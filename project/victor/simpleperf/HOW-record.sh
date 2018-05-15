@@ -33,13 +33,6 @@ mkdir -p ${SCRIPTDIR}/${ANKI_PROFILE_PROCNAME}
 : ${ADB:="adb"}
 
 #
-# If ANDROID_NDK is set, use it, else provide default location
-#
-if [ -z "${ANDROID_NDK+x}" ]; then
-  ANDROID_NDK=`${TOPLEVEL}/tools/build/tools/ankibuild/android.py`
-fi
-
-#
 # Create symbol cache
 #
 if [ ! -d ${ANKI_PROFILE_SYMBOLCACHE} ] ; then

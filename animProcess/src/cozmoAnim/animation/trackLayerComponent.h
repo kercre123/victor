@@ -57,31 +57,28 @@ public:
   void Init();
   
   void Update();
+  void AdvanceTracks(const TimeStamp_t toTime_ms);
   
   // Pulls the current keyframe from various tracks of the anim
   // and combines it with any track layers that may exist
   // Outputs layeredKeyframes struct which contains the final combined
   // keyframes from the anim and the various track layers
   void ApplyLayersToAnim(Animation* anim,
-                         TimeStamp_t startTime_ms,
-                         TimeStamp_t streamTime_ms,
+                         const TimeStamp_t timeSinceAnimStart_ms,
                          LayeredKeyFrames& layeredKeyFrames,
-                         bool storeFace);
+                         bool storeFace) const;
   
   // Keep Cozmo's face alive using the params specified
   // (call each tick while the face should be kept alive)
-  void KeepFaceAlive(const std::map<KeepFaceAliveParameter, f32>& params);
+  void KeepFaceAlive(const std::map<KeepFaceAliveParameter, f32>& params,
+                     const TimeStamp_t timeSinceKeepAliveStart_ms);
   
   // Removes the live face after duration_ms has passed
   // Note: Will not cancel/remove a blink that is in progress
   void RemoveKeepFaceAlive(u32 duration_ms);
   
-  // Resets timers for keeping face alive.
-  // Call this when KeepFaceAlive timing parameters have changed.
-  void ResetKeepFaceAliveTimers();
-  
   // Make Cozmo blink
-  void AddBlink();
+  void AddBlink(const TimeStamp_t timeSinceKeepAliveStart_ms);
   
   // Make Cozmo squint (will continue to squint until removed)
   void AddSquint(const std::string& name, f32 squintScaleX, f32 squintScaleY, f32 upperLidAngle);
@@ -116,20 +113,17 @@ public:
 private:
 
   void ApplyAudioLayersToAnim(Animation* anim,
-                              TimeStamp_t startTime_ms,
-                              TimeStamp_t streamTime_ms,
-                              LayeredKeyFrames& layeredKeyFrames);
+                              const TimeStamp_t timeSinceAnimStart_ms,
+                              LayeredKeyFrames& layeredKeyFrames) const;
   
   void ApplyBackpackLayersToAnim(Animation* anim,
-                                 TimeStamp_t startTime_ms,
-                                 TimeStamp_t streamTime_ms,
-                                 LayeredKeyFrames& layeredKeyFrames);
+                                 const TimeStamp_t timeSinceAnimStart_ms,
+                                 LayeredKeyFrames& layeredKeyFrames) const;
   
   void ApplyFaceLayersToAnim(Animation* anim,
-                             TimeStamp_t startTime_ms,
-                             TimeStamp_t streamTime_ms,
+                             const TimeStamp_t timeSinceAnimStart_ms,
                              LayeredKeyFrames& layeredKeyFrames,
-                             bool storeFace);
+                             bool storeFace) const;
   
   std::unique_ptr<AudioLayerManager>    _audioLayerManager;
   std::unique_ptr<BackpackLayerManager> _backpackLayerManager;

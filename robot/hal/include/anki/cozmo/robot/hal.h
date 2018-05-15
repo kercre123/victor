@@ -268,7 +268,7 @@ PowerState PowerGetMode();
  */
 bool RadioIsConnected();
 
-void DisconnectRadio();
+void DisconnectRadio(bool sendDisconnectMsg = true);
 
 /** Gets the next packet from the radio
  * @param buffer [out] A buffer into which to copy the packet. Must have MTU bytes available

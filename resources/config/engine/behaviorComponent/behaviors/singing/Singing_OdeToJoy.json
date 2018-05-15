@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_OdeToJoy",
-  "displayNameKey":"behavior.singing.OdeToJoy",
-  "requiredUnlockId":"Singing_OdeToJoy",
-  "audioSwitchGroup":"Cozmo_Sings_120Bpm",
-  "audioSwitch":"Cozmo_Sings_Ode_To_Joy"
-}

@@ -91,10 +91,7 @@ void BehaviorRequestToGoHome::GetBehaviorJsonKeys(std::set<const char*>& expecte
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorRequestToGoHome::WantsToBeActivatedBehavior() const
 {
-  // Should not run if we already know where a charger is
-  BlockWorldFilter filter;
-  filter.AddAllowedType(ObjectType::Charger_Basic);
-  return (nullptr == GetBEI().GetBlockWorld().FindLocatedMatchingObject(filter));
+  return true;
 }
 
 

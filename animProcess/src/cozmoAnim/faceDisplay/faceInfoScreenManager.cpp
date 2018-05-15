@@ -537,14 +537,17 @@ void FaceInfoScreenManager::DrawConfidenceClock(
     const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
     if (currentTime > nextWebServerUpdateTime)
     {
-      nextWebServerUpdateTime = currentTime + 0.150;
+      nextWebServerUpdateTime = currentTime + 0.1;
 
       Json::Value webData;
+      webData["time"] = currentTime;
       webData["confidence"] = micData.confidence;
       webData["dominant"] = micData.direction;
       webData["maxConfidence"] = maxConf;
       webData["triggerDetected"] = triggerRecognized;
       webData["delayTime"] = delayTime_ms;
+      webData["latestPowerValue"] = (double)micData.latestPowerValue;
+      webData["latestNoiseFloor"] = (double)micData.latestNoiseFloor;
 
       Json::Value& directionValues = webData["directions"];
       for ( float confidence : micData.confidenceList )

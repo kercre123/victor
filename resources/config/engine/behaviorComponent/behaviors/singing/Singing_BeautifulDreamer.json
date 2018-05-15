@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_BeautifulDreamer",
-  "displayNameKey":"behavior.singing.BeautifulDreamer",
-  "requiredUnlockId":"Singing_BeautifulDreamer",
-  "audioSwitchGroup":"Cozmo_Sings_100Bpm",
-  "audioSwitch":"Cozmo_Sings_Beautiful_Dreamer"
-}

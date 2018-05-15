@@ -276,8 +276,8 @@ void GroundPlaneClassifier::TrainClassifier(const std::string& path)
     const std::vector<u8> responses = _classifier->PredictClass(values);
     const cv::Mat responsesMat(responses);
 
-    const float error = Anki::calculateError(responsesMat, trainingLabels);
-    PRINT_CH_DEBUG("VisionSystem", "GroundPlaneClassifier.Train.ErrorLevel", "Error after training is: %f", error);
+    PRINT_CH_DEBUG("VisionSystem", "GroundPlaneClassifier.Train.ErrorLevel",
+                   "Error after training is: %f", Anki::calculateError(responsesMat, trainingLabels));
   }
   _initialized = true;
 

@@ -16,6 +16,7 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/carryingComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceAndApproachPlanner.h"
 #include "engine/latticePlanner.h"
@@ -594,10 +595,15 @@ void PathComponent::TryCompletingPath()
 
   const Pose3d& driveCenterPose = _robot->GetDriveCenterPose();
 
+  // NOTE: If object-carrying state changes between the time this function is called
+  //       and the time the path is executed, the robot will either drive too fast and
+  //       potentially fall off cliffs or too slow and potentially look strange.
+  PathMotionProfile cliffSafeMotionProfile = ClampToCliffSafeSpeed(*_pathMotionProfile);
+
   _selectedPathPlanner->GetCompletePath(driveCenterPose,
                                         newPath,
                                         selectedPoseIdx,
-                                        _pathMotionProfile.get());
+                                        &cliffSafeMotionProfile);
   
   // the planner finished but returned no path... either the robot is at the goal, some internal error
   // occurred, or, if the robot was replanning, it probably isn't yet close enough to that position to
@@ -801,11 +807,11 @@ bool PathComponent::HasCustomMotionProfile() const
   return _hasCustomMotionProfile;
 }
 
-const PathMotionProfile& PathComponent::GetCustomMotionProfile() const
+PathMotionProfile PathComponent::GetCustomMotionProfile() const
 {
   ANKI_VERIFY(_hasCustomMotionProfile, "PathComponent.GetCustomMotionProfile.NoCustomProfile",
               "Trying to get the custom profile, but none is set. This is a bug");
-  return *_pathMotionProfile;
+  return ClampToCliffSafeSpeed(*_pathMotionProfile);
 }
 
 Result PathComponent::ConfigureAndStartPlanner(const std::vector<Pose3d>& poses,
@@ -1196,6 +1202,34 @@ void PathComponent::SetDriveToPoseStatus(ERobotDriveToPoseStatus newValue)
 
     _driveToPoseStatus = newValue;
   }
+}
+
+PathMotionProfile PathComponent::ClampToCliffSafeSpeed(const PathMotionProfile& motionProfile) const
+{
+  PathMotionProfile cliffSafeMotionProfile = motionProfile;
+  const bool isCarrying = _robot->GetCarryingComponent().IsCarryingObject(); 
+  const float maxSpeed = isCarrying ? 
+                         MAX_SAFE_WHILE_CARRYING_WHEEL_SPEED_MMPS : 
+                         MAX_SAFE_WHEEL_SPEED_MMPS;
+
+  auto ClampSpeedFunc = [maxSpeed, isCarrying](float orig_speed) {
+    if (Util::InRange(orig_speed, -maxSpeed, maxSpeed)) {
+      return orig_speed;
+    } else if (!isCarrying) {
+      // Only print when not carrying since carrying is expected
+      // to further clamp valid speed limits
+      PRINT_NAMED_WARNING("PathComponent.ClampToCliffSafeSpeed.ClampingUnsafeSpeed", 
+                          "%f mm/s will be clamped to %f mm/s", 
+                          orig_speed, maxSpeed);
+    }
+    return CLIP(orig_speed, -maxSpeed, maxSpeed);
+  };
+
+  cliffSafeMotionProfile.speed_mmps        = ClampSpeedFunc(motionProfile.speed_mmps);
+  cliffSafeMotionProfile.reverseSpeed_mmps = ClampSpeedFunc(motionProfile.reverseSpeed_mmps);
+  cliffSafeMotionProfile.dockSpeed_mmps    = ClampSpeedFunc(motionProfile.dockSpeed_mmps);
+
+  return cliffSafeMotionProfile;
 }
 
 }

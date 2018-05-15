@@ -1,5 +1,5 @@
 /**
- * File: logging
+ * File: util/logging/logging.h
  *
  * Author: damjan
  * Created: 4/3/2014
@@ -10,7 +10,7 @@
  *   style: f - takes (...) , v - takes va_list
  *   functions are spelled out, instead of stacked (sErrorF -> calls sErrorV -> calls sError)
  *   to improve on the stack space. If you think about improving on this, please consider macros to re-use code.
- *   If you however feel that we should stack them into one set of function that uses LogLevel as a param, think about
+ *   If you however feel that we should stack them into one set of functions that use LogLevel as a param, think about
  *   need to translate Ank::Util::LogLevel to DasLogLevel and then to ios/android LogLevel.
  *
  * Copyright: Anki, Inc. 2014
@@ -35,10 +35,15 @@
 namespace Anki {
 namespace Util {
 
+using KVPair = std::pair<const char *, const char *>;
+using KVPairVector = std::vector<KVPair>;
+
 class ITickTimeProvider;
 class ILoggerProvider;
 class ChannelFilter;
 class IEventProvider;
+
+const uint8_t DASMaxSvalLength = 128;
 
 using KVPair = std::pair<const char *, const char *>;
 using KVPairVector = std::vector<KVPair>;
@@ -56,16 +61,22 @@ extern bool _errG;
 // Global flag to control break-on-error behavior
 extern bool _errBreakOnError;
 
+// DAS message field
 struct DasItem
 {
+  DasItem() = default;
+  DasItem(const std::string & valueStr) { value = valueStr; }
+  DasItem(int64_t valueInt) { value = std::to_string(valueInt); }
+
   std::string value;
-  DasItem(std::string valueStr) {value = valueStr;}
-  DasItem(int64_t valueInt) {value = std::to_string(valueInt);}
-  DasItem() {value = "";}
 };
 
+// DAS message struct
 struct DasMsg
 {
+  DasMsg(const std::string & eventStr) { event = eventStr; }
+
+  std::string event;
   DasItem s1;
   DasItem s2;
   DasItem s3;
@@ -74,20 +85,41 @@ struct DasMsg
   DasItem i2;
   DasItem i3;
   DasItem i4;
-  std::string event;
-  DasMsg(std::string eventStr) {event = eventStr;}
 };
 
-#define DAS_MSG(ezRef, eventName, documentation) { Anki::Util::DasMsg msg(eventName);
-#define FILL_ITEM(dasEntry, value, comment) msg.dasEntry = Anki::Util::DasItem(value);
-#define SEND_DAS_MSG_EVENT() sEventD(msg); }
-#define SEND_DAS_MSG_WARN() sWarningD(msg); }
-#define SEND_DAS_MSG_ERROR() sErrorD(msg); }
+//
+// DAS message macros
+//
+#ifndef DOXYGEN
 
-//__attribute__((__deprecated__))
+#define DASMSG(ezRef, eventName, documentation) { Anki::Util::DasMsg __DAS_msg(eventName);
+#define DASMSG_SET(dasEntry, value, comment) __DAS_msg.dasEntry = Anki::Util::DasItem(value);
+#define DASMSG_SEND() sEventD(__DAS_msg); }
+#define DASMSG_SEND_WARNING() sWarningD(__DAS_msg); }
+#define DASMSG_SEND_ERROR() sErrorD(__DAS_msg); }
+
+#else
+
+/*! \defgroup dasmsg Das Messages
+*/
+
+class DasDoxMsg() {}
+
+#define DASMSG(ezRef, eventName, documentation)  }}}}}}}}/** \ingroup dasmsg */ \
+                                            /** \brief eventName */ \
+                                            /** documentation */ \
+                                            class ezRef(): public DasDoxMsg() { \
+                                            public:
+#define DASMSG_SET(dasEntry, value, comment) /** @param dasEntry comment \n*/
+#define DASMSG_SEND }; {{{{{{{{
+#define DASMSG_SEND_WARNING }; {{{{{{{{
+#define DASMSG_SEND_ERROR }; {{{{{{{{
+
+#endif
+
 //
 // "Event level" logging is no longer a thing. Do not use it.
-// Messages intended for DAS should use the explicit DASMESSAGE interface.
+// Messages intended for DAS should use the explicit DASMSG interface declared above.
 // Other messages should use INFO or DEBUG as appropriate.
 //
 __attribute__((__deprecated__))
@@ -283,9 +315,13 @@ constexpr const char * LOG_UNFILTERED = "Unfiltered";
   ::Anki::Util::sChanneledInfoF(channel, name, {}, format, ##__VA_ARGS__); \
 } while(0)
 
+#if ALLOW_DEBUG_LOGGING
 #define PRINT_CH_DEBUG(channel, name, format, ...) do { \
   ::Anki::Util::sChanneledDebugF(channel, name, {}, format, ##__VA_ARGS__); \
 } while(0)
+#else
+#define PRINT_CH_DEBUG(channel, name, format, ...)
+#endif
 
 //
 // Periodic logging with channels.

@@ -25,6 +25,8 @@
 #include "engine/aiComponent/continuityComponent.h"
 #include "engine/externalInterface/externalInterface.h"
 
+#include "coretech/common/engine/utils/timer.h"
+
 #include "engine/robot.h"
 
 namespace Anki {
@@ -68,7 +70,8 @@ bool Delegator::Delegate(IBehavior* delegatingBehavior,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool Delegator::Delegate(IBehavior* delegatingBehavior, IBehavior* delegated)
 {
-  return _bsm.Delegate(delegatingBehavior, delegated);
+  const bool delegatedOK = _bsm.Delegate(delegatingBehavior, delegated);
+  return delegatedOK;
 }
 
 
@@ -188,6 +191,12 @@ void DelegationComponent::HandleActionComplete(u32 actionTag)
 const IBehavior* DelegationComponent::GetBehaviorDelegatedTo(const IBehavior* delegatingBehavior) const
 {
   return _bsm->GetBehaviorDelegatedTo(delegatingBehavior);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+size_t DelegationComponent::GetLastTickBehaviorStackChanged() const
+{
+  return _bsm->GetLastTickBehaviorStackChanged();
 }
 
 } // namespace Cozmo

@@ -143,7 +143,12 @@ public:
   // check / get the custom motion profile. Note that there is always _some_ motion profile that paths follow,
   // but these functions refer to the _custom_ profile which, for example, might get set by a behavior
   bool HasCustomMotionProfile() const;
-  const PathMotionProfile& GetCustomMotionProfile() const;
+
+  // Returns a copy of the custom motion profile with speeds that
+  // have been clamped for speed safety.
+  // The returned profile also depends on whether or not the
+  // robot is currently carrying an object.
+  PathMotionProfile GetCustomMotionProfile() const;
   
   // This function checks the planning / path following status of the robot. See the enum definition for
   // details. In 99% of cases you should prefer the direct bool functions below, like IsActive() or
@@ -253,6 +258,8 @@ private:
 
   void SetDriveToPoseStatus(ERobotDriveToPoseStatus newValue);
   
+  PathMotionProfile ClampToCliffSafeSpeed(const PathMotionProfile& motionProfile) const;
+
   std::unique_ptr<SpeedChooser>   _speedChooser;
   std::unique_ptr<PathDolerOuter> _pdo;
 

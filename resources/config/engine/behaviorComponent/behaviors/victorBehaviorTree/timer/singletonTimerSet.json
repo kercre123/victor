@@ -1,6 +1,9 @@
 {
   "behaviorClass" : "ProceduralClock",
   "behaviorID" : "SingletonTimerSet",
+
+  "associatedActiveFeature": "TimerSet",
+  
   "respondToUserIntents": [
     {
       "type": "set_timer"
@@ -12,7 +15,7 @@
   "displayClockFor_s" : 5,
 
   "clockLayout" : [{  
-    "layerName" : "Layer_4",
+    "layerName" : "Clock_Display",
     "spriteBoxLayout" : [
       {
         "spriteBoxName": "TensLeftOfColon",

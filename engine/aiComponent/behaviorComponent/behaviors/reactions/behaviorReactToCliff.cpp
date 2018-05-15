@@ -46,7 +46,9 @@ BehaviorReactToCliff::DynamicVariables::DynamicVariables()
   quitReaction = false;
   state = State::PlayingStopReaction;
   gotCliff = false;
+  gotStop = false;
   detectedFlags = 0;
+  shouldStopDueToCharger = false;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -73,7 +75,7 @@ void BehaviorReactToCliff::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToCliff::WantsToBeActivatedBehavior() const
 {
-  return _iConfig.cliffDetectedCondition->AreConditionsMet(GetBEI());
+  return _iConfig.cliffDetectedCondition->AreConditionsMet(GetBEI()) || _dVars.gotStop;
 }
 
 
@@ -247,6 +249,7 @@ void BehaviorReactToCliff::HandleWhileInScopeButNotActivated(const EngineToGameE
 
     case EngineToGameTag::RobotStopped: {
       _dVars.quitReaction = false;
+      _dVars.gotStop = true;
       _dVars.state = State::PlayingStopReaction;
       break;
     }

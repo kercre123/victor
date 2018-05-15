@@ -117,7 +117,7 @@ public:
   // the region is a line segment of fixed length that is perpendicular to the robot direction
   void ClearRobotToEdge(const Point2f& p, const Point2f& q, const TimeStamp_t t);
 
-
+  void AddProxData(const Poly2f& poly, const MemoryMapData& data);
   
   ////////////////////////////////////////////////////////////////////////////////
   // Accessors
@@ -182,6 +182,7 @@ private:
   PoseOriginID_t                  _currentMapOriginID;
   ObjectIdToPosesPerOrigin        _reportedPoses;
   Pose3d                          _reportedRobotPose;
+  TimeStamp_t                     _nextTimeoutUpdate_ms;
 
   // use multiple dirty flags to broadcast to different channels in case they have different broadcast rates
   bool                            _vizMessageDirty;

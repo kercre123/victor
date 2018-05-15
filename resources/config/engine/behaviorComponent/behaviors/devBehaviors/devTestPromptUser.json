@@ -1,0 +1,16 @@
+{
+  "behaviorID" : "DevTestPromptUser",
+  "behaviorClass" : "PromptUserForVoiceCommand",
+
+  "earConAudioEventBegin"          : "Play__Robot_Vic_Sfx__Wake_Word_On",
+  "earConAudioEventSuccess"        : "Play__Robot_Vic_Sfx__Wake_Word_Success",
+  "earConAudioEventNeutral"        : "Play__Robot_Vic_Sfx__Wake_Word_Off",
+  "vocalPromptString"              : "Speak a voice command",
+  "vocalResponseToIntentString"    : "Received valid intent",
+  "vocalResponseToBadIntentString" : "Did not receive a valid intent",
+  "vocalRepromptString"            : "Try again. Speak a voice command",
+  "maxNumberOfReprompts"           : 1,
+  "stopListeningOnIntents"         : false,
+  "playListeningGetIn"             : true,
+  "backpackLights"                 : true
+}

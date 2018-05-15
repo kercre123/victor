@@ -14,21 +14,23 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/activeBehaviorIterator.h"
+#include "engine/aiComponent/behaviorComponent/activeFeatureComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorAudioComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/devBehaviorComponentMessageHandler.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
+#include "engine/audio/engineRobotAudioClient.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/faceWorld.h"
-#include "engine/audio/engineRobotAudioClient.h"
 
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -197,6 +199,14 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
   if(!entity->HasComponent(BCComponentID::RobotInfo)){
     entity->AddDependentComponent(BCComponentID::RobotInfo,
                                   new BEIRobotInfo(robot));
+  }
+
+  if(!entity->HasComponent(BCComponentID::ActiveFeature)) {
+    entity->AddDependentComponent(BCComponentID::ActiveFeature, new ActiveFeatureComponent);
+  }
+
+  if(!entity->HasComponent(BCComponentID::ActiveBehaviorIterator)) {
+    entity->AddDependentComponent(BCComponentID::ActiveBehaviorIterator, new ActiveBehaviorIterator);
   }
 }
 

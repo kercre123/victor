@@ -55,10 +55,12 @@ namespace Anki {
       return server.HasClient();
     }
 
-    void HAL::DisconnectRadio(void)
+    void HAL::DisconnectRadio(bool sendDisconnectMsg)
     {
-      RobotInterface::RobotServerDisconnect msg;
-      RobotInterface::SendMessage(msg);
+      if (sendDisconnectMsg && RadioIsConnected()) {
+        RobotInterface::RobotServerDisconnect msg;
+        RobotInterface::SendMessage(msg);
+      }
       
       server.Disconnect();
       recvBufSize_ = 0;
@@ -70,7 +72,7 @@ namespace Anki {
         const ssize_t bytesSent = server.Send((char*)buffer, length);
         if (bytesSent < (ssize_t) length) {
           AnkiError("HAL.RadioSendPacket.FailedToSend", "Failed to send msg contents (%zd/%u sent)", bytesSent, length);
-          DisconnectRadio();
+          DisconnectRadio(false);
           return false;
         }
 
@@ -108,7 +110,7 @@ namespace Anki {
       else if (dataLen < 0) {
         // Something went wrong
         AnkiError("HAL.RadioGetNextPacket", "Receive failed");
-        DisconnectRadio();
+        DisconnectRadio(false);
         return 0;
       }
       else {

@@ -210,9 +210,9 @@ void Process_displayCompositeImageChunk(const Anki::Cozmo::RobotInterface::Displ
   _animStreamer->Process_displayCompositeImageChunk(msg);
 }
 
-void Process_updateCompositeImageAsset(const Anki::Cozmo::RobotInterface::UpdateCompositeImageAsset& msg)
+void Process_updateCompositeImage(const Anki::Cozmo::RobotInterface::UpdateCompositeImage& msg)
 {
-  _animStreamer->Process_updateCompositeImageAsset(msg);
+  _animStreamer->Process_updateCompositeImage(msg);
 }
 
 void Process_playCompositeAnimation(const Anki::Cozmo::RobotInterface::PlayCompositeAnimation& msg)
@@ -245,7 +245,7 @@ void Process_setKeepFaceAliveParameter(const Anki::Cozmo::RobotInterface::SetKee
 void Process_addOrUpdateEyeShift(const Anki::Cozmo::RobotInterface::AddOrUpdateEyeShift& msg)
 {
   const std::string layerName(msg.name, msg.name_length);
-  _animStreamer->GetTrackLayerComponent()->AddOrUpdateEyeShift(layerName,
+  _animStreamer->GetProceduralTrackComponent()->AddOrUpdateEyeShift(layerName,
                                                                msg.xPix,
                                                                msg.yPix,
                                                                msg.duration_ms,
@@ -259,19 +259,19 @@ void Process_addOrUpdateEyeShift(const Anki::Cozmo::RobotInterface::AddOrUpdateE
 void Process_removeEyeShift(const Anki::Cozmo::RobotInterface::RemoveEyeShift& msg)
 {
   const std::string layerName(msg.name, msg.name_length);
-  _animStreamer->GetTrackLayerComponent()->RemoveEyeShift(layerName, msg.disableTimeout_ms);
+  _animStreamer->GetProceduralTrackComponent()->RemoveEyeShift(layerName, msg.disableTimeout_ms);
 }
 
 void Process_addSquint(const Anki::Cozmo::RobotInterface::AddSquint& msg)
 {
   const std::string layerName(msg.name, msg.name_length);
-  _animStreamer->GetTrackLayerComponent()->AddSquint(layerName, msg.squintScaleX, msg.squintScaleY, msg.upperLidAngle);
+  _animStreamer->GetProceduralTrackComponent()->AddSquint(layerName, msg.squintScaleX, msg.squintScaleY, msg.upperLidAngle);
 }
 
 void Process_removeSquint(const Anki::Cozmo::RobotInterface::RemoveSquint& msg)
 {
   const std::string layerName(msg.name, msg.name_length);
-  _animStreamer->GetTrackLayerComponent()->RemoveSquint(layerName, msg.disableTimeout_ms);
+  _animStreamer->GetProceduralTrackComponent()->RemoveSquint(layerName, msg.disableTimeout_ms);
 }
 
 void Process_postAudioEvent(const Anki::AudioEngine::Multiplexer::PostAudioEvent& msg)
@@ -352,6 +352,16 @@ void Process_startRecordingMicsProcessed(const Anki::Cozmo::RobotInterface::Star
   micDataSystem->RecordProcessedAudio(msg.duration_ms,
                                       std::string(msg.path,
                                                   msg.path_length));
+}
+
+void Process_startWakeWordlessStreaming(const Anki::Cozmo::RobotInterface::StartWakeWordlessStreaming& msg)
+{
+  auto* micDataSystem = _context->GetMicDataSystem();
+  if(micDataSystem == nullptr){
+    return;
+  }
+
+  micDataSystem->StartWakeWordlessStreaming();
 }
 
 void Process_playbackAudioStart(const Anki::Cozmo::RobotInterface::StartPlaybackAudio& msg)

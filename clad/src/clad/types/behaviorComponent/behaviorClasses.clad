@@ -28,6 +28,7 @@ enum uint_8 BehaviorClass {
   RollBlock,
 
   // basicWorldInteractions
+  ClearChargerArea,
   DriveOffCharger,
   FindFaces,
   FindHome,
@@ -148,6 +149,9 @@ enum uint_8 BehaviorClass {
   ReactToSound,
   ReactToUnexpectedMovement,
   ReactToVoiceCommand,
+
+  // robotDrivenDialog
+  PromptUserForVoiceCommand,
 
   // sleeping
   Sleeping,

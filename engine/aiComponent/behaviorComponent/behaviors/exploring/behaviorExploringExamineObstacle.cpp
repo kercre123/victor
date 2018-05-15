@@ -43,7 +43,7 @@ namespace {
   const float kDistanceForConeActivation_mm = 89.0f;
   const float kHalfAngleForConeActivation_rad = M_PI_4_F;
   const float kDistanceForStopTurn_mm = 300.0f;
-  const float kDistanceForStartApproach_mm = 120.0f;
+  const float kDistanceForStartApproach_mm = 150.0f;
   const float kDistanceForStopApproach_mm = 80.0f;
   
   const float kMaxTurnAngle_deg = 135.0f; // 90 + 45 looks good for coming at a wall at an acute angle
@@ -414,7 +414,7 @@ bool BehaviorExploringExamineObstacle::RobotSeesObstacleInFront( float dist_mm, 
     if( data->type == MemoryMapTypes::EContentType::ObstacleProx ) {
       if( onlyUnexplored ) {
         auto castPtr = MemoryMapData::MemoryMapDataCast<const MemoryMapData_ProxObstacle>( data );
-        ret = (castPtr->_explored == MemoryMapData_ProxObstacle::NOT_EXPLORED);
+        ret = !castPtr->IsExplored();
       } else {
         ret = true;
       }
@@ -461,7 +461,7 @@ bool BehaviorExploringExamineObstacle::RobotSeesNewObstacleInCone( float dist_mm
     const bool newObstacle = data->GetFirstObservedTime() >= earliestTime;
     if( sameType && newObstacle ) {
       auto castPtr = MemoryMapData::MemoryMapDataCast<const MemoryMapData_ProxObstacle>( data );
-      position = Point2f{castPtr->_pose.GetTranslation()};
+      position = Point2f{castPtr->GetObservationPose().GetTranslation()};
     }
     return sameType && newObstacle;
   };

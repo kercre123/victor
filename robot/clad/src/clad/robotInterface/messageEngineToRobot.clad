@@ -391,6 +391,10 @@ message StartPlaybackAudio
   string  path
 }
 
+message StartWakeWordlessStreaming
+{
+}
+
 structure ColorRGB
 {
   uint_8 r,
@@ -444,11 +448,12 @@ message DisplayCompositeImageChunk
   Vision::CompositeImageChunk compositeImageChunk
 }
 
-message UpdateCompositeImageAsset
+message UpdateCompositeImage
 {
-  Vision::LayerName     layerName,
-  Vision::SpriteBoxName spriteBoxName,
-  Vision::SpriteName    spriteName
+  Vision::SerializedSpriteBox serializedSpriteBox, // SpriteBox named count indicates clear the whole layer
+  uint_32                     applyAt_ms, // specify the time in ms from the start of the animation that the update should be applied
+  Vision::LayerName           layerName,
+  Vision::SpriteName          spriteName // Use Count to indicate erase sprite
 }
 
 
@@ -642,7 +647,7 @@ union EngineToRobot
 
   DisplayFaceImageGrayscaleChunk   displayFaceImageGrayscaleChunk      = 0x62,
   DisplayCompositeImageChunk       displayCompositeImageChunk          = 0x63,
-  UpdateCompositeImageAsset        updateCompositeImageAsset           = 0x64,
+  UpdateCompositeImage             updateCompositeImage                = 0x64,
   PlayCompositeAnimation           playCompositeAnimation              = 0x65,
 
   AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
@@ -660,6 +665,8 @@ union EngineToRobot
   StartRecordingMicsRaw         startRecordingMicsRaw       = 0x95,
   StartRecordingMicsProcessed   startRecordingMicsProcessed = 0x96,
   StartPlaybackAudio            playbackAudioStart          = 0x97,
+
+  StartWakeWordlessStreaming    startWakeWordlessStreaming  = 0x98,
 
   SwitchboardInterface::SetConnectionStatus setConnectionStatus = 0xA0,
   SwitchboardInterface::SetBLEPin           setBLEPin           = 0xA1,

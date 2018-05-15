@@ -1,0 +1,17 @@
+[Unit]
+Description=Victor crash uploader daemon
+SourcePath=/anki/bin/vic-crashuploader.sh
+PartOf=anki-robot.target
+
+Wants=vic-init.service
+After=vic-init.service
+
+ConditionFileIsExecutable=/anki/bin/vic-crashuploader.sh
+
+[Service]
+EnvironmentFile=/anki/etc/vic-crashuploader.env
+Restart=always
+ExecStart=/usr/bin/logwrapper /bin/sh /anki/bin/vic-crashuploader.sh $VIC_UPLOADCRASHES_OPTS
+
+[Install]
+WantedBy=anki-robot.target

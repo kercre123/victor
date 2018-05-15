@@ -15,7 +15,7 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
-#if (defined(ANDROID) && defined(USE_GOOGLE_BREAKPAD))
+#if (defined(VICOS) && defined(USE_GOOGLE_BREAKPAD))
 #include <client/linux/handler/exception_handler.h>
 #include <client/linux/handler/minidump_descriptor.h>
 
@@ -30,7 +30,7 @@
 
 namespace GoogleBreakpad {
 
-#if (defined(ANDROID) && defined(USE_GOOGLE_BREAKPAD))
+#if (defined(VICOS) && defined(USE_GOOGLE_BREAKPAD))
 // Google Breakpad setup
 namespace {
 
@@ -84,7 +84,7 @@ void InstallGoogleBreakpad(const char* filenamePrefix)
 
   const std::string crashFile = path + filenamePrefix + "-" + GetDateTimeString() + ".dmp";
 
-  (void) strlcpy(dumpPath, crashFile.c_str(), sizeof(dumpPath)); 
+  (void) strncpy(dumpPath, crashFile.c_str(), sizeof(dumpPath)); 
   fd = open(crashFile.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_EXCL, 0600);
   google_breakpad::MinidumpDescriptor descriptor(fd);
   exceptionHandler = new google_breakpad::ExceptionHandler(descriptor, NULL, DumpCallback, NULL, true, -1);

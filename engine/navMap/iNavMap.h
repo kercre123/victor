@@ -109,6 +109,7 @@ protected:
 
   // add a poly with the specified content. 
   virtual bool Insert(const Poly2f& poly, const MemoryMapData& data) = 0;
+  virtual bool Insert(const Poly2f& poly, NodeTransformFunction transform) = 0;
   
   // merge the given map into this map by applying to the other's information the given transform
   // although this methods allows merging any INavMap into any INavMap, subclasses are not

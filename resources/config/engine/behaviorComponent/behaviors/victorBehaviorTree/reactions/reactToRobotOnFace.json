@@ -1,4 +1,5 @@
 {
   "behaviorClass": "ReactToRobotOnFace",
-  "behaviorID": "ReactToRobotOnFace"
+  "behaviorID": "ReactToRobotOnFace",
+  "associatedActiveFeature": "NoFeature"
 }

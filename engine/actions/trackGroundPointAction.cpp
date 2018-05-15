@@ -27,12 +27,11 @@
 #include "util/math/math.h"
 
 #define DEBUG_TRACKING_ACTIONS 0
+#define kLogChannelName "Actions"
 
 namespace Anki {
 namespace Cozmo {
-  
-static const char * const kLogChannelName = "Actions";
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TrackGroundPointAction::TrackGroundPointAction(const ExternalInterface::MessageEngineToGameTag& salientPointTag)
 : ITrackAction("TrackGroundPoint", RobotActionType::TRACK_GROUND_POINT)

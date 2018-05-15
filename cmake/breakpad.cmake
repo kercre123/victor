@@ -1,12 +1,12 @@
 set(BREAKPAD_INCLUDE_PATHS
-    "${CMAKE_SOURCE_DIR}/lib/crash-reporting-android/Breakpad/include"
+    "${CMAKE_SOURCE_DIR}/lib/crash-reporting-vicos/Breakpad/include"
 )
 
-# Android platform-specific library
+# VICOS platform-specific library
 set(BREAKPAD_LIBS "")
 
-if (ANDROID)
-    set(BREAKPAD_LIB_PATH "${CMAKE_SOURCE_DIR}/lib/crash-reporting-android/Breakpad/libs/armeabi-v7a")
+if (VICOS)
+    set(BREAKPAD_LIB_PATH "${CMAKE_SOURCE_DIR}/lib/crash-reporting-vicos/Breakpad/libs/armeabi-v7a")
     set(BREAKPAD_LIBS
       breakpad_client
     )

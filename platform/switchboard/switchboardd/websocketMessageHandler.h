@@ -44,6 +44,11 @@ private:
   void HandleMotorControl_MoveHead(Anki::Cozmo::ExternalComms::MoveHead sdkMessage);
   void HandleMotorControl_MoveLift(Anki::Cozmo::ExternalComms::MoveLift sdkMessage);
 
+  void HandleAnimations(Anki::Cozmo::ExternalComms::Animations unionInstance);
+  void HandleAnimations_PlayAnimation(Anki::Cozmo::ExternalComms::PlayAnimation sdkMessage);
+  void HandleAnimations_RequestAvailableAnimations(Anki::Cozmo::ExternalComms::RequestAvailableAnimations sdkMessage);
+  void HandleAnimations_SayText(Anki::Cozmo::ExternalComms::SayText sdkMessage);
+
   void HandleMovementAction(Anki::Cozmo::ExternalComms::MovementAction unionInstance);
   void HandleMovementAction_DriveOffChargerContacts(Anki::Cozmo::ExternalComms::DriveOffChargerContacts sdkMessage);
   void HandleMovementAction_DriveStraight(Anki::Cozmo::ExternalComms::DriveStraight sdkMessage);
@@ -59,6 +64,10 @@ private:
   void HandleMeetVictor_EraseEnrolledFaceByID(Anki::Cozmo::ExternalComms::EraseEnrolledFaceByID sdkMessage);
   void HandleMeetVictor_EraseAllEnrolledFaces(Anki::Cozmo::ExternalComms::EraseAllEnrolledFaces sdkMessage);
   void HandleMeetVictor_SetFaceToEnroll(Anki::Cozmo::ExternalComms::SetFaceToEnroll sdkMessage);
+
+  void HandleVictorDisplay(Anki::Cozmo::ExternalComms::VictorDisplay unionInstance);
+  void HandleVictorDisplay_SetBackpackLEDs(Anki::Cozmo::ExternalComms::SetBackpackLEDs sdkMessage);
+
 
   Anki::Cozmo::ExternalComms::ExternalComms SendMeetVictorStarted(const Anki::Cozmo::ExternalInterface::MeetVictorStarted& msg);
   Anki::Cozmo::ExternalComms::ExternalComms SendMeetVictorFaceScanStarted(const Anki::Cozmo::ExternalInterface::MeetVictorFaceScanStarted& msg);

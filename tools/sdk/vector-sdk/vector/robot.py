@@ -7,11 +7,29 @@ import struct
 
 import websockets
 
+from . import lights
+from ._clad import _animation_trigger
 from ._clad import _clad_message
 
 class Robot:
     def __init__(self, socket):
         self.socket = socket
+
+    # Animations
+    async def get_anim_names(self):
+        message = _clad_message.RequestAvailableAnimations()
+        innerWrappedMessage = _clad_message.Animations(requestAvailableAnimations=message)
+        outerWrappedMessage = _clad_message.ExternalComms(Animations=innerWrappedMessage)
+        await self.socket.send(outerWrappedMessage.pack()) 
+        # TODO (VIC-2784): wait for the list...d
+        return []
+
+    async def play_anim(self, animation_name, loop_count=1, ignore_body_track = True, ignore_head_track = True, ignore_lift_track = True ):
+        message = _clad_message.PlayAnimation(
+            animationName = animation_name, numLoops = loop_count, ignoreBodyTrack = ignore_body_track, ignoreHeadTrack = ignore_head_track, ignoreLiftTrack = ignore_lift_track)
+        innerWrappedMessage = _clad_message.Animations(playAnimation=message)
+        outerWrappedMessage = _clad_message.ExternalComms(Animations=innerWrappedMessage)
+        await self.socket.send(outerWrappedMessage.pack()) 
 
     # Low level motor functions
     async def set_wheel_motors(self, left_wheel_speed, right_wheel_speed, left_wheel_accel=0.0, right_wheel_accel=0.0):
@@ -108,6 +126,31 @@ class Robot:
         
         await self.socket.send(outerWrappedMessage.pack())        
 
+    async def say_text(self, text, play_event=_animation_trigger.Count, voice_style=3,
+                 duration_scalar=1.0, voice_pitch=0.0):
+        #TODO Add enum for voice style
+        #Set AnimationTrigger::Count to only play the Tts without an animation
+
+        '''Have Vector say text.
+
+        Args:
+            text (string): The words for Vector to say.
+            play_event (bool): Whether to also play an 
+                animation while speaking.
+            voice_style (bool): Whether to use Vector's robot voice
+                (otherwise, he uses a generic human male voice).
+            duration_scalar (float): Adjust the relative duration of the
+                generated text to speech audio.
+            voice_pitch (float): Adjust the pitch of Vector's robot voice [-1.0, 1.0]
+        '''
+        fit_to_duration = False
+        message = _clad_message.SayText(text, play_event, voice_style,
+                 duration_scalar, voice_pitch, fit_to_duration)
+        innerWrappedMessage = _clad_message.Animations(SayText=message)
+        outerWrappedMessage = _clad_message.ExternalComms(Animations=innerWrappedMessage)
+
+        await self.socket.send(outerWrappedMessage.pack())
+
     # Mid level movement actions
     async def drive_off_contacts(self):
         message = _clad_message.DriveOffChargerContacts()
@@ -163,6 +206,36 @@ class Robot:
         outerWrappedMessage = _clad_message.ExternalComms(MovementAction=innerWrappedMessage)
 
         await self.socket.send(outerWrappedMessage.pack())
+
+    # Vector Display
+    async def set_backpack_lights(self, light1, light2, light3, backpack_color_profile=lights.white_balanced_backpack_profile):
+        '''Set the lights on Vector's backpack.
+
+        The light descriptions below are all from Vector's perspective.
+
+        Args:
+            light1 (:class:`cozmo.lights.Light`): The front backpack light
+            light2 (:class:`cozmo.lights.Light`): The center backpack light
+            light3 (:class:`cozmo.lights.Light`): The rear backpack light
+        '''
+        message = _clad_message.SetBackpackLEDs()
+        for i, light in enumerate( (light1, light2, light3) ):
+            if light is not None:
+                lights._set_light(message, i, light, backpack_color_profile)
+
+        innerWrappedMessage = _clad_message.VictorDisplay(SetBackpackLEDs=message)
+        outerWrappedMessage = _clad_message.ExternalComms(VictorDisplay=innerWrappedMessage)
+
+        await self.socket.send(outerWrappedMessage.pack())
+
+    async def set_all_backpack_lights(self, light, backpack_color_profile=lights.white_balanced_backpack_profile):
+        '''Set the lights on Vector's backpack to the same color.
+
+        Args:
+            light (:class:`cozmo.lights.Light`): The lights for Vector's backpack.
+        '''
+        light_arr = [ light ] * 3
+        await self.set_backpack_lights(*light_arr, backpack_color_profile)
 
 async def _bootstrap(main_function, uri):
     print("Attempting websockets.connect...")

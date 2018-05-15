@@ -2,6 +2,8 @@
   "behaviorID" : "Sleeping",
   "behaviorClass" : "DispatcherQueue",
 
+  "associatedActiveFeature": "Sleeping",
+  
   "behaviors": [
     "GoToSleep",
     "SleepingInternal"

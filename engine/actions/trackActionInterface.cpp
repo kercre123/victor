@@ -501,7 +501,7 @@ ActionResult ITrackAction::CheckIfDone()
           }
           
           // Specify a fixed duration to reach the goal and compute speed from it
-          const f32 wheelspeed_mmps = std::min(MAX_WHEEL_SPEED_MMPS, distance_mm / _timeToReachTarget_sec);
+          const f32 wheelspeed_mmps = std::min(MAX_SAFE_WHEEL_SPEED_MMPS, distance_mm / _timeToReachTarget_sec);
           const f32 accel = MAX_WHEEL_ACCEL_MMPS2; // Expose?
           
           if(DEBUG_TRACKING_ACTIONS) {

@@ -3,6 +3,8 @@
   "behaviorClass": "InteractWithFaces",
   "behaviorID": "InteractWithFaces",
 
+  "associatedActiveFeature": "InteractWithFaces",
+
   "minTimeToTrackFace_s": 8.0,
   "maxTimeToTrackFace_s": 15.0,
   "clampSmallAngles": true,

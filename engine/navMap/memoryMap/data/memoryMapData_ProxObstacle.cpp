@@ -16,15 +16,13 @@
 namespace Anki {
 namespace Cozmo {
   
-namespace {
-  const float kRotationTolerance = 1e-6f;
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MemoryMapData_ProxObstacle::MemoryMapData_ProxObstacle(ExploredType explored, const Pose2d& pose, TimeStamp_t t)
 : MemoryMapData( MemoryMapTypes::EContentType::ObstacleProx,  t, true)
 , _pose(pose)
 , _explored(explored)
+, _belief(40)
 {
 
 }
@@ -43,10 +41,9 @@ bool MemoryMapData_ProxObstacle::Equals(const MemoryMapData* other) const
   }
 
   const MemoryMapData_ProxObstacle* castPtr = static_cast<const MemoryMapData_ProxObstacle*>( other );
-  const bool isNearLocation = IsNearlyEqual( _pose.GetTranslation(), castPtr->_pose.GetTranslation() );
-  const bool isNearRotation = _pose.GetAngle().IsNear( castPtr->_pose.GetAngle(), kRotationTolerance );
+  const bool isNearLocation = IsNearlyEqual( _pose.GetTranslation(), castPtr->_pose.GetTranslation(), 20.f ); // close enough to initial observed pose
   const bool exploredSame = _explored == castPtr->_explored;
-  return isNearLocation && isNearRotation && exploredSame;
+  return isNearLocation && exploredSame;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -20,8 +20,7 @@ set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
 set(PLATFORM_COMPILE_DEFS "")
 
 if (VICOS)
-    # FIXME: We need to build Breakpad libs for VICOS
-    # include(breakpad)
+    include(breakpad)
     set(PLATFORM_LIBS
         log
         robot_core)
@@ -35,6 +34,10 @@ elseif (MACOSX)
 endif()
 
 target_link_libraries(victor_anim
+  PUBLIC
+  victor_web_library
+  robot_interface  # Needs to be public for cozmoConfig.h
+  DAS
   PRIVATE
   util
   util_audio
@@ -50,7 +53,6 @@ target_link_libraries(victor_anim
   audio_multiplexer_robot
   osState
   micdata
-  DAS
   # vendor
   ${OPENCV_LIBS}
   ${FLATBUFFERS_LIBS}
@@ -90,9 +92,8 @@ if (VICOS)
   target_link_libraries(vic-anim
     PRIVATE
     victor_anim
-    # FIXME: We need to build Breakpad libs for VICOS
-    # victorCrashReports
-    # breakpad_client
+    victorCrashReports
+    breakpad_client
     cti_common_robot
     util
     jsoncpp

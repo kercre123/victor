@@ -326,14 +326,6 @@ bool CubeCommsComponent::SendCubeLights(const ActiveID& activeId, const CubeLigh
 }
 
 
-void CubeCommsComponent::SendBlockPoolData() const
-{
-  // Persistent pool not yet implemented! (VIC-782)
-  PRINT_NAMED_WARNING("CubeCommsComponent.SendBlockPoolData.NotImplemented",
-                      "Not sending BlockPoolDataMessage - persistent pool  is not yet implemented!");
-}
-
-
 void CubeCommsComponent::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
   const auto& tag = event.GetData().GetTag();

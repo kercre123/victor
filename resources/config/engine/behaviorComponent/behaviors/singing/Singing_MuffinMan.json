@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_MuffinMan",
-  "displayNameKey":"behavior.singing.MuffinMan",
-  "requiredUnlockId":"Singing_MuffinMan",
-  "audioSwitchGroup":"Cozmo_Sings_80Bpm",
-  "audioSwitch":"Cozmo_Sings_Muffin_Man"
-}

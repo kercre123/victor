@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_LaPaloma",
-  "displayNameKey":"behavior.singing.LaPaloma",
-  "requiredUnlockId":"Singing_LaPaloma",
-  "audioSwitchGroup":"Cozmo_Sings_120Bpm",
-  "audioSwitch":"Cozmo_Sings_La_Paloma"
-}

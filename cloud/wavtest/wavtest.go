@@ -22,6 +22,7 @@ func main() {
 	verbose := flag.Bool("verbose", false, "enable verbose logging")
 	compress := flag.Bool("compress", false, "do compression in harness")
 	ms := flag.Bool("ms", false, "use microsoft instead of google")
+	lex := flag.Bool("lex", false, "use lex instead of google")
 	flag.Parse()
 
 	if *infile == "" {
@@ -67,6 +68,8 @@ func main() {
 		options := []cloudproc.Option{cloudproc.WithCompression(*compress)}
 		if *ms {
 			options = append(options, cloudproc.WithHandler(cloudproc.HandlerMicrosoft))
+		} else if *lex {
+			options = append(options, cloudproc.WithHandler(cloudproc.HandlerAmazon))
 		}
 		proc, err := harness.CreateMemProcess(options...)
 		if err != nil {

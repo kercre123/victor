@@ -56,6 +56,7 @@ class IBehavior;
 class Robot;
 class UserIntentComponent;
 class BehaviorEventComponent;
+class ActiveFeatureComponent;
 
 namespace Audio {
 class BehaviorAudioComponent;

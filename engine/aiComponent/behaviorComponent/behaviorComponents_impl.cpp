@@ -37,6 +37,8 @@ class FaceWorld;
 class BEIRobotInfo;
 class BaseBehaviorWrapper;
 class UserIntentComponent;
+class ActiveFeatureComponent;
+class ActiveBehaviorIterator;
 
 } // namespace Cozmo
 
@@ -58,6 +60,8 @@ LINK_COMPONENT_TYPE_TO_ENUM(FaceWorld,                          BCComponentID, F
 LINK_COMPONENT_TYPE_TO_ENUM(BEIRobotInfo,                       BCComponentID, RobotInfo)
 LINK_COMPONENT_TYPE_TO_ENUM(BaseBehaviorWrapper,                BCComponentID, BaseBehaviorWrapper)
 LINK_COMPONENT_TYPE_TO_ENUM(UserIntentComponent,                BCComponentID, UserIntentComponent)
+LINK_COMPONENT_TYPE_TO_ENUM(ActiveFeatureComponent,             BCComponentID, ActiveFeature)
+LINK_COMPONENT_TYPE_TO_ENUM(ActiveBehaviorIterator,             BCComponentID, ActiveBehaviorIterator)
 
 // Translate entity into string
 template<>
@@ -84,6 +88,8 @@ std::string GetComponentStringForID<Cozmo::BCComponentID>(Cozmo::BCComponentID e
     case Cozmo::BCComponentID::BaseBehaviorWrapper:                { return "BaseBehaviorWrapper";}
     case Cozmo::BCComponentID::UserIntentComponent:                { return "UserIntentComponent";}
     case Cozmo::BCComponentID::BehaviorTimerManager:               { return "BehaviorTimerManager";}
+    case Cozmo::BCComponentID::ActiveFeature:                      { return "ActiveFeature";}
+    case Cozmo::BCComponentID::ActiveBehaviorIterator:             { return "ActiveBehaviorIterator";}
     case Cozmo::BCComponentID::Count:                              { return "Count";}
   }
 }

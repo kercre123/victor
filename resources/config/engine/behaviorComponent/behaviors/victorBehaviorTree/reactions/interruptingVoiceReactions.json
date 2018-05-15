@@ -7,9 +7,6 @@
 
   "behaviors": [
     "ReactToGreeting",
-    "ReactToGoodMorning",
-    "ReactToGoodBye",
-    "ReactToGoodNight",
     "DoATrickVoiceCommand",
     "FistBumpVoiceCommand",
     "RollCubeVoiceCommand",

@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_SilveryMoon",
-  "displayNameKey":"behavior.singing.SilveryMoon",
-  "requiredUnlockId":"Singing_SilveryMoon",
-  "audioSwitchGroup":"Cozmo_Sings_120Bpm",
-  "audioSwitch":"Cozmo_Sings_Silvery_Moon"
-}

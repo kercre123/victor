@@ -68,7 +68,7 @@ float QuadTree::GetContentPrecisionMM() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTree::Insert(const FastPolygon& poly, MemoryMapDataPtr data)
+bool QuadTree::Insert(const FastPolygon& poly, NodeTransformFunction transform)
 {
   ANKI_CPU_PROFILE("QuadTree::Insert");
   
@@ -82,23 +82,21 @@ bool QuadTree::Insert(const FastPolygon& poly, MemoryMapDataPtr data)
   bool contentChanged = false;
   FoldFunctor accumulator = [&] (QuadTreeNode& node)
   {
-    if ( node.GetData() == data ) { return; }
+    auto newData = transform(node.GetData());
+    if ( node.GetData() == newData ) { return; }
 
-    node.GetData()->SetLastObservedTime(data->GetLastObservedTime());
-    
-    const bool polyContainsNode = node.IsContainedBy(poly);
-    const bool polyContainsNodeCenter = polyContainsNode || poly.Contains( node.GetCenter() );
+    node.GetData()->SetLastObservedTime(newData->GetLastObservedTime());
 
     // split node if we can unsure if the incoming poly will fill the entire area
-    if ( !polyContainsNode && !node.IsSubdivided() && node.CanSubdivide())
+    if ( !node.IsContainedBy(poly) && !node.IsSubdivided() && node.CanSubdivide())
     {
       node.Subdivide( _processor );
     }
     
     if ( !node.IsSubdivided() )
     {
-      if ( node.GetData()->CanOverrideSelfWithContent(data, polyContainsNodeCenter) ) {
-        node.ForceSetDetectedContentType( data, _processor );
+      if ( node.GetData()->CanOverrideSelfWithContent(newData) ) {
+        node.ForceSetDetectedContentType( newData, _processor );
         contentChanged = true;
       }
     } 
@@ -209,7 +207,7 @@ bool QuadTree::Merge(const QuadTree& other, const Pose3d& transform)
       Poly2f transformedPoly;
       transformedPoly.ImportQuad2d(transformedQuad2d);
       
-      changed |= Insert(transformedPoly, nodeInOther->GetData());
+      changed |= Insert(transformedPoly, [&nodeInOther] (auto _) { return nodeInOther->GetData(); });
     }
   }
   return changed;

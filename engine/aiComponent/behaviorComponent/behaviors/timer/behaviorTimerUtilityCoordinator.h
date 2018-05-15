@@ -15,6 +15,7 @@
 #define __Engine_Behaviors_BehaviorTimerUtilityCoordinator_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -82,7 +83,7 @@ private:
   bool TimerShouldRing() const;
   TimerUtility& GetTimerUtility() const;
   
-  void SetupTimerBehaviorFunctions() const;
+  void SetupTimerBehaviorFunctions();
 
   void TransitionToSetTimer();
   void TransitionToPlayAntic();
@@ -92,6 +93,7 @@ private:
   void TransitionToCancelTimer();
   void TransitionToInvalidTimerRequest();
 
+  BehaviorProceduralClock::GetDigitsFunction BuildTimerFunction() const;
 
   // Functions called by Update to check for transitions
   void CheckShouldCancelRinging();

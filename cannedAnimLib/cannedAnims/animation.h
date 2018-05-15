@@ -74,28 +74,30 @@ public:
   
   void Clear();
 
+  void ClearUpToCurrent();
+
+
   void SetName(const std::string& name) { _name = name; }
   const std::string& GetName() const { return _name; }
-  
-  bool IsLive() const { return _isLive; }
-  void SetIsLive(bool isLive);
   
   // Append Animation with another animation starting on the next key frame
   void AppendAnimation(const Animation& appendAnim);
   
   // Get last key frame time_ms
-  uint32_t GetLastKeyFrameTime_ms();
+  uint32_t GetLastKeyFrameTime_ms() const;
   
   // Get last key frame + duration of keyframe
-  uint32_t GetLastKeyFrameEndTime_ms();
+  uint32_t GetLastKeyFrameEndTime_ms() const;
 
+  // Advance all tracks to the keyframe that should play in ms
+  // NOTE: This function only moves tracks forwards
+  void AdvanceTracks(const TimeStamp_t toTime_ms);
 
 private:
 
   // Name of this animation
   std::string _name;
   bool _isInitialized;
-  bool _isLive = false;
 
   // All the animation tracks, storing different kinds of KeyFrames
   Animations::Track<HeadAngleKeyFrame>      _headTrack;
@@ -112,12 +114,15 @@ private:
   // Compare if the track's last key frame time is gerater then the lastFrameTime_ms argument
   // Return the greater time
   template<class KeyFrameType>
-  TimeStamp_t CompareLastFrameTime(const TimeStamp_t lastFrameTime_ms);
+  TimeStamp_t CompareLastFrameTime(const TimeStamp_t lastFrameTime_ms) const;
   
   // Compare if the track's last key frame + duration time is greater then the lastFrameTime_ms argument
   // Return the greater time
   template<class KeyFrameType>
-  TimeStamp_t CompareLastFrameEndTime(const TimeStamp_t lastFrameTime_ms);
+  TimeStamp_t CompareLastFrameEndTime(const TimeStamp_t lastFrameTime_ms) const;
+
+  // Iterate through all tracks and set keyframe durations
+  void SetKeyFrameDuration_ms();
   
 }; // class Animation
 
@@ -125,12 +130,24 @@ private:
 template<class KeyFrameType>
 Result Animation::AddKeyFrameToBack(const KeyFrameType& kf)
 {
+  auto* oldKF = GetTrack<KeyFrameType>().GetLastKeyFrame();
   Result addResult = GetTrack<KeyFrameType>().AddKeyFrameToBack(kf);
   if(RESULT_OK != addResult) {
     PRINT_NAMED_ERROR("Animation.AddKeyFrameToBack.Failed", "AnimationName:%s",
                       GetName().c_str());
+    return addResult;
   }
 
+  auto* newKF = GetTrack<KeyFrameType>().GetLastKeyFrame();
+
+  if((oldKF != nullptr) &&
+     (newKF->GetTriggerTime_ms() == 0)){
+    const auto lastTriggerTime = oldKF->GetTriggerTime_ms();
+    const auto lastDuration = oldKF->GetKeyframeDuration_ms();
+    newKF->SetTriggerTime_ms(lastTriggerTime + lastDuration);
+  }
+
+  SetKeyFrameDuration_ms();
   return addResult;
 }
 
@@ -144,6 +161,7 @@ Result Animation::AddKeyFrameByTime(const KeyFrameType& kf)
                       GetName().c_str());
   }
 
+  SetKeyFrameDuration_ms();
   return addResult;
 }
     

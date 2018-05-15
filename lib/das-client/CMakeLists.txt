@@ -3,6 +3,8 @@ project(das_client)
 include(anki_build_cxx)
 include(anki_build_strip)
 
+option(USE_DAS "Enable DAS logs" OFF)
+
 set(SRCS
   src/DAS.cpp
   src/dasAppender.cpp
@@ -81,11 +83,13 @@ target_compile_options(DAS
 )
 
 target_compile_definitions(DAS
+  PUBLIC
+  USE_DAS=$<BOOL:${USE_DAS}>
   PRIVATE
   ${ANKI_BUILD_CXX_COMPILE_DEFINITIONS}
 )
 
-target_include_directories(DAS 
+target_include_directories(DAS
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   PRIVATE

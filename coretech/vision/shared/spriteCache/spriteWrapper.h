@@ -58,9 +58,11 @@ public:
   void ClearCachedSprite();
 
 private:
-  void LoadSprite(Image& outImage) const;
-  void LoadSprite(ImageRGBA& outImage, const HSImageHandle& hsImage) const;
-  void ApplyHS(const Image& grayImg, const HSImageHandle& hsImage, ImageRGBA& outImg) const;
+  bool ImageMatchesStoredID(const HSImageHandle& hsImage) const;
+  
+  void LoadSprite(Image* outImage) const;
+  void LoadSprite(ImageRGBA* outImage, const HSImageHandle& hsImage) const;
+  void ApplyHS(const Image& grayImg, const HSImageHandle& hsImage, ImageRGBA* outImg) const;
 
   const std::string _fullSpritePath;
   // Keep track of what hue/satruation have been applied to the image if appropriate

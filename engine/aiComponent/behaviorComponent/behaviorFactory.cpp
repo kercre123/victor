@@ -17,6 +17,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorPickUpCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorPutDownBlock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorRollBlock.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorClearChargerArea.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorDriveOffCharger.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorFindFaces.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorFindHome.h"
@@ -105,6 +106,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToSound.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUnexpectedMovement.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/robotDrivenDialog/behaviorPromptUserForVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/sleeping/behaviorSleeping.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
@@ -182,6 +184,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::ClearChargerArea:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorClearChargerArea(config));
+      break;
+    }
+      
     case BehaviorClass::DriveOffCharger:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDriveOffCharger(config));
@@ -707,6 +715,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::ReactToVoiceCommand:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToVoiceCommand(config));
+      break;
+    }
+    
+    case BehaviorClass::PromptUserForVoiceCommand:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPromptUserForVoiceCommand(config));
       break;
     }
     

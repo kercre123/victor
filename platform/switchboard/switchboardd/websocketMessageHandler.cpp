@@ -33,98 +33,141 @@ WebsocketMessageHandler::WebsocketMessageHandler(std::shared_ptr<EngineMessaging
 }
 
 void WebsocketMessageHandler::HandleMotorControl_DriveWheels( Anki::Cozmo::ExternalComms::DriveWheels sdkMessage ) {
-      Anki::Cozmo::ExternalInterface::DriveWheels engineMessage;
-      engineMessage.lwheel_speed_mmps = sdkMessage.lwheel_speed_mmps;
-      engineMessage.rwheel_speed_mmps = sdkMessage.rwheel_speed_mmps;
-      engineMessage.lwheel_accel_mmps2 = sdkMessage.lwheel_accel_mmps2;
-      engineMessage.rwheel_accel_mmps2 = sdkMessage.rwheel_accel_mmps2;
-      _engineMessaging->SendMessage(G2EMessage::CreateDriveWheels(std::move(engineMessage)));
+  Anki::Cozmo::ExternalInterface::DriveWheels engineMessage;
+  engineMessage.lwheel_speed_mmps = sdkMessage.lwheel_speed_mmps;
+  engineMessage.rwheel_speed_mmps = sdkMessage.rwheel_speed_mmps;
+  engineMessage.lwheel_accel_mmps2 = sdkMessage.lwheel_accel_mmps2;
+  engineMessage.rwheel_accel_mmps2 = sdkMessage.rwheel_accel_mmps2;
+  _engineMessaging->SendMessage(G2EMessage::CreateDriveWheels(std::move(engineMessage)));
 }
 
 void WebsocketMessageHandler::HandleMotorControl_DriveArc( Anki::Cozmo::ExternalComms::DriveArc sdkMessage ) {
-      Anki::Cozmo::ExternalInterface::DriveArc engineMessage;
-      engineMessage.speed = sdkMessage.speed;
-      engineMessage.accel = sdkMessage.accel;
-      engineMessage.curvatureRadius_mm = sdkMessage.curvatureRadius_mm;
-      _engineMessaging->SendMessage(G2EMessage::CreateDriveArc(std::move(engineMessage)));
+  Anki::Cozmo::ExternalInterface::DriveArc engineMessage;
+  engineMessage.speed = sdkMessage.speed;
+  engineMessage.accel = sdkMessage.accel;
+  engineMessage.curvatureRadius_mm = sdkMessage.curvatureRadius_mm;
+  _engineMessaging->SendMessage(G2EMessage::CreateDriveArc(std::move(engineMessage)));
 }
 
 void WebsocketMessageHandler::HandleMotorControl_MoveHead( Anki::Cozmo::ExternalComms::MoveHead sdkMessage ) {
-      Anki::Cozmo::ExternalInterface::MoveHead engineMessage;
-      engineMessage.speed_rad_per_sec = sdkMessage.speed_rad_per_sec;
-      _engineMessaging->SendMessage(G2EMessage::CreateMoveHead(std::move(engineMessage)));
+  Anki::Cozmo::ExternalInterface::MoveHead engineMessage;
+  engineMessage.speed_rad_per_sec = sdkMessage.speed_rad_per_sec;
+  _engineMessaging->SendMessage(G2EMessage::CreateMoveHead(std::move(engineMessage)));
 }
 
 void WebsocketMessageHandler::HandleMotorControl_MoveLift( Anki::Cozmo::ExternalComms::MoveLift sdkMessage ) {
-      Anki::Cozmo::ExternalInterface::MoveLift engineMessage;
-      engineMessage.speed_rad_per_sec = sdkMessage.speed_rad_per_sec;
-      _engineMessaging->SendMessage(G2EMessage::CreateMoveLift(std::move(engineMessage)));
+  Anki::Cozmo::ExternalInterface::MoveLift engineMessage;
+  engineMessage.speed_rad_per_sec = sdkMessage.speed_rad_per_sec;
+  _engineMessaging->SendMessage(G2EMessage::CreateMoveLift(std::move(engineMessage)));
 }
 
 void WebsocketMessageHandler::HandleMotorControl(Anki::Cozmo::ExternalComms::MotorControl unionInstance) {
   switch(unionInstance.GetTag()) {
     case Anki::Cozmo::ExternalComms::MotorControlTag::DriveWheels:
-      HandleMotorControl_DriveWheels( unionInstance.Get_DriveWheels() );
-      break;
+        HandleMotorControl_DriveWheels( unionInstance.Get_DriveWheels() );
+        break;
     case Anki::Cozmo::ExternalComms::MotorControlTag::DriveArc:
-      HandleMotorControl_DriveArc( unionInstance.Get_DriveArc() );
-      break;
+        HandleMotorControl_DriveArc( unionInstance.Get_DriveArc() );
+        break;
     case Anki::Cozmo::ExternalComms::MotorControlTag::MoveHead:
-      HandleMotorControl_MoveHead( unionInstance.Get_MoveHead() );
-      break;
+        HandleMotorControl_MoveHead( unionInstance.Get_MoveHead() );
+        break;
     case Anki::Cozmo::ExternalComms::MotorControlTag::MoveLift:
-      HandleMotorControl_MoveLift( unionInstance.Get_MoveLift() );
-      break;       
+        HandleMotorControl_MoveLift( unionInstance.Get_MoveLift() );
+        break;
+    default:
+        return;
+  }
+}
+
+void WebsocketMessageHandler::HandleAnimations_PlayAnimation(Anki::Cozmo::ExternalComms::PlayAnimation sdkMessage) {
+  Anki::Cozmo::ExternalInterface::PlayAnimation engineMessage;
+  engineMessage.numLoops = sdkMessage.numLoops;
+  engineMessage.animationName = sdkMessage.animationName;
+  engineMessage.ignoreBodyTrack = sdkMessage.ignoreBodyTrack;
+  engineMessage.ignoreHeadTrack = sdkMessage.ignoreHeadTrack;
+  engineMessage.ignoreLiftTrack = sdkMessage.ignoreLiftTrack;
+  _engineMessaging->SendMessage(G2EMessage::CreatePlayAnimation(std::move(engineMessage)));
+}
+
+void WebsocketMessageHandler::HandleAnimations_RequestAvailableAnimations(Anki::Cozmo::ExternalComms::RequestAvailableAnimations sdkMessage) {
+  Anki::Cozmo::ExternalInterface::RequestAvailableAnimations engineMessage;
+  _engineMessaging->SendMessage(G2EMessage::CreateRequestAvailableAnimations(std::move(engineMessage)));
+}
+
+void WebsocketMessageHandler::HandleAnimations_SayText(Anki::Cozmo::ExternalComms::SayText sdkMessage) {
+  Anki::Cozmo::ExternalInterface::SayText engineMessage;
+  engineMessage.text = sdkMessage.text;
+  engineMessage.playEvent = sdkMessage.playEvent;
+  engineMessage.voiceStyle = (Anki::Cozmo::SayTextVoiceStyle)sdkMessage.voiceStyle;
+  engineMessage.durationScalar = sdkMessage.durationScalar;
+  engineMessage.voicePitch = sdkMessage.voicePitch;
+  engineMessage.fitToDuration = sdkMessage.fitToDuration;
+  _engineMessaging->SendMessage(G2EMessage::CreateSayText(std::move(engineMessage)));
+}
+
+void WebsocketMessageHandler::HandleAnimations(Anki::Cozmo::ExternalComms::Animations unionInstance) {
+  using AnimationsTag = Anki::Cozmo::ExternalComms::AnimationsTag;
+  switch(unionInstance.GetTag()) {
+    case AnimationsTag::playAnimation:
+      HandleAnimations_PlayAnimation(unionInstance.Get_playAnimation());
+      break;
+    case AnimationsTag::requestAvailableAnimations:
+      HandleAnimations_RequestAvailableAnimations(unionInstance.Get_requestAvailableAnimations());
+      break;   
+    case AnimationsTag::SayText:
+      HandleAnimations_SayText( unionInstance.Get_SayText() );
+      break;          
      default:
       return;
    }
  }
 
 void WebsocketMessageHandler::HandleMeetVictor_AppIntent(Anki::Cozmo::ExternalComms::AppIntent sdkMessage) {
-      Anki::Cozmo::ExternalInterface::AppIntent ai;
-      ai.intent = sdkMessage.intent;
-      ai.param = sdkMessage.param;
-      _engineMessaging->SendMessage(G2EMessage::CreateAppIntent(std::move(ai)));
+  Anki::Cozmo::ExternalInterface::AppIntent ai;
+  ai.intent = sdkMessage.intent;
+  ai.param = sdkMessage.param;
+  _engineMessaging->SendMessage(G2EMessage::CreateAppIntent(std::move(ai)));
 }
 
 void WebsocketMessageHandler::HandleMeetVictor_CancelFaceEnrollment() {
-      Anki::Cozmo::ExternalInterface::CancelFaceEnrollment cfe;
-      _engineMessaging->SendMessage(G2EMessage::CreateCancelFaceEnrollment(std::move(cfe)));
+  Anki::Cozmo::ExternalInterface::CancelFaceEnrollment cfe;
+  _engineMessaging->SendMessage(G2EMessage::CreateCancelFaceEnrollment(std::move(cfe)));
 }
 
 void WebsocketMessageHandler::HandleMeetVictor_RequestEnrolledNames() {
-      Anki::Cozmo::ExternalInterface::RequestEnrolledNames ref;
-      _engineMessaging->SendMessage(G2EMessage::CreateRequestEnrolledNames(std::move(ref)));
+  Anki::Cozmo::ExternalInterface::RequestEnrolledNames ref;
+  _engineMessaging->SendMessage(G2EMessage::CreateRequestEnrolledNames(std::move(ref)));
 }
 
 void WebsocketMessageHandler::HandleMeetVictor_UpdateEnrolledFaceByID(Anki::Cozmo::ExternalComms::UpdateEnrolledFaceByID sdkMessage) {
-      Anki::Cozmo::ExternalInterface::UpdateEnrolledFaceByID uef;
-      uef.faceID = sdkMessage.faceID;
-      uef.oldName = sdkMessage.oldName;
-      uef.newName = sdkMessage.newName;
-      _engineMessaging->SendMessage(G2EMessage::CreateUpdateEnrolledFaceByID(std::move(uef)));
+  Anki::Cozmo::ExternalInterface::UpdateEnrolledFaceByID uef;
+  uef.faceID = sdkMessage.faceID;
+  uef.oldName = sdkMessage.oldName;
+  uef.newName = sdkMessage.newName;
+  _engineMessaging->SendMessage(G2EMessage::CreateUpdateEnrolledFaceByID(std::move(uef)));
 }
 
 void WebsocketMessageHandler::HandleMeetVictor_EraseEnrolledFaceByID(Anki::Cozmo::ExternalComms::EraseEnrolledFaceByID sdkMessage) {
-      Anki::Cozmo::ExternalInterface::EraseEnrolledFaceByID eef;
-      eef.faceID = sdkMessage.faceID;
-      _engineMessaging->SendMessage(G2EMessage::CreateEraseEnrolledFaceByID(std::move(eef)));
+  Anki::Cozmo::ExternalInterface::EraseEnrolledFaceByID eef;
+  eef.faceID = sdkMessage.faceID;
+  _engineMessaging->SendMessage(G2EMessage::CreateEraseEnrolledFaceByID(std::move(eef)));
 }
 
 void WebsocketMessageHandler::HandleMeetVictor_EraseAllEnrolledFaces(Anki::Cozmo::ExternalComms::EraseAllEnrolledFaces sdkMessage) {
-      Anki::Cozmo::ExternalInterface::EraseAllEnrolledFaces eaef;
-      _engineMessaging->SendMessage(G2EMessage::CreateEraseAllEnrolledFaces(std::move(eaef)));
+  Anki::Cozmo::ExternalInterface::EraseAllEnrolledFaces eaef;
+  _engineMessaging->SendMessage(G2EMessage::CreateEraseAllEnrolledFaces(std::move(eaef)));
 }
 
 void WebsocketMessageHandler::HandleMeetVictor_SetFaceToEnroll(Anki::Cozmo::ExternalComms::SetFaceToEnroll sdkMessage) {
-      Anki::Cozmo::ExternalInterface::SetFaceToEnroll sfte;
-      sfte.name = sdkMessage.name;
-      sfte.observedID = sdkMessage.observedID;
-      sfte.saveID = sdkMessage.saveID;
-      sfte.saveToRobot = sdkMessage.saveToRobot;
-      sfte.sayName = sdkMessage.sayName;
-      sfte.useMusic = sdkMessage.useMusic;
-      _engineMessaging->SendMessage(G2EMessage::CreateSetFaceToEnroll(std::move(sfte)));
+  Anki::Cozmo::ExternalInterface::SetFaceToEnroll sfte;
+  sfte.name = sdkMessage.name;
+  sfte.observedID = sdkMessage.observedID;
+  sfte.saveID = sdkMessage.saveID;
+  sfte.saveToRobot = sdkMessage.saveToRobot;
+  sfte.sayName = sdkMessage.sayName;
+  sfte.useMusic = sdkMessage.useMusic;
+  _engineMessaging->SendMessage(G2EMessage::CreateSetFaceToEnroll(std::move(sfte)));
 }
 
 void WebsocketMessageHandler::HandleMeetVictor(Anki::Cozmo::ExternalComms::MeetVictor unionInstance) {
@@ -158,44 +201,44 @@ void WebsocketMessageHandler::HandleMeetVictor(Anki::Cozmo::ExternalComms::MeetV
 }
 
 void WebsocketMessageHandler::HandleMovementAction_DriveOffChargerContacts(Anki::Cozmo::ExternalComms::DriveOffChargerContacts sdkMessage) {
-      Anki::Cozmo::ExternalInterface::DriveOffChargerContacts engineMessage;
-      _engineMessaging->SendMessage(G2EMessage::CreateDriveOffChargerContacts(std::move(engineMessage)));
+  Anki::Cozmo::ExternalInterface::DriveOffChargerContacts engineMessage;
+  _engineMessaging->SendMessage(G2EMessage::CreateDriveOffChargerContacts(std::move(engineMessage)));
 }
 
 void WebsocketMessageHandler::HandleMovementAction_DriveStraight(Anki::Cozmo::ExternalComms::DriveStraight sdkMessage) {
-      Anki::Cozmo::ExternalInterface::DriveStraight engineMessage;
-      engineMessage.speed_mmps = sdkMessage.speed_mmps;
-      engineMessage.dist_mm = sdkMessage.dist_mm;
-      engineMessage.shouldPlayAnimation = sdkMessage.shouldPlayAnimation;
-      _engineMessaging->SendMessage(G2EMessage::CreateDriveStraight(std::move(engineMessage)));
+  Anki::Cozmo::ExternalInterface::DriveStraight engineMessage;
+  engineMessage.speed_mmps = sdkMessage.speed_mmps;
+  engineMessage.dist_mm = sdkMessage.dist_mm;
+  engineMessage.shouldPlayAnimation = sdkMessage.shouldPlayAnimation;
+  _engineMessaging->SendMessage(G2EMessage::CreateDriveStraight(std::move(engineMessage)));
 }
 
 void WebsocketMessageHandler::HandleMovementAction_TurnInPlace(Anki::Cozmo::ExternalComms::TurnInPlace sdkMessage) {
-      Anki::Cozmo::ExternalInterface::TurnInPlace engineMessage;
-      engineMessage.angle_rad = sdkMessage.angle_rad;
-      engineMessage.speed_rad_per_sec = sdkMessage.speed_rad_per_sec;
-      engineMessage.accel_rad_per_sec2 = sdkMessage.accel_rad_per_sec2;
-      engineMessage.tol_rad = sdkMessage.tol_rad;
-      engineMessage.isAbsolute = sdkMessage.isAbsolute;
-      _engineMessaging->SendMessage(G2EMessage::CreateTurnInPlace(std::move(engineMessage)));
+  Anki::Cozmo::ExternalInterface::TurnInPlace engineMessage;
+  engineMessage.angle_rad = sdkMessage.angle_rad;
+  engineMessage.speed_rad_per_sec = sdkMessage.speed_rad_per_sec;
+  engineMessage.accel_rad_per_sec2 = sdkMessage.accel_rad_per_sec2;
+  engineMessage.tol_rad = sdkMessage.tol_rad;
+  engineMessage.isAbsolute = sdkMessage.isAbsolute;
+  _engineMessaging->SendMessage(G2EMessage::CreateTurnInPlace(std::move(engineMessage)));
 }
 
 void WebsocketMessageHandler::HandleMovementAction_SetHeadAngle(Anki::Cozmo::ExternalComms::SetHeadAngle sdkMessage) {
-      Anki::Cozmo::ExternalInterface::SetHeadAngle engineMessage;
-      engineMessage.angle_rad = sdkMessage.angle_rad;
-      engineMessage.max_speed_rad_per_sec = sdkMessage.max_speed_rad_per_sec;
-      engineMessage.accel_rad_per_sec2 = sdkMessage.accel_rad_per_sec2;
-      engineMessage.duration_sec = sdkMessage.duration_sec;
-      _engineMessaging->SendMessage(G2EMessage::CreateSetHeadAngle(std::move(engineMessage)));
+  Anki::Cozmo::ExternalInterface::SetHeadAngle engineMessage;
+  engineMessage.angle_rad = sdkMessage.angle_rad;
+  engineMessage.max_speed_rad_per_sec = sdkMessage.max_speed_rad_per_sec;
+  engineMessage.accel_rad_per_sec2 = sdkMessage.accel_rad_per_sec2;
+  engineMessage.duration_sec = sdkMessage.duration_sec;
+  _engineMessaging->SendMessage(G2EMessage::CreateSetHeadAngle(std::move(engineMessage)));
 }
 
 void WebsocketMessageHandler::HandleMovementAction_SetLiftHeight(Anki::Cozmo::ExternalComms::SetLiftHeight sdkMessage) {
-      Anki::Cozmo::ExternalInterface::SetLiftHeight engineMessage;
-      engineMessage.height_mm = sdkMessage.height_mm;
-      engineMessage.max_speed_rad_per_sec = sdkMessage.max_speed_rad_per_sec;
-      engineMessage.accel_rad_per_sec2 = sdkMessage.accel_rad_per_sec2;
-      engineMessage.duration_sec = sdkMessage.duration_sec;
-      _engineMessaging->SendMessage(G2EMessage::CreateSetLiftHeight(std::move(engineMessage)));
+  Anki::Cozmo::ExternalInterface::SetLiftHeight engineMessage;
+  engineMessage.height_mm = sdkMessage.height_mm;
+  engineMessage.max_speed_rad_per_sec = sdkMessage.max_speed_rad_per_sec;
+  engineMessage.accel_rad_per_sec2 = sdkMessage.accel_rad_per_sec2;
+  engineMessage.duration_sec = sdkMessage.duration_sec;
+  _engineMessaging->SendMessage(G2EMessage::CreateSetLiftHeight(std::move(engineMessage)));
 }
 
 void WebsocketMessageHandler::HandleMovementAction(Anki::Cozmo::ExternalComms::MovementAction unionInstance) {
@@ -220,6 +263,28 @@ void WebsocketMessageHandler::HandleMovementAction(Anki::Cozmo::ExternalComms::M
   }
 }
 
+void WebsocketMessageHandler::HandleVictorDisplay_SetBackpackLEDs(Anki::Cozmo::ExternalComms::SetBackpackLEDs sdkMessage) {
+  Anki::Cozmo::ExternalInterface::SetBackpackLEDs engineMessage;
+  engineMessage.onColor = sdkMessage.onColor;
+  engineMessage.offColor = sdkMessage.offColor;
+  engineMessage.onPeriod_ms = sdkMessage.onPeriod_ms;
+  engineMessage.offPeriod_ms = sdkMessage.offPeriod_ms;
+  engineMessage.transitionOnPeriod_ms = sdkMessage.transitionOnPeriod_ms;
+  engineMessage.transitionOffPeriod_ms = sdkMessage.transitionOffPeriod_ms;
+  engineMessage.offset = sdkMessage.offset;
+  _engineMessaging->SendMessage(G2EMessage::CreateSetBackpackLEDs(std::move(engineMessage)));
+}
+
+void WebsocketMessageHandler::HandleVictorDisplay(Anki::Cozmo::ExternalComms::VictorDisplay unionInstance) {
+  switch(unionInstance.GetTag()) {
+    case Anki::Cozmo::ExternalComms::VictorDisplayTag::SetBackpackLEDs:
+      HandleVictorDisplay_SetBackpackLEDs( unionInstance.Get_SetBackpackLEDs() );
+      break;
+    default:
+      return;
+  }
+}
+
 void WebsocketMessageHandler::Receive(uint8_t* buffer, size_t size) {
   if(size < 1) {
     return;
@@ -236,12 +301,18 @@ void WebsocketMessageHandler::Receive(uint8_t* buffer, size_t size) {
     case ExtCommsMessageTag::MotorControl:
        HandleMotorControl(extComms.Get_MotorControl());
        break;
+    case ExtCommsMessageTag::Animations:
+       HandleAnimations(extComms.Get_Animations());
+       break;
     case ExtCommsMessageTag::MovementAction:
        HandleMovementAction(extComms.Get_MovementAction());
        break;
     case ExtCommsMessageTag::MeetVictor:
-      HandleMeetVictor(extComms.Get_MeetVictor());
-      break;
+       HandleMeetVictor(extComms.Get_MeetVictor());
+       break;
+    case ExtCommsMessageTag::VictorDisplay:
+       HandleVictorDisplay(extComms.Get_VictorDisplay());
+       break;
     default:
       Log::Write("Unhandled external comms message tag: %d", extComms.GetTag());
       return;
@@ -249,54 +320,54 @@ void WebsocketMessageHandler::Receive(uint8_t* buffer, size_t size) {
 }
 
 ExtCommsMessage WebsocketMessageHandler::SendMeetVictorStarted(const Anki::Cozmo::ExternalInterface::MeetVictorStarted& msg) {
-      Anki::Cozmo::ExternalComms::MeetVictorStarted mvs;
-      mvs.name = msg.name;
+  Anki::Cozmo::ExternalComms::MeetVictorStarted mvs;
+  mvs.name = msg.name;
 
-      auto externalComms = Anki::Cozmo::ExternalComms::MeetVictor::CreateMeetVictorStarted(std::move(mvs));
-      return ExtCommsMessage::CreateMeetVictor(std::move(externalComms));
+  auto externalComms = Anki::Cozmo::ExternalComms::MeetVictor::CreateMeetVictorStarted(std::move(mvs));
+  return ExtCommsMessage::CreateMeetVictor(std::move(externalComms));
 }
 
 ExtCommsMessage WebsocketMessageHandler::SendMeetVictorFaceScanStarted(const Anki::Cozmo::ExternalInterface::MeetVictorFaceScanStarted& msg) {
-      Anki::Cozmo::ExternalComms::MeetVictorFaceScanStarted mvfss;
+  Anki::Cozmo::ExternalComms::MeetVictorFaceScanStarted mvfss;
 
-      auto externalComms = Anki::Cozmo::ExternalComms::MeetVictor::CreateMeetVictorFaceScanStarted(std::move(mvfss));
-      return ExtCommsMessage::CreateMeetVictor(std::move(externalComms));
+  auto externalComms = Anki::Cozmo::ExternalComms::MeetVictor::CreateMeetVictorFaceScanStarted(std::move(mvfss));
+  return ExtCommsMessage::CreateMeetVictor(std::move(externalComms));
 }
 
 ExtCommsMessage WebsocketMessageHandler::SendMeetVictorFaceScanComplete(const Anki::Cozmo::ExternalInterface::MeetVictorFaceScanComplete& msg) {
-      Anki::Cozmo::ExternalComms::MeetVictorFaceScanComplete mvfsc;
+  Anki::Cozmo::ExternalComms::MeetVictorFaceScanComplete mvfsc;
 
-      auto externalComms = Anki::Cozmo::ExternalComms::MeetVictor::CreateMeetVictorFaceScanComplete(std::move(mvfsc));
-      return ExtCommsMessage::CreateMeetVictor(std::move(externalComms));
+  auto externalComms = Anki::Cozmo::ExternalComms::MeetVictor::CreateMeetVictorFaceScanComplete(std::move(mvfsc));
+  return ExtCommsMessage::CreateMeetVictor(std::move(externalComms));
 }
 
 ExtCommsMessage WebsocketMessageHandler::SendFaceEnrollmentCompleted(const Anki::Cozmo::ExternalInterface::FaceEnrollmentCompleted& msg) {
-      Anki::Cozmo::ExternalComms::FaceEnrollmentCompleted fec;
-      fec.result = msg.result;
-      fec.faceID = msg.faceID;
-      fec.name = msg.name;
+  Anki::Cozmo::ExternalComms::FaceEnrollmentCompleted fec;
+  fec.result = msg.result;
+  fec.faceID = msg.faceID;
+  fec.name = msg.name;
 
-      auto externalComms = Anki::Cozmo::ExternalComms::MeetVictor::CreateFaceEnrollmentCompleted(std::move(fec));
-      return ExtCommsMessage::CreateMeetVictor(std::move(externalComms));
+  auto externalComms = Anki::Cozmo::ExternalComms::MeetVictor::CreateFaceEnrollmentCompleted(std::move(fec));
+  return ExtCommsMessage::CreateMeetVictor(std::move(externalComms));
 }
 
 ExtCommsMessage WebsocketMessageHandler::SendEnrolledNamesResponse(const Anki::Cozmo::ExternalInterface::EnrolledNamesResponse& msg) {
-      Anki::Cozmo::ExternalComms::EnrolledNamesResponse enr;
-      enr.faces = msg.faces;
-      for( const auto& faceEntry : msg.faces ) {
-        Anki::Vision::LoadedKnownFace knownFace;
+  Anki::Cozmo::ExternalComms::EnrolledNamesResponse enr;
+  enr.faces = msg.faces;
+  for( const auto& faceEntry : msg.faces ) {
+    Anki::Vision::LoadedKnownFace knownFace;
 
-        knownFace.secondsSinceFirstEnrolled = faceEntry.secondsSinceFirstEnrolled;
-        knownFace.secondsSinceLastUpdated = faceEntry.secondsSinceLastUpdated;
-        knownFace.secondsSinceLastSeen = faceEntry.secondsSinceLastSeen;
-        knownFace.faceID = faceEntry.faceID;
-        knownFace.name = faceEntry.name;
+    knownFace.secondsSinceFirstEnrolled = faceEntry.secondsSinceFirstEnrolled;
+    knownFace.secondsSinceLastUpdated = faceEntry.secondsSinceLastUpdated;
+    knownFace.secondsSinceLastSeen = faceEntry.secondsSinceLastSeen;
+    knownFace.faceID = faceEntry.faceID;
+    knownFace.name = faceEntry.name;
 
-        enr.faces.push_back(knownFace);
-      }
+    enr.faces.push_back(knownFace);
+  }
 
-      auto externalComms = Anki::Cozmo::ExternalComms::MeetVictor::CreateEnrolledNamesResponse(std::move(enr));
-      return ExtCommsMessage::CreateMeetVictor(std::move(externalComms));
+  auto externalComms = Anki::Cozmo::ExternalComms::MeetVictor::CreateEnrolledNamesResponse(std::move(enr));
+  return ExtCommsMessage::CreateMeetVictor(std::move(externalComms));
 }
 
 // Convert from EngineToGame to ExternalComms

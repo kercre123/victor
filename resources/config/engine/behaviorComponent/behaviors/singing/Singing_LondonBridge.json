@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_LondonBridge",
-  "displayNameKey":"behavior.singing.LondonBridge",
-  "requiredUnlockId":"Singing_LondonBridge",
-  "audioSwitchGroup":"Cozmo_Sings_100Bpm",
-  "audioSwitch":"Cozmo_Sings_London_Bridge"
-}

@@ -1,7 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_MaryHadALittleLamb",
-  "requiredUnlockId":"Singing_MaryHadALittleLamb",
-  "audioSwitchGroup":"Cozmo_Sings_80Bpm",
-  "audioSwitch":"Cozmo_Sings_Mary_Had_A_Little_Lamb"
-}

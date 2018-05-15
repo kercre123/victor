@@ -51,10 +51,9 @@ public:
   // Operations
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // notify the QT that the given poly has the specified content
-  // shiftAllowedCount: number of shifts we can do for a fully expanded root that still needs to move to
-  // fit the data.
-  bool Insert(const FastPolygon& poly, MemoryMapDataPtr data);
+  // notify the QT that the given poly has the specified content. If a NodeTransformFunction is specified instead of 
+  // data, that node will subdivide as necessary and then apply the transform to the default leaf data
+  bool Insert(const FastPolygon& poly, NodeTransformFunction transform);
   
   // modify content bounded by poly. Note that if the poly extends outside the current size of the root node,
   // it will not expand the root node

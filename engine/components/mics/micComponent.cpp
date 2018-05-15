@@ -15,6 +15,8 @@
 #include "engine/components/mics/voiceMessageSystem.h"
 #include "engine/robot.h"
 
+#include "clad/robotInterface/messageEngineToRobot.h"
+
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
@@ -50,6 +52,13 @@ void MicComponent::GetInitDependencies( RobotCompIDSet& dependencies ) const
 void MicComponent::InitDependent( Cozmo::Robot* robot, const RobotCompMap& dependentComponents )
 {
   _messageSystem->Initialize( robot );
+  _robot = robot;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MicComponent::StartWakeWordlessStreaming()
+{
+  _robot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartWakeWordlessStreaming()));
 }
 
 } // namespace Cozmo

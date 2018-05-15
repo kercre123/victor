@@ -5,10 +5,10 @@ port=$1
 shift
 
 while [ "$1" != "" ]; do
-	processName=$1
+    processName=$1
     shift
-	result=`/bin/systemctl is-active $processName`
-	allResults=$allResults$processName=$result\&
+    result=`/bin/systemctl is-active $processName`
+    allResults=$allResults$processName=$result\&
 done
 # Remove the last character (the last ampersand)
 allResults=${allResults%?};

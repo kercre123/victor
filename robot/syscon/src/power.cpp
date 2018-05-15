@@ -43,6 +43,20 @@ void Power::init(void) {
   RCC->APB2ENR |= APB2_CLOCKS;
 }
 
+static inline void enableHead(void) {
+  MAIN_EN::mode(MODE_OUTPUT);
+  MAIN_EN::set();
+  Mics::start();
+  Lights::init();
+}
+
+static inline void disableHead(void) {
+  MAIN_EN::mode(MODE_OUTPUT);
+  MAIN_EN::reset();
+  Mics::stop();
+  Lights::disable();
+}
+
 static void markForErase(void) {
   // Mark the flash application space for deletion
   for (int i = 0; i < MAX_FAULT_COUNT; i++) {
@@ -146,13 +160,22 @@ void Power::tick(void) {
     }
 
     currentState = desired;
+
+    switch (currentState) {
+      case POWER_ERASE:
+        markForErase();
+        enterBootloader();
+        return ;
+      case POWER_STOP:
+        disableHead();
+        break ;
+      default:
+        enableHead();
+        break ;
+    }
   }
 
   switch (currentState) {
-    case POWER_ERASE:
-      markForErase();
-      enterBootloader();
-      break ;
     case POWER_STOP:
       Analog::setPower(false);
       break ;
@@ -160,18 +183,4 @@ void Power::tick(void) {
       Analog::setPower(true);
       break ;
   }
-}
-
-void Power::enableHead(void) {
-  MAIN_EN::mode(MODE_OUTPUT);
-  MAIN_EN::set();
-  Mics::start();
-  Lights::init();
-}
-
-void Power::disableHead(void) {
-  MAIN_EN::mode(MODE_OUTPUT);
-  MAIN_EN::reset();
-  Mics::stop();
-  Lights::disable();
 }

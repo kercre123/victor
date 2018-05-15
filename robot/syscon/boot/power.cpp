@@ -25,24 +25,25 @@ void Power::init(void) {
                ;
 }
 
-
-void Power::setMode(PowerMode set) {
-  switch (set) {
-    case POWER_STOP:
-      Analog::setPower(false);
-      break ;
-    default:
-      Analog::setPower(true);
-      break ;
-  }
-}
-
-void Power::disableHead(void) {
+static inline void disableHead(void) {
   MAIN_EN::mode(MODE_OUTPUT);
   MAIN_EN::reset();
 }
 
-void Power::enableHead(void) {
+static inline void enableHead(void) {
   MAIN_EN::mode(MODE_OUTPUT);
   MAIN_EN::set();
+}
+
+void Power::setMode(PowerMode set) {
+  switch (set) {
+    case POWER_STOP:
+      disableHead();
+      Analog::setPower(false);
+      break ;
+    default:
+      enableHead();
+      Analog::setPower(true);
+      break ;
+  }
 }

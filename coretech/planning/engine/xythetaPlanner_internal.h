@@ -15,6 +15,7 @@
 
 #include "openList.h"
 #include "stateTable.h"
+#include "plannerStates.h"
 #include <unordered_map>
 
 namespace Anki
@@ -33,14 +34,20 @@ struct xythetaPlannerImpl
 
   // This function starts by making a copy of the context, then computes a plan
   bool ComputePath(unsigned int maxExpansions, volatile bool* runPlan);
+  bool AStar(unsigned int maxExpansions, volatile bool* runPlan);
 
   // helper functions
   void Reset();
+  void Reset_New();
 
   void ExpandState(StateID sid);
+  void ExpandState_New(const PlannerState& currState);
 
   // this one takes the map an penalties into account
   Cost heur(StateID sid);
+
+  // compute using octile distance
+  Cost heur_octile(GraphState sid);
 
   // this one computes based on the distance to the closest goal (including _costOutsideHeurMapPerGoal)
   Cost heur_internal(StateID sid);
@@ -50,6 +57,7 @@ struct xythetaPlannerImpl
   bool InitializeHeuristic();
 
   void BuildPlan();
+  void BuildPlan_New(const PlannerState& goal);
 
   // checks if we need to replan from scratch
   bool NeedsReplan() const;
@@ -76,6 +84,12 @@ struct xythetaPlannerImpl
   bool CheckContextGoal(const GoalID& goalID, StateID& goalStateID, State_c& roundedGoal_c) const;
   bool CheckGoal(const GoalState_cPair& goal, StateID& goalStateID, State_c& roundedGoal_c) const;
   
+  // check if the candidate state is a goal state when expanding graph
+  bool IsGoalState(const PlannerState& candidate);
+  
+  // check if the state has already been added to the closed list
+  bool IsClosedState(StateID state);
+  
   // Checks all goals, returns true if any goals are valid. Adds a map element to the arguments if the goal is valid.
   // If false is returned, may have set or not set any of the return arguments. 
   bool CheckContextGoals(GoalStateIDPairs& goalStateIDs,
@@ -101,6 +115,9 @@ struct xythetaPlannerImpl
 
   OpenList _open;
   StateTable _table;
+  
+  OpenList2 _open2;
+  ClosedList _closed;
   
   bool _goalsChanged; // any goal changed
   

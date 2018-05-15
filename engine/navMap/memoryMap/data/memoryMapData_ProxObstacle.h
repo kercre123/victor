@@ -46,6 +46,19 @@ public:
   virtual ExternalInterface::ENodeContentTypeEnum GetExternalContentType() const override;
   
   void MarkExplored() { _explored = ExploredType::EXPLORED; }
+
+  // NOTE: at the time of adding the `_belief` value, there was still pending tuning as to performance for 
+  //       removing objects. Once weights and thresholds have been verified, we should probably a more formal
+  //       coded relationship to the paramters if possible.
+  void MarkObserved() { _belief = (_belief >= 96) ? 100 : _belief + 4; }
+  void MarkClear()    { _belief = (_belief <= 6 ) ? 0   : _belief - 6; }
+
+  bool IsExplored()          const { return (_explored == ExploredType::EXPLORED); }
+  bool IsConfirmedObstacle() const { return (_belief > 50); }
+  bool IsConfirmedClear()    const { return (_belief == 0); }
+
+  const Pose2d& GetObservationPose() const    { return _pose; }
+  u8            GetObstacleConfidence() const { return _belief; }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
@@ -54,9 +67,11 @@ public:
   
   // Important: this is available in all NOT_EXPLORED obstacles and only some EXPLORED. We lose
   // these params when flood filling from EXPLORED to NOT_EXPLORED, although that's not ideal. todo: fix this (FillBorder)
-  Pose2d _pose; // assumed obstacle pose (based off robot pose when detected)
-  
-  ExploredType _explored;
+private:
+
+  Pose2d       _pose;     // assumed obstacle pose (based off robot pose when detected)
+  ExploredType _explored; // has Victor visited this node?
+  u8           _belief;   // our confidence that there really is an obstacle here
 };
  
 } // namespace

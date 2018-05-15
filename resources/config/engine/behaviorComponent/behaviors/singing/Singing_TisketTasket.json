@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_TisketTasket",
-  "displayNameKey":"behavior.singing.TisketTasket",
-  "requiredUnlockId":"Singing_TisketTasket",
-  "audioSwitchGroup":"Cozmo_Sings_100Bpm",
-  "audioSwitch":"Cozmo_Sings_Tisket_Tasket"
-}

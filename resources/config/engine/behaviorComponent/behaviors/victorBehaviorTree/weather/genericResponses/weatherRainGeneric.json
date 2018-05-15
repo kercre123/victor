@@ -2,7 +2,7 @@
   "behaviorClass": "DisplayWeather",
   "behaviorID" : "WeatherRainGeneric",
 
-  "animationName" : "",
+  "animationName" : "anim_weather_rain_01",
   "imageLayouts" : [
     "WeatherCondRain_01"
   ],

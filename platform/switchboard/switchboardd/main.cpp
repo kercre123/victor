@@ -34,6 +34,8 @@
 #include "switchboardd/christen.h"
 #include "switchboardd/main.h"
 
+#include "platform/victorCrashReports/google_breakpad.h"
+
 // --------------------------------------------------------------------------------------------------------------------
 // Switchboard Daemon
 // --------------------------------------------------------------------------------------------------------------------
@@ -495,6 +497,7 @@ std::unique_ptr<Anki::Switchboard::Daemon> _daemon;
 
 static void ExitHandler(int status = 0) {
   // todo: smoothly handle termination
+  GoogleBreakpad::UnInstallGoogleBreakpad();
   _exit(status);
 }
 
@@ -516,6 +519,9 @@ static void Tick(struct ev_loop* loop, struct ev_timer* w, int revents) {
 }
 
 int main() {
+  static char const* filenamePrefix = "switchboard";
+  GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
+
   sLoop = ev_default_loop(0);
 
   ev_signal_init(&sIntSig, SignalCallback, SIGINT);

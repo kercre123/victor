@@ -16,7 +16,7 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MemoryMapData::CanOverrideSelfWithContent(MemoryMapDataConstPtr newContent, bool centerContainedByROI) const
+bool MemoryMapData::CanOverrideSelfWithContent(MemoryMapDataConstPtr newContent) const
 {
   EContentType newContentType = newContent->type;
   EContentType dataType = type;
@@ -38,14 +38,7 @@ bool MemoryMapData::CanOverrideSelfWithContent(MemoryMapDataConstPtr newContent,
     // ClearOfCliff is currently a superset of Clear of Obstacle, so trust ClearOfCliff flags.
     const bool isTotalClear = ( dataType != EContentType::Cliff ) &&
                               ( dataType != EContentType::ClearOfCliff );
-    // only mark prox obstacles as clear if their centers are within the insertion area. this is
-    // because we clear prox obstacles within a poly drawn from the robot to the sensor reading
-    // position, and then place a prox obstacle on the other side of that poly. the lowest level
-    // quads may not be fully contained within the clearing poly. if we allow both clearing and
-    // placing of prox obstacles without this restriction, those on/near the border will flicker
-    // between being clear and new. this prevents that
-    const bool nonContainedProx = (dataType == EContentType::ObstacleProx) && !centerContainedByROI;
-    return isTotalClear && !nonContainedProx;
+    return isTotalClear;
   }
   else if ( newContentType == EContentType::InterestingEdge )
   {
@@ -72,7 +65,7 @@ bool MemoryMapData::CanOverrideSelfWithContent(MemoryMapDataConstPtr newContent,
     if( dataType == EContentType::ObstacleProx ) {
       DEV_ASSERT( dynamic_cast<const MemoryMapData_ProxObstacle*>(this) != nullptr, "MemoryMapData.CanOverride.InvalidCast" );
       auto castPtr = static_cast<const MemoryMapData_ProxObstacle*>(this);
-      return castPtr->_explored != MemoryMapData_ProxObstacle::EXPLORED;
+      return !castPtr->IsExplored();
     }
   }
   else if ( newContentType == EContentType::NotInterestingEdge )

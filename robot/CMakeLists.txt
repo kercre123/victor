@@ -83,8 +83,7 @@ set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
 set(PLATFORM_FLAGS "")
 if (VICOS)
-  # FIXME: We need to build Breakpad libs for VICOS
-  # include(breakpad)
+  include(breakpad)
   set(PLATFORM_LIBS
     robot_hal
   )
@@ -233,9 +232,8 @@ if (VICOS)
     robot_clad_cpplite
     cti_common_robot
     cti_messaging_robot
-    # FIXME: We need to build Breakpad libs for VICOS
-    # victorCrashReports
-    # breakpad_client
+    victorCrashReports
+    breakpad_client
     ${PLATFORM_LIBS}
   )
 

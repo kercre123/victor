@@ -163,7 +163,7 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config,
   , _currDebugLights(kLightsOff)
 {
   
-  _useDebugLights = config.get("use_debug_lights", true).asBool();
+  _useDebugLights = config.get("use_debug_lights", false).asBool();
 
   // create custom BEI conditions for timers (if any are specified)
   CustomBEIConditionHandleList customTimerHandles = CreateCustomTimerConditions(config);
