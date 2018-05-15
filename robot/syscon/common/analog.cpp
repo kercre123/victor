@@ -10,7 +10,6 @@
 #include "vectors.h"
 #include "flash.h"
 
-
 static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL2
   | ADC_CHSELR_CHSEL4
@@ -236,7 +235,7 @@ void Analog::setPower(bool powered) {
 
 void Analog::tick(void) {
   static bool disable_vmain = false;
-  
+
   // On-charger delay
   bool vext_now = Analog::values[ADC_VEXT] >= TRANSITION_POINT;
   bool enable_watchdog = (vext_debounce >= MAX_CHARGE_TIME_WD) && (values[ADC_VEXT] > ADC_VOLTS(4.7));
@@ -346,17 +345,18 @@ void Analog::tick(void) {
     NVIC_DisableIRQ(ADC1_IRQn);
    
     // Don't enable power to charge circuit until a second has passed
-    if (charge_delay < CHARGE_ENABLE_DELAY) {
+    if (charge_delay >= CHARGE_ENABLE_DELAY) {
+      nCHG_PWR::reset();
+    } else {
       nCHG_PWR::set();
       charge_delay++;
-    } else {
-      nCHG_PWR::reset();
     }
 
     POWER_EN::pull(PULL_UP);
     POWER_EN::mode(MODE_INPUT);
-    
+
     battery_voltage = Analog::values[ADC_VMAIN];
+
     is_charging = true;
   }
 

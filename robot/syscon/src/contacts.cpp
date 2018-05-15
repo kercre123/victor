@@ -10,13 +10,12 @@
 
 static ContactData rxData;
 static int rxDataIndex;
+static int ignore = 200;
 
 static uint8_t txData[64];
 static int txReadIndex;
 static int txWriteIndex;
 static bool transmitting;
-
-static const ContactData boot_msg = {"\xFF\xFF\xFF\xFF\nbooted\n"};
 
 static inline void set_rx() {
   USART2->CR1 = 0;
@@ -66,8 +65,6 @@ void Contacts::init(void) {
   rxDataIndex = 0;
   txReadIndex = 0;
   txWriteIndex = 0;
-
-  Contacts::forward( boot_msg );
 }
 
 #define DEBUG_TX_OVF_DETECT 0
@@ -103,6 +100,11 @@ void Contacts::forward(const ContactData& pkt) {
 }
 
 void Contacts::tick(void) {
+  if (ignore > 0) {
+    USART2->RQR = USART_RQR_RXFRQ;
+    ignore--;
+  }
+
   if (rxDataIndex > 0) {
     ContactData pkt;
 
@@ -153,14 +155,13 @@ extern "C" void USART2_IRQHandler(void) {
   if (USART2->ISR & USART_ISR_RXNE) {
     uint32_t status = USART2->ISR;
     volatile uint8_t rxd = USART2->RDR;
-    
-    Analog::delayCharge();
-    
+        
     if( status & (USART_ISR_ORE | USART_ISR_FE) ) { //framing and/or overrun error
       //rxd = USART2->RDR; //flush the rdr & shift register
       //rxd = USART2->RDR;
       USART2->ICR = USART_ICR_ORECF | USART_ICR_FECF; //clear flags
-    } else if (rxDataIndex < sizeof(rxData.data)) {
+    } else if (rxDataIndex < sizeof(rxData.data) && !ignore) {
+      Analog::delayCharge();
       rxData.data[rxDataIndex++] = rxd;
     }
   }
