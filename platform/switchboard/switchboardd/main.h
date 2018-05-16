@@ -42,6 +42,7 @@ namespace Switchboard {
         _loop(loop),
         _isPairing(false),
         _isOtaUpdating(false),
+        _connectionFailureCounter(kFailureCountToLog),
         _taskExecutor(nullptr),
         _bleClient(nullptr),
         _securePairing(nullptr),
@@ -77,6 +78,7 @@ namespace Switchboard {
       bool TryConnectToAnkiBluetoothDaemon();
       void HandleOtaUpdateExit(int rc, const std::string& output);
       void HandleOtaUpdateProgress();
+      void HandlePairingTimeout();
       int GetOtaProgress(uint64_t* progress, uint64_t* expected);
 
       Signal::SmartHandle _pinHandle;
@@ -92,16 +94,20 @@ namespace Switchboard {
 
       const uint8_t kOtaUpdateInterval_s = 1;
       const float kRetryInterval_s = 0.2f;
+      const uint32_t kFailureCountToLog = 20;
+      const uint32_t kPairingPreConnectionTimeout_s = 300;
 
       int _connectionId = -1;
 
       inline bool IsConnected() { return _connectionId != -1; }
 
       EvTimerSignal _otaUpdateTimerSignal;
+      EvTimerSignal _pairingPreConnectionSignal;
 
       struct ev_loop* _loop;
       bool _isPairing;
       bool _isOtaUpdating;
+      uint32_t _connectionFailureCounter;
 
       ev_timer _engineTimer;
       ev_timer _ankibtdTimer;
@@ -110,6 +116,8 @@ namespace Switchboard {
         ev_timer timer;
         EvTimerSignal* signal;
       } _handleOtaTimer;
+
+      struct ev_TimerStruct _pairingTimer;
 
       std::unique_ptr<TaskExecutor> _taskExecutor;
       std::unique_ptr<BleClient> _bleClient;

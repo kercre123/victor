@@ -19,8 +19,7 @@
 namespace Anki {
 namespace Switchboard {
 
-const std::string SavedSessionManager::kRtsKeyPath = "/data/switchboard/rts_keys";
-const std::string SavedSessionManager::kSaveFolder = "/data/switchboard";
+const std::string SavedSessionManager::kRtsKeyPath = "/dev/block/bootdevice/by-name/switchboard";
 
 const std::ios_base::openmode SavedSessionManager::kWriteMode = std::ios_base::binary | std::ios_base::trunc;
 const std::ios_base::openmode SavedSessionManager::kReadMode = std::ios_base::binary | std::ios_base::in;
@@ -95,15 +94,7 @@ void SavedSessionManager::SaveRtsKeys(RtsKeys& saveData) {
   // Write file with Rts data
   std::ofstream fout;
 
-  // Make Directory if not exist
-  bool makeDirSuccess = MakeDirectory(kSaveFolder);
-
-  if(!makeDirSuccess) {
-    Log::Error("Could not successfully make directory.");
-    return;
-  }
-
-  fout.open(kRtsKeyPath + ".tmp", kWriteMode);
+  fout.open(kRtsKeyPath, kWriteMode);
 
   if(!fout.is_open()) {
     Log::Error("Could not open file.");
@@ -130,24 +121,6 @@ void SavedSessionManager::SaveRtsKeys(RtsKeys& saveData) {
   }
 
   fout.close();
-
-  // Rename tmp file to actual file
-  int renameStatus = rename((kRtsKeyPath + ".tmp").c_str(), 
-    (kRtsKeyPath).c_str());
-
-  if(renameStatus != 0) {
-    Log::Error("Could not move tmp file to actual file. Error [%d]", errno);
-  }
-}
-
-bool SavedSessionManager::MakeDirectory(std::string directory) {
-  int status = mkdir(directory.c_str(), S_IRUSR | S_IWUSR);
-
-  if(status != -1 || errno == EEXIST) {
-    return true;
-  } else {
-    return false;
-  }
 }
 
 } // Switchboard
