@@ -14,7 +14,7 @@
 
 : ${VIC_CRASH_UPLOADER_KEEP_LATEST:=30}
 : ${VIC_CRASH_FOLDER:="/data/data/com.anki.victor/cache/crashDumps"}
-: ${VIC_CRASH_UPLOAD_URL:='https://anki.sp.backtrace.io:6098/post?format=minidump&token=ab2d0e343f1f7baa3c6ef5fd67f95c9fb7e9de9b74a5891c38df14d3d1821ffc'}
+: ${VIC_CRASH_UPLOAD_URL:='https://anki.sp.backtrace.io:6098/post?format=minidump&token=6fd2bd053e8dd542ee97c05903b1ea068f090d37c7f6bbfa873c5f3b9c40b1d9'}
 : ${VIC_CRASH_SCRAPE_PERIOD_SEC:=30}
 
 UPLOADED_EXT=uploaded
