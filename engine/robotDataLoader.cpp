@@ -65,6 +65,9 @@ const std::vector<std::string> kPathsToEngineAccessibleAnimations = {
   "assets/animations/anim_weather_snow_01.bin",
   "assets/animations/anim_weather_rain_01.bin",
   "assets/animations/anim_weather_sunny_01.bin",
+  "assets/animations/anim_weather_stars_01.bin",
+  "assets/animations/anim_weather_cold_01.bin",
+  "assets/animations/anim_weather_windy_01.bin",
 };
 
 }
@@ -461,7 +464,8 @@ void RobotDataLoader::LoadBehaviors()
 void RobotDataLoader::LoadSpritePaths()
 {
  // Creates a map of all sprite names to their file names
-  _spritePaths->Load(_platform, "assets/cladToFileMaps/spriteMap.json", "SpriteName");
+  const bool reverseLookupAllowed = true;
+  _spritePaths->Load(_platform, "assets/cladToFileMaps/spriteMap.json", "SpriteName", reverseLookupAllowed);
 
   auto spritePaths = {pathToExternalIndependentSprites,
                       pathToEngineIndependentSprites};
@@ -516,8 +520,9 @@ void RobotDataLoader::LoadCompositeImageMaps()
     const auto layoutBasePath = "assets/compositeImageResources/imageLayouts/";
     const std::string layoutFullPath = _platform->pathToResource(Util::Data::Scope::Resources,
                                                                  layoutBasePath);
+    const bool reverseLookupAllowed = true;
     Util::CladEnumToStringMap<Vision::CompositeImageLayout> layoutMap;
-    layoutMap.Load(_platform, "assets/cladToFileMaps/CompositeImageLayoutMap.json", "LayoutName");
+    layoutMap.Load(_platform, "assets/cladToFileMaps/CompositeImageLayoutMap.json", "LayoutName", reverseLookupAllowed);
     auto fileNameToFullPath = CreateFileNameToFullPathMap({layoutBasePath}, "json");
 
     // Iterate through all files in the directory and extract the associated
@@ -549,8 +554,10 @@ void RobotDataLoader::LoadCompositeImageMaps()
     const auto mapBasePath = "assets/compositeImageResources/imageMaps/";
     const std::string mapFullPath = _platform->pathToResource(Util::Data::Scope::Resources,
                                                               mapBasePath);
+    
+    const bool reverseLookupAllowed = true;
     Util::CladEnumToStringMap<Vision::CompositeImageMap> mapMap;
-    mapMap.Load(_platform, "assets/cladToFileMaps/CompositeImageMapMap.json", "MapName");
+    mapMap.Load(_platform, "assets/cladToFileMaps/CompositeImageMapMap.json", "MapName", reverseLookupAllowed);
     auto fileNameToFullPath = CreateFileNameToFullPathMap({mapBasePath}, "json");
 
     // Iterate through all files in the directory and extract the associated

@@ -120,6 +120,10 @@
     "SpriteName": "face_timercancel_01"
   },
   {
+    "CladEvent": "Face_TimerCancel_02",
+    "SpriteName": "face_timercancel_02"
+  },
+  {
     "CladEvent": "Face_TimerLeft_GetIn_01",
     "SpriteName": "face_timerleft_getin_01"
   },
@@ -198,6 +202,10 @@
   {
     "CladEvent": "Face_Sunny_01",
     "SpriteName": "face_sunny"
+  },
+  {
+    "CladEvent": "Face_Stars_01",
+    "SpriteName": "face_stars"
   }
 ]
 

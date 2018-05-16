@@ -50,6 +50,7 @@ enum uint_8 SpriteName
   Face_ChargerDocking_SevereRequest,
   Face_TimerCancel_GetIn_01,
   Face_TimerCancel_01,
+  Face_TimerCancel_02,
   Face_TimerLeft_GetIn_01,
   Face_TimerLeft_GetOut_01,
   Face_TimerSet_GetIn_01,
@@ -67,7 +68,7 @@ enum uint_8 SpriteName
   Face_Snow_Mist,
   Face_Snow_01,
   Face_Sunny_01,
-
+  Face_Stars_01,
 
   // Must be last element
   Count
@@ -113,6 +114,7 @@ enum_concept bool IsSpriteSequence[SpriteName] {
   Face_ChargerDocking_SevereRequest = 1,
   Face_TimerCancel_GetIn_01 = 1,
   Face_TimerCancel_01 = 1,
+  Face_TimerCancel_02 = 1,
   Face_TimerLeft_GetIn_01 = 1,
   Face_TimerLeft_GetOut_01 = 1,
   Face_TimerSet_GetIn_01  = 1,
@@ -130,6 +132,7 @@ enum_concept bool IsSpriteSequence[SpriteName] {
   Face_Snow_Mist   = 1,
   Face_Snow_01     = 1,
   Face_Sunny_01    = 1,
+  Face_Stars_01    = 1,
 
   // Must be last element
   Count = 0
