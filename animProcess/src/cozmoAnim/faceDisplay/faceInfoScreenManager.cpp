@@ -545,7 +545,9 @@ void FaceInfoScreenManager::DrawConfidenceClock(
       Json::Value webData;
       webData["time"] = currentTime;
       webData["confidence"] = micData.confidence;
+      // 'selectedDirection' is what's being used (locked-in), whereas 'dominant' is just the strongest direction
       webData["dominant"] = micData.direction;
+      webData["selectedDirection"] = micData.selectedDirection;
       webData["maxConfidence"] = maxConf;
       webData["triggerDetected"] = triggerRecognized;
       webData["delayTime"] = delayTime_ms;

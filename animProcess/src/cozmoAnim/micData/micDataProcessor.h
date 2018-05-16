@@ -74,6 +74,7 @@ private:
   int _selectedSearchBeamIndex = 0;
   int _selectedSearchBeamConfidence = 0;
   int _searchConfidenceState = 0;
+  int _policyFallbackFlag = 0;
 
   // Members for general purpose processing and state
   std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> _inProcessAudioBlock;

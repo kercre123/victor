@@ -86,9 +86,14 @@ namespace {
   constexpr int32_t kTriggerDataListLen = (int32_t) sizeof(kTriggerDataList) / sizeof(kTriggerDataList[0]);
   Anki::AudioUtil::SpeechRecognizer::IndexType _currentTriggerSearchIndex = 0;
 
+  // For testing VIC-2451, we have this namespace cached value and console var kMicData_UseFallbackBeam that allows
+  // for turning beamforming off and back on
+  bool _usingFallbackBeam = false;
+
 # define CONSOLE_GROUP "MicData"
   CONSOLE_VAR_RANGED(s32, kMicData_NextTriggerIndex, CONSOLE_GROUP, 0, 0, kTriggerDataListLen-1);
   CONSOLE_VAR(bool, kMicData_SaveRawFullIntent, CONSOLE_GROUP, false);
+  CONSOLE_VAR(bool, kMicData_UseFallbackBeam, CONSOLE_GROUP, false);
 # undef CONSOLE_GROUP
 
 }
@@ -148,6 +153,7 @@ MicDataProcessor::MicDataProcessor(MicDataSystem* micDataSystem, const std::stri
   _selectedSearchBeamIndex = SEDiagGetIndex("search_result_best_beam_index");
   _selectedSearchBeamConfidence = SEDiagGetIndex("search_result_best_beam_confidence");
   _searchConfidenceState = SEDiagGetIndex("fdsearch_confidence_state");
+  _policyFallbackFlag = SEDiagGetIndex("policy_fallback_flag");
 
   _processThread = std::thread(&MicDataProcessor::ProcessRawLoop, this);
   _processTriggerThread = std::thread(&MicDataProcessor::ProcessTriggerLoop, this);
@@ -368,6 +374,16 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
     // When the robot has stopped moving (and the gears are no longer making noise) we reset the mic direciton
     // confidence values to be based on non-noisy data
     MMIfResetLocationSearch();
+  }
+
+  // If there's been a change to the console var (vs our cached version), update set whether we're using the fallback
+  // beam (aka no beamforming) For testing VIC-2451.
+  if (kMicData_UseFallbackBeam != _usingFallbackBeam)
+  {
+    _usingFallbackBeam = kMicData_UseFallbackBeam;
+    int32_t newSetting = _usingFallbackBeam ? 1 : 0;
+    SEDiagSetInt32(_policyFallbackFlag, newSetting);
+    PRINT_NAMED_INFO("MicDataProcessor.ProcessMicrophonesSE.SetUseFallbackBeam", "%s", _usingFallbackBeam ? "true" : "false");
   }
 
   // We only care about checking one channel, and since the channel data is uninterleaved when passed in here,
