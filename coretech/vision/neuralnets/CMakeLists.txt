@@ -8,7 +8,6 @@ include(anki_build_cxx)
 include(anki_build_strip)
 
 set(TENSORFLOW_PATH  ${CORETECH_EXTERNAL_DIR}/tensorflow)
-set(VICTOR_REPO_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
@@ -91,8 +90,6 @@ target_include_directories(vic-neuralnets
   ${TENSORFLOW_PATH}/bazel-genfiles
   ${TENSORFLOW_PATH}/bazel-tensorflow/external/protobuf_archive/src
   ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/downloads/nsync/public
-  ${VICTOR_REPO_PATH}/lib/util/source/anki
-  ${VICTOR_REPO_PATH}/tools/message-buffers/support/cpp/include
   ${OPENCV_INCLUDE_PATHS}
 )
 
@@ -102,6 +99,8 @@ list(REMOVE_ITEM OPENCV_LIBS libprotobuf)
 target_link_libraries(vic-neuralnets
   PRIVATE
   jsoncpp
+  util
+  cti_common
   ${OPENCV_LIBS}    # NOTE: Order may matter here? (OpenCV before platform?)
   ${PLATFORM_LIBS}
 )

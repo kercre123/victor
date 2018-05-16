@@ -10,8 +10,8 @@
  **/
 
 // TODO: put this back if/when we start supporting other ObjectDetectorModels
-//// The contents of this file are only used when the build is using *neither* TF or TF Lite
-//#if (!defined(USE_TENSORFLOW) || !USE_TENSORFLOW) && (!defined(USE_TENSORFLOW_LITE) || !USE_TENSORFLOW_LITE)
+// // The contents of this file are only used when the build is using *neither* TF or TF Lite
+// #if (!defined(USE_TENSORFLOW) || !USE_TENSORFLOW) && (!defined(USE_TENSORFLOW_LITE) || !USE_TENSORFLOW_LITE)
 
 #include "coretech/vision/engine/objectDetector.h"
 #include "coretech/vision/engine/image.h"
@@ -60,7 +60,6 @@ private:
   
 }; // class Model
   
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ObjectDetector::Model::Model(Profiler& profiler) 
 : _profiler(profiler) 
@@ -99,20 +98,21 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<ObjectDetector:
   // Profiling will be from time we write file to when we get results
   auto totalTicToc = _profiler.TicToc("ObjectDetector.Model.Run");
   
-  // Write image to a temporary file
   const std::string imageFilename = Util::FileUtils::FullFilePath({_cachePath, "objectDetectionImage.png"});
   {
+    // Write image to a temporary file
     auto writeTicToc = _profiler.TicToc("ObjectDetector.Model.Run.WriteImage");
     const std::string tempFilename = Util::FileUtils::FullFilePath({_cachePath, "temp.png"});
     img.Save(tempFilename);
     
+    // Write timestamp to file
     const std::string timestampFilename = Util::FileUtils::FullFilePath({_cachePath, "timestamp.txt"});
     const std::string timestampString = std::to_string(img.GetTimestamp());
     std::ofstream timestampFile(timestampFilename);
     timestampFile << timestampString;
     timestampFile.close();
 
-    // Rename to what standalone process expects once the data is fully written (poor man's "lock")
+    // Rename to what vic-neuralnets process expects once the data is fully written (poor man's "lock")
     if(0 != rename(tempFilename.c_str(), imageFilename.c_str()))
     {
       PRINT_NAMED_ERROR("StandaloneInferenceProcess.FailedToRenameFile",
@@ -124,7 +124,7 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<ObjectDetector:
                  imageFilename.c_str(), img.GetTimestamp());
   }
 
-  // Wait for result JSON to appear
+  // Wait for detection result JSON to appear
   const std::string resultFilename = Util::FileUtils::FullFilePath({_cachePath, "objectDetectionResults.json"});
   bool resultAvailable = false;
   f32 startTime_sec = 0.f, currentTime_sec = 0.f;
@@ -141,7 +141,7 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<ObjectDetector:
     }
   }
 
-  // Delete image file (whether or not we got the result or timed out)
+  // Delete image file (whether we got the result or timed out)
   PRINT_CH_DEBUG(kLogChannelName, "ObjectDetector.Detect.DeletingImageFile", "%s, deleting %s",
                  (resultAvailable ? "Result found" : "Polling timed out"), imageFilename.c_str());
   Util::FileUtils::DeleteFile(imageFilename);
@@ -163,6 +163,7 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<ObjectDetector:
     }
     else
     {
+      // Translate JSON into a DetectedObject struct and put it in the output
       const Json::Value& detectedObjects = detectionResult["objects"];
       if(detectedObjects.isArray())
       {

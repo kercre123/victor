@@ -1,5 +1,6 @@
 #include "objectDetector_tensorflow.h"
-#include "helpers.h"
+
+#include "coretech/common/shared/types.h"
 
 #include "tensorflow/core/framework/graph.pb.h"
 #include "tensorflow/core/framework/graph_def_util.h"
@@ -18,8 +19,14 @@
 #include "tensorflow/core/util/command_line_flags.h"
 #include "tensorflow/core/util/memmapped_file_system.h"
 
+#include "util/fileUtils/fileUtils.h"
+#include "util/helpers/quoteMacro.h"
+#include "util/logging/logging.h"
+
 #include <cmath>
 #include <fstream>
+
+namespace Anki {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 static inline void SetFromConfigHelper(const Json::Value& json, int32_t& value) {
@@ -189,9 +196,9 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
     GetFromConfig(input_scale);
   }
   
-  const std::string graph_file_name = FullFilePath(modelPath, _params.graph);
+  const std::string graph_file_name = Util::FileUtils::FullFilePath({modelPath, _params.graph});
   
-  if (!FileExists(graph_file_name))
+  if (!Util::FileUtils::FileExists(graph_file_name))
                   
   {
     PRINT_NAMED_ERROR("ObjectDetector.Model.LoadGraph.GraphFileDoesNotExist", "%s",
@@ -331,7 +338,7 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
     }
     
   }
-  const std::string labels_file_name = FullFilePath(modelPath, _params.labels);
+  const std::string labels_file_name = Util::FileUtils::FullFilePath({modelPath, _params.labels});
   Result readLabelsResult = ReadLabelsFile(labels_file_name, _labels);
   if (RESULT_OK == readLabelsResult)
   {
@@ -601,3 +608,5 @@ Result ObjectDetector::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Detec
 
   return RESULT_OK;
 }
+
+} // namespace Anki

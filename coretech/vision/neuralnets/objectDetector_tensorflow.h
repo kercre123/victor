@@ -1,6 +1,7 @@
 #ifndef __Anki_Vision_ObjectDetector_TensorFlow_H__
 #define __Anki_Vision_ObjectDetector_TensorFlow_H__
 
+#include "coretech/common/shared/types.h"
 #include "json/json.h"
 
 #include "opencv2/core/core.hpp"
@@ -12,15 +13,14 @@
 #include <sstream>
 #include <string>
 
-// In lieu of using full Anki::Util
-#include "helpers.h"
-
 // Forward declarations:
 namespace tensorflow {
   class MemmappedEnv;
   class Session;
   class Tensor;
 }
+
+namespace Anki {
 
 class ObjectDetector
 {
@@ -97,5 +97,7 @@ private:
   std::vector<std::string>                  _labels;
   
 }; // class ObjectDetector
+
+} // namespace Anki
 
 #endif /* __Anki_Vision_ObjectDetector_TensorFlow_H__ */

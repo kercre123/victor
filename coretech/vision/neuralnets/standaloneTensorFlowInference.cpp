@@ -22,6 +22,10 @@
 #  error TENSORFLOW or CAFFE2 or OPENCVDNN or TFLITE must be defined
 #endif
 
+#include "coretech/common/shared/types.h"
+#include "util/fileUtils/fileUtils.h"
+#include "util/logging/logging.h"
+
 #ifdef SIMULATOR
 #  include <webots/Supervisor.hpp>
 #endif
@@ -61,6 +65,8 @@ cv::Mat read_bmp(const std::string& input_bmp_name); // defined below, after mai
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 int main(int argc, char **argv)
 {
+  using namespace Anki;
+
 # ifdef SIMULATOR
   webots::Supervisor webotsSupervisor;
 # endif
@@ -115,9 +121,9 @@ int main(int argc, char **argv)
 
   const std::string imageFilename = (imageFileProvided ? 
                                      argv[4] :
-                                     FullFilePath(cachePath, "objectDetectionImage.png")); 
+                                     Util::FileUtils::FullFilePath({cachePath, "objectDetectionImage.png"})); 
 
-  const std::string timestampFilename = FullFilePath(cachePath, "timestamp.txt");
+  const std::string timestampFilename = Util::FileUtils::FullFilePath({cachePath, "timestamp.txt"});
 
   std::cout << (imageFileProvided ? "Loading given image: " : "Polling for images at: ") << 
     imageFilename << std::endl;
@@ -140,7 +146,7 @@ int main(int argc, char **argv)
   while(true)
   {
     // Is there an image file available in the cache?
-    const bool isImageAvailable = FileExists(imageFilename);
+    const bool isImageAvailable = Util::FileUtils::FileExists(imageFilename);
 
     if(isImageAvailable)
     {
@@ -163,7 +169,7 @@ int main(int argc, char **argv)
         cv::cvtColor(img, img, CV_BGR2RGB); // OpenCV loads BGR, TF expects RGB
       }
       TimeStamp_t timestamp=0;
-      if(FileExists(timestampFilename))
+      if(Util::FileUtils::FileExists(timestampFilename))
       {
         std::ifstream file(timestampFilename);
         std::string line;
@@ -217,7 +223,7 @@ int main(int argc, char **argv)
       // Write out the Json
       startTime = Tic();
       {
-        const std::string jsonFilename = FullFilePath(cachePath, "objectDetectionResults.json");
+        const std::string jsonFilename = Util::FileUtils::FullFilePath({cachePath, "objectDetectionResults.json"});
         if(detector.IsVerbose())
         {
           std::cout << "Writing results to JSON: " << jsonFilename << std::endl;
@@ -265,7 +271,7 @@ int main(int argc, char **argv)
         static int count = 0;
         if(count++ * kPollPeriod_ms >= kVerbosePrintFreq_ms)
         {
-          std::cout << "Waiting for image..." << std::endl;
+          std::cout << "Waiting for image at " << imageFilename <<  std::endl;
           count = 0;
         }
       }
