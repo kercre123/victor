@@ -87,6 +87,9 @@ enum uint_8 BehaviorID {
   GlobalInterruptions,
   HighLevelAI,
 
+  // victorBehaviorTree/danceToTheBeat
+  DanceToTheBeat,
+
   // victorBehaviorTree/highLevelDelegates/exploring
   ConfirmCharger,
   ConfirmCube,

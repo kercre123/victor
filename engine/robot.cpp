@@ -39,6 +39,7 @@
 #include "engine/components/cubes/cubeLightComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/inventoryComponent.h"
+#include "engine/components/mics/beatDetectorComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/nvStorageComponent.h"
 #include "engine/components/pathComponent.h"
@@ -274,6 +275,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::Battery,                    new BatteryComponent());
     _components->AddDependentComponent(RobotComponentID::FullRobotPose,              new FullRobotPose());
     _components->AddDependentComponent(RobotComponentID::DataAccessor,               new DataAccessorComponent());
+    _components->AddDependentComponent(RobotComponentID::BeatDetector,               new BeatDetectorComponent());
     _components->InitComponents(this);
   }
 

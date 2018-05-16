@@ -34,6 +34,7 @@
 // Declarations
 namespace Anki {
   namespace Cozmo {
+    class BeatDetector;
     namespace MicData {
       class MicDataSystem;
       class MicImmediateDirection;
@@ -62,6 +63,8 @@ public:
   void ResetMicListenDirection();
   float GetIncomingMicDataPercentUsed();
 
+  BeatDetector& GetBeatDetector() { assert(nullptr != _beatDetector); return *_beatDetector.get(); }
+  
 private:
   MicDataSystem* _micDataSystem = nullptr;
   std::string _writeLocationDir = "";
@@ -115,6 +118,9 @@ private:
   // Mutex for different accessing signal essence software
   std::mutex _seInteractMutex;
 
+  // Aubio beat detector
+  std::unique_ptr<BeatDetector> _beatDetector;
+  
   void InitVAD();
   void TriggerWordDetectCallback(const char* resultFound, float score);
   void ProcessRawAudio(TimeStamp_t timestamp,

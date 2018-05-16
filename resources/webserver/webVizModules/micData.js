@@ -198,6 +198,17 @@
     textY += textHeight;
     context.fillText( "Delay Time (ms) : ", labelX, textY );
     context.fillText( data.delayTime, valueX, textY );
+    
+    textY += 2*textHeight;
+    context.fillText( "Beat Detector:", labelX, textY );
+
+    textY += textHeight;    
+    context.fillText( "tempo (bpm) : ", labelX, textY );
+    context.fillText( data.beatDetector.tempo_bpm, valueX, textY );
+
+    textY += textHeight;    
+    context.fillText( "confidence : ", labelX, textY );
+    context.fillText( data.beatDetector.confidence, valueX, textY );
 
     if ( data.triggerDetected )
     {

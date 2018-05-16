@@ -47,6 +47,9 @@ enum uint_8 BehaviorClass {
   CoordinateGlobalInterrupts,
   QuietModeCoordinator,
 
+  // danceToTheBeat
+  DanceToTheBeat,
+
   // devBehaviors
   DevBatteryLogging,
   DevDisplayReadingsOnFace,

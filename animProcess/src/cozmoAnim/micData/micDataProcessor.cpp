@@ -18,6 +18,7 @@
 #include "se_diag.h"
 
 #include "cozmoAnim/animProcessMessages.h"
+#include "cozmoAnim/beatDetector/beatDetector.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/micData/micDataProcessor.h"
 #include "cozmoAnim/micData/micDataSystem.h"
@@ -111,6 +112,7 @@ MicDataProcessor::MicDataProcessor(MicDataSystem* micDataSystem, const std::stri
 , _writeLocationDir(writeLocation)
 , _recognizer(new SpeechRecognizerTHF())
 , _micImmediateDirection(new MicImmediateDirection())
+, _beatDetector(std::make_unique<BeatDetector>())
 {
   const std::string& pronunciationFileToUse = "";
   (void) _recognizer->Init(pronunciationFileToUse);
@@ -217,8 +219,7 @@ void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float 
   RobotInterface::TriggerWordDetected twDetectedMessage;
   twDetectedMessage.timestamp = mostRecentTimestamp;
   twDetectedMessage.direction = currentDirection;
-  auto engineMessage = std::unique_ptr<RobotInterface::RobotToEngine>(
-    new RobotInterface::RobotToEngine(std::move(twDetectedMessage)));
+  auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
   _micDataSystem->SendMessageToEngine(std::move(engineMessage));
 
   // Tell signal essence software to lock in on the current direction if it's known
@@ -269,6 +270,18 @@ void MicDataProcessor::ProcessRawAudio(TimeStamp_t timestamp,
   // If we aren't starting a block, we're finishing it - time to convert to a single channel
   if (!_inProcessAudioBlockFirstHalf)
   {
+    {
+      ANKI_CPU_PROFILE("BeatDetectorAddSamples");
+      // For beat detection, we only need a single channel of audio. Use the
+      // first quarter of the un-interleaved audio block
+      const bool beatDetected = _beatDetector->AddSamples(_inProcessAudioBlock.data(), kSamplesPerBlock);
+      if (beatDetected) {
+        auto beatMessage = RobotInterface::BeatDetectorState{_beatDetector->GetLatestBeat()};
+        auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(beatMessage));
+        _micDataSystem->SendMessageToEngine(std::move(engineMessage));
+      }
+    }
+    
     TimedMicData* nextSampleSpot = nullptr;
     {
       // Note we don't bother to free any slots here that have been consumed (by comparing size to _procAudioXferCount)
@@ -331,8 +344,7 @@ void MicDataProcessor::ProcessRawAudio(TimeStamp_t timestamp,
       directionResult.confidenceList.end(),
       newMessage.confidenceList);
     
-    auto engineMessage = std::unique_ptr<RobotInterface::RobotToEngine>(
-      new RobotInterface::RobotToEngine(std::move(newMessage)));
+    auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(newMessage));
     _micDataSystem->SendMessageToEngine(std::move(engineMessage));
   }
   

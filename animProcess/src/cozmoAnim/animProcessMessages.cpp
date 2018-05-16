@@ -364,6 +364,14 @@ void Process_startWakeWordlessStreaming(const Anki::Cozmo::RobotInterface::Start
   micDataSystem->StartWakeWordlessStreaming();
 }
 
+void Process_resetBeatDetector(const Anki::Cozmo::RobotInterface::ResetBeatDetector& msg)
+{
+  auto* micDataSystem = _context->GetMicDataSystem();
+  if (micDataSystem != nullptr) {
+    micDataSystem->ResetBeatDetector();
+  }
+}
+
 void Process_playbackAudioStart(const Anki::Cozmo::RobotInterface::StartPlaybackAudio& msg)
 {
   using namespace Audio;

@@ -21,6 +21,7 @@
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreen.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
+#include "cozmoAnim/micData/micDataSystem.h"
 #include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -136,6 +137,8 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
 {
   DEV_ASSERT(context != nullptr, "FaceInfoScreenManager.Init.NullContext");
 
+  _context = context;
+  
   // allow us to send debug info out to the web server
   _webService = context->GetWebService();
 
@@ -555,6 +558,12 @@ void FaceInfoScreenManager::DrawConfidenceClock(
         directionValues.append(confidence);
       }
 
+      // Beat Detection stuff
+      Json::Value& beatInfo = webData["beatDetector"];
+      const auto& latestBeat = _context->GetMicDataSystem()->GetLatestBeatInfo();
+      beatInfo["confidence"] = latestBeat.confidence;
+      beatInfo["tempo_bpm"] = latestBeat.tempo_bpm;
+      
       static const std::string moduleName = "micdata";
       _webService->SendToWebViz( moduleName, webData );
     }

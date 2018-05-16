@@ -107,6 +107,7 @@ class AnimationComponent;
 class MapComponent;
 class MicComponent;
 class BatteryComponent;
+class BeatDetectorComponent;
 
 namespace Audio {
   class EngineRobotAudioClient;
@@ -289,6 +290,9 @@ public:
   const BatteryComponent&    GetBatteryComponent()    const { return GetComponent<BatteryComponent>(); }
   BatteryComponent&          GetBatteryComponent()          { return GetComponent<BatteryComponent>(); }
 
+  const BeatDetectorComponent&    GetBeatDetectorComponent()    const { return GetComponent<BeatDetectorComponent>(); }
+  BeatDetectorComponent&          GetBeatDetectorComponent()          { return GetComponent<BeatDetectorComponent>(); }
+  
   const PoseOriginList&  GetPoseOriginList() const { return *_poseOrigins.get(); }
 
   ObjectPoseConfirmer& GetObjectPoseConfirmer() { return GetComponent<ObjectPoseConfirmer>(); }

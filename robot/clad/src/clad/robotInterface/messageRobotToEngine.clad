@@ -5,6 +5,7 @@
 
 
 #include "clad/audio/audioCallbackMessage.clad"
+#include "clad/types/beatDetectorTypes.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/motorTypes.clad"
 #include "clad/types/dockingSignals.clad"
@@ -114,6 +115,11 @@ message DisplayedFaceImageRGBChunk {
     uint_8   chunkIndex
 }
 
+message BeatDetectorState
+{
+  BeatInfo latestBeat
+}
+
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from robot to engine.
@@ -197,6 +203,8 @@ union RobotToEngine {
   AudioEngine::Multiplexer::AudioCallbackError    audioCallbackError    = 0xE3,
 
   DisplayedFaceImageRGBChunk displayedFaceImageRGBChunk = 0xE4,
+  
+  BeatDetectorState          beatDetectorState      = 0xE5,
 
   // ====== 0xF0 to 0x FE: Unreliable message to the Engine =====
   // From robot process

@@ -395,6 +395,10 @@ message StartWakeWordlessStreaming
 {
 }
 
+message ResetBeatDetector
+{
+}
+
 structure ColorRGB
 {
   uint_8 r,
@@ -667,6 +671,8 @@ union EngineToRobot
   StartPlaybackAudio            playbackAudioStart          = 0x97,
 
   StartWakeWordlessStreaming    startWakeWordlessStreaming  = 0x98,
+
+  ResetBeatDetector             resetBeatDetector           = 0x99,
 
   SwitchboardInterface::SetConnectionStatus setConnectionStatus = 0xA0,
   SwitchboardInterface::SetBLEPin           setBLEPin           = 0xA1,

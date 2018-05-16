@@ -91,6 +91,8 @@ public:
   void DrawCameraImage(const Vision::ImageRGB565& img);
 
 private:
+  const AnimContext* _context = nullptr;
+  
   std::unique_ptr<Vision::ImageRGB565> _scratchDrawingImg;
 
   bool IsDebugScreen(ScreenName screen) const;

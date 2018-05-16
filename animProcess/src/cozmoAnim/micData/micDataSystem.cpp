@@ -14,6 +14,7 @@
 #include "coretech/messaging/shared/LocalUdpServer.h"
 
 #include "cozmoAnim/animProcessMessages.h"
+#include "cozmoAnim/beatDetector/beatDetector.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/micData/micDataInfo.h"
 #include "cozmoAnim/micData/micDataProcessor.h"
@@ -248,8 +249,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         const auto mostRecentTimestamp_ms = static_cast<TimeStamp_t>(currTime_nanosec / (1000 * 1000));
         twDetectedMessage.timestamp = mostRecentTimestamp_ms;
         twDetectedMessage.direction = kFirstIndex;
-        auto engineMessage = std::unique_ptr<RobotInterface::RobotToEngine>(
-          new RobotInterface::RobotToEngine(std::move(twDetectedMessage)));
+        auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
         {
           std::lock_guard<std::mutex> lock(_msgsMutex);
           _msgsToEngine.push_back(std::move(engineMessage));
@@ -399,6 +399,10 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       #endif
       RobotInterface::SendAnimToEngine(msg->micDirection);
     }
+    else if (msg->tag == RobotInterface::RobotToEngine::Tag_beatDetectorState)
+    {
+      RobotInterface::SendAnimToEngine(msg->beatDetectorState);
+    }
     else
     {
       DEV_ASSERT_MSG(false, 
@@ -502,6 +506,16 @@ void MicDataSystem::AudioSaveCallback(const std::string& dest)
   {
     SendUdpMessage(CloudMic::Message::CreatedebugFile(CloudMic::Filename{dest}));
   }
+}
+
+BeatInfo MicDataSystem::GetLatestBeatInfo()
+{
+  return _micDataProcessor->GetBeatDetector().GetLatestBeat();
+}
+
+void MicDataSystem::ResetBeatDetector()
+{
+  _micDataProcessor->GetBeatDetector().Start();
 }
 
 void MicDataSystem::SendUdpMessage(const CloudMic::Message& msg)

@@ -15,6 +15,7 @@
 #define __AnimProcess_CozmoAnim_MicDataSystem_H_
 
 #include "micDataTypes.h"
+#include "clad/types/beatDetectorTypes.h"
 #include "coretech/common/shared/types.h"
 #include "util/global/globalDefinitions.h"
 
@@ -81,6 +82,10 @@ public:
   void UpdateMicJobs();
   void AudioSaveCallback(const std::string& dest);
 
+  BeatInfo GetLatestBeatInfo();
+  
+  void ResetBeatDetector();
+  
 private:
   void RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT);
 

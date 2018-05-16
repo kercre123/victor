@@ -72,6 +72,7 @@ void InitBEIPartial( const BEIComponentMap& map, BehaviorExternalInterface& bei 
 {
   bei.Init(GetFromMap<AIComponent>(map, BEIComponentID::AIComponent),
            GetFromMap<AnimationComponent>(map, BEIComponentID::Animation),
+           GetFromMap<BeatDetectorComponent>(map, BEIComponentID::BeatDetector),
            GetFromMap<BehaviorContainer>(map, BEIComponentID::BehaviorContainer),
            GetFromMap<BehaviorEventComponent>(map, BEIComponentID::BehaviorEvent),
            GetFromMap<BehaviorTimerManager>(map, BEIComponentID::BehaviorTimerManager),

@@ -33,6 +33,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorWiggleOntoChargerContacts.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateGlobalInterrupts.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorQuietModeCoordinator.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/danceToTheBeat/behaviorDanceToTheBeat.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevBatteryLogging.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevDisplayReadingsOnFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevImageCapture.h"
@@ -275,13 +276,19 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       newBehavior = ICozmoBehaviorPtr(new BehaviorCoordinateGlobalInterrupts(config));
       break;
     }
-    
+      
     case BehaviorClass::QuietModeCoordinator:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorQuietModeCoordinator(config));
       break;
     }
-    
+      
+    case BehaviorClass::DanceToTheBeat:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDanceToTheBeat(config));
+      break;
+    }
+
     case BehaviorClass::DevBatteryLogging:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDevBatteryLogging(config));

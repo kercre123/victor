@@ -3,7 +3,7 @@
 * High level behaviors coordinate overall activity, delegate to other behaviors
 * Lower level behaviors control the robot by delegating to actions or helpers
 * Multiple behaviors are *active* in the stack, only the last one is *in control*
-* Behaviors which might run are in *activatable scope*
+* Behaviors which might run are in *activatable scope* 
 
 **The behavior system documentation is [on confluence](https://ankiinc.atlassian.net/wiki/spaces/CBS/overview).**
 Look there for details, this is just a tiny overview.
