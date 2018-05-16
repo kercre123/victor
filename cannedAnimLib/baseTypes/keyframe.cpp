@@ -638,11 +638,47 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     //
     // RobotAudioKeyFrame
     //
-
+    
+    // By Default use "Animation" Audio Game Object
+    const auto kAnimationGameObject = AudioMetaData::GameObjectType::Animation;
+    
     Result RobotAudioKeyFrame::AddAudioRef(AudioKeyFrameType::AudioRef&& audioRef)
     {
       _audioReferences.push_back( std::move(audioRef) );
       return RESULT_OK;
+    }
+
+    Result RobotAudioKeyFrame::AddAudioRef(AudioKeyFrameType::AudioEventGroupRef&& eventGroupRef)
+    {
+      _audioReferences.push_back( AudioKeyFrameType::AudioRef( std::move(eventGroupRef) ) );
+      return RESULT_OK;
+    }
+
+    Result RobotAudioKeyFrame::AddAudioRef(AudioKeyFrameType::AudioParameterRef&& parameterRef)
+    {
+      _audioReferences.push_back( AudioKeyFrameType::AudioRef( std::move(parameterRef) ) );
+      return RESULT_OK;
+    }
+
+    Result RobotAudioKeyFrame::AddAudioRef(AudioKeyFrameType::AudioStateRef&& stateRef)
+    {
+      _audioReferences.push_back( AudioKeyFrameType::AudioRef( std::move(stateRef) ) );
+      return RESULT_OK;
+    }
+
+    Result RobotAudioKeyFrame::AddAudioRef(AudioKeyFrameType::AudioSwitchRef&& switchRef)
+    {
+      _audioReferences.push_back( AudioKeyFrameType::AudioRef( std::move(switchRef) ) );
+      return RESULT_OK;
+    }
+    
+    void RobotAudioKeyFrame::MergeKeyFrame(RobotAudioKeyFrame&& otherFrame)
+    {
+      _audioReferences.insert(_audioReferences.end(),
+                              std::make_move_iterator(otherFrame._audioReferences.begin()),
+                              std::make_move_iterator(otherFrame._audioReferences.end()));
+      // Remove junk
+      otherFrame._audioReferences.clear();
     }
 
     Result RobotAudioKeyFrame::DefineFromFlatBuf(const CozmoAnim::RobotAudio* audioKeyframe, const std::string& animNameDebug)
@@ -673,6 +709,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       JSON_KEY(switches);
       JSON_KEY(parameters);
       
+      // Add States
       const auto& states = jsonRoot[kKey_states];
       if (states.isArray()) {
         JSON_KEY(stateGroupId);
@@ -689,14 +726,15 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
             // Move to next state
             continue;
           }
-          Result addResult = AddAudioRef(AudioRef(AudioStateRef(static_cast<GameState::StateGroupType>(groupId),
-                                                                static_cast<GameState::GenericState>(stateId))));
+          Result addResult = AddAudioRef(AudioStateRef(static_cast<GameState::StateGroupType>(groupId),
+                                                       static_cast<GameState::GenericState>(stateId)));
           if(addResult != RESULT_OK) {
             return addResult;
           }
         }
       } // States
       
+      // Add Switches
       const auto& switches = jsonRoot[kKey_switches];
       if (switches.isArray()) {
         JSON_KEY(switchGroupId);
@@ -714,14 +752,17 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
             // Move to next switch
             continue;
           }
-          Result addResult = AddAudioRef(AudioRef(AudioSwitchRef(static_cast<SwitchState::SwitchGroupType>(groupId),
-                                                                 static_cast<SwitchState::GenericSwitch>(stateId))));
+          
+          Result addResult = AddAudioRef(AudioSwitchRef(static_cast<SwitchState::SwitchGroupType>(groupId),
+                                                        static_cast<SwitchState::GenericSwitch>(stateId),
+                                                        kAnimationGameObject));
           if(addResult != RESULT_OK) {
             return addResult;
           }
         }
       } // Switches
       
+      // Add Parameters
       const auto& parameters = jsonRoot[kKey_parameters];
       if (parameters.isArray()) {
         JSON_KEY(parameterId);
@@ -743,17 +784,20 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           JsonTools::GetValueOptional(*parameterIt, kKey_value, value);
           JsonTools::GetValueOptional(*parameterIt, kKey_time_ms, time_ms);
           JsonTools::GetValueOptional(*parameterIt, kKey_curve, curve);
-          Result addResult = AddAudioRef(AudioRef(AudioParameterRef(static_cast<GameParameter::ParameterType>(parameterId),
-                                                                    value,
-                                                                    time_ms,
-                                                                    static_cast<AudioEngine::Multiplexer::CurveType>(curve))));
+          
+          Result addResult = AddAudioRef(AudioParameterRef(static_cast<GameParameter::ParameterType>(parameterId),
+                                                           value,
+                                                           time_ms,
+                                                           static_cast<AudioEngine::Multiplexer::CurveType>(curve),
+                                                           kAnimationGameObject));
           if(addResult != RESULT_OK) {
             return addResult;
           }
         }
       } // Parameters
       
-      // Events need to be added last to the AudioRef list, they need to be posted last when performing a key frame
+      // Add Event Groups
+      // Note: Add events last to the AudioRef list, they need to be posted last when performing a key frame
       const auto& eventGroups = jsonRoot[kKey_eventGroups];
       if (eventGroups.isArray()) {
         JSON_KEY(eventIds);
@@ -784,7 +828,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           }
           
           // Add events to group
-          AudioEventGroupRef eventGroup;
+          AudioEventGroupRef eventGroup(kAnimationGameObject);
           GameEvent::GenericEvent eventId;
           for (int idx = 0; idx < eventIds.size(); ++idx) {
             eventId = static_cast<GameEvent::GenericEvent>( eventIds[idx].asUInt() );
@@ -802,7 +846,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
                               "'%s' @ %i ms : Has an empty event group", animNameDebug.c_str(), _triggerTime_ms);
             return  RESULT_FAIL;
           }
-          Result addResult = AddAudioRef(AudioRef(std::move(eventGroup)));
+          Result addResult = AddAudioRef(std::move(eventGroup));
           if (addResult != RESULT_OK) {
             return addResult;
           }
@@ -864,7 +908,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           }
         }
         
-        AudioEventGroupRef eventGroup;
+        AudioEventGroupRef eventGroup(kAnimationGameObject);
         for (int idx = 0; idx < eventIds.size(); ++idx) {
           probability = probabilities[idx];
           const auto eventId = static_cast<GameEvent::GenericEvent>( eventIds[idx].asUInt() );
@@ -876,7 +920,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           }
           eventGroup.AddEvent(eventId, volume, probability);
         }
-        Result addResult = AddAudioRef( AudioRef( std::move(eventGroup) ) );
+        Result addResult = AddAudioRef(std::move(eventGroup));
         if (addResult != RESULT_OK) {
           return addResult;
         }
@@ -889,9 +933,9 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
                             "'%s' @ %i ms : Has an invalid audio event", animNameDebug.c_str(), _triggerTime_ms);
           return RESULT_FAIL;
         }
-        AudioEventGroupRef eventGroup;
+        AudioEventGroupRef eventGroup(kAnimationGameObject);
         eventGroup.AddEvent(eventId, volume, probability);
-        Result addResult = AddAudioRef( AudioRef( std::move(eventGroup) ) );
+        Result addResult = AddAudioRef(std::move(eventGroup));
         if(addResult != RESULT_OK) {
           return addResult;
         }
@@ -907,6 +951,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       using namespace AudioKeyFrameType;
       using namespace AudioMetaData;
       
+      // Add States
       const auto* states = audioKeyframe->states();
       if (nullptr != states) {
         for (const auto& aState : *states) {
@@ -919,13 +964,14 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
             // Move to next State
             continue;
           }
-          Result addResult = AddAudioRef(AudioRef(AudioStateRef(groupId, stateId)));
+          Result addResult = AddAudioRef(AudioStateRef(groupId, stateId));
           if(addResult != RESULT_OK) {
             return addResult;
           }
         }
       }
       
+      // Add Switches
       const auto* switches = audioKeyframe->switches();
       if (nullptr != switches) {
         for (const auto& aSwitch : *switches) {
@@ -938,13 +984,14 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
             // Move to next Switch
             continue;
           }
-          Result addResult = AddAudioRef(AudioRef(AudioSwitchRef(groupId, stateId)));
+          Result addResult = AddAudioRef(AudioSwitchRef(groupId, stateId, kAnimationGameObject));
           if(addResult != RESULT_OK) {
             return addResult;
           }
         }
       }
       
+      // Add Parameters
       const auto* parameters = audioKeyframe->parameters();
       if (nullptr != parameters) {
         for (const auto& aParameter : *parameters) {
@@ -958,20 +1005,23 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           auto parameterRef = AudioParameterRef(parameterId,
                                                 aParameter->value(),
                                                 aParameter->time_ms(),
-                                                static_cast<Multiplexer::CurveType>(aParameter->curve()));
-          Result addResult = AddAudioRef(AudioRef(std::move(parameterRef)));
+                                                static_cast<Multiplexer::CurveType>(aParameter->curve()),
+                                                kAnimationGameObject);
+          Result addResult = AddAudioRef(std::move(parameterRef));
           if(addResult != RESULT_OK) {
             return addResult;
           }
         }
       }
-      // Events need to be added last to the AudioRef list, they need to be posted last when performing a key frame
+      
+      // Add Event Groups
+      // Note: Add events last to the AudioRef list, they need to be posted last when performing a key frame
       const auto* eventGroups = audioKeyframe->eventGroups();
       if (nullptr != eventGroups) {
         // Loop through groups
         for (const auto& aGroup : *eventGroups) {
           // Create event group
-          AudioEventGroupRef anEventGroup;
+          AudioEventGroupRef anEventGroup(kAnimationGameObject);
           const auto* eventIds      = aGroup->eventIds();
           const auto* volumes       = aGroup->volumes();
           const auto* probabilities = aGroup->probabilities();
@@ -1001,7 +1051,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
                               "'%s' @ %i ms : Has an empty event group", animNameDebug.c_str(), _triggerTime_ms);
             return  RESULT_FAIL;
           }
-          Result addResult = AddAudioRef(AudioRef(std::move(anEventGroup)));
+          Result addResult = AddAudioRef(std::move(anEventGroup));
           if (addResult != RESULT_OK) {
             return addResult;
           }

@@ -115,7 +115,9 @@ void ITrackLayerManager<FRAME_TYPE>::AddToPersistentLayer(const std::string& lay
 }
 
 template<class FRAME_TYPE>
-void ITrackLayerManager<FRAME_TYPE>::RemovePersistentLayer(const std::string& layerName, u32 duration_ms)
+void ITrackLayerManager<FRAME_TYPE>::RemovePersistentLayer(const std::string& layerName,
+                                                           TimeStamp_t streamTime_ms,
+                                                           TimeStamp_t duration_ms)
 {
   auto layerIter = _layers.find(layerName);
   if (layerIter != _layers.end())
@@ -132,11 +134,12 @@ void ITrackLayerManager<FRAME_TYPE>::RemovePersistentLayer(const std::string& la
     if (duration_ms > 0)
     {
       FRAME_TYPE firstFrame(layerIter->second.track.GetCurrentKeyFrame());
-      firstFrame.SetTriggerTime_ms(0);
+      firstFrame.SetTriggerTime_ms(streamTime_ms);
+      firstFrame.SetKeyFrameDuration_ms(duration_ms);
       track.AddKeyFrameToBack(std::move(firstFrame));
     }
     FRAME_TYPE lastFrame;
-    lastFrame.SetTriggerTime_ms(duration_ms);
+    lastFrame.SetTriggerTime_ms(streamTime_ms + duration_ms);
     track.AddKeyFrameToBack(std::move(lastFrame));
     
     AddLayer("Remove" + layerName, track);

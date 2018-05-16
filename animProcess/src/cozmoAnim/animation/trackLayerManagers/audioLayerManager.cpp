@@ -10,17 +10,103 @@
  *
  **/
 
+#include "cannedAnimLib/baseTypes/audioKeyFrameTypes.h"
 #include "cozmoAnim/animation/trackLayerManagers/audioLayerManager.h"
+#include "util/console/consoleInterface.h"
+#include <algorithm>
+
 
 namespace Anki {
 namespace Cozmo {
 
+namespace
+{
+  const auto kProceduralGameObject = AudioMetaData::GameObjectType::Procedural;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioLayerManager::AudioLayerManager(const Util::RandomGenerator& rng)
 : ITrackLayerManager<RobotAudioKeyFrame>(rng)
 {
-  
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Result AudioLayerManager::AddEyeBlinkToAudioTrack(const std::string& layerName,
+                                                    const BlinkEventList& eventList,
+                                                    const TimeStamp_t timeSinceAnimStart_ms)
+{
+  using namespace AudioKeyFrameType;
+  using namespace AudioMetaData;
+  Animations::Track<RobotAudioKeyFrame> audioTrack;
+  
+  const auto eventIt = std::find_if(eventList.begin(), eventList.end(), [](const BlinkEvent& event)
+                                                                        { return (BlinkState::Closed == event.state); });
+  if (eventIt != eventList.end()) {
+    // Add Event Group
+    RobotAudioKeyFrame frame;
+    AudioEventGroupRef eventGroup(kProceduralGameObject);
+    eventGroup.AddEvent(GameEvent::GenericEvent::Play__Robot_Vic_Sfx__Scrn_Procedural_Blink, 1.0f, 1.0f);
+    frame.AddAudioRef(std::move(eventGroup));
+    frame.SetTriggerTime_ms(eventIt->time_ms);
+    frame.SetKeyFrameDuration_ms(ANIM_TIME_STEP_MS); // Provide a duration to assure the event is called
+    audioTrack.AddKeyFrameToBack(frame);
+  }
+
+  if (audioTrack.IsEmpty()) {
+    // Don't add an empty track
+    return RESULT_OK;
+  }
+  
+  return AddLayer(layerName, audioTrack);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result AudioLayerManager::AddEyeDartToAudioTrack(const std::string& layerName,
+                                                 const TimeStamp_t interpolationTime_ms,
+                                                 const TimeStamp_t timeSinceAnimStart_ms)
+{
+  using namespace AudioKeyFrameType;
+  using namespace AudioMetaData;
+  RobotAudioKeyFrame frame;
+  Animations::Track<RobotAudioKeyFrame> audioTrack;
+  // Add parameter
+  auto paramRef = AudioParameterRef(GameParameter::ParameterType::Robot_Vic_Screen_Shift_Interpolation_Time,
+                                    interpolationTime_ms,
+                                    0.0f,
+                                    AudioEngine::Multiplexer::CurveType::Linear,
+                                    kProceduralGameObject);
+  frame.AddAudioRef(std::move(paramRef));
+  // Add Event Group
+  AudioEventGroupRef eventGroup(kProceduralGameObject);
+  eventGroup.AddEvent(GameEvent::GenericEvent::Play__Robot_Vic_Sfx__Scrn_Procedural_Shift, 1.0f, 1.0f);
+  frame.AddAudioRef(std::move(eventGroup));
+  frame.SetTriggerTime_ms(interpolationTime_ms);   // Always start with begining of movement
+  frame.SetKeyFrameDuration_ms(ANIM_TIME_STEP_MS); // Provide a duration to assure the event is called
+  audioTrack.AddKeyFrameToBack(frame);
+  
+  return AddLayer(layerName, audioTrack);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result AudioLayerManager::AddEyeSquintToAudioTrack(const std::string& layerName,
+                                                   const TimeStamp_t timeSinceAnimStart_ms)
+{
+  using namespace AudioKeyFrameType;
+  using namespace AudioMetaData;
+  Animations::Track<RobotAudioKeyFrame> audioTrack;
+  RobotAudioKeyFrame frame;
+  // Add Event Group
+  AudioEventGroupRef eventGroup(kProceduralGameObject);
+  eventGroup.AddEvent(GameEvent::GenericEvent::Play__Robot_Vic_Sfx__Scrn_Procedural_Squint, 1.0f, 1.0f);
+  frame.AddAudioRef(std::move(eventGroup));
+  frame.SetTriggerTime_ms(timeSinceAnimStart_ms);  // Always start with begining of movement
+  frame.SetKeyFrameDuration_ms(ANIM_TIME_STEP_MS); // Provide a duration to assure the event is called
+  audioTrack.AddKeyFrameToBack(frame);
+  
+  return AddLayer(layerName, audioTrack);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioLayerManager::GenerateGlitchAudio(u32 numFramesToGen,
                                             Animations::Track<RobotAudioKeyFrame>& outTrack) const
 {

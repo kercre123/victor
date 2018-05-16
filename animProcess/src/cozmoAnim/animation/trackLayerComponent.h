@@ -17,13 +17,14 @@
 #ifndef __Anki_Cozmo_TrackLayerComponent_H__
 #define __Anki_Cozmo_TrackLayerComponent_H__
 
-#include "coretech/common/shared/types.h"
-
 #include "cannedAnimLib/cannedAnims/animation.h"
-
 #include "clad/types/keepFaceAliveParameters.h"
-
+#include "coretech/common/shared/types.h"
+#include <functional>
+#include <map>
 #include <memory>
+#include <vector>
+
 
 namespace Anki {
 namespace Cozmo {
@@ -51,6 +52,7 @@ public:
     ProceduralFaceKeyFrame faceKeyFrame;
   };
   
+  
   TrackLayerComponent(const AnimContext* context);
   ~TrackLayerComponent();
   
@@ -68,27 +70,32 @@ public:
                          LayeredKeyFrames& layeredKeyFrames,
                          bool storeFace) const;
   
-  // Keep Cozmo's face alive using the params specified
+  // Keep Victor's face alive using the params specified
   // (call each tick while the face should be kept alive)
   void KeepFaceAlive(const std::map<KeepFaceAliveParameter, f32>& params,
                      const TimeStamp_t timeSinceKeepAliveStart_ms);
   
   // Removes the live face after duration_ms has passed
   // Note: Will not cancel/remove a blink that is in progress
-  void RemoveKeepFaceAlive(u32 duration_ms);
+  void RemoveKeepFaceAlive(TimeStamp_t streamTime_ms, TimeStamp_t duration_ms);
   
-  // Keep Cozmo's face alive, but the same, by posting empty new frames
+  // Resets timers for keeping face alive.
+  // Call this when KeepFaceAlive timing parameters have changed.
+  void ResetKeepFaceAliveTimers();
+  
+  // Keep Victor's face alive, but the same, by posting empty new frames
   // so that noise keeps working
   void KeepFaceTheSame();
 
-  // Make Cozmo blink
-  void AddBlink(const TimeStamp_t timeSinceKeepAliveStart_ms);
-  
-  // Make Cozmo squint (will continue to squint until removed)
-  void AddSquint(const std::string& name, f32 squintScaleX, f32 squintScaleY, f32 upperLidAngle);
+  // Make Victor squint (will continue to squint until removed)
+  void AddSquint(const std::string& name,
+                 f32 squintScaleX,
+                 f32 squintScaleY,
+                 f32 upperLidAngle,
+                 TimeStamp_t streamTime_ms);
 
   // Removes specified squint after duration_ms has passed
-  void RemoveSquint(const std::string& name, u32 duration_ms = 0);
+  void RemoveSquint(const std::string& name, TimeStamp_t streamTime_ms, TimeStamp_t duration_ms = 0);
   
   // Either start an eye shift or update an already existing eye shift with new params
   // Note: Eye shift will continue until removed so if eye shift with the same name
@@ -97,6 +104,7 @@ public:
                            f32 xPix,
                            f32 yPix,
                            TimeStamp_t duration_ms,
+                           TimeStamp_t streamTime_ms,
                            f32 xMax = ProceduralFace::HEIGHT,
                            f32 yMax = ProceduralFace::WIDTH,
                            f32 lookUpMaxScale = 1.1f,
@@ -104,9 +112,9 @@ public:
                            f32 outerEyeScaleIncrease = 0.1f);
   
   // Removes the specified eye shift after duration_ms has passed
-  void RemoveEyeShift(const std::string& name, u32 duration_ms = 0);
+  void RemoveEyeShift(const std::string& name, TimeStamp_t streamTime_ms, TimeStamp_t duration_ms = 0);
   
-  // Make Cozmo glitch
+  // Make Victor glitch
   void AddGlitch(f32 glitchDegree);
   
   // Returns true if any of the layerManagers have layers to send
@@ -115,7 +123,47 @@ public:
   u32 GetMaxBlinkSpacingTimeForScreenProtection_ms() const;
   
 private:
+  
+  // The KeepFaceAlive system consists of multiple Modifiers applied to the face by the
+  // AnimationStreamer when no animation is controlling the face -- to keep the robot
+  // looking "alive". For example, blinks are one Modifier, and eye darts are another. Multiple
+  // Modifiers exist on separate layers and can be run at the same time. A priority flag
+  // could be added in the future to handle more complicated cases.
+  
+  struct KeepAliveModifier {
+    using ParameterMap = std::map<KeepFaceAliveParameter,f32>;
+    using ActivityPerformFunc = std::function<bool(const ParameterMap& parameterMap,
+                                                   const TimeStamp_t streamTime_ms)>;
+    using ActivityGetNextPerformanceTimeFunc = std::function<s32(const ParameterMap& parameterMap)>;
+    std::string name;
+    ActivityPerformFunc performFunc = nullptr;
+    ActivityGetNextPerformanceTimeFunc getNextPerformanceTimeFunc = nullptr;
+    bool hasFaceLayers = false; // If false, we need to use idle face layers
+    s32 nextPerformanceTime_ms = 0;
+    KeepAliveModifier(const std::string& name,
+                      ActivityPerformFunc performFunc,
+                      ActivityGetNextPerformanceTimeFunc getNextPerformanceTimeFunc,
+                      bool hasFaceLayers = false)
+    : name(name)
+    , performFunc(performFunc)
+    , getNextPerformanceTimeFunc(getNextPerformanceTimeFunc)
+    , hasFaceLayers(hasFaceLayers) {}
+    
+    void UpdateNextPerformanceTime(const ParameterMap& parameterMap)
+    { nextPerformanceTime_ms = getNextPerformanceTimeFunc(parameterMap); }
+  };
 
+
+  std::unique_ptr<AudioLayerManager>    _audioLayerManager;
+  std::unique_ptr<BackpackLayerManager> _backpackLayerManager;
+  std::unique_ptr<FaceLayerManager>     _faceLayerManager;
+  std::unique_ptr<ProceduralFace>       _lastProceduralFace;
+  std::vector<KeepAliveModifier>        _keepAliveModifiers;
+  
+  // Setup and add keep face alive activites to _keepAliveActivities vector
+  void SetupKeepFaceAliveActivities();
+  
+  // Handle track layer
   void ApplyAudioLayersToAnim(Animation* anim,
                               const TimeStamp_t timeSinceAnimStart_ms,
                               LayeredKeyFrames& layeredKeyFrames) const;
@@ -128,12 +176,7 @@ private:
                              const TimeStamp_t timeSinceAnimStart_ms,
                              LayeredKeyFrames& layeredKeyFrames,
                              bool storeFace) const;
-  
-  std::unique_ptr<AudioLayerManager>    _audioLayerManager;
-  std::unique_ptr<BackpackLayerManager> _backpackLayerManager;
-  std::unique_ptr<FaceLayerManager>     _faceLayerManager;
-  
-  std::unique_ptr<ProceduralFace> _lastProceduralFace;
+
 };
   
 }

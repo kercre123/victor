@@ -950,16 +950,11 @@ namespace Cozmo {
     return state;
   } // ConvertColorspace()
 
-  bool ProceduralFaceDrawer::GetNextBlinkFrame(ProceduralFace& faceData, TimeStamp_t& offset)
+  bool ProceduralFaceDrawer::GetNextBlinkFrame(ProceduralFace& faceData,
+                                               BlinkState& out_blinkState,
+                                               TimeStamp_t& out_offset)
   {
     static ProceduralFace originalFace;
-
-    enum class BlinkState : uint8_t {
-      Closing,
-      Closed,
-      JustOpened,
-      Opening
-    };
 
     struct BlinkParams {
       ProceduralFace::Value height, width;
@@ -987,7 +982,7 @@ namespace Cozmo {
     if(paramIter == blinkParams.end()) {
       // Set everything back to original params
       faceData = originalFace;
-      offset = 33;
+      out_offset = 33;
 
       // Reset for next time
       paramIter = blinkParams.begin();
@@ -1006,7 +1001,7 @@ namespace Cozmo {
         faceData.SetParameter(whichEye, Parameter::EyeScaleY,
                               originalFace.GetParameter(whichEye, Parameter::EyeScaleY) * paramIter->height);
       }
-      offset = paramIter->t;
+      out_offset = paramIter->t;
 
       switch(paramIter->blinkState) {
         case BlinkState::Closed:
@@ -1040,7 +1035,8 @@ namespace Cozmo {
         default:
           break;
       }
-
+      
+      out_blinkState = paramIter->blinkState;
       ++paramIter;
 
       // Let caller know there are more blink frames left, so keep calling

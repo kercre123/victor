@@ -44,6 +44,13 @@ namespace Cozmo {
     class ProceduralAudioClient;
   }
   
+  namespace RobotInterface {
+    struct AddOrUpdateEyeShift;
+    struct RemoveEyeShift;
+    struct AddSquint;
+    struct RemoveSquint;
+  }
+  
   
   class AnimationStreamer
   {
@@ -134,6 +141,13 @@ namespace Cozmo {
     // Whether or not to redirect a face image to the FaceInfoScreenManager
     // for display on a debug screen
     void RedirectFaceImagesToDebugScreen(bool redirect) { _redirectFaceImagesToDebugScreen = redirect; }
+    
+    // Procedural Eye
+    void ProcessAddOrUpdateEyeShift(const RobotInterface::AddOrUpdateEyeShift& msg);
+    void ProcessRemoveEyeShift(const RobotInterface::RemoveEyeShift& msg);
+    void ProcessAddSquint(const RobotInterface::AddSquint& msg);
+    void ProcessRemoveSquint(const RobotInterface::RemoveSquint& msg);
+    
 
   private:
     
@@ -253,14 +267,6 @@ namespace Cozmo {
     
     // Last time we streamed anything
     f32 _lastAnimationStreamTime = std::numeric_limits<f32>::lowest();
-
-#   define PLAY_ROBOT_AUDIO_ON_DEVICE 0
-#   if PLAY_ROBOT_AUDIO_ON_DEVICE
-    // TODO: Remove these once we aren't playing robot audio on the device
-    TimeStamp_t _playedRobotAudio_ms;
-    std::deque<const RobotAudioKeyFrame*> _onDeviceRobotAudioKeyFrameQueue;
-    const RobotAudioKeyFrame* _lastPlayedOnDeviceRobotAudioKeyFrame;
-#   endif
     
     // Sends msg to appropriate destination as long as the specified track is unlocked
     bool SendIfTrackUnlocked(RobotInterface::EngineToRobot* msg, AnimTrackFlag track);

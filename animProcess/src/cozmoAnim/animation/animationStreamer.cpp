@@ -663,7 +663,6 @@ namespace Cozmo {
 
     DEV_ASSERT(nullptr != _proceduralAnimation, "AnimationStreamer.SetFaceImage.NullProceduralAnimation");
     
-    
     auto& spriteSeqTrack = _proceduralAnimation->GetTrack<SpriteSequenceKeyFrame>();
     
     if(_streamingAnimation == _proceduralAnimation){
@@ -830,7 +829,7 @@ namespace Cozmo {
       // Make sure any eye dart (which is persistent) gets removed so it doesn't
       // affect the animation we are about to start streaming. Give it a little
       // duration so it doesn't pop.
-      _proceduralTrackComponent->RemoveKeepFaceAlive(3*ANIM_TIME_STEP_MS);
+      _proceduralTrackComponent->RemoveKeepFaceAlive(_relativeStreamTime_ms, (3 * ANIM_TIME_STEP_MS));
       
     }
     return lastResult;
@@ -1324,6 +1323,12 @@ namespace Cozmo {
                                                    layeredKeyFrames,
                                                    false);
       
+      // If we have audio keyframe to play
+      if(layeredKeyFrames.haveAudioKeyFrame)
+      {
+        _animAudioClient->PlayAudioKeyFrame( layeredKeyFrames.audioKeyFrame, _context->GetRandom() );
+      }
+      
       // If we have backpack keyframes to send
       if(layeredKeyFrames.haveBackpackKeyFrame)
       {
@@ -1339,8 +1344,6 @@ namespace Cozmo {
         GetStreamableFace(layeredKeyFrames.faceKeyFrame.GetFace(), _faceDrawBuf);
         BufferFaceToSend(_faceDrawBuf);
       }
-      
-
     }
     
     return lastResult;
@@ -1366,7 +1369,6 @@ namespace Cozmo {
     
     // Grab references to some of the tracks
     // Some tracks are managed by the TrackLayerComponent
-    auto & robotAudioTrack  = _streamingAnimation->GetTrack<RobotAudioKeyFrame>();
     auto & headTrack        = _streamingAnimation->GetTrack<HeadAngleKeyFrame>();
     auto & liftTrack        = _streamingAnimation->GetTrack<LiftHeightKeyFrame>();
     auto & bodyTrack        = _streamingAnimation->GetTrack<BodyMotionKeyFrame>();
@@ -1374,21 +1376,11 @@ namespace Cozmo {
     auto & turnToRecordedHeadingTrack = _streamingAnimation->GetTrack<TurnToRecordedHeadingKeyFrame>();
     auto & eventTrack       = _streamingAnimation->GetTrack<EventKeyFrame>();
     auto & spriteSeqTrack    = _streamingAnimation->GetTrack<SpriteSequenceKeyFrame>();
-    
 
     if(!_startOfAnimationSent) {
       SendStartOfAnimation();
       _animAudioClient->InitAnimation();
     }
-    
-    // Is it time to play robot audio?
-    // TODO: Do it this way or with GetCurrentStreamingMessage() like all the other tracks?
-    if (robotAudioTrack.HasFramesLeft() &&
-        robotAudioTrack.GetCurrentKeyFrame().IsFirstKeyframeTick(_relativeStreamTime_ms))
-    {
-      _animAudioClient->PlayAudioKeyFrame( robotAudioTrack.GetCurrentKeyFrame(), _context->GetRandom() );
-    }
-
     
     if(DEBUG_ANIMATION_STREAMING) {
       // Very verbose!
@@ -1533,6 +1525,11 @@ namespace Cozmo {
       if (SendIfTrackUnlocked(layeredKeyFrames.backpackKeyFrame.GetStreamMessage(_relativeStreamTime_ms), AnimTrackFlag::BACKPACK_LIGHTS_TRACK)) {
         EnableBackpackAnimationLayer(true);
       }
+    }
+      
+    if(layeredKeyFrames.haveAudioKeyFrame)
+    {
+      _animAudioClient->PlayAudioKeyFrame( layeredKeyFrames.audioKeyFrame, _context->GetRandom() );
     }
     
     if(SendIfTrackUnlocked(bodyTrack.GetCurrentStreamingMessage(_relativeStreamTime_ms), AnimTrackFlag::BODY_TRACK)) {
@@ -1735,14 +1732,13 @@ namespace Cozmo {
       _numTicsToSendAnimState = kAnimStateReportingPeriod_tics;
     }
 
-
     return lastResult;
   } // AnimationStreamer::Update()
   
   void AnimationStreamer::EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms)
   {
     if (s_enableKeepFaceAlive && !enable) {
-      _proceduralTrackComponent->RemoveKeepFaceAlive(disableTimeout_ms);
+      _proceduralTrackComponent->RemoveKeepFaceAlive(_relativeStreamTime_ms, disableTimeout_ms);
     }
     s_enableKeepFaceAlive = enable;
   }
@@ -1779,7 +1775,43 @@ namespace Cozmo {
     _longEnoughSinceLastStreamTimeout_s = kDefaultLongEnoughSinceLastStreamTimeout_s;
   }
   
-
+  void AnimationStreamer::ProcessAddOrUpdateEyeShift(const RobotInterface::AddOrUpdateEyeShift& msg)
+  {
+    const std::string layerName(msg.name, msg.name_length);
+    _proceduralTrackComponent->AddOrUpdateEyeShift(layerName,
+                                                   msg.xPix,
+                                                   msg.yPix,
+                                                   msg.duration_ms,
+                                                   _relativeStreamTime_ms,
+                                                   msg.xMax,
+                                                   msg.yMax,
+                                                   msg.lookUpMaxScale,
+                                                   msg.lookDownMinScale,
+                                                   msg.outerEyeScaleIncrease);
+  }
+  
+  void AnimationStreamer::ProcessRemoveEyeShift(const RobotInterface::RemoveEyeShift& msg)
+  {
+    const std::string layerName(msg.name, msg.name_length);
+    _proceduralTrackComponent->RemoveEyeShift(layerName, _relativeStreamTime_ms, msg.disableTimeout_ms);
+  }
+  
+  void AnimationStreamer::ProcessAddSquint(const RobotInterface::AddSquint& msg)
+  {
+    const std::string layerName(msg.name, msg.name_length);
+    _proceduralTrackComponent->AddSquint(layerName,
+                                         msg.squintScaleX,
+                                         msg.squintScaleY,
+                                         msg.upperLidAngle,
+                                         _relativeStreamTime_ms);
+  }
+  
+  void AnimationStreamer::ProcessRemoveSquint(const RobotInterface::RemoveSquint& msg)
+  {
+    const std::string layerName(msg.name, msg.name_length);
+    _proceduralTrackComponent->RemoveSquint(layerName, _relativeStreamTime_ms, msg.disableTimeout_ms);
+  }
+  
   void AnimationStreamer::StopTracks(const u8 whichTracks)
   {
     if(whichTracks)
