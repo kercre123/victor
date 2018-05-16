@@ -76,6 +76,12 @@ Result ObjectDetector::Init(const std::string& modelPath, const std::string& cac
   result = _model->LoadModel(modelPath, cachePath, config);
   _profiler.Toc("LoadModel");
   
+  if(RESULT_OK != result)
+  {
+    PRINT_NAMED_ERROR("ObjectDetector.Init.LoadModelFailed", "");
+    return result;
+  }
+  
   // Get the input height/width so we can do the resize and only need to share/copy/write as
   // small an image as possible for the standalone CNN process to pick up
   if(false == JsonTools::GetValueOptional(config, "input_height", _processingHeight))
@@ -88,12 +94,6 @@ Result ObjectDetector::Init(const std::string& modelPath, const std::string& cac
   {
     PRINT_NAMED_ERROR("ObjectDetector.Init.MissingConfig", "input_width");
     return RESULT_FAIL;
-  }
-  
-  if(RESULT_OK != result)
-  {
-    PRINT_NAMED_ERROR("ObjectDetector.Init.LoadModelFailed", "");
-    return result;
   }
 
   PRINT_NAMED_INFO("ObjectDetector.Init.LoadModelTime", "Loading model from '%s' took %.1fsec",
