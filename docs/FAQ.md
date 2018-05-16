@@ -64,7 +64,13 @@ rsync error: error in socket IO (code 10) at /BuildRoot/Library/Caches/com.apple
   - `chmod u=rwx victor/_build/mac/Debug-Xcode/launch-cxx`
 
 * To check the battery level:
-  - Not sure how to do this?
+   1. Place Victor on charger
+   1. Double click his back button
+   1. Raise and lower the lift the full way to enter the debug screen
+   1. Move his head all the way down and back up
+   1. A tiny pixel will appear in the upper right of the face
+   1. Use the button to cycle through the various face screens
+   1. The second screen has battery like `BATT: 4.18V`
 
 * Webots Firewall Connection issues?
   - [Create a code signing certificate](/project/build-scripts/webots/FirewallCertificateInstructions.md)
