@@ -1094,7 +1094,7 @@ void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
       break;
     
     //error out quickly if robot removed from charge base
-    if ((offContact = current_ma < PRESENT_CURRENT_MA ? offContact + 1 : 0) > 5) {
+    if ((offContact = current_ma < PRESENT_CURRENT_MA ? offContact + 1 : 0) > 20) {
       CHARGE_TEST_DEBUG( ConsolePrintf("\n"); );
       ConsolePrintf("robot off charger\n");
       throw ERROR_BAT_CHARGER;
