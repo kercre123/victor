@@ -406,6 +406,8 @@ void ObjectDetector::GetLocalizedBinaryClassification(const tensorflow::Tensor& 
 {
   // Create a detection box for each grid cell that is above threshold
 
+  // This raw (Eigen) tensor data appears to be _column_ major (i.e. "not row major")
+  assert( !(output_tensor.tensor<float, 2>().Options & Eigen::RowMajor) );
   const float* output_data = output_tensor.tensor<float, 2>().data();
 
   // TODO: Get size from output_tensor somehow
@@ -416,22 +418,22 @@ void ObjectDetector::GetLocalizedBinaryClassification(const tensorflow::Tensor& 
   const float boxWidth  = 1.f / (float)numBoxCols;
   const float boxHeight = 1.f / (float)numBoxRows;
 
-  for(int iBox=0; iBox < numBoxRows; ++iBox)
+  int outputIndex = 0;
+  for(int xBox=0; xBox < numBoxRows; ++xBox)
   {
-    for(int jBox=0; jBox < numBoxCols; ++jBox)
+    for(int yBox=0; yBox < numBoxCols; ++yBox)
     {
-      const int outputIndex= iBox*numBoxCols + jBox;
-      const float score = output_data[outputIndex];
+      const float score = output_data[outputIndex++];
       if(score > _params.min_score)
       {
         DetectedObject box{
           .timestamp = timestamp, 
           .score = score,
           .name = "",
-          .xmin = boxWidth  * (float)jBox,
-          .ymin = boxHeight * (float)iBox, 
-          .xmax = boxWidth  * (float)(jBox+1),
-          .ymax = boxHeight * (float)(iBox+1),
+          .xmin = boxWidth  * (float)xBox,
+          .ymin = boxHeight * (float)yBox, 
+          .xmax = boxWidth  * (float)(xBox+1),
+          .ymax = boxHeight * (float)(yBox+1),
         };
 
         objects.push_back(std::move(box));
