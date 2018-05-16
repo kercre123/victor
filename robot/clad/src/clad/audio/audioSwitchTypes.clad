@@ -178,8 +178,7 @@ enum uint_32 Robot_Vic_Scrn_Procedural
 {
   Blink = 3379926649,
   Invalid = 0,
-  Shift_Long = 3156794696,
-  Shift_Short = 3265274760,
+  Shift = 2921160983,
   Squint = 1347280069,
 }
 
