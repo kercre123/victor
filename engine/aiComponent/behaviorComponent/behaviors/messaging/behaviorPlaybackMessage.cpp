@@ -14,6 +14,7 @@
 // #include "engine/aiComponent/behaviorComponent/behaviors/messaging/behaviorPlaybackMessage.h"
 #include "behaviorPlaybackMessage.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/mics/voiceMessageSystem.h"
@@ -90,13 +91,16 @@ void BehaviorPlaybackMessage::OnBehaviorActivated()
 
   // play an animation
 
-  // make sure we were triggered by the correct intent
-  const UserIntent& intent = GetTriggeringUserIntent();
-  DEV_ASSERT_MSG( ( intent.GetTag() == USER_INTENT( message_playback ) ), "BehaviorPlaybackMessage",
-                    "Expecting intent of type [message_playback] but received type [%s]",
-                    UserIntentTagToString( intent.GetTag() ) );
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
+  UserIntentPtr activeIntentPtr = uic.GetActiveUserIntent( USER_INTENT( message_playback ) );
 
-  const UserIntent_RecordMessage& messageIntent = intent.Get_message_record();
+  DEV_ASSERT_MSG( activeIntentPtr != nullptr &&
+                  ( activeIntentPtr->GetTag() == USER_INTENT( message_playback ) ),
+                  "BehaviorPlaybackMessage.OnBehaviorActivated.IncorrectIntent",
+                  "Expecting intent of type [message_playback] but received type [%s]",
+                  activeIntentPtr ? UserIntentTagToString( activeIntentPtr->GetTag() ) : "NULL");
+
+  const UserIntent_RecordMessage& messageIntent = activeIntentPtr->Get_message_record();
   _dVars.messageRecipient = messageIntent.given_name;
 
   PRINT_NAMED_DEBUG( "BehaviorPlaybackMessage", "Playback message request for [%s]", _dVars.messageRecipient.c_str() );

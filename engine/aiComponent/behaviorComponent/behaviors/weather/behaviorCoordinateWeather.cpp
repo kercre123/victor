@@ -159,7 +159,7 @@ void BehaviorCoordinateWeather::OnBehaviorActivated()
   if(cantDoThat){
     if(_iConfig.iCantDoThatBehavior->WantsToBeActivated()){
       DelegateIfInControl(_iConfig.iCantDoThatBehavior.get());
-      uic.ClearUserIntent(intent.GetTag());
+      SmartActivateUserIntent(intent.GetTag());
     }else{
       PRINT_NAMED_ERROR("BehaviorCoordinateWeather.OnBehaviorActivated.ICantDoThatCantBeActivated",
                         "");
@@ -172,7 +172,7 @@ void BehaviorCoordinateWeather::OnBehaviorActivated()
     PRINT_NAMED_ERROR("BehaviorCoordinateWeather.OnBehaviorActivated.UserIntentConditionNotCleared",
                       "Something went wrong for condition %s, clearing intent",
                       weatherResponse.condition.c_str());
-    uic.ClearUserIntent(intent.GetTag());
+    SmartActivateUserIntent(intent.GetTag());
   }
 
 }

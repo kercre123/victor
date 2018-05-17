@@ -73,7 +73,6 @@ static const char* kAlwaysStreamlineKey              = "alwaysStreamline";
 static const char* kWantsToBeActivatedCondConfigKey  = "wantsToBeActivatedCondition";
 static const char* kWantsToCancelSelfConfigKey       = "wantsToCancelSelfCondition";
 static const char* kRespondToUserIntentsKey          = "respondToUserIntents";
-static const char* kClaimUserIntentDataKey           = "claimUserIntentData";
 static const char* kRespondToTriggerWordKey          = "respondToTriggerWord";
 static const char* kResetTimersKey                   = "resetTimers";
 static const char* kEmotionEventOnActivatedKey       = "emotionEventOnActivated";
@@ -192,7 +191,7 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config, const CustomBEIConditi
 , _id(ExtractBehaviorIDFromConfig(config))
 , _behaviorClassID(ExtractBehaviorClassFromConfig(config))
 , _executableType(BehaviorTypesWrapper::GetDefaultExecutableBehaviorType())
-, _claimUserIntentData( true )
+, _intentToDeactivate( UserIntentTag::INVALID )
 , _respondToTriggerWord( false )
 , _emotionEventOnActivated("")
 , _requiredUnlockId( UnlockId::Count )
@@ -284,8 +283,6 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
     _respondToUserIntent = std::make_shared<ConditionUserIntentPending>( json );
     _respondToUserIntent->SetOwnerDebugLabel( GetDebugLabel() );
     _wantsToBeActivatedConditions.push_back( _respondToUserIntent );
-
-    _claimUserIntentData = config.get( kClaimUserIntentDataKey, true ).asBool();
   }
 
   _respondToTriggerWord = config.get(kRespondToTriggerWordKey, false).asBool();
@@ -345,7 +342,6 @@ std::vector<const char*> ICozmoBehavior::GetAllJsonKeys() const
     kWantsToBeActivatedCondConfigKey,
     kWantsToCancelSelfConfigKey,
     kRespondToUserIntentsKey,
-    kClaimUserIntentDataKey,
     kRespondToTriggerWordKey,
     kEmotionEventOnActivatedKey,
     kResetTimersKey,
@@ -718,25 +714,18 @@ void ICozmoBehavior::OnActivatedInternal()
   _activatedTime_s = currTime_s;
   _startCount++;
 
-  // Clear user intent if responding to it. Since _respondToUserIntent is initialized, this
+  // Activate user intent if responding to it. Since _respondToUserIntent is initialized, this
   // behavior has a BEI condition that won't be true unless the specific user intent is pending.
   // If this behavior was activated, then it must have been true, so it suffices to check if it's
   // initialized instead of evaluating it here.
   if( _respondToUserIntent != nullptr ) {
     auto tag = _respondToUserIntent->GetUserIntentTagSelected();
     if( tag != USER_INTENT(INVALID) ) {
-      auto& uic = GetBehaviorComp<UserIntentComponent>();
-      if( _claimUserIntentData ) {
-        // u now pwn it
-        _pendingIntent.reset( uic.ClearUserIntentWithOwnership( tag ) );
-      } else {
-        uic.ClearUserIntentWithPreservation( tag, GetID() );
-      }
+      SmartActivateUserIntent( tag );
     } else {
       // this can happen in tests
       PRINT_NAMED_WARNING("ICozmoBehavior.OnActivatedInternal.InvalidTag",
                           "_respondToUserIntent said it was responding to the INVALID tag" );
-      _pendingIntent.reset();
     }
   }
 
@@ -867,17 +856,16 @@ void ICozmoBehavior::OnDeactivatedInternal()
   _lockingNameToTracksMap.clear();
   _customLightObjects.clear();
   
-  if( (_respondToUserIntent != nullptr) && (!_claimUserIntentData) ) {
-    // make sure a delegate of this behavior claimed the intent that we preserved for them, and
-    // remove it if not
-    auto& uic = GetBehaviorComp<UserIntentComponent>();
-    uic.ResetPreservedUserIntents( GetID() );
-  }
-
   if( _postBehaviorSuggestion != PostBehaviorSuggestions::Invalid ) {
     GetAIComp<AIWhiteboard>().OfferPostBehaviorSuggestion( _postBehaviorSuggestion );
   }
 
+  if( _intentToDeactivate != UserIntentTag::INVALID ) {
+    auto& uic = GetBehaviorComp<UserIntentComponent>();
+    uic.DeactivateUserIntent( _intentToDeactivate );
+    _intentToDeactivate = UserIntentTag::INVALID;
+  }                                         
+  
   DEV_ASSERT(_smartLockIDs.empty(), "ICozmoBehavior.Stop.DisabledReactionsNotEmpty");
 }
 
@@ -1413,18 +1401,14 @@ bool ICozmoBehavior::SmartRemoveCustomLightPattern(const ObjectID& objectID,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-UserIntent& ICozmoBehavior::GetTriggeringUserIntent()
+UserIntentPtr ICozmoBehavior::SmartActivateUserIntent(UserIntentTag tag)
 {
-  if( ANKI_VERIFY( _pendingIntent,
-                   "ICozmoBehavior.GetTriggeringUserIntent.NoIntent",
-                   "Behavior '%s' called this without having been activated because of a user intent",
-                   GetDebugLabel().c_str() ) )
-  {
-    return *_pendingIntent;
-  } else {
-    static UserIntent emptyIntent;
-    return emptyIntent;
-  }
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
+
+  // track the tag so that we can automatically deactivate it when this behavior deactivates
+  _intentToDeactivate = tag;
+
+  return uic.ActivateUserIntent(tag, GetDebugLabel());
 }
 
 

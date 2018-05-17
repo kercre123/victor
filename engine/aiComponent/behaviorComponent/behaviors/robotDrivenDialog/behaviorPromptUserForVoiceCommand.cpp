@@ -229,10 +229,9 @@ void BehaviorPromptUserForVoiceCommand::CheckForPendingIntents()
     static const UserIntentTag unmatched = USER_INTENT(unmatched_intent);
     if(uic.IsUserIntentPending(unmatched))
     {
-      uic.ClearUserIntent(unmatched);
+      SmartActivateUserIntent(unmatched);
       _dVars.intentStatus = EIntentStatus::IntentUnknown;
     }
-
   }
 }
 

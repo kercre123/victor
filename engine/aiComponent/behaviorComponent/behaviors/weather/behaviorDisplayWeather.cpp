@@ -217,9 +217,13 @@ void BehaviorDisplayWeather::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDisplayWeather::OnBehaviorActivated() 
 {
-  const UserIntent& intent = GetTriggeringUserIntent();
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
 
-  const auto& weatherResponse = intent.Get_weather_response();
+  UserIntentPtr intent = uic.GetActiveUserIntent(USER_INTENT(weather_response));
+  DEV_ASSERT(intent != nullptr, "BehaviorDisplayWeather.InvalidTriggeringIntent");
+
+
+  const auto& weatherResponse = intent->Get_weather_response();
 
   // reset dynamic variables
   _dVars = DynamicVariables();

@@ -57,7 +57,7 @@
       "name": "ExploringVoiceCommand",
       "behavior": "ExploringVoiceCommand",
       "getInBehavior": "DriveOffCharger",
-      "clearIntent": "explore_start"
+      "activateIntent": "explore_start"
     },
     {
       "name": "Socializing",
@@ -70,12 +70,12 @@
     {
       "name": "Napping",
       "behavior": "Sleeping",
-      "clearIntent": "system_sleep"
+      "activateIntent": "system_sleep"
     },
     {
       "name": "NappingOnCharger",
       "behavior": "Sleeping",
-      "clearIntent": "system_sleep"
+      "activateIntent": "system_sleep"
     },
     {
       "name": "WakingUp",
@@ -84,7 +84,7 @@
     {
       "name": "ReturningToCharger",
       "behavior": "FindAndGoToHome",
-      "clearIntent": "system_charger"
+      "activateIntent": "system_charger"
     },
     {
       "name": "FailedToFindCharger",
@@ -488,6 +488,12 @@
           "to": "NappingOnCharger",
           "condition": {
             "conditionType": "OnCharger"
+          }
+        },
+        {
+          "to": "WakingUp",
+          "condition": {
+            "conditionType": "TriggerWordPending"
           }
         }
       ]
