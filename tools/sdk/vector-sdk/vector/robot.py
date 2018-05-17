@@ -15,19 +15,41 @@ class Robot:
     def __init__(self, socket):
         self.socket = socket
 
+    # TODO temporary event handling before gRPC protocol is implemented
+    async def wait_for_single_event(self, enable_diagnostics=True, timeout_in_sec=10):
+        try:
+            evt = await asyncio.wait_for(self.socket.recv(), timeout_in_sec)
+            if enable_diagnostics == True:
+                print("Event received: {}".format(evt))
+        except asyncio.TimeoutError:
+            evt = None
+        finally:
+            return evt
+
+    # TODO temporary event handling before gRPC protocol is implemented
+    async def collect_events(self, enable_diagnostics=True, timeout_in_sec=10):
+        collected_evts = []
+        while True:
+            evt = await self.wait_for_single_event(enable_diagnostics, timeout_in_sec)
+            if evt == None:
+                if enable_diagnostics == True:
+                    print("Received {} events.".format(len(collected_evts)))
+                return collected_evts
+            else:
+                collected_evts.append(evt)
+
     # Animations
-    async def get_anim_names(self):
+    async def get_anim_names(self, enable_diagnostics=True):
         message = _clad_message.RequestAvailableAnimations()
-        innerWrappedMessage = _clad_message.Animations(requestAvailableAnimations=message)
+        innerWrappedMessage = _clad_message.Animations(RequestAvailableAnimations=message)
         outerWrappedMessage = _clad_message.ExternalComms(Animations=innerWrappedMessage)
         await self.socket.send(outerWrappedMessage.pack()) 
-        # TODO (VIC-2784): wait for the list...d
-        return []
+        return await self.collect_events(enable_diagnostics, 10)
 
     async def play_anim(self, animation_name, loop_count=1, ignore_body_track = True, ignore_head_track = True, ignore_lift_track = True ):
         message = _clad_message.PlayAnimation(
             animationName = animation_name, numLoops = loop_count, ignoreBodyTrack = ignore_body_track, ignoreHeadTrack = ignore_head_track, ignoreLiftTrack = ignore_lift_track)
-        innerWrappedMessage = _clad_message.Animations(playAnimation=message)
+        innerWrappedMessage = _clad_message.Animations(PlayAnimation=message)
         outerWrappedMessage = _clad_message.ExternalComms(Animations=innerWrappedMessage)
         await self.socket.send(outerWrappedMessage.pack()) 
 

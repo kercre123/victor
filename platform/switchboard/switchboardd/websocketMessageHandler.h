@@ -74,6 +74,8 @@ private:
   Anki::Cozmo::ExternalComms::ExternalComms SendMeetVictorFaceScanComplete(const Anki::Cozmo::ExternalInterface::MeetVictorFaceScanComplete& msg);
   Anki::Cozmo::ExternalComms::ExternalComms SendFaceEnrollmentCompleted(const Anki::Cozmo::ExternalInterface::FaceEnrollmentCompleted& msg);
   Anki::Cozmo::ExternalComms::ExternalComms SendEnrolledNamesResponse(const Anki::Cozmo::ExternalInterface::EnrolledNamesResponse& msg);
+  
+  Anki::Cozmo::ExternalComms::ExternalComms SendAnimationAvailable(const Anki::Cozmo::ExternalInterface::AnimationAvailable& msg);
 
   Signal::SmartHandle _onEngineMessageHandle;
   SendToWebsocketSignal _sendSignal;

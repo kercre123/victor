@@ -441,7 +441,6 @@ union MotorControl {
 //          Robot Animation Messages
 // ====================================================
 
-// PlayAnimation
 message PlayAnimation {
     uint_32 numLoops,
     string animationName,
@@ -450,9 +449,12 @@ message PlayAnimation {
     bool    ignoreLiftTrack=0
 }
 
-// RequestAvailableAnimations
 message RequestAvailableAnimations {
   
+}
+
+message AnimationAvailable {
+  string animName
 }
 
 message SayText {
@@ -465,10 +467,10 @@ message SayText {
 }
 
 union Animations {
-  PlayAnimation                 playAnimation = 0x00,
-  RequestAvailableAnimations    requestAvailableAnimations = 0x01,
+  PlayAnimation                 PlayAnimation = 0x00,
+  RequestAvailableAnimations    RequestAvailableAnimations = 0x01,
   SayText                       SayText = 0x02,
-
+  AnimationAvailable            AnimationAvailable = 0x03,
 }
 
 // ====================================================

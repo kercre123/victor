@@ -109,11 +109,11 @@ void WebsocketMessageHandler::HandleAnimations_SayText(Anki::Cozmo::ExternalComm
 void WebsocketMessageHandler::HandleAnimations(Anki::Cozmo::ExternalComms::Animations unionInstance) {
   using AnimationsTag = Anki::Cozmo::ExternalComms::AnimationsTag;
   switch(unionInstance.GetTag()) {
-    case AnimationsTag::playAnimation:
-      HandleAnimations_PlayAnimation(unionInstance.Get_playAnimation());
+    case AnimationsTag::PlayAnimation:
+      HandleAnimations_PlayAnimation(unionInstance.Get_PlayAnimation());
       break;
-    case AnimationsTag::requestAvailableAnimations:
-      HandleAnimations_RequestAvailableAnimations(unionInstance.Get_requestAvailableAnimations());
+    case AnimationsTag::RequestAvailableAnimations:
+      HandleAnimations_RequestAvailableAnimations(unionInstance.Get_RequestAvailableAnimations());
       break;   
     case AnimationsTag::SayText:
       HandleAnimations_SayText( unionInstance.Get_SayText() );
@@ -370,6 +370,14 @@ ExtCommsMessage WebsocketMessageHandler::SendEnrolledNamesResponse(const Anki::C
   return ExtCommsMessage::CreateMeetVictor(std::move(externalComms));
 }
 
+ExtCommsMessage WebsocketMessageHandler::SendAnimationAvailable(const Anki::Cozmo::ExternalInterface::AnimationAvailable& msg) {
+  Anki::Cozmo::ExternalComms::AnimationAvailable anim;
+  anim.animName = msg.animName;
+
+  auto externalComms = Anki::Cozmo::ExternalComms::Animations::CreateAnimationAvailable(std::move(anim));
+  return ExtCommsMessage::CreateAnimations(std::move(externalComms));
+}
+
 // Convert from EngineToGame to ExternalComms
 bool WebsocketMessageHandler::Send(const E2GMessage& e2gMessage) {
   ExtCommsMessage result;
@@ -399,6 +407,11 @@ bool WebsocketMessageHandler::Send(const E2GMessage& e2gMessage) {
     case E2GMessageTag::EnrolledNamesResponse:
     {
       result = SendEnrolledNamesResponse(e2gMessage.Get_EnrolledNamesResponse());
+      break;
+    }
+    case E2GMessageTag::AnimationAvailable:
+    {
+      result = SendAnimationAvailable(e2gMessage.Get_AnimationAvailable());
       break;
     }
     default:
