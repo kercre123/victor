@@ -55,6 +55,8 @@ public:
   static const std::string kRtsKeyPath;
 
 private:
+  static bool MakeDirectory(std::string directory);
+  
   static const std::string kSaveFolder;
   static const std::ios_base::openmode kWriteMode;
   static const std::ios_base::openmode kReadMode;
