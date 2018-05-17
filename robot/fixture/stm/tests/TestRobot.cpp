@@ -645,6 +645,8 @@ void TestRobotRange(robot_range_t *testlift, robot_range_t *testhead)
 
 void TestRobotRange(void)
 {
+  #define RELAXED_TEST_FOR_DVT4_STICKY_LIFT_HEAD 1
+  
   //High Power
   if( g_fixmode == FIXMODE_ROBOT1 ) {
     //NO HEAD/ARMS ATTACHED = NO STOP!
@@ -656,8 +658,15 @@ void TestRobotRange(void)
   } else if( g_fixmode <= FIXMODE_ROBOT3 ) { //skip PACKOUT
     //lift travel ~200-220 in each direction
     //head travel ~540-560 in each direction
-    robot_range_t lift = { /*power*/  75, /*travel_min*/ 170, /*travel_max*/ 260, /*speed_min*/ 1300 };
-    robot_range_t head = { /*power*/ 100, /*travel_min*/ 480, /*travel_max*/ 600, /*speed_min*/ 2000 };
+    #if RELAXED_TEST_FOR_DVT4_STICKY_LIFT_HEAD > 0
+      #warning "recalibrate prior to MP"
+      robot_range_t lift = { /*power*/  75, /*travel_min*/ 170, /*travel_max*/ 260, /*speed_min*/ 900 };
+      robot_range_t head = { /*power*/ 100, /*travel_min*/ 480, /*travel_max*/ 600, /*speed_min*/ 2000 };
+    #else
+      robot_range_t lift = { /*power*/  75, /*travel_min*/ 170, /*travel_max*/ 260, /*speed_min*/ 1300 };
+      robot_range_t head = { /*power*/ 100, /*travel_min*/ 480, /*travel_max*/ 600, /*speed_min*/ 2000 };
+    #endif
+    
     TestRobotRange( &lift, &head );
   }
   
@@ -672,8 +681,15 @@ void TestRobotRange(void)
   } else { //ROBOT3,PACKOUT
     //lift travel ~200-220 in each direction
     //head travel ~540-560 in each direction
-    robot_range_t lift = { /*power*/  45, /*travel_min*/ 170, /*travel_max*/  300, /*speed_min*/ 550 };
-    robot_range_t head = { /*power*/  50, /*travel_min*/ 480, /*travel_max*/  650, /*speed_min*/ 700 };
+    #if RELAXED_TEST_FOR_DVT4_STICKY_LIFT_HEAD > 0
+      #warning "recalibrate prior to MP"
+      robot_range_t lift = { /*power*/  65, /*travel_min*/ 170, /*travel_max*/  300, /*speed_min*/ 550 };
+      robot_range_t head = { /*power*/  60, /*travel_min*/ 480, /*travel_max*/  650, /*speed_min*/ 700 };
+    #else
+      robot_range_t lift = { /*power*/  45, /*travel_min*/ 170, /*travel_max*/  300, /*speed_min*/ 550 };
+      robot_range_t head = { /*power*/  50, /*travel_min*/ 480, /*travel_max*/  650, /*speed_min*/ 700 };
+    #endif
+    
     TestRobotRange( &lift, &head );
   }
   
