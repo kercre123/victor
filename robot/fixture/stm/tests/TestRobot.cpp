@@ -758,11 +758,17 @@ void EmrChecks(void)
 
 void EmrUpdate(void)
 {
+  #define DVT4_DISABLE_PACKOUT_FLAG_DEBUG 1
+  
   if( g_fixmode == FIXMODE_ROBOT3 ) {
     rcomSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 1 );
   }
   if( g_fixmode == FIXMODE_PACKOUT ) {
+    #if DVT4_DISABLE_PACKOUT_FLAG_DEBUG > 0
+    #warning "packout flag update disabled"
+    #else
     rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 1 );
+    #endif
   }
 }
 
@@ -1321,7 +1327,6 @@ TestFunction* TestRobot3GetTests(void) {
 
 TestFunction* TestRobotPackoutGetTests(void) { 
   static TestFunction m_tests[] = {
-    TestRobotButton,
     TestRobotInfo,
     EmrChecks, //check previous test results and reset status flags
     TestRobotSensors,
