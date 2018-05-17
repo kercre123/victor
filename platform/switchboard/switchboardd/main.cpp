@@ -33,6 +33,12 @@
 #include "cutils/properties.h"
 #include "switchboardd/christen.h"
 #include "switchboardd/main.h"
+#include "clad/externalInterface/messageGameToEngine.h"
+
+using G2EMessageTag = Anki::Cozmo::ExternalInterface::MessageGameToEngineTag;
+using G2EMessage = Anki::Cozmo::ExternalInterface::MessageGameToEngine;
+using E2GMessageTag = Anki::Cozmo::ExternalInterface::MessageEngineToGameTag;
+using E2GMessage = Anki::Cozmo::ExternalInterface::MessageEngineToGame;
 
 // --------------------------------------------------------------------------------------------------------------------
 // Switchboard Daemon
@@ -52,8 +58,10 @@ void Daemon::Start() {
   Christen();
 
   InitializeEngineComms();
-  _websocketServer = std::make_unique<WebsocketServer>(_engineMessagingClient);
-  _websocketServer->Start();
+  // InitializeGrpcServer();
+  // NOTE: this would need to be handled in our own loop or some other thread or something
+  _grpcServer = std::make_unique<SdkServer>(_engineMessagingClient);
+  _grpcServer->Run();
   Log::Write("Finished Starting");
 
   // Initialize Ble Ipc Timer

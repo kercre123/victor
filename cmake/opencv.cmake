@@ -76,8 +76,7 @@ if(VICOS)
       libpng
       libtiff
       #cpufeatures # missing for vicos build?
-      libjpeg # NOT using turbo jpeg below
-      libprotobuf) 
+      libjpeg) # NOT using turbo jpeg below
 else()
   set(OPENCV_EXTERNAL_LIBS
       IlmImf
@@ -88,8 +87,7 @@ else()
       libjpeg 
       ippicv 
       ippiw 
-      ittnotify 
-      libprotobuf)
+      ittnotify)
 endif()
 
 foreach(LIB ${OPENCV_EXTERNAL_LIBS})
@@ -98,8 +96,12 @@ foreach(LIB ${OPENCV_EXTERNAL_LIBS})
         IMPORTED_LOCATION
         ${OPENCV_3RDPARTY_LIB_DIR}/lib${LIB}.a)
 endforeach()
+add_library(libprotobuf-s STATIC IMPORTED)
+set_target_properties(libprotobuf-s PROPERTIES
+    IMPORTED_LOCATION
+    ${OPENCV_3RDPARTY_LIB_DIR}/liblibprotobuf.a)
 
-message(STATUS "including OpenCV-${OPENCV_VERSION}, [Modules: ${OPENCV_LIBS}], [3rdParty: ${OPENCV_EXTERNAL_LIBS}]")
+message(STATUS "including OpenCV-${OPENCV_VERSION}, [Modules: ${OPENCV_LIBS}], [3rdParty: ${OPENCV_EXTERNAL_LIBS} libprotobuf-s]")
 
 list(APPEND OPENCV_LIBS ${OPENCV_EXTERNAL_LIBS})
 
@@ -121,7 +123,7 @@ if(VICOS)
   set(INSTALL_LIBS
     "${OPENCV_LIBS}")
   
-  message(STATUS "opencv libs: ${INSTALL_LIBS}")
+  message(STATUS "opencv libs: ${INSTALL_LIBS} libprotobuf-s")
   
   set(OUTPUT_FILES "")
   
@@ -138,7 +140,20 @@ if(VICOS)
           VERBATIM
       )
       list(APPEND OUTPUT_FILES ${DST_PATH})
-  endforeach() 
+  endforeach()
+  
+  get_target_property(LIB_PATH libprotobuf-s IMPORTED_LOCATION)
+  get_filename_component(LIB_FILENAME ${LIB_PATH} NAME)
+  set(DST_PATH "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${LIB_FILENAME}") 
+  message(STATUS "copy opencv lib: ${lib} ${LIB_PATH} -> ${DST_PATH}")
+  add_custom_command(
+      OUTPUT "${DST_PATH}"
+      COMMAND ${CMAKE_COMMAND}
+      ARGS -E copy_if_different "${LIB_PATH}" "${DST_PATH}"
+      COMMENT "copy ${LIB_PATH}"
+      VERBATIM
+  )
+  list(APPEND OUTPUT_FILES ${DST_PATH})
   
   add_custom_target(copy_opencv_libs ALL DEPENDS ${OUTPUT_FILES})
 

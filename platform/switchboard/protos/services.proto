@@ -1,0 +1,65 @@
+// Top-level service definitions
+//
+// There are a couple possible designs that I
+// will sepcify in this document itself to get
+// a more complete picture of the design space.
+// I aim to have a recommendation when finished
+// prototyping.
+
+syntax = "proto3";
+
+
+import "google/protobuf/empty.proto";
+import "messages.proto";
+
+package test;
+// This service will attempt to mimic CLAD.
+// To achieve this, we will open a single
+// connection between user and robot. That
+// connection will pass back and forth the
+// equivalent unions to GameToEngine and
+// EngineToGame.
+// Note to self: may benefit highly from:
+// https://grpc.io/grpc/cpp/md_doc_cpp_perf_notes.html
+service MimicCLAD {
+    rpc ExternalInterface(stream GameToEngine) returns (stream EngineToGame);
+}
+
+// This service contains many rpc definitions,
+// but it breaks away from the structure of the
+// old clad messages we used. Would require a more
+// complicated mapping from Engine's CLAD ->
+// switchboard's gRPC.
+service MinimalConnection {
+    rpc ListenForEvents(google.protobuf.Empty) returns (stream EngineEvents);
+    rpc GetStatus(google.protobuf.Empty) returns (RobotStatusResponse); // Might make sense as an engine event
+    rpc SingleAction(SingleActionRequest) returns (SingleActionResponse);
+    rpc StreamAction(StreamActionRequest) returns (stream StreamActionResponse);
+}
+
+// Note: from a service perspective I prefer this one or MinimalConnection
+// Increased fidelity from MinimalConnection
+service MediumConnection {
+    rpc ListenForEvents(google.protobuf.Empty) returns (stream EngineEvents);
+    rpc GetStatus(google.protobuf.Empty) returns (RobotStatusResponse);
+    // Expanded from SingleAction
+    rpc DirectControl(DirectControlRequest) returns (DirectControlResponse);
+    rpc MeetVictor(MeetVictorRequest) returns (MeetVictorResponse);
+    // Expanded from StreamAction
+    rpc AVFeed(AVFeedRequest) returns (stream AVFeedResponse);
+}
+
+// Increased fidelity from MediumConnection
+service ManyConnection {
+    rpc ListenForEvents(google.protobuf.Empty) returns (stream EngineEvents);
+    rpc GetStatus(google.protobuf.Empty) returns (RobotStatus);
+    // Expanded from DirectControl
+    rpc Drive(DriveRequest) returns (DriveResponse);
+    rpc Turn(TurnRequest) returns (TurnResponse);
+    rpc SayText(SayTextRequest) returns (SayTextResponse);
+    // Expanded from MeetVictor
+    // TODO: break MeetVictor into individual parts?
+    // Expanded from AVFeed
+    rpc CameraFeed(CameraRequest) returns (stream CameraResponse);
+    rpc AudioFeed(AudioRequest) returns (stream AudioResponse);
+}

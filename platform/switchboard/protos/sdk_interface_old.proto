@@ -1,0 +1,67 @@
+// TODO: Header
+
+syntax = "proto3";
+
+package sdkinterface;
+
+// TODO: desciption
+service SDKInterface {
+  // TODO: desciption
+  // rpc StreamMessages(stream DeviceToRobot) returns (stream RobotToDevice) {}
+  rpc EventStream(ListOptions) returns (stream Event) {
+  }
+  rpc ListAnimations(ListOptions) returns (AnimationList) {} // change this to an AnimationList Object
+  rpc PlayAnimation(Animation) returns (GenericResult) {}
+  rpc DriveWheels(WheelMotors) returns (GenericResult) {}
+}
+
+enum Error{
+  SUCCESS = 0;
+  FAILURE = 1;
+}
+
+message ListOptions {
+  string filter = 1;
+}
+
+message Animation {
+  string name = 1;
+}
+
+message AnimationList {
+  repeated Animation animations = 1; 
+}
+
+message GenericResult {
+  string description = 1;
+  Error err_no = 2;
+}
+
+// TODO: description
+message WheelMotors {
+  float left_wheel_mmps   = 1;
+  float right_wheel_mmps  = 2;
+  float left_wheel_mmps2  = 3;
+  float right_wheel_mmps2 = 4;
+}
+
+// TODO: Use the proper values when I figure them out
+message Event {
+  bytes data = 1;
+}
+
+// message DeviceToRobot {
+//   int64 version = 1;
+//   oneof msg {
+//     DriveWheels drive = 2;
+//       // fill in with all the possible game to engine message types
+//   }
+// } 
+
+// message RobotToDevice {
+//   int64 version = 1;
+//   oneof msg {
+//     Event event = 2;
+//     // fill in with all the possible engine to game message types
+//   }
+// }

@@ -13,6 +13,7 @@
  *
  **/
 
+#include <iostream>
 #include <stdio.h>
 #include <chrono>
 #include <thread>
@@ -34,6 +35,10 @@ uint8_t EngineMessagingClient::sMessageData[2048];
 EngineMessagingClient::EngineMessagingClient(struct ev_loop* evloop)
 : loop_(evloop)
 {}
+
+EngineMessagingClient::~EngineMessagingClient() {
+  logi("Destructing the messaging client!");
+}
 
 bool EngineMessagingClient::Init() {
   ev_timer_init(&_handleEngineMessageTimer.timer, 
@@ -105,6 +110,10 @@ void EngineMessagingClient::SendMessage(const GMessage& message) {
   memcpy(buffer, &message_size, kMessageHeaderLength);
 
   _client.Send((char*)buffer, sizeof(buffer));
+}
+
+void EngineMessagingClient::Test() {
+  logi("Shawn Test");
 }
 
 void EngineMessagingClient::SetPairingPin(std::string pin) {

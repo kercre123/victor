@@ -32,6 +32,8 @@ class EngineMessagingClient {
 public:
   using EngineMessageSignal = Signal::Signal<void (Anki::Cozmo::ExternalInterface::MessageEngineToGame)>;
   explicit EngineMessagingClient(struct ev_loop* loop);
+  ~EngineMessagingClient();
+  void Test();
   bool Init();
   bool Connect();
   bool Disconnect();

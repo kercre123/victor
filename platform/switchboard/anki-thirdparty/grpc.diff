@@ -1,0 +1,48 @@
+diff --git a/examples/csharp/helloworld/GreeterClient/Program.cs b/examples/csharp/helloworld/GreeterClient/Program.cs
+index 38e7625d14..51a8acc999 100644
+--- a/examples/csharp/helloworld/GreeterClient/Program.cs
++++ b/examples/csharp/helloworld/GreeterClient/Program.cs
+@@ -22,7 +22,7 @@ namespace GreeterClient
+     {
+         public static void Main(string[] args)
+         {
+-            Channel channel = new Channel("127.0.0.1:50051", ChannelCredentials.Insecure);
++            Channel channel = new Channel("192.168.42.254:50051", ChannelCredentials.Insecure);
+ 
+             var client = new Greeter.GreeterClient(channel);
+             String user = "you";
+diff --git a/examples/python/helloworld/greeter_client.py b/examples/python/helloworld/greeter_client.py
+index a0aeb47bd7..70a923f0cb 100644
+--- a/examples/python/helloworld/greeter_client.py
++++ b/examples/python/helloworld/greeter_client.py
+@@ -22,9 +22,9 @@ import helloworld_pb2_grpc
+ 
+ 
+ def run():
+-    channel = grpc.insecure_channel('localhost:50051')
++    channel = grpc.insecure_channel('192.168.42.254:50051')
+     stub = helloworld_pb2_grpc.GreeterStub(channel)
+-    response = stub.SayHello(helloworld_pb2.HelloRequest(name='you'))
++    response = stub.SayHello(helloworld_pb2.HelloRequest(name='you rock!'))
+     print("Greeter client received: " + response.message)
+ 
+ 
+diff --git a/include/grpcpp/impl/codegen/proto_buffer_writer.h b/include/grpcpp/impl/codegen/proto_buffer_writer.h
+index fdff4676b0..26d2bb51a2 100644
+--- a/include/grpcpp/impl/codegen/proto_buffer_writer.h
++++ b/include/grpcpp/impl/codegen/proto_buffer_writer.h
+@@ -86,7 +86,7 @@ class ProtoBufferWriter : public ::grpc::protobuf::io::ZeroCopyOutputStream {
+     //    or our maximum allocation size
+     // 3. Provide the slice start and size available
+     // 4. Add the slice being returned to the slice buffer
+-    size_t remain = total_size_ - byte_count_;
++    size_t remain = size_t(total_size_ - byte_count_);
+     if (have_backup_) {
+       /// If we have a backup slice, we should use it first
+       slice_ = backup_slice_;
+diff --git a/third_party/protobuf b/third_party/protobuf
+--- a/third_party/protobuf
++++ b/third_party/protobuf
+@@ -1 +1 @@
+-Subproject commit b5fbb742af122b565925987e65c08957739976a7
++Subproject commit b5fbb742af122b565925987e65c08957739976a7-dirty

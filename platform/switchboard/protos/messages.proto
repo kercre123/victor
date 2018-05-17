@@ -1,0 +1,155 @@
+// Top-level service definitions
+//
+// There are a couple possible designs that I
+// will sepcify in this document itself to get
+// a more complete picture of the design space.
+// I aim to have a recommendation when finished
+// prototyping.
+
+syntax = "proto3";
+
+package test;
+// v MimicCLAD messages
+message GameToEngine {
+    int version = 1;
+    oneof msg {
+        DriveRequest drive = 1;
+        StopRequest stop = 2;
+        // fill in with all the possible game to engine message types
+    }
+} 
+
+message EngineToGame {
+    oneof msg {
+        Status status = 1;
+        SomeOther other = 2;
+        // fill in with all the possible engine to game message types
+    }
+}
+
+message DriveRequest {
+    float lwheel_mmps = 1;
+    float rwheel_mmps = 2;
+}
+
+message StopRequest {
+}
+
+message Status {
+    string log = 1;
+}
+
+message SomeOther {
+    string thing1 = 1;
+    string thing2 = 2;
+}
+// ^ MimicCLAD messages
+
+// v MinimalConnection messages
+    message EngineEvents {
+        oneof events {
+            string test = 1;
+            // fill in with all the possible events
+        }
+    }
+    message RobotStatusResponse {
+        enum Status {
+            GOOD = 0;
+            BAD = 1;
+            // fill in with actual states
+        }
+        Status status = 1;
+    }
+
+    message SingleActionRequest {
+        oneof actions {
+            string test = 1;
+            // fill in with all the single actions
+        }
+    }
+    
+    message SingleActionResponse {
+        oneof responses {
+            string test = 1;
+            // fill in with all the single action responses
+        }
+    }
+    
+    message StreamActionRequest {
+        enum Type {
+            OFF = 0;
+            VIDEO = 1;
+            AUDIO = 2;
+            AV = 3;
+        }
+        Type type = 1;
+    }
+
+    message StreamActionResponse {
+        int64 video_frame = 1; // the type is totally wrong
+        int64 audio_frame = 2;
+        // others?
+    }
+// ^ MinimalConnection messages
+
+// v MediumConnection messages
+    // EngineEvents implemented above
+    // RobotStatusResponse implemented above
+    message DirectControlRequest {
+        oneof controls {
+            string test = 1;
+            // fill in with all the direct controls
+        }
+    }
+    
+    message DirectControlResponse {
+        oneof responses {
+            string test = 1;
+            // fill in with all the direct control responses
+        }
+    }
+    
+    message MeetVictorRequest {
+        oneof meet_victor {
+            string test = 1;
+            // fill in with all the meet victor messages
+        }
+    }
+    
+    message MeetVictorResponse {
+        oneof responses {
+            string test = 1;
+            // fill in with all the meet victor responses
+        }
+    }
+    
+    message AVFeedRequest {
+        enum Type {
+            OFF = 0;
+            VIDEO = 1;
+            AUDIO = 2;
+            AV = 3;
+        }
+        Type type = 1;
+    }
+    
+    message AVFeedResponse {
+        int64 video_frame = 1; // the type is totally wrong
+        int64 audio_frame = 2;
+    }
+// ^ MediumConnection messages
+
+// // Increased fidelity from MediumConnection
+// service ManyConnection {
+//     rpc ListenForEvents(google.protobuf.Empty) returns (stream EngineEvents);
+//     rpc GetStatus(google.protobuf.Empty) returns (RobotStatus);
+//     // Expanded from DirectControl
+//     rpc Drive(DriveRequest) returns (DriveResponse);
+//     rpc Turn(TurnRequest) returns (TurnResponse);
+//     rpc SayText(SayTextRequest) returns (SayTextResponse);
+//     // Expanded from MeetVictor
+//     // TODO: break MeetVictor into individual parts?
+//     // Expanded from AVFeed
+//     rpc CameraFeed(CameraRequest) returns (stream CameraResponse);
+//     rpc AudioFeed(AudioRequest) returns (stream AudioResponse);
+// }
