@@ -4,21 +4,24 @@
  * Author: Andrew Stein
  * Date:   1/29/2018
  *
- * Description: Standalone process to run forward inference through a TensorFlow model.
- *              Currently uses the file system as a poor man's IPC.
+ * Description: Standalone process to run forward inference through a variety of neural network platforms,
+ *              specified at compile time defines (e.g. TensorFlow, OpenCV DNN, or TF Lite).
+ *
+ *              Currently uses the file system as a poor man's IPC to communicate with the "standalone"
+ *              ObjectDetector implementation in vic-engine's Vision System.
  *
  *              Can be used as a Webots controller when compiled with -DSIMULATOR
  *
  * Copyright: Anki, Inc. 2018
  **/
 
-#if defined(TENSORFLOW)
+#if defined(VIC_NEURALNETS_USE_TENSORFLOW)
 #  include "objectDetector_tensorflow.h"
-#elif defined(CAFFE2)
+#elif defined(VIC_NEURALNETS_USE_CAFFE2)
 #  include "objectDetector_caffe2.h"
-#elif defined(OPENCV_DNN)
+#elif defined(VIC_NEURALNETS_USE_OPENCV_DNN)
 #  include "objectDetector_opencvdnn.h"
-#elif defined(TFLITE)
+#elif defined(VIC_NEURALNETS_USE_TFLITE)
 #  include "objectDetector_tflite.h"
 #else 
 #  error TENSORFLOW or CAFFE2 or OPENCVDNN or TFLITE must be defined
