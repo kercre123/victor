@@ -745,7 +745,7 @@ void EmrChecks(void)
 
 void EmrUpdate(void)
 {
-  #define DVT4_DISABLE_PACKOUT_FLAG_DEBUG 1
+  #define DVT4_DISABLE_PACKOUT_FLAG_DEBUG 0
   
   if( g_fixmode == FIXMODE_ROBOT3 ) {
     rcomSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 1 );
