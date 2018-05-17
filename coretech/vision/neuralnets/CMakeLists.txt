@@ -105,6 +105,5 @@ target_link_libraries(vic-neuralnets
   ${PLATFORM_LIBS}
 )
 
-# Can't strip because of TensorFlow's factory pattern: needed Ops will be lost
-# anki_build_strip(TARGET vic-neuralnets)
+anki_build_strip(TARGET vic-neuralnets)
 
