@@ -15,6 +15,7 @@
 #include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"
 #include "cannedAnimLib/proceduralFace/proceduralFace.h"
 #include "cannedAnimLib/spriteSequences/spriteSequenceLoader.h"
+#include "coretech/vision/engine/image_impl.h"
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
 #include "util/dispatchWorker/dispatchWorker.h"
 
@@ -143,17 +144,14 @@ void SpriteSequenceLoader::LoadSequenceImageFrames(Vision::SpriteCache* cache,
                         frameNum, filename.c_str());
       return;
     }
-        
-    // Add empty frames if there's a gap
-    if(frameNum > 1) { 
-      s32 emptyFramesAdded = 0;
-      while(sequence.GetNumFrames() < frameNum-1) {
-        auto handle = std::make_shared<Vision::SpriteWrapper>(new Vision::ImageRGBA());
-        sequence.AddFrame(handle);
-        ++emptyFramesAdded;
-      }
+    
+    if(frameNum < sequence.GetNumFrames()){
+      PRINT_NAMED_ERROR("SpriteSequenceContainer.LoadSequenceImageFrames",
+                        "Image %s has frame number %d, but sequence already has %d frames - skipping frame",
+                        filename.c_str(), frameNum, sequence.GetNumFrames());
+      continue;
     }
-
+    
     // Load the image
     const std::string fullFilename = Util::FileUtils::FullFilePath({fullDirectoryPath, filename});
     Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
@@ -163,8 +161,25 @@ void SpriteSequenceLoader::LoadSequenceImageFrames(Vision::SpriteCache* cache,
     }else{
       handle = cache->GetSpriteHandle(fullFilename, faceHueAndSaturation, cacheSpecs);
     }
+    
+    // Add empty frames if there's a gap
+    if(frameNum != sequence.GetNumFrames()){
+      const auto numMissingFrames = frameNum - sequence.GetNumFrames();
+      const auto& sprite = handle->GetSpriteContentsGrayscale();
+      const auto numRows = sprite.GetNumRows();
+      const auto numCols = sprite.GetNumCols();
+      const Vision::PixelRGBA blankPixel(0,0,0,255);
+      auto emptyImgHandle = std::make_shared<Vision::SpriteWrapper>(new Vision::ImageRGBA(numRows,numCols, blankPixel));
+      for(auto i = 0; i < numMissingFrames; i++){
+        sequence.AddFrame(emptyImgHandle);
+        PRINT_NAMED_INFO("SpriteSequenceLoader.LoadSequenceImageFrames.FillingGapWithEmptyImage",
+                         "Sequence %s does not have an image for frame number %d, adding empty image",
+                         SpriteNameToString(sequenceName), sequence.GetNumFrames() + i);
+      }
+    }
+
     sequence.AddFrame(handle);
-  }
+  } // end for (auto fileIter)
   
 
   // Place the sequence in the appropriate map

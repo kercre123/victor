@@ -27,17 +27,13 @@ structure UserIntent_TimeInSeconds
 
 structure UserIntent_WeatherResponse
 {
-  string  city,
-  string  state,
-  string  country,
+  string  speakableLocationString,
+  string  isForecast,
 
   string  condition,
 
-  uint_32 temperature,
+  int_8 temperature,
   string  temperatureUnit,
-
-  string  wordIfForecast,
-  string  dateTime,
 
 }
 

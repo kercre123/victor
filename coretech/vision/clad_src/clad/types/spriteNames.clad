@@ -8,6 +8,9 @@ namespace Vision {
 
 enum uint_8 SpriteName
 {
+  // Utility Sprites
+  Empty_Sprite,
+
   // Independent Sprites
   Clock_00,
   Clock_01,
@@ -75,6 +78,9 @@ enum uint_8 SpriteName
 }
 
 enum_concept bool IsSpriteSequence[SpriteName] {
+  // Utility Sprites
+  Empty_Sprite = 0,
+
   // Independent Sprites
   Clock_00 = 0,
   Clock_01 = 0,

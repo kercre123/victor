@@ -21,6 +21,24 @@
 namespace Anki {
 namespace Vision {
 
+namespace{
+
+const std::string kEmptyBoxLayout = R"json(
+  {
+    "layerName" : "EmptyBoxLayer",
+    "spriteBoxLayout" : [
+      {
+        "spriteBoxName": "EmptyBox",
+        "spriteRenderMethod" : "RGBA",
+        "x": -1,
+        "y": -1,
+        "width": 1,
+        "height": 1
+      }
+    ]
+    })json";
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CompositeImage::CompositeImage(SpriteCache* spriteCache,
                                ConstHSImageHandle faceHSImageHandle,
@@ -276,6 +294,28 @@ uint CompositeImage::GetFullLoopLength(){
 
   return maxSequenceLength;
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CompositeImage::AddEmptyLayer(SpriteSequenceContainer* seqContainer)
+{
+  Json::Reader reader;
+  Json::Value config;
+  const bool parsedOK = reader.parse(kEmptyBoxLayout, config, false);
+  if(!ANKI_VERIFY(parsedOK, "CompositeImage.AddEmptyLayer.ParsingIssue", "")){
+    return;
+  }
+  
+  static CompositeImageLayer layer(config);
+  if(layer.GetImageMap().size() == 0){
+    CompositeImageLayer::SpriteEntry entry(_spriteCache, seqContainer, SpriteName::Empty_Sprite);
+    layer.AddToImageMap(SpriteBoxName::EmptyBox, entry);
+  }
+  auto intentionalCopy = layer;
+  AddLayer(std::move(intentionalCopy));
+    
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CompositeImage::ProcessAllSpriteBoxes(AllSpriteBoxDataFunc processCallback) const

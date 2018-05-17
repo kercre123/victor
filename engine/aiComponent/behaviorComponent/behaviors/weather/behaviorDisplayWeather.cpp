@@ -198,6 +198,16 @@ void BehaviorDisplayWeather::InitBehavior()
     }
   }
   
+  // If the composite image is empty, we still need to send a template (that has no image map)
+  // so that the temperature will have a layer to be displayed on
+  if(_iConfig->compImg->GetLayerLayoutMap().empty()){
+    auto* seqContainer = dataAccessorComp.GetSpriteSequenceContainer();
+    _iConfig->compImg->AddEmptyLayer(seqContainer);
+    PRINT_NAMED_INFO("BehaviorDisplayWeather.InitBehavior.AddingEmptyCompositeImage",
+                     "Composite image does not exist or behavior %s, adding one so that temperature can be displayed",
+                     GetDebugLabel().c_str());
+  }
+  
   // Get the animation ptr
   const auto* animContainer = dataAccessorComp.GetCannedAnimationContainer();
   if((animContainer != nullptr) && !_iConfig->animationName.empty()){
@@ -319,7 +329,8 @@ bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenhei
                         Vision::SpriteBoxName::TemperatureOnesDigit, 
                         _iConfig->temperatureAssets[onesDig]);
   }
-  if(tensDig > 0){
+  // Don't show leading zeroes
+  if((tensDig > 0) || (hundredsDig > 0)){
     layer.AddToImageMap(spriteCache, seqContainer,
                         Vision::SpriteBoxName::TemperatureTensDigit, 
                         _iConfig->temperatureAssets[tensDig]);

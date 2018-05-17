@@ -1131,6 +1131,12 @@ namespace Vision {
     
   }
   
+  ImageRGBA::ImageRGBA(s32 nrows, s32 ncols, const PixelRGBA& fillValue)
+  : ImageBase<PixelRGBA>(nrows, ncols, fillValue)
+  {
+    
+  }
+  
   ImageRGBA::ImageRGBA(s32 nrows, s32 ncols, u32* data)
   : ImageBase<PixelRGBA>(nrows, ncols, reinterpret_cast<PixelRGBA*>(data))
   {

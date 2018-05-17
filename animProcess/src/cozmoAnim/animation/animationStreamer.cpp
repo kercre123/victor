@@ -759,8 +759,10 @@ namespace Cozmo {
     }
 
 
-    auto& keyframe = _streamingAnimation->GetTrack<SpriteSequenceKeyFrame>().GetCurrentKeyFrame();
-    if(keyframe.HasCompositeImage()){
+    auto& track = _streamingAnimation->GetTrack<SpriteSequenceKeyFrame>();
+    if(track.HasFramesLeft() &&
+       track.GetCurrentKeyFrame().HasCompositeImage()){
+      auto& keyframe =  track.GetCurrentKeyFrame();
       auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
       auto* spriteSeqContainer = _context->GetDataLoader()->GetSpriteSequenceContainer();
       SpriteSequenceKeyFrame::CompositeImageUpdateSpec spec(spriteCache, 
@@ -1444,13 +1446,21 @@ namespace Cozmo {
     
     // Non-procedural faces (raw pixel data/images) take precedence over procedural faces (parameterized faces
     // like idles, keep alive, or normal animated faces)
-    const bool shouldPlayFaceAnim = !IsTrackLocked((u8)AnimTrackFlag::FACE_IMAGE_TRACK) &&
-                                    spriteSeqTrack.HasFramesLeft() &&
-                                    spriteSeqTrack.GetCurrentKeyFrame().IsTimeToPlay(_relativeStreamTime_ms) &&
-                                    spriteSeqTrack.GetCurrentKeyFrame().NewImageContentAvailable(_relativeStreamTime_ms);
-
-        
-    if(shouldPlayFaceAnim)
+    const bool spriteSeqHasData = !IsTrackLocked((u8)AnimTrackFlag::FACE_IMAGE_TRACK) &&
+                                  spriteSeqTrack.HasFramesLeft() &&
+                                  spriteSeqTrack.GetCurrentKeyFrame().IsTimeToPlay(_relativeStreamTime_ms);
+    
+    bool newSpriteSeqData =  false;
+    bool needToRenderFaceIntoCompositeImage = false;
+    if(spriteSeqHasData){
+      auto faceKeyFrame = spriteSeqTrack.GetCurrentKeyFrame();
+      
+      newSpriteSeqData = faceKeyFrame.NewImageContentAvailable(_relativeStreamTime_ms);
+      needToRenderFaceIntoCompositeImage = faceKeyFrame.HasCompositeImage() && layeredKeyFrames.haveFaceKeyFrame;
+    }
+    
+    
+    if(newSpriteSeqData || needToRenderFaceIntoCompositeImage)
     {
       auto & faceKeyFrame = spriteSeqTrack.GetCurrentKeyFrame();
       

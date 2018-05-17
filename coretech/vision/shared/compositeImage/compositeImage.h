@@ -101,6 +101,11 @@ public:
   s32 GetWidth(){ return _width;}
   s32 GetHeight(){ return _height;}
 
+  // Utility function which adds the "empty layer" to the image - useful for instances
+  // where a blank composite image is needed at the start of an animation so that updates
+  // can be applied at a non-zero time
+  void AddEmptyLayer(SpriteSequenceContainer* seqContainer);
+
 private:
   using SpriteBox = CompositeImageLayer::SpriteBox;
   using SpriteEntry = CompositeImageLayer::SpriteEntry;

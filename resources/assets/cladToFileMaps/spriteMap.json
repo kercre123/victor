@@ -1,5 +1,9 @@
 [
   {
+    "CladEvent": "Empty_Sprite",
+    "SpriteName": "empty_sprite"
+  },
+  {
     "CladEvent": "Clock_00",
     "SpriteName": "clock_00"
   },

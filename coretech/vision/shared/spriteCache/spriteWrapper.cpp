@@ -255,6 +255,15 @@ void SpriteWrapper::LoadSprite(Image* outImage) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SpriteWrapper::LoadSprite(ImageRGBA* outImage, const HSImageHandle& hsImage) const
 {
+  if(_fullSpritePath.empty()){
+    PRINT_NAMED_ERROR("SpriteWrapper.LoadSprite.NoPathToLoadFrom", "");
+    return;
+  }
+  
+  if(outImage == nullptr){
+    PRINT_NAMED_ERROR("SpriteWrapper.LoadSprite.OutImageIsNull", "");
+  }
+  
   if((hsImage != nullptr) &&
      hsImage->GetHSID() != 0){
     // Load the image as a grayscale image and merge it with a hue image
@@ -262,15 +271,13 @@ void SpriteWrapper::LoadSprite(ImageRGBA* outImage, const HSImageHandle& hsImage
     grayImg.Load(_fullSpritePath.c_str());
     outImage->Allocate(grayImg.GetNumRows(), grayImg.GetNumCols());
     ApplyHS(grayImg, hsImage, outImage);
-  }else if(!_fullSpritePath.empty()){
+  }else{
     // Load the image in as an RGB directly 
     auto res = outImage->Load(_fullSpritePath.c_str());
     ANKI_VERIFY(RESULT_OK == res,
                 "CompositeImage.SpriteBoxImpl.Constructor.ColorLoadFailed",
                 "Failed to load sprite %s",
                 _fullSpritePath.c_str());
-  }else{
-    PRINT_NAMED_ERROR("SpriteWrapper.LoadSprite.NoPathToLoadFrom", "");
   }
 }
 
