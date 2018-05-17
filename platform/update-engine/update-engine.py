@@ -300,6 +300,68 @@ class ShaFile(object):
         return self.len
 
 
+class CacheStream(object):
+    "A fileobject wrapper for streams which caches the first N bytes in memory allowing seeking back to them."
+
+    def __init__(self, fileobj, cache_first, progress_callback=None):
+        "Sets up the cachestream caching the first N bytes"
+        self.src_file = fileobj
+        self.cache = self.src_file.read(cache_first)
+        self.fetched = len(self.cache)
+        self.pos = 0
+        self.progress = 0
+        self.progress_callback = progress_callback
+
+    def _update_pos(self, new_pos):
+        "Update the position and track progress"
+        self.pos = new_pos
+        if new_pos > self.progress:
+            self.progress = new_pos
+            if callable(self.progress_callback):
+                self.progress_callback(self.progress)
+
+    def seek(self, offset):
+        "Seek on the file if possible"
+        if offset < len(self.cache):
+            self._update_pos(offset)
+        elif offset == self.fetched:
+            self._update_pos(self.fetched)
+        elif offset > self.fetched:
+            _ = self.src_file.read(offset - self.fetched)
+            self.fetched = offset
+            self._update_pos(offset)
+        else:
+            raise IOError("Invalid seek on CacheStream({}): {}".format(len(self.cache), offset))
+        return self.pos
+
+    def read(self, length):
+        "Read the given file"
+        if self.pos + length <= len(self.cache):
+            old_pos = self.pos
+            self._update_pos(self.pos + length)
+            return self.cache[old_pos:self.pos]
+        elif self.pos < len(self.cache):
+            if self.fetched == len(self.cache):
+                need_to_read = self.pos + length - self.fetched
+                read = self.src_file.read(need_to_read)
+                self.fetched += len(read)
+                self._update_pos(self.fetched)
+                return self.cache[self.pos:] + read
+            else:
+                raise IOError("Invalid read on CacheStream({}): pos={}, length={}".format(len(self.cache),
+                                                                                          self.pos,
+                                                                                          length))
+        elif self.pos == self.fetched:
+            read = self.src_file.read(length)
+            self.fetched += len(read)
+            self._update_pos(self.fetched)
+            return read
+        else:
+            raise IOError("Invalid read on CacheStream({}): pos={}, length={}".format(len(self.cache),
+                                                                                      self.pos,
+                                                                                      length))
+
+
 def handle_boot_system(target_slot, manifest, tar_stream):
     "Process 0.9.2 format manifest files"
     total_size = manifest.getint("BOOT", "bytes") + manifest.getint("SYSTEM", "bytes")
@@ -408,15 +470,14 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
     delta_base_version = manifest.get("DELTA", "base_version")
     if current_version != delta_base_version:
         die(211, "My version is {} not {}".format(current_version, delta_base_version))
-    delta_bytes = manifest.getint("DELTA", "bytes")
-    write_status(EXPECTED_WRITE_SIZE_FILE, delta_bytes*4)  # Download expected not to take more than 25% of the time
+    write_status(EXPECTED_WRITE_SIZE_FILE, manifest.getint("DELTA", "bytes"))
     write_status(PROGRESS_FILE, 0)
 
     def progress_update(progress):
         "Update delta download progress"
         write_status(PROGRESS_FILE, progress)
         if DEBUG:
-            sys.stdout.write("{0:0.3f}\r".format(float(progress)/float(delta_bytes*4)))
+            sys.stdout.write("{0:0.3f}\r".format(float(progress)/float(manifest.getint("DELTA", "bytes"))))
             sys.stdout.flush()
 
     # Extract delta file
@@ -432,43 +493,20 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
                                       manifest.get("DELTA", "compression"),
                                       manifest.getint("DELTA", "bytes"),
                                       True)
-    decompressor.read_to_file(open(DELTA_STAGING, "wb"), DD_BLOCK_SIZE, progress_update)
-    # Verify delta hash
-    if decompressor.digest() != manifest.get("DELTA", "sha256"):
-        safe_delete(DELTA_STAGING)
-        die(209, "delta.bin hash doesn't match manifest value")
     try:
-        payload = update_payload.Payload(open(DELTA_STAGING, "rb"))
+        payload = update_payload.Payload(CacheStream(decompressor, manifest.getint("DELTA", "cache"), progress_update))
         payload.Init()
-
-        # Update progress estimate
-        num_operations = len(payload.manifest.install_operations) + len(payload.manifest.kernel_install_operations)
-        progress = num_operations / 4
-        num_operations += progress
-        write_status(PROGRESS_FILE, progress)
-        write_status(EXPECTED_WRITE_SIZE_FILE, num_operations)
-
-        def progress_ticker(start, total):
-            "Delta application callback"
-            progress = start
-            while True:
-                progress += 1
-                write_status(PROGRESS_FILE, progress)
-                if DEBUG:
-                    sys.stdout.write("{0:0.3f}\r".format(float(progress)/float(total)))
-                    sys.stdout.flush()
-                yield
-
-        payload.progress_tick_callback = progress_ticker(progress, num_operations)
         payload.Apply(os.path.join(BOOT_DEVICE, "boot_" + target_slot),
                       os.path.join(BOOT_DEVICE, "system_" + target_slot),
                       os.path.join(BOOT_DEVICE, "boot_" + current_slot),
                       os.path.join(BOOT_DEVICE, "system_" + current_slot),
                       truncate_to_expected_size=False)
-
     except update_payload.PayloadError as pay_err:
-        zero_slot(target_slot)
         die(207, "Delta payload error: {!s}".format(pay_err))
+    # Verify delta hash
+    if decompressor.digest() != manifest.get("DELTA", "sha256"):
+        zero_slot(target_slot)
+        die(209, "delta.bin hash doesn't match manifest value")
 
 
 def handle_anki(current_slot, target_slot, manifest, tar_stream):
