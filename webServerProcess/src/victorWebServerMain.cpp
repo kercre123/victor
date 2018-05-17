@@ -18,7 +18,7 @@
 
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
-#include "util/logging/androidLogPrintLogger_android.h"
+#include "util/logging/victorLogger.h"
 
 #include "platform/victorCrashReports/google_breakpad.h"
 
@@ -116,8 +116,8 @@ int main(void)
   GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
 
   // - create and set logger
-  Util::AndroidLogPrintLogger logPrintLogger("vic-webserver");
-  Util::gLoggerProvider = &logPrintLogger;
+  Util::VictorLogger logger("vic-webserver");
+  Util::gLoggerProvider = &logger;
 
   Util::Data::DataPlatform* dataPlatform = createPlatform();
 
@@ -131,6 +131,7 @@ int main(void)
               "Web server config file %s not found or failed to parse",
               wsConfigPath.c_str());
     GoogleBreakpad::UnInstallGoogleBreakpad();
+    Util::gLoggerProvider = nullptr;
     exit(1);
   }
 
