@@ -25,6 +25,10 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
+#include <sys/types.h>
+#include <ifaddrs.h>
+#include <string.h>
+#include <netdb.h>
 
 #include <linux/wireless.h>
 
@@ -319,52 +323,81 @@ const std::string& OSState::GetRobotName() const
   return  name;
 }
 
+static std::string GetIPV4AddressForInterface(const char* if_name) {
+  struct ifaddrs* ifaddr = nullptr;
+  struct ifaddrs* ifa = nullptr;
+  char host[NI_MAXHOST] = {0};
+
+  int rc = getifaddrs(&ifaddr);
+  if (rc == -1) {
+    PRINT_NAMED_ERROR("OSState.GetIPAddress.GetIfAddrsFailed", "%s", strerror(errno));
+    return "";
+  }
+
+  for (ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
+    if (ifa->ifa_addr == nullptr) {
+      continue;
+    }
+
+    if (ifa->ifa_addr->sa_family != AF_INET) {
+      continue;
+    }
+
+    if (!strcmp(ifa->ifa_name, if_name)) {
+      break;
+    }
+  }
+
+  if (ifa != nullptr) {
+    int s = getnameinfo(ifa->ifa_addr,
+                        sizeof(struct sockaddr_in),
+                        host, sizeof(host),
+                        NULL, 0, NI_NUMERICHOST);
+    if (s != 0) {
+      PRINT_NAMED_ERROR("OSState.GetIPAddress.GetNameInfoFailed", "%s", gai_strerror(s));
+      memset(host, 0, sizeof(host));
+    }
+  }
+
+  if (host[0]) {
+    PRINT_NAMED_INFO("OSState.GetIPAddress.IPV4AddressFound", "iface = %s , ip = %s",
+                     if_name, host);
+  } else {
+    PRINT_NAMED_INFO("OSState.GetIPAddress.IPV4AddressNotFound", "iface = %s", if_name);
+  }
+  freeifaddrs(ifaddr);
+  return std::string(host);
+}
+
+static std::string GetWiFiSSIDForInterface(const char* if_name) {
+  int fd = socket(AF_INET, SOCK_DGRAM, 0);
+  if (fd == -1) {
+    ASSERT_NAMED_EVENT(false, "OSState.GetSSID.OpenSocketFail", "");
+    return "";
+  }
+
+  iwreq req;
+  memset(&req, 0, sizeof(req));
+  (void) strncpy(req.ifr_name, if_name, sizeof(req.ifr_name) - 1);
+  char essid[IW_ESSID_MAX_SIZE + 2] = {0};
+  req.u.essid.pointer = essid;
+  req.u.essid.length = sizeof(essid) - 2;
+
+  if (ioctl(fd, SIOCGIWESSID, &req) == -1) {
+    PRINT_NAMED_INFO("OSState.UpdateWifiInfo.FailedToGetSSID", "iface = %s , errno = %s",
+                     if_name, strerror(errno));
+    memset(essid, 0, sizeof(essid));
+  }
+  (void) close(fd);
+  PRINT_NAMED_INFO("OSState.GetSSID", "%s", essid);
+  return std::string(essid);
+}
+
 void OSState::UpdateWifiInfo()
 {
-  // Open a socket to figure out the ip adress of the wlan0 (wifi) interface
   const char* const if_name = "wlan0";
-  struct ifreq ifr;
-  size_t if_name_len=strlen(if_name);
-  if (if_name_len<sizeof(ifr.ifr_name)) {
-    memcpy(ifr.ifr_name,if_name,if_name_len);
-    ifr.ifr_name[if_name_len]=0;
-  } else {
-    ASSERT_NAMED_EVENT(false, "OSState.GetIPAddress.InvalidInterfaceName", "");
-  }
-
-  int fd=socket(AF_INET,SOCK_DGRAM,0);
-  if (fd==-1) {
-    ASSERT_NAMED_EVENT(false, "OSState.GetIPAddress.OpenSocketFail", "");
-  }
-
-  if (ioctl(fd,SIOCGIFADDR,&ifr)==-1) {
-    int temp_errno=errno;
-    close(fd);
-    ASSERT_NAMED_EVENT(false, "OSState.GetIPAddress.IoctlError", "%s", strerror(temp_errno));
-  }
-
-  struct sockaddr_in* ipaddr = (struct sockaddr_in*)&ifr.ifr_addr;
-  _ipAddress = std::string(inet_ntoa(ipaddr->sin_addr));
-
-  // Get SSID
-  iwreq req;
-  strcpy(req.ifr_name, if_name);
-  req.u.data.pointer = (iw_statistics*)malloc(sizeof(iw_statistics));
-  req.u.data.length = sizeof(iw_statistics);
-
-  const int kSSIDBufferSize = 32;
-  char buffer[kSSIDBufferSize];
-  memset(buffer, 0, sizeof(buffer));
-  req.u.essid.pointer = buffer;
-  req.u.essid.length = kSSIDBufferSize;
-  if(ioctl(fd, SIOCGIWESSID, &req) == -1)
-  {
-    close(fd);
-    ASSERT_NAMED_EVENT(false, "OSState.UpdateWifiInfo.FailedToGetSSID","%s", strerror(errno));
-  }
-  close(fd);
-
-  _ssid = std::string(buffer);
+  _ipAddress = GetIPV4AddressForInterface(if_name);
+  _ssid = GetWiFiSSIDForInterface(if_name);
 }
 
 const std::string& OSState::GetIPAddress(bool update)
