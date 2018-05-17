@@ -941,8 +941,7 @@ EXCLUDE_PATTERNS       = */_build/* \
                          */tools/smartling/* \
                          */tools/squawkbox/* \
                          */tools/turnInPlaceTests/* \
-                         */tools/versionGenerator/* \
-                         */tools/victor-ble-cli/*
+                         */tools/versionGenerator/*
 
 # The EXCLUDE_SYMBOLS tag can be used to specify one or more symbol names
 # (namespaces, classes, functions, etc.) that should be excluded from the

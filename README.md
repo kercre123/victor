@@ -1,11 +1,5 @@
 # victor
 
-**If you have a DVT3 robot, some of these instructions may be outdated. Refer to confluence for the latest. (Their contents should get merged into the repo when things stabilize.)**  
-[https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/221151299/Victor+Build+Setup](https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/221151299/Victor+Build+Setup)
-[https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/368476326/Victor+DVT3+ssh+connection](https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/368476326/Victor+DVT3+ssh+connection)
-
-
-
 `victor` is the _code name_ for the next iteration of the Cozmo product line. This repo contains code for the embedded firmware (syscon), robotics, animation and engine layers.
 
 If you're looking for the embedded OS that runs on victor hardware, there is not much in the way of formal documentation yet, but you can start by looking at our repo for [vicos-oelinux](https://github.com/anki/vicos-oelinux).
@@ -42,56 +36,12 @@ git clone --recursive git@github.com:anki/victor.git
 ```
 
 ### Submodules
-Fetch the submodules:
+Update the submodules:
 
 ```
 git submodule update --init --recursive
+git submodule update --recursive
 ```
-
-Alternatively when fetching the code:
-
-```
-git clone --recursive <git url>
-```
-
-### ADB setup
-
-**DEPRECATED: We now use ssh instead of adb to connect to robots.**
-
-1. Make sure you do not have Android SDK or Android NDK installed from `brew`:
-
-    ```
-    brew cask uninstall android-sdk
-    brew cask uninstall android-ndk
-    ```
-
-    This way you only have one version of `adb` on your system. (If you have two they fight with each other, i.e. disconnect)
-
-1. Get the Anki-blessed Android SDK and Android NDK by running the following commands:
-
-    ```
-    ./tools/build/tools/ankibuild/android.py --install-sdk
-    ./tools/build/tools/ankibuild/android.py --install-ndk
-    ```
-
-1. Make sure the following is in your `~/.bash_profile`:
-
-    ```
-    ANKI_ANDROID_ROOT=~/.anki/android
-    ANDROID_SDK_REPOSITORY=${ANKI_ANDROID_ROOT}/sdk-repository
-    export ANDROID_HOME=${ANDROID_SDK_REPOSITORY}/`/bin/ls $ANDROID_SDK_REPOSITORY/ | tail -1`
-    export ANDROID_ROOT=$ANDROID_HOME
-
-    export ANDROID_NDK_REPOSITORY=${ANKI_ANDROID_ROOT}/ndk-repository
-    export ANDROID_NDK_ROOT=${ANDROID_NDK_REPOSITORY}/`/bin/ls $ANDROID_NDK_REPOSITORY/ | tail -1`
-    export ANDROID_NDK_HOME=$ANDROID_NDK_ROOT
-    export ANDROID_NDK=$ANDROID_NDK_ROOT
-    export NDK_ROOT=$ANDROID_NDK_ROOT
-    export PATH=${PATH}:${ANDROID_HOME}/platform-tools  # for adb
-    export PATH=${PATH}:${ANDROID_HOME}/anki/bin # For tools like buck
-    ```
-
-1. Run `source ~/.bash_profile` or open a new terminal. `adb` should now be in your path.
 
 ### Miscellaneous setup
 
@@ -109,7 +59,7 @@ git clone --recursive <git url>
 
 If you're a developer, it is highly recommended that you check out the [Victor Build System Walkthrough](/docs/build-system-walkthrough.md) doc to familiarize yourself with the build system. The underlying build system for victor is [`CMake`](https://cmake.org/).  The appropriate version of CMake and other dependencies required for building victor will be fetched automatically.
 
-1. To build for embedded android (the default), ensure you are in the `victor` directory and run
+1. To build for vicos (the default), ensure you are in the `victor` directory and run
 
     ```
     victor_build
@@ -128,7 +78,7 @@ If you're a developer, it is highly recommended that you check out the [Victor B
 1. If you want to force a 'clean' build, the brute-force method is to run
 
     ```
-    rm -rf _build EXTERNALS generated
+    git clean -dffx _build EXTERNALS generated
     ```
     
     then rebuild. Note that it will now take 10-20 minutes to rebuild.
@@ -147,18 +97,28 @@ For a more thorough description of build options, run `project/victor/build-vict
 
 ### Install shared victor ssh key
 
-If your robot is >= 0.9.1 then it has a built-in ssh key. To interact with the robot you need to know its IP address and you must have the ssk key on your computer.
+If your robot is >= 0.9.1 then it has a built-in ssh key. To interact with the robot you need to know its IP address and you must have the ssh key on your computer.
 
 1. Download the private key to `~/.ssh/id_rsa_victor_shared`
 ```
 curl -sL -o ~/.ssh/id_rsa_victor_shared https://www.dropbox.com/s/mgxgdouo0id6j9m/id_rsa_victor_shared?dl=0
 chmod 600 ~/.ssh/id_rsa_victor_shared
 ssh-add -K ~/.ssh/id_rsa_victor_shared
-``` 
+```
 
-If you're on OS X Sierra you may want to add the `ssh-add` line to your `.bashrc` or `.bash_profile` since adding to keychain with `-K` is broken in Sierra.
+If you're on macOS Sierra you may want to add the `ssh-add` line to your `.bashrc` or `.bash_profile` since adding to keychain with `-K` is broken in Sierra.
 
-1. Build, deploy, and run commands as normal (See []()). You can specify the target robot with `-s` on most of the deploy and run commands or you can set the `ANKI_ROBOT_HOST` environment variable in your shell to set a default host.
+1. Optionally create a configuration for your Victor robot in `~/.ssh/config`
+```
+Host 192.168.42.*
+  User root
+  IdentityFile ~/.ssh/id_rsa_victor_shared
+  StrictHostKeyChecking no
+```
+
+If you still get an `ssh` error that says "Too many authentication failures", try adding `IdentitiesOnly=yes` to the above entry.
+
+1. Build, deploy, and run commands as normal (See []()). You can specify the target robot with `-s` on most of the deploy and run commands or you can set the `ANKI_ROBOT_HOST` environment variable in your shell to a default host.
 
 ```
 export ANKI_ROBOT_HOST="<ip address>"
@@ -173,53 +133,20 @@ ssh root@${ANKI_ROBOT_HOST}
 or execute remote commands. e.g. `ssh root@${ANKI_ROBOT_HOST} "logcat -vthreadtime"`
 
 
-### Connecting over Wifi
+### Connecting over WiFi
 
-**If you have a DVT3 robot you should no longer be using `victor-ble-cli` for configuring wifi over bluetooth. Robots should already connect automatically to the `AnkiRobits` network, but if you need to attach to a diifferent network use the `mac-client` referred to in**  
-[https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/323321886/Victor+OTA+update+using+Mac-Client+tool#VictorOSandOTAupdateusingMac-Clienttool-OTA](https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/323321886/Victor+OTA+update+using+Mac-Client+tool#VictorOSandOTAupdateusingMac-Clienttool-OTA))
+Follow the instructions at:
 
+[Victor OTA udpate using Mac-Client tool](https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/323321886/Victor+OTA+update+using+Mac-Client+tool#VictorOSand\OTAupdateusingMac-Clienttool-OTA) to setup WiFi on your robot.
 
-1. Make sure your laptop is connected to the `Anki5Ghz` wifi network. If you are on a home network, follow the instructions [here](/tools/victor-ble-cli#configuring-wifi).
+## Getting Victor's IP address
 
-1. Power on your robot and wait until the eyes appear on the screen. Then click the backpack button once to show the debug display. The robot's IP address appears on the first line.
+1. Power on your robot and wait until the eyes appear on the screen.
+1. Place robot on charger
+1. Double click his back button
+1. Raise and lower the lift the full way
 
-    If that method doesn't work, you can also try running
-
-    ```
-    tools/victor-ble-cli/vic_show_ip.sh VICTOR_xxxxxx
-    ```
-
-    where `xxxxxx` is the bluetooth ID of the robot (which is displayed on the screen when the robot is powered up). You may need to put the robot physically near your computer when you run the script.
-
-    The `inet addr` for `wlan0` is the robot's IP address.
-
-1. We no longer use adb to connect to the robot. Instead we use SSH which is more reliable. You need to do this ONE-TIME operation for each different robot you want to connect to, on the laptop you're connecting from. Run this script:
-
-    ```
-    ./tools/victor-ble-cli/vic_set_robot_key.sh VICTOR_xxxxxx
-    ```
-
-    where 'xxxxxx' is the bluetooth ID of the robot (as mentioned above, for example VICTOR_1a3d273d, or "VECTOR R2D2"). This script will generate an SSH key pair, install it on your laptop, and then connect to the robot and install the public key on the robot. It will also modify your `~/.ssh/config` file to add some lines that will prevent unnecessary prompts and warnings. Finally, it will show you the robot's IP address, and write that IP address to a file on your laptop.
-
-1. Once that one-time step is done, all of the existing scripts (victor_start, victor_deploy, victor_log, etc.) will work as before, but without using adb.<br/><br/>You can also run a command on the robot with:
-
-    ```
-    ssh root@<robotIP> <command> <arguments>
-    ```
-
-    where 'robotIP' is the robot's IP address. You can also shell in to the robot with:
-
-    ```
-    ssh root@<robotIP>
-    ```
-
-1. Unless you're running the `ssh` command, however, you won't need to enter the robot IP address again, for the other scripts, e.g. victor_log, victor_deploy, etc. If you want to switch to another robot, first make sure the vic_robot_set_key script (above) has been run on your laptop for that robot, if you haven't done so already. Then, run
-
-    ```
-    ./project/victor/scripts/victor_set_robot_ip.sh <robotIP>
-    ```
-
-    to switch to the new robot's IP address. From that point forward the victor_log, etc. scripts will use that new IP address.
+## Deploying to a particular robot
 
 1. For convenience when working with multiple robots, or if you just want to be sure you're targeting a specific robot, almost all of the commands accept a robot IP with the -s option. For example:
 
@@ -276,3 +203,7 @@ Most developers shouldn't have to do this. Better to ask someone in hardware or 
 ## Having trouble?
 
 Check out the [Frequently Asked Questions](/docs/FAQ.md) page. When you get new questions answered, consider adding them to the list to help others!
+
+[Victor Build Setup](https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/221151299/Victor+Build+Setup)
+
+[Victor DVT3 ssh connection](https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/368476326/Victor+DVT3+ssh+connection)

@@ -4,22 +4,6 @@ If you have a question that you get answered (e.g. in a Slack channel) which mig
 
 Additional troubleshooting can be found on [Confluence](https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/362807304/Victor+Build+Troubleshooting).
 
-* How do I set my Android NDK?
-  - Follow the setup instructions for `adb` in [README.md](/README.md) to get the default Android NDK.
-  - Don't try to override the default NDK unless you know what you are doing!
-
-* How do I override the default NDK?
-  - If you set `${ANDROID_NDK}` in your environment, the build script ([`build-victor.sh`](/project/victor/build-victor.sh)) will use it.
-  - If you have `ndk.dir` set in your top-level `local.properties`, the environment script ([`envsetup.sh`](/project/victor/envsetup.sh)) will use it.
-  - If you have an NDK installed by Android Studio, the android locator script ([`android.py`](/tools/build/tools/ankibuild/android.py)) will use it.
-  - If you have an NDK set in your top-level `.buckconfig`, the android locator script ([`android.py`](/tools/build/tools/ankibuild/android.py)) will use it.
-
-* How do I fix my Android NDK?
-  - Check for each of the overrides listed above.
-  - Figure out which one is wrong.
-  - Fix it or remove it.
-  - If you change your NDK settings, you must force a full rebuild by removing your top-level `_build/android`.
-
 * How do I set a console var from Webots?
   - Set the `consoleVarName` and `consoleVarValue` strings under the WebotsKeyboardController in the scene tree at left. Press `]` (closing square bracket) to send the message to the engine to set the console var. 
   - Using `}` (closing curly brace) instead will use the name and value strings as a console _function_ and its arguments instead.
@@ -29,12 +13,12 @@ Additional troubleshooting can be found on [Confluence](https://ankiinc.atlassia
   - [Run the Victor web server](/docs/development/web-server.md) 
   
 * `victor_stop`/`victor_restart` hangs with `stopping <number>...` when trying to kill one of the processes
-  - Manually kill the process with `adb shell kill -9 <number>`
+  - Manually kill the process with `ssh <robot-ip> kill -9 <number>`
   - Run `victor_stop` to ensure the rest of the processes are stopped
   
 * One of the processes crashed/aborted and the stack trace has no symbols, how do I get symbols for the trace?
-  - Manually deploy the full libraries (with symbols) to the robot; they are located in `_build/android/<Debug/Release>/lib/*.so.full`
-  - `adb push _build/android/<Debug/Release>/lib/<one_or_more_of_the_libraries>.so.full /data/data/com.anki.cozmoengine/lib/<one_or_more_of_the_libraries>.so`
+  - Manually deploy the full libraries (with symbols) to the robot; they are located in `_build/vicos/<Debug/Release>/lib/*.so.full`
+  - `scp _build/vicos/<Debug/Release>/lib/<one_or_more_of_the_libraries>.so.full /anki/lib/<one_or_more_of_the_libraries>.so`
   - Reproduce the crash and you should now see symbols
   
 * How do I do performance analysis/benchmarking on robot?
@@ -48,25 +32,10 @@ Additional troubleshooting can be found on [Confluence](https://ankiinc.atlassia
   - Victor has low battery, turn Victor off and turn back on with the backpack button. Put Victor on the charger and the lights should return to normal multicolor or green, leave on charger for ~30 minutes
   
 * `Sending Mode Change ...` or `spine_header ...` errors continually spam in the logs
-  - Ensure you have deployed correctly built code otherwise Syscon and robot process are likely incompatible, give to Al or Kevin to have firmware flashed
-  
-* I can `adb connect` to Victor and ping it but I can't deploy or access the shell
-  - Run `adb devices`, make sure only one device, Victor, is listed
-  - If Victor is listed as being `offline`, power cycle the robot. Multiple devices might have been connected or adb got into a bad state possibly due to the network connection changing while you were connected
-  - Another solution to Victor being `offline` is to connect with the `victor-ble-cli` tool and run `restart-adb` (you'll have to run `adb connect` again on your computer)
+  - Ensure you have deployed correctly built code otherwise Syscon and robot process are likely incompatible, give to [Al](https://ankiinc.atlassian.net/wiki/display/~Al.Chaussee) or [Kevin](https://ankiinc.atlassian.net/wiki/display/~kevin) to have firmware flashed
   
 * I can't connect or ping Victor, he doesn't seem to be connected to wifi
-  - Use the [BLE-CLI](../tools/victor-ble-cli) tool to connect over BLE and configure wifi
-    Modify `vic_join_wifi.sh`, replace the `elif [ "K" ...` block in the `robot configs` section with your robot's `robotname` (serial number). Run the script with `./vic_join_wifi.sh K` to reconfigure your robot to connect to the AnkiRobits network.
-  - This connection will likely only be temporary, if after power cycling your robot is again not autoconnecting then bring to Al or Nathan
-  
-* I get `Failed to connect to non-global ctrl_ifname: wlan0  error: No such file or directory` errors in the [BLE-CLI](../tools/victor-ble-cli) tool
-  - Reboot the robot and hope!
-
-* Seriously... I cannot get connected to my home WIFI using wifi-set-config ^^
-  - These issues should be resolved when we update the OS, but in the meantime:
-  - You can connect with a static IP to your network using a shell script located at .../victor/tools/victor-ble-cli/vic_join_network.sh
-  - You will have to rerun the script every time you power cycle so it may be worth your time to make an alias with your network config as arguments
+  - Use the companion app, Chewie, to configure Victor's WiFi
 
 * Deploying is super slow
   - Try turning off wifi on your laptop and use ethernet instead
@@ -75,8 +44,8 @@ Additional troubleshooting can be found on [Confluence](https://ankiinc.atlassia
   - If nothing seems to help consider bringing to HW team, could be a bad antenna
   
 * Deploying to the robot fails (possibly complains about out of disk space?)
-  - You can safely remove the cache and persistent folders with `adb shell rm -rf /data/data/com.anki.victor/cache /data/data/com.anki.victor/persistent`
-  - If this isn't enough, in `adb shell` you can check disk usage with `df` to list percentage of space each section has free, you should only care about the `/ and `/data` sections. The percentage indicates how much space the section is using out of how much total space it has.
+  - You can safely remove the cache and persistent folders with `ssh <robot-ip> rm -rf /data/data/com.anki.victor/cache /data/data/com.anki.victor/persistent`
+  - If this isn't enough, in the shell you can check disk usage with `df` to list percentage of space each section has free, you should only care about the `/` and `/data` sections. The percentage indicates how much space the section is using out of how much total space it has.
   - You can then inspect space usage with `du -h /anki` which will list disk usage of all directories in `/anki`. Most things that get deployed live in `/anki`. Files that get generated at run-time may be stored in `/data/data/com.anki.victor`.
   - You can also delete the `/anki` folder with `rm -rf /anki`, but in general you should never have to do. It may be useful when the you get an error like this.
   
@@ -95,9 +64,14 @@ rsync error: error in socket IO (code 10) at /BuildRoot/Library/Caches/com.apple
   - `chmod u=rwx victor/_build/mac/Debug-Xcode/launch-cxx`
 
 * To check the battery level:
-  - With the processes running, press the backpack button twice. The battery voltage is in the bottom right. It should be around 4.0v. The backpack lights will blink green when charging (and the processes are running)
-  - Otherwise: `adb shell cat /sys/devices/soc/qpnp-linear-charger-8/power_supply/battery/voltage_now`
-  
+   1. Place Victor on charger
+   1. Double click his back button
+   1. Raise and lower the lift the full way to enter the debug screen
+   1. Move his head all the way down and back up
+   1. A tiny pixel will appear in the upper right of the face
+   1. Use the button to cycle through the various face screens
+   1. The second screen has battery like `BATT: 4.18V`
+
 * Webots Firewall Connection issues?
   - [Create a code signing certificate](/project/build-scripts/webots/FirewallCertificateInstructions.md)
   - [Run a sample script to initially sign](/simulator/README.md#firewall)
@@ -170,10 +144,10 @@ Looking at the first four lines after `backtrace:` you can see the top four addr
 to get:
 
 ```
-0x00287960: .anki/android/ndk-repository/android-ndk-r15b/sources/cxx-stl/llvm-libc++/include/memory:4041
-0x002c34a7: projects/victor/_build/android/Release/../../../engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.cpp:714
-0x00273793: projects/victor/_build/android/Release/../../../engine/aiComponent/behaviorComponent/behaviorStack.cpp:123
-0x002751ed: projects/victor/_build/android/Release/../../../engine/aiComponent/behaviorComponent/behaviorSystemManager.cpp:154
+0x00287960: .anki/vicos-sdk/dist/0.9-r03/sysroot/usr/include/c++/v1/memorymemory:4041
+0x002c34a7: projects/victor/_build/vicos/Release/../../../engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.cpp:714
+0x00273793: projects/victor/_build/vicos/Release/../../../engine/aiComponent/behaviorComponent/behaviorStack.cpp:123
+0x002751ed: projects/victor/_build/vicos/Release/../../../engine/aiComponent/behaviorComponent/behaviorSystemManager.cpp:154
 ```
 * How do I increase the max files limit on macos Sierra and greater? (when seeing an error like `[Errno 24] Too many open files`)
   - Follow instructions at https://gist.github.com/tombigel/d503800a282fcadbee14b537735d202c

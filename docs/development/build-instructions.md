@@ -2,7 +2,7 @@
 
 The underlying build system for victor is currently `CMake`.  The appropriate version of CMake and other dependencies required for building victor will be fetched automatically.
 
-Configure your shell for command-line builds. This will ensure that you are using the correct Android build environment and also add some helper functions for navigation and grepping.
+Configure your shell for command-line builds. This will ensure that you are using the correct Vicos build environment and also add some helper functions for navigation and grepping.
 
 ```
 source project/victor/envsetup.sh
@@ -11,13 +11,13 @@ source project/victor/envsetup.sh
 victorhelp
 ```
 
-To build for embedded android (the default):
+To build for vicos (the default):
 
 ```
 ./project/victor/build-victor.sh
 
 # you can also explicitly pass the platform
-./project/victor/build-victor.sh -p android
+./project/victor/build-victor.sh -p vicos
 ```
 
 To build for mac:
@@ -55,7 +55,7 @@ By default, the build script builds all targets.  To build a specific target, we
 
 ```
 # build animation process
-./project/victor/build-victor.sh -- --target victor_animator
+./project/victor/build-victor.sh -- --target vic-anim
 ```
 
 Listing targets is difficult.  Either of these commands will give you a list of all targets, many of which are intermediates, but you should be able sort through these to get a sense of what to build:

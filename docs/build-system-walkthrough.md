@@ -6,18 +6,6 @@ rules such that the build system is always the source of truth about when output
 from input. This document outlines the flow of information through the build. My hope is that after
 reading this, anyone will be able to add new components to the build system.
 
-## Environment
-
-Victor requires a properly configured Android build environment. Maybe you know what that means and
-have your shell correctly pointing to a version of the SDK and NDK. That might work, but we need
-a specific version for Victor builds. Rather than modifying any files on your computer, the environment
-required to build victor is encoded in [`project/victor/envsetup.sh`](/project/victor/envsetup.sh). To load it into your shell, simply
-source the file:
-
-```
-source project/victor/envsetup.sh
-```
-
 ## Build Script Procedure
 
 This is the main entry-point is currently the script:
@@ -34,9 +22,9 @@ This script performs 3 main functions, in order:
     of CMake. These files are designed to work like `BUCK` and `BUILD` files from buck and bazel build systems.
     `BUILD.in` are python files that are evaluated using a sandboxed subset of python, using the self-contained
     python script [`metabuild.py`](/tools/build/tools/metabuild/metabuild.py).
-    
-    Primarily these function
-    to provide a clear definition of what files will be included in each build target and to
+
+    Primarily these functions
+    provide a clear definition of what files will be included in each build target and to
     limit ad hoc glob specifications. They strictly enforce the constraint that files assigned to a build target
     must reside under the root of the target directory (the folder containing `CMakeLists.txt` and `BUILD.in`).
     This strategy prevents "out-of-tree" references to source files that results in hidden cross-target
@@ -80,7 +68,7 @@ This script performs 3 main functions, in order:
     functions work the same way as described in the buck documentation.
     The output of each target in `BUILD.in` is a set of `.lst` files inside
     `generated/cmake`, named using the target name as the prefix. The helper functions used in `BUILD.in`
-    automatically handle the platform-specific exclude rules that we typically use, for example `*_android.*`
+    automatically handle the platform-specific exclude rules that we typically use, for example `*_vicos.*`
     files are separated into a platform-specific `.lst` file, which makes it easy to include platform-specific
     sources from within CMake.
 
@@ -108,50 +96,58 @@ that any programs invoked by the build do not include hidden logic that controls
 In practice, this means that programs run by the build system should typically follow the
 [compiler pattern](http://www.catb.org/esr/writings/taoup/html/ch11s06.html#id2958199). Programs should
 produce predictable outputs from a specified set of inputs and when necessary, provide the ability to output
-dependencies for each input element.  For an example if this, see the "make dependency" options for `gcc`/`clang`
+dependencies for each input element.  For an example of this, see the "make dependency" options for `gcc`/`clang`
 (`-MD -MF <deps file>` options).
 
 
 ## Anatomy of a build target
 
 As an example, let's dive into the build definition of the `victor_anim` lib used by the animation process
-(`victor_animator`).
+(`vic-anim`).
 
 ```
 #
 # animProcess/BUILD.in
 #
-
 cxx_project(
     name = 'victor_anim',
     srcs = cxx_src_glob(['src/cozmoAnim'],
-                        excludes = ['*_android.*',
-                                    'android/**/*',
+                        excludes = ['*_vicos.*',
+                                    'vicos/**/*',
                                     '*_mac.*',
                                     'cozmoAnimMain.cpp']),
     platform_srcs = [
-        ('android', glob(['android/**/*.cpp',
-                          '**/*_android.cpp'])),
+        ('vicos', glob(['vicos/**/*.cpp',
+                          '**/*_vicos.cpp'])),
         ('mac', glob(['**/*_mac.cpp']))
     ],
     headers = cxx_header_glob(['.']),
     platform_headers = [
-        ('android', glob(['**/*.h']))
     ]
 )
+
+cxx_project(
+    name = 'vic-anim',
+    srcs = glob(['src/cozmoAnim/cozmoAnimMain.cpp']),
+    platform_srcs = [
+    ],
+    headers = [],
+    platform_headers = [
+    ]
+)
+
 ```
 
 [`metabuild.py`](/tools/build/tools/metabuild/metabuild.py) interprets this file and outputs:
 
 ```
 generated/cmake/
+├── vic-anim.headers.lst
+├── vic-anim.srcs.lst
 ├── victor_anim.headers.lst
 ├── victor_anim.srcs.lst
-├── victor_anim_android.headers.lst
-├── victor_anim_android.srcs.lst
 ├── victor_anim_mac.srcs.lst
-├── victor_animator.headers.lst
-└── victor_animator.srcs.lst
+└── victor_anim_vicos.srcs.lst
 ```
 
 The corresponding `CMakeLists.txt` file uses this definition to create a `library` target and then
@@ -171,40 +167,58 @@ anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
 # Define the list of libraries that victor_anim should link against
 # All of the link dependencies are other target defined in different 
 target_link_libraries(victor_anim
-PRIVATE
+  PUBLIC
+  victor_web_library
+  robot_interface  # Needs to be public for cozmoConfig.h
+  DAS
+  PRIVATE
   util
-# cti
+  util_audio
+  canned_anim_lib_anim
+  # cti
   cti_common_robot
   cti_vision
   cti_messaging_robot
   robot_clad_cpplite
-  robot_interface
   robot_transport
+  cloud_clad_cpp
   audio_engine
   audio_multiplexer_robot
+  osState
+  micdata
   # vendor
   ${OPENCV_LIBS}
-  ${FLATBUFFERS_LIBS} 
-# platform
+  ${FLATBUFFERS_LIBS}
+  signal_essence
+  ${TEXT2SPEECH_LIBS}
+  ${SENSORY_LIBS}
+  # platform
   ${PLATFORM_LIBS}
+  # Aubio beat detection
+  ${AUBIO_LIBS}
+  PUBLIC
+  victor_web_library
+  robot_interface  # Needs to be public for cozmoConfig.h
 )
 
-# Add a post build step on Android to strip the library if necessary
+# Add a post build step on Vicos to strip the library if necessary
 anki_build_strip(TARGET victor_anim)
 
 # Define the preprocessor definitions for victor_anim
 target_compile_definitions(victor_anim
-PRIVATE
-  ANKICORETECH_USE_OPENCV=1
-  ANKICORETECH_EMBEDDED_USE_OPENCV=1  
+  PRIVATE
+  USE_DAS=$<BOOL:${USE_DAS}>
   ${PLATFORM_COMPILE_DEFS}
 )
 
 # Specify include paths for victor_anim target
-target_include_directories(victor_anim PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src> # allow "android/" prefix
+target_include_directories(victor_anim
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/lib/util/source/3rd>
   ${PLATFORM_INCLUDES}
 )
+
 ```
 
 ## Caveats

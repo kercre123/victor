@@ -3,12 +3,10 @@ cxx_project(
     name = 'utilUnitTest',
     srcs = cxx_src_glob(['.'], excludes = ['tests/testPTree*','tests/testPtree*']),
     platform_srcs = [
-        ('android', glob(['**/*_android.cpp'])),
         ('mac', glob(['**/*_iososx.mm']))
     ],
     headers = cxx_header_glob(['.'], excludes = ['tests/testPTree*','tests/testPtree*']),
     platform_headers = [
-        ('android', glob(['**/*_android.h'])),
         ('mac', glob(['**/*_iososx.h']))
     ]
 )

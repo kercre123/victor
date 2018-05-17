@@ -35,9 +35,6 @@ vlog "Check homebrew dependencies"
     libsndfile \
     node
 
-vlog "Android SDK"
-./tools/build/tools/ankibuild/android.py --install-sdk r3
-
 vlog "vicos sdk"
 ./tools/build/tools/ankibuild/vicos.py --install 0.9-r03
 
