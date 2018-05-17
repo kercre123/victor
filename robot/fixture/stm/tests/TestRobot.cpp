@@ -792,13 +792,14 @@ void RobotPowerDown(void)
     int spine_mv, cnt = 0;
     uint32_t Tstart = Timer::get();
     do {
+      rcomPwr(RCOM_PWR_OFF);
       spine_mv = Meter::getVoltageMv(PWR_DUTVDD,5);
       cnt = spine_mv < 50 ? cnt+1 : 0;
-    } while( cnt < 4 && Timer::elapsedUs(Tstart) < 1*1000*1000 );
+    } while( cnt < 4 && Timer::elapsedUs(Tstart) < 1.5*1000*1000 );
     
     ConsolePrintf("spine off voltage %imV\n", spine_mv);
     if( spine_mv > 250 )
-      throw ERROR_BODY_VMAIN_SWITCH; //power won't shut off
+      throw ERROR_BODY_CANNOT_POWER_OFF;
   }
 }
 

@@ -241,7 +241,7 @@ typedef int error_t;
 //#define ERROR_BODY_TREAD_ENC_RIGHT      554 // right tread encoder failed self test
 //#define ERROR_BODY_BACKPACK_PULL        555 // backpack pull-up incorrect
 //#define ERROR_BODYCOLOR_INVALID         556 // an invalid color code was detected
-#define ERROR_BODY_VMAIN_SWITCH           557 // power switch is broken - stuck on
+#define ERROR_BODY_CANNOT_POWER_OFF       557 // robot can't turn off. check test connection and button not held. Possible damage on Body PCBA
 #define ERROR_BODY_PROGRAMMED             558 // already has production fw (jtag lock prevents reprogram)
 #define ERROR_BODY_NO_BOOT_MSG            559 // Could not detect production fw boot msg
 
