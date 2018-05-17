@@ -53,10 +53,12 @@ namespace {
   
   const int kNumCubeLEDs = Util::EnumToUnderlying(CubeConstants::NUM_CUBE_LEDS);
   
-  const std::string kBlockFacIdsKey = "blockFactoryIds";
+  const std::string kBlockFacIdKey = "blockFactoryId";
   
   static bool sResetBlockPoolList = false;
   
+  const std::string kBlockPoolFilename = "blockPool.json";
+
   const std::string kWebVizModuleNameCubes = "cubes";
 }
 
@@ -83,7 +85,7 @@ void CubeCommsComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
 {
   _robot = robot;
   
-  _blockPoolFactoryIds.clear();
+  _blockPoolFactoryId = "";
   
   // Game to engine message handling:
   if (_robot->HasExternalInterface()) {
@@ -100,18 +102,14 @@ void CubeCommsComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
   // - warn if the json wasn't parsed correctly
   const Util::Data::DataPlatform* platform = robot->GetContextDataPlatform();
   DEV_ASSERT(platform!=nullptr, "CubeCommsComponent.InitDependent.DataPlatformIsNull");
-  const auto blockPoolFile = platform->pathToResource(Util::Data::Scope::Persistent, "blockPoolList.json");
+  const auto blockPoolFile = platform->pathToResource(Util::Data::Scope::Persistent, kBlockPoolFilename);
   bool parsingSuccessful = false;
   if(Util::FileUtils::FileExists(blockPoolFile)) {
     std::string contents = Util::FileUtils::ReadFile(blockPoolFile);
     Json::Value root;
     Json::Reader reader;
     if(reader.parse(contents, root)) {
-      std::vector<std::string> blockFacIds;
-      if(JsonTools::GetVectorOptional(root, kBlockFacIdsKey, blockFacIds)) {
-        std::copy(blockFacIds.begin(), blockFacIds.end(), std::inserter(_blockPoolFactoryIds, _blockPoolFactoryIds.begin()));
-        parsingSuccessful = true;
-      }
+      parsingSuccessful = JsonTools::GetValueOptional(root, kBlockFacIdKey, _blockPoolFactoryId);
     }
   }
   
@@ -141,9 +139,9 @@ void CubeCommsComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
   // handle console function request to delete saved blockpool
   if(sResetBlockPoolList) {
-    _blockPoolFactoryIds.clear();
+    _blockPoolFactoryId = "";
     const Util::Data::DataPlatform* platform = _robot->GetContextDataPlatform();
-    const auto blockPoolFile = platform->pathToResource(Util::Data::Scope::Persistent, "blockPoolList.json");
+    const auto blockPoolFile = platform->pathToResource(Util::Data::Scope::Persistent, kBlockPoolFilename);
     SaveBlockPoolListToJson(blockPoolFile);
     sResetBlockPoolList = false;
     EnableDiscovery(true,0);
@@ -417,9 +415,9 @@ void CubeCommsComponent::HandleGameEvents(const AnkiEvent<ExternalInterface::Mes
     case ExternalInterface::MessageGameToEngineTag::BlockPoolEnabledMessage:
       // delete the persist block pool file, and clear the cached list
       if(event.GetData().Get_BlockPoolEnabledMessage().reset) {
-        _blockPoolFactoryIds.clear();
+        _blockPoolFactoryId = "";
         const Util::Data::DataPlatform* platform = _robot->GetContextDataPlatform();
-        const auto blockPoolFile = platform->pathToResource(Util::Data::Scope::Persistent, "blockPoolList.json");
+        const auto blockPoolFile = platform->pathToResource(Util::Data::Scope::Persistent, kBlockPoolFilename);
         Util::FileUtils::DeleteFile(blockPoolFile);
       }
       EnableDiscovery(event.GetData().Get_BlockPoolEnabledMessage().enable,
@@ -542,12 +540,11 @@ void CubeCommsComponent::HandleConnectionStateChange(const BleFactoryId& factory
     }
     
     // save this cube to preferred cubes to connect to (block pool)
-    auto got = _blockPoolFactoryIds.find(cube->factoryId);
-    if(got==_blockPoolFactoryIds.end()) {
-      _blockPoolFactoryIds.insert(cube->factoryId);
+    if(_blockPoolFactoryId.empty()) {
+      _blockPoolFactoryId = cube->factoryId;
     }
     const Util::Data::DataPlatform* platform = _robot->GetContextDataPlatform();
-    const std::string blockPoolFile = platform->pathToResource(Util::Data::Scope::Persistent, "blockPoolList.json");
+    const std::string blockPoolFile = platform->pathToResource(Util::Data::Scope::Persistent, kBlockPoolFilename);
     SaveBlockPoolListToJson(blockPoolFile);
   } else {
     // log event to das
@@ -608,17 +605,15 @@ void CubeCommsComponent::HandleScanForCubesFinished()
     // If this is the first cube of this type to be seen or if this cube's rssi
     // is higher than the max seen, add it to the list of cubes to connect to
     auto got = candidates.find(type);
-    const bool inBlockPool = _blockPoolFactoryIds.find(facId)!=_blockPoolFactoryIds.end();
+    const bool inBlockPool = _blockPoolFactoryId.compare(facId)==0;
     if(got==candidates.end()) {
       candidates[type] = CandidateCubeInfo{rssi, facId, inBlockPool};
-    } else if(( got->second.inBlockPool &&  inBlockPool && got->second.maxRssiSeen < rssi) ||
-              (!got->second.inBlockPool && (inBlockPool || got->second.maxRssiSeen < rssi))) {
+    } else if(!got->second.inBlockPool && (inBlockPool || got->second.maxRssiSeen < rssi)) {
       // truth table: used to decide if we want to overwrite old with new
+      //
       //   old cube         new cube
       // in block pool?   in block pool?    higher rssi?    should overwrite?
       //    (A)               (B)               (C)             (D)
-      //  yes               yes               yes             yes
-      //  yes               yes               no              no
       //  yes               no                yes             no
       //  yes               no                no              no
       //  no                yes               yes             yes
@@ -626,11 +621,10 @@ void CubeCommsComponent::HandleScanForCubesFinished()
       //  no                no                yes             yes
       //  no                no                no              no
       //
-      //  expression:
-      //    D = (A & B & C) || (!A & (B | C))
-      //
       // prefer the cubes in the blockpool over higher rssi cubes
       candidates[type] = CandidateCubeInfo{rssi, facId, inBlockPool};
+    } else {
+      DEV_ASSERT( !(inBlockPool && got->second.inBlockPool), "CubeCommsComponent.HandleScanForCubesFinished.TwoCubesInBlockPoolNotAllowed");
     }
   }
 
@@ -722,11 +716,7 @@ CubeCommsComponent::CubeInfo* CubeCommsComponent::GetCubeByFactoryId(const BleFa
 void CubeCommsComponent::SaveBlockPoolListToJson(const std::string& blockPoolFile) const
 {
   Util::JsonWriter writer(blockPoolFile);
-  writer.StartList(kBlockFacIdsKey);
-  for(const auto& item : _blockPoolFactoryIds) {
-    writer.AddRawListEntry(item);
-  }
-  writer.EndList();
+  writer.AddEntry(kBlockFacIdKey, _blockPoolFactoryId);
   writer.Close();
 }
 

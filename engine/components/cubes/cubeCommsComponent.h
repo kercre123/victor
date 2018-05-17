@@ -22,7 +22,6 @@
 #include "util/signals/simpleSignal_fwd.h" // Signal::SmartHandle
 
 #include <unordered_map>
-#include <unordered_set>
 
 namespace Anki {
 namespace Cozmo {
@@ -163,8 +162,8 @@ private:
   
   void SaveBlockPoolListToJson(const std::string& blockPoolFile) const;
   
-  // cached list of preferred blocks to connect to
-  std::unordered_set<std::string> _blockPoolFactoryIds;
+  // cached preferred block to connect to
+  std::string _blockPoolFactoryId = "";
 };
 
 
