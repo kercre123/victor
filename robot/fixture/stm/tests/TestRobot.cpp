@@ -1123,7 +1123,7 @@ void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
     }
     
     //keep an eye on output voltage from crappy power supplies
-    const int undervolt = 4700, overvolt = 5300;
+    const int undervolt = 4750, overvolt = 5300;
     if( voltage_mv < undervolt || voltage_mv > overvolt ) {
       ConsolePrintf("bad voltage: %u\n", voltage_mv );
       throw voltage_mv < undervolt ? ERROR_OUTPUT_VOLTAGE_LOW : ERROR_OUTPUT_VOLTAGE_HIGH;
