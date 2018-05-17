@@ -1,5 +1,5 @@
 /**
- * File: standaloneTensorFlowInference.cpp
+ * File: standaloneForwardInference.cpp
  *
  * Author: Andrew Stein
  * Date:   1/29/2018

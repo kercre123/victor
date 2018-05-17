@@ -1,7 +1,7 @@
 cxx_project(
     name = 'vic-neuralnets',
     srcs = [
-      "standaloneForwardInference.cpp",
+      "vicNeuralNetsMain.cpp",
       "objectDetector_tensorflow.cpp"
     ],
     platform_srcs = [
