@@ -549,6 +549,29 @@ union VictorDisplay {
     SetBackpackLEDs             SetBackpackLEDs             = 0x01,
 }
 
+
+// ====================================================
+//                         Cubes
+// ====================================================
+
+// See SetActiveObjectLEDs for parameter documentation
+message SetAllActiveObjectLEDs {
+  uint_32  objectID,
+  uint_32  onColor[4],
+  uint_32  offColor[4],
+  uint_32  onPeriod_ms[4],
+  uint_32  offPeriod_ms[4],
+  uint_32  transitionOnPeriod_ms[4],
+  uint_32  transitionOffPeriod_ms[4],
+  int_32   offset[4]
+}
+
+
+union Cubes {
+    Error                       Error                       = 0x00,
+    SetAllActiveObjectLEDs      SetAllActiveObjectLEDs      = 0x01,
+}
+
 // ====================================================
 //                      Outer Union
 // ====================================================
@@ -563,6 +586,7 @@ union ExternalComms {
     MovementAction              MovementAction              = 0x06,
     Animations                  Animations                  = 0x07,
     VictorDisplay               VictorDisplay               = 0x08,
+    Cubes                       Cubes                       = 0x09,
 }
 
 } // namespace ExternalComms

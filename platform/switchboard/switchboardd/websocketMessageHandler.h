@@ -19,6 +19,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/externalInterface/messageExternalComms.h"
+#include "clad/types/ledTypes.h"
 
 namespace Anki {
 namespace Switchboard {
@@ -68,6 +69,8 @@ private:
   void HandleVictorDisplay(Anki::Cozmo::ExternalComms::VictorDisplay unionInstance);
   void HandleVictorDisplay_SetBackpackLEDs(Anki::Cozmo::ExternalComms::SetBackpackLEDs sdkMessage);
 
+  void HandleCubes(Anki::Cozmo::ExternalComms::Cubes unionInstance);
+  void HandleCubes_SetAllActiveObjectLEDs(Anki::Cozmo::ExternalComms::SetAllActiveObjectLEDs sdkMessage);
 
   Anki::Cozmo::ExternalComms::ExternalComms SendMeetVictorStarted(const Anki::Cozmo::ExternalInterface::MeetVictorStarted& msg);
   Anki::Cozmo::ExternalComms::ExternalComms SendMeetVictorFaceScanStarted(const Anki::Cozmo::ExternalInterface::MeetVictorFaceScanStarted& msg);

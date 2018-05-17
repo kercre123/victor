@@ -250,14 +250,30 @@ class Robot:
 
         await self.socket.send(outerWrappedMessage.pack())
 
-    async def set_all_backpack_lights(self, light, backpack_color_profile=lights.white_balanced_backpack_profile):
+    async def set_all_backpack_lights(self, light, color_profile=lights.white_balanced_backpack_profile):
         '''Set the lights on Vector's backpack to the same color.
 
         Args:
             light (:class:`cozmo.lights.Light`): The lights for Vector's backpack.
         '''
         light_arr = [ light ] * 3
-        await self.set_backpack_lights(*light_arr, backpack_color_profile)
+        await self.set_backpack_lights(*light_arr, color_profile)
+
+    async def set_cube_light_corners( self, cube_id, light1, light2, light3, light4, color_profile=lights.white_balanced_cube_profile ):
+        message = _clad_message.SetAllActiveObjectLEDs(
+            objectID=cube_id,
+            offset=[0,0,0,0])
+        for i, light in enumerate( (light1, light2, light3, light4) ):
+            if light is not None:
+                lights._set_light(message, i, light, color_profile)
+
+        innerWrappedMessage = _clad_message.Cubes(SetAllActiveObjectLEDs=message)
+        outerWrappedMessage = _clad_message.ExternalComms(Cubes=innerWrappedMessage)
+
+        await self.socket.send(outerWrappedMessage.pack())
+
+    async def set_cube_lights( self, cube_id, light, color_profile=lights.white_balanced_cube_profile ):
+        await self.set_cube_light_corners( cube_id, *[light, light, light, light], color_profile)
 
 async def _bootstrap(main_function, uri):
     print("Attempting websockets.connect...")

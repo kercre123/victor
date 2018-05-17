@@ -52,13 +52,13 @@ white = Color(name="white", int_color=0xffffffff)
 off = Color(name="off")
 
 
-class BackpackColorProfile:
-    '''A Color profile send to be used with messaged involving the robot's backpack LEDs.
+class ColorProfile:
+    '''A Color profile send to be used with messages involving LEDs.
 
     Args:
-        red_multiplier (float): Scaling value for the brightness of backpack red LED's
-        green_multiplier (float): Scaling value for the brightness of backpack green LED's
-        blue_multiplier (float): Scaling value for the brightness of backpack blue LED's
+        red_multiplier (float): Scaling value for the brightness of red LEDs
+        green_multiplier (float): Scaling value for the brightness of green LEDs
+        blue_multiplier (float): Scaling value for the brightness of blue LEDs
     '''
 
     def __init__(self, red_multiplier, green_multiplier, blue_multiplier):
@@ -96,13 +96,16 @@ class BackpackColorProfile:
         return self._blue_multiplier
 
 
-#: :class:`BackpackColorProfile`:  Color profile to get the maximum possible brightness out of each LED.
-max_brightness_backpack_profile = BackpackColorProfile(red_multiplier=1.0, green_multiplier=1.0, blue_multiplier=1.0)
+#: :class:`ColorProfile`:  Color profile to get the maximum possible brightness out of each LED.
+max_color_profile = ColorProfile(red_multiplier=1.0, green_multiplier=1.0, blue_multiplier=1.0)
 
-#: :class:`BackpackColorProfile`:  Color profile balanced so that a max color value more closely resembles pure white.
+#: :class:`ColorProfile`:  Color profile balanced so that a max color value more closely resembles pure white.
 #TODO: Balance this more carefully once robots with proper color pipe hardware becomes available
-white_balanced_backpack_profile = BackpackColorProfile(red_multiplier=1.0, green_multiplier=0.825, blue_multiplier=0.81)
+white_balanced_backpack_profile = ColorProfile(red_multiplier=1.0, green_multiplier=0.825, blue_multiplier=0.81)
 
+#: :class:`ColorProfile`:  Color profile balanced so that a max color value more closely resembles pure white.
+#TODO: Balance this more carefully once robots with proper color pipe hardware becomes available
+white_balanced_cube_profile = ColorProfile(red_multiplier=1.0, green_multiplier=0.95, blue_multiplier=0.7)
 
 class Light:
     '''Lights are used with LightCubes and Vector's backpack.
@@ -186,6 +189,7 @@ class Light:
             raise ValueError("Invalid value")
         self._transition_off_period_ms = ms
 
+# @TODO: This paradigm is a holdover from Cozmo, we should investigate a better solution after GRPC lands
 def _set_light(msg, idx, light, profile):
     # For use with clad light messages specifically.
     if not isinstance(light, Light):

@@ -285,6 +285,32 @@ void WebsocketMessageHandler::HandleVictorDisplay(Anki::Cozmo::ExternalComms::Vi
   }
 }
 
+void WebsocketMessageHandler::HandleCubes_SetAllActiveObjectLEDs(Anki::Cozmo::ExternalComms::SetAllActiveObjectLEDs sdkMessage) {
+  Anki::Cozmo::ExternalInterface::SetAllActiveObjectLEDs engineMessage;
+  engineMessage.objectID = sdkMessage.objectID;
+  engineMessage.onColor = sdkMessage.onColor;
+  engineMessage.offColor = sdkMessage.offColor;
+  engineMessage.onPeriod_ms = sdkMessage.onPeriod_ms;
+  engineMessage.offPeriod_ms = sdkMessage.offPeriod_ms;
+  engineMessage.transitionOnPeriod_ms = sdkMessage.transitionOnPeriod_ms;
+  engineMessage.transitionOffPeriod_ms = sdkMessage.transitionOffPeriod_ms;
+  engineMessage.offset = sdkMessage.offset;
+  engineMessage.rotate = 0;
+  engineMessage.makeRelative = Anki::Cozmo::MakeRelativeMode::RELATIVE_LED_MODE_OFF;
+  Log::Write("WebsocketMessageHandler - Sending Cube Lights Message");
+  _engineMessaging->SendMessage(G2EMessage::CreateSetAllActiveObjectLEDs(std::move(engineMessage)));
+}
+
+void WebsocketMessageHandler::HandleCubes(Anki::Cozmo::ExternalComms::Cubes unionInstance) {
+  switch(unionInstance.GetTag()) {
+    case Anki::Cozmo::ExternalComms::CubesTag::SetAllActiveObjectLEDs:
+      HandleCubes_SetAllActiveObjectLEDs( unionInstance.Get_SetAllActiveObjectLEDs() );
+      break;
+    default:
+      return;
+  }
+}
+
 void WebsocketMessageHandler::Receive(uint8_t* buffer, size_t size) {
   if(size < 1) {
     return;
@@ -312,6 +338,9 @@ void WebsocketMessageHandler::Receive(uint8_t* buffer, size_t size) {
        break;
     case ExtCommsMessageTag::VictorDisplay:
        HandleVictorDisplay(extComms.Get_VictorDisplay());
+       break;
+    case ExtCommsMessageTag::Cubes:
+       HandleCubes(extComms.Get_Cubes());
        break;
     default:
       Log::Write("Unhandled external comms message tag: %d", extComms.GetTag());
