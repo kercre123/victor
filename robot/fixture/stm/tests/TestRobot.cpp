@@ -1056,7 +1056,10 @@ void Recharge(void)
 extern void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv );
 static void ChargeTest(void)
 {
-  RobotChargeTest( 425, 4100 ); //test charging circuit
+  if( g_fixmode == FIXMODE_ROBOT1 )
+    RobotChargeTest( 425, 4000 ); //test charging circuit
+  else //ROBOT3, PACKOUT
+    RobotChargeTest( 425, 4100 ); //test charging circuit
 }
 
 //Test charging circuit by verifying current draw
