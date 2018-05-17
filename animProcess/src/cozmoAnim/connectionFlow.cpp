@@ -56,7 +56,7 @@ bool DrawStartPairingScreen(AnimationStreamer* animStreamer)
   {
     return false;
   }
-
+  
   animStreamer->EnableKeepFaceAlive(false, 0);
   animStreamer->Abort();
 
@@ -73,12 +73,12 @@ bool DrawStartPairingScreen(AnimationStreamer* animStreamer)
   auto handle = std::make_shared<Vision::SpriteWrapper>(img);
   const bool shouldRenderInEyeHue = false;
   animStreamer->SetFaceImage(handle, shouldRenderInEyeHue, 0);
-
+  
   return true;
 }
 
 // Draws BLE name, key icon, and BLE pin to screen
-void DrawShowPinScreen(AnimationStreamer* animStreamer, const AnimContext* context, const std::string& pin)
+void DrawShowPinScreen(AnimationStreamer* animStreamer, const AnimContext* context)
 {
   Vision::ImageRGB key;
   key.Load(context->GetDataLoader()->GetSpritePaths()->GetValue(Vision::SpriteName::PairingIconKey));
@@ -168,7 +168,7 @@ void UpdatePairingLight(bool on)
             .offset = 0
           }}));
     AnimComms::SendPacketToRobot((char*)m.GetBuffer(), m.Size());
-    isOn = on;
+    isOn = on; 
   }
   else if(isOn && !on)
   {
@@ -195,18 +195,11 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
   using namespace SwitchboardInterface;
 
   // Update the pairing light
-  // Turn it on if we are on the START_PAIRING, SHOW_PRE_PIN, or SHOW_PIN screen
+  // Turn it on if we are on the START_PAIRING or SHOW_PIN screen
   // Otherwise turn it off
   UpdatePairingLight((msg.status == ConnectionStatus::START_PAIRING ||
-                      msg.status == ConnectionStatus::SHOW_PRE_PIN ||
                       msg.status == ConnectionStatus::SHOW_PIN));
-
-  // Enable pairing screen if status is anything besides NONE, COUNT, and END_PAIRING
-  // Should do nothing if called multiple times with same argument such as when transitioning from
-  // START_PAIRING to SHOW_PRE_PIN
-  FaceInfoScreenManager::getInstance()->EnablePairingScreen((msg.status != ConnectionStatus::NONE &&
-                                                             msg.status != ConnectionStatus::COUNT &&
-                                                             msg.status != ConnectionStatus::END_PAIRING));
+  
 
   switch(msg.status)
   {
@@ -224,14 +217,9 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
       DrawStartPairingScreen(animStreamer);
     }
     break;
-    case ConnectionStatus::SHOW_PRE_PIN:
-    {
-      DrawShowPinScreen(animStreamer, context, "######");
-    }
-    break;
     case ConnectionStatus::SHOW_PIN:
     {
-      DrawShowPinScreen(animStreamer, context, std::to_string(_pin));
+      DrawShowPinScreen(animStreamer, context);
     }
     break;
     case ConnectionStatus::SETTING_WIFI:
@@ -270,6 +258,7 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
         // Reenable keep face alive
         animStreamer->EnableKeepFaceAlive(true, 0);
       }
+      FaceInfoScreenManager::getInstance()->EnablePairingScreen(false);
     }
     break;
     case ConnectionStatus::COUNT:

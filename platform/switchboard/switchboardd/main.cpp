@@ -224,10 +224,8 @@ void Daemon::UpdateAdvertisement(bool pairing) {
 
 void Daemon::OnConnected(int connId, INetworkStream* stream) {
   Log::Write("OnConnected");
-  _taskExecutor->Wake([connId, stream, this](){
+  _taskExecutor->Wake([stream, this](){
     Log::Write("Connected to a BLE central.");
-    _connectionId = connId;
-
     if(_securePairing == nullptr) {
       _securePairing = std::make_unique<Anki::Switchboard::SecurePairing>(stream, _loop, _engineMessagingClient, _isPairing, _isOtaUpdating);
       _pinHandle = _securePairing->OnUpdatedPinEvent().ScopedSubscribe(std::bind(&Daemon::OnPinUpdated, this, std::placeholders::_1));
@@ -268,23 +266,13 @@ void Daemon::OnBleIpcDisconnected() {
 
 void Daemon::OnPinUpdated(std::string pin) {
   _engineMessagingClient->SetPairingPin(pin);
+  _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::START_PAIRING);
   _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SHOW_PIN);
   Log::Blue((" " + pin + " ").c_str());
 }
 
 void Daemon::OnEndPairing() {
-  Log::Write("Turning off Pairing Mode and Disconnecting from Client");
-
   UpdateAdvertisement(false);
-
-  if(_bleClient != nullptr) {
-    Log::Write("Pairing ended: Disconnecting from BLE Central [%d]", _connectionId);
-    _bleClient->Disconnect(_connectionId);
-  }
-
-  if(_engineMessagingClient != nullptr) {
-    _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
-  }
 }
 
 void Daemon::OnCompletedPairing() {
@@ -451,11 +439,10 @@ void Daemon::OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame
     case Anki::Cozmo::ExternalInterface::MessageEngineToGameTag::EnterPairing: {
       printf("Enter pairing: %hhu\n", tag);
       if(_securePairing != nullptr) {
-        break;
-      } 
-      
+        _securePairing->SetIsPairing(true);
+      }
       UpdateAdvertisement(true);
-      _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SHOW_PRE_PIN);
+      _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::START_PAIRING);
       break;
     }
     case Anki::Cozmo::ExternalInterface::MessageEngineToGameTag::ExitPairing: {
