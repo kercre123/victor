@@ -69,7 +69,7 @@ anki_build_cxx_executable(vic-neuralnets ${ANKI_SRCLIST_DIR})
 
 target_compile_definitions(vic-neuralnets 
   PRIVATE
-  TENSORFLOW
+  VIC_NEURALNETS_USE_TENSORFLOW
 )
 
 target_compile_options(vic-neuralnets 
