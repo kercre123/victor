@@ -17,6 +17,7 @@
 #include "coretech/common/engine/math/lineSegment2d.h"
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
@@ -30,6 +31,7 @@
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_Cliff.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_ProxObstacle.h"
+#include "util/console/consoleInterface.h"
 #include "util/random/randomGenerator.h"
 #include "util/random/randomIndexSampler.h"
 
@@ -45,14 +47,15 @@ namespace {
   const char* const kMotionProfileKey = "motionProfile";
   
   // todo: params for this:
-  const float kMinScanAngle = M_PI_F / 4;
-  const float kMaxScanAngle = M_PI_F;
+  const float kMinScanAngle = DEG_TO_RAD( 45.0f );
+  const float kMaxScanAngle = DEG_TO_RAD( 140.0f );
   constexpr float kMinCliffPenaltyDist_mm = 30.0f;
   constexpr float kMaxCliffPenaltyDist_mm = 60.0f;
   const float kTimeBeforeConfirmCharger_s = 10*60.0f;
   const float kTimeBeforeConfirmCube_s = 2*60.0f;
   const float kProxPoseOffset_mm = 120.0f;
   const float kMaxDistToProxPose_mm = 750.0f;
+  const float kMinDistToProxPose_mm = 100.0f;
   const float kMaxCubeFromChargerDist_mm = 2000.0f;
 
   static_assert( kMinCliffPenaltyDist_mm < kMaxCliffPenaltyDist_mm, "Max must be > min" );
@@ -81,6 +84,8 @@ namespace {
   // distance prox obstacles should be from one another to be included in the sample list
   // (set to 0 for an efficiency boost!)
   const float kMinProxObstacleSeparation_mm = 100.0f;
+  
+  CONSOLE_VAR( bool, kMoveLiftAboveProx, "BehaviorExploring", false);
   
   constexpr MemoryMapTypes::FullContentArray kTypesToBlockSampling =
   {
@@ -402,7 +407,9 @@ void BehaviorExploring::TransitionToDriving()
   
   auto* action = new CompoundActionSequential();
   
-  action->AddAction( new MoveLiftToHeightAction( MoveLiftToHeightAction::Preset::JUST_ABOVE_PROX ) );
+  if( kMoveLiftAboveProx ) {
+    action->AddAction( new MoveLiftToHeightAction( MoveLiftToHeightAction::Preset::JUST_ABOVE_PROX ) );
+  }
   
   const bool forceHeadDown = false;
   action->AddAction( new DriveToPoseAction( _dVars.sampledPoses, forceHeadDown ) );
@@ -433,13 +440,29 @@ void BehaviorExploring::TransitionToArrived()
   _dVars.distToGoal_mm = -1.0f;
   _dVars.numDriveAttemps = 0;
   
-  // turn a random angle
+  // turn a couple random angles
+  auto* action = new CompoundActionSequential();
+  const float t1 = GetRNG().RandDbl();
+  if( t1 < 0.33f ) {
+    action->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::ExploringLookLeft ) );
+  } else if( t1 < 0.66f ) {
+    action->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::ExploringLookRight ) );
+  }
+  
   const float angleChange = GetRNG().RandDblInRange( kMinScanAngle, kMaxScanAngle );
   const bool isAbsAngle = false;
   auto* turnAction = new TurnInPlaceAction( angleChange, isAbsAngle );
   turnAction->SetMaxSpeed(M_PI_2);
+  action->AddAction( turnAction );
+  
+  const float t2 = GetRNG().RandDbl();
+  if( t2 < 0.33f ) {
+    action->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::ExploringLookLeft ) );
+  } else if( t2 < 0.66f ) {
+    action->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::ExploringLookRight ) );
+  }
 
-  DelegateNow( turnAction, [this](const ActionResult& res) {
+  DelegateNow( action, [this](const ActionResult& res) {
     // this could get canceled if an obstacle is seen
     SampleAndDrive();
   });
@@ -701,7 +724,10 @@ void BehaviorExploring::SampleVisitLocationsFacingObstacle( const INavMap* memor
   auto isPositionedWell = [&currListBegin,&robotPos]( const MemoryMapDataWrapper<const MemoryMapData_ProxObstacle>& data,
                                             const std::vector<Pose3d>& existing ) {
     Point2f dataPoint { data->GetObservationPose().GetTranslation() };
-    if( (dataPoint - robotPos).LengthSq() > kMaxDistToProxPose_mm*kMaxDistToProxPose_mm ) {
+    const float distSq = (dataPoint - robotPos).LengthSq();
+    if( (distSq > kMaxDistToProxPose_mm*kMaxDistToProxPose_mm)
+        || (distSq < kMinDistToProxPose_mm*kMinDistToProxPose_mm) )
+    {
       return false;
     }
     for( auto itOthers = currListBegin; itOthers != existing.end(); ++itOthers ) {
@@ -764,7 +790,8 @@ void BehaviorExploring::PrepRobotForProx()
   if( !isSensorReadingValid ) {
     const bool liftBlocking = proxSensor.IsLiftInFOV();
     if( !IsControlDelegated() && liftBlocking ) {
-      DelegateIfInControl( new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::JUST_ABOVE_PROX) );
+      auto preset = kMoveLiftAboveProx ? MoveLiftToHeightAction::Preset::JUST_ABOVE_PROX : MoveLiftToHeightAction::Preset::LOW_DOCK;
+      DelegateIfInControl( new MoveLiftToHeightAction(preset) );
     }
   }
 }

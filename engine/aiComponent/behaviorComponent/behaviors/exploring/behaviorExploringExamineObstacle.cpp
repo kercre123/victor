@@ -44,7 +44,7 @@ namespace {
   const float kHalfAngleForConeActivation_rad = M_PI_4_F;
   const float kDistanceForStopTurn_mm = 300.0f;
   const float kDistanceForStartApproach_mm = 80.0f;
-  const float kDistanceForStopApproach_mm = 40.0f;
+  const float kDistanceForStopApproach_mm = 50.0f;
   
   const float kMaxTurnAngle_deg = 135.0f; // 90 + 45 looks good for coming at a wall at an acute angle
   
@@ -53,7 +53,7 @@ namespace {
   const bool kTakePhoto = false;
   
   float kReturnToCenterSpeed_deg_s = 300.0f;
-  float kTurnSpeed_deg_s = 60.0f;
+  float kTurnSpeed_deg_s = 45.0f;
   
   const unsigned int kNumFloodFillSteps = 10;
   

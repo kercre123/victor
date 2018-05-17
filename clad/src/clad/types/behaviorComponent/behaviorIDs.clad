@@ -97,6 +97,7 @@ enum uint_8 BehaviorID {
   Exploring,
   ExploringDispatcher,
   ExploringExamineObstacle,
+  ExploringGetIn,
   ExploringVoiceCommand,
 
   // victorBehaviorTree/highLevelDelegates

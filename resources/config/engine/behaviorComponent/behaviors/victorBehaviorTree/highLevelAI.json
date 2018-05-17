@@ -51,12 +51,12 @@
     {
       "name": "Exploring",
       "behavior": "Exploring",
-      "getInBehavior": "DriveOffCharger"
+      "getInBehavior": "ExploringGetIn"
     },
     {
       "name": "ExploringVoiceCommand",
       "behavior": "ExploringVoiceCommand",
-      "getInBehavior": "DriveOffCharger",
+      "getInBehavior": "ExploringGetIn",
       "activateIntent": "explore_start"
     },
     {

@@ -288,6 +288,14 @@
     "AnimName": "ag_driving01_startdriving"
   },
   {
+    "CladEvent": "ExploringLookLeft",
+    "AnimName": "ag_vc_wakeword_turnleft_45degrees"
+  },
+  {
+    "CladEvent": "ExploringLookRight",
+    "AnimName": "ag_vc_wakeword_turnright_45degrees"
+  },
+  {
     "CladEvent": "DEPRECATED_FacePlantRoll",
     "AnimName": "ag_reacttocliff_faceplantroll_01"
   },
