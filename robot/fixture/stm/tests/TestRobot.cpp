@@ -484,12 +484,17 @@ static robot_tread_dat_t* robot_tread_test_(uint8_t sensor, int8_t power)
   return &test;
 }
 
+#define TREAD_TEST_DATA_GATHERING 0
 static void TestRobotTreads_(int8_t power, int min_speed, int min_travel)
 {
   robot_tread_dat_t treadL = *robot_tread_test_(RCOM_SENSOR_MOT_LEFT, power);
   robot_tread_dat_t treadR = *robot_tread_test_(RCOM_SENSOR_MOT_RIGHT, -power);
   print_tread_dat(&treadL, "LEFT ");
   print_tread_dat(&treadR, "RIGHT");
+  
+  #if TREAD_TEST_DATA_GATHERING > 0
+  #warning "TREAD ERROR CHECKING DISABLED"
+  #else
   
   if( treadL.fwd_avg < min_speed || (-1)*treadL.rev_avg < min_speed ) {
     ConsolePrintf("insufficient LEFT tread speed %i,%i < %i\n", treadL.fwd_avg, treadL.rev_avg, min_speed);
@@ -507,16 +512,28 @@ static void TestRobotTreads_(int8_t power, int min_speed, int min_travel)
     ConsolePrintf("insufficient RIGHT tread travel %i,%i < %i\n", treadR.fwd_travel, treadR.rev_travel, min_travel);
     throw ERROR_MOTOR_RIGHT;
   }
+  #endif
 }
 
 void TestRobotTreads(void)
 {
-  //anecdotal norms @ full power: speed 1700-2000, travel 800+
+  #if TREAD_TEST_DATA_GATHERING > 0
+  #warning "TREAD TEST"
+  for(int pwr = 127; pwr >= 60; pwr -= 5) {
+    ConsolePrintf("TREAD TEST pwr = %i\n", pwr);
+    TestRobotTreads_(pwr, 9999, 9999);
+  }
+    
+  #else
+  
+  //full power: speed 1760-1980, travel 790-1160
   TestRobotTreads_(127, 1500, 600);
   
-  //anecdotal norms @ low power: (???)
+  //low power (72): speed 870-1070, travel 400-550
   if( g_fixmode <= FIXMODE_ROBOT3 )
-    TestRobotTreads_(75, 800, 400);
+    TestRobotTreads_(75, 750, 300);
+  
+  #endif
 }
 
 typedef struct {
@@ -558,7 +575,7 @@ static robot_range_dat_t* robot_range_test_(uint8_t sensor, int8_t power)
   
   //calibrated test params for lift vs head
   uint8_t NNstart = lift ? 35 : 65;
-  uint8_t NNtest  = lift ? (power >= 75 ? 45 : 85) : (power >= 90 ? 65 : 125);
+  uint8_t NNtest  = lift ? (power >= 75 ? 55 : 85) : (power >= 90 ? 70 : 125);
   const uint8_t NNsettle = 50;
   
   //force to known starting position
@@ -604,6 +621,7 @@ static robot_range_dat_t* robot_range_test_(uint8_t sensor, int8_t power)
   return &test;
 }
 
+#define RANGE_TEST_DATA_GATHERING 0
 typedef struct { int8_t power; int travel_min; int travel_max; int speed_min; } robot_range_t;
 void TestRobotRange(robot_range_t *testlift, robot_range_t *testhead)
 {
@@ -612,6 +630,10 @@ void TestRobotRange(robot_range_t *testlift, robot_range_t *testhead)
   print_range_dat(&lift, "LIFT");
   print_range_dat(&head, "HEAD");
 
+  #if RANGE_TEST_DATA_GATHERING > 0
+  #warning "RANGE ERROR CHECKING DISABLED"
+  #else
+  
   const int lift_start_delta_max = 50;
   lift.dn_travel *= -1; lift.dn_avg *= -1; //positive comparisons
   if( lift.up_travel < -20 || lift.dn_travel < -20 )
@@ -641,11 +663,24 @@ void TestRobotRange(robot_range_t *testlift, robot_range_t *testhead)
     throw ERROR_MOTOR_HEAD_SPEED;
   else if( ABS(head.start_active-head.start_passive) > head_start_delta_max )
     throw ERROR_MOTOR_HEAD_RANGE; //range met only when force applied
+  
+  #endif
 }
 
 void TestRobotRange(void)
 {
-  #define RELAXED_TEST_FOR_DVT4_STICKY_LIFT_HEAD 1
+  #if RANGE_TEST_DATA_GATHERING > 0
+  #warning "RANGE TESTING"
+  for(int pwr=100; pwr >= 45; pwr -= 5) {
+    if( pwr >= 100 || (pwr < 71 && pwr > 39) ) { //DEBUG limited range of values
+      ConsolePrintf("RANGE TEST pwr = %i\n", pwr);
+      robot_range_t lift = { /*power*/ pwr, /*travel_min*/ 0, /*travel_max*/ 99999, /*speed_min*/ 0 };
+      robot_range_t head = { /*power*/ pwr, /*travel_min*/ 0, /*travel_max*/ 99999, /*speed_min*/ 0 };
+      TestRobotRange( &lift, &head );
+    }
+  }
+  
+  #else
   
   //High Power
   if( g_fixmode == FIXMODE_ROBOT1 ) {
@@ -656,17 +691,10 @@ void TestRobotRange(void)
     robot_range_t head = { /*power*/ 100, /*travel_min*/ 700, /*travel_max*/ 9999, /*speed_min*/ 2300 };
     TestRobotRange( &lift, &head );
   } else if( g_fixmode <= FIXMODE_ROBOT3 ) { //skip PACKOUT
-    //lift travel ~200-220 in each direction
-    //head travel ~540-560 in each direction
-    #if RELAXED_TEST_FOR_DVT4_STICKY_LIFT_HEAD > 0
-      #warning "recalibrate prior to MP"
-      robot_range_t lift = { /*power*/  75, /*travel_min*/ 170, /*travel_max*/ 260, /*speed_min*/ 900 };
-      robot_range_t head = { /*power*/ 100, /*travel_min*/ 480, /*travel_max*/ 600, /*speed_min*/ 2000 };
-    #else
-      robot_range_t lift = { /*power*/  75, /*travel_min*/ 170, /*travel_max*/ 260, /*speed_min*/ 1300 };
-      robot_range_t head = { /*power*/ 100, /*travel_min*/ 480, /*travel_max*/ 600, /*speed_min*/ 2000 };
-    #endif
-    
+    //lift: travel 195-200, speed 760-1600
+    //head: travel 550-560, speed 2130-2400
+    robot_range_t lift = { /*power*/  75, /*travel_min*/ 170, /*travel_max*/ 230, /*speed_min*/  650 };
+    robot_range_t head = { /*power*/ 100, /*travel_min*/ 520, /*travel_max*/ 590, /*speed_min*/ 1700 };
     TestRobotRange( &lift, &head );
   }
   
@@ -675,59 +703,18 @@ void TestRobotRange(void)
     //NO HEAD/ARMS ATTACHED = NO STOP!
     //lift travel ~550-600 in each direction
     //head travel ~650-??? in each direction
-    robot_range_t lift = { /*power*/  45, /*travel_min*/ 450, /*travel_max*/ 9999, /*speed_min*/ 1000 };
-    robot_range_t head = { /*power*/  50, /*travel_min*/ 550, /*travel_max*/ 9999, /*speed_min*/ 800 };
+    robot_range_t lift = { /*power*/  50, /*travel_min*/ 400, /*travel_max*/ 9999, /*speed_min*/ 800 };
+    robot_range_t head = { /*power*/  55, /*travel_min*/ 550, /*travel_max*/ 9999, /*speed_min*/ 700 };
     TestRobotRange( &lift, &head );
   } else { //ROBOT3,PACKOUT
-    //lift travel ~200-220 in each direction
-    //head travel ~540-560 in each direction
-    #if RELAXED_TEST_FOR_DVT4_STICKY_LIFT_HEAD > 0
-      #warning "recalibrate prior to MP"
-      robot_range_t lift = { /*power*/  65, /*travel_min*/ 170, /*travel_max*/  300, /*speed_min*/ 550 };
-      robot_range_t head = { /*power*/  60, /*travel_min*/ 480, /*travel_max*/  650, /*speed_min*/ 700 };
-    #else
-      robot_range_t lift = { /*power*/  45, /*travel_min*/ 170, /*travel_max*/  300, /*speed_min*/ 550 };
-      robot_range_t head = { /*power*/  50, /*travel_min*/ 480, /*travel_max*/  650, /*speed_min*/ 700 };
-    #endif
-    
+    //lift: travel 190-200, speed 580-1520
+    //head: travel 545-555, speed 900-1230
+    robot_range_t lift = { /*power*/  65, /*travel_min*/ 170, /*travel_max*/  230, /*speed_min*/ 400 };
+    robot_range_t head = { /*power*/  60, /*travel_min*/ 520, /*travel_max*/  590, /*speed_min*/ 700 };
     TestRobotRange( &lift, &head );
   }
   
-  /*/ROBOT1 sample log test results
-  LIFT range test. power 75
-  HEAD range test. power 100
-  LIFT POS start:-2024 passive:-2024 delta:0
-  LIFT UP  speed:+2557 avg:+2387 travel:+514
-  LIFT DN  speed:-2569 avg:-2454 travel:-448
-  HEAD POS start:-1738 passive:-1738 delta:0
-  HEAD UP  speed:+3063 avg:+2710 travel:+864
-  HEAD DN  speed:-2983 avg:-2807 travel:-798
-  LIFT range test. power 45
-  HEAD range test. power 50
-  LIFT POS start:-2180 passive:-2180 delta:0
-  LIFT UP  speed:+1489 avg:+1407 travel:+590
-  LIFT DN  speed:-1530 avg:-1451 travel:-576
-  HEAD POS start:-1838 passive:-1838 delta:0
-  HEAD UP  speed:+1098 avg:+1057 travel:+660
-  HEAD DN  speed:-1117 avg:-1091 travel:-652 */
-  
-  /*/ROBOT3 sample log test results
-  LIFT range test. power 75
-  HEAD range test. power 100
-  LIFT POS start:-26 passive:-2 delta:-24
-  LIFT UP  speed:+1869 avg:+1607 travel:+211
-  LIFT DN  speed:-1975 avg:-1819 travel:-214
-  HEAD POS start:-356 passive:-341 delta:-15
-  HEAD UP  speed:+2680 avg:+2393 travel:+545
-  HEAD DN  speed:-2865 avg:-2495 travel:-556
-  LIFT range test. power 45
-  HEAD range test. power 50
-  LIFT POS start:-27 passive:0 delta:-27
-  LIFT UP  speed:+794 avg:+774 travel:+200
-  LIFT DN  speed:-1187 avg:-1147 travel:-216
-  HEAD POS start:-358 passive:-340 delta:-18
-  HEAD UP  speed:+1001 avg:+857 travel:+522
-  HEAD DN  speed:-1095 avg:-1067 travel:-544 */
+  #endif
 }
 
 void EmrChecks(void)
@@ -786,6 +773,8 @@ void RobotPowerDown(void)
   {
     Contacts::powerOn(); //turn on power to prevent rebooting
     cleanup_preserve_vext = 1; //leave power on for removal detection (no cleanup pwr cycle)
+    Timer::delayMs(SYSCON_CHG_PWR_DELAY_MS+100); //wait for charger to kick in (known state)
+    
     rcomPwr(RCOM_PWR_OFF);
     
     //wait for syscon to turn off head power
@@ -794,8 +783,8 @@ void RobotPowerDown(void)
     do {
       rcomPwr(RCOM_PWR_OFF);
       spine_mv = Meter::getVoltageMv(PWR_DUTVDD,5);
-      cnt = spine_mv < 50 ? cnt+1 : 0;
-    } while( cnt < 4 && Timer::elapsedUs(Tstart) < 1.5*1000*1000 );
+      cnt = spine_mv < 250 ? cnt+1 : 0;
+    } while( cnt < 4 && Timer::elapsedUs(Tstart) < 2.5*1000*1000 );
     
     ConsolePrintf("spine off voltage %imV\n", spine_mv);
     if( spine_mv > 250 )
@@ -1284,6 +1273,7 @@ TestFunction* TestRobot1GetTests(void) {
     TestRobotDetectSpine,
     TestRobotButton,
     TestRobotInfo,
+    BatteryCheck, //sensor/motors may act strange if battery is low
     TestRobotSensors,
     //DEBUG_TestRobotLeds,
     TestRobotTreads,
@@ -1301,6 +1291,7 @@ TestFunction* TestRobot2GetTests(void) {
     //TestRobotButton,
     TestRobotInfo,
     //DBG_test_emr,
+    //BatteryCheck,
     //TestRobotSensors,
     //TestRobotTreads,
     TestRobotRange,
@@ -1317,6 +1308,7 @@ TestFunction* TestRobot3GetTests(void) {
     TestRobotButton,
     TestRobotInfo,
     EmrChecks, //check previous test results and reset status flags
+    BatteryCheck, //sensor/motors may act strange if battery is low
     TestRobotSensors,
     TestRobotTreads,
     TestRobotRange,
@@ -1333,6 +1325,7 @@ TestFunction* TestRobotPackoutGetTests(void) {
   static TestFunction m_tests[] = {
     TestRobotInfo,
     EmrChecks, //check previous test results and reset status flags
+    BatteryCheck, //sensor/motors may act strange if battery is low
     TestRobotSensors,
     TestRobotTreads,
     TestRobotRange,

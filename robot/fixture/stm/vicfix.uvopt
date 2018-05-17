@@ -205,7 +205,7 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>23</TopLine>
+      <TopLine>24</TopLine>
       <CurrentLine>25</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\app\app.cpp</PathWithFileName>
@@ -309,7 +309,7 @@
       <Focus>0</Focus>
       <ColumnNumber>33</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>250</TopLine>
+      <TopLine>251</TopLine>
       <CurrentLine>252</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\tests\TestBody.cpp</PathWithFileName>
@@ -373,8 +373,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>200</TopLine>
+      <CurrentLine>205</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\tests\TestCube.cpp</PathWithFileName>
       <FilenameWithoutPath>TestCube.cpp</FilenameWithoutPath>
@@ -389,8 +389,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>1</TopLine>
-      <CurrentLine>1</CurrentLine>
+      <TopLine>735</TopLine>
+      <CurrentLine>745</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\tests\TestRobot.cpp</PathWithFileName>
       <FilenameWithoutPath>TestRobot.cpp</FilenameWithoutPath>
@@ -541,8 +541,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>114</TopLine>
-      <CurrentLine>115</CurrentLine>
+      <TopLine>119</TopLine>
+      <CurrentLine>121</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\lib\swd_stm32.cpp</PathWithFileName>
       <FilenameWithoutPath>swd_stm32.cpp</FilenameWithoutPath>
