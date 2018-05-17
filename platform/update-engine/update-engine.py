@@ -13,11 +13,10 @@ import tarfile
 import zlib
 import shutil
 import ConfigParser
-import errno
-import select
-from hashlib import sha256
+from Crypto.Cipher import AES
+from Crypto.Util.number import bytes_to_long, long_to_bytes
+from hashlib import sha256, md5
 from collections import OrderedDict
-from fcntl import fcntl, F_GETFL, F_SETFL
 
 BOOT_DEVICE = "/dev/block/bootdevice/by-name"
 STATUS_DIR = "/run/update-engine"
@@ -36,28 +35,17 @@ DELTA_STAGING = os.path.join(STATUS_DIR, "delta.bin")
 OTA_PUB_KEY = "/anki/etc/ota.pub"
 OTA_ENC_PASSWORD = "/anki/etc/ota.pas"
 DD_BLOCK_SIZE = 1024*256
-HTTP_BLOCK_SIZE = 1024*2  # Tuned to what seems to work best with DD_BLOCK_SIZE
 SUPPORTED_MANIFEST_VERSIONS = ["0.9.2", "0.9.3", "0.9.4", "0.9.5"]
 
 DEBUG = False
-
-
-def make_blocking(pipe, blocking):
-    "Set a filehandle to blocking or not"
-    fd = pipe.fileno()
-    if not blocking:
-        fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | os.O_NONBLOCK)  # set O_NONBLOCK
-    else:
-        fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~os.O_NONBLOCK)  # clear it
+SIGNATURE_VALIDATION_DISABLED = False
 
 
 def safe_delete(name):
-    "Delete a filesystem path name without error"
     if os.path.isfile(name):
         os.remove(name)
     elif os.path.isdir(name):
         shutil.rmtree(name)
-
 
 def clear_status():
     "Clear everything out of the status directory"
@@ -165,82 +153,24 @@ def get_slot(kernel_command_line):
 
 def get_manifest(fileobj):
     "Returns config parsed from INI file in filelike object"
-    config = ConfigParser.ConfigParser({'encryption': '0'})
+    config = ConfigParser.ConfigParser()
     config.readfp(fileobj)
     return config
 
 
-class StreamDecompressor(object):
-    "An object wrapper for handling possibly encrypted, compressed files"
+def get_section_encryption(manifest, section):
+    "Returns the encryption setting of the section"
+    try:
+        enc = manifest.getint(section, "encryption")
+    except ConfigParser.NoOptionError:
+        enc = 0
+    return enc
 
-    def __init__(self, src_file, encryption, compression, expected_size, do_sha=False):
-        "Sets up the decompressor with it's subprocess, pipes etc."
-        self.fileobj = src_file
-        self.len = expected_size
-        self.pos = 0
-        self.sum = sha256() if do_sha else None
-        cmds = []
-        if encryption == 1:
-            cmds.append("openssl enc -d -aes-256-ctr -pass file:{0}".format(OTA_ENC_PASSWORD))
-        elif encryption != 0:
-            die(210, "Unsupported encryption scheme {}".format(encryption))
-        if compression == 'gz':
-            cmds.append("gunzip")
-        elif compression:
-            die(205, "Unsupported compression scheme {}".format(compression))
-        if cmds:
-            self.proc = subprocess.Popen(" | ".join(cmds), shell=True,
-                                         stdin=subprocess.PIPE,
-                                         stdout=subprocess.PIPE,
-                                         stderr=sys.stderr)
-            make_blocking(self.proc.stdout, False)
-        else:
-            raise ValueError("No procs")
 
-    def __del__(self):
-        "Ensure all subprocesses are closed when class goes away"
-        if self.proc.poll() is None:
-            self.proc.kill()
+def get_password():
+    "Returns the encryption password"
+    return open(OTA_ENC_PASSWORD, "rb").read()
 
-    def read(self, length=-1):
-        """Pumps the input and reads output
-        NOTE: This read function may return more than the requested number of bytes while decompression is in progress
-        but will not return fewer than the requested number of bytes unless the end of file has been reached."""
-        block = b""
-        while (length < 0 or len(block) < length) and (self.pos + len(block)) < self.len:
-            rlist, wlist, xlist = select.select((self.proc.stdout,),
-                                                (self.proc.stdin,),
-                                                (self.proc.stdout, self.proc.stdin))
-            if xlist:
-                die(205, "Decompressor subprocess exceptional status")
-            if self.proc.stdin in wlist:
-                curl = self.fileobj.read(HTTP_BLOCK_SIZE)
-                if len(curl) == HTTP_BLOCK_SIZE:
-                    self.proc.stdin.write(curl)
-                else:  # End the communication
-                    block += self.proc.communicate(curl)[0]
-                    break
-            if self.proc.stdout in rlist:
-                block += self.proc.stdout.read(length)
-        if self.sum:
-            self.sum.update(block)
-        self.pos += len(block)
-        return block
-
-    def digest(self):
-        "Calculate the hexdigest if shasum has been being calculated"
-        return self.sum.hexdigest() if self.sum else None
-
-    def tell(self):
-        "Return the number of bytes output so far"
-        return self.pos
-
-    def read_to_file(self, out_fh, block_size=DD_BLOCK_SIZE, progress_callback=None):
-        "Read the entire contents to a given file"
-        while self.pos < self.len:
-            out_fh.write(self.read(block_size))
-            if callable(progress_callback):
-                progress_callback(self.pos)
 
 
 def open_url_stream(url):
@@ -299,56 +229,131 @@ class ShaFile(object):
         return self.len
 
 
+class AESCtr(object):
+    "AES Counter Object"
+    def __init__(self, nonce):
+        self.c = bytes_to_long(nonce)
+
+    def __call__(self):
+        r = long_to_bytes(self.c)
+        self.c += 1
+        return r
+
+
+class CryptStream(ShaFile):
+    "A file like object for decrypting openssl created AES-256-CTR data"
+
+    def __init__(self, fileobj, password, calc_sha=False):
+        "Initalize the CryptStream from a source file object and password"
+        ShaFile.__init__(self, fileobj)
+        def evp_bytes_to_key(password, salt, key_len, iv_len):
+            "Private key parsing function"
+            m = md5()
+            m.update(password)
+            m.update(salt)
+            dtot = m.digest()
+            d = [dtot]
+            while len(dtot) < (iv_len + key_len):
+                m = md5()
+                m.update(d[-1])
+                m.update(password)
+                m.update(salt)
+                d.append(m.digest())
+                dtot = dtot + d[-1]
+            return bytes(dtot[:key_len]), bytes(dtot[key_len:key_len+iv_len])
+
+        magic = fileobj.read(8)
+        if magic != 'Salted__':
+            raise ValueError('Openssl magic not found')
+        salt = fileobj.read(8)
+        (key, iv) = evp_bytes_to_key(password, salt, 32, 16)
+        self.aes_decrypter = AES.new(key, AES.MODE_CTR, counter=AESCtr(iv))
+        self.do_sha = calc_sha
+
+    def read(self, *args):
+        "Read method for crypt stream"
+        block = self.aes_decrypter.decrypt(self.fileobj.read(*args))
+        if self.do_sha:
+            self.sum.update(block)
+        self.len += len(block)
+        return block
+
+
+def GZStreamGenerator(fileobj, block_size, wbits):
+    "A generator for decompressing gzip data from a filelike object"
+    decompressor = zlib.decompressobj(wbits)
+    block = fileobj.read(block_size)
+    while len(block) >= block_size:
+        yield decompressor.decompress(block, block_size)
+        if len(decompressor.unconsumed_tail) < block_size:
+            block = decompressor.unconsumed_tail + fileobj.read(block_size - len(decompressor.unconsumed_tail))
+    output_block = decompressor.decompress(block, block_size)
+    while len(output_block) == block_size:
+        yield output_block
+        output_block = decompressor.decompress(decompressor.unconsumed_tail, block_size)
+    yield output_block
+
+
 def handle_boot_system(target_slot, manifest, tar_stream):
     "Process 0.9.2 format manifest files"
     total_size = manifest.getint("BOOT", "bytes") + manifest.getint("SYSTEM", "bytes")
     write_status(EXPECTED_WRITE_SIZE_FILE, total_size)
     written_size = 0
     write_status(PROGRESS_FILE, written_size)
-
-    def progress_update(progress):
-        "Update progress while writing to slots"
-        write_status(PROGRESS_FILE, written_size + progress)
-        if DEBUG:
-            sys.stdout.write("{0:0.3f}\r".format(float(written_size+progress)/float(total_size)))
-            sys.stdout.flush()
-
     # Extract boot image
     if DEBUG:
         print("Boot")
     boot_ti = tar_stream.next()
     if not boot_ti.name.endswith("boot.img.gz"):
         die(200, "Expected boot.img.gz to be next in tar but found \"{}\"".format(boot_ti.name))
+    wbits = manifest.getint("BOOT", "wbits")
+    digest = sha256()
     with open(BOOT_STAGING, "wb") as boot_fh:
-        decompressor = StreamDecompressor(tar_stream.extractfile(boot_ti),
-                                          manifest.getint("BOOT", "encryption"),
-                                          manifest.get("BOOT", "compression"),
-                                          manifest.getint("BOOT", "bytes"),
-                                          True)
-        decompressor.read_to_file(boot_fh, DD_BLOCK_SIZE, progress_update)
-        # Verify boot hash
-        if decompressor.digest() != manifest.get("BOOT", "sha256"):
-            zero_slot(target_slot)
-            die(209, "Boot image hash doesn't match signed manifest")
-        written_size += decompressor.tell()
-
+        src_file = tar_stream.extractfile(boot_ti)
+        enc = get_section_encryption(manifest, "BOOT")
+        if enc == 1:
+            src_file = CryptStream(src_file, get_password())
+        elif enc != 0:
+            die(210, "Unsupported enc value")
+        for boot_block in GZStreamGenerator(src_file, DD_BLOCK_SIZE, wbits):
+            boot_fh.write(boot_block)
+            digest.update(boot_block)
+            written_size += len(boot_block)
+            write_status(PROGRESS_FILE, written_size)
+            if DEBUG:
+                sys.stdout.write("{0:0.3f}\r".format(float(written_size)/float(total_size)))
+                sys.stdout.flush()
+    # Verify boot hash
+    if digest.hexdigest() != manifest.get("BOOT", "sha256"):
+        zero_slot(target_slot)
+        die(209, "Boot image hash doesn't match signed manifest")
     # Extract system images
     if DEBUG:
         print("System")
     system_ti = tar_stream.next()
     if not system_ti.name.endswith("sysfs.img.gz"):
         die(200, "Expected sysfs.img.gz to be next in tar but found \"{}\"".format(system_ti.name))
+    wbits = manifest.getint("SYSTEM", "wbits")
+    digest = sha256()
     with open_slot("system", target_slot, "w") as system_slot:
-        decompressor = StreamDecompressor(tar_stream.extractfile(system_ti),
-                                          manifest.getint("SYSTEM", "encryption"),
-                                          manifest.get("SYSTEM", "compression"),
-                                          manifest.getint("SYSTEM", "bytes"),
-                                          True)
-        decompressor.read_to_file(system_slot, DD_BLOCK_SIZE, progress_update)
-        if decompressor.digest() != manifest.get("SYSTEM", "sha256"):
-            zero_slot(target_slot)
-            die(209, "System image hash doesn't match signed manifest")
-        written_size += decompressor.tell()
+        src_file = tar_stream.extractfile(system_ti)
+        enc = get_section_encryption(manifest, "SYSTEM")
+        if enc == 1:
+            src_file = CryptStream(src_file, get_password())
+        elif enc != 0:
+            die(210, "Unsupported enc value")
+        for system_block in GZStreamGenerator(src_file, DD_BLOCK_SIZE, wbits):
+            system_slot.write(system_block)
+            digest.update(system_block)
+            written_size += len(system_block)
+            write_status(PROGRESS_FILE, written_size)
+            if DEBUG:
+                sys.stdout.write("{0:0.3f}\r".format(float(written_size)/float(total_size)))
+                sys.stdout.flush()
+    # Verify system image hash
+    if digest.hexdigest() != manifest.get("SYSTEM", "sha256"):
+        zero_slot(target_slot)
+        die(209, "System image hash doesn't match signed manifest")
     # Actually write the boot image now
     with open(BOOT_STAGING, "rb") as src:
         with open_slot("boot", target_slot, "w") as dst:
@@ -407,16 +412,10 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
     delta_base_version = manifest.get("DELTA", "base_version")
     if current_version != delta_base_version:
         die(211, "My version is {} not {}".format(current_version, delta_base_version))
-    write_status(EXPECTED_WRITE_SIZE_FILE, manifest.getint("DELTA", "bytes"))
+    total_size = manifest.getint("DELTA", "bytes")
+    write_status(EXPECTED_WRITE_SIZE_FILE, total_size)
+    written_size = 0
     write_status(PROGRESS_FILE, 0)
-
-    def progress_update(progress):
-        "Update delta download progress"
-        write_status(PROGRESS_FILE, progress)
-        if DEBUG:
-            sys.stdout.write("{0:0.3f}\r".format(float(progress)/float(manifest.getint("DELTA", "bytes"))))
-            sys.stdout.flush()
-
     # Extract delta file
     if DEBUG:
         print("Delta")
@@ -425,17 +424,27 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
         die(200,
             "Expected delta.bin.gz to be next in tar but found \"{}\""
             .format(delta_ti.name))
+    wbits = manifest.getint("DELTA", "wbits")
+    digest = sha256()
     with open(DELTA_STAGING, "wb") as delta_fh:
-        decompressor = StreamDecompressor(tar_stream.extractfile(delta_ti),
-                                          manifest.getint("DELTA", "encryption"),
-                                          manifest.get("DELTA", "compression"),
-                                          manifest.getint("DELTA", "bytes"),
-                                          True)
-        decompressor.read_to_file(delta_fh, DD_BLOCK_SIZE, progress_update)
-        # Verify delta hash
-        if decompressor.digest() != manifest.get("DELTA", "sha256"):
-            safe_delete(DELTA_STAGING)
-            die(209, "delta.bin hash doesn't match manifest value")
+        src_file = tar_stream.extractfile(delta_ti)
+        enc = get_section_encryption(manifest, "DELTA")
+        if enc == 1:
+            src_file = CryptStream(src_file, get_password())
+        elif enc != 0:
+            die(210, "Unsupported enc value")
+        for delta_block in GZStreamGenerator(src_file, DD_BLOCK_SIZE, wbits):
+            delta_fh.write(delta_block)
+            digest.update(delta_block)
+            written_size += len(delta_block)
+            write_status(PROGRESS_FILE, written_size)
+            if DEBUG:
+                sys.stdout.write("{0:0.3f}\r".format(float(written_size)/float(total_size)))
+                sys.stdout.flush()
+    # Verify delta hash
+    if digest.hexdigest() != manifest.get("DELTA", "sha256"):
+        safe_delete(DELTA_STAGING)
+        die(209, "delta.bin hash doesn't match manifest value")
     paycheck = subprocess.Popen(["/usr/bin/paycheck.py",
                                  "--do-not-truncate-to-expected-size",
                                  DELTA_STAGING,
@@ -450,9 +459,10 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
     paycheck_out, paycheck_err = paycheck.communicate()
     safe_delete(DELTA_STAGING)
     if ret_code != 0:
-        die(207,
+        die(219,
             "Failed to apply delta. paycheck.py returned {0}\n{1}\n{2}"
             .format(ret_code, paycheck_out, paycheck_err))
+
 
 
 def handle_anki(current_slot, target_slot, manifest, tar_stream):
@@ -473,8 +483,11 @@ def handle_anki(current_slot, target_slot, manifest, tar_stream):
         write_status(PROGRESS_FILE, 2)
         anki_ti = tar_stream.next()
         src_file = tar_stream.extractfile(anki_ti)
-        if manifest.getint("ANKI", "encryption") != 0:
-            die(210, "Encrypted Anki updates are not supported")
+        enc = get_section_encryption(manifest, "ANKI")
+        if enc == 1:
+            sha_fh = CryptStream(src_file, get_password(), True)
+        elif enc != 0:
+            die(210, "Unsupported enc value")
         else:
             sha_fh = ShaFile(src_file)
         anki_tar = make_tar_stream(sha_fh, "r|" + manifest.get("ANKI", "compression"))
@@ -527,8 +540,11 @@ def update_from_url(url):
             signature.write(tar_stream.extractfile(manifest_sig_ti).read())
         verification_status = verify_signature(MANIFEST_FILE, MANIFEST_SIG, OTA_PUB_KEY)
         if not verification_status[0]:
-            die(209,
-                "Manifest failed signature validation, openssl returned {1:d} {2:s} {3:s}".format(*verification_status))
+            if not SIGNATURE_VALIDATION_DISABLED:
+                die(209,
+                    "Manifest failed signature validation, openssl returned {1:d} {2:s} {3:s}".format(*verification_status))
+            elif DEBUG:
+                sys.stderr.write("ERROR 209 (suppressed): Manifest failed signature validation.{linesep} {1:d} {2:s} {3:s}{linesep}".format(*verification_status, linesep=os.linesep))
         # Manifest was signed correctly
         manifest = get_manifest(open(MANIFEST_FILE, "r"))
         # Inspect the manifest
