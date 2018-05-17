@@ -428,9 +428,6 @@ def update_from_url(url):
         else:
             die(201, "Unexpected manifest configuration")
     stream.close()
-    # Ensure new images are synced to disk
-    if not call(["/bin/sync"]):
-        die(208, "Couldn't sync OS images to disk")
     # Mark the slot bootable now
     if not call(["/bin/bootctl", current_slot, "set_active", target_slot]):
         die(202, "Could not set target slot as active")
