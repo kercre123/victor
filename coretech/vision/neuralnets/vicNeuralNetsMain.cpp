@@ -53,7 +53,7 @@
 
 #define LOG_PROCNAME "vic-neuralnets"
 #define LOG_CHANNEL "NeuralNets"
-#define PRINT_TIMING 1
+#define PRINT_TICTOC_TIMING 1
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace {
@@ -77,28 +77,49 @@ static void CleanupAndExit(Anki::Result result)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// NOTE: this simplified Tic/Toc approach does not support nested calls. Toc just returns time since last Tic!
-// TODO: Use coretech/util profilers 
-
-using ClockType = std::chrono::high_resolution_clock;
-using TimePoint = std::chrono::time_point<ClockType>;
-
-static inline TimePoint Tic() 
+// Lightweight scoped timing mechanism
+// TODO: Use coretech/util profiling mechanism
+class TicToc
 {
-  return ClockType::now();  
-}
+  using ClockType = std::chrono::high_resolution_clock;
+  using TimePoint = std::chrono::time_point<ClockType>;
 
-static void Toc(TimePoint startTime, const std::string& name) 
-{
-  if(PRINT_TIMING) {
-    const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(ClockType::now() - startTime);
-    const std::string eventName("VicNeuralNets.Toc." + name);
+  std::string _name;
+  TimePoint   _startTime;
+
+public:
+
+  #if defined(PRINT_TICTOC_TIMING) && PRINT_TICTOC_TIMING
+  TicToc(const std::string& name)
+  : _name(name) 
+  , _startTime(ClockType::now())
+  { 
+
+  }
+
+  ~TicToc()
+  {
+    const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(ClockType::now() - _startTime);
+    const std::string eventName("VicNeuralNets.Toc." + _name);
     LOG_INFO(eventName.c_str(), "%dms", (int)duration.count());
   }
-}
+  #else
+  TicToc() { }
+  ~TicToc() { }
+  #endif
+};
 
-// Simple bmp reader for test images
-cv::Mat read_bmp(const std::string& input_bmp_name); // implemented below, after main()
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Define helpers for timing and reading / writing images and results (implemented below, after main())
+
+static void GetImage(const std::string& imageFilename, const std::string timestampFilename,
+                     cv::Mat& img, Anki::TimeStamp_t timestamp);
+
+static void GetJsonResults(const std::list<Anki::ObjectDetector::DetectedObject>& objects, Json::Value& detectionResults);
+
+static bool WriteResults(const std::string jsonFilename, const Json::Value& detectionResults);
+
+static cv::Mat ReadBMP(const std::string& input_bmp_name); 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 int main(int argc, char **argv)
@@ -131,7 +152,8 @@ int main(int argc, char **argv)
 
   if(argc < 4)
   {
-    std::cout << "Usage: " << argv[0] << " <configFile>.json modelPath cachePath <imageFile>" << std::endl;
+    std::cout << std::endl << "Usage: " << argv[0] << " <configFile>.json modelPath cachePath <imageFile>" << std::endl;
+    std::cout << std::endl << " If no imageFile is provided, polls cachePath for objectDetectionImage.png" << std::endl;
     CleanupAndExit(result);
   }
   
@@ -175,6 +197,8 @@ int main(int argc, char **argv)
 
   const std::string timestampFilename = Util::FileUtils::FullFilePath({cachePath, "timestamp.txt"});
 
+  const std::string jsonFilename = Util::FileUtils::FullFilePath({cachePath, "objectDetectionResults.json"});
+
   LOG_INFO("VicNeuralNets.Main.ImageLoadMode", "%s: %s",
            (imageFileProvided ? "Loading given image" : "Polling for images at"),
            imageFilename.c_str());
@@ -183,13 +207,15 @@ int main(int argc, char **argv)
 
   // Initialize the detector
   ObjectDetector detector;
-  auto startTime = Tic();
-  result = detector.LoadModel(modelPath, config);
-  Toc(startTime, "LoadModel");
-  if(RESULT_OK != result)
   {
-    PRINT_NAMED_ERROR(argv[0], "Failed to load model from path: %s", modelPath.c_str());
-    CleanupAndExit(result);
+    auto ticToc = TicToc("LoadModel");
+    result = detector.LoadModel(modelPath, config);
+  
+    if(RESULT_OK != result)
+    {
+      PRINT_NAMED_ERROR(argv[0], "Failed to load model from path: %s", modelPath.c_str());
+      CleanupAndExit(result);
+    }
   }
   
   LOG_INFO("VicNeuralNets.Main.DetectorInitialized", "Waiting for images");
@@ -208,97 +234,51 @@ int main(int argc, char **argv)
       }
 
       // Get the image
-      auto startTime = Tic();
       cv::Mat img;
-      
-      const std::string ext = imageFilename.substr(imageFilename.size()-3,3);
-      if(ext == "bmp")
-      {
-        img = read_bmp(imageFilename); // Converts to RGB internally
-      } 
-      else {
-        img = cv::imread(imageFilename);
-        cv::cvtColor(img, img, CV_BGR2RGB); // OpenCV loads BGR, TF expects RGB
-      }
-
-      if(img.empty())
-      {
-        PRINT_NAMED_ERROR("VicNeuralNets.Main.ImageReadFailed", "Empty image from %s", imageFilename.c_str());
-        result = RESULT_FAIL;
-        break;
-      }
-
       TimeStamp_t timestamp=0;
-      if(Util::FileUtils::FileExists(timestampFilename))
       {
-        std::ifstream file(timestampFilename);
-        std::string line;
-        std::getline(file, line);
-        timestamp = std::stoi(line);
+        auto ticToc = TicToc("GetImage");
+        GetImage(imageFilename, timestampFilename, img, timestamp);
+        
+        if(img.empty())
+        {
+          PRINT_NAMED_ERROR("VicNeuralNets.Main.ImageReadFailed", "Empty image from %s", imageFilename.c_str());
+          result = RESULT_FAIL;
+          break;
+        }
       }
-      Toc(startTime, "ImageRead");
 
       // Detect what's in it
-      startTime = Tic();
       std::list<ObjectDetector::DetectedObject> objects;
-      Result result = detector.Detect(img, timestamp, objects);
-      Toc(startTime, "Detect");
-
-      if(RESULT_OK != result)
       {
-        PRINT_NAMED_ERROR(argv[0], "Detect failed!");
-      }
-
-      Json::Value detectionResults;
+        auto ticToc = TicToc("Detect");
+        result = detector.Detect(img, timestamp, objects);
       
-      // Convert the results to JSON
-      {
-        std::string objectsStr;
-        
-        Json::Value& objectsJSON = detectionResults["objects"];
-        for(auto const& object : objects)
+        if(RESULT_OK != result)
         {
-          objectsStr += object.name + "[" + std::to_string((int)round(100.f*object.score)) + "] ";
-          Json::Value json;
-          json["timestamp"] = object.timestamp;
-          json["score"]     = object.score;
-          json["name"]      = object.name;
-          json["xmin"]      = object.xmin;
-          json["ymin"]      = object.ymin;
-          json["xmax"]      = object.xmax;
-          json["ymax"]      = object.ymax;
-          
-          objectsJSON.append(json);
-        }  
-
-        if(!objects.empty())
-        {
-          LOG_INFO("VicNeuralNets.Main.DetectedObjects", 
-                   "Detected %zu objects: %s", objects.size(), objectsStr.c_str());
-        }        
+          PRINT_NAMED_ERROR("VicNeuralNets.Main.DetectFailed", "");
+        }
       }
+
+      // Convert the results to JSON
+      Json::Value detectionResults;
+      GetJsonResults(objects, detectionResults);
 
       // Write out the Json
-      startTime = Tic();
       {
-        const std::string jsonFilename = Util::FileUtils::FullFilePath({cachePath, "objectDetectionResults.json"});
+        auto ticToc = TicToc("WriteJSON");
         if(detector.IsVerbose())
         {
           LOG_INFO("VicNeuralNets.Main.WritingResults", "%s", jsonFilename.c_str());
         }
 
-        Json::StyledStreamWriter writer;
-        std::fstream fs;
-        fs.open(jsonFilename, std::ios::out);
-        if (!fs.is_open()) {
-          PRINT_NAMED_ERROR("VicNeuralNets.Main.OutputFileOpenFailed", "%s", jsonFilename.c_str());
+        const bool success = WriteResults(jsonFilename, detectionResults);
+        if(!success)
+        {
           result = RESULT_FAIL;
           break;
         }
-        writer.write(fs, detectionResults);
-        fs.close();
       }
-      Toc(startTime, "WriteJSON");
 
       if(imageFileProvided)
       {
@@ -352,7 +332,79 @@ int main(int argc, char **argv)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-cv::Mat read_bmp(const std::string& input_bmp_name) 
+void GetImage(const std::string& imageFilename, const std::string timestampFilename,
+                     cv::Mat& img, Anki::TimeStamp_t timestamp)
+{
+  const std::string ext = imageFilename.substr(imageFilename.size()-3,3);
+  if(ext == "bmp")
+  {
+    img = ReadBMP(imageFilename); // Converts to RGB internally
+  } 
+  else {
+    img = cv::imread(imageFilename);
+    cv::cvtColor(img, img, CV_BGR2RGB); // OpenCV loads BGR, TF expects RGB
+  }
+
+  if(img.empty())
+  {
+    // Don't bother reading the timestamp file
+    return;
+  }
+
+  if(Anki::Util::FileUtils::FileExists(timestampFilename))
+  {
+    std::ifstream file(timestampFilename);
+    std::string line;
+    std::getline(file, line);
+    timestamp = std::stoi(line);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void GetJsonResults(const std::list<Anki::ObjectDetector::DetectedObject>& objects, Json::Value& detectionResults)
+{
+  std::string objectsStr;
+  
+  Json::Value& objectsJSON = detectionResults["objects"];
+  for(auto const& object : objects)
+  {
+    objectsStr += object.name + "[" + std::to_string((int)round(100.f*object.score)) + "] ";
+    Json::Value json;
+    json["timestamp"] = object.timestamp;
+    json["score"]     = object.score;
+    json["name"]      = object.name;
+    json["xmin"]      = object.xmin;
+    json["ymin"]      = object.ymin;
+    json["xmax"]      = object.xmax;
+    json["ymax"]      = object.ymax;
+    
+    objectsJSON.append(json);
+  }  
+
+  if(!objects.empty())
+  {
+    LOG_INFO("VicNeuralNets.Main.DetectedObjects", 
+             "Detected %zu objects: %s", objects.size(), objectsStr.c_str());
+  }    
+} 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool WriteResults(const std::string jsonFilename, const Json::Value& detectionResults)
+{
+  Json::StyledStreamWriter writer;
+  std::fstream fs;
+  fs.open(jsonFilename, std::ios::out);
+  if (!fs.is_open()) {
+    PRINT_NAMED_ERROR("VicNeuralNets.Main.OutputFileOpenFailed", "%s", jsonFilename.c_str());
+    return false;
+  }
+  writer.write(fs, detectionResults);
+  fs.close();
+  return true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+cv::Mat ReadBMP(const std::string& input_bmp_name) 
 {
   std::ifstream file(input_bmp_name, std::ios::in | std::ios::binary);
   if (!file) {
