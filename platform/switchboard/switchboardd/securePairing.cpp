@@ -524,8 +524,6 @@ void SecurePairing::HandleRtsWifiConnectRequest(const Cozmo::ExternalComms::RtsC
     bool online = state.connState == WiFiConnState::ONLINE;
 
     if(online) {
-      ev_timer_stop(_loop, &_handleInternet.timer);
-      _inetTimerCount = 0;
       SendWifiConnectResult();
     } else {
       ev_timer_again(_loop, &_handleInternet.timer);
@@ -924,7 +922,6 @@ void SecurePairing::HandleInternetTimerTick() {
 
   if(online || _inetTimerCount > _wifiConnectTimeout_s) {
     ev_timer_stop(_loop, &_handleInternet.timer);
-    _inetTimerCount = 0;
     SendWifiConnectResult();
   }
 }
