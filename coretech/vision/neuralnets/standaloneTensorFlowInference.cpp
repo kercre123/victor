@@ -44,14 +44,30 @@
 #include <iostream>
 #include <signal.h>
 #include <thread>
+#include <unistd.h>
 
 #define LOG_PROCNAME "vic-neuralnets"
+#define LOG_CHANNEL "VicNeuralNets"
 #define PRINT_TIMING 1
 
-std::atomic<bool> quit(false);
-void got_signal(int)
+namespace {
+  bool gShutdown = false;
+}
+
+static void Shutdown(int signum)
 {
-  quit.store(true);
+  LOG_INFO("VicNeuralNets.Shutdown", "Shutdown on signal %d", signum);
+  gShutdown = true;
+}
+
+static void CleanupAndExit(Anki::Result result)
+{
+  LOG_INFO("VicNeuralNets.CleanupAndExit", "result:%d", result);
+  Anki::Util::gLoggerProvider = nullptr;
+  // TODO: Add GoogleBreakpad
+  // GoogleBreakpad::UnInstallGoogleBreakpad();
+  sync();
+  exit(result);
 }
 
 using ClockType = std::chrono::high_resolution_clock;
@@ -73,6 +89,12 @@ cv::Mat read_bmp(const std::string& input_bmp_name); // defined below, after mai
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 int main(int argc, char **argv)
 {
+  signal(SIGTERM, Shutdown);
+
+  // TODO: Add GoogleBreakpad
+  //static char const* filenamePrefix = "anim";
+  //GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
+
   using namespace Anki;
 
   // Create and set logger, depending on platform
@@ -91,19 +113,12 @@ int main(int argc, char **argv)
   webots::Supervisor webotsSupervisor;
 # endif
 
-  // For calling destructor when process is interrupted or terminated
-  // https://stackoverflow.com/questions/4250013/is-destructor-called-if-sigint-or-sigstp-issued
-  struct sigaction sa;
-  memset( &sa, 0, sizeof(sa) );
-  sa.sa_handler = got_signal;
-  sigfillset(&sa.sa_mask);
-  sigaction(SIGINT,&sa,NULL);
-  sigaction(SIGTERM,&sa,NULL);
+  Result result = RESULT_OK;
 
   if(argc < 4)
   {
     std::cout << "Usage: " << argv[0] << " <configFile>.json modelPath cachePath <imageFile>" << std::endl;
-    return -1;
+    CleanupAndExit(result);
   }
   
   const std::string configFilename(argv[1]);
@@ -119,13 +134,13 @@ int main(int argc, char **argv)
     if(!success)
     {
       PRINT_NAMED_ERROR(argv[0], "Could not read config file: %s", configFilename.c_str());
-      return -1;
+      CleanupAndExit(RESULT_FAIL);
     }
 
     if(!config.isMember("ObjectDetector"))
     {
       PRINT_NAMED_ERROR(argv[0], "Config file missing 'ObjectDetector' field");
-      return -1;
+      CleanupAndExit(RESULT_FAIL);
     }
 
     config = config["ObjectDetector"];
@@ -133,7 +148,7 @@ int main(int argc, char **argv)
     if(!config.isMember("poll_period_ms")) 
     {
       PRINT_NAMED_ERROR(argv[0], "No poll_period_ms specified in config file");
-      return -1;
+      CleanupAndExit(RESULT_FAIL);
     }
   }
 
@@ -153,17 +168,18 @@ int main(int argc, char **argv)
   // Initialize the detector
   ObjectDetector detector;
   auto startTime = Tic();
-  Result initResult = detector.LoadModel(modelPath, config);
+  result = detector.LoadModel(modelPath, config);
   Toc(startTime, "LoadModel");
-  if(RESULT_OK != initResult)
+  if(RESULT_OK != result)
   {
     PRINT_NAMED_ERROR(argv[0], "Failed to load model from path: %s", modelPath.c_str());
-    return -1;
+    CleanupAndExit(result);
   }
   
   std::cout << "Detector initialized, waiting for images" << std::endl;
 
-  while(true)
+  // Loop until shutdown or error
+  while (!gShutdown) 
   {
     // Is there an image file available in the cache?
     const bool isImageAvailable = Util::FileUtils::FileExists(imageFilename);
@@ -254,17 +270,18 @@ int main(int argc, char **argv)
         fs.open(jsonFilename, std::ios::out);
         if (!fs.is_open()) {
           std::cerr << "Failed to open output file: " << jsonFilename << std::endl;
-          return -1;
+          result = RESULT_FAIL;
+          break;
         }
         writer.write(fs, detectionResults);
         fs.close();
       }
       Toc(startTime, "WriteJSON");
 
-      
       if(imageFileProvided)
       {
         // If we loaded in image file specified on the command line, we are done 
+        result = RESULT_OK;
         break;
       }
       else
@@ -307,15 +324,9 @@ int main(int argc, char **argv)
       std::this_thread::sleep_for(std::chrono::milliseconds(kPollPeriod_ms));  
 #     endif
     }
-
-    if(quit.load()) 
-    {
-      std::cout << std::endl << "Terminating " << argv[0] << std::endl;
-      break;
-    }
   }
 
-  return 0;
+  CleanupAndExit(result);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
