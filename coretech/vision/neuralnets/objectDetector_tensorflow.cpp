@@ -28,7 +28,7 @@
 
 namespace Anki {
 
-static const char* kLogChannelName = "NeuralNets";
+#define LOG_CHANNEL "NeuralNets"
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // TODO: Could use JsonTools:: instead of most of these...
@@ -75,7 +75,7 @@ ObjectDetector::ObjectDetector()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ObjectDetector::~ObjectDetector()
 {
-  std::cout << "Destructing ObjectDetector" << std::endl;
+  LOG_INFO("ObjectDetector.Destructor", "");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -100,8 +100,8 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
 
   if(_params.verbose)
   {
-    PRINT_CH_INFO(kLogChannelName, "ObjectDetector.LoadModel.FoundGraphFile",
-                  "%s", graph_file_name.c_str());
+    LOG_INFO("ObjectDetector.LoadModel.FoundGraphFile",
+             "%s", graph_file_name.c_str());
   }
 
   tensorflow::GraphDef graph_def;
@@ -127,7 +127,7 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
       return RESULT_FAIL;
     }
 
-    std::cout << "ObjectDetector.Model.LoadGraph.MemMappedModelLoadSuccess " << graph_file_name << std::endl;
+    LOG_INFO("ObjectDetector.LoadModel.MemMappedModelLoadSuccess", "%s", graph_file_name.c_str());
 
     tensorflow::SessionOptions options;
     options.config.mutable_graph_options()
@@ -140,7 +140,7 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
 
     if (!session_status.ok())
     {
-      PRINT_NAMED_ERROR("ObjectDetector.Model.LoadGraph.NewMemoryMappedSessionFailed", 
+      PRINT_NAMED_ERROR("ObjectDetector.LoadModel.NewMemoryMappedSessionFailed", 
                         "Status: %s", session_status.ToString().c_str());
       return RESULT_FAIL;
     }
@@ -153,12 +153,12 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
                                                                        graph_file_name, &graph_def);
     if (!load_graph_status.ok())
     {
-      PRINT_NAMED_ERROR("ObjectDetector.Model.LoadGraph.ReadBinaryProtoFailed",
+      PRINT_NAMED_ERROR("ObjectDetector.LoadModel.ReadBinaryProtoFailed",
                         "Status: %s", load_graph_status.ToString().c_str());
       return RESULT_FAIL;
     }
 
-    std::cout << "ObjectDetector.Model.LoadGraph.ModelLoadSuccess " << graph_file_name << std::endl;
+    LOG_INFO("ObjectDetector.LoadModel.ReadBinaryProtoSuccess", "%s", graph_file_name.c_str());
 
     _session.reset(tensorflow::NewSession(tensorflow::SessionOptions()));
   } 
@@ -167,12 +167,12 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
 
   if (!session_create_status.ok())
   {
-    PRINT_NAMED_ERROR("ObjectDetector.Model.LoadGraph.CreateSessionFailed",
+    PRINT_NAMED_ERROR("ObjectDetector.LoadModel.CreateSessionFailed",
                       "Status: %s", session_create_status.ToString().c_str());
     return RESULT_FAIL;
   }
 
-  std::cout << "ObjectDetector.Model.LoadGraph.SessionCreated" << std::endl;
+  LOG_INFO("ObjectDetector.LoadModel.SessionCreated", "");
 
   if (_params.verbose)
   {
@@ -184,21 +184,21 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
     for (int i = 0; i < node_count; i++)
     {
       const auto n = graph_def.node(i);
-      std::cout << "Layer " << i << " - Name: " << n.name() << ", Op: " << n.op() << std::endl;
+      LOG_INFO("ObjectDetector.LoadModel.Summary", "Layer %d - Name: %s, Op: %s", i, n.name().c_str(), n.op().c_str());
       if(n.op() == "Const")
       {
         tensorflow::Tensor t;
         if (!t.FromProto(n.attr().at("value").tensor())) {
-          std::cout << "- Failed to create Tensor from proto" << std::endl;
+          LOG_INFO("ObjectDetector.LoadModel.SummaryFail", "Failed to create Tensor from proto");
           continue;
         }
 
-        std::cout << "- Summary: " << t.DebugString() << std::endl;
+        LOG_INFO("ObjectDetector.LoadModel.Summary", "%s", t.DebugString().c_str());
       }
       else if(n.op() == "Conv2D")
       {
         const auto& filter_node_name = n.input(1);
-        std::cout << "- Filter input from node: " << filter_node_name << std::endl;
+        LOG_INFO("ObjectDetector.LoadModel.Summary", "Filter input from Conv2D node: %s", filter_node_name.c_str());
       }
     }
   }
@@ -207,7 +207,7 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
   Result readLabelsResult = ReadLabelsFile(labels_file_name, _labels);
   if (RESULT_OK == readLabelsResult)
   {
-    std::cout << "ObjectDetector.Model.LoadGraph.ReadLabelFileSuccess " << labels_file_name.c_str() << std::endl;
+    LOG_INFO("ObjectDetector.LoadModel.ReadLabelFileSuccess", "%s", labels_file_name.c_str());
   }
   return readLabelsResult;
 }
@@ -243,7 +243,8 @@ Result ObjectDetector::SetParamsFromConfig(const Json::Value& config)
     _params.output_type = OutputType::SSD_Boxes;
 
     if(config.isMember("output_type")) {
-      std::cout << "Ignoring output_type and using 'SSD_Boxes' because architecture='ssd_mobilenet' was specified" << std::endl;
+      PRINT_NAMED_WARNING("ObjectDetector.SetParamsFromConfig.IgnoringOutputType", 
+                          "Ignoring output_type and using 'SSD_Boxes' because architecture='ssd_mobilenet' was specified");
     }
   }
   else if(("mobilenet" == _params.architecture) || ("mobilenet_v1" == _params.architecture))
@@ -254,7 +255,8 @@ Result ObjectDetector::SetParamsFromConfig(const Json::Value& config)
     _params.output_type = OutputType::Classification;
 
     if(config.isMember("output_type")) {
-      std::cout << "Ignoring output_type and using 'Classification' because architecture='mobilenet' was specified" << std::endl;
+      PRINT_NAMED_WARNING("ObjectDetector.SetParamsFromConfig.IgnoringOutputType", 
+                          "Ignoring output_type and using 'Classification' because architecture='mobilenet' was specified");
     }
   }
   else if("custom" == _params.architecture)
@@ -284,15 +286,15 @@ Result ObjectDetector::SetParamsFromConfig(const Json::Value& config)
 
   if(_params.verbose)
   {
-    std::cout << "Arch: " << _params.architecture << 
-      (_params.use_grayscale ? ", Grayscale " : ", Color ") << 
-      "Input: " << _params.input_layer_name << ", Outputs: ";
-
+    std::string outputNames;
     for(auto const& outputLayerName : _params.output_layer_names)
     {
-      std::cout << outputLayerName << " ";
-    }
-    std::cout << std::endl;
+      outputNames += outputLayerName + " ";
+    }    
+
+    LOG_INFO("ObjectDetector.SetParamsFromConfig.Summary", "Arch: %s, %s Input: %s, Outputs: %s", 
+             _params.architecture.c_str(), (_params.use_grayscale ? "Grayscale" : "Color"),
+             _params.input_layer_name.c_str(), outputNames.c_str());
   }
 
   if(_params.use_float_input)
@@ -310,7 +312,7 @@ Result ObjectDetector::SetOutputTypeFromConfig(const Json::Value& config)
 {
   // Convert output_type to enum and validate number of outputs
   if(!config.isMember("output_type")) {
-    PRINT_NAMED_ERROR("ObjectDetector.LoadModel.MissingOutputType", 
+    PRINT_NAMED_ERROR("ObjectDetector.SetOutputTypeFromConfig.MissingOutputType", 
                       "Custom architecture requires output_type to be specified");
     return RESULT_FAIL;
   }
@@ -335,14 +337,14 @@ Result ObjectDetector::SetOutputTypeFromConfig(const Json::Value& config)
       validKeys += entry.first;
       validKeys += " ";
     }
-    PRINT_NAMED_ERROR("ObjectDetector.LoadModel.BadOutputType", "Valid types: %s", validKeys.c_str());
+    PRINT_NAMED_ERROR("ObjectDetector.SetOutputTypeFromConfig.BadOutputType", "Valid types: %s", validKeys.c_str());
     return RESULT_FAIL;
   }
   else {
 
     if(_params.output_layer_names.size() != iter->second.numOutputs)
     {
-      PRINT_NAMED_ERROR("ObjectDetector.LoadModel.WrongNumberOfOutputs", 
+      PRINT_NAMED_ERROR("ObjectDetector.SetOutputTypeFromConfig.WrongNumberOfOutputs", 
                         "OutputType %s requires %d outputs (%d provided)", 
                         iter->first.c_str(), iter->second.numOutputs, (int)_params.output_layer_names.size());
       return RESULT_FAIL;
@@ -365,7 +367,7 @@ Result ObjectDetector::ReadLabelsFile(const std::string& fileName, std::vector<s
   std::ifstream file(fileName);
   if (!file)
   {
-    PRINT_NAMED_ERROR("ObjectDetector.ReadLabelsFile.LabelsFileNotFound: ", "%s", fileName.c_str());
+    PRINT_NAMED_ERROR("ObjectDetector.ReadLabelsFile.LabelsFileNotFound", "%s", fileName.c_str());
     return RESULT_FAIL;
   }
   
@@ -375,7 +377,7 @@ Result ObjectDetector::ReadLabelsFile(const std::string& fileName, std::vector<s
     labels_out.push_back(line);
   }
   
-  std::cout << "ReadLabelsFile read " << labels_out.size() << " labels" << std::endl;
+  LOG_INFO("ObjectDetector.ReadLabelsFile.Success", "Read %d labels", (int)labels_out.size());
 
   return RESULT_OK;
 }
@@ -408,14 +410,14 @@ void ObjectDetector::GetClassification(const tensorflow::Tensor& output_tensor, 
     
     if(_params.verbose)
     {
-      std::cout << "Found " << object.name << "[" << labelIndex << "] with score=" << object.score << std::endl;
+      LOG_INFO("ObjectDetector.GetClassification.ObjectFound", "Name: %s, Score: %f", object.name.c_str(), object.score);
     }
 
     objects.push_back(std::move(object));
   }
   else if(_params.verbose)
   {
-    std::cout << "Nothing found above min_score=" << _params.min_score << std::endl;
+    LOG_INFO("ObjectDetector.GetClassification.NoObjects", "MinScore: %f", _params.min_score);
   }
 }
 
@@ -426,7 +428,9 @@ void ObjectDetector::GetLocalizedBinaryClassification(const tensorflow::Tensor& 
   // Create a detection box for each grid cell that is above threshold
 
   // This raw (Eigen) tensor data appears to be _column_ major (i.e. "not row major")
-  assert( !(output_tensor.tensor<float, 2>().Options & Eigen::RowMajor) );
+  DEV_ASSERT( !(output_tensor.tensor<float, 2>().Options & Eigen::RowMajor), 
+             "ObjectDetector.GetLocalizedBinaryClassification.OutputNotRowMajor");
+
   const float* output_data = output_tensor.tensor<float, 2>().data();
 
   // Box size in normalized image coordiantes
@@ -461,13 +465,13 @@ void ObjectDetector::GetLocalizedBinaryClassification(const tensorflow::Tensor& 
 void ObjectDetector::GetDetectedObjects(const std::vector<tensorflow::Tensor>& output_tensors, TimeStamp_t timestamp,
                                         std::list<DetectedObject>& objects)
 {
-  assert(output_tensors.size() == 4);
+  DEV_ASSERT(output_tensors.size() == 4, "ObjectDetector.GetDetectedObjects.WrongNumOutputs");
 
   const int numDetections = (int)output_tensors[3].tensor<float,1>().data()[0];
 
   if(_params.verbose)
   {
-    std::cout << "Got " << numDetections << " raw detections" << std::endl;
+    LOG_INFO("ObjectDetector.GetDetectedObjects.NumDetections", "%d raw detections", numDetections);
   }
 
   if(numDetections > 0)
@@ -498,12 +502,14 @@ void ObjectDetector::GetDetectedObjects(const std::vector<tensorflow::Tensor>& o
 
     if(_params.verbose)
     {
-      std::cout << "Returning " << objects.size() << " detections with score above " << _params.min_score << ":";
-      for(auto const& object : objects)
-      {
-        std::cout << object.name << " ";
+      std::string objectsStr;
+      for(auto const& object : objects) {
+        objectsStr += object.name + " ";
       }
-      std::cout << std::endl;
+
+      LOG_INFO("ObjectDetector.GetDetectedObjects.ReturningObjects", 
+               "Returning %d objects with score above %f: %s", 
+               (int)objects.size(), _params.min_score, objectsStr.c_str());
     }
   } 
 }
@@ -522,8 +528,10 @@ Result ObjectDetector::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Detec
 
   if(_params.verbose)
   {
-    std::cout << "Resizing " << img.cols << "x" << img.rows << "x" << img.channels() << " image into " << 
-      _params.input_width << "x" << _params.input_height << " " << typeStr << " tensor" << std::endl;
+    LOG_INFO("ObjectDetector.Detect.Resizing", "From [%dx%dx%d] image to [%dx%dx%d] %s tensor", 
+             img.cols, img.rows, img.channels(), 
+             _params.input_width, _params.input_height, (_params.use_grayscale ? 1 : 3), 
+             typeStr);
   }
 
   const auto kResizeMethod = CV_INTER_LINEAR;
@@ -537,9 +545,9 @@ Result ObjectDetector::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Detec
     } 
     else if(_params.verbose)
     {
-      std::cout << "Skipping actual resize: image already correct size" << std::endl;
+      LOG_INFO("ObjectDetector.Detect.SkipResize", "Skipping actual resize: image already correct size");
     }
-    assert(img.isContinuous());
+    DEV_ASSERT(img.isContinuous(), "ObjectDetector.Detect.ImageNotContinuous");
 
     image_tensor = tensorflow::Tensor(tensorflow::DT_FLOAT, {
       1, _params.input_height, _params.input_width, img.channels()
@@ -578,8 +586,8 @@ Result ObjectDetector::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Detec
     
   if(_params.verbose)
   {
-    std::cout << "Running session: Input=(" << img.cols << "x" << img.rows << "x" << img.channels() << "), " << 
-      typeStr << ", " << _params.output_layer_names.size() << " outputs(s)" << std::endl;
+    LOG_INFO("ObjectDetector.Detect.RunningSession", "Input=[%dx%dx%d], %s, %d output(s)", 
+             img.cols, img.rows, img.channels(), typeStr, (int)_params.output_layer_names.size());
   }
 
   std::vector<tensorflow::Tensor> output_tensors;
@@ -611,7 +619,7 @@ Result ObjectDetector::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Detec
 
   if(_params.verbose)
   {
-    std::cout << "Session complete" << std::endl;
+    LOG_INFO("ObjectDetector.Detect.SessionComplete", "");
   }
 
   return RESULT_OK;

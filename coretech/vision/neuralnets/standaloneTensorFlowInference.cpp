@@ -7,6 +7,8 @@
  * Description: Standalone process to run forward inference through a TensorFlow model.
  *              Currently uses the file system as a poor man's IPC.
  *
+ *              Can be used as a Webots controller when compiled with -DSIMULATOR
+ *
  * Copyright: Anki, Inc. 2018
  **/
 
@@ -47,9 +49,10 @@
 #include <unistd.h>
 
 #define LOG_PROCNAME "vic-neuralnets"
-#define LOG_CHANNEL "VicNeuralNets"
+#define LOG_CHANNEL "NeuralNets"
 #define PRINT_TIMING 1
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace {
   bool gShutdown = false;
 }
@@ -70,21 +73,29 @@ static void CleanupAndExit(Anki::Result result)
   exit(result);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// NOTE: this simplified Tic/Toc approach does not support nested calls. Toc just returns time since last Tic!
+// TODO: Use coretech/util profilers 
+
 using ClockType = std::chrono::high_resolution_clock;
 using TimePoint = std::chrono::time_point<ClockType>;
 
-inline TimePoint Tic() {
+static inline TimePoint Tic() 
+{
   return ClockType::now();  
 }
 
-void Toc(TimePoint startTime, const std::string& name) {
+static void Toc(TimePoint startTime, const std::string& name) 
+{
   if(PRINT_TIMING) {
     const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(ClockType::now() - startTime);
-    std::cout << "StandaloneTensorFlow." << name << " took " << duration.count() << "ms" << std::endl;
+    const std::string eventName("VicNeuralNets.Toc." + name);
+    LOG_INFO(eventName.c_str(), "%dms", (int)duration.count());
   }
 }
 
-cv::Mat read_bmp(const std::string& input_bmp_name); // defined below, after main()
+// Simple bmp reader for test images
+cv::Mat read_bmp(const std::string& input_bmp_name); // implemented below, after main()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 int main(int argc, char **argv)
@@ -133,13 +144,14 @@ int main(int argc, char **argv)
     const bool success = reader.parse(file, config);
     if(!success)
     {
-      PRINT_NAMED_ERROR(argv[0], "Could not read config file: %s", configFilename.c_str());
+      PRINT_NAMED_ERROR("VicNeuralNets.Main.ReadConfigFailed", 
+                        "Could not read config file: %s", configFilename.c_str());
       CleanupAndExit(RESULT_FAIL);
     }
 
     if(!config.isMember("ObjectDetector"))
     {
-      PRINT_NAMED_ERROR(argv[0], "Config file missing 'ObjectDetector' field");
+      PRINT_NAMED_ERROR("VicNeuralNets.Main.MissingObjectDetectorField", "Config file missing 'ObjectDetector' field");
       CleanupAndExit(RESULT_FAIL);
     }
 
@@ -147,7 +159,7 @@ int main(int argc, char **argv)
 
     if(!config.isMember("poll_period_ms")) 
     {
-      PRINT_NAMED_ERROR(argv[0], "No poll_period_ms specified in config file");
+      PRINT_NAMED_ERROR("VicNeuralNets.Main.MissingPollPeriodField", "No 'poll_period_ms' specified in config file");
       CleanupAndExit(RESULT_FAIL);
     }
   }
@@ -160,8 +172,9 @@ int main(int argc, char **argv)
 
   const std::string timestampFilename = Util::FileUtils::FullFilePath({cachePath, "timestamp.txt"});
 
-  std::cout << (imageFileProvided ? "Loading given image: " : "Polling for images at: ") << 
-    imageFilename << std::endl;
+  LOG_INFO("VicNeuralNets.Main.ImageLoadMode", "%s: %s",
+           (imageFileProvided ? "Loading given image" : "Polling for images at"),
+           imageFilename.c_str());
 
   const int kPollPeriod_ms = config["poll_period_ms"].asInt();
 
@@ -176,7 +189,7 @@ int main(int argc, char **argv)
     CleanupAndExit(result);
   }
   
-  std::cout << "Detector initialized, waiting for images" << std::endl;
+  LOG_INFO("VicNeuralNets.Main.DetectorInitialized", "Waiting for images");
 
   // Loop until shutdown or error
   while (!gShutdown) 
@@ -188,7 +201,7 @@ int main(int argc, char **argv)
     {
       if(detector.IsVerbose())
       {
-        std::cout << "Found image: " << imageFilename << std::endl;
+        LOG_INFO("VicNeuralNets.Main.FoundImage", "%s", imageFilename.c_str());
       }
 
       // Get the image
@@ -204,6 +217,14 @@ int main(int argc, char **argv)
         img = cv::imread(imageFilename);
         cv::cvtColor(img, img, CV_BGR2RGB); // OpenCV loads BGR, TF expects RGB
       }
+
+      if(img.empty())
+      {
+        PRINT_NAMED_ERROR("VicNeuralNets.Main.ImageReadFailed", "Empty image from %s", imageFilename.c_str());
+        result = RESULT_FAIL;
+        break;
+      }
+
       TimeStamp_t timestamp=0;
       if(Util::FileUtils::FileExists(timestampFilename))
       {
@@ -229,15 +250,12 @@ int main(int argc, char **argv)
       
       // Convert the results to JSON
       {
-        if(!objects.empty())
-        {
-          std::cout << "Detected " << objects.size() << " objects: ";
-        }
-
+        std::string objectsStr;
+        
         Json::Value& objectsJSON = detectionResults["objects"];
         for(auto const& object : objects)
         {
-          std::cout << object.name << "[" << (int)round(100.f*object.score) << "] ";
+          objectsStr += object.name + "[" + std::to_string((int)round(100.f*object.score)) + "] ";
           Json::Value json;
           json["timestamp"] = object.timestamp;
           json["score"]     = object.score;
@@ -252,7 +270,8 @@ int main(int argc, char **argv)
 
         if(!objects.empty())
         {
-          std::cout << std::endl;
+          LOG_INFO("VicNeuralNets.Main.DetectedObjects", 
+                   "Detected %zu objects: %s", objects.size(), objectsStr.c_str());
         }        
       }
 
@@ -262,14 +281,14 @@ int main(int argc, char **argv)
         const std::string jsonFilename = Util::FileUtils::FullFilePath({cachePath, "objectDetectionResults.json"});
         if(detector.IsVerbose())
         {
-          std::cout << "Writing results to JSON: " << jsonFilename << std::endl;
+          LOG_INFO("VicNeuralNets.Main.WritingResults", "%s", jsonFilename.c_str());
         }
 
         Json::StyledStreamWriter writer;
         std::fstream fs;
         fs.open(jsonFilename, std::ios::out);
         if (!fs.is_open()) {
-          std::cerr << "Failed to open output file: " << jsonFilename << std::endl;
+          PRINT_NAMED_ERROR("VicNeuralNets.Main.OutputFileOpenFailed", "%s", jsonFilename.c_str());
           result = RESULT_FAIL;
           break;
         }
@@ -290,14 +309,14 @@ int main(int argc, char **argv)
         // and ready for a new image
         if(detector.IsVerbose())
         {
-          std::cout << "Deleting image file: " << imageFilename << std::endl;
+          LOG_INFO("VicNeuralNets.Main.DeletingImageFile", "%s", imageFilename.c_str());
         }
         remove(imageFilename.c_str());
       }
     }
     else if(imageFileProvided)
     {
-      std::cerr << imageFilename << " does not exist!" << std::endl;
+      PRINT_NAMED_ERROR("VicNeuralNets.Main.ImageFileDoesNotExist", "%s", imageFilename.c_str());
       break;
     }
     else 
@@ -308,7 +327,7 @@ int main(int argc, char **argv)
         static int count = 0;
         if(count++ * kPollPeriod_ms >= kVerbosePrintFreq_ms)
         {
-          std::cout << "Waiting for image at " << imageFilename <<  std::endl;
+          LOG_INFO("VicNeuralNets.Main.WaitingForImage", "%s", imageFilename.c_str());
           count = 0;
         }
       }
@@ -317,7 +336,7 @@ int main(int argc, char **argv)
       const int rc = webotsSupervisor.step(kPollPeriod_ms);
       if(rc == -1)
       {
-        std::cout << "Webots terminating " << argv[0] << std::endl;
+        LOG_INFO("VicNeuralNets.Main.WebotsTerminating", "");
         break;
       }
 #     else
@@ -334,8 +353,8 @@ cv::Mat read_bmp(const std::string& input_bmp_name)
 {
   std::ifstream file(input_bmp_name, std::ios::in | std::ios::binary);
   if (!file) {
-    std::cerr << "Input file " << input_bmp_name << " not found" << std::endl;
-    exit(-1);
+    PRINT_NAMED_ERROR("ReadBMP.FileNotFound", "%s", input_bmp_name.c_str());
+    return cv::Mat();
   }
 
   const auto begin = file.tellg();
@@ -402,8 +421,8 @@ cv::Mat read_bmp(const std::string& input_bmp_name)
           output[dst_pos + 3] = input[src_pos + 3];
           break;
         default:
-          std::cerr << "Unexpected number of channels: " << channels << std::endl;
-          return img;
+          PRINT_NAMED_ERROR("ReadBMP.UnexpectedNumChannels", "%d", channels);
+          return cv::Mat();
       }
     }
   }
