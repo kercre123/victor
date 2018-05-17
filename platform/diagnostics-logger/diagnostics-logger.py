@@ -45,7 +45,7 @@ def run_commands():
 
 def compress_output():
     if os.path.isfile("/data/boot.log"):
-        cmd_tar[1] += "/data/boot.log"
+        cmd_tar[1].append("/data/boot.log")
 
     subprocess.check_output(cmd_tar[1].split())
 
