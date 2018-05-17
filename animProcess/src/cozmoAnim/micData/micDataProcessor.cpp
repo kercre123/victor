@@ -18,6 +18,7 @@
 #include "se_diag.h"
 
 #include "cozmoAnim/animProcessMessages.h"
+#include "cozmoAnim/beatDetector/beatDetector.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/micData/micDataProcessor.h"
 #include "cozmoAnim/micData/micDataSystem.h"
@@ -85,9 +86,14 @@ namespace {
   constexpr int32_t kTriggerDataListLen = (int32_t) sizeof(kTriggerDataList) / sizeof(kTriggerDataList[0]);
   Anki::AudioUtil::SpeechRecognizer::IndexType _currentTriggerSearchIndex = 0;
 
+  // For testing VIC-2451, we have this namespace cached value and console var kMicData_UseFallbackBeam that allows
+  // for turning beamforming off and back on
+  bool _usingFallbackBeam = false;
+
 # define CONSOLE_GROUP "MicData"
   CONSOLE_VAR_RANGED(s32, kMicData_NextTriggerIndex, CONSOLE_GROUP, 0, 0, kTriggerDataListLen-1);
   CONSOLE_VAR(bool, kMicData_SaveRawFullIntent, CONSOLE_GROUP, false);
+  CONSOLE_VAR(bool, kMicData_UseFallbackBeam, CONSOLE_GROUP, false);
 # undef CONSOLE_GROUP
 
 }
@@ -111,6 +117,7 @@ MicDataProcessor::MicDataProcessor(MicDataSystem* micDataSystem, const std::stri
 , _writeLocationDir(writeLocation)
 , _recognizer(new SpeechRecognizerTHF())
 , _micImmediateDirection(new MicImmediateDirection())
+, _beatDetector(std::make_unique<BeatDetector>())
 {
   const std::string& pronunciationFileToUse = "";
   (void) _recognizer->Init(pronunciationFileToUse);
@@ -146,6 +153,7 @@ MicDataProcessor::MicDataProcessor(MicDataSystem* micDataSystem, const std::stri
   _selectedSearchBeamIndex = SEDiagGetIndex("search_result_best_beam_index");
   _selectedSearchBeamConfidence = SEDiagGetIndex("search_result_best_beam_confidence");
   _searchConfidenceState = SEDiagGetIndex("fdsearch_confidence_state");
+  _policyFallbackFlag = SEDiagGetIndex("policy_fallback_flag");
 
   _processThread = std::thread(&MicDataProcessor::ProcessRawLoop, this);
   _processTriggerThread = std::thread(&MicDataProcessor::ProcessTriggerLoop, this);
@@ -217,8 +225,7 @@ void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float 
   RobotInterface::TriggerWordDetected twDetectedMessage;
   twDetectedMessage.timestamp = mostRecentTimestamp;
   twDetectedMessage.direction = currentDirection;
-  auto engineMessage = std::unique_ptr<RobotInterface::RobotToEngine>(
-    new RobotInterface::RobotToEngine(std::move(twDetectedMessage)));
+  auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
   _micDataSystem->SendMessageToEngine(std::move(engineMessage));
 
   // Tell signal essence software to lock in on the current direction if it's known
@@ -269,6 +276,18 @@ void MicDataProcessor::ProcessRawAudio(TimeStamp_t timestamp,
   // If we aren't starting a block, we're finishing it - time to convert to a single channel
   if (!_inProcessAudioBlockFirstHalf)
   {
+    {
+      ANKI_CPU_PROFILE("BeatDetectorAddSamples");
+      // For beat detection, we only need a single channel of audio. Use the
+      // first quarter of the un-interleaved audio block
+      const bool beatDetected = _beatDetector->AddSamples(_inProcessAudioBlock.data(), kSamplesPerBlock);
+      if (beatDetected) {
+        auto beatMessage = RobotInterface::BeatDetectorState{_beatDetector->GetLatestBeat()};
+        auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(beatMessage));
+        _micDataSystem->SendMessageToEngine(std::move(engineMessage));
+      }
+    }
+    
     TimedMicData* nextSampleSpot = nullptr;
     {
       // Note we don't bother to free any slots here that have been consumed (by comparing size to _procAudioXferCount)
@@ -324,13 +343,14 @@ void MicDataProcessor::ProcessRawAudio(TimeStamp_t timestamp,
     newMessage.selectedDirection = directionResult.selectedDirection;
     newMessage.selectedConfidence = directionResult.selectedConfidence;
     newMessage.activeState = directionResult.activeState;
+    newMessage.latestPowerValue = directionResult.latestPowerValue;
+    newMessage.latestNoiseFloor = directionResult.latestNoiseFloor;
     std::copy(
       directionResult.confidenceList.begin(),
       directionResult.confidenceList.end(),
       newMessage.confidenceList);
     
-    auto engineMessage = std::unique_ptr<RobotInterface::RobotToEngine>(
-      new RobotInterface::RobotToEngine(std::move(newMessage)));
+    auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(newMessage));
     _micDataSystem->SendMessageToEngine(std::move(engineMessage));
   }
   
@@ -356,8 +376,20 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
     MMIfResetLocationSearch();
   }
 
+  // If there's been a change to the console var (vs our cached version), update set whether we're using the fallback
+  // beam (aka no beamforming) For testing VIC-2451.
+  if (kMicData_UseFallbackBeam != _usingFallbackBeam)
+  {
+    _usingFallbackBeam = kMicData_UseFallbackBeam;
+    int32_t newSetting = _usingFallbackBeam ? 1 : 0;
+    SEDiagSetInt32(_policyFallbackFlag, newSetting);
+    PRINT_NAMED_INFO("MicDataProcessor.ProcessMicrophonesSE.SetUseFallbackBeam", "%s", _usingFallbackBeam ? "true" : "false");
+  }
+
   // We only care about checking one channel, and since the channel data is uninterleaved when passed in here,
   // we simply give the start of the buffer as the input to run the vad detection on
+  float latestPowerValue = 0.f;
+  float latestNoiseFloor = 0.f;
   int activityFlag = 0;
   {
     ANKI_CPU_PROFILE("ProcessVAD");
@@ -366,16 +398,15 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
     // of always thinking we hear a voice when the robot moves, so we maximize our chances of hearing any triggers
     // over the noise. So when the robot is moving, don't even bother running the VAD, and instead just set activity
     // to true.
+    const float vadConfidence = 1.0f;
+    activityFlag = DoSVad(_sVadObject.get(),           // object
+                          vadConfidence,               // confidence it is okay to measure noise floor, i.e. no known activity like gear noise
+                          (int16_t*)audioChunk);       // pointer to input data
+    latestPowerValue = _sVadObject->AvePowerInBlock;
+    latestNoiseFloor = _sVadObject->NoiseFloor;
     if (robotIsMoving)
     {
       activityFlag = 1;
-    }
-    else
-    {
-      const float vadConfidence = 1.0f;
-      activityFlag = DoSVad(_sVadObject.get(),           // object
-                            vadConfidence,               // confidence it is okay to measure noise floor, i.e. no known activity like gear noise
-                            (int16_t*)audioChunk);       // pointer to input data
     }
   }
 
@@ -388,7 +419,8 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
 
   MicDirectionData result{};
   result.activeState = activityFlag;
-
+  result.latestPowerValue = latestPowerValue;
+  result.latestNoiseFloor = latestNoiseFloor;
   if (robotIsMoving)
   {
     result.winningDirection = result.selectedDirection = kDirectionUnknown;

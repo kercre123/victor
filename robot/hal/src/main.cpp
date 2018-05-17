@@ -12,8 +12,7 @@
 #include  "../spine/cc_commander.h"
 #include "anki/cozmo/shared/factory/emrHelper.h"
 
-// FIXME: We need to build Breakpad libs for VICOS
-// #include "platform/victorCrashReports/google_breakpad.h"
+#include "platform/victorCrashReports/google_breakpad.h"
 
 // For development purposes, while HW is scarce, it's useful to be able to run on phones
 #ifdef HAL_DUMMY_BODY
@@ -21,7 +20,8 @@
 #endif
 
 int shutdownSignal = 0;
-int shutdownCounter = 2;
+const int SHUTDOWN_COUNTDOWN_TICKS = 5;
+int shutdownCounter = SHUTDOWN_COUNTDOWN_TICKS;
 
 #if FACTORY_TEST
 // Count of how many ticks we have been on the charger
@@ -32,14 +32,17 @@ static const uint8_t MAX_SEEN_CHARGER_CNT = 5;
 bool wasPackedOutAtBoot = false;
 #endif
 
-static void Cleanup(int signum)
+static void Shutdown(int signum)
 {
-  Anki::Cozmo::Robot::Destroy();
-
-  // Need to HAL::Step() in order for light commands to go down to robot
-  // so set shutdownSignal here to signal process shutdown after
-  // shutdownCounter more tics of main loop.
-  shutdownSignal = signum;
+  if (shutdownSignal == 0) {
+    AnkiInfo("robot.shutdown", "Shutdown on signal %d", signum);
+  
+    // Need to HAL::Step() in order for light commands to go down to robot
+    // so set shutdownSignal here to signal process shutdown after
+    // shutdownCounter more tics of main loop.
+    shutdownSignal = signum;
+    shutdownCounter = SHUTDOWN_COUNTDOWN_TICKS;
+  }
 }
 
 
@@ -53,14 +56,13 @@ int main(int argc, const char* argv[])
   params.sched_priority = sched_get_priority_max(SCHED_FIFO);
   sched_setscheduler(0, SCHED_FIFO, &params);
 
-  signal(SIGTERM, Cleanup);
+  signal(SIGTERM, Shutdown);
 
-  // FIXME: We need to build Breakpad libs for VICOS
-  // static char const* filenamePrefix = "robot";
-  // GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
+  static char const* filenamePrefix = "robot";
+  GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
 
   if (argc > 1) {
-    ccc_set_shutdown_function(Cleanup);
+    ccc_set_shutdown_function(Shutdown);
     ccc_parse_command_line(argc-1, argv+1);
   }
 
@@ -71,8 +73,7 @@ int main(int argc, const char* argv[])
   const Result result = Anki::Cozmo::Robot::Init(&shutdownSignal);
   if (result != Result::RESULT_OK) {
     AnkiError("robot.main.InitFailed", "Unable to initialize (result %d)", result);
-    // FIXME: We need to build Breakpad libs for VICOS
-    // GoogleBreakpad::UnInstallGoogleBreakpad();
+    GoogleBreakpad::UnInstallGoogleBreakpad();
     sync();
     if (shutdownSignal == SIGTERM) {
       return 0;
@@ -94,8 +95,7 @@ int main(int argc, const char* argv[])
     if (Anki::Cozmo::HAL::Step() == Anki::RESULT_OK) {
       if (Anki::Cozmo::Robot::step_MainExecution() != Anki::RESULT_OK) {
         AnkiError("robot.main", "MainExecution failed");
-        // FIXME: We need to build Breakpad libs for VICOS
-        // GoogleBreakpad::UnInstallGoogleBreakpad();
+        GoogleBreakpad::UnInstallGoogleBreakpad();
         return -1;
       }
     }
@@ -142,12 +142,16 @@ int main(int argc, const char* argv[])
     }
 #endif
 
-    if (shutdownSignal != 0 && --shutdownCounter == 0) {
-      AnkiInfo("robot.main.shutdown", "%d", shutdownSignal);
-      // FIXME: We need to build Breakpad libs for VICOS
-      // GoogleBreakpad::UnInstallGoogleBreakpad();
-      sync();
-      exit(0);
+    if (shutdownSignal != 0) {
+      if (shutdownCounter == SHUTDOWN_COUNTDOWN_TICKS) {
+        Anki::Cozmo::Robot::Destroy();
+      } else if (shutdownCounter == 0) {
+        AnkiInfo("robot.main.shutdown", "%d", shutdownSignal);
+        GoogleBreakpad::UnInstallGoogleBreakpad();
+        sync();
+        exit(0);
+      }
+      --shutdownCounter;
     }
   }
   return 0;
@@ -162,7 +166,7 @@ int main_test(int argc, const char* argv[])
   params.sched_priority = sched_get_priority_max(SCHED_FIFO);
   sched_setscheduler(0, SCHED_FIFO, &params);
 
-  signal(SIGTERM, Cleanup);
+  signal(SIGTERM, Shutdown);
 
   spine_test_setup();
 

@@ -59,6 +59,17 @@ const char* pathToExternalIndependentSprites = "assets/sprites/independentSprite
 const char* pathToEngineIndependentSprites = "config/devOnlySprites/independentSprites/";
 const char* pathToExternalSpriteSequences = "assets/sprites/spriteSequences/";
 const char* pathToEngineSpriteSequences   = "config/devOnlySprites/spriteSequences/";
+
+const std::vector<std::string> kPathsToEngineAccessibleAnimations = {
+  "assets/animations/anim_weather_cloud_01.bin",
+  "assets/animations/anim_weather_snow_01.bin",
+  "assets/animations/anim_weather_rain_01.bin",
+  "assets/animations/anim_weather_sunny_01.bin",
+  "assets/animations/anim_weather_stars_01.bin",
+  "assets/animations/anim_weather_cold_01.bin",
+  "assets/animations/anim_weather_windy_01.bin",
+};
+
 }
 
 namespace Anki {
@@ -180,10 +191,16 @@ void RobotDataLoader::LoadNonConfigData()
   }
   
   {
-    // Load animations into engine - disabled for the time being to save the 30 MB hit
-    // of loading animations into engine in addition to anim process
-    //CannedAnimationLoader animLoader(_platform, _loadingCompleteRatio, _abortLoad);
-    //_cannedAnimations.reset(animLoader.LoadAnimations());
+    CannedAnimationLoader animLoader(_platform,
+                                     _spritePaths.get(), _spriteSequenceContainer.get(), 
+                                     _loadingCompleteRatio, _abortLoad);
+    // Create the canned animation container, but don't load any data into it
+    // Engine side animations are loaded only when requested
+    _cannedAnimations = std::make_unique<CannedAnimationContainer>();
+    for(const auto& path : kPathsToEngineAccessibleAnimations){
+      const auto fullPath =  _platform->pathToResource(Util::Data::Scope::Resources, path);
+      animLoader.LoadAnimationIntoContainer(fullPath, _cannedAnimations.get());
+    }
   }
 
   // this map doesn't need to be persistent
@@ -447,7 +464,8 @@ void RobotDataLoader::LoadBehaviors()
 void RobotDataLoader::LoadSpritePaths()
 {
  // Creates a map of all sprite names to their file names
-  _spritePaths->Load(_platform, "assets/cladToFileMaps/spriteMap.json", "SpriteName");
+  const bool reverseLookupAllowed = true;
+  _spritePaths->Load(_platform, "assets/cladToFileMaps/spriteMap.json", "SpriteName", reverseLookupAllowed);
 
   auto spritePaths = {pathToExternalIndependentSprites,
                       pathToEngineIndependentSprites};
@@ -502,8 +520,9 @@ void RobotDataLoader::LoadCompositeImageMaps()
     const auto layoutBasePath = "assets/compositeImageResources/imageLayouts/";
     const std::string layoutFullPath = _platform->pathToResource(Util::Data::Scope::Resources,
                                                                  layoutBasePath);
+    const bool reverseLookupAllowed = true;
     Util::CladEnumToStringMap<Vision::CompositeImageLayout> layoutMap;
-    layoutMap.Load(_platform, "assets/cladToFileMaps/CompositeImageLayoutMap.json", "LayoutName");
+    layoutMap.Load(_platform, "assets/cladToFileMaps/CompositeImageLayoutMap.json", "LayoutName", reverseLookupAllowed);
     auto fileNameToFullPath = CreateFileNameToFullPathMap({layoutBasePath}, "json");
 
     // Iterate through all files in the directory and extract the associated
@@ -535,8 +554,10 @@ void RobotDataLoader::LoadCompositeImageMaps()
     const auto mapBasePath = "assets/compositeImageResources/imageMaps/";
     const std::string mapFullPath = _platform->pathToResource(Util::Data::Scope::Resources,
                                                               mapBasePath);
+    
+    const bool reverseLookupAllowed = true;
     Util::CladEnumToStringMap<Vision::CompositeImageMap> mapMap;
-    mapMap.Load(_platform, "assets/cladToFileMaps/CompositeImageMapMap.json", "MapName");
+    mapMap.Load(_platform, "assets/cladToFileMaps/CompositeImageMapMap.json", "MapName", reverseLookupAllowed);
     auto fileNameToFullPath = CreateFileNameToFullPathMap({mapBasePath}, "json");
 
     // Iterate through all files in the directory and extract the associated

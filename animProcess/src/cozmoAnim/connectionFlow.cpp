@@ -56,7 +56,7 @@ bool DrawStartPairingScreen(AnimationStreamer* animStreamer)
   {
     return false;
   }
-  
+
   animStreamer->EnableKeepFaceAlive(false, 0);
   animStreamer->Abort();
 
@@ -73,7 +73,7 @@ bool DrawStartPairingScreen(AnimationStreamer* animStreamer)
   auto handle = std::make_shared<Vision::SpriteWrapper>(img);
   const bool shouldRenderInEyeHue = false;
   animStreamer->SetFaceImage(handle, shouldRenderInEyeHue, 0);
-  
+
   return true;
 }
 
@@ -168,7 +168,7 @@ void UpdatePairingLight(bool on)
             .offset = 0
           }}));
     AnimComms::SendPacketToRobot((char*)m.GetBuffer(), m.Size());
-    isOn = on; 
+    isOn = on;
   }
   else if(isOn && !on)
   {

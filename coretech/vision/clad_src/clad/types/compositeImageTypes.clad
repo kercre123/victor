@@ -23,7 +23,7 @@ enum no_cpp_class uint_8 LayerName
   Procedural_Eyes,
   
   Weather_Temperature,
-
+  Clock_Display,
 
   Layer_4,
   Layer_5,
@@ -58,6 +58,8 @@ enum no_cpp_class uint_8 SpriteBoxName
   WeatherBox_3,
   WeatherBox_4,
   WeatherBox_5,
+
+  Count
 
 }
 

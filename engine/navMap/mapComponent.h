@@ -119,6 +119,12 @@ public:
 
   void AddProxData(const Poly2f& poly, const MemoryMapData& data);
   
+  // Remove all prox obstacles from the map.
+  // CAUTION: This will entirely remove _all_ information about prox
+  // obstacles. This should almost never be necessary. Is this really
+  // what you want??
+  void RemoveAllProxObstacles();
+  
   ////////////////////////////////////////////////////////////////////////////////
   // Accessors
   ////////////////////////////////////////////////////////////////////////////////
@@ -182,6 +188,7 @@ private:
   PoseOriginID_t                  _currentMapOriginID;
   ObjectIdToPosesPerOrigin        _reportedPoses;
   Pose3d                          _reportedRobotPose;
+  TimeStamp_t                     _nextTimeoutUpdate_ms;
 
   // use multiple dirty flags to broadcast to different channels in case they have different broadcast rates
   bool                            _vizMessageDirty;

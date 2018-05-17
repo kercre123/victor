@@ -31,7 +31,10 @@ class CladEnumToStringMap
 {
 public:
 
-  bool Load(const Anki::Util::Data::DataPlatform* data, const std::string& path, const std::string& fileNameKey);
+  bool Load(const Anki::Util::Data::DataPlatform* data, 
+            const std::string& path, 
+            const std::string& fileNameKey,
+            bool isReverseLookupAllowed = false);
   
   std::vector<CladEnum> GetAllKeys() const;
   std::string GetValue(CladEnum ev) const;
@@ -54,6 +57,7 @@ public:
 private:
   std::unordered_map<CladEnum, std::string, Anki::Util::EnumHasher> _cladMap;
   std::unordered_map<std::string, CladEnum> _reverseLookupMap;
+  bool _isReverseLookupAllowed = false;
 
 }; // class CladEnumToStringMap
   
@@ -62,12 +66,14 @@ private:
 template<class CladEnum>
 bool CladEnumToStringMap<CladEnum>::Load(const Anki::Util::Data::DataPlatform* data, 
                                          const std::string& path, 
-                                         const std::string& fileNameKey)
+                                         const std::string& fileNameKey,
+                                         bool isReverseLookupAllowed)
 {
   if (nullptr == data )
   {
     return false;
   }
+  _isReverseLookupAllowed = isReverseLookupAllowed;
   bool allStringsLoaded = false;
 
   const std::string fullPath = data->pathToResource(Util::Data::Scope::Resources, path);
@@ -113,6 +119,20 @@ bool CladEnumToStringMap<CladEnum>::Load(const Anki::Util::Data::DataPlatform* d
     }
   }
   
+  // Verify that all maps are unique so that reverse lookups work as expected
+  if(_isReverseLookupAllowed){
+    for(const auto& pair : _cladMap){
+      CladEnum outKey;
+      GetKeyForValue(pair.second, outKey);
+      if(pair.first != outKey){
+        PRINT_NAMED_ERROR("CladEnumToStringMap.Load.ReverseLookupFailure",
+                          "Value %s returns key %s instead of expected key %s",
+                          pair.second.c_str(), EnumToString(outKey), EnumToString(pair.first));
+      }
+    }
+    
+  }
+  
   return allStringsLoaded;
 }
 
@@ -154,6 +174,10 @@ std::string CladEnumToStringMap<CladEnum>::GetValue(CladEnum enumValue) const
 template<class CladEnum>
 bool CladEnumToStringMap<CladEnum>::GetKeyForValue(const std::string& value, CladEnum& outKey, bool shouldCacheLookupMap)
 {
+  if(!_isReverseLookupAllowed){
+    return false;
+  }
+
   if(shouldCacheLookupMap && _reverseLookupMap.empty()){
     const auto& allKeys = GetAllKeys();
     for(const auto& key: allKeys){
@@ -167,6 +191,10 @@ bool CladEnumToStringMap<CladEnum>::GetKeyForValue(const std::string& value, Cla
 template<class CladEnum>
 bool CladEnumToStringMap<CladEnum>::GetKeyForValueConst(const std::string& value, CladEnum& outKey) const
 {
+  if(!_isReverseLookupAllowed){
+    return false;
+  }
+
   if(!_reverseLookupMap.empty()){
     auto resultPair = _reverseLookupMap.find(value);
     const bool success = resultPair != _reverseLookupMap.end();

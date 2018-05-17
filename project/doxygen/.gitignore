@@ -1,0 +1,4 @@
+# victor/project/doxygen/.gitignore
+# Ignore doxygen output
+html
+xml

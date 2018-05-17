@@ -6,6 +6,7 @@ project(vic-switchboard)
 
 include(anki_build_cxx)
 include(sodium)
+include(breakpad)
 
 anki_build_cxx_executable(vic-switchboard ${ANKI_SRCLIST_DIR})
 
@@ -38,6 +39,9 @@ PRIVATE
   libpcre.so.1
   libcutils.so.0
   civetweb
+  util
+  victorCrashReports
+  breakpad_client
 )
 
 target_compile_definitions(vic-switchboard

@@ -11,6 +11,7 @@ import (
 )
 
 var verbose bool
+var checkDataFunc func() error // overwritten by cert_verify_linux.go
 
 func getSocketWithRetry(name string, client string) ipc.Conn {
 	for {
@@ -46,6 +47,14 @@ func testReader(serv ipc.Server, send cloudproc.MsgSender) {
 
 func main() {
 	log.Println("Hello, world!")
+	if checkDataFunc != nil {
+		if err := checkDataFunc(); err != nil {
+			log.Println("CLOUD DATA VERIFICATION ERROR:", err)
+			log.Println("(this should not happen on any DVT3 or later robot)")
+		} else {
+			log.Println("Cloud data verified")
+		}
+	}
 
 	// don't yet have control over process startup on DVT2, set these as default
 	verbose = true

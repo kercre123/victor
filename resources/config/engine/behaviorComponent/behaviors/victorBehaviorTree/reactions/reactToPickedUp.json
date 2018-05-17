@@ -1,0 +1,11 @@
+{
+  "behaviorID": "ReactToPickedUp",
+  "behaviorClass": "Wait",
+
+  "associatedActiveFeature": "NoFeature",
+
+  "wantsToBeActivatedCondition": {
+    "conditionType": "OffTreadsState",
+    "targetState": "InAir"
+  }
+}

@@ -170,3 +170,18 @@ Short name|Long name              |N/A|Description
           |--profile_from_launch  |X  |Profile an activity from initial launch. It should be used with -p, -a, and --arch options.
 -r        |--record_options       |   |Set options for `simpleperf record` command. See also [annotated-profiler-events.md](annotated-profiler-events.md)
 -t        |--test                 |X  |When profiling an Android app, start an instrumentation test before profiling. It restarts the app if the app is already running.
+
+# Anki Profiling
+
+`#define ANKI_EMBEDDED_BENCHMARKS` to enable benchmarking within the Vision component.
+
+`#define ANKI_VISION_PROFILER` to enable profiling metrics for the Vision system. 
+
+When logged to DAS these have the prefix `robot.vision.profiler`
+
+These can be enabled from the command-line, e.g.
+
+`victor_build_release -DANKI_EMBEDDED_BENCHMARK=1`, embedded benchmarks are enabled
+`victor_build_release`, embedded benchmarks are still enabled as the build is rerun with current options
+`victor_build_release -f`, embedded benchmarks are disabled as the build is reconfigured
+

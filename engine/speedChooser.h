@@ -44,10 +44,10 @@ namespace Anki {
         bool _enabled = true;
 
         // Max speed a generated motion profile can have
-        const float maxSpeed_mmps = 200.0f;
+        const float maxSpeed_mmps = MAX_SAFE_WHEEL_SPEED_MMPS;
       
         // Min speed a generated motion profile can have
-        const float minSpeed_mmps = 160.0f;
+        const float minSpeed_mmps = MAX_SAFE_WHILE_CARRYING_WHEEL_SPEED_MMPS;
 
         const float minAccel_mmps2 = 80.0f;
         const float maxAccel_mmps2 = 100.0f;

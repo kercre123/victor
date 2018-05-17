@@ -7,6 +7,7 @@ namespace Cozmo {
 enum class BEIComponentID{
   AIComponent,
   Animation,
+  BeatDetector,
   BehaviorContainer,
   BehaviorEvent,
   BehaviorTimerManager,

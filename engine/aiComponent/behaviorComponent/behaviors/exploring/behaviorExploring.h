@@ -4,7 +4,7 @@
  * Author: ross
  * Created: 2018-03-25
  *
- * Description: prototype exploration behavior
+ * Description: exploration behavior
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -21,6 +21,7 @@ namespace Cozmo {
   
 class BehaviorExploringExamineObstacle;
 class INavMap;
+struct PathMotionProfile;
 
 class BehaviorExploring : public ICozmoBehavior
 {
@@ -92,6 +93,7 @@ private:
   // samples UP TO kNumProxPoses that are slightly offset from an unexplored prox obstacle and facing it
   void SampleVisitLocationsFacingObstacle( const INavMap* memoryMap,
                                            const ObservableObject* charger,
+                                           const Point2f& robotPos,
                                            std::vector<Pose3d>& retPoses ) const;
   
   
@@ -112,6 +114,8 @@ private:
     std::shared_ptr<BehaviorExploringExamineObstacle> examineBehavior;
     ICozmoBehaviorPtr confirmChargerBehavior;
     ICozmoBehaviorPtr confirmCubeBehavior;
+    
+    std::unique_ptr<PathMotionProfile> customMotionProfile;
   };
 
   struct DynamicVariables {
@@ -122,7 +126,6 @@ private:
     std::vector<Pose3d> sampledPoses;
     bool posesHaveBeenPruned; // true if poses now contains only the selected goal
     float distToGoal_mm; // the distance to the selected goal, if posesHaveBeenPruned, otherwise negative
-    float angleAtArrival_rad;
     int numDriveAttemps;
     bool hasTakenPitStop;
     float timeFinishedConfirmCharger_s;

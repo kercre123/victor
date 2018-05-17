@@ -39,16 +39,16 @@ namespace Vision {
     
     Result SetGammaTable(const std::vector<u8>& inputs, const std::vector<u8>& gamma);
     
+    // Compute multiplicative amount by which to adjust exposure
     Result ComputeExposureAdjustment(const Vision::Image& image, f32& adjustmentFraction);
     Result ComputeExposureAdjustment(const Vision::Image& image, const Vision::Image& weightMask, f32& adjustmentFraction);
-    
     Result ComputeExposureAdjustment(const std::vector<Vision::Image>& imageROIs, f32& adjustmentFraction);
 
-    // Computes adjusted red, green, and blue gains for WhiteBalance using the gray world assumption
-    Result ComputeWhiteBalanceAdjustment(const Vision::ImageRGB& image, 
-                                         f32& gainR,
-                                         f32& gainG,
-                                         f32& gainB);
+    // Computes multiplicative amount by which to adjust red, and blue gains for WhiteBalance
+    // - Caller can update gains via: newGainX = adjX * oldGainX
+    // - Green gain is assumed to be fixed
+    // - Uses the gray world assumption
+    Result ComputeWhiteBalanceAdjustment(const Vision::ImageRGB& image, f32& adjR, f32& adjB);
     
     Result Linearize(const Vision::Image& image, Vision::Image& linearizedImage) const;
     

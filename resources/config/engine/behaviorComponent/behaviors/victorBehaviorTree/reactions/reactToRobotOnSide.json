@@ -1,4 +1,6 @@
 {
   "behaviorClass": "ReactToRobotOnSide",
-  "behaviorID": "ReactToRobotOnSide"
+  "behaviorID": "ReactToRobotOnSide",
+
+  "associatedActiveFeature": "ReactToRobotOnSide"
 }

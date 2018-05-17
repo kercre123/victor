@@ -157,6 +157,18 @@ bool CompositeImage::AddLayer(CompositeImageLayer&& layer)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CompositeImage::ClearLayerByName(LayerName name)
+{
+  const auto numRemoved = _layerMap.erase(name);
+  if(numRemoved == 0){
+    PRINT_NAMED_WARNING("CompositeImage.ClearLayerByName.LayerNotFound",
+                        "Layer %s not found in composite image",
+                        LayerNameToString(name));
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CompositeImageLayer* CompositeImage::GetLayerByName(LayerName name)
 {
   auto iter = _layerMap.find(name);
@@ -213,7 +225,9 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
         }
         case SpriteRenderMethod::CustomHue:
         {
-          std::pair<uint32_t,uint32_t> widthAndHeight = {spriteBox.width, spriteBox.height};
+          
+          Vision::HueSatWrapper::ImageSize imageSize(static_cast<uint32_t>(spriteBox.height),
+                                                     static_cast<uint32_t>(spriteBox.width));
           std::shared_ptr<Vision::HueSatWrapper> hsImageHandle;
 
           if((spriteBox.renderConfig.hue == 0) &&
@@ -225,11 +239,11 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
             auto sat = _faceHSImageHandle->GetSaturation();
             hsImageHandle = std::make_shared<Vision::HueSatWrapper>(hue,
                                                                      sat,
-                                                                     widthAndHeight);
+                                                                     imageSize);
           }else{
             hsImageHandle = std::make_shared<Vision::HueSatWrapper>(spriteBox.renderConfig.hue,
                                                                      spriteBox.renderConfig.saturation,
-                                                                     widthAndHeight);
+                                                                     imageSize);
           }
           
           // Render the sprite - use the cached RGBA image if possible

@@ -5,7 +5,7 @@ project(victorCrashReports)
 include(anki_build_cxx)
 include(anki_build_strip)
 
-if (ANDROID)
+if (VICOS)
 
   anki_build_cxx_library(victorCrashReports ${ANKI_SRCLIST_DIR} STATIC)
 

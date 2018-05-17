@@ -28,6 +28,7 @@ enum uint_8 BehaviorClass {
   RollBlock,
 
   // basicWorldInteractions
+  ClearChargerArea,
   DriveOffCharger,
   FindFaces,
   FindHome,
@@ -44,6 +45,10 @@ enum uint_8 BehaviorClass {
 
   // coordinators
   CoordinateGlobalInterrupts,
+  QuietModeCoordinator,
+
+  // danceToTheBeat
+  DanceToTheBeat,
 
   // devBehaviors
   DevBatteryLogging,
@@ -149,6 +154,9 @@ enum uint_8 BehaviorClass {
   ReactToUnexpectedMovement,
   ReactToVoiceCommand,
 
+  // robotDrivenDialog
+  PromptUserForVoiceCommand,
+
   // sleeping
   Sleeping,
 
@@ -164,6 +172,7 @@ enum uint_8 BehaviorClass {
   TrackCube,
 
   // weather
+  CoordinateWeather,
   DisplayWeather,
 }
 

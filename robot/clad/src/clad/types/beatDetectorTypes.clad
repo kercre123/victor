@@ -1,0 +1,16 @@
+/** Beat/tempo detection types
+*/
+ 
+namespace Anki {
+namespace Cozmo {
+
+structure BeatInfo
+{
+  float_32 tempo_bpm = -1.0,   // Tempo estimate in beats per minute
+  float_32 confidence = -1.0,  // Beat detector's confidence level
+  float_32 time_sec = -1.0     // System clock time (CLOCK_MONOTONIC) of the last detected beat
+}
+
+
+} // namespace Cozmo
+} // namespace Anki

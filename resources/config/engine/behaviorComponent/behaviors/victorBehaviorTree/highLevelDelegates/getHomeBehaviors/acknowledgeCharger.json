@@ -1,7 +1,6 @@
 {
   "behaviorClass": "AnimSequenceWithObject",
   "behaviorID": "AcknowledgeCharger",
-  "displayNameKey":"behavior.AcknowledgeCharger",
 
   "objectType" : "Charger_Basic",
   "animTriggers" : ["ChargerReaction"],
@@ -11,7 +10,7 @@
   "wantsToBeActivatedCondition": {
     "conditionType" : "ObjectInitialDetection",
     "objectTypes" : ["Charger_Basic"],
-    "firstTimeOnly" : false
+    "firstTimeOnly" : true
   }
 
 }

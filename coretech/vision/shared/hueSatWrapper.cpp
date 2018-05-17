@@ -42,12 +42,12 @@ HueSatWrapper::HueSatWrapper(Image* hueImg, Image* saturationImg)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 HueSatWrapper::HueSatWrapper(uint8_t hue, uint8_t saturation, 
-                               const std::pair<uint32_t, uint32_t>& imageSize)
+                               const ImageSize& imageSize)
 : _hue(hue)
 , _saturation(saturation)
 , _imagesManagedExternally(false)
 {
-  if(imageSize.first != 0){
+  if(imageSize.numCols != 0){
     Image* hueImg;
     Image* saturationImg;
     AllocateImagesInternal(hueImg, saturationImg, imageSize);
@@ -97,43 +97,53 @@ uint8_t HueSatWrapper::GetSaturation() const
   return _saturation;
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool HueSatWrapper::AreImagesCached(const ImageSize& imageSize) const
+{
+  return (_hueImg != nullptr) &&
+         (_hueImg->GetNumRows() == imageSize.numRows) &&
+         (_hueImg->GetNumCols() == imageSize.numCols);
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void HueSatWrapper::AllocateImages(Image*& hueImg, Image*& saturationImg, std::pair<uint32_t, uint32_t> imgSize)
+void HueSatWrapper::AllocateImages(Image*& hueImg, Image*& saturationImg,
+                                   const ImageSize& imageSize)
 {
   if((_hueImg != nullptr) &&
-     (_hueImg->GetNumRows() == imgSize.second) &&
-     (_hueImg->GetNumCols() == imgSize.first)){
-    PRINT_NAMED_WARNING("HueSatWrapper.AllocateImages.AllocatingMemoryUnnecessarily", 
+     (_hueImg->GetNumRows() == imageSize.numRows) &&
+     (_hueImg->GetNumCols() == imageSize.numCols)){
+    PRINT_NAMED_WARNING("HueSatWrapper.AllocateImages.AllocatingMemoryUnnecessarily",
                         "Hue and saturation images are cached for hue %d and saturation %d, but new allocation requested",
                         _hue, _saturation);
   }
-  AllocateImagesInternal(hueImg, saturationImg, imgSize);
+  AllocateImagesInternal(hueImg, saturationImg, imageSize);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void HueSatWrapper::AllocateImagesInternal(Image*& hueImg, Image*& saturationImg,
-                                            const std::pair<uint32_t, uint32_t>& imageSize)
+                                           const ImageSize& imageSize)
 {
-  hueImg = new Image(imageSize.second, imageSize.first);
+  hueImg = new Image(imageSize.numRows, imageSize.numCols);
   hueImg->FillWith(_hue);
-  saturationImg = new Image(imageSize.second, imageSize.first);
+  saturationImg = new Image(imageSize.numRows, imageSize.numCols);
   saturationImg->FillWith(_saturation);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void HueSatWrapper::GetCachedImages(Image*& hueImg, Image*& saturationImg, 
-                                     const std::pair<uint32_t, uint32_t>& imageSize)
+                                    const ImageSize& imageSize)
 {
   if((_hueImg == nullptr) ||
-     (_hueImg->GetNumRows() != imageSize.second) ||
-     (_hueImg->GetNumCols() != imageSize.first)){
+     (_hueImg->GetNumRows() != imageSize.numRows) ||
+     (_hueImg->GetNumCols() != imageSize.numCols)){
     PRINT_NAMED_ERROR("HueSatWrapper.GetCachedImages.ImagesNotCached",
                       "Called get cached images on a wrapper that doesn't have cached images");
-    _hueImg = std::unique_ptr<Image>(new Image(imageSize.second, imageSize.first));
-    _saturationImg = std::unique_ptr<Image>(new Image(imageSize.second, imageSize.first));
+    _hueImg = std::unique_ptr<Image>(new Image(imageSize.numRows, imageSize.numCols));
+    _saturationImg = std::unique_ptr<Image>(new Image(imageSize.numRows, imageSize.numCols));
   }
   hueImg = _hueImg.get();
   saturationImg = _saturationImg.get();

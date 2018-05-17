@@ -1,6 +1,6 @@
 {
   "behaviorClass": "PopAWheelie",
   "behaviorID": "PopAWheelie",
-  "displayNameKey":"behavior.PopAWheelie",
+  "associatedActiveFeature": "PopAWheelie",
   "requiredUnlockId": "PopAWheelieAction"
 }

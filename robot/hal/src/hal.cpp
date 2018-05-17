@@ -436,6 +436,7 @@ void HAL::Stop()
   AnkiInfo("HAL.Stop", "");
   StopRadio();
   StopIMU();
+  DisconnectRadio();
 }
 
 void ProcessTouchLevel(void)

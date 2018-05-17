@@ -448,6 +448,7 @@ bool QuadTreeProcessor::IsCached(EContentType contentType)
     case EContentType::ObstacleObservable:
     case EContentType::ObstacleProx:
     case EContentType::ObstacleUnrecognized:
+    case EContentType::ObstacleCharger:
     case EContentType::InterestingEdge:
     case EContentType::NotInterestingEdge:
     case EContentType::Cliff:
@@ -457,7 +458,6 @@ bool QuadTreeProcessor::IsCached(EContentType contentType)
     case EContentType::Unknown:
     case EContentType::ClearOfObstacle:
     case EContentType::ClearOfCliff:
-    case EContentType::ObstacleCharger: // todo: ObstacleCharger should be cached, unless it is absorbed into ObstacleObservable
     case EContentType::ObstacleChargerRemoved:
     case EContentType::_Count:
     {

@@ -168,7 +168,7 @@ void BehaviorDriveToFace::TransitionToDrivingToFace()
   if(facePtr != nullptr &&
      CalculateDistanceToFace(facePtr->GetID(), distToHead)){
     DriveStraightAction* driveAction = new DriveStraightAction(distToHead - _iConfig.minDriveToFaceDistance_mm,
-                                                               MAX_WHEEL_SPEED_MMPS);
+                                                               MAX_SAFE_WHEEL_SPEED_MMPS);
     driveAction->SetDecel(DEFAULT_PATH_MOTION_PROFILE.decel_mmps2/kArbitraryDecelFactor);
     DelegateIfInControl(driveAction, &BehaviorDriveToFace::TransitionToTrackingFace);
   }

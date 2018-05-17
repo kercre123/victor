@@ -97,6 +97,7 @@ namespace Cozmo {
     
   CONSOLE_VAR(bool, kEnableMirrorMode,              "Vision.General", false);
   CONSOLE_VAR(bool, kDisplayDetectionsInMirrorMode, "Vision.General", false); // objects, faces, markers
+  CONSOLE_VAR(f32,  kMirrorModeGamma,               "Vision.General", 1.f);
   
   // Hack to continue drawing detected objects for a bit after they are detected
   // since object detection is slow
@@ -430,7 +431,7 @@ namespace Cozmo {
     }
 
     if (!_enabled) {
-      PRINT_CH_INFO("VisionComponent", "VisionComponent.Update.NotEnabled", "");
+      PRINT_PERIODIC_CH_INFO(200, "VisionComponent", "VisionComponent.Update.NotEnabled", "If persistent, camera calibration is probably missing");
       return;
     }
 
@@ -553,12 +554,14 @@ namespace Cozmo {
 
             // Use gamma to make it easier to see
             static std::array<u8,256> gammaLUT{};
-            if(gammaLUT.back() == 0) {
-              const f32 gamma = 1.f / 2.2f;
+            static f32 currentGamma = 0.f;
+            if(!Util::IsFltNear(currentGamma, kMirrorModeGamma)) {
+              currentGamma = kMirrorModeGamma;
+              const f32 invGamma = 1.f / currentGamma;
               const f32 divisor = 1.f / 255.f;
               for(s32 value=0; value<256; ++value)
               {
-                gammaLUT[value] = std::round(255.f * std::powf((f32)value * divisor, gamma));
+                gammaLUT[value] = std::round(255.f * std::powf((f32)value * divisor, invGamma));
               }
             }
 
@@ -2482,6 +2485,8 @@ namespace Cozmo {
        !_visionSystem->IsGainValid(gainG) ||
        !_visionSystem->IsGainValid(gainB))
     {
+      PRINT_PERIODIC_CH_INFO(100, "VisionComponent", "VisionComponent.SetWhiteBalance.InvalidGains",
+                             "gainR=%f gainG=%f gainB=%f", gainR, gainG, gainB);
       return;
     }
 

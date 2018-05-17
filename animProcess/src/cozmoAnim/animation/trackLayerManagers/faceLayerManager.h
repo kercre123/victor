@@ -37,20 +37,20 @@ public:
   
   // Helper to fold the next procedural face from the given track (if one is
   // ready to play) into the passed-in procedural face params.
-  static bool GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& track,
-                            TimeStamp_t startTime_ms, TimeStamp_t currTime_ms,
-                            ProceduralFaceKeyFrame& procFace,
-                            bool shouldReplace);
+  bool GetFaceHelper(const Animations::Track<ProceduralFaceKeyFrame>& track,
+                     TimeStamp_t timeSinceAnimStart_ms,
+                     ProceduralFaceKeyFrame& procFace,
+                     bool shouldReplace) const;
   
   // Generates and adds keyframes to various layers to keep the face "alive"
-  void KeepFaceAlive(const std::map<KeepFaceAliveParameter,f32>& params);
+  void KeepFaceAlive(const std::map<KeepFaceAliveParameter,f32>& params,
+                     const TimeStamp_t timeSinceKeepAliveStart_ms);
   
   // Remove all keep face alive layers
   void RemoveKeepFaceAlive(u32 duration_ms);
   
-  // Resets nextEyeDart_ms and nextBlink_ms so that they are computed anew
-  // on the next KeepFaceAlive() call.
-  void ResetKeepFaceAliveTimers();
+  // Eye shifts keyframes are generated with a relative start time - they should then
+  // be updated to reflect their true playback time within a track
   
   // Generates a single keyframe with shifted eyes according to the arguments
   void GenerateEyeShift(f32 xPix, f32 yPix,
@@ -66,7 +66,8 @@ public:
                         ProceduralFaceKeyFrame& frame) const;
   
   // Generates a track of all keyframes necessary to make the eyes blink
-  void GenerateBlink(Animations::Track<ProceduralFaceKeyFrame>& track) const;
+  void GenerateBlink(Animations::Track<ProceduralFaceKeyFrame>& track,
+                     const TimeStamp_t timeSinceKeepAliveStart_ms) const;
   
   // Generates a track of all keyframes necessary to make the eyes squint
   void GenerateSquint(f32 squintScaleX, f32 squintScaleY, f32 upperLidAngle,

@@ -47,6 +47,15 @@ void TrackLayerComponent::Init()
   _lastProceduralFace->Reset();
 }
 
+  
+void TrackLayerComponent::AdvanceTracks(const TimeStamp_t toTime_ms)
+{
+  _audioLayerManager->AdvanceTracks(toTime_ms);
+  _backpackLayerManager->AdvanceTracks(toTime_ms);
+  _faceLayerManager->AdvanceTracks(toTime_ms);
+}
+
+  
 void TrackLayerComponent::Update()
 {
   // TODO: Restore glitch ability via messaging from engine
@@ -58,26 +67,25 @@ void TrackLayerComponent::Update()
     AddGlitch(desiredGlitchDegree);
   }
    */
+
 }
 
 void TrackLayerComponent::ApplyLayersToAnim(Animation* anim,
-                                            TimeStamp_t startTime_ms,
-                                            TimeStamp_t streamTime_ms,
+                                            const TimeStamp_t timeSinceAnimStart_ms,
                                             LayeredKeyFrames& layeredKeyframes,
-                                            bool storeFace)
+                                            bool storeFace) const
 {
   // Apply layers of individual tracks to anim
-  ApplyAudioLayersToAnim(anim, startTime_ms, streamTime_ms, layeredKeyframes);
+  ApplyAudioLayersToAnim(anim, timeSinceAnimStart_ms, layeredKeyframes);
 
-  ApplyBackpackLayersToAnim(anim, startTime_ms, streamTime_ms, layeredKeyframes);
+  ApplyBackpackLayersToAnim(anim, timeSinceAnimStart_ms, layeredKeyframes);
   
-  ApplyFaceLayersToAnim(anim, startTime_ms, streamTime_ms, layeredKeyframes, storeFace);
+  ApplyFaceLayersToAnim(anim, timeSinceAnimStart_ms, layeredKeyframes, storeFace);
 }
 
 void TrackLayerComponent::ApplyAudioLayersToAnim(Animation* anim,
-                                                 TimeStamp_t startTime_ms,
-                                                 TimeStamp_t streamTime_ms,
-                                                 LayeredKeyFrames& layeredKeyFrames)
+                                                 const TimeStamp_t timeSinceAnimStart_ms,
+                                                 LayeredKeyFrames& layeredKeyFrames) const
 {
   // TODO: VIC-447: Restore glitching
   /*
@@ -94,8 +102,7 @@ void TrackLayerComponent::ApplyAudioLayersToAnim(Animation* anim,
     // Function to blend/apply layers
     // Currently just takes any audio in layer
     auto applyFunc = [](Animations::Track<AnimKeyFrame::AudioSample>& layerTrack,
-                        TimeStamp_t startTime_ms,
-                        TimeStamp_t streamTime_ms,
+                        TimeStamp_t timeSinceAnimStart_ms,
                         AnimKeyFrame::AudioSample& outFrame)
     {
       // Pull the current keyframe from the layer's track and move to the next one
@@ -114,17 +121,16 @@ void TrackLayerComponent::ApplyAudioLayersToAnim(Animation* anim,
 }
 
 void TrackLayerComponent::ApplyBackpackLayersToAnim(Animation* anim,
-                                                    TimeStamp_t startTime_ms,
-                                                    TimeStamp_t streamTime_ms,
-                                                    LayeredKeyFrames& layeredKeyFrames)
+                                                    const TimeStamp_t timeSinceAnimStart_ms,
+                                                    LayeredKeyFrames& layeredKeyFrames) const
 {
   // If we have an anim and it has a backpack keyframe at this time
   if(anim != nullptr)
   {
-    auto* frame = anim->GetTrack<BackpackLightsKeyFrame>().GetCurrentKeyFrame(streamTime_ms - startTime_ms);
-    if(frame != nullptr)
-    {
-      layeredKeyFrames.backpackKeyFrame = *frame;
+    auto& track = anim->GetTrack<BackpackLightsKeyFrame>();
+    if(track.CurrentFrameIsValid(timeSinceAnimStart_ms)){
+      auto& frame = track.GetCurrentKeyFrame();
+      layeredKeyFrames.backpackKeyFrame = frame;
       layeredKeyFrames.haveBackpackKeyFrame = true;
     }
   }
@@ -132,34 +138,33 @@ void TrackLayerComponent::ApplyBackpackLayersToAnim(Animation* anim,
   // If the backpackLayerManager has layers then we need to combine them together (with the keyframe from the anim)
   if(_backpackLayerManager->HaveLayersToSend())
   {
-    auto applyFunc = [](Animations::Track<BackpackLightsKeyFrame>& layerTrack,
-                        TimeStamp_t startTime_ms,
-                        TimeStamp_t streamTime_ms,
+    auto applyFunc = [](const Animations::Track<BackpackLightsKeyFrame>& layerTrack,
+                        const TimeStamp_t timeSinceAnimStart_ms,
                         BackpackLightsKeyFrame& outFrame)
     {
-      // Get the current keyframe from the layer's track (will move to the next keyframe automatically)
-      auto* frame = layerTrack.GetCurrentKeyFrame(streamTime_ms - startTime_ms);
-      if(frame != nullptr)
-      {
+      // Get the current keyframe from the layer's track
+      if(layerTrack.CurrentFrameIsValid(timeSinceAnimStart_ms)){
         // TODO: Blend frame and outFrame?
         // Would need to account for whether or not the anim has a backpack keyframe
-        outFrame = *frame;
+        outFrame = layerTrack.GetCurrentKeyFrame();
         return true;
+
+
       }
       return false;
     };
     
     const bool haveBackpack = _backpackLayerManager->ApplyLayersToFrame(layeredKeyFrames.backpackKeyFrame,
+                                                                        timeSinceAnimStart_ms,
                                                                         applyFunc);
     layeredKeyFrames.haveBackpackKeyFrame |= haveBackpack;
   }
 }
 
 void TrackLayerComponent::ApplyFaceLayersToAnim(Animation* anim,
-                                                TimeStamp_t startTime_ms,
-                                                TimeStamp_t streamTime_ms,
+                                                const TimeStamp_t timeSinceAnimStart_ms,
                                                 LayeredKeyFrames& layeredKeyFrames,
-                                                bool storeFace)
+                                                bool storeFace) const
 {
   // Set faceKeyframe to the last procedural face
   DEV_ASSERT(_lastProceduralFace != nullptr,
@@ -172,8 +177,7 @@ void TrackLayerComponent::ApplyFaceLayersToAnim(Animation* anim,
     // Face keyframe from animation should replace whatever is in layeredKeyframes.faceKeyframe
     const bool kShouldReplace = true;
     const bool faceUpdated = _faceLayerManager->GetFaceHelper(anim->GetTrack<ProceduralFaceKeyFrame>(),
-                                                              startTime_ms,
-                                                              streamTime_ms,
+                                                              timeSinceAnimStart_ms,
                                                               layeredKeyFrames.faceKeyFrame,
                                                               kShouldReplace);
     layeredKeyFrames.haveFaceKeyFrame = faceUpdated;
@@ -188,41 +192,37 @@ void TrackLayerComponent::ApplyFaceLayersToAnim(Animation* anim,
   // If the faceLayerManager has layers then we need to combine them together
   if(_faceLayerManager->HaveLayersToSend())
   {
-    auto applyFunc = [this](Animations::Track<ProceduralFaceKeyFrame>& track,
-                            TimeStamp_t startTime_ms,
-                            TimeStamp_t streamTime_ms,
+    auto applyFunc = [this](const Animations::Track<ProceduralFaceKeyFrame>& track,
+                            const TimeStamp_t timeSinceAnimStart_ms,
                             ProceduralFaceKeyFrame& outFrame)
     {
       // Procedural layers should not replace what is already in outFrame, they need to be combined with it
       const bool kShouldReplace = false;
-      return _faceLayerManager->GetFaceHelper(track, startTime_ms, streamTime_ms, outFrame, kShouldReplace);
+      return _faceLayerManager->GetFaceHelper(track, timeSinceAnimStart_ms, outFrame, kShouldReplace);
     };
     
     layeredKeyFrames.haveFaceKeyFrame |= _faceLayerManager->ApplyLayersToFrame(layeredKeyFrames.faceKeyFrame,
+                                                                               timeSinceAnimStart_ms,
                                                                                applyFunc);
   }
 }
 
 
-void TrackLayerComponent::KeepFaceAlive(const std::map<KeepFaceAliveParameter, f32>& params)
+void TrackLayerComponent::KeepFaceAlive(const std::map<KeepFaceAliveParameter, f32>& params,
+                                        const TimeStamp_t timeSinceKeepAliveStart_ms)
 {
-  _faceLayerManager->KeepFaceAlive(params);
+  _faceLayerManager->KeepFaceAlive(params, timeSinceKeepAliveStart_ms);
 }
 
 void TrackLayerComponent::RemoveKeepFaceAlive(u32 duration_ms)
 {
   _faceLayerManager->RemoveKeepFaceAlive(duration_ms);
 }
-  
-void TrackLayerComponent::ResetKeepFaceAliveTimers()
-{
-  _faceLayerManager->ResetKeepFaceAliveTimers();
-}
 
-void TrackLayerComponent::AddBlink()
+void TrackLayerComponent::AddBlink(const TimeStamp_t timeSinceKeepAliveStart_ms)
 {
   Animations::Track<ProceduralFaceKeyFrame> faceTrack;
-  _faceLayerManager->GenerateBlink(faceTrack);
+  _faceLayerManager->GenerateBlink(faceTrack, timeSinceKeepAliveStart_ms);
   _faceLayerManager->AddLayer("Blink", faceTrack);
 }
 
@@ -254,7 +254,8 @@ void TrackLayerComponent::AddOrUpdateEyeShift(const std::string& name,
                                       lookUpMaxScale,
                                       lookDownMinScale,
                                       outerEyeScaleIncrease,
-                                      duration_ms, eyeShift);
+                                      duration_ms,
+                                      eyeShift);
   
   if(!_faceLayerManager->HasLayer(name))
   {

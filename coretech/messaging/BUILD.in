@@ -3,11 +3,9 @@ cxx_project(
     name = 'cti_messaging',
     srcs = cxx_src_glob(['engine', 'shared']),
     platform_srcs = [
-        ('android', glob(['engine/**/*_android.cpp', 'shared/**/*_android.cpp']))
     ],
     headers = cxx_header_glob(['engine', 'shared']),
     platform_headers = [
-        ('android', glob(['engine/**/*_android.h', 'shared/**/*_android.h']))
     ]
 )
 
@@ -15,10 +13,8 @@ cxx_project(
     name = 'cti_messaging_robot',
     srcs = cxx_src_glob(['shared']),
     platform_srcs = [
-        ('android', glob(['shared/**/*_android.cpp']))
     ],
     headers = cxx_header_glob(['shared']),
     platform_headers = [
-        ('android', glob(['shared/**/*_android.h']))
     ]
 )

@@ -21,9 +21,11 @@
 #include "util/logging/logging.h"
 #include "util/logging/androidLogPrintLogger_vicos.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/logging/logging.h"
+#include "util/logging/victorLogger.h"
+#include "util/string/stringUtils.h"
 
-// FIXME: We need to build Breakpad libs for VICOS
-// #include "platform/victorCrashReports/google_breakpad.h"
+#include "platform/victorCrashReports/google_breakpad.h"
 
 #include <stdio.h>
 #include <chrono>
@@ -35,6 +37,7 @@
 using namespace Anki;
 using namespace Anki::Cozmo;
 
+#define LOG_PROCNAME "vic-anim"
 #define LOG_CHANNEL "CozmoAnimMain"
 
 namespace {
@@ -51,11 +54,11 @@ Anki::Util::Data::DataPlatform* createPlatform(const std::string& persistentPath
                                          const std::string& cachePath,
                                          const std::string& resourcesPath)
 {
-    Anki::Util::FileUtils::CreateDirectory(persistentPath);
-    Anki::Util::FileUtils::CreateDirectory(cachePath);
-    Anki::Util::FileUtils::CreateDirectory(resourcesPath);
+  Anki::Util::FileUtils::CreateDirectory(persistentPath);
+  Anki::Util::FileUtils::CreateDirectory(cachePath);
+  Anki::Util::FileUtils::CreateDirectory(resourcesPath);
 
-    return new Anki::Util::Data::DataPlatform(persistentPath, cachePath, resourcesPath);
+  return new Anki::Util::Data::DataPlatform(persistentPath, cachePath, resourcesPath);
 }
 
 Anki::Util::Data::DataPlatform* createPlatform()
@@ -106,10 +109,7 @@ Anki::Util::Data::DataPlatform* createPlatform()
     PRINT_NAMED_ERROR("cozmoAnimMain.createPlatform.DataPlatformResourcesPathUndefined", "");
   }
 
-  Util::Data::DataPlatform* dataPlatform =
-    createPlatform(persistentPath, cachePath, resourcesPath);
-
-  return dataPlatform;
+  return createPlatform(persistentPath, cachePath, resourcesPath);
 }
 
 
@@ -117,15 +117,30 @@ int main(void)
 {
   signal(SIGTERM, Shutdown);
 
-  // FIXME: We need to build Breakpad libs for VICOS
-  // static char const* filenamePrefix = "anim";
-  // GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
+  static char const* filenamePrefix = "anim";
+  GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
 
   // - create and set logger
-  Util::AndroidLogPrintLogger logPrintLogger("vic-anim");
-  Util::gLoggerProvider = &logPrintLogger;
+  auto logger = std::make_unique<Anki::Util::VictorLogger>(LOG_PROCNAME);
 
-  Util::Data::DataPlatform* dataPlatform = createPlatform();
+  Util::gLoggerProvider = logger.get();
+  Util::gEventProvider = logger.get();
+
+  auto dataPlatform = createPlatform();
+
+  // Log a test event
+  {
+    DASMSG(anim_main_hello, "anim.main.hello", "Application start");
+    DASMSG_SET(s1, "str1", "Example string 1");
+    DASMSG_SET(s2, "str2", "Example string 2");
+    DASMSG_SET(s3, "str3", "Example string 3")
+    DASMSG_SET(s4, "str4" ,"Example string 4");
+    DASMSG_SET(i1, 1, "Example int 1");
+    DASMSG_SET(i2, 2, "Example int 2");
+    DASMSG_SET(i3, 3, "Example int 3");
+    DASMSG_SET(i4, 4, "Example int 4");
+    DASMSG_SEND();
+  }
 
   // Set up the console vars to load from file, if it exists
   ANKI_CONSOLE_SYSTEM_INIT(dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, "consoleVarsAnim.ini").c_str());
@@ -137,6 +152,9 @@ int main(void)
   if (RESULT_OK != result) {
     LOG_ERROR("CozmoAnimMain.main.InitFailed", "Unable to initialize (exit %d)", result);
     delete animEngine;
+    Util::gLoggerProvider = nullptr;
+    Util::gEventProvider = nullptr;
+    GoogleBreakpad::UnInstallGoogleBreakpad();
     sync();
     exit(result);
   }
@@ -206,8 +224,11 @@ int main(void)
   LOG_INFO("CozmoAnimMain.main.Shutdown", "Shutting down (exit %d)", result);
 
   delete animEngine;
-  // FIXME: We need to build Breakpad libs for VICOS
-  // GoogleBreakpad::UnInstallGoogleBreakpad();
+
+  Util::gLoggerProvider = nullptr;
+  Util::gEventProvider = nullptr;
+
+  GoogleBreakpad::UnInstallGoogleBreakpad();
   sync();
   exit(result);
 }

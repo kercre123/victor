@@ -72,6 +72,7 @@ void InitBEIPartial( const BEIComponentMap& map, BehaviorExternalInterface& bei 
 {
   bei.Init(GetFromMap<AIComponent>(map, BEIComponentID::AIComponent),
            GetFromMap<AnimationComponent>(map, BEIComponentID::Animation),
+           GetFromMap<BeatDetectorComponent>(map, BEIComponentID::BeatDetector),
            GetFromMap<BehaviorContainer>(map, BEIComponentID::BehaviorContainer),
            GetFromMap<BehaviorEventComponent>(map, BEIComponentID::BehaviorEvent),
            GetFromMap<BehaviorTimerManager>(map, BEIComponentID::BehaviorTimerManager),
@@ -250,7 +251,8 @@ void TestBehaviorFramework::ReplaceBehaviorStack(std::vector<IBehavior*> newStac
 
   if(newStack.size() > 0){
     auto baseBehaviorIter = newStack.begin();
-    bsm._behaviorStack->InitBehaviorStack(*baseBehaviorIter);
+    bsm._behaviorStack->InitBehaviorStack(*baseBehaviorIter, 
+      GetBehaviorExternalInterface().GetRobotInfo().GetExternalInterface());
     newStack.erase(baseBehaviorIter);
   }
   
@@ -273,10 +275,40 @@ void TestBehaviorFramework::AddDelegateToStack(IBehavior* delegate)
   // something
   auto& delegationComponent = GetBehaviorExternalInterface().GetDelegationComponent();
   delegationComponent.CancelDelegates(topOfStack);
-  
+
+  // Apply special cases to system
+  ApplyAdditionalRequirementsBeforeDelegation(delegate);
+
   delegate->WantsToBeActivated();
   bsm.Delegate(topOfStack, delegate);
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestBehaviorFramework::ApplyAdditionalRequirementsBeforeDelegation(IBehavior* delegate)
+{
+  auto& bsm = GetBehaviorSystemManager();
+  IBehavior* topOfStack = bsm._behaviorStack->GetTopOfStack();
+
+  // Special case logic for weather
+  {
+    ICozmoBehavior* delCozPtr = dynamic_cast<ICozmoBehavior*>(delegate);
+    const bool delegatingToWeather = (delCozPtr != nullptr) &&
+                                     (delCozPtr->GetID() == BehaviorID::WeatherResponses);
+
+    ICozmoBehavior* topWeatherPtr = dynamic_cast<ICozmoBehavior*>(topOfStack);
+    const bool delegatingFromWeather = (topWeatherPtr != nullptr) &&
+                                         (topWeatherPtr->GetID() == BehaviorID::WeatherResponses);
+    if(delegatingToWeather || delegatingFromWeather){
+      auto& uic = GetBehaviorExternalInterface().GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
+
+      UserIntent_WeatherResponse weatherResponse;
+      UserIntent intent = UserIntent::Createweather_response(std::move(weatherResponse));
+      uic.SetUserIntentPending(std::move(intent));
+    }
+  }
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::vector<IBehavior*> TestBehaviorFramework::GetNamedBehaviorStack(const std::string& stackName)
@@ -302,9 +334,18 @@ void TestBehaviorFramework::SetBehaviorStackByName(const std::string& stackName)
   ReplaceBehaviorStack(_namedBehaviorStacks[stackName]);
 }
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestBehaviorFramework::FullTreeWalk(std::map<IBehavior*,std::set<IBehavior*>>& delegateMap,
                                          std::function<void(void)> evaluateTreeCallback)
+{
+  FullTreeWalk(delegateMap, [&](bool leaf){ evaluateTreeCallback(); });
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestBehaviorFramework::FullTreeWalk(std::map<IBehavior*,std::set<IBehavior*>>& delegateMap,
+                                         std::function<void(bool)> evaluateTreeCallback)
 {
   if(delegateMap.empty()){
     return;
@@ -318,18 +359,26 @@ void TestBehaviorFramework::FullTreeWalk(std::map<IBehavior*,std::set<IBehavior*
         // Cancel any behaviors delegated to on activation
         // we'll push them on manually later
         bsm.CancelDelegates(delegate);
-        if(evaluateTreeCallback != nullptr){
-          evaluateTreeCallback();
+
+        // if we don't have the new delegates in the map yet then add them now
+        auto nextDelegates = delegateMap.find(delegate);
+        if( nextDelegates == delegateMap.end() ) {
+          std::set<IBehavior*> tmpDelegates;
+          delegate->GetAllDelegates(tmpDelegates);
+          nextDelegates = delegateMap.insert(std::make_pair(delegate, std::move(tmpDelegates))).first;
         }
+
+        ASSERT_NAMED(nextDelegates != delegateMap.end(), "TestBehaviorFramework.TreeWalk.InvalidDelegates");
+        
+        if(evaluateTreeCallback != nullptr){
+          const bool isLeaf = nextDelegates->second.empty();
+          evaluateTreeCallback(isLeaf);
+        }
+        
         FullTreeWalk(delegateMap, evaluateTreeCallback);
       }
       delegateMap.erase(iter);
       bsm.CancelSelf(topOfStack);
-    }else{
-      std::set<IBehavior*> tmpDelegates;
-      topOfStack->GetAllDelegates(tmpDelegates);
-      delegateMap.insert(std::make_pair(topOfStack, std::move(tmpDelegates)));
-      FullTreeWalk(delegateMap, evaluateTreeCallback);
     }
   }
 }
@@ -674,6 +723,23 @@ void TestBehaviorFramework::LoadNamedBehaviorStacks()
                  ("Named Behavior Stack: " + behaviorStackName + " is not achievable during freeplay").c_str());
     _namedBehaviorStacks[behaviorStackName] = behaviorStack;
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CheckStackSuffixMatch(const std::vector<IBehavior*>& a, const std::vector<IBehavior*>& b)
+{
+  auto aIter = a.rbegin();
+  auto bIter = b.rbegin();
+
+  while( aIter != a.rend() && bIter != b.rend() ) {
+    if( *aIter != *bIter ) {
+      return false;
+    }
+    aIter++;
+    bIter++;
+  }
+
+  return true;
 }
 
 }

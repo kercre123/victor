@@ -144,6 +144,7 @@ namespace Anki {
 
     void DrivingAnimationHandler::HandleActionCompleted(const ExternalInterface::RobotCompletedAction& msg)
     {
+      const auto& pathComponent = _robot->GetPathComponent();
       // Only start playing drivingLoop if start successfully completes
       if(msg.idTag == _drivingStartAnimTag && msg.result == ActionResult::SUCCESS)
       {
@@ -154,7 +155,8 @@ namespace Anki {
       }
       else if(msg.idTag == _drivingLoopAnimTag)
       {
-        const bool keepLooping = (_keepLoopingWithoutPath || _robot->GetPathComponent().HasPathToFollow());
+        const bool stillDrivingPath = pathComponent.HasPathToFollow() && !pathComponent.HasStoppedBeforeExecuting();
+        const bool keepLooping = (_keepLoopingWithoutPath || stillDrivingPath);
         if(keepLooping && msg.result == ActionResult::SUCCESS)
         {
           PlayDrivingLoopAnim();
@@ -168,12 +170,12 @@ namespace Anki {
             _robot->GetMoveComponent().UnlockTracks(_tracksToUnlock, _actionTag);
           }
           
-          PlayEndAnim();
+          EndDrivingAnim();
         }
       }
       else if(msg.idTag == _drivingEndAnimTag)
       {
-        _state = AnimState::FinishedEnd;
+        _state = AnimState::FinishedDriving;
         
         // Relock tracks like nothing ever happend
         if(_isActionLockingTracks)
@@ -209,14 +211,14 @@ namespace Anki {
       _keepLoopingWithoutPath = keepLoopingWithoutPath;
     }
     
-    void DrivingAnimationHandler::PlayStartAnim()
+    void DrivingAnimationHandler::StartDrivingAnim()
     {
       if (!kEnableDrivingAnimations) {
         return;
       }
       
-      // Don't do anything until Init is called
-      if(_state != AnimState::Waiting)
+      // Don't do anything until Init is called, or it finished the last driving animation
+      if(_state != AnimState::Waiting && _state != AnimState::FinishedDriving)
       {
         return;
       }
@@ -231,7 +233,7 @@ namespace Anki {
       }
     }
     
-    bool DrivingAnimationHandler::PlayEndAnim()
+    bool DrivingAnimationHandler::EndDrivingAnim()
     {
       if (!kEnableDrivingAnimations) {
         return false;
@@ -239,8 +241,8 @@ namespace Anki {
       
       // The end anim can interrupt the start and loop animations
       // If we are currently playing the end anim or have already completed it don't play it again
-      if(_state == AnimState::PlayingEnd ||
-         _state == AnimState::FinishedEnd ||
+      if(_state == AnimState::DrivingEnd ||
+         _state == AnimState::FinishedDriving ||
          _state == AnimState::ActionDestroyed)
       {
         return false;
@@ -261,12 +263,12 @@ namespace Anki {
         PlayDrivingEndAnim();
         return true;
       }
-      return false;;
+      return false;
     }
   
     void DrivingAnimationHandler::PlayDrivingStartAnim()
     {
-      _state = AnimState::PlayingStart;
+      _state = AnimState::DrivingStart;
       IActionRunner* animAction = new TriggerLiftSafeAnimationAction(_currDrivingAnimations.drivingStartAnim,
                                                                      1, true);
       _drivingStartAnimTag = animAction->GetTag();
@@ -275,7 +277,7 @@ namespace Anki {
     
     void DrivingAnimationHandler::PlayDrivingLoopAnim()
     {
-      _state = AnimState::PlayingLoop;
+      _state = AnimState::DrivingLoop;
       IActionRunner* animAction = new TriggerLiftSafeAnimationAction(_currDrivingAnimations.drivingLoopAnim,
                                                                      1, true);
       _drivingLoopAnimTag = animAction->GetTag();
@@ -284,18 +286,19 @@ namespace Anki {
     
     void DrivingAnimationHandler::PlayDrivingEndAnim()
     {
-      if(_state == AnimState::PlayingEnd ||
-         _state == AnimState::FinishedEnd ||
+      if(_state == AnimState::DrivingEnd ||
+         _state == AnimState::FinishedDriving ||
          _state == AnimState::ActionDestroyed)
       {
         return;
       }
       
-      _state = AnimState::PlayingEnd;
+      _state = AnimState::DrivingEnd;
       IActionRunner* animAction = new TriggerLiftSafeAnimationAction(_currDrivingAnimations.drivingEndAnim,
                                                                      1, true);
       _drivingEndAnimTag = animAction->GetTag();
       _robot->GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
     }
+    
   }
 }

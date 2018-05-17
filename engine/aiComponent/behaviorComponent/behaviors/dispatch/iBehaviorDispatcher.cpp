@@ -25,20 +25,18 @@ namespace Cozmo {
 
 namespace {
 static const char* kInterruptBehaviorKey = "interruptActiveBehavior";
-static const char* kMaxBehaviorActivations = "maxBehaviorActivations";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehaviorDispatcher::InstanceConfig::InstanceConfig()
 {
-  maxBehaviorActivations = -1;
+
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehaviorDispatcher::DynamicVariables::DynamicVariables()
 {
-  numActivations = 0;
 }
 
 
@@ -49,7 +47,6 @@ IBehaviorDispatcher::IBehaviorDispatcher(const Json::Value& config)
   _iConfig.shouldInterruptActiveBehavior = JsonTools::ParseBool(config,
                                                         kInterruptBehaviorKey,
                                                         "IBehaviorDispatcher.ShouldInterrupt.ConfigError");
-  _iConfig.maxBehaviorActivations = config.get(kMaxBehaviorActivations, -1).asInt();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -71,11 +68,7 @@ IBehaviorDispatcher::IBehaviorDispatcher(const Json::Value& config, bool shouldI
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehaviorDispatcher::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
-  const char* list[] = {
-    kInterruptBehaviorKey,
-    kMaxBehaviorActivations,
-  };
-  expectedKeys.insert( std::begin(list), std::end(list) );
+  expectedKeys.insert( kInterruptBehaviorKey );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -199,14 +192,6 @@ void IBehaviorDispatcher::BehaviorUpdate()
                      "Behavior should have a delegation component while running") ) {
     CancelSelf();
     return;
-  }
-  
-  if( !IsControlDelegated() ) {
-    ++_dVars.numActivations;
-    if( (_iConfig.maxBehaviorActivations >= 0) && (_dVars.numActivations > _iConfig.maxBehaviorActivations) ) {
-      CancelSelf();
-      return;
-    }
   }
 
   // only choose a new behavior if we should interrupt the active behavior, or if no behavior is active

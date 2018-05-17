@@ -13,6 +13,7 @@
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 
 #include "engine/aiComponent/beiConditions/conditions/conditionBatteryLevel.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionBeatDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionBehaviorTimer.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCliffDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCompound.h"
@@ -173,6 +174,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::BatteryLevel:
     {
       strategy = std::make_shared<ConditionBatteryLevel>(config);
+      break;
+    }
+    case BEIConditionType::BeatDetected:
+    {
+      strategy = std::make_shared<ConditionBeatDetected>(config);
       break;
     }
     case BEIConditionType::BehaviorTimer:

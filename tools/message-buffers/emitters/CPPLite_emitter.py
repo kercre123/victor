@@ -409,7 +409,7 @@ class CPPEnumEmitter(HEnumEmitter):
           ''').format(num_values=len(node.members()), **globals))
           
         with self.output.indent(1):
-          self.output.write('const std::unordered_map<std::string, {enum_name}> stringToEnumMap = {{\n'.format(**globals))
+          self.output.write('static const std::unordered_map<std::string, {enum_name}> stringToEnumMap = {{\n'.format(**globals))
           for member in node.members():
               self.output.write('\t{{"{member_name}", {enum_name}::{member_name}}},\n'.format(member_name=member.name, **globals))
           self.output.write('};\n\n')
@@ -417,7 +417,9 @@ class CPPEnumEmitter(HEnumEmitter):
           self.output.write(textwrap.dedent('''\
               auto it = stringToEnumMap.find(str);
               if(it == stringToEnumMap.end()) {{
+              #ifndef NDEBUG
               std::cerr << "error: string '" << str << "' is not a valid {enum_name} value" << std::endl;
+              #endif // NDEBUG
               assert(false && "string must be a valid {enum_name} value");
               return {enum_name}::{first_val};
               }}

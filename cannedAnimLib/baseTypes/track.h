@@ -17,6 +17,7 @@
 #include "cannedAnimLib/baseTypes/keyframe.h"
 #include "coretech/common/shared/types.h"
 #include "json/json-forwards.h"
+#include "util/helpers/boundedWhile.h"
 #include <stdint.h>
 #include <list>
 
@@ -59,12 +60,13 @@ public:
   // Custom copy constructor
   Track<FRAME_TYPE>(const Track<FRAME_TYPE>& other) :
     _frames(other._frames),
-    _frameIter(_frames.begin()),
-    _isLive(other._isLive)
+    _frameIter(_frames.begin())
   {
-    // Advance iterator to preserve original position
-    for (auto pos = other._frames.begin(); pos != other._frameIter; ++pos) {
-      ++_frameIter;
+    if(!other._frames.empty()){
+      // Advance iterator to preserve original position
+      for (auto pos = other._frames.begin(); pos != other._frameIter; ++pos) {
+        ++_frameIter;
+      }
     }
   }
   
@@ -74,7 +76,6 @@ public:
     if (this != &other) {
       _frames = other._frames;
       _frameIter = _frames.begin();
-      _isLive = other._isLive;
       // Advance iterator to preserve original position
       for (auto pos = other._frames.begin(); pos != other._frameIter; ++pos) {
         ++_frameIter;
@@ -82,11 +83,6 @@ public:
     }
     return *this;
   }
-
-  
-  // If set to true, keyframes in this track will be deleted after they are played.
-  void SetIsLive(bool isLive) { _isLive = isLive; }
-  bool IsLive() const { return _isLive; }
 
   Result AddKeyFrameToBack(const FRAME_TYPE& keyFrame);
 
@@ -114,15 +110,10 @@ public:
   // Return the Streaming message for the current KeyFrame if it is time,
   // nullptr otherwise. Also returns nullptr if there are no KeyFrames
   // left in the track.
-  RobotInterface::EngineToRobot* GetCurrentStreamingMessage(TimeStamp_t animationTime_ms);
-  
-  // Compare current time with start time.
-  RobotInterface::EngineToRobot* GetCurrentStreamingMessage(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms);
-  
-  FRAME_TYPE* GetCurrentKeyFrame(TimeStamp_t animationTime_ms);
+  RobotInterface::EngineToRobot* GetCurrentStreamingMessage(const TimeStamp_t relativeStreamingTime_ms) const;
   
   // Get a reference to the current KeyFrame in the track.
-  FRAME_TYPE& GetCurrentKeyFrame() { return *_frameIter; }
+  FRAME_TYPE& GetCurrentKeyFrame() const { return *_frameIter; }
   
   // Get pointer to next keyframe. Returns nullptr if the track is on the last frame.
   const FRAME_TYPE* GetNextKeyFrame() const;
@@ -132,6 +123,8 @@ public:
   
   // Get a pointer to the last KeyFrame in the track. Returns nullptr if track is empty.
   const FRAME_TYPE* GetLastKeyFrame() const;
+  FRAME_TYPE* GetLastKeyFrame();
+
   
   // Move to next frame and delete the current one if it's marked "live".
   // Will not advance past end.
@@ -153,6 +146,12 @@ public:
 
   bool HasFramesLeft() const { return _frameIter != _frames.end(); }
 
+  // Check to see whether the return value of GetCurrentKeyFrame is valid
+  bool CurrentFrameIsValid (const TimeStamp_t relativeStreamingTime_ms) const {  
+    return HasFramesLeft() && 
+           GetCurrentKeyFrame().IsTimeToPlay(relativeStreamingTime_ms);
+  }
+
   bool IsEmpty() const { return _frames.empty(); }
   int TrackLength() const { return static_cast<int>(_frames.size()); }
 
@@ -165,6 +164,13 @@ public:
   // Append Track to current track
   void AppendTrack(const Track& appendTrack, const TimeStamp_t appendStartTime_ms);
 
+  // Moves the frameIter forward to the keyframe that should be set for the given time
+  // NOTE: This function only moves the track forward
+  void AdvanceTrack(const TimeStamp_t toTime_ms);
+
+  // Set all keyframe durations within the track
+  void SetKeyFrameDuration_ms();
+
 private:
   
   using FrameList = std::list<FRAME_TYPE>;
@@ -175,10 +181,6 @@ private:
   
   // Pointer to current position
   FrameListIter _frameIter = _frames.begin();
-  
-  // Is this a live animation?
-  bool _isLive = false;
-
   
   Result AddKeyFrameToBackHelper(const FRAME_TYPE& keyFrame, FRAME_TYPE* &prevKeyFrame);
   Result AddKeyFrameByTimeHelper(const FRAME_TYPE& keyFrame, FRAME_TYPE* &prevKeyFrame);
@@ -194,14 +196,8 @@ void Track<FRAME_TYPE>::MoveToStart()
 template<typename FRAME_TYPE>
 void Track<FRAME_TYPE>::MoveToNextKeyFrame()
 {
-  if(_isLive) {
-    // Live frames get removed from the track once played
-    _frameIter = _frames.erase(_frameIter);
-  } else {
-    // For canned frames, we just move to the next one in the track
-    if(_frameIter != _frames.end()) {
-      ++_frameIter;
-    }
+  if(_frameIter != _frames.end()) {
+    ++_frameIter;
   }
 }
   
@@ -220,13 +216,6 @@ void Track<FRAME_TYPE>::MoveToLastKeyFrame()
     // nothing to do
     return;
   }
-
-  // For "live" tracks, remove everything up to last frame
-  if(_isLive) {
-    FRAME_TYPE lastKeyFrame(_frames.back()); // store a copy of last
-    _frames.clear(); // clear everything
-    _frames.push_back(lastKeyFrame); // put last frame back
-  }
   
   // Jump to end and then move back one
   _frameIter = _frames.end();
@@ -236,11 +225,7 @@ void Track<FRAME_TYPE>::MoveToLastKeyFrame()
 template<typename FRAME_TYPE>
 void Track<FRAME_TYPE>::MoveToEnd()
 {
-  if(_isLive) {
-    Clear();
-  } else {
-    _frameIter = _frames.end();
-  }
+  _frameIter = _frames.end();
 }
   
 template<typename FRAME_TYPE>
@@ -265,6 +250,16 @@ const FRAME_TYPE* Track<FRAME_TYPE>::GetFirstKeyFrame() const
     return nullptr;
   } else {
     return &(_frames.front());
+  }
+}
+
+template<typename FRAME_TYPE>
+FRAME_TYPE* Track<FRAME_TYPE>::GetLastKeyFrame()
+{
+  if(_frames.empty()) {
+    return nullptr;
+  } else {
+    return &(_frames.back());
   }
 }
 
@@ -299,8 +294,7 @@ Result Track<FRAME_TYPE>::AddKeyFrameToBackHelper(const FRAME_TYPE& keyFrame,
 
   _frames.emplace_back(keyFrame);
 
-  // If we just added the first keyframe (e.g. after deleting the last remaining
-  // keyframe in a "Live" track), we need to reset the frameIter to point
+  // If we just added the first keyframe we need to reset the frameIter to point
   // back to the beginning.
   if(_frames.size() == 1) {
     _frameIter = _frames.begin();
@@ -337,13 +331,13 @@ Result Track<FRAME_TYPE>::AddKeyFrameByTimeHelper(const FRAME_TYPE& keyFrame,
     return RESULT_FAIL;
   }
 
-  auto desiredTrigger = keyFrame.GetTriggerTime();
+  auto desiredTrigger = keyFrame.GetTriggerTime_ms();
   
   auto framePlaceIter = _frames.begin();
-  while (framePlaceIter != _frames.end() && framePlaceIter->GetTriggerTime() <= desiredTrigger)
+  while (framePlaceIter != _frames.end() && framePlaceIter->GetTriggerTime_ms() <= desiredTrigger)
   {
     // Don't put another key frame at the same time as an existing one
-    if (framePlaceIter->GetTriggerTime() == desiredTrigger)
+    if (framePlaceIter->GetTriggerTime_ms() == desiredTrigger)
     {
       PRINT_NAMED_ERROR("Animation.Track.AddKeyFrameByTime.DuplicateTime",
                         "There is already a frame at time %u in %s track.",
@@ -383,59 +377,21 @@ Result Track<BackpackLightsKeyFrame>::AddKeyFrameByTime(const BackpackLightsKeyF
 
 
 template<typename FRAME_TYPE>
-FRAME_TYPE* Track<FRAME_TYPE>::GetCurrentKeyFrame(TimeStamp_t animationTime_ms)
-{
-  if (HasFramesLeft()) {
-    FRAME_TYPE& currentKeyFrame = GetCurrentKeyFrame();
-    if (currentKeyFrame.IsTimeToPlay(animationTime_ms)) {
-      
-      if(currentKeyFrame.IsDone()) {
-        MoveToNextKeyFrame();
-      }
-      
-      return &currentKeyFrame;
-    }
-  }
-  return nullptr;
-}
-
-template<typename FRAME_TYPE>
-RobotInterface::EngineToRobot* Track<FRAME_TYPE>::GetCurrentStreamingMessage(TimeStamp_t animationTime_ms)
+RobotInterface::EngineToRobot* Track<FRAME_TYPE>::GetCurrentStreamingMessage(const TimeStamp_t relativeStreamingTime_ms) const
 {
   RobotInterface::EngineToRobot* msg = nullptr;
   
   if(HasFramesLeft()) {
     FRAME_TYPE& currentKeyFrame = GetCurrentKeyFrame();
-    if(currentKeyFrame.IsTimeToPlay(animationTime_ms))
+    if(currentKeyFrame.IsTimeToPlay(relativeStreamingTime_ms))
     {
-      msg = currentKeyFrame.GetStreamMessage();
-      if(currentKeyFrame.IsDone()) {
-        MoveToNextKeyFrame();
-      }
+      msg = currentKeyFrame.GetStreamMessage(relativeStreamingTime_ms);
     }
   }
   
   return msg;
 }
 
-template<typename FRAME_TYPE>
-RobotInterface::EngineToRobot* Track<FRAME_TYPE>::GetCurrentStreamingMessage(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms)
-{
-  RobotInterface::EngineToRobot* msg = nullptr;
-
-  if(HasFramesLeft()) {
-    FRAME_TYPE& currentKeyFrame = GetCurrentKeyFrame();
-    if(currentKeyFrame.IsTimeToPlay(currTime_ms - startTime_ms))
-    {
-      msg = currentKeyFrame.GetStreamMessage();
-      if(currentKeyFrame.IsDone()) {
-        MoveToNextKeyFrame();
-      }
-    }
-  }
-
-  return msg;
-}
 
 template<typename FRAME_TYPE>
 Result Track<FRAME_TYPE>::AddKeyFrameToBack(const CozmoAnim::LiftHeight* liftKeyframe, const std::string& animNameDebug)
@@ -560,10 +516,10 @@ Result Track<FRAME_TYPE>::AddNewKeyFrameToBack(const FRAME_TYPE& newKeyFrame)
       auto nextToLastFrame = _frames.rbegin();
       ++nextToLastFrame;
 
-      if(_frames.back().GetTriggerTime() <= nextToLastFrame->GetTriggerTime()) {
+      if(_frames.back().GetTriggerTime_ms() <= nextToLastFrame->GetTriggerTime_ms()) {
         PRINT_NAMED_WARNING("Animation.Track.AddKeyFrameToBack.BadTriggerTime",
                             "New keyframe (t=%d) must be after the last keyframe (t=%d)",
-                            _frames.back().GetTriggerTime(), nextToLastFrame->GetTriggerTime());
+                            _frames.back().GetTriggerTime_ms(), nextToLastFrame->GetTriggerTime_ms());
         
         _frames.pop_back();
         lastResult = RESULT_FAIL;
@@ -588,13 +544,48 @@ void Track<FRAME_TYPE>::AppendTrack(const Track<FRAME_TYPE>& appendTrack, const 
 {
   for (const FRAME_TYPE& aFrame : appendTrack._frames) {
     FRAME_TYPE newFrame(aFrame);
-    TimeStamp_t triggerTime = newFrame.GetTriggerTime();
-    newFrame.SetTriggerTime(triggerTime + appendStartTime_ms);
+    TimeStamp_t triggerTime = newFrame.GetTriggerTime_ms();
+    newFrame.SetTriggerTime_ms(triggerTime + appendStartTime_ms);
     if ( RESULT_OK != AddKeyFrameToBack(newFrame) ) {
       PRINT_NAMED_ERROR("Track.AppendTrack.AddKeyFrameToBack.Failure", "");
     }
   }
 }
+
+template<class FRAME_TYPE>
+void Track<FRAME_TYPE>::AdvanceTrack(const TimeStamp_t toTime_ms)
+{
+  const auto upperBound = _frames.size() + 1;
+  BOUNDED_WHILE(upperBound, _frameIter != _frames.end()) {
+    if(_frameIter->IsDone(toTime_ms)){
+      _frameIter++;
+    }else{
+      break;
+    }
+  }
+}
+
+template<class FRAME_TYPE>
+void Track<FRAME_TYPE>::SetKeyFrameDuration_ms()
+{
+  if(_frames.size() < 2){
+    return;
+  }
+  auto prevIter = _frames.begin();
+  auto nextIter = _frames.begin();
+  nextIter++;
+  const auto upperBound = _frames.size() + 1;
+  BOUNDED_WHILE(upperBound, nextIter != _frames.end()) {
+    // Only override durations which haven't been set
+    if(prevIter->GetKeyframeDuration_ms() == 0){
+      prevIter->SetKeyFrameDuration_ms(nextIter->GetTriggerTime_ms() - prevIter->GetTriggerTime_ms());
+    }
+    prevIter++;
+    nextIter++;
+  }
+}
+
+
   
 } // end namespace Animations
 } // end namespace Cozmo

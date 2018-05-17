@@ -27,9 +27,8 @@ namespace Vision {
 // Turn this on to linearize brightness values using the camera's Gamma table
 // before computing the desired exposure. Should be more accurate, but may not
 // be super necessary.
-CONSOLE_VAR(bool, kLinearizeForAutoExposure, "Vision.PreProcessing", false);
-
-CONSOLE_VAR(float, kMaxWhiteBalanceGainChange, "Vision.PreProcessing", 0.05);
+CONSOLE_VAR(bool,  kLinearizeForAutoExposure,     "Vision.PreProcessing", false);
+CONSOLE_VAR(bool,  kUseWhiteBalanceExposureCheck, "Vision.PreProcessing", true);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ImagingPipeline::SetExposureParameters(u8  targetMidValue,
@@ -295,51 +294,48 @@ Result ImagingPipeline::ComputeExposureAdjustment(const std::vector<Vision::Imag
   return RESULT_OK;
 }
 
-Result ImagingPipeline::ComputeWhiteBalanceAdjustment(const Vision::ImageRGB& image, 
-                                                      f32& gainR,
-                                                      f32& gainG,
-                                                      f32& gainB)
+Result ImagingPipeline::ComputeWhiteBalanceAdjustment(const Vision::ImageRGB& image, f32& adjR, f32& adjB)
 {
-  f32 avgR = 0.f;
-  f32 avgG = 0.f;
-  f32 avgB = 0.f;
+  s32 sumR = 0;
+  s32 sumG = 0;
+  s32 sumB = 0;
 
   const u32 numRows = image.GetNumRows();
   const u32 numCols = image.GetNumCols();
 
-  // Calculate the average value for each of the three color channels
+  // Calculate the sum for each of the three color channels
+  // Note: we technically care about averages, but since we are just using ratios of the different channels
+  //       below, the divisor cancels out, so we can just use sums for better efficiency. This also means
+  //       we don't have to worry about tracking the number of [sub-sampled] well-exposed pixels.
+
   for(u32 i = 0; i < numRows; i += _subSample)
   {
     const Vision::PixelRGB* image_i = image.GetRow(i);
     for(u32 j = 0; j < numCols; j += _subSample)
     {
-      avgR += image_i[j].r();
-      avgG += image_i[j].g();
-      avgB += image_i[j].b();
+      // Ignore over/under-exposed pixels in computing statistics
+      const Vision::PixelRGB& pixel = image_i[j];
+      const bool isWellExposed = !kUseWhiteBalanceExposureCheck || (pixel.r() > 0 && pixel.r() < 255 &&
+                                                                    pixel.g() > 0 && pixel.g() < 255 &&
+                                                                    pixel.b() > 0 && pixel.b() < 255);
+      if(isWellExposed)
+      {
+        // TODO: Consider linearizing (un-gamma) before computing statistics needed for this update
+        sumR += pixel.r();
+        sumG += pixel.g();
+        sumB += pixel.b();
+      }
     }
   }
 
-  const u32 numPixels = numRows * numCols;
-  avgR /= numPixels;
-  avgG /= numPixels;
-  avgB /= numPixels;
-
-  // Red and blue gain default to 2.0 in camera driver
-  static f32 prevGainR = 2.0;
-  static f32 prevGainB = 2.0;
-
-  // Adjust red and blue gains so their channel's average value match green's
-  gainR = (Util::IsNearZero(avgR) ? 1.f : avgG/avgR);
-  gainB = (Util::IsNearZero(avgB) ? 1.f : avgG/avgB);
-  // Green gain is fixed at 1 since we need something to compute the Red and Blue gains relative to
-  gainG = 1.f;
-
-  // Limit how fast the WhiteBalance gain can change
-  gainR = prevGainR + Util::Clamp(gainR - prevGainR, -kMaxWhiteBalanceGainChange, kMaxWhiteBalanceGainChange);
-  gainB = prevGainB + Util::Clamp(gainB - prevGainB, -kMaxWhiteBalanceGainChange, kMaxWhiteBalanceGainChange);
-
-  prevGainR = gainR;
-  prevGainB = gainB;
+  // Adjust red and blue gains so their channel's average value match green's, making sure
+  // not to adjust too much in a single update:
+  adjR = (sumR==0 ? 1.f : (f32)sumG/(f32)sumR);
+  adjB = (sumB==0 ? 1.f : (f32)sumG/(f32)sumB);
+  
+  // Don't change too much at each update
+  adjR = Util::Clamp(adjR, 1.f-_maxChangeFraction, 1.f+_maxChangeFraction);
+  adjB = Util::Clamp(adjB, 1.f-_maxChangeFraction, 1.f+_maxChangeFraction);
 
   return RESULT_OK;
 }

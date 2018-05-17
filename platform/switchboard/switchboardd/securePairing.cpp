@@ -446,7 +446,7 @@ void SecurePairing::HandleRtsConnResponse(const Anki::Cozmo::ExternalComms::RtsC
   if(_state == PairingState::AwaitingPublicKey) {
     Anki::Cozmo::ExternalComms::RtsConnResponse connResponse = msg.Get_RtsConnResponse();
 
-    if(connResponse.connectionType == Anki::Cozmo::ExternalComms::RtsConnType::FirstTimePair) {    
+    if(connResponse.connectionType == Anki::Cozmo::ExternalComms::RtsConnType::FirstTimePair) {
       if(_isPairing && !_isOtaUpdating) {
         ev_timer_stop(_loop, &_idleConnectionTimer.timer);
         HandleInitialPair((uint8_t*)connResponse.publicKey.data(), crypto_kx_PUBLICKEYBYTES);
@@ -456,7 +456,7 @@ void SecurePairing::HandleRtsConnResponse(const Anki::Cozmo::ExternalComms::RtsC
       }
     } else {
       bool hasClient = false;;
-      
+
       for(int i = 0; i < _rtsKeys.clients.size(); i++) {
         if(memcmp((uint8_t*)connResponse.publicKey.data(), (uint8_t*)&(_rtsKeys.clients[i].publicKey), crypto_kx_PUBLICKEYBYTES) == 0) {
           hasClient = true;
@@ -713,7 +713,7 @@ void SecurePairing::HandleRtsSsh(const Cozmo::ExternalComms::RtsConnection_2& ms
 
 void SecurePairing::HandleRtsAck(const Cozmo::ExternalComms::RtsConnection_2& msg) {
   Anki::Cozmo::ExternalComms::RtsAck ack = msg.Get_RtsAck();
-  if(_state == PairingState::AwaitingNonceAck && 
+  if(_state == PairingState::AwaitingNonceAck &&
     ack.rtsConnectionTag == (uint8_t)Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsNonceMessage) {
     HandleNonceAck();
   } else {
@@ -771,7 +771,7 @@ void SecurePairing::HandleInitialPair(uint8_t* publicKey, uint32_t publicKeyLeng
   _rtsKeys.clients.push_back(client);
 
   SaveKeys();
-  
+
   // Send nonce
   SendNonce();
 

@@ -1,7 +1,15 @@
 {
   "behaviorClass": "RequestToGoHome",
   "behaviorID": "RequestToGoHome",
-  "displayNameKey":"behavior.RequestToGoHome",
+  "associatedActiveFeature": "RequestCharger",
+  
+  "wantsToBeActivatedCondition": {
+    "conditionType": "Compound",
+    "not": {
+      "conditionType": "ObjectKnown",
+      "objectTypes": ["Charger_Basic"]
+    }
+  },
   
   "normal" : {
     "numRequests"         : 1,

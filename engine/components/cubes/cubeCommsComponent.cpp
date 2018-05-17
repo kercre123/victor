@@ -14,7 +14,9 @@
 
 #include "engine/components/blockTapFilterComponent.h"
 #include "engine/components/cubes/cubeAccelComponent.h"
+#include "engine/components/cubes/cubeLightComponent.h"
 #include "engine/components/cubes/ledAnimation.h"
+#include "engine/activeObject.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -32,6 +34,8 @@
 #include "util/jsonWriter/jsonWriter.h"
 #include "util/console/consoleInterface.h"
 
+#include "webServerProcess/src/webService.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -45,11 +49,15 @@ namespace {
   // How long must the object be disconnected before we really remove it from the list of connected objects
   const float kDisconnectTimeout_sec = 5.0f;
 
+  const float kSendWebVizDataPeriod_sec = 1.0f;
+  
   const int kNumCubeLEDs = Util::EnumToUnderlying(CubeConstants::NUM_CUBE_LEDS);
   
   const std::string kBlockFacIdsKey = "blockFactoryIds";
   
   static bool sResetBlockPoolList = false;
+  
+  const std::string kWebVizModuleNameCubes = "cubes";
 }
 
   
@@ -79,6 +87,8 @@ void CubeCommsComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
   
   // Game to engine message handling:
   if (_robot->HasExternalInterface()) {
+    SubscribeToWebViz();
+    
     auto callback = std::bind(&CubeCommsComponent::HandleGameEvents, this, std::placeholders::_1);
     auto* extInterface = _robot->GetExternalInterface();
     _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BlockPoolEnabledMessage, callback));
@@ -180,6 +190,12 @@ void CubeCommsComponent::UpdateDependent(const RobotCompMap& dependentComps)
     }
 
     _nextDisconnectCheckTime_sec = now_sec + kDisconnectCheckPeriod_sec;
+  }
+  
+  // Send info to web viz occasionally
+  if (now_sec > _nextSendWebVizDataTime_sec) {
+    SendDataToWebViz();
+    _nextSendWebVizDataTime_sec = now_sec + kSendWebVizDataPeriod_sec;
   }
 }
 
@@ -326,11 +342,71 @@ bool CubeCommsComponent::SendCubeLights(const ActiveID& activeId, const CubeLigh
 }
 
 
-void CubeCommsComponent::SendBlockPoolData() const
+void CubeCommsComponent::SubscribeToWebViz()
 {
-  // Persistent pool not yet implemented! (VIC-782)
-  PRINT_NAMED_WARNING("CubeCommsComponent.SendBlockPoolData.NotImplemented",
-                      "Not sending BlockPoolDataMessage - persistent pool  is not yet implemented!");
+  if (!ANKI_DEV_CHEATS) {
+    return;
+  }
+  
+  const auto* context = _robot->GetContext();
+  if (context != nullptr) {
+    auto* webService = context->GetWebService();
+    if (webService != nullptr) {
+      auto onData = [this](const Json::Value& data, const std::function<void(const Json::Value&)>& sendToClient) {
+        const auto& flashCubeLights = data["flashCubeLights"];
+        const bool shouldFlashCubeLights = flashCubeLights.isBool() && flashCubeLights.asBool();
+        if(shouldFlashCubeLights) {
+          // flash lights on all connected cubes
+          for (const auto& mapEntry : _availableCubes) {
+            const auto& activeID = mapEntry.first;
+            const bool connected = mapEntry.second.connected;
+            if (connected) {
+              const auto* object = _robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeID);
+              if (object != nullptr) {
+                _robot->GetCubeLightComponent().PlayLightAnim(object->GetID(), CubeAnimationTrigger::Flash);
+              }
+            }
+          }
+        }
+        
+        const auto& resetBlockPool = data["resetBlockPool"];
+        const bool shouldResetBlockPool = resetBlockPool.isBool() && resetBlockPool.asBool();
+        if(shouldResetBlockPool) {
+          sResetBlockPoolList = true;
+        }
+      };
+      
+      _signalHandles.emplace_back(webService->OnWebVizData(kWebVizModuleNameCubes).ScopedSubscribe(onData));
+    }
+  }
+}
+
+
+void CubeCommsComponent::SendDataToWebViz()
+{
+  if (!ANKI_DEV_CHEATS) {
+    return;
+  }
+  
+  const auto* context = _robot->GetContext();
+  if (context != nullptr) {
+    auto* webService = context->GetWebService();
+    if (webService!= nullptr) {
+      Json::Value toSend = Json::arrayValue;
+      for (const auto& mapEntry : _availableCubes) {
+        Json::Value blob;
+        const auto& cube = mapEntry.second;
+        blob["connected"]     = cube.connected;
+        blob["address"]       = cube.factoryId;
+        blob["lastHeardTime"] = cube.lastHeardTime_sec;
+        if (!cube.connected) {
+          blob["lastRssi"]  = cube.lastRssi;
+        }
+        toSend.append(blob);
+      }
+      webService->SendToWebViz(kWebVizModuleNameCubes, toSend);
+    }
+  }
 }
 
 

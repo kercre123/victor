@@ -21,7 +21,8 @@ namespace Anki {
 namespace Cozmo {
 
 class BlockWorldFilter;
-class BehaviorPickUpCube;
+class BehaviorClearChargerArea;
+class BehaviorWiggleOntoChargerContacts;
   
 class BehaviorGoHome : public ICozmoBehavior
 {
@@ -70,7 +71,8 @@ private:
     int driveToRetryCount = 0;
     int turnToDockRetryCount = 0;
     int mountChargerRetryCount = 0;
-    std::shared_ptr<BehaviorPickUpCube> pickupBehavior;
+    std::shared_ptr<BehaviorClearChargerArea> clearChargerAreaBehavior;
+    std::shared_ptr<BehaviorWiggleOntoChargerContacts> wiggleOntoChargerBehavior;
   };
 
   struct DynamicVariables {
@@ -88,11 +90,17 @@ private:
   void TransitionToCheckDockingArea();
   void TransitionToPlacingCubeOnGround();
   void TransitionToDriveToCharger();
+  void TransitionToCheckPreTurnPosition();
   void TransitionToTurn();
   void TransitionToMountCharger();
   void TransitionToPlayingNuzzleAnim();
   void TransitionToOnChargerCheck();
-  void ActionFailure();
+  
+  // An action failed such that we must exit the behavior, or
+  // we're out of retries for action failures.
+  // Optionally remove the charger from BlockWorld if we failed in
+  // such a way that we definitely don't know where the charger is
+  void ActionFailure(const bool removeChargerFromBlockWorld = false);
   
   void PushDrivingAnims();
   void PopDrivingAnims();

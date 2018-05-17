@@ -11,6 +11,7 @@
  **/
 
 #include "clad/types/behaviorComponent/userIntent.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/cozmoContext.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
@@ -241,6 +242,8 @@ TEST(BehaviorHighLevelAI, PostBehaviorSuggestionsConsidered)
       IncrementBaseStationTimerTicks();
     }
   };
+  
+  BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec(5.0) );
   
   for( const auto& tup : expected ) {
     

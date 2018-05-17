@@ -5,6 +5,7 @@
 
 
 #include "clad/audio/audioCallbackMessage.clad"
+#include "clad/types/beatDetectorTypes.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/motorTypes.clad"
 #include "clad/types/dockingSignals.clad"
@@ -52,7 +53,9 @@ message MicDirection
   uint_16   selectedDirection,
   int_16    selectedConfidence,
   float_32  confidenceList[13],
-  int_32  activeState,
+  int_32    activeState,
+  float_32  latestPowerValue,
+  float_32  latestNoiseFloor,
 }
 
 // This message indicates that the robot experienced a freefall event
@@ -114,6 +117,11 @@ message DisplayedFaceImageRGBChunk {
     uint_16  numPixels,       // Number of pixels in faceData
     uint_8   imageId,         // ID for this image, used only to track chunks of the same image
     uint_8   chunkIndex
+}
+
+message BeatDetectorState
+{
+  BeatInfo latestBeat
 }
 
 /// *************** Overall message pipe ******************************* ///
@@ -200,6 +208,8 @@ union RobotToEngine {
   AudioEngine::Multiplexer::AudioCallbackError    audioCallbackError    = 0xE3,
 
   DisplayedFaceImageRGBChunk displayedFaceImageRGBChunk = 0xE4,
+  
+  BeatDetectorState          beatDetectorState      = 0xE5,
 
   // ====== 0xF0 to 0x FE: Unreliable message to the Engine =====
   // From robot process

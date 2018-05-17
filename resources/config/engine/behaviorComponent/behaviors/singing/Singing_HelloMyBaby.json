@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_HelloMyBaby",
-  "displayNameKey":"behavior.singing.HelloMyBaby",
-  "requiredUnlockId":"Singing_HelloMyBaby",
-  "audioSwitchGroup":"Cozmo_Sings_120Bpm",
-  "audioSwitch":"Cozmo_Sings_Hello_My_Baby"
-}

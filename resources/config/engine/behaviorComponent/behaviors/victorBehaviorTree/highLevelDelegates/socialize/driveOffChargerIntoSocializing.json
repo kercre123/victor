@@ -1,6 +1,7 @@
 {
   "behaviorClass": "DriveOffCharger",
   "behaviorID": "DriveOffChargerIntoSocializing",
+  "associatedActiveFeature": "NoFeature",
   "extraDistanceToDrive_mm": 60.0,
   "resetTimers": ["Socializing"]
 }

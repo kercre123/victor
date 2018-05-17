@@ -142,6 +142,19 @@ void CompositeImageLayer::AddToImageMap(SpriteBoxName sbName, const SpriteEntry&
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CompositeImageLayer::GetSpriteEntry(const SpriteBox& sb, SpriteEntry& outEntry) const
+{
+  auto iter = _imageMap.find(sb.spriteBoxName);
+  if(iter != _imageMap.end()){
+    outEntry = iter->second;
+    return true;
+  }
+
+  return false;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CompositeImageLayer::SetImageMap(const Json::Value& imageMapSpec, 
                                       SpriteCache* cache, SpriteSequenceContainer* seqContainer)
 {
@@ -213,7 +226,14 @@ CompositeImageLayer::SpriteEntry::SpriteEntry(SpriteCache* cache,
 : _spriteName(spriteName)
 {
   if(Vision::IsSpriteSequence(spriteName, false)){
-    _spriteSequence = *seqContainer->GetSequenceByName(spriteName);
+    auto* seq = seqContainer->GetSequenceByName(spriteName);
+    if(seq != nullptr){
+      _spriteSequence = *seq;
+    }else{
+      PRINT_NAMED_ERROR("CompositeImageLayer.SpriteEntry.SequenceNotInContainer",
+                        "Could not find sequence for SpriteName %s",
+                        SpriteNameToString(spriteName));
+    }
   }else{
     _spriteSequence.AddFrame(cache->GetSpriteHandle(spriteName));
   }

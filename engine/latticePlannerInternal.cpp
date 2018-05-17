@@ -78,6 +78,9 @@ const f32 TERMINAL_POINT_TURN_ANGLE_TOL = DEG_TO_RAD(5.f);
 
 namespace Anki {
 namespace Cozmo {
+  
+// option to add a small delay for planning to mimic the robot
+CONSOLE_VAR_RANGED( int, kArtificialPlanningTime_ms, "Planner", 0, 0, 3900 );
 
 LatticePlannerInternal::LatticePlannerInternal(Robot* robot, Util::Data::DataPlatform* dataPlatform, const LatticePlanner* parent)
   : _robot(robot)
@@ -152,11 +155,16 @@ LatticePlannerInternal::~LatticePlannerInternal()
 void LatticePlannerInternal::DoPlanning()
 {
   _internalComputeStatus = EPlannerStatus::Running;
+  _errorType             = EPlannerErrorType::None;
 
   if( LATTICE_PLANNER_THREAD_DEBUG ) {
     PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug", "DoPlanning: running replan...");
   }
 
+  if( _msToBlock == 0 ) {
+    _msToBlock = kArtificialPlanningTime_ms;
+  }
+  
   if( _msToBlock > 0 ) {
     if( LATTICE_PLANNER_THREAD_DEBUG ) {
       PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug", "DoPlanning: block for %d ms", _msToBlock);
@@ -200,6 +208,7 @@ void LatticePlannerInternal::DoPlanning()
 
   if(!result) {
     _internalComputeStatus = EPlannerStatus::Error;
+    _errorType = EPlannerErrorType::PlannerFailed;
   }
   else if(_planner.GetPlan().Size() != 0) {
     // at this point _totalPlan may contain the valid old plan during replanning
@@ -220,6 +229,8 @@ void LatticePlannerInternal::DoPlanning()
         _context.env.GetActionSpace().PrintPlan(_planner.GetPlan());
 
         _internalComputeStatus = EPlannerStatus::Error;
+        _errorType = EPlannerErrorType::InvalidAppendant;
+        return;
       }
     }
 
@@ -317,7 +328,12 @@ EPlannerStatus LatticePlannerInternal::CheckPlanningStatus() const
   // read-only access is safe here
   return _internalComputeStatus;
 }
-
+  
+EPlannerErrorType LatticePlannerInternal::GetErrorType() const
+{
+  // read-only access is safe here
+  return _errorType;
+}
 
 void LatticePlannerInternal::ImportBlockworldObstaclesIfNeeded(const bool isReplanning, const ColorRGBA* vizColor)
 {
@@ -418,6 +434,23 @@ void LatticePlannerInternal::ImportBlockworldObstaclesIfNeeded(const bool isRepl
     };
     static_assert(MemoryMapTypes::IsSequentialArray(typesToCalculateBordersWithCliff),
       "This array does not define all types once and only once.");
+    
+    constexpr MemoryMapTypes::FullContentArray typesToCalculateBordersWithCharger =
+    {
+      {MemoryMapTypes::EContentType::Unknown               , true},
+      {MemoryMapTypes::EContentType::ClearOfObstacle       , true},
+      {MemoryMapTypes::EContentType::ClearOfCliff          , true},
+      {MemoryMapTypes::EContentType::ObstacleObservable    , true},
+      {MemoryMapTypes::EContentType::ObstacleCharger       , false},
+      {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
+      {MemoryMapTypes::EContentType::ObstacleProx          , true},
+      {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true},
+      {MemoryMapTypes::EContentType::Cliff                 , true},
+      {MemoryMapTypes::EContentType::InterestingEdge       , true},
+      {MemoryMapTypes::EContentType::NotInterestingEdge    , true}
+    };
+    static_assert(MemoryMapTypes::IsSequentialArray(typesToCalculateBordersWithCharger),
+                  "This array does not define all types once and only once.");
 
     // GetNavMap Polys
     std::vector<ConvexPolygon> convexHulls;
@@ -427,8 +460,9 @@ void LatticePlannerInternal::ImportBlockworldObstaclesIfNeeded(const bool isRepl
     GetConvexHullsByType(memoryMap, typesToCalculateBordersWithNotInterestingEdges, MemoryMapTypes::EContentType::NotInterestingEdge, convexHulls);
     GetConvexHullsByType(memoryMap, typesToCalculateBordersWithProx, MemoryMapTypes::EContentType::ObstacleProx, convexHulls);
     GetConvexHullsByType(memoryMap, typesToCalculateBordersWithCliff, MemoryMapTypes::EContentType::Cliff, convexHulls);
-
-    // todo (VIC-2323): make the charger an obstacle 
+    
+    // todo (VIC-2323): make the charger a ObservableObject and use its boundingPoly as done below
+    GetConvexHullsByType(memoryMap, typesToCalculateBordersWithCharger, MemoryMapTypes::EContentType::ObstacleCharger, convexHulls);
 
     MemoryMapTypes::MemoryMapDataConstList observableObjectData;
     MemoryMapTypes::NodePredicate pred =
@@ -586,14 +620,14 @@ EComputePathStatus LatticePlannerInternal::StartPlanning(const Pose3d& startPose
   }
 
   // TODO:(bn) param. This is linked to other uses of this parameter as well
-  const float maxDistanceToFollowOldPlan_mm = 40.0;
-
+  const float maxDistanceToFollowOldPlan_mm = 300.0;
   if(_context.forceReplanFromScratch ||
      ! _context.env.PlanIsSafe(_totalPlan,
                                maxDistanceToFollowOldPlan_mm,
                                static_cast<int>(planIdx),
                                lastSafeState,
                                validOldPlan)) {
+       
     // at this point, we know the plan isn't completely safe. lastSafeState will be set to the furthest state
     // along the plan (after planIdx) which is safe. validOldPlan will contain a partial plan starting at
     // planIdx and ending at lastSafeState
@@ -608,8 +642,11 @@ EComputePathStatus LatticePlannerInternal::StartPlanning(const Pose3d& startPose
 
     PRINT_STREAM_INFO("LatticePlanner", "currentRobotState:"<<currentRobotState);
 
-    // uncomment to print debugging info
-    // impl_->env_.FindClosestPlanSegmentToPose(impl_->totalPlan_, currentRobotState, true);
+    // to print debugging info
+    if( false ) {
+      float waste = 0.0f;
+      _context.env.FindClosestPlanSegmentToPose(_totalPlan, currentRobotState, waste, true);
+    }
 
     if(validOldPlan.Size() == 0) {
       // if we can't safely complete the action we are currently
@@ -743,6 +780,7 @@ bool LatticePlannerInternal::GetCompletePath(const Pose3d& currentRobotPose,
                      offsetFromPlan);
     _totalPlan.Clear();
     _internalComputeStatus = EPlannerStatus::Error;
+    _errorType = EPlannerErrorType::TooFarFromPlan;
     return false;
   }
 

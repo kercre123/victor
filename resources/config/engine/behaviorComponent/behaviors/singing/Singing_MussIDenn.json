@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_MussIDenn",
-  "displayNameKey":"behavior.singing.MussIDenn",
-  "requiredUnlockId":"Singing_MussIDenn",
-  "audioSwitchGroup":"Cozmo_Sings_100Bpm",
-  "audioSwitch":"Cozmo_Sings_Muss_I_Denn"
-}

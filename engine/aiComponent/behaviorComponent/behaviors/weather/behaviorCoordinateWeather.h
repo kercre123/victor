@@ -1,0 +1,72 @@
+/**
+ * File: BehaviorDisplayWeather.h
+ *
+ * Author: Kevin M. Karol
+ * Created: 2018-04-25
+ *
+ * Description: Displays weather information by compositing temperature information and weather conditions returned from the cloud
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
+
+#ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorCoordinateWeather__
+#define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorCoordinateWeather__
+
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "clad/types/behaviorComponent/userIntent.h"
+#include "clad/types/behaviorComponent/weatherConditionTypes.h"
+
+namespace Anki {
+namespace Cozmo {
+
+// forward declaration
+enum class BehaviorID : uint8_t;
+
+class BehaviorCoordinateWeather : public ICozmoBehavior
+{
+public: 
+  virtual ~BehaviorCoordinateWeather();
+
+  virtual void GetLinkedActivatableScopeBehaviors(std::set<IBehavior*>& delegates) const override;
+
+protected:
+
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
+  explicit BehaviorCoordinateWeather(const Json::Value& config);  
+
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  
+  virtual bool WantsToBeActivatedBehavior() const override;
+  virtual void OnBehaviorActivated() override;
+  virtual void InitBehavior() override;
+
+private:
+
+  struct InstanceConfig {
+    InstanceConfig();
+    // indexes of these two vectors match - combined into the map below
+    std::vector<BehaviorID> behaviorIDs;
+    std::vector<WeatherConditionType> conditions;
+
+    std::map<WeatherConditionType, ICozmoBehaviorPtr> weatherBehaviorMap;
+    ICozmoBehaviorPtr              iCantDoThatBehavior;
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+  };
+
+  InstanceConfig _iConfig;
+  DynamicVariables _dVars;
+
+  
+};
+
+} // namespace Cozmo
+} // namespace Anki
+
+#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorCoordinateWeather__

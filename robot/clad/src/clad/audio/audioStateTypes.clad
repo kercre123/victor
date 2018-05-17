@@ -85,6 +85,13 @@ enum uint_32 Music_Dimmer
   Music_Full = 2880332950,
 }
 
+enum uint_32 Robot_Vic_Quiet
+{
+  Invalid = 0,
+  Robot_Vic_Quiet_Off = 2503617831,
+  Robot_Vic_Quiet_On = 3604654675,
+}
+
 enum uint_32 Robot_Vic_Vc
 {
   Invalid = 0,
@@ -100,6 +107,7 @@ enum uint_32 StateGroupType
   Mood = 3128647864,
   Music = 3991942870,
   Music_Dimmer = 920031443,
+  Robot_Vic_Quiet = 3765614597,
   Robot_Vic_Vc = 3929179650,
   Time_Of_Day = 207908541,
   Voice_Commands_Mode = 522893720,

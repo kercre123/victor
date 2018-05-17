@@ -21,6 +21,7 @@
 #include "engine/actions/visuallyVerifyActions.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/carryingComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/visionComponent.h"
@@ -679,6 +680,11 @@ namespace Anki {
       const f32 x_end = x_start + _dist_mm * std::cos(heading.ToFloat());
       const f32 y_end = y_start + _dist_mm * std::sin(heading.ToFloat());
       
+      // Clip speed to cliff-safe range
+      bool isCarryingObject = GetRobot().GetCarryingComponent().IsCarryingObject();
+      f32 maxSpeed = isCarryingObject ? MAX_SAFE_WHILE_CARRYING_WHEEL_SPEED_MMPS : MAX_SAFE_WHEEL_SPEED_MMPS;
+      _speed_mmps = CLIP(_speed_mmps, -maxSpeed, maxSpeed);
+
       Planning::Path path;
       if(false  == path.AppendLine(x_start, y_start, x_end, y_end,
                                    _speed_mmps, _accel_mmps2, _decel_mmps2))
@@ -699,7 +705,7 @@ namespace Anki {
     
     ActionResult DriveStraightAction::CheckIfDone()
     {
-      if(GetRobot().GetDrivingAnimationHandler().IsPlayingEndAnim())
+      if(GetRobot().GetDrivingAnimationHandler().IsPlayingDrivingEndAnim())
       {
         return ActionResult::RUNNING;
       }
@@ -715,7 +721,7 @@ namespace Anki {
         {
           PRINT_CH_DEBUG("Actions", "DriveStraightAction.CheckIfDone.PathJustStarted", "");
           if(_shouldPlayDrivingAnimation) {
-            GetRobot().GetDrivingAnimationHandler().PlayStartAnim();
+            GetRobot().GetDrivingAnimationHandler().StartDrivingAnim();
           }
         }
       }
@@ -723,7 +729,7 @@ namespace Anki {
       if ( _hasStarted && !GetRobot().GetPathComponent().IsActive() ) {
         PRINT_CH_DEBUG("Actions", "DriveStraightAction.CheckIfDone.PathJustCompleted", "");
         if( _shouldPlayDrivingAnimation ) {
-          if( GetRobot().GetDrivingAnimationHandler().PlayEndAnim()) {
+          if( GetRobot().GetDrivingAnimationHandler().EndDrivingAnim()) {
             return ActionResult::RUNNING;
           }
         }
@@ -1039,6 +1045,7 @@ namespace Anki {
         {Preset::HIGH_DOCK,  LIFT_HEIGHT_HIGHDOCK},
         {Preset::CARRY,      LIFT_HEIGHT_CARRY},
         {Preset::OUT_OF_FOV, -1.f},
+        {Preset::JUST_ABOVE_PROX, LIFT_HEIGHT_ABOVE_PROX},
       };
       
       return LUT.at(preset);
@@ -1051,6 +1058,7 @@ namespace Anki {
         {Preset::HIGH_DOCK,  "HighDock"},
         {Preset::CARRY,      "HeightCarry"},
         {Preset::OUT_OF_FOV, "OutOfFOV"},
+        {Preset::JUST_ABOVE_PROX, "JustAboveProx"},
       };
       
       static const std::string unknown("UnknownPreset");

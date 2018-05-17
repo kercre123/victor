@@ -1,5 +1,6 @@
 #include "dockingController.h"
 #include "pathFollower.h"
+#include "pickAndPlaceController.h"
 #include "localization.h"
 #include "steeringController.h"
 #include "wheelController.h"
@@ -24,6 +25,10 @@
 
 // The number of tics desired in between debug prints
 #define DBG_PERIOD 200
+
+// Whether or not path speeds should be automatically
+// clamped to prevent driving off of cliffs
+#define CLAMP_TO_CLIFF_SAFE_SPEEDS 0
 
 namespace Anki
 {
@@ -88,6 +93,19 @@ namespace Anki
         RobotInterface::SendMessage(pathEventMsg);
       }
 
+      f32 GetCurrentSegmentTargetSpeed()
+      {
+        f32 speed = path_[currPathSegment_].GetTargetSpeed();
+#if (CLAMP_TO_CLIFF_SAFE_SPEEDS==1)
+        if (path_[currPathSegment_].GetType() != Planning::PST_POINT_TURN) {
+          f32 maxSpeed = PickAndPlaceController::IsCarryingBlock() ? 
+                         MAX_SAFE_WHILE_CARRYING_WHEEL_SPEED_MMPS : 
+                         MAX_SAFE_WHEEL_SPEED_MMPS;
+          speed = CLIP(speed, -maxSpeed, maxSpeed);
+        }
+#endif
+        return speed;
+      }
 
       // Deletes current path
       void ClearPath(bool didCompletePath)
@@ -234,15 +252,16 @@ namespace Anki
 
           // Set speed
           // (Except for point turns whose speeds are handled at the steering controller level)
+          f32 targetSpeed = GetCurrentSegmentTargetSpeed();
           if (path_[currPathSegment_].GetType() != Planning::PST_POINT_TURN) {
-            SpeedController::SetUserCommandedDesiredVehicleSpeed( path_[currPathSegment_].GetTargetSpeed() );
+            SpeedController::SetUserCommandedDesiredVehicleSpeed( targetSpeed );
             SpeedController::SetUserCommandedAcceleration( path_[currPathSegment_].GetAccel() );
             SpeedController::SetUserCommandedDeceleration( path_[currPathSegment_].GetDecel() );
           }
 
           AnkiDebug( "PathFollower.StartPathTraversal", "Start segment %d, speed = %f, accel = %f, decel = %f",
                 currPathSegment_,
-                path_[currPathSegment_].GetTargetSpeed(),
+                targetSpeed,
                 path_[currPathSegment_].GetAccel(),
                 path_[currPathSegment_].GetDecel());
 
@@ -456,15 +475,16 @@ namespace Anki
 
           // Command new speed for segment
           // (Except for point turns whose speeds are handled at the steering controller level)
+          f32 targetSpeed = GetCurrentSegmentTargetSpeed();
           if (path_[currPathSegment_].GetType() != Planning::PST_POINT_TURN) {
-            SpeedController::SetUserCommandedDesiredVehicleSpeed( path_[currPathSegment_].GetTargetSpeed() );
+            SpeedController::SetUserCommandedDesiredVehicleSpeed( targetSpeed );
             SpeedController::SetUserCommandedAcceleration( path_[currPathSegment_].GetAccel() );
             SpeedController::SetUserCommandedDeceleration( path_[currPathSegment_].GetDecel() );
           }
 #if(DEBUG_PATH_FOLLOWER)
           AnkiDebug( "PathFollower.Update.SegmentSpeed", "Segment %d, speed = %f, accel = %f, decel = %f",
                 currPathSegment_,
-                path_[currPathSegment_].GetTargetSpeed(),
+                targetSpeed,
                 path_[currPathSegment_].GetAccel(),
                 path_[currPathSegment_].GetDecel());
 #endif
@@ -530,7 +550,7 @@ namespace Anki
 
         if (!vpg.StartProfile_fixedDuration(0, currSpeed, acc_start_frac * duration_sec,
                                             dist_mm, acc_end_frac * duration_sec,
-                                            MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_ACCEL_MMPS2,
+                                            MAX_SAFE_WHEEL_SPEED_MMPS, MAX_WHEEL_ACCEL_MMPS2,
                                             duration_sec, CONTROL_DT) ) {
           AnkiWarn( "PathFollower.DriveStraight.VPGFail", "");
           return false;

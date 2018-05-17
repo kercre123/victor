@@ -112,8 +112,16 @@
     "SpriteName": "face_chargerdocking_severerequest"
   },
   {
+    "CladEvent": "Face_TimerCancel_GetIn_01",
+    "SpriteName": "face_timercancel_getin_01"
+  },
+  {
     "CladEvent": "Face_TimerCancel_01",
     "SpriteName": "face_timercancel_01"
+  },
+  {
+    "CladEvent": "Face_TimerCancel_02",
+    "SpriteName": "face_timercancel_02"
   },
   {
     "CladEvent": "Face_TimerLeft_GetIn_01",
@@ -134,6 +142,10 @@
   {
     "CladEvent": "Face_TimerSet_GetOut_01",
     "SpriteName": "face_timerset_getout_01"
+  },
+  {
+    "CladEvent": "Face_TimerRing_GetIn_02",
+    "SpriteName": "face_timersup_getin_02"
   },
   {
     "CladEvent": "PairingIconKey",
@@ -172,6 +184,10 @@
     "SpriteName": "face_cloud04"
   },
   {
+    "CladEvent": "Face_Rain_01",
+    "SpriteName": "face_rain"
+  },
+  {
     "CladEvent": "Face_Clouds_Mist",
     "SpriteName": "face_clouds_mist"
   },
@@ -182,6 +198,14 @@
   {
     "CladEvent": "Face_Snow_01",
     "SpriteName": "face_snow01"
+  },
+  {
+    "CladEvent": "Face_Sunny_01",
+    "SpriteName": "face_sunny"
+  },
+  {
+    "CladEvent": "Face_Stars_01",
+    "SpriteName": "face_stars"
   }
 ]
 

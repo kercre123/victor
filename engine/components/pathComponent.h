@@ -54,7 +54,7 @@ enum class ERobotDriveToPoseStatus {
   // traversal. The robot is not currently following a path
   WaitingToBeginPath,
 
-  // Following a planned path. While in this state, it may also be replanning, sending new paths, etc.
+  // Following a planned path. While in this state, it may also be replanning, sending new paths, scanning prox obstacles, etc.
   FollowingPath,
     
   // Stopped and waiting (not planning or following)
@@ -143,7 +143,12 @@ public:
   // check / get the custom motion profile. Note that there is always _some_ motion profile that paths follow,
   // but these functions refer to the _custom_ profile which, for example, might get set by a behavior
   bool HasCustomMotionProfile() const;
-  const PathMotionProfile& GetCustomMotionProfile() const;
+
+  // Returns a copy of the custom motion profile with speeds that
+  // have been clamped for speed safety.
+  // The returned profile also depends on whether or not the
+  // robot is currently carrying an object.
+  PathMotionProfile GetCustomMotionProfile() const;
   
   // This function checks the planning / path following status of the robot. See the enum definition for
   // details. In 99% of cases you should prefer the direct bool functions below, like IsActive() or
@@ -153,11 +158,16 @@ public:
   // Opposite of IsReady, this component is actively doing something (planning, following, etc)
   bool IsActive() const;
 
-  // only returns true if the automatic replanning is running, but not during the initial planning stage
+  // returns true if the automatic replanning is running, until the search is complete.
+  // returns false during the initial planning stage, or once a search is complete
   bool IsReplanning() const { return _isReplanning; }
   
   // True if there is a path to follow (state is following path or waiting to begin)
   bool HasPathToFollow() const;
+  
+  // True if the robot is following a path but is momentarily stopped (the robot issued a
+  // PATH_COMPLETED). This is probably because it's replanning and it exhaused its safe subpath
+  bool HasStoppedBeforeExecuting() const { return _hasStoppedBeforeExecuting; }
 
   // True if the last path failed (based on status of failure)
   bool LastPathFailed() const;
@@ -202,8 +212,10 @@ private:
   void RejiggerTargetsAndReplan();
 
   // Used when the planner finishes, to begin following the proposed plan (if desired and the plan is
-  // safe). Gets plan from _selectedPathPlanner
-  void HandlePlanComplete();  
+  // safe). Gets plan from _selectedPathPlanner. This method may set abort flags if the proposed plan
+  // is invalid, or it may set retry flags if the proposed plan is NOT YET valid (e.g., while still
+  // driving during replanning).
+  void TryCompletingPath();
 
   // Starts the selected planner with ComputePath, using the params in _currPlanParams, returns true if the
   // selected planner or its fallback starts successfully. The path may still contain obstacles if the
@@ -233,7 +245,8 @@ private:
 
   // Clears the path that the robot is executing which also stops the robot
   Result ClearPath();
-  Result SendClearPath() const;
+  // Trims the end of the path that the robot is executing
+  Result TrimRobotPathToLength( uint8_t length );
 
   bool IsWaitingToCancelPath() const;
 
@@ -245,6 +258,8 @@ private:
 
   void SetDriveToPoseStatus(ERobotDriveToPoseStatus newValue);
   
+  PathMotionProfile ClampToCliffSafeSpeed(const PathMotionProfile& motionProfile) const;
+
   std::unique_ptr<SpeedChooser>   _speedChooser;
   std::unique_ptr<PathDolerOuter> _pdo;
 
@@ -274,7 +289,8 @@ private:
   bool                     _startFollowingPath           = true;
   bool                     _isReplanning                 = false;
   bool                     _replanningCanChangeGoal      = true;
-
+  bool                     _waitingToMatchReplanOrigin   = false;
+  bool                     _hasStoppedBeforeExecuting    = false;
 
   // keep track of the last path ID we canceled. Note that when we cancel a path we will transition to one of
   // the "waiting to cancel" statuses, but then we may start working on a new plan before we actually get a

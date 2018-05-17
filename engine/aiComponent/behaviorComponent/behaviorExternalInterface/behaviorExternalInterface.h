@@ -35,6 +35,7 @@ namespace Cozmo {
 // Forward Declaration
 class AIComponent;
 class AnimationComponent;
+class BeatDetectorComponent;
 class BehaviorContainer;
 class BehaviorEventComponent;
 class BehaviorTimerManager;
@@ -119,6 +120,7 @@ public:
 
   void Init(AIComponent*                   aiComponent,
             AnimationComponent*            animationComponent,
+            BeatDetectorComponent*         beatDetectorComponent,
             BehaviorContainer*             behaviorContainer,
             BehaviorEventComponent*        behaviorEventComponent,
             BehaviorTimerManager*          behaviorTimers,
@@ -213,7 +215,9 @@ public:
 
   inline bool HasMicComponent() const { return GetComponentWrapper(BEIComponentID::MicComponent).IsValueValid();}
   MicComponent& GetMicComponent() const {return GetComponentWrapper(BEIComponentID::MicComponent).GetValue<MicComponent>();}
-
+  
+  inline bool HasBeatDetectorComponent() const { return GetComponentWrapper(BEIComponentID::BeatDetector).IsValueValid();}
+  BeatDetectorComponent& GetBeatDetectorComponent() const {return GetComponentWrapper(BEIComponentID::BeatDetector).GetValue<BeatDetectorComponent>();}
 
   // Util functions
   OffTreadsState GetOffTreadsState() const;
@@ -224,6 +228,7 @@ private:
     public:
       CompArrayWrapper(AIComponent*                  aiComponent,
                        AnimationComponent*            animationComponent,
+                       BeatDetectorComponent*         beatDetectorComponent,
                        BehaviorContainer*             behaviorContainer,
                        BehaviorEventComponent*        behaviorEventComponent,
                        BehaviorTimerManager*          behaviorTimers,

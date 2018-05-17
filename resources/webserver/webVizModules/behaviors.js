@@ -283,6 +283,7 @@
   var tree = d3.tree().nodeSize([0, 30]) //Invokes tree
   var params = {};
   var svgGroups = {};
+  var activeFeatureDiv;
   var currentBehaviorDiv;
   var currentBehaviorStateDiv;
 
@@ -580,6 +581,8 @@
     params.barHeight = 30;
 
     $('<h4>Usage: Move your mouse around the main window to see active behaviors and the times they were active. You may also drag your cursor in the bottom window to zoom in on a particular period of time. Click in the same box to zoom out. Zooming will pause live updates, so you should toggle the switch on the left when you\'re done.</h3>').appendTo( elem );
+    
+    activeFeatureDiv = $('<h3 id="activeFeature"></h3>').appendTo( elem );
     currentBehaviorDiv = $('<h3 id="currentBehavior"></h3>').appendTo( elem );
     currentBehaviorStateDiv = $('<h3 id="currentBehaviorDebugState"></h3>').appendTo( elem );
 
@@ -703,15 +706,21 @@
 
   myMethods.onData = function(allData, elem) {
 
-    if( (typeof allData.tree === 'undefined') && (typeof allData.debugState === 'undefined') ) {
+    if( (typeof allData.tree === 'undefined') &&
+        (typeof allData.debugState === 'undefined') &&
+        (typeof allData.activeFeature === 'undefined') ) {
       // currently the only other option a list of behaviors
       setBehaviorDropdown( allData, elem );
       return;
     }
-    else if (typeof allData.tree === 'undefined') {
-      if( typeof currentBehaviorStateDiv !== 'undefined' ) {
-        currentBehaviorStateDiv.text('Latest state: ' + allData.debugState);
-      }
+    else if( typeof allData.debugState !== 'undefined' &&
+             typeof currentBehaviorStateDiv !== 'undefined' ) {
+      currentBehaviorStateDiv.text('Latest state: ' + allData.debugState);
+      return;
+    }
+    else if( typeof allData.activeFeature !== 'undefined' &&
+             typeof activeFeatureDiv !== 'undefined' ) {
+      activeFeatureDiv.text('Active feature: ' + allData.activeFeature);
       return;
     }
 
@@ -737,7 +746,7 @@
                        .id(function(d) { return d.behaviorID; })
                        .parentId(function(d) { return d.parent; })
                        (flatData);
-
+    
     // always update the current behavior, even if the toggle for live updates is off
     if( stack.length && (typeof currentBehaviorDiv !== 'undefined') ) {
       var newText = 'Current behavior: ' + stack[stack.length - 1];
@@ -857,6 +866,11 @@
         stroke-opacity:0.5;
         stroke:red;
         pointer-events: none;
+      }
+      #activeFeature {
+        font-size:12px;
+        margin-top: 3px;
+        margin-bottom:3px;
       }
       #currentBehavior {
         font-size:16px;

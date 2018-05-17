@@ -49,8 +49,6 @@ private:
     IBEIConditionPtr  triggerWordPendingCond;
     ICozmoBehaviorPtr wakeWordBehavior;
     std::shared_ptr<BehaviorTimerUtilityCoordinator> timerCoordBehavior;
-    ICozmoBehaviorPtr highLevelAIBehavior;
-    ICozmoBehaviorPtr sleepingBehavior;
     ICozmoBehaviorPtr reactToObstacleBehavior;
     
     std::unordered_map<ICozmoBehaviorPtr, bool> devActivatableOverrides;
@@ -58,12 +56,14 @@ private:
 
   struct DynamicVariables{
     DynamicVariables();
+
+    bool supressProx;
   };
 
   InstanceConfig   _iConfig;
   DynamicVariables _dVars;
 
-  bool ShouldSuppressProxReaction() const;
+  bool ShouldSuppressProxReaction();
   
 };
 

@@ -68,23 +68,23 @@ public:
       
   // Returns true if the drivingEnd animation is currently playing
   // Calling action should return ActionResult::RUNNING as long as this is true.
-  bool IsPlayingEndAnim() const { return _state == AnimState::PlayingEnd; }
+  bool IsPlayingDrivingEndAnim() const { return _state == AnimState::DrivingEnd; }
       
   // Returns true if the drivingEnd animation has finished.
   // Once this is true, action's CheckIfDone can return return a non-running ActionResult.
-  bool HasFinishedEndAnim() const { return (_state == AnimState::FinishedEnd); }
+  bool HasFinishedDrivingEndAnim() const { return (_state == AnimState::FinishedDriving); }
       
   // Takes in the tag of the action that is calling this and whether or not it is suppressing track locking
   // If keepLoopingWithoutPath is false, endAnim is played automatically once no path is being followed.
-  // If true, then calling action must call PlayEndAnim.
+  // If true, then calling action must call EndDrivingAnim.
   void Init(const u8 tracksToUnlock, const u32 tag, const bool isActionSuppressingLockingTracks,
             const bool keepLoopingWithoutPath = false);
-      
+  
   // Starts playing drivingStart or drivingLoop if drivingStart isn't specified
-  void PlayStartAnim();
+  void StartDrivingAnim();
       
   // Cancels drivingStart and drivingLoop animations and starts playing drivingEnd animation
-  bool PlayEndAnim();
+  bool EndDrivingAnim();
       
   // Called when the Driving action is being destroyed
   void ActionIsBeingDestroyed();
@@ -95,7 +95,7 @@ private:
   void HandleActionCompleted(const ExternalInterface::RobotCompletedAction& msg);
       
   void UpdateCurrDrivingAnimations();
-
+  
   // Queues the respective driving animation
   void PlayDrivingStartAnim();
   void PlayDrivingLoopAnim();
@@ -104,10 +104,10 @@ private:
   enum class AnimState
   {
     Waiting,         // State after Init() has been called
-      PlayingStart,    // Currently playing the start anim
-      PlayingLoop,     // Currently playing the loop anim
-      PlayingEnd,      // Currently playing the end anim
-      FinishedEnd,     // End anim has finished but the action hasn't been destroyed yet
+      DrivingStart,    // Currently playing the driving start anim
+      DrivingLoop,     // Currently playing the driving loop anim
+      DrivingEnd,      // Currently playing the driving end anim
+      FinishedDriving, // End anim has finished but the action hasn't been destroyed yet
       ActionDestroyed, // The action has been destroyed so we are waiting for Init() to be called
       };
       

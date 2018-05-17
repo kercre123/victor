@@ -32,7 +32,7 @@ function usage() {
   echo "  -h                      print this message"
   echo "  -v                      print verbose output"
   echo "  -r                      force-install rsync binary on robot"
-  echo "  -f                      force rsync to (re)deploy all files" 
+  echo "  -f                      force rsync to (re)deploy all files"
   echo "  -c CONFIGURATION        build configuration {Debug,Release}"
   echo "  -s ANKI_ROBOT_HOST      hostname or ip address of robot"
   echo ""
@@ -101,8 +101,14 @@ MOUNT_STATE=$(\
 [[ "$MOUNT_STATE" == "ro" ]] && logv "remount rw /" && robot_sh "/bin/mount -o remount,rw /"
 
 function cleanup() {
-  # Remount rootfs read-only
-  [[ "$MOUNT_STATE" == "ro" ]] && logv "remount ro /" &&  robot_sh "/bin/mount -o remount,ro /"    
+  # Remount rootfs read-only if it was previously mounted read-only before deployment
+  # This function used to be this single line:
+  # [[ "$MOUNT_STATE" == "ro" ]] && logv "remount ro /" && robot_sh "/bin/mount -o remount,ro /"
+  # but we don't want this function to return an exit status of 1 when $MOUNT_STATE != "ro"
+  if [ "$MOUNT_STATE" == "ro" ]; then
+    logv "remount ro /"
+    robot_sh "/bin/mount -o remount,ro /"
+  fi
 }
 
 # trap ctrl-c and call ctrl_c()

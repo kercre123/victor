@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_FrereJacques",
-  "displayNameKey":"behavior.singing.FrereJacques",
-  "requiredUnlockId":"Singing_FrereJacques",
-  "audioSwitchGroup":"Cozmo_Sings_80Bpm",
-  "audioSwitch":"Cozmo_Sings_Frere_Jacques"
-}

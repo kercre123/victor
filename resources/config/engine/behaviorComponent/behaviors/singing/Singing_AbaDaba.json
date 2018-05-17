@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_AbaDaba",
-  "displayNameKey":"behavior.singing.AbaDaba",
-  "requiredUnlockId":"Singing_AbaDaba",
-  "audioSwitchGroup":"Cozmo_Sings_80Bpm",
-  "audioSwitch":"Cozmo_Sings_Aba_Daba"
-}

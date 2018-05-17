@@ -15,11 +15,12 @@
 
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
-#include "util/logging/androidLogPrintLogger_android.h"
+#include "util/logging/victorLogger.h"
 
 #include <stdio.h>
 #include <iomanip>
 #include <thread>
+#include <signal.h>
 
 using namespace Anki;
 
@@ -139,8 +140,8 @@ int main(int argc, char* argv[])
   GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
 
   // - create and set logger
-  Util::AndroidLogPrintLogger logPrintLogger("vic-testcrash");
-  Util::gLoggerProvider = &logPrintLogger;
+  Util::VictorLogger logger("vic-testcrash");
+  Util::gLoggerProvider = &logger;
 
   if (argc < 2)
   {

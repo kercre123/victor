@@ -1,0 +1,72 @@
+// File: activeFeatures
+// Author: Brad Neuman
+// Created: 2018-05-07
+// Copyright: Anki, inc. 2018
+
+
+namespace Anki {
+namespace Cozmo {
+
+structure ActiveFeatureMetaData_None
+{
+}
+
+structure ActiveFeatureMetaData_Name
+{
+  string name
+}
+
+structure ActiveFeatureMetaData_Timer
+{
+  uint_32 duration_s
+}
+
+
+union ActiveFeatureMetaData
+{
+  ActiveFeatureMetaData_None none,
+  ActiveFeatureMetaData_Name name,
+  ActiveFeatureMetaData_Timer timer,
+}
+  
+enum uint_32 ActiveFeature {
+
+  NoFeature = 0,
+  
+  BeQuiet,
+  CantDoThat,
+  ComeHere,
+  Exploring,
+  FistBump,
+  Frustrated,
+  GoHome,
+  InteractWithFaces,
+  Keepaway,
+  MeetVictor,
+  Observing,
+  ObservingOnCharger,
+  Petting,
+  PlayingMessage,
+  PopAWheelie,
+  PounceOnFinger,
+  ReactToCliff,
+  ReactToCubeTap,
+  ReactToRobotOnSide,
+  RecordingMessage,
+  RequestCharger,
+  RollBlock,
+  Sleeping,
+  ShutUp,
+  TimerCanceled,
+  TimerReminder,
+  TimerRinging,
+  TimerSet,
+  UnmatchedVoiceIntent,
+  VC_Greeting,
+  Weather,
+
+}
+
+
+} // namespace Cozmo
+} // namespace Anki

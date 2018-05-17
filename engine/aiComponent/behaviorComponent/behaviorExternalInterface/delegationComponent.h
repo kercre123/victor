@@ -92,6 +92,10 @@ public:
   // behavior that it was delegated to. Otherwise, return nullptr (including if control was delegated to an
   // action)
   const IBehavior* GetBehaviorDelegatedTo(const IBehavior* delegatingBehavior) const;
+
+  // Return the last tick when the behavior stack was updated (i.e. new behavior delegated to or one was
+  // canceled)
+  size_t GetLastTickBehaviorStackChanged() const;
   
 private:
   std::unique_ptr<Delegator>   _delegator;

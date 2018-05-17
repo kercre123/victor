@@ -16,6 +16,7 @@ enum uint_8 BehaviorID {
   Wait_TestInjectable,
 
   // <root>
+  FindFaces_sdk,
   StackBlocks,
 
   // devBehaviors
@@ -24,6 +25,7 @@ enum uint_8 BehaviorID {
   DevDisplayReadingsOnFace,
   DevImageCapture,
   DevPlannerTest,
+  DevTestPromptUser,
   DevTouchDataCollection,
   DevTurnInPlaceTest,
   DockingTestSimple,
@@ -78,47 +80,6 @@ enum uint_8 BehaviorID {
   ReactToCubeMoved,
   ReactToPet,
 
-  // singing
-  Singing_AbaDaba,
-  Singing_BeautifulDreamer,
-  Singing_Beethovens5th,
-  Singing_Bingo,
-  Singing_BuffaloGals,
-  Singing_Camptown,
-  Singing_CanCan1,
-  Singing_CanCan2,
-  Singing_DannyBoy,
-  Singing_EntryOfTheGladiators,
-  Singing_FarmerInTheDell,
-  Singing_FrereJacques,
-  Singing_HelloMyBaby,
-  Singing_ItsyBitsySpider,
-  Singing_LaPaloma,
-  Singing_LondonBridge,
-  Singing_MaryHadALittleLamb,
-  Singing_MountainKing,
-  Singing_MuffinMan,
-  Singing_MulberryBush,
-  Singing_MussIDenn,
-  Singing_OdeToJoy,
-  Singing_PachebelCanon,
-  Singing_PopGoesTheWeasel,
-  Singing_RowYourBoat,
-  Singing_Sakura,
-  Singing_SilveryMoon,
-  Singing_TaRaRaBoom,
-  Singing_TakeMeOutToTheBallgame,
-  Singing_TisketTasket,
-  Singing_Toccata,
-  Singing_TurkeyInTheStraw,
-  Singing_TwinkleTwinkle,
-  Singing_VivaldiSpring,
-  Singing_WaterMusic,
-  Singing_WildAboutHarry,
-  Singing_WilliamTell,
-  Singing_YankeeDoodle,
-  Singing_YellowRose,
-
   // victorBehaviorTree
   ComeHereVoiceCommand,
   CoordinateGlobalInterrupts,
@@ -126,13 +87,15 @@ enum uint_8 BehaviorID {
   GlobalInterruptions,
   HighLevelAI,
 
+  // victorBehaviorTree/danceToTheBeat
+  DanceToTheBeat,
+
   // victorBehaviorTree/highLevelDelegates/exploring
   ConfirmCharger,
   ConfirmCube,
   Exploring,
   ExploringDispatcher,
   ExploringExamineObstacle,
-  ExploringFindCharger,
   ExploringVoiceCommand,
 
   // victorBehaviorTree/highLevelDelegates
@@ -140,11 +103,13 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree/highLevelDelegates/getHomeBehaviors
   AcknowledgeCharger,
+  ClearChargerArea,
   FindAndGoToHome,
   FindAndRequestHome,
   FindHome,
   GoHome,
   LowBatteryFindAndGoToHome,
+  RequestHomeBecauseStuck,
   RequestToGoHome,
   WiggleBackOntoChargerFromPlatform,
 
@@ -157,8 +122,6 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree/highLevelDelegates/meetVictor
   EnrollFace,
-  MeetCozmo_FindFaces_Socialize,
-  MeetCozmo_InteractWithFaces,
   MeetVictor,
   RespondToRenameFace,
 
@@ -212,7 +175,6 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree/highLevelDelegates/socialize
   DriveOffChargerIntoSocializing,
-  FindFaces_socialize,
   Socialize,
   SocializeGame,
 
@@ -223,6 +185,16 @@ enum uint_8 BehaviorID {
   DoATrickVoiceCommand,
   FistBumpVoiceCommand,
   KeepawayVoiceCommand,
+
+  // victorBehaviorTree
+  ModeSelector,
+
+  // victorBehaviorTree/quietMode
+  BeQuietAnim,
+  QuietMode,
+  QuietModeLowBatteryGoHome,
+  ShutUpAnim,
+  ShutUpMode,
 
   // victorBehaviorTree
   ReactToTouchPetting,
@@ -239,8 +211,11 @@ enum uint_8 BehaviorID {
   ReactToGoodMorning,
   ReactToGoodNight,
   ReactToGreeting,
+  ReactToHello,
   ReactToObstacle,
+  ReactToPickedUp,
   ReactToPlacedOnSlope,
+  ReactToPutDown,
   ReactToRobotOnBack,
   ReactToRobotOnFace,
   ReactToRobotOnSide,

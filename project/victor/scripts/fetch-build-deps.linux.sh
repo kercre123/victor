@@ -45,10 +45,6 @@ check_dep which ninja
 
 echo `pwd`
 
-vlog "Android SDK"
-# BRC: r3 is not supported on Linux. AndroidSDK is not required for build, but adb is currently required for deploy
-#./tools/build/tools/ankibuild/android.py --install-sdk r3
-
 vlog "vicos-sdk"
 ./tools/build/tools/ankibuild/vicos.py --install 0.9-r03
 

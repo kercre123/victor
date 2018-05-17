@@ -21,6 +21,7 @@
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreen.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
+#include "cozmoAnim/micData/micDataSystem.h"
 #include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -130,6 +131,8 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
 {
   DEV_ASSERT(context != nullptr, "FaceInfoScreenManager.Init.NullContext");
 
+  _context = context;
+  
   // allow us to send debug info out to the web server
   _webService = context->GetWebService();
 
@@ -558,14 +561,19 @@ void FaceInfoScreenManager::DrawConfidenceClock(
     const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
     if (currentTime > nextWebServerUpdateTime)
     {
-      nextWebServerUpdateTime = currentTime + 0.150;
+      nextWebServerUpdateTime = currentTime + 0.1;
 
       Json::Value webData;
+      webData["time"] = currentTime;
       webData["confidence"] = micData.confidence;
+      // 'selectedDirection' is what's being used (locked-in), whereas 'dominant' is just the strongest direction
       webData["dominant"] = micData.direction;
+      webData["selectedDirection"] = micData.selectedDirection;
       webData["maxConfidence"] = maxConf;
       webData["triggerDetected"] = triggerRecognized;
       webData["delayTime"] = delayTime_ms;
+      webData["latestPowerValue"] = (double)micData.latestPowerValue;
+      webData["latestNoiseFloor"] = (double)micData.latestNoiseFloor;
 
       Json::Value& directionValues = webData["directions"];
       for ( float confidence : micData.confidenceList )
@@ -573,6 +581,12 @@ void FaceInfoScreenManager::DrawConfidenceClock(
         directionValues.append(confidence);
       }
 
+      // Beat Detection stuff
+      Json::Value& beatInfo = webData["beatDetector"];
+      const auto& latestBeat = _context->GetMicDataSystem()->GetLatestBeatInfo();
+      beatInfo["confidence"] = latestBeat.confidence;
+      beatInfo["tempo_bpm"] = latestBeat.tempo_bpm;
+      
       static const std::string moduleName = "micdata";
       _webService->SendToWebViz( moduleName, webData );
     }

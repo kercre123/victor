@@ -26,11 +26,9 @@ target_link_libraries(vic-engine
   # anki libs
   util
   cozmo_engine
-  # FIXME: We need to build Breakpad libs for VICOS
-  # victorCrashReports
+  victorCrashReports
   # vendor
-  # FIXME: We need to build Breakpad libs for VICOS
-  # breakpad_client
+  breakpad_client
   # platform
   ${PLATFORM_LIBS}
 )

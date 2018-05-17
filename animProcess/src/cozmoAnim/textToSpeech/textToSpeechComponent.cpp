@@ -27,6 +27,7 @@
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 
+#include "audioEngine/audioCallback.h"
 #include "audioEngine/audioTypeTranslator.h"
 #include "audioEngine/plugins/ankiPluginInterface.h"
 #include "util/dispatchQueue/dispatchQueue.h"
@@ -426,10 +427,26 @@ void TextToSpeechComponent::SetAudioProcessingPitch(float pitchScalar)
 //
 // Send audio trigger event for this utterance
 //
-void TextToSpeechComponent::PostAudioEvent(AudioEngine::AudioEventId eventId)
+void TextToSpeechComponent::PostAudioEvent(AudioEngine::AudioEventId eventId, uint8_t ttsID)
 {
+  LOG_DEBUG("TextToSpeechComponent.PostAudioEvent", "ttsID %hhu", ttsID);
+  AudioEngine::AudioCallbackContext* audioCallbackContext = nullptr;
+  const auto callbackFunc = std::bind(&TextToSpeechComponent::OnUtteranceCompleted, this, ttsID);
+  audioCallbackContext = new AudioEngine::AudioCallbackContext();
+  // Set callback flags
+  audioCallbackContext->SetCallbackFlags( AudioEngine::AudioCallbackFlag::Complete );
+  // Execute callbacks synchronously (on main thread)
+  audioCallbackContext->SetExecuteAsync( false );
+  // Register callbacks for event
+  audioCallbackContext->SetEventCallbackFunc ( [ callbackFunc = std::move(callbackFunc) ]
+                                              ( const AudioEngine::AudioCallbackContext* thisContext,
+                                                const AudioEngine::AudioCallbackInfo& callbackInfo )
+                                              {
+                                                callbackFunc();
+                                              } );
+
   const auto gameObject = static_cast<AudioEngine::AudioGameObject>(kTTSGameObject);
-  _audioController->PostAudioEvent(eventId, gameObject);
+  _audioController->PostAudioEvent(eventId, gameObject, audioCallbackContext);
 }
 
 //
@@ -443,6 +460,15 @@ static bool SendAnimToEngine(uint8_t ttsID, TextToSpeechState state)
   evt.ttsID = ttsID;
   evt.ttsState = state;
   return AnimProcessMessages::SendAnimToEngine(std::move(evt));
+}
+
+//
+// Handle a callback from the AudioEngine indicating that the TtS Utterance has finished playing
+//
+void TextToSpeechComponent::OnUtteranceCompleted(uint8_t ttsID) const
+{
+  LOG_DEBUG("TextToSpeechCOmponent.UtteranceCompleted", "Completion callback recieved for ttsID %hhu", ttsID);
+  SendAnimToEngine(ttsID, TextToSpeechState::Finished);
 }
 
 //
@@ -500,7 +526,7 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechDeli
 
   if (!triggeredByAnim) {
     // Tell audio engine to play audio data
-    PostAudioEvent(eventId);
+    PostAudioEvent(eventId, ttsID);
   }
 
   // Notify engine that tts request is done

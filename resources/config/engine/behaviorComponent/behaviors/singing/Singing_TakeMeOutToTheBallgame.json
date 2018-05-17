@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_TakeMeOutToTheBallgame",
-  "displayNameKey":"behavior.singing.TakeMeOutToTheBallgame",
-  "requiredUnlockId":"Singing_TakeMeOutToTheBallgame",
-  "audioSwitchGroup":"Cozmo_Sings_80Bpm",
-  "audioSwitch":"Cozmo_Sings_Take_Me_Out_To_The_Ballgame"
-}

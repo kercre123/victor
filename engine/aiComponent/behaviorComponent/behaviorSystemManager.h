@@ -83,17 +83,30 @@ public:
   
   bool IsControlDelegated(const IBehavior* delegator) override;
   bool CanDelegate(IBehavior* delegator) override;
+
+  // delegate and return true if delegation was successful
   bool Delegate(IBehavior* delegator, IBehavior* delegated) override;
-  void CancelDelegates(IBehavior* delegator) override;
+
+  // cancel delegates, and return true if any were canceled (note that false here isn't an error, it's OK for
+  // a behavior with no delegates to call this function and have false returned)
+  bool CancelDelegates(IBehavior* delegator) override;
+  
   void CancelSelf(IBehavior* delegator) override;
 
   // If control of the passed in behavior is delegated (to another behavior), return the pointer of the
   // behavior that it was delegated to. Otherwise, return nullptr (including if control was delegated to an
   // action or helper)
   const IBehavior* GetBehaviorDelegatedTo(const IBehavior* delegatingBehavior) const;
+
+  // Returns the base behavior at the top of the stack
+  const IBehavior* GetBaseBeahvior() const;
   
   // calls upon the behavior stack to build and return the behavior tree as a flat array in json
   Json::Value BuildDebugBehaviorTree(BehaviorExternalInterface& bei) const;
+
+  // Return the last tick when the behavior stack was updated (i.e. new behavior delegated to or one was
+  // canceled)  
+  size_t GetLastTickBehaviorStackChanged() const { return _lastBehaviorStackUpdateTick; }
 
 private:
   enum class InitializationStage{
@@ -119,6 +132,8 @@ private:
   std::vector<Signal::SmartHandle> _eventHandles;
 
   std::unique_ptr<BehaviorStack> _behaviorStack;
+
+  size_t _lastBehaviorStackUpdateTick = 0;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods

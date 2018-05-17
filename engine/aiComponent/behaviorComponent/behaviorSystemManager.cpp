@@ -16,8 +16,9 @@
 #include "engine/aiComponent/behaviorComponent/asyncMessageGateComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
@@ -27,6 +28,8 @@
 #include "engine/viz/vizManager.h"
 
 #include "osState/osState.h"
+
+#include "coretech/common/engine/utils/timer.h"
 
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/boundedWhile.h"
@@ -100,7 +103,7 @@ Result BehaviorSystemManager::InitConfiguration(Robot& robot,
     DEV_ASSERT(baseBehavior != nullptr, "BehaviorSystemManager.InitConfiguration.ForcingPlaypen.Null");
   }
 
-  // Assumes there's only one instance of the behavior external Intarfec
+  // Assumes there's only one instance of the behavior external interface
   _behaviorExternalInterface = &behaviorExternalInterface;
   _asyncMessageComponent = asyncMessageComponent;
   ResetBehaviorStack(baseBehavior);
@@ -149,7 +152,7 @@ void BehaviorSystemManager::UpdateDependent(const BCCompMap& dependentComponents
 
     IBehavior* baseBehavior = _baseBehaviorTmp;
     
-    _behaviorStack->InitBehaviorStack(baseBehavior);
+    _behaviorStack->InitBehaviorStack(baseBehavior, bei.GetRobotInfo().GetExternalInterface());
     _baseBehaviorTmp = nullptr;
   }
 
@@ -219,6 +222,17 @@ const IBehavior* BehaviorSystemManager::GetBehaviorDelegatedTo(const IBehavior* 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const IBehavior* BehaviorSystemManager::GetBaseBeahvior() const
+{
+  if( _behaviorStack != nullptr ) {
+    return _behaviorStack->GetBottomOfStack();
+  }
+  else {
+    return nullptr;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Json::Value BehaviorSystemManager::BuildDebugBehaviorTree(BehaviorExternalInterface& bei) const
 {
   if( _behaviorStack != nullptr ) {
@@ -272,31 +286,43 @@ bool BehaviorSystemManager::Delegate(IBehavior* delegator, IBehavior* delegated)
   _behaviorStack->PushOntoStack(delegated);
   
   _behaviorStack->DebugPrintStack("AfterDelegation");
+
+  _lastBehaviorStackUpdateTick = BaseStationTimer::getInstance()->GetTickCount();
   
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSystemManager::CancelDelegates(IBehavior* delegator)
+bool BehaviorSystemManager::CancelDelegates(IBehavior* delegator)
 {
+  bool anyPopped = false;
+
   if(_behaviorStack->IsInStack(delegator)){
     BOUNDED_WHILE(kArbitrarilyLargeCancelBound,
                   _behaviorStack->GetTopOfStack() != delegator){
       _behaviorStack->PopStack();
+      anyPopped = true;
     }
   }
 
-  PRINT_CH_INFO("BehaviorSystem", "BehaviorSystemManager.CancelDelegates",
-                "'%s' canceled its delegates",
-                delegator->GetDebugLabel().c_str());
+  if( anyPopped ) {
+    PRINT_CH_INFO("BehaviorSystem", "BehaviorSystemManager.CancelDelegates",
+                  "'%s' canceled its delegates",
+                  delegator->GetDebugLabel().c_str());
 
-  _behaviorStack->DebugPrintStack("AfterCancelDelgates");
+    _behaviorStack->DebugPrintStack("AfterCancelDelgates");
+  }
+
+  if( anyPopped ) {
+    _lastBehaviorStackUpdateTick = BaseStationTimer::getInstance()->GetTickCount();
+  }
+
+  return anyPopped;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// TODO:(bn) kevink: consider rename to "stop" rather than cancel
 void BehaviorSystemManager::CancelSelf(IBehavior* delegator)
 {
   if(!ANKI_VERIFY(_behaviorStack->IsInStack(delegator),
@@ -319,6 +345,9 @@ void BehaviorSystemManager::CancelSelf(IBehavior* delegator)
                 delegator->GetDebugLabel().c_str());
 
   _behaviorStack->DebugPrintStack("AfterCancelSelf");
+
+  _lastBehaviorStackUpdateTick = BaseStationTimer::getInstance()->GetTickCount();
+
 }
 
 } // namespace Cozmo

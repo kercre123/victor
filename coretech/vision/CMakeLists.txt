@@ -12,6 +12,11 @@ include(anki_build_cxx)
 # cti_vision
 #
 
+option(VISION_PROFILER "Enables Anki::Vision::Profiler::Tic/Toc functions" OFF)
+if(VISION_PROFILER)
+  set(additional_defines ANKI_VISION_PROFILER=1)
+endif()
+
 anki_build_cxx_library(cti_vision ${ANKI_SRCLIST_DIR} STATIC)
 
 set_target_properties(cti_vision 
@@ -49,6 +54,7 @@ target_compile_definitions(cti_vision
   FACE_TRACKER_OPENCV=2
   FACE_TRACKER_OKAO=3
   FACE_TRACKER_PROVIDER=FACE_TRACKER_OKAO
+  ${additional_defines}
 )
 
 #

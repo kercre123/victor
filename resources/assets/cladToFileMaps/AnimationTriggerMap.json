@@ -36,6 +36,18 @@
     "AnimName": "ag_audio_test"
   },
   {
+    "CladEvent": "BeQuiet_GetIn",
+    "AnimName": "ag_gotosleep_getin"
+  },
+  {
+    "CladEvent": "BeQuiet_GetOut",
+    "AnimName": "ag_gotosleep_wakeup"
+  },
+  {
+    "CladEvent": "BeQuiet_Loop",
+    "AnimName": "ag_gotosleep_sleeping"
+  },
+  {
     "CladEvent": "DEPRECATED_BlockReact",
     "AnimName": "ag_blockreact"
   },
@@ -1060,6 +1072,10 @@
     "AnimName": "ag_vc_laser_lookdown"
   },
   {
+    "CladEvent": "ReactToPutDown",
+    "AnimName": "ag_generic_look_up_idle"
+  },
+  {
     "CladEvent": "ANTICIPATED_ReactToSoundOffChargerAsleepAmbient",
     "AnimName": "ag_rtsound_offcharger_asleep_ambient"
   },
@@ -1314,5 +1330,17 @@
   {
     "CladEvent": "ReactToCubeTapInteractionGetOut",
     "AnimName": "ag_cubetapping_getout"
+  },
+  {
+    "CladEvent": "ShutUp_GetIn",
+    "AnimName": "ag_gotosleep_getin"
+  },
+  {
+    "CladEvent": "ShutUp_GetOut",
+    "AnimName": "ag_gotosleep_wakeup"
+  },
+  {
+    "CladEvent": "ShutUp_Loop",
+    "AnimName": "ag_gotosleep_sleeping"
   }
 ]

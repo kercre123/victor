@@ -4,7 +4,7 @@
 * Author: damjan stulic
 * Created: 8/5/15
 *
-* Description: 
+* Description:
 *
 * Copyright: Anki, inc. 2015
 *
@@ -27,7 +27,23 @@ public:
   DataPlatform(const std::string &persistentPath, const std::string &cachePath, const std::string &resourcesPath);
 
   std::string pathToResource(const Scope& resourceScope, const std::string& resourceName) const;
-  
+
+  std::string GetPersistentPath(const std::string& path) const {
+    return pathToResource(Scope::Persistent, path);
+  }
+
+  std::string GetResourcePath(const std::string& path) const {
+    return pathToResource(Scope::Resources, path);
+  }
+
+  std::string GetCachePath(const std::string& path) const {
+    return pathToResource(Scope::Cache, path);
+  }
+
+  std::string GetCurrentGameLogPath(const std::string& path) const {
+    return pathToResource(Scope::CurrentGameLog, path);
+  }
+
   // returns a key for the current platform/OS (eg: osx, android, ios)
   static std::string GetOSPlatformString();
 

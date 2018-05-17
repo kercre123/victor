@@ -14,6 +14,7 @@
 #include "coretech/messaging/shared/LocalUdpServer.h"
 
 #include "cozmoAnim/animProcessMessages.h"
+#include "cozmoAnim/beatDetector/beatDetector.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/micData/micDataInfo.h"
 #include "cozmoAnim/micData/micDataProcessor.h"
@@ -52,6 +53,7 @@ namespace {
 
 #endif
   CONSOLE_VAR_RANGED(u32, kMicData_ClipRecordTime_ms, CONSOLE_GROUP, 4000, 500, 15000);
+  CONSOLE_VAR(bool, kMicData_SaveRawFullIntent_Wakewordless, CONSOLE_GROUP, false);
 # undef CONSOLE_GROUP
 
 }
@@ -126,6 +128,37 @@ void MicDataSystem::RecordRawAudio(uint32_t duration_ms, const std::string& path
 void MicDataSystem::RecordProcessedAudio(uint32_t duration_ms, const std::string& path)
 {
   RecordAudioInternal(duration_ms, path, MicDataType::Processed, false);
+}
+
+void MicDataSystem::StartWakeWordlessStreaming()
+{
+  if(HasStreamingJob())
+  {
+    PRINT_NAMED_WARNING("micDataProcessor.OverlappingStreamRequests",
+                        "Received StartWakeWorldlessStreaming message from engine, but micDataSystem is already streaming");
+    return;
+  }
+
+  MicDataInfo* newJob = new MicDataInfo{};
+  newJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggeredCapture"});
+  newJob->_writeNameBase = ""; //use autogen names
+  newJob->_numMaxFiles = 100;
+  bool saveToFile = false;
+#if ANKI_DEV_CHEATS
+  saveToFile = true;
+  if(kMicData_SaveRawFullIntent_Wakewordless){
+    newJob->EnableDataCollect(MicDataType::Raw, true);
+  }
+  newJob->_audioSaveCallback = std::bind(&MicDataSystem::AudioSaveCallback, this, std::placeholders::_1);
+#endif
+  newJob->EnableDataCollect(MicDataType::Processed, saveToFile);
+  newJob->SetTimeToRecord(MicDataInfo::kMaxRecordTime_ms);
+
+  const bool isStreamingJob = true;
+  AddMicDataJob(std::shared_ptr<MicDataInfo>(newJob), isStreamingJob);
+
+  PRINT_NAMED_INFO("MicDataSystem.StartStreaming",
+                   "Starting Wake Wordless streaming");
 }
 
 void MicDataSystem::RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT)
@@ -216,8 +249,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         const auto mostRecentTimestamp_ms = static_cast<TimeStamp_t>(currTime_nanosec / (1000 * 1000));
         twDetectedMessage.timestamp = mostRecentTimestamp_ms;
         twDetectedMessage.direction = kFirstIndex;
-        auto engineMessage = std::unique_ptr<RobotInterface::RobotToEngine>(
-          new RobotInterface::RobotToEngine(std::move(twDetectedMessage)));
+        auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
         {
           std::lock_guard<std::mutex> lock(_msgsMutex);
           _msgsToEngine.push_back(std::move(engineMessage));
@@ -367,6 +399,10 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       #endif
       RobotInterface::SendAnimToEngine(msg->micDirection);
     }
+    else if (msg->tag == RobotInterface::RobotToEngine::Tag_beatDetectorState)
+    {
+      RobotInterface::SendAnimToEngine(msg->beatDetectorState);
+    }
     else
     {
       DEV_ASSERT_MSG(false, 
@@ -470,6 +506,16 @@ void MicDataSystem::AudioSaveCallback(const std::string& dest)
   {
     SendUdpMessage(CloudMic::Message::CreatedebugFile(CloudMic::Filename{dest}));
   }
+}
+
+BeatInfo MicDataSystem::GetLatestBeatInfo()
+{
+  return _micDataProcessor->GetBeatDetector().GetLatestBeat();
+}
+
+void MicDataSystem::ResetBeatDetector()
+{
+  _micDataProcessor->GetBeatDetector().Start();
 }
 
 void MicDataSystem::SendUdpMessage(const CloudMic::Message& msg)

@@ -13,7 +13,13 @@
 #include "coretech/vision/engine/profiler.h"
 #include "util/logging/logging.h"
 
-#define SHOW_TIMING 1
+#if !defined(ANKI_VISION_PROFILER)
+#if defined(NDEBUG)
+#define ANKI_VISION_PROFILER 0
+#else
+#define ANKI_VISION_PROFILER 0
+#endif
+#endif // ANKI_VISION_PROFILER
 
 namespace Anki {
 namespace Vision {
@@ -30,7 +36,7 @@ namespace Vision {
     PrintAverageTiming();
   }
 
-# if !SHOW_TIMING
+# if !ANKI_VISION_PROFILER
 
   void Profiler::SetProfileGroupName(const char* name) {}
 
@@ -42,6 +48,12 @@ namespace Vision {
 
   void Profiler::PrintAverageTiming() { }
 
+  Profiler::TicTocObject::TicTocObject(Profiler& profiler, const char* timerName)
+  : _profiler(profiler) { }
+
+  Profiler::TicTocObject::~TicTocObject()
+  {
+  }
 # else
 
   void Profiler::Tic(const char* timerName)
@@ -205,7 +217,7 @@ namespace Vision {
     _profiler.Toc(_timerName);
   }
 
-# endif // SHOW_TIMING
+# endif // ANKI_VISION_PROFILER
 
 } // namespace Vision
 } // namespace Anki

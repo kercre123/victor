@@ -56,11 +56,13 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define NO_INLINE
 #endif
 
+#if !defined(ANKI_DEBUG_LEVEL)
 #ifdef NDEBUG
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS
 #else
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
 #endif
+#endif // ANKI_DEBUG_LEVEL
 
 #ifndef USE_M4_HOST_INTRINSICS
 #define USE_M4_HOST_INTRINSICS 1
@@ -116,6 +118,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define USE_M4_HOST_INTRINSICS 1
 #endif
 
+#if !defined(ANKI_DEBUG_LEVEL)
 #if defined(__ARM_ARCH_7A__) // GCC on ARM Cortex A
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS
 #else // GCC on a PC
@@ -124,6 +127,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #else
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
 #endif
+#endif // ANKI_DEBUG_LEVEL
 #endif
 
 #endif // #if defined(__GNUC__) // GCC
@@ -150,7 +154,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 // Allow anonymous unions in Keil
 #pragma anon_unions
 
+#if !defined(ANKI_DEBUG_LEVEL)
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS
+#endif // ANKI_DEBUG_LEVEL
 
 //#define ARM_MATH_CM4
 //#define ARM_MATH_ROUNDING
@@ -203,6 +209,12 @@ extern "C" {
 #define ANKI_OUTPUT_DEBUG_NONE 0
 #define ANKI_OUTPUT_DEBUG_PRINTF 10
 
+#if !defined(ANKI_OUTPUT_DEBUG_LEVEL)
+#if defined(NDEBUG)
+#define ANKI_OUTPUT_DEBUG_LEVEL ANKI_OUTPUT_DEBUG_NONE
+#else
 #define ANKI_OUTPUT_DEBUG_LEVEL ANKI_OUTPUT_DEBUG_PRINTF
+#endif
+#endif // ANKI_OUTPUT_DEBUG_LEVEL
 
 #endif // _ANKICORETECHEMBEDDED_COMMON_CONFIG_H_

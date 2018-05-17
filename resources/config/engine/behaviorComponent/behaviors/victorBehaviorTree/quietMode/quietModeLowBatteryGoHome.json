@@ -1,0 +1,22 @@
+{
+  "behaviorID" : "QuietModeLowBatteryGoHome",
+  "behaviorClass" : "DispatcherStrictPriority",
+
+  "linkScope": true,
+  "interruptActiveBehavior": true,
+
+  "wantsToBeActivatedCondition" : {
+    "conditionType": "BatteryLevel",
+    "targetBatteryLevel": "Low"
+  },
+
+  "behaviors": [
+    "ReactToRobotOnBack",
+    "ReactToRobotOnFace",
+    // note: no "ReactToRobotOnSide",
+    "ReactToCliff",
+    "ReactToPlacedOnSlope",
+    "ReactToUnexpectedMovement",
+    "LowBatteryFindAndGoToHome"
+  ]
+}

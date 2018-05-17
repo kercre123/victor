@@ -16,6 +16,8 @@
     "ReactToSoundAwake",
     "ReactToObstacle",
     "ReactToUnclaimedIntent",
+    "ReactToPutDown",
+    "ReactToPickedUp",
     "HighLevelAI"
   ]
 }

@@ -141,7 +141,7 @@ public:
   // optional light debugging color
   ColorRGBA _debugColor = NamedColors::BLACK;
   
-  UserIntentTag _clearIntent = USER_INTENT(INVALID);
+  UserIntentTag _activateIntent = USER_INTENT(INVALID);
 
   std::string _behaviorName;
   ICozmoBehaviorPtr _behavior;
@@ -163,7 +163,7 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config,
   , _currDebugLights(kLightsOff)
 {
   
-  _useDebugLights = config.get("use_debug_lights", true).asBool();
+  _useDebugLights = config.get("use_debug_lights", false).asBool();
 
   // create custom BEI conditions for timers (if any are specified)
   CustomBEIConditionHandleList customTimerHandles = CreateCustomTimerConditions(config);
@@ -679,12 +679,12 @@ InternalStatesBehavior::State::State(const Json::Value& config)
   const std::string& debugColorStr = config.get("debugColor", "BLACK").asString();
   _debugColor = NamedColors::GetByString(debugColorStr);
   
-  const std::string& clearIntent = config.get("clearIntent", "").asString();
-  if( !clearIntent.empty() ) {
-    ANKI_VERIFY( UserIntentTagFromString( clearIntent, _clearIntent ),
+  const std::string& activateIntent = config.get("activateIntent", "").asString();
+  if( !activateIntent.empty() ) {
+    ANKI_VERIFY( UserIntentTagFromString( activateIntent, _activateIntent ),
                  "InternalStateBehavior.State.Ctor.InvalidIntent",
                  "Could not get user intent from '%s'",
-                 clearIntent.c_str() );
+                 activateIntent.c_str() );
   }
 }
 
@@ -728,10 +728,10 @@ void InternalStatesBehavior::State::AddTransition(TransitionType transType, cons
 
 void InternalStatesBehavior::State::OnActivated(BehaviorExternalInterface& bei, bool isResuming)
 {
-  if( _clearIntent != USER_INTENT(INVALID) ) {
+  if( _activateIntent != USER_INTENT(INVALID) ) {
     auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
-    if( uic.IsUserIntentPending( _clearIntent ) ) {
-      uic.ClearUserIntent( _clearIntent );
+    if( uic.IsUserIntentPending( _activateIntent ) ) {
+      uic.ActivateUserIntent( _activateIntent, ("InternalState:" + _name) );
     }
   }
 
@@ -777,6 +777,11 @@ void InternalStatesBehavior::State::OnDeactivated(BehaviorExternalInterface& bei
     for( const auto& transition : transitionTypes.second ) {
       transition.condition->SetActive(bei, false);
     }
+  }
+
+  if( _activateIntent != USER_INTENT(INVALID) ) {
+    auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
+    uic.DeactivateUserIntent( _activateIntent );
   }
 
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();

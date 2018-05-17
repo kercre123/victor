@@ -2,6 +2,15 @@
   "behaviorClass" : "ReactToSound",
   "behaviorID" : "ReactToSoundAsleep",
 
+  "wantsToBeActivatedCondition": {
+    // when the robot gets put down, the sound of being put down can trigger this reaction. 
+    // Check the last time our treads state changed to make sure we aren't triggering from
+    // the noise of our own put down (or flip down from back)
+    "conditionType": "OffTreadsState",
+    "targetState": "OnTreads",
+    "minTimeSinceChange_ms": 400
+  },
+
   "emotionEventOnActivated": "ReactToSoundAsleep",
 
   "FromSleep" : true

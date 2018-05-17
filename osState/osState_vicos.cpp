@@ -123,16 +123,13 @@ void OSState::Update()
   if (_updatePeriod_ms != 0) {
     const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
     if (now_ms - _lastUpdateTime_ms > _updatePeriod_ms) {
-      
-      using namespace std::chrono;
-      // const auto startTime = steady_clock::now();
 
       // Update cpu freq
       UpdateCPUFreq_kHz();
 
       // Update temperature reading
       UpdateTemperature_C();
-      
+
       // const auto now = steady_clock::now();
       // const auto elapsed_us = duration_cast<microseconds>(now - startTime).count();
       // PRINT_NAMED_INFO("OSState", "Update took %lld microseconds", elapsed_us);
@@ -281,7 +278,7 @@ const std::string& OSState::GetOSBuildVersion()
   return _osBuildVersion;
 }
 
-const std::string& OSState::GetBuildSha() 
+const std::string& OSState::GetBuildSha()
 {
   return _buildSha;
 }

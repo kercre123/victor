@@ -9,7 +9,7 @@
     "ExampleObjectPositionUpdated",
     "ExamplePetInitialDetection",
     "ExampleFrustration",    
-    "FindFaces_socialize",
+    "FindFaces_sdk",
     "PutDownDispatch_LookForFaceAndCube"   
   ]
 }

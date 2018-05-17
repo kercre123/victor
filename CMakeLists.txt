@@ -53,6 +53,12 @@ add_compile_options(
     $<$<CONFIG:Release>:-O2>
 )
 
+# RPATH options
+if (VICOS)
+  set(CMAKE_INSTALL_RPATH "/anki/lib")
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+endif()
+
 #
 # Factory build options
 #
@@ -69,6 +75,30 @@ else()
 endif()
 
 add_definitions(-DANKI_BUILD_SHA="${ANKI_BUILD_SHA}")
+
+#
+# Pass ANKI defines from the command-line to all targets
+#
+get_cmake_property(opts CACHE_VARIABLES)
+foreach(opt ${opts})
+  if(opt STREQUAL "ANKI_BUILD_SHA")
+    # ignore, set previously
+
+  elseif(opt MATCHES "ANKI_")
+    get_property(helpstring CACHE ${opt} PROPERTY HELPSTRING)
+    if(${helpstring} MATCHES "cached value")
+      # value was set from a previous run, but not this run, turn off
+      # Note: remove_definitions #defines the value as OFF (which itself is undefined)
+      add_definitions(-D${opt}=0)
+
+    else()
+      # value was set this run, from the command-line
+      add_definitions(-D${opt}=${${opt}})
+      set_property(CACHE ${opt} PROPERTY HELPSTRING "cached value from a previous command-line")
+
+    endif()
+  endif()
+endforeach()
 
 set(LINK_FLAGS "${LINK_FLAGS} -Wl,--threads")
 
@@ -88,11 +118,6 @@ set(ANKI_EXTERNAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/EXTERNALS")
 set(CORETECH_EXTERNAL_DIR "${ANKI_EXTERNAL_DIR}/coretech_external")
 
 set(ANKI_SRCLIST_DIR "${CMAKE_SOURCE_DIR}/generated/cmake")
-
-# NOTE: We need to setup server to build Breakpad for VICOS
-#if (ANDROID)
-#  add_subdirectory("lib/crash-reporting-android/Breakpad")
-#endif()
 
 #if (NOT breakpad_client)
 #    message(FATAL_ERROR "breakpad_client not defined")
@@ -115,6 +140,8 @@ import(DAS "lib/das-client")
 # include dirs
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/lib/crash-reporting-vicos/Breakpad/include/breakpad")
+
 import(coretech "coretech")
 add_subdirectory("clad")
 add_subdirectory("cloud")
@@ -123,6 +150,7 @@ add_subdirectory("osState")
 add_subdirectory("cannedAnimLib")
 add_subdirectory("animProcess")
 add_subdirectory("webServerProcess")
+add_subdirectory("testCrash")
 add_subdirectory("lib/micData")
 add_subdirectory("lib/signalEssence")
 add_subdirectory("platform")

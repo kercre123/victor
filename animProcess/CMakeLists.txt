@@ -20,8 +20,7 @@ set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
 set(PLATFORM_COMPILE_DEFS "")
 
 if (VICOS)
-    # FIXME: We need to build Breakpad libs for VICOS
-    # include(breakpad)
+    include(breakpad)
     set(PLATFORM_LIBS
         log
         robot_core)
@@ -35,6 +34,10 @@ elseif (MACOSX)
 endif()
 
 target_link_libraries(victor_anim
+  PUBLIC
+  victor_web_library
+  robot_interface  # Needs to be public for cozmoConfig.h
+  DAS
   PRIVATE
   util
   util_audio
@@ -50,7 +53,6 @@ target_link_libraries(victor_anim
   audio_multiplexer_robot
   osState
   micdata
-  DAS
   # vendor
   ${OPENCV_LIBS}
   ${FLATBUFFERS_LIBS}
@@ -76,12 +78,12 @@ target_compile_definitions(victor_anim
 
 target_include_directories(victor_anim
   PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src> # allow "android/" prefix
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/lib/util/source/3rd>
   ${PLATFORM_INCLUDES}
 )
 
-# victor_animator binary only builds on Android now
+# victor_animator binary only builds on vicos now
 # mac implementation uses (webotsCtrlAnim)
 if (VICOS)
 
@@ -90,9 +92,8 @@ if (VICOS)
   target_link_libraries(vic-anim
     PRIVATE
     victor_anim
-    # FIXME: We need to build Breakpad libs for VICOS
-    # victorCrashReports
-    # breakpad_client
+    victorCrashReports
+    breakpad_client
     cti_common_robot
     util
     jsoncpp

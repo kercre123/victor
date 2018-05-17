@@ -2,10 +2,11 @@
   "behaviorClass": "DispatcherStrictPriority",
   "behaviorID": "MeetVictor",
 
+  "associatedActiveFeature": "MeetVictor",
+
   "respondToUserIntents" : [
     {"type": "meet_victor"}
   ],
-  "claimUserIntentData": false, // the behaviorID EnrollFace should, not us
 
   "interruptActiveBehavior": true,
   "behaviors": 

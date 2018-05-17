@@ -10,8 +10,8 @@
  *
  **/
 
-#ifndef __Cozmo_Basestation_Behaviors_BeahviorReactToRobotOnFace_H__
-#define __Cozmo_Basestation_Behaviors_BeahviorReactToRobotOnFace_H__
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorReactToRobotOnFace_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorReactToRobotOnFace_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 

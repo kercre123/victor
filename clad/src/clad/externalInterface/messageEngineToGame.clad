@@ -223,6 +223,11 @@ message RestoreRobotOptions {
   uint_32 robotsWithBackupData[uint_8]
 }
 
+message RobotFallingEvent {
+  uint_32 duration_ms,
+  float_32 impactIntensity
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////  DEBUG/PERFORMANCE  ///////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -953,6 +958,11 @@ message SupportInfo {
 message FeedingSFXStageUpdate {
   uint_8 stage,
   float_32 chargePercentage = 0.0
+}
+
+message AudioBehaviorBranchUpdate {
+  bool activated,
+  string branch
 }
 
 message ResponseLocale {
