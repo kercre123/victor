@@ -26,6 +26,13 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
+#ifdef VICOS
+#  include "util/logging/victorLogger.h"
+#else
+#  include "util/logging/printfLoggerProvider.h"
+#  include "util/logging/multiFormattedLoggerProvider.h"
+#endif
+
 #ifdef SIMULATOR
 #  include <webots/Supervisor.hpp>
 #endif
@@ -38,13 +45,14 @@
 #include <signal.h>
 #include <thread>
 
+#define LOG_PROCNAME "vic-neuralnets"
+#define PRINT_TIMING 1
+
 std::atomic<bool> quit(false);
 void got_signal(int)
 {
   quit.store(true);
 }
-
-#define PRINT_TIMING 1
 
 using ClockType = std::chrono::high_resolution_clock;
 using TimePoint = std::chrono::time_point<ClockType>;
@@ -66,6 +74,18 @@ cv::Mat read_bmp(const std::string& input_bmp_name); // defined below, after mai
 int main(int argc, char **argv)
 {
   using namespace Anki;
+
+  // Create and set logger, depending on platform
+# ifdef VICOS
+  auto logger = std::make_unique<Util::VictorLogger>(LOG_PROCNAME);
+  Util::gLoggerProvider = logger.get();
+# else
+  const bool colorizeStderrOutput = false; // TODO: Get from Webots proto in simulation?
+  auto logger = std::make_unique<Util::PrintfLoggerProvider>(Util::ILoggerProvider::LOG_LEVEL_DEBUG,
+                                                               colorizeStderrOutput);  
+# endif
+
+  Util::gLoggerProvider = logger.get();
 
 # ifdef SIMULATOR
   webots::Supervisor webotsSupervisor;

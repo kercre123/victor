@@ -56,40 +56,52 @@ private:
   void GetDetectedObjects(const std::vector<tensorflow::Tensor>& output_tensors, TimeStamp_t timestamp,
                           std::list<DetectedObject>& objects);
 
-  struct 
-  {
-    std::string   graph; // = "tensorflow/examples/label_image/data/inception_v3_2016_08_28_frozen.pb";
-    std::string   labels; // = "tensorflow/examples/label_image/data/imagenet_slim_labels.txt";
-    std::string   architecture;
-    
-    int32_t       input_width; // = 299;
-    int32_t       input_height; // = 299;
-
-    // When input to graph is float, data is first divided by scale and then shifted
-    // I.e.:  float_input = data / scale + shift
-    float         input_shift; // = 0;
-    float         input_scale; // = 255;
-    
-    float         min_score; // in [0,1]
-    
-    bool          verbose;
-
-    bool          memory_map_graph;
-
-  } _params;
-
-  std::string                          _inputLayerName;
-  std::vector<std::string>             _outputLayerNames;
-  bool                                 _useFloatInput = false;
-  bool                                 _useGrayscale = false;
-  
   enum class OutputType {
     Classification,
     BinaryLocalization,
     SSD_Boxes,
   };
 
-  OutputType _outputType;
+  struct 
+  {
+    std::string               graph_file; 
+    std::string               labels_file;
+    std::string               architecture;
+    
+    int32_t                   input_width = 128;
+    int32_t                   input_height = 128;
+    
+    // When input to graph is float, data is first divided by scale and then shifted
+    // I.e.:  float_input = data / scale + shift
+    float                     input_shift = 0.f;
+    float                     input_scale = 255.f;
+    
+    float                     min_score = 0.5f; // in [0,1]
+    
+    // Used by "custom" architectures
+    std::string               input_layer_name;
+    std::vector<std::string>  output_layer_names;
+    OutputType                output_type;
+    bool                      use_float_input = false;
+    bool                      use_grayscale = false;
+
+    // For "binary_localization" output_type, the localization grid resolution
+    // (ignored otherwise)
+    int32_t                   num_grid_rows = 6;
+    int32_t                   num_grid_cols = 6;
+
+    bool                      verbose = false;
+
+    bool                      memory_map_graph = false;
+
+  } _params;
+
+  // Populate _params struct from Json config
+  Result SetParamsFromConfig(const Json::Value& config);
+
+  // Helper to set _params.output_type enum
+  // Must be called after input/output_layer_names have been set
+  Result SetOutputTypeFromConfig(const Json::Value& config);
 
   std::unique_ptr<tensorflow::Session>      _session;
   std::unique_ptr<tensorflow::MemmappedEnv> _memmapped_env;

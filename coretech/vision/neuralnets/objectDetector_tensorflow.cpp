@@ -28,7 +28,11 @@
 
 namespace Anki {
 
+static const char* kLogChannelName = "NeuralNets";
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// TODO: Could use JsonTools:: instead of most of these...
+
 static inline void SetFromConfigHelper(const Json::Value& json, int32_t& value) {
   value = json.asInt();
 }
@@ -43,6 +47,18 @@ static inline void SetFromConfigHelper(const Json::Value& json, bool& value) {
 
 static inline void SetFromConfigHelper(const Json::Value& json, std::string& value) {
   value = json.asString();
+}
+
+static inline void SetFromConfigHelper(const Json::Value& json, std::vector<std::string>& values)
+{
+  if(json.isArray()) {
+    for(const auto& value : json) {
+      values.push_back(value.asString());
+    }
+  } 
+  else {
+    values.push_back(json.asString());
+  }
 }
 
 // static inline void SetFromConfigHelper(const Json::Value& json, uint8_t& value) {
@@ -65,138 +81,14 @@ ObjectDetector::~ObjectDetector()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value& config)
 {
- 
-# define GetFromConfig(keyName) \
-  if(!config.isMember(QUOTE(keyName))) \
-  { \
-    PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.MissingConfig", QUOTE(keyName)); \
-    return RESULT_FAIL; \
-  } \
-  else \
-  { \
-    SetFromConfigHelper(config[QUOTE(keyName)], _params.keyName); \
-  }
-
-  GetFromConfig(verbose);
-  GetFromConfig(labels);
-  GetFromConfig(min_score);  
-  GetFromConfig(graph);
-  GetFromConfig(input_height);
-  GetFromConfig(input_width);
-  GetFromConfig(architecture);
-  GetFromConfig(memory_map_graph);
-
-  if("ssd_mobilenet" == _params.architecture)
+  const Result result = SetParamsFromConfig(config);
+  if(RESULT_OK != result) 
   {
-    _inputLayerName = "image_tensor";
-    _outputLayerNames = {"detection_scores", "detection_classes", "detection_boxes", "num_detections"};
-    _useFloatInput = false;
-    _outputType = OutputType::SSD_Boxes;
-
-    if(config.isMember("output_type")) {
-      std::cout << "Ignoring output_type and using 'SSD_Boxes' because architecture='ssd_mobilenet' was specified" << std::endl;
-    }
-  }
-  else if(("mobilenet" == _params.architecture) || ("mobilenet_v1" == _params.architecture))
-  { 
-    _inputLayerName = "input";
-    _outputLayerNames = {"MobilenetV1/Predictions/Softmax"};
-    _useFloatInput = true;
-    _outputType = OutputType::Classification;
-
-    if(config.isMember("output_type")) {
-      std::cout << "Ignoring output_type and using 'Classification' because architecture='mobilenet' was specified" << std::endl;
-    }
-  }
-  else if("custom" == _params.architecture)
-  {
-    if(!config.isMember("input") || !config.isMember("output") || 
-       !config.isMember("use_float_input") || !config.isMember("output_type"))
-    {
-      PRINT_NAMED_ERROR("ObjectDetector.LoadModel.MissingInputOutput", 
-                        "Custom architecture requires input/output names, use_float_input, and output_type to be specified");
-      return RESULT_FAIL;
-    }
-    SetFromConfigHelper(config["input"], _inputLayerName);
-    const auto& outputs = config["output"];
-    if(outputs.isArray()) {
-      for(const auto& output : outputs) {
-        _outputLayerNames.push_back(output.asString());
-      }
-    } 
-    else {
-      _outputLayerNames.push_back(outputs.asString());
-    }
-    
-    SetFromConfigHelper(config["use_float_input"], _useFloatInput);
-
-    std::string output_type_str;
-    SetFromConfigHelper(config["output_type"], output_type_str);
-    struct OutputTypeEntry {
-      OutputType type;
-      int        numOutputs;
-    };
-    const std::map<std::string, OutputTypeEntry> kOutputTypeMap{
-      {"classification",        {OutputType::Classification,     1} }, 
-      {"binary_localization",   {OutputType::BinaryLocalization, 1} },
-      {"ssd_boxes",             {OutputType::SSD_Boxes,          4} },
-    };
-
-    auto iter = kOutputTypeMap.find(output_type_str);
-    if(iter == kOutputTypeMap.end()) {
-      std::string validKeys;
-      for(auto const& entry : kOutputTypeMap) {
-        validKeys += entry.first;
-        validKeys += " ";
-      }
-      PRINT_NAMED_ERROR("ObjectDetector.LoadModel.BadOutputType", "Valid types: %s", validKeys.c_str());
-      return RESULT_FAIL;
-    }
-    else {
-
-      if(_outputLayerNames.size() != iter->second.numOutputs)
-      {
-        PRINT_NAMED_ERROR("ObjectDetector.LoadModel.WrongNumberOfOutputs", 
-                          "OutputType %s requires %d outputs (%d provided)", 
-                          iter->first.c_str(), iter->second.numOutputs, (int)_outputLayerNames.size());
-        return RESULT_FAIL;
-      }
-      _outputType = iter->second.type;
-    }
-
-    if(config.isMember("use_grayscale"))
-    {
-      SetFromConfigHelper(config["use_grayscale"], _useGrayscale);
-    }
-  }
-  else
-  {
-    PRINT_NAMED_ERROR("ObjectDetector.LoadModel.UnrecognizedArchitecture", "%s", 
-                      _params.architecture.c_str());
-    return RESULT_FAIL;
-  }
-
-  if(_params.verbose)
-  {
-    std::cout << "Arch: " << _params.architecture << 
-      (_useGrayscale ? ", Grayscale " : ", Color ") << 
-      "Input: " << _inputLayerName << ", Outputs: ";
-
-    for(auto const& outputLayerName : _outputLayerNames)
-    {
-      std::cout << outputLayerName << " ";
-    }
-    std::cout << std::endl;
-  }
-
-  if(_useFloatInput)
-  {
-    // NOTE: Only used when processing in floating point
-    GetFromConfig(input_shift);
-    GetFromConfig(input_scale);
+    PRINT_NAMED_ERROR("ObjectDetector.LoadModel.SetParamsFromConfigFailed", "");
+    return result;
   }
   
-  const std::string graph_file_name = Util::FileUtils::FullFilePath({modelPath, _params.graph});
+  const std::string graph_file_name = Util::FileUtils::FullFilePath({modelPath, _params.graph_file});
   
   if (!Util::FileUtils::FileExists(graph_file_name))
                   
@@ -208,7 +100,8 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
 
   if(_params.verbose)
   {
-    std::cout << "Found graph file: " << graph_file_name << std::endl;
+    PRINT_CH_INFO(kLogChannelName, "ObjectDetector.LoadModel.FoundGraphFile",
+                  "%s", graph_file_name.c_str());
   }
 
   tensorflow::GraphDef graph_def;
@@ -301,34 +194,6 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
         }
 
         std::cout << "- Summary: " << t.DebugString() << std::endl;
-
-        /*
-        const tensorflow::TensorProto& tensor = n.attr().at("value").tensor();
-        const auto& shape = tensor.tensor_shape();
-        std::cout << "- " << shape.dim_size() << "D shape [Init'd:" << (tensor.IsInitialized() ? "Y" : "N") << "]: " << shape.dim(0).size();
-        for(auto ndims=1; ndims < shape.dim_size(); ++ndims) 
-        {
-           std::cout << "x" << shape.dim(ndims).size();
-        }
-        std::cout << std::endl;
-
-        const size_t kNumWeights = 25;
-        const size_t N = std::min((size_t)tensor.float_val_size(), kNumWeights);
-        std::cout << "- " << N << " " << (tensor.dtype()==1 ? "float" : "unknown") << " items: ";
-
-        for(auto i=0; i<N; ++i)
-        {
-          std::cout << tensor.float_val(i) << " ";
-        }
-
-        std::cout << "- " << N << " " << (tensor.dtype()==1 ? "float" : "unknown") << " items: ";
-        for(auto i=0; i<N; ++i)
-        {
-          std::cout << tensor.float_val(i) << " ";
-        }
-
-        std::cout << std::endl;
-        */
       }
       else if(n.op() == "Conv2D")
       {
@@ -336,15 +201,162 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
         std::cout << "- Filter input from node: " << filter_node_name << std::endl;
       }
     }
-    
   }
-  const std::string labels_file_name = Util::FileUtils::FullFilePath({modelPath, _params.labels});
+
+  const std::string labels_file_name = Util::FileUtils::FullFilePath({modelPath, _params.labels_file});
   Result readLabelsResult = ReadLabelsFile(labels_file_name, _labels);
   if (RESULT_OK == readLabelsResult)
   {
     std::cout << "ObjectDetector.Model.LoadGraph.ReadLabelFileSuccess " << labels_file_name.c_str() << std::endl;
   }
   return readLabelsResult;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result ObjectDetector::SetParamsFromConfig(const Json::Value& config)
+{
+# define GetFromConfig(keyName) \
+  if(!config.isMember(QUOTE(keyName))) \
+  { \
+    PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.MissingConfig", QUOTE(keyName)); \
+    return RESULT_FAIL; \
+  } \
+  else \
+  { \
+    SetFromConfigHelper(config[QUOTE(keyName)], _params.keyName); \
+  }
+  
+  GetFromConfig(verbose);
+  GetFromConfig(labels_file);
+  GetFromConfig(min_score);  
+  GetFromConfig(graph_file);
+  GetFromConfig(input_height);
+  GetFromConfig(input_width);
+  GetFromConfig(architecture);
+  GetFromConfig(memory_map_graph);
+
+  if("ssd_mobilenet" == _params.architecture)
+  {
+    _params.input_layer_name = "image_tensor";
+    _params.output_layer_names = {"detection_scores", "detection_classes", "detection_boxes", "num_detections"};
+    _params.use_float_input = false;
+    _params.output_type = OutputType::SSD_Boxes;
+
+    if(config.isMember("output_type")) {
+      std::cout << "Ignoring output_type and using 'SSD_Boxes' because architecture='ssd_mobilenet' was specified" << std::endl;
+    }
+  }
+  else if(("mobilenet" == _params.architecture) || ("mobilenet_v1" == _params.architecture))
+  { 
+    _params.input_layer_name = "input";
+    _params.output_layer_names = {"MobilenetV1/Predictions/Softmax"};
+    _params.use_float_input = true;
+    _params.output_type = OutputType::Classification;
+
+    if(config.isMember("output_type")) {
+      std::cout << "Ignoring output_type and using 'Classification' because architecture='mobilenet' was specified" << std::endl;
+    }
+  }
+  else if("custom" == _params.architecture)
+  {
+    GetFromConfig(input_layer_name);
+    GetFromConfig(output_layer_names);
+    GetFromConfig(use_float_input);
+    
+    const Result result = SetOutputTypeFromConfig(config);
+    if(RESULT_OK != result) {
+      // SetOutputTypeFromConfig will print an error, just return
+      // up the chain
+      return result;
+    }
+    
+    if(config.isMember("use_grayscale"))
+    {
+      SetFromConfigHelper(config["use_grayscale"], _params.use_grayscale);
+    }
+  }
+  else
+  {
+    PRINT_NAMED_ERROR("ObjectDetector.LoadModel.UnrecognizedArchitecture", "%s", 
+                      _params.architecture.c_str());
+    return RESULT_FAIL;
+  }
+
+  if(_params.verbose)
+  {
+    std::cout << "Arch: " << _params.architecture << 
+      (_params.use_grayscale ? ", Grayscale " : ", Color ") << 
+      "Input: " << _params.input_layer_name << ", Outputs: ";
+
+    for(auto const& outputLayerName : _params.output_layer_names)
+    {
+      std::cout << outputLayerName << " ";
+    }
+    std::cout << std::endl;
+  }
+
+  if(_params.use_float_input)
+  {
+    // NOTE: Only used when processing in floating point
+    GetFromConfig(input_shift);
+    GetFromConfig(input_scale);
+  }
+
+  return RESULT_OK;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result ObjectDetector::SetOutputTypeFromConfig(const Json::Value& config)
+{
+  // Convert output_type to enum and validate number of outputs
+  if(!config.isMember("output_type")) {
+    PRINT_NAMED_ERROR("ObjectDetector.LoadModel.MissingOutputType", 
+                      "Custom architecture requires output_type to be specified");
+    return RESULT_FAIL;
+  }
+
+  std::string output_type_str;
+  SetFromConfigHelper(config["output_type"], output_type_str);
+
+  struct OutputTypeEntry {
+    OutputType type;
+    int        numOutputs;
+  };
+  const std::map<std::string, OutputTypeEntry> kOutputTypeMap{
+    {"classification",        {OutputType::Classification,     1} }, 
+    {"binary_localization",   {OutputType::BinaryLocalization, 1} },
+    {"ssd_boxes",             {OutputType::SSD_Boxes,          4} },
+  };
+
+  auto iter = kOutputTypeMap.find(output_type_str);
+  if(iter == kOutputTypeMap.end()) {
+    std::string validKeys;
+    for(auto const& entry : kOutputTypeMap) {
+      validKeys += entry.first;
+      validKeys += " ";
+    }
+    PRINT_NAMED_ERROR("ObjectDetector.LoadModel.BadOutputType", "Valid types: %s", validKeys.c_str());
+    return RESULT_FAIL;
+  }
+  else {
+
+    if(_params.output_layer_names.size() != iter->second.numOutputs)
+    {
+      PRINT_NAMED_ERROR("ObjectDetector.LoadModel.WrongNumberOfOutputs", 
+                        "OutputType %s requires %d outputs (%d provided)", 
+                        iter->first.c_str(), iter->second.numOutputs, (int)_params.output_layer_names.size());
+      return RESULT_FAIL;
+    }
+    _params.output_type = iter->second.type;
+
+    if(OutputType::BinaryLocalization == _params.output_type)
+    {
+      GetFromConfig(num_grid_rows);
+      GetFromConfig(num_grid_cols);
+    }
+  }
+
+  return RESULT_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -417,18 +429,14 @@ void ObjectDetector::GetLocalizedBinaryClassification(const tensorflow::Tensor& 
   assert( !(output_tensor.tensor<float, 2>().Options & Eigen::RowMajor) );
   const float* output_data = output_tensor.tensor<float, 2>().data();
 
-  // TODO: Get size from output_tensor somehow
-  const int numBoxCols = 6;
-  const int numBoxRows = 6;
-
   // Box size in normalized image coordiantes
-  const float boxWidth  = 1.f / (float)numBoxCols;
-  const float boxHeight = 1.f / (float)numBoxRows;
+  const float boxWidth  = 1.f / (float)_params.num_grid_cols;
+  const float boxHeight = 1.f / (float)_params.num_grid_rows;
 
   int outputIndex = 0;
-  for(int xBox=0; xBox < numBoxRows; ++xBox)
+  for(int xBox=0; xBox < _params.num_grid_cols; ++xBox)
   {
-    for(int yBox=0; yBox < numBoxCols; ++yBox)
+    for(int yBox=0; yBox < _params.num_grid_rows; ++yBox)
     {
       const float score = output_data[outputIndex++];
       if(score > _params.min_score)
@@ -505,12 +513,12 @@ Result ObjectDetector::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Detec
 {
   tensorflow::Tensor image_tensor;
 
-  if(_useGrayscale)
+  if(_params.use_grayscale)
   {
     cv::cvtColor(img, img, CV_BGR2GRAY);
   }
 
-  const char* typeStr = (_useFloatInput ? "FLOAT" : "UINT8");
+  const char* typeStr = (_params.use_float_input ? "FLOAT" : "UINT8");
 
   if(_params.verbose)
   {
@@ -520,7 +528,7 @@ Result ObjectDetector::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Detec
 
   const auto kResizeMethod = CV_INTER_LINEAR;
 
-  if(_useFloatInput)
+  if(_params.use_float_input)
   {
     // TODO: Resize and convert directly into the tensor
     if(img.rows != _params.input_height || img.cols != _params.input_width)
@@ -571,18 +579,18 @@ Result ObjectDetector::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Detec
   if(_params.verbose)
   {
     std::cout << "Running session: Input=(" << img.cols << "x" << img.rows << "x" << img.channels() << "), " << 
-      typeStr << ", " << _outputLayerNames.size() << " outputs(s)" << std::endl;
+      typeStr << ", " << _params.output_layer_names.size() << " outputs(s)" << std::endl;
   }
 
   std::vector<tensorflow::Tensor> output_tensors;
-  tensorflow::Status run_status = _session->Run({{_inputLayerName, image_tensor}}, _outputLayerNames, {}, &output_tensors);
+  tensorflow::Status run_status = _session->Run({{_params.input_layer_name, image_tensor}}, _params.output_layer_names, {}, &output_tensors);
 
   if (!run_status.ok()) {
     PRINT_NAMED_ERROR("ObjectDetector.Model.Run.DetectionSessionRunFail", "%s", run_status.ToString().c_str());
     return RESULT_FAIL;
   }
 
-  switch(_outputType)
+  switch(_params.output_type)
   {
     case OutputType::Classification:
     {

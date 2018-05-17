@@ -128,22 +128,24 @@
     //
 
     // Standalone TF model
-    "graph"           : "person_localization_victor_6x6_92_accuracy.pb", 
-    "memory_map_graph": 0,
-    "labels"          : "person-labels.txt", 
-    "architecture"    : "custom",
-    "input"           : "input_1",
-    "output"          : "output_node0",
-    "output_type"     : "binary_localization",
-    "use_float_input" : 1,
-    "use_grayscale"   : 0,
-    "input_width"     : 128, 
-    "input_height"    : 128, 
-    "input_scale"     : 127.5, 
-    "input_shift"     : -1, 
-    "min_score"       : 0.5,
-    "verbose"         : 1,
-    "poll_period_ms"  : 10
+    "graph_file"           : "person_localization_victor_6x6_92_accuracy.pb", 
+    "memory_map_graph"     : 0,
+    "labels_file"          : "person-labels.txt", 
+    "architecture"         : "custom",
+    "input_layer_name"     : "input_1",
+    "output_layer_names"   : "output_node0",
+    "output_type"          : "binary_localization",
+    "num_grid_rows"        : 6,
+    "num_grid_cols"        : 6,
+    "use_float_input"      : 1,
+    "use_grayscale"        : 0,
+    "input_width"          : 128, 
+    "input_height"         : 128, 
+    "input_scale"          : 127.5, 
+    "input_shift"          : -1, 
+    "min_score"            : 0.5,
+    "verbose"              : 1,
+    "poll_period_ms"       : 10
 
 
     // // OpenCV DNN w/ MobileNet SSD Model
