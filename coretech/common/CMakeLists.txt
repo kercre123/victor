@@ -2,6 +2,11 @@
 
 project(cti_common)
 
+option(EMBEDDED_BENCHMARK "Enables BeginBenchmark/EndBenchmark functions" OFF)
+if(EMBEDDED_BENCHMARK)
+  set(additional_defines ANKI_EMBEDDED_BENCHMARK=1)
+endif()
+
 if (NOT DEFINED CORETECH)
   set(CORETECH ${CMAKE_CURRENT_SOURCE_DIR}/..)
 endif()
@@ -18,6 +23,7 @@ target_compile_definitions(cti_common
   ANKICORETECH_EMBEDDED_USE_MATLAB=0
   PRIVATE
   CORETECH_ENGINE
+  ${additional_defines}
 )
 
 target_include_directories(cti_common
