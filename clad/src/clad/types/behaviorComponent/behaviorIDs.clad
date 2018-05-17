@@ -24,6 +24,7 @@ enum uint_8 BehaviorID {
   DevBatteryLogging,
   DevDisplayReadingsOnFace,
   DevImageCapture,
+  DevEventSequenceCapture,
   DevPlannerTest,
   DevTestPromptUser,
   DevTouchDataCollection,
