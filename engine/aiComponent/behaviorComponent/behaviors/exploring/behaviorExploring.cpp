@@ -49,8 +49,8 @@ namespace {
   // todo: params for this:
   const float kMinScanAngle = DEG_TO_RAD( 45.0f );
   const float kMaxScanAngle = DEG_TO_RAD( 140.0f );
-  constexpr float kMinCliffPenaltyDist_mm = 30.0f;
-  constexpr float kMaxCliffPenaltyDist_mm = 60.0f;
+  constexpr float kMinCliffPenaltyDist_mm = 100.0f;
+  constexpr float kMaxCliffPenaltyDist_mm = 600.0f;
   const float kTimeBeforeConfirmCharger_s = 10*60.0f;
   const float kTimeBeforeConfirmCube_s = 2*60.0f;
   const float kProxPoseOffset_mm = 120.0f;
@@ -77,7 +77,7 @@ namespace {
   const unsigned int kNumAnglesAtPose = 5;
   // number of samples before we give up trying to find a non-colliding pose. Note: the behavior will
   // end if no pose was found
-  const unsigned int kNumSampleSteps = 500;
+  const unsigned int kNumSampleSteps = 50;
   
   // number of poses to select that are offset from a prox obstacle by some nearby amount
   const unsigned int kNumProxPoses = 1;
@@ -102,19 +102,19 @@ namespace {
     {MemoryMapTypes::EContentType::NotInterestingEdge    , true }
   };
   
-  constexpr MemoryMapTypes::FullContentArray kTypesThatAreUnknown =
+  constexpr MemoryMapTypes::FullContentArray kTypesThatAreKnown =
   {
-    {MemoryMapTypes::EContentType::Unknown               , true },
-    {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
-    {MemoryMapTypes::EContentType::ClearOfCliff          , false},
-    {MemoryMapTypes::EContentType::ObstacleObservable    , false},
-    {MemoryMapTypes::EContentType::ObstacleCharger       , false},
-    {MemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
-    {MemoryMapTypes::EContentType::ObstacleProx          , false},
-    {MemoryMapTypes::EContentType::ObstacleUnrecognized  , false},
-    {MemoryMapTypes::EContentType::Cliff                 , false},
-    {MemoryMapTypes::EContentType::InterestingEdge       , false},
-    {MemoryMapTypes::EContentType::NotInterestingEdge    , false}
+    {MemoryMapTypes::EContentType::Unknown               , false},
+    {MemoryMapTypes::EContentType::ClearOfObstacle       , true},
+    {MemoryMapTypes::EContentType::ClearOfCliff          , true},
+    {MemoryMapTypes::EContentType::ObstacleObservable    , true},
+    {MemoryMapTypes::EContentType::ObstacleCharger       , true},
+    {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
+    {MemoryMapTypes::EContentType::ObstacleProx          , true},
+    {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true},
+    {MemoryMapTypes::EContentType::Cliff                 , true},
+    {MemoryMapTypes::EContentType::InterestingEdge       , true},
+    {MemoryMapTypes::EContentType::NotInterestingEdge    , true}
   };
   
   using MemoryMapDataConstList = MemoryMapTypes::MemoryMapDataConstList;
@@ -136,6 +136,8 @@ BehaviorExploring::DynamicVariables::DynamicVariables()
   hasTakenPitStop = false;
   timeFinishedConfirmCharger_s = -1.0f;
   timeFinishedConfirmCube_s = -1.0f;
+  
+  devWarnIfNotInterruptedByTick = std::numeric_limits<size_t>::max();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -246,6 +248,23 @@ void BehaviorExploring::BehaviorUpdate()
   if( GetBEI().GetRobotInfo().IsOnChargerPlatform() ) {
     // user must have placed it on the charger
     CancelSelf();
+    return;
+  }
+  size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
+  if( currTick > _dVars.devWarnIfNotInterruptedByTick ) {
+    PRINT_NAMED_WARNING("BehaviorExploring.BehaviorUpdate.WasNonInterrupted",
+                        "Behavior assumed an interruption that didn't occur. This could mean the robot stops driving");
+    _dVars.devWarnIfNotInterruptedByTick = std::numeric_limits<size_t>::max();
+    if( _dVars.numDriveAttemps <= 2 ) {
+      SampleAndDrive();
+    } else {
+      // numDriveAttemps is reset every activation, so this should only happen if something internal
+      // is cancelling the driving
+      PRINT_NAMED_WARNING("BehaviorExploring.BehaviorUpdate.InterruptedMultiple",
+                          "Could not start a path without interruption after %d attempts",
+                          _dVars.numDriveAttemps);
+      CancelSelf();
+    }
     return;
   }
   
@@ -415,14 +434,21 @@ void BehaviorExploring::TransitionToDriving()
   action->AddAction( new DriveToPoseAction( _dVars.sampledPoses, forceHeadDown ) );
   
   DelegateIfInControl( action, [this](ActionResult res) {
-    if( res != ActionResult::SUCCESS ) {
+    if( res == ActionResult::CANCELLED_WHILE_RUNNING ){
+      // something interrupted this action (ReactToCliff/OnBack/etc.). don't delegate again, since
+      // hopefully that means something higher up is interrupting. This case is here to prevent
+      // the sampling computation if this behavior is just going to get interrupted. Just to be sure,
+      _dVars.devWarnIfNotInterruptedByTick = 2 + BaseStationTimer::getInstance()->GetTickCount();
+    } else if( res != ActionResult::SUCCESS ) {
       // this can happen if we cleared all but one of the goal poses, then the robot stopped to
       // examine something midway, then when trying to start again, there is no path to the selected
       // goal. try a couple more times (maybe this needs more precise ActionResult types?)
       if( _dVars.numDriveAttemps <= 4 ) {
         SampleAndDrive();
       } else {
-        PRINT_NAMED_INFO("BehaviorExploring.TransitionToDriving.NoPath", "Could not plan a path after %d attempts", _dVars.numDriveAttemps);
+        PRINT_NAMED_INFO("BehaviorExploring.TransitionToDriving.NoPath",
+                         "Could not plan a path after %d attempts",
+                         _dVars.numDriveAttemps);
         CancelSelf();
       }
     } else {
@@ -606,7 +632,9 @@ void BehaviorExploring::SampleVisitLocationsOpenSpace( const INavMap* memoryMap,
           const float distFromCliffSq = (intersectionPoint - cliffPos).LengthSq();
           const static float minSq = kMinCliffPenaltyDist_mm * kMinCliffPenaltyDist_mm;
           if( distFromCliffSq < minSq ) {
-            continue;
+            pAccept = 0.0f;
+            // break to then move to next sample point
+            break;
           }
           const static float maxSq = kMaxCliffPenaltyDist_mm * kMaxCliffPenaltyDist_mm;
           const float p = (distFromCliffSq > maxSq)
@@ -615,12 +643,18 @@ void BehaviorExploring::SampleVisitLocationsOpenSpace( const INavMap* memoryMap,
           // multiple cliffs can contribute to the acceptance probability
           pAccept -= p;
           if( pAccept <= 0.0f ) {
-            continue;
+            // break to then move to next sample point
+            break;
           }
         }
       }
-      if( pAccept < GetRNG().RandDbl() ) {
+      if( (pAccept <= 0.0f) || (pAccept < GetRNG().RandDbl()) ) {
+        // move to next sample point
         continue;
+      } else {
+        PRINT_NAMED_INFO( "BehaviorExploring.SampleVisitLocationsOpenSpace.AcceptedCliff",
+                          "Accepted cliff with p=%1.2f",
+                          pAccept );
       }
     }
     
@@ -642,9 +676,15 @@ void BehaviorExploring::SampleVisitLocationsOpenSpace( const INavMap* memoryMap,
     
     // bias towards unknown areas based on config
     {
-      const bool isUnknown = !memoryMap->HasCollisionWithTypes( footprint, kTypesThatAreUnknown );
-      if( !isUnknown ) {
-        if( GetRNG().RandDbl() > _iConfig.pAcceptKnownAreas ) {
+      const bool isKnown = memoryMap->HasCollisionWithTypes( footprint, kTypesThatAreKnown );
+      if( isKnown ) {
+        const float rv = GetRNG().RandDbl();
+        if( rv <= _iConfig.pAcceptKnownAreas ) {
+          PRINT_NAMED_INFO( "BehaviorExploring.SampleVisitLocationsOpenSpace.AcceptKnown",
+                            "Accepting a sample that is known with p=%1.2f",
+                            rv );
+        } else {
+          // move to next sample
           continue;
         }
       }
@@ -667,6 +707,8 @@ void BehaviorExploring::SampleVisitLocationsOpenSpace( const INavMap* memoryMap,
     }
     
     if( numAcceptedPoses >= kNumPositionsForSearch ) {
+      PRINT_NAMED_INFO("BehaviorExploring.SampleVisitLocationsOpenSpace.Completed",
+                       "Met required sampling of %d points, cnt=%d", numAcceptedPoses, cnt);
       break;
     }
   }

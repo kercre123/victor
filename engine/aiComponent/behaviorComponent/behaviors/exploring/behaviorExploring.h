@@ -130,6 +130,8 @@ private:
     bool hasTakenPitStop;
     float timeFinishedConfirmCharger_s;
     float timeFinishedConfirmCube_s;
+    
+    size_t devWarnIfNotInterruptedByTick;
   };
 
   InstanceConfig _iConfig;
