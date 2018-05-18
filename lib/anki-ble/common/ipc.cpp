@@ -79,19 +79,19 @@ void IPCEndpoint::ReceiveMessage(PeerState* p)
                message->magic[0], message->magic[1], message->magic[2], message->magic[3],
                kIPCMessageMagic[0], kIPCMessageMagic[1], kIPCMessageMagic[2], kIPCMessageMagic[3]);
 
-          OnReceiveError(p->GetFD());
+          OnPeerClose(p->GetFD());
           return;
         }
         if (message->version != kIPCMessageVersion) {
           loge("ipc-endpoint: recv'd version %u, expected %u",
                message->version, kIPCMessageVersion);
-          OnReceiveError(p->GetFD());
+          OnPeerClose(p->GetFD());
           return;
         }
         if (message->length > kIPCMessageMaxLength) {
           loge("ipc-endpoint: recv'd bad length (%u). max is %zu",
                message->length, kIPCMessageMaxLength);
-          OnReceiveError(p->GetFD());
+          OnPeerClose(p->GetFD());
           return;
         }
         size_t totalLength = sizeof(*message) + message->length;
@@ -118,7 +118,7 @@ void IPCEndpoint::ReceiveMessage(PeerState* p)
     }
     loge("ipc-endpoint: recv. p->GetFD() = %d, errno = %d (%s)",
          p->GetFD(), errno, strerror(errno));
-    OnReceiveError(p->GetFD());
+    OnPeerClose(p->GetFD());
     return;
   }
 
@@ -217,17 +217,18 @@ void IPCEndpoint::SendQueuedMessagesToPeer(const int sockfd)
   }
   while (!search->second->IsQueueEmpty()) {
     const std::vector<uint8_t>& packed_message = search->second->GetMessageAtFrontOfQueue();
-    ssize_t bytesSent = send(sockfd, packed_message.data(), packed_message.size(), 0);
+    ssize_t bytesSent = send(sockfd, packed_message.data(), packed_message.size(), MSG_NOSIGNAL);
     if (-1 == bytesSent) {
       if (errno == EAGAIN || errno == EWOULDBLOCK) {
         logv("ipc-endpoint: send would block");
         break;
       }
-      OnSendError(sockfd, errno);
+      logd("ipc-endpoint: send failed. errno = %s (%d)", strerror(errno), errno);
+      OnPeerClose(sockfd);
       break;
     } else if (bytesSent < packed_message.size()) {
       loge("ipc-endpoint: send sent %zd bytes, expecting %zu bytes", bytesSent, packed_message.size());
-      OnSendError(sockfd, EIO);
+      OnPeerClose(sockfd);
       break;
     } else {
       search->second->EraseMessageFromFrontOfQueue();
@@ -235,27 +236,14 @@ void IPCEndpoint::SendQueuedMessagesToPeer(const int sockfd)
   }
 }
 
-void IPCEndpoint::HandleSocketCloseOrError(const int sockfd)
-{
-  RemovePeerByFD(sockfd);
-  if (sockfd == sockfd_) {
-    CloseSocket();
-  }
-}
-
-void IPCEndpoint::OnReceiveError(const int sockfd)
-{
-  HandleSocketCloseOrError(sockfd);
-}
-
 void IPCEndpoint::OnPeerClose(const int sockfd)
 {
-  HandleSocketCloseOrError(sockfd);
-}
-
-void IPCEndpoint::OnSendError(const int sockfd, const int error)
-{
-  HandleSocketCloseOrError(sockfd);
+  if (sockfd == sockfd_) {
+    CloseSocket();
+  } else {
+    RemovePeerByFD(sockfd);
+    (void) close(sockfd);
+  }
 }
 
 IPCEndpoint::PeerState::~PeerState()

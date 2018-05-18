@@ -12,9 +12,9 @@
 #ifndef __BleClient_H__
 #define  __BleClient_H__
 
-#include "anki-ble/ipc-client.h"
+#include "anki-ble/common/ipc-client.h"
 #include "signals/simpleSignal.hpp"
-#include "anki-ble/ipcBleStream.h"
+#include "bleClient/ipcBleStream.h"
 
 #include <string>
 
@@ -65,9 +65,7 @@ namespace Switchboard {
     bool SendPlainText(uint8_t* msg, size_t length);
     bool SendEncrypted(uint8_t* msg, size_t length);
 
-    virtual void OnReceiveError(const int sockfd);
     virtual void OnPeerClose(const int sockfd);
-    virtual void OnSendError(const int sockfd, const int error);
     
     int _connectionId;
     IpcBleStream* _stream;

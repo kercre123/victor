@@ -20,7 +20,7 @@
  **/
 #include <stdlib.h>
 #include "libev/libev.h"
-#include "anki-ble/bleClient.h"
+#include "bleClient/bleClient.h"
 #include "anki-websocket/websocketServer.h"
 #include "switchboardd/securePairing.h"
 #include "switchboardd/taskExecutor.h"

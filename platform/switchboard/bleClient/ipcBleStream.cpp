@@ -10,7 +10,7 @@
  *
  **/
 
-#include "anki-ble/ipcBleStream.h"
+#include "bleClient/ipcBleStream.h"
 
 namespace Anki {
 namespace Switchboard {

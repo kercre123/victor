@@ -16,7 +16,7 @@
 #include <ifaddrs.h>
 #include "exec_command.h"
 #include "fileutils.h"
-#include "anki-ble/stringutils.h"
+#include "anki-ble/common/stringutils.h"
 #include "log.h"
 #include "wifi.h"
 

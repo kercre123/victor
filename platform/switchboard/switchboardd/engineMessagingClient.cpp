@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <chrono>
 #include <thread>
-#include "anki-ble/log.h"
+#include "anki-ble/common/log.h"
 #include "switchboardd/engineMessagingClient.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"

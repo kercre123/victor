@@ -42,6 +42,7 @@ PRIVATE
   util
   victorCrashReports
   breakpad_client
+  anki-ble
 )
 
 target_compile_definitions(vic-switchboard
@@ -53,10 +54,9 @@ target_include_directories(vic-switchboard
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/switchboardd>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bleClient>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cutils>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/anki-ble>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/anki-wifi>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libev>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/signals>
   $<BUILD_INTERFACE:${CORETECH_EXTERNAL_DIR}/build/libsodium/vicos/include>
   $<BUILD_INTERFACE:${VICOS_SDK}/sysroot/usr/include/gio-unix-2.0>

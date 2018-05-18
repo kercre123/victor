@@ -3,14 +3,11 @@ cxx_project(
     srcs = cxx_src_glob(['.'],
                         excludes = ['*_mac.*',
                                     '*_vicos.*',
-                                    './anki-ble/**/*',
                                     './bleClient/*',
-                                    './libev/*',
                                     ]),
     platform_srcs = [
         ('vicos', glob(['**/*_vicos.cpp',
-                          '**/bleClient/*',
-                          '**/anki-ble/common/*'])),
+                          '**/bleClient/*'])),
         ('mac', glob(['**/*_mac.cpp']))
     ],
     headers = cxx_header_glob(['.'])

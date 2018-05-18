@@ -26,9 +26,9 @@
 #include <sys/reboot.h>
 #include <fstream>
 
-#include "anki-ble/log.h"
-#include "anki-ble/anki_ble_uuids.h"
-#include "anki-ble/ble_advertise_settings.h"
+#include "anki-ble/common/log.h"
+#include "anki-ble/common/anki_ble_uuids.h"
+#include "anki-ble/common/ble_advertise_settings.h"
 #include "anki-wifi/wifi.h"
 #include "cutils/properties.h"
 #include "switchboardd/christen.h"

@@ -69,7 +69,8 @@ enum class IPCMessageType {
     OnDescriptorReadResult,
     RequestConnectionParameterUpdate,
     OnRequestConnectionParameterUpdateResult,
-    SetAdapterName
+    SetAdapterName,
+    DisconnectByAddress
 };
 
 typedef struct __attribute__ ((__packed__)) IPCMessage {
@@ -229,6 +230,10 @@ typedef struct __attribute__ ((__packed__)) SetAdapterNameArgs {
   char name[kAdapterNameSize];
 } SetAdapterNameArgs;
 
+typedef struct __attribute__ ((__packed__)) DisconnectByAddressArgs {
+  char address[kAddressSize];
+} DisconnectByAddressArgs;
+
 class IPCEndpoint {
  public:
   IPCEndpoint(struct ev_loop* loop);
@@ -274,13 +279,10 @@ class IPCEndpoint {
   void CloseSocket();
   void ReceiveMessage(PeerState* p);
   void SendQueuedMessagesToPeer(const int sockfd);
-  void HandleSocketCloseOrError(const int sockfd);
-  virtual void OnReceiveError(const int sockfd);
   virtual void OnPeerClose(const int sockfd);
   virtual void OnReceiveIPCMessage(const int sockfd,
                                    const IPCMessageType type,
                                    const std::vector<uint8_t>& data) {}
-  virtual void OnSendError(const int sockfd, const int error);
   void ReadWriteWatcherCallback(ev::io& w, int revents);
 
   struct ev_loop* loop_;
@@ -292,3 +294,4 @@ class IPCEndpoint {
 
 } // namespace BluetoothDaemon
 } // namespace Anki
+

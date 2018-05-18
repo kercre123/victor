@@ -10,8 +10,8 @@
  *
  **/
 
-#include "anki_ble_uuids.h"
-#include "anki-ble/bleClient.h"
+#include "anki-ble/common/anki_ble_uuids.h"
+#include "bleClient/bleClient.h"
 
 namespace Anki {
 namespace Switchboard {
@@ -87,18 +87,11 @@ void BleClient::OnPeripheralStateUpdate(const bool advertising,
   _advertisingUpdateSignal.emit(advertising);
 }
 
-void BleClient::OnReceiveError(const int sockfd) {
-  IPCEndpoint::OnReceiveError(sockfd);
-  _ipcDisconnectedSignal.emit();
-}
 void BleClient::OnPeerClose(const int sockfd) {
   IPCEndpoint::OnPeerClose(sockfd);
   _ipcDisconnectedSignal.emit();
 }
-void BleClient::OnSendError(const int sockfd, const int error) {
-  IPCEndpoint::OnSendError(sockfd, error);
-  _ipcDisconnectedSignal.emit();
-}
+
 
 } // Switchboard
 } // Anki

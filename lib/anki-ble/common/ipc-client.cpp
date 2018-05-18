@@ -331,6 +331,15 @@ void IPCClient::ConnectToPeripheral(const std::string& address)
                          (uint8_t *) &args);
 }
 
+void IPCClient::DisconnectByAddress(const std::string& address)
+{
+  DisconnectByAddressArgs args = {{0}};
+  (void) strlcpy(args.address, address.c_str(), sizeof(args.address));
+  SendIPCMessageToServer(IPCMessageType::DisconnectByAddress,
+                         sizeof(args),
+                         (uint8_t *) &args);
+}
+
 void IPCClient::RequestConnectionParameterUpdate(const std::string& address,
                                                  int min_interval,
                                                  int max_interval,
