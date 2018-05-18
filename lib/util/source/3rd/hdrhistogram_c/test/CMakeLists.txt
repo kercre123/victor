@@ -27,9 +27,9 @@ if (RT_EXISTS)
     target_link_libraries(perftest rt)
 endif (RT_EXISTS)
 
-install(TARGETS hdr_histogram_test DESTINATION bin)
-install(TARGETS hdr_histogram_log_test DESTINATION bin)
-install(TARGETS perftest DESTINATION bin)
+#install(TARGETS hdr_histogram_test DESTINATION bin)
+#install(TARGETS hdr_histogram_log_test DESTINATION bin)
+#install(TARGETS perftest DESTINATION bin)
 
 add_test(Histogram hdr_histogram_test)
 add_test(HistogramLogging hdr_histogram_log_test)

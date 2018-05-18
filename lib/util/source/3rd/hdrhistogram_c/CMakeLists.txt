@@ -18,15 +18,15 @@ set(HDR_SOVERSION_CURRENT   1)
 set(HDR_SOVERSION_AGE       0)
 set(HDR_SOVERSION_REVISION  2)
 
-set(HDR_VERSION ${HDR_SOVERSION_CURRENT}.${HDR_SOVERSION_AGE}.${HDR_SOVERSION_REVISION})
+set(HDR_VERSION ${HDR_SOVERSION_CURRENT})
 set(HDR_SOVERSION ${HDR_SOVERSION_CURRENT})
 
 ENABLE_TESTING()
 
 if(UNIX)
-    set(CMAKE_C_FLAGS "-Wall -Wno-unknown-pragmas -Wextra -Wshadow -Winit-self -Wmissing-prototypes -Wpedantic -D_GNU_SOURCE")
-    set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
-    set(CMAKE_C_FLAGS_RELEASE "-O3 -g")
+    add_compile_options("$<$<CONFIG:RELASE>:-O3>")
+    add_compile_options("$<$<CONFIG:DEBUG>:-O0>")
+    add_compile_options(-Wall -Wno-unknown-pragmas -Wextra -Wshadow -Winit-self -Wmissing-prototypes -Wpedantic -D_GNU_SOURCE -g)
 endif()
 
 if(WIN32)
