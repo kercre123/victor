@@ -98,6 +98,12 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenWaitToStart::PlaypenUpdateInterna
 
   if(touchGood && buttonGood && (robot.GetBatteryComponent().IsOnChargerContacts() || robot.GetBatteryComponent().IsCharging()))
   {
+    // Draw nothing on the screen to clear it
+    robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::DrawTextOnScreen(true,	
+                                                                                     RobotInterface::ColorRGB(0,0,0),	
+                                                                                     RobotInterface::ColorRGB(0,0,0),	
+                                                                                     "")));
+    
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, PlaypenStatus::Complete);
   }
 

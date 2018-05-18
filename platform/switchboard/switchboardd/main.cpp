@@ -468,8 +468,8 @@ void Daemon::OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame
       printf("Enter pairing: %hhu\n", tag);
       if(_securePairing != nullptr) {
         break;
-      }
-
+      } 
+      
       UpdateAdvertisement(true);
       _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SHOW_PRE_PIN);
       ev_timer_set(&_pairingTimer.timer, kPairingPreConnectionTimeout_s, 0);

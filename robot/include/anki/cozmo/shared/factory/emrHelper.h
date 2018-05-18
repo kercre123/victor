@@ -19,6 +19,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 
 namespace Anki {
 namespace Cozmo {
@@ -27,8 +28,7 @@ namespace Factory {
 
   namespace 
   {
-    static const char* kEMRFile = "/factory/birthcertificate";
-    // static const char* kEMRFile = "/data/data/com.anki.victor/birthcertificate";
+    static const char* kEMRFile = "/dev/block/bootdevice/by-name/emr";
 
     static Factory::EMR* _emr = nullptr;
 
@@ -43,20 +43,20 @@ namespace Factory {
         LOG_ERROR("Factory.CheckEMRForPackout.OpenFailed", "%d", errno);
         return nullptr; // exit instead? will probably end up crashing in WriteEMR or GetEMR will return null
       }
-      
-      // Makes the file the correct size, only does something if the file was just
-      // created otherwise it should always be the size of the EMR struct
-      ftruncate(fd, sizeof(Factory::EMR));
 
       // Memory map the file as shared since multiple processes have access to these functions
       Factory::EMR* emr = (Factory::EMR*)(mmap(nullptr, sizeof(EMR), protFlags, MAP_SHARED, fd, 0));
-
+      
       if(emr == MAP_FAILED)
       {
         LOG_ERROR("Factory.CheckEMRForPackout.MmapFailed", "%d", errno);
+        close(fd);
         return nullptr; // exit instead? will probably end up crashing in WriteEMR or GetEMR will return null
       }
 
+      // Close our fd, mmap will add a reference to it so the mapping will still be valid
+      close(fd);
+      
       return emr;
     }
   

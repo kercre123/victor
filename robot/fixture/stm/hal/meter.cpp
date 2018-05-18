@@ -241,8 +241,8 @@ namespace Meter
       case PWR_VBAT:    return getVoltageMv_(oversample, INA220_VBAT_BUS_ADDR);
       case PWR_CUBEBAT: return getVoltageMv_(oversample, INA220_CBAT_BUS_ADDR);
       case PWR_UAMP:    return getVoltageMv_(oversample, INA220_UAMP_BUS_ADDR);
+      case PWR_DUTVDD:  return Board::getAdcMv(ADC_DUT_VDD_IN, oversample) << 1; //this input has a resistor divider
       case PWR_DUTPROG:
-      case PWR_DUTVDD:
         break;
     }
     return 0;

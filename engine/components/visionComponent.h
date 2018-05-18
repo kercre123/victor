@@ -319,6 +319,8 @@ struct DockingErrorSignal;
 
     bool LookupGroundPlaneHomography(f32 atHeadAngle, Matrix_3x3f& H) const;
 
+    bool HasStartedCapturingImages() const { return _hasStartedCapturingImages; }
+    
     // Non-rotated points representing the lift cross bar
     std::vector<Point3f> _liftCrossBarSource;
 
@@ -328,6 +330,7 @@ struct DockingErrorSignal;
     std::set<VisionMode> GetVisionModesFromFlags(u32 bitflags) const;
 
     bool _isInitialized = false;
+    bool _hasStartedCapturingImages = false;
     
     Robot* _robot = nullptr;
     const CozmoContext* _context = nullptr;

@@ -17,13 +17,8 @@ if not exist "emmcdl" (
   exit 1
 )
 
-REM create fixture directory, if it doesn't exist
-adb shell -x "mkdir -p data/local/fixture && sync"
-
-REM increase cpu0 freq (usb performance)
-REM adb shell "echo 800000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq"
-
-REM update head scripts & image files
+echo update head scripts and image files...
+adb shell -x "mkdir -p /data/local/fixture"
 adb push headprogram /data/local/fixture/
 adb push usbserial.ko /data/local/fixture/
 adb push makebc /data/local/fixture/
@@ -35,9 +30,10 @@ adb push bin/emmcdl /data/local/fixture/emmcdl/
 adb shell -x "cd /data/local/fixture/emmcdl && chmod +x emmcdl"
 adb shell "sync"
 
-echo restart helper process...
+echo restarting helper...
 adb shell -x "pkill helper && sleep 1"
-adb shell "/data/local/fixture/helper > /dev/null 2>&1 &"
+adb shell "cd /data/local/fixture && ./helper > /dev/null 2>&1 < /dev/null &"
+adb shell "sleep 1 && ps | grep helper"
 
 echo Done!
 pause

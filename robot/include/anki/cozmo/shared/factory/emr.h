@@ -39,7 +39,7 @@ namespace Factory {
   };
   
   #ifdef __GNUC__
-  static_assert(sizeof(EMR) == 1024);
+  static_assert(sizeof(EMR) == 1024, "EMR union is wrong size");
   #else
   typedef char static_assertion_emr_size_check[(sizeof(EMR) == 1024) ? 1 : -1];
   #endif

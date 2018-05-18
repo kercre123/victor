@@ -19,6 +19,10 @@
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
 
+#include "cutils/properties.h"
+
+#include "anki/cozmo/shared/factory/emrHelper.h"
+
 // For getting our ip address
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -34,6 +38,7 @@
 
 #include <fstream>
 #include <array>
+#include <iomanip>
 #include <stdlib.h>
 
 #ifdef SIMULATOR
@@ -78,50 +83,26 @@ namespace {
 
 } // namespace
 
-// Searches the .prop property files for the given key and returns the value
-// __system_get_property() from sys/system_properties.h does
-// not work for some reason so we have to read the files manually
 std::string GetProperty(const std::string& key)
 {
-  const std::string kProp = key + "=";
-
-  // First check the regular build.prop
-  std::ifstream infile("/build.prop");
-
-  std::string line;
-  while(std::getline(infile, line))
+  char propBuf[PROPERTY_VALUE_MAX] = {0};
+  int rc = property_get(key.c_str(), propBuf, "");
+  if(rc <= 0)
   {
-    size_t index = line.find(kProp);
-    if(index != std::string::npos)
-    {
-      infile.close();
-      return line.substr(kProp.length());
-    }
+    PRINT_NAMED_WARNING("OSState.GetProperty.FailedToFindProperty",
+                        "Property %s not found",
+                        key.c_str());
   }
 
-  infile.close();
-
-  // If the key wasn't found in /build.prop, then
-  // check the persistent build.prop
-  infile.open("/data/persist/build.prop");
-
-  while(std::getline(infile, line))
-  {
-    size_t index = line.find(kProp);
-    if(index != std::string::npos)
-    {
-      infile.close();
-      return line.substr(kProp.length());
-    }
-  }
-
-  infile.close();
-
-  return "";
+  return std::string(propBuf);
 }
 
 OSState::OSState()
 {
+  // Suppress unused function error for WriteEMR
+  (void)static_cast<void(*)(size_t, void*, size_t)>(Factory::WriteEMR);
+  (void)static_cast<void(*)(size_t, uint32_t)>(Factory::WriteEMR);
+  
   // Get nominal CPU frequency for this robot
   _tempFile.open(kNominalCPUFreqFile, std::ifstream::in);
   if(_tempFile.is_open()) {
@@ -279,22 +260,14 @@ const std::string& OSState::GetSerialNumberAsString()
 {
   if(_serialNumString.empty())
   {
-    std::ifstream infile("/proc/cmdline");
-
-    std::string line;
-    while(std::getline(infile, line))
-    {
-      static const std::string kProp = "androidboot.serialno=";
-      size_t index = line.find(kProp);
-      if(index != std::string::npos)
-      {
-        _serialNumString = line.substr(index + kProp.length(), 8);
-      }
-    }
-
-    infile.close();
+    std::stringstream ss;
+    ss << std::hex 
+       << std::setfill('0') 
+       << std::setw(8) 
+       << std::uppercase
+       << Factory::GetEMR()->fields.ESN;
+    _serialNumString = ss.str();
   }
-
   return _serialNumString;
 }
 
@@ -302,7 +275,7 @@ const std::string& OSState::GetOSBuildVersion()
 {
   if(_osBuildVersion.empty())
   {
-    _osBuildVersion = GetProperty("ro.build.version.release");
+    _osBuildVersion = GetProperty("ro.build.display.id");
   }
 
   return _osBuildVersion;

@@ -1,0 +1,23 @@
+/* Clad definitions for factory test fixture messages sent from robot to engine 
+ */
+
+namespace Anki {
+namespace Cozmo {
+namespace RobotInterface {
+
+enum uint_8 FactoryTest {
+  MIC_TEST,
+  SPEAKER_TEST,
+
+  COUNT
+}
+
+message RunFactoryTest
+{
+  FactoryTest test,
+  uint_8 args[4]
+}
+
+} // RobotInterface
+} // Cozmo
+} // Anki
