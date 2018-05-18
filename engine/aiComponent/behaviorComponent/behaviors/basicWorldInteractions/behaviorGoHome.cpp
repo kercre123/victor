@@ -172,13 +172,21 @@ void BehaviorGoHome::OnBehaviorActivated()
   // causing the robot to fail to plan a path to the charger (VIC-2978)
   GetBEI().GetMapComponent().RemoveAllProxObstacles();
   
-  // Check here if we're carrying an object and put it down next to the charger if so
-  const auto& robotInfo = GetBEI().GetRobotInfo();
-  if (robotInfo.GetCarryingComponent().IsCarryingObject()) {
-    TransitionToPlacingCubeOnGround();
-  } else {
-    TransitionToCheckDockingArea();
-  }
+  // First turn toward the charger. This will hopefully update its pose
+  // to be more accurate before interacting with it.
+  auto* turnToAction = new TurnTowardsObjectAction(_dVars.chargerID);
+  DelegateIfInControl(turnToAction,
+                      [this]() {
+                        // We don't care if the turn action failed or not, just
+                        // continue with the behavior. Check if we're carrying
+                        // an object and put it down next to the charger if so
+                        const auto& robotInfo = GetBEI().GetRobotInfo();
+                        if (robotInfo.GetCarryingComponent().IsCarryingObject()) {
+                          TransitionToPlacingCubeOnGround();
+                        } else {
+                          TransitionToCheckDockingArea();
+                        }
+                      });
 }
 
 
