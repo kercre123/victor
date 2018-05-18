@@ -15,6 +15,8 @@
 
 #include "engine/components/animationComponent.h"
 #include "engine/components/dataAccessorComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/weatherIntentParser.h"
 
@@ -122,6 +124,14 @@ void BehaviorDisplayWeather::GetBehaviorJsonKeys(std::set<const char*>& expected
 
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDisplayWeather::GetAllDelegates(std::set<IBehavior*>& delegates) const
+{
+  delegates.insert(_iConfig->textToSpeechBehavior.get());
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDisplayWeather::InitBehavior()
 {
@@ -219,7 +229,11 @@ void BehaviorDisplayWeather::InitBehavior()
                         "Animations need to be manually loaded on engine side - %s is not", _iConfig->animationName.c_str());
     return;
   }
-  
+
+  const auto& bc = GetBEI().GetBehaviorContainer();
+  bc.FindBehaviorByIDAndDowncast<BehaviorTextToSpeechLoop>(BEHAVIOR_ID(WeatherTextToSpeech),
+                                                           BEHAVIOR_CLASS(TextToSpeechLoop),
+                                                           _iConfig->textToSpeechBehavior);
   ParseDisplayTempTimesFromAnim();
   
 }
@@ -227,16 +241,48 @@ void BehaviorDisplayWeather::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDisplayWeather::OnBehaviorActivated() 
 {
+  // reset dynamic variables
+  _dVars = DynamicVariables();
+
   auto& uic = GetBehaviorComp<UserIntentComponent>();
 
   UserIntentPtr intent = uic.GetActiveUserIntent(USER_INTENT(weather_response));
   DEV_ASSERT(intent != nullptr, "BehaviorDisplayWeather.InvalidTriggeringIntent");
 
+  const auto& weatherResponse = intent->Get_weather_response();
+  std::string textToSay;
+  if(WeatherIntentParser::ShouldSayText(weatherResponse, textToSay)){
+    StateWeatherInformation(textToSay);
+  }else{
+    DisplayWeatherResponse();
+  }
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDisplayWeather::StateWeatherInformation(const std::string& textToSay)
+{
+  _iConfig->textToSpeechBehavior->SetTextToSay(textToSay);
+  if(_iConfig->textToSpeechBehavior->WantsToBeActivated()){
+    DelegateIfInControl(_iConfig->textToSpeechBehavior.get(),
+                        &BehaviorDisplayWeather::DisplayWeatherResponse);
+  }else{
+    DisplayWeatherResponse();
+  }
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDisplayWeather::DisplayWeatherResponse()
+{
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
+
+  UserIntentPtr intent = uic.GetActiveUserIntent(USER_INTENT(weather_response));
+  DEV_ASSERT(intent != nullptr, "BehaviorDisplayWeather.InvalidTriggeringIntent");
 
   const auto& weatherResponse = intent->Get_weather_response();
-
-  // reset dynamic variables
-  _dVars = DynamicVariables();
 
 
   auto animationCallback = [this](const AnimationComponent::AnimResult res){

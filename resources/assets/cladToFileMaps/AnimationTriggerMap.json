@@ -972,6 +972,18 @@
     "AnimName": "ag_surprise"
   },
   {
+    "CladEvent": "TextToSpeechGetIn",
+    "AnimName": "ag_texttospeech_getin_01"
+  },
+  {
+    "CladEvent": "TextToSpeechGetLoop",
+    "AnimName": "ag_texttospeech_loop_01"
+  },
+  {
+    "CladEvent": "TextToSpeechGetOut",
+    "AnimName": "ag_texttospeech_getout_01"
+  },
+  {
     "CladEvent": "TimerCancelTimer",
     "AnimName": "ag_timer_timecancel"
   },

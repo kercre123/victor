@@ -21,6 +21,7 @@ enum uint_8 BehaviorClass {
   AnimSequence,
   AnimSequenceWithFace,
   AnimSequenceWithObject,
+  TextToSpeechLoop,
 
   // basicCubeInteractions
   PickUpCube,

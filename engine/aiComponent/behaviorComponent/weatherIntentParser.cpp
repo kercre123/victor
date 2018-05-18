@@ -21,6 +21,7 @@ namespace Anki {
 namespace Cozmo {
 
 namespace{
+const std::string kWeatherLocationPrepend = "Right now in ";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -35,7 +36,7 @@ bool WeatherIntentParser::IsForecast(const UserIntent_WeatherResponse& weatherIn
 bool WeatherIntentParser::ShouldSayText(const UserIntent_WeatherResponse& weatherIntent, 
                                         std::string& textToSay) 
 { 
-  textToSay = weatherIntent.speakableLocationString;
+  textToSay = kWeatherLocationPrepend + weatherIntent.speakableLocationString;
   return !weatherIntent.speakableLocationString.empty();
 }
 

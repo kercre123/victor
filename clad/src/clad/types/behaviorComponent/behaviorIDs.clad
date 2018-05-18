@@ -254,6 +254,7 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree/weather
   WeatherResponses,
+  WeatherTextToSpeech,
 }
 
 }

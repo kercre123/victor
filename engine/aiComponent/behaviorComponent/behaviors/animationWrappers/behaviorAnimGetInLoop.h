@@ -34,23 +34,27 @@ public:
   
   virtual ~BehaviorAnimGetInLoop();
   
-  virtual bool WantsToBeActivatedBehavior() const override;
+  virtual bool WantsToBeActivatedBehavior() const override final;
 
   // Notify the behavior that it should end the looping animation when it finishes
   void RequestLoopEnd() { _dVars.shouldLoopEnd = true; }
 
 protected:
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override  final{
     modifiers.wantsToBeActivatedWhenOffTreads = true;
     modifiers.behaviorAlwaysDelegates         = false;
   }
   
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override final;
   
-  virtual void InitBehavior() override;
-  virtual void OnBehaviorActivated() override;
-  virtual void BehaviorUpdate() override;
-  virtual void OnBehaviorDeactivated() override;
+  virtual void InitBehavior() override final;
+  virtual void OnBehaviorActivated() override final;
+  virtual void BehaviorUpdate() override final;
+  virtual void AnimBehaviorUpdate() {};
+  virtual void OnBehaviorDeactivated() override final;
+
+  // For derived classes that do their own looping
+  AnimationTrigger GetLoopTrigger() { return _iConfig.loopTrigger; }
 
 
 private:
