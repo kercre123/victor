@@ -433,12 +433,14 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, period, channel, name, format, ##__VA
 // Developer assertions are compiled for debug builds ONLY.
 // Developer assertions are discarded for release and shipping builds.
 //
-// Code blocks that are only used for developer assertions should be guarded with #if DEV_ASSERT_ENABLED.
+// Code blocks that are only used for developer assertions should be guarded with #if ANKI_DEV_ASSERT_ENABLED.
 // Variables that are only used for developer assertions should be guarded with DEV_ASSERT_ONLY.
 
-#define DEV_ASSERT_ENABLED ANKI_DEVELOPER_CODE
+#ifndef ANKI_DEV_ASSERT_ENABLED
+  #define ANKI_DEV_ASSERT_ENABLED ANKI_DEVELOPER_CODE
+#endif
 
-#if DEV_ASSERT_ENABLED
+#if ANKI_DEV_ASSERT_ENABLED
 
 #define DEV_ASSERT_MSG(expr, name, format, ...) do { \
   if (!(expr)) { \

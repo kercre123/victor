@@ -83,7 +83,7 @@ void ActionWatcher::ParentActionUpdating(const IActionRunner* action)
 
   // All of the updating action stacks should be empty since no actions besides the parent action are
   // currently updating
-  #if DEV_ASSERT_ENABLED
+  #if ANKI_DEV_ASSERT_ENABLED
   for (const auto& i : _parentToUpdatingActions)
   {
     DEV_ASSERT(i.second.empty(), "ActionWatcher.ParentActionUpdating.ParentToUpdatingActionsNotEmpty");
