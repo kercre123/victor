@@ -3,7 +3,8 @@
  *  This file should turn data into a visualization.
  *  Anything you need will need to be dynamically added
  *  to the DOM.
- *  You have access to d3, jquery, and processing.js
+ *  You have access to d3, jquery, and processing.js,
+ *  flot, and datatables.
  *  Instructions:
  *  1) Supply the following four methods
  *  2) Add your module to the list of modules in the 

@@ -44,6 +44,38 @@ public:
 
   virtual ~CozmoAudioController();
   
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Overrides of AudioEngineController's basic audio engine functions
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  using AudioEventId = AudioEngine::AudioEventId;
+  using AudioPlayingId = AudioEngine::AudioPlayingId;
+  using AudioGameObject = AudioEngine::AudioGameObject;
+  using AudioStateGroupId = AudioEngine::AudioStateGroupId;
+  using AudioStateId = AudioEngine::AudioStateId;
+  using AudioSwitchGroupId = AudioEngine::AudioSwitchGroupId;
+  using AudioSwitchStateId = AudioEngine::AudioSwitchStateId;
+  using AudioCallbackContext = AudioEngine::AudioCallbackContext;
+  enum { kInvalidAudioGameObject = (AudioGameObject)-1 };
+  virtual AudioPlayingId PostAudioEvent( const std::string& eventName,
+                                         AudioGameObject gameObjectId = kInvalidAudioGameObject,
+                                         AudioCallbackContext* callbackContext = nullptr ) override;
+  
+  virtual AudioPlayingId PostAudioEvent( AudioEventId eventId,
+                                         AudioGameObject gameObjectId = kInvalidAudioGameObject,
+                                         AudioCallbackContext* callbackContext = nullptr ) override;
+  
+  // Stops playing all sounds on the specified game object
+  // + If kInvalidAudioGameObject is specified, then ALL audio will be stopped
+  virtual void StopAllAudioEvents( AudioGameObject gameObjectId = kInvalidAudioGameObject ) override;
+  
+  virtual bool SetState( AudioStateGroupId stateGroupId,
+                         AudioStateId stateId ) const override;
+  
+  virtual bool SetSwitchState( AudioSwitchGroupId switchGroupId,
+                               AudioSwitchStateId switchStateId,
+                               AudioGameObject gameObjectId ) const override;
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
   // Save session profiler capture to a file
   bool WriteProfilerCapture( bool write );
   // Save session audio output to a file
