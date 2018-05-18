@@ -1,49 +1,55 @@
-## FAQ
+# Frequently Asked Questions
 
 If you have a question that you get answered (e.g. in a Slack channel) which might plague others, consider creating an entry here for it.
 
 Additional troubleshooting can be found on [Confluence](https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/362807304/Victor+Build+Troubleshooting).
 
-* How do I set a console var from Webots?
-  - Set the `consoleVarName` and `consoleVarValue` strings under the WebotsKeyboardController in the scene tree at left. Press `]` (closing square bracket) to send the message to the engine to set the console var. 
-  - Using `}` (closing curly brace) instead will use the name and value strings as a console _function_ and its arguments instead.
-  - Hold down `ALT` to send either of the above to the animation process to set console vars/functions there.
+### How do I see what's happening on my robot?
 
-* How do I access the Victor embedded web server, from which I can set console vars?
-  - [Run the Victor web server](/docs/development/web-server.md) 
-  
-* `victor_stop`/`victor_restart` hangs with `stopping <number>...` when trying to kill one of the processes
-  - Manually kill the process with `ssh <robot-ip> kill -9 <number>`
+* Run `victor_log` from a terminal. If you would like to simultaneously save the log output to file, run `victor_log | tee log.txt`.
+* Try using the webserver on the robot. In a browser, type `<my_victor_ip_address>:8888` in the address bar, where `<my_victor_ip_address>` is the IP address of your robot. Change the `8888` to an `8889` to see anim process information. You can open webviz, an interactive status page, by clicking the `WebViz` link on the web server landing page. More information [here](/docs/development/web-server.md).
+
+### I can't connect or ping Victor, he doesn't seem to be connected to wifi
+  - Check your laptop's internet connection and wifi network.
+  - Use the companion app, Chewie, to configure Victor's WiFi.
+  - Use the mac client to troubleshoot wifi. Information [here](https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/323321886/Victor+OTA+update+using+Mac-Client+tool#VictorOSand%5COTAupdateusingMac-Clienttool-OTA) and [here](/docs/mac-client-setup.md).
+
+### Deploying is super slow
+  - Try turning off wifi on your laptop and use ethernet instead.
+  - Try moving to somewhere else in the office, a conference room or the kitchen. Might be an access point/network problem.
+  - If nothing seems to help, consider bringing the robot to the hardware team. He might have a bad antenna.
+
+### My Victor won't turn on/stay on
+  - If only the top backpack light blinks when on the charger then the robot is low on battery and will not turn on by just being placed on the charger
+  - First turn the robot on with the backpack button and all the lights should turn on as normal
+  - Quickly place the robot on the charger. It should stay on at this point and begin charging
+  - Leave the robot on the charger for ~30 minutes
+
+### How do I set a console vars and set console functions on my robot?
+
+Open the web server (see above) and look for "console vars/funcs".
+
+### `victor_stop`/`victor_restart` hangs with `stopping <number>...` when trying to kill one of the processes
+  - Manually kill the process with `ssh root@<robot-ip> kill -9 <number>`
   - Run `victor_stop` to ensure the rest of the processes are stopped
   
-* One of the processes crashed/aborted and the stack trace has no symbols, how do I get symbols for the trace?
+### One of the processes crashed/aborted and the stack trace has no symbols, how do I get symbols for the trace?
+
   - Manually deploy the full libraries (with symbols) to the robot; they are located in `_build/vicos/<Debug/Release>/lib/*.so.full`
   - `scp _build/vicos/<Debug/Release>/lib/<one_or_more_of_the_libraries>.so.full /anki/lib/<one_or_more_of_the_libraries>.so`
   - Reproduce the crash and you should now see symbols
   
-* How do I do performance analysis/benchmarking on robot?
+### How do I do performance analysis/benchmarking on robot?
   - Use simpleperf to generate list of highest overhead functions in a process by running [`project/victor/simpleperf/HOW-simpleperf.sh`](/project/victor/simpleperf/HOW-simpleperf.sh)
   - If the script fails with the error: `[native_lib_dir] "./project/victor/simpleperf/symbol_cache" is not a dir`, cd into `./project/victor/simpleperf/` and run `make_symbol_cache.sh`
   - Use inferno to generate a flame graph of call hierarchies by running [`project/victor/simpleperf/HOW-inferno.sh`](/project/victor/simpleperf/HOW-inferno.sh)
   - By default both scripts run on the engine process, `cozmoengined`. Change this by prepending `ANKI_PROFILE_PROCNAME="<name_of_process>"` to the command to run the script. The other two process names are `victor_animator` and `robot_supervisor`
   - To see overall cpu load per process run `top -m 10`
   
-* Victor won't turn on, the top backpack light blinks orange/red
-  - Victor has low battery, turn Victor off and turn back on with the backpack button. Put Victor on the charger and the lights should return to normal multicolor or green, leave on charger for ~30 minutes
-  
-* `Sending Mode Change ...` or `spine_header ...` errors continually spam in the logs
+### `Sending Mode Change ...` or `spine_header ...` errors continually spam in the logs
   - Ensure you have deployed correctly built code otherwise Syscon and robot process are likely incompatible, give to [Al](https://ankiinc.atlassian.net/wiki/display/~Al.Chaussee) or [Kevin](https://ankiinc.atlassian.net/wiki/display/~kevin) to have firmware flashed
   
-* I can't connect or ping Victor, he doesn't seem to be connected to wifi
-  - Use the companion app, Chewie, to configure Victor's WiFi
-
-* Deploying is super slow
-  - Try turning off wifi on your laptop and use ethernet instead
-  - Run `victor_stop` before deploying
-  - Try moving to somewhere else in the office, a conference room or the kitchen. Might be an access point/network problem
-  - If nothing seems to help consider bringing to HW team, could be a bad antenna
-  
-* Deploying to the robot fails (possibly complains about out of disk space?)
+### Deploying to the robot fails (possibly complains about out of disk space?)
   - You can safely remove the cache and persistent folders with `ssh <robot-ip> rm -rf /data/data/com.anki.victor/cache /data/data/com.anki.victor/persistent`
   - If this isn't enough, in the shell you can check disk usage with `df` to list percentage of space each section has free, you should only care about the `/` and `/data` sections. The percentage indicates how much space the section is using out of how much total space it has.
   - You can then inspect space usage with `du -h /anki` which will list disk usage of all directories in `/anki`. Most things that get deployed live in `/anki`. Files that get generated at run-time may be stored in `/data/data/com.anki.victor`.
@@ -56,14 +62,18 @@ rsync: failed to connect to 192.168.42.251: Connection refused (61)
 rsync error: error in socket IO (code 10) at /BuildRoot/Library/Caches/com.apple.xbs/Sources/rsync/rsync-51/rsync/clientserver.c(106) [sender=2.6.9]
 ```
   
-* How do I run unit tests
+### How do I run unit tests?
   - https://ankiinc.atlassian.net/wiki/spaces/VD/pages/149363555/Victor+Unit+Tests
 
-* I get permission denied during build `error: can't exec 'victor/_build/mac/Debug-Xcode/launch-c' (Permission denied)`
+### I get permission denied during build `error: can't exec 'victor/_build/mac/Debug-Xcode/launch-c' (Permission denied)`
   - `chmod u=rwx victor/_build/mac/Debug-Xcode/launch-c`
   - `chmod u=rwx victor/_build/mac/Debug-Xcode/launch-cxx`
 
-* To check the battery level:
+### To check the battery level:
+
+Open the engine (8888) web server (see above instructions) and click the `ENGINE` button.
+
+Or: 
    1. Place Victor on charger
    1. Double click his back button
    1. Raise and lower the lift the full way to enter the debug screen
@@ -72,11 +82,11 @@ rsync error: error in socket IO (code 10) at /BuildRoot/Library/Caches/com.apple
    1. Use the button to cycle through the various face screens
    1. The second screen has battery like `BATT: 4.18V`
 
-* Webots Firewall Connection issues?
+### Webots Firewall Connection issues?
   - [Create a code signing certificate](/project/build-scripts/webots/FirewallCertificateInstructions.md)
   - [Run a sample script to initially sign](/simulator/README.md#firewall)
 
-* Can't generate Xcode project using `build-victor.sh -p mac -g Xcode -C` and getting error output like this
+### Can't generate Xcode project using `build-victor.sh -p mac -g Xcode -C` and getting error output like this
 ```
 -- The C compiler identification is unknown
 -- The CXX compiler identification is unknown
@@ -90,7 +100,7 @@ CMake Error at CMakeLists.txt:9 (project):
    	* Install command line tools
     * `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`# New Document
    
-* Can't generate Xcode project using `build-victor.sh -g Xcode -C` and getting error output like this
+### Can't generate Xcode project using `build-victor.sh -g Xcode -C` and getting error output like this
 ```
 CMake Error at lib/util/source/3rd/civetweb/cmake/FindWinSock.cmake:77 (if):
   if given arguments:
@@ -103,17 +113,11 @@ Call Stack (most recent call first):
 ```
 
   * you forgot `-p mac`
-  
-* My Victor won't turn on/stay on
-  - If only the top backpack light blinks when on the charger then the robot is low on battery and will not turn on by just being placed on the charger
-  - First turn the robot on with the backpack button and all the lights should turn on as normal
-  - Quickly place the robot on the charger. It should stay on at this point and begin charging
-  - Leave the robot on the charger for ~30 minutes
 
-* When profiling I see "...doesn't contain symbol table"
+### When profiling I see "...doesn't contain symbol table"
   - This is just a warning, there are no symbol tables for the .so files on the device, instead we use symbols from the symbol cache
 
-* How do I decipher this crash in the victor log
+### How do I decipher this crash in the victor log
 
 ```
 12-31 16:22:17.366  2534  2733 F libc    : Fatal signal 11 (SIGSEGV), code 1, fault addr 0x0 in tid 2733 (CozmoRunner)
@@ -149,5 +153,5 @@ to get:
 0x00273793: projects/victor/_build/vicos/Release/../../../engine/aiComponent/behaviorComponent/behaviorStack.cpp:123
 0x002751ed: projects/victor/_build/vicos/Release/../../../engine/aiComponent/behaviorComponent/behaviorSystemManager.cpp:154
 ```
-* How do I increase the max files limit on macos Sierra and greater? (when seeing an error like `[Errno 24] Too many open files`)
+### How do I increase the max files limit on macos Sierra and greater? (when seeing an error like `[Errno 24] Too many open files`)
   - Follow instructions at https://gist.github.com/tombigel/d503800a282fcadbee14b537735d202c

@@ -1,6 +1,6 @@
 # victor
 
-`victor` is the _code name_ for the next iteration of the Cozmo product line. This repo contains code for the embedded firmware (syscon), robotics, animation and engine layers.
+`victor` is the _code name_ for the next iteration of the Cozmo product line. This repo contains code for the embedded firmware (syscon), robotics, animation, engine, and app layers.
 
 If you're looking for the embedded OS that runs on victor hardware, there is not much in the way of formal documentation yet, but you can start by looking at our repo for [vicos-oelinux](https://github.com/anki/vicos-oelinux).
 
@@ -62,10 +62,12 @@ If you're a developer, it is highly recommended that you check out the [Victor B
 1. To build for vicos (the default), ensure you are in the `victor` directory and run
 
     ```
-    victor_build
+    victor_build_debug
     ```
 
-    If this command fails for some reason, try running `project/victor/build-victor.sh -f -X`<sup>1</sup>.
+    If this command fails for some reason, try running `victor_build_debug -fX`<sup>1</sup>.
+    
+    Note that we often build in `release` mode, since `debug` mode is extremely slow on the robot. You can build in release by using `victor_build_release`.
 
 1. To build for mac, run
 
@@ -73,7 +75,7 @@ If you're a developer, it is highly recommended that you check out the [Victor B
     project/victor/build-victor.sh -p mac
     ```
 
-    If this command fails for some reason, try running `project/victor/build-victor.sh -p mac -f -X`<sup>1</sup>.
+    If this command fails for some reason, try running `project/victor/build-victor.sh -p mac -fX`<sup>1</sup>.
 
 1. If you want to force a 'clean' build, the brute-force method is to run
 
@@ -100,37 +102,39 @@ For a more thorough description of build options, run `project/victor/build-vict
 If your robot is >= 0.9.1 then it has a built-in ssh key. To interact with the robot you need to know its IP address and you must have the ssh key on your computer.
 
 1. Download the private key to `~/.ssh/id_rsa_victor_shared`
-```
-curl -sL -o ~/.ssh/id_rsa_victor_shared https://www.dropbox.com/s/mgxgdouo0id6j9m/id_rsa_victor_shared?dl=0
-chmod 600 ~/.ssh/id_rsa_victor_shared
-ssh-add -K ~/.ssh/id_rsa_victor_shared
-```
 
-If you're on macOS Sierra you may want to add the `ssh-add` line to your `.bashrc` or `.bash_profile` since adding to keychain with `-K` is broken in Sierra.
+    ```
+    curl -sL -o ~/.ssh/id_rsa_victor_shared https://www.dropbox.com/s/mgxgdouo0id6j9m/id_rsa_victor_shared?dl=0
+    chmod 600 ~/.ssh/id_rsa_victor_shared
+    ssh-add -K ~/.ssh/id_rsa_victor_shared
+    ```
+
+    If you're on macOS Sierra you may want to add the `ssh-add` line to your `.bashrc` or `.bash_profile` since adding to keychain with `-K` is broken in Sierra.
 
 1. Optionally create a configuration for your Victor robot in `~/.ssh/config`
-```
-Host 192.168.42.*
-  User root
-  IdentityFile ~/.ssh/id_rsa_victor_shared
-  StrictHostKeyChecking no
-```
 
-If you still get an `ssh` error that says "Too many authentication failures", try adding `IdentitiesOnly=yes` to the above entry.
+    ```
+    Host 192.168.42.*
+      User root
+      IdentityFile ~/.ssh/id_rsa_victor_shared
+      StrictHostKeyChecking no
+    ```
+
+    If you still get an `ssh` error that says "Too many authentication failures", try adding `IdentitiesOnly=yes` to the above entry.
 
 1. Build, deploy, and run commands as normal (See []()). You can specify the target robot with `-s` on most of the deploy and run commands or you can set the `ANKI_ROBOT_HOST` environment variable in your shell to a default host.
 
-```
-export ANKI_ROBOT_HOST="<ip address>"
-```
+    ```
+    export ANKI_ROBOT_HOST="<ip address>"
+    ```
 
 1. You can open an ssh session on the robot as follows:
 
-```
-ssh root@${ANKI_ROBOT_HOST}
-```
+    ```
+    ssh root@${ANKI_ROBOT_HOST}
+    ```
 
-or execute remote commands. e.g. `ssh root@${ANKI_ROBOT_HOST} "logcat -vthreadtime"`
+    or execute remote commands. e.g. `ssh root@${ANKI_ROBOT_HOST} "logcat -vthreadtime"`
 
 
 ### Connecting over WiFi
@@ -139,44 +143,39 @@ Follow the instructions at:
 
 [Victor OTA udpate using Mac-Client tool](https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/323321886/Victor+OTA+update+using+Mac-Client+tool#VictorOSand\OTAupdateusingMac-Clienttool-OTA) to setup WiFi on your robot.
 
-## Getting Victor's IP address
+### Getting Victor's IP address
 
 1. Power on your robot and wait until the eyes appear on the screen.
-1. Place robot on charger
-1. Double click his back button
-1. Raise and lower the lift the full way
+1. Place robot on charger.
+1. Double click his back button.
+1. Raise the lift fully, then lower it fully.
+1. The robot's IP address will appear in green if connected to a network. If the IP address appears in red, then the robot is not properly connected. Follow the steps [here](https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/323321886/Victor+OTA+update+using+Mac-Client+tool#VictorOSand\OTAupdateusingMac-Clienttool-OTA) to get him connected to a network.
 
-## Deploying to a particular robot
+### Deploying to a particular robot
 
 1. For convenience when working with multiple robots, or if you just want to be sure you're targeting a specific robot, almost all of the commands accept a robot IP with the -s option. For example:
 
     ```
-    victor_deploy_release -s 192.168.43.45
+    victor_deploy_debug -s 192.168.43.45
     ```
 
-    will deploy the release version to the robot at 192.168.43.45.
+    will deploy the debug version to the robot at 192.168.43.45.
 
 ### Deploying binaries and assets to physical robot
 
 1. Run `victor_stop` to stop the processes running on the robot.
 
-1. Run `victor_deploy` to deploy the binaries and asset files to the robot.
-
+1. Run `victor_deploy_debug` to deploy the binaries and asset files to the robot. To deploy the release version, use `victor_deploy_release`.
+ 
 1. If the operation times out, power cycle the robot and try again.
-
-1. If you want to deploy the debug build (you should not normally have to do this), run
-
-    ```
-    ANKI_BUILD_TYPE=Debug ./project/victor/scripts/deploy.sh
-    ```
 
 ## Running Victor
 
 Once the binaries and assets are deployed, you can run everything by running `victor_start`.
 
-You can view output from all processes by running `victor_log`.
+You can view output from all processes by running `victor_log`. You can save the output to file while also viewing the live output by running `victor_log | tee log.txt`.
 
-## Connect to Victor with Webots
+### Connect to Victor with Webots
 
 Note that we have floating licenses for Webots. Check with your friendly producers to see if it's OK for you to install and use Webots, since you may be taking a license from someone who really needs it. 
 
@@ -186,19 +185,13 @@ Note that we have floating licenses for Webots. Check with your friendly produce
 
 1. Run the world to connect to the robot. The processes must be fully up and running before connecting with webots. If in doubt, stop the world and run `victor_restart` first.
 
-## Running Victor in Webots (simulated robot)
+### Running Victor in Webots (simulated robot)
 
 See [simulator/README.md](/simulator/README.md).
 
 ## Updating syscon (body firmware)
 
-Most developers shouldn't have to do this. Better to ask someone in hardware or Al or Kevin Y.
-
-1. To build syscon, run `vmake.sh` in [robot/](/robot). 
-
-1. If the robot has previously run the robot process since last boot then you'll need to first reboot the robot. 
-
-1. Run [dfu.sh](/robot/dfu.sh) in [robot/](/robot). There should be a bunch of messages indicating transfer of data. Might need to run twice.
+Most developers shouldn't have to do this. If you think you need to update your syscon firmware, check with [Al](https://ankiinc.atlassian.net/wiki/display/~Al.Chaussee), [Kevin Y](https://ankiinc.atlassian.net/wiki/display/~kevin), or [Matt M](https://ankiinc.atlassian.net/wiki/display/~matt.michini).
 
 ## Having trouble?
 
@@ -207,3 +200,5 @@ Check out the [Frequently Asked Questions](/docs/FAQ.md) page. When you get new 
 [Victor Build Setup](https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/221151299/Victor+Build+Setup)
 
 [Victor DVT3 ssh connection](https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/368476326/Victor+DVT3+ssh+connection)
+
+[Victor DVT3 OTA Instructions](https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/323321886/Victor+OTA+update+using+Mac-Client+tool#VictorOSand\OTAupdateusingMac-Clienttool-OTA)
