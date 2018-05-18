@@ -52,6 +52,9 @@ namespace { // "Private members"
 
   PowerState desiredPowerMode_;
 
+  // Flag to prevent spamming of unexepected power mode warning
+  bool reportUnexpectedPowerMode_ = false;
+
   // Time since the desired power mode was last set
   TimeStamp_t lastPowerSetModeTime_ms_ = 0;
 
@@ -383,13 +386,18 @@ Result HAL::Step(void)
 
     // Print warning if power mode is unexpected
     const HAL::PowerState currPowerMode = PowerGetMode();
-    if ((currPowerMode != desiredPowerMode_) && (lastPowerSetModeTime_ms_ > 0)) {
-      if (now_ms - lastPowerSetModeTime_ms_ > MAX_POWER_MODE_SWITCH_TIME_MS[desiredPowerMode_]) {
+    if (currPowerMode != desiredPowerMode_) {
+      if ( ((lastPowerSetModeTime_ms_ == 0) && reportUnexpectedPowerMode_) || 
+           ((lastPowerSetModeTime_ms_ > 0) && ((now_ms - lastPowerSetModeTime_ms_ > MAX_POWER_MODE_SWITCH_TIME_MS[desiredPowerMode_])))
+           ) {
         AnkiWarn("HAL.Step.UnexpectedPowerMode", 
                  "Curr mode: %u, Desired mode: %u, now: %ums, lastSetModeTime: %ums, lastH2BSendTime: %ums",
                  currPowerMode, desiredPowerMode_, now_ms, lastPowerSetModeTime_ms_, lastH2BSendTime_ms_);
         lastPowerSetModeTime_ms_ = 0;  // Reset time to avoid spamming warning
+        reportUnexpectedPowerMode_ = false;
       }
+    } else {
+      reportUnexpectedPowerMode_ = true;
     }
 
     struct ContactData* ccc_response = ccc_text_response();
@@ -593,6 +601,7 @@ void HAL::Shutdown()
 
 void HAL::PowerSetMode(const PowerState state)
 {
+  AnkiInfo("HAL.PowerSetMode", "%d", state);
   desiredPowerMode_ = state;
   lastPowerSetModeTime_ms_ = HAL::GetTimeStamp();
 }
