@@ -6,11 +6,22 @@
   "animTriggers" : ["ChargerReaction"],
   "num_loops" : 1,
   "playOnChargerWithoutBody" : true,
-
+  
   "wantsToBeActivatedCondition": {
-    "conditionType" : "ObjectInitialDetection",
-    "objectTypes" : ["Charger_Basic"],
-    "firstTimeOnly" : true
+    "conditionType": "Compound",
+    "and": [
+      {
+        "conditionType" : "ObjectInitialDetection",
+        "objectTypes" : ["Charger_Basic"],
+        "firstTimeOnly" : true
+      },
+      {
+        "conditionType": "Compound",
+        "not": {
+          "conditionType": "CarryingCube"
+        }
+      }
+    ]
   }
 
 }

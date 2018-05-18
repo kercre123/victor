@@ -125,6 +125,14 @@ WorldInfo {
       bounce 0
       softCFM 0.1
     }
+    DEF CHARGER_TRACK ContactProperties {
+      material1 "charger"
+      material2 "highfriction"
+      coulombFriction [
+        .5
+      ]
+      bounce 0
+    }
   ]
 } 
 

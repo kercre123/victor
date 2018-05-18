@@ -1,10 +1,10 @@
 /**
-* File: stateConceptStrategyFactory.cpp
+* File: beiConditionFactory.cpp
 *
 * Author: Kevin M. Karol
 * Created: 6/03/17
 *
-* Description: Factory for creating wantsToRunStrategy
+* Description: Factory for creating beiConditions
 *
 * Copyright: Anki, Inc. 2017
 *
@@ -15,6 +15,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionBatteryLevel.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionBeatDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionBehaviorTimer.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionCarryingCube.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCliffDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCompound.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionConsoleVar.h"
@@ -166,195 +167,200 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     return GetCustomCondition(config, ownerDebugLabel);
   }
   
-  BEIConditionType strategyType = IBEICondition::ExtractConditionType(config);
+  BEIConditionType conditionType = IBEICondition::ExtractConditionType(config);
   
-  IBEIConditionPtr strategy = nullptr;
+  IBEIConditionPtr condition = nullptr;
 
-  switch (strategyType) {
+  switch (conditionType) {
     case BEIConditionType::BatteryLevel:
     {
-      strategy = std::make_shared<ConditionBatteryLevel>(config);
+      condition = std::make_shared<ConditionBatteryLevel>(config);
       break;
     }
     case BEIConditionType::BeatDetected:
     {
-      strategy = std::make_shared<ConditionBeatDetected>(config);
+      condition = std::make_shared<ConditionBeatDetected>(config);
       break;
     }
     case BEIConditionType::BehaviorTimer:
     {
-      strategy = std::make_shared<ConditionBehaviorTimer>(config);
+      condition = std::make_shared<ConditionBehaviorTimer>(config);
+      break;
+    }
+    case BEIConditionType::CarryingCube:
+    {
+      condition = std::make_shared<ConditionCarryingCube>(config);
       break;
     }
     case BEIConditionType::Compound:
     {
-      strategy = std::make_shared<ConditionCompound>(config);
+      condition = std::make_shared<ConditionCompound>(config);
       break;
     }
     case BEIConditionType::ConsoleVar:
     {
-      strategy = std::make_shared<ConditionConsoleVar>(config);
+      condition = std::make_shared<ConditionConsoleVar>(config);
       break;
     }
     case BEIConditionType::Emotion:
     {
-      strategy = std::make_shared<ConditionEmotion>(config);
+      condition = std::make_shared<ConditionEmotion>(config);
       break;
     }
     case BEIConditionType::EyeContact:
     {
-      strategy = std::make_shared<ConditionEyeContact>(config);
+      condition = std::make_shared<ConditionEyeContact>(config);
       break;
     }
     case BEIConditionType::FacePositionUpdated:
     {
-      strategy = std::make_shared<ConditionFacePositionUpdated>(config);
+      condition = std::make_shared<ConditionFacePositionUpdated>(config);
       break;
     }
     case BEIConditionType::FeatureGate:
     {
-      strategy = std::make_shared<ConditionFeatureGate>(config);
+      condition = std::make_shared<ConditionFeatureGate>(config);
       break;
     }
     case BEIConditionType::MotionDetected:
     {
-      strategy = std::make_shared<ConditionMotionDetected>(config);
+      condition = std::make_shared<ConditionMotionDetected>(config);
       break;
     }
     case BEIConditionType::ObjectInitialDetection:
     {
-      strategy = std::make_shared<ConditionObjectInitialDetection>(config);
+      condition = std::make_shared<ConditionObjectInitialDetection>(config);
       break;
     }
     case BEIConditionType::ObjectKnown:
     {
-      strategy = std::make_shared<ConditionObjectKnown>(config);
+      condition = std::make_shared<ConditionObjectKnown>(config);
       break;
     }
     case BEIConditionType::ObjectMoved:
     {
-      strategy = std::make_shared<ConditionObjectMoved>(config);
+      condition = std::make_shared<ConditionObjectMoved>(config);
       break;
     }
     case BEIConditionType::ObjectPositionUpdated:
     {
-      strategy = std::make_shared<ConditionObjectPositionUpdated>(config);
+      condition = std::make_shared<ConditionObjectPositionUpdated>(config);
       break;
     }
     case BEIConditionType::ObstacleDetected:
     {
-      strategy = std::make_shared<ConditionObstacleDetected>(config);
+      condition = std::make_shared<ConditionObstacleDetected>(config);
       break;
     }
     case BEIConditionType::PetInitialDetection:
     {
-      strategy = std::make_shared<ConditionPetInitialDetection>(config);
+      condition = std::make_shared<ConditionPetInitialDetection>(config);
       break;
     }
     case BEIConditionType::ProxInRange:
     {
-      strategy = std::make_shared<ConditionProxInRange>(config);
+      condition = std::make_shared<ConditionProxInRange>(config);
       break;
     }
     case BEIConditionType::RobotPlacedOnSlope:
     {
-      strategy = std::make_shared<ConditionRobotPlacedOnSlope>(config);
+      condition = std::make_shared<ConditionRobotPlacedOnSlope>(config);
       break;
     }
     case BEIConditionType::RobotShaken:
     {
-      strategy = std::make_shared<ConditionRobotShaken>(config);
+      condition = std::make_shared<ConditionRobotShaken>(config);
       break;
     }
     case BEIConditionType::RobotTouched:
     {
-      strategy = std::make_shared<ConditionRobotTouched>(config);
+      condition = std::make_shared<ConditionRobotTouched>(config);
       break;
     }
     case BEIConditionType::SimpleMood:
     {
-      strategy = std::make_shared<ConditionSimpleMood>(config);
+      condition = std::make_shared<ConditionSimpleMood>(config);
       break;
     }
     case BEIConditionType::TimerInRange:
     {
-      strategy = std::make_shared<ConditionTimerInRange>(config);
+      condition = std::make_shared<ConditionTimerInRange>(config);
       break;
     }
     case BEIConditionType::TimedDedup:
     {
-      strategy = std::make_shared<ConditionTimedDedup>(config);
+      condition = std::make_shared<ConditionTimedDedup>(config);
       break;
     }
     case BEIConditionType::TrueCondition:
     {
-      strategy = std::make_shared<ConditionTrue>(config);
+      condition = std::make_shared<ConditionTrue>(config);
       break;
     }
     case BEIConditionType::TriggerWordPending:
     {
-      strategy = std::make_shared<ConditionTriggerWordPending>(config);
+      condition = std::make_shared<ConditionTriggerWordPending>(config);
       break;
     }
     case BEIConditionType::UnexpectedMovement:
     {
-      strategy = std::make_shared<ConditionUnexpectedMovement>(config);
+      condition = std::make_shared<ConditionUnexpectedMovement>(config);
       break;
     }
     case BEIConditionType::UserIntentPending:
     {
-      strategy = std::make_shared<ConditionUserIntentPending>(config);
+      condition = std::make_shared<ConditionUserIntentPending>(config);
       break;
     }
     case BEIConditionType::OnCharger:
     {
-      strategy = std::make_shared<ConditionOnCharger>(config);
+      condition = std::make_shared<ConditionOnCharger>(config);
       break;
     }
     case BEIConditionType::OnChargerPlatform:
     {
-      strategy = std::make_shared<ConditionOnChargerPlatform>(config);
+      condition = std::make_shared<ConditionOnChargerPlatform>(config);
       break;
     }
     case BEIConditionType::OffTreadsState:
     {
-      strategy = std::make_shared<ConditionOffTreadsState>(config);
+      condition = std::make_shared<ConditionOffTreadsState>(config);
       break;
     }
     case BEIConditionType::CliffDetected:
     {
-      strategy = std::make_shared<ConditionCliffDetected>(config);
+      condition = std::make_shared<ConditionCliffDetected>(config);
       break;
     }
     case BEIConditionType::CubeTapped:
     {
-      strategy = std::make_shared<ConditionCubeTapped>(config);
+      condition = std::make_shared<ConditionCubeTapped>(config);
       break;
     }
     case BEIConditionType::UnitTestCondition:
     {
-      strategy = std::make_shared<ConditionUnitTest>(config);
+      condition = std::make_shared<ConditionUnitTest>(config);
       break;
     }
     
     case BEIConditionType::Lambda:
     {
-      DEV_ASSERT(false, "BEIConditionFactory.CreateWantsToRunStrategy.CantCreateLambdaFromConfig");
+      DEV_ASSERT(false, "BEIConditionFactory.CreateBeiCondition.CantCreateLambdaFromConfig");
       break;
     }
     case BEIConditionType::Invalid:
     {
-      DEV_ASSERT(false, "BEIConditionFactory.CreateWantsToRunStrategy.InvalidType");
+      DEV_ASSERT(false, "BEIConditionFactory.CreateBeiCondition.InvalidType");
       break;
     }
     
   }
   
-  if( (strategy != nullptr) && !ownerDebugLabel.empty() ) {
-    strategy->SetOwnerDebugLabel( ownerDebugLabel );
+  if( (condition != nullptr) && !ownerDebugLabel.empty() ) {
+    condition->SetOwnerDebugLabel( ownerDebugLabel );
   }
   
-  return strategy;
+  return condition;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
