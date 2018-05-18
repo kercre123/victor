@@ -36,16 +36,8 @@
     "AnimName": "ag_audio_test"
   },
   {
-    "CladEvent": "BeQuiet_GetIn",
-    "AnimName": "ag_gotosleep_getin"
-  },
-  {
-    "CladEvent": "BeQuiet_GetOut",
-    "AnimName": "ag_gotosleep_wakeup"
-  },
-  {
-    "CladEvent": "BeQuiet_Loop",
-    "AnimName": "ag_gotosleep_sleeping"
+    "CladEvent": "BeQuiet",
+    "AnimName": "ag_vc_bequiet_01"
   },
   {
     "CladEvent": "DEPRECATED_BlockReact",
@@ -1340,15 +1332,7 @@
     "AnimName": "ag_cubetapping_getout"
   },
   {
-    "CladEvent": "ShutUp_GetIn",
-    "AnimName": "ag_gotosleep_getin"
-  },
-  {
-    "CladEvent": "ShutUp_GetOut",
-    "AnimName": "ag_gotosleep_wakeup"
-  },
-  {
-    "CladEvent": "ShutUp_Loop",
-    "AnimName": "ag_gotosleep_sleeping"
+    "CladEvent": "ShutUp",
+    "AnimName": "ag_vc_shutup"
   }
 ]

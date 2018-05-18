@@ -13,7 +13,7 @@
       "behaviorName"     : "QuietGetInInternal",
       "behaviorClass"    : "AnimSequence",
       "playOnChargerWithoutBody": true,
-      "animTriggers"     : ["BeQuiet_GetIn"]
+      "animTriggers"     : ["BeQuiet"]
     },
     {
       "behaviorName"     : "PutHeadDownInternal",

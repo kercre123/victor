@@ -4,6 +4,8 @@
 
   "interruptActiveBehavior": true,
 
+  "resetCooldownOnDeactivation": true,
+
   "behaviors": [
     {
       "behavior"    : "ObservingHeadDownInternal",

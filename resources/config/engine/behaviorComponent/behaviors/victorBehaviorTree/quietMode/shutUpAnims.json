@@ -13,7 +13,7 @@
       "behaviorName"     : "ShutUpGetInInternal",
       "behaviorClass"    : "AnimSequence",
       "playOnChargerWithoutBody": true,
-      "animTriggers"     : ["ShutUp_GetIn"]
+      "animTriggers"     : ["ShutUp"]
     },
     {
       "behaviorName"     : "PutHeadDownInternal",
