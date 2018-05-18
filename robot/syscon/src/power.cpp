@@ -150,13 +150,15 @@ void Power::tick(void) {
   PowerMode desired = desiredState;
 
   if (currentState != desired) {
-    // Disable optical sensors
+    // Power reduction code
     if (currentState == POWER_ACTIVE) {
       Opto::stop();
       Encoders::stop();
+      Mics::reduce(true);
     } else if (desired == POWER_ACTIVE) {
       Encoders::init();
       Opto::start();
+      Mics::reduce(false);
     }
 
     currentState = desired;
