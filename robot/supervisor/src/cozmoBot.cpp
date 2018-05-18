@@ -42,6 +42,8 @@ namespace Anki {
         // Main cycle time errors
         u32 mainTooLongCnt_ = 0;
         u32 mainTooLateCnt_ = 0;
+        u32 maxMainTooLongTime_ = 0;
+        u32 maxMainTooLateTime_ = 0;
         u32 avgMainTooLongTime_ = 0;
         u32 avgMainTooLateTime_ = 0;
         u32 lastCycleStartTime_ = 0;
@@ -126,6 +128,9 @@ namespace Anki {
             ++mainTooLateCnt_;
             EventStop(EventType::MAIN_CYCLE_TOO_LATE);
             avgMainTooLateTime_ = (u32)((f32)(avgMainTooLateTime_ * (mainTooLateCnt_ - 1) + timeBetweenCycles)) / mainTooLateCnt_;
+            if (maxMainTooLateTime_ < timeBetweenCycles) {
+              maxMainTooLateTime_ = timeBetweenCycles;
+            }
           }
         }
 
@@ -264,6 +269,9 @@ namespace Anki {
           ++mainTooLongCnt_;
           EventStop(EventType::MAIN_CYCLE_TOO_LONG);
           avgMainTooLongTime_ = (u32)((f32)(avgMainTooLongTime_ * (mainTooLongCnt_ - 1) + cycleTime)) / mainTooLongCnt_;
+          if (maxMainTooLongTime_ < cycleTime) {
+            maxMainTooLongTime_ = cycleTime;
+          }
         }
         lastCycleStartTime_ = cycleStartTime;
 
@@ -272,13 +280,15 @@ namespace Anki {
         if ((mainTooLateCnt_ > 0 || mainTooLongCnt_ > 0) &&
             (cycleEndTime - lastMainCycleTimeErrorReportTime_ > MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC)) {
 
-          AnkiWarn( "CozmoBot.MainCycleTimeError", "TooLateCount: %d, avgTooLateTime: %d us, tooLongCount: %d, avgTooLongTime: %d us",
-                   mainTooLateCnt_, avgMainTooLateTime_, mainTooLongCnt_, avgMainTooLongTime_);
+          AnkiWarn( "CozmoBot.MainCycleTimeError", "TooLate: %d tics, avg: %d us, max: %d us, TooLong: %d tics, avg: %d us, max: %d us",
+                   mainTooLateCnt_, avgMainTooLateTime_, maxMainTooLateTime_, mainTooLongCnt_, avgMainTooLongTime_, maxMainTooLongTime_);
 
           mainTooLateCnt_ = 0;
           avgMainTooLateTime_ = 0;
+          maxMainTooLateTime_ = 0;
           mainTooLongCnt_ = 0;
           avgMainTooLongTime_ = 0;
+          maxMainTooLongTime_ = 0;
 
           lastMainCycleTimeErrorReportTime_ = cycleEndTime;
         }
