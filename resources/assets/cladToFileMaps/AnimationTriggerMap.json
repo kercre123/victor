@@ -36,16 +36,8 @@
     "AnimName": "ag_audio_test"
   },
   {
-    "CladEvent": "BeQuiet_GetIn",
-    "AnimName": "ag_gotosleep_getin"
-  },
-  {
-    "CladEvent": "BeQuiet_GetOut",
-    "AnimName": "ag_gotosleep_wakeup"
-  },
-  {
-    "CladEvent": "BeQuiet_Loop",
-    "AnimName": "ag_gotosleep_sleeping"
+    "CladEvent": "BeQuiet",
+    "AnimName": "ag_vc_bequiet_01"
   },
   {
     "CladEvent": "DEPRECATED_BlockReact",
@@ -286,6 +278,14 @@
   {
     "CladEvent": "DriveStartLaunch",
     "AnimName": "ag_driving01_startdriving"
+  },
+  {
+    "CladEvent": "ExploringLookLeft",
+    "AnimName": "ag_vc_wakeword_turnleft_45degrees"
+  },
+  {
+    "CladEvent": "ExploringLookRight",
+    "AnimName": "ag_vc_wakeword_turnright_45degrees"
   },
   {
     "CladEvent": "DEPRECATED_FacePlantRoll",
@@ -972,6 +972,18 @@
     "AnimName": "ag_surprise"
   },
   {
+    "CladEvent": "TextToSpeechGetIn",
+    "AnimName": "ag_texttospeech_getin_01"
+  },
+  {
+    "CladEvent": "TextToSpeechGetLoop",
+    "AnimName": "ag_texttospeech_loop_01"
+  },
+  {
+    "CladEvent": "TextToSpeechGetOut",
+    "AnimName": "ag_texttospeech_getout_01"
+  },
+  {
     "CladEvent": "TimerCancelTimer",
     "AnimName": "ag_timer_timecancel"
   },
@@ -1070,6 +1082,10 @@
   {
     "CladEvent": "DEPRECATED_LookDownForLaser",
     "AnimName": "ag_vc_laser_lookdown"
+  },
+  {
+    "CladEvent": "ReactToPutDown",
+    "AnimName": "ag_generic_look_up_idle"
   },
   {
     "CladEvent": "ANTICIPATED_ReactToSoundOffChargerAsleepAmbient",
@@ -1328,15 +1344,7 @@
     "AnimName": "ag_cubetapping_getout"
   },
   {
-    "CladEvent": "ShutUp_GetIn",
-    "AnimName": "ag_gotosleep_getin"
-  },
-  {
-    "CladEvent": "ShutUp_GetOut",
-    "AnimName": "ag_gotosleep_wakeup"
-  },
-  {
-    "CladEvent": "ShutUp_Loop",
-    "AnimName": "ag_gotosleep_sleeping"
+    "CladEvent": "ShutUp",
+    "AnimName": "ag_vc_shutup"
   }
 ]

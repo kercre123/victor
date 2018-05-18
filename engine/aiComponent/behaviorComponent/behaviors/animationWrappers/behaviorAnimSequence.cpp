@@ -27,6 +27,7 @@ static const char* kAnimTriggerKey = "animTriggers";
 static const char* kAnimNamesKey   = "animNames";
 static const char* kLoopsKey       = "num_loops";
 static const char* kSupportCharger = "playOnChargerWithoutBody";
+static const char* kTracksToLock   = "tracksToLock";
 }
 
 
@@ -77,6 +78,22 @@ BehaviorAnimSequence::BehaviorAnimSequence(const Json::Value& config, bool trigg
   _iConfig.numLoops = config.get(kLoopsKey, 1).asInt();
 
   _iConfig.activatableOnCharger = config.get(kSupportCharger, false).asBool();
+  
+  _iConfig.tracksToLock = (u8)AnimTrackFlag::NO_TRACKS;
+  if( !config[kTracksToLock].isNull() ) {
+    for( const auto& trackStr : config[kTracksToLock] ) {
+      if( ANKI_VERIFY(trackStr.isString(), "BehaviorAnimSequence.Ctor.TrackNotString", "Must be array of track strings" ) ) {
+        AnimTrackFlag flag = AnimTrackFlag::NO_TRACKS;
+        if( ANKI_VERIFY( AnimTrackFlagFromString(trackStr.asString(), flag),
+                         "BehaviorAnimSequence.Ctor.InvalidTrack",
+                         "Track '%s' is not a track", trackStr.asString().c_str() ) )
+        {
+          _iConfig.tracksToLock = _iConfig.tracksToLock | static_cast<u8>(flag);
+        }
+      }
+    }
+  }
+  
 }
   
   
@@ -88,6 +105,7 @@ void BehaviorAnimSequence::GetBehaviorJsonKeys(std::set<const char*>& expectedKe
     kAnimNamesKey,
     kLoopsKey,
     kSupportCharger,
+    kTracksToLock,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -212,12 +230,12 @@ u8 BehaviorAnimSequence::GetTracksToLock() const
     const auto& robotInfo = GetBEI().GetRobotInfo();
     if( robotInfo.IsOnChargerPlatform() ) {
       // we are supporting the charger and are on it, so lock out the body
-      return (u8)AnimTrackFlag::BODY_TRACK;
+      return (u8)AnimTrackFlag::BODY_TRACK | _iConfig.tracksToLock;
     }
   }
 
-  // otherwise nothing to lock
-  return (u8)AnimTrackFlag::NO_TRACKS;   
+  // otherwise whatever was specified in config
+  return _iConfig.tracksToLock;
 }
 
 

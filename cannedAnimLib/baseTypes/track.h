@@ -113,7 +113,10 @@ public:
   RobotInterface::EngineToRobot* GetCurrentStreamingMessage(const TimeStamp_t relativeStreamingTime_ms) const;
   
   // Get a reference to the current KeyFrame in the track.
-  FRAME_TYPE& GetCurrentKeyFrame() const { return *_frameIter; }
+  FRAME_TYPE& GetCurrentKeyFrame() const {
+    ANKI_VERIFY(HasFramesLeft(),"Track.GetCurrentKeyframe.NoFramesLeft","");
+    return *_frameIter;
+  }
   
   // Get pointer to next keyframe. Returns nullptr if the track is on the last frame.
   const FRAME_TYPE* GetNextKeyFrame() const;

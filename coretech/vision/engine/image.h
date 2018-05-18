@@ -382,6 +382,8 @@ namespace Vision {
   public:
     ImageRGBA();
     ImageRGBA(s32 nrows, s32 ncols); // allocates
+    ImageRGBA(s32 nrows, s32 ncols, const PixelRGBA& fillValue); // allocates
+
     ImageRGBA(const ImageBase<PixelRGBA>& imageBase) : ImageBase<PixelRGBA>(imageBase) { }
     
     // No allocation, just wraps a header around given data.

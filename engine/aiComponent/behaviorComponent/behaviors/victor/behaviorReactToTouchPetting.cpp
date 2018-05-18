@@ -100,9 +100,10 @@ BehaviorReactToTouchPetting::BehaviorReactToTouchPetting(const Json::Value& conf
   _nonBlissTimeout = JsonTools::ParseFloat(config, kTimeTilNonBlissGetoutKey,kDebugStr);
   _minNumPetsToAdvanceBliss = JsonTools::ParseInt8(config, kNumPetsToAdvanceBlissKey,kDebugStr);
   
-  SubscribeToTags({
-    ExternalInterface::MessageEngineToGameTag::TouchButtonEvent
-  });
+  SubscribeToTags({{
+    ExternalInterface::MessageEngineToGameTag::TouchButtonEvent,
+    ExternalInterface::MessageEngineToGameTag::RobotFallingEvent,
+  }});
 }
 
 
@@ -142,8 +143,17 @@ void BehaviorReactToTouchPetting::AlwaysHandleInScope(const EngineToGameEvent& e
         _checkForTimeoutTimeBliss = touchTimeRelease + _blissTimeout;
         _checkForTimeoutTimeNonbliss = touchTimeRelease + _nonBlissTimeout;
       }
-    }
       break;
+    }
+    case ExternalInterface::MessageEngineToGameTag::RobotFallingEvent:
+    {
+      if(IsActivated()) {
+        CancelDelegates();
+        ResetTouchState();
+        CancelSelf();
+      }
+      break;
+    }
     default: {
       PRINT_NAMED_ERROR("BehaviorReactToTouchPetting.AlwaysHandle.InvalidEvent",
                         "%s", MessageEngineToGameTagToString(tag));
@@ -348,6 +358,13 @@ void BehaviorReactToTouchPetting::BehaviorUpdate()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToTouchPetting::OnBehaviorDeactivated()
+{
+  ResetTouchState();
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToTouchPetting::ResetTouchState()
 {
   _currResponseState              = Done;
   _numPressesAtCurrentBlissLevel  = 0;

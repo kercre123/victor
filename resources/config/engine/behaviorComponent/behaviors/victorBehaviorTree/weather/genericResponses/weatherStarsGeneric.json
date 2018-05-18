@@ -2,7 +2,7 @@
   "behaviorClass": "DisplayWeather",
   "behaviorID" : "WeatherStarsGeneric",
 
-  "animationName" : "",
+  "animationName" : "anim_weather_stars_01",
   "imageLayouts" : [
     "WeatherCondStars_01"
   ],

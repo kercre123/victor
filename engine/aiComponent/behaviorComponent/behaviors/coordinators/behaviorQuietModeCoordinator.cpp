@@ -33,6 +33,8 @@ namespace {
   const char* const kBehaviorsKey         = "behaviors";
   const char* const kBehaviorKey          = "behavior";
   const char* const kAudioAllowedKey      = "audioAllowed";
+
+  const float kAccelMagnitudeShakingStartedThreshold = 16000.f;
 }
   
 CONSOLE_VAR_EXTERN(float, kTimeMultiplier);
@@ -177,6 +179,12 @@ void BehaviorQuietModeCoordinator::BehaviorUpdate()
   // exit quiet mode once enough time has elapsed
   const float timeActivated_s = GetActivatedDuration();
   if( timeActivated_s * kTimeMultiplier >= _iConfig.activeTime_s ) {
+    CancelSelf();
+    return;
+  }
+  
+  // exit quiet mode if the robot has been shaken
+  if( GetBEI().GetRobotInfo().GetHeadAccelMagnitudeFiltered() > kAccelMagnitudeShakingStartedThreshold ) {
     CancelSelf();
     return;
   }

@@ -20,6 +20,7 @@ function usage() {
     echo "  -d                      DEBUG: generate file lists and exit"
     echo "  -x [CMAKE_EXE]          path to cmake executable"
     echo "  -C                      generate build config and exit without building"
+    echo "  -D                      allow #defines to be specified from the command-line"
     echo "  -F [FEATURE]            enable feature {factoryTest,factoryTestDev}"
     echo "  -T                      list all cmake targets"
     echo "  -t [target]             build specified cmake target"
@@ -45,9 +46,10 @@ CONFIGURATION=Debug
 PLATFORM=vicos
 GENERATOR=Ninja
 FEATURES=""
+DEFINES=""
 ADDITIONAL_PLATFORM_ARGS=()
 
-while getopts ":x:c:p:a:t:g:F:hvfdCTeISX" opt; do
+while getopts ":x:c:p:a:t:g:F:D:hvfdCTeISX" opt; do
     case $opt in
         h)
             usage
@@ -62,6 +64,11 @@ while getopts ":x:c:p:a:t:g:F:hvfdCTeISX" opt; do
         C)
             CONFIGURE=1
             RUN_BUILD=0
+            ;;
+        D)
+            # -D defines on the command-line will force a reconfigure, save any dev gotchas
+            CONFIGURE=1
+            DEFINES="${DEFINES} -D${OPTARG}"
             ;;
         d)
             CONFIGURE=1
@@ -383,7 +390,6 @@ if [ $CONFIGURE -eq 1 ]; then
 
     # Append additional platrom args
     PLATFORM_ARGS+=(${ADDITIONAL_PLATFORM_ARGS[@]})
-
     $CMAKE_EXE ${TOPLEVEL} \
         ${VERBOSE_ARG} \
         -G"${GENERATOR}" \
@@ -394,6 +400,7 @@ if [ $CONFIGURE -eq 1 ]; then
         -DANKI_BUILD_SHA=${ANKI_BUILD_SHA} \
         ${EXPORT_FLAGS} \
         ${FEATURE_FLAGS} \
+        ${DEFINES} \
         "${PLATFORM_ARGS[@]}"
 fi
 

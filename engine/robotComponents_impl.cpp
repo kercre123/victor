@@ -59,6 +59,7 @@ class MicComponent;
 class BatteryComponent;
 class FullRobotPose;
 class DataAccessorComponent;
+class BeatDetectorComponent;
 
 } // namespace Cozmo
 
@@ -101,7 +102,8 @@ LINK_COMPONENT_TYPE_TO_ENUM(RobotIdleTimeoutComponent,     RobotComponentID, Rob
 LINK_COMPONENT_TYPE_TO_ENUM(MicComponent,                  RobotComponentID, MicComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(BatteryComponent,              RobotComponentID, Battery)
 LINK_COMPONENT_TYPE_TO_ENUM(FullRobotPose,                 RobotComponentID, FullRobotPose)
-LINK_COMPONENT_TYPE_TO_ENUM(DataAccessorComponent,          RobotComponentID, DataAccessor)
+LINK_COMPONENT_TYPE_TO_ENUM(DataAccessorComponent,         RobotComponentID, DataAccessor)
+LINK_COMPONENT_TYPE_TO_ENUM(BeatDetectorComponent,         RobotComponentID, BeatDetector)
 
 // Translate entity into string
 template<>
@@ -115,6 +117,7 @@ std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotCompone
     case Cozmo::RobotComponentID::ActionList:                 { return "ActionList";}
     case Cozmo::RobotComponentID::Animation:                  { return "Animation";}
     case Cozmo::RobotComponentID::Battery:                    { return "Battery";}
+    case Cozmo::RobotComponentID::BeatDetector:               { return "BeatDetector";}
     case Cozmo::RobotComponentID::BlockTapFilter:             { return "BlockTapFilter";}
     case Cozmo::RobotComponentID::BlockWorld:                 { return "BlockWorld";}
     case Cozmo::RobotComponentID::BodyLights:                 { return "BodyLights";}

@@ -96,7 +96,7 @@ static int swd_stm32_init_(void)
 {
   //reset,init the SWD interface
   if( !swd_stm32_chipinit() )
-    return ERROR_ACK1;
+    return ERROR_SWD_CHIPINIT;
   
   //bring mcu out of reset
   SwdDebugPrintf("exit reset state, halt core\n");
@@ -107,7 +107,7 @@ static int swd_stm32_init_(void)
   r |= swd_write32(0xE000ED0C, 0x05FA0004);     // Reset peripherals
   if( r != SWD_ACK ) {
     SwdPrintf("exit reset FAILED (r=%u)>\n", r);
-    return ERROR_ACK1;
+    return ERROR_SWD_INIT_FAIL;
   }
   
   return r;
@@ -124,8 +124,9 @@ int swd_stm32_init()
   if( !swd_initialized )
   {
     swd_init(); //phy
-    if( swd_stm32_init_() != SWD_ACK )
-      THROW_RETURN( ERROR_ACK1 );
+    int e = swd_stm32_init_();
+    if( e != SWD_ACK ) //ERROR_SWD_CHIPINIT/INIT_FAIL
+      THROW_RETURN( e );
     
     swd_initialized = 1;
   }
@@ -164,7 +165,7 @@ int swd_stm32_erase(void)
   r |= swd_write32(0x40022010, 0x00000244);
   
   if( r != SWD_ACK )
-    THROW_RETURN( ERROR_ACK1 );
+    THROW_RETURN( ERROR_SWD_WRITE_FAULT );
   
   // Check busy flag
   int timeout = 50;
@@ -177,11 +178,11 @@ int swd_stm32_erase(void)
   r |= swd_write32(0x40022010, 0x00000200);  // Finished!
   SwdDebugPrintf("\n");
   if( r != SWD_ACK )
-    THROW_RETURN( ERROR_ACK1 );
+    THROW_RETURN( ERROR_SWD_FLASH_ERASE );
   
   SwdPrintf("erase %s in %ums (r=%u)\n", (r == SWD_ACK ? "completed" : "FAILED"), (Timer::get() - start)/1000, r );
   if( timeout < 1 )
-    THROW_RETURN( ERROR_ACK1 );
+    THROW_RETURN( ERROR_SWD_FLASH_ERASE );
   
   return ERROR_OK;
 }
@@ -222,7 +223,7 @@ int swd_stm32_verify(uint32_t flash_addr, const uint8_t* bin_start, const uint8_
   r |= swd_write32(0x40022004, 0x45670123);
   r |= swd_write32(0x40022004, 0xCDEF89AB);
   if( r != SWD_ACK )
-    THROW_RETURN( ERROR_ACK1 );
+    THROW_RETURN( ERROR_SWD_WRITE_FAULT );
   //-*/
   
   const int linesize = 40; //pretty printing
@@ -312,7 +313,9 @@ int swd_stm32_flash(uint32_t flash_addr, const uint8_t* bin_start, const uint8_t
     // Unlock flash chip
     r |= swd_write32(0x40022004, 0x45670123);
     r |= swd_write32(0x40022004, 0xCDEF89AB);
-        
+    if( r != SWD_ACK )
+      THROW_RETURN( ERROR_SWD_WRITE_FAULT );
+    
     for(int page=0; size > 0; page++, size-=pagesize )
     {
       Timer::get(); //timer bug. must poll for correct overflow handling
@@ -333,7 +336,7 @@ int swd_stm32_flash(uint32_t flash_addr, const uint8_t* bin_start, const uint8_t
     
     SwdPrintf("flash write %s in %ums (r=%u)\n", (r == SWD_ACK ? "completed" : "FAILED"), (Timer::get() - start)/1000, r );
     if( r != SWD_ACK )
-      THROW_RETURN( ERROR_ACK1 );
+      THROW_RETURN( ERROR_SWD_FLASH_WRITE );
   }
   
   Timer::delayMs(10);
@@ -373,6 +376,9 @@ int swd_stm32_lock_jtag(void)
   r |= swd_write32(0x40022010, 0x200 + 0x20); // Option byte ERASE w/OPTWRE
   r |= swd_write32(0x40022010, 0x200 + 0x40 + 0x20); // START option byte ERASE w/OPTWRE
   
+  if( r != SWD_ACK )
+    THROW_RETURN( ERROR_SWD_WRITE_FAULT );
+  
   int wait = 250;                       // 250ms before we give up (outer limit is 60ms)
   while (swd_read32(0x4002200C) & 1)    // Wait for erase complete
   {
@@ -383,6 +389,9 @@ int swd_stm32_lock_jtag(void)
   
   r |= swd_write32(0x40022010, 0x200 + 0x10);// Allow option byte program w/OPTWRE
   r |= swd_stm32_write16(0x1FFFF800, 0xCC);  // RDP mode 2 - irreversible disable
+  
+  if( r != SWD_ACK )
+    THROW_RETURN( ERROR_SWD_WRITE_FAULT );
   
   wait = 250;                        // 250ms before we give up (outer limit is 1ms)
   while (swd_read32(0x4002200C) & 1)    // Wait for program complete
@@ -396,7 +405,7 @@ int swd_stm32_lock_jtag(void)
   r |= swd_write32(0x40022010, 0x80);        // Re-lock flash  
   
   if( r != SWD_ACK )
-    THROW_RETURN( ERROR_ACK2 );
+    THROW_RETURN( ERROR_SWD_WRITE_FAULT );
   return ERROR_OK;
 }
 

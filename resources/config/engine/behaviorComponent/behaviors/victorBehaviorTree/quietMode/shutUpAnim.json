@@ -1,9 +1,0 @@
-{
-  "behaviorID"       : "ShutUpAnim",
-  "behaviorClass"    : "AnimGetInLoop",
-  "getIn"            : "ShutUp_GetIn",
-  "loopAnimation"    : "ShutUp_Loop",
-  "getOut"           : "ShutUp_GetOut",
-  "shouldCheckEndCondDuringAnim": false,
-  "lockTreads"       : true
-}

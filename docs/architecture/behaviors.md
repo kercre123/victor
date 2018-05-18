@@ -3,7 +3,7 @@
 * High level behaviors coordinate overall activity, delegate to other behaviors
 * Lower level behaviors control the robot by delegating to actions or helpers
 * Multiple behaviors are *active* in the stack, only the last one is *in control*
-* Behaviors which might run are in *activatable scope*
+* Behaviors which might run are in *activatable scope* 
 
 **The behavior system documentation is [on confluence](https://ankiinc.atlassian.net/wiki/spaces/CBS/overview).**
 Look there for details, this is just a tiny overview.
@@ -14,6 +14,16 @@ of behaviors can be active, managed by the Behavior System Manager. Each behavio
 
 On Victor, if you are trying to make the robot do something from engine, then (99% of the time) you need to be
 using a behavior
+
+## Active Feature
+
+The behavior system is also responsible for determining what the current _active feature_ is. This informs the
+feature that will appear in the status-log on app, as well as the data which is sent to DAS. Behavior json
+files can specify an "associatedActiveFeature" to declare that they (and all delegates that don't have their
+own associated features) as associated with a given feature enum (from
+[activeFeatures.clad](/clad/src/clad/types/behaviorComponent/activeFeatures.clad)). All branches of the
+production behavior tree must have an active feature defined (or explicitly declare
+ActiveFeature::NoFeature). This is checked by the `DelegationTree.CheckActiveFeatures` unit test.
 
 ## Running behaviors
 

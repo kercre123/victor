@@ -109,11 +109,11 @@ void WebsocketMessageHandler::HandleAnimations_SayText(Anki::Cozmo::ExternalComm
 void WebsocketMessageHandler::HandleAnimations(Anki::Cozmo::ExternalComms::Animations unionInstance) {
   using AnimationsTag = Anki::Cozmo::ExternalComms::AnimationsTag;
   switch(unionInstance.GetTag()) {
-    case AnimationsTag::playAnimation:
-      HandleAnimations_PlayAnimation(unionInstance.Get_playAnimation());
+    case AnimationsTag::PlayAnimation:
+      HandleAnimations_PlayAnimation(unionInstance.Get_PlayAnimation());
       break;
-    case AnimationsTag::requestAvailableAnimations:
-      HandleAnimations_RequestAvailableAnimations(unionInstance.Get_requestAvailableAnimations());
+    case AnimationsTag::RequestAvailableAnimations:
+      HandleAnimations_RequestAvailableAnimations(unionInstance.Get_RequestAvailableAnimations());
       break;   
     case AnimationsTag::SayText:
       HandleAnimations_SayText( unionInstance.Get_SayText() );
@@ -285,6 +285,32 @@ void WebsocketMessageHandler::HandleVictorDisplay(Anki::Cozmo::ExternalComms::Vi
   }
 }
 
+void WebsocketMessageHandler::HandleCubes_SetAllActiveObjectLEDs(Anki::Cozmo::ExternalComms::SetAllActiveObjectLEDs sdkMessage) {
+  Anki::Cozmo::ExternalInterface::SetAllActiveObjectLEDs engineMessage;
+  engineMessage.objectID = sdkMessage.objectID;
+  engineMessage.onColor = sdkMessage.onColor;
+  engineMessage.offColor = sdkMessage.offColor;
+  engineMessage.onPeriod_ms = sdkMessage.onPeriod_ms;
+  engineMessage.offPeriod_ms = sdkMessage.offPeriod_ms;
+  engineMessage.transitionOnPeriod_ms = sdkMessage.transitionOnPeriod_ms;
+  engineMessage.transitionOffPeriod_ms = sdkMessage.transitionOffPeriod_ms;
+  engineMessage.offset = sdkMessage.offset;
+  engineMessage.rotate = 0;
+  engineMessage.makeRelative = Anki::Cozmo::MakeRelativeMode::RELATIVE_LED_MODE_OFF;
+  Log::Write("WebsocketMessageHandler - Sending Cube Lights Message");
+  _engineMessaging->SendMessage(G2EMessage::CreateSetAllActiveObjectLEDs(std::move(engineMessage)));
+}
+
+void WebsocketMessageHandler::HandleCubes(Anki::Cozmo::ExternalComms::Cubes unionInstance) {
+  switch(unionInstance.GetTag()) {
+    case Anki::Cozmo::ExternalComms::CubesTag::SetAllActiveObjectLEDs:
+      HandleCubes_SetAllActiveObjectLEDs( unionInstance.Get_SetAllActiveObjectLEDs() );
+      break;
+    default:
+      return;
+  }
+}
+
 void WebsocketMessageHandler::Receive(uint8_t* buffer, size_t size) {
   if(size < 1) {
     return;
@@ -312,6 +338,9 @@ void WebsocketMessageHandler::Receive(uint8_t* buffer, size_t size) {
        break;
     case ExtCommsMessageTag::VictorDisplay:
        HandleVictorDisplay(extComms.Get_VictorDisplay());
+       break;
+    case ExtCommsMessageTag::Cubes:
+       HandleCubes(extComms.Get_Cubes());
        break;
     default:
       Log::Write("Unhandled external comms message tag: %d", extComms.GetTag());
@@ -370,6 +399,14 @@ ExtCommsMessage WebsocketMessageHandler::SendEnrolledNamesResponse(const Anki::C
   return ExtCommsMessage::CreateMeetVictor(std::move(externalComms));
 }
 
+ExtCommsMessage WebsocketMessageHandler::SendAnimationAvailable(const Anki::Cozmo::ExternalInterface::AnimationAvailable& msg) {
+  Anki::Cozmo::ExternalComms::AnimationAvailable anim;
+  anim.animName = msg.animName;
+
+  auto externalComms = Anki::Cozmo::ExternalComms::Animations::CreateAnimationAvailable(std::move(anim));
+  return ExtCommsMessage::CreateAnimations(std::move(externalComms));
+}
+
 // Convert from EngineToGame to ExternalComms
 bool WebsocketMessageHandler::Send(const E2GMessage& e2gMessage) {
   ExtCommsMessage result;
@@ -399,6 +436,11 @@ bool WebsocketMessageHandler::Send(const E2GMessage& e2gMessage) {
     case E2GMessageTag::EnrolledNamesResponse:
     {
       result = SendEnrolledNamesResponse(e2gMessage.Get_EnrolledNamesResponse());
+      break;
+    }
+    case E2GMessageTag::AnimationAvailable:
+    {
+      result = SendAnimationAvailable(e2gMessage.Get_AnimationAvailable());
       break;
     }
     default:

@@ -219,6 +219,11 @@ void TrackLayerComponent::RemoveKeepFaceAlive(u32 duration_ms)
   _faceLayerManager->RemoveKeepFaceAlive(duration_ms);
 }
 
+void TrackLayerComponent::KeepFaceTheSame()
+{
+  _faceLayerManager->KeepFaceTheSame();
+}
+
 void TrackLayerComponent::AddBlink(const TimeStamp_t timeSinceKeepAliveStart_ms)
 {
   Animations::Track<ProceduralFaceKeyFrame> faceTrack;

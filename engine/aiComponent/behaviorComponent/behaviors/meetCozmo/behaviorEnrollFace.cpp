@@ -136,7 +136,7 @@ void BehaviorEnrollFace::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys
 void BehaviorEnrollFace::CheckForIntentData() const
 {
   auto& uic = GetBehaviorComp<UserIntentComponent>();
-  UserIntent* intent = uic.TakePreservedUserIntentOwnership( USER_INTENT(meet_victor) );
+  UserIntentPtr intent = uic.GetActiveUserIntent( USER_INTENT(meet_victor) );
   if( intent != nullptr ) {
     const auto& meetVictor = intent->Get_meet_victor();
     _settings->name = meetVictor.username;
@@ -145,7 +145,6 @@ void BehaviorEnrollFace::CheckForIntentData() const
     _settings->saveToRobot = true;
     _settings->sayName = true;
     _settings->useMusic = false;
-    delete intent;
   }
 }
 

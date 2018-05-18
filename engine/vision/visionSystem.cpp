@@ -1700,7 +1700,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     const Result saveResult = imageCache.GetRGB().Save(fullFilename, _imageSaveQuality);
 
     Result saveSensorResult = RESULT_OK;
-    if ((ImageSendMode::SingleShotWithSensorData == _imageSaveMode)) {
+    if((ImageSendMode::SingleShotWithSensorData == _imageSaveMode) || (ImageSendMode::Stream == _imageSaveMode)) {
       saveSensorResult = SaveSensorData();
     }
 

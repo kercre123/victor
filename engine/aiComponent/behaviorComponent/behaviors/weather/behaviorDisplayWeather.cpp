@@ -15,6 +15,8 @@
 
 #include "engine/components/animationComponent.h"
 #include "engine/components/dataAccessorComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/weatherIntentParser.h"
 
@@ -122,6 +124,14 @@ void BehaviorDisplayWeather::GetBehaviorJsonKeys(std::set<const char*>& expected
 
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDisplayWeather::GetAllDelegates(std::set<IBehavior*>& delegates) const
+{
+  delegates.insert(_iConfig->textToSpeechBehavior.get());
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDisplayWeather::InitBehavior()
 {
@@ -198,6 +208,16 @@ void BehaviorDisplayWeather::InitBehavior()
     }
   }
   
+  // If the composite image is empty, we still need to send a template (that has no image map)
+  // so that the temperature will have a layer to be displayed on
+  if(_iConfig->compImg->GetLayerLayoutMap().empty()){
+    auto* seqContainer = dataAccessorComp.GetSpriteSequenceContainer();
+    _iConfig->compImg->AddEmptyLayer(seqContainer);
+    PRINT_NAMED_INFO("BehaviorDisplayWeather.InitBehavior.AddingEmptyCompositeImage",
+                     "Composite image does not exist or behavior %s, adding one so that temperature can be displayed",
+                     GetDebugLabel().c_str());
+  }
+  
   // Get the animation ptr
   const auto* animContainer = dataAccessorComp.GetCannedAnimationContainer();
   if((animContainer != nullptr) && !_iConfig->animationName.empty()){
@@ -209,7 +229,11 @@ void BehaviorDisplayWeather::InitBehavior()
                         "Animations need to be manually loaded on engine side - %s is not", _iConfig->animationName.c_str());
     return;
   }
-  
+
+  const auto& bc = GetBEI().GetBehaviorContainer();
+  bc.FindBehaviorByIDAndDowncast<BehaviorTextToSpeechLoop>(BEHAVIOR_ID(WeatherTextToSpeech),
+                                                           BEHAVIOR_CLASS(TextToSpeechLoop),
+                                                           _iConfig->textToSpeechBehavior);
   ParseDisplayTempTimesFromAnim();
   
 }
@@ -217,12 +241,48 @@ void BehaviorDisplayWeather::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDisplayWeather::OnBehaviorActivated() 
 {
-  const UserIntent& intent = GetTriggeringUserIntent();
-
-  const auto& weatherResponse = intent.Get_weather_response();
-
   // reset dynamic variables
   _dVars = DynamicVariables();
+
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
+
+  UserIntentPtr intent = uic.GetActiveUserIntent(USER_INTENT(weather_response));
+  DEV_ASSERT(intent != nullptr, "BehaviorDisplayWeather.InvalidTriggeringIntent");
+
+  const auto& weatherResponse = intent->Get_weather_response();
+  std::string textToSay;
+  if(WeatherIntentParser::ShouldSayText(weatherResponse, textToSay)){
+    StateWeatherInformation(textToSay);
+  }else{
+    DisplayWeatherResponse();
+  }
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDisplayWeather::StateWeatherInformation(const std::string& textToSay)
+{
+  _iConfig->textToSpeechBehavior->SetTextToSay(textToSay);
+  if(_iConfig->textToSpeechBehavior->WantsToBeActivated()){
+    DelegateIfInControl(_iConfig->textToSpeechBehavior.get(),
+                        &BehaviorDisplayWeather::DisplayWeatherResponse);
+  }else{
+    DisplayWeatherResponse();
+  }
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDisplayWeather::DisplayWeatherResponse()
+{
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
+
+  UserIntentPtr intent = uic.GetActiveUserIntent(USER_INTENT(weather_response));
+  DEV_ASSERT(intent != nullptr, "BehaviorDisplayWeather.InvalidTriggeringIntent");
+
+  const auto& weatherResponse = intent->Get_weather_response();
 
 
   auto animationCallback = [this](const AnimationComponent::AnimResult res){
@@ -315,7 +375,8 @@ bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenhei
                         Vision::SpriteBoxName::TemperatureOnesDigit, 
                         _iConfig->temperatureAssets[onesDig]);
   }
-  if(tensDig > 0){
+  // Don't show leading zeroes
+  if((tensDig > 0) || (hundredsDig > 0)){
     layer.AddToImageMap(spriteCache, seqContainer,
                         Vision::SpriteBoxName::TemperatureTensDigit, 
                         _iConfig->temperatureAssets[tensDig]);

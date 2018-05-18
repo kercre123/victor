@@ -77,6 +77,10 @@ public:
   // Note: Will not cancel/remove a blink that is in progress
   void RemoveKeepFaceAlive(u32 duration_ms);
   
+  // Keep Cozmo's face alive, but the same, by posting empty new frames
+  // so that noise keeps working
+  void KeepFaceTheSame();
+
   // Make Cozmo blink
   void AddBlink(const TimeStamp_t timeSinceKeepAliveStart_ms);
   

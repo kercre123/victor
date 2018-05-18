@@ -22,7 +22,6 @@
 #include "util/signals/simpleSignal_fwd.h" // Signal::SmartHandle
 
 #include <unordered_map>
-#include <unordered_set>
 
 namespace Anki {
 namespace Cozmo {
@@ -77,6 +76,12 @@ public:
   
 private:
   
+  // Subscribes to webviz data
+  void SubscribeToWebViz();
+  
+  // Send information about cubes to webviz
+  void SendDataToWebViz();
+  
   // Game to engine event handlers
   void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   
@@ -84,7 +89,7 @@ private:
   
   std::unique_ptr<CubeBleClient> _cubeBleClient;
   
-  // Handles for grabbing GameToEngine messages
+  // Handles for grabbing GameToEngine messages and web viz
   std::vector<Signal::SmartHandle> _signalHandles;
   
   // From the given CubeLights struct, generates a set of cube light messages
@@ -117,6 +122,9 @@ private:
   
   // Next time we're supposed to check for disconnections
   float _nextDisconnectCheckTime_sec = 0.f;
+  
+  // Next time we should send data to webviz
+  float _nextSendWebVizDataTime_sec = 0.f;
   
   // Whether or not to broadcast incoming ObjectAvailable messages to game
   bool _broadcastObjectAvailableMsg = false;
@@ -154,8 +162,8 @@ private:
   
   void SaveBlockPoolListToJson(const std::string& blockPoolFile) const;
   
-  // cached list of preferred blocks to connect to
-  std::unordered_set<std::string> _blockPoolFactoryIds;
+  // cached preferred block to connect to
+  std::string _blockPoolFactoryId = "";
 };
 
 

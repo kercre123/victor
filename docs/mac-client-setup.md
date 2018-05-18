@@ -11,7 +11,7 @@ having him complete an OTA (over the air) update.
 
 ## Building 
 
-To build `mac-client`, simply run this command from the root of your `victor` repo:
+To build `mac-client`, simply run the [build command](/apps/demos/ble-pairing/mac-client/build_client.sh) from the root of your `victor` repo:
 ```
 ./apps/demos/ble-pairing/mac-client/build_client.sh
 ```

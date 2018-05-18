@@ -22,7 +22,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "coretech/common/robot/fixedLengthList_declarations.h"
 
 #if !defined(ANKI_EMBEDDED_BENCHMARK)
-#if defined(NDBEUG)
+#if defined(NDEBUG)
 #define ANKI_EMBEDDED_BENCHMARK 0
 #else
 #define ANKI_EMBEDDED_BENCHMARK 1

@@ -367,9 +367,11 @@ uint32_t swd_read32(uint32_t addr)
   r  = swd_write(1, 0x4, addr);   // Set address
   r |= swd_read(1, 0xC, &value);  // Read data from AP
   r |= swd_read(0, 0xC, &value);  // Read readback reg
-  if (r != SWD_ACK)
+  if (r != SWD_ACK) {
     SwdDebugPrintf("  FAILED (%u) swd_read32(Addr=%08x)\n", r, addr );
     //SwdDebugPrintf("  FAILED, resp=%u\n", r);
+    throw ERROR_SWD_READ_FAULT;
+  }
   return value;
 }
 

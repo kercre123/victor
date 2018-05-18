@@ -172,10 +172,11 @@
       }
     }
 
-    // draw our dominant direction ...
+    // We draw the selected direction, as opposed to dominant, to most clearly reflect the actual listening behavior
+    // 'selectedDirection' is what's being used (locked-in), whereas 'dominant' is just the strongest direction
     var dotRadius = 7;
-    var dotX = ClockData.center[0] + ( ClockData.offsets[data.dominant][0] * ClockData.radius );
-    var dotY = ClockData.center[1] + ( ClockData.offsets[data.dominant][1] * ClockData.radius );
+    var dotX = ClockData.center[0] + ( ClockData.offsets[data.selectedDirection][0] * ClockData.radius );
+    var dotY = ClockData.center[1] + ( ClockData.offsets[data.selectedDirection][1] * ClockData.radius );
 
     context.beginPath();
     context.arc( dotX, dotY, dotRadius, 0, 2*Math.PI );
@@ -198,6 +199,17 @@
     textY += textHeight;
     context.fillText( "Delay Time (ms) : ", labelX, textY );
     context.fillText( data.delayTime, valueX, textY );
+    
+    textY += 2*textHeight;
+    context.fillText( "Beat Detector:", labelX, textY );
+
+    textY += textHeight;    
+    context.fillText( "tempo (bpm) : ", labelX, textY );
+    context.fillText( data.beatDetector.tempo_bpm, valueX, textY );
+
+    textY += textHeight;    
+    context.fillText( "confidence : ", labelX, textY );
+    context.fillText( data.beatDetector.confidence, valueX, textY );
 
     if ( data.triggerDetected )
     {

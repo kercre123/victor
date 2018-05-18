@@ -178,3 +178,10 @@ Short name|Long name              |N/A|Description
 `#define ANKI_VISION_PROFILER` to enable profiling metrics for the Vision system. 
 
 When logged to DAS these have the prefix `robot.vision.profiler`
+
+These can be enabled from the command-line, e.g.
+
+`victor_build_release -DANKI_EMBEDDED_BENCHMARK=1`, embedded benchmarks are enabled
+`victor_build_release`, embedded benchmarks are still enabled as the build is rerun with current options
+`victor_build_release -f`, embedded benchmarks are disabled as the build is reconfigured
+

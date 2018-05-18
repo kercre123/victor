@@ -13,6 +13,8 @@
 #ifndef __Engine_AiComponent_UserIntentComponent_H__
 #define __Engine_AiComponent_UserIntentComponent_H__
 
+#include "engine/aiComponent/behaviorComponent/userIntentComponent_fwd.h"
+
 #include "clad/cloud/mic.h"
 #include "coretech/common/shared/types.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
@@ -38,7 +40,6 @@ class UserIntentMap;
 namespace ExternalInterface{
 struct AppIntent;
 }
-
 
 class UserIntentComponent : public IDependencyManagedComponent<BCComponentID>, private Util::noncopyable
 {
@@ -74,7 +75,7 @@ public:
   // A user intent is an enum member defined in userIntent.clad. It can come from a voice command but also
   // elsewhere (e.g. from the app once that is supported). Intents, like trigger words, should generally be
   // handled immediately, and they do not queue. If another intent comes in while the last one is still
-  // pending, it will be overwritten
+  // pending, it will be overwritten. There is up to one _pending_ intent and one _active_ intent at any time
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   // Returns true if any user intent is pending
@@ -86,28 +87,26 @@ public:
   // Same as above, but also get data
   bool IsUserIntentPending(UserIntentTag userIntent, UserIntent& extraData) const;
 
-  // Clear the passed in user intent. If this is the current pending one, the pending intent will be cleared
-  // until a new intent comes in. If not (e.g. another more-recent intent came in), this call will have no
-  // effect (other than printing a warning)
-  void ClearUserIntent(UserIntentTag userIntent);
-  
-  // The same as above, but also gets ownership of the intent, if userIntent matches what is pending
-  UserIntent* ClearUserIntentWithOwnership(UserIntentTag userIntent);
-  
-  // clears but keeps the data in a list obtainable through TakePreservedUserIntentOwnership(). This
-  // might be useful if a behavior expects that one of its delegates will consume the data. The
-  // behavior clearingBehavior doing the clearing is now on the hook for someone else to consume it,
-  // and clearingBehavior should ResetPreservedUserIntents() when it deactivates
-  void ClearUserIntentWithPreservation(UserIntentTag userIntent, BehaviorID clearingBehavior);
-  
-  // if ClearUserIntentWithPreservation was used to clear the user intent instead of
-  // ClearUserIntentWithOwnership, then the data can be obtained here. you now own it.
-  UserIntent* TakePreservedUserIntentOwnership(UserIntentTag userIntent);
-  
-  // The clearingBehavior who called ClearUserIntentWithPreservation is on the hook for one of its
-  // delegates to TakePreservedUserIntentOwnership. This will print an error if there are any
-  // preserved intents, and then remove them. The clearingBehavior should call this OnDeactivated()
-  void ResetPreservedUserIntents(BehaviorID clearingBehavior);
+  // Activate the pending user intent. Owner string is stored for debugging because you are responsible to
+  // deactivate the intent if you call this function directly. If the given userIntent is pending, this will
+  // move it from pending to active (it will no longer be pending) and return a pointer to the full intent
+  // data. Otherwise, it will print warnings and return nullptr
+  UserIntentPtr ActivateUserIntent(UserIntentTag userIntent, const std::string& owner);
+
+  // Must be called when a user intent is no longer active (generally meaning that the behavior that was
+  // handling the intent has stopped).
+  void DeactivateUserIntent(UserIntentTag userIntent);
+
+  // Check if an intent tag is currently active
+  bool IsUserIntentActive(UserIntentTag userIntent);
+
+  // If the given intent is active, return the associated data, otherwise return nullptr
+  UserIntentPtr GetActiveUserIntent(UserIntentTag forIntent);
+
+  // A helper function to drop a user intent without responding to it. This is meant to be called for a
+  // pending user intent and will make it no longer pending without ever making it active. This is generally
+  // not what you want, but can be useful to explicitly ignore a command
+  void DropUserIntent(UserIntentTag userIntent);
 
   // returns if an intent has recently gone unclaimed. or, reset the corresponding flag
   bool WasUserIntentUnclaimed() const { return _wasIntentUnclaimed; };
@@ -157,15 +156,9 @@ private:
   bool _pendingTrigger = false;
   
   std::unique_ptr<UserIntent> _pendingIntent;
+  UserIntentPtr _activeIntent;
+  std::string _activeIntentOwner;
   
-  struct Preserved {
-    UserIntentTag tag;
-    std::unique_ptr<UserIntent> intent;
-    BehaviorID responsibleBehavior;
-    float timeAdded;
-  };
-  std::vector<Preserved> _preservedIntents;
-
   // for debugging -- intents should be processed within one tick so track the ticks here
   size_t _pendingTriggerTick = 0;
   size_t _pendingIntentTick = 0;

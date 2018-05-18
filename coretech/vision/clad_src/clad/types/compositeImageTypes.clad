@@ -11,6 +11,9 @@ namespace Vision {
 //  2) Composite image layers are rendered in the order of this enum
 enum no_cpp_class uint_8 LayerName 
 {
+  // Utility layers
+  EmptyBoxLayer,
+
   // Special layer names that lots of images can use
   StaticBackground = 0,
 
@@ -35,6 +38,9 @@ enum no_cpp_class uint_8 LayerName
 // Names for SpriteBoxes
 enum no_cpp_class uint_8 SpriteBoxName
 {
+  // Utility SpriteBoxes
+  EmptyBox,
+
   // SpritBoxNames for procedural clock
   TensLeftOfColon,
   OnesLeftOfColon,

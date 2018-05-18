@@ -21,6 +21,7 @@
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreen.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
+#include "cozmoAnim/micData/micDataSystem.h"
 #include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -100,12 +101,6 @@ namespace {
   const f32 kMenuHeadLowThresh_rad  = DEG_TO_RAD(-15);
   const f32 kMenuHeadHighThresh_rad = DEG_TO_RAD(40);
 
-  // Amount of time the backpack button must be held before sync() is called
-  const f32 kButtonHoldTimeForSync_s = 1.f;
-
-  // Time at which sync() should be called
-  f32 syncTime_s = 0.f;
-
   // Variables for performing connectivity checks in threads
   // and triggering redrawing of screens
   std::atomic<bool> _redrawMain{false};
@@ -136,6 +131,8 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
 {
   DEV_ASSERT(context != nullptr, "FaceInfoScreenManager.Init.NullContext");
 
+  _context = context;
+  
   // allow us to send debug info out to the web server
   _webService = context->GetWebService();
 
@@ -208,6 +205,7 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
 
   ADD_SCREEN(MicDirectionClock, Camera);
   ADD_SCREEN(Camera, Main);    // Last screen cycles back to Main
+  ADD_SCREEN(CameraMotorTest, Camera);
 
   // Recovery screen
   FaceInfoScreen::MenuItemAction rebootAction = [this]() {
@@ -277,6 +275,20 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   GetScreen(ScreenName::Camera)->SetEnterScreenAction(cameraEnterAction);
   GetScreen(ScreenName::Camera)->SetExitScreenAction(cameraExitAction);
 
+  // Camera Motor Test
+  // Add menu item to camera screen to start a test mode where the motors run back and forth
+  // and camera images are streamed to the face
+  ADD_MENU_ITEM(Camera, "TEST MODE", CameraMotorTest);
+  SET_TIMEOUT(CameraMotorTest, 300.f, None);
+
+  GetScreen(ScreenName::CameraMotorTest)->SetEnterScreenAction(cameraEnterAction);
+  FaceInfoScreen::ScreenAction cameraMotorTestExitAction = [cameraExitAction]() {
+    cameraExitAction();
+    SendAnimToRobot(RobotInterface::StopAllMotors());
+  };
+  GetScreen(ScreenName::CameraMotorTest)->SetExitScreenAction(cameraMotorTestExitAction);
+
+  
   // Check if we booted in recovery mode
   if (OSState::getInstance()->IsInRecoveryMode()) {
     LOG_WARNING("FaceInfoScreenManager.Init.RecoveryModeFileFound", "Going into recovery mode");
@@ -380,8 +392,6 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
 
 #ifndef SIMULATOR
   // Enable/Disable lift
-  // (If the new screen is None, or one of the screens that's normally
-  // active during playpen, then re-enable lift power)
   RobotInterface::EnableMotorPower msg;
   msg.motorID = MotorID::MOTOR_LIFT;
   msg.enable = !currScreenIsDebug;
@@ -468,16 +478,30 @@ void FaceInfoScreenManager::DrawFAC()
 {
   DrawTextOnScreen({"FAC"},
                    NamedColors::BLACK,
-                   (Factory::GetEMR()->fields.PLAYPEN_PASSED_FLAG ?
-                      NamedColors::GREEN : NamedColors::RED),
+                   (Factory::GetEMR()->fields.PLAYPEN_PASSED_FLAG ? 
+		    NamedColors::GREEN : NamedColors::RED),
                    { 0, FACE_DISPLAY_HEIGHT-10 },
                    10,
                    3.f);
 }
 
+void FaceInfoScreenManager::UpdateFAC()
+{
+  static bool prevPlaypenPassedFlag = Factory::GetEMR()->fields.PLAYPEN_PASSED_FLAG;
+  const bool curPlaypenPassedFlag = Factory::GetEMR()->fields.PLAYPEN_PASSED_FLAG;
+
+  if(curPlaypenPassedFlag != prevPlaypenPassedFlag)
+  {
+    DrawFAC();
+  }
+  
+  prevPlaypenPassedFlag = curPlaypenPassedFlag;
+}
+  
 void FaceInfoScreenManager::DrawCameraImage(const Vision::ImageRGB565& img)
 {
-  if (GetCurrScreenName() != ScreenName::Camera) {
+  if (GetCurrScreenName() != ScreenName::Camera &&
+      GetCurrScreenName() != ScreenName::CameraMotorTest) {
     return;
   }
 
@@ -542,7 +566,9 @@ void FaceInfoScreenManager::DrawConfidenceClock(
       Json::Value webData;
       webData["time"] = currentTime;
       webData["confidence"] = micData.confidence;
+      // 'selectedDirection' is what's being used (locked-in), whereas 'dominant' is just the strongest direction
       webData["dominant"] = micData.direction;
+      webData["selectedDirection"] = micData.selectedDirection;
       webData["maxConfidence"] = maxConf;
       webData["triggerDetected"] = triggerRecognized;
       webData["delayTime"] = delayTime_ms;
@@ -555,6 +581,12 @@ void FaceInfoScreenManager::DrawConfidenceClock(
         directionValues.append(confidence);
       }
 
+      // Beat Detection stuff
+      Json::Value& beatInfo = webData["beatDetector"];
+      const auto& latestBeat = _context->GetMicDataSystem()->GetLatestBeatInfo();
+      beatInfo["confidence"] = latestBeat.confidence;
+      beatInfo["tempo_bpm"] = latestBeat.tempo_bpm;
+      
       static const std::string moduleName = "micdata";
       _webService->SendToWebViz( moduleName, webData );
     }
@@ -804,25 +836,11 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
 {
   static bool buttonWasPressed = false;
   const bool buttonIsPressed = static_cast<bool>(state.status & (uint16_t)RobotStatusFlag::IS_BUTTON_PRESSED);
-  const bool buttonPressedEvent = !buttonWasPressed && buttonIsPressed;
+  //const bool buttonPressedEvent = !buttonWasPressed && buttonIsPressed;
   const bool buttonReleasedEvent = buttonWasPressed && !buttonIsPressed;
   buttonWasPressed = buttonIsPressed;
 
   const bool isOnCharger = static_cast<bool>(state.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER);
-
-  const auto currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-
-  // Call sync() when button held nearly long enough for shutdown
-  // before the power is pulled to make sure pending writes are flushed
-  if (buttonPressedEvent) {
-    syncTime_s = currentTime_s + kButtonHoldTimeForSync_s;
-  }
-  if (buttonIsPressed) {
-    if (syncTime_s > 0.f && (currentTime_s > syncTime_s)) {
-      sync();
-      syncTime_s = 0.f;
-    }
-  }
 
   const ScreenName currScreenName = GetCurrScreenName();
 
@@ -924,7 +942,6 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
     _liftTriggerReady = false;
   }
 
-
   // Process head motion for going from Main screen to "hidden" debug info screens
   if (currScreenName == ScreenName::Main) {
     const auto headAngle = state.headAngle;
@@ -949,7 +966,6 @@ ScreenName FaceInfoScreenManager::GetCurrScreenName() const
 
 void FaceInfoScreenManager::Update(const RobotState& state)
 {
-
   ProcessMenuNavigation(state);
 
   const auto currScreenName = GetCurrScreenName();
@@ -979,6 +995,12 @@ void FaceInfoScreenManager::Update(const RobotState& state)
     case ScreenName::CustomText:
       DrawCustomText();
       break;
+    case ScreenName::FAC:
+      UpdateFAC();
+      break;
+    case ScreenName::CameraMotorTest:
+      UpdateCameraTestMode(state.timestamp);
+      break;
     default:
       // Other screens are either updated once when SetScreen() is called
       // or updated by their own draw functions that are called externally
@@ -988,16 +1010,10 @@ void FaceInfoScreenManager::Update(const RobotState& state)
 
 void FaceInfoScreenManager::DrawMain()
 {
-  std::stringstream ss;
-  if(Factory::GetEMR()->fields.ESN != 0)
-  {
-    ss << std::hex
-       << std::setfill('0')
-       << std::setw(8)
-       << std::uppercase
-       << Factory::GetEMR()->fields.ESN;
-  }
-  else
+  auto *osstate = OSState::getInstance();
+
+  std::string esn = osstate->GetSerialNumberAsString();
+  if(esn.empty())
   {
     // TODO Remove once DVT2s are phased out
     // ESN is 0 assume this is a DVT2 with a fake birthcertificate
@@ -1019,12 +1035,14 @@ void FaceInfoScreenManager::DrawMain()
       }
       infile.close();
     }
-    ss << serialNum;
+    esn =  serialNum;
   }
-  const std::string serialNo = "ESN: "  + ss.str();
 
-  auto *osstate = OSState::getInstance();
-  const std::string osVer    = "OS: "   + osstate->GetOSBuildVersion() + (FACTORY_TEST ? " (V3)" : "");
+  const std::string serialNo = "ESN: "  + esn;
+
+  const std::string osVer    = "OS: "   + osstate->GetOSBuildVersion() +
+                                          (FACTORY_TEST ? " (V4)" : "") +
+                                          (osstate->IsInRecoveryMode() ? " U" : "");
   const std::string ssid     = "SSID: " + osstate->GetSSID(true);
 
 #if ANKI_DEV_CHEATS
@@ -1036,9 +1054,9 @@ void FaceInfoScreenManager::DrawMain()
     ip = "XXX.XXX.XXX.XXX";
   }
 
-  ColoredTextLines lines = { {serialNo},
-                             {osVer},
-                             {ssid},
+  ColoredTextLines lines = { {serialNo}, 
+                             {osVer}, 
+                             {ssid}, 
 #if FACTORY_TEST
                              {"IP: " + ip},
 #else
@@ -1356,6 +1374,50 @@ void FaceInfoScreenManager::Reboot()
 
 #endif
 }
+
+void FaceInfoScreenManager::UpdateCameraTestMode(uint32_t curTime_ms)
+{
+  const ScreenName curScreen = FaceInfoScreenManager::getInstance()->GetCurrScreenName();
+  if(curScreen != ScreenName::CameraMotorTest)
+  {
+    return;
+  }
+
+  // Every alternateTime_ms, while we are in the camera test mode,
+  // send alternating motor commands
+  static const uint32_t alternateTime_ms = 2000;
+  static BaseStationTime_t lastMovement_ms = curTime_ms;
+  if(curTime_ms - lastMovement_ms > alternateTime_ms)
+  {
+    lastMovement_ms = curTime_ms;
+    static bool up = false;
+
+    RobotInterface::SetHeadAngle head;
+    head.angle_rad = (up ? MAX_HEAD_ANGLE : MIN_HEAD_ANGLE);
+    head.duration_sec = alternateTime_ms / 1000.f;
+    head.max_speed_rad_per_sec = MAX_HEAD_SPEED_RAD_PER_S;
+    head.accel_rad_per_sec2 = MAX_HEAD_ACCEL_RAD_PER_S2;
+      
+    RobotInterface::SetLiftHeight lift;
+    lift.height_mm = (up ? LIFT_HEIGHT_CARRY : 50);
+    lift.duration_sec = alternateTime_ms / 1000.f;
+    lift.max_speed_rad_per_sec = MAX_LIFT_SPEED_RAD_PER_S;
+    lift.accel_rad_per_sec2 = MAX_LIFT_ACCEL_RAD_PER_S2;
+
+    RobotInterface::DriveWheels wheels;
+    wheels.lwheel_speed_mmps = (up ? 60 : -60);
+    wheels.rwheel_speed_mmps = (up ? 60 : -60);
+    wheels.lwheel_accel_mmps2 = MAX_WHEEL_ACCEL_MMPS2;
+    wheels.rwheel_accel_mmps2 = MAX_WHEEL_ACCEL_MMPS2;
+
+    SendAnimToRobot(std::move(head));
+    SendAnimToRobot(std::move(lift));
+    SendAnimToRobot(std::move(wheels));
+
+    up = !up;
+  }
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

@@ -74,7 +74,6 @@ private:
   struct LifetimeParams{
     LifetimeParams();
     bool shouldForceAntic;
-    std::unique_ptr<UserIntent> setTimerIntent;
   };
 
   InstanceParams _iParams;

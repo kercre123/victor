@@ -76,6 +76,30 @@ endif()
 
 add_definitions(-DANKI_BUILD_SHA="${ANKI_BUILD_SHA}")
 
+#
+# Pass ANKI defines from the command-line to all targets
+#
+get_cmake_property(opts CACHE_VARIABLES)
+foreach(opt ${opts})
+  if(opt STREQUAL "ANKI_BUILD_SHA")
+    # ignore, set previously
+
+  elseif(opt MATCHES "ANKI_")
+    get_property(helpstring CACHE ${opt} PROPERTY HELPSTRING)
+    if(${helpstring} MATCHES "cached value")
+      # value was set from a previous run, but not this run, turn off
+      # Note: remove_definitions #defines the value as OFF (which itself is undefined)
+      add_definitions(-D${opt}=0)
+
+    else()
+      # value was set this run, from the command-line
+      add_definitions(-D${opt}=${${opt}})
+      set_property(CACHE ${opt} PROPERTY HELPSTRING "cached value from a previous command-line")
+
+    endif()
+  endif()
+endforeach()
+
 set(LINK_FLAGS "${LINK_FLAGS} -Wl,--threads")
 
 if (NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
@@ -127,6 +151,7 @@ add_subdirectory("cannedAnimLib")
 add_subdirectory("animProcess")
 add_subdirectory("webServerProcess")
 add_subdirectory("testCrash")
+add_subdirectory("lib/anki-ble")
 add_subdirectory("lib/micData")
 add_subdirectory("lib/signalEssence")
 add_subdirectory("platform")

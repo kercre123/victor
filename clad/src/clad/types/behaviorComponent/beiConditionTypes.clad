@@ -13,11 +13,13 @@ enum uint_8 BEIConditionType {
 
   TrueCondition, // (note: name can't be True due to clad rules)
 
+  CarryingCube,
   CliffDetected,
   Compound,
   ConsoleVar,
   CubeTapped,
   BatteryLevel,
+  BeatDetected,
   BehaviorTimer,
   Emotion,
   EyeContact,

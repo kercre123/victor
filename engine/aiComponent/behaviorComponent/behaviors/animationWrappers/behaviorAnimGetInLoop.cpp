@@ -158,11 +158,13 @@ void BehaviorAnimGetInLoop::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAnimGetInLoop::BehaviorUpdate() 
 {
+  AnimBehaviorUpdate();
   if(!IsActivated()){
     return;
   }
 
-  if(_iConfig.checkEndConditionDuringAnim){
+  if(_iConfig.checkEndConditionDuringAnim &&
+     (_iConfig.endLoopCondition != nullptr)){
     _dVars.shouldLoopEnd |= _iConfig.endLoopCondition->AreConditionsMet(GetBEI());
   }
 

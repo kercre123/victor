@@ -15,6 +15,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logEvent.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/shared/factory/faultCodes.h"
 
 #include "../spine/spine.h"
 #include "../spine/cc_commander.h"
@@ -47,6 +48,9 @@ namespace { // "Private members"
 
   PowerState desiredPowerMode_;
 
+  // Flag to prevent spamming of unexepected power mode warning
+  bool reportUnexpectedPowerMode_ = false;
+
   // Time since the desired power mode was last set
   TimeStamp_t lastPowerSetModeTime_ms_ = 0;
 
@@ -74,6 +78,7 @@ namespace { // "Private members"
 
 // Forward Declarations
 Result InitRadio();
+void StopRadio();
 void InitIMU();
 void StopIMU();
 void ProcessIMUEvents();
@@ -89,11 +94,45 @@ extern "C" {
   }
 }
 
+// Tries to select from the spine fd
+// If it times out too many times then
+// syscon must be hosed or there is no spine
+// connection
+bool check_select_timeout(spine_ctx_t spine)
+{
+  int fd = spine_get_fd(spine);
+
+  static u8 selectTimeoutCount = 0;
+  if(selectTimeoutCount >= 5)
+  {
+    return true;
+  }
+
+  static fd_set fdSet;
+  FD_ZERO(&fdSet);
+  FD_SET(fd, &fdSet);
+  static timeval timeout;
+  timeout.tv_sec = 1;
+  timeout.tv_usec = 0;
+  ssize_t s = select(FD_SETSIZE, &fdSet, NULL, NULL, &timeout);
+  if(s == 0)
+  {
+    selectTimeoutCount++;
+    return true;
+  }
+  return false;
+}
+
 ssize_t robot_io(spine_ctx_t spine)
 {
   int fd = spine_get_fd(spine);
 
   EventStart(EventType::ROBOT_IO_READ);
+
+  if(check_select_timeout(spine))
+  {
+    return -1;
+  }
 
   ssize_t r = read(fd, readBuffer_, sizeof(readBuffer_));
 
@@ -117,12 +156,23 @@ ssize_t robot_io(spine_ctx_t spine)
 
 Result spine_wait_for_first_frame(spine_ctx_t spine, const int * shutdownSignal)
 {
+  TimeStamp_t startWait_ms = HAL::GetTimeStamp();
   bool initialized = false;
   int read_count = 0;
 
   assert(shutdownSignal != nullptr);
 
   while (!initialized && *shutdownSignal == 0) {
+    // If we spend more than 2 seconds waiting for the first frame,
+    // something must be wrong. Likely there is no body or head to body
+    // connection
+    if(HAL::GetTimeStamp() - startWait_ms > 2000)
+    {
+      AnkiError("spine_wait_for_first_frame.timeout","");
+      FaultCode::DisplayFaultCode(FaultCode::NO_BODY);
+      return RESULT_FAIL;
+    }
+
     ssize_t r = spine_parse_frame(spine, &frameBuffer_, sizeof(frameBuffer_), NULL);
 
     if (r < 0) {
@@ -197,12 +247,16 @@ Result HAL::Init(const int * shutdownSignal)
     spine_set_mode(&spine_, RobotMode_RUN);
 
     AnkiDebug("HAL.Init.WaitingForDataFrame", "");
-    const Result result = spine_wait_for_first_frame(&spine_, shutdownSignal);
-    request_version();  //get version so we have it when we need it.
-    if (RESULT_OK != result) {
-      AnkiError("HAL.Init.SpineWait", "Unable to synchronize spine (result %d)", result);
-      return result;
+
+    const Result res =  spine_wait_for_first_frame(&spine_, shutdownSignal);
+    if(res != RESULT_OK)
+    {
+      AnkiError("HAL.Init.NoFirstFrame", "");
+      return res;
     }
+    AnkiDebug("HAL.Init.GotFirstFrame", "");
+
+    request_version();  //get version so we have it when we need it.
   }
 #else
   bodyData_ = &dummyBodyData_;
@@ -334,13 +388,18 @@ Result HAL::Step(void)
 
     // Print warning if power mode is unexpected
     const HAL::PowerState currPowerMode = PowerGetMode();
-    if ((currPowerMode != desiredPowerMode_) && (lastPowerSetModeTime_ms_ > 0)) {
-      if (now_ms - lastPowerSetModeTime_ms_ > MAX_POWER_MODE_SWITCH_TIME_MS[desiredPowerMode_]) {
+    if (currPowerMode != desiredPowerMode_) {
+      if ( ((lastPowerSetModeTime_ms_ == 0) && reportUnexpectedPowerMode_) || 
+           ((lastPowerSetModeTime_ms_ > 0) && ((now_ms - lastPowerSetModeTime_ms_ > MAX_POWER_MODE_SWITCH_TIME_MS[desiredPowerMode_])))
+           ) {
         AnkiWarn("HAL.Step.UnexpectedPowerMode", 
                  "Curr mode: %u, Desired mode: %u, now: %ums, lastSetModeTime: %ums, lastH2BSendTime: %ums",
                  currPowerMode, desiredPowerMode_, now_ms, lastPowerSetModeTime_ms_, lastH2BSendTime_ms_);
         lastPowerSetModeTime_ms_ = 0;  // Reset time to avoid spamming warning
+        reportUnexpectedPowerMode_ = false;
       }
+    } else {
+      reportUnexpectedPowerMode_ = true;
     }
 
     struct ContactData* ccc_response = ccc_text_response();
@@ -382,6 +441,8 @@ Result HAL::Step(void)
 
 void HAL::Stop()
 {
+  AnkiInfo("HAL.Stop", "");
+  StopRadio();
   StopIMU();
   DisconnectRadio();
 }
@@ -530,12 +591,14 @@ u8 HAL::GetWatchdogResetCounter()
 
 void HAL::Shutdown()
 {
+  HAL::Stop();
   spine_shutdown(&spine_);
 }
 
 
 void HAL::PowerSetMode(const PowerState state)
 {
+  AnkiInfo("HAL.PowerSetMode", "%d", state);
   desiredPowerMode_ = state;
   lastPowerSetModeTime_ms_ = HAL::GetTimeStamp();
 }

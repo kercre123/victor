@@ -1,0 +1,9 @@
+{
+  "behaviorID"       : "WeatherTextToSpeech",
+  "behaviorClass"    : "TextToSpeechLoop",
+
+  "getIn"            : "TextToSpeechGetIn",
+  "loopAnimation"    : "TextToSpeechGetLoop",
+  "getOut"           : "TextToSpeechGetOut",
+  "emergencyGetOut"  : "TextToSpeechGetOut"
+}

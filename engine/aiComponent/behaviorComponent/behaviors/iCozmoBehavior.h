@@ -21,6 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent_fwd.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/components/cubes/cubeLightComponent.h"
@@ -53,8 +54,6 @@ class ConditionUserIntentPending;
 class DriveToObjectAction;
 enum class ObjectInteractionIntention;
 class UnitTestKey;
-class UserIntent;
-enum class UserIntentTag : uint8_t;
 enum class ActiveFeature : uint32_t;
 class ActiveFeatureMetaData;
 
@@ -439,6 +438,11 @@ protected:
   bool SmartRemoveCustomLightPattern(const ObjectID& objectID,
                                      const std::vector<CubeAnimationTrigger>& anims);
 
+  // Allows the behavior to activate a user intent and have it automatically deactived when this behavior is
+  // deactivated. For convenience (in the case where there is extra intent data), a pointer the the intent is
+  // returned. This pointer will be null if the intent couldn't be activated (i.e. it wasn't pending)
+  UserIntentPtr SmartActivateUserIntent(UserIntentTag tag);
+
   // Helper function to play an emergency get out through the continuity component
   void PlayEmergencyGetOut(AnimationTrigger anim);
 
@@ -458,11 +462,7 @@ protected:
   AIInformationAnalysis::EProcess _requiredProcess;
   
   bool ShouldStreamline() const { return (_alwaysStreamline); }
-  
-  // If you _know_ you have been activated due to a pending intent, get the intent along with
-  // its data using this helper
-  UserIntent& GetTriggeringUserIntent();
-  
+    
   // make a member variable a console var that is only around as long as its class instance is
   #if ANKI_DEV_CHEATS
     template <typename T>
@@ -514,14 +514,9 @@ private:
   //    the absence of other negative conditions), and
   // 2) Clear the intent when the behavior is activated
   std::shared_ptr< ConditionUserIntentPending > _respondToUserIntent;
-  
-  // if config changes this to false, the intent will be cleared but not moved into _pendingIntent,
-  // below. It will instead remain in the UserIntentComponent as a backup
-  bool _claimUserIntentData;
-  
-  // if a behavior is waiting for a specific intent and it got it, and _claimUserIntentData,
-  // then the intent will be here just prior to activation. otherwise it will be null
-  std::unique_ptr<UserIntent> _pendingIntent;
+
+  // The tag of the intent that should be deactivated when this behavior deactivates
+  UserIntentTag _intentToDeactivate;
 
   // A behavior can specify an associated ActiveFeature. If it does, the ActiveFeatureComponent can check this
   // while the behavior is active on the stack

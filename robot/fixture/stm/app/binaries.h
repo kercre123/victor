@@ -11,7 +11,8 @@ extern "C" {
   extern const uint8_t g_CubeTest[], g_CubeTestEnd[];
   extern const uint8_t g_CubeStub[], g_CubeStubEnd[];
   extern const uint8_t g_CubeBoot[], g_CubeBootEnd[]; //DEBUG -- this bin is nested in CubeStub for OTP programming
-
+  extern const uint8_t g_CubeStubFcc[], g_CubeStubFccEnd[];
+  
   // Body binaries
   extern const uint8_t g_BodyTest[], g_BodyTestEnd[];
   extern const uint8_t g_BodyBoot[], g_BodyBootEnd[];

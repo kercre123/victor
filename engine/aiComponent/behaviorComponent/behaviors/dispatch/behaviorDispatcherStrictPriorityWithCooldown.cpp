@@ -22,6 +22,7 @@ namespace Cozmo {
 namespace {
 const char* kBehaviorsKey = "behaviors";
 const char* kLinkScopeKey = "linkScope";
+const char* kResetOnDeactivationKey = "resetCooldownOnDeactivation";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -45,6 +46,8 @@ BehaviorDispatcherStrictPriorityWithCooldown::BehaviorDispatcherStrictPriorityWi
 {
 
   _iConfig.linkScope = config.get(kLinkScopeKey, false).asBool();
+  
+  _iConfig.resetCooldownOnDeactivation = config.get(kResetOnDeactivationKey, false).asBool();
 
   const Json::Value& behaviorArray = config[kBehaviorsKey];
   DEV_ASSERT_MSG(!behaviorArray.isNull(),
@@ -72,6 +75,7 @@ void BehaviorDispatcherStrictPriorityWithCooldown::GetBehaviorJsonKeys(std::set<
 {
   expectedKeys.insert( kBehaviorsKey );
   expectedKeys.insert( kLinkScopeKey );
+  expectedKeys.insert( kResetOnDeactivationKey );
   IBehaviorDispatcher::GetBehaviorJsonKeys(expectedKeys);
 }
 
@@ -165,9 +169,16 @@ void BehaviorDispatcherStrictPriorityWithCooldown::BehaviorDispatcher_OnDeactiva
 {
   // if we are stopped while a behavior was active, put it on cooldown
   if( _dVars.lastDesiredBehaviorIdx < _iConfig.cooldownInfo.size() ) {
-    _iConfig.cooldownInfo[ _dVars.lastDesiredBehaviorIdx ].StartCooldown(GetRNG());
+    if( !_iConfig.resetCooldownOnDeactivation ) {
+      _iConfig.cooldownInfo[ _dVars.lastDesiredBehaviorIdx ].StartCooldown(GetRNG());
+    }
     _dVars.lastDesiredBehaviorIdx = _iConfig.cooldownInfo.size();
-  }   
+  }
+  if( _iConfig.resetCooldownOnDeactivation ) {
+    for( auto& cooldown : _iConfig.cooldownInfo ) {
+      cooldown.ResetCooldown();
+    }
+  }
 }
 
 }

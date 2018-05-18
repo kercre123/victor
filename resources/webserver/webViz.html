@@ -10,6 +10,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="/p5.min.js"></script> <!--this has a v0.6.0 bugfix so isn't CDN-->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.16/js/jquery.dataTables.min.js"></script>
   
   <script>
     // add new modules here, which also become the tab
@@ -25,14 +26,19 @@
       ObservedObjects : 'webVizModules/observedObjects.js',
       Mood : 'webVizModules/mood.js',
       CpuProfile : 'webVizModules/cpuprofile.js',
-      NavMap : 'webVizModules/navMap.js'
+      NavMap : 'webVizModules/navMap.js',
+      Cubes : 'webVizModules/cubes.js'
     }
     var modules8889 = {
       MicData : 'webVizModules/micData.js',
       Animations: 'webVizModules/animations.js',
+      AudioEvents: 'webVizModules/audioEvents.js',
       CpuProfile : 'webVizModules/cpuprofile.js'
     }
   </script>
+
+  <!-- for datatables -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.16/css/jquery.dataTables.min.css">
 
   <style>
     *, *:before, *:after {

@@ -57,6 +57,11 @@ void ConvertFromStringToVector(std::vector<uint8_t> &bytes, const std::string &s
 bool StringStartsWith(const std::string& fullString, const std::string& prefix);
 
 bool StringEndsWith(const std::string& fullString, const std::string& ending);
+  
+// trim whitespace from beginning/end/both ends
+void StringTrimWhitespaceFromStart(std::string& s);
+void StringTrimWhitespaceFromEnd(std::string& s);
+void StringTrimWhitespace(std::string& s);
 
 // Checks if a byte array is valid UTF-8
 // Warning:  This is homegrown code for use by PlayerAdvertisement::GetAdvertisingString.

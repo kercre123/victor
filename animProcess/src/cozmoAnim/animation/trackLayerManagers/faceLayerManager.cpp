@@ -278,7 +278,15 @@ void FaceLayerManager::KeepFaceAlive(const std::map<KeepFaceAliveParameter,f32>&
   
 } // KeepFaceAlive()
 
-    
+
+void FaceLayerManager::KeepFaceTheSame()
+{
+    ProceduralFaceKeyFrame frame;
+    FaceTrack faceTrack;
+    faceTrack.AddKeyFrameToBack(frame);
+    AddLayer(kEyeNoiseLayerName, faceTrack);
+} // KeepFaceTheSame()
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 u32 FaceLayerManager::GenerateFaceDistortion(float distortionDegree,
                                                Animations::Track<ProceduralFaceKeyFrame>& track) const

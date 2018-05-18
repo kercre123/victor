@@ -30,6 +30,8 @@ public:
 
 private:
   OffTreadsState _targetState;
+  int _minTimeSinceChange_ms;
+  int _maxTimeSinceChange_ms; // ignored if negative
   
 };
 

@@ -160,7 +160,8 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
 void RobotDataLoader::LoadSpritePaths()
 {
   // Creates a map of all sprite names to their file names
-  _spritePaths->Load(_platform, "assets/cladToFileMaps/spriteMap.json", "SpriteName");
+  const bool reverseLookupAllowed = true;
+  _spritePaths->Load(_platform, "assets/cladToFileMaps/spriteMap.json", "SpriteName", reverseLookupAllowed);
 
   std::map<std::string, std::string> fileNameToFullPath;
   // Get all independent sprites

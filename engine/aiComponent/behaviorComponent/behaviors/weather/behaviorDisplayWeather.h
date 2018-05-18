@@ -25,6 +25,8 @@ class CompositeImage;
   
 namespace Cozmo {
 
+class BehaviorTextToSpeechLoop;
+
 class BehaviorDisplayWeather : public ICozmoBehavior
 {
 public: 
@@ -38,12 +40,16 @@ protected:
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
+
   
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void InitBehavior() override;
 
 private:
+  void StateWeatherInformation(const std::string& textToSay);
+  void DisplayWeatherResponse();
 
   struct InstanceConfig {
     InstanceConfig(const Json::Value& layoutConfig,
@@ -51,6 +57,7 @@ private:
     const Json::Value& compLayoutConfig;
     const Json::Value& compMapConfig;
     std::unique_ptr<Vision::CompositeImage> compImg;
+    std::shared_ptr<BehaviorTextToSpeechLoop> textToSpeechBehavior;
 
     // Animation metadata
     std::string animationName;

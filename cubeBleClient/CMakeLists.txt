@@ -11,7 +11,9 @@ set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
 if (VICOS)
     set(PLATFORM_LIBS
-        log)
+        anki-ble
+        log
+    )
 elseif (MACOSX)
     include(webots)
     set(PLATFORM_LIBS

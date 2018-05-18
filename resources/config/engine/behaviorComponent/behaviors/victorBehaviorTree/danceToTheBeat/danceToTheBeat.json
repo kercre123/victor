@@ -1,0 +1,11 @@
+{
+  "behaviorClass": "DanceToTheBeat",
+  "behaviorID": "DanceToTheBeat",
+  
+  "wantsToBeActivatedCondition": {
+    "conditionType": "BeatDetected"
+  },
+  
+  "danceDuration_sec" : 15.0,
+  "danceDurationVariability_sec" : 0.0
+}

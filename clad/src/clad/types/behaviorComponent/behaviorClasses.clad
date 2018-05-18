@@ -21,6 +21,7 @@ enum uint_8 BehaviorClass {
   AnimSequence,
   AnimSequenceWithFace,
   AnimSequenceWithObject,
+  TextToSpeechLoop,
 
   // basicCubeInteractions
   PickUpCube,
@@ -35,6 +36,7 @@ enum uint_8 BehaviorClass {
   GoHome,
   InteractWithFaces,
   LookAround,
+  MoveHeadToAngle,
   PopAWheelie,
   RequestToGoHome,
   SearchForFace,
@@ -47,9 +49,13 @@ enum uint_8 BehaviorClass {
   CoordinateGlobalInterrupts,
   QuietModeCoordinator,
 
+  // danceToTheBeat
+  DanceToTheBeat,
+
   // devBehaviors
   DevBatteryLogging,
   DevDisplayReadingsOnFace,
+  DevEventSequenceCapture,
   DevImageCapture,
   DevTouchDataCollection,
   DevTurnInPlaceTest,

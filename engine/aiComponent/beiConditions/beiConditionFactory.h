@@ -1,10 +1,10 @@
 /**
-* File: stateConceptStrategyFactory.h
+* File: beiConditionFactory.h
 *
 * Author: Kevin M. Karol
 * Created: 6/03/17
 *
-* Description: Factory for creating wantsToRunStrategy
+* Description: Factory for creating beiConditions
 *
 * Copyright: Anki, Inc. 2017
 *

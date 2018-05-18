@@ -369,7 +369,8 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       }else if(_compositeImage != nullptr){
         outTime = _compositeImage->GetFullLoopLength() * _internalUpdateInterval_ms;
       }
-      return outTime += _triggerTime_ms;
+      outTime += _triggerTime_ms;
+      return outTime > GetKeyframeDuration_ms() ? outTime : GetKeyframeDuration_ms();
     }
     
     bool SpriteSequenceKeyFrame::HaveKeyframeForTimeStamp(const TimeStamp_t timeSinceAnimStart_ms) const

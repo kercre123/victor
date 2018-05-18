@@ -4,9 +4,11 @@
 #include "cmd.h"
 #include "console.h"
 #include "contacts.h"
+#include "dut_uart.h"
 #include "emrf.h"
 #include "meter.h"
 #include "portable.h"
+#include "robotcom.h"
 #include "testcommon.h"
 #include "tests.h"
 #include "timer.h"
@@ -15,60 +17,32 @@
 //                  Debug
 //-----------------------------------------------------------------------------
 
-static void dbg_check_emr_(void)
-{
-  uint32_t esn0 = cmdRobotEsn()->esn;
-  uint32_t esn1     = cmdRobotGmr( EMR_FIELD_OFS(ESN) );
-  uint32_t hwver    = cmdRobotGmr( EMR_FIELD_OFS(HW_VER) );
-  uint32_t model    = cmdRobotGmr( EMR_FIELD_OFS(MODEL) );
-  uint32_t lot_code = cmdRobotGmr( EMR_FIELD_OFS(LOT_CODE) );
-  uint32_t playpenready = cmdRobotGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
-  uint32_t playpenpass  = cmdRobotGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
-  uint32_t packedout    = cmdRobotGmr( EMR_FIELD_OFS(PACKED_OUT_FLAG) );
-  uint32_t packoutdate  = cmdRobotGmr( EMR_FIELD_OFS(PACKED_OUT_DATE) );
-  
-  ConsolePrintf("\n");
-  cmdRobotBsv();
-  ConsolePrintf("\n");
-  ConsolePrintf("EMR[%u] esn         :%08x [%08x]\n", EMR_FIELD_OFS(ESN), esn1, esn0);
-  ConsolePrintf("EMR[%u] hwver       :%u\n", EMR_FIELD_OFS(HW_VER), hwver);
-  ConsolePrintf("EMR[%u] model       :%u\n", EMR_FIELD_OFS(MODEL), model);
-  ConsolePrintf("EMR[%u] lotcode     :%u\n", EMR_FIELD_OFS(LOT_CODE), lot_code);
-  ConsolePrintf("EMR[%u] playpenready:%u\n", EMR_FIELD_OFS(PLAYPEN_READY_FLAG), playpenready);
-  ConsolePrintf("EMR[%u] playpenpass :%u\n", EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), playpenpass);
-  ConsolePrintf("EMR[%u] packedout   :%u\n", EMR_FIELD_OFS(PACKED_OUT_FLAG), packedout);
-  ConsolePrintf("EMR[%u] packout-date:%u\n", EMR_FIELD_OFS(PACKED_OUT_DATE), packoutdate);
-  ConsolePrintf("\n");
-}
-
+extern void read_robot_info_(void);
 static void dbg_test_all_(void)
 {
   //test all supported commands
-  cmdRobotEsn();
-  cmdRobotBsv();
+  read_robot_info_(); //esn,bsv,gmr...
   ConsolePutChar('\n');
   
-  cmdRobotMot(100, CCC_SENSOR_MOT_LEFT, 127, 0, 0, 0); ConsolePutChar('\n');
-  cmdRobotMot(100, CCC_SENSOR_MOT_RIGHT, 0, -127, 0, 0); ConsolePutChar('\n');
-  cmdRobotMot(50,  CCC_SENSOR_MOT_LIFT, 0, 0, 100, 0); ConsolePutChar('\n');
-  cmdRobotMot(75,  CCC_SENSOR_MOT_LIFT, 0, 0, -100, 0); ConsolePutChar('\n');
-  cmdRobotMot(50,  CCC_SENSOR_MOT_HEAD, 0, 0, 0, 100); ConsolePutChar('\n');
-  cmdRobotMot(75,  CCC_SENSOR_MOT_HEAD, 0, 0, 0, -100); ConsolePutChar('\n');
+  rcomMot(100, RCOM_SENSOR_MOT_LEFT, 127, 0, 0, 0); ConsolePutChar('\n');
+  rcomMot(100, RCOM_SENSOR_MOT_RIGHT, 0, -127, 0, 0); ConsolePutChar('\n');
+  rcomMot(50,  RCOM_SENSOR_MOT_LIFT, 0, 0, 100, 0); ConsolePutChar('\n');
+  rcomMot(75,  RCOM_SENSOR_MOT_LIFT, 0, 0, -100, 0); ConsolePutChar('\n');
+  rcomMot(50,  RCOM_SENSOR_MOT_HEAD, 0, 0, 0, 100); ConsolePutChar('\n');
+  rcomMot(75,  RCOM_SENSOR_MOT_HEAD, 0, 0, 0, -100); ConsolePutChar('\n');
   
-  cmdRobotGet(1, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
-  cmdRobotGet(3, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
-  cmdRobotGet(5, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
-  cmdRobotGet(1, CCC_SENSOR_CLIFF); ConsolePutChar('\n');
-  //cmdRobotGet(1, CCC_SENSOR_MOT_LEFT); ConsolePutChar('\n');
-  //cmdRobotGet(1, CCC_SENSOR_MOT_RIGHT); ConsolePutChar('\n');
-  //cmdRobotGet(1, CCC_SENSOR_MOT_LIFT); ConsolePutChar('\n');
-  //cmdRobotGet(1, CCC_SENSOR_MOT_HEAD); ConsolePutChar('\n');
-  cmdRobotGet(1, CCC_SENSOR_PROX_TOF); ConsolePutChar('\n');
-  cmdRobotGet(1, CCC_SENSOR_BTN_TOUCH); ConsolePutChar('\n');
-  cmdRobotGet(1, CCC_SENSOR_RSSI); ConsolePutChar('\n');
-  cmdRobotGet(1, CCC_SENSOR_RX_PKT); ConsolePutChar('\n');
-  
-  dbg_check_emr_();
+  rcomGet(1, RCOM_SENSOR_BATTERY); ConsolePutChar('\n');
+  rcomGet(3, RCOM_SENSOR_BATTERY); ConsolePutChar('\n');
+  rcomGet(5, RCOM_SENSOR_BATTERY); ConsolePutChar('\n');
+  rcomGet(1, RCOM_SENSOR_CLIFF); ConsolePutChar('\n');
+  //rcomGet(1, RCOM_SENSOR_MOT_LEFT); ConsolePutChar('\n');
+  //rcomGet(1, RCOM_SENSOR_MOT_RIGHT); ConsolePutChar('\n');
+  //rcomGet(1, RCOM_SENSOR_MOT_LIFT); ConsolePutChar('\n');
+  //rcomGet(1, RCOM_SENSOR_MOT_HEAD); ConsolePutChar('\n');
+  rcomGet(1, RCOM_SENSOR_PROX_TOF); ConsolePutChar('\n');
+  rcomGet(1, RCOM_SENSOR_BTN_TOUCH); ConsolePutChar('\n');
+  rcomGet(1, RCOM_SENSOR_RSSI); ConsolePutChar('\n');
+  rcomGet(1, RCOM_SENSOR_RX_PKT); ConsolePutChar('\n');
 }
 
 static void dbg_test_emr_(bool blank_only=0, bool dont_clear=0);
@@ -79,7 +53,7 @@ static void dbg_test_emr_(bool blank_only, bool dont_clear)
   
   //reset EMR to blank
   for(idx=0; idx < 256; idx++)
-    cmdRobotSmr(idx, 0);
+    rcomSmr(idx, 0);
   if( blank_only )
     return;
   
@@ -98,14 +72,14 @@ static void dbg_test_emr_(bool blank_only, bool dont_clear)
       val = 0;
     }
     
-    cmdRobotSmr(idx, val);
+    rcomSmr(idx, val);
     m_emr[idx] = val;
   }
   
   //readback verify
   int mismatch = 0;
   for(idx=0; idx < 256; idx++) {
-    uint32_t val = cmdRobotGmr(idx);
+    uint32_t val = rcomGmr(idx);
     if( val != m_emr[idx] ) {
       mismatch++;
       ConsolePrintf("-------> EMR MISMATCH @[%u]: %08x != %08x\n", idx, val, m_emr[idx]);
@@ -120,29 +94,45 @@ static void dbg_test_emr_(bool blank_only, bool dont_clear)
   
   //reset EMR to blank
   for(idx=0; idx < 256; idx++)
-    cmdRobotSmr(idx, 0);
+    rcomSmr(idx, 0);
   
   ConsolePrintf("EMR test %s: %u errors\n", mismatch > 0 ? "FAILED" : "passed", mismatch);
 }
 
-static void dbg_test_comm_loop_(int nloops, int rlim)
+static void dbg_test_comm_loop_(int nloops, int rmax, int rmin)
 {
-  rlim = rlim<=0 ? 255 : rlim&0xff; //limit for random generator
-  ConsolePrintf("STRESS TEST COMMS: %i loops, rlim=%i\n", nloops, rlim);
+  rmin = rmin<=0 ?   1 : rmin&0xff; //limit for random generator
+  rmax = rmax<=0 ? 255 : rmax&0xff; //upper limit for random generator
+  if( rmin > rmax )
+    rmin = rmax;
+  
+  ConsolePrintf("STRESS TEST COMMS: %i loops, NN=rand{%i..%i}\n", nloops, rmin, rmax);
+  int rmod = rmax-rmin+1; //modulo
+  
+  static int sensorSelect = -1;
+  sensorSelect += 1;
   
   srand(Timer::get());
-  for(int x = 0; x < nloops; x++) {
-    cmdRobotEsn(); cmdRobotBsv();
-    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_BATTERY);
-    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_CLIFF);
-    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_MOT_LEFT);
-    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_MOT_RIGHT);
-    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_MOT_LIFT);
-    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_MOT_HEAD);
-    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_PROX_TOF);
-    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_BTN_TOUCH);
-    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_RSSI);
-    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_RX_PKT);
+  for(int x = 0; x < nloops; x++)
+  {
+    rcomEsn(); rcomBsv();
+    if( sensorSelect == 0 ) {}
+    //rcomGet(rmin+rand()%rmod, RCOM_SENSOR_BATTERY);
+    else if( sensorSelect == 1 )
+    rcomGet(rmin+rand()%rmod, RCOM_SENSOR_CLIFF);
+    //rcomGet(rmin+rand()%rmod, RCOM_SENSOR_MOT_LEFT);
+    //rcomGet(rmin+rand()%rmod, RCOM_SENSOR_MOT_RIGHT);
+    //rcomGet(rmin+rand()%rmod, RCOM_SENSOR_MOT_LIFT);
+    //rcomGet(rmin+rand()%rmod, RCOM_SENSOR_MOT_HEAD);
+    else if( sensorSelect == 2 )
+    rcomGet(rmin+rand()%rmod, RCOM_SENSOR_PROX_TOF);
+    else if( sensorSelect == 3 )
+    rcomGet(rmin+rand()%rmod, RCOM_SENSOR_BTN_TOUCH);
+    //rcomGet(rmin+rand()%rmod, RCOM_SENSOR_RSSI);
+    //rcomGet(rmin+rand()%rmod, RCOM_SENSOR_RX_PKT);
+    else if( sensorSelect == 4 )
+    rcomGet(rmin+rand()%rmod, RCOM_SENSOR_DEBUG_INC);
+    else { sensorSelect = -1; break; }
   }
 }
 
@@ -151,7 +141,7 @@ static void run_debug(int arg[])
   if( arg[0] == 1 )
     dbg_test_all_();
   if( arg[0] == 2 )
-    dbg_test_comm_loop_(arg[1], arg[2]);
+    dbg_test_comm_loop_(arg[1], arg[2], arg[3]);
   if( arg[0] == 3 )
     dbg_test_emr_( arg[1], arg[2] );
 }
@@ -186,7 +176,7 @@ const char* DBG_cmd_substitution(const char *line, int len)
     try { run_debug(arg); } catch(int e) { dbgErr = e; }
     ConsolePrintf("========== DEBUG %s e%03d ==========\n", !dbgErr ? "OK" : "FAIL", dbgErr);
     
-    return "\n";
+    return "\n"; //sends the debug line to charge contacts (ignored by robot, but keeps cmd in recall buffer)
   }
   return 0;
 }
@@ -218,95 +208,193 @@ bool TestRobotDetect(void)
   return i_ma > DETECT_CURRENT_MA || (i_ma > PRESENT_CURRENT_MA && g_isDevicePresent);
 }
 
+int detect_mv = 0;
+void TestRobotDetectSpine(void)
+{
+  rcomSetTarget(1); //rcom -> spine cable
+  
+  //ROBOT1 connected to stump via spine cable. Check for power input.
+  //if( g_fixmode == FIXMODE_ROBOT1 )
+    detect_mv = Meter::getVoltageMv(PWR_DUTVDD,6);
+  //else
+  //  detect_mv = 0;
+  
+  ConsolePrintf("spine voltage %imV\n", detect_mv);
+  if( detect_mv < 3000 || detect_mv > 5000 )
+    throw ERROR_SPINE_POWER;
+}
+
 void TestRobotCleanup(void)
 {
   detect_ma = 0;
+  detect_mv = 0;
   Board::powerOff(PWR_VEXT);
   Board::powerOff(PWR_VBAT);
   //ConsolePrintf("----DBG: i=%imA\n", Meter::getCurrentMa(PWR_VEXT,4) );
+  DUT_UART::deinit(); //used by rcom/spine layers
+  rcomSetTarget(0); //charge contacts
+}
+
+void read_robot_info_(void)
+{
+  uint32_t esn0 = rcomEsn();
+  uint32_t esn1     = rcomGmr( EMR_FIELD_OFS(ESN) );
+  uint32_t hwver    = rcomGmr( EMR_FIELD_OFS(HW_VER) );
+  uint32_t model    = rcomGmr( EMR_FIELD_OFS(MODEL) );
+  uint32_t lot_code = rcomGmr( EMR_FIELD_OFS(LOT_CODE) );
+  uint32_t playpenready = rcomGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
+  uint32_t playpenpass  = rcomGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
+  uint32_t packedout    = rcomGmr( EMR_FIELD_OFS(PACKED_OUT_FLAG) );
+  uint32_t packoutdate  = rcomGmr( EMR_FIELD_OFS(PACKED_OUT_DATE) );
+  rcomBsv();
+  
+  ConsolePrintf("EMR[%u] esn         :%08x [%08x]\n", EMR_FIELD_OFS(ESN), esn1, esn0);
+  ConsolePrintf("EMR[%u] hwver       :%u\n", EMR_FIELD_OFS(HW_VER), hwver);
+  ConsolePrintf("EMR[%u] model       :%u\n", EMR_FIELD_OFS(MODEL), model);
+  ConsolePrintf("EMR[%u] lotcode     :%u\n", EMR_FIELD_OFS(LOT_CODE), lot_code);
+  ConsolePrintf("EMR[%u] playpenready:%u\n", EMR_FIELD_OFS(PLAYPEN_READY_FLAG), playpenready);
+  ConsolePrintf("EMR[%u] playpenpass :%u\n", EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), playpenpass);
+  ConsolePrintf("EMR[%u] packedout   :%u\n", EMR_FIELD_OFS(PACKED_OUT_FLAG), packedout);
+  ConsolePrintf("EMR[%u] packout-date:%u\n", EMR_FIELD_OFS(PACKED_OUT_DATE), packoutdate);
 }
 
 //always run this first after detect, to get into comms mode
 void TestRobotInfo(void)
 {
   Board::powerOn(PWR_VBAT); //XXX Debug: work on body pcba w/o battery
-  
   ConsolePrintf("detect current avg %i mA\n", detect_ma);
   
   ConsolePrintf("Resetting comms interface\n");
-  Board::powerOff(PWR_VEXT, 500); //turn power off to disable charging
-  Contacts::setModeRx();
-  
-  try { //DEBUG, cmd doesn't always succeed in dev builds
-    dbg_check_emr_();
-  } catch(int e){
+  if( g_fixmode == FIXMODE_ROBOT1 ) {
+    DUT_UART::deinit(); //spine comms
+  } else {
+    Board::powerOff(PWR_VEXT, 500); //turn power off to disable charging
+    Contacts::setModeRx();
   }
+  
+  read_robot_info_();
   
   //DEBUG: console bridge, manual testing
   if( g_fixmode == FIXMODE_ROBOT0 )
     TestCommon::consoleBridge(TO_CONTACTS, 0, 0, BRIDGE_OPT_LINEBUFFER, DBG_cmd_substitution);
-  if( g_fixmode == FIXMODE_ROBOT1 )
-    TestCommon::consoleBridge(TO_CONTACTS, 1000, 0, BRIDGE_OPT_LINEBUFFER, DBG_cmd_substitution);
   //-*/
 }
 
-//ccr_sr_t get(uint8_t NN, uint8_t sensor
+//robot_sr_t get(uint8_t NN, uint8_t sensor
 void TestRobotSensors(void)
 {
   //XXX struct copies don't seem to work correctly...
-  ccr_sr_t bat    = cmdRobotGet(3, CCC_SENSOR_BATTERY   )[1];
-  ccr_sr_t cliff  = cmdRobotGet(3, CCC_SENSOR_CLIFF     )[1];
-  ccr_sr_t prox   = cmdRobotGet(3, CCC_SENSOR_PROX_TOF  )[1];
-  ccr_sr_t btn    = cmdRobotGet(3, CCC_SENSOR_BTN_TOUCH )[1];
-  ccr_sr_t rssi   = cmdRobotGet(3, CCC_SENSOR_RSSI      )[1];
-  ccr_sr_t pktcnt = cmdRobotGet(3, CCC_SENSOR_RX_PKT    )[1];
+  robot_sr_t bat    = rcomGet(3, RCOM_SENSOR_BATTERY   )[1];
+  robot_sr_t cliff  = rcomGet(3, RCOM_SENSOR_CLIFF     )[1];
+  robot_sr_t prox   = rcomGet(3, RCOM_SENSOR_PROX_TOF  )[1];
+  robot_sr_t btn    = rcomGet(3, RCOM_SENSOR_BTN_TOUCH )[1];
+  //robot_sr_t rssi   = rcomGet(3, RCOM_SENSOR_RSSI      )[1];
+  //robot_sr_t pktcnt = rcomGet(3, RCOM_SENSOR_RX_PKT    )[1];
   
   ConsolePrintf("Sensor Values:\n");
   ConsolePrintf("  battery = %i.%03iV\n", bat.bat.raw/1000, bat.bat.raw%1000);
   ConsolePrintf("  cliff = fL:%i fR:%i bR:%i bL:%i\n", cliff.cliff.fL, cliff.cliff.fR, cliff.cliff.bR, cliff.cliff.bL);
   ConsolePrintf("  prox = %imm sigRate:%i spad:%i ambientRate:%i\n", prox.prox.rangeMM, prox.prox.signalRate, prox.prox.spadCnt, prox.prox.ambientRate);
   ConsolePrintf("  btn = %i touch=%i\n", btn.btn.btn, btn.btn.touch);
-  ConsolePrintf("  rf = %idBm %i packets\n", rssi.fccRssi.rssi, rssi.fccRx.pktCnt);
+  //ConsolePrintf("  rf = %idBm %i packets\n", rssi.fccRssi.rssi, rssi.fccRx.pktCnt);
   
   //XXX: what should "good" sensor values look like?
+  
 }
+
+//measure tread speed, distance etc.
+typedef struct { int fwd_mid; int fwd_avg; int fwd_travel; int rev_mid; int rev_avg; int rev_travel; } motor_speed_t;
+static motor_speed_t* tread_test_(uint8_t sensor, int8_t power)
+{
+  const int printlvl = RCOM_PRINT_LEVEL_DEFAULT;
+  static motor_speed_t test;
+  memset(&test, 0, sizeof(test));
+  robot_sr_t* psr;
+  
+  int8_t pwrL = sensor == RCOM_SENSOR_MOT_LEFT ? power : 0;
+  int8_t pwrR = sensor == RCOM_SENSOR_MOT_RIGHT ? power : 0;
+  if( sensor != RCOM_SENSOR_MOT_LEFT && sensor != RCOM_SENSOR_MOT_RIGHT )
+    throw ERROR_BAD_ARG;
+  
+  //Forward
+  int start_pos = rcomGet(1, sensor, printlvl)[0].enc.pos; //get the idle start position
+  psr = rcomMot(100, sensor, pwrL, pwrR, 0, 0 , printlvl);
+  test.fwd_mid = psr[49].enc.speed;
+  for(int x=10; x<90; x++)
+    test.fwd_avg += psr[x].enc.speed;
+  test.fwd_avg /= (90-10);
+  
+  Timer::delayMs(50); //wait for tread to stop spinning
+  int end_pos = rcomGet(1, sensor, printlvl)[0].enc.pos;
+  test.fwd_travel = end_pos - start_pos;
+  
+  //Reverse
+  start_pos = end_pos;
+  psr = rcomMot(100, sensor, (-1)*pwrL, (-1)*pwrR, 0, 0 , printlvl);
+  test.rev_mid = psr[49].enc.speed;
+  for(int x=10; x<90; x++)
+    test.rev_avg += psr[x].enc.speed;
+  test.rev_avg /= (90-10);
+  
+  Timer::delayMs(50); //wait for tread to stop spinning
+  end_pos = rcomGet(1, sensor, printlvl)[0].enc.pos;
+  test.rev_travel = end_pos - start_pos;
+  
+  return &test;
+}
+
+typedef struct {
+  int start_active;   //starting position, while motor is pushing to absolute limit
+  int start_passive;  //starting position, with motor idle
+} motor_limits_t;
 
 void TestRobotMotors(void)
 {
-  //ccr_sr_t* psr; //sensor values
-  
-  int treadL_Fwd = cmdRobotMot(100, CCC_SENSOR_MOT_LEFT,  127,    0, 0, 0 )[49].enc.speed;
-  int treadL_Rev = cmdRobotMot(100, CCC_SENSOR_MOT_LEFT, -127,    0, 0, 0 )[49].enc.speed;
-  int treadR_Fwd = cmdRobotMot(100, CCC_SENSOR_MOT_RIGHT,   0, -127, 0, 0 )[49].enc.speed;
-  int treadR_Rev = cmdRobotMot(100, CCC_SENSOR_MOT_RIGHT,   0,  127, 0, 0 )[49].enc.speed;
+  motor_speed_t treadL = *tread_test_(RCOM_SENSOR_MOT_LEFT, 127);
+  motor_speed_t treadR = *tread_test_(RCOM_SENSOR_MOT_RIGHT, -127);
   
   //check range of motion
-  int lift_start = cmdRobotMot(50, CCC_SENSOR_MOT_LIFT, 0, 0,  100,    0 )[49].enc.pos;
-  int lift_end   = cmdRobotMot(75, CCC_SENSOR_MOT_LIFT, 0, 0, -100,    0 )[74].enc.pos;
-  int head_start = cmdRobotMot(50, CCC_SENSOR_MOT_HEAD, 0, 0,    0,  100 )[49].enc.pos;
-  int head_end   = cmdRobotMot(75, CCC_SENSOR_MOT_HEAD, 0, 0,    0, -100 )[74].enc.pos;
-  int lift_travel = lift_end - lift_start;
-  int head_travel = head_end - head_start;
+  int lift_start = rcomMot(50, RCOM_SENSOR_MOT_LIFT, 0, 0, -100,    0 )[49].enc.pos; //start at bottom
+  int lift_top   = rcomMot(35, RCOM_SENSOR_MOT_LIFT, 0, 0,  100,    0 )[34].enc.pos; //up
+  int lift_bot   = rcomMot(35, RCOM_SENSOR_MOT_LIFT, 0, 0, -100,    0 )[34].enc.pos; //down
+  int lift_travel_up = lift_top - lift_start;
+  int lift_travel_down = lift_top - lift_bot;
+  int head_start = rcomMot(65, RCOM_SENSOR_MOT_HEAD, 0, 0,    0, -127 )[64].enc.pos; //start at bottom
+  int head_top   = rcomMot(65, RCOM_SENSOR_MOT_HEAD, 0, 0,    0,  100 )[64].enc.pos; //up
+  int head_bot   = rcomMot(65, RCOM_SENSOR_MOT_HEAD, 0, 0,    0, -100 )[64].enc.pos; //down
+  int head_travel_up    = head_top - head_start;
+  int head_travel_down  = head_top - head_bot;
   
   ConsolePutChar('\n');
-  ConsolePrintf("tread speed LEFT : %i %i\n", treadL_Fwd, treadL_Rev);
-  ConsolePrintf("tread speed RIGHT: %i %i\n", treadR_Fwd, treadR_Rev);
-  ConsolePrintf("lift pos: start %i end %i travel %i\n", lift_start, lift_end, lift_travel);
-  ConsolePrintf("head pos: start %i end %i travel %i\n", head_start, head_end, head_travel);
+  ConsolePrintf("tread LEFT  fwd speed:%i avg:%i travel:%i\n", treadL.fwd_mid, treadL.fwd_avg, treadL.fwd_travel);
+  ConsolePrintf("tread LEFT  rev speed:%i avg:%i travel:%i\n", treadL.rev_mid, treadL.rev_avg, treadL.rev_travel);
+  ConsolePrintf("tread RIGHT fwd speed:%i avg:%i travel:%i\n", treadR.fwd_mid, treadR.fwd_avg, treadR.fwd_travel);
+  ConsolePrintf("tread RIGHT rev speed:%i avg:%i travel:%i\n", treadR.rev_mid, treadR.rev_avg, treadR.rev_travel);
+  ConsolePrintf("lift pos: start,up,down %i,%i,%i travel: up,down %i,%i\n", lift_start, lift_top, lift_bot, lift_travel_up, lift_travel_down );
+  ConsolePrintf("head pos: start,up,down %i,%i,%i travel: up,down %i,%i\n", head_start, head_top, head_bot, head_travel_up, head_travel_down );
   ConsolePutChar('\n');
   
-  const int min_speed = 1500; //we normally see 1700-1900
-  
-  if( treadL_Fwd < min_speed || (-1)*treadL_Rev < min_speed ) {
-    ConsolePrintf("insufficient LEFT tread speed %i %i\n", treadL_Fwd, treadL_Rev);
+  const int min_speed = 1500; //we normally see 1700-2000
+  if( treadL.fwd_avg < min_speed || (-1)*treadL.rev_avg < min_speed ) {
+    ConsolePrintf("insufficient LEFT tread speed %i %i\n", treadL.fwd_avg, treadL.rev_avg);
     throw ERROR_MOTOR_LEFT; //ERROR_MOTOR_LEFT_SPEED
   }
-  if( (-1)*treadR_Fwd < min_speed || treadR_Rev < min_speed ) {
-    ConsolePrintf("insufficient RIGHT tread speed %i %i\n", treadR_Fwd, treadR_Rev);
+  if( (-1)*treadR.fwd_avg < min_speed || treadR.rev_avg < min_speed ) {
+    ConsolePrintf("insufficient RIGHT tread speed %i %i\n", treadR.fwd_avg, treadR.rev_avg);
     throw ERROR_MOTOR_RIGHT; //ERROR_MOTOR_RIGHT_SPEED
   }
   
-  //XXX: calibration sample of 1, travel should be about -230
+  const int min_travel = 600;
+  if( treadL.fwd_travel < min_travel || (-1)*treadL.rev_travel < min_travel ) {
+    ConsolePrintf("insufficient LEFT tread travel %i %i\n", treadL.fwd_travel, treadL.rev_travel);
+    throw ERROR_MOTOR_LEFT;
+  }
+  if( (-1)*treadR.fwd_travel < min_travel || treadR.rev_travel < min_travel ) {
+    ConsolePrintf("insufficient RIGHT tread travel %i %i\n", treadR.fwd_travel, treadR.rev_travel);
+    throw ERROR_MOTOR_RIGHT;
+  }
+  
+  /*/XXX: calibration sample of 1, travel should be about -230
   lift_travel *= -1; //positive travel comparisons
   if( (-1)*lift_travel > 20 )
     throw ERROR_MOTOR_LIFT_BACKWARD;
@@ -316,8 +404,9 @@ void TestRobotMotors(void)
     throw ERROR_MOTOR_LIFT_RANGE; //moves, but not enough...
   else if( lift_travel > 300 )
     throw ERROR_MOTOR_LIFT_NOSTOP; //moves too much!
+  //-*/
   
-  //XXX: calibration sample of 1, travel should be about -570
+  /*/XXX: calibration sample of 1, travel should be about -570
   head_travel *= -1; //positive travel comparisons
   if( (-1)*head_travel > 20 )
     throw ERROR_MOTOR_HEAD_BACKWARD;
@@ -327,6 +416,11 @@ void TestRobotMotors(void)
     throw ERROR_MOTOR_HEAD_RANGE; //moves, but not enough...
   else if( head_travel > 700 )
     throw ERROR_MOTOR_HEAD_NOSTOP; //moves too much!
+  //-*/
+}
+
+void TestRobotMotorsSlow(void)
+{
 }
 
 void EmrChecks(void)
@@ -336,8 +430,8 @@ void EmrChecks(void)
     //XXX: ROBOT1,2,MIC_TEST etc results in EMR.fixture[?]
   }
   if( g_fixmode == FIXMODE_PACKOUT ) {
-    uint32_t ppReady  = cmdRobotGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
-    uint32_t ppPassed = cmdRobotGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
+    uint32_t ppReady  = rcomGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
+    uint32_t ppPassed = rcomGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
     if( ppReady != 1 || ppPassed != 1 ) {
       throw ERROR_ROBOT_TEST_SEQUENCE;
     }
@@ -345,22 +439,22 @@ void EmrChecks(void)
   
   //requrie retest on all downstream fixtures after rework
   if( g_fixmode == FIXMODE_ROBOT3 ) {
-    cmdRobotSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 0 );
-    cmdRobotSmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), 0 );
-    cmdRobotSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 0 );
+    rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 0 );
+    rcomSmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), 0 );
+    rcomSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 0 );
   }
   if( g_fixmode == FIXMODE_PACKOUT ) {
-    cmdRobotSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 0 );
+    rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 0 );
   }
 }
 
 void EmrUpdate(void)
 {
   if( g_fixmode == FIXMODE_ROBOT3 ) {
-    cmdRobotSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 1 );
+    rcomSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 1 );
   }
   if( g_fixmode == FIXMODE_PACKOUT ) {
-    cmdRobotSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 1 );
+    rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 1 );
   }
 }
 
@@ -369,24 +463,13 @@ void EmrUpdate(void)
 //-----------------------------------------------------------------------------
 
 //read battery voltage
-int robot_get_battVolt100x(void)
+int robot_get_batt_mv(void)
 {
-  //XXX: hook this up to a real battery command
-  #define VBAT_SCALE(v) ((v) = (v)<0 ? -1 : (v)>>16)
+  int raw = rcomGet(1, RCOM_SENSOR_BATTERY)[0].bat.raw;
+  int vBatMv = RCOM_BAT_RAW_TO_MV(raw);
   
-  ConsolePrintf(">vbat (simulated)\n");
-  char* rsp = (char*)"vbat 0 65536 655360 6553600 3276800"; //cmdSend(CMD_IO_CONTACTS, "vbat");
-  //int status = cmdStatus();
-  
-  //convert raw values to 100x voltage [centivolts]
-  int vBat100x     = cmdParseInt32( cmdGetArg(rsp,2) ); VBAT_SCALE(vBat100x);
-  int vBatFilt100x = cmdParseInt32( cmdGetArg(rsp,3) ); VBAT_SCALE(vBatFilt100x);
-  int vExt100x     = cmdParseInt32( cmdGetArg(rsp,4) ); VBAT_SCALE(vExt100x);
-  int vExtFilt100x = cmdParseInt32( cmdGetArg(rsp,5) ); VBAT_SCALE(vExtFilt100x);
-  ConsolePrintf("vBat,%03d,%03d,vExt,%03d,%03d\r\n", vBat100x, vBatFilt100x, vExt100x, vExtFilt100x );
-  
-  //return vBatFilt100x; //return filtered vBat
-  return -1;
+  ConsolePrintf("vbat = %u.%03uV (%i)\n", vBatMv/1000, vBatMv%1000, raw);
+  return vBatMv;
 }
 
 enum {
@@ -460,17 +543,17 @@ static inline int charge1_(uint16_t timeout_s, uint16_t i_done_ma, bool dbgPrint
 }
 
 //recharge cozmo. parameterized conditions: time, battery voltage, current threshold
-int m_Recharge( uint16_t max_charge_time_s, uint16_t vbat_limit_v100x, uint16_t i_done_ma, bool dbgPrint )
+int m_Recharge( uint16_t max_charge_time_s, uint16_t bat_limit_mv, uint16_t i_done_ma, bool dbgPrint )
 {
   const u8 BAT_CHECK_INTERVAL_S = 90; //interrupt charging this often to test battery level
-  ConsolePrintf("recharge,%dcV,%dmA,%ds\r\n", vbat_limit_v100x, i_done_ma, max_charge_time_s );
+  ConsolePrintf("recharge,%dcV,%dmA,%ds\r\n", bat_limit_mv, i_done_ma, max_charge_time_s );
   
   Contacts::setModeRx();
   Timer::delayMs(500); //let battery voltage settle
-  int battVolt100x = robot_get_battVolt100x(); //get initial battery level
+  int batt_mv = robot_get_batt_mv(); //get initial battery level
   
   uint32_t Tstart = Timer::get();
-  while( vbat_limit_v100x == 0 || battVolt100x < vbat_limit_v100x )
+  while( bat_limit_mv == 0 || batt_mv < bat_limit_mv )
   {
     if( max_charge_time_s > 0 && Timer::elapsedUs(Tstart) >= ((uint32_t)max_charge_time_s*1000*1000) )
       return RECHARGE_STATUS_TIMEOUT;
@@ -480,7 +563,7 @@ int m_Recharge( uint16_t max_charge_time_s, uint16_t vbat_limit_v100x, uint16_t 
     ConsolePrintf("total charge time: %ds\n", Timer::elapsedUs(Tstart)/1000000 );
     Contacts::setModeRx();
     Timer::delayMs(500); //let battery voltage settle
-    battVolt100x = robot_get_battVolt100x();
+    batt_mv = robot_get_batt_mv();
     
     //charge loop detected robot removal or charge completion?
     if( chgStat != RECHARGE_STATUS_TIMEOUT )
@@ -493,13 +576,13 @@ int m_Recharge( uint16_t max_charge_time_s, uint16_t vbat_limit_v100x, uint16_t 
 void Recharge(void)
 {
   const u16 BAT_MAX_CHARGE_TIME_S = 25*60;  //max amount of time to charge
-  const u16 VBAT_CHARGE_LIMIT = 390;        //Voltage x100
+  const u16 VBAT_CHARGE_LIMIT_MV = 3900;
   const u16 BAT_FULL_I_THRESH_MA = 200;     //current threshold for charging complete (experimental)
   int status;
   
   bool dbgPrint = g_fixmode == FIXMODE_RECHARGE0 ? 1 : 0;
   
-  //Notes from test measurements ->
+  //Notes from test measurements (Cozmo) ->
   //conditions: 90s charge intervals, interrupted to measure vBat)
   //full charge (3.44V-4.15V) 1880s (31.3min)
   //typical charge (3.65V-3.92V) 990s (16.5min)
@@ -507,7 +590,7 @@ void Recharge(void)
   if( g_fixmode == FIXMODE_RECHARGE0 )
     status = m_Recharge( 2*BAT_MAX_CHARGE_TIME_S, 0, BAT_FULL_I_THRESH_MA, dbgPrint ); //charge to full battery
   else
-    status = m_Recharge( BAT_MAX_CHARGE_TIME_S, VBAT_CHARGE_LIMIT, 0, dbgPrint ); //charge to specified voltage
+    status = m_Recharge( BAT_MAX_CHARGE_TIME_S, VBAT_CHARGE_LIMIT_MV, 0, dbgPrint ); //charge to specified voltage
   
   if( status == RECHARGE_STATUS_TIMEOUT )
     throw ERROR_TIMEOUT;
@@ -516,24 +599,22 @@ void Recharge(void)
     cmdSend(CMD_IO_CONTACTS, "powerdown", 50, CMD_OPTS_DEFAULT & ~(CMD_OPTS_LOG_ERRORS | CMD_OPTS_EXCEPTION_EN));
 }
 
-extern void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x );
+extern void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv );
 static void ChargeTest(void) {
-  RobotChargeTest( 425/*mA*/, 420/*cV*/ );
+  RobotChargeTest( 425, 4200 );
 }
 
 //Test charging circuit by verifying current draw
 //@param i_done_ma - average current (min) to pass this test
-//@param vbat_overvolt_v100x - battery too full voltage level. special failure handling above this threshold.
-void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x )
+//@param bat_overvolt_mv - battery too full voltage level. special failure handling above this threshold.
+void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
 {
   #define CHARGE_TEST_DEBUG(x)    x
   const int NUM_SAMPLES = 16;
   
   Contacts::setModeRx(); //switch to comm mode
   Timer::delayMs(500); //let battery voltage settle
-  int battVolt100x = robot_get_battVolt100x(); //get initial battery level
-  
-  battVolt100x = 360; //XXX battery command doesn't work yet
+  int batt_mv = robot_get_batt_mv(); //get initial battery level
   
   //Turn on charging power
   Board::powerOn(PWR_VEXT,0);
@@ -594,15 +675,19 @@ void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x )
     }
   }
   
+  Contacts::setModeRx(); //switch to comm mode
+  Timer::delayMs(500); //let battery voltage settle
+  batt_mv = robot_get_batt_mv(); //get final battery level
+  
   ConsolePrintf("charge-current-ma,%d,sample-cnt,%d\r\n", avg, avgCnt);
   ConsolePrintf("charge-current-dbg,avgMax,%d,%d,iMax,%d,%d\r\n", avgMax, avgMaxTime, iMax, iMaxTime);
   if( avgCnt >= NUM_SAMPLES && avg >= i_done_ma )
     return; //OK
   
-  if( battVolt100x >= vbat_overvolt_v100x ) {
+  if( batt_mv >= bat_overvolt_mv ) {
     //const int BURN_TIME_S = 120;  //time to hit the gym and burn off a few pounds
     //ConsolePrintf("power-on,%ds\r\n", BURN_TIME_S);
-    //robot_get_battVolt100x(BURN_TIME_S,BURN_TIME_S); //reset power-on timer and set face to info screen for the duration
+    //robot_get_batt_mv(BURN_TIME_S,BURN_TIME_S); //reset power-on timer and set face to info screen for the duration
     throw ERROR_BAT_OVERVOLT; //error prompts operator to put robot aside for a bit
   }
   
@@ -613,40 +698,32 @@ void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x )
 //                  Get Tests
 //-----------------------------------------------------------------------------
 
-TestFunction* TestRobotInfoGetTests(void)
-{
+void DBG_test_all(void) { dbg_test_all_(); }
+void DBG_test_emr(void) { dbg_test_emr_(); }
+
+TestFunction* TestRobot0GetTests(void) {
   static TestFunction m_tests[] = {
     TestRobotInfo,
+    //DBG_test_all,
+    //DBG_test_emr,
     NULL,
   };
   return m_tests;
 }
 
-TestFunction* TestRobot0GetTests(void)
-{
+TestFunction* TestRobot1GetTests(void) {
   static TestFunction m_tests[] = {
+    TestRobotDetectSpine,
     TestRobotInfo,
-    //DBG_RobotCmdTest,
+    TestRobotSensors,
+    //TestRobotMotors,
     //ChargeTest,
     NULL,
   };
   return m_tests;
 }
 
-void DBG_test_all(void) { dbg_test_all_(); }
-TestFunction* TestRobot1GetTests(void)
-{
-  static TestFunction m_tests[] = {
-    TestRobotInfo,
-    DBG_test_all,
-    NULL,
-  };
-  return m_tests;
-}
-
-void DBG_test_emr(void) { dbg_test_emr_(); }
-TestFunction* TestRobot2GetTests(void)
-{
+TestFunction* TestRobot2GetTests(void) {
   static TestFunction m_tests[] = {
     TestRobotInfo,
     //DBG_test_emr,
@@ -659,8 +736,7 @@ TestFunction* TestRobot2GetTests(void)
   return m_tests;
 }
 
-TestFunction* TestRobot3GetTests(void)
-{
+TestFunction* TestRobot3GetTests(void) {
   static TestFunction m_tests[] = {
     TestRobotInfo,
     EmrChecks, //check previous test results and reset status flags
@@ -672,70 +748,23 @@ TestFunction* TestRobot3GetTests(void)
   };
   return m_tests;
 }
+
+TestFunction* TestRobotInfoGetTests(void) {
+  static TestFunction m_tests[] = {
+    TestRobotInfo,
+    NULL,
+  };
+  return m_tests;
+}
+
 TestFunction* TestRobotPackoutGetTests(void) { 
   return TestRobot3GetTests();
 }
 
-TestFunction* TestRobotPlaypenGetTests(void)
-{
-  static TestFunction m_tests[] = {
-    TestRobotInfo,
-    NULL,
-  };
-  return m_tests;
-}
-
-TestFunction* TestRobotLifetestGetTests(void)
-{
-  static TestFunction m_tests[] = {
-    TestRobotInfo,
-    NULL,
-  };
-  return m_tests;
-}
-
-TestFunction* TestRobotRecharge0GetTests(void)
-{
+TestFunction* TestRobotRechargeGetTests(void) {
   static TestFunction m_tests[] = {
     TestRobotInfo,
     Recharge,
-    NULL,
-  };
-  return m_tests;
-}
-
-TestFunction* TestRobotRecharge1GetTests(void)
-{
-  static TestFunction m_tests[] = {
-    TestRobotInfo,
-    Recharge,
-    NULL,
-  };
-  return m_tests;
-}
-
-TestFunction* TestRobotSoundGetTests(void)
-{
-  static TestFunction m_tests[] = {
-    TestRobotInfo,
-    NULL,
-  };
-  return m_tests;
-}
-
-TestFunction* TestRobotFacRevertGetTests(void)
-{
-  static TestFunction m_tests[] = {
-    TestRobotInfo,
-    NULL,
-  };
-  return m_tests;
-}
-
-TestFunction* TestRobotEMGetTests(void)
-{
-  static TestFunction m_tests[] = {
-    TestRobotInfo,
     NULL,
   };
   return m_tests;

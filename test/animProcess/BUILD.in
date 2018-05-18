@@ -4,10 +4,6 @@ cxx_project(
                         excludes = [
                         ]),
     platform_srcs = [
-        ('android', glob([
-                            '**/*_android.cpp',
-                            '**/android/*.cpp',
-                         ])),
         ('mac', glob([
                         '**/*_iososx*.mm',
                         '**/*_osx.mm',
@@ -15,12 +11,8 @@ cxx_project(
                      ]))
     ],
     headers = cxx_header_glob(['.'],
-                              excludes = ['**/android/*']),
+                              excludes = []),
     platform_headers = [
-        ('android', glob([
-                            '**/*_android.h',
-                            '**/android/*.h',
-                         ])),
         ('mac', glob([
                         '**/*_ios*.h',
                         '**/*_osx.h',

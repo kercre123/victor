@@ -61,7 +61,7 @@ public:
 
 private:
   // Check state & send firmware handshake when engine connects
-  static Result MonitorConnectionState();
+  static Result MonitorConnectionState(BaseStationTime_t currTime_nanosec);
 
 
 };

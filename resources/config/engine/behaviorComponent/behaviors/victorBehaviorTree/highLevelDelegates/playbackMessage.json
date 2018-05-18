@@ -7,6 +7,5 @@
   "respondToUserIntents" :
   [
     { "type": "message_playback" }
-  ],
-  "claimUserIntentData" : true
+  ]
 }

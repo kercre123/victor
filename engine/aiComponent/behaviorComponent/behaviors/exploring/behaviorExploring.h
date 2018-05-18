@@ -126,11 +126,12 @@ private:
     std::vector<Pose3d> sampledPoses;
     bool posesHaveBeenPruned; // true if poses now contains only the selected goal
     float distToGoal_mm; // the distance to the selected goal, if posesHaveBeenPruned, otherwise negative
-    float angleAtArrival_rad;
     int numDriveAttemps;
     bool hasTakenPitStop;
     float timeFinishedConfirmCharger_s;
     float timeFinishedConfirmCube_s;
+    
+    size_t devWarnIfNotInterruptedByTick;
   };
 
   InstanceConfig _iConfig;

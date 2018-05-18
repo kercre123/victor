@@ -21,25 +21,14 @@ namespace Anki {
 namespace Cozmo {
 
 namespace{
-static const std::string formatString = "%Y-%b-%d %H:%M:%S";
+const std::string kWeatherLocationPrepend = "Right now in ";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool WeatherIntentParser::IsForecast(const UserIntent_WeatherResponse& weatherIntent) 
 { 
-  // Get the date specified by the cloud associated with this weather data
-  std::tm intentTime = {};
-  const bool gotTime = Util::EpochFromDateString(weatherIntent.dateTime, formatString, intentTime);
-
-
-  // Compare that date to the current date
-  const std::time_t epochT = std::time(0);
-
-  // Two ways cloud can indicate a forecast - timestamp or detecting forecast words in the request
-  const bool sameDate =  gotTime && (localtime(&epochT)->tm_mday == intentTime.tm_mday);
-  const bool isForecast = !weatherIntent.wordIfForecast.empty();
-
-  return sameDate || isForecast;
+  return (weatherIntent.isForecast == "true") || 
+         (weatherIntent.isForecast == "True");
 }
 
 
@@ -47,10 +36,8 @@ bool WeatherIntentParser::IsForecast(const UserIntent_WeatherResponse& weatherIn
 bool WeatherIntentParser::ShouldSayText(const UserIntent_WeatherResponse& weatherIntent, 
                                         std::string& textToSay) 
 { 
-  // If city/state/country are specified state the location
-  textToSay = weatherIntent.city + " " + weatherIntent.state + " " + weatherIntent.country;
-
-  return weatherIntent.city.empty();
+  textToSay = kWeatherLocationPrepend + weatherIntent.speakableLocationString;
+  return !weatherIntent.speakableLocationString.empty();
 }
 
 

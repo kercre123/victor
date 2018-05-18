@@ -226,7 +226,14 @@ CompositeImageLayer::SpriteEntry::SpriteEntry(SpriteCache* cache,
 : _spriteName(spriteName)
 {
   if(Vision::IsSpriteSequence(spriteName, false)){
-    _spriteSequence = *seqContainer->GetSequenceByName(spriteName);
+    auto* seq = seqContainer->GetSequenceByName(spriteName);
+    if(seq != nullptr){
+      _spriteSequence = *seq;
+    }else{
+      PRINT_NAMED_ERROR("CompositeImageLayer.SpriteEntry.SequenceNotInContainer",
+                        "Could not find sequence for SpriteName %s",
+                        SpriteNameToString(spriteName));
+    }
   }else{
     _spriteSequence.AddFrame(cache->GetSpriteHandle(spriteName));
   }

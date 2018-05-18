@@ -61,6 +61,7 @@ void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dep
 
   Init(&aiComponent,
        &robot->GetAnimationComponent(),
+       &robot->GetBeatDetectorComponent(),
        &behaviorContainer,
        &behaviorEventComponent,
        &behaviorTimers,
@@ -91,6 +92,7 @@ void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dep
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                      AnimationComponent*            animationComponent,
+                                     BeatDetectorComponent*         beatDetectorComponent,
                                      BehaviorContainer*             behaviorContainer,
                                      BehaviorEventComponent*        behaviorEventComponent,
                                      BehaviorTimerManager*          behaviorTimers,
@@ -118,6 +120,7 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
 {
   _arrayWrapper = std::make_unique<CompArrayWrapper>(aiComponent,
                                                      animationComponent,
+                                                     beatDetectorComponent,
                                                      behaviorContainer,
                                                      behaviorEventComponent,
                                                      behaviorTimers,
@@ -159,6 +162,7 @@ Util::RandomGenerator& BehaviorExternalInterface::GetRNG()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*                   aiComponent,
                                                               AnimationComponent*            animationComponent,
+                                                              BeatDetectorComponent*         beatDetectorComponent,
                                                               BehaviorContainer*             behaviorContainer,
                                                               BehaviorEventComponent*        behaviorEventComponent,
                                                               BehaviorTimerManager*          behaviorTimers,
@@ -186,6 +190,7 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
 : _array({
     {BEIComponentID::AIComponent,            BEIComponentWrapper(aiComponent)},
     {BEIComponentID::Animation,              BEIComponentWrapper(animationComponent)},
+    {BEIComponentID::BeatDetector,           BEIComponentWrapper(beatDetectorComponent)},
     {BEIComponentID::BehaviorContainer,      BEIComponentWrapper(behaviorContainer)},
     {BEIComponentID::BehaviorEvent,          BEIComponentWrapper(behaviorEventComponent)},
     {BEIComponentID::BehaviorTimerManager,   BEIComponentWrapper(behaviorTimers)},

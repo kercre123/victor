@@ -19,7 +19,8 @@
 #pragma GCC diagnostic pop
 #include <cstdint>
 
-namespace Anki{ namespace Util {
+namespace Anki {
+namespace Util {
 
 class RandomGenerator
 {
@@ -42,7 +43,7 @@ public:
   // Returns a random integer in the range [0,numVals-1]
   int RandInt(int numVals) const;
 
-  // Generates number in the whole range of give type
+  // Generates number in the whole range of given type
   template <typename T>
   T RandT();
   
@@ -64,7 +65,7 @@ private:
 
 
 
-// Generates number in the whole range of give type
+// Generates number in the whole range of given type
 template <typename T>
 T RandomGenerator::RandT() {
   double maxVal = std::numeric_limits<T>::max();
@@ -74,8 +75,8 @@ T RandomGenerator::RandT() {
 }
 
 
+} // namespace Util
 } // namespace Anki
-} //namespace Util
 
 #endif // __Util_Random_RandomGenerator_H__
 

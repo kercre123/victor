@@ -174,13 +174,11 @@ enum uint_32 Robot_Vic_Mvmt_Size
   Robot_Vic_Mvmt_Short = 3300471426,
 }
 
-enum uint_32 Robot_Vic_Scrn_Procedural
+enum uint_32 Robot_Vic_Scrn_Procedural_Shift_Length
 {
-  Blink = 3379926649,
   Invalid = 0,
   Shift_Long = 3156794696,
   Shift_Short = 3265274760,
-  Squint = 1347280069,
 }
 
 enum uint_32 Robot_Vic_Stim_Switch
@@ -231,7 +229,7 @@ enum uint_32 SwitchGroupType
   Robot_Vic_Lift_Direction = 3690255634,
   Robot_Vic_Mood_Switch = 1492705913,
   Robot_Vic_Mvmt_Size = 1553011127,
-  Robot_Vic_Scrn_Procedural = 612876373,
+  Robot_Vic_Scrn_Procedural_Shift_Length = 1706342803,
   Robot_Vic_Stim_Switch = 2087220263,
   Robot_Vic_Tread_Drive = 4283612440,
   Robot_Vic_Tread_Speed = 724346585,

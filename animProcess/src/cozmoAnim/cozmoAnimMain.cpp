@@ -18,6 +18,8 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "util/console/consoleSystem.h"
+#include "util/logging/logging.h"
+#include "util/logging/androidLogPrintLogger_vicos.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/logging/victorLogger.h"

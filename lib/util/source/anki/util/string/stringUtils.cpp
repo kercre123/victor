@@ -206,6 +206,24 @@ bool StringEndsWith(const std::string& fullString, const std::string& ending)
     return false;
   }
 }
+  
+void StringTrimWhitespaceFromEnd(std::string& s)
+{
+  s.erase(std::find_if(s.rbegin(), s.rend(),
+                       std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+}
+
+void StringTrimWhitespaceFromStart(std::string& s) {
+    s.erase(s.begin(),
+            std::find_if(s.begin(),
+                         s.end(),
+                         std::not1(std::ptr_fun<int, int>(std::isspace))));
+}
+
+void StringTrimWhitespace(std::string& s) {
+  StringTrimWhitespaceFromStart(s);
+  StringTrimWhitespaceFromEnd(s);
+}
 
 bool IsValidUTF8(const uint8_t* b, size_t length)
 {

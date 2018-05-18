@@ -39,6 +39,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/factory/emrHelper.h"
+#include "anki/cozmo/shared/factory/faultCodes.h"
 
 #include "osState/osState.h"
 
@@ -59,6 +60,9 @@
 // Anonymous namespace for private declarations
 namespace {
 
+  static const int kNumTicksToShutdown = 5;
+  int _countToShutdown = -1;
+  
   // For comms with engine
   constexpr int MAX_PACKET_BUFFER_SIZE = 2048;
   u8 pktBuffer_[MAX_PACKET_BUFFER_SIZE];
@@ -364,6 +368,14 @@ void Process_startWakeWordlessStreaming(const Anki::Cozmo::RobotInterface::Start
   micDataSystem->StartWakeWordlessStreaming();
 }
 
+void Process_resetBeatDetector(const Anki::Cozmo::RobotInterface::ResetBeatDetector& msg)
+{
+  auto* micDataSystem = _context->GetMicDataSystem();
+  if (micDataSystem != nullptr) {
+    micDataSystem->ResetBeatDetector();
+  }
+}
+
 void Process_playbackAudioStart(const Anki::Cozmo::RobotInterface::StartPlaybackAudio& msg)
 {
   using namespace Audio;
@@ -505,6 +517,14 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
       AnimComms::DisconnectRobot();
     }
     break;
+    case RobotInterface::RobotToEngine::Tag_prepForShutdown:
+    {
+      PRINT_NAMED_INFO("AnimProcessMessages.ProcessMessageFromRobot.Shutdown","");
+      // Need to wait a couple ticks before actually shutting down so that this message
+      // can be forwarded up to engine
+      _countToShutdown = kNumTicksToShutdown;
+    }
+    break;
     case RobotInterface::RobotToEngine::Tag_micData:
     {
       const auto& payload = msg.micData;
@@ -559,8 +579,24 @@ Result AnimProcessMessages::Init(AnimEngine* animEngine,
   return RESULT_OK;
 }
 
-Result AnimProcessMessages::MonitorConnectionState(void)
+Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_nanosec)
 {
+  // If it has been more than 30 seconds and we still haven't connected to engine
+  // or robot process display a fault code
+  static BaseStationTime_t startTime_nanosec = currTime_nanosec;
+  static const BaseStationTime_t kTimeUntilNoProcessFaultCode_nanosec = Util::SecToNanoSec(30.f);
+  static bool faultCodeDisplayed = false;
+  if(!faultCodeDisplayed &&
+     currTime_nanosec - startTime_nanosec > kTimeUntilNoProcessFaultCode_nanosec)
+  {
+    if(!AnimComms::IsConnectedToEngine())
+    {
+      faultCodeDisplayed = true;
+      FaultCode::DisplayFaultCode(FaultCode::NO_ENGINE_PROCESS);
+    }
+    // Connection to robot process fault code check is in Update()
+  }
+  
   // Send block connection state when engine connects
   static bool wasConnected = false;
   if (!wasConnected && AnimComms::IsConnectedToEngine()) {
@@ -596,6 +632,17 @@ Result AnimProcessMessages::MonitorConnectionState(void)
 
 Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
 {
+  if(_countToShutdown > 0)
+  {
+    if(--_countToShutdown == 0)
+    {
+      LOG_INFO("AnimProcessMessages.Update.Shutdown","");
+      // RESULT_SHUTDOWN will kick us out of the main update loop
+      // and cause the process to exit cleanly
+      return RESULT_SHUTDOWN;
+    }
+  }
+    
   // Keep trying to init the connection flow until it works
   // which will be when the robot name has been set by switchboard
   if(!_connectionFlowInited)
@@ -605,10 +652,14 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
   
   if (!AnimComms::IsConnectedToRobot()) {
     LOG_WARNING("AnimProcessMessages.Update", "No connection to robot");
+    FaultCode::DisplayFaultCode(FaultCode::NO_ROBOT_PROCESS);
+#if !FACTORY_TEST
+    // Only return failure if this is not the factory test
     return RESULT_FAIL_IO_CONNECTION_CLOSED;
+#endif
   }
 
-  MonitorConnectionState();
+  MonitorConnectionState(currTime_nanosec);
 
   _context->GetMicDataSystem()->Update(currTime_nanosec);
   _context->GetAudioPlaybackSystem()->Update(currTime_nanosec);

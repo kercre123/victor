@@ -212,6 +212,13 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
                                                        robot->Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::ExitPairing()));
                                                      }));
 
+  GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::prepForShutdown,
+                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+                                                       LOG_INFO("RobotMessageHandler.ProcessMessage.Shutdown","");
+                                                       robot->Shutdown();
+                                                     }));
+
+  
   if (robot->HasExternalInterface())
   {
     using namespace ExternalInterface;
@@ -480,7 +487,7 @@ void RobotToEngineImplMessaging::HandleFallingEvent(const AnkiEvent<RobotInterfa
               std::to_string(impactIntensity_int).c_str());       // 's_val'
 
   // TODO: Beam this up to game?
-  // robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(payload)));
+  robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotFallingEvent(msg.duration_ms, msg.impactIntensity)));
 }
 
 void RobotToEngineImplMessaging::HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

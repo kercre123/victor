@@ -98,7 +98,7 @@ public:
   MovementComponent& GetMoveComponent() const;
   ObjectPoseConfirmer& GetObjectPoseConfirmer() const;
   OffTreadsState GetOffTreadsState() const;
-  TimeStamp_t GetOffTreadsStateLastChangedTime_ms() const;
+  TimeStamp_t GetOffTreadsStateLastChangedTime_ms() const; // note: engine time, not robot time
   PathComponent& GetPathComponent() const;
   Radians GetPitchAngle() const;
   const Pose3d& GetPose() const;

@@ -17,6 +17,7 @@
 #include "coretech/common/engine/math/lineSegment2d.h"
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
@@ -30,6 +31,7 @@
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_Cliff.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_ProxObstacle.h"
+#include "util/console/consoleInterface.h"
 #include "util/random/randomGenerator.h"
 #include "util/random/randomIndexSampler.h"
 
@@ -45,14 +47,15 @@ namespace {
   const char* const kMotionProfileKey = "motionProfile";
   
   // todo: params for this:
-  const float kMinScanAngle = M_PI_F / 4;
-  const float kMaxScanAngle = M_PI_F;
-  constexpr float kMinCliffPenaltyDist_mm = 30.0f;
-  constexpr float kMaxCliffPenaltyDist_mm = 60.0f;
+  const float kMinScanAngle = DEG_TO_RAD( 45.0f );
+  const float kMaxScanAngle = DEG_TO_RAD( 140.0f );
+  constexpr float kMinCliffPenaltyDist_mm = 100.0f;
+  constexpr float kMaxCliffPenaltyDist_mm = 600.0f;
   const float kTimeBeforeConfirmCharger_s = 10*60.0f;
   const float kTimeBeforeConfirmCube_s = 2*60.0f;
   const float kProxPoseOffset_mm = 120.0f;
   const float kMaxDistToProxPose_mm = 750.0f;
+  const float kMinDistToProxPose_mm = 100.0f;
   const float kMaxCubeFromChargerDist_mm = 2000.0f;
 
   static_assert( kMinCliffPenaltyDist_mm < kMaxCliffPenaltyDist_mm, "Max must be > min" );
@@ -61,8 +64,6 @@ namespace {
   const float kMinGoalDistForPitStop_mm = 300.0f;
   const float kMinPathCompleteForPitStop = 0.3f; // >= this % of the distance followed
   const float kMaxPathCompleteForPitStop = 0.7f; // <= this % of the distance followed
-  
-  const float kRadiansIndicatesTurn = DEG_TO_RAD(10.0f);
   
   const float kChargerRadius_mm = 68.89f; // radius of circle that circumscribes the charger
   
@@ -76,13 +77,15 @@ namespace {
   const unsigned int kNumAnglesAtPose = 5;
   // number of samples before we give up trying to find a non-colliding pose. Note: the behavior will
   // end if no pose was found
-  const unsigned int kNumSampleSteps = 500;
+  const unsigned int kNumSampleSteps = 50;
   
   // number of poses to select that are offset from a prox obstacle by some nearby amount
   const unsigned int kNumProxPoses = 1;
   // distance prox obstacles should be from one another to be included in the sample list
   // (set to 0 for an efficiency boost!)
   const float kMinProxObstacleSeparation_mm = 100.0f;
+  
+  CONSOLE_VAR( bool, kMoveLiftAboveProx, "BehaviorExploring", false);
   
   constexpr MemoryMapTypes::FullContentArray kTypesToBlockSampling =
   {
@@ -99,19 +102,19 @@ namespace {
     {MemoryMapTypes::EContentType::NotInterestingEdge    , true }
   };
   
-  constexpr MemoryMapTypes::FullContentArray kTypesThatAreUnknown =
+  constexpr MemoryMapTypes::FullContentArray kTypesThatAreKnown =
   {
-    {MemoryMapTypes::EContentType::Unknown               , true },
-    {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
-    {MemoryMapTypes::EContentType::ClearOfCliff          , false},
-    {MemoryMapTypes::EContentType::ObstacleObservable    , false},
-    {MemoryMapTypes::EContentType::ObstacleCharger       , false},
-    {MemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
-    {MemoryMapTypes::EContentType::ObstacleProx          , false},
-    {MemoryMapTypes::EContentType::ObstacleUnrecognized  , false},
-    {MemoryMapTypes::EContentType::Cliff                 , false},
-    {MemoryMapTypes::EContentType::InterestingEdge       , false},
-    {MemoryMapTypes::EContentType::NotInterestingEdge    , false}
+    {MemoryMapTypes::EContentType::Unknown               , false},
+    {MemoryMapTypes::EContentType::ClearOfObstacle       , true},
+    {MemoryMapTypes::EContentType::ClearOfCliff          , true},
+    {MemoryMapTypes::EContentType::ObstacleObservable    , true},
+    {MemoryMapTypes::EContentType::ObstacleCharger       , true},
+    {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
+    {MemoryMapTypes::EContentType::ObstacleProx          , true},
+    {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true},
+    {MemoryMapTypes::EContentType::Cliff                 , true},
+    {MemoryMapTypes::EContentType::InterestingEdge       , true},
+    {MemoryMapTypes::EContentType::NotInterestingEdge    , true}
   };
   
   using MemoryMapDataConstList = MemoryMapTypes::MemoryMapDataConstList;
@@ -129,11 +132,12 @@ BehaviorExploring::DynamicVariables::DynamicVariables()
   posesHaveBeenPruned = false;
   distToGoal_mm = -1.0f;
   
-  angleAtArrival_rad = 0.0f;
   numDriveAttemps = 0;
   hasTakenPitStop = false;
   timeFinishedConfirmCharger_s = -1.0f;
   timeFinishedConfirmCube_s = -1.0f;
+  
+  devWarnIfNotInterruptedByTick = std::numeric_limits<size_t>::max();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -246,6 +250,23 @@ void BehaviorExploring::BehaviorUpdate()
     CancelSelf();
     return;
   }
+  size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
+  if( currTick > _dVars.devWarnIfNotInterruptedByTick ) {
+    PRINT_NAMED_WARNING("BehaviorExploring.BehaviorUpdate.WasNonInterrupted",
+                        "Behavior assumed an interruption that didn't occur. This could mean the robot stops driving");
+    _dVars.devWarnIfNotInterruptedByTick = std::numeric_limits<size_t>::max();
+    if( _dVars.numDriveAttemps <= 2 ) {
+      SampleAndDrive();
+    } else {
+      // numDriveAttemps is reset every activation, so this should only happen if something internal
+      // is cancelling the driving
+      PRINT_NAMED_WARNING("BehaviorExploring.BehaviorUpdate.InterruptedMultiple",
+                          "Could not start a path without interruption after %d attempts",
+                          _dVars.numDriveAttemps);
+      CancelSelf();
+    }
+    return;
+  }
   
   // make sure the lift is out of the prox fov
   PrepRobotForProx();
@@ -287,18 +308,6 @@ void BehaviorExploring::BehaviorUpdate()
   if( !_dVars.posesHaveBeenPruned ) {
     AdjustCachedPoses();
   }
-  
-  // tell our examine delegate if it's allowed to want to approach an obstacle it sees when we've
-  // arrive at a spot and are spinning. we wait until we're spinning so that a robot that just drove to and
-  // stopped at a pose doesn't immediately start driving forward again, and will only approach a
-  // new obstacle if it sees it while turning.
-  // It might make sense to do the memory map checks here and delegate accordingly, instead of depending
-  // on this behavior's WantsToBeActivated, but this way all memory map checks (aside from sampling) are
-  // in one behavior
-  const bool stateIsAtSamplePoint = _dVars.state == State::Arrived;
-  Radians currAngle = GetBEI().GetRobotInfo().GetPose().GetRotationAngle<'Z'>();
-  const bool hasStartedTurning = (currAngle - _dVars.angleAtArrival_rad).getAbsoluteVal() > kRadiansIndicatesTurn;
-  _iConfig.examineBehavior->SetCanVisitObstacle( stateIsAtSamplePoint && hasStartedTurning );
   
   // tell our examine delegate that it's ok to stop mid path if an unexplored obstacle is passed. this
   // is allowed when the robot is driving a long path and is about halfway to the goal (as the bird flies). otherwise,
@@ -417,20 +426,29 @@ void BehaviorExploring::TransitionToDriving()
   
   auto* action = new CompoundActionSequential();
   
-  action->AddAction( new MoveLiftToHeightAction( MoveLiftToHeightAction::Preset::JUST_ABOVE_PROX ) );
+  if( kMoveLiftAboveProx ) {
+    action->AddAction( new MoveLiftToHeightAction( MoveLiftToHeightAction::Preset::JUST_ABOVE_PROX ) );
+  }
   
   const bool forceHeadDown = false;
   action->AddAction( new DriveToPoseAction( _dVars.sampledPoses, forceHeadDown ) );
   
   DelegateIfInControl( action, [this](ActionResult res) {
-    if( res != ActionResult::SUCCESS ) {
+    if( res == ActionResult::CANCELLED_WHILE_RUNNING ){
+      // something interrupted this action (ReactToCliff/OnBack/etc.). don't delegate again, since
+      // hopefully that means something higher up is interrupting. This case is here to prevent
+      // the sampling computation if this behavior is just going to get interrupted. Just to be sure,
+      _dVars.devWarnIfNotInterruptedByTick = 2 + BaseStationTimer::getInstance()->GetTickCount();
+    } else if( res != ActionResult::SUCCESS ) {
       // this can happen if we cleared all but one of the goal poses, then the robot stopped to
       // examine something midway, then when trying to start again, there is no path to the selected
       // goal. try a couple more times (maybe this needs more precise ActionResult types?)
       if( _dVars.numDriveAttemps <= 4 ) {
         SampleAndDrive();
       } else {
-        PRINT_NAMED_INFO("BehaviorExploring.TransitionToDriving.NoPath", "Could not plan a path after %d attempts", _dVars.numDriveAttemps);
+        PRINT_NAMED_INFO("BehaviorExploring.TransitionToDriving.NoPath",
+                         "Could not plan a path after %d attempts",
+                         _dVars.numDriveAttemps);
         CancelSelf();
       }
     } else {
@@ -447,15 +465,30 @@ void BehaviorExploring::TransitionToArrived()
   _dVars.sampledPoses.clear();
   _dVars.distToGoal_mm = -1.0f;
   _dVars.numDriveAttemps = 0;
-  _dVars.angleAtArrival_rad = GetBEI().GetRobotInfo().GetPose().GetRotationAngle<'Z'>().ToFloat();
   
-  // turn a random angle
+  // turn a couple random angles
+  auto* action = new CompoundActionSequential();
+  const float t1 = GetRNG().RandDbl();
+  if( t1 < 0.33f ) {
+    action->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::ExploringLookLeft ) );
+  } else if( t1 < 0.66f ) {
+    action->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::ExploringLookRight ) );
+  }
+  
   const float angleChange = GetRNG().RandDblInRange( kMinScanAngle, kMaxScanAngle );
   const bool isAbsAngle = false;
   auto* turnAction = new TurnInPlaceAction( angleChange, isAbsAngle );
   turnAction->SetMaxSpeed(M_PI_2);
+  action->AddAction( turnAction );
+  
+  const float t2 = GetRNG().RandDbl();
+  if( t2 < 0.33f ) {
+    action->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::ExploringLookLeft ) );
+  } else if( t2 < 0.66f ) {
+    action->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::ExploringLookRight ) );
+  }
 
-  DelegateNow( turnAction, [this](const ActionResult& res) {
+  DelegateNow( action, [this](const ActionResult& res) {
     // this could get canceled if an obstacle is seen
     SampleAndDrive();
   });
@@ -525,7 +558,7 @@ void BehaviorExploring::SampleVisitLocationsOpenSpace( const INavMap* memoryMap,
   
   float r1;
   float r2;
-  if( tooFarFromCharger ) {
+  if( !tooFarFromCharger ) {
     r1 = M_TO_MM(_iConfig.minSearchRadius_m);
     r2 = M_TO_MM(_iConfig.maxSearchRadius_m);
   } else {
@@ -599,7 +632,9 @@ void BehaviorExploring::SampleVisitLocationsOpenSpace( const INavMap* memoryMap,
           const float distFromCliffSq = (intersectionPoint - cliffPos).LengthSq();
           const static float minSq = kMinCliffPenaltyDist_mm * kMinCliffPenaltyDist_mm;
           if( distFromCliffSq < minSq ) {
-            continue;
+            pAccept = 0.0f;
+            // break to then move to next sample point
+            break;
           }
           const static float maxSq = kMaxCliffPenaltyDist_mm * kMaxCliffPenaltyDist_mm;
           const float p = (distFromCliffSq > maxSq)
@@ -608,12 +643,18 @@ void BehaviorExploring::SampleVisitLocationsOpenSpace( const INavMap* memoryMap,
           // multiple cliffs can contribute to the acceptance probability
           pAccept -= p;
           if( pAccept <= 0.0f ) {
-            continue;
+            // break to then move to next sample point
+            break;
           }
         }
       }
-      if( pAccept < GetRNG().RandDbl() ) {
+      if( (pAccept <= 0.0f) || (pAccept < GetRNG().RandDbl()) ) {
+        // move to next sample point
         continue;
+      } else {
+        PRINT_NAMED_INFO( "BehaviorExploring.SampleVisitLocationsOpenSpace.AcceptedCliff",
+                          "Accepted cliff with p=%1.2f",
+                          pAccept );
       }
     }
     
@@ -635,9 +676,15 @@ void BehaviorExploring::SampleVisitLocationsOpenSpace( const INavMap* memoryMap,
     
     // bias towards unknown areas based on config
     {
-      const bool isUnknown = !memoryMap->HasCollisionWithTypes( footprint, kTypesThatAreUnknown );
-      if( !isUnknown ) {
-        if( GetRNG().RandDbl() > _iConfig.pAcceptKnownAreas ) {
+      const bool isKnown = memoryMap->HasCollisionWithTypes( footprint, kTypesThatAreKnown );
+      if( isKnown ) {
+        const float rv = GetRNG().RandDbl();
+        if( rv <= _iConfig.pAcceptKnownAreas ) {
+          PRINT_NAMED_INFO( "BehaviorExploring.SampleVisitLocationsOpenSpace.AcceptKnown",
+                            "Accepting a sample that is known with p=%1.2f",
+                            rv );
+        } else {
+          // move to next sample
           continue;
         }
       }
@@ -660,6 +707,8 @@ void BehaviorExploring::SampleVisitLocationsOpenSpace( const INavMap* memoryMap,
     }
     
     if( numAcceptedPoses >= kNumPositionsForSearch ) {
+      PRINT_NAMED_INFO("BehaviorExploring.SampleVisitLocationsOpenSpace.Completed",
+                       "Met required sampling of %d points, cnt=%d", numAcceptedPoses, cnt);
       break;
     }
   }
@@ -717,7 +766,10 @@ void BehaviorExploring::SampleVisitLocationsFacingObstacle( const INavMap* memor
   auto isPositionedWell = [&currListBegin,&robotPos]( const MemoryMapDataWrapper<const MemoryMapData_ProxObstacle>& data,
                                             const std::vector<Pose3d>& existing ) {
     Point2f dataPoint { data->GetObservationPose().GetTranslation() };
-    if( (dataPoint - robotPos).LengthSq() > kMaxDistToProxPose_mm*kMaxDistToProxPose_mm ) {
+    const float distSq = (dataPoint - robotPos).LengthSq();
+    if( (distSq > kMaxDistToProxPose_mm*kMaxDistToProxPose_mm)
+        || (distSq < kMinDistToProxPose_mm*kMinDistToProxPose_mm) )
+    {
       return false;
     }
     for( auto itOthers = currListBegin; itOthers != existing.end(); ++itOthers ) {
@@ -780,7 +832,8 @@ void BehaviorExploring::PrepRobotForProx()
   if( !isSensorReadingValid ) {
     const bool liftBlocking = proxSensor.IsLiftInFOV();
     if( !IsControlDelegated() && liftBlocking ) {
-      DelegateIfInControl( new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::JUST_ABOVE_PROX) );
+      auto preset = kMoveLiftAboveProx ? MoveLiftToHeightAction::Preset::JUST_ABOVE_PROX : MoveLiftToHeightAction::Preset::LOW_DOCK;
+      DelegateIfInControl( new MoveLiftToHeightAction(preset) );
     }
   }
 }

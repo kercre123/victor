@@ -1,4 +1,5 @@
 #!/bin/bash
+cd "$(dirname ${BASH_SOURCE[0]})"
 
 #files, config
 keil=/mnt/c/Keil/UV4/UV4.exe
@@ -16,6 +17,10 @@ if $tasklist | grep -iq "UV4.exe"; then
   echo close all instances of UV4 before build
   exit 1
 fi
+
+#git (relative) list of modified files
+#uncomittedfilez=$(git diff-files --relative --name-only --ignore-space-at-eol)
+uncomittedfilez=$(git ls-files -m)
 
 #read release version
 version=$(grep -oP '#define\s+APP_RELEASE_VERSION\s+\K([0-9]+)' $vers_file)
@@ -40,7 +45,7 @@ sleep 1 #delay for file system changes to clear cache
 echo building project
 timeout 5.0s python error_codes_export.py $version #export error codes
 Tstart=$(($(date +%s%N)/1000000))
-timeout 90.0s $keil -b $project -j0 -o $buildlog
+timeout 180.0s $keil -b $project -j0 -o $buildlog
 builderr=$?
 Tend=$(($(date +%s%N)/1000000))
 if [ ! -e $errcodes ]; then builderr=-2; fi
@@ -48,6 +53,9 @@ if [ ! -e $errcodes ]; then builderr=-2; fi
 #restore debug flag
 echo restore debug flag
 echo "#define NOT_FOR_FACTORY 1" > $flags_file
+
+#print build info
+cat $buildlog
 
 #build the manifest
 echo $(printf timestamp:%s "$(date +'%m/%d/%Y %H:%M:%S')") > $manifest
@@ -57,7 +65,13 @@ echo $(printf build-err:%d $builderr) >> $manifest
 echo $(printf branch:%s $(git rev-parse --abbrev-ref HEAD)) >> $manifest
 echo $(printf sha-1:%s $(git rev-parse HEAD)) >> $manifest
 #if [ "$(git diff-index --cached --quiet HEAD --ignore-submodules --)" == "0" ]; then isclean=1; else isclean=0; fi
-#echo $(printf working-tree-clean:%d $isclean) >> $manifest
+if [ "$uncomittedfilez" == "" ]; then isclean=1; else isclean=0; fi
+echo $(printf working-tree-clean:%d $isclean) >> $manifest
+echo $(printf working-tree-changes:%s "$uncomittedfilez") >> $manifest
+
+#print manifest
+echo MANIFEST:
+cat $manifest
 
 #package for shipment
 if [ $builderr = 0 -o $builderr = 1 ]; then #Note: keil return 1=warnings-only

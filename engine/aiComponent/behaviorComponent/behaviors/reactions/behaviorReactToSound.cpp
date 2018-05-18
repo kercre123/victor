@@ -45,7 +45,6 @@ CONSOLE_VAR( MicDirectionIndex, kSoundReaction_FakeDirection,         "MicData",
 CONSOLE_VAR( MicDirectionIndex, kSoundReaction_FakeConfidence,        "MicData", kSoundReaction_TuningThreshold );
 
 const MicDirectionIndex BehaviorReactToSound::kInvalidDirectionIndex = { kMicDirectionUnknown };
-const TimeStamp_t kRecentlyPlacedOnGroundTime_ms = 400;
 
 namespace {
 
@@ -211,14 +210,7 @@ bool BehaviorReactToSound::WantsToBeActivatedBehavior() const
   // setting _triggeredDirection will cause us to activate
   if ( kInvalidDirectionIndex != _triggeredDirection )
   {
-    // when the robot gets put down, the sound of being put down can trigger this reaction. This only runs
-    // when the robot is on the ground, so just check the last time our treads state changed to make sure we
-    // aren't triggering from the noise of our own put down (or flip down from back)
-    const TimeStamp_t onGroundTime_ms = GetBEI().GetRobotInfo().GetOffTreadsStateLastChangedTime_ms();
-    const TimeStamp_t currTime_ms = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
-
-    const bool recentlyPlaced = currTime_ms - onGroundTime_ms < kRecentlyPlacedOnGroundTime_ms;
-    return !recentlyPlaced;
+    return true;
   }
 
   return false;

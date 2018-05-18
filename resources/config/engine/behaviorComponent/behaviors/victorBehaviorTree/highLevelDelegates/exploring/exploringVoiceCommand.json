@@ -2,13 +2,10 @@
   "behaviorID": "ExploringVoiceCommand",
   "behaviorClass": "DispatcherQueue",
 
-  "respondToUserIntents": [
-    { "type": "explore_start" }
-  ],
+  "associatedActiveFeature": "Exploring",
 
   "behaviors": 
   [
-    "DriveOffCharger",
     "ExploringInternal"
   ],
 

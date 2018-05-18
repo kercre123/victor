@@ -263,11 +263,7 @@ namespace Cozmo {
         s_frameStart = clock();
         s_frame = 0;
 
-        if(s_enableKeepFaceAlive) {
-          html = std::string("<html>\nCapturing frames as <a href=\"/cache/")+s_frameFilename+"\">"+s_frameFilename+"\n" + "</html>\n";
-        } else {
-          html = std::string("<html>\nWaiting to capture frames as <a href=\"/cache/")+s_frameFilename+"\">"+s_frameFilename+"\n" + "</html>\n";
-        }
+        html = std::string("<html>\nCapturing frames as <a href=\"/cache/")+s_frameFilename+"\">"+s_frameFilename+"\n" + "</html>\n";
       } else {
         html = std::string("<html>\nError: unable to open file <a href=\"/cache/")+s_frameFilename+"\">"+s_frameFilename+"\n" + "</html>\n";
       }
@@ -279,6 +275,9 @@ namespace Cozmo {
   }
 
   CONSOLE_FUNC(CaptureFace, "ProceduralFace", optional const char* filename, optional int numFrames);
+
+  CONSOLE_VAR(bool, kShouldDisplayPlaybackTime, "AnimationStreamer", false);
+
   } // namespace
   
   AnimationStreamer::AnimationStreamer(const AnimContext* context)
@@ -756,8 +755,10 @@ namespace Cozmo {
     }
 
 
-    auto& keyframe = _streamingAnimation->GetTrack<SpriteSequenceKeyFrame>().GetCurrentKeyFrame();
-    if(keyframe.HasCompositeImage()){
+    auto& track = _streamingAnimation->GetTrack<SpriteSequenceKeyFrame>();
+    if(track.HasFramesLeft() &&
+       track.GetCurrentKeyFrame().HasCompositeImage()){
+      auto& keyframe =  track.GetCurrentKeyFrame();
       auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
       auto* spriteSeqContainer = _context->GetDataLoader()->GetSpriteSequenceContainer();
       SpriteSequenceKeyFrame::CompositeImageUpdateSpec spec(spriteCache, 
@@ -1180,6 +1181,30 @@ namespace Cozmo {
       DEV_ASSERT_MSG(chunkCount == kExpectedNumChunks, "AnimationComponent.DisplayFaceImage.UnexpectedNumChunks", "%d", chunkCount);
     }
 
+    if(kShouldDisplayPlaybackTime){
+      // Build display str secs:ms
+      const auto secs = _relativeStreamTime_ms/1000;
+      const auto ms = _relativeStreamTime_ms % 1000;
+      std::string playbackTime = std::to_string(secs) + ":" + std::to_string(ms);
+
+      // Estimate if animation process is running slowly and display this on the screen
+      const auto estimatedRealTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _startTime_ms;
+      const auto timeDrift = estimatedRealTime - _relativeStreamTime_ms;
+
+      ColorRGBA color = NamedColors::GREEN;
+      if(timeDrift > (2*ANIM_TIME_STEP_MS) ){
+        color = NamedColors::RED;
+
+        const auto realSecs = estimatedRealTime/1000;
+        const auto realMS = estimatedRealTime % 1000;
+        playbackTime += ("/" + std::to_string(realSecs) + ":" + std::to_string(realMS));
+      }
+
+      const Point2f pos(20,20);
+      const float scale = 0.5f;
+      faceImg565.DrawText(pos, playbackTime, color, scale);
+    }
+
     FaceDisplay::getInstance()->DrawToFace(faceImg565);
   }
   
@@ -1417,13 +1442,21 @@ namespace Cozmo {
     
     // Non-procedural faces (raw pixel data/images) take precedence over procedural faces (parameterized faces
     // like idles, keep alive, or normal animated faces)
-    const bool shouldPlayFaceAnim = !IsTrackLocked((u8)AnimTrackFlag::FACE_IMAGE_TRACK) &&
-                                    spriteSeqTrack.HasFramesLeft() &&
-                                    spriteSeqTrack.GetCurrentKeyFrame().IsTimeToPlay(_relativeStreamTime_ms) &&
-                                    spriteSeqTrack.GetCurrentKeyFrame().NewImageContentAvailable(_relativeStreamTime_ms);
-
-        
-    if(shouldPlayFaceAnim)
+    const bool spriteSeqHasData = !IsTrackLocked((u8)AnimTrackFlag::FACE_IMAGE_TRACK) &&
+                                  spriteSeqTrack.HasFramesLeft() &&
+                                  spriteSeqTrack.GetCurrentKeyFrame().IsTimeToPlay(_relativeStreamTime_ms);
+    
+    bool newSpriteSeqData =  false;
+    bool needToRenderFaceIntoCompositeImage = false;
+    if(spriteSeqHasData){
+      auto faceKeyFrame = spriteSeqTrack.GetCurrentKeyFrame();
+      
+      newSpriteSeqData = faceKeyFrame.NewImageContentAvailable(_relativeStreamTime_ms);
+      needToRenderFaceIntoCompositeImage = faceKeyFrame.HasCompositeImage() && layeredKeyFrames.haveFaceKeyFrame;
+    }
+    
+    
+    if(newSpriteSeqData || needToRenderFaceIntoCompositeImage)
     {
       auto & faceKeyFrame = spriteSeqTrack.GetCurrentKeyFrame();
       
@@ -1615,10 +1648,17 @@ namespace Cozmo {
         SetStreamingAnimation(_neutralFaceAnimation, kNotAnimatingTag);
         _wasAnimationInterruptedWithNothing = false;
       }
-      
-      if(s_enableKeepFaceAlive && !FACTORY_TEST)
+
+      if(!FACTORY_TEST)
       {
-        _proceduralTrackComponent->KeepFaceAlive(_keepFaceAliveParams, _relativeStreamTime_ms);
+        if(s_enableKeepFaceAlive)
+        {
+          _proceduralTrackComponent->KeepFaceAlive(_keepFaceAliveParams, _relativeStreamTime_ms);
+        }
+        else
+        {
+          _proceduralTrackComponent->KeepFaceTheSame();
+        }
       }
     }
   }

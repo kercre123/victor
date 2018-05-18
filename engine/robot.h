@@ -107,6 +107,7 @@ class AnimationComponent;
 class MapComponent;
 class MicComponent;
 class BatteryComponent;
+class BeatDetectorComponent;
 
 namespace Audio {
   class EngineRobotAudioClient;
@@ -289,6 +290,9 @@ public:
   const BatteryComponent&    GetBatteryComponent()    const { return GetComponent<BatteryComponent>(); }
   BatteryComponent&          GetBatteryComponent()          { return GetComponent<BatteryComponent>(); }
 
+  const BeatDetectorComponent&    GetBeatDetectorComponent()    const { return GetComponent<BeatDetectorComponent>(); }
+  BeatDetectorComponent&          GetBeatDetectorComponent()          { return GetComponent<BeatDetectorComponent>(); }
+  
   const PoseOriginList&  GetPoseOriginList() const { return *_poseOrigins.get(); }
 
   ObjectPoseConfirmer& GetObjectPoseConfirmer() { return GetComponent<ObjectPoseConfirmer>(); }
@@ -603,14 +607,15 @@ public:
 
   void SetBodyColor(const s32 color);
   const BodyColor GetBodyColor() const { return _bodyColor; }
-
+  
   bool HasReceivedFirstStateMessage() const { return _gotStateMsgAfterRobotSync; }
 
-protected:
-  // Context is stored both as a member variable and as a component (within a wrapper)
-  // This allows components to easily access context via component where appropriate
-  // but also ensures access to context during component destruction in case the
-  // wrapper component is destroyed first
+  void Shutdown() { _toldToShutdown = true; }
+  bool ToldToShutdown() const { return _toldToShutdown; }
+  
+protected:  
+  bool _toldToShutdown = false;
+
   const CozmoContext* _context;
   std::unique_ptr<PoseOriginList> _poseOrigins;
 
@@ -749,6 +754,8 @@ protected:
   // only since caching etc could blow it all to shreds
   void DevReplaceAIComponent(AIComponent* aiComponent, bool shouldManage = false);
 
+  // Performs various startup checks and displays fault codes as appropriate
+  Result UpdateStartupChecks();
 }; // class Robot
 
 

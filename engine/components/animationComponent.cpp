@@ -544,6 +544,11 @@ Result AnimationComponent::DisplayFaceImage(const Vision::CompositeImage& compos
   for(const auto& chunk: imageChunks){
     _robot->SendRobotMessage<RobotInterface::DisplayCompositeImageChunk>(_compositeImageID, getFrameInterval_ms, duration_ms, chunk);
   }
+  
+  if(imageChunks.empty()){
+    PRINT_NAMED_WARNING("AnimationComponent.DisplayFaceImage.NoImageChunksToSend", "");
+    return RESULT_FAIL;
+  }
 
   _compositeImageID++;
   return RESULT_OK;

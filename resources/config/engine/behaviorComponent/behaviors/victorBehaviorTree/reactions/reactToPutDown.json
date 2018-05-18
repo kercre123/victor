@@ -1,0 +1,47 @@
+{
+  // In lieu of a design for putting down, this plays an animation
+
+  "behaviorID": "ReactToPutDown",
+  "behaviorClass": "AnimSequence",
+
+  "associatedActiveFeature": "NoFeature",
+
+  "animTriggers": ["ReactToPutDown"],
+  "num_loops": 100,
+  "tracksToLock": ["BODY_TRACK"],
+
+  "wantsToBeActivatedCondition": {
+    "conditionType": "Compound",
+    "and": [
+      {
+        "conditionType": "OffTreadsState",
+        "targetState": "OnTreads",
+        "maxTimeSinceChange_ms": 1000
+      },
+      {
+        "conditionType": "Compound",
+        "not": {
+          "conditionType": "OnChargerPlatform"
+        }
+      }
+    ]
+  },
+
+  "wantsToCancelSelfCondition": {
+    "conditionType": "Compound",
+    "or": [
+      {
+        "conditionType": "OffTreadsState",
+        "targetState": "OnTreads",
+        "minTimeSinceChange_ms": 3000
+      },
+      {
+        "conditionType": "Compound",
+        "not": {
+          "conditionType": "OffTreadsState",
+          "targetState": "OnTreads"
+        }
+      }
+    ]
+  }
+}

@@ -59,6 +59,9 @@ protected:
   // helper method to play maximum bliss looping animations
   void PlayBlissLoopAnimation();
   
+  // helper method to clear the stateful members for touch tracking
+  void ResetTouchState();
+  
 private:
 
   // - - - - - - - - - - - - - -

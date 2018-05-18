@@ -144,7 +144,7 @@ void BehaviorContainer::VerifyExecutableBehaviors() const
     const ExecutableBehaviorType executableBehaviorType = behaviorPtr->GetExecutableType();
     if( executableBehaviorType != ExecutableBehaviorType::Count )
     {
-#if (DEV_ASSERT_ENABLED)
+#if (ANKI_DEV_ASSERT_ENABLED)
       const auto mapIt = executableBehaviorMap.find(executableBehaviorType);      
       DEV_ASSERT_MSG((mapIt == executableBehaviorMap.end()), "ExecutableBehaviorType.NotUnique",
                      "Multiple behaviors marked as %s including '%s' and '%s'",
@@ -156,7 +156,7 @@ void BehaviorContainer::VerifyExecutableBehaviors() const
     }
   }
   
-  #if (DEV_ASSERT_ENABLED)
+  #if (ANKI_DEV_ASSERT_ENABLED)
     for( size_t i = 0; i < (size_t)ExecutableBehaviorType::Count; ++i)
     {
       const ExecutableBehaviorType executableBehaviorType = (ExecutableBehaviorType)i;

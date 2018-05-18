@@ -64,6 +64,10 @@
 
 #include "util/fileUtils/fileUtils.h"
 
+#include "anki/cozmo/shared/factory/emrHelper.h"
+
+#include <fcntl.h>
+
 // Immediately returns on write/erase commands as if they succeeded.
 CONSOLE_VAR(bool, kNoWriteToRobot, "NVStorageComponent", false);
 
@@ -80,6 +84,8 @@ static constexpr u32 _kMaxNvStorageBlobSize = 1024;
 static const char*   _kNVDataFileExtension = ".nvdata";
 
 static const char*   _kFactoryPath = "/factory/nvStorage/";
+
+static const u32     _kCameraCalibMagic = 0x0DDFACE5;
 
 namespace Anki {
 namespace Cozmo {
@@ -404,9 +410,7 @@ bool NVStorageComponent::Write(NVEntryTag tag,
     BroadcastNVStorageOpResult(tag, NVResult::NV_OKAY, NVOperation::NVOP_WRITE);
   }
   
-  WriteEntryToFile(entryTag);
-  
-  return true;
+  return WriteEntryToFile(entryTag);
 }
 
 bool NVStorageComponent::Erase(NVEntryTag tag,
@@ -461,9 +465,7 @@ bool NVStorageComponent::Erase(NVEntryTag tag,
     BroadcastNVStorageOpResult(tag, NVResult::NV_OKAY, NVOperation::NVOP_ERASE);
   }
   
-  WriteEntryToFile(entryTag);
-    
-  return true;
+  return WriteEntryToFile(entryTag);
 }
   
   
@@ -560,7 +562,7 @@ bool NVStorageComponent::Read(NVEntryTag tag,
   return true;
 }
 
-void NVStorageComponent::WriteEntryToFile(u32 tag)
+bool NVStorageComponent::WriteEntryToFile(u32 tag)
 {
   // Not writing data to disk on Mac OS so as make sure Webots robots load "clean"
   // which is usually the assumption when using Webots robots.
@@ -584,7 +586,13 @@ void NVStorageComponent::WriteEntryToFile(u32 tag)
   if (iter == _tagDataMap.end()) {
     PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.WriteEntryToFile.Erasing", "Tag 0x%x", tag);
     Util::FileUtils::DeleteFile(path + ss.str());
-    return;
+    return true;
+  }
+
+  // Camera calibration is special since it lives in a block device
+  if(tag == static_cast<u32>(NVEntryTag::NVEntry_CameraCalib))
+  {
+    return WriteCameraCalibFile(iter);
   }
   
   // Write data to file
@@ -592,9 +600,11 @@ void NVStorageComponent::WriteEntryToFile(u32 tag)
   Util::FileUtils::CreateDirectory(path);
   if (!Util::FileUtils::WriteFile(path + ss.str(), iter->second)) {
     PRINT_NAMED_ERROR("NVStorageComponent.WriteEntryToFile.Failed", "%s", ss.str().c_str());
+    return false;
   }
 
   #endif // if !defined(ANKI_PLATFORM_OSX)
+  return true;
 }
   
 void NVStorageComponent::LoadDataFromFiles()
@@ -631,7 +641,10 @@ void NVStorageComponent::LoadDataFromFiles()
     PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.LoadDataFromFiles.LoadingData", "Tag 0x%x, data size = %zu bytes", tagNum, file.size());
     _tagDataMap[tagNum].assign(file.data(), file.data() + file.size());
   }
-  
+
+  // Attempt to read camera calibration from the block device
+  ReadCameraCalibFile();
+ 
   // TODO: For now load factory related nvstorage files from the "factory" subdirectory. Will probably
   // be moved to some read only place
   fileList = Util::FileUtils::FilesInDirectory(_kFactoryPath, false, _kNVDataFileExtension);
@@ -654,6 +667,17 @@ void NVStorageComponent::LoadDataFromFiles()
       PRINT_NAMED_ERROR("NVStorageComponent.LoadFactoryDataFromFiles.InvalidTagValues", "0x%x", tagNum);
       continue;
     }
+
+    // Camera calibration is special and is stored in a block device so we should not be trying
+    // to load it from the normal nvstorage files
+    if(tagNum == static_cast<u32>(NVEntryTag::NVEntry_CameraCalib))
+    {
+      DEV_ASSERT_MSG(false,
+                     "NVStorageComponent.LoadFactoryDataFromFiles.CameraCalibFile",
+                     "Trying to load camera calibration from nvStorage file when it should be in the block device");
+      continue;
+    }
+
     
     // Read data from file
     std::vector<u8> file = Util::FileUtils::ReadFileAsBinary(_kFactoryPath + fileName);
@@ -890,6 +914,138 @@ size_t NVStorageComponent::MakeWordAligned(size_t size) {
     return size + numBytesToMakeAligned;
   }
   return size;
+}
+
+int NVStorageComponent::OpenCameraCalibFile(int openFlags)
+{
+  static const char* kBlockDevice = "/dev/block/bootdevice/by-name/emr";
+  int fd = open(kBlockDevice, openFlags);
+  if(fd == -1)
+  {
+    PRINT_NAMED_ERROR("NVStorageComponent.OpenCameraCalibFile.FailedToOpenBlockDevice",
+                      "%d", errno);
+    return -1;
+  }
+
+  // Camera calibration is offest by 4mb in the block device
+  const off_t kCalibOffset = 4194304;
+  const off_t seek = lseek(fd, kCalibOffset, SEEK_SET);
+  if(seek == -1)
+  {
+    PRINT_NAMED_ERROR("NVStorageComponent.OpenCameraCalibFile.FailedToSeek",
+                      "%d", errno);
+    return -1;
+  }
+
+  return fd;
+}
+
+void NVStorageComponent::ReadCameraCalibFile()
+{
+  #ifdef SIMULATOR
+  return;
+  #endif
+  
+  int fd = OpenCameraCalibFile(O_RDONLY);
+  if(fd == -1)
+  {
+    PRINT_NAMED_ERROR("NVStorageComponent.LoadDataFromFiles.FailedToOpenCameraCalib","");
+    return;
+  }
+
+  const u32 kSizeOfMagic = sizeof(_kCameraCalibMagic);
+  const u32 kSizeOfCalib = sizeof(CameraCalibration);
+  const u32 kNumBytesForCalib = kSizeOfMagic + kSizeOfCalib; 
+  const u32 kNumBytesToRead = 4096; // Read a whole page due to this being a block device
+  static_assert(kNumBytesToRead >= kNumBytesForCalib, "Bytes to read smaller than size of camera calibration");
+
+  u8 buf[kNumBytesToRead];
+  ssize_t numBytesRead = 0;
+  do
+  {
+    numBytesRead += read(fd, buf + numBytesRead, kNumBytesToRead - numBytesRead);
+    if(numBytesRead == -1)
+    {
+      PRINT_NAMED_ERROR("NVStorageComponent.LoadDataFromFiles.FailedToReadCameraCalib",
+                      "%d", errno);
+      return;
+    }
+  }
+  while(numBytesRead < kNumBytesToRead);
+
+  static_assert(std::is_same<decltype(_kCameraCalibMagic), const u32>::value,
+                "CameraCalibMagic must be const u32");
+  const u32 dataMagic = (u32)(*(u32*)buf);
+  if(dataMagic != _kCameraCalibMagic)
+  {
+    PRINT_NAMED_ERROR("NVStorageComponent.LoadDataFromFiles.CameraCalibMagicMismatch",
+                      "Read magic 0x%x and expected magic 0x%x do not match",
+                      dataMagic,
+                      _kCameraCalibMagic);
+    return;
+  }
+
+  // Copy camera calibration into a vector and assign to tagDataMap
+  std::vector<u8> data;
+  std::copy(&buf[kSizeOfMagic], &buf[kNumBytesForCalib], std::back_inserter(data));
+  _tagDataMap[static_cast<u32>(NVEntryTag::NVEntry_CameraCalib)].assign(data.data(), data.data() + data.size());
+
+  int rc = close(fd);
+  if(rc == -1)
+  {
+    PRINT_NAMED_ERROR("NVStorageComponent.LoadDataFromFiles.FailedToCloseCameraCalib",
+                      "%d", errno);
+  }
+}
+
+bool NVStorageComponent::WriteCameraCalibFile(const TagDataMap::iterator& iter)
+{
+  if(iter->first != static_cast<u32>(NVEntryTag::NVEntry_CameraCalib))
+  {
+    PRINT_NAMED_WARNING("NVStorageComponent.WriteCameraCalibFile.BadIter",
+                        "Expected iter to point to camera calibration");
+    return false;
+  }
+  
+  int fd = OpenCameraCalibFile(O_WRONLY);
+  if(fd == -1)
+  {
+    PRINT_NAMED_ERROR("NVStorageComponent.WriteEntryToFile.FailedToOpenCameraCalib","");
+    return false;
+  }
+      
+  const u32 kNumBytesForCalib = sizeof(_kCameraCalibMagic) + sizeof(CameraCalibration);
+  u8 buf[kNumBytesForCalib];
+  *((u32*)buf) = _kCameraCalibMagic;
+  std::copy(iter->second.begin(), iter->second.end(), buf + sizeof(_kCameraCalibMagic));
+
+  bool ret = true;
+  ssize_t numBytesWritten = write(fd, buf, kNumBytesForCalib);
+  if(numBytesWritten == -1)
+  {
+    PRINT_NAMED_ERROR("NVStorageComponent.WriteEntryToFile.FailedToWriteBlockDevice",
+                      "%d", errno);
+    
+    ret = false;
+  }
+  else if(numBytesWritten != kNumBytesForCalib)
+  {
+    PRINT_NAMED_ERROR("NVStorageComponent.WriteEntryToFile.FailedToWriteBlockDevice",
+                      "Only wrote %zd bytes instead of %d",
+                      numBytesWritten,
+                      kNumBytesForCalib);
+    ret = false;
+  }
+    
+  int rc = close(fd);
+  if(rc == -1)
+  {
+    PRINT_NAMED_ERROR("NVStorageComponent.WriteEntryToFile.FailedToCloseBlockDevice",
+                      "%d", errno);
+    ret = false;
+  }
+
+  return ret;
 }
   
 void NVStorageComponent::Test()

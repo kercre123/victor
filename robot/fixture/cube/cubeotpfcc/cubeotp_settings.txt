@@ -1,0 +1,33 @@
+-----------------
+include dirs
+-----------------
+.;
+.\flash_programmer;
+.\releases;
+..\hal;
+..\hal\ontogeny;
+..\sdk_da1458x\5.0.4\sdk\platform\arch;
+..\sdk_da1458x\5.0.4\sdk\platform\arch\compiler\rvds;
+..\sdk_da1458x\5.0.4\sdk\platform\arch\ll\rvds;
+..\sdk_da1458x\5.0.4\sdk\platform\driver\adc;
+..\sdk_da1458x\5.0.4\sdk\platform\driver\reg;
+..\sdk_da1458x\5.0.4\sdk\platform\include;
+..\sdk_da1458x\5.0.4\sdk\platform\driver\gpio;
+..\sdk_da1458x\5.0.4\sdk\app_modules\api;
+..\sdk_da1458x\5.0.4\sdk\platform\driver\uart;
+
+-----------------
+global defines
+-----------------
+(na)
+
+-----------------
+other
+-----------------
+
+linker scatter file:
+startup\peripheral_examples.sct
+
+debug ini file:
+startup\sysram.ini
+

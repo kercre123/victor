@@ -43,8 +43,8 @@ namespace {
   const float kDistanceForConeActivation_mm = 89.0f;
   const float kHalfAngleForConeActivation_rad = M_PI_4_F;
   const float kDistanceForStopTurn_mm = 300.0f;
-  const float kDistanceForStartApproach_mm = 150.0f;
-  const float kDistanceForStopApproach_mm = 80.0f;
+  const float kDistanceForStartApproach_mm = 80.0f;
+  const float kDistanceForStopApproach_mm = 50.0f;
   
   const float kMaxTurnAngle_deg = 135.0f; // 90 + 45 looks good for coming at a wall at an acute angle
   
@@ -53,7 +53,7 @@ namespace {
   const bool kTakePhoto = false;
   
   float kReturnToCenterSpeed_deg_s = 300.0f;
-  float kTurnSpeed_deg_s = 30.0f;
+  float kTurnSpeed_deg_s = 45.0f;
   
   const unsigned int kNumFloodFillSteps = 10;
   
@@ -109,7 +109,6 @@ BehaviorExploringExamineObstacle::InstanceConfig::InstanceConfig()
 BehaviorExploringExamineObstacle::DynamicVariables::DynamicVariables()
 {
   state = State::Initial;
-  persistent.canVisitObstacle = false;
   persistent.canSeeSideObstacle = false;
   persistent.seesFrontObstacle = false;
   persistent.seesSideObstacle = false;
@@ -210,8 +209,8 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
     }
   }
   
-  const bool shouldVisitObstacle = _dVars.persistent.canVisitObstacle && (_dVars.state == State::Initial);
-  if( shouldVisitObstacle ) {
+  const bool canVisitObstacle = (_dVars.state == State::Initial);
+  if( canVisitObstacle ) {
     const bool useRobotWidth = true;
     if( RobotPathFreeOfObstacle( kDistanceForStartApproach_mm, useRobotWidth ) ) {
       

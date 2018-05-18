@@ -1,0 +1,7 @@
+cxx_project(
+    name = 'anki-ble',
+    srcs = cxx_src_glob(['.'],
+      excludes = [('./libev/*')]
+    ),
+    headers = cxx_header_glob(['.'])
+)

@@ -240,7 +240,6 @@ void BehaviorTimerUtilityCoordinator::DevAdvanceAnticBySeconds(int seconds)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorTimerUtilityCoordinator::LifetimeParams::LifetimeParams()
 {
-  setTimerIntent = std::make_unique<UserIntent>();
   shouldForceAntic = false;
 }
 
@@ -326,7 +325,7 @@ void BehaviorTimerUtilityCoordinator::GetAllDelegates(std::set<IBehavior*>& dele
 bool BehaviorTimerUtilityCoordinator::WantsToBeActivatedBehavior() const 
 {
   auto& uic = GetBehaviorComp<UserIntentComponent>();
-  const bool setTimerWantsToRun = uic.IsUserIntentPending(USER_INTENT(set_timer), *_lParams.setTimerIntent);
+  const bool setTimerWantsToRun = uic.IsUserIntentPending(USER_INTENT(set_timer));
   const bool timerShouldRing    = TimerShouldRing();
   const bool cancelTimerPending = uic.IsUserIntentPending(USER_INTENT(cancel_timer));
   
@@ -347,11 +346,9 @@ bool BehaviorTimerUtilityCoordinator::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTimerUtilityCoordinator::OnBehaviorActivated() 
 {
-  auto* persistIntentData       = _lParams.setTimerIntent.release();
   bool  persistShouldForceAntic = _lParams.shouldForceAntic;
   _lParams = LifetimeParams();
 
-  _lParams.setTimerIntent.reset(persistIntentData);
   _lParams.shouldForceAntic = persistShouldForceAntic;
 }
 
@@ -412,9 +409,9 @@ void BehaviorTimerUtilityCoordinator::CheckShouldSetTimer()
 {
   auto& uic = GetBehaviorComp<UserIntentComponent>();
   if(uic.IsUserIntentPending(USER_INTENT(set_timer))){
-    uic.ClearUserIntent(USER_INTENT(set_timer));
+    UserIntentPtr intent = SmartActivateUserIntent(USER_INTENT(set_timer));
 
-    int requestedTime_s = _lParams.setTimerIntent->Get_set_timer().time_s;
+    int requestedTime_s = intent->Get_set_timer().time_s;
     const bool isTimerInRange = (_iParams.minValidTimer_s <= requestedTime_s) && 
                                 (requestedTime_s          <= _iParams.maxValidTimer_s);
 
@@ -435,7 +432,8 @@ void BehaviorTimerUtilityCoordinator::CheckShouldCancelTimer()
 {
   auto& uic = GetBehaviorComp<UserIntentComponent>();
   if(uic.IsUserIntentPending(USER_INTENT(cancel_timer))){
-    uic.ClearUserIntent(USER_INTENT(cancel_timer));
+    SmartActivateUserIntent(USER_INTENT(cancel_timer));
+
     // Cancel a timer if it is set, otherwise play "I Cant Do That"
     if(GetTimerUtility().GetTimerHandle() != nullptr){
       GetTimerUtility().ClearTimer();
@@ -537,11 +535,17 @@ TimerUtility& BehaviorTimerUtilityCoordinator::GetTimerUtility() const
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTimerUtilityCoordinator::SetupTimerBehaviorFunctions()
-{
-  auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
-  
-  auto startTimerCallback = [&timerUtility, this](){
-    timerUtility.StartTimer(_lParams.setTimerIntent->Get_set_timer().time_s);
+{  
+  auto startTimerCallback = [this](){
+    auto& uic = GetBehaviorComp<UserIntentComponent>();
+    UserIntentPtr intent = uic.GetActiveUserIntent(USER_INTENT(set_timer));
+
+    if( ANKI_VERIFY(intent != nullptr, "BehaviorTimerUtilityCoordinator.SetShowClockCallback.IncorrectIntent",
+                    "Active user intent should have been set_timer but wasn't") ) {
+      
+      auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
+      timerUtility.StartTimer(intent->Get_set_timer().time_s);
+    }
   };
 
   _iParams.setTimerBehavior->SetShowClockCallback(startTimerCallback);
