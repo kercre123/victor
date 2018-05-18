@@ -45,7 +45,11 @@ public:
   // Generates and adds keyframes to various layers to keep the face "alive"
   void KeepFaceAlive(const std::map<KeepFaceAliveParameter,f32>& params,
                      const TimeStamp_t timeSinceKeepAliveStart_ms);
-  
+
+  // Keep Cozmo's face alive, but the same, by posting empty new frames
+  // so that noise keeps working
+  void KeepFaceTheSame();
+
   // Remove all keep face alive layers
   void RemoveKeepFaceAlive(u32 duration_ms);
   

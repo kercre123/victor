@@ -263,11 +263,7 @@ namespace Cozmo {
         s_frameStart = clock();
         s_frame = 0;
 
-        if(s_enableKeepFaceAlive) {
-          html = std::string("<html>\nCapturing frames as <a href=\"/cache/")+s_frameFilename+"\">"+s_frameFilename+"\n" + "</html>\n";
-        } else {
-          html = std::string("<html>\nWaiting to capture frames as <a href=\"/cache/")+s_frameFilename+"\">"+s_frameFilename+"\n" + "</html>\n";
-        }
+        html = std::string("<html>\nCapturing frames as <a href=\"/cache/")+s_frameFilename+"\">"+s_frameFilename+"\n" + "</html>\n";
       } else {
         html = std::string("<html>\nError: unable to open file <a href=\"/cache/")+s_frameFilename+"\">"+s_frameFilename+"\n" + "</html>\n";
       }
@@ -1652,10 +1648,17 @@ namespace Cozmo {
         SetStreamingAnimation(_neutralFaceAnimation, kNotAnimatingTag);
         _wasAnimationInterruptedWithNothing = false;
       }
-      
-      if(s_enableKeepFaceAlive && !FACTORY_TEST)
+
+      if(!FACTORY_TEST)
       {
-        _proceduralTrackComponent->KeepFaceAlive(_keepFaceAliveParams, _relativeStreamTime_ms);
+        if(s_enableKeepFaceAlive)
+        {
+          _proceduralTrackComponent->KeepFaceAlive(_keepFaceAliveParams, _relativeStreamTime_ms);
+        }
+        else
+        {
+          _proceduralTrackComponent->KeepFaceTheSame();
+        }
       }
     }
   }
