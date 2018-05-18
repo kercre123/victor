@@ -111,7 +111,7 @@ TEST_INTENT(UserIntentsTransitions, BeQuiet, "be_quiet")
 {
   UserIntent intent;
   intent.Set_imperative_quiet({});
-  const bool res = IntentHelper( intent, BehaviorID::BeQuietAnim );
+  const bool res = IntentHelper( intent, BehaviorID::BeQuietAnims, true );
   EXPECT_TRUE(res);
 }
   
@@ -119,7 +119,7 @@ TEST_INTENT(UserIntentsTransitions, ShutUp, "shut_up")
 {
   UserIntent intent;
   intent.Set_imperative_shutup({});
-  const bool res = IntentHelper( intent, BehaviorID::ShutUpAnim );
+  const bool res = IntentHelper( intent, BehaviorID::ShutUpAnims, true );
   EXPECT_TRUE(res);
 }
 

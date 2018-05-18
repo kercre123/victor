@@ -23,7 +23,7 @@
     },
     // todo: TimerUtilityCoordinator?
     {
-      "behavior": "BeQuietAnim",
+      "behavior": "BeQuietAnims",
       "audioAllowed": false
     }
   ]

@@ -23,8 +23,8 @@ enum uint_8 BehaviorID {
   DevBaseBehavior,
   DevBatteryLogging,
   DevDisplayReadingsOnFace,
-  DevImageCapture,
   DevEventSequenceCapture,
+  DevImageCapture,
   DevPlannerTest,
   DevTestPromptUser,
   DevTouchDataCollection,
@@ -84,18 +84,19 @@ enum uint_8 BehaviorID {
   // victorBehaviorTree
   ComeHereVoiceCommand,
   CoordinateGlobalInterrupts,
-  DriveOffCharger,
-  GlobalInterruptions,
-  HighLevelAI,
 
   // victorBehaviorTree/danceToTheBeat
   DanceToTheBeat,
+
+  // victorBehaviorTree
+  DriveOffCharger,
+  GlobalInterruptions,
+  HighLevelAI,
 
   // victorBehaviorTree/highLevelDelegates/exploring
   ConfirmCharger,
   ConfirmCube,
   Exploring,
-  ExploringDispatcher,
   ExploringExamineObstacle,
   ExploringGetIn,
   ExploringVoiceCommand,
@@ -192,10 +193,11 @@ enum uint_8 BehaviorID {
   ModeSelector,
 
   // victorBehaviorTree/quietMode
-  BeQuietAnim,
+  BeQuietAnims,
+  BeQuietLoop,
   QuietMode,
   QuietModeLowBatteryGoHome,
-  ShutUpAnim,
+  ShutUpAnims,
   ShutUpMode,
 
   // victorBehaviorTree
