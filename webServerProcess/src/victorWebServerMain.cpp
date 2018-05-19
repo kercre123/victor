@@ -20,7 +20,7 @@
 #include "util/logging/logging.h"
 #include "util/logging/victorLogger.h"
 
-#include "platform/victorCrashReports/google_breakpad.h"
+#include "platform/victorCrashReports/victorCrashReporter.h"
 
 #include <stdio.h>
 #include <chrono>
@@ -113,7 +113,7 @@ int main(void)
   signal(SIGTERM, Shutdown);
 
   static char const* filenamePrefix = "webserver";
-  GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
+  Anki::Victor::InstallCrashReporter(filenamePrefix);
 
   // - create and set logger
   Util::VictorLogger logger("vic-webserver");
@@ -130,7 +130,7 @@ int main(void)
     LOG_ERROR("victorWebServerMain.WebServerConfigNotFound",
               "Web server config file %s not found or failed to parse",
               wsConfigPath.c_str());
-    GoogleBreakpad::UnInstallGoogleBreakpad();
+    Anki::Victor::UninstallCrashReporter();
     Util::gLoggerProvider = nullptr;
     exit(1);
   }
@@ -191,7 +191,7 @@ int main(void)
 
   LOG_INFO("victorWebServerMain", "exit(0)");
   Util::gLoggerProvider = nullptr;
-  GoogleBreakpad::UnInstallGoogleBreakpad();
+  Anki::Victor::UninstallCrashReporter();
   sync();
   exit(0);
 }

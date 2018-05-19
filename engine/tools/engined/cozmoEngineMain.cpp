@@ -22,7 +22,6 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/templateHelpers.h"
 
-#include "util/logging/androidLogPrintLogger_vicos.h"
 #include "util/logging/channelFilter.h"
 #include "util/logging/iEventProvider.h"
 #include "util/logging/iFormattedLoggerProvider.h"
@@ -40,7 +39,7 @@
 #endif
 
 #include "anki/cozmo/shared/factory/emrHelper.h"
-#include "platform/victorCrashReports/google_breakpad.h"
+#include "platform/victorCrashReports/victorCrashReporter.h"
 
 #if !defined(DEV_LOGGER_ENABLED)
   #if FACTORY_TEST
@@ -296,7 +295,7 @@ int main(int argc, char* argv[])
   signal(SIGTERM, sigterm);
 
   static char const* filenamePrefix = "engine";
-  GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
+  Anki::Victor::InstallCrashReporter(filenamePrefix);
 
   char cwd[PATH_MAX] = { 0 };
   (void)getcwd(cwd, sizeof(cwd));
@@ -398,7 +397,7 @@ int main(int argc, char* argv[])
   int res = cozmo_start(config);
   if (0 != res) {
       printf("failed to start engine\n");
-      GoogleBreakpad::UnInstallGoogleBreakpad();
+      Anki::Victor::UninstallCrashReporter();
       exit(res);
   }
 
@@ -415,7 +414,7 @@ int main(int argc, char* argv[])
   LOG_INFO("CozmoEngineMain.main", "Stopping engine");
   res = cozmo_stop();
 
-  GoogleBreakpad::UnInstallGoogleBreakpad();
+  Anki::Victor::UninstallCrashReporter();
 
   return res;
 }

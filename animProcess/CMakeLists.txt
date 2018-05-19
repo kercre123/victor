@@ -20,7 +20,6 @@ set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
 set(PLATFORM_COMPILE_DEFS "")
 
 if (VICOS)
-    include(breakpad)
     set(PLATFORM_LIBS
         log
         robot_core)
@@ -93,7 +92,6 @@ if (VICOS)
     PRIVATE
     victor_anim
     victorCrashReports
-    breakpad_client
     cti_common_robot
     util
     jsoncpp

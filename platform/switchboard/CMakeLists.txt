@@ -6,14 +6,13 @@ project(vic-switchboard)
 
 include(anki_build_cxx)
 include(sodium)
-include(breakpad)
 
 anki_build_cxx_executable(vic-switchboard ${ANKI_SRCLIST_DIR})
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
-  
+
 set(PLATFORM_LIBS
   log
   c
@@ -41,7 +40,6 @@ PRIVATE
   civetweb
   util
   victorCrashReports
-  breakpad_client
   anki-ble
 )
 

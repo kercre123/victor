@@ -83,7 +83,6 @@ set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
 set(PLATFORM_FLAGS "")
 if (VICOS)
-  include(breakpad)
   set(PLATFORM_LIBS
     robot_hal
   )
@@ -233,7 +232,6 @@ if (VICOS)
     cti_common_robot
     cti_messaging_robot
     victorCrashReports
-    breakpad_client
     ${PLATFORM_LIBS}
   )
 

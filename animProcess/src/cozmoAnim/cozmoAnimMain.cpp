@@ -25,7 +25,7 @@
 #include "util/logging/victorLogger.h"
 #include "util/string/stringUtils.h"
 
-#include "platform/victorCrashReports/google_breakpad.h"
+#include "platform/victorCrashReports/victorCrashReporter.h"
 
 #include <stdio.h>
 #include <chrono>
@@ -118,7 +118,7 @@ int main(void)
   signal(SIGTERM, Shutdown);
 
   static char const* filenamePrefix = "anim";
-  GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
+  Anki::Victor::InstallCrashReporter(filenamePrefix);
 
   // - create and set logger
   auto logger = std::make_unique<Anki::Util::VictorLogger>(LOG_PROCNAME);
@@ -154,7 +154,7 @@ int main(void)
     delete animEngine;
     Util::gLoggerProvider = nullptr;
     Util::gEventProvider = nullptr;
-    GoogleBreakpad::UnInstallGoogleBreakpad();
+    Anki::Victor::UninstallCrashReporter();
     sync();
     exit(result);
   }
@@ -228,7 +228,7 @@ int main(void)
   Util::gLoggerProvider = nullptr;
   Util::gEventProvider = nullptr;
 
-  GoogleBreakpad::UnInstallGoogleBreakpad();
+  Anki::Victor::UninstallCrashReporter();
   sync();
   exit(result);
 }
