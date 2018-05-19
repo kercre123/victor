@@ -17,12 +17,13 @@
 #include "cozmoAnim/animContext.h"
 
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/utils/data/dataScope.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 
 #include "util/environment/locale.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
+#include "util/math/numericCast.h"
+
 #include <cmath>
 
 // Log options
@@ -42,9 +43,6 @@
 /* How many samples do we fetch in one call? */
 #define ACAPELA_SAMPLE_BUFSIZ (16*1024)
 
-// Fixed parameters
-#define TTS_LEADINGSILENCE_MS  50 // Minimum allowed by Acapela TTS SDK
-#define TTS_TRAILINGSILENCE_MS 50 // Minimum allowed by Acapela TTS SDK
 
 namespace Anki {
 namespace Cozmo {
@@ -55,9 +53,9 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* ctx,
                                                    const Json::Value& tts_platform_config)
 {
   using Locale = Anki::Util::Locale;
-  using Scope = Anki::Util::Data::Scope;
   using DataPlatform = Anki::Util::Data::DataPlatform;
-  
+
+
   // Check for valid data platform before we do any work
   const DataPlatform * dataPlatform = ctx->GetDataPlatform();
   if (nullptr == dataPlatform) {
@@ -75,42 +73,40 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* ctx,
                 "Unable to initialize TTS provider");
     return;
   }
-  
-  // Set up default parameters
-  _tts_language = locale->GetLanguageString();
-  _tts_voice = "Ryan22k_CO";
-  _tts_speed = 100;
-  _tts_shaping = 100;
-  _tts_licensed = false;
 
-  // Allow language configuration to override defaults
-  Json::Value tts_language_config = tts_platform_config[_tts_language.c_str()];
-  JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kVoiceKey, _tts_voice);
-  JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kSpeedKey, _tts_speed);
-  JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kShapingKey, _tts_shaping);
-    
+  // Set up default parameters for requested language
+  _tts_config = std::make_unique<TextToSpeechProviderConfig>(locale->GetLanguageString(), tts_platform_config);
+
+  const auto & language = _tts_config->GetLanguage();
+  const auto & voice = _tts_config->GetVoice();
+  const auto speed = _tts_config->GetSpeed();
+  const auto shaping = _tts_config->GetShaping();
+  const auto pitch = _tts_config->GetPitch();
+  const auto leadingSilence_ms = _tts_config->GetLeadingSilence_ms();
+  const auto trailingSilence_ms = _tts_config->GetTrailingSilence_ms();
+
   LOG_INFO("TextToSpeechProviderImpl.Initialize",
-           "tts_language=%s tts_voice=%s tts_speed=%d tts_shaping=%d",
-           _tts_language.c_str(), _tts_voice.c_str(), _tts_speed, _tts_shaping);
+           "language=%s voice=%s speed=%d shaping=%d pitch=%d",
+           language.c_str(), voice.c_str(), speed, shaping, pitch);
 
   // Initialize Acapela DLL
-  std::string resources = dataPlatform->pathToResource(Scope::Resources, "tts");
+  std::string resources = dataPlatform->GetResourcePath("tts");
   HMODULE h = BabTtsInitDllEx(resources.c_str());
   if (nullptr == h) {
     LOG_WARNING("TextToSpeechProvider.Initialize.InitDll",
               "Unable to initialize TTS provider DLL in '%s'",resources.c_str());
     return;
   }
-  
+
   bool ok = BabTTS_Init();
   if (!ok) {
     LOG_ERROR("TextToSpeechProvider.Initialize.Init",
               "Unable to initialize TTS provider");
     return;
   }
-  
+
   const long numVoices = BabTTS_GetNumVoices();
-  
+
   LOG_DEBUG("TextToSpeechProvider.Initialize.NumVoices",
             "TTS provider has %ld voices", numVoices);
 
@@ -121,15 +117,15 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* ctx,
     LOG_DEBUG("TextToSpeechProvider.Initialize.EnumVoices",
               "TTS provider has voice %s", voice);
   }
-  
+
   _lpBabTTS = BabTTS_Create();
   if (nullptr == _lpBabTTS) {
     LOG_ERROR("TextToSpeechProvider.Initialize.Create",
               "Unable to create TTS provider handle");
     return;
   }
-  
-  BabTtsError err = BabTTS_Open(_lpBabTTS, _tts_voice.c_str(), BABTTS_USEDEFDICT);
+
+  BabTtsError err = BabTTS_Open(_lpBabTTS, voice.c_str(), BABTTS_USEDEFDICT);
   if (E_BABTTS_NOERROR == err) {
     /* licensed install */
     _tts_licensed = true;
@@ -146,37 +142,45 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* ctx,
               BabTTS_GetErrorName(err));
     return;
   }
-  
-  err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_SPEED, _tts_speed);
+
+  err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_SPEED, speed);
   if (E_BABTTS_NOERROR != err) {
     LOG_ERROR("TextToSpeechProvider.Initialize.SetSpeed",
               "Unable to set speed=%d (%s)",
-              _tts_speed, BabTTS_GetErrorName(err));
+              speed, BabTTS_GetErrorName(err));
   }
-  
-  err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_VOCALTRACT, _tts_shaping);
+
+  err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_VOCALTRACT, shaping);
+  if (E_BABTTS_NOERROR != err) {
+    LOG_ERROR("TextToSpeechProvider.Initialize.SetShaping",
+              "Unable to set shaping=%d (%s)",
+              shaping, BabTTS_GetErrorName(err));
+  }
+
+  err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_PITCH, pitch);
   if (E_BABTTS_NOERROR != err) {
     LOG_ERROR("TextToSpeechProvider.Initialize.SetPitch",
-              "Unable to set shaping=%d (%s)",
-              _tts_shaping, BabTTS_GetErrorName(err));
+              "Unable to set pitch=%d (%s)",
+              pitch, BabTTS_GetErrorName(err));
   }
 
-  err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_LEADINGSILENCE, TTS_LEADINGSILENCE_MS);
+  err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_LEADINGSILENCE, leadingSilence_ms);
   if (E_BABTTS_NOERROR != err) {
     LOG_ERROR("TextToSpeechProvider.Initialize.SetLeadingSilence",
-              "Unable to set leading silence (%s)",
-              BabTTS_GetErrorName(err));
+              "Unable to set leading silence=%d (%s)",
+              leadingSilence_ms, BabTTS_GetErrorName(err));
   }
 
-  err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_TRAILINGSILENCE, TTS_TRAILINGSILENCE_MS);
+  err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_TRAILINGSILENCE, trailingSilence_ms);
   if (E_BABTTS_NOERROR != err) {
     LOG_ERROR("TextToSpeechProvider.Initialize.SetTrailingSilence",
-              "Unable to set trailing silence (%s)",
-              BabTTS_GetErrorName(err));
+              "Unable to set trailing silence=%d (%s)",
+              trailingSilence_ms, BabTTS_GetErrorName(err));
   }
 
+  _rng = ctx->GetRandom();
 }
-  
+
 TextToSpeechProviderImpl::~TextToSpeechProviderImpl()
 {
   if (nullptr != _lpBabTTS) {
@@ -208,21 +212,42 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
     return RESULT_OK;
   }
 
-  // Adjust base speed by duration scalar
-  const float speechRate = AcapelaTTS::GetSpeechRate(_tts_speed, durationScalar);
-  const int speed = Anki::Util::numeric_cast<int>(std::round(speechRate));
-  
-  // Update TTS engine to use new speed param
+  // Get base speed for this utterance, then adjust by duration scalar
+  const auto baseSpeed = _tts_config->GetSpeed(_rng, text.size());
+  const auto adjustedSpeed = AcapelaTTS::GetSpeechRate(baseSpeed, durationScalar);
+  const int speed = Anki::Util::numeric_cast<int>(std::round(adjustedSpeed));
+  const int shaping = _tts_config->GetShaping();
+  const int pitch = _tts_config->GetPitch();
+
+  LOG_DEBUG("TextToSpeechProvider.CreateAudioData",
+            "size=%zu speed=%d shaping=%d pitch=%d",
+            text.size(), speed, shaping, pitch);
+
+  // Update TTS engine to use new speed, shaping, pitch
   BabTtsError err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_SPEED, speed);
   if (E_BABTTS_NOERROR != err) {
-    LOG_ERROR("TextToSpeechProvider.CreateAudioData.SetSettings",
-              "Unable to set speed (%s)", BabTTS_GetErrorName(err));
+    LOG_ERROR("TextToSpeechProvider.CreateAudioData.SetSpeed",
+              "Unable to set speed %d (%s)", speed, BabTTS_GetErrorName(err));
+    return RESULT_FAIL_INVALID_PARAMETER;
+  }
+
+  err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_VOCALTRACT, shaping);
+  if (E_BABTTS_NOERROR != err) {
+    LOG_ERROR("TextToSpeechProvider.CreateAudioData.SetShaping",
+              "Unable to set shaping %d (%s)", shaping, BabTTS_GetErrorName(err));
+    return RESULT_FAIL_INVALID_PARAMETER;
+  }
+
+  err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_PITCH, pitch);
+  if (E_BABTTS_NOERROR != err) {
+    LOG_ERROR("TextToSpeechProvider.CreateAudioData.SetPitch",
+              "Unable to set pitch %d (%s)", pitch, BabTTS_GetErrorName(err));
     return RESULT_FAIL_INVALID_PARAMETER;
   }
 
   // Initialize output buffer
   data.Init(AcapelaTTS::GetSampleRate(), AcapelaTTS::GetNumChannels());
-  
+
   // Start processing text
   DWORD dwTextFlags = BABTTS_TEXT | BABTTS_TXT_UTF8 | BABTTS_READ_DEFAULT | BABTTS_TAG_SAPI;
   err = BabTTS_InsertText(_lpBabTTS, text.c_str(), dwTextFlags);
@@ -231,9 +256,9 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
               "Unable to insert text (%s)", BabTTS_GetErrorName(err));
     return RESULT_FAIL;
   }
-  
+
   AudioUtil::AudioChunk& chunk = data.GetChunk();
-  
+
   // Poll output buffer until we run out of data
   while (1) {
     short buf[ACAPELA_SAMPLE_BUFSIZ] = {0};
@@ -258,9 +283,9 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
       return RESULT_FAIL;
     }
   }
-  
+
   return RESULT_OK;
-  
+
 }
 
 } // end namespace TextToSpeech

@@ -17,10 +17,19 @@
 #if defined(ANKI_PLATFORM_VICOS)
 
 #include "textToSpeechProvider.h"
+#include "textToSpeechProviderConfig.h"
+
 #include <string>
 
 // Acapela SDK declarations
 #include "i_babile.h"
+
+// Forward declarations
+namespace Anki {
+  namespace Util {
+    class RandomGenerator;
+  }
+}
 
 namespace Anki {
 namespace Cozmo {
@@ -40,10 +49,10 @@ public:
 
 private:
   // TTS configuration
-  std::string _tts_voice;
-  int _tts_speed;
-  int _tts_shaping;
-  int _tts_pitch;
+  std::unique_ptr<TextToSpeechProviderConfig> _tts_config;
+
+  // RNG provided by context
+  Anki::Util::RandomGenerator * _rng = nullptr;
 
   //
   // BABILE Object State

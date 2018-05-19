@@ -20,6 +20,7 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 
 #include "util/console/consoleInterface.h"
+#include "util/console/consoleMacro.h"
 #include "util/environment/locale.h"
 #include "util/logging/logging.h"
 
@@ -31,23 +32,6 @@
 
 // Log options
 #define LOG_CHANNEL    "TextToSpeech"
-
-// Debug sliders
-#if REMOTE_CONSOLE_ENABLED
-
-#define CONSOLE_GROUP "TextToSpeech.VoiceParameters"
-
-namespace {
-  CONSOLE_VAR_RANGED(s32, kVoiceSpeed, CONSOLE_GROUP, 100, 30, 300);
-  CONSOLE_VAR_RANGED(s32, kVoiceShaping, CONSOLE_GROUP, 100, 70, 140);
-  CONSOLE_VAR_RANGED(s32, kVoicePitch, CONSOLE_GROUP, 100, 70, 160);
-}
-
-#endif
-
-// Fixed parameters
-#define TTS_LEADINGSILENCE_MS  50 // Minimum allowed by Acapela TTS SDK
-#define TTS_TRAILINGSILENCE_MS 50 // Minimum allowed by Acapela TTS SDK
 
 namespace Anki {
 namespace Cozmo {
@@ -74,48 +58,33 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* context, c
     return;
   }
 
-  // Set up license parameters
+  // Initialize license parameters
   const auto tts_userid = AcapelaTTS::GetUserid();
   const auto tts_passwd = AcapelaTTS::GetPassword();
   const auto tts_license = AcapelaTTS::GetLicense();
 
-  // Set up default parameters
-  _tts_voice = "co-USEnglish-Ryan-22khz/enu/enu_ryan_22k_co.fl.ini";
-  _tts_speed = 100;
-  _tts_shaping = 100;
-  _tts_pitch = 100;
+  // Initialize configuration
+  _tts_config = std::make_unique<TextToSpeechProviderConfig>(locale->GetLanguageString(), tts_platform_config);
 
-  //
-  // Allow language configuration to override defaults.  Note pitch is not
-  // supported on all platforms, so it is not supported as a config parameter
-  // at this time.
-  //
-  const std::string& language = locale->GetLanguageString();
-  Json::Value tts_language_config = tts_platform_config[language.c_str()];
+  const auto & language = _tts_config->GetLanguage();
+  const auto & voice = _tts_config->GetVoice();
+  const auto speed = _tts_config->GetSpeed();
+  const auto shaping = _tts_config->GetShaping();
+  const auto pitch = _tts_config->GetPitch();
+  const auto leadingSilence_ms = _tts_config->GetLeadingSilence_ms();
+  const auto trailingSilence_ms = _tts_config->GetTrailingSilence_ms();
 
-  JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kVoiceKey, _tts_voice);
-  JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kSpeedKey, _tts_speed);
-  JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kShapingKey, _tts_shaping);
-  //JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kPitchKey, _tts_pitch);
-
-  LOG_DEBUG("TextToSpeechProvider.Initialize", "language=%s voice=%s speed=%d shaping=%d pitch=%d",
-            language.c_str(), _tts_voice.c_str(), _tts_speed, _tts_shaping, _tts_pitch);
-
-  #if REMOTE_CONSOLE_ENABLED
-  {
-    kVoiceSpeed = _tts_speed;
-    kVoiceShaping = _tts_shaping;
-    kVoicePitch = _tts_pitch;
-  }
-  #endif
+  LOG_INFO("TextToSpeechProvider.Initialize",
+           "language=%s voice=%s speed=%d shaping=%d pitch=%d",
+           language.c_str(), voice.c_str(), speed, shaping, pitch);
 
   //
   // Load voice parameters from ini file
   //
   // VIC-293 TODO: Path to ini file should be determined by data platform & current locale
   //
-  const std::string & ttsPath = dataPlatform->pathToResource(Util::Data::Scope::Resources, "tts");
-  const std::string & iniFile = ttsPath + "/" + _tts_voice;
+  const std::string & ttsPath = dataPlatform->GetResourcePath("tts");
+  const std::string & iniFile = ttsPath + "/" + voice;
   const std::string & loadParams = "*=RAM";
   const char * defaultText = NULL;
   BB_S32 synthAvail = 0;
@@ -187,36 +156,37 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* context, c
     	BABILE_getVersion(), version, _BAB_voicefreq, _BAB_samplesize);
   }
 
-  bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_SPEED, _tts_speed);
+  bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_SPEED, speed);
   if (BB_OK != bbError) {
     LOG_WARNING("TextToSpeechProvider.Initialize.SetSpeed", "Unable to set speed %d (error %ld)",
-                _tts_speed, bbError);
+                speed, bbError);
   }
 
-  bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_SEL_VOICESHAPE, _tts_shaping);
+  bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_SEL_VOICESHAPE, shaping);
   if (BB_OK != bbError) {
     LOG_WARNING("TextToSpeechProvider.Initialize.SetVoiceShape", "Unable to set voice shape %d (error %ld)",
-                _tts_shaping, bbError);
+                shaping, bbError);
   }
 
-  bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_PITCH, _tts_pitch);
+  bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_PITCH, pitch);
   if (BB_OK != bbError) {
     LOG_WARNING("TextToSpeechProvider.Initialize.SetPitch", "Unable to set pitch %d (error %ld)",
-                _tts_pitch, bbError);
+                pitch, bbError);
   }
 
-  bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_LEADINGSILENCE, TTS_LEADINGSILENCE_MS);
+  bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_LEADINGSILENCE, leadingSilence_ms);
   if (BB_OK != bbError) {
     LOG_WARNING("TextToSpeechProvider.Initialize.SetLeadingSilence", "Unable to set leading silence %d (error %ld)",
-               TTS_LEADINGSILENCE_MS, bbError);
+               leadingSilence_ms, bbError);
   }
 
-  bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_TRAILINGSILENCE, TTS_TRAILINGSILENCE_MS);
+  bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_TRAILINGSILENCE, trailingSilence_ms);
   if (BB_OK != bbError) {
     LOG_WARNING("TextToSpeechProvider.Initialize.SetTrailingSilence", "Unable to set trailing silence %d (error %ld)",
-                TTS_TRAILINGSILENCE_MS, bbError);
+                trailingSilence_ms, bbError);
   }
 
+  _rng = context->GetRandom();
 
 }
 
@@ -254,11 +224,12 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
     return RESULT_FAIL_INVALID_OBJECT;
   }
 
-#if REMOTE_CONSOLE_ENABLED
-  _tts_speed = kVoiceSpeed;
-  _tts_shaping = kVoiceShaping;
-  _tts_pitch = kVoicePitch;
-#endif
+  // Get base speed for this utterance, then adjust by duration scalar
+  const auto baseSpeed = _tts_config->GetSpeed(_rng, text.size());
+  const auto adjustedSpeed = AcapelaTTS::GetSpeechRate(baseSpeed, durationScalar);
+  const auto speed = Anki::Util::numeric_cast<int>(std::round(adjustedSpeed));
+  const auto shaping = _tts_config->GetShaping();
+  const auto pitch = _tts_config->GetPitch();
 
   // Reset TTS processing state & error state
   BB_ERROR bbError = BABILE_reset(_BAB_Obj);
@@ -269,19 +240,19 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
   BABILE_resetError(_BAB_Obj);
 
   // Apply current TTS params
-  bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_SPEED, _tts_speed);
+  bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_SPEED, speed);
   if (BB_OK != bbError) {
-    LOG_WARNING("TextToSpeechProvider.CreateAudioData", "Unable to set speed %d (error %ld)", _tts_speed, bbError);
+    LOG_WARNING("TextToSpeechProvider.CreateAudioData", "Unable to set speed %d (error %ld)", speed, bbError);
   }
 
-  bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_SEL_VOICESHAPE, _tts_shaping);
+  bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_SEL_VOICESHAPE, shaping);
   if (BB_OK != bbError) {
-    LOG_WARNING("TextToSpeechProvider.CreateAudioData", "Unable to set shaping %d (error %ld)", _tts_shaping, bbError);
+    LOG_WARNING("TextToSpeechProvider.CreateAudioData", "Unable to set shaping %d (error %ld)", shaping, bbError);
   }
 
-  bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_PITCH, _tts_pitch);
+  bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_PITCH, pitch);
   if (BB_OK != bbError) {
-    LOG_WARNING("TextToSpeechProvider.CreateAudioData", "Unable to set pitch %d (error %ld)", _tts_pitch, bbError);
+    LOG_WARNING("TextToSpeechProvider.CreateAudioData", "Unable to set pitch %d (error %ld)", pitch, bbError);
   }
 
   data.Init(_BAB_voicefreq, 1);
