@@ -672,9 +672,8 @@ void NVStorageComponent::LoadDataFromFiles()
     // to load it from the normal nvstorage files
     if(tagNum == static_cast<u32>(NVEntryTag::NVEntry_CameraCalib))
     {
-      DEV_ASSERT_MSG(false,
-                     "NVStorageComponent.LoadFactoryDataFromFiles.CameraCalibFile",
-                     "Trying to load camera calibration from nvStorage file when it should be in the block device");
+      PRINT_NAMED_ERROR("NVStorageComponent.LoadFactoryDataFromFiles.CameraCalibFile",
+                        "Trying to load camera calibration from nvStorage file when it should be in the block device");
       continue;
     }
 
