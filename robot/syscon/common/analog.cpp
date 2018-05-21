@@ -77,7 +77,7 @@ void Analog::init(void) {
               | ADC_CFGR1_DMACFG
               | ADC_CFGR1_AWDEN
               | ADC_CFGR1_AWDSGL
-              | (ADC_CFGR1_AWDCH_0 * 2) // ADC Channel 2 (VEXT)
+              | (ADC_CFGR1_AWDCH_0 * 3) // ADC Channel 2 (VEXT)
               ;
   ADC1->CFGR2 = 0
               | ADC_CFGR2_CKMODE_1
@@ -405,12 +405,13 @@ void Analog::tick(void) {
 }
 
 extern "C" void ADC1_IRQHandler(void) {
-  ADC1->ISR = ADC_ISR_AWD;
-  NVIC_DisableIRQ(ADC1_IRQn);
-
   POWER_EN::set();
   POWER_EN::mode(MODE_OUTPUT);
   POWER_EN::pull(PULL_UP);
   POWER_EN::mode(MODE_INPUT);
   //nCHG_PWR::set();
+
+  ADC1->ISR = ADC_ISR_AWD;
+  NVIC_DisableIRQ(ADC1_IRQn);
+\
 }
