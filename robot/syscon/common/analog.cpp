@@ -12,7 +12,7 @@
 
 static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL2
-  | ADC_CHSELR_CHSEL4
+  | ADC_CHSELR_CHSEL3
   | ADC_CHSELR_CHSEL6
   | ADC_CHSELR_CHSEL16
   ;
@@ -20,7 +20,7 @@ static const int SELECTED_CHANNELS = 0
 static const uint16_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.4);
 static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 200;  // 1s
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.3);
-static const uint32_t FALLING_EDGE = ADC_WINDOW(ADC_VOLTS(4.7), ~0);
+static const uint32_t FALLING_EDGE = ADC_WINDOW(ADC_VOLTS(3.5), ~0);
 
 static const uint16_t*  TEMP30_CAL_ADDR = (uint16_t*)0x1FFFF7B8;
 static const int32_t    TEMP_VOLT_ADJ   = (int32_t)(0x100000 * (2.8 / 3.3));
@@ -30,7 +30,7 @@ static const int POWER_DOWN_TIME = 200 * 4.5;   // Shutdown
 static const int POWER_WIPE_TIME = 200 * 12;  // Enter recovery mode
 static const int MINIMUM_VEXT_TIME = 20; // 0.1s
 static const int CHARGE_ENABLE_DELAY = 50; // 0.25s
-static const int MAX_CHARGE_TIME = 200 * 60 * 30; // 30 minutes
+static const int MAX_CHARGE_TIME = 200 * 10; // 30 minutes
 static const int MAX_CHARGE_TIME_WD = MAX_CHARGE_TIME + 20; // 100ms past MAX_CHARGE_TIME
 
 static const int BOUNCE_LENGTH = 3;
@@ -238,7 +238,7 @@ void Analog::tick(void) {
 
   // On-charger delay
   bool vext_now = Analog::values[ADC_VEXT] >= TRANSITION_POINT;
-  bool enable_watchdog = (vext_debounce >= MAX_CHARGE_TIME_WD) && (values[ADC_VEXT] > ADC_VOLTS(4.7));
+  bool enable_watchdog = vext_debounce >= MAX_CHARGE_TIME_WD;
   bool button_now = (values[ADC_BUTTON] >= BUTTON_THRESHOLD);
 
   if (vext_now && last_vext) {
@@ -253,9 +253,10 @@ void Analog::tick(void) {
   temperature = *TEMP30_CAL_ADDR - ((Analog::values[ADC_TEMP] * TEMP_VOLT_ADJ) >> 20);
   temperature = ((temperature * TEMP_SCALE_ADJ) >> 20) + 30;
 
-  bool emergency_shutoff = temperature >= 60;    // Will immediately cause a reboot
-  if (temperature >= 45) disable_vmain = true;
-
+  //bool emergency_shutoff = temperature >= 60;    // Will immediately cause a reboot
+  //if (temperature >= 45) disable_vmain = true;
+  bool emergency_shutoff = false;
+  
   #ifdef BOOTLOADER
   static bool has_booted = false;
   
@@ -289,11 +290,11 @@ void Analog::tick(void) {
     charge_delay = 0;
   } else if (!on_charger) {
     NVIC_DisableIRQ(ADC1_IRQn);
-    // Powered, off charger
-    nCHG_PWR::set();
-
     POWER_EN::pull(PULL_UP);
     POWER_EN::mode(MODE_INPUT);
+
+    // Powered, off charger
+    nCHG_PWR::set();
 
     battery_voltage = Analog::values[ADC_VMAIN];
     is_charging = false;
@@ -411,4 +412,5 @@ extern "C" void ADC1_IRQHandler(void) {
   POWER_EN::mode(MODE_OUTPUT);
   POWER_EN::pull(PULL_UP);
   POWER_EN::mode(MODE_INPUT);
+  //nCHG_PWR::set();
 }
