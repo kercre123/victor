@@ -1760,13 +1760,32 @@ Result VisionSystem::SaveSensorData() const {
     config["backLeftCliff"]   = state.WasCliffDetected(CliffSensor::CLIFF_BL);
     config["backRightCliff"]  = state.WasCliffDetected(CliffSensor::CLIFF_BR);
 
-    // was picked up
+    // robot motion flags
+    // We don't record "WasCameraMoving" since it's HeadMoving || WheelsMoving
+    config["wasCarryingObject"] = state.WasCarryingObject();
+    config["wasMoving"] = state.WasMoving();
+    config["WasHeadMoving"] = state.WasHeadMoving();
+    config["WasLiftMoving"] = state.WasLiftMoving();
+    config["WereWheelsMoving"] = state.WereWheelsMoving();
     config["wasPickedUp"] = state.WasPickedUp();
 
     // head angle
     config["headAngle"] = state.GetHeadAngle_rad();
     // lift angle
     config["liftAngle"] = state.GetLiftAngle_rad();
+
+    // camera exposure, gain, white balance
+    // Make sure to get parameters for current image, not next image
+    // NOTE: Due to latency between interface call and actual register writes,
+    // the so-called current params may not actually be current
+    config["requestedCamExposure"] = _currentCameraParams.exposureTime_ms;
+    config["requestedCamGain"] = _currentCameraParams.gain;
+    config["requestedCamWhiteBalanceRed"] = _currentCameraParams.whiteBalanceGainR;
+    config["requestedCamWhiteBalanceGreen"] = _currentCameraParams.whiteBalanceGainG;
+    config["requestedCamWhiteBalanceBlue"] = _currentCameraParams.whiteBalanceGainB;
+
+    // image timestamp
+    config["imageTimestamp"] = _currentResult.timestamp;
   }
 
   Json::StyledWriter writer;
