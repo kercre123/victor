@@ -19,8 +19,10 @@
 #include "clad/externalInterface/messageGameToEngineTag.h"
 #include "clad/robotInterface/messageRobotToEngineTag.h"
 
+#include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 
@@ -33,6 +35,7 @@ namespace Cozmo {
 class Robot;
 class BehaviorComponent;
 class BehaviorContainer;
+class BehaviorSystemManager;
 
 class DevBehaviorComponentMessageHandler : public IDependencyManagedComponent<BCComponentID>, private Util::noncopyable
 {

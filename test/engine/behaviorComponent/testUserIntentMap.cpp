@@ -13,6 +13,7 @@
 #include "gtest/gtest.h"
 
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
@@ -147,7 +148,7 @@ TEST(UserIntentMap, UserIntent)
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
 
-  comp->SetUserIntentPending(USER_INTENT(test_user_intent_1));
+  comp->DevSetUserIntentPending(USER_INTENT(test_user_intent_1), UserIntentSource::Voice);
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
   EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
@@ -164,6 +165,7 @@ TEST(UserIntentMap, UserIntent)
   EXPECT_TRUE(comp->IsUserIntentActive(USER_INTENT(test_user_intent_1)));
   EXPECT_FALSE(comp->IsUserIntentActive(USER_INTENT(test_user_intent_2)));
   EXPECT_FALSE(comp->IsUserIntentActive(USER_INTENT(unmatched_intent)));
+  EXPECT_EQ(comp->GetActiveUserIntent()->source, UserIntentSource::Voice);
 
   comp->DeactivateUserIntent(USER_INTENT(test_user_intent_1));
   EXPECT_FALSE(comp->IsAnyUserIntentPending());
@@ -175,7 +177,7 @@ TEST(UserIntentMap, UserIntent)
   EXPECT_FALSE(comp->IsUserIntentActive(USER_INTENT(unmatched_intent)));
 
   
-  comp->SetUserIntentPending(USER_INTENT(test_user_intent_2));
+  comp->DevSetUserIntentPending(USER_INTENT(test_user_intent_2), UserIntentSource::App);
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
   EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
@@ -192,7 +194,8 @@ TEST(UserIntentMap, UserIntent)
   EXPECT_FALSE(comp->IsUserIntentActive(USER_INTENT(test_user_intent_1)));
   EXPECT_TRUE(comp->IsUserIntentActive(USER_INTENT(test_user_intent_2)));
   EXPECT_FALSE(comp->IsUserIntentActive(USER_INTENT(unmatched_intent)));
-
+  EXPECT_EQ(comp->GetActiveUserIntent()->source, UserIntentSource::App);
+  
   comp->DeactivateUserIntent(USER_INTENT(test_user_intent_2));
   EXPECT_FALSE(comp->IsAnyUserIntentPending());
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
@@ -317,7 +320,7 @@ TEST(UserIntentMap, IntentExpiration)
   BCCompMap emptyMap;
   comp->UpdateDependent(emptyMap);
   
-  comp->SetUserIntentPending(USER_INTENT(test_user_intent_1));
+  comp->DevSetUserIntentPending(USER_INTENT(test_user_intent_1), UserIntentSource::Voice);
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
   EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
@@ -403,10 +406,11 @@ TEST(UserIntentMap, ExtraData)
   EXPECT_TRUE(comp->IsUserIntentActive(USER_INTENT(set_timer)));
 
   {
-    UserIntentPtr activeIntent = comp->GetActiveUserIntent(USER_INTENT(set_timer));
+    UserIntentPtr activeIntent = comp->GetUserIntentIfActive(USER_INTENT(set_timer));
     ASSERT_TRUE(activeIntent != nullptr);
-    EXPECT_EQ(activeIntent->GetTag(), UserIntentTag::set_timer);
-    EXPECT_EQ(activeIntent->Get_set_timer().time_s, 42);
+    EXPECT_EQ(activeIntent->intent.GetTag(), UserIntentTag::set_timer);
+    EXPECT_EQ(activeIntent->intent.Get_set_timer().time_s, 42);
+    EXPECT_EQ(activeIntent->source, UserIntentSource::Voice);
   }
 
   comp->DeactivateUserIntent(USER_INTENT(set_timer));
@@ -432,10 +436,11 @@ TEST(UserIntentMap, ExtraData)
   EXPECT_TRUE(comp->IsUserIntentActive(USER_INTENT(set_timer)));
 
   {
-    UserIntentPtr activeIntent = comp->GetActiveUserIntent(USER_INTENT(set_timer));
+    UserIntentPtr activeIntent = comp->GetUserIntentIfActive(USER_INTENT(set_timer));
     ASSERT_TRUE(activeIntent != nullptr);
-    EXPECT_EQ(activeIntent->GetTag(), UserIntentTag::set_timer);
-    EXPECT_EQ(activeIntent->Get_set_timer().time_s, 9001);
+    EXPECT_EQ(activeIntent->intent.GetTag(), UserIntentTag::set_timer);
+    EXPECT_EQ(activeIntent->intent.Get_set_timer().time_s, 9001);
+    EXPECT_EQ(activeIntent->source, UserIntentSource::Voice);
   }
 
   comp->DeactivateUserIntent(USER_INTENT(set_timer));
@@ -462,10 +467,11 @@ TEST(UserIntentMap, ExtraData)
   EXPECT_TRUE(comp->IsUserIntentActive(USER_INTENT(test_name)));
 
   {
-    UserIntentPtr activeIntent = comp->GetActiveUserIntent(USER_INTENT(test_name));
+    UserIntentPtr activeIntent = comp->GetUserIntentIfActive(USER_INTENT(test_name));
     ASSERT_TRUE(activeIntent != nullptr);
-    EXPECT_EQ(activeIntent->GetTag(), UserIntentTag::test_name);
-    EXPECT_EQ(activeIntent->Get_test_name().name, "Victor");
+    EXPECT_EQ(activeIntent->intent.GetTag(), UserIntentTag::test_name);
+    EXPECT_EQ(activeIntent->intent.Get_test_name().name, "Victor");
+    EXPECT_EQ(activeIntent->source, UserIntentSource::Voice);
   }
 
   comp->DeactivateUserIntent(USER_INTENT(test_name));
@@ -489,4 +495,5 @@ TEST(UserIntentMap, ExtraData)
   EXPECT_EQ(data.Get_test_timeWithUnits().time, 60);
   EXPECT_EQ(data.Get_test_timeWithUnits().units, UserIntent_Test_Time_Units::s);
 
+  // TODO:(bn) add test of app intents
 }

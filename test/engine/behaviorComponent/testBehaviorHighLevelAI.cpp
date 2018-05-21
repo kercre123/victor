@@ -263,7 +263,7 @@ TEST(BehaviorHighLevelAI, PostBehaviorSuggestionsConsidered)
     if( intentTag == USER_INTENT(meet_victor) ) {
       intent.Set_meet_victor( UserIntent_MeetVictor{"cozmo"} );
     }
-    uic.SetUserIntentPending( std::move(intent) );
+    uic.DevSetUserIntentPending( std::move(intent), UserIntentSource::Unknown );
     
     for( int i=0; i<10; ++i ) {
       if( !uic.IsUserIntentPending(intentTag) ) {

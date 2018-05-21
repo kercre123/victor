@@ -41,6 +41,9 @@ namespace ExternalInterface{
 struct AppIntent;
 }
 
+// helper to avoid .h dependency on userIntent.clad
+const UserIntentSource& GetIntentSource(const UserIntentData& intentData);
+
 class UserIntentComponent : public IDependencyManagedComponent<BCComponentID>, private Util::noncopyable
 {
 public:
@@ -98,10 +101,15 @@ public:
   void DeactivateUserIntent(UserIntentTag userIntent);
 
   // Check if an intent tag is currently active
-  bool IsUserIntentActive(UserIntentTag userIntent);
+  bool IsUserIntentActive(UserIntentTag userIntent) const;
 
-  // If the given intent is active, return the associated data, otherwise return nullptr
-  UserIntentPtr GetActiveUserIntent(UserIntentTag forIntent);
+  // If the given intent is active, return the associated data, otherwise return nullptr.
+  UserIntentPtr GetUserIntentIfActive(UserIntentTag forIntent) const;
+
+  // If any intent is active, return the associated data, otherwise return nullptr. In general, most cases
+  // should use the above version that checks that the explicit user intent is matching what the caller
+  // expects
+  UserIntentPtr GetActiveUserIntent() const;
 
   // A helper function to drop a user intent without responding to it. This is meant to be called for a
   // pending user intent and will make it no longer pending without ever making it active. This is generally
@@ -112,12 +120,13 @@ public:
   bool WasUserIntentUnclaimed() const { return _wasIntentUnclaimed; };
   void ResetUserIntentUnclaimed() { _wasIntentUnclaimed = false; };
 
-  // replace the current pending user intent (if any) with this one. This will assert in dev if the
-  // user intent data type is not void
-  void SetUserIntentPending(UserIntentTag userIntent);
-  
-  // replace the current pending user intent (if any) with this one. 
-  void SetUserIntentPending(UserIntent&& userIntent);
+  // replace the current pending user intent (if any) with this one. This will assert in dev if the user
+  // intent data type is not void. These should only be used for test and dev purposes (e.g. webviz), not
+  // directly used to express an intent
+  void DevSetUserIntentPending(UserIntentTag userIntent, const UserIntentSource& source);
+  void DevSetUserIntentPending(UserIntent&& userIntent, const UserIntentSource& source);
+  void DevSetUserIntentPending(UserIntentTag userIntent);
+  void DevSetUserIntentPending(UserIntent&& userIntent);
 
   // this allows us to temporarilty disable the warning when we haven't responded to a pending intent
   // useful when we know a behavior down the line will consume the intent, but we still
@@ -151,12 +160,17 @@ private:
   
   void SendWebVizIntents();
 
+  void SetUserIntentPending(UserIntentTag userIntent, const UserIntentSource& source);
+  void SetUserIntentPending(UserIntent&& userIntent, const UserIntentSource& source);
+
+  static size_t sActivatedIntentID;
+
   std::unique_ptr<UserIntentMap> _intentMap;
 
   bool _pendingTrigger = false;
   
-  std::unique_ptr<UserIntent> _pendingIntent;
-  UserIntentPtr _activeIntent;
+  std::unique_ptr<UserIntentData> _pendingIntent;
+  std::shared_ptr<UserIntentData> _activeIntent;
   std::string _activeIntentOwner;
   
   // for debugging -- intents should be processed within one tick so track the ticks here

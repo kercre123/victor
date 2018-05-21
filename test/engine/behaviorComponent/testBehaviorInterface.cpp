@@ -774,7 +774,7 @@ TEST(BehaviorInterface, BehaviorRespondsToUserIntents)
       {
         passedIntent.Set_test_name( UserIntent_Test_Name{""} );
         EXPECT_TRUE( b.WantsToBeActivated() );
-        uic.SetUserIntentPending( std::move(passedIntent) );
+        uic.DevSetUserIntentPending( std::move(passedIntent) , UserIntentSource::Voice);
         EXPECT_TRUE( b.WantsToBeActivatedInternal() );
         uic.DropUserIntent( USER_INTENT(test_name) );
       }
@@ -783,7 +783,7 @@ TEST(BehaviorInterface, BehaviorRespondsToUserIntents)
       {
         passedIntent.Set_test_user_intent_1({});
         EXPECT_FALSE( b.WantsToBeActivated() );
-        uic.SetUserIntentPending( passedIntent.GetTag() );
+        uic.DevSetUserIntentPending( passedIntent.GetTag() , UserIntentSource::Voice);
         EXPECT_TRUE( b.WantsToBeActivated() );
         b.OnActivated();
         EXPECT_FALSE( uic.IsUserIntentPending(USER_INTENT(test_user_intent_1)) );
@@ -801,7 +801,7 @@ TEST(BehaviorInterface, BehaviorRespondsToUserIntents)
       {
         passedIntent.Set_test_name( UserIntent_Test_Name{"Victor"} );
         EXPECT_FALSE( b.WantsToBeActivated() );
-        uic.SetUserIntentPending( std::move(passedIntent) );
+        uic.DevSetUserIntentPending( std::move(passedIntent) , UserIntentSource::Voice);
         EXPECT_TRUE( b.WantsToBeActivated() );
         b.OnActivated();
         EXPECT_FALSE( uic.IsUserIntentPending(USER_INTENT(test_name)) );
@@ -820,7 +820,7 @@ TEST(BehaviorInterface, BehaviorRespondsToUserIntents)
       {
         passedIntent.Set_test_user_intent_2({});
         EXPECT_FALSE( b.WantsToBeActivated() );
-        uic.SetUserIntentPending( passedIntent.GetTag() );
+        uic.DevSetUserIntentPending( passedIntent.GetTag() , UserIntentSource::Voice);
         EXPECT_FALSE( b.WantsToBeActivated() );
         uic.DropUserIntent( USER_INTENT(test_user_intent_2) );
       }
@@ -831,7 +831,7 @@ TEST(BehaviorInterface, BehaviorRespondsToUserIntents)
       {
         passedIntent.Set_test_name( UserIntent_Test_Name{"Cozmo"} );
         EXPECT_FALSE( b.WantsToBeActivated() );
-        uic.SetUserIntentPending( std::move(passedIntent) );
+        uic.DevSetUserIntentPending( std::move(passedIntent) , UserIntentSource::Voice);
         EXPECT_FALSE( b.WantsToBeActivated() );
         uic.DropUserIntent( USER_INTENT(test_name) );
       }
@@ -840,7 +840,7 @@ TEST(BehaviorInterface, BehaviorRespondsToUserIntents)
       {
         passedIntent.Set_test_name( UserIntent_Test_Name{""} );
         EXPECT_FALSE( b.WantsToBeActivated() );
-        uic.SetUserIntentPending( std::move(passedIntent) );
+        uic.DevSetUserIntentPending( std::move(passedIntent) , UserIntentSource::Voice);
         EXPECT_TRUE( b.WantsToBeActivated() );
         b.OnActivated();
         EXPECT_FALSE( uic.IsUserIntentPending(USER_INTENT(test_name)) );

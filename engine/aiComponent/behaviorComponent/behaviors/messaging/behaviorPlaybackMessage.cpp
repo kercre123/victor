@@ -15,6 +15,7 @@
 #include "behaviorPlaybackMessage.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/mics/voiceMessageSystem.h"
@@ -92,15 +93,15 @@ void BehaviorPlaybackMessage::OnBehaviorActivated()
   // play an animation
 
   auto& uic = GetBehaviorComp<UserIntentComponent>();
-  UserIntentPtr activeIntentPtr = uic.GetActiveUserIntent( USER_INTENT( message_playback ) );
+  UserIntentPtr activeIntentPtr = uic.GetUserIntentIfActive( USER_INTENT( message_playback ) );
 
   DEV_ASSERT_MSG( activeIntentPtr != nullptr &&
-                  ( activeIntentPtr->GetTag() == USER_INTENT( message_playback ) ),
+                  ( activeIntentPtr->intent.GetTag() == USER_INTENT( message_playback ) ),
                   "BehaviorPlaybackMessage.OnBehaviorActivated.IncorrectIntent",
                   "Expecting intent of type [message_playback] but received type [%s]",
-                  activeIntentPtr ? UserIntentTagToString( activeIntentPtr->GetTag() ) : "NULL");
+                  activeIntentPtr ? UserIntentTagToString( activeIntentPtr->intent.GetTag() ) : "NULL");
 
-  const UserIntent_RecordMessage& messageIntent = activeIntentPtr->Get_message_record();
+  const UserIntent_RecordMessage& messageIntent = activeIntentPtr->intent.Get_message_record();
   _dVars.messageRecipient = messageIntent.given_name;
 
   PRINT_NAMED_DEBUG( "BehaviorPlaybackMessage", "Playback message request for [%s]", _dVars.messageRecipient.c_str() );

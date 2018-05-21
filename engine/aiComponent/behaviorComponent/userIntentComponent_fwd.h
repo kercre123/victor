@@ -24,7 +24,11 @@ class UserIntentComponent;
 class UserIntent;
 enum class UserIntentTag : uint8_t;
 
-using UserIntentPtr = std::shared_ptr<UserIntent>;
+enum class UserIntentSource : uint8_t;
+
+struct UserIntentData;
+
+using UserIntentPtr = std::shared_ptr<const UserIntentData>;
 
 }
 }

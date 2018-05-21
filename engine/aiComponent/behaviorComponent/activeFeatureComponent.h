@@ -44,6 +44,7 @@ public:
     // ensure the bsm updates first so that the stack is in the new state when this component ticks
     dependencies.insert(BCComponentID::BehaviorSystemManager);
     dependencies.insert(BCComponentID::ActiveBehaviorIterator);
+    dependencies.insert(BCComponentID::UserIntentComponent);
   }
   virtual void UpdateDependent(const BCCompMap& dependentComponents) override;
 
@@ -52,11 +53,12 @@ public:
 
 private:
 
-  void SetActiveFeature(ActiveFeature newFeature);
-
-  void SendActiveFeatureToWebViz() const;
+  void SendActiveFeatureToWebViz(const std::string& intentSource) const;
   
   ActiveFeature _activeFeature = ActiveFeature::NoFeature;
+
+  // only one feature should count as activated by a given active intent, so track the ID here
+  size_t _lastUsedIntentActivationID = 0;
 
   const CozmoContext* _context = nullptr;
 };

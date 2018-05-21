@@ -304,7 +304,7 @@ void TestBehaviorFramework::ApplyAdditionalRequirementsBeforeDelegation(IBehavio
 
       UserIntent_WeatherResponse weatherResponse;
       UserIntent intent = UserIntent::Createweather_response(std::move(weatherResponse));
-      uic.SetUserIntentPending(std::move(intent));
+      uic.SetUserIntentPending(std::move(intent), UserIntentSource::Unknown);
     }
   }
 }

@@ -37,6 +37,7 @@ class UserIntent;
 #if USER_INTENT_DEV_MODE
   // forward declare user intent tags rather than include
   enum class UserIntentTag : uint8_t;
+  enum class UserIntentSource : uint8_t;
   const char* UserIntentTagToString(const UserIntentTag tag);
 #endif
 }

@@ -6,6 +6,15 @@
 namespace Anki {
 namespace Cozmo {
 
+enum uint_8 UserIntentSource
+{
+  // should never be used except for debug tools (e.g. webviz intent tab)
+  Unknown = 0,
+
+  Voice,
+  App
+}
+
 structure UserIntent_Void
 { 
 }
