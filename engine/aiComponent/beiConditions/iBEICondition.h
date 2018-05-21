@@ -59,6 +59,10 @@ public:
   
   BEIConditionType GetConditionType(){return _conditionType;}
   
+  // If a BEICondition has VisionMode Requirements, override this function to specify them. Modes set here
+  // will be automatically managed by the SetActive infrastructure.
+  virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const {};
+  
   void SetOwnerDebugLabel(const std::string& ownerLabel) { _ownerLabel = ownerLabel; }
   const std::string& GetOwnerDebugLabel() { return _ownerLabel; }
   
@@ -88,10 +92,6 @@ protected:
   // Derived classes which have functionality that should only be carried out during an active part of their 
   // lifecycle should override this function.
   virtual void SetActiveInternal(BehaviorExternalInterface& behaviorExternalInterface, bool isActive) {}
-
-  // If a BEICondition has VisionMode Requirements, override this function to specify them. Modes set here
-  // will be automatically managed by the SetActive infrastructure.
-  virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const {};
   
 private:
   

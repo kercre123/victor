@@ -117,6 +117,16 @@ void ConditionCompound::SetActiveInternal( BehaviorExternalInterface& bei, bool 
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ConditionCompound::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
+{
+  for( const auto& operand : _operands ) {
+    std::set<VisionModeRequest> operandModes;
+    operand->GetRequiredVisionModes( operandModes );
+    requests.insert( operandModes.begin(), operandModes.end() );
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 int ConditionCompound::CreateNode( std::unique_ptr<Node>& node, const Json::Value& config, const bool isRoot = false )
 {
   int childrenDepth = 0;

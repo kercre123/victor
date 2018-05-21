@@ -192,7 +192,7 @@ UserIntentPtr UserIntentComponent::GetUserIntentIfActive(UserIntentTag forIntent
   auto ret = IsUserIntentActive(forIntent) ? _activeIntent : nullptr;
   return ret;
 }
-
+  
 UserIntentPtr UserIntentComponent::GetActiveUserIntent() const
 {
   return _activeIntent;

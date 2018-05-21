@@ -33,6 +33,7 @@ public:
   virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual void SetActiveInternal(BehaviorExternalInterface& behaviorExternalInterface, bool setActive) override;
+  virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
   
   virtual DebugFactorsList GetDebugFactors() const override;
   

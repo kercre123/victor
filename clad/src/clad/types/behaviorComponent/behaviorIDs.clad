@@ -187,6 +187,7 @@ enum uint_8 BehaviorID {
   // victorBehaviorTree/highLevelDelegates/voiceCommands
   DoATrickVoiceCommand,
   FistBumpVoiceCommand,
+  GoToSleepVoiceCommand,
   KeepawayVoiceCommand,
 
   // victorBehaviorTree

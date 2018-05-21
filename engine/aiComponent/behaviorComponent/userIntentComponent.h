@@ -99,7 +99,7 @@ public:
   // Must be called when a user intent is no longer active (generally meaning that the behavior that was
   // handling the intent has stopped).
   void DeactivateUserIntent(UserIntentTag userIntent);
-
+  
   // Check if an intent tag is currently active
   bool IsUserIntentActive(UserIntentTag userIntent) const;
 
