@@ -1441,7 +1441,7 @@ namespace Cozmo {
     bool newSpriteSeqData =  false;
     bool needToRenderFaceIntoCompositeImage = false;
     if(spriteSeqHasData){
-      auto faceKeyFrame = spriteSeqTrack.GetCurrentKeyFrame();
+      auto& faceKeyFrame = spriteSeqTrack.GetCurrentKeyFrame();
       
       newSpriteSeqData = faceKeyFrame.NewImageContentAvailable(_relativeStreamTime_ms);
       needToRenderFaceIntoCompositeImage = faceKeyFrame.HasCompositeImage() && layeredKeyFrames.haveFaceKeyFrame;

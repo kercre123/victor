@@ -279,6 +279,8 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       _spriteSequenceName        = other._spriteSequenceName;
       _scanlineOpacity           = other._scanlineOpacity;
       _internalUpdateInterval_ms = other._internalUpdateInterval_ms;
+      _compositeImageUpdated     = other._compositeImageUpdated;
+      _compositeImageUpdateMap   = other._compositeImageUpdateMap;
       
       if(other._runtimeSpriteSequence != nullptr){
         _runtimeSpriteSequence.reset(new Vision::SpriteSequence(*other._runtimeSpriteSequence));
