@@ -6,7 +6,7 @@
   "socializeKnownFaceCooldown_s": 1800.0,
   "playWithCubeCooldown_s": 600.0,
   "playWithCubeOnChargerCooldown_s": 2400.0,
-  "maxFaceDistanceToSocialize_mm": 500.0,
+  "maxFaceDistanceToSocialize_mm": 1000.0,
 
   "initialState": "ObservingOnCharger",
 
