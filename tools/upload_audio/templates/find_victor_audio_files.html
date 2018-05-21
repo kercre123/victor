@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
+</head>
+<style>
+body {font-family: Arial, Helvetica, sans-serif;}
+* {box-sizing: border-box}
+
+/* Full-width input fields */
+input[type=text], input[type=password], input[type=file], input[type=date] {
+    width: 100%;
+    padding: 15px;
+    margin: 5px 0 22px 0;
+    display: inline-block;
+    border: none;
+    background: #f1f1f1;
+}
+input[type=date] {
+    width: 30%;
+}
+
+input[type=text]:focus, input[type=password]:focus, input[type=date]:focus, input[type=file]:focus {
+    background-color: #ddd;
+    outline: none;
+}
+
+hr {
+    border: 1px solid #f1f1f1;
+    margin-bottom: 25px;
+}
+
+/* Set a style for all buttons */
+button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    opacity: 0.9;
+}
+
+button:hover {
+    opacity:1;
+}
+
+/* Extra styles for the cancel button */
+.cancelbtn {
+    padding: 14px 20px;
+    background-color: #f44336;
+}
+
+/* Float cancel and signup buttons and add an equal width */
+.cancelbtn, .signupbtn {
+  float: left;
+  width: 50%;
+}
+
+/* Add padding to container elements */
+.container {
+    padding: 16px;
+}
+
+/* Clear floats */
+.clearfix::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+
+/* Change styles for cancel button and signup button on extra small screens */
+@media screen and (max-width: 300px) {
+    .cancelbtn, .signupbtn {
+       width: 100%;
+    }
+}
+
+</style>
+<body>
+
+<form id="target" action="" method="post" role="form" enctype="multipart/form-data" style="border:1px solid #ccc">
+  <div class="container">
+    <h1>Vector Audio Service</h1>
+    <p>Please fill the IP of Victor, so we can see its audio files.</p>
+    <hr>
+
+    <label><b>Victor's IP</b></label>
+    <input type="text" placeholder="Enter Victor's IP" name="ip" class="f">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+ 
+            {% for message in messages %}
+                <div class="alert alert-info">
+                    {{ message[1] }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="clearfix">
+      <button type="submit" class="btnUpload" value="Submit">Submit</button>
+      <button type="reset" class="btnCancel" value="Reset">Reset</button>
+    </div>
+  </div>
+</form>
+
+</body>
+</html>

@@ -4,6 +4,7 @@ from werkzeug import secure_filename
 import os, json, shutil
 from DropboxFileUploader import DropboxFileUploader
 from DynamoDB import DynamoDB
+from VictorHelper import VictorHelper
 import settings
 
 app = Flask(__name__)
@@ -45,9 +46,9 @@ def query():
         if not json_data:
             flash(ERROR_MESSAGE)
         else:
-            dynamoDB = DynamoDB(json_data)
-            dataList = dynamoDB.filterValues()
-            return render_template('data_table.html', list = dataList)
+            dynamo_db = DynamoDB(json_data)
+            data_list = dynamo_db.filterValues()
+            return render_template('data_table.html', list = data_list)
     return render_template('query.html')
 
 @app.route("/upload", methods=['GET', 'POST'])
@@ -72,8 +73,8 @@ def upload():
                 dropbox_path = "{}/".format(dropbox_path)
 
             path_db = "{}{}".format(dropbox_path, filename)
-            dropboxUploader = DropboxFileUploader(file_full, dropbox_path)
-            dropboxUploader.uploadFile()
+            dropbox_uploader = DropboxFileUploader(file_full, dropbox_path)
+            dropbox_uploader.uploadFile()
             
             ######################
 
@@ -85,8 +86,8 @@ def upload():
             json_data[column_date] = date
             json_data[column_gender] = gender
             
-            dynamoDB = DynamoDB(json_data)
-            dynamoDB.putItem()
+            dynamo_db = DynamoDB(json_data)
+            dynamo_db.putItem()
             # Delete temp file
             for the_file in os.listdir(DATADIR):
                 file_path = os.path.join(upload_folder, the_file)
@@ -99,6 +100,58 @@ def upload():
                     print(e)
             return render_template('success_message.html', message="File uploaded successfully")
     return render_template('upload.html')
- 
+
+###############################
+@app.route("/upload-from-victor", methods=['GET', 'POST'])
+def upload_from_victor():
+    ERROR_EMPTY_MESSAGE = 'You should fill Victor\'s IP field.'
+    ERROR_NOT_FOUND_MESSAGE = 'Cannot find any Victor that match the IP address. Please try again.'
+    if request.method == 'POST':
+        victor_ip = request.form['ip']
+
+        if victor_ip != "":
+            VictorHelper.pull_data_to_machine(victor_ip, )
+        else:
+            flash(ERROR_EMPTY_MESSAGE)
+
+        if file_obj:
+            filename = secure_filename(file_obj.filename)
+            file_full = os.path.join(DATADIR, filename)
+            file_obj.save(file_full)
+
+            if not dropbox_path.startswith("/"):
+                dropbox_path = "/{}".format(dropbox_path)
+            if not dropbox_path.endswith("/"):
+                dropbox_path = "{}/".format(dropbox_path)
+
+            path_db = "{}{}".format(dropbox_path, filename)
+            dropbox_uploader = DropboxFileUploader(file_full, dropbox_path)
+            dropbox_uploader.uploadFile()
+            
+            ######################
+
+            json_data = {}
+            json_data[column_name] = name_obj
+            json_data[column_age] = age
+            json_data[column_distance] = distance
+            json_data[column_dropbox_path] = "{}{}".format(dropbox_path, filename)
+            json_data[column_date] = date
+            json_data[column_gender] = gender
+
+            dynamo_db = DynamoDB(json_data)
+            dynamo_db.putItem()
+            # Delete temp file
+            for the_file in os.listdir(DATADIR):
+                file_path = os.path.join(upload_folder, the_file)
+                try:
+                    if os.path.isfile(file_path):
+                        os.unlink(file_path)
+                    elif os.path.isdir(file_path):
+                        shutil.rmtree(file_path)
+                except Exception as e:
+                    print(e)
+            return render_template('success_message.html', message="File uploaded successfully")
+    return render_template('find_victor_audio_files.html')
+################################################################
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8012)
