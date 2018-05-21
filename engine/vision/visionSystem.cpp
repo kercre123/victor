@@ -106,7 +106,7 @@ namespace {
   u8 kTooDarkValue   = 15;
   u8 kTooBrightValue = 230;
   f32 kLowPercentile = 0.10f;
-  f32 kMidPercentile = 0.50f;
+  f32 kTargetPercentile = 0.50f;
   f32 kHighPercentile = 0.90f;
   bool kMeterFromDetections = true;
 }
@@ -143,7 +143,7 @@ Result VisionSystem::Init(const Json::Value& config)
   std::string dataPath("");
   if(_context->GetDataPlatform() != nullptr) {
     dataPath = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
-                                                           Util::FileUtils::FullFilePath({"config", "engine", "vision"}));
+                                                            Util::FileUtils::FullFilePath({"config", "engine", "vision"}));
   } else {
     PRINT_NAMED_WARNING("VisionSystem.Init.NullDataPlatform",
                         "Initializing VisionSystem with no data platform.");
@@ -170,27 +170,27 @@ Result VisionSystem::Init(const Json::Value& config)
     GET_JSON_PARAMETER(imageQualityConfig, "TooDarkValue",        kTooDarkValue);
     GET_JSON_PARAMETER(imageQualityConfig, "MeterFromDetections", kMeterFromDetections);
     GET_JSON_PARAMETER(imageQualityConfig, "LowPercentile",       kLowPercentile);
-    GET_JSON_PARAMETER(imageQualityConfig, "MidPercentile",       kMidPercentile);
     GET_JSON_PARAMETER(imageQualityConfig, "HighPercentile",      kHighPercentile);
     
-    u8  targetMidValue=0;
+    u8  targetValue=0;
     f32 maxChangeFraction = -1.f;
     s32 subSample = 0;
     
-    GET_JSON_PARAMETER(imageQualityConfig, "MidValue",             targetMidValue);
-    GET_JSON_PARAMETER(imageQualityConfig, "MaxChangeFraction",    maxChangeFraction);
-    GET_JSON_PARAMETER(imageQualityConfig, "SubSample",            subSample);
+    GET_JSON_PARAMETER(imageQualityConfig, "TargetPercentile",    kTargetPercentile);
+    GET_JSON_PARAMETER(imageQualityConfig, "TargetValue",         targetValue);
+    GET_JSON_PARAMETER(imageQualityConfig, "MaxChangeFraction",   maxChangeFraction);
+    GET_JSON_PARAMETER(imageQualityConfig, "SubSample",           subSample);
     
-    const Result result = _imagingPipeline->SetExposureParameters(targetMidValue,
-                                                                  kMidPercentile,
+    const Result result = _imagingPipeline->SetExposureParameters(targetValue,
+                                                                  kTargetPercentile,
                                                                   maxChangeFraction,
                                                                   subSample);
     
     if(RESULT_OK == result)
     {
       PRINT_CH_INFO(kLogChannelName, "VisionSystem.Init.SetAutoExposureParams",
-                    "subSample:%d midVal:%d midPerc:%.3f changeFrac:%.3f",
-                    subSample, targetMidValue, kMidPercentile, maxChangeFraction);
+                    "subSample:%d tarVal:%d tarPerc:%.3f changeFrac:%.3f",
+                    subSample, targetValue, kTargetPercentile, maxChangeFraction);
     }
     else
     {
@@ -694,7 +694,7 @@ Result VisionSystem::CheckImageQuality(const Vision::Image& inputImage,
   if(DEBUG_IMAGE_HISTOGRAM)
   {
     const Vision::ImageBrightnessHistogram& hist = _imagingPipeline->GetHistogram();
-    std::vector<u8> values = hist.ComputePercentiles({kLowPercentile, kMidPercentile, kHighPercentile});
+    std::vector<u8> values = hist.ComputePercentiles({kLowPercentile, kTargetPercentile, kHighPercentile});
     auto valueIter = values.begin();
     
     Vision::ImageRGB histImg(hist.GetDisplayImage(128));

@@ -32,8 +32,8 @@ namespace Vision {
     
     ImagingPipeline();
     
-    Result SetExposureParameters(u8  targetMidValue,
-                                 f32 midPercentile,
+    Result SetExposureParameters(u8  targetValue,
+                                 f32 targetPercentile,
                                  f32 maxChangeFraction,
                                  s32 subSample);
     
@@ -57,8 +57,8 @@ namespace Vision {
     
   private:
     
-    u8        _targetMidValue           = 128;
-    f32       _midPercentile            = 0.5f;
+    u8        _targetValue              = 128;
+    f32       _targetPercentile         = 0.5f;
     f32       _maxChangeFraction        = 0.5f;
     s32       _subSample                = 1;
     

@@ -31,8 +31,8 @@ CONSOLE_VAR(bool,  kLinearizeForAutoExposure,     "Vision.PreProcessing", false)
 CONSOLE_VAR(bool,  kUseWhiteBalanceExposureCheck, "Vision.PreProcessing", true);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ImagingPipeline::SetExposureParameters(u8  targetMidValue,
-                                              f32 midPercentile,
+Result ImagingPipeline::SetExposureParameters(u8  targetValue,
+                                              f32 targetPercentile,
                                               f32 maxChangeFraction,
                                               s32 subSample)
 {
@@ -43,10 +43,10 @@ Result ImagingPipeline::SetExposureParameters(u8  targetMidValue,
     return RESULT_FAIL_INVALID_PARAMETER;
   }
   
-  if(FLT_LT(midPercentile, 0.f) || FLT_GT(midPercentile, 1.f))
+  if(FLT_LT(targetPercentile, 0.f) || FLT_GT(targetPercentile, 1.f))
   {
-    PRINT_NAMED_ERROR("ImagingPipeline.SetExposureParameters.BadMidPercentile",
-                      "%f not on interval [0,1]", midPercentile);
+    PRINT_NAMED_ERROR("ImagingPipeline.SetExposureParameters.BadTargetPercentile",
+                      "%f not on interval [0,1]", targetPercentile);
     return RESULT_FAIL_INVALID_PARAMETER;
   }
   
@@ -57,8 +57,8 @@ Result ImagingPipeline::SetExposureParameters(u8  targetMidValue,
     return RESULT_FAIL_INVALID_PARAMETER;
   }
 
-  _targetMidValue           = targetMidValue;
-  _midPercentile            = midPercentile;
+  _targetValue              = targetValue;
+  _targetPercentile         = targetPercentile;
   _maxChangeFraction        = maxChangeFraction;
   _subSample                = subSample;
   
@@ -207,16 +207,16 @@ Result ImagingPipeline::ComputeExposureAdjustment(const Vision::Image& image, co
     return RESULT_FAIL;
   }
   
-  const u8 currentMidValue = _hist.ComputePercentile(_midPercentile);
+  const u8 currentPercentileValue = _hist.ComputePercentile(_targetPercentile);
   
-  if(currentMidValue == 0)
+  if(currentPercentileValue == 0)
   {
     // Special case: avoid divide by zero and just increase by maximum amount possible
     adjustmentFraction = 1.f + _maxChangeFraction;
   }
   else
   {
-    adjustmentFraction = static_cast<f32>(_targetMidValue) / static_cast<f32>(currentMidValue);
+    adjustmentFraction = static_cast<f32>(_targetValue) / static_cast<f32>(currentPercentileValue);
     adjustmentFraction = CLIP(adjustmentFraction, 1.f - _maxChangeFraction, 1.f + _maxChangeFraction);
   }
   
@@ -278,16 +278,16 @@ Result ImagingPipeline::ComputeExposureAdjustment(const std::vector<Vision::Imag
     return RESULT_FAIL;
   }
   
-  const u8 currentMidValue = _hist.ComputePercentile(_midPercentile);
+  const u8 currentPercentileValue = _hist.ComputePercentile(_targetPercentile);
   
-  if(currentMidValue == 0)
+  if(currentPercentileValue == 0)
   {
     // Special case: avoid divide by zero and just increase by maximum amount possible
     adjustmentFraction = 1.f + _maxChangeFraction;
   }
   else
   {
-    adjustmentFraction = static_cast<f32>(_targetMidValue) / static_cast<f32>(currentMidValue);
+    adjustmentFraction = static_cast<f32>(_targetValue) / static_cast<f32>(currentPercentileValue);
     adjustmentFraction = CLIP(adjustmentFraction, 1.f - _maxChangeFraction, 1.f + _maxChangeFraction);
   }
   

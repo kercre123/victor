@@ -27,12 +27,10 @@
     // value to process every Nth frame
     "DetectingPets"          : [true, false],
     "DetectingOverheadEdges" : [false, true],
-    // CheckingQuality and CheckingAWB run every 16 frames but are interleaved so they don't
+    // CheckingQuality and CheckingAWB run every 8 frames but are interleaved so they don't
     // run at the same time and step on each other's toes
-    "CheckingQuality"        : [false, false, false, false, false, false, false, false,
-                                false, false, false, false, false, false, false, true],
-    "CheckingWhiteBalance"   : [false, false, false, false, false, false, false, true,
-                                false, false, false, false, false, false, false, false],
+    "CheckingQuality"        : [false, false, false, false, false, false, false, true],
+    "CheckingWhiteBalance"   : [false, false, false, true, false, false, false, false],
     "DetectingLaserPoints"   : 2,
     "ComputingStatistics"    : false,  // NOTE: enabled but not scheduled!
     "DetectingGeneralObjects": 1,
@@ -57,13 +55,13 @@
   {
     // Auto-exposure settings
     "InitialExposureTime_ms"    : 31,    // Sent each time we request camera calibration
-    "MidValue"                  : 115,   // [0,255] - Try to make midPercentile have this value
+    "TargetValue"               : 115,   // [0,255] - Try to make targetPercentile have this value
+    "TargetPercentile"          : 0.50,  // [0.0, 1.0]
     "TooDarkValue"              : 20,    // "Too Dark" if HighPercentile is below this
     "TooBrightValue"            : 230,   // "Too Bright" if LowPercentile is above this
     "LowPercentile"             : 0.10,  // [0.0, 1.0]  (Near 0.0)
-    "MidPercentile"             : 0.50,  // [0.0, 1.0]  (B/w low and high, higher to prefer under exposure)
     "HighPercentile"            : 0.90,  // [0.0, 1.0]  (Near 1.0)
-    "MaxChangeFraction"         : 0.80,  // [0.0, 1.0]  (Relative amount we can change current exposure/gain/wb each update)
+    "MaxChangeFraction"         : 1.0,   // [0.0, 1.0]  (Relative amount we can change current exposure/gain/wb each update)
     "SubSample"                 : 3,     // >= 1
     "MeterFromDetections"       : true,  // Base auto-exposure on detected markers, faces, etc, if any
 
