@@ -94,6 +94,8 @@ static const BackpackLights kLightsPostCap = {
 
 const char* const kSavePathKey = "save_path";
 const char* const kImageSaveQualityKey = "quality";
+const char* const kImageScaleKey = "image_scale";
+const char* const kImageResizeMethodKey = "resize_method";
 const char* const kUseCapacitiveTouchKey = "use_capacitive_touch";
 const char* const kClassNamesKey = "class_names";
 const char* const kSequenceSetupTimeKey = "sequence_setup_time";
@@ -103,6 +105,12 @@ const char* const kPostEventCaptureTimeKey = "post_event_capture_time";
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDevEventSequenceCapture::InstanceConfig::InstanceConfig()
+{
+  useCapTouch = false;
+  imageSaveSize = Vision::ImageCache::Size::Full;
+}
+
 BehaviorDevEventSequenceCapture::DynamicVariables::DynamicVariables()
 {
   seqState = SequenceState::Waiting;
@@ -119,6 +127,11 @@ BehaviorDevEventSequenceCapture::BehaviorDevEventSequenceCapture(const Json::Val
   _iConfig.imageSavePath = JsonTools::ParseString(config, kSavePathKey, "BehaviorDevEventSequenceCapture");
   _iConfig.imageSaveQuality = JsonTools::ParseInt8(config, kImageSaveQualityKey, "BehaviorDevEventSequenceCapture");
   _iConfig.useCapTouch = JsonTools::ParseBool(config, kUseCapacitiveTouchKey, "BehaviorDevEventSequenceCapture");
+
+  std::string scaleStr = JsonTools::ParseString(config, kImageScaleKey, "BehaviorDevEventSequenceCapture");
+  std::string methodStr = JsonTools::ParseString(config, kImageResizeMethodKey, "BehaviorDevEventSequenceCapture");
+  _iConfig.imageSaveSize = Vision::ImageCache::StringToSize(scaleStr, methodStr);
+
   _iConfig.sequenceSetupTime = JsonTools::ParseFloat(config, kSequenceSetupTimeKey, "BehaviorDevEventSequenceCapture");  
   _iConfig.preEventCaptureTime = JsonTools::ParseFloat(config, kPreEventCaptureTimeKey, "BehaviorDevEventSequenceCapture");
   _iConfig.postEventCaptureTime = JsonTools::ParseFloat(config, kPostEventCaptureTimeKey, "BehaviorDevEventSequenceCapture");  
@@ -156,6 +169,8 @@ void BehaviorDevEventSequenceCapture::GetBehaviorJsonKeys(std::set<const char*>&
   const char* list[] = {
     kSavePathKey,
     kImageSaveQualityKey,
+    kImageScaleKey,
+    kImageResizeMethodKey,
     kUseCapacitiveTouchKey,
     kClassNamesKey,
     kSequenceSetupTimeKey,
@@ -313,7 +328,8 @@ void BehaviorDevEventSequenceCapture::BehaviorUpdate()
         _dVars.seqEventTimeStamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
         visionComponent.SetSaveImageParameters(ImageSendMode::Stream,
                                                GetRelSequenceSavePath(),
-                                               _iConfig.imageSaveQuality);
+                                               _iConfig.imageSaveQuality,
+                                               _iConfig.imageSaveSize);
         GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Timer_Beep,
                                                  GO::Behavior);
         GetBEI().GetBodyLightComponent().SetBackpackLights( kLightsPreCap );
@@ -347,7 +363,8 @@ void BehaviorDevEventSequenceCapture::BehaviorUpdate()
         _dVars.seqEndTimeStamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
         visionComponent.SetSaveImageParameters(ImageSendMode::Off,
                                                GetRelSequenceSavePath(),
-                                               _iConfig.imageSaveQuality);
+                                               _iConfig.imageSaveQuality,
+                                               _iConfig.imageSaveSize);
         GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Timer_Beep,
                                                  GO::Behavior);
         GetBEI().GetBodyLightComponent().SetBackpackLights( kLightsWaiting );

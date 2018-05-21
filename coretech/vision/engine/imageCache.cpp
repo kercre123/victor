@@ -261,7 +261,7 @@ ImageCache::Size ImageCache::GetSize(s32 scale, Vision::ResizeMethod method)
             break;
             
           default:
-            DEV_ASSERT(false, "ImageCache.GetSize.UnsupportedScaleLinear");
+            PRINT_NAMED_ERROR("ImageCache.GetSize.UnsupportedScaleLinear", "");
             break;
         }
         break;
@@ -280,20 +280,68 @@ ImageCache::Size ImageCache::GetSize(s32 scale, Vision::ResizeMethod method)
             break;
             
           default:
-            DEV_ASSERT(false, "ImageCache.GetSize.UnsupportedScaleLinear");
+            PRINT_NAMED_ERROR("ImageCache.GetSize.UnsupportedScaleLinear", "");
             break;
         }
       }
 
       default:
-        DEV_ASSERT(false, "ImageCache.GetSize.UnsupportedMethod");
+        PRINT_NAMED_ERROR("ImageCache.GetSize.UnsupportedMethod", "");
         break;
     }
   }
-  
+
   return size;
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const char* const kScaleFullString = "full";
+const char* const kScaleHalfString = "half";
+const char* const kScaleQuarterString = "quarter";
+const char* const kMethodNearestString = "nearest";
+const char* const kMethodLinearString = "linear";
+const char* const kMethodAreaString = "average_area";
+ImageCache::Size ImageCache::StringToSize(const std::string& scaleStr, const std::string& methodStr)
+{
+  s32 scale = 0;
+  if(kScaleFullString == scaleStr)
+  {
+    scale = 1;
+  }
+  else if(kScaleHalfString == scaleStr)
+  {
+    scale = 2;
+  }
+  else if(kScaleQuarterString == scaleStr)
+  {
+    scale = 4;
+  }
+  else
+  {
+    PRINT_NAMED_ERROR("ImageCache.StringToSize.InvalidScale", "%s", scaleStr.c_str());
+  }
+
+  Vision::ResizeMethod method = Vision::ResizeMethod::Linear;
+  if(kMethodNearestString == methodStr)
+  {
+    method = Vision::ResizeMethod::NearestNeighbor;
+  }
+  else if(kMethodLinearString == methodStr)
+  {
+    method = Vision::ResizeMethod::Linear;
+  }
+  else if(kMethodAreaString == methodStr)
+  {
+    method = Vision::ResizeMethod::AverageArea;
+  }
+  else
+  {
+    PRINT_NAMED_ERROR("ImageCache.StringToSize.InvalidMethod", "%s", methodStr.c_str());
+  }
+
+  return ImageCache::GetSize(scale, method);
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<class ImageType>
 void ImageCache::ResetHelper(const ImageType& img)

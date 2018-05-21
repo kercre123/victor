@@ -423,11 +423,13 @@ Result VisionSystem::SetNextCameraWhiteBalance(f32 whiteBalanceGainR,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void VisionSystem::SetSaveParameters(const ImageSendMode saveMode, const std::string& path, const int8_t quality)
+void VisionSystem::SetSaveParameters(const ImageSendMode saveMode, const std::string& path, 
+                                     const int8_t quality, const Vision::ImageCache::Size& saveSize)
 {
   _imageSaveMode = saveMode;
   _imageSavePath = path;
   _imageSaveQuality = std::min(int8_t(100), quality);
+  _imageSaveSize = saveSize;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1697,7 +1699,9 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.Update.SavingImage", "Saving to %s",
                    fullFilename.c_str());
 
-    const Result saveResult = imageCache.GetRGB().Save(fullFilename, _imageSaveQuality);
+    // Resize into a new image to avoid affecting downstream updates
+    const Vision::ImageRGB& sizedImage = imageCache.GetRGB(_imageSaveSize);
+    const Result saveResult = sizedImage.Save(fullFilename, _imageSaveQuality);
 
     Result saveSensorResult = RESULT_OK;
     if((ImageSendMode::SingleShotWithSensorData == _imageSaveMode) || (ImageSendMode::Stream == _imageSaveMode)) {

@@ -13,6 +13,7 @@
 #ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_DevBehaviors_BehaviorDevEventSequenceCapture_H__
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_DevBehaviors_BehaviorDevEventSequenceCapture_H__
 
+#include "coretech/vision/engine/imageCache.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
@@ -48,11 +49,12 @@ protected:
 
 private:
   struct InstanceConfig {
-    InstanceConfig() = default;
+    InstanceConfig();
     std::string imageSavePath;
     int8_t      imageSaveQuality;
+    Vision::ImageCache::Size  imageSaveSize;
     bool        useCapTouch;
-    
+
     float       sequenceSetupTime;
     float       preEventCaptureTime;
     float       postEventCaptureTime;

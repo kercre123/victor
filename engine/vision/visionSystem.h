@@ -39,7 +39,7 @@
 
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/cameraCalibration.h"
-#include "coretech/vision/engine/image.h"
+#include "coretech/vision/engine/imageCache.h"
 #include "coretech/vision/engine/profiler.h"
 #include "coretech/vision/engine/trackedFace.h"
 #include "coretech/vision/engine/trackedPet.h"
@@ -214,9 +214,11 @@ namespace Cozmo {
     //  saveMode: SingleShot=save one image and wait for this call again
     //            Stream=save according to the mode schedule
     //            Off=no saving until this is called again with one of the above
+    //  subsample: Factor to reduce image size by (1 is no subsampling)
     //  path: Where to save images (relative to <Cache>/camera/images)
     //  quality: -1=PNG, 0-100=JPEG quality
-    void SetSaveParameters(const ImageSendMode saveMode, const std::string& path, const int8_t quality);
+    void SetSaveParameters(const ImageSendMode saveMode, const std::string& path, 
+                           const int8_t quality, const Vision::ImageCache::Size& saveSize);
 
     CameraParams GetCurrentCameraParams() const;
   
@@ -283,9 +285,11 @@ namespace Cozmo {
     
     s32 _frameNumber = 0;
 
-    ImageSendMode  _imageSaveMode = ImageSendMode::Off;
-    s8             _imageSaveQuality = -1;
-    std::string    _imageSavePath;
+    // Image saving and transmitting
+    ImageSendMode             _imageSaveMode = ImageSendMode::Off;
+    s8                        _imageSaveQuality = -1;
+    Vision::ImageCache::Size  _imageSaveSize = Vision::ImageCache::Size::Full;
+    std::string               _imageSavePath;
     
     // Snapshots of robot state
     bool _wasCalledOnce    = false;

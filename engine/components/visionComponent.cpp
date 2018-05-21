@@ -2705,7 +2705,8 @@ namespace Cozmo {
 
   void VisionComponent::SetSaveImageParameters(const ImageSendMode saveMode,
                                                const std::string& path,
-                                               const int8_t onRobotQuality)
+                                               const int8_t onRobotQuality,
+                                               const Vision::ImageCache::Size& saveSize)
   {
     if(nullptr != _visionSystem)
     {
@@ -2714,7 +2715,8 @@ namespace Cozmo {
       const std::string fullPath = Util::FileUtils::FullFilePath({cachePath, "images", path});
       _visionSystem->SetSaveParameters(saveMode,
                                        fullPath,
-                                       onRobotQuality);
+                                       onRobotQuality,
+                                       saveSize);
 
       if(saveMode != ImageSendMode::Off)
       {
