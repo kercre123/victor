@@ -171,6 +171,9 @@ enum uint_8 BehaviorID {
   PutDownDispatch_LookForFaceAndCube,
   ShortLookAroundForFaceAndCube,
 
+  // sdkBehaviors
+  SDKBehaviors,
+
   // victorBehaviorTree/highLevelDelegates/sleeping
   GoToSleep,
   Sleeping,

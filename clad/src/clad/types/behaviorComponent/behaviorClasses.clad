@@ -160,6 +160,9 @@ enum uint_8 BehaviorClass {
   // robotDrivenDialog
   PromptUserForVoiceCommand,
 
+  // sdkBehaviors
+  SDKInterface,
+
   // sleeping
   Sleeping,
 
