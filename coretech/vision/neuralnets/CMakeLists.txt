@@ -29,6 +29,9 @@ if (VICOS)
   
   set(PLATFORM_INCLUDES
     ${CORETECH_EXTERNAL_DIR}/build/opencv-3.4.0/vicos/include
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/proto
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/protobuf/armeabi-v7a/include
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/downloads/eigen
     ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/downloads/nsync/public
   )
 
@@ -62,6 +65,9 @@ elseif (MACOSX)
   
   set(PLATFORM_INCLUDES
     ${CORETECH_EXTERNAL_DIR}/build/opencv-3.4.0/mac
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/proto
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/protobuf/include
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/downloads/eigen
     ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/downloads/nsync/public
   )
 
@@ -96,10 +102,6 @@ target_include_directories(${TARGET_NAME}
   PRIVATE
   ${PLATFORM_INCLUDES}
   ${TENSORFLOW_PATH}
-  ${TENSORFLOW_PATH}/bazel-tensorflow/external/eigen_archive
-  ${TENSORFLOW_PATH}/bazel-genfiles
-  ${TENSORFLOW_PATH}/bazel-tensorflow/external/protobuf_archive/src
-  
   ${OPENCV_INCLUDE_PATHS}
 )
 
