@@ -426,3 +426,22 @@ symlink_target(
   TARGET webotsCtrlDevLog
   DST "${CONTROLLERS_DIR}/webotsCtrlDevLog/"
 )
+
+#
+# webotsCtrlNeuralNets
+#
+
+# NOTE: This controller is actually built by coretech/vision/neuralnets/CMakeLists.txt
+#       because it shares a main.cpp with the robot's vic-neuralnets process. Since it
+#       it is not a target defined in this directory, we'll manually symlink it. This 
+#       does mean we don't get a firewall certificate for this process, but since it 
+#       doesn't open any ports, that should be ok. This also assumes the neuralnets 
+#       build ran first, however.
+
+add_custom_target(symLinkWebotsCtrlNeuralNets ALL
+    COMMENT "Symlinking webotsCtrlNeuralNets"  
+    WORKING_DIRECTORY ${CONTROLLERS_DIR}
+    COMMAND mkdir -p webotsCtrlNeuralNets
+    COMMAND ln -s -f ${CMAKE_BINARY_DIR}/bin/webotsCtrlNeuralNets webotsCtrlNeuralNets/webotsCtrlNeuralNets
+    COMMAND ln -s -F ${BUILT_RESOURCES_DIR} webotsCtrlNeuralNets/resources
+)

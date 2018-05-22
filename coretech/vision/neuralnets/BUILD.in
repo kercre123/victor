@@ -1,0 +1,30 @@
+cxx_project(
+    name = 'vic-neuralnets',
+    srcs = [
+      "vicNeuralNetsMain.cpp",
+      "objectDetector_tensorflow.cpp"
+    ],
+    platform_srcs = [
+    ],
+    headers = [
+      "objectDetector_tensorflow.h"
+    ],
+    platform_headers = [
+    ]
+)
+
+# Duplicate source list with target name for building webots controller on Mac
+cxx_project(
+    name = 'webotsCtrlNeuralNets',
+    srcs = [
+      "vicNeuralNetsMain.cpp",
+      "objectDetector_tensorflow.cpp"
+    ],
+    platform_srcs = [
+    ],
+    headers = [
+      "objectDetector_tensorflow.h"
+    ],
+    platform_headers = [
+    ]
+)

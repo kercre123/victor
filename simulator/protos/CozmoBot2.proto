@@ -49,6 +49,9 @@ PROTO CozmoBot2 [
   # Rates at which battery voltage changes while on/off the charger
   field SFFloat batteryChargeRate_voltsPerMin     0.09
   field SFFloat batteryDischargeRate_voltsPerMin -0.02
+
+  # Simulate slower processing of the neural nets process
+  field SFInt32 neuralNetPollingPeriod_ms 250
 ]
 {
 
@@ -278,6 +281,11 @@ Supervisor {
                   robotID IS robotID
                   filterLogs IS filterLogs
                   colorizeStderrOutput IS colorizeStderrOutput
+                }
+
+                # NeuralNet process:
+                NeuralNetProcessor {
+                  pollingPeriod_ms IS neuralNetPollingPeriod_ms
                 }
 
                 # This IMU is positioned in the same place as the one in CozmoEngine2.proto

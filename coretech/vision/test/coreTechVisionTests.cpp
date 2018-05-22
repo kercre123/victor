@@ -679,6 +679,7 @@ GTEST_TEST(ObjectDetector, DetectionAndClassification)
   Vision::ObjectDetector detector;
   
   const std::string modelPath = std::string(getenv("TEST_DATA_PATH")) + "/resources/test/dnn_models";
+  const std::string cachePath = std::string(getenv("TEST_DATA_PATH")) + "/resources/test/dnn_models/cache";
   const std::string testImagePath = std::string(getenv("TEST_DATA_PATH")) + "/resources/test/images";
   
   // For now, to get this test to run, you need to have "dnn_models" symlinked to "~/DropBox/VictorDeepLearningModels"
@@ -752,7 +753,7 @@ GTEST_TEST(ObjectDetector, DetectionAndClassification)
   // Image classification test: verify expected name is returned for each image
   {
     testImageFile = Util::FileUtils::FullFilePath({testImagePath, "grace_hopper.jpg"});
-    result = detector.Init(modelPath, config);
+    result = detector.Init(modelPath, cachePath, config);
     ASSERT_EQ(RESULT_OK, result);
     
     result = testImg.Load(testImageFile);
@@ -834,7 +835,7 @@ GTEST_TEST(ObjectDetector, DetectionAndClassification)
     
     for(auto const& config : configs)
     {
-      result = detector.Init(modelPath, config);
+      result = detector.Init(modelPath, cachePath, config);
       ASSERT_EQ(RESULT_OK, result);
       
       for(auto const& filename : {"cat.jpg", "linus.jpg"})

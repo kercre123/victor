@@ -280,7 +280,7 @@ ImageCache::Size ImageCache::GetSize(s32 scale, Vision::ResizeMethod method)
             break;
             
           default:
-            PRINT_NAMED_ERROR("ImageCache.GetSize.UnsupportedScaleLinear", "");
+            PRINT_NAMED_ERROR("ImageCache.GetSize.UnsupportedScaleAverage", "");
             break;
         }
       }

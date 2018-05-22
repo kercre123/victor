@@ -141,9 +141,11 @@ Result VisionSystem::Init(const Json::Value& config)
   _isReadingToolCode = false;
   
   std::string dataPath("");
+  std::string cachePath("");
   if(_context->GetDataPlatform() != nullptr) {
     dataPath = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
-                                                            Util::FileUtils::FullFilePath({"config", "engine", "vision"}));
+                                                           Util::FileUtils::FullFilePath({"config", "engine", "vision"}));
+    cachePath = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "vision");
   } else {
     PRINT_NAMED_WARNING("VisionSystem.Init.NullDataPlatform",
                         "Initializing VisionSystem with no data platform.");
@@ -153,6 +155,7 @@ Result VisionSystem::Init(const Json::Value& config)
     PRINT_NAMED_ERROR("VisionSystem.Init.MissingImageQualityConfigField", "");
     return RESULT_FAIL;
   }
+    
   
   // Helper macro to try to get the specified field and store it in the given variable
   // and return RESULT_FAIL if that doesn't work
@@ -236,26 +239,32 @@ Result VisionSystem::Init(const Json::Value& config)
     return petTrackerInitResult;
   }
   
+  if(!config.isMember("ObjectDetector"))
   {
-    if(!config.isMember("ObjectDetector"))
-    {
-      PRINT_NAMED_ERROR("VisionSystem.Init.MissingObjectDetectorConfigField", "");
-      return RESULT_FAIL;
-    }
-    
-    
-    const std::string modelPath = Util::FileUtils::FullFilePath({dataPath, "dnn_models"});
-    if(Util::FileUtils::DirectoryExists(modelPath)) // TODO: Remove once DNN models are checked in somewhere (VIC-1071)
-    {
-      const Json::Value& objDetectorConfig = config["ObjectDetector"];
-      Result objDetectorResult = _generalObjectDetector->Init(modelPath, objDetectorConfig);
-      if(RESULT_OK != objDetectorResult)
-      {
-        PRINT_NAMED_ERROR("VisionSystem.Init.ObjectDetectorInitFailed", "");
-      }
-    }
+    PRINT_NAMED_ERROR("VisionSystem.Init.MissingObjectDetectorConfigField", "");
+    return RESULT_FAIL;
   }
   
+  const std::string modelPath = Util::FileUtils::FullFilePath({dataPath, "dnn_models"});
+  if(Util::FileUtils::DirectoryExists(modelPath)) // TODO: Remove once DNN models are checked in somewhere (VIC-1071)
+  {
+    const Json::Value& objDetectorConfig = config["ObjectDetector"];
+    
+#   ifdef VICOS
+    // Use faster tmpfs partition for the cache, to make I/O less of a bottleneck
+    const std::string dnnCachePath = "/tmp/vision/object_detector";
+#   else
+    const std::string dnnCachePath = Util::FileUtils::FullFilePath({cachePath, "object_detector"});
+#   endif
+    Result objDetectorResult = _generalObjectDetector->Init(modelPath,
+                                                            dnnCachePath,
+                                                            objDetectorConfig);
+    if(RESULT_OK != objDetectorResult)
+    {
+      PRINT_NAMED_ERROR("VisionSystem.Init.ObjectDetectorInitFailed", "");
+    }
+  }
+   
   // Default processing modes should are set in vision_config.json
   if(!config.isMember("InitialVisionModes"))
   {
