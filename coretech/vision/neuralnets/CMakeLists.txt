@@ -29,6 +29,7 @@ if (VICOS)
   
   set(PLATFORM_INCLUDES
     ${CORETECH_EXTERNAL_DIR}/build/opencv-3.4.0/vicos/include
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/downloads/nsync/public
   )
 
   set(PLATFORM_LIBS
@@ -36,7 +37,7 @@ if (VICOS)
     ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/lib/libtensorflow-core.a
     -Wl,--no-whole-archive
     ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/protobuf/armeabi-v7a/lib/libprotobuf.a 
-    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/downloads/nsync/builds/default.vicos.c++11/libnsync.a
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/downloads/nsync/builds/default.vicos.c++11/libnsync.a
     c++   # NOTE: VicOS uses libc++, so TensorFlow must be built to match
     dl
     log
@@ -61,13 +62,14 @@ elseif (MACOSX)
   
   set(PLATFORM_INCLUDES
     ${CORETECH_EXTERNAL_DIR}/build/opencv-3.4.0/mac
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/downloads/nsync/public
   )
 
   set(PLATFORM_LIBS
     -Wl,-force_load
     ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/lib/libtensorflow-core.a
     ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/protobuf/lib/libprotobuf.a
-    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/downloads/nsync/builds/default.macos.c++11/libnsync.a
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/downloads/nsync/builds/default.macos.c++11/libnsync.a
     ${WEBOTS_LIBS}
     stdc++
     m
@@ -97,7 +99,7 @@ target_include_directories(${TARGET_NAME}
   ${TENSORFLOW_PATH}/bazel-tensorflow/external/eigen_archive
   ${TENSORFLOW_PATH}/bazel-genfiles
   ${TENSORFLOW_PATH}/bazel-tensorflow/external/protobuf_archive/src
-  ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/downloads/nsync/public
+  
   ${OPENCV_INCLUDE_PATHS}
 )
 
