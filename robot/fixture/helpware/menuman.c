@@ -85,13 +85,15 @@ void menu_advance()
   }
 }
 
+#define MIN_SELECT_HIGHLIGHT_CYCLES 10
+
 void menu_select()
 {
   if (!gMenu.is_busy) {
     gMenu.changed = 1;
     if (gMenu.current->item[gMenu.index].handler)
     {
-      gMenu.selection_count = 10;
+      gMenu.selection_count = MIN_SELECT_HIGHLIGHT_CYCLES;
       gMenu.current->item[gMenu.index].handler(gMenu.current->item[gMenu.index].param);
      }
     if (gMenu.current->item[gMenu.index].submenu)
@@ -100,6 +102,20 @@ void menu_select()
       gMenu.index = 0;
     }
   }
+}
+
+bool menu_jump(int opt) { //returns true if item selected
+  if (!gMenu.is_busy) {
+    if (opt >= 0 && opt < gMenu.current->nItems) {
+      printf("doing menu option %d\n",opt);
+      bool isAction = (gMenu.current->item[opt].handler != NULL);
+      gMenu.selection_count = 0;
+      gMenu.index = opt;
+      menu_select();
+      return isAction;
+    }
+  }
+  return false;
 }
 
 
@@ -212,7 +228,7 @@ void command_motors(struct HeadToBody* data)
     int i;
     int16_t power = (gMotorTestCycles%2) ? MOTOR_TEST_POWER : -MOTOR_TEST_POWER;
     for (i=0;i<MOTOR_COUNT;i++) {
-      data->motorPower[i] = power;
+      data->motorPower[i] = power * (1 -2*(i%2));
     }
     if (drop_count)
     {
@@ -354,22 +370,26 @@ void handle_SystemCall(void* param) {
 
 void handle_LifeTestBattery(void* param)
 {
+  printf("Battery Cycle Selected\n");
   gLifeTesting.battery = true;
   gLifeTesting.do_discharge = true;
 }
 
 void handle_LifeTestCpu(void* param)
 {
+  printf("CPU/Flash Test Selected\n");
   gLifeTesting.burn_proc.proc_fd = pidopen("./burn.sh", "", &gLifeTesting.burn_proc.wait_pid);
   gLifeTesting.cpu = true;
 }
 
 void handle_LifeTestMotors(void* param)
 {
+  printf("Motor Life Test Selected\n");
   gLifeTesting.motors = true;
 }
 void handle_LifeTestScreen(void* param)
 {
+  printf("Screen Test Selected\n");
   gLifeTesting.screen = true;
 }
 
@@ -431,7 +451,7 @@ MENU_CREATE(TXB);
 
 MENU_ITEMS(LifeTest)= {
   MENU_BACK(Main),
-  MENU_ACTION("Burn Battery", LifeTestBattery),
+  MENU_ACTION("Cycle Battery", LifeTestBattery),
   MENU_ACTION("CPU / Flash ", LifeTestCpu),
   MENU_ACTION("Run Motors", LifeTestMotors),
   MENU_ACTION("Cycle Screens", LifeTestScreen),
@@ -533,6 +553,7 @@ void process_menu_controls(struct BodyToHead* bodyData)
       }
       else {
         gLifeTesting.motors=0;
+        gLifeTesting.screen=0;
       }
     }
   }
@@ -559,7 +580,7 @@ int main(int argc, const char* argv[])
   signal(SIGKILL, safe_quit);
 
   lcd_init();
-  lcd_set_brightness(10);
+  lcd_set_brightness(5);
   display_init();
 
   menus_init();
@@ -575,6 +596,18 @@ int main(int argc, const char* argv[])
   usleep(5000);
   hal_send_frame(PAYLOAD_DATA_FRAME, &gHeadData, sizeof(gHeadData));
 
+
+  while (--argc>0) {
+    ++argv;
+    char *endptr;
+    long option = strtol(*argv, &endptr, 10);
+    if (endptr != *argv && *endptr == '\0') {
+      if (menu_jump(option -1 )) { //1st item is 0th entry
+        break;
+      }
+      draw_menus();
+    }
+  }
 
 
   while (!shouldexit)
@@ -598,6 +631,10 @@ int main(int argc, const char* argv[])
          manage_life_tests();
          populate_outgoing_frame();
          hal_send_frame(PAYLOAD_DATA_FRAME, &gHeadData, sizeof(gHeadData));
+      }
+      else if (hdr->payload_type == PAYLOAD_BOOT_FRAME) {
+        mm_debug("got unexpected header %x\n", hdr->payload_type);
+        hal_send_frame(PAYLOAD_MODE_CHANGE, NULL, 0);
       }
       else {
         mm_debug("got unexpected header %x\n", hdr->payload_type);
