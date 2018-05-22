@@ -332,7 +332,7 @@
     "AnimName": "ag_fistbump_fail"
   },
   {
-    "CladEvent": "ANTICIPATED_FlipDownFromBack",
+    "CladEvent": "FlipDownFromBack",
     "AnimName": "ag_reacttocliff_turtleroll_01"
   },
   {
@@ -816,15 +816,15 @@
     "AnimName": "ag_reacttonewblockonground"
   },
   {
-    "CladEvent": "ANTICIPATED_ReactToOnLeftSide",
+    "CladEvent": "ReactToOnLeftSide",
     "AnimName": "ag_reacttocliff_stuckleftside_01"
   },
   {
-    "CladEvent": "ANTICIPATED_ReactToOnRightSide",
+    "CladEvent": "ReactToOnRightSide",
     "AnimName": "ag_reacttocliff_stuckrightside_01"
   },
   {
-    "CladEvent": "ANTICIPATED_ReactToPerchedOnBlock",
+    "CladEvent": "ReactToPerchedOnBlock",
     "AnimName": "ag_reacttoblock_stuckonblock"
   },
   {
@@ -844,7 +844,7 @@
     "AnimName": "ag_reacttocliff_huh_01"
   },
   {
-    "CladEvent": "ANTICIPATED_ReactToUnexpectedMovement",
+    "CladEvent": "ReactToUnexpectedMovement",
     "AnimName": "ag_reacttostop"
   },
   {
@@ -864,11 +864,11 @@
     "AnimName": "ag_putdownblock"
   },
   {
-    "CladEvent": "ANTICIPATED_RollBlockRealign",
+    "CladEvent": "RollBlockRealign",
     "AnimName": "ag_rollcube_realign"
   },
   {
-    "CladEvent": "ANTICIPATED_RollBlockRetry",
+    "CladEvent": "RollBlockRetry",
     "AnimName": "ag_rollcube_retry"
   },
   {
@@ -1052,7 +1052,7 @@
     "AnimName": "ag_vc_reaction_yesfaceheardyou"	
   },
   {
-    "CladEvent": "ANTICIPATED_WaitOnSideLoop",
+    "CladEvent": "WaitOnSideLoop",
     "AnimName": "ag_reacttocliff_wait"
   },
   {
