@@ -72,12 +72,7 @@ public:
   // Tells this action to keep running until another action (being run separately) stops. As soon as this
   // other action completes, this action will complete as well
   void StopTrackingWhenOtherActionCompleted( u32 otherActionTag );
-  
-  // Set min/max body pan and head tilt speeds directly
-  // NOTE: motion profile doesn't effect these speeds!  
-  void SetTiltSpeeds(f32 minSpeed_radPerSec, f32 maxSpeed_radPerSec);
-  void SetPanSpeeds(f32 minSpeed_radPerSec,  f32 maxSpeed_radPerSec);
-  
+    
   // Instead of setting pan _speed_, set the desired duration of the pan to turn towards
   // the target and compute the speed internally. So small turns will move more slowly and
   // large turns will be quicker. If this duration is set (non-zero), it will take precedence
@@ -188,7 +183,7 @@ private:
   Radians  _minTiltAngleForSound = DEG_TO_RAD(10);
   
   f32      _tiltDuration_sec = 0.15f;
-  f32      _panDuration_sec  = 0.4f;
+  f32      _panDuration_sec  = 0.2f;
   f32      _timeToReachTarget_sec  = 0.5f;
   
   u32      _soundAnimTag = (u32)ActionConstants::INVALID_TAG;

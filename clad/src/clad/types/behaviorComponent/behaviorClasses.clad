@@ -173,6 +173,7 @@ enum uint_8 BehaviorClass {
   ReactToTouchPetting,
   ReactToUnclaimedIntent,
   TrackCube,
+  TrackFace,
 
   // weather
   CoordinateWeather,

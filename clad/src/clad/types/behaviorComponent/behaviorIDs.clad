@@ -183,6 +183,8 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree/highLevelDelegates
   TrackCube,
+  TrackCubeTest,
+  TrackFaceTest,
 
   // victorBehaviorTree/highLevelDelegates/voiceCommands
   DoATrickVoiceCommand,
