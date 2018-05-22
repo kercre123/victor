@@ -32,6 +32,7 @@ vlog "Check homebrew dependencies"
     -d python2 \
     ninja \
     python3 \
+    git-lfs \
     libsndfile \
     node \
     protobuf
