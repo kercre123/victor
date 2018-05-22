@@ -82,7 +82,7 @@ target_include_directories(victor_anim
   ${PLATFORM_INCLUDES}
 )
 
-# victor_animator binary only builds on vicos now
+# victor_anim binary only builds on vicos now
 # mac implementation uses (webotsCtrlAnim)
 if (VICOS)
 
@@ -93,7 +93,6 @@ if (VICOS)
     victor_anim
     victorCrashReports
     cti_common_robot
-    util
     jsoncpp
     ${PLATFORM_LIBS}
   )
