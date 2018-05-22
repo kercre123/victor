@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# platform/config/bin/vic-crashuploader.sh
+# platform/config/bin/vic-crashuploader
 #
 # Victor crash file uploader
 #
@@ -24,13 +24,16 @@ while :
 do
     cd $VIC_CRASH_FOLDER > /dev/null
 
+    # Go through all the crash files we haven't uploaded
     for i in ./*.dmp
     do
-        # Ignore file if file size is zero, or file being held by any process
-        # (These are the empty crash dump files that exist while victor is running)
-        if [[ -s ${i} ]]; then
-            PROCESSES_HOLDING=$(fuser ${i})
-            if [[ -z $PROCESSES_HOLDING ]]; then
+        # Ignore file if it is being held by any process; it's either one
+        # of the empty crash dump files that exist while victor is running,
+        # or is in the process of being written
+        PROCESSES_HOLDING=$(fuser ${i})
+        if [[ -z $PROCESSES_HOLDING ]]; then
+            if [[ -s ${i} ]]; then
+                # If file size is greater than zero, attempt to upload it
                 echo "Uploading crash dump file ${i}"
                 # todo:  Remove -k after we get this to route through anki.com instead of directly to the crash reporting service
                 if curl -k --data-binary @$i ${VIC_CRASH_UPLOAD_URL} ; then
@@ -41,6 +44,10 @@ do
                 else
                     echo "Failed to upload "$i
                 fi
+            else
+                # If file size is zero, at this point it has been abandoned
+                echo "Deleting abandoned crash dump file ${i}"
+                rm -f ${i}
             fi
         fi
     done
