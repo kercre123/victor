@@ -339,6 +339,7 @@ void Analog::tick(void) {
 
     if (enable_watchdog) {
       ADC1->ISR = ADC_ISR_AWD;
+      NVIC_ClearPendingIRQ(ADC1_IRQn);
       NVIC_EnableIRQ(ADC1_IRQn);
     }
   } else {
@@ -411,7 +412,8 @@ extern "C" void ADC1_IRQHandler(void) {
   POWER_EN::mode(MODE_INPUT);
   //nCHG_PWR::set();
 
+  vext_debounce = MAX_CHARGE_TIME - 20; // Do not reengage for 0.1s
+
   ADC1->ISR = ADC_ISR_AWD;
   NVIC_DisableIRQ(ADC1_IRQn);
-\
 }
