@@ -54,6 +54,9 @@ type_translations = {
     'float_64': 'float64'
 }
 
+input_file = None
+defaults_warned = False
+
 def get_visitor_output(visitorType, node):
     _py3 = sys.version_info[0] >= 3
     output = io.StringIO() if _py3 else io.BytesIO()
@@ -64,10 +67,17 @@ class GlobalEmitter(ast.NodeVisitor):
 
     def __init__(self, output):
         self.output = output
+        self.imported = set()
 
     def visit_IncludeDecl(self, node, *args, **kwargs):
         # only need to import if it's not part of the same package
         #self.output.write('import "{0}"\n'.format(node.name))
+        direct = os.path.split(node.name)[0]
+        import_stmt = 'import . "{0}"\n'.format(direct)
+        inp_f = "clad" + os.path.split(input_file)[0].split('clad', 1)[-1]
+        if import_stmt not in self.imported and direct != inp_f:
+            self.output.write(import_stmt)
+            self.imported.add(import_stmt)
         pass
 
     def visit_EnumDecl(self, node, *args, **kwargs):
@@ -146,8 +156,12 @@ class StructEmitter(ast.NodeVisitor):
             visitor = MemberVisitor(output=self.output)
             for member in node.members():
                 if member.init:
-                    emitterutil.exit_at_coord(member.coord,
-                        'Error: The Go emitter does not support default values for members')
+                    # TODO: handle defaults gracefully
+                    global defaults_warned
+                    if not defaults_warned:
+                        defaults_warned = True
+                        print("Warning: The Go emitter does not support default values for members. They have been ignored.")
+                    pass
                 self.output.write('\t')
                 visitor.visit(member.type, member_name=goify(member.name))
                 self.output.write('\n')
@@ -674,5 +688,6 @@ if __name__ == '__main__':
     option_parser.add_argument('--package', default=None,
         help='The name of the package to be generated from this file')
     options = option_parser.parse_args()
+    input_file = options.input_file
 
     emitterutil.go_main(GlobalEmitter, options, scanner=OptionDetector)

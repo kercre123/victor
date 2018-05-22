@@ -5,7 +5,8 @@ include(anki_build_cxx)
 include(anki_build_go)
 include(anki_build_util)
 
-set(__extra_go_deps "${CLAD_GO_GEN_SRCS}")
+set(GATEWAY_GRPC_OUTPUT "${CMAKE_SOURCE_DIR}/generated/go/src/proto/external_interface/external_interface.pb.go" "${CMAKE_SOURCE_DIR}/generated/go/src/proto/external_interface/external_interface.pb.gw.go")
+set(__extra_go_deps "${CLAD_GO_GEN_SRCS}" "${GATEWAY_GRPC_OUTPUT}")
 
 if (NOT EXISTS "${ANKI_EXTERNAL_DIR}/chipper_key")
   message(WARNING "Need chipper_key file to be able to connect to cloud services!")
@@ -125,3 +126,37 @@ endif()
 _build_cloud_executable(opusenc)
 _add_chipper_flags(opusenc)
 anki_disable_default_build(opusenc)
+
+#
+# vic-gateway
+#
+# SDK translation service that interfaces between the engine and the external world.
+#
+set(GOPATH_GATEWAY "${CMAKE_CURRENT_SOURCE_DIR}/go")
+set(GATEWAY_PROTOC_GENERATORS "${GOPATH_GATEWAY}/bin/protoc-gen-go" "${GOPATH_GATEWAY}/bin/protoc-gen-grpc-gateway")
+add_custom_command(
+  OUTPUT ${GATEWAY_PROTOC_GENERATORS}
+  COMMAND ${CMAKE_COMMAND} -E env "GOPATH=${GOPATH_GATEWAY}" 
+    ${GOROOT}/bin/go install github.com/golang/protobuf/protoc-gen-go github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
+  WORKING_DIRECTORY "${GOPATH_GATEWAY}"
+)
+
+set(GATEWAY_PROTO_FILES "${CMAKE_CURRENT_SOURCE_DIR}/gateway/external_interface.proto")
+add_custom_command(
+  OUTPUT ${GATEWAY_GRPC_OUTPUT}
+  COMMAND ${CMAKE_COMMAND} -E env "PATH=${GOPATH_GATEWAY}/bin:$ENV{PATH}"
+    protoc "-I/usr/local/include" "-I${CMAKE_CURRENT_SOURCE_DIR}/gateway"
+    "-I${GOPATH_GATEWAY}/src"
+    "-I${GOPATH_GATEWAY}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis"
+    "--go_out=plugins=grpc:${CMAKE_SOURCE_DIR}/generated/go/src/proto/external_interface"
+    "${GATEWAY_PROTO_FILES}"
+  COMMAND ${CMAKE_COMMAND} -E env "PATH=${GOPATH_GATEWAY}/bin:$ENV{PATH}"
+    protoc -I/usr/local/include -I"${CMAKE_CURRENT_SOURCE_DIR}/gateway"
+    -I"${GOPATH_GATEWAY}/src"
+    -I"${GOPATH_GATEWAY}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis"
+    "--grpc-gateway_out=logtostderr=true:${CMAKE_SOURCE_DIR}/generated/go/src/proto/external_interface"
+    "${GATEWAY_PROTO_FILES}"
+  DEPENDS "${GATEWAY_PROTO_FILES}" "${GATEWAY_PROTOC_GENERATORS}"
+)
+_build_cloud_executable(vic-gateway)
+_add_chipper_flags(vic-gateway)

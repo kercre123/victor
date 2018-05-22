@@ -1,0 +1,33 @@
+namespace Anki {
+namespace Victor {
+namespace Gateway {
+
+message UiDeviceConnectionWrongVersion {
+  string placeHolder,
+}
+
+message DriveWheels {
+  float_32 lwheel_speed_mmps,
+  float_32 rwheel_speed_mmps,
+  float_32 lwheel_accel_mmps2 = 0.0,
+  float_32 rwheel_accel_mmps2 = 0.0,
+}
+
+message PlayAnimation {
+  uint_32 numLoops,
+  string  animationName,
+  bool    ignoreBodyTrack = 0,
+  bool    ignoreHeadTrack = 0,
+  bool    ignoreLiftTrack = 0,
+}
+
+// Note: these values and messages must match the values that get added to MessageGameToEngine
+union MessageExternalToRobot {
+  UiDeviceConnectionWrongVersion UiDeviceConnectionWrongVersion = 0x00, // DO NOT CHANGE THIS VALUE
+  DriveWheels                    DriveWheels                    = 0x01,
+  PlayAnimation                  PlayAnimation                  = 0x02,
+}
+
+} // Gateway
+} // Victor
+} // Anki

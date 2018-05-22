@@ -2,6 +2,7 @@ package ipc
 
 import (
 	"net"
+	"path"
 	"syscall"
 )
 
@@ -38,4 +39,24 @@ func NewUnixgramServer(path string) (Server, error) {
 	}
 
 	return newDatagramServer(conn)
+}
+
+func NewEngineUnixgramClient(socket_dir string, client string, server string) (Conn, error) {
+	serverpath := path.Join(socket_dir, server)
+	servaddr, err := net.ResolveUnixAddr("unixgram", serverpath)
+	if err != nil {
+		return nil, err
+	}
+	clientpath := path.Join(socket_dir, client)
+	syscall.Unlink(clientpath)
+	cliaddr, err := net.ResolveUnixAddr("unixgram", clientpath)
+	if err != nil {
+		return nil, err
+	}
+	conn, err := net.DialUnix("unixgram", cliaddr, servaddr)
+	if err != nil {
+		return nil, err
+	}
+
+	return newDatagramClient(conn)
 }

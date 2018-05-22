@@ -1150,7 +1150,9 @@ message RequestRobotSettings {
 // handshake between and App and SDK version combination
 autounion MessageGameToEngine
 {
-  UiDeviceConnectionWrongVersion          UiDeviceConnectionWrongVersion          = 0x00, // DO NOT CHANGE THIS VALUE
+  UiDeviceConnectionWrongVersion UiDeviceConnectionWrongVersion = 0x00, // DO NOT CHANGE THIS VALUE
+  DriveWheels DriveWheels = 0x01,
+  PlayAnimation PlayAnimation = 0x02,
 }
 
 
