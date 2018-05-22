@@ -86,14 +86,12 @@ namespace {
   constexpr int32_t kTriggerDataListLen = (int32_t) sizeof(kTriggerDataList) / sizeof(kTriggerDataList[0]);
   Anki::AudioUtil::SpeechRecognizer::IndexType _currentTriggerSearchIndex = 0;
 
-  // For testing VIC-2451, we have this namespace cached value and console var kMicData_UseFallbackBeam that allows
-  // for turning beamforming off and back on
-  bool _usingFallbackBeam = false;
-
 # define CONSOLE_GROUP "MicData"
   CONSOLE_VAR_RANGED(s32, kMicData_NextTriggerIndex, CONSOLE_GROUP, 0, 0, kTriggerDataListLen-1);
   CONSOLE_VAR(bool, kMicData_SaveRawFullIntent, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_UseFallbackBeam, CONSOLE_GROUP, false);
+  CONSOLE_VAR(bool, kMicData_ForceDisableMicDataProc, CONSOLE_GROUP, false);
+  CONSOLE_VAR(bool, kMicData_ForceEnableMicDataProc, CONSOLE_GROUP, false);
 # undef CONSOLE_GROUP
 
 }
@@ -367,23 +365,24 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   // Note that currently we are only monitoring the moving flag. We _could_ also discard mic data when the robot
   // is picked up, but that is being evaluated with design before implementation, see VIC-1219
   const bool robotIsMoving = static_cast<bool>(robotStatus & (uint16_t)RobotStatusFlag::IS_MOVING);
+  const bool robotStartedMoving = robotIsMoving && !_robotWasMoving;
   const bool robotStoppedMoving = !robotIsMoving && _robotWasMoving;
   _robotWasMoving = robotIsMoving;
+
+  // When the robot is moving, we use the "fallback policy", meaning we essentially disable beamforming so that we aren't
+  // focusing on the gear noise (note we still run SE processing to combine the channels when using the fallback policy).
+  if (robotStartedMoving || robotStoppedMoving)
+  {
+    int32_t newSetting = robotStartedMoving ? 1 : 0;
+    SEDiagSetInt32(_policyFallbackFlag, newSetting);
+    PRINT_NAMED_INFO("MicDataProcessor.ProcessMicrophonesSE.SetUseFallbackBeam", "%s", robotStartedMoving ? "true" : "false");
+  }
+
   if (robotStoppedMoving)
   {
     // When the robot has stopped moving (and the gears are no longer making noise) we reset the mic direciton
     // confidence values to be based on non-noisy data
     MMIfResetLocationSearch();
-  }
-
-  // If there's been a change to the console var (vs our cached version), update set whether we're using the fallback
-  // beam (aka no beamforming) For testing VIC-2451.
-  if (kMicData_UseFallbackBeam != _usingFallbackBeam)
-  {
-    _usingFallbackBeam = kMicData_UseFallbackBeam;
-    int32_t newSetting = _usingFallbackBeam ? 1 : 0;
-    SEDiagSetInt32(_policyFallbackFlag, newSetting);
-    PRINT_NAMED_INFO("MicDataProcessor.ProcessMicrophonesSE.SetUseFallbackBeam", "%s", _usingFallbackBeam ? "true" : "false");
   }
 
   // We only care about checking one channel, and since the channel data is uninterleaved when passed in here,
@@ -408,20 +407,74 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
     {
       activityFlag = 1;
     }
+
+    // Keep a counter from the last active vad flag. When it hits 0 don't bother doing
+    // the trigger recognition, then reset the counter when the flag is active again
+    constexpr uint32_t kVadCountdown_ms = 4 * 1000;
+    constexpr uint32_t kVadCountdownLimit = kVadCountdown_ms / kTimePerSEBlock_ms;
+    if (activityFlag != 0)
+    {
+      _vadCountdown = kVadCountdownLimit;
+    }
+    else if (_vadCountdown > 0)
+    {
+      --_vadCountdown;
+    }
+
+    if (_vadCountdown != 0)
+    {
+      activityFlag = 1;
+    }
   }
 
-  static const std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> dummySpeakerOut{};
+  // Allow overriding (for testing) to force enable or disable mic data processing
+  if (kMicData_ForceEnableMicDataProc)
   {
-    ANKI_CPU_PROFILE("ProcessMicrophonesSE");
-    // Process the current audio block with SE software
-    MMIfProcessMicrophones(dummySpeakerOut.data(), audioChunk, bufferOut);
+    activityFlag = 1;
+  }
+  else if (kMicData_ForceDisableMicDataProc)
+  {
+    activityFlag = 0;
+  }
+
+  // If we've detected activity, SE signal processing (which includes the fallback policy
+  // that will skip spatial filtering, which is enabled while the robot is moving).
+  if (activityFlag == 1)
+  {
+    static const std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> dummySpeakerOut{};
+    {
+      ANKI_CPU_PROFILE("ProcessMicrophonesSE");
+      // Process the current audio block with SE software
+      MMIfProcessMicrophones(dummySpeakerOut.data(), audioChunk, bufferOut);
+    }
+  }
+  else
+  {
+    // Otherwise if it's determined there's really no activity right now, we're skipping the standard SE processing
+    // We simply remove the DC bias and apply some gain to the first mic channel and pass it along
+    
+    // Our bias is stored as a fixed-point value
+    constexpr int iirCoefPower = 10;
+    constexpr int iirMult = 1023; // (2 ^ iirCoefPower) - 1
+    static int bias = audioChunk[0] << iirCoefPower;
+    for (int i=0; i<kSamplesPerBlock; ++i)
+    {
+      // First update our bias with the latest audio sample
+      bias = ((bias * iirMult) >> iirCoefPower) + audioChunk[i];
+      // Push out the next sample using the updated bias
+      bufferOut[i] = audioChunk[i] - (bias >> iirCoefPower);
+      // Gain multiplier of 8 gives good results
+      bufferOut[i] <<= 3;
+    }
   }
 
   MicDirectionData result{};
   result.activeState = activityFlag;
   result.latestPowerValue = latestPowerValue;
   result.latestNoiseFloor = latestNoiseFloor;
-  if (robotIsMoving)
+
+  // When we know the robot is moving or there's no current activity (so we didn't do beamforming) clear direction data
+  if (robotIsMoving || (activityFlag != 1))
   {
     result.winningDirection = result.selectedDirection = kDirectionUnknown;
   }
@@ -546,22 +599,9 @@ void MicDataProcessor::ProcessTriggerLoop()
       _recognizer->SetRecognizerIndex(_currentTriggerSearchIndex);
     }
 
-    // Keep a counter from the last active vad flag. When it hits 0 don't bother doing
-    // the trigger recognition, then reset the counter when the flag is active again
-    constexpr uint32_t kVadCountdown_ms = 4 * 1000;
-    constexpr uint32_t kVadCountdownLimit = kVadCountdown_ms / kTimePerSEBlock_ms;
-    if (_micImmediateDirection->GetLatestSample().activeState != 0)
-    {
-      _vadCountdown = kVadCountdownLimit;
-    }
-    else if (_vadCountdown > 0)
-    {
-      --_vadCountdown;
-    }
-
     // Run the trigger detection, which will use the callback defined above
-    // LeeC TODO VIC-2390: For now we're testing without the VAD gate, to make sure we aren't harming trigger recognition
-    // if (_vadCountdown != 0)
+    // Note we skip it if there is no activity as of the latest processed audioblock
+    if (_micImmediateDirection->GetLatestSample().activeState != 0)
     {
       ANKI_CPU_PROFILE("RecognizeTriggerWord");
       _recognizer->Update(processedAudio.data(), (unsigned int)processedAudio.size());
