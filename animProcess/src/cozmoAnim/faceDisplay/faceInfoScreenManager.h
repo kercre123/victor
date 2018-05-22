@@ -90,6 +90,9 @@ public:
   void DrawMicInfo(const RobotInterface::MicData& micData);
   void DrawCameraImage(const Vision::ImageRGB565& img);
   
+  // Sets the power mode message to send when returning to none screen
+  void SetCalmPowerModeOnReturnToNone(const RobotInterface::CalmPowerMode& msg) { _calmModeMsgOnNone = msg; }
+
 private:
   const AnimContext* _context = nullptr;
   
@@ -103,6 +106,10 @@ private:
   // Gets the current screen
   FaceInfoScreen* GetScreen(ScreenName name);
   
+  // Resets the lift and head angles observed thus far.
+  // Called everytime the screen changes.
+  void ResetObservedHeadAndLiftAngles();
+
   // Process wheel, head, lift, button motion for menu navigation
   void ProcessMenuNavigation(const RobotState& state);
   u32 _wheelMovingForwardsCount;
@@ -112,6 +119,9 @@ private:
   
   // Flag indicating when debug screens have been unlocked
   bool _debugInfoScreensUnlocked;
+
+  // Power mode to set when returning to None screen
+  RobotInterface::CalmPowerMode _calmModeMsgOnNone;
   
   // Map of all screen names to their associated screen objects
   std::unordered_map<ScreenName, FaceInfoScreen> _screenMap;

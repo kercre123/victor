@@ -183,11 +183,12 @@ static void EnableCalmPowerMode(ConsoleFunctionContextRef context)
 {
   if (_thisRobot != nullptr) {
     const bool enableCalm = ConsoleArg_Get_Bool(context, "enable");
-    _thisRobot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::CalmPowerMode(enableCalm)));
+    const bool calibOnDisable = ConsoleArg_GetOptional_Bool(context, "calibOnDisable", false);
+    _thisRobot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::CalmPowerMode(enableCalm, calibOnDisable)));
   }
 }
 
-CONSOLE_FUNC(EnableCalmPowerMode, "EnableCalmPowerMode", bool enable);
+CONSOLE_FUNC(EnableCalmPowerMode, "EnableCalmPowerMode", bool enable, optional bool calibOnDisable);
 
 } // end namespace
 
