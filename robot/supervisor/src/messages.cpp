@@ -1,4 +1,5 @@
 #include "messages.h"
+#include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/hal.h"
 #include <math.h>
 
@@ -185,9 +186,10 @@ namespace Anki {
 
       void Process_calmPowerMode(const RobotInterface::CalmPowerMode& msg)
       {
-        AnkiInfo("Messages.Process_calmPowerMode.enable", "%d", msg.enable);
+        AnkiInfo("Messages.Process_calmPowerMode.enable", "enable: %d, calib: %d", msg.enable, msg.calibOnDisable);
         HAL::PowerState newPowerMode = msg.enable ? HAL::POWER_MODE_CALM : HAL::POWER_MODE_ACTIVE;
         HAL::PowerSetMode(newPowerMode);
+        Robot::CalibrateMotorsOnNextCalmModeExit(msg.calibOnDisable);
       }
 
       void Process_absLocalizationUpdate(const RobotInterface::AbsoluteLocalizationUpdate& msg)
