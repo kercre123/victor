@@ -169,9 +169,12 @@ target_include_directories(cozmo_engine PRIVATE
 if (VICOS)
   include(vicos-sdk-stl-config)
   include(gen-version)
+
+  add_subdirectory("noise")
 endif()
 
 add_subdirectory("resources")
+
 
 if (MACOSX)
   add_subdirectory("test")
