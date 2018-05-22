@@ -149,6 +149,7 @@ add_subdirectory("lib/anki-ble")
 add_subdirectory("lib/micData")
 add_subdirectory("lib/signalEssence")
 add_subdirectory("platform")
+add_subdirectory("dasmgr")
 
 target_include_directories(victor_anim PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
