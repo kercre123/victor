@@ -101,7 +101,7 @@ void AnimationAudioClient::HandleAudioRef( const AudioEventGroupRef& eventRef, U
   }
 
   // Play valid event
-  const auto playId = PostCozmoEvent( anEvent->AudioEvent );
+  const auto playId = PostCozmoEvent( anEvent->AudioEvent, eventRef.GameObject );
   if ( playId != kInvalidAudioPlayingId ) {
     // Apply volume to event
     SetCozmoEventParameter( playId, GameParameter::ParameterType::Event_Volume, anEvent->Volume );
@@ -122,7 +122,7 @@ void AnimationAudioClient::HandleAudioRef( const AudioSwitchRef& switchRef )
 {
   _audioController->SetSwitchState( ToAudioSwitchGroupId( switchRef.SwitchGroup ),
                                     ToAudioSwitchStateId( switchRef.State ),
-                                    kAnimGameObj );
+                                    ToAudioGameObject( switchRef.GameObject ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -130,7 +130,7 @@ void AnimationAudioClient::HandleAudioRef( const AudioParameterRef& parameterRef
 {
   _audioController->SetParameter( ToAudioParameterId( parameterRef.Parameter ),
                                   ToAudioRTPCValue( parameterRef.Value ),
-                                  kAnimGameObj,
+                                  ToAudioGameObject( parameterRef.GameObject ),
                                   ToAudioTimeMs( parameterRef.Time_ms ),
                                   ToAudioCurveType( parameterRef.Curve ) );
 }
@@ -151,7 +151,8 @@ bool AnimationAudioClient::HasActiveEvents() const
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngine::AudioPlayingId AnimationAudioClient::PostCozmoEvent( AudioMetaData::GameEvent::GenericEvent event )
+AudioEngine::AudioPlayingId AnimationAudioClient::PostCozmoEvent( AudioMetaData::GameEvent::GenericEvent event,
+                                                                  AudioMetaData::GameObjectType gameObject )
 {
   if ( _audioController == nullptr ) { return kInvalidAudioPlayingId; }
 
@@ -172,7 +173,7 @@ AudioEngine::AudioPlayingId AnimationAudioClient::PostCozmoEvent( AudioMetaData:
                                                } );
 
   const AudioEngine::AudioPlayingId playId = _audioController->PostAudioEvent( audioEventId,
-                                                                               kAnimGameObj,
+                                                                               ToAudioGameObject( gameObject ),
                                                                                audioCallbackContext );
   // Track event playback
   AddActiveEvent( playId );

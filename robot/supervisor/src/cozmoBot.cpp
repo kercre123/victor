@@ -42,6 +42,8 @@ namespace Anki {
         // times through the main loop
         u32 robotStateMessageCounter_ = 0;
 
+        bool _calibOnNextCalmModeExit = false;
+
         // Main cycle time errors
         u32 mainTooLongCnt_ = 0;
         u32 mainTooLateCnt_ = 0;
@@ -204,7 +206,11 @@ namespace Anki {
         buttonWasPressed = buttonIsPressed;
       }
 
-      
+      void CalibrateMotorsOnNextCalmModeExit(bool enable)
+      {
+        _calibOnNextCalmModeExit = enable;
+      }
+
       Result step_MainExecution()
       {
         EventStart(EventType::MAIN_STEP);
@@ -249,10 +255,11 @@ namespace Anki {
         // If power mode changed from CALM to ACTIVE, trigger calibration
         static HAL::PowerState lastPowerMode = HAL::POWER_MODE_ACTIVE;
         HAL::PowerState currPowerMode = HAL::PowerGetMode();
-        if (currPowerMode == HAL::POWER_MODE_ACTIVE && lastPowerMode == HAL::POWER_MODE_CALM) {
+        if (_calibOnNextCalmModeExit && currPowerMode == HAL::POWER_MODE_ACTIVE && lastPowerMode == HAL::POWER_MODE_CALM) {
           AnkiInfo("CozmoBot.Update.CalmToActiveCalibration", "");
           LiftController::StartCalibrationRoutine(true);
           HeadController::StartCalibrationRoutine(true);
+          _calibOnNextCalmModeExit = false;
         }
         lastPowerMode = currPowerMode;
       

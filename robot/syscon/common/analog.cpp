@@ -329,7 +329,7 @@ void Analog::tick(void) {
     } else {
       power_down_timer = LOW_VOLTAGE_POWER_DOWN_TIME;
     }
-  } else if (CHARGE_CUTOFF) {
+  } else if (CHARGE_CUTOFF && false) {
     // Unpowered, on charger (timeout)
     nCHG_PWR::reset();
     POWER_EN::pull(PULL_NONE);
@@ -396,6 +396,7 @@ void Analog::tick(void) {
       BODY_TX::reset();
       BODY_TX::mode(MODE_OUTPUT);
     } else if (++hold_count >= POWER_DOWN_TIME) { // Increment is here to prevent overflow in recovery condition
+      Analog::setPower(false);
       Power::setMode(POWER_STOP);
     } else {
       Power::setMode(POWER_ACTIVE);

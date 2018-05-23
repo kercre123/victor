@@ -20,7 +20,6 @@ set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
 set(PLATFORM_COMPILE_DEFS "")
 
 if (VICOS)
-    include(breakpad)
     set(PLATFORM_LIBS
         log
         robot_core)
@@ -83,7 +82,7 @@ target_include_directories(victor_anim
   ${PLATFORM_INCLUDES}
 )
 
-# victor_animator binary only builds on vicos now
+# victor_anim binary only builds on vicos now
 # mac implementation uses (webotsCtrlAnim)
 if (VICOS)
 
@@ -93,9 +92,7 @@ if (VICOS)
     PRIVATE
     victor_anim
     victorCrashReports
-    breakpad_client
     cti_common_robot
-    util
     jsoncpp
     ${PLATFORM_LIBS}
   )

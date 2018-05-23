@@ -228,19 +228,27 @@ namespace Cozmo {
     
     virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
     
+    Result AddAudioRef(AudioKeyFrameType::AudioRef&& audioRef);
+    Result AddAudioRef(AudioKeyFrameType::AudioEventGroupRef&& eventGroupRef);
+    Result AddAudioRef(AudioKeyFrameType::AudioParameterRef&& parameterRef);
+    Result AddAudioRef(AudioKeyFrameType::AudioStateRef&& stateRef);
+    Result AddAudioRef(AudioKeyFrameType::AudioSwitchRef&& switchRef);
+    
+    // Merge two RobotAudioKeyFrames together
+    // Note: triggerTime_ms will not be effected
+    // Note: otherFrame will be invalid after merging
+    void MergeKeyFrame(RobotAudioKeyFrame&& otherFrame);
+    
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
     Result SetMembersFromDeprecatedJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "");
     virtual Result SetMembersFromFlatBuf(const CozmoAnim::RobotAudio* audioKeyframe, const std::string& animNameDebug = "");
     
   private:
-    
-    Result AddAudioRef(AudioKeyFrameType::AudioRef&& audioRef);
-
     std::vector<AudioKeyFrameType::AudioRef> _audioReferences;
     
   }; // class RobotAudioKeyFrame
-    
+
 
   // A SpriteSequenceKeyFrame is for streaming a set of images to display on the
   // robot's face. It will return a non-NULL message each time GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms)
@@ -391,8 +399,8 @@ namespace Cozmo {
   class ProceduralFaceKeyFrame : public IKeyFrame
   {
   public:
-    ProceduralFaceKeyFrame() { }
-    ProceduralFaceKeyFrame(const ProceduralFace& face, TimeStamp_t triggerTime_ms = 0);
+    ProceduralFaceKeyFrame(TimeStamp_t triggerTime_ms = 0, TimeStamp_t durationTime_ms = 0);
+    ProceduralFaceKeyFrame(const ProceduralFace& face, TimeStamp_t triggerTime_ms = 0, TimeStamp_t durationTime_ms = 0);
 
     Result DefineFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKeyframe, const std::string& animNameDebug);
     
@@ -427,11 +435,19 @@ namespace Cozmo {
     ProceduralFace  _procFace;
   }; // class ProceduralFaceKeyFrame
   
+  inline ProceduralFaceKeyFrame::ProceduralFaceKeyFrame(TimeStamp_t triggerTime, TimeStamp_t durationTime_ms)
+  {
+    SetTriggerTime_ms(triggerTime);
+    SetKeyFrameDuration_ms(durationTime_ms);
+  }
+  
   inline ProceduralFaceKeyFrame::ProceduralFaceKeyFrame(const ProceduralFace& face,
-                                                        TimeStamp_t triggerTime)
+                                                        TimeStamp_t triggerTime,
+                                                        TimeStamp_t durationTime_ms)
   : _procFace(face)
   {
     SetTriggerTime_ms(triggerTime);
+    SetKeyFrameDuration_ms(durationTime_ms);
   }
 
   

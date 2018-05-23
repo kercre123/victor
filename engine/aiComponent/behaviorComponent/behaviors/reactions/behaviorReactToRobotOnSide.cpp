@@ -73,11 +73,11 @@ void BehaviorReactToRobotOnSide::ReactToBeingOnSide()
   AnimationTrigger anim = AnimationTrigger::Count;
   
   if( GetBEI().GetOffTreadsState() == OffTreadsState::OnLeftSide){
-    anim = AnimationTrigger::ANTICIPATED_ReactToOnLeftSide;
+    anim = AnimationTrigger::ReactToOnLeftSide;
   }
   
   if(GetBEI().GetOffTreadsState() == OffTreadsState::OnRightSide) {
-    anim = AnimationTrigger::ANTICIPATED_ReactToOnRightSide;
+    anim = AnimationTrigger::ReactToOnRightSide;
   }
   
   if(anim != AnimationTrigger::Count){
@@ -136,7 +136,7 @@ void BehaviorReactToRobotOnSide::HoldingLoop()
     }
     else {
       // otherwise, we just loop this animation
-      DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ANTICIPATED_WaitOnSideLoop),
+      DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::WaitOnSideLoop),
                   &BehaviorReactToRobotOnSide::HoldingLoop);
     }
   }

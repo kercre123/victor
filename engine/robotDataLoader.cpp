@@ -124,6 +124,11 @@ void RobotDataLoader::LoadNonConfigData()
     ANKI_CPU_PROFILE("RobotDataLoader::LoadBehaviors");
     LoadBehaviors();
   }
+
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadWeatherResponseMaps");
+    LoadWeatherResponseMaps();
+  }
   
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackLightAnimations");
@@ -613,6 +618,64 @@ void RobotDataLoader::LoadCompositeImageMaps()
       }
     }
   }
+}
+
+
+void RobotDataLoader::LoadWeatherResponseMaps()
+{
+  _weatherResponseMap = std::make_unique<WeatherResponseMap>();
+  const bool useFullPath = false;
+  const char* extensions = ".json";
+  const bool recurse = true;
+
+
+  const std::string path =  "config/engine/behaviorComponent/weatherResponseMaps/";
+  const char* kAPIValueKey = "APIValue";
+  const char* kCladTypeKey = "CladType";
+
+  const std::string responseFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
+  auto responseJSONFiles = Util::FileUtils::FilesInDirectory(responseFolder, useFullPath, extensions, recurse);
+  for (const auto& filename : responseJSONFiles)
+  {
+    Json::Value responseJSON;
+    const bool success = _platform->readAsJson(filename, responseJSON);
+    if (success && 
+        !responseJSON.empty() &&
+        responseJSON.isArray())
+    {
+      for(const auto& pair : responseJSON){
+        if(ANKI_VERIFY(pair.isMember(kAPIValueKey) && pair.isMember(kCladTypeKey),
+                       "RobotDataLoader.LoadWeatherResponseMaps.PairMissingKey",
+                       "File %s has an invalid pair",
+                       filename.c_str())){
+          WeatherConditionType cond = WeatherConditionTypeFromString(pair[kCladTypeKey].asString());
+
+          std::string str = pair[kAPIValueKey].asString();
+          std::transform(str.begin(), str.end(), str.begin(), 
+                         [](const char c) { return std::tolower(c); });
+          
+          if(!str.empty()){
+            auto resPair  = _weatherResponseMap->emplace(std::make_pair(str, cond));
+            ANKI_VERIFY(resPair.second,
+                        "RobotDataLoader.LoadWeatherResponseMaps.DuplicateAPIKey",
+                        "Key %s already exists within the weather response map ",
+                        str.c_str());
+          }else{
+            PRINT_NAMED_ERROR("RobotDataLoader.LoadWeatherResponseMaps.MissingAPIValue",
+                              "APIValue that maps to %s in file %s is blank",
+                              WeatherConditionTypeToString(cond), filename.c_str());
+          }
+
+        }
+      }
+    }
+    else if (!success)
+    {
+      LOG_WARNING("RobotDataLoader.LoadWeatherResponseMap", "Failed to read '%s'", filename.c_str());
+    }
+  }
+
+
 }
 
 

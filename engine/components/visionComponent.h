@@ -16,7 +16,7 @@
 
 #include "coretech/vision/engine/cameraCalibration.h"
 #include "coretech/vision/engine/droppedFrameStats.h"
-#include "coretech/vision/engine/image.h"
+#include "coretech/vision/engine/imageCache.h"
 #include "coretech/vision/engine/visionMarker.h"
 #include "coretech/vision/engine/faceTracker.h"
 #include "engine/components/nvStorageComponent.h"
@@ -222,7 +222,7 @@ struct DockingErrorSignal;
     Result GetCalibrationPoseToRobot(size_t whichPose, Pose3d& p) const;
     
     // Tool code images
-    Result ClearToolCodeImages();    
+    Result ClearToolCodeImages();
     size_t  GetNumStoredToolCodeImages() const;
     std::list<std::vector<u8> > GetToolCodeImageJpegData();
 
@@ -284,7 +284,8 @@ struct DockingErrorSignal;
     Result LoadFaceAlbumFromFile(const std::string& path, std::list<Vision::LoadedKnownFace>& loadedFaces); // Populates list, does not broadcast
     
     // See VisionSystem::SetSaveParameters for details on the arguments
-    void SetSaveImageParameters(const ImageSendMode saveMode, const std::string& path, const int8_t onRobotQuality);
+    void SetSaveImageParameters(const ImageSendMode saveMode, const std::string& path, const int8_t onRobotQuality, 
+                                const Vision::ImageCache::Size& saveSize = Vision::ImageCache::Size::Full);
 
     // This is for faking images being processed for unit tests
     void FakeImageProcessed(TimeStamp_t t);

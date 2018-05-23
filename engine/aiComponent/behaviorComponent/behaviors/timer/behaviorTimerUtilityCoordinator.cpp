@@ -18,14 +18,15 @@
 #include "coretech/common/engine/jsonTools.h"
 
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/timerUtility.h"
-#include "engine/aiComponent/timerUtilityDevFunctions.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimGetInLoop.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimGetInLoop.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "engine/aiComponent/behaviorComponent/userIntentData.h"
+#include "engine/aiComponent/timerUtility.h"
+#include "engine/aiComponent/timerUtilityDevFunctions.h"
 
 #include "util/console/consoleInterface.h"
 
@@ -409,9 +410,9 @@ void BehaviorTimerUtilityCoordinator::CheckShouldSetTimer()
 {
   auto& uic = GetBehaviorComp<UserIntentComponent>();
   if(uic.IsUserIntentPending(USER_INTENT(set_timer))){
-    UserIntentPtr intent = SmartActivateUserIntent(USER_INTENT(set_timer));
+    UserIntentPtr intentData = SmartActivateUserIntent(USER_INTENT(set_timer));
 
-    int requestedTime_s = intent->Get_set_timer().time_s;
+    int requestedTime_s = intentData->intent.Get_set_timer().time_s;
     const bool isTimerInRange = (_iParams.minValidTimer_s <= requestedTime_s) && 
                                 (requestedTime_s          <= _iParams.maxValidTimer_s);
 
@@ -538,13 +539,15 @@ void BehaviorTimerUtilityCoordinator::SetupTimerBehaviorFunctions()
 {  
   auto startTimerCallback = [this](){
     auto& uic = GetBehaviorComp<UserIntentComponent>();
-    UserIntentPtr intent = uic.GetActiveUserIntent(USER_INTENT(set_timer));
+    UserIntentPtr intentData = uic.GetUserIntentIfActive(USER_INTENT(set_timer));
 
-    if( ANKI_VERIFY(intent != nullptr, "BehaviorTimerUtilityCoordinator.SetShowClockCallback.IncorrectIntent",
+    if( ANKI_VERIFY(intentData != nullptr &&
+                    (intentData->intent.GetTag() == USER_INTENT(set_timer)),
+                    "BehaviorTimerUtilityCoordinator.SetShowClockCallback.IncorrectIntent",
                     "Active user intent should have been set_timer but wasn't") ) {
       
       auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
-      timerUtility.StartTimer(intent->Get_set_timer().time_s);
+      timerUtility.StartTimer(intentData->intent.Get_set_timer().time_s);
     }
   };
 

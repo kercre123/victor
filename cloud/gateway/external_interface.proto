@@ -1,0 +1,84 @@
+// External interface for robot <-> app and robot <-> sdk communication
+
+syntax = "proto3";
+
+package external_interface;
+
+import "google/api/annotations.proto";
+
+service ExternalInterface {
+  // Drives the wheel motors
+  rpc DriveWheels(DriveWheelsRequest) returns (DriveWheelsResult) {
+    option (google.api.http) = {
+      post: "/v1/drive_wheels",
+      body: "*"
+    };
+  }
+  // Plays an animation by name
+  rpc PlayAnimation(PlayAnimationRequest) returns (PlayAnimationResult) {
+    option (google.api.http) = {
+      post: "/v1/play_animation",
+      body: "*"
+    };
+  }
+  // Constructs and returns a list of animations
+  rpc ListAnimations(ListAnimationsRequest) returns (ListAnimationsResult) {
+    option (google.api.http) = {
+      post: "/v1/list_animations",
+      body: "*"
+    };
+  }
+  // TODO: Remove once we finish the conversion of old messages
+  // An example of how a basic rpc should start as
+  rpc Test(TestRequest) returns (TestResult) {
+    option (google.api.http) = {
+      post: "/v1/test",
+      body: "*"
+    };
+  }
+}
+
+message ResultStatus {
+  string description = 1;
+}
+
+message Animation {
+  string name = 1;
+}
+
+
+message DriveWheelsRequest {
+  float left_wheel_mmps   = 1;
+  float right_wheel_mmps  = 2;
+  float left_wheel_mmps2  = 3;
+  float right_wheel_mmps2 = 4;
+}
+
+message DriveWheelsResult {
+  ResultStatus status = 1;
+}
+
+
+message PlayAnimationRequest {
+  Animation animation = 1;
+  uint32 loops = 2;
+}
+
+message PlayAnimationResult {
+  ResultStatus status = 1;
+}
+
+
+message ListAnimationsRequest {}
+
+message ListAnimationsResult {
+  ResultStatus status = 1;
+  repeated Animation animation_names = 2;
+}
+
+
+message TestRequest {}
+
+message TestResult {
+  ResultStatus status = 1;
+}

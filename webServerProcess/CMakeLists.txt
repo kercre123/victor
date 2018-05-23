@@ -18,7 +18,6 @@ set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
 set(PLATFORM_COMPILE_DEFS "")
 
 if (VICOS)
-    include(breakpad)
     set(PLATFORM_LIBS
         log
     )
@@ -68,7 +67,6 @@ if (VICOS)
     cti_common
     util
     victorCrashReports
-    breakpad_client
     ${PLATFORM_LIBS}
   )
 

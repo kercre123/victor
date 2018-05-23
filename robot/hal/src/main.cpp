@@ -12,7 +12,7 @@
 #include  "../spine/cc_commander.h"
 #include "anki/cozmo/shared/factory/emrHelper.h"
 
-#include "platform/victorCrashReports/google_breakpad.h"
+#include "platform/victorCrashReports/victorCrashReporter.h"
 
 // For development purposes, while HW is scarce, it's useful to be able to run on phones
 #ifdef HAL_DUMMY_BODY
@@ -36,7 +36,7 @@ static void Shutdown(int signum)
 {
   if (shutdownSignal == 0) {
     AnkiInfo("robot.shutdown", "Shutdown on signal %d", signum);
-  
+
     // Need to HAL::Step() in order for light commands to go down to robot
     // so set shutdownSignal here to signal process shutdown after
     // shutdownCounter more tics of main loop.
@@ -59,7 +59,7 @@ int main(int argc, const char* argv[])
   signal(SIGTERM, Shutdown);
 
   static char const* filenamePrefix = "robot";
-  GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
+  Anki::Victor::InstallCrashReporter(filenamePrefix);
 
   if (argc > 1) {
     ccc_set_shutdown_function(Shutdown);
@@ -73,7 +73,7 @@ int main(int argc, const char* argv[])
   const Result result = Anki::Cozmo::Robot::Init(&shutdownSignal);
   if (result != Result::RESULT_OK) {
     AnkiError("robot.main.InitFailed", "Unable to initialize (result %d)", result);
-    GoogleBreakpad::UnInstallGoogleBreakpad();
+    Anki::Victor::UninstallCrashReporter();
     sync();
     if (shutdownSignal == SIGTERM) {
       return 0;
@@ -95,7 +95,7 @@ int main(int argc, const char* argv[])
     if (Anki::Cozmo::HAL::Step() == Anki::RESULT_OK) {
       if (Anki::Cozmo::Robot::step_MainExecution() != Anki::RESULT_OK) {
         AnkiError("robot.main", "MainExecution failed");
-        GoogleBreakpad::UnInstallGoogleBreakpad();
+        Anki::Victor::UninstallCrashReporter();
         return -1;
       }
     }
@@ -147,7 +147,7 @@ int main(int argc, const char* argv[])
         Anki::Cozmo::Robot::Destroy();
       } else if (shutdownCounter == 0) {
         AnkiInfo("robot.main.shutdown", "%d", shutdownSignal);
-        GoogleBreakpad::UnInstallGoogleBreakpad();
+        Anki::Victor::UninstallCrashReporter();
         sync();
         exit(0);
       }

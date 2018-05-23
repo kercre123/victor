@@ -12,6 +12,7 @@
 
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 
+#include "engine/aiComponent/beiConditions/conditions/conditionAnyStimuli.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionBatteryLevel.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionBeatDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionBehaviorTimer.h"
@@ -22,6 +23,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionCubeTapped.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionEmotion.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionEyeContact.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionFaceKnown.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFacePositionUpdated.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFeatureGate.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionMotionDetected.h"
@@ -44,6 +46,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionTriggerWordPending.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionUnexpectedMovement.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionUnitTest.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionUserIntentActive.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTrue.h"
 
@@ -172,6 +175,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
   IBEIConditionPtr condition = nullptr;
 
   switch (conditionType) {
+    case BEIConditionType::AnyStimuli:
+    {
+      condition = std::make_shared<ConditionAnyStimuli>(config);
+      break;
+    }
     case BEIConditionType::BatteryLevel:
     {
       condition = std::make_shared<ConditionBatteryLevel>(config);
@@ -210,6 +218,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::EyeContact:
     {
       condition = std::make_shared<ConditionEyeContact>(config);
+      break;
+    }
+    case BEIConditionType::FaceKnown:
+    {
+      condition = std::make_shared<ConditionFaceKnown>(config);
       break;
     }
     case BEIConditionType::FacePositionUpdated:
@@ -305,6 +318,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::UnexpectedMovement:
     {
       condition = std::make_shared<ConditionUnexpectedMovement>(config);
+      break;
+    }
+    case BEIConditionType::UserIntentActive:
+    {
+      condition = std::make_shared<ConditionUserIntentActive>(config);
       break;
     }
     case BEIConditionType::UserIntentPending:

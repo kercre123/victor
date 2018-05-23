@@ -61,6 +61,8 @@ namespace {
   // if discovered an obstacle within this long, and an unrelated path brings you nearby turn toward it
   int kTimeForTurnToPassingObstacles_ms = 5000;
   
+  const bool kUseDebugLights = false;
+  
   // backpack lights so I know when this behavior is active
   static const BackpackLights kLightsOff =
   {
@@ -167,7 +169,9 @@ void BehaviorExploringExamineObstacle::OnBehaviorActivated()
   if( _dVars.persistent.seesSideObstacle ) {
     DEV_ASSERT( !_dVars.persistent.seesFrontObstacle, "Should not be facing an obstacle now" );
     
-    GetBEI().GetBodyLightComponent().SetBackpackLights(kLightsActiveSide);
+    if( kUseDebugLights ) {
+      GetBEI().GetBodyLightComponent().SetBackpackLights(kLightsActiveSide);
+    }
     
     // turn first
     Pose2d pose(0.0f, _dVars.persistent.sideObstaclePosition );
@@ -185,7 +189,9 @@ void BehaviorExploringExamineObstacle::OnBehaviorActivated()
                            "Should be facing an obstacle now" );
     }
     
-    GetBEI().GetBodyLightComponent().SetBackpackLights(kLightsActiveFront);
+    if( kUseDebugLights ) {
+      GetBEI().GetBodyLightComponent().SetBackpackLights(kLightsActiveFront);
+    }
     
     // todo: should probably back up if this behavior activates and it's too close. for now, the reaction
     // animation moves it back a little bit
@@ -246,7 +252,9 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
     _dVars.state = (_dVars.state == State::SecondTurn) ? State::ReturnToCenterEnd : State::ReturnToCenter;
     
     if( _dVars.state == State::ReturnToCenterEnd ) {
-      GetBEI().GetBodyLightComponent().SetBackpackLights(kLightsOff);
+      if( kUseDebugLights ) {
+        GetBEI().GetBodyLightComponent().SetBackpackLights(kLightsOff);
+      }
       CancelSelf();
       return;
     }
@@ -273,7 +281,9 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
     action->AddAction( turnAction );
     
   } else if( _dVars.state == State::ReturnToCenterEnd ) {
-    GetBEI().GetBodyLightComponent().SetBackpackLights(kLightsOff);
+    if( kUseDebugLights ) {
+      GetBEI().GetBodyLightComponent().SetBackpackLights(kLightsOff);
+    }
     CancelSelf();
     return;
   }

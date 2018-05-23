@@ -1,8 +1,105 @@
 (function(myMethods, sendData) {
 
+  //myMethods.devShouldDumpData = true;
+
   // helper methods
 
-  function setBehaviorDropdown(data, container) {
+  var downloadAsCsv = function(){
+    var data = cachedTreeData; // use latest, even if frozen
+    
+    var doToSelfAndChildren = function(elem, func) {
+      func(elem);
+      var children = elem['children'];
+      if( typeof children !== 'undefined' && Array.isArray(children) ) {
+        children.forEach(function(child) {
+          doToSelfAndChildren(child, func);
+        });
+      }
+    }
+
+    // find all times where behaviors were activated or deactivated
+    var changedTimes = new Set();
+    var findChanged = function(elem) {
+      var activeTimes = elem.data.activeTimes;
+      if( typeof elem.data !== 'undefined' 
+          && typeof elem.data.activeTimes !== 'undefined' 
+          && Array.isArray(elem.data.activeTimes) ) 
+      {
+        elem.data.activeTimes.forEach(function(startStop) {
+          if( typeof startStop.start !== 'undefined' ) {
+            changedTimes.add(startStop.start)
+          }
+          if( typeof startStop.end !== 'undefined' ) {
+            changedTimes.add(startStop.end)
+          }
+        });
+      }
+    };
+    doToSelfAndChildren( data, findChanged );
+    // transform set to sorted array
+    changedTimes = Array.from(changedTimes).sort(function(a,b){return a - b});
+
+    var outputInfo = {};
+    var maxStackLength = 0;
+    // for any event at that time, gather info on the stack at that time
+    changedTimes.forEach(function(time){
+      var behaviorsActiveAtTime = [];
+      var findBehaviorsActiveAtTime = function(elem) {
+        var activeTimes = elem.data.activeTimes;
+        if( typeof elem.data !== 'undefined' 
+          && typeof elem.data.activeTimes !== 'undefined' 
+          && Array.isArray(elem.data.activeTimes) ) 
+        {
+          elem.data.activeTimes.forEach(function(startStop) {
+            if( (startStop.start <= time) 
+                && ((typeof startStop.end === 'undefined') || (startStop.end > time)) ) 
+            {
+              behaviorsActiveAtTime.push( elem.data.behaviorID );
+            }
+          });
+        }
+      };
+      doToSelfAndChildren( data, findBehaviorsActiveAtTime );
+
+      outputInfo[time] = behaviorsActiveAtTime;
+      maxStackLength = Math.max(maxStackLength, behaviorsActiveAtTime.length);
+    });
+
+    // finally, write the info into csv format
+
+    // create header
+    var dateStr = (new Date()).toLocaleString('en-US').replace(',','');
+    var outputCsv = 'time[' + dateStr + ']';
+    for( var i=0; i<maxStackLength; ++i ) {
+      outputCsv += ',behavior';
+    }
+    outputCsv += '\n';
+    // write body
+    changedTimes.forEach(function(time){
+      var info = outputInfo[time];
+      outputCsv += time;
+      for( var i=0; i<maxStackLength; ++i ) {
+        if( i < info.length ) {
+          outputCsv += ',' + info[i];  
+        } else {
+          outputCsv += ',';
+        }
+      }
+      outputCsv += '\n';
+    });
+    // make QA agree that this doesn't suffice for full logs
+    alert('Downloading behavior stacks. To help the engineers, it\'s useful to send them this file, a screenshot of this tab, _AND_ a full log (victor_log)')
+    // force download
+    var elem = document.createElement('a');
+    elem.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(outputCsv));
+    elem.setAttribute('download', 'behaviorStackLog.csv');
+    elem.style.display = 'none';
+    document.body.appendChild(elem);
+    elem.click();
+    document.body.removeChild(elem);
+  };
+
+  function addControls(data, container) {
     data.sort();
     // create if needed, then populate a dropdown with behaviorIDs,
     // and when the user selects one, tell the engine to start that behavior 
@@ -27,7 +124,8 @@
           showInactive = $(this).is(':checked');
         })
       $('<label for="showActivatable">Show activatable</label>').appendTo(container);
-      
+
+      $('<button type="button" id="downloadTimeBars">Download as csv</button>').click(downloadAsCsv).appendTo(container);
     }
     dropDown.empty();
     $("<option/>", {val: '', text:'Select a behaviorID to switch to immediately'}).appendTo(dropDown);
@@ -568,11 +666,6 @@
 
   myMethods.init = function(elem) {
 
-    if ( location.port != '8888' ) { 
-      $('<h3>You must use this tab with the engine process (port 8888)</h3>').appendTo(elem);
-      return;
-    }
-
     params.duration = 400;
     params.margin = {top: 30, right: 20, bottom: 30, left: 20};
     params.frameWidth = $(elem).width() - params.margin.right - params.margin.left;
@@ -710,7 +803,7 @@
         (typeof allData.debugState === 'undefined') &&
         (typeof allData.activeFeature === 'undefined') ) {
       // currently the only other option a list of behaviors
-      setBehaviorDropdown( allData, elem );
+      addControls( allData, elem );
       return;
     }
     else if( typeof allData.debugState !== 'undefined' &&
@@ -880,6 +973,11 @@
       #showActivatable {
         margin-left:10px;
         margin-right:2px;
+      }
+      #downloadTimeBars {
+        padding: 5px 10px;
+        margin-right:20px;
+        float:right;
       }
       `
   }; // end getStyles

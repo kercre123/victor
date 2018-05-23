@@ -16,10 +16,13 @@
 
 #include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/quoteMacro.h"
 
+#include <cstdio>
 #include <list>
 #include <fstream>
 
@@ -34,8 +37,10 @@
 //#  endif
 //#elif USE_TENSORFLOW_LITE
 //#  include "objectDetectorModel_tensorflow_lite.cpp"
+//#elif USE_OPENCV_DNN
+//#  include "objectDetectorModel_opencvdnn.cpp"
 //#else
-#  include "objectDetectorModel_opencvdnn.cpp"
+#include "objectDetectorModel_messenger.cpp"
 //#endif
 
 namespace Anki {
@@ -43,6 +48,10 @@ namespace Vision {
  
 // Log channel name currently expected to be defined by one of the objectDetectorModel cpp files...
 // static const char * const kLogChannelName = "VisionSystem";
+ 
+namespace {
+  CONSOLE_VAR(f32,        kObjectDetection_Gamma,                "Vision.ObjectDetector", 1.0f); // set to 1.0 to disable
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ObjectDetector::ObjectDetector()
@@ -59,16 +68,32 @@ ObjectDetector::~ObjectDetector()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ObjectDetector::Init(const std::string& modelPath, const Json::Value& config)
+Result ObjectDetector::Init(const std::string& modelPath, const std::string& cachePath, const Json::Value& config)
 {
+  Result result = RESULT_OK;
+  
   _profiler.Tic("LoadModel");
-  const Result result = _model->LoadModel(modelPath, config);
+  result = _model->LoadModel(modelPath, cachePath, config);
   _profiler.Toc("LoadModel");
   
   if(RESULT_OK != result)
   {
     PRINT_NAMED_ERROR("ObjectDetector.Init.LoadModelFailed", "");
     return result;
+  }
+  
+  // Get the input height/width so we can do the resize and only need to share/copy/write as
+  // small an image as possible for the standalone CNN process to pick up
+  if(false == JsonTools::GetValueOptional(config, "inputHeight", _processingHeight))
+  {
+    PRINT_NAMED_ERROR("ObjectDetector.Init.MissingConfig", "inputHeight");
+    return RESULT_FAIL;
+  }
+  
+  if(false == JsonTools::GetValueOptional(config, "inputWidth", _processingWidth))
+  {
+    PRINT_NAMED_ERROR("ObjectDetector.Init.MissingConfig", "inputWidth");
+    return RESULT_FAIL;
   }
 
   PRINT_NAMED_INFO("ObjectDetector.Init.LoadModelTime", "Loading model from '%s' took %.1fsec",
@@ -82,11 +107,51 @@ Result ObjectDetector::Init(const std::string& modelPath, const Json::Value& con
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ObjectDetector::ApplyGamma(ImageRGB& img)
+{
+  if(Util::IsFltNear(kObjectDetection_Gamma, 1.f))
+  {
+    return;
+  }
+  
+  auto ticToc = _profiler.TicToc("Gamma");
+  
+  if(!Util::IsFltNear(kObjectDetection_Gamma, _currentGamma))
+  {
+    _currentGamma = kObjectDetection_Gamma;
+    const f32 gamma = 1.f / _currentGamma;
+    const f32 divisor = 1.f / 255.f;
+    for(s32 value=0; value<256; ++value)
+    {
+      _gammaLUT[value] = std::round(255.f * std::powf((f32)value * divisor, gamma));
+    }
+  }
+  
+  s32 nrows = img.GetNumRows();
+  s32 ncols = img.GetNumCols();
+  if(img.IsContinuous()) {
+    ncols *= nrows;
+    nrows = 1;
+  }
+  for(s32 i=0; i<nrows; ++i)
+  {
+    Vision::PixelRGB* img_i = img.GetRow(i);
+    for(s32 j=0; j<ncols; ++j)
+    {
+      Vision::PixelRGB& pixel = img_i[j];
+      pixel.r() = _gammaLUT[pixel.r()];
+      pixel.g() = _gammaLUT[pixel.g()];
+      pixel.b() = _gammaLUT[pixel.b()];
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
 {
   if(!_isInitialized)
   {
-    PRINT_NAMED_ERROR("ObjectDetector.Detect.NotInitialized", "");
+    PRINT_NAMED_ERROR("ObjectDetector.StartProcessingIfIdle.NotInitialized", "");
     return false;
   }
   
@@ -94,45 +159,48 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
   if(!_future.valid())
   {
     // Require color data
-    if(imageCache.HasColor())
+    if(!imageCache.HasColor())
     {
-      // This is just the size to grab from cache to copy to the asynchronous processing call.
-      // It will still be resized by the actual detector implementation to the exact size specified
-      // in the params.
-      // TODO: resize here instead of the Model, to copy less data
-      // TODO: avoid copying data entirely somehow? (but maybe who cares b/c it's tiny and fwd inference time likely dwarfs the copy)
-      const ImageCache::Size kImageSize = ImageCache::Size::Full;
-      
-      // Grab a copy of the image
-      imageCache.GetRGB(kImageSize).CopyTo(_imgBeingProcessed);
-      
-      // Store its size relative to original size so we can rescale object detections later
-      _widthScale = (f32)imageCache.GetOrigNumRows() / (f32)_imgBeingProcessed.GetNumRows();
-      _heightScale = (f32)imageCache.GetOrigNumCols() / (f32)_imgBeingProcessed.GetNumCols();
-      
-      PRINT_NAMED_INFO("ObjectDetector.Detect.ProcessingImage", "Detecting objects in %dx%d image t=%u",
-                       _imgBeingProcessed.GetNumCols(), _imgBeingProcessed.GetNumRows(), _imgBeingProcessed.GetTimestamp());
-      
-      _future = std::async(std::launch::async, [this]() {
-        std::list<DetectedObject> objects;
-        _profiler.Tic("Inference");
-        Result result = _model->Run(_imgBeingProcessed, objects);
-        _profiler.Toc("Inference");
-        if(RESULT_OK != result)
-        {
-          PRINT_NAMED_WARNING("ObjectDetector.Detect.AsyncLambda.ModelRunFailed", "");
-        }
-        return objects;
-      });
-      
-      return true;
+      PRINT_PERIODIC_CH_DEBUG(30, kLogChannelName, "ObjectDetector.StartProcessingIfIdle.NeedColorData", "");
+      return false;
     }
-    else
-    {
-      PRINT_PERIODIC_CH_DEBUG(30, kLogChannelName, "ObjectDetector.Detect.NeedColorData", "");
-    }
+  
+    // Resize to processing size
+    _imgBeingProcessed.Allocate(_processingHeight, _processingWidth);
+    const ImageCache::Size kImageSize = ImageCache::Size::Full;
+    const Vision::ResizeMethod kResizeMethod = Vision::ResizeMethod::Linear;
+    imageCache.GetRGB(kImageSize).Resize(_imgBeingProcessed, kResizeMethod);
+    
+    // Apply gamma (no-op if gamma is set to 1.0)
+    ApplyGamma(_imgBeingProcessed);
+    
+    // Store its size relative to original size so we can rescale object detections later
+    _heightScale = (f32)imageCache.GetOrigNumRows() / (f32)_imgBeingProcessed.GetNumRows();
+    _widthScale  = (f32)imageCache.GetOrigNumCols() / (f32)_imgBeingProcessed.GetNumCols();
+    
+    PRINT_CH_INFO(kLogChannelName, "ObjectDetector.StartProcessingIfIdle.ProcessingImage",
+                  "Detecting objects in %dx%d image t=%u",
+                  _imgBeingProcessed.GetNumCols(), _imgBeingProcessed.GetNumRows(), _imgBeingProcessed.GetTimestamp());
+    
+    _future = std::async(std::launch::async, [this]() {
+      std::list<DetectedObject> objects;
+  
+      _profiler.Tic("Model.Run");
+      Result result = _model->Run(_imgBeingProcessed, objects);
+      _profiler.Toc("Model.Run");
+      if(RESULT_OK != result)
+      {
+        PRINT_NAMED_WARNING("ObjectDetector.StartProcessingIfIdle.AsyncLambda.ModelRunFailed", "");
+      }
+    
+      return objects;
+    });
+    
+    // We did start processing the given image
+    return true;
   }
   
+  // We were not idle, so did not start processing the new image
   return false;
 }
   
@@ -152,7 +220,7 @@ bool ObjectDetector::GetObjects(std::list<DetectedObject>& objects_out)
     if(std::future_status::ready == futureStatus)
     {
       std::list<DetectedObject> objects = _future.get();
-      DEV_ASSERT(!_future.valid(), "ObjectDetector.Detect.FutureStillValid");
+      DEV_ASSERT(!_future.valid(), "ObjectDetector.GetObjects.FutureStillValid");
       
       // The detection will be at the processing resolution. Need to convert it to original resolution.
       if( !Util::IsNear(_widthScale, 1.f) || !Util::IsNear(_heightScale,1.f))
@@ -171,11 +239,11 @@ bool ObjectDetector::GetObjects(std::list<DetectedObject>& objects_out)
       {
         if(objects.empty())
         {
-          PRINT_CH_INFO(kLogChannelName, "ObjectDetector.Detect.NoObjects", "t=%ums", _imgBeingProcessed.GetTimestamp());
+          PRINT_CH_INFO(kLogChannelName, "ObjectDetector.GetObjects.NoObjects", "t=%ums", _imgBeingProcessed.GetTimestamp());
         }
         for(auto const& object : objects)
         {
-          PRINT_CH_INFO(kLogChannelName, "ObjectDetector.Detect.FoundObject", "t=%ums Name:%s Score:%.3f",
+          PRINT_CH_INFO(kLogChannelName, "ObjectDetector.GetObjects.FoundObject", "t=%ums Name:%s Score:%.3f",
                         _imgBeingProcessed.GetTimestamp(), object.name.c_str(), object.score);
         }
       }

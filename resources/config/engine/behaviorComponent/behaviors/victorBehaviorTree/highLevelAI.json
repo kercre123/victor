@@ -6,14 +6,13 @@
   "socializeKnownFaceCooldown_s": 1800.0,
   "playWithCubeCooldown_s": 600.0,
   "playWithCubeOnChargerCooldown_s": 2400.0,
-  "goToSleepTimeout_s": 1200.0,
-  "minFaceTimeToAllowSleep_s": 600.0,
-  "maxFaceDistanceToSocialize_mm": 500.0,
+  "maxFaceDistanceToSocialize_mm": 1000.0,
 
   "initialState": "ObservingOnCharger",
 
   "resumeReplacements": {
-    "Napping" : "ObservingOnCharger"
+    "NappingOnCharger" : "ObservingOnCharger",
+    "Napping": "Observing"
   },
   // these are evaluated after resumeReplacements and override them
   "postBehaviorSuggestionResumeOverrides": {
@@ -110,6 +109,10 @@
       "begin_s": 14400.0
     },
     {
+      "name": "NapHasBeenLong",
+      "begin_s": 10800.0
+    },
+    {
       "name": "FailedToFindCharger",
       "begin_s": 300.0
     }
@@ -181,16 +184,9 @@
         {
           "to": "NappingOnCharger",
           "condition": {
-            "conditionType": "Compound",
-            "and": [
-              {
-                "customCondition": "WantsToSleep"
-              },
-              {
-                "conditionType": "SimpleMood",
-                "mood": "LowStim"
-              }
-            ]
+            "conditionType": "SimpleMood",
+            "from": "MedStim",
+            "to": "LowStim"
           }
         }
       ],
@@ -314,6 +310,14 @@
                 "objectTypes": ["Charger_Basic"]
               }
             ]
+          }
+        },
+        {
+          "to": "Napping",
+          "condition": {
+            "conditionType": "SimpleMood",
+            "from": "MedStim",
+            "to": "LowStim"
           }
         }
       ]
@@ -448,15 +452,55 @@
           "to": "WakingUp",
           "condition": {
             "conditionType": "Compound",
-            "not": {
-              "conditionType": "OnCharger"
-            }
-          }
-        },
-        {
-          "to": "ObservingOnCharger",
-          "condition": {
-            "conditionType": "TriggerWordPending"
+            "or": [
+              {
+                "conditionType": "TriggerWordPending"
+              },
+              {
+                "conditionType": "Compound",
+                "not": {
+                  "conditionType": "OnCharger"
+                }
+              },
+              {
+                "customCondition": "WakeUpFromNap"
+              },
+              {
+                "conditionType": "Compound",
+                "and": [
+                  {
+                    "conditionType": "UserIntentActive",
+                    "list": [
+                      {"type": "system_sleep"}
+                    ]
+                  },
+                  {
+                    "conditionType": "AnyStimuli",
+                    "MotionDetected": false,
+                    "FacePositionUpdated": false,
+                    "FaceKnown": false,
+                    "RobotTouched": true,
+                    "RobotShaken": true
+                  }
+                ]
+              },
+              {
+                "conditionType": "Compound",
+                "and": [
+                  {
+                    "conditionType": "AnyStimuli",
+                    "MotionDetected": true,
+                    "FacePositionUpdated": false,
+                    "FaceKnown": false,
+                    "RobotTouched": true,
+                    "RobotShaken": true
+                  },
+                  {
+                    "customCondition": "NapHasBeenLong"
+                  }
+                ]
+              }
+            ]
           }
         }
       ],
@@ -464,17 +508,39 @@
         {
           "to": "WakingUp",
           "condition": {
-            "customCondition": "WakeUpFromNap"
-          }
-        },
-        {
-          "to": "WakingUp",
-          "condition": {
             "conditionType": "Compound",
-            "not": {
-              "conditionType": "SimpleMood",
-              "mood": "LowStim"
-            }
+            "and": [
+              {
+                "conditionType": "Compound",
+                "or": [
+                  {
+                    "conditionType": "SimpleMood",
+                    "mood": "MedStim"
+                  },
+                  {
+                    "conditionType": "SimpleMood",
+                    "mood": "HighStim"
+                  },
+                  {
+                    "conditionType": "AnyStimuli",
+                    "MotionDetected": false,
+                    "FacePositionUpdated": false,
+                    "FaceKnown": false,
+                    "RobotTouched": true,
+                    "RobotShaken": true
+                  }
+                ]
+              },
+              {
+                "conditionType": "Compound",
+                "not": {
+                  "conditionType": "UserIntentActive",
+                  "list": [
+                    {"type": "system_sleep"}
+                  ]
+                }
+              }
+            ]
           }
         }
       ]
@@ -484,16 +550,95 @@
       "from": "Napping",
       "interruptingTransitions": [
         {
-           // TODO:(bn) used to go to waking up, double check what we want
-          "to": "NappingOnCharger",
+          "to": "WakingUp",
           "condition": {
-            "conditionType": "OnCharger"
+            "conditionType": "Compound",
+            "or": [
+              {
+                "conditionType": "TriggerWordPending"
+              },
+              {
+                "conditionType": "OnCharger"
+              },
+              {
+                "customCondition": "WakeUpFromNap"
+              },
+              {
+                "conditionType": "Compound",
+                "and": [
+                  {
+                    "conditionType": "UserIntentActive",
+                    "list": [
+                      {"type": "system_sleep"}
+                    ]
+                  },
+                  {
+                    "conditionType": "AnyStimuli",
+                    "MotionDetected": false,
+                    "FacePositionUpdated": false,
+                    "FaceKnown": false,
+                    "RobotTouched": true,
+                    "RobotShaken": true
+                  }
+                ]
+              },
+              {
+                "conditionType": "Compound",
+                "and": [
+                  {
+                    "conditionType": "AnyStimuli",
+                    "MotionDetected": true,
+                    "FacePositionUpdated": false,
+                    "FaceKnown": false,
+                    "RobotTouched": true,
+                    "RobotShaken": true
+                  },
+                  {
+                    "customCondition": "NapHasBeenLong"
+                  }
+                ]
+              }
+            ]
           }
-        },
+        }
+      ],
+      "nonInterruptingTransitions": [
         {
           "to": "WakingUp",
           "condition": {
-            "conditionType": "TriggerWordPending"
+            "conditionType": "Compound",
+            "and": [
+              {
+                "conditionType": "Compound",
+                "or": [
+                  {
+                    "conditionType": "SimpleMood",
+                    "mood": "MedStim"
+                  },
+                  {
+                    "conditionType": "SimpleMood",
+                    "mood": "HighStim"
+                  },
+                  {
+                    "conditionType": "AnyStimuli",
+                    "MotionDetected": false,
+                    "FacePositionUpdated": false,
+                    "FaceKnown": false,
+                    "RobotTouched": true,
+                    "RobotShaken": true
+                  }
+                ]
+              },
+              {
+                "conditionType": "Compound",
+                "not": {
+                  "conditionType": "UserIntentActive",
+                  "list": [
+                    {"type": "system_sleep"}
+                  ]
+                }
+              }
+            ]
           }
         }
       ]

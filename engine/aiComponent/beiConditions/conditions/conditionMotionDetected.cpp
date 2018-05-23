@@ -87,6 +87,13 @@ void ConditionMotionDetected::HandleEvent(const EngineToGameEvent& event, Behavi
         case MotionArea::Right: { observedMotion = EvaluateRight(motionObserved);  break;}
         case MotionArea::Top:   { observedMotion = EvaluateTop(motionObserved);    break;}
         case MotionArea::Ground:{ observedMotion = EvaluateGround(motionObserved); break;}
+        case MotionArea::Any:   {
+          observedMotion = EvaluateLeft(motionObserved)
+                           || EvaluateRight(motionObserved)
+                           || EvaluateTop(motionObserved)
+                           || EvaluateGround(motionObserved);
+        }
+          break;
       }
       if(observedMotion){
         _lifetimeParams.tickCountMotionObserved = BaseStationTimer::getInstance()->GetTickCount();
@@ -162,6 +169,8 @@ ConditionMotionDetected::MotionArea ConditionMotionDetected::AreaStringToEnum(co
     return MotionArea::Top;
   }else if(areaStr == "Ground"){
     return MotionArea::Ground;
+  }else if(areaStr == "Any"){
+    return MotionArea::Any;
   }else{
     DEV_ASSERT(false, "ConditionMotionDetected.AreaStringToEnum.InvalidAreaStr");
     return MotionArea::Ground;

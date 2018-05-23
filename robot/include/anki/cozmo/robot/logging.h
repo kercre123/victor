@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if defined(ANDROID)
+#if defined(VICOS)
 
 #include <android/log.h>
 #define console_printf(fmt, ...) __android_log_print(ANDROID_LOG_INFO, "vic-robot", fmt, ##__VA_ARGS__)

@@ -12,6 +12,7 @@
 
 #ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_${class_name}__
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_${class_name}__
+#pragma once
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 

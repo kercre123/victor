@@ -13,6 +13,7 @@
 #ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_DevBehaviors_BehaviorDevImageCapture_H__
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_DevBehaviors_BehaviorDevImageCapture_H__
 
+#include "coretech/vision/engine/imageCache.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 #include <list>
@@ -51,10 +52,11 @@ protected:
 private:
   struct InstanceConfig {
     InstanceConfig();
-    std::string imageSavePath;
-    int8_t      imageSaveQuality;
-    bool        useCapTouch;
-    bool        saveSensorData;
+    std::string               imageSavePath;
+    int8_t                    imageSaveQuality;
+    Vision::ImageCache::Size  imageSaveSize;
+    bool                      useCapTouch;
+    bool                      saveSensorData;
 
     std::list<std::string> classNames;
   };

@@ -60,6 +60,9 @@ public:
   
   inline void SendToWebViz(const std::string& moduleName, const Json::Value& data) const { SendToWebSockets(moduleName, data); }
   
+  // returns true if a client has subscribed to a given module name (or any module if empty)
+  bool IsWebVizClientSubscribed(const std::string& moduleName = {}) const;
+  
   // subscribe to when a client connects and notifies the webservice that they want data for moduleName
   using SendToClientFunc = std::function<void(const Json::Value&)>;
   using OnWebVizSubscribedType = Signal::Signal<void(const SendToClientFunc&)>;

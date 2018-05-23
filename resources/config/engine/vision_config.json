@@ -27,12 +27,10 @@
     // value to process every Nth frame
     "DetectingPets"          : [true, false],
     "DetectingOverheadEdges" : [false, true],
-    // CheckingQuality and CheckingAWB run every 16 frames but are interleaved so they don't
+    // CheckingQuality and CheckingAWB run every 8 frames but are interleaved so they don't
     // run at the same time and step on each other's toes
-    "CheckingQuality"        : [false, false, false, false, false, false, false, false,
-                                false, false, false, false, false, false, false, true],
-    "CheckingWhiteBalance"   : [false, false, false, false, false, false, false, true,
-                                false, false, false, false, false, false, false, false],
+    "CheckingQuality"        : [false, false, false, false, false, false, false, true],
+    "CheckingWhiteBalance"   : [false, false, false, true, false, false, false, false],
     "DetectingLaserPoints"   : 2,
     "ComputingStatistics"    : false,  // NOTE: enabled but not scheduled!
     "DetectingGeneralObjects": 1,
@@ -57,13 +55,13 @@
   {
     // Auto-exposure settings
     "InitialExposureTime_ms"    : 31,    // Sent each time we request camera calibration
-    "MidValue"                  : 115,   // [0,255] - Try to make midPercentile have this value
+    "TargetValue"               : 115,   // [0,255] - Try to make targetPercentile have this value
+    "TargetPercentile"          : 0.50,  // [0.0, 1.0]
     "TooDarkValue"              : 20,    // "Too Dark" if HighPercentile is below this
     "TooBrightValue"            : 230,   // "Too Bright" if LowPercentile is above this
     "LowPercentile"             : 0.10,  // [0.0, 1.0]  (Near 0.0)
-    "MidPercentile"             : 0.50,  // [0.0, 1.0]  (B/w low and high, higher to prefer under exposure)
     "HighPercentile"            : 0.90,  // [0.0, 1.0]  (Near 1.0)
-    "MaxChangeFraction"         : 0.80,  // [0.0, 1.0]  (Relative amount we can change current exposure/gain/wb each update)
+    "MaxChangeFraction"         : 1.0,   // [0.0, 1.0]  (Relative amount we can change current exposure/gain/wb each update)
     "SubSample"                 : 3,     // >= 1
     "MeterFromDetections"       : true,  // Base auto-exposure on detected markers, faces, etc, if any
 
@@ -123,20 +121,45 @@
     "ProfilingPrintFrequency_ms"     : 10000,
     "ProfilingEventLogFrequency_ms"  : 30000,
 
-    // OpenCV DNN w/ MobileNet SSD Model
-    // NOTE: Currently assumes model is symlinked in resources/config/engine/vision/dnn_models to:
-    //       ~/DropBox/DeepLearningVisionModels, shared by andrew (until VIC-1071)
-    "graph"  : "ssd_mobilenet_v1_coco_11_06_2017_frozen.pb",
-    "labels" : "cocostuff-labels.txt",
-    "mode"   : "detection",
-    "input_width" : 224,
-    "input_height": 224,
-    "input_mean_R": 0,
-    "input_mean_G": 0,
-    "input_mean_B": 0,
-    "input_std": 255,
-    "top_K": 1,
-    "min_score": 0.5
+    //
+    // Model definition:
+    //
+
+    // Standalone TF model
+    "graphFile"           : "person_localization_victor_6x6_92_accuracy.pb", 
+    "memoryMapGraph"      : 0,
+    "labelsFile"          : "person-labels.txt", 
+    "architecture"        : "custom",
+    "inputLayerName"      : "input_1",
+    "outputLayerNames"    : "output_node0",
+    "outputType"          : "binary_localization",
+    "numGridRows"         : 6,
+    "numGridCols"         : 6,
+    "useFloatInput"       : 1,
+    "useGrayscale"        : 0,
+    "inputWidth"          : 128, 
+    "inputHeight"         : 128, 
+    "inputScale"          : 127.5, 
+    "inputShift"          : -1, 
+    "minScore"            : 0.5,
+    "verbose"             : 0,
+    "pollPeriod_ms"       : 10
+
+
+    // // OpenCV DNN w/ MobileNet SSD Model
+    // // NOTE: Currently assumes model is symlinked in resources/config/engine/vision/dnn_models to:
+    // //       ~/DropBox/DeepLearningVisionModels, shared by andrew (until VIC-1071)
+    // "graph"  : "ssd_mobilenet_v1_coco_11_06_2017_frozen.pb",
+    // "labels" : "cocostuff-labels.txt",
+    // "mode"   : "detection",
+    // "input_width" : 224,
+    // "input_height": 224,
+    // "input_mean_R": 0,
+    // "input_mean_G": 0,
+    // "input_mean_B": 0,
+    // "input_std": 255,
+    // "top_K": 1,
+    // "min_score": 0.5
 
     // // SqueezeNet on ImageNet with Caffe
     // // See also: https://github.com/DeepScale/SqueezeNet

@@ -88,11 +88,6 @@ private:
 class TextToSpeechProvider
 {
 public:
-  // Configuration keywords shared by all providers
-  static constexpr const char * kVoiceKey = "voice";
-  static constexpr const char * kSpeedKey = "speed";
-  static constexpr const char * kShapingKey = "shaping";
-
   TextToSpeechProvider(const AnimContext* ctx, const Json::Value& tts_config);
   ~TextToSpeechProvider();
 

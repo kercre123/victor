@@ -41,6 +41,15 @@ namespace{
                                                                            BEHAVIOR_CLASS(Keepaway),
                                                                            BEHAVIOR_CLASS(RollBlock),
                                                                            BEHAVIOR_CLASS(PounceWithProx) }};
+  
+  static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenSleeping = {{
+    BEHAVIOR_ID(ReactToTouchPetting),
+    BEHAVIOR_ID(TriggerWordDetected),
+  }};
+  static const std::set<BehaviorID> kBehaviorIDsThatMeanSleeping = {{
+    BEHAVIOR_ID(Sleeping),
+    BEHAVIOR_ID(SleepingWakeUp),
+  }};
 }
 
 
@@ -81,6 +90,10 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
 {
   const auto& BC = GetBEI().GetBehaviorContainer();
   _iConfig.wakeWordBehavior         = BC.FindBehaviorByID(BEHAVIOR_ID(TriggerWordDetected));
+  
+  for( const auto& id : kBehaviorIDsToSuppressWhenSleeping ) {
+    _iConfig.toSuppressWhenSleeping.push_back( BC.FindBehaviorByID(id) );
+  }
 
   BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(TimerUtilityCoordinator),
                                  BEHAVIOR_CLASS(TimerUtilityCoordinator),
@@ -117,27 +130,33 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
     _iConfig.wakeWordBehavior->SetDontActivateThisTick(GetDebugLabel());
   }
   
-  if( triggerWordPending ) {
-
+  // suppress certain behaviors during sleeping
+  {
     bool highLevelRunning = false;
     auto callback = [this, &highLevelRunning](const ICozmoBehavior& behavior) {
       if( behavior.GetID() == BEHAVIOR_ID(HighLevelAI) ) {
         highLevelRunning = true;
       }
 
-      if( highLevelRunning && (behavior.GetID() == BEHAVIOR_ID(Sleeping)) ) {
+      if( highLevelRunning
+          && (std::find(kBehaviorIDsThatMeanSleeping.begin(), kBehaviorIDsThatMeanSleeping.end(), behavior.GetID())
+              != kBehaviorIDsThatMeanSleeping.end()) )
+      {
         // High level AI is running the Sleeping behavior (probably through the Napping state).
         // Wake word serves as the wakeup for a napping robot, so disable the wake word behavior and let
         // high level AI resume. It will clear the pending trigger and resume in some other state. (The
-        // wake up animation is the getout for napping)
-        _iConfig.wakeWordBehavior->SetDontActivateThisTick(GetDebugLabel());
+        // wake up animation is the getout for napping). Also petting behaviors,
+        // since those will cause a graceful getout
+        for( const auto& beh : _iConfig.toSuppressWhenSleeping ) {
+          beh->SetDontActivateThisTick(GetDebugLabel());
+        }
       }
     };
 
     const auto& behaviorIterator = GetBehaviorComp<ActiveBehaviorIterator>();
     behaviorIterator.IterateActiveCozmoBehaviorsForward( callback, this );
-
   }
+  
   
   // Suppress ReactToObstacle if needed
   if( ShouldSuppressProxReaction() ) {

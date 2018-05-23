@@ -13,12 +13,13 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/weather/behaviorDisplayWeather.h"
 
-#include "engine/components/animationComponent.h"
-#include "engine/components/dataAccessorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/aiComponent/behaviorComponent/weatherIntentParser.h"
+#include "engine/components/animationComponent.h"
+#include "engine/components/dataAccessorComponent.h"
 
 #include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
 #include "cannedAnimLib/proceduralFace/proceduralFace.h"
@@ -246,10 +247,10 @@ void BehaviorDisplayWeather::OnBehaviorActivated()
 
   auto& uic = GetBehaviorComp<UserIntentComponent>();
 
-  UserIntentPtr intent = uic.GetActiveUserIntent(USER_INTENT(weather_response));
-  DEV_ASSERT(intent != nullptr, "BehaviorDisplayWeather.InvalidTriggeringIntent");
+  UserIntentPtr intentData = uic.GetUserIntentIfActive(USER_INTENT(weather_response));
+  DEV_ASSERT(intentData != nullptr, "BehaviorDisplayWeather.InvalidTriggeringIntent");
 
-  const auto& weatherResponse = intent->Get_weather_response();
+  const auto& weatherResponse = intentData->intent.Get_weather_response();
   std::string textToSay;
   if(WeatherIntentParser::ShouldSayText(weatherResponse, textToSay)){
     StateWeatherInformation(textToSay);
@@ -279,10 +280,10 @@ void BehaviorDisplayWeather::DisplayWeatherResponse()
 {
   auto& uic = GetBehaviorComp<UserIntentComponent>();
 
-  UserIntentPtr intent = uic.GetActiveUserIntent(USER_INTENT(weather_response));
-  DEV_ASSERT(intent != nullptr, "BehaviorDisplayWeather.InvalidTriggeringIntent");
+  UserIntentPtr intentData = uic.GetUserIntentIfActive(USER_INTENT(weather_response));
+  DEV_ASSERT(intentData != nullptr, "BehaviorDisplayWeather.InvalidTriggeringIntent");
 
-  const auto& weatherResponse = intent->Get_weather_response();
+  const auto& weatherResponse = intentData->intent.Get_weather_response();
 
 
   auto animationCallback = [this](const AnimationComponent::AnimResult res){

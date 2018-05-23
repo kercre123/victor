@@ -603,7 +603,7 @@ AudioPlayingId CozmoAudioController::PostAudioEvent( const std::string& eventNam
   
   if( ANKI_DEV_CHEATS ) {
     auto* webservice = _animContext->GetWebService();
-    if( webservice != nullptr ) {
+    if( (webservice != nullptr) && webservice->IsWebVizClientSubscribed(kWebVizModuleName) ) {
       Json::Value toSend;
       toSend["type"] = "PostAudioEvent";
       toSend["time"] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
@@ -630,7 +630,7 @@ AudioPlayingId CozmoAudioController::PostAudioEvent( AudioEventId eventId,
   
   if( ANKI_DEV_CHEATS ) {
     auto* webservice = _animContext->GetWebService();
-    if( webservice != nullptr ) {
+    if( (webservice != nullptr) && webservice->IsWebVizClientSubscribed(kWebVizModuleName) ) {
       Json::Value toSend;
       toSend["type"] = "PostAudioEvent";
       toSend["time"] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
@@ -651,7 +651,7 @@ void CozmoAudioController::StopAllAudioEvents( AudioGameObject gameObjectId )
   
   if( ANKI_DEV_CHEATS ) {
     auto* webservice = _animContext->GetWebService();
-    if( webservice != nullptr ) {
+    if( (webservice != nullptr) && webservice->IsWebVizClientSubscribed(kWebVizModuleName) ) {
       Json::Value toSend;
       toSend["type"] = "StopAllAudioEvents";
       toSend["time"] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
@@ -669,14 +669,13 @@ bool CozmoAudioController::SetState( AudioStateGroupId stateGroupId,
   
   if( ANKI_DEV_CHEATS ) {
     auto* webservice = _animContext->GetWebService();
-    if( webservice != nullptr ) {
+    if( (webservice != nullptr) && webservice->IsWebVizClientSubscribed(kWebVizModuleName) ) {
       Json::Value toSend;
       toSend["type"] = "SetState";
       toSend["time"] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       toSend["stateGroupId"]
         = AudioMetaData::GameState::EnumToString( static_cast<AudioMetaData::GameState::StateGroupType>(stateGroupId) );
-      toSend["stateId"]
-        = AudioMetaData::GameState::EnumToString( static_cast<AudioMetaData::GameState::GenericState>(stateId) );
+      toSend["stateId"] = stateId; // no string mapping
       webservice->SendToWebViz( kWebVizModuleName, toSend );
     }
   }
@@ -693,14 +692,13 @@ bool CozmoAudioController::SetSwitchState( AudioSwitchGroupId switchGroupId,
   
   if( ANKI_DEV_CHEATS ) {
     auto* webservice = _animContext->GetWebService();
-    if( webservice != nullptr ) {
+    if( (webservice != nullptr) && webservice->IsWebVizClientSubscribed(kWebVizModuleName) ) {
       Json::Value toSend;
       toSend["type"] = "SetSwitchState";
       toSend["time"] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       toSend["switchGroupId"]
         = AudioMetaData::SwitchState::EnumToString( static_cast<AudioMetaData::SwitchState::SwitchGroupType>(switchGroupId) );
-      toSend["switchStateId"]
-        = AudioMetaData::SwitchState::EnumToString( static_cast<AudioMetaData::SwitchState::GenericSwitch>(switchStateId) );
+      toSend["switchStateId"] = switchStateId; // no string mapping
       toSend["gameObjectId"] = AudioMetaData::EnumToString( static_cast<AudioMetaData::GameObjectType>(gameObjectId) );
       webservice->SendToWebViz( kWebVizModuleName, toSend );
     }

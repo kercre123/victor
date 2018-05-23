@@ -50,7 +50,8 @@ bool TestIntentsFramework::TestUserIntentTransition( TestBehaviorFramework& tbf,
   // Send user intent
   auto& uic = tbf.GetBehaviorComponent().GetComponent<UserIntentComponent>();
   UserIntentTag intentTag = intentToSend.GetTag();
-  uic.SetUserIntentPending(std::move(intentToSend));
+  uic.DevSetUserIntentPending(std::move(intentToSend), UserIntentSource::Unknown);
+  // TODO:(bn) add support for intent sources
 
   // Tick the behavior component until the intent is consumed, so that the behavior can respond to the intent
   AICompMap emptyMap;

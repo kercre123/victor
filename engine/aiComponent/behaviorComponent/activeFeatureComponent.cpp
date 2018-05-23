@@ -17,6 +17,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/cozmoContext.h"
 #include "webServerProcess/src/webService.h"
 
@@ -31,6 +33,7 @@ ActiveFeatureComponent::ActiveFeatureComponent()
 void ActiveFeatureComponent::InitDependent( Robot* robot, const BCCompMap& dependentComponents )
 {
   _context = dependentComponents.GetValue<BEIRobotInfo>().GetContext();
+  _lastUsedIntentActivationID = 0;
 }
 
 void ActiveFeatureComponent::UpdateDependent(const BCCompMap& dependentComponents)
@@ -43,18 +46,63 @@ void ActiveFeatureComponent::UpdateDependent(const BCCompMap& dependentComponent
   if( behaviorIterator.GetLastTickBehaviorStackChanged() == currTick ) {
     
     // get the feature at the end of the stack
-    ActiveFeature lastFeature = ActiveFeature::NoFeature;
-    auto callback = [&lastFeature](const ICozmoBehavior& behavior) {
+    ActiveFeature newFeature = ActiveFeature::NoFeature;
+    auto callback = [&newFeature](const ICozmoBehavior& behavior) {
       ActiveFeature feature = ActiveFeature::NoFeature;
       if( behavior.GetAssociatedActiveFeature(feature) &&
           feature != ActiveFeature::NoFeature ) {
-        lastFeature = feature;
+        newFeature = feature;
       }
     };
 
     behaviorIterator.IterateActiveCozmoBehaviorsForward(callback);
 
-    SetActiveFeature(lastFeature);
+    if( _activeFeature != newFeature ) {
+
+      const auto& uic = dependentComponents.GetValue<UserIntentComponent>();
+
+      UserIntentPtr activeIntent = uic.GetActiveUserIntent();
+
+      // TODO:(bn) delete this soon. This shouldn't happen but is possible theoretically. If this is a real
+      // use case, I need to know about it
+      if( activeIntent == nullptr &&
+          uic.IsAnyUserIntentPending() &&
+          newFeature != ActiveFeature::NoFeature ) {
+        PRINT_NAMED_ERROR("ActiveFeatureComponent.PossibleBug",
+                          "TELL BRAD: Feature '%s' is activating (old feature is %s). No intent active, but one is pending.",
+                          ActiveFeatureToString(newFeature),
+                          ActiveFeatureToString(_activeFeature));
+      }
+
+      // the default is that the robot activated the intent on it's own
+      std::string intentSource = "AI";
+      
+      if( activeIntent != nullptr ) {
+        // only consider a single source to be activated by an intent
+        if( newFeature != ActiveFeature::NoFeature &&
+            activeIntent->activationID != _lastUsedIntentActivationID ) {
+          // set intent source from this feature, and mark it's ID so we don't use it again
+          intentSource = UserIntentSourceToString(activeIntent->source);
+          _lastUsedIntentActivationID = activeIntent->activationID;
+        }
+      }
+      
+      if( _activeFeature != ActiveFeature::NoFeature ) {
+        DASMSG(featureEnd, "robot.feature.end", "This feature is no longer active");
+        DASMSG_SET(s1, ActiveFeatureToString(_activeFeature), "The feature");
+        DASMSG_SEND();
+      }
+
+      if( newFeature != ActiveFeature::NoFeature ) {
+        DASMSG(featureEnd, "robot.feature.start", "A new feature is active");
+        DASMSG_SET(s1, ActiveFeatureToString(newFeature), "The feature");
+        DASMSG_SET(s2, intentSource, "The source of the intent (possible values are AI, App, Voice, or Unknown)");
+        DASMSG_SEND();
+      }
+
+      _activeFeature = newFeature;
+      SendActiveFeatureToWebViz(intentSource);
+    }
   }
 }
 
@@ -63,35 +111,14 @@ ActiveFeature ActiveFeatureComponent::GetActiveFeature() const
   return _activeFeature;
 }
 
-void ActiveFeatureComponent::SetActiveFeature(ActiveFeature newFeature)
-{
-  if( _activeFeature != newFeature ) {
-    
-    if( _activeFeature != ActiveFeature::NoFeature ) {
-      PRINT_CH_INFO("BehaviorSystem", "active_feature.end",
-                    "%s",
-                    ActiveFeatureToString(_activeFeature));
-    }
-
-    if( newFeature != ActiveFeature::NoFeature ) {
-      PRINT_CH_INFO("BehaviorSystem", "active_feature.start",
-                    "%s",
-                    ActiveFeatureToString(newFeature));
-    }
-
-    _activeFeature = newFeature;
-    SendActiveFeatureToWebViz();
-  }
-}
-
-void ActiveFeatureComponent::SendActiveFeatureToWebViz() const
+void ActiveFeatureComponent::SendActiveFeatureToWebViz(const std::string& intentSource) const
 {
   if( _activeFeature != ActiveFeature::NoFeature ) {
     if( _context != nullptr ) {
       const auto* webService = _context->GetWebService();
       if( webService != nullptr ){
         Json::Value data;
-        data["activeFeature"] = ActiveFeatureToString(_activeFeature);
+        data["activeFeature"] = std::string(ActiveFeatureToString(_activeFeature)) + " (" + intentSource + ")";
         webService->SendToWebViz("behaviors", data);
       }
     }

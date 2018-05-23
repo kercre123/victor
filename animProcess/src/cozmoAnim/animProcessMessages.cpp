@@ -248,34 +248,22 @@ void Process_setKeepFaceAliveParameter(const Anki::Cozmo::RobotInterface::SetKee
 
 void Process_addOrUpdateEyeShift(const Anki::Cozmo::RobotInterface::AddOrUpdateEyeShift& msg)
 {
-  const std::string layerName(msg.name, msg.name_length);
-  _animStreamer->GetProceduralTrackComponent()->AddOrUpdateEyeShift(layerName,
-                                                               msg.xPix,
-                                                               msg.yPix,
-                                                               msg.duration_ms,
-                                                               msg.xMax,
-                                                               msg.yMax,
-                                                               msg.lookUpMaxScale,
-                                                               msg.lookDownMinScale,
-                                                               msg.outerEyeScaleIncrease);
+  _animStreamer->ProcessAddOrUpdateEyeShift(msg);
 }
 
 void Process_removeEyeShift(const Anki::Cozmo::RobotInterface::RemoveEyeShift& msg)
 {
-  const std::string layerName(msg.name, msg.name_length);
-  _animStreamer->GetProceduralTrackComponent()->RemoveEyeShift(layerName, msg.disableTimeout_ms);
+  _animStreamer->ProcessRemoveEyeShift(msg);
 }
 
 void Process_addSquint(const Anki::Cozmo::RobotInterface::AddSquint& msg)
 {
-  const std::string layerName(msg.name, msg.name_length);
-  _animStreamer->GetProceduralTrackComponent()->AddSquint(layerName, msg.squintScaleX, msg.squintScaleY, msg.upperLidAngle);
+  _animStreamer->ProcessAddSquint(msg);
 }
 
 void Process_removeSquint(const Anki::Cozmo::RobotInterface::RemoveSquint& msg)
 {
-  const std::string layerName(msg.name, msg.name_length);
-  _animStreamer->GetProceduralTrackComponent()->RemoveSquint(layerName, msg.disableTimeout_ms);
+  _animStreamer->ProcessRemoveSquint(msg);
 }
 
 void Process_postAudioEvent(const Anki::AudioEngine::Multiplexer::PostAudioEvent& msg)
@@ -454,6 +442,15 @@ void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineT
     {
       forwardToRobot = true;
       _context->GetMicDataSystem()->ResetMicListenDirection();
+      break;
+    }
+    case RobotInterface::EngineToRobot::Tag_calmPowerMode:
+    {
+      // Remember the power mode specified by engine so that we can go back to 
+      // it when pairing/debug screens are exited.
+      // Only relay the power mode to robot process if not already in pairing/debug screen.
+      FaceInfoScreenManager::getInstance()->SetCalmPowerModeOnReturnToNone(msg.calmPowerMode);
+      forwardToRobot = FaceInfoScreenManager::getInstance()->GetCurrScreenName() == ScreenName::None;
       break;
     }
 

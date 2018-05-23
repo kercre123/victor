@@ -47,7 +47,7 @@ public:
   //    the detector attempts to interpret the graph entirely from the frozen ".pb" file.
   //  - Otherwise, the model is assumed to be Caffe and both <graph>.prototxt and <graph>.caffemodel are
   //    assumed to exist and used to read the model.
-  Result Init(const std::string& modelPath, const Json::Value& config);
+  Result Init(const std::string& modelPath, const std::string& cachePath, const Json::Value& config);
   
   struct DetectedObject
   {
@@ -63,7 +63,6 @@ public:
   // Returns true if processing of the last image provided using StartProcessingIfIdle is complete
   // and populates objects with any detections.
   bool GetObjects(std::list<DetectedObject>& objects);
-  
   
   // Example usage:
   //
@@ -86,9 +85,15 @@ private:
   // We process asynchronsously, so need a copy of the image data
   Vision::ImageRGB _imgBeingProcessed;
   
-  bool    _isInitialized = false;
-  f32     _widthScale = 1.f;
-  f32     _heightScale = 1.f;
+  bool                  _isInitialized = false;
+  s32                   _processingWidth;
+  s32                   _processingHeight;
+  f32                   _widthScale = 1.f;
+  f32                   _heightScale = 1.f;
+  f32                   _currentGamma;
+  std::array<u8,256>    _gammaLUT{};
+  
+  void ApplyGamma(ImageRGB& img);
   
 }; // class ObjectDetector
   

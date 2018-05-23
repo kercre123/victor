@@ -112,6 +112,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUnexpectedMovement.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/robotDrivenDialog/behaviorPromptUserForVoiceCommand.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/sdkBehaviors/behaviorSDKInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/sleeping/behaviorSleeping.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
@@ -120,6 +121,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToTouchPetting.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToUnclaimedIntent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorTrackCube.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorTrackFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/weather/behaviorCoordinateWeather.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/weather/behaviorDisplayWeather.h"
 
@@ -760,6 +762,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::SDKInterface:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSDKInterface(config));
+      break;
+    }
+    
     case BehaviorClass::Sleeping:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorSleeping(config));
@@ -805,6 +813,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::TrackCube:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorTrackCube(config));
+      break;
+    }
+    
+    case BehaviorClass::TrackFace:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorTrackFace(config));
       break;
     }
     

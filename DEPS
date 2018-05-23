@@ -27,11 +27,11 @@
                     "animationGroups",
                     "sprites/spriteSequences"
                 ],
-                "version": "3039"
+                "version": "3048"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
-                "version": "44"
+                "version": "47"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"

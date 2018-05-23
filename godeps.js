@@ -263,8 +263,9 @@ function runRoutine(args) {
   // step 2: run 'go get' on all godir-specified folders - will pick up any new dependencies
   execSync('go get -d -v ' + allGoDirs, { stdio: 'inherit' });
 
+  const extraIncludes = ["github.com/golang/protobuf/protoc-gen-go", "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway", "github.com/golang/glog"];
   // now that 'go get' has pulled everything we need, get full dependency list for packages
-  const allDeps = [...new Set(execSyncTrim('go list -f \'{{ join .Deps "\\n" }}\' ' + allGoDirs).split('\n'))]
+  const allDeps = [...new Set(execSyncTrim('go list -f \'{{ join .Deps "\\n" }}\' ' + allGoDirs).split('\n'))].concat(extraIncludes)
     .filter(dep => !stdLibPackages.includes(dep)).sort();
 
   // step 3: check that all remote dependencies are tracked by us and checked out at correct commit

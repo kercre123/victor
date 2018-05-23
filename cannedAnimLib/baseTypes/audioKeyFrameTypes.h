@@ -49,9 +49,12 @@ struct AudioEventGroupRef {
     , Probability( probability ) {}
   };
   
+  AudioMetaData::GameObjectType GameObject;
   std::vector<EventDef> Events;
 
-  AudioEventGroupRef() {}
+  AudioEventGroupRef( AudioMetaData::GameObjectType gameObject = AudioMetaData::GameObjectType::Invalid )
+  : GameObject( gameObject ) {}
+  
   AudioEventGroupRef& operator=( const AudioEventGroupRef& other );
   
   void AddEvent( AudioMetaData::GameEvent::GenericEvent audioEvent, float volume, float probability );
@@ -77,11 +80,14 @@ struct AudioStateRef {
 struct AudioSwitchRef {
   AudioMetaData::SwitchState::SwitchGroupType SwitchGroup;
   AudioMetaData::SwitchState::GenericSwitch State;
+  AudioMetaData::GameObjectType GameObject;
   
   AudioSwitchRef( AudioMetaData::SwitchState::SwitchGroupType switchGroup = AudioMetaData::SwitchState::SwitchGroupType::Invalid,
-                  AudioMetaData::SwitchState::GenericSwitch state = AudioMetaData::SwitchState::GenericSwitch::Invalid )
+                  AudioMetaData::SwitchState::GenericSwitch state = AudioMetaData::SwitchState::GenericSwitch::Invalid,
+                  AudioMetaData::GameObjectType gameObject = AudioMetaData::GameObjectType::Invalid )
   : SwitchGroup( switchGroup )
-  , State( state ) {}
+  , State( state )
+  , GameObject( gameObject ) {}
 };
 
 
@@ -90,15 +96,18 @@ struct AudioParameterRef {
   float Value;
   uint32_t Time_ms;
   Anki::AudioEngine::Multiplexer::CurveType Curve;
+  AudioMetaData::GameObjectType GameObject;
   
   AudioParameterRef( AudioMetaData::GameParameter::ParameterType parameter = AudioMetaData::GameParameter::ParameterType::Invalid,
                      float value = 0.0f,
                      uint32_t time_ms = 0,
-                     Anki::AudioEngine::Multiplexer::CurveType curve = Anki::AudioEngine::Multiplexer::CurveType::Linear )
+                     Anki::AudioEngine::Multiplexer::CurveType curve = Anki::AudioEngine::Multiplexer::CurveType::Linear,
+                     AudioMetaData::GameObjectType gameObject = AudioMetaData::GameObjectType::Invalid )
   : Parameter( parameter )
   , Value( value )
   , Time_ms( time_ms )
-  , Curve( curve ) {}
+  , Curve( curve )
+  , GameObject( gameObject ) {}
 };
 
 

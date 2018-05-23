@@ -35,6 +35,7 @@ target_link_libraries(robot_hal
   cti_common_robot
   robot_interface
   robot_clad_cpplite
+  hdr_histogram
 )
 
 target_include_directories(robot_hal
@@ -83,7 +84,6 @@ set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
 set(PLATFORM_FLAGS "")
 if (VICOS)
-  include(breakpad)
   set(PLATFORM_LIBS
     robot_hal
   )
@@ -233,7 +233,6 @@ if (VICOS)
     cti_common_robot
     cti_messaging_robot
     victorCrashReports
-    breakpad_client
     ${PLATFORM_LIBS}
   )
 

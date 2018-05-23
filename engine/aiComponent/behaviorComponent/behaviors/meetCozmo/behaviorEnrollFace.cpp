@@ -24,6 +24,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/visionComponent.h"
@@ -136,9 +137,9 @@ void BehaviorEnrollFace::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys
 void BehaviorEnrollFace::CheckForIntentData() const
 {
   auto& uic = GetBehaviorComp<UserIntentComponent>();
-  UserIntentPtr intent = uic.GetActiveUserIntent( USER_INTENT(meet_victor) );
-  if( intent != nullptr ) {
-    const auto& meetVictor = intent->Get_meet_victor();
+  UserIntentPtr intentData = uic.GetUserIntentIfActive(USER_INTENT(meet_victor));
+  if( intentData != nullptr ) {
+    const auto& meetVictor = intentData->intent.Get_meet_victor();
     _settings->name = meetVictor.username;
     _settings->observedID = Vision::UnknownFaceID;
     _settings->saveID = 0;

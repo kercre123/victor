@@ -68,7 +68,7 @@ void BehaviorReactToUnexpectedMovement::OnBehaviorActivated()
   const u32  kNumLoops = 1;
   const bool kInterruptRunning = true;
   
-  AnimationTrigger reactionAnimation = AnimationTrigger::ANTICIPATED_ReactToUnexpectedMovement;
+  AnimationTrigger reactionAnimation = AnimationTrigger::ReactToUnexpectedMovement;
 
   DelegateIfInControl(new TriggerLiftSafeAnimationAction(reactionAnimation,
                                                          kNumLoops, kInterruptRunning, tracksToLock), [this]()

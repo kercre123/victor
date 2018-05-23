@@ -119,10 +119,6 @@ set(CORETECH_EXTERNAL_DIR "${ANKI_EXTERNAL_DIR}/coretech_external")
 
 set(ANKI_SRCLIST_DIR "${CMAKE_SOURCE_DIR}/generated/cmake")
 
-#if (NOT breakpad_client)
-#    message(FATAL_ERROR "breakpad_client not defined")
-#endif()
-
 set(CLAD_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/victor-clad/tools/message-buffers")
 set(CLAD_VICTOR_EMITTER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/victor-clad/victorEmitters")
 add_subdirectory("victor-clad") # includes clad via message-buffers
@@ -140,8 +136,6 @@ import(DAS "lib/das-client")
 # include dirs
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/lib/crash-reporting-vicos/Breakpad/include/breakpad")
-
 import(coretech "coretech")
 add_subdirectory("clad")
 add_subdirectory("cloud")
@@ -155,6 +149,7 @@ add_subdirectory("lib/anki-ble")
 add_subdirectory("lib/micData")
 add_subdirectory("lib/signalEssence")
 add_subdirectory("platform")
+add_subdirectory("dasmgr")
 
 target_include_directories(victor_anim PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>

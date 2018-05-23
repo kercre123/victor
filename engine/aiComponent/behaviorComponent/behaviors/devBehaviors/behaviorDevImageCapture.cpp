@@ -61,6 +61,8 @@ static const BackpackLights kLightsOff = {
   
 const char* const kSavePathKey = "save_path";
 const char* const kImageSaveQualityKey = "quality";
+const char* const kImageScaleKey = "image_scale";
+const char* const kImageResizeMethodKey = "resize_method";
 const char* const kUseCapacitiveTouchKey = "use_capacitive_touch";
 const char* const kSaveSensorDataKey = "save_sensor_data";
 const char* const kClassNamesKey = "class_names";
@@ -73,6 +75,7 @@ BehaviorDevImageCapture::InstanceConfig::InstanceConfig()
 {
   useCapTouch = false;
   saveSensorData = false;
+  imageSaveSize = Vision::ImageCache::Size::Full;
 }
 
 
@@ -96,6 +99,10 @@ BehaviorDevImageCapture::BehaviorDevImageCapture(const Json::Value& config)
   _iConfig.imageSavePath = JsonTools::ParseString(config, kSavePathKey, "BehaviorDevImageCapture");
   _iConfig.imageSaveQuality = JsonTools::ParseInt8(config, kImageSaveQualityKey, "BehaviorDevImageCapture");
   _iConfig.useCapTouch = JsonTools::ParseBool(config, kUseCapacitiveTouchKey, "BehaviorDevImageCapture");
+
+  std::string scaleStr = JsonTools::ParseString(config, kImageScaleKey, "BehaviorDevImageCapture");
+  std::string methodStr = JsonTools::ParseString(config, kImageResizeMethodKey, "BehaviorDevImageCapture");
+  _iConfig.imageSaveSize = Vision::ImageCache::StringToSize(scaleStr, methodStr);
 
   if (config.isMember(kSaveSensorDataKey)) {
     _iConfig.saveSensorData = config[kSaveSensorDataKey].asBool();
@@ -135,6 +142,8 @@ void BehaviorDevImageCapture::GetBehaviorJsonKeys(std::set<const char*>& expecte
   const char* list[] = {
     kSavePathKey,
     kImageSaveQualityKey,
+    kImageScaleKey,
+    kImageResizeMethodKey,
     kUseCapacitiveTouchKey,
     kSaveSensorDataKey,
     kClassNamesKey,
@@ -219,7 +228,7 @@ void BehaviorDevImageCapture::BehaviorUpdate()
   const bool isLiftUp = (GetBEI().GetRobotInfo().GetLiftHeight() > LIFT_HEIGHT_HIGHDOCK);
   if(_dVars.wasLiftUp && !isLiftUp)
   {
-    SwitchToNextClass();    
+    SwitchToNextClass();
   }
   _dVars.wasLiftUp = isLiftUp;
 
@@ -257,7 +266,8 @@ void BehaviorDevImageCapture::BehaviorUpdate()
       const ImageSendMode sendMode = _dVars.isStreaming ? ImageSendMode::Stream : ImageSendMode::Off;
       visionComponent.SetSaveImageParameters(sendMode,
                                              GetSavePath(),
-                                             _iConfig.imageSaveQuality);
+                                             _iConfig.imageSaveQuality,
+                                             _iConfig.imageSaveSize);
       
       if( _dVars.isStreaming ) {
         BlinkLight();
@@ -279,12 +289,14 @@ void BehaviorDevImageCapture::BehaviorUpdate()
       if (_iConfig.saveSensorData) {
         visionComponent.SetSaveImageParameters(ImageSendMode::SingleShotWithSensorData,
                                                GetSavePath(),
-                                               _iConfig.imageSaveQuality);
+                                               _iConfig.imageSaveQuality,
+                                               _iConfig.imageSaveSize);
       }
       else {
         visionComponent.SetSaveImageParameters(ImageSendMode::SingleShot,
                                                GetSavePath(),
-                                               _iConfig.imageSaveQuality);
+                                               _iConfig.imageSaveQuality,
+                                               _iConfig.imageSaveSize);
       }
 
       BlinkLight();
@@ -298,7 +310,8 @@ void BehaviorDevImageCapture::BehaviorUpdate()
       // we were streaming but now should stop because there was a new touch
       visionComponent.SetSaveImageParameters(ImageSendMode::Off,
                                              GetSavePath(),
-                                             _iConfig.imageSaveQuality);
+                                             _iConfig.imageSaveQuality,
+                                             _iConfig.imageSaveSize);
 
       _dVars.isStreaming = false;
     }

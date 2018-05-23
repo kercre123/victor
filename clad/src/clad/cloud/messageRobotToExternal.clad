@@ -1,0 +1,43 @@
+namespace Anki {
+namespace Victor {
+namespace Gateway {
+
+message UiDeviceConnected {
+  string placeholder,
+}
+
+structure AnimationCompleted {
+  string animationName,
+}
+
+union ActionCompletedUnion {
+  AnimationCompleted          animationCompleted = 0x01,
+}
+
+enum int_32 RobotActionType {
+    UNKNOWN = -1,
+}
+
+enum uint_32 ActionResult {
+  SUCCESS                 = 0, // This is still zero
+  RUNNING                 = 16777216,
+  CANCELLED_WHILE_RUNNING = 33554432,
+}
+
+message RobotCompletedAction {
+    uint_32 idTag,                                 // The identifier of the specific action that completed
+    RobotActionType      actionType,
+    ActionResult         result,
+    ActionResult         subActionResults[uint_8], // vector of all results from this action's subActions
+    ActionCompletedUnion completionInfo,
+}
+
+// Note: these values and messages must match the values that get added to MessageEngineToGame
+union MessageRobotToExternal {
+  UiDeviceConnected    UiDeviceConnected    = 0x00, // DO NOT CHANGE THIS VALUE
+  RobotCompletedAction RobotCompletedAction = 0x01,
+}
+
+} // Gateway
+} // Victor
+} // Anki

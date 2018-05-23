@@ -193,8 +193,8 @@ generate_clad(
 )
 
 set(CLAD_GO_GEN_SRCS ${CLAD_GO_GEN_SRCS} PARENT_SCOPE)
-string(REPLACE "cladgo/src" "clad/engine" CLAD_CLOUD_CPP_GEN_SRCS ${CLAD_GO_GEN_SRCS})
-string(REPLACE ".go" ".cpp" CLAD_CLOUD_CPP_GEN_SRCS ${CLAD_CLOUD_CPP_GEN_SRCS})
+string(REPLACE "cladgo/src" "clad/engine" CLAD_CLOUD_CPP_GEN_SRCS "${CLAD_GO_GEN_SRCS}")
+string(REPLACE ".go" ".cpp" CLAD_CLOUD_CPP_GEN_SRCS "${CLAD_CLOUD_CPP_GEN_SRCS}")
 
 add_library(cloud_clad_cpp STATIC
     ${CLAD_CLOUD_CPP_GEN_SRCS}

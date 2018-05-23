@@ -106,7 +106,7 @@ namespace {
   u8 kTooDarkValue   = 15;
   u8 kTooBrightValue = 230;
   f32 kLowPercentile = 0.10f;
-  f32 kMidPercentile = 0.50f;
+  f32 kTargetPercentile = 0.50f;
   f32 kHighPercentile = 0.90f;
   bool kMeterFromDetections = true;
 }
@@ -141,9 +141,11 @@ Result VisionSystem::Init(const Json::Value& config)
   _isReadingToolCode = false;
   
   std::string dataPath("");
+  std::string cachePath("");
   if(_context->GetDataPlatform() != nullptr) {
     dataPath = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
                                                            Util::FileUtils::FullFilePath({"config", "engine", "vision"}));
+    cachePath = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "vision");
   } else {
     PRINT_NAMED_WARNING("VisionSystem.Init.NullDataPlatform",
                         "Initializing VisionSystem with no data platform.");
@@ -153,6 +155,7 @@ Result VisionSystem::Init(const Json::Value& config)
     PRINT_NAMED_ERROR("VisionSystem.Init.MissingImageQualityConfigField", "");
     return RESULT_FAIL;
   }
+    
   
   // Helper macro to try to get the specified field and store it in the given variable
   // and return RESULT_FAIL if that doesn't work
@@ -170,27 +173,27 @@ Result VisionSystem::Init(const Json::Value& config)
     GET_JSON_PARAMETER(imageQualityConfig, "TooDarkValue",        kTooDarkValue);
     GET_JSON_PARAMETER(imageQualityConfig, "MeterFromDetections", kMeterFromDetections);
     GET_JSON_PARAMETER(imageQualityConfig, "LowPercentile",       kLowPercentile);
-    GET_JSON_PARAMETER(imageQualityConfig, "MidPercentile",       kMidPercentile);
     GET_JSON_PARAMETER(imageQualityConfig, "HighPercentile",      kHighPercentile);
     
-    u8  targetMidValue=0;
+    u8  targetValue=0;
     f32 maxChangeFraction = -1.f;
     s32 subSample = 0;
     
-    GET_JSON_PARAMETER(imageQualityConfig, "MidValue",             targetMidValue);
-    GET_JSON_PARAMETER(imageQualityConfig, "MaxChangeFraction",    maxChangeFraction);
-    GET_JSON_PARAMETER(imageQualityConfig, "SubSample",            subSample);
+    GET_JSON_PARAMETER(imageQualityConfig, "TargetPercentile",    kTargetPercentile);
+    GET_JSON_PARAMETER(imageQualityConfig, "TargetValue",         targetValue);
+    GET_JSON_PARAMETER(imageQualityConfig, "MaxChangeFraction",   maxChangeFraction);
+    GET_JSON_PARAMETER(imageQualityConfig, "SubSample",           subSample);
     
-    const Result result = _imagingPipeline->SetExposureParameters(targetMidValue,
-                                                                  kMidPercentile,
+    const Result result = _imagingPipeline->SetExposureParameters(targetValue,
+                                                                  kTargetPercentile,
                                                                   maxChangeFraction,
                                                                   subSample);
     
     if(RESULT_OK == result)
     {
       PRINT_CH_INFO(kLogChannelName, "VisionSystem.Init.SetAutoExposureParams",
-                    "subSample:%d midVal:%d midPerc:%.3f changeFrac:%.3f",
-                    subSample, targetMidValue, kMidPercentile, maxChangeFraction);
+                    "subSample:%d tarVal:%d tarPerc:%.3f changeFrac:%.3f",
+                    subSample, targetValue, kTargetPercentile, maxChangeFraction);
     }
     else
     {
@@ -236,26 +239,32 @@ Result VisionSystem::Init(const Json::Value& config)
     return petTrackerInitResult;
   }
   
+  if(!config.isMember("ObjectDetector"))
   {
-    if(!config.isMember("ObjectDetector"))
-    {
-      PRINT_NAMED_ERROR("VisionSystem.Init.MissingObjectDetectorConfigField", "");
-      return RESULT_FAIL;
-    }
-    
-    
-    const std::string modelPath = Util::FileUtils::FullFilePath({dataPath, "dnn_models"});
-    if(Util::FileUtils::DirectoryExists(modelPath)) // TODO: Remove once DNN models are checked in somewhere (VIC-1071)
-    {
-      const Json::Value& objDetectorConfig = config["ObjectDetector"];
-      Result objDetectorResult = _generalObjectDetector->Init(modelPath, objDetectorConfig);
-      if(RESULT_OK != objDetectorResult)
-      {
-        PRINT_NAMED_ERROR("VisionSystem.Init.ObjectDetectorInitFailed", "");
-      }
-    }
+    PRINT_NAMED_ERROR("VisionSystem.Init.MissingObjectDetectorConfigField", "");
+    return RESULT_FAIL;
   }
   
+  const std::string modelPath = Util::FileUtils::FullFilePath({dataPath, "dnn_models"});
+  if(Util::FileUtils::DirectoryExists(modelPath)) // TODO: Remove once DNN models are checked in somewhere (VIC-1071)
+  {
+    const Json::Value& objDetectorConfig = config["ObjectDetector"];
+    
+#   ifdef VICOS
+    // Use faster tmpfs partition for the cache, to make I/O less of a bottleneck
+    const std::string dnnCachePath = "/tmp/vision/object_detector";
+#   else
+    const std::string dnnCachePath = Util::FileUtils::FullFilePath({cachePath, "object_detector"});
+#   endif
+    Result objDetectorResult = _generalObjectDetector->Init(modelPath,
+                                                            dnnCachePath,
+                                                            objDetectorConfig);
+    if(RESULT_OK != objDetectorResult)
+    {
+      PRINT_NAMED_ERROR("VisionSystem.Init.ObjectDetectorInitFailed", "");
+    }
+  }
+   
   // Default processing modes should are set in vision_config.json
   if(!config.isMember("InitialVisionModes"))
   {
@@ -423,11 +432,13 @@ Result VisionSystem::SetNextCameraWhiteBalance(f32 whiteBalanceGainR,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void VisionSystem::SetSaveParameters(const ImageSendMode saveMode, const std::string& path, const int8_t quality)
+void VisionSystem::SetSaveParameters(const ImageSendMode saveMode, const std::string& path, 
+                                     const int8_t quality, const Vision::ImageCache::Size& saveSize)
 {
   _imageSaveMode = saveMode;
   _imageSavePath = path;
   _imageSaveQuality = std::min(int8_t(100), quality);
+  _imageSaveSize = saveSize;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -694,7 +705,7 @@ Result VisionSystem::CheckImageQuality(const Vision::Image& inputImage,
   if(DEBUG_IMAGE_HISTOGRAM)
   {
     const Vision::ImageBrightnessHistogram& hist = _imagingPipeline->GetHistogram();
-    std::vector<u8> values = hist.ComputePercentiles({kLowPercentile, kMidPercentile, kHighPercentile});
+    std::vector<u8> values = hist.ComputePercentiles({kLowPercentile, kTargetPercentile, kHighPercentile});
     auto valueIter = values.begin();
     
     Vision::ImageRGB histImg(hist.GetDisplayImage(128));
@@ -1697,7 +1708,9 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.Update.SavingImage", "Saving to %s",
                    fullFilename.c_str());
 
-    const Result saveResult = imageCache.GetRGB().Save(fullFilename, _imageSaveQuality);
+    // Resize into a new image to avoid affecting downstream updates
+    const Vision::ImageRGB& sizedImage = imageCache.GetRGB(_imageSaveSize);
+    const Result saveResult = sizedImage.Save(fullFilename, _imageSaveQuality);
 
     Result saveSensorResult = RESULT_OK;
     if((ImageSendMode::SingleShotWithSensorData == _imageSaveMode) || (ImageSendMode::Stream == _imageSaveMode)) {
@@ -1760,13 +1773,32 @@ Result VisionSystem::SaveSensorData() const {
     config["backLeftCliff"]   = state.WasCliffDetected(CliffSensor::CLIFF_BL);
     config["backRightCliff"]  = state.WasCliffDetected(CliffSensor::CLIFF_BR);
 
-    // was picked up
+    // robot motion flags
+    // We don't record "WasCameraMoving" since it's HeadMoving || WheelsMoving
+    config["wasCarryingObject"] = state.WasCarryingObject();
+    config["wasMoving"] = state.WasMoving();
+    config["WasHeadMoving"] = state.WasHeadMoving();
+    config["WasLiftMoving"] = state.WasLiftMoving();
+    config["WereWheelsMoving"] = state.WereWheelsMoving();
     config["wasPickedUp"] = state.WasPickedUp();
 
     // head angle
     config["headAngle"] = state.GetHeadAngle_rad();
     // lift angle
     config["liftAngle"] = state.GetLiftAngle_rad();
+
+    // camera exposure, gain, white balance
+    // Make sure to get parameters for current image, not next image
+    // NOTE: Due to latency between interface call and actual register writes,
+    // the so-called current params may not actually be current
+    config["requestedCamExposure"] = _currentCameraParams.exposureTime_ms;
+    config["requestedCamGain"] = _currentCameraParams.gain;
+    config["requestedCamWhiteBalanceRed"] = _currentCameraParams.whiteBalanceGainR;
+    config["requestedCamWhiteBalanceGreen"] = _currentCameraParams.whiteBalanceGainG;
+    config["requestedCamWhiteBalanceBlue"] = _currentCameraParams.whiteBalanceGainB;
+
+    // image timestamp
+    config["imageTimestamp"] = _currentResult.timestamp;
   }
 
   Json::StyledWriter writer;

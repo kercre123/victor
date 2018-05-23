@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include "bleMessageProtocol.h"
 #include "messageExternalComms.h"
+#include "RequestsDelegate.h"
 #include <sodium.h>
 #include <arpa/inet.h>
 
@@ -68,6 +69,7 @@ enum WiFiAuth : uint8_t {
   NSMutableDictionary* _wifiAuth;
   NSMutableSet* _wifiHidden;
   dispatch_queue_t _commandQueue;
+  dispatch_queue_t _requestQueue;
   
   std::string _currentCommand;
   bool _readyForNextCommand;
@@ -77,7 +79,9 @@ enum WiFiAuth : uint8_t {
   uint64_t _otaExpected;
   
   bool _verbose;
+  bool _download;
   int _commVersion;
+  bool _interactive;
   
   NSArray* _colorArray;
   
@@ -89,17 +93,31 @@ enum WiFiAuth : uint8_t {
   bool _isPairing;
 }
 
+@property (strong, nonatomic) id delegate;
+@property (strong, nonatomic) id syncdelegate;
+
 - (std::string)hexStr:(char*)data length:(int)len;
 - (std::string)asciiStr:(char*)data length:(int)size;
 - (uint8_t)nibbleToNumber:(uint8_t)nibble;
 
+- (void) devDownloadOta;
 - (void) handleSend:(const void*)bytes length:(int)n;
 - (void) handleReceive:(const void*)bytes length:(int)n;
 - (void) handleReceiveSecure:(const void*)bytes length:(int)n;
 - (void) printHelp;
 - (void) showProgress: (float)current expected:(float)expected;
+- (void) handleRequest:(Anki::Victor::ExternalComms::RtsConnection_2)msg;
 
 - (void) SendSshPublicKey:(std::string)filename;
+
+- (void) async_StatusRequest;
+- (void) async_WifiScanRequest;
+- (void) async_WifiConnectRequest:(std::string)ssid password:(std::string)pw hidden:(bool)hid auth:(uint8_t)authType;
+- (void) async_WifiIpRequest;
+- (void) async_WifiApRequest:(bool)enabled;
+- (void) async_otaStart:(std::string)url;
+- (void) async_otaCancel;
+- (void) async_otaProgress;
 
 - (void) HandleReceiveHandshake:(const void*)bytes length:(int)n;
 - (void) HandleReceivePublicKey:(const Anki::Victor::ExternalComms::RtsConnRequest&)msg;
@@ -129,6 +147,7 @@ enum WiFiAuth : uint8_t {
 - (NSArray*) GetSession: (NSString*)key;
 - (void)resetDefaults;
 - (void)setVerbose:(bool)enabled;
+- (void)setDownload:(bool)enabled;
 
 @end
 

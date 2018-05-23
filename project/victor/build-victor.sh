@@ -270,7 +270,7 @@ if [ -z "${GOROOT+x}" ]; then
 else
     GO_EXE=$GOROOT/bin/go
 fi
-export GOPATH=${TOPLEVEL}/cloud/go:${TOPLEVEL}/generated/cladgo:${TOPLEVEL}/tools/message-buffers/support/go
+export GOPATH=${TOPLEVEL}/cloud/go:${TOPLEVEL}/generated/cladgo:${TOPLEVEL}/generated/go:${TOPLEVEL}/tools/message-buffers/support/go
 
 if [ ! -f ${GO_EXE} ]; then
   echo "Missing Go executable: ${GO_EXE}"

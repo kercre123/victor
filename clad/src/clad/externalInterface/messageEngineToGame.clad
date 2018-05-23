@@ -992,6 +992,7 @@ message NotificationTextKeys {
 autounion MessageEngineToGame
 {
   UiDeviceConnected                 UiDeviceConnected                  = 0x00, // DO NOT CHANGE THIS VALUE
+  RobotCompletedAction              RobotCompletedAction               = 0x01,
 }
 
 } // namespace ExternalInterface

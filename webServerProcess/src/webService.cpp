@@ -1434,6 +1434,18 @@ void WebService::SendToWebSockets(const std::string& moduleName, const Json::Val
     }
   }
 }
+  
+bool WebService::IsWebVizClientSubscribed(const std::string& moduleName) const
+{
+  for( const auto& connData : _webSocketConnections ) {
+    if( (moduleName.empty() && !connData.subscribedModules.empty()) // any module subscribed
+        || (connData.subscribedModules.find( moduleName ) != connData.subscribedModules.end()) )
+    {
+      return true;
+    }
+  }
+  return false;
+}
 
 int WebService::HandleWebSocketsConnect(const struct mg_connection* conn, void* cbparams)
 {

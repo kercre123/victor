@@ -36,7 +36,7 @@ namespace Cozmo {
   CONSOLE_VAR_RANGED(f32,   kProcFace_EyeLightnessMultiplier,     CONSOLE_GROUP, 1.f, 0.f, 2.f);
 
   CONSOLE_VAR(bool,         kProcFace_HotspotRender,              CONSOLE_GROUP, true); // Render glow
-  CONSOLE_VAR_RANGED(f32,   kProcFace_HotspotFalloff,             CONSOLE_GROUP, 0.9f, 0.05f, 1.f);
+  CONSOLE_VAR_RANGED(f32,   kProcFace_HotspotFalloff,             CONSOLE_GROUP, 0.48f, 0.05f, 1.f);
 
 #if PROCEDURALFACE_GLOW_FEATURE
   CONSOLE_VAR_RANGED(f32, kProcFace_GlowSizeMultiplier,           CONSOLE_GROUP, 1.f, 0.f, 1.f);
@@ -48,7 +48,7 @@ namespace Cozmo {
   static const s32 kNumNoiseImages = 7;
 
   CONSOLE_VAR_RANGED(s32, kProcFace_NoiseNumFrames,     "ProceduralFace", 5, 0, kNumNoiseImages);
-  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseMinLightness,  "ProceduralFace", 0.95f, 0.f, 2.f); // replaces kProcFace_NoiseFraction
+  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseMinLightness,  "ProceduralFace", 0.92f, 0.f, 2.f); // replaces kProcFace_NoiseFraction
   CONSOLE_VAR_RANGED(f32, kProcFace_NoiseMaxLightness,  "ProceduralFace", 1.14f, 0.f, 2.f); // replaces kProcFace_NoiseFraction
 
   CONSOLE_VAR_EXTERN(s32, kProcFace_NoiseNumFrames);
@@ -950,16 +950,11 @@ namespace Cozmo {
     return state;
   } // ConvertColorspace()
 
-  bool ProceduralFaceDrawer::GetNextBlinkFrame(ProceduralFace& faceData, TimeStamp_t& offset)
+  bool ProceduralFaceDrawer::GetNextBlinkFrame(ProceduralFace& faceData,
+                                               BlinkState& out_blinkState,
+                                               TimeStamp_t& out_offset)
   {
     static ProceduralFace originalFace;
-
-    enum class BlinkState : uint8_t {
-      Closing,
-      Closed,
-      JustOpened,
-      Opening
-    };
 
     struct BlinkParams {
       ProceduralFace::Value height, width;
@@ -987,7 +982,7 @@ namespace Cozmo {
     if(paramIter == blinkParams.end()) {
       // Set everything back to original params
       faceData = originalFace;
-      offset = 33;
+      out_offset = 33;
 
       // Reset for next time
       paramIter = blinkParams.begin();
@@ -1006,7 +1001,7 @@ namespace Cozmo {
         faceData.SetParameter(whichEye, Parameter::EyeScaleY,
                               originalFace.GetParameter(whichEye, Parameter::EyeScaleY) * paramIter->height);
       }
-      offset = paramIter->t;
+      out_offset = paramIter->t;
 
       switch(paramIter->blinkState) {
         case BlinkState::Closed:
@@ -1040,7 +1035,8 @@ namespace Cozmo {
         default:
           break;
       }
-
+      
+      out_blinkState = paramIter->blinkState;
       ++paramIter;
 
       // Let caller know there are more blink frames left, so keep calling

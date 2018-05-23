@@ -16,6 +16,7 @@
 #include "clad/types/behaviorComponent/userIntent.h"
 #include "clad/types/behaviorComponent/weatherConditionTypes.h"
 
+#include "engine/robotDataLoader.h"
 #include "util/helpers/noncopyable.h"
 
 namespace Anki {
@@ -29,7 +30,8 @@ public:
   static bool ShouldSayText(const UserIntent_WeatherResponse& weatherIntent, 
                             std::string& textToSay);
   static bool IsFahrenheit(const UserIntent_WeatherResponse& weatherIntent);
-  static WeatherConditionType GetCondition(const UserIntent_WeatherResponse& weatherIntent);
+  static WeatherConditionType GetCondition(const RobotDataLoader::WeatherResponseMap* weatherResponseMap,
+                                           const UserIntent_WeatherResponse& weatherIntent);
 
 }; // class WeatherIntentParser
 

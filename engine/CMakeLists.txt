@@ -23,7 +23,6 @@ set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
 set(PLATFORM_FLAGS "")
 if (VICOS)
-  include(breakpad)
   set(PLATFORM_LIBS log)
 elseif (MACOSX)
   find_library(FOUNDATION Foundation)
@@ -74,7 +73,6 @@ target_link_libraries(cozmo_engine
   # vendor
   ${FLATBUFFERS_LIBS}
   ${LIBARCHIVE_LIBS}
-  ${BREAKPAD_LIBS}
   # system
   z
   # platform
@@ -115,4 +113,3 @@ if (VICOS)
     ARCHIVE DESTINATION ${CMAKE_BINARY_DIR}/dist/lib
   )
 endif()
-

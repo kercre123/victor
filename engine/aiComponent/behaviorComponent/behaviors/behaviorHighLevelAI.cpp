@@ -21,6 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionAnyStimuli.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
@@ -42,8 +43,6 @@ constexpr const char* kDebugName = "BehaviorHighLevelAI";
 const char* kSocializeKnownFaceCooldownKey = "socializeKnownFaceCooldown_s";
 const char* kPlayWithCubeCooldownKey = "playWithCubeCooldown_s";
 const char* kPlayWithCubeOnChargerCooldownKey = "playWithCubeOnChargerCooldown_s";
-const char* kGoToSleepTimeoutKey = "goToSleepTimeout_s";
-const char* kMinFaceTimeToAllowSleepKey = "minFaceTimeToAllowSleep_s";
 const char* kMaxFaceDistanceToSocializeKey = "maxFaceDistanceToSocialize_mm";
 const char* kPostBehaviorSuggestionResumeOverrides = "postBehaviorSuggestionResumeOverrides"; // whew
   
@@ -58,8 +57,6 @@ BehaviorHighLevelAI::BehaviorHighLevelAI(const Json::Value& config)
   _params.socializeKnownFaceCooldown_s = JsonTools::ParseFloat(config, kSocializeKnownFaceCooldownKey, kDebugName);
   _params.playWithCubeCooldown_s = JsonTools::ParseFloat(config, kPlayWithCubeCooldownKey, kDebugName);
   _params.playWithCubeOnChargerCooldown_s = JsonTools::ParseFloat(config, kPlayWithCubeOnChargerCooldownKey, kDebugName);
-  _params.goToSleepTimeout_s = JsonTools::ParseFloat(config, kGoToSleepTimeoutKey, kDebugName);
-  _params.minFaceTimeToAllowSleep_s = JsonTools::ParseFloat(config, kMinFaceTimeToAllowSleepKey, kDebugName);
   _params.maxFaceDistanceToSocialize_mm = JsonTools::ParseFloat(config, kMaxFaceDistanceToSocializeKey, kDebugName);
   
   if( config[kPostBehaviorSuggestionResumeOverrides].isObject() ) {
@@ -102,8 +99,6 @@ void BehaviorHighLevelAI::GetBehaviorJsonKeys(std::set<const char*>& expectedKey
     kSocializeKnownFaceCooldownKey,
     kPlayWithCubeCooldownKey,
     kPlayWithCubeOnChargerCooldownKey,
-    kGoToSleepTimeoutKey,
-    kMinFaceTimeToAllowSleepKey,
     kMaxFaceDistanceToSocializeKey,
     kPostBehaviorSuggestionResumeOverrides,
   };
@@ -184,38 +179,6 @@ CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
         ConditionLambda::VisionModeSet{
           { VisionMode::DetectingFaces, EVisionUpdateFrequency::Low }
         })));
-
-  handles.emplace_back(
-    BEIConditionFactory::InjectCustomBEICondition(
-      "WantsToSleep",
-      std::make_shared<ConditionLambda>(
-        [this](BehaviorExternalInterface& bei) {
-          if( GetCurrentStateID() != GetStateID("ObservingOnCharger") ) {
-            PRINT_NAMED_WARNING("BehaviorHighLevelAI.WantsToSleepCondition.WrongState",
-                                "This condition only works from ObservingOnCharger");
-            return false;
-          }
-          
-          const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-          if( GetLastTimeStarted( GetStateID("ObservingOnCharger") ) + (_params.goToSleepTimeout_s / kTimeMultiplier) <= currTime_s ) {
-
-            // only go to sleep if we haven't recently seen a face
-            auto& faceWorld = bei.GetFaceWorld();
-            Pose3d waste;
-            const bool inRobotOriginOnly = false; // might have been picked up
-            const TimeStamp_t lastFaceTime = faceWorld.GetLastObservedFace(waste, inRobotOriginOnly);
-            const TimeStamp_t lastImgTime = bei.GetRobotInfo().GetLastImageTimeStamp();
-            if( lastFaceTime < lastImgTime &&
-                (1000*kTimeMultiplier*(lastImgTime - lastFaceTime) > _params.minFaceTimeToAllowSleep_s) ) {
-              return true;
-            }
-          }
-          return false;
-        },
-        ConditionLambda::VisionModeSet{
-          { VisionMode::DetectingFaces, EVisionUpdateFrequency::Low }
-        }
-        )));
 
   handles.emplace_back(
     BEIConditionFactory::InjectCustomBEICondition(

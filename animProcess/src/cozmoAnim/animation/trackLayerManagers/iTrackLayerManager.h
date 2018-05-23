@@ -54,7 +54,9 @@ public:
   void AddToPersistentLayer(const std::string& layerName, FRAME_TYPE& keyFrame);
   
   // Removes a persitent layer after duration_ms has passed
-  void RemovePersistentLayer(const std::string& layerName, u32 duration_ms = 0);
+  void RemovePersistentLayer(const std::string& layerName,
+                             TimeStamp_t streamTime_ms,
+                             TimeStamp_t duration_ms);
   
   // Returns true if there are any layers
   bool HaveLayersToSend() const;

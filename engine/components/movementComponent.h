@@ -193,9 +193,7 @@ public:
   // Returns a string of who is locking each of the specified tracks
   std::string WhoIsLocking(u8 tracks) const;
   
-  void IgnoreDirectDriveMessages(bool ignore) { _ignoreDirectDrive = ignore; }
-  
-  bool IsDirectDriving() const { return ((_drivingWheels || _drivingHead || _drivingLift) && !_ignoreDirectDrive); }
+  bool IsDirectDriving() const { return ((_drivingWheels || _drivingHead || _drivingLift)); }
   
   u8 GetMaxUnexpectedMovementCount() const { return UnexpectedMovement::kMaxUnexpectedMovementCount; }
   
@@ -299,7 +297,6 @@ private:
   const char* kDrivingArcStr     = "DirectDriveArc";
   const char* kDrivingTurnStr    = "DirectDriveTurnInPlace";
   const char* kOnChargerInSdkStr = "OnChargerInSDK";
-  bool _ignoreDirectDrive = false;
   
   const u8 kAllMotorTracks = ((u8)AnimTrackFlag::HEAD_TRACK |
                               (u8)AnimTrackFlag::LIFT_TRACK |

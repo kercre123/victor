@@ -13,6 +13,7 @@ enum uint_8 BEIConditionType {
 
   TrueCondition, // (note: name can't be True due to clad rules)
 
+  AnyStimuli,
   CarryingCube,
   CliffDetected,
   Compound,
@@ -23,6 +24,7 @@ enum uint_8 BEIConditionType {
   BehaviorTimer,
   Emotion,
   EyeContact,
+  FaceKnown,
   FacePositionUpdated,
   FeatureGate,
   Lambda,
@@ -45,6 +47,7 @@ enum uint_8 BEIConditionType {
   TimerInRange,
   TriggerWordPending,
   UnexpectedMovement,
+  UserIntentActive,
   UserIntentPending,
 
   UnitTestCondition,

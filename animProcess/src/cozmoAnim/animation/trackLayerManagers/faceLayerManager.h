@@ -16,10 +16,11 @@
 #define __Anki_Cozmo_FaceLayerManager_H__
 
 #include "cozmoAnim/animation/trackLayerManagers/iTrackLayerManager.h"
-
+#include "cannedAnimLib/proceduralFace/proceduralFaceModifierTypes.h"
 #include "clad/types/keepFaceAliveParameters.h"
-
 #include <map>
+#include <string>
+
 
 namespace Anki {
 namespace Cozmo {
@@ -42,21 +43,9 @@ public:
                      ProceduralFaceKeyFrame& procFace,
                      bool shouldReplace) const;
   
-  // Generates and adds keyframes to various layers to keep the face "alive"
-  void KeepFaceAlive(const std::map<KeepFaceAliveParameter,f32>& params,
-                     const TimeStamp_t timeSinceKeepAliveStart_ms);
-
-  // Keep Cozmo's face alive, but the same, by posting empty new frames
-  // so that noise keeps working
-  void KeepFaceTheSame();
-
-  // Remove all keep face alive layers
-  void RemoveKeepFaceAlive(u32 duration_ms);
-  
+  // Generates a single keyframe with shifted eyes according to the arguments
   // Eye shifts keyframes are generated with a relative start time - they should then
   // be updated to reflect their true playback time within a track
-  
-  // Generates a single keyframe with shifted eyes according to the arguments
   void GenerateEyeShift(f32 xPix, f32 yPix,
                         f32 xMax, f32 yMax,
                         f32 lookUpMaxScale,
@@ -71,23 +60,44 @@ public:
   
   // Generates a track of all keyframes necessary to make the eyes blink
   void GenerateBlink(Animations::Track<ProceduralFaceKeyFrame>& track,
-                     const TimeStamp_t timeSinceKeepAliveStart_ms) const;
+                     const TimeStamp_t timeSinceKeepAliveStart_ms,
+                     BlinkEventList& out_eventList) const;
+  
+  // Generate eye blink sequence
+  // Add BlinkStateEvnets to eventList for other layers to sync with
+  // Return RESULT_FAIL if there is already a blink layer
+  Result AddBlinkToFaceTrack(const std::string& layerName,
+                             const TimeStamp_t timeSinceKeepAliveStart_ms,
+                             BlinkEventList& out_eventList);
+  
+  // Get the next eye blink time
+  s32 GetNextBlinkTime_ms(const std::map<KeepFaceAliveParameter, f32>& params) const;
+  
+  // Generate eye dart
+  // Set eye dart interpolationTime_ms for other layers to sync with
+  Result AddEyeDartToFaceTrack(const std::string& layerName,
+                               const std::map<KeepFaceAliveParameter,f32>& params,
+                               const TimeStamp_t timeSinceKeepAliveStart_ms,
+                               TimeStamp_t& out_interpolationTime_ms);
+  
+  // Get the next eye dart time
+  s32 GetNextEyeDartTime_ms(const std::map<KeepFaceAliveParameter, f32>& params) const;
+  
+  // Add "alive" frames to Face Track
+  void AddKeepFaceAliveTrack(const std::string& layerName);
   
   // Generates a track of all keyframes necessary to make the eyes squint
-  void GenerateSquint(f32 squintScaleX, f32 squintScaleY, f32 upperLidAngle,
-                      Animations::Track<ProceduralFaceKeyFrame>& track) const;
+  void GenerateSquint(f32 squintScaleX,
+                      f32 squintScaleY,
+                      f32 upperLidAngle,
+                      Animations::Track<ProceduralFaceKeyFrame>& track,
+                      const TimeStamp_t timeSinceKeepAliveStart_ms) const;
   
   // Generates a track of all keyframes necessary to make the face have distortion
   // Returns how many keyframes were generated
   u32 GenerateFaceDistortion(float distortionDegree, Animations::Track<ProceduralFaceKeyFrame>& track) const;
   
   u32 GetMaxBlinkSpacingTimeForScreenProtection_ms() const;
-  
-private:
-  
-  // KeepFaceAlive members:
-  s32          _nextBlink_ms         = 0;
-  s32          _nextEyeDart_ms       = 0;
   
 };
 

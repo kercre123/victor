@@ -50,34 +50,23 @@ bool WeatherIntentParser::IsFahrenheit(const UserIntent_WeatherResponse& weather
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-WeatherConditionType WeatherIntentParser::GetCondition(const UserIntent_WeatherResponse& weatherIntent) 
+WeatherConditionType WeatherIntentParser::GetCondition(const RobotDataLoader::WeatherResponseMap* weatherResponseMap,
+                                                       const UserIntent_WeatherResponse& weatherIntent) 
 {
 
   std::string str;
   std::transform(weatherIntent.condition.begin(), weatherIntent.condition.end(), 
                  std::back_inserter(str), [](const char c) { return std::tolower(c); });
 
-  if(str == "cloudy"){
-    return WeatherConditionType::Cloudy;
-  }else if(str == "cold"){
-    return WeatherConditionType::Cold;
-  }else if(str == "rain"){
-    return WeatherConditionType::Rain;
-  }else if(str == "snow"){
-    return WeatherConditionType::Snow;
-  }else if(str == "stars"){
-    return WeatherConditionType::Stars;
-  }else if(str == "sunny"){
-    return WeatherConditionType::Sunny;
-  }else if(str == "windy"){
-    return WeatherConditionType::Windy;
+  auto iter = weatherResponseMap->find(str);
+  if(iter != weatherResponseMap->end()){
+    return iter->second;
   }else{
     PRINT_NAMED_ERROR("WeatherIntentParser.GetCondition.NoConditionMatch",
                       "No weather condition found for %s",
                       str.c_str());
+    return WeatherConditionType::Count;
   }
-
-  return WeatherConditionType::Count;
 }
 
 } // namespace Cozmo

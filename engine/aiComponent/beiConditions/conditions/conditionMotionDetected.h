@@ -47,7 +47,8 @@ private:
     Left,
     Right,
     Top,
-    Ground
+    Ground,
+    Any
   };
 
   // We currently don't have uniform thresholding/calibration on

@@ -11,6 +11,12 @@
   // image quality: [1-100]:JPEG quality, -1: use PNG
   "quality": 100,
 
+  // image save scale: any scale valid with ImageCache::StringToSize
+  "image_scale": "full",
+
+  // image scaling method: any method valid with ImageCache::StringToSize
+  "resize_method": "linear",
+
   // whether or not to use capacitive touch to trigger saving
   // if 0, uses power button istead
   "use_capacitive_touch" : false,
