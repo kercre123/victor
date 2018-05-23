@@ -142,6 +142,27 @@ add_custom_command(
 )
 
 set(GATEWAY_PROTO_FILES "${CMAKE_CURRENT_SOURCE_DIR}/gateway/external_interface.proto")
+
+if ("${CMAKE_HOST_SYSTEM_NAME}" MATCHES "Linux")
+add_custom_command(
+  OUTPUT ${GATEWAY_GRPC_OUTPUT}
+  COMMAND wget https://github.com/google/protobuf/releases/download/v3.5.1/protoc-3.5.1-linux-x86_64.zip
+  COMMAND unzip protoc-3.5.1-linux-x86_64.zip -d ~/.anki/protoc
+  COMMAND ${CMAKE_COMMAND} -E env "PATH=${GOPATH_GATEWAY}/bin:$ENV{PATH}"
+    ~/.anki/protoc/bin/protoc "-I/usr/local/include" "-I${CMAKE_CURRENT_SOURCE_DIR}/gateway"
+    "-I${GOPATH_GATEWAY}/src"
+    "-I${GOPATH_GATEWAY}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis"
+    "--go_out=plugins=grpc:${CMAKE_SOURCE_DIR}/generated/go/src/proto/external_interface"
+    "${GATEWAY_PROTO_FILES}"
+  COMMAND ${CMAKE_COMMAND} -E env "PATH=${GOPATH_GATEWAY}/bin:$ENV{PATH}"
+    ~/.anki/protoc/bin/protoc -I/usr/local/include -I"${CMAKE_CURRENT_SOURCE_DIR}/gateway"
+    -I"${GOPATH_GATEWAY}/src"
+    -I"${GOPATH_GATEWAY}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis"
+    "--grpc-gateway_out=logtostderr=true:${CMAKE_SOURCE_DIR}/generated/go/src/proto/external_interface"
+    "${GATEWAY_PROTO_FILES}"
+  DEPENDS "${GATEWAY_PROTO_FILES}" "${GATEWAY_PROTOC_GENERATORS}"
+)
+else()
 add_custom_command(
   OUTPUT ${GATEWAY_GRPC_OUTPUT}
   COMMAND ${CMAKE_COMMAND} -E env "PATH=${GOPATH_GATEWAY}/bin:$ENV{PATH}"
@@ -158,5 +179,6 @@ add_custom_command(
     "${GATEWAY_PROTO_FILES}"
   DEPENDS "${GATEWAY_PROTO_FILES}" "${GATEWAY_PROTOC_GENERATORS}"
 )
+endif()
 _build_cloud_executable(vic-gateway)
 _add_chipper_flags(vic-gateway)
