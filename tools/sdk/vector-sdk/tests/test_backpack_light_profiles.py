@@ -9,7 +9,7 @@ import vector
 async def main(robot):
 
     # Set backpack to White Lights using the max brightness profile for 4 seconds
-    await robot.set_all_backpack_lights( vector.lights.white_light, vector.lights.max_brightness_backpack_profile )
+    await robot.set_all_backpack_lights( vector.lights.white_light, vector.lights.max_color_profile )
     await asyncio.sleep(2.5)
 
     # Set backpack to White Lights using the white balanced profile for 4 seconds
@@ -17,7 +17,7 @@ async def main(robot):
     await asyncio.sleep(2.5)
 
     # Set backpack to Magenta Lights using the max brightness profile for 4 seconds
-    await robot.set_all_backpack_lights( vector.lights.magenta_light, vector.lights.max_brightness_backpack_profile )
+    await robot.set_all_backpack_lights( vector.lights.magenta_light, vector.lights.max_color_profile )
     await asyncio.sleep(2.5)
 
     # Set backpack to Magenta Lights using the white balanced profile for 4 seconds

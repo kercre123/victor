@@ -8,6 +8,7 @@ import struct
 import websockets
 
 from . import lights
+from . import color
 from ._clad import _animation_trigger
 from ._clad import _clad_message
 

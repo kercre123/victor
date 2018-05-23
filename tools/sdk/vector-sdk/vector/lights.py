@@ -1,56 +1,5 @@
 #!/usr/bin/env python3
-
-class Color:
-    '''A Color to be used with a Light.
-
-    Either int_color or rgb may be used to specify the actual color.
-    Any alpha components (from int_color) are ignored - all colors are fully opaque.
-
-    Args:
-        int_color (int): A 32 bit value holding the binary RGBA value (where A
-            is ignored and forced to be fully opaque).
-        rgb (tuple): A tuple holding the integer values from 0-255 for (reg, green, blue)
-        name (str): A name to assign to this color
-    '''
-
-    def __init__(self, int_color=None, rgb=None, name=None):
-        self.name = name
-        self._int_color = 0
-        if int_color is not None:
-            self._int_color = int_color | 0xff
-        elif rgb is not None:
-            self._int_color = (rgb[0] << 24) | (rgb[1] << 16) | (rgb[2] << 8) | 0xff
-
-    @property
-    def int_color(self):
-        '''int: The encoded integer value of the color.'''
-        return self._int_color
-
-
-#: :class:`Color`: Green color instance.
-green = Color(name="green", int_color=0x00ff00ff)
-
-#: :class:`Color`: Red color instance.
-red = Color(name="red", int_color=0xff0000ff)
-
-#: :class:`Color`: Blue color instance.
-blue = Color(name="blue", int_color=0x0000ffff)
-
-#: :class:`Color`: Cyan color instance.
-cyan = Color(name="cyan", int_color=0x00ffffff)
-
-#: :class:`Color`: Magenta color instance.
-magenta = Color(name="magenta", int_color=0xff00ffff)
-
-#: :class:`Color`: Yellow color instance.
-yellow = Color(name="yellow", int_color=0xffff00ff)
-
-#: :class:`Color`: White color instance.
-white = Color(name="white", int_color=0xffffffff)
-
-#: :class:`Color`:  instance representing no color (LEDs off).
-off = Color(name="off")
-
+from . import color
 
 class ColorProfile:
     '''A Color profile send to be used with messages involving LEDs.
@@ -66,11 +15,11 @@ class ColorProfile:
         self._green_multiplier = green_multiplier
         self._blue_multiplier = blue_multiplier
 
-    def augment_color(self, color):
+    def augment_color(self, original_color):
         rgb = [
-            (color.int_color >> 24) & 0xff,
-            (color.int_color >> 16) & 0xff,
-            (color.int_color >> 8) & 0xff
+            (original_color.int_color >> 24) & 0xff,
+            (original_color.int_color >> 16) & 0xff,
+            (original_color.int_color >> 8) & 0xff
             ]
 
         rgb[0] = int(self._red_multiplier * rgb[0])
@@ -78,7 +27,7 @@ class ColorProfile:
         rgb[2] = int(self._blue_multiplier * rgb[2])
 
         result_int_code = (rgb[0] << 24) | (rgb[1] << 16) | (rgb[2] << 8) | 0xff
-        return Color(result_int_code)
+        return color.Color(result_int_code)
 
     @property
     def red_multiplier(self):
@@ -114,7 +63,7 @@ class Light:
     assigned to either state (including no color/light).
     '''
 
-    def __init__(self, on_color=off, off_color=off, on_period_ms=250,
+    def __init__(self, on_color=color.off, off_color=color.off, on_period_ms=250,
             off_period_ms=0, transition_on_period_ms=0, transition_off_period_ms=0):
         self._on_color = on_color
         self._off_color = off_color
@@ -130,7 +79,7 @@ class Light:
 
     @on_color.setter
     def on_color(self, color):
-        if not isinstance(color, Color):
+        if not isinstance(color, color.Color):
             raise TypeError("Must specify a Color")
         self._on_color = color
 
@@ -141,7 +90,7 @@ class Light:
 
     @off_color.setter
     def off_color(self, color):
-        if not isinstance(color, Color):
+        if not isinstance(color, color.Color):
             raise TypeError("Must specify a Color")
         self._off_color = color
 
@@ -202,25 +151,25 @@ def _set_light(msg, idx, light, profile):
     msg.transitionOffPeriod_ms[idx] = light.transition_off_period_ms
 
 #: :class:`Light`: A steady green colored LED light.
-green_light = Light(on_color=green)
+green_light = Light(on_color=color.green)
 
 #: :class:`Light`: A steady red colored LED light.
-red_light = Light(on_color=red)
+red_light = Light(on_color=color.red)
 
 #: :class:`Light`: A steady blue colored LED light.
-blue_light = Light(on_color=blue)
+blue_light = Light(on_color=color.blue)
 
 #: :class:`Light`: A steady cyan colored LED light.
-cyan_light = Light(on_color=cyan)
+cyan_light = Light(on_color=color.cyan)
 
 #: :class:`Light`: A steady magenta colored LED light.
-magenta_light = Light(on_color=magenta)
+magenta_light = Light(on_color=color.magenta)
 
 #: :class:`Light`: A steady yellow colored LED light.
-yellow_light = Light(on_color=yellow)
+yellow_light = Light(on_color=color.yellow)
 
 #: :class:`Light`: A steady white colored LED light.
-white_light = Light(on_color=white)
+white_light = Light(on_color=color.white)
 
 #: :class:`Light`: A steady off (non-illuminated LED light).
-off_light = Light(on_color=off)
+off_light = Light(on_color=color.off)
