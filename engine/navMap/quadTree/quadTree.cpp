@@ -73,7 +73,7 @@ bool QuadTree::Insert(const FastPolygon& poly, NodeTransformFunction transform)
   ANKI_CPU_PROFILE("QuadTree::Insert");
   
   // if the root does not contain the poly, expand
-  if ( !Contains( poly ) )
+  if ( !_boundingBox.Contains( poly ) )
   {
     ExpandToFit( poly );
   }
@@ -88,7 +88,7 @@ bool QuadTree::Insert(const FastPolygon& poly, NodeTransformFunction transform)
     node.GetData()->SetLastObservedTime(newData->GetLastObservedTime());
 
     // split node if we can unsure if the incoming poly will fill the entire area
-    if ( !node.IsContainedBy(poly) && !node.IsSubdivided() && node.CanSubdivide())
+    if ( !node.GetBoundingBox().IsContainedBy(poly) && !node.IsSubdivided() && node.CanSubdivide())
     {
       node.Subdivide( _processor );
     }
@@ -230,7 +230,7 @@ bool QuadTree::ExpandToFit(const Poly2f& polyToCover)
     expanded = UpgradeRootLevel(direction, kQuadTreeMaxRootDepth, _processor);
 
     // check if the poly now fits in the expanded root
-    fitsInMap = Contains(polyToCover);
+    fitsInMap = _boundingBox.Contains(polyToCover);
     
   } while( !fitsInMap && expanded );
 
@@ -241,7 +241,7 @@ bool QuadTree::ExpandToFit(const Poly2f& polyToCover)
     ShiftRoot(polyToCover, _processor);
 
     // check if the poly now fits in the expanded root
-    fitsInMap = Contains(polyToCover);
+    fitsInMap = _boundingBox.Contains(polyToCover);
   }
   
   // the poly should be contained, if it's not, we have reached the limit of expansions and shifts, and the poly does not

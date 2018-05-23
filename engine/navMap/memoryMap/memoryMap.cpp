@@ -207,28 +207,11 @@ bool MemoryMap::HasCollisionWithTypes(const FastPolygon& poly, const FullContent
   // convert type to quadtree node content and to flag (since processor takes in flags)
   const EContentTypePackedType nodeTypeFlags = ConvertContentArrayToFlags(types);
 
-  return Eval( poly, [&nodeTypeFlags] (MemoryMapDataConstPtr data) {
+  return AnyOf( poly, [&nodeTypeFlags] (MemoryMapDataConstPtr data) {
     return IsInEContentTypePackedType(data->type, nodeTypeFlags);
   });
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MemoryMap::Eval(const FastPolygon& poly, const NodePredicate& func) const
-{
-  bool anyMatch = false;
-  if( func == nullptr ) {
-    return anyMatch;
-  }
-  
-  QuadTreeTypes::FoldFunctorConst accumulator = [&anyMatch, &func] (const QuadTreeNode& node) {
-    MemoryMapDataConstPtr data = node.GetData();
-    anyMatch |= func(data);
-  };
-  
-  MONITOR_PERFORMANCE( _quadTree.Fold(accumulator, poly) );
-  return anyMatch;
-}
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool MemoryMap::HasContentType(EContentType type) const
 {

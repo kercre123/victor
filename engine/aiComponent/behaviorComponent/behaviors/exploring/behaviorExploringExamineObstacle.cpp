@@ -431,7 +431,7 @@ bool BehaviorExploringExamineObstacle::RobotSeesObstacleInFront( float dist_mm, 
     return ret;
   };
   
-  const bool foundNewObstacle = memoryMap->Eval( {{Point2f{currRobotPose.GetTranslation()},
+  const bool foundNewObstacle = memoryMap->AnyOf( {{Point2f{currRobotPose.GetTranslation()},
                                                    p2}},
                                                  evalFunc );
   return foundNewObstacle;
@@ -475,7 +475,7 @@ bool BehaviorExploringExamineObstacle::RobotSeesNewObstacleInCone( float dist_mm
     return sameType && newObstacle;
   };
   
-  const bool foundNewObstacle = memoryMap->Eval( {{ t1, t2, t3 }}, evalFunc );
+  const bool foundNewObstacle = memoryMap->AnyOf( {{ t1, t2, t3 }}, evalFunc );
   return foundNewObstacle;
 }
   

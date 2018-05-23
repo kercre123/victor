@@ -66,7 +66,22 @@ protected:
   T          _rSq;
 };
 
-using Ball2f = Ball<2, f32>;
+class Ball2f : public Ball<2, float>
+{
+public:
+  using Ball::GetMin;
+  using Ball::GetMax;
+
+  // construction/destruction
+  Ball2f(const Point2f& p = Point2f(), const float r = 1.f) : Ball(p, r) {}
+  virtual ~Ball2f() override {}
+
+  inline float GetMinX() const { return GetMin(0); }
+  inline float GetMaxX() const { return GetMax(0); }
+  inline float GetMinY() const { return GetMin(1); }
+  inline float GetMaxY() const { return GetMax(1); }
+};
+
 using Ball3f = Ball<3, f32>;
 
 }

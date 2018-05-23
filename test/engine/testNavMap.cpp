@@ -81,11 +81,11 @@ TEST( TestNavMap, FillBorder)
   bool hasProx = false;
   bool hasCliff = false;
   bool hasEdge = false;
-  memoryMap->Eval( bigQuad, [&](MemoryMapDataConstPtr ptr) {
+  memoryMap->AnyOf( bigQuad, [&](MemoryMapDataConstPtr ptr) {
     hasClear |= ptr->type == EContentType::ClearOfObstacle;
-    hasProx |= ptr->type == EContentType::ObstacleProx;
+    hasProx  |= ptr->type == EContentType::ObstacleProx;
     hasCliff |= ptr->type == EContentType::Cliff;
-    hasEdge |= ptr->type == EContentType::InterestingEdge;
+    hasEdge  |= ptr->type == EContentType::InterestingEdge;
     return false;
   });
   EXPECT_TRUE( hasClear );
@@ -98,11 +98,11 @@ TEST( TestNavMap, FillBorder)
   hasProx = false;
   hasCliff = false;
   hasEdge = false;
-  memoryMap->Eval( medEdge, [&](MemoryMapDataConstPtr ptr) {
+  memoryMap->AnyOf( medEdge, [&](MemoryMapDataConstPtr ptr) {
     hasClear |= ptr->type == EContentType::ClearOfObstacle;
-    hasProx |= ptr->type == EContentType::ObstacleProx;
+    hasProx  |= ptr->type == EContentType::ObstacleProx;
     hasCliff |= ptr->type == EContentType::Cliff;
-    hasEdge |= ptr->type == EContentType::InterestingEdge;
+    hasEdge  |= ptr->type == EContentType::InterestingEdge;
     return false;
   });
   EXPECT_FALSE( hasClear );
@@ -134,11 +134,11 @@ TEST( TestNavMap, FillBorder)
   hasProx = false;
   hasCliff = false;
   hasEdge = false;
-  memoryMap->Eval( bigQuad, [&](MemoryMapDataConstPtr ptr) {
+  memoryMap->AnyOf( bigQuad, [&](MemoryMapDataConstPtr ptr) {
     hasClear |= ptr->type == EContentType::ClearOfObstacle;
-    hasProx |= ptr->type == EContentType::ObstacleProx;
+    hasProx  |= ptr->type == EContentType::ObstacleProx;
     hasCliff |= ptr->type == EContentType::Cliff;
-    hasEdge |= ptr->type == EContentType::InterestingEdge;
+    hasEdge  |= ptr->type == EContentType::InterestingEdge;
     return false;
   });
   EXPECT_TRUE( hasClear );
@@ -151,11 +151,11 @@ TEST( TestNavMap, FillBorder)
   hasProx = false;
   hasCliff = false;
   hasEdge = false;
-  memoryMap->Eval( medEdge, [&](MemoryMapDataConstPtr ptr) {
+  memoryMap->AnyOf( medEdge, [&](MemoryMapDataConstPtr ptr) {
     hasClear |= ptr->type == EContentType::ClearOfObstacle;
-    hasProx |= ptr->type == EContentType::ObstacleProx;
+    hasProx  |= ptr->type == EContentType::ObstacleProx;
     hasCliff |= ptr->type == EContentType::Cliff;
-    hasEdge |= ptr->type == EContentType::InterestingEdge;
+    hasEdge  |= ptr->type == EContentType::InterestingEdge;
     return false;
   });
   EXPECT_FALSE( hasClear );
@@ -168,11 +168,11 @@ TEST( TestNavMap, FillBorder)
   hasProx = false;
   hasCliff = false;
   hasEdge = false;
-  memoryMap->Eval( littleProx1, [&](MemoryMapDataConstPtr ptr) {
+  memoryMap->AnyOf( littleProx1, [&](MemoryMapDataConstPtr ptr) {
     hasClear |= ptr->type == EContentType::ClearOfObstacle;
-    hasProx |= ptr->type == EContentType::ObstacleProx;
+    hasProx  |= ptr->type == EContentType::ObstacleProx;
     hasCliff |= ptr->type == EContentType::Cliff;
-    hasEdge |= ptr->type == EContentType::InterestingEdge;
+    hasEdge  |= ptr->type == EContentType::InterestingEdge;
     return false;
   });
   EXPECT_FALSE( hasClear );
