@@ -106,9 +106,54 @@ static std::string Demangle(const std::string& backtraceFrame) {
 static std::string Demangle(const char * frame)
 {
   if (frame == nullptr) {
+    // Don't crash
     return "NULL";
   }
-  return frame;
+
+  //
+  // VicOS stack frames look like these lines:
+  //   /anki/lib/libankiutil.so(_ZN4Anki4Util14sDumpCallstackERKNSt3__112basic_stringIcNS1_11char_traitsIcEENS1_9allocatorIcEEEE+0x23) [0xb03d4920]
+  //   /anki/bin/vic-anim(+0x3dcc2) [0x7f592cc2]
+  // or generically
+  //  obj(name+offset) [addr]
+  //
+  // The mangled name (if any) appears between left paren and plus.
+  // If we can't find a mangled name, return the frame unchanged.
+  //
+  std::string s = frame;
+
+  auto pos1 = s.find('(');
+  if (pos1 == std::string::npos) {
+    // Can't find left paren
+    return s;
+  }
+
+  auto pos2 = s.find('+', pos1+1);
+  if (pos2 == std::string::npos) {
+    // Can't find plus
+    return s;
+  }
+
+  // Get the mangled name
+  std::string name = s.substr(pos1+1, pos2-pos1-1);
+  if (name.empty()) {
+    // No name provided
+    return s;
+  }
+
+  // Perform the demangle
+  int status = 0;
+  char * temp = abi::__cxa_demangle(name.c_str(), 0, 0, &status);
+  if (temp == nullptr) {
+    // Unable to demangle
+    return s;
+  }
+
+  // Replace mangled name with demangled name
+  s.replace(pos1+1, pos2-pos1-1, temp);
+  free(temp);
+
+  return s;
 }
 #endif
 
