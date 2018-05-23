@@ -114,8 +114,14 @@ void VictorLogger::LogEvent(android_LogPriority prio,
 
   // Format fields into a compact CSV format.
   // Leading @ serves as a hint that this row is in compact CSV format.
-  // TO DO: Escape any colons in user data
-  __android_log_print(prio, _tag.c_str(), "@%s:%s:%s:%s:%s:%s:%s:%s:%s",
+  //
+  // We use a fixed format string for performance, but we need to update the format string
+  // if event format ever changes.
+  static_assert(Anki::Util::DAS::EVENT_MARKER == '@', "DAS event marker does not match declarations");
+  static_assert(Anki::Util::DAS::FIELD_MARKER == '\x1F', "DAS field marker does not match declarations");
+  static_assert(Anki::Util::DAS::FIELD_COUNT == 9, "DAS field count does not match declarations");
+
+  __android_log_print(prio, _tag.c_str(), "@%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s",
                       name, str1, str2, str3, str4, int1, int2, int3, int4);
 
 }

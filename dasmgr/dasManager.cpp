@@ -9,6 +9,7 @@
 
 #include "dasManager.h"
 #include "util/logging/logging.h"
+#include "util/logging/DAS.h"
 #include "util/string/stringUtils.h"
 
 #include <log/logger.h>
@@ -33,8 +34,7 @@ using LogLevel = Anki::Util::ILoggerProvider::LogLevel;
 // Optional numeric fields are parsed as strings because they may be omitted from the log record.
 // See also: util/logging/victorLogger_vicos.cpp
 //
-//static constexpr const char * EVENT_FORMAT = "@%s:%s:%s:%s:%s:%s:%s:%s:%s";
-static constexpr int EVENT_COLUMNS = 9;
+//static constexpr const char * EVENT_FORMAT = "@%s\x1f%s\x1f%s\x1f%s\x1f%s\x1f%s\x1f%s\x1f%s\x1f%s";
 
 // How often do we process queued events? Counted by log records.
 static constexpr int PROCESS_QUEUE_INTERVAL = 1000;
@@ -98,13 +98,11 @@ bool DASManager::ParseLogEntry(const AndroidLogEntry & logEntry, LogEvent & logE
   assert(tag != nullptr);
   assert(message != nullptr);
 
-  // TBD: Must handle any colons embedded in data
   // Anki::Util::StringSplit ignores trailing separator so don't use it
-
   std::vector<std::string> strings;
-  const char * pos = message+1; // (skip leading @)
+  const char * pos = message+1; // (skip leading event marker)
   while (1) {
-    const char * end = strchr(pos, ':');
+    const char * end = strchr(pos, Anki::Util::DAS::FIELD_MARKER);
     if (end == nullptr) {
       strings.push_back(std::string(pos));
       break;
@@ -113,11 +111,15 @@ bool DASManager::ParseLogEntry(const AndroidLogEntry & logEntry, LogEvent & logE
     pos = end+1;
   }
 
-  if (strings.size() != EVENT_COLUMNS) {
+
+  if (strings.size() != Anki::Util::DAS::FIELD_COUNT) {
     LOG_ERROR("DASManager.ParseLogEntry", "Unable to parse %s from %s (%zu != %d)",
-              message, tag, strings.size(), EVENT_COLUMNS);
+              message, tag, strings.size(), Anki::Util::DAS::FIELD_COUNT);
     return false;
   }
+
+  // If field count changes, we need to update this code
+  static_assert(Anki::Util::DAS::FIELD_COUNT == 9, "DAS field count does not match declarations");
 
   // Populate event struct
   logEvent.source = tag;
@@ -152,7 +154,7 @@ void DASManager::ProcessLogEntry(const AndroidLogEntry & logEntry)
   ++_entryCount;
 
   // Does this record look like a DAS entry?
-  if (*message != '@') {
+  if (*message != Anki::Util::DAS::EVENT_MARKER) {
     return;
   }
 
