@@ -69,6 +69,8 @@ std::string DataPlatform::GetOSPlatformString()
     return "ios";
   #elif defined(ANKI_PLATFORM_ANDROID)
     return "android";
+  #elif defined(ANKI_PLATFORM_VICOS)
+    return "vicos";
   #elif defined(ANKI_PLATFORM_OSX)
     return "osx";
   #else
