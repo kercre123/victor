@@ -89,6 +89,8 @@ private:
   DynamicVariables _dVars;
 
   int32_t GetNumCurrentSequences() const;
+  TimeStamp_t GetTimestamp() const;
+  float GetTimestampSec() const;
 
   std::string GetRelClassSavePath() const;
   std::string GetRelSequenceSavePath() const;

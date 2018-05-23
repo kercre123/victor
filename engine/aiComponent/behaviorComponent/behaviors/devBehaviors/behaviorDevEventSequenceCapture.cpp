@@ -43,6 +43,7 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "util/fileUtils/fileUtils.h"
 
+#include <chrono>
 #include <fstream>
 
 namespace Anki {
@@ -263,6 +264,18 @@ int32_t BehaviorDevEventSequenceCapture::GetNumCurrentSequences() const
   return (int32_t) currentSequences.size();
 }
 
+TimeStamp_t BehaviorDevEventSequenceCapture::GetTimestamp() const
+{
+  // NOTE We're clocking ourselves using the image timestamps to make sure sequence info is on the same clock
+  // This should be fixed when a proper wall time implementation is added
+  return GetBEI().GetRobotInfo().GetLastImageTimeStamp();
+}
+
+float BehaviorDevEventSequenceCapture::GetTimestampSec() const
+{
+  return static_cast<float>(GetTimestamp()) / 1000.0f;
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevEventSequenceCapture::BehaviorUpdate()
 {
@@ -276,7 +289,7 @@ void BehaviorDevEventSequenceCapture::BehaviorUpdate()
                         GetBEI().GetRobotInfo().IsPowerButtonPressed());
   const bool isLiftUp = (GetBEI().GetRobotInfo().GetLiftHeight() > LIFT_HEIGHT_HIGHDOCK);
 
-  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const float currTime_s = GetTimestampSec();
   float waitTime_s = currTime_s - _dVars.waitStartTime_s;
   auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
   int32_t numCurrentSeqs = GetNumCurrentSequences();
@@ -309,7 +322,6 @@ void BehaviorDevEventSequenceCapture::BehaviorUpdate()
         _dVars.seqState = SequenceState::Setup;
         _dVars.currentSeqNumber = numCurrentSeqs;
         _dVars.waitStartTime_s = currTime_s;
-        _dVars.seqStartTimeStamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
         GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Timer_Beep,
                                                  GO::Behavior);
         GetBEI().GetBodyLightComponent().SetBackpackLights( kLightsSetup );
@@ -325,7 +337,7 @@ void BehaviorDevEventSequenceCapture::BehaviorUpdate()
       {
         _dVars.seqState = SequenceState::PreEventCapture;
         _dVars.waitStartTime_s = currTime_s;
-        _dVars.seqEventTimeStamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+        _dVars.seqStartTimeStamp = GetTimestamp();
         visionComponent.SetSaveImageParameters(ImageSendMode::Stream,
                                                GetRelSequenceSavePath(),
                                                _iConfig.imageSaveQuality,
@@ -345,7 +357,7 @@ void BehaviorDevEventSequenceCapture::BehaviorUpdate()
       {
         _dVars.seqState = SequenceState::PostEventCapture;
         _dVars.waitStartTime_s = currTime_s;
-        _dVars.seqEventTimeStamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+        _dVars.seqEventTimeStamp = GetTimestamp();
         GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Timer_Beep,
                                                  GO::Behavior);
         GetBEI().GetBodyLightComponent().SetBackpackLights( kLightsPostCap );
@@ -360,7 +372,7 @@ void BehaviorDevEventSequenceCapture::BehaviorUpdate()
       if( waitTime_s > _iConfig.postEventCaptureTime )
       {
         _dVars.seqState = SequenceState::Waiting;
-        _dVars.seqEndTimeStamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+        _dVars.seqEndTimeStamp = GetTimestamp();
         visionComponent.SetSaveImageParameters(ImageSendMode::Off,
                                                GetRelSequenceSavePath(),
                                                _iConfig.imageSaveQuality,
