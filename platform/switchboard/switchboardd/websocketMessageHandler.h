@@ -49,6 +49,7 @@ private:
   void HandleAnimations_PlayAnimation(Anki::Cozmo::ExternalComms::PlayAnimation sdkMessage);
   void HandleAnimations_RequestAvailableAnimations(Anki::Cozmo::ExternalComms::RequestAvailableAnimations sdkMessage);
   void HandleAnimations_SayText(Anki::Cozmo::ExternalComms::SayText sdkMessage);
+  void HandleAnimations_TransferFile(Anki::Cozmo::ExternalComms::TransferFile sdkMessage); 
 
   void HandleMovementAction(Anki::Cozmo::ExternalComms::MovementAction unionInstance);
   void HandleMovementAction_DriveOffChargerContacts(Anki::Cozmo::ExternalComms::DriveOffChargerContacts sdkMessage);

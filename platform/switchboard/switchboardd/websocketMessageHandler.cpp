@@ -106,6 +106,16 @@ void WebsocketMessageHandler::HandleAnimations_SayText(Anki::Cozmo::ExternalComm
   _engineMessaging->SendMessage(G2EMessage::CreateSayText(std::move(engineMessage)));
 }
 
+void WebsocketMessageHandler::HandleAnimations_TransferFile(Anki::Cozmo::ExternalComms::TransferFile sdkMessage) {
+  Anki::Cozmo::ExternalInterface::TransferFile engineMessage;
+  engineMessage.fileBytes = sdkMessage.fileBytes;
+  engineMessage.filePart = sdkMessage.filePart;
+  engineMessage.numFileParts = sdkMessage.numFileParts;
+  engineMessage.filename = sdkMessage.filename;
+  engineMessage.fileType = (Anki::Cozmo::ExternalInterface::FileType)sdkMessage.fileType;
+  _engineMessaging->SendMessage(G2EMessage::CreateTransferFile(std::move(engineMessage)));
+}
+
 void WebsocketMessageHandler::HandleAnimations(Anki::Cozmo::ExternalComms::Animations unionInstance) {
   using AnimationsTag = Anki::Cozmo::ExternalComms::AnimationsTag;
   switch(unionInstance.GetTag()) {
@@ -118,6 +128,9 @@ void WebsocketMessageHandler::HandleAnimations(Anki::Cozmo::ExternalComms::Anima
     case AnimationsTag::SayText:
       HandleAnimations_SayText( unionInstance.Get_SayText() );
       break;          
+    case AnimationsTag::TransferFile:
+      HandleAnimations_TransferFile(unionInstance.Get_TransferFile());
+      break;
      default:
       return;
    }

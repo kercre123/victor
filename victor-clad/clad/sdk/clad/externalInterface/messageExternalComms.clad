@@ -441,6 +441,7 @@ union MotorControl {
 //          Robot Animation Messages
 // ====================================================
 
+
 message PlayAnimation {
     uint_32 numLoops,
     string animationName,
@@ -448,6 +449,7 @@ message PlayAnimation {
     bool    ignoreHeadTrack=0,
     bool    ignoreLiftTrack=0
 }
+
 
 message RequestAvailableAnimations {
   
@@ -466,11 +468,26 @@ message SayText {
   bool                   fitToDuration   // No longer supported
 }
 
+// Upload animations
+enum uint_8 FileType {
+  Animation,
+  FaceImg,
+}
+
+message TransferFile {
+  uint_8   fileBytes[uint_16],
+  uint_16  filePart,
+  uint_16  numFileParts,
+  string   filename,
+  FileType   fileType
+}
+
 union Animations {
   PlayAnimation                 PlayAnimation = 0x00,
   RequestAvailableAnimations    RequestAvailableAnimations = 0x01,
   SayText                       SayText = 0x02,
   AnimationAvailable            AnimationAvailable = 0x03,
+  TransferFile                  TransferFile = 0x04,
 }
 
 // ====================================================

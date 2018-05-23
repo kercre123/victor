@@ -3,21 +3,22 @@
 import argparse
 import asyncio
 import math
+import os
 import struct
-
 import websockets
 
 from . import lights
 from . import color
 from ._clad import _animation_trigger
 from ._clad import _clad_message
+from enum import IntEnum
 
 class Robot:
     def __init__(self, socket):
         self.socket = socket
 
     # TODO temporary event handling before gRPC protocol is implemented
-    async def wait_for_single_event(self, enable_diagnostics=True, timeout_in_sec=10):
+    async def wait_for_single_event(self, enable_diagnostics=False, timeout_in_sec=10):
         try:
             evt = await asyncio.wait_for(self.socket.recv(), timeout_in_sec)
             if enable_diagnostics == True:
@@ -28,7 +29,7 @@ class Robot:
             return evt
 
     # TODO temporary event handling before gRPC protocol is implemented
-    async def collect_events(self, enable_diagnostics=True, timeout_in_sec=10):
+    async def collect_events(self, enable_diagnostics=False, timeout_in_sec=10):
         collected_evts = []
         while True:
             evt = await self.wait_for_single_event(enable_diagnostics, timeout_in_sec)
@@ -40,7 +41,7 @@ class Robot:
                 collected_evts.append(evt)
 
     # Animations
-    async def get_anim_names(self, enable_diagnostics=True):
+    async def get_anim_names(self, enable_diagnostics=False):
         message = _clad_message.RequestAvailableAnimations()
         innerWrappedMessage = _clad_message.Animations(RequestAvailableAnimations=message)
         outerWrappedMessage = _clad_message.ExternalComms(Animations=innerWrappedMessage)
@@ -53,6 +54,44 @@ class Robot:
         innerWrappedMessage = _clad_message.Animations(PlayAnimation=message)
         outerWrappedMessage = _clad_message.ExternalComms(Animations=innerWrappedMessage)
         await self.socket.send(outerWrappedMessage.pack()) 
+
+    #TODO Refactor out of robot.py
+    async def __read_file_in_chunks(self, file_path, chunk_size):
+        if not os.path.isfile(file_path):
+            raise ValueError("File missing: %s" % file_path)
+        chunks = []
+        with open(file_path, 'rb') as fh:
+            chunk = fh.read(chunk_size)
+            while chunk:
+                chunks.append(chunk)
+                chunk = fh.read(chunk_size)
+        return chunks
+
+    #TODO Refactor out of robot.py
+    class FileType(IntEnum):
+        Animation = 0
+        FaceImg = 1
+
+    #TODO Refactor out of robot.py
+    MAX_MSG_SIZE = 2048
+    TRANSFER_FILE_MSG_OVERHEAD = 6
+    CLAD_MSG_OVERHEAD = 15
+    async def transfer_file(self, file_type, anim_file_path, enable_diagnostics=False):
+        file_chunk_size = self.MAX_MSG_SIZE - self.TRANSFER_FILE_MSG_OVERHEAD - len(os.path.basename(anim_file_path)) - self.CLAD_MSG_OVERHEAD
+        chunks = await self.__read_file_in_chunks(anim_file_path, file_chunk_size)
+        num_chunks = len(chunks)
+        if enable_diagnostics==True:
+            print("Transfering file %s" % (anim_file_path)),
+            print("Transfering %d chunks" % (num_chunks)),
+        for idx in range(num_chunks):
+            message = _clad_message.TransferFile(fileBytes=chunks[idx], filePart=idx,
+                      numFileParts=num_chunks, filename=os.path.basename(anim_file_path),
+                      fileType=file_type)
+            innerWrappedMessage = _clad_message.Animations(TransferFile=message)
+            outerWrappedMessage = _clad_message.ExternalComms(Animations=innerWrappedMessage)
+            await self.socket.send(outerWrappedMessage.pack())
+            if enable_diagnostics==True:
+                print("Transfered chunk %d" % idx),
 
     # Low level motor functions
     async def set_wheel_motors(self, left_wheel_speed, right_wheel_speed, left_wheel_accel=0.0, right_wheel_accel=0.0):
