@@ -57,6 +57,7 @@ enum uint_32 ActiveFeature {
   RollBlock,
   Sleeping,
   ShutUp,
+  StuckOnEdge,
   TimerCanceled,
   TimerReminder,
   TimerRinging,

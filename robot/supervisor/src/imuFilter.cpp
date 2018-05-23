@@ -110,6 +110,7 @@ namespace Anki {
         u16 cliffValsWhileNotMoving_[HAL::CLIFF_COUNT] = {0};
 
         const u16 CLIFF_DELTA_FOR_PICKUP = 50;
+        const u8 NUM_CLIFF_SENSORS_FOR_CHANGE_DETECT_PICKUP = 3;
 
         const f32 ACCEL_DISTURBANCE_MOTION_THRESH = 40.f;
         s8 external_accel_disturbance_cnt[3]      = {0};
@@ -543,22 +544,26 @@ namespace Anki {
 
         } else {
 
-          // If cliff sensor changes while wheels not moving this is indicative of pickup
+          // If enough of the cliff sensor detect changes while wheels not moving this is indicative of pickup
           bool cliffBasedPickupDetect = false;
           bool gyroZBasedMotionDetect = false;
           if (!WheelController::AreWheelsMoving() && !WheelController::AreWheelsPowered()) {
-            s16 maxCliffDelta = 0;
+            u8 numCliffSensorsDetectingChange = 0;
 
             for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
               if (cliffValsWhileNotMoving_[i] == 0) {
                 cliffValsWhileNotMoving_[i] = ProxSensors::GetCliffValue(i);
               } else {
                 const s16 absCliffDelta = ABS(cliffValsWhileNotMoving_[i] - ProxSensors::GetCliffValue(i));
-                maxCliffDelta = MAX(maxCliffDelta, absCliffDelta);
+                if (absCliffDelta > CLIFF_DELTA_FOR_PICKUP) {
+                  ++numCliffSensorsDetectingChange;
+                }
               }
             }
 
-            cliffBasedPickupDetect = maxCliffDelta > CLIFF_DELTA_FOR_PICKUP;
+            // If a sufficient number of cliff sensors detect a change of more than CLIFF_DELTA_FOR_PICKUP
+            // then that is evidence of pickup.
+            cliffBasedPickupDetect = numCliffSensorsDetectingChange >= NUM_CLIFF_SENSORS_FOR_CHANGE_DETECT_PICKUP;
 
             // As long as wheels aren't moving, we can also check for Z-axis gyro motion
             gyroZBasedMotionDetect = ABS(gyro_robot_frame_filt[2]) > PICKUP_WHILE_WHEELS_NOT_MOVING_GYRO_THRESH[2];

@@ -13,18 +13,17 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
-#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCliff.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/robotStateHistory.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationTrigger.h"
+#include "clad/types/behaviorComponent/behaviorIDs.h"
 #include "clad/types/proxMessages.h"
 
 #define ALWAYS_PLAY_REACT_TO_CLIFF 1
@@ -40,6 +39,12 @@ static const float kCliffBackupSpeed_mmps = 100.0f;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorReactToCliff::InstanceConfig::InstanceConfig()
+{
+  stuckOnEdgeBehavior = nullptr;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToCliff::DynamicVariables::DynamicVariables()
 {
   cliffDetectThresholdAtStart = 0;
@@ -47,8 +52,8 @@ BehaviorReactToCliff::DynamicVariables::DynamicVariables()
   state = State::PlayingStopReaction;
   gotCliff = false;
   gotStop = false;
-  detectedFlags = 0;
   shouldStopDueToCharger = false;
+  wantsToBeActivated = false;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -60,22 +65,20 @@ BehaviorReactToCliff::BehaviorReactToCliff(const Json::Value& config)
     EngineToGameTag::RobotStopped,
     EngineToGameTag::ChargerEvent
   }});
-
-  _iConfig.cliffDetectedCondition = BEIConditionFactory::CreateBEICondition(BEIConditionType::CliffDetected, GetDebugLabel());
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::InitBehavior()
 {
-  _iConfig.cliffDetectedCondition->Init(GetBEI());
-  _iConfig.cliffDetectedCondition->SetActive(GetBEI(), true);
+  const auto& BC = GetBEI().GetBehaviorContainer();
+  _iConfig.stuckOnEdgeBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(StuckOnEdge));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToCliff::WantsToBeActivatedBehavior() const
 {
-  return _iConfig.cliffDetectedCondition->AreConditionsMet(GetBEI()) || _dVars.gotStop;
+  return _dVars.gotStop || _dVars.gotCliff || _dVars.wantsToBeActivated;
 }
 
 
@@ -131,7 +134,6 @@ void BehaviorReactToCliff::OnBehaviorActivated()
     }
   }
 
-
 }
 
 
@@ -171,10 +173,10 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction()
   else if( _dVars.gotCliff || ALWAYS_PLAY_REACT_TO_CLIFF) {
     Anki::Util::sInfo("robot.cliff_detected", {}, "");
 
+    auto& robotInfo = GetBEI().GetRobotInfo();
+    auto action = GetCliffPreReactAction(robotInfo.GetCliffSensorComponent().GetCliffDetectedFlags());
 
     AnimationTrigger reactionAnim = AnimationTrigger::ReactToCliff;
-    auto action = GetCliffPreReactAction(_dVars.detectedFlags);
-
     action->AddAction(new TriggerLiftSafeAnimationAction(reactionAnim));
 
     DelegateIfInControl(action, &BehaviorReactToCliff::TransitionToBackingUp);
@@ -190,9 +192,28 @@ void BehaviorReactToCliff::TransitionToBackingUp()
 
   // if the animation doesn't drive us backwards enough, do it manually
   if( robotInfo.GetCliffSensorComponent().IsCliffDetected() ) {
-      DelegateIfInControl(new DriveStraightAction(-kCliffBackupDist_mm, kCliffBackupSpeed_mmps),
+    
+    // Determine whether to backup or move forward based on triggered sensor
+    f32 direction = 1.f;
+    if (robotInfo.GetCliffSensorComponent().IsCliffDetected(CliffSensor::CLIFF_FL) ||
+        robotInfo.GetCliffSensorComponent().IsCliffDetected(CliffSensor::CLIFF_FR) ) {
+      direction = -1.f;
+    }
+
+    PRINT_NAMED_INFO("BehaviorReactToCliff.TransitionToBackingUp.DoingExtraRecoveryMotion", "");
+    DelegateIfInControl(new DriveStraightAction(direction * kCliffBackupDist_mm, kCliffBackupSpeed_mmps),
                   [this](){
+                      PRINT_NAMED_INFO("BehaviorReactToCliff.TransitionToBackingUp.ExtraRecoveryMotionComplete", "");
                       SendFinishedReactToCliffMessage();
+
+                      auto& cliffComponent = GetBEI().GetRobotInfo().GetCliffSensorComponent();
+                      if ( cliffComponent.IsCliffDetected() ) {
+                        PRINT_NAMED_INFO("BehaviorReactToCliff.TransitionToBackingUp.StillStuckOnEdge", 
+                                         "%x", 
+                                         cliffComponent.GetCliffDetectedFlags());
+                        _iConfig.stuckOnEdgeBehavior->WantsToBeActivated();
+                        DelegateIfInControl(_iConfig.stuckOnEdgeBehavior.get());
+                      }
                   });
   }
   else {
@@ -212,15 +233,43 @@ void BehaviorReactToCliff::SendFinishedReactToCliffMessage() {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::OnBehaviorDeactivated()
 {
-  
+  // reset dvars
+  _dVars = DynamicVariables();
 }
 
+
+void BehaviorReactToCliff::GetAllDelegates(std::set<IBehavior*>& delegates) const
+{
+  delegates.insert(_iConfig.stuckOnEdgeBehavior.get());
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::BehaviorUpdate()
 {
   if(!IsActivated()){
+    // Set wantsToBeActivated to effectively give the activation conditions
+    // an extra tick to be evaluated.
+    _dVars.wantsToBeActivated = _dVars.gotStop || _dVars.gotCliff;
+    _dVars.gotStop = false;
+    _dVars.gotCliff = false;
     return;
+  }
+
+  // Delegate to StuckOnEdge if unexpected motion detected while
+  // cliff is still detected since it means treads are spinning
+  const bool unexpectedMovement = GetBEI().GetMovementComponent().IsUnexpectedMovementDetected();
+  const bool cliffDetected = GetBEI().GetRobotInfo().GetCliffSensorComponent().IsCliffDetected();
+  if (unexpectedMovement && cliffDetected) {
+    PRINT_NAMED_INFO("BehaviorReactToCliff.Update.StuckOnEdge", "");
+    _iConfig.stuckOnEdgeBehavior->WantsToBeActivated();
+    DelegateNow(_iConfig.stuckOnEdgeBehavior.get());
+  }
+
+  // Cancel if picked up
+  const bool isPickedUp = GetBEI().GetRobotInfo().IsPickedUp();
+  if (isPickedUp) {
+    PRINT_NAMED_INFO("BehaviorReactToCliff.Update.CancelDueToPickup", "");
+    CancelSelf();
   }
 
   if(_dVars.shouldStopDueToCharger){
@@ -240,7 +289,6 @@ void BehaviorReactToCliff::HandleWhileInScopeButNotActivated(const EngineToGameE
         PRINT_NAMED_WARNING("BehaviorReactToCliff.CliffWithoutStop",
                             "Got a cliff event but stop isn't running, skipping straight to cliff react (bad latency?)");
         // this should only happen if latency gets bad because otherwise we should stay in the stop reaction
-        _dVars.detectedFlags = detectedFlags;
         _dVars.gotCliff = true;
         _dVars.state = State::PlayingCliffReaction;
       }
@@ -277,7 +325,6 @@ void BehaviorReactToCliff::HandleWhileActivated(const EngineToGameEvent& event)
       if( !_dVars.gotCliff && (detectedFlags != 0) ) {
         PRINT_NAMED_DEBUG("BehaviorReactToCliff.GotCliff", "Got cliff event while running");
         _dVars.gotCliff = true;
-        _dVars.detectedFlags = detectedFlags;
       }
       break;
     }
@@ -364,7 +411,7 @@ CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(uint8_t c
   turnAction->SetAccel(MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2);
   turnAction->SetMaxSpeed(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC);
 
-  auto driveAction = new DriveStraightAction(amountToDrive_mm, MAX_WHEEL_SPEED_MMPS, false);
+  auto driveAction = new DriveStraightAction(amountToDrive_mm, MAX_SAFE_WHEEL_SPEED_MMPS, false);
   driveAction->SetAccel(MAX_WHEEL_ACCEL_MMPS2);
   driveAction->SetDecel(MAX_WHEEL_ACCEL_MMPS2);
 

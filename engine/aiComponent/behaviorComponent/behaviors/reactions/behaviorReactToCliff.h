@@ -43,6 +43,8 @@ protected:
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
+
   virtual void HandleWhileInScopeButNotActivated(const EngineToGameEvent& event) override;
   virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
   
@@ -66,9 +68,12 @@ private:
   };
   
   struct InstanceConfig {
-    IBEIConditionPtr cliffDetectedCondition;
+    InstanceConfig();
+    ICozmoBehaviorPtr stuckOnEdgeBehavior;
   };
-  
+
+  InstanceConfig _iConfig;
+
   struct DynamicVariables {
     DynamicVariables();
     u16 cliffDetectThresholdAtStart;
@@ -76,11 +81,10 @@ private:
     State state;
     bool gotCliff;
     bool gotStop;
-    uint8_t detectedFlags;
     bool shouldStopDueToCharger;
+    bool wantsToBeActivated;
   };
   
-  InstanceConfig _iConfig;
   DynamicVariables _dVars;
   
 }; // class BehaviorReactToCliff

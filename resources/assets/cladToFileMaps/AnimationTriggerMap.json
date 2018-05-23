@@ -964,6 +964,10 @@
     "AnimName": "ag_startsleeping"
   },
   {
+    "CladEvent": "StuckOnEdge",
+    "AnimName": "ag_reacttocliff_stuckonedge_01"
+  },
+  {
     "CladEvent": "SuccessfulWheelie",
     "AnimName": "ag_reacttocliff_wheelie_01"
   },

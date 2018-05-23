@@ -7,6 +7,14 @@
   "interruptActiveBehavior" : true,
   "linkScope": true,
 
+  "wantsToCancelSelfCondition": {
+    "conditionType": "Compound",
+    "not": {
+      "conditionType": "OffTreadsState",
+      "targetState": "OnTreads"
+    }
+  },
+
   "behaviors" : [
     {
       "behavior" : "AcknowledgeCharger",

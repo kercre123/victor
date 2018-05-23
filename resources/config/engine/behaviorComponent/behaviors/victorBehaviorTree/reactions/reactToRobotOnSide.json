@@ -1,6 +1,11 @@
 {
   "behaviorClass": "ReactToRobotOnSide",
   "behaviorID": "ReactToRobotOnSide",
+  
+  "associatedActiveFeature": "ReactToRobotOnSide",
 
-  "associatedActiveFeature": "ReactToRobotOnSide"
+  "wantsToCancelSelfCondition": {
+    "conditionType": "OffTreadsState",
+    "targetState": "OnTreads"
+  }
 }

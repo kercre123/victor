@@ -156,7 +156,6 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
   // Don't check for unexpected movement under the following conditions
   if (robotState.status & (uint16_t)RobotStatusFlag::IS_PICKED_UP   ||
       robotState.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER  ||
-      robotState.status & (uint16_t)RobotStatusFlag::CLIFF_DETECTED ||
       robotState.status & (uint16_t)RobotStatusFlag::IS_FALLING)
   {
     _unexpectedMovement.Reset();

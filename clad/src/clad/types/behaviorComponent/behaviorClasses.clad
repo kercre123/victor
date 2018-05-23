@@ -156,6 +156,7 @@ enum uint_8 BehaviorClass {
   ReactToSound,
   ReactToUnexpectedMovement,
   ReactToVoiceCommand,
+  StuckOnEdge,
 
   // robotDrivenDialog
   PromptUserForVoiceCommand,

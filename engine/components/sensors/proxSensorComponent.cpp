@@ -184,8 +184,9 @@ void ProxSensorComponent::UpdateReadingValidity()
     }
 
   } else {
-    PRINT_NAMED_WARNING("ProxSensorComponent.UpdateReadingValidity.LiftNotCalibrated",
-                        "Lift is not calibrated! Considering it not in FOV.");
+    // Lift might not be calibrated if bracing while falling
+    PRINT_NAMED_INFO("ProxSensorComponent.UpdateReadingValidity.LiftNotCalibrated",
+                     "Lift is not calibrated! Considering it not in FOV.");
   }
   _latestData.isLiftInFOV = isInFOV;
 
