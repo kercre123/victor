@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-
+#include "TargetConditionals.h"
 #include "BleCentral.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,8 +17,10 @@
 #include <ifaddrs.h>
 #include <arpa/inet.h>
 
+#if !TARGET_OS_IPHONE
 #include <readline/readline.h>
 #include <readline/history.h>
+#endif
 
 #include "signal.h"
 
@@ -64,6 +66,7 @@ BleCentral* centralContext;
 }
 
 - (void)devDownloadOta {
+#if !TARGET_OS_IPHONE
   NSFileManager* fileManager = [NSFileManager defaultManager];
   
   NSArray* pathParts = [NSArray arrayWithObjects:NSHomeDirectory(), @"Downloads", @"mac-client-ota", nil];
@@ -86,6 +89,7 @@ BleCentral* centralContext;
   
   // Move to wifi-ap mode
   Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiAccessPointRequest>(self, _commVersion, true);
+#endif
 }
 
 - (id)init {
@@ -399,8 +403,10 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
             NSString *s = [NSString stringWithFormat:
                            @"tell application \"Terminal\" to do script \"ssh %@\"", sshArg];
             
+            #if !TARGET_OS_IPHONE
             NSAppleScript *as = [[NSAppleScript alloc] initWithSource: s];
             [as executeAndReturnError:nil];
+            #endif
             
             _readyForNextCommand = true;
           }
@@ -597,8 +603,10 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
             NSString *s = [NSString stringWithFormat:
                            @"tell application \"Terminal\" to do script \"ssh %@\"", sshArg];
             
+            #if !TARGET_OS_IPHONE
             NSAppleScript *as = [[NSAppleScript alloc] initWithSource: s];
             [as executeAndReturnError:nil];
+            #endif
             
             _readyForNextCommand = true;
           }
@@ -1077,11 +1085,15 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         continue;
       }
       
+      #if !TARGET_OS_IPHONE
       input = readline((const char*)prompt);
       
       if(strlen(input) > 0) {
         add_history(input);
       }
+      #else
+      break;
+      #endif
       
       std::vector<std::string> words = [self GetWordsFromLine:input];
       

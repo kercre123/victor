@@ -8,7 +8,6 @@
 
 #import <Foundation/Foundation.h>
 #include "SyncController.h"
-#include <CoreWLAN/CoreWLAN.h>
 #include <ifaddrs.h>
 #include <arpa/inet.h>
 
@@ -73,6 +72,9 @@
 }
 
 -(void) macConnectVictorWifi {
+#include "TargetConditionals.h"
+#if !TARGET_OS_IPHONE
+  #include <CoreWLAN/CoreWLAN.h>
   NSString* matchingSsid = [NSString stringWithUTF8String:_lastSSID.c_str()];
   NSString* pw = [NSString stringWithUTF8String:_lastPW.c_str()];
   
@@ -108,6 +110,7 @@
     }
     _requests.success = wifiConnect? kSuccess : kFailure;
   }
+#endif
 }
 
 -(std::string) getIPAddress {
@@ -133,6 +136,7 @@
 }
 
 -(void) downloadOta:(std::string)url {
+  #if !TARGET_OS_IPHONE
   NSFileManager* fileManager = [NSFileManager defaultManager];
   
   NSArray* pathParts = [NSArray arrayWithObjects:NSHomeDirectory(), @"Downloads", @"mac-client-ota", nil];
@@ -149,6 +153,7 @@
   
   NSAppleScript *as = [[NSAppleScript alloc] initWithSource: s];
   [as executeAndReturnError:nil];
+  #endif
 }
 
 -(void) processCommands:(bool)doExit {

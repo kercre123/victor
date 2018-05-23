@@ -23,6 +23,28 @@
 		DA87208A20A4C65100343D43 /* SyncController.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA87208920A4C65100343D43 /* SyncController.mm */; };
 		DA87208D20AA07FC00343D43 /* CoreWLAN.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA87208C20AA07FC00343D43 /* CoreWLAN.framework */; };
 		DA945AFD2080167B0017AD00 /* libreadline.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DA945AFC2080167B0017AD00 /* libreadline.tbd */; };
+		DAB2332020B60013003B6285 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DAB2331F20B60013003B6285 /* AppDelegate.m */; };
+		DAB2332320B60013003B6285 /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = DAB2332220B60013003B6285 /* ViewController.mm */; };
+		DAB2332620B60013003B6285 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DAB2332420B60013003B6285 /* Main.storyboard */; };
+		DAB2332820B60013003B6285 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DAB2332720B60013003B6285 /* Assets.xcassets */; };
+		DAB2332B20B60013003B6285 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DAB2332920B60013003B6285 /* LaunchScreen.storyboard */; };
+		DAB2332E20B60013003B6285 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = DAB2332D20B60013003B6285 /* main.m */; };
+		DAB2333820B60013003B6285 /* HanTests.m in Sources */ = {isa = PBXBuildFile; fileRef = DAB2333720B60013003B6285 /* HanTests.m */; };
+		DAB2334320B60013003B6285 /* HanUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = DAB2334220B60013003B6285 /* HanUITests.m */; };
+		DAB2334F20B601D8003B6285 /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DAB2334E20B601D8003B6285 /* CoreBluetooth.framework */; };
+		DAB2335020B60417003B6285 /* BleCentral.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA54707620479890004FDA9F /* BleCentral.mm */; };
+		DAB2335120B6041A003B6285 /* SyncController.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA87208920A4C65100343D43 /* SyncController.mm */; };
+		DAB2335220B6041D003B6285 /* Requests.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA87208620A4B8C300343D43 /* Requests.mm */; };
+		DAB2335320B60426003B6285 /* bleMessageProtocol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DAE361D32049D4AE0053ED2F /* bleMessageProtocol.cpp */; };
+		DAB2335620B60672003B6285 /* SafeMessageBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 700A7149205A647F00B518CD /* SafeMessageBuffer.cpp */; };
+		DAB2335720B60672003B6285 /* messageExternalComms.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DA27D315206C386D00D4416A /* messageExternalComms.cpp */; };
+		DAB2335820B60672003B6285 /* jsoncpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 700A714A205A647F00B518CD /* jsoncpp.cpp */; };
+		DAB2335B20B60672003B6285 /* json.h in Headers */ = {isa = PBXBuildFile; fileRef = 700A7147205A647F00B518CD /* json.h */; };
+		DAB2335C20B60672003B6285 /* json-forwards.h in Headers */ = {isa = PBXBuildFile; fileRef = 700A7146205A647F00B518CD /* json-forwards.h */; };
+		DAB2335D20B60672003B6285 /* messageExternalCommsTag.h in Headers */ = {isa = PBXBuildFile; fileRef = DA27D319206C386D00D4416A /* messageExternalCommsTag.h */; };
+		DAB2335E20B60672003B6285 /* SafeMessageBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 700A7144205A647F00B518CD /* SafeMessageBuffer.h */; };
+		DAB2335F20B60672003B6285 /* messageExternalComms.h in Headers */ = {isa = PBXBuildFile; fileRef = DA27D318206C386D00D4416A /* messageExternalComms.h */; };
+		DAB2336620B606EB003B6285 /* libclad-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DAB2336320B60672003B6285 /* libclad-ios.a */; };
 		DAE361D52049D4AE0053ED2F /* bleMessageProtocol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DAE361D32049D4AE0053ED2F /* bleMessageProtocol.cpp */; };
 /* End PBXBuildFile section */
 
@@ -33,6 +55,27 @@
 			proxyType = 1;
 			remoteGlobalIDString = 700A7137205A639E00B518CD;
 			remoteInfo = clad;
+		};
+		DAB2333420B60013003B6285 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DA5470642047985E004FDA9F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DAB2331B20B60013003B6285;
+			remoteInfo = Han;
+		};
+		DAB2333F20B60013003B6285 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DA5470642047985E004FDA9F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DAB2331B20B60013003B6285;
+			remoteInfo = Han;
+		};
+		DAB2336420B606B6003B6285 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DA5470642047985E004FDA9F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DAB2335420B60672003B6285;
+			remoteInfo = "clad-ios";
 		};
 /* End PBXContainerItemProxy section */
 
@@ -73,6 +116,24 @@
 		DA87208B20A4C66400343D43 /* SyncController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SyncController.h; sourceTree = "<group>"; };
 		DA87208C20AA07FC00343D43 /* CoreWLAN.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreWLAN.framework; path = System/Library/Frameworks/CoreWLAN.framework; sourceTree = SDKROOT; };
 		DA945AFC2080167B0017AD00 /* libreadline.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libreadline.tbd; path = usr/lib/libreadline.tbd; sourceTree = SDKROOT; };
+		DAB2331C20B60013003B6285 /* Han.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Han.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DAB2331E20B60013003B6285 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		DAB2331F20B60013003B6285 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		DAB2332120B60013003B6285 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
+		DAB2332220B60013003B6285 /* ViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ViewController.mm; sourceTree = "<group>"; };
+		DAB2332520B60013003B6285 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		DAB2332720B60013003B6285 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		DAB2332A20B60013003B6285 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		DAB2332C20B60013003B6285 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		DAB2332D20B60013003B6285 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		DAB2333320B60013003B6285 /* HanTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HanTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DAB2333720B60013003B6285 /* HanTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HanTests.m; sourceTree = "<group>"; };
+		DAB2333920B60013003B6285 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		DAB2333E20B60013003B6285 /* HanUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HanUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DAB2334220B60013003B6285 /* HanUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HanUITests.m; sourceTree = "<group>"; };
+		DAB2334420B60013003B6285 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		DAB2334E20B601D8003B6285 /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS11.2.sdk/System/Library/Frameworks/CoreBluetooth.framework; sourceTree = DEVELOPER_DIR; };
+		DAB2336320B60672003B6285 /* libclad-ios.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libclad-ios.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		DAE361C52049D1500053ED2F /* libsodium.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libsodium.a; sourceTree = "<group>"; };
 		DAE361CE2049D27B0053ED2F /* libclad.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libclad.a; sourceTree = "<group>"; };
 		DAE361D32049D4AE0053ED2F /* bleMessageProtocol.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = bleMessageProtocol.cpp; sourceTree = "<group>"; };
@@ -98,6 +159,36 @@
 				DA945AFD2080167B0017AD00 /* libreadline.tbd in Frameworks */,
 				700A7152205A649800B518CD /* libclad.a in Frameworks */,
 				DA54707B20479928004FDA9F /* CoreBluetooth.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DAB2331920B60013003B6285 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DAB2336620B606EB003B6285 /* libclad-ios.a in Frameworks */,
+				DAB2334F20B601D8003B6285 /* CoreBluetooth.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DAB2333020B60013003B6285 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DAB2333B20B60013003B6285 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DAB2335920B60672003B6285 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -174,6 +265,9 @@
 			children = (
 				DAE361D92049DE4D0053ED2F /* clad */,
 				DA54706E2047985E004FDA9F /* mac-client */,
+				DAB2331D20B60013003B6285 /* Han */,
+				DAB2333620B60013003B6285 /* HanTests */,
+				DAB2334120B60013003B6285 /* HanUITests */,
 				DA54706D2047985E004FDA9F /* Products */,
 				DA54707920479928004FDA9F /* Frameworks */,
 			);
@@ -184,6 +278,10 @@
 			children = (
 				DA54706C2047985E004FDA9F /* mac-client */,
 				700A7138205A639E00B518CD /* libclad.a */,
+				DAB2331C20B60013003B6285 /* Han.app */,
+				DAB2333320B60013003B6285 /* HanTests.xctest */,
+				DAB2333E20B60013003B6285 /* HanUITests.xctest */,
+				DAB2336320B60672003B6285 /* libclad-ios.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -210,6 +308,7 @@
 		DA54707920479928004FDA9F /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				DAB2334E20B601D8003B6285 /* CoreBluetooth.framework */,
 				DA87208C20AA07FC00343D43 /* CoreWLAN.framework */,
 				DA945AFC2080167B0017AD00 /* libreadline.tbd */,
 				DAE361CE2049D27B0053ED2F /* libclad.a */,
@@ -217,6 +316,40 @@
 				DA54707A20479928004FDA9F /* CoreBluetooth.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		DAB2331D20B60013003B6285 /* Han */ = {
+			isa = PBXGroup;
+			children = (
+				DAB2331E20B60013003B6285 /* AppDelegate.h */,
+				DAB2331F20B60013003B6285 /* AppDelegate.m */,
+				DAB2332120B60013003B6285 /* ViewController.h */,
+				DAB2332220B60013003B6285 /* ViewController.mm */,
+				DAB2332420B60013003B6285 /* Main.storyboard */,
+				DAB2332720B60013003B6285 /* Assets.xcassets */,
+				DAB2332920B60013003B6285 /* LaunchScreen.storyboard */,
+				DAB2332C20B60013003B6285 /* Info.plist */,
+				DAB2332D20B60013003B6285 /* main.m */,
+			);
+			path = Han;
+			sourceTree = "<group>";
+		};
+		DAB2333620B60013003B6285 /* HanTests */ = {
+			isa = PBXGroup;
+			children = (
+				DAB2333720B60013003B6285 /* HanTests.m */,
+				DAB2333920B60013003B6285 /* Info.plist */,
+			);
+			path = HanTests;
+			sourceTree = "<group>";
+		};
+		DAB2334120B60013003B6285 /* HanUITests */ = {
+			isa = PBXGroup;
+			children = (
+				DAB2334220B60013003B6285 /* HanUITests.m */,
+				DAB2334420B60013003B6285 /* Info.plist */,
+			);
+			path = HanUITests;
 			sourceTree = "<group>";
 		};
 		DAE361C82049D1940053ED2F /* signals */ = {
@@ -250,6 +383,18 @@
 				DA27D31C206C386E00D4416A /* messageExternalCommsTag.h in Headers */,
 				700A714B205A647F00B518CD /* SafeMessageBuffer.h in Headers */,
 				DA27D31B206C386E00D4416A /* messageExternalComms.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DAB2335A20B60672003B6285 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DAB2335B20B60672003B6285 /* json.h in Headers */,
+				DAB2335C20B60672003B6285 /* json-forwards.h in Headers */,
+				DAB2335D20B60672003B6285 /* messageExternalCommsTag.h in Headers */,
+				DAB2335E20B60672003B6285 /* SafeMessageBuffer.h in Headers */,
+				DAB2335F20B60672003B6285 /* messageExternalComms.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -291,6 +436,77 @@
 			productReference = DA54706C2047985E004FDA9F /* mac-client */;
 			productType = "com.apple.product-type.tool";
 		};
+		DAB2331B20B60013003B6285 /* Han */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DAB2334B20B60013003B6285 /* Build configuration list for PBXNativeTarget "Han" */;
+			buildPhases = (
+				DAB2331820B60013003B6285 /* Sources */,
+				DAB2331920B60013003B6285 /* Frameworks */,
+				DAB2331A20B60013003B6285 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DAB2336520B606B6003B6285 /* PBXTargetDependency */,
+			);
+			name = Han;
+			productName = Han;
+			productReference = DAB2331C20B60013003B6285 /* Han.app */;
+			productType = "com.apple.product-type.application";
+		};
+		DAB2333220B60013003B6285 /* HanTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DAB2334C20B60013003B6285 /* Build configuration list for PBXNativeTarget "HanTests" */;
+			buildPhases = (
+				DAB2332F20B60013003B6285 /* Sources */,
+				DAB2333020B60013003B6285 /* Frameworks */,
+				DAB2333120B60013003B6285 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DAB2333520B60013003B6285 /* PBXTargetDependency */,
+			);
+			name = HanTests;
+			productName = HanTests;
+			productReference = DAB2333320B60013003B6285 /* HanTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		DAB2333D20B60013003B6285 /* HanUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DAB2334D20B60013003B6285 /* Build configuration list for PBXNativeTarget "HanUITests" */;
+			buildPhases = (
+				DAB2333A20B60013003B6285 /* Sources */,
+				DAB2333B20B60013003B6285 /* Frameworks */,
+				DAB2333C20B60013003B6285 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DAB2334020B60013003B6285 /* PBXTargetDependency */,
+			);
+			name = HanUITests;
+			productName = HanUITests;
+			productReference = DAB2333E20B60013003B6285 /* HanUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		DAB2335420B60672003B6285 /* clad-ios */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DAB2336020B60672003B6285 /* Build configuration list for PBXNativeTarget "clad-ios" */;
+			buildPhases = (
+				DAB2335520B60672003B6285 /* Sources */,
+				DAB2335920B60672003B6285 /* Frameworks */,
+				DAB2335A20B60672003B6285 /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "clad-ios";
+			productName = clad;
+			productReference = DAB2336320B60672003B6285 /* libclad-ios.a */;
+			productType = "com.apple.product-type.library.static";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -308,6 +524,23 @@
 						CreatedOnToolsVersion = 9.2;
 						ProvisioningStyle = Automatic;
 					};
+					DAB2331B20B60013003B6285 = {
+						CreatedOnToolsVersion = 9.2;
+						ProvisioningStyle = Automatic;
+					};
+					DAB2333220B60013003B6285 = {
+						CreatedOnToolsVersion = 9.2;
+						ProvisioningStyle = Automatic;
+						TestTargetID = DAB2331B20B60013003B6285;
+					};
+					DAB2333D20B60013003B6285 = {
+						CreatedOnToolsVersion = 9.2;
+						ProvisioningStyle = Automatic;
+						TestTargetID = DAB2331B20B60013003B6285;
+					};
+					DAB2335420B60672003B6285 = {
+						ProvisioningStyle = Automatic;
+					};
 				};
 			};
 			buildConfigurationList = DA5470672047985E004FDA9F /* Build configuration list for PBXProject "mac-client" */;
@@ -316,6 +549,7 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				Base,
 			);
 			mainGroup = DA5470632047985E004FDA9F;
 			productRefGroup = DA54706D2047985E004FDA9F /* Products */;
@@ -324,9 +558,40 @@
 			targets = (
 				DA54706B2047985E004FDA9F /* mac-client */,
 				700A7137205A639E00B518CD /* clad */,
+				DAB2331B20B60013003B6285 /* Han */,
+				DAB2333220B60013003B6285 /* HanTests */,
+				DAB2333D20B60013003B6285 /* HanUITests */,
+				DAB2335420B60672003B6285 /* clad-ios */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		DAB2331A20B60013003B6285 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DAB2332B20B60013003B6285 /* LaunchScreen.storyboard in Resources */,
+				DAB2332820B60013003B6285 /* Assets.xcassets in Resources */,
+				DAB2332620B60013003B6285 /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DAB2333120B60013003B6285 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DAB2333C20B60013003B6285 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		700A7134205A639E00B518CD /* Sources */ = {
@@ -351,6 +616,46 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		DAB2331820B60013003B6285 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DAB2332320B60013003B6285 /* ViewController.mm in Sources */,
+				DAB2335120B6041A003B6285 /* SyncController.mm in Sources */,
+				DAB2335020B60417003B6285 /* BleCentral.mm in Sources */,
+				DAB2335220B6041D003B6285 /* Requests.mm in Sources */,
+				DAB2335320B60426003B6285 /* bleMessageProtocol.cpp in Sources */,
+				DAB2332E20B60013003B6285 /* main.m in Sources */,
+				DAB2332020B60013003B6285 /* AppDelegate.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DAB2332F20B60013003B6285 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DAB2333820B60013003B6285 /* HanTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DAB2333A20B60013003B6285 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DAB2334320B60013003B6285 /* HanUITests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DAB2335520B60672003B6285 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DAB2335620B60672003B6285 /* SafeMessageBuffer.cpp in Sources */,
+				DAB2335720B60672003B6285 /* messageExternalComms.cpp in Sources */,
+				DAB2335820B60672003B6285 /* jsoncpp.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -359,7 +664,41 @@
 			target = 700A7137205A639E00B518CD /* clad */;
 			targetProxy = 700A7150205A649300B518CD /* PBXContainerItemProxy */;
 		};
+		DAB2333520B60013003B6285 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DAB2331B20B60013003B6285 /* Han */;
+			targetProxy = DAB2333420B60013003B6285 /* PBXContainerItemProxy */;
+		};
+		DAB2334020B60013003B6285 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DAB2331B20B60013003B6285 /* Han */;
+			targetProxy = DAB2333F20B60013003B6285 /* PBXContainerItemProxy */;
+		};
+		DAB2336520B606B6003B6285 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DAB2335420B60672003B6285 /* clad-ios */;
+			targetProxy = DAB2336420B606B6003B6285 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		DAB2332420B60013003B6285 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				DAB2332520B60013003B6285 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		DAB2332920B60013003B6285 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				DAB2332A20B60013003B6285 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		700A713A205A639E00B518CD /* Debug */ = {
@@ -370,6 +709,7 @@
 				EXECUTABLE_PREFIX = lib;
 				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/../../../../victor-clad/tools/message-buffers/support/cpp/include";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
 			};
 			name = Debug;
 		};
@@ -381,6 +721,7 @@
 				EXECUTABLE_PREFIX = lib;
 				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/../../../../victor-clad/tools/message-buffers/support/cpp/include";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
 			};
 			name = Release;
 		};
@@ -432,6 +773,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/../../../../EXTERNALS/coretech_external/build/libsodium/ios/include",
+					"$(PROJECT_DIR)/**",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -481,6 +826,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/../../../../EXTERNALS/coretech_external/build/libsodium/ios/include",
+					"$(PROJECT_DIR)/**",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = macosx;
@@ -490,7 +839,7 @@
 		DA5470742047985E004FDA9F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 6N4JN4E7V7;
 				HEADER_SEARCH_PATHS = (
@@ -510,13 +859,14 @@
 				);
 				OTHER_LDFLAGS = "$(PROJECT_DIR)/../../../../EXTERNALS/coretech_external/build/libsodium/mac/lib/libsodium.a";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
 			name = Debug;
 		};
 		DA5470752047985E004FDA9F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 6N4JN4E7V7;
 				HEADER_SEARCH_PATHS = (
@@ -531,6 +881,148 @@
 				);
 				OTHER_LDFLAGS = "$(PROJECT_DIR)/../../../../EXTERNALS/coretech_external/build/libsodium/mac/lib/libsodium.a";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+			};
+			name = Release;
+		};
+		DAB2334520B60013003B6285 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 6N4JN4E7V7;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/../../../../tools/message-buffers/support/cpp/include/**",
+					"$(PROJECT_DIR)",
+					"$(PROJECT_DIR)/../../../../EXTERNALS/coretech_external/build/libsodium/ios/include",
+				);
+				"HEADER_SEARCH_PATHS[arch=*]" = (
+					"$(PROJECT_DIR)/../../../../tools/message-buffers/support/cpp/include",
+					"$(PROJECT_DIR)/../../../../EXTERNALS/coretech_external/build/libsodium/ios/include",
+				);
+				INFOPLIST_FILE = Han/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.2;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../../../../EXTERNALS/coretech_external/build/libsodium/ios/lib";
+				"LIBRARY_SEARCH_PATHS[arch=*]" = "$(PROJECT_DIR)/../../../../EXTERNALS/coretech_external/build/libsodium/ios/lib";
+				OTHER_LDFLAGS = "$(PROJECT_DIR)/../../../../EXTERNALS/coretech_external/build/libsodium/ios/lib/libsodium.a";
+				PRODUCT_BUNDLE_IDENTIFIER = blah.Han;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		DAB2334620B60013003B6285 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 6N4JN4E7V7;
+				INFOPLIST_FILE = Han/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.2;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../../../../EXTERNALS/coretech_external/build/libsodium/ios/lib";
+				OTHER_LDFLAGS = "$(PROJECT_DIR)/../../../../EXTERNALS/coretech_external/build/libsodium/ios/lib/libsodium.a";
+				PRODUCT_BUNDLE_IDENTIFIER = blah.Han;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		DAB2334720B60013003B6285 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = HanTests/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.2;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = blah.HanTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Han.app/Han";
+			};
+			name = Debug;
+		};
+		DAB2334820B60013003B6285 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = HanTests/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.2;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = blah.HanTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Han.app/Han";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		DAB2334920B60013003B6285 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = HanUITests/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.2;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = blah.HanUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Han;
+			};
+			name = Debug;
+		};
+		DAB2334A20B60013003B6285 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = HanUITests/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.2;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = blah.HanUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Han;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		DAB2336120B60672003B6285 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = BEJF9NAYCL;
+				EXECUTABLE_PREFIX = lib;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/../../../../victor-clad/tools/message-buffers/support/cpp/include";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos11.2;
+			};
+			name = Debug;
+		};
+		DAB2336220B60672003B6285 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = BEJF9NAYCL;
+				EXECUTABLE_PREFIX = lib;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/../../../../victor-clad/tools/message-buffers/support/cpp/include";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos11.2;
 			};
 			name = Release;
 		};
@@ -560,6 +1052,42 @@
 			buildConfigurations = (
 				DA5470742047985E004FDA9F /* Debug */,
 				DA5470752047985E004FDA9F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DAB2334B20B60013003B6285 /* Build configuration list for PBXNativeTarget "Han" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DAB2334520B60013003B6285 /* Debug */,
+				DAB2334620B60013003B6285 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DAB2334C20B60013003B6285 /* Build configuration list for PBXNativeTarget "HanTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DAB2334720B60013003B6285 /* Debug */,
+				DAB2334820B60013003B6285 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DAB2334D20B60013003B6285 /* Build configuration list for PBXNativeTarget "HanUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DAB2334920B60013003B6285 /* Debug */,
+				DAB2334A20B60013003B6285 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DAB2336020B60672003B6285 /* Build configuration list for PBXNativeTarget "clad-ios" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DAB2336120B60672003B6285 /* Debug */,
+				DAB2336220B60672003B6285 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
