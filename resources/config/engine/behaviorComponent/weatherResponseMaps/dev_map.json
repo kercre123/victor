@@ -1,0 +1,37 @@
+// one to one mapping with weather conditions 
+[
+  // Duplicate of accuweather map
+  //{
+  //  "APIValue" : "cloudy",
+  //  "CladType" : "Cloudy"
+  //},
+  // Duplicate of accuweather map
+  //{
+  //  "APIValue" : "cold",
+  //  "CladType" : "Cold"
+  //},
+  // Duplicate of accuweather map
+  //{
+  //  "APIValue" : "rain",
+  //  "CladType" : "Rain"
+  //},
+  // Duplicate of accuweather map
+  //{
+  //  "APIValue" : "snow",
+  //  "CladType" : "Snow"
+  //},
+  // Duplicate of accuweather map
+  //{
+  //  "APIValue" : "sunny",
+  //  "CladType" : "Sunny"
+  //},
+  // Duplicate of accuweather map
+  //{
+  //  "APIValue" : "windy",
+  //  "CladType" : "Windy"
+  //}
+  {
+    "APIValue" : "stars",
+    "CladType" : "Stars"
+  }
+]

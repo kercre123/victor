@@ -18,6 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/weatherIntentParser.h"
+#include "engine/components/dataAccessorComponent.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -142,7 +143,10 @@ void BehaviorCoordinateWeather::OnBehaviorActivated()
   if(WeatherIntentParser::IsForecast(weatherResponse)){
     cantDoThat = true;
   }else{
-    const auto condition = WeatherIntentParser::GetCondition(weatherResponse);
+    auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetValue<DataAccessorComponent>();
+
+    const auto condition = WeatherIntentParser::GetCondition(dataAccessorComp.GetWeatherResponseMap(), 
+                                                             weatherResponse);
     const auto iter = _iConfig.weatherBehaviorMap.find(condition);
     if((iter != _iConfig.weatherBehaviorMap.end()) &&
        iter->second->WantsToBeActivated()){
