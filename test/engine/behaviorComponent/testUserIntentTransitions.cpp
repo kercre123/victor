@@ -103,7 +103,7 @@ TEST_INTENT(UserIntentsTransitions, MeetVictor, "meet_victor")
 {
   UserIntent intent;
   intent.Set_meet_victor( UserIntent_MeetVictor("cozmo") );
-  const bool res = IntentHelper( intent, BehaviorID::EnrollFace );
+  const bool res = IntentHelper( intent, BehaviorID::MeetVictor, true );
   EXPECT_TRUE(res);
 }
   

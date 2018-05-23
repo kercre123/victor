@@ -52,6 +52,9 @@ private:
     std::shared_ptr<BehaviorTimerUtilityCoordinator> timerCoordBehavior;
     ICozmoBehaviorPtr reactToObstacleBehavior;
     
+    ICozmoBehaviorPtr meetVictorBehavior;
+    std::vector<ICozmoBehaviorPtr> toSuppressWhenMeetVictor;
+    
     std::unordered_map<ICozmoBehaviorPtr, bool> devActivatableOverrides;
   };
 

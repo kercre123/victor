@@ -304,7 +304,7 @@ ActionResult SayTextAction::TransitionToPlaying()
   _ttsState = TextToSpeechState::Playing;
 
   if(AnimationTrigger::Count != _animTrigger){
-    _animAction = std::make_unique<TriggerAnimationAction>(_animTrigger, 1, false, _ignoreAnimTracks);
+    _animAction = std::make_unique<TriggerAnimationAction>(_animTrigger, 1, true, _ignoreAnimTracks);
     _animAction->SetRobot(&GetRobot());
   }
 

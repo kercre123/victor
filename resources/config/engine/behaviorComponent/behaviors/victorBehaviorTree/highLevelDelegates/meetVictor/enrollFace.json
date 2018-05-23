@@ -1,8 +1,0 @@
-{
-  "behaviorClass": "EnrollFace",
-  "behaviorID": "EnrollFace",
-  "executableBehaviorType": "EnrollFace",
-  "maxFacesVisible": 1,  // Error state thrown if enrollment is attempted while more than this many faces visible
-  "tooManyFacesTimeout_sec": 1.5, // Set to zero to error immediately upon seeing multiple faces
-  "tooManyFacesRecentTime_sec": 0.5 // Seeing more maxFaces different IDs within this recent time window "too many"
-}

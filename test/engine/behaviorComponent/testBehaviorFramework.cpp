@@ -307,6 +307,22 @@ void TestBehaviorFramework::ApplyAdditionalRequirementsBeforeDelegation(IBehavio
       uic.SetUserIntentPending(std::move(intent), UserIntentSource::Unknown);
     }
   }
+  
+  // meet victor
+  {
+    ICozmoBehavior* delCozPtr = dynamic_cast<ICozmoBehavior*>(delegate);
+    const bool delegatingToEnrollFace = (delCozPtr != nullptr) &&
+                                        (delCozPtr->GetClass() == BEHAVIOR_CLASS(EnrollFace));
+    
+    if( delegatingToEnrollFace ) {
+      auto& uic =
+        GetBehaviorExternalInterface().GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
+      
+      UserIntent_MeetVictor meetVictor{"Cozmo"};
+      UserIntent intent = UserIntent::Createmeet_victor(std::move(meetVictor));
+      uic.SetUserIntentPending(std::move(intent), UserIntentSource::Unknown);
+    }
+  }
 }
 
 

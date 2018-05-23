@@ -59,7 +59,9 @@ protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
+  
+  virtual void InitBehavior() override;
   virtual void OnBehaviorActivated()   override;
   virtual void BehaviorUpdate() override;
   virtual void OnBehaviorDeactivated()   override;
@@ -79,13 +81,16 @@ private:
   using FaceID_t = Vision::FaceID_t;
 
   enum class State : uint8_t {
-    Success,
     
-    // All failure states:
     NotStarted,
+    
+    // contains both states and failure cases
+    DriveOffCharger,
+    PutDownBlock,
     LookingForFace,
     Enrolling,
     SayingName,
+    Success,
     SayingIKnowThatName,
     EmotingConfusion,
     SavingToRobot,
@@ -104,6 +109,8 @@ private:
   
   Result InitEnrollmentSettings();
   
+  void TransitionToPutDownBlock();
+  void TransitionToDriveOffCharger();
   void TransitionToLookingForFace();
   void TransitionToEnrolling();
   void TransitionToScanningInterrupted();
@@ -135,40 +142,64 @@ private:
   // Members
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  State                     _state = State::NotStarted;
+  struct InstanceConfig {
+    InstanceConfig();
+    
+    s32              maxFacesVisible;
+    f32              tooManyFacesRecentTime_sec;
+    f32              tooManyFacesTimeout_sec;
+    f32              timeout_sec;
+    
+    ICozmoBehaviorPtr driveOffChargerBehavior;
+    ICozmoBehaviorPtr putDownBlockBehavior;
+  };
   
-  FaceID_t                  _faceID;
-  FaceID_t                  _saveID;
-  FaceID_t                  _observedUnusableID;
+  struct DynamicVariables {
+    DynamicVariables();
+    
+    struct Persistent {
+      State          state = State::NotStarted;
+      bool           didEverLeaveCharger = false;
+      
+      using EnrollmentSettings = ExternalInterface::SetFaceToEnroll;
+      std::unique_ptr<EnrollmentSettings> settings;
+    };
+    Persistent       persistent;
+    
+    bool             sayName;
+    bool             useMusic;
+    bool             saveToRobot;
+    bool             saveSucceeded;
+    bool             enrollingSpecificID;
+    FaceID_t         faceID;
+    FaceID_t         saveID;
+    FaceID_t         observedUnusableID;
+    
+    TimeStamp_t      lastFaceSeenTime_ms;
+    
+    f32 timeout_sec;
+    
+    f32              startedSeeingMultipleFaces_sec;
+    f32              startTime_sec;
+    
+    f32              totalBackup_mm;
+    
+    
+    
+    ActionResult     saveEnrollResult;
+    ActionResult     saveAlbumResult;
+    
+    std::string      faceName;
+    std::string      observedUnusableName;
+    
+    Radians          lastRelBodyAngle;
+    
+    
+    State            failedState;
+  };
   
-  TimeStamp_t               _lastFaceSeenTime_ms;
-  
-  s32                       _maxFacesVisible;
-  f32                       _tooManyFacesRecentTime_sec;
-  f32                       _tooManyFacesTimeout_sec;
-  f32                       _startedSeeingMultipleFaces_sec;
-  f32                       _startTime_sec;
-  f32                       _timeout_sec;
-  f32                       _totalBackup_mm;
-  
-  bool                      _sayName;
-  bool                      _useMusic;
-  bool                      _saveToRobot;
-  bool                      _saveSucceeded;
-  bool                      _enrollingSpecificID;
-  
-  ActionResult              _saveEnrollResult;
-  ActionResult              _saveAlbumResult;
-  
-  std::string               _faceName;
-  std::string               _observedUnusableName;
-  
-  Radians                   _lastRelBodyAngle;
-  
-  using EnrollmentSettings = ExternalInterface::SetFaceToEnroll;
-  std::unique_ptr<EnrollmentSettings> _settings;
-  
-  State _failedState;
+  InstanceConfig _iConfig;
+  DynamicVariables _dVars;
   
 }; // class BehaviorEnrollFace
   

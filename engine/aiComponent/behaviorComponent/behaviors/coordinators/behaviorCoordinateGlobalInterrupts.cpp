@@ -50,6 +50,10 @@ namespace{
     BEHAVIOR_ID(Sleeping),
     BEHAVIOR_ID(SleepingWakeUp),
   }};
+  
+  static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenMeetVictor = {
+    BEHAVIOR_ID(ReactToTouchPetting),
+  };
 }
 
 
@@ -94,6 +98,9 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
   for( const auto& id : kBehaviorIDsToSuppressWhenSleeping ) {
     _iConfig.toSuppressWhenSleeping.push_back( BC.FindBehaviorByID(id) );
   }
+  for( const auto& id : kBehaviorIDsToSuppressWhenMeetVictor ) {
+    _iConfig.toSuppressWhenMeetVictor.push_back( BC.FindBehaviorByID(id) );
+  }
 
   BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(TimerUtilityCoordinator),
                                  BEHAVIOR_CLASS(TimerUtilityCoordinator),
@@ -103,6 +110,7 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
   _iConfig.triggerWordPendingCond->Init(GetBEI());
   
   _iConfig.reactToObstacleBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToObstacle));
+  _iConfig.meetVictorBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(MeetVictor));
 }
 
 
@@ -155,6 +163,15 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
 
     const auto& behaviorIterator = GetBehaviorComp<ActiveBehaviorIterator>();
     behaviorIterator.IterateActiveCozmoBehaviorsForward( callback, this );
+  }
+  
+  // suppress during meet victor
+  {
+    if( _iConfig.meetVictorBehavior->IsActivated() ) {
+      for( const auto& beh : _iConfig.toSuppressWhenMeetVictor ) {
+        beh->SetDontActivateThisTick(GetDebugLabel());
+      }
+    }
   }
   
   

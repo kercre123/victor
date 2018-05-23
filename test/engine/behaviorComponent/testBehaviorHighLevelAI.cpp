@@ -259,9 +259,9 @@ TEST(BehaviorHighLevelAI, PostBehaviorSuggestionsConsidered)
     // set an intent pending
     auto intent = tih.GetCompletedIntent( intentName );
     auto intentTag = intent.GetTag();
-    // meet victor needs a name to activate
+    // meet victor needs a special name to activate and deactivate again
     if( intentTag == USER_INTENT(meet_victor) ) {
-      intent.Set_meet_victor( UserIntent_MeetVictor{"cozmo"} );
+      intent.Set_meet_victor( UserIntent_MeetVictor{"Special name for unit tests to end enrollment"} );
     }
     uic.DevSetUserIntentPending( std::move(intent), UserIntentSource::Unknown );
     
