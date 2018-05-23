@@ -546,15 +546,23 @@ namespace Cozmo {
           case (uint8_t)Filter::NEONBoxFilter: {
             kProcFace_AntiAliasingSize = 3;
 
-            static Vision::Image temp(_eyeShape.GetNumRows(), _eyeShape.GetNumCols());
-            Vision::Image tempImage = temp.GetROI(eyeBoundingBoxS32);
-            eyeShapeROI.BoxFilter(tempImage,kProcFace_AntiAliasingSize);
-            std::swap(_eyeShape, temp);
+            if((upperLeft.x()>0) && (upperLeft.y()>0) && (bottomRight.x()<ProceduralFace::WIDTH-1) && (bottomRight.y()<ProceduralFace::HEIGHT-1)) {
+              // The eye does NOT intersect with the boundary, so it is safe to use NEON box filter
+              static Vision::Image temp(_eyeShape.GetNumRows(), _eyeShape.GetNumCols());
+              Vision::Image tempImage = temp.GetROI(eyeBoundingBoxS32);
+              eyeShapeROI.BoxFilter(tempImage, kProcFace_AntiAliasingSize);
+              std::swap(_eyeShape, temp);
+            } else {
+              // The eye intersects with the boundary, so the NEON box filter in Anki::Vision::Image::BoxFilter() will cause a crash
+              // (that problem is documented in jira VIC-3221). We'll fall back on cv::boxFilter() for now to avoid that crash.
+              // TODO: Update this to use the NEON box filter in Anki::Vision::Image::BoxFilter() after jira VIC-3221 has been fixed. 
+              cv::boxFilter(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), -1, cv::Size(kProcFace_AntiAliasingSize,kProcFace_AntiAliasingSize));
+            }
+
             break;
           }
         }
       }
-
 
       const f32 hueFactor = faceData.GetHue();
       DEV_ASSERT(Util::InRange(hueFactor, 0.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidHue");
