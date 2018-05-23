@@ -29,8 +29,27 @@ class DropboxFileUploader():
         self.localfile = local_file
         self.folderpath = folder_path
 
+    def dropboxInstance(self):
+        # Check for an access token
+        if (len(self.token) == 0):
+            sys.exit("ERROR: Looks like you didn't add your access token. Open up backup-and-restore-example.py in a text editor and paste in your token in line 14.")
+
+        # Create an instance of a Dropbox class, which can make requests to the API.
+        print("Creating a Dropbox object...")
+        dbx = dropbox.Dropbox(self.token)
+
+        # Check that the access token is valid
+        try:
+            dbx.users_get_current_account()
+        except AuthError as err:
+            sys.exit(
+                "ERROR: Invalid access token; try re-generating an access token from the app console on the web.")
+
+        self.checkFileDetails(dbx)
+        return dbx
+
     # Uploads contents of localfile to Dropbox
-    def backup(self, dbx):
+    def uploadToDropbox(self, dbx):
         self.backuppath = "{}{}".format(self.folderpath, os.path.basename(self.localfile))
         with open(self.localfile, 'rb') as f:
             # We use WriteMode=overwrite to make sure that the settings in the file
@@ -60,25 +79,20 @@ class DropboxFileUploader():
             print(entry.name)
 
     def uploadFile(self):
-        # Check for an access token
-        if (len(self.token) == 0):
-            sys.exit("ERROR: Looks like you didn't add your access token. Open up backup-and-restore-example.py in a text editor and paste in your token in line 14.")
-
-        # Create an instance of a Dropbox class, which can make requests to the API.
-        print("Creating a Dropbox object...")
-        dbx = dropbox.Dropbox(self.token)
-
-        # Check that the access token is valid
-        try:
-            dbx.users_get_current_account()
-        except AuthError as err:
-            sys.exit(
-                "ERROR: Invalid access token; try re-generating an access token from the app console on the web.")
-
-        self.checkFileDetails(dbx)
+        dbx = self.dropboxInstance()
 
         print("Creating backup...")
         # Create a backup of the current settings file
-        self.backup(dbx)
+        self.uploadToDropbox(dbx)
 
         print("Done!")
+
+    def uploadFolder(self):
+        dbx = self.dropboxInstance()
+
+        # enumerate local files recursively
+        for root, dirs, files in os.walk(self.localfile):
+            for filename in files:
+                # construct the full local path
+                self.localfile = os.path.join(root, filename)
+                self.uploadToDropbox(dbx)

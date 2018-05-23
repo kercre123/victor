@@ -18,12 +18,19 @@ class VictorHelper(object) :
     @classmethod
     def pull_data(self, vector_ip, src_path, dest_path):
         command = self.pull_data_command(vector_ip, src_path, dest_path)
-        result = subprocess.run(command, stdout=subprocess.PIPE)
+        result = subprocess.run(command, stdout=subprocess.PIPE, check=True)
         print(result.stdout.decode("utf-8"))
+        return result.returncode # return 0 if successfully
 
     @classmethod
     def pull_data_to_machine(self, ip, output_dir = "./"):
-        self.pull_data(ip, self.MICDATA_SRC, output_dir)
+        try:
+            return_code = self.pull_data(ip, self.MICDATA_SRC, output_dir)
+            return return_code
+        except (subprocess.CalledProcessError, subprocess.SubprocessError):
+            return "1"
+
 
 # if __name__ == "__main__":
-#     VictorHelper.pull_data_to_machine("192.168.42.22","/Users/son.nguyen/Desktop/son.nguyen/temp/kaka2")
+#     a = VictorHelper.pull_data_to_machine("192.168.2.63","/Users/manh.tran/Desktop/temp")
+#     print("a la {}".format(a))
