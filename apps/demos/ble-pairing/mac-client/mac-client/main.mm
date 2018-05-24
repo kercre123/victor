@@ -26,6 +26,7 @@ int main(int argc, const char * argv[]) {
     parser.addArgument("-d", "--download", 0, true);
     parser.addArgument("-u", "--ota-update", 1, true);
     parser.addArgument("-m", "--ota-update-ap", 1, true);
+    parser.addArgument("-l", "--local", 0, true);
     
     try {
       parser.parse(argc, argv);
@@ -46,6 +47,7 @@ int main(int argc, const char * argv[]) {
     bool sync = parser.exists("--sync");
     bool otaupdate = parser.exists("--ota-update");
     bool otaupdateap = parser.exists("--ota-update-ap");
+    bool useLocal = parser.exists("--local");
     bool noninteractive = otaupdate || otaupdateap || sync;
     
     if(noninteractive) {
@@ -64,6 +66,7 @@ int main(int argc, const char * argv[]) {
       
       Requests* requests = [[Requests alloc] initWithCentral:central];
       SyncController* syncController = [[SyncController alloc] init];
+      syncController.useLocal = useLocal;
       [syncController setCommand:c];
       [syncController setArg:arg];
       central.delegate = requests;

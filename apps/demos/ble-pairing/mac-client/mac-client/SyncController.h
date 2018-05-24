@@ -37,6 +37,7 @@
 -(void) setArg:(std::string)s;
 -(void) setOtaUrl:(std::string)url;
 -(void) downloadOta:(std::string)url;
+-(void) moveOta:(std::string)path;
 -(void) macConnectVictorWifi;
 -(std::string) getIPAddress;
 
@@ -44,6 +45,7 @@
 -(std::string)trim:(const std::string&)str;
 
 @property (strong, nonatomic) Requests* requests;
+@property (nonatomic) bool useLocal;
 
 @end
 

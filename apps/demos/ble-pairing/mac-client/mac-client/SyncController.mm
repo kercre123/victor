@@ -39,7 +39,11 @@
       _command = "wifi-ap:true; mac-vec-wifi";
       
       // download and serve
-      [self downloadOta:_arg];
+      if(_useLocal) {
+        [self moveOta:_arg];
+      } else {
+        [self downloadOta:_arg];
+      }
       
       [self processCommands:false];
       
@@ -144,6 +148,25 @@
   
   std::string curlCmd = "curl " + url + " --output " + std::string(filePath.UTF8String);
   system(curlCmd.c_str());
+  
+  NSString *s = [NSString stringWithFormat: @"tell application \"Terminal\" to do script \"pushd %@; python -m SimpleHTTPServer; popd\"", dirPath];
+  
+  NSAppleScript *as = [[NSAppleScript alloc] initWithSource: s];
+  [as executeAndReturnError:nil];
+}
+
+-(void) moveOta:(std::string)path {
+  NSFileManager* fileManager = [NSFileManager defaultManager];
+  
+  NSArray* pathParts = [NSArray arrayWithObjects:NSHomeDirectory(), @"Downloads", @"mac-client-ota", nil];
+  NSString* otaName = @"downloaded.ota";
+  NSString* dirPath = [NSString pathWithComponents:pathParts];
+  NSString* filePath = [NSString pathWithComponents:@[dirPath, otaName]];
+  
+  (void)[fileManager createDirectoryAtPath:dirPath withIntermediateDirectories:true attributes:nil error:nil];
+  
+  std::string cpCmd = "cp " + path + " " + std::string(filePath.UTF8String);
+  system(cpCmd.c_str());
   
   NSString *s = [NSString stringWithFormat: @"tell application \"Terminal\" to do script \"pushd %@; python -m SimpleHTTPServer; popd\"", dirPath];
   

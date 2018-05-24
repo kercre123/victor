@@ -24,6 +24,8 @@ After you are paired once with your robot (see `Running` section), you can run t
 If you want to speed things up and perform an OTA with the robot in AP mode, you can simply do:
 `./mac-client -f A2B2 --ota-update-ap http://example.com/update.ota`
 
+You can specify `--local (-l)` with the `--ota-update-ap` command to specify a local file instead of a URL.
+
 This command might not work 100% of the time because it involves using MacOS api to try to connect your Mac to Victor's wifi network, which is a little tempermental.
 
 ## Running
