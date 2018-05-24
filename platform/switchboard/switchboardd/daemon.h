@@ -127,3 +127,6 @@ namespace Switchboard {
   };
 }
 }
+
+// Entry point
+int SwitchboardMain();

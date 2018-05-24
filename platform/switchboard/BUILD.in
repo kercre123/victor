@@ -1,5 +1,14 @@
 cxx_project(
-  name = 'vic-switchboard',
-  srcs = cxx_src_glob(['switchboardd', 'anki-wifi', 'anki-websocket', 'bleClient', 'signals', 'libsodium/**']),
-  headers = cxx_header_glob(['switchboardd', 'anki-wifi', 'anki-websocket', 'bleClient', 'signals', 'libsodium/**'])
+  name = 'switchboard',
+  srcs = cxx_src_glob(['switchboardd', 'bleClient', 'anki-wifi', 'anki-websocket', 'signals'],
+    excludes = ['switchboardd/switchboardMain.cpp']),
+  headers = cxx_header_glob(['switchboardd', 'bleClient', 'anki-wifi', 'anki-websocket', 'signals'])
+)
+
+cxx_project(
+    name = 'vic-switchboard',
+    srcs = glob(['switchboardd/switchboardMain.cpp']),
+    platform_srcs = [],
+    headers = [],
+    platform_headers = []
 )

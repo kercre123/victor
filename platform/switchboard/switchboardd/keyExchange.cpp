@@ -84,7 +84,7 @@ void KeyExchange::SetRemotePublicKey(const uint8_t* pubKey) {
   memcpy(_remotePublicKey, pubKey, crypto_kx_PUBLICKEYBYTES);
 }
 
-bool KeyExchange::CalculateSharedKeys(const uint8_t* pin) {
+bool KeyExchange::CalculateSharedKeysServer(const uint8_t* pin) {
   //
   // Messages from the robot will be encrypted with a hash that incorporates
   // a random pin
@@ -92,6 +92,35 @@ bool KeyExchange::CalculateSharedKeys(const uint8_t* pin) {
   // client_rx (client's decrypt key) needs to be sha-256'ed
   //
   bool success = crypto_kx_server_session_keys(
+    _decryptKey, _encryptKey, _publicKey, _secretKey, _remotePublicKey) == 0;
+  
+  // Save tmp version of encryptKey
+  std::vector<uint8_t> tmpEncryptKey(_encryptKey, _encryptKey + sizeof(_encryptKey));
+
+  // Save tmp version of encryptKey
+  std::vector<uint8_t> tmpDecryptKey(_decryptKey, _decryptKey + sizeof(_decryptKey));
+  
+  // Hash mix of pin and encryptKey to form new encryptKey
+  crypto_generichash(_encryptKey, crypto_kx_SESSIONKEYBYTES, 
+    tmpEncryptKey.data(), crypto_kx_SESSIONKEYBYTES, 
+    pin, _numPinDigits);
+
+  // Hash mix of pin and decryptKey to form new decryptKey
+  crypto_generichash(_decryptKey, crypto_kx_SESSIONKEYBYTES, 
+    tmpDecryptKey.data(), crypto_kx_SESSIONKEYBYTES, 
+    pin, _numPinDigits);
+  
+  return success;
+}
+
+bool KeyExchange::CalculateSharedKeysClient(const uint8_t* pin) {
+  //
+  // Messages from the robot will be encrypted with a hash that incorporates
+  // a random pin
+  // server_tx (encryptKey) needs to be sha-256'ed
+  // client_rx (client's decrypt key) needs to be sha-256'ed
+  //
+  bool success = crypto_kx_client_session_keys(
     _decryptKey, _encryptKey, _publicKey, _secretKey, _remotePublicKey) == 0;
   
   // Save tmp version of encryptKey

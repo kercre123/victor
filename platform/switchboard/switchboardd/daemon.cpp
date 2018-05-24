@@ -32,9 +32,8 @@
 #include "anki-wifi/wifi.h"
 #include "cutils/properties.h"
 #include "switchboardd/christen.h"
-#include "switchboardd/main.h"
-
 #include "platform/victorCrashReports/victorCrashReporter.h"
+#include "switchboardd/daemon.h"
 
 // --------------------------------------------------------------------------------------------------------------------
 // Switchboard Daemon
@@ -570,7 +569,7 @@ static void Tick(struct ev_loop* loop, struct ev_timer* w, int revents) {
   // noop
 }
 
-int main() {
+int SwitchboardMain() {
   static char const* filenamePrefix = "switchboard";
   Anki::Victor::InstallCrashReporter(filenamePrefix);
 

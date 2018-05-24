@@ -215,10 +215,7 @@ void SecurePairing::Reset(bool forced) {
   if(forced) {
     Log::Write("Client disconnected. Stopping pairing.");
     ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
-
-    if(!_isOtaUpdating) {
-      _stopPairingSignal.emit();
-    }
+    UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
   } else if(++_totalPairingAttempts < kMaxPairingAttempts) {
     Init();
     Log::Write("SecurePairing restarting.");
@@ -227,6 +224,7 @@ void SecurePairing::Reset(bool forced) {
     Log::Write("SecurePairing ending due to multiple failures. Requires external restart.");
     ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
     _stopPairingSignal.emit();
+    UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
   }
 }
 
@@ -751,8 +749,8 @@ void SecurePairing::HandleInitialPair(uint8_t* publicKey, uint32_t publicKeyLeng
 
   // Input client's public key and calculate shared keys
   _keyExchange->SetRemotePublicKey(publicKey);
-  _keyExchange->CalculateSharedKeys((unsigned char*)_pin.c_str());
-
+  _keyExchange->CalculateSharedKeysServer((unsigned char*)_pin.c_str());
+  
   // Give our shared keys to the network stream
   _stream->SetCryptoKeys(
     _keyExchange->GetEncryptKey(),
@@ -935,6 +933,11 @@ void SecurePairing::HandleIdleTimeout() {
 }
 
 void SecurePairing::UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus state) {
+  if(_engineClient == nullptr) {
+    // no engine client -- probably testing
+    return;
+  }
+
   if(!_isOtaUpdating) {
     _engineClient->ShowPairingStatus(state);
   } else {
