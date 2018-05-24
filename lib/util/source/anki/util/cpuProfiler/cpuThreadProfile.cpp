@@ -14,6 +14,7 @@
 #include "util/cpuProfiler/cpuThreadProfile.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
+#include "util/time/universalTime.h"
 
 #include <pthread.h>
 #include <unistd.h>
@@ -222,6 +223,7 @@ void CpuThreadProfile::SaveChromeTracingProfile(FILE* fp, uint32_t threadIndex) 
 
 
 void CpuThreadProfile::PublishToWebService(const std::function<void(const Json::Value&)>& callback,
+                                           const char* threadName,
                                            uint32_t threadIndex,
                                            const std::vector<CpuProfileSampleShared*>& samplesCalledFromThread) const
 {
@@ -243,6 +245,8 @@ void CpuThreadProfile::PublishToWebService(const std::function<void(const Json::
 
 
   Json::Value data;
+  data["threadIndex"] = threadIndex;
+  data["threadName"] = threadName;
   data["time"] = GetTickNum();
 
   auto& sampleJson = data["sample"];

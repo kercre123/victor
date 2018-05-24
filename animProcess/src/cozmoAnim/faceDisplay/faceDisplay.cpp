@@ -17,6 +17,8 @@
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "coretech/common/engine/array2d_impl.h"
 #include "coretech/vision/engine/image.h"
+#include "util/console/consoleInterface.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/threading/threadPriority.h"
 
 #include "opencv2/highgui.hpp"
@@ -26,6 +28,11 @@
 
 namespace Anki {
 namespace Cozmo {
+
+#if ANKI_CPU_PROFILER_ENABLED
+  CONSOLE_VAR_RANGED(float, maxDrawTime_ms,      ANKI_CPU_CONSOLEVARGROUP, 5, 5, 32);
+  CONSOLE_VAR_ENUM(u8,      kDrawFace_Logging,   ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
+#endif
 
 namespace {
   int _faultCodeFifo = -1;
@@ -169,6 +176,8 @@ void FaceDisplay::DrawFaceLoop()
   Anki::Util::SetThreadName(pthread_self(), "DrawFaceLoop");
   while (!_stopDrawFace)
   {
+    ANKI_CPU_TICK("FaceDisplay::DrawFaceLoop", maxDrawTime_ms, Util::CpuProfiler::CpuProfilerLoggingTime(kDrawFace_Logging));
+
     // Lock because we're about to check and change pointers
     _faceDrawMutex.lock();
     if (_faceDrawNextImg != nullptr)

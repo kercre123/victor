@@ -45,6 +45,7 @@
 
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleSystem.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
@@ -640,6 +641,8 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
     }
   }
     
+  ANKI_CPU_PROFILE("AnimProcessMessages::Update");
+
   // Keep trying to init the connection flow until it works
   // which will be when the robot name has been set by switchboard
   if(!_connectionFlowInited)
@@ -665,40 +668,48 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
   u32 dataLen;
 
   // Process messages from engine
-  while((dataLen = AnimComms::GetNextPacketFromEngine(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
   {
-    Anki::Cozmo::RobotInterface::EngineToRobot msg;
-    memcpy(msg.GetBuffer(), pktBuffer_, dataLen);
-    if (msg.Size() != dataLen) {
-      LOG_WARNING("AnimProcessMessages.Update.EngineToRobot.InvalidSize",
-                  "Invalid message size from engine (%d != %d)",
-                  msg.Size(), dataLen);
-      continue;
+    ANKI_CPU_PROFILE("ProcessMessageFromEngine");
+
+    while((dataLen = AnimComms::GetNextPacketFromEngine(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
+    {
+      Anki::Cozmo::RobotInterface::EngineToRobot msg;
+      memcpy(msg.GetBuffer(), pktBuffer_, dataLen);
+      if (msg.Size() != dataLen) {
+        LOG_WARNING("AnimProcessMessages.Update.EngineToRobot.InvalidSize",
+                    "Invalid message size from engine (%d != %d)",
+                    msg.Size(), dataLen);
+        continue;
+      }
+      if (!msg.IsValid()) {
+        LOG_WARNING("AnimProcessMessages.Update.EngineToRobot.InvalidData", "Invalid message from engine");
+        continue;
+      }
+      ProcessMessageFromEngine(msg);
     }
-    if (!msg.IsValid()) {
-      LOG_WARNING("AnimProcessMessages.Update.EngineToRobot.InvalidData", "Invalid message from engine");
-      continue;
-    }
-    ProcessMessageFromEngine(msg);
   }
 
   // Process messages from robot
-  while ((dataLen = AnimComms::GetNextPacketFromRobot(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
   {
-    Anki::Cozmo::RobotInterface::RobotToEngine msg;
-    memcpy(msg.GetBuffer(), pktBuffer_, dataLen);
-    if (msg.Size() != dataLen) {
-      LOG_WARNING("AnimProcessMessages.Update.RobotToEngine.InvalidSize",
-                  "Invalid message size from robot (%d != %d)",
-                  msg.Size(), dataLen);
-      continue;
+    ANKI_CPU_PROFILE("ProcessMessageFromRobot");
+
+    while ((dataLen = AnimComms::GetNextPacketFromRobot(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
+    {
+      Anki::Cozmo::RobotInterface::RobotToEngine msg;
+      memcpy(msg.GetBuffer(), pktBuffer_, dataLen);
+      if (msg.Size() != dataLen) {
+        LOG_WARNING("AnimProcessMessages.Update.RobotToEngine.InvalidSize",
+                    "Invalid message size from robot (%d != %d)",
+                    msg.Size(), dataLen);
+        continue;
+      }
+      if (!msg.IsValid()) {
+        LOG_WARNING("AnimProcessMessages.Update.RobotToEngine.InvalidData", "Invalid message from robot");
+        continue;
+      }
+      ProcessMessageFromRobot(msg);
+      _proceduralAudioClient->ProcessMessage(msg);
     }
-    if (!msg.IsValid()) {
-      LOG_WARNING("AnimProcessMessages.Update.RobotToEngine.InvalidData", "Invalid message from robot");
-      continue;
-    }
-    ProcessMessageFromRobot(msg);
-    _proceduralAudioClient->ProcessMessage(msg);
   }
 
 #if FACTORY_TEST

@@ -7,8 +7,8 @@ Profiling on Victor is based on [simpleperf](../../project/victor/simpleperf/REA
 Create and deploy a release build.
 
 ```
-victor_build
-victor_deploy
+victor_build_release
+victor_deploy_release
 ```
 
 ## One-shot recording and reporting

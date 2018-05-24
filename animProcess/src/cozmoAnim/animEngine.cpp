@@ -53,6 +53,11 @@
 namespace Anki {
 namespace Cozmo {
 
+#if ANKI_CPU_PROFILER_ENABLED
+  CONSOLE_VAR_RANGED(float, kAnimEngine_TimeMax_ms,     ANKI_CPU_CONSOLEVARGROUP, 2, 2, 32);
+  CONSOLE_VAR_ENUM(u8,      kAnimEngine_TimeLogging,    ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
+#endif
+
 AnimEngine::AnimEngine(Util::Data::DataPlatform* dataPlatform)
   : _isInitialized(false)
   , _context(std::make_unique<AnimContext>(dataPlatform))
@@ -116,7 +121,7 @@ Result AnimEngine::Init()
 
 Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
 {
-  //ANKI_CPU_PROFILE("AnimEngine::Update");
+  ANKI_CPU_TICK("AnimEngine::Update", kAnimEngine_TimeMax_ms, Util::CpuProfiler::CpuProfilerLoggingTime(kAnimEngine_TimeLogging));
   if (!_isInitialized) {
     LOG_ERROR("AnimEngine.Update", "Cannot update AnimEngine before it is initialized.");
     return RESULT_FAIL;

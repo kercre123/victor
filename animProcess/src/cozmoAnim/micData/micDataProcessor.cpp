@@ -256,6 +256,8 @@ void MicDataProcessor::ProcessRawAudio(TimeStamp_t timestamp,
                                        uint32_t robotStatus,
                                        float robotAngle)
 {
+  ANKI_CPU_PROFILE("MicDataProcessor::ProcessRawAudio");
+  
   {
     ANKI_CPU_PROFILE("UninterleaveAudioForSE");
     // Uninterleave the chunks when copying out of the payload, since that's what SE wants
@@ -505,6 +507,7 @@ void MicDataProcessor::ProcessRawLoop()
   const auto maxProcTime = std::chrono::milliseconds(maxProcTime_ms);
   while (!_processThreadStop)
   {
+    ANKI_CPU_TICK("MicDataProcessorRaw", maxProcTime_ms, Util::CpuProfiler::CpuProfilerLoggingTime(kMicDataProcessorRaw_Logging));
     const auto start = std::chrono::steady_clock::now();
   
     // Switch which buffer we're processing if it's empty
@@ -519,7 +522,6 @@ void MicDataProcessor::ProcessRawLoop()
     auto& rawAudioToProcess = _rawAudioBuffers[_rawAudioProcessingIndex];
     while (rawAudioToProcess.size() > 0)
     {
-      ANKI_CPU_TICK("MicDataProcessorRaw", maxProcessingTimePerDrop_ms, Util::CpuProfiler::CpuProfilerLoggingTime(kMicDataProcessorRaw_Logging));
       ANKI_CPU_PROFILE("ProcessLoop");
 
       const auto& nextData = rawAudioToProcess.front();

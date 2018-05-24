@@ -98,7 +98,7 @@ public:
   
   void LogAllCalledSamples(uint32_t threadIndex, const std::vector<CpuProfileSampleShared*>& samplesCalledFromThread) const;
   void SaveChromeTracingProfile(FILE* fp, uint32_t threadIndex) const;
-  void PublishToWebService(const std::function<void(const Json::Value&)>& callback, uint32_t threadIndex, const std::vector<CpuProfileSampleShared*>& samplesCalledFromThread) const;
+  void PublishToWebService(const std::function<void(const Json::Value&)>& callback, const char* threadName, uint32_t threadIndex, const std::vector<CpuProfileSampleShared*>& samplesCalledFromThread) const;
 
   uint32_t GetTickNum() const { return _tickNum; }
   

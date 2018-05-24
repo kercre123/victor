@@ -24,11 +24,6 @@ namespace Cozmo {
     NEONBoxFilter  = 3, // Note: anti-aliasing size is hard-coded to 3 for this option
   };
 
-#if ANKI_CPU_PROFILER_ENABLED
-  CONSOLE_VAR_RANGED(float, kProcFace_DrawTimeMax_ms,     ANKI_CPU_CONSOLEVARGROUP, 2, 2, 32);
-  CONSOLE_VAR_ENUM(u8,      kProcFace_DrawTimeLogging,    ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
-#endif
-
   #define CONSOLE_GROUP "ProceduralFace"
 
   CONSOLE_VAR_ENUM(u8,      kProcFace_LineType,                   CONSOLE_GROUP, 1, "Line_4,Line_8,Line_AA"); // Only affects OpenCV drawing, not post-smoothing
@@ -231,7 +226,7 @@ namespace Cozmo {
 
     // 1. Eye shape poly
     {
-      ANKI_CPU_PROFILE("EyeShapePoly");
+      //ANKI_CPU_PROFILE("EyeShapePoly");
       // Upper right corner
       if(upRightRadX > 0 && upRightRadY > 0) {
         cv::ellipse2Poly(cv::Point(std::round(halfEyeWidth  - upRightRadX), std::round(-halfEyeHeight + upRightRadY)),
@@ -271,7 +266,7 @@ namespace Cozmo {
 
     // 2. Lower lid poly
     {
-      ANKI_CPU_PROFILE("LowerLidPoly");
+      //ANKI_CPU_PROFILE("LowerLidPoly");
       const f32 lowerLidY = faceData.GetParameter(whichEye, Parameter::LowerLidY) * static_cast<f32>(eyeHeight);
       const f32 angleDeg = faceData.GetParameter(whichEye, Parameter::LowerLidAngle);
       const f32 angleRad = DEG_TO_RAD(angleDeg);
@@ -300,7 +295,7 @@ namespace Cozmo {
 
     // 3. Upper lid poly
     {
-      ANKI_CPU_PROFILE("UpperLidPoly");
+      //ANKI_CPU_PROFILE("UpperLidPoly");
       const f32 upperLidY = faceData.GetParameter(whichEye, Parameter::UpperLidY) * static_cast<f32>(eyeHeight);
       const f32 angleDeg = faceData.GetParameter(whichEye, Parameter::UpperLidAngle);
       const f32 angleRad = DEG_TO_RAD(angleDeg);
@@ -327,7 +322,7 @@ namespace Cozmo {
       }
     }
 
-    ANKI_CPU_PROFILE_START(prof_getMat, "GetMatrices");
+    //ANKI_CPU_PROFILE_START(prof_getMat, "GetMatrices");
     Point<2, Value> eyeCenter = (whichEye == WhichEye::Left) ?
                                  Point<2, Value>(ProceduralFace::GetNominalLeftEyeX(), ProceduralFace::GetNominalEyeY()) :
                                  Point<2, Value>(ProceduralFace::GetNominalRightEyeX(), ProceduralFace::GetNominalEyeY());
@@ -349,14 +344,14 @@ namespace Cozmo {
                                                                   eyeCenter.x(),
                                                                   eyeCenter.y());
 #endif
-    ANKI_CPU_PROFILE_STOP(prof_getMat);
+    //ANKI_CPU_PROFILE_STOP(prof_getMat);
 
     // Initialize bounding box corners at their opposite extremes. We will figure out their
     // true locations as we loop over the eyePoly below.
     Point2f upperLeft(ProceduralFace::WIDTH, ProceduralFace::HEIGHT);
     Point2f bottomRight(0.f,0.f);
 
-    ANKI_CPU_PROFILE_START(prof_applyMat, "ApplyMatrices");
+    //ANKI_CPU_PROFILE_START(prof_applyMat, "ApplyMatrices");
     // Warp the poly and the glow. Use the warped glow (which is a larger shape) to compute
     // the overall eye bounding box
     for(auto & point : eyePoly)
@@ -391,7 +386,7 @@ namespace Cozmo {
         point.y = std::round(temp.y());
       }
     }
-    ANKI_CPU_PROFILE_STOP(prof_applyMat);
+    //ANKI_CPU_PROFILE_STOP(prof_applyMat);
 
     // Make sure the upper left and bottom right points are in bounds (note that we loop over
     // pixels below *inclusive* of the bottom right point, so we use HEIGHT/WIDTH-1)
@@ -461,7 +456,7 @@ namespace Cozmo {
       // Outer Glow = the "halo" effect around the outside of the eye shape
       // Add inner glow to the eye shape, before we compute the outer glow, so that boundaries conditions match.
       if(kProcFace_HotspotRender) {
-        ANKI_CPU_PROFILE("RenderInnerOuterGlow");
+        //ANKI_CPU_PROFILE("HotspotRender");
         const f32 sigmaX = kProcFace_HotspotFalloff*scaledEyeWidth;
         const f32 sigmaY = kProcFace_HotspotFalloff*scaledEyeHeight;
         const f32 invInnerGlowSigmaX_sq = 1.f / (2.f * (sigmaX*sigmaX));
@@ -500,7 +495,7 @@ namespace Cozmo {
 
       const Value glowLightness = kProcFace_GlowLightnessMultiplier * faceData.GetParameter(whichEye, Parameter::GlowLightness);
       if(Util::IsFltGTZero(glowLightness) && Util::IsFltGTZero(glowFraction)) {
-        ANKI_CPU_PROFILE("GlowRender");
+        //ANKI_CPU_PROFILE("Glow");
         Vision::Image glowImgROI = _glowImg.GetROI(eyeBoundingBoxS32);
 
         s32 glowSizeX = std::ceil(glowFraction * 0.5f * scaledEyeWidth);
@@ -650,7 +645,6 @@ namespace Cozmo {
                                       const Util::RandomGenerator& rng,
                                       Vision::ImageRGB565& output)
   {
-    ANKI_CPU_TICK("ProceduralFaceDrawer", kProcFace_DrawTimeMax_ms, Util::CpuProfiler::CpuProfilerLoggingTime(kProcFace_DrawTimeLogging));
     ANKI_CPU_PROFILE("DrawFace");
 
     DrawCacheState state = DrawCacheState::MaybeSomethingToDraw; // set to MustDraw to force all stages to render, previous pipeline
