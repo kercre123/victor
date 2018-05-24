@@ -1,0 +1,21 @@
+{
+  "behaviorID" : "ExampleDispatcherTriggeredRandomChoice",
+  "behaviorClass" : "DispatcherRandom",
+
+  "wantsToBeActivatedCondition": {
+    "conditionType": "ObjectPositionUpdated"
+  },
+
+  "behaviors" : [
+    {
+      "behavior": "ReactToFrustrationMajor",
+      "cooldown_s": 0.0,
+      "weight": 0.4
+    },
+    {
+      "behavior": "Exploring",
+      "cooldown_s": 0.0,
+      "weight": 0.6
+    }
+  ]
+}

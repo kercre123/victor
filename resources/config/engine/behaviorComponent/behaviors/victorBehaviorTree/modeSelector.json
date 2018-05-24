@@ -5,8 +5,8 @@
   "interruptActiveBehavior": true,
 
   "behaviors": [
-    "ShutUpMode",
-    "QuietMode",
+    // "ShutUpMode",
+    // "QuietMode",
     "CoordinateGlobalInterrupts"
   ]
 }

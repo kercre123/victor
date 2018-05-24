@@ -6,12 +6,11 @@
   "interruptActiveBehavior": true,
 
   "behaviors": [
-    "StuckOnEdge",
-    "ReactToRobotOnBack",
-    "ReactToRobotOnFace",
-    "ReactToRobotOnSide",
-    "ReactToCliff",
-    "ReactToPlacedOnSlope",
-    "ReactToUnexpectedMovement"
+    // "ReactToRobotOnBack",
+    // "ReactToRobotOnFace",
+    // "ReactToRobotOnSide",
+    "ReactToCliff"
+    // "ReactToPlacedOnSlope",
+    // "ReactToUnexpectedMovement"
   ]
 }
