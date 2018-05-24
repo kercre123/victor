@@ -32,6 +32,9 @@
     var perfAutoUpdatePeriod_ms = 1000;
     var perfAutoUpdatePeriodMin_ms = 250;   // Minimum auto update period
     var perfAutoUpdateTimerId = 0;
+    var perfRequestInProgress = false;
+    var perfRequestQueued = false;
+    var perfSavedTriggeredByTimer = false;
 
     var perfItems = [
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:1500000, desc:"CPU freq",        units:"kHz" },
@@ -60,11 +63,17 @@
     var procAutoUpdatePeriod_ms = 1000;
     var procAutoUpdatePeriodMin_ms = 1000;   // Minimum auto update period
     var procAutoUpdateTimerId = 0;
+    var procRequestInProgress = false;
+    var procRequestQueued = false;
+    var procSavedTriggeredByTimer = false;
 
     var engineAutoUpdate = true;
     var engineAutoUpdatePeriod_ms = 250;
     var engineAutoUpdatePeriodMin_ms = 250;   // Minimum auto update period
     var engineAutoUpdateTimerId = 0;
+    var engineRequestInProgress = false;
+    var engineRequestQueued = false;
+    var engineSavedTriggeredByTimer = false;
 
     var engineItems = [
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:5,      desc:"Battery (filtered)",        units:"volts" },
@@ -275,6 +284,12 @@
     }
 
     function SendPerfUpdateRequest(triggeredByTimer) {
+        if (perfRequestInProgress) {
+            perfRequestQueued = true;
+            perfSavedTriggeredByTimer = triggeredByTimer;
+            return;
+        }
+        perfRequestInProgress = true;
         var whichStats = "";
         var numItems = perfItems.length;
         for (var i = 0; i < numItems; i++) {
@@ -300,6 +315,11 @@
                         }
                     }
                 }
+            }
+            perfRequestInProgress = false;
+            if (perfRequestQueued) {
+                perfRequestQueued = false;
+                SendPerfUpdateRequest(perfSavedTriggeredByTimer);
             }
         });
         if (perfAutoUpdate && triggeredByTimer) {
@@ -389,6 +409,12 @@
         });
     }
     function SendProcUpdateRequest(triggeredByTimer) {
+        if (procRequestInProgress) {
+            procRequestQueued = true;
+            procSavedTriggeredByTimer = triggeredByTimer;
+            return;
+        }
+        procRequestInProgress = true;
         var query = "";
         $('#table_processes tr').each(function() {
             if (query != "") {
@@ -401,6 +427,11 @@
             for (var i = 0; i < payload.length; i++) {
                 var procData = payload[i].split('=');
                 $('#' + procData[0]).find('#status').html(procData[1]);
+            }
+            procRequestInProgress = false;
+            if (procRequestQueued) {
+                procRequestQueued = false;
+                SendProcUpdateRequest(procSavedTriggeredByTimer);
             }
         });
         if (procAutoUpdate && triggeredByTimer) {
@@ -436,6 +467,12 @@
     }
 
     function SendEngineUpdateRequest(triggeredByTimer) {
+        if (engineRequestInProgress) {
+            engineRequestQueued = true;
+            engineSavedTriggeredByTimer = triggeredByTimer;
+            return;
+        }
+        engineRequestInProgress = true;
         var whichStats = "";
         var numItems = engineItems.length;
         for (var i = 0; i < numItems; i++) {
@@ -461,6 +498,11 @@
                         }
                     }
                 }
+            }
+            engineRequestInProgress = false;
+            if (engineRequestQueued) {
+                engineRequestQueued = false;
+                SendEngineUpdateRequest(engineSavedTriggeredByTimer);
             }
         });
         if (engineAutoUpdate && triggeredByTimer) {

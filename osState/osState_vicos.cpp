@@ -51,10 +51,17 @@ namespace Cozmo {
 namespace {
 
   std::ifstream _cpuFile;
-  std::ifstream _tempFile;
+  std::ifstream _temperatureFile;
   std::ifstream _uptimeFile;
   std::ifstream _memInfoFile;
   std::ifstream _cpuTimeStatsFile;
+
+  std::mutex _cpuMutex;
+  std::mutex _temperatureMutex;
+  std::mutex _MACAddressMutex;
+  std::mutex _uptimeMutex;
+  std::mutex _memInfoMutex;
+  std::mutex _cpuTimeStatsMutex;
 
   const char* kNominalCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq";
   const char* kCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq";
@@ -104,11 +111,12 @@ OSState::OSState()
   (void)static_cast<void(*)(size_t, uint32_t)>(Factory::WriteEMR);
   
   // Get nominal CPU frequency for this robot
-  _tempFile.open(kNominalCPUFreqFile, std::ifstream::in);
-  if(_tempFile.is_open()) {
-    _tempFile >> kNominalCPUFreq_kHz;
+  std::ifstream file;
+  file.open(kNominalCPUFreqFile, std::ifstream::in);
+  if(file.is_open()) {
+    file >> kNominalCPUFreq_kHz;
     PRINT_NAMED_INFO("OSState.Constructor.NominalCPUFreq", "%dkHz", kNominalCPUFreq_kHz);
-    _tempFile.close();
+    file.close();
   }
   else {
     PRINT_NAMED_WARNING("OSState.Constructor.FailedToOpenNominalCPUFreqFile", "%s", kNominalCPUFreqFile);
@@ -158,46 +166,61 @@ void OSState::SetUpdatePeriod(uint32_t milliseconds)
 void OSState::UpdateCPUFreq_kHz() const
 {
   // Update cpu freq
+  std::lock_guard<std::mutex> lock(_cpuMutex);
   _cpuFile.open(kCPUFreqFile, std::ifstream::in);
-  _cpuFile >> _cpuFreq_kHz;
-  _cpuFile.close();
+  if (_cpuFile.is_open()) {
+    _cpuFile >> _cpuFreq_kHz;
+    _cpuFile.close();
+  }
 }
 
 void OSState::UpdateTemperature_C() const
 {
   // Update temperature reading
-  _tempFile.open(kTemperatureFile, std::ifstream::in);
-  _tempFile >> _cpuTemp_C;
-  _tempFile.close();
+  std::lock_guard<std::mutex> lock(_temperatureMutex);
+  _temperatureFile.open(kTemperatureFile, std::ifstream::in);
+  if (_temperatureFile.is_open()) {
+    _temperatureFile >> _cpuTemp_C;
+    _temperatureFile.close();
+  }
 }
 
 void OSState::UpdateUptimeAndIdleTime() const
 {
   // Update uptime and idle time data
+  std::lock_guard<std::mutex> lock(_uptimeMutex);
   _uptimeFile.open(kUptimeFile, std::ifstream::in);
-  _uptimeFile >> _uptime_s >> _idleTime_s;
-  _uptimeFile.close();
+  if (_uptimeFile.is_open()) {
+    _uptimeFile >> _uptime_s >> _idleTime_s;
+    _uptimeFile.close();
+  }
 }
 
 void OSState::UpdateMemoryInfo() const
 {
   // Update total and free memory
+  std::lock_guard<std::mutex> lock(_memInfoMutex);
   _memInfoFile.open(kMemInfoFile, std::ifstream::in);
-  std::string discard;
-  _memInfoFile >> discard >> _memTotal_kB >> discard >> discard >> _memFree_kB;
-  _memInfoFile.close();
+  if (_memInfoFile.is_open()) {
+    std::string discard;
+    _memInfoFile >> discard >> _memTotal_kB >> discard >> discard >> _memFree_kB;
+    _memInfoFile.close();
+  }
 }
 
 void OSState::UpdateCPUTimeStats() const
 {
   // Update CPU time stats lines
+  std::lock_guard<std::mutex> lock(_cpuTimeStatsMutex);
   _cpuTimeStatsFile.open(kCPUTimeStatsFile, std::ifstream::in);
-  static const int kNumCPUTimeStatLines = 5;
-  _CPUTimeStats.resize(kNumCPUTimeStatLines);
-  for (int i = 0; i < kNumCPUTimeStatLines; i++) {
-    std::getline(_cpuTimeStatsFile, _CPUTimeStats[i]);
+  if (_cpuTimeStatsFile.is_open()) {
+    static const int kNumCPUTimeStatLines = 5;
+    _CPUTimeStats.resize(kNumCPUTimeStatLines);
+    for (int i = 0; i < kNumCPUTimeStatLines; i++) {
+      std::getline(_cpuTimeStatsFile, _CPUTimeStats[i]);
+    }
+    _cpuTimeStatsFile.close();
   }
-  _cpuTimeStatsFile.close();
 }
 
 uint32_t OSState::GetCPUFreq_kHz() const
@@ -395,6 +418,7 @@ const std::string& OSState::GetSSID(bool update)
 
 std::string OSState::GetMACAddress() const
 {
+  std::lock_guard<std::mutex> lock(_MACAddressMutex);
   std::ifstream macFile;
   macFile.open(kMACAddressFile);
   if (macFile.is_open()) {
