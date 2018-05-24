@@ -85,6 +85,7 @@ namespace Anki
     RESULT_FAIL_ORIGIN_MISMATCH,
     RESULT_FAIL_FILE_OPEN,
     RESULT_FAIL_FILE_READ,
+    RESULT_SHUTDOWN,
   } Result;
 #ifdef __cplusplus
 } // namespace Anki

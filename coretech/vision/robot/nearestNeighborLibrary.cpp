@@ -48,14 +48,14 @@ namespace Embedded {
     FILE* fp = fopen(dataFile.c_str(), "rb");
     AnkiConditionalErrorAndReturn(fp, "NearestNeighborLibrary.Constructor.MissingFile",
                                   "Unable to find NN library data file '%s'.", dataFile.c_str());
-    fread(_data.data, numDataPoints*dataDim, sizeof(u8), fp);
+    (void)fread(_data.data, numDataPoints*dataDim, sizeof(u8), fp);
     fclose(fp);
     
     dataFile = nnLibPath + "/nnLibrary_labels.bin";
     AnkiConditionalErrorAndReturn(fp, "NearestNeighborLibrary.Constructor.MissingFile",
                                   "Unable to find NN library labels file '%s'.", dataFile.c_str());
     fp = fopen(dataFile.c_str(), "rb");
-    fread(_labels.data, numDataPoints, sizeof(u16), fp);
+    (void)fread(_labels.data, numDataPoints, sizeof(u16), fp);
     fclose(fp);
 
   }

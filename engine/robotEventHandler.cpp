@@ -19,7 +19,7 @@
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/bodyLightComponent.h"
-#include "engine/components/cubeAccelComponent.h"
+#include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/movementComponent.h"
@@ -87,7 +87,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceObjec
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceObjectOnGround& msg)
 {
-  // Create an action to drive to specied pose and then put down the carried
+  // Create an action to drive to specified pose and then put down the carried
   // object.
   // TODO: Better way to set the object's z height and parent? (This assumes object's origin is 22mm off the ground!)
   Rotation3d rot(UnitQuaternion(msg.qw, msg.qx, msg.qy, msg.qz));
@@ -934,7 +934,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     // We'll use this callback for all action events
     auto actionEventCallback = std::bind(&RobotEventHandler::HandleActionEvents, this, std::placeholders::_1);
       
-    // This macro makes adding handler defitions less painful/verbose by adding namespaces
+    // This macro makes adding handler definitions less painful/verbose by adding namespaces
     // and grabbing the right function pointer for the right method in the templated
     // GetActionWrapper helper struct above.
 #   define DEFINE_HANDLER(__actionTag__, __g2eTag__, __numRetries__) \
@@ -1055,12 +1055,11 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetMotionModelParams>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotCarryingObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::StopRobotForSdk>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::StreamObjectAccel>();
 
     // Messages from switchboard
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetConnectionStatus>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetBLEPin>();
-      
+
     // EngineToGame: (in alphabetical order)
     helper.SubscribeEngineToGame<MessageEngineToGameTag::AnimationAborted>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotCompletedAction>();
@@ -1097,13 +1096,13 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
   auto const& msg = event.GetData();
   auto handlerIter = _gameToEngineHandlerLUT.find(msg.GetTag());
   if(handlerIter == _gameToEngineHandlerLUT.end())
-    {
+  {
     // This should really never happen because we are supposed to be guaranteed at
     // compile time that all action tags are inserted.
     PRINT_NAMED_ERROR("RobotEventHandler.HandleActionEvents.MissingTag",
                       "%s (%hhu)", MessageGameToEngineTagToString(msg.GetTag()), msg.GetTag());
-      return;
-    }
+    return;
+  }
   
   // Now we fill out our Action and possibly update number of retries:
   IActionRunner* newAction = handlerIter->second.first(*robot, msg);
@@ -1200,6 +1199,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueCompoundActi
       PRINT_NAMED_ERROR("RobotEventHandler.HandleQueueCompoundAction.MissingActionTag",
                         "Action %zu: %s (%hhu)", iAction,
                         RobotActionUnionTagToString(actionUnion.GetTag()), actionUnion.GetTag());
+      delete compoundAction;
       return;
     }
     
@@ -1661,31 +1661,6 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::StopRobotForSdk& 
     // BOUNDED_WHILE(kBoundedWhileIdlePopLimit,
     //               RESULT_OK == animStreamer.RemoveIdleAnimation("sdk")){
     // }
-  }
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-void RobotEventHandler::HandleMessage(const ExternalInterface::StreamObjectAccel& msg)
-{
-  Robot* robot = _context->GetRobotManager()->GetRobot();
-  if (nullptr == robot)
-  {
-    PRINT_NAMED_WARNING("RobotEventHandler.StreamObjectAccel.InvalidRobotID", "Failed to find robot.");
-  }
-  else
-  {
-    static std::shared_ptr<CubeAccelListeners::ICubeAccelListener> listener(new CubeAccelListeners::DummyListener());
- 
-    if(msg.enable)
-    {
-      robot->GetCubeAccelComponent().AddListener(msg.objectID, listener);
-    }
-    else
-    {
-      robot->GetCubeAccelComponent().RemoveListener(msg.objectID, listener);
-    }
   }
 }
   

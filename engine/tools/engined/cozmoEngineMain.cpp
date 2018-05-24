@@ -1,3 +1,15 @@
+/** 
+* File: cozmoEngineMain.cpp
+*
+* Author: Various Artists
+* Created: 6/26/17
+*
+* Description: Cozmo Engine Process on Victor
+*
+* Copyright: Anki, inc. 2017
+*
+*/
+
 #include "json/json.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -7,7 +19,7 @@
 #include "engine/utils/parsingConstants/parsingConstants.h"
 
 #include "util/fileUtils/fileUtils.h"
-#include "util/logging/androidLogPrintLogger_android.h"
+#include "util/logging/androidLogPrintLogger_vicos.h"
 #include "util/logging/logging.h"
 #include "util/logging/iFormattedLoggerProvider.h"
 #include "util/string/stringUtils.h"
@@ -36,6 +48,7 @@
 #include <libgen.h>
 #include <limits.h>
 #include <unistd.h>
+#include <csignal>
 
 
 // What IP do we use for advertisement?
@@ -242,7 +255,7 @@ int main(int argc, char* argv[])
     signal(SIGTERM, sigterm);
 
     char cwd[PATH_MAX] = { 0 };
-    getcwd(cwd, sizeof(cwd));
+    (void)getcwd(cwd, sizeof(cwd));
     printf("CWD: %s\n", cwd);
     printf("argv[0]: %s\n", argv[0]);
     printf("exe path: %s/%s\n", cwd, argv[0]);

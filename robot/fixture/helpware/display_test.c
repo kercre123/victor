@@ -97,7 +97,7 @@ int display_parse(const char* command, int linelen)
 
 }
 
-void on_vic_exit(void) {
+void core_common_on_exit(void) {
   lcd_shutdown();
 }
 

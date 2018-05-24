@@ -15,6 +15,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logEvent.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/shared/factory/faultCodes.h"
 
 #include "../spine/spine.h"
 #include "../spine/cc_commander.h"
@@ -52,10 +53,15 @@ namespace { // "Private members"
   struct spine_ctx spine_;
   uint8_t frameBuffer_[SPINE_B2H_FRAME_LEN];
   uint8_t readBuffer_[4096];
+  BodyToHead BootBodyData_ = { //dummy data for boot stub frames
+    .framecounter = 0
+  };
+  static const f32 kBatteryScale = 2.8f / 2048.f;
 } // "private" namespace
 
 // Forward Declarations
 Result InitRadio();
+void StopRadio();
 void InitIMU();
 void StopIMU();
 void ProcessIMUEvents();
@@ -71,24 +77,58 @@ extern "C" {
   }
 }
 
+// Tries to select from the spine fd
+// If it times out too many times then
+// syscon must be hosed or there is no spine
+// connection
+bool check_select_timeout(spine_ctx_t spine)
+{
+  int fd = spine_get_fd(spine);
+
+  static u8 selectTimeoutCount = 0;
+  if(selectTimeoutCount >= 5)
+  {
+    return true;
+  }
+
+  static fd_set fdSet;
+  FD_ZERO(&fdSet);
+  FD_SET(fd, &fdSet);
+  static timeval timeout;
+  timeout.tv_sec = 1;
+  timeout.tv_usec = 0;
+  ssize_t s = select(FD_SETSIZE, &fdSet, NULL, NULL, &timeout);
+  if(s == 0)
+  {
+    selectTimeoutCount++;
+    return true;
+  }
+  return false;
+}
+
 ssize_t robot_io(spine_ctx_t spine)
 {
   int fd = spine_get_fd(spine);
 
   EventStart(EventType::ROBOT_IO_READ);
-  
+
+  if(check_select_timeout(spine))
+  {
+    return -1;
+  }
+
   ssize_t r = read(fd, readBuffer_, sizeof(readBuffer_));
-  
+
   EventAddToMisc(EventType::ROBOT_IO_READ, (uint32_t)r);
   EventStop(EventType::ROBOT_IO_READ);
-  
-  if (r > 0) 
+
+  if (r > 0)
   {
     EventStart(EventType::ROBOT_IO_RECEIVE);
     r = spine_receive_data(spine, (const void*)readBuffer_, r);
     EventStop(EventType::ROBOT_IO_RECEIVE);
-  } 
-  else if (r < 0) 
+  }
+  else if (r < 0)
   {
     if (errno == EAGAIN) {
       r = 0;
@@ -99,10 +139,21 @@ ssize_t robot_io(spine_ctx_t spine)
 
 Result spine_wait_for_first_frame(spine_ctx_t spine)
 {
+  TimeStamp_t startWait_ms = HAL::GetTimeStamp();
   bool initialized = false;
   int read_count = 0;
 
   while (!initialized) {
+    // If we spend more than 2 seconds waiting for the first frame,
+    // something must be wrong. Likely there is no body or head to body
+    // connection
+    if(HAL::GetTimeStamp() - startWait_ms > 2000)
+    {
+      AnkiError("spine_wait_for_first_frame.timeout","");
+      FaultCode::DisplayFaultCode(FaultCode::NO_BODY);
+      return RESULT_FAIL;
+    }
+
     ssize_t r = spine_parse_frame(spine, &frameBuffer_, sizeof(frameBuffer_), NULL);
 
     if (r < 0) {
@@ -174,7 +225,13 @@ Result HAL::Init()
 
     // Do we need to check for errors here?
     AnkiDebug("HAL.Init.WaitingForDataFrame", "");
-    (void) spine_wait_for_first_frame(&spine_);
+    const Result res =  spine_wait_for_first_frame(&spine_);
+    if(res != RESULT_OK)
+    {
+      AnkiError("HAL.Init.NoFirstFrame", "");
+      return res;
+    }
+    AnkiDebug("HAL.Init.GotFirstFrame", "");
     request_version();  //get version so we have it when we need it.
   }
 #else
@@ -216,8 +273,8 @@ Result spine_get_frame() {
     if (r < 0)
     {
       continue;
-    } 
-    else if (r > 0) 
+    }
+    else if (r > 0)
     {
       const struct SpineMessageHeader* hdr = (const struct SpineMessageHeader*)frame_buffer;
       if (hdr->payload_type == PAYLOAD_DATA_FRAME) {
@@ -232,6 +289,16 @@ Result spine_get_frame() {
       else if (hdr->payload_type == PAYLOAD_VERSION) {
          LOGD("Handling VR payload type %x\n", hdr->payload_type);
         record_body_version( (VersionInfo*)(hdr+1) );
+      }
+      else if (hdr->payload_type == PAYLOAD_BOOT_FRAME) {
+        //extract button data from stub packet and put in fake full packet
+        uint8_t button_pressed = ((struct MicroBodyToHead*)(hdr+1))->buttonPressed;
+        BootBodyData_.touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
+        BootBodyData_.battery.flags = POWER_ON_CHARGER;
+
+        BootBodyData_.battery.battery = (int16_t)(5.0/kBatteryScale);
+        BootBodyData_.battery.charger = (int16_t)(5.0/kBatteryScale);
+        bodyData_ = &BootBodyData_;
       }
       else {
         LOGD("Unknown Frame Type %x\n", hdr->payload_type);
@@ -290,7 +357,7 @@ Result HAL::Step(void)
       spine_write_ccc_frame(&spine_, ccc_response);
     }
     last_packet_send = now;
-  }  
+  }
 
 #if !PROCESS_IMU_ON_THREAD
   ProcessIMUEvents();
@@ -324,6 +391,8 @@ Result HAL::Step(void)
 
 void HAL::Stop()
 {
+  AnkiInfo("HAL.Stop", "");
+  StopRadio();
   StopIMU();
 }
 
@@ -443,7 +512,6 @@ bool HAL::HandleLatestMicData(SendDataFunction sendDataFunc)
 f32 HAL::BatteryGetVoltage()
 {
   // scale raw ADC counts to voltage (conversion factor from Vandiver)
-  static const f32 kBatteryScale = 2.8f / 2048.f;
   return kBatteryScale * bodyData_->battery.battery;
 }
 
@@ -478,6 +546,7 @@ u8 HAL::GetWatchdogResetCounter()
 
 void HAL::Shutdown()
 {
+  HAL::Stop();
   spine_shutdown(&spine_);
 }
 

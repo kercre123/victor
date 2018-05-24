@@ -19,7 +19,8 @@
 #include "tests.h"
 #include "timer.h"
 
-static const int CURRENT_HW_REV = CUBEID_HWREV_DVT3;
+#define TESTCUBE_DEBUG 1
+static const int CURRENT_HW_REV = CUBEID_HWREV_DVT4;
 
 //generate signature for the cube bootloader binary
 uint32_t cubebootSignature(bool dbg_print, int *out_cubeboot_size)
@@ -31,26 +32,30 @@ uint32_t cubebootSignature(bool dbg_print, int *out_cubeboot_size)
   if( !crc_init) //cache crc. hard-coded bins won't change at runtime, I pinky-swear
   {
     //OTP stub contains nested cubeboot.bin application. location/size info is reported at hard-coded addresses...
-    uint32_t cubeboot_magic = ((uint32_t*)g_CubeStub)[40];
-    uint32_t cubeboot_start = ((uint32_t*)g_CubeStub)[41] & 0x0FFFffff; //ignore dialog's OTP/Ram section placements
-    uint32_t cubeboot_end   = ((uint32_t*)g_CubeStub)[42] & 0x0FFFffff; //ignore dialog's OTP/Ram section placements
-    int cubeboot_size = cubeboot_end - cubeboot_start;
-    int cubestub_size = g_CubeStubEnd - g_CubeStub;
+    const uint32_t cubeboot_magic = ((uint32_t*)g_CubeStub)[40];
+    const uint32_t cubeboot_start = ((uint32_t*)g_CubeStub)[41] & 0x0FFFffff; //ignore dialog's OTP/Ram section placements
+    const uint32_t cubeboot_end   = ((uint32_t*)g_CubeStub)[42] & 0x0FFFffff; //ignore dialog's OTP/Ram section placements
+    const int cubeboot_size = cubeboot_end - cubeboot_start;
+    const int cubestub_size = g_CubeStubEnd - g_CubeStub;
     
     //validate header
     bool bad_header = cubeboot_magic != 0xc0beb007 || cubeboot_size < 4000 || cubeboot_size >= cubestub_size || cubeboot_start >= cubestub_size || cubeboot_end >= cubestub_size;
+    #if TESTCUBE_DEBUG > 0
     if( bad_header || dbg_print ) {
       ConsolePrintf("CubeStub[CubeBoot] header:\n");
       ConsolePrintf("  g_CubeStub: %08x-%08x (%i)\n", 0, cubestub_size-1, cubestub_size);
       ConsolePrintf("  g_CubeBoot: %08x-%08x (%i) magic %08x\n", cubeboot_start, cubeboot_end-1, cubeboot_size, cubeboot_magic);
-      if( bad_header ) {
-        ConsolePrintf("bad header\n");
-        throw ERROR_CUBE_BAD_BINARY;
-        //return 0;
-      }
+    }
+    #endif
+    if( bad_header ) {
+      #if TESTCUBE_DEBUG > 0
+      ConsolePrintf("bad header\n");
+      #endif
+      throw ERROR_CUBE_BAD_BINARY;
     }
     
     //DEBUG: byte-for-byte compare to actual binary
+    #if TESTCUBE_DEBUG > 0
     const int cubeboot_raw_size = g_CubeBootEnd-g_CubeBoot;
     if( cubeboot_raw_size > 0 ) //must be included by 'binaries.s'. Development check.
     {
@@ -70,6 +75,7 @@ uint32_t cubebootSignature(bool dbg_print, int *out_cubeboot_size)
       
       ConsolePrintf(".OK\n");
     }
+    #endif
     
     m_cubeboot_size = cubeboot_size; //cache size after successful checks
     crc = crc32(0xFFFFffff, g_CubeStub+cubeboot_start, cubeboot_size );
@@ -114,7 +120,7 @@ static void da14580_load_program_(const uint8_t *bin, int size, const char* name
   int vbat3v_mv, vbat3v_last = 0;
   while(1)
   {
-    vbat3v_mv = Board::getAdcMv(ADC_DUT_VDD_IN) << 1; //this input has a resistor divider
+    vbat3v_mv = Meter::getVoltageMv(PWR_DUTVDD,4);
     if( ABS(vbat3v_mv-vbat3v_last) > 25 && Timer::elapsedUs(Tupdate) > 50*1000 ) //detect changes, rate limited
     {
       vbat3v_last = vbat3v_mv;
@@ -127,9 +133,9 @@ static void da14580_load_program_(const uint8_t *bin, int size, const char* name
   ConsolePrintf("%u\n", vbat3v_mv); //print final value
   
   if( vbat3v_mv < 2500 )
-    throw ERROR_BAT_UNDERVOLT;
+    throw ERROR_CUBE_BAD_POWER; //ERROR_BAT_UNDERVOLT;
   if( vbat3v_mv > 2900 )
-    throw ERROR_BAT_OVERVOLT;
+    throw ERROR_BAT_OVERVOLT; //ERROR_CUBE_BAD_POWER
   
   //Sync bootloader
   int ack = -1;
@@ -164,7 +170,7 @@ static void da14580_load_program_(const uint8_t *bin, int size, const char* name
         DUT_UART::putchar( bin[n] );
         crc_local ^= bin[n]; //generate expected crc
         if( (n & 0x1FF) == 0 ) //%512 == 0
-          ConsolePrintf(".");
+          ConsolePutChar('.');
       }
       ConsolePrintf("done\n");
       
@@ -231,6 +237,18 @@ static void da14580_load_program_(const uint8_t *bin, int size, const char* name
 //-----------------------------------------------------------------------------
 //                  Debug
 //-----------------------------------------------------------------------------
+
+void DbgPowerWaitTest(void)
+{
+  ConsolePrintf("power on and wait (debug)\n");
+  const int ima_limit_CUBEBAT = 450;
+  TestCommon::powerOnProtected(PWR_CUBEBAT, 100, ima_limit_CUBEBAT );
+  //leave power on
+  
+  //DEBUG: console bridge, manual testing
+  cmdSend(CMD_IO_DUT_UART, "echo on", CMD_DEFAULT_TIMEOUT, (CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS) & ~CMD_OPTS_EXCEPTION_EN );
+  TestCommon::consoleBridge(TO_DUT_UART,10*1000);
+}//-*/
 
 void DbgCubeIMeasLoop(char *title)
 {
@@ -305,21 +323,21 @@ static void ShortCircuitTest(void)
 //led test array
 typedef struct { char* name; uint16_t bits; int duty; int i_meas; int i_nominal; int i_variance; error_t e; } led_test_t;
 led_test_t ledtest[] = {
-  {(char*)"All.RED", 0x1111, 12, 0, 11, 5, ERROR_CUBE_LED    },
-  {(char*)"All.GRN", 0x2222, 12, 0, 13, 5, ERROR_CUBE_LED    },
-  {(char*)"All.BLU", 0x4444, 12, 0, 10, 5, ERROR_CUBE_LED    },
-  {(char*)"D1.RED",  0x0001,  1, 0, 28, 5, ERROR_CUBE_LED_D1 },
-  {(char*)"D1.GRN",  0x0002,  1, 0, 34, 6, ERROR_CUBE_LED_D1 },
-  {(char*)"D1.BLU",  0x0004,  1, 0, 27, 5, ERROR_CUBE_LED_D1 },
-  {(char*)"D2.RED",  0x0010,  1, 0, 28, 5, ERROR_CUBE_LED_D2 },
-  {(char*)"D2.GRN",  0x0020,  1, 0, 34, 6, ERROR_CUBE_LED_D2 },
-  {(char*)"D2.BLU",  0x0040,  1, 0, 27, 5, ERROR_CUBE_LED_D2 },
-  {(char*)"D3.RED",  0x0100,  1, 0, 28, 5, ERROR_CUBE_LED_D3 },
-  {(char*)"D3.GRN",  0x0200,  1, 0, 34, 6, ERROR_CUBE_LED_D3 },
-  {(char*)"D3.BLU",  0x0400,  1, 0, 27, 5, ERROR_CUBE_LED_D3 },
-  {(char*)"D4.RED",  0x1000,  1, 0, 28, 5, ERROR_CUBE_LED_D4 },
-  {(char*)"D4.GRN",  0x2000,  1, 0, 34, 6, ERROR_CUBE_LED_D4 },
-  {(char*)"D4.BLU",  0x4000,  1, 0, 27, 5, ERROR_CUBE_LED_D4 }
+  {(char*)"All.RED", 0x1111, 12, 0, 10, 4, ERROR_CUBE_LED    },
+  {(char*)"All.GRN", 0x2222, 12, 0, 10, 4, ERROR_CUBE_LED    },
+  {(char*)"All.BLU", 0x4444, 12, 0,  9, 4, ERROR_CUBE_LED    },
+  {(char*)"D1.RED",  0x0001,  1, 0, 27, 5, ERROR_CUBE_LED_D1 },
+  {(char*)"D1.GRN",  0x0002,  1, 0, 28, 6, ERROR_CUBE_LED_D1 },
+  {(char*)"D1.BLU",  0x0004,  1, 0, 26, 5, ERROR_CUBE_LED_D1 },
+  {(char*)"D2.RED",  0x0010,  1, 0, 27, 5, ERROR_CUBE_LED_D2 },
+  {(char*)"D2.GRN",  0x0020,  1, 0, 28, 6, ERROR_CUBE_LED_D2 },
+  {(char*)"D2.BLU",  0x0040,  1, 0, 26, 5, ERROR_CUBE_LED_D2 },
+  {(char*)"D3.RED",  0x0100,  1, 0, 27, 5, ERROR_CUBE_LED_D3 },
+  {(char*)"D3.GRN",  0x0200,  1, 0, 28, 6, ERROR_CUBE_LED_D3 },
+  {(char*)"D3.BLU",  0x0400,  1, 0, 26, 5, ERROR_CUBE_LED_D3 },
+  {(char*)"D4.RED",  0x1000,  1, 0, 27, 5, ERROR_CUBE_LED_D4 },
+  {(char*)"D4.GRN",  0x2000,  1, 0, 28, 6, ERROR_CUBE_LED_D4 },
+  {(char*)"D4.BLU",  0x4000,  1, 0, 26, 5, ERROR_CUBE_LED_D4 }
 };
 
 static inline bool ledtest_pass(led_test_t *ptest, int i_test) {
@@ -335,7 +353,7 @@ static void CubeTest(void)
   DUT_UART::init(57600);
   
   //DEBUG:
-  if( g_fixmode < FIXMODE_CUBE1 ) {
+  if( g_fixmode == FIXMODE_CUBE0 ) {
     TestCommon::consoleBridge(TO_DUT_UART,3000);
   }
   
@@ -377,14 +395,14 @@ static void CubeTest(void)
   }
   
   //DEBUG
-  if( e != ERROR_OK && g_fixmode == FIXMODE_CUBE0 ) {
+  if( e != ERROR_OK && g_fixmode <= FIXMODE_CUBE0 ) {
     ConsolePrintf("CUBE LED ERROR: %i -- press a key to approve\n", e);
     while( ConsoleReadChar() > -1 );
     uint32_t Tstart = Timer::get();
     while( Timer::elapsedUs(Tstart) < 2*1000*1000 ) {
       if( ConsoleReadChar() > -1 ) { e = ERROR_OK; break; }
     }
-  }
+  }//-*/
   
   if( e != ERROR_OK )
       throw e;
@@ -451,6 +469,25 @@ static void OTPbootloader(void)
     throw ERROR_CUBE_VERIFY_FAILED;
 }
 
+static void burnFCC(void)
+{
+  da14580_load_program_( g_CubeStubFcc, g_CubeStubFccEnd-g_CubeStubFcc, "cube fcc" );
+  Timer::delayMs(250); //wait for ROM+app reboot sequence
+  DUT_UART::init(57600);
+  
+  //XXX: how long should this take?
+  int write_result = -1;
+  Board::powerOn(PWR_DUTPROG);
+  {
+    cmdSend(CMD_IO_DUT_UART, "otp write fcc", 60*1000, (CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS) & ~CMD_OPTS_EXCEPTION_EN );
+    write_result = cmdStatus();
+  }
+  Board::powerOff(PWR_DUTPROG);
+  
+  if( write_result != 0 )
+    throw ERROR_CUBE_VERIFY_FAILED;
+}
+
 void CubeBootDebug(void)
 {
   da14580_load_program_( g_CubeBoot, g_CubeBootEnd-g_CubeBoot, "cube boot" );
@@ -461,20 +498,23 @@ void CubeBootDebug(void)
 
 static void CubeFlexFlowReport(void)
 {
-  char b[80]; const int bz = sizeof(b);
-  snformat(b,bz,"<flex> ESN %08x HWRev %u Model %u\n", cubeid.esn, cubeid.hwrev, cubeid.model);
-  ConsoleWrite(b);
-  FLEXFLOW::write(b);
-  
   int bootSize;
   uint32_t crc = cubebootSignature(0,&bootSize);
-  snformat(b,bz,"<flex> BootSize %i CRC %08x\n", bootSize, crc);
-  ConsoleWrite(b);
-  FLEXFLOW::write(b);
+  FLEXFLOW::printf("<flex> ESN %08x HWRev %u Model %u </flex>\n", cubeid.esn, cubeid.hwrev, cubeid.model);
+  FLEXFLOW::printf("<flex> BootSize %i CRC %08x </flex>\n", bootSize, crc);
 }
 
-TestFunction* TestCube0GetTests(void)
-{
+TestFunction* TestCubeFccGetTests(void) {
+  static TestFunction m_tests[] = {
+    ShortCircuitTest,
+    CubeTest,
+    burnFCC,
+    NULL,
+  };
+  return m_tests;
+}
+
+TestFunction* TestCube0GetTests(void) {
   static TestFunction m_tests[] = {
     ShortCircuitTest,
     CubeTest,
@@ -485,8 +525,7 @@ TestFunction* TestCube0GetTests(void)
   return m_tests;
 }
 
-TestFunction* TestCube1GetTests(void)
-{
+TestFunction* TestCube1GetTests(void) {
   static TestFunction m_tests[] = {
     ShortCircuitTest,
     CubeTest,
@@ -502,56 +541,28 @@ TestFunction* TestCube2GetTests(void) {
   return TestCube1GetTests();
 }
 
-bool TestCubeFinishDetect(void)
+//-----------------------------------------------------------------------------
+//                  Block Tests
+//-----------------------------------------------------------------------------
+
+bool TestBlockDetect(void)
 {
   return false;
 }
 
-TestFunction* TestCubeFinish1GetTests(void)
+void TestBlockCleanup(void)
+{
+}
+
+TestFunction* TestBlock1GetTests(void)
 {
   static TestFunction m_tests[] = {
-    NULL
+    NULL,
   };
   return m_tests;
 }
 
-TestFunction* TestCubeFinish2GetTests(void)
-{
-  static TestFunction m_tests[] = {
-    NULL
-  };
-  return m_tests;
+TestFunction* TestBlock2GetTests(void) { 
+  return TestBlock1GetTests();
 }
-
-TestFunction* TestCubeFinish3GetTests(void)
-{
-  static TestFunction m_tests[] = {
-    NULL
-  };
-  return m_tests;
-}
-
-TestFunction* TestCubeFinishXGetTests(void)
-{
-  static TestFunction m_tests[] = {
-    NULL
-  };
-  return m_tests;
-}
-
-//-----------------------------------------------------------------------------
-//                  Debug
-//-----------------------------------------------------------------------------
-
-void DbgPowerWaitTest(void)
-{
-  ConsolePrintf("power on and wait (debug)\n");
-  const int ima_limit_CUBEBAT = 450;
-  TestCommon::powerOnProtected(PWR_CUBEBAT, 100, ima_limit_CUBEBAT );
-  //leave power on
-  
-  //DEBUG: console bridge, manual testing
-  cmdSend(CMD_IO_DUT_UART, "echo on", CMD_DEFAULT_TIMEOUT, (CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS) & ~CMD_OPTS_EXCEPTION_EN );
-  TestCommon::consoleBridge(TO_DUT_UART,10*1000);
-}//-*/
 

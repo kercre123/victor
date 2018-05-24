@@ -1,4 +1,7 @@
 
+#include "anki/cozmo/robot/hal.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include <stdint.h>
 
 namespace Anki {
@@ -12,22 +15,36 @@ namespace Factory {
     et_SPEAKER_TEST,
     et_TEST_COUNT
   };
+  
+  //lifted from cc_commander.c
+  enum {
+    ERR_PENDING = -1, //does not return right away
+    ERR_OK = 0,
+    ERR_UNKNOWN,
+    ERR_SYNTAX,
+    ERR_SYSTEM,
+    ERR_LOCKED    //packout
+  };
 
   int RunEngineTest(uint8_t id, uint8_t args[4])
   {
-    switch (id) {
-    default:
-      return -1;
-    case et_NO_TEST:
-
-    case et_MIC_TEST:
-      //SendCladMessage(RunMicTest)
-      break;
-    case et_SPEAKER_TEST:
-      //SendCladMessage(RunSpeakerTest)
-      break;
+    using namespace RobotInterface;
+    RunFactoryTest msg;
+    memcpy(msg.args, args, 4);
+    switch (id)
+    {
+      default:
+      case et_NO_TEST:
+        return ERR_UNKNOWN;
+      case et_MIC_TEST:
+        msg.test = FactoryTest::MIC_TEST;
+        break;
+      case et_SPEAKER_TEST:
+        msg.test = FactoryTest::SPEAKER_TEST;
+        break;
     }
-    return 0;
+    SendMessage(msg);
+    return ERR_OK;
 
     //Future possible TODO:
     // Provide a method for engine to send a TestResult message

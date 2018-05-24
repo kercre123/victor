@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include "board.h"
+#include "console.h"
 #include "flexflow.h"
 #include "timer.h"
 
@@ -46,6 +47,7 @@ void FLEXFLOW::init(int baud)
     USART_InitStruct.USART_Parity     = USART_Parity_No ;
     USART_InitStruct.USART_Mode       = USART_Mode_Tx;
     USART_InitStruct.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+    USART_OverSampling8Cmd(USART1, ENABLE);
     USART_Init(USART1, &USART_InitStruct);
     
     //Enable UART
@@ -110,5 +112,7 @@ void FLEXFLOW::putchar(char c)
     //while( !(USART1->SR & USART_SR_TXE) ); //dat moved to shift register (ok to write a new data)
     //while( !(USART1->SR & USART_SR_TC)  ); //wait for transmit complete
   }
+  
+  ConsolePutChar(c); //XXX also print to console
 }
 

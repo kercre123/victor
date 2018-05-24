@@ -11,7 +11,6 @@
  **/
 
 #include "anki-wifi/wifi.h"
-#include "switchboardd/savedSessionManager.h"
 #include "switchboardd/securePairing.h"
 #include "exec_command.h"
 
@@ -28,10 +27,10 @@ namespace Switchboard {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 long long SecurePairing::sTimeStarted;
 
-SecurePairing::SecurePairing(INetworkStream* stream, 
+SecurePairing::SecurePairing(INetworkStream* stream,
   struct ev_loop* evloop,
   std::shared_ptr<EngineMessagingClient> engineClient,
-  bool isPairing, 
+  bool isPairing,
   bool isOtaUpdating) :
 _pin(""),
 _challengeAttempts(0),
@@ -50,23 +49,24 @@ _isOtaUpdating(isOtaUpdating)
 {
   Log::Write("Instantiate with isPairing:%s", isPairing?"true":"false");
   sTimeStarted = std::time(0);
-  
+
   // Register with stream events
   _onReceivePlainTextHandle = _stream->OnReceivedPlainTextEvent().ScopedSubscribe(
     std::bind(&SecurePairing::HandleMessageReceived,
               this, std::placeholders::_1, std::placeholders::_2));
-  
+
   _onReceiveEncryptedHandle = _stream->OnReceivedEncryptedEvent().ScopedSubscribe(
     std::bind(&SecurePairing::HandleMessageReceived,
               this, std::placeholders::_1, std::placeholders::_2));
-  
+
   _onFailedDecryptionHandle = _stream->OnFailedDecryptionEvent().ScopedSubscribe(
     std::bind(&SecurePairing::HandleDecryptionFailed, this));
-  
+
   // Register with private events
   _pairingTimeoutSignal.SubscribeForever(std::bind(&SecurePairing::HandleTimeout, this));
   _internetTimerSignal.SubscribeForever(std::bind(&SecurePairing::HandleInternetTimerTick, this));
-  
+  _idleConnectionSignal.SubscribeForever(std::bind(&SecurePairing::HandleIdleTimeout, this));
+
   // Initialize the key exchange object
   _keyExchange = std::make_unique<KeyExchange>(kNumPinDigits);
 
@@ -76,7 +76,7 @@ _isOtaUpdating(isOtaUpdating)
 
   // Initialize the task executor
   _taskExecutor = std::make_unique<TaskExecutor>(_loop);
-  
+
   // Initialize ev timer
   Log::Write("[timer] init");
   _handleTimeoutTimer.signal = &_pairingTimeoutSignal;
@@ -84,6 +84,10 @@ _isOtaUpdating(isOtaUpdating)
 
   _handleInternet.signal = &_internetTimerSignal;
   ev_timer_init(&_handleInternet.timer, &SecurePairing::sEvTimerHandler, kWifiConnectInterval_s, kWifiConnectInterval_s);
+
+  _idleConnectionTimer.signal = &_idleConnectionSignal;
+  ev_timer_init(&_idleConnectionTimer.timer, &SecurePairing::sEvTimerHandler, kBleIdleConnectionTimeout_s, 0);
+  ev_timer_start(_loop, &_idleConnectionTimer.timer);
   
   Log::Write("SecurePairing starting up.");
 }
@@ -95,6 +99,7 @@ SecurePairing::~SecurePairing() {
 
   ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
   ev_timer_stop(_loop, &_handleInternet.timer);
+  ev_timer_stop(_loop, &_idleConnectionTimer.timer);
   
   Log::Write("Destroying SecurePairing object.");
 }
@@ -105,16 +110,16 @@ SecurePairing::~SecurePairing() {
 
 void SecurePairing::BeginPairing() {
   Log::Write("Beginning secure pairing process.");
-  
+
   _totalPairingAttempts = 0;
-  
+
   // Initialize object
   Init();
 }
 
 void SecurePairing::StopPairing() {
   _totalPairingAttempts = kMaxPairingAttempts;
-  
+
   Reset(true);
 }
 
@@ -123,18 +128,52 @@ void SecurePairing::Init() {
   _challengeAttempts = 0;
   _abnormalityCount = 0;
   _inetTimerCount = 0;
-  
+
   // Update our state
   _state = PairingState::Initial;
-  
+
   // Send Handshake
   Log::Write("Sending Handshake to Client.");
-  
+
   ev_timer_again(_loop, &_handleTimeoutTimer.timer);
-  
+
   SendHandshake();
-  
+
   _state = PairingState::AwaitingHandshake;
+}
+
+bool SecurePairing::LoadKeys() {
+  // Try to load keys
+  _rtsKeys = SavedSessionManager::LoadRtsKeys();
+
+  bool validKeys = _keyExchange->ValidateKeys((uint8_t*)&(_rtsKeys.keys.id.publicKey), (uint8_t*)&(_rtsKeys.keys.id.privateKey));
+
+  if(!validKeys) {
+    Log::Write("Keys loaded from file are corrupt.");
+  } else {
+    Log::Write("Stored keys are good to go.");
+  }
+
+  if(validKeys && (_rtsKeys.keys.version == SB_PAIRING_PROTOCOL_VERSION)) {
+    _keyExchange->SetKeys((uint8_t*)&(_rtsKeys.keys.id.publicKey), (uint8_t*)&(_rtsKeys.keys.id.privateKey));
+
+    Log::Write("Loading key pair from file.");
+    return true;
+  } else {
+    uint8_t* publicKey = (uint8_t*)_keyExchange->GenerateKeys();
+
+    // Save keys to file
+    memcpy(&_rtsKeys.keys.id.publicKey, publicKey, sizeof(_rtsKeys.keys.id.publicKey));
+    memcpy(&_rtsKeys.keys.id.privateKey, _keyExchange->GetPrivateKey(), sizeof(_rtsKeys.keys.id.privateKey));
+
+    SaveKeys();
+    Log::Write("Generating new key pair.");
+    return false;
+  }
+}
+
+void SecurePairing::SaveKeys() {
+  SavedSessionManager::SaveRtsKeys(_rtsKeys);
 }
 
 void SecurePairing::SubscribeToCladMessages() {
@@ -145,8 +184,10 @@ void SecurePairing::SubscribeToCladMessages() {
   _rtsRtsStatusRequestHandle = _cladHandler->OnReceiveRtsStatusRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsStatusRequest, this, std::placeholders::_1));
   _rtsWifiScanRequestHandle = _cladHandler->OnReceiveRtsWifiScanRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsWifiScanRequest, this, std::placeholders::_1));
   _rtsOtaUpdateRequestHandle = _cladHandler->OnReceiveRtsOtaUpdateRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsOtaUpdateRequest, this, std::placeholders::_1));
+  _rtsOtaCancelRequestHandle = _cladHandler->OnReceiveRtsOtaCancelRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsOtaCancelRequest, this, std::placeholders::_1));
   _rtsWifiAccessPointRequestHandle = _cladHandler->OnReceiveRtsWifiAccessPointRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsWifiAccessPointRequest, this, std::placeholders::_1));
   _rtsCancelPairingHandle = _cladHandler->OnReceiveCancelPairingRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsCancelPairing, this, std::placeholders::_1));
+  _rtsLogRequestHandle = _cladHandler->OnReceiveRtsLogRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsLogRequest, this, std::placeholders::_1));
   _rtsAckHandle = _cladHandler->OnReceiveRtsAck().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsAck, this, std::placeholders::_1));
   _rtsSshHandle = _cladHandler->OnReceiveRtsSsh().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsSsh, this, std::placeholders::_1));
 }
@@ -159,26 +200,33 @@ void SecurePairing::Reset(bool forced) {
   SendCancelPairing();
 
   _commsState = CommsState::Raw;
-  
+
   // Tell key exchange to reset
   _keyExchange->Reset();
-  
+
   // Clear pin
   _pin = "000000";
 
   // Stop timers
   ev_timer_stop(_loop, &_handleInternet.timer);
+  ev_timer_stop(_loop, &_idleConnectionTimer.timer);
   
   // Put us back in initial state
   if(forced) {
     Log::Write("Client disconnected. Stopping pairing.");
     ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
+
+    if(!_isOtaUpdating) {
+      _stopPairingSignal.emit();
+    }
   } else if(++_totalPairingAttempts < kMaxPairingAttempts) {
     Init();
     Log::Write("SecurePairing restarting.");
+    UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::START_PAIRING);
   } else {
     Log::Write("SecurePairing ending due to multiple failures. Requires external restart.");
     ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
+    _stopPairingSignal.emit();
   }
 }
 
@@ -195,7 +243,7 @@ void SecurePairing::SendHandshake() {
   // Send versioning handshake
   // ************************************************************
   // Handshake Message (first message)
-  // This message is fixed. Cannot change. Ever. 
+  // This message is fixed. Cannot change. Ever.
   // If you are thinking about changing the code in this message,
   // DON'T. All Victor's for all time must send this message.
   // ANY victor needs to be able to communicate with
@@ -219,38 +267,13 @@ void SecurePairing::SendPublicKey() {
   }
 
   // Generate public, private key
-  uint8_t* publicKey;
-
-  uint8_t publicKeyBuffer[crypto_kx_PUBLICKEYBYTES];
-  uint8_t privateKeyBuffer[crypto_kx_SECRETKEYBYTES];
-  uint32_t fileVersion = SavedSessionManager::LoadKey(&publicKeyBuffer[0], crypto_kx_PUBLICKEYBYTES, SavedSessionManager::kPublicKeyPath);
-  uint32_t fileVPrivate = SavedSessionManager::LoadKey(&privateKeyBuffer[0], crypto_kx_SECRETKEYBYTES, SavedSessionManager::kPrivateKeyPath);
-
-  // Check if keys from file are valid
-  bool validKeys = _keyExchange->ValidateKeys(publicKeyBuffer, privateKeyBuffer);
-
-  if(!validKeys) {
-    Log::Write("Keys loaded from file are corrupt.");
-  } else {
-    Log::Write("Store keys are good to go.");
-  }
-
-  if(validKeys && (fileVersion == SB_PAIRING_PROTOCOL_VERSION) && (fileVPrivate == SB_PAIRING_PROTOCOL_VERSION)) {
-    publicKey = publicKeyBuffer;
-    _keyExchange->SetKeys(publicKey, privateKeyBuffer);
-
-    Log::Write("Loading key pair from file.");
-  } else {
-    publicKey = (uint8_t*)_keyExchange->GenerateKeys();
-
-    // Save keys to file
-    SavedSessionManager::SaveKey(publicKey, crypto_kx_PUBLICKEYBYTES, SavedSessionManager::kPublicKeyPath);
-    SavedSessionManager::SaveKey(_keyExchange->GetPrivateKey(), crypto_kx_SECRETKEYBYTES, SavedSessionManager::kPrivateKeyPath);
-    Log::Write("Generating new key pair.");
-  }
+  (void)LoadKeys();
 
   std::array<uint8_t, crypto_kx_PUBLICKEYBYTES> publicKeyArray;
-  memcpy(std::begin(publicKeyArray), publicKey, crypto_kx_PUBLICKEYBYTES);
+  std::copy((uint8_t*)&_rtsKeys.keys.id.publicKey,
+            (uint8_t*)&_rtsKeys.keys.id.publicKey + crypto_kx_PUBLICKEYBYTES,
+            publicKeyArray.begin());
+
   SendRtsMessage<RtsConnRequest>(publicKeyArray);
 
   // Save public key to file
@@ -264,17 +287,17 @@ void SecurePairing::SendNonce() {
 
   // Send nonce
   const uint8_t NONCE_BYTES = crypto_aead_xchacha20poly1305_ietf_NPUBBYTES;
-  
+
   // Generate a nonce
   uint8_t* toRobotNonce = _keyExchange->GetToRobotNonce();
   randombytes_buf(toRobotNonce, NONCE_BYTES);
 
   uint8_t* toDeviceNonce = _keyExchange->GetToDeviceNonce();
   randombytes_buf(toDeviceNonce, NONCE_BYTES);
-  
+
   // Give our nonce to the network stream
   _stream->SetNonce(toRobotNonce, toDeviceNonce);
-  
+
   std::array<uint8_t, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES> toRobotNonceArray;
   memcpy(std::begin(toRobotNonceArray), toRobotNonce, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
 
@@ -293,10 +316,10 @@ void SecurePairing::SendChallenge() {
   _stream->SetEncryptedChannelEstablished(true);
   // Update state to secureClad
   _state = PairingState::AwaitingChallengeResponse;
-  
+
   // Create random challenge value
   randombytes_buf(&_pingChallenge, sizeof(_pingChallenge));
-  
+
   SendRtsMessage<RtsChallengeMessage>(_pingChallenge);
 }
 
@@ -314,23 +337,24 @@ void SecurePairing::SendWifiScanResult() {
     return;
   }
 
-  // TODO: will replace with CLAD message format
-  std::vector<Anki::WiFiScanResult> wifiResults = Anki::ScanForWiFiAccessPoints();
+  std::vector<Anki::WiFiScanResult> wifiResults;
+  WifiScanErrorCode code = Anki::ScanForWiFiAccessPoints(wifiResults);
 
-  const uint8_t statusCode = wifiResults.size() > 0? 0 : 1;
+  const uint8_t statusCode = (uint8_t)code;
 
-  std::vector<Anki::Victor::ExternalComms::RtsWifiScanResult> wifiScanResults;
+  std::vector<Anki::Victor::ExternalComms::RtsWifiScanResult_2> wifiScanResults;
 
   for(int i = 0; i < wifiResults.size(); i++) {
-    Anki::Victor::ExternalComms::RtsWifiScanResult result = Anki::Victor::ExternalComms::RtsWifiScanResult(wifiResults[i].auth,
+    Anki::Victor::ExternalComms::RtsWifiScanResult_2 result = Anki::Victor::ExternalComms::RtsWifiScanResult_2(wifiResults[i].auth,
       wifiResults[i].signal_level,
-      wifiResults[i].ssid);
+      wifiResults[i].ssid,
+      wifiResults[i].hidden);
 
       wifiScanResults.push_back(result);
   }
 
   Log::Write("Sending wifi scan results.");
-  SendRtsMessage<RtsWifiScanResponse>(statusCode, wifiScanResults);
+  SendRtsMessage<RtsWifiScanResponse_2>(statusCode, wifiScanResults);
 }
 
 void SecurePairing::SendWifiConnectResult() {
@@ -368,7 +392,7 @@ void SecurePairing::SendStatusResponse() {
 
   std::string buildNoString(buildNo);
 
-  SendRtsMessage<RtsStatusResponse_2>(state.ssid, state.connState, isApMode, bleState, batteryState, buildNoString);
+  SendRtsMessage<RtsStatusResponse_2>(state.ssid, state.connState, isApMode, bleState, batteryState, buildNoString, _isOtaUpdating);
 
   Log::Write("Send status response.");
 }
@@ -388,6 +412,28 @@ void SecurePairing::SendOtaProgress(int status, uint64_t progress, uint64_t expe
   Log::Write("Sending OTA Progress Update");
 }
 
+void SecurePairing::SendFile(uint32_t fileId, std::vector<uint8_t> fileBytes) {
+  // Send File
+  const size_t chunkSize = 256; // can't be more than 2^16
+  size_t fileSizeBytes = fileBytes.size();
+  uint8_t status = 0; // not sure if we need status byte, but reserving so I don't regret ~PRA
+
+  size_t remaining = fileSizeBytes;
+
+  while((ssize_t)remaining > 0) {
+    size_t msgSize = remaining >= chunkSize? chunkSize : remaining;
+    size_t bytesWritten = fileSizeBytes - remaining;
+
+    std::vector<uint8_t> dataChunk;
+    auto fileIter = fileBytes.begin() + bytesWritten;
+    std::copy(fileIter, fileIter + msgSize, back_inserter(dataChunk));
+
+    SendRtsMessage<RtsFileDownload>(status, fileId, bytesWritten + msgSize, fileSizeBytes, dataChunk);
+
+    remaining -= msgSize;
+  }
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Event handling methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -400,30 +446,32 @@ void SecurePairing::HandleRtsConnResponse(const Anki::Victor::ExternalComms::Rts
   if(_state == PairingState::AwaitingPublicKey) {
     Anki::Victor::ExternalComms::RtsConnResponse connResponse = msg.Get_RtsConnResponse();
 
-    if(connResponse.connectionType == Anki::Victor::ExternalComms::RtsConnType::FirstTimePair) {    
+    if(connResponse.connectionType == Anki::Victor::ExternalComms::RtsConnType::FirstTimePair) {
       if(_isPairing && !_isOtaUpdating) {
+        ev_timer_stop(_loop, &_idleConnectionTimer.timer);
         HandleInitialPair((uint8_t*)connResponse.publicKey.data(), crypto_kx_PUBLICKEYBYTES);
         _state = PairingState::AwaitingNonceAck;
       } else {
         Log::Write("Client tried to initial pair while not in pairing mode.");
       }
     } else {
-      uint8_t clientPublicKeySaved[crypto_kx_PUBLICKEYBYTES];
-      uint8_t clientEncryptKeySaved[crypto_kx_SESSIONKEYBYTES];
-      uint8_t clientDecryptKeySaved[crypto_kx_SESSIONKEYBYTES];
+      bool hasClient = false;;
 
-      int sessionVersion = SavedSessionManager::LoadSession(clientPublicKeySaved, clientEncryptKeySaved, clientDecryptKeySaved);
+      for(int i = 0; i < _rtsKeys.clients.size(); i++) {
+        if(memcmp((uint8_t*)connResponse.publicKey.data(), (uint8_t*)&(_rtsKeys.clients[i].publicKey), crypto_kx_PUBLICKEYBYTES) == 0) {
+          hasClient = true;
+          _stream->SetCryptoKeys(
+            _rtsKeys.clients[i].sessionTx,
+            _rtsKeys.clients[i].sessionRx);
 
-      if(sessionVersion == SB_PAIRING_PROTOCOL_VERSION && 
-        (memcmp((uint8_t*)connResponse.publicKey.data(), clientPublicKeySaved, crypto_kx_PUBLICKEYBYTES) == 0)) {
-        _stream->SetCryptoKeys(
-          clientEncryptKeySaved,
-          clientDecryptKeySaved);
+          SendNonce();
+          _state = PairingState::AwaitingNonceAck;
+          Log::Write("Received renew connection request.");
+          break;
+        }
+      }
 
-        SendNonce();
-        _state = PairingState::AwaitingNonceAck;
-        Log::Write("Received renew connection request.");
-      } else {
+      if(!hasClient) {
         Reset();
         Log::Write("No stored session for public key.");
       }
@@ -459,13 +507,13 @@ void SecurePairing::HandleRtsWifiConnectRequest(const Victor::ExternalComms::Rts
   if(_state == PairingState::ConfirmedSharedSecret) {
     Anki::Victor::ExternalComms::RtsWifiConnectRequest wifiConnectMessage = msg.Get_RtsWifiConnectRequest();
 
-    Log::Write("Trying to connect to wifi network [%s][pw=%s][sec=%d][hid=%d].", wifiConnectMessage.wifiSsidHex.c_str(), wifiConnectMessage.password.c_str(), wifiConnectMessage.authType, wifiConnectMessage.hidden);
+    Log::Write("Trying to connect to wifi network.");
 
     _wifiConnectTimeout_s = std::max(kWifiConnectMinTimeout_s, wifiConnectMessage.timeout);
 
     UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SETTING_WIFI);
 
-    bool connected = Anki::ConnectWiFiBySsid(wifiConnectMessage.wifiSsidHex, 
+    bool connected = Anki::ConnectWiFiBySsid(wifiConnectMessage.wifiSsidHex,
       wifiConnectMessage.password,
       wifiConnectMessage.authType,
       (bool)wifiConnectMessage.hidden,
@@ -476,6 +524,8 @@ void SecurePairing::HandleRtsWifiConnectRequest(const Victor::ExternalComms::Rts
     bool online = state.connState == WiFiConnState::ONLINE;
 
     if(online) {
+      ev_timer_stop(_loop, &_handleInternet.timer);
+      _inetTimerCount = 0;
       SendWifiConnectResult();
     } else {
       ev_timer_again(_loop, &_handleInternet.timer);
@@ -506,7 +556,7 @@ void SecurePairing::HandleRtsWifiIpRequest(const Victor::ExternalComms::RtsConne
 
     SendRtsMessage<RtsWifiIpResponse>(hasIpV4, hasIpV6, ipV4, ipV6);
   }
-  
+
   Log::Write("Received wifi ip request.");
 }
 
@@ -545,8 +595,25 @@ void SecurePairing::HandleRtsOtaUpdateRequest(const Victor::ExternalComms::RtsCo
     _otaUpdateRequestSignal.emit(otaMessage.url);
     _isOtaUpdating = true;
   }
-  
+
   Log::Write("Starting OTA update.");
+}
+
+void SecurePairing::HandleRtsOtaCancelRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
+  if(!AssertState(CommsState::SecureClad)) {
+    return;
+  }
+
+  if(_state == PairingState::ConfirmedSharedSecret && _isOtaUpdating) {
+    Anki::CancelBackgroundCommands();
+    _isOtaUpdating = false;
+    Log::Write("Terminating OTA Update Engine");
+  } else {
+    Log::Write("Tried to cancel OTA when OTA not running.");
+  }
+
+  // Send status response
+  SendStatusResponse();
 }
 
 void SecurePairing::HandleRtsWifiAccessPointRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
@@ -559,7 +626,7 @@ void SecurePairing::HandleRtsWifiAccessPointRequest(const Victor::ExternalComms:
     if(accessPointMessage.enable) {
       // enable access point mode on Victor
       char vicName[PROPERTY_VALUE_MAX] = {0};
-      (void)property_get("persist.anki.robot.name", vicName, "");
+      (void)property_get("anki.robot.name", vicName, "");
 
       std::string ssid(vicName);
       std::string password = _keyExchange->GeneratePin(kWifiApPasswordSize);
@@ -582,11 +649,38 @@ void SecurePairing::HandleRtsWifiAccessPointRequest(const Victor::ExternalComms:
   }
 }
 
+void SecurePairing::HandleRtsLogRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
+  if(!AssertState(CommsState::SecureClad)) {
+    return;
+  }
+
+  std::string output;
+  int exitCode = ExecCommand({"python", "/anki/bin/diagnostics-logger"}, output);
+
+  std::vector<uint8_t> logBytes;
+
+  bool readSuccess = ReadFileIntoVector("/data/diagnostics/logs.tar.bz2", logBytes);
+
+  if(!readSuccess) {
+    exitCode = -1;
+  }
+
+  // Send RtsLogResponse
+  uint32_t fileId = 0;
+  randombytes_buf(&fileId, sizeof(fileId));
+  SendRtsMessage<RtsLogResponse>(exitCode, fileId);
+
+  // Send file
+  SendFile(fileId, logBytes);
+}
+
 void SecurePairing::HandleRtsCancelPairing(const Victor::ExternalComms::RtsConnection_2& msg) {
   Log::Write("Stopping pairing due to client request.");
   StopPairing();
 }
 
+#ifdef DEBUG
+// only handle ssh message in debug build
 void SecurePairing::HandleRtsSsh(const Victor::ExternalComms::RtsConnection_2& msg) {
   // RtsSsh
   if(!AssertState(CommsState::SecureClad)) {
@@ -610,16 +704,22 @@ void SecurePairing::HandleRtsSsh(const Victor::ExternalComms::RtsConnection_2& m
     WriteFileAtomically(sshPath + "/" + sshFile, data, Anki::kModeUserReadWrite);
   }
 }
+#else
+void SecurePairing::HandleRtsSsh(const Victor::ExternalComms::RtsConnection_2& msg) {
+  // log in release
+  Log::Write("Received ssh key message in non-debug build.");
+}
+#endif
 
 void SecurePairing::HandleRtsAck(const Victor::ExternalComms::RtsConnection_2& msg) {
   Anki::Victor::ExternalComms::RtsAck ack = msg.Get_RtsAck();
-  if(_state == PairingState::AwaitingNonceAck && 
+  if(_state == PairingState::AwaitingNonceAck &&
     ack.rtsConnectionTag == (uint8_t)Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsNonceMessage) {
     HandleNonceAck();
   } else {
     // ignore msg
     IncrementAbnormalityCount();
-    
+
     std::ostringstream ss;
     ss << "Received nonce ack in wrong state '" << _state << "'.";
     Log::Write(ss.str().c_str());
@@ -638,35 +738,43 @@ bool SecurePairing::HandleHandshake(uint16_t version) {
     Log::Write("Client reported incompatible version [%d]. Our version is [%d]", version, PairingProtocolVersion::CURRENT);
     return false;
   }
-  
+
   return false;
 }
 
 void SecurePairing::HandleInitialPair(uint8_t* publicKey, uint32_t publicKeyLength) {
   // Handle initial pair request from client
-  
+
   // Generate a random number with kNumPinDigits digits
   _pin = _keyExchange->GeneratePin();
   _updatedPinSignal.emit(_pin);
-  
+
   // Input client's public key and calculate shared keys
   _keyExchange->SetRemotePublicKey(publicKey);
   _keyExchange->CalculateSharedKeys((unsigned char*)_pin.c_str());
-  
+
   // Give our shared keys to the network stream
   _stream->SetCryptoKeys(
     _keyExchange->GetEncryptKey(),
     _keyExchange->GetDecryptKey());
 
   // Save keys to file
-  SavedSessionManager::SaveSession(
-    publicKey,
-    _keyExchange->GetEncryptKey(),
-    _keyExchange->GetDecryptKey());
-  
+  // For now only save one client
+
+  RtsClientData client;
+
+  memcpy(&client.publicKey, publicKey, sizeof(client.publicKey));
+  memcpy(&client.sessionRx, _keyExchange->GetDecryptKey(), sizeof(client.sessionRx));
+  memcpy(&client.sessionTx, _keyExchange->GetEncryptKey(), sizeof(client.sessionTx));
+
+  _rtsKeys.clients.clear();
+  _rtsKeys.clients.push_back(client);
+
+  SaveKeys();
+
   // Send nonce
   SendNonce();
-  
+
   Log::Write("Received initial pair request, sending nonce.");
 }
 
@@ -686,7 +794,7 @@ void SecurePairing::HandleNonceAck() {
   // Send challenge to user
   _commsState = CommsState::SecureClad;
   SendChallenge();
-  
+
   Log::Write("Client acked nonce, sending challenge [%d].", _pingChallenge);
 }
 
@@ -697,20 +805,25 @@ inline bool isChallengeSuccess(uint32_t challenge, uint32_t answer) {
 
 void SecurePairing::HandleChallengeResponse(uint8_t* pingChallengeAnswer, uint32_t length) {
   bool success = false;
-  
+
   if(length < sizeof(uint32_t)) {
     success = false;
   } else {
     uint32_t answer = *((uint32_t*)pingChallengeAnswer);
     success = isChallengeSuccess(_pingChallenge, answer);
   }
-  
+
   if(success) {
     // Inform client that we are good to go and
     // update our state
+    ev_timer_stop(_loop, &_idleConnectionTimer.timer);
     SendChallengeSuccess();
     _state = PairingState::ConfirmedSharedSecret;
     Log::Green("Challenge answer was accepted. Encrypted channel established.");
+
+    if(_isPairing) {
+      _completedPairingSignal.emit();
+    }
   } else {
     // Increment our abnormality and attack counter, and
     // if at or above max attempts reset.
@@ -750,7 +863,7 @@ void SecurePairing::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
             uint32_t clientVersion = *(uint32_t*)(bytes + 1);
             handleHandshake = HandleHandshake(clientVersion);
           }
-          
+
           if(handleHandshake) {
             _commsState = CommsState::Clad;
             SendPublicKey();
@@ -784,22 +897,22 @@ void SecurePairing::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
 void SecurePairing::IncrementChallengeCount() {
   // Increment challenge count
   _challengeAttempts++;
-  
+
   if(_challengeAttempts >= kMaxMatchAttempts) {
     Reset();
   }
-  
+
   Log::Write("Client answered challenge.");
 }
 
 void SecurePairing::IncrementAbnormalityCount() {
   // Increment abnormality count
   _abnormalityCount++;
-  
+
   if(_abnormalityCount >= kMaxAbnormalityCount) {
     Reset();
   }
-  
+
   Log::Write("Abnormality recorded.");
 }
 
@@ -811,8 +924,14 @@ void SecurePairing::HandleInternetTimerTick() {
 
   if(online || _inetTimerCount > _wifiConnectTimeout_s) {
     ev_timer_stop(_loop, &_handleInternet.timer);
+    _inetTimerCount = 0;
     SendWifiConnectResult();
   }
+}
+
+void SecurePairing::HandleIdleTimeout() {
+  Log::Write("Connection idled. Terminating session.");
+  _stopPairingSignal.emit();
 }
 
 void SecurePairing::UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus state) {
@@ -854,7 +973,7 @@ void SecurePairing::sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, in
   std::ostringstream ss;
   ss << "[timer] " << (time(0) - sTimeStarted) << "s since beginning.";
   Log::Write(ss.str().c_str());
-  
+
   struct ev_TimerStruct *wData = (struct ev_TimerStruct*)w;
   wData->signal->emit();
 }

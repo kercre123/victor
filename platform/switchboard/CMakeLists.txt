@@ -33,7 +33,6 @@ PRIVATE
   libffi.so.6
   libdl.so.2
   libz.so.1
-  libselinux.so.1
   libresolv.so.2
   libgmodule-2.0.so.0
   libpcre.so.1
@@ -60,5 +59,7 @@ target_include_directories(vic-switchboard
   $<BUILD_INTERFACE:${VICOS_SDK}/sysroot/usr/lib/glib-2.0/include>
   ${PLATFORM_INCLUDES}
 )
+
+anki_build_strip(TARGET vic-switchboard)
 
 endif(VICOS)

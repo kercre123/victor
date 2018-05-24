@@ -13,7 +13,7 @@
 #include "coretech/common/engine/colorRGBA.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "engine/animations/animationContainers/cubeLightAnimationContainer.h"
-#include "engine/components/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLightComponent.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -27,7 +27,7 @@ static const char* kOffPeriodKey           = "offPeriod_ms";
 static const char* kTransitionOnPeriodKey  = "transitionOnPeriod_ms";
 static const char* kTransitionOffPeriodKey = "transitionOffPeriod_ms";
 static const char* kOffsetKey              = "offset";
-static const char* kRotationPeriodKey      = "rotationPeriod_ms";
+static const char* kRotateKey              = "rotate";
 
 // Sequence Keys
 static const char* kDurationKey            = "duration_ms";
@@ -49,7 +49,7 @@ bool CubeLightAnimationContainer::ParseJsonToPattern(const Json::Value& json, Li
   res &= JsonTools::GetArrayOptional(json, kTransitionOnPeriodKey,     values.transitionOnPeriod_ms);
   res &= JsonTools::GetArrayOptional(json, kTransitionOffPeriodKey,    values.transitionOffPeriod_ms);
   res &= JsonTools::GetArrayOptional(json, kOffsetKey,                 values.offset);
-  res &= json.isMember(kRotationPeriodKey);
+  res &= json.isMember(kRotateKey);
   
   // If any of the member fields are missing from the pattern definition return false
   if(!res)
@@ -57,7 +57,7 @@ bool CubeLightAnimationContainer::ParseJsonToPattern(const Json::Value& json, Li
     return false;
   }
   
-  values.rotationPeriod_ms = json[kRotationPeriodKey].asUInt();
+  values.rotate            = json[kRotateKey].asBool();
   values.makeRelative      = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
   values.relativePoint     = {0,0};
   

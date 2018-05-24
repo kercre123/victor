@@ -48,7 +48,7 @@ private:
   virtual s32 UpdateSimInternal() override;
   
   virtual void HandleBehaviorTransition(const ExternalInterface::BehaviorTransition& msg) override;
-  virtual void HandleActiveObjectConnectionState(const ObjectConnectionState& msg) override;
+  virtual void HandleActiveObjectConnectionState(const ExternalInterface::ObjectConnectionState& msg) override;
   virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction &msg) override;
   
   // State:
@@ -383,7 +383,7 @@ void CST_StackBlockBehavior::HandleBehaviorTransition(const ExternalInterface::B
   }**/
 }
   
-void CST_StackBlockBehavior::HandleActiveObjectConnectionState(const ObjectConnectionState& msg)
+void CST_StackBlockBehavior::HandleActiveObjectConnectionState(const ExternalInterface::ObjectConnectionState& msg)
 {
   if (msg.connected) {
     ++_numObjectsConnected;

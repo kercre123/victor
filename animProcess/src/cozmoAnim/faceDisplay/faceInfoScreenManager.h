@@ -88,7 +88,7 @@ public:
                            bool triggerRecognized);
   void DrawMicInfo(const RobotInterface::MicData& micData);
   void DrawCameraImage(const Vision::ImageRGB565& img);
-
+  
 private:
   std::unique_ptr<Vision::ImageRGB565> _scratchDrawingImg;
 
@@ -124,6 +124,10 @@ private:
   // Draw the _scratchDrawingImg to the face
   void DrawScratch();
 
+  // Updates the FAC screen if needed
+  void UpdateFAC();
+
+  void UpdateCameraTestMode(uint32_t curTime_ms);
   
   static const Point2f kDefaultTextStartingLoc_pix;
   static const u32 kDefaultTextSpacing_pix;
@@ -158,7 +162,7 @@ private:
   WebService::WebService* _webService;
   
   bool _drawFAC = false;
-
+  
   // Reboot Linux
   void Reboot();
 

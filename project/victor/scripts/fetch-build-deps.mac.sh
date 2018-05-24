@@ -32,7 +32,6 @@ vlog "Check homebrew dependencies"
     -d python2 \
     ninja \
     python3 \
-    libsndfile \
     graphviz \
     --pip2 graphviz \
     --pip3 graphviz
@@ -40,8 +39,8 @@ vlog "Check homebrew dependencies"
 vlog "Android SDK"
 ./tools/build/tools/ankibuild/android.py --install-sdk r3
 
-vlog "Android NDK"
-./tools/build/tools/ankibuild/android.py --install-ndk r15b
+vlog "vicos sdk"
+./tools/build/tools/ankibuild/vicos.py --install 0.9-r03
 
 vlog "CMake"
 ./tools/build/tools/ankibuild/cmake.py

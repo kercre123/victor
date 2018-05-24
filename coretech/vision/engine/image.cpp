@@ -283,6 +283,74 @@ namespace Vision {
   }
 
   template<typename T>
+  void ImageBase<T>::MakeTextFillImageWidth(const std::string& text,
+					    int font,
+					    int thickness,
+					    int imageWidth,
+					    cv::Size& textSize,
+					    float& scale)
+  {
+    scale = 0.1f;
+    cv::Size prevTextSize(0,0);
+    // TODO Use binary search instead
+    for(; scale < 3.f; scale += 0.05f)
+    {
+      textSize = cv::getTextSize(text, 
+				 font,
+				 scale, 
+				 1, 
+				 nullptr);
+
+      if(textSize.width > imageWidth)
+      {
+	scale -= 0.05f;
+	textSize = prevTextSize;
+	break;
+      }
+      prevTextSize = textSize;
+    }
+  }
+
+  template<typename T>
+  void ImageBase<T>::DrawTextCenteredHorizontally(const std::string& text,
+						  int font,
+						  float scale,
+						  int thickness,
+						  const ColorRGBA& color,
+						  int verticalPos,
+						  bool drawTwiceToMaybeFillGaps)
+  {
+    int baseline = 0;
+    cv::Size textSize = cv::getTextSize(text, 
+					font,
+					scale, 
+					thickness, 
+					&baseline);
+
+    Point2f p((this->GetNumCols() - textSize.width)/2, verticalPos);
+
+    this->DrawText(p,
+		   text,
+		   color,
+		   scale,
+		   false,
+		   thickness);
+
+    if(drawTwiceToMaybeFillGaps)
+    {
+      p.y() += 1;
+
+      this->DrawText(p,
+		     text,
+		     color,
+		     scale,
+		     false,
+		     thickness);
+    }
+  }
+
+
+  template<typename T>
   void ImageBase<T>::Resize(f32 scaleFactor, ResizeMethod method)
   {
     cv::resize(this->get_CvMat_(), this->get_CvMat_(), cv::Size(), scaleFactor, scaleFactor,

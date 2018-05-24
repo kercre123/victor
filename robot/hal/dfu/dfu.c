@@ -56,7 +56,7 @@ enum VersionStatus {
 FILE* gImgFilep = NULL;
 
 
-void on_vic_exit(void)
+void core_common_on_exit(void)
 {
    if (gImgFilep) {
       fclose(gImgFilep);
@@ -73,7 +73,7 @@ void error_exit(enum DfuAppErrorCode code, const char* msg, ...)
   vprintf(msg, args);
   va_end(args);
   printf("\n\n");
-  on_vic_exit();
+  core_common_on_exit();
   exit(code);
 }
 
@@ -232,6 +232,6 @@ int main(int argc, const char* argv[])
   }
 
   printf("Success!\n");
-  on_vic_exit();
+  core_common_on_exit();
   return 0;
 }

@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.6)
 
 project(robot)
 
+include(anki_build_cxx)
+include(anki_build_strip)
+
 add_library(robot_interface INTERFACE IMPORTED GLOBAL)
 set_property(TARGET robot_interface
              PROPERTY INTERFACE_INCLUDE_DIRECTORIES
@@ -19,7 +22,7 @@ if (MACOSX)
   set(PLATFORM_COMPILE_DEFS
     SIMULATOR
   )
-elseif (ANDROID)
+elseif (VICOS)
   set(PLATFORM_COMPILE_DEFS
     DEVELOPMENT
   )
@@ -53,12 +56,31 @@ target_compile_definitions(robot_hal
   #HAL_DUMMY_BODY # Uncomment if deploying on head only
 )
 
+# Create a lib for cube firmware led animation code, so
+# we can link into it from webotsCtrlLightCube
+if (MACOSX)
+add_library(cube_led_animator STATIC
+  ${CMAKE_SOURCE_DIR}/robot/cube_firmware/app/animation.c
+)
+
+target_compile_options(cube_led_animator
+  PRIVATE
+  ${ANKI_BUILD_CXX_COMPILE_OPTIONS}
+)
+
+target_compile_definitions(cube_led_animator
+  PRIVATE
+  ${PLATFORM_COMPILE_DEFS}
+  ${ANKI_BUILD_CXX_COMPILE_DEFINITIONS}
+)
+endif()
+
 set(PLATFORM_SRCS "")
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
 set(PLATFORM_FLAGS "")
-if (ANDROID)
+if (VICOS)
   set(PLATFORM_LIBS
     robot_hal
   )
@@ -105,6 +127,9 @@ target_include_directories(robot_transport
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
+add_executable(displayFaultCode
+  ${CMAKE_SOURCE_DIR}/robot/include/anki/cozmo/shared/factory/faultCodeMain.cpp
+)
 
 anki_build_cxx_library(supervisor ${ANKI_SRCLIST_DIR} STATIC
   ${PLATFORM_SRCS}
@@ -146,8 +171,8 @@ set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
 set(PLATFORM_FLAGS "")
-if (ANDROID)
-  set(PLATFORM_LIBS android log)
+if (VICOS)
+  set(PLATFORM_LIBS log)
   set(PLATFORM_COMPILE_DEFS
     DEVELOPMENT
   )
@@ -164,7 +189,7 @@ endif()
 #
 # spine
 #
-if (ANDROID)
+if (VICOS)
 
   anki_build_cxx_library(spine ${ANKI_SRCLIST_DIR} STATIC)
 
@@ -186,7 +211,7 @@ endif()
 #
 # robot_supervisor
 #
-if (ANDROID)
+if (VICOS)
 
   anki_build_cxx_executable(vic-robot ${ANKI_SRCLIST_DIR})
 
@@ -220,6 +245,6 @@ if (ANDROID)
     ${PLATFORM_LIBS}
   )
 
-  android_strip(TARGET vic-robot)
+  anki_build_strip(TARGET vic-robot)
 
 endif()

@@ -48,6 +48,12 @@ namespace Anki {
       return RESULT_OK;
     }
 
+    void StopRadio()
+    {
+      AnkiInfo("HAL.RadioStop", "");
+      server.StopListening();
+    }
+
     bool HAL::RadioIsConnected(void)
     {
       return server.HasClient();

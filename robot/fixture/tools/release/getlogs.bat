@@ -12,4 +12,5 @@ if %ERRORLEVEL% NEQ 0 (
   exit 2
 )
 
+rd /S /Q logs
 adb pull data/local/fixture/logs

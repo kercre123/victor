@@ -5,13 +5,14 @@
 #define  PLATFORM_OSX 1
 #else
 #define  PLATFORM_VICOS 1
+#define  PLATFORM_ANDROID 1
 #endif
 
 /* Platform selector. **
  * -
  * Makefile must define exactly one of
  *
- * PLATFORM_ANDRIOD
+ * PLATFORM_VICOS
  * PLATFORM_OSX
  * PLATFORM_SIM ?
  */

@@ -122,6 +122,85 @@ const uint8_t RtsWifiScanResultVersionHash[16] = {
     0x84, 0xba, 0x9b, 0x54, 0x55, 0x48, 0x8d, 0x84, 0xec, 0x8c, 0x2, 0x6a, 0x62, 0x2b, 0xc1, 0x13 
 };
 
+// MESSAGE RtsWifiScanResult_2
+
+RtsWifiScanResult_2::RtsWifiScanResult_2(const CLAD::SafeMessageBuffer& buffer)
+
+{
+  Unpack(buffer);
+}
+
+RtsWifiScanResult_2::RtsWifiScanResult_2(const uint8_t* buff, size_t len)
+: RtsWifiScanResult_2::RtsWifiScanResult_2({const_cast<uint8_t*>(buff), len, false})
+{
+}
+
+size_t RtsWifiScanResult_2::Pack(uint8_t* buff, size_t len) const
+{
+  CLAD::SafeMessageBuffer buffer(buff, len, false);
+  return Pack(buffer);
+}
+
+size_t RtsWifiScanResult_2::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+  buffer.Write(this->authType);
+  buffer.Write(this->signalStrength);
+  buffer.WritePString<uint8_t>(this->wifiSsidHex);
+  buffer.Write(this->hidden);
+  const size_t bytesWritten {buffer.GetBytesWritten()};
+  return bytesWritten;
+}
+
+size_t RtsWifiScanResult_2::Unpack(const uint8_t* buff, const size_t len)
+{
+  const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+  return Unpack(buffer);
+}
+
+size_t RtsWifiScanResult_2::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+  buffer.Read(this->authType);
+  buffer.Read(this->signalStrength);
+  buffer.ReadPString<uint8_t>(this->wifiSsidHex);
+  buffer.Read(this->hidden);
+  return buffer.GetBytesRead();
+}
+
+size_t RtsWifiScanResult_2::Size() const
+{
+  size_t result = 0;
+  // authType
+  result += 1; // uint_8
+  // signalStrength
+  result += 1; // uint_8
+  // wifiSsidHex
+  result += 1; // uint_8 (string length)
+  result += this->wifiSsidHex.length(); // uint_8
+  // hidden
+  result += 1; // bool
+  return result;
+}
+
+bool RtsWifiScanResult_2::operator==(const RtsWifiScanResult_2& other) const
+{
+  return (this->authType == other.authType &&
+    this->signalStrength == other.signalStrength &&
+    this->wifiSsidHex == other.wifiSsidHex &&
+    this->hidden == other.hidden);
+}
+
+bool RtsWifiScanResult_2::operator!=(const RtsWifiScanResult_2& other) const
+{
+  return !(operator==(other));
+}
+
+
+const char* RtsWifiScanResult_2VersionHashStr = "312324e7c38765237119903f33814f7d";
+
+const uint8_t RtsWifiScanResult_2VersionHash[16] = { 
+    0x31, 0x23, 0x24, 0xe7, 0xc3, 0x87, 0x65, 0x23, 0x71, 0x19, 0x90, 0x3f, 0x33, 0x81, 0x4f, 0x7d 
+};
+
 // MESSAGE RtsConnRequest
 
 RtsConnRequest::RtsConnRequest(const CLAD::SafeMessageBuffer& buffer)
@@ -967,6 +1046,7 @@ size_t RtsStatusResponse_2::Pack(CLAD::SafeMessageBuffer& buffer) const
   buffer.Write(this->bleState);
   buffer.Write(this->batteryState);
   buffer.WritePString<uint8_t>(this->version);
+  buffer.Write(this->otaInProgress);
   const size_t bytesWritten {buffer.GetBytesWritten()};
   return bytesWritten;
 }
@@ -985,6 +1065,7 @@ size_t RtsStatusResponse_2::Unpack(const CLAD::SafeMessageBuffer& buffer)
   buffer.Read(this->bleState);
   buffer.Read(this->batteryState);
   buffer.ReadPString<uint8_t>(this->version);
+  buffer.Read(this->otaInProgress);
   return buffer.GetBytesRead();
 }
 
@@ -1005,6 +1086,8 @@ size_t RtsStatusResponse_2::Size() const
   // version
   result += 1; // uint_8 (string length)
   result += this->version.length(); // uint_8
+  // otaInProgress
+  result += 1; // bool
   return result;
 }
 
@@ -1015,7 +1098,8 @@ bool RtsStatusResponse_2::operator==(const RtsStatusResponse_2& other) const
     this->accessPoint == other.accessPoint &&
     this->bleState == other.bleState &&
     this->batteryState == other.batteryState &&
-    this->version == other.version);
+    this->version == other.version &&
+    this->otaInProgress == other.otaInProgress);
 }
 
 bool RtsStatusResponse_2::operator!=(const RtsStatusResponse_2& other) const
@@ -1024,10 +1108,10 @@ bool RtsStatusResponse_2::operator!=(const RtsStatusResponse_2& other) const
 }
 
 
-const char* RtsStatusResponse_2VersionHashStr = "b27bcdcc814dd969fb9cd35581698f74";
+const char* RtsStatusResponse_2VersionHashStr = "25f0391edee291156a151237ab915393";
 
 const uint8_t RtsStatusResponse_2VersionHash[16] = { 
-    0xb2, 0x7b, 0xcd, 0xcc, 0x81, 0x4d, 0xd9, 0x69, 0xfb, 0x9c, 0xd3, 0x55, 0x81, 0x69, 0x8f, 0x74 
+    0x25, 0xf0, 0x39, 0x1e, 0xde, 0xe2, 0x91, 0x15, 0x6a, 0x15, 0x12, 0x37, 0xab, 0x91, 0x53, 0x93 
 };
 
 // MESSAGE RtsWifiScanRequest
@@ -1163,6 +1247,80 @@ const uint8_t RtsWifiScanResponseVersionHash[16] = {
     0xab, 0x3d, 0xab, 0x44, 0x6c, 0xbe, 0x21, 0x30, 0x2e, 0x1b, 0x1f, 0x76, 0xfc, 0x17, 0xc3, 0x30 
 };
 
+// MESSAGE RtsWifiScanResponse_2
+
+RtsWifiScanResponse_2::RtsWifiScanResponse_2(const CLAD::SafeMessageBuffer& buffer)
+
+{
+  Unpack(buffer);
+}
+
+RtsWifiScanResponse_2::RtsWifiScanResponse_2(const uint8_t* buff, size_t len)
+: RtsWifiScanResponse_2::RtsWifiScanResponse_2({const_cast<uint8_t*>(buff), len, false})
+{
+}
+
+size_t RtsWifiScanResponse_2::Pack(uint8_t* buff, size_t len) const
+{
+  CLAD::SafeMessageBuffer buffer(buff, len, false);
+  return Pack(buffer);
+}
+
+size_t RtsWifiScanResponse_2::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+  buffer.Write(this->statusCode);
+  buffer.Write(static_cast<uint8_t>(scanResult.size()));
+  for (const Anki::Victor::ExternalComms::RtsWifiScanResult_2& m : scanResult) {
+    m.Pack(buffer);
+  }
+  const size_t bytesWritten {buffer.GetBytesWritten()};
+  return bytesWritten;
+}
+
+size_t RtsWifiScanResponse_2::Unpack(const uint8_t* buff, const size_t len)
+{
+  const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+  return Unpack(buffer);
+}
+
+size_t RtsWifiScanResponse_2::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+  buffer.Read(this->statusCode);
+  buffer.ReadCompoundTypeVArray<Anki::Victor::ExternalComms::RtsWifiScanResult_2, uint8_t>(this->scanResult);
+  return buffer.GetBytesRead();
+}
+
+size_t RtsWifiScanResponse_2::Size() const
+{
+  size_t result = 0;
+  // statusCode
+  result += 1; // uint_8
+  // scanResult
+  result += 1; // uint_8 (array length)
+  for (const Anki::Victor::ExternalComms::RtsWifiScanResult_2& m : this->scanResult) {
+    result += m.Size();
+  }
+  return result;
+}
+
+bool RtsWifiScanResponse_2::operator==(const RtsWifiScanResponse_2& other) const
+{
+  return (this->statusCode == other.statusCode &&
+    this->scanResult == other.scanResult);
+}
+
+bool RtsWifiScanResponse_2::operator!=(const RtsWifiScanResponse_2& other) const
+{
+  return !(operator==(other));
+}
+
+
+const char* RtsWifiScanResponse_2VersionHashStr = "e380e17b42f1e675b6c2624d27fa8572";
+
+const uint8_t RtsWifiScanResponse_2VersionHash[16] = { 
+    0xe3, 0x80, 0xe1, 0x7b, 0x42, 0xf1, 0xe6, 0x75, 0xb6, 0xc2, 0x62, 0x4d, 0x27, 0xfa, 0x85, 0x72 
+};
+
 // MESSAGE RtsOtaUpdateRequest
 
 RtsOtaUpdateRequest::RtsOtaUpdateRequest(const CLAD::SafeMessageBuffer& buffer)
@@ -1225,6 +1383,65 @@ const char* RtsOtaUpdateRequestVersionHashStr = "34abeee2b5da4911bdec8d7e0a7ca1c
 
 const uint8_t RtsOtaUpdateRequestVersionHash[16] = { 
     0x34, 0xab, 0xee, 0xe2, 0xb5, 0xda, 0x49, 0x11, 0xbd, 0xec, 0x8d, 0x7e, 0xa, 0x7c, 0xa1, 0xc6 
+};
+
+// MESSAGE RtsOtaCancelRequest
+
+RtsOtaCancelRequest::RtsOtaCancelRequest(const CLAD::SafeMessageBuffer& buffer)
+
+{
+  Unpack(buffer);
+}
+
+RtsOtaCancelRequest::RtsOtaCancelRequest(const uint8_t* buff, size_t len)
+: RtsOtaCancelRequest::RtsOtaCancelRequest({const_cast<uint8_t*>(buff), len, false})
+{
+}
+
+size_t RtsOtaCancelRequest::Pack(uint8_t* buff, size_t len) const
+{
+  CLAD::SafeMessageBuffer buffer(buff, len, false);
+  return Pack(buffer);
+}
+
+size_t RtsOtaCancelRequest::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+  const size_t bytesWritten {buffer.GetBytesWritten()};
+  return bytesWritten;
+}
+
+size_t RtsOtaCancelRequest::Unpack(const uint8_t* buff, const size_t len)
+{
+  const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+  return Unpack(buffer);
+}
+
+size_t RtsOtaCancelRequest::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+  return buffer.GetBytesRead();
+}
+
+size_t RtsOtaCancelRequest::Size() const
+{
+  size_t result = 0;
+  return result;
+}
+
+bool RtsOtaCancelRequest::operator==(const RtsOtaCancelRequest& other) const
+{
+return true;
+}
+
+bool RtsOtaCancelRequest::operator!=(const RtsOtaCancelRequest& other) const
+{
+  return !(operator==(other));
+}
+
+
+const char* RtsOtaCancelRequestVersionHashStr = "a7d3597d9a697b66c5f4f06ca9e9b3f2";
+
+const uint8_t RtsOtaCancelRequestVersionHash[16] = { 
+    0xa7, 0xd3, 0x59, 0x7d, 0x9a, 0x69, 0x7b, 0x66, 0xc5, 0xf4, 0xf0, 0x6c, 0xa9, 0xe9, 0xb3, 0xf2 
 };
 
 // MESSAGE RtsOtaUpdateResponse
@@ -1682,6 +1899,230 @@ const uint8_t RtsSshResponseVersionHash[16] = {
     0xcb, 0xe, 0xb9, 0x8b, 0x10, 0x3a, 0x38, 0xcf, 0x34, 0xa2, 0x4f, 0x44, 0x22, 0x20, 0x97, 0x11 
 };
 
+// MESSAGE RtsLogRequest
+
+RtsLogRequest::RtsLogRequest(const CLAD::SafeMessageBuffer& buffer)
+
+{
+  Unpack(buffer);
+}
+
+RtsLogRequest::RtsLogRequest(const uint8_t* buff, size_t len)
+: RtsLogRequest::RtsLogRequest({const_cast<uint8_t*>(buff), len, false})
+{
+}
+
+size_t RtsLogRequest::Pack(uint8_t* buff, size_t len) const
+{
+  CLAD::SafeMessageBuffer buffer(buff, len, false);
+  return Pack(buffer);
+}
+
+size_t RtsLogRequest::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+  buffer.Write(this->mode);
+  buffer.WritePStringVArray<uint16_t, uint8_t>(this->filter);
+  const size_t bytesWritten {buffer.GetBytesWritten()};
+  return bytesWritten;
+}
+
+size_t RtsLogRequest::Unpack(const uint8_t* buff, const size_t len)
+{
+  const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+  return Unpack(buffer);
+}
+
+size_t RtsLogRequest::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+  buffer.Read(this->mode);
+  buffer.ReadPStringVArray<uint16_t, uint8_t>(this->filter);
+  return buffer.GetBytesRead();
+}
+
+size_t RtsLogRequest::Size() const
+{
+  size_t result = 0;
+  // mode
+  result += 1; // uint_8
+  // filter
+  result += 2; // uint_16 (array length)
+  result += 1 * this->filter.size(); // uint_8 (string lengths)
+  for (const std::string& m : this->filter) {
+    result += m.length();
+  }
+  return result;
+}
+
+bool RtsLogRequest::operator==(const RtsLogRequest& other) const
+{
+  return (this->mode == other.mode &&
+    this->filter == other.filter);
+}
+
+bool RtsLogRequest::operator!=(const RtsLogRequest& other) const
+{
+  return !(operator==(other));
+}
+
+
+const char* RtsLogRequestVersionHashStr = "810562ad55beb91ee6f05f371e3b493e";
+
+const uint8_t RtsLogRequestVersionHash[16] = { 
+    0x81, 0x5, 0x62, 0xad, 0x55, 0xbe, 0xb9, 0x1e, 0xe6, 0xf0, 0x5f, 0x37, 0x1e, 0x3b, 0x49, 0x3e 
+};
+
+// MESSAGE RtsLogResponse
+
+RtsLogResponse::RtsLogResponse(const CLAD::SafeMessageBuffer& buffer)
+
+{
+  Unpack(buffer);
+}
+
+RtsLogResponse::RtsLogResponse(const uint8_t* buff, size_t len)
+: RtsLogResponse::RtsLogResponse({const_cast<uint8_t*>(buff), len, false})
+{
+}
+
+size_t RtsLogResponse::Pack(uint8_t* buff, size_t len) const
+{
+  CLAD::SafeMessageBuffer buffer(buff, len, false);
+  return Pack(buffer);
+}
+
+size_t RtsLogResponse::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+  buffer.Write(this->exitCode);
+  buffer.Write(this->fileId);
+  const size_t bytesWritten {buffer.GetBytesWritten()};
+  return bytesWritten;
+}
+
+size_t RtsLogResponse::Unpack(const uint8_t* buff, const size_t len)
+{
+  const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+  return Unpack(buffer);
+}
+
+size_t RtsLogResponse::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+  buffer.Read(this->exitCode);
+  buffer.Read(this->fileId);
+  return buffer.GetBytesRead();
+}
+
+size_t RtsLogResponse::Size() const
+{
+  size_t result = 0;
+  // exitCode
+  result += 1; // uint_8
+  // fileId
+  result += 4; // uint_32
+  return result;
+}
+
+bool RtsLogResponse::operator==(const RtsLogResponse& other) const
+{
+  return (this->exitCode == other.exitCode &&
+    this->fileId == other.fileId);
+}
+
+bool RtsLogResponse::operator!=(const RtsLogResponse& other) const
+{
+  return !(operator==(other));
+}
+
+
+const char* RtsLogResponseVersionHashStr = "df59c1cfa0b204dc0c34a454780f4fde";
+
+const uint8_t RtsLogResponseVersionHash[16] = { 
+    0xdf, 0x59, 0xc1, 0xcf, 0xa0, 0xb2, 0x4, 0xdc, 0xc, 0x34, 0xa4, 0x54, 0x78, 0xf, 0x4f, 0xde 
+};
+
+// MESSAGE RtsFileDownload
+
+RtsFileDownload::RtsFileDownload(const CLAD::SafeMessageBuffer& buffer)
+
+{
+  Unpack(buffer);
+}
+
+RtsFileDownload::RtsFileDownload(const uint8_t* buff, size_t len)
+: RtsFileDownload::RtsFileDownload({const_cast<uint8_t*>(buff), len, false})
+{
+}
+
+size_t RtsFileDownload::Pack(uint8_t* buff, size_t len) const
+{
+  CLAD::SafeMessageBuffer buffer(buff, len, false);
+  return Pack(buffer);
+}
+
+size_t RtsFileDownload::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+  buffer.Write(this->status);
+  buffer.Write(this->fileId);
+  buffer.Write(this->packetNumber);
+  buffer.Write(this->packetTotal);
+  buffer.WriteVArray<uint8_t, uint16_t>(this->fileChunk);
+  const size_t bytesWritten {buffer.GetBytesWritten()};
+  return bytesWritten;
+}
+
+size_t RtsFileDownload::Unpack(const uint8_t* buff, const size_t len)
+{
+  const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+  return Unpack(buffer);
+}
+
+size_t RtsFileDownload::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+  buffer.Read(this->status);
+  buffer.Read(this->fileId);
+  buffer.Read(this->packetNumber);
+  buffer.Read(this->packetTotal);
+  buffer.ReadVArray<uint8_t, uint16_t>(this->fileChunk);
+  return buffer.GetBytesRead();
+}
+
+size_t RtsFileDownload::Size() const
+{
+  size_t result = 0;
+  // status
+  result += 1; // uint_8
+  // fileId
+  result += 4; // uint_32
+  // packetNumber
+  result += 4; // uint_32
+  // packetTotal
+  result += 4; // uint_32
+  // fileChunk
+  result += 2; // uint_16 (array length)
+  result += 1 * this->fileChunk.size(); // uint_8
+  return result;
+}
+
+bool RtsFileDownload::operator==(const RtsFileDownload& other) const
+{
+  return (this->status == other.status &&
+    this->fileId == other.fileId &&
+    this->packetNumber == other.packetNumber &&
+    this->packetTotal == other.packetTotal &&
+    this->fileChunk == other.fileChunk);
+}
+
+bool RtsFileDownload::operator!=(const RtsFileDownload& other) const
+{
+  return !(operator==(other));
+}
+
+
+const char* RtsFileDownloadVersionHashStr = "4b499c8a4a58c7c24d6661931f35305e";
+
+const uint8_t RtsFileDownloadVersionHash[16] = { 
+    0x4b, 0x49, 0x9c, 0x8a, 0x4a, 0x58, 0xc7, 0xc2, 0x4d, 0x66, 0x61, 0x93, 0x1f, 0x35, 0x30, 0x5e 
+};
+
 // MESSAGE Error
 
 Error::Error(const CLAD::SafeMessageBuffer& buffer)
@@ -1799,8 +2240,8 @@ RtsConnection_2::RtsConnection_2(const RtsConnection_2& other)
   case Tag::RtsWifiScanRequest:
     new(&(this->_RtsWifiScanRequest)) Anki::Victor::ExternalComms::RtsWifiScanRequest(other._RtsWifiScanRequest);
     break;
-  case Tag::RtsWifiScanResponse:
-    new(&(this->_RtsWifiScanResponse)) Anki::Victor::ExternalComms::RtsWifiScanResponse(other._RtsWifiScanResponse);
+  case Tag::RtsWifiScanResponse_2:
+    new(&(this->_RtsWifiScanResponse_2)) Anki::Victor::ExternalComms::RtsWifiScanResponse_2(other._RtsWifiScanResponse_2);
     break;
   case Tag::RtsOtaUpdateRequest:
     new(&(this->_RtsOtaUpdateRequest)) Anki::Victor::ExternalComms::RtsOtaUpdateRequest(other._RtsOtaUpdateRequest);
@@ -1828,6 +2269,18 @@ RtsConnection_2::RtsConnection_2(const RtsConnection_2& other)
     break;
   case Tag::RtsSshResponse:
     new(&(this->_RtsSshResponse)) Anki::Victor::ExternalComms::RtsSshResponse(other._RtsSshResponse);
+    break;
+  case Tag::RtsOtaCancelRequest:
+    new(&(this->_RtsOtaCancelRequest)) Anki::Victor::ExternalComms::RtsOtaCancelRequest(other._RtsOtaCancelRequest);
+    break;
+  case Tag::RtsLogRequest:
+    new(&(this->_RtsLogRequest)) Anki::Victor::ExternalComms::RtsLogRequest(other._RtsLogRequest);
+    break;
+  case Tag::RtsLogResponse:
+    new(&(this->_RtsLogResponse)) Anki::Victor::ExternalComms::RtsLogResponse(other._RtsLogResponse);
+    break;
+  case Tag::RtsFileDownload:
+    new(&(this->_RtsFileDownload)) Anki::Victor::ExternalComms::RtsFileDownload(other._RtsFileDownload);
     break;
   default:
     _tag = Tag::INVALID;
@@ -1878,8 +2331,8 @@ RtsConnection_2::RtsConnection_2(RtsConnection_2&& other) noexcept
   case Tag::RtsWifiScanRequest:
     new(&(this->_RtsWifiScanRequest)) Anki::Victor::ExternalComms::RtsWifiScanRequest(std::move(other._RtsWifiScanRequest));
     break;
-  case Tag::RtsWifiScanResponse:
-    new(&(this->_RtsWifiScanResponse)) Anki::Victor::ExternalComms::RtsWifiScanResponse(std::move(other._RtsWifiScanResponse));
+  case Tag::RtsWifiScanResponse_2:
+    new(&(this->_RtsWifiScanResponse_2)) Anki::Victor::ExternalComms::RtsWifiScanResponse_2(std::move(other._RtsWifiScanResponse_2));
     break;
   case Tag::RtsOtaUpdateRequest:
     new(&(this->_RtsOtaUpdateRequest)) Anki::Victor::ExternalComms::RtsOtaUpdateRequest(std::move(other._RtsOtaUpdateRequest));
@@ -1907,6 +2360,18 @@ RtsConnection_2::RtsConnection_2(RtsConnection_2&& other) noexcept
     break;
   case Tag::RtsSshResponse:
     new(&(this->_RtsSshResponse)) Anki::Victor::ExternalComms::RtsSshResponse(std::move(other._RtsSshResponse));
+    break;
+  case Tag::RtsOtaCancelRequest:
+    new(&(this->_RtsOtaCancelRequest)) Anki::Victor::ExternalComms::RtsOtaCancelRequest(std::move(other._RtsOtaCancelRequest));
+    break;
+  case Tag::RtsLogRequest:
+    new(&(this->_RtsLogRequest)) Anki::Victor::ExternalComms::RtsLogRequest(std::move(other._RtsLogRequest));
+    break;
+  case Tag::RtsLogResponse:
+    new(&(this->_RtsLogResponse)) Anki::Victor::ExternalComms::RtsLogResponse(std::move(other._RtsLogResponse));
+    break;
+  case Tag::RtsFileDownload:
+    new(&(this->_RtsFileDownload)) Anki::Victor::ExternalComms::RtsFileDownload(std::move(other._RtsFileDownload));
     break;
   default:
     _tag = Tag::INVALID;
@@ -1960,8 +2425,8 @@ RtsConnection_2& RtsConnection_2::operator=(const RtsConnection_2& other)
   case Tag::RtsWifiScanRequest:
     new(&(this->_RtsWifiScanRequest)) Anki::Victor::ExternalComms::RtsWifiScanRequest(other._RtsWifiScanRequest);
     break;
-  case Tag::RtsWifiScanResponse:
-    new(&(this->_RtsWifiScanResponse)) Anki::Victor::ExternalComms::RtsWifiScanResponse(other._RtsWifiScanResponse);
+  case Tag::RtsWifiScanResponse_2:
+    new(&(this->_RtsWifiScanResponse_2)) Anki::Victor::ExternalComms::RtsWifiScanResponse_2(other._RtsWifiScanResponse_2);
     break;
   case Tag::RtsOtaUpdateRequest:
     new(&(this->_RtsOtaUpdateRequest)) Anki::Victor::ExternalComms::RtsOtaUpdateRequest(other._RtsOtaUpdateRequest);
@@ -1989,6 +2454,18 @@ RtsConnection_2& RtsConnection_2::operator=(const RtsConnection_2& other)
     break;
   case Tag::RtsSshResponse:
     new(&(this->_RtsSshResponse)) Anki::Victor::ExternalComms::RtsSshResponse(other._RtsSshResponse);
+    break;
+  case Tag::RtsOtaCancelRequest:
+    new(&(this->_RtsOtaCancelRequest)) Anki::Victor::ExternalComms::RtsOtaCancelRequest(other._RtsOtaCancelRequest);
+    break;
+  case Tag::RtsLogRequest:
+    new(&(this->_RtsLogRequest)) Anki::Victor::ExternalComms::RtsLogRequest(other._RtsLogRequest);
+    break;
+  case Tag::RtsLogResponse:
+    new(&(this->_RtsLogResponse)) Anki::Victor::ExternalComms::RtsLogResponse(other._RtsLogResponse);
+    break;
+  case Tag::RtsFileDownload:
+    new(&(this->_RtsFileDownload)) Anki::Victor::ExternalComms::RtsFileDownload(other._RtsFileDownload);
     break;
   default:
     _tag = Tag::INVALID;
@@ -2042,8 +2519,8 @@ RtsConnection_2& RtsConnection_2::operator=(RtsConnection_2&& other) noexcept
   case Tag::RtsWifiScanRequest:
     new(&(this->_RtsWifiScanRequest)) Anki::Victor::ExternalComms::RtsWifiScanRequest(std::move(other._RtsWifiScanRequest));
     break;
-  case Tag::RtsWifiScanResponse:
-    new(&(this->_RtsWifiScanResponse)) Anki::Victor::ExternalComms::RtsWifiScanResponse(std::move(other._RtsWifiScanResponse));
+  case Tag::RtsWifiScanResponse_2:
+    new(&(this->_RtsWifiScanResponse_2)) Anki::Victor::ExternalComms::RtsWifiScanResponse_2(std::move(other._RtsWifiScanResponse_2));
     break;
   case Tag::RtsOtaUpdateRequest:
     new(&(this->_RtsOtaUpdateRequest)) Anki::Victor::ExternalComms::RtsOtaUpdateRequest(std::move(other._RtsOtaUpdateRequest));
@@ -2071,6 +2548,18 @@ RtsConnection_2& RtsConnection_2::operator=(RtsConnection_2&& other) noexcept
     break;
   case Tag::RtsSshResponse:
     new(&(this->_RtsSshResponse)) Anki::Victor::ExternalComms::RtsSshResponse(std::move(other._RtsSshResponse));
+    break;
+  case Tag::RtsOtaCancelRequest:
+    new(&(this->_RtsOtaCancelRequest)) Anki::Victor::ExternalComms::RtsOtaCancelRequest(std::move(other._RtsOtaCancelRequest));
+    break;
+  case Tag::RtsLogRequest:
+    new(&(this->_RtsLogRequest)) Anki::Victor::ExternalComms::RtsLogRequest(std::move(other._RtsLogRequest));
+    break;
+  case Tag::RtsLogResponse:
+    new(&(this->_RtsLogResponse)) Anki::Victor::ExternalComms::RtsLogResponse(std::move(other._RtsLogResponse));
+    break;
+  case Tag::RtsFileDownload:
+    new(&(this->_RtsFileDownload)) Anki::Victor::ExternalComms::RtsFileDownload(std::move(other._RtsFileDownload));
     break;
   default:
     _tag = Tag::INVALID;
@@ -2808,59 +3297,59 @@ void RtsConnection_2::Set_RtsWifiScanRequest(Anki::Victor::ExternalComms::RtsWif
   }
 }
 
-RtsConnection_2 RtsConnection_2::CreateRtsWifiScanResponse(Anki::Victor::ExternalComms::RtsWifiScanResponse&& new_RtsWifiScanResponse)
+RtsConnection_2 RtsConnection_2::CreateRtsWifiScanResponse_2(Anki::Victor::ExternalComms::RtsWifiScanResponse_2&& new_RtsWifiScanResponse_2)
 {
   RtsConnection_2 m;
-  m.Set_RtsWifiScanResponse(new_RtsWifiScanResponse);
+  m.Set_RtsWifiScanResponse_2(new_RtsWifiScanResponse_2);
   return m;
 }
 
-RtsConnection_2::RtsConnection_2(Anki::Victor::ExternalComms::RtsWifiScanResponse&& new_RtsWifiScanResponse)
+RtsConnection_2::RtsConnection_2(Anki::Victor::ExternalComms::RtsWifiScanResponse_2&& new_RtsWifiScanResponse_2)
 {
-  new(&this->_RtsWifiScanResponse) Anki::Victor::ExternalComms::RtsWifiScanResponse(std::move(new_RtsWifiScanResponse));
-  _tag = Tag::RtsWifiScanResponse;
+  new(&this->_RtsWifiScanResponse_2) Anki::Victor::ExternalComms::RtsWifiScanResponse_2(std::move(new_RtsWifiScanResponse_2));
+  _tag = Tag::RtsWifiScanResponse_2;
 }
 
-const Anki::Victor::ExternalComms::RtsWifiScanResponse& RtsConnection_2::Get_RtsWifiScanResponse() const
+const Anki::Victor::ExternalComms::RtsWifiScanResponse_2& RtsConnection_2::Get_RtsWifiScanResponse_2() const
 {
-  assert(_tag == Tag::RtsWifiScanResponse);
-  return this->_RtsWifiScanResponse;
+  assert(_tag == Tag::RtsWifiScanResponse_2);
+  return this->_RtsWifiScanResponse_2;
 }
 
-void RtsConnection_2::Set_RtsWifiScanResponse(const Anki::Victor::ExternalComms::RtsWifiScanResponse& new_RtsWifiScanResponse)
+void RtsConnection_2::Set_RtsWifiScanResponse_2(const Anki::Victor::ExternalComms::RtsWifiScanResponse_2& new_RtsWifiScanResponse_2)
 {
-  if(this->_tag == Tag::RtsWifiScanResponse) {
-    this->_RtsWifiScanResponse = new_RtsWifiScanResponse;
+  if(this->_tag == Tag::RtsWifiScanResponse_2) {
+    this->_RtsWifiScanResponse_2 = new_RtsWifiScanResponse_2;
   }
   else {
     ClearCurrent();
-    new(&this->_RtsWifiScanResponse) Anki::Victor::ExternalComms::RtsWifiScanResponse(new_RtsWifiScanResponse);
-    _tag = Tag::RtsWifiScanResponse;
+    new(&this->_RtsWifiScanResponse_2) Anki::Victor::ExternalComms::RtsWifiScanResponse_2(new_RtsWifiScanResponse_2);
+    _tag = Tag::RtsWifiScanResponse_2;
   }
 }
 
 template<>
-const Anki::Victor::ExternalComms::RtsWifiScanResponse& RtsConnection_2::Get_<RtsConnection_2::Tag::RtsWifiScanResponse>() const
+const Anki::Victor::ExternalComms::RtsWifiScanResponse_2& RtsConnection_2::Get_<RtsConnection_2::Tag::RtsWifiScanResponse_2>() const
 {
-  assert(_tag == Tag::RtsWifiScanResponse);
-  return this->_RtsWifiScanResponse;
+  assert(_tag == Tag::RtsWifiScanResponse_2);
+  return this->_RtsWifiScanResponse_2;
 }
 
 template<>
-RtsConnection_2 RtsConnection_2::Create_<RtsConnection_2::Tag::RtsWifiScanResponse>(Anki::Victor::ExternalComms::RtsWifiScanResponse member)
+RtsConnection_2 RtsConnection_2::Create_<RtsConnection_2::Tag::RtsWifiScanResponse_2>(Anki::Victor::ExternalComms::RtsWifiScanResponse_2 member)
 {
-  return CreateRtsWifiScanResponse(std::move(member));
+  return CreateRtsWifiScanResponse_2(std::move(member));
 }
 
-void RtsConnection_2::Set_RtsWifiScanResponse(Anki::Victor::ExternalComms::RtsWifiScanResponse&& new_RtsWifiScanResponse)
+void RtsConnection_2::Set_RtsWifiScanResponse_2(Anki::Victor::ExternalComms::RtsWifiScanResponse_2&& new_RtsWifiScanResponse_2)
 {
-  if (this->_tag == Tag::RtsWifiScanResponse) {
-    this->_RtsWifiScanResponse = std::move(new_RtsWifiScanResponse);
+  if (this->_tag == Tag::RtsWifiScanResponse_2) {
+    this->_RtsWifiScanResponse_2 = std::move(new_RtsWifiScanResponse_2);
   }
   else {
     ClearCurrent();
-    new(&this->_RtsWifiScanResponse) Anki::Victor::ExternalComms::RtsWifiScanResponse(std::move(new_RtsWifiScanResponse));
-    _tag = Tag::RtsWifiScanResponse;
+    new(&this->_RtsWifiScanResponse_2) Anki::Victor::ExternalComms::RtsWifiScanResponse_2(std::move(new_RtsWifiScanResponse_2));
+    _tag = Tag::RtsWifiScanResponse_2;
   }
 }
 
@@ -3368,6 +3857,230 @@ void RtsConnection_2::Set_RtsSshResponse(Anki::Victor::ExternalComms::RtsSshResp
   }
 }
 
+RtsConnection_2 RtsConnection_2::CreateRtsOtaCancelRequest(Anki::Victor::ExternalComms::RtsOtaCancelRequest&& new_RtsOtaCancelRequest)
+{
+  RtsConnection_2 m;
+  m.Set_RtsOtaCancelRequest(new_RtsOtaCancelRequest);
+  return m;
+}
+
+RtsConnection_2::RtsConnection_2(Anki::Victor::ExternalComms::RtsOtaCancelRequest&& new_RtsOtaCancelRequest)
+{
+  new(&this->_RtsOtaCancelRequest) Anki::Victor::ExternalComms::RtsOtaCancelRequest(std::move(new_RtsOtaCancelRequest));
+  _tag = Tag::RtsOtaCancelRequest;
+}
+
+const Anki::Victor::ExternalComms::RtsOtaCancelRequest& RtsConnection_2::Get_RtsOtaCancelRequest() const
+{
+  assert(_tag == Tag::RtsOtaCancelRequest);
+  return this->_RtsOtaCancelRequest;
+}
+
+void RtsConnection_2::Set_RtsOtaCancelRequest(const Anki::Victor::ExternalComms::RtsOtaCancelRequest& new_RtsOtaCancelRequest)
+{
+  if(this->_tag == Tag::RtsOtaCancelRequest) {
+    this->_RtsOtaCancelRequest = new_RtsOtaCancelRequest;
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsOtaCancelRequest) Anki::Victor::ExternalComms::RtsOtaCancelRequest(new_RtsOtaCancelRequest);
+    _tag = Tag::RtsOtaCancelRequest;
+  }
+}
+
+template<>
+const Anki::Victor::ExternalComms::RtsOtaCancelRequest& RtsConnection_2::Get_<RtsConnection_2::Tag::RtsOtaCancelRequest>() const
+{
+  assert(_tag == Tag::RtsOtaCancelRequest);
+  return this->_RtsOtaCancelRequest;
+}
+
+template<>
+RtsConnection_2 RtsConnection_2::Create_<RtsConnection_2::Tag::RtsOtaCancelRequest>(Anki::Victor::ExternalComms::RtsOtaCancelRequest member)
+{
+  return CreateRtsOtaCancelRequest(std::move(member));
+}
+
+void RtsConnection_2::Set_RtsOtaCancelRequest(Anki::Victor::ExternalComms::RtsOtaCancelRequest&& new_RtsOtaCancelRequest)
+{
+  if (this->_tag == Tag::RtsOtaCancelRequest) {
+    this->_RtsOtaCancelRequest = std::move(new_RtsOtaCancelRequest);
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsOtaCancelRequest) Anki::Victor::ExternalComms::RtsOtaCancelRequest(std::move(new_RtsOtaCancelRequest));
+    _tag = Tag::RtsOtaCancelRequest;
+  }
+}
+
+RtsConnection_2 RtsConnection_2::CreateRtsLogRequest(Anki::Victor::ExternalComms::RtsLogRequest&& new_RtsLogRequest)
+{
+  RtsConnection_2 m;
+  m.Set_RtsLogRequest(new_RtsLogRequest);
+  return m;
+}
+
+RtsConnection_2::RtsConnection_2(Anki::Victor::ExternalComms::RtsLogRequest&& new_RtsLogRequest)
+{
+  new(&this->_RtsLogRequest) Anki::Victor::ExternalComms::RtsLogRequest(std::move(new_RtsLogRequest));
+  _tag = Tag::RtsLogRequest;
+}
+
+const Anki::Victor::ExternalComms::RtsLogRequest& RtsConnection_2::Get_RtsLogRequest() const
+{
+  assert(_tag == Tag::RtsLogRequest);
+  return this->_RtsLogRequest;
+}
+
+void RtsConnection_2::Set_RtsLogRequest(const Anki::Victor::ExternalComms::RtsLogRequest& new_RtsLogRequest)
+{
+  if(this->_tag == Tag::RtsLogRequest) {
+    this->_RtsLogRequest = new_RtsLogRequest;
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsLogRequest) Anki::Victor::ExternalComms::RtsLogRequest(new_RtsLogRequest);
+    _tag = Tag::RtsLogRequest;
+  }
+}
+
+template<>
+const Anki::Victor::ExternalComms::RtsLogRequest& RtsConnection_2::Get_<RtsConnection_2::Tag::RtsLogRequest>() const
+{
+  assert(_tag == Tag::RtsLogRequest);
+  return this->_RtsLogRequest;
+}
+
+template<>
+RtsConnection_2 RtsConnection_2::Create_<RtsConnection_2::Tag::RtsLogRequest>(Anki::Victor::ExternalComms::RtsLogRequest member)
+{
+  return CreateRtsLogRequest(std::move(member));
+}
+
+void RtsConnection_2::Set_RtsLogRequest(Anki::Victor::ExternalComms::RtsLogRequest&& new_RtsLogRequest)
+{
+  if (this->_tag == Tag::RtsLogRequest) {
+    this->_RtsLogRequest = std::move(new_RtsLogRequest);
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsLogRequest) Anki::Victor::ExternalComms::RtsLogRequest(std::move(new_RtsLogRequest));
+    _tag = Tag::RtsLogRequest;
+  }
+}
+
+RtsConnection_2 RtsConnection_2::CreateRtsLogResponse(Anki::Victor::ExternalComms::RtsLogResponse&& new_RtsLogResponse)
+{
+  RtsConnection_2 m;
+  m.Set_RtsLogResponse(new_RtsLogResponse);
+  return m;
+}
+
+RtsConnection_2::RtsConnection_2(Anki::Victor::ExternalComms::RtsLogResponse&& new_RtsLogResponse)
+{
+  new(&this->_RtsLogResponse) Anki::Victor::ExternalComms::RtsLogResponse(std::move(new_RtsLogResponse));
+  _tag = Tag::RtsLogResponse;
+}
+
+const Anki::Victor::ExternalComms::RtsLogResponse& RtsConnection_2::Get_RtsLogResponse() const
+{
+  assert(_tag == Tag::RtsLogResponse);
+  return this->_RtsLogResponse;
+}
+
+void RtsConnection_2::Set_RtsLogResponse(const Anki::Victor::ExternalComms::RtsLogResponse& new_RtsLogResponse)
+{
+  if(this->_tag == Tag::RtsLogResponse) {
+    this->_RtsLogResponse = new_RtsLogResponse;
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsLogResponse) Anki::Victor::ExternalComms::RtsLogResponse(new_RtsLogResponse);
+    _tag = Tag::RtsLogResponse;
+  }
+}
+
+template<>
+const Anki::Victor::ExternalComms::RtsLogResponse& RtsConnection_2::Get_<RtsConnection_2::Tag::RtsLogResponse>() const
+{
+  assert(_tag == Tag::RtsLogResponse);
+  return this->_RtsLogResponse;
+}
+
+template<>
+RtsConnection_2 RtsConnection_2::Create_<RtsConnection_2::Tag::RtsLogResponse>(Anki::Victor::ExternalComms::RtsLogResponse member)
+{
+  return CreateRtsLogResponse(std::move(member));
+}
+
+void RtsConnection_2::Set_RtsLogResponse(Anki::Victor::ExternalComms::RtsLogResponse&& new_RtsLogResponse)
+{
+  if (this->_tag == Tag::RtsLogResponse) {
+    this->_RtsLogResponse = std::move(new_RtsLogResponse);
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsLogResponse) Anki::Victor::ExternalComms::RtsLogResponse(std::move(new_RtsLogResponse));
+    _tag = Tag::RtsLogResponse;
+  }
+}
+
+RtsConnection_2 RtsConnection_2::CreateRtsFileDownload(Anki::Victor::ExternalComms::RtsFileDownload&& new_RtsFileDownload)
+{
+  RtsConnection_2 m;
+  m.Set_RtsFileDownload(new_RtsFileDownload);
+  return m;
+}
+
+RtsConnection_2::RtsConnection_2(Anki::Victor::ExternalComms::RtsFileDownload&& new_RtsFileDownload)
+{
+  new(&this->_RtsFileDownload) Anki::Victor::ExternalComms::RtsFileDownload(std::move(new_RtsFileDownload));
+  _tag = Tag::RtsFileDownload;
+}
+
+const Anki::Victor::ExternalComms::RtsFileDownload& RtsConnection_2::Get_RtsFileDownload() const
+{
+  assert(_tag == Tag::RtsFileDownload);
+  return this->_RtsFileDownload;
+}
+
+void RtsConnection_2::Set_RtsFileDownload(const Anki::Victor::ExternalComms::RtsFileDownload& new_RtsFileDownload)
+{
+  if(this->_tag == Tag::RtsFileDownload) {
+    this->_RtsFileDownload = new_RtsFileDownload;
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsFileDownload) Anki::Victor::ExternalComms::RtsFileDownload(new_RtsFileDownload);
+    _tag = Tag::RtsFileDownload;
+  }
+}
+
+template<>
+const Anki::Victor::ExternalComms::RtsFileDownload& RtsConnection_2::Get_<RtsConnection_2::Tag::RtsFileDownload>() const
+{
+  assert(_tag == Tag::RtsFileDownload);
+  return this->_RtsFileDownload;
+}
+
+template<>
+RtsConnection_2 RtsConnection_2::Create_<RtsConnection_2::Tag::RtsFileDownload>(Anki::Victor::ExternalComms::RtsFileDownload member)
+{
+  return CreateRtsFileDownload(std::move(member));
+}
+
+void RtsConnection_2::Set_RtsFileDownload(Anki::Victor::ExternalComms::RtsFileDownload&& new_RtsFileDownload)
+{
+  if (this->_tag == Tag::RtsFileDownload) {
+    this->_RtsFileDownload = std::move(new_RtsFileDownload);
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsFileDownload) Anki::Victor::ExternalComms::RtsFileDownload(std::move(new_RtsFileDownload));
+    _tag = Tag::RtsFileDownload;
+  }
+}
+
 size_t RtsConnection_2::Unpack(const uint8_t* buff, const size_t len)
 {
   const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -3487,12 +4200,12 @@ size_t RtsConnection_2::Unpack(const CLAD::SafeMessageBuffer& buffer)
       this->_RtsWifiScanRequest.Unpack(buffer);
     }
     break;
-  case Tag::RtsWifiScanResponse:
+  case Tag::RtsWifiScanResponse_2:
     if (newTag != oldTag) {
-      new(&(this->_RtsWifiScanResponse)) Anki::Victor::ExternalComms::RtsWifiScanResponse(buffer);
+      new(&(this->_RtsWifiScanResponse_2)) Anki::Victor::ExternalComms::RtsWifiScanResponse_2(buffer);
     }
     else {
-      this->_RtsWifiScanResponse.Unpack(buffer);
+      this->_RtsWifiScanResponse_2.Unpack(buffer);
     }
     break;
   case Tag::RtsOtaUpdateRequest:
@@ -3567,6 +4280,38 @@ size_t RtsConnection_2::Unpack(const CLAD::SafeMessageBuffer& buffer)
       this->_RtsSshResponse.Unpack(buffer);
     }
     break;
+  case Tag::RtsOtaCancelRequest:
+    if (newTag != oldTag) {
+      new(&(this->_RtsOtaCancelRequest)) Anki::Victor::ExternalComms::RtsOtaCancelRequest(buffer);
+    }
+    else {
+      this->_RtsOtaCancelRequest.Unpack(buffer);
+    }
+    break;
+  case Tag::RtsLogRequest:
+    if (newTag != oldTag) {
+      new(&(this->_RtsLogRequest)) Anki::Victor::ExternalComms::RtsLogRequest(buffer);
+    }
+    else {
+      this->_RtsLogRequest.Unpack(buffer);
+    }
+    break;
+  case Tag::RtsLogResponse:
+    if (newTag != oldTag) {
+      new(&(this->_RtsLogResponse)) Anki::Victor::ExternalComms::RtsLogResponse(buffer);
+    }
+    else {
+      this->_RtsLogResponse.Unpack(buffer);
+    }
+    break;
+  case Tag::RtsFileDownload:
+    if (newTag != oldTag) {
+      new(&(this->_RtsFileDownload)) Anki::Victor::ExternalComms::RtsFileDownload(buffer);
+    }
+    else {
+      this->_RtsFileDownload.Unpack(buffer);
+    }
+    break;
   default:
     break;
   }
@@ -3623,8 +4368,8 @@ size_t RtsConnection_2::Pack(CLAD::SafeMessageBuffer& buffer) const
   case Tag::RtsWifiScanRequest:
     this->_RtsWifiScanRequest.Pack(buffer);
     break;
-  case Tag::RtsWifiScanResponse:
-    this->_RtsWifiScanResponse.Pack(buffer);
+  case Tag::RtsWifiScanResponse_2:
+    this->_RtsWifiScanResponse_2.Pack(buffer);
     break;
   case Tag::RtsOtaUpdateRequest:
     this->_RtsOtaUpdateRequest.Pack(buffer);
@@ -3652,6 +4397,18 @@ size_t RtsConnection_2::Pack(CLAD::SafeMessageBuffer& buffer) const
     break;
   case Tag::RtsSshResponse:
     this->_RtsSshResponse.Pack(buffer);
+    break;
+  case Tag::RtsOtaCancelRequest:
+    this->_RtsOtaCancelRequest.Pack(buffer);
+    break;
+  case Tag::RtsLogRequest:
+    this->_RtsLogRequest.Pack(buffer);
+    break;
+  case Tag::RtsLogResponse:
+    this->_RtsLogResponse.Pack(buffer);
+    break;
+  case Tag::RtsFileDownload:
+    this->_RtsFileDownload.Pack(buffer);
     break;
   default:
     break;
@@ -3702,8 +4459,8 @@ size_t RtsConnection_2::Size() const
   case Tag::RtsWifiScanRequest:
     result += this->_RtsWifiScanRequest.Size(); // RtsWifiScanRequest
     break;
-  case Tag::RtsWifiScanResponse:
-    result += this->_RtsWifiScanResponse.Size(); // RtsWifiScanResponse
+  case Tag::RtsWifiScanResponse_2:
+    result += this->_RtsWifiScanResponse_2.Size(); // RtsWifiScanResponse_2
     break;
   case Tag::RtsOtaUpdateRequest:
     result += this->_RtsOtaUpdateRequest.Size(); // RtsOtaUpdateRequest
@@ -3731,6 +4488,18 @@ size_t RtsConnection_2::Size() const
     break;
   case Tag::RtsSshResponse:
     result += this->_RtsSshResponse.Size(); // RtsSshResponse
+    break;
+  case Tag::RtsOtaCancelRequest:
+    result += this->_RtsOtaCancelRequest.Size(); // RtsOtaCancelRequest
+    break;
+  case Tag::RtsLogRequest:
+    result += this->_RtsLogRequest.Size(); // RtsLogRequest
+    break;
+  case Tag::RtsLogResponse:
+    result += this->_RtsLogResponse.Size(); // RtsLogResponse
+    break;
+  case Tag::RtsFileDownload:
+    result += this->_RtsFileDownload.Size(); // RtsFileDownload
     break;
   default:
     break;
@@ -3770,8 +4539,8 @@ bool RtsConnection_2::operator==(const RtsConnection_2& other) const
     return this->_RtsStatusResponse_2 == other._RtsStatusResponse_2;
   case Tag::RtsWifiScanRequest:
     return this->_RtsWifiScanRequest == other._RtsWifiScanRequest;
-  case Tag::RtsWifiScanResponse:
-    return this->_RtsWifiScanResponse == other._RtsWifiScanResponse;
+  case Tag::RtsWifiScanResponse_2:
+    return this->_RtsWifiScanResponse_2 == other._RtsWifiScanResponse_2;
   case Tag::RtsOtaUpdateRequest:
     return this->_RtsOtaUpdateRequest == other._RtsOtaUpdateRequest;
   case Tag::RtsOtaUpdateResponse:
@@ -3790,6 +4559,14 @@ bool RtsConnection_2::operator==(const RtsConnection_2& other) const
     return this->_RtsSshRequest == other._RtsSshRequest;
   case Tag::RtsSshResponse:
     return this->_RtsSshResponse == other._RtsSshResponse;
+  case Tag::RtsOtaCancelRequest:
+    return this->_RtsOtaCancelRequest == other._RtsOtaCancelRequest;
+  case Tag::RtsLogRequest:
+    return this->_RtsLogRequest == other._RtsLogRequest;
+  case Tag::RtsLogResponse:
+    return this->_RtsLogResponse == other._RtsLogResponse;
+  case Tag::RtsFileDownload:
+    return this->_RtsFileDownload == other._RtsFileDownload;
   default:
     return true;
   }
@@ -3842,8 +4619,8 @@ void RtsConnection_2::ClearCurrent()
   case Tag::RtsWifiScanRequest:
     _RtsWifiScanRequest.~RtsWifiScanRequest();
     break;
-  case Tag::RtsWifiScanResponse:
-    _RtsWifiScanResponse.~RtsWifiScanResponse();
+  case Tag::RtsWifiScanResponse_2:
+    _RtsWifiScanResponse_2.~RtsWifiScanResponse_2();
     break;
   case Tag::RtsOtaUpdateRequest:
     _RtsOtaUpdateRequest.~RtsOtaUpdateRequest();
@@ -3871,6 +4648,18 @@ void RtsConnection_2::ClearCurrent()
     break;
   case Tag::RtsSshResponse:
     _RtsSshResponse.~RtsSshResponse();
+    break;
+  case Tag::RtsOtaCancelRequest:
+    _RtsOtaCancelRequest.~RtsOtaCancelRequest();
+    break;
+  case Tag::RtsLogRequest:
+    _RtsLogRequest.~RtsLogRequest();
+    break;
+  case Tag::RtsLogResponse:
+    _RtsLogResponse.~RtsLogResponse();
+    break;
+  case Tag::RtsFileDownload:
+    _RtsFileDownload.~RtsFileDownload();
     break;
   default:
     break;
@@ -3906,8 +4695,8 @@ const char* RtsConnection_2TagToString(const RtsConnection_2Tag tag) {
     return "RtsStatusResponse_2";
   case RtsConnection_2Tag::RtsWifiScanRequest:
     return "RtsWifiScanRequest";
-  case RtsConnection_2Tag::RtsWifiScanResponse:
-    return "RtsWifiScanResponse";
+  case RtsConnection_2Tag::RtsWifiScanResponse_2:
+    return "RtsWifiScanResponse_2";
   case RtsConnection_2Tag::RtsOtaUpdateRequest:
     return "RtsOtaUpdateRequest";
   case RtsConnection_2Tag::RtsOtaUpdateResponse:
@@ -3926,15 +4715,23 @@ const char* RtsConnection_2TagToString(const RtsConnection_2Tag tag) {
     return "RtsSshRequest";
   case RtsConnection_2Tag::RtsSshResponse:
     return "RtsSshResponse";
+  case RtsConnection_2Tag::RtsOtaCancelRequest:
+    return "RtsOtaCancelRequest";
+  case RtsConnection_2Tag::RtsLogRequest:
+    return "RtsLogRequest";
+  case RtsConnection_2Tag::RtsLogResponse:
+    return "RtsLogResponse";
+  case RtsConnection_2Tag::RtsFileDownload:
+    return "RtsFileDownload";
   default:
     return "INVALID";
   }
 }
 
-const char* RtsConnection_2VersionHashStr = "1516bb3021b3798036fdb5ae320ac621";
+const char* RtsConnection_2VersionHashStr = "3ef2a15e2df3baa973fe886381a98c9a";
 
 const uint8_t RtsConnection_2VersionHash[16] = { 
-    0x15, 0x16, 0xbb, 0x30, 0x21, 0xb3, 0x79, 0x80, 0x36, 0xfd, 0xb5, 0xae, 0x32, 0xa, 0xc6, 0x21 
+    0x3e, 0xf2, 0xa1, 0x5e, 0x2d, 0xf3, 0xba, 0xa9, 0x73, 0xfe, 0x88, 0x63, 0x81, 0xa9, 0x8c, 0x9a 
 };
 
 // UNION RtsConnection

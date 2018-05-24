@@ -1,10 +1,10 @@
 /**
  * File: cameraService_vicos.cpp
  *
- * 
+ *
  * Author: chapados
  * Created: 02/07/2018
- * 
+ *
  * based on androidHAL_mac.cpp
  * Author: Kevin Yoon
  * Created: 02/17/2017
@@ -30,6 +30,8 @@
 #ifdef SIMULATOR
 #error SIMULATOR should NOT be defined by any target using cameraService_vicos.cpp
 #endif
+
+#define LOG_CHANNEL "CameraService"
 
 namespace Anki {
   namespace Cozmo {
@@ -78,25 +80,37 @@ namespace Anki {
       DeleteCamera();
     }
 
-    void CameraService::InitCamera()
+    Result CameraService::InitCamera()
     {
       std::lock_guard<std::mutex> lock(_lock);
-      PRINT_NAMED_INFO("CameraService.InitCamera.StartingInit", "");
+      LOG_INFO("CameraService.InitCamera.StartingInit", "");
 
       int rc = camera_init(&_camera);
-      DEV_ASSERT(rc == 0, "CameraService.InitCamera.CameraInitFailed");
+      if (rc != 0) {
+        LOG_ERROR("CameraService.InitCamera.CameraInitFailed", "camera_init error %d", rc);
+        return RESULT_FAIL;
+      }
 
       rc = camera_start(_camera);
-      DEV_ASSERT(rc == 0, "CameraService.InitCamera.CameraStartFailed");
+      if (rc != 0) {
+        LOG_ERROR("CameraService.InitCamera.CameraStartFailed", "camera_start error %d", rc);
+        return RESULT_FAIL;
+      }
+
+      return RESULT_OK;
     }
 
     void CameraService::DeleteCamera() {
       std::lock_guard<std::mutex> lock(_lock);
       int res = camera_stop(_camera);
-      DEV_ASSERT(res == 0, "CameraService.Delete.CameraStopFailed");
+      if (res != 0) {
+        LOG_ERROR("CameraService.DeleteCamera.CameraStopFailed", "camera_stop error %d", res);
+      }
 
       res = camera_release(_camera);
-      DEV_ASSERT(res == 0, "CameraService.Delete.CameraCleanupFailed");
+      if (res != 0) {
+        LOG_ERROR("CameraService.DeleteCamera.CameraReleaseFailed", "camera_release error %d", res);
+      }
       _camera = NULL;
     }
 
@@ -113,7 +127,7 @@ namespace Anki {
       anki_camera_status_t status = camera_status(_camera);
 
       if (_isRestartingCamera && (status == ANKI_CAMERA_STATUS_RUNNING)) {
-        PRINT_NAMED_INFO("CameraService.Update.RestartedCameraClient", "");
+        LOG_INFO("CameraService.Update.RestartedCameraClient", "");
         _isRestartingCamera = false;
       }
 

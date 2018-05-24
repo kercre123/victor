@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <chrono>
+#include <csignal>
 #include <thread>
 #include <sys/mman.h>
 #include <sched.h>
@@ -17,7 +18,8 @@
 #endif
 
 int shutdownSignal = 0;
-int shutdownCounter = 2;
+const int SHUTDOWN_COUNTDOWN_TICKS = 5;
+int shutdownCounter = SHUTDOWN_COUNTDOWN_TICKS;
 
 // Count of how many ticks we have been on the charger
 uint8_t seenChargerCnt = 0;
@@ -26,14 +28,17 @@ uint8_t seenChargerCnt = 0;
 static const uint8_t MAX_SEEN_CHARGER_CNT = 5;
 bool wasPackedOutAtBoot = false;
 
-static void Cleanup(int signum)
+static void Shutdown(int signum)
 {
-  Anki::Cozmo::Robot::Destroy();
-
-  // Need to HAL::Step() in order for light commands to go down to robot
-  // so set shutdownSignal here to signal process shutdown after
-  // shutdownCounter more tics of main loop.
-  shutdownSignal = signum;
+  if (shutdownSignal == 0) {
+    AnkiInfo("robot.shutdown", "Shutdown on signal %d", signum);
+  
+    // Need to HAL::Step() in order for light commands to go down to robot
+    // so set shutdownSignal here to signal process shutdown after
+    // shutdownCounter more tics of main loop.
+    shutdownSignal = signum;
+    shutdownCounter = SHUTDOWN_COUNTDOWN_TICKS;
+  }
 }
 
 
@@ -45,10 +50,10 @@ int main(int argc, const char* argv[])
   params.sched_priority = sched_get_priority_max(SCHED_FIFO);
   sched_setscheduler(0, SCHED_FIFO, &params);
 
-  signal(SIGTERM, Cleanup);
+  signal(SIGTERM, Shutdown);
 
   if (argc > 1) {
-    ccc_set_shutdown_function(Cleanup);
+    ccc_set_shutdown_function(Shutdown);
     ccc_parse_command_line(argc-1, argv+1);
   }
 
@@ -111,10 +116,15 @@ int main(int argc, const char* argv[])
       }
     }
 
-    if (shutdownSignal != 0 && --shutdownCounter == 0) {
-      sync();
-      AnkiInfo("robot.main.shutdown", "%d", shutdownSignal);
-      exit(0);
+    if (shutdownSignal != 0) {
+      if (shutdownCounter == SHUTDOWN_COUNTDOWN_TICKS) {
+        Anki::Cozmo::Robot::Destroy();
+      } else if (shutdownCounter == 0) {
+        AnkiInfo("robot.main.shutdown", "%d", shutdownSignal);
+        sync();
+        exit(0);
+      }
+      --shutdownCounter;
     }
   }
   return 0;
@@ -129,7 +139,7 @@ int main_test(int argc, const char* argv[])
   params.sched_priority = sched_get_priority_max(SCHED_FIFO);
   sched_setscheduler(0, SCHED_FIFO, &params);
 
-  signal(SIGTERM, Cleanup);
+  signal(SIGTERM, Shutdown);
 
   spine_test_setup();
 

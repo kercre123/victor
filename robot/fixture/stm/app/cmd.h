@@ -29,23 +29,34 @@ typedef enum cmd_io_e cmd_io;
 
 //option flags
 #define CMD_OPTS_EXCEPTION_EN         0x0001  //enable exceptions
-#define CMD_OPTS_LOG_ERRORS           0x0002  //log errors (to console)
-#define CMD_OPTS_REQUIRE_STATUS_CODE  0x0004  //missing status code is an error
-#define CMD_OPTS_ALLOW_STATUS_ERRS    0x0010  //status!=0 not considered an error
-#define CMD_OPTS_DBG_PRINT_ENTRY      0x1000  //print function entry with parsed params
-#define CMD_OPTS_DBG_PRINT_RSP_TIME   0x2000  //print elapsed cmd time
-#define CMD_OPTS_DEFAULT              (CMD_OPTS_EXCEPTION_EN | CMD_OPTS_LOG_ERRORS | CMD_OPTS_REQUIRE_STATUS_CODE | CMD_OPTS_DBG_PRINT_RSP_TIME)
+#define CMD_OPTS_REQUIRE_STATUS_CODE  0x0002  //missing status code is an error
+#define CMD_OPTS_ALLOW_STATUS_ERRS    0x0004  //status!=0 not considered an error
+#define CMD_OPTS_LOG_CMD              0x0010  //print-log cmd line (>>cmd...)
+#define CMD_OPTS_LOG_RSP              0x0020  //print-log rsp line (<<cmd...)
+#define CMD_OPTS_LOG_RSP_TIME         0x0040  //print-log append elapsed time to logged rsp line
+#define CMD_OPTS_LOG_ASYNC            0x0080  //print-log async line (:async)
+#define CMD_OPTS_LOG_OTHER            0x0100  //print-log 'other' rx'd line (informational,uncategorized)
+#define CMD_OPTS_LOG_ERRORS           0x0200  //print-log extra error info
+#define CMD_OPTS_LOG_RAW_RX_DBG       0x0400  //print-log raw rx stream (DEBUG)
+#define CMD_OPTS_LOG_ALL              0x03F0  //print-log all
+#define CMD_OPTS_DBG_PRINT_ENTRY      0x1000  //debug: print function entry with parsed params
+#define CMD_OPTS_DBG_PRINT_RX_PARTIAL 0x2000  //debug: print any unexpected chars, partial line left in rx buffer at cmd end
+#define CMD_OPTS_DBG_SYSCON_OVF_ERR   0x4000  //debug: throw error if syscon tx overflow detected
+#define CMD_OPTS_DEFAULT              (CMD_OPTS_EXCEPTION_EN | CMD_OPTS_REQUIRE_STATUS_CODE | CMD_OPTS_LOG_ALL | CMD_OPTS_DBG_PRINT_RX_PARTIAL)
+
+typedef struct { char *p; int size; int wlen; } cmd_dbuf_t;
 
 //Send a command and return response string
 //@return response (NULL if timeout)
 //e.g. send(IO_DUT, snformat(x,x,"lcdshow %u %s /"Victor DVT/"", solo=0, color="ib"), timeout=100 );
-//@param err_lvl: -1 throws exceptions. 0+ prints errors instead, indicates verbosity
-char* cmdSend(cmd_io io, const char* scmd, int timeout_ms = CMD_DEFAULT_TIMEOUT, int opts = CMD_OPTS_DEFAULT, void(*async_handler)(char*) = 0 );
+//@param async_handler: user handler, any line beginning with ASYNC_PREFIX
+//@param dbuf: if provided, rx dat between cmd and response lines will be copied here (raw char stream, not null terminated)
+char* cmdSend(cmd_io io, const char* scmd, int timeout_ms = CMD_DEFAULT_TIMEOUT, int opts = CMD_OPTS_DEFAULT, void(*async_handler)(char*) = 0, cmd_dbuf_t *dbuf = 0 );
 int cmdStatus(); //parsed rsp status of most recent cmdSend(). status=1st arg, INT_MIN if !exist or bad format
 uint32_t cmdTimeMs(); //time it took for most recent cmdSend() to finish
 
-//during cmdSend() exectuion, callback at the given interval while waiting for response. ONLY for next cmdSend() call; cleared on exit.
-void cmdTickCallback(uint32_t interval_ms, void(*tick_handler)(void) );
+//DEBUG:
+int cmdSysconOvfCnt(); //get syscon tx overflow cnt from most recent cmdSend(CMD_IO_CONTACTS) [reported by syscon debug builds]
 
 //-----------------------------------------------------------------------------
 //                  Line Parsing
@@ -69,71 +80,6 @@ int cmdNumArgs(char *s);
 //DEBUG: run some parsing tests
 void cmdDbgParseTestbench(void);
 
-//-----------------------------------------------------------------------------
-//                  Robot (Charge Contacts)
-//-----------------------------------------------------------------------------
-//cmdSend() to robot over charge contacts - parse reply into data struct.
-
-//sensor index for 'mot' + 'get' cmds
-#define CCC_SENSOR_NONE       0
-#define CCC_SENSOR_BATTERY    1
-#define CCC_SENSOR_CLIFF      2
-#define CCC_SENSOR_MOT_LEFT   3
-#define CCC_SENSOR_MOT_RIGHT  4
-#define CCC_SENSOR_MOT_LIFT   5
-#define CCC_SENSOR_MOT_HEAD   6
-#define CCC_SENSOR_PROX_TOF   7
-#define CCC_SENSOR_BTN_TOUCH  8
-#define CCC_SENSOR_RSSI       9
-#define CCC_SENSOR_RX_PKT     10
-const int ccr_sr_cnt[11] = {0,2,4,2,2,2,2,4,2,1,1}; //number of sensor fields for each type
-
-//FCC test modes
-#define CCC_FCC_MODE_TX_CARRIER   0
-#define CCC_FCC_MODE_TX_PACKETS   1
-#define CCC_FCC_MODE_RX_POWER     2
-#define CCC_FCC_MODE_RX_PACKETS   3
-
-typedef struct {
-  uint32_t esn;
-} ccr_esn_t;
-
-typedef struct {
-  uint32_t hw_rev;
-  uint32_t hw_model;
-  uint32_t ein[4];
-  uint32_t app_version[4];
-} ccr_bsv_t;
-
-typedef union {
-  int32_t val[4];
-  struct { int32_t raw; int32_t temp; } bat; //battery: raw-adc, temperature (2x int16)
-  struct { int32_t fL; int32_t fR; int32_t bR; int32_t bL; } cliff; //cliff sensors: front/back L/R (4x uint16)
-  struct { int32_t pos; int32_t speed; } enc; //encoder: position, speed (2x int32)
-  struct { int32_t rangeMM; int32_t spadCnt; int32_t signalRate; int32_t ambientRate; } prox; //proximity,TOF (4x uint16)
-  struct { int32_t touch; int32_t btn; } btn; //touch & button (2x uint16)
-  struct { int32_t rssi; } fccRssi; //FCC mode RSSI (int8)
-  struct { int32_t pktCnt; } fccRx; //Fcc mode packet rx (int32)
-} ccr_sr_t;
-
-ccr_esn_t* cmdRobotEsn(); //read robot (head) ESN
-ccr_bsv_t* cmdRobotBsv(); //read body serial+version info
-ccr_sr_t*  cmdRobotMot(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head);
-ccr_sr_t*  cmdRobotGet(uint8_t NN, uint8_t sensor); //NN = #drops (sr vals). returns &sensor[0] of [NN-1]
-void       cmdRobotFcc(uint8_t mode, uint8_t cn); //CCC_FCC_MODE_, {0..39}
-//void       cmdRobotRlg(uint8_t idx);
-void       cmdRobotEng(uint8_t idx, uint32_t val);
-void       cmdRobotLfe(uint8_t idx, uint32_t val);
-void       cmdRobotSmr(uint8_t idx, uint32_t val);
-uint32_t   cmdRobotGmr(uint8_t idx);
-
-//-----------------------------------------------------------------------------
-//                  Additional Cmd + response parsing
-//-----------------------------------------------------------------------------
-
-#define DEFAULT_TEMP_ZONE 3
-char* cmdGetEmmcdlVersion(int timeout_ms = CMD_DEFAULT_TIMEOUT);
-int   cmdGetHelperTempC(int zone = DEFAULT_TEMP_ZONE);
 
 #endif //CMD_H
 

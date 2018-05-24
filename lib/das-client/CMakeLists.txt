@@ -1,5 +1,8 @@
 project(das_client)
 
+include(anki_build_cxx)
+include(anki_build_strip)
+
 set(SRCS
   src/DAS.cpp
   src/dasAppender.cpp
@@ -16,6 +19,9 @@ set(SRCS
 )
 
 set(PLATFORM_SRCS "")
+set(PLATFORM_LIBS "")
+set(PLATFORM_INCLUDES "")
+
 if (ANDROID)
   set(PLATFORM_SRCS
     android/DASNativeLib/jni/dasJni.cpp
@@ -70,3 +76,4 @@ target_include_directories(DAS PUBLIC
 target_link_libraries(DAS
   ${PLATFORM_LIBS}
 )
+anki_build_strip(TARGET DAS)

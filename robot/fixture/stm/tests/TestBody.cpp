@@ -17,8 +17,13 @@
 #include "tests.h"
 #include "timer.h"
 
+#define TESTBODY_DEBUG 1
+
+#if TESTBODY_DEBUG > 0
 #define DBG_VERBOSE(x)  x
-//#define DBG_VERBOSE(x)  {}
+#else
+#define DBG_VERBOSE(x)  {}
+#endif
 
 #define FLASH_ADDR_TEST_APP       0x08000000
 #define FLASH_ADDR_SYSBOOT        0x08000000
@@ -30,7 +35,7 @@
 #define SYSCON_HEADER_SIZE        16
 #define SYSCON_EVIL               0x4F4D3243 /*first word of syscon header, indicates valid app*/
 
-static const int CURRENT_HW_REV = BODYID_HWREV_DVT3;
+static const int CURRENT_HW_REV = CUBEID_HWREV_DVT4;
 
 //-----------------------------------------------------------------------------
 //                  STM Load
@@ -48,22 +53,53 @@ static void mcu_power_up_(void) {
 static void mcu_power_down_(void) {
   Board::powerOff(PWR_VEXT);
   Board::powerOff(PWR_VBAT);
-  Timer::delayMs(100);
+  Timer::delayMs(100); //extra delay for power discharge
   
   swd_stm32_deinit();
 }
 
-void stm32f030_program_(bool erase, uint32_t flash_addr, const uint8_t *bin, const uint8_t *binEnd, bool verify, const char* name)
+static void mcu_swd_init_(void) {
+  try { swd_stm32_init(); /*safe from re-init*/ }
+  catch(int e) {
+    throw e;
+  }
+}
+
+static void mcu_flash_erase_(void) {
+  try { swd_stm32_erase(); }
+  catch(int e) {
+    throw e;
+  }
+}
+
+static void mcu_flash_program_(uint32_t flash_addr, const uint8_t *bin, const uint8_t *binEnd, bool verify, const char* name)
 {
-  swd_stm32_init(); //safe from re-init
-  
-  if( erase )
-    swd_stm32_erase();
+  mcu_swd_init_();
   
   int size = binEnd - bin;
-  if( size > 0 ) {
-    ConsolePrintf("load %s: %u kB\n", name?name:"program", CEILDIV(size,1024));
-    swd_stm32_flash(flash_addr, bin, binEnd, verify);
+  if( size < 1 ) {
+    ConsolePrintf("BAD_ARG: mcu_flash_program_() size=%i\n", size );
+    throw ERROR_BAD_ARG;
+  }
+  
+  ConsolePrintf("load %s: %u kB\n", name?name:"program", CEILDIV(size,1024));
+  try { swd_stm32_flash(flash_addr, bin, binEnd, verify); }
+  catch(int e) {
+    throw e;
+  }
+}
+
+static void mcu_flash_verify_(uint32_t flash_addr, const uint8_t* bin_start, const uint8_t* bin_end) {
+  try { swd_stm32_verify(flash_addr, bin_start, bin_end); }
+  catch(int e) {
+    throw e;
+  }
+}
+
+static void mcu_jtag_lock_(void) {
+  try { swd_stm32_lock_jtag(); }
+  catch(int e) {
+    throw e;
   }
 }
 
@@ -115,12 +151,13 @@ static void ShortCircuitTest(void)
   Board::powerOff(PWR_VEXT);
   TestCommon::powerOnProtected(PWR_VEXT, 100, ima_limit_VEXT, 2);
   Board::powerOff(PWR_VEXT);
+  Timer::delayMs(250);
 }
 
 static void BodyTryReadSerial(void)
 {
   mcu_power_up_();
-  swd_stm32_init();
+  mcu_swd_init_();
   bodyid.hwrev = swd_read32(FLASH_ADDR_SYSBOOT+16);
   bodyid.model = swd_read32(FLASH_ADDR_SYSBOOT+20);
   bodyid.esn    = swd_read32(FLASH_ADDR_SYSBOOT+24); /*ein0*/
@@ -146,13 +183,13 @@ static void BodyLoadTestFirmware(void)
 {
   //erase and power cycle resets any strange internal states from previous fw
   mcu_power_up_();
-  swd_stm32_init();
-  swd_stm32_erase();
+  mcu_swd_init_();
+  mcu_flash_erase_();
   mcu_power_down_();
   
   //Erase and flash
   mcu_power_up_();
-  stm32f030_program_(0, FLASH_ADDR_TEST_APP, g_BodyTest, g_BodyTestEnd, 1, "test firmware");
+  mcu_flash_program_(FLASH_ADDR_TEST_APP, g_BodyTest, g_BodyTestEnd, 1, "test firmware");
   mcu_power_down_();
   
   //Power up and test comms
@@ -184,8 +221,8 @@ static void BodyLoadProductionFirmware(void)
 {
   //erase and power cycle resets any strange internal states from previous fw
   mcu_power_up_();
-  swd_stm32_init();
-  swd_stm32_erase();
+  mcu_swd_init_();
+  mcu_flash_erase_();
   mcu_power_down_();
   
   //assign ESN & HW ids (preserve, if exist)
@@ -208,10 +245,14 @@ static void BodyLoadProductionFirmware(void)
   //Erase and flash boot/app
   ConsolePrintf("load: ESN %08x, hwrev %u, model %u\n", bodyid.esn, bodyid.hwrev, bodyid.model);
   mcu_power_up_();
-  stm32f030_program_(0, FLASH_ADDR_SYSBOOT, bodyboot, bodyboot+bodybootSize, 1, "bootloader");
-  stm32f030_program_(0, FLASH_ADDR_SYSCON,  g_Body,     g_BodyEnd,     1, "application");
-  swd_stm32_verify( FLASH_ADDR_SYSBOOT,     bodyboot, bodyboot+bodybootSize );
-  //swd_stm32_verify( FLASH_ADDR_SYSCON,  g_Body,     g_BodyEnd     );
+  mcu_flash_program_(FLASH_ADDR_SYSBOOT, bodyboot, bodyboot+bodybootSize, 1, "bootloader");
+  mcu_flash_program_(FLASH_ADDR_SYSCON,  g_Body,     g_BodyEnd,     1, "application");
+  mcu_flash_verify_( FLASH_ADDR_SYSBOOT, bodyboot, bodyboot+bodybootSize );
+  //mcu_flash_verify_( FLASH_ADDR_SYSCON,  g_Body,     g_BodyEnd     );
+  if( g_fixmode == FIXMODE_BODY1 && g_isReleaseBuild ) {
+    ConsolePrintf("LOCKING JTAG. POINT OF NO RETURN!\n");
+    mcu_jtag_lock_();
+  }
   mcu_power_down_();
 }
 
@@ -260,13 +301,10 @@ static void BodyBootcheckProductionFirmware(void)
 
 static void BodyFlexFlowReport(void)
 {
-  char b[80]; const int bz = sizeof(b);
-  snformat(b,bz,"<flex> ESN %08x HwRev %u Model %u\n", bodyid.esn, bodyid.hwrev, bodyid.model);
-  ConsoleWrite(b);
-  FLEXFLOW::write(b);
+  FLEXFLOW::printf("<flex> ESN %08x HwRev %u Model %u </flex>\n", bodyid.esn, bodyid.hwrev, bodyid.model);
 }
 
-/*static void BodyChargeContactElectricalDebug(void)
+static void BodyChargeContactElectricalDebug(void)
 {
   BodyLoadTestFirmware();
   
@@ -276,38 +314,44 @@ static void BodyFlexFlowReport(void)
   Timer::delayMs(150); //wait for systest to boot into main and enable battery power
   Contacts::setModeRx(); //switch to comms mode
   
+  int x=0;
+  while( ConsoleReadChar() > -1 ); //clear console input
   while(1)
   {
     //DEBUG: various TX/RX lengths to test VEXT analog performance
-    for(int x=0; x<10; x++)
-    {
-      ConsolePrintf("---START MEASUREMENTS NOW!---(%u)\n",x+1);
-      Timer::delayMs(3000);
-      
-      //VEXT idle high to pre-charge some gate circuits
-      Contacts::powerOn(); //Contacts::setModeTx();
-      Timer::delayMs(25);
-      Contacts::powerOff();
-      Timer::delayMs(100);
-      
-      cmdSend(CMD_IO_CONTACTS, "getvers", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
-      cmdSend(CMD_IO_CONTACTS, "getvers", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
-      Timer::delayMs(50);
-      cmdSend(CMD_IO_CONTACTS, "testcommand  extra  long  string  to  measure  gate  rise  abcd  1234567890", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
-      Timer::delayMs(50);
-      
-      cmdSend(CMD_IO_CONTACTS, "getvers", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
-      Timer::delayMs(100);
-      
-      Contacts::setModeTx();
-      Timer::delayMs(50);
-      cmdSend(CMD_IO_CONTACTS, "getvers plus some extra ignored params to create a really really long transmit cyclce", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
+    ConsolePrintf("---START MEASUREMENTS NOW!---(%u)\n",x+1);
+    uint32_t Twait = Timer::get();
+    while( Timer::elapsedUs(Twait) < 5*1000*1000 ) {
+      if( ConsoleReadChar() > -1 )
+        break;
     }
+    
+    //VEXT idle high to pre-charge some gate circuits
+    Contacts::powerOn(); //Contacts::setModeTx();
+    Timer::delayMs(25);
+    Contacts::powerOff();
+    Timer::delayMs(100);
+    
+    cmdSend(CMD_IO_CONTACTS, "getvers", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
+    cmdSend(CMD_IO_CONTACTS, "getvers", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
+    Timer::delayMs(50);
+    cmdSend(CMD_IO_CONTACTS, "testcommand  extra  long  string  to  measure  gate  rise  abcd  1234567890", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
+    Timer::delayMs(50);
+    
+    cmdSend(CMD_IO_CONTACTS, "getvers", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
+    Timer::delayMs(100);
+    
+    Contacts::setModeTx();
+    Timer::delayMs(50);
+    cmdSend(CMD_IO_CONTACTS, "getvers plus some extra ignored params to create a really really long transmit cyclce", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
+    
+    if( ConsoleReadChar() > -1 ) //exit test on console input
+      break;
   }
   
   Board::powerOff(PWR_VEXT);
   Board::powerOff(PWR_VBAT);
-}*/
+}
 
 TestFunction* TestBody0GetTests(void)
 {
@@ -315,8 +359,7 @@ TestFunction* TestBody0GetTests(void)
     ShortCircuitTest,
     BodyTryReadSerial, //--skip serial read to force blank state
     //BodyLoadTestFirmware,
-    //BodyBootcheckProductionFirmware,
-    //BodyChargeContactElectricalDebug,
+    BodyChargeContactElectricalDebug,
     NULL,
   };
   static TestFunction m_tests_0[] = {
@@ -348,10 +391,10 @@ TestFunction* TestBody2GetTests(void)
 {
   static TestFunction m_tests[] = {
     ShortCircuitTest,
-    //BodyTryReadSerial, --skip serial read. forces blank state
-    BodyLoadTestFirmware,
+    BodyTryReadSerial, //skip serial read to force blank state (generate new ESN)
+    //BodyLoadTestFirmware,
     BodyLoadProductionFirmware,
-    //BodyBootcheckProductionFirmware,
+    BodyBootcheckProductionFirmware,
     BodyFlexFlowReport,
     NULL,
   };

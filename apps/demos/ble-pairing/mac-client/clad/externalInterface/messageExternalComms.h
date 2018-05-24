@@ -99,6 +99,57 @@ struct RtsWifiScanResult
 extern const char* RtsWifiScanResultVersionHashStr;
 extern const uint8_t RtsWifiScanResultVersionHash[16];
 
+// MESSAGE RtsWifiScanResult_2
+struct RtsWifiScanResult_2
+{
+  uint8_t authType;
+  uint8_t signalStrength;
+  std::string wifiSsidHex;
+  bool hidden;
+  
+  /**** Constructors ****/
+  RtsWifiScanResult_2() = default;
+  RtsWifiScanResult_2(const RtsWifiScanResult_2& other) = default;
+  RtsWifiScanResult_2(RtsWifiScanResult_2& other) = default;
+  RtsWifiScanResult_2(RtsWifiScanResult_2&& other) noexcept = default;
+  RtsWifiScanResult_2& operator=(const RtsWifiScanResult_2& other) = default;
+  RtsWifiScanResult_2& operator=(RtsWifiScanResult_2&& other) = default;
+  
+  explicit RtsWifiScanResult_2(uint8_t authType,
+    uint8_t signalStrength,
+    const std::string& wifiSsidHex,
+    bool hidden)
+  : authType(authType)
+  , signalStrength(signalStrength)
+  , wifiSsidHex(wifiSsidHex)
+  , hidden(hidden)
+  {}
+  
+  explicit RtsWifiScanResult_2(const uint8_t* buff, size_t len);
+  explicit RtsWifiScanResult_2(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsWifiScanResult_2& other) const;
+  bool operator!=(const RtsWifiScanResult_2& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(authType, signalStrength, wifiSsidHex, hidden);
+  }
+};
+
+extern const char* RtsWifiScanResult_2VersionHashStr;
+extern const uint8_t RtsWifiScanResult_2VersionHash[16];
+
 // MESSAGE RtsConnRequest
 struct RtsConnRequest
 {
@@ -639,6 +690,7 @@ struct RtsStatusResponse_2
   uint8_t bleState;
   uint8_t batteryState;
   std::string version;
+  bool otaInProgress;
   
   /**** Constructors ****/
   RtsStatusResponse_2() = default;
@@ -653,13 +705,15 @@ struct RtsStatusResponse_2
     bool accessPoint,
     uint8_t bleState,
     uint8_t batteryState,
-    const std::string& version)
+    const std::string& version,
+    bool otaInProgress)
   : wifiSsidHex(wifiSsidHex)
   , wifiState(wifiState)
   , accessPoint(accessPoint)
   , bleState(bleState)
   , batteryState(batteryState)
   , version(version)
+  , otaInProgress(otaInProgress)
   {}
   
   explicit RtsStatusResponse_2(const uint8_t* buff, size_t len);
@@ -680,7 +734,7 @@ struct RtsStatusResponse_2
   
   template <typename Callable>
   void Invoke(Callable&& func) const {
-     func(wifiSsidHex, wifiState, accessPoint, bleState, batteryState, version);
+     func(wifiSsidHex, wifiState, accessPoint, bleState, batteryState, version, otaInProgress);
   }
 };
 
@@ -769,6 +823,51 @@ struct RtsWifiScanResponse
 extern const char* RtsWifiScanResponseVersionHashStr;
 extern const uint8_t RtsWifiScanResponseVersionHash[16];
 
+// MESSAGE RtsWifiScanResponse_2
+struct RtsWifiScanResponse_2
+{
+  uint8_t statusCode;
+  std::vector<Anki::Victor::ExternalComms::RtsWifiScanResult_2> scanResult;
+  
+  /**** Constructors ****/
+  RtsWifiScanResponse_2() = default;
+  RtsWifiScanResponse_2(const RtsWifiScanResponse_2& other) = default;
+  RtsWifiScanResponse_2(RtsWifiScanResponse_2& other) = default;
+  RtsWifiScanResponse_2(RtsWifiScanResponse_2&& other) noexcept = default;
+  RtsWifiScanResponse_2& operator=(const RtsWifiScanResponse_2& other) = default;
+  RtsWifiScanResponse_2& operator=(RtsWifiScanResponse_2&& other) = default;
+  
+  explicit RtsWifiScanResponse_2(uint8_t statusCode,
+    const std::vector<Anki::Victor::ExternalComms::RtsWifiScanResult_2>& scanResult)
+  : statusCode(statusCode)
+  , scanResult(scanResult)
+  {}
+  
+  explicit RtsWifiScanResponse_2(const uint8_t* buff, size_t len);
+  explicit RtsWifiScanResponse_2(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsWifiScanResponse_2& other) const;
+  bool operator!=(const RtsWifiScanResponse_2& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(statusCode, scanResult);
+  }
+};
+
+extern const char* RtsWifiScanResponse_2VersionHashStr;
+extern const uint8_t RtsWifiScanResponse_2VersionHash[16];
+
 // MESSAGE RtsOtaUpdateRequest
 struct RtsOtaUpdateRequest
 {
@@ -810,6 +909,43 @@ struct RtsOtaUpdateRequest
 
 extern const char* RtsOtaUpdateRequestVersionHashStr;
 extern const uint8_t RtsOtaUpdateRequestVersionHash[16];
+
+// MESSAGE RtsOtaCancelRequest
+struct RtsOtaCancelRequest
+{
+  
+  /**** Constructors ****/
+  RtsOtaCancelRequest() = default;
+  RtsOtaCancelRequest(const RtsOtaCancelRequest& other) = default;
+  RtsOtaCancelRequest(RtsOtaCancelRequest& other) = default;
+  RtsOtaCancelRequest(RtsOtaCancelRequest&& other) noexcept = default;
+  RtsOtaCancelRequest& operator=(const RtsOtaCancelRequest& other) = default;
+  RtsOtaCancelRequest& operator=(RtsOtaCancelRequest&& other) = default;
+  
+  explicit RtsOtaCancelRequest(const uint8_t* buff, size_t len);
+  explicit RtsOtaCancelRequest(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsOtaCancelRequest& other) const;
+  bool operator!=(const RtsOtaCancelRequest& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func();
+  }
+};
+
+extern const char* RtsOtaCancelRequestVersionHashStr;
+extern const uint8_t RtsOtaCancelRequestVersionHash[16];
 
 // MESSAGE RtsOtaUpdateResponse
 struct RtsOtaUpdateResponse
@@ -1102,6 +1238,150 @@ struct RtsSshResponse
 extern const char* RtsSshResponseVersionHashStr;
 extern const uint8_t RtsSshResponseVersionHash[16];
 
+// MESSAGE RtsLogRequest
+struct RtsLogRequest
+{
+  uint8_t mode;
+  std::vector<std::string> filter;
+  
+  /**** Constructors ****/
+  RtsLogRequest() = default;
+  RtsLogRequest(const RtsLogRequest& other) = default;
+  RtsLogRequest(RtsLogRequest& other) = default;
+  RtsLogRequest(RtsLogRequest&& other) noexcept = default;
+  RtsLogRequest& operator=(const RtsLogRequest& other) = default;
+  RtsLogRequest& operator=(RtsLogRequest&& other) = default;
+  
+  explicit RtsLogRequest(uint8_t mode,
+    const std::vector<std::string>& filter)
+  : mode(mode)
+  , filter(filter)
+  {}
+  
+  explicit RtsLogRequest(const uint8_t* buff, size_t len);
+  explicit RtsLogRequest(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsLogRequest& other) const;
+  bool operator!=(const RtsLogRequest& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(mode, filter);
+  }
+};
+
+extern const char* RtsLogRequestVersionHashStr;
+extern const uint8_t RtsLogRequestVersionHash[16];
+
+// MESSAGE RtsLogResponse
+struct RtsLogResponse
+{
+  uint8_t exitCode;
+  uint32_t fileId;
+  
+  /**** Constructors ****/
+  RtsLogResponse() = default;
+  RtsLogResponse(const RtsLogResponse& other) = default;
+  RtsLogResponse(RtsLogResponse& other) = default;
+  RtsLogResponse(RtsLogResponse&& other) noexcept = default;
+  RtsLogResponse& operator=(const RtsLogResponse& other) = default;
+  RtsLogResponse& operator=(RtsLogResponse&& other) = default;
+  
+  explicit RtsLogResponse(uint8_t exitCode,
+    uint32_t fileId)
+  : exitCode(exitCode)
+  , fileId(fileId)
+  {}
+  
+  explicit RtsLogResponse(const uint8_t* buff, size_t len);
+  explicit RtsLogResponse(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsLogResponse& other) const;
+  bool operator!=(const RtsLogResponse& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(exitCode, fileId);
+  }
+};
+
+extern const char* RtsLogResponseVersionHashStr;
+extern const uint8_t RtsLogResponseVersionHash[16];
+
+// MESSAGE RtsFileDownload
+struct RtsFileDownload
+{
+  uint8_t status;
+  uint32_t fileId;
+  uint32_t packetNumber;
+  uint32_t packetTotal;
+  std::vector<uint8_t> fileChunk;
+  
+  /**** Constructors ****/
+  RtsFileDownload() = default;
+  RtsFileDownload(const RtsFileDownload& other) = default;
+  RtsFileDownload(RtsFileDownload& other) = default;
+  RtsFileDownload(RtsFileDownload&& other) noexcept = default;
+  RtsFileDownload& operator=(const RtsFileDownload& other) = default;
+  RtsFileDownload& operator=(RtsFileDownload&& other) = default;
+  
+  explicit RtsFileDownload(uint8_t status,
+    uint32_t fileId,
+    uint32_t packetNumber,
+    uint32_t packetTotal,
+    const std::vector<uint8_t>& fileChunk)
+  : status(status)
+  , fileId(fileId)
+  , packetNumber(packetNumber)
+  , packetTotal(packetTotal)
+  , fileChunk(fileChunk)
+  {}
+  
+  explicit RtsFileDownload(const uint8_t* buff, size_t len);
+  explicit RtsFileDownload(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsFileDownload& other) const;
+  bool operator!=(const RtsFileDownload& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(status, fileId, packetNumber, packetTotal, fileChunk);
+  }
+};
+
+extern const char* RtsFileDownloadVersionHashStr;
+extern const uint8_t RtsFileDownloadVersionHash[16];
+
 // MESSAGE Error
 struct Error
 {
@@ -1196,8 +1476,8 @@ struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsWifiScanRequest> {
   using type = Anki::Victor::ExternalComms::RtsWifiScanRequest;
 };
 template<>
-struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsWifiScanResponse> {
-  using type = Anki::Victor::ExternalComms::RtsWifiScanResponse;
+struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsWifiScanResponse_2> {
+  using type = Anki::Victor::ExternalComms::RtsWifiScanResponse_2;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsOtaUpdateRequest> {
@@ -1234,6 +1514,22 @@ struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsSshRequest> {
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsSshResponse> {
   using type = Anki::Victor::ExternalComms::RtsSshResponse;
+};
+template<>
+struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsOtaCancelRequest> {
+  using type = Anki::Victor::ExternalComms::RtsOtaCancelRequest;
+};
+template<>
+struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsLogRequest> {
+  using type = Anki::Victor::ExternalComms::RtsLogRequest;
+};
+template<>
+struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsLogResponse> {
+  using type = Anki::Victor::ExternalComms::RtsLogResponse;
+};
+template<>
+struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsFileDownload> {
+  using type = Anki::Victor::ExternalComms::RtsFileDownload;
 };
 
 // UNION RtsConnection_2
@@ -1353,12 +1649,12 @@ public:
   void Set_RtsWifiScanRequest(const Anki::Victor::ExternalComms::RtsWifiScanRequest& new_RtsWifiScanRequest);
   void Set_RtsWifiScanRequest(Anki::Victor::ExternalComms::RtsWifiScanRequest&& new_RtsWifiScanRequest);
   
-  /** RtsWifiScanResponse **/
-  static RtsConnection_2 CreateRtsWifiScanResponse(Anki::Victor::ExternalComms::RtsWifiScanResponse&& new_RtsWifiScanResponse);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsWifiScanResponse&& new_RtsWifiScanResponse);
-  const Anki::Victor::ExternalComms::RtsWifiScanResponse& Get_RtsWifiScanResponse() const;
-  void Set_RtsWifiScanResponse(const Anki::Victor::ExternalComms::RtsWifiScanResponse& new_RtsWifiScanResponse);
-  void Set_RtsWifiScanResponse(Anki::Victor::ExternalComms::RtsWifiScanResponse&& new_RtsWifiScanResponse);
+  /** RtsWifiScanResponse_2 **/
+  static RtsConnection_2 CreateRtsWifiScanResponse_2(Anki::Victor::ExternalComms::RtsWifiScanResponse_2&& new_RtsWifiScanResponse_2);
+  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsWifiScanResponse_2&& new_RtsWifiScanResponse_2);
+  const Anki::Victor::ExternalComms::RtsWifiScanResponse_2& Get_RtsWifiScanResponse_2() const;
+  void Set_RtsWifiScanResponse_2(const Anki::Victor::ExternalComms::RtsWifiScanResponse_2& new_RtsWifiScanResponse_2);
+  void Set_RtsWifiScanResponse_2(Anki::Victor::ExternalComms::RtsWifiScanResponse_2&& new_RtsWifiScanResponse_2);
   
   /** RtsOtaUpdateRequest **/
   static RtsConnection_2 CreateRtsOtaUpdateRequest(Anki::Victor::ExternalComms::RtsOtaUpdateRequest&& new_RtsOtaUpdateRequest);
@@ -1423,6 +1719,34 @@ public:
   void Set_RtsSshResponse(const Anki::Victor::ExternalComms::RtsSshResponse& new_RtsSshResponse);
   void Set_RtsSshResponse(Anki::Victor::ExternalComms::RtsSshResponse&& new_RtsSshResponse);
   
+  /** RtsOtaCancelRequest **/
+  static RtsConnection_2 CreateRtsOtaCancelRequest(Anki::Victor::ExternalComms::RtsOtaCancelRequest&& new_RtsOtaCancelRequest);
+  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsOtaCancelRequest&& new_RtsOtaCancelRequest);
+  const Anki::Victor::ExternalComms::RtsOtaCancelRequest& Get_RtsOtaCancelRequest() const;
+  void Set_RtsOtaCancelRequest(const Anki::Victor::ExternalComms::RtsOtaCancelRequest& new_RtsOtaCancelRequest);
+  void Set_RtsOtaCancelRequest(Anki::Victor::ExternalComms::RtsOtaCancelRequest&& new_RtsOtaCancelRequest);
+  
+  /** RtsLogRequest **/
+  static RtsConnection_2 CreateRtsLogRequest(Anki::Victor::ExternalComms::RtsLogRequest&& new_RtsLogRequest);
+  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsLogRequest&& new_RtsLogRequest);
+  const Anki::Victor::ExternalComms::RtsLogRequest& Get_RtsLogRequest() const;
+  void Set_RtsLogRequest(const Anki::Victor::ExternalComms::RtsLogRequest& new_RtsLogRequest);
+  void Set_RtsLogRequest(Anki::Victor::ExternalComms::RtsLogRequest&& new_RtsLogRequest);
+  
+  /** RtsLogResponse **/
+  static RtsConnection_2 CreateRtsLogResponse(Anki::Victor::ExternalComms::RtsLogResponse&& new_RtsLogResponse);
+  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsLogResponse&& new_RtsLogResponse);
+  const Anki::Victor::ExternalComms::RtsLogResponse& Get_RtsLogResponse() const;
+  void Set_RtsLogResponse(const Anki::Victor::ExternalComms::RtsLogResponse& new_RtsLogResponse);
+  void Set_RtsLogResponse(Anki::Victor::ExternalComms::RtsLogResponse&& new_RtsLogResponse);
+  
+  /** RtsFileDownload **/
+  static RtsConnection_2 CreateRtsFileDownload(Anki::Victor::ExternalComms::RtsFileDownload&& new_RtsFileDownload);
+  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsFileDownload&& new_RtsFileDownload);
+  const Anki::Victor::ExternalComms::RtsFileDownload& Get_RtsFileDownload() const;
+  void Set_RtsFileDownload(const Anki::Victor::ExternalComms::RtsFileDownload& new_RtsFileDownload);
+  void Set_RtsFileDownload(Anki::Victor::ExternalComms::RtsFileDownload&& new_RtsFileDownload);
+  
   size_t Unpack(const uint8_t* buff, const size_t len);
   size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
   
@@ -1451,7 +1775,7 @@ private:
     Anki::Victor::ExternalComms::RtsStatusRequest _RtsStatusRequest;
     Anki::Victor::ExternalComms::RtsStatusResponse_2 _RtsStatusResponse_2;
     Anki::Victor::ExternalComms::RtsWifiScanRequest _RtsWifiScanRequest;
-    Anki::Victor::ExternalComms::RtsWifiScanResponse _RtsWifiScanResponse;
+    Anki::Victor::ExternalComms::RtsWifiScanResponse_2 _RtsWifiScanResponse_2;
     Anki::Victor::ExternalComms::RtsOtaUpdateRequest _RtsOtaUpdateRequest;
     Anki::Victor::ExternalComms::RtsOtaUpdateResponse _RtsOtaUpdateResponse;
     Anki::Victor::ExternalComms::RtsCancelPairing _RtsCancelPairing;
@@ -1461,6 +1785,10 @@ private:
     Anki::Victor::ExternalComms::RtsWifiAccessPointResponse _RtsWifiAccessPointResponse;
     Anki::Victor::ExternalComms::RtsSshRequest _RtsSshRequest;
     Anki::Victor::ExternalComms::RtsSshResponse _RtsSshResponse;
+    Anki::Victor::ExternalComms::RtsOtaCancelRequest _RtsOtaCancelRequest;
+    Anki::Victor::ExternalComms::RtsLogRequest _RtsLogRequest;
+    Anki::Victor::ExternalComms::RtsLogResponse _RtsLogResponse;
+    Anki::Victor::ExternalComms::RtsFileDownload _RtsFileDownload;
   };
 };
 extern const char* RtsConnection_2VersionHashStr;

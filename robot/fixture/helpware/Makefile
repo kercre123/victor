@@ -29,7 +29,6 @@ CFLAGS  += -I$(CORE_DIR)/inc
 
 CFLAGS  += -I../../syscon
 CFLAGS  += -I../../hal
-CFLAGS  += -DPLATFORM_ANDROID
 
 
 # All the c files in this directory will be compiled

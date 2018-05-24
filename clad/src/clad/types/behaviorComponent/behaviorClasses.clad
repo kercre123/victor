@@ -101,7 +101,6 @@ enum uint_8 BehaviorClass {
   // freeplay/userInteractive
   Bouncer,
   FistBump,
-  GuardDog,
   PounceOnMotion,
   PounceWithProx,
   PuzzleMaze,

@@ -7,12 +7,11 @@ include(anki_build_cxx)
 anki_build_cxx_library(osState ${ANKI_SRCLIST_DIR})
 
 set(PLATFORM_LIBS "")
-set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
-if (ANDROID)
+if (VICOS)
     set(PLATFORM_LIBS
-        android
-        log)
+        log
+        libcutils.so.0)
 elseif (MACOSX)
     include(webots)
     set(PLATFORM_LIBS
@@ -29,7 +28,7 @@ PRIVATE
   ${PLATFORM_LIBS}
 )
 
-android_strip(TARGET osState)
+anki_build_strip(TARGET osState)
 
 target_compile_definitions(osState
   PRIVATE
@@ -42,6 +41,5 @@ target_include_directories(osState
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
   PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../robot/include>
-  ${PLATFORM_INCLUDES}
 )
 

@@ -65,8 +65,10 @@ int swd_da1458x_load_bin(const uint8_t* bin_start, const uint8_t* bin_end)
   //uint8_t * page_buffer = app_global_buffer;
   
   SwdDebugPrintf("swd_da1458x_load_bin 0x%08x-0x%08x (%u)\n", bin_start, bin_end, bin_end-bin_start);
-  if( !bin_start || !bin_end || bin_end <= bin_start )
+  if( !bin_start || !bin_end || bin_end <= bin_start ) {
+    ConsolePrintf("BAD_ARG: swd_da1458x_load_bin() start=%06x end=%06x size=%i\n", bin_start, bin_end, (int)bin_end-(int)bin_start);
     return ERROR_BAD_ARG;
+  }
   
   // Try to contact via SWD
   swd_phy_reset();

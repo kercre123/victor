@@ -31,6 +31,7 @@ namespace Switchboard {
 
     // Types
     using ConnectionSignal = Signal::Signal<void (int connectionId, IpcBleStream* stream)>;
+    using PeerSignal = Signal::Signal<void ()>;
     using AdvertisingSignal = Signal::Signal<void (bool advertising)>;
 
     AdvertisingSignal& OnAdvertisingUpdateEvent() {
@@ -43,6 +44,10 @@ namespace Switchboard {
 
     ConnectionSignal& OnDisconnectedEvent() {
       return _disconnectedSignal;
+    }
+
+    PeerSignal& OnIpcDisconnection() {
+      return _ipcDisconnectedSignal;
     }
 
   protected:
@@ -59,6 +64,10 @@ namespace Switchboard {
     bool Send(uint8_t* msg, size_t length, std::string charUuid);
     bool SendPlainText(uint8_t* msg, size_t length);
     bool SendEncrypted(uint8_t* msg, size_t length);
+
+    virtual void OnReceiveError(const int sockfd);
+    virtual void OnPeerClose(const int sockfd);
+    virtual void OnSendError(const int sockfd, const int error);
     
     int _connectionId;
     IpcBleStream* _stream;
@@ -67,6 +76,8 @@ namespace Switchboard {
 
     ConnectionSignal _connectedSignal;
     ConnectionSignal _disconnectedSignal;
+
+    PeerSignal _ipcDisconnectedSignal;
   };
 } // Switchboard
 } // Anki

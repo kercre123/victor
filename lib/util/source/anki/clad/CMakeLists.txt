@@ -1,5 +1,5 @@
 include(generate_clad)
-include(android_strip)
+include(anki_build_strip)
 
 set(CLAD_BASE_DIR "${CMAKE_SOURCE_DIR}/tools/message-buffers")
 set(CLAD_EMITTER_DIR "${CLAD_BASE_DIR}/emitters")
@@ -40,7 +40,7 @@ target_link_libraries(util_clad
     clad
 )
 
-android_strip(TARGET util_clad)
+anki_build_strip(TARGET util_clad)
 
 generate_clad_py(
     TARGET "util_clad_python"

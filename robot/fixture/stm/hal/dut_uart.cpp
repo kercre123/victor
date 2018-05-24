@@ -25,7 +25,7 @@ namespace DUT_UART {
   static int current_baud = 0;
   
   //recieve buffer
-  static const int rx_fifo_size = 0x40;
+  static const int rx_fifo_size = 0x800;
   static struct {
     char buf[rx_fifo_size]; 
     volatile int len; 
@@ -56,6 +56,7 @@ void DUT_UART::init(int baud)
     USART_InitStruct.USART_Parity     = USART_Parity_No ;
     USART_InitStruct.USART_Mode       = USART_Mode_Rx | USART_Mode_Tx;
     USART_InitStruct.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+    USART_OverSampling8Cmd(USART2, ENABLE);
     USART_Init(USART2, &USART_InitStruct);
     
     //set up rx ints
@@ -68,7 +69,7 @@ void DUT_UART::init(int baud)
     
     #if DUT_UART_DEBUG
       #define USART USART2
-      ConsolePrintf("DUT_UART:init()\n");
+      ConsolePrintf("DUT_UART:init(%i)\n", baud);
       
       //what the @%*# is our clock??
       RCC_ClocksTypeDef RCC_ClocksStatus;

@@ -105,7 +105,7 @@ namespace Cozmo {
     virtual void HandleRobotStateUpdate(ExternalInterface::RobotState const& msg) override;
     virtual void HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg) override;
     virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction &msg) override;
-    virtual void HandleActiveObjectConnectionState(const ObjectConnectionState& msg) override;
+    virtual void HandleActiveObjectConnectionState(const ExternalInterface::ObjectConnectionState& msg) override;
     
   };
   
@@ -402,7 +402,7 @@ namespace Cozmo {
     }
   }
   
-  void CST_RobotKidnappingComplex::HandleActiveObjectConnectionState(const ObjectConnectionState& msg)
+  void CST_RobotKidnappingComplex::HandleActiveObjectConnectionState(const ExternalInterface::ObjectConnectionState& msg)
   {
     if (msg.connected) {
       ++_numObjectsConnected;

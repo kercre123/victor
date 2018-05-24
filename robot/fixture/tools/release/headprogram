@@ -1,52 +1,81 @@
 #!/bin/sh
-ESN=$1
-HW_VER=0001
+ESN=$(echo $1 | xargs)
+HW_VER=0004
 MODEL=0001
+echo headprogram esn $ESN hwvers $((HW_VER)) model $((MODEL))
 
-helper=0
+USBVID=05c6
+USBPID=9008
+
+#exit codes RESERVED RANGE: 500-520
+ERROR_OFFSET=$((500-100)) #shift error codes to start from 100 (valid exit range 0-255)
+ERROR_HEADPGM=$((500-$ERROR_OFFSET))
+ERROR_HEADPGM_MISSING_CERT=$((501-$ERROR_OFFSET))
+ERROR_HEADPGM_BAD_CERT=$((502-$ERROR_OFFSET))
+ERROR_HEADPGM_FAC_IMG=$((503-$ERROR_OFFSET))
+ERROR_HEADPGM_USB_DEV_NOT_FOUND=$((504-$ERROR_OFFSET))
+ERROR_HEADPGM_USB_MODE_SWITCH=$((505-$ERROR_OFFSET))
+
+cloudcert=1; helper=0
 for arg in "$@"; do
-  #echo arg: \""${arg}"\" #DEBUG
-  if [ "${arg}" == "helper" ]; then echo "making helper head"; helper=1; ESN=0; fi
+  #argCnt=$((argCnt+1))
+  #echo arg[$argCnt] raw:\""${arg}"\" trimmed:\""$(echo ${arg} | xargs)"\"
+  if [ "$(echo ${arg} | xargs)" == "helper" ]; then echo "making helper head"; helper=1; cloudcert=0; ESN=0; fi
+  if [ "$(echo ${arg} | xargs)" == "nocloud" ]; then echo "cloud cert disabled"; cloudcert=0; fi
 done
 
 # Enable USB
 mode=$(cat /sys/kernel/debug/msm_otg/mode)
 if [ "$mode" != "host" ]; then
+  echo otg mode "$mode"
 # echo cpu clock $(cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq)
   echo none > /sys/kernel/debug/msm_otg/mode
   echo host > /sys/kernel/debug/msm_otg/mode
   sleep 1
   echo 1094400 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
-  insmod ./usbserial.ko vendor=0x05c6 product=0x9008
+  insmod ./usbserial.ko vendor=0x$USBVID product=0x$USBPID
 fi
+
 # Reboot if USB did not switch the first time - only a reboot can fix it
 mode=$(cat /sys/kernel/debug/msm_otg/mode)
 if [ "$mode" != "host" ]; then
-  reboot
+  echo otg mode "$mode"
+  echo otg mode change failed
+  exit $ERROR_HEADPGM_USB_MODE_SWITCH
+  #reboot
 fi
+
 # Prepare factory partition image
 umount /data/img
 rm emmcdl/factory.img
 mkdir -p /data/img
-dd if=/dev/zero of=emmcdl/factory.img count=4 bs=1M     || exit 101
-yes | mkfs.ext4 emmcdl/factory.img                      || exit 102
-mount -o loop emmcdl/factory.img /data/img              || exit 103
-mkdir /data/img/cloud                                   || exit 103
-# Set up birth certificate on factory partition
-./makebc /data/img/birthcertificate $ESN $HW_VER $MODEL || exit 104
+dd if=/dev/zero of=emmcdl/factory.img count=4 bs=1M       || exit $ERROR_HEADPGM_FAC_IMG
+yes | mkfs.ext4 emmcdl/factory.img                        || exit $ERROR_HEADPGM_FAC_IMG
+mount -o loop emmcdl/factory.img /data/img                || exit $ERROR_HEADPGM_FAC_IMG
+mkdir /data/img/cloud                                     || exit $ERROR_HEADPGM_FAC_IMG
+# Set up birth certificate as its own partition
+rm emmcdl/emr.img
+./makebc emmcdl/emr.img $ESN $HW_VER $MODEL   || exit $ERROR_HEADPGM_FAC_IMG
+
 # Prepare cloud data for this ESN
-if [ $helper -eq 0 ]; then
+if [ $cloudcert -gt 0 ]; then
   echo unpacking cert...
-  unzip -d /data/img/cloud /anki/certs.zip $ESN/*         || exit 105
+  unzip -d /data/img/cloud /anki/certs.zip $ESN/*         || exit $ERROR_HEADPGM_BAD_CERT
   if [ ! -e /data/img/cloud/$ESN ]; then
-    echo no cert found for ESN $ESN
-    exit 105
+    echo no cert found for ESN $ESN;                         exit $ERROR_HEADPGM_MISSING_CERT
   fi
-  mv /data/img/cloud/$ESN/* /data/img/cloud               || exit 105
-  chmod 0440 /data/img/cloud /data/img/cloud/*            || exit 105
-  chown 888:888 /data/img/cloud /data/img/cloud/*         || exit 105
+  mv /data/img/cloud/$ESN/* /data/img/cloud               || exit $ERROR_HEADPGM_FAC_IMG
+  chmod 0440 /data/img/cloud /data/img/cloud/*            || exit $ERROR_HEADPGM_FAC_IMG
+  chown 888:888 /data/img/cloud /data/img/cloud/*         || exit $ERROR_HEADPGM_FAC_IMG
 fi
-umount /data/img                                        || exit 106
-# Flash the robot
+umount /data/img                                        || exit $ERROR_HEADPGM_FAC_IMG
+
+#check for USB device [Bus ### Device ###: ID 05c6:9008]
 lsusb
+if ! lsusb | grep -q "ID $USBVID:$USBPID"; then
+  echo "usb device $USBVID:$USBPID not detected"
+  exit $ERROR_HEADPGM_USB_DEV_NOT_FOUND
+fi
+
+# Flash the robot
 ./emmcdl/emmcdl -p 0 -f emmcdl/prog_emmc_firehose_8909_ddr.mbn -x emmcdl/anki.xml -SetActivePartition 0

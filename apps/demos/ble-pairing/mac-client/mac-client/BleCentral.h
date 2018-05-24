@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include "bleMessageProtocol.h"
 #include "messageExternalComms.h"
+#include "RequestsDelegate.h"
 #include <sodium.h>
 #include <arpa/inet.h>
 
@@ -66,7 +67,9 @@ enum WiFiAuth : uint8_t {
   NSString* _filter;
   
   NSMutableDictionary* _wifiAuth;
+  NSMutableSet* _wifiHidden;
   dispatch_queue_t _commandQueue;
+  dispatch_queue_t _requestQueue;
   
   std::string _currentCommand;
   bool _readyForNextCommand;
@@ -76,21 +79,45 @@ enum WiFiAuth : uint8_t {
   uint64_t _otaExpected;
   
   bool _verbose;
+  bool _download;
   int _commVersion;
+  bool _interactive;
   
   NSArray* _colorArray;
+  
+  // file download
+  uint32_t _currentFileId;
+  std::vector<uint8_t> _currentFileBuffer;
+  NSString* _downloadFilePath;
+
+  bool _isPairing;
 }
+
+@property (strong, nonatomic) id delegate;
+@property (strong, nonatomic) id syncdelegate;
 
 - (std::string)hexStr:(char*)data length:(int)len;
 - (std::string)asciiStr:(char*)data length:(int)size;
 - (uint8_t)nibbleToNumber:(uint8_t)nibble;
 
+- (void) devDownloadOta;
 - (void) handleSend:(const void*)bytes length:(int)n;
 - (void) handleReceive:(const void*)bytes length:(int)n;
 - (void) handleReceiveSecure:(const void*)bytes length:(int)n;
 - (void) printHelp;
+- (void) showProgress: (float)current expected:(float)expected;
+- (void) handleRequest:(Anki::Victor::ExternalComms::RtsConnection_2)msg;
 
 - (void) SendSshPublicKey:(std::string)filename;
+
+- (void) async_StatusRequest;
+- (void) async_WifiScanRequest;
+- (void) async_WifiConnectRequest:(std::string)ssid password:(std::string)pw hidden:(bool)hid auth:(uint8_t)authType;
+- (void) async_WifiIpRequest;
+- (void) async_WifiApRequest:(bool)enabled;
+- (void) async_otaStart:(std::string)url;
+- (void) async_otaCancel;
+- (void) async_otaProgress;
 
 - (void) HandleReceiveHandshake:(const void*)bytes length:(int)n;
 - (void) HandleReceivePublicKey:(const Anki::Victor::ExternalComms::RtsConnRequest&)msg;
@@ -98,6 +125,7 @@ enum WiFiAuth : uint8_t {
 - (void) HandleChallengeMessage:(const Anki::Victor::ExternalComms::RtsChallengeMessage&)msg;
 - (void) HandleChallengeSuccessMessage:(const Anki::Victor::ExternalComms::RtsChallengeSuccessMessage&)msg;
 - (void) HandleWifiScanResponse:(const Anki::Victor::ExternalComms::RtsWifiScanResponse&)msg;
+- (void) HandleWifiScanResponse_2:(const Anki::Victor::ExternalComms::RtsWifiScanResponse_2&)msg;
 - (void) HandleReceiveAccessPointResponse:(const Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&)msg;
 
 - (void) send:(const void*)bytes length:(int)n;
@@ -106,6 +134,7 @@ enum WiFiAuth : uint8_t {
 - (void) StartScanning;
 - (void) StartScanning:(NSString*)nameFilter;
 - (void) StopScanning;
+- (void) interrupt;
 
 - (std::vector<std::string>) GetWordsFromLine: (std::string)line;
 
@@ -118,6 +147,7 @@ enum WiFiAuth : uint8_t {
 - (NSArray*) GetSession: (NSString*)key;
 - (void)resetDefaults;
 - (void)setVerbose:(bool)enabled;
+- (void)setDownload:(bool)enabled;
 
 @end
 
@@ -138,6 +168,15 @@ public:
         NSLog(@"The mac client is trying to speak a version we do not know about.");
         break;
     }
+    std::vector<uint8_t> messageData(msg.Size());
+    const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
+    [central send:messageData.data() length:(int)packedSize];
+  }
+  
+  template<typename T, typename... Args>
+  static void SendRtsMessage_2(BleCentral* central, int commVersion, Args&&... args) {
+    Anki::Victor::ExternalComms::ExternalComms msg = Anki::Victor::ExternalComms::ExternalComms(Anki::Victor::ExternalComms::RtsConnection(Anki::Victor::ExternalComms::RtsConnection_2(T(std::forward<Args>(args)...))));
+
     std::vector<uint8_t> messageData(msg.Size());
     const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
     [central send:messageData.data() length:(int)packedSize];

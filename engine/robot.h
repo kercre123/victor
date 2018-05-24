@@ -623,8 +623,13 @@ public:
   const BodyColor GetBodyColor() const { return _bodyColor; }
   
   bool HasReceivedFirstStateMessage() const { return _gotStateMsgAfterTimeSync; }
+
+  void Shutdown() { _toldToShutdown = true; }
+  bool ToldToShutdown() const { return _toldToShutdown; }
   
 protected:  
+  bool _toldToShutdown = false;
+  
   std::unique_ptr<PoseOriginList> _poseOrigins;
   Pose3d         _pose;
   const Pose3d     _neckPose;     // joint around which head rotates
@@ -787,7 +792,9 @@ protected:
   // fully enumerated constructor option, but for the time being use this for dev/testing purposes
   // only since caching etc could blow it all to shreds
   void DevReplaceAIComponent(AIComponent* aiComponent, bool shouldManage = false);
-  
+
+  // Performs various startup checks and displays fault codes as appropriate
+  Result UpdateStartupChecks();
 }; // class Robot
 
   

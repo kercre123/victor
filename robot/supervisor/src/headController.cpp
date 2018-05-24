@@ -6,6 +6,7 @@
 #include "messages.h"
 #include "imuFilter.h"
 #include "proxSensors.h"
+#include "anki/cozmo/shared/factory/emrHelper.h"
 #include <math.h>
 
 #define DEBUG_HEAD_CONTROLLER 0
@@ -70,6 +71,7 @@ namespace HeadController {
       // Calibration parameters
       typedef enum {
         HCS_IDLE,
+        HCS_RAISE_HEAD, // Only used if not packed out
         HCS_LOWER_HEAD,
         HCS_WAIT_FOR_STOP,
         HCS_SET_CURR_ANGLE
@@ -155,8 +157,13 @@ namespace HeadController {
     {
       Enable();
       potentialBurnoutStartTime_ms_ = 0;
-      calState_ = HCS_LOWER_HEAD;
+      calState_ = (Factory::GetEMR()->fields.PACKED_OUT_FLAG ? HCS_LOWER_HEAD : HCS_RAISE_HEAD);
       isCalibrated_ = false;
+
+      // After we're done with calibration it shouldn't continue trying to reach 
+      // the head position it was trying to get to before
+      inPosition_ = true;  
+    
       Messages::SendMotorCalibrationMsg(MotorID::MOTOR_HEAD, true, autoStarted);
     }
 
@@ -202,12 +209,30 @@ namespace HeadController {
           case HCS_IDLE:
             break;
 
-          case HCS_LOWER_HEAD:
-            power_ = HAL::MotorGetCalibPower(MotorID::MOTOR_HEAD);
+          case HCS_RAISE_HEAD:
+            power_ = 0.4f;
             HAL::MotorSetPower(MotorID::MOTOR_HEAD, power_);
             lastHeadMovedTime_ms = HAL::GetTimeStamp();
             lowHeadAngleDuringCalib_rad_ = currentAngle_.ToFloat();
-            calState_ = HCS_WAIT_FOR_STOP;
+            calState_ = HCS_LOWER_HEAD;
+            break;
+            
+          case HCS_LOWER_HEAD:
+            if(!IsMoving())
+            {
+              if( HAL::GetTimeStamp() - lastHeadMovedTime_ms > HEAD_STOP_TIME)
+              {
+                power_ = HAL::MotorGetCalibPower(MotorID::MOTOR_HEAD);
+                HAL::MotorSetPower(MotorID::MOTOR_HEAD, power_);
+                lastHeadMovedTime_ms = HAL::GetTimeStamp();
+                lowHeadAngleDuringCalib_rad_ = currentAngle_.ToFloat();
+                calState_ = HCS_WAIT_FOR_STOP;
+              }            
+            }
+            else
+            {
+              lastHeadMovedTime_ms = HAL::GetTimeStamp();
+            }
             break;
 
           case HCS_WAIT_FOR_STOP:
@@ -251,7 +276,7 @@ namespace HeadController {
 
         // Check if head is actually moving up when it should be moving down.
         // This means someone's messing with it so just abort calibration.
-        if (IsCalibrating()) {
+        if (IsCalibrating() && calState_ >= HCS_WAIT_FOR_STOP) {
           const float currAngle = currentAngle_.ToFloat();
           if (lowHeadAngleDuringCalib_rad_ > currAngle) {
             lowHeadAngleDuringCalib_rad_ = currAngle;
@@ -262,7 +287,7 @@ namespace HeadController {
               AnkiWarn("HeadController.CalibrationUpdate.RestartingCalib", 
                         "Someone is probably messing with head (low: %fdeg, curr: %fdeg)",
                         RAD_TO_DEG(lowHeadAngleDuringCalib_rad_), RAD_TO_DEG(currAngle));
-              calState_ = HCS_LOWER_HEAD;
+              calState_ = (Factory::GetEMR()->fields.PACKED_OUT_FLAG ? HCS_LOWER_HEAD : HCS_RAISE_HEAD);
             } else {
               AnkiInfo("HeadController.CalibrationUpdate.Abort", 
                         "Someone is probably messing with head (low: %fdeg, curr: %fdeg)",

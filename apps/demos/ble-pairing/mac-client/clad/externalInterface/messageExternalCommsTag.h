@@ -27,7 +27,7 @@ enum class RtsConnection_2Tag : uint8_t {
   RtsStatusRequest           = 0xa,  // 10
   RtsStatusResponse_2        = 0xb,  // 11
   RtsWifiScanRequest         = 0xc,  // 12
-  RtsWifiScanResponse        = 0xd,  // 13
+  RtsWifiScanResponse_2      = 0xd,  // 13
   RtsOtaUpdateRequest        = 0xe,  // 14
   RtsOtaUpdateResponse       = 0xf,  // 15
   RtsCancelPairing           = 0x10, // 16
@@ -37,6 +37,10 @@ enum class RtsConnection_2Tag : uint8_t {
   RtsWifiAccessPointResponse = 0x14, // 20
   RtsSshRequest              = 0x15, // 21
   RtsSshResponse             = 0x16, // 22
+  RtsOtaCancelRequest        = 0x17, // 23
+  RtsLogRequest              = 0x18, // 24
+  RtsLogResponse             = 0x19, // 25
+  RtsFileDownload            = 0x1a, // 26
   INVALID                    = 255
 };
 

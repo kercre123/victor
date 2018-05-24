@@ -45,8 +45,8 @@ case Anki::Victor::ExternalComms::RtsConnection_2::Tag::RtsStatusResponse_2:
 case Anki::Victor::ExternalComms::RtsConnection_2::Tag::RtsWifiScanRequest:
   Process_RtsWifiScanRequest(msg.Get_RtsWifiScanRequest());
   break;
-case Anki::Victor::ExternalComms::RtsConnection_2::Tag::RtsWifiScanResponse:
-  Process_RtsWifiScanResponse(msg.Get_RtsWifiScanResponse());
+case Anki::Victor::ExternalComms::RtsConnection_2::Tag::RtsWifiScanResponse_2:
+  Process_RtsWifiScanResponse_2(msg.Get_RtsWifiScanResponse_2());
   break;
 case Anki::Victor::ExternalComms::RtsConnection_2::Tag::RtsOtaUpdateRequest:
   Process_RtsOtaUpdateRequest(msg.Get_RtsOtaUpdateRequest());
@@ -74,6 +74,18 @@ case Anki::Victor::ExternalComms::RtsConnection_2::Tag::RtsSshRequest:
   break;
 case Anki::Victor::ExternalComms::RtsConnection_2::Tag::RtsSshResponse:
   Process_RtsSshResponse(msg.Get_RtsSshResponse());
+  break;
+case Anki::Victor::ExternalComms::RtsConnection_2::Tag::RtsOtaCancelRequest:
+  Process_RtsOtaCancelRequest(msg.Get_RtsOtaCancelRequest());
+  break;
+case Anki::Victor::ExternalComms::RtsConnection_2::Tag::RtsLogRequest:
+  Process_RtsLogRequest(msg.Get_RtsLogRequest());
+  break;
+case Anki::Victor::ExternalComms::RtsConnection_2::Tag::RtsLogResponse:
+  Process_RtsLogResponse(msg.Get_RtsLogResponse());
+  break;
+case Anki::Victor::ExternalComms::RtsConnection_2::Tag::RtsFileDownload:
+  Process_RtsFileDownload(msg.Get_RtsFileDownload());
   break;
 }
 switch(msg.GetTag()) {

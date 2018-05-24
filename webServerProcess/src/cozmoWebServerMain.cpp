@@ -24,6 +24,7 @@
 #include <chrono>
 #include <fstream>
 #include <thread>
+#include <csignal>
 
 using namespace Anki;
 using namespace Anki::Cozmo;
