@@ -471,8 +471,11 @@ void Daemon::OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame
       
       UpdateAdvertisement(true);
       _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SHOW_PRE_PIN);
-      ev_timer_set(&_pairingTimer.timer, kPairingPreConnectionTimeout_s, 0);
+      
+      ev_timer_stop(_loop, &_pairingTimer.timer);
+      ev_timer_set(&_pairingTimer.timer, kPairingPreConnectionTimeout_s, 0.);
       ev_timer_start(_loop, &_pairingTimer.timer);
+      
       Log::Write("[PT] Starting pairing timer... pairing will timeout in %d seconds.", kPairingPreConnectionTimeout_s);
       break;
     }
