@@ -258,17 +258,17 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
 
   // Add WantsToBeActivated conditions
   if(config.isMember(kWantsToBeActivatedCondConfigKey)){
-    const auto& strategy = config[kWantsToBeActivatedCondConfigKey];
+    const auto& condition = config[kWantsToBeActivatedCondConfigKey];
     _wantsToBeActivatedConditions.push_back(
-      BEIConditionFactory::CreateBEICondition(strategy, GetDebugLabel() )
+      BEIConditionFactory::CreateBEICondition(condition, GetDebugLabel() )
     );
   }
 
   // Add WantsToCancelSelf conditions
   if(config.isMember(kWantsToCancelSelfConfigKey)){
-    const auto& strategy = config[kWantsToCancelSelfConfigKey];
+    const auto& condition = config[kWantsToCancelSelfConfigKey];
     _wantsToCancelSelfConditions.push_back(
-      BEIConditionFactory::CreateBEICondition( strategy, GetDebugLabel() )
+      BEIConditionFactory::CreateBEICondition( condition, GetDebugLabel() )
     );
   }
 
@@ -364,18 +364,18 @@ void ICozmoBehavior::InitInternal()
   _initHasBeenCalled = true;
 
   {
-    for( auto& strategy : _wantsToBeActivatedConditions ) {
-      strategy->Init(GetBEI());
+    for( auto& condition : _wantsToBeActivatedConditions ) {
+      condition->Init(GetBEI());
     }
 
-    for( auto& strategy : _wantsToCancelSelfConditions ) {
-      strategy->Init(GetBEI());
+    for( auto& condition : _wantsToCancelSelfConditions ) {
+      condition->Init(GetBEI());
     }
 
     if( _respondToTriggerWord ){
-      IBEIConditionPtr strategy(BEIConditionFactory::CreateBEICondition(BEIConditionType::TriggerWordPending, GetDebugLabel()));
-      strategy->Init(GetBEI());
-      _wantsToBeActivatedConditions.push_back(strategy);
+      IBEIConditionPtr condition(BEIConditionFactory::CreateBEICondition(BEIConditionType::TriggerWordPending, GetDebugLabel()));
+      condition->Init(GetBEI());
+      _wantsToBeActivatedConditions.push_back(condition);
     }
 
   }
@@ -742,14 +742,14 @@ void ICozmoBehavior::OnActivatedInternal()
 
   // Manage state for any WantsToBeActivated conditions used by this Behavior
   // Conditions may not be evaluted when the behavior is Active
-  for(auto& strategy: _wantsToBeActivatedConditions){
-    strategy->SetActive(GetBEI(), false);
+  for(auto& condition: _wantsToBeActivatedConditions){
+    condition->SetActive(GetBEI(), false);
   }
 
   // Manage state for any WantsToCancelSelf conditions used by this Behavior
   // Conditions will be evaluated while the behavior is activated
-  for(auto& strategy: _wantsToCancelSelfConditions){
-    strategy->SetActive(GetBEI(), true);
+  for(auto& condition: _wantsToCancelSelfConditions){
+    condition->SetActive(GetBEI(), true);
   }
 
   // reset any timers
@@ -783,8 +783,8 @@ void ICozmoBehavior::OnEnteredActivatableScopeInternal()
 
   // Manage state for any IBEIConditions used by this Behavior
   // Conditions may be evaluted when the behavior is inside the Activatable Scope
-  for(auto& strategy: _wantsToBeActivatedConditions){
-    strategy->SetActive(GetBEI(), true);
+  for(auto& condition: _wantsToBeActivatedConditions){
+    condition->SetActive(GetBEI(), true);
   }
 
   OnBehaviorEnteredActivatableScope();
@@ -803,8 +803,8 @@ void ICozmoBehavior::OnLeftActivatableScopeInternal()
 
   // Manage state for any IBEIConditions used by this Behavior
   // Conditions may not be evaluted when the behavior is outside the Activatable Scope
-  for(auto& strategy: _wantsToBeActivatedConditions){
-    strategy->SetActive(GetBEI(), false);
+  for(auto& condition: _wantsToBeActivatedConditions){
+    condition->SetActive(GetBEI(), false);
   }
 
   OnBehaviorLeftActivatableScope();
@@ -832,14 +832,14 @@ void ICozmoBehavior::OnDeactivatedInternal()
 
   // Manage state for any WantsToBeActivated conditions used by this Behavior:
   // Conditions may be evaluted when inactive, if in Activatable scope
-  for(auto& strategy: _wantsToBeActivatedConditions){
-    strategy->SetActive(GetBEI(), true);
+  for(auto& condition: _wantsToBeActivatedConditions){
+    condition->SetActive(GetBEI(), true);
   }
 
   // Manage state for any WantsToCancelSelf conditions used by this Behavior
   // Conditions will be evaluated while the behavior is activated
-  for(auto& strategy: _wantsToCancelSelfConditions){
-    strategy->SetActive(GetBEI(), false);
+  for(auto& condition: _wantsToCancelSelfConditions){
+    condition->SetActive(GetBEI(), false);
   }
 
   // clear the path component motion profile if it was set by the behavior
@@ -979,8 +979,8 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
     return false;
   }
 
-  for(auto& strategy: _wantsToBeActivatedConditions){
-    if(!strategy->AreConditionsMet(GetBEI())){
+  for(auto& condition: _wantsToBeActivatedConditions){
+    if(!condition->AreConditionsMet(GetBEI())){
       return false;
     }
   }
@@ -1021,12 +1021,12 @@ void ICozmoBehavior::UpdateInternal()
     }
 
     // Check wants to cancel self strategies
-    for(auto& strategy: _wantsToCancelSelfConditions){
-      if(strategy->AreConditionsMet(GetBEI())){
+    for(auto& condition: _wantsToCancelSelfConditions){
+      if(condition->AreConditionsMet(GetBEI())){
         shouldCancelSelf = true;
-        PRINT_NAMED_INFO((baseDebugStr + "WantsToCancelSelfStrategy").c_str(),
-                         "Strategy %s wants behavior %s to cancel itself",
-                         strategy->GetDebugLabel().c_str(),
+        PRINT_NAMED_INFO((baseDebugStr + "WantsToCancelSelfCondition").c_str(),
+                         "Condition %s wants behavior %s to cancel itself",
+                         condition->GetDebugLabel().c_str(),
                          GetDebugLabel().c_str());
       }
     }
