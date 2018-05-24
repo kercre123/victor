@@ -40,7 +40,7 @@ static const int BUTTON_THRESHOLD = ADC_VOLTS(2.0) * 2;
 static bool is_charging;
 static bool allow_power;
 static bool on_charger = false;
-
+ 
 // Assume we started on the charger
 static int vext_debounce = MINIMUM_VEXT_TIME;
 static int charge_delay = CHARGE_ENABLE_DELAY;
@@ -253,8 +253,8 @@ void Analog::tick(void) {
   temperature = *TEMP30_CAL_ADDR - ((Analog::values[ADC_TEMP] * TEMP_VOLT_ADJ) >> 20);
   temperature = ((temperature * TEMP_SCALE_ADJ) >> 20) + 30;
 
-  //bool emergency_shutoff = temperature >= 60;    // Will immediately cause a reboot
-  //if (temperature >= 45) disable_vmain = true;
+  //bool emergency_shutoff = temperature >= 70;    // Will immediately cause a reboot
+  //if (temperature >= 60) disable_vmain = true;
   bool emergency_shutoff = false;
   
   #ifdef BOOTLOADER
@@ -329,7 +329,7 @@ void Analog::tick(void) {
     } else {
       power_down_timer = LOW_VOLTAGE_POWER_DOWN_TIME;
     }
-  } else if (CHARGE_CUTOFF && false) {
+  } else if (CHARGE_CUTOFF) {
     // Unpowered, on charger (timeout)
     nCHG_PWR::reset();
     POWER_EN::pull(PULL_NONE);
@@ -411,7 +411,6 @@ extern "C" void ADC1_IRQHandler(void) {
   POWER_EN::mode(MODE_OUTPUT);
   POWER_EN::pull(PULL_UP);
   POWER_EN::mode(MODE_INPUT);
-  //nCHG_PWR::set();
 
   vext_debounce = MAX_CHARGE_TIME - 20; // Do not reengage for 0.1s
 
