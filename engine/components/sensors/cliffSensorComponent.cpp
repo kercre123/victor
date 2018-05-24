@@ -308,7 +308,7 @@ bool CliffSensorComponent::ComputeCliffPose(const CliffEvent& cliffEvent, Pose3d
     { 0.f,            -cliffSize.y() * .5f }}; // lo R
   ((Pose2d) cliffPose).ApplyTo(cliffquad, cliffquad);
 
-  _robot->GetMapComponent().InsertData(Poly2f(cliffquad), MemoryMapData_Cliff(cliffPose, cliffEvent.timestamp));
+  _robot->GetMapComponent().InsertData(cliffquad, MemoryMapData_Cliff(cliffPose, cliffEvent.timestamp));
 
   return true;
 }

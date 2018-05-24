@@ -515,8 +515,9 @@ void LatticePlannerInternal::ImportBlockworldObstaclesIfNeeded(const bool isRepl
       _robot->ComputeOriginPose(robotDriveCenterPose, robotOriginPose);
 
       // Get the robot polygon, and inflate it by a bit to handle error
-      Poly2f robotPoly(_robot->GetBoundingQuadXY(robotOriginPose, robotPadding).Scale(LATTICE_PLANNER_ROBOT_EXPANSION_SCALING) );
-
+      Poly2f robotPoly;
+      robotPoly.ImportQuad2d(_robot->GetBoundingQuadXY(robotOriginPose, robotPadding).Scale(LATTICE_PLANNER_ROBOT_EXPANSION_SCALING));
+      
       const Pose2d& robotPose = (_robot->GetPose());
       const State_c robotState(robotPose.GetX(), robotPose.GetY(), robotPose.GetAngle().ToFloat());
       for(const auto& boundingPoly : convexHulls) {

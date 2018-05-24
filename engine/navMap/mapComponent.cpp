@@ -362,13 +362,13 @@ void MapComponent::UpdateRobotPose()
       {kCliffSensorXOffsetRear_mm,  +kCliffSensorYOffset_mm}}; // lo L
 
     ((Pose2d) robotPoseWrtOrigin).ApplyTo(robotSensorQuad, robotSensorQuad);
-    InsertData(Poly2f(robotSensorQuad), MemoryMapData(EContentType::ClearOfCliff, currentTimestamp));
+    InsertData(robotSensorQuad, MemoryMapData(EContentType::ClearOfCliff, currentTimestamp));
 
 
     const Quad2f& robotQuad = _robot->GetBoundingQuadXY(robotPoseWrtOrigin);
 
     // regular clear of obstacle
-    InsertData(Poly2f(robotQuad), MemoryMapData(EContentType::ClearOfObstacle, currentTimestamp));
+    InsertData(robotQuad, MemoryMapData(EContentType::ClearOfObstacle, currentTimestamp));
 
     _robot->GetAIComponent().GetComponent<AIWhiteboard>().ProcessClearQuad(robotQuad);
     // update las reported pose
@@ -433,14 +433,16 @@ void MapComponent::FlagGroundPlaneROIInterestingEdgesAsUncertain()
         }
         return oldData;
     };
-
-  UpdateBroadcastFlags(currentNavMemoryMap->TransformContent(Poly2f((Quad2f)groundPlaneWrtRobot), transform));
+  
+  Poly2f groundPlanePoly;
+  groundPlanePoly.ImportQuad2d(groundPlaneWrtRobot);
+  UpdateBroadcastFlags(currentNavMemoryMap->TransformContent(groundPlanePoly, transform));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::FlagQuadAsNotInterestingEdges(const Quad2f& quadWRTOrigin)
 {
-  InsertData(Poly2f(quadWRTOrigin), MemoryMapData(EContentType::NotInterestingEdge, _robot->GetLastImageTimeStamp()));
+  InsertData(quadWRTOrigin, MemoryMapData(EContentType::NotInterestingEdge, _robot->GetLastImageTimeStamp()));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -877,13 +879,13 @@ void MapComponent::AddObservableObject(const ObservableObject& object, const Pos
             Poly2f boundingPoly;
             boundingPoly.ImportQuad2d(newQuad);
             MemoryMapData_ObservableObject data(object, boundingPoly, _robot->GetLastImageTimeStamp());
-            InsertData(Poly2f(newQuad), data);
+            InsertData(boundingPoly, data);
             break;
           }
           default:
             PRINT_NAMED_WARNING("MapComponent.AddObservableObject.AddedNonObservableType",
                                 "AddObservableObject was called to add a non observable object");
-            InsertData(Poly2f(newQuad), MemoryMapData(addType, _robot->GetLastImageTimeStamp()));
+            InsertData(newQuad, MemoryMapData(addType, _robot->GetLastImageTimeStamp()));
             break;
         }
 
@@ -1153,6 +1155,19 @@ void MapComponent::InsertData(const Poly2f& polyWRTOrigin, const MemoryMapData& 
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MapComponent::InsertData(const Quad2f& quadWRTOrigin, const MemoryMapData& data)
+{
+  INavMap* currentMap = GetCurrentMemoryMap();
+  if (currentMap)
+  {
+    // Convert quad to a poly and insert that
+    Poly2f poly;
+    poly.ImportQuad2d(quadWRTOrigin);
+    UpdateBroadcastFlags(currentMap->Insert(poly, data));
+  }
+}
+  
 // NOTE: mrw: we probably want to separate the vision processing code into its own file at some point.
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1729,7 +1744,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
         }
 
         // add clear info to map
-        InsertData(Poly2f(potentialClearQuad2D), MemoryMapData(EContentType::ClearOfObstacle, frameInfo.timestamp));
+        InsertData(potentialClearQuad2D, MemoryMapData(EContentType::ClearOfObstacle, frameInfo.timestamp));
       }
     }
   }

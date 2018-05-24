@@ -46,7 +46,7 @@ public:
    * this object to be the roatated rectangle of minimum area which
    * bounds the polygon
    */
-  RotatedRectangle(const Quad2f& quad); // construct directly from quad
+  explicit RotatedRectangle(const Quad2f& quad); // construct directly from quad
   void ImportQuad(const Quad2f& quad);
 
   /** Returns true if the given (x,y) point is inside (or on the

@@ -26,6 +26,9 @@ using PolygonDimType = size_t;
 template<PolygonDimType N, typename T>
 class Quadrilateral;
 
+template<typename T>
+class Rectangle;
+  
 class RotatedRectangle;
 
 template <PolygonDimType N, typename T>
@@ -41,16 +44,19 @@ public:
 
   // Initialize polygon from list of points. Assumes points are already in clockwise order!
   Polygon(std::initializer_list< Point<N,T> > points);
-
+  
   // Construct from polygon living in one dimension higher. Last
   // dimension simply gets dropped. For example, this allows
   // construction of a 2D quad from a 3D polygon, by simply using the
   // (x,y) coordinates and ignoring z.
   Polygon(const Polygon<N+1,T>& other);
 
+  // convert from a rectangle
+  explicit Polygon(const Rectangle<T>& rect);
+  
   // convert from a rotated rectangle
-  Polygon(const RotatedRectangle& rect);
-
+  explicit Polygon(const RotatedRectangle& rect);
+  
   // Import from a 2D quad
   // NOTE: this is difficult to make into a constructor because of SortCornersClockwise
   void ImportQuad2d(const Quadrilateral<2, T>& quad);

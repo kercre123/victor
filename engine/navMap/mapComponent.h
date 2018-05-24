@@ -91,6 +91,9 @@ public:
   // set the region defined by the given poly with the provided data.
   void InsertData(const Poly2f& polyWRTOrigin, const MemoryMapData& data);
   
+  // set the region defined by the given quad with the provided data.
+  void InsertData(const Quad2f& quadWRTOrigin, const MemoryMapData& data);
+  
   // flags all current interesting edges as too small to give useful information
   void FlagInterestingEdgesAsUseless();
   

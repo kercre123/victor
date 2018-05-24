@@ -53,7 +53,13 @@ Polygon<N,T>::Polygon(const Polygon<N+1,T>& other)
   }
 }
 
-
+template <PolygonDimType N, typename T>
+Polygon<N,T>::Polygon(const Rectangle<T>& rect)
+  : _points{rect.GetTopLeft(), rect.GetTopRight(), rect.GetBottomRight(), rect.GetBottomLeft()}
+{
+  static_assert(N == 2, "Must use 2D for rectangles");
+}
+  
 template <PolygonDimType N, typename T>
 Polygon<N,T>::Polygon(const RotatedRectangle& rect)
 {
