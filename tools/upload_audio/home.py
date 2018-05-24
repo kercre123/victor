@@ -7,6 +7,7 @@ from DynamoDB import DynamoDB
 from VictorHelper import VictorHelper
 import settings
 import time
+from CommonHelper import CommonHelper
 
 app = Flask(__name__)
 app.config.from_object(settings)
@@ -14,7 +15,8 @@ app.config.from_object(settings)
 upload_folder = 'upload'
 SRCDIR = os.path.dirname(os.path.abspath(__file__))
 DATADIR = os.path.join(SRCDIR, upload_folder)
-
+victor_audio_folder = 'victor_audio'
+VICTOR_FOLDER = os.path.join(SRCDIR, victor_audio_folder)
 # The name of column in table
 column_name = 'name'
 column_age = 'age'
@@ -90,15 +92,7 @@ def upload():
             dynamo_db = DynamoDB(json_data)
             dynamo_db.putItem()
             # Delete temp file
-            for the_file in os.listdir(DATADIR):
-                file_path = os.path.join(upload_folder, the_file)
-                try:
-                    if os.path.isfile(file_path):
-                        os.unlink(file_path)
-                    elif os.path.isdir(file_path):
-                        shutil.rmtree(file_path)
-                except Exception as e:
-                    print(e)
+            CommonHelper().delete_folder(DATADIR, upload_folder)
             return render_template('success_message.html', message="File uploaded successfully")
     return render_template('upload.html')
 
@@ -109,58 +103,24 @@ def upload_from_victor():
     ERROR_NOT_FOUND_MESSAGE = 'Cannot find any Victor that match the IP address. Please try again.'
     if request.method == 'POST':
         user_name = request.form['name']
-        victor_ip = request.form['ip']
+        age = request.form['age']
+        distance = request.form['distance']
+        gender = request.form['radio']
+        file_obj = request.files.getlist('file')
 
-        if (victor_ip.strip() != "" and user_name.strip() != ""):
-            result = VictorHelper.pull_data_to_machine(victor_ip, DATADIR)
-            if result == "1":
-                flash(ERROR_NOT_FOUND_MESSAGE)
-            else:
-                current_time = time.strftime("%Y%m%d%H%M%S")
-                dropbox_folder = "/{}_{}/".format(user_name, current_time)
-                dropbox_uploader = DropboxFileUploader(DATADIR, dropbox_folder)
-                dropbox_uploader.uploadFolder()
-                return render_template('success_message.html', message="File uploaded successfully")
-        else:
-            flash(ERROR_EMPTY_MESSAGE)
-
-        # if file_obj:
-        #     filename = secure_filename(file_obj.filename)
-        #     file_full = os.path.join(DATADIR, filename)
-        #     file_obj.save(file_full)
-
-        #     if not dropbox_path.startswith("/"):
-        #         dropbox_path = "/{}".format(dropbox_path)
-        #     if not dropbox_path.endswith("/"):
-        #         dropbox_path = "{}/".format(dropbox_path)
-
-        #     path_db = "{}{}".format(dropbox_path, filename)
-        #     dropbox_uploader = DropboxFileUploader(file_full, dropbox_path)
-        #     dropbox_uploader.uploadFile()
-            
-        #     ######################
-
-        #     json_data = {}
-        #     json_data[column_name] = name_obj
-        #     json_data[column_age] = age
-        #     json_data[column_distance] = distance
-        #     json_data[column_dropbox_path] = "{}{}".format(dropbox_path, filename)
-        #     json_data[column_date] = date
-        #     json_data[column_gender] = gender
-
-        #     dynamo_db = DynamoDB(json_data)
-        #     dynamo_db.putItem()
-        #     # Delete temp file
-        #     for the_file in os.listdir(DATADIR):
-        #         file_path = os.path.join(upload_folder, the_file)
-        #         try:
-        #             if os.path.isfile(file_path):
-        #                 os.unlink(file_path)
-        #             elif os.path.isdir(file_path):
-        #                 shutil.rmtree(file_path)
-        #         except Exception as e:
-        #             print(e)
-        #     return render_template('success_message.html', message="File uploaded successfully")
+        if len(file_obj) != 0:
+            for file in file_obj:
+                filename = "{}_{}_{}_{}_{}".format(user_name, age, gender, distance, secure_filename((file.filename).split("/")[-1]))
+                file_full = os.path.join(DATADIR, filename)
+                file.save(file_full)
+            current_time = time.strftime("%Y_%m_%d")
+            dropbox_folder = "/{}/".format(current_time)
+            dropbox_uploader = DropboxFileUploader(DATADIR, dropbox_folder)
+            dropbox_uploader.uploadFolder()
+            # Delete temp file
+            CommonHelper().delete_folder(DATADIR, upload_folder)
+            CommonHelper().delete_folder(VICTOR_FOLDER, victor_audio_folder)
+            return render_template('success_message.html', message="Files uploaded successfully")
     return render_template('find_victor_audio_files.html')
 ################################################################
 if __name__ == "__main__":

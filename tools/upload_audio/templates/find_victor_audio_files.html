@@ -83,14 +83,44 @@ button:hover {
 <form id="target" action="" method="post" role="form" enctype="multipart/form-data" style="border:1px solid #ccc">
   <div class="container">
     <h1>Vector Audio Service</h1>
-    <p>Please fill the IP of Victor, so we can see its audio files.</p>
+    <p>Please fill in this form to upload an audio folder.</p>
+    </br>
+    <p>WARNING: This function does not support Safari browser.</p>
     <hr>
 
-    <label><b>Your Name</b></label>
-    <input type="text" placeholder="Enter Name" name="name" class="f">
+    <label><b>Name</b></label>
+    <input type="text" placeholder="Enter Name" name="name" required>
+    
+    <label ><b>Age</b></label>
+    <input type="text" placeholder="Enter Age" name="age" required>
+    
+    <label><b>Gender</b></label>
 
-    <label><b>Victor's IP</b></label>
-    <input type="text" placeholder="Enter Victor's IP" name="ip" class="f">
+    <label class="container">Male
+    <input type="radio" checked="checked" name="radio" value="male">
+    <span class="checkmark"></span>
+    </label>
+    <label class="container">Female
+    <input type="radio" name="radio" value="female">
+    <span class="checkmark"></span>
+    </label>
+    </p>
+
+    <label><b>Distance</b></label>
+    <input type="text" placeholder="Enter Distance" name="distance" required>
+
+    <label><b>Audio folder</b></label>
+    <input type="file" name="file" onchange="selectFolder(event);" webkitdirectory mozdirectory msdirectory odirectory directory multiple="multiple" required/>
+    <script>
+    function selectFolder(e) {
+       for (var i = 0; i < e.target.files.length; i++) {
+          var s = e.target.files[i].name + '\n';
+          s += e.target.files[i].size + ' Bytes\n';
+          s += e.target.files[i].type;
+          // alert(s);
+       }
+    }
+    </script>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
