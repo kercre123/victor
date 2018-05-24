@@ -40,9 +40,11 @@
 #define FIXTURE_ROBOT2_TEST    22
 #define FIXTURE_ROBOT3_TEST    23
 #define FIXTURE_ROBOT3_CE_TEST 33
+#define FIXTURE_ROBOT3_LE_TEST 38
 
 #define FIXTURE_PACKOUT_TEST   24
 #define FIXTURE_PACKOUT_CE_TEST 34
+#define FIXTURE_PACKOUT_LE_TEST 39
 #define FIXTURE_LIFETEST_TEST  25
 #define FIXTURE_RECHARGE_TEST  26
 #define FIXTURE_RECHARGE2_TEST 35
@@ -58,18 +60,19 @@
 #define FIXTURE_EMROBOT_TEST   36
 #define FIXTURE_EMCUBE_TEST    37
 
-#define FIXTURE_DEBUG          38   // Should be last ID
+#define FIXTURE_DEBUG          40   // Should be last ID
 
 //DEBUG must always be last entry!!!!!!!!!!!!!!!!!!1
 #define NUM_FIXTYPES  (FIXTURE_DEBUG+1)
 
 typedef unsigned char FixtureType;
-#define FIXTURE_TYPES {                                                                                 \
-  /*0-7*/   "NO ID",    "BODY1",      "HEAD1",      "MOTOR1H",  "CHARGER",  "CUBE1",  "CUBE2",    "CUBE3",    \
-  /*8-15*/  "ROBOT1",   "BODY2",      "MOTOR1L",    "MOTOR2L",  "MOTOR2H",  "BODY3",  "INFO",     "PLAYPEN",  \
-  /*16-23*/ "FINISHC",  "FINISH1",    "FINISH2",    "FINISH3",  "FINISHX",  "CUBEX",  "ROBOT2",   "ROBOT3",   \
-  /*24-31*/ "PACKOUT",  "LIFETEST",   "RECHARGE",   "JAM",      "HEAD2",    "SOUND",  "MOTOR3L",  "MOTOR3H",  \
-  /*32-39*/ "COZ187",   "ROBOT3-CE",  "PACKOUT-CE", "RECHARGE2","EMROBOT",  "EMCUBE", "DEBUG" }
+#define FIXTURE_TYPES {                                                                                           \
+  /*0-7*/   "NO ID",    "BODY1",      "HEAD1",      "MOTOR1H",  "CHARGER",  "CUBE1",  "CUBE2",      "CUBE3",      \
+  /*8-15*/  "ROBOT1",   "BODY2",      "MOTOR1L",    "MOTOR2L",  "MOTOR2H",  "BODY3",  "INFO",       "PLAYPEN",    \
+  /*16-23*/ "FINISHC",  "FINISH1",    "FINISH2",    "FINISH3",  "FINISHX",  "CUBEX",  "ROBOT2",     "ROBOT3",     \
+  /*24-31*/ "PACKOUT",  "LIFETEST",   "RECHARGE",   "JAM",      "HEAD2",    "SOUND",  "MOTOR3L",    "MOTOR3H",    \
+  /*32-39*/ "COZ187",   "ROBOT3-CE",  "PACKOUT-CE", "RECHARGE2","EMROBOT",  "EMCUBE", "ROBOT3-LE",  "PACKOUT-LE", \
+  /*40-47*/ "DEBUG" }
 
 // Get a serial number for a device in the normal 12.20 fixture.sequence format
 u32 GetSerial();

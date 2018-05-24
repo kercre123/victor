@@ -41,8 +41,10 @@ static __inline bool _isRobot(void) {
           (g_fixtureType == FIXTURE_ROBOT2_TEST) ||
           (g_fixtureType == FIXTURE_ROBOT3_TEST) ||
           (g_fixtureType == FIXTURE_ROBOT3_CE_TEST) ||
+          (g_fixtureType == FIXTURE_ROBOT3_LE_TEST) ||
           (g_fixtureType == FIXTURE_PACKOUT_TEST) ||
           (g_fixtureType == FIXTURE_PACKOUT_CE_TEST) ||
+          (g_fixtureType == FIXTURE_PACKOUT_LE_TEST) ||
           (g_fixtureType == FIXTURE_COZ187_TEST);
 }
 

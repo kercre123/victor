@@ -1,4 +1,12 @@
 ----------------
+Release v104.9
+----------------
+
+split CE/LE modes:
+ROBOT3-CE/PACKOUT-CE: set,verify BODYCOLOR "3" for 2017 "Liquid Metal" model Collector's Edition.
+ROBOT3-LE/PACKOUT-LE: set,verify BODYCOLOR "4" for 2018 "Blue" model Limited Edition.
+
+----------------
 Release v104.8
 ----------------
 

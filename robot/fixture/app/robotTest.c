@@ -34,7 +34,7 @@ enum {
   BODYCOLOR_M1_RESERVED       = 1,
   BODYCOLOR_M2_WHITE          = 2,  //standard white (v1.5 and later)
   BODYCOLOR_M3_CE_LM          = 3,  //Collectors edition, Liquid Metal
-  BODYCOLOR_M3_LE_BLUE        = 4,  //Limited edition, "Blue" Sneaker (2018)
+  BODYCOLOR_M4_LE_BLUE        = 4,  //Limited edition, "Blue" Sneaker (2018)
   BODYCOLOR_END,
 };
 
@@ -148,7 +148,9 @@ static void WriteBodyColor(void)
   if( g_fixtureType == FIXTURE_ROBOT3_TEST )
     setBodycolor( BODYCOLOR_M2_WHITE );
   if( g_fixtureType == FIXTURE_ROBOT3_CE_TEST )
-    setBodycolor( BODYCOLOR_M3_LE_BLUE );
+    setBodycolor( BODYCOLOR_M3_CE_LM );
+  if( g_fixtureType == FIXTURE_ROBOT3_LE_TEST )
+    setBodycolor( BODYCOLOR_M4_LE_BLUE );
 }
 
 static void VerifyBodyColor(void)
@@ -157,7 +159,9 @@ static void VerifyBodyColor(void)
   
   if( g_fixtureType == FIXTURE_PACKOUT_TEST && m_bodyColor != BODYCOLOR_M2_WHITE )
     throw ERROR_BODYCOLOR_INVALID;
-  if( g_fixtureType == FIXTURE_PACKOUT_CE_TEST && m_bodyColor != BODYCOLOR_M3_LE_BLUE )
+  if( g_fixtureType == FIXTURE_PACKOUT_CE_TEST && m_bodyColor != BODYCOLOR_M3_CE_LM )
+    throw ERROR_BODYCOLOR_INVALID;
+  if( g_fixtureType == FIXTURE_PACKOUT_LE_TEST && m_bodyColor != BODYCOLOR_M4_LE_BLUE )
     throw ERROR_BODYCOLOR_INVALID;
 }
 
@@ -240,7 +244,7 @@ void CheckMotor(u8 motor, u8 power, int min, int max)
   int errbase = ERROR_MOTOR_LEFT + motor*10;
 
   // For packout, scale limits to 80%
-  if (g_fixtureType == FIXTURE_PACKOUT_TEST || g_fixtureType == FIXTURE_PACKOUT_CE_TEST)
+  if (g_fixtureType == FIXTURE_PACKOUT_TEST || g_fixtureType == FIXTURE_PACKOUT_CE_TEST || g_fixtureType == FIXTURE_PACKOUT_LE_TEST)
     min = (min * 13) >> 4;
   
   // Move lift/head out of the way before test
@@ -369,7 +373,7 @@ void JamTest(void)
 void HeadLimits(void)
 {
   // Check max limit for head only on ROBOT2 and above (head is installed)
-  if (g_fixtureType < FIXTURE_ROBOT2_TEST || g_fixtureType == FIXTURE_PACKOUT_TEST || g_fixtureType == FIXTURE_PACKOUT_CE_TEST)
+  if (g_fixtureType < FIXTURE_ROBOT2_TEST || g_fixtureType == FIXTURE_PACKOUT_TEST || g_fixtureType == FIXTURE_PACKOUT_CE_TEST || g_fixtureType == FIXTURE_PACKOUT_LE_TEST)
     return;
   
   const int MOTOR_RUNTIME = 2000 * 1000;  // Need about 2 seconds for normal variation
@@ -409,7 +413,7 @@ void FastMotors(void)
   CheckMotor(MOTOR_LIFT,        FAST_HEADLIFT_POWER, FAST_LIFT_THRESH, g_fixtureType < FIXTURE_ROBOT3_TEST ? 0 : FAST_LIFT_MAX);
 
   // Per Raymond/Kenny's request, run second lift test after jamming motion
-  if (g_fixtureType == FIXTURE_ROBOT3_TEST || g_fixtureType == FIXTURE_ROBOT3_CE_TEST)
+  if (g_fixtureType == FIXTURE_ROBOT3_TEST || g_fixtureType == FIXTURE_ROBOT3_CE_TEST || g_fixtureType == FIXTURE_ROBOT3_LE_TEST)
     CheckMotor(MOTOR_LIFT,        SLOW_POWER, SLOW_LIFT_THRESH, 0);
 }
 

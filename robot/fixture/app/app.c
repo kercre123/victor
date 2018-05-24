@@ -22,7 +22,7 @@
 #include "nvReset.h"
 
 u8 g_fixtureReleaseVersion = 104;
-u8 g_fixtureReleaseRev = 8; //'ver.rev' e.g. 104.2
+u8 g_fixtureReleaseRev = 9; //'ver.rev' e.g. 104.2
 #define BUILD_INFO "MP v1.5"
 
 //Set this flag to modify display info - indicates a debug/test build
@@ -229,9 +229,11 @@ bool DetectDevice(void)
     case FIXTURE_ROBOT2_TEST:
     case FIXTURE_ROBOT3_TEST:
     case FIXTURE_ROBOT3_CE_TEST:
+    case FIXTURE_ROBOT3_LE_TEST:
     case FIXTURE_COZ187_TEST:
     case FIXTURE_PACKOUT_TEST:
     case FIXTURE_PACKOUT_CE_TEST:
+    case FIXTURE_PACKOUT_LE_TEST:
     case FIXTURE_LIFETEST_TEST:
     case FIXTURE_RECHARGE_TEST:
     case FIXTURE_RECHARGE2_TEST:
@@ -435,6 +437,7 @@ static void MainExecution()
     case FIXTURE_ROBOT2_TEST:
     case FIXTURE_ROBOT3_TEST:
     case FIXTURE_ROBOT3_CE_TEST:
+    case FIXTURE_ROBOT3_LE_TEST:
       m_functions = GetRobotTestFunctions();
       break;
     case FIXTURE_EMROBOT_TEST:
@@ -445,6 +448,7 @@ static void MainExecution()
       break;
     case FIXTURE_PACKOUT_TEST:
     case FIXTURE_PACKOUT_CE_TEST:
+    case FIXTURE_PACKOUT_LE_TEST:
       m_functions = GetPackoutTestFunctions();
       break; 
     case FIXTURE_LIFETEST_TEST:
