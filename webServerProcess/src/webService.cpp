@@ -13,6 +13,16 @@
 
 #include "webService.h"
 
+#if !defined(ANKI_WEBSERVER_ENABLED)
+  #if defined(NDEBUG)
+    #define ANKI_WEBSERVER_ENABLED 0
+  #else
+    #define ANKI_WEBSERVER_ENABLED 1
+  #endif
+#endif
+
+#if ANKI_WEBSERVER_ENABLED
+
 #if USE_DAS
 #include "DAS/DAS.h"
 #endif
@@ -435,7 +445,6 @@ TempEngineToApp(struct mg_connection *conn, void *cbdata)
                                         cbdata,
                                         WebService::WebService::RequestType::RT_TempEngineToApp );
 }
-
 
 WebService::WebService::Request::Request(RequestType rt,
                                          const std::string& param1,
@@ -1600,3 +1609,48 @@ void WebService::OnCloseWebSocket(const struct mg_connection* conn)
 } // namespace WebService
 } // namespace Cozmo
 } // namespace Anki
+
+#else
+
+namespace Anki {
+namespace Cozmo {
+namespace WebService {
+
+  WebService::WebService()
+  {
+  }
+
+  WebService::~WebService()
+  {
+  }
+
+  void WebService::Start(Anki::Util::Data::DataPlatform* /*platform*/, const Json::Value& /*config*/)
+  {
+  }
+
+  void WebService::Update()
+  {
+  }
+
+  void WebService::Stop()
+  {
+  }
+
+  void WebService::SendToWebSockets(const std::string& /*moduleName*/, const Json::Value& /*data*/) const
+  {
+  }
+
+  bool WebService::IsWebVizClientSubscribed(const std::string& /*moduleName*/) const
+  {
+    return false;
+  }
+
+  void WebService::RegisterRequestHandler(std::string /*uri*/, mg_request_handler /*handler*/, void* /*cbdata*/)
+  {
+  }
+
+} // namespace WebService
+} // namespace Cozmo
+} // namespace Anki
+
+#endif // ANKI_WEBSERVICE_ENABLED

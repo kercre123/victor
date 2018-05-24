@@ -67,7 +67,19 @@ If you're a developer, it is highly recommended that you check out the [Victor B
 
     If this command fails for some reason, try running `victor_build_debug -fX`<sup>1</sup>.
     
+    Note if performance is a problem there is an option for a debug build with compiler optimizations enabled
+
+    ```
+    victor_build_debugo2
+    ```
+
     Note that we often build in `release` mode, since `debug` mode is extremely slow on the robot. You can build in release by using `victor_build_release`.
+
+    This differs from a shipping build as some developer tools are included, e.g. webserver, for a build that is shipped to consumers use
+
+    ```
+    victor_build_shipping
+    ```
 
 1. To build for mac, run
 
