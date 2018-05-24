@@ -256,40 +256,79 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     
 #pragma mark -
 #pragma mark SpriteSequenceKeyFrame
-
-    SpriteSequenceKeyFrame::SpriteSequenceKeyFrame(bool shouldRenderInEyeHue,
-                                                   Vision::SpriteName sequenceName,
-                                                   bool containsRuntimeSpriteSeq)
-    : _shouldRenderInEyeHue(shouldRenderInEyeHue)
-    , _spriteSequenceName(sequenceName) 
+    SpriteSequenceKeyFrame::SpriteSequenceKeyFrame(Vision::SpriteHandle spriteHandle,
+                                                   TimeStamp_t triggerTime_ms, 
+                                                   float scanlineOpacity,
+                                                   bool shouldRenderInEyeHue)
+    : _scanlineOpacity(scanlineOpacity)
     {
-      _keyframeDuration_ms = ANIM_TIME_STEP_MS;
-      if(containsRuntimeSpriteSeq){
-        _runtimeSpriteSequence = std::make_unique<Vision::SpriteSequence>();
+      if(ANKI_DEV_CHEATS){
+        auto img = spriteHandle->GetSpriteContentsGrayscale();
+        ANKI_VERIFY((img.GetNumRows() == FACE_DISPLAY_HEIGHT) &&
+                    (img.GetNumCols() == FACE_DISPLAY_WIDTH),
+                    "SpriteSequenceKeyFrame.Constructor.ImproperDimensions",
+                    "Expected %d rows and %d cols, received %d rows and %d cols",
+                    img.GetNumRows(), img.GetNumCols(),
+                    FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
       }
+      Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
+      _compositeImage.reset(new Vision::CompositeImage(faceHueAndSaturation, spriteHandle, !shouldRenderInEyeHue));
+      _keyframeDuration_ms = ANIM_TIME_STEP_MS;
+      _triggerTime_ms = triggerTime_ms;
+
+      ValidateScanlineOpacity();
+    }
+
+    SpriteSequenceKeyFrame::SpriteSequenceKeyFrame(const Vision::SpriteSequence* const spriteSeq,
+                                                   TimeStamp_t triggerTime_ms, 
+                                                   u32 frameInterval_ms,
+                                                   float scanlineOpacity,
+                                                   bool shouldRenderInEyeHue)
+    : _scanlineOpacity(scanlineOpacity)
+    {
+      Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
+      _compositeImage.reset(new Vision::CompositeImage(faceHueAndSaturation, spriteSeq, !shouldRenderInEyeHue));
+      _keyframeDuration_ms = spriteSeq->GetNumFrames() * ANIM_TIME_STEP_MS;
+      _triggerTime_ms = triggerTime_ms;
+      _internalUpdateInterval_ms = frameInterval_ms;
+      ANKI_VERIFY((_internalUpdateInterval_ms != 0) &&
+                  ((_internalUpdateInterval_ms % ANIM_TIME_STEP_MS) == 0),
+                  "SpriteSequenceKeyFrame.SetCompositeImage.InvalidTimeStep",
+                  "Update interval %d is not a multiple of anim time step %d",
+                  _internalUpdateInterval_ms, ANIM_TIME_STEP_MS);
+      ValidateScanlineOpacity();
+    }
+
+    SpriteSequenceKeyFrame::SpriteSequenceKeyFrame(Vision::SpriteCache* spriteCache, 
+                                                   Vision::CompositeImage* compImg, 
+                                                   u32 frameInterval_ms,
+                                                   float scanlineOpacity)
+    : _scanlineOpacity(scanlineOpacity)
+    {
+      Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
+      _compositeImage = std::make_unique<Vision::CompositeImage>(spriteCache, faceHueAndSaturation);
+      _compositeImage.reset(compImg);
+      _internalUpdateInterval_ms = frameInterval_ms;
+      ANKI_VERIFY((_internalUpdateInterval_ms != 0) &&
+                  ((_internalUpdateInterval_ms % ANIM_TIME_STEP_MS) == 0),
+                  "SpriteSequenceKeyFrame.SetCompositeImage.InvalidTimeStep",
+                  "Update interval %d is not a multiple of anim time step %d",
+                  _internalUpdateInterval_ms, ANIM_TIME_STEP_MS);
+      ValidateScanlineOpacity();
     }
 
     SpriteSequenceKeyFrame::SpriteSequenceKeyFrame(const SpriteSequenceKeyFrame& other)
     {
       _triggerTime_ms            = other._triggerTime_ms;
       _keyframeDuration_ms       = other._keyframeDuration_ms;
-      _shouldRenderInEyeHue      = other._shouldRenderInEyeHue;
-      _cannedSpriteSequence      = other._cannedSpriteSequence;
-      _rawSeqName                = other._rawSeqName;
-      _spriteSequenceName        = other._spriteSequenceName;
       _scanlineOpacity           = other._scanlineOpacity;
       _internalUpdateInterval_ms = other._internalUpdateInterval_ms;
       _compositeImageUpdated     = other._compositeImageUpdated;
       _compositeImageUpdateMap   = other._compositeImageUpdateMap;
       
-      if(other._runtimeSpriteSequence != nullptr){
-        _runtimeSpriteSequence.reset(new Vision::SpriteSequence(*other._runtimeSpriteSequence));
-      }
-
       if(other._compositeImage != nullptr){
         _compositeImage.reset(new Vision::CompositeImage(*other._compositeImage));
       }
-      
     }
 
     SpriteSequenceKeyFrame::~SpriteSequenceKeyFrame()
@@ -299,80 +338,53 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     
     Result SpriteSequenceKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
-      {
-        std::string strSeqName = JsonTools::ParseString(jsonRoot, "animName", "SpriteSequenceKeyframe.MissingName");
-        // TODO: Take this out once root path is part of AnimationTool!
-        size_t lastSlash = strSeqName.find_last_of("/");
-        if(lastSlash != std::string::npos) {
-          PRINT_NAMED_WARNING("SpriteSequenceKeyFrame.Process",
-                              "%s: Removing path from animation name: %s",
-                              animNameDebug.c_str(),
-                              strSeqName.c_str());
-          strSeqName = strSeqName.substr(lastSlash+1, std::string::npos);
-        }
-        _rawSeqName = strSeqName;
-      }
-
-      JsonTools::GetValueOptional(jsonRoot, "scanlineOpacity", _scanlineOpacity);
-      JsonTools::GetValueOptional(jsonRoot, "frameDuration_ms", _internalUpdateInterval_ms);
-
-      return Process(animNameDebug);
+      DEV_ASSERT(false, "SpriteSequenceKeyframe.SetMembersFromJSON.ThisFunctionNotSupported.BuildKeyframeDirectly");
+      return RESULT_FAIL;
     }
 
-    Result SpriteSequenceKeyFrame::Process(const std::string& animNameDebug)
+    void SpriteSequenceKeyFrame::ValidateScanlineOpacity()
     {
       // Verify that the scanline opacity is between 0 and 1
       DEV_ASSERT_MSG(Util::InRange(_scanlineOpacity, 0.f, 1.f),
                      "SpriteSequenceKeyFrame.Process.InvalidScanlineOpacity",
-                     "%s: Invalid scanline opacity of %f",
-                     animNameDebug.c_str(),
+                     "Invalid scanline opacity of %f",
                      _scanlineOpacity);
       _scanlineOpacity = Util::Clamp(_scanlineOpacity, 0.f, 1.f);
-
-      return RESULT_OK;
     }
 
-    
-    void SpriteSequenceKeyFrame::GiveKeyframeImageAccess(const Vision::SpritePathMap* spriteMap,
-                                                         Vision::SpriteSequenceContainer* spriteSequenceContainer) 
+    bool SpriteSequenceKeyFrame::ParseSequenceNameFromString(const Vision::SpritePathMap* spriteMap,
+                                                             const std::string& sequenceName, 
+                                                             Vision::SpriteName& outName)
     {
-      DEV_ASSERT((spriteMap != nullptr) && (_runtimeSpriteSequence == nullptr), 
-                 "SpriteSequenceKeyFram.GiveKeyframeImageAccess.InvalidSpriteMap");
-
-      if(ParseSequenceNameFromString(spriteMap)){
-        _cannedSpriteSequence = spriteSequenceContainer->GetSequenceByName(_spriteSequenceName);
-      }else{
-        PRINT_NAMED_WARNING("SpriteSequenceKeyFram.GiveKeyframeImageAccess.NoMatchFoundForSequenceName",
-                            "Sequence name %s does not appear in spriteMap, attempting to grab from unnamed map",
-                            _rawSeqName.c_str());
-        _cannedSpriteSequence = spriteSequenceContainer->GetUnmappedSequenceByFileName(_rawSeqName);
-        ANKI_VERIFY(_cannedSpriteSequence != nullptr,
-                    "SpriteSequenceKeyFram.GiveKeyframeImageAccess.Failed to fild unmaped sequence",
-                    "Missing sequence for %s entirely",
-                    _rawSeqName.c_str());
+      // sequenceName is only the folder name - manually check all entries in sprite map
+      // so that just the folder name is pulled out of the full path to try and find a match
+      bool foundMatch = false;
+      for(const auto& key : spriteMap->GetAllKeys()){
+        const auto& fullPath = spriteMap->GetValue(key);
+        const auto& fileName = Util::FileUtils::GetFileName(fullPath);
+        if(fileName == sequenceName){
+          foundMatch = true;
+          outName = key;
+          break;
+        }
       }
+
+      if(foundMatch){
+        const bool isValidSequence = Vision::IsSpriteSequence(outName, false);
+        ANKI_VERIFY(isValidSequence,
+                    "SpriteSequenceKeyFrame.SetMembersFromJson.InvalidSequence",
+                    "Sprite %s is not marked as a sprite sequence",
+                    SpriteNameToString(outName));
+      }
+
+      return foundMatch;
     }
 
-    bool SpriteSequenceKeyFrame::VerifyOnlyOneImplementationSet() const
-    {
-      const bool oneSequenceNull = (_cannedSpriteSequence == nullptr) || (_runtimeSpriteSequence == nullptr);
-      const bool oneRuntimeNull  = (_runtimeSpriteSequence == nullptr) || (_compositeImage == nullptr);
-      const bool oneOtherNull    = (_cannedSpriteSequence == nullptr) || (_compositeImage == nullptr);
-      return oneSequenceNull && oneRuntimeNull && oneOtherNull;
-    }
     
     TimeStamp_t SpriteSequenceKeyFrame::CalculateInternalEndTime_ms() const
     {
-      TimeStamp_t outTime = 0;
-      if(_cannedSpriteSequence != nullptr){
-        outTime = _cannedSpriteSequence->GetNumFrames() * _internalUpdateInterval_ms;
-      }else if(_runtimeSpriteSequence != nullptr){
-        outTime = _runtimeSpriteSequence->GetNumFrames() * _internalUpdateInterval_ms;
-      }else if(_compositeImage != nullptr){
-        outTime = _compositeImage->GetFullLoopLength() * _internalUpdateInterval_ms;
-      }
-      outTime += _triggerTime_ms;
-      return outTime > GetKeyframeDuration_ms() ? outTime : GetKeyframeDuration_ms();
+      const TimeStamp_t outTime = (_compositeImage->GetFullLoopLength() * _internalUpdateInterval_ms) + _triggerTime_ms;
+      return (outTime > GetKeyframeDuration_ms()) ? outTime : (GetKeyframeDuration_ms() + _triggerTime_ms);
     }
     
     bool SpriteSequenceKeyFrame::HaveKeyframeForTimeStamp(const TimeStamp_t timeSinceAnimStart_ms) const
@@ -381,32 +393,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
              ((timeSinceAnimStart_ms % _internalUpdateInterval_ms) <= ANIM_TIME_STEP_MS);
     }
 
-    
-    bool SpriteSequenceKeyFrame::ParseSequenceNameFromString(const Vision::SpritePathMap* spriteMap)
-    {
-      // _rawSeqName is only the folder name - manually check all entries in sprite map
-      // so that just the folder name is pulled out of the full path to try and find a match
-      bool foundMatch = false;
-      for(const auto& key : spriteMap->GetAllKeys()){
-        const auto& fullPath = spriteMap->GetValue(key);
-        const auto& fileName = Util::FileUtils::GetFileName(fullPath);
-        if(fileName == _rawSeqName){
-          foundMatch = true;
-          _spriteSequenceName = key;
-          break;
-        }
-      }
-
-      if(foundMatch){
-        const bool isValidSequence = Vision::IsSpriteSequence(_spriteSequenceName, false);
-        ANKI_VERIFY(isValidSequence,
-                    "SpriteSequenceKeyFrame.SetMembersFromJson.InvalidSequence",
-                    "Sprite %s is not marked as a sprite sequence",
-                    SpriteNameToString(_spriteSequenceName));
-      }
-
-      return foundMatch;
-    }
 
     void SpriteSequenceKeyFrame::ApplyCompositeImageUpdate(CompositeImageUpdateSpec&& updateSpec)
     {
@@ -437,21 +423,64 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     }
 
 
-    Result SpriteSequenceKeyFrame::DefineFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug)
+    bool SpriteSequenceKeyFrame::ExtractDataFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe,
+                                                        const Vision::SpritePathMap* spriteMap,
+                                                        Vision::SpriteSequenceContainer* seqContainer,
+                                                        const Vision::SpriteSequence*& outSeq,
+                                                        TimeStamp_t& triggerTime_ms, 
+                                                        float& scanlineOpacity)
     {
       DEV_ASSERT(faceAnimKeyframe != nullptr, "SpriteSequenceKeyFrame.DefineFromFlatBuf.NullAnim");
-      SafeNumericCast(faceAnimKeyframe->triggerTime_ms(), _triggerTime_ms, animNameDebug.c_str());
-      Result lastResult = SetMembersFromFlatBuf(faceAnimKeyframe, animNameDebug);
-      return lastResult;
+      auto seqNameStr = faceAnimKeyframe->animName()->str();
+      Vision::SpriteName seqName = Vision::SpriteName::Count;
+      const bool success = ParseSequenceNameFromString(spriteMap, seqNameStr, seqName);
+      if(success){
+        outSeq = seqContainer->GetSequenceAgnostic(seqName, seqNameStr);
+      }else{
+        outSeq = seqContainer->GetUnmappedSequenceByFileName(seqNameStr);
+      }
+
+      SafeNumericCast(faceAnimKeyframe->scanlineOpacity(), scanlineOpacity, seqNameStr.c_str());
+      SafeNumericCast(faceAnimKeyframe->triggerTime_ms(),  triggerTime_ms, seqNameStr.c_str());
+      return success;
     }
 
-    Result SpriteSequenceKeyFrame::SetMembersFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug)
+    bool SpriteSequenceKeyFrame::ExtractDataFromJson(const Json::Value &jsonRoot,
+                                                     const Vision::SpritePathMap* spriteMap,
+                                                     Vision::SpriteSequenceContainer* seqContainer,
+                                                     const Vision::SpriteSequence*& outSeq,
+                                                     TimeStamp_t& triggerTime_ms, 
+                                                     float& scanlineOpacity,
+                                                     TimeStamp_t& frameUpdateInterval)
     {
-      _rawSeqName = faceAnimKeyframe->animName()->str();
-      SafeNumericCast(faceAnimKeyframe->scanlineOpacity(), _scanlineOpacity, animNameDebug.c_str());
+      // Get the sprite sequence
+      {
+        std::string strSeqName = JsonTools::ParseString(jsonRoot, "animName", "SpriteSequenceKeyframe.MissingName");
 
-      return Process(animNameDebug);
+        // TODO: Take this out once root path is part of AnimationTool!
+        size_t lastSlash = strSeqName.find_last_of("/");
+        if(lastSlash != std::string::npos) {
+          PRINT_NAMED_WARNING("SpriteSequenceKeyFrame.Process",
+                              "Removing path from animation name: %s",
+                              strSeqName.c_str());
+          strSeqName = strSeqName.substr(lastSlash+1, std::string::npos);
+        }
+        
+        Vision::SpriteName seqName = Vision::SpriteName::Count;
+        const bool success = ParseSequenceNameFromString(spriteMap, strSeqName, seqName);
+        if(success){
+          outSeq = seqContainer->GetSequenceAgnostic(seqName, strSeqName);
+        }else{
+          outSeq = seqContainer->GetUnmappedSequenceByFileName(strSeqName);
+        }
+      }
+
+      JsonTools::GetValueOptional(jsonRoot, "scanlineOpacity", scanlineOpacity);
+      JsonTools::GetValueOptional(jsonRoot, "frameDuration_ms", frameUpdateInterval);
+
+      return outSeq != nullptr;
     }
+
     
     bool SpriteSequenceKeyFrame::IsDone(const TimeStamp_t timeSinceAnimStart_ms) const
     {
@@ -459,56 +488,9 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         return false;
       }
 
-      // For canned animations we check if GetFaceImage() has been called as many
-      // times as there are frames.
-      // For procedural animations, frames are deleted (with PopFront) after they are
-      // played in order to avoid unbounded growth (since a procedural animation can
-      // be played for an arbitrary period of time) so we check for whether or not
-      // there are any frames left.
-      if(ANKI_DEV_CHEATS){
-        ANKI_VERIFY(VerifyOnlyOneImplementationSet(), 
-                    "SpriteSequenceKeyFrame.IsDone.MultilpeImplementationsSet", 
-                    "");
-      }
-
-      if(_runtimeSpriteSequence != nullptr){
-        return _runtimeSpriteSequence->GetNumFrames() == 0;
-      }else if(_cannedSpriteSequence != nullptr){
-        return _cannedSpriteSequence->GetNumFrames() <= GetFrameNumberForTime(timeSinceAnimStart_ms);
-      }else if(_compositeImage != nullptr){
-        return _compositeImage->GetFullLoopLength() <= GetFrameNumberForTime(timeSinceAnimStart_ms);
-      }
-      return true;
-    }
-    
-    bool SpriteSequenceKeyFrame::ShouldRenderInEyeHue() const
-    {
-      // Composite images handle their own eye coloring
-      return (_compositeImage == nullptr) && _shouldRenderInEyeHue;
+      return _compositeImage->GetFullLoopLength() <= GetFrameNumberForTime(timeSinceAnimStart_ms);
     }
 
-
-    void SpriteSequenceKeyFrame::AddFrameToRuntimeSequence(Vision::SpriteHandle spriteHandle)
-    {
-      if(_runtimeSpriteSequence != nullptr){
-        _runtimeSpriteSequence->AddFrame(spriteHandle);
-      }
-    }
-
-    void SpriteSequenceKeyFrame::SetCompositeImage(Vision::SpriteCache* spriteCache, 
-                                                   Vision::CompositeImage* compImg, 
-                                                   u32 getFrameInterval_ms)
-    {
-      Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
-      _compositeImage = std::make_unique<Vision::CompositeImage>(spriteCache, faceHueAndSaturation);
-      _compositeImage.reset(compImg);
-      _internalUpdateInterval_ms = getFrameInterval_ms;
-      ANKI_VERIFY((_internalUpdateInterval_ms != 0) &&
-                  ((_internalUpdateInterval_ms % ANIM_TIME_STEP_MS) == 0),
-                  "SpriteSequenceKeyFrame.SetCompositeImage.InvalidTimeStep",
-                  "Update interval %d is not a multiple of anim time step %d",
-                  _internalUpdateInterval_ms, ANIM_TIME_STEP_MS);
-    }
 
     void SpriteSequenceKeyFrame::QueueCompositeImageUpdate(CompositeImageUpdateSpec&& updateSpec,
                                                            u32 applyAt_ms)
@@ -523,20 +505,12 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       if(IsFirstKeyframeTick(timeSinceAnimStart_ms)){
         return true;
       }
-      
-      if(_cannedSpriteSequence != nullptr){
-        return HaveKeyframeForTimeStamp(timeSinceAnimStart_ms);
-      }else if(_runtimeSpriteSequence != nullptr){
-        return _runtimeSpriteSequence->GetNumFrames() > 1;
-      }else if(_compositeImage != nullptr){
-        const bool timeToAdvanceFrame = (_compositeImage->GetFullLoopLength() > 1) && 
-                                        ((timeSinceAnimStart_ms % _internalUpdateInterval_ms) == 0);
-        const bool updatesForCurrentFrame = !_compositeImageUpdateMap.empty() &&
-                                            (_compositeImageUpdateMap.begin()->first <= timeSinceAnimStart_ms);
-        return _compositeImageUpdated ||timeToAdvanceFrame || updatesForCurrentFrame;
-      }
-      
-      return false;
+
+      const bool timeToAdvanceFrame = (_compositeImage->GetFullLoopLength() > 1) && 
+                                      ((timeSinceAnimStart_ms % _internalUpdateInterval_ms) == 0);
+      const bool updatesForCurrentFrame = !_compositeImageUpdateMap.empty() &&
+                                          (_compositeImageUpdateMap.begin()->first <= timeSinceAnimStart_ms);
+      return _compositeImageUpdated ||timeToAdvanceFrame || updatesForCurrentFrame;      
     }
 
     
@@ -546,56 +520,44 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         return false;
       }
 
-      if(ANKI_DEV_CHEATS){
-        ANKI_VERIFY(VerifyOnlyOneImplementationSet(), 
-                    "SpriteSequenceKeyFrame.GetFaceImageHandle.MultilpeImplementationsSet", 
-                    "");
-      }
-
-      if(_compositeImage != nullptr){
-        // Apply any composite image updates queued
-        auto iter = _compositeImageUpdateMap.begin();
-        const auto mapBound = _compositeImageUpdateMap.size() + 1;
-        BOUNDED_WHILE(mapBound, iter != _compositeImageUpdateMap.end()){
-          if(iter->first <= timeSinceAnimStart_ms){
-            auto updateSpec = iter->second;
-            ApplyCompositeImageUpdate(std::move(updateSpec));
-            // erase element/move iterator
-            _compositeImageUpdateMap.erase(iter);
-            iter = _compositeImageUpdateMap.begin();
-            _compositeImageUpdated = true;
-          }else{
-            break;
-          }
+      // Apply any composite image updates queued
+      auto iter = _compositeImageUpdateMap.begin();
+      const auto mapBound = _compositeImageUpdateMap.size() + 1;
+      BOUNDED_WHILE(mapBound, iter != _compositeImageUpdateMap.end()){
+        if(iter->first <= timeSinceAnimStart_ms){
+          auto updateSpec = iter->second;
+          ApplyCompositeImageUpdate(std::move(updateSpec));
+          // erase element/move iterator
+          _compositeImageUpdateMap.erase(iter);
+          iter = _compositeImageUpdateMap.begin();
+          _compositeImageUpdated = true;
+        }else{
+          break;
         }
       }
-
       
       u32 curFrame = GetFrameNumberForTime(timeSinceAnimStart_ms);
 
       if((HaveKeyframeForTimeStamp(timeSinceAnimStart_ms)) ||
          _compositeImageUpdated){
-        if(_runtimeSpriteSequence != nullptr){
-          _runtimeSpriteSequence->GetFrame(0, handle);
-          if(SequenceShouldAdvance()){
-            _runtimeSpriteSequence->PopFront();
-          }
-        }else if(_cannedSpriteSequence != nullptr){
-          _cannedSpriteSequence->GetFrame(curFrame, handle);
-        }else if(_compositeImage != nullptr){
-          auto* img = new Vision::ImageRGBA(_compositeImage->GetHeight(),
-                                            _compositeImage->GetWidth());
-          img->FillWith(Vision::PixelRGBA());
-          _compositeImage->OverlayImageWithFrame(*img, curFrame);
-          handle = std::make_shared<Vision::SpriteWrapper>(img);
-        }
-
+        auto* img = new Vision::ImageRGBA(_compositeImage->GetHeight(),
+                                          _compositeImage->GetWidth());
+        img->FillWith(Vision::PixelRGBA());
+        _compositeImage->OverlayImageWithFrame(*img, curFrame);
+        handle = std::make_shared<Vision::SpriteWrapper>(img);
         _compositeImageUpdated = false;
         return true;
       }else{
         return false;
       }
     }
+    
+    void SpriteSequenceKeyFrame::OverrideShouldRenderInEyeHue(bool shouldRenderInEyeHue)
+    {
+      auto renderMethod = shouldRenderInEyeHue ? Vision::SpriteRenderMethod::CustomHue : Vision::SpriteRenderMethod::RGBA;
+      _compositeImage->OverrideRenderMethod(renderMethod);
+    }
+
 
 #pragma mark -
 #pragma mark ProceduralFaceKeyFrame

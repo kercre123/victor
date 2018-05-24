@@ -94,9 +94,7 @@ private:
   void LoadAnimationFile(const std::string& path, CannedAnimationContainer* container);
 
   Result DefineFromJson(const Json::Value& jsonRoot, std::string& loadedAnimName, CannedAnimationContainer* container);
-  Result DefineFromFlatBuf(const CozmoAnim::AnimClip* animClip, std::string& animName, CannedAnimationContainer* container);
-  void SetSpriteSequenceContainerOnAnimation(Animation& animation) const;
-  
+  Result DefineFromFlatBuf(const CozmoAnim::AnimClip* animClip, std::string& animName, CannedAnimationContainer* container);  
   Result SanityCheck(Result lastResult, Animation& animation, std::string& animationName) const;
 
 };

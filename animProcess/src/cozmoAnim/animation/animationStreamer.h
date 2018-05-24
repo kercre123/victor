@@ -84,6 +84,7 @@ namespace Cozmo {
                                  Tag tag,
                                  u32 numLoops = 1,
                                  bool interruptRunning = true,
+                                 bool shouldOverrideEyeHue = false,
                                  bool shouldRenderInEyeHue = true);
     
     Result SetProceduralFace(const ProceduralFace& face, u32 duration_ms);    
@@ -97,7 +98,7 @@ namespace Cozmo {
 
 
     Result SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms);
-    Result SetCompositeImage(Vision::CompositeImage* compImg, u32 getFrameInterval_ms, u32 duration_ms);
+    Result SetCompositeImage(Vision::CompositeImage* compImg, u32 frameInterval_ms, u32 duration_ms);
     Result UpdateCompositeImage(Vision::LayerName layerName, 
                                 const Vision::CompositeImageLayer::SpriteBox& spriteBox, 
                                 Vision::SpriteName spriteName,
@@ -155,13 +156,16 @@ namespace Cozmo {
                                  Tag tag,
                                  u32 numLoops = 1,
                                  bool interruptRunning = true,
+                                 bool shouldOverrideEyeHue = false,
                                  bool shouldRenderInEyeHue = true,
                                  bool isInternalAnim = true,
                                  bool shouldClearProceduralAnim = true);
 
     // Initialize the streaming of an animation with a given tag
     // (This will call anim->Init())
-    Result InitStreamingAnimation(Tag withTag);
+    // if shouldOverrideEyeHue is set to true the value of shouldRenderInEyeHue will be applied
+    // to all sprites in the animation's SpriteSequenceTrack
+    Result InitStreamingAnimation(Tag withTag, bool shouldOverrideEyeHue = false, bool shouldRenderInEyeHue = true);
     
     // Update Stream of either the streaming animation or procedural tracks
     Result StreamTracks();

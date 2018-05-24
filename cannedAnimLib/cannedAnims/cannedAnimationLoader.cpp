@@ -270,8 +270,8 @@ Result CannedAnimationLoader::DefineFromFlatBuf(const CozmoAnim::AnimClip* animC
 {
   Animation animation(animName);
 
-  Result lastResult = animation.DefineFromFlatBuf(animName, animClip);
-  SetSpriteSequenceContainerOnAnimation(animation);
+  Result lastResult = animation.DefineFromFlatBuf(animName, animClip, 
+                                                  _spriteMap, _spriteSequenceContainer);
 
   const Result res = SanityCheck(lastResult, animation, animName);
   if(res == Result::RESULT_OK){
@@ -314,8 +314,8 @@ Result CannedAnimationLoader::DefineFromJson(const Json::Value& jsonRoot, std::s
   PRINT_CH_DEBUG(LOG_CHANNEL, "CannedAnimationLoader::DefineFromJson", "Loading '%s'", animationName.c_str());
 
   Animation animation(animationName);
-  Result lastResult = animation.DefineFromJson(animationName, jsonRoot[animationName]);
-  SetSpriteSequenceContainerOnAnimation(animation);
+  Result lastResult = animation.DefineFromJson(animationName, jsonRoot[animationName],
+                                               _spriteMap, _spriteSequenceContainer);
 
   const Result res = SanityCheck(lastResult, animation, animationName);
   if(res == Result::RESULT_OK){
@@ -324,19 +324,6 @@ Result CannedAnimationLoader::DefineFromJson(const Json::Value& jsonRoot, std::s
   return res;
 } // CannedAnimationLoader::DefineFromJson()
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CannedAnimationLoader::SetSpriteSequenceContainerOnAnimation(Animation& animation) const
-{
-  auto& spriteSeqTrack = animation.GetTrack<SpriteSequenceKeyFrame>();
-  const auto& maxCount = Animations::Track<SpriteSequenceKeyFrame>::ConstMaxFramesPerTrack();
-  BOUNDED_WHILE(maxCount, spriteSeqTrack.HasFramesLeft()){
-    auto& keyframe = spriteSeqTrack.GetCurrentKeyFrame();
-    keyframe.GiveKeyframeImageAccess(_spriteMap, _spriteSequenceContainer);
-    spriteSeqTrack.MoveToNextKeyFrame();
-  }
-  spriteSeqTrack.MoveToStart();
-}
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -3,7 +3,7 @@
     {
       "animName": "pairing_icon_awaiting_app",
       "triggerTime_ms": 0.0,
-      "frameDuration_ms": 500,
+      "frameDuration_ms": 495,
       "Name": "FaceAnimationKeyFrame"
     }
   ]

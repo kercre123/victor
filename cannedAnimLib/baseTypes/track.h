@@ -97,7 +97,6 @@ public:
   Result AddKeyFrameToBack(const CozmoAnim::ProceduralFace* procFaceKeyframe, const std::string& animNameDebug = "");
   Result AddKeyFrameToBack(const CozmoAnim::HeadAngle* headKeyframe, const std::string& animNameDebug = "");
   Result AddKeyFrameToBack(const CozmoAnim::RobotAudio* audioKeyframe, const std::string& animNameDebug = "");
-  Result AddKeyFrameToBack(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug = "");
   Result AddKeyFrameToBack(const CozmoAnim::Event* eventKeyframe, const std::string& animNameDebug = "");
   Result AddKeyFrameToBack(const CozmoAnim::BodyMotion* bodyKeyframe, const std::string& animNameDebug = "");
   Result AddKeyFrameToBack(const CozmoAnim::RecordHeading* recordHeadingKeyframe, const std::string& animNameDebug = "");
@@ -127,6 +126,8 @@ public:
   // Get a pointer to the last KeyFrame in the track. Returns nullptr if track is empty.
   const FRAME_TYPE* GetLastKeyFrame() const;
   FRAME_TYPE* GetLastKeyFrame();
+  
+  std::list<FRAME_TYPE>& GetAllKeyframes() { return _frames;}
 
   
   // Move to next frame and delete the current one if it's marked "live".
@@ -434,17 +435,6 @@ Result Track<FRAME_TYPE>::AddKeyFrameToBack(const CozmoAnim::RobotAudio* audioKe
 {
   FRAME_TYPE newKeyFrame;
   Result lastResult = newKeyFrame.DefineFromFlatBuf(audioKeyframe, animNameDebug);
-  if(RESULT_OK != lastResult) {
-    return lastResult;
-  }
-  return AddNewKeyFrameToBack(newKeyFrame);
-}
-
-template<typename FRAME_TYPE>
-Result Track<FRAME_TYPE>::AddKeyFrameToBack(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug)
-{
-  FRAME_TYPE newKeyFrame;
-  Result lastResult = newKeyFrame.DefineFromFlatBuf(faceAnimKeyframe, animNameDebug);
   if(RESULT_OK != lastResult) {
     return lastResult;
   }

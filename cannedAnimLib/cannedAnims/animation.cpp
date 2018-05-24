@@ -37,7 +37,8 @@ Animation::Animation(const std::string& name)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result Animation::DefineFromFlatBuf(const std::string& name, const CozmoAnim::AnimClip* animClip)
+Result Animation::DefineFromFlatBuf(const std::string& name, const CozmoAnim::AnimClip* animClip,
+                                    const Vision::SpritePathMap* spriteMap, Vision::SpriteSequenceContainer* seqContainer)
 {
   /*
   TODO: Does this method and the FlatBuffers schema file need to support
@@ -158,8 +159,17 @@ Result Animation::DefineFromFlatBuf(const std::string& name, const CozmoAnim::An
   if (spriteSequenceData != nullptr) {
     for (int faIdx=0; faIdx < spriteSequenceData->size(); faIdx++) {
       const CozmoAnim::FaceAnimation* faceAnimKeyframe = spriteSequenceData->Get(faIdx);
-      Result addResult = _spriteSequenceTrack.AddKeyFrameToBack(faceAnimKeyframe, name);
-      if(addResult != RESULT_OK) {
+      
+      const Vision::SpriteSequence* spriteSeq = nullptr;
+      TimeStamp_t triggerTime_ms = 0;
+      float scanlineOpacity = 0;
+      u32 frameInterval_ms = ANIM_TIME_STEP_MS;
+      const bool success = SpriteSequenceKeyFrame::ExtractDataFromFlatBuf(faceAnimKeyframe, spriteMap, seqContainer,
+                                                                          spriteSeq, triggerTime_ms, scanlineOpacity);
+      const bool shouldRenderInEyeHue = true;
+      SpriteSequenceKeyFrame kf(spriteSeq, triggerTime_ms, frameInterval_ms, scanlineOpacity, shouldRenderInEyeHue);
+      Result addResult = _spriteSequenceTrack.AddKeyFrameToBack(kf);
+      if(success && addResult != RESULT_OK) {
         PRINT_NAMED_ERROR("Animation.DefineFromFlatBuf.AddKeyFrameFailure",
                           "Adding FaceAnimation frame %d failed.", faIdx);
         return addResult;
@@ -225,7 +235,8 @@ Result Animation::DefineFromFlatBuf(const std::string& name, const CozmoAnim::An
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result Animation::DefineFromJson(const std::string& name, const Json::Value &jsonRoot)
+Result Animation::DefineFromJson(const std::string& name, const Json::Value &jsonRoot,
+                                 const Vision::SpritePathMap* spriteMap, Vision::SpriteSequenceContainer* seqContainer)
 {
   _name = name;
   
@@ -263,7 +274,21 @@ Result Animation::DefineFromJson(const std::string& name, const Json::Value &jso
     } else if(frameName == LiftHeightKeyFrame::GetClassName()) {
       addResult = _liftTrack.AddKeyFrameToBack(jsonFrame, name);
     } else if(frameName == SpriteSequenceKeyFrame::GetClassName()) {
-      addResult = _spriteSequenceTrack.AddKeyFrameToBack(jsonFrame, name);
+      const Vision::SpriteSequence* spriteSeq = nullptr;
+      TimeStamp_t triggerTime_ms = 0;
+      TimeStamp_t frameUpdateInterval = 0;
+      float scanlineOpacity = 0.f;
+      const bool success = SpriteSequenceKeyFrame::ExtractDataFromJson(jsonFrame, spriteMap, seqContainer,
+                                                                       spriteSeq, triggerTime_ms, 
+                                                                       scanlineOpacity, frameUpdateInterval);
+      if(success){
+        const bool shouldRenderInEyeHue = true;
+        SpriteSequenceKeyFrame kf(spriteSeq, triggerTime_ms, frameUpdateInterval, 
+                                scanlineOpacity, shouldRenderInEyeHue);
+        addResult = _spriteSequenceTrack.AddKeyFrameToBack(kf);
+      }else{
+        addResult = RESULT_FAIL;
+      }
     } else if(frameName == EventKeyFrame::GetClassName()) {
       addResult = _eventTrack.AddKeyFrameToBack(jsonFrame, name);
     } else if(frameName == "DeviceAudioKeyFrame") {

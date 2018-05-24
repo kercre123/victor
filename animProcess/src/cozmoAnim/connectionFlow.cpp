@@ -103,32 +103,40 @@ void DrawShowPinScreen(AnimationStreamer* animStreamer, const AnimContext* conte
 void DrawWifiScreen(AnimationStreamer* animStreamer)
 {
   const bool shouldInterrupt = true;
+  const bool shouldOverrideEyeHue = true;
   const bool shouldRenderInEyeHue = false;
-  animStreamer->SetStreamingAnimation("anim_pairing_icon_wifi", 0, 0, shouldInterrupt, shouldRenderInEyeHue);
+  animStreamer->SetStreamingAnimation("anim_pairing_icon_wifi", 0, 0, shouldInterrupt,
+                                      shouldOverrideEyeHue, shouldRenderInEyeHue);
 }
 
 // Uses a png sequence animation to draw os updating icon to screen
 void DrawUpdatingOSScreen(AnimationStreamer* animStreamer)
 {
   const bool shouldInterrupt = true;
+  const bool shouldOverrideEyeHue = true;
   const bool shouldRenderInEyeHue = false;
-  animStreamer->SetStreamingAnimation("anim_pairing_icon_update", 0, 0, shouldInterrupt, shouldRenderInEyeHue);
+  animStreamer->SetStreamingAnimation("anim_pairing_icon_update", 0, 0, shouldInterrupt,
+                                      shouldOverrideEyeHue, shouldRenderInEyeHue);
 }
 
 // Uses a png sequence animation to draw os updating error icon to screen
 void DrawUpdatingOSErrorScreen(AnimationStreamer* animStreamer)
 {
   const bool shouldInterrupt = true;
+  const bool shouldOverrideEyeHue = true;
   const bool shouldRenderInEyeHue = false;
-  animStreamer->SetStreamingAnimation("anim_pairing_icon_update_error", 0, 0, shouldInterrupt, shouldRenderInEyeHue);
+  animStreamer->SetStreamingAnimation("anim_pairing_icon_update_error", 0, 0, shouldInterrupt,
+                                      shouldOverrideEyeHue, shouldRenderInEyeHue);
 }
 
 // Uses a png sequence animation to draw waiting for app icon to screen
 void DrawWaitingForAppScreen(AnimationStreamer* animStreamer)
 {
   const bool shouldInterrupt = true;
+  const bool shouldOverrideEyeHue = true;
   const bool shouldRenderInEyeHue = false;
-  animStreamer->SetStreamingAnimation("anim_pairing_icon_awaitingapp", 0, 0, shouldInterrupt, shouldRenderInEyeHue);
+  animStreamer->SetStreamingAnimation("anim_pairing_icon_awaitingapp", 0, 0, shouldInterrupt,
+                                      shouldOverrideEyeHue, shouldRenderInEyeHue);
 }
 
 void SetBLEPin(uint32_t pin)

@@ -243,15 +243,7 @@ void RobotDataLoader::SetupProceduralAnimation()
   Animation proceduralAnim(kProceduralAnimName);
   _cannedAnimations->AddAnimation(std::move(proceduralAnim));
   
-  Animation* anim = _cannedAnimations->GetAnimation(kProceduralAnimName);
-  assert(anim != nullptr);
-  const bool shouldRenderInEyeHue = true;
-  SpriteSequenceKeyFrame kf(shouldRenderInEyeHue, Vision::SpriteName::Count, true);
-  if(RESULT_OK != anim->AddKeyFrameToBack(kf))
-  {
-    PRINT_NAMED_ERROR("RobotDataLoader.SetupProceduralAnimation.AddProceduralFailed",
-                      "Failed to add keyframe to procedural animation.");
-  }
+  assert(_cannedAnimations->GetAnimation(kProceduralAnimName) != nullptr);
 }
 
 bool RobotDataLoader::DoNonConfigDataLoading(float& loadingCompleteRatio_out)

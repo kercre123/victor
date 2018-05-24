@@ -9,7 +9,7 @@ namespace Vision {
 // Layer names that allow composite image layers to be:
 //  1) Referenced/set in code or JSON
 //  2) Composite image layers are rendered in the order of this enum
-enum no_cpp_class uint_8 LayerName 
+enum uint_8 LayerName 
 {
   // Utility layers
   EmptyBoxLayer,
@@ -36,10 +36,11 @@ enum no_cpp_class uint_8 LayerName
 }
 
 // Names for SpriteBoxes
-enum no_cpp_class uint_8 SpriteBoxName
+enum uint_8 SpriteBoxName
 {
   // Utility SpriteBoxes
   EmptyBox,
+  StaticBackground,
 
   // SpritBoxNames for procedural clock
   TensLeftOfColon,

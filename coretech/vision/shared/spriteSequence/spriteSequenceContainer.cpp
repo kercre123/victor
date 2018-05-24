@@ -62,5 +62,18 @@ const Vision::SpriteSequence* const SpriteSequenceContainer::GetUnmappedSequence
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const Vision::SpriteSequence* const SpriteSequenceContainer::GetSequenceAgnostic(Vision::SpriteName sequenceName,
+                                                                                 const std::string& fileName) const
+{
+  const Vision::SpriteSequence* spriteSeq = GetSequenceByName(sequenceName);
+  if(spriteSeq == nullptr){
+    spriteSeq = GetUnmappedSequenceByFileName(fileName);
+  }
+  return spriteSeq;
+}
+
+
 } // namespace Cozmo
 } // namespace Anki

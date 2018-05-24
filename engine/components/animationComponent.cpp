@@ -263,7 +263,7 @@ Result AnimationComponent::PlayAnimByName(const std::string& animName,
 
 Result AnimationComponent::PlayCompositeAnimation(const std::string& animName,
                                                   const Vision::CompositeImage& compositeImage, 
-                                                  u32 getFrameInterval_ms,
+                                                  u32 frameInterval_ms,
                                                   int& outDuration_ms,
                                                   bool interruptRunning,
                                                   AnimationCompleteCallback callback)
@@ -312,7 +312,7 @@ Result AnimationComponent::PlayCompositeAnimation(const std::string& animName,
   }
 
   outDuration_ms = anim->GetLastKeyFrameEndTime_ms();
-  return DisplayFaceImage(compositeImage, getFrameInterval_ms, outDuration_ms, interruptRunning);
+  return DisplayFaceImage(compositeImage, frameInterval_ms, outDuration_ms, interruptRunning);
 }
 
   
@@ -530,7 +530,7 @@ void AnimationComponent::SetAnimationCallback(const std::string& animName,
 }
 
 
-Result AnimationComponent::DisplayFaceImage(const Vision::CompositeImage& compositeImage, u32 getFrameInterval_ms, u32 duration_ms, bool interruptRunning)
+Result AnimationComponent::DisplayFaceImage(const Vision::CompositeImage& compositeImage, u32 frameInterval_ms, u32 duration_ms, bool interruptRunning)
 {
   // TODO: Is this what interruptRunning should mean?
   //       Or should it queue on anim process side and optionally interrupt currently executing anim?
@@ -542,7 +542,7 @@ Result AnimationComponent::DisplayFaceImage(const Vision::CompositeImage& compos
   // Send the image to the animation process in chunks
   const std::vector<Vision::CompositeImageChunk> imageChunks = compositeImage.GetImageChunks();
   for(const auto& chunk: imageChunks){
-    _robot->SendRobotMessage<RobotInterface::DisplayCompositeImageChunk>(_compositeImageID, getFrameInterval_ms, duration_ms, chunk);
+    _robot->SendRobotMessage<RobotInterface::DisplayCompositeImageChunk>(_compositeImageID, frameInterval_ms, duration_ms, chunk);
   }
   
   if(imageChunks.empty()){
@@ -578,6 +578,7 @@ void AnimationComponent::ClearCompositeImageLayer(Vision::LayerName layerName, u
 
   // Setup empty spriteBox
   Vision::SpriteRenderConfig renderConfig;
+  renderConfig.renderMethod = Vision::SpriteRenderMethod::RGBA;
   Point2i topLeft(0,0);
   Vision::CompositeImageLayer::SpriteBox sb(Vision::SpriteBoxName::Count, renderConfig, topLeft, 0, 0);
   

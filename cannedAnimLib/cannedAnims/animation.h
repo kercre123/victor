@@ -38,8 +38,10 @@ public:
   Animation(const std::string& name = "");
 
   // For reading canned animations from files
-  Result DefineFromFlatBuf(const std::string& name, const CozmoAnim::AnimClip* animClip);
-  Result DefineFromJson(const std::string& name, const Json::Value& json);
+  Result DefineFromFlatBuf(const std::string& name, const CozmoAnim::AnimClip* animClip, 
+                           const Vision::SpritePathMap* spriteMap, Vision::SpriteSequenceContainer* seqContainer);
+  Result DefineFromJson(const std::string& name, const Json::Value& json,
+                        const Vision::SpritePathMap* spriteMap, Vision::SpriteSequenceContainer* seqContainer);
 
   // For defining animations at runtime (e.g. live animation)
   template<class KeyFrameType>

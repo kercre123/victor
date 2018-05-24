@@ -256,26 +256,44 @@ namespace Cozmo {
   class SpriteSequenceKeyFrame : public IKeyFrame
   {
   public:
-    SpriteSequenceKeyFrame(bool shouldRenderInEyeHue = true,
-                           Vision::SpriteName sequenceName = Vision::SpriteName::Count,
-                           bool containsRuntimeSpriteSeq = false);
+    SpriteSequenceKeyFrame(Vision::SpriteHandle spriteHandle,
+                           TimeStamp_t triggerTime_ms, 
+                           float scanlineOpacity = 1.f,
+                           bool shouldRenderInEyeHue = true);
+
+    SpriteSequenceKeyFrame(const Vision::SpriteSequence* const spriteSeq,
+                           TimeStamp_t triggerTime_ms, 
+                           u32 frameInterval_ms,
+                           float scanlineOpacity = 1.f,
+                           bool shouldRenderInEyeHue = true);
+                           
+    // Transfers ownership to the keyframe
+    SpriteSequenceKeyFrame(Vision::SpriteCache* spriteCache, 
+                           Vision::CompositeImage* compImg, 
+                           u32 frameInterval_ms,
+                           float scanlineOpacity = 0.f);
 
     //Copy constructor
     SpriteSequenceKeyFrame(const SpriteSequenceKeyFrame& other);
 
     virtual ~SpriteSequenceKeyFrame();
     
-    Result DefineFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug);
-
-    Result Process(const std::string& animNameDebug);
+    static bool ExtractDataFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe,
+                                       const Vision::SpritePathMap* spriteMap,
+                                       Vision::SpriteSequenceContainer* seqContainer,
+                                       const Vision::SpriteSequence*& outSeq,
+                                       TimeStamp_t& triggerTime_ms, 
+                                       float& scanlineOpacity);
     
-    // To access the actual images and sequence names loaded in by the process
-    // this function must be called after the keyframe is defined
-    // Pass in the sprite sequence container if this keyframe doesn't contain
-    // a runtime sprite sequence
-    void GiveKeyframeImageAccess(const Vision::SpritePathMap* spriteMap,
-                                 Vision::SpriteSequenceContainer* spriteSequenceContainer);
-  
+    static bool ExtractDataFromJson(const Json::Value &jsonRoot,
+                                    const Vision::SpritePathMap* spriteMap,
+                                    Vision::SpriteSequenceContainer* seqContainer,
+                                    const Vision::SpriteSequence*& outSeq,
+                                    TimeStamp_t& triggerTime_ms, 
+                                    float& scanlineOpacity,
+                                    TimeStamp_t& frameUpdateInterval);
+
+
     #if CAN_STREAM
       // The face image isn't actually returned via this function since the
       // message does not go to robot process. Instead, images are grabbed via GetFaceImage().
@@ -294,19 +312,9 @@ namespace Cozmo {
 
     virtual bool IsDone(const TimeStamp_t timeSinceAnimStart_ms) const override;
     
-    Vision::SpriteName GetName() const { return _spriteSequenceName; }
-    
     float GetScanlineOpacity() const { return _scanlineOpacity; }
-    
-    void ClearRuntimeSequence() { _runtimeSpriteSequence.reset(); }
-    
-    void SetShouldRenderInEyeHue(bool shouldRenederInEyeHue) { _shouldRenderInEyeHue = shouldRenederInEyeHue;}
-    bool ShouldRenderInEyeHue() const;
-
-    void AddFrameToRuntimeSequence(Vision::SpriteHandle spriteHandle);
-
-
-   struct CompositeImageUpdateSpec{
+        
+    struct CompositeImageUpdateSpec{
       CompositeImageUpdateSpec(Vision::SpriteCache* sCache, 
                                Vision::SpriteSequenceContainer* sContainer,
                                Vision::LayerName lName, 
@@ -325,17 +333,14 @@ namespace Cozmo {
       Vision::SpriteName spriteName;
     };
 
-    // Transfers ownership to the keyframe
-    void SetCompositeImage(Vision::SpriteCache* spriteCache, Vision::CompositeImage* compImg, u32 getFrameInterval_ms);
-
     void QueueCompositeImageUpdate(CompositeImageUpdateSpec&& updateSpec,
                                    u32 applyAt_ms);
 
     // Depending on the contents of the keyframe there may or may not be updates to images
     // Checking this function ensures there aren't unnecessary re-draws
     bool NewImageContentAvailable(const TimeStamp_t timeSinceAnimStart_ms) const;
-    // These functions retrieve the image handle and increment the frame count so that they will retrieve
-    // the next image on the next call. Returns true if the Image field was populated, false otherwise.
+    // These functions retrieve the image handle. 
+    // Returns true if the Image field was populated, false otherwise.
     // Empty frames are expected for animations that have a duration longer than ANIM_TIME_STEP_MS, and hence
     // this function may return false even though there are frames remaining. To check if the keyframe is done,
     // use IsDone() rather than the return value of this function.
@@ -344,54 +349,34 @@ namespace Cozmo {
     virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
     
     // tmp exposure for procedural eye layer
-    bool HasCompositeImage() const { return _compositeImage != nullptr;}
     Vision::CompositeImage& GetCompositeImage() { assert(_compositeImage != nullptr); return *_compositeImage;}
+    
+    void OverrideShouldRenderInEyeHue(bool shouldRenderInEyeHue);
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
-    virtual Result SetMembersFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug = "");
     
   private:
-    // Ensure that a keyframe doesn't have multiple sequence implementations
-    // fighting with each other
-    bool VerifyOnlyOneImplementationSet() const;
-    
     u32 GetFrameNumberForTime(const TimeStamp_t timeSinceAnimStart_ms) const { return timeSinceAnimStart_ms/_internalUpdateInterval_ms;}
     TimeStamp_t CalculateInternalEndTime_ms() const;
     bool HaveKeyframeForTimeStamp(const TimeStamp_t timeSinceAnimStart_ms) const;
+    void ValidateScanlineOpacity();
 
+    static bool ParseSequenceNameFromString(const Vision::SpritePathMap* spriteMap,
+                                            const std::string& sequenceName, 
+                                            Vision::SpriteName& outName);
     
     // If frame duration is zero keyframe lasts forever
     bool SequenceShouldAdvance() const { return _keyframeDuration_ms != 0;}
-
-    // used to translate _rawSeqName into _spriteSequenceName
-    bool ParseSequenceNameFromString(const Vision::SpritePathMap* spriteMap);
  
     // Apply the update to the composite image
     void ApplyCompositeImageUpdate(CompositeImageUpdateSpec&& updateSpec);
 
-    
-    // Keyframe either points to a const sprite sequences within the sprite sequence container
-    // or it has a runtime sprite sequence 
-    const Vision::SpriteSequence*  _cannedSpriteSequence = nullptr;
-    std::unique_ptr<Vision::SpriteSequence> _runtimeSpriteSequence;
     std::unique_ptr<Vision::CompositeImage> _compositeImage;
-
-    // CompositeImage specific variables
     bool _compositeImageUpdated = false;
     std::multimap<u32, CompositeImageUpdateSpec> _compositeImageUpdateMap;
 
-    // Defines whether the frame should be rendered as an RGBA image
-    // or a grayscale image rendered in the color of the robot's eye hue
-    bool         _shouldRenderInEyeHue;
-    // When a sprite sequence is read in its sequence name is a raw folder name
-    // After linking to the sequence container this name is mapped to the CLAD sequence name
-    // which is what is used for all internal operations
-    std::string              _rawSeqName;
-    Vision::SpriteName       _spriteSequenceName;
-
-    float        _scanlineOpacity = 1.f;
-
+    float        _scanlineOpacity;
     TimeStamp_t  _internalUpdateInterval_ms = ANIM_TIME_STEP_MS;
     
   }; // class SpriteSequenceKeyFrame

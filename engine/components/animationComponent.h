@@ -115,7 +115,7 @@ public:
   // OutDuration_ms is set to the length of the animation that is playing back
   Result PlayCompositeAnimation(const std::string& animName,
                                 const Vision::CompositeImage& compositeImage, 
-                                u32 getFrameInterval_ms,
+                                u32 frameInterval_ms,
                                 int& outDuration_ms,
                                 bool interruptRunning = true,
                                 AnimationCompleteCallback callback = nullptr);
@@ -145,8 +145,8 @@ public:
   Result DisplayFaceImage(const Vision::ImageRGB& img, u32 duration_ms, bool interruptRunning = false);
   Result DisplayFaceImage(const Vision::ImageRGB565& imgRGB565, u32 duration_ms, bool interruptRunning = false);
   // There is only one composite image in the animation process - duration is the amount of time the image will be displayed on screen
-  // getFrameInterval_ms defines how often the composite images' GetFrame function should be called for internal sprite sequences
-  Result DisplayFaceImage(const Vision::CompositeImage& compositeImage, u32 getFrameInterval_ms, u32 duration_ms, bool interruptRunning = false);
+  // frameInterval_ms defines how often the composite images' GetFrame function should be called for internal sprite sequences
+  Result DisplayFaceImage(const Vision::CompositeImage& compositeImage, u32 frameInterval_ms, u32 duration_ms, bool interruptRunning = false);
   
   // Calling this function provides no gaurentee that the assets will actually be displayed
   // If a compositeFaceImage is currently displayed on the face all layers/image maps within

@@ -73,6 +73,76 @@ CompositeImage::CompositeImage(SpriteCache* spriteCache,
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+CompositeImage::CompositeImage(ConstHSImageHandle faceHSImageHandle,
+                               Vision::SpriteHandle spriteHandle,
+                               bool shouldRenderRGBA,
+                               const Point2i& topLeftCorner)
+: _faceHSImageHandle(faceHSImageHandle)
+{
+  auto img = spriteHandle->GetSpriteContentsGrayscale();
+  _width = img.GetNumCols();
+  _height = img.GetNumRows();
+  SpriteRenderConfig renderConfig;
+  renderConfig.renderMethod = shouldRenderRGBA ?
+                                SpriteRenderMethod::RGBA :
+                                SpriteRenderMethod::CustomHue;
+  SpriteBox sb(Vision::SpriteBoxName::StaticBackground,
+               renderConfig,
+               topLeftCorner, 
+               img.GetNumCols(),
+               img.GetNumRows());
+
+  CompositeImageLayer::LayoutMap layout;
+  layout.emplace(Vision::SpriteBoxName::StaticBackground, sb);
+  CompositeImageLayer layer(Vision::LayerName::StaticBackground, std::move(layout));
+  layer.AddToImageMap(Vision::SpriteBoxName::StaticBackground, SpriteEntry(spriteHandle));
+  AddLayer(std::move(layer));
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+CompositeImage::CompositeImage(ConstHSImageHandle faceHSImageHandle,
+                               const Vision::SpriteSequence* const spriteSeq,
+                               bool shouldRenderRGBA,
+                               const Point2i& topLeftCorner)
+: _faceHSImageHandle(faceHSImageHandle)
+{
+  if(!ANKI_VERIFY((spriteSeq != nullptr) &&
+                  (spriteSeq->GetNumFrames() > 0),
+                  "CompositeImage.Constructor.InvalideSpriteSeq",
+                  "Sequence is null or length zero")){
+    return;
+  }
+
+  Vision::SpriteHandle handle;
+  const bool success = spriteSeq->GetFrame(0, handle);
+  if(!success){
+    PRINT_NAMED_ERROR("CompositeImage.Constructor.FailedToGetFrameZero","");
+    return;
+  }
+  auto img = handle->GetSpriteContentsGrayscale();
+  _width = img.GetNumCols();
+  _height = img.GetNumRows();
+  SpriteRenderConfig renderConfig;
+  renderConfig.renderMethod = shouldRenderRGBA ?
+                                SpriteRenderMethod::RGBA :
+                                SpriteRenderMethod::CustomHue;
+  SpriteBox sb(Vision::SpriteBoxName::StaticBackground,
+               renderConfig,
+               topLeftCorner, 
+               img.GetNumCols(),
+               img.GetNumRows());
+
+  CompositeImageLayer::LayoutMap layout;
+  layout.emplace(Vision::SpriteBoxName::StaticBackground, sb);
+  CompositeImageLayer layer(Vision::LayerName::StaticBackground, std::move(layout));
+  Vision::SpriteSequence intentionalCopy = *spriteSeq;
+  layer.AddToImageMap(Vision::SpriteBoxName::StaticBackground, SpriteEntry(std::move(intentionalCopy)));
+  AddLayer(std::move(layer));
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CompositeImage::~CompositeImage()
 {
 }
@@ -247,9 +317,17 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
           Vision::HueSatWrapper::ImageSize imageSize(static_cast<uint32_t>(spriteBox.height),
                                                      static_cast<uint32_t>(spriteBox.width));
           std::shared_ptr<Vision::HueSatWrapper> hsImageHandle;
-
-          if((spriteBox.renderConfig.hue == 0) &&
-             (spriteBox.renderConfig.saturation == 0)){
+          
+          const bool shouldRenderInEyeHue = (spriteBox.renderConfig.hue == 0) &&
+                                            (spriteBox.renderConfig.saturation == 0);
+          const bool canRenderInEyeHue = _faceHSImageHandle != nullptr;
+          // Print error if should but cant render in eye hue
+          if(shouldRenderInEyeHue && !canRenderInEyeHue){
+            PRINT_NAMED_ERROR("CompositeImage.OverlayImageWithFrame.ShouldRenderInEyeHueButCant",
+                              "HS Image handle missing - image will be renderd with 0,0 hue saturation");
+          }
+          
+          if(shouldRenderInEyeHue && canRenderInEyeHue){
             // Render the sprite with procedural face hue/saturation
             // TODO: Kevin K. Copy is happening here due to way we can resize image handles with cached data
             // do something better
@@ -274,6 +352,14 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
           }
           break;
         }
+        default:
+        {
+          PRINT_NAMED_ERROR("CompositeImage.OverlayImageWithFrame.InvalidRenderMethod",
+                            "Layer %s Sprite Box %s does not have a valid render method",
+                            LayerNameToString(layerName),
+                            SpriteBoxNameToString(spriteBoxName));
+          break;
+        }
       }
     }
   };
@@ -293,6 +379,18 @@ uint CompositeImage::GetFullLoopLength(){
   ProcessAllSpriteBoxes(callback);
 
   return maxSequenceLength;
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CompositeImage::OverrideRenderMethod(Anki::Vision::SpriteRenderMethod renderMethod)
+{
+  auto callback = [&renderMethod](Vision::LayerName layerName, SpriteBoxName spriteBoxName,
+                     SpriteBox& spriteBox, SpriteEntry& spriteEntry){
+    spriteBox.renderConfig.renderMethod = renderMethod;
+  };
+  
+  UpdateAllSpriteBoxes(callback);
 }
 
 
@@ -318,7 +416,7 @@ void CompositeImage::AddEmptyLayer(SpriteSequenceContainer* seqContainer)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CompositeImage::ProcessAllSpriteBoxes(AllSpriteBoxDataFunc processCallback) const
+void CompositeImage::ProcessAllSpriteBoxes(UseSpriteBoxDataFunc processCallback) const
 {
     for(const auto& layerPair : _layerMap){
       auto& layoutMap = layerPair.second.GetLayoutMap();
@@ -332,6 +430,25 @@ void CompositeImage::ProcessAllSpriteBoxes(AllSpriteBoxDataFunc processCallback)
         auto& spriteBox = layoutIter->second;
         processCallback(layerPair.first, imagePair.first, spriteBox, imagePair.second);
       } // end for(imageMap)
+  } // end for(_layerMap)
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CompositeImage::UpdateAllSpriteBoxes(UpdateSpriteBoxDataFunc updateCallback)
+{
+  for(auto& layerPair : _layerMap){
+    auto& layoutMap = layerPair.second.GetLayoutMap();
+    auto& imageMap  = layerPair.second.GetImageMap();
+    for(auto& imagePair : imageMap){
+      auto layoutIter = layoutMap.find(imagePair.first);
+      if(layoutIter == layoutMap.end()){
+        return;
+      }
+      
+      auto& spriteBox = layoutIter->second;
+      updateCallback(layerPair.first, imagePair.first, spriteBox, imagePair.second);
+    } // end for(imageMap)
   } // end for(_layerMap)
 }
 
