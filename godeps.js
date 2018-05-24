@@ -279,6 +279,10 @@ function runRoutine(args) {
   const ourToplevel = execSyncTrim('git rev-parse --show-toplevel');
   let changed = false;
 
+  // step 3.5:
+  // Install the binaries we need on our machine
+  execSync('go install github.com/golang/protobuf/protoc-gen-go github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway');
+
   // process 1 dep at a time, since we might be able to remove several deps at once when
   // multiple dependent packages live in the same repository
   while (remainingDeps.length > 0) {

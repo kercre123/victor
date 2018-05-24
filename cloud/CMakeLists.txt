@@ -133,13 +133,13 @@ anki_disable_default_build(opusenc)
 # SDK translation service that interfaces between the engine and the external world.
 #
 set(GOPATH_GATEWAY "${CMAKE_CURRENT_SOURCE_DIR}/go")
-set(GATEWAY_PROTOC_GENERATORS "${GOPATH_GATEWAY}/bin/protoc-gen-go" "${GOPATH_GATEWAY}/bin/protoc-gen-grpc-gateway")
-add_custom_command(
-  OUTPUT ${GATEWAY_PROTOC_GENERATORS}
-  COMMAND ${CMAKE_COMMAND} -E env "GOPATH=${GOPATH_GATEWAY}" 
-    ${GOROOT}/bin/go install github.com/golang/protobuf/protoc-gen-go github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
-  WORKING_DIRECTORY "${GOPATH_GATEWAY}"
-)
+# set(GATEWAY_PROTOC_GENERATORS "${GOPATH_GATEWAY}/bin/protoc-gen-go" "${GOPATH_GATEWAY}/bin/protoc-gen-grpc-gateway")
+# add_custom_command(
+#   OUTPUT ${GATEWAY_PROTOC_GENERATORS}
+#   COMMAND ${CMAKE_COMMAND} -E env "GOPATH=${GOPATH_GATEWAY}" 
+#     ${GOROOT}/bin/go install github.com/golang/protobuf/protoc-gen-go github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
+#   WORKING_DIRECTORY "${GOPATH_GATEWAY}"
+# )
 
 set(GATEWAY_PROTO_FILES "${CMAKE_CURRENT_SOURCE_DIR}/gateway/external_interface.proto")
 
@@ -160,7 +160,7 @@ add_custom_command(
     -I"${GOPATH_GATEWAY}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis"
     "--grpc-gateway_out=logtostderr=true:${CMAKE_SOURCE_DIR}/generated/go/src/proto/external_interface"
     "${GATEWAY_PROTO_FILES}"
-  DEPENDS "${GATEWAY_PROTO_FILES}" "${GATEWAY_PROTOC_GENERATORS}"
+  DEPENDS "${GATEWAY_PROTO_FILES}"
 )
 else()
 add_custom_command(
@@ -177,7 +177,7 @@ add_custom_command(
     -I"${GOPATH_GATEWAY}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis"
     "--grpc-gateway_out=logtostderr=true:${CMAKE_SOURCE_DIR}/generated/go/src/proto/external_interface"
     "${GATEWAY_PROTO_FILES}"
-  DEPENDS "${GATEWAY_PROTO_FILES}" "${GATEWAY_PROTOC_GENERATORS}"
+  DEPENDS "${GATEWAY_PROTO_FILES}"
 )
 endif()
 _build_cloud_executable(vic-gateway)
