@@ -46,7 +46,6 @@ namespace Anki {
         constexpr auto LIFT_IN_POS = EnumToUnderlyingType(RobotStatusFlag::LIFT_IN_POS);
         constexpr auto HEAD_IN_POS = EnumToUnderlyingType(RobotStatusFlag::HEAD_IN_POS);
         constexpr auto CALM_POWER_MODE = EnumToUnderlyingType(RobotStatusFlag::CALM_POWER_MODE);
-        constexpr auto IS_BATTERY_DISCONNECTED = EnumToUnderlyingType(RobotStatusFlag::IS_BATTERY_DISCONNECTED);
         constexpr auto IS_ON_CHARGER = EnumToUnderlyingType(RobotStatusFlag::IS_ON_CHARGER);
         constexpr auto IS_CHARGING = EnumToUnderlyingType(RobotStatusFlag::IS_CHARGING);
         constexpr auto CLIFF_DETECTED = EnumToUnderlyingType(RobotStatusFlag::CLIFF_DETECTED);
@@ -133,7 +132,6 @@ namespace Anki {
         robotState_.status |= (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
         robotState_.status |= (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
         robotState_.status |= HAL::PowerGetMode() == HAL::POWER_MODE_CALM ? CALM_POWER_MODE : 0;
-        robotState_.status |= HAL::BatteryIsDisconnected() ? IS_BATTERY_DISCONNECTED : 0;
         robotState_.status |= HAL::BatteryIsOnCharger() ? IS_ON_CHARGER : 0;
         robotState_.status |= HAL::BatteryIsCharging() ? IS_CHARGING : 0;
         robotState_.status |= ProxSensors::IsAnyCliffDetected() ? CLIFF_DETECTED : 0;

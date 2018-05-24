@@ -343,15 +343,42 @@ namespace Anki {
         // Feedback / Display
         //////////////////////////////////////////////////////////////
 
+        int ROBOT_STATE_SEND_RATE = STATE_MESSAGE_FREQUENCY;
+
+#if FACTORY_TEST
+        // Slow down state message when in calm mode as long
+        // as it's been a few seconds since the backpack button
+        // was last pressed, since it affects how well
+        // the double-press action can be detected.
+        static u32 ticsSinceLastButtonPressed = 0;
+        const u32 COUNTDOWN_TO_THROTTLE_TICS = 400;
+        if (HAL::GetButtonState(HAL::BUTTON_POWER)) {
+          ticsSinceLastButtonPressed = 0;
+        }
+        if ((HAL::PowerGetMode() == HAL::POWER_MODE_CALM) && 
+            (ticsSinceLastButtonPressed > COUNTDOWN_TO_THROTTLE_TICS)) { 
+          ROBOT_STATE_SEND_RATE = 8 * STATE_MESSAGE_FREQUENCY;
+        }
+        ++ticsSinceLastButtonPressed;
+#endif
+
         Messages::UpdateRobotStateMsg();
         ++robotStateMessageCounter_;
-        if(robotStateMessageCounter_ >= STATE_MESSAGE_FREQUENCY) {
+        if(robotStateMessageCounter_ >= ROBOT_STATE_SEND_RATE) {
           Messages::SendRobotStateMsg();
           robotStateMessageCounter_ = 0;
         }
 
         // Now that the robot state msg has been udpated, send mic data (which uses some of robot state)
+#if FACTORY_TEST
+        // Don't send mic data in calm mode (in factory only!)
+        if (HAL::PowerGetMode() == HAL::POWER_MODE_ACTIVE) {
+          Messages::SendMicDataMsgs();
+        }
+#else
         Messages::SendMicDataMsgs();
+#endif
+        
 
         // Print time profile stats
         END_TIME_PROFILE(CozmoBot);

@@ -96,14 +96,6 @@ namespace {
   f32 _headHighestAngle_rad;
   
   const f32 kMenuAngularTriggerThresh_rad = DEG_TO_RAD(5);
-
-  // Variables for performing connectivity checks in threads
-  // and triggering redrawing of screens
-  std::atomic<bool> _redrawMain{false};
-  std::atomic<bool> _redrawNetwork{false};
-  std::atomic<bool> _hasAuthAccess{false};
-  std::atomic<bool> _hasOTAAccess{false};
-  std::atomic<bool> _hasVoiceAccess{false};
 }
 
   
@@ -167,17 +159,6 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
 
   ADD_SCREEN_WITH_TEXT(Recovery, Recovery, {"RECOVERY MODE"});
   ADD_SCREEN(None, None);
-  GetScreen(ScreenName::None)->SetEnterScreenAction([this]() {
-    // Restore power mode as specified by engine
-    SendAnimToRobot(_calmModeMsgOnNone);
-  });
-  GetScreen(ScreenName::None)->SetExitScreenAction([]() {
-    // Disable calm mode
-    RobotInterface::CalmPowerMode msg;
-    msg.enable = false;
-    msg.calibOnDisable = false;
-    SendAnimToRobot(std::move(msg));
-  });
   ADD_SCREEN(Pairing, Pairing);
   ADD_SCREEN(FAC, None);
   ADD_SCREEN(CustomText, None);
@@ -213,12 +194,24 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   DISABLE_TIMEOUT(Recovery);
 
   // None screen 
-#if FACTORY_TEST  
-  FaceInfoScreen::ScreenAction drawInitConnectionScreen = [animStreamer]() {
+  FaceInfoScreen::ScreenAction drawInitConnectionScreen = [animStreamer, this]() {
+  #if FACTORY_TEST
     InitConnectionFlow(animStreamer);
+  #endif  
+
+    // Restore power mode as specified by engine
+    SendAnimToRobot(_calmModeMsgOnNone);
   };
   GetScreen(ScreenName::None)->SetEnterScreenAction(drawInitConnectionScreen);
-#endif  
+  
+  FaceInfoScreen::ScreenAction exitNoneAction = []() {
+    // Disable calm mode
+    RobotInterface::CalmPowerMode msg;
+    msg.enable = false;
+    msg.calibOnDisable = false;
+    SendAnimToRobot(std::move(msg));
+  };
+  GetScreen(ScreenName::None)->SetExitScreenAction(exitNoneAction);
   
   // FAC screen
   DISABLE_TIMEOUT(FAC);
