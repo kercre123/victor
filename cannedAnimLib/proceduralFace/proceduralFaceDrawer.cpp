@@ -544,6 +544,7 @@ namespace Cozmo {
             if((upperLeft.x()>0) && (upperLeft.y()>0) && (bottomRight.x()<ProceduralFace::WIDTH-1) && (bottomRight.y()<ProceduralFace::HEIGHT-1)) {
               // The eye does NOT intersect with the boundary, so it is safe to use NEON box filter
               static Vision::Image temp(_eyeShape.GetNumRows(), _eyeShape.GetNumCols());
+              temp.FillWith(0);
               Vision::Image tempImage = temp.GetROI(eyeBoundingBoxS32);
               eyeShapeROI.BoxFilter(tempImage, kProcFace_AntiAliasingSize);
               std::swap(_eyeShape, temp);
@@ -553,7 +554,6 @@ namespace Cozmo {
               // TODO: Update this to use the NEON box filter in Anki::Vision::Image::BoxFilter() after jira VIC-3221 has been fixed. 
               cv::boxFilter(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), -1, cv::Size(kProcFace_AntiAliasingSize,kProcFace_AntiAliasingSize));
             }
-
             break;
           }
         }
