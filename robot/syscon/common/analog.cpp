@@ -253,9 +253,8 @@ void Analog::tick(void) {
   temperature = *TEMP30_CAL_ADDR - ((Analog::values[ADC_TEMP] * TEMP_VOLT_ADJ) >> 20);
   temperature = ((temperature * TEMP_SCALE_ADJ) >> 20) + 30;
 
-  //bool emergency_shutoff = temperature >= 60;    // Will immediately cause a reboot
-  //if (temperature >= 45) disable_vmain = true;
-  emergency_shutoff = false;
+  bool emergency_shutoff = temperature >= 70;    // Will immediately cause a reboot
+  if (temperature >= 60) disable_vmain = true;
 
   #ifdef BOOTLOADER
   static bool has_booted = false;
