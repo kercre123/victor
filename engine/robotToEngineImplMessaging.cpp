@@ -523,6 +523,9 @@ void RobotToEngineImplMessaging::HandleRobotStopped(const AnkiEvent<RobotInterfa
   // Stop whatever we were doing
   robot->GetActionList().Cancel();
 
+  // Let robot process know that it can re-enable wheels
+  robot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::RobotStoppedAck()));
+
   // Forward on with EngineToGame event
   robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotStopped()));
 }

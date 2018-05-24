@@ -257,6 +257,14 @@ message EnableReadToolCodeMode
   bool enable
 }
 
+// Message for ACKing the RobotStopped message from robot process
+// which re-enables the SteeringController/WheelController which
+// were disabled upon encountering cliff so as not to accidentally
+// drive off it.
+message RobotStoppedAck
+{
+}
+
 message EnableStopOnCliff
 {
   bool enable
@@ -624,6 +632,7 @@ union EngineToRobot
   // Reactions
   EnableStopOnCliff             enableStopOnCliff           = 0x35,
   EnableBraceWhenFalling        enableBraceWhenFalling      = 0x36,
+  RobotStoppedAck               robotStoppedAck             = 0x37,
   
   // TEMP support for 'old' chargers with black stripe and white body
   ChargerDockingStripeColor     chargerDockingStripeColor   = 0x40,

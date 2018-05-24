@@ -560,6 +560,12 @@ namespace Anki {
         }
       }
 
+      void Process_robotStoppedAck(const RobotInterface::RobotStoppedAck& msg)
+      {
+        AnkiInfo("Messages.Process_robotStoppedAck", "");
+        SteeringController::Enable();
+      }
+
       void Process_enableStopOnCliff(const RobotInterface::EnableStopOnCliff& msg)
       {
         ProxSensors::EnableStopOnCliff(msg.enable);

@@ -194,7 +194,11 @@ namespace Anki {
           {
             // Stop all motors and animations
             PickAndPlaceController::Reset();
-            SteeringController::ExecuteDirectDrive(0,0);
+
+            // Disable wheels so that subsequent wheel commands are ignored 
+            // until engine has a chance to cancel actions and anims
+            // Wheels will be re-enabled when RobotStoppedAck is received.
+            SteeringController::Disable();
 
             // Send stopped message
             RobotInterface::SendMessage(RobotInterface::RobotStopped());

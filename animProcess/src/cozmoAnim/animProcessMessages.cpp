@@ -535,6 +535,12 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
       HandleRobotStateUpdate(msg.state);
     }
     break;
+    case RobotInterface::RobotToEngine::Tag_robotStopped:
+    {
+      LOG_INFO("AnimProcessMessages.ProcessMessageFromRobot.RobotStopped", "Abort animation");
+      _animStreamer->Abort();
+    }
+    break;
     default:
     {
 
