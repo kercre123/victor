@@ -42,7 +42,7 @@ $GIT config --global url."git@github.com:".insteadOf https://github.com
 check_dep which python2
 check_dep which python3
 check_dep which ninja
-check_dep pkg-config sndfile
+#check_dep pkg-config sndfile
 
 echo `pwd`
 
