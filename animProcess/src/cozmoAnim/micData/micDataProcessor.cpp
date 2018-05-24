@@ -81,13 +81,19 @@ namespace {
       .dataDir = "hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b",
       .netFile = "anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_am.raw",
       .searchFile = "anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_18.raw"
+    },
+    // "HeyVector" frFR trigger trained on adults search 11
+    {
+      .dataDir = "hey_vector/trigger_ai_x_fr_01s_heyvector_sfs14_a51d9f15",
+      .netFile = "ai_x_heyvector_fr_sfs14_a51d9f15_delivery01s_am.raw",
+      .searchFile = "ai_x_heyvector_fr_sfs14_a51d9f15_delivery01s_search_11.raw"
     }
   };
   constexpr int32_t kTriggerDataListLen = (int32_t) sizeof(kTriggerDataList) / sizeof(kTriggerDataList[0]);
-  Anki::AudioUtil::SpeechRecognizer::IndexType _currentTriggerSearchIndex = 0;
+  Anki::AudioUtil::SpeechRecognizer::IndexType _currentTriggerSearchIndex = 5;
 
 # define CONSOLE_GROUP "MicData"
-  CONSOLE_VAR_RANGED(s32, kMicData_NextTriggerIndex, CONSOLE_GROUP, 0, 0, kTriggerDataListLen-1);
+  CONSOLE_VAR_RANGED(s32, kMicData_NextTriggerIndex, CONSOLE_GROUP, _currentTriggerSearchIndex, 0, kTriggerDataListLen-1);
   CONSOLE_VAR(bool, kMicData_SaveRawFullIntent, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_UseFallbackBeam, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_ForceDisableMicDataProc, CONSOLE_GROUP, false);

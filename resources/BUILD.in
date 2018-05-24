@@ -17,6 +17,8 @@ asset_project(
                 ('externals/anki-thirdparty/sensory', 'hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b/anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_10.raw'),
                 ('externals/anki-thirdparty/sensory', 'hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b/anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_14.raw'),
                 ('externals/anki-thirdparty/sensory', 'hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b/anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_18.raw'),
+                ('externals/anki-thirdparty/sensory', 'hey_vector/trigger_ai_x_fr_01s_heyvector_sfs14_a51d9f15/ai_x_heyvector_fr_sfs14_a51d9f15_delivery01s_am.raw'),
+                ('externals/anki-thirdparty/sensory', 'hey_vector/trigger_ai_x_fr_01s_heyvector_sfs14_a51d9f15/ai_x_heyvector_fr_sfs14_a51d9f15_delivery01s_search_11.raw'),
                 ('externals/animation-assets', 'animations/**/*.bin'),
                 ('externals/animation-assets', 'animationGroups/**/*.json'),
                 ('externals/animation-assets', 'sprites/**/*.png'),
