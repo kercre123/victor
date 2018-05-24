@@ -178,7 +178,7 @@
                 $("#consolevars_page_disabled").show();
             }
         } else if (pageName == "page_perf") {
-            if (allowPerfPage && !connectedToWebotsSim) {
+            if (allowPerfPage) {
                 UpdatePerfHeader();
                 $("#perf_page_disabled").hide();
                 $("#perf_page_disabled_webots").hide();
@@ -204,27 +204,15 @@
             }
             else {                
                 $("#perf_main_section").hide();
-                if (connectedToWebotsSim) {
-                    $("#perf_page_disabled_webots").show();
-                    $("#perf_page_disabled").hide();
-                }
-                else {
-                    $("#perf_page_disabled_webots").hide();
-                    $("#perf_page_disabled").show();
-                }
+                $("#perf_page_disabled_webots").hide();
+                $("#perf_page_disabled").show();
             }
         } else if (pageName == "page_processes") {
-            if (!connectedToWebotsSim) {
-                UpdateProcHeader();
-                $("#proc_page_disabled_webots").hide();
-                if (procAutoUpdate) {
-                    // When entering processes page and auto-update is on, do the first update immediately
-                    procAutoUpdateTimerId = setTimeout(SendProcUpdateRequest, 0, true);
-                }
-            }
-            else {
-                $("#proc_main_section").hide();
-                $("#proc_page_disabled_webots").show();
+            UpdateProcHeader();
+            $("#proc_page_disabled_webots").hide();
+            if (procAutoUpdate) {
+                // When entering processes page and auto-update is on, do the first update immediately
+                procAutoUpdateTimerId = setTimeout(SendProcUpdateRequest, 0, true);
             }
         } else if (pageName == "page_engine") {
             if (whichWebServer == whichWebServerEnum.ENGINE) {
@@ -339,6 +327,7 @@
         graph.progressbar( "option", "max", totalMem_kB );
     }
 
+    // http://www.linuxhowtos.org/System/procstat.htm
     function CPUTimeInfo(payload, itemIndex) {
         var whichCPU = payload.charAt(3);
         payload = payload.substring(5); // Strip cpu name and space(s)

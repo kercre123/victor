@@ -319,6 +319,7 @@ Result CozmoEngine::Init(const Json::Value& config) {
   // freq or temperature so we set the update period to 0
   // avoid time-wasting file access
   OSState::getInstance()->SetUpdatePeriod(0);
+  OSState::getInstance()->SendToWebVizCallback([&](const Json::Value& json) { _context->GetWebService()->SendToWebViz("cpu", json); });
 
   _config = config;
 

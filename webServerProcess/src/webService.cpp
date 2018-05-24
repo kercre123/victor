@@ -576,8 +576,6 @@ static int GetMainRobotInfo(struct mg_connection *conn, void *cbdata)
 }
 
 
-#ifndef SIMULATOR
-
 static int GetPerfStats(struct mg_connection *conn, void *cbdata)
 {
   using namespace std::chrono;
@@ -698,6 +696,8 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
   return 1;
 }
 
+
+#ifndef SIMULATOR
 
 static int SystemCtl(struct mg_connection *conn, void *cbdata)
 {
@@ -943,8 +943,8 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
   mg_set_request_handler(_ctx, "/dasinfo", dasinfo, 0);
   mg_set_request_handler(_ctx, "/getinitialconfig", GetInitialConfig, 0);
   mg_set_request_handler(_ctx, "/getmainrobotinfo", GetMainRobotInfo, 0);
-#ifndef SIMULATOR
   mg_set_request_handler(_ctx, "/getperfstats", GetPerfStats, 0);
+#ifndef SIMULATOR
   mg_set_request_handler(_ctx, "/systemctl", SystemCtl, 0);
   mg_set_request_handler(_ctx, "/getprocessstatus", GetProcessStatus, 0);
   mg_set_request_handler(_ctx, "/processstatus", ProcessStatus, 0);

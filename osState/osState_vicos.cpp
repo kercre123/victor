@@ -13,6 +13,7 @@
  **/
 
 #include "osState/osState.h"
+#include "util/console/consoleInterface.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
@@ -48,7 +49,10 @@
 namespace Anki {
 namespace Cozmo {
 
+CONSOLE_VAR_ENUM(int, kWebvizUpdatePeriod, "OSState", 0, "Off,10ms,100ms,1000ms,10000ms");
+
 namespace {
+  uint32_t kPeriodEnumToMS[] = {0, 10, 100, 1000, 10000};
 
   std::ifstream _cpuFile;
   std::ifstream _temperatureFile;
@@ -87,6 +91,9 @@ namespace {
   // How often state variables are updated
   uint32_t _updatePeriod_ms = 0;
   uint32_t _lastUpdateTime_ms = 0;
+  uint32_t _lastWebvizUpdateTime_ms = 0;
+
+  std::function<void(const Json::Value&)> _webServiceCallback = nullptr;
 
 } // namespace
 
@@ -126,6 +133,8 @@ OSState::OSState()
   _cpuTemp_C = 0;
 
   _buildSha = ANKI_BUILD_SHA;
+
+  _lastWebvizUpdateTime_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
 }
 
 OSState::~OSState()
@@ -142,6 +151,8 @@ void OSState::Update()
   if (_updatePeriod_ms != 0) {
     const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
     if (now_ms - _lastUpdateTime_ms > _updatePeriod_ms) {
+      using namespace std::chrono;
+      // const auto startTime = steady_clock::now();
 
       // Update cpu freq
       UpdateCPUFreq_kHz();
@@ -154,6 +165,24 @@ void OSState::Update()
       // PRINT_NAMED_INFO("OSState", "Update took %lld microseconds", elapsed_us);
 
       _lastUpdateTime_ms = now_ms;
+      
+    }
+  }
+
+  if (kWebvizUpdatePeriod != 0 && _webServiceCallback) {
+    const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+    if (now_ms - _lastWebvizUpdateTime_ms > kPeriodEnumToMS[kWebvizUpdatePeriod]) {
+      UpdateCPUTimeStats();
+
+      Json::Value json;
+      json["deltaTime_ms"] = now_ms - _lastWebvizUpdateTime_ms;
+      auto& usage = json["usage"];
+      for(size_t i = 0; i < _CPUTimeStats.size(); ++i) {
+        usage.append( _CPUTimeStats[i] );
+      }
+      _webServiceCallback(json);
+
+      _lastWebvizUpdateTime_ms = now_ms;
     }
   }
 }
@@ -161,6 +190,10 @@ void OSState::Update()
 void OSState::SetUpdatePeriod(uint32_t milliseconds)
 {
   _updatePeriod_ms = milliseconds;
+}
+
+void OSState::SendToWebVizCallback(const std::function<void(const Json::Value&)>& callback) {
+  _webServiceCallback = callback;
 }
 
 void OSState::UpdateCPUFreq_kHz() const

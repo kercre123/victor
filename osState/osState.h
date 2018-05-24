@@ -17,7 +17,9 @@
 
 #include "coretech/common/shared/types.h"
 #include "util/singleton/dynamicSingleton.h"
+#include "json/json.h"
 
+#include <functional>
 #include <string>
 
 // Forward declaration
@@ -53,6 +55,8 @@ public:
   // You should leave this at zero only if you don't 
   // ever care about CPU freq and temperature.
   void SetUpdatePeriod(uint32_t milliseconds);
+
+  void SendToWebVizCallback(const std::function<void(const Json::Value&)>& callback);
 
   // Returns true if CPU frequncy falls below kNominalCPUFreq_kHz
   bool IsCPUThrottling() const;
