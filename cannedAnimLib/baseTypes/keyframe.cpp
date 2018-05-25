@@ -253,8 +253,10 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     SpriteSequenceKeyFrame::SpriteSequenceKeyFrame(Vision::SpriteHandle spriteHandle,
                                                    TimeStamp_t triggerTime_ms, 
                                                    float scanlineOpacity,
-                                                   bool shouldRenderInEyeHue)
-    : _scanlineOpacity(scanlineOpacity)
+                                                   bool shouldRenderInEyeHue,
+                                                   bool allowProceduralEyeOverlays)
+    : _allowProceduralEyeOverlays(allowProceduralEyeOverlays)
+    , _scanlineOpacity(scanlineOpacity)
     {
       if(ANKI_DEV_CHEATS){
         auto img = spriteHandle->GetSpriteContentsGrayscale();
@@ -277,8 +279,10 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
                                                    TimeStamp_t triggerTime_ms, 
                                                    u32 frameInterval_ms,
                                                    float scanlineOpacity,
-                                                   bool shouldRenderInEyeHue)
-    : _scanlineOpacity(scanlineOpacity)
+                                                   bool shouldRenderInEyeHue,
+                                                   bool allowProceduralEyeOverlays)
+    : _allowProceduralEyeOverlays(allowProceduralEyeOverlays)
+    , _scanlineOpacity(scanlineOpacity)
     {
       Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
       _compositeImage.reset(new Vision::CompositeImage(faceHueAndSaturation, spriteSeq, !shouldRenderInEyeHue));
@@ -296,8 +300,10 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     SpriteSequenceKeyFrame::SpriteSequenceKeyFrame(Vision::SpriteCache* spriteCache, 
                                                    Vision::CompositeImage* compImg, 
                                                    u32 frameInterval_ms,
-                                                   float scanlineOpacity)
-    : _scanlineOpacity(scanlineOpacity)
+                                                   float scanlineOpacity,
+                                                   bool allowProceduralEyeOverlays)
+    : _allowProceduralEyeOverlays(allowProceduralEyeOverlays)
+    , _scanlineOpacity(scanlineOpacity)
     {
       Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
       _compositeImage = std::make_unique<Vision::CompositeImage>(spriteCache, faceHueAndSaturation);
@@ -319,6 +325,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       _internalUpdateInterval_ms = other._internalUpdateInterval_ms;
       _compositeImageUpdated     = other._compositeImageUpdated;
       _compositeImageUpdateMap   = other._compositeImageUpdateMap;
+      _allowProceduralEyeOverlays = other._allowProceduralEyeOverlays;
       
       if(other._compositeImage != nullptr){
         _compositeImage.reset(new Vision::CompositeImage(*other._compositeImage));
@@ -377,8 +384,9 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     
     TimeStamp_t SpriteSequenceKeyFrame::CalculateInternalEndTime_ms() const
     {
-      const TimeStamp_t outTime = (_compositeImage->GetFullLoopLength() * _internalUpdateInterval_ms) + _triggerTime_ms;
-      return (outTime > GetKeyframeDuration_ms()) ? outTime : (GetKeyframeDuration_ms() + _triggerTime_ms);
+      const TimeStamp_t loopTime = (_compositeImage->GetFullLoopLength() * _internalUpdateInterval_ms);
+      const TimeStamp_t longestDuration = loopTime > GetKeyframeDuration_ms() ? loopTime : GetKeyframeDuration_ms();
+      return longestDuration + _triggerTime_ms;
     }
     
     bool SpriteSequenceKeyFrame::HaveKeyframeForTimeStamp(const TimeStamp_t timeSinceAnimStart_ms) const
@@ -551,7 +559,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       auto renderMethod = shouldRenderInEyeHue ? Vision::SpriteRenderMethod::CustomHue : Vision::SpriteRenderMethod::RGBA;
       _compositeImage->OverrideRenderMethod(renderMethod);
     }
-
 
 #pragma mark -
 #pragma mark ProceduralFaceKeyFrame

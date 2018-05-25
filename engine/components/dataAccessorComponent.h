@@ -49,6 +49,8 @@ public:
   // end IDependencyManagedComponent functions
   //////
 
+  const Vision::SpritePathMap* GetSpritePaths() const { assert(_spritePaths != nullptr); return _spritePaths; }
+
   Vision::SpriteCache* GetSpriteCache() const { assert(_spriteCache != nullptr); return _spriteCache;  }
   Vision::SpriteSequenceContainer* GetSpriteSequenceContainer() const { assert(_spriteSequenceContainer != nullptr); return _spriteSequenceContainer;}
 
@@ -58,6 +60,7 @@ public:
   const RobotDataLoader::WeatherResponseMap* GetWeatherResponseMap() const { assert(_weatherResponseMap); return _weatherResponseMap; }
 
 private:
+  const Vision::SpritePathMap* _spritePaths = nullptr;
   Vision::SpriteCache* _spriteCache = nullptr;
   Vision::SpriteSequenceContainer* _spriteSequenceContainer = nullptr;
   const RobotDataLoader::CompImageMap* _compImgMap = nullptr;

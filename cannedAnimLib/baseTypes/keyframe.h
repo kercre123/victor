@@ -259,19 +259,22 @@ namespace Cozmo {
     SpriteSequenceKeyFrame(Vision::SpriteHandle spriteHandle,
                            TimeStamp_t triggerTime_ms, 
                            float scanlineOpacity = 1.f,
-                           bool shouldRenderInEyeHue = true);
+                           bool shouldRenderInEyeHue = true,
+                           bool allowProceduralEyeOverlays = false);
 
     SpriteSequenceKeyFrame(const Vision::SpriteSequence* const spriteSeq,
                            TimeStamp_t triggerTime_ms, 
                            u32 frameInterval_ms,
                            float scanlineOpacity = 1.f,
-                           bool shouldRenderInEyeHue = true);
+                           bool shouldRenderInEyeHue = true,
+                           bool allowProceduralEyeOverlays = false);
                            
     // Transfers ownership to the keyframe
     SpriteSequenceKeyFrame(Vision::SpriteCache* spriteCache, 
                            Vision::CompositeImage* compImg, 
                            u32 frameInterval_ms,
-                           float scanlineOpacity = 0.f);
+                           float scanlineOpacity = 0.f,
+                           bool allowProceduralEyeOverlays = false);
 
     //Copy constructor
     SpriteSequenceKeyFrame(const SpriteSequenceKeyFrame& other);
@@ -333,8 +336,7 @@ namespace Cozmo {
       Vision::SpriteName spriteName;
     };
 
-    void QueueCompositeImageUpdate(CompositeImageUpdateSpec&& updateSpec,
-                                   u32 applyAt_ms);
+    void QueueCompositeImageUpdate(CompositeImageUpdateSpec&& updateSpec, u32 applyAt_ms);
 
     // Depending on the contents of the keyframe there may or may not be updates to images
     // Checking this function ensures there aren't unnecessary re-draws
@@ -346,12 +348,13 @@ namespace Cozmo {
     // use IsDone() rather than the return value of this function.
     bool GetFaceImageHandle(const TimeStamp_t timeSinceAnimStart_ms, Vision::SpriteHandle& handle);
     
-    virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
+    virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms + CalculateInternalEndTime_ms();}
     
-    // tmp exposure for procedural eye layer
     Vision::CompositeImage& GetCompositeImage() { assert(_compositeImage != nullptr); return *_compositeImage;}
     
     void OverrideShouldRenderInEyeHue(bool shouldRenderInEyeHue);
+    
+    bool AllowProceduralEyeOverlays() const { return _allowProceduralEyeOverlays; }
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
@@ -375,7 +378,8 @@ namespace Cozmo {
     std::unique_ptr<Vision::CompositeImage> _compositeImage;
     bool _compositeImageUpdated = false;
     std::multimap<u32, CompositeImageUpdateSpec> _compositeImageUpdateMap;
-
+    
+    bool         _allowProceduralEyeOverlays;
     float        _scanlineOpacity;
     TimeStamp_t  _internalUpdateInterval_ms = ANIM_TIME_STEP_MS;
     

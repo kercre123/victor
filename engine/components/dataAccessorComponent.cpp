@@ -42,6 +42,7 @@ void DataAccessorComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMa
 {
   auto* context = dependentComponents.GetValue<ContextWrapper>().context;
   auto& dataLoader = *context->GetDataLoader();
+  _spritePaths = dataLoader.GetSpritePaths();
   _spriteCache = dataLoader.GetSpriteCache();
   _spriteSequenceContainer = dataLoader.GetSpriteSequenceContainer();
   _compImgMap = dataLoader.GetCompImageMap();

@@ -613,7 +613,8 @@ namespace Cozmo {
       if(ANKI_VERIFY(builtImage, 
                      "AnimationStreamer.Process_displayCompositeImageChunk.FailedToBuildImage",
                      "Composite image failed to build")){
-        SetCompositeImage(outImage, msg.get_frame_interval_ms, msg.duration_ms);
+        const bool allowProceduralEyeOverlays = true;
+        SetCompositeImage(outImage, msg.get_frame_interval_ms, msg.duration_ms, allowProceduralEyeOverlays);
       }
 
       _compositeImageBuilder.reset();
@@ -694,7 +695,8 @@ namespace Cozmo {
     return result;
   }
 
-  Result AnimationStreamer::SetCompositeImage(Vision::CompositeImage* compImg, u32 frameInterval_ms, u32 duration_ms)
+  Result AnimationStreamer::SetCompositeImage(Vision::CompositeImage* compImg, u32 frameInterval_ms,
+                                              u32 duration_ms, bool allowProceduralEyeOverlays)
   {
     DEV_ASSERT(nullptr != _proceduralAnimation, "AnimationStreamer.SetCompositeImage.NullProceduralAnimation");
     // If procedural animation is streaming set the streaming animation to nullptr 
@@ -717,9 +719,11 @@ namespace Cozmo {
     auto& spriteSeqTrack = _proceduralAnimation->GetTrack<SpriteSequenceKeyFrame>();
     spriteSeqTrack.Clear();
     
+    const bool shouldRenderInEyeHue = false;
     // Trigger time of keyframe is 0 since we want it to start playing immediately
     auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
-    SpriteSequenceKeyFrame kf(spriteCache, compImg, frameInterval_ms);
+    SpriteSequenceKeyFrame kf(spriteCache, compImg, frameInterval_ms,
+                              shouldRenderInEyeHue, allowProceduralEyeOverlays);
     kf.SetKeyFrameDuration_ms(duration_ms);
     Result result = _proceduralAnimation->AddKeyFrameToBack(kf);
     if(!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetCompositeImage.FailedToAddKeyFrame", "")))
@@ -730,7 +734,6 @@ namespace Cozmo {
     const u32 numLoops = 1;
     const bool interruptRunning = true;
     const bool shouldOverrideEyeHue = false;
-    const bool shouldRenderInEyeHue = false;
     const bool isInternalAnim = false;
     return SetStreamingAnimation(_proceduralAnimation, preserveTag, numLoops, interruptRunning,
                                  shouldOverrideEyeHue, shouldRenderInEyeHue, isInternalAnim);
@@ -825,10 +828,23 @@ namespace Cozmo {
       _endOfAnimationSent = false;
       _startOfAnimationSent = false;
       
-      // Make sure any eye dart (which is persistent) gets removed so it doesn't
-      // affect the animation we are about to start streaming. Give it a little
-      // duration so it doesn't pop.
-      _proceduralTrackComponent->RemoveKeepFaceAlive(_relativeStreamTime_ms, (3 * ANIM_TIME_STEP_MS));
+      {
+        // If the animation that's about to start streaming will be using
+        // sprite sequences, check weather the sequence will use procedural eyes
+        // or take full control of the screen.
+        auto& spriteTrack = _streamingAnimation->GetTrack<SpriteSequenceKeyFrame>();
+        const bool spriteTrackAllowsEyes = spriteTrack.IsEmpty() ||
+                                           !spriteTrack.CurrentFrameIsValid(_relativeStreamTime_ms) ||
+                                           (spriteTrack.CurrentFrameIsValid(_relativeStreamTime_ms) &&
+                                            spriteTrack.GetCurrentKeyFrame().AllowProceduralEyeOverlays());
+
+        // If procedural eyes will be used, make sure any eye dart (which is persistent) gets removed
+        // so it doesn't affect the animation we are about to start streaming.
+        // Give it a little duration so it doesn't pop.
+        if(spriteTrackAllowsEyes){
+          _proceduralTrackComponent->RemoveKeepFaceAlive(_relativeStreamTime_ms, (3 * ANIM_TIME_STEP_MS));
+        }
+      }
       
     }
     return lastResult;
@@ -1452,7 +1468,8 @@ namespace Cozmo {
       auto & faceKeyFrame = spriteSeqTrack.GetCurrentKeyFrame();
       
       // Insert animation face keyframes into composite image
-      if(layeredKeyFrames.haveFaceKeyFrame){
+      if(layeredKeyFrames.haveFaceKeyFrame &&
+         faceKeyFrame.AllowProceduralEyeOverlays()){
         auto& compImg = faceKeyFrame.GetCompositeImage();
         InsertFaceKeyframeIntoCompImg(layeredKeyFrames, compImg);
       }
