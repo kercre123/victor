@@ -34,8 +34,7 @@ vlog "Check homebrew dependencies"
     python3 \
     git-lfs \
     libsndfile \
-    node \
-    protobuf
+    node
 
 vlog "vicos sdk"
 ./tools/build/tools/ankibuild/vicos.py --install 0.9-r03
@@ -45,6 +44,9 @@ vlog "CMake"
 
 vlog "Go"
 ./tools/build/tools/ankibuild/go.py
+
+vlog "protobuf"
+./tools/build/tools/ankibuild/protobuf.py --install
 
 vlog "Build output dirs"
 mkdir -p generated

@@ -280,6 +280,9 @@ fi
 
 ${TOPLEVEL}/tools/build/tools/ankibuild/go.py --check-version $GO_EXE
 
+PROTOC_EXE=`${TOPLEVEL}/tools/build/tools/ankibuild/protobuf.py --install | tail -1`
+PROTOBUF_HOME=`cd $(dirname "${PROTOC_EXE}")/.. && pwd`
+
 #
 # Remove assets in build directory if requested. This will force the
 # build to re-copy them from the source tree into the build directory.
@@ -397,6 +400,7 @@ if [ $CONFIGURE -eq 1 ]; then
         -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} \
         -DGOPATH=${GOPATH} \
         -DGOROOT=${GOROOT} \
+        -DPROTOBUF_HOME=${PROTOBUF_HOME} \
         -DANKI_BUILD_SHA=${ANKI_BUILD_SHA} \
         ${EXPORT_FLAGS} \
         ${FEATURE_FLAGS} \

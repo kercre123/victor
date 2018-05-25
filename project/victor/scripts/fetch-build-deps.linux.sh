@@ -54,6 +54,9 @@ vlog "CMake"
 vlog "Go"
 ./tools/build/tools/ankibuild/go.py
 
+vlog "protobuf"                                                                                     
+./tools/build/tools/ankibuild/protobuf.py --install
+
 vlog "Build output dirs"
 mkdir -p generated
 mkdir -p _build
