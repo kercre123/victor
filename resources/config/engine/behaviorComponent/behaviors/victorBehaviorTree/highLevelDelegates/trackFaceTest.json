@@ -4,8 +4,12 @@
 
   "faceSelectionPenalties": [
     {
-      "factor": "TimeSinceSeen_s",
+      "factor": "TrackingOnly",
       "multiplier": 100.0
+    },
+    {
+      "factor": "TimeSinceSeen_s",
+      "multiplier": 50.0
     },
     {
       "factor": "Distance_m",

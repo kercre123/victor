@@ -33,6 +33,7 @@ static const float kMinTrackingTiltAngle_deg = 4.0f;
 static const float kMinTrackingPanAngle_deg = 4.0f;
 static const float kMinTrackingClampPeriod_s = 0.2f;
 static const float kMaxTrackingClampPeriod_s = 0.7f;
+static const float kTrackingTimeout_s = 2.5f;
 }
 
 BehaviorObservingLookAtFaces::BehaviorObservingLookAtFaces(const Json::Value& config)
@@ -170,6 +171,7 @@ void BehaviorObservingLookAtFaces::TransitionToStareAtFace(SmartFaceID face)
     trackAction->SetPanTolerance(DEG_TO_RAD(kMinTrackingPanAngle_deg));
     trackAction->SetClampSmallAnglesToTolerances(true);
     trackAction->SetClampSmallAnglesPeriod(kMinTrackingClampPeriod_s, kMaxTrackingClampPeriod_s);
+    trackAction->SetUpdateTimeout(kTrackingTimeout_s);
 
     // stare for a while, then turn towards another face
     DelegateIfInControl( new CompoundActionParallel({waitAction, trackAction}),
