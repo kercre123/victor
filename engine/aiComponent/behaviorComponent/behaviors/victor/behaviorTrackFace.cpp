@@ -95,6 +95,12 @@ void BehaviorTrackFace::OnBehaviorActivated()
 {
   // don't reset variables here (keep tracked face persistent)
   if( _dVars->faceToTrack.IsValid() ) {
+
+    PRINT_CH_INFO("Behaviors", "BehaviorTrackFace.Start",
+                  "%s: starting by tracking face %s",
+                  GetDebugLabel().c_str(),
+                  _dVars->faceToTrack.GetDebugStr().c_str());
+
     BeginTracking();
   }
   // otherwise just wait for a face
@@ -132,6 +138,15 @@ void BehaviorTrackFace::BehaviorUpdate()
     const bool newFace = bestFace.IsValid() && ( bestFace != _dVars->faceToTrack );
 
     if( chargerChange || newFace ) {
+
+      if( newFace ) {
+        PRINT_CH_INFO("Behaviors", "BehaviorTrackFace.SwitchFaces",
+                      "%s: switch from face %s to face %s",
+                      GetDebugLabel().c_str(),
+                      _dVars->faceToTrack.GetDebugStr().c_str(),
+                      bestFace.GetDebugStr().c_str());
+      }
+      
       const bool allowCallback = false;
       CancelDelegates(allowCallback);
       _dVars->faceToTrack = bestFace;

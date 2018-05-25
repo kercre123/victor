@@ -13,12 +13,8 @@
 #include "engine/actions/trackFaceAction.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/visionComponent.h"
-#include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
-
-#include "clad/externalInterface/messageEngineToGameTag.h"
-#include "clad/externalInterface/messageEngineToGame.h"
 
 #define DEBUG_TRACKING_ACTIONS 0
 
@@ -45,9 +41,6 @@ TrackFaceAction::TrackFaceAction(SmartFaceID faceID)
 
 TrackFaceAction::~TrackFaceAction()
 {
-  if(HasRobot()){
-    GetRobot().GetMoveComponent().UnSetTrackToFace();
-  }
 }
 
 void TrackFaceAction::OnRobotSet()
@@ -59,19 +52,11 @@ void TrackFaceAction::OnRobotSet()
 
 void TrackFaceAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
 {
-  requests.insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Med });
+  requests.insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
 }
 
 ActionResult TrackFaceAction::InitInternal()
-{
-  if(false == GetRobot().HasExternalInterface()) {
-    PRINT_NAMED_ERROR("TrackFaceAction.InitInternal.NoExternalInterface",
-                      "Robot must have an external interface so action can "
-                      "subscribe to face changed ID events.");
-    return ActionResult::ABORT;
-  }
-  
-  GetRobot().GetMoveComponent().SetTrackToFace(_faceID.GetID());
+{  
   _lastFaceUpdate = 0;
   
   return ActionResult::SUCCESS;
