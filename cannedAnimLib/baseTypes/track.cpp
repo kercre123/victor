@@ -113,7 +113,43 @@ namespace Animations {
     return result;
   }
   
+  template<>
+  void Track<BodyMotionKeyFrame>::SetKeyFrameDuration_ms()
+  {
+    SetKeyFrameDurationHelper();
+  }
   
+  template<>
+  void Track<ProceduralFaceKeyFrame>::SetKeyFrameDuration_ms()
+  {
+    SetKeyFrameDurationHelper();
+  }
+  
+  template<>
+  void Track<SpriteSequenceKeyFrame>::SetKeyFrameDuration_ms()
+  {
+    SetKeyFrameDurationHelper();
+  }
+  
+  template<class FRAME_TYPE>
+  void Track<FRAME_TYPE>::SetKeyFrameDurationHelper()
+  {
+    if(_frames.size() < 2){
+      return;
+    }
+    auto prevIter = _frames.begin();
+    auto nextIter = _frames.begin();
+    nextIter++;
+    const auto upperBound = _frames.size() + 1;
+    BOUNDED_WHILE(upperBound, nextIter != _frames.end()) {
+      // Only override durations which haven't been set
+      if(prevIter->GetKeyframeDuration_ms() == 0){
+        prevIter->SetKeyFrameDuration_ms(nextIter->GetTriggerTime_ms() - prevIter->GetTriggerTime_ms());
+      }
+      prevIter++;
+      nextIter++;
+    }
+  }
   
 } // end namespace Animations
 } // end namespace Cozmo

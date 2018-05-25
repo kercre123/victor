@@ -175,6 +175,7 @@ public:
   // Set all keyframe durations within the track
   void SetKeyFrameDuration_ms();
 
+
 private:
   
   using FrameList = std::list<FRAME_TYPE>;
@@ -188,6 +189,9 @@ private:
   
   Result AddKeyFrameToBackHelper(const FRAME_TYPE& keyFrame, FRAME_TYPE* &prevKeyFrame);
   Result AddKeyFrameByTimeHelper(const FRAME_TYPE& keyFrame, FRAME_TYPE* &prevKeyFrame);
+  
+  // Use to setup keyframe duration for specific keyframe types
+  void SetKeyFrameDurationHelper();
   
 }; // class Track
   
@@ -558,26 +562,13 @@ void Track<FRAME_TYPE>::AdvanceTrack(const TimeStamp_t toTime_ms)
   }
 }
 
+// Default template implementation
 template<class FRAME_TYPE>
-void Track<FRAME_TYPE>::SetKeyFrameDuration_ms()
-{
-  if(_frames.size() < 2){
-    return;
-  }
-  auto prevIter = _frames.begin();
-  auto nextIter = _frames.begin();
-  nextIter++;
-  const auto upperBound = _frames.size() + 1;
-  BOUNDED_WHILE(upperBound, nextIter != _frames.end()) {
-    // Only override durations which haven't been set
-    if(prevIter->GetKeyframeDuration_ms() == 0){
-      prevIter->SetKeyFrameDuration_ms(nextIter->GetTriggerTime_ms() - prevIter->GetTriggerTime_ms());
-    }
-    prevIter++;
-    nextIter++;
-  }
-}
-
+void Track<FRAME_TYPE>::SetKeyFrameDuration_ms() { }
+// Specialized implementations in .cpp
+template<> void Track<BodyMotionKeyFrame>::SetKeyFrameDuration_ms();
+template<> void Track<ProceduralFaceKeyFrame>::SetKeyFrameDuration_ms();
+template<> void Track<SpriteSequenceKeyFrame>::SetKeyFrameDuration_ms();
 
   
 } // end namespace Animations

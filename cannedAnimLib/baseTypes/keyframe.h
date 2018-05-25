@@ -111,8 +111,8 @@ namespace Cozmo {
     bool IsDoneHelper(const TimeStamp_t timeSinceAnimStart_ms, TimeStamp_t durationTime_ms) const;
     
     TimeStamp_t GetTimeSinceTrigger(const TimeStamp_t timeSinceAnimStart_ms) const 
-    { 
-      return timeSinceAnimStart_ms > GetTriggerTime_ms() ? timeSinceAnimStart_ms - GetTriggerTime_ms() : 0; 
+    {
+      return (timeSinceAnimStart_ms > GetTriggerTime_ms()) ? (timeSinceAnimStart_ms - GetTriggerTime_ms()) : 0;
     }
 
 

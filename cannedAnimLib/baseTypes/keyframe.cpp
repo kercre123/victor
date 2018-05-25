@@ -86,7 +86,10 @@ namespace Anki {
     
     bool IKeyFrame::IsDoneHelper(const TimeStamp_t timeSinceAnimStart_ms, TimeStamp_t duration_ms) const
     {
-      return GetTimeSinceTrigger(timeSinceAnimStart_ms) >= duration_ms;
+      if (_triggerTime_ms < timeSinceAnimStart_ms) {
+        return GetTimeSinceTrigger(timeSinceAnimStart_ms) >= duration_ms;
+      }
+      return false;
     }
     
 #pragma mark -
@@ -143,12 +146,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     #if CAN_STREAM
       RobotInterface::EngineToRobot* HeadAngleKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
       {
-        if (!IsFirstKeyframeTick(timeSinceAnimStart_ms)) {
-          return nullptr;
-        }
-        
         RobotInterface::SetHeadAngle streamHeadMsg;
-        
         streamHeadMsg.actionID = 0;
         streamHeadMsg.duration_sec = 0.001 * _motionDuration_ms;
         
@@ -207,11 +205,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     #if CAN_STREAM
       RobotInterface::EngineToRobot* LiftHeightKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
       {
-        if (!IsFirstKeyframeTick(timeSinceAnimStart_ms)) {
-          return nullptr;
-        }
         RobotInterface::SetLiftHeight streamLiftMsg;
-        
         streamLiftMsg.actionID = 0;
         streamLiftMsg.duration_sec = 0.001 * _motionDuration_ms;
         
@@ -1352,10 +1346,7 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
     #if CAN_STREAM
       RobotInterface::EngineToRobot* RecordHeadingKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
       {
-        if (IsFirstKeyframeTick(timeSinceAnimStart_ms)) {
-          return new RobotInterface::EngineToRobot(_streamMsg);
-        }
-        return nullptr;
+        return new RobotInterface::EngineToRobot(_streamMsg);
       }
     #endif
     
@@ -1475,10 +1466,7 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
     #if CAN_STREAM
       RobotInterface::EngineToRobot* TurnToRecordedHeadingKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
       {
-        if (IsFirstKeyframeTick(timeSinceAnimStart_ms)) {
-          return new RobotInterface::EngineToRobot(_streamMsg);
-        }
-        return nullptr;
+        return new RobotInterface::EngineToRobot(_streamMsg);
       }
     #endif
     

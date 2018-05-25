@@ -430,7 +430,6 @@ namespace Cozmo {
     }
     
     return RESULT_OK;
-
   }
   
   Result AnimationStreamer::SetProceduralFace(const ProceduralFace& face, u32 duration_ms)

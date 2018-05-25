@@ -107,8 +107,8 @@ void AnimationAudioClient::HandleAudioRef( const AudioEventGroupRef& eventRef, U
     SetCozmoEventParameter( playId, GameParameter::ParameterType::Event_Volume, anEvent->Volume );
   }
   AUDIO_DEBUG_LOG("AnimationAudioClient.PlayAudioKeyFrame",
-                  "Posted audio event '%s' (volume %f, probability %f)",
-                  EnumToString(audioRef.audioEvent), audioRef.volume, audioRef.probability);
+                  "Posted audio event '%s' volume %f)",
+                  EnumToString(anEvent->AudioEvent), anEvent->Volume);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
