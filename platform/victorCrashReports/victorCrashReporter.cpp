@@ -8,21 +8,40 @@
  **/
 
 #include "victorCrashReporter.h"
+
+#ifdef USE_GOOGLE_BREAKPAD
 #include "google_breakpad.h"
-#include <assert.h>
+#endif
+
+#ifdef USE_TOMBSTONE_HOOKS
+#include "tombstoneHooks.h"
+#endif
 
 namespace Anki {
 namespace Victor {
 
 void InstallCrashReporter(const char * filenamePrefix)
 {
-  assert(filenamePrefix != nullptr);
+  #ifdef USE_TOMBSTONE_HOOKS
+  Anki::Victor::InstallTombstoneHooks();
+  #endif
+
+  #ifdef USE_GOOGLE_BREAKPAD
   GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
+  #endif
+
 }
 
 void UninstallCrashReporter()
 {
+  #ifdef USE_GOOGLE_BREAKPAD
   GoogleBreakpad::UnInstallGoogleBreakpad();
+  #endif
+
+  #ifdef USE_TOMBSTONE_HOOKS
+  Anki::Victor::UninstallTombstoneHooks();
+  #endif
+
 }
 
 } // end namespace Victor
