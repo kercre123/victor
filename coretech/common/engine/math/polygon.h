@@ -26,6 +26,9 @@ using PolygonDimType = size_t;
 template<PolygonDimType N, typename T>
 class Quadrilateral;
 
+template<typename T>
+class Rectangle;
+
 class RotatedRectangle;
 
 template <PolygonDimType N, typename T>
@@ -48,11 +51,12 @@ public:
   // (x,y) coordinates and ignoring z.
   Polygon(const Polygon<N+1,T>& other);
 
-  // convert from a rotated rectangle
-  Polygon(const RotatedRectangle& rect);
+  // convert from common 2d objects
+  explicit Polygon(const Rectangle<T>& rect);
+  explicit Polygon(const RotatedRectangle& rect);
+  explicit Polygon(const Quadrilateral<2, T>& quad);
 
   // Import from a 2D quad
-  // NOTE: this is difficult to make into a constructor because of SortCornersClockwise
   void ImportQuad2d(const Quadrilateral<2, T>& quad);
 
   // Import from a quadrilateral > 2D

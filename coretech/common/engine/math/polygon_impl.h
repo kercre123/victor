@@ -55,6 +55,13 @@ Polygon<N,T>::Polygon(const Polygon<N+1,T>& other)
 
 
 template <PolygonDimType N, typename T>
+Polygon<N,T>::Polygon(const Rectangle<T>& rect)
+  : _points{rect.GetTopLeft(), rect.GetTopRight(), rect.GetBottomRight(), rect.GetBottomLeft()}
+{
+  static_assert(N == 2, "Must use 2D for rectangles");
+}
+
+template <PolygonDimType N, typename T>
 Polygon<N,T>::Polygon(const RotatedRectangle& rect)
 {
   static_assert(N == 2, "Must use 2D for rotated rectangles");
@@ -62,6 +69,11 @@ Polygon<N,T>::Polygon(const RotatedRectangle& rect)
   ImportQuad2d(rect.GetQuad());
 }
 
+template <PolygonDimType N, typename T>
+Polygon<N,T>::Polygon(const Quadrilateral<2, T>& quad)
+{
+  ImportQuad2d(quad);
+}
 
 template <PolygonDimType N, typename T>
 void Polygon<N,T>::ImportQuad(const Quadrilateral<N,T>& quad)
