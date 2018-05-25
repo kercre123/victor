@@ -90,6 +90,7 @@ enum int_32 AnimationTrigger
   MeetVictorLookFaceInterrupt,
   MeetVictorSayName,
   MeetVictorSayNameAgain,
+  MeetVictorSawWrongFace,
 
   MeetCozmoFirstEnrollmentCelebration,  // 5. First-time enrollment, big special celebration for new name
   MeetCozmoReEnrollmentSayName,         // 3b. Re-enrollment, say player's name

@@ -524,6 +524,10 @@
     "AnimName" : "ag_meetvictor_sayname_02"
   },
   {
+    "CladEvent": "MeetVictorSawWrongFace",
+    "AnimName" : "ag_meetvictor_sayname_01"
+  },
+  {
     "CladEvent": "MeetVictorLookFaceInterrupt",
     "AnimName" : "ag_meetvictor_interrupt"
   },

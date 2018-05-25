@@ -87,6 +87,7 @@ CONSOLE_VAR(s32,               kEnrollFace_DefaultMaxFacesVisible,              
 CONSOLE_VAR(f32,               kEnrollFace_DefaultTooManyFacesTimeout_sec,      CONSOLE_GROUP, 2.f);
 CONSOLE_VAR(f32,               kEnrollFace_DefaultTooManyFacesRecentTime_sec,   CONSOLE_GROUP, 0.5f);
   
+CONSOLE_VAR(u32,               kEnrollFace_TicksForKnownNameBeforeFail,         CONSOLE_GROUP, 35);
 CONSOLE_VAR(TimeStamp_t,       kEnrollFace_TimeStopMovingAfterManualTurn_ms,    CONSOLE_GROUP, 8000);
 
 static const char * const kLogChannelName = "FaceRecognizer";
@@ -998,6 +999,29 @@ void BehaviorEnrollFace::TransitionToSayingIKnowThatName()
   }
 
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEnrollFace::TransitionToWrongFace( const std::string& faceName )
+{
+  SET_STATE(EmotingConfusion);
+  
+  _dVars.failedState = State::Failed_WrongFace;
+
+  CancelDelegates(false);
+  
+  // todo: locale
+  const std::string text = "youre    " + faceName;
+  auto* sayNameAction = new SayTextAction(text, SayTextIntent::Name_FirstIntroduction_1);
+  sayNameAction->SetAnimationTrigger(AnimationTrigger::MeetVictorSawWrongFace);
+  
+  DelegateIfInControl(sayNameAction, [this](ActionResult result) {
+    if( ActionResult::SUCCESS != result ) {
+      PRINT_NAMED_WARNING("BehaviorEnrollFace.TransitionToWrongFace.AnimFailed", "");
+    }
+    _dVars.persistent.state = State::Failed_WrongFace;
+    SetDebugStateName("Failed_WrongFace");
+  });
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::TransitionToFailedState( State state, const std::string& stateName )
@@ -1441,6 +1465,20 @@ void BehaviorEnrollFace::UpdateFaceToEnroll()
                       "Refusing to enroll '%s' face %d, with current faceID=%d and saveID=%d",
                       !newFace->HasName() ? "<unnamed>" : Util::HidePersonallyIdentifiableInfo(newFace->GetName().c_str()),
                       faceID, _dVars.faceID, _dVars.saveID);
+        auto it = std::find_if( _dVars.knownFaceCounts.begin(), _dVars.knownFaceCounts.end(), [&](const auto& p) {
+          return p.first == newFace->GetName();
+        });
+        if( it == _dVars.knownFaceCounts.end() ) {
+          _dVars.knownFaceCounts.emplace_back( newFace->GetName(), 1 );
+          it = _dVars.knownFaceCounts.end();
+          --it;
+        } else {
+          ++it->second;
+        }
+        if( it->second >= kEnrollFace_TicksForKnownNameBeforeFail ) {
+          TransitionToWrongFace( it->first );
+          return;
+        }
       }
 
     } // for each face ID
@@ -1480,7 +1518,7 @@ void BehaviorEnrollFace::AlwaysHandleInScope(const EngineToGameEvent& event)
                         msg.oldID, msg.newID,
                         Util::HidePersonallyIdentifiableInfo(newFace->GetName().c_str()), _dVars.saveID);
 
-          TransitionToFailedState(State::Failed_WrongFace, "Failed_WrongFace");
+          TransitionToWrongFace( newFace->GetName() );
 
           _dVars.observedUnusableID   = msg.newID;
           _dVars.observedUnusableName = newFace->GetName();

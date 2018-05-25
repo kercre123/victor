@@ -117,6 +117,7 @@ private:
   void TransitionToSayingName();
   void TransitionToSayingIKnowThatName();
   void TransitionToSavingToRobot();
+  void TransitionToWrongFace( const std::string& faceName );
   // catch all for "confusion" animations that should play before transitioning to the given state
   void TransitionToFailedState( State state, const std::string& stateName);
   
@@ -199,6 +200,8 @@ private:
     std::string      observedUnusableName;
     
     Radians          lastRelBodyAngle;
+    
+    std::vector<std::pair<std::string, unsigned int>> knownFaceCounts;
     
     
     State            failedState;
