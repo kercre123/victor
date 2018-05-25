@@ -569,13 +569,6 @@ def update_from_url(url):
                 handle_boot_system(target_slot, manifest, tar_stream)
             else:
                 die(201, "Two images specified but couldn't find boot or system")
-        elif num_images == 1:
-            if manifest.has_section("DELTA"):
-                handle_delta(current_slot, target_slot, manifest, tar_stream)
-            elif manifest.has_section("ANKI"):
-                handle_anki(current_slot, target_slot, manifest, tar_stream)
-            else:
-                die(201, "One image specified but not DELTA or ANKI")
         else:
             die(201, "Unexpected manifest configuration")
     stream.close()
