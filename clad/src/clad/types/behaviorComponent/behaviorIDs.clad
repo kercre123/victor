@@ -81,6 +81,9 @@ enum uint_8 BehaviorID {
   ReactToCubeMoved,
   ReactToPet,
 
+  // sdkBehaviors
+  SDKBehaviors,
+
   // victorBehaviorTree
   ComeHereVoiceCommand,
   CoordinateGlobalInterrupts,
@@ -90,6 +93,7 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree
   DriveOffCharger,
+  DriveOffChargerAnim,
   GlobalInterruptions,
   HighLevelAI,
 
@@ -170,9 +174,6 @@ enum uint_8 BehaviorID {
   PutDownDispatch_LookForFaceAndCube,
   ShortLookAroundForFaceAndCube,
 
-  // sdkBehaviors
-  SDKBehaviors,
-
   // victorBehaviorTree/highLevelDelegates/sleeping
   GoToSleep,
   Sleeping,
@@ -191,7 +192,6 @@ enum uint_8 BehaviorID {
   // victorBehaviorTree/highLevelDelegates/voiceCommands
   DoATrickVoiceCommand,
   FistBumpVoiceCommand,
-  GoToSleepVoiceCommand,
   KeepawayVoiceCommand,
 
   // victorBehaviorTree

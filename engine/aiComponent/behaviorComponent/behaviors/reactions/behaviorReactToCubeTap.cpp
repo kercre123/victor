@@ -101,11 +101,7 @@ void BehaviorReactToCubeTap::InitBehavior()
     DEV_ASSERT_MSG( chargerBehavior != nullptr,
                     "BehaviorReactToCubeTap.Init",
                     "Reaction behavior not found: %s", _iVars.chargerBehaviorString.c_str() );
-    DEV_ASSERT_MSG( chargerBehavior->GetClass() == BEHAVIOR_CLASS( DriveOffCharger ),
-                    "BehaviorReactToCubeTap.Init",
-                    "the specified `chargerBehavior` behavior is not of valid class BehaviorClass::DriveOffCharger" );
-
-    _iVars.chargerBehavior = std::static_pointer_cast<BehaviorDriveOffCharger>(chargerBehavior);
+    _iVars.chargerBehavior = chargerBehavior;
   }
 
   SubscribeToTags(

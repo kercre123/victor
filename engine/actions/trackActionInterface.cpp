@@ -439,7 +439,8 @@ ActionResult ITrackAction::CheckIfDone()
       
       if(DEBUG_TRACKING_ACTIONS) {
         PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.NewInfo",
-                      "Commanding %sabs angles: pan=%.1fdeg, tilt=%.1fdeg, dist=%1.fmm",
+                      "[%d] Commanding %sabs angles: pan=%.1fdeg, tilt=%.1fdeg, dist=%1.fmm",
+                      GetTag(),
                       updateResult == UpdateResult::PredictedInfo ? "predicted " : "",
                       absPanAngle.getDegrees(), absTiltAngle.getDegrees(), distance_mm);
       }
@@ -532,8 +533,8 @@ ActionResult ITrackAction::CheckIfDone()
           
           if(DEBUG_TRACKING_ACTIONS) {
             PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.DriveWheelsCurvature",
-                          "d=%f r=%hd relPan=%.1fdeg speed=%f accel=%f",
-                          distance_mm, radius, RAD_TO_DEG(relPanAngle), wheelspeed_mmps, accel);
+                          "[%d] d=%f r=%hd relPan=%.1fdeg speed=%f accel=%f",
+                          GetTag(), distance_mm, radius, RAD_TO_DEG(relPanAngle), wheelspeed_mmps, accel);
           }
           
           Result result = GetRobot().SendRobotMessage<RobotInterface::DriveWheelsCurvature>(wheelspeed_mmps, accel, radius);
@@ -562,8 +563,8 @@ ActionResult ITrackAction::CheckIfDone()
           
           if(DEBUG_TRACKING_ACTIONS) {
             PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.SetBodyAngle",
-                          "d=%f relPan=%.1fdeg speed=%f accel=%f",
-                          distance_mm, RAD_TO_DEG(relPanAngle), rotSpeed_radPerSec, accel);
+                          "[%d] d=%f relPan=%.1fdeg speed=%f accel=%f",
+                          GetTag(), distance_mm, RAD_TO_DEG(relPanAngle), rotSpeed_radPerSec, accel);
           }
           
           if(RESULT_OK != GetRobot().GetMoveComponent().TurnInPlace(turnAngle.ToFloat(),      // angle_rad
@@ -582,7 +583,8 @@ ActionResult ITrackAction::CheckIfDone()
       }
       else if(DEBUG_TRACKING_ACTIONS) {
         PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.NoMotion",
-                      "%sneed to pan (relPanAngle=%f, tol=%f). %sneed to move fwd/bwd",
+                      "[%d] %sneed to pan (relPanAngle=%f, tol=%f). %sneed to move fwd/bwd",
+                      GetTag(),
                       needToPan ? "" : "don't",
                       relPanAngle,
                       _panTolerance.ToFloat(),
@@ -620,7 +622,8 @@ ActionResult ITrackAction::CheckIfDone()
         
         if(DEBUG_TRACKING_ACTIONS) {
           PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.EyeShift",
-                        "Adjusting eye shift to (%.1f,%.1f)",
+                        "[%d] Adjusting eye shift to (%.1f,%.1f)",
+                        GetTag(),
                         eyeShiftX, eyeShiftY);
         }
         
@@ -702,8 +705,8 @@ ActionResult ITrackAction::CheckIfDone()
         }
         else if(DEBUG_TRACKING_ACTIONS) {
           PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.NotTimedOut",
-                        "Current t=%f, LastUpdate t=%f, Timeout=%f",
-                        currentTime, _lastUpdateTime, _updateTimeout_sec);
+                        "[%d] Current t=%f, LastUpdate t=%f, Timeout=%f",
+                        GetTag(), currentTime, _lastUpdateTime, _updateTimeout_sec);
         }
       } else {
         // Remove eye shift once "locked on" target
@@ -771,7 +774,8 @@ bool ITrackAction::StopCriteriaMetAndTimeToStop(const f32 relPanAngle, const f32
     if(DEBUG_TRACKING_ACTIONS)
     {
       PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.CheckingStopCriteria",
-                    "Pan:%.1fdeg vs %.1f (%c), Tilt:%.1fdeg vs %.1f (%c), Dist:%.1fmm vs (%.1f,%.1f) (%c)",
+                    "[%d] Pan:%.1fdeg vs %.1f (%c), Tilt:%.1fdeg vs %.1f (%c), Dist:%.1fmm vs (%.1f,%.1f) (%c)",
+                    GetTag(), 
                     std::abs(RAD_TO_DEG(relPanAngle)), _stopCriteria.panTol.getDegrees(),
                     isWithinPanTol ? 'Y' : 'N',
                     std::abs(RAD_TO_DEG(relTiltAngle)), _stopCriteria.tiltTol.getDegrees(),
@@ -804,7 +808,8 @@ bool ITrackAction::StopCriteriaMetAndTimeToStop(const f32 relPanAngle, const f32
         if(DEBUG_TRACKING_ACTIONS)
         {
           PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.StopCriteriaMet",
-                        "Setting start of stop criteria being met to t=%.1fsec",
+                        "[%d] Setting start of stop criteria being met to t=%.1fsec",
+                        GetTag(),
                         currentTime);
         }
         

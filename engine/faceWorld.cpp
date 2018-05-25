@@ -930,6 +930,7 @@ namespace Cozmo {
       data["name"] = msg.name;
     }
     data["timestamp"] = msg.timestamp;
+    data["originID"] = msg.pose.originID;
 
     const auto* webService = _robot->GetContext()->GetWebService();
     if( webService != nullptr ) {

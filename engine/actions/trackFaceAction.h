@@ -27,8 +27,8 @@ public:
   
   using FaceID = Vision::FaceID_t;
   
-  TrackFaceAction(FaceID faceID);
-  TrackFaceAction(SmartFaceID faceID);
+  explicit TrackFaceAction(FaceID faceID);
+  explicit TrackFaceAction(SmartFaceID faceID);
   virtual ~TrackFaceAction();
 
   virtual void GetCompletionUnion(ActionCompletedUnion& completionInfo) const override;
@@ -47,10 +47,9 @@ protected:
 private:
   // store face id as non-smart until robot is accessible
   FaceID               _tmpFaceID;
+  
   SmartFaceID          _faceID;
   TimeStamp_t          _lastFaceUpdate = 0;
-
-  Signal::SmartHandle _signalHandle;
 
 }; // class TrackFaceAction
     

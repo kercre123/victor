@@ -78,6 +78,7 @@ private:
   float CalculateHeadAngleCost(const Vision::TrackedFace* currentFace) const;
   float CalculateMicDirectionCost(const Vision::TrackedFace* currentFace) const;
   float CalculateUnnamedCost(const Vision::TrackedFace* currentFace) const;
+  float CalculateTrackingOnlyCost(const Vision::TrackedFace* currentFace) const;
   float CalculateTimeSinceSeenCost(const Vision::TrackedFace* currentFace) const;
   float CalculateNotMakingEyeContact(const Vision::TrackedFace* currentFace) const;
   float CalculateDistanceCost(const Vision::TrackedFace* currentFace) const;

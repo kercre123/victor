@@ -63,6 +63,7 @@ private:
   struct InstanceConfig {
     InstanceConfig();
     bool activatableOnCharger;
+    bool lockBodyOnCharger;
     int  numLoops;
     u8 tracksToLock;
     // Class supports playing a series of animation triggers OR a series of animations by name

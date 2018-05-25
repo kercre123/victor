@@ -4,16 +4,16 @@
 
   "faceSelectionPenalties": [
     {
-      "factor": "NotMakingEyeContact",
-      "multiplier": 1000.0
-    },
-    {
-      "factor": "TimeSinceSeen_s",
+      "factor": "TrackingOnly",
       "multiplier": 100.0
     },
     {
-      "factor": "UnnamedFace",
-      "multiplier": 10.0
+      "factor": "TimeSinceSeen_s",
+      "multiplier": 50.0
+    },
+    {
+      "factor": "Distance_m",
+      "multiplier": 2.0
     },
     {
       "factor": "RelativeBodyAngleRadians",

@@ -204,6 +204,8 @@ private:
   }
 
   void LoadAudioParameterMap(const Json::Value& inJson);
+  void LoadAudioSimpleMoodMap(const Json::Value& inJson);
+  void VerifyAudioEvents() const;
   void LoadActionCompletedEventMap(const Json::Value& inJson);
   void PrintActionCompletedEventMap() const;
 
@@ -231,6 +233,10 @@ private:
   using AudioParameterType = AudioMetaData::GameParameter::ParameterType;  
   // map from emotion to audio parameter type to inform audio system of mood parameters
   std::map< EmotionType, AudioParameterType > _audioParameterMap;
+
+  // map from simple mood to value to send floats to the audio system
+  AudioParameterType _simpleMoodAudioParameter;
+  std::map< SimpleMoodType, float > _simpleMoodAudioEventMap;
 
   std::set< u32 > _actionsTagsToIgnore;
   
