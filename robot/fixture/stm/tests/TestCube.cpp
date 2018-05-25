@@ -20,7 +20,7 @@
 #include "timer.h"
 
 #define TESTCUBE_DEBUG 1
-static const int CURRENT_HW_REV = CUBEID_HWREV_DVT4;
+static const int CURRENT_CUBE_HW_REV = CUBEID_HWREV_DVT4;
 
 //generate signature for the cube bootloader binary
 uint32_t cubebootSignature(bool dbg_print, int *out_cubeboot_size)
@@ -211,7 +211,7 @@ static void da14580_load_program_(const uint8_t *bin, int size, const char* name
           
           uint32_t crc_current = cubebootSignature();
           uint32_t expected_model = g_fixmode == FIXMODE_CUBE2 ? CUBEID_MODEL_CUBE2 : CUBEID_MODEL_CUBE1;
-          if( info.hwrev != CURRENT_HW_REV || info.model != expected_model || info.crc != crc_current ) {
+          if( info.hwrev != CURRENT_CUBE_HW_REV || info.model != expected_model || info.crc != crc_current ) {
             if( info.crc != crc_current )
               ConsolePrintf("CRC mismatch != %08x\n", crc_current);
             throw ERROR_CUBE_FW_MISMATCH;
@@ -446,7 +446,7 @@ static void OTPbootloader(void)
   
   //prepare hwardware ids
   cubeid.esn = CUBEID_ESN_INVALID;
-  cubeid.hwrev = CURRENT_HW_REV;
+  cubeid.hwrev = CURRENT_CUBE_HW_REV;
   cubeid.model = (g_fixmode == FIXMODE_CUBE1) ? CUBEID_MODEL_CUBE1 : ((g_fixmode == FIXMODE_CUBE2) ? CUBEID_MODEL_CUBE2 : CUBEID_MODEL_INVALID);
   
   //pull a new s/n for release builds only (limited supply, don't waste during debug)

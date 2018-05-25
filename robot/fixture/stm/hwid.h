@@ -61,6 +61,11 @@ typedef struct {
 #define HEADID_ESN_INVALID      0
 #define HEADID_ESN_EMPTY        0xFFFFffff
 
+#define HEADID_HWREV_EMPTY      0 //unprogrammed/empty value
+#define HEADID_HWREV_DEBUG      1 //debug use and DVT1-3
+#define HEADID_HWREV_DVT4       4
+#define HEADID_HWREV_IS_VALID(r)  ((r) > 0 && (r) <= HEADID_HWREV_DVT4)
+
 typedef struct {
   uint32_t  esn;
 } headid_t;

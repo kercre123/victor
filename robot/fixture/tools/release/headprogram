@@ -1,8 +1,8 @@
 #!/bin/sh
 ESN=$(echo $1 | xargs)
-HW_VER=0004
-MODEL=0001
-echo headprogram esn $ESN hwvers $((HW_VER)) model $((MODEL))
+HW_VER=$(echo $2 | xargs)
+MODEL=$(echo $3 | xargs)
+echo headprogram esn $ESN hwvers $HW_VER model $MODEL
 
 USBVID=05c6
 USBPID=9008
@@ -16,12 +16,12 @@ ERROR_HEADPGM_FAC_IMG=$((503-$ERROR_OFFSET))
 ERROR_HEADPGM_USB_DEV_NOT_FOUND=$((504-$ERROR_OFFSET))
 ERROR_HEADPGM_USB_MODE_SWITCH=$((505-$ERROR_OFFSET))
 
-cloudcert=1; helper=0
+cloudcert=1; helper=0; argCnt=0
 for arg in "$@"; do
   #argCnt=$((argCnt+1))
   #echo arg[$argCnt] raw:\""${arg}"\" trimmed:\""$(echo ${arg} | xargs)"\"
-  if [ "$(echo ${arg} | xargs)" == "helper" ]; then echo "making helper head"; helper=1; cloudcert=0; ESN=0; fi
-  if [ "$(echo ${arg} | xargs)" == "nocloud" ]; then echo "cloud cert disabled"; cloudcert=0; fi
+  if [ "$(echo ${arg} | xargs)" == "helper" ]; then echo "making helper head"; helper=1; cloudcert=0; fi
+  if [ "$(echo ${arg} | xargs)" == "nocert" ]; then echo "cloud cert disabled"; cloudcert=0; fi
 done
 
 # Enable USB

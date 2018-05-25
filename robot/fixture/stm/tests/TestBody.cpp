@@ -35,7 +35,7 @@
 #define SYSCON_HEADER_SIZE        16
 #define SYSCON_EVIL               0x4F4D3243 /*first word of syscon header, indicates valid app*/
 
-static const int CURRENT_HW_REV = CUBEID_HWREV_DVT4;
+static const int CURRENT_BODY_HW_REV = CUBEID_HWREV_DVT4;
 
 //-----------------------------------------------------------------------------
 //                  STM Load
@@ -227,7 +227,7 @@ static void BodyLoadProductionFirmware(void)
   
   //assign ESN & HW ids (preserve, if exist)
   bodyid.model = BODYID_MODEL_BLACK_STD;
-  bodyid.hwrev = (bodyid.hwrev == BODYID_HWREV_EMPTY) ? CURRENT_HW_REV : bodyid.hwrev;
+  bodyid.hwrev = (bodyid.hwrev == BODYID_HWREV_EMPTY) ? CURRENT_BODY_HW_REV : bodyid.hwrev;
   if( !bodyid.esn || bodyid.esn == BODYID_ESN_EMPTY )
   {
     //if( g_isReleaseBuild )
