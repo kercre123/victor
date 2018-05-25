@@ -87,11 +87,15 @@ namespace {
   
   const f32 kWheelMotionThresh_mmps = 3.f;
   
-  const f32 kMenuLiftLowThresh_rad  = DEG_TO_RAD(-5);
-  const f32 kMenuLiftHighThresh_rad = DEG_TO_RAD(40);
+  const f32 kMenuLiftRange_rad = DEG_TO_RAD(45);
+  f32 _liftLowestAngle_rad;
+  f32 _liftHighestAngle_rad;
+
+  const f32 kMenuHeadRange_rad = DEG_TO_RAD(55);
+  f32 _headLowestAngle_rad;
+  f32 _headHighestAngle_rad;
   
-  const f32 kMenuHeadLowThresh_rad  = DEG_TO_RAD(-15);
-  const f32 kMenuHeadHighThresh_rad = DEG_TO_RAD(40);
+  const f32 kMenuAngularTriggerThresh_rad = DEG_TO_RAD(5);
 }
 
   
@@ -106,6 +110,9 @@ FaceInfoScreenManager::FaceInfoScreenManager()
 // , _webService(nullptr)
 {
   _scratchDrawingImg->Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+
+  _calmModeMsgOnNone.enable = false;
+  _calmModeMsgOnNone.calibOnDisable = false;
 
   memset(&_customText, 0, sizeof(_customText));
 }
@@ -187,12 +194,24 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   DISABLE_TIMEOUT(Recovery);
 
   // None screen 
-#if FACTORY_TEST  
-  FaceInfoScreen::ScreenAction drawInitConnectionScreen = [animStreamer]() {
+  FaceInfoScreen::ScreenAction drawInitConnectionScreen = [animStreamer, this]() {
+  #if FACTORY_TEST
     InitConnectionFlow(animStreamer);
+  #endif  
+
+    // Restore power mode as specified by engine
+    SendAnimToRobot(_calmModeMsgOnNone);
   };
   GetScreen(ScreenName::None)->SetEnterScreenAction(drawInitConnectionScreen);
-#endif  
+  
+  FaceInfoScreen::ScreenAction exitNoneAction = []() {
+    // Disable calm mode
+    RobotInterface::CalmPowerMode msg;
+    msg.enable = false;
+    msg.calibOnDisable = false;
+    SendAnimToRobot(std::move(msg));
+  };
+  GetScreen(ScreenName::None)->SetExitScreenAction(exitNoneAction);
   
   // FAC screen
   DISABLE_TIMEOUT(FAC);
@@ -348,6 +367,8 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
 
   LOG_INFO("FaceInfoScreenManager.SetScreen.EnteringScreen", "%d", GetCurrScreenName());
   _currScreen->EnterScreen();
+
+  ResetObservedHeadAndLiftAngles();
 
   // Clear menu navigation triggers
   _headTriggerReady = false;
@@ -708,6 +729,15 @@ bool CheckForDoublePress(bool buttonReleased)
   return false;
 }
 
+void FaceInfoScreenManager::ResetObservedHeadAndLiftAngles()
+{
+  _liftLowestAngle_rad = std::numeric_limits<f32>::max();
+  _liftHighestAngle_rad = std::numeric_limits<f32>::lowest();
+
+  _headLowestAngle_rad = std::numeric_limits<f32>::max();
+  _headHighestAngle_rad = std::numeric_limits<f32>::lowest();
+}
+
 void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
 {
   static bool buttonWasPressed = false;
@@ -797,10 +827,21 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
 
   if (_currScreen->HasMenu() || currScreenName == ScreenName::Pairing) {
     // Process lift motion for confirming current menu selection
+
+    // Update min/max lift angles and the current range observed
     const auto liftAngle = state.liftAngle;
-    if (liftAngle > kMenuLiftHighThresh_rad) {
+    if (liftAngle > _liftHighestAngle_rad) {
+      _liftHighestAngle_rad = liftAngle;
+    }
+    if (liftAngle < _liftLowestAngle_rad) {
+      _liftLowestAngle_rad = liftAngle;
+    }
+    const float liftRange_rad = _liftHighestAngle_rad - _liftLowestAngle_rad;
+
+    if (!_liftTriggerReady && (liftRange_rad > kMenuLiftRange_rad)) {
       _liftTriggerReady = true;
-    } else if (_liftTriggerReady && liftAngle < kMenuLiftLowThresh_rad) {
+    } else if (_liftTriggerReady && 
+               (Util::Abs(liftAngle - _liftLowestAngle_rad) < kMenuAngularTriggerThresh_rad)) {
       // Menu item confirmed. Go to next screen.
       _liftTriggerReady = false;
 
@@ -821,10 +862,21 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
   
   // Process head motion for going from Main screen to "hidden" debug info screens
   if (currScreenName == ScreenName::Main) {
+
+    // Update min/max head angles and the current range observed
     const auto headAngle = state.headAngle;
-    if (headAngle > kMenuHeadHighThresh_rad) {
+    if (headAngle > _headHighestAngle_rad) {
+      _headHighestAngle_rad = headAngle;
+    }
+    if (headAngle < _headLowestAngle_rad) {
+      _headLowestAngle_rad = headAngle;
+    }
+    const float headRange_rad = _headHighestAngle_rad - _headLowestAngle_rad;
+
+    if (!_headTriggerReady && (headRange_rad > kMenuHeadRange_rad)) {
       _headTriggerReady = true;
-    } else if (_headTriggerReady && headAngle < kMenuHeadLowThresh_rad) {
+    } else if (_headTriggerReady && 
+               (Util::Abs(headAngle - _headLowestAngle_rad) < kMenuAngularTriggerThresh_rad)) {
       // Menu item confirmed. Go to first debug info screen
       _headTriggerReady = false;
       _debugInfoScreensUnlocked = true;
