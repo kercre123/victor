@@ -1,5 +1,5 @@
 /**
- * File: iStateConceptStrategy_fwd.h
+ * File: iBEICondition_fwd.h
  *
  * Author: Brad Neuman
  * Created: 2017-11-29

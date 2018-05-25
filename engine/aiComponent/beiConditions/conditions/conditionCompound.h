@@ -26,19 +26,19 @@ public:
   explicit ConditionCompound(const Json::Value& config);
   
   // static methods to construct a boolean condition from subConditions
-  static IBEIConditionPtr CreateAndCondition(const std::vector<IBEIConditionPtr>& subConditions);
-  static IBEIConditionPtr CreateOrCondition (const std::vector<IBEIConditionPtr>& subConditions);
-  static IBEIConditionPtr CreateNotCondition(IBEIConditionPtr subCondition);
+  static IBEIConditionPtr CreateAndCondition(const std::vector<IBEIConditionPtr>& subConditions, const std::string& ownerDebugLabel);
+  static IBEIConditionPtr CreateOrCondition (const std::vector<IBEIConditionPtr>& subConditions, const std::string& ownerDebugLabel);
+  static IBEIConditionPtr CreateNotCondition(IBEIConditionPtr subCondition, const std::string& ownerDebugLabel);
 
   virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual void SetActiveInternal(BehaviorExternalInterface& behaviorExternalInterface, bool setActive) override;
   virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
   
-  virtual DebugFactorsList GetDebugFactors() const override;
+  virtual void BuildDebugFactorsInternal( BEIConditionDebugFactors& factors ) const override;
   
 protected:
-  ConditionCompound(); // for use by static methods
+  explicit ConditionCompound( const std::string& ownerDebugLabel ); // for use by static methods
   
 private:
   enum class NodeType : uint8_t {
@@ -56,7 +56,9 @@ private:
   };
   
   // helper for the public static construction methods
-  static IBEIConditionPtr CreateSingleLevelCondition( NodeType type, const std::vector<IBEIConditionPtr>& subConditions );
+  static IBEIConditionPtr CreateSingleLevelCondition( NodeType type,
+                                                      const std::vector<IBEIConditionPtr>& subConditions,
+                                                      const std::string& ownerDebugLabel );
   
   // recursively initializes node with config, returns the depth
   int CreateNode( std::unique_ptr<Node>& node, const Json::Value& config, const bool isRoot );
@@ -67,7 +69,7 @@ private:
   // returns all _operands' AreConditionsMet()
   std::vector<bool> EvaluateConditions( BehaviorExternalInterface& bei ) const;
   
-  // recursively generates a debug string starting at node, consisting of the boolean operations and the _operands' GetDebugFactors
+  // recursively generates a debug string starting at node, consisting of the boolean operations and the _operands' names
   std::string GetDebugString( const std::unique_ptr<Node>& node ) const;
   
   std::vector<IBEIConditionPtr> _operands;

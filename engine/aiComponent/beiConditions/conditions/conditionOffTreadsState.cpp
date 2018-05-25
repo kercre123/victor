@@ -35,11 +35,13 @@ ConditionOffTreadsState::ConditionOffTreadsState(const Json::Value& config)
   _maxTimeSinceChange_ms = config.get("maxTimeSinceChange_ms", -1).asInt();
 }
 
-ConditionOffTreadsState::ConditionOffTreadsState(const OffTreadsState& targetState)
+ConditionOffTreadsState::ConditionOffTreadsState(const OffTreadsState& targetState,
+                                                 const std::string& ownerDebugLabel)
   : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::OffTreadsState))
   , _minTimeSinceChange_ms(0)
   , _maxTimeSinceChange_ms(-1)
 {
+  SetOwnerDebugLabel(ownerDebugLabel);
   _targetState = targetState;
 }
 

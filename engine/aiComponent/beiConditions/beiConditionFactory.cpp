@@ -97,9 +97,13 @@ CustomBEIConditionHandle BEIConditionFactory::InjectCustomBEICondition(const std
                  "Added custom condition '%s'",
                  name.c_str());
 
-  if( condition->GetOwnerDebugLabel().empty() ) {
+  {
     // set debug label to include name for easier debugging
-    condition->SetOwnerDebugLabel( "@" + name );
+    std::string newLabel = "@" + name;
+    if( !condition->GetDebugLabel().empty() ) {
+      newLabel += ":" + condition->GetDebugLabel();
+    }
+    condition->SetDebugLabel( newLabel );
   }
   
   // note: can't use make_shared because constructor is private
@@ -155,6 +159,10 @@ IBEIConditionPtr BEIConditionFactory::GetCustomCondition(const Json::Value& conf
                    "No custom condition with name '%s' found. Have %zu custom conditions",
                    config[kCustomConditionKey].asString().c_str(),
                    _customConditionMap.size() ) ) {
+    // replace the owner debug label, even if it exists, since it was likely created before knowing
+    // what behavior or condition would end up grabbing it. Obivously multiple behaviors or
+    // conditions could grab it, but we can deal with that if the use of the owner debug label depends on it
+    it->second->SetOwnerDebugLabel( ownerDebugLabel );
     return it->second;
   }
   else {

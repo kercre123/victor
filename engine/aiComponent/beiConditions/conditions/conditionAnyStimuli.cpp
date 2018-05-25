@@ -12,6 +12,7 @@
 
 
 #include "engine/aiComponent/beiConditions/conditions/conditionAnyStimuli.h"
+#include "engine/aiComponent/beiConditions/beiConditionDebugFactors.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFaceKnown.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionMotionDetected.h"
@@ -144,13 +145,11 @@ bool ConditionAnyStimuli::AreConditionsMetInternal(BehaviorExternalInterface& be
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBEICondition::DebugFactorsList ConditionAnyStimuli::GetDebugFactors() const
+void ConditionAnyStimuli::BuildDebugFactorsInternal( BEIConditionDebugFactors& factors ) const
 {
-  DebugFactorsList ret;
   for( const auto& cond : _conditions ) {
-    ret.emplace_back(BEIConditionTypeToString(cond->GetConditionType()), "used"); // this isnt very useful, but GetDebugFactors needs a revamp
+    factors.AddChild( BEIConditionTypeToString(cond->GetConditionType()), cond );
   }
-  return ret;
 }
 
 } // namespace

@@ -210,6 +210,15 @@
       margin-bottom:20px;
     }
 
+    #devDataDump {
+      overflow-x: scroll;
+      overflow-y: scroll;
+      border:1px solid black;
+      padding:10px;
+      margin:10px;
+      font-family:monospace;
+    }
+
     
   </style>
 
@@ -233,6 +242,11 @@
       <p>Each tab contains its own module. Open the tab to subscribe to the data source for that module.</p>
       <p>To add new modules, start with the template file module.js.template.</p>
       <p><b>Are you always disconnected from the robot? Not seeing new tabs or new functionality? In Chrome, hit Command + Shift + R to re-download all the assets for this site.</b></p>
+
+      <div id="devDataDump" style="display:none;">
+        <div>{</div>
+        <div>}</div>
+      </div>
     </div>
 
     
@@ -245,6 +259,8 @@
   <script>
 
     var modules;
+
+    var fakeData;
 
     var kUpdatePeriod_ms = 200; // todo: maybe a module should request its period?
 
@@ -342,6 +358,12 @@
           }
         
           modules[moduleName].init($('#' + tab_id)[0]);
+
+          if( typeof fakeData !== 'undefined' && typeof fakeData[moduleName] !== 'undefined' ) {
+            fakeData[moduleName].forEach(function(entry){
+              onNewData(moduleName, entry);
+            });
+          }
         }
       });
       $('.popoutIcon').click(function(){
@@ -390,6 +412,18 @@
             alert('The module ' + moduleName + ' has an error. Displayed results may be invalid');
             hasShownAlert = true;
           }
+        }
+        if( modules[moduleName].devShouldDumpData ) {
+          $('#devDataDump').show();
+          var moduleData = $('#devDataDump').find('div[data-tab="' + moduleName + '"]');
+          var container;
+          if( moduleData.length == 0 ) {
+            container = $('<div data-tab="' + moduleName + '">"' + moduleName + '": [</div>').insertBefore('#devDataDump div:last-child');
+          } else {
+            container = $(moduleData[0]);
+            container.text( container.text().slice(0,-1) + ', ' ); // prepare by removing trailing "]" and adding ", "
+          }
+          container.text( container.text() + JSON.stringify(data) + ']' ); 
         }
       }
     }
@@ -448,6 +482,14 @@
     }
     var getPortLink = function(port) {
       return 'http://' + window.location.hostname + ':' + port + window.location.pathname;
+    }
+    var getDevData = function() {
+      var url = 'devData.json';
+      $.getJSON( url, function( data ) {
+        // add a warning about fake data
+        $('#tab-overview p:first-child').html( '<b>USING FAKE DATA!</b> remember to remove ' + url + ' when dev work is done' );
+        fakeData = data;
+      });
     }
 
     var modulesContexts = {};
@@ -531,6 +573,8 @@
           setupSocket();
 
           startUpdateLoop(kUpdatePeriod_ms);
+
+          getDevData();
         } else {
           // increment and continue
           ++moduleIndex;

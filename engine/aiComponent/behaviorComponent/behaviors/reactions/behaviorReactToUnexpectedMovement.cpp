@@ -11,7 +11,7 @@
  **/
 
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUnexpectedMovement.h"
-
+#include "engine/aiComponent/beiConditions/conditions/conditionUnexpectedMovement.h"
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/components/movementComponent.h"
@@ -27,26 +27,36 @@ namespace Cozmo {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToUnexpectedMovement::BehaviorReactToUnexpectedMovement(const Json::Value& config)
 : ICozmoBehavior(config)
-, _unexpectedMovementCondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::UnexpectedMovement))
-{  
-
+{
+  _unexpectedMovementCondition
+    = BEIConditionFactory::CreateBEICondition( IBEICondition::GenerateBaseConditionConfig(BEIConditionType::UnexpectedMovement),
+                                               GetDebugLabel() );
+  DEV_ASSERT( _unexpectedMovementCondition != nullptr, "BehaviorReactToUnexpectedMovement.Ctor.NullCond" );
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToUnexpectedMovement::WantsToBeActivatedBehavior() const
 {
-  return _unexpectedMovementCondition.AreConditionsMet(GetBEI());;
+  return _unexpectedMovementCondition->AreConditionsMet(GetBEI());;
 }
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToUnexpectedMovement::InitBehavior()
 {
-  _unexpectedMovementCondition.Init(GetBEI());
-  _unexpectedMovementCondition.SetActive(GetBEI(), true);
+  _unexpectedMovementCondition->Init(GetBEI());
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToUnexpectedMovement::OnBehaviorEnteredActivatableScope() {
+  _unexpectedMovementCondition->SetActive(GetBEI(), true);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToUnexpectedMovement::OnBehaviorLeftActivatableScope()
+{
+  _unexpectedMovementCondition->SetActive(GetBEI(), false);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToUnexpectedMovement::OnBehaviorActivated()

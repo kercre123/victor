@@ -306,7 +306,8 @@ CustomBEIConditionHandleList InternalStatesBehavior::CreateCustomTimerConditions
             const float ffwdTime = kTimeMultiplier * activatedTime;
             const bool val = ffwdTime >= beginTime_s;
             return val;
-          })));
+          },
+          GetDebugLabel() )));
   }
   
   return handles;

@@ -55,12 +55,14 @@ BehaviorConfirmObject::BehaviorConfirmObject(const Json::Value& config)
   Json::Value conditionConfig = IBEICondition::GenerateBaseConditionConfig( BEIConditionType::ObjectKnown );
   conditionConfig[kObjectTypesKey] = config[kObjectTypesKey];
   _iConfig.objectKnownCondition.reset( new ConditionObjectKnown(conditionConfig) );
+  _iConfig.objectKnownCondition->SetOwnerDebugLabel( GetDebugLabel() );
   
   if( config[kMinAgeForActivationKey].isDouble() ) {
     const float minAge_ms = config.get( kMinAgeForActivationKey, 0.0f ).asFloat();
     
     conditionConfig["maxAge_ms"] = minAge_ms;
     _iConfig.objectKnownRecentlyCondition.reset( new ConditionObjectKnown(conditionConfig) );
+    _iConfig.objectKnownRecentlyCondition->SetOwnerDebugLabel( GetDebugLabel() );
   }
   
   // NOTE: Some specifics of what happens if you provide maxAge_ms:
@@ -72,6 +74,7 @@ BehaviorConfirmObject::BehaviorConfirmObject(const Json::Value& config)
   //   maxAge_ms, this behavior won't activate
   conditionConfig["maxAge_ms"] = 0;
   _iConfig.objectJustSeen.reset( new ConditionObjectKnown(conditionConfig) );
+  _iConfig.objectJustSeen->SetOwnerDebugLabel( GetDebugLabel() );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -4,7 +4,8 @@
  * Author: ross
  * Created: 2018-03-12
  *
- * Description: behavior that activates with an animation on seeing motion, then turns to it if it is persistent
+ * Description: behavior that activates upon and turns toward motion, with options for first looking with the eyes
+ *              and using either animation or procedural eyes
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -82,10 +83,14 @@ BehaviorReactToMotion::DynamicVariables::DynamicVariables()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorReactToMotion::AreaCondition::AreaCondition(MotionArea a, unsigned int intervalSize, Json::Value& config)
+BehaviorReactToMotion::AreaCondition::AreaCondition(MotionArea a,
+                                                    unsigned int intervalSize,
+                                                    Json::Value& config,
+                                                    const std::string& ownerDebugLabel)
   : area( a )
   , condition( new ConditionMotionDetected(config) )
 {
+  condition->SetOwnerDebugLabel( ownerDebugLabel );
   historyBuff.Reset( intervalSize );
   for( size_t i = 0; i < intervalSize; ++i ) {
     historyBuff.push_back(false);
@@ -162,13 +167,13 @@ void BehaviorReactToMotion::InitBehavior()
   config["motionLevel"] = "Low";
   
   config["motionArea"] = "Left";
-  _dVars.motionConditions.emplace_back( MotionArea::Left, _iConfig.turnIntervalSize, config );
+  _dVars.motionConditions.emplace_back( MotionArea::Left, _iConfig.turnIntervalSize, config, GetDebugLabel() );
   _dVars.motionConditions.back().condition->Init( GetBEI() );
   config["motionArea"] = "Right";
-  _dVars.motionConditions.emplace_back( MotionArea::Right, _iConfig.turnIntervalSize, config );
+  _dVars.motionConditions.emplace_back( MotionArea::Right, _iConfig.turnIntervalSize, config, GetDebugLabel() );
   _dVars.motionConditions.back().condition->Init( GetBEI() );
   config["motionArea"] = "Top";
-  _dVars.motionConditions.emplace_back( MotionArea::Top, _iConfig.turnIntervalSize, config );
+  _dVars.motionConditions.emplace_back( MotionArea::Top, _iConfig.turnIntervalSize, config, GetDebugLabel() );
   _dVars.motionConditions.back().condition->Init( GetBEI() );
 }
   

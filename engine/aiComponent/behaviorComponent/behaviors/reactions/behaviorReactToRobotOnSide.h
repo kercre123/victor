@@ -15,8 +15,6 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
-#include "engine/aiComponent/beiConditions/conditions/conditionOffTreadsState.h"
-
 namespace Anki {
 namespace Cozmo {
 
@@ -41,10 +39,12 @@ protected:
   virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
+  virtual void OnBehaviorEnteredActivatableScope() override;
+  virtual void OnBehaviorLeftActivatableScope() override;
 
 private:
 
-  std::vector<ConditionOffTreadsState> _offTreadsConditions;
+  std::vector<IBEIConditionPtr> _offTreadsConditions;
   
   void ReactToBeingOnSide();
   void AskToBeRighted();

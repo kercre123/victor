@@ -77,13 +77,13 @@ TEST(BeiConditions, TestBEIConditionFactory)
   auto cond1 = std::make_shared<ConditionLambda>(
     [&val1](BehaviorExternalInterface& behaviorExternalInterface) {
       return val1;
-    });
+    }, "unit_test");
 
   bool val2 = false;
   auto cond2 = std::make_shared<ConditionLambda>(
     [&val2](BehaviorExternalInterface& behaviorExternalInterface) {
       return val2;
-    });
+    }, "unit_test");
 
   Json::Value cond1Config;
   cond1Config["customCondition"] = "cond1";
@@ -218,7 +218,7 @@ TEST(BeiConditions, CreateLambda)
   auto cond = std::make_shared<ConditionLambda>(
     [&val](BehaviorExternalInterface& behaviorExternalInterface) {
       return val;
-    });
+    }, "unit_test");
 
   ASSERT_TRUE( cond != nullptr );
 
@@ -565,7 +565,7 @@ TEST(BeiConditions, CompoundNot)
 
   auto subCond = std::make_shared<ConditionUnitTest>(true);
 
-  auto cond = ConditionCompound::CreateNotCondition( subCond );
+  auto cond = ConditionCompound::CreateNotCondition( subCond, "unit_test" );
 
   EXPECT_EQ(subCond->_initCount, 0);
   EXPECT_EQ(subCond->_setActiveCount, 0);
@@ -618,7 +618,7 @@ TEST(BeiConditions, CompoundAnd)
   auto subCond1 = std::make_shared<ConditionUnitTest>(true);
   auto subCond2 = std::make_shared<ConditionUnitTest>(true);
 
-  auto cond = ConditionCompound::CreateAndCondition( {subCond1, subCond2} );
+  auto cond = ConditionCompound::CreateAndCondition( {subCond1, subCond2}, "unit_test" );
 
   EXPECT_EQ(subCond1->_initCount, 0);
   EXPECT_EQ(subCond1->_setActiveCount, 0);
@@ -684,7 +684,7 @@ TEST(BeiConditions, CompoundOr)
   auto subCond1 = std::make_shared<ConditionUnitTest>(true);
   auto subCond2 = std::make_shared<ConditionUnitTest>(true);
 
-  auto cond = ConditionCompound::CreateOrCondition( {subCond1, subCond2} );
+  auto cond = ConditionCompound::CreateOrCondition( {subCond1, subCond2}, "unit_test" );
 
   EXPECT_EQ(subCond1->_initCount, 0);
   EXPECT_EQ(subCond1->_setActiveCount, 0);

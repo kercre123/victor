@@ -27,7 +27,7 @@ public:
   explicit ConditionUserIntentPending( const Json::Value& config );
   
   // special constructor for which you MUST immediately use an Add* method from the base class
-  ConditionUserIntentPending();
+  explicit ConditionUserIntentPending( const std::string& ownerDebugLabel );
   
   // helper to build the sort of json you'd find in a file
   static Json::Value GenerateConfig( const Json::Value& config );

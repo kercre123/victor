@@ -145,6 +145,8 @@ void BehaviorHighLevelAI::BehaviorUpdate()
 CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
 {
   CustomBEIConditionHandleList handles;
+  
+  const std::string emptyOwnerLabel = ""; // when these conditions are claimed from the factory, a label is added
 
   handles.emplace_back(
     BEIConditionFactory::InjectCustomBEICondition(
@@ -178,7 +180,8 @@ CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
         },
         ConditionLambda::VisionModeSet{
           { VisionMode::DetectingFaces, EVisionUpdateFrequency::Low }
-        })));
+        },
+        emptyOwnerLabel )));
 
   handles.emplace_back(
     BEIConditionFactory::InjectCustomBEICondition(
@@ -195,8 +198,8 @@ CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
         },
         ConditionLambda::VisionModeSet{
           { VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low }
-        }
-        )));
+        },
+        emptyOwnerLabel )));
   
   handles.emplace_back(
     BEIConditionFactory::InjectCustomBEICondition(
@@ -219,9 +222,9 @@ CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
           const bool hasntPlayed = timer.HasCooldownExpired(_params.playWithCubeCooldown_s / kTimeMultiplier, valueIfNeverRun);
           
           return hasntDrivenOffChargerForPlay && hasntPlayed;
-        }
+        },
         /* No Vision Requirements*/
-        )));
+        emptyOwnerLabel )));
 
   handles.emplace_back(
     BEIConditionFactory::InjectCustomBEICondition(
@@ -245,8 +248,8 @@ CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
         },
         ConditionLambda::VisionModeSet{
           { VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low }
-        }
-        )));
+        },
+        emptyOwnerLabel )));
 
   return handles;
 }

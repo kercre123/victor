@@ -47,11 +47,6 @@ public:
   // if this condition is true, then this condition should be able to return the tag that made it
   // true out of the list passed during construction
   UserIntentTag GetUserIntentTagSelected() const;
-  
-//  // helper to build the sort of json you'd find in a file
-//  static Json::Value GenerateConfig( const Json::Value& config );
-//  
-  DebugFactorsList GetDebugFactors() const override;
 
 protected:
   
@@ -67,6 +62,8 @@ protected:
   virtual bool AreConditionsMetInternal( BehaviorExternalInterface& behaviorExternalInterface ) const override;
   
   virtual void SetActiveInternal(BehaviorExternalInterface& behaviorExternalInterface, bool isActive) override;
+  
+  virtual void BuildDebugFactorsInternal( BEIConditionDebugFactors& factors ) const override;
   
 private:
   

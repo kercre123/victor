@@ -4,7 +4,8 @@
  * Author: ross
  * Created: 2018-03-12
  *
- * Description: behavior that activates with an animation on seeing motion, then turns to it if it is persistent
+ * Description: behavior that activates upon and turns toward motion, with options for first looking with the eyes
+ *              and using either animation or procedural eyes
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -63,7 +64,7 @@ private:
   MotionArea GetAreaWithMostMotion() const;
   
   struct AreaCondition {
-    AreaCondition(MotionArea a, unsigned int intervalSize, Json::Value& config);
+    AreaCondition(MotionArea a, unsigned int intervalSize, Json::Value& config, const std::string& ownerDebugLabel);
     void Reset();
     
     MotionArea area;

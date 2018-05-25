@@ -19,6 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
+#include "engine/aiComponent/beiConditions/beiConditionDebugFactors.h"
 #include "util/logging/logging.h"
 
 
@@ -296,24 +297,18 @@ const IConditionUserIntent::EvalUserIntentFunc& IConditionUserIntent::GetFromNam
   return nullfunc;
 }
   
-IBEICondition::DebugFactorsList IConditionUserIntent::GetDebugFactors() const
+void IConditionUserIntent::BuildDebugFactorsInternal( BEIConditionDebugFactors& factors ) const
 {
-  DebugFactorsList ret;
-  ret.reserve( _evalList.size() );
-  unsigned int cnt=0;
   for( const auto& elem : _evalList ) {
-    std::string cntStr = (cnt>0) ? std::to_string(cnt) : "";
-    ret.emplace_back("tag" + cntStr, UserIntentTagToString(elem.tag));
+    factors.AddFactor( "tag", UserIntentTagToString(elem.tag) );
     if( elem.func != nullptr ) {
-      ret.emplace_back("lambda" + cntStr, "true");
+      factors.AddFactor( "lambda", true );
     } else if( elem.intent != nullptr ) {
       std::stringstream ss;
       ss << elem.intent->GetJSON();
-      ret.emplace_back("intent" + cntStr, ss.str());
+      factors.AddFactor( "intent", ss.str() );
     }
-    ++cnt;
   }
-  return ret;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

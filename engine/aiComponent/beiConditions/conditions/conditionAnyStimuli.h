@@ -35,7 +35,7 @@ protected:
   virtual void SetActiveInternal(BehaviorExternalInterface& behaviorExternalInterface, bool active) override;
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requiredVisionModes) const override;
-  virtual DebugFactorsList GetDebugFactors() const override;
+  virtual void BuildDebugFactorsInternal( BEIConditionDebugFactors& factors ) const override;
   
 private:
   std::vector<IBEIConditionPtr> _conditions;

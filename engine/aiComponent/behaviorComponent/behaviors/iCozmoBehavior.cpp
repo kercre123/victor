@@ -279,10 +279,15 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
   if(config.isMember(kRespondToUserIntentsKey)){
     // create a ConditionUserIntentPending based on the config json
     Json::Value json = ConditionUserIntentPending::GenerateConfig( config[kRespondToUserIntentsKey] );
-    // another shared_ptr is kept outside of the regular list _wantsToBeActivatedConditions to avoid casting
-    _respondToUserIntent = std::make_shared<ConditionUserIntentPending>( json );
-    _respondToUserIntent->SetOwnerDebugLabel( GetDebugLabel() );
-    _wantsToBeActivatedConditions.push_back( _respondToUserIntent );
+    auto cond = BEIConditionFactory::CreateBEICondition( json, GetDebugLabel() );
+    auto castCond = std::dynamic_pointer_cast<ConditionUserIntentPending>(cond);
+    if( ANKI_VERIFY( castCond != nullptr,
+                     "ICozmoBehavior.ReadFromJson.InvalidCondPtr",
+                     "Could not cast a factory-made condition to the subclass type") )
+    {
+      _respondToUserIntent = castCond;
+      _wantsToBeActivatedConditions.push_back( cond );
+    }
   }
 
   _respondToTriggerWord = config.get(kRespondToTriggerWordKey, false).asBool();
@@ -542,8 +547,7 @@ void ICozmoBehavior::AddWaitForUserIntent( UserIntentTag intentTag )
 
 
   if( _respondToUserIntent == nullptr ) {
-    _respondToUserIntent = std::make_shared<ConditionUserIntentPending>();
-    _respondToUserIntent->SetOwnerDebugLabel( GetDebugLabel() );
+    _respondToUserIntent = std::make_shared<ConditionUserIntentPending>( GetDebugLabel() );
     _wantsToBeActivatedConditions.push_back( _respondToUserIntent );
   }
   _respondToUserIntent->AddUserIntent( intentTag );
@@ -570,8 +574,7 @@ void ICozmoBehavior::AddWaitForUserIntent( UserIntent&& intent )
 
 
   if( _respondToUserIntent == nullptr ) {
-    _respondToUserIntent = std::make_shared<ConditionUserIntentPending>();
-    _respondToUserIntent->SetOwnerDebugLabel( GetDebugLabel() );
+    _respondToUserIntent = std::make_shared<ConditionUserIntentPending>( GetDebugLabel() );
     _wantsToBeActivatedConditions.push_back( _respondToUserIntent );
   }
   _respondToUserIntent->AddUserIntent( std::move(intent) );
@@ -606,8 +609,7 @@ void ICozmoBehavior::AddWaitForUserIntent( UserIntentTag tag, EvalUserIntentFunc
 
 
   if( _respondToUserIntent == nullptr ) {
-    _respondToUserIntent = std::make_shared<ConditionUserIntentPending>();
-    _respondToUserIntent->SetOwnerDebugLabel( GetDebugLabel() );
+    _respondToUserIntent = std::make_shared<ConditionUserIntentPending>( GetDebugLabel() );
     _wantsToBeActivatedConditions.push_back( _respondToUserIntent );
   }
   _respondToUserIntent->AddUserIntent( tag, std::move(func) );

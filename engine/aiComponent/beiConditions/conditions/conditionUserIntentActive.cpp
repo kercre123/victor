@@ -34,9 +34,10 @@ ConditionUserIntentActive::ConditionUserIntentActive( const Json::Value& config 
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionUserIntentActive::ConditionUserIntentActive()
+ConditionUserIntentActive::ConditionUserIntentActive( const std::string& ownerDebugLabel )
   : IConditionUserIntent( BEIConditionType::UserIntentActive )
 {
+  SetOwnerDebugLabel( ownerDebugLabel );
 }
   
 } // end namespace

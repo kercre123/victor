@@ -27,7 +27,8 @@ class ConditionTimedDedup : public IBEICondition
 public:
   explicit ConditionTimedDedup(const Json::Value& config);
   explicit ConditionTimedDedup(IBEIConditionPtr subCondition,
-                               float dedupInterval_ms);
+                               float dedupInterval_ms,
+                               const std::string& ownerDebugLabel);
 
   virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;

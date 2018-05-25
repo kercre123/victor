@@ -13,6 +13,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionCompound.h"
 
 #include "coretech/common/engine/jsonTools.h"
+#include "engine/aiComponent/beiConditions/beiConditionDebugFactors.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/unitTestKey.h"
 #include "lib/util/source/anki/util/logging/logging.h"
@@ -26,9 +27,12 @@ const char* kAndKey = "and";
 const char* kOrKey =  "or";
 const char* kNotKey = "not";
 
+// this is something that can use the protected ConditionCompound ctor in a std::make_shared
 struct ConditionCompoundConstructable : public ConditionCompound
 {
-  // this is something that can use the protected ConditionCompound ctor in a std::make_shared
+  explicit ConditionCompoundConstructable(const std::string& debugLabel)
+    : ConditionCompound(debugLabel)
+  {}
 };
   
 }
@@ -47,46 +51,54 @@ ConditionCompound::ConditionCompound( const Json::Value& config )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionCompound::ConditionCompound()
+ConditionCompound::ConditionCompound( const std::string& ownerDebugLabel )
   : IBEICondition( IBEICondition::GenerateBaseConditionConfig(BEIConditionType::Compound) )
 {
+  SetOwnerDebugLabel( ownerDebugLabel );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBEIConditionPtr ConditionCompound::CreateAndCondition( const std::vector<IBEIConditionPtr>& subConditions )
+IBEIConditionPtr ConditionCompound::CreateAndCondition( const std::vector<IBEIConditionPtr>& subConditions,
+                                                        const std::string& ownerDebugLabel )
 {
   DEV_ASSERT( !subConditions.empty(), "Cannot create an AND condition with empty subConditions" );
-  IBEIConditionPtr ret = CreateSingleLevelCondition( NodeType::And, subConditions );
+  IBEIConditionPtr ret = CreateSingleLevelCondition( NodeType::And, subConditions, ownerDebugLabel );
   return ret;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBEIConditionPtr ConditionCompound::CreateOrCondition(const std::vector<IBEIConditionPtr>& subConditions)
+IBEIConditionPtr ConditionCompound::CreateOrCondition( const std::vector<IBEIConditionPtr>& subConditions,
+                                                       const std::string& ownerDebugLabel )
 {
   DEV_ASSERT( !subConditions.empty(), "Cannot create an OR condition with empty subConditions" );
-  IBEIConditionPtr ret = CreateSingleLevelCondition( NodeType::Or, subConditions );
+  IBEIConditionPtr ret = CreateSingleLevelCondition( NodeType::Or, subConditions, ownerDebugLabel );
   return ret;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBEIConditionPtr ConditionCompound::CreateNotCondition( IBEIConditionPtr subCondition )
+IBEIConditionPtr ConditionCompound::CreateNotCondition( IBEIConditionPtr subCondition,
+                                                        const std::string& ownerDebugLabel )
 {
-  IBEIConditionPtr ret = CreateSingleLevelCondition( NodeType::Not, {subCondition} );
+  IBEIConditionPtr ret = CreateSingleLevelCondition( NodeType::Not, {subCondition}, ownerDebugLabel );
   return ret;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBEIConditionPtr ConditionCompound::CreateSingleLevelCondition( NodeType type, const std::vector<IBEIConditionPtr>& subConditions )
+IBEIConditionPtr ConditionCompound::CreateSingleLevelCondition( NodeType type,
+                                                                const std::vector<IBEIConditionPtr>& subConditions,
+                                                                const std::string& ownerDebugLabel )
 {
-  auto ret = std::make_shared<ConditionCompoundConstructable>();
+  auto ret = std::make_shared<ConditionCompoundConstructable>( ownerDebugLabel );
   ret->_root.reset( new Node );
   ret->_root->type = type;
   ret->_root->children.reserve( subConditions.size() );
+  ret->_conditionNames.reserve( subConditions.size() );
   for( size_t idx=0; idx<subConditions.size(); ++idx ) {
     DEV_ASSERT( subConditions[idx] != nullptr, "Constructing a ConditionCompound with a null condition!" );
     ret->_root->children.emplace_back( new Node );
     ret->_root->children.back()->type = NodeType::Condition;
     ret->_root->children.back()->conditionIndex = idx;
+    ret->_conditionNames.push_back( subConditions[idx]->GetDebugLabel() );
   }
   ret->_operands = subConditions;
   return ret;
@@ -137,7 +149,7 @@ int ConditionCompound::CreateNode( std::unique_ptr<Node>& node, const Json::Valu
     _operands.push_back( condition );
     node->conditionIndex = _operands.size()-1;
     
-    _conditionNames.push_back( config[kConditionTypeKey].asString() );
+    _conditionNames.push_back( condition->GetDebugLabel() );
     
   } else if( !config[kNotKey].isNull() ) {
     
@@ -247,11 +259,14 @@ bool ConditionCompound::EvaluateNode( const std::unique_ptr<Node>& node, const s
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBEICondition::DebugFactorsList ConditionCompound::GetDebugFactors() const
+void ConditionCompound::BuildDebugFactorsInternal( BEIConditionDebugFactors& factors ) const
 {
-  std::string debugStr = GetDebugString( _root );
-  DebugFactorsList ret = { {"value", debugStr} };
-  return ret;
+  DEV_ASSERT( _conditionNames.size() == _operands.size(), "ConditionCompound.BuildDebugFactorsInternal.Mismatch" );
+  for( size_t i=0; i<_operands.size(); ++i ) {
+    factors.AddChild( _conditionNames[i], _operands[i] );
+  }
+  std::string logicStr = GetDebugString( _root );
+  factors.AddFactor( "logic", logicStr );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -259,19 +274,7 @@ std::string ConditionCompound::GetDebugString( const std::unique_ptr<Node>& node
 {
   std::string debugStr;
   if( node->type == NodeType::Condition ) {
-    IBEIConditionPtr condition = _operands[node->conditionIndex];
-    DebugFactorsList factors = condition->GetDebugFactors();
-    debugStr += condition->GetDebugLabel();
-    if( !factors.empty() ) {
-      debugStr += "(";
-      for( size_t idx=0; idx<factors.size(); ++idx ) {
-        debugStr += factors[idx].name + ":" + factors[idx].value;
-        if( idx < factors.size()-1 ) {
-          debugStr += ",";
-        }
-      }
-      debugStr += ")";
-    }
+    debugStr = _conditionNames[node->conditionIndex];
   } else {
     std::string nodeType;
     if( node->type == NodeType::And ) {
@@ -292,7 +295,7 @@ std::string ConditionCompound::GetDebugString( const std::unique_ptr<Node>& node
     }
     debugStr += " }";
   }
-    
+  
   return debugStr;
 }
   

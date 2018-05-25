@@ -32,10 +32,6 @@
 namespace Anki {
 namespace Cozmo {
 
-namespace{
-  const std::string kWebVizModuleName = "behaviors";
-}
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorStack::~BehaviorStack()
@@ -329,13 +325,22 @@ void BehaviorStack::SendDebugVizMessages(BehaviorExternalInterface& behaviorExte
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStack::SendDebugBehaviorTreeToWebViz(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  Json::Value data = BuildDebugBehaviorTree(behaviorExternalInterface);
-  
   const auto* context = behaviorExternalInterface.GetRobotInfo().GetContext();
   if( context != nullptr ) {
     const auto* webService = context->GetWebService();
     if( webService != nullptr ){
-      webService->SendToWebViz( kWebVizModuleName, data );
+      const bool behaviorsSub = webService->IsWebVizClientSubscribed("behaviors");
+      const bool behaviorCondsSub = webService->IsWebVizClientSubscribed("behaviorconds");
+      Json::Value data;
+      if( behaviorsSub || behaviorCondsSub ) {
+        data = BuildDebugBehaviorTree(behaviorExternalInterface);
+      }
+      if( behaviorsSub ) {
+        webService->SendToWebViz( "behaviors", data );
+      }
+      if( behaviorCondsSub ) {
+        webService->SendToWebViz( "behaviorconds", data );
+      }
     }
   }
 }

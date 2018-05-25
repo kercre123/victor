@@ -15,6 +15,7 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/beiConditions/beiConditionMessageHelper.h"
+#include "engine/aiComponent/beiConditions/beiConditionDebugFactors.h"
 
 
 namespace Anki {
@@ -65,11 +66,10 @@ bool ConditionMotionDetected::AreConditionsMetInternal(BehaviorExternalInterface
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBEICondition::DebugFactorsList ConditionMotionDetected::GetDebugFactors() const
+void ConditionMotionDetected::BuildDebugFactorsInternal( BEIConditionDebugFactors& factors ) const
 {
-  DebugFactorsList ret;
-  ret.emplace_back("detectedLevel", std::to_string(_lifetimeParams.detectedMotionLevel));
-  return ret;
+  factors.AddFactor( "detectedMotionLevel", _lifetimeParams.detectedMotionLevel );
+  factors.AddFactor( "tickCountMotionObserved", (int)_lifetimeParams.tickCountMotionObserved );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
