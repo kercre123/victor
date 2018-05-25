@@ -1,4 +1,4 @@
-// Values from https://developer.accuweather.com/weather-icons
+// Values from https://www.wunderground.com/weather/api/d/docs?d=resources/phrase-glossary#current_condition_phrases
 [
   {
     "APIValue" : "Light Drizzle",
