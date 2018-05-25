@@ -51,9 +51,11 @@ namespace{
     BEHAVIOR_ID(SleepingWakeUp),
   }};
   
-  static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenMeetVictor = {
-    BEHAVIOR_ID(ReactToTouchPetting),
-  };
+  static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenMeetVictor = {{
+    BEHAVIOR_ID(ReactToTouchPetting),       // the user will often turn the robot to face them and in the process touch it
+    BEHAVIOR_ID(ReactToUnexpectedMovement), // the user will often turn the robot to face them
+    BEHAVIOR_ID(ReactToSoundAwake),         // fully concentrate on what's in front
+  }};
 }
 
 

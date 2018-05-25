@@ -194,6 +194,11 @@ public:
   
   u8 GetMaxUnexpectedMovementCount() const { return UnexpectedMovement::kMaxUnexpectedMovementCount; }
   
+  // Enable/disable detection of rotation without motors. This must be explicitly enabled since it
+  // differs from the most common use case of this component.
+  void EnableUnexpectedRotationWithoutMotors(bool enabled) { _enableRotatedWithoutMotors = enabled; }
+  bool IsUnexpectedRotationWithoutMotorsEnabled() const { return _enableRotatedWithoutMotors; }
+  
 private:
   
   void InitEventHandlers(IExternalInterface& interface);
@@ -217,6 +222,7 @@ private:
   bool _isHeadMoving = false;
   bool _isLiftMoving = false;
   bool _areWheelsMoving = false;
+  bool _enableRotatedWithoutMotors = false;
   
   std::list<Signal::SmartHandle> _eventHandles;
   

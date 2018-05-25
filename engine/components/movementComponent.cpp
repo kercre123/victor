@@ -171,15 +171,28 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
   
   UnexpectedMovementType unexpectedMovementType = UnexpectedMovementType::TURNED_BUT_STOPPED;
   
+  bool rotatingWithoutMotorsDetected = false;
+  const bool noGyroRotation = NEAR(zGyro_radps, 0, kGyroTol_radps);
   // Wheels aren't moving (using kMinWheelSpeed_mmps as a dead band)
   if (ABS(lWheelSpeed_mmps) + ABS(rWheelSpeed_mmps) < kMinWheelSpeed_mmps)
   {
-    _unexpectedMovement.Decrement();
-    return;
+    if (noGyroRotation || !_enableRotatedWithoutMotors)
+    {
+      _unexpectedMovement.Decrement();
+      return;
+    }
+    else
+    {
+      // Increment by 5 here to get this case to trigger faster than other cases
+      // The intuition is that this case is easier and more reliable to detect so there should not be any false positives
+      _unexpectedMovement.Increment(5, lWheelSpeed_mmps, rWheelSpeed_mmps, robotState.timestamp);
+      unexpectedMovementType = UnexpectedMovementType::ROTATING_WITHOUT_MOTORS;
+      rotatingWithoutMotorsDetected = true;
+    }
   }
   
   // Gyro says we aren't turning
-  if (NEAR(zGyro_radps, 0, kGyroTol_radps))
+  if (noGyroRotation)
   {
     // But wheels say we are turning (the direction of the wheels are different like during a point turn)
     if (signbit(lWheelSpeed_mmps) != signbit(rWheelSpeed_mmps))
@@ -199,7 +212,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
     }
   }
   // Wheel speeds and gyro agree on the direction we are turning
-  else if (signbit(speedDiff) == signbit(zGyro_radps))
+  else if ((signbit(speedDiff) == signbit(zGyro_radps)) && !rotatingWithoutMotorsDetected)
   {
     // This check is for detecting if we are being turned in the direction we are already turning
     // this is difficult to detect due to physics. For example, we spin faster when carrying a block
@@ -217,8 +230,8 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
     _unexpectedMovement.Decrement();
     return;
   }
-  // Otherwise gyro says we are turning but our wheel speeds don't agree
-  else
+  // Otherwise gyro says we are turning but our non-zero wheel speeds don't agree
+  else if (!rotatingWithoutMotorsDetected)
   {
     // Increment by 2 here to get this case to trigger twice as fast as other cases
     // The intuition is that this case is easier and more reliable to detect so there should not be any false positives
@@ -241,6 +254,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
 
     _unexpectedMovementSide = UnexpectedMovementSide::UNKNOWN;
     
+    // don't create obstacles for ROTATING_WITHOUT_MOTORS or TURNED_IN_SAME_DIRECTION
     const bool isValidTypeOfUnexpectedMovement = (unexpectedMovementType == UnexpectedMovementType::TURNED_BUT_STOPPED ||
                                                   unexpectedMovementType == UnexpectedMovementType::TURNED_IN_OPPOSITE_DIRECTION);
     

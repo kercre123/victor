@@ -86,6 +86,8 @@ CONSOLE_VAR(s32,               kEnrollFace_NumImagesToWait,                     
 CONSOLE_VAR(s32,               kEnrollFace_DefaultMaxFacesVisible,              CONSOLE_GROUP, 1); // > this is "too many"
 CONSOLE_VAR(f32,               kEnrollFace_DefaultTooManyFacesTimeout_sec,      CONSOLE_GROUP, 2.f);
 CONSOLE_VAR(f32,               kEnrollFace_DefaultTooManyFacesRecentTime_sec,   CONSOLE_GROUP, 0.5f);
+  
+CONSOLE_VAR(TimeStamp_t,       kEnrollFace_TimeStopMovingAfterManualTurn_ms,    CONSOLE_GROUP, 8000);
 
 static const char * const kLogChannelName = "FaceRecognizer";
 static const char * const kMaxFacesVisibleKey = "maxFacesVisible";
@@ -265,6 +267,28 @@ void BehaviorEnrollFace::OnBehaviorActivated()
 {
   CheckForIntentData();
   
+  // reset dynamic variables
+  {
+    auto persistent = std::move(_dVars.persistent);
+    _dVars = DynamicVariables();
+    _dVars.persistent = std::move(persistent);
+    _dVars.timeout_sec = _iConfig.timeout_sec;
+    
+    const auto& moveComp = GetBEI().GetMovementComponent();
+    _dVars.wasUnexpectedRotationWithoutMotorsEnabled = moveComp.IsUnexpectedRotationWithoutMotorsEnabled();
+  }
+  
+  const Result settingsResult = InitEnrollmentSettings();
+  if(RESULT_OK != settingsResult)
+  {
+    PRINT_NAMED_WARNING("BehaviorEnrollFace.InitInternal.BadSettings",
+                        "Disabling enrollment");
+    if( _dVars.persistent.state != State::SayingIKnowThatName ) {
+      CancelSelf();
+    }
+    return;
+  }
+  
   // Check if we were interrupted and need to fast forward:
   switch(_dVars.persistent.state)
   {
@@ -303,25 +327,7 @@ void BehaviorEnrollFace::OnBehaviorActivated()
       SET_STATE(NotStarted);
   }
   
-  // reset dynamic variables
-  {
-    auto persistent = std::move(_dVars.persistent);
-    _dVars = DynamicVariables();
-    _dVars.persistent = std::move(persistent);
-    _dVars.timeout_sec = _iConfig.timeout_sec;
-  }
   
-  const Result settingsResult = InitEnrollmentSettings();
-  if(RESULT_OK != settingsResult)
-  {
-    PRINT_NAMED_WARNING("BehaviorEnrollFace.InitInternal.BadSettings",
-                        "Disabling enrollment");
-    if( _dVars.persistent.state != State::SayingIKnowThatName ) {
-      CancelSelf();
-    }
-    return;
-  }
-
   {
     // send a status update to the app that MeetVictor has started with _faceName.
     // todo: this will be superceded by some sort of robot status VIC-1423
@@ -488,6 +494,9 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
 {
   // Leave general-purpose / session-only enrollment enabled (i.e. not for a specific face)
   GetBEI().GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
+  
+  auto& moveComp = GetBEI().GetMovementComponent();
+  moveComp.EnableUnexpectedRotationWithoutMotors( _dVars.wasUnexpectedRotationWithoutMotorsEnabled );
 
   const auto& robotInfo = GetBEI().GetRobotInfo();
   // if on the charger, we're exiting to the on charger reaction, unity is going to try to cancel but too late.
@@ -640,6 +649,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
     // in unit tests, this behavior will always want to re-activate when Cancel via the delegation component,
     // unless we disable enrollment. Use a special name (one that would almost certainly never be spoken)
     if( _dVars.faceName == "Special name for unit tests to end enrollment" ) {
+      SET_STATE(NotStarted);
       DisableEnrollment();
     }
   }
@@ -663,6 +673,7 @@ void BehaviorEnrollFace::DisableEnrollment()
 {
   _dVars.persistent.settings->name.clear();
   _dVars.persistent.didEverLeaveCharger = false;
+  _dVars.persistent.lastTimeUserMovedRobot = 0;
   // Leave "session-only" face enrollment enabled when we finish
   GetBEI().GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
 }
@@ -749,6 +760,12 @@ void BehaviorEnrollFace::TransitionToPutDownBlock()
 void BehaviorEnrollFace::TransitionToLookingForFace()
 {
   const bool playScanningGetOut = (State::Enrolling == _dVars.persistent.state);
+  
+  // enable detection of unexpected rotation for the remainder of the behavior. This is reset
+  // to its original value upon behavior deactivation. Note that ReactToUnexpectedMotion is suppressed
+  // during this behavior
+  auto& moveComp = GetBEI().GetMovementComponent();
+  moveComp.EnableUnexpectedRotationWithoutMotors( true );
 
   SET_STATE(LookingForFace);
 
@@ -1180,7 +1197,8 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(Vision::FaceID_t 
     }
   }
 
-  if(turnAction == nullptr)
+  const bool wasMovedRecently = WasMovedRecently();
+  if( (turnAction == nullptr) && !wasMovedRecently )
   {
     // Couldn't find face in face world, try turning towards last face pose
     PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.CreateTurnTowardsFaceAction.NullFace",
@@ -1191,8 +1209,10 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(Vision::FaceID_t 
     turnAction = new TurnTowardsLastFacePoseAction(DEG_TO_RAD(45.f));
   }
 
-  // Add whatever turn action we decided to create to the parallel action and return it
-  liftAndTurnTowardsAction->AddAction(turnAction);
+  if( turnAction != nullptr ) {
+    // Add whatever turn action we decided to create to the parallel action and return it
+    liftAndTurnTowardsAction->AddAction(turnAction);
+  }
 
   return liftAndTurnTowardsAction;
 
@@ -1215,7 +1235,8 @@ IActionRunner* BehaviorEnrollFace::CreateLookAroundAction()
 
   CompoundActionSequential* compoundAction = new CompoundActionSequential();
 
-  if(CanMoveTreads())
+  const bool wasMovedRecently = WasMovedRecently();
+  if(CanMoveTreads() && !wasMovedRecently)
   {
     compoundAction->AddAction(new PanAndTiltAction(relBodyAngle, absHeadAngle, false, true));
 
@@ -1308,6 +1329,12 @@ void BehaviorEnrollFace::UpdateFaceToEnroll()
 {
   const FaceWorld& faceWorld = GetBEI().GetFaceWorld();
   auto& robotInfo = GetBEI().GetRobotInfo();
+  
+  const bool unexpectedMovement = GetBEI().GetMovementComponent().IsUnexpectedMovementDetected();
+  const bool pickedUp = robotInfo.IsPickedUp();
+  if( unexpectedMovement || pickedUp ) {
+    _dVars.persistent.lastTimeUserMovedRobot = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  }
 
   const TimeStamp_t lastImgTime = robotInfo.GetLastImageTimeStamp();
 
@@ -1507,6 +1534,7 @@ void BehaviorEnrollFace::HandleWhileActivated(const EngineToGameEvent& event)
     case EngineToGameTag::RobotOffTreadsStateChanged:
     case EngineToGameTag::CliffEvent:
     {
+      _dVars.persistent.lastTimeUserMovedRobot = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       if(IsControlDelegated())
       {
         if(State::LookingForFace == _dVars.persistent.state)
@@ -1605,6 +1633,14 @@ void BehaviorEnrollFace::HandleWhileActivated(const GameToEngineEvent& event)
                         "Received unexpected GameToEngine tag %s",
                         MessageGameToEngineTagToString(event.GetData().GetTag()));
   }
+}
+  
+bool BehaviorEnrollFace::WasMovedRecently() const
+{
+  const TimeStamp_t currentTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const TimeStamp_t timeSinceMoved_ms = currentTime_ms - _dVars.persistent.lastTimeUserMovedRobot;
+  const bool movedRobotRecently = (timeSinceMoved_ms < kEnrollFace_TimeStopMovingAfterManualTurn_ms);
+  return movedRobotRecently;
 }
 
 } // namespace Cozmo
