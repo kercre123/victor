@@ -99,7 +99,7 @@ private:
   bool _robotWasMoving = false;
 
   // Internal buffer used to add to the streaming audio once a trigger is detected
-  static constexpr uint32_t kImmediateBufferSize = kTriggerOverlapSize_ms / kTimePerSEBlock_ms;
+  static constexpr uint32_t kImmediateBufferSize = kPreTriggerOverlapSize_ms / kTimePerSEBlock_ms;
   struct TimedMicData {
     std::array<AudioUtil::AudioSample, kSamplesPerBlock> audioBlock;
     TimeStamp_t timestamp;
@@ -124,6 +124,7 @@ private:
   
   void InitVAD();
   void TriggerWordDetectCallback(const char* resultFound, float score);
+  TimeStamp_t CreateTriggerWordDetectedJobs();
   void ProcessRawAudio(TimeStamp_t timestamp,
                        const AudioUtil::AudioSample* audioChunk,
                        uint32_t robotStatus,

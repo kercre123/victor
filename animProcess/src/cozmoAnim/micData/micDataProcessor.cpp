@@ -98,6 +98,7 @@ namespace {
   CONSOLE_VAR(bool, kMicData_UseFallbackBeam, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_ForceDisableMicDataProc, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_ForceEnableMicDataProc, CONSOLE_GROUP, false);
+  CONSOLE_VAR(bool, kMicData_CollectAllTriggers, CONSOLE_GROUP, false);
 # undef CONSOLE_GROUP
 
 }
@@ -183,46 +184,7 @@ void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float 
     return;
   }
 
-  MicDataInfo* newJob = new MicDataInfo{};
-  newJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggeredCapture"});
-  newJob->_writeNameBase = ""; // Use the autogen names in this subfolder
-  newJob->_numMaxFiles = 100;
-  bool saveToFile = false;
-#if ANKI_DEV_CHEATS
-  saveToFile = true;
-  if (kMicData_SaveRawFullIntent)
-  {
-    newJob->EnableDataCollect(MicDataType::Raw, true);
-  }
-  newJob->_audioSaveCallback = std::bind(&MicDataSystem::AudioSaveCallback, _micDataSystem, std::placeholders::_1);
-#endif
-  newJob->EnableDataCollect(MicDataType::Processed, saveToFile);
-  newJob->SetTimeToRecord(MicDataInfo::kMaxRecordTime_ms);
-
-  TimeStamp_t mostRecentTimestamp;
-  {
-    std::lock_guard<std::mutex> lock(_procAudioXferMutex);
-    DEV_ASSERT(_procAudioRawComplete >= _procAudioXferCount,
-               "MicDataProcessor.TriggerWordDetectCallback.AudioProcIdx");
-    const auto maxIndex = _procAudioRawComplete - _procAudioXferCount;
-    // Copy the current audio chunks in the trigger overlap buffer
-    for (size_t i=0; i<maxIndex; ++i)
-    {
-      const auto& audioBlock = _immediateAudioBuffer[i].audioBlock;
-      newJob->CollectProcessedAudio(audioBlock.data(), audioBlock.size());
-    }
-    // Copy the current audio chunks in the trigger overlap buffer
-    for (size_t i=0; i<_immediateAudioBufferRaw.size(); ++i)
-    {
-      const auto& audioBlock = _immediateAudioBufferRaw[i];
-      newJob->CollectRawAudio(audioBlock.data(), audioBlock.size());
-    }
-    mostRecentTimestamp = _immediateAudioBuffer[_procAudioRawComplete-1].timestamp;
-  }
-
-  const auto isStreamingJob = true;
-  _micDataSystem->AddMicDataJob(std::shared_ptr<MicDataInfo>(newJob), isStreamingJob);
-
+  TimeStamp_t mostRecentTimestamp = CreateTriggerWordDetectedJobs();
   const auto currentDirection = _micImmediateDirection->GetDominantDirection();
 
   // Set up a message to send out about the triggerword
@@ -243,6 +205,85 @@ void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float 
                     "Direction index %d at timestamp %d",
                     currentDirection,
                     mostRecentTimestamp);
+}
+
+TimeStamp_t MicDataProcessor::CreateTriggerWordDetectedJobs()
+{
+  std::lock_guard<std::mutex> lock(_procAudioXferMutex);
+
+  // First we create the job responsible for streaming the intent after the trigger
+  auto newJob = std::make_shared<MicDataInfo>();
+  newJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggeredCapture"});
+  newJob->_writeNameBase = ""; // Use the autogen names in this subfolder
+  newJob->_numMaxFiles = 100;
+  bool saveToFile = false;
+#if ANKI_DEV_CHEATS
+  saveToFile = true;
+  if (kMicData_SaveRawFullIntent)
+  {
+    newJob->EnableDataCollect(MicDataType::Raw, true);
+  }
+  newJob->_audioSaveCallback = std::bind(&MicDataSystem::AudioSaveCallback, _micDataSystem, std::placeholders::_1);
+#endif
+  newJob->EnableDataCollect(MicDataType::Processed, saveToFile);
+  newJob->SetTimeToRecord(MicDataInfo::kMaxRecordTime_ms);
+
+  DEV_ASSERT(_procAudioRawComplete >= _procAudioXferCount,
+              "MicDataProcessor.TriggerWordDetectCallback.AudioProcIdx");
+  const auto maxIndex = _procAudioRawComplete - _procAudioXferCount;
+  // Copy the current audio chunks in the trigger overlap buffer
+  // The immediate buffer is bigger than just the overlap time (time right after trigger end but before trigger was
+  // recognized), so that the immediate buffer also contains the trigger itself. So here we set our start index to
+  // only capture that in-between time, and push it into the streaming job for intent matching
+  constexpr uint32_t kOverlapCount = kTriggerOverlapSize_ms / kTimePerSEBlock_ms;
+  size_t triggerOverlapStartIdx = (maxIndex > kOverlapCount) ? (maxIndex - kOverlapCount) : 0;
+  for (size_t i=triggerOverlapStartIdx; i<maxIndex; ++i)
+  {
+    const auto& audioBlock = _immediateAudioBuffer[i].audioBlock;
+    newJob->CollectProcessedAudio(audioBlock.data(), audioBlock.size());
+  }
+
+  // Copy the current audio chunks in the trigger overlap buffer
+  for (size_t i=0; i<_immediateAudioBufferRaw.size(); ++i)
+  {
+    const auto& audioBlock = _immediateAudioBufferRaw[i];
+    newJob->CollectRawAudio(audioBlock.data(), audioBlock.size());
+  }
+  const auto isStreamingJob = true;
+  _micDataSystem->AddMicDataJob(newJob, isStreamingJob);
+
+  // Now we set up the optional job for recording _just_ the trigger that was just recognized
+  if (kMicData_CollectAllTriggers)
+  {
+    auto triggerJob = std::make_shared<MicDataInfo>();
+    triggerJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggersOnly"});
+    triggerJob->_writeNameBase = ""; // Use the autogen names in this subfolder
+    triggerJob->_numMaxFiles = 100;
+    bool saveToFile = true;
+    triggerJob->EnableDataCollect(MicDataType::Raw, saveToFile);
+    triggerJob->EnableDataCollect(MicDataType::Processed, saveToFile);
+    triggerJob->_audioSaveCallback = std::bind(&MicDataSystem::AudioSaveCallback, _micDataSystem, std::placeholders::_1);
+
+    // We only record a little extra time beyond what we're stuffing in below
+    constexpr uint32_t timeAfterTriggerEnd_ms = 170;
+    triggerJob->SetTimeToRecord(timeAfterTriggerEnd_ms);
+
+    for (size_t i=0; i<maxIndex; ++i)
+    {
+      const auto& audioBlock = _immediateAudioBuffer[i].audioBlock;
+      triggerJob->CollectProcessedAudio(audioBlock.data(), audioBlock.size());
+    }
+    for (size_t i=0; i<_immediateAudioBufferRaw.size(); ++i)
+    {
+      const auto& audioBlock = _immediateAudioBufferRaw[i];
+      triggerJob->CollectRawAudio(audioBlock.data(), audioBlock.size());
+    }
+    const auto notStreamingJob = false;
+    _micDataSystem->AddMicDataJob(triggerJob, notStreamingJob);
+  }
+
+  TimeStamp_t mostRecentTimestamp = _immediateAudioBuffer[_procAudioRawComplete-1].timestamp;
+  return mostRecentTimestamp;
 }
 
 MicDataProcessor::~MicDataProcessor()
