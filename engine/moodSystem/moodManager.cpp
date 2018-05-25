@@ -52,6 +52,7 @@ CONSOLE_VAR_EXTERN(float, kTimeMultiplier);
 namespace {
 static const char* kActionResultEmotionEventKey = "actionResultEmotionEvents";
 static const char* kAudioParametersMapKey = "audioParameterMap";
+static const char* kSimpleMoodAudioKey = "simpleMoodAudioParameters";
 
 CONSOLE_VAR(bool, kSendMoodToViz, "VizDebug", true);
 
@@ -77,6 +78,7 @@ MoodManager::MoodManager()
 : IDependencyManagedComponent(this, RobotComponentID::MoodManager)
 , _lastUpdateTime(0.0f)
 , _fixedEmotions{}
+, _simpleMoodAudioParameter(AudioParameterType::Invalid)
 {
 }
 
@@ -111,6 +113,9 @@ void MoodManager::ReadMoodConfig(const Json::Value& inJson)
   GetStaticMoodData().Init(inJson);
 
   LoadAudioParameterMap(inJson[kAudioParametersMapKey]);
+  LoadAudioSimpleMoodMap(inJson[kSimpleMoodAudioKey]);
+  VerifyAudioEvents();
+    
   LoadActionCompletedEventMap(inJson[kActionResultEmotionEventKey]);
 
   // set values per mood if we have them
@@ -132,6 +137,30 @@ void MoodManager::ReadMoodConfig(const Json::Value& inJson)
       std::bind(&MoodManager::HandleActionEnded, this, std::placeholders::_1));
   }
 }
+
+void MoodManager::VerifyAudioEvents() const
+{
+  std::set<AudioParameterType> audioParams;
+
+  for( const auto& mapPair : _audioParameterMap ) {
+    const auto result = audioParams.insert(mapPair.second);
+    ANKI_VERIFY(result.second,
+                "MoodManager.VerifyAudioEvents.AudioMap.DuplicateEvent",
+                "config '%s' specifies multiple emotions using the '%s' event",
+                kAudioParametersMapKey,
+                EnumToString(mapPair.second));
+  }
+
+  if( _simpleMoodAudioParameter != AudioParameterType::Invalid ) {
+    const auto result = audioParams.insert(_simpleMoodAudioParameter);
+    ANKI_VERIFY(result.second,
+                "MoodManager.VerifyAudioEvents.AudioSimpleMap.DuplicateEvent",
+                "config '%s' specifies the same event '%s' as is used in the emotion map",
+                kSimpleMoodAudioKey,
+                EnumToString(_simpleMoodAudioParameter));
+  }
+}
+
 
 void MoodManager::LoadEmotionEvents(const RobotDataLoader::FileJsonMap& emotionEventData)
 {
@@ -157,6 +186,10 @@ bool MoodManager::LoadEmotionEvents(const Json::Value& inJson)
 
 void MoodManager::LoadAudioParameterMap(const Json::Value& inJson)
 {
+  if( inJson.isNull() ) {
+    return;
+  }
+  
   if( ANKI_VERIFY( ! inJson.isArray(), "MoodManager.LoadAudioParameterMap.MissingKey",
                    "No audio parameter map specified, or it isn't a list" ) ) {
 
@@ -177,6 +210,39 @@ void MoodManager::LoadAudioParameterMap(const Json::Value& inJson)
       }
     }
   }
+}
+
+void MoodManager::LoadAudioSimpleMoodMap(const Json::Value& inJson)
+{
+  if( inJson.isNull() ) {
+    return;
+  }
+
+  const std::string& audioParamStr = JsonTools::ParseString(inJson,
+                                                            "event",
+                                                            "MoodManager.AudioSimpleMoodMap.ConfigError");
+  
+  ANKI_VERIFY( AudioMetaData::GameParameter::ParameterTypeFromString( audioParamStr, _simpleMoodAudioParameter ),
+               "MoodManager.LoadAudioSimpleMoodMap.InvalidAudioParameter",
+               "Audio parameter type '%s' cannot be converted to enum value",
+               audioParamStr.c_str() );
+
+  const Json::Value& mapJson = inJson["values"];
+  for( auto mapIt = mapJson.begin(); mapIt != mapJson.end(); ++mapIt ) {
+    SimpleMoodType simpleMood;
+    if( ANKI_VERIFY( SimpleMoodTypeFromString( mapIt.key().asCString(), simpleMood ),
+                     "MoodManager.LoadAudioSimpleMoodMap.InvalidSimpleMood",
+                     "event map key '%s' is not a valid simple mood",
+                     mapIt.key().asCString() ) ) {
+      if( ANKI_VERIFY( mapIt->isNumeric(),
+                       "MoodManager.LoadAudioSimpleMoodMap.InvalidSimpleValue",
+                       "event map key '%s' does not map to numeric value",
+                       mapIt.key().asCString() ) ) {
+        
+        _simpleMoodAudioEventMap.emplace( simpleMood, mapIt->asFloat() );
+      }
+    }
+  }  
 }
 
 void MoodManager::LoadActionCompletedEventMap(const Json::Value& inJson)
@@ -403,17 +469,27 @@ void MoodManager::SendEmotionsToGame()
 
 void MoodManager::SendEmotionsToAudio(Audio::EngineRobotAudioClient& audioClient)
 {
-  for (size_t i = 0; i < (size_t)EmotionType::Count; ++i)
-  {
-    const EmotionType emotionType = (EmotionType)i;
-    Emotion& emotion = GetEmotionByIndex(i);
+  if( !_audioParameterMap.empty() ) {
+    for (size_t i = 0; i < (size_t)EmotionType::Count; ++i)
+    {
+      const EmotionType emotionType = (EmotionType)i;
+      Emotion& emotion = GetEmotionByIndex(i);
 
-    auto audioParamIt = _audioParameterMap.find(emotionType);
-    if( audioParamIt != _audioParameterMap.end() ) {
-      const float val = emotion.GetValue();
-      audioClient.PostParameter( audioParamIt->second, val );
+      auto audioParamIt = _audioParameterMap.find(emotionType);
+      if( audioParamIt != _audioParameterMap.end() ) {
+        const float val = emotion.GetValue();
+        audioClient.PostParameter( audioParamIt->second, val );
+      }
     }
   }
+  
+  if( !_simpleMoodAudioEventMap.empty() ) {
+    auto simpleMoodIt = _simpleMoodAudioEventMap.find( GetSimpleMood() );
+    if( simpleMoodIt != _simpleMoodAudioEventMap.end() ) {
+      const float val = simpleMoodIt->second;
+      audioClient.PostParameter( _simpleMoodAudioParameter, val );
+    }
+  }  
 
   _lastAudioSendTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }

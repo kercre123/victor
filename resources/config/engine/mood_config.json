@@ -116,11 +116,23 @@
     "emotionEvents" : [
     ]
   },
-  "audioParameterMap": {
-    "Happy": "Robot_Vic_Happy",
-    "Confident": "Robot_Vic_Confident",
-    "Social": "Robot_Vic_Social",
-    "Stimulated": "Robot_Vic_Stimulation"
+
+  // per-emotion direct values are disabled in favor of sending fixed values based on the simple mood
+  // "audioParameterMap": {
+  //   "Happy": "Robot_Vic_Happy",
+  //   "Confident": "Robot_Vic_Confident",
+  //   "Social": "Robot_Vic_Social",
+  //   "Stimulated": "Robot_Vic_Stimulation"
+  // },
+
+  "simpleMoodAudioParameters": {
+    "event": "Robot_Vic_Stimulation",
+    "values": {
+      "LowStim": -1.0,
+      "MedStim": 0.0,
+      "HighStim": 1.0,
+      "Frustrated": -2.0
+    }
   },
   "defaultRepetitionPenalty" : {
     "nodes" : [
