@@ -1,11 +1,5 @@
 #!/bin/sh
-cd /anki
-
-if [ $1 == forever ]; then
-  while true; do
-    tinyplay square-05.wav
-  done
-fi
-
+killall -9 pcm && exit
 /etc/initscripts/anki-audio-init
-./testsound.sh forever &
+export LD_LIBRARY_PATH=/anki/menuman
+/anki/menuman/pcm &
