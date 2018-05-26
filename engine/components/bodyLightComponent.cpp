@@ -73,7 +73,10 @@ void BodyLightComponent::UpdateChargingLightConfig()
     {
       state = BackpackLightsState::BadCharger;
     }
-    else if(_robot->IsCharging())
+    // If battery voltage is less than 3V it must be on charger
+    // with a disconnected battery which should be indicated with 
+    // Charged lights.
+    else if(_robot->IsCharging() && _robot->GetBatteryVoltage() > 3.f)
     {
       state = BackpackLightsState::Charging;
     }
