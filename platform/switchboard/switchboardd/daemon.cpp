@@ -255,7 +255,6 @@ void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
   if(_securePairing != nullptr) {
     _securePairing->StopPairing();
     Log::Write("BLE Central disconnected.");
-    UpdateAdvertisement(false);
     if(!_isOtaUpdating) {
       _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
     }
@@ -266,6 +265,8 @@ void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
     _completedPairingHandle = nullptr;
     _securePairing = nullptr;
   }
+
+  UpdateAdvertisement(false);
 }
 
 void Daemon::OnBleIpcDisconnected() {
@@ -298,6 +299,10 @@ void Daemon::OnCompletedPairing() {
   // Handle Successful Pairing Event
   // (for now, the handling may be no different than failed pairing)
   UpdateAdvertisement(false);
+
+  if(_bleClient != nullptr) {
+    _bleClient->StopAdvertising();
+  }
 }
 
 void Daemon::HandlePairingTimeout() {
