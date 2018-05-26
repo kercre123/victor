@@ -251,20 +251,17 @@ void SetSystemLED(u32 color);
 /// Run levels for the hardware
 typedef enum 
 {
-  POWER_STATE_OFF               = 0x00,
-  POWER_STATE_OFF_WAKE_ON_RADIO = 0x01,
-  POWER_STATE_ON                = 0x02,
-  POWER_STATE_IDLE              = 0x03,
-  POWER_STATE_FORCE_RECOVERY    = 0x04,
-  POWER_STATE_OTA_MODE          = 0x08,
-  POWER_STATE_CHARGER_TEST_MODE = 0x41,
-  POWER_STATE_DTM_MODE          = 0x42,
+  POWER_MODE_ACTIVE           = 0x0,
+  POWER_MODE_CALM             = 0x1,
 } PowerState;
 
-/** Command hardware to enter specified power state
- * @warning Some power states will power off the android processor
+/** Command syscon to enter specified power state
  */
 void PowerSetMode(const PowerState state);
+
+/** Get syscon's current power state
+ */
+PowerState PowerGetMode();
 
 /************************************************************************
  * \section "Radio" comms to/from engine

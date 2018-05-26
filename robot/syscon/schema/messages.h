@@ -58,6 +58,7 @@ typedef uint32_t DropSensor;
 
 // ENUM PayloadId
 enum {
+  PAYLOAD_LIGHT_STATE = 0x736c,
   PAYLOAD_DATA_FRAME  = 0x6466,
   PAYLOAD_CONT_DATA   = 0x6364,
   PAYLOAD_MODE_CHANGE = 0x6d64,
@@ -98,14 +99,8 @@ typedef uint16_t BatteryFlags;
 
 // ENUM PowerState
 enum {
-  POWER_STATE_OFF               = 0,
-  POWER_STATE_OFF_WAKE_ON_RADIO = 1,
-  POWER_STATE_ON                = 2,
-  POWER_STATE_IDLE              = 3,
-  POWER_STATE_FORCE_RECOVERY    = 4,
-  POWER_STATE_OTA_MODE          = 5,
-  POWER_STATE_CHARGER_TEST_MODE = 6,
-  POWER_STATE_DTM_MODE          = 7,
+  POWER_MODE_ACTIVE = 0,
+  POWER_MODE_CALM   = 1,
 };
 typedef uint32_t PowerState;
 
@@ -228,12 +223,17 @@ struct ContactData
   uint8_t data[32];
 };
 
+struct LightState
+{
+  uint8_t ledColors[16];
+};
+
 struct HeadToBody
 {
   uint32_t framecounter;
   PowerState powerState;
   int16_t motorPower[4];
-  uint8_t ledColors[16];
+  struct LightState lightState;
   uint8_t _unused[32];  // Future expansion
 };
 

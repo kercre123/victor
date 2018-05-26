@@ -61,4 +61,61 @@ export LD_LIBRARY_PATH=/data/local/tmp
 cd /data/local/tmp
 ./dfu syscon.dfu
 
-"
+function cleanup() {
+  # Remount rootfs read-only
+  [[ "$MOUNT_STATE" == "ro" ]] && logv "remount ro /" &&  robot_sh "/bin/mount -o remount,ro /"    
+}
+
+# trap ctrl-c and call ctrl_c()
+trap cleanup INT
+
+set +e
+
+echo "Uploading dfu files"
+robot_sh mkdir -p ${STAGING_DIR}
+robot_cp ${DFU_PROGRAM} ${STAGING_DIR}
+robot_cp ${DFU_PAYLOAD} ${STAGING_DIR}
+
+DFU_PROGRAM_BASENAME=$(basename $DFU_PROGRAM)
+DFU_PAYLOAD_BASENAME=$(basename $DFU_PAYLOAD)
+
+echo "Running DFU"
+NUM_RETRIES=5
+
+# NOTE: DVT3 bootloaders have a bug that makes DFU fail often
+# thus the retries. It also never gets further than "requesting validation"
+# but this seems to be a sufficient enough indicator that the DFU has
+# succeeded.
+while [ $NUM_RETRIES -ge 0 ]; do
+    status=$(/usr/bin/expect << EOF
+        spawn ssh ${ANKI_ROBOT_USER}@${ANKI_ROBOT_HOST}
+        expect "~ #"
+        send "${STAGING_DIR}/${DFU_PROGRAM_BASENAME} ${STAGING_DIR}/${DFU_PAYLOAD_BASENAME}\n"
+        set timeout 5
+        expect {
+            "requesting validation" {
+                send_user "DFU_SUCCESS"
+            }
+            timeout {
+                send_user "DFU_FAILED"
+            }
+        }
+EOF
+    )
+
+    logv "RESULT: ${status}"
+    if [[ $status = *"DFU_SUCCESS"* ]]; then
+      echo "DFU SUCCESS"
+      break
+    fi
+
+    let NUM_RETRIES=NUM_RETRIES-1
+    if [ $NUM_RETRIES -ge 0 ]; then
+      echo "Retrying... (Num retries left: ${NUM_RETRIES})"
+    else
+      echo "DFU FAILED"
+      break
+    fi
+done # end while
+
+cleanup

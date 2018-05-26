@@ -1308,44 +1308,6 @@ Result Robot::Update()
 
   BEGIN_DONT_RUN_AFTER_PACKOUT
 
-#if FACTORY_TEST
-  // Once we have gotten a frame from the camera play a sound to indicate 
-  // a "successful" boot
-  static bool playedSound = false;
-  if(!playedSound &&
-     CameraService::getInstance()->HaveGottenFrame())
-  {
-    GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(1.f);
-    CompoundActionParallel* action = new CompoundActionParallel();
-    std::weak_ptr<IActionRunner> soundAction = action->AddAction(new PlayAnimationAction("soundTestAnim"));
-
-    // Start WaitForLambdaAction in parallel that will cancel the sound action after 200 milliseconds
-    WaitForLambdaAction* waitAction = new WaitForLambdaAction([soundAction](Robot& robot){
-      static TimeStamp_t start = 0;
-      if(start == 0)
-      {
-        start = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-      }
-
-      if(BaseStationTimer::getInstance()->GetCurrentTimeStamp() - start > 200)
-      {
-        start = 0;
-        auto sp = soundAction.lock();
-        if(sp != nullptr)
-        {
-          sp->Cancel();
-          return true;
-        }
-      }
-
-      return false;
-    });
-    action->AddAction(waitAction);
-    GetActionList().AddConcurrentAction(action);
-    playedSound = true;
-  }
-#endif
-
   //////////// VisionScheduleMediator ////////////
   // Applies the scheduling consequences of the last frame's subscriptions before ticking VisionComponent
   GetVisionScheduleMediator().Update();
@@ -3034,6 +2996,24 @@ Result Robot::UpdateStartupChecks()
       else
       {
         state = State::PASSED;
+
+        #if FACTORY_TEST
+        // Manually init AnimationComponent
+        // Normally it would init when we receive syncTime from robot process
+        // but since there might not be a body (robot process won't init)
+        // we need to do it here
+        GetAnimationComponent().Init();
+        
+        // Once we have gotten a frame from the camera play a sound to indicate 
+        // a "successful" boot
+        static bool playedSound = false;
+        if(!playedSound)
+        {
+          GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(1.f);
+          GetAnimationComponent().PlayAnimByName("soundTestAnim", 1, true, nullptr, 0, 0.4f);
+          playedSound = true;
+        }
+        #endif
       }
     }
   }
