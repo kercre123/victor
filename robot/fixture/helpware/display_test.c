@@ -3,7 +3,7 @@
 /* #include <stdbool.h> */
 /* #include <stdlib.h> */
 /* #include <assert.h> */
-/* #include <string.h> */
+#include <string.h>
 #include <ctype.h>
 /* #include <fcntl.h> */
 #include <unistd.h>
