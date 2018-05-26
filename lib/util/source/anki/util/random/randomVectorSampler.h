@@ -169,7 +169,9 @@ const T& RandomVectorSampler<T>::Sample(RandomGenerator& rng) const
     // this just allows undefined behavior for now
   }
 
-  float r = (float)rng.RandDbl();
+  using namespace std::chrono;
+  auto time_s = duration_cast<seconds>(steady_clock::now().time_since_epoch()).count();
+  float r = (float)rng.RandDbl(static_cast<int>(time_s));
   size_t i = 0;
   size_t end = _cumlProbs.size() - 1;
   while(i < end && r >= _cumlProbs[i])

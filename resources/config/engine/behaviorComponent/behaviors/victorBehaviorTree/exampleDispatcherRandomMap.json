@@ -1,0 +1,22 @@
+{
+  "behaviorID" : "ExampleDispatcherRandomMap",
+  "behaviorClass" : "DispatcherRandomMap",
+
+  "conditions" : [
+    {
+      "conditionType": "ObjectPositionUpdated"
+    },
+    {
+      "conditionType": "OnCharger"
+    }
+  ],
+
+  "behaviors" : [
+    {
+      "behavior": "ReactToFrustrationMajor"
+    },
+    {
+      "behavior": "Exploring"
+    }
+  ]
+}

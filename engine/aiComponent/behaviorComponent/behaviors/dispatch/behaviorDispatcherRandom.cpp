@@ -44,7 +44,7 @@ BehaviorDispatcherRandom::BehaviorDispatcherRandom(const Json::Value& config)
 {
   const Json::Value& behaviorArray = config[kBehaviorsKey];
   DEV_ASSERT_MSG(!behaviorArray.isNull(),
-                 "BehaviorDispatcherStrictPriorityWithCooldown.BehaviorsNotSpecified",
+                 "BehaviorDispatcherRandom.BehaviorsNotSpecified",
                  "No Behaviors key found");
   if(!behaviorArray.isNull()) {
     for(const auto& behaviorDefinitionGroup: behaviorArray) {      

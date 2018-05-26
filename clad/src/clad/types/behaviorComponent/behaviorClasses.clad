@@ -83,6 +83,7 @@ enum uint_8 BehaviorClass {
   DispatcherPassThrough,
   DispatcherQueue,
   DispatcherRandom,
+  DispatcherRandomMap,
   DispatcherRerun,
   DispatcherScoring,
   DispatcherStrictPriority,

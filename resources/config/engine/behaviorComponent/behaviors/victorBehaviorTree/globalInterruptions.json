@@ -5,7 +5,7 @@
   "interruptActiveBehavior": true,
 
   "behaviors": [
-    "ExampleDispatcherTriggeredRandomChoice"
+    "ExampleDispatcherRandomMap"
     // "MandatoryPhysicalReactions",
     // "LowBatteryFindAndGoToHome",
     // "TriggerWordDetected",
