@@ -73,7 +73,7 @@ BURN_OBJ = $(BURN_SRC:%.c=$(OBJDIR)/%.o)
 
 REMOTE_DEST = /data/local/fixture/
 
-all: $(VICOS_ARM_TOOLS_BIN) $(DFU) $(ANIMATE) $(DISPLAY) $(HELPER)
+all: $(VICOS_ARM_TOOLS_BIN) $(DFU) $(ANIMATE) $(DISPLAY) $(HELPER) $(MENUMAN) $(BURN)
 
 $(CORE):
 	cd $(CORE_DIR) && make all
