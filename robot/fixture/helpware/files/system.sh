@@ -2,7 +2,7 @@
 # Try to stop everything - if it fails, restart the module
 if ! iwpriv wlan0 tx 0; then
   rmmod wlan.ko
-  insmod /usr/lib/modules/3.18.66/extra/wlan.ko con_mode=5
+  insmod /usr/lib/modules/3.18.66-perf/extra/wlan.ko con_mode=5
   iwpriv wlan0 ftm 1
   iwpriv wlan0 ena_chain 2
 fi

@@ -33,7 +33,7 @@ const struct SpineMessageHeader* hal_read_frame();
 struct HeadToBody gHeadData = {0};
 
 
-void on_vic_exit(void)
+void core_common_on_exit(void)
 {
   //TODO: hal_terminate();
 }
@@ -642,7 +642,7 @@ int main(int argc, const char* argv[])
     }
   }
 
-  on_vic_exit();
+  core_common_on_exit();
 
   return 0;
 }
