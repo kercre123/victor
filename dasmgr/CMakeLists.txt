@@ -17,6 +17,7 @@ if (VICOS)
 
   target_link_libraries(vic-dasmgr
     PRIVATE
+    victorCrashReports
     util
   )
 

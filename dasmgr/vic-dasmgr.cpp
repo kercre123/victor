@@ -8,6 +8,8 @@
 */
 #include "dasManager.h"
 
+#include "platform/victorCrashReports/victorCrashReporter.h"
+
 #include "util/logging/logging.h"
 #include "util/logging/victorLogger.h"
 
@@ -30,12 +32,16 @@ void Shutdown(int signum)
 
 int main(int argc, const char * argv[])
 {
-  signal(SIGTERM, Shutdown);
+  // Set up crash reporter
+  Anki::Victor::InstallCrashReporter(LOG_PROCNAME);
 
   // Set up logging
   auto logger = std::make_unique<Anki::Util::VictorLogger>(LOG_PROCNAME);
   Anki::Util::gLoggerProvider = logger.get();
   Anki::Util::gEventProvider = logger.get();
+
+  // Set up signal handler
+  signal(SIGTERM, Shutdown);
 
   // Say hello
   LOG_DEBUG("main.hello", "Hello world");
@@ -52,8 +58,11 @@ int main(int argc, const char * argv[])
 
   // Say goodbye & we're done
   LOG_DEBUG("main.goodbye", "Goodbye world (exit %d)", status);
+
   Anki::Util::gLoggerProvider = nullptr;
   Anki::Util::gEventProvider = nullptr;
+
+  Anki::Victor::UninstallCrashReporter();
 
   exit(status);
 
