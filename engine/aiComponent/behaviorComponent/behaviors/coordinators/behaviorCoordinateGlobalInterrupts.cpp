@@ -23,6 +23,9 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
+#include "engine/robot.h"
+#define private public
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 
 #include "util/helpers/boundedWhile.h"
 
@@ -124,6 +127,14 @@ void BehaviorCoordinateGlobalInterrupts::OnPassThroughActivated()
   if( ANKI_DEV_CHEATS ) {
     CreateConsoleVars();
   }
+  
+
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
+  const bool runFFT = true;
+  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingMicsRaw(300000, // 5 mins
+                                                                                        runFFT,
+                                                                                        "recording")));
+  
 }
 
 

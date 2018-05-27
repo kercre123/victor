@@ -63,6 +63,7 @@ enum uint_8 BehaviorClass {
   DockingTestSimple,
   FactoryCentroidExtractor,
   LiftLoadTest,
+  MakeNoise,
   PlannerTest,
 
   // devBehaviors/playpen

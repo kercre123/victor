@@ -28,7 +28,7 @@ DirectionalLight {
 CozmoMat {
 }
 VictorCharger {
-  translation -0.076696196 0.00014978189 2.4646951e-14
+  translation -0.076696196 0.00014978189 -0.1799999999999754
   rotation 0 0 1 4.7124
 }
 Face {
@@ -65,10 +65,9 @@ CozmoBot2 {
 }
 WebotsKeyboardController {
   intent "{\"intent\": \"intent_play_specific\", \"params\": {\"entity_behavior\": \"fist_bump\"}}"
+  emotionVal 0.1
   consoleVarName "DevDispatchAfterShake"
   consoleVarValue "1"
-  emotionName "Stimulated"
-  emotionVal 0.1
   colorizeStderrOutput TRUE
   translation -0.24686749 0.2921897 0.08
   rotation 0 0 1 6.0213859
