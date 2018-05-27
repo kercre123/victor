@@ -14,7 +14,7 @@
 
 #include	"samplerate.h"
 #include	"float_cast.h"
-#include	"common.h"
+#include	"samplerate_common.h"
 
 static int psrc_set_converter (SRC_PRIVATE	*psrc, int converter_type) ;
 

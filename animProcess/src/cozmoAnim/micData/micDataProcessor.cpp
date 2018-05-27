@@ -36,6 +36,7 @@
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 
 #include "cozmoAnim/denoiser/samplerate.h"
+#include "cozmoAnim/denoiser/rnnoise.h"
 
 namespace {
   struct TriggerData
@@ -101,7 +102,7 @@ namespace {
   CONSOLE_VAR(bool, kMicData_ForceEnableMicDataProc, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_CollectAllTriggers, CONSOLE_GROUP, false);
   
-  CONSOLE_VAR(bool, kReduceNoise, CONSOLE_GROUP, true);
+  CONSOLE_VAR_RANGED(int, kReduceNoise, CONSOLE_GROUP, 1, 0, 2); // 2 = run upsampling and downsampling but not denoising
 # undef CONSOLE_GROUP
 
 }
@@ -707,26 +708,32 @@ float MicDataProcessor::GetIncomingMicDataPercentUsed()
   
 void MicDataProcessor::InitDenoising()
 {
-  const int converterType = SRC_SINC_FASTEST;
-  const int channels = 1;
-  int errorCode = 0;
-  _sampleRateChanger = src_new(converterType, channels, &errorCode);
-  if( _sampleRateChanger == nullptr ) {
-    PRINT_NAMED_ERROR("MicDataProcessor.InitDenoising.NoRateConverter", "Could not init rate converter. Error code %d", errorCode);
+//  const int converterType = SRC_SINC_FASTEST;
+//  const int channels = 1;
+//  int errorCode = 0;
+//  _sampleRateChanger = src_new(converterType, channels, &errorCode);
+//  if( _sampleRateChanger == nullptr ) {
+//    PRINT_NAMED_ERROR("MicDataProcessor.InitDenoising.NoRateConverter", "Could not init rate converter. Error code %d", errorCode);
+//  }
+  
+  _denoiser = rnnoise_create();
+  if( _denoiser == nullptr ) {
+    PRINT_NAMED_ERROR("MicDataProcessor.InitDenoising.NoDenoiser", "Could not init denoiser");
   }
 }
   
 void MicDataProcessor::EndDenoising()
 {
-  src_delete(_sampleRateChanger);
+  //src_delete(_sampleRateChanger);
+  rnnoise_destroy( _denoiser );
 }
   
-void MicDataProcessor::ReduceNoise( AudioUtil::AudioSample* audioChunk, size_t size ) const
+void MicDataProcessor::ReduceNoise( AudioUtil::AudioSample* audioChunk, size_t size )
 {
   DEV_ASSERT( size == 160, "");
-  if( _sampleRateChanger == nullptr ) {
-    return;
-  }
+//  if( _sampleRateChanger == nullptr ) {
+//    return;
+//  }
   for( size_t i=0; i<size; ++i ) {
     _nativeSamples.data()[i] = audioChunk[i];
   }
@@ -741,13 +748,22 @@ void MicDataProcessor::ReduceNoise( AudioUtil::AudioSample* audioChunk, size_t s
   info.src_ratio = integerFactor;
   info.end_of_input = 1;
   
-  int processError = src_process(_sampleRateChanger, &info);
+  const int converterType = SRC_LINEAR;//SRC_SINC_FASTEST;
+  const int numChannels = 1;
+  int processError = src_simple( &info, converterType, numChannels );
+  
+  //int processError = src_process(_sampleRateChanger, &info);
   if( processError ) {
     PRINT_NAMED_WARNING("MicDataProcessor.ReduceNoise.UpsamplingFailed", "Failed with error code %d", processError);
     return;
   }
+  //PRINT_NAMED_WARNING("WHATNOW", "upsampling used %ld for output %ld", info.input_frames_used , info.output_frames_gen );
   
-  // now remove noise
+  if( kReduceNoise == 1 ) {
+    // now remove noise
+    ASSERT_NAMED(_upsampled.size() == 480, "");
+    rnnoise_process_frame(_denoiser, _upsampled.data(), _upsampled.data());
+  }
   
   // now downsample back into audioChunk
   info.data_in = _upsampled.data();
@@ -756,12 +772,18 @@ void MicDataProcessor::ReduceNoise( AudioUtil::AudioSample* audioChunk, size_t s
   info.output_frames = size;
   info.src_ratio = 1.0/integerFactor;
   info.end_of_input = 1;
-  processError = src_process(_sampleRateChanger, &info);
+  processError = src_simple( &info, converterType, numChannels );
+  //processError = src_process(_sampleRateChanger, &info);
   if( processError ) {
     PRINT_NAMED_WARNING("MicDataProcessor.ReduceNoise.DownsamplingFailed", "Failed with error code %d", processError);
     return;
   }
+  //PRINT_NAMED_WARNING("WHATNOW", "downsampling used %ld for output %ld", info.input_frames_used , info.output_frames_gen );
   
+  // finally put it back in the original array. it might be worth changing src_process to support int16's
+  for( size_t i=0; i<size; ++i ) {
+    audioChunk[i] = _nativeSamples.data()[i];
+  }
   
 }
 

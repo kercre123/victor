@@ -12,7 +12,7 @@
 
 #include "config.h"
 #include "float_cast.h"
-#include "common.h"
+#include "samplerate_common.h"
 
 static int linear_vari_process (SRC_PRIVATE *psrc, SRC_DATA *data) ;
 static void linear_reset (SRC_PRIVATE *psrc) ;
