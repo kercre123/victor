@@ -31,6 +31,8 @@
 #include <thread>
 #include <utility>
 
+typedef struct SRC_STATE_tag SRC_STATE ;
+
 // Declarations
 namespace Anki {
   namespace Cozmo {
@@ -137,6 +139,15 @@ private:
 
   void ProcessRawLoop();
   void ProcessTriggerLoop();
+  
+  void ReduceNoise(AudioUtil::AudioSample* audioChunk, size_t size) const;
+  void InitDenoising();
+  void EndDenoising();
+  
+  SRC_STATE* _sampleRateChanger = nullptr;
+  
+  std::array<float, kSamplesPerBlock> _nativeSamples;
+  std::array<float, 3*kSamplesPerBlock> _upsampled;
 };
 
 } // namespace MicData

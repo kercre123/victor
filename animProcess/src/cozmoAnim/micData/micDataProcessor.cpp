@@ -35,6 +35,7 @@
 
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 
+#include "cozmoAnim/denoiser/samplerate.h"
 
 namespace {
   struct TriggerData
@@ -99,6 +100,8 @@ namespace {
   CONSOLE_VAR(bool, kMicData_ForceDisableMicDataProc, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_ForceEnableMicDataProc, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_CollectAllTriggers, CONSOLE_GROUP, false);
+  
+  CONSOLE_VAR(bool, kReduceNoise, CONSOLE_GROUP, true);
 # undef CONSOLE_GROUP
 
 }
@@ -159,6 +162,8 @@ MicDataProcessor::MicDataProcessor(MicDataSystem* micDataSystem, const std::stri
   _selectedSearchBeamConfidence = SEDiagGetIndex("search_result_best_beam_confidence");
   _searchConfidenceState = SEDiagGetIndex("fdsearch_confidence_state");
   _policyFallbackFlag = SEDiagGetIndex("policy_fallback_flag");
+  
+  InitDenoising();
 
   _processThread = std::thread(&MicDataProcessor::ProcessRawLoop, this);
   _processTriggerThread = std::thread(&MicDataProcessor::ProcessTriggerLoop, this);
@@ -296,6 +301,8 @@ MicDataProcessor::~MicDataProcessor()
 
   MMIfDestroy();
   _recognizer->Stop();
+  
+  EndDenoising();
 }
 
 void MicDataProcessor::ProcessRawAudio(TimeStamp_t timestamp,
@@ -634,7 +641,7 @@ void MicDataProcessor::ProcessTriggerLoop()
       readyDataSpot = &_immediateAudioBuffer[_procAudioRawComplete - _procAudioXferCount];
     }
 
-    const auto& processedAudio = readyDataSpot->audioBlock;
+    auto& processedAudio = readyDataSpot->audioBlock;
     std::deque<std::shared_ptr<MicDataInfo>> jobs = _micDataSystem->GetMicDataJobs();
     for (auto& job : jobs)
     {
@@ -647,7 +654,11 @@ void MicDataProcessor::ProcessTriggerLoop()
       _currentTriggerSearchIndex = kMicData_NextTriggerIndex;
       _recognizer->SetRecognizerIndex(_currentTriggerSearchIndex);
     }
-
+    
+    if( kReduceNoise ) {
+      ReduceNoise( processedAudio.data(), processedAudio.size() );
+    }
+    
     // Run the trigger detection, which will use the callback defined above
     // Note we skip it if there is no activity as of the latest processed audioblock
     if (_micImmediateDirection->GetLatestSample().activeState != 0)
@@ -692,6 +703,66 @@ float MicDataProcessor::GetIncomingMicDataPercentUsed()
   // This way the "fullness" returned is less variable and better covers the worst case
   _rawAudioBufferFullness[inUseIndex] = updatedFullness;
   return MAX(_rawAudioBufferFullness[0], _rawAudioBufferFullness[1]);
+}
+  
+void MicDataProcessor::InitDenoising()
+{
+  const int converterType = SRC_SINC_FASTEST;
+  const int channels = 1;
+  int errorCode = 0;
+  _sampleRateChanger = src_new(converterType, channels, &errorCode);
+  if( _sampleRateChanger == nullptr ) {
+    PRINT_NAMED_ERROR("MicDataProcessor.InitDenoising.NoRateConverter", "Could not init rate converter. Error code %d", errorCode);
+  }
+}
+  
+void MicDataProcessor::EndDenoising()
+{
+  src_delete(_sampleRateChanger);
+}
+  
+void MicDataProcessor::ReduceNoise( AudioUtil::AudioSample* audioChunk, size_t size ) const
+{
+  DEV_ASSERT( size == 160, "");
+  if( _sampleRateChanger == nullptr ) {
+    return;
+  }
+  for( size_t i=0; i<size; ++i ) {
+    _nativeSamples.data()[i] = audioChunk[i];
+  }
+  
+  const int integerFactor = 3; // to 480
+  
+  SRC_DATA info;
+  info.data_in = _nativeSamples.data();
+  info.data_out = _upsampled.data();
+  info.input_frames = size;
+  info.output_frames = _upsampled.size();
+  info.src_ratio = integerFactor;
+  info.end_of_input = 1;
+  
+  int processError = src_process(_sampleRateChanger, &info);
+  if( processError ) {
+    PRINT_NAMED_WARNING("MicDataProcessor.ReduceNoise.UpsamplingFailed", "Failed with error code %d", processError);
+    return;
+  }
+  
+  // now remove noise
+  
+  // now downsample back into audioChunk
+  info.data_in = _upsampled.data();
+  info.data_out = _nativeSamples.data();
+  info.input_frames = _upsampled.size();
+  info.output_frames = size;
+  info.src_ratio = 1.0/integerFactor;
+  info.end_of_input = 1;
+  processError = src_process(_sampleRateChanger, &info);
+  if( processError ) {
+    PRINT_NAMED_WARNING("MicDataProcessor.ReduceNoise.DownsamplingFailed", "Failed with error code %d", processError);
+    return;
+  }
+  
+  
 }
 
 
