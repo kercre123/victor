@@ -104,7 +104,7 @@ namespace {
   CONSOLE_VAR(bool, kMicData_ForceEnableMicDataProc, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_CollectAllTriggers, CONSOLE_GROUP, false);
   
-  CONSOLE_VAR_RANGED(int, kReduceNoise, CONSOLE_GROUP, 1, 0, 3); // 0 never, 1 only when moving, 2 = always, 3 = run upsampling and downsampling but not denoising
+  CONSOLE_VAR_RANGED(int, kReduceNoise, CONSOLE_GROUP, 0, 0, 3); // 0 never, 1 only when moving, 2 = always, 3 = run upsampling and downsampling but not denoising
   CONSOLE_VAR_ENUM(int, kConverterType, CONSOLE_GROUP, 3, "SINC_BEST_QUALITY,SINC_MEDIUM_QUALITY,SINC_FASTEST,ZERO_ORDER_HOLD,LINEAR");
 # undef CONSOLE_GROUP
 

@@ -130,9 +130,11 @@ void BehaviorCoordinateGlobalInterrupts::OnPassThroughActivated()
   
 
   Robot& robot = GetBEI().GetRobotInfo()._robot;
-  const bool runFFT = true;
+  const bool runFFT = false;
   robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingMicsRaw(300000, // 5 mins
                                                                                         runFFT,
+                                                                                        "recording")));
+  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingMicsProcessed(120000, // 2 mins
                                                                                         "recording")));
   
 }

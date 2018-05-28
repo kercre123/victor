@@ -7,7 +7,7 @@
   "behaviors": [
     //"MandatoryPhysicalReactions",
     //"LowBatteryFindAndGoToHome",
-    "TriggerWordDetected",
+    //"TriggerWordDetected",
     "MakeNoise"
     // "TimerUtilityCoordinator",
     // "WeatherResponses",
