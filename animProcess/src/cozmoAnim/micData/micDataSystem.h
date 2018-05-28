@@ -86,6 +86,8 @@ public:
   
   void ResetBeatDetector();
   
+  void HandleRobotState( const Anki::Cozmo::RobotState& robotState );
+  
 private:
   void RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT);
 

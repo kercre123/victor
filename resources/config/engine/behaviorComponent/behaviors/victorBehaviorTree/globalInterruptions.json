@@ -5,19 +5,20 @@
   "interruptActiveBehavior": true,
 
   "behaviors": [
-    "MandatoryPhysicalReactions",
-    "LowBatteryFindAndGoToHome",
+    //"MandatoryPhysicalReactions",
+    //"LowBatteryFindAndGoToHome",
     "TriggerWordDetected",
-    "TimerUtilityCoordinator",
-    "WeatherResponses",
-    "ReactToTouchPetting",
-    "InterruptingVoiceReactions",
-    "ReactToCubeTap",
-    "ReactToSoundAwake",
-    "ReactToObstacle",
-    "ReactToUnclaimedIntent",
-    "ReactToPutDown",
-    "ReactToPickedUp",
-    "HighLevelAI"
+    "MakeNoise"
+    // "TimerUtilityCoordinator",
+    // "WeatherResponses",
+    // "ReactToTouchPetting",
+    // "InterruptingVoiceReactions",
+    // "ReactToCubeTap",
+    // "ReactToSoundAwake",
+    // "ReactToObstacle",
+    // "ReactToUnclaimedIntent",
+    // "ReactToPutDown",
+    // "ReactToPickedUp",
+    // "HighLevelAI"
   ]
 }

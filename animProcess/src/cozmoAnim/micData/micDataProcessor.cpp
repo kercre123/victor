@@ -37,6 +37,8 @@
 
 #include "cozmoAnim/denoiser/samplerate.h"
 #include "cozmoAnim/denoiser/rnnoise.h"
+#include "audioUtil/waveFile.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
 
 namespace {
   struct TriggerData
@@ -102,7 +104,8 @@ namespace {
   CONSOLE_VAR(bool, kMicData_ForceEnableMicDataProc, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_CollectAllTriggers, CONSOLE_GROUP, false);
   
-  CONSOLE_VAR_RANGED(int, kReduceNoise, CONSOLE_GROUP, 1, 0, 2); // 2 = run upsampling and downsampling but not denoising
+  CONSOLE_VAR_RANGED(int, kReduceNoise, CONSOLE_GROUP, 1, 0, 3); // 0 never, 1 only when moving, 2 = always, 3 = run upsampling and downsampling but not denoising
+  CONSOLE_VAR_ENUM(int, kConverterType, CONSOLE_GROUP, 3, "SINC_BEST_QUALITY,SINC_MEDIUM_QUALITY,SINC_FASTEST,ZERO_ORDER_HOLD,LINEAR");
 # undef CONSOLE_GROUP
 
 }
@@ -237,6 +240,7 @@ TimeStamp_t MicDataProcessor::CreateTriggerWordDetectedJobs()
   DEV_ASSERT(_procAudioRawComplete >= _procAudioXferCount,
               "MicDataProcessor.TriggerWordDetectCallback.AudioProcIdx");
   const auto maxIndex = _procAudioRawComplete - _procAudioXferCount;
+  //PRINT_NAMED_WARNING("WHATNOW", "Buffer size %d", maxIndex);
   // Copy the current audio chunks in the trigger overlap buffer
   // The immediate buffer is bigger than just the overlap time (time right after trigger end but before trigger was
   // recognized), so that the immediate buffer also contains the trigger itself. So here we set our start index to
@@ -656,7 +660,15 @@ void MicDataProcessor::ProcessTriggerLoop()
       _recognizer->SetRecognizerIndex(_currentTriggerSearchIndex);
     }
     
-    if( kReduceNoise ) {
+    bool isMoving = false;
+    {
+      std::unique_lock<std::mutex> lock(_movingMutex);
+      isMoving = _isMoving;
+      _isMoving = false;
+    }
+    const auto maxIndex = _procAudioRawComplete - _procAudioXferCount;
+    PRINT_NAMED_WARNING("WHATNOW", "Buffer size %d", maxIndex);
+    if( (kReduceNoise == 1 && isMoving) || (kReduceNoise>=2) ) {
       ReduceNoise( processedAudio.data(), processedAudio.size() );
     }
     
@@ -731,9 +743,6 @@ void MicDataProcessor::EndDenoising()
 void MicDataProcessor::ReduceNoise( AudioUtil::AudioSample* audioChunk, size_t size )
 {
   DEV_ASSERT( size == 160, "");
-//  if( _sampleRateChanger == nullptr ) {
-//    return;
-//  }
   for( size_t i=0; i<size; ++i ) {
     _nativeSamples.data()[i] = audioChunk[i];
   }
@@ -748,7 +757,7 @@ void MicDataProcessor::ReduceNoise( AudioUtil::AudioSample* audioChunk, size_t s
   info.src_ratio = integerFactor;
   info.end_of_input = 1;
   
-  const int converterType = SRC_LINEAR;//SRC_SINC_FASTEST;
+  const int converterType = kConverterType;//SRC_SINC_FASTEST;
   const int numChannels = 1;
   int processError = src_simple( &info, converterType, numChannels );
   
@@ -759,7 +768,7 @@ void MicDataProcessor::ReduceNoise( AudioUtil::AudioSample* audioChunk, size_t s
   }
   //PRINT_NAMED_WARNING("WHATNOW", "upsampling used %ld for output %ld", info.input_frames_used , info.output_frames_gen );
   
-  if( kReduceNoise == 1 ) {
+  if( kReduceNoise != 3 ) {
     // now remove noise
     ASSERT_NAMED(_upsampled.size() == 480, "");
     rnnoise_process_frame(_denoiser, _upsampled.data(), _upsampled.data());
@@ -781,10 +790,46 @@ void MicDataProcessor::ReduceNoise( AudioUtil::AudioSample* audioChunk, size_t s
   //PRINT_NAMED_WARNING("WHATNOW", "downsampling used %ld for output %ld", info.input_frames_used , info.output_frames_gen );
   
   // finally put it back in the original array. it might be worth changing src_process to support int16's
+  static AudioUtil::AudioChunkList list;
+  list.push_back( AudioUtil::AudioChunk{} );
   for( size_t i=0; i<size; ++i ) {
     audioChunk[i] = _nativeSamples.data()[i];
+    
+    list.back().push_back( audioChunk[i] );
+  }
+  PRINT_NAMED_WARNING("WHATNOW", "saved %d chunks", (int)list.size());
+  if( list.size() >= 100 * 60 ) { // 1 min
+    std::string dest = (_writeLocationDir + "/reduced.wav");
+    auto saveProcessedWave = [dest = std::move(dest),
+                              data = std::move(list)] () {
+      Anki::Util::SetThreadName(pthread_self(), "saveProcWave2");
+      AudioUtil::WaveFile::SaveFile(dest, data);
+      //LOG_INFO("MicDataInfo.WriteProcessedWaveFile", "%s", dest.c_str());
+      PRINT_NAMED_WARNING("WHATNOW", "wrote to file");
+    };
+    std::thread(saveProcessedWave).detach();
+    //AudioUtil::WaveFile::SaveFile("reduced", list);
+    PRINT_NAMED_WARNING("WHATNOW", "writing to file");
+    list.clear();
   }
   
+}
+  
+void MicDataProcessor::HandleRobotState( const Anki::Cozmo::RobotState& robotState )
+{
+  if( _previousState == nullptr ) {
+    _previousState.reset( new Anki::Cozmo::RobotState{robotState} );
+    return;
+  }
+  //PRINT_NAMED_WARNING("WHATNOW", "head %f %f lift %f %f, body %f %f", robotState.headAngle, _previousState->headAngle, robotState.liftAngle, _previousState->liftAngle, robotState.lwheel_speed_mmps, robotState.rwheel_speed_mmps);
+  const bool bodyMoving = ABS(robotState.lwheel_speed_mmps) > 0.0f || ABS(robotState.rwheel_speed_mmps) > 0.0f;
+  const bool headMoving = robotState.headAngle != _previousState->headAngle;
+  const bool liftMoving = robotState.liftAngle != _previousState->liftAngle;
+  if( bodyMoving || headMoving || liftMoving ) {
+    std::unique_lock<std::mutex> lock(_movingMutex);
+    _isMoving = true;
+  }
+  *_previousState.get() = robotState;
 }
 
 

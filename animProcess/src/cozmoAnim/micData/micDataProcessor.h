@@ -68,6 +68,8 @@ public:
 
   BeatDetector& GetBeatDetector() { assert(nullptr != _beatDetector); return *_beatDetector.get(); }
   
+  void HandleRobotState( const Anki::Cozmo::RobotState& robotState );
+  
 private:
   MicDataSystem* _micDataSystem = nullptr;
   std::string _writeLocationDir = "";
@@ -150,6 +152,10 @@ private:
   std::array<float, 3*kSamplesPerBlock> _upsampled;
   
   DenoiseState* _denoiser = nullptr;
+  
+  std::mutex _movingMutex;
+  bool _isMoving = false;
+  std::unique_ptr<Anki::Cozmo::RobotState> _previousState;
 };
 
 } // namespace MicData

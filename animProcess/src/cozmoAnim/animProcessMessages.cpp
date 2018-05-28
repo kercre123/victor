@@ -501,6 +501,7 @@ static void HandleRobotStateUpdate(const Anki::Cozmo::RobotState& robotState)
     {
       micDataSystem->SetForceRecordClip(true);
     }
+    micDataSystem->HandleRobotState(robotState);
   }
 #endif
 }

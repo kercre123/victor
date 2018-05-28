@@ -525,6 +525,13 @@ void MicDataSystem::SendUdpMessage(const CloudMic::Message& msg)
   _udpServer->Send((const char*)buf.data(), (int)buf.size());
 }
 
+void MicDataSystem::HandleRobotState( const Anki::Cozmo::RobotState& robotState )
+{
+  if( _micDataProcessor != nullptr ) {
+    _micDataProcessor->HandleRobotState( robotState );
+  }
+}
+  
 } // namespace MicData
 } // namespace Cozmo
 } // namespace Anki

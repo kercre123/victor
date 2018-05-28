@@ -46,16 +46,9 @@ private:
     InstanceConfig();
     // TODO: put configuration variables here
   };
-
-  enum class Function : int {
-    NoNoise=0,
-    OnlyLift=1,
-    OnlyBody=2,
-    LiftAndBody=3,
-  };
   
   struct DynamicVariables {
-    Function function;
+    int lastFunction = 0;
     DynamicVariables();
     // TODO: put member variables here
   };

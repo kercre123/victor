@@ -19,7 +19,10 @@
 namespace Anki {
 namespace Cozmo {
   
-CONSOLE_VAR_ENUM(int, kFunction, "AAA", 0, "NoNoise,OnlyLift,OnlyBody,LiftAndBody");
+  CONSOLE_VAR(bool, kMoveHead, "AAA", true);
+  CONSOLE_VAR(bool, kMoveLift, "AAA", true);
+  CONSOLE_VAR(bool, kMoveBody, "AAA", true);
+  CONSOLE_VAR_RANGED(float, kTurnSpeed, "AAA", .4f*M_PI_F, 0.01, 2*M_PI_F);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorMakeNoise::InstanceConfig::InstanceConfig()
@@ -29,7 +32,7 @@ BehaviorMakeNoise::InstanceConfig::InstanceConfig()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorMakeNoise::DynamicVariables::DynamicVariables()
 {
-  function = static_cast<Function>(kFunction);
+  lastFunction = (kMoveHead << 0) | (kMoveLift << 1) | (kMoveBody << 2);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -84,7 +87,7 @@ void BehaviorMakeNoise::OnBehaviorActivated()
   
 void BehaviorMakeNoise::MakeNoise()
 {
-  if( _dVars.function != Function::NoNoise ) {
+  if( kMoveHead || kMoveLift || kMoveBody ) {
     
     // use unique_ptrs in case the _dVars.function doesnt need this action
     
@@ -96,7 +99,9 @@ void BehaviorMakeNoise::MakeNoise()
         if( i & 1 ) {
           angle = -angle;
         }
-        bodyAction->AddAction( new TurnInPlaceAction( angle, false ) );
+        auto* turnAction = new TurnInPlaceAction( angle, false );
+        turnAction->SetMaxSpeed( kTurnSpeed );
+        bodyAction->AddAction( turnAction );
       }
     }
     
@@ -112,18 +117,33 @@ void BehaviorMakeNoise::MakeNoise()
       }
     }
     
+    std::unique_ptr<CompoundActionSequential> headAction;
+    headAction.reset(new CompoundActionSequential());
+    {
+      for( int i=0; i<100; ++i ) {
+        f32 angle = DEG_TO_RAD(-22.f);
+        if( i & 1 ) {
+          angle = DEG_TO_RAD( 45.f);
+        }
+        headAction->AddAction( new MoveHeadToAngleAction(angle) );
+      }
+    }
+    
     auto* action = new CompoundActionParallel();
     
-    if( _dVars.function == Function::OnlyLift || _dVars.function == Function::LiftAndBody ) {
+    if( kMoveLift ) {
       action->AddAction(liftAction.release());
     }
     
-    if( _dVars.function == Function::OnlyBody || _dVars.function == Function::LiftAndBody ) {
+    if( kMoveBody ) {
       action->AddAction(bodyAction.release());
     }
     
+    if( kMoveHead ) {
+      action->AddAction(headAction.release());
+    }
+    
     DelegateIfInControl( action, &BehaviorMakeNoise::MakeNoise );
-    //DelegateIfInControl( bodyAction.get(), &BehaviorMakeNoise::MakeNoise );
   }
 }
 
@@ -135,8 +155,9 @@ void BehaviorMakeNoise::BehaviorUpdate()
     return;
   }
   
-  if( kFunction != (int)_dVars.function ) {
-    _dVars.function = static_cast<Function>(kFunction);
+  int newFunc = (kMoveHead << 0) | (kMoveLift << 1) | (kMoveBody << 2);
+  if( _dVars.lastFunction != newFunc ) {
+    _dVars.lastFunction = newFunc;
     CancelDelegates(false);
     MakeNoise();
   }
