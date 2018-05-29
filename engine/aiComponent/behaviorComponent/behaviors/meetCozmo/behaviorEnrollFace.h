@@ -165,6 +165,7 @@ private:
       State          state = State::NotStarted;
       bool           didEverLeaveCharger = false;
       TimeStamp_t    lastTimeUserMovedRobot = 0;
+      TimeStamp_t    lastDeactivationTime_ms = 0;
       
       using EnrollmentSettings = ExternalInterface::SetFaceToEnroll;
       std::unique_ptr<EnrollmentSettings> settings;

@@ -89,6 +89,7 @@ CONSOLE_VAR(f32,               kEnrollFace_DefaultTooManyFacesRecentTime_sec,   
   
 CONSOLE_VAR(u32,               kEnrollFace_TicksForKnownNameBeforeFail,         CONSOLE_GROUP, 35);
 CONSOLE_VAR(TimeStamp_t,       kEnrollFace_TimeStopMovingAfterManualTurn_ms,    CONSOLE_GROUP, 8000);
+CONSOLE_VAR(TimeStamp_t,       kEnrollFace_MaxInterruptionBeforeReset_ms,       CONSOLE_GROUP, 10000);
 
 static const char * const kLogChannelName = "FaceRecognizer";
 static const char * const kMaxFacesVisibleKey = "maxFacesVisible";
@@ -364,7 +365,27 @@ void BehaviorEnrollFace::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::BehaviorUpdate()
 {
-  if(!IsActivated()){
+  // conditions that would end enrollment, even if the behavior has been interrupted
+  const bool lowBattery = GetBEI().GetRobotInfo().GetBatteryLevel() == BatteryLevel::Low;
+  const auto& uic = GetBehaviorComp<UserIntentComponent>();
+  const bool triggerWordPending = uic.IsTriggerWordPending();
+  if( lowBattery || triggerWordPending ) {
+    DisableEnrollment();
+    SET_STATE( NotStarted );
+    return;
+  }
+  
+  if( !IsActivated() ) {
+    if( _dVars.persistent.state != State::NotStarted ) {
+      // interrupted
+      if( _dVars.persistent.lastDeactivationTime_ms > 0 ) {
+        TimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+        if( currTime_ms - _dVars.persistent.lastDeactivationTime_ms > kEnrollFace_MaxInterruptionBeforeReset_ms ) {
+          DisableEnrollment();
+          SET_STATE( NotStarted );
+        }
+      }
+    }
     return;
   }
 
@@ -495,6 +516,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
 {
   // Leave general-purpose / session-only enrollment enabled (i.e. not for a specific face)
   GetBEI().GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
+  _dVars.persistent.lastDeactivationTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   
   auto& moveComp = GetBEI().GetMovementComponent();
   moveComp.EnableUnexpectedRotationWithoutMotors( _dVars.wasUnexpectedRotationWithoutMotorsEnabled );
@@ -675,6 +697,7 @@ void BehaviorEnrollFace::DisableEnrollment()
   _dVars.persistent.settings->name.clear();
   _dVars.persistent.didEverLeaveCharger = false;
   _dVars.persistent.lastTimeUserMovedRobot = 0;
+  _dVars.persistent.lastDeactivationTime_ms = 0;
   // Leave "session-only" face enrollment enabled when we finish
   GetBEI().GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
 }
