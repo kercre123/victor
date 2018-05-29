@@ -23,6 +23,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
+#include "engine/components/mics/micComponent.h"
 
 #include "util/helpers/boundedWhile.h"
 
@@ -68,7 +69,8 @@ BehaviorCoordinateGlobalInterrupts::InstanceConfig::InstanceConfig()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorCoordinateGlobalInterrupts::DynamicVariables::DynamicVariables()
-  : supressProx(false)
+  : suppressProx(false)
+  , isSuppressingStreaming(false)
 {
 }
 
@@ -133,6 +135,7 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
   if(!IsActivated()){
     return;
   }
+  
   const bool triggerWordPending = _iConfig.triggerWordPendingCond->AreConditionsMet(GetBEI());
   const bool isTimerRinging     = _iConfig.timerCoordBehavior->IsTimerRinging();
   if(triggerWordPending && isTimerRinging){
@@ -140,10 +143,12 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
     _iConfig.wakeWordBehavior->SetDontActivateThisTick(GetDebugLabel());
   }
   
+  bool shouldSuppressStreaming = isTimerRinging;
+  
   // suppress certain behaviors during sleeping
   {
     bool highLevelRunning = false;
-    auto callback = [this, &highLevelRunning](const ICozmoBehavior& behavior) {
+    auto callback = [this, &highLevelRunning, &shouldSuppressStreaming](const ICozmoBehavior& behavior) {
       if( behavior.GetID() == BEHAVIOR_ID(HighLevelAI) ) {
         highLevelRunning = true;
       }
@@ -160,6 +165,7 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
         for( const auto& beh : _iConfig.toSuppressWhenSleeping ) {
           beh->SetDontActivateThisTick(GetDebugLabel());
         }
+        shouldSuppressStreaming = true;
       }
     };
 
@@ -190,6 +196,11 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
       }
     }
   }
+  
+  if( shouldSuppressStreaming != _dVars.isSuppressingStreaming ) {
+    GetBEI().GetMicComponent().SetShouldStreamAfterWakeWord( !shouldSuppressStreaming );
+    _dVars.isSuppressingStreaming = shouldSuppressStreaming;
+  }
 
 }
 
@@ -204,18 +215,18 @@ bool BehaviorCoordinateGlobalInterrupts::ShouldSuppressProxReaction()
   // If the behavior stack has changed this tick or last tick, then update, otherwise use the last value
   const size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
   if( behaviorIterator.GetLastTickBehaviorStackChanged() + 1 >= currTick ) {
-    _dVars.supressProx = false;
+    _dVars.suppressProx = false;
 
     auto callback = [this](const ICozmoBehavior& behavior) {
       if( kBehaviorClassesToSuppressProx.find( behavior.GetClass() ) != kBehaviorClassesToSuppressProx.end() ) {
-        _dVars.supressProx = true;
+        _dVars.suppressProx = true;
       }
     };
     
     behaviorIterator.IterateActiveCozmoBehaviorsForward( callback, this );
   }
 
-  return _dVars.supressProx;
+  return _dVars.suppressProx;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

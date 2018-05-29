@@ -404,6 +404,11 @@ message StartWakeWordlessStreaming
 {
 }
 
+message SetShouldStreamAfterWakeWord
+{
+  bool shouldStream,
+}
+
 message ResetBeatDetector
 {
 }
@@ -681,8 +686,9 @@ union EngineToRobot
   StartPlaybackAudio            playbackAudioStart          = 0x97,
 
   StartWakeWordlessStreaming    startWakeWordlessStreaming  = 0x98,
+  SetShouldStreamAfterWakeWord  setShouldStreamAfterWakeWord = 0x99,
 
-  ResetBeatDetector             resetBeatDetector           = 0x99,
+  ResetBeatDetector             resetBeatDetector           = 0x9A,
 
   SwitchboardInterface::SetConnectionStatus setConnectionStatus = 0xA0,
   SwitchboardInterface::SetBLEPin           setBLEPin           = 0xA1,

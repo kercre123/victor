@@ -61,7 +61,9 @@ private:
   struct DynamicVariables{
     DynamicVariables();
 
-    bool supressProx;
+    bool suppressProx;
+    
+    bool isSuppressingStreaming;
   };
 
   InstanceConfig   _iConfig;

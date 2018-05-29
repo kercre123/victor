@@ -62,6 +62,8 @@ public:
 
   void ResetMicListenDirection();
   float GetIncomingMicDataPercentUsed();
+  
+  void SetShouldStreamAfterTrigger(bool shouldStream) { _shouldStreamAfterTrigger = shouldStream; }
 
   BeatDetector& GetBeatDetector() { assert(nullptr != _beatDetector); return *_beatDetector.get(); }
   
@@ -97,6 +99,7 @@ private:
   std::mutex _rawMicDataMutex;
   bool _processThreadStop = false;
   bool _robotWasMoving = false;
+  bool _shouldStreamAfterTrigger = true;
 
   // Internal buffer used to add to the streaming audio once a trigger is detected
   static constexpr uint32_t kImmediateBufferSize = kPreTriggerOverlapSize_ms / kTimePerSEBlock_ms;

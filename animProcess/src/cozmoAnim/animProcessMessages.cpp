@@ -356,6 +356,16 @@ void Process_startWakeWordlessStreaming(const Anki::Cozmo::RobotInterface::Start
 
   micDataSystem->StartWakeWordlessStreaming();
 }
+  
+void Process_setShouldStreamAfterWakeWord(const Anki::Cozmo::RobotInterface::SetShouldStreamAfterWakeWord& msg)
+{
+  auto* micDataSystem = _context->GetMicDataSystem();
+  if(micDataSystem == nullptr){
+    return;
+  }
+
+  micDataSystem->SetShouldStreamAfterWakeWord(msg.shouldStream);
+}
 
 void Process_resetBeatDetector(const Anki::Cozmo::RobotInterface::ResetBeatDetector& msg)
 {

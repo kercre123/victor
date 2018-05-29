@@ -129,6 +129,14 @@ void MicDataSystem::RecordProcessedAudio(uint32_t duration_ms, const std::string
 {
   RecordAudioInternal(duration_ms, path, MicDataType::Processed, false);
 }
+  
+void MicDataSystem::SetShouldStreamAfterWakeWord(bool shouldStream)
+{
+  if (_micDataProcessor != nullptr)
+  {
+    _micDataProcessor->SetShouldStreamAfterTrigger(shouldStream);
+  }
+}
 
 void MicDataSystem::StartWakeWordlessStreaming()
 {

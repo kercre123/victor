@@ -61,5 +61,12 @@ void MicComponent::StartWakeWordlessStreaming()
   _robot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartWakeWordlessStreaming()));
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MicComponent::SetShouldStreamAfterWakeWord(bool shouldStream)
+{
+  RobotInterface::SetShouldStreamAfterWakeWord msg{shouldStream};
+  _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
+}
+
 } // namespace Cozmo
 } // namespace Anki

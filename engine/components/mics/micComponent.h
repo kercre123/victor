@@ -51,6 +51,8 @@ public:
   const VoiceMessageSystem& GetVoiceMessageSystem() const { return *_messageSystem; }
 
   void StartWakeWordlessStreaming();
+  
+  void SetShouldStreamAfterWakeWord(bool shouldStream);
 
 private:
 
