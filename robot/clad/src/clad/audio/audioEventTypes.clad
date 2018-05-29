@@ -498,6 +498,7 @@ enum uint_32 GenericEvent
   Play__Robot_Vic_Sfx__Timer_Countdown = 1379596305,
   Play__Robot_Vic_Sfx__Touch_React = 1078700783,
   Play__Robot_Vic_Sfx__Tread_Angry = 4159310964,
+  Play__Robot_Vic_Sfx__Tread_Angry_Long = 1909472813,
   Play__Robot_Vic_Sfx__Tread_Curious = 1363830477,
   Play__Robot_Vic_Sfx__Tread_Curious_Long = 1842808354,
   Play__Robot_Vic_Sfx__Tread_Happy = 3894118537,
@@ -529,7 +530,6 @@ enum uint_32 GenericEvent
   Play__Robot_Vic_Vo__React_Wake_Word_Surprised = 515534641,
   Play__Robot_Vic_Vo__Temp_Fist_Bump = 1376298574,
   Play__Robot_Vic__External_Voice_Message = 3168753800,
-  Play__Robot_Vic__Sfx_Tread_Angry_Long = 2687652581,
   Play__Robot_Vo__Codelab_Conducting_01 = 2126150744,
   Play__Robot_Vo__Codelab_Countdown_01 = 2593818563,
   Play__Robot_Vo__Codelab_Countdown_02 = 2593818560,
@@ -1111,7 +1111,6 @@ enum uint_32 Robot_Vic
 {
   External_Voice_Message = 3168753800,
   Invalid = 0,  // Use this to check for Invalid events
-  Sfx_Tread_Angry_Long = 2687652581,
 }
 
 enum uint_32 Robot_Vic_Scene
@@ -1350,6 +1349,7 @@ enum uint_32 Robot_Vic_Sfx
   Timer_Countdown = 1379596305,
   Touch_React = 1078700783,
   Tread_Angry = 4159310964,
+  Tread_Angry_Long = 1909472813,
   Tread_Curious = 1363830477,
   Tread_Curious_Long = 1842808354,
   Tread_Happy = 3894118537,
