@@ -43,6 +43,7 @@ __victor_external_path = path.join(__project_root_path, 'EXTERNALS', 'local-audi
 sys.path.append(__audio_build_script_path)
 import bundle_metadata_products
 import bundle_soundbank_products
+import convert_csv_to_json
 import organize_soundbank_products
 
 
@@ -51,6 +52,7 @@ __audio_project_name = 'VictorAudio'
 __sound_bank_dir_name = 'GeneratedSoundBanks'
 __audio_metadata_dir_name = 'metadata'
 __victor_bank_list_file_name = 'victor-banks-list.json'
+__audio_behavior_scene_event_file_name = 'audioBehaviorSceneEvents'
 
 
 
@@ -120,6 +122,20 @@ def main(args):
     organize_soundbank_products.main([tmp_linux_dir, dest_linux_dir, bank_list_filepath] + script_commands)
     organize_soundbank_products.main([tmp_dev_mac_dir, dest_dev_mac_dir, bank_list_filepath] + script_commands)
     Logger.info('Complete: organize_soundbank_products')
+
+    # Copy audio behavior scene metadata
+    behavior_metadata_filepath = path.join(args.audio_project_repo_dir, __audio_metadata_dir_name, __audio_behavior_scene_event_file_name + '.csv')
+    if not path.exists(behavior_metadata_filepath):
+        Logger.error('Behavior Audio Secene metadata does NOT exist: \'{0}\''.format(behavior_metadata_filepath))
+    else:
+        Logger.debug('Behavior Audio Secene metadata found: \'{0}\''.format(behavior_metadata_filepath))
+        # Victor Robot
+        linux_path = path.join(dest_linux_dir, __audio_behavior_scene_event_file_name + '.json')
+        convert_csv_to_json.main([behavior_metadata_filepath, linux_path])
+        # Mac
+        mac_path = path.join(dest_dev_mac_dir, __audio_behavior_scene_event_file_name + '.json')
+        convert_csv_to_json.main([behavior_metadata_filepath, mac_path])
+        Logger.info('Complete: convert_csv_to_json')
 
 
     # Remove tmp dir

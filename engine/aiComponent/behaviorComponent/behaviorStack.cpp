@@ -258,9 +258,20 @@ void BehaviorStack::BroadcastAudioBranch(bool activated)
   if(ANKI_VERIFY(_externalInterface != nullptr, 
                  "BehaviorStack.BroadcastAudioBranch.NoExternalInterface",
                  "")){
-    std::string branchName = BehaviorStack::StackToBehaviorString(_behaviorStack);
-    ExternalInterface::AudioBehaviorBranchUpdate msg(activated, branchName) ;
-    _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+    // Create path of BehaviorIds to broadcast
+    std::vector<BehaviorID> path;
+    path.reserve(_behaviorStack.size());
+    for(auto* behavior : _behaviorStack){
+      auto* cozmoBehavior = dynamic_cast<ICozmoBehavior*>(behavior);
+      if(cozmoBehavior == nullptr){
+        continue;
+      }
+      path.push_back(cozmoBehavior->GetID());
+    }
+    // Broadcast message
+    using namespace ExternalInterface;
+    auto state = activated ? BehaviorStackState::Active : BehaviorStackState::NotActive;
+    _externalInterface->Broadcast(MessageEngineToGame( AudioBehaviorStackUpdate( state, std::move(path) ) ));
   }
 }
 

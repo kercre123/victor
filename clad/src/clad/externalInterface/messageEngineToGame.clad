@@ -9,6 +9,7 @@
 #include "clad/types/actionResults.clad"
 #include "clad/types/activeObjectAccel.clad"
 #include "clad/types/animationEvents.clad"
+#include "clad/types/behaviorComponent/behaviorIDs.clad"
 #include "clad/types/behaviorComponent/behaviorObjectives.clad"
 #include "clad/types/debugConsoleTypes.clad"
 #include "clad/types/deviceDataTypes.clad"
@@ -960,9 +961,13 @@ message FeedingSFXStageUpdate {
   float_32 chargePercentage = 0.0
 }
 
-message AudioBehaviorBranchUpdate {
-  bool activated,
-  string branch
+enum uint_8 BehaviorStackState {
+  NotActive = 0,
+  Active
+} 
+message AudioBehaviorStackUpdate {
+  BehaviorStackState state,
+  BehaviorID branchPath[uint_8],
 }
 
 message ResponseLocale {

@@ -300,9 +300,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 
   GetRobotToEngineImplMessaging().InitRobotMessageComponent(GetContext()->GetRobotManager()->GetMsgHandler(), this);
 
-  // Setup audio messages
-  GetAudioClient()->SubscribeAudioCallbackMessages(this);
-
   _lastDebugStringHash = 0;
 
   // Setting camera pose according to current head angle.
