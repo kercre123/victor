@@ -381,8 +381,8 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       return foundMatch;
     }
 
-    
-    TimeStamp_t SpriteSequenceKeyFrame::CalculateInternalEndTime_ms() const
+
+    TimeStamp_t SpriteSequenceKeyFrame::GetKeyFrameFinalTimestamp_ms() const
     {
       const TimeStamp_t loopTime = (_compositeImage->GetFullLoopLength() * _internalUpdateInterval_ms);
       const TimeStamp_t longestDuration = loopTime > GetKeyframeDuration_ms() ? loopTime : GetKeyframeDuration_ms();
@@ -391,7 +391,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     
     bool SpriteSequenceKeyFrame::HaveKeyframeForTimeStamp(const TimeStamp_t timeSinceAnimStart_ms) const
     {
-      return (timeSinceAnimStart_ms < CalculateInternalEndTime_ms()) &&
+      return (timeSinceAnimStart_ms < GetKeyFrameFinalTimestamp_ms()) &&
              ((timeSinceAnimStart_ms % _internalUpdateInterval_ms) <= ANIM_TIME_STEP_MS);
     }
 
@@ -486,7 +486,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     
     bool SpriteSequenceKeyFrame::IsDone(const TimeStamp_t timeSinceAnimStart_ms) const
     {
-      if(!SequenceShouldAdvance() || (timeSinceAnimStart_ms < CalculateInternalEndTime_ms())){
+      if(!SequenceShouldAdvance() || (timeSinceAnimStart_ms < GetKeyFrameFinalTimestamp_ms())){
         return false;
       }
 

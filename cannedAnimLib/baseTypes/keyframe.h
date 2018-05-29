@@ -348,7 +348,7 @@ namespace Cozmo {
     // use IsDone() rather than the return value of this function.
     bool GetFaceImageHandle(const TimeStamp_t timeSinceAnimStart_ms, Vision::SpriteHandle& handle);
     
-    virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms + CalculateInternalEndTime_ms();}
+    virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override;
     
     Vision::CompositeImage& GetCompositeImage() { assert(_compositeImage != nullptr); return *_compositeImage;}
     
@@ -361,7 +361,6 @@ namespace Cozmo {
     
   private:
     u32 GetFrameNumberForTime(const TimeStamp_t timeSinceAnimStart_ms) const { return timeSinceAnimStart_ms/_internalUpdateInterval_ms;}
-    TimeStamp_t CalculateInternalEndTime_ms() const;
     bool HaveKeyframeForTimeStamp(const TimeStamp_t timeSinceAnimStart_ms) const;
     void ValidateScanlineOpacity();
 
