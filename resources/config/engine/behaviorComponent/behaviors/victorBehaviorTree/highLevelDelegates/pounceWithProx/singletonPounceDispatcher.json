@@ -2,8 +2,6 @@
   "behaviorID": "SingletonPounceDispatcher",  
   "behaviorClass" : "DispatcherStrictPriority",
   "interruptActiveBehavior": true,
-
-  "associatedActiveFeature": "PounceOnFinger",
   
   "wantsToCancelSelfCondition": {
     "conditionType": "TimerInRange",

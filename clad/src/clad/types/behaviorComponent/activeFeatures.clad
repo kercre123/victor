@@ -48,7 +48,6 @@ enum uint_32 ActiveFeature {
   Petting,
   PlayingMessage,
   PopAWheelie,
-  PounceOnFinger,
   ReactToCliff,
   ReactToCubeTap,
   ReactToRobotOnSide,
