@@ -235,7 +235,8 @@ ActionResult SayTextAction::Init()
     const auto ttsID = ttsEvent.ttsID;
 
     // If this is our ID, update state to match
-    if (ttsID == _ttsID) {
+    // Ignore "Playing" state messages here since that transition is handled internally for sayTextActions
+    if (ttsID == _ttsID && (TextToSpeechState::Playing != ttsEvent.ttsState) ) {
       LOG_DEBUG("SayTextAction.callback", "ttsID %hhu ttsState now %hhu", ttsID, ttsEvent.ttsState);
       _ttsState = ttsEvent.ttsState;
     }
@@ -284,7 +285,7 @@ ActionResult SayTextAction::TransitionToDelivering()
 
   RobotInterface::TextToSpeechDeliver msg;
   msg.ttsID = _ttsID;
-  msg.triggeredByAnim = (_animTrigger != AnimationTrigger::Count);
+  msg.playImmediately = (_animTrigger == AnimationTrigger::Count);
 
   const auto & robot = GetRobot();
   const auto result = robot.SendMessage(RobotInterface::EngineToRobot(std::move(msg)));

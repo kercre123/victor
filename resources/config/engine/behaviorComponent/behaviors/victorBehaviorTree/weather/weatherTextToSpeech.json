@@ -2,8 +2,8 @@
   "behaviorID"       : "WeatherTextToSpeech",
   "behaviorClass"    : "TextToSpeechLoop",
 
-  "getIn"            : "TextToSpeechGetIn",
-  "loopAnimation"    : "TextToSpeechGetLoop",
-  "getOut"           : "TextToSpeechGetOut",
-  "emergencyGetOut"  : "TextToSpeechGetOut"
+  "getInAnimation"            : "TextToSpeechGetIn",
+  "loopAnimation"             : "TextToSpeechGetLoop",
+  "getOutAnimation"           : "TextToSpeechGetOut",
+  "emergencyGetOutAnimation"  : "TextToSpeechGetOut"
 }

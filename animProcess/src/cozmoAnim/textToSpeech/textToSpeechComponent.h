@@ -37,6 +37,7 @@ namespace Anki {
     namespace RobotInterface {
       struct TextToSpeechPrepare;
       struct TextToSpeechDeliver;
+      struct TextToSpeechPlay;
       struct TextToSpeechCancel;
     }
     namespace TextToSpeech {
@@ -65,6 +66,7 @@ public:
   //
   void HandleMessage(const RobotInterface::TextToSpeechPrepare& msg);
   void HandleMessage(const RobotInterface::TextToSpeechDeliver& msg);
+  void HandleMessage(const RobotInterface::TextToSpeechPlay& msg);
   void HandleMessage(const RobotInterface::TextToSpeechCancel& msg);
 
   //
@@ -114,6 +116,9 @@ private:
 
   // Map of data bundles
   std::unordered_map<TTSID_t, TtsBundle> _ttsWaveDataMap;
+
+  // Map of TTSID's to corresponding AudioEventId's for delayed playback
+  std::unordered_map<TTSID_t, AudioEngine::AudioEventId> _ttsIDtoAudioEventIdMap;
 
   // Audio controller provided by context
   AudioController * _audioController = nullptr;

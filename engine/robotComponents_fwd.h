@@ -66,6 +66,7 @@ enum class RobotComponentID{
   RobotIdleTimeout,
   RobotToEngineImplMessaging,
   StateHistory,
+  TextToSpeechCoordinator,
   TouchSensor,
   Vision,
   VisionScheduleMediator,

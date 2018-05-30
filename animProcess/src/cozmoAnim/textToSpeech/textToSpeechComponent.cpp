@@ -425,6 +425,19 @@ void TextToSpeechComponent::SetAudioProcessingPitch(float pitchScalar)
 }
 
 //
+// Send a TextToSpeechEvent message from anim to engine.
+// This is called on main thread for thread-safe access to comms.
+//
+static bool SendAnimToEngine(uint8_t ttsID, TextToSpeechState state)
+{
+  LOG_DEBUG("TextToSpeechComponent.SendAnimToEngine", "ttsID %hhu state %hhu", ttsID, state);
+  TextToSpeechEvent evt;
+  evt.ttsID = ttsID;
+  evt.ttsState = state;
+  return AnimProcessMessages::SendAnimToEngine(std::move(evt));
+}
+
+//
 // Send audio trigger event for this utterance
 //
 void TextToSpeechComponent::PostAudioEvent(AudioEngine::AudioEventId eventId, uint8_t ttsID)
@@ -446,20 +459,12 @@ void TextToSpeechComponent::PostAudioEvent(AudioEngine::AudioEventId eventId, ui
                                               } );
 
   const auto gameObject = static_cast<AudioEngine::AudioGameObject>(kTTSGameObject);
-  _audioController->PostAudioEvent(eventId, gameObject, audioCallbackContext);
-}
-
-//
-// Send a TextToSpeechEvent message from anim to engine.
-// This is called on main thread for thread-safe access to comms.
-//
-static bool SendAnimToEngine(uint8_t ttsID, TextToSpeechState state)
-{
-  LOG_DEBUG("TextToSpeechComponent.SendAnimToEngine", "ttsID %hhu state %hhu", ttsID, state);
-  TextToSpeechEvent evt;
-  evt.ttsID = ttsID;
-  evt.ttsState = state;
-  return AnimProcessMessages::SendAnimToEngine(std::move(evt));
+  AudioEngine::AudioPlayingId playingID = _audioController->PostAudioEvent(eventId, gameObject, audioCallbackContext);
+  if(AudioEngine::kInvalidAudioPlayingId == playingID){
+    LOG_DEBUG("TextToSpeechComponent.UtteranceFailedToPlay", "Utterance with ttsID %hhu failed to play", ttsID);
+    SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
+  }
+  SendAnimToEngine(ttsID, TextToSpeechState::Playing);
 }
 
 //
@@ -506,9 +511,9 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechPrep
 void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechDeliver& msg)
 {
   const auto ttsID = msg.ttsID;
-  const auto triggeredByAnim = msg.triggeredByAnim;
+  const auto playImmediately = msg.playImmediately;
 
-  LOG_DEBUG("TextToSpeechComponent.TextToSpeechDeliver", "ttsID %d triggeredByAnim %d", ttsID, triggeredByAnim);
+  LOG_DEBUG("TextToSpeechComponent.TextToSpeechDeliver", "ttsID %d playImmediately %d", ttsID, playImmediately);
 
   SendAnimToEngine(ttsID, TextToSpeechState::Delivering);
 
@@ -524,9 +529,12 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechDeli
 
   LOG_INFO("TextToSpeechComponent.TextToSpeechDeliver", "ttsID %d will play for %.2f ms", ttsID, duration_ms);
 
-  if (!triggeredByAnim) {
+  if (playImmediately) {
     // Tell audio engine to play audio data
     PostAudioEvent(eventId, ttsID);
+  } else {
+    // Keep a record of the ttsID -> AudioEventId for later playback
+    _ttsIDtoAudioEventIdMap.emplace(ttsID, eventId);
   }
 
   // Notify engine that tts request is done
@@ -534,6 +542,27 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechDeli
 
   // Clear operation from bookkeeping
   ClearOperationData(ttsID);
+}
+
+//
+// Called on main thread to handle incoming TextToSpeechPlay
+//
+void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechPlay& msg)
+{
+  const auto ttsID = msg.ttsID;
+
+  LOG_DEBUG("TextToSpeechComponent.HandleMessage.TextToSpeechPlay", "ttsID %d", ttsID);
+
+  auto it = _ttsIDtoAudioEventIdMap.find(ttsID);
+  if(it != _ttsIDtoAudioEventIdMap.end()){
+    PostAudioEvent(it->second, ttsID);
+    _ttsIDtoAudioEventIdMap.erase(ttsID);
+  } else {
+    LOG_ERROR("TextToSpeechComponent.HandleMessage.TextToSpeechPlay.InvalidRequest",
+              "ttsID %d does not correspond to a valid AudioEventId",
+              ttsID);
+    SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
+  }
 }
 
 //

@@ -108,6 +108,7 @@ class MapComponent;
 class MicComponent;
 class BatteryComponent;
 class BeatDetectorComponent;
+class TextToSpeechCoordinator;
 
 namespace Audio {
   class EngineRobotAudioClient;
@@ -277,6 +278,9 @@ public:
 
   inline const AnimationComponent& GetAnimationComponent() const { return GetComponent<AnimationComponent>(); }
   inline       AnimationComponent& GetAnimationComponent()       { return GetComponent<AnimationComponent>(); }
+
+  inline const TextToSpeechCoordinator& GetTextToSpeechCoordinator() const { return GetComponent<TextToSpeechCoordinator>();}
+  inline       TextToSpeechCoordinator& GetTextToSpeechCoordinator()       { return GetComponent<TextToSpeechCoordinator>();}
 
   inline const TouchSensorComponent& GetTouchSensorComponent() const { return GetComponent<TouchSensorComponent>(); }
   inline       TouchSensorComponent& GetTouchSensorComponent()       { return GetComponent<TouchSensorComponent>(); }

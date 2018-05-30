@@ -108,6 +108,7 @@ public:
   const Json::Value& GetWebServerEngineConfig() const        { return _webServerEngineConfig; }
   const Json::Value& GetDasEventConfig() const               { return _dasEventConfig; }
   const Json::Value& GetUserIntentConfig() const             { return _userIntentsConfig; }
+  const Json::Value* GetTextToSpeechConfig() const           { return &_textToSpeechConfig; }
 
   // images are stored as a map of stripped file name (no file extension) to full path
   const Vision::SpritePathMap* GetSpritePaths()       const { assert(_spritePaths != nullptr); return _spritePaths.get(); }

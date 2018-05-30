@@ -839,6 +839,17 @@ void RobotDataLoader::LoadRobotConfigs()
                 jsonFilename.c_str());
     }
   }
+
+  // TextToSpeechConfig
+  {
+    const std::string jsonFilename = "config/engine/sayTextintentConfig.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _textToSpeechConfig);
+    if( !success){
+      LOG_ERROR("RobotDataLoader.TextToSpeechConfigNotFound",
+                "TextToSpeech Engine Config file %s not found or failed to parse",
+                jsonFilename.c_str());
+    }
+  }
 }
 
 bool RobotDataLoader::DoNonConfigDataLoading(float& loadingCompleteRatio_out)

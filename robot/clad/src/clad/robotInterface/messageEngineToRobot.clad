@@ -536,7 +536,14 @@ message TextToSpeechPrepare {
 //
 message TextToSpeechDeliver {
   uint_8 ttsID,            // ID of utterance
-  bool triggeredByAnim     // Will TTS be triggered by animation?
+  bool playImmediately     // Should the TTS be played immediately when finished, or is it triggered by message/animation?
+}
+
+//
+// Sent from engine to robot (anim process) to play a prepared TTS
+//
+message TextToSpeechPlay {
+  uint_8 ttsID // ID of utterance
 }
 
 //
@@ -679,16 +686,17 @@ union EngineToRobot
   RunDebugConsoleFuncMessage    runDebugConsoleFuncMessage  = 0x91,
   TextToSpeechPrepare           textToSpeechPrepare         = 0x92,
   TextToSpeechDeliver           textToSpeechDeliver         = 0x93,
-  TextToSpeechCancel            textToSpeechCancel          = 0x94,
+  TextToSpeechPlay              textToSpeechPlay            = 0x94,
+  TextToSpeechCancel            textToSpeechCancel          = 0x95,
 
-  StartRecordingMicsRaw         startRecordingMicsRaw       = 0x95,
-  StartRecordingMicsProcessed   startRecordingMicsProcessed = 0x96,
-  StartPlaybackAudio            playbackAudioStart          = 0x97,
+  StartRecordingMicsRaw         startRecordingMicsRaw       = 0x96,
+  StartRecordingMicsProcessed   startRecordingMicsProcessed = 0x97,
+  StartPlaybackAudio            playbackAudioStart          = 0x98,
 
-  StartWakeWordlessStreaming    startWakeWordlessStreaming  = 0x98,
-  SetShouldStreamAfterWakeWord  setShouldStreamAfterWakeWord = 0x99,
+  StartWakeWordlessStreaming    startWakeWordlessStreaming  = 0x99,
+  SetShouldStreamAfterWakeWord  setShouldStreamAfterWakeWord = 0x9A,
 
-  ResetBeatDetector             resetBeatDetector           = 0x9A,
+  ResetBeatDetector             resetBeatDetector           = 0x9B,
 
   SwitchboardInterface::SetConnectionStatus setConnectionStatus = 0xA0,
   SwitchboardInterface::SetBLEPin           setBLEPin           = 0xA1,

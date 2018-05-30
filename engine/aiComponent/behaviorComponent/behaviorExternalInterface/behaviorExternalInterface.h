@@ -58,6 +58,7 @@ class ProgressionUnlockComponent;
 class ProxSensorComponent;
 class PublicStateBroadcaster;
 class DataAccessorComponent;
+class TextToSpeechCoordinator;
 class TouchSensorComponent;
 class VisionComponent;
 class VisionScheduleMediator;
@@ -142,6 +143,7 @@ public:
             Audio::EngineRobotAudioClient* robotAudioClient,
             BEIRobotInfo*                  robotInfo,
             DataAccessorComponent*         dataAccessor,
+            TextToSpeechCoordinator*       TextToSpeechCoordinator,
             TouchSensorComponent*          touchSensorComponent,
             VisionComponent*               visionComponent,
             VisionScheduleMediator*        visionScheduleMediator);
@@ -219,6 +221,9 @@ public:
   inline bool HasBeatDetectorComponent() const { return GetComponentWrapper(BEIComponentID::BeatDetector).IsValueValid();}
   BeatDetectorComponent& GetBeatDetectorComponent() const {return GetComponentWrapper(BEIComponentID::BeatDetector).GetValue<BeatDetectorComponent>();}
 
+  inline bool HasTextToSpeechCoordinator() const { return GetComponentWrapper(BEIComponentID::TextToSpeechCoordinator).IsValueValid();}
+  TextToSpeechCoordinator& GetTextToSpeechCoordinator() const {return GetComponentWrapper(BEIComponentID::TextToSpeechCoordinator).GetValue<TextToSpeechCoordinator>();}
+
   // Util functions
   OffTreadsState GetOffTreadsState() const;
   Util::RandomGenerator& GetRNG();
@@ -250,6 +255,7 @@ private:
                        Audio::EngineRobotAudioClient* robotAudioClient,
                        BEIRobotInfo*                  robotInfo,
                        DataAccessorComponent*         dataAccessor,
+                       TextToSpeechCoordinator*       textToSpeechCoordinator,
                        TouchSensorComponent*          touchSensorComponent,
                        VisionComponent*               visionComponent,
                        VisionScheduleMediator*        visionSchedulMediator);

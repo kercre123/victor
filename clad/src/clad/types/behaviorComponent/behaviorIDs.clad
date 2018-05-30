@@ -55,6 +55,7 @@ enum uint_8 BehaviorID {
   ExampleDispatcherScoring,
   ExampleGlobalReactions,
   ExampleProceduralClock,
+  ExampleTextToSpeechLoop,
 
   // examples/globalReactionSubBehaviors
   ExampleFacePositionUpdated,

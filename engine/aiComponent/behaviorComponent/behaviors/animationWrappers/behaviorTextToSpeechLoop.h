@@ -4,7 +4,7 @@
  * Author: Kevin M. Karol
  * Created: 2018-05-17
  *
- * Description: Play a looping animation while receiting text to speech
+ * Description: Play a looping animation while reciting text to speech
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -18,29 +18,77 @@
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorTextToSpeechLoop : public BehaviorAnimGetInLoop
+// Fwd Declarations
+enum class UtteranceState;
+
+class BehaviorTextToSpeechLoop : public ICozmoBehavior
 {
 public: 
   virtual ~BehaviorTextToSpeechLoop();
 
-  void SetTextToSay(const std::string& textToSay){ _textToSay = textToSay;}
+  virtual bool WantsToBeActivatedBehavior() const override final;
+
+  void SetTextToSay(const std::string& textToSay, const SayTextIntent& intent = SayTextIntent::Text);
 
 protected:
-
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   explicit BehaviorTextToSpeechLoop(const Json::Value& config);  
 
-  virtual void AnimBehaviorUpdate() override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override  final{
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
+    modifiers.behaviorAlwaysDelegates         = false;
+  }
+
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override final;
+  virtual void OnBehaviorActivated() override final;
+  virtual void BehaviorUpdate() override final;
+  virtual void OnBehaviorDeactivated() override final;
 
 private:
-  enum class TTSStage{
-    SayingText,
-    PlayingGetOut
+
+  enum class State{
+    IdleLoop,
+    GetIn,
+    SpeakingLoop,
+    GetOut,
+    EmergencyGetOut
   };
 
-  std::string _textToSay;
-  TTSStage _ttsStage;
+  struct InstanceConfig {
+    InstanceConfig();
+    AnimationTrigger idleTrigger;
+    AnimationTrigger getInTrigger;
+    AnimationTrigger loopTrigger;
+    AnimationTrigger getOutTrigger;
+    AnimationTrigger emergencyGetOutTrigger;
+    std::string      devTestUtteranceString;
+    bool             idleDuringTTSGeneration;
+    uint8_t          tracksToLock;
+  };
+
+  // NOTE: Because state set on this behavior before it is run must persist into running,
+  //       Dynamic variables are reset in OnBehaviorDeactivated instead of OnBehaviorActivated
+  struct DynamicVariables {
+    DynamicVariables();
+    std::string     textToSay;
+    State           state;
+    uint8_t         utteranceID;
+    UtteranceState  utteranceState;
+    bool            hasSentPlayCommand;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
+
+  void TransitionToIdleLoop();
+  void TransitionToGetIn();
+  void TransitionToSpeakingLoop();
+  void TransitionToGetOut();
+  void TransitionToEmergencyGetOut();
+
+  void PlayUtterance();
+  void OnUtteranceUpdated(const UtteranceState& state);
 };
 
 } // namespace Cozmo

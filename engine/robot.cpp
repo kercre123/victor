@@ -48,6 +48,7 @@
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
+#include "engine/components/textToSpeech/textToSpeechCoordinator.h"
 #include "engine/components/dataAccessorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
@@ -278,6 +279,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::FullRobotPose,              new FullRobotPose());
     _components->AddDependentComponent(RobotComponentID::DataAccessor,               new DataAccessorComponent());
     _components->AddDependentComponent(RobotComponentID::BeatDetector,               new BeatDetectorComponent());
+    _components->AddDependentComponent(RobotComponentID::TextToSpeechCoordinator,    new TextToSpeechCoordinator());
     _components->InitComponents(this);
   }
 

@@ -428,6 +428,11 @@ void Process_textToSpeechDeliver(const RobotInterface::TextToSpeechDeliver& msg)
   _animEngine->HandleMessage(msg);
 }
 
+void Process_textToSpeechPlay(const RobotInterface::TextToSpeechPlay& msg)
+{
+  _animEngine->HandleMessage(msg);
+}
+
 void Process_textToSpeechCancel(const RobotInterface::TextToSpeechCancel& msg)
 {
   _animEngine->HandleMessage(msg);
