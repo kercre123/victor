@@ -140,7 +140,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
      : _angle_deg(angle_deg)
      , _angleVariability_deg(angle_variability_deg)
      {
-       _keyframeDuration_ms = duration_ms;
      }
     
     #if CAN_STREAM
@@ -176,7 +175,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       SafeNumericCast(headAngleKeyframe->durationTime_ms(),      _motionDuration_ms,    animNameDebug.c_str());
       SafeNumericCast(headAngleKeyframe->angle_deg(),            _angle_deg,            animNameDebug.c_str());
       SafeNumericCast(headAngleKeyframe->angleVariability_deg(), _angleVariability_deg, animNameDebug.c_str());
-      _keyframeDuration_ms = _motionDuration_ms;
       return RESULT_OK;
     }
     
@@ -185,7 +183,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, durationTime_ms, motionDuration_ms);
       GET_MEMBER_FROM_JSON(jsonRoot, angle_deg);
       GET_MEMBER_FROM_JSON(jsonRoot, angleVariability_deg);
-      _keyframeDuration_ms = _motionDuration_ms;
       return RESULT_OK;
     }
     
@@ -199,7 +196,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     : _height_mm(height_mm)
     , _heightVariability_mm(heightVariability_mm)
     {
-      _keyframeDuration_ms = duration_ms;
     }
     
     #if CAN_STREAM
@@ -234,8 +230,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       SafeNumericCast(liftHeightKeyframe->durationTime_ms(),      _motionDuration_ms,    animNameDebug.c_str());
       SafeNumericCast(liftHeightKeyframe->height_mm(),            _height_mm,            animNameDebug.c_str());
       SafeNumericCast(liftHeightKeyframe->heightVariability_mm(), _heightVariability_mm, animNameDebug.c_str());
-      _keyframeDuration_ms = _motionDuration_ms;
-         
+      
       return RESULT_OK;
     }
     
@@ -244,7 +239,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, durationTime_ms, motionDuration_ms);
       GET_MEMBER_FROM_JSON(jsonRoot, height_mm);
       GET_MEMBER_FROM_JSON(jsonRoot, heightVariability_mm);
-      _keyframeDuration_ms = _motionDuration_ms;
       return RESULT_OK;
     }
     
@@ -1137,7 +1131,6 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
       GET_COLOR_FROM_JSON(Back,   (int)LEDId::LED_BACKPACK_BACK);
       
       GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, durationTime_ms, motionDuration_ms);
-      _keyframeDuration_ms = _motionDuration_ms;
 
       return RESULT_OK;
     }
@@ -1380,7 +1373,6 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
                                                                  s32 duration_ms)
     : TurnToRecordedHeadingKeyFrame()
     {
-      _keyframeDuration_ms = duration_ms;
       _streamMsg.offset_deg = offset_deg;
       _streamMsg.speed_degPerSec = speed_degPerSec;
       _streamMsg.accel_degPerSec2 = accel_degPerSec2;
@@ -1445,7 +1437,6 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
       SafeNumericCast(turnToRecordedHeadingKeyframe->decel_degPerSec2(), _streamMsg.decel_degPerSec2, dbgName);
       SafeNumericCast(turnToRecordedHeadingKeyframe->tolerance_deg(),    _streamMsg.tolerance_deg,    dbgName);
       SafeNumericCast(turnToRecordedHeadingKeyframe->numHalfRevs(),      _streamMsg.numHalfRevs,      dbgName);
-      _keyframeDuration_ms = _motionDuration_ms;
       _streamMsg.useShortestDir = turnToRecordedHeadingKeyframe->useShortestDir();
       
       CheckRotationSpeed(animNameDebug);
@@ -1463,7 +1454,6 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
       GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, tolerance_deg,    streamMsg.tolerance_deg);
       GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, numHalfRevs,      streamMsg.numHalfRevs);
       GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, useShortestDir,   streamMsg.useShortestDir);
-      _keyframeDuration_ms = _motionDuration_ms;
 
       CheckRotationSpeed(animNameDebug);
 
