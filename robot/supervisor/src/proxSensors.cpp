@@ -259,6 +259,11 @@ namespace Anki {
         return _cliffDetectedFlags != 0;
       }
 
+      bool IsCliffDetected(u32 ind)
+      {
+        return _cliffDetectedFlags & (1 << ind);
+      }
+
       void EnableCliffDetector(bool enable) {
         AnkiInfo("ProxSensors.EnableCliffDetector", "%d", enable);
         _enableCliffDetect = enable;
