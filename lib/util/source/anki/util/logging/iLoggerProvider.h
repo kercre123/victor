@@ -1,5 +1,5 @@
 /**
-* File: iLoggerProvider
+* File: iLoggerProvider.h
 *
 * Author: damjan
 * Created: 4/21/2015
@@ -14,6 +14,8 @@
 #define __Util_Logging_ILoggerProvider_H__
 
 #include "iChannelFilter.h"
+#include "logtypes.h"
+
 #include <memory>
 #include <vector>
 
@@ -22,29 +24,15 @@ namespace Util {
 
 class ILoggerProvider {
 public:
+  using LogLevel = Anki::Util::LogLevel;
 
-  // todo: this is duplicated all over anki code (DASLogLevel, errorHandling, ...). We should standardize.
-  enum LogLevel {
-    LOG_LEVEL_DEBUG = 0,
-    LOG_LEVEL_INFO,
-    LOG_LEVEL_EVENT,
-    LOG_LEVEL_WARN,
-    LOG_LEVEL_ERROR,
-    
-    _LOG_LEVEL_COUNT // control field. Do not use for regular logging
-  };
-  
   // constructor/destructor
-  ILoggerProvider(){}
-  virtual ~ILoggerProvider(){};
-  
-  // returns a descriptive string for the given log level / or level from string
-  static const char* GetLogLevelString(LogLevel level);
-  static LogLevel GetLogLevelValue(const std::string& levelStr);
-  
+  ILoggerProvider() = default;
+  virtual ~ILoggerProvider() = default;
+
   // set filter after creation. Note this provider will keep a shared_ptr to the filter
   void SetFilter(const std::shared_ptr<const IChannelFilter>& infoFilter);
-  
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Unfiltered logs
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -65,7 +53,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Channel filters apply to these levels. This method will filter messages and delegate to subclasses through
   // protected API the messages that pass the filter
-  
+
   // Delegates on PrintLogI to print infos that pass channel filtering
   void PrintChanneledLogI(const char* channel,
     const char* eventName,
@@ -79,7 +67,7 @@ public:
 
   // Perform synchronous flush to underlying storage
   virtual void Flush() {};
-  
+
 protected:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -111,4 +99,3 @@ private:
 } // namespace Anki
 
 #endif // __Util_Logging_ILoggerProvider_H__
-

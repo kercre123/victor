@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
 
       case 'c': {
         doContextPlan = 1;
-        
+
         Json::Reader jsonReader;
 
         char* contextFilenameBase_c = basename(optarg);
@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
     cout<<"Welcome to xythetaPlanner.\n";
 
     loggerProvider = new Anki::Util::PrintfLoggerProvider();
-    loggerProvider->SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
+    loggerProvider->SetMinLogLevel(Anki::Util::LOG_LEVEL_DEBUG);
     Anki::Util::gLoggerProvider = loggerProvider;
   }
 
@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
       statsJson["expansions"] = planner.GetLastNumExpansions();
       statsJson["considerations"] = planner.GetLastNumConsiderations();
       statsJson["cost"] = planner.GetFinalCost();
-      
+
       Json::StyledStreamWriter writer("  ");
       writer.write(cout, statsJson);
       cout << std::endl;
@@ -238,7 +238,7 @@ int main(int argc, char *argv[])
     cout<<"final state: "<<context.env.State2State_c(context.env.GetActionSpace().GetPlanFinalState(plan))<<endl;
 
     printf("\n\nTestPlan:\n");
-    for(size_t i = 0; i < plan.Size(); i++) 
+    for(size_t i = 0; i < plan.Size(); i++)
     {
       printf("plan.Push(%d);\n", plan.GetAction(i));
     }

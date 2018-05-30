@@ -9,7 +9,7 @@ GTEST_API_ int main(int argc, char * argv[])
 {
   //LEAKING HERE
   loggerProvider = new Anki::Util::PrintfLoggerProvider();
-  loggerProvider->SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
+  loggerProvider->SetMinLogLevel(Anki::Util::LOG_LEVEL_DEBUG);
   Anki::Util::gLoggerProvider = loggerProvider;
 
   char *path=NULL;
@@ -19,6 +19,6 @@ GTEST_API_ int main(int argc, char * argv[])
            << "\nLet the (CoreTechCommon) testing commence\n\n";
   free(path);
   ::testing::InitGoogleTest(&argc, argv);
- 
-  return RUN_ALL_TESTS();  
+
+  return RUN_ALL_TESTS();
 }

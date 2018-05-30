@@ -2,8 +2,8 @@
  * File:          webotsCtrlGameEngine2.cpp
  * Date:
  * Description:   Cozmo 2.0 engine for Webots simulation
- * Author:        
- * Modifications: 
+ * Author:
+ * Modifications:
  */
 
 #include "../shared/ctrlCommonInitialization.h"
@@ -57,42 +57,42 @@ int main(int argc, char **argv)
 {
   // parse commands
   WebotsCtrlShared::ParsedCommandLine params = WebotsCtrlShared::ParseCommandLine(argc, argv);
-  
+
   // create platform.
   // Unfortunately, CozmoAPI does not properly receive a const DataPlatform, and that change
   // is too big of a change, since it involves changing down to the context, so create a non-const platform
   //const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0]);
   Anki::Util::Data::DataPlatform dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlGameEngine2");
-  
+
   // Instantiate supervisor and pass to AndroidHAL and cubeBleClient
   webots::Supervisor engineSupervisor;
   CameraService::SetSupervisor(&engineSupervisor);
   OSState::SetSupervisor(&engineSupervisor);
   CubeBleClient::SetSupervisor(&engineSupervisor);
 
-  // Get robotID to detmermine if devlogger should be created
+  // Get robotID to determine if devlogger should be created
   // Only create devLogs for robot with DEFAULT_ROBOT_ID.
   // The only time it shouldn't create a log is for sim robots
   // with non-DEFAULT_ROBOT_ID so as to avoid multiple devLogs
   // recording to the same folder.
   RobotID_t robotID = OSState::getInstance()->GetRobotID();
   const bool createDevLoggers = robotID == DEFAULT_ROBOT_ID;
-  
+
 #if ANKI_DEV_CHEATS
-  if (createDevLoggers) {  
+  if (createDevLoggers) {
     DevLoggingSystem::CreateInstance(dataPlatform.pathToResource(Util::Data::Scope::CurrentGameLog, "devLogger"), "mac");
   } else {
-    PRINT_NAMED_WARNING("webotsCtrlGameEngine.main.SkippingDevLogger", 
+    PRINT_NAMED_WARNING("webotsCtrlGameEngine.main.SkippingDevLogger",
                         "RobotID: %d - Only DEFAULT_ROBOT_ID may create loggers", robotID);
   }
 #endif
 
   // - create and set logger
-  Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN,
+  Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::LOG_LEVEL_WARN,
                                                                                         params.colorizeStderrOutput);
   std::vector<Util::IFormattedLoggerProvider*> loggerVec;
   loggerVec.push_back(printfLoggerProvider);
-    
+
 #if ANKI_DEV_CHEATS
   if (createDevLoggers) {
     loggerVec.push_back(new DevLoggerProvider(DevLoggingSystem::GetInstance()->GetQueue(),
@@ -102,16 +102,16 @@ int main(int argc, char **argv)
 
   Anki::Util::MultiFormattedLoggerProvider loggerProvider(loggerVec);
 
-  loggerProvider.SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
+  loggerProvider.SetMinLogLevel(Anki::Util::LOG_LEVEL_DEBUG);
   Anki::Util::gLoggerProvider = &loggerProvider;
   Anki::Util::sSetGlobal(DPHYS, "0xdeadffff00000001");
-  
+
   // - console filter for logs
   if ( params.filterLog )
   {
     using namespace Anki::Util;
     ChannelFilter* consoleFilter = new ChannelFilter();
-    
+
     // load file config
     Json::Value consoleFilterConfig;
     const std::string& consoleFilterConfigPath = "config/engine/console_filter_config.json";
@@ -119,19 +119,19 @@ int main(int argc, char **argv)
     {
       PRINT_NAMED_ERROR("webotsCtrlGameEngine.main.loadConsoleConfig", "Failed to parse Json file '%s'", consoleFilterConfigPath.c_str());
     }
-    
+
     // initialize console filter for this platform
     const std::string& platformOS = dataPlatform.GetOSPlatformString();
     const Json::Value& consoleFilterConfigOnPlatform = consoleFilterConfig[platformOS];
     consoleFilter->Initialize(consoleFilterConfigOnPlatform);
-    
+
     // set filter in the loggers
     std::shared_ptr<const IChannelFilter> filterPtr( consoleFilter );
     printfLoggerProvider->SetFilter(filterPtr);
-    
+
     // also parse additional info for providers
     printfLoggerProvider->ParseLogLevelSettings(consoleFilterConfigOnPlatform);
-    
+
     #if ANKI_DEV_CHEATS
     {
       // Disable the Clad logger by default - prevents it sending the log messages,
@@ -146,10 +146,10 @@ int main(int argc, char **argv)
   {
     PRINT_NAMED_INFO("webotsCtrlGameEngine.main.noFilter", "Console will not be filtered due to program args");
   }
-  
+
   // Start with a step so that we can attach to the process here for debugging
   engineSupervisor.step(BS_TIME_STEP_MS);
-  
+
   // Get configuration JSON
   Json::Value config;
 
@@ -161,7 +161,7 @@ int main(int argc, char **argv)
   if(!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
     config[AnkiUtil::kP_ADVERTISING_HOST_IP] = ROBOT_ADVERTISING_HOST_IP;
   }
-  
+
   if(!config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
     config[AnkiUtil::kP_UI_ADVERTISING_PORT] = UI_ADVERTISING_PORT;
   }
@@ -169,15 +169,15 @@ int main(int argc, char **argv)
   if(!config.isMember(AnkiUtil::kP_SDK_ADVERTISING_HOST_IP)) {
     config[AnkiUtil::kP_SDK_ADVERTISING_HOST_IP] = SDK_ADVERTISING_HOST_IP;
   }
-  
+
   if(!config.isMember(AnkiUtil::kP_SDK_ADVERTISING_PORT)) {
     config[AnkiUtil::kP_SDK_ADVERTISING_PORT] = SDK_ADVERTISING_PORT;
   }
-  
+
   if(!config.isMember(AnkiUtil::kP_SDK_ON_DEVICE_TCP_PORT)) {
     config[AnkiUtil::kP_SDK_ON_DEVICE_TCP_PORT] = SDK_ON_DEVICE_TCP_PORT;
   }
-  
+
   int numUIDevicesToWaitFor = 1;
   webots::Field* numUIsField = engineSupervisor.getSelf()->getField("numUIDevicesToWaitFor");
   if (numUIsField) {
@@ -185,14 +185,14 @@ int main(int argc, char **argv)
   } else {
     PRINT_NAMED_WARNING("webotsCtrlGameEngine.main.MissingField", "numUIDevicesToWaitFor not found in BlockworldComms");
   }
-  
+
   config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 0;
   config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 1;
   config[AnkiUtil::kP_NUM_SDK_DEVICES_TO_WAIT_FOR] = 1;
-  
+
   // Set up the console vars to load from file, if it exists
   ANKI_CONSOLE_SYSTEM_INIT("consoleVarsEngine.ini");
-  
+
   // Initialize the API
   CozmoAPI myCozmo;
   myCozmo.Start(&dataPlatform, config);
@@ -214,4 +214,3 @@ int main(int argc, char **argv)
   Anki::Util::gLoggerProvider = nullptr;
   return 0;
 }
-

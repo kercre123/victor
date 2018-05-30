@@ -126,6 +126,67 @@ void VictorLogger::LogEvent(android_LogPriority prio,
 
 }
 
+//
+// Map Anki log level to android log priority
+//
+inline android_LogPriority GetLogPrio(LogLevel level)
+{
+  android_LogPriority prio = ANDROID_LOG_UNKNOWN;
+  switch (level)
+  {
+    case LOG_LEVEL_ERROR:
+      prio = ANDROID_LOG_ERROR;
+      break;
+    case LOG_LEVEL_WARN:
+      prio = ANDROID_LOG_WARN;
+      break;
+    case LOG_LEVEL_EVENT:
+    case LOG_LEVEL_INFO:
+      prio = ANDROID_LOG_INFO;
+      break;
+    case LOG_LEVEL_DEBUG:
+      prio = ANDROID_LOG_DEBUG;
+      break;
+    case _LOG_LEVEL_COUNT:
+      break;
+  }
+  DEV_ASSERT(prio != ANDROID_LOG_UNKNOWN, "VictorLogger.GetLogPrio.UnknownLogLevel");
+  return prio;
+}
+
+void VictorLogger::LogEvent(LogLevel level, const DasMsg & dasMsg)
+{
+  //
+  // Marshal values for each DAS v2 event fields that must be provided.
+  // Note some fields will be provided by the log record itself,
+  // while others will be provided by the aggregator.
+  //
+  //const char * SOURCE = ""; (represented by android log tag)
+  //const char * TS = ""; (represented by android log timestamp)
+  //const char * LEVEL = ""; (represented by android log level)
+  //const char * ROBOT = ""; (provided by aggregator)
+  //const char * ROBOT_VERSION = ""; (provided by aggregator)
+  //const char * SEQ = seq; (provided by aggregator)
+  //const char * PROFILE_ID = ""; (provided by aggregator)
+  //const char * FEATURE_TYPE = ""; (provided by aggregator)
+  //const char * FEATURE_RUN_ID = ""; (provided by aggregator)
+  const auto prio = GetLogPrio(level);
+
+  // Format fields into a compact CSV format.
+  // Leading @ serves as a hint that this row is in compact CSV format.
+  //
+  // We use a fixed format string for performance, but we need to update the format string
+  // if event format ever changes.
+  static_assert(Anki::Util::DAS::EVENT_MARKER == '@', "DAS event marker does not match declarations");
+  static_assert(Anki::Util::DAS::FIELD_MARKER == '\x1F', "DAS field marker does not match declarations");
+  static_assert(Anki::Util::DAS::FIELD_COUNT == 9, "DAS field count does not match declarations");
+
+  __android_log_print(prio, _tag.c_str(), "@%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s",
+                      dasMsg.event.c_str(), dasMsg.s1.c_str(), dasMsg.s2.c_str(), dasMsg.s3.c_str(), dasMsg.s4.c_str(),
+                      dasMsg.i1.c_str(), dasMsg.i2.c_str(), dasMsg.i3.c_str(), dasMsg.i4.c_str());
+
+}
+
 void VictorLogger::SetGlobal(const char * key, const char * value)
 {
   // Key may not be null

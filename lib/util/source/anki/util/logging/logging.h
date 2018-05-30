@@ -24,6 +24,7 @@
 #include "util/global/globalDefinitions.h"
 #include "util/logging/eventKeys.h"
 #include "util/logging/callstack.h"
+#include "util/logging/logtypes.h"
 
 #include <string>
 #include <vector>
@@ -35,18 +36,10 @@
 namespace Anki {
 namespace Util {
 
-using KVPair = std::pair<const char *, const char *>;
-using KVPairVector = std::vector<KVPair>;
-
 class ITickTimeProvider;
 class ILoggerProvider;
 class ChannelFilter;
 class IEventProvider;
-
-const uint8_t DASMaxSvalLength = 128;
-
-using KVPair = std::pair<const char *, const char *>;
-using KVPairVector = std::vector<KVPair>;
 
 std::string HexDump(const void *value, const size_t len, char delimiter);
 
@@ -68,10 +61,19 @@ struct DasItem
   DasItem(const std::string & valueStr) { value = valueStr; }
   DasItem(int64_t valueInt) { value = std::to_string(valueInt); }
 
+  inline const std::string & str() const { return value; }
+  inline const char * c_str() const { return value.c_str(); }
+
   std::string value;
 };
 
+//
 // DAS message struct
+//
+// Event name is required. Other fields are optional.
+// Event structures should be declared with DASMSG.
+// Event fields should be assigned with DASMSG_SET.
+//
 struct DasMsg
 {
   DasMsg(const std::string & eventStr) { event = eventStr; }
@@ -94,9 +96,10 @@ struct DasMsg
 
 #define DASMSG(ezRef, eventName, documentation) { Anki::Util::DasMsg __DAS_msg(eventName);
 #define DASMSG_SET(dasEntry, value, comment) __DAS_msg.dasEntry = Anki::Util::DasItem(value);
-#define DASMSG_SEND() sEventD(__DAS_msg); }
-#define DASMSG_SEND_WARNING() sWarningD(__DAS_msg); }
-#define DASMSG_SEND_ERROR() sErrorD(__DAS_msg); }
+#define DASMSG_SEND()         Anki::Util::sLogInfo(__DAS_msg); }
+#define DASMSG_SEND_WARNING() Anki::Util::sLogWarning(__DAS_msg); }
+#define DASMSG_SEND_ERROR()   Anki::Util::sLogError(__DAS_msg); }
+#define DASMSG_SEND_DEBUG()   Anki::Util::sLogDebug(__DAS_msg); }
 
 #else
 
@@ -114,13 +117,28 @@ class DasDoxMsg() {}
 #define DASMSG_SEND }; {{{{{{{{
 #define DASMSG_SEND_WARNING }; {{{{{{{{
 #define DASMSG_SEND_ERROR }; {{{{{{{{
-
+#define DASMSG_SEND_DEBUG }; {{{{{{{{
 #endif
+
+// Log an error event
+__attribute__((__used__))
+void sLogError(const DasMsg & dasMessage);
+
+// Log a warning event
+__attribute__((__used__))
+void sLogWarning(const DasMsg & dasMessage);
+
+// Log an info event
+__attribute__((__used__))
+void sLogInfo(const DasMsg & dasMessage);
+
+// Log a debug event
+__attribute__((__used__))
+void sLogDebug(const DasMsg & dasMessage);
 
 //
 // "Event level" logging is no longer a thing. Do not use it.
 // Messages intended for DAS should use the explicit DASMSG interface declared above.
-// Other messages should use INFO or DEBUG as appropriate.
 //
 __attribute__((__deprecated__))
 __attribute__((__used__))
@@ -129,9 +147,6 @@ void sEventF(const char* name, const KVPairVector & keyvals, const char* format,
 __attribute__((__deprecated__))
 __attribute__((__used__))
 void sEventV(const char* name, const KVPairVector & keyvals, const char* format, va_list args) __attribute__((format(printf,3,0)));
-
-__attribute__((__used__))
-void sEventD(DasMsg& dasMessage);
 
 __attribute__((__used__))
 void sEvent(const char* name, const KVPairVector & keyvals, const char* strval);
@@ -143,9 +158,6 @@ __attribute__((__used__))
 void sErrorV(const char* name, const KVPairVector & keyvals, const char* format, va_list args) __attribute__((format(printf,3,0)));
 
 __attribute__((__used__))
-void sErrorD(DasMsg& dasMessage);
-
-__attribute__((__used__))
 void sError(const char* name, const KVPairVector & keyvals, const char* strval);
 
 __attribute__((__used__))
@@ -153,9 +165,6 @@ void sWarningF(const char* name, const KVPairVector & keyvals, const char* forma
 
 __attribute__((__used__))
 void sWarningV(const char* name, const KVPairVector & keyvals, const char* format, va_list args) __attribute__((format(printf,3,0)));
-
-__attribute__((__used__))
-void sWarningD(DasMsg& dasMessage);
 
 __attribute__((__used__))
 void sWarning(const char* name, const KVPairVector & keyvals, const char* strval);

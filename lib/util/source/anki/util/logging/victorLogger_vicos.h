@@ -30,27 +30,27 @@ public:
   // Implements ILoggerProvider
   virtual void PrintLogE(const char * name, const KVPairVector & keyvals, const char * strval)
   {
-      Log(ANDROID_LOG_ERROR, name, keyvals, strval);
+    Log(ANDROID_LOG_ERROR, name, keyvals, strval);
   }
 
   virtual void PrintLogW(const char* name, const KVPairVector & keyvals, const char * strval)
   {
-      Log(ANDROID_LOG_WARN, name, keyvals, strval);
+    Log(ANDROID_LOG_WARN, name, keyvals, strval);
   }
 
   virtual void PrintLogI(const char * channel, const char * name, const KVPairVector & keyvals, const char * strval)
   {
-      Log(ANDROID_LOG_INFO, channel, name, keyvals, strval);
+    Log(ANDROID_LOG_INFO, channel, name, keyvals, strval);
   }
 
   virtual void PrintLogD(const char * channel, const char * name, const KVPairVector & keyvals, const char * strval)
   {
-      Log(ANDROID_LOG_DEBUG, channel, name, keyvals, strval);
+    Log(ANDROID_LOG_DEBUG, channel, name, keyvals, strval);
   }
 
- virtual void PrintEvent(const char * name, const KVPairVector & keyvals, const char *)
+  virtual void PrintEvent(const char * name, const KVPairVector & keyvals, const char * strval)
   {
-      LogEvent(ANDROID_LOG_INFO, name, keyvals);
+    LogEvent(ANDROID_LOG_INFO, name, keyvals);
   }
 
   // Implements IEventProvider
@@ -76,6 +76,8 @@ private:
   void LogEvent(android_LogPriority prio,
     const char * name,
     const KVPairVector & keyvals);
+
+  void LogEvent(LogLevel level, const DasMsg & dasMsg);
 
 }; // class VictorLogger
 
