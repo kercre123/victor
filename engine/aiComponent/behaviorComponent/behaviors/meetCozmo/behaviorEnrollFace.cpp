@@ -20,6 +20,7 @@
 #include "engine/actions/sayTextAction.h"
 
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -536,6 +537,15 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
     // in this state
     _dVars.persistent.state = _dVars.failedState;
   }
+  
+  if( ANKI_DEVELOPER_CODE ) {
+    // in unit tests, this behavior will always want to re-activate when Cancel via the delegation component,
+    // unless we disable enrollment. Use a special name (one that would almost certainly never be spoken)
+    if( _dVars.faceName == "Special name for unit tests to end enrollment" ) {
+      SET_STATE(Success);
+      DisableEnrollment();
+    }
+  }
 
   const bool wasSeeingMultipleFaces = _dVars.startedSeeingMultipleFaces_sec > 0.f;
   const bool observedUnusableFace = _dVars.observedUnusableID != Vision::UnknownFaceID && !_dVars.observedUnusableName.empty();
@@ -668,13 +678,8 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
     uic.DeactivateUserIntent( USER_INTENT(meet_victor) );
   }
   
-  if( ANKI_DEVELOPER_CODE ) {
-    // in unit tests, this behavior will always want to re-activate when Cancel via the delegation component,
-    // unless we disable enrollment. Use a special name (one that would almost certainly never be spoken)
-    if( _dVars.faceName == "Special name for unit tests to end enrollment" ) {
-      SET_STATE(NotStarted);
-      DisableEnrollment();
-    }
+  if( info.result == FaceEnrollmentResult::Success ) {
+    GetAIComp<AIWhiteboard>().OfferPostBehaviorSuggestion( PostBehaviorSuggestions::Socialize );
   }
 
   PRINT_CH_DEBUG(kLogChannelName, "BehaviorEnrollFace.StopInternal.FinalState",

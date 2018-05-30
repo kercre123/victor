@@ -537,7 +537,7 @@
   },
   {
     "CladEvent": "MeetCozmoDuplicateName",
-    "AnimName": "ag_pounceonmotionfail"
+    "AnimName": "ag_meetvictor_sayname_01"
   },
   {
     "CladEvent": "DEPRECATED_NamedFaceInitialGreeting",
