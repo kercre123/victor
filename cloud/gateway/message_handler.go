@@ -3,11 +3,11 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 
 	"anki/ipc"
+	"anki/log"
 	"clad/cloud"
-	"proto/external_interface"
+	extint "proto/external_interface"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
@@ -30,7 +30,7 @@ func WriteToEngine(conn ipc.Conn, msg *cloud.MessageExternalToRobot) (int, error
 }
 
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
-func ProtoDriveWheelsToClad(msg *external_interface.DriveWheelsRequest) *cloud.MessageExternalToRobot {
+func ProtoDriveWheelsToClad(msg *extint.DriveWheelsRequest) *cloud.MessageExternalToRobot {
 	return cloud.NewMessageExternalToRobotWithDriveWheels(&cloud.DriveWheels{
 		Lwheel_speed_mmps:  msg.LeftWheelMmps,
 		Rwheel_speed_mmps:  msg.RightWheelMmps,
@@ -40,11 +40,11 @@ func ProtoDriveWheelsToClad(msg *external_interface.DriveWheelsRequest) *cloud.M
 }
 
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
-func ProtoPlayAnimationToClad(msg *external_interface.PlayAnimationRequest) *cloud.MessageExternalToRobot {
+func ProtoPlayAnimationToClad(msg *extint.PlayAnimationRequest) *cloud.MessageExternalToRobot {
 	if msg.Animation == nil {
 		return nil
 	}
-	fmt.Println("Animation name:", msg.Animation.Name)
+	log.Println("Animation name:", msg.Animation.Name)
 	return cloud.NewMessageExternalToRobotWithPlayAnimation(&cloud.PlayAnimation{
 		NumLoops:        msg.Loops,
 		AnimationName:   msg.Animation.Name,
@@ -58,21 +58,21 @@ func ProtoPlayAnimationToClad(msg *external_interface.PlayAnimationRequest) *clo
 // This must implement all the rpc functions defined in the external_interface proto file.
 type rpcService struct{}
 
-func (m *rpcService) DriveWheels(ctx context.Context, in *external_interface.DriveWheelsRequest) (*external_interface.DriveWheelsResult, error) {
-	fmt.Printf("Received rpc request DriveWheels(%s)\n", in)
+func (m *rpcService) DriveWheels(ctx context.Context, in *extint.DriveWheelsRequest) (*extint.DriveWheelsResult, error) {
+	log.Println("Received rpc request DriveWheels(", in, ")")
 	_, err := WriteToEngine(engineSock, ProtoDriveWheelsToClad(in))
 	if err != nil {
 		return nil, err
 	}
-	return &external_interface.DriveWheelsResult{
-		Status: &external_interface.ResultStatus{
+	return &extint.DriveWheelsResult{
+		Status: &extint.ResultStatus{
 			Description: "Message sent to engine",
 		},
 	}, nil
 }
 
-func (m *rpcService) PlayAnimation(ctx context.Context, in *external_interface.PlayAnimationRequest) (*external_interface.PlayAnimationResult, error) {
-	fmt.Printf("Received rpc request PlayAnimation(%s)\n", in)
+func (m *rpcService) PlayAnimation(ctx context.Context, in *extint.PlayAnimationRequest) (*extint.PlayAnimationResult, error) {
+	log.Println("Received rpc request PlayAnimation(", in, ")")
 	animation_result := make(chan RobotToExternalResult)
 	engineChanMap[cloud.MessageRobotToExternalTag_RobotCompletedAction] = animation_result
 	_, err := WriteToEngine(engineSock, ProtoPlayAnimationToClad(in))
@@ -82,20 +82,20 @@ func (m *rpcService) PlayAnimation(ctx context.Context, in *external_interface.P
 	}
 	<-animation_result
 	engineChanMap[cloud.MessageRobotToExternalTag_RobotCompletedAction] = nil
-	return &external_interface.PlayAnimationResult{
-		Status: &external_interface.ResultStatus{
+	return &extint.PlayAnimationResult{
+		Status: &extint.ResultStatus{
 			Description: "Animation completed",
 		},
 	}, nil
 }
 
-func (m *rpcService) ListAnimations(ctx context.Context, in *external_interface.ListAnimationsRequest) (*external_interface.ListAnimationsResult, error) {
-	fmt.Printf("Received rpc request ListAnimations(%s)\n", in)
+func (m *rpcService) ListAnimations(ctx context.Context, in *extint.ListAnimationsRequest) (*extint.ListAnimationsResult, error) {
+	log.Println("Received rpc request ListAnimations(", in, ")")
 	return nil, status.Errorf(codes.Unimplemented, "ListAnimations not yet implemented")
 }
 
-func (m *rpcService) Test(ctx context.Context, in *external_interface.TestRequest) (*external_interface.TestResult, error) {
-	fmt.Printf("Received rpc request Test(%s)\n", in)
+func (m *rpcService) Test(ctx context.Context, in *extint.TestRequest) (*extint.TestResult, error) {
+	log.Println("Received rpc request Test(", in, ")")
 	return nil, status.Errorf(codes.Unimplemented, "Test not yet implemented")
 }
 

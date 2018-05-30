@@ -6,15 +6,17 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
+	"os"
+	"path"
 	"strings"
 	"time"
 
 	"anki/ipc"
+	"anki/log"
 	"clad/cloud"
-	"proto/external_interface"
+	extint "proto/external_interface"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"golang.org/x/net/context"
@@ -41,11 +43,12 @@ var (
 	engineChanMap map[cloud.MessageRobotToExternalTag](chan RobotToExternalResult)
 )
 
-func getSocketWithRetry(client string, server string) ipc.Conn {
+func getSocketWithRetry(socket_dir string, server string, name string) ipc.Conn {
+	server_path := path.Join(socket_dir, server)
 	for {
-		sock, err := ipc.NewEngineUnixgramClient("/dev/socket", client, server)
+		sock, err := ipc.NewUnixgramClient(server_path, name)
 		if err != nil {
-			fmt.Println("Couldn't create sockets", client, ",", server, "- retrying:", err)
+			log.Println("Couldn't create sockets for", server, "- retrying:", err)
 			time.Sleep(time.Second)
 		} else {
 			return sock
@@ -66,16 +69,25 @@ func grpcHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Ha
 // TODO: improve the logic for this to allow for multiple simultaneous requests
 func processEngineMessages() {
 	var msg cloud.MessageRobotToExternal
-	var b []byte
-	buf := bytes.NewBuffer(make([]byte, 1))
-	for true {
+	var b, block []byte
+	var buf bytes.Buffer
+	for {
 		buf.Reset()
-		b = engineSock.ReadBlock()[2:] // dropping the length from the start
-		buf.Write(b)
-		if err := msg.Unpack(buf); err != nil {
+		block = engineSock.ReadBlock()
+		if block == nil {
+			log.Println("Error: engine socket returned empty message")
+			continue
+		} else if len(block) < 2 {
+			log.Println("Error: engine socket message too small")
 			continue
 		}
-		fmt.Println("Action Completed!", msg)
+		b = block[2:]
+		buf.Write(b)
+		if err := msg.Unpack(&buf); err != nil {
+			// Intentionally ignoring errors for unknown messages
+			continue
+		}
+		log.Println("Action Completed!", msg)
 		if c, ok := engineChanMap[msg.Tag()]; ok {
 			c <- RobotToExternalResult{Message: msg}
 		}
@@ -83,9 +95,9 @@ func processEngineMessages() {
 }
 
 func main() {
-	fmt.Println("Launching vic-gateway")
+	log.Tag = "vic-gateway"
+	log.Println("Launching vic-gateway")
 
-	var err error
 	pair, err := tls.LoadX509KeyPair(Cert, Key)
 	if err != nil {
 		panic(err)
@@ -94,23 +106,25 @@ func main() {
 	demoCertPool = x509.NewCertPool()
 	caCert, err := ioutil.ReadFile(Cert)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		os.Exit(1)
 	}
 	ok := demoCertPool.AppendCertsFromPEM(caCert)
 	if !ok {
-		panic("bad certs")
+		log.Println("Error: Bad certificates.")
+		panic("Bad certificates.")
 	}
 	demoAddr = fmt.Sprintf("localhost:%d", Port)
 
-	engineSock = getSocketWithRetry("_engine_gateway_client_", "_engine_gateway_server_")
+	engineSock = getSocketWithRetry("/dev/socket/", "_engine_gateway_server_", "client")
 	defer engineSock.Close()
 	engineChanMap = make(map[cloud.MessageRobotToExternalTag](chan RobotToExternalResult))
 
-	fmt.Println("Sockets successfully created")
+	log.Println("Sockets successfully created")
 
 	creds, _ := credentials.NewServerTLSFromFile(Cert, Key)
 	grpcServer := grpc.NewServer(grpc.Creds(creds))
-	external_interface.RegisterExternalInterfaceServer(grpcServer, newServer())
+	extint.RegisterExternalInterfaceServer(grpcServer, newServer())
 	ctx := context.Background()
 
 	dcreds := credentials.NewTLS(&tls.Config{
@@ -121,14 +135,15 @@ func main() {
 	dopts := []grpc.DialOption{grpc.WithTransportCredentials(dcreds)}
 
 	gwmux := runtime.NewServeMux()
-	err = external_interface.RegisterExternalInterfaceHandlerFromEndpoint(ctx, gwmux, demoAddr, dopts)
+	err = extint.RegisterExternalInterfaceHandlerFromEndpoint(ctx, gwmux, demoAddr, dopts)
 	if err != nil {
-		fmt.Printf("serve: %v\n", err)
-		return
+		log.Println("Error during RegisterExternalInterfaceHandlerFromEndpoint:", err)
+		os.Exit(1)
 	}
 
 	conn, err := net.Listen("tcp", fmt.Sprintf(":%d", Port))
 	if err != nil {
+		log.Println("Error during Listen:", err)
 		panic(err)
 	}
 
@@ -143,12 +158,13 @@ func main() {
 
 	go processEngineMessages()
 
-	fmt.Printf("grpc on Port: %d\n", Port)
+	log.Println("Listening on Port:", Port)
 	err = srv.Serve(tls.NewListener(conn, srv.TLSConfig))
 
 	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
+		log.Println("Error during Serve:", err)
+		os.Exit(1)
 	}
-
+	log.Println("Closing vic-gateway")
 	return
 }
