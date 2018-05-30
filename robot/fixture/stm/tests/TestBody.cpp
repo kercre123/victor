@@ -197,12 +197,16 @@ static void BodyLoadTestFirmware(void)
   if( g_fixmode < FIXMODE_BODY3 )
     Board::powerOn(PWR_VBAT, 0);
   Timer::delayMs(150); //wait for systest to boot into main and enable battery power
+  Contacts::powerOff(); //forces discharge
   Contacts::setModeRx(); //switch to comms mode
   
   //DEBUG:
   if( g_fixmode < FIXMODE_BODY1 ) {
     TestCommon::consoleBridge(TO_CONTACTS,5000,0,BRIDGE_OPT_CHG_DISABLE);
   }
+  
+  //flush systest line buffer
+  Contacts::write("\n\n\n");
   
   //Run some tests
   cmdSend(CMD_IO_CONTACTS, "getvers");
@@ -230,8 +234,10 @@ static void BodyLoadProductionFirmware(void)
   bodyid.hwrev = (bodyid.hwrev == BODYID_HWREV_EMPTY) ? CURRENT_BODY_HW_REV : bodyid.hwrev;
   if( !bodyid.esn || bodyid.esn == BODYID_ESN_EMPTY )
   {
-    //if( g_isReleaseBuild )
+    if( g_fixmode == FIXMODE_BODY1 )
       bodyid.esn = fixtureGetSerial(); //get next 12.20 esn in the sequence
+    else
+      bodyid.esn = BODYID_ESN_EMPTY;
   }
   
   //buffer the bootlaoder image and insert ESN/HW info
