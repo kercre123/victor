@@ -235,6 +235,7 @@ void BehaviorReactToSound::BehaviorUpdate()
   // if we're not active, it means we're listing for sound in order to activate us
   if ( !IsActivated() )
   {
+    _triggeredDirection = kInvalidDirectionIndex;
     // make sure we're not on cooldown, or other reason we shouldn't react
     if ( CanReactToSound() )
     {
