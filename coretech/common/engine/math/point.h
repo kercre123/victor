@@ -23,6 +23,8 @@
 
 #include "coretech/common/shared/types.h"
 
+#include "clad/types/cladPoint.h"
+
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/core.hpp"
 #endif
@@ -57,6 +59,10 @@ namespace Anki {
     // the last dimensions. For example, construct a 2D point from a 3D point
     // by just using the (x,y) dimensions and ignoring z.
     Point(const Point<N+1,T>& pt);
+    
+    // Create from a CladPoint
+    Point(const CladPoint2d& cladPoint);
+    Point(const CladPoint3d& cladPoint);
     
     explicit Point(const SmallMatrix<N,1,T>& M);
 
@@ -96,6 +102,10 @@ namespace Anki {
     // Return a cast version of this
     template<typename T_other>
     Point<N, T_other> CastTo() const;
+    
+    // Return a CladPoint
+    CladPoint2d ToCladPoint2d() const;
+    CladPoint3d ToCladPoint3d() const;
     
     // Accessors:
     T& operator[] (const PointDimType i);

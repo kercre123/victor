@@ -201,3 +201,89 @@ GTEST_TEST(TestPolygon, FastPolygonSortedEdges)
   printf("took %u dot products unsorted, and %u sorted\n", numDotsUnsorted, numDotsSorted);
 
 }
+
+GTEST_TEST(TestPoly, CladConversion)
+{
+  // 2D:
+  {
+    const Poly2f poly2d {
+      {1.2f, 2.3f},
+      {3.4f, 4.5f},
+      {5.6f, 6.7f},
+      {7.8f, 8.9f},
+      {9.0f, 0.1f},
+    };
+    
+    const std::vector<CladPoint2d> cladPoly2d = poly2d.ToCladPoint2dVector();
+    
+    EXPECT_EQ(poly2d.size(), cladPoly2d.size());
+    
+    auto polyIter = poly2d.begin();
+    auto polyEnd  = poly2d.end();
+    auto cladIter = cladPoly2d.begin();
+    auto cladEnd  = cladPoly2d.end();
+    
+    while(polyIter != polyEnd && cladIter != cladEnd)
+    {
+      EXPECT_TRUE(Util::IsFltNear(polyIter->x(), cladIter->x));
+      EXPECT_TRUE(Util::IsFltNear(polyIter->y(), cladIter->y));
+      ++polyIter;
+      ++cladIter;
+    }
+    
+    const Poly2f polyCheck(cladPoly2d);
+    auto polyCheckIter = polyCheck.begin();
+    auto polyCheckEnd  = polyCheck.end();
+    polyIter = poly2d.begin();
+    
+    while(polyIter != polyEnd && polyCheckIter != polyCheckEnd)
+    {
+      EXPECT_TRUE(IsNearlyEqual(*polyIter, *polyCheckIter));
+      ++polyIter;
+      ++polyCheckIter;
+    }
+  }
+  
+  // 3D:
+  {
+    const Poly3f poly3d {
+      {1.2f, 2.3f, -3.2f},
+      {3.4f, 4.5f, -5.4f},
+      {5.6f, 6.7f, -7.6f},
+      {7.8f, 8.9f, -9.8f},
+      {9.0f, 0.1f, -1.0f},
+      {-0.1f, -1.2f, -2.3f},
+    };
+    
+    const std::vector<CladPoint3d> cladPoly3d = poly3d.ToCladPoint3dVector();
+    
+    EXPECT_EQ(poly3d.size(), cladPoly3d.size());
+    
+    auto polyIter = poly3d.begin();
+    auto polyEnd  = poly3d.end();
+    auto cladIter = cladPoly3d.begin();
+    auto cladEnd  = cladPoly3d.end();
+    
+    while(polyIter != polyEnd && cladIter != cladEnd)
+    {
+      EXPECT_TRUE(Util::IsFltNear(polyIter->x(), cladIter->x));
+      EXPECT_TRUE(Util::IsFltNear(polyIter->y(), cladIter->y));
+      EXPECT_TRUE(Util::IsFltNear(polyIter->z(), cladIter->z));
+      ++polyIter;
+      ++cladIter;
+    }
+    
+    const Poly3f polyCheck(cladPoly3d);
+    auto polyCheckIter = polyCheck.begin();
+    auto polyCheckEnd  = polyCheck.end();
+    polyIter = poly3d.begin();
+    
+    while(polyIter != polyEnd && polyCheckIter != polyCheckEnd)
+    {
+      EXPECT_TRUE(IsNearlyEqual(*polyIter, *polyCheckIter));
+      ++polyIter;
+      ++polyCheckIter;
+    }
+  }
+  
+}

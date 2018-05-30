@@ -92,7 +92,16 @@ if (VICOS)
     PRIVATE
     victor_anim
     victorCrashReports
-    cti_common_robot
+    # NOTE: deliberately using non-robot cti_common here to ease build
+    #       pain given differing include paths for clad types. This still
+    #       does not expose cpplite clad messaging within the anim process 
+    #       (which is undesirable) since this is limited just to the 
+    #       vic-anim executable (vs. using cti_common_robot and thus 
+    #       cpplite clad in the victor_anim library above). Ideally this
+    #       separation would be clearer and cleaner or we would 
+    #       exclusively use one or the other, but that will have to 
+    #       wait for a (much) larger cleanup to cmake / clad / coretech.
+    cti_common
     jsoncpp
     ${PLATFORM_LIBS}
   )

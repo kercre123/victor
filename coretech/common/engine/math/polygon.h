@@ -17,6 +17,8 @@
 
 #include "coretech/common/engine/math/point.h"
 
+#include "clad/types/cladPoint.h"
+
 #include <vector>
 
 namespace Anki {
@@ -55,6 +57,14 @@ public:
   explicit Polygon(const Rectangle<T>& rect);
   explicit Polygon(const RotatedRectangle& rect);
   explicit Polygon(const Quadrilateral<2, T>& quad);
+  
+  // Initialize 2D polygon from a list of clad points. Assumes points are already in clockwise order!
+  Polygon(const std::vector<CladPoint2d>& cladPoints);
+  Polygon(const std::vector<CladPoint3d>& cladPoints);
+
+  // Get a vector of CladPoints
+  std::vector<CladPoint2d> ToCladPoint2dVector() const;
+  std::vector<CladPoint3d> ToCladPoint3dVector() const;
 
   // Import from a 2D quad
   void ImportQuad2d(const Quadrilateral<2, T>& quad);
@@ -114,6 +124,8 @@ protected:
 
 using Poly2f = Polygon<2, f32>;
 using Poly3f = Polygon<3, f32>;
+using Poly2i = Polygon<2, s32>;
+using Poly3i = Polygon<3, s32>;
 
 }
 

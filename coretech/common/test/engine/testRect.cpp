@@ -62,3 +62,27 @@ GTEST_TEST(TestRect, TwoPointConstruction)
   }
   
 } // GTEST_TEST(TestRect, Contains)
+
+GTEST_TEST(TestRect, CladConversion)
+{
+  const Rectangle<float> rect(1.2f, 3.4f, 5.6f, 7.8f);
+  const CladRect cladRect = rect.ToCladRect();
+  
+  // Check conversion to CLAD
+  EXPECT_TRUE(Util::IsFltNear(rect.GetX(), cladRect.x_topLeft));
+  EXPECT_TRUE(Util::IsFltNear(rect.GetY(), cladRect.y_topLeft));
+  EXPECT_TRUE(Util::IsFltNear(rect.GetWidth(),  cladRect.width));
+  EXPECT_TRUE(Util::IsFltNear(rect.GetHeight(), cladRect.height));
+  
+  // Make sure "top left" means the same thing in both
+  const Point2f& topLeft = rect.GetTopLeft();
+  EXPECT_TRUE(Util::IsFltNear(topLeft.x(), cladRect.x_topLeft));
+  EXPECT_TRUE(Util::IsFltNear(topLeft.y(), cladRect.y_topLeft));
+  
+  // Make sure conversion back to Rectangle from CLAD works
+  const Rectangle<f32> rectCheck(cladRect);
+  EXPECT_TRUE(IsNearlyEqual(rectCheck.GetTopLeft(),     rect.GetTopLeft()));
+  EXPECT_TRUE(IsNearlyEqual(rectCheck.GetBottomRight(), rect.GetBottomRight()));
+  EXPECT_TRUE(IsNearlyEqual(rectCheck.GetTopRight(),    rect.GetTopRight()));
+  EXPECT_TRUE(IsNearlyEqual(rectCheck.GetBottomLeft(),  rect.GetBottomLeft()));
+}
