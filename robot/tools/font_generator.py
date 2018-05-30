@@ -5,7 +5,7 @@ from PIL import Image, ImageFont, ImageDraw, ImageColor
 
 DEBUG=0
 
-name = "Huge"
+name = "Large"
 
 
 
@@ -31,6 +31,17 @@ elif name == "Big":
     formatstr = "0x{:04x},"
     font = ImageFont.truetype("Inconsolata-Bold.ttf", pt)
 
+
+elif name == "Large":
+    height = 32
+    width = 18
+    pt = 30
+    startrow = 6
+    first = ord(' ')
+    last = ord('~')
+    ctype = "uint32_t"
+    formatstr = "0x{:08x},"
+    font = ImageFont.truetype("Menlo.ttc", pt, 1) #bold
 
 elif name == "Huge":
     height = 32
@@ -83,6 +94,7 @@ def RenderChar(ch):
 #        sys.exit(-1)
     if (bbox[2]>=width):
         print("/*Image must be wider than {}*/".format(width))
+        image.save("{}.gif".format(ch))
 #        sys.exit(-1)
 
     if DEBUG:
