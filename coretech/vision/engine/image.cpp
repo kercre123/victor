@@ -126,7 +126,7 @@ namespace Vision {
   template<typename T>
   void ImageBase<T>::Display(const char *windowName, s32 pauseTime_ms) const
   {
-#   if !defined(SIMULATOR)
+#   if !defined(ANKI_PLATFORM_OSX)
     {
       PRINT_NAMED_WARNING("ImageBase.Display.NoDisplay",
                           "Ignoring display request for %s", windowName);
@@ -144,7 +144,7 @@ namespace Vision {
   template<typename T>
   void ImageBase<T>::CloseDisplayWindow(const char *windowName)
   {
-#   if !defined(SIMULATOR)
+#   if !defined(ANKI_PLATFORM_OSX)
     {
       PRINT_NAMED_WARNING("ImageBase.CloseDisplayWindow.NoDisplay",
                           "Ignoring close display request for %s", windowName);
@@ -158,7 +158,7 @@ namespace Vision {
   template<typename T>
   void ImageBase<T>::CloseAllDisplayWindows()
   {
-#   if !defined(SIMULATOR)
+#   if !defined(ANKI_PLATFORM_OSX)
     {
       // NOTE: Display should not be possible (via similar checks above), so
       // there's no real harm in calling this method, so just a debug, not
