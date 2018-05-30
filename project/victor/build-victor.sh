@@ -301,7 +301,6 @@ fi
 #
 # grab Go dependencies ahead of generating source lists
 #
-# needed for metabuild if we have to run it
 if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ] || [ $CONFIGURE -eq 1 ] ; then
     GEN_SRC_DIR="${TOPLEVEL}/generated/cmake"
     if [ $CONFIGURE -eq 1 ] ; then
@@ -311,14 +310,15 @@ if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ] || [ $CONFIGURE -eq 1 ] ; then
 
     # Scan for BUILD.in files
     METABUILD_INPUTS=`find . -name BUILD.in`
+
+    # Process BUILD.in files (creates list of Go projects to fetch)
+    ${BUILD_TOOLS}/metabuild/metabuild.py --go-output \
+      -o ${GEN_SRC_DIR} \
+      ${METABUILD_INPUTS}
 fi
 
 if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ]; then
   echo "Getting Go dependencies"
-  # Process BUILD.in files (creates list of Go projects to fetch)
-  ${BUILD_TOOLS}/metabuild/metabuild.py --go-output \
-      -o ${GEN_SRC_DIR} \
-      ${METABUILD_INPUTS}
   # Check out specified revisions of repositories we've versioned
   # Append a dummy dir to the GOPATH so that `go get` doesn't barf
   # on nonexistent clad files
@@ -376,7 +376,7 @@ if [ $CONFIGURE -eq 1 ]; then
         if [ -z "${VICOS_SDK+x}" ]; then
             VICOS_SDK=$(${TOPLEVEL}/tools/build/tools/ankibuild/vicos.py --install 0.9-r03 | tail -1)
         fi
- 
+
         PLATFORM_ARGS=(
             -DMACOSX=0
             -DANDROID=0
