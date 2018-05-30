@@ -19,13 +19,27 @@ sys.path.append(__engineScriptDir)
 import dependencies
 
 
-
 # Project specific files and directors to perform scripts
 __externalsDir = path.join(__projectRoot, 'EXTERNALS')
 __wwiseToAppMetadataScript = path.join(__projectRoot, 'lib', 'audio', 'tools', 'WWiseToAppMetadata', 'WwiseToAppMetadata.py')
 __wwiseIdFileName = 'Wwise_IDs.h'
-__wwiseIdsFilePath = path.join(__externalsDir, 'victor-audio-assets', 'metadata', __wwiseIdFileName)
-__audioMetadataFileName= 'audioEventMetadata.csv'
+
+# When executed from within Maya, the $ANKI_SB_WORKING environment variable will point at the Soundbank directory
+# that should be used, which is typically EXTERNALS/victor-audio-assets/victor_robot/dev_mac/ or
+# EXTERNALS/local-audio-assets/victor_robot/dev_mac/
+__sbDir = os.getenv('ANKI_SB_WORKING')
+while __sbDir not in ['', None, os.sep]:
+    metadataDir = path.join(__sbDir, 'metadata')
+    if path.isdir(metadataDir):
+        break
+    else:
+        __sbDir = path.dirname(__sbDir)
+if __sbDir in ['', None, os.sep]:
+    __sbDir = path.join(__externalsDir, 'victor-audio-assets')
+__wwiseIdsFilePath = path.join(__sbDir, 'metadata', __wwiseIdFileName)
+
+# More project specific files and directors to perform scripts
+__audioMetadataFileName = 'audioEventMetadata.csv'
 __audioMetadataFilePath = path.join(__scriptDir, __audioMetadataFileName)
 __audioCladDir = path.join(__projectRoot, 'robot', 'clad', 'src', 'clad', 'audio')
 __depsFilePath = path.join(__projectRoot, 'DEPS')
