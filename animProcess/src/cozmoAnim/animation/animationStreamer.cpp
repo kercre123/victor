@@ -808,7 +808,8 @@ namespace Cozmo {
   
   Result AnimationStreamer::InitStreamingAnimation(Tag withTag, bool shouldOverrideEyeHue, bool shouldRenderInEyeHue)
   {
-    Result lastResult = _streamingAnimation->Init();
+    auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
+    Result lastResult = _streamingAnimation->Init(spriteCache);
     if(lastResult == RESULT_OK)
     {
       // Only update should render in eye hue if not looping

@@ -554,6 +554,12 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       _compositeImage->OverrideRenderMethod(renderMethod);
     }
 
+
+    void SpriteSequenceKeyFrame::CacheInternalSprites(Vision::SpriteCache* cache, const TimeStamp_t endTime_ms)
+    {
+      _compositeImage->CacheInternalSprites(cache, endTime_ms);
+    }
+
 #pragma mark -
 #pragma mark ProceduralFaceKeyFrame
     

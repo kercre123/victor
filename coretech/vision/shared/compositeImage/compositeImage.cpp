@@ -395,6 +395,34 @@ void CompositeImage::OverrideRenderMethod(Anki::Vision::SpriteRenderMethod rende
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CompositeImage::CacheInternalSprites(Vision::SpriteCache* cache, const TimeStamp_t endTime_ms)
+{
+  auto callback = [cache, endTime_ms](Vision::LayerName layerName, SpriteBoxName spriteBoxName, 
+                                       const SpriteBox& spriteBox, const SpriteEntry& spriteEntry){
+    const auto numFrames = spriteEntry._spriteSequence.GetNumFrames();
+    Vision::SpriteHandle handle;
+    for(auto i = 0; i < numFrames; i++){
+      if(ANKI_VERIFY(spriteEntry._spriteSequence.GetFrame(i, handle),
+                     "CompositeImage.CacheInternalSprites.FailedToGetFrame", 
+                     "Get Frame %d failed for layer %s and spriteBoxName %s",
+                     i, LayerNameToString(layerName), SpriteBoxNameToString(spriteBoxName))){
+        const bool cacheRGBA = (spriteBox.renderConfig.renderMethod == SpriteRenderMethod::RGBA);
+        ISpriteWrapper::ImgTypeCacheSpec cacheSpec;
+        cacheSpec.grayscale = !cacheRGBA;
+        cacheSpec.rgba = cacheRGBA;
+
+        auto hs = std::make_shared<HueSatWrapper>(spriteBox.renderConfig.hue, 
+                                                  spriteBox.renderConfig.saturation);
+        cache->CacheSprite(handle, cacheSpec, endTime_ms, hs);
+      }
+    }
+  };
+
+  ProcessAllSpriteBoxes(callback);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CompositeImage::AddEmptyLayer(SpriteSequenceContainer* seqContainer)
 {
   Json::Reader reader;
@@ -472,6 +500,50 @@ void CompositeImage::DrawSubImage(ImageType& baseImage, const ImageType& subImag
               "CompositeImageBuilder.BuildCompositeImage.InvalidHeight",
               "Quadrant Name:%s Expected Height:%d, Image Height:%d",
               SpriteBoxNameToString(spriteBox.spriteBoxName), spriteBox.height, subImage.GetNumRows());
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HSImageHandle CompositeImage::HowToRenderRGBA(const SpriteRenderConfig& config) const
+{
+  HSImageHandle hsImageHandle;
+  switch(config.renderMethod){
+    case SpriteRenderMethod::RGBA:
+    {
+      break;
+    }
+    case SpriteRenderMethod::CustomHue:
+    {      
+      const bool shouldRenderInEyeHue = (config.hue == 0) &&
+                                        (config.saturation == 0);
+      const bool canRenderInEyeHue = _faceHSImageHandle != nullptr;
+      // Print error if should but cant render in eye hue
+      if(shouldRenderInEyeHue && !canRenderInEyeHue){
+        PRINT_NAMED_ERROR("CompositeImage.OverlayImageWithFrame.ShouldRenderInEyeHueButCant",
+                          "HS Image handle missing - image will be renderd with 0,0 hue saturation");
+      }
+      
+      if(shouldRenderInEyeHue && canRenderInEyeHue){
+        // Render the sprite with procedural face hue/saturation
+        // TODO: Kevin K. Copy is happening here due to way we can resize image handles with cached data
+        // do something better
+        auto hue = _faceHSImageHandle->GetHue();
+        auto sat = _faceHSImageHandle->GetSaturation();
+        hsImageHandle = std::make_shared<Vision::HueSatWrapper>(hue, sat);
+      }else{
+        hsImageHandle = std::make_shared<Vision::HueSatWrapper>(config.hue, config.saturation);
+      }
+      break;
+    }
+    default:
+    {
+      PRINT_NAMED_ERROR("CompositeImage.HowToRenderRGBA.InvalidRenderMethod",
+                        "Do not have a valid render method");
+      break;
+    }
+  }
+
+  return hsImageHandle;
 }
 
 

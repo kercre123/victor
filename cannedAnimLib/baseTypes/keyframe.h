@@ -353,6 +353,8 @@ namespace Cozmo {
     Vision::CompositeImage& GetCompositeImage() { assert(_compositeImage != nullptr); return *_compositeImage;}
     
     void OverrideShouldRenderInEyeHue(bool shouldRenderInEyeHue);
+
+    void CacheInternalSprites(Vision::SpriteCache* cache, const TimeStamp_t endTime_ms);
     
     bool AllowProceduralEyeOverlays() const { return _allowProceduralEyeOverlays; }
     

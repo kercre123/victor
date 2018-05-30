@@ -15,9 +15,14 @@
 
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
 
+#include "util/helpers/boundedWhile.h"
+#include "util/math/math.h"
 
 namespace Anki {
 namespace Vision {
+
+namespace{
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SpriteCache::SpriteCache(const Vision::SpritePathMap* spriteMap)
@@ -36,8 +41,23 @@ SpriteCache::~SpriteCache()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SpriteHandle SpriteCache::GetSpriteHandle(SpriteName spriteName, 
-                                          const HSImageHandle& hueAndSaturation, 
-                                          const std::set<CacheSpec>& cacheSpecs)
+                                          const HSImageHandle& hueAndSaturation)
+{
+  return GetSpriteHandleInternal(spriteName, hueAndSaturation);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SpriteHandle SpriteCache::GetSpriteHandle(const std::string& fullSpritePath, 
+                                          const HSImageHandle& hueAndSaturation)
+{
+  return GetSpriteHandleInternal(fullSpritePath, hueAndSaturation);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SpriteCache::InternalHandle SpriteCache::GetSpriteHandleInternal(SpriteName spriteName, 
+                                                                 const HSImageHandle& hueAndSaturation)
 {
   std::lock_guard<std::mutex> guard(_hueSaturationMapMutex);
 
@@ -50,24 +70,14 @@ SpriteHandle SpriteCache::GetSpriteHandle(SpriteName spriteName,
 
   // If not, create a new handle
   InternalHandle handle = std::make_shared<SpriteWrapper>(_spriteMap, spriteName);
-
-  // Add it to the cache as appropriate
-  ISpriteWrapper::ImgTypeCacheSpec typesToCache;
-  for(auto& spec : cacheSpecs){
-    typesToCache.grayscale = (spec == CacheSpec::CacheGrayscaleIndefinitely);
-    typesToCache.rgba = (spec == CacheSpec::CacheRGBAIndefinitely);
-  }
-  handle->CacheSprite(typesToCache, hueAndSaturation);
   wrapperMap.emplace(spriteName, handle);
-
   return handle;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SpriteHandle SpriteCache::GetSpriteHandle(const std::string& fullSpritePath, 
-                                          const HSImageHandle& hueAndSaturation, 
-                                          const std::set<CacheSpec>& cacheSpecs)
+SpriteCache::InternalHandle SpriteCache::GetSpriteHandleInternal(const std::string& fullSpritePath, 
+                                                                 const HSImageHandle& hueAndSaturation)
 {
   std::lock_guard<std::mutex> guard(_hueSaturationMapMutex);
 
@@ -80,19 +90,48 @@ SpriteHandle SpriteCache::GetSpriteHandle(const std::string& fullSpritePath,
 
   // If not, create a new handle
   InternalHandle handle = std::make_shared<SpriteWrapper>(fullSpritePath);
-
-  // Add it to the cache as appropriate
-  ISpriteWrapper::ImgTypeCacheSpec typesToCache;
-  for(auto& spec : cacheSpecs){
-    typesToCache.grayscale = (spec == CacheSpec::CacheGrayscaleIndefinitely);
-    typesToCache.rgba = (spec == CacheSpec::CacheRGBAIndefinitely);
-  }
-  
-  handle->CacheSprite(typesToCache, hueAndSaturation);
   filePathMap.emplace(fullSpritePath, handle);
 
   return handle;
+}
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SpriteCache::InternalHandle SpriteCache::ConvertToInternalHandle(SpriteHandle handle,
+                                                                 const HSImageHandle& hueAndSaturation)
+{
+  InternalHandle internalHandle;
+  {
+    std::lock_guard<std::mutex> guard(_hueSaturationMapMutex);
+    auto& handleMap = GetHandleMapForHue(hueAndSaturation);
+
+    for(auto& pair : handleMap._wrapperMap){
+      if(pair.second.get() == handle.get()){
+        internalHandle = pair.second;
+        break;
+      }
+    }
+
+    if(internalHandle == nullptr){
+      for(auto& pair : handleMap._filePathMap){
+        if(pair.second.get() == handle.get()){
+          internalHandle = pair.second;
+          break;
+        }
+      }
+    }
+  } // guard falls out of scope to allow call to GetSpriteHandleInternal
+  
+  
+  if(internalHandle == nullptr){
+    std::string fullSpritePath;
+    if(handle->GetFullSpritePath(fullSpritePath)){
+      internalHandle = GetSpriteHandleInternal(fullSpritePath, hueAndSaturation);
+    }
+  }
+  
+
+  return internalHandle;
 }
 
 
@@ -106,6 +145,64 @@ auto SpriteCache::GetHandleMapForHue(const HSImageHandle& hueAndSaturation) -> H
   }
 
   return iter->second;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpriteCache::Update(BaseStationTime_t currTime_nanosec)
+{
+  _lastUpdateTime_nanosec = currTime_nanosec;
+
+  auto iter = _cacheTimeoutMap.begin();
+  const auto upperBound = _cacheTimeoutMap.size() + 1;
+  BOUNDED_WHILE(upperBound, iter != _cacheTimeoutMap.end()){
+    if(iter->first != 0){
+      if(iter->first < _lastUpdateTime_nanosec){
+        iter->second->ClearCachedSprite();
+        iter = _cacheTimeoutMap.erase(iter);
+      }else{
+        break;
+      }
+    }else{
+      ++iter;
+    }
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpriteCache::CacheSprite(const SpriteHandle& handle, 
+                              ImgTypeCacheSpec cacheSpec,
+                              BaseStationTime_t cacheFor_ms, 
+                              const HSImageHandle& hueAndSaturation)
+{
+  InternalHandle internalHandle = ConvertToInternalHandle(handle, hueAndSaturation);
+  
+  if(internalHandle != nullptr){
+    internalHandle->CacheSprite(cacheSpec, hueAndSaturation);
+    const auto expire_ns = _lastUpdateTime_nanosec + Util::MilliSecToNanoSec(cacheFor_ms);
+    _cacheTimeoutMap.emplace(expire_ns, internalHandle);
+  }else{
+    PRINT_NAMED_WARNING("SpriteCache.CacheSprite.UnableToFindSpriteToCache", "");
+  }
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpriteCache::ClearCachedSprite(SpriteHandle handle, 
+                                    ImgTypeCacheSpec cacheSpec, 
+                                    const HSImageHandle& hueAndSaturation)
+{
+  InternalHandle internalHandle = ConvertToInternalHandle(handle, hueAndSaturation);
+
+  for(auto iter = _cacheTimeoutMap.begin(); iter != _cacheTimeoutMap.end(); ++iter){
+    if(iter->second == internalHandle){
+      internalHandle->ClearCachedSprite();
+      _cacheTimeoutMap.erase(iter);
+      break;
+    }
+  }
 }
 
 

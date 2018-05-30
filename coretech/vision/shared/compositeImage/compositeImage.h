@@ -116,6 +116,10 @@ public:
   // Update all sprite boxes to use the new render method
   void OverrideRenderMethod(Anki::Vision::SpriteRenderMethod renderMethod);
 
+  // The composite image should cache all of its sprites for the time specifed
+  void CacheInternalSprites(Vision::SpriteCache* cache, const TimeStamp_t endTime_ms);
+
+
   // Utility function which adds the "empty layer" to the image - useful for instances
   // where a blank composite image is needed at the start of an animation so that updates
   // can be applied at a non-zero time
@@ -141,6 +145,11 @@ private:
   template<typename ImageType>
   void DrawSubImage(ImageType& baseImage, const ImageType& subImage, 
                     const SpriteBox& spriteBox, const Point2i& overlayOffset) const;
+  
+  // Translates SpriteRenderConfig into a usable format for composite images
+  // Returns nullptr if should render RGBA with no image handle
+  // Othrewise, returns HSImage to use in render
+  HSImageHandle HowToRenderRGBA(const SpriteRenderConfig& config) const;
 
   SpriteCache* _spriteCache;
   // To allow sprite boxes to be rendered the color of the robot's eyes

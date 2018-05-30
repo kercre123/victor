@@ -64,7 +64,7 @@ public:
   }
   
   // Calls all tracks' Init() methods
-  Result Init();
+  Result Init(Vision::SpriteCache* cache);
 
   bool IsInitialized() const { return _isInitialized; }
   
@@ -77,6 +77,10 @@ public:
   void Clear();
 
   void ClearUpToCurrent();
+
+  // If the animation has any sprites (the sprite sequence track) cache them for the duration
+  // of the animation so that they're not being loaded from disk during playback
+  void CacheAnimationSprites(Vision::SpriteCache* cache);
 
 
   void SetName(const std::string& name) { _name = name; }

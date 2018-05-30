@@ -172,6 +172,9 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
 
   _ttsComponent->Update();
 
+  // Clear out sprites that have passed their cache time
+  _context->GetDataLoader()->GetSpriteCache()->Update(currTime_nanosec);
+  
   _animationStreamer->Update();
 
 #if ENABLE_CE_RUN_TIME_DIAGNOSTICS

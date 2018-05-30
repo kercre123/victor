@@ -26,6 +26,8 @@ class ImageRGB565;
 class SpriteSequence
 {
 public:
+  using ImgTypeCacheSpec = ISpriteWrapper::ImgTypeCacheSpec;
+
   // Define what should be returned if there are attempts to access frames beyond
   // the final frame index
   enum class LoopConfig{
@@ -46,6 +48,11 @@ public:
   
   // Pop the front frame
   void PopFront();
+
+  void CacheSequence(SpriteCache* cache, 
+                     ImgTypeCacheSpec cacheSpec,
+                     BaseStationTime_t cacheFor_ms,
+                     const HSImageHandle& hueAndSaturation = {}) const;
   
   // Clear the underlying container
   void Clear() { _frames.clear();};

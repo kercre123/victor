@@ -175,6 +175,7 @@ public:
   // Set all keyframe durations within the track
   void SetKeyFrameDuration_ms();
 
+  std::list<FRAME_TYPE>& GetAllFrames() { return _frames;}
 
 private:
   

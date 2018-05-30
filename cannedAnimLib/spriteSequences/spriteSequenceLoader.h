@@ -47,8 +47,7 @@ public:
   Vision::SpriteSequenceContainer* LoadSpriteSequences(const Util::Data::DataPlatform* dataPlatform, 
                                                        Vision::SpritePathMap* spriteMap,
                                                        Vision::SpriteCache* cache,
-                                                       const std::vector<std::string>& spriteSequenceDirs,
-                                                       const std::set<Vision::SpriteCache::CacheSpec>& cacheSpecs = {});
+                                                       const std::vector<std::string>& spriteSequenceDirs);
 private:
   std::mutex _mapMutex;
 
@@ -59,7 +58,6 @@ private:
   Vision::SpriteSequenceContainer::UnmappedSequenceContainer _unmappedSequences;
 
   void LoadSequenceImageFrames(Vision::SpriteCache* cache,
-                               const std::set<Vision::SpriteCache::CacheSpec>& cacheSpecs,
                                const std::string& fullDirectoryPath, 
                                Vision::SpriteName sequenceName);
 

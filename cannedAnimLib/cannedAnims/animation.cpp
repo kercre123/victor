@@ -27,6 +27,7 @@ namespace Anki {
 namespace Cozmo {
 
 static const char* kNameKey = "Name";
+CONSOLE_VAR(bool, kShouldPreCacheSprites, "Animation", false);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Animation::Animation(const std::string& name)
@@ -404,7 +405,7 @@ _turnToRecordedHeadingTrack.__METHOD__(__VA_ARGS__)
 //# define ALL_TRACKS(__METHOD__, __ARG__, __COMBINE_WITH__) ALL_TRACKS_WITH_ARG(__METHOD__, void, __COMBINE_WITH__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result Animation::Init()
+Result Animation::Init(Vision::SpriteCache* cache)
 {
 
 #   if DEBUG_ANIMATIONS
@@ -412,7 +413,9 @@ Result Animation::Init()
 #   endif
   
   ALL_TRACKS(MoveToStart, ;);
-  
+  if(kShouldPreCacheSprites){
+    CacheAnimationSprites(cache);
+  }
   _isInitialized = true;
   
   return RESULT_OK;
@@ -429,6 +432,16 @@ void Animation::Clear()
 void Animation::ClearUpToCurrent()
 {
   ALL_TRACKS(ClearUpToCurrent, ;);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Animation::CacheAnimationSprites(Vision::SpriteCache* cache)
+{
+  auto& frameList = _spriteSequenceTrack.GetAllFrames();
+  auto endTime_ms = GetLastKeyFrameEndTime_ms();
+  for(auto& frame: frameList){
+    frame.CacheInternalSprites(cache, endTime_ms);
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

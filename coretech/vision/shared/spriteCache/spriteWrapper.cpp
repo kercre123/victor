@@ -194,6 +194,7 @@ void SpriteWrapper::CacheSprite(const ImgTypeCacheSpec& typesToCache, const HSIm
   // Cache Grayscale sprite if appropriate
   if(typesToCache.grayscale &&
      _spriteGrayscale == nullptr){
+    _spriteGrayscale = std::unique_ptr<Image>(new Image());
     LoadSprite(_spriteGrayscale.get());
   }
 
@@ -244,6 +245,11 @@ bool SpriteWrapper::ImageMatchesStoredID(const HSImageHandle& hsImage) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SpriteWrapper::LoadSprite(Image* outImage) const
 {
+  if(outImage == nullptr){
+    PRINT_NAMED_ERROR("SpriteWrapper.LoadSprite.OutImageIsNull", "");
+    return;
+  }
+  
   auto res = outImage->Load(_fullSpritePath.c_str());
   ANKI_VERIFY(RESULT_OK == res,
               "CompositeImage.SpriteBoxImpl.Constructor.GrayLoadFailed",

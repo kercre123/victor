@@ -39,8 +39,7 @@ static const std::set<Vision::SpriteName> kSequencesRefuseCache = {
 Vision::SpriteSequenceContainer* SpriteSequenceLoader::LoadSpriteSequences(const Util::Data::DataPlatform* dataPlatform,
                                                                            Vision::SpritePathMap* spriteMap,
                                                                            Vision::SpriteCache* cache,
-                                                                           const std::vector<std::string>& spriteSequenceDirs,
-                                                                           const std::set<Vision::SpriteCache::CacheSpec>& cacheSpecs)
+                                                                           const std::vector<std::string>& spriteSequenceDirs)
 {
   if (dataPlatform == nullptr) { 
     return nullptr;
@@ -48,9 +47,9 @@ Vision::SpriteSequenceContainer* SpriteSequenceLoader::LoadSpriteSequences(const
   Util::Data::Scope resourceScope = Util::Data::Scope::Resources;
 
   // Set up the worker that will process all the image frame folders
-  using MyDispatchWorker = Util::DispatchWorker<3, Vision::SpriteCache*, const std::set<Vision::SpriteCache::CacheSpec>&, std::string, Vision::SpriteName>;
+  using MyDispatchWorker = Util::DispatchWorker<3, Vision::SpriteCache*, std::string, Vision::SpriteName>;
   MyDispatchWorker::FunctionType workerFunction = std::bind(&SpriteSequenceLoader::LoadSequenceImageFrames, 
-                                                            this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+                                                            this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
   MyDispatchWorker worker(workerFunction);
   for(const auto& path : spriteSequenceDirs){
     const std::string spriteSeqFolder = dataPlatform->pathToResource(resourceScope, path);
@@ -75,7 +74,7 @@ Vision::SpriteSequenceContainer* SpriteSequenceLoader::LoadSpriteSequences(const
       }
             
       // Now we can start looking at the next name, this one is ok to load
-      worker.PushJob(cache, cacheSpecs, fullDirPath, sequenceName);
+      worker.PushJob(cache, fullDirPath, sequenceName);
       ++nameIter;
     }
     
@@ -90,7 +89,6 @@ Vision::SpriteSequenceContainer* SpriteSequenceLoader::LoadSpriteSequences(const
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SpriteSequenceLoader::LoadSequenceImageFrames(Vision::SpriteCache* cache,
-                                                   const std::set<Vision::SpriteCache::CacheSpec>& cacheSpecs,
                                                    const std::string& fullDirectoryPath, 
                                                    Vision::SpriteName sequenceName)
 {
@@ -159,7 +157,7 @@ void SpriteSequenceLoader::LoadSequenceImageFrames(Vision::SpriteCache* cache,
     if(kSequencesRefuseCache.find(sequenceName) !=  kSequencesRefuseCache.end()){
       handle = cache->GetSpriteHandle(fullFilename, faceHueAndSaturation);
     }else{
-      handle = cache->GetSpriteHandle(fullFilename, faceHueAndSaturation, cacheSpecs);
+      handle = cache->GetSpriteHandle(fullFilename, faceHueAndSaturation);
     }
     
     // Add empty frames if there's a gap
