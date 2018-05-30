@@ -19,6 +19,7 @@ enum uint_8 BehaviorID {
   StackBlocks,
 
   // devBehaviors
+  ReactToPersonDetected,
   DevBaseBehavior,
   DevBatteryLogging,
   DevDisplayReadingsOnFace,
