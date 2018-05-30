@@ -101,16 +101,12 @@ static const Font gSmallFont = {
 #include "huge_font.inc"
 
 
-
-#define HUGE_FONT_START_LINE 1
-
-
 static const Font* gFont[DISPLAY_NUM_LAYERS] = {
   &gSmallFont,
   &gMediumFont,
   &gBigFont,
+  &gHugeFont,
   &gLargeFont,
-//  &gHugeFont,
 };
 
 //each screen_line is 8 bits high.
