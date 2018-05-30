@@ -126,9 +126,9 @@ namespace Vision {
   template<typename T>
   void ImageBase<T>::Display(const char *windowName, s32 pauseTime_ms) const
   {
-#   if defined(ANKI_PLATFORM_IOS) || defined(ANKI_PLATFORM_ANDROID)
+#   if !defined(SIMULATOR)
     {
-      PRINT_NAMED_WARNING("ImageBase.Display.NoDisplayOnAndroidOrIOS",
+      PRINT_NAMED_WARNING("ImageBase.Display.NoDisplay",
                           "Ignoring display request for %s", windowName);
       return;
     }
@@ -144,9 +144,9 @@ namespace Vision {
   template<typename T>
   void ImageBase<T>::CloseDisplayWindow(const char *windowName)
   {
-#   if defined(ANKI_PLATFORM_IOS) || defined(ANKI_PLATFORM_ANDROID)
+#   if !defined(SIMULATOR)
     {
-      PRINT_NAMED_WARNING("ImageBase.CloseDisplayWindow.NoDisplayOnAndroidOrIOS",
+      PRINT_NAMED_WARNING("ImageBase.CloseDisplayWindow.NoDisplay",
                           "Ignoring close display request for %s", windowName);
       return;
     }
@@ -158,12 +158,12 @@ namespace Vision {
   template<typename T>
   void ImageBase<T>::CloseAllDisplayWindows()
   {
-#   if defined(ANKI_PLATFORM_IOS) || defined(ANKI_PLATFORM_ANDROID)
+#   if !defined(SIMULATOR)
     {
       // NOTE: Display should not be possible (via similar checks above), so
       // there's no real harm in calling this method, so just a debug, not
       // a warning.
-      PRINT_NAMED_DEBUG("ImageBase.CloseAllDisplayWindows.NoDisplayOnAndroidOrIOS", "");
+      PRINT_NAMED_DEBUG("ImageBase.CloseAllDisplayWindows.NoDisplay", "");
       return;
     }
 #   endif
