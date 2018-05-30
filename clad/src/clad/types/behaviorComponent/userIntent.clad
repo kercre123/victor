@@ -93,6 +93,7 @@ union dupes_allowed UserIntent
   UserIntent_MeetVictor       meet_victor, 
   UserIntent_Void             play_anytrick,
   UserIntent_PlaySpecific     play_specific,
+  UserIntent_Void             check_timer,
   UserIntent_Void             cancel_timer,
   UserIntent_TimeInSeconds    set_timer,
   UserIntent_WeatherResponse  weather_response,

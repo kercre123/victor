@@ -1008,6 +1008,14 @@
     "AnimName": "ag_timer_timecancel"
   },
   {
+    "CladEvent": "TimerCheckTimeGetIn",
+    "AnimName": "ag_timer_left_getin"
+  },
+  {
+    "CladEvent": "TimerCheckTimeGetOut",
+    "AnimName": "ag_timer_left_getout"
+  },
+  {
     "CladEvent": "TimerSetGetIn",
     "AnimName": "ag_timer_set_getin"
   },

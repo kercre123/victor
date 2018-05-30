@@ -298,6 +298,10 @@ void BehaviorTimerUtilityCoordinator::InitBehavior()
   BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(SingletonTimerAntic),
                                  BEHAVIOR_CLASS(ProceduralClock),
                                  _iParams.timerAnticBehavior);
+                                
+  BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(SingletonTimerCheckTime),
+                                 BEHAVIOR_CLASS(ProceduralClock),
+                                 _iParams.timerCheckTimeBehavior);
 
   BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(SingletonTimerRinging),
                                  BEHAVIOR_CLASS(AnimGetInLoop),
@@ -319,6 +323,7 @@ void BehaviorTimerUtilityCoordinator::GetAllDelegates(std::set<IBehavior*>& dele
   delegates.insert(_iParams.timerAlreadySetBehavior.get());
   delegates.insert(_iParams.iCantDoThatBehavior.get());
   delegates.insert(_iParams.cancelTimerBehavior.get());
+  delegates.insert(_iParams.timerCheckTimeBehavior.get());
 }
 
 
@@ -329,6 +334,7 @@ bool BehaviorTimerUtilityCoordinator::WantsToBeActivatedBehavior() const
   const bool setTimerWantsToRun = uic.IsUserIntentPending(USER_INTENT(set_timer));
   const bool timerShouldRing    = TimerShouldRing();
   const bool cancelTimerPending = uic.IsUserIntentPending(USER_INTENT(cancel_timer));
+  const bool checkTimePending = uic.IsUserIntentPending(USER_INTENT(check_timer));
   
   // Todo - need to have a distinction of polite interrupt on min time vs max time
   // for now, just use max as a hard cut criteria
@@ -340,7 +346,9 @@ bool BehaviorTimerUtilityCoordinator::WantsToBeActivatedBehavior() const
   }
 
 
-  return cancelTimerPending || setTimerWantsToRun || timeToRunAntic || timerShouldRing || _lParams.shouldForceAntic;
+  return cancelTimerPending || setTimerWantsToRun || 
+         timeToRunAntic || timerShouldRing || 
+         _lParams.shouldForceAntic || checkTimePending;
 }
 
 
@@ -374,6 +382,7 @@ void BehaviorTimerUtilityCoordinator::BehaviorUpdate()
   CheckShouldSetTimer();
   CheckShouldCancelTimer();
   CheckShouldPlayAntic();
+  CheckShouldShowTimeRemaining();
   
   _lParams.shouldForceAntic = false;
 }
@@ -447,6 +456,21 @@ void BehaviorTimerUtilityCoordinator::CheckShouldCancelTimer()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorTimerUtilityCoordinator::CheckShouldShowTimeRemaining()
+{
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
+  if(uic.IsUserIntentPending(USER_INTENT(check_timer))){
+    SmartActivateUserIntent(USER_INTENT(check_timer));
+    if(auto handle = GetTimerUtility().GetTimerHandle()){
+      TransitionToPlayAntic();
+    }else{
+      TransitionToInvalidTimerRequest();
+    }
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTimerUtilityCoordinator::CheckShouldPlayAntic()
 {
   if(auto handle = GetTimerUtility().GetTimerHandle()){
@@ -476,6 +500,14 @@ void BehaviorTimerUtilityCoordinator::TransitionToPlayAntic()
   _iParams.anticTracker->PlayingAntic(GetBEI());
   _iParams.timerAnticBehavior->WantsToBeActivated();
   DelegateNow(_iParams.timerAnticBehavior.get());
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorTimerUtilityCoordinator::TransitionToShowTimeRemaining()
+{
+  _iParams.timerAlreadySetBehavior->WantsToBeActivated();
+  DelegateNow(_iParams.timerAlreadySetBehavior.get());
 }
 
 
@@ -555,6 +587,7 @@ void BehaviorTimerUtilityCoordinator::SetupTimerBehaviorFunctions()
 
   _iParams.setTimerBehavior->SetGetDigitFunction(BuildTimerFunction());
   _iParams.timerAnticBehavior->SetGetDigitFunction(BuildTimerFunction());
+  _iParams.timerCheckTimeBehavior->SetGetDigitFunction(BuildTimerFunction());
 }
 
 

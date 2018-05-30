@@ -209,6 +209,8 @@ enum int_32 AnimationTrigger
   StuckOnEdge,
   SuccessfulWheelie,
   TimerCancelTimer,
+  TimerCheckTimeGetIn,
+  TimerCheckTimeGetOut,
   TimerSetGetIn,
   TimerSetGetOut,
   TimerRingGetIn,

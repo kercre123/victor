@@ -242,6 +242,7 @@ enum uint_8 BehaviorID {
   SingletonCancelTimer,
   SingletonTimerAlreadySet,
   SingletonTimerAntic,
+  SingletonTimerCheckTime,
   SingletonTimerRinging,
   SingletonTimerSet,
   TimerUtilityCoordinator,

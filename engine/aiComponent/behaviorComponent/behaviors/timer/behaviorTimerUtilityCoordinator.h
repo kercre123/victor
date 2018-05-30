@@ -62,6 +62,7 @@ private:
   struct InstanceParams{
     std::shared_ptr<BehaviorProceduralClock> setTimerBehavior;
     std::shared_ptr<BehaviorProceduralClock> timerAnticBehavior;
+    std::shared_ptr<BehaviorProceduralClock> timerCheckTimeBehavior;
     std::shared_ptr<BehaviorAnimGetInLoop>   timerRingingBehavior;
     ICozmoBehaviorPtr                        timerAlreadySetBehavior;
     ICozmoBehaviorPtr                        iCantDoThatBehavior;
@@ -86,6 +87,7 @@ private:
 
   void TransitionToSetTimer();
   void TransitionToPlayAntic();
+  void TransitionToShowTimeRemaining();
   void TransitionToRinging();
   void TransitionToTimerAlreadySet();
   void TransitionToNoTimerToCancel();
@@ -99,6 +101,7 @@ private:
   void CheckShouldSetTimer();
   void CheckShouldCancelTimer();
   void CheckShouldPlayAntic();
+  void CheckShouldShowTimeRemaining();
 };
 
 } // namespace Cozmo

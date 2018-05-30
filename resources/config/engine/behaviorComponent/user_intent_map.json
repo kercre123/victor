@@ -44,6 +44,10 @@
       "user_intent": "status_feeling"
     },
     {
+      "cloud_intent": "intent_clock_checktimer",
+      "user_intent": "check_timer"
+    },
+    {
       "cloud_intent" : "intent_clock_settimer",
       "app_intent" : "intent_clock_settimer",
       "user_intent"  : "set_timer",

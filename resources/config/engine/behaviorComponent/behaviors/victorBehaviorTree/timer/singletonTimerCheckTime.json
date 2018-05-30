@@ -1,8 +1,14 @@
 {
   "behaviorClass" : "ProceduralClock",
-  "behaviorID" : "SingletonTimerAntic",
+  "behaviorID" : "SingletonTimerCheckTime",
 
-  "associatedActiveFeature": "TimerReminder",
+  "respondToUserIntents": [
+    {
+      "type": "check_timer"
+    }
+  ],
+
+  "associatedActiveFeature": "TimerChecked",
 
   "getInAnimTrigger" : "TimerCheckTimeGetIn",
   "getOutAnimTrigger" : "TimerCheckTimeGetOut",

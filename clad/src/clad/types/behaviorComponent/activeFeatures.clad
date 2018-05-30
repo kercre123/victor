@@ -58,6 +58,7 @@ enum uint_32 ActiveFeature {
   ShutUp,
   StuckOnEdge,
   TimerCanceled,
+  TimerChecked,
   TimerReminder,
   TimerRinging,
   TimerSet,

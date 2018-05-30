@@ -95,7 +95,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeCubeMoved.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeObject.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorStuckOnEdge.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCliff.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCubeTap.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToFrustration.h"
@@ -112,6 +111,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToSound.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUnexpectedMovement.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorStuckOnEdge.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/robotDrivenDialog/behaviorPromptUserForVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/sdkBehaviors/behaviorSDKInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/sleeping/behaviorSleeping.h"
@@ -660,7 +660,7 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       newBehavior = ICozmoBehaviorPtr(new BehaviorAcknowledgeObject(config));
       break;
     }
-
+    
     case BehaviorClass::ReactToCliff:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToCliff(config));
@@ -762,7 +762,7 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       newBehavior = ICozmoBehaviorPtr(new BehaviorStuckOnEdge(config));
       break;
     }
-
+    
     case BehaviorClass::PromptUserForVoiceCommand:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorPromptUserForVoiceCommand(config));
