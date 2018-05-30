@@ -181,6 +181,3 @@ int main(int argc, const char* argv[])
   core_common_on_exit();
   return 0;
 }
-
-
-

@@ -1,22 +1,23 @@
 #ifndef SPINE_PLATFORM_H
 #define SPINE_PLATFORM_H
 
-#if defined(ANDROID) || defined(VICOS)
-#define  PLATFORM_ANDROID 1
-#else
+#ifdef OSX
 #define  PLATFORM_OSX 1
+#else
+#define  PLATFORM_VICOS 1
+#define  PLATFORM_ANDROID 1
 #endif
 
 /* Platform selector. **
  * -
  * Makefile must define exactly one of
  *
- * PLATFORM_ANDRIOD
+ * PLATFORM_VICOS
  * PLATFORM_OSX
  * PLATFORM_SIM ?
  */
 
-#if PLATFORM_ANDROID
+#if PLATFORM_VICOS
 #include "android/spine_logging.h"
 #include "android/serial_support.h"
 #include <unistd.h>

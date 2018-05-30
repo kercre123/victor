@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <string.h>
+#include <stdio.h>
+
 #include <sys/stat.h>
 
 #include "core/clock.h"
@@ -53,7 +56,7 @@ int fixture_log_init(void)
     }
     snprintf(filename, MAX_LOGFILE_NAMELEN, HELPER_LOGFILE, n);
     gLogging.fd = open(filename, O_WRONLY|O_CREAT);
-    
+
     if( gLogging.fd >= 0 )
       write(gLogging.fd, "helper build " __DATE__ " " __TIME__ "\n", strlen("helper build " __DATE__ " " __TIME__ "\n"));
   }
@@ -72,13 +75,13 @@ void fixture_log_terminate(void)
 int fixture_log_start(const char* params, int len)
 {
   char buf[100];
-  
+
   if (gLogging.fd >= 0) {
     if( !gLogging.enabled ) {
       gLogging.enabled = true;
       snprintf(buf, sizeof(buf), "\n------------------------------ log start %i ------------------------------\n", ++gLogging.start_cnt);
       write(gLogging.fd, buf, strlen(buf));
-      
+
       gLogging.ccnt = 0;
       gLogging.start_time = steady_clock_now(); //beginning of log time
       fixture_log_writestring(">>logstart ");
@@ -97,7 +100,7 @@ void fixture_log_writestring(const char* textstring)
 void fixture_log_write(const char* textstring, int len)
 {
   static char logbuf[LOG_BUFSZ];
-  
+
   if (gLogging.enabled)
   {
     //parse chunky stream into smooth lines
@@ -108,13 +111,13 @@ void fixture_log_write(const char* textstring, int len)
       int oplen = !endl ? len : endl - textstring + 1; //up to and including newline
       if( oplen + gLogging.ccnt > LOG_BUFSZ ) //force line wrap if we overflow buffer
         forcewrap = 1, oplen = LOG_BUFSZ - gLogging.ccnt;
-      
+
       //append to buffer
       memcpy( &logbuf[gLogging.ccnt], textstring, oplen );
       gLogging.ccnt += oplen;
       textstring += oplen;
       len -= oplen;
-      
+
       //Dump full lines to the logfile
       if( forcewrap || logbuf[gLogging.ccnt-1] == '\n' )
       {
@@ -123,14 +126,14 @@ void fixture_log_write(const char* textstring, int len)
         uint64_t time_us = (steady_clock_now() - gLogging.start_time)/1000;
         snprintf(prefix, sizeof(prefix), "[%03u.%06u] ", (uint32_t)(time_us/1000000), (uint32_t)(time_us%1000000) );
         write(gLogging.fd, prefix, strlen(prefix));
-        
+
         //write buffered line
         write(gLogging.fd, logbuf, gLogging.ccnt);
         gLogging.ccnt = 0;
         if( forcewrap )
           write(gLogging.fd, "\n", 1);
       }
-      
+
     }
   }
 }
@@ -139,7 +142,7 @@ int fixture_log_stop(const char* params, int len)
 {
   if( gLogging.enabled && gLogging.ccnt ) //flush log buffer
     fixture_log_write("\n",1);
-  
+
   gLogging.enabled = false;
   return 0;
 }

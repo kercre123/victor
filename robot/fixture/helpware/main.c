@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
+#include <errno.h>
+#include <limits.h>
 #include <sys/time.h>
 #include <sys/wait.h>
 
@@ -16,6 +18,7 @@
 #include "helpware/display.h"
 #include "helpware/logging.h"
 #include "helpware/pidopen.h"
+#include "helpware/kbhit.h"
 
 
 //#define FIXTURE_TTY "/dev/ttyHSL1"
@@ -128,8 +131,6 @@ int handle_logstop_command(const char* cmd, int len) {
   return 0;
 }
 
-//#define STATIC_ASSERT(COND,MSG) typedef char static_assertion_##MSG[(COND)?1:-1]
-//STATIC_ASSERT(LONG_MAX > 0xFFFFffff); //require >32-bit long for parsing u32 nums with strtol()
 
 int handle_dutprogram_command(const char* cmd, int len) {
   char *end;
@@ -152,13 +153,13 @@ int handle_dutprogram_command(const char* cmd, int len) {
   len--;
   if( len <= 0 ) //missing ESN param
     return 917; //ERROR_BAD_ARG
-  
+
   //ensure null terminated
   char argstr[128];
   if (sizeof(argstr) < len) { len = sizeof(argstr)-1; }
   memcpy(argstr, next, len);
   argstr[len]='\0';
-  
+
   int retval = shellcommand((int)timeout_sec, "./headprogram", argstr );
   if( retval >= 100 && retval <= 120 ) //limited range of script errors mapped to fixture error codes
     retval += 400; //shift to fixture 'headprogram' error range {500-520}
@@ -368,41 +369,6 @@ int fixture_serial(int serialFd) {
 
 
 
-
-void enable_kbhit(bool enable)
-{
-  static struct termios oldt, newt;
-  static bool active;
-
-  if ( enable && !active)
-  {
-    tcgetattr( STDIN_FILENO, &oldt);
-    newt = oldt;
-    newt.c_lflag &= ~( ICANON | ECHO );
-    tcsetattr( STDIN_FILENO, TCSANOW, &newt);
-    active = true;
-  }
-  else if (!enable && active) {
-    tcsetattr( STDIN_FILENO, TCSANOW, &oldt);
-    active = false;
-  }
-}
-
-int kbhit (void)
-{
-  struct timeval tv;
-  fd_set rdfs;
-
-  tv.tv_sec = 0;
-  tv.tv_usec = 0;
-
-  FD_ZERO(&rdfs);
-  FD_SET (STDIN_FILENO, &rdfs);
-
-  select(STDIN_FILENO+1, &rdfs, NULL, NULL, &tv);
-  return FD_ISSET(STDIN_FILENO, &rdfs);
-
-}
 
 int user_terminal(void) {
   static int linelen = 0;

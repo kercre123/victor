@@ -89,7 +89,9 @@ static const Font gSmallFont = {
   /* int BitWidth; */        SMALL_FONT_WIDTH,
   SMALL_FONT_CHAR_START,
   SMALL_FONT_CHAR_END,
-  1 /* CenteredByDefault& */
+  1, /* CenteredByDefault& */
+  0,
+  gSmallFontGlyph,
 };
 
 

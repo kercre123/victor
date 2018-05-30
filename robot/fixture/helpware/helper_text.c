@@ -11,16 +11,10 @@
 
 
 
-
-#define LAYER_SMALL 1
-#define LAYER_LARGE 3
-
 #define SMALL_LINE_COUNT 8
 
 #define HELPER_SMALL_TEXT_COLOR_FG lcd_BLUE
 #define HELPER_SMALL_TEXT_COLOR_BG lcd_BLACK
-
-static inline int min(int a, int b){  return a<b?a:b;}
 
 
 void helper_text_small(int line, const char *text, int len) {
