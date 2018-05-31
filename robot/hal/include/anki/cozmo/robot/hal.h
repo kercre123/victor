@@ -216,6 +216,9 @@ bool BatteryIsOnCharger();
 /// Return whether or not the battery has been disconnected from the charging circuit
 /// after being on charge base for more than 30 min.
 bool BatteryIsDisconnected();
+
+/// Return detected charger voltage
+f32 ChargerGetVoltage();
 /************************************************************************
  * \section LEDs
  */

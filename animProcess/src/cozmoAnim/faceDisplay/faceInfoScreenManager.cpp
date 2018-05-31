@@ -1194,12 +1194,17 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
   const std::string batt = temp;
 
   sprintf(temp,
+          "CHGR:  %0.2fV",
+          state.chargerVoltage);
+  const std::string charger = temp;
+
+  sprintf(temp,
           "TEMP:  %uC",
           OSState::getInstance()->GetTemperature_C());
   const std::string tempC = temp;
 
 
-  DrawTextOnScreen({cliffs, prox1, prox2, touch, batt, tempC});
+  DrawTextOnScreen({cliffs, prox1, prox2, touch, batt, charger, tempC});
 }
 
 void FaceInfoScreenManager::DrawIMUInfo(const RobotState& state)

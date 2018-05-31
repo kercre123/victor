@@ -583,6 +583,12 @@ bool HAL::BatteryIsDisconnected()
   return bodyData_->battery.flags & POWER_BATTERY_DISCONNECTED;
 }
 
+f32 HAL::ChargerGetVoltage()
+{
+  // scale raw ADC counts to voltage (conversion factor from Vandiver)
+  return kBatteryScale * bodyData_->battery.charger;
+}
+
 u8 HAL::GetWatchdogResetCounter()
 {
   // not (yet) implemented in HAL in V2
