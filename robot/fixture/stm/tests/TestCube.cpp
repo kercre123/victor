@@ -353,7 +353,7 @@ static void CubeTest(void)
   DUT_UART::init(57600);
   
   //DEBUG:
-  if( g_fixmode == FIXMODE_CUBE0 ) {
+  if( g_fixmode <= FIXMODE_CUBE0 ) {
     TestCommon::consoleBridge(TO_DUT_UART,3000);
   }
   
@@ -434,12 +434,6 @@ static void OTPbootloader(void)
   
   cmdSend(CMD_IO_DUT_UART, "getvers");
   
-  //only burn OTP for valid cube types (0/debug bail out here)
-  if( g_fixmode != FIXMODE_CUBE1 && g_fixmode != FIXMODE_CUBE2 ) {
-    throw ERROR_UNKNOWN_MODE;
-    //return;
-  }
-  
   //Generate bd address
   bdaddr_t bdaddr;
   bdaddr_generate(&bdaddr, GetRandom ); //use RNG peripheral for proper randomness
@@ -449,8 +443,8 @@ static void OTPbootloader(void)
   cubeid.hwrev = CURRENT_CUBE_HW_REV;
   cubeid.model = (g_fixmode == FIXMODE_CUBE1) ? CUBEID_MODEL_CUBE1 : ((g_fixmode == FIXMODE_CUBE2) ? CUBEID_MODEL_CUBE2 : CUBEID_MODEL_INVALID);
   
-  //pull a new s/n for release builds only (limited supply, don't waste during debug)
-  //if( g_isReleaseBuild )
+  //pull a new s/n for valid modes only (allow debug on all fixtures)
+  if( g_fixmode == FIXMODE_CUBE1 || g_fixmode == FIXMODE_CUBE2 )
     cubeid.esn = fixtureGetSerial(); //get next 12.20 esn in the sequence
   
   uint32_t crc = cubebootSignature();
@@ -460,8 +454,18 @@ static void OTPbootloader(void)
   Board::powerOn(PWR_DUTPROG);
   {
     char *cmd = snformat(b,bz,"otp write %s %08x %u %u %08x", bdaddr2str(&bdaddr), cubeid.esn, cubeid.hwrev, cubeid.model, crc);
-    cmdSend(CMD_IO_DUT_UART, cmd, 60*1000, (CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS) & ~CMD_OPTS_EXCEPTION_EN );
-    write_result = cmdStatus();
+    
+    //only burn OTP for valid cube types
+    if( g_fixmode == FIXMODE_CUBE1 || g_fixmode == FIXMODE_CUBE2 ) {
+      cmdSend(CMD_IO_DUT_UART, cmd, 60*1000, (CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS) & ~CMD_OPTS_EXCEPTION_EN );
+      write_result = cmdStatus();
+    } else {
+      ConsolePrintf("skipping OTP write:\n");
+      ConsolePrintf("XXX: %s\n", b);
+      write_result = 0;
+      //throw ERROR_UNKNOWN_MODE;
+      //return;
+    }
   }
   Board::powerOff(PWR_DUTPROG);
   
@@ -539,6 +543,10 @@ TestFunction* TestCube1GetTests(void) {
 TestFunction* TestCube2GetTests(void) {
   //CUBE2 needs to be same as CUBE1. cube id changes based on g_fixmode (1->2)
   return TestCube1GetTests();
+}
+
+TestFunction* TestCubeOLGetTests(void) {
+  return TestCube1GetTests(); //OTP write disabled in OL mode
 }
 
 //-----------------------------------------------------------------------------

@@ -40,6 +40,7 @@ TestFunction* TestBackpack1GetTests(void);
 uint32_t cubebootSignature(bool dbg_print=0, int *out_cubeboot_size=0);
 bool          TestCubeDetect(void);
 void          TestCubeCleanup(void);
+TestFunction* TestCubeOLGetTests(void);
 TestFunction* TestCubeFccGetTests(void);
 TestFunction* TestCube0GetTests(void);
 TestFunction* TestCube1GetTests(void);
