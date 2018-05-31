@@ -2811,7 +2811,8 @@ RobotState Robot::GetDefaultRobotState()
                          0.f, //float touchSensorFilt
                          AccelData(), //const Anki::Cozmo::AccelData &accel,
                          GyroData(), //const Anki::Cozmo::GyroData &gyro,
-                         5.f, //float batteryVoltage,
+                         5.f, // float batteryVoltage
+                         0.f, // float chargerVoltage
                          kDefaultStatus, //uint32_t status,
                          std::move(defaultCliffRawVals), //std::array<uint16_t, 4> cliffDataRaw,
                          ProxSensorData(), //const Anki::Cozmo::ProxSensorData &proxData,

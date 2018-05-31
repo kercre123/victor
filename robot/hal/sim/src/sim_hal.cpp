@@ -886,6 +886,14 @@ namespace Anki {
       return false;
     }
 
+    f32 HAL::ChargerGetVoltage()
+    {
+      if (BatteryIsOnCharger()) {
+        return 5.f;
+      }
+      return 0.f;
+    }
+
     extern "C" {
     void EnableIRQ() {}
     void DisableIRQ() {}
