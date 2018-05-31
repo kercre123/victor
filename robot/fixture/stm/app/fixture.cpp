@@ -154,11 +154,16 @@ static int GetSequence(bool allocate_permanently)
 // Get a serial number for a device in the normal 12.20 fixture.sequence format
 uint32_t fixtureGetSerial(void)
 {
-  if ( !FIXTURE_SERIAL || FIXTURE_SERIAL > 0xfff) { //12-bit limit
+  if ( !FIXTURE_SERIAL || FIXTURE_SERIAL > 0x7ff) { //12-bit limit
     ConsolePrintf("fixture serial out of range for esn generation\n");
     throw ERROR_SERIAL_INVALID;
   }
   return (FIXTURE_SERIAL << 20) | (GetSequence(1) & 0x0Fffff);
+}
+
+uint32_t fixtureReadSerial(void) {
+  uint32_t serial = FIXTURE_SERIAL > 0x7ff ? 0 : FIXTURE_SERIAL;
+  return (serial << 20) | (GetSequence(0) & 0x0Fffff); //read only, no sequence changes or flash update
 }
 
 int fixtureReadSequence(void) {

@@ -17,8 +17,16 @@ static headid_t headnfo;
 static const int CURRENT_HEAD_HW_REV = HEADID_HWREV_PVT;
 static const int CURRENT_HEAD_MODEL = 1;
 
-static uint32_t m_previous_esn = 0;
-uint32_t TestHeadGetPrevESN(void) {
+static uint32_t m_previous_esn = ~0;
+uint32_t TestHeadGetPrevESN(void)
+{
+  //initialize on first use (app display at boot)
+  if( m_previous_esn & 0x80000000 ) {
+    m_previous_esn = fixtureReadSerial(); //readSerial returns the next s/n to be allocated
+    if( fixtureReadSequence() > 0 ) //adjust to last used esn
+      m_previous_esn -= 1;
+  }
+  
   return m_previous_esn;
 }
 
