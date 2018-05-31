@@ -20,7 +20,7 @@
 #include "timer.h"
 
 #define TESTCUBE_DEBUG 1
-static const int CURRENT_CUBE_HW_REV = CUBEID_HWREV_DVT4;
+static const int CURRENT_CUBE_HW_REV = CUBEID_HWREV_PVT;
 
 //generate signature for the cube bootloader binary
 uint32_t cubebootSignature(bool dbg_print, int *out_cubeboot_size)
