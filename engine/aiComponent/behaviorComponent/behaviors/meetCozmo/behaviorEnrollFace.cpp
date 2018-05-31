@@ -370,13 +370,15 @@ void BehaviorEnrollFace::OnBehaviorActivated()
 void BehaviorEnrollFace::BehaviorUpdate()
 {
   // conditions that would end enrollment, even if the behavior has been interrupted
-  const bool lowBattery = GetBEI().GetRobotInfo().GetBatteryLevel() == BatteryLevel::Low;
-  const auto& uic = GetBehaviorComp<UserIntentComponent>();
-  const bool triggerWordPending = uic.IsTriggerWordPending();
-  if( lowBattery || triggerWordPending ) {
-    DisableEnrollment();
-    SET_STATE( NotStarted );
-    return;
+  if( (_dVars.persistent.settings != nullptr) && IsEnrollmentRequested() ) {
+    const bool lowBattery = GetBEI().GetRobotInfo().GetBatteryLevel() == BatteryLevel::Low;
+    const auto& uic = GetBehaviorComp<UserIntentComponent>();
+    const bool triggerWordPending = uic.IsTriggerWordPending();
+    if( lowBattery || triggerWordPending ) {
+      DisableEnrollment();
+      SET_STATE( NotStarted );
+      return;
+    }
   }
   
   if( !IsActivated() ) {
