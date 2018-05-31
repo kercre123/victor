@@ -13,15 +13,11 @@
 
 #include "webService.h"
 
-#if !defined(ANKI_WEBSERVER_ENABLED)
-  #if defined(NDEBUG)
-    #define ANKI_WEBSERVER_ENABLED 0
-  #else
-    #define ANKI_WEBSERVER_ENABLED 1
-  #endif
+#if !defined(ANKI_NO_WEBSERVER_ENABLED)
+  #define ANKI_NO_WEBSERVER_ENABLED 0
 #endif
 
-#if ANKI_WEBSERVER_ENABLED
+#if !ANKI_NO_WEBSERVER_ENABLED
 
 #if USE_DAS
 #include "DAS/DAS.h"

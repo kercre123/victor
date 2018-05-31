@@ -15,8 +15,8 @@ alias victor_stop='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_
 # shipping, the build that is delivered to customers
 # release, a shipping build with custom options for development, e.g. profilers, webservices
 
-alias victor_build_shipping='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_build.sh -c Release'
-alias victor_build_release='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_build.sh -c Release -DANKI_WEBSERVER_ENABLED=1'
+alias victor_build_shipping='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_build.sh -c Release -DANKI_NO_WEBSERVER_ENABLED=1'
+alias victor_build_release='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_build.sh -c Release'
 alias victor_build_debug='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_build.sh -c Debug'
 alias victor_build_debugo2='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_build.sh -c Debug -O2'
 alias victor_build_xcode='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_build.sh -c Debug -p mac -g Xcode -C'
