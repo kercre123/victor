@@ -1,0 +1,10 @@
+pipeline {
+    agent  { label 'automation'}
+    stages {
+        stage('build') {
+            steps {
+                sh 'python --version'
+            }
+        }
+    }
+}
