@@ -36,6 +36,7 @@ enum uint_32 ActiveFeature {
   BeQuiet,
   CantDoThat,
   ComeHere,
+  DanceToTheBeat,
   Exploring,
   FistBump,
   Frustrated,

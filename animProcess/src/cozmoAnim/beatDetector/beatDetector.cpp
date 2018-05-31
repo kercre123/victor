@@ -33,13 +33,12 @@ namespace {
     .confidence = -1.f,
     .time_sec   = -1.f
   };
-    
-  CONSOLE_VAR(bool, kRunBeatDetector, "BeatDetector", false);
 }
 
 BeatDetector::BeatDetector()
   : _latestBeat(kInvalidBeatInfo)
 {
+  Start();
 }
 
 BeatDetector::~BeatDetector()
@@ -49,17 +48,6 @@ BeatDetector::~BeatDetector()
 
 bool BeatDetector::AddSamples(const AudioUtil::AudioSample* const samples, const uint32_t nSamples)
 {
-  // Start or stop the beat detector if console variable has changed.
-  static bool wasRunBeatDetector = kRunBeatDetector;
-  if (kRunBeatDetector != wasRunBeatDetector) {
-    if (kRunBeatDetector) {
-      Start();
-    } else {
-      Stop();
-    }
-    wasRunBeatDetector = kRunBeatDetector;
-  }
-  
   if (!IsRunning()) {
     return false;
   }

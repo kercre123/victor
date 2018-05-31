@@ -14,6 +14,7 @@
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
 
@@ -21,21 +22,28 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
+  const char* const kConsoleGroup = "BeatDetectorComponent";
+  
   // Minimum beat detector confidence to be considered an actual beat
-  const float kConfidenceThreshold = 0.13f;
+  CONSOLE_VAR_RANGED(float, kConfidenceThreshold, kConsoleGroup, 0.25f, 0.01f, 50.f);
   
   // Length of time to keep a history of detected beats
-  const int kBeatHistoryWindowSize_sec = 10.f;
+  CONSOLE_VAR_RANGED(float, kBeatHistoryWindowSize_sec, kConsoleGroup, 10.f, 1.f, 60.f);
   
   // Minimum number of beats that we must have accumulated in
   // the history window in order to say a beat is detected
-  const int kMinNumBeatsInHistory = 8;
+  CONSOLE_VAR_RANGED(int, kMinNumBeatsInHistory, kConsoleGroup, 8, 2, 50);
   
   // Detected tempo must be steadily within this window
   // in order to say a beat is detected
-  const float kTempoSteadyThreshold_bpm = 7;
+  CONSOLE_VAR_RANGED(float, kTempoSteadyThreshold_bpm, kConsoleGroup, 5, 1, 25);
+  
+  // Used to fake a detected beat. If greater than 0, then a series of confident
+  // beats is created at the given bpm.
+  CONSOLE_VAR_RANGED(float, kFakeBeat_bpm, kConsoleGroup, -1.f, -1.f, 200.f);
 }
 
+  
 BeatDetectorComponent::BeatDetectorComponent()
 : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::BeatDetector)
 {
@@ -59,18 +67,42 @@ void BeatDetectorComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMa
   
   auto* messageHandler = robot->GetRobotMessageHandler();
   _signalHandle = messageHandler->Subscribe(RobotInterface::RobotToEngineTag::beatDetectorState, [this](const AnkiEvent<RobotInterface::RobotToEngine>& event) {
-    _recentBeats.push_back(event.GetData().Get_beatDetectorState().latestBeat);
+    // Only add beats if we are not currently faking a beat
+    if (kFakeBeat_bpm < 0.f) {
+      _recentBeats.push_back(event.GetData().Get_beatDetectorState().latestBeat);
+    }
   });
 }
 
 void BeatDetectorComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
-  // Cull the recent beats list to its window size
-  if (!_recentBeats.empty()) {
-    const float now_sec = static_cast<float>(Util::Time::UniversalTime::GetCurrentTimeInSeconds());
-    while (_recentBeats.front().time_sec < now_sec - kBeatHistoryWindowSize_sec) {
-      _recentBeats.pop_front();
+  const float now_sec = static_cast<float>(Util::Time::UniversalTime::GetCurrentTimeInSeconds());
+  
+  // Are we currently faking a beat?
+  static float prevFakeBeat_bpm = kFakeBeat_bpm;
+  if (kFakeBeat_bpm > 0.f) {
+    if (kFakeBeat_bpm != prevFakeBeat_bpm) {
+      // Just started faking a beat - clear the queue
+      _recentBeats.clear();
     }
+    const float fakeBeatPeriod_sec = 60.f / kFakeBeat_bpm;
+    const float lastFakeBeatTime_sec = _recentBeats.empty() ? 0.f : _recentBeats.back().time_sec;
+    // Do we need to add any new beats?
+    if (now_sec > lastFakeBeatTime_sec + fakeBeatPeriod_sec) {
+      BeatInfo beat;
+      beat.tempo_bpm = kFakeBeat_bpm;
+      beat.confidence = 100.f;
+      // If this is the first beat, pretend it happened right now
+      beat.time_sec = _recentBeats.empty() ? now_sec : lastFakeBeatTime_sec + fakeBeatPeriod_sec;
+      _recentBeats.push_back(beat);
+    }
+  }
+  prevFakeBeat_bpm = kFakeBeat_bpm;
+
+  // Cull the recent beats list to its window size
+  while (!_recentBeats.empty() &&
+         _recentBeats.front().time_sec < now_sec - kBeatHistoryWindowSize_sec) {
+    _recentBeats.pop_front();
   }
 }
 
@@ -82,6 +114,10 @@ bool BeatDetectorComponent::IsBeatDetected() const
   //   - Tempo has been steady for a minimum amount of time
   
   const bool haveEnoughBeats = _recentBeats.size() >= kMinNumBeatsInHistory;
+  if (!haveEnoughBeats) {
+    return false;
+  }
+  
   const bool confidenceHighEnough = std::all_of(_recentBeats.begin(),
                                                 _recentBeats.end(),
                                                 [](const BeatInfo& b) {
@@ -96,13 +132,14 @@ bool BeatDetectorComponent::IsBeatDetected() const
                                         minMaxTempoItPair.first->tempo_bpm,
                                         kTempoSteadyThreshold_bpm);
   
-  return haveEnoughBeats && confidenceHighEnough && tempoSteady;
+  return confidenceHighEnough && tempoSteady;
 }
 
 float BeatDetectorComponent::GetNextBeatTime_sec() const
 {
-  if (!IsBeatDetected()) {
-    DEV_ASSERT(false, "BeatDetectorComponent.GetNextBeatTime.NoBeatDetected");
+  if (!IsBeatDetected() || _recentBeats.empty()) {
+    PRINT_NAMED_WARNING("BeatDetectorComponent.GetNextBeatTime.NoBeatDetected",
+                        "No current beat is detected");
     return 0.f;
   }
   
@@ -120,8 +157,9 @@ float BeatDetectorComponent::GetNextBeatTime_sec() const
 
 float BeatDetectorComponent::GetCurrTempo_bpm() const
 {
-  if (!IsBeatDetected()) {
-    DEV_ASSERT(false, "BeatDetectorComponent.GetCurrTempo_bpm.NoBeatDetected");
+  if (!IsBeatDetected() || _recentBeats.empty()) {
+    PRINT_NAMED_WARNING("BeatDetectorComponent.GetCurrTempo_bpm.NoBeatDetected",
+                        "No current beat is detected");
     return 0.f;
   }
   

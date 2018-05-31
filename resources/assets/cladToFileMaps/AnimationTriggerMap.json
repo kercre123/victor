@@ -196,6 +196,26 @@
     "AnimName": "ag_rtpkeepaway_reacttocube"
   },
   {
+    "CladEvent": "DanceBeatEyeHold",
+    "AnimName": "ag_dancebeat_eyehold"
+  },
+  {
+    "CladEvent": "DanceBeatGetIn",
+    "AnimName": "ag_dancebeat_getin"
+  },
+  {
+    "CladEvent": "DanceBeatGetOut",
+    "AnimName": "ag_dancebeat_getout"
+  },
+  {
+    "CladEvent": "DanceBeatIdle",
+    "AnimName": "ag_dancebeat_idle"
+  },
+  {
+    "CladEvent": "DanceBeatQuit",
+    "AnimName": "ag_dancebeat_quit"
+  },
+  {
     "CladEvent": "DEPRECATED_DanceMambo",
     "AnimName": "ag_dancing_mambo"
   },

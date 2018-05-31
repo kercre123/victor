@@ -61,6 +61,12 @@ const char* pathToExternalSpriteSequences = "assets/sprites/spriteSequences/";
 const char* pathToEngineSpriteSequences   = "config/devOnlySprites/spriteSequences/";
 
 const std::vector<std::string> kPathsToEngineAccessibleAnimations = {
+  // Dance to the beat:
+  "assets/animations/anim_dancebeat_01.bin",
+  "assets/animations/anim_dancebeat_getin_01.bin",
+  "assets/animations/anim_dancebeat_getout_01.bin",
+  
+  // Weather:
   "assets/animations/anim_weather_cloud_01.bin",
   "assets/animations/anim_weather_snow_01.bin",
   "assets/animations/anim_weather_rain_01.bin",

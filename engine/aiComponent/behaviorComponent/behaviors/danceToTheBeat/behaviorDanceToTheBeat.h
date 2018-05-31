@@ -15,6 +15,10 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
+#include "engine/components/bodyLightComponent.h"
+
+#include "clad/types/animationTrigger.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -31,6 +35,7 @@ protected:
   };
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   
+  virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
   virtual void OnBehaviorDeactivated() override;
@@ -40,21 +45,89 @@ protected:
 private:
   using base = ICozmoBehavior;
   
+  // DanceAnimMetadata stores information about dance animations.
+  // Each dance animation is short, and meant to last only a single
+  // beat. The beatDelay_sec indicates when in the animation the
+  // musical beat should land, and is determined by an event keyframe
+  // in the animation itself.
+  struct DanceAnimMetadata {
+    DanceAnimMetadata(std::string&& name) : animName(std::move(name)) {}
+    std::string animName;
+    float beatDelay_sec = 0.f;
+  };
+  
+  // A DancePhrase is made up of one or more possible dance animations
+  // that can be strung together and played on sequential musical beats.
+  // DancePhraseConfig specifies the rules by which dance phrases are
+  // generated when the behavior is run.
+  //
+  // When the behavior begins, animations are randomly drawn from the
+  // list in accordance with the min/max beats. The number of animations
+  // that make up the phrase is random, but is always between 'minBeats'
+  // and 'maxBeats', and is always a multiple of 'multipleOf'.
+  struct DancePhraseConfig {
+    uint32_t minBeats    = 0;
+    uint32_t maxBeats    = 0;
+    uint32_t multipleOf  = 1;
+    bool canListenForBeats = false;
+    std::vector<DanceAnimMetadata> anims;
+  };
+  
   struct InstanceConfig {
     InstanceConfig(const Json::Value& config, const std::string& debugName);
-    const float danceDuration_sec;
-    const float danceDurationVariability_sec;
+
+    // Check if this instance is a valid configuration
+    bool CheckValid();
+    
+    // Is this a valid config?
+    bool isValid = false;
+    
+    float cooldown_sec = 0.f;
+    
+    const bool useBackpackLights;
+    
+    AnimationTrigger getInAnim   = AnimationTrigger::Count;
+    AnimationTrigger getOutAnim  = AnimationTrigger::Count;
+    AnimationTrigger quitAnim    = AnimationTrigger::Count;
+    AnimationTrigger idleAnim    = AnimationTrigger::Count;
+    AnimationTrigger eyeHoldAnim = AnimationTrigger::Count;
+    
+    std::vector<DancePhraseConfig> dancePhraseConfigs;
   };
   
   struct DynamicVariables {
-    float nextAnimTime_sec = 0.f;
     float beatPeriod_sec = 0.f;
-    float dancingEndTime_sec = 0.f;
-    bool getoutAnimPlayed = false;
+    float nextBeatTime_sec = 0.f;
+    float nextAnimTriggerTime_sec = 0.f;
+    
+    BackpackLightDataLocator backpackDataRef;
+    
+    // The queue of animations to play
+    std::queue<DanceAnimMetadata> animsToPlay;
   };
   
   InstanceConfig   _iConfig;
   DynamicVariables _dVars;
+  
+  bool IsAnimQueued() { return _dVars.nextAnimTriggerTime_sec > 0.f; }
+  
+  // Called when a beat occurs while the behavior is running
+  void OnBeat();
+  
+  void StopBackpackLights();
+  
+  // Populates beatDelay_sec with the time into the given animation where
+  // the beat should land. For example, a value of 0.100 would mean that
+  // the musical beat should fall 100 ms into the animation.
+  //
+  // Returns true if we successfully found the beat delay, emits an error
+  // and returns false otherwise.
+  bool GetAnimationBeatDelay_sec(const std::string& animName, float& beatDelay_sec);
+  
+  bool GetAnimationFromTrigger(const AnimationTrigger& animTrigger, std::string& animName);
+
+  // Note, this time uses BasestationTimer, not UniversalTime
+  float _lastRunningBasestationTime_sec = -1.f;
   
 };
 
