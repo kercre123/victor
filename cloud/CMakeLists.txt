@@ -6,7 +6,7 @@ include(anki_build_go)
 include(anki_build_util)
 
 set(GATEWAY_GRPC_OUTPUT "${CMAKE_SOURCE_DIR}/generated/go/src/proto/external_interface/external_interface.pb.go" "${CMAKE_SOURCE_DIR}/generated/go/src/proto/external_interface/external_interface.pb.gw.go")
-set(__extra_go_deps "${CLAD_GO_GEN_SRCS}" "${GATEWAY_GRPC_OUTPUT}")
+set(__extra_go_deps "${CLAD_GO_GEN_SRCS}" "${GATEWAY_GRPC_OUTPUT}" "${CLAD_GATEWAY_GEN_SRCS}")
 
 if (NOT EXISTS "${ANKI_EXTERNAL_DIR}/chipper_key")
   message(WARNING "Need chipper_key file to be able to connect to cloud services!")

@@ -7,7 +7,7 @@ import (
 
 	"anki/ipc"
 	"anki/log"
-	"clad/cloud"
+	gw_clad "clad/gateway"
 	extint "proto/external_interface"
 
 	"golang.org/x/net/context"
@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func WriteToEngine(conn ipc.Conn, msg *cloud.MessageExternalToRobot) (int, error) {
+func WriteToEngine(conn ipc.Conn, msg *gw_clad.MessageExternalToRobot) (int, error) {
 	var err error
 	var buf bytes.Buffer
 	if msg == nil {
@@ -31,8 +31,8 @@ func WriteToEngine(conn ipc.Conn, msg *cloud.MessageExternalToRobot) (int, error
 }
 
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
-func ProtoDriveWheelsToClad(msg *extint.DriveWheelsRequest) *cloud.MessageExternalToRobot {
-	return cloud.NewMessageExternalToRobotWithDriveWheels(&cloud.DriveWheels{
+func ProtoDriveWheelsToClad(msg *extint.DriveWheelsRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithDriveWheels(&gw_clad.DriveWheels{
 		Lwheel_speed_mmps:  msg.LeftWheelMmps,
 		Rwheel_speed_mmps:  msg.RightWheelMmps,
 		Lwheel_accel_mmps2: msg.LeftWheelMmps2,
@@ -41,12 +41,12 @@ func ProtoDriveWheelsToClad(msg *extint.DriveWheelsRequest) *cloud.MessageExtern
 }
 
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
-func ProtoPlayAnimationToClad(msg *extint.PlayAnimationRequest) *cloud.MessageExternalToRobot {
+func ProtoPlayAnimationToClad(msg *extint.PlayAnimationRequest) *gw_clad.MessageExternalToRobot {
 	if msg.Animation == nil {
 		return nil
 	}
 	log.Println("Animation name:", msg.Animation.Name)
-	return cloud.NewMessageExternalToRobotWithPlayAnimation(&cloud.PlayAnimation{
+	return gw_clad.NewMessageExternalToRobotWithPlayAnimation(&gw_clad.PlayAnimation{
 		NumLoops:        msg.Loops,
 		AnimationName:   msg.Animation.Name,
 		IgnoreBodyTrack: false,
@@ -56,28 +56,28 @@ func ProtoPlayAnimationToClad(msg *extint.PlayAnimationRequest) *cloud.MessageEx
 }
 
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
-func ProtoMoveHeadToClad(msg *extint.MoveHeadRequest) *cloud.MessageExternalToRobot {
-	return cloud.NewMessageExternalToRobotWithMoveHead(&cloud.MoveHead{
+func ProtoMoveHeadToClad(msg *extint.MoveHeadRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithMoveHead(&gw_clad.MoveHead{
 		Speed_rad_per_sec:  msg.SpeedRadPerSec,
 	})
 }
 
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
-func ProtoMoveLiftToClad(msg *extint.MoveLiftRequest) *cloud.MessageExternalToRobot {
-	return cloud.NewMessageExternalToRobotWithMoveLift(&cloud.MoveLift{
+func ProtoMoveLiftToClad(msg *extint.MoveLiftRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithMoveLift(&gw_clad.MoveLift{
 		Speed_rad_per_sec:  msg.SpeedRadPerSec,
 	})
 }
 
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
-func ProtoDriveArcToClad(msg *extint.DriveArcRequest) *cloud.MessageExternalToRobot {
+func ProtoDriveArcToClad(msg *extint.DriveArcRequest) *gw_clad.MessageExternalToRobot {
 	// Bind msg.CurvatureRadiusMm which is an int32 to an int16 boundary to prevent overflow
 	if (msg.CurvatureRadiusMm < math.MinInt16) {
 		msg.CurvatureRadiusMm = math.MinInt16
 	} else if (msg.CurvatureRadiusMm > math.MaxInt16) {
 		msg.CurvatureRadiusMm = math.MaxInt16
 	}
-	return cloud.NewMessageExternalToRobotWithDriveArc(&cloud.DriveArc{
+	return gw_clad.NewMessageExternalToRobotWithDriveArc(&gw_clad.DriveArc{
 		Speed:  msg.Speed,
 		Accel: msg.Accel,
 		CurvatureRadius_mm: int16(msg.CurvatureRadiusMm),
@@ -105,14 +105,14 @@ func (m *rpcService) DriveWheels(ctx context.Context, in *extint.DriveWheelsRequ
 func (m *rpcService) PlayAnimation(ctx context.Context, in *extint.PlayAnimationRequest) (*extint.PlayAnimationResult, error) {
 	log.Println("Received rpc request PlayAnimation(", in, ")")
 	animation_result := make(chan RobotToExternalResult)
-	engineChanMap[cloud.MessageRobotToExternalTag_RobotCompletedAction] = animation_result
+	engineChanMap[gw_clad.MessageRobotToExternalTag_RobotCompletedAction] = animation_result
 	_, err := WriteToEngine(engineSock, ProtoPlayAnimationToClad(in))
 	if err != nil {
-		engineChanMap[cloud.MessageRobotToExternalTag_RobotCompletedAction] = nil
+		engineChanMap[gw_clad.MessageRobotToExternalTag_RobotCompletedAction] = nil
 		return nil, err
 	}
 	<-animation_result
-	engineChanMap[cloud.MessageRobotToExternalTag_RobotCompletedAction] = nil
+	engineChanMap[gw_clad.MessageRobotToExternalTag_RobotCompletedAction] = nil
 	return &extint.PlayAnimationResult{
 		Status: &extint.ResultStatus{
 			Description: "Animation completed",

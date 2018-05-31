@@ -15,7 +15,7 @@ import (
 
 	"anki/ipc"
 	"anki/log"
-	"clad/cloud"
+	gw_clad "clad/gateway"
 	extint "proto/external_interface"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -31,7 +31,7 @@ const (
 )
 
 type RobotToExternalResult struct {
-	Message cloud.MessageRobotToExternal
+	Message gw_clad.MessageRobotToExternal
 	Error   error
 }
 
@@ -40,7 +40,7 @@ var (
 	demoCertPool  *x509.CertPool
 	demoAddr      string
 	engineSock    ipc.Conn
-	engineChanMap map[cloud.MessageRobotToExternalTag](chan RobotToExternalResult)
+	engineChanMap map[gw_clad.MessageRobotToExternalTag](chan RobotToExternalResult)
 )
 
 func getSocketWithRetry(socket_dir string, server string, name string) ipc.Conn {
@@ -68,7 +68,7 @@ func grpcHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Ha
 
 // TODO: improve the logic for this to allow for multiple simultaneous requests
 func processEngineMessages() {
-	var msg cloud.MessageRobotToExternal
+	var msg gw_clad.MessageRobotToExternal
 	var b, block []byte
 	var buf bytes.Buffer
 	for {
@@ -118,7 +118,7 @@ func main() {
 
 	engineSock = getSocketWithRetry("/dev/socket/", "_engine_gateway_server_", "client")
 	defer engineSock.Close()
-	engineChanMap = make(map[cloud.MessageRobotToExternalTag](chan RobotToExternalResult))
+	engineChanMap = make(map[gw_clad.MessageRobotToExternalTag](chan RobotToExternalResult))
 
 	log.Println("Sockets successfully created")
 
