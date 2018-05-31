@@ -608,6 +608,10 @@ void HAL::PowerSetMode(const PowerState state)
 
 HAL::PowerState HAL::PowerGetMode()
 {
+  if(bodyData_ == nullptr)
+  {
+    return POWER_MODE_ACTIVE;
+  }
   return (bodyData_->flags & RUNNING_FLAGS_SENSORS_VALID) ? POWER_MODE_ACTIVE : POWER_MODE_CALM;
 }
 
