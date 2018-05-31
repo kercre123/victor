@@ -18,6 +18,8 @@
 namespace Anki {
 namespace Cozmo {
 
+class ConditionPersonDetected;
+
 class BehaviorReactToPersonDetected : public ICozmoBehavior
 {
 public: 
@@ -39,6 +41,16 @@ protected:
 
 private:
 
+  void TurnTowardsPoint();
+  void FinishedTurning();
+
+  enum class State : uint8_t {
+    Starting=0,
+    Turning,
+    TurnedAndWaiting,
+    Completed
+  };
+
   struct InstanceConfig {
     InstanceConfig();
     // TODO: put configuration variables here
@@ -46,8 +58,9 @@ private:
 
   struct DynamicVariables {
     DynamicVariables();
-    // TODO: put member variables here
+    State state;
   };
+
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
