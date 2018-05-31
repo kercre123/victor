@@ -40,7 +40,7 @@
           "value" : 0.1
         },{
           "emotionType" : "Stimulated",
-          "value" : 0.1
+          "value" : 0.3
         },
         {
           "emotionType" : "Social",
@@ -57,7 +57,7 @@
         },
         {
           "emotionType" : "Stimulated",
-          "value" : -0.1
+          "value" : -0.15
         },
         {
           "emotionType" : "Social",
@@ -82,7 +82,7 @@
         },
         {
           "emotionType" : "Stimulated",
-          "value" : -0.1
+          "value" : -0.15
         },
         {
           "emotionType" : "Social",
