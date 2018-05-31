@@ -12,7 +12,7 @@
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/matrix.h"
 #include "coretech/vision/engine/image.h"
-#include "engine/vision/illuminationState.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 
 #include "json/json-forwards.h"
 
@@ -62,7 +62,7 @@ public:
   // Perform illumination detection if the robot is not moving
   Result Detect( Vision::ImageCache& cache, 
                  const VisionPoseData& poseData,
-                 Vision::IlluminationState& illumination );
+                 ExternalInterface::RobotObservedIllumination& illumination );
 
 private:
 

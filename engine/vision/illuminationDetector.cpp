@@ -17,7 +17,6 @@
 
 #include "engine/cozmoContext.h"
 #include "engine/vision/illuminationDetector.h"
-#include "engine/vision/illuminationState.h"
 #include "engine/vision/visionPoseData.h"
 
 #include "util/math/math.h"
@@ -96,10 +95,11 @@ Result IlluminationDetector::Init( const Json::Value& config, const CozmoContext
 
 Result IlluminationDetector::Detect( Vision::ImageCache& cache,
                                      const VisionPoseData& poseData,
-                                     Vision::IlluminationState& illumination )
+                                     ExternalInterface::RobotObservedIllumination& illumination )
 {
   // If the robot moved, clear buffer and bail
-  illumination = Vision::IlluminationState::Unknown;
+  illumination.timestamp = cache.GetTimeStamp();
+  illumination.state = IlluminationState::Unknown;
 
   if( !CanRunDetection( poseData ) )
   {
@@ -125,11 +125,11 @@ Result IlluminationDetector::Detect( Vision::ImageCache& cache,
 
   if( prob > _illumMinProb )
   {
-    illumination = Vision::IlluminationState::Illuminated;
+    illumination.state = IlluminationState::Illuminated;
   }
   else if( prob < _darkMaxProb )
   {
-    illumination = Vision::IlluminationState::Darkened;
+    illumination.state = IlluminationState::Darkened;
   }
 
   #ifndef NDEBUG

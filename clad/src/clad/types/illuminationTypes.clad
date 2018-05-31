@@ -1,0 +1,14 @@
+/** Clad message definition for scene illumination type.
+ */
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 IlluminationState {
+  Unknown = 0,
+  Illuminated,
+  Darkened
+}
+
+} // namespace Cozmo
+} // namespace Anki
