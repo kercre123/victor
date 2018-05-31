@@ -767,6 +767,16 @@ message DisplayFaceImageBinaryChunk {
     bool     interruptRunning
 }
 
+// Sends a chunk of oled data, to be later displayed using DisplayFaceImageRGB
+message DisplayFaceImageRGBChunk {
+    uint_16  faceData[600], // Splitting into chunks of 600 similar to the e2r layer
+    uint_16  numPixels,
+    uint_8   chunkIndex,
+    uint_8   numChunks,
+    uint_32  duration_ms,     // Use uint_32 max value to keep the image on the screen
+    bool     interruptRunning
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Robot / Cube LED Controls
 ///////////////////////////////////////////////////////////////////////////////

@@ -29,6 +29,7 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/shared/compositeImage/compositeImage.h"
+#include "coretech/vision/shared/rgb565Image/rgb565ImageBuilder.h"
 
 #include "json/json.h"
 
@@ -56,6 +57,7 @@ AnimationComponent::AnimationComponent()
 , _isAnimating(false)
 , _currAnimName("")
 , _currAnimTag(0)
+, _oledImageBuilder(new Vision::RGB565ImageBuilder)
 , _compositeImageID(0)
 {
 
@@ -80,6 +82,7 @@ void AnimationComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
       helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayProceduralFace>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SetFaceHue>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayFaceImageBinaryChunk>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayFaceImageRGBChunk>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableKeepFaceAlive>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SetKeepFaceAliveParameters>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadAnimationFile>();
@@ -736,6 +739,32 @@ void AnimationComponent::HandleMessage(const ExternalInterface::DisplayFaceImage
 
   // Convert ExternalInterface version of DisplayFaceImage to RobotInterface version and send
   _robot->SendRobotMessage<RobotInterface::DisplayFaceImageBinaryChunk>(msg.duration_ms, msg.faceData, msg.imageId, msg.chunkIndex);
+}
+
+template<>
+void AnimationComponent::HandleMessage(const ExternalInterface::DisplayFaceImageRGBChunk& msg)
+{
+  if (!_isInitialized) {
+    PRINT_NAMED_WARNING("AnimationComponent.DisplayFaceImageRGB.Uninitialized", "");
+    return;
+  }
+
+  _oledImageBuilder->AddDataChunk(msg.faceData, msg.chunkIndex, msg.numPixels);
+
+  uint32_t fullMask = 0;
+  for( int i=0; i<msg.numChunks; ++i )
+  {
+    fullMask |= (1L << i);
+  }
+
+  // did we recieve every chunk we need?
+  if( (_oledImageBuilder->GetRecievedChunkMask() ^ fullMask) == 0 )
+  {
+    Vision::ImageRGB565 image(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH, _oledImageBuilder->GetAllData());
+    DisplayFaceImage(image, msg.duration_ms, msg.interruptRunning);
+
+    _oledImageBuilder->Clear();
+  }
 }
 
 template<>

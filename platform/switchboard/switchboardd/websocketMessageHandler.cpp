@@ -10,6 +10,7 @@
  *
  **/
 
+#include "lib/util/source/anki/util/helpers/boundedWhile.h"
 #include "switchboardd/websocketMessageHandler.h"
 #include "switchboardd/log.h"
 
@@ -288,10 +289,44 @@ void WebsocketMessageHandler::HandleVictorDisplay_SetBackpackLEDs(Anki::Cozmo::E
   _engineMessaging->SendMessage(G2EMessage::CreateSetBackpackLEDs(std::move(engineMessage)));
 }
 
+void WebsocketMessageHandler::HandleVictorDisplay_DisplayFaceImageRGB(Anki::Cozmo::ExternalComms::DisplayFaceImageRGB sdkMessage) {
+  const unsigned int maxTransferPixels = 600;
+
+  unsigned int pixelsRemaining = 17664;
+  unsigned int chunkIndex = 0;
+  unsigned int chunkCount = (pixelsRemaining + maxTransferPixels + 1) / maxTransferPixels;
+
+  BOUNDED_WHILE(100, pixelsRemaining > 0)
+  {
+    unsigned int pixelCount = (pixelsRemaining > maxTransferPixels) ? maxTransferPixels : pixelsRemaining;
+
+    Anki::Cozmo::ExternalInterface::DisplayFaceImageRGBChunk message;
+
+    message.duration_ms = sdkMessage.duration_ms;
+    message.interruptRunning = sdkMessage.interruptRunning;
+
+    message.chunkIndex = chunkIndex;
+    message.numChunks = chunkCount;
+
+    message.numPixels = pixelCount;
+
+    auto head = std::begin(sdkMessage.faceData) + (maxTransferPixels*chunkIndex);
+    std::copy(head, head + pixelCount, std::begin(message.faceData));
+
+    _engineMessaging->SendMessage(G2EMessage::CreateDisplayFaceImageRGBChunk(std::move(message)));
+
+    pixelsRemaining -= pixelCount;
+    ++chunkIndex;
+  }
+}
+
 void WebsocketMessageHandler::HandleVictorDisplay(Anki::Cozmo::ExternalComms::VictorDisplay unionInstance) {
   switch(unionInstance.GetTag()) {
     case Anki::Cozmo::ExternalComms::VictorDisplayTag::SetBackpackLEDs:
       HandleVictorDisplay_SetBackpackLEDs( unionInstance.Get_SetBackpackLEDs() );
+      break;
+    case Anki::Cozmo::ExternalComms::VictorDisplayTag::DisplayFaceImageRGB:
+      HandleVictorDisplay_DisplayFaceImageRGB( unionInstance.Get_DisplayFaceImageRGB() );
       break;
     default:
       return;

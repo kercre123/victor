@@ -315,6 +315,27 @@ class Robot:
     async def set_cube_lights( self, cube_id, light, color_profile=lights.white_balanced_cube_profile ):
         await self.set_cube_light_corners( cube_id, *[light, light, light, light], color_profile)
 
+    async def set_oled_to_color(self, color, duration_sec, interrupt_running=True):
+        message = _clad_message.DisplayFaceImageRGB()
+        message.duration_ms = int(1000 * duration_sec)
+
+        rgb565 = [
+            ((color.int_color >> 24) & 0xff) >> 3,
+            ((color.int_color >> 16) & 0xff) >> 2,
+            ((color.int_color >> 8) & 0xff) >> 3
+            ]
+
+        int_565_color = (rgb565[0]<<11) | (rgb565[1] << 5) | rgb565[2]
+
+        message.faceData = [int_565_color] * 17664
+        message.interruptRunning = interrupt_running
+
+        innerWrappedMessage = _clad_message.VictorDisplay(DisplayFaceImageRGB=message)
+        outerWrappedMessage = _clad_message.ExternalComms(VictorDisplay=innerWrappedMessage)
+
+        await self.socket.send(outerWrappedMessage.pack())
+
+
 async def _bootstrap(main_function, uri):
     print("Attempting websockets.connect...")
     async with websockets.connect(uri) as websocket:

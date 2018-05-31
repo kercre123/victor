@@ -336,6 +336,7 @@ namespace Vision {
   public:
     ImageRGB565();
     ImageRGB565(s32 nrows, s32 ncols);
+    explicit ImageRGB565(s32 nrows, s32 ncols, const std::vector<u16>& pixels);
     explicit ImageRGB565(const ImageRGB& imageRGB);
     explicit ImageRGB565(const ImageBase<PixelRGB565>& imageBase) : ImageBase<PixelRGB565>(imageBase) { }
     ImageRGB565(const Array2d<PixelRGB565>& array2d) : ImageBase<PixelRGB565>(array2d) { }
@@ -344,6 +345,8 @@ namespace Vision {
     ImageRGB565& SetFromImageRGB(const ImageRGB& imageRGB);
     ImageRGB565& SetFromImageRGB(const ImageRGB& imageRGB, const std::array<u8, 256>& gammaLUT);
     ImageRGB565& SetFromImageRGB565(const ImageRGB565& imageRGB565);
+
+    ImageRGB565& SetFromVector(const std::vector<u16>& pixels);
     
     // Reference counting assignment (does not copy):
     ImageRGB565& operator= (const ImageBase<PixelRGB565> &other);

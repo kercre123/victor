@@ -1456,7 +1456,13 @@ namespace Vision {
   {
     
   }
-  
+
+  ImageRGB565::ImageRGB565(s32 nrows, s32 ncols, const std::vector<u16>& pixels)
+  : ImageBase<PixelRGB565>(nrows, ncols)
+  {
+    SetFromVector( pixels );
+  }
+
   ImageRGB565& ImageRGB565::SetFromImage(const Image& image)
   {
     Allocate(image.GetNumRows(), image.GetNumCols());
@@ -1498,6 +1504,19 @@ namespace Vision {
   ImageRGB565& ImageRGB565::SetFromImageRGB565(const ImageRGB565& imageRGB565)
   {
     imageRGB565.CopyTo(*this);
+    return *this;
+  }
+
+  ImageRGB565& ImageRGB565::SetFromVector(const std::vector<u16>& externalData)
+  {
+    u16* internalDataPtr = GetRawDataPointer();
+    const size_t pixelCount = GetNumRows() * GetNumCols();
+    DEV_ASSERT(externalData.size() == pixelCount, "ImageRGB565.SetFromShowableFormat.UnexpectedNumChannels");
+    for(auto& i : externalData)
+    {
+      *internalDataPtr = i;
+      ++internalDataPtr;
+    }
     return *this;
   }
 

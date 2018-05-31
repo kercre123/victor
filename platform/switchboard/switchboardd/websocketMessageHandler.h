@@ -69,6 +69,7 @@ private:
 
   void HandleVictorDisplay(Anki::Cozmo::ExternalComms::VictorDisplay unionInstance);
   void HandleVictorDisplay_SetBackpackLEDs(Anki::Cozmo::ExternalComms::SetBackpackLEDs sdkMessage);
+  void HandleVictorDisplay_DisplayFaceImageRGB(Anki::Cozmo::ExternalComms::DisplayFaceImageRGB sdkMessage);
 
   void HandleCubes(Anki::Cozmo::ExternalComms::Cubes unionInstance);
   void HandleCubes_SetAllActiveObjectLEDs(Anki::Cozmo::ExternalComms::SetAllActiveObjectLEDs sdkMessage);

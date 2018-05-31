@@ -36,6 +36,7 @@ namespace Anki {
 // Forward declarations
 namespace Vision{
 class CompositeImage;
+class RGB565ImageBuilder;
 }
 
 namespace Cozmo {
@@ -290,6 +291,8 @@ private:
 
   // Latest state message received from anim process
   AnimationState _animState;
+
+  std::unique_ptr<Vision::RGB565ImageBuilder> _oledImageBuilder;
 
   struct AnimCallbackInfo {
     AnimCallbackInfo(const std::string animName,

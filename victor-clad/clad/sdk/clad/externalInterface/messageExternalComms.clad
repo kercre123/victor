@@ -561,9 +561,18 @@ message SetBackpackLEDs {
   int_32   offset[3]
 }
 
+// Note: using dynamic allocation on uint_16, to avoid overflowing the buffer size
+//       or bloating the other messages.
+message DisplayFaceImageRGB {
+    uint_32  duration_ms,     // Use uint_32 max value to keep the image on the screen
+    uint_16  faceData[uint_16],
+    bool     interruptRunning
+}
+
 union VictorDisplay {
     Error                       Error                       = 0x00,
     SetBackpackLEDs             SetBackpackLEDs             = 0x01,
+    DisplayFaceImageRGB         DisplayFaceImageRGB         = 0x02,
 }
 
 
