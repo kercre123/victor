@@ -88,13 +88,13 @@ void ActiveFeatureComponent::UpdateDependent(const BCCompMap& dependentComponent
       }
       
       if( _activeFeature != ActiveFeature::NoFeature ) {
-        DASMSG(featureEnd, "robot.feature.end", "This feature is no longer active");
+        DASMSG(behavior_featureEnd, "behavior.feature.end", "This feature is no longer active");
         DASMSG_SET(s1, ActiveFeatureToString(_activeFeature), "The feature");
         DASMSG_SEND();
       }
 
       if( newFeature != ActiveFeature::NoFeature ) {
-        DASMSG(featureEnd, "robot.feature.start", "A new feature is active");
+        DASMSG(behavior_featureEnd, "behavior.feature.start", "A new feature is active");
         DASMSG_SET(s1, ActiveFeatureToString(newFeature), "The feature");
         DASMSG_SET(s2, intentSource, "The source of the intent (possible values are AI, App, Voice, or Unknown)");
         DASMSG_SEND();

@@ -618,8 +618,8 @@ namespace Vision {
 
         // Log the enrollment ID we just completed and how many album entries it now has
         const size_t numAlbumEntries = entryToReturn.GetAlbumEntries().size();
-        DASMSG(robot_vision_face_enrollment_count_reached,
-               "robot.vision.face_enrollment_count_reached",
+        DASMSG(vision_face_enrollment_count_reached,
+               "vision.face_enrollment_count_reached",
                "This will be shown when the most number of faces we support is shown");
         DASMSG_SET(i1, numAlbumEntries, "The current num of entries");
         DASMSG_SET(i2, _enrollmentID, "The enrollment ID");

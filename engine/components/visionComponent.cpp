@@ -2323,7 +2323,14 @@ namespace Cozmo {
     // Pair this name and ID in the vision system
     Lock();
     _visionSystem->AssignNameToFace(faceID, name, mergeWithID);
+    int numTotal = static_cast<int>(_visionSystem->GetEnrolledNames().size());
     Unlock();
+    {
+      DASMSG(vision_enrolled_names_new, "vision.enrolled_names.new", "A face was assigned a name");
+      DASMSG_SET(i1, faceID, "The face ID (int)");
+      DASMSG_SET(i2, numTotal, "total number of enrolled faces");
+      DASMSG_SEND();
+    }
   }
 
   void VisionComponent::SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
@@ -2338,6 +2345,7 @@ namespace Cozmo {
   {
     Lock();
     Result result = _visionSystem->EraseFace(faceID);
+    int numRemaining = static_cast<int>(_visionSystem->GetEnrolledNames().size());
     Unlock();
     if(RESULT_OK == result) {
       // Update robot
@@ -2347,6 +2355,12 @@ namespace Cozmo {
       msg.faceID  = faceID;
       msg.name    = "";
       _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+      {
+        DASMSG(vision_enrolled_names_erase, "vision.enrolled_names.erase", "An enrolled face/name was erased");
+        DASMSG_SET(i1, faceID, "The face ID (int)");
+        DASMSG_SET(i2, numRemaining, "total number of remaining enrolled faces");
+        DASMSG_SEND();
+      }
       return RESULT_OK;
     } else {
       return RESULT_FAIL;
@@ -2379,12 +2393,20 @@ namespace Cozmo {
     Vision::RobotRenamedEnrolledFace renamedFace;
     Lock();
     Result result = _visionSystem->RenameFace(faceID, oldName, newName, renamedFace);
+    int numTotal = static_cast<int>(_visionSystem->GetEnrolledNames().size());
     Unlock();
 
     if(RESULT_OK == result)
     {
       SaveFaceAlbumToRobot();
       _robot->Broadcast(ExternalInterface::MessageEngineToGame( std::move(renamedFace) ));
+      
+      {
+        DASMSG(vision_enrolled_names_modify, "vision.enrolled_names.modify", "An enrolled face/name was modified");
+        DASMSG_SET(i1, faceID, "The face ID (int)");
+        DASMSG_SET(i2, numTotal, "total number of enrolled faces");
+        DASMSG_SEND();
+      }
     }
 
     return result;

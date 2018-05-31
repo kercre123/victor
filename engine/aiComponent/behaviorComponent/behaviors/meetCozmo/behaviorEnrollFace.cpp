@@ -119,6 +119,9 @@ BehaviorEnrollFace::DynamicVariables::DynamicVariables()
   
   startTime_sec       = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
+  timeScanningStarted_ms = 0;
+  timeStartedLookingForFace_ms = 0;
+  
   lastFaceSeenTime_ms            = 0;
   startedSeeingMultipleFaces_sec = 0.f;
   
@@ -449,17 +452,13 @@ void BehaviorEnrollFace::BehaviorUpdate()
 
     case State::Enrolling:
     {
+      bool finishedScanning = false;
       // Check to see if we're done
       if(GetBEI().GetFaceWorld().IsFaceEnrollmentComplete())
       {
         PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.CheckIfDone.ReachedEnrollmentCount", "");
 
-        // tell the app we've finished scanning
-        // todo: replace with generic status VIC-1423
-        if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
-          ExternalInterface::MeetVictorFaceScanComplete status;
-          GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(std::move(status)));
-        }
+        finishedScanning = true;
 
         // If we complete successfully, unset the observed ID/name
         _dVars.observedUnusableID = Vision::UnknownFaceID;
@@ -474,6 +473,7 @@ void BehaviorEnrollFace::BehaviorUpdate()
       }
       else if(HasTimedOut() || justPlacedOnCharger)
       {
+        finishedScanning = true;
         // Need to play scanning get-out because we timed out while enrolling
         TransitionToScanningInterrupted();
       }
@@ -503,6 +503,45 @@ void BehaviorEnrollFace::BehaviorUpdate()
           }
 
           TransitionToLookingForFace();
+        }
+      }
+      
+      if( finishedScanning ) {
+        // tell the app we've finished scanning
+        if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
+          ExternalInterface::MeetVictorFaceScanComplete status;
+          GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(std::move(status)));
+        }
+        // das msg
+        {
+          const TimeStamp_t currentTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+          const TimeStamp_t timeSpentScanning_ms = currentTime_ms - _dVars.timeScanningStarted_ms;
+          const TimeStamp_t timeBeforeFirstFace_ms = _dVars.timeScanningStarted_ms - _dVars.timeStartedLookingForFace_ms;
+          int numPartialFacesSeen = 0;
+          int numFullFacesSeen = 0;
+          int numNamedFacesSeen = 0;
+          for( const auto& faceID : _dVars.facesSeen ) {
+            const auto it = _dVars.isFaceNamed.find(faceID);
+            if( it != _dVars.isFaceNamed.end() && it->second ) {
+              ++numNamedFacesSeen;
+            }
+            if( faceID > 0 ) {
+              ++numFullFacesSeen;
+            } else if( faceID < 0 ) {
+              ++numPartialFacesSeen;
+            }
+          }
+          
+          DASMSG(behavior_meet_victor_scan_end, "behavior.meet_victor.scan_end", "Face scanning ended in meet victor");
+          DASMSG_SET(i1, timeSpentScanning_ms, "Time spent scanning faces (ms)");
+          DASMSG_SET(i2, timeBeforeFirstFace_ms, "Time scanning before seeing the first face (ms)");
+          DASMSG_SEND();
+
+          DASMSG(behavior_meet_victor_scan_faces, "behavior.meet_victor.scan_faces", "Info about # of faces seen when scanning, sent at scan_end");
+          DASMSG_SET(i1, numPartialFacesSeen, "Number of partial faces seen during scanning");
+          DASMSG_SET(i2, numFullFacesSeen, "Number of full faces seen during scanning");
+          DASMSG_SET(i3, numNamedFacesSeen, "Number of named faces seen during scanning");
+          DASMSG_SEND();
         }
       }
 
@@ -632,6 +671,8 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
 
     } // switch(_state)
   }
+  
+  int numInterruptions = _dVars.persistent.numInterruptions;
 
   // If incomplete, we are being interrupted by something. Don't broadcast completion
   // and don't disable face enrollment.
@@ -671,6 +712,8 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
 
     // Done (whether success or failure), so reset state for next run
     SET_STATE(NotStarted);
+  } else {
+    numInterruptions = ++_dVars.persistent.numInterruptions;
   }
   
   auto& uic = GetBehaviorComp<UserIntentComponent>();
@@ -680,6 +723,16 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
   
   if( info.result == FaceEnrollmentResult::Success ) {
     GetAIComp<AIWhiteboard>().OfferPostBehaviorSuggestion( PostBehaviorSuggestions::Socialize );
+  }
+  
+  {
+    DASMSG(behavior_meet_victor_end, "behavior.meet_victor.end", "Meet victor completed");
+    DASMSG_SET(s1,
+               FaceEnrollmentResultToString(info.result),
+               "Completion status (Success,SawWrongFace,SawMultipleFaces,TimedOut,SaveFailed,Incomplete,Cancelled,NameInUse,UnknownFailure)");
+    DASMSG_SET(i1, info.faceID, "faceID, if applicable");
+    DASMSG_SET(i2, numInterruptions, "number of interruptions (so far [if Incomplete], or total otherwise])");
+    DASMSG_SEND();
   }
 
   PRINT_CH_DEBUG(kLogChannelName, "BehaviorEnrollFace.StopInternal.FinalState",
@@ -703,6 +756,7 @@ void BehaviorEnrollFace::DisableEnrollment()
   _dVars.persistent.didEverLeaveCharger = false;
   _dVars.persistent.lastTimeUserMovedRobot = 0;
   _dVars.persistent.lastDeactivationTime_ms = 0;
+  _dVars.persistent.numInterruptions = 0;
   // Leave "session-only" face enrollment enabled when we finish
   GetBEI().GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
 }
@@ -790,6 +844,10 @@ void BehaviorEnrollFace::TransitionToLookingForFace()
 {
   const bool playScanningGetOut = (State::Enrolling == _dVars.persistent.state);
   
+  if( _dVars.timeStartedLookingForFace_ms == 0 ) {
+    _dVars.timeStartedLookingForFace_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  }
+  
   // enable detection of unexpected rotation for the remainder of the behavior. This is reset
   // to its original value upon behavior deactivation. Note that ReactToUnexpectedMotion is suppressed
   // during this behavior
@@ -869,6 +927,11 @@ void BehaviorEnrollFace::TransitionToLookingForFace()
                     ExternalInterface::MeetVictorFaceScanStarted status;
                     GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(std::move(status)));
                   }
+                  
+                  {
+                    DASMSG(behavior_meet_victor_scan_start, "behavior.meet_victor.scan_start", "Face scanning started in meet victor");
+                    DASMSG_SEND();
+                  }
 
                   DelegateIfInControl(action, &BehaviorEnrollFace::TransitionToEnrolling);
                 }
@@ -880,6 +943,8 @@ void BehaviorEnrollFace::TransitionToLookingForFace()
 void BehaviorEnrollFace::TransitionToEnrolling()
 {
   SET_STATE(Enrolling);
+  
+  _dVars.timeScanningStarted_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
   // Actually enable directed enrollment of the selected face in the vision system
   GetBEI().GetFaceWorldMutable().Enroll(_dVars.faceID);
@@ -1335,6 +1400,16 @@ bool BehaviorEnrollFace::IsSeeingTooManyFaces(FaceWorld& faceWorld, const TimeSt
                                   0); // Avoid unsigned math rollover
 
   auto recentlySeenFaceIDs = faceWorld.GetFaceIDsObservedSince(recentTime);
+  
+  for( const auto& faceID : recentlySeenFaceIDs ) {
+    const Vision::TrackedFace* face = faceWorld.GetFace(faceID);
+    // only save info on the face if it is known this tick, but don't remove saved faces
+    if( nullptr != face ) {
+      _dVars.facesSeen.insert( faceID );
+      _dVars.isFaceNamed[faceID] = (faceID > 0) && face->HasName();
+    }
+  }
+  
 
   const bool hasRecentlySeenTooManyFaces = recentlySeenFaceIDs.size() > _iConfig.maxFacesVisible;
   if(hasRecentlySeenTooManyFaces)

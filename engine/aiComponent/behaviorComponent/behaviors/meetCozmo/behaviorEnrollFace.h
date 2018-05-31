@@ -169,6 +169,8 @@ private:
       
       using EnrollmentSettings = ExternalInterface::SetFaceToEnroll;
       std::unique_ptr<EnrollmentSettings> settings;
+      
+      int numInterruptions = 0;
     };
     Persistent       persistent;
     
@@ -182,6 +184,9 @@ private:
     FaceID_t         observedUnusableID;
     
     TimeStamp_t      lastFaceSeenTime_ms;
+    
+    TimeStamp_t      timeScanningStarted_ms;
+    TimeStamp_t      timeStartedLookingForFace_ms;
     
     f32 timeout_sec;
     
@@ -204,6 +209,8 @@ private:
     
     std::vector<std::pair<std::string, unsigned int>> knownFaceCounts;
     
+    std::set<Vision::FaceID_t> facesSeen;
+    std::unordered_map<Vision::FaceID_t, bool> isFaceNamed;
     
     State            failedState;
   };
