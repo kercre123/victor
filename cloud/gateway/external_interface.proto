@@ -28,6 +28,27 @@ service ExternalInterface {
       body: "*"
     };
   }
+  // Moves the Head
+  rpc MoveHead(MoveHeadRequest) returns (MoveHeadResult) {
+    option (google.api.http) = {
+      post: "/v1/move_head",
+      body: "*"
+    };
+  }
+  // Moves the Lift
+  rpc MoveLift(MoveLiftRequest) returns (MoveLiftResult) {
+    option (google.api.http) = {
+      post: "/v1/move_lift",
+      body: "*"
+    };
+  }
+  // Drive arc
+  rpc DriveArc(DriveArcRequest) returns (DriveArcResult) {
+    option (google.api.http) = {
+      post: "/v1/drive_arc",
+      body: "*"
+    };
+  }
   // TODO: Remove once we finish the conversion of old messages
   // An example of how a basic rpc should start as
   rpc Test(TestRequest) returns (TestResult) {
@@ -58,6 +79,31 @@ message DriveWheelsResult {
   ResultStatus status = 1;
 }
 
+message MoveHeadRequest {
+  float speed_rad_per_sec = 1;
+}
+
+message MoveHeadResult {
+  ResultStatus status = 1;
+}
+
+message MoveLiftRequest {
+  float speed_rad_per_sec = 1;
+}
+
+message MoveLiftResult {
+  ResultStatus status = 1;
+}
+
+message DriveArcRequest {
+  float speed = 1;
+  float accel = 2;
+  int32 curvatureRadius_mm = 3;
+}
+
+message DriveArcResult {
+  ResultStatus status = 1;
+}
 
 message PlayAnimationRequest {
   Animation animation = 1;

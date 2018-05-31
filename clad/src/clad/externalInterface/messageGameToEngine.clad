@@ -1153,6 +1153,9 @@ autounion MessageGameToEngine
   UiDeviceConnectionWrongVersion UiDeviceConnectionWrongVersion = 0x00, // DO NOT CHANGE THIS VALUE
   DriveWheels DriveWheels = 0x01,
   PlayAnimation PlayAnimation = 0x02,
+  MoveHead MoveHead = 0x03,
+  MoveLift MoveLift = 0x04,
+  DriveArc DriveArc = 0x05,
 }
 
 

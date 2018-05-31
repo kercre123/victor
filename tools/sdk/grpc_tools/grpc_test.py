@@ -70,6 +70,26 @@ class Robot:
         print(f'{type(animList)}: {str(animList).strip()} : {animList.animations}')
         print("List animations: Done")
 
+    @_actionable
+    async def move_head(self, speed_rad_per_sec=0.0):
+        move_head_request = external.MoveHeadRequest(speed_rad_per_sec=speed_rad_per_sec)
+        result = await self.connection.MoveHead(move_head_request)
+        print(f'{type(result)}: {str(result).strip()}')
+
+    @_actionable
+    async def move_lift(self, speed_rad_per_sec=0.0):
+        move_lift_request = external.MoveLiftRequest(speed_rad_per_sec=speed_rad_per_sec)
+        result = await self.connection.MoveLift(move_lift_request)
+        print(f'{type(result)}: {str(result).strip()}')
+
+    @_actionable
+    async def drive_arc(self, speed=1.0, accel=1.0, curvatureRadius_mm=1):
+        drive_arc_request = external.DriveArcRequest(speed=speed,
+                                                    accel=accel,
+                                                    curvatureRadius_mm=curvatureRadius_mm)
+        result = await self.connection.DriveArc(drive_arc_request)
+        print(f'{type(result)}: {str(result).strip()}')
+
     def disconnect(self):
         for task in self.pending:
             task.wait_for_completed()
@@ -85,11 +105,17 @@ class AsyncRobot(Robot):
     def __init__(self, *args, **kwargs):
         super(AsyncRobot, self).__init__(*args, **kwargs, complicated=True)
 
+def test_motor_controls(robot):
+    robot.move_head(1.0).wait_for_completed()
+    robot.move_lift(0.5).wait_for_completed()
+    robot.drive_wheels().wait_for_completed()
+    robot.drive_arc().wait_for_completed()
+
 def main():
     try:
         robot = AsyncRobot()
         robot.play_animation("anim_poked_giggle").wait_for_completed()
-        robot.drive_wheels().wait_for_completed()
+        test_motor_controls(robot)
     finally:
         if robot is not None:
             robot.disconnect()

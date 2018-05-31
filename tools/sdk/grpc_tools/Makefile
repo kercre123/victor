@@ -1,6 +1,6 @@
 .PHONY:
 
-GIT_ROOT:=$(shell git root)
+GIT_ROOT:="../../.."
 GOPATH:=$(GIT_ROOT)/cloud/go
 
 all: python golang
@@ -37,9 +37,29 @@ create_certs: .require_ip
 test_curl: .require_ip
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/drive_wheels -d '{"left_wheel_mmps":100.0,"right_wheel_mmps":-100.0,"left_wheel_mmps2":0.0,"right_wheel_mmps2":0.0}'
 	@echo
+	sleep 2	
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/drive_wheels -d '{"left_wheel_mmps":0.0,"right_wheel_mmps":0.0,"left_wheel_mmps2":0.0,"right_wheel_mmps2":0.0}'
 	@echo
+	
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/play_animation -d '{"animation":{"name":"anim_poked_giggle"},"loops":1}'
+	@echo
+	
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/move_head -d '{"speed_rad_per_sec":0.5}'
+	@echo
+	sleep 2
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/move_head -d '{"speed_rad_per_sec":0}'
+	@echo
+
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/move_lift -d '{"speed_rad_per_sec":0.5}'
+	@echo
+	sleep 2
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/move_lift -d '{"speed_rad_per_sec":0}'
+	@echo
+
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/drive_arc -d '{"speed":5, "accel":2, "curvatureRadius_mm":10}'
+	@echo
+	sleep 2
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/drive_arc -d '{"speed":0, "accel":0, "curvatureRadius_mm":0}'
 	@echo
 
 help: .PHONY

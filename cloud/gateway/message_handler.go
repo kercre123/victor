@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+	"math"
 
 	"anki/ipc"
 	"anki/log"
@@ -54,6 +55,36 @@ func ProtoPlayAnimationToClad(msg *extint.PlayAnimationRequest) *cloud.MessageEx
 	})
 }
 
+// TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
+func ProtoMoveHeadToClad(msg *extint.MoveHeadRequest) *cloud.MessageExternalToRobot {
+	return cloud.NewMessageExternalToRobotWithMoveHead(&cloud.MoveHead{
+		Speed_rad_per_sec:  msg.SpeedRadPerSec,
+	})
+}
+
+// TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
+func ProtoMoveLiftToClad(msg *extint.MoveLiftRequest) *cloud.MessageExternalToRobot {
+	return cloud.NewMessageExternalToRobotWithMoveLift(&cloud.MoveLift{
+		Speed_rad_per_sec:  msg.SpeedRadPerSec,
+	})
+}
+
+// TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
+func ProtoDriveArcToClad(msg *extint.DriveArcRequest) *cloud.MessageExternalToRobot {
+	// Bind msg.CurvatureRadiusMm which is an int32 to an int16 boundary to prevent overflow
+	if (msg.CurvatureRadiusMm < math.MinInt16) {
+		msg.CurvatureRadiusMm = math.MinInt16
+	} else if (msg.CurvatureRadiusMm > math.MaxInt16) {
+		msg.CurvatureRadiusMm = math.MaxInt16
+	}
+	return cloud.NewMessageExternalToRobotWithDriveArc(&cloud.DriveArc{
+		Speed:  msg.Speed,
+		Accel: msg.Accel,
+		CurvatureRadius_mm: int16(msg.CurvatureRadiusMm),
+		// protobuf does not have a 16-bit integer representation, this conversion is used to satisfy the specs specified in the clad
+	})
+}
+
 // The service definition.
 // This must implement all the rpc functions defined in the external_interface proto file.
 type rpcService struct{}
@@ -92,6 +123,45 @@ func (m *rpcService) PlayAnimation(ctx context.Context, in *extint.PlayAnimation
 func (m *rpcService) ListAnimations(ctx context.Context, in *extint.ListAnimationsRequest) (*extint.ListAnimationsResult, error) {
 	log.Println("Received rpc request ListAnimations(", in, ")")
 	return nil, status.Errorf(codes.Unimplemented, "ListAnimations not yet implemented")
+}
+
+func (m *rpcService) MoveHead(ctx context.Context, in *extint.MoveHeadRequest) (*extint.MoveHeadResult, error) {
+	log.Println("Received rpc request MoveHead(", in, ")")
+	_, err := WriteToEngine(engineSock, ProtoMoveHeadToClad(in))
+	if err != nil {
+		return nil, err
+	}
+	return &extint.MoveHeadResult{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
+func (m *rpcService) MoveLift(ctx context.Context, in *extint.MoveLiftRequest) (*extint.MoveLiftResult, error) {
+	log.Println("Received rpc request MoveLift(", in, ")")
+	_, err := WriteToEngine(engineSock, ProtoMoveLiftToClad(in))
+	if err != nil {
+		return nil, err
+	}
+	return &extint.MoveLiftResult{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
+func (m *rpcService) DriveArc(ctx context.Context, in *extint.DriveArcRequest) (*extint.DriveArcResult, error) {
+	log.Println("Received rpc request DriveArc(", in, ")")
+	_, err := WriteToEngine(engineSock, ProtoDriveArcToClad(in))
+	if err != nil {
+		return nil, err
+	}
+	return &extint.DriveArcResult{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
 }
 
 func (m *rpcService) Test(ctx context.Context, in *extint.TestRequest) (*extint.TestResult, error) {
