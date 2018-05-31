@@ -31,7 +31,7 @@
 #define serial_init(tty, baud) 0
 #endif
 
-#define LINEBUFSZ 1024
+#define LINEBUFSZ 4096
 
 static int gSerialFd;
 
