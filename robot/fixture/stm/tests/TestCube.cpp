@@ -294,10 +294,10 @@ bool TestCubeDetect(void)
   TestCubeCleanup();
   
   //weakly pulled-up - it will detect as grounded when the board is attached
-  DUT_TX::init(MODE_INPUT, PULL_UP);
+  DUT_SWC::init(MODE_INPUT, PULL_UP);
   Timer::wait(100);
-  bool detected = !DUT_TX::read(); //true if pin is pulled down by the board
-  DUT_TX::init(MODE_INPUT, PULL_NONE); //prevent pu from doing strange things to mcu (phantom power?)
+  bool detected = !DUT_SWC::read(); //true if pin is pulled down by the board
+  DUT_SWC::init(MODE_INPUT, PULL_NONE); //prevent pu from doing strange things to mcu (phantom power?)
   
   return detected;
 }
