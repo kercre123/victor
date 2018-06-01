@@ -17,7 +17,8 @@
     "ComputingStatistics"        : false,
     "BuildingOverheadMap"        : false,
     "DetectingVisualObstacles"   : false,
-    "DetectingGeneralObjects"    : false
+    "DetectingGeneralObjects"    : false,
+    "DetectingIllumination"      : true
   },
 
   "InitialModeSchedules" :
@@ -34,7 +35,8 @@
     "DetectingLaserPoints"   : 2,
     "ComputingStatistics"    : false,  // NOTE: enabled but not scheduled!
     "DetectingGeneralObjects": 1,
-    "SavingImages"           : 5
+    "SavingImages"           : 5,
+    "DetectingIllumination"  : 1
   },
 
   "ColorImages" : true,        // Whether color images are enabled on startup (can still be toggled later)
@@ -49,6 +51,15 @@
   "FaceRecognition" :
   {
     "RunMode": "asynchronous"  // "synchronous" or "asynchronous"
+  },
+
+  "IlluminationDetector" :
+  {
+    "ClassifierConfigPath"       : "config/engine/vision/illuminationClassifier/illuminationClassifier.json",
+
+    "FeaturePercentileSubsample" : 4,                     // Stride for building histogram to compute percentiles
+    "IlluminatedMinProbability"  : 0.75,                  // Min probability to result in 'Illuminated' class
+    "DarkenedMaxProbability"     : 0.25                   // Max probability to result in 'Darkened' class
   },
 
   "ImageQuality" :

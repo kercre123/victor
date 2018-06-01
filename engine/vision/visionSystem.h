@@ -31,9 +31,10 @@
 #include "engine/overheadEdge.h"
 #include "engine/robotStateHistory.h"
 #include "engine/rollingShutterCorrector.h"
+#include "engine/vision/cameraCalibrator.h"
+#include "engine/vision/illuminationState.h"
 #include "engine/vision/visionModeSchedule.h"
 #include "engine/vision/visionPoseData.h"
-#include "engine/vision/cameraCalibrator.h"
 
 #include "coretech/common/engine/matlabInterface.h"
 
@@ -77,6 +78,7 @@ namespace Cozmo {
   // Forward declaration:
   class CameraCalibrator;
   class CozmoContext;
+  class IlluminationDetector;
   class LaserPointDetector;
   class MotionDetector;
   class OverheadEdgesDetector;
@@ -94,7 +96,7 @@ namespace Cozmo {
     ImageQuality imageQuality;
     CameraParams cameraParams;
     u8 imageMean;
-    
+
     std::list<ExternalInterface::RobotObservedMotion>           observedMotions;
     std::list<Vision::ObservedMarker>                           observedMarkers;
     std::list<Vision::TrackedFace>                              faces;
@@ -106,7 +108,8 @@ namespace Cozmo {
     std::list<Vision::CameraCalibration>                        cameraCalibration;
     std::list<ExternalInterface::RobotObservedGenericObject>    generalObjects;
     std::list<OverheadEdgeFrame>                                visualObstacles;
-    
+    Vision::IlluminationState                                   illumination;
+
     // Used to pass debug images back to main thread for display:
     DebugImageList<Vision::Image>    debugImages;
     DebugImageList<Vision::ImageRGB> debugImageRGBs;
@@ -304,18 +307,19 @@ namespace Cozmo {
     VizManager*                   _vizManager = nullptr;
 
     // Sub-components for detection/tracking/etc:
-    std::unique_ptr<Vision::FaceTracker>    _faceTracker;
-    std::unique_ptr<Vision::PetTracker>     _petTracker;
-    std::unique_ptr<Vision::MarkerDetector> _markerDetector;
-    std::unique_ptr<LaserPointDetector>     _laserPointDetector;
-    std::unique_ptr<MotionDetector>         _motionDetector;
-    std::unique_ptr<OverheadEdgesDetector>  _overheadEdgeDetector;
-    std::unique_ptr<CameraCalibrator>       _cameraCalibrator;
-    std::unique_ptr<OverheadMap>            _overheadMap;
-    std::unique_ptr<GroundPlaneClassifier>  _groundPlaneClassifier;
+    std::unique_ptr<Vision::FaceTracker>            _faceTracker;
+    std::unique_ptr<Vision::PetTracker>             _petTracker;
+    std::unique_ptr<Vision::MarkerDetector>         _markerDetector;
+    std::unique_ptr<LaserPointDetector>             _laserPointDetector;
+    std::unique_ptr<MotionDetector>                 _motionDetector;
+    std::unique_ptr<OverheadEdgesDetector>          _overheadEdgeDetector;
+    std::unique_ptr<CameraCalibrator>               _cameraCalibrator;
+    std::unique_ptr<OverheadMap>                    _overheadMap;
+    std::unique_ptr<GroundPlaneClassifier>          _groundPlaneClassifier;
+    std::unique_ptr<IlluminationDetector>           _illuminationDetector;
 
-    std::unique_ptr<Vision::Benchmark>      _benchmark;
-    std::unique_ptr<Vision::ObjectDetector> _generalObjectDetector;
+    std::unique_ptr<Vision::Benchmark>              _benchmark;
+    std::unique_ptr<Vision::ObjectDetector>         _generalObjectDetector;
     
     TimeStamp_t                   _generalObjectDetectionTimestamp = 0;
     
@@ -356,6 +360,8 @@ namespace Cozmo {
     
     // Will use color if not empty, or gray otherwise
     Result DetectMotion(Vision::ImageCache& imageCache);
+
+    Result DetectIllumination(Vision::ImageCache& imageCache);
 
     Result UpdateOverheadMap(const Vision::ImageRGB& image);
 

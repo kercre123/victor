@@ -13,15 +13,17 @@
 #include "visionSystem.h"
 
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/linearAlgebra_impl.h"
+#include "coretech/common/engine/math/linearClassifier.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/common/engine/math/rect_impl.h"
-#include "coretech/common/engine/math/linearAlgebra_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/vision/groundPlaneClassifier.h"
+#include "engine/vision/illuminationDetector.h"
 #include "engine/vision/laserPointDetector.h"
 #include "engine/vision/motionDetector.h"
 #include "engine/vision/overheadEdgesDetector.h"
@@ -126,6 +128,7 @@ VisionSystem::VisionSystem(const CozmoContext* context)
 , _laserPointDetector(new LaserPointDetector(_vizManager))
 , _overheadEdgeDetector(new OverheadEdgesDetector(_camera, _vizManager, *this))
 , _cameraCalibrator(new CameraCalibrator(*this))
+, _illuminationDetector(new IlluminationDetector())
 , _benchmark(new Vision::Benchmark())
 , _generalObjectDetector(new Vision::ObjectDetector())
 , _clahe(cv::createCLAHE())
@@ -265,6 +268,18 @@ Result VisionSystem::Init(const Json::Value& config)
     }
   }
    
+  if(!config.isMember("IlluminationDetector"))
+  {
+    PRINT_NAMED_ERROR("VisionSystem.Init.MissingIlluminationDetectorConfigField", "");
+    return RESULT_FAIL;
+  }
+  Result illuminationResult = _illuminationDetector->Init(config["IlluminationDetector"], _context);
+  if( illuminationResult != RESULT_OK )
+  {
+    PRINT_NAMED_ERROR("VisionSystem.Init.IlluminationDetectorInitFailed", "");
+    return RESULT_FAIL;
+  }
+
   // Default processing modes should are set in vision_config.json
   if(!config.isMember("InitialVisionModes"))
   {
@@ -1038,6 +1053,15 @@ Result VisionSystem::DetectLaserPoints(Vision::ImageCache& imageCache)
   return result;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::DetectIllumination(Vision::ImageCache& imageCache)
+{
+  Result result = _illuminationDetector->Detect(imageCache, 
+                                                _poseData, 
+                                                _currentResult.illumination);
+  return result;
+}
+
 #if 0
 #pragma mark --- Public VisionSystem API Implementations ---
 #endif
@@ -1657,6 +1681,19 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     }
   }
   
+  // Check for illumination state
+  if(ShouldProcessVisionMode(VisionMode::DetectingIllumination))
+  {
+    Tic("DetectingIllumination");
+    lastResult = DetectIllumination(imageCache);
+    Toc("DetectingIllumination");
+    if (lastResult != RESULT_OK) {
+      PRINT_NAMED_ERROR("VisionSystem.Update.DetectIlluminationFailed", "");
+      return lastResult;
+    }
+    visionModesProcessed.SetBitFlag(VisionMode::DetectingIllumination, true);
+  }
+
   // NOTE: This should come after any detectors that add things to "detectionRects"
   //       since it meters exposure based on those.
   if(ShouldProcessVisionMode(VisionMode::CheckingQuality))

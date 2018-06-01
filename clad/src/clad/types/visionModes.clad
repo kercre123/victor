@@ -29,6 +29,7 @@ namespace Cozmo {
     Benchmarking,
     SavingImages,
     DetectingGeneralObjects, // I.e. via Deep CNN / TensorFlow
+    DetectingIllumination,
     Count
   }
       
