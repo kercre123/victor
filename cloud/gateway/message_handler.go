@@ -30,6 +30,10 @@ func WriteToEngine(conn ipc.Conn, msg *gw_clad.MessageExternalToRobot) (int, err
 	return engineSock.Write(buf.Bytes())
 }
 
+func ClearMapSetting(tag gw_clad.MessageRobotToExternalTag) {
+	delete(engineChanMap, tag)
+}
+
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
 func ProtoDriveWheelsToClad(msg *extint.DriveWheelsRequest) *gw_clad.MessageExternalToRobot {
 	return gw_clad.NewMessageExternalToRobotWithDriveWheels(&gw_clad.DriveWheels{
@@ -85,6 +89,18 @@ func ProtoDriveArcToClad(msg *extint.DriveArcRequest) *gw_clad.MessageExternalTo
 	})
 }
 
+func CladEventPlaceholderToProto(msg *gw_clad.EventPlaceholder) *extint.EventResult {
+	return &extint.EventResult{
+		Event: &extint.Event{
+			EventType: &extint.Event_Test1{
+				&extint.Test1{
+					Value: msg.Test, // NOTE: This is a test
+				},
+			},
+		},
+	}
+}
+
 // The service definition.
 // This must implement all the rpc functions defined in the external_interface proto file.
 type rpcService struct{}
@@ -106,13 +122,12 @@ func (m *rpcService) PlayAnimation(ctx context.Context, in *extint.PlayAnimation
 	log.Println("Received rpc request PlayAnimation(", in, ")")
 	animation_result := make(chan RobotToExternalResult)
 	engineChanMap[gw_clad.MessageRobotToExternalTag_RobotCompletedAction] = animation_result
+	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_RobotCompletedAction)
 	_, err := WriteToEngine(engineSock, ProtoPlayAnimationToClad(in))
 	if err != nil {
-		engineChanMap[gw_clad.MessageRobotToExternalTag_RobotCompletedAction] = nil
 		return nil, err
 	}
-	<-animation_result
-	engineChanMap[gw_clad.MessageRobotToExternalTag_RobotCompletedAction] = nil
+	<-animation_result // TODO: Properly handle the result
 	return &extint.PlayAnimationResult{
 		Status: &extint.ResultStatus{
 			Description: "Animation completed",
@@ -164,9 +179,27 @@ func (m *rpcService) DriveArc(ctx context.Context, in *extint.DriveArcRequest) (
 	}, nil
 }
 
-func (m *rpcService) Test(ctx context.Context, in *extint.TestRequest) (*extint.TestResult, error) {
-	log.Println("Received rpc request Test(", in, ")")
-	return nil, status.Errorf(codes.Unimplemented, "Test not yet implemented")
+// Long running message for sending events to listening sdk users
+func (c *rpcService) EventStream(in *extint.EventRequest, stream extint.ExternalInterface_EventStreamServer) error {
+	log.Println("Received rpc request EventStream(", in, ")")
+
+	events_channel := make(chan RobotToExternalResult, 16)
+	engineChanMap[gw_clad.MessageRobotToExternalTag_EventPlaceholder] = events_channel
+	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_EventPlaceholder)
+	log.Println(engineChanMap[gw_clad.MessageRobotToExternalTag_EventPlaceholder])
+
+	for result := range events_channel {
+		feature := CladEventPlaceholderToProto(result.Message.GetEventPlaceholder())
+
+		if err := stream.Send(feature); err != nil {
+			return err
+		} else if err = stream.Context().Err(); err != nil {
+			// This is the case where the user disconnects the stream
+			// We should still return the err in case the user doesn't think they disconnected
+			return err
+		}
+	}
+	return nil
 }
 
 func newServer() *rpcService {

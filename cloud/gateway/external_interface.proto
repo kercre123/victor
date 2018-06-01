@@ -49,11 +49,10 @@ service ExternalInterface {
       body: "*"
     };
   }
-  // TODO: Remove once we finish the conversion of old messages
-  // An example of how a basic rpc should start as
-  rpc Test(TestRequest) returns (TestResult) {
+  // Current groundwork for a streaming events endpoint
+  rpc EventStream(EventRequest) returns (stream EventResult) {
     option (google.api.http) = {
-      post: "/v1/test",
+      post: "/v1/event_stream",
       body: "*"
     };
   }
@@ -122,9 +121,25 @@ message ListAnimationsResult {
   repeated Animation animation_names = 2;
 }
 
+// TODO: Remove Test1 and Test2. Use real events.
+message Test1 {
+  string value = 1;
+}
 
-message TestRequest {}
+message Test2 {
+  string value = 1;
+}
 
-message TestResult {
+message Event {
+  oneof event_type {
+    Test1 test1 = 1;
+    Test2 test2 = 2;
+  }
+}
+
+message EventRequest {}
+
+message EventResult {
   ResultStatus status = 1;
+  Event event = 2;
 }
