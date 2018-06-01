@@ -290,6 +290,8 @@ static void BodyBootcheckProductionFirmware(void)
   {
     if( Timer::elapsedUs(Tstart) > 4*1000*1000 ) { //nominal delay is ~2.5s
       ConsolePrintf("timeout waiting for syscon boot\n");
+      if( g_fixmode == FIXMODE_BODY3 ) //XXX: debug, can't guarantee reset timing (battery installed)
+        break;
       throw ERROR_BODY_NO_BOOT_MSG;
     }
     
@@ -406,6 +408,7 @@ TestFunction* TestBody0GetTests(void)
     BodyLoadTestFirmware,
     BodyLoadProductionFirmware,
     BodyBootcheckProductionFirmware,
+    BodyFlexFlowReport,
     NULL,
   };
   return (g_fixmode == FIXMODE_BODY0A) ? m_tests_0a : m_tests_0;
@@ -448,7 +451,7 @@ TestFunction* TestBody3GetTests(void)
     BodyCheckProgramLockout,
     BodyTryReadSerial,
     BodyLoadProductionFirmware,
-    //BodyBootcheckProductionFirmware,
+    BodyBootcheckProductionFirmware,
     BodyFlexFlowReport,
     NULL,
   };
