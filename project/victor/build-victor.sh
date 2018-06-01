@@ -280,9 +280,6 @@ fi
 
 ${TOPLEVEL}/tools/build/tools/ankibuild/go.py --check-version $GO_EXE
 
-PROTOC_EXE=`${TOPLEVEL}/tools/build/tools/ankibuild/protobuf.py --install | tail -1`
-PROTOBUF_HOME=`cd $(dirname "${PROTOC_EXE}")/.. && pwd`
-
 #
 # Remove assets in build directory if requested. This will force the
 # build to re-copy them from the source tree into the build directory.
@@ -327,6 +324,10 @@ if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ]; then
 else
   echo "Ignore Go dependencies"
 fi
+
+# install build tool binaries + set protoc location
+PROTOC_EXE=`${TOPLEVEL}/tools/build/tools/ankibuild/protobuf.py --install --helpers | tail -1`
+PROTOBUF_HOME=`cd $(dirname "${PROTOC_EXE}")/.. && pwd`
 
 #
 # generate source file lists
