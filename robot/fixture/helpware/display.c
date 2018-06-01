@@ -97,18 +97,16 @@ static const Font gSmallFont = {
 
 #include "medium_font.inc"
 #include "big_font.inc"
+#include "large_font.inc"
 #include "huge_font.inc"
-
-
-
-#define HUGE_FONT_START_LINE 1
 
 
 static const Font* gFont[DISPLAY_NUM_LAYERS] = {
   &gSmallFont,
   &gMediumFont,
   &gBigFont,
-  &gHugeFont,
+  &gHugeFont,  //DISPLAY_LAYER_LARGE uses original "Huge" font
+  &gLargeFont, //DISPLAY_LAYER_LARGE_SKINNY uses "Large"
 };
 
 //each screen_line is 8 bits high.
@@ -364,6 +362,9 @@ void display_render(uint8_t layermask) {
 
 void display_draw_text(int layer, int line , uint16_t fg, uint16_t bg, const char* text, int len, bool centered)
 {
+  if( layer == DISPLAY_LAYER_LARGE && len > gFont[layer].CharsPerLine ) {
+    layer = DISPLAY_LAYER_LARGE_SKINNY;
+  }
   const Font* font =  gFont[layer];
   assert(line < font->LineCount);
   int nchars =  min(len, font->CharsPerLine);
