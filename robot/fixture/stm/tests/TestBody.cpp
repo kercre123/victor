@@ -271,7 +271,7 @@ static void BodyBootcheckProductionFirmware(void)
   //DEBUG:
   if( g_fixmode < FIXMODE_BODY1 ) {
     //only works if body has a battery?
-    TestCommon::consoleBridge(TO_CONTACTS,3000,0,BRIDGE_OPT_CHG_DISABLE);
+    TestCommon::consoleBridge(TO_CONTACTS,1000,0,BRIDGE_OPT_CHG_DISABLE);
   }
   
   //Power up and test comms
