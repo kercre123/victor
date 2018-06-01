@@ -64,6 +64,7 @@ class SDKComponent;
 class DataAccessorComponent;
 class TextToSpeechCoordinator;
 class TouchSensorComponent;
+class VariableSnapshotComponent;
 class VisionComponent;
 class VisionScheduleMediator;
   
@@ -122,7 +123,6 @@ public:
   // end IDependencyManagedComponent functions
   //////
 
-
   void Init(AIComponent*                   aiComponent,
             AnimationComponent*            animationComponent,
             BeatDetectorComponent*         beatDetectorComponent,
@@ -153,6 +153,7 @@ public:
             DataAccessorComponent*         dataAccessor,
             TextToSpeechCoordinator*       TextToSpeechCoordinator,
             TouchSensorComponent*          touchSensorComponent,
+            VariableSnapshotComponent*      variableSnapshotComponent,
             VisionComponent*               visionComponent,
             VisionScheduleMediator*        visionScheduleMediator);
     
@@ -251,7 +252,7 @@ public:
 private:
   struct CompArrayWrapper{
     public:
-      CompArrayWrapper(AIComponent*                  aiComponent,
+      CompArrayWrapper(AIComponent*                   aiComponent,
                        AnimationComponent*            animationComponent,
                        BeatDetectorComponent*         beatDetectorComponent,
                        BehaviorContainer*             behaviorContainer,
@@ -281,6 +282,7 @@ private:
                        DataAccessorComponent*         dataAccessor,
                        TextToSpeechCoordinator*       textToSpeechCoordinator,
                        TouchSensorComponent*          touchSensorComponent,
+                       VariableSnapshotComponent*      variableSnapshotComponent,
                        VisionComponent*               visionComponent,
                        VisionScheduleMediator*        visionSchedulMediator);
       ~CompArrayWrapper(){};

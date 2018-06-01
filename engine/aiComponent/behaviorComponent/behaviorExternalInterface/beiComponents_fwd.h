@@ -35,6 +35,7 @@ enum class BEIComponentID{
   RobotInfo,
   TextToSpeechCoordinator,
   TouchSensor,
+  VariableSnapshotComponent,
   Vision,
   VisionScheduleMediator,
 

@@ -20,6 +20,7 @@
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
+#include "engine/components/variableSnapshot/variableSnapshotComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/moodSystem/moodManager.h"
@@ -89,6 +90,7 @@ void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dep
        robot->GetComponentPtr<DataAccessorComponent>(),
        robot->GetComponentPtr<TextToSpeechCoordinator>(),
        robot->GetComponentPtr<TouchSensorComponent>(),
+       robot->GetComponentPtr<VariableSnapshotComponent>(),
        robot->GetComponentPtr<VisionComponent>(),
        robot->GetComponentPtr<VisionScheduleMediator>());
 }
@@ -125,6 +127,7 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                      DataAccessorComponent*         dataAccessor,
                                      TextToSpeechCoordinator*       textToSpeechCoordinator,
                                      TouchSensorComponent*          touchSensorComponent,
+                                     VariableSnapshotComponent*     variableSnapshotComponent,
                                      VisionComponent*               visionComponent,
                                      VisionScheduleMediator*        visionScheduleMediator)
 {
@@ -158,6 +161,7 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                                      dataAccessor,
                                                      textToSpeechCoordinator,
                                                      touchSensorComponent,
+                                                     variableSnapshotComponent,
                                                      visionComponent,
                                                      visionScheduleMediator);
 }
@@ -205,42 +209,44 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
                                                               DataAccessorComponent*         dataAccessor,
                                                               TextToSpeechCoordinator*       textToSpeechCoordinator,
                                                               TouchSensorComponent*          touchSensorComponent,
+                                                              VariableSnapshotComponent*     variableSnapshotComponent,
                                                               VisionComponent*               visionComponent,
                                                               VisionScheduleMediator*        visionScheduleMediator)
 : _array({
-    {BEIComponentID::AIComponent,             BEIComponentWrapper(aiComponent)},
-    {BEIComponentID::Animation,               BEIComponentWrapper(animationComponent)},
-    {BEIComponentID::BeatDetector,            BEIComponentWrapper(beatDetectorComponent)},
-    {BEIComponentID::BehaviorContainer,       BEIComponentWrapper(behaviorContainer)},
-    {BEIComponentID::BehaviorEvent,           BEIComponentWrapper(behaviorEventComponent)},
-    {BEIComponentID::BehaviorTimerManager,    BEIComponentWrapper(behaviorTimers)},
-    {BEIComponentID::BlockWorld,              BEIComponentWrapper(blockWorld)},
-    {BEIComponentID::BodyLightComponent,      BEIComponentWrapper(bodyLightComponent)},
-    {BEIComponentID::CubeAccel,               BEIComponentWrapper(cubeAccelComponent)},
-    {BEIComponentID::CubeLight,               BEIComponentWrapper(cubeLightComponent)},
-    {BEIComponentID::CliffSensor,             BEIComponentWrapper(cliffSensorComponent)},
-    {BEIComponentID::DataAccessor,            BEIComponentWrapper(dataAccessor)},
-    {BEIComponentID::Delegation,              BEIComponentWrapper(delegationComponent)},
-    {BEIComponentID::FaceWorld,               BEIComponentWrapper(faceWorld)},
-    {BEIComponentID::HabitatDetector,         BEIComponentWrapper(habitatDetectorComponent)},
-    {BEIComponentID::Map,                     BEIComponentWrapper(mapComponent)},
-    {BEIComponentID::MicComponent,            BEIComponentWrapper(micComponent)},
-    {BEIComponentID::MoodManager,             BEIComponentWrapper(moodManager)},
-    {BEIComponentID::MovementComponent,       BEIComponentWrapper(movementComponent)},
-    {BEIComponentID::ObjectPoseConfirmer,     BEIComponentWrapper(objectPoseConfirmer)},
-    {BEIComponentID::PetWorld,                BEIComponentWrapper(petWorld)},
-    {BEIComponentID::PhotographyManager,      BEIComponentWrapper(photographyManager)},
-    {BEIComponentID::ProgressionUnlock,       BEIComponentWrapper(progressionUnlockComponent)},
-    {BEIComponentID::ProxSensor,              BEIComponentWrapper(proxSensor)},
-    {BEIComponentID::PublicStateBroadcaster,  BEIComponentWrapper(publicStateBroadcaster)},
-    {BEIComponentID::SDK,                     BEIComponentWrapper(sdkComponent)},
-    {BEIComponentID::RobotAudioClient,        BEIComponentWrapper(robotAudioClient)},
-    {BEIComponentID::RobotInfo,               BEIComponentWrapper(robotInfo)},
-    {BEIComponentID::TextToSpeechCoordinator, BEIComponentWrapper(textToSpeechCoordinator)},
-    {BEIComponentID::TouchSensor,             BEIComponentWrapper(touchSensorComponent)},
-    {BEIComponentID::Vision,                  BEIComponentWrapper(visionComponent)},
-    {BEIComponentID::VisionScheduleMediator,  BEIComponentWrapper(visionScheduleMediator)}
+    {BEIComponentID::AIComponent,               BEIComponentWrapper(aiComponent)},
+    {BEIComponentID::Animation,                 BEIComponentWrapper(animationComponent)},
+    {BEIComponentID::BeatDetector,              BEIComponentWrapper(beatDetectorComponent)},
+    {BEIComponentID::BehaviorContainer,         BEIComponentWrapper(behaviorContainer)},
+    {BEIComponentID::BehaviorEvent,             BEIComponentWrapper(behaviorEventComponent)},
+    {BEIComponentID::BehaviorTimerManager,      BEIComponentWrapper(behaviorTimers)},
+    {BEIComponentID::BlockWorld,                BEIComponentWrapper(blockWorld)},
+    {BEIComponentID::BodyLightComponent,        BEIComponentWrapper(bodyLightComponent)},
+    {BEIComponentID::CubeAccel,                 BEIComponentWrapper(cubeAccelComponent)},
+    {BEIComponentID::CubeLight,                 BEIComponentWrapper(cubeLightComponent)},
+    {BEIComponentID::CliffSensor,               BEIComponentWrapper(cliffSensorComponent)},
+    {BEIComponentID::DataAccessor,              BEIComponentWrapper(dataAccessor)},
+    {BEIComponentID::Delegation,                BEIComponentWrapper(delegationComponent)},
+    {BEIComponentID::FaceWorld,                 BEIComponentWrapper(faceWorld)},
+    {BEIComponentID::HabitatDetector,           BEIComponentWrapper(habitatDetectorComponent)},
+    {BEIComponentID::Map,                       BEIComponentWrapper(mapComponent)},
+    {BEIComponentID::MicComponent,              BEIComponentWrapper(micComponent)},
+    {BEIComponentID::MoodManager,               BEIComponentWrapper(moodManager)},
+    {BEIComponentID::MovementComponent,         BEIComponentWrapper(movementComponent)},
+    {BEIComponentID::ObjectPoseConfirmer,       BEIComponentWrapper(objectPoseConfirmer)},
+    {BEIComponentID::PetWorld,                  BEIComponentWrapper(petWorld)},
+    {BEIComponentID::PhotographyManager,        BEIComponentWrapper(photographyManager)},
+    {BEIComponentID::ProgressionUnlock,         BEIComponentWrapper(progressionUnlockComponent)},
+    {BEIComponentID::ProxSensor,                BEIComponentWrapper(proxSensor)},
+    {BEIComponentID::PublicStateBroadcaster,    BEIComponentWrapper(publicStateBroadcaster)},
+    {BEIComponentID::SDK,                       BEIComponentWrapper(sdkComponent)},
+    {BEIComponentID::RobotAudioClient,          BEIComponentWrapper(robotAudioClient)},
+    {BEIComponentID::RobotInfo,                 BEIComponentWrapper(robotInfo)},
+    {BEIComponentID::TextToSpeechCoordinator,   BEIComponentWrapper(textToSpeechCoordinator)},
+    {BEIComponentID::TouchSensor,               BEIComponentWrapper(touchSensorComponent)},
+    {BEIComponentID::VariableSnapshotComponent, BEIComponentWrapper(variableSnapshotComponent)},
+    {BEIComponentID::Vision,                    BEIComponentWrapper(visionComponent)},
+    {BEIComponentID::VisionScheduleMediator,    BEIComponentWrapper(visionScheduleMediator)}
 }){}
-  
+
 } // namespace Cozmo
 } // namespace Anki

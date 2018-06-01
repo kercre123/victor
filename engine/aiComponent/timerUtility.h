@@ -96,7 +96,7 @@ public:
 
 private:
   SharedHandle _activeTimer;
-
+  
 };
 
 } // namespace Cozmo

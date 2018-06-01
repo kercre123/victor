@@ -50,6 +50,7 @@ void DataAccessorComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMa
   _cannedAnimationContainer = dataLoader.GetCannedAnimationContainer();
   _textToSpeechConfig = dataLoader.GetTextToSpeechConfig();
   _weatherResponseMap = dataLoader.GetWeatherResponseMap();
+  _variableSnapshotJsonMap = dataLoader.GetVariableSnapshotJsonMap();
 }
 
   

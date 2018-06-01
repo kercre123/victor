@@ -18,6 +18,7 @@
 #include "clad/types/compositeImageLayouts.h"
 #include "clad/types/compositeImageMaps.h"
 #include "clad/types/cubeAnimationTrigger.h"
+#include "clad/types/variableSnapshotIds.h"
 #include "clad/types/spriteNames.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
@@ -127,8 +128,11 @@ public:
   // weather response map
   using WeatherResponseMap = std::unordered_map<std::string, WeatherConditionType>;
 
+  // variable snapshot json map
+  using VariableSnapshotJsonMap = std::unordered_map<VariableSnapshotId, Json::Value>;
+
   const WeatherResponseMap* GetWeatherResponseMap() const { assert(_weatherResponseMap); return _weatherResponseMap.get();}
-  
+  VariableSnapshotJsonMap*  GetVariableSnapshotJsonMap() const { assert(_variableSnapshotJsonMap); return _variableSnapshotJsonMap.get(); }
 
   bool IsCustomAnimLoadEnabled() const;
 
@@ -167,6 +171,8 @@ private:
   void LoadCompositeImageMaps();
 
   void LoadWeatherResponseMaps();
+
+  void LoadVariableSnapshotJsonMap();
 
   // Outputs a map of file name (no path or extensions) to the full file path
   // Useful for clad mappings/lookups
@@ -221,6 +227,7 @@ private:
   std::unique_ptr<CompLayoutMap> _compLayoutMap;
 
   std::unique_ptr<WeatherResponseMap> _weatherResponseMap;
+  std::unique_ptr<VariableSnapshotJsonMap> _variableSnapshotJsonMap;
 
 
   bool                  _isNonConfigDataLoaded = false;

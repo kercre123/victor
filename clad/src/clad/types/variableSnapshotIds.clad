@@ -1,0 +1,16 @@
+// File: variableSnapshotIds
+// Author: Hamzah Khan
+// Created: 2018-06-05
+// Copyright: Anki, inc. 2018
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_32 VariableSnapshotId {
+  UnitTestInt0,
+  UnitTestBool0,
+
+}
+
+} // namespace Cozmo
+} // namespace Anki

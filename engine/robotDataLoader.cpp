@@ -79,6 +79,8 @@ const std::vector<std::string> kPathsToEngineAccessibleAnimations = {
   "assets/animations/anim_blackjack_gameplay_01.bin",
 };
 
+const char* kVariableSnapshotFolder = "variableSnapshotStorage";
+const char* kVariableSnapshotFilename = "variableSnapshot";
 }
 
 namespace Anki {
@@ -97,6 +99,7 @@ RobotDataLoader::RobotDataLoader(const CozmoContext* context)
   _spritePaths = std::make_unique<Vision::SpritePathMap>();
   _compLayoutMap = std::make_unique<CompLayoutMap>();
   _compImageMap = std::make_unique<CompImageMap>();
+
 }
 
 RobotDataLoader::~RobotDataLoader()
@@ -137,6 +140,11 @@ void RobotDataLoader::LoadNonConfigData()
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadWeatherResponseMaps");
     LoadWeatherResponseMaps();
+  }
+
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadVariableSnapshotJsonMap");
+    LoadVariableSnapshotJsonMap();
   }
   
   {
@@ -685,6 +693,42 @@ void RobotDataLoader::LoadWeatherResponseMaps()
   }
 
 
+}
+
+void RobotDataLoader::LoadVariableSnapshotJsonMap() {
+  const char* kVariableSnapshotIdKey = "variableSnapshotId";
+
+  _variableSnapshotJsonMap = std::make_unique<VariableSnapshotJsonMap>();
+
+  // cache the name of our save directory
+  std::string saveFolder = _platform->pathToResource( Util::Data::Scope::Persistent, kVariableSnapshotFolder );
+  saveFolder = Util::FileUtils::AddTrailingFileSeparator( saveFolder );
+
+  // make sure our folder structure exists
+  if(Util::FileUtils::DirectoryDoesNotExist( saveFolder )) {
+    Util::FileUtils::CreateDirectory( saveFolder, false, true );
+    PRINT_CH_DEBUG( "DataLoader", "VariableSnapshot", "Creating variable snapshot directory: %s", saveFolder.c_str() );
+  }
+  
+  // read in our data
+  const std::string filename = ( saveFolder + kVariableSnapshotFilename + ".json" );
+
+  if(!Util::FileUtils::FileExists( filename )) {
+    Util::FileUtils::WriteFile( filename, "{}" );
+    PRINT_CH_DEBUG( "DataLoader", "VariableSnapshot", "Creating variable snapshot file: %s", filename.c_str() );
+  }
+
+  Json::Value outSubscriberJSON;
+  const bool success = _platform->readAsJson(filename, outSubscriberJSON);
+
+  // check whether the look up was successful and we got back a nonempty JSON array
+  if (success && !outSubscriberJSON.empty() && outSubscriberJSON.isArray()) {
+    for(const auto& subscriberInfo : outSubscriberJSON) {
+      // store the json object in the map
+      VariableSnapshotId variableSnapshotId = VariableSnapshotIdFromString(subscriberInfo[kVariableSnapshotIdKey].asString());
+      _variableSnapshotJsonMap->emplace(variableSnapshotId, subscriberInfo);
+    }
+  }
 }
 
 
