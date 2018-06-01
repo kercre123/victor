@@ -46,6 +46,7 @@ namespace{
   static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenSleeping = {{
     BEHAVIOR_ID(ReactToTouchPetting),
     BEHAVIOR_ID(TriggerWordDetected),
+    BEHAVIOR_ID(ReactToIlluminationOff)
   }};
   static const std::set<BehaviorID> kBehaviorIDsThatMeanSleeping = {{
     BEHAVIOR_ID(Sleeping),
@@ -56,6 +57,7 @@ namespace{
     BEHAVIOR_ID(ReactToTouchPetting),       // the user will often turn the robot to face them and in the process touch it
     BEHAVIOR_ID(ReactToUnexpectedMovement), // the user will often turn the robot to face them
     BEHAVIOR_ID(ReactToSoundAwake),         // fully concentrate on what's in front
+    BEHAVIOR_ID(ReactToIlluminationOff)     // user hand near camera may trigger darkened condition
   }};
 }
 

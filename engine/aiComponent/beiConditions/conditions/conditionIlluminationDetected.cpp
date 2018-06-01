@@ -36,9 +36,16 @@ ConditionIlluminationDetected::ConditionIlluminationDetected( const Json::Value&
                                                       "ConditionIlluminationDetected.Constructor" );
   _params.confirmationMinNum = JsonTools::ParseUInt32( config, "confirmationMinNum",
                                                        "ConditionIlluminationDetected.Constructor" );
+  _params.ignoreUnknown = JsonTools::ParseBool( config, "ignoreUnknown",
+                                                "ConditionalIlluminationDetected.Constructor" );
 }
 
 ConditionIlluminationDetected::~ConditionIlluminationDetected() {}
+
+void ConditionIlluminationDetected::GetRequiredVisionModes(std::set<VisionModeRequest>& request) const
+{
+  request.insert({ VisionMode::DetectingIllumination, EVisionUpdateFrequency::High });
+}
 
 void ConditionIlluminationDetected::InitInternal( BehaviorExternalInterface& bei )
 {
@@ -74,10 +81,18 @@ void ConditionIlluminationDetected::HandleEvent( const EngineToGameEvent& event,
 void ConditionIlluminationDetected::HandleIllumination( const EngineToGameEvent& event )
 {
   const auto& msg = event.GetData().Get_RobotObservedIllumination();
+
+  if( _params.ignoreUnknown && IlluminationState::Unknown == msg.state )
+  {
+    return;
+  }
+
   switch( _matchState )
   {
     case MatchState::WaitingForMatch:
     {
+      PRINT_NAMED_INFO("ConditionIlluminationDetected.HandleIllumination.Waiting", "%s",
+                       EnumToString(_params.targetState) );
       if( msg.state == _params.targetState )
       {
         _matchState = MatchState::ConfirmingMatch;
@@ -94,6 +109,8 @@ void ConditionIlluminationDetected::HandleIllumination( const EngineToGameEvent&
       }
       else
       {
+        PRINT_NAMED_INFO("ConditionIlluminationDetected.HandleIllumination.Confirming", "%s",
+                         EnumToString(_params.targetState) );
         if( msg.timestamp < _matchStartTime )
         {
           PRINT_NAMED_ERROR("ConditionIlluminationDetected.HandleIllumination.TimeError",
@@ -114,6 +131,8 @@ void ConditionIlluminationDetected::HandleIllumination( const EngineToGameEvent&
     }
     case MatchState::MatchConfirmed:
     {
+      PRINT_NAMED_INFO("ConditionIlluminationDetected.HandleIllumination.Matched", "%s",
+                       EnumToString(_params.targetState) );
       if( msg.state != _params.targetState )
       {
         _matchState = MatchState::WaitingForMatch;

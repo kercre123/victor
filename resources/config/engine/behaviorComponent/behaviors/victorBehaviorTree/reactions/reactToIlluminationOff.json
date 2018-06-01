@@ -1,0 +1,13 @@
+{
+  "behaviorID"    : "ReactToIlluminationOff",
+  "behaviorClass" : "DispatcherPassThrough",
+  
+  "delegateID" : "Sleeping",
+
+  "wantsToBeActivatedCondition":
+    {"conditionType"     : "IlluminationDetected",
+     "targetState"       : "Darkened",
+     "confirmationTime"  : 10.0,
+     "confirmationMinNum": 10,
+     "ignoreUnknown"     : true}
+}

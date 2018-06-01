@@ -29,6 +29,8 @@ public:
   ConditionIlluminationDetected( const Json::Value& config );
   virtual ~ConditionIlluminationDetected();
 
+  virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& request) const override;
+
 protected:
 
   virtual void InitInternal( BehaviorExternalInterface& bei ) override;
@@ -40,8 +42,9 @@ private:
   struct ConfigParams
   {
     IlluminationState targetState; // State that causes trigger
-    f32 confirmationTime_s;   // Number of seconds state must match to trigger condition
-    u32 confirmationMinNum; // Min number of match events to trigger condition
+    f32 confirmationTime_s;        // Number of seconds state must match to trigger condition
+    u32 confirmationMinNum;        // Min number of match events to trigger condition
+    bool ignoreUnknown;            // Whether to ignore Unknown illuminations
   };
   
   ConfigParams _params;
