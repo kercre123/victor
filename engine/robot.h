@@ -84,6 +84,7 @@ class NVStorageComponent;
 class ObjectPoseConfirmer;
 class PetWorld;
 class ProgressionUnlockComponent;
+class RobotEventHandler;
 class RobotGyroDriftDetector;
 class RobotIdleTimeoutComponent;
 class RobotStateHistory;
@@ -109,6 +110,7 @@ class MicComponent;
 class BatteryComponent;
 class BeatDetectorComponent;
 class TextToSpeechCoordinator;
+class SDKComponent;
 
 namespace Audio {
   class EngineRobotAudioClient;
@@ -297,6 +299,9 @@ public:
   const BeatDetectorComponent&    GetBeatDetectorComponent()    const { return GetComponent<BeatDetectorComponent>(); }
   BeatDetectorComponent&          GetBeatDetectorComponent()          { return GetComponent<BeatDetectorComponent>(); }
   
+  const SDKComponent&    GetSDKComponent()    const { return GetComponent<SDKComponent>(); }
+  SDKComponent&          GetSDKComponent()          { return GetComponent<SDKComponent>(); }
+
   const PoseOriginList&  GetPoseOriginList() const { return *_poseOrigins.get(); }
 
   ObjectPoseConfirmer& GetObjectPoseConfirmer() { return GetComponent<ObjectPoseConfirmer>(); }
@@ -566,6 +571,7 @@ public:
   IExternalInterface* GetExternalInterface() const;
 
   RobotInterface::MessageHandler* GetRobotMessageHandler() const;
+  RobotEventHandler& GetRobotEventHandler();
   void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
   const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
 

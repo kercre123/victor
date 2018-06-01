@@ -83,7 +83,7 @@ enum uint_8 BehaviorID {
   ReactToPet,
 
   // sdkBehaviors
-  SDKBehaviors,
+  SDK0,
 
   // victorBehaviorTree
   ComeHereVoiceCommand,

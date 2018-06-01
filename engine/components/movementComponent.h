@@ -193,6 +193,8 @@ public:
   bool IsDirectDriving() const { return ((_drivingWheels || _drivingHead || _drivingLift)); }
   
   u8 GetMaxUnexpectedMovementCount() const { return UnexpectedMovement::kMaxUnexpectedMovementCount; }
+
+  void SetAllowedToHandleActions(bool allowedToHandleActions);
   
   // Enable/disable detection of rotation without motors. This must be explicitly enabled since it
   // differs from the most common use case of this component.
@@ -223,6 +225,9 @@ private:
   bool _isLiftMoving = false;
   bool _areWheelsMoving = false;
   bool _enableRotatedWithoutMotors = false;
+
+  // TODO Set to false so it is only enabled when BehaviorSDKInterface is activated.
+  bool _isAllowedToHandleActions = true;//false;
   
   std::list<Signal::SmartHandle> _eventHandles;
   

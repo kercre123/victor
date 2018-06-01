@@ -27,6 +27,7 @@ enum class BEIComponentID{
   ProgressionUnlock,
   ProxSensor,
   PublicStateBroadcaster,
+  SDK,
   RobotAudioClient,
   RobotInfo,
   TextToSpeechCoordinator,

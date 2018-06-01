@@ -45,6 +45,7 @@
 #include "engine/components/pathComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
+#include "engine/components/sdkComponent.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
@@ -280,6 +281,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::DataAccessor,               new DataAccessorComponent());
     _components->AddDependentComponent(RobotComponentID::BeatDetector,               new BeatDetectorComponent());
     _components->AddDependentComponent(RobotComponentID::TextToSpeechCoordinator,    new TextToSpeechCoordinator());
+    _components->AddDependentComponent(RobotComponentID::SDK,                        new SDKComponent());
     _components->InitComponents(this);
   }
 
@@ -2695,6 +2697,10 @@ RobotInterface::MessageHandler* Robot::GetRobotMessageHandler() const
   return GetContext()->GetRobotManager()->GetMsgHandler();
 }
 
+RobotEventHandler& Robot::GetRobotEventHandler()
+{
+  return GetContext()->GetRobotManager()->GetRobotEventHandler();
+}
 
 Result Robot::ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, f32 yTolFrac) const
 {

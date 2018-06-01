@@ -380,13 +380,6 @@ namespace Anki {
 
             if (moveComponent.AreAnyTracksLocked(tracksToLock))
             {
-              // Print special, more helpful message in SDK mode, if on charger
-              if (GetRobot().GetContext()->IsInSdkMode() && GetRobot().GetBatteryComponent().IsOnChargerContacts())
-              {
-                PRINT_CH_INFO(kLogChannelName, "IActionRunner.Update.TracksLockedOnChargerInSDK",
-                              "Use of head/lift/body motors is limited while on charger in SDK mode");
-              }
-
               // Split this into two messages so we don't send giant strings to DAS
               PRINT_NAMED_WARNING("IActionRunner.Update.TracksLocked",
                                   "Action %s [%d] not running because required tracks are locked",

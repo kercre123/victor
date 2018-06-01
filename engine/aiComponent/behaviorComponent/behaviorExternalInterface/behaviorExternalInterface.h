@@ -57,6 +57,7 @@ class PetWorld;
 class ProgressionUnlockComponent;
 class ProxSensorComponent;
 class PublicStateBroadcaster;
+class SDKComponent;
 class DataAccessorComponent;
 class TextToSpeechCoordinator;
 class TouchSensorComponent;
@@ -140,6 +141,7 @@ public:
             ProgressionUnlockComponent*    progressionUnlockComponent,
             ProxSensorComponent*           proxSensor,
             PublicStateBroadcaster*        publicStateBroadcaster,
+            SDKComponent*                  sdkComponent,
             Audio::EngineRobotAudioClient* robotAudioClient,
             BEIRobotInfo*                  robotInfo,
             DataAccessorComponent*         dataAccessor,
@@ -224,6 +226,9 @@ public:
   inline bool HasTextToSpeechCoordinator() const { return GetComponentWrapper(BEIComponentID::TextToSpeechCoordinator).IsValueValid();}
   TextToSpeechCoordinator& GetTextToSpeechCoordinator() const {return GetComponentWrapper(BEIComponentID::TextToSpeechCoordinator).GetValue<TextToSpeechCoordinator>();}
 
+  inline bool HasSDKComponent() const { return GetComponentWrapper(BEIComponentID::SDK).IsValueValid();}
+  SDKComponent& GetSDKComponent() const {return GetComponentWrapper(BEIComponentID::SDK).GetValue<SDKComponent>();}
+
   // Util functions
   OffTreadsState GetOffTreadsState() const;
   Util::RandomGenerator& GetRNG();
@@ -252,6 +257,7 @@ private:
                        ProgressionUnlockComponent*    progressionUnlockComponent,
                        ProxSensorComponent*           proxSensor,
                        PublicStateBroadcaster*        publicStateBroadcaster,
+                       SDKComponent*                  sdkComponent,
                        Audio::EngineRobotAudioClient* robotAudioClient,
                        BEIRobotInfo*                  robotInfo,
                        DataAccessorComponent*         dataAccessor,

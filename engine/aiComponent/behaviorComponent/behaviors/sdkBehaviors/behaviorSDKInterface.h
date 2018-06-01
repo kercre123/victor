@@ -20,9 +20,6 @@ namespace Cozmo {
 
 class BehaviorSDKInterface : public ICozmoBehavior
 {
-public: 
-  virtual ~BehaviorSDKInterface();
-
 protected:
 
   // Enforce creation through BehaviorFactory
@@ -36,6 +33,7 @@ protected:
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
+  virtual void OnBehaviorDeactivated() override;
 
 private:
 

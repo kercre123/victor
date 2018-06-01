@@ -91,6 +91,7 @@ void InitBEIPartial( const BEIComponentMap& map, BehaviorExternalInterface& bei 
            GetFromMap<ProgressionUnlockComponent>(map, BEIComponentID::ProgressionUnlock),
            GetFromMap<ProxSensorComponent>(map, BEIComponentID::ProxSensor),
            GetFromMap<PublicStateBroadcaster>(map, BEIComponentID::PublicStateBroadcaster),
+           GetFromMap<SDKComponent>(map, BEIComponentID::SDK),
            GetFromMap<Audio::EngineRobotAudioClient>(map, BEIComponentID::RobotAudioClient),
            GetFromMap<BEIRobotInfo>(map, BEIComponentID::RobotInfo),
            GetFromMap<DataAccessorComponent>(map, BEIComponentID::DataAccessor),

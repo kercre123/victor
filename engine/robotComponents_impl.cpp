@@ -61,6 +61,7 @@ class FullRobotPose;
 class DataAccessorComponent;
 class BeatDetectorComponent;
 class TextToSpeechCoordinator;
+class SDKComponent;
 
 } // namespace Cozmo
 
@@ -106,6 +107,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(FullRobotPose,                 RobotComponentID, Ful
 LINK_COMPONENT_TYPE_TO_ENUM(DataAccessorComponent,         RobotComponentID, DataAccessor)
 LINK_COMPONENT_TYPE_TO_ENUM(BeatDetectorComponent,         RobotComponentID, BeatDetector)
 LINK_COMPONENT_TYPE_TO_ENUM(TextToSpeechCoordinator,       RobotComponentID, TextToSpeechCoordinator)
+LINK_COMPONENT_TYPE_TO_ENUM(SDKComponent,                  RobotComponentID, SDK)
 
 // Translate entity into string
 template<>
@@ -148,6 +150,7 @@ std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotCompone
     case Cozmo::RobotComponentID::ProgressionUnlock:          { return "ProgressionUnlock";}
     case Cozmo::RobotComponentID::ProxSensor:                 { return "ProxSensor";}
     case Cozmo::RobotComponentID::PublicStateBroadcaster:     { return "PublicStateBroadcaster";}
+    case Cozmo::RobotComponentID::SDK:                        { return "SDK";}
     case Cozmo::RobotComponentID::FullRobotPose:              { return "FullRobotPose";}
     case Cozmo::RobotComponentID::RobotIdleTimeout:           { return "RobotIdleTimeout";}
     case Cozmo::RobotComponentID::RobotToEngineImplMessaging: { return "RobotToEngineImplMessaging";}

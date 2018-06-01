@@ -63,6 +63,7 @@ public:
   Result UpdateRobotConnection();
 
   RobotInterface::MessageHandler* GetMsgHandler() const { return _robotMessageHandler.get(); }
+  RobotEventHandler& GetRobotEventHandler() { return _robotEventHandler; }
 
   bool ShouldFilterMessage(RobotInterface::RobotToEngineTag msgType) const;
   bool ShouldFilterMessage(RobotInterface::EngineToRobotTag msgType) const;

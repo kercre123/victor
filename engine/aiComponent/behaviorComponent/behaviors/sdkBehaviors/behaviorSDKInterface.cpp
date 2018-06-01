@@ -12,6 +12,9 @@
 
 
 #include "engine/aiComponent/behaviorComponent/behaviors/sdkBehaviors/behaviorSDKInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/components/movementComponent.h"
+#include "engine/robotEventHandler.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -35,14 +38,11 @@ BehaviorSDKInterface::BehaviorSDKInterface(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorSDKInterface::~BehaviorSDKInterface()
-{
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorSDKInterface::WantsToBeActivatedBehavior() const
 {
-  return true;
+  // TODO set to true
+  return false;
+  //return true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -76,10 +76,27 @@ void BehaviorSDKInterface::OnBehaviorActivated()
 {
   // reset dynamic variables
   _dVars = DynamicVariables();
-  
-  // TODO: the behavior is active now, time to do something!
+
+  // Permit actions and low level motor control to run since SDK behavior is now active.
+  auto& robotInfo = GetBEI().GetRobotInfo();
+  auto& robotEventHandler = robotInfo.GetRobotEventHandler();  
+  robotEventHandler.SetAllowedToHandleActions(true);
+
+  auto& movementComponent = robotInfo.GetMoveComponent();
+  movementComponent.SetAllowedToHandleActions(true);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorSDKInterface::OnBehaviorDeactivated()
+{
+  // Do not permit actions and low level motor control to run since SDK behavior is no longer active.
+  auto& robotInfo = GetBEI().GetRobotInfo();
+  auto& robotEventHandler = robotInfo.GetRobotEventHandler();
+  robotEventHandler.SetAllowedToHandleActions(false);
+
+  auto& movementComponent = robotInfo.GetMoveComponent();
+  movementComponent.SetAllowedToHandleActions(false);
+}    
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSDKInterface::BehaviorUpdate() 

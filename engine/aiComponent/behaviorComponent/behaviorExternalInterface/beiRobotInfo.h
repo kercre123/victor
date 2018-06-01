@@ -52,6 +52,7 @@ class PathComponent;
 class ProgressionUnlockComponent;
 class PublicStateBroadcaster;
 class Robot;
+class RobotEventHandler;
 class VisionComponent;
 
 struct AccelData;
@@ -103,6 +104,7 @@ public:
   Radians GetPitchAngle() const;
   const Pose3d& GetPose() const;
   const PoseOriginList&  GetPoseOriginList() const;
+  RobotEventHandler& GetRobotEventHandler() const;
   Util::RandomGenerator& GetRNG();
   const Pose3d& GetWorldOrigin()  const;
   PoseOriginID_t GetWorldOriginID() const;

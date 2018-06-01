@@ -775,11 +775,11 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SetLiftHei
   }
   else
   {
-      // In the normal case directly set the lift height
+    // In the normal case directly set the lift height
     MoveLiftToHeightAction* action = new MoveLiftToHeightAction(msg.height_mm);
-      action->SetMaxLiftSpeed(msg.max_speed_rad_per_sec);
-      action->SetLiftAccel(msg.accel_rad_per_sec2);
-      action->SetDuration(msg.duration_sec);
+    action->SetMaxLiftSpeed(msg.max_speed_rad_per_sec);
+    action->SetLiftAccel(msg.accel_rad_per_sec2);
+    action->SetDuration(msg.duration_sec);
 
     return action;
     }
@@ -921,6 +921,9 @@ using FullActionMessageHandlerArray = Util::FullEnumToValueArrayChecker::FullEnu
 RobotEventHandler::RobotEventHandler(const CozmoContext* context)
 : _context(context)
 {
+  // TODO Set to false so it is only enabled when BehaviorSDKInterface is activated.
+  _allowedToHandleActions = true;//false;
+  
   auto externalInterface = _context->GetExternalInterface();
 
   if (externalInterface != nullptr)
@@ -1068,6 +1071,9 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
 
 } // RobotEventHandler Constructor
 
+void RobotEventHandler::SetAllowedToHandleActions(bool allowedToHandleActions) {
+  _allowedToHandleActions = allowedToHandleActions;
+}
 
 // =====================================================================================================================
 #pragma mark -
@@ -1084,6 +1090,13 @@ u32 RobotEventHandler::GetNextGameActionTag() {
 
 void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
 {
+  auto const& msg = event.GetData();
+  if (!_allowedToHandleActions) {
+    PRINT_NAMED_ERROR("RobotEventHandler.HandleActionEvents.ActionsNotAllowedUntilSDKBehaviorActivated",
+                      "Tag: %s", ExternalInterface::MessageGameToEngineTagToString(msg.GetTag()));
+    return;
+  }
+
   Robot* robot = _context->GetRobotManager()->GetRobot();
 
   // If we don't have a valid robot there's nothing to do
@@ -1093,7 +1106,6 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
   }
 
   // Create the action
-  auto const& msg = event.GetData();
   auto handlerIter = _gameToEngineHandlerLUT.find(msg.GetTag());
   if(handlerIter == _gameToEngineHandlerLUT.end())
   {

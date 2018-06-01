@@ -63,6 +63,7 @@ enum class RobotComponentID{
   ProgressionUnlock,
   ProxSensor,
   PublicStateBroadcaster,
+  SDK,
   RobotIdleTimeout,
   RobotToEngineImplMessaging,
   StateHistory,

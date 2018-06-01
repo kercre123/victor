@@ -74,6 +74,11 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
   helper.SubscribeGameToEngine<MessageGameToEngineTag::TurnInPlaceAtSpeed>();
 }
 
+void MovementComponent::SetAllowedToHandleActions(bool allowedToHandleActions)
+{
+  _isAllowedToHandleActions = allowedToHandleActions;
+}
+
 void MovementComponent::OnRobotDelocalized()
 {
   _unexpectedMovement.Reset();
@@ -384,7 +389,10 @@ void MovementComponent::RemoveEyeShiftWhenHeadMoves(const std::string& name, Tim
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
 {
-  if (!_drivingWheels && AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK)) {
+  if (!_isAllowedToHandleActions) {
+    LOG_ERROR("MovementComponent.EventHandler.DriveWheels.SDKBehaviorNotActive", "Ignoring ExternalInterface::DriveWheels while SDK behavior is not active.");
+  }
+  else if (!_drivingWheels && AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK)) {
     LOG_INFO("MovementComponent.EventHandler.DriveWheels.WheelsLocked",
              "Ignoring ExternalInterface::DriveWheels while wheels are locked.");
   } else {
@@ -401,7 +409,10 @@ void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::TurnInPlaceAtSpeed& msg)
 {
-  if (!_drivingWheels && AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK)) {
+  if (!_isAllowedToHandleActions) {
+    LOG_ERROR("MovementComponent.EventHandler.DriveWheels.SDKBehaviorNotActive", "Ignoring ExternalInterface::TurnInPlaceAtSpeed while SDK behavior is not active.");
+  }
+  else if (!_drivingWheels && AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK)) {
     LOG_INFO("MovementComponent.EventHandler.TurnInPlaceAtSpeed.WheelsLocked",
              "Ignoring ExternalInterface::TurnInPlaceAtSpeed while wheels are locked.");
   } else {
@@ -424,7 +435,10 @@ void MovementComponent::HandleMessage(const ExternalInterface::TurnInPlaceAtSpee
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::MoveHead& msg)
 {
-  if (!_drivingHead && AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK)) {
+  if (!_isAllowedToHandleActions) {
+    LOG_ERROR("MovementComponent.EventHandler.DriveWheels.SDKBehaviorNotActive", "Ignoring ExternalInterface::MoveHead while SDK behavior is not active.");
+  }
+  else if (!_drivingHead && AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK)) {
     LOG_INFO("MovementComponent.EventHandler.MoveHead.HeadLocked",
              "Ignoring ExternalInterface::MoveHead while head is locked.");
   } else {
@@ -440,7 +454,10 @@ void MovementComponent::HandleMessage(const ExternalInterface::MoveHead& msg)
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::MoveLift& msg)
 {
-  if (!_drivingLift && AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK)) {
+  if (!_isAllowedToHandleActions) {
+    LOG_ERROR("MovementComponent.EventHandler.DriveWheels.SDKBehaviorNotActive", "Ignoring ExternalInterface::MoveLift while SDK behavior is not active.");
+  }
+  else if (!_drivingLift && AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK)) {
     LOG_INFO("MovementComponent.EventHandler.MoveLift.LiftLocked",
              "Ignoring ExternalInterface::MoveLift while lift is locked.");
   } else {
@@ -456,7 +473,10 @@ void MovementComponent::HandleMessage(const ExternalInterface::MoveLift& msg)
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::DriveArc& msg)
 {
-  if (!_drivingWheels && AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK)) {
+  if (!_isAllowedToHandleActions) {
+    LOG_ERROR("MovementComponent.EventHandler.DriveWheels.SDKBehaviorNotActive", "Ignoring ExternalInterface::DriveArc while SDK behavior is not active.");
+  }
+  else if (!_drivingWheels && AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK)) {
     LOG_INFO("MovementComponent.EventHandler.DriveArc.WheelsLocked",
              "Ignoring ExternalInterface::DriveArc while wheels are locked.");
   } else {
@@ -474,6 +494,11 @@ void MovementComponent::HandleMessage(const ExternalInterface::DriveArc& msg)
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::StopAllMotors& msg)
 {
+  if (!_isAllowedToHandleActions) {
+    LOG_ERROR("MovementComponent.EventHandler.DriveWheels.SDKBehaviorNotActive", "Ignoring ExternalInterface::StopAllMotors while SDK behavior is not active.");
+    return;
+  }
+
   StopAllMotors();
 }
 
