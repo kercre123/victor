@@ -13,6 +13,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_ConditionPersonDetected_H__
 #define __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_ConditionPersonDetected_H__
 
+#include "engine/aiComponent/beiConditions/beiConditionMessageHelper.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/aiComponent/beiConditions/iBEIConditionEventHandler.h"
 
@@ -22,7 +23,9 @@ namespace Cozmo {
 
 class ConditionPersonDetected : public IBEICondition, private IBEIConditionEventHandler
 {
+public:
   explicit ConditionPersonDetected(const Json::Value& config);
+  ConditionPersonDetected();
   ~ConditionPersonDetected() override ;
 
 protected:
@@ -33,7 +36,8 @@ protected:
 private:
   void HandleEvent(const EngineToGameEvent& event, BehaviorExternalInterface& bei) override;
 
-protected:
+  std::unique_ptr<BEIConditionMessageHelper> _messageHelper;
+  mutable float _timeSinceLastObservation = 0; // TODO this is temporary for testing
 
 };
 

@@ -11,42 +11,78 @@
  **/
 
 #include "engine/aiComponent/beiConditions/conditions/conditionPersonDetected.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
-Anki::Cozmo::ConditionPersonDetected::ConditionPersonDetected(const Json::Value& config)
+namespace Anki {
+namespace Cozmo {
+
+ConditionPersonDetected::ConditionPersonDetected(const Json::Value& config)
     : IBEICondition(config)
 {
-
+  // TODO need something from the json file here?
 }
 
-Anki::Cozmo::ConditionPersonDetected::~ConditionPersonDetected()
+ConditionPersonDetected::ConditionPersonDetected()
+    : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::PersonDetected))
+{
+}
+
+
+ConditionPersonDetected::~ConditionPersonDetected()
 {
 
 }
 
 void
-Anki::Cozmo::ConditionPersonDetected::InitInternal(Anki::Cozmo::BehaviorExternalInterface& behaviorExternalInterface)
+ConditionPersonDetected::InitInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  IBEICondition::InitInternal(behaviorExternalInterface);
+  _messageHelper.reset(new BEIConditionMessageHelper(this, behaviorExternalInterface));
+
+  // TODO get the right tag for person detection
+//  _messageHelper->SubscribeToTags({EngineToGameTag::RobotObservedMotion});
+
 }
 
-bool Anki::Cozmo::ConditionPersonDetected::AreConditionsMetInternal(
-    Anki::Cozmo::BehaviorExternalInterface& behaviorExternalInterface) const
+bool ConditionPersonDetected::AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  return false;
+  PRINT_CH_INFO("Behaviors", "ConditionPersonDetected.AreConditionsMetInternal.Called", "");
+  // TODO Here I'm cheating: test if x seconds have passed and if so make the condition true
+
+  float currentTickCount = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if ((currentTickCount - _timeSinceLastObservation) > 3 ) { // 3 seconds
+    PRINT_CH_INFO("Behaviors", "ConditionPersonDetected.AreConditionsMetInternal.ConditionTrue", "");
+    _timeSinceLastObservation = currentTickCount;
+    return true;
+  }
+  else {
+    PRINT_CH_INFO("Behaviors", "ConditionPersonDetected.AreConditionsMetInternal.ConditionFalse", "");
+    return false;
+  }
 }
 
 void
-Anki::Cozmo::ConditionPersonDetected::GetRequiredVisionModes(std::set<Anki::Cozmo::VisionModeRequest>& requests) const
+Anki::Cozmo::ConditionPersonDetected::GetRequiredVisionModes(std::set<Anki::Cozmo::VisionModeRequest>& requiredVisionModes) const
 {
-  IBEICondition::GetRequiredVisionModes(requests);
   //TODO we need person detection mode here
-//    requiredVisionModes.insert( {VisionMode::DetectingMotion, EVisionUpdateFrequency::High} );
+//  requiredVisionModes.insert( {VisionMode::DetectingMotion, EVisionUpdateFrequency::High} );
 }
 
-void Anki::Cozmo::ConditionPersonDetected::HandleEvent(const Anki::Cozmo::EngineToGameEvent& event,
-                                                       Anki::Cozmo::BehaviorExternalInterface& bei)
+void Anki::Cozmo::ConditionPersonDetected::HandleEvent(const EngineToGameEvent& event,
+                                                       BehaviorExternalInterface& bei)
 {
-  IBEIConditionEventHandler::HandleEvent(event, bei);
+
+  switch (event.GetData().GetTag()) {
+    // TODO react to the right tag
+
+    default:
+      PRINT_NAMED_WARNING("ConditionPersonDetected.HandleEvent.InvalidEvent", "");
+      break;
+  }
+
+} // namespace Cozmo
 }
+
+} // namespace Anki
 
 

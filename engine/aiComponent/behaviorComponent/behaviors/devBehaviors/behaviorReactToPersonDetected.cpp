@@ -12,6 +12,8 @@
 
 
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorReactToPersonDetected.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionPersonDetected.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionMotionDetected.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
@@ -28,7 +30,13 @@ BehaviorReactToPersonDetected::InstanceConfig::InstanceConfig()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToPersonDetected::DynamicVariables::DynamicVariables()
 {
+  Reset();
+}
+
+void BehaviorReactToPersonDetected::DynamicVariables::Reset()
+{
   state = State::Starting;
+  sawAPerson = false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -46,6 +54,8 @@ BehaviorReactToPersonDetected::~BehaviorReactToPersonDetected()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToPersonDetected::WantsToBeActivatedBehavior() const
 {
+  PRINT_CH_INFO("Behaviors", "BehaviorReactToPersonDetected.WantsToBeActivatedBehavior.Called", "Wake Up?");
+
   return true;
 }
 
@@ -89,12 +99,33 @@ void BehaviorReactToPersonDetected::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToPersonDetected::BehaviorUpdate() 
 {
+  PRINT_CH_INFO("Behaviors", "BehaviorReactToPersonDetected.BehaviorUpdate", "I am being updated");
 
-  if( ! IsActivated() ) {
+
+  const bool motorsMoving = GetBEI().GetRobotInfo().GetMoveComponent().IsMoving();
+  const bool pickedUp = GetBEI().GetRobotInfo().IsPickedUp();
+
+  // for the moment only handle the case where the robot is moving
+
+  if (motorsMoving) {
+    if (_dVars.state != State::Turning) {
+      // the robot is moving not because we told it to do so
+
+      TransitionToCompleted();
+      return;
+    }
+  }
+  if (pickedUp) {
+    // definitively stop here
+    TransitionToCompleted();
     return;
   }
 
-  PRINT_CH_INFO("Behaviors", "BehaviorReactToPersonDetected.BehaviorUpdate", "I am updated!");
+
+  if( ! IsActivated() ) {
+    PRINT_CH_INFO("Behaviors", "BehaviorReactToPersonDetected.BehaviorUpdate", "I am actually not active :(");
+    return;
+  }
 
   if (_dVars.state == State::Starting) {
     PRINT_CH_INFO("Behaviors", "BehaviorReactToPersonDetected.BehaviorUpdate", "Starting the turn");
@@ -105,7 +136,8 @@ void BehaviorReactToPersonDetected::BehaviorUpdate()
     return;
   }
   else if (_dVars.state == State::Completed) {
-    PRINT_CH_INFO("Behaviors", "BehaviorReactToPersonDetected.BehaviorUpdate", "Finished turning, now what?");
+    PRINT_CH_INFO("Behaviors", "BehaviorReactToPersonDetected.BehaviorUpdate", "Finished turning");
+    TransitionToCompleted();
   }
 }
 
@@ -128,6 +160,17 @@ void BehaviorReactToPersonDetected::FinishedTurning() {
 
   PRINT_CH_INFO("Behaviors", "BehaviorReactToPersonDetected.FinishedTurning", "Finished turning");
   _dVars.state = State::Completed;
+}
+
+
+void BehaviorReactToPersonDetected::TransitionToCompleted()
+{
+  // for the moment just stop doing stuff
+  _dVars.state = State::Completed;
+  CancelDelegates(false);
+  if (IsActivated()) {
+    CancelSelf();
+  }
 }
 
 } // namespace Cozmo

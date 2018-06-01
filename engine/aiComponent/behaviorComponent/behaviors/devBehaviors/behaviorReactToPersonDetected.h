@@ -31,18 +31,18 @@ protected:
   friend class BehaviorFactory;
   explicit BehaviorReactToPersonDetected(const Json::Value& config);  
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
-  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
-  virtual bool WantsToBeActivatedBehavior() const override;
-  virtual void OnBehaviorActivated() override;
-  virtual void BehaviorUpdate() override;
+  void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
+  void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  bool WantsToBeActivatedBehavior() const override;
+  void OnBehaviorActivated() override;
+  void BehaviorUpdate() override;
 
 private:
 
   void TurnTowardsPoint();
   void FinishedTurning();
+  void TransitionToCompleted();
 
   enum class State : uint8_t {
     Starting=0,
@@ -58,13 +58,15 @@ private:
 
   struct DynamicVariables {
     DynamicVariables();
+    void Reset();
     State state;
+    bool sawAPerson = false;
   };
 
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
-  
+
 };
 
 } // namespace Cozmo
