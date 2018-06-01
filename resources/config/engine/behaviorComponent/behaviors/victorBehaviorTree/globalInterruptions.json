@@ -7,6 +7,7 @@
   "behaviors": [
     "MandatoryPhysicalReactions",
     "LowBatteryFindAndGoToHome",
+    "SDK0",
     "TriggerWordDetected",
     "TimerUtilityCoordinator",
     "WeatherResponses",
