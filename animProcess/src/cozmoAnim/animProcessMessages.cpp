@@ -608,7 +608,10 @@ Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_na
   if(!faultCodeDisplayed &&
      currTime_nanosec - startTime_nanosec > kTimeUntilNoProcessFaultCode_nanosec)
   {
-    if(!AnimComms::IsConnectedToEngine())
+    if(!ANKI_VERIFY(AnimComms::IsConnectedToEngine(),
+                    "AnimProcessMessages.MonitorConnectionState.NotConnectedToEngine",
+                    "Not connected to engine process (currTime_nanosec %llu, startTime_nanosec %llu)",
+                    currTime_nanosec, startTime_nanosec))
     {
       faultCodeDisplayed = true;
       FaultCode::DisplayFaultCode(FaultCode::NO_ENGINE_PROCESS);
