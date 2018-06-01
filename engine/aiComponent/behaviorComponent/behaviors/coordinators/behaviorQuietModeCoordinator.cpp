@@ -13,13 +13,16 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorQuietModeCoordinator.h"
 #include "engine/actions/dockActions.h"
+#include "engine/activeObject.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/audio/engineRobotAudioClient.h"
+#include "clad/types/animationTrigger.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/cubeLightComponent.h"
 #include "engine/moodSystem/moodManager.h"
@@ -207,6 +210,13 @@ void BehaviorQuietModeCoordinator::SimmerDownNow()
   SetAudioActive( false );
   
   GetBEI().GetCubeLightComponent().StopAllAnims();
+  BlockWorldFilter filter;
+  filter.AddAllowedFamily(ObjectFamily::LightCube);
+  std::vector<const ActiveObject*> connectedCubes;
+  GetBEI().GetBlockWorld().FindConnectedActiveMatchingObjects(filter, connectedCubes);
+  for( const auto* obj : connectedCubes ) {
+    GetBEI().GetCubeLightComponent().PlayLightAnim( obj->GetID(), CubeAnimationTrigger::SleepNoFade );
+  }
   
   auto& moodManager = GetBEI().GetMoodManager();
   _dVars.wasFixed = moodManager.IsEmotionFixed( EmotionType::Stimulated );
@@ -220,6 +230,8 @@ void BehaviorQuietModeCoordinator::ResumeNormal()
   
   auto& moodManager = GetBEI().GetMoodManager();
   moodManager.SetEmotionFixed( EmotionType::Stimulated, _dVars.wasFixed );
+  
+  GetBEI().GetCubeLightComponent().StopAllAnims();
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
