@@ -34,6 +34,12 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
+  
+  // This is a fixed latency correction factor. Animation
+  // commands are sent to the anim process early by this
+  // amount to account for messaging/tick latency/timing.
+  const float kLatencyCorrectionTime_sec = 0.050f;
+  
   const BackpackLights beatBackpackLights = {
     .onColors               = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
     .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
@@ -195,12 +201,6 @@ void BehaviorDanceToTheBeat::OnBehaviorActivated()
   _dVars.nextBeatTime_sec = beatDetector.GetNextBeatTime_sec();
   _dVars.beatPeriod_sec = 60.f / beatDetector.GetCurrTempo_bpm();
   
-  // Push the get-in animation onto the queue
-  std::string animNameStr;
-  if (ANKI_VERIFY(GetAnimationFromTrigger(_iConfig.getInAnim, animNameStr), "BehaviorDanceToTheBeat.OnBehaviorActivated.NoAnimForGetInTrigger", "")) {
-    _dVars.animsToPlay.push(std::move(animNameStr));
-  }
-  
   // For each dance phrase config entry, randomly draw the specified number
   // of animations from the list and add them to the queue.
   const auto& rng = GetRNG();
@@ -216,11 +216,11 @@ void BehaviorDanceToTheBeat::OnBehaviorActivated()
     }
   }
   
-  // Push the get-out animation onto the queue
-  animNameStr.clear();
-  if (ANKI_VERIFY(GetAnimationFromTrigger(_iConfig.getOutAnim, animNameStr), "BehaviorDanceToTheBeat.OnBehaviorActivated.NoAnimForGetOutTrigger", "")) {
-    _dVars.animsToPlay.push(std::move(animNameStr));
-  }
+  // Start off the behavior by playing the get-in anim
+  DelegateIfInControl(new TriggerAnimationAction(_iConfig.getInAnim),
+                      [this](){
+                        SetNextAnimTriggerTime();
+                      });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -239,29 +239,33 @@ void BehaviorDanceToTheBeat::BehaviorUpdate()
     _dVars.nextBeatTime_sec += _dVars.beatPeriod_sec;
   }
   
-  if (!IsControlDelegated()) {
-    if (IsAnimQueued()) {
-      if (now_sec > _dVars.nextAnimTriggerTime_sec) {
-        DelegateNow(new PlayAnimationAction(_dVars.animsToPlay.front().animName));
-        _dVars.animsToPlay.pop();
-        _dVars.nextAnimTriggerTime_sec = 0.f;
-      }
+  if (_dVars.nextAnimTriggerTime_sec > 0.f &&
+      now_sec >= _dVars.nextAnimTriggerTime_sec) {
+    // Time to play the next animation in the queue
+    DEV_ASSERT(!_dVars.animsToPlay.empty(), "BehaviorDanceToTheBeat.BehaviorUpdate.NoAnimsInQueue");
+    auto* animAction = new PlayAnimationAction(_dVars.animsToPlay.front().animName);
+    _dVars.animsToPlay.pop();
+    if (_dVars.animsToPlay.empty()) {
+      // No more animations to play after this one. Play this
+      // animation then the getout.
+      DelegateNow(animAction, [this](){
+        DelegateIfInControl(new TriggerAnimationAction(_iConfig.getOutAnim));
+      });
+      _dVars.nextAnimTriggerTime_sec = -1.f;
     } else {
-      if (_dVars.animsToPlay.empty()) {
-        // There are no more animations to play, so end the behavior.
-        CancelSelf();
-      } else {
-        // Queue up a new animation
-        const auto& nextAnim = _dVars.animsToPlay.front();
-        // Must start the animation beatDelay_sec before the next beat
-        _dVars.nextAnimTriggerTime_sec = _dVars.nextBeatTime_sec - nextAnim.beatDelay_sec;
-        // Make sure the animation trigger time is somewhere in the future
-        BOUNDED_WHILE(1000, _dVars.nextAnimTriggerTime_sec < now_sec) {
-          // warn?
-          _dVars.nextAnimTriggerTime_sec += _dVars.beatPeriod_sec;
-        }
-      }
+      // Delegate to this animation, and play the eye hold indefinitely after that
+      DelegateNow(animAction, [this](){
+        DelegateIfInControl(new TriggerAnimationAction(_iConfig.eyeHoldAnim, 0));
+      });
+      SetNextAnimTriggerTime();
     }
+  }
+  
+  // If we have no animation queued and we're not currently doing
+  // anything, it's time to quit.
+  if (!IsControlDelegated() &&
+      _dVars.nextAnimTriggerTime_sec <= 0.f) {
+    CancelSelf();
   }
 }
 
@@ -269,6 +273,29 @@ void BehaviorDanceToTheBeat::BehaviorUpdate()
 void BehaviorDanceToTheBeat::OnBehaviorDeactivated()
 {
   StopBackpackLights();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDanceToTheBeat::SetNextAnimTriggerTime()
+{
+  if (_dVars.animsToPlay.empty()) {
+    _dVars.nextAnimTriggerTime_sec = -1.f;
+    DEV_ASSERT(false, "BehaviorDanceToTheBeat.SetNextAnimTriggerTime.NoAnimsInQueue");
+    return;
+  }
+  
+  const auto now_sec = static_cast<float>(Util::Time::UniversalTime::GetCurrentTimeInSeconds());
+  
+  const auto& nextAnim = _dVars.animsToPlay.front();
+  
+  // Must start the animation beatDelay_sec before the next beat. Also include
+  // the latency correction factor to account for messaging/tick times, etc.
+  _dVars.nextAnimTriggerTime_sec = _dVars.nextBeatTime_sec - nextAnim.beatDelay_sec - kLatencyCorrectionTime_sec;
+  
+  // Make sure the animation trigger time is somewhere in the future
+  BOUNDED_WHILE(1000, _dVars.nextAnimTriggerTime_sec < now_sec) {
+    _dVars.nextAnimTriggerTime_sec += _dVars.beatPeriod_sec;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -339,42 +366,6 @@ bool BehaviorDanceToTheBeat::GetAnimationBeatDelay_sec(const std::string& animNa
   }
 
   beatDelay_sec = Util::MilliSecToSec(static_cast<float>(firstEventKeyframe->GetTriggerTime_ms()));
-  return true;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDanceToTheBeat::GetAnimationFromTrigger(const AnimationTrigger& animTrigger, std::string& animName)
-{
-  auto* context = GetBEI().GetRobotInfo().GetContext();
-  if (context == nullptr) {
-    PRINT_NAMED_ERROR("BehaviorDanceToTheBeat.GetAnimationFromTrigger.NullContext", "Null CozmoContext!");
-    return false;
-  }
-  
-  auto* dataLoader = context->GetDataLoader();
-  if (dataLoader == nullptr) {
-    PRINT_NAMED_ERROR("BehaviorDanceToTheBeat.GetAnimationFromTrigger.NullDataLoader", "Null data loader!");
-    return false;
-  }
-  
-  if (!dataLoader->HasAnimationForTrigger(animTrigger)) {
-    PRINT_NAMED_WARNING("BehaviorDanceToTheBeat.GetAnimationFromTrigger.NoAnimGroupForTrigger",
-                        "No anim group found for trigger %s",
-                        AnimationTriggerToString(animTrigger));
-    return false;
-  }
-  
-  const auto& animGroupName = dataLoader->GetAnimationForTrigger(animTrigger);
-  const bool strictCooldown = false;
-  const auto& animNameStr = GetBEI().GetAnimationComponent().GetAnimationNameFromGroup(animGroupName, strictCooldown);
-  if (animNameStr.empty()) {
-    PRINT_NAMED_WARNING("BehaviorDanceToTheBeat.GetAnimationFromTrigger.NoAnimForGroup",
-                        "No animation found for group name %s",
-                        animGroupName.c_str());
-    return false;
-  }
-  
-  animName = animNameStr;
   return true;
 }
   

@@ -57,6 +57,9 @@ namespace{
     BEHAVIOR_ID(ReactToUnexpectedMovement), // the user will often turn the robot to face them
     BEHAVIOR_ID(ReactToSoundAwake),         // fully concentrate on what's in front
   }};
+  static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenDancingToTheBeat = {
+    BEHAVIOR_ID(ReactToSoundAwake),
+  };
 }
 
 
@@ -105,6 +108,9 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
   for( const auto& id : kBehaviorIDsToSuppressWhenMeetVictor ) {
     _iConfig.toSuppressWhenMeetVictor.push_back( BC.FindBehaviorByID(id) );
   }
+  for( const auto& id : kBehaviorIDsToSuppressWhenDancingToTheBeat ) {
+    _iConfig.toSuppressWhenDancingToTheBeat.push_back( BC.FindBehaviorByID(id) );
+  }
 
   BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(TimerUtilityCoordinator),
                                  BEHAVIOR_CLASS(TimerUtilityCoordinator),
@@ -115,6 +121,7 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
   
   _iConfig.reactToObstacleBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToObstacle));
   _iConfig.meetVictorBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(MeetVictor));
+  _iConfig.danceToTheBeatBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(DanceToTheBeat));
 }
 
 
@@ -182,6 +189,12 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
     }
   }
   
+  // Suppress behaviors if dancing to the beat
+  if( _iConfig.danceToTheBeatBehavior->IsActivated() ) {
+    for( const auto& beh : _iConfig.toSuppressWhenDancingToTheBeat ) {
+      beh->SetDontActivateThisTick(GetDebugLabel());
+    }
+  }
   
   // Suppress ReactToObstacle if needed
   if( ShouldSuppressProxReaction() ) {

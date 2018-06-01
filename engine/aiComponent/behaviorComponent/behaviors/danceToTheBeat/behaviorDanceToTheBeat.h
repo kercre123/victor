@@ -96,9 +96,9 @@ private:
   };
   
   struct DynamicVariables {
-    float beatPeriod_sec = 0.f;
-    float nextBeatTime_sec = 0.f;
-    float nextAnimTriggerTime_sec = 0.f;
+    float beatPeriod_sec = -1.f;
+    float nextBeatTime_sec = -1.f;
+    float nextAnimTriggerTime_sec = -1.f;
     
     BackpackLightDataLocator backpackDataRef;
     
@@ -109,7 +109,7 @@ private:
   InstanceConfig   _iConfig;
   DynamicVariables _dVars;
   
-  bool IsAnimQueued() { return _dVars.nextAnimTriggerTime_sec > 0.f; }
+  void SetNextAnimTriggerTime();
   
   // Called when a beat occurs while the behavior is running
   void OnBeat();
@@ -123,8 +123,6 @@ private:
   // Returns true if we successfully found the beat delay, emits an error
   // and returns false otherwise.
   bool GetAnimationBeatDelay_sec(const std::string& animName, float& beatDelay_sec);
-  
-  bool GetAnimationFromTrigger(const AnimationTrigger& animTrigger, std::string& animName);
 
   // Note, this time uses BasestationTimer, not UniversalTime
   float _lastRunningBasestationTime_sec = -1.f;

@@ -21,6 +21,11 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
+  // This scale factor gets applied to the output tempo estimate of
+  // the aubio tempo detector. It has been seen that the tempo detector
+  // usually reports a tempo ~1.7% higher than the actual tempo.
+  const float kTempoCorrectionScaleFactor = 1.f / 1.017f;
+  
   // Every once in a while, we reset the aubio tempo detection object,
   // just in case it is carrying some weird state or taking up memory.
   // (This is a recommendation from the library's author)
@@ -86,7 +91,10 @@ bool BeatDetector::AddSamples(const AudioUtil::AudioSample* const samples, const
     const bool isBeat = fvec_get_sample(_aubioOutputVec, 0) != 0.f;
     if (isBeat) {
       beatDetected = true;
-      const auto tempo = aubio_tempo_get_bpm(_aubioTempoDetector);
+      auto tempo = aubio_tempo_get_bpm(_aubioTempoDetector);
+      // Note: We 'correct' the estimated tempo here since it seems to always
+      // report a faster-than-reality tempo.
+      tempo *= kTempoCorrectionScaleFactor;
       const auto conf = aubio_tempo_get_confidence(_aubioTempoDetector);
       {
         std::lock_guard<std::mutex> lock(_latestBeatMutex);
