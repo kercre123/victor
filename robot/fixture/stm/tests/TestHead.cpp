@@ -86,7 +86,7 @@ void TestHeadForceBoot(void)
   
   //DEBUG
   if( g_fixmode == FIXMODE_HEAD2 ) {
-    int timeout_s = 10;
+    int timeout_s = 5;
     ConsolePrintf("---DELAY %us FOR MANUAL FORCE_USB---\n", timeout_s);
     while( timeout_s-- > 0 ) {
       Timer::delayMs(1000);
@@ -102,13 +102,13 @@ void TestHeadDutProgram(void)
   char b[50]; int bz = sizeof(b);
   
   //provision ESN
-  headnfo.esn = g_fixmode == FIXMODE_HELPER1 ? 0x00100000 /*debug*/: fixtureGetSerial();
+  headnfo.esn = g_fixmode == FIXMODE_HEAD1 ? fixtureGetSerial() : 0x00100000;
   m_previous_esn = headnfo.esn; //even if programming fails, report the (now unusable) ESN
-  int hwrev = g_isReleaseBuild && g_fixmode == FIXMODE_HEAD1 ? CURRENT_HEAD_HW_REV : HEADID_HWREV_DEBUG /*debug || HELPER1*/ ;
+  int hwrev = g_isReleaseBuild && g_fixmode == FIXMODE_HEAD1 ? CURRENT_HEAD_HW_REV : HEADID_HWREV_DEBUG;
   int model = g_fixmode == FIXMODE_HEAD1 ? CURRENT_HEAD_MODEL : 1 /*debug*/ ;
   
   //helper head does the rest
-  snformat(b,bz,"dutprogram %u %08x %04x %04x %s", timeout_s, headnfo.esn, hwrev, model, g_fixmode == FIXMODE_HELPER1 ? "helper" : "");
+  snformat(b,bz,"dutprogram %u %08x %04x %04x %s", timeout_s, headnfo.esn, hwrev, model, g_fixmode == FIXMODE_HEAD1 ? "" : "nocert");
   cmdSend(CMD_IO_HELPER, b, (timeout_s+10)*1000, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS );
   if( cmdStatus() >= ERROR_HEADPGM && cmdStatus() < ERROR_HEADPGM_RANGE_END ) //headprogram exit code range
     throw cmdStatus();
