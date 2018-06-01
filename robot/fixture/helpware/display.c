@@ -362,9 +362,6 @@ void display_render(uint8_t layermask) {
 
 void display_draw_text(int layer, int line , uint16_t fg, uint16_t bg, const char* text, int len, bool centered)
 {
-  if( layer == DISPLAY_LAYER_LARGE && len > gFont[layer].CharsPerLine ) {
-    layer = DISPLAY_LAYER_LARGE_SKINNY;
-  }
   const Font* font =  gFont[layer];
   assert(line < font->LineCount);
   int nchars =  min(len, font->CharsPerLine);
