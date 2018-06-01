@@ -21,8 +21,9 @@ namespace Anki {
 namespace Cozmo {
 
 // forward declarations
-class BehaviorProceduralClock;
+class BehaviorAdvanceClock;
 class BehaviorAnimGetInLoop;
+class BehaviorProceduralClock;
 class TimerUtility;
 class UserIntent;
 // Specified in .cpp
@@ -66,7 +67,7 @@ private:
     std::shared_ptr<BehaviorAnimGetInLoop>   timerRingingBehavior;
     ICozmoBehaviorPtr                        timerAlreadySetBehavior;
     ICozmoBehaviorPtr                        iCantDoThatBehavior;
-    ICozmoBehaviorPtr                        cancelTimerBehavior;
+    std::shared_ptr<BehaviorAdvanceClock>    cancelTimerBehavior;
     std::unique_ptr<AnticTracker>            anticTracker;
     int                                      minValidTimer_s;
     int                                      maxValidTimer_s;

@@ -168,6 +168,7 @@ enum uint_8 BehaviorClass {
   Sleeping,
 
   // timer
+  AdvanceClock,
   ProceduralClock,
   TimerUtilityCoordinator,
 

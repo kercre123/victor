@@ -1024,6 +1024,10 @@
     "AnimName": "ag_texttospeech_getout_01"
   },
   {
+    "CladEvent": "TimerCancelGetIn",
+    "AnimName": "ag_timer_timecancel_getin"
+  },
+  {
     "CladEvent": "TimerCancelTimer",
     "AnimName": "ag_timer_timecancel"
   },

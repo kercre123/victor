@@ -69,7 +69,7 @@ BehaviorProceduralClock::BehaviorProceduralClock(const Json::Value& config)
 
   _instanceParams.getInAnim = AnimationTriggerFromString(JsonTools::ParseString(config, kGetInTriggerKey, kDebugStr));
   _instanceParams.getOutAnim = AnimationTriggerFromString(JsonTools::ParseString(config, kGetOutTriggerKey, kDebugStr));
-  _instanceParams.totalTimeDisplayClock = JsonTools::ParseUint8(config, kDisplayClockSKey, kDebugStr);
+  _instanceParams.totalTimeDisplayClock_sec = JsonTools::ParseUint8(config, kDisplayClockSKey, kDebugStr);
   JsonTools::GetValueOptional(config, kShouldTurnToFaceKey, _instanceParams.shouldTurnToFace);
 
   // add all static elements
@@ -100,6 +100,7 @@ void BehaviorProceduralClock::GetBehaviorJsonKeys(std::set<const char*>& expecte
     kShouldTurnToFaceKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
+  GetBehaviorJsonKeysInternal(expectedKeys);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -203,7 +204,14 @@ void BehaviorProceduralClock::TransitionToShowClock()
   auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
   _lifetimeParams.timeShowClockStarted = timerUtility.GetSystemTime_s();
 
-  for(int i = 0; i < _instanceParams.totalTimeDisplayClock; i++){
+  TransitionToShowClockInternal();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorProceduralClock::TransitionToShowClockInternal()
+{
+  for(int i = 0; i < _instanceParams.totalTimeDisplayClock_sec; i++){
     BuildAndDisplayProceduralClock(i, i*1000);   
   }
 }
@@ -230,7 +238,7 @@ void BehaviorProceduralClock::BehaviorUpdate()
     auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
     const int currentTime_s = timerUtility.GetSystemTime_s();
 
-    if(currentTime_s >= (_lifetimeParams.timeShowClockStarted + _instanceParams.totalTimeDisplayClock)){
+    if(currentTime_s >= (_lifetimeParams.timeShowClockStarted + _instanceParams.totalTimeDisplayClock_sec)){
       TransitionToGetOut();
     }
   }

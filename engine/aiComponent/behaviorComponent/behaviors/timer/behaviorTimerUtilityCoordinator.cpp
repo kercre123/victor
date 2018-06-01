@@ -22,6 +22,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimGetInLoop.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorAdvanceClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
@@ -307,9 +308,12 @@ void BehaviorTimerUtilityCoordinator::InitBehavior()
                                  BEHAVIOR_CLASS(AnimGetInLoop),
                                  _iParams.timerRingingBehavior);
 
+  BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(SingletonCancelTimer),
+                                 BEHAVIOR_CLASS(AdvanceClock),
+                                 _iParams.cancelTimerBehavior);
+
   _iParams.timerAlreadySetBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(SingletonTimerAlreadySet));
   _iParams.iCantDoThatBehavior     = BC.FindBehaviorByID(BEHAVIOR_ID(SingletonICantDoThat));
-  _iParams.cancelTimerBehavior     = BC.FindBehaviorByID(BEHAVIOR_ID(SingletonCancelTimer));
   SetupTimerBehaviorFunctions();
 }
 
@@ -445,7 +449,12 @@ void BehaviorTimerUtilityCoordinator::CheckShouldCancelTimer()
     SmartActivateUserIntent(USER_INTENT(cancel_timer));
 
     // Cancel a timer if it is set, otherwise play "I Cant Do That"
-    if(GetTimerUtility().GetTimerHandle() != nullptr){
+    auto handle = GetTimerUtility().GetTimerHandle();
+    if(handle != nullptr){
+      const auto timeRemaining_s = handle->GetTimeRemaining_s();
+      const auto displayTime = _iParams.cancelTimerBehavior->GetTimeDisplayClock_sec();
+      _iParams.cancelTimerBehavior->SetAdvanceClockParams(timeRemaining_s, 0, displayTime);
+      
       GetTimerUtility().ClearTimer();
       TransitionToCancelTimer();
     }else{

@@ -115,6 +115,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/robotDrivenDialog/behaviorPromptUserForVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/sdkBehaviors/behaviorSDKInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/sleeping/behaviorSleeping.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorAdvanceClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h"
@@ -778,6 +779,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::Sleeping:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorSleeping(config));
+      break;
+    }
+    
+    case BehaviorClass::AdvanceClock:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorAdvanceClock(config));
       break;
     }
     

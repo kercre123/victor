@@ -213,6 +213,7 @@ enum int_32 AnimationTrigger
   SoundOnlyLiftEffortPlaceRoll,
   StuckOnEdge,
   SuccessfulWheelie,
+  TimerCancelGetIn,
   TimerCancelTimer,
   TimerCheckTimeGetIn,
   TimerCheckTimeGetOut,

@@ -42,6 +42,9 @@ public:
     _instanceParams.showClockCallback = callback;
   }
 
+  int GetTimeDisplayClock_sec() const { return _instanceParams.totalTimeDisplayClock_sec;}
+
+
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;  
@@ -50,7 +53,8 @@ protected:
     modifiers.behaviorAlwaysDelegates = false;
     modifiers.wantsToBeActivatedWhenOffTreads = true;
   }
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override final;
+  virtual void GetBehaviorJsonKeysInternal(std::set<const char*>& expectedKeys) const {};
 
   virtual void OnBehaviorActivated() override;
   virtual void InitBehavior() override;
@@ -61,6 +65,16 @@ protected:
   void TransitionToGetIn();
   void TransitionToShowClock();
   void TransitionToGetOut();
+
+  // Override to display clock differently
+  // Default behavior is to update the clock once per second for the length of display clock
+  virtual void TransitionToShowClockInternal();
+
+  void SetTimeDisplayClock_sec(int displayTime_sec) { _instanceParams.totalTimeDisplayClock_sec = displayTime_sec;}
+
+  // Function which builds and displays the proceduralClock - adds the 4 core digits on top
+  // of any quadrant images passed into the function
+  void BuildAndDisplayProceduralClock(const int clockOffset_s = 0, const int displayOffset_ms = 0);
 
 private:
   enum class BehaviorState{
@@ -79,7 +93,7 @@ private:
     AnimationTrigger getOutAnim;
     bool shouldTurnToFace = false;
     Json::Value layout;
-    int totalTimeDisplayClock;
+    int totalTimeDisplayClock_sec;
 
     // Asset properties
     Vision::CompositeImageLayer::ImageMap staticImageMap;
@@ -102,9 +116,6 @@ private:
   InstanceParams _instanceParams;
   LifetimeParams _lifetimeParams;
 
-  // Function which builds and displays the proceduralClock - adds the 4 core digits on top
-  // of any quadrant images passed into the function
-  void BuildAndDisplayProceduralClock(const int clockOffset_s = 0, const int displayOffset_ms = 0);
 
   // Updates the target face within lifetime params - returns the member face for checking success inline
   SmartFaceID UpdateTargetFace();
