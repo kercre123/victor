@@ -361,6 +361,7 @@ Event,,Play__Robot_Vic_Sfx__Scrn_Surprised_Long,3223693447,Robot_Vic_Sfx,Scrn_Su
 Event,,Play__Robot_Vic_Sfx__Scrn_Surprised_Short,4031777881,Robot_Vic_Sfx,Scrn_Surprised_Short,
 Event,,Play__Robot_Vic_Sfx__Snore,3717200567,Robot_Vic_Sfx,Snore,
 Event,,Play__Robot_Vic_Sfx__Timer_Beep,2315630444,Robot_Vic_Sfx,Timer_Beep,
+Event,,Play__Robot_Vic_Sfx__Timer_Cancel,1284632326,Robot_Vic_Sfx,Timer_Cancel,
 Event,,Play__Robot_Vic_Sfx__Timer_Countdown,1379596305,Robot_Vic_Sfx,Timer_Countdown,
 Event,,Play__Robot_Vic_Sfx__Touch_React,1078700783,Robot_Vic_Sfx,Touch_React,
 Event,,Play__Robot_Vic_Sfx__Tread_Angry,4159310964,Robot_Vic_Sfx,Tread_Angry,
