@@ -60,6 +60,7 @@
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/textToSpeech/textToSpeechCoordinator.h"
+#include "engine/components/variableSnapshot/variableSnapshotComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/cozmoContext.h"
@@ -339,6 +340,7 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::SettingsCommManager,        new SettingsCommManager());
     _components->AddDependentComponent(RobotComponentID::SettingsManager,            new SettingsManager());
     _components->AddDependentComponent(RobotComponentID::RobotStatsTracker,          new RobotStatsTracker());
+    _components->AddDependentComponent(RobotComponentID::VariableSnapshotComponent,  new VariableSnapshotComponent());
     _components->InitComponents(this);
   }
 
@@ -378,6 +380,9 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
 
 Robot::~Robot()
 {
+  // save variable snapshots before robot starts destructing
+  GetVariableSnapshotComponent().SaveVariableSnapshots();
+
   // VIC-1961: Remove touch sensor component before aborting all since there's a DEV_ASSERT crash
   // and we need to write data out from the touch sensor component out. This explicit destruction
   // can be removed once the DEV_ASSERT is fixed

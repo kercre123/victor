@@ -26,6 +26,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/components/backpackLights/backpackLightComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
+#include "engine/components/variableSnapshot/variableSnapshotComponent.h"
+#include "engine/components/variableSnapshot/variableSnapshotEncoder.h"
 #include "engine/cozmoContext.h"
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/cozmoFeatureGate.h"
@@ -78,8 +80,8 @@ const std::vector<std::string> kPathsToEngineAccessibleAnimations = {
   // Blackjack
   "assets/animations/anim_blackjack_gameplay_01.bin",
 };
-
 }
+
 
 namespace Anki {
 namespace Cozmo {
@@ -96,6 +98,7 @@ RobotDataLoader::RobotDataLoader(const CozmoContext* context)
   _spritePaths = std::make_unique<Vision::SpritePathMap>();
   _compLayoutMap = std::make_unique<CompLayoutMap>();
   _compImageMap = std::make_unique<CompImageMap>();
+
 }
 
 RobotDataLoader::~RobotDataLoader()
@@ -136,6 +139,11 @@ void RobotDataLoader::LoadNonConfigData()
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadWeatherResponseMaps");
     LoadWeatherResponseMaps();
+  }
+
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadVariableSnapshotJsonMap");
+    LoadVariableSnapshotJsonMap();
   }
   
   {
@@ -685,6 +693,42 @@ void RobotDataLoader::LoadWeatherResponseMaps()
   }
 
 
+}
+
+void RobotDataLoader::LoadVariableSnapshotJsonMap()
+{
+
+  _variableSnapshotJsonMap = std::make_unique<VariableSnapshotJsonMap>();
+
+  // cache the name of our save directory
+  std::string saveFolder = _platform->pathToResource( Util::Data::Scope::Persistent, VariableSnapshotComponent::kVariableSnapshotFolder );
+  saveFolder = Util::FileUtils::AddTrailingFileSeparator( saveFolder );
+
+  // make sure our folder structure exists
+  if(Util::FileUtils::DirectoryDoesNotExist( saveFolder )) {
+    Util::FileUtils::CreateDirectory( saveFolder, false, true );
+    PRINT_CH_DEBUG( "DataLoader", "VariableSnapshot", "Creating variable snapshot directory: %s", saveFolder.c_str() );
+  }
+  
+  // read in our data
+  std::string pathToVariableSnapshotFile = ( saveFolder + VariableSnapshotComponent::kVariableSnapshotFilename + ".json" );
+
+  if(!Util::FileUtils::FileExists( pathToVariableSnapshotFile )) {
+    Util::FileUtils::WriteFile( pathToVariableSnapshotFile, "{}" );
+    PRINT_CH_DEBUG( "DataLoader", "VariableSnapshot", "Creating variable snapshot file: %s", pathToVariableSnapshotFile.c_str() );
+  }
+
+  Json::Value outSubscriberJSON;
+  const bool success = _platform->readAsJson(pathToVariableSnapshotFile, outSubscriberJSON);
+
+  // check whether the look up was successful and we got back a nonempty JSON array
+  if (success && !outSubscriberJSON.empty() && outSubscriberJSON.isArray()) {
+    for(const auto& subscriberInfo : outSubscriberJSON) {
+      // store the json object in the map
+      VariableSnapshotId variableSnapshotId = VariableSnapshotIdFromString(subscriberInfo[VariableSnapshotEncoder::kVariableSnapshotIdKey].asString());
+      _variableSnapshotJsonMap->emplace(variableSnapshotId, subscriberInfo);
+    }
+  }
 }
 
 

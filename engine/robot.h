@@ -80,6 +80,7 @@ class CozmoContext;
 class CubeAccelComponent;
 class CubeCommsComponent;
 class DrivingAnimationHandler;
+class DataAccessorComponent;
 class FaceWorld;
 class IExternalInterface;
 class IGatewayInterface;
@@ -104,6 +105,7 @@ class CubeLightComponent;
 class BackpackLightComponent;
 class RobotToEngineImplMessaging;
 class PublicStateBroadcaster;
+class VariableSnapshotComponent;
 class VisionComponent;
 class VisionScheduleMediator;
 class PathComponent;
@@ -254,6 +256,8 @@ public:
   inline const MoodManager& GetMoodManager() const { return GetComponent<MoodManager>();}
   inline MoodManager&       GetMoodManager()       { return GetComponent<MoodManager>();}
 
+  inline const DataAccessorComponent& GetDataAccessorComponent() const { return GetComponent<DataAccessorComponent>(); }
+  inline       DataAccessorComponent& GetDataAccessorComponent()       { return GetComponent<DataAccessorComponent>(); }
 
   inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const {return GetComponent<ProgressionUnlockComponent>();}
   inline ProgressionUnlockComponent& GetProgressionUnlockComponent() {return GetComponent<ProgressionUnlockComponent>();}
@@ -296,6 +300,9 @@ public:
 
   inline const TouchSensorComponent& GetTouchSensorComponent() const { return GetComponent<TouchSensorComponent>(); }
   inline       TouchSensorComponent& GetTouchSensorComponent()       { return GetComponent<TouchSensorComponent>(); }
+
+  inline const VariableSnapshotComponent& GetVariableSnapshotComponent() const { return GetComponent<VariableSnapshotComponent>(); }
+  inline       VariableSnapshotComponent& GetVariableSnapshotComponent()       { return GetComponent<VariableSnapshotComponent>(); }
 
   const DrivingAnimationHandler& GetDrivingAnimationHandler() const { return GetComponent<DrivingAnimationHandler>(); }
   DrivingAnimationHandler& GetDrivingAnimationHandler() { return GetComponent<DrivingAnimationHandler>(); }
