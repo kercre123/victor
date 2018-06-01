@@ -17,14 +17,14 @@
 namespace Anki {
 namespace Cozmo {
 
+  #define CONSOLE_GROUP "Face.ParameterizedFace"
+
   enum class Filter {
     None           = 0,
     BoxFilter      = 1,
     GaussianFilter = 2,
     NEONBoxFilter  = 3, // Note: anti-aliasing size is hard-coded to 3 for this option
   };
-
-  #define CONSOLE_GROUP "ProceduralFace"
 
   CONSOLE_VAR_ENUM(u8,      kProcFace_LineType,                   CONSOLE_GROUP, 1, "Line_4,Line_8,Line_AA"); // Only affects OpenCV drawing, not post-smoothing
   CONSOLE_VAR_RANGED(s32,   kProcFace_EllipseDelta,               CONSOLE_GROUP, 10, 1, 90);
@@ -33,38 +33,33 @@ namespace Cozmo {
   CONSOLE_VAR(bool,         kProcFace_HotspotRender,              CONSOLE_GROUP, true); // Render glow
   CONSOLE_VAR_RANGED(f32,   kProcFace_HotspotFalloff,             CONSOLE_GROUP, 0.48f, 0.05f, 1.f);
 
+  CONSOLE_VAR_RANGED(s32,   kProcFace_AntiAliasingSize,           CONSOLE_GROUP, 3, 0, 15); // full image antialiasing
+  CONSOLE_VAR_ENUM(uint8_t, kProcFace_AntiAliasingFilter,         CONSOLE_GROUP, (uint8_t)Filter::NEONBoxFilter, "None,Box,Gaussian,Box (NEON code; size 3)");
+  CONSOLE_VAR_RANGED(f32,   kProcFace_AntiAliasingSigmaFraction,  CONSOLE_GROUP, 0.5f, 0.0f, 1.0f);
+
+
 #if PROCEDURALFACE_GLOW_FEATURE
   CONSOLE_VAR_RANGED(f32, kProcFace_GlowSizeMultiplier,           CONSOLE_GROUP, 1.f, 0.f, 1.f);
   CONSOLE_VAR_RANGED(f32, kProcFace_GlowLightnessMultiplier,      CONSOLE_GROUP, 1.f, 0.f, 10.f);
   CONSOLE_VAR_ENUM(uint8_t, kProcFace_GlowFilter,                 CONSOLE_GROUP, (uint8_t)Filter::BoxFilter, "None,Box,Gaussian,Box (NEON code; size 3)");
 #endif
 
+#if PROCEDURALFACE_SCANLINE_FEATURE
+  CONSOLE_VAR(bool,                         kProcFace_Scanlines,              CONSOLE_GROUP, false);
+  CONSOLE_VAR_RANGED(ProceduralFace::Value, kProcFace_DefaultScanlineOpacity, CONSOLE_GROUP, 1.f, 0.f, 1.f);
+#endif
+
 #if PROCEDURALFACE_NOISE_FEATURE
   static const s32 kNumNoiseImages = 7;
 
-  CONSOLE_VAR_RANGED(s32, kProcFace_NoiseNumFrames,     "ProceduralFace", 5, 0, kNumNoiseImages);
-  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseMinLightness,  "ProceduralFace", 0.92f, 0.f, 2.f); // replaces kProcFace_NoiseFraction
-  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseMaxLightness,  "ProceduralFace", 1.14f, 0.f, 2.f); // replaces kProcFace_NoiseFraction
+  CONSOLE_VAR_RANGED(s32, kProcFace_NoiseNumFrames,              CONSOLE_GROUP, 5, 0, kNumNoiseImages);
+  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseMinLightness,           CONSOLE_GROUP, 0.92f, 0.f, 2.f); // replaces kProcFace_NoiseFraction
+  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseMaxLightness,           CONSOLE_GROUP, 1.14f, 0.f, 2.f); // replaces kProcFace_NoiseFraction
 
   CONSOLE_VAR_EXTERN(s32, kProcFace_NoiseNumFrames);
+#else
+  static const s32 kProcFace_NoiseNumFrames = 0;
 #endif
-
-  CONSOLE_VAR_RANGED(s32,   kProcFace_AntiAliasingSize,           CONSOLE_GROUP, 3, 0, 15); // full image antialiasing
-  CONSOLE_VAR_ENUM(uint8_t, kProcFace_AntiAliasingFilter,         CONSOLE_GROUP, (uint8_t)Filter::NEONBoxFilter, "None,Box,Gaussian,Box (NEON code; size 3)");
-  CONSOLE_VAR_RANGED(f32,   kProcFace_AntiAliasingSigmaFraction,  CONSOLE_GROUP, 0.5f, 0.0f, 1.0f);
-
-  static void VictorFaceRenderer(ConsoleFunctionContextRef context)
-  {
-    kProcFace_HotspotRender = true;
-    kProcFace_AntiAliasingSize = 5;
-  }
-  static void CozmoFaceRenderer(ConsoleFunctionContextRef context)
-  {
-    kProcFace_HotspotRender = false;
-    kProcFace_AntiAliasingSize = 0;
-  }
-  CONSOLE_FUNC(VictorFaceRenderer, CONSOLE_GROUP);
-  CONSOLE_FUNC(CozmoFaceRenderer, CONSOLE_GROUP);
 
   #undef CONSOLE_GROUP
 
@@ -456,7 +451,7 @@ namespace Cozmo {
       // Outer Glow = the "halo" effect around the outside of the eye shape
       // Add inner glow to the eye shape, before we compute the outer glow, so that boundaries conditions match.
       if(kProcFace_HotspotRender) {
-        //ANKI_CPU_PROFILE("HotspotRender");
+        ANKI_CPU_PROFILE("HotspotRender");
         const f32 sigmaX = kProcFace_HotspotFalloff*scaledEyeWidth;
         const f32 sigmaY = kProcFace_HotspotFalloff*scaledEyeHeight;
         const f32 invInnerGlowSigmaX_sq = 1.f / (2.f * (sigmaX*sigmaX));
@@ -495,7 +490,7 @@ namespace Cozmo {
 
       const Value glowLightness = kProcFace_GlowLightnessMultiplier * faceData.GetParameter(whichEye, Parameter::GlowLightness);
       if(Util::IsFltGTZero(glowLightness) && Util::IsFltGTZero(glowFraction)) {
-        //ANKI_CPU_PROFILE("Glow");
+        ANKI_CPU_PROFILE("Glow");
         Vision::Image glowImgROI = _glowImg.GetROI(eyeBoundingBoxS32);
 
         s32 glowSizeX = std::ceil(glowFraction * 0.5f * scaledEyeWidth);
@@ -877,6 +872,7 @@ namespace Cozmo {
     return state;
   } // DistortScanlines()
 
+#if PROCEDURALFACE_NOISE_FEATURE
   ProceduralFaceDrawer::DrawCacheState ProceduralFaceDrawer::ApplyNoise(const Util::RandomGenerator& rng, const Vision::ImageRGB565& input, Vision::ImageRGB565& output, DrawCacheState state)
   {
     ANKI_CPU_PROFILE("ApplyNoise");
@@ -931,6 +927,7 @@ namespace Cozmo {
 
     return state;
   } // ApplyNoise()
+#endif // PROCEDURALFACE_NOISE_FEATURE
 
   ProceduralFaceDrawer::DrawCacheState ProceduralFaceDrawer::ConvertColorspace(Vision::ImageRGB565& output, DrawCacheState state)
   {
@@ -1050,34 +1047,34 @@ namespace Cozmo {
   
   ProceduralFaceDrawer::DrawCacheState ProceduralFaceDrawer::ApplyScanlines(Vision::ImageRGB& imageHsv, const float opacity, DrawCacheState state)
   {
-#if PROCEDURALFACE_SCANLINE_FEATURE
-    ANKI_CPU_PROFILE("ApplyScanlines");
+    if(PROCEDURALFACE_SCANLINE_FEATURE && kProcFace_Scanlines) {
+      ANKI_CPU_PROFILE("ApplyScanlines");
 
-    if(state == DrawCacheState::NothingToDraw) {
+      if(state == DrawCacheState::NothingToDraw) {
         // Nothing to draw, early out
-      return state;
-    }
+        return state;
+      }
 
-    const bool applyScanlines = !Util::IsNear(opacity, 1.f);
-    if (applyScanlines) {
-      state = DrawCacheState::MustDraw;
+      const bool applyScanlines = !Util::IsNear(opacity, 1.f);
+      if (applyScanlines) {
+        state = DrawCacheState::MustDraw;
 
-      DEV_ASSERT(Util::InRange(opacity, 0.f, 1.f), "ProceduralFaceDrawer.ApplyCurrentFaceHue.InvalidOpacity");
+        DEV_ASSERT(Util::InRange(opacity, 0.f, 1.f), "ProceduralFaceDrawer.ApplyCurrentFaceHue.InvalidOpacity");
 
-      const auto nRows = imageHsv.GetNumRows();
-      const auto nCols = imageHsv.GetNumCols();
+        const auto nRows = imageHsv.GetNumRows();
+        const auto nCols = imageHsv.GetNumCols();
 
-      for (int i=0 ; i < nRows ; i++) {
-        if (ShouldApplyScanlineToRow(i)) {
-          auto* thisRow = faceImg.GetRow(i);
-          for (int j=0 ; j < nCols ; j++) {
-            // the 'blue' channel in an HSV image is the value
-            thisRow[j].b() *= opacity;
+        for (int i=0 ; i < nRows ; i++) {
+          if (ShouldApplyScanlineToRow(i)) {
+            auto* thisRow = imageHsv.GetRow(i);
+            for (int j=0 ; j < nCols ; j++) {
+              // the 'blue' channel in an HSV image is the value
+              thisRow[j].b() *= opacity;
+            }
           }
         }
       }
     }
-#endif
     return state;
   } // ApplyScanlines()
 } // namespace Cozmo

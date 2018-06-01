@@ -31,10 +31,11 @@ Vision::Image ProceduralFace::_hueImage = Vision::Image(FACE_DISPLAY_HEIGHT, FAC
 Vision::Image ProceduralFace::_satImage = Vision::Image(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH, static_cast<u8>(_saturation * std::numeric_limits<u8>::max()));
 
   
+#define CONSOLE_GROUP "Face.ParameterizedFace"
 // Set up hue and saturation console functions
-std::unique_ptr<Anki::Util::IConsoleFunction> ProceduralFace::_hueConsoleFunc = std::unique_ptr<Anki::Util::IConsoleFunction>(new Anki::Util::IConsoleFunction("ProcFace_Hue", HueConsoleFunction, "ProceduralFace", "float hue") );
-std::unique_ptr<Anki::Util::IConsoleFunction> ProceduralFace::_saturationConsoleFunc = std::unique_ptr<Anki::Util::IConsoleFunction>(new Anki::Util::IConsoleFunction("ProcFace_Saturation", SaturationConsoleFunction, "ProceduralFace", "float saturation") );
-
+std::unique_ptr<Anki::Util::IConsoleFunction> ProceduralFace::_hueConsoleFunc = std::unique_ptr<Anki::Util::IConsoleFunction>(new Anki::Util::IConsoleFunction("ProcFace_Hue", HueConsoleFunction, CONSOLE_GROUP, "float hue") );
+std::unique_ptr<Anki::Util::IConsoleFunction> ProceduralFace::_saturationConsoleFunc = std::unique_ptr<Anki::Util::IConsoleFunction>(new Anki::Util::IConsoleFunction("ProcFace_Saturation", SaturationConsoleFunction, CONSOLE_GROUP, "float saturation") );
+#undef CONSOLE_GROUP
 
 void ProceduralFace::HueConsoleFunction(ConsoleFunctionContextRef context)
 {
@@ -48,12 +49,13 @@ void ProceduralFace::SaturationConsoleFunction(ConsoleFunctionContextRef context
   ProceduralFace::SetSaturation(saturation);
 }
 
-namespace {
-# define CONSOLE_GROUP "ProceduralFace"
-  
 #if PROCEDURALFACE_SCANLINE_FEATURE
-  CONSOLE_VAR_RANGED(ProceduralFace::Value, kProcFace_DefaultScanlineOpacity, CONSOLE_GROUP, 1.f, 0.f, 1.f);
+  CONSOLE_VAR_EXTERN(ProceduralFace::Value, kProcFace_DefaultScanlineOpacity);
 #endif
+
+namespace {
+# define CONSOLE_GROUP "Face.ParameterizedFace"
+  
   CONSOLE_VAR_RANGED(s32, kProcFace_NominalEyeSpacing, CONSOLE_GROUP, 92, -FACE_DISPLAY_WIDTH, FACE_DISPLAY_WIDTH);  // V1: 64;
   
 # undef CONSOLE_GROUP
@@ -719,33 +721,36 @@ void ProceduralFace::RemoveScanlineDistorter()
   _scanlineDistorter.reset();
 }
 
+#define CONSOLE_GROUP "Face.ParameterizedFace"
 void ProceduralFace::RegisterFaceWithConsoleVars() {
-   new Util::ConsoleVar<float>(_faceAngle_deg,
-                               "kProcFace_Angle_deg", "ProceduralFace",
-                               -90.f, 90.f, true);
-
-   new Util::ConsoleVar<float>(_faceScale[0],
-                               "kProcFace_ScaleX", "ProceduralFace",
-                               0.f, 4.f, true);
-
-   new Util::ConsoleVar<float>(_faceScale[1],
-                               "kProcFace_ScaleY", "ProceduralFace",
-                               0.f, 4.f,
-                               true);
-
    new Util::ConsoleVar<float>(_faceCenter[0],
-                               "kProcFace_CenterX", "ProceduralFace",
+                               "kProcFace_CenterX", CONSOLE_GROUP,
                                -100.f, 100.f, true);
 
    new Util::ConsoleVar<float>(_faceCenter[1],
-                               "kProcFace_CenterY", "ProceduralFace",
+                               "kProcFace_CenterY", CONSOLE_GROUP,
                                -100.f, 100.f, true);
 
-#if PROCEDURALFACE_SCANLINE_FEATURE
-   new Util::ConsoleVar<float>(_scanlineOpacity,
-                               "kProcFace_ScanlineOpacity", "ProceduralFace",
+   new Util::ConsoleVar<float>(_faceAngle_deg,
+                               "kProcFace_Angle_deg", CONSOLE_GROUP,
+                               -90.f, 90.f, true);
+
+   new Util::ConsoleVar<float>(_faceScale[0],
+                               "kProcFace_ScaleX", CONSOLE_GROUP,
+                               0.f, 4.f, true);
+
+   new Util::ConsoleVar<float>(_faceScale[1],
+                               "kProcFace_ScaleY", CONSOLE_GROUP,
+                               0.f, 4.f,
+                               true);
+
+   new Util::ConsoleVar<float>(_hue,
+                               "kProcFace_Hue", CONSOLE_GROUP,
                                0.f, 1.f, true);
-#endif
+
+   new Util::ConsoleVar<float>(_saturation,
+                               "kProcFace_Saturation", CONSOLE_GROUP,
+                               0., 1.f, true);
 
   for(auto whichEye : {WhichEye::Left, WhichEye::Right}) {
     for (std::underlying_type<Parameter>::type iParam=0; iParam < Util::EnumToUnderlying(Parameter::NumParameters); ++iParam) {
@@ -762,16 +767,18 @@ void ProceduralFace::RegisterFaceWithConsoleVars() {
       }
 
       std::string eyeName = (whichEye == 0 ? "Left" : "Right");
+      std::string group = std::string("Face.") + eyeName;
       std::string param = eyeName+"_"+EnumToString(kEyeParamInfoLUT[iParam].EnumValue());
       new Util::ConsoleVar<float>(_eyeParams[whichEye][iParam],
                                   param.c_str(),
-                                  "ProceduralFace",
+                                  group.c_str(),
                                   kEyeParamInfoLUT[iParam].Value().clipLimits.min,
                                   kEyeParamInfoLUT[iParam].Value().clipLimits.max,
                                   true);
     }
   }
 }
+#undef CONSOLE_GROUP
 
 } // namespace Cozmo
 } // namespace Anki

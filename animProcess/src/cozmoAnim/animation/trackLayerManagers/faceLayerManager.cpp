@@ -23,7 +23,7 @@
 
 #define DEBUG_FACE_LAYERING 0
 
-#define CONSOLE_GROUP_NAME "FaceLayers"
+#define CONSOLE_GROUP_NAME "Face.Layers"
 
 namespace Anki {
 namespace Cozmo {

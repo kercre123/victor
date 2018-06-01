@@ -23,7 +23,7 @@
 #include "util/logging/logging.h"
 #include "util/random/randomGenerator.h"
 
-#define CONSOLE_GROUP_NAME "ScanlineDistortion"
+#define CONSOLE_GROUP_NAME "Face.ScanlineDistortion"
 
 namespace Anki {
 namespace Cozmo {

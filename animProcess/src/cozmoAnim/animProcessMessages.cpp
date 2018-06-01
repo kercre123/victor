@@ -74,7 +74,7 @@ namespace {
   Anki::Cozmo::Audio::ProceduralAudioClient* _proceduralAudioClient = nullptr;
   const Anki::Cozmo::AnimContext*            _context = nullptr;
 
-  CONSOLE_VAR(bool, kDebugFaceDraw_CycleWithButton, "DebugFaceDraw", true);
+  CONSOLE_VAR(bool, kDebugFaceDraw_CycleWithButton, "Face.DebugDraw", true);
 
   bool _connectionFlowInited = false;
   

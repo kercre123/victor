@@ -62,6 +62,7 @@
 namespace Anki {
 namespace Cozmo {
 
+#define CONSOLE_GROUP "Face.ParameterizedFace"
   enum class FaceDisplayType {
     Normal,
     Test,
@@ -71,12 +72,12 @@ namespace Cozmo {
 
   // Overrides whatever faces we're sending with a 3-stripe test pattern
   // (seems more related to the other ProceduralFace console vars, so putting it in that group instead)
-  CONSOLE_VAR_ENUM(int, kProcFace_Display,             "ProceduralFace", 0, "Normal,Test,Override individually,Override together"); // Override procedural face with ConsoleVars edited version
+  CONSOLE_VAR_ENUM(int, kProcFace_Display,              CONSOLE_GROUP, 0, "Normal,Test,Override individually,Override together"); // Override procedural face with ConsoleVars edited version
 #if PROCEDURALFACE_NOISE_FEATURE
   CONSOLE_VAR_EXTERN(s32, kProcFace_NoiseNumFrames);
 #endif
-  CONSOLE_VAR_ENUM(int, kProcFace_GammaType,            "ProceduralFace", 0, "None,FromLinear,ToLinear,AddGamma,RemoveGamma,Custom");
-  CONSOLE_VAR_RANGED(f32, kProcFace_Gamma,              "ProceduralFace", 1.f, 1.f, 4.f);
+  CONSOLE_VAR_ENUM(int, kProcFace_GammaType,            CONSOLE_GROUP, 0, "None,FromLinear,ToLinear,AddGamma,RemoveGamma,Custom");
+  CONSOLE_VAR_RANGED(f32, kProcFace_Gamma,              CONSOLE_GROUP, 1.f, 1.f, 4.f);
 
   enum class FaceGammaType {
     None,
@@ -99,7 +100,7 @@ namespace Cozmo {
     s_faceDataReset = true;
   }
   
-  CONSOLE_FUNC(ResetFace, "ProceduralFace");
+  CONSOLE_FUNC(ResetFace, CONSOLE_GROUP);
 
   static void LoadFaceGammaLUT(ConsoleFunctionContextRef context)
   {
@@ -161,7 +162,7 @@ namespace Cozmo {
     }
   }
 
-  CONSOLE_FUNC(LoadFaceGammaLUT, "ProceduralFace", const char* filename);
+  CONSOLE_FUNC(LoadFaceGammaLUT, CONSOLE_GROUP, const char* filename);
 
   namespace{
     
@@ -217,7 +218,7 @@ namespace Cozmo {
                   (s_enableKeepFaceAlive ? "ON" : "OFF"));
   }
   
-  CONSOLE_FUNC(ToggleKeepFaceAlive, "ProceduralFace");
+  CONSOLE_FUNC(ToggleKeepFaceAlive, CONSOLE_GROUP);
 
   static std::string s_frameFilename;
   static int s_frame = 0;
@@ -274,12 +275,13 @@ namespace Cozmo {
     context->channel->WriteLog(html.c_str());
   }
 
-  CONSOLE_FUNC(CaptureFace, "ProceduralFace", optional const char* filename, optional int numFrames);
+  CONSOLE_FUNC(CaptureFace, "Face", optional const char* filename, optional int numFrames);
 
   CONSOLE_VAR(bool, kShouldDisplayPlaybackTime, "AnimationStreamer", false);
 
   } // namespace
-  
+#undef CONSOLE_GROUP
+
   AnimationStreamer::AnimationStreamer(const AnimContext* context)
   : _context(context)
   , _proceduralTrackComponent(new TrackLayerComponent(context))
