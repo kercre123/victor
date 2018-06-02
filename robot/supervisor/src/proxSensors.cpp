@@ -179,16 +179,23 @@ namespace Anki {
         WheelController::GetDesiredWheelSpeeds(desiredLeftSpeed, desiredRightSpeed);
         bool alreadyStopping = (desiredLeftSpeed == 0.f) && (desiredRightSpeed == 0.f);
 
+        // If side cliffs are detected while driving stop (possibly again)
+        // because this is a precarious situation.
+        bool sideCliffsDetected = (_cliffDetectedFlags == ((1 << HAL::CLIFF_FL) | (1 << HAL::CLIFF_BL))) ||
+                                  (_cliffDetectedFlags == ((1 << HAL::CLIFF_FR) | (1 << HAL::CLIFF_BR)));
+
         if (_enableCliffDetect &&
             IsAnyCliffDetected() &&
             !IMUFilter::IsPickedUp() &&
             isDriving && !alreadyStopping &&
-            !_wasAnyCliffDetected) {
+            (!_wasAnyCliffDetected || sideCliffsDetected)) {
 
           // TODO (maybe): Check for cases where cliff detect should not stop motors
           // 1) Turning in place
           // 2) Driving over something (i.e. pitch is higher than some degrees).
-          AnkiInfo("ProxSensors.UpdateCliff.StoppingDueToCliff", "%d", _stopOnCliff);
+          AnkiInfo("ProxSensors.UpdateCliff.StoppingDueToCliff", 
+                   "stopOnCliff: %d, sideCliffsDetected: %d", 
+                   _stopOnCliff, sideCliffsDetected);
 
           if(_stopOnCliff)
           {

@@ -187,9 +187,6 @@ message RobotOffTreadsStateChanged {
     OffTreadsState treadsState
 }
 
-message RobotCliffEventFinished {
-}
-
 // Tests a collision, not contacts.
 message RobotOnChargerPlatformEvent {
   bool   onCharger

@@ -14,7 +14,8 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorReactToCliff_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include <vector>
+#include "engine/components/sensors/cliffSensorComponent.h"
+#include <array>
 
 namespace Anki {
 namespace Cozmo {
@@ -56,7 +57,6 @@ private:
   void TransitionToPlayingStopReaction();
   void TransitionToPlayingCliffReaction();
   void TransitionToBackingUp();
-  void SendFinishedReactToCliffMessage();
   
   // Based on which cliff sensor(s) was tripped, select an appropriate pre-animation action
   CompoundActionSequential* GetCliffPreReactAction(uint8_t cliffDetectedFlags);
@@ -76,13 +76,17 @@ private:
 
   struct DynamicVariables {
     DynamicVariables();
-    u16 cliffDetectThresholdAtStart;
     bool quitReaction;
     State state;
     bool gotCliff;
     bool gotStop;
     bool shouldStopDueToCharger;
     bool wantsToBeActivated;
+
+    struct Persistent {
+      std::array<u16, CliffSensorComponent::kNumCliffSensors> cliffValsAtStart;
+    };
+    Persistent persistent;
   };
   
   DynamicVariables _dVars;

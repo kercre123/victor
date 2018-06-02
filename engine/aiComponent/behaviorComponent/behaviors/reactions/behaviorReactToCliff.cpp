@@ -25,8 +25,7 @@
 #include "clad/types/animationTrigger.h"
 #include "clad/types/behaviorComponent/behaviorIDs.h"
 #include "clad/types/proxMessages.h"
-
-#define ALWAYS_PLAY_REACT_TO_CLIFF 1
+#include <limits>
 
 namespace Anki {
 namespace Cozmo {
@@ -36,6 +35,15 @@ using namespace ExternalInterface;
 namespace{
 static const float kCliffBackupDist_mm = 60.0f;
 static const float kCliffBackupSpeed_mmps = 100.0f;
+
+// If the value of the cliff when it started stopping is 
+// this much less than the value when it stopped, then
+// the cliff is considered suspicious (i.e. something like
+// carpet) and the reaction is aborted.
+// In general you'd expect the start value to be _higher_
+// that the stop value if it's true cliff, but we
+// use some margin here to account for sensor noise.
+static const u16   kSuspiciousCliffValDiff = 20;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -47,13 +55,15 @@ BehaviorReactToCliff::InstanceConfig::InstanceConfig()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToCliff::DynamicVariables::DynamicVariables()
 {
-  cliffDetectThresholdAtStart = 0;
   quitReaction = false;
   state = State::PlayingStopReaction;
   gotCliff = false;
   gotStop = false;
   shouldStopDueToCharger = false;
   wantsToBeActivated = false;
+
+  const auto kInitVal = std::numeric_limits<u16>::max();
+  std::fill(persistent.cliffValsAtStart.begin(), persistent.cliffValsAtStart.end(), kInitVal);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -86,7 +96,9 @@ bool BehaviorReactToCliff::WantsToBeActivatedBehavior() const
 void BehaviorReactToCliff::OnBehaviorActivated()
 {
   // reset dvars
+  const auto persistent = _dVars.persistent;
   _dVars = DynamicVariables();
+  _dVars.persistent = persistent;
   
   if(GetBEI().HasMoodManager()){
     auto& moodManager = GetBEI().GetMoodManager();
@@ -98,21 +110,32 @@ void BehaviorReactToCliff::OnBehaviorActivated()
     {
       auto& robotInfo = GetBEI().GetRobotInfo();
 
-      // Record cliff detection threshold before at start of stop
-      _dVars.cliffDetectThresholdAtStart = robotInfo.GetCliffSensorComponent().GetCliffDetectThreshold(0);
-
       // Wait function for determining if the cliff is suspicious
       auto waitForStopLambda = [this, &robotInfo](Robot& robot) {
         if ( robotInfo.GetMoveComponent().AreWheelsMoving() ) {
           return false;
         }
 
-        if (_dVars.cliffDetectThresholdAtStart != robotInfo.GetCliffSensorComponent().GetCliffDetectThreshold(0)) {
-          // There was a change in the cliff detection threshold so assuming
-          // it was a false cliff and aborting reaction
-          PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.QuittingDueToSuspiciousCliff", "");
-          _dVars.quitReaction = true;
-        }
+        const auto& cliffComp = robotInfo.GetCliffSensorComponent();
+        const auto& cliffData = cliffComp.GetCliffDataRaw();
+
+        PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.CliffValsAtEnd", 
+                      "%u %u %u %u (%x)", 
+                      cliffData[0], cliffData[1], cliffData[2], cliffData[3], cliffComp.GetCliffDetectedFlags());
+
+        for (int i=0; i<CliffSensorComponent::kNumCliffSensors; ++i) {  
+          if (cliffComp.IsCliffDetected((CliffSensor)(i))) {
+            if (_dVars.persistent.cliffValsAtStart[i] + kSuspiciousCliffValDiff < cliffData[i]) {
+              // There was a sufficiently large increase in cliff value since cliff was 
+              /// first detected so assuming it was a false cliff and aborting reaction
+              PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.QuittingDueToSuspiciousCliff", 
+                            "index: %d, startVal: %u, currVal: %u",
+                            i, _dVars.persistent.cliffValsAtStart[i], cliffData[i]);
+              _dVars.quitReaction = true;    
+            }
+          }
+        } 
+
         return true;
       };
 
@@ -143,7 +166,6 @@ void BehaviorReactToCliff::TransitionToPlayingStopReaction()
   DEBUG_SET_STATE(PlayingStopReaction);
 
   if(_dVars.quitReaction) {
-    SendFinishedReactToCliffMessage();
     return;
   }
 
@@ -151,13 +173,11 @@ void BehaviorReactToCliff::TransitionToPlayingStopReaction()
   const float latencyDelay_s = 0.05f;
   const float maxWaitTime_s = (1.0f / 1000.0f ) * CLIFF_EVENT_DELAY_MS + latencyDelay_s;
 
-  auto action = new CompoundActionParallel();
-
   // Wait for the cliff event before jumping to cliff reaction
   auto waitForCliffLambda = [this](Robot& robot) {
     return _dVars.gotCliff;
   };
-  action->AddAction(new WaitForLambdaAction(waitForCliffLambda, maxWaitTime_s), true);
+  auto action = new WaitForLambdaAction(waitForCliffLambda, maxWaitTime_s);
   DelegateIfInControl(action, &BehaviorReactToCliff::TransitionToPlayingCliffReaction);
 }
 
@@ -169,8 +189,7 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction()
 
   if(ShouldStreamline()){
     TransitionToBackingUp();
-  }
-  else if( _dVars.gotCliff || ALWAYS_PLAY_REACT_TO_CLIFF) {
+  } else {
     Anki::Util::sInfo("robot.cliff_detected", {}, "");
 
     auto& robotInfo = GetBEI().GetRobotInfo();
@@ -181,7 +200,6 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction()
 
     DelegateIfInControl(action, &BehaviorReactToCliff::TransitionToBackingUp);
   }
-  // else end the behavior now
 }
 
 
@@ -204,7 +222,6 @@ void BehaviorReactToCliff::TransitionToBackingUp()
     DelegateIfInControl(new DriveStraightAction(direction * kCliffBackupDist_mm, kCliffBackupSpeed_mmps),
                   [this](){
                       PRINT_NAMED_INFO("BehaviorReactToCliff.TransitionToBackingUp.ExtraRecoveryMotionComplete", "");
-                      SendFinishedReactToCliffMessage();
 
                       auto& cliffComponent = GetBEI().GetRobotInfo().GetCliffSensorComponent();
                       if ( cliffComponent.IsCliffDetected() ) {
@@ -217,18 +234,9 @@ void BehaviorReactToCliff::TransitionToBackingUp()
                   });
   }
   else {
-    SendFinishedReactToCliffMessage();
     BehaviorObjectiveAchieved(BehaviorObjective::ReactedToCliff);
   }
 }
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToCliff::SendFinishedReactToCliffMessage() {
-  // Send message that we're done reacting
-  //robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCliffEventFinished()));
-}
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::OnBehaviorDeactivated()
@@ -299,6 +307,20 @@ void BehaviorReactToCliff::HandleWhileInScopeButNotActivated(const EngineToGameE
       _dVars.quitReaction = false;
       _dVars.gotStop = true;
       _dVars.state = State::PlayingStopReaction;
+
+      // Record triggered cliff sensor value(s) and compare to what they are when wheels
+      // stop moving. If the values are higher, the cliff is suspicious and we should quit.
+      auto& robotInfo = GetBEI().GetRobotInfo();
+      const auto& cliffComp = robotInfo.GetCliffSensorComponent();
+      const auto& cliffData = cliffComp.GetCliffDataRaw();
+      std::copy(cliffData.begin(), cliffData.end(), _dVars.persistent.cliffValsAtStart.begin());
+      PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.CliffValsAtStart", 
+                    "%u %u %u %u", 
+                    _dVars.persistent.cliffValsAtStart[0], 
+                    _dVars.persistent.cliffValsAtStart[1],
+                    _dVars.persistent.cliffValsAtStart[2],
+                    _dVars.persistent.cliffValsAtStart[3]);
+
       break;
     }
     case EngineToGameTag::ChargerEvent:

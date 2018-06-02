@@ -68,7 +68,7 @@ public:
   
   // Cliff detection based on RobotState
   bool IsCliffDetected() const { return _cliffDetectedFlags.AreAnyFlagsSet(); }
-  bool IsCliffDetected(CliffSensor sensor) const;
+  bool IsCliffDetected(CliffSensor sensor) const { return _cliffDetectedFlags.IsBitFlagSet(sensor); }
   uint8_t GetCliffDetectedFlags() const { return _cliffDetectedFlags.GetFlags(); }
 
   bool IsCliffDetectedStatusBitOn() const { return _cliffDetectedStatusBitOn; }
