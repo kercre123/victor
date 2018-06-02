@@ -11,14 +11,16 @@ MiniSquawks is an audio interface to play audio files from a computer, to 8 conn
 
 # Things to install
 
-In the Victor github repo, you'll want to first pull from master, and then checkout the branch 
+In the Victor github repo, you'll want to first pull from master, and then navigate to the folder:
 
-`aghirmai/BI-990-Squawkbox-repurposed-for-24Audio-Room` 
+`victor/tools/squawkbox` 
 
 You will need to also download the following through your Mac terminal
 
 `brew install portaudio` (this one takes a while)
+
 `pip3 install pyaudio`
+
 `pip3 install easygui`
 
 Once you've installed those, you'll need to configure the USB sound card (this is a one time thing).
