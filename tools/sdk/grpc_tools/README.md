@@ -6,7 +6,7 @@ While this will all be added to proper build steps, this folder is used to creat
 
 For first time setup you will need to do the following:
 1. Set `ANKI_ROBOT_HOST` to point at the ip of your robot
-2. Generate files from the `.proto` file
+2. Generate python files from the `.proto` file
 
 ```bash
 > make
@@ -27,12 +27,18 @@ In a free terminal, run
 ```bash
 > make gateway
 ```
+And, in another terminal, capture the logs with
+```bash
+> victor_log | grep vic-gateway
+```
 Use Ctrl+C to exit
 
 ## Testing `vic-gateway`
 
-To test python, currently use `> python3 grpc_test.py`
+To test python, run the scripts inside `tools/sdk/vector-sdk/tests`.
+Note: They will require an ip and the path to the trust.cert file for your robot.
+Also, not all of them work yet, but they are being converted over as the messages are converted over.
 
-To test the rest api, use `> make test_curl`
+To test the rest api, use `> make test_curl`, or use `> make test_curl_events` to test events coming from the engine.
 
-Soon™, these will be replaced by the vector-sdk and the chewie app respectively.
+Soon™, these curl tests will be replaced by the chewie app.
