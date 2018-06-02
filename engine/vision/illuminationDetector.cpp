@@ -144,8 +144,8 @@ Result IlluminationDetector::Detect( Vision::ImageCache& cache,
                     "Features: %s", ss.str().c_str());
   #endif
 
-  PRINT_CH_INFO("VisionSystem", "IlluminationDetector.Detect.Result",
-                "Probability: %.3f", prob);
+  PRINT_NAMED_DEBUG("IlluminationDetector.Detect.Result",
+                    "Probability: %.3f", prob);
 
   return RESULT_OK;
 }
