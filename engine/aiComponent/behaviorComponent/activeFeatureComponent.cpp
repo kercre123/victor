@@ -17,6 +17,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/statusLogHandler.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/cozmoContext.h"
@@ -34,6 +35,8 @@ void ActiveFeatureComponent::InitDependent( Robot* robot, const BCCompMap& depen
 {
   _context = dependentComponents.GetValue<BEIRobotInfo>().GetContext();
   _lastUsedIntentActivationID = 0;
+  
+  _statusLogHandler.reset( new StatusLogHandler( _context ) );
 }
 
 void ActiveFeatureComponent::UpdateDependent(const BCCompMap& dependentComponents)
@@ -87,21 +90,9 @@ void ActiveFeatureComponent::UpdateDependent(const BCCompMap& dependentComponent
         }
       }
       
-      if( _activeFeature != ActiveFeature::NoFeature ) {
-        DASMSG(behavior_featureEnd, "behavior.feature.end", "This feature is no longer active");
-        DASMSG_SET(s1, ActiveFeatureToString(_activeFeature), "The feature");
-        DASMSG_SEND();
-      }
-
-      if( newFeature != ActiveFeature::NoFeature ) {
-        DASMSG(behavior_featureEnd, "behavior.feature.start", "A new feature is active");
-        DASMSG_SET(s1, ActiveFeatureToString(newFeature), "The feature");
-        DASMSG_SET(s2, intentSource, "The source of the intent (possible values are AI, App, Voice, or Unknown)");
-        DASMSG_SEND();
-      }
-
+      OnFeatureChanged( newFeature, _activeFeature, intentSource );
+      
       _activeFeature = newFeature;
-      SendActiveFeatureToWebViz(intentSource);
     }
   }
 }
@@ -123,6 +114,27 @@ void ActiveFeatureComponent::SendActiveFeatureToWebViz(const std::string& intent
       }
     }
   }
+}
+  
+void ActiveFeatureComponent::OnFeatureChanged(const ActiveFeature& newFeature, const ActiveFeature& oldFeature, const std::string& source)
+{
+  // send das message
+  if( oldFeature != ActiveFeature::NoFeature ) {
+    DASMSG(behavior_featureEnd, "behavior.feature.end", "This feature is no longer active");
+    DASMSG_SET(s1, ActiveFeatureToString(_activeFeature), "The feature");
+    DASMSG_SEND();
+  }
+
+  if( newFeature != ActiveFeature::NoFeature ) {
+    DASMSG(behavior_featureEnd, "behavior.feature.start", "A new feature is active");
+    DASMSG_SET(s1, ActiveFeatureToString(newFeature), "The feature");
+    DASMSG_SET(s2, source, "The source of the intent (possible values are AI, App, Voice, or Unknown)");
+    DASMSG_SEND();
+  }
+  
+  _statusLogHandler->SetFeature( ActiveFeatureToString(newFeature), source );
+  
+  SendActiveFeatureToWebViz(source);
 }
 
 }

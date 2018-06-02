@@ -27,6 +27,7 @@ namespace Anki {
 namespace Cozmo {
 
 class CozmoContext;
+class StatusLogHandler;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class ActiveFeatureComponent : public IDependencyManagedComponent<BCComponentID>
@@ -52,6 +53,8 @@ public:
   ActiveFeature GetActiveFeature() const;
 
 private:
+  
+  void OnFeatureChanged(const ActiveFeature& newFeature, const ActiveFeature& oldFeature, const std::string& source);
 
   void SendActiveFeatureToWebViz(const std::string& intentSource) const;
   
@@ -61,6 +64,8 @@ private:
   size_t _lastUsedIntentActivationID = 0;
 
   const CozmoContext* _context = nullptr;
+
+  std::unique_ptr<StatusLogHandler> _statusLogHandler;
 };
 
 }

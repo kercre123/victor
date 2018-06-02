@@ -121,19 +121,43 @@ message ListAnimationsResult {
   repeated Animation animation_names = 2;
 }
 
-// TODO: Remove Test1 and Test2. Use real events.
-message Test1 {
-  string value = 1;
+message FeatureStatus {
+  string feature_name = 1;
+  string source      = 2; // Voice, App, AI, Unknown
 }
 
-message Test2 {
-  string value = 1;
+message MeetVictorFaceScanStarted
+{
+}
+
+message MeetVictorFaceScanComplete
+{
+}
+
+message Status {
+  oneof status_type {
+     FeatureStatus                   featureStatus                = 1;
+     MeetVictorFaceScanStarted       meetVictorFaceScanStarted    = 2;
+     MeetVictorFaceScanComplete      meetVictorFaceScanComplete   = 3;
+  }
+}
+
+message TimeStampedStatus {
+  Status status = 1;
+  uint32 timestamp_ms = 2;
+}
+
+message RobotHistoryRequest {
+}
+
+message RobotHistoryResponse {
+  repeated TimeStampedStatus messages = 1;
 }
 
 message Event {
   oneof event_type {
-    Test1 test1 = 1;
-    Test2 test2 = 2;
+    Status                           status                              = 1;
+    // BatteryEvents, etc.
   }
 }
 

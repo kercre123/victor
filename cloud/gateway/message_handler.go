@@ -89,15 +89,70 @@ func ProtoDriveArcToClad(msg *extint.DriveArcRequest) *gw_clad.MessageExternalTo
 	})
 }
 
-func CladEventPlaceholderToProto(msg *gw_clad.EventPlaceholder) *extint.EventResult {
-	return &extint.EventResult{
-		Event: &extint.Event{
-			EventType: &extint.Event_Test1{
-				&extint.Test1{
-					Value: msg.Test, // NOTE: This is a test
-				},
+func CladFeatureStatusToProto(msg *gw_clad.FeatureStatus) *extint.FeatureStatus {
+	return &extint.FeatureStatus{
+		FeatureName: msg.FeatureName,
+		Source: msg.Source,
+	}
+}
+
+func CladMeetVictorFaceScanStartedToProto(msg *gw_clad.MeetVictorFaceScanStarted) *extint.MeetVictorFaceScanStarted {
+	return &extint.MeetVictorFaceScanStarted{}
+}
+
+func CladMeetVictorFaceScanCompleteToProto(msg *gw_clad.MeetVictorFaceScanComplete) *extint.MeetVictorFaceScanComplete {
+	return &extint.MeetVictorFaceScanComplete{}
+}
+
+func CladStatusToProto(msg *gw_clad.Status) *extint.Status {
+	var status *extint.Status
+	switch tag := msg.Tag(); tag {
+	case gw_clad.StatusTag_FeatureStatus:
+		status = &extint.Status{
+			StatusType: &extint.Status_FeatureStatus{
+				CladFeatureStatusToProto(msg.GetFeatureStatus()),
 			},
-		},
+		}
+	case gw_clad.StatusTag_MeetVictorFaceScanStarted:
+		status = &extint.Status{
+			StatusType: &extint.Status_MeetVictorFaceScanStarted{
+				CladMeetVictorFaceScanStartedToProto(msg.GetMeetVictorFaceScanStarted()),
+			},
+		}
+	case gw_clad.StatusTag_MeetVictorFaceScanComplete:
+		status = &extint.Status{
+			StatusType: &extint.Status_MeetVictorFaceScanComplete{
+				CladMeetVictorFaceScanCompleteToProto(msg.GetMeetVictorFaceScanComplete()),
+			},
+		}
+	case gw_clad.StatusTag_INVALID:
+		log.Println(tag, "tag for status is invalid")
+		return nil
+	default:
+		log.Println(tag, "tag for status is not yet implemented")
+		return nil
+	}
+	return status
+}
+
+func CladEventToProto(msg *gw_clad.Event) *extint.EventResult {
+	var event *extint.Event
+	switch tag := msg.Tag(); tag {
+	case gw_clad.EventTag_Status:
+		event = &extint.Event{
+			EventType: &extint.Event_Status{
+				CladStatusToProto(msg.GetStatus()),
+			},
+		}
+	case gw_clad.EventTag_INVALID:
+		log.Println(tag, "tag is invalid")
+		return nil
+	default:
+		log.Println(tag, "tag is not yet implemented")
+		return nil
+	}
+	return &extint.EventResult{
+		Event: event,
 	}
 }
 
@@ -184,14 +239,15 @@ func (c *rpcService) EventStream(in *extint.EventRequest, stream extint.External
 	log.Println("Received rpc request EventStream(", in, ")")
 
 	events_channel := make(chan RobotToExternalResult, 16)
-	engineChanMap[gw_clad.MessageRobotToExternalTag_EventPlaceholder] = events_channel
-	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_EventPlaceholder)
-	log.Println(engineChanMap[gw_clad.MessageRobotToExternalTag_EventPlaceholder])
+	engineChanMap[gw_clad.MessageRobotToExternalTag_Event] = events_channel
+	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_Event)
+	log.Println(engineChanMap[gw_clad.MessageRobotToExternalTag_Event])
 
 	for result := range events_channel {
-		feature := CladEventPlaceholderToProto(result.Message.GetEventPlaceholder())
-
-		if err := stream.Send(feature); err != nil {
+		log.Println("Got result:", result)
+		event := CladEventToProto(result.Message.GetEvent())
+		log.Println("Made event:", event)
+		if err := stream.Send(event); err != nil {
 			return err
 		} else if err = stream.Context().Err(); err != nil {
 			// This is the case where the user disconnects the stream

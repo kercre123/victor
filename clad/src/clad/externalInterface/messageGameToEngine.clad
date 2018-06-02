@@ -1154,6 +1154,10 @@ message SetCameraSettings {
 message RequestRobotSettings {
 }
 
+// Request a status history
+message RobotHistoryRequest {
+}
+
 // explicit autounion - this will force the values given, and then add every other messages in this file
 // if you do not want to include messages in this union, use the keyword "structure" instead of "message"
 // DO NOT CHANGE ANY EXPLICITLY DECLARED VALUES - they must be compatible across all versions so we can reliably
@@ -1166,6 +1170,7 @@ autounion MessageGameToEngine
   MoveHead MoveHead = 0x03,
   MoveLift MoveLift = 0x04,
   DriveArc DriveArc = 0x05,
+  RobotHistoryRequest RobotHistoryRequest = 0x06,
 }
 
 

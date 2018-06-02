@@ -990,6 +990,43 @@ message CacheNotificationToSchedule {
 message NotificationTextKeys {
   string textKeys[uint_16],
 }
+
+message FeatureStatus {
+  string featureName,
+  string source, // Voice, App, AI, Unknown
+}
+
+// A list of messages that are considered "status" messages.
+// This is a (hopefully temporary) way to tell the app which
+// Event messages are considered statuses.
+// Ideally we will get rid of this in favor of always sending
+// individual Event messages once info cards are made app-side,
+// and perhaps a "feature started" message in lieu of FeatureStatus
+union Status {
+  FeatureStatus                    FeatureStatus                       = 0x00,
+  MeetVictorFaceScanStarted        MeetVictorFaceScanStarted           = 0x01,
+  MeetVictorFaceScanComplete       MeetVictorFaceScanComplete          = 0x02,
+  FaceEnrollmentCompleted          FaceEnrollmentCompleted             = 0x03,
+}
+
+//// Don't use this within robot, use AnkiEvent, which already has a timestamp.
+//// This is for external use only.
+message TimeStampedStatus {
+  Status status,
+  uint_32 timestamp_ms,
+}
+
+message RobotHistoryResponse {
+  TimeStampedStatus  messages[uint_16],
+}
+
+// Anything that the robot wishes to push to the app that 
+// is not a response to a request from the app.
+union Event {
+  Status                           status                              = 0x00,
+  // BatteryEvents, etc.
+}
+
 // explicit autounion - this will force the values given, and then add every other messages in this file
 // if you do not want to include messages in this union, use the keyword "structure" instead of "message"
 // DO NOT CHANGE ANY EXPLICITELY DECLARED VALUES - they must be compatible across all versions so we can reliably
@@ -998,6 +1035,8 @@ autounion MessageEngineToGame
 {
   UiDeviceConnected                 UiDeviceConnected                  = 0x00, // DO NOT CHANGE THIS VALUE
   RobotCompletedAction              RobotCompletedAction               = 0x01,
+  Event                             Event                              = 0x02,
+  RobotHistoryResponse              RobotHistoryResponse               = 0x03,
 }
 
 } // namespace ExternalInterface

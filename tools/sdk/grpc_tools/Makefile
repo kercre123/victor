@@ -46,9 +46,11 @@ create_certs: .require_ip
 	scp trust.cert root@$(ANKI_ROBOT_HOST):/data/trust.cert
 	scp trust.key root@$(ANKI_ROBOT_HOST):/data/trust.key
 
-test_curl: .require_ip
+test_curl_events: .require_ip
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/event_stream -d '{}'
 	@echo
+
+test_curl: .require_ip
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/drive_wheels -d '{"left_wheel_mmps":100.0,"right_wheel_mmps":-100.0,"left_wheel_mmps2":0.0,"right_wheel_mmps2":0.0}'
 	@echo
 	sleep 2	

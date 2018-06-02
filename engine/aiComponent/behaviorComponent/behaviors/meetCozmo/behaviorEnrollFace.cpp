@@ -33,6 +33,7 @@
 #include "engine/components/visionComponent.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "engine/externalInterface/externalMessageRouter.h"
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/viz/vizManager.h"
@@ -334,15 +335,6 @@ void BehaviorEnrollFace::OnBehaviorActivated()
   }
   
   
-  {
-    // send a status update to the app that MeetVictor has started with _faceName.
-    // todo: this will be superceded by some sort of robot status VIC-1423
-    if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
-      ExternalInterface::MeetVictorStarted status( _dVars.faceName );
-      GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(std::move(status)));
-    }
-  }
-
   // Reset flag in FaceWorld because we're starting a new enrollment and will
   // be waiting for this new enrollment to be "complete" after this
   GetBEI().GetFaceWorldMutable().SetFaceEnrollmentComplete(false);
@@ -709,7 +701,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
                   _dVars.persistent.state, EnumToString(info.result));
 
     if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
-      GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(std::move(info)));
+      GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast( ExternalMessageRouter::Wrap(std::move(info)) );
     }
 
     // Done (whether success or failure), so reset state for next run
@@ -927,7 +919,7 @@ void BehaviorEnrollFace::TransitionToLookingForFace()
                   if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
                     // todo: replace with generic status VIC-1423
                     ExternalInterface::MeetVictorFaceScanStarted status;
-                    GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(std::move(status)));
+                    GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast( ExternalMessageRouter::Wrap(std::move(status)) );
                   }
                   
                   {
