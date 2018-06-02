@@ -960,14 +960,22 @@ namespace Cozmo {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool FaceWorld::IsMakingEyeContact() const
+  bool FaceWorld::IsMakingEyeContact(const u32 withinLast_ms) const
   {
+    // Loop over all the faces and see if any of them are making eye contact
+    const TimeStamp_t lastImgTime = _robot->GetLastImageTimeStamp();
+    const TimeStamp_t recentTime = lastImgTime > withinLast_ms ?
+                                   ( lastImgTime - withinLast_ms ) :
+                                   0;
     // Loop over all the faces and see if any of them are making eye contact
     for (const auto& entry: _faceEntries)
     {
-      if (entry.second.face.IsMakingEyeContact())
+      if (ShouldReturnFace(entry.second, recentTime, false))
       {
-        return true;
+        if (entry.second.face.IsMakingEyeContact())
+        {
+          return true;
+        }
       }
     }
     return false;

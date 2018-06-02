@@ -60,6 +60,8 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/imageTypes.h"
 
+#include "aiComponent/beiConditions/conditions/conditionEyeContact.h"
+
 #include "opencv2/highgui/highgui.hpp"
 
 namespace Anki {
@@ -97,6 +99,7 @@ namespace Cozmo {
     
   CONSOLE_VAR(bool, kEnableMirrorMode,              "Vision.General", false);
   CONSOLE_VAR(bool, kDisplayDetectionsInMirrorMode, "Vision.General", false); // objects, faces, markers
+  CONSOLE_VAR(bool, kDisplayEyeContactInMirrorMode, "Vision.General", false);
   CONSOLE_VAR(f32,  kMirrorModeGamma,               "Vision.General", 1.f);
   
   // Hack to continue drawing detected objects for a bit after they are detected
@@ -1318,6 +1321,26 @@ namespace Cozmo {
           {
             img.DrawText({1.f, img.GetNumRows()-1}, name, NamedColors::YELLOW, 0.6f, true);
           }
+        };
+
+        AddDrawScreenModifier(modFcn);
+      }
+    }
+
+    if(kDisplayEyeContactInMirrorMode)
+    {
+      const u32 maxTimeSinceSeenFaceToLook_ms = ConditionEyeContact::GetMaxTimeSinceTrackedFaceUpdated_ms();
+      const bool making_eye_contact = _robot->GetFaceWorld().IsMakingEyeContact(maxTimeSinceSeenFaceToLook_ms);
+      if(making_eye_contact)
+      {
+        std::function<void (Vision::ImageRGB&)> modFcn = [](Vision::ImageRGB& img)
+        {
+          // Put eye contact indicator right in the middle
+          const f32 x = .5f * (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
+          const f32 y = .5f * (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT;
+          const f32 width = .2f * (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
+          const f32 height = .2f * (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT;
+          img.DrawFilledRect(DisplayMirroredRectHelper(x, y, width, height), NamedColors::YELLOW);
         };
         
         AddDrawScreenModifier(modFcn);
