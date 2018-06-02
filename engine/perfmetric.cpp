@@ -298,6 +298,8 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll, const std::st
                 "ANDROID"
 #elif defined(ANKI_PLATFORM_OSX)
                 "MAC"
+#elif defined(ANKI_PLATFORM_VICOS)
+                "VICOS"
 #else
                 "UNKNOWN"
 #endif

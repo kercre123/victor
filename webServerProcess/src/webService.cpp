@@ -220,9 +220,12 @@ void ExecCommand(const std::vector<std::string>& args)
 
 static int
 ProcessRequest(struct mg_connection *conn, WebService::WebService::RequestType requestType,
-               const std::string& param1, const std::string& param2, const std::string& param3 = "", bool waitAndSendResponse = true)
+               const std::string& param1, const std::string& param2, const std::string& param3 = "",
+               bool waitAndSendResponse = true, WebService::WebService::ExternalCallback extCallback = nullptr,
+               void* cbdata = nullptr)
 {
-  WebService::WebService::Request* requestPtr = new WebService::WebService::Request(requestType, param1, param2, param3);
+  WebService::WebService::Request* requestPtr = new WebService::WebService::Request(requestType, param1, param2,
+                                                                                    param3, extCallback, cbdata);
 
   struct mg_context *ctx = mg_get_context(conn);
   WebService::WebService* that = static_cast<WebService::WebService*>(mg_get_user_data(ctx));
@@ -445,20 +448,23 @@ TempEngineToApp(struct mg_connection *conn, void *cbdata)
 WebService::WebService::Request::Request(RequestType rt,
                                          const std::string& param1,
                                          const std::string& param2,
-                                         const std::string& param3)
+                                         const std::string& param3,
+                                         ExternalCallback extCallback,
+                                         void* cbdata)
 {
   _requestType = rt;
   _param1 = param1;
   _param2 = param2;
   _param3 = param3;
+  _externalCallback = extCallback;
+  _cbdata = cbdata,
   _result = "";
   _resultReady = false;
   _done = false;
 }
 WebService::WebService::Request::Request(RequestType rt, const std::string& param1, const std::string& param2)
-  : Request(rt, param1, param2, "")
+  : Request(rt, param1, param2, "", nullptr, nullptr)
 {
-
 }
 
 static int
@@ -1068,7 +1074,6 @@ void WebService::Update()
             }
           }
           break;
-
         case RT_ConsoleVarList:
           {
             const std::string& key = requestPtr->_param1;
@@ -1087,7 +1092,6 @@ void WebService::Update()
             }
           }
           break;
-
         case RT_ConsoleFuncList:
           {
             const std::string& key = requestPtr->_param1;
@@ -1106,7 +1110,6 @@ void WebService::Update()
             }
           }
           break;
-
         case RT_ConsoleFuncCall:
           {
             const std::string& func = requestPtr->_param1;
@@ -1132,6 +1135,16 @@ void WebService::Update()
             }
             else {
               LOG_INFO("WebService.FuncCallNotFound", "CONSOLE_FUNC %s %s not found", func.c_str(), args.c_str());
+            }
+          }
+          break;
+        case RT_External:
+          {
+            // Call out to the external update handler
+            DEV_ASSERT(requestPtr->_externalCallback != nullptr, "Expecting valid externalCallback pointer");
+            const int returnCode = requestPtr->_externalCallback(requestPtr);
+            if (returnCode == 0) {
+              LOG_INFO("WebService.Update", "External callback failed");
             }
           }
           break;
@@ -1211,6 +1224,18 @@ void WebService::AddRequest(Request* requestPtr)
 void WebService::RegisterRequestHandler(std::string uri, mg_request_handler handler, void* cbdata)
 {
   mg_set_request_handler(_ctx, uri.c_str(), handler, cbdata);
+}
+
+int WebService::ProcessRequestExternal(struct mg_connection* conn, void* cbdata,
+                                       ExternalCallback extCallback, const std::string& param1,
+                                       const std::string& param2, const std::string& param3)
+{
+  // This is a request coming from an 'external' handler that wants WebService
+  // to process the request at the end of the tick (in WebService::Update)
+  static const bool waitAndSendResponse = true;
+  return ProcessRequest(conn, WebService::WebService::RequestType::RT_External,
+                        param1, param2, param3, waitAndSendResponse, extCallback,
+                        cbdata);
 }
 
 static std::string sanitize_tag(const std::string& tag)
@@ -1643,6 +1668,13 @@ namespace WebService {
 
   void WebService::RegisterRequestHandler(std::string /*uri*/, mg_request_handler /*handler*/, void* /*cbdata*/)
   {
+  }
+
+  int WebService::ProcessRequestExternal(struct mg_connection* /*conn*/, void* /*cbdata*/,
+                                         ExternalCallback /*extCallback*/, const std::string& /*param1*/,
+                                         const std::string& /*param2*/, const std::string& /*param3*/)
+  {
+    return 1;
   }
 
 } // namespace WebService
