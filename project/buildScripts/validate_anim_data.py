@@ -20,6 +20,8 @@ AUDIO_EVENT_NAMES_ATTR = "audioName"
 AUDIO_EVENT_ID_ATTR = "audioEventId"
 TRIGGER_TIME_ATTR = "triggerTime_ms"
 DURATION_TIME_ATTR = "durationTime_ms"
+EVENT_GROUPS_ATTR = "eventGroups"
+EVENT_IDS_ATTR = "eventIds"
 
 # These are the relevant attribute names in the SoundBanks info XML file
 SOUND_BANKS_XML_ATTR = "SoundBanks"
@@ -111,6 +113,7 @@ def get_audio_event_usage_in_anim(json_file, all_available_events):
     The first list is valid audio events in the animation. The second
     list is the audio events in the animation that are unavailable.
     """
+    all_available_event_ids = [x[1] for x in all_available_events]
     available_events = []
     unavailable_events = []
     if not json_file or not os.path.isfile(json_file):
@@ -130,22 +133,50 @@ def get_audio_event_usage_in_anim(json_file, all_available_events):
                 # but in this context we just assume that it's NOT an audio keyframe and move on.
                 continue
             if keyframe_type == AUDIO_KEYFRAME_TYPE:
-                audio_events = keyframe[AUDIO_EVENT_NAMES_ATTR]
-                audio_ids = keyframe[AUDIO_EVENT_ID_ATTR]
-                if len(audio_events) != len(audio_ids):
-                    raise ValueError("Bad audio keyframe in %s has mismatched number of audio "
-                                     "event IDs and names: %s" % (json_file, keyframe))
-                for idx in range(len(audio_events)):
-                    # The numerical event ID is what really matters for Wwise audio events,
-                    # so the event name strings are NOT case sensitive. Therefore, we converted
-                    # to lowercase earlier and compare to lowercase event names here.
-                    audio_event = str(audio_events[idx]).lower()
-                    audio_id = long(audio_ids[idx])
-                    if (audio_event, audio_id) in all_available_events:
-                        available_events.append((audio_event, audio_id))
-                    else:
-                        unavailable_events.append((audio_event, audio_id))
+                try:
+                    audio_events = keyframe[AUDIO_EVENT_NAMES_ATTR]
+                except KeyError:
+                    # this is the NEW style of audio keyframe
+                    audio_ids = []
+                    for events in keyframe[EVENT_GROUPS_ATTR]:
+                        audio_ids.extend(events[EVENT_IDS_ATTR])
+                        _check_using_event_id(audio_ids, all_available_event_ids,
+                                              available_events, unavailable_events)
+                else:
+                    # this is the OLD style of audio keyframe
+                    audio_ids = keyframe[AUDIO_EVENT_ID_ATTR]
+                    _check_using_event_name(audio_events, audio_ids, all_available_events,
+                                            available_events, unavailable_events)
+
     return (available_events, unavailable_events)
+
+
+def _check_using_event_id(audio_ids, all_available_event_ids, available_events, unavailable_events):
+    for audio_id in audio_ids:
+        audio_id = long(audio_id)
+        #print("Looking for audio ID = %s" % audio_id)
+        if audio_id in all_available_event_ids:
+            available_events.append((None, audio_id))
+        else:
+            unavailable_events.append((None, audio_id))
+
+
+def _check_using_event_name(audio_events, audio_ids, all_available_events,
+                            available_events, unavailable_events):
+    if len(audio_events) != len(audio_ids):
+        raise ValueError("Bad audio keyframe in %s has mismatched number of audio "
+                         "event IDs and names: %s" % (json_file, keyframe))
+    for idx in range(len(audio_events)):
+        # The numerical event ID is what really matters for Wwise audio events,
+        # so the event name strings are NOT case sensitive. Therefore, we converted
+        # to lowercase earlier and compare to lowercase event names here.
+        audio_event = str(audio_events[idx]).lower()
+        audio_id = long(audio_ids[idx])
+        #print("Looking for audio event '%s' with ID = %s" % (audio_event, audio_id))
+        if (audio_event, audio_id) in all_available_events:
+            available_events.append((audio_event, audio_id))
+        else:
+            unavailable_events.append((audio_event, audio_id))
 
 
 def check_audio_events_all_anims(externals_dir, anim_assets_dir=ANIM_ASSETS_DIR,
@@ -177,6 +208,7 @@ def check_audio_events_all_anims(externals_dir, anim_assets_dir=ANIM_ASSETS_DIR,
         file_path = file_paths[0]
         unpacked_files = unpack_tarball(file_path)
         for json_file in unpacked_files:
+            #print("Checking for audio event usage in: %s" % json_file)
             available_events, unavailable_events = get_audio_event_usage_in_anim(json_file, all_audio_events)
             if unavailable_events:
                 anim_name = os.path.basename(json_file)
