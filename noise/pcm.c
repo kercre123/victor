@@ -750,6 +750,7 @@ static void help(void)
 "-v,--verbose   show the PCM setup parameters\n"
 "-n,--noresample  do not resample\n"
 "-e,--pevent    enable poll event after each period\n"
+"-s,--square	square save instead of sinusoidal\n"
 "\n");
         printf("Recognized sample formats are:");
         for (k = 0; k < SND_PCM_FORMAT_LAST; ++k) {
@@ -780,7 +781,7 @@ int main(int argc, char *argv[])
 		{"verbose", 1, NULL, 'v'},
 		{"noresample", 1, NULL, 'n'},
 		{"pevent", 1, NULL, 'e'},
-		{"square", 0, NULL, 's'}
+		{"square", 0, NULL, 's'},
 		{NULL, 0, NULL, 0},
 	};
 	snd_pcm_t *handle;
@@ -798,7 +799,7 @@ int main(int argc, char *argv[])
 	morehelp = 0;
 	while (1) {
 		int c;
-		if ((c = getopt_long(argc, argv, "hD:r:c:f:b:ps:m:o:vne", long_option, NULL)) < 0)
+		if ((c = getopt_long(argc, argv, "hD:r:c:f:b:p:sm:o:vne", long_option, NULL)) < 0)
 			break;
 		switch (c) {
 		case 'h':
