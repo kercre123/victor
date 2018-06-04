@@ -43,6 +43,7 @@
 #include "engine/components/movementComponent.h"
 #include "engine/components/nvStorageComponent.h"
 #include "engine/components/pathComponent.h"
+#include "engine/components/photographyManager.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/components/sdkComponent.h"
@@ -282,6 +283,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::BeatDetector,               new BeatDetectorComponent());
     _components->AddDependentComponent(RobotComponentID::TextToSpeechCoordinator,    new TextToSpeechCoordinator());
     _components->AddDependentComponent(RobotComponentID::SDK,                        new SDKComponent());
+    _components->AddDependentComponent(RobotComponentID::PhotographyManager,         new PhotographyManager());
     _components->InitComponents(this);
   }
 
