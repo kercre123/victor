@@ -52,7 +52,7 @@ namespace {
   // Whether or not SetSupervisor() was called
   bool _supervisorIsSet = false;
   webots::Supervisor *_supervisor = nullptr;
-  
+
   RobotID_t _robotID = DEFAULT_ROBOT_ID;
 
   // System vars
@@ -81,9 +81,9 @@ OSState::OSState()
     // Set RobotID
     const auto* robotIDField = _supervisor->getSelf()->getField("robotID");
     DEV_ASSERT(robotIDField != nullptr, "OSState.Ctor.MissingRobotIDField");
-    _robotID = robotIDField->getSFInt32();    
+    _robotID = robotIDField->getSFInt32();
   }
-  
+
   // Set simulated attributes
   _serialNumString = "12345";
   _osBuildVersion = "12345";
@@ -113,13 +113,13 @@ void OSState::Update()
   if (_updatePeriod_ms != 0) {
     const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
     if (now_ms - _lastUpdateTime_ms > _updatePeriod_ms) {
-      
+
       // Update cpu freq
       UpdateCPUFreq_kHz();
 
       // Update temperature reading
       UpdateTemperature_C();
-      
+
       _lastUpdateTime_ms = now_ms;
     }
   }
@@ -284,12 +284,12 @@ const std::string& OSState::GetSerialNumberAsString()
 {
   return _serialNumString;
 }
-  
+
 const std::string& OSState::GetOSBuildVersion()
 {
   return _osBuildVersion;
 }
-  
+
 const std::string& OSState::GetBuildSha()
 {
   return _buildSha;
@@ -357,6 +357,10 @@ bool OSState::IsInRecoveryMode()
   return false;
 }
 
+bool OSState::HasValidEMR() const
+{
+  return false;
+}
+
 } // namespace Cozmo
 } // namespace Anki
-

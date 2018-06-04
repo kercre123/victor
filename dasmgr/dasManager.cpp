@@ -8,6 +8,9 @@
 */
 
 #include "dasManager.h"
+
+#include "osState/osState.h"
+
 #include "util/logging/logging.h"
 #include "util/logging/DAS.h"
 #include "util/string/stringUtils.h"
@@ -207,6 +210,17 @@ Result DASManager::Run(const bool & shutdown)
   Result result = RESULT_OK;
 
   LOG_DEBUG("DASManager.Run", "Start");
+
+  {
+    auto * osState = Anki::Cozmo::OSState::getInstance();
+    DEV_ASSERT(osState != nullptr, "DASManager.Run.InvalidOSState");
+    if (osState->HasValidEMR()) {
+      _robot_id = osState->GetSerialNumberAsString();
+    } else {
+      LOG_ERROR("DASManager.Run.InvalidEMR", "INVALID EMR - NO ESN");
+      _robot_id = "invalid";
+    }
+  }
 
   //
   // Android log API is documented here:

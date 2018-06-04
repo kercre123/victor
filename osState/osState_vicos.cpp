@@ -116,7 +116,7 @@ OSState::OSState()
   // Suppress unused function error for WriteEMR
   (void)static_cast<void(*)(size_t, void*, size_t)>(Factory::WriteEMR);
   (void)static_cast<void(*)(size_t, uint32_t)>(Factory::WriteEMR);
-  
+
   // Get nominal CPU frequency for this robot
   std::ifstream file;
   file.open(kNominalCPUFreqFile, std::ifstream::in);
@@ -165,7 +165,7 @@ void OSState::Update()
       // PRINT_NAMED_INFO("OSState", "Update took %lld microseconds", elapsed_us);
 
       _lastUpdateTime_ms = now_ms;
-      
+
     }
   }
 
@@ -317,9 +317,9 @@ const std::string& OSState::GetSerialNumberAsString()
   if(_serialNumString.empty())
   {
     std::stringstream ss;
-    ss << std::hex 
-       << std::setfill('0') 
-       << std::setw(8) 
+    ss << std::hex
+       << std::setfill('0')
+       << std::setw(8)
        << std::uppercase
        << Factory::GetEMR()->fields.ESN;
     _serialNumString = ss.str();
@@ -490,6 +490,12 @@ uint64_t OSState::GetWifiRxBytes() const
 bool OSState::IsInRecoveryMode()
 {
   return Util::FileUtils::FileExists(kRecoveryModeFile);
+}
+
+bool OSState::HasValidEMR() const
+{
+  const auto * emr = Factory::GetEMR();
+  return (emr != nullptr);
 }
 
 } // namespace Cozmo
