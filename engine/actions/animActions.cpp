@@ -16,15 +16,15 @@
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/audio/engineRobotAudioClient.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/cubeLightComponent.h"
 #include "engine/cozmoContext.h"
+#include "engine/moodSystem/moodManager.h"
 #include "engine/robot.h"
-#include "engine/robotInterface/messageHandler.h"
 #include "engine/robotDataLoader.h"
-
+#include "engine/robotInterface/messageHandler.h"
 
 namespace Anki {
 
@@ -161,16 +161,26 @@ namespace Anki {
       }
       else {
         const ActionResult res = PlayAnimationAction::Init();
-
+        
         auto* dataLoader = GetRobot().GetContext()->GetDataLoader();
         const std::set<AnimationTrigger>& dasBlacklistedTriggers = dataLoader->GetDasBlacklistedAnimationTriggers();
-        const bool isBlacklisted = std::find(dasBlacklistedTriggers.begin(), dasBlacklistedTriggers.end(), _animTrigger) != dasBlacklistedTriggers.end();
+        const bool isBlacklisted = std::find(dasBlacklistedTriggers.begin(), dasBlacklistedTriggers.end(), _animTrigger)
+          != dasBlacklistedTriggers.end();
 
         if( res == ActionResult::SUCCESS && !isBlacklisted ) {
-          const std::string& dataStr = std::string(AnimationTriggerToString(_animTrigger)) + ":" + _animGroupName;
-          Anki::Util::sInfo("robot.play_animation",
-                            {{DDATA, dataStr.c_str()}},
-                            _animName.c_str());
+          const auto simpleMood = GetRobot().GetMoodManager().GetSimpleMood();
+          const float headAngle_deg = Util::RadToDeg(GetRobot().GetComponent<FullRobotPose>().GetHeadAngle());
+          
+          // NOTE: you can add events to the blacklist in das_event_config.json to block them from sending here
+          
+          DASMSG(anim, "action.play_animation",
+                 "An animation has been started on the robot (that wasn't blacklisted for DAS)");
+          DASMSG_SET(s1, _animName, "The animation clip name");
+          DASMSG_SET(s2, _animGroupName, "The animation group name");
+          DASMSG_SET(s3, AnimationTriggerToString(_animTrigger), "The animation trigger name");
+          DASMSG_SET(s4, EnumToString(simpleMood), "The current SimpleMood value");
+          DASMSG_SET(i1, std::round(headAngle_deg), "The current head angle (in degrees)");
+          DASMSG_SEND();
         }
 
         return res;
