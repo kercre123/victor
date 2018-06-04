@@ -1,4 +1,8 @@
 {
   "behaviorID" : "ReactToPersonDetected",
-  "behaviorClass": "ReactToPersonDetected"
+  "behaviorClass": "ReactToPersonDetected",
+
+  "wantsToBeActivatedCondition": {
+    "conditionType": "PersonDetected"
+  }
 }

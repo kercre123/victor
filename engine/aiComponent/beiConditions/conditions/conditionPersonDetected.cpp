@@ -10,9 +10,12 @@
  *
  **/
 
-#include "engine/aiComponent/beiConditions/conditions/conditionPersonDetected.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionPersonDetected.h"
+#include "engine/aiComponent/salientPointsDetectorComponent.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -37,28 +40,16 @@ ConditionPersonDetected::~ConditionPersonDetected()
 void
 ConditionPersonDetected::InitInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  _messageHelper.reset(new BEIConditionMessageHelper(this, behaviorExternalInterface));
-
-  // TODO get the right tag for person detection
-//  _messageHelper->SubscribeToTags({EngineToGameTag::RobotObservedMotion});
-
+  // no need to subscribe to messages here, the SalientPointsDetectorComponent will do that for us
 }
 
 bool ConditionPersonDetected::AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   PRINT_CH_INFO("Behaviors", "ConditionPersonDetected.AreConditionsMetInternal.Called", "");
-  // TODO Here I'm cheating: test if x seconds have passed and if so make the condition true
 
-  float currentTickCount = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if ((currentTickCount - _timeSinceLastObservation) > 3 ) { // 3 seconds
-    PRINT_CH_INFO("Behaviors", "ConditionPersonDetected.AreConditionsMetInternal.ConditionTrue", "");
-    _timeSinceLastObservation = currentTickCount;
-    return true;
-  }
-  else {
-    PRINT_CH_INFO("Behaviors", "ConditionPersonDetected.AreConditionsMetInternal.ConditionFalse", "");
-    return false;
-  }
+  auto& component = behaviorExternalInterface.GetAIComponent().GetComponent<SalientPointsDetectorComponent>();
+  return component.PersonDetected();
+
 }
 
 void

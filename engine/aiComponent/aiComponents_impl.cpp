@@ -26,19 +26,21 @@ class ObjectInteractionInfoCache;
 class PuzzleComponent;
 class TimerUtility;
 class AIWhiteboard;
+class SalientPointsDetectorComponent;
 
 } // namespace Cozmo
 
 // Template specializations mapping enums from the _fwd.h file to the class forward declarations above
-LINK_COMPONENT_TYPE_TO_ENUM(BehaviorComponent,          AIComponentID, BehaviorComponent)
-LINK_COMPONENT_TYPE_TO_ENUM(ContinuityComponent,        AIComponentID, ContinuityComponent)
-LINK_COMPONENT_TYPE_TO_ENUM(FaceSelectionComponent,     AIComponentID, FaceSelection)
-LINK_COMPONENT_TYPE_TO_ENUM(FreeplayDataTracker,        AIComponentID, FreeplayDataTracker)
-LINK_COMPONENT_TYPE_TO_ENUM(AIInformationAnalyzer,      AIComponentID, InformationAnalyzer)
-LINK_COMPONENT_TYPE_TO_ENUM(ObjectInteractionInfoCache, AIComponentID, ObjectInteractionInfoCache)
-LINK_COMPONENT_TYPE_TO_ENUM(PuzzleComponent,            AIComponentID, Puzzle)
-LINK_COMPONENT_TYPE_TO_ENUM(TimerUtility,               AIComponentID, TimerUtility)
-LINK_COMPONENT_TYPE_TO_ENUM(AIWhiteboard,               AIComponentID, Whiteboard)
+LINK_COMPONENT_TYPE_TO_ENUM(BehaviorComponent,                 AIComponentID, BehaviorComponent)
+LINK_COMPONENT_TYPE_TO_ENUM(ContinuityComponent,               AIComponentID, ContinuityComponent)
+LINK_COMPONENT_TYPE_TO_ENUM(FaceSelectionComponent,            AIComponentID, FaceSelection)
+LINK_COMPONENT_TYPE_TO_ENUM(FreeplayDataTracker,               AIComponentID, FreeplayDataTracker)
+LINK_COMPONENT_TYPE_TO_ENUM(AIInformationAnalyzer,             AIComponentID, InformationAnalyzer)
+LINK_COMPONENT_TYPE_TO_ENUM(ObjectInteractionInfoCache,        AIComponentID, ObjectInteractionInfoCache)
+LINK_COMPONENT_TYPE_TO_ENUM(PuzzleComponent,                   AIComponentID, Puzzle)
+LINK_COMPONENT_TYPE_TO_ENUM(TimerUtility,                      AIComponentID, TimerUtility)
+LINK_COMPONENT_TYPE_TO_ENUM(AIWhiteboard,                      AIComponentID, Whiteboard)
+LINK_COMPONENT_TYPE_TO_ENUM(SalientPointsDetectorComponent,    AIComponentID, SalientPointsDetectorComponent)
 
 // Translate entity into string
 template<>
@@ -48,16 +50,17 @@ template<>
 std::string GetComponentStringForID<Cozmo::AIComponentID>(Cozmo::AIComponentID enumID)
 {
   switch(enumID){
-    case Cozmo::AIComponentID::BehaviorComponent:          { return "BehaviorComponent";}
-    case Cozmo::AIComponentID::ContinuityComponent:        { return "ContinuityComponent";}
-    case Cozmo::AIComponentID::FaceSelection:              { return "FaceSelection";}
-    case Cozmo::AIComponentID::FreeplayDataTracker:        { return "FreeplayDataTracker";}
-    case Cozmo::AIComponentID::InformationAnalyzer:        { return "InformationAnalyzer";}
-    case Cozmo::AIComponentID::ObjectInteractionInfoCache: { return "ObjectInteractionInfoCache";}
-    case Cozmo::AIComponentID::Puzzle:                     { return "Puzzle";}
-    case Cozmo::AIComponentID::TimerUtility:               { return "TimerUtility";}
-    case Cozmo::AIComponentID::Whiteboard:                 { return "Whiteboard";}
-    case Cozmo::AIComponentID::Count:                      { return "Count";}
+    case Cozmo::AIComponentID::BehaviorComponent:                 { return "BehaviorComponent";}
+    case Cozmo::AIComponentID::ContinuityComponent:               { return "ContinuityComponent";}
+    case Cozmo::AIComponentID::FaceSelection:                     { return "FaceSelection";}
+    case Cozmo::AIComponentID::FreeplayDataTracker:               { return "FreeplayDataTracker";}
+    case Cozmo::AIComponentID::InformationAnalyzer:               { return "InformationAnalyzer";}
+    case Cozmo::AIComponentID::ObjectInteractionInfoCache:        { return "ObjectInteractionInfoCache";}
+    case Cozmo::AIComponentID::Puzzle:                            { return "Puzzle";}
+    case Cozmo::AIComponentID::TimerUtility:                      { return "TimerUtility";}
+    case Cozmo::AIComponentID::Whiteboard:                        { return "Whiteboard";}
+    case Cozmo::AIComponentID::SalientPointsDetectorComponent:    { return "SalientPointsDetectorComponent";}
+    case Cozmo::AIComponentID::Count:                             { return "Count";}
   }
 }
 

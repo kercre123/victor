@@ -36,9 +36,6 @@ protected:
 private:
   void HandleEvent(const EngineToGameEvent& event, BehaviorExternalInterface& bei) override;
 
-  std::unique_ptr<BEIConditionMessageHelper> _messageHelper;
-  mutable float _timeSinceLastObservation = 0; // TODO this is temporary for testing
-
 };
 
 } // namespace Anki

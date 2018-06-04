@@ -50,8 +50,12 @@ enum class AIComponentID{
   TimerUtility,
   // whiteboard for behaviors to share information, or to store information only useful to behaviors
   Whiteboard,
-  
-  Count
+  // component for behaviors to access information about salient points being detected
+  SalientPointsDetectorComponent,
+
+  Count,
+
+
 };
 
 using AIComp =  IDependencyManagedComponent<AIComponentID>;
