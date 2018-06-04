@@ -249,6 +249,10 @@ static void BodyLoadProductionFirmware(void)
   *((uint32_t*)(bodyboot+20)) = bodyid.model;
   *((uint32_t*)(bodyboot+24)) = bodyid.esn;
   
+  //Offline mode don't write production firmware (but WILL print esn/hw info)
+  if( g_fixmode == FIXMODE_BODY1_OL )
+    return;
+  
   //Erase and flash boot/app
   ConsolePrintf("load: ESN %08x, hwrev %u, model %u\n", bodyid.esn, bodyid.hwrev, bodyid.model);
   mcu_power_up_();
@@ -263,8 +267,50 @@ static void BodyLoadProductionFirmware(void)
   mcu_power_down_();
 }
 
-//Power cycle and listen for the "booted" message from sycon application
-static void BodyBootcheckProductionFirmware(void)
+//detect production firmware boot signature
+static void BodyVerifyProductionFirmware(void)
+{
+  mcu_power_down_();
+  
+  if( g_fixmode == FIXMODE_BODY1_OL ) //Offline mode doesn't write production firmware
+    return;
+  if( g_fixmode == FIXMODE_BODY3 ) //Body 3 can't verify; no VBAT connection
+    return;
+  
+  //Power up the mcu under battery
+  Board::powerOn(PWR_VEXT,0); //must provide VEXT to wake up the mcu
+  Board::powerOn(PWR_VBAT,0); //connect a battery
+  Timer::delayMs(150); //wait for mcu to boot into main and enable battery power
+  Board::powerOff(PWR_VEXT);
+  
+  bool allow_skip = g_fixmode < FIXMODE_BODY1; //DEBUG
+  ConsolePrintf("detect production power signature... %s\n", (allow_skip ? " press a key to skip" : "") );
+  
+  while( ConsoleReadChar() > -1 );
+  uint32_t Tstart = Timer::get();
+  while(1)
+  {
+    if( Timer::elapsedUs(Tstart) > 4*1000*1000 ) { //nominal app boot delay is ~2.6s
+      ConsolePrintf("\ntimeout waiting for syscon boot\n");
+      throw ERROR_BODY_NO_BOOT_MSG;
+    }
+    
+    //Debug: shortcut outta here
+    if( ConsoleReadChar() > -1 && allow_skip )
+      break;
+    
+    //wait for current to be in the range we expect
+    int ibat_ma = Meter::getCurrentMa(PWR_VBAT, 8); //large oversample for averaging
+    ConsolePrintf("%i,", ibat_ma);
+    if( Timer::elapsedUs(Tstart) > 500*1000 && ibat_ma > 10 && ibat_ma < 100 )
+      break; //OK!
+  }
+  ConsolePutChar('\n');
+}
+
+//OBSOLETE: "booted" msg removed from production firmware
+/*/Power cycle and listen for the "booted" message from sycon application
+void BodyBootcheckProductionFirmware_OBSOLETE(void)
 {
   mcu_power_down_();
   
@@ -306,7 +352,7 @@ static void BodyBootcheckProductionFirmware(void)
         break;
     }
   }
-}
+}//-*/
 
 //check if this board has been factory programmed (swd lockout)
 static void BodyCheckProgramLockout(void)
@@ -326,8 +372,8 @@ static void BodyCheckProgramLockout(void)
   {
     ConsolePrintf("swd [chip]init fail %i. boot checking...\n", err);
     
-    //if we don't detect boot msg, assume unprogrammed and throw the original swd error
-    try { BodyBootcheckProductionFirmware(); } catch(...) { throw err; }
+    //if we don't detect production firmware, assume unprogrammed and throw the original swd error
+    try { BodyVerifyProductionFirmware(); } catch(...) { throw err; }
     
     throw ERROR_BODY_PROGRAMMED; //detected boot msg. this board is programmed/locked
   }
@@ -407,7 +453,7 @@ TestFunction* TestBody0GetTests(void)
     BodyTryReadSerial,
     BodyLoadTestFirmware,
     BodyLoadProductionFirmware,
-    BodyBootcheckProductionFirmware,
+    BodyVerifyProductionFirmware,
     BodyFlexFlowReport,
     NULL,
   };
@@ -422,7 +468,7 @@ TestFunction* TestBody1GetTests(void)
     BodyTryReadSerial,
     BodyLoadTestFirmware,
     BodyLoadProductionFirmware,
-    BodyBootcheckProductionFirmware,
+    BodyVerifyProductionFirmware,
     BodyFlexFlowReport,
     NULL,
   };
@@ -437,7 +483,7 @@ TestFunction* TestBody2GetTests(void)
     BodyTryReadSerial, //skip serial read to force blank state (generate new ESN)
     //BodyLoadTestFirmware,
     BodyLoadProductionFirmware,
-    BodyBootcheckProductionFirmware,
+    BodyVerifyProductionFirmware,
     BodyFlexFlowReport,
     NULL,
   };
@@ -451,7 +497,7 @@ TestFunction* TestBody3GetTests(void)
     BodyCheckProgramLockout,
     BodyTryReadSerial,
     BodyLoadProductionFirmware,
-    BodyBootcheckProductionFirmware,
+    BodyVerifyProductionFirmware,
     BodyFlexFlowReport,
     NULL,
   };
