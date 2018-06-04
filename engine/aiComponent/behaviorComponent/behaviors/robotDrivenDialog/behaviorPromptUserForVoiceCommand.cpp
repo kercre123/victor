@@ -12,65 +12,78 @@
  *
  **/
 
-
 #include "engine/aiComponent/behaviorComponent/behaviors/robotDrivenDialog/behaviorPromptUserForVoiceCommand.h"
 
-#include "engine/actions/sayTextAction.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "engine/actions/animActions.h"
+#include "engine/actions/basicActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/mics/micComponent.h"
 #include "micDataTypes.h"
+#include "util/cladHelpers/cladFromJSONHelpers.h"
 
-#include "coretech/common/engine/utils/timer.h"
 
 namespace Anki {
 namespace Cozmo {
   
 namespace {
-  const char* kEarConBegin                      = "earConAudioEventBegin";
-  const char* kEarConSuccess                    = "earConAudioEventSuccess";
-  const char* kEarConFail                       = "earConAudioEventNeutral";
-  const char* kAnimPromptKey                    = "promptAnimationTrigger";
-  const char* kAnimResponseToIntentKey          = "animResponseToIntentTrigger";
-  const char* kAnimResponseToBadIntentKey       = "animResponseToBadIntentTrigger";
-  const char* kAnimRepromptTriggerKey           = "animRepromptTrigger";
-  const char* kVocalPromptKey                   = "vocalPromptString";
-  const char* kVocalResponseToIntentKey         = "vocalResponseToIntentString";
-  const char* kVocalResponseToBadIntentKey      = "vocalResponseToBadIntentString";
-  const char* kVocalRepromptKey                 = "vocalRepromptString";
-  const char* kMaxRepromptKey                   = "maxNumberOfReprompts";
-  const char* kExitOnIntentsKey                 = "stopListeningOnIntents";
-  const char* kListeningGetInKey                = "playListeningGetIn";
-  const char* kProceduralBackpackLights         = "backpackLights";
-  constexpr float kMaxRecordTime_s              = ( (float)MicData::kStreamingTimeout_ms / 1000.0f );
+  const char* kDefaultTTSBehaviorID = "DefaultTextToSpeechLoop";
+
+  // JSON keys
+  const char* kEarConBegin                        = "earConAudioEventBegin";
+  const char* kEarConSuccess                      = "earConAudioEventSuccess";
+  const char* kEarConFail                         = "earConAudioEventNeutral";
+  const char* kShouldTurnToFaceKey                = "shouldTurnToFaceBeforePrompting";
+  const char* kTextToSpeechBehaviorKey            = "textToSpeechBehaviorID";
+  const char* kVocalPromptKey                     = "vocalPromptString";
+  const char* kVocalResponseToIntentKey           = "vocalResponseToIntentString";
+  const char* kVocalResponseToBadIntentKey        = "vocalResponseToBadIntentString";
+  const char* kVocalRepromptKey                   = "vocalRepromptString";
+  const char* kListenGetInOverrideKey             = "listenGetInOverrideTrigger";
+  const char* kListenAnimOverrideKey              = "listenAnimOverrideTrigger";
+  const char* kListenGetOutOverrideKey            = "listenGetOutOverrideTrigger";
+  const char* kStopListeningOnIntentsKey          = "stopListeningOnIntents";
+  const char* kListeningGetInKey                  = "playListeningGetIn";
+  const char* kListeningGetOutKey                 = "playListeningGetOut";
+  const char* kMaxRepromptKey                     = "maxNumberOfReprompts";
+  const char* kProceduralBackpackLights           = "backpackLights";
+  constexpr float kMaxRecordTime_s                = ( (float)MicData::kStreamingTimeout_ms / 1000.0f );
 }
 
+#define SET_STATE(s) do{ \
+                          _dVars.state = EState::s; \
+                          PRINT_NAMED_INFO("BehaviorPromptUserForVoiceCommand.State", "State = %s", #s); \
+                        } while(0);
+                        
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPromptUserForVoiceCommand::InstanceConfig::InstanceConfig()
 : earConBegin( AudioMetaData::GameEvent::GenericEvent::Invalid )
 , earConSuccess( AudioMetaData::GameEvent::GenericEvent::Invalid )
 , earConFail( AudioMetaData::GameEvent::GenericEvent::Invalid )
-, animPromptTrigger(AnimationTrigger::Count)
-, animResponseToIntentTrigger(AnimationTrigger::Count)
-, animResponseToBadIntentTrigger(AnimationTrigger::Count)
-, animRepromptTrigger(AnimationTrigger::Count)
-, vocalPromptString("")
-, vocalResponseToIntentString("")
-, vocalResponseToBadIntentString("")
-, vocalRepromptString("")
+, ttsBehaviorID(kDefaultTTSBehaviorID)
+, ttsBehavior(nullptr)
+, listenGetInOverrideTrigger(AnimationTrigger::Count)
+, listenAnimOverrideTrigger(AnimationTrigger::Count)
+, listenGetOutOverrideTrigger(AnimationTrigger::Count)
 , maxNumReprompts(0)
-, exitOnIntents(true)
+, shouldTurnToFace(true)
+, stopListeningOnIntents(true)
 , backpackLights(true)
 , playListeningGetIn(true)
+, playListeningGetOut(true)
 {
 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPromptUserForVoiceCommand::DynamicVariables::DynamicVariables()
-: state(EState::Prompting)
+: state(EState::TurnToFace)
 , streamingBeginTime(0)
 , intentStatus(EIntentStatus::NoIntentHeard)
 , isListening(false)
@@ -99,38 +112,38 @@ BehaviorPromptUserForVoiceCommand::BehaviorPromptUserForVoiceCommand(const Json:
     }
   }
 
-  // Load up animation triggers
-  auto loadTriggerOptional = [](const Json::Value& config, const char* key, AnimationTrigger& trigger){
-    std::string debugStr = "BehaviorPromptUserForVoiceCommand.Ctor.MissingParam.";
-    std::string triggerString;
-    if(JsonTools::GetValueOptional(config, key, triggerString)){
-      trigger = AnimationTriggerFromString(triggerString);
-      ANKI_VERIFY(trigger != AnimationTrigger::Count,
-                  "BehaviorPromptUserForVoiceCommand.Ctor.InvalidAnimTrigger",
-                  "%s is not a valid anim trigger",
-                  key);
-    }
-  };
+  JsonTools::GetValueOptional(config, kShouldTurnToFaceKey, _iConfig.shouldTurnToFace);
 
-  loadTriggerOptional(config, kAnimPromptKey, _iConfig.animPromptTrigger);
-  loadTriggerOptional(config, kAnimResponseToIntentKey, _iConfig.animResponseToIntentTrigger);
-  loadTriggerOptional(config, kAnimResponseToBadIntentKey, _iConfig.animResponseToBadIntentTrigger);
-  loadTriggerOptional(config, kAnimRepromptTriggerKey, _iConfig.animRepromptTrigger);
+  // Set up the TextToSpeech Behavior
+  JsonTools::GetValueOptional(config, kTextToSpeechBehaviorKey, _iConfig.ttsBehaviorID);
 
-  JsonTools::GetValueOptional(config, kVocalPromptKey, _iConfig.vocalPromptString);
+  _iConfig.vocalPromptString = JsonTools::ParseString(config,
+                                                      kVocalPromptKey,
+                                                      "BehaviorPromptUserForVoiceCommand.MissingPromptString");
+
   JsonTools::GetValueOptional(config, kVocalResponseToIntentKey, _iConfig.vocalResponseToIntentString);
   JsonTools::GetValueOptional(config, kVocalResponseToBadIntentKey, _iConfig.vocalResponseToBadIntentString);
   JsonTools::GetValueOptional(config, kVocalRepromptKey, _iConfig.vocalRepromptString);
 
-  // Should we exit the behavior as soon as an intent is pending, or finish what we're doing first?
-  // TODO:(str) interrupting behaviors may prevent the ending earcon from playing
-  JsonTools::GetValueOptional(config, kExitOnIntentsKey, _iConfig.exitOnIntents);
+  const std::string& debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
+  JsonTools::GetCladEnumFromJSON(config, kListenGetInOverrideKey, _iConfig.listenGetInOverrideTrigger, 
+                                 debugName, false);
+  JsonTools::GetCladEnumFromJSON(config, kListenAnimOverrideKey, _iConfig.listenAnimOverrideTrigger,
+                                 debugName, false);
+  JsonTools::GetCladEnumFromJSON(config, kListenGetOutOverrideKey, _iConfig.listenGetOutOverrideTrigger,
+                                 debugName, false);
+
+   // Should we exit the behavior as soon as an intent is pending, or finish what we're doing first?
+  // TODO:(str) interrupting behaviors will prevent the ending earcon from playing
+  JsonTools::GetValueOptional(config, kStopListeningOnIntentsKey, _iConfig.stopListeningOnIntents);
+  // play the getIn animation for the listening anim?
+  JsonTools::GetValueOptional(config, kListeningGetInKey, _iConfig.playListeningGetIn);
+  // play the getOut animation for the listening anim?
+  JsonTools::GetValueOptional(config, kListeningGetOutKey, _iConfig.playListeningGetOut);
   // Should we repeat the prompt if it fails? If so, how many times
   JsonTools::GetValueOptional(config, kMaxRepromptKey, _iConfig.maxNumReprompts);
   // play backpack lights from the behavior? else assume anims will handle it
   JsonTools::GetValueOptional(config, kProceduralBackpackLights, _iConfig.backpackLights);
-  // play the getIn animation for the listening anim?j
-  JsonTools::GetValueOptional(config, kListeningGetInKey, _iConfig.playListeningGetIn);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -142,6 +155,12 @@ BehaviorPromptUserForVoiceCommand::~BehaviorPromptUserForVoiceCommand()
 bool BehaviorPromptUserForVoiceCommand::WantsToBeActivatedBehavior() const
 {
   return true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPromptUserForVoiceCommand::GetAllDelegates(std::set<IBehavior*>& delegates) const
+{
+  delegates.insert(_iConfig.ttsBehavior.get());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -160,21 +179,34 @@ void BehaviorPromptUserForVoiceCommand::GetBehaviorJsonKeys(std::set<const char*
     kEarConBegin,
     kEarConSuccess,
     kEarConFail,
-    kAnimPromptKey,
-    kAnimResponseToIntentKey,
-    kAnimResponseToBadIntentKey,
-    kAnimRepromptTriggerKey,
+    kShouldTurnToFaceKey,
+    kTextToSpeechBehaviorKey,
     kVocalPromptKey,
     kVocalResponseToIntentKey,
     kVocalResponseToBadIntentKey,
     kVocalRepromptKey,
-    kExitOnIntentsKey,
+    kListenGetInOverrideKey,
+    kListenAnimOverrideKey,
+    kListenGetOutOverrideKey,
+    kVocalResponseToIntentKey,
+    kVocalResponseToBadIntentKey,
+    kVocalRepromptKey,
+    kStopListeningOnIntentsKey,
     kMaxRepromptKey,
     kProceduralBackpackLights,
-    kListeningGetInKey
+    kListeningGetInKey,
+    kListeningGetOutKey
   };
 
   expectedKeys.insert( std::begin(list), std::end(list) );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPromptUserForVoiceCommand::InitBehavior(){
+  BehaviorID ttsID = BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.ttsBehaviorID);
+  GetBEI().GetBehaviorContainer().FindBehaviorByIDAndDowncast(ttsID,
+                                                              BEHAVIOR_CLASS(TextToSpeechLoop),
+                                                              _iConfig.ttsBehavior);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -183,7 +215,11 @@ void BehaviorPromptUserForVoiceCommand::OnBehaviorActivated()
   // reset dynamic variables
   _dVars = DynamicVariables();
 
-  TransitionToPrompting();
+  if(_iConfig.shouldTurnToFace){
+    TransitionToTurnToFace();
+  } else {
+    TransitionToPrompting();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -204,8 +240,10 @@ void BehaviorPromptUserForVoiceCommand::BehaviorUpdate()
 
   if(EState::Listening == _dVars.state){
     CheckForPendingIntents();
-    if((EIntentStatus::NoIntentHeard != _dVars.intentStatus) && (_iConfig.exitOnIntents)){
-      CancelSelf();
+    if((EIntentStatus::IntentHeard == _dVars.intentStatus) && (_iConfig.stopListeningOnIntents)){
+      // End the listening anim, which should push us into Thinking
+      CancelDelegates();
+      TransitionToThinking();
     }
   } else if(EState::Thinking == _dVars.state){
     CheckForPendingIntents();
@@ -236,20 +274,20 @@ void BehaviorPromptUserForVoiceCommand::CheckForPendingIntents()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPromptUserForVoiceCommand::TransitionToTurnToFace()
+{
+  SET_STATE(TurnToFace);
+  DelegateIfInControl(new TurnTowardsLastFacePoseAction(), &BehaviorPromptUserForVoiceCommand::TransitionToPrompting);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPromptUserForVoiceCommand::TransitionToPrompting()
 {
-  // decipher whether or not to speak or just animate the prompt
-  IActionRunner* promptAction = nullptr;
-  if(!_iConfig.vocalPromptString.empty()){
-    SayTextAction* vocalPromptAction = new SayTextAction(_iConfig.vocalPromptString, SayTextIntent::Text);
-    vocalPromptAction->SetAnimationTrigger(_iConfig.animPromptTrigger);
-    promptAction = vocalPromptAction;
-  } else {
-    promptAction = new TriggerAnimationAction(_iConfig.animPromptTrigger);
+  SET_STATE(Prompting);
+  _iConfig.ttsBehavior->SetTextToSay(_iConfig.vocalPromptString);
+  if(_iConfig.ttsBehavior->WantsToBeActivated()){
+    DelegateIfInControl(_iConfig.ttsBehavior.get(), &BehaviorPromptUserForVoiceCommand::TransitionToListening);
   }
-
-  _dVars.state = EState::Prompting;
-  DelegateIfInControl(promptAction, &BehaviorPromptUserForVoiceCommand::TransitionToListening);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -280,20 +318,28 @@ void BehaviorPromptUserForVoiceCommand::TransitionToListening()
   GetBEI().GetMicComponent().StartWakeWordlessStreaming();
   _dVars.streamingBeginTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
-  _dVars.state = EState::Listening;
+  SET_STATE(Listening);
 
   // Start the getIn animation, then go straight into the listening loop from the callback
   auto callback = [this](){
     const float elapsed = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _dVars.streamingBeginTime;
     const float timeout = kMaxRecordTime_s - elapsed;
-    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::VC_ListeningLoop,
+
+    AnimationTrigger listenTrigger = (AnimationTrigger::Count != _iConfig.listenAnimOverrideTrigger) ?
+      _iConfig.listenAnimOverrideTrigger : AnimationTrigger::VC_ListeningLoop;
+
+    DelegateIfInControl(new TriggerAnimationAction(listenTrigger,
                                                   0, true, (uint8_t)AnimTrackFlag::NO_TRACKS,
                                                   std::max(timeout, 1.0f)),
                         &BehaviorPromptUserForVoiceCommand::TransitionToThinking);
   };
 
   if(_iConfig.playListeningGetIn){
-    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::VC_ListeningGetIn), callback);
+
+    AnimationTrigger listenGetInTrigger = (AnimationTrigger::Count != _iConfig.listenGetInOverrideTrigger) ?
+      _iConfig.listenGetInOverrideTrigger : AnimationTrigger::VC_ListeningGetIn;
+
+    DelegateIfInControl(new TriggerAnimationAction(listenGetInTrigger), callback);
   } else {
     callback();
   }
@@ -302,7 +348,7 @@ void BehaviorPromptUserForVoiceCommand::TransitionToListening()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPromptUserForVoiceCommand::TransitionToThinking()
 {
-  _dVars.state = EState::Thinking;
+  SET_STATE(Thinking);
 
   // Play the Listening getOut, then close out the streaming stuff in case an intent was just a little late
   auto callback = [this](){
@@ -324,7 +370,15 @@ void BehaviorPromptUserForVoiceCommand::TransitionToThinking()
     TransitionToIntentReceived();
   };
 
-  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::VC_ListeningGetOut), callback);
+  if(_iConfig.playListeningGetOut){
+    AnimationTrigger listenGetOutTrigger = (AnimationTrigger::Count != _iConfig.listenGetOutOverrideTrigger) ?
+      _iConfig.listenGetOutOverrideTrigger : AnimationTrigger::VC_ListeningGetOut;
+
+    DelegateIfInControl(new TriggerAnimationAction(listenGetOutTrigger), callback);
+  } else {
+    callback();
+  }
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -333,43 +387,33 @@ void BehaviorPromptUserForVoiceCommand::TransitionToIntentReceived()
   // Two ways we make it all the way here:
   //  1. Any resultant intent is handled by a non-interrupting behavior && !ExitOnIntents
   //  2. Any resultant intents have gone unclaimed
-  
+
+  SET_STATE(Thinking)
+
   // Play intent response anim and voice, if set
-  IActionRunner* responseAction = nullptr;
   if(EIntentStatus::IntentHeard == _dVars.intentStatus){
-    if(_iConfig.vocalResponseToIntentString.empty() &&
-       AnimationTrigger::Count == _iConfig.animResponseToIntentTrigger){
-      // If we don't have any intent response anims or vocalizations, but we got a valid intent,
-      // end this behavior. The resultant intent should be handled elsewhere after this behavior releases control.
+    if(_iConfig.vocalResponseToIntentString.empty()){
+      // No prompts specified, exit so the intent can be handled elsewhere
       CancelSelf();
       return;
-    } else if(!_iConfig.vocalResponseToIntentString.empty()){
-      SayTextAction* vocalResponseAction = new SayTextAction(_iConfig.vocalResponseToIntentString, SayTextIntent::Text);
-      vocalResponseAction->SetAnimationTrigger(_iConfig.animResponseToIntentTrigger);
-      responseAction = vocalResponseAction;
     } else {
-      responseAction = new TriggerAnimationAction(_iConfig.animResponseToIntentTrigger);
+      _iConfig.ttsBehavior->SetTextToSay(_iConfig.vocalResponseToIntentString);
+      if(_iConfig.ttsBehavior->WantsToBeActivated()){
+        DelegateIfInControl(_iConfig.ttsBehavior.get(), [this](){ CancelSelf(); });
+      }
     }
-
-    DelegateIfInControl(responseAction, [this](){ CancelSelf(); });
   } else {
-    if(_iConfig.vocalResponseToBadIntentString.empty() &&
-       AnimationTrigger::Count == _iConfig.animResponseToBadIntentTrigger){
-      // If we don't have any intent response anims or vocalizations, from here we will want to
-      // either re-prompt or exit
+    if(_iConfig.vocalResponseToBadIntentString.empty()){
+      // No prompts specified, either reprompt or exit
       TransitionToReprompt();
       return;
-    } else if (!_iConfig.vocalResponseToBadIntentString.empty()){
-      SayTextAction* vocalResponseAction = new SayTextAction(_iConfig.vocalResponseToBadIntentString, SayTextIntent::Text);
-      vocalResponseAction->SetAnimationTrigger(_iConfig.animResponseToBadIntentTrigger);
-      responseAction = vocalResponseAction;
     } else {
-      responseAction = new TriggerAnimationAction(_iConfig.animResponseToBadIntentTrigger);
+      _iConfig.ttsBehavior->SetTextToSay(_iConfig.vocalResponseToBadIntentString);
+      if(_iConfig.ttsBehavior->WantsToBeActivated()){
+        DelegateIfInControl(_iConfig.ttsBehavior.get(), &BehaviorPromptUserForVoiceCommand::TransitionToReprompt);
+      }
     }
-
-    DelegateIfInControl(responseAction, &BehaviorPromptUserForVoiceCommand::TransitionToReprompt);
   }
-
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -381,10 +425,7 @@ void BehaviorPromptUserForVoiceCommand::TransitionToReprompt()
     // Reset necessary vars
     _dVars.intentStatus = EIntentStatus::NoIntentHeard;
 
-    // decipher whether or not to speak or just animate the prompt
-    IActionRunner* repromptAction = nullptr;
-    if(_iConfig.vocalRepromptString.empty() &&
-       AnimationTrigger::Count == _iConfig.animRepromptTrigger){
+    if(_iConfig.vocalRepromptString.empty()){
       // If we don't have any Reprompt anims or vocalizations, just reuse the prompting state
       PRINT_NAMED_INFO("BehaviorPromptUserForVoiceCommand.RepromptGeneric",
                        "Reprompting user %d of %d times with original prompt action",
@@ -392,22 +433,18 @@ void BehaviorPromptUserForVoiceCommand::TransitionToReprompt()
                        _iConfig.maxNumReprompts);
       TransitionToPrompting();
       return;
-    } else if (!_iConfig.vocalRepromptString.empty()){
-      SayTextAction* vocalRepromptAction = new SayTextAction(_iConfig.vocalRepromptString, SayTextIntent::Text);
-      vocalRepromptAction->SetAnimationTrigger(_iConfig.animRepromptTrigger);
-      repromptAction = vocalRepromptAction;
     } else {
-      repromptAction = new TriggerAnimationAction(_iConfig.animPromptTrigger);
+      PRINT_NAMED_INFO("BehaviorPromptUserForVoiceCommand.RepromptSpecialized",
+                      "Reprompting user %d of %d times with specialized reprompt action.",
+                      _dVars.repromptCount,
+                      _iConfig.maxNumReprompts);
+      SET_STATE(Reprompt);
+      _iConfig.ttsBehavior->SetTextToSay(_iConfig.vocalRepromptString);
+      if(_iConfig.ttsBehavior->WantsToBeActivated()){
+        DelegateIfInControl(_iConfig.ttsBehavior.get(), &BehaviorPromptUserForVoiceCommand::TransitionToListening);
+      }
+      return;
     }
-
-    PRINT_NAMED_INFO("BehaviorPromptUserForVoiceCommand.RepromptSpecialized",
-                     "Reprompting user %d of %d times with specialized reprompt action.",
-                     _dVars.repromptCount,
-                     _iConfig.maxNumReprompts);
-    _dVars.state = EState::Reprompt;
-    DelegateIfInControl(repromptAction, &BehaviorPromptUserForVoiceCommand::TransitionToListening);
-
-    return;
   }
 
   CancelSelf();

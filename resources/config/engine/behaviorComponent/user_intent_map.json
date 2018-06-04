@@ -20,6 +20,14 @@
       "user_intent": "imperative_come"
     },
     {
+      "cloud_intent": "intent_imperative_affirmative",
+      "user_intent": "imperative_affirmative"
+    },
+    {
+      "cloud_intent": "intent_imperative_negative",
+      "user_intent": "imperative_negative"
+    },
+    {
       "cloud_intent": "intent_global_stop",
       "user_intent": "cancel_timer"
     },

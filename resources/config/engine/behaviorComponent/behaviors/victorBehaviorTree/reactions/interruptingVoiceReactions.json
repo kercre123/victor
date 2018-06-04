@@ -11,6 +11,7 @@
     "FistBumpVoiceCommand",
     "RollCubeVoiceCommand",
     "KeepawayVoiceCommand",
+    "BlackJackVoiceCommand",
     "ComeHereVoiceCommand",
     "MeetVictor"
   ]

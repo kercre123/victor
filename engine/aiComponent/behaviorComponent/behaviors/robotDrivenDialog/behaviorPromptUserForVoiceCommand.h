@@ -22,6 +22,9 @@
 namespace Anki {
 namespace Cozmo {
 
+// Fwd Declarations
+class BehaviorTextToSpeechLoop;
+
 class BehaviorPromptUserForVoiceCommand : public ICozmoBehavior
 {
 public: 
@@ -33,9 +36,11 @@ protected:
   friend class BehaviorFactory;
   explicit BehaviorPromptUserForVoiceCommand(const Json::Value& config);  
 
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   
+  virtual void InitBehavior() override final;
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
@@ -44,6 +49,7 @@ protected:
 private:
 
   enum class EState {
+    TurnToFace,
     Prompting,
     Listening,
     Thinking,
@@ -58,6 +64,7 @@ private:
     NoIntentHeard
   };
 
+  void TransitionToTurnToFace();
   void TransitionToPrompting();
   void TransitionToListening();
   void TransitionToThinking();
@@ -74,6 +81,7 @@ private:
   // Accessory helpers
   void CheckForPendingIntents();
   void TurnOffBackpackLights();
+  IBehavior* SelectPromptBehavior(std::string& speechString, ICozmoBehaviorPtr& altPromptBehavior);
 
   struct InstanceConfig {
     InstanceConfig();
@@ -83,10 +91,12 @@ private:
     AudioMetaData::GameEvent::GenericEvent earConSuccess;
     AudioMetaData::GameEvent::GenericEvent earConFail;
 
-    AnimationTrigger animPromptTrigger;
-    AnimationTrigger animResponseToIntentTrigger;
-    AnimationTrigger animResponseToBadIntentTrigger;
-    AnimationTrigger animRepromptTrigger;
+    std::string ttsBehaviorID;
+    std::shared_ptr<BehaviorTextToSpeechLoop> ttsBehavior;
+
+    AnimationTrigger listenGetInOverrideTrigger;
+    AnimationTrigger listenAnimOverrideTrigger;
+    AnimationTrigger listenGetOutOverrideTrigger;
 
     std::string vocalPromptString;
     std::string vocalResponseToIntentString;
@@ -94,9 +104,11 @@ private:
     std::string vocalRepromptString;
 
     uint8_t maxNumReprompts;
-    bool exitOnIntents;
+    bool shouldTurnToFace;
+    bool stopListeningOnIntents;
     bool backpackLights;
     bool playListeningGetIn;
+    bool playListeningGetOut;
 
   };
 

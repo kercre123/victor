@@ -28,7 +28,8 @@ class BehaviorDispatcherStrictPriority : public IBehaviorDispatcher
   BehaviorDispatcherStrictPriority(const Json::Value& config);
 
 protected:
-  
+  virtual void BehaviorDispatcher_OnActivated() override;
+
   virtual ICozmoBehaviorPtr GetDesiredBehavior() override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
@@ -41,10 +42,16 @@ private:
 
     // if true, links activation scope and WantsToBeActivated with it's delegates
     bool linkScope;
+
+    // if true, will CancelSelf after the FIRST behavior that WantsToBeActivated returns control
+    bool actAsSelector;
   };
 
   struct DynamicVariables {
     DynamicVariables();
+
+    // Track whether this behavior has yet delegated, in case it is acting as a selector.
+    bool hasDelegated;
   };
 
   InstanceConfig   _iConfig;

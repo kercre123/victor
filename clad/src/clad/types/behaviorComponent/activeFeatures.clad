@@ -34,6 +34,7 @@ enum uint_32 ActiveFeature {
   NoFeature = 0,
   
   BeQuiet,
+  Blackjack,
   CantDoThat,
   ComeHere,
   DanceToTheBeat,

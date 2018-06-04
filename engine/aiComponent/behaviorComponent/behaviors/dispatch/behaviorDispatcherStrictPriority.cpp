@@ -22,17 +22,20 @@ namespace Cozmo {
 namespace {
 const char* kBehaviorsKey = "behaviors";
 const char* kLinkScopeKey = "linkScope";
+const char* kActAsSelectorKey = "actAsSelector";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDispatcherStrictPriority::InstanceConfig::InstanceConfig()
   : linkScope(false)
+  , actAsSelector(false)
 {
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDispatcherStrictPriority::DynamicVariables::DynamicVariables()
+  : hasDelegated(false)
 {
 }
 
@@ -45,6 +48,7 @@ BehaviorDispatcherStrictPriority::BehaviorDispatcherStrictPriority(const Json::V
               "BaseClass is wrong");
 
   _iConfig.linkScope = config.get(kLinkScopeKey, false).asBool();
+  _iConfig.actAsSelector = config.get(kActAsSelectorKey, false).asBool();
   
   const Json::Value& behaviorArray = config[kBehaviorsKey];
   DEV_ASSERT_MSG(!behaviorArray.isNull(),
@@ -62,6 +66,7 @@ void BehaviorDispatcherStrictPriority::GetBehaviorJsonKeys(std::set<const char*>
 {
   expectedKeys.insert( kBehaviorsKey );
   expectedKeys.insert( kLinkScopeKey );
+  expectedKeys.insert( kActAsSelectorKey );
   IBehaviorDispatcher::GetBehaviorJsonKeys(expectedKeys);
 }
 
@@ -92,12 +97,23 @@ bool BehaviorDispatcherStrictPriority::WantsToBeActivatedBehavior() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatcherStrictPriority::BehaviorDispatcher_OnActivated(){
+  _dVars = DynamicVariables();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehaviorPtr BehaviorDispatcherStrictPriority::GetDesiredBehavior()
 {
+  // Don't provide more than one desired behavior if acting as a selector
+  if(_iConfig.actAsSelector && _dVars.hasDelegated){
+    return ICozmoBehaviorPtr{};
+  }
+
   // Iterate through available behaviors, and use the first one that is activated or wants to be activated
   // since this is the highest priority behavior
   for(const auto& entry: GetAllPossibleDispatches()) {
     if(entry->IsActivated() || entry->WantsToBeActivated()) {
+      _dVars.hasDelegated = true;
       return entry;
     }
   }

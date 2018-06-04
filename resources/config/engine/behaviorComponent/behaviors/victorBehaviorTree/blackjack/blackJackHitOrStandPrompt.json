@@ -1,17 +1,18 @@
 {
-  "behaviorID" : "DevTestPromptUser",
+  "behaviorID" : "BlackJackHitOrStandPrompt",
   "behaviorClass" : "PromptUserForVoiceCommand",
+
+  "associatedActiveFeature": "Blackjack",
 
   "earConAudioEventBegin"               : "Play__Robot_Vic_Sfx__Wake_Word_On",
   "earConAudioEventSuccess"             : "Play__Robot_Vic_Sfx__Wake_Word_Success",
   "earConAudioEventNeutral"             : "Play__Robot_Vic_Sfx__Wake_Word_Off",
-  "vocalPromptString"                   : "Test Prompt: say a command",
-  "vocalResponseToIntentString"         : "Got an intent",
-  "vocalResponseToBadIntentString"      : "Didn't get an intent",
-  "vocalRepromptString"                 : "Try again",
+  "textToSpeechBehaviorID"              : "BlackJackTextToSpeech",
+  "vocalPromptString"                   : "Say yes to hit, no to stand",
+  "listenAnimOverrideTrigger"           : "BlackJack_Idle",
   "maxNumberOfReprompts"                : 1,
   "stopListeningOnIntents"              : true,
   "backpackLights"                      : true,
-  "playListeningGetIn"                  : true,
-  "playListeningGetOut"                 : true
+  "playListeningGetIn"                  : false,
+  "playListeningGetOut"                 : false
 }

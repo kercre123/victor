@@ -40,6 +40,90 @@
     "AnimName": "ag_vc_bequiet_01"
   },
   {
+    "CladEvent": "BlackJack_Deal",
+    "AnimName" : "ag_blackjack_deal"
+  },
+  {
+    "CladEvent": "BlackJack_GoodLuck",
+    "AnimName" : "ag_blackjack_goodluck"
+  },
+  {
+    "CladEvent": "BlackJack_GetIn",
+    "AnimName" : "ag_blackjack_getin"
+  },
+  {
+    "CladEvent": "BlackJack_Idle",
+    "AnimName" : "ag_blackjack_idle"
+  },
+  {
+    "CladEvent": "BlackJack_Quit",
+    "AnimName" : "ag_blackjack_quit"
+  },
+  {
+    "CladEvent": "BlackJack_Response",
+    "AnimName" : "ag_blackjack_response"
+  },
+  {
+    "CladEvent": "BlackJack_RtpIdle",
+    "AnimName" : "ag_rtp_blackjack_idle"
+  },
+  {
+    "CladEvent": "BlackJack_RtpPlayerNo",
+    "AnimName" : "ag_rtp_blackjack_playerno"
+  },
+  {
+    "CladEvent": "BlackJack_RtpPlayerYes",
+    "AnimName" : "ag_rtp_blackjack_playeryes"
+  },
+  {
+    "CladEvent": "BlackJack_RtpRequest",
+    "AnimName" : "ag_rtp_blackjack_request"
+  },
+  {
+    "CladEvent": "BlackJack_RtpTimeOut",
+    "AnimName" : "ag_rtp_blackjack_timeout"
+  },
+  {
+    "CladEvent": "BlackJack_SpeechGetIn",
+    "AnimName" : "ag_blackjack_speech_getin"
+  },
+  {
+    "CladEvent": "BlackJack_SpeechShortStatement",
+    "AnimName" : "ag_blackjack_speech_short_statement"
+  },
+  {
+    "CladEvent": "BlackJack_Spread",
+    "AnimName" : "ag_blackjack_spread"
+  },
+  {
+    "CladEvent": "BlackJack_Swipe",
+    "AnimName" : "ag_blackjack_swipe"
+  },
+  {
+    "CladEvent": "BlackJack_VictorBlackJackLose",
+    "AnimName" : "ag_blackjack_victorblackjacklose"
+  },
+  {
+    "CladEvent": "BlackJack_VictorBlackJackWin",
+    "AnimName" : "ag_blackjack_victorblackjackwin"
+  },
+  {
+    "CladEvent": "BlackJack_VictorBust",
+    "AnimName" : "ag_blackjack_victorbust"
+  },
+  {
+    "CladEvent": "BlackJack_VictorLose",
+    "AnimName" : "ag_blackjack_victorlose"
+  },
+  {
+    "CladEvent": "BlackJack_VictorPush",
+    "AnimName" : "ag_blackjack_victorpush"
+  },
+  {
+    "CladEvent": "BlackJack_VictorWin",
+    "AnimName" : "ag_blackjack_victorwin"
+  },
+  {
     "CladEvent": "DEPRECATED_BlockReact",
     "AnimName": "ag_blockreact"
   },

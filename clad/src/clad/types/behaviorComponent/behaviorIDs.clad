@@ -82,8 +82,13 @@ enum uint_8 BehaviorID {
   ReactToCubeMoved,
   ReactToPet,
 
-  // sdkBehaviors
-  SDK0,
+  // victorBehaviorTree/blackjack
+  BlackJack,
+  BlackJackHandleRTPResponses,
+  BlackJackHitOrStandPrompt,
+  BlackJackRequestToPlay,
+  BlackJackRequestToPlayAgain,
+  BlackJackTextToSpeech,
 
   // victorBehaviorTree
   ComeHereVoiceCommand,
@@ -93,6 +98,7 @@ enum uint_8 BehaviorID {
   DanceToTheBeat,
 
   // victorBehaviorTree
+  DefaultTextToSpeechLoop,
   DriveOffCharger,
   DriveOffChargerAnim,
   GlobalInterruptions,
@@ -191,6 +197,7 @@ enum uint_8 BehaviorID {
   TrackFaceTest,
 
   // victorBehaviorTree/highLevelDelegates/voiceCommands
+  BlackJackVoiceCommand,
   DoATrickVoiceCommand,
   FistBumpVoiceCommand,
   KeepawayVoiceCommand,
@@ -234,6 +241,9 @@ enum uint_8 BehaviorID {
   ReactToTriggerDirectionAwake,
   ReactToUnexpectedMovement,
   StuckOnEdge,
+
+  // victorBehaviorTree/sdkBehaviors
+  SDK0,
 
   // victorBehaviorTree
   SingletonICantDoThat,

@@ -33,6 +33,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorTurn.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorTurnToFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorWiggleOntoChargerContacts.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/blackjack/behaviorBlackJack.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateGlobalInterrupts.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorQuietModeCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/danceToTheBeat/behaviorDanceToTheBeat.h"
@@ -287,6 +288,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::WiggleOntoChargerContacts:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorWiggleOntoChargerContacts(config));
+      break;
+    }
+    
+    case BehaviorClass::BlackJack:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorBlackJack(config));
       break;
     }
     
