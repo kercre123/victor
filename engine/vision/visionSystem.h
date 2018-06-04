@@ -70,7 +70,7 @@ namespace Vision {
   class ImageCache;
   class ImagingPipeline;
   class MarkerDetector;
-  class ObjectDetector;
+  class NeuralNetRunner;
   class PetTracker;
 }
   
@@ -320,9 +320,9 @@ namespace Cozmo {
     std::unique_ptr<IlluminationDetector>           _illuminationDetector;
 
     std::unique_ptr<Vision::Benchmark>              _benchmark;
-    std::unique_ptr<Vision::ObjectDetector>         _generalObjectDetector;
+    std::unique_ptr<Vision::NeuralNetRunner>        _neuralNetRunner;
     
-    TimeStamp_t                   _generalObjectDetectionTimestamp = 0;
+    TimeStamp_t                   _neuralNetRunnerTimestamp = 0;
     
     // Tool code stuff
     TimeStamp_t                   _firstReadToolCodeTime_ms = 0;
@@ -368,7 +368,7 @@ namespace Cozmo {
 
     Result UpdateGroundPlaneClassifier(const Vision::ImageRGB& image);
     
-    void CheckForGeneralObjectDetections();
+    void CheckForNeuralNetResults();
     
     Result ReadToolCode(const Vision::Image& image);
     

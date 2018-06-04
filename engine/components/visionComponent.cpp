@@ -105,7 +105,7 @@ namespace Cozmo {
   
   // Hack to continue drawing detected objects for a bit after they are detected
   // since object detection is slow
-  CONSOLE_VAR(u32, kKeepDrawingObjectDetectionsFor_ms,   "Vision.General", 150);
+  CONSOLE_VAR(u32, kKeepDrawingSalientPointsFor_ms, "Vision.General", 150);
 
   namespace JsonKey
   {
@@ -998,7 +998,7 @@ namespace Cozmo {
         tryAndReport(&VisionComponent::UpdateImageQuality,        VisionMode::CheckingQuality);
         tryAndReport(&VisionComponent::UpdateWhiteBalance,        VisionMode::CheckingWhiteBalance);
         tryAndReport(&VisionComponent::UpdateLaserPoints,         VisionMode::DetectingLaserPoints);
-        tryAndReport(&VisionComponent::UpdateDetectedObjects,     VisionMode::Count); // Use Count here to always call UpdateDetectedObjects
+        tryAndReport(&VisionComponent::UpdateSalientPoints,       VisionMode::Count); // Use Count here to always call UpdateSalientPoints
         tryAndReport(&VisionComponent::UpdateVisualObstacles,     VisionMode::DetectingVisualObstacles);
 
         // Display any debug images left by the vision system
@@ -1059,9 +1059,8 @@ namespace Cozmo {
         }
 
         // Store frame rate and last image processed time. Time should only move forward.
-        // NOTE: Object detection runs asynchronously, so we ignore those results for this
-        //       purpose.
-        if(!result.modesProcessed.IsBitFlagSet(VisionMode::DetectingGeneralObjects))
+        // NOTE: Neural nets run asynchronously, so we ignore those results for this purpose.
+        if(!result.modesProcessed.IsBitFlagSet(VisionMode::RunningNeuralNet))
         {
           DEV_ASSERT(result.timestamp >= _lastProcessedImageTimeStamp_ms, "VisionComponent.UpdateAllResults.BadTimeStamp");
           _processingPeriod_ms = result.timestamp - _lastProcessedImageTimeStamp_ms;
@@ -1127,7 +1126,7 @@ namespace Cozmo {
     const Point<2,T> pt_mirror(widthScale*(xmax - pt.x()), pt.y()*heightScale);
     return pt_mirror;
   }
-    
+  
   static Quad2f DisplayMirroredQuadHelper(const Quad2f& quad)
   {
     // Mirror x coordinates, swap left/right points, and scale for each point in the quad:
@@ -1408,29 +1407,29 @@ namespace Cozmo {
     return RESULT_OK;
   } // UpdateMotionCentroid()
 
-  Result VisionComponent::UpdateDetectedObjects(const VisionProcessingResult& procResult)
+  Result VisionComponent::UpdateSalientPoints(const VisionProcessingResult& procResult)
   {
     TimeStamp_t currentTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
-    auto iter = _detectedObjectsToDraw.begin();
-    while(iter != _detectedObjectsToDraw.end() && iter->first < currentTime_ms - kKeepDrawingObjectDetectionsFor_ms)
+    auto iter = _salientPointsToDraw.begin();
+    while(iter != _salientPointsToDraw.end() && iter->first < currentTime_ms - kKeepDrawingSalientPointsFor_ms)
     {
-      iter = _detectedObjectsToDraw.erase(iter);
+      iter = _salientPointsToDraw.erase(iter);
     }
 
-    if(procResult.modesProcessed.IsBitFlagSet(VisionMode::DetectingGeneralObjects))
+    if(procResult.modesProcessed.IsBitFlagSet(VisionMode::RunningNeuralNet))
     {
       for(auto const& detectedObject : procResult.salientPoints)
       {
         // TODO: Notify behaviors somehow
-        _detectedObjectsToDraw.push_back({currentTime_ms, detectedObject});
+        _salientPointsToDraw.push_back({currentTime_ms, detectedObject});
       }
     }
 
     s32 colorIndex = 0;
-    for(auto const& objectToDraw : _detectedObjectsToDraw)
+    for(auto const& salientPointToDraw : _salientPointsToDraw)
     {
-      const auto& object = objectToDraw.second;
+      const auto& object = salientPointToDraw.second;
 
       const Poly2f poly(object.shape);
       const ColorRGBA color = (object.description.empty() ? NamedColors::RED : ColorRGBA::CreateFromColorIndex(colorIndex++));
@@ -1442,7 +1441,7 @@ namespace Cozmo {
       if(kDisplayDetectionsInMirrorMode)
       {
         const Point2f centroid(object.x_img, object.y_img);
-        PRINT_NAMED_INFO("VisionComponent.UpdateDetectedObjects.MirrorMode",
+        PRINT_NAMED_INFO("VisionComponent.UpdateSalientPoints.MirrorMode",
                          "Drawing %s poly with %d points. Centroid: (%.2f,%.2f)",
                          EnumToString(object.salientType), (int)poly.size(), centroid.x(), centroid.y());
         std::string str(object.description);

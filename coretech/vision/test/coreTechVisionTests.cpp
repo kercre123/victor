@@ -13,7 +13,7 @@
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/imageCache.h"
-#include "coretech/vision/engine/objectDetector.h"
+#include "coretech/vision/engine/neuralNetRunner.h"
 #include "coretech/vision/engine/observableObject.h"
 #include "coretech/vision/engine/perspectivePoseEstimation.h"
 #include "coretech/vision/engine/profiler.h"
@@ -674,9 +674,9 @@ GTEST_TEST(ResizeImage, CorrectSizes)
   
 }
 
-GTEST_TEST(ObjectDetector, DetectionAndClassification)
+GTEST_TEST(NeuralNetRunner, DetectionAndClassification)
 {
-  Vision::ObjectDetector detector;
+  Vision::NeuralNetRunner neuralNet;
   
   const std::string modelPath = std::string(getenv("TEST_DATA_PATH")) + "/resources/test/dnn_models";
   const std::string cachePath = std::string(getenv("TEST_DATA_PATH")) + "/resources/test/dnn_models/cache";
@@ -687,7 +687,7 @@ GTEST_TEST(ObjectDetector, DetectionAndClassification)
   // TODO: Remove this once we have models stored in the repo (VIC-1071)
   if(Util::FileUtils::DirectoryDoesNotExist(modelPath))
   {
-    PRINT_NAMED_WARNING("ObjectDetector.DetectionAndClassification.Skipping", "Model path not found: %s", modelPath.c_str());
+    PRINT_NAMED_WARNING("NeuralNetRunner.DetectionAndClassification.Skipping", "Model path not found: %s", modelPath.c_str());
     return;
   }
                         
@@ -724,20 +724,20 @@ GTEST_TEST(ObjectDetector, DetectionAndClassification)
   std::string testImageFile;
   Vision::ImageRGB testImg;
   Vision::ImageCache imageCache;
-  std::list<Vision::SalientPoint> objects;
+  std::list<Vision::SalientPoint> salientPoints;
   
   // Helper to deal with the fact the detector runs asynchronously.
   // This just waits for it to finish.
-  auto DetectionHelper = [&detector](Vision::ImageCache& imageCache, std::list<Vision::SalientPoint>& objects) -> Result
+  auto DetectionHelper = [&neuralNet](Vision::ImageCache& imageCache, std::list<Vision::SalientPoint>& salientPoints) -> Result
   {
-    const bool started = detector.StartProcessingIfIdle(imageCache);
+    const bool started = neuralNet.StartProcessingIfIdle(imageCache);
     if(!started)
     {
       return RESULT_FAIL;
     }
     
     bool gotResult = false;
-    BOUNDED_WHILE(10, (gotResult = detector.GetObjects(objects)) == false)
+    BOUNDED_WHILE(10, (gotResult = neuralNet.GetDetections(salientPoints)) == false)
     { 
       std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
@@ -753,24 +753,24 @@ GTEST_TEST(ObjectDetector, DetectionAndClassification)
   // Image classification test: verify expected name is returned for each image
   {
     testImageFile = Util::FileUtils::FullFilePath({testImagePath, "grace_hopper.jpg"});
-    result = detector.Init(modelPath, cachePath, config);
+    result = neuralNet.Init(modelPath, cachePath, config);
     ASSERT_EQ(RESULT_OK, result);
     
     result = testImg.Load(testImageFile);
     ASSERT_EQ(RESULT_OK, result);
     imageCache.Reset(testImg);
     
-    result = DetectionHelper(imageCache, objects);
+    result = DetectionHelper(imageCache, salientPoints);
     ASSERT_EQ(RESULT_OK, result);
 
-    for(auto const& object : objects)
+    for(auto const& salientPoint : salientPoints)
     {
-      printf("Found %s in image %s\n", object.description.c_str(), testImageFile.c_str());
+      printf("Found %s in image %s\n", salientPoint.description.c_str(), testImageFile.c_str());
     }
-    EXPECT_EQ(1, objects.size());
-    if(!objects.empty())
+    EXPECT_EQ(1, salientPoints.size());
+    if(!salientPoints.empty())
     {
-      EXPECT_EQ("653:military uniform", objects.front().description);
+      EXPECT_EQ("653:military uniform", salientPoints.front().description);
     }
     
     testImageFile = Util::FileUtils::FullFilePath({testImagePath, "cat.jpg"});
@@ -778,18 +778,18 @@ GTEST_TEST(ObjectDetector, DetectionAndClassification)
     ASSERT_EQ(RESULT_OK, result);
     imageCache.Reset(testImg);
     
-    result = DetectionHelper(imageCache, objects);
+    result = DetectionHelper(imageCache, salientPoints);
     ASSERT_EQ(RESULT_OK, result);
 
-    EXPECT_EQ(1, objects.size());
+    EXPECT_EQ(1, salientPoints.size());
     
     bool catFound = false;
-    for(auto const& object : objects)
+    for(auto const& salientPoint : salientPoints)
     {
-      printf("Found %s in image %s\n", object.description.c_str(), testImageFile.c_str());
+      printf("Found %s in image %s\n", salientPoint.description.c_str(), testImageFile.c_str());
       
-      // Expecting "cat" to be somewhere in the object's name
-      if(objects.front().description.find("cat") != std::string::npos) {
+      // Expecting "cat" to be somewhere in the salient point's name
+      if(salientPoints.front().description.find("cat") != std::string::npos) {
         catFound = true;
       }
     }
@@ -835,7 +835,7 @@ GTEST_TEST(ObjectDetector, DetectionAndClassification)
     
     for(auto const& config : configs)
     {
-      result = detector.Init(modelPath, cachePath, config);
+      result = neuralNet.Init(modelPath, cachePath, config);
       ASSERT_EQ(RESULT_OK, result);
       
       for(auto const& filename : {"cat.jpg", "linus.jpg"})
@@ -845,14 +845,14 @@ GTEST_TEST(ObjectDetector, DetectionAndClassification)
         ASSERT_EQ(RESULT_OK, result);
         imageCache.Reset(testImg);
         
-        result = DetectionHelper(imageCache, objects);
+        result = DetectionHelper(imageCache, salientPoints);
         ASSERT_EQ(RESULT_OK, result);
         
         bool catFound = false;
-        std::for_each(objects.begin(), objects.end(),
-                      [&catFound](const Vision::SalientPoint& object)
+        std::for_each(salientPoints.begin(), salientPoints.end(),
+                      [&catFound](const Vision::SalientPoint& salientPoint)
                       {
-                        if(object.description == "cat")
+                        if(salientPoint.description == "cat")
                         {
                           catFound = true;
                         }
@@ -863,14 +863,14 @@ GTEST_TEST(ObjectDetector, DetectionAndClassification)
         if(kEnableDetectedObjectDisplay)
         {
           Vision::ImageRGB dispImg(testImg);
-          for(auto const& object : objects)
+          for(auto const& salientPoint : salientPoints)
           {
-            dispImg.DrawPoly(Poly2f(object.shape), NamedColors::RED);
+            dispImg.DrawPoly(Poly2f(salientPoint.shape), NamedColors::RED);
             std::stringstream caption;
-            caption << object.description << "[" << std::round(100.f*object.score) << "]";
+            caption << salientPoint.description << "[" << std::round(100.f*salientPoint.score) << "]";
             
-            ASSERT_FALSE(object.shape.empty());
-            dispImg.DrawText(Point2f(object.shape.front()) + Point2f(2.f,-6.f), caption.str(), NamedColors::RED, .5f, true);
+            ASSERT_FALSE(salientPoint.shape.empty());
+            dispImg.DrawText(Point2f(salientPoint.shape.front()) + Point2f(2.f,-6.f), caption.str(), NamedColors::RED, .5f, true);
           }
           dispImg.Display("Detections", 0);
         }

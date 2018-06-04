@@ -12,7 +12,7 @@
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/math/rect_impl.h"
-#include "coretech/vision/neuralnets/objectDetector_tensorflow.h"
+#include "coretech/vision/neuralnets/neuralNetModel_tensorflow.h"
 
 #include "tensorflow/core/framework/graph.pb.h"
 #include "tensorflow/core/framework/graph_def_util.h"
@@ -78,34 +78,34 @@ static inline void SetFromConfigHelper(const Json::Value& json, std::vector<std:
 // }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectDetector::ObjectDetector() 
+NeuralNetModel::NeuralNetModel()
 : _params{} 
 {
 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectDetector::~ObjectDetector()
+NeuralNetModel::~NeuralNetModel()
 {
-  LOG_INFO("ObjectDetector.Destructor", "");
+  LOG_INFO("NeuralNetModel.Destructor", "");
   if(_session)
   {
     tensorflow::Status sessionCloseStatus = _session->Close();
     if (!sessionCloseStatus.ok() ) 
     {
-      PRINT_NAMED_WARNING("ObjectDetector.Destructor.CloseSessionFailed", "Status: %s", 
+      PRINT_NAMED_WARNING("NeuralNetModel.Destructor.CloseSessionFailed", "Status: %s",
                           sessionCloseStatus.ToString().c_str());
     }
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value& config)
+Result NeuralNetModel::LoadModel(const std::string& modelPath, const Json::Value& config)
 {
   const Result result = SetParamsFromConfig(config);
   if(RESULT_OK != result) 
   {
-    PRINT_NAMED_ERROR("ObjectDetector.LoadModel.SetParamsFromConfigFailed", "");
+    PRINT_NAMED_ERROR("NeuralNetModel.LoadModel.SetParamsFromConfigFailed", "");
     return result;
   }
   
@@ -114,14 +114,14 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
   if (!Util::FileUtils::FileExists(graphFileName))
                   
   {
-    PRINT_NAMED_ERROR("ObjectDetector.Model.LoadGraph.GraphFileDoesNotExist", "%s",
+    PRINT_NAMED_ERROR("NeuralNetModel.Model.LoadGraph.GraphFileDoesNotExist", "%s",
                       graphFileName.c_str());
     return RESULT_FAIL;
   }
 
   if(_params.verbose)
   {
-    LOG_INFO("ObjectDetector.LoadModel.FoundGraphFile",
+    LOG_INFO("NeuralNetModel.LoadModel.FoundGraphFile",
              "%s", graphFileName.c_str());
   }
 
@@ -147,12 +147,12 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
 
     if (!loadGraphStatus.ok())
     {
-      PRINT_NAMED_ERROR("ObjectDetector.Model.LoadGraph.MemoryMapBinaryProtoFailed",
+      PRINT_NAMED_ERROR("NeuralNetModel.Model.LoadGraph.MemoryMapBinaryProtoFailed",
                         "Status: %s", loadGraphStatus.ToString().c_str());
       return RESULT_FAIL;
     }
 
-    LOG_INFO("ObjectDetector.LoadModel.MemMappedModelLoadSuccess", "%s", graphFileName.c_str());
+    LOG_INFO("NeuralNetModel.LoadModel.MemMappedModelLoadSuccess", "%s", graphFileName.c_str());
 
     tensorflow::SessionOptions options;
     options.config.mutable_graph_options()
@@ -164,7 +164,7 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
 
     if (!session_status.ok())
     {
-      PRINT_NAMED_ERROR("ObjectDetector.LoadModel.NewMemoryMappedSessionFailed", 
+      PRINT_NAMED_ERROR("NeuralNetModel.LoadModel.NewMemoryMappedSessionFailed",
                         "Status: %s", session_status.ToString().c_str());
       return RESULT_FAIL;
     }
@@ -177,12 +177,12 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
                                                                        graphFileName, &graphDef);
     if (!loadGraphStatus.ok())
     {
-      PRINT_NAMED_ERROR("ObjectDetector.LoadModel.ReadBinaryProtoFailed",
+      PRINT_NAMED_ERROR("NeuralNetModel.LoadModel.ReadBinaryProtoFailed",
                         "Status: %s", loadGraphStatus.ToString().c_str());
       return RESULT_FAIL;
     }
 
-    LOG_INFO("ObjectDetector.LoadModel.ReadBinaryProtoSuccess", "%s", graphFileName.c_str());
+    LOG_INFO("NeuralNetModel.LoadModel.ReadBinaryProtoSuccess", "%s", graphFileName.c_str());
 
     sessionPtr = tensorflow::NewSession(tensorflow::SessionOptions());
   } 
@@ -192,7 +192,7 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
     tensorflow::Status sessionCloseStatus = _session->Close();
     if (!sessionCloseStatus.ok() ) 
     {
-      PRINT_NAMED_WARNING("ObjectDetector.LoadModel.CloseSessionFailed", "Status: %s", 
+      PRINT_NAMED_WARNING("NeuralNetModel.LoadModel.CloseSessionFailed", "Status: %s",
                           sessionCloseStatus.ToString().c_str());
     }
   }
@@ -202,12 +202,12 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
 
   if (!sessionCreateStatus.ok())
   {
-    PRINT_NAMED_ERROR("ObjectDetector.LoadModel.CreateSessionFailed",
+    PRINT_NAMED_ERROR("NeuralNetModel.LoadModel.CreateSessionFailed",
                       "Status: %s", sessionCreateStatus.ToString().c_str());
     return RESULT_FAIL;
   }
 
-  LOG_INFO("ObjectDetector.LoadModel.SessionCreated", "");
+  LOG_INFO("NeuralNetModel.LoadModel.SessionCreated", "");
 
   if (_params.verbose)
   {
@@ -219,21 +219,21 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
     for (int i = 0; i < node_count; i++)
     {
       const auto n = graphDef.node(i);
-      LOG_INFO("ObjectDetector.LoadModel.Summary", "Layer %d - Name: %s, Op: %s", i, n.name().c_str(), n.op().c_str());
+      LOG_INFO("NeuralNetModel.LoadModel.Summary", "Layer %d - Name: %s, Op: %s", i, n.name().c_str(), n.op().c_str());
       if(n.op() == "Const")
       {
         tensorflow::Tensor t;
         if (!t.FromProto(n.attr().at("value").tensor())) {
-          LOG_INFO("ObjectDetector.LoadModel.SummaryFail", "Failed to create Tensor from proto");
+          LOG_INFO("NeuralNetModel.LoadModel.SummaryFail", "Failed to create Tensor from proto");
           continue;
         }
 
-        LOG_INFO("ObjectDetector.LoadModel.Summary", "%s", t.DebugString().c_str());
+        LOG_INFO("NeuralNetModel.LoadModel.Summary", "%s", t.DebugString().c_str());
       }
       else if(n.op() == "Conv2D")
       {
         const auto& filterNodeName = n.input(1);
-        LOG_INFO("ObjectDetector.LoadModel.Summary", "Filter input from Conv2D node: %s", filterNodeName.c_str());
+        LOG_INFO("NeuralNetModel.LoadModel.Summary", "Filter input from Conv2D node: %s", filterNodeName.c_str());
       }
     }
   }
@@ -242,18 +242,18 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
   Result readLabelsResult = ReadLabelsFile(labelsFileName, _labels);
   if (RESULT_OK == readLabelsResult)
   {
-    LOG_INFO("ObjectDetector.LoadModel.ReadLabelFileSuccess", "%s", labelsFileName.c_str());
+    LOG_INFO("NeuralNetModel.LoadModel.ReadLabelFileSuccess", "%s", labelsFileName.c_str());
   }
   return readLabelsResult;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ObjectDetector::SetParamsFromConfig(const Json::Value& config)
+Result NeuralNetModel::SetParamsFromConfig(const Json::Value& config)
 {
 # define GetFromConfig(keyName) \
   if(!config.isMember(QUOTE(keyName))) \
   { \
-    PRINT_NAMED_ERROR("ObjectDetector.SetParamsFromConfig.MissingConfig", QUOTE(keyName)); \
+    PRINT_NAMED_ERROR("NeuralNetModel.SetParamsFromConfig.MissingConfig", QUOTE(keyName)); \
     return RESULT_FAIL; \
   } \
   else \
@@ -278,7 +278,7 @@ Result ObjectDetector::SetParamsFromConfig(const Json::Value& config)
     _params.outputType = OutputType::AnchorBoxes;
 
     if(config.isMember("outputType")) {
-      PRINT_NAMED_WARNING("ObjectDetector.SetParamsFromConfig.IgnoringOutputType", 
+      PRINT_NAMED_WARNING("NeuralNetModel.SetParamsFromConfig.IgnoringOutputType",
                           "Ignoring outputType and using 'AnchorBoxes' because architecture='ssd_mobilenet' was specified");
     }
   }
@@ -290,7 +290,7 @@ Result ObjectDetector::SetParamsFromConfig(const Json::Value& config)
     _params.outputType = OutputType::Classification;
 
     if(config.isMember("outputType")) {
-      PRINT_NAMED_WARNING("ObjectDetector.SetParamsFromConfig.IgnoringOutputType", 
+      PRINT_NAMED_WARNING("NeuralNetModel.SetParamsFromConfig.IgnoringOutputType",
                           "Ignoring outputType and using 'Classification' because architecture='mobilenet' was specified");
     }
   }
@@ -314,7 +314,7 @@ Result ObjectDetector::SetParamsFromConfig(const Json::Value& config)
   }
   else
   {
-    PRINT_NAMED_ERROR("ObjectDetector.SetParamsFromConfig.UnrecognizedArchitecture", "%s", 
+    PRINT_NAMED_ERROR("NeuralNetModel.SetParamsFromConfig.UnrecognizedArchitecture", "%s",
                       _params.architecture.c_str());
     return RESULT_FAIL;
   }
@@ -327,7 +327,7 @@ Result ObjectDetector::SetParamsFromConfig(const Json::Value& config)
       outputNames += outputLayerName + " ";
     }    
 
-    LOG_INFO("ObjectDetector.SetParamsFromConfig.Summary", "Arch: %s, %s Input: %s, Outputs: %s", 
+    LOG_INFO("NeuralNetModel.SetParamsFromConfig.Summary", "Arch: %s, %s Input: %s, Outputs: %s",
              _params.architecture.c_str(), (_params.useGrayscale ? "Grayscale" : "Color"),
              _params.inputLayerName.c_str(), outputNames.c_str());
   }
@@ -343,11 +343,11 @@ Result ObjectDetector::SetParamsFromConfig(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ObjectDetector::SetOutputTypeFromConfig(const Json::Value& config)
+Result NeuralNetModel::SetOutputTypeFromConfig(const Json::Value& config)
 {
   // Convert outputType to enum and validate number of outputs
   if(!config.isMember("outputType")) {
-    PRINT_NAMED_ERROR("ObjectDetector.SetOutputTypeFromConfig.MissingOutputType", 
+    PRINT_NAMED_ERROR("NeuralNetModel.SetOutputTypeFromConfig.MissingOutputType",
                       "Custom architecture requires outputType to be specified");
     return RESULT_FAIL;
   }
@@ -372,14 +372,14 @@ Result ObjectDetector::SetOutputTypeFromConfig(const Json::Value& config)
       validKeys += entry.first;
       validKeys += " ";
     }
-    PRINT_NAMED_ERROR("ObjectDetector.SetOutputTypeFromConfig.BadOutputType", "Valid types: %s", validKeys.c_str());
+    PRINT_NAMED_ERROR("NeuralNetModel.SetOutputTypeFromConfig.BadOutputType", "Valid types: %s", validKeys.c_str());
     return RESULT_FAIL;
   }
   else {
 
     if(_params.outputLayerNames.size() != iter->second.numOutputs)
     {
-      PRINT_NAMED_ERROR("ObjectDetector.SetOutputTypeFromConfig.WrongNumberOfOutputs", 
+      PRINT_NAMED_ERROR("NeuralNetModel.SetOutputTypeFromConfig.WrongNumberOfOutputs",
                         "OutputType %s requires %d outputs (%d provided)", 
                         iter->first.c_str(), iter->second.numOutputs, (int)_params.outputLayerNames.size());
       return RESULT_FAIL;
@@ -397,12 +397,12 @@ Result ObjectDetector::SetOutputTypeFromConfig(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ObjectDetector::ReadLabelsFile(const std::string& fileName, std::vector<std::string>& labels_out)
+Result NeuralNetModel::ReadLabelsFile(const std::string& fileName, std::vector<std::string>& labels_out)
 {
   std::ifstream file(fileName);
   if (!file)
   {
-    PRINT_NAMED_ERROR("ObjectDetector.ReadLabelsFile.LabelsFileNotFound", "%s", fileName.c_str());
+    PRINT_NAMED_ERROR("NeuralNetModel.ReadLabelsFile.LabelsFileNotFound", "%s", fileName.c_str());
     return RESULT_FAIL;
   }
   
@@ -412,14 +412,14 @@ Result ObjectDetector::ReadLabelsFile(const std::string& fileName, std::vector<s
     labels_out.push_back(line);
   }
   
-  LOG_INFO("ObjectDetector.ReadLabelsFile.Success", "Read %d labels", (int)labels_out.size());
+  LOG_INFO("NeuralNetModel.ReadLabelsFile.Success", "Read %d labels", (int)labels_out.size());
 
   return RESULT_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ObjectDetector::GetClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp, 
-                                       std::list<Vision::SalientPoint>& objects)
+void NeuralNetModel::GetClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp,
+                                       std::list<Vision::SalientPoint>& salientPoints)
 {
   const float* outputData = outputTensor.tensor<float, 2>().data();
         
@@ -439,33 +439,33 @@ void ObjectDetector::GetClassification(const tensorflow::Tensor& outputTensor, T
   
   if(labelIndex >= 0)
   {    
-    Vision::SalientPoint object(timestamp, 0.5f, 0.5f, maxScore, 1.f,
-                                Vision::SalientPointType::Object,
-                                (labelIndex < _labels.size() ? _labels.at((size_t)labelIndex) : "<UNKNOWN>"),
-                                imgPoly.ToCladPoint2dVector());
+    Vision::SalientPoint salientPoint(timestamp, 0.5f, 0.5f, maxScore, 1.f,
+                                      Vision::SalientPointType::Object,
+                                      (labelIndex < _labels.size() ? _labels.at((size_t)labelIndex) : "<UNKNOWN>"),
+                                      imgPoly.ToCladPoint2dVector());
     
     if(_params.verbose)
     {
-      LOG_INFO("ObjectDetector.GetClassification.ObjectFound", "Name: %s, Score: %f", object.description.c_str(), object.score);
+      LOG_INFO("NeuralNetModel.GetClassification.ObjectFound", "Name: %s, Score: %f", salientPoint.description.c_str(), salientPoint.score);
     }
 
-    objects.push_back(std::move(object));
+    salientPoints.push_back(std::move(salientPoint));
   }
   else if(_params.verbose)
   {
-    LOG_INFO("ObjectDetector.GetClassification.NoObjects", "MinScore: %f", _params.minScore);
+    LOG_INFO("NeuralNetModel.GetClassification.NoObjects", "MinScore: %f", _params.minScore);
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ObjectDetector::GetLocalizedBinaryClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp, 
-                                                      std::list<Vision::SalientPoint>& objects)
+void NeuralNetModel::GetLocalizedBinaryClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp,
+                                                      std::list<Vision::SalientPoint>& salientPoints)
 {
   // Create a detection box for each grid cell that is above threshold
 
   // This raw (Eigen) tensor data appears to be _column_ major (i.e. "not row major"). Ensure that remains true.
   DEV_ASSERT( !(outputTensor.tensor<float, 2>().Options & Eigen::RowMajor), 
-             "ObjectDetector.GetLocalizedBinaryClassification.OutputNotRowMajor");
+             "NeuralNetModel.GetLocalizedBinaryClassification.OutputNotRowMajor");
 
   const float* outputData = outputTensor.tensor<float, 2>().data();
 
@@ -500,11 +500,11 @@ void ObjectDetector::GetLocalizedBinaryClassification(const tensorflow::Tensor& 
     // we'll do our own "stats" computation below instead of using connectedComponentsWithStats()
     const s32 count = cv::connectedComponents(_detectionGrid, _labelsGrid);
     DEV_ASSERT((_detectionGrid.rows == _labelsGrid.rows) && (_detectionGrid.cols == _labelsGrid.cols),
-               "ObjectDetector.GetLocalizedBinaryClassification.MismatchedLabelsGridSize");
+               "NeuralNetModel.GetLocalizedBinaryClassification.MismatchedLabelsGridSize");
     
     if(_params.verbose)
     {
-      LOG_INFO("ObjectDetector.GetLocalizedBinaryClassification.FoundConnectedComponents",
+      LOG_INFO("NeuralNetModel.GetLocalizedBinaryClassification.FoundConnectedComponents",
                "NumComponents: %d", count);
     }
     
@@ -526,7 +526,7 @@ void ObjectDetector::GetLocalizedBinaryClassification(const tensorflow::Tensor& 
         const int32_t label = labelsGrid_i[j];
         if(label > 0) // zero is background (not part of any connected component)
         {
-          DEV_ASSERT(label < count, "ObjectDetector.GetLocalizedBinaryClassification.BadLabel");
+          DEV_ASSERT(label < count, "NeuralNetModel.GetLocalizedBinaryClassification.BadLabel");
           const int32_t score = detectionGrid_i[j];
           Stat& stat = stats[label];
           stat.scoreSum += score;
@@ -575,18 +575,18 @@ void ObjectDetector::GetLocalizedBinaryClassification(const tensorflow::Tensor& 
       const float ymax = (static_cast<float>(stat.ymax)+0.5f) * heightScale;
       const Poly2f shape( Rectangle<float>(xmin, ymin, xmax-xmin, ymax-ymin) );
       
-      Vision::SalientPoint object(timestamp,
-                                  stat.centroid.x(),
-                                  stat.centroid.y(),
-                                  avgScore,
-                                  area * (widthScale*heightScale), // convert to area fraction
-                                  type,
-                                  EnumToString(type),
-                                  shape.ToCladPoint2dVector());
+      Vision::SalientPoint salientPoint(timestamp,
+                                        stat.centroid.x(),
+                                        stat.centroid.y(),
+                                        avgScore,
+                                        area * (widthScale*heightScale), // convert to area fraction
+                                        type,
+                                        EnumToString(type),
+                                        shape.ToCladPoint2dVector());
       
       if(_params.verbose)
       {
-        LOG_INFO("ObjectDetector.GetLocalizedBinaryClassification.SalientPoint",
+        LOG_INFO("NeuralNetModel.GetLocalizedBinaryClassification.SalientPoint",
                  "%d: %s score:%.2f area:%.2f [%s %s %s %s]",
                  iComp, stat.centroid.ToString().c_str(), avgScore, area,
                  shape[0].ToString().c_str(),
@@ -595,23 +595,23 @@ void ObjectDetector::GetLocalizedBinaryClassification(const tensorflow::Tensor& 
                  shape[3].ToString().c_str());
       }
       
-      objects.push_back(std::move(object));
+      salientPoints.push_back(std::move(salientPoint));
     }
   }
 
 } 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ObjectDetector::GetDetectedObjects(const std::vector<tensorflow::Tensor>& outputRensors, TimeStamp_t timestamp,
-                                        std::list<Vision::SalientPoint>& objects)
+void NeuralNetModel::GetDetectedObjects(const std::vector<tensorflow::Tensor>& outputRensors, TimeStamp_t timestamp,
+                                        std::list<Vision::SalientPoint>& salientPoints)
 {
-  DEV_ASSERT(outputRensors.size() == 4, "ObjectDetector.GetDetectedObjects.WrongNumOutputs");
+  DEV_ASSERT(outputRensors.size() == 4, "NeuralNetModel.GetDetectedObjects.WrongNumOutputs");
 
   const int numDetections = (int)outputRensors[3].tensor<float,1>().data()[0];
 
   if(_params.verbose)
   {
-    LOG_INFO("ObjectDetector.GetDetectedObjects.NumDetections", "%d raw detections", numDetections);
+    LOG_INFO("NeuralNetModel.GetDetectedObjects.NumDetections", "%d raw detections", numDetections);
   }
 
   if(numDetections > 0)
@@ -638,35 +638,35 @@ void ObjectDetector::GetDetectedObjects(const std::vector<tensorflow::Tensor>& o
         const Rectangle<int32_t> bbox(xmin, ymin, xmax-xmin, ymax-ymin);
         const Poly2i poly(bbox);
         
-        Vision::SalientPoint object(timestamp,
-                                    (float)(xmin+xmax) * 0.5f,
-                                    (float)(ymin+ymax) * 0.5f,
-                                    scores[i],
-                                    bbox.Area(),
-                                    Vision::SalientPointType::Object,
-                                    (labelIndex < _labels.size() ? _labels[labelIndex] : "<UNKNOWN>"),
-                                    poly.ToCladPoint2dVector());
+        Vision::SalientPoint salientPoint(timestamp,
+                                          (float)(xmin+xmax) * 0.5f,
+                                          (float)(ymin+ymax) * 0.5f,
+                                          scores[i],
+                                          bbox.Area(),
+                                          Vision::SalientPointType::Object,
+                                          (labelIndex < _labels.size() ? _labels[labelIndex] : "<UNKNOWN>"),
+                                          poly.ToCladPoint2dVector());
         
-        objects.emplace_back(std::move(object));
+        salientPoints.emplace_back(std::move(salientPoint));
       }
     }
 
     if(_params.verbose)
     {
-      std::string objectsStr;
-      for(auto const& object : objects) {
-        objectsStr += object.description + " ";
+      std::string salientPointsStr;
+      for(auto const& salientPoint : salientPoints) {
+        salientPointsStr += salientPoint.description + " ";
       }
 
-      LOG_INFO("ObjectDetector.GetDetectedObjects.ReturningObjects", 
-               "Returning %d objects with score above %f: %s", 
-               (int)objects.size(), _params.minScore, objectsStr.c_str());
+      LOG_INFO("NeuralNetModel.GetDetectedObjects.ReturningObjects",
+               "Returning %d salient points with score above %f: %s",
+               (int)salientPoints.size(), _params.minScore, salientPointsStr.c_str());
     }
   } 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ObjectDetector::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Vision::SalientPoint>& objects)
+Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Vision::SalientPoint>& salientPoints)
 {
   tensorflow::Tensor image_tensor;
 
@@ -679,7 +679,7 @@ Result ObjectDetector::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
 
   if(_params.verbose)
   {
-    LOG_INFO("ObjectDetector.Detect.Resizing", "From [%dx%dx%d] image to [%dx%dx%d] %s tensor", 
+    LOG_INFO("NeuralNetModel.Detect.Resizing", "From [%dx%dx%d] image to [%dx%dx%d] %s tensor",
              img.cols, img.rows, img.channels(), 
              _params.inputWidth, _params.inputHeight, (_params.useGrayscale ? 1 : 3), 
              typeStr);
@@ -697,9 +697,9 @@ Result ObjectDetector::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
     } 
     else if(_params.verbose)
     {
-      LOG_INFO("ObjectDetector.Detect.SkipResize", "Skipping actual resize: image already correct size");
+      LOG_INFO("NeuralNetModel.Detect.SkipResize", "Skipping actual resize: image already correct size");
     }
-    DEV_ASSERT(img.isContinuous(), "ObjectDetector.Detect.ImageNotContinuous");
+    DEV_ASSERT(img.isContinuous(), "NeuralNetModel.Detect.ImageNotContinuous");
 
     image_tensor = tensorflow::Tensor(tensorflow::DT_FLOAT, {
       1, _params.inputHeight, _params.inputWidth, img.channels()
@@ -730,7 +730,7 @@ Result ObjectDetector::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
     
   if(_params.verbose)
   {
-    LOG_INFO("ObjectDetector.Detect.RunningSession", "Input=[%dx%dx%d], %s, %d output(s)", 
+    LOG_INFO("NeuralNetModel.Detect.RunningSession", "Input=[%dx%dx%d], %s, %d output(s)",
              img.cols, img.rows, img.channels(), typeStr, (int)_params.outputLayerNames.size());
   }
 
@@ -738,7 +738,7 @@ Result ObjectDetector::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
   tensorflow::Status run_status = _session->Run({{_params.inputLayerName, image_tensor}}, _params.outputLayerNames, {}, &outputRensors);
 
   if (!run_status.ok()) {
-    PRINT_NAMED_ERROR("ObjectDetector.Detect.DetectionSessionRunFail", "%s", run_status.ToString().c_str());
+    PRINT_NAMED_ERROR("NeuralNetModel.Detect.DetectionSessionRunFail", "%s", run_status.ToString().c_str());
     return RESULT_FAIL;
   }
 
@@ -746,24 +746,24 @@ Result ObjectDetector::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
   {
     case OutputType::Classification:
     {
-      GetClassification(outputRensors[0], t, objects);
+      GetClassification(outputRensors[0], t, salientPoints);
       break;
     }
     case OutputType::BinaryLocalization:
     {
-      GetLocalizedBinaryClassification(outputRensors[0], t, objects);
+      GetLocalizedBinaryClassification(outputRensors[0], t, salientPoints);
       break;
     }
     case OutputType::AnchorBoxes:
     {
-      GetDetectedObjects(outputRensors, t, objects);  
+      GetDetectedObjects(outputRensors, t, salientPoints);
       break;
     }
   }
 
   if(_params.verbose)
   {
-    LOG_INFO("ObjectDetector.Detect.SessionComplete", "");
+    LOG_INFO("NeuralNetModel.Detect.SessionComplete", "");
   }
 
   return RESULT_OK;

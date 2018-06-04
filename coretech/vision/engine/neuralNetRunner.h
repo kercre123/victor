@@ -4,15 +4,18 @@
  * Author: Andrew Stein
  * Date:   6/29/2017
  *
- * Description: Asynchronous wrapper for a deep-learning based object detector / scene classifier.
+ * Description: Asynchronous wrapper for running forward inference with a deep neural network on an image.
+ *              Currently supports detection of SalientPoints, but API could be extended to get other
+ *              types of outputs later.
+ *
  *              Abstracts away the private implementation around what kind of inference engine is used
  *              and runs asynchronously since forward inference through deep networks is generally "slow".
  *
  * Copyright: Anki, Inc. 2017
  **/
 
-#ifndef __Anki_Vision_ObjectDetector_H__
-#define __Anki_Vision_ObjectDetector_H__
+#ifndef __Anki_Vision_NeuralNetRunner_H__
+#define __Anki_Vision_NeuralNetRunner_H__
 
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/rect.h"
@@ -35,12 +38,12 @@ namespace Vision {
 
 class ImageCache;
 
-class ObjectDetector
+class NeuralNetRunner
 {
 public:
   
-  ObjectDetector();
-  ~ObjectDetector();
+  NeuralNetRunner();
+  ~NeuralNetRunner();
   
   // Load a DNN model and assocated labels specified by the "graph" and "labels" fields of config.
   // Supports either TensorFlow or Caffe models using the following conventions:
@@ -55,13 +58,13 @@ public:
   bool StartProcessingIfIdle(ImageCache& imageCache);
   
   // Returns true if processing of the last image provided using StartProcessingIfIdle is complete
-  // and populates objects with any detections.
-  bool GetObjects(std::list<SalientPoint>& objects);
+  // and populates salientPoints with any detections.
+  bool GetDetections(std::list<SalientPoint>& salientPoints);
   
   // Example usage:
   //
-  //  if(GetObjects(objects)) {
-  //    <do stuff with objects>
+  //  if(GetDetections(salientPoints)) {
+  //    <do stuff with salientPoints>
   //  }
   //
   //  StartProcessingIfIdle(imageCache);
@@ -76,8 +79,8 @@ private:
   std::unique_ptr<Model> _model;
   std::future<std::list<SalientPoint>> _future; // for processing aysnchronously
 
-  // We process asynchronsously, so need a copy of the image data
-  Vision::ImageRGB _imgBeingProcessed;
+  // We process asynchronsously, so need a copy of the image data (at processing resolution)
+  ImageRGB              _imgBeingProcessed;
   
   bool                  _isInitialized = false;
   s32                   _processingWidth;
@@ -89,9 +92,9 @@ private:
   
   void ApplyGamma(ImageRGB& img);
   
-}; // class ObjectDetector
+}; // class NeuralNetworkRunner
   
 } // namespace Vision
 } // namespace Anki
 
-#endif /* __Anki_Vision_ObjectDetector_H__ */
+#endif /* __Anki_Vision_NeuralNetRunner_H__ */

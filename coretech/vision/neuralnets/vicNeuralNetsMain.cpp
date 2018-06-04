@@ -7,8 +7,8 @@
  * Description: Standalone process to run forward inference using a variety of neural network platforms,
  *              specified via compile-time defines (e.g. TensorFlow, OpenCV DNN, or TF Lite).
  *
- *              Currently uses the file system as a poor man's IPC to communicate with the "standalone"
- *              ObjectDetector implementation in vic-engine's Vision System. See also VIC-2686.
+ *              Currently uses the file system as a poor man's IPC to communicate with the "messenger"
+ *              NeuralNetRunner::Model implementation in vic-engine's Vision System. See also VIC-2686.
  *
  *              Can be used as a Webots controller when compiled with -DSIMULATOR
  *
@@ -16,7 +16,7 @@
  **/
 
 #if defined(VIC_NEURALNETS_USE_TENSORFLOW)
-#  include "objectDetector_tensorflow.h"
+#  include "neuralNetModel_tensorflow.h"
 #elif defined(VIC_NEURALNETS_USE_CAFFE2)
 #  include "objectDetector_caffe2.h"
 #elif defined(VIC_NEURALNETS_USE_OPENCV_DNN)
@@ -115,7 +115,7 @@ public:
 static void GetImage(const std::string& imageFilename, const std::string timestampFilename,
                      cv::Mat& img, Anki::TimeStamp_t timestamp);
 
-static void ConvertSalientPointsToJson(const std::list<Anki::Vision::SalientPoint>& objects, Json::Value& detectionResults);
+static void ConvertSalientPointsToJson(const std::list<Anki::Vision::SalientPoint>& salientPoints, Json::Value& detectionResults);
 
 static bool WriteResults(const std::string jsonFilename, const Json::Value& detectionResults);
 
@@ -149,7 +149,7 @@ int main(int argc, char **argv)
   if(argc < 4)
   {
     std::cout << std::endl << "Usage: " << argv[0] << " <configFile>.json modelPath cachePath <imageFile>" << std::endl;
-    std::cout << std::endl << " If no imageFile is provided, polls cachePath for objectDetectionImage.png" << std::endl;
+    std::cout << std::endl << " If no imageFile is provided, polls cachePath for neuralNetImage.png" << std::endl;
     CleanupAndExit(result);
   }
   
@@ -170,13 +170,14 @@ int main(int argc, char **argv)
       CleanupAndExit(RESULT_FAIL);
     }
 
-    if(!config.isMember("ObjectDetector"))
+    const char *  const kNeuralNetsKey = "NeuralNets";
+    if(!config.isMember(kNeuralNetsKey))
     {
-      PRINT_NAMED_ERROR("VicNeuralNets.Main.MissingObjectDetectorField", "Config file missing 'ObjectDetector' field");
+      PRINT_NAMED_ERROR("VicNeuralNets.Main.MissingConfigKey", "Config file missing '%s' field", kNeuralNetsKey);
       CleanupAndExit(RESULT_FAIL);
     }
 
-    config = config["ObjectDetector"];
+    config = config[kNeuralNetsKey];
 
     if(!config.isMember("pollPeriod_ms"))
     {
@@ -189,11 +190,11 @@ int main(int argc, char **argv)
 
   const std::string imageFilename = (imageFileProvided ? 
                                      argv[4] :
-                                     Util::FileUtils::FullFilePath({cachePath, "objectDetectionImage.png"})); 
+                                     Util::FileUtils::FullFilePath({cachePath, "neuralNetImage.png"}));
 
   const std::string timestampFilename = Util::FileUtils::FullFilePath({cachePath, "timestamp.txt"});
 
-  const std::string jsonFilename = Util::FileUtils::FullFilePath({cachePath, "objectDetectionResults.json"});
+  const std::string jsonFilename = Util::FileUtils::FullFilePath({cachePath, "neuralNetResults.json"});
 
   LOG_INFO("VicNeuralNets.Main.ImageLoadMode", "%s: %s",
            (imageFileProvided ? "Loading given image" : "Polling for images at"),
@@ -208,10 +209,10 @@ int main(int argc, char **argv)
 # endif
 
   // Initialize the detector
-  ObjectDetector detector;
+  NeuralNetModel neuralNet;
   {
     auto ticToc = TicToc("LoadModel");
-    result = detector.LoadModel(modelPath, config);
+    result = neuralNet.LoadModel(modelPath, config);
   
     if(RESULT_OK != result)
     {
@@ -230,7 +231,7 @@ int main(int argc, char **argv)
 
     if(isImageAvailable)
     {
-      if(detector.IsVerbose())
+      if(neuralNet.IsVerbose())
       {
         LOG_INFO("VicNeuralNets.Main.FoundImage", "%s", imageFilename.c_str());
       }
@@ -251,10 +252,10 @@ int main(int argc, char **argv)
       }
 
       // Detect what's in it
-      std::list<Vision::SalientPoint> objects;
+      std::list<Vision::SalientPoint> salientPoints;
       {
         auto ticToc = TicToc("Detect");
-        result = detector.Detect(img, timestamp, objects);
+        result = neuralNet.Detect(img, timestamp, salientPoints);
       
         if(RESULT_OK != result)
         {
@@ -264,12 +265,12 @@ int main(int argc, char **argv)
 
       // Convert the results to JSON
       Json::Value detectionResults;
-      ConvertSalientPointsToJson(objects, detectionResults);
+      ConvertSalientPointsToJson(salientPoints, detectionResults);
 
       // Write out the Json
       {
         auto ticToc = TicToc("WriteJSON");
-        if(detector.IsVerbose())
+        if(neuralNet.IsVerbose())
         {
           LOG_INFO("VicNeuralNets.Main.WritingResults", "%s", jsonFilename.c_str());
         }
@@ -292,7 +293,7 @@ int main(int argc, char **argv)
       {
         // Remove the image file we were working with to signal that we're done with it 
         // and ready for a new image
-        if(detector.IsVerbose())
+        if(neuralNet.IsVerbose())
         {
           LOG_INFO("VicNeuralNets.Main.DeletingImageFile", "%s", imageFilename.c_str());
         }
@@ -306,7 +307,7 @@ int main(int argc, char **argv)
     }
     else 
     {
-      if(detector.IsVerbose())
+      if(neuralNet.IsVerbose())
       {
         const int kVerbosePrintFreq_ms = 1000;
         static int count = 0;
@@ -363,22 +364,22 @@ void GetImage(const std::string& imageFilename, const std::string timestampFilen
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ConvertSalientPointsToJson(const std::list<Anki::Vision::SalientPoint>& objects, Json::Value& detectionResults)
+void ConvertSalientPointsToJson(const std::list<Anki::Vision::SalientPoint>& salientPoints, Json::Value& detectionResults)
 {
-  std::string objectsStr;
+  std::string salientPointsStr;
   
-  Json::Value& objectsJSON = detectionResults["objects"];
-  for(auto const& object : objects)
+  Json::Value& salientPointsJson = detectionResults["salientPoints"];
+  for(auto const& salientPoint : salientPoints)
   {
-    objectsStr += object.description + "[" + std::to_string((int)round(100.f*object.score)) + "] ";
-    const Json::Value json = object.GetJSON();
-    objectsJSON.append(json);
+    salientPointsStr += salientPoint.description + "[" + std::to_string((int)round(100.f*salientPoint.score)) + "] ";
+    const Json::Value json = salientPoint.GetJSON();
+    salientPointsJson.append(json);
   }  
 
-  if(!objects.empty())
+  if(!salientPoints.empty())
   {
     LOG_INFO("VicNeuralNets.Main.ConvertSalientPointsToJson", 
-             "Detected %zu objects: %s", objects.size(), objectsStr.c_str());
+             "Detected %zu objects: %s", salientPoints.size(), salientPointsStr.c_str());
   }    
 } 
 

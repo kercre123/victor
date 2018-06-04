@@ -17,7 +17,7 @@
     "ComputingStatistics"        : false,
     "BuildingOverheadMap"        : false,
     "DetectingVisualObstacles"   : false,
-    "DetectingGeneralObjects"    : false,
+    "RunningNeuralNet"           : false,
     "DetectingIllumination"      : true
   },
 
@@ -126,7 +126,7 @@
     "FileOrDirName"       : "config/engine/vision/groundClassifier/deskClassifier.yaml"
   },
 
-  "ObjectDetector" :
+  "NeuralNets" :
   {
     // How frequently to print or log events about timing
     "ProfilingPrintFrequency_ms"     : 10000,

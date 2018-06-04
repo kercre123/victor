@@ -9,7 +9,7 @@
  * Copyright: Anki, Inc. 2017
  **/
 
-#include "coretech/vision/engine/objectDetector.h"
+#include "coretech/vision/engine/neuralNetRunner.h"
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/imageCache.h"
 #include "coretech/vision/engine/profiler.h"
@@ -26,7 +26,7 @@
 #include <list>
 #include <fstream>
 
-// TODO: put this back if/when we start supporting other ObjectDetectorModels
+// TODO: put this back if/when we start supporting other NeuralNetRunnerModels
 //#if USE_TENSORFLOW
 //#  ifndef TENSORFLOW_USE_AOT
 //#    error Expecting TENSORFLOW_USE_AOT to be defined by cmake!
@@ -38,9 +38,9 @@
 //#elif USE_TENSORFLOW_LITE
 //#  include "objectDetectorModel_tensorflow_lite.cpp"
 //#elif USE_OPENCV_DNN
-//#  include "objectDetectorModel_opencvdnn.cpp"
+//#  include "neuralNetRunner_opencvdnnModel.cpp"
 //#else
-#include "objectDetectorModel_messenger.cpp"
+#include "neuralNetRunner_messengerModel.cpp"
 //#endif
 
 namespace Anki {
@@ -50,25 +50,25 @@ namespace Vision {
 // static const char * const kLogChannelName = "VisionSystem";
  
 namespace {
-  CONSOLE_VAR(f32,        kObjectDetection_Gamma,                "Vision.ObjectDetector", 1.0f); // set to 1.0 to disable
+  CONSOLE_VAR(f32,   kObjectDetection_Gamma,  "Vision.NeuralNetRunner", 1.0f); // set to 1.0 to disable
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectDetector::ObjectDetector()
-: _profiler("ObjectDetector")
+NeuralNetRunner::NeuralNetRunner()
+: _profiler("NeuralNetRunner")
 , _model(new Model(_profiler))
 {
   
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectDetector::~ObjectDetector()
+NeuralNetRunner::~NeuralNetRunner()
 {
   
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ObjectDetector::Init(const std::string& modelPath, const std::string& cachePath, const Json::Value& config)
+Result NeuralNetRunner::Init(const std::string& modelPath, const std::string& cachePath, const Json::Value& config)
 {
   Result result = RESULT_OK;
   
@@ -78,7 +78,7 @@ Result ObjectDetector::Init(const std::string& modelPath, const std::string& cac
   
   if(RESULT_OK != result)
   {
-    PRINT_NAMED_ERROR("ObjectDetector.Init.LoadModelFailed", "");
+    PRINT_NAMED_ERROR("NeuralNetRunner.Init.LoadModelFailed", "");
     return result;
   }
   
@@ -86,17 +86,17 @@ Result ObjectDetector::Init(const std::string& modelPath, const std::string& cac
   // small an image as possible for the standalone CNN process to pick up
   if(false == JsonTools::GetValueOptional(config, "inputHeight", _processingHeight))
   {
-    PRINT_NAMED_ERROR("ObjectDetector.Init.MissingConfig", "inputHeight");
+    PRINT_NAMED_ERROR("NeuralNetRunner.Init.MissingConfig", "inputHeight");
     return RESULT_FAIL;
   }
   
   if(false == JsonTools::GetValueOptional(config, "inputWidth", _processingWidth))
   {
-    PRINT_NAMED_ERROR("ObjectDetector.Init.MissingConfig", "inputWidth");
+    PRINT_NAMED_ERROR("NeuralNetRunner.Init.MissingConfig", "inputWidth");
     return RESULT_FAIL;
   }
 
-  PRINT_NAMED_INFO("ObjectDetector.Init.LoadModelTime", "Loading model from '%s' took %.1fsec",
+  PRINT_NAMED_INFO("NeuralNetRunner.Init.LoadModelTime", "Loading model from '%s' took %.1fsec",
                    modelPath.c_str(), Util::MilliSecToSec(_profiler.AverageToc("LoadModel")));
 
   _profiler.SetPrintFrequency(config.get("ProfilingPrintFrequency_ms", 10000).asUInt());
@@ -107,7 +107,7 @@ Result ObjectDetector::Init(const std::string& modelPath, const std::string& cac
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ObjectDetector::ApplyGamma(ImageRGB& img)
+void NeuralNetRunner::ApplyGamma(ImageRGB& img)
 {
   if(Util::IsFltNear(kObjectDetection_Gamma, 1.f))
   {
@@ -147,11 +147,11 @@ void ObjectDetector::ApplyGamma(ImageRGB& img)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
+bool NeuralNetRunner::StartProcessingIfIdle(ImageCache& imageCache)
 {
   if(!_isInitialized)
   {
-    PRINT_NAMED_ERROR("ObjectDetector.StartProcessingIfIdle.NotInitialized", "");
+    PRINT_NAMED_ERROR("NeuralNetRunner.StartProcessingIfIdle.NotInitialized", "");
     return false;
   }
   
@@ -161,7 +161,7 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
     // Require color data
     if(!imageCache.HasColor())
     {
-      PRINT_PERIODIC_CH_DEBUG(30, kLogChannelName, "ObjectDetector.StartProcessingIfIdle.NeedColorData", "");
+      PRINT_PERIODIC_CH_DEBUG(30, kLogChannelName, "NeuralNetRunner.StartProcessingIfIdle.NeedColorData", "");
       return false;
     }
   
@@ -178,22 +178,22 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
     _heightScale = (f32)imageCache.GetOrigNumRows();
     _widthScale  = (f32)imageCache.GetOrigNumCols();
     
-    PRINT_CH_INFO(kLogChannelName, "ObjectDetector.StartProcessingIfIdle.ProcessingImage",
-                  "Detecting objects in %dx%d image t=%u",
+    PRINT_CH_INFO(kLogChannelName, "NeuralNetRunner.StartProcessingIfIdle.ProcessingImage",
+                  "Detecting salient points in %dx%d image t=%u",
                   _imgBeingProcessed.GetNumCols(), _imgBeingProcessed.GetNumRows(), _imgBeingProcessed.GetTimestamp());
     
     _future = std::async(std::launch::async, [this]() {
-      std::list<SalientPoint> objects;
+      std::list<SalientPoint> salientPoints;
   
       _profiler.Tic("Model.Run");
-      Result result = _model->Run(_imgBeingProcessed, objects);
+      Result result = _model->Run(_imgBeingProcessed, salientPoints);
       _profiler.Toc("Model.Run");
       if(RESULT_OK != result)
       {
-        PRINT_NAMED_WARNING("ObjectDetector.StartProcessingIfIdle.AsyncLambda.ModelRunFailed", "");
+        PRINT_NAMED_WARNING("NeuralNetRunner.StartProcessingIfIdle.AsyncLambda.ModelRunFailed", "");
       }
     
-      return objects;
+      return salientPoints;
     });
     
     // We did start processing the given image
@@ -205,11 +205,11 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ObjectDetector::GetObjects(std::list<SalientPoint>& objects_out)
+bool NeuralNetRunner::GetDetections(std::list<SalientPoint>& salientPoints)
 {
   // Always clear the output list, so it's definitely only populated once the
   // future is ready below
-  objects_out.clear();
+  salientPoints.clear();
 
   if(_future.valid())
   {
@@ -219,16 +219,16 @@ bool ObjectDetector::GetObjects(std::list<SalientPoint>& objects_out)
     const std::future_status futureStatus = _future.wait_for(kWaitForTime);
     if(std::future_status::ready == futureStatus)
     {
-      std::list<SalientPoint> objects = _future.get();
-      DEV_ASSERT(!_future.valid(), "ObjectDetector.GetObjects.FutureStillValid");
+      salientPoints = _future.get();
+      DEV_ASSERT(!_future.valid(), "NeuralNetRunner.GetDetections.FutureStillValid");
       
       // The detection will be in normalized coordinates. Need to convert it to original resolution.
-      std::for_each(objects.begin(), objects.end(), [this](SalientPoint& object)
+      std::for_each(salientPoints.begin(), salientPoints.end(), [this](SalientPoint& salientPoint)
                     {
-                      object.x_img *= _widthScale;
-                      object.y_img *= _heightScale;
+                      salientPoint.x_img *= _widthScale;
+                      salientPoint.y_img *= _heightScale;
                       
-                      for(auto &pt : object.shape)
+                      for(auto &pt : salientPoint.shape)
                       {
                         pt.x *= _widthScale;
                         pt.y *= _heightScale;
@@ -237,19 +237,19 @@ bool ObjectDetector::GetObjects(std::list<SalientPoint>& objects_out)
       
       if(ANKI_DEV_CHEATS)
       {
-        if(objects.empty())
+        if(salientPoints.empty())
         {
-          PRINT_CH_INFO(kLogChannelName, "ObjectDetector.GetObjects.NoObjects", "t=%ums", _imgBeingProcessed.GetTimestamp());
+          PRINT_CH_INFO(kLogChannelName, "NeuralNetRunner.GetDetections.NoSalientPoints",
+                        "t=%ums", _imgBeingProcessed.GetTimestamp());
         }
-        for(auto const& object : objects)
+        for(auto const& salientPoint : salientPoints)
         {
-          PRINT_CH_INFO(kLogChannelName, "ObjectDetector.GetObjects.FoundObject", "t=%ums Name:%s Score:%.3f",
-                        _imgBeingProcessed.GetTimestamp(), object.description.c_str(), object.score);
+          PRINT_CH_INFO(kLogChannelName, "NeuralNetRunner.GetDetections.FoundSalientPoint",
+                        "t=%ums Name:%s Score:%.3f",
+                        _imgBeingProcessed.GetTimestamp(), salientPoint.description.c_str(), salientPoint.score);
         }
       }
       
-      // Put the result from the future into the output argument and let the caller know via the Status
-      std::swap(objects, objects_out);
       return true;
     }
   }

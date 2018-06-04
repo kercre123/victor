@@ -4,7 +4,7 @@
  * Author: Andrew Stein
  * Date:   5/17/2018
  *
- * Description: Implementation of ObjectDetector class which wraps TensorFlow's API in order
+ * Description: Implementation of NeuralNetModel class which wraps TensorFlow's API in order
  *              to be used by the vic-neuralnets standalone forward inference process.
  *
  *              Note this deliberately avoids use of Anki:Vision Image classes and instead uses
@@ -14,8 +14,8 @@
  * Copyright: Anki, Inc. 2018
  **/
 
-#ifndef __Anki_Vision_ObjectDetector_TensorFlow_H__
-#define __Anki_Vision_ObjectDetector_TensorFlow_H__
+#ifndef __Anki_Vision_NeuralNetModel_TensorFlow_H__
+#define __Anki_Vision_NeuralNetModel_TensorFlow_H__
 
 #include "coretech/common/shared/types.h"
 
@@ -41,19 +41,19 @@ namespace tensorflow {
 
 namespace Anki {
 
-class ObjectDetector
+class NeuralNetModel
 {
 public:
 
-  ObjectDetector();
+  NeuralNetModel();
 
-  ~ObjectDetector();
+  ~NeuralNetModel();
 
   // Load the model/labels files specified in the config and set up assocated parameters
   Result LoadModel(const std::string& modelPath, const Json::Value& config);
 
-  // Run forward inference on the given image/timestamp and return any objects found
-  Result Detect(cv::Mat& img, const TimeStamp_t t, std::list<Vision::SalientPoint>& objects);
+  // Run forward inference on the given image/timestamp and return any SalientPoints found
+  Result Detect(cv::Mat& img, const TimeStamp_t t, std::list<Vision::SalientPoint>& salientPoints);
 
   bool IsVerbose() const { return _params.verbose; }
 
@@ -65,23 +65,23 @@ private:
   // Helper to find the index of the a single output with the highest score, assumed to 
   // correspond to the matching label from the labels file
   void GetClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp, 
-                         std::list<Vision::SalientPoint>& objects);
+                         std::list<Vision::SalientPoint>& salientPoints);
 
   // Helper to return a set of localization boxes from a grid, assuming a binary classifcation 
   // (e.g. person / no-person in a 6x6 grid). Grid size is specified in JSON config
   void GetLocalizedBinaryClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp, 
-                                        std::list<Vision::SalientPoint>& objects);
+                                        std::list<Vision::SalientPoint>& salientPoints);
 
   // Helper to interpret four outputs as SSD boxes (num detections, scores, classes, and boxes)
   void GetDetectedObjects(const std::vector<tensorflow::Tensor>& outputTensors, TimeStamp_t timestamp,
-                          std::list<Vision::SalientPoint>& objects);
+                          std::list<Vision::SalientPoint>& salientPoints);
 
   // Specified in config, used to determine how to interpret the output of the network, and
   // thus which helper above to call (string to use in JSON config shown for each)
   enum class OutputType {
-    Classification,     // "classification"
-    BinaryLocalization, // "binary_localization"
-    AnchorBoxes,        // "anchor_boxes"
+    Classification,
+    BinaryLocalization,
+    AnchorBoxes,
   };
 
   struct 
@@ -134,8 +134,8 @@ private:
   cv::Mat_<uint8_t>                         _detectionGrid;
   cv::Mat_<int32_t>                         _labelsGrid;
   
-}; // class ObjectDetector
+}; // class NeuralNetModel
 
 } // namespace Anki
 
-#endif /* __Anki_Vision_ObjectDetector_TensorFlow_H__ */
+#endif /* __Anki_Vision_NeuralNetModel_TensorFlow_H__ */

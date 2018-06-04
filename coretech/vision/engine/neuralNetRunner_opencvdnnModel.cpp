@@ -4,16 +4,16 @@
  * Author: Andrew Stein
  * Date:   6/29/2017
  *
- * Description: Implementation of ObjectDetector Model class which wrapps OpenCV's DNN module.
+ * Description: Implementation of NeuralNetRunner Model class which wrapps OpenCV's DNN module.
  *
  * Copyright: Anki, Inc. 2017
  **/
 
-// TODO: put this back if/when we start supporting other ObjectDetectorModels
+// TODO: put this back if/when we start supporting other NeuralNetRunnerModels
 //// The contents of this file are only used when the build is using *neither* TF or TF Lite
 //#if (!defined(USE_TENSORFLOW) || !USE_TENSORFLOW) && (!defined(USE_TENSORFLOW_LITE) || !USE_TENSORFLOW_LITE)
 
-#include "coretech/vision/engine/objectDetector.h"
+#include "coretech/vision/engine/neuralNetRunner.h"
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/profiler.h"
 
@@ -36,9 +36,9 @@ static const char * const kLogChannelName = "VisionSystem";
   
 // Useful just for printing every frame, since detection is slow, even through the profiler
 // already has settings for printing based on time. Set to 0 to disable.
-CONSOLE_VAR(s32, kObjectDetector_PrintTimingFrequency, "Vision.ObjectDetector", 1);
+CONSOLE_VAR(s32, kNeuralNetRunner_PrintTimingFrequency, "Vision.NeuralNetRunner", 1);
 
-class ObjectDetector::Model
+class NeuralNetRunner::Model
 {
 public:
 
@@ -46,7 +46,7 @@ public:
   
   Result LoadModel(const std::string& modelPath, const Json::Value& config);
   
-  Result Run(const ImageRGB& img, std::list<SalientPoint>& objects);
+  Result Run(const ImageRGB& img, std::list<SalientPoint>& salientPoints);
   
 private:
   
@@ -79,12 +79,12 @@ private:
 }; // class Model
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json::Value& config)
+Result NeuralNetRunner::Model::LoadModel(const std::string& modelPath, const Json::Value& config)
 {
 # define GetFromConfig(keyName) \
   if(false == JsonTools::GetValueOptional(config, QUOTE(keyName), _params.keyName)) \
   { \
-    PRINT_NAMED_ERROR("ObjectDetector.Init.MissingConfig", QUOTE(keyName)); \
+    PRINT_NAMED_ERROR("NeuralNetRunner.Init.MissingConfig", QUOTE(keyName)); \
     return RESULT_FAIL; \
   }
   
@@ -93,7 +93,7 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
   GetFromConfig(min_score);
   
   if(!ANKI_VERIFY(Util::IsFltGEZero(_params.min_score) && Util::IsFltLE(_params.min_score, 1.f),
-                  "ObjectDetector.Model.LoadModel.BadMinScore",
+                  "NeuralNetRunner.Model.LoadModel.BadMinScore",
                   "%f not in range [0.0,1.0]", _params.min_score))
   {
     return RESULT_FAIL;
@@ -123,12 +123,12 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
         }
       }
       catch(const cv::Exception& e) {
-        PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.ReadTensorflowModelCvException",
+        PRINT_NAMED_ERROR("NeuralNetRunner.Model.LoadModel.ReadTensorflowModelCvException",
                           "Model file: %s, Error: %s", graphFileName.c_str(), e.what());
         return RESULT_FAIL;
       }
       catch(...) {
-        PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.ReadTensorflowModelUnknownException",
+        PRINT_NAMED_ERROR("NeuralNetRunner.Model.LoadModel.ReadTensorflowModelUnknownException",
                           "Model file: %s", graphFileName.c_str());
         return RESULT_FAIL;
       }
@@ -136,7 +136,7 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
     }
     else
     {
-      PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.TensorflowModelFileNotFound",
+      PRINT_NAMED_ERROR("NeuralNetRunner.Model.LoadModel.TensorflowModelFileNotFound",
                         "Model file: %s", graphFileName.c_str());
       return RESULT_FAIL;
     }
@@ -152,19 +152,19 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
         _network = cv::dnn::readNetFromCaffe(protoFileName, modelFileName);
       }
       catch(const cv::Exception& e) {
-        PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.ReadCaffeModelCvException",
+        PRINT_NAMED_ERROR("NeuralNetRunner.Model.LoadModel.ReadCaffeModelCvException",
                           "Model file: %s, Error: %s", _params.graph.c_str(), e.what());
         return RESULT_FAIL;
       }
       catch(...) {
-        PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.ReadCaffeModelUnknownException",
+        PRINT_NAMED_ERROR("NeuralNetRunner.Model.LoadModel.ReadCaffeModelUnknownException",
                           "Model file: %s", _params.graph.c_str());
         return RESULT_FAIL;
       }
     }
     else
     {
-      PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.CaffeFilesNotFound",
+      PRINT_NAMED_ERROR("NeuralNetRunner.Model.LoadModel.CaffeFilesNotFound",
                         "Reading %s/%s.{prototxt|caffemodel}", modelPath.c_str(), _params.graph.c_str());
       return RESULT_FAIL;
     }
@@ -172,11 +172,11 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
   
   if(_network.empty())
   {
-    PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.ReadNetFailed", "");
+    PRINT_NAMED_ERROR("NeuralNetRunner.Model.LoadModel.ReadNetFailed", "");
     return RESULT_FAIL;
   }
   
-  PRINT_CH_INFO(kLogChannelName, "ObjectDetector.Model.OpenCvDNN.LoadedGraph",
+  PRINT_CH_INFO(kLogChannelName, "NeuralNetRunner.Model.OpenCvDNN.LoadedGraph",
                 "%s", _params.graph.c_str());
   
   // Report network complexity in FLOPS
@@ -197,7 +197,7 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
       flopsDivisor = 1e9f;
     }
     
-    PRINT_CH_INFO(kLogChannelName, "ObjectDetector.Model.LoadModel.NetworkFLOPS", "Input %dx%d: %.3f %sFLOPS",
+    PRINT_CH_INFO(kLogChannelName, "NeuralNetRunner.Model.LoadModel.NetworkFLOPS", "Input %dx%d: %.3f %sFLOPS",
                   _params.input_width, _params.input_height,
                   (f32)numFLOPS / flopsDivisor, flopsPrefix);
   }
@@ -211,7 +211,7 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
   {
     if(_params.mode != "classification")
     {
-      PRINT_NAMED_ERROR("ObjectDetector.Model.LoadGraph.UnknownMode",
+      PRINT_NAMED_ERROR("NeuralNetRunner.Model.LoadGraph.UnknownMode",
                         "Expecting 'classification' or 'detection'. Got '%s'.",
                         _params.mode.c_str());
       return RESULT_FAIL;
@@ -223,7 +223,7 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
   Result readLabelsResult = ReadLabelsFile(labelsFileName);
   if(RESULT_OK == readLabelsResult)
   {
-    PRINT_CH_INFO(kLogChannelName, "ObjectDetector.Model.LoadGraph.ReadLabelFileSuccess", "%s",
+    PRINT_CH_INFO(kLogChannelName, "NeuralNetRunner.Model.LoadGraph.ReadLabelFileSuccess", "%s",
                   labelsFileName.c_str());
   }
   
@@ -233,12 +233,12 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ObjectDetector::Model::ReadLabelsFile(const std::string& fileName)
+Result NeuralNetRunner::Model::ReadLabelsFile(const std::string& fileName)
 {
   std::ifstream file(fileName);
   if (!file)
   {
-    PRINT_NAMED_ERROR("ObjectDetector.ReadLabelsFile.LabelsFileNotFound",
+    PRINT_NAMED_ERROR("NeuralNetRunner.ReadLabelsFile.LabelsFileNotFound",
                       "%s", fileName.c_str());
     return RESULT_FAIL;
   }
@@ -253,7 +253,7 @@ Result ObjectDetector::Model::ReadLabelsFile(const std::string& fileName)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<SalientPoint>& objects)
+Result NeuralNetRunner::Model::Run(const ImageRGB& img, std::list<SalientPoint>& salientPoints)
 {
   const cv::Size processingSize(_params.input_width, _params.input_height);
   const f32 scale = 1.f / (f32)_params.input_std;
@@ -263,22 +263,22 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<SalientPoint>& 
   
   _network.setInput(dnnBlob);
   
-  _profiler.Tic("ObjectDetector.Model.Run.ForwardInference");
+  _profiler.Tic("NeuralNetRunner.Model.Run.ForwardInference");
   cv::Mat detections = _network.forward();
-  _profiler.Toc("ObjectDetector.Model.Run.ForwardInference");
+  _profiler.Toc("NeuralNetRunner.Model.Run.ForwardInference");
   
-  if(kObjectDetector_PrintTimingFrequency > 0)
+  if(kNeuralNetRunner_PrintTimingFrequency > 0)
   {
-    static int printCount = kObjectDetector_PrintTimingFrequency;
+    static int printCount = kNeuralNetRunner_PrintTimingFrequency;
     if(--printCount == 0)
     {
       _profiler.PrintAverageTiming();
-      printCount = kObjectDetector_PrintTimingFrequency;
+      printCount = kNeuralNetRunner_PrintTimingFrequency;
     }
   }
   
-  SalientPoint object;
-  bool wasObjectDetected = false;
+  SalientPoint salientPoint;
+  bool wasSalientPointDetected = false;
   
   if(_isDetectionMode)
   {
@@ -298,24 +298,24 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<SalientPoint>& 
         const float xmax = std::min((float)img.GetNumCols(), detection[5] * (float)img.GetNumCols());
         const float ymax = std::min((float)img.GetNumRows(), detection[6] * (float)img.GetNumRows());
         
-        DEV_ASSERT_MSG(Util::IsFltGT(xmax, xmin), "ObjectDetector.Model.Run.InvalidDetectionBoxWidth",
+        DEV_ASSERT_MSG(Util::IsFltGT(xmax, xmin), "NeuralNetRunner.Model.Run.InvalidDetectionBoxWidth",
                        "xmin=%f xmax=%f", xmin, xmax);
-        DEV_ASSERT_MSG(Util::IsFltGT(ymax, ymin), "ObjectDetector.Model.Run.InvalidDetectionBoxHeight",
+        DEV_ASSERT_MSG(Util::IsFltGT(ymax, ymin), "NeuralNetRunner.Model.Run.InvalidDetectionBoxHeight",
                        "ymin=%f ymax=%f", ymin, ymax);
         
         const bool labelIndexOOB = (labelIndex < 0 || labelIndex > _labels.size());
         
-        object.timestamp     = img.GetTimestamp();
-        object.x_img         = (f32)(xmin+xmax) * 0.5f;
-        object.y_img         = (f32)(ymin+ymax) * 0.5f;
-        object.area_fraction = (xmax-xmin)*(ymax-ymin) / (float)img.GetNumElements();
-        object.score         = confidence;
-        object.description   = (labelIndexOOB ? "UNKNOWN" :  _labels.at((size_t)labelIndex));
+        salientPoint.timestamp     = img.GetTimestamp();
+        salientPoint.x_img         = (f32)(xmin+xmax) * 0.5f;
+        salientPoint.y_img         = (f32)(ymin+ymax) * 0.5f;
+        salientPoint.area_fraction = (xmax-xmin)*(ymax-ymin) / (float)img.GetNumElements();
+        salientPoint.score         = confidence;
+        salientPoint.description   = (labelIndexOOB ? "UNKNOWN" :  _labels.at((size_t)labelIndex));
         
         // TODO: fill in shape
         //object.shape         = {{xmin,ymin}, {xmax,ymin}, {xmax,ymax}, {xmin,ymax}};
         
-        wasObjectDetected = true;
+        wasSalientPointDetected = true;
       }
     }
   }
@@ -329,7 +329,7 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<SalientPoint>& 
     //       and not set cols)
     const int numDetections = detections.size[1];
     
-    DEV_ASSERT_MSG(numDetections == _labels.size(), "ObjectDetector.Model.Run.UnexpectedResultSize",
+    DEV_ASSERT_MSG(numDetections == _labels.size(), "NeuralNetRunner.Model.Run.UnexpectedResultSize",
                    "NumLabels:%zu, DNN returned %d values", _labels.size(), numDetections);
     
     for(int i=0; i<numDetections; ++i)
@@ -343,28 +343,28 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<SalientPoint>& 
     
     if(maxLabelIndex >= 0)
     {
-      object.timestamp     = img.GetTimestamp();
-      object.score         = maxScore;
-      object.description   = _labels.at((size_t)maxLabelIndex);
-      object.x_img         = 0.5f;
-      object.y_img         = 0.5f;
-      object.area_fraction = 1.f;
+      salientPoint.timestamp     = img.GetTimestamp();
+      salientPoint.score         = maxScore;
+      salientPoint.description   = _labels.at((size_t)maxLabelIndex);
+      salientPoint.x_img         = 0.5f;
+      salientPoint.y_img         = 0.5f;
+      salientPoint.area_fraction = 1.f;
       
       // TODO: object.shape =
       //object.rect        = Rectangle<s32>(0,0,img.GetNumCols(),img.GetNumRows());
       
-      wasObjectDetected = true;
+      wasSalientPointDetected = true;
     }
   }
   
-  if(wasObjectDetected)
+  if(wasSalientPointDetected)
   {
     PRINT_CH_DEBUG(kLogChannelName,
-                   (_isDetectionMode ? "ObjectDetector.Model.Run.ObjectDetected" : "ObjectDetector.Model.Run.ObjectClassified"),
+                   "NeuralNetRunner.Model.Run.SalientPointDetected",
                    "Name:%s Score:%.3f t:%ums",
-                   object.description.c_str(), object.score, object.timestamp);
+                   salientPoint.description.c_str(), salientPoint.score, salientPoint.timestamp);
     
-    objects.emplace_back(std::move(object));
+    salientPoints.emplace_back(std::move(salientPoint));
   }
   
   return RESULT_OK;

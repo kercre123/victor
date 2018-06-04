@@ -37,7 +37,7 @@
 #include "coretech/vision/engine/image_impl.h"
 #include "coretech/vision/engine/imageCache.h"
 #include "coretech/vision/engine/markerDetector.h"
-#include "coretech/vision/engine/objectDetector.h"
+#include "coretech/vision/engine/neuralNetRunner.h"
 #include "coretech/vision/engine/petTracker.h"
 
 #include "clad/vizInterface/messageViz.h"
@@ -130,7 +130,7 @@ VisionSystem::VisionSystem(const CozmoContext* context)
 , _cameraCalibrator(new CameraCalibrator(*this))
 , _illuminationDetector(new IlluminationDetector())
 , _benchmark(new Vision::Benchmark())
-, _generalObjectDetector(new Vision::ObjectDetector())
+, _neuralNetRunner(new Vision::NeuralNetRunner())
 , _clahe(cv::createCLAHE())
 {
   DEV_ASSERT(_context != nullptr, "VisionSystem.Constructor.NullContext");
@@ -242,29 +242,29 @@ Result VisionSystem::Init(const Json::Value& config)
     return petTrackerInitResult;
   }
   
-  if(!config.isMember("ObjectDetector"))
+  if(!config.isMember("NeuralNets"))
   {
-    PRINT_NAMED_ERROR("VisionSystem.Init.MissingObjectDetectorConfigField", "");
+    PRINT_NAMED_ERROR("VisionSystem.Init.MissingNeuralNetsConfigField", "");
     return RESULT_FAIL;
   }
   
   const std::string modelPath = Util::FileUtils::FullFilePath({dataPath, "dnn_models"});
   if(Util::FileUtils::DirectoryExists(modelPath)) // TODO: Remove once DNN models are checked in somewhere (VIC-1071)
   {
-    const Json::Value& objDetectorConfig = config["ObjectDetector"];
+    const Json::Value& neuralNetConfig = config["NeuralNets"];
     
 #   ifdef VICOS
     // Use faster tmpfs partition for the cache, to make I/O less of a bottleneck
-    const std::string dnnCachePath = "/tmp/vision/object_detector";
+    const std::string dnnCachePath = "/tmp/vision/neural_nets";
 #   else
-    const std::string dnnCachePath = Util::FileUtils::FullFilePath({cachePath, "object_detector"});
+    const std::string dnnCachePath = Util::FileUtils::FullFilePath({cachePath, "neural_nets"});
 #   endif
-    Result objDetectorResult = _generalObjectDetector->Init(modelPath,
-                                                            dnnCachePath,
-                                                            objDetectorConfig);
-    if(RESULT_OK != objDetectorResult)
+    Result neuralNetResult = _neuralNetRunner->Init(modelPath,
+                                                      dnnCachePath,
+                                                      neuralNetConfig);
+    if(RESULT_OK != neuralNetResult)
     {
-      PRINT_NAMED_ERROR("VisionSystem.Init.ObjectDetectorInitFailed", "");
+      PRINT_NAMED_ERROR("VisionSystem.Init.NeuralNetInitFailed", "");
     }
   }
    
@@ -1371,16 +1371,16 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
   
 } // DetectMarkersWithCLAHE()
 
-void VisionSystem::CheckForGeneralObjectDetections()
+void VisionSystem::CheckForNeuralNetResults()
 {
-  std::list<Vision::SalientPoint> objects;
-  const bool resultReady = _generalObjectDetector->GetObjects(objects);
+  std::list<Vision::SalientPoint> salientPoints;
+  const bool resultReady = _neuralNetRunner->GetDetections(salientPoints);
   if(resultReady)
   {
     VisionProcessingResult detectionResult;
-    detectionResult.timestamp = _generalObjectDetectionTimestamp;
-    detectionResult.modesProcessed.SetBitFlag(VisionMode::DetectingGeneralObjects, true);
-    std::swap(detectionResult.salientPoints, objects);
+    detectionResult.timestamp = _neuralNetRunnerTimestamp;
+    detectionResult.modesProcessed.SetBitFlag(VisionMode::RunningNeuralNet, true);
+    std::swap(detectionResult.salientPoints, salientPoints);
     
     _mutex.lock();
     _results.emplace(std::move(detectionResult));
@@ -1662,15 +1662,15 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   // Check for any objects from the detector. It runs asynchronously, so these objects
   // will be from a different image than the one in the cache and will use their own
   // VisionProcessingResult.
-  CheckForGeneralObjectDetections();
+  CheckForNeuralNetResults();
   
-  if(ShouldProcessVisionMode(VisionMode::DetectingGeneralObjects))
+  if(ShouldProcessVisionMode(VisionMode::RunningNeuralNet))
   {
-    const bool started = _generalObjectDetector->StartProcessingIfIdle(imageCache);
+    const bool started = _neuralNetRunner->StartProcessingIfIdle(imageCache);
     if(started)
     {
       // Remember the timestamp of the image used to do object detection
-      _generalObjectDetectionTimestamp = imageCache.GetTimeStamp();
+      _neuralNetRunnerTimestamp = imageCache.GetTimeStamp();
     }
   }
   

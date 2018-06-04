@@ -4,17 +4,17 @@
  * Author: Andrew Stein
  * Date:   3/8/2018
  *
- * Description: Implementation of ObjectDetector Model class does not actually run forward inference through
+ * Description: Implementation of NeuralNetRunner Model class does not actually run forward inference through
  *              a neural network model but instead communicates with a standalone process that does so.
  *
  * Copyright: Anki, Inc. 2018
  **/
 
-// TODO: put this back if/when we start supporting other ObjectDetectorModels
+// TODO: put this back if/when we start supporting other NeuralNetRunnerModels
 // // The contents of this file are only used when the build is using *neither* TF or TF Lite
 // #if (!defined(USE_TENSORFLOW) || !USE_TENSORFLOW) && (!defined(USE_TENSORFLOW_LITE) || !USE_TENSORFLOW_LITE)
 
-#include "coretech/vision/engine/objectDetector.h"
+#include "coretech/vision/engine/neuralNetRunner.h"
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/profiler.h"
 
@@ -33,16 +33,16 @@ namespace Anki {
 namespace Vision {
 
 namespace {
-  CONSOLE_VAR_RANGED(f32, kObjectDetection_TimeoutDuration_sec,  "Vision.ObjectDetector", 10.f, 1., 15.f);
+  CONSOLE_VAR_RANGED(f32, kNeuralNetRunner_TimeoutDuration_sec,  "Vision.NeuralNetRunner", 10.f, 1., 15.f);
 }
   
 static const char * const kLogChannelName = "VisionSystem";
   
 // Useful just for printing every frame, since detection is slow, even through the profiler
 // already has settings for printing based on time. Set to 0 to disable.
-CONSOLE_VAR(s32, kObjectDetector_PrintTimingFrequency, "Vision.ObjectDetector", 1);
+CONSOLE_VAR(s32, kNeuralNetRunner_PrintTimingFrequency, "Vision.NeuralNetRunner", 1);
 
-class ObjectDetector::Model
+class NeuralNetRunner::Model
 {
 public:
 
@@ -50,7 +50,7 @@ public:
   
   Result LoadModel(const std::string& modelPath, const std::string& cachePath, const Json::Value& config);
 
-  Result Run(const ImageRGB& img, std::list<SalientPoint>& objects);
+  Result Run(const ImageRGB& img, std::list<SalientPoint>& salientPoints);
   
 private:
   
@@ -62,16 +62,16 @@ private:
 }; // class Model
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectDetector::Model::Model(Profiler& profiler) 
+NeuralNetRunner::Model::Model(Profiler& profiler)
 : _profiler(profiler) 
 { 
 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const std::string& cachePath, const Json::Value& config)
+Result NeuralNetRunner::Model::LoadModel(const std::string& modelPath, const std::string& cachePath, const Json::Value& config)
 {
-  // NOTE: This implementation of an ObjectDetector::Model does not actual load any model as it is communicating
+  // NOTE: This implementation of an NeuralNetRunner::Model does not actual load any model as it is communicating
   //       with a standalone process which is loading and running the model. Here we'll just set any inititalization
   //       parameters for communicating with that process.
   
@@ -83,28 +83,28 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const std:
 
   if (false == JsonTools::GetValueOptional(config, "pollPeriod_ms", _pollPeriod_ms))
   {
-    PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.MissingPollPeriod", "");
+    PRINT_NAMED_ERROR("NeuralNetRunner.Model.LoadModel.MissingPollPeriod", "");
     return RESULT_FAIL;
   }
 
-  PRINT_CH_INFO(kLogChannelName, "ObjectDetector.Model.LoadModel.Success", 
+  PRINT_CH_INFO(kLogChannelName, "NeuralNetRunner.Model.LoadModel.Success",
                 "Polling period: %dms, Cache: %s", _pollPeriod_ms, _cachePath.c_str());
 
   return RESULT_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<SalientPoint>& objects)
+Result NeuralNetRunner::Model::Run(const ImageRGB& img, std::list<SalientPoint>& salientPoints)
 {
-  objects.clear();
+  salientPoints.clear();
 
   // Profiling will be from time we write file to when we get results
-  auto totalTicToc = _profiler.TicToc("ObjectDetector.Model.Run");
+  auto totalTicToc = _profiler.TicToc("NeuralNetRunner.Model.Run");
   
-  const std::string imageFilename = Util::FileUtils::FullFilePath({_cachePath, "objectDetectionImage.png"});
+  const std::string imageFilename = Util::FileUtils::FullFilePath({_cachePath, "neuralNetImage.png"});
   {
     // Write image to a temporary file
-    auto writeTicToc = _profiler.TicToc("ObjectDetector.Model.Run.WriteImage");
+    auto writeTicToc = _profiler.TicToc("NeuralNetRunner.Model.Run.WriteImage");
     const std::string tempFilename = Util::FileUtils::FullFilePath({_cachePath, "temp.png"});
     img.Save(tempFilename);
     
@@ -124,12 +124,12 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<SalientPoint>& 
       return RESULT_FAIL;
     }
 
-    PRINT_CH_DEBUG(kLogChannelName, "ObjectDetector.Model.SavedImageFileForProcessing", "%s t:%d",
+    PRINT_CH_DEBUG(kLogChannelName, "NeuralNetRunner.Model.SavedImageFileForProcessing", "%s t:%d",
                  imageFilename.c_str(), img.GetTimestamp());
   }
 
   // Wait for detection result JSON to appear
-  const std::string resultFilename = Util::FileUtils::FullFilePath({_cachePath, "objectDetectionResults.json"});
+  const std::string resultFilename = Util::FileUtils::FullFilePath({_cachePath, "neuralNetResults.json"});
   bool resultAvailable = false;
   f32 startTime_sec = 0.f, currentTime_sec = 0.f;
   {
@@ -137,7 +137,7 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<SalientPoint>& 
     startTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     currentTime_sec = startTime_sec;
     
-    while( !resultAvailable && (currentTime_sec - startTime_sec < kObjectDetection_TimeoutDuration_sec) )
+    while( !resultAvailable && (currentTime_sec - startTime_sec < kNeuralNetRunner_TimeoutDuration_sec) )
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(_pollPeriod_ms));
       resultAvailable = Util::FileUtils::FileExists(resultFilename);
@@ -146,7 +146,7 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<SalientPoint>& 
   }
 
   // Delete image file (whether we got the result or timed out)
-  PRINT_CH_DEBUG(kLogChannelName, "ObjectDetector.Detect.DeletingImageFile", "%s, deleting %s",
+  PRINT_CH_DEBUG(kLogChannelName, "NeuralNetRunner.Detect.DeletingImageFile", "%s, deleting %s",
                  (resultAvailable ? "Result found" : "Polling timed out"), imageFilename.c_str());
   Util::FileUtils::DeleteFile(imageFilename);
   
@@ -154,7 +154,7 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<SalientPoint>& 
   {
     auto readTicToc = _profiler.TicToc("StandaloneInferenceProcess.ReadingResult");
     
-    PRINT_CH_DEBUG(kLogChannelName, "ObjectDetector.Model.FoundDetectionResultsJSON", "%s",
+    PRINT_CH_DEBUG(kLogChannelName, "NeuralNetRunner.Model.FoundDetectionResultsJSON", "%s",
                    resultFilename.c_str());
     
     Json::Reader reader;
@@ -163,25 +163,25 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<SalientPoint>& 
     const bool success = reader.parse(file, detectionResult);
     if(!success)
     {
-      PRINT_NAMED_ERROR("ObjectDetector.Model.FailedToReadJSON", "%s", resultFilename.c_str());
+      PRINT_NAMED_ERROR("NeuralNetRunner.Model.FailedToReadJSON", "%s", resultFilename.c_str());
     }
     else
     {
-      // Translate JSON into a DetectedObject struct and put it in the output
-      const Json::Value& detectedObjects = detectionResult["objects"];
-      if(detectedObjects.isArray())
+      // Translate JSON into a SalientPoint and put it in the output
+      const Json::Value& salientPointsJson = detectionResult["salientPoints"];
+      if(salientPointsJson.isArray())
       {
-        for(auto const& object : detectedObjects)
+        for(auto const& salientPointJson : salientPointsJson)
         {
           SalientPoint salientPoint;
-          const bool success = salientPoint.SetFromJSON(object);
+          const bool success = salientPoint.SetFromJSON(salientPointJson);
           if(!success)
           {
-            PRINT_NAMED_ERROR("ObjectDetector.Model.FailedToSetFromJSON", "");
+            PRINT_NAMED_ERROR("NeuralNetRunner.Model.FailedToSetFromJSON", "");
             continue;
           }
           
-          objects.emplace_back(std::move(salientPoint));
+          salientPoints.emplace_back(std::move(salientPoint));
         }
       }
     }
@@ -190,9 +190,9 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<SalientPoint>& 
   }
   else
   {
-    PRINT_NAMED_WARNING("ObjectDetector.Model.PollingForResultTimedOut",
+    PRINT_NAMED_WARNING("NeuralNetRunner.Model.PollingForResultTimedOut",
                         "Start:%.1fsec Current:%.1f Timeout:%.1fsec",
-                        startTime_sec, currentTime_sec, kObjectDetection_TimeoutDuration_sec);
+                        startTime_sec, currentTime_sec, kNeuralNetRunner_TimeoutDuration_sec);
   }
   
   return RESULT_OK;
