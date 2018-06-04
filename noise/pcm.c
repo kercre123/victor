@@ -22,12 +22,13 @@ static double freq = 440;				/* sinusoidal wave frequency in Hz */
 static int verbose = 0;					/* verbose flag */
 static int resample = 1;				/* enable alsa-lib resampling */
 static int period_event = 0;				/* produce poll event after each period */
+static int square = 0;					/* Square (instead of sinusoidal) output */
 
 static snd_pcm_sframes_t buffer_size;
 static snd_pcm_sframes_t period_size;
 static snd_output_t *output = NULL;
 
-static void generate_sine(const snd_pcm_channel_area_t *areas, 
+static void generate_sine(const snd_pcm_channel_area_t *areas,
 			  snd_pcm_uframes_t offset,
 			  int count, double *_phase)
 {
@@ -69,9 +70,12 @@ static void generate_sine(const snd_pcm_channel_area_t *areas,
 		int res, i;
 		if (is_float) {
 			fval.f = sin(phase);
+			if (square) fval.f = fval.f > 0.0f ? 1.0f : -1.0f;
 			res = fval.i;
-		} else
+		} else {
 			res = sin(phase) * maxval;
+			if (square) res = res > 0 ? maxval : -maxval;
+		}
 		if (to_unsigned)
 			res ^= 1U << (format_bits - 1);
 		for (chn = 0; chn < channels; chn++) {
@@ -218,7 +222,7 @@ static int set_swparams(snd_pcm_t *handle, snd_pcm_sw_params_t *swparams)
 /*
  *   Underrun and suspend recovery
  */
- 
+
 static int xrun_recovery(snd_pcm_t *handle, int err)
 {
 	if (verbose)
@@ -273,7 +277,7 @@ static int write_loop(snd_pcm_t *handle,
 		}
 	}
 }
- 
+
 /*
  *   Transfer method - write and wait for room in buffer using poll
  */
@@ -395,7 +399,7 @@ static void async_callback(snd_async_handler_t *ahandler)
 	snd_pcm_channel_area_t *areas = data->areas;
 	snd_pcm_sframes_t avail;
 	int err;
-	
+
 	avail = snd_pcm_avail_update(handle);
 	while (avail >= period_size) {
 		generate_sine(areas, 0, period_size, &data->phase);
@@ -468,7 +472,7 @@ static void async_direct_callback(snd_async_handler_t *ahandler)
 	snd_pcm_sframes_t avail, commitres;
 	snd_pcm_state_t state;
 	int first = 0, err;
-	
+
 	while (1) {
 		state = snd_pcm_state(handle);
 		if (state == SND_PCM_STATE_XRUN) {
@@ -672,7 +676,7 @@ static int direct_loop(snd_pcm_t *handle,
 		}
 	}
 }
- 
+
 /*
  *   Transfer method - direct write only using mmap_write functions
  */
@@ -705,7 +709,7 @@ static int direct_write_loop(snd_pcm_t *handle,
 		}
 	}
 }
- 
+
 /*
  *
  */
@@ -776,6 +780,7 @@ int main(int argc, char *argv[])
 		{"verbose", 1, NULL, 'v'},
 		{"noresample", 1, NULL, 'n'},
 		{"pevent", 1, NULL, 'e'},
+		{"square", 0, NULL, 's'}
 		{NULL, 0, NULL, 0},
 	};
 	snd_pcm_t *handle;
@@ -793,7 +798,7 @@ int main(int argc, char *argv[])
 	morehelp = 0;
 	while (1) {
 		int c;
-		if ((c = getopt_long(argc, argv, "hD:r:c:f:b:p:m:o:vne", long_option, NULL)) < 0)
+		if ((c = getopt_long(argc, argv, "hD:r:c:f:b:ps:m:o:vne", long_option, NULL)) < 0)
 			break;
 		switch (c) {
 		case 'h':
@@ -826,6 +831,9 @@ int main(int argc, char *argv[])
 			period_time = atoi(optarg);
 			period_time = period_time < 1000 ? 1000 : period_time;
 			period_time = period_time > 1000000 ? 1000000 : period_time;
+			break;
+		case 's':
+			square = 1;
 			break;
 		case 'm':
 			for (method = 0; transfer_methods[method].name; method++)
@@ -883,7 +891,7 @@ int main(int argc, char *argv[])
 		printf("Playback open error: %s\n", snd_strerror(err));
 		return 0;
 	}
-	
+
 	if ((err = set_hwparams(handle, hwparams, transfer_methods[method].access)) < 0) {
 		printf("Setting of hwparams failed: %s\n", snd_strerror(err));
 		exit(EXIT_FAILURE);
@@ -901,7 +909,7 @@ int main(int argc, char *argv[])
 		printf("No enough memory\n");
 		exit(EXIT_FAILURE);
 	}
-	
+
 	areas = calloc(channels, sizeof(snd_pcm_channel_area_t));
 	if (areas == NULL) {
 		printf("No enough memory\n");
@@ -922,4 +930,3 @@ int main(int argc, char *argv[])
 	snd_pcm_close(handle);
 	return 0;
 }
-
