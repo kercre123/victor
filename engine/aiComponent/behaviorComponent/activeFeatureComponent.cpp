@@ -21,6 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/cozmoContext.h"
+#include "util/string/stringUtils.h"
 #include "webServerProcess/src/webService.h"
 
 namespace Anki {
@@ -118,18 +119,33 @@ void ActiveFeatureComponent::SendActiveFeatureToWebViz(const std::string& intent
   
 void ActiveFeatureComponent::OnFeatureChanged(const ActiveFeature& newFeature, const ActiveFeature& oldFeature, const std::string& source)
 {
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
   // send das message
   if( oldFeature != ActiveFeature::NoFeature ) {
-    DASMSG(behavior_featureEnd, "behavior.feature.end", "This feature is no longer active");
+    const float timeActive = currTime_s - _lastFeatureActivatedTime_s;
+
+    DASMSG(behavior_featureEnd, "behavior.feature.end",
+           "This feature is no longer active, but there may not be a new feature yet");
     DASMSG_SET(s1, ActiveFeatureToString(_activeFeature), "The feature");
+    DASMSG_SET(i1, std::round(timeActive), "Time the feature was active in seconds");
     DASMSG_SEND();
   }
 
   if( newFeature != ActiveFeature::NoFeature ) {
+    const std::string& uuid = Util::GetUUIDString();
+    const ActiveFeatureType& featureType = GetActiveFeatureType(newFeature, ActiveFeatureType::System);
+
+    // NOTE: this event is inspected by the DAS Manager to determine the feature id and type columns, so be
+    // especially careful if changing it
     DASMSG(behavior_featureEnd, "behavior.feature.start", "A new feature is active");
     DASMSG_SET(s1, ActiveFeatureToString(newFeature), "The feature");
     DASMSG_SET(s2, source, "The source of the intent (possible values are AI, App, Voice, or Unknown)");
+    DASMSG_SET(s3, uuid, "A unique ID associated with this feature run");
+    DASMSG_SET(s4, ActiveFeatureTypeToString(featureType), "The feature type (category)");
     DASMSG_SEND();
+
+    _lastFeatureActivatedTime_s = currTime_s;
   }
   
   _statusLogHandler->SetFeature( ActiveFeatureToString(newFeature), source );

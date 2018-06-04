@@ -60,6 +60,8 @@ private:
   
   ActiveFeature _activeFeature = ActiveFeature::NoFeature;
 
+  float _lastFeatureActivatedTime_s = 0.0f;
+
   // only one feature should count as activated by a given active intent, so track the ID here
   size_t _lastUsedIntentActivationID = 0;
 
