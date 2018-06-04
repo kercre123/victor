@@ -67,9 +67,9 @@ void BeatDetectorComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMa
   
   auto* messageHandler = robot->GetRobotMessageHandler();
   _signalHandle = messageHandler->Subscribe(RobotInterface::RobotToEngineTag::beatDetectorState, [this](const AnkiEvent<RobotInterface::RobotToEngine>& event) {
-    // Only add beats if we are not currently faking a beat
+    // Only call callback if we are not currently faking a beat
     if (kFakeBeat_bpm < 0.f) {
-      _recentBeats.push_back(event.GetData().Get_beatDetectorState().latestBeat);
+      OnBeat(event.GetData().Get_beatDetectorState().latestBeat);
     }
   });
 }
@@ -94,7 +94,7 @@ void BeatDetectorComponent::UpdateDependent(const RobotCompMap& dependentComps)
       beat.confidence = 100.f;
       // If this is the first beat, pretend it happened right now
       beat.time_sec = _recentBeats.empty() ? now_sec : lastFakeBeatTime_sec + fakeBeatPeriod_sec;
-      _recentBeats.push_back(beat);
+      OnBeat(beat);
     }
   }
   prevFakeBeat_bpm = kFakeBeat_bpm;
@@ -105,6 +105,18 @@ void BeatDetectorComponent::UpdateDependent(const RobotCompMap& dependentComps)
     _recentBeats.pop_front();
   }
 }
+
+
+void BeatDetectorComponent::OnBeat(const BeatInfo& beat)
+{
+  _recentBeats.push_back(beat);
+  
+  for (const auto& callbackMapEntry : _onBeatCallbacks) {
+    const auto& callback = callbackMapEntry.second;
+    callback();
+  }
+}
+
 
 bool BeatDetectorComponent::IsBeatDetected() const
 {
@@ -173,6 +185,24 @@ void BeatDetectorComponent::Reset()
   _recentBeats.clear();
   
   _robot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::ResetBeatDetector()));
+}
+
+  
+int BeatDetectorComponent::RegisterOnBeatCallback(const OnBeatCallback& callback)
+{
+  static int callbackId = 1;
+  _onBeatCallbacks[callbackId] = callback;
+  return callbackId++;
+}
+
+  
+bool BeatDetectorComponent::UnregisterOnBeatCallback(const int callbackId)
+{
+  const auto numErased = _onBeatCallbacks.erase(callbackId);
+  const bool success = ANKI_VERIFY(numErased == 1,
+                                  "BeatDetectorComponent.UnregisterOnBeatCallback.FailedToUnregisterCallback",
+                                  "Failed to erase callback with ID %d (num erased %zu)", callbackId, numErased);
+  return success;
 }
 
 } // namespace Cozmo

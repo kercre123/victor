@@ -55,6 +55,7 @@ namespace {
   
   const char* kCooldown_key = "cooldown_s";
   const char* kUseBackpackLights_key = "useBackpackLights";
+  const char* kCanListenForBeatsDuringGetIn_key = "canListenForBeatsDuringGetIn";
   const char* kGetInAnim_key   = "getInAnim";
   const char* kGetOutAnim_key  = "getOutAnim";
   const char* kQuitAnim_key    = "quitAnim";
@@ -76,6 +77,7 @@ BehaviorDanceToTheBeat::BehaviorDanceToTheBeat(const Json::Value& config)
 BehaviorDanceToTheBeat::InstanceConfig::InstanceConfig(const Json::Value& config, const std::string& debugName)
   : cooldown_sec(JsonTools::ParseFloat(config, kCooldown_key, debugName))
   , useBackpackLights(JsonTools::ParseBool(config, kUseBackpackLights_key, debugName))
+  , canListenForBeatsDuringGetIn(JsonTools::ParseBool(config, kCanListenForBeatsDuringGetIn_key, debugName))
 {
   JsonTools::GetCladEnumFromJSON(config, kGetInAnim_key,   getInAnim,   debugName);
   JsonTools::GetCladEnumFromJSON(config, kGetOutAnim_key,  getOutAnim,  debugName);
@@ -91,11 +93,11 @@ BehaviorDanceToTheBeat::InstanceConfig::InstanceConfig(const Json::Value& config
     dancePhraseConfig.maxBeats    = JsonTools::ParseUInt32(json, "maxBeats", debugName);
     dancePhraseConfig.multipleOf  = JsonTools::ParseUInt32(json, "multipleOf", debugName);
     dancePhraseConfig.canListenForBeats = JsonTools::ParseBool(json, "canListenForBeats", debugName);
-    DEV_ASSERT(!dancePhraseConfig.canListenForBeats, "BehaviorDanceToTheBeat.InstanceConfig.CanListenForBeatsUnsupported");
     std::vector<std::string> tmp;
     if (JsonTools::GetVectorOptional(json, "anims", tmp)) {
       for (auto& animStr : tmp) {
-        dancePhraseConfig.anims.emplace_back(std::move(animStr));
+        dancePhraseConfig.anims.emplace_back(std::move(animStr),
+                                             dancePhraseConfig.canListenForBeats);
       }
     }
     dancePhraseConfigs.push_back(std::move(dancePhraseConfig));
@@ -113,6 +115,7 @@ bool BehaviorDanceToTheBeat::InstanceConfig::CheckValid()
     PRINT_NAMED_WARNING("BehaviorDanceToTheBeat.InstanceConfig.CheckValid.NoDancePhraseConfigs",
                         "Invalid config - no dance phrase config entries");
   }
+  bool prevCanListenForBeats = canListenForBeatsDuringGetIn;
   for (const auto& config : dancePhraseConfigs) {
     if (config.anims.empty()) {
       isValid = false;
@@ -130,6 +133,16 @@ bool BehaviorDanceToTheBeat::InstanceConfig::CheckValid()
                           "Invalid minBeats, maxBeats, or multipleOf (minBeats %d, maxBeats %d, multipleOf %d). Max allowed %d.",
                           config.minBeats, config.maxBeats, config.multipleOf, kMaxBeatsPerDancePhrase);
     }
+
+    const bool canListenForBeatsThisPhrase = config.canListenForBeats;
+    if (canListenForBeatsThisPhrase &&
+        !prevCanListenForBeats) {
+      isValid = false;
+      PRINT_NAMED_WARNING("BehaviorDanceToTheBeat.InstanceConfig.CheckValid.InvalidListenForBeats",
+                          "CanListenForBeats is true for this phrase, but a previous canListenForBeats was false. Not allowed! "
+                          "Can only go from 'listening' to 'not listening' and never the other way around");
+    }
+    prevCanListenForBeats = canListenForBeatsThisPhrase;
   }
   
   return isValid;
@@ -141,6 +154,7 @@ void BehaviorDanceToTheBeat::GetBehaviorJsonKeys(std::set<const char*>& expected
   const char* list[] = {
     kCooldown_key,
     kUseBackpackLights_key,
+    kCanListenForBeatsDuringGetIn_key,
     kGetInAnim_key,
     kGetOutAnim_key,
     kQuitAnim_key,
@@ -197,7 +211,7 @@ void BehaviorDanceToTheBeat::OnBehaviorActivated()
   _dVars = DynamicVariables();
   
   // grab the next beat time here and wait to play the anim until the appropriate time
-  const auto& beatDetector = GetBEI().GetBeatDetectorComponent();
+  auto& beatDetector = GetBEI().GetBeatDetectorComponent();
   _dVars.nextBeatTime_sec = beatDetector.GetNextBeatTime_sec();
   _dVars.beatPeriod_sec = 60.f / beatDetector.GetCurrTempo_bpm();
   
@@ -214,6 +228,14 @@ void BehaviorDanceToTheBeat::OnBehaviorActivated()
       const auto& anim = config.anims[index];
       _dVars.animsToPlay.push(anim);
     }
+  }
+  
+  _dVars.listeningForBeats = _iConfig.canListenForBeatsDuringGetIn;
+  
+  // Register an OnBeat callback with BeatDetectorComponent if we
+  // are to listen for beats during the behavior:
+  if (_dVars.listeningForBeats) {
+    _dVars.onBeatCallbackId = beatDetector.RegisterOnBeatCallback(std::bind(&BehaviorDanceToTheBeat::OnBeat, this));
   }
   
   // Start off the behavior by playing the get-in anim
@@ -234,16 +256,38 @@ void BehaviorDanceToTheBeat::BehaviorUpdate()
   
   const auto now_sec = static_cast<float>(Util::Time::UniversalTime::GetCurrentTimeInSeconds());
   
-  if (now_sec > _dVars.nextBeatTime_sec) {
-    OnBeat();
-    _dVars.nextBeatTime_sec += _dVars.beatPeriod_sec;
+  // If we are currently listening for beats, double check that a beat
+  // is still detected. If not, we should bail out of the behavior.
+  const auto& beatDetector = GetBEI().GetBeatDetectorComponent();
+  if (_dVars.listeningForBeats &&
+      !beatDetector.IsBeatDetected()) {
+    PRINT_NAMED_WARNING("BehaviorDanceToTheBeat.BehaviorUpdate.BeatNoLongerDetected",
+                        "Cancelling behavior since we are currently listening for beats "
+                        "and BeatDetectorComponent says beat is no longer detected");
+    CancelSelf();
+    return;
+  }
+  
+  // If we're not listening for beats, we need to call OnBeat() 'manually'
+  // when the next 'extrapolated' beat occurs.
+  if (!_dVars.listeningForBeats) {
+    if (now_sec > _dVars.nextBeatTime_sec) {
+      OnBeat();
+    }
+    // Unregister the OnBeat callback since we no longer need it
+    UnregisterOnBeatCallback();
   }
   
   if (_dVars.nextAnimTriggerTime_sec > 0.f &&
       now_sec >= _dVars.nextAnimTriggerTime_sec) {
     // Time to play the next animation in the queue
     DEV_ASSERT(!_dVars.animsToPlay.empty(), "BehaviorDanceToTheBeat.BehaviorUpdate.NoAnimsInQueue");
-    auto* animAction = new PlayAnimationAction(_dVars.animsToPlay.front().animName);
+    const auto& thisAnim = _dVars.animsToPlay.front();
+    auto* animAction = new PlayAnimationAction(thisAnim.animName);
+    // If this animation is not marked "canListenForBeats", then stop listening for beats
+    if (!thisAnim.canListenForBeats) {
+      _dVars.listeningForBeats = false;
+    }
     _dVars.animsToPlay.pop();
     if (_dVars.animsToPlay.empty()) {
       // No more animations to play after this one. Play this
@@ -273,6 +317,7 @@ void BehaviorDanceToTheBeat::BehaviorUpdate()
 void BehaviorDanceToTheBeat::OnBehaviorDeactivated()
 {
   StopBackpackLights();
+  UnregisterOnBeatCallback();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -306,12 +351,37 @@ void BehaviorDanceToTheBeat::OnBeat()
     return;
   }
   
+  PRINT_NAMED_INFO("BehaviorDanceToTheBeat.OnBeat",
+                   "OnBeat() called. Currently%s listening for new beats. Current universal time (sec): %.3f",
+                   _dVars.listeningForBeats ? "" : " NOT",
+                   Util::Time::UniversalTime::GetCurrentTimeInSeconds());
+  
   if (_iConfig.useBackpackLights) {
     StopBackpackLights();
     auto& blc = GetBEI().GetBodyLightComponent();
     blc.StartLoopingBackpackLights(beatBackpackLights,
                                    BackpackLightSource::Behavior,
                                    _dVars.backpackDataRef);
+  }
+  
+  // If we're currently listening for beats, then this means
+  // we have new information from the BeatDetectorComponent.
+  if (_dVars.listeningForBeats) {
+    // Update some stuff now that we have new beat information from
+    // BeatDetectorComponent.
+    const auto& beatDetector = GetBEI().GetBeatDetectorComponent();
+    _dVars.nextBeatTime_sec = beatDetector.GetNextBeatTime_sec();
+    _dVars.beatPeriod_sec = 60.f / beatDetector.GetCurrTempo_bpm();
+    
+    // Update the next animation trigger time if we still have
+    // animations in the queue.
+    if (!_dVars.animsToPlay.empty()) {
+      SetNextAnimTriggerTime();
+    }
+  } else {
+    // We are not currently listening for beats, so just manually
+    // extrapolate the next beat time.
+    _dVars.nextBeatTime_sec += _dVars.beatPeriod_sec;
   }
 }
   
@@ -326,6 +396,19 @@ void BehaviorDanceToTheBeat::StopBackpackLights()
                         "Failed to stop backpack lights");
   }
 }
+
+void BehaviorDanceToTheBeat::UnregisterOnBeatCallback()
+{
+  if (_dVars.onBeatCallbackId > 0) {
+    auto& beatDetector = GetBEI().GetBeatDetectorComponent();
+    if (!beatDetector.UnregisterOnBeatCallback(_dVars.onBeatCallbackId)) {
+      PRINT_NAMED_ERROR("BehaviorDanceToTheBeat.UnregisterOnBeatCallback.FailedToUnregisterCallback",
+                        "Failed to unregister OnBeat callback (id %d)", _dVars.onBeatCallbackId);
+    }
+  }
+  _dVars.onBeatCallbackId = -1;
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDanceToTheBeat::GetAnimationBeatDelay_sec(const std::string& animName, float& beatDelay_sec)

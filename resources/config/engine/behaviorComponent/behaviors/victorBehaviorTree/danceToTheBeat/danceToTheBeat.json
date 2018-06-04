@@ -12,7 +12,9 @@
   
   "useBackpackLights" : true,
   
-  "getInAnim"   : "DanceBeatGetIn",
+  "canListenForBeatsDuringGetIn" : true,
+  
+  "getInAnim"   : "Count",
   "getOutAnim"  : "DanceBeatGetOut",
   "quitAnim"    : "DanceBeatQuit",
   "idleAnim"    : "DanceBeatIdle",
@@ -32,17 +34,17 @@
   
   "dancePhraseConfigs" : [
     {
-      "minBeats"    : 4,
-      "maxBeats"    : 6,
+      "minBeats"    : 6,
+      "maxBeats"    : 10,
       "multipleOf"  : 1,
-      "canListenForBeats" : false, // only if the animation does not move any motors (currently unsupported)
+      "canListenForBeats" : true,
       "anims" : [
         "anim_dancebeat_eyebeat_01"
       ]
     },
     {
-      "minBeats"    : 2,
-      "maxBeats"    : 4,
+      "minBeats"    : 4,
+      "maxBeats"    : 6,
       "multipleOf"  : 1,
       "canListenForBeats" : false,
       "anims" : [

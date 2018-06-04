@@ -55,7 +55,21 @@ public:
   // Send a message to reset the beat detector in the anim process
   void Reset();
   
+  using OnBeatCallback = std::function<void(void)>;
+  
+  // OnBeatCallbacks get called when we receive a 'beat' message
+  // from the anim process, i.e. we have new beat information.
+  // Returns a unique indentifier to allow un-registering. The
+  // identifier is always a positive number.
+  int RegisterOnBeatCallback(const OnBeatCallback& callback);
+  
+  // Returns true if the callback existed and was unregistered.
+  bool UnregisterOnBeatCallback(const int callbackId);
+  
 private:
+  
+  // Called when we receive a beat message from the anim process
+  void OnBeat(const BeatInfo& beat);
   
   Robot* _robot = nullptr;
   
@@ -64,6 +78,9 @@ private:
   
   // Store recent beat events
   std::deque<BeatInfo> _recentBeats;
+  
+  // map of unique ID to OnBeatCallback
+  std::map<int, OnBeatCallback> _onBeatCallbacks;
 };
 
 } // namespace Cozmo

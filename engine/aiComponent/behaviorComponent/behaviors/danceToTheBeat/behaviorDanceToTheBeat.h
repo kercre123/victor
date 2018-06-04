@@ -51,9 +51,12 @@ private:
   // musical beat should land, and is determined by an event keyframe
   // in the animation itself.
   struct DanceAnimMetadata {
-    DanceAnimMetadata(std::string&& name) : animName(std::move(name)) {}
+    DanceAnimMetadata(std::string&& name, const bool canListenForBeats)
+      : animName(std::move(name))
+      , canListenForBeats(canListenForBeats) {}
     std::string animName;
     float beatDelay_sec = 0.f;
+    bool canListenForBeats = false;
   };
   
   // A DancePhrase is made up of one or more possible dance animations
@@ -85,6 +88,7 @@ private:
     float cooldown_sec = 0.f;
     
     const bool useBackpackLights;
+    const bool canListenForBeatsDuringGetIn;
     
     AnimationTrigger getInAnim   = AnimationTrigger::Count;
     AnimationTrigger getOutAnim  = AnimationTrigger::Count;
@@ -99,6 +103,16 @@ private:
     float beatPeriod_sec = -1.f;
     float nextBeatTime_sec = -1.f;
     float nextAnimTriggerTime_sec = -1.f;
+    
+    // True if we are actively listening for new beats, during animations
+    // that don't move motors for example. Normally false since the motors
+    // themselves create too much noise for beat detection to continue
+    // running during the behavior.
+    bool listeningForBeats = false;
+    
+    // ID for registering OnBeat callback with BeatDetectorComponent. A
+    // value of less than 0 indicates that no callback is registered.
+    int onBeatCallbackId = -1;
     
     BackpackLightDataLocator backpackDataRef;
     
@@ -115,6 +129,8 @@ private:
   void OnBeat();
   
   void StopBackpackLights();
+  
+  void UnregisterOnBeatCallback();
   
   // Populates beatDelay_sec with the time into the given animation where
   // the beat should land. For example, a value of 0.100 would mean that
