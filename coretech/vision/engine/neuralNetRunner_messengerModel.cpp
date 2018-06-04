@@ -33,14 +33,19 @@ namespace Anki {
 namespace Vision {
 
 namespace {
-  CONSOLE_VAR_RANGED(f32, kNeuralNetRunner_TimeoutDuration_sec,  "Vision.NeuralNetRunner", 10.f, 1., 15.f);
+#define CONSOLE_GROUP "Vision.NeuralNetRunner"
+
+  CONSOLE_VAR_RANGED(f32, kNeuralNetRunner_TimeoutDuration_sec,  CONSOLE_GROUP, 10.f, 1., 15.f);
+  CONSOLE_VAR(s32,        kNeuralNetRunner_PrintTimingFrequency, CONSOLE_GROUP, 1);
+
+#undef CONSOLE_GROUP
 }
   
 static const char * const kLogChannelName = "VisionSystem";
   
 // Useful just for printing every frame, since detection is slow, even through the profiler
 // already has settings for printing based on time. Set to 0 to disable.
-CONSOLE_VAR(s32, kNeuralNetRunner_PrintTimingFrequency, "Vision.NeuralNetRunner", 1);
+
 
 class NeuralNetRunner::Model
 {

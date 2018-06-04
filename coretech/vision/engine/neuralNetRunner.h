@@ -82,6 +82,7 @@ private:
   // We process asynchronsously, so need a copy of the image data (at processing resolution)
   ImageRGB              _imgBeingProcessed;
   
+  std::string           _cachePath;
   bool                  _isInitialized = false;
   s32                   _processingWidth;
   s32                   _processingHeight;

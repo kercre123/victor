@@ -50,7 +50,18 @@ namespace Vision {
 // static const char * const kLogChannelName = "VisionSystem";
  
 namespace {
-  CONSOLE_VAR(f32,   kObjectDetection_Gamma,  "Vision.NeuralNetRunner", 1.0f); // set to 1.0 to disable
+#define CONSOLE_GROUP "Vision.NeuralNetRunner"
+
+  CONSOLE_VAR(f32,   kObjectDetection_Gamma,       CONSOLE_GROUP, 1.0f); // set to 1.0 to disable
+
+  // Save images sent to the model for processing to:
+  //   <cachePath>/saved_images/{full|resized}/<timestamp>.png
+  // 0: off
+  // 1: save resized images
+  // 2: save full images
+  CONSOLE_VAR(s32,   kNeuralNetRunner_SaveImages,  CONSOLE_GROUP, 0);
+
+#undef CONSOLE_GROUP
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -71,6 +82,9 @@ NeuralNetRunner::~NeuralNetRunner()
 Result NeuralNetRunner::Init(const std::string& modelPath, const std::string& cachePath, const Json::Value& config)
 {
   Result result = RESULT_OK;
+
+  _isInitialized = false;
+  _cachePath = cachePath;
   
   _profiler.Tic("LoadModel");
   result = _model->LoadModel(modelPath, cachePath, config);
@@ -165,6 +179,14 @@ bool NeuralNetRunner::StartProcessingIfIdle(ImageCache& imageCache)
       return false;
     }
   
+    if(kNeuralNetRunner_SaveImages == 2)
+    {
+      const Vision::ImageRGB& img = imageCache.GetRGB(ImageCache::Size::Full);
+      const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath, "full",
+        std::to_string(img.GetTimestamp()) + ".png"});
+      img.Save(saveFilename);
+    }
+
     // Resize to processing size
     _imgBeingProcessed.Allocate(_processingHeight, _processingWidth);
     const ImageCache::Size kImageSize = ImageCache::Size::Full;
@@ -174,6 +196,13 @@ bool NeuralNetRunner::StartProcessingIfIdle(ImageCache& imageCache)
     // Apply gamma (no-op if gamma is set to 1.0)
     ApplyGamma(_imgBeingProcessed);
     
+    if(kNeuralNetRunner_SaveImages == 1)
+    {
+      const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath, "resized",
+        std::to_string(_imgBeingProcessed.GetTimestamp()) + ".png"});
+      _imgBeingProcessed.Save(saveFilename);
+    }
+
     // Store its size relative to original size so we can rescale object detections later
     _heightScale = (f32)imageCache.GetOrigNumRows();
     _widthScale  = (f32)imageCache.GetOrigNumCols();
