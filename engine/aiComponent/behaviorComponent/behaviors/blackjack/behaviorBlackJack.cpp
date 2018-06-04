@@ -189,7 +189,9 @@ void BehaviorBlackJack::TransitionToReactToPlayerCard()
 void BehaviorBlackJack::TransitionToHitOrStandPrompt()
 {
   SET_STATE(HitOrStandPrompt);
-  DelegateIfInControl(_iConfig.hitOrStandPromptBehavior.get(), &BehaviorBlackJack::TransitionToHitOrStand);
+  if(_iConfig.hitOrStandPromptBehavior->WantsToBeActivated()){
+    DelegateIfInControl(_iConfig.hitOrStandPromptBehavior.get(), &BehaviorBlackJack::TransitionToHitOrStand);
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -360,7 +362,9 @@ void BehaviorBlackJack::TransitionToEndGame(){
 void BehaviorBlackJack::TransitionToPlayAgainPrompt()
 {
   SET_STATE(PlayAgainPrompt);
-  DelegateIfInControl(_iConfig.playAgainPromptBehavior.get(), &BehaviorBlackJack::TransitionToPlayAgain);
+  if(_iConfig.playAgainPromptBehavior->WantsToBeActivated()){
+    DelegateIfInControl(_iConfig.playAgainPromptBehavior.get(), &BehaviorBlackJack::TransitionToPlayAgain);
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
