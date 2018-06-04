@@ -31,6 +31,7 @@
 #include "clad/types/cameraParams.h"
 #include "clad/types/loadedKnownFace.h"
 #include "clad/types/robotStatusAndActions.h"
+#include "clad/types/salientPointTypes.h"
 #include "clad/types/visionModes.h"
 
 #include "util/helpers/noncopyable.h"
@@ -339,7 +340,7 @@ struct DockingErrorSignal;
     VisionSystem* _visionSystem = nullptr;
     VizManager*   _vizManager = nullptr;
     std::map<std::string, s32> _vizDisplayIndexMap;
-    std::list<std::pair<TimeStamp_t, ExternalInterface::RobotObservedGenericObject>> _detectedObjectsToDraw;
+    std::list<std::pair<TimeStamp_t, Vision::SalientPoint>> _detectedObjectsToDraw;
     
     // Robot stores the calibration, camera just gets a reference to it
     // This is so we can share the same calibration data across multiple

@@ -1373,21 +1373,14 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
 
 void VisionSystem::CheckForGeneralObjectDetections()
 {
-  std::list<Vision::ObjectDetector::DetectedObject> objects;
+  std::list<Vision::SalientPoint> objects;
   const bool resultReady = _generalObjectDetector->GetObjects(objects);
   if(resultReady)
   {
     VisionProcessingResult detectionResult;
     detectionResult.timestamp = _generalObjectDetectionTimestamp;
     detectionResult.modesProcessed.SetBitFlag(VisionMode::DetectingGeneralObjects, true);
-    
-    // Convert returned Vision::DetectedObject list to our (Cozmo) ExternalInterface message
-    for(const auto& object : objects)
-    {
-      detectionResult.generalObjects.emplace_back(CladRect(object.rect.GetX(), object.rect.GetY(),
-                                                           object.rect.GetWidth(), object.rect.GetHeight()),
-                                                  object.name, object.timestamp, object.score);
-    }
+    std::swap(detectionResult.salientPoints, objects);
     
     _mutex.lock();
     _results.emplace(std::move(detectionResult));

@@ -6,6 +6,7 @@ file(STRINGS "${ANKI_SRCLIST_DIR}/cti_vision_clad.srcs.lst" SRCS)
 
 set(CLAD_INCLUDES
   "${CMAKE_CURRENT_SOURCE_DIR}/"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../../common/clad_src/"
 )
 
 set(OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/coretech/vision")
@@ -34,6 +35,7 @@ target_include_directories(cti_vision_clad
 
 target_link_libraries(cti_vision_clad
   clad
+  cti_common_clad
 )
 
 #

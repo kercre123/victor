@@ -724,11 +724,11 @@ GTEST_TEST(ObjectDetector, DetectionAndClassification)
   std::string testImageFile;
   Vision::ImageRGB testImg;
   Vision::ImageCache imageCache;
-  std::list<Vision::ObjectDetector::DetectedObject> objects;
+  std::list<Vision::SalientPoint> objects;
   
   // Helper to deal with the fact the detector runs asynchronously.
   // This just waits for it to finish.
-  auto DetectionHelper = [&detector](Vision::ImageCache& imageCache, std::list<Vision::ObjectDetector::DetectedObject>& objects) -> Result
+  auto DetectionHelper = [&detector](Vision::ImageCache& imageCache, std::list<Vision::SalientPoint>& objects) -> Result
   {
     const bool started = detector.StartProcessingIfIdle(imageCache);
     if(!started)
@@ -765,12 +765,12 @@ GTEST_TEST(ObjectDetector, DetectionAndClassification)
 
     for(auto const& object : objects)
     {
-      printf("Found %s in image %s\n", object.name.c_str(), testImageFile.c_str());
+      printf("Found %s in image %s\n", object.description.c_str(), testImageFile.c_str());
     }
     EXPECT_EQ(1, objects.size());
     if(!objects.empty())
     {
-      EXPECT_EQ("653:military uniform", objects.front().name);
+      EXPECT_EQ("653:military uniform", objects.front().description);
     }
     
     testImageFile = Util::FileUtils::FullFilePath({testImagePath, "cat.jpg"});
@@ -786,10 +786,10 @@ GTEST_TEST(ObjectDetector, DetectionAndClassification)
     bool catFound = false;
     for(auto const& object : objects)
     {
-      printf("Found %s in image %s\n", object.name.c_str(), testImageFile.c_str());
+      printf("Found %s in image %s\n", object.description.c_str(), testImageFile.c_str());
       
       // Expecting "cat" to be somewhere in the object's name
-      if(objects.front().name.find("cat") != std::string::npos) {
+      if(objects.front().description.find("cat") != std::string::npos) {
         catFound = true;
       }
     }
@@ -850,9 +850,9 @@ GTEST_TEST(ObjectDetector, DetectionAndClassification)
         
         bool catFound = false;
         std::for_each(objects.begin(), objects.end(),
-                      [&catFound](const Vision::ObjectDetector::DetectedObject& object)
+                      [&catFound](const Vision::SalientPoint& object)
                       {
-                        if(object.name == "cat")
+                        if(object.description == "cat")
                         {
                           catFound = true;
                         }
@@ -865,10 +865,12 @@ GTEST_TEST(ObjectDetector, DetectionAndClassification)
           Vision::ImageRGB dispImg(testImg);
           for(auto const& object : objects)
           {
-            dispImg.DrawRect(object.rect, NamedColors::RED);
+            dispImg.DrawPoly(Poly2f(object.shape), NamedColors::RED);
             std::stringstream caption;
-            caption << object.name << "[" << std::round(100.f*object.score) << "]";
-            dispImg.DrawText((object.rect.GetBottomLeft() + Point2i(2,-6)).CastTo<f32>(), caption.str(), NamedColors::RED, .5f, true);
+            caption << object.description << "[" << std::round(100.f*object.score) << "]";
+            
+            ASSERT_FALSE(object.shape.empty());
+            dispImg.DrawText(Point2f(object.shape.front()) + Point2f(2.f,-6.f), caption.str(), NamedColors::RED, .5f, true);
           }
           dispImg.Display("Detections", 0);
         }

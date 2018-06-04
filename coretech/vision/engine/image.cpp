@@ -10,11 +10,13 @@
  **/
 
 #include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/vision/engine/image_impl.h"
 
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/ankiDefines.h"
+#include "util/helpers/boundedWhile.h"
 
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/core.hpp"
@@ -231,6 +233,55 @@ namespace Vision {
   }
 
   template<typename T>
+  static void DrawPolyHelper(ImageBase<T>* img, const cv::Mat& ptsMat,
+                             const cv::Scalar& color, const s32 thickness,
+                             const bool closed)
+  {
+    const cv::Point *pts = (const cv::Point*) ptsMat.data;
+    int npts = ptsMat.rows;
+    
+    try {
+      cv::polylines(img->get_CvMat_(), &pts, &npts, 1, closed, color, thickness);
+    }
+    catch (cv::Exception& e)
+    {
+      PRINT_NAMED_ERROR("ImageBase.DrawPolyHelper.OpenCvPolylinesFailed",
+                        "%s", e.what());
+      return;
+    }
+  }
+
+  template<typename T>
+  void ImageBase<T>::DrawPoly(const Poly2f& poly, const ColorRGBA& color, const s32 thickness, const bool closed)
+  {
+    cv::Mat ptsMat((int)poly.size(), 2, CV_32SC1);
+    int row = 0;
+    for(auto const& polyPt : poly)
+    {
+      s32 *ptsMat_row = ptsMat.ptr<s32>(row++);
+      ptsMat_row[0] = (s32)std::round(polyPt.x());
+      ptsMat_row[1] = (s32)std::round(polyPt.y());
+    }
+    
+    DrawPolyHelper(this, ptsMat, GetCvColor(color), thickness, closed);
+  }
+
+  template<typename T>
+  void ImageBase<T>::DrawPoly(const Poly2i& poly, const ColorRGBA& color, const s32 thickness, const bool closed)
+  {
+    cv::Mat ptsMat((int)poly.size(), 2, CV_32FC1);
+    int row = 0;
+    for(auto const& polyPt : poly)
+    {
+      f32 *ptsMat_row = ptsMat.ptr<f32>(row++);
+      ptsMat_row[0] = polyPt.x();
+      ptsMat_row[1] = polyPt.y();
+    }
+    
+    DrawPolyHelper(this, ptsMat, GetCvColor(color), thickness, closed);
+  }
+
+  template<typename T>
   void ImageBase<T>::DrawFilledConvexPolygon(const std::vector<Point2i> points, const ColorRGBA& color)
   {
     std::vector<cv::Point> cvpts;
@@ -264,15 +315,22 @@ namespace Vision {
   template<typename T>
   void ImageBase<T>::DrawText(const Point2f& position, const std::string& str,
                               const ColorRGBA& color, f32 scale, bool dropShadow,
-                              int thickness)
+                              int thickness, bool centered)
   {
+    Point2f alignedPos(position);
+    if(centered)
+    {
+      const cv::Size textSize = cv::getTextSize(str, CV_FONT_NORMAL, scale, thickness, nullptr);
+      alignedPos.x() -= textSize.width/2;
+    }
+    
     if(dropShadow) {
-      cv::Point shadowPos(position.get_CvPoint_());
+      cv::Point shadowPos(alignedPos.get_CvPoint_());
       shadowPos.x += 1;
       shadowPos.y += 1;
       cv::putText(this->get_CvMat_(), str, shadowPos, CV_FONT_NORMAL, scale, GetCvColor(NamedColors::BLACK), thickness);
     }
-    cv::putText(this->get_CvMat_(), str, position.get_CvPoint_(), CV_FONT_NORMAL, scale, GetCvColor(color), thickness);
+    cv::putText(this->get_CvMat_(), str, alignedPos.get_CvPoint_(), CV_FONT_NORMAL, scale, GetCvColor(color), thickness);
   }
   
   template<typename T>

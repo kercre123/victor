@@ -175,15 +175,15 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
     ApplyGamma(_imgBeingProcessed);
     
     // Store its size relative to original size so we can rescale object detections later
-    _heightScale = (f32)imageCache.GetOrigNumRows() / (f32)_imgBeingProcessed.GetNumRows();
-    _widthScale  = (f32)imageCache.GetOrigNumCols() / (f32)_imgBeingProcessed.GetNumCols();
+    _heightScale = (f32)imageCache.GetOrigNumRows();
+    _widthScale  = (f32)imageCache.GetOrigNumCols();
     
     PRINT_CH_INFO(kLogChannelName, "ObjectDetector.StartProcessingIfIdle.ProcessingImage",
                   "Detecting objects in %dx%d image t=%u",
                   _imgBeingProcessed.GetNumCols(), _imgBeingProcessed.GetNumRows(), _imgBeingProcessed.GetTimestamp());
     
     _future = std::async(std::launch::async, [this]() {
-      std::list<DetectedObject> objects;
+      std::list<SalientPoint> objects;
   
       _profiler.Tic("Model.Run");
       Result result = _model->Run(_imgBeingProcessed, objects);
@@ -205,7 +205,7 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ObjectDetector::GetObjects(std::list<DetectedObject>& objects_out)
+bool ObjectDetector::GetObjects(std::list<SalientPoint>& objects_out)
 {
   // Always clear the output list, so it's definitely only populated once the
   // future is ready below
@@ -219,21 +219,21 @@ bool ObjectDetector::GetObjects(std::list<DetectedObject>& objects_out)
     const std::future_status futureStatus = _future.wait_for(kWaitForTime);
     if(std::future_status::ready == futureStatus)
     {
-      std::list<DetectedObject> objects = _future.get();
+      std::list<SalientPoint> objects = _future.get();
       DEV_ASSERT(!_future.valid(), "ObjectDetector.GetObjects.FutureStillValid");
       
-      // The detection will be at the processing resolution. Need to convert it to original resolution.
-      if( !Util::IsNear(_widthScale, 1.f) || !Util::IsNear(_heightScale,1.f))
-      {
-        
-        std::for_each(objects.begin(), objects.end(), [this](DetectedObject& object)
+      // The detection will be in normalized coordinates. Need to convert it to original resolution.
+      std::for_each(objects.begin(), objects.end(), [this](SalientPoint& object)
+                    {
+                      object.x_img *= _widthScale;
+                      object.y_img *= _heightScale;
+                      
+                      for(auto &pt : object.shape)
                       {
-                        object.rect = Rectangle<s32>(std::round((f32)object.rect.GetX() * _widthScale),
-                                                     std::round((f32)object.rect.GetY() * _heightScale),
-                                                     std::round((f32)object.rect.GetWidth() * _widthScale),
-                                                     std::round((f32)object.rect.GetHeight() * _heightScale));
-                      });
-      }
+                        pt.x *= _widthScale;
+                        pt.y *= _heightScale;
+                      }
+                    });
       
       if(ANKI_DEV_CHEATS)
       {
@@ -244,7 +244,7 @@ bool ObjectDetector::GetObjects(std::list<DetectedObject>& objects_out)
         for(auto const& object : objects)
         {
           PRINT_CH_INFO(kLogChannelName, "ObjectDetector.GetObjects.FoundObject", "t=%ums Name:%s Score:%.3f",
-                        _imgBeingProcessed.GetTimestamp(), object.name.c_str(), object.score);
+                        _imgBeingProcessed.GetTimestamp(), object.description.c_str(), object.score);
         }
       }
       

@@ -18,6 +18,9 @@
 #define __Anki_Vision_ObjectDetector_TensorFlow_H__
 
 #include "coretech/common/shared/types.h"
+
+#include "clad/types/salientPointTypes.h"
+
 #include "json/json.h"
 
 #include "opencv2/core/core.hpp"
@@ -49,16 +52,8 @@ public:
   // Load the model/labels files specified in the config and set up assocated parameters
   Result LoadModel(const std::string& modelPath, const Json::Value& config);
 
-  struct DetectedObject
-  {
-    TimeStamp_t     timestamp;
-    float           score;
-    std::string     name;
-    float           xmin, ymin, xmax, ymax;
-  };
-
   // Run forward inference on the given image/timestamp and return any objects found
-  Result Detect(cv::Mat& img, const TimeStamp_t t, std::list<DetectedObject>& objects);
+  Result Detect(cv::Mat& img, const TimeStamp_t t, std::list<Vision::SalientPoint>& objects);
 
   bool IsVerbose() const { return _params.verbose; }
 
@@ -70,16 +65,16 @@ private:
   // Helper to find the index of the a single output with the highest score, assumed to 
   // correspond to the matching label from the labels file
   void GetClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp, 
-                         std::list<DetectedObject>& objects);
+                         std::list<Vision::SalientPoint>& objects);
 
   // Helper to return a set of localization boxes from a grid, assuming a binary classifcation 
   // (e.g. person / no-person in a 6x6 grid). Grid size is specified in JSON config
   void GetLocalizedBinaryClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp, 
-                                        std::list<DetectedObject>& objects);
+                                        std::list<Vision::SalientPoint>& objects);
 
   // Helper to interpret four outputs as SSD boxes (num detections, scores, classes, and boxes)
   void GetDetectedObjects(const std::vector<tensorflow::Tensor>& outputTensors, TimeStamp_t timestamp,
-                          std::list<DetectedObject>& objects);
+                          std::list<Vision::SalientPoint>& objects);
 
   // Specified in config, used to determine how to interpret the output of the network, and
   // thus which helper above to call (string to use in JSON config shown for each)
@@ -134,6 +129,10 @@ private:
   std::unique_ptr<tensorflow::Session>      _session;
   std::unique_ptr<tensorflow::MemmappedEnv> _memmappedEnv;
   std::vector<std::string>                  _labels;
+  
+  // For OutputType::BinaryLocalization
+  cv::Mat_<uint8_t>                         _detectionGrid;
+  cv::Mat_<int32_t>                         _labelsGrid;
   
 }; // class ObjectDetector
 

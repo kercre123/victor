@@ -50,7 +50,7 @@ public:
   
   Result LoadModel(const std::string& modelPath, const std::string& cachePath, const Json::Value& config);
 
-  Result Run(const ImageRGB& img, std::list<ObjectDetector::DetectedObject>& objects);
+  Result Run(const ImageRGB& img, std::list<SalientPoint>& objects);
   
 private:
   
@@ -94,7 +94,7 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const std:
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<ObjectDetector::DetectedObject>& objects)
+Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<SalientPoint>& objects)
 {
   objects.clear();
 
@@ -173,25 +173,15 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<ObjectDetector:
       {
         for(auto const& object : detectedObjects)
         {
-          DEV_ASSERT(object.isMember("xmin") && object.isMember("xmax") &&
-                     object.isMember("ymin") && object.isMember("ymax"),
-                     "ObjectDetector.Model.MissingJsonFieldsXY");
+          SalientPoint salientPoint;
+          const bool success = salientPoint.SetFromJSON(object);
+          if(!success)
+          {
+            PRINT_NAMED_ERROR("ObjectDetector.Model.FailedToSetFromJSON", "");
+            continue;
+          }
           
-          const int xmin = std::round(object["xmin"].asFloat() * img.GetNumCols());
-          const int ymin = std::round(object["ymin"].asFloat() * img.GetNumRows());
-          const int xmax = std::round(object["xmax"].asFloat() * img.GetNumCols());
-          const int ymax = std::round(object["ymax"].asFloat() * img.GetNumRows());
-          
-          DEV_ASSERT(object.isMember("timestamp"), "ObjectDetector.Model.MissingJsonFieldTimestamp");
-          DEV_ASSERT(object.isMember("score"),     "ObjectDetector.Model.MissingJsonFieldScore");
-          DEV_ASSERT(object.isMember("name"),      "ObjectDetector.Model.MissingJsonFieldName");
-          
-          objects.emplace_back(DetectedObject{
-            .timestamp = object["timestamp"].asUInt(),
-            .score = object["score"].asFloat(),
-            .name = object["name"].asString(),
-            .rect = Rectangle<s32>(xmin, ymin, xmax-xmin, ymax-ymin)
-          });
+          objects.emplace_back(std::move(salientPoint));
         }
       }
     }

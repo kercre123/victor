@@ -101,7 +101,6 @@ Polygon<N,T>::Polygon(const Polygon<N+1,T>& other)
   }
 }
 
-
 template <PolygonDimType N, typename T>
 Polygon<N,T>::Polygon(const Rectangle<T>& rect)
   : _points{rect.GetTopLeft(), rect.GetTopRight(), rect.GetBottomRight(), rect.GetBottomLeft()}

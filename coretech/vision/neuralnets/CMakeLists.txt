@@ -112,6 +112,7 @@ target_link_libraries(${TARGET_NAME}
   jsoncpp
   util
   cti_common
+  cti_vision_clad               # Just vision CLAD, not the whole enchilada
   ${OPENCV_LIBS_NO_PROTOBUF}    # NOTE: Order may matter here? (OpenCV before platform?)
   ${PLATFORM_LIBS}
 )

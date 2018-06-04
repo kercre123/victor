@@ -115,7 +115,7 @@ public:
 static void GetImage(const std::string& imageFilename, const std::string timestampFilename,
                      cv::Mat& img, Anki::TimeStamp_t timestamp);
 
-static void GetJsonResults(const std::list<Anki::ObjectDetector::DetectedObject>& objects, Json::Value& detectionResults);
+static void ConvertSalientPointsToJson(const std::list<Anki::Vision::SalientPoint>& objects, Json::Value& detectionResults);
 
 static bool WriteResults(const std::string jsonFilename, const Json::Value& detectionResults);
 
@@ -138,8 +138,8 @@ int main(int argc, char **argv)
   Util::gLoggerProvider = logger.get();
 # else
   const bool colorizeStderrOutput = false; // TODO: Get from Webots proto in simulation?
-  auto logger = std::make_unique<Util::PrintfLoggerProvider>(Util::ILoggerProvider::LOG_LEVEL_DEBUG,
-                                                               colorizeStderrOutput);  
+  auto logger = std::make_unique<Util::PrintfLoggerProvider>(Anki::Util::LOG_LEVEL_DEBUG,
+                                                             colorizeStderrOutput);  
 # endif
 
   Util::gLoggerProvider = logger.get();
@@ -251,7 +251,7 @@ int main(int argc, char **argv)
       }
 
       // Detect what's in it
-      std::list<ObjectDetector::DetectedObject> objects;
+      std::list<Vision::SalientPoint> objects;
       {
         auto ticToc = TicToc("Detect");
         result = detector.Detect(img, timestamp, objects);
@@ -264,7 +264,7 @@ int main(int argc, char **argv)
 
       // Convert the results to JSON
       Json::Value detectionResults;
-      GetJsonResults(objects, detectionResults);
+      ConvertSalientPointsToJson(objects, detectionResults);
 
       // Write out the Json
       {
@@ -363,29 +363,21 @@ void GetImage(const std::string& imageFilename, const std::string timestampFilen
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void GetJsonResults(const std::list<Anki::ObjectDetector::DetectedObject>& objects, Json::Value& detectionResults)
+void ConvertSalientPointsToJson(const std::list<Anki::Vision::SalientPoint>& objects, Json::Value& detectionResults)
 {
   std::string objectsStr;
   
   Json::Value& objectsJSON = detectionResults["objects"];
   for(auto const& object : objects)
   {
-    objectsStr += object.name + "[" + std::to_string((int)round(100.f*object.score)) + "] ";
-    Json::Value json;
-    json["timestamp"] = object.timestamp;
-    json["score"]     = object.score;
-    json["name"]      = object.name;
-    json["xmin"]      = object.xmin;
-    json["ymin"]      = object.ymin;
-    json["xmax"]      = object.xmax;
-    json["ymax"]      = object.ymax;
-    
+    objectsStr += object.description + "[" + std::to_string((int)round(100.f*object.score)) + "] ";
+    const Json::Value json = object.GetJSON();
     objectsJSON.append(json);
   }  
 
   if(!objects.empty())
   {
-    LOG_INFO("VicNeuralNets.Main.DetectedObjects", 
+    LOG_INFO("VicNeuralNets.Main.ConvertSalientPointsToJson", 
              "Detected %zu objects: %s", objects.size(), objectsStr.c_str());
   }    
 } 

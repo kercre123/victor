@@ -40,6 +40,7 @@
 #include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -104,7 +105,7 @@ namespace Cozmo {
   
   // Hack to continue drawing detected objects for a bit after they are detected
   // since object detection is slow
-  CONSOLE_VAR(u32, kKeepDrawingDetectionsFor_ms,   "Vision.General", 500);
+  CONSOLE_VAR(u32, kKeepDrawingObjectDetectionsFor_ms,   "Vision.General", 150);
 
   namespace JsonKey
   {
@@ -1115,29 +1116,44 @@ namespace Cozmo {
     return rect;
   }
   
+  template<typename T>
+  static Point<2,T> MirrorPointHelper(const Point<2,T>& pt)
+  {
+    // TODO: figure out original image resolution?
+    constexpr f32 xmax = (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
+    constexpr f32 heightScale = (f32)FACE_DISPLAY_HEIGHT / (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT;
+    constexpr f32 widthScale  = (f32)FACE_DISPLAY_WIDTH / (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
+    
+    const Point<2,T> pt_mirror(widthScale*(xmax - pt.x()), pt.y()*heightScale);
+    return pt_mirror;
+  }
+    
   static Quad2f DisplayMirroredQuadHelper(const Quad2f& quad)
   {
     // Mirror x coordinates, swap left/right points, and scale for each point in the quad:
-    
-    const f32 xmax = (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH; // TODO: figure out original image resolution?
-    const f32 heightScale = (f32)FACE_DISPLAY_HEIGHT / (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT;
-    const f32 widthScale  = (f32)FACE_DISPLAY_WIDTH / (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
-    
-    const Point2f topLeft( widthScale*(xmax - quad.GetTopRight().x()), heightScale*quad.GetTopRight().y() );
-    const Point2f topRight( widthScale*(xmax - quad.GetTopLeft().x()), heightScale*quad.GetTopLeft().y()  );
-    
-    const Point2f btmLeft(  widthScale*(xmax - quad.GetBottomRight().x()), heightScale*quad.GetBottomRight().y() );
-    const Point2f btmRight( widthScale*(xmax - quad.GetBottomLeft().x()),  heightScale*quad.GetBottomLeft().y()  );
-    
-    const Quad2f quad_mirrored(topLeft, btmLeft, topRight, btmRight);
+    const Quad2f quad_mirrored(MirrorPointHelper(quad.GetTopRight()),
+                               MirrorPointHelper(quad.GetBottomRight()),
+                               MirrorPointHelper(quad.GetTopLeft()),
+                               MirrorPointHelper(quad.GetBottomLeft()));
     
     return quad_mirrored;
+  }
+  
+  template<typename T>
+  static Polygon<2,T> DisplayMirroredPolyHelper(const Polygon<2,T>& poly)
+  {
+    Polygon<2,T> poly_mirrored;
+    for(auto & pt : poly)
+    {
+      poly_mirrored.emplace_back(MirrorPointHelper(pt));
+    }
+    
+    return poly_mirrored;
   }
 
   Result VisionComponent::UpdateVisionMarkers(const VisionProcessingResult& procResult)
   {
     Result lastResult = RESULT_OK;
-
 
     std::list<Vision::ObservedMarker> observedMarkers;
 
@@ -1397,57 +1413,57 @@ namespace Cozmo {
     TimeStamp_t currentTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
     auto iter = _detectedObjectsToDraw.begin();
-    while(iter != _detectedObjectsToDraw.end() && iter->first < currentTime_ms - kKeepDrawingDetectionsFor_ms)
+    while(iter != _detectedObjectsToDraw.end() && iter->first < currentTime_ms - kKeepDrawingObjectDetectionsFor_ms)
     {
       iter = _detectedObjectsToDraw.erase(iter);
     }
 
     if(procResult.modesProcessed.IsBitFlagSet(VisionMode::DetectingGeneralObjects))
     {
-      for(auto const& detectedObject : procResult.generalObjects)
+      for(auto const& detectedObject : procResult.salientPoints)
       {
-        using namespace ExternalInterface;
-        _robot->Broadcast(MessageEngineToGame(RobotObservedGenericObject(detectedObject)));
-
+        // TODO: Notify behaviors somehow
         _detectedObjectsToDraw.push_back({currentTime_ms, detectedObject});
       }
     }
 
-    const s32 textHeight = 14;
-    s32 offset = textHeight;
     s32 colorIndex = 0;
     for(auto const& objectToDraw : _detectedObjectsToDraw)
     {
       const auto& object = objectToDraw.second;
 
-      const Rectangle<s32> rect(object.img_rect.x_topLeft, object.img_rect.y_topLeft,
-                                object.img_rect.width, object.img_rect.height);
-      const ColorRGBA color = (object.name.empty() ? NamedColors::RED : ColorRGBA::CreateFromColorIndex(colorIndex++));
-      _vizManager->DrawCameraRect(rect, color);
-      const std::string caption(object.name + "[" + std::to_string((s32)std::round(100.f*object.score))
+      const Poly2f poly(object.shape);
+      const ColorRGBA color = (object.description.empty() ? NamedColors::RED : ColorRGBA::CreateFromColorIndex(colorIndex++));
+      _vizManager->DrawCameraPoly(poly, color);
+      const std::string caption(object.description + "[" + std::to_string((s32)std::round(100.f*object.score))
                                 + "] t:" + std::to_string(object.timestamp));
-      _vizManager->DrawCameraText(rect.GetTopLeft().CastTo<float>(), caption, color);
+      _vizManager->DrawCameraText(Point2f(object.x_img, object.y_img), caption, color);
       
       if(kDisplayDetectionsInMirrorMode)
       {
-        std::string str(object.name);
+        const Point2f centroid(object.x_img, object.y_img);
+        PRINT_NAMED_INFO("VisionComponent.UpdateDetectedObjects.MirrorMode",
+                         "Drawing %s poly with %d points. Centroid: (%.2f,%.2f)",
+                         EnumToString(object.salientType), (int)poly.size(), centroid.x(), centroid.y());
+        std::string str(object.description);
         if(!str.empty())
         {
           str += ":" + std::to_string((s32)std::round(object.score*100.f));
         }
-        const auto& rect = object.img_rect;
-        std::function<void (Vision::ImageRGB&)> modFcn = [str,offset,rect,color](Vision::ImageRGB& img)
+        std::function<void (Vision::ImageRGB&)> modFcn = [str,centroid,poly,color](Vision::ImageRGB& img)
         {
+          const Point2f mirroredCentroid = MirrorPointHelper(centroid);
           if(!str.empty())
           {
-            img.DrawText({1.f, offset}, str, NamedColors::YELLOW, 0.6f, true);
+            const bool kDropShadow = true;
+            const bool kCentered = true;
+            img.DrawText(mirroredCentroid, str, NamedColors::YELLOW, 0.6f, kDropShadow, 1, kCentered);
           }
-          img.DrawRect(DisplayMirroredRectHelper(rect.x_topLeft, rect.y_topLeft, rect.width, rect.height), color);
+          img.DrawFilledCircle(mirroredCentroid, color, 3);
+          img.DrawPoly(DisplayMirroredPolyHelper(poly), color, 2);
         };
 
         AddDrawScreenModifier(modFcn);
-
-        offset += textHeight;
       }
     }
 

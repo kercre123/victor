@@ -46,7 +46,7 @@ public:
 
   // Initialize polygon from list of points. Assumes points are already in clockwise order!
   Polygon(std::initializer_list< Point<N,T> > points);
-
+  
   // Construct from polygon living in one dimension higher. Last
   // dimension simply gets dropped. For example, this allows
   // construction of a 2D quad from a 3D polygon, by simply using the
@@ -58,7 +58,7 @@ public:
   explicit Polygon(const RotatedRectangle& rect);
   explicit Polygon(const Quadrilateral<2, T>& quad);
   
-  // Initialize 2D polygon from a list of clad points. Assumes points are already in clockwise order!
+  // Initialize 2D/3D polygons from a list of clad points. Assumes points are already in clockwise order!
   Polygon(const std::vector<CladPoint2d>& cladPoints);
   Polygon(const std::vector<CladPoint3d>& cladPoints);
 

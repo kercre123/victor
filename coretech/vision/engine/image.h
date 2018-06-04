@@ -17,6 +17,7 @@
 #include "coretech/common/engine/array2d.h"
 #include "coretech/common/engine/colorRGBA.h"
 #include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/math/quad.h"
 #include "coretech/common/engine/math/rect.h"
 
@@ -115,6 +116,10 @@ namespace Vision {
     // Draw quadrangle defined by four given points
     void DrawQuad(const Quad2f& quad, const ColorRGBA& color, const s32 thickness = 1);
 
+    // Draw generic, unfilled polygon (note, floating point polylines are rounded)
+    void DrawPoly(const Poly2f& poly, const ColorRGBA& color, const s32 thickness = 1, const bool closed = true);
+    void DrawPoly(const Poly2i& poly, const ColorRGBA& color, const s32 thickness = 1, const bool closed = true);
+    
     // Draw a filled convex polygon defined by a list of points
     void DrawFilledConvexPolygon(const std::vector<Point2i> points, const ColorRGBA& color);
 
@@ -124,7 +129,8 @@ namespace Vision {
                   const ColorRGBA& color, 
                   f32 scale = 1.f, 
                   bool dropShadow = false, 
-                  int thickness = 1);
+                  int thickness = 1,
+                  bool centered = false);
 
     // Returns the bounding box dimensions of the text that would be drawn
     // if the same parameters were passed into DrawText()

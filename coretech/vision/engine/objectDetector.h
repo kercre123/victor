@@ -20,6 +20,8 @@
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/profiler.h"
 
+#include "clad/types/salientPointTypes.h"
+
 #include <future>
 #include <list>
 
@@ -49,20 +51,12 @@ public:
   //    assumed to exist and used to read the model.
   Result Init(const std::string& modelPath, const std::string& cachePath, const Json::Value& config);
   
-  struct DetectedObject
-  {
-    TimeStamp_t     timestamp;
-    float           score;
-    std::string     name;
-    Rectangle<s32>  rect;
-  };
-
   // Returns true if image was used, false if otherwise occupied or image wasn't suitable (e.g., not color)
   bool StartProcessingIfIdle(ImageCache& imageCache);
   
   // Returns true if processing of the last image provided using StartProcessingIfIdle is complete
   // and populates objects with any detections.
-  bool GetObjects(std::list<DetectedObject>& objects);
+  bool GetObjects(std::list<SalientPoint>& objects);
   
   // Example usage:
   //
@@ -80,7 +74,7 @@ private:
   // Hide the library/implementation we actually use for detecting objects
   class Model;
   std::unique_ptr<Model> _model;
-  std::future<std::list<DetectedObject>> _future; // for processing aysnchronously
+  std::future<std::list<SalientPoint>> _future; // for processing aysnchronously
 
   // We process asynchronsously, so need a copy of the image data
   Vision::ImageRGB _imgBeingProcessed;

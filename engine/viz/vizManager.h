@@ -240,6 +240,11 @@ namespace Anki {
                           const Point2f& end,
                           const ColorRGBA& color);
       
+      // Draw a polygon (as a set of line segments) in the camera display
+      void DrawCameraPoly(const Poly2f& poly,
+                          const ColorRGBA& color,
+                          const bool isClosed = true);
+      
       // Draw an oval in the camera display
       void DrawCameraOval(const Point2f& center,
                           float xRadius, float yRadius,

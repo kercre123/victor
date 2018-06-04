@@ -10,6 +10,8 @@
  **/
 
 #include "coretech/common/shared/types.h"
+#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/rect_impl.h"
 #include "coretech/vision/neuralnets/objectDetector_tensorflow.h"
 
 #include "tensorflow/core/framework/graph.pb.h"
@@ -417,7 +419,7 @@ Result ObjectDetector::ReadLabelsFile(const std::string& fileName, std::vector<s
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ObjectDetector::GetClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp, 
-                                       std::list<DetectedObject>& objects)
+                                       std::list<Vision::SalientPoint>& objects)
 {
   const float* outputData = outputTensor.tensor<float, 2>().data();
         
@@ -432,18 +434,19 @@ void ObjectDetector::GetClassification(const tensorflow::Tensor& outputTensor, T
     }
   }
   
+  const Rectangle<int32_t> imgRect(0.f,0.f,1.f,1.f);
+  const Poly2i imgPoly(imgRect);
+  
   if(labelIndex >= 0)
   {    
-    DetectedObject object{
-      .timestamp = timestamp,
-      .score = maxScore,
-      .name = (labelIndex < _labels.size() ? _labels.at((size_t)labelIndex) : "<UNKNOWN>"),
-      .xmin = 0, .ymin = 0, .xmax = 1, .ymax = 1,
-    };
+    Vision::SalientPoint object(timestamp, 0.5f, 0.5f, maxScore, 1.f,
+                                Vision::SalientPointType::Object,
+                                (labelIndex < _labels.size() ? _labels.at((size_t)labelIndex) : "<UNKNOWN>"),
+                                imgPoly.ToCladPoint2dVector());
     
     if(_params.verbose)
     {
-      LOG_INFO("ObjectDetector.GetClassification.ObjectFound", "Name: %s, Score: %f", object.name.c_str(), object.score);
+      LOG_INFO("ObjectDetector.GetClassification.ObjectFound", "Name: %s, Score: %f", object.description.c_str(), object.score);
     }
 
     objects.push_back(std::move(object));
@@ -456,7 +459,7 @@ void ObjectDetector::GetClassification(const tensorflow::Tensor& outputTensor, T
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ObjectDetector::GetLocalizedBinaryClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp, 
-                                                      std::list<DetectedObject>& objects)
+                                                      std::list<Vision::SalientPoint>& objects)
 {
   // Create a detection box for each grid cell that is above threshold
 
@@ -466,37 +469,141 @@ void ObjectDetector::GetLocalizedBinaryClassification(const tensorflow::Tensor& 
 
   const float* outputData = outputTensor.tensor<float, 2>().data();
 
-  // Box size in normalized image coordiantes
-  const float boxWidth  = 1.f / (float)_params.numGridCols;
-  const float boxHeight = 1.f / (float)_params.numGridRows;
-
-  int outputIndex = 0;
-  for(int xBox=0; xBox < _params.numGridCols; ++xBox)
+  _detectionGrid.create(_params.numGridRows, _params.numGridCols);
+  
+  bool anyDetections = false;
+  for(int i=0; i<_detectionGrid.rows; ++i)
   {
-    for(int yBox=0; yBox < _params.numGridRows; ++yBox)
+    uint8_t* detectionGrid_i = _detectionGrid.ptr(i);
+    for(int j=0; j<_detectionGrid.cols; ++j)
     {
-      const float score = outputData[outputIndex++];
-      if(score > _params.minScore)
-      {
-        DetectedObject box{
-          .timestamp = timestamp, 
-          .score = score,
-          .name = "",
-          .xmin = boxWidth  * (float)xBox,
-          .ymin = boxHeight * (float)yBox, 
-          .xmax = boxWidth  * (float)(xBox+1),
-          .ymax = boxHeight * (float)(yBox+1),
-        };
-
-        objects.push_back(std::move(box));
+      // Compute the column-major index to get data from the output tensor
+      const int outputIndex = j*_params.numGridRows + i;
+      const float score = outputData[outputIndex];
+      
+      // Create binary detection image
+      if(score > _params.minScore) {
+        anyDetections = true;
+        detectionGrid_i[j] = static_cast<uint8_t>(255.f * score);
       }
+      else {
+        detectionGrid_i[j] = 0;
+      }
+      
     }
   }
+  
+  if(anyDetections)
+  {
+    // Someday if we ever link vic-neuralnets against coretech vision, we could use our own connected
+    // components API, but for now, rely directly on OpenCV. Because we want to get average score, 
+    // we'll do our own "stats" computation below instead of using connectedComponentsWithStats()
+    const s32 count = cv::connectedComponents(_detectionGrid, _labelsGrid);
+    DEV_ASSERT((_detectionGrid.rows == _labelsGrid.rows) && (_detectionGrid.cols == _labelsGrid.cols),
+               "ObjectDetector.GetLocalizedBinaryClassification.MismatchedLabelsGridSize");
+    
+    if(_params.verbose)
+    {
+      LOG_INFO("ObjectDetector.GetLocalizedBinaryClassification.FoundConnectedComponents",
+               "NumComponents: %d", count);
+    }
+    
+    // Compute stats for each connected component
+    struct Stat {
+      int32_t area; // NOTE: area will be number of grid squares, not area of bounding box shape
+      int32_t scoreSum;
+      Point2f centroid;
+      int xmin, xmax, ymin, ymax;
+    };
+    std::vector<Stat> stats(count, {0,0,{0.f,0.f},_detectionGrid.cols, -1, _detectionGrid.rows, -1});
+    
+    for(int i=0; i<_detectionGrid.rows; ++i)
+    {
+      const uint8_t* detectionGrid_i = _detectionGrid.ptr<uint8_t>(i);
+      const int32_t* labelsGrid_i    = _labelsGrid.ptr<int32_t>(i);
+      for(int j=0; j<_detectionGrid.cols; ++j)
+      {
+        const int32_t label = labelsGrid_i[j];
+        if(label > 0) // zero is background (not part of any connected component)
+        {
+          DEV_ASSERT(label < count, "ObjectDetector.GetLocalizedBinaryClassification.BadLabel");
+          const int32_t score = detectionGrid_i[j];
+          Stat& stat = stats[label];
+          stat.scoreSum += score;
+          stat.area++;
+          
+          stat.centroid.x() += j;
+          stat.centroid.y() += i;
+          
+          stat.xmin = std::min(stat.xmin, j);
+          stat.xmax = std::max(stat.xmax, j);
+          stat.ymin = std::min(stat.ymin, i);
+          stat.ymax = std::max(stat.ymax, i);
+        }
+      }
+    }
+    
+    // Create a SalientPoint to return for each connected component (skipping background component 0)
+    const float widthScale  = 1.f / static_cast<float>(_detectionGrid.cols);
+    const float heightScale = 1.f / static_cast<float>(_detectionGrid.rows);
+    for(s32 iComp=1; iComp < count; ++iComp)
+    {
+      Stat& stat = stats[iComp];
+      
+      const float area = static_cast<float>(stat.area);
+      const float avgScore = (1.f/255.f) * ((float)stat.scoreSum / area);
+      
+      // Centroid currently contains a sum. Divide by area to get actual centroid.
+      stat.centroid *= 1.f/area;
+      
+      // Convert centroid to normalized coordinates
+      stat.centroid.x() = Util::Clamp(stat.centroid.x()*widthScale,  0.f, 1.f);
+      stat.centroid.y() = Util::Clamp(stat.centroid.y()*heightScale, 0.f, 1.f);
+      
+      // Use the single label (this is supposed to be a binary classifier after all) and
+      // convert it to a SalientPointType
+      DEV_ASSERT(_labels.size()==1, "ObjectDetector.GetLocalizedBinaryClassification.NotBinary");
+      Vision::SalientPointType type = Vision::SalientPointType::Unknown;
+      const bool success = SalientPointTypeFromString(_labels[0], type);
+      DEV_ASSERT(success, "ObjectDetector.GetLocalizedBinaryClassification.NoSalientPointTypeForLabel");
+
+      // Use the bounding box as the shape (in normalized coordinates)
+      // TODO: Create a more precise polygon that traces the shape of the connected component (cv::findContours?)
+      const float xmin = (static_cast<float>(stat.xmin)-0.5f) * widthScale;
+      const float ymin = (static_cast<float>(stat.ymin)-0.5f) * heightScale;
+      const float xmax = (static_cast<float>(stat.xmax)+0.5f) * widthScale;
+      const float ymax = (static_cast<float>(stat.ymax)+0.5f) * heightScale;
+      const Poly2f shape( Rectangle<float>(xmin, ymin, xmax-xmin, ymax-ymin) );
+      
+      Vision::SalientPoint object(timestamp,
+                                  stat.centroid.x(),
+                                  stat.centroid.y(),
+                                  avgScore,
+                                  area * (widthScale*heightScale), // convert to area fraction
+                                  type,
+                                  EnumToString(type),
+                                  shape.ToCladPoint2dVector());
+      
+      if(_params.verbose)
+      {
+        LOG_INFO("ObjectDetector.GetLocalizedBinaryClassification.SalientPoint",
+                 "%d: %s score:%.2f area:%.2f [%s %s %s %s]",
+                 iComp, stat.centroid.ToString().c_str(), avgScore, area,
+                 shape[0].ToString().c_str(),
+                 shape[1].ToString().c_str(),
+                 shape[2].ToString().c_str(),
+                 shape[3].ToString().c_str());
+      }
+      
+      objects.push_back(std::move(object));
+    }
+  }
+
 } 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ObjectDetector::GetDetectedObjects(const std::vector<tensorflow::Tensor>& outputRensors, TimeStamp_t timestamp,
-                                        std::list<DetectedObject>& objects)
+                                        std::list<Vision::SalientPoint>& objects)
 {
   DEV_ASSERT(outputRensors.size() == 4, "ObjectDetector.GetDetectedObjects.WrongNumOutputs");
 
@@ -521,15 +628,26 @@ void ObjectDetector::GetDetectedObjects(const std::vector<tensorflow::Tensor>& o
       if(scores[i] >= _params.minScore)
       {
         const float* box = boxes + (4*i);
+        const float xmin = box[0];
+        const float ymin = box[1];
+        const float xmax = box[2];
+        const float ymax = box[3];
         
         const size_t labelIndex = (size_t)(classes[i]);
 
-        objects.emplace_back(DetectedObject{
-          .timestamp = 0, // TODO: Fill in timestamp!  img.GetTimestamp(),
-          .score     = scores[i],
-          .name      = (labelIndex < _labels.size() ? _labels[labelIndex] : "<UNKNOWN>"),
-          .xmin = box[0], .ymin = box[1], .xmax = box[2], .ymax = box[3],
-        });
+        const Rectangle<int32_t> bbox(xmin, ymin, xmax-xmin, ymax-ymin);
+        const Poly2i poly(bbox);
+        
+        Vision::SalientPoint object(timestamp,
+                                    (float)(xmin+xmax) * 0.5f,
+                                    (float)(ymin+ymax) * 0.5f,
+                                    scores[i],
+                                    bbox.Area(),
+                                    Vision::SalientPointType::Object,
+                                    (labelIndex < _labels.size() ? _labels[labelIndex] : "<UNKNOWN>"),
+                                    poly.ToCladPoint2dVector());
+        
+        objects.emplace_back(std::move(object));
       }
     }
 
@@ -537,7 +655,7 @@ void ObjectDetector::GetDetectedObjects(const std::vector<tensorflow::Tensor>& o
     {
       std::string objectsStr;
       for(auto const& object : objects) {
-        objectsStr += object.name + " ";
+        objectsStr += object.description + " ";
       }
 
       LOG_INFO("ObjectDetector.GetDetectedObjects.ReturningObjects", 
@@ -548,7 +666,7 @@ void ObjectDetector::GetDetectedObjects(const std::vector<tensorflow::Tensor>& o
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ObjectDetector::Detect(cv::Mat& img, const TimeStamp_t t, std::list<DetectedObject>& objects)
+Result ObjectDetector::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Vision::SalientPoint>& objects)
 {
   tensorflow::Tensor image_tensor;
 

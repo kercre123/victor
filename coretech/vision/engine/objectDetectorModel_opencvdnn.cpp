@@ -46,7 +46,7 @@ public:
   
   Result LoadModel(const std::string& modelPath, const Json::Value& config);
   
-  Result Run(const ImageRGB& img, std::list<ObjectDetector::DetectedObject>& objects);
+  Result Run(const ImageRGB& img, std::list<SalientPoint>& objects);
   
 private:
   
@@ -253,7 +253,7 @@ Result ObjectDetector::Model::ReadLabelsFile(const std::string& fileName)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<ObjectDetector::DetectedObject>& objects)
+Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<SalientPoint>& objects)
 {
   const cv::Size processingSize(_params.input_width, _params.input_height);
   const f32 scale = 1.f / (f32)_params.input_std;
@@ -277,7 +277,7 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<ObjectDetector:
     }
   }
   
-  DetectedObject object;
+  SalientPoint object;
   bool wasObjectDetected = false;
   
   if(_isDetectionMode)
@@ -293,22 +293,27 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<ObjectDetector:
       if(confidence >= _params.min_score)
       {
         const int labelIndex = detection[1];
-        const int xmin = std::max(0,(int)std::round(detection[3] * (float)img.GetNumCols()));
-        const int ymin = std::max(0,(int)std::round(detection[4] * (float)img.GetNumRows()));
-        const int xmax = std::min(img.GetNumCols(), (int)std::round(detection[5] * (float)img.GetNumCols()));
-        const int ymax = std::min(img.GetNumRows(), (int)std::round(detection[6] * (float)img.GetNumRows()));
+        const float xmin = std::max(0.f, detection[3] * (float)img.GetNumCols());
+        const float ymin = std::max(0.f, detection[4] * (float)img.GetNumRows());
+        const float xmax = std::min((float)img.GetNumCols(), detection[5] * (float)img.GetNumCols());
+        const float ymax = std::min((float)img.GetNumRows(), detection[6] * (float)img.GetNumRows());
         
-        DEV_ASSERT_MSG(xmax > xmin, "ObjectDetector.Model.Run.InvalidDetectionBoxWidth",
-                       "xmin=%d xmax=%d", xmin, xmax);
-        DEV_ASSERT_MSG(ymax > ymin, "ObjectDetector.Model.Run.InvalidDetectionBoxHeight",
-                       "ymin=%d ymax=%d", ymin, ymax);
+        DEV_ASSERT_MSG(Util::IsFltGT(xmax, xmin), "ObjectDetector.Model.Run.InvalidDetectionBoxWidth",
+                       "xmin=%f xmax=%f", xmin, xmax);
+        DEV_ASSERT_MSG(Util::IsFltGT(ymax, ymin), "ObjectDetector.Model.Run.InvalidDetectionBoxHeight",
+                       "ymin=%f ymax=%f", ymin, ymax);
         
         const bool labelIndexOOB = (labelIndex < 0 || labelIndex > _labels.size());
         
-        object.timestamp = img.GetTimestamp();
-        object.score     = confidence;
-        object.name      = (labelIndexOOB ? "UNKNOWN" :  _labels.at((size_t)labelIndex));
-        object.rect      = Rectangle<s32>(xmin, ymin, xmax-xmin, ymax-ymin);
+        object.timestamp     = img.GetTimestamp();
+        object.x_img         = (f32)(xmin+xmax) * 0.5f;
+        object.y_img         = (f32)(ymin+ymax) * 0.5f;
+        object.area_fraction = (xmax-xmin)*(ymax-ymin) / (float)img.GetNumElements();
+        object.score         = confidence;
+        object.description   = (labelIndexOOB ? "UNKNOWN" :  _labels.at((size_t)labelIndex));
+        
+        // TODO: fill in shape
+        //object.shape         = {{xmin,ymin}, {xmax,ymin}, {xmax,ymax}, {xmin,ymax}};
         
         wasObjectDetected = true;
       }
@@ -338,10 +343,15 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<ObjectDetector:
     
     if(maxLabelIndex >= 0)
     {
-      object.timestamp = img.GetTimestamp();
-      object.score     = maxScore;
-      object.name      = _labels.at((size_t)maxLabelIndex);
-      object.rect      = Rectangle<s32>(0,0,img.GetNumCols(),img.GetNumRows());
+      object.timestamp     = img.GetTimestamp();
+      object.score         = maxScore;
+      object.description   = _labels.at((size_t)maxLabelIndex);
+      object.x_img         = 0.5f;
+      object.y_img         = 0.5f;
+      object.area_fraction = 1.f;
+      
+      // TODO: object.shape =
+      //object.rect        = Rectangle<s32>(0,0,img.GetNumCols(),img.GetNumRows());
       
       wasObjectDetected = true;
     }
@@ -351,10 +361,8 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<ObjectDetector:
   {
     PRINT_CH_DEBUG(kLogChannelName,
                    (_isDetectionMode ? "ObjectDetector.Model.Run.ObjectDetected" : "ObjectDetector.Model.Run.ObjectClassified"),
-                   "Name:%s Score:%.3f Box:[%d %d %d %d] t:%ums",
-                   object.name.c_str(), object.score,
-                   object.rect.GetX(), object.rect.GetY(), object.rect.GetWidth(), object.rect.GetHeight(),
-                   object.timestamp);
+                   "Name:%s Score:%.3f t:%ums",
+                   object.description.c_str(), object.score, object.timestamp);
     
     objects.emplace_back(std::move(object));
   }
