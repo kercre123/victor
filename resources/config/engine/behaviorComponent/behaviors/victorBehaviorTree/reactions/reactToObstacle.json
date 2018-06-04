@@ -3,6 +3,7 @@
   "behaviorID": "ReactToObstacle",
   
   "associatedActiveFeature": "NoFeature",
+  "emotionEventOnActivated": "ReactToObstacle",
 
   "animTriggers": ["ReactToObstacle"],
   "wantsToBeActivatedCondition": {

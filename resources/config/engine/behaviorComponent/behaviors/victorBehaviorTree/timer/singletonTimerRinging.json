@@ -3,6 +3,7 @@
   "behaviorClass"    : "AnimGetInLoop",
 
   "associatedActiveFeature": "TimerRinging",
+  "emotionEventOnActivated": "TimerRinging",
   
   "getIn"            : "TimerRingGetIn",
   "loopAnimation"    : "TimerRing",

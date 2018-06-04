@@ -602,10 +602,12 @@ void BehaviorReactToVoiceCommand::TransitionToIntentReceived()
     case EIntentStatus::IntentUnknown:
       PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent", "Heard user intent but could not understand it" );
       intentReaction = AnimationTrigger::VC_IntentNeutral;
+      GetBEI().GetMoodManager().TriggerEmotionEvent( "NoValidVoiceIntent" );
       break;
     case EIntentStatus::NoIntentHeard:
       PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent", "No user intent was heard" );
       intentReaction = AnimationTrigger::VC_IntentNeutral;
+      GetBEI().GetMoodManager().TriggerEmotionEvent( "NoValidVoiceIntent" );
       break;
   }
 
