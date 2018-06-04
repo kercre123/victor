@@ -63,6 +63,7 @@ private:
     AnimationTrigger getOutTrigger;
     AnimationTrigger emergencyGetOutTrigger;
     std::string      devTestUtteranceString;
+    bool             triggeredByAnim;
     bool             idleDuringTTSGeneration;
     uint8_t          tracksToLock;
   };

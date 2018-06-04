@@ -133,30 +133,19 @@ anki_disable_default_build(opusenc)
 # SDK translation service that interfaces between the engine and the external world.
 #
 set(GOPATH_GATEWAY "${CMAKE_CURRENT_SOURCE_DIR}/go")
-set(GATEWAY_PROTOC_GENERATORS "${GOPATH_GATEWAY}/bin/protoc-gen-go" "${GOPATH_GATEWAY}/bin/protoc-gen-grpc-gateway")
-# NOTE: (VIC-3226) The following command compiles go for the HOST (build-machine) arch, NOT the
-# target arch.  Since this command will be executed during the TARGET build, we have to assume that
-# build env is configured for the target, and explicitly override CC/CXX to use HOST compilers.
-# TODO:(BRC) Ideally we should run this install step before starting the CMake build for the
-# TARGET architecture. It is awkward/problematic to mix HOST+TARGET compilation targets like this.
-add_custom_command(
-  OUTPUT ${GATEWAY_PROTOC_GENERATORS}
-  COMMAND ${CMAKE_COMMAND} -E env "GOPATH=${GOPATH_GATEWAY}" "CC=/usr/bin/cc" "CXX=/usr/bin/c++"
-    ${GOROOT}/bin/go install github.com/golang/protobuf/protoc-gen-go github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
-  WORKING_DIRECTORY "${GOPATH_GATEWAY}"
-)
-
+set(GATEWAY_PROTOC_GENERATORS "${PROTOBUF_HOME}/go/bin/protoc-gen-go" "${PROTOBUF_HOME}/go/bin/protoc-gen-grpc-gateway")
 set(GATEWAY_PROTO_FILES "${CMAKE_CURRENT_SOURCE_DIR}/gateway/external_interface.proto")
+
 add_custom_command(
   OUTPUT ${GATEWAY_GRPC_OUTPUT}
-  COMMAND ${CMAKE_COMMAND} -E env "PATH=${GOPATH_GATEWAY}/bin:$ENV{PATH}"
+  COMMAND ${CMAKE_COMMAND} -E env "PATH=${PROTOBUF_HOME}/go/bin:$ENV{PATH}"
     ${PROTOBUF_HOME}/bin/protoc "-I${CMAKE_CURRENT_SOURCE_DIR}/gateway"
     -I"${PROTOBUF_HOME}/include"
     "-I${GOPATH_GATEWAY}/src"
     "-I${GOPATH_GATEWAY}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis"
     "--go_out=plugins=grpc:${CMAKE_SOURCE_DIR}/generated/go/src/proto/external_interface"
     "${GATEWAY_PROTO_FILES}"
-  COMMAND ${CMAKE_COMMAND} -E env "PATH=${GOPATH_GATEWAY}/bin:$ENV{PATH}"
+  COMMAND ${CMAKE_COMMAND} -E env "PATH=${PROTOBUF_HOME}/go/bin:$ENV{PATH}"
     ${PROTOBUF_HOME}/bin/protoc -I"${CMAKE_CURRENT_SOURCE_DIR}/gateway"
     -I"${PROTOBUF_HOME}/include"
     -I"${GOPATH_GATEWAY}/src"
@@ -166,4 +155,3 @@ add_custom_command(
   DEPENDS "${GATEWAY_PROTO_FILES}" "${GATEWAY_PROTOC_GENERATORS}"
 )
 _build_cloud_executable(vic-gateway)
-_add_chipper_flags(vic-gateway)

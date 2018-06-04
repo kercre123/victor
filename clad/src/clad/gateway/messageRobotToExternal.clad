@@ -32,10 +32,17 @@ message RobotCompletedAction {
     ActionCompletedUnion completionInfo,
 }
 
+// TODO: remove this once we figure out how we want the engine to send events
+// Chicken and the egg problem with VIC-3186
+message EventPlaceholder {
+  string test,
+}
+
 // Note: these values and messages must match the values that get added to MessageEngineToGame
 union MessageRobotToExternal {
   UiDeviceConnected    UiDeviceConnected    = 0x00, // DO NOT CHANGE THIS VALUE
   RobotCompletedAction RobotCompletedAction = 0x01,
+  EventPlaceholder     EventPlaceholder     = 0x02, // TODO: Remove this when the events are fully implemented through to engine
 }
 
 } // Gateway

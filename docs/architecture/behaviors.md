@@ -20,7 +20,7 @@ using a behavior
 The behavior system is also responsible for determining what the current _active feature_ is. This informs the
 feature that will appear in the status-log on app, as well as the data which is sent to DAS. Behavior json
 files can specify an "associatedActiveFeature" to declare that they (and all delegates that don't have their
-own associated features) as associated with a given feature enum (from
+own associated features) are associated with a given feature enum (from
 [activeFeatures.clad](/clad/src/clad/types/behaviorComponent/activeFeatures.clad)). All branches of the
 production behavior tree must have an active feature defined (or explicitly declare
 ActiveFeature::NoFeature). This is checked by the `DelegationTree.CheckActiveFeatures` unit test.

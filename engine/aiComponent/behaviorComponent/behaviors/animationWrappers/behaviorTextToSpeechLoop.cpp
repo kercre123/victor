@@ -28,6 +28,9 @@ const char* kGetInAnimationKey           = "getInAnimation";
 const char* kLoopAnimationKey            = "loopAnimation";
 const char* kGetOutAnimationKey          = "getOutAnimation";
 const char* kEmergencyGetOutAnimationKey = "emergencyGetOutAnimation";
+// TODO:(str) we will eventually need to support anim keyframe driven tts
+// Uncomment when the TTSCoordinator can handle that case
+// const char* kTriggeredByAnimKey          = "utteranceTriggeredByAnim";
 const char* kLockTreadsKey               = "lockTreads";
 
 // DEV TESTING Allow simple test behavior construction from JSON only
@@ -48,6 +51,7 @@ BehaviorTextToSpeechLoop::InstanceConfig::InstanceConfig()
   getOutTrigger               = AnimationTrigger::Count;
   emergencyGetOutTrigger      = AnimationTrigger::Count;
   devTestUtteranceString      = "";
+  triggeredByAnim             = false;
   idleDuringTTSGeneration     = false;
   tracksToLock                = static_cast<uint8_t>(AnimTrackFlag::NO_TRACKS);
 };
@@ -79,6 +83,10 @@ BehaviorTextToSpeechLoop::BehaviorTextToSpeechLoop(const Json::Value& config)
   JsonTools::GetCladEnumFromJSON(config, kGetOutAnimationKey, _iConfig.getOutTrigger, debugName);
   JsonTools::GetCladEnumFromJSON(config, kEmergencyGetOutAnimationKey, _iConfig.emergencyGetOutTrigger, debugName);
 
+  // TODO:(str) we will eventually need to support anim keyframe driven tts
+  // Uncomment when the TTSCoordinator can handle that case
+  // JsonTools::GetValueOptional(config, kTriggeredByAnimKey, _iConfig.triggeredByAnim);
+
   bool lockTreads = false;
   JsonTools::GetValueOptional( config, kLockTreadsKey, lockTreads );
   _iConfig.tracksToLock = lockTreads
@@ -97,6 +105,9 @@ void BehaviorTextToSpeechLoop::GetBehaviorJsonKeys(std::set<const char*>& expect
     kLoopAnimationKey,
     kGetOutAnimationKey,
     kEmergencyGetOutAnimationKey,
+    // TODO:(str) we will eventually need to support anim keyframe driven tts
+    // Uncomment when the TTSCoordinator can handle that case
+    // kTriggeredByAnimKey,
     kLockTreadsKey,
     kDevTestUtteranceKey
   };
@@ -118,13 +129,14 @@ void BehaviorTextToSpeechLoop::SetTextToSay(const std::string& textToSay, const 
     OnUtteranceUpdated(utteranceState);
   };
 
+  UtteranceTriggerType triggerType = UtteranceTriggerType::Manual;
+  if(_iConfig.triggeredByAnim){
+    triggerType = UtteranceTriggerType::KeyFrame;
+  }
   _dVars.utteranceID = GetBEI().GetTextToSpeechCoordinator().CreateUtterance(_dVars.textToSay,
                                                                              intent,
-                                                                             UtteranceTriggerType::Manual,
+                                                                             triggerType,
                                                                              callback);
-
-  // Update utterance state manually so we don't have wierd state before the first callback 
-  _dVars.utteranceState = GetBEI().GetTextToSpeechCoordinator().GetUtteranceState(_dVars.utteranceID);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -136,6 +148,7 @@ bool BehaviorTextToSpeechLoop::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTextToSpeechLoop::OnBehaviorActivated()
 {
+  // For a standalone test behavior, exampleTextToSpeechLoop
   if(!_iConfig.devTestUtteranceString.empty()){
     SetTextToSay(_iConfig.devTestUtteranceString, SayTextIntent::Unprocessed);
   }
@@ -193,6 +206,7 @@ void BehaviorTextToSpeechLoop::BehaviorUpdate()
 
   if(State::SpeakingLoop == _dVars.state){
     if(UtteranceState::Ready == _dVars.utteranceState &&
+       !_iConfig.triggeredByAnim &&
        !_dVars.hasSentPlayCommand){
       PlayUtterance();
     } else if (UtteranceState::Finished == _dVars.utteranceState){
@@ -219,7 +233,7 @@ void BehaviorTextToSpeechLoop::TransitionToGetIn()
 {
   SET_STATE(GetIn);
   auto callback = [this](){
-    if(UtteranceState::Ready == _dVars.utteranceState){
+    if( (UtteranceState::Ready == _dVars.utteranceState) && !_iConfig.triggeredByAnim ){
       PlayUtterance();
     }
     TransitionToSpeakingLoop();

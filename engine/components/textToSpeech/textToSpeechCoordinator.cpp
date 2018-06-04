@@ -41,6 +41,10 @@ static uint8_t GetNextID()
 namespace Anki{
 namespace Cozmo{
 
+namespace {
+  // The coordinator will wait kPlayTimeoutScalar times the expected duration before erroring out on a TTS utterance
+  const float kPlayTimeoutScalar = 2.0f;
+}
 // Static members
 TextToSpeechCoordinator::SayIntentConfigMap TextToSpeechCoordinator::_intentConfigs;
 
@@ -60,7 +64,7 @@ void TextToSpeechCoordinator::InitDependent(Cozmo::Robot* robot, const RobotComp
   auto callback = [this](const AnkiEvent<RobotInterface::RobotToEngine>& event)
   {
     const auto& ttsEvent = event.GetData().Get_textToSpeechEvent();
-    UpdateUtteranceState(ttsEvent.ttsID, &ttsEvent.ttsState);
+    UpdateUtteranceState(ttsEvent.ttsID, ttsEvent.ttsState, ttsEvent.expectedDuration_ms);
   };
 
   auto* messageHandler = _robot->GetRobotMessageHandler();
@@ -114,27 +118,45 @@ void TextToSpeechCoordinator::InitDependent(Cozmo::Robot* robot, const RobotComp
 void TextToSpeechCoordinator::UpdateDependent(const RobotCompMap& dependentComps)
 {
   float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  size_t currentTick = BaseStationTimer::getInstance()->GetTickCount();
 
   // Check for timeouts
-  for(auto& pair : _utteranceMap){
-    auto utterance = pair.second;
+  for(auto it =  _utteranceMap.cbegin(); it != _utteranceMap.cend(); ){
+    const auto& utteranceID = it->first;
+    const auto& utterance = it->second;
     // Generation Timeout
     if(UtteranceState::Generating == utterance.state &&
        (currentTime_s - utterance.timeStartedGeneration_s) > kGenerationTimeout_s){
       PRINT_NAMED_ERROR("TextToSpeechCoordinator.Update.GenerationTimeout",
-                        "Utterance %d took too long to generate",
-                        pair.first);
+                        "Utterance %d generation timed out after %f seconds",
+                        utteranceID,
+                        kGenerationTimeout_s);
       // Remove the utterance so status update requests will return invalid
-      _utteranceMap.erase(pair.first);
+      UpdateUtteranceState(utteranceID, TextToSpeechState::Invalid);
     }
-    // Clean up finished utterances after owners have had enough time to check the state and respond
-    if( ((UtteranceState::Finished == utterance.state) || (UtteranceState::Invalid == utterance.state)) &&
-       (currentTime_s - utterance.timeReadyForCleanup_s) > kUtteranceCleanupTimeout_s){
+    // Playing timeout
+    if(UtteranceState::Playing == utterance.state){
+      float playTime_s = currentTime_s - utterance.timeStartedPlaying_s;
+      float playingTimeout_s = utterance.expectedDuration_s * kPlayTimeoutScalar;
+      if(playTime_s >= playingTimeout_s){
+        PRINT_NAMED_WARNING("TextToSpeechCoordinator.Update.UtterancePlayingTimeout",
+                            "Utterance %d was expected to play for %f seconds, timed out after %f",
+                            utteranceID,
+                            utterance.expectedDuration_s,
+                            playTime_s);
+        UpdateUtteranceState(utteranceID, TextToSpeechState::Invalid);
+      }
+    }
+    // Clean up finished utterances after one tick  
+    if( ((UtteranceState::Finished == utterance.state) ||
+        (UtteranceState::Invalid == utterance.state)) &&
+        (currentTick > utterance.tickReadyForCleanup) ){
       PRINT_NAMED_DEBUG("TextToSpeechCoordinator.Update.CleanUpUtterance",
-                        "Utterance %d cleaned up %f seconds after it finished playing",
-                        pair.first,
-                        kUtteranceCleanupTimeout_s);
-      _utteranceMap.erase(pair.first);
+                        "Utterance %d cleaned one BSTick after it finished playing",
+                        utteranceID);
+      it = _utteranceMap.erase(it);
+    } else {
+      ++it;
     }
   }
 }
@@ -150,6 +172,12 @@ const uint8_t TextToSpeechCoordinator::CreateUtterance(const std::string& uttera
                                                        const UtteranceUpdatedCallback callback)
 {
   uint8_t utteranceID = GetNextID();
+
+  // TODO:(str) we will eventually need to support anim keyframe driven tts
+  // Remove when the TTSCoordinator can handle that case
+  ANKI_VERIFY(UtteranceTriggerType::KeyFrame != triggerType,
+              "TextToSpeechCoordinator.KeyframeDrivenTTS.NotYetSupported",
+              "Keyframe driven TTS should not be used with the TTSCoordinator until it is fully supported");
 
   // Compose a request to prepare TTS audio
   RobotInterface::TextToSpeechPrepare msg;
@@ -168,12 +196,15 @@ const uint8_t TextToSpeechCoordinator::CreateUtterance(const std::string& uttera
 
   float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   UtteranceRecord newRecord;
-  newRecord.state = UtteranceState::Generating;
+  newRecord.state = UtteranceState::Invalid;
   newRecord.triggerType = triggerType;
   newRecord.timeStartedGeneration_s = currentTime_s;
   newRecord.callback = callback;
 
   _utteranceMap[utteranceID] = newRecord;
+  // Update the state here so that the callback is run at least once before the user checks the state
+  // of the utterance they've just created
+  UpdateUtteranceState(utteranceID, TextToSpeechState::Preparing);
 
   PRINT_NAMED_INFO("TextToSpeechCoordinator.CreateUtterance",
                    "Text '%s' Style '%s' DurScalar %f Pitch %f",
@@ -321,8 +352,7 @@ const bool TextToSpeechCoordinator::CancelUtterance(const uint8_t utteranceID)
   }
 
   // Mark the record for cleanup
-  TextToSpeechState invalidState = TextToSpeechState::Invalid;
-  UpdateUtteranceState(utteranceID, &invalidState);
+  UpdateUtteranceState(utteranceID, TextToSpeechState::Invalid);
 
   return true;
 }
@@ -330,7 +360,9 @@ const bool TextToSpeechCoordinator::CancelUtterance(const uint8_t utteranceID)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Private methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TextToSpeechCoordinator::UpdateUtteranceState(const uint8_t& ttsID, const TextToSpeechState* ttsState)
+void TextToSpeechCoordinator::UpdateUtteranceState(const uint8_t& ttsID,
+                                                   const TextToSpeechState& ttsState,
+                                                   const float& expectedDuration_ms)
 {
   auto it = _utteranceMap.find(ttsID);
   if(it == _utteranceMap.end()){
@@ -342,8 +374,9 @@ void TextToSpeechCoordinator::UpdateUtteranceState(const uint8_t& ttsID, const T
 
   UtteranceRecord& utterance = it->second;
   float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  size_t currentTick = BaseStationTimer::getInstance()->GetTickCount();
 
-  switch(*ttsState){
+  switch(ttsState){
     case TextToSpeechState::Invalid:
     {
       PRINT_NAMED_WARNING("TextToSpeechCoordinator.StateUpdate", "ttsID %d operation failed", ttsID);
@@ -385,6 +418,7 @@ void TextToSpeechCoordinator::UpdateUtteranceState(const uint8_t& ttsID, const T
     {
       PRINT_NAMED_INFO("TextToSpeechCoordinator.StateUpdate", "ttsID %d is ready to play", ttsID);
       utterance.state = UtteranceState::Ready;
+      utterance.expectedDuration_s = Util::MilliSecToSec(expectedDuration_ms);
       break;
     }
     case TextToSpeechState::Playing:
@@ -408,7 +442,7 @@ void TextToSpeechCoordinator::UpdateUtteranceState(const uint8_t& ttsID, const T
                        ttsID,
                        timeSinceStartedPlaying_s);
       utterance.state = UtteranceState::Finished;
-      utterance.timeReadyForCleanup_s = currentTime_s;
+      utterance.tickReadyForCleanup = currentTick; 
       break;
     }
   }

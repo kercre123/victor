@@ -55,6 +55,9 @@ private:
     ICozmoBehaviorPtr meetVictorBehavior;
     std::vector<ICozmoBehaviorPtr> toSuppressWhenMeetVictor;
     
+    ICozmoBehaviorPtr danceToTheBeatBehavior;
+    std::vector<ICozmoBehaviorPtr> toSuppressWhenDancingToTheBeat;
+    
     std::unordered_map<ICozmoBehaviorPtr, bool> devActivatableOverrides;
   };
 

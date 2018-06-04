@@ -84,11 +84,26 @@ func processEngineMessages() {
 		b = block[2:]
 		buf.Write(b)
 		if err := msg.Unpack(&buf); err != nil {
+			// TODO: v Remove this fake event code once events are properly in the engine.
+			if c, ok := engineChanMap[gw_clad.MessageRobotToExternalTag_EventPlaceholder]; ok {
+				msg = *gw_clad.NewMessageRobotToExternalWithEventPlaceholder(&gw_clad.EventPlaceholder{
+					Test: "Some Test Value",
+				})
+				select {
+				case c <- RobotToExternalResult{Message: msg}:
+					log.Println("Sent fake message", msg) // TODO: remove logging
+				default:
+					log.Println("Couldn't send message. There might be a problem with the channel.")
+				}
+			}
+			// TODO: ^ Remove this fake event code once events are properly in the engine.
+
 			// Intentionally ignoring errors for unknown messages
+			// TODO: treat this as an error condition once VIC-3186 is completed
 			continue
 		}
-		log.Println("Action Completed!", msg)
 		if c, ok := engineChanMap[msg.Tag()]; ok {
+			log.Println("Sending Action:", msg, "to listener")
 			c <- RobotToExternalResult{Message: msg}
 		}
 	}

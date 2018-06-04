@@ -1,1 +1,2 @@
-websockets
+aiogrpc
+googleapis-common-protos

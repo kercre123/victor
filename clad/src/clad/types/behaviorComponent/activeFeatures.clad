@@ -55,6 +55,7 @@ enum uint_32 ActiveFeature {
   RecordingMessage,
   RequestCharger,
   RollBlock,
+  SDK,
   Sleeping,
   ShutUp,
   StuckOnEdge,

@@ -30,15 +30,13 @@ namespace Cozmo{
 
 
 const static uint8_t kInvalidUtteranceID = 0;
-
 // Utterances should not take longer than this to generate
-const static float kGenerationTimeout_s = 1.5f;
-// Utterances will be cleaned up automatically this long after reaching "Finished"
-const static float kUtteranceCleanupTimeout_s = 1.0f;
+const static float kGenerationTimeout_s = 3.0f;
 
 // Forward declarations
 class Robot;
 enum class TextToSpeechState : uint8_t;
+struct TextToSpeechEvent;
 
 enum class UtteranceState {
   Invalid,
@@ -90,14 +88,17 @@ public:
   const bool           CancelUtterance(const uint8_t utteranceID);
 
 private:
-  void UpdateUtteranceState(const uint8_t& ttsID, const TextToSpeechState* ttsState);
+  void UpdateUtteranceState(const uint8_t& ttsID,
+                            const TextToSpeechState& ttsState,
+                            const float& expectedDuration_ms = 0.0f);
 
   struct UtteranceRecord {
     UtteranceState            state                       = UtteranceState::Invalid;
     UtteranceTriggerType      triggerType                 = UtteranceTriggerType::Manual;
     float                     timeStartedGeneration_s     = 0.0f;
     float                     timeStartedPlaying_s        = 0.0f;
-    float                     timeReadyForCleanup_s       = 0.0f;
+    float                     expectedDuration_s          = 0.0f;
+    size_t                    tickReadyForCleanup         = 0;
     UtteranceUpdatedCallback  callback                    = nullptr;
   };
   

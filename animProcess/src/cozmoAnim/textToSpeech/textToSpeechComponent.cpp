@@ -428,12 +428,13 @@ void TextToSpeechComponent::SetAudioProcessingPitch(float pitchScalar)
 // Send a TextToSpeechEvent message from anim to engine.
 // This is called on main thread for thread-safe access to comms.
 //
-static bool SendAnimToEngine(uint8_t ttsID, TextToSpeechState state)
+static bool SendAnimToEngine(uint8_t ttsID, TextToSpeechState state, float expectedDuration = 0.0f)
 {
   LOG_DEBUG("TextToSpeechComponent.SendAnimToEngine", "ttsID %hhu state %hhu", ttsID, state);
   TextToSpeechEvent evt;
   evt.ttsID = ttsID;
   evt.ttsState = state;
+  evt.expectedDuration_ms = expectedDuration; // Used only on TextToSpeechState::Delivered messages
   return AnimProcessMessages::SendAnimToEngine(std::move(evt));
 }
 
@@ -442,7 +443,6 @@ static bool SendAnimToEngine(uint8_t ttsID, TextToSpeechState state)
 //
 void TextToSpeechComponent::PostAudioEvent(AudioEngine::AudioEventId eventId, uint8_t ttsID)
 {
-  LOG_DEBUG("TextToSpeechComponent.PostAudioEvent", "ttsID %hhu", ttsID);
   AudioEngine::AudioCallbackContext* audioCallbackContext = nullptr;
   const auto callbackFunc = std::bind(&TextToSpeechComponent::OnUtteranceCompleted, this, ttsID);
   audioCallbackContext = new AudioEngine::AudioCallbackContext();
@@ -459,6 +459,9 @@ void TextToSpeechComponent::PostAudioEvent(AudioEngine::AudioEventId eventId, ui
                                               } );
 
   const auto gameObject = static_cast<AudioEngine::AudioGameObject>(kTTSGameObject);
+  LOG_DEBUG("TextToSpeechComponent.PostAudioEvent", "ttsID: %hhu gameObject: %u", 
+            ttsID,
+            static_cast<uint32_t>(gameObject));
   AudioEngine::AudioPlayingId playingID = _audioController->PostAudioEvent(eventId, gameObject, audioCallbackContext);
   if(AudioEngine::kInvalidAudioPlayingId == playingID){
     LOG_DEBUG("TextToSpeechComponent.UtteranceFailedToPlay", "Utterance with ttsID %hhu failed to play", ttsID);
@@ -538,7 +541,7 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechDeli
   }
 
   // Notify engine that tts request is done
-  SendAnimToEngine(ttsID, TextToSpeechState::Delivered);
+  SendAnimToEngine(ttsID, TextToSpeechState::Delivered, duration_ms);
 
   // Clear operation from bookkeeping
   ClearOperationData(ttsID);

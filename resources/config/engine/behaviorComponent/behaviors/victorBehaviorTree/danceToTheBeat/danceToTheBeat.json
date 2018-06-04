@@ -42,7 +42,16 @@
     },
     {
       "minBeats"    : 2,
-      "maxBeats"    : 6,
+      "maxBeats"    : 4,
+      "multipleOf"  : 1,
+      "canListenForBeats" : false,
+      "anims" : [
+        "anim_dancebeat_headnod_01"
+      ]
+    },
+    {
+      "minBeats"    : 6,
+      "maxBeats"    : 8,
       "multipleOf"  : 2,
       "canListenForBeats" : false,
       "anims" : [
@@ -51,35 +60,15 @@
       ]
     },
     {
-      "minBeats"    : 2,
-      "maxBeats"    : 6,
+      "minBeats"    : 6,
+      "maxBeats"    : 8,
       "multipleOf"  : 2,
       "canListenForBeats" : false,
       "anims" : [
         "anim_dancebeat_headliftbody_left_small_01",
-        "anim_dancebeat_headliftbody_right_small_01"
-      ]
-    },
-    {
-      "minBeats"    : 4,
-      "maxBeats"    : 6,
-      "multipleOf"  : 1,
-      "canListenForBeats" : false,
-      "anims" : [
-        "anim_dancebeat_headliftbody_left_med_01",
-        "anim_dancebeat_headliftbody_right_med_01",
+        "anim_dancebeat_headliftbody_right_small_01",
         "anim_dancebeat_headliftbody_fwd_01",
         "anim_dancebeat_headliftbody_back_01"
-      ]
-    },
-    {
-      "minBeats"    : 4,
-      "maxBeats"    : 6,
-      "multipleOf"  : 2,
-      "canListenForBeats" : false,
-      "anims" : [
-        "anim_dancebeat_headliftbody_left_large_01",
-        "anim_dancebeat_headliftbody_right_med_01"
       ]
     }
   ]
