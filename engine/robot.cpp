@@ -516,12 +516,6 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
       GetCarryingComponent().SetCarriedObjectAsUnattached(clearObjects);
     }
 
-    // if the robot was on the charging platform and its state changes it's not on the platform anymore
-    if (_offTreadsState != OffTreadsState::OnTreads)
-    {
-      GetBatteryComponent().SetOnChargerPlatform(false);
-    }
-
     offTreadsStateChanged = true;
   }
 
@@ -1263,41 +1257,6 @@ Result Robot::Update()
 #endif
 
   GetContext()->GetVizManager()->SendStartRobotUpdate();
-
-  /* DEBUG
-     const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-     static float lastUpdateTime = currentTime_sec;
-
-     const float updateTimeDiff = currentTime_sec - lastUpdateTime;
-     if(updateTimeDiff > 1.0f) {
-       PRINT_NAMED_WARNING("Robot.Update", "Gap between robot update calls = %f\n", updateTimeDiff);
-     }
-     lastUpdateTime = currentTime_sec;
-  */
-
-  // Check if we have driven off the charger platform - this has to happen before the behaviors which might
-  // need this information. This state is useful for knowing not to play a cliff react when just driving off
-  // the charger.
-
-  if (GetBatteryComponent().IsOnChargerPlatform() && _offTreadsState == OffTreadsState::OnTreads) {
-    BlockWorldFilter filter;
-    filter.SetAllowedFamilies({ObjectFamily::Charger});
-    // Assuming there is only one charger in the world
-    const ObservableObject* charger = GetBlockWorld().FindLocatedMatchingObject(filter);
-
-    if (nullptr != charger)
-    {
-      const bool isOnChargerPlatform = charger->GetBoundingQuadXY().Intersects(GetBoundingQuadXY());
-      if( !isOnChargerPlatform )
-      {
-        GetBatteryComponent().SetOnChargerPlatform(false);
-      }
-    }
-    else {
-      // if we can't connect / talk to the charger, consider the robot to be off the platform
-      GetBatteryComponent().SetOnChargerPlatform(false);
-    }
-  }
 
   _components->UpdateComponents();
 
@@ -2136,7 +2095,32 @@ Result Robot::SetPoseOnCharger()
   return RESULT_OK;
 
 } // SetPoseOnCharger()
+  
 
+Result Robot::SetPosePostRollOffCharger()
+{
+  auto* charger = dynamic_cast<Charger*>(GetBlockWorld().GetLocatedObjectByID(_chargerID));
+  if (charger == nullptr) {
+    PRINT_NAMED_WARNING("Robot.SetPosePostRollOffCharger.NoChargerWithID",
+                        "Charger object with ID %d not found in the world.",
+                        _chargerID.GetValue());
+    return RESULT_FAIL;
+  }
+  
+  // Just do an absolute pose update, setting the robot's position to
+  // where we "know" he should be when he finishes rolling off the charger.
+  Result lastResult = SetNewPose(charger->GetRobotPostRollOffPose().GetWithRespectToRoot());
+  if (lastResult != RESULT_OK) {
+    PRINT_NAMED_WARNING("Robot.SetPosePostRollOffCharger.SetNewPose", "Failed to set new pose");
+    return lastResult;
+  }
+  
+  PRINT_NAMED_INFO("Robot.SetPosePostRollOffCharger.NewRobotPose",
+                   "Updated robot pose to be in front of the charger, as if it had just rolled off.");
+  return RESULT_OK;
+}
+
+  
 // ============ Messaging ================
 
 Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliable, bool hot) const

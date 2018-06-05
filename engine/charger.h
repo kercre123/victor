@@ -56,6 +56,12 @@ namespace Anki {
       
       // Return pose of the robot when it's in the charger
       Pose3d GetRobotDockedPose()  const;
+      
+      // Return the pose of the robot when it has just rolled off the
+      // charger. It is roughly the first point at which the robot's
+      // bounding quad no longer intersects the charger's.
+      Pose3d GetRobotPostRollOffPose() const;
+      
       // Return pose of charger wrt robot when the robot is on the charger
       static Pose3d GetDockPoseRelativeToRobot(const Robot& robot);
       
@@ -103,6 +109,7 @@ namespace Anki {
       constexpr static const f32 kMarkerZPosition   = 48.5f;  // Middle of marker above ground
       constexpr static const f32 kPreAscentDistance  = 100.f; // for ascending from bottom
       constexpr static const f32 kRobotToChargerDistWhenDocked = 30.f;  // Distance from front of charger to robot origin when docked
+      constexpr static const f32 kRobotToChargerDistPostRollOff = 80.f;  // Distance from front of charger to robot origin after just having rolled off the charger
       
       virtual const std::vector<Point3f>& GetCanonicalCorners() const override;
       

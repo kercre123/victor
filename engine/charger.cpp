@@ -117,6 +117,17 @@ namespace Anki {
       return pose;
     }
     
+    Pose3d Charger::GetRobotPostRollOffPose() const
+    {
+      Pose3d pose(M_PI_F, Z_AXIS_3D(),
+                  Point3f{-kRobotToChargerDistPostRollOff, 0, 0},
+                  GetPose());
+      
+      pose.SetName("Charger" + std::to_string(GetID().GetValue()) + "PostRollOffPose");
+      
+      return pose;
+    }
+    
     Pose3d Charger::GetDockPoseRelativeToRobot(const Robot& robot)
     {
       return Pose3d(M_PI_F, Z_AXIS_3D(),

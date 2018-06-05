@@ -18,6 +18,7 @@
 
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
+#include "engine/components/movementComponent.h"
 #include "engine/robot.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -65,6 +66,8 @@ namespace {
   // Console var for faking low battery
   CONSOLE_VAR(bool, kFakeLowBattery, "BatteryComponent", false);
   const float kFakeLowBatteryVoltage = 3.5f;
+  
+  const float kInvalidPitchAngle = std::numeric_limits<float>::max();
 }
 
 BatteryComponent::BatteryComponent()
@@ -79,6 +82,9 @@ BatteryComponent::BatteryComponent()
   // setup block world filter to find chargers:
   _chargerFilter->AddAllowedFamily(ObjectFamily::Charger);
   _chargerFilter->AddAllowedType(ObjectType::Charger_Basic);
+  
+  _lastOnChargerContactsPitchAngle.performRescaling(false);
+  _lastOnChargerContactsPitchAngle = kInvalidPitchAngle;
 }
 
 void BatteryComponent::Init(Cozmo::Robot* robot)
@@ -113,10 +119,11 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
     _batteryVoltsFilt = _batteryVoltsFilter->AddSample(_batteryVoltsRaw);
   }
 
-  // Update isCharging / isOnChargerContacts
+  // Update isCharging / isOnChargerContacts / isOnChargerPlatform
   SetOnChargeContacts(msg.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER);
   SetIsCharging(msg.status & (uint32_t)RobotStatusFlag::IS_CHARGING);
-
+  UpdateOnChargerPlatform();
+  
   // Check if saturation charging
   bool isSaturationCharging = _isCharging && _batteryVoltsFilt > kSaturationChargingThresholdVolts;
   bool isFullyCharged = false;
@@ -262,43 +269,20 @@ void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
     // that timestamp refers to visual observations only (TODO: maybe that should be more explicit or any
     // observation should set that timestamp)
     _robot->GetObjectPoseConfirmer().AddRobotRelativeObservation(chargerInstance, poseWrtRobot, PoseState::Known);
+    
+    // Update the last OnChargeContacts pitch angle
+    if (!_robot->GetMoveComponent().IsMoving()) {
+      _lastOnChargerContactsPitchAngle = _robot->GetPitchAngle();
+    }
   }
 
   // Log events and send message if state changed
   if (onChargeContacts != _isOnChargerContacts) {
     _isOnChargerContacts = onChargeContacts;
-    if (onChargeContacts) {
-      PRINT_NAMED_INFO("robot.on_charger", "");
-      // if we are on the charger, we must also be on the charger platform.
-      SetOnChargerPlatform(true);
-    } else {
-      PRINT_NAMED_INFO("robot.off_charger", "");
-    }
+    PRINT_NAMED_INFO(onChargeContacts ? "robot.on_charger" : "robot.off_charger", "");
     // Broadcast to game
     using namespace ExternalInterface;
     _robot->Broadcast(MessageEngineToGame(ChargerEvent(onChargeContacts)));
-  }
-}
-
-
-void BatteryComponent::SetOnChargerPlatform(bool onPlatform)
-{
-  // Can only not be on platform if not on charge contacts
-  onPlatform = onPlatform || IsOnChargerContacts();
-
-  const bool stateChanged = _isOnChargerPlatform != onPlatform;
-  _isOnChargerPlatform = onPlatform;
-
-  if (stateChanged) {
-    using namespace ExternalInterface;
-    _robot->Broadcast(MessageEngineToGame(RobotOnChargerPlatformEvent(_isOnChargerPlatform)));
-
-    PRINT_NAMED_DEBUG("robot.SetOnChargerPlatform",
-                      "robot is now %s the charger platform",
-                      onPlatform ? "ON" : "OFF");
-
-    // pause the freeplay tracking if we are on the charger
-    _robot->GetAIComponent().GetComponent<FreeplayDataTracker>().SetFreeplayPauseFlag(_isOnChargerPlatform, FreeplayPauseFlag::OnCharger);
   }
 }
 
@@ -308,6 +292,70 @@ void BatteryComponent::SetIsCharging(const bool isCharging)
   if (isCharging != _isCharging) {
     _lastChargingChange_ms = _lastMsgTimestamp;
     _isCharging = isCharging;
+  }
+}
+
+
+void BatteryComponent::UpdateOnChargerPlatform()
+{
+  bool onPlatform = _isOnChargerPlatform;
+  
+  if (IsOnChargerContacts()) {
+    // If we're on the charger _contacts_, we are definitely on the charger _platform_
+    onPlatform = true;
+  } else if (onPlatform) {
+    // Not on the charger contacts, but we still think we're on the charger platform.
+    // Make a reasonable conjecture about our current OnChargerPlatform state.
+    
+    // Not on charger platform if we're off treads
+    if (_robot->GetOffTreadsState() != OffTreadsState::OnTreads) {
+      onPlatform = false;
+    }
+    
+    // Check intersection between robot and charger bounding quads
+    auto* charger = _robot->GetBlockWorld().FindLocatedObjectClosestTo(_robot->GetPose(),
+                                                                       *_chargerFilter);
+    if (charger == nullptr ||
+        !charger->GetBoundingQuadXY().Intersects(_robot->GetBoundingQuadXY())) {
+      onPlatform = false;
+    }
+    
+    // Check to see if the robot's pitch angle indicates that it has
+    // been moved from the charger platform onto the ground.
+    const bool lastPitchAngleValid = (_lastOnChargerContactsPitchAngle.ToFloat() != kInvalidPitchAngle);
+    const bool robotMoving = _robot->GetMoveComponent().IsMoving();
+    if (lastPitchAngleValid && !robotMoving) {
+      const auto& expectedPitchAngleOffPlatform = _lastOnChargerContactsPitchAngle + kChargerSlopeAngle_rad;
+      if (_robot->GetPitchAngle() > expectedPitchAngleOffPlatform - DEG_TO_RAD(2.f)) {
+        // Pitch angle change indicates that we've probably moved from the
+        // charger platform onto the table. Update the robot's pose accordingly.
+        onPlatform = false;
+        if (charger != nullptr) {
+          _robot->SetCharger(charger->GetID());
+          _robot->SetPosePostRollOffCharger();
+        }
+      }
+    }
+  }
+  
+  // Has OnChargerPlatform state changed?
+  if (onPlatform != _isOnChargerPlatform) {
+    _isOnChargerPlatform = onPlatform;
+    
+    using namespace ExternalInterface;
+    _robot->Broadcast(MessageEngineToGame(RobotOnChargerPlatformEvent(_isOnChargerPlatform)));
+    
+    PRINT_NAMED_INFO("BatteryComponent.UpdateOnChargerPlatform.OnChargerPlatformChange",
+                     "robot is now %s the charger platform",
+                     _isOnChargerPlatform ? "ON" : "OFF");
+    
+    // pause the freeplay tracking if we are on the charger
+    _robot->GetAIComponent().GetComponent<FreeplayDataTracker>().SetFreeplayPauseFlag(_isOnChargerPlatform, FreeplayPauseFlag::OnCharger);
+    
+    // Reset last on charger pitch angle if we're no longer on the platform
+    if (!onPlatform) {
+      _lastOnChargerContactsPitchAngle = kInvalidPitchAngle;
+    }
   }
 }
 
