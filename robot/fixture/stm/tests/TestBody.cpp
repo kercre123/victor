@@ -250,8 +250,12 @@ static void BodyLoadProductionFirmware(void)
   *((uint32_t*)(bodyboot+24)) = bodyid.esn;
   
   //Offline mode don't write production firmware (but WILL print esn/hw info)
-  if( g_fixmode == FIXMODE_BODY1_OL )
+  if( g_fixmode == FIXMODE_BODY1_OL ) {
+    bodyid.hwrev = BODYID_HWREV_EMPTY;
+    bodyid.model = BODYID_MODEL_EMPTY;
+    bodyid.esn = BODYID_ESN_EMPTY;
     return;
+  }
   
   //Erase and flash boot/app
   ConsolePrintf("load: ESN %08x, hwrev %u, model %u\n", bodyid.esn, bodyid.hwrev, bodyid.model);
