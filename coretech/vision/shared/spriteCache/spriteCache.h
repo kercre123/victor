@@ -37,29 +37,36 @@ namespace Vision {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class SpriteCache {
 public:
-  // Simple enum specifier for how to cache the sprite - currently it's binary
-  // but in the future functionality can be added along the lines of "Cache for x seconds"
-  enum class CacheSpec{
-    CacheGrayscaleIndefinitely,
-    CacheRGBAIndefinitely,
-    DoNotCache
-  };
+  using ImgTypeCacheSpec = ISpriteWrapper::ImgTypeCacheSpec;
 
   SpriteCache(const Vision::SpritePathMap* spriteMap);
   virtual ~SpriteCache();
 
   const Vision::SpritePathMap* GetSpritePathMap(){ return _spriteMap;}  
   SpriteHandle GetSpriteHandle(SpriteName spriteName, 
-                               const HSImageHandle& hueAndSaturation = {}, 
-                               const std::set<CacheSpec>& cacheSpecs = {});
+                               const HSImageHandle& hueAndSaturation = {});
   SpriteHandle GetSpriteHandle(const std::string& fullSpritePath, 
-                               const HSImageHandle& hueAndSaturation = {}, 
-                               const std::set<CacheSpec>& cacheSpecs = {});
+                               const HSImageHandle& hueAndSaturation = {});
+
+  void Update(BaseStationTime_t currTime_nanosec);
+
+  // Functions for caching/clearing sprites out of cache memory
+  void CacheSprite(const SpriteHandle& handle,
+                   ImgTypeCacheSpec cacheSpec,
+                   BaseStationTime_t cacheFor_ms = 0, 
+                   const HSImageHandle& hueAndSaturation = {});
+
+  void ClearCachedSprite(SpriteHandle handle, 
+                         ImgTypeCacheSpec cacheSpec, 
+                         const HSImageHandle& hueAndSaturation = {});
 
 private:
   using InternalHandle = std::shared_ptr<SpriteWrapper>;
+
   const Vision::SpritePathMap* _spriteMap;
   std::mutex _hueSaturationMapMutex;
+
+  BaseStationTime_t _lastUpdateTime_nanosec;
 
   struct HandleMaps{
     std::unordered_map<SpriteName, InternalHandle,  Util::EnumHasher> _wrapperMap;
@@ -68,7 +75,23 @@ private:
 
   std::unordered_map<uint16_t, HandleMaps> _hueSaturationMap;
 
+  // Map of expiration time -> Internal Handle
+  // This ordering allows the update loop to efficiently clear stale entries
+  // since they are stored in time order
+  std::multimap<BaseStationTime_t, InternalHandle> _cacheTimeoutMap;
+
   HandleMaps& GetHandleMapForHue(const HSImageHandle& hueAndSaturation);
+
+  InternalHandle GetSpriteHandleInternal(SpriteName spriteName, 
+                                         const HSImageHandle& hueAndSaturation = {});
+  InternalHandle GetSpriteHandleInternal(const std::string& fullSpritePath, 
+                                         const HSImageHandle& hueAndSaturation = {});
+
+  // In most cases this is the equivelent of a downcast from SpriteHandle to InternalHandle
+  // If the SpriteHandle doesn't exist withn the cache, it will be added as part of this function call
+  InternalHandle ConvertToInternalHandle(SpriteHandle handle,
+                                         const HSImageHandle& hueAndSaturation = {});
+
 };
 
 }; // namespace Vision

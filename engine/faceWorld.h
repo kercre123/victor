@@ -134,7 +134,9 @@ namespace Cozmo {
     bool IsFaceEnrollmentComplete() const { return _lastEnrollmentCompleted; }
     void SetFaceEnrollmentComplete(bool complete) { _lastEnrollmentCompleted = complete; }
 
-    bool IsMakingEyeContact() const;
+    // IsMakingEyeContact with only return true if it finds a face that is making
+    // eye contact and has a time stamp greater than seenSinceTime_ms
+    bool IsMakingEyeContact(const u32 withinLast_ms) const;
     
     // template for all events we subscribe to
     template<typename T>

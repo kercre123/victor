@@ -87,6 +87,9 @@ void CliffSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
       _cliffDataFilt[i] = Util::IsNearZero(_cliffDataFilt[i]) ?
                           _cliffDataRaw[i] :
                           (kCliffFiltCoef * _cliffDataFilt[i]) + ((1.f - kCliffFiltCoef) * static_cast<float>(_cliffDataRaw[i]));
+
+      // Update detection state
+      _cliffDetectedFlags.SetBitFlag(static_cast<CliffSensor>(i), _cliffDataFilt[i] < _cliffDetectThresholds[i]);
     }
   }
   
@@ -125,11 +128,6 @@ std::string CliffSensorComponent::GetLogRow()
   }
   return str;
 }
-  
-bool CliffSensorComponent::IsCliffDetected(CliffSensor sensor) const
-{
-  return _cliffDetectedFlags.IsBitFlagSet(sensor);
-}
 
 void CliffSensorComponent::UpdateCliffDetectThresholds()
 {
@@ -146,7 +144,7 @@ void CliffSensorComponent::UpdateCliffDetectThresholds()
     // All cliff values are below the dark threshold (or IMU is saying we might be driving over something),
     // so use a reduced allowedDelta to reduce false cliff detections.
     _cliffDetectAllowedDelta = kCliffDetectAllowedDeltaLow;
-  } else if (minCliffVal > kCliffValDarkSurface) {
+  } else if (minCliffVal >= kCliffValDarkSurface) {
     // All cliff values are above the dark threshold and we are sitting flat, so reset the allowedDelta back to the default.
     _cliffDetectAllowedDelta = kCliffDetectAllowedDeltaDefault;
   }

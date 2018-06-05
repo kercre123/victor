@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_TurkeyInTheStraw",
-  "displayNameKey":"behavior.singing.TurkeyInTheStraw",
-  "requiredUnlockId":"Singing_TurkeyInTheStraw",
-  "audioSwitchGroup":"Cozmo_Sings_120Bpm",
-  "audioSwitch":"Cozmo_Sings_Turkey_In_The_Straw"
-}

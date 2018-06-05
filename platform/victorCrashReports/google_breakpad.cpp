@@ -46,22 +46,22 @@ std::string GetDateTimeString()
   const auto now = ClockType::now();
   const auto numSecs = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch());
   const auto millisLeft = std::chrono::duration_cast<std::chrono::milliseconds>((now - numSecs).time_since_epoch());
-  
+
   const auto currTime_t = ClockType::to_time_t(now);
   struct tm localTime; // This is local scoped to make it thread safe
   // For some reason this is giving this error message: "__bionic_open_tzdata: couldn't find any tzdata when looking for GMT!"
   localtime_r(&currTime_t, &localTime);
-  
+
   // Use the old fashioned strftime for thread safety, instead of std::put_time
   char formatTimeBuffer[256];
   strftime(formatTimeBuffer, sizeof(formatTimeBuffer), "%FT%H-%M-%S-", &localTime);
-  
+
   std::ostringstream stringStream;
   stringStream << formatTimeBuffer << std::setfill('0') << std::setw(3) << millisLeft.count();
 
   return stringStream.str();
 }
-  
+
 bool DumpCallback(const google_breakpad::MinidumpDescriptor& descriptor,
                   void* context, bool succeeded)
 {
@@ -71,7 +71,9 @@ bool DumpCallback(const google_breakpad::MinidumpDescriptor& descriptor,
   if (descriptor.fd() == fd && fd >= 0) {
     (void) close(fd); fd = -1;
   }
-  return succeeded;
+
+  // Return false (not handled) so breakpad will chain to next handler.
+  return false;
 }
 
 } // anon namespace
@@ -79,17 +81,12 @@ bool DumpCallback(const google_breakpad::MinidumpDescriptor& descriptor,
 
 void InstallGoogleBreakpad(const char* filenamePrefix)
 {
-  // FIXME:  Temporarily disabling creation of crash dumps, until we get a
-  // system that uploads and deletes them.  Otherwise all of our robots
-  // will start accumulating them, and we have shutdown crashes already.
-  return;
-
   const std::string path = "/data/data/com.anki.victor/cache/crashDumps/";
   Anki::Util::FileUtils::CreateDirectory(path);
 
   const std::string crashFile = path + filenamePrefix + "-" + GetDateTimeString() + ".dmp";
 
-  (void) strncpy(dumpPath, crashFile.c_str(), sizeof(dumpPath)); 
+  (void) strncpy(dumpPath, crashFile.c_str(), sizeof(dumpPath));
   fd = open(crashFile.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_EXCL, 0600);
   google_breakpad::MinidumpDescriptor descriptor(fd);
   exceptionHandler = new google_breakpad::ExceptionHandler(descriptor, NULL, DumpCallback, NULL, true, -1);

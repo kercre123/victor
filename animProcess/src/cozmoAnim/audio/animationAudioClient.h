@@ -74,7 +74,8 @@ private:
   void HandleAudioRef( const AudioKeyFrameType::AudioParameterRef& parameterRef );
   
   // Perform an event
-  AudioEngine::AudioPlayingId PostCozmoEvent( AudioMetaData::GameEvent::GenericEvent event );
+  AudioEngine::AudioPlayingId PostCozmoEvent( AudioMetaData::GameEvent::GenericEvent event,
+                                              AudioMetaData::GameObjectType gameObject );
 
   // Update parameters for a event play id
   bool SetCozmoEventParameter( AudioEngine::AudioPlayingId playId,

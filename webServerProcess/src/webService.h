@@ -60,6 +60,9 @@ public:
   
   inline void SendToWebViz(const std::string& moduleName, const Json::Value& data) const { SendToWebSockets(moduleName, data); }
   
+  // returns true if a client has subscribed to a given module name (or any module if empty)
+  bool IsWebVizClientSubscribed(const std::string& moduleName = {}) const;
+  
   // subscribe to when a client connects and notifies the webservice that they want data for moduleName
   using SendToClientFunc = std::function<void(const Json::Value&)>;
   using OnWebVizSubscribedType = Signal::Signal<void(const SendToClientFunc&)>;
@@ -93,6 +96,8 @@ public:
     RT_ConsoleFuncList,
     RT_ConsoleFuncCall,
     
+    RT_External,
+    
     RT_TempAppToEngine,
     RT_TempEngineToApp,
     
@@ -100,14 +105,20 @@ public:
     RT_WebsocketOnData,
   };
 
+  struct Request;
+  using ExternalCallback = int (*)(WebService::WebService::Request* request);
+
   struct Request
   {
     Request(RequestType rt, const std::string& param1, const std::string& param2);
-    Request(RequestType rt, const std::string& param1, const std::string& param2, const std::string& param3);
+    Request(RequestType rt, const std::string& param1, const std::string& param2,
+            const std::string& param3, ExternalCallback extCallback, void* cbdata);
     RequestType _requestType;
     std::string _param1;
     std::string _param2;
     std::string _param3;
+    ExternalCallback _externalCallback;
+    void*       _cbdata;
     std::string _result;
     bool        _resultReady; // Result is ready for use by the webservice thread
     bool        _done;        // Result has been used and now it's OK for main thread to delete this item
@@ -120,6 +131,9 @@ public:
   const Anki::Util::Data::DataPlatform* GetPlatform() { return _platform; }
 
   void RegisterRequestHandler(std::string uri, mg_request_handler handler, void* cbdata);
+  int ProcessRequestExternal(struct mg_connection *conn, void* cbdata,
+                             ExternalCallback extCallback, const std::string& param1 = "",
+                             const std::string& param2 = "", const std::string& param3 = "");
 
 private:
 

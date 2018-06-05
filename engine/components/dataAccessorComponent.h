@@ -49,19 +49,26 @@ public:
   // end IDependencyManagedComponent functions
   //////
 
+  const Vision::SpritePathMap* GetSpritePaths() const { assert(_spritePaths != nullptr); return _spritePaths; }
+
   Vision::SpriteCache* GetSpriteCache() const { assert(_spriteCache != nullptr); return _spriteCache;  }
   Vision::SpriteSequenceContainer* GetSpriteSequenceContainer() const { assert(_spriteSequenceContainer != nullptr); return _spriteSequenceContainer;}
 
-  const RobotDataLoader::CompImageMap* GetCompImgMap() { return _compImgMap; }
-  const RobotDataLoader::CompLayoutMap* GetCompLayoutMap() { return _compLayoutMap; }
-  const CannedAnimationContainer* GetCannedAnimationContainer() { return _cannedAnimationContainer; }
+  const RobotDataLoader::CompImageMap* GetCompImgMap() { assert(_compImgMap); return _compImgMap; }
+  const RobotDataLoader::CompLayoutMap* GetCompLayoutMap() { assert(_compLayoutMap); return _compLayoutMap; }
+  const CannedAnimationContainer* GetCannedAnimationContainer() { assert(_cannedAnimationContainer); return _cannedAnimationContainer; }
+  const RobotDataLoader::WeatherResponseMap* GetWeatherResponseMap() const { assert(_weatherResponseMap); return _weatherResponseMap; }
+  const Json::Value* GetTextToSpeechConfig() { assert(_textToSpeechConfig != nullptr); return _textToSpeechConfig; }
 
 private:
+  const Vision::SpritePathMap* _spritePaths = nullptr;
   Vision::SpriteCache* _spriteCache = nullptr;
   Vision::SpriteSequenceContainer* _spriteSequenceContainer = nullptr;
   const RobotDataLoader::CompImageMap* _compImgMap = nullptr;
   const RobotDataLoader::CompLayoutMap* _compLayoutMap = nullptr;
   const CannedAnimationContainer* _cannedAnimationContainer = nullptr;
+  const RobotDataLoader::WeatherResponseMap* _weatherResponseMap = nullptr;
+  const Json::Value* _textToSpeechConfig = nullptr;
 
 }; // __Cozmo_Basestation_Components_DataAccessorComponent_H__
 

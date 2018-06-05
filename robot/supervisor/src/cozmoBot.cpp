@@ -24,6 +24,9 @@
 #include "timeProfiler.h"
 #include "wheelController.h"
 
+#ifndef SIMULATOR
+#include <unistd.h>
+#endif
 
 namespace Anki {
   namespace Cozmo {
@@ -39,9 +42,13 @@ namespace Anki {
         // times through the main loop
         u32 robotStateMessageCounter_ = 0;
 
+        bool _calibOnNextCalmModeExit = false;
+
         // Main cycle time errors
         u32 mainTooLongCnt_ = 0;
         u32 mainTooLateCnt_ = 0;
+        u32 maxMainTooLongTime_ = 0;
+        u32 maxMainTooLateTime_ = 0;
         u32 avgMainTooLongTime_ = 0;
         u32 avgMainTooLateTime_ = 0;
         u32 lastCycleStartTime_ = 0;
@@ -49,7 +56,6 @@ namespace Anki {
         const u32 MAIN_TOO_LATE_TIME_THRESH_USEC = ROBOT_TIME_STEP_MS * 1500;  // Normal cycle time plus 50% margin
         const u32 MAIN_TOO_LONG_TIME_THRESH_USEC = 700;
         const u32 MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC = 1000000;
-
       } // Robot private namespace
 
       //
@@ -110,6 +116,101 @@ namespace Anki {
         BackpackLightController::TurnOffAll();
       }
 
+      void CheckForShutdown()
+      {
+        // Shutdown sequence will be begin if the button is held down for this
+        // amount of time
+        static const int SHUTDOWN_TIME_MS = 4000;
+
+        // Wait this amount of time after sending PrepForShutdown message and calling
+        // sync(). The assumption is that whoever is handling the PrepForShutdown message
+        // is able to do so within this amount of time
+        static const int TIME_TO_WAIT_UNTIL_SYNC_MS = 350;
+
+        // Wait this amount of time after syncing before sending the shutdown
+        // command to syscon
+        static const int TIME_TO_WAIT_AFTER_SYNC_MS = 100;
+        
+        enum ShutdownState
+        {
+          NONE,
+          START,
+          SYNC,
+        };
+        static ShutdownState state = NONE;
+        static bool buttonWasPressed = false;
+        static TimeStamp_t timeMark_ms = 0;
+        static bool buttonReleasedAfterShutdownStarted = false;
+        
+        const TimeStamp_t curTime_ms = HAL::GetTimeStamp();
+        const bool buttonIsPressed = HAL::GetButtonState(HAL::ButtonID::BUTTON_POWER);
+
+        if(state != NONE && !buttonIsPressed)
+        {
+          buttonReleasedAfterShutdownStarted = true;
+        }
+        
+        switch(state)
+        {
+          case NONE:
+            if(buttonIsPressed)
+            {
+              // If button has just been pressed, record time
+              if(!buttonWasPressed)
+              {
+                timeMark_ms = curTime_ms;
+              }
+              // If button has been held down for more than SHUTDOWN_TIME_MS
+              else if(curTime_ms - timeMark_ms > SHUTDOWN_TIME_MS)
+              {
+                timeMark_ms = curTime_ms;
+                state = START;
+                // Send a shutdown message to anim/engine
+                AnkiWarn("CozmoBot.CheckForButtonHeld.Shutdown", "Sending PrepForShutdown");
+                RobotInterface::PrepForShutdown msg;
+                RobotInterface::SendMessage(msg);
+              }
+            }
+            else
+            {
+              timeMark_ms = 0;
+            }
+            break;
+
+          case START:
+            // If it has been more than TIME_TO_WAIT_UNTIL_SYNC_MS
+            // then we should sync()
+            if(curTime_ms - timeMark_ms > TIME_TO_WAIT_UNTIL_SYNC_MS)
+            {
+              AnkiWarn("CozmoBot.CheckForButtonHeld.Sync", "");
+              #ifdef VICOS
+              sync();
+              #endif
+              state = SYNC;
+              timeMark_ms = curTime_ms;
+            }
+            break;
+ 
+          case SYNC:
+            // Waiting for either the button to be released
+            // or syscon's power down time to be reached
+            if(buttonReleasedAfterShutdownStarted &&
+               curTime_ms - timeMark_ms > TIME_TO_WAIT_AFTER_SYNC_MS)
+            {
+              AnkiWarn("CozmoBot.CheckForButtonHeld.HALShutdown","");
+              HAL::Shutdown();
+            }
+            break;
+        }
+
+        buttonWasPressed = buttonIsPressed;
+      }
+
+      void CalibrateMotorsOnNextCalmModeExit(bool enable)
+      {
+        _calibOnNextCalmModeExit = enable;
+      }
+
       Result step_MainExecution()
       {
         EventStart(EventType::MAIN_STEP);
@@ -126,10 +227,13 @@ namespace Anki {
             ++mainTooLateCnt_;
             EventStop(EventType::MAIN_CYCLE_TOO_LATE);
             avgMainTooLateTime_ = (u32)((f32)(avgMainTooLateTime_ * (mainTooLateCnt_ - 1) + timeBetweenCycles)) / mainTooLateCnt_;
+            if (maxMainTooLateTime_ < timeBetweenCycles) {
+              maxMainTooLateTime_ = timeBetweenCycles;
+            }
           }
         }
 
-
+        CheckForShutdown();
 /*
         // Test code for measuring number of mainExecution tics per second
         static u32 cnt = 0;
@@ -151,10 +255,11 @@ namespace Anki {
         // If power mode changed from CALM to ACTIVE, trigger calibration
         static HAL::PowerState lastPowerMode = HAL::POWER_MODE_ACTIVE;
         HAL::PowerState currPowerMode = HAL::PowerGetMode();
-        if (currPowerMode == HAL::POWER_MODE_ACTIVE && lastPowerMode == HAL::POWER_MODE_CALM) {
+        if (_calibOnNextCalmModeExit && currPowerMode == HAL::POWER_MODE_ACTIVE && lastPowerMode == HAL::POWER_MODE_CALM) {
           AnkiInfo("CozmoBot.Update.CalmToActiveCalibration", "");
           LiftController::StartCalibrationRoutine(true);
           HeadController::StartCalibrationRoutine(true);
+          _calibOnNextCalmModeExit = false;
         }
         lastPowerMode = currPowerMode;
       
@@ -264,6 +369,9 @@ namespace Anki {
           ++mainTooLongCnt_;
           EventStop(EventType::MAIN_CYCLE_TOO_LONG);
           avgMainTooLongTime_ = (u32)((f32)(avgMainTooLongTime_ * (mainTooLongCnt_ - 1) + cycleTime)) / mainTooLongCnt_;
+          if (maxMainTooLongTime_ < cycleTime) {
+            maxMainTooLongTime_ = cycleTime;
+          }
         }
         lastCycleStartTime_ = cycleStartTime;
 
@@ -272,13 +380,15 @@ namespace Anki {
         if ((mainTooLateCnt_ > 0 || mainTooLongCnt_ > 0) &&
             (cycleEndTime - lastMainCycleTimeErrorReportTime_ > MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC)) {
 
-          AnkiWarn( "CozmoBot.MainCycleTimeError", "TooLateCount: %d, avgTooLateTime: %d us, tooLongCount: %d, avgTooLongTime: %d us",
-                   mainTooLateCnt_, avgMainTooLateTime_, mainTooLongCnt_, avgMainTooLongTime_);
+          AnkiWarn( "CozmoBot.MainCycleTimeError", "TooLate: %d tics, avg: %d us, max: %d us, TooLong: %d tics, avg: %d us, max: %d us",
+                   mainTooLateCnt_, avgMainTooLateTime_, maxMainTooLateTime_, mainTooLongCnt_, avgMainTooLongTime_, maxMainTooLongTime_);
 
           mainTooLateCnt_ = 0;
           avgMainTooLateTime_ = 0;
+          maxMainTooLateTime_ = 0;
           mainTooLongCnt_ = 0;
           avgMainTooLongTime_ = 0;
+          maxMainTooLongTime_ = 0;
 
           lastMainCycleTimeErrorReportTime_ = cycleEndTime;
         }

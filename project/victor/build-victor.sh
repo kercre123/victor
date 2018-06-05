@@ -20,6 +20,7 @@ function usage() {
     echo "  -d                      DEBUG: generate file lists and exit"
     echo "  -x [CMAKE_EXE]          path to cmake executable"
     echo "  -C                      generate build config and exit without building"
+    echo "  -D                      allow #defines to be specified from the command-line"
     echo "  -F [FEATURE]            enable feature {factoryTest,factoryTestDev}"
     echo "  -T                      list all cmake targets"
     echo "  -t [target]             build specified cmake target"
@@ -45,9 +46,10 @@ CONFIGURATION=Debug
 PLATFORM=vicos
 GENERATOR=Ninja
 FEATURES=""
+DEFINES=""
 ADDITIONAL_PLATFORM_ARGS=()
 
-while getopts ":x:c:p:a:t:g:F:hvfdCTeISX" opt; do
+while getopts ":x:c:p:a:t:g:F:D:hvfdCTeISX" opt; do
     case $opt in
         h)
             usage
@@ -62,6 +64,11 @@ while getopts ":x:c:p:a:t:g:F:hvfdCTeISX" opt; do
         C)
             CONFIGURE=1
             RUN_BUILD=0
+            ;;
+        D)
+            # -D defines on the command-line will force a reconfigure, save any dev gotchas
+            CONFIGURE=1
+            DEFINES="${DEFINES} -D${OPTARG}"
             ;;
         d)
             CONFIGURE=1
@@ -263,7 +270,7 @@ if [ -z "${GOROOT+x}" ]; then
 else
     GO_EXE=$GOROOT/bin/go
 fi
-export GOPATH=${TOPLEVEL}/cloud/go:${TOPLEVEL}/generated/cladgo:${TOPLEVEL}/tools/message-buffers/support/go
+export GOPATH=${TOPLEVEL}/cloud/go:${TOPLEVEL}/generated/cladgo:${TOPLEVEL}/generated/go:${TOPLEVEL}/tools/message-buffers/support/go
 
 if [ ! -f ${GO_EXE} ]; then
   echo "Missing Go executable: ${GO_EXE}"
@@ -291,7 +298,6 @@ fi
 #
 # grab Go dependencies ahead of generating source lists
 #
-# needed for metabuild if we have to run it
 if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ] || [ $CONFIGURE -eq 1 ] ; then
     GEN_SRC_DIR="${TOPLEVEL}/generated/cmake"
     if [ $CONFIGURE -eq 1 ] ; then
@@ -301,14 +307,15 @@ if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ] || [ $CONFIGURE -eq 1 ] ; then
 
     # Scan for BUILD.in files
     METABUILD_INPUTS=`find . -name BUILD.in`
+
+    # Process BUILD.in files (creates list of Go projects to fetch)
+    ${BUILD_TOOLS}/metabuild/metabuild.py --go-output \
+      -o ${GEN_SRC_DIR} \
+      ${METABUILD_INPUTS}
 fi
 
 if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ]; then
   echo "Getting Go dependencies"
-  # Process BUILD.in files (creates list of Go projects to fetch)
-  ${BUILD_TOOLS}/metabuild/metabuild.py --go-output \
-      -o ${GEN_SRC_DIR} \
-      ${METABUILD_INPUTS}
   # Check out specified revisions of repositories we've versioned
   # Append a dummy dir to the GOPATH so that `go get` doesn't barf
   # on nonexistent clad files
@@ -317,6 +324,10 @@ if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ]; then
 else
   echo "Ignore Go dependencies"
 fi
+
+# install build tool binaries + set protoc location
+PROTOC_EXE=`${TOPLEVEL}/tools/build/tools/ankibuild/protobuf.py --install --helpers | tail -1`
+PROTOBUF_HOME=`cd $(dirname "${PROTOC_EXE}")/.. && pwd`
 
 #
 # generate source file lists
@@ -366,7 +377,7 @@ if [ $CONFIGURE -eq 1 ]; then
         if [ -z "${VICOS_SDK+x}" ]; then
             VICOS_SDK=$(${TOPLEVEL}/tools/build/tools/ankibuild/vicos.py --install 0.9-r03 | tail -1)
         fi
- 
+
         PLATFORM_ARGS=(
             -DMACOSX=0
             -DANDROID=0
@@ -383,7 +394,6 @@ if [ $CONFIGURE -eq 1 ]; then
 
     # Append additional platrom args
     PLATFORM_ARGS+=(${ADDITIONAL_PLATFORM_ARGS[@]})
-
     $CMAKE_EXE ${TOPLEVEL} \
         ${VERBOSE_ARG} \
         -G"${GENERATOR}" \
@@ -391,9 +401,11 @@ if [ $CONFIGURE -eq 1 ]; then
         -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} \
         -DGOPATH=${GOPATH} \
         -DGOROOT=${GOROOT} \
+        -DPROTOBUF_HOME=${PROTOBUF_HOME} \
         -DANKI_BUILD_SHA=${ANKI_BUILD_SHA} \
         ${EXPORT_FLAGS} \
         ${FEATURE_FLAGS} \
+        ${DEFINES} \
         "${PLATFORM_ARGS[@]}"
 fi
 

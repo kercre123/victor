@@ -2,6 +2,8 @@
   "behaviorID" : "FistBumpVoiceCommand",
   "behaviorClass" : "DispatcherQueue",
 
+  "associatedActiveFeature": "FistBump",
+
   "respondToUserIntents" : [
     {
       "type": "play_specific",

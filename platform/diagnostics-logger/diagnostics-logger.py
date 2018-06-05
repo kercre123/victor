@@ -17,7 +17,10 @@ output_path = "/data/diagnostics/"
 cmd_tar = [ "tar", "tar -cvjf " + output_path + "logs.tar.bz2 " + output_path + "logs/ " ]
 
 def run_cmd(cmd):
-    return subprocess.check_output(cmd, shell=True)
+    try:
+        return subprocess.check_output(cmd, shell=True)
+    except subprocess.CalledProcessError as e:
+        return e.output
 
 def run_commands():
     if not os.path.exists(output_path + "logs/"):
@@ -45,7 +48,7 @@ def run_commands():
 
 def compress_output():
     if os.path.isfile("/data/boot.log"):
-        cmd_tar[1].append("/data/boot.log")
+        cmd_tar[1] += "/data/boot.log"
 
     subprocess.check_output(cmd_tar[1].split())
 

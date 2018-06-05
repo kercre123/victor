@@ -43,8 +43,8 @@ namespace {
   const float kDistanceForConeActivation_mm = 89.0f;
   const float kHalfAngleForConeActivation_rad = M_PI_4_F;
   const float kDistanceForStopTurn_mm = 300.0f;
-  const float kDistanceForStartApproach_mm = 120.0f;
-  const float kDistanceForStopApproach_mm = 80.0f;
+  const float kDistanceForStartApproach_mm = 80.0f;
+  const float kDistanceForStopApproach_mm = 50.0f;
   
   const float kMaxTurnAngle_deg = 135.0f; // 90 + 45 looks good for coming at a wall at an acute angle
   
@@ -53,13 +53,15 @@ namespace {
   const bool kTakePhoto = false;
   
   float kReturnToCenterSpeed_deg_s = 300.0f;
-  float kTurnSpeed_deg_s = 30.0f;
+  float kTurnSpeed_deg_s = 45.0f;
   
   const unsigned int kNumFloodFillSteps = 10;
   
   
   // if discovered an obstacle within this long, and an unrelated path brings you nearby turn toward it
   int kTimeForTurnToPassingObstacles_ms = 5000;
+  
+  const bool kUseDebugLights = false;
   
   // backpack lights so I know when this behavior is active
   static const BackpackLights kLightsOff =
@@ -109,7 +111,6 @@ BehaviorExploringExamineObstacle::InstanceConfig::InstanceConfig()
 BehaviorExploringExamineObstacle::DynamicVariables::DynamicVariables()
 {
   state = State::Initial;
-  persistent.canVisitObstacle = false;
   persistent.canSeeSideObstacle = false;
   persistent.seesFrontObstacle = false;
   persistent.seesSideObstacle = false;
@@ -168,7 +169,9 @@ void BehaviorExploringExamineObstacle::OnBehaviorActivated()
   if( _dVars.persistent.seesSideObstacle ) {
     DEV_ASSERT( !_dVars.persistent.seesFrontObstacle, "Should not be facing an obstacle now" );
     
-    GetBEI().GetBodyLightComponent().SetBackpackLights(kLightsActiveSide);
+    if( kUseDebugLights ) {
+      GetBEI().GetBodyLightComponent().SetBackpackLights(kLightsActiveSide);
+    }
     
     // turn first
     Pose2d pose(0.0f, _dVars.persistent.sideObstaclePosition );
@@ -186,7 +189,9 @@ void BehaviorExploringExamineObstacle::OnBehaviorActivated()
                            "Should be facing an obstacle now" );
     }
     
-    GetBEI().GetBodyLightComponent().SetBackpackLights(kLightsActiveFront);
+    if( kUseDebugLights ) {
+      GetBEI().GetBodyLightComponent().SetBackpackLights(kLightsActiveFront);
+    }
     
     // todo: should probably back up if this behavior activates and it's too close. for now, the reaction
     // animation moves it back a little bit
@@ -210,8 +215,8 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
     }
   }
   
-  const bool shouldVisitObstacle = _dVars.persistent.canVisitObstacle && (_dVars.state == State::Initial);
-  if( shouldVisitObstacle ) {
+  const bool canVisitObstacle = (_dVars.state == State::Initial);
+  if( canVisitObstacle ) {
     const bool useRobotWidth = true;
     if( RobotPathFreeOfObstacle( kDistanceForStartApproach_mm, useRobotWidth ) ) {
       
@@ -247,7 +252,9 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
     _dVars.state = (_dVars.state == State::SecondTurn) ? State::ReturnToCenterEnd : State::ReturnToCenter;
     
     if( _dVars.state == State::ReturnToCenterEnd ) {
-      GetBEI().GetBodyLightComponent().SetBackpackLights(kLightsOff);
+      if( kUseDebugLights ) {
+        GetBEI().GetBodyLightComponent().SetBackpackLights(kLightsOff);
+      }
       CancelSelf();
       return;
     }
@@ -274,7 +281,9 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
     action->AddAction( turnAction );
     
   } else if( _dVars.state == State::ReturnToCenterEnd ) {
-    GetBEI().GetBodyLightComponent().SetBackpackLights(kLightsOff);
+    if( kUseDebugLights ) {
+      GetBEI().GetBodyLightComponent().SetBackpackLights(kLightsOff);
+    }
     CancelSelf();
     return;
   }
@@ -422,7 +431,7 @@ bool BehaviorExploringExamineObstacle::RobotSeesObstacleInFront( float dist_mm, 
     return ret;
   };
   
-  const bool foundNewObstacle = memoryMap->Eval( {{Point2f{currRobotPose.GetTranslation()},
+  const bool foundNewObstacle = memoryMap->AnyOf( {{Point2f{currRobotPose.GetTranslation()},
                                                    p2}},
                                                  evalFunc );
   return foundNewObstacle;
@@ -466,7 +475,7 @@ bool BehaviorExploringExamineObstacle::RobotSeesNewObstacleInCone( float dist_mm
     return sameType && newObstacle;
   };
   
-  const bool foundNewObstacle = memoryMap->Eval( {{ t1, t2, t3 }}, evalFunc );
+  const bool foundNewObstacle = memoryMap->AnyOf( {{ t1, t2, t3 }}, evalFunc );
   return foundNewObstacle;
 }
   

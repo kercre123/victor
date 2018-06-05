@@ -179,22 +179,33 @@ namespace Anki {
         WheelController::GetDesiredWheelSpeeds(desiredLeftSpeed, desiredRightSpeed);
         bool alreadyStopping = (desiredLeftSpeed == 0.f) && (desiredRightSpeed == 0.f);
 
+        // If side cliffs are detected while driving stop (possibly again)
+        // because this is a precarious situation.
+        bool sideCliffsDetected = (_cliffDetectedFlags == ((1 << HAL::CLIFF_FL) | (1 << HAL::CLIFF_BL))) ||
+                                  (_cliffDetectedFlags == ((1 << HAL::CLIFF_FR) | (1 << HAL::CLIFF_BR)));
+
         if (_enableCliffDetect &&
             IsAnyCliffDetected() &&
             !IMUFilter::IsPickedUp() &&
             isDriving && !alreadyStopping &&
-            !_wasAnyCliffDetected) {
+            (!_wasAnyCliffDetected || sideCliffsDetected)) {
 
           // TODO (maybe): Check for cases where cliff detect should not stop motors
           // 1) Turning in place
           // 2) Driving over something (i.e. pitch is higher than some degrees).
-          AnkiInfo("ProxSensors.UpdateCliff.StoppingDueToCliff", "%d", _stopOnCliff);
+          AnkiInfo("ProxSensors.UpdateCliff.StoppingDueToCliff", 
+                   "stopOnCliff: %d, sideCliffsDetected: %d", 
+                   _stopOnCliff, sideCliffsDetected);
 
           if(_stopOnCliff)
           {
             // Stop all motors and animations
             PickAndPlaceController::Reset();
-            SteeringController::ExecuteDirectDrive(0,0);
+
+            // Disable wheels so that subsequent wheel commands are ignored 
+            // until engine has a chance to cancel actions and anims
+            // Wheels will be re-enabled when RobotStoppedAck is received.
+            SteeringController::Disable();
 
             // Send stopped message
             RobotInterface::SendMessage(RobotInterface::RobotStopped());
@@ -253,6 +264,11 @@ namespace Anki {
       bool IsAnyCliffDetected()
       {
         return _cliffDetectedFlags != 0;
+      }
+
+      bool IsCliffDetected(u32 ind)
+      {
+        return _cliffDetectedFlags & (1 << ind);
       }
 
       void EnableCliffDetector(bool enable) {

@@ -58,13 +58,19 @@ macro(__anki_run_go_build target_name extra_deps)
   set(__targ_links $<TARGET_PROPERTY:${target_name}_fake_dep,LINK_LIBRARIES>)
   set(__targ_ldfolders $<TARGET_PROPERTY:${target_name},GO_CLINK_FOLDERS>)
   set(__link_env CGO_LDFLAGS=${__targ_ldfolders}\ $<$<BOOL:${__targ_links}>:-l$<JOIN:${__targ_links},\ -l>>)
-  set(__go_build_ldflags $<TARGET_PROPERTY:${target_name},GO_LDFLAGS>)
+  set(__go_platform_ldflags "")
+  if (VICOS)
+    set(__go_platform_ldflags "-r /anki/lib")
+  endif()
+  set(__go_build_ldflags $<TARGET_PROPERTY:${target_name},GO_LDFLAGS>\ ${__go_platform_ldflags})
   set(__ldflags_str $<$<BOOL:${__go_build_ldflags}>:-ldflags>)
 
   add_custom_command(
     OUTPUT ${__gobuild_out}
     COMMAND ${CMAKE_COMMAND} -E env ${__go_compile_env} ${__include_env} ${__link_env}
-                             ${GOROOT}/bin/go build ${__go_build_flags} ${__ldflags_str} ${__go_build_ldflags} ${__gobuild_basedir}
+                             ${GOROOT}/bin/go build ${__go_build_flags}
+                             ${__ldflags_str} ${__go_build_ldflags}
+                             ${__gobuild_basedir}
     DEPENDS ${SRCS} ${_ab_PLATFORM_SRCS} ${__go_deps} ${extra_deps} ${GO_VERSION_FILE}
   )
 endmacro()

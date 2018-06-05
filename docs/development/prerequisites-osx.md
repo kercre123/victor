@@ -43,32 +43,7 @@ pip2 install pyyaml
 pip3 install pyyaml
 ```
 
-## Cleanup stale homebrew installations
-
-Since the Android SDK and NDK are automatically downloaded, you should be using
-`adb` from there. Make sure you do not have android-sdk installed from `brew` by
-running:
-
-``` bash
-brew uninstall android-sdk
-brew uninstall android-ndk
-```
-
-## Android App build environment
-
-The robotics and engine code run on an embedded android system and require both
-the Android NDK toolchain and SDK tools in order to build and deploy to devices.
-The correct versions will be automatically installed for you when you run
-[`fetch-build-deps.sh`](/project/victor/scripts/fetch-build-deps.sh) for the Android platform.
-
-You can also install them ahead of time with:
-
-``` bash
-./tools/build/tools/ankibuild/android.py --install-sdk
-./tools/build/tools/ankibuild/android.py --install-ndk
-```
-
-Once the tools are installed, you can setup your shell environment for Android
+Once the tools are installed, you can setup your shell environment for Vicos
 development by running the command:
 
 ``` bash

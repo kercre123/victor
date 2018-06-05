@@ -24,32 +24,40 @@
 // appropriate headers per platform
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #if defined(__MACH__) && defined(__APPLE__)
-#include <execinfo.h>
-#include <cxxabi.h>
-#elif defined(ANDROID) || defined(LINUX) || defined(VICOS)
+#define USE_BACKTRACE
+#define USE_MACOS_DEMANGLE
+#elif defined(VICOS)
+#define USE_BACKTRACE
+#define USE_VICOS_DEMANGLE
+#elif defined(ANDROID) || defined(LINUX)
 
 #else
 #error "Unsupported platform"
 #endif
 
+#ifdef USE_BACKTRACE
+#include <execinfo.h>
+#include <cxxabi.h>
+#endif
+
 namespace Anki {
 namespace Util {
 
-#if defined(__MACH__) && defined(__APPLE__)
-std::string DemangleBacktraceSymbols(const std::string& backtraceFrame) {
+#ifdef USE_MACOS_DEMANGLE
+static std::string Demangle(const std::string& backtraceFrame) {
   std::vector<std::string> splitFrame = SplitString(backtraceFrame, ' ');
 
   // -4 because the valid statuses from __cxa_demangle() is 0, -1, -2, -3. If we got -4 after
   // calling __cxa_demangle() something very wrong happened.
   int status = -4;
 
-  // Make sure that when the backtrace frame string is split 
+  // Make sure that when the backtrace frame string is split
   // by spaces there is at least 3 items in there.
   if (splitFrame.size() > 3) {
     // A backtraceFrame looks like:
     // "0   webotsCtrlGameEngine                0x000000010cc84894 _ZN4Anki4Util14sDumpCallstackERKNSt3__112basic_stringIcNS1_11char_traitsIcEENS1_9allocatorIcEEEE + 52"
     // The mangled symbol is the third element from the back, when split by ' '
-    // 
+    //
     // Use a tempPtr here in case __cxa_demangle cannot demangle the given string and returns a nullptr.
     char* tempPtr = abi::__cxa_demangle(splitFrame.end()[-3].c_str(), 0, 0, &status);
 
@@ -63,7 +71,7 @@ std::string DemangleBacktraceSymbols(const std::string& backtraceFrame) {
       case -2:
       {
         // Demangle didn't work, don't change the name.
-        PRINT_NAMED_DEBUG("Callstack.DemangleBacktraceSymbols",
+        PRINT_NAMED_DEBUG("Callstack.Demangle",
                           "%s is not a valid name under the C++ ABI mangling rules.",
                           splitFrame.end()[-3].c_str());
         break;
@@ -72,14 +80,14 @@ std::string DemangleBacktraceSymbols(const std::string& backtraceFrame) {
       default:
       {
         // Demangle didn't work, don't change the name.
-        PRINT_NAMED_WARNING("Callstack.DemangleBacktraceSymbols",
+        PRINT_NAMED_WARNING("Callstack.Demangle",
                             "Couldn't demangle the symbol, __cxa_demangle returned status = %i", status);
         break;
       }
     }
     free(tempPtr);
   } else {
-    PRINT_NAMED_WARNING("Callstack.DemangleBacktraceSymbols",
+    PRINT_NAMED_WARNING("Callstack.Demangle",
                         "Something is wrong with the format of the backtrace frame. It should look "
                         "something like "
                         "'0   webotsCtrlGameEngine                0x000000010cc84894 _ZN4Anki4Util14sDumpCallstackERKNSt3__112basic_stringIcNS1_11char_traitsIcEENS1_9allocatorIcEEEE + 52'");
@@ -90,25 +98,79 @@ std::string DemangleBacktraceSymbols(const std::string& backtraceFrame) {
     os << part << " ";
   }
 
-  const std::string& ret(os.str());
-  return ret;
+  return os.str();
 }
-#endif  // defined(__MACH__) && defined(__APPLE__)
+#endif  // USE_MACOS_DEMANGLE
+
+#ifdef USE_VICOS_DEMANGLE
+static std::string Demangle(const char * frame)
+{
+  if (frame == nullptr) {
+    // Don't crash
+    return "NULL";
+  }
+
+  //
+  // VicOS stack frames look like these lines:
+  //   /anki/lib/libankiutil.so(_ZN4Anki4Util14sDumpCallstackERKNSt3__112basic_stringIcNS1_11char_traitsIcEENS1_9allocatorIcEEEE+0x23) [0xb03d4920]
+  //   /anki/bin/vic-anim(+0x3dcc2) [0x7f592cc2]
+  // or generically
+  //  obj(name+offset) [addr]
+  //
+  // The mangled name (if any) appears between left paren and plus.
+  // If we can't find a mangled name, return the frame unchanged.
+  //
+  std::string s = frame;
+
+  auto pos1 = s.find('(');
+  if (pos1 == std::string::npos) {
+    // Can't find left paren
+    return s;
+  }
+
+  auto pos2 = s.find('+', pos1+1);
+  if (pos2 == std::string::npos) {
+    // Can't find plus
+    return s;
+  }
+
+  // Get the mangled name
+  std::string name = s.substr(pos1+1, pos2-pos1-1);
+  if (name.empty()) {
+    // No name provided
+    return s;
+  }
+
+  // Perform the demangle
+  int status = 0;
+  char * temp = abi::__cxa_demangle(name.c_str(), 0, 0, &status);
+  if (temp == nullptr) {
+    // Unable to demangle
+    return s;
+  }
+
+  // Replace mangled name with demangled name
+  s.replace(pos1+1, pos2-pos1-1, temp);
+  free(temp);
+
+  return s;
+}
+#endif
 
 void sDumpCallstack(const std::string& name)
 {
-  #if defined(__MACH__) && defined(__APPLE__)
+  #ifdef USE_BACKTRACE
   {
     void* callstack[128];
     int frames = backtrace(callstack, 128);
     char** strs = backtrace_symbols(callstack, frames);
     for (int i = 0; i < frames; ++i) {
-      PRINT_CH_INFO("Unfiltered", name.c_str(), "%s", DemangleBacktraceSymbols(strs[i]).c_str());
+      PRINT_CH_INFO("Unfiltered", name.c_str(), "%s", Demangle(strs[i]).c_str());
     }
     free(strs);
   }
   #else
-  
+
   //TODO implement android
 
   #endif

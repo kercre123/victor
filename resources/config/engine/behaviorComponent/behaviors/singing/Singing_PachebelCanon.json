@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_PachebelCanon",
-  "displayNameKey":"behavior.singing.PachebelCanon",
-  "requiredUnlockId":"Singing_PachebelCanon",
-  "audioSwitchGroup":"Cozmo_Sings_80Bpm",
-  "audioSwitch":"Cozmo_Sings_Pachebel_Canon"
-}

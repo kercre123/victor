@@ -48,22 +48,31 @@ private:
     InstanceConfig();
     IBEIConditionPtr  triggerWordPendingCond;
     ICozmoBehaviorPtr wakeWordBehavior;
+    std::vector<ICozmoBehaviorPtr> toSuppressWhenSleeping;
     std::shared_ptr<BehaviorTimerUtilityCoordinator> timerCoordBehavior;
-    ICozmoBehaviorPtr highLevelAIBehavior;
-    ICozmoBehaviorPtr sleepingBehavior;
     ICozmoBehaviorPtr reactToObstacleBehavior;
+    
+    ICozmoBehaviorPtr meetVictorBehavior;
+    std::vector<ICozmoBehaviorPtr> toSuppressWhenMeetVictor;
+    
+    ICozmoBehaviorPtr danceToTheBeatBehavior;
+    std::vector<ICozmoBehaviorPtr> toSuppressWhenDancingToTheBeat;
     
     std::unordered_map<ICozmoBehaviorPtr, bool> devActivatableOverrides;
   };
 
   struct DynamicVariables{
     DynamicVariables();
+
+    bool suppressProx;
+    
+    bool isSuppressingStreaming;
   };
 
   InstanceConfig   _iConfig;
   DynamicVariables _dVars;
 
-  bool ShouldSuppressProxReaction() const;
+  bool ShouldSuppressProxReaction();
   
 };
 

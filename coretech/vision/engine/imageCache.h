@@ -65,6 +65,7 @@ public:
 
     // TODO: add other sizes/methods (e.g. cubic interpolation)
   };
+
   
   // Get the image dimensions of the image returned for a given Size, based on
   // the original number of rows/cols.
@@ -74,6 +75,11 @@ public:
   // Look up a Size enum, given a scale and resize method
   static Size GetSize(s32 scale, Vision::ResizeMethod method);
   
+  // Interprets a scale string and a method string into a Size enum
+  // Valid scales are: "full", "half", "quarter"
+  // Valid methods are: "nearest", "linear", "area"
+  static Size StringToSize(const std::string& scaleStr, const std::string& methodStr);
+
   // For unit tests to verify expected behavior
   enum class GetType : u8
   {

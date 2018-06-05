@@ -25,16 +25,12 @@ SCRIPTDIR=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || ech
 # Where is simpleperf?
 : ${SIMPLEPERF:="${TOPLEVEL}/lib/util/tools/simpleperf"}
 
-#
-# If ANDROID_NDK is set, use it, else provide default location
-#
-if [ -z "${ANDROID_NDK+x}" ]; then
-  ANDROID_NDK=`${TOPLEVEL}/tools/build/tools/ankibuild/android.py`
-fi
+# Where is addr2line?
+: ${VICOS_ADDR2LINE:="`${TOPLEVEL}/project/victor/scripts/vicos_which.sh addr2line`"}
 
 python ${SIMPLEPERF}/annotate.py \
   -o ${ANKI_PROFILE_ANNOTATEDDIR} \
   -i ${ANKI_PROFILE_PERFDATA} \
   -s ${TOPLEVEL} \
   --symfs ${ANKI_PROFILE_SYMBOLCACHE} \
-  --addr2line ${ANDROID_NDK}/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-addr2line \
+  --addr2line ${VICOS_ADDR2LINE}

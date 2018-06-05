@@ -59,7 +59,19 @@ public:
                  const LayerLayoutMap&& layers,
                  s32 imageWidth = 0,
                  s32 imageHeight = 0);
+            
+  // Create a composite image with the spriteHandle as a static background
+  CompositeImage(ConstHSImageHandle faceHSImageHandle,
+                 Vision::SpriteHandle spriteHandle,
+                 bool shouldRenderRGBA = true,
+                 const Point2i& topLeftCorner = {0,0});
 
+  // Create a composite image with the sprite sequence as a background
+  CompositeImage(ConstHSImageHandle faceHSImageHandle,
+                 const Vision::SpriteSequence* const spriteSeq,
+                 bool shouldRenderRGBA = true,
+                 const Point2i& topLeftCorner = {0,0});
+  
   virtual ~CompositeImage();
 
   std::vector<CompositeImageChunk> GetImageChunks() const;
@@ -100,19 +112,44 @@ public:
   
   s32 GetWidth(){ return _width;}
   s32 GetHeight(){ return _height;}
+  
+  // Update all sprite boxes to use the new render method
+  void OverrideRenderMethod(Anki::Vision::SpriteRenderMethod renderMethod);
+
+  // The composite image should cache all of its sprites for the time specifed
+  void CacheInternalSprites(Vision::SpriteCache* cache, const TimeStamp_t endTime_ms);
+
+
+  // Utility function which adds the "empty layer" to the image - useful for instances
+  // where a blank composite image is needed at the start of an animation so that updates
+  // can be applied at a non-zero time
+  void AddEmptyLayer(SpriteSequenceContainer* seqContainer);
 
 private:
   using SpriteBox = CompositeImageLayer::SpriteBox;
   using SpriteEntry = CompositeImageLayer::SpriteEntry;
-  using AllSpriteBoxDataFunc = std::function<void(Vision::LayerName, 
+  
+  using UseSpriteBoxDataFunc = std::function<void(Vision::LayerName,
                                                   SpriteBoxName, const SpriteBox&, 
                                                   const SpriteEntry&)>;
+  using UpdateSpriteBoxDataFunc = std::function<void(Vision::LayerName,
+                                                     SpriteBoxName, SpriteBox&,
+                                                     SpriteEntry&)>;
   // Call the callback with the data from every spritebox moving from lowest z-index to highest
-  void ProcessAllSpriteBoxes(AllSpriteBoxDataFunc processCallback) const;
-
+  // Data is const so can only be used for making decisions
+  void ProcessAllSpriteBoxes(UseSpriteBoxDataFunc processCallback) const;
+  // Call the callback with the data from every spritebox moving from lowest z-index to highest
+  // Data is non-const so it can be updated (e.g. update sprite box render method
+  void UpdateAllSpriteBoxes(UpdateSpriteBoxDataFunc updateCallback);
+  
   template<typename ImageType>
   void DrawSubImage(ImageType& baseImage, const ImageType& subImage, 
                     const SpriteBox& spriteBox, const Point2i& overlayOffset) const;
+  
+  // Translates SpriteRenderConfig into a usable format for composite images
+  // Returns nullptr if should render RGBA with no image handle
+  // Othrewise, returns HSImage to use in render
+  HSImageHandle HowToRenderRGBA(const SpriteRenderConfig& config) const;
 
   SpriteCache* _spriteCache;
   // To allow sprite boxes to be rendered the color of the robot's eyes

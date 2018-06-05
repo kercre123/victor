@@ -4,6 +4,8 @@
 
   "interruptActiveBehavior": true,
   "linkScope": true,
+
+  "associatedActiveFeature": "ObservingOnCharger",
   
   "behaviors": [
     {

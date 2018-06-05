@@ -61,8 +61,19 @@ const char* pathToExternalSpriteSequences = "assets/sprites/spriteSequences/";
 const char* pathToEngineSpriteSequences   = "config/devOnlySprites/spriteSequences/";
 
 const std::vector<std::string> kPathsToEngineAccessibleAnimations = {
+  // Dance to the beat:
+  "assets/animations/anim_dancebeat_01.bin",
+  "assets/animations/anim_dancebeat_getin_01.bin",
+  "assets/animations/anim_dancebeat_getout_01.bin",
+  
+  // Weather:
   "assets/animations/anim_weather_cloud_01.bin",
   "assets/animations/anim_weather_snow_01.bin",
+  "assets/animations/anim_weather_rain_01.bin",
+  "assets/animations/anim_weather_sunny_01.bin",
+  "assets/animations/anim_weather_stars_01.bin",
+  "assets/animations/anim_weather_cold_01.bin",
+  "assets/animations/anim_weather_windy_01.bin",
 };
 
 }
@@ -118,6 +129,11 @@ void RobotDataLoader::LoadNonConfigData()
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadBehaviors");
     LoadBehaviors();
+  }
+
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadWeatherResponseMaps");
+    LoadWeatherResponseMaps();
   }
   
   {
@@ -459,7 +475,8 @@ void RobotDataLoader::LoadBehaviors()
 void RobotDataLoader::LoadSpritePaths()
 {
  // Creates a map of all sprite names to their file names
-  _spritePaths->Load(_platform, "assets/cladToFileMaps/spriteMap.json", "SpriteName");
+  const bool reverseLookupAllowed = true;
+  _spritePaths->Load(_platform, "assets/cladToFileMaps/spriteMap.json", "SpriteName", reverseLookupAllowed);
 
   auto spritePaths = {pathToExternalIndependentSprites,
                       pathToEngineIndependentSprites};
@@ -514,8 +531,9 @@ void RobotDataLoader::LoadCompositeImageMaps()
     const auto layoutBasePath = "assets/compositeImageResources/imageLayouts/";
     const std::string layoutFullPath = _platform->pathToResource(Util::Data::Scope::Resources,
                                                                  layoutBasePath);
+    const bool reverseLookupAllowed = true;
     Util::CladEnumToStringMap<Vision::CompositeImageLayout> layoutMap;
-    layoutMap.Load(_platform, "assets/cladToFileMaps/CompositeImageLayoutMap.json", "LayoutName");
+    layoutMap.Load(_platform, "assets/cladToFileMaps/CompositeImageLayoutMap.json", "LayoutName", reverseLookupAllowed);
     auto fileNameToFullPath = CreateFileNameToFullPathMap({layoutBasePath}, "json");
 
     // Iterate through all files in the directory and extract the associated
@@ -547,8 +565,10 @@ void RobotDataLoader::LoadCompositeImageMaps()
     const auto mapBasePath = "assets/compositeImageResources/imageMaps/";
     const std::string mapFullPath = _platform->pathToResource(Util::Data::Scope::Resources,
                                                               mapBasePath);
+    
+    const bool reverseLookupAllowed = true;
     Util::CladEnumToStringMap<Vision::CompositeImageMap> mapMap;
-    mapMap.Load(_platform, "assets/cladToFileMaps/CompositeImageMapMap.json", "MapName");
+    mapMap.Load(_platform, "assets/cladToFileMaps/CompositeImageMapMap.json", "MapName", reverseLookupAllowed);
     auto fileNameToFullPath = CreateFileNameToFullPathMap({mapBasePath}, "json");
 
     // Iterate through all files in the directory and extract the associated
@@ -604,6 +624,64 @@ void RobotDataLoader::LoadCompositeImageMaps()
       }
     }
   }
+}
+
+
+void RobotDataLoader::LoadWeatherResponseMaps()
+{
+  _weatherResponseMap = std::make_unique<WeatherResponseMap>();
+  const bool useFullPath = false;
+  const char* extensions = ".json";
+  const bool recurse = true;
+
+
+  const std::string path =  "config/engine/behaviorComponent/weatherResponseMaps/";
+  const char* kAPIValueKey = "APIValue";
+  const char* kCladTypeKey = "CladType";
+
+  const std::string responseFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
+  auto responseJSONFiles = Util::FileUtils::FilesInDirectory(responseFolder, useFullPath, extensions, recurse);
+  for (const auto& filename : responseJSONFiles)
+  {
+    Json::Value responseJSON;
+    const bool success = _platform->readAsJson(filename, responseJSON);
+    if (success && 
+        !responseJSON.empty() &&
+        responseJSON.isArray())
+    {
+      for(const auto& pair : responseJSON){
+        if(ANKI_VERIFY(pair.isMember(kAPIValueKey) && pair.isMember(kCladTypeKey),
+                       "RobotDataLoader.LoadWeatherResponseMaps.PairMissingKey",
+                       "File %s has an invalid pair",
+                       filename.c_str())){
+          WeatherConditionType cond = WeatherConditionTypeFromString(pair[kCladTypeKey].asString());
+
+          std::string str = pair[kAPIValueKey].asString();
+          std::transform(str.begin(), str.end(), str.begin(), 
+                         [](const char c) { return std::tolower(c); });
+          
+          if(!str.empty()){
+            auto resPair  = _weatherResponseMap->emplace(std::make_pair(str, cond));
+            ANKI_VERIFY(resPair.second,
+                        "RobotDataLoader.LoadWeatherResponseMaps.DuplicateAPIKey",
+                        "Key %s already exists within the weather response map ",
+                        str.c_str());
+          }else{
+            PRINT_NAMED_ERROR("RobotDataLoader.LoadWeatherResponseMaps.MissingAPIValue",
+                              "APIValue that maps to %s in file %s is blank",
+                              WeatherConditionTypeToString(cond), filename.c_str());
+          }
+
+        }
+      }
+    }
+    else if (!success)
+    {
+      LOG_WARNING("RobotDataLoader.LoadWeatherResponseMap", "Failed to read '%s'", filename.c_str());
+    }
+  }
+
+
 }
 
 
@@ -764,6 +842,17 @@ void RobotDataLoader::LoadRobotConfigs()
     {
       LOG_ERROR("RobotDataLoader.WebServerEngineConfigNotFound",
                 "Web Server Engine Config file %s not found or failed to parse",
+                jsonFilename.c_str());
+    }
+  }
+
+  // TextToSpeechConfig
+  {
+    const std::string jsonFilename = "config/engine/sayTextintentConfig.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _textToSpeechConfig);
+    if( !success){
+      LOG_ERROR("RobotDataLoader.TextToSpeechConfigNotFound",
+                "TextToSpeech Engine Config file %s not found or failed to parse",
                 jsonFilename.c_str());
     }
   }

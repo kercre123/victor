@@ -31,7 +31,7 @@
 
 namespace Anki {
 namespace Cozmo {
-  
+
 static constexpr auto kDevLogStepTime_ms = 10;
 static const char* kLogsDirectoryFieldName = "logsDirectory";
 static const char* kSaveImagesFieldName = "saveImages";
@@ -74,7 +74,7 @@ void WebotsDevLogController::UpdateStatusText(bool jumping)
 {
   char text[kMaxStatusStrLen+1];
   text[0] = 0;
-  
+
   if( GetDirectoryPath().empty() ) {
     snprintf(text, kMaxStatusStrLen+1, "WAIT");
   }
@@ -90,11 +90,11 @@ void WebotsDevLogController::UpdateStatusText(bool jumping)
   // status goes in white in the bottom left
   const int width = kMaxStatusStrLen * kFontWidth;
   const int top = _disp->getHeight() - kFontHeight;
-    
+
   // clear area
   _disp->setColor(0);
   _disp->fillRectangle(0, top, width, kFontHeight);
-    
+
   _disp->setColor(0xFFFFFF);
   _disp->drawText(text, 0, top);
 }
@@ -113,7 +113,7 @@ void WebotsDevLogController::UpdateEndTimeText(uint32_t time_ms)
   // clear area
   _disp->setColor(0);
   _disp->fillRectangle(left, top, width, kFontHeight);
-    
+
   _disp->setColor(0xFFFFFF);
   _disp->drawText(str, left, top);
 }
@@ -132,7 +132,7 @@ void WebotsDevLogController::UpdateCurrTimeText(uint32_t time_ms)
   // clear area
   _disp->setColor(0);
   _disp->fillRectangle(left, top, width, kFontHeight);
-    
+
   _disp->setColor(0x00CCCC);
   _disp->drawText(str, left, top);
 }
@@ -163,7 +163,7 @@ void WebotsDevLogController::UpdateCurrTimeRender(uint32_t time_ms, uint32_t tar
     const int maxInnerWidth = totalWidth - 2 * kInnerPadding;
     const int progressWidth = time_ms * maxInnerWidth / _totalLogLength_ms;
     const int width = std::min( progressWidth, maxInnerWidth );
-    
+
     if (width > 0) {
       _disp->setColor(0x00CCCC);
       _disp->fillRectangle(left, top, width, height);
@@ -184,7 +184,7 @@ void WebotsDevLogController::UpdateCurrTimeRender(uint32_t time_ms, uint32_t tar
 int32_t WebotsDevLogController::Update()
 {
   UpdateKeyboard();
-  
+
   if (_devLogProcessor && ! _isPaused)
   {
     if (_devLogProcessor->AdvanceTime(std::round(_fastForwardFactor * _stepTime_ms)))
@@ -204,10 +204,10 @@ int32_t WebotsDevLogController::Update()
     PRINT_NAMED_ERROR("WebotsDevLogController.Update.StepFailed", "");
     return -1;
   }
-  
+
   return 0;
 }
-  
+
 std::string WebotsDevLogController::GetDirectoryPath() const
 {
   std::string dirPath;
@@ -228,7 +228,7 @@ void WebotsDevLogController::EnableSaveImagesIfChecked()
     EnableSaveImages(saveImagesField->getSFBool());
   }
 }
-  
+
 void WebotsDevLogController::EnableSaveImages(bool enable)
 {
   if(enable == _savingImages)
@@ -236,7 +236,7 @@ void WebotsDevLogController::EnableSaveImages(bool enable)
     // Nothing to do, already in correct mode
     return;
   }
-  
+
   ImageSendMode mode = ImageSendMode::Off;
   if(enable)
   {
@@ -250,14 +250,14 @@ void WebotsDevLogController::EnableSaveImages(bool enable)
 
   // Save images to "savedVizImages" in log directory
   std::string path = Util::FileUtils::FullFilePath({_devLogProcessor->GetDirectoryName(), "savedImages"});
-  
+
   VizInterface::MessageViz message(VizInterface::SaveImages(mode, path));
-  
+
   const size_t MAX_MESSAGE_SIZE{(size_t)VizConstants::MaxMessageSize};
   uint8_t buffer[MAX_MESSAGE_SIZE]{0};
-  
+
   const size_t numWritten = (uint32_t)message.Pack(buffer, MAX_MESSAGE_SIZE);
-  
+
   if (_vizConnection->Send((const char*)buffer, (int)numWritten) <= 0) {
     PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd failed", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
   }
@@ -276,29 +276,29 @@ void WebotsDevLogController::PrintHelp()
   printf("n   : Jump to next print message\n");
   printf("SPC : Play / pause\n");
 }
-  
+
 void WebotsDevLogController::UpdateKeyboard()
 {
   if (!UpdatePressedKeys())
   {
     return;
   }
-  
+
   for(auto key : _lastKeysPressed)
   {
     // Extract modifier key(s)
     int modifier_key = key & ~webots::Keyboard::KEY;
-    
+
     // Set key to its modifier-less self
     key &= webots::Keyboard::KEY;
-  
+
     switch(key)
     {
       case(int)'I':
       {
         // Toggle save state:
         EnableSaveImages(!_savingImages);
-        
+
         // Make field in object tree match new state (EnableSaveImages changes _savingImages)
         webots::Field* saveImagesField = _selfNode->getField(kSaveImagesFieldName);
         if (nullptr == saveImagesField)
@@ -310,10 +310,10 @@ void WebotsDevLogController::UpdateKeyboard()
         {
           saveImagesField->setSFBool(_savingImages);
         }
-        
+
         break;
       }
-        
+
       case (int)'L':
       {
         std::string dirPath = GetDirectoryPath();
@@ -361,7 +361,7 @@ void WebotsDevLogController::UpdateKeyboard()
       case (int)'J':
       {
         const bool dropMessages = modifier_key & webots::Keyboard::SHIFT;
-          
+
         int ms = _selfNode->getField("jumpToMS")->getSFInt32();
         JumpToMS(ms, dropMessages);
         break;
@@ -385,7 +385,7 @@ void WebotsDevLogController::UpdateKeyboard()
         PrintHelp();
         break;
       }
-     
+
     } // switch(key)
 
   }
@@ -421,9 +421,9 @@ void WebotsDevLogController::JumpToMS(uint32_t targetTime_ms, bool dropMessages)
                       "Only positive jumps are supported, sorry");
     return;
   }
-  
+
   uint32_t jump_ms = targetTime_ms - currTime_ms;
-  
+
   PRINT_NAMED_INFO("WebotsDevLogController.JumpToMS",
                    "fast forwarding ahead to %d ms (jumping by %d)",
                    targetTime_ms, jump_ms);
@@ -437,7 +437,7 @@ void WebotsDevLogController::JumpToMS(uint32_t targetTime_ms, bool dropMessages)
   PRINT_NAMED_INFO("WebotsDevLogController.JumpToMS.Complete",
                    "jump complete");
 }
-  
+
 void WebotsDevLogController::JumpByMS(uint32_t jump_ms, bool dropMessages)
 {
   if( ! _devLogProcessor ) {
@@ -447,7 +447,7 @@ void WebotsDevLogController::JumpByMS(uint32_t jump_ms, bool dropMessages)
   if( dropMessages ) {
     ClearLogCallbacks();
   }
-  
+
   // play all of the messages, skipping ahead by chunks of kMaxJumpInterval_ms
   static const uint32_t kMaxJumpInterval_ms = 60000;
 
@@ -490,17 +490,17 @@ bool WebotsDevLogController::UpdatePressedKeys()
     currentKeysPressed.insert(key);
     key = _supervisor->getKeyboard()->getKey();
   }
-  
+
   // If exact same keys were pressed last tic, do nothing.
   if (_lastKeysPressed == currentKeysPressed)
   {
     return false;
   }
-  
+
   _lastKeysPressed = currentKeysPressed;
   return true;
 }
-  
+
 void WebotsDevLogController::InitDevLogProcessor(const std::string& directoryPath)
 {
 
@@ -512,13 +512,13 @@ void WebotsDevLogController::InitDevLogProcessor(const std::string& directoryPat
     PRINT_NAMED_INFO("WebotsDevLogController.InitDevLogProcessor", "DevLogProcessor already exists. Ignoring.");
     return;
   }
-  
+
   if (directoryPath.empty() || !Util::FileUtils::DirectoryExists(directoryPath))
   {
     PRINT_NAMED_INFO("WebotsDevLogController.InitDevLogProcessor", "Input directory %s not found.", directoryPath.c_str());
     return;
   }
-  
+
   PRINT_NAMED_INFO("WebotsDevLogController.InitDevLogProcessor", "Loading directory %s", directoryPath.c_str());
   _devLogProcessor.reset(new DevLogProcessor(directoryPath));
   SetLogCallbacks();
@@ -529,13 +529,13 @@ void WebotsDevLogController::InitDevLogProcessor(const std::string& directoryPat
                    _totalLogLength_ms);
 
   UpdateEndTimeText( _totalLogLength_ms );
-  
+
   // Initialize saveImages to on if box is already checked
   EnableSaveImagesIfChecked();
 
   UpdateStatusText();
 }
-  
+
 void WebotsDevLogController::HandleVizData(const DevLogReader::LogData& logData)
 {
   if (_vizConnection && _vizConnection->IsConnected())
@@ -543,7 +543,7 @@ void WebotsDevLogController::HandleVizData(const DevLogReader::LogData& logData)
     _vizConnection->Send(reinterpret_cast<const char*>(logData._data.data()), Util::numeric_cast<int>(logData._data.size()));
   }
 }
-  
+
 void WebotsDevLogController::HandlePrintLines(const DevLogReader::LogData& logData)
 {
   std::cout << reinterpret_cast<const char*>(logData._data.data());
@@ -562,8 +562,8 @@ int main(int argc, char **argv)
   // controller is meant to show all logs.
 
   Anki::Util::PrintfLoggerProvider loggerProvider;
-  loggerProvider.SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
-  loggerProvider.SetMinToStderrLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN);  
+  loggerProvider.SetMinLogLevel(Anki::Util::LOG_LEVEL_DEBUG);
+  loggerProvider.SetMinToStderrLevel(Anki::Util::LOG_LEVEL_WARN);
   Anki::Util::gLoggerProvider = &loggerProvider;
 
   Anki::Cozmo::WebotsDevLogController webotsCtrlDevLog(Anki::Cozmo::kDevLogStepTime_ms);
@@ -573,11 +573,11 @@ int main(int argc, char **argv)
   std::string dirPath = webotsCtrlDevLog.GetDirectoryPath();
   if(!dirPath.empty())
   {
-    webotsCtrlDevLog.Update(); // Tick once first 
+    webotsCtrlDevLog.Update(); // Tick once first
     webotsCtrlDevLog.InitDevLogProcessor(dirPath);
   }
 
-  
+
   while (webotsCtrlDevLog.Update() == 0) { }
 
   return 0;

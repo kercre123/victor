@@ -25,6 +25,8 @@ class CompositeImage;
   
 namespace Cozmo {
 
+class BehaviorTextToSpeechLoop;
+
 class BehaviorDisplayWeather : public ICozmoBehavior
 {
 public: 
@@ -38,13 +40,16 @@ protected:
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
+
   
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void InitBehavior() override;
-  virtual void BehaviorUpdate() override;
 
 private:
+  void StateWeatherInformation(const std::string& textToSay);
+  void DisplayWeatherResponse();
 
   struct InstanceConfig {
     InstanceConfig(const Json::Value& layoutConfig,
@@ -52,19 +57,21 @@ private:
     const Json::Value& compLayoutConfig;
     const Json::Value& compMapConfig;
     std::unique_ptr<Vision::CompositeImage> compImg;
+    std::shared_ptr<BehaviorTextToSpeechLoop> textToSpeechBehavior;
+
+    // Animation metadata
     std::string animationName;
+    const Animation* animationPtr = nullptr;
+    u32 timeTempShouldAppear_ms = 0;
+    u32 timeTempShouldDisappear_ms = 0;
 
     std::vector<Vision::SpriteName> temperatureAssets;
     // layouts stored least -> greatest pos followed by least -> greatest neg
     std::vector<Vision::CompositeImage> temperatureLayouts;
-
-    bool devIsRunnable = false; 
   };
 
   struct DynamicVariables {
     DynamicVariables();
-    uint32_t timeTempShouldAppear_ms = 0;
-    uint32_t timeTempShouldDisappear_ms = 0;
     Vision::CompositeImage* temperatureImg = nullptr;
   };
 

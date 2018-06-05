@@ -10,19 +10,17 @@
 #include "vectors.h"
 #include "flash.h"
 
-
 static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL2
   | ADC_CHSELR_CHSEL4
   | ADC_CHSELR_CHSEL6
   | ADC_CHSELR_CHSEL16
-  | ADC_CHSELR_CHSEL17
   ;
 
 static const uint16_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.4);
 static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 200;  // 1s
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.3);
-static const uint32_t FALLING_EDGE = ADC_WINDOW(ADC_VOLTS(4.7), ~0);
+static const uint32_t FALLING_EDGE = ADC_WINDOW(ADC_VOLTS(3.50), ~0);
 
 static const uint16_t*  TEMP30_CAL_ADDR = (uint16_t*)0x1FFFF7B8;
 static const int32_t    TEMP_VOLT_ADJ   = (int32_t)(0x100000 * (2.8 / 3.3));
@@ -33,7 +31,7 @@ static const int POWER_WIPE_TIME = 200 * 12;  // Enter recovery mode
 static const int MINIMUM_VEXT_TIME = 20; // 0.1s
 static const int CHARGE_ENABLE_DELAY = 50; // 0.25s
 static const int MAX_CHARGE_TIME = 200 * 60 * 30; // 30 minutes
-static const int MAX_CHARGE_TIME_WD = MAX_CHARGE_TIME + 20; // 100ms past MAX_CHARGE_TIME
+static const int MAX_CHARGE_TIME_WD = MAX_CHARGE_TIME + 5; // 25ms past MAX_CHARGE_TIME
 
 static const int BOUNCE_LENGTH = 3;
 static const int MINIMUM_RELEASE_UNSTUCK = 20;
@@ -59,7 +57,7 @@ static int total_release = 0;
 
 uint16_t volatile Analog::values[ADC_CHANNELS];
 bool Analog::button_pressed = false;
-uint16_t Analog::battery_voltage = 0;
+uint16_t Analog::battery_voltage;
 
 void Analog::init(void) {
   // Calibrate ADC1
@@ -79,19 +77,22 @@ void Analog::init(void) {
               | ADC_CFGR1_DMACFG
               | ADC_CFGR1_AWDEN
               | ADC_CFGR1_AWDSGL
-              | (ADC_CFGR1_AWDCH_0 * 2) // ADC Channel 2 (VEXT)
+              | (ADC_CFGR1_AWDCH_0 * 4) // ADC Channel 4 (VMAIN)
               ;
   ADC1->CFGR2 = 0
               | ADC_CFGR2_CKMODE_1
               ;
   ADC1->SMPR  = 0
+              | ADC_SMPR_SMP_0  // ~0.4us
+              | ADC_SMPR_SMP_2
               ;
+
   ADC1->IER = ADC_IER_AWDIE;
   ADC1->TR = FALLING_EDGE;
 
   ADC->CCR = 0
            | ADC_CCR_TSEN
-           | ADC_CCR_VREFEN;
+           ;
 
   // Enable ADC
   ADC1->ISR = ADC_ISR_ADRDY;
@@ -211,10 +212,9 @@ void Analog::stop(void) {
 }
 
 void Analog::transmit(BodyToHead* data) {
-  data->battery.battery = values[ADC_VMAIN];
+  data->battery.battery = battery_voltage;
   data->battery.charger = values[ADC_VEXT];
   data->battery.temperature = (int16_t) temperature;
-  data->battery.ref_voltage = values[ADC_VREF];
   data->battery.flags = 0
                       | (is_charging ? POWER_IS_CHARGING : 0)
                       | (on_charger ? POWER_ON_CHARGER : 0)
@@ -235,30 +235,28 @@ void Analog::setPower(bool powered) {
 
 void Analog::tick(void) {
   static bool disable_vmain = false;
-  
+
   // On-charger delay
   bool vext_now = Analog::values[ADC_VEXT] >= TRANSITION_POINT;
-  bool enable_watchdog = (vext_debounce >= MAX_CHARGE_TIME_WD) && (values[ADC_VEXT] > ADC_VOLTS(4.7));
+  bool enable_watchdog = (vext_debounce >= MAX_CHARGE_TIME_WD);
   bool button_now = (values[ADC_BUTTON] >= BUTTON_THRESHOLD);
 
-  if (vext_now && last_vext) {
-    if (!enable_watchdog) vext_debounce++;
-  } else {
-    vext_debounce = 0;
+  if (vext_now == last_vext) {
+    if (!vext_now) {
+      vext_debounce = 0;
+    } else if (!enable_watchdog) {
+      vext_debounce++;
+    }
   }
 
   last_vext = vext_now;
   on_charger = vext_debounce >= MINIMUM_VEXT_TIME;
 
-  // Button current injection work around
-  if (!button_now) {
-    temperature = *TEMP30_CAL_ADDR - ((Analog::values[ADC_TEMP] * TEMP_VOLT_ADJ) >> 20);
-    temperature = ((temperature * TEMP_SCALE_ADJ) >> 20) + 30;
-  }
+  temperature = *TEMP30_CAL_ADDR - ((Analog::values[ADC_TEMP] * TEMP_VOLT_ADJ) >> 20);
+  temperature = ((temperature * TEMP_SCALE_ADJ) >> 20) + 30;
 
-  //bool emergency_shutoff = temperature >= 60;    // Will immediately cause a reboot
-  //if (temperature >= 45) disable_vmain = true;
-  bool emergency_shutoff = false;
+  bool emergency_shutoff = temperature >= 70;    // Will immediately cause a reboot
+  if (temperature >= 60) disable_vmain = true;
 
   #ifdef BOOTLOADER
   static bool has_booted = false;
@@ -332,7 +330,7 @@ void Analog::tick(void) {
     } else {
       power_down_timer = LOW_VOLTAGE_POWER_DOWN_TIME;
     }
-  } else if (CHARGE_CUTOFF) {
+  } else if (CHARGE_CUTOFF && false) {
     // Unpowered, on charger (timeout)
     nCHG_PWR::reset();
     POWER_EN::pull(PULL_NONE);
@@ -349,18 +347,17 @@ void Analog::tick(void) {
     NVIC_DisableIRQ(ADC1_IRQn);
    
     // Don't enable power to charge circuit until a second has passed
-    if (charge_delay < CHARGE_ENABLE_DELAY) {
+    if (charge_delay >= CHARGE_ENABLE_DELAY) {
+      nCHG_PWR::reset();
+      is_charging = true;
+    } else {
       nCHG_PWR::set();
       charge_delay++;
-    } else {
-      nCHG_PWR::reset();
+      is_charging = false;
     }
 
     POWER_EN::pull(PULL_UP);
     POWER_EN::mode(MODE_INPUT);
-    
-    battery_voltage = Analog::values[ADC_VMAIN];
-    is_charging = true;
   }
 
   // VMain / VBat trap
@@ -397,6 +394,7 @@ void Analog::tick(void) {
       BODY_TX::reset();
       BODY_TX::mode(MODE_OUTPUT);
     } else if (++hold_count >= POWER_DOWN_TIME) { // Increment is here to prevent overflow in recovery condition
+      Analog::setPower(false);
       Power::setMode(POWER_STOP);
     } else {
       Power::setMode(POWER_ACTIVE);

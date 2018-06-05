@@ -60,6 +60,9 @@ simulator/controllers/webotsCtrlKeyboard/resources
 #
 simulator/controllers/webotsCtrlDevLog/webotsCtrlDevLog
 #
+simulator/controllers/webotsCtrlNeuralNets/webotsCtrlNeuralNets
+simulator/controllers/webotsCtrlNeuralNets/resources
+#
 simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
 simulator/worlds/__generated__.wbt
 simulator/worlds/__GENERATED_FOR_*__.wbt
@@ -393,3 +396,4 @@ apps/xamarin/chewie/codelab.Droid/bin
 apps/xamarin/chewie/codelab.Droid/obj
 apps/xamarin/chewie/codelab.iOS/bin
 apps/xamarin/chewie/codelab.iOS/obj
+robot_ip.txt

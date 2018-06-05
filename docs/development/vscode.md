@@ -1,7 +1,7 @@
 # Visual Studio Code
 
 Visual Studio Code (VSCode) is the main supported environment for writing code 
-that will run on the embedded android system. Xcode is supported for debugging 
+that will run on the Vicos system. Xcode is supported for debugging 
 and profiling on Mac, but not much effort has been made to make it nice to use 
 beyond the default cmake generated projects.
 
@@ -116,7 +116,7 @@ to pick up where you left off.
 
 Use "Tasks -> Run Build Task" to run the default build task.  
 
-You can set additional build flags (e.g. "-p mac" vs "-p android") by editing 
+You can set additional build flags (e.g. "-p mac" vs "-p vicos") by editing 
 the task configuration, or you can create a second set of tasks and switch 
 between them.
 

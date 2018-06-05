@@ -15,13 +15,15 @@
 #define __Engine_Behaviors_BehaviorTimerUtilityCoordinator_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 
 namespace Anki {
 namespace Cozmo {
 
 // forward declarations
-class BehaviorProceduralClock;
+class BehaviorAdvanceClock;
 class BehaviorAnimGetInLoop;
+class BehaviorProceduralClock;
 class TimerUtility;
 class UserIntent;
 // Specified in .cpp
@@ -61,10 +63,11 @@ private:
   struct InstanceParams{
     std::shared_ptr<BehaviorProceduralClock> setTimerBehavior;
     std::shared_ptr<BehaviorProceduralClock> timerAnticBehavior;
+    std::shared_ptr<BehaviorProceduralClock> timerCheckTimeBehavior;
     std::shared_ptr<BehaviorAnimGetInLoop>   timerRingingBehavior;
     ICozmoBehaviorPtr                        timerAlreadySetBehavior;
     ICozmoBehaviorPtr                        iCantDoThatBehavior;
-    ICozmoBehaviorPtr                        cancelTimerBehavior;
+    std::shared_ptr<BehaviorAdvanceClock>    cancelTimerBehavior;
     std::unique_ptr<AnticTracker>            anticTracker;
     int                                      minValidTimer_s;
     int                                      maxValidTimer_s;
@@ -73,7 +76,6 @@ private:
   struct LifetimeParams{
     LifetimeParams();
     bool shouldForceAntic;
-    std::unique_ptr<UserIntent> setTimerIntent;
   };
 
   InstanceParams _iParams;
@@ -82,22 +84,25 @@ private:
   bool TimerShouldRing() const;
   TimerUtility& GetTimerUtility() const;
   
-  void SetupTimerBehaviorFunctions() const;
+  void SetupTimerBehaviorFunctions();
 
   void TransitionToSetTimer();
   void TransitionToPlayAntic();
+  void TransitionToShowTimeRemaining();
   void TransitionToRinging();
   void TransitionToTimerAlreadySet();
   void TransitionToNoTimerToCancel();
   void TransitionToCancelTimer();
   void TransitionToInvalidTimerRequest();
 
+  BehaviorProceduralClock::GetDigitsFunction BuildTimerFunction() const;
 
   // Functions called by Update to check for transitions
   void CheckShouldCancelRinging();
   void CheckShouldSetTimer();
   void CheckShouldCancelTimer();
   void CheckShouldPlayAntic();
+  void CheckShouldShowTimeRemaining();
 };
 
 } // namespace Cozmo

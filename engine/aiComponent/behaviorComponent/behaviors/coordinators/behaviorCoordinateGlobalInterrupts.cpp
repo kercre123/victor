@@ -13,6 +13,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateGlobalInterrupts.h"
 
+#include "engine/aiComponent/behaviorComponent/activeBehaviorIterator.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
@@ -22,7 +23,11 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
+#include "engine/components/mics/micComponent.h"
+
 #include "util/helpers/boundedWhile.h"
+
+#include "coretech/common/engine/utils/timer.h"
 
 #include <deque>
 
@@ -35,7 +40,26 @@ namespace{
   // _any_ behavior of that class is running below us on the stack
   static const std::set<BehaviorClass> kBehaviorClassesToSuppressProx = {{ BEHAVIOR_CLASS(FistBump),
                                                                            BEHAVIOR_CLASS(Keepaway),
+                                                                           BEHAVIOR_CLASS(RollBlock),
                                                                            BEHAVIOR_CLASS(PounceWithProx) }};
+  
+  static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenSleeping = {{
+    BEHAVIOR_ID(ReactToTouchPetting),
+    BEHAVIOR_ID(TriggerWordDetected),
+  }};
+  static const std::set<BehaviorID> kBehaviorIDsThatMeanSleeping = {{
+    BEHAVIOR_ID(Sleeping),
+    BEHAVIOR_ID(SleepingWakeUp),
+  }};
+  
+  static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenMeetVictor = {{
+    BEHAVIOR_ID(ReactToTouchPetting),       // the user will often turn the robot to face them and in the process touch it
+    BEHAVIOR_ID(ReactToUnexpectedMovement), // the user will often turn the robot to face them
+    BEHAVIOR_ID(ReactToSoundAwake),         // fully concentrate on what's in front
+  }};
+  static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenDancingToTheBeat = {
+    BEHAVIOR_ID(ReactToSoundAwake),
+  };
 }
 
 
@@ -48,6 +72,8 @@ BehaviorCoordinateGlobalInterrupts::InstanceConfig::InstanceConfig()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorCoordinateGlobalInterrupts::DynamicVariables::DynamicVariables()
+  : suppressProx(false)
+  , isSuppressingStreaming(false)
 {
 }
 
@@ -75,18 +101,27 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
 {
   const auto& BC = GetBEI().GetBehaviorContainer();
   _iConfig.wakeWordBehavior         = BC.FindBehaviorByID(BEHAVIOR_ID(TriggerWordDetected));
+  
+  for( const auto& id : kBehaviorIDsToSuppressWhenSleeping ) {
+    _iConfig.toSuppressWhenSleeping.push_back( BC.FindBehaviorByID(id) );
+  }
+  for( const auto& id : kBehaviorIDsToSuppressWhenMeetVictor ) {
+    _iConfig.toSuppressWhenMeetVictor.push_back( BC.FindBehaviorByID(id) );
+  }
+  for( const auto& id : kBehaviorIDsToSuppressWhenDancingToTheBeat ) {
+    _iConfig.toSuppressWhenDancingToTheBeat.push_back( BC.FindBehaviorByID(id) );
+  }
 
   BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(TimerUtilityCoordinator),
                                  BEHAVIOR_CLASS(TimerUtilityCoordinator),
                                  _iConfig.timerCoordBehavior);
   
-  _iConfig.highLevelAIBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(HighLevelAI));
-  _iConfig.sleepingBehavior    = BC.FindBehaviorByID(BEHAVIOR_ID(Sleeping));
-
   _iConfig.triggerWordPendingCond = BEIConditionFactory::CreateBEICondition(BEIConditionType::TriggerWordPending, GetDebugLabel());
   _iConfig.triggerWordPendingCond->Init(GetBEI());
   
   _iConfig.reactToObstacleBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToObstacle));
+  _iConfig.meetVictorBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(MeetVictor));
+  _iConfig.danceToTheBeatBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(DanceToTheBeat));
 }
 
 
@@ -107,6 +142,7 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
   if(!IsActivated()){
     return;
   }
+  
   const bool triggerWordPending = _iConfig.triggerWordPendingCond->AreConditionsMet(GetBEI());
   const bool isTimerRinging     = _iConfig.timerCoordBehavior->IsTimerRinging();
   if(triggerWordPending && isTimerRinging){
@@ -114,24 +150,49 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
     _iConfig.wakeWordBehavior->SetDontActivateThisTick(GetDebugLabel());
   }
   
-  if( triggerWordPending ) {
+  bool shouldSuppressStreaming = isTimerRinging;
+  
+  // suppress certain behaviors during sleeping
+  {
     bool highLevelRunning = false;
-    const IBehavior* behavior = this;
-    const auto& bsm = GetBEI().GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<BehaviorSystemManager>();
-    BOUNDED_WHILE( 100, (behavior != nullptr) && "Stack too deep to find sleeping" ) {
-      behavior = bsm.GetBehaviorDelegatedTo( behavior );
-      if( highLevelRunning && (behavior == _iConfig.sleepingBehavior.get()) ) {
+    auto callback = [this, &highLevelRunning, &shouldSuppressStreaming](const ICozmoBehavior& behavior) {
+      if( behavior.GetID() == BEHAVIOR_ID(HighLevelAI) ) {
+        highLevelRunning = true;
+      }
+
+      if( highLevelRunning
+          && (std::find(kBehaviorIDsThatMeanSleeping.begin(), kBehaviorIDsThatMeanSleeping.end(), behavior.GetID())
+              != kBehaviorIDsThatMeanSleeping.end()) )
+      {
         // High level AI is running the Sleeping behavior (probably through the Napping state).
         // Wake word serves as the wakeup for a napping robot, so disable the wake word behavior and let
         // high level AI resume. It will clear the pending trigger and resume in some other state. (The
-        // wake up animation is the getout for napping)
-        _iConfig.wakeWordBehavior->SetDontActivateThisTick(GetDebugLabel());
-        
-        break;
+        // wake up animation is the getout for napping). Also petting behaviors,
+        // since those will cause a graceful getout
+        for( const auto& beh : _iConfig.toSuppressWhenSleeping ) {
+          beh->SetDontActivateThisTick(GetDebugLabel());
+        }
+        shouldSuppressStreaming = true;
       }
-      if( behavior == _iConfig.highLevelAIBehavior.get() ) {
-        highLevelRunning = true;
+    };
+
+    const auto& behaviorIterator = GetBehaviorComp<ActiveBehaviorIterator>();
+    behaviorIterator.IterateActiveCozmoBehaviorsForward( callback, this );
+  }
+  
+  // suppress during meet victor
+  {
+    if( _iConfig.meetVictorBehavior->IsActivated() ) {
+      for( const auto& beh : _iConfig.toSuppressWhenMeetVictor ) {
+        beh->SetDontActivateThisTick(GetDebugLabel());
       }
+    }
+  }
+  
+  // Suppress behaviors if dancing to the beat
+  if( _iConfig.danceToTheBeatBehavior->IsActivated() ) {
+    for( const auto& beh : _iConfig.toSuppressWhenDancingToTheBeat ) {
+      beh->SetDontActivateThisTick(GetDebugLabel());
     }
   }
   
@@ -148,34 +209,37 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
       }
     }
   }
+  
+  if( shouldSuppressStreaming != _dVars.isSuppressingStreaming ) {
+    GetBEI().GetMicComponent().SetShouldStreamAfterWakeWord( !shouldSuppressStreaming );
+    _dVars.isSuppressingStreaming = shouldSuppressStreaming;
+  }
 
 }
 
 
-bool BehaviorCoordinateGlobalInterrupts::ShouldSuppressProxReaction() const
+bool BehaviorCoordinateGlobalInterrupts::ShouldSuppressProxReaction()
 {
   // scan through the stack below this behavior and return true if any behavior is active which is listed in
   // kBehaviorClassesToSuppressProx
   
-  // const auto& delegationComponent = GetBEI().GetDelegationComponent();
+  const auto& behaviorIterator = GetBehaviorComp<ActiveBehaviorIterator>();
 
-  // NOTE: (bn) I had to hack around this here because the delegation component has been stripped. A better
-  // solution here would be that instead of fully stripping the delegation component, we support a way to make
-  // it "const only", and then allow us to grab a const behavior component
-  // see VIC-2474
-  
-  const auto& delegationComponent = GetBehaviorComp<DelegationComponent>();
-  
-  const ICozmoBehavior* b = dynamic_cast<const ICozmoBehavior*>(this);
-  BOUNDED_WHILE(100, b != nullptr) {
-    if( kBehaviorClassesToSuppressProx.find( b->GetClass() ) != kBehaviorClassesToSuppressProx.end() ) {
-      return true;
-    }
+  // If the behavior stack has changed this tick or last tick, then update, otherwise use the last value
+  const size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
+  if( behaviorIterator.GetLastTickBehaviorStackChanged() + 1 >= currTick ) {
+    _dVars.suppressProx = false;
+
+    auto callback = [this](const ICozmoBehavior& behavior) {
+      if( kBehaviorClassesToSuppressProx.find( behavior.GetClass() ) != kBehaviorClassesToSuppressProx.end() ) {
+        _dVars.suppressProx = true;
+      }
+    };
     
-    b = dynamic_cast<const ICozmoBehavior*>( delegationComponent.GetBehaviorDelegatedTo(b) );
+    behaviorIterator.IterateActiveCozmoBehaviorsForward( callback, this );
   }
 
-  return false;  
+  return _dVars.suppressProx;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

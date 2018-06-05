@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_WildAboutHarry",
-  "displayNameKey":"behavior.singing.WildAboutHarry",
-  "requiredUnlockId":"Singing_WildAboutHarry",
-  "audioSwitchGroup":"Cozmo_Sings_120Bpm",
-  "audioSwitch":"Cozmo_Sings_Wild_About_Harry"
-}

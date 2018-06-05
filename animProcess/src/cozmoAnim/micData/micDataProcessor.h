@@ -34,6 +34,7 @@
 // Declarations
 namespace Anki {
   namespace Cozmo {
+    class BeatDetector;
     namespace MicData {
       class MicDataSystem;
       class MicImmediateDirection;
@@ -61,7 +62,11 @@ public:
 
   void ResetMicListenDirection();
   float GetIncomingMicDataPercentUsed();
+  
+  void SetShouldStreamAfterTrigger(bool shouldStream) { _shouldStreamAfterTrigger = shouldStream; }
 
+  BeatDetector& GetBeatDetector() { assert(nullptr != _beatDetector); return *_beatDetector.get(); }
+  
 private:
   MicDataSystem* _micDataSystem = nullptr;
   std::string _writeLocationDir = "";
@@ -71,6 +76,7 @@ private:
   int _selectedSearchBeamIndex = 0;
   int _selectedSearchBeamConfidence = 0;
   int _searchConfidenceState = 0;
+  int _policyFallbackFlag = 0;
 
   // Members for general purpose processing and state
   std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> _inProcessAudioBlock;
@@ -93,9 +99,10 @@ private:
   std::mutex _rawMicDataMutex;
   bool _processThreadStop = false;
   bool _robotWasMoving = false;
+  bool _shouldStreamAfterTrigger = true;
 
   // Internal buffer used to add to the streaming audio once a trigger is detected
-  static constexpr uint32_t kImmediateBufferSize = kTriggerOverlapSize_ms / kTimePerSEBlock_ms;
+  static constexpr uint32_t kImmediateBufferSize = kPreTriggerOverlapSize_ms / kTimePerSEBlock_ms;
   struct TimedMicData {
     std::array<AudioUtil::AudioSample, kSamplesPerBlock> audioBlock;
     TimeStamp_t timestamp;
@@ -115,8 +122,12 @@ private:
   // Mutex for different accessing signal essence software
   std::mutex _seInteractMutex;
 
+  // Aubio beat detector
+  std::unique_ptr<BeatDetector> _beatDetector;
+  
   void InitVAD();
   void TriggerWordDetectCallback(const char* resultFound, float score);
+  TimeStamp_t CreateTriggerWordDetectedJobs();
   void ProcessRawAudio(TimeStamp_t timestamp,
                        const AudioUtil::AudioSample* audioChunk,
                        uint32_t robotStatus,

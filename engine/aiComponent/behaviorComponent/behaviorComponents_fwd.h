@@ -46,6 +46,8 @@ enum class BCComponentID{
   RobotInfo,
   UserIntentComponent,
   BaseBehaviorWrapper,
+  ActiveFeature,
+  ActiveBehaviorIterator,
   Count
 };
 

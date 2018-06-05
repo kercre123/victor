@@ -2,6 +2,8 @@
   "behaviorID" : "RollCubeVoiceCommand",
   "behaviorClass" : "DispatcherQueue",
 
+  "associatedActiveFeature": "RollBlock",
+  
   "respondToUserIntents" : [
     {
       "type": "play_specific",
@@ -22,7 +24,7 @@
     {
       "behaviorClass": "LookForFaceAndCube",
       "behaviorName": "LookForCubeInternal",
-      
+
       "bodyTurnSpeed_degPerSec": 180,
       "headTurnSpeed_degPerSec": 120,
       

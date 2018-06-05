@@ -76,6 +76,30 @@ endif()
 
 add_definitions(-DANKI_BUILD_SHA="${ANKI_BUILD_SHA}")
 
+#
+# Pass ANKI defines from the command-line to all targets
+#
+get_cmake_property(opts CACHE_VARIABLES)
+foreach(opt ${opts})
+  if(opt STREQUAL "ANKI_BUILD_SHA")
+    # ignore, set previously
+
+  elseif(opt MATCHES "ANKI_")
+    get_property(helpstring CACHE ${opt} PROPERTY HELPSTRING)
+    if(${helpstring} MATCHES "cached value")
+      # value was set from a previous run, but not this run, turn off
+      # Note: remove_definitions #defines the value as OFF (which itself is undefined)
+      add_definitions(-D${opt}=0)
+
+    else()
+      # value was set this run, from the command-line
+      add_definitions(-D${opt}=${${opt}})
+      set_property(CACHE ${opt} PROPERTY HELPSTRING "cached value from a previous command-line")
+
+    endif()
+  endif()
+endforeach()
+
 set(LINK_FLAGS "${LINK_FLAGS} -Wl,--threads")
 
 if (NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
@@ -95,10 +119,6 @@ set(CORETECH_EXTERNAL_DIR "${ANKI_EXTERNAL_DIR}/coretech_external")
 
 set(ANKI_SRCLIST_DIR "${CMAKE_SOURCE_DIR}/generated/cmake")
 
-#if (NOT breakpad_client)
-#    message(FATAL_ERROR "breakpad_client not defined")
-#endif()
-
 set(CLAD_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/victor-clad/tools/message-buffers")
 set(CLAD_VICTOR_EMITTER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/victor-clad/victorEmitters")
 add_subdirectory("victor-clad") # includes clad via message-buffers
@@ -116,8 +136,6 @@ import(DAS "lib/das-client")
 # include dirs
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/lib/crash-reporting-vicos/Breakpad/include/breakpad")
-
 import(coretech "coretech")
 add_subdirectory("clad")
 add_subdirectory("cloud")
@@ -127,9 +145,11 @@ add_subdirectory("cannedAnimLib")
 add_subdirectory("animProcess")
 add_subdirectory("webServerProcess")
 add_subdirectory("testCrash")
+add_subdirectory("lib/anki-ble")
 add_subdirectory("lib/micData")
 add_subdirectory("lib/signalEssence")
 add_subdirectory("platform")
+add_subdirectory("dasmgr")
 
 target_include_directories(victor_anim PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
@@ -150,6 +170,10 @@ target_include_directories(cozmo_engine PRIVATE
 if (VICOS)
   include(vicos-sdk-stl-config)
   include(gen-version)
+
+  if (ANKI_TEST_SWITCHBOARD)
+    add_subdirectory("test/switchboard")
+  endif()
 endif()
 
 add_subdirectory("resources")

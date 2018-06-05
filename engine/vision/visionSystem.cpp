@@ -13,15 +13,17 @@
 #include "visionSystem.h"
 
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/linearAlgebra_impl.h"
+#include "coretech/common/engine/math/linearClassifier.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/common/engine/math/rect_impl.h"
-#include "coretech/common/engine/math/linearAlgebra_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/vision/groundPlaneClassifier.h"
+#include "engine/vision/illuminationDetector.h"
 #include "engine/vision/laserPointDetector.h"
 #include "engine/vision/motionDetector.h"
 #include "engine/vision/overheadEdgesDetector.h"
@@ -35,7 +37,7 @@
 #include "coretech/vision/engine/image_impl.h"
 #include "coretech/vision/engine/imageCache.h"
 #include "coretech/vision/engine/markerDetector.h"
-#include "coretech/vision/engine/objectDetector.h"
+#include "coretech/vision/engine/neuralNetRunner.h"
 #include "coretech/vision/engine/petTracker.h"
 
 #include "clad/vizInterface/messageViz.h"
@@ -65,1669 +67,1778 @@
 namespace Anki {
 namespace Cozmo {
   
-  CONSOLE_VAR_RANGED(u8,  kUseCLAHE_u8,     "Vision.PreProcessing", 0, 0, 4);  // One of MarkerDetectionCLAHE enum
-  CONSOLE_VAR(s32, kClaheClipLimit,         "Vision.PreProcessing", 32);
-  CONSOLE_VAR(s32, kClaheTileSize,          "Vision.PreProcessing", 4);
-  CONSOLE_VAR(u8,  kClaheWhenDarkThreshold, "Vision.PreProcessing", 80); // In MarkerDetectionCLAHE::WhenDark mode, only use CLAHE when img avg < this
-  CONSOLE_VAR(s32, kPostClaheSmooth,        "Vision.PreProcessing", -3); // 0: off, +ve: Gaussian sigma, -ve (& odd): Box filter size
-  CONSOLE_VAR(s32, kMarkerDetector_ScaleMultiplier, "Vision.MarkerDetection", 1);
+CONSOLE_VAR_RANGED(u8,  kUseCLAHE_u8,     "Vision.PreProcessing", 0, 0, 4);  // One of MarkerDetectionCLAHE enum
+CONSOLE_VAR(s32, kClaheClipLimit,         "Vision.PreProcessing", 32);
+CONSOLE_VAR(s32, kClaheTileSize,          "Vision.PreProcessing", 4);
+CONSOLE_VAR(u8,  kClaheWhenDarkThreshold, "Vision.PreProcessing", 80); // In MarkerDetectionCLAHE::WhenDark mode, only use CLAHE when img avg < this
+CONSOLE_VAR(s32, kPostClaheSmooth,        "Vision.PreProcessing", -3); // 0: off, +ve: Gaussian sigma, -ve (& odd): Box filter size
+CONSOLE_VAR(s32, kMarkerDetector_ScaleMultiplier, "Vision.MarkerDetection", 1);
+
+CONSOLE_VAR(f32, kEdgeThreshold,  "Vision.OverheadEdges", 50.f);
+CONSOLE_VAR(u32, kMinChainLength, "Vision.OverheadEdges", 3); // in number of edge pixels
+
+CONSOLE_VAR(f32, kCalibDotSearchWidth_mm,   "Vision.ToolCode",  4.5f);
+CONSOLE_VAR(f32, kCalibDotSearchHeight_mm,  "Vision.ToolCode",  6.5f);
+CONSOLE_VAR(f32, kCalibDotMinContrastRatio, "Vision.ToolCode",  1.1f);
+
+// Loose constraints on how fast Cozmo can move and still trust tracker (which has no
+// knowledge of or access to camera movement). Rough means of deciding these angles:
+// look at angle created by distance between two faces seen close together at the max
+// distance we care about seeing them from. If robot turns by that angle between two
+// consecutve frames, it is possible the tracker will be confused and jump from one
+// to the other.
+CONSOLE_VAR(f32,  kFaceTrackingMaxHeadAngleChange_deg, "Vision.FaceDetection", 8.f);
+CONSOLE_VAR(f32,  kFaceTrackingMaxBodyAngleChange_deg, "Vision.FaceDetection", 8.f);
+CONSOLE_VAR(f32,  kFaceTrackingMaxPoseChange_mm,       "Vision.FaceDetection", 10.f);
+
+// Sample rate for estimating the mean of an image (increment in both X and Y)
+CONSOLE_VAR_RANGED(s32, kImageMeanSampleInc, "VisionSystem.Statistics", 10, 1, 32);
+
+// For testing artificial slowdowns of the vision thread
+CONSOLE_VAR(u32, kVisionSystemSimulatedDelay_ms, "Vision.General", 0);
+
+CONSOLE_VAR(u32, kCalibTargetType, "Vision.Calibration", (u32)CameraCalibrator::CalibTargetType::CHECKERBOARD);
+
+// If non-zero, toggles the corresponding VisionMode and sets back to 0
+CONSOLE_VAR(u32, kToggleVisionMode, "Vision.General", 0);
   
-  CONSOLE_VAR(f32, kEdgeThreshold,  "Vision.OverheadEdges", 50.f);
-  CONSOLE_VAR(u32, kMinChainLength, "Vision.OverheadEdges", 3); // in number of edge pixels
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+namespace {
+  // These are initialized from Json config:
+  u8 kTooDarkValue   = 15;
+  u8 kTooBrightValue = 230;
+  f32 kLowPercentile = 0.10f;
+  f32 kTargetPercentile = 0.50f;
+  f32 kHighPercentile = 0.90f;
+  bool kMeterFromDetections = true;
+}
+
+static const char * const kLogChannelName = "VisionSystem";
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+VisionSystem::VisionSystem(const CozmoContext* context)
+: _rollingShutterCorrector()
+, _imageCache(new Vision::ImageCache())
+, _context(context)
+, _imagingPipeline(new Vision::ImagingPipeline())
+, _poseOrigin("VisionSystemOrigin")
+, _vizManager(context == nullptr ? nullptr : context->GetVizManager())
+, _petTracker(new Vision::PetTracker())
+, _markerDetector(new Vision::MarkerDetector(_camera))
+, _laserPointDetector(new LaserPointDetector(_vizManager))
+, _overheadEdgeDetector(new OverheadEdgesDetector(_camera, _vizManager, *this))
+, _cameraCalibrator(new CameraCalibrator(*this))
+, _illuminationDetector(new IlluminationDetector())
+, _benchmark(new Vision::Benchmark())
+, _neuralNetRunner(new Vision::NeuralNetRunner())
+, _clahe(cv::createCLAHE())
+{
+  DEV_ASSERT(_context != nullptr, "VisionSystem.Constructor.NullContext");
+} // VisionSystem()
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::Init(const Json::Value& config)
+{
+  _isInitialized = false;
   
-  CONSOLE_VAR(f32, kCalibDotSearchWidth_mm,   "Vision.ToolCode",  4.5f);
-  CONSOLE_VAR(f32, kCalibDotSearchHeight_mm,  "Vision.ToolCode",  6.5f);
-  CONSOLE_VAR(f32, kCalibDotMinContrastRatio, "Vision.ToolCode",  1.1f);
+  _isReadingToolCode = false;
   
-  // Loose constraints on how fast Cozmo can move and still trust tracker (which has no
-  // knowledge of or access to camera movement). Rough means of deciding these angles:
-  // look at angle created by distance between two faces seen close together at the max
-  // distance we care about seeing them from. If robot turns by that angle between two
-  // consecutve frames, it is possible the tracker will be confused and jump from one
-  // to the other.
-  CONSOLE_VAR(f32,  kFaceTrackingMaxHeadAngleChange_deg, "Vision.FaceDetection", 8.f);
-  CONSOLE_VAR(f32,  kFaceTrackingMaxBodyAngleChange_deg, "Vision.FaceDetection", 8.f);
-  CONSOLE_VAR(f32,  kFaceTrackingMaxPoseChange_mm,       "Vision.FaceDetection", 10.f);
-  
-  // Sample rate for estimating the mean of an image (increment in both X and Y)
-  CONSOLE_VAR_RANGED(s32, kImageMeanSampleInc, "VisionSystem.Statistics", 10, 1, 32);
-  
-  // For testing artificial slowdowns of the vision thread
-  CONSOLE_VAR(u32, kVisionSystemSimulatedDelay_ms, "Vision.General", 0);
-  
-  CONSOLE_VAR(u32, kCalibTargetType, "Vision.Calibration", (u32)CameraCalibrator::CalibTargetType::CHECKERBOARD);
-  
-  // If non-zero, toggles the corresponding VisionMode and sets back to 0
-  CONSOLE_VAR(u32, kToggleVisionMode, "Vision.General", 0);
-  
-  namespace {
-    // These are initialized from Json config:
-    u8 kTooDarkValue   = 15;
-    u8 kTooBrightValue = 230;
-    f32 kLowPercentile = 0.10f;
-    f32 kMidPercentile = 0.50f;
-    f32 kHighPercentile = 0.90f;
-    bool kMeterFromDetections = true;
+  std::string dataPath("");
+  std::string cachePath("");
+  if(_context->GetDataPlatform() != nullptr) {
+    dataPath = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
+                                                           Util::FileUtils::FullFilePath({"config", "engine", "vision"}));
+    cachePath = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "vision");
+  } else {
+    PRINT_NAMED_WARNING("VisionSystem.Init.NullDataPlatform",
+                        "Initializing VisionSystem with no data platform.");
   }
-  
-  static const char * const kLogChannelName = "VisionSystem";
-  
-  VisionSystem::VisionSystem(const CozmoContext* context)
-  : _rollingShutterCorrector()
-  , _imageCache(new Vision::ImageCache())
-  , _context(context)
-  , _imagingPipeline(new Vision::ImagingPipeline())
-  , _poseOrigin("VisionSystemOrigin")
-  , _vizManager(context == nullptr ? nullptr : context->GetVizManager())
-  , _petTracker(new Vision::PetTracker())
-  , _markerDetector(new Vision::MarkerDetector(_camera))
-  , _laserPointDetector(new LaserPointDetector(_vizManager))
-  , _overheadEdgeDetector(new OverheadEdgesDetector(_camera, _vizManager, *this))
-  , _cameraCalibrator(new CameraCalibrator(*this))
-  , _benchmark(new Vision::Benchmark())
-  , _generalObjectDetector(new Vision::ObjectDetector())
-  , _clahe(cv::createCLAHE())
+  if(!config.isMember("ImageQuality"))
   {
-    DEV_ASSERT(_context != nullptr, "VisionSystem.Constructor.NullContext");
-  } // VisionSystem()
+    PRINT_NAMED_ERROR("VisionSystem.Init.MissingImageQualityConfigField", "");
+    return RESULT_FAIL;
+  }
+    
   
-  
-  Result VisionSystem::Init(const Json::Value& config)
-  {
-    _isInitialized = false;
-    
-    _isReadingToolCode = false;
-    
-    std::string dataPath("");
-    if(_context->GetDataPlatform() != nullptr) {
-      dataPath = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
-                                                             Util::FileUtils::FullFilePath({"config", "engine", "vision"}));
-    } else {
-      PRINT_NAMED_WARNING("VisionSystem.Init.NullDataPlatform",
-                          "Initializing VisionSystem with no data platform.");
-    }
-    if(!config.isMember("ImageQuality"))
-    {
-      PRINT_NAMED_ERROR("VisionSystem.Init.MissingImageQualityConfigField", "");
-      return RESULT_FAIL;
-    }
-    
-    // Helper macro to try to get the specified field and store it in the given variable
-    // and return RESULT_FAIL if that doesn't work
+  // Helper macro to try to get the specified field and store it in the given variable
+  // and return RESULT_FAIL if that doesn't work
 #   define GET_JSON_PARAMETER(__json__, __fieldName__, __variable__) \
-    do { \
-    if(!JsonTools::GetValueOptional(__json__, __fieldName__, __variable__)) { \
-      PRINT_NAMED_ERROR("VisionSystem.Init.MissingJsonParameter", "%s", __fieldName__); \
-      return RESULT_FAIL; \
-    }} while(0)
+  do { \
+  if(!JsonTools::GetValueOptional(__json__, __fieldName__, __variable__)) { \
+    PRINT_NAMED_ERROR("VisionSystem.Init.MissingJsonParameter", "%s", __fieldName__); \
+    return RESULT_FAIL; \
+  }} while(0)
 
-    {
-      // Set up auto-exposure
-      const Json::Value& imageQualityConfig = config["ImageQuality"];
-      GET_JSON_PARAMETER(imageQualityConfig, "TooBrightValue",      kTooBrightValue);
-      GET_JSON_PARAMETER(imageQualityConfig, "TooDarkValue",        kTooDarkValue);
-      GET_JSON_PARAMETER(imageQualityConfig, "MeterFromDetections", kMeterFromDetections);
-      GET_JSON_PARAMETER(imageQualityConfig, "LowPercentile",       kLowPercentile);
-      GET_JSON_PARAMETER(imageQualityConfig, "MidPercentile",       kMidPercentile);
-      GET_JSON_PARAMETER(imageQualityConfig, "HighPercentile",      kHighPercentile);
-      
-      u8  targetMidValue=0;
-      f32 maxChangeFraction = -1.f;
-      s32 subSample = 0;
-      
-      GET_JSON_PARAMETER(imageQualityConfig, "MidValue",                 targetMidValue);
-      GET_JSON_PARAMETER(imageQualityConfig, "MaxChangeFraction",        maxChangeFraction);
-      GET_JSON_PARAMETER(imageQualityConfig, "SubSample",                subSample);
-      
-      Result expResult = SetAutoExposureParams(subSample, targetMidValue, kMidPercentile, maxChangeFraction);
-      
-      if(RESULT_OK != expResult)
-      {
-        PRINT_NAMED_ERROR("VisionSystem.Init.SetExposureParametersFailed", "");
-        return expResult;
-      }
-    }
-    
-    {
-      // Set up profiler logging frequencies
-      f32 timeBetweenProfilerInfoPrints_sec = 5.f;
-      f32 timeBetweenProfilerDasLogs_sec = 60.f;
-      
-      const Json::Value& performanceConfig = config["PerformanceLogging"];
-      GET_JSON_PARAMETER(performanceConfig, "TimeBetweenProfilerInfoPrints_sec", timeBetweenProfilerInfoPrints_sec);
-      GET_JSON_PARAMETER(performanceConfig, "TimeBetweenProfilerDasLogs_sec",    timeBetweenProfilerDasLogs_sec);
-      
-      Profiler::SetProfileGroupName("VisionSystem.Profiler");
-      Profiler::SetPrintChannelName(kLogChannelName);
-      Profiler::SetPrintFrequency(Util::SecToMilliSec(timeBetweenProfilerInfoPrints_sec));
-      Profiler::SetDasLogFrequency(Util::SecToMilliSec(timeBetweenProfilerDasLogs_sec));
-    }
-    
-    PRINT_CH_INFO(kLogChannelName, "VisionSystem.Init.InstantiatingFaceTracker",
-                  "With model path %s.", dataPath.c_str());
-    _faceTracker.reset(new Vision::FaceTracker(_camera, dataPath, config));
-    PRINT_CH_INFO(kLogChannelName, "VisionSystem.Init.DoneInstantiatingFaceTracker", "");
-
-    _motionDetector.reset(new MotionDetector(_camera, _vizManager, config));
-
-    if (!config.isMember("OverheadMap")) {
-      PRINT_NAMED_ERROR("VisionSystem.Init.MissingJsonParameter", "OverheadMap");
-      return RESULT_FAIL;
-    }
-    _overheadMap.reset(new OverheadMap(config["OverheadMap"], _context));
-
-    // TODO check config entry here
-    _groundPlaneClassifier.reset(new GroundPlaneClassifier(config["GroundPlaneClassifier"], _context));
-
-    const Result petTrackerInitResult = _petTracker->Init(config);
-    if(RESULT_OK != petTrackerInitResult) {
-      PRINT_NAMED_ERROR("VisionSystem.Init.PetTrackerInitFailed", "");
-      return petTrackerInitResult;
-    }
-    
-    {
-      if(!config.isMember("ObjectDetector"))
-      {
-        PRINT_NAMED_ERROR("VisionSystem.Init.MissingObjectDetectorConfigField", "");
-        return RESULT_FAIL;
-      }
-      
-      
-      const std::string modelPath = Util::FileUtils::FullFilePath({dataPath, "dnn_models"});
-      if(Util::FileUtils::DirectoryExists(modelPath)) // TODO: Remove once DNN models are checked in somewhere (VIC-1071)
-      {
-        const Json::Value& objDetectorConfig = config["ObjectDetector"];
-        Result objDetectorResult = _generalObjectDetector->Init(modelPath, objDetectorConfig);
-        if(RESULT_OK != objDetectorResult)
-        {
-          PRINT_NAMED_ERROR("VisionSystem.Init.ObjectDetectorInitFailed", "");
-        }
-      }
-    }
-    
-    // Default processing modes should are set in vision_config.json
-    if(!config.isMember("InitialVisionModes"))
-    {
-      PRINT_NAMED_ERROR("VisionSystem.Init.MissingInitialVisionModesConfigField", "");
-      return RESULT_FAIL;
-    }
-    
-    const Json::Value& configModes = config["InitialVisionModes"];
-    for(auto & modeName : configModes.getMemberNames())
-    {
-      VisionMode mode = GetModeFromString(modeName);
-      if(mode == VisionMode::Idle) {
-        PRINT_NAMED_WARNING("VisionSystem.Init.BadVisionMode",
-                            "Ignoring initial Idle mode for string '%s' in vision config",
-                            modeName.c_str());
-      } else {
-        EnableMode(mode, configModes[modeName].asBool());
-      }
-    }
-    
-    if(!config.isMember("InitialModeSchedules"))
-    {
-      PRINT_NAMED_ERROR("VisionSystem.Init.MissingInitialModeSchedulesConfigField", "");
-      return RESULT_FAIL;
-    }
-    
-    const Json::Value& modeSchedulesConfig = config["InitialModeSchedules"];
-    
-    for(s32 modeIndex = 0; modeIndex < (s32)VisionMode::Count; ++modeIndex)
-    {
-      const VisionMode mode = (VisionMode)modeIndex;
-      const char* modeStr = EnumToString(mode);
-      
-      if(modeSchedulesConfig.isMember(modeStr))
-      {
-        const Json::Value& jsonSchedule = modeSchedulesConfig[modeStr];
-        if(jsonSchedule.isArray())
-        {
-          std::vector<bool> schedule;
-          schedule.reserve(jsonSchedule.size());
-          for(auto jsonIter = jsonSchedule.begin(); jsonIter != jsonSchedule.end(); ++jsonIter)
-          {
-            schedule.push_back(jsonIter->asBool());
-          }
-          AllVisionModesSchedule::SetDefaultSchedule(mode, VisionModeSchedule(std::move(schedule)));
-        }
-        else if(jsonSchedule.isInt())
-        {
-          AllVisionModesSchedule::SetDefaultSchedule(mode, VisionModeSchedule(jsonSchedule.asInt()));
-        }
-        else if(jsonSchedule.isBool())
-        {
-          AllVisionModesSchedule::SetDefaultSchedule(mode, VisionModeSchedule(jsonSchedule.asBool()));
-        }
-        else
-        {
-          PRINT_NAMED_ERROR("VisionSystem.Init.UnrecognizedModeScheduleValue",
-                            "Mode:%s Expecting int, bool, or array of bools", modeStr);
-          return RESULT_FAIL;
-        }
-      }
-    }
-    
-    // Put the default schedule on the stack. We will never pop this.
-    _modeScheduleStack.push_front(AllVisionModesSchedule());
-    
-    _clahe->setClipLimit(kClaheClipLimit);
-    _clahe->setTilesGridSize(cv::Size(kClaheTileSize, kClaheTileSize));
-    _lastClaheTileSize = kClaheTileSize;
-    _lastClaheClipLimit = kClaheClipLimit;
-       
-    _isInitialized = true;
-    return RESULT_OK;
-  }
-  
-  Result VisionSystem::UpdateCameraCalibration(std::shared_ptr<Vision::CameraCalibration> camCalib)
   {
-    Result result = RESULT_OK;
-    const bool updatedCalibration = _camera.SetCalibration(camCalib);
-    if(!updatedCalibration)
+    // Set up auto-exposure
+    const Json::Value& imageQualityConfig = config["ImageQuality"];
+    GET_JSON_PARAMETER(imageQualityConfig, "TooBrightValue",      kTooBrightValue);
+    GET_JSON_PARAMETER(imageQualityConfig, "TooDarkValue",        kTooDarkValue);
+    GET_JSON_PARAMETER(imageQualityConfig, "MeterFromDetections", kMeterFromDetections);
+    GET_JSON_PARAMETER(imageQualityConfig, "LowPercentile",       kLowPercentile);
+    GET_JSON_PARAMETER(imageQualityConfig, "HighPercentile",      kHighPercentile);
+    
+    u8  targetValue=0;
+    f32 maxChangeFraction = -1.f;
+    s32 subSample = 0;
+    
+    GET_JSON_PARAMETER(imageQualityConfig, "TargetPercentile",    kTargetPercentile);
+    GET_JSON_PARAMETER(imageQualityConfig, "TargetValue",         targetValue);
+    GET_JSON_PARAMETER(imageQualityConfig, "MaxChangeFraction",   maxChangeFraction);
+    GET_JSON_PARAMETER(imageQualityConfig, "SubSample",           subSample);
+    
+    const Result result = _imagingPipeline->SetExposureParameters(targetValue,
+                                                                  kTargetPercentile,
+                                                                  maxChangeFraction,
+                                                                  subSample);
+    
+    if(RESULT_OK == result)
     {
-      // Camera already calibrated with same settings, no need to do anything
+      PRINT_CH_INFO(kLogChannelName, "VisionSystem.Init.SetAutoExposureParams",
+                    "subSample:%d tarVal:%d tarPerc:%.3f changeFrac:%.3f",
+                    subSample, targetValue, kTargetPercentile, maxChangeFraction);
+    }
+    else
+    {
+      PRINT_NAMED_ERROR("VisionSystem.Init.SetExposureParametersFailed", "");
       return result;
     }
-    
-    // Re-initialize the marker detector for the new image size
-    _markerDetector->Init(camCalib->GetNrows(), camCalib->GetNcols());
-
-    return result;
-  } // Init()
-
-  VisionSystem::~VisionSystem()
-  {
-    
   }
   
+  {
+    // Set up profiler logging frequencies
+    f32 timeBetweenProfilerInfoPrints_sec = 5.f;
+    f32 timeBetweenProfilerDasLogs_sec = 60.f;
+    
+    const Json::Value& performanceConfig = config["PerformanceLogging"];
+    GET_JSON_PARAMETER(performanceConfig, "TimeBetweenProfilerInfoPrints_sec", timeBetweenProfilerInfoPrints_sec);
+    GET_JSON_PARAMETER(performanceConfig, "TimeBetweenProfilerDasLogs_sec",    timeBetweenProfilerDasLogs_sec);
+    
+    Profiler::SetProfileGroupName("VisionSystem.Profiler");
+    Profiler::SetPrintChannelName(kLogChannelName);
+    Profiler::SetPrintFrequency(Util::SecToMilliSec(timeBetweenProfilerInfoPrints_sec));
+    Profiler::SetDasLogFrequency(Util::SecToMilliSec(timeBetweenProfilerDasLogs_sec));
+  }
+  
+  PRINT_CH_INFO(kLogChannelName, "VisionSystem.Init.InstantiatingFaceTracker",
+                "With model path %s.", dataPath.c_str());
+  _faceTracker.reset(new Vision::FaceTracker(_camera, dataPath, config));
+  PRINT_CH_INFO(kLogChannelName, "VisionSystem.Init.DoneInstantiatingFaceTracker", "");
+
+  _motionDetector.reset(new MotionDetector(_camera, _vizManager, config));
+
+  if (!config.isMember("OverheadMap")) {
+    PRINT_NAMED_ERROR("VisionSystem.Init.MissingJsonParameter", "OverheadMap");
+    return RESULT_FAIL;
+  }
+  _overheadMap.reset(new OverheadMap(config["OverheadMap"], _context));
+
+  // TODO check config entry here
+  _groundPlaneClassifier.reset(new GroundPlaneClassifier(config["GroundPlaneClassifier"], _context));
+
+  const Result petTrackerInitResult = _petTracker->Init(config);
+  if(RESULT_OK != petTrackerInitResult) {
+    PRINT_NAMED_ERROR("VisionSystem.Init.PetTrackerInitFailed", "");
+    return petTrackerInitResult;
+  }
+  
+  if(!config.isMember("NeuralNets"))
+  {
+    PRINT_NAMED_ERROR("VisionSystem.Init.MissingNeuralNetsConfigField", "");
+    return RESULT_FAIL;
+  }
+  
+  const std::string modelPath = Util::FileUtils::FullFilePath({dataPath, "dnn_models"});
+  if(Util::FileUtils::DirectoryExists(modelPath)) // TODO: Remove once DNN models are checked in somewhere (VIC-1071)
+  {
+    const Json::Value& neuralNetConfig = config["NeuralNets"];
+    
+#   ifdef VICOS
+    // Use faster tmpfs partition for the cache, to make I/O less of a bottleneck
+    const std::string dnnCachePath = "/tmp/vision/neural_nets";
+#   else
+    const std::string dnnCachePath = Util::FileUtils::FullFilePath({cachePath, "neural_nets"});
+#   endif
+    Result neuralNetResult = _neuralNetRunner->Init(modelPath,
+                                                      dnnCachePath,
+                                                      neuralNetConfig);
+    if(RESULT_OK != neuralNetResult)
+    {
+      PRINT_NAMED_ERROR("VisionSystem.Init.NeuralNetInitFailed", "");
+    }
+  }
+   
+  if(!config.isMember("IlluminationDetector"))
+  {
+    PRINT_NAMED_ERROR("VisionSystem.Init.MissingIlluminationDetectorConfigField", "");
+    return RESULT_FAIL;
+  }
+  Result illuminationResult = _illuminationDetector->Init(config["IlluminationDetector"], _context);
+  if( illuminationResult != RESULT_OK )
+  {
+    PRINT_NAMED_ERROR("VisionSystem.Init.IlluminationDetectorInitFailed", "");
+    return RESULT_FAIL;
+  }
+
+  // Default processing modes should are set in vision_config.json
+  if(!config.isMember("InitialVisionModes"))
+  {
+    PRINT_NAMED_ERROR("VisionSystem.Init.MissingInitialVisionModesConfigField", "");
+    return RESULT_FAIL;
+  }
+  
+  const Json::Value& configModes = config["InitialVisionModes"];
+  for(auto & modeName : configModes.getMemberNames())
+  {
+    VisionMode mode = GetModeFromString(modeName);
+    if(mode == VisionMode::Idle) {
+      PRINT_NAMED_WARNING("VisionSystem.Init.BadVisionMode",
+                          "Ignoring initial Idle mode for string '%s' in vision config",
+                          modeName.c_str());
+    } else {
+      EnableMode(mode, configModes[modeName].asBool());
+    }
+  }
+  
+  if(!config.isMember("InitialModeSchedules"))
+  {
+    PRINT_NAMED_ERROR("VisionSystem.Init.MissingInitialModeSchedulesConfigField", "");
+    return RESULT_FAIL;
+  }
+  
+  const Json::Value& modeSchedulesConfig = config["InitialModeSchedules"];
+  
+  for(s32 modeIndex = 0; modeIndex < (s32)VisionMode::Count; ++modeIndex)
+  {
+    const VisionMode mode = (VisionMode)modeIndex;
+    const char* modeStr = EnumToString(mode);
+    
+    if(modeSchedulesConfig.isMember(modeStr))
+    {
+      const Json::Value& jsonSchedule = modeSchedulesConfig[modeStr];
+      if(jsonSchedule.isArray())
+      {
+        std::vector<bool> schedule;
+        schedule.reserve(jsonSchedule.size());
+        for(auto jsonIter = jsonSchedule.begin(); jsonIter != jsonSchedule.end(); ++jsonIter)
+        {
+          schedule.push_back(jsonIter->asBool());
+        }
+        AllVisionModesSchedule::SetDefaultSchedule(mode, VisionModeSchedule(std::move(schedule)));
+      }
+      else if(jsonSchedule.isInt())
+      {
+        AllVisionModesSchedule::SetDefaultSchedule(mode, VisionModeSchedule(jsonSchedule.asInt()));
+      }
+      else if(jsonSchedule.isBool())
+      {
+        AllVisionModesSchedule::SetDefaultSchedule(mode, VisionModeSchedule(jsonSchedule.asBool()));
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("VisionSystem.Init.UnrecognizedModeScheduleValue",
+                          "Mode:%s Expecting int, bool, or array of bools", modeStr);
+        return RESULT_FAIL;
+      }
+    }
+  }
+  
+  // Put the default schedule on the stack. We will never pop this.
+  _modeScheduleStack.push_front(AllVisionModesSchedule());
+  
+  _clahe->setClipLimit(kClaheClipLimit);
+  _clahe->setTilesGridSize(cv::Size(kClaheTileSize, kClaheTileSize));
+  _lastClaheTileSize = kClaheTileSize;
+  _lastClaheClipLimit = kClaheClipLimit;
+  
+  _isInitialized = true;
+  return RESULT_OK;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::UpdateCameraCalibration(std::shared_ptr<Vision::CameraCalibration> camCalib)
+{
+  Result result = RESULT_OK;
+  const bool updatedCalibration = _camera.SetCalibration(camCalib);
+  if(!updatedCalibration)
+  {
+    // Camera already calibrated with same settings, no need to do anything
+    return result;
+  }
+  
+  // Re-initialize the marker detector for the new image size
+  _markerDetector->Init(camCalib->GetNrows(), camCalib->GetNcols());
+
+  return result;
+} // Init()
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+VisionSystem::~VisionSystem()
+{
+  
+}
+
 #if 0
 #pragma mark --- Mode Controls ---
 #endif
 
-  Result VisionSystem::PushNextModeSchedule(AllVisionModesSchedule&& schedule)
-  {
-    _nextSchedules.push({true, std::move(schedule)});
-    return RESULT_OK;
-  }
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::PushNextModeSchedule(AllVisionModesSchedule&& schedule)
+{
+  _nextSchedules.push({true, std::move(schedule)});
+  return RESULT_OK;
+}
 
-  
-  Result VisionSystem::PopModeSchedule()
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::PopModeSchedule()
+{
+  _nextSchedules.push({false, AllVisionModesSchedule()});
+  return RESULT_OK;
+}
+
+Result VisionSystem::SetNextMode(VisionMode mode, bool enable)
+{
+  _nextModes.push({mode, enable});
+  return RESULT_OK;
+}
+
+Result VisionSystem::SetNextCameraExposure(s32 exposure_ms, f32 gain)
+{
+  bool& nextParamsSet = _nextCameraParams.first;
+  if(nextParamsSet)
   {
-    _nextSchedules.push({false, AllVisionModesSchedule()});
-    return RESULT_OK;
+    PRINT_NAMED_WARNING("VisionSystem.SetNextCameraParams.OverwritingPreviousParams",
+                        "Params already requested (%dms,%.2f) but not sent. Replacing with (%dms,%.2f)",
+                        _nextCameraParams.second.exposureTime_ms, _nextCameraParams.second.gain,
+                        exposure_ms, gain);
   }
   
-  Result VisionSystem::SetNextMode(VisionMode mode, bool enable)
+  _nextCameraParams.second.exposureTime_ms = exposure_ms;
+  _nextCameraParams.second.gain = gain;
+  nextParamsSet = true;
+  
+  return RESULT_OK;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::SetNextCameraWhiteBalance(f32 whiteBalanceGainR,
+                                               f32 whiteBalanceGainG,
+                                               f32 whiteBalanceGainB)
+{
+  bool& nextParamsSet = _nextCameraParams.first;
+  if(nextParamsSet)
   {
-    _nextModes.push({mode, enable});
-    return RESULT_OK;
+    PRINT_NAMED_WARNING("VisionSystem.SetNextCameraWhiteBalance.OverwritingPreviousParams",
+                        "Params already requested (%.2f,%.2f,%.2f) but not sent. Replacing with (%.2f,%.2f,%.2f)",
+                        _nextCameraParams.second.whiteBalanceGainR,
+                        _nextCameraParams.second.whiteBalanceGainG,
+                        _nextCameraParams.second.whiteBalanceGainB,
+                        whiteBalanceGainR,
+                        whiteBalanceGainG,
+                        whiteBalanceGainB);
   }
   
-  Result VisionSystem::SetNextCameraExposure(s32 exposure_ms, f32 gain)
+  _nextCameraParams.second.whiteBalanceGainR = whiteBalanceGainR;
+  _nextCameraParams.second.whiteBalanceGainG = whiteBalanceGainG;
+  _nextCameraParams.second.whiteBalanceGainB = whiteBalanceGainB;
+  nextParamsSet = true;
+  
+  return RESULT_OK;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void VisionSystem::SetSaveParameters(const ImageSendMode saveMode, const std::string& path, 
+                                     const int8_t quality, const Vision::ImageCache::Size& saveSize)
+{
+  _imageSaveMode = saveMode;
+  _imageSavePath = path;
+  _imageSaveQuality = std::min(int8_t(100), quality);
+  _imageSaveSize = saveSize;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::EnableMode(VisionMode whichMode, bool enabled)
+{
+  switch(whichMode)
   {
-    bool& nextParamsSet = _nextCameraParams.first;
-    if(nextParamsSet)
+    case VisionMode::Idle:
     {
-      PRINT_NAMED_WARNING("VisionSystem.SetNextCameraParams.OverwritingPreviousParams",
-                          "Params already requested (%dms,%.2f) but not sent. Replacing with (%dms,%.2f)",
-                          _nextCameraParams.second.exposureTime_ms, _nextCameraParams.second.gain,
-                          exposure_ms, gain);
+      if(enabled) {
+        // "Enabling" idle means to turn everything off
+        PRINT_CH_INFO(kLogChannelName, "VisionSystem.EnableMode.Idle",
+                      "Disabling all vision modes");
+        _mode.ClearFlags();
+        _mode.SetBitFlag(whichMode, true);
+      } else {
+        PRINT_NAMED_WARNING("VisionSystem.EnableMode.InvalidRequest", "Ignoring request to 'disable' idle mode.");
+      }
+      
+      break;
     }
-    
-    _nextCameraParams.second.exposureTime_ms = exposure_ms;
-    _nextCameraParams.second.gain = gain;
-    nextParamsSet = true;
-    
-    return RESULT_OK;
-  }
-
-  Result VisionSystem::SetNextCameraWhiteBalance(f32 whiteBalanceGainR, 
-                                                 f32 whiteBalanceGainG, 
-                                                 f32 whiteBalanceGainB)
-  {
-    bool& nextParamsSet = _nextCameraParams.first;
-    if(nextParamsSet)
+      
+    case VisionMode::EstimatingFacialExpression:
     {
-      PRINT_NAMED_WARNING("VisionSystem.SetNextCameraWhiteBalance.OverwritingPreviousParams",
-                          "Params already requested (%.2f,%.2f,%.2f) but not sent. Replacing with (%.2f,%.2f,%.2f)",
-                          _nextCameraParams.second.whiteBalanceGainR,
-                          _nextCameraParams.second.whiteBalanceGainG,
-                          _nextCameraParams.second.whiteBalanceGainB,
-                          whiteBalanceGainR,
-                          whiteBalanceGainG,
-                          whiteBalanceGainB);
+      DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.EnableEstimatingExpression.NullFaceTracker");
+      
+      PRINT_CH_INFO(kLogChannelName, "VisionSystem.EnableMode.EnableExpressionEstimation",
+                    "Enabled=%c", (enabled ? 'Y' : 'N'));
+
+      _faceTracker->EnableEmotionDetection(enabled);
+      break;
     }
-    
-    _nextCameraParams.second.whiteBalanceGainR = whiteBalanceGainR;
-    _nextCameraParams.second.whiteBalanceGainG = whiteBalanceGainG;
-    _nextCameraParams.second.whiteBalanceGainB = whiteBalanceGainB;
-    nextParamsSet = true;
-    
-    return RESULT_OK;
-  }
-
-  void VisionSystem::SetSaveParameters(const ImageSendMode saveMode, const std::string& path, const int8_t quality)
-  {
-    _imageSaveMode = saveMode;
-    _imageSavePath = path;
-    _imageSaveQuality = std::min(int8_t(100), quality);
-  }
-
-  Result VisionSystem::EnableMode(VisionMode whichMode, bool enabled)
-  {
-    switch(whichMode)
+      
+    case VisionMode::DetectingSmileAmount:
     {
-      case VisionMode::Idle:
-      {
-        if(enabled) {
-          // "Enabling" idle means to turn everything off
-          PRINT_CH_INFO(kLogChannelName, "VisionSystem.EnableMode.Idle",
-                        "Disabling all vision modes");
-          _mode.ClearFlags();
+      DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.EnableDetectingSmileAmount.NullFaceTracker");
+      
+      PRINT_CH_INFO(kLogChannelName, "VisionSystem.EnableMode.EnableDetectingSmileAmount", "Enabled=%c", (enabled ? 'Y' : 'N'));
+      
+      _faceTracker->EnableSmileDetection(enabled);
+      break;
+    }
+      
+    case VisionMode::DetectingGaze:
+    {
+      DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.EnableDetectingGaze.NullFaceTracker");
+      
+      PRINT_CH_INFO(kLogChannelName, "VisionSystem.EnableMode.EnableDetectingGaze", "Enabled=%c", (enabled ? 'Y' : 'N'));
+      
+      _faceTracker->EnableGazeDetection(enabled);
+      break;
+    }
+      
+    case VisionMode::DetectingBlinkAmount:
+    {
+      DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.EnableDetectingBlinkAmount.NullFaceTracker");
+      
+      PRINT_CH_INFO(kLogChannelName, "VisionSystem.EnableMode.DetectingBlinkAmount", "Enabled=%c", (enabled ? 'Y' : 'N'));
+      
+      _faceTracker->EnableBlinkDetection(enabled);
+      break;
+    }
+      
+    default:
+    {
+      if(enabled) {
+        const bool modeAlreadyEnabled = _mode.IsBitFlagSet(whichMode);
+        if(!modeAlreadyEnabled) {
+          PRINT_CH_INFO(kLogChannelName, "VisionSystem.EnablingMode",
+                        "Adding mode %s to current mode %s.",
+                        EnumToString(whichMode),
+                        VisionSystem::GetModeName(_mode).c_str());
+          
+          _mode.SetBitFlag(VisionMode::Idle, false);
           _mode.SetBitFlag(whichMode, true);
-        } else {
-          PRINT_NAMED_WARNING("VisionSystem.EnableMode.InvalidRequest", "Ignoring request to 'disable' idle mode.");
         }
-        
-        break;
+      } else {
+        const bool modeAlreadyDisabled = !_mode.IsBitFlagSet(whichMode);
+        if(!modeAlreadyDisabled) {
+          PRINT_CH_INFO(kLogChannelName, "VisionSystem.DisablingMode",
+                        "Removing mode %s from current mode %s.",
+                        EnumToString(whichMode),
+                        VisionSystem::GetModeName(_mode).c_str());
+          _mode.SetBitFlag(whichMode, false);
+          if (!_mode.AreAnyFlagsSet())
+          {
+            _mode.SetBitFlag(VisionMode::Idle, true);
+          }
+        }
       }
-        
-      case VisionMode::EstimatingFacialExpression:
-      {
-        DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.EnableEstimatingExpression.NullFaceTracker");
-        
-        PRINT_CH_INFO(kLogChannelName, "VisionSystem.EnableMode.EnableExpressionEstimation",
-                      "Enabled=%c", (enabled ? 'Y' : 'N'));
+      break;
+    }
+  } // switch(whichMode)
+  
+  return RESULT_OK;
+} // EnableMode()
 
-        _faceTracker->EnableEmotionDetection(enabled);
-        break;
-      }
-        
-      case VisionMode::DetectingSmileAmount:
-      {
-        DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.EnableDetectingSmileAmount.NullFaceTracker");
-        
-        PRINT_CH_INFO(kLogChannelName, "VisionSystem.EnableMode.EnableDetectingSmileAmount", "Enabled=%c", (enabled ? 'Y' : 'N'));
-        
-        _faceTracker->EnableSmileDetection(enabled);
-        break;
-      }
-        
-      case VisionMode::DetectingGaze:
-      {
-        DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.EnableDetectingGaze.NullFaceTracker");
-        
-        PRINT_CH_INFO(kLogChannelName, "VisionSystem.EnableMode.EnableDetectingGaze", "Enabled=%c", (enabled ? 'Y' : 'N'));
-        
-        _faceTracker->EnableGazeDetection(enabled);
-        break;
-      }
-        
-      case VisionMode::DetectingBlinkAmount:
-      {
-        DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.EnableDetectingBlinkAmount.NullFaceTracker");
-        
-        PRINT_CH_INFO(kLogChannelName, "VisionSystem.EnableMode.DetectingBlinkAmount", "Enabled=%c", (enabled ? 'Y' : 'N'));
-        
-        _faceTracker->EnableBlinkDetection(enabled);
-        break;
-      }
-        
-      default:
-      {
-        if(enabled) {
-          const bool modeAlreadyEnabled = _mode.IsBitFlagSet(whichMode);
-          if(!modeAlreadyEnabled) {
-            PRINT_CH_INFO(kLogChannelName, "VisionSystem.EnablingMode",
-                          "Adding mode %s to current mode %s.",
-                          EnumToString(whichMode),
-                          VisionSystem::GetModeName(_mode).c_str());
-            
-            _mode.SetBitFlag(VisionMode::Idle, false);
-            _mode.SetBitFlag(whichMode, true);
-          }
-        } else {
-          const bool modeAlreadyDisabled = !_mode.IsBitFlagSet(whichMode);
-          if(!modeAlreadyDisabled) {
-            PRINT_CH_INFO(kLogChannelName, "VisionSystem.DisablingMode",
-                          "Removing mode %s from current mode %s.",
-                          EnumToString(whichMode),
-                          VisionSystem::GetModeName(_mode).c_str());
-            _mode.SetBitFlag(whichMode, false);
-            if (!_mode.AreAnyFlagsSet())
-            {
-              _mode.SetBitFlag(VisionMode::Idle, true);
-            }
-          }
-        }
-        break;
-      }
-    } // switch(whichMode)
-    
-    return RESULT_OK;
-  } // EnableMode()
-  
-  Result VisionSystem::EnableToolCodeCalibration(bool enable)
-  {
-    if(IsModeEnabled(VisionMode::ReadingToolCode)) {
-      PRINT_NAMED_WARNING("VisionSystem.EnableToolCodeCalibration.AlreadyReadingToolCode",
-                          "Cannot enable/disable tool code calibration while in the middle "
-                          "of reading tool code.");
-      return RESULT_FAIL;
-    }
-    
-    _calibrateFromToolCode = enable;
-    return RESULT_OK;
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::EnableToolCodeCalibration(bool enable)
+{
+  if(IsModeEnabled(VisionMode::ReadingToolCode)) {
+    PRINT_NAMED_WARNING("VisionSystem.EnableToolCodeCalibration.AlreadyReadingToolCode",
+                        "Cannot enable/disable tool code calibration while in the middle "
+                        "of reading tool code.");
+    return RESULT_FAIL;
   }
   
-  Result VisionSystem::UpdatePoseData(const VisionPoseData& poseData)
-  {
-    std::swap(_prevPoseData, _poseData);
-    _poseData = poseData;
-    
-    // Update cameraPose and historical state's pose to use the vision system's pose origin
-    {
-      // We expect the passed-in historical pose to be w.r.t. to an origin and have its parent removed
-      // so that we can set its parent to be our poseOrigin on this thread. The cameraPose
-      // should use the histState's pose as its parent.
-      DEV_ASSERT(!poseData.histState.GetPose().HasParent(), "VisionSystem.UpdatePoseData.HistStatePoseHasParent");
-      DEV_ASSERT(poseData.cameraPose.IsChildOf(poseData.histState.GetPose()),
-                 "VisionSystem.UpdatePoseData.BadPoseDataCameraPose");
-      _poseData.histState.SetPoseParent(_poseOrigin);
-    }
-    
-    if(_wasCalledOnce) {
-      _havePrevPoseData = true;
-    } else {
-      _wasCalledOnce = true;
-    }
-    
-    return RESULT_OK;
-  } // UpdateRobotState()
+  _calibrateFromToolCode = enable;
+  return RESULT_OK;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::UpdatePoseData(const VisionPoseData& poseData)
+{
+  std::swap(_prevPoseData, _poseData);
+  _poseData = poseData;
   
-  
-  Radians VisionSystem::GetCurrentHeadAngle()
+  // Update cameraPose and historical state's pose to use the vision system's pose origin
   {
-    return _poseData.histState.GetHeadAngle_rad();
+    // We expect the passed-in historical pose to be w.r.t. to an origin and have its parent removed
+    // so that we can set its parent to be our poseOrigin on this thread. The cameraPose
+    // should use the histState's pose as its parent.
+    DEV_ASSERT(!poseData.histState.GetPose().HasParent(), "VisionSystem.UpdatePoseData.HistStatePoseHasParent");
+    DEV_ASSERT(poseData.cameraPose.IsChildOf(poseData.histState.GetPose()),
+               "VisionSystem.UpdatePoseData.BadPoseDataCameraPose");
+    _poseData.histState.SetPoseParent(_poseOrigin);
   }
   
-  
-  Radians VisionSystem::GetPreviousHeadAngle()
-  {
-    return _prevPoseData.histState.GetHeadAngle_rad();
+  if(_wasCalledOnce) {
+    _havePrevPoseData = true;
+  } else {
+    _wasCalledOnce = true;
   }
   
-  bool VisionSystem::CheckMailbox(VisionProcessingResult& result)
-  {
-    std::lock_guard<std::mutex> lock(_mutex);
-    if(_results.empty()) {
-      return false;
-    } else {
-      std::swap(result, _results.front());
-      _results.pop();
-      return true;
-    }
+  return RESULT_OK;
+} // UpdateRobotState()
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Radians VisionSystem::GetCurrentHeadAngle()
+{
+  return _poseData.histState.GetHeadAngle_rad();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Radians VisionSystem::GetPreviousHeadAngle()
+{
+  return _prevPoseData.histState.GetHeadAngle_rad();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool VisionSystem::CheckMailbox(VisionProcessingResult& result)
+{
+  std::lock_guard<std::mutex> lock(_mutex);
+  if(_results.empty()) {
+    return false;
+  } else {
+    std::swap(result, _results.front());
+    _results.pop();
+    return true;
   }
-  
-  bool VisionSystem::IsInitialized() const
-  {
-    bool retVal = _isInitialized;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool VisionSystem::IsInitialized() const
+{
+  bool retVal = _isInitialized;
 #   if ANKI_COZMO_USE_MATLAB_VISION
-    retVal &= _matlab.ep != NULL;
+  retVal &= _matlab.ep != NULL;
 #   endif
-    return retVal;
-  }
-  
-  u8 VisionSystem::ComputeMean(const Vision::Image& inputImageGray, const s32 sampleInc)
-  {
-    DEV_ASSERT(sampleInc >= 1, "VisionSystem.ComputeMean.BadIncrement");
-    
-    s32 sum=0;
-    const s32 numRows = inputImageGray.GetNumRows();
-    const s32 numCols = inputImageGray.GetNumCols();
-    for(s32 i=0; i<numRows; i+=sampleInc)
-    {
-      const u8* image_i = inputImageGray.GetRow(i);
-      for(s32 j=0; j<numCols; j+=sampleInc)
-      {
-        sum += image_i[j];
-      }
-    }
-    // Consider that in the loop above, we always start at row 0, and we always start at column 0
-    const s32 count = ((numRows + sampleInc - 1) / sampleInc) *
-                      ((numCols + sampleInc - 1) / sampleInc);
+  return retVal;
+}
 
-    const u8 mean = Util::numeric_cast_clamped<u8>(sum/count);
-    return mean;
-  }
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+u8 VisionSystem::ComputeMean(const Vision::Image& inputImageGray, const s32 sampleInc)
+{
+  DEV_ASSERT(sampleInc >= 1, "VisionSystem.ComputeMean.BadIncrement");
   
-  Result VisionSystem::CheckImageQuality(const Vision::Image& inputImage,
-                                         const std::vector<Anki::Rectangle<s32>>& detections)
+  s32 sum=0;
+  const s32 numRows = inputImageGray.GetNumRows();
+  const s32 numCols = inputImageGray.GetNumCols();
+  for(s32 i=0; i<numRows; i+=sampleInc)
   {
+    const u8* image_i = inputImageGray.GetRow(i);
+    for(s32 j=0; j<numCols; j+=sampleInc)
+    {
+      sum += image_i[j];
+    }
+  }
+  // Consider that in the loop above, we always start at row 0, and we always start at column 0
+  const s32 count = ((numRows + sampleInc - 1) / sampleInc) *
+                    ((numCols + sampleInc - 1) / sampleInc);
+
+  const u8 mean = Util::numeric_cast_clamped<u8>(sum/count);
+  return mean;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::CheckImageQuality(const Vision::Image& inputImage,
+                                       const std::vector<Anki::Rectangle<s32>>& detections)
+{
 #   define DEBUG_IMAGE_HISTOGRAM 0
 
-    // Compute the exposure we would like to have
-    f32 exposureAdjFrac = 1.f;
-    
-    Result expResult = RESULT_FAIL;
-    if(!kMeterFromDetections || detections.empty())
+  // Compute the exposure we would like to have
+  f32 exposureAdjFrac = 1.f;
+  
+  Result expResult = RESULT_FAIL;
+  if(!kMeterFromDetections || detections.empty())
+  {
+    expResult = _imagingPipeline->ComputeExposureAdjustment(inputImage, exposureAdjFrac);
+  }
+  else
+  {
+    // Give half the weight to the detections, the other half to the rest of the image
+    std::vector<Anki::Rectangle<s32>> roiRects;
+    s32 totalRoiArea = 0;
+    for(auto const& quad : detections)
     {
+      roiRects.emplace_back(quad);
+      totalRoiArea += roiRects.back().Area();
+    }
+    
+    DEV_ASSERT(totalRoiArea >= 0, "VisionSystem.CheckImageQuality.NegativeROIArea");
+    
+    if(2*totalRoiArea < inputImage.GetNumElements())
+    {
+      const u8 backgroundWeight = Util::numeric_cast<u8>(255.f * static_cast<f32>(totalRoiArea)/static_cast<f32>(inputImage.GetNumElements()));
+      const u8 roiWeight = 255 - backgroundWeight;
+      
+      Vision::Image weightMask(inputImage.GetNumRows(), inputImage.GetNumCols());
+      weightMask.FillWith(backgroundWeight);
+      
+      for(auto & rect : roiRects)
+      {
+        weightMask.GetROI(rect).FillWith(roiWeight);
+      }
+      
+      expResult = _imagingPipeline->ComputeExposureAdjustment(inputImage, weightMask, exposureAdjFrac);
+      
+      if(DEBUG_IMAGE_HISTOGRAM)
+      {
+        Vision::ImageRGB dispWeights(weightMask);
+        dispWeights.DrawText({1.f,9.f},
+                             "F:" + std::to_string(roiWeight) +
+                             " B:" + std::to_string(backgroundWeight),
+                             NamedColors::RED, 0.5f);
+        _currentResult.debugImageRGBs.emplace_back("HistWeights", dispWeights);
+      }
+    }
+    else
+    {
+      // Detections already make up more than half the image, so they'll already
+      // get more focus. Just expose normally
       expResult = _imagingPipeline->ComputeExposureAdjustment(inputImage, exposureAdjFrac);
     }
+  }
+  
+  if(RESULT_OK != expResult)
+  {
+    PRINT_NAMED_WARNING("VisionSystem.CheckImageQuality.ComputeNewExposureFailed",
+                        "Detection Quads=%zu", detections.size());
+    return expResult;
+  }
+  
+  if(DEBUG_IMAGE_HISTOGRAM)
+  {
+    const Vision::ImageBrightnessHistogram& hist = _imagingPipeline->GetHistogram();
+    std::vector<u8> values = hist.ComputePercentiles({kLowPercentile, kTargetPercentile, kHighPercentile});
+    auto valueIter = values.begin();
+    
+    Vision::ImageRGB histImg(hist.GetDisplayImage(128));
+    histImg.DrawText(Anki::Point2f((s32)hist.GetCounts().size()/3, 12),
+                     std::string("L:")  + std::to_string(*valueIter++) +
+                     std::string(" M:") + std::to_string(*valueIter++) +
+                     std::string(" H:") + std::to_string(*valueIter++),
+                     NamedColors::RED, 0.45f);
+    _currentResult.debugImageRGBs.emplace_back("ImageHist", histImg);
+    
+  } // if(DEBUG_IMAGE_HISTOGRAM)
+  
+  // Default: we checked the image quality and it's fine (no longer "Unchecked")
+  // Desired exposure settings are what they already were.
+  _currentResult.imageQuality = ImageQuality::Good;
+  
+  s32 desiredExposureTime_ms = _currentCameraParams.exposureTime_ms;
+  f32 desiredGain = _currentCameraParams.gain;
+  
+  if(FLT_LT(exposureAdjFrac, 1.f))
+  {
+    // Want to bring brightness down: reduce exposure first, if possible
+    if(_currentCameraParams.exposureTime_ms > _minCameraExposureTime_ms)
+    {
+      desiredExposureTime_ms = std::round(static_cast<f32>(_currentCameraParams.exposureTime_ms) * exposureAdjFrac);
+      desiredExposureTime_ms = std::max(_minCameraExposureTime_ms, desiredExposureTime_ms);
+    }
+    else if(FLT_GT(_currentCameraParams.gain, _minCameraGain))
+    {
+      // Already at min exposure time; reduce gain
+      desiredGain *= exposureAdjFrac;
+      desiredGain = std::max(_minCameraGain, desiredGain);
+    }
     else
     {
-      // Give half the weight to the detections, the other half to the rest of the image
-      std::vector<Anki::Rectangle<s32>> roiRects;
-      s32 totalRoiArea = 0;
-      for(auto const& quad : detections)
+      const u8 currentLowValue = _imagingPipeline->GetHistogram().ComputePercentile(kLowPercentile);
+      if(currentLowValue > kTooBrightValue)
       {
-        roiRects.emplace_back(quad);
-        totalRoiArea += roiRects.back().Area();
-      }
-      
-      DEV_ASSERT(totalRoiArea >= 0, "VisionSystem.CheckImageQuality.NegativeROIArea");
-      
-      if(2*totalRoiArea < inputImage.GetNumElements())
-      {
-        const u8 backgroundWeight = Util::numeric_cast<u8>(255.f * static_cast<f32>(totalRoiArea)/static_cast<f32>(inputImage.GetNumElements()));
-        const u8 roiWeight = 255 - backgroundWeight;
-        
-        Vision::Image weightMask(inputImage.GetNumRows(), inputImage.GetNumCols());
-        weightMask.FillWith(backgroundWeight);
-        
-        for(auto & rect : roiRects)
-        {
-          weightMask.GetROI(rect).FillWith(roiWeight);
-        }
-        
-        expResult = _imagingPipeline->ComputeExposureAdjustment(inputImage, weightMask, exposureAdjFrac);
-        
-        if(DEBUG_IMAGE_HISTOGRAM)
-        {
-          Vision::ImageRGB dispWeights(weightMask);
-          dispWeights.DrawText({1.f,9.f},
-                               "F:" + std::to_string(roiWeight) +
-                               " B:" + std::to_string(backgroundWeight),
-                               NamedColors::RED, 0.5f);
-          _currentResult.debugImageRGBs.emplace_back("HistWeights", dispWeights);
-        }
-      }
-      else
-      {
-        // Detections already make up more than half the image, so they'll already
-        // get more focus. Just expose normally
-        expResult = _imagingPipeline->ComputeExposureAdjustment(inputImage, exposureAdjFrac);
+        // Both exposure and gain are as low as they can go and the low value in the
+        // image is still too high: it's too bright!
+        _currentResult.imageQuality = ImageQuality::TooBright;
       }
     }
-    
-    if(RESULT_OK != expResult)
+  }
+  else if(FLT_GT(exposureAdjFrac, 1.f))
+  {
+    // Want to bring brightness up: increase gain first, if possible
+    if(FLT_LT(_currentCameraParams.gain, _maxCameraGain))
     {
-      PRINT_NAMED_WARNING("VisionSystem.CheckImageQuality.ComputeNewExposureFailed",
-                          "Detection Quads=%zu", detections.size());
-      return expResult;
+      desiredGain *= exposureAdjFrac;
+      desiredGain = std::min(_maxCameraGain, desiredGain);
     }
-    
-    if(DEBUG_IMAGE_HISTOGRAM)
+    else if(_currentCameraParams.exposureTime_ms < _maxCameraExposureTime_ms)
     {
-      const Vision::ImageBrightnessHistogram& hist = _imagingPipeline->GetHistogram();
-      std::vector<u8> values = hist.ComputePercentiles({kLowPercentile, kMidPercentile, kHighPercentile});
-      auto valueIter = values.begin();
-      
-      Vision::ImageRGB histImg(hist.GetDisplayImage(128));
-      histImg.DrawText(Anki::Point2f((s32)hist.GetCounts().size()/3, 12),
-                       std::string("L:")  + std::to_string(*valueIter++) +
-                       std::string(" M:") + std::to_string(*valueIter++) +
-                       std::string(" H:") + std::to_string(*valueIter++),
-                       NamedColors::RED, 0.45f);
-      _currentResult.debugImageRGBs.emplace_back("ImageHist", histImg);
-      
-    } // if(DEBUG_IMAGE_HISTOGRAM)
-    
-    // Default: we checked the image quality and it's fine (no longer "Unchecked")
-    // Desired exposure settings are what they already were.
-    _currentResult.imageQuality = ImageQuality::Good;
-    
-    s32 desiredExposureTime_ms = _currentCameraParams.exposureTime_ms;
-    f32 desiredGain = _currentCameraParams.gain;
-    
-    if(FLT_LT(exposureAdjFrac, 1.f))
+      // Already at max gain; increase exposure
+      desiredExposureTime_ms = std::round(static_cast<f32>(_currentCameraParams.exposureTime_ms) * exposureAdjFrac);
+      desiredExposureTime_ms = std::min(_maxCameraExposureTime_ms, desiredExposureTime_ms);
+    }
+    else
     {
-      // Want to bring brightness down: reduce exposure first, if possible
-      if(_currentCameraParams.exposureTime_ms > _minCameraExposureTime_ms)
+      const u8 currentHighValue = _imagingPipeline->GetHistogram().ComputePercentile(kHighPercentile);
+      if(currentHighValue < kTooDarkValue)
       {
-        desiredExposureTime_ms = std::round(static_cast<f32>(_currentCameraParams.exposureTime_ms) * exposureAdjFrac);
-        desiredExposureTime_ms = std::max(_minCameraExposureTime_ms, desiredExposureTime_ms);
-      }
-      else if(FLT_GT(_currentCameraParams.gain, _minCameraGain))
-      {
-        // Already at min exposure time; reduce gain
-        desiredGain *= exposureAdjFrac;
-        desiredGain = std::max(_minCameraGain, desiredGain);
-      }
-      else
-      {
-        const u8 currentLowValue = _imagingPipeline->GetHistogram().ComputePercentile(kLowPercentile);
-        if(currentLowValue > kTooBrightValue)
-        {
-          // Both exposure and gain are as low as they can go and the low value in the
-          // image is still too high: it's too bright!
-          _currentResult.imageQuality = ImageQuality::TooBright;
-        }
+        // Both exposure and gain are as high as they can go and the high value in the
+        // image is still too low: it's too dark!
+        _currentResult.imageQuality = ImageQuality::TooDark;
       }
     }
-    else if(FLT_GT(exposureAdjFrac, 1.f))
-    {
-      // Want to bring brightness up: increase gain first, if possible
-      if(FLT_LT(_currentCameraParams.gain, _maxCameraGain))
-      {
-        desiredGain *= exposureAdjFrac;
-        desiredGain = std::min(_maxCameraGain, desiredGain);
-      }
-      else if(_currentCameraParams.exposureTime_ms < _maxCameraExposureTime_ms)
-      {
-        // Already at max gain; increase exposure
-        desiredExposureTime_ms = std::round(static_cast<f32>(_currentCameraParams.exposureTime_ms) * exposureAdjFrac);
-        desiredExposureTime_ms = std::min(_maxCameraExposureTime_ms, desiredExposureTime_ms);
-      }
-      else
-      {
-        const u8 currentHighValue = _imagingPipeline->GetHistogram().ComputePercentile(kHighPercentile);
-        if(currentHighValue < kTooDarkValue)
-        {
-          // Both exposure and gain are as high as they can go and the high value in the
-          // image is still too low: it's too dark!
-          _currentResult.imageQuality = ImageQuality::TooDark;
-        }
-      }
-    }
-    
-    // If we are in limited exposure mode limit the exposure to multiples of 10 ms
-    // This is to prevent image artifacts from mismatched exposure and head light pulsing
-    if(_mode.IsBitFlagSet(VisionMode::LimitedExposure))
-    {
-      static const int kExposureMultiple = 10;
+  }
+  
+  // If we are in limited exposure mode limit the exposure to multiples of 10 ms
+  // This is to prevent image artifacts from mismatched exposure and head light pulsing
+  if(_mode.IsBitFlagSet(VisionMode::LimitedExposure))
+  {
+    static const int kExposureMultiple = 10;
 
-      const int remainder = desiredExposureTime_ms % kExposureMultiple;
-      // Round _maxCameraExposureTime_ms down to the nearest multiple of kExposureMultiple
-      const int maxCameraExposureRounded_ms = _maxCameraExposureTime_ms - (_maxCameraExposureTime_ms % kExposureMultiple);
-      if(remainder != 0)
-      {
-        desiredExposureTime_ms += (kExposureMultiple - remainder);
-        desiredExposureTime_ms = std::min(maxCameraExposureRounded_ms, desiredExposureTime_ms);
-      }
-    }
-    
-    _currentResult.cameraParams.exposureTime_ms = desiredExposureTime_ms;
-    _currentResult.cameraParams.gain = desiredGain;
-
-    return RESULT_OK;
-  }
-
-  Result VisionSystem::AssignNameToFace(Vision::FaceID_t faceID, const std::string& name, Vision::FaceID_t mergeWithID)
-  {
-    if(!_isInitialized) {
-      PRINT_NAMED_WARNING("VisionSystem.AssignNameToFace.NotInitialized",
-                          "Cannot assign name '%s' to face ID %d before being initialized",
-                          name.c_str(), faceID);
-      return RESULT_FAIL;
-    }
-    
-    DEV_ASSERT(_faceTracker != nullptr, "VisionSystem.AssignNameToFace.NullFaceTracker");
-    
-    return _faceTracker->AssignNameToID(faceID, name, mergeWithID);
-  }
-
-  Result VisionSystem::EraseFace(Vision::FaceID_t faceID)
-  {
-    return _faceTracker->EraseFace(faceID);
-  }
-  
-  void VisionSystem::SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
- 																						  Vision::FaceID_t forFaceID,
-																						  s32 numEnrollments)
-  {
-    _faceTracker->SetFaceEnrollmentMode(pose, forFaceID, numEnrollments);
-  }
-  
-  void VisionSystem::EraseAllFaces()
-  {
-    _faceTracker->EraseAllFaces();
-  }
-  
-  std::vector<Vision::LoadedKnownFace> VisionSystem::GetEnrolledNames() const
-  {
-    return _faceTracker->GetEnrolledNames();
-  }
-  
-  Result VisionSystem::RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName,
-                                  Vision::RobotRenamedEnrolledFace& renamedFace)
-  {
-    return _faceTracker->RenameFace(faceID, oldName, newName, renamedFace);
-  }
-  
-  
-  Vision::Image BlackOutRects(const Vision::Image& img, const std::vector<Anki::Rectangle<s32>>& rects)
-  {
-    // Black out detected markers so we don't find faces in them
-    Vision::Image maskedImage;
-    img.CopyTo(maskedImage);
-    
-    DEV_ASSERT(maskedImage.GetTimestamp() == img.GetTimestamp(), "VisionSystem.DetectFaces.BadImageTimestamp");
-    
-    for(auto rect : rects) // Deliberate copy because GetROI can modify 'rect'
+    const int remainder = desiredExposureTime_ms % kExposureMultiple;
+    // Round _maxCameraExposureTime_ms down to the nearest multiple of kExposureMultiple
+    const int maxCameraExposureRounded_ms = _maxCameraExposureTime_ms - (_maxCameraExposureTime_ms % kExposureMultiple);
+    if(remainder != 0)
     {
-      Vision::Image roi = maskedImage.GetROI(rect);
-      
-      if(!roi.IsEmpty())
-      {
-        roi.FillWith(0);
-      }
+      desiredExposureTime_ms += (kExposureMultiple - remainder);
+      desiredExposureTime_ms = std::min(maxCameraExposureRounded_ms, desiredExposureTime_ms);
     }
-    
-    return maskedImage;
   }
   
+  _currentResult.cameraParams.exposureTime_ms = desiredExposureTime_ms;
+  _currentResult.cameraParams.gain = desiredGain;
+
+  return RESULT_OK;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::CheckWhiteBalance(const Vision::ImageRGB& img)
+{
+  f32 adjR = 1.f, adjB = 1.f;
   
-  Result VisionSystem::DetectFaces(const Vision::Image& grayImage,
-                                   std::vector<Anki::Rectangle<s32>>& detectionRects)
+  Result result = _imagingPipeline->ComputeWhiteBalanceAdjustment(img, adjR, adjB);
+  
+  if(RESULT_OK != result) {
+    PRINT_NAMED_ERROR("VisionSystem.UpdateWhiteBalance.ComputeWhiteBalanceAdjustmentFailed", "");
+    return result;
+  }
+  
+  // Actually report the new white balance gains, based on the current values and the
+  // computed adjustments
+  _currentResult.cameraParams.whiteBalanceGainR = _currentCameraParams.whiteBalanceGainR * adjR;
+  _currentResult.cameraParams.whiteBalanceGainG = _currentCameraParams.whiteBalanceGainG; // Constant!
+  _currentResult.cameraParams.whiteBalanceGainB = _currentCameraParams.whiteBalanceGainB * adjB;
+    
+  return result;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::AssignNameToFace(Vision::FaceID_t faceID, const std::string& name, Vision::FaceID_t mergeWithID)
+{
+  if(!_isInitialized) {
+    PRINT_NAMED_WARNING("VisionSystem.AssignNameToFace.NotInitialized",
+                        "Cannot assign name '%s' to face ID %d before being initialized",
+                        name.c_str(), faceID);
+    return RESULT_FAIL;
+  }
+  
+  DEV_ASSERT(_faceTracker != nullptr, "VisionSystem.AssignNameToFace.NullFaceTracker");
+  
+  return _faceTracker->AssignNameToID(faceID, name, mergeWithID);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::EraseFace(Vision::FaceID_t faceID)
+{
+  return _faceTracker->EraseFace(faceID);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void VisionSystem::SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
+                                            Vision::FaceID_t forFaceID,
+                                            s32 numEnrollments)
+{
+  _faceTracker->SetFaceEnrollmentMode(pose, forFaceID, numEnrollments);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void VisionSystem::EraseAllFaces()
+{
+  _faceTracker->EraseAllFaces();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::vector<Vision::LoadedKnownFace> VisionSystem::GetEnrolledNames() const
+{
+  return _faceTracker->GetEnrolledNames();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName,
+                                Vision::RobotRenamedEnrolledFace& renamedFace)
+{
+  return _faceTracker->RenameFace(faceID, oldName, newName, renamedFace);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Vision::Image BlackOutRects(const Vision::Image& img, const std::vector<Anki::Rectangle<s32>>& rects)
+{
+  // Black out detected markers so we don't find faces in them
+  Vision::Image maskedImage;
+  img.CopyTo(maskedImage);
+  
+  DEV_ASSERT(maskedImage.GetTimestamp() == img.GetTimestamp(), "VisionSystem.DetectFaces.BadImageTimestamp");
+  
+  for(auto rect : rects) // Deliberate copy because GetROI can modify 'rect'
   {
-    DEV_ASSERT(_faceTracker != nullptr, "VisionSystem.DetectFaces.NullFaceTracker");
-   
-    /*
-    // Periodic printouts of face tracker timings
-    static TimeStamp_t lastProfilePrint = 0;
-    if(grayImage.GetTimestamp() - lastProfilePrint > 2000) {
-      _faceTracker->PrintTiming();
-      lastProfilePrint = grayImage.GetTimestamp();
-    }
-     */
+    Vision::Image roi = maskedImage.GetROI(rect);
     
-    if(_faceTracker == nullptr) {
-      PRINT_NAMED_ERROR("VisionSystem.Update.NullFaceTracker",
-                        "In detecting faces mode, but face tracker is null.");
-      return RESULT_FAIL;
-    }
-    
-    // If we've moved too much, reset the tracker so we don't accidentally mistake
-    // one face for another. (If one face it was tracking from the last image is
-    // now on top of a nearby face in the image, the tracker can't tell if that's
-    // because the face moved or the camera moved.)
-    const bool hasHeadMoved = !_poseData.IsHeadAngleSame(_prevPoseData, DEG_TO_RAD(kFaceTrackingMaxHeadAngleChange_deg));
-    const bool hasBodyMoved = !_poseData.IsBodyPoseSame(_prevPoseData,
-                                                        DEG_TO_RAD(kFaceTrackingMaxBodyAngleChange_deg),
-                                                        kFaceTrackingMaxPoseChange_mm);
-    if(hasHeadMoved || hasBodyMoved)
+    if(!roi.IsEmpty())
     {
-      PRINT_NAMED_DEBUG("VisionSystem.Update.ResetFaceTracker",
-                        "HeadMoved:%d BodyMoved:%d", hasHeadMoved, hasBodyMoved);
-      _faceTracker->Reset();
+      roi.FillWith(0);
     }
+  }
+  
+  return maskedImage;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::DetectFaces(const Vision::Image& grayImage,
+                                 std::vector<Anki::Rectangle<s32>>& detectionRects)
+{
+  DEV_ASSERT(_faceTracker != nullptr, "VisionSystem.DetectFaces.NullFaceTracker");
+ 
+  /*
+  // Periodic printouts of face tracker timings
+  static TimeStamp_t lastProfilePrint = 0;
+  if(grayImage.GetTimestamp() - lastProfilePrint > 2000) {
+    _faceTracker->PrintTiming();
+    lastProfilePrint = grayImage.GetTimestamp();
+  }
+   */
+  
+  if(_faceTracker == nullptr) {
+    PRINT_NAMED_ERROR("VisionSystem.Update.NullFaceTracker",
+                      "In detecting faces mode, but face tracker is null.");
+    return RESULT_FAIL;
+  }
+  
+  // If we've moved too much, reset the tracker so we don't accidentally mistake
+  // one face for another. (If one face it was tracking from the last image is
+  // now on top of a nearby face in the image, the tracker can't tell if that's
+  // because the face moved or the camera moved.)
+  const bool hasHeadMoved = !_poseData.IsHeadAngleSame(_prevPoseData, DEG_TO_RAD(kFaceTrackingMaxHeadAngleChange_deg));
+  const bool hasBodyMoved = !_poseData.IsBodyPoseSame(_prevPoseData,
+                                                      DEG_TO_RAD(kFaceTrackingMaxBodyAngleChange_deg),
+                                                      kFaceTrackingMaxPoseChange_mm);
+  if(hasHeadMoved || hasBodyMoved)
+  {
+    PRINT_NAMED_DEBUG("VisionSystem.Update.ResetFaceTracker",
+                      "HeadMoved:%d BodyMoved:%d", hasHeadMoved, hasBodyMoved);
+    _faceTracker->Reset();
+  }
+  
+  if(!detectionRects.empty())
+  {
+    // Black out previous detections so we don't find faces in them
+    Vision::Image maskedImage = BlackOutRects(grayImage, detectionRects);
     
-    if(!detectionRects.empty())
-    {
-      // Black out previous detections so we don't find faces in them
-      Vision::Image maskedImage = BlackOutRects(grayImage, detectionRects);
-      
 #     if DEBUG_FACE_DETECTION
-      //_currentResult.debugImages.push_back({"MaskedFaceImage", maskedImage});
+    //_currentResult.debugImages.push_back({"MaskedFaceImage", maskedImage});
 #     endif
-      
-      _faceTracker->Update(maskedImage, _currentResult.faces, _currentResult.updatedFaceIDs);
-    } else {
-      // Nothing already detected, so nothing to black out before looking for faces
-      _faceTracker->Update(grayImage, _currentResult.faces, _currentResult.updatedFaceIDs);
-    }
     
-    for(auto faceIter = _currentResult.faces.begin(); faceIter != _currentResult.faces.end(); ++faceIter)
-    {
-      auto & currentFace = *faceIter;
-      
-      DEV_ASSERT(currentFace.GetTimeStamp() == grayImage.GetTimestamp(), "VisionSystem.DetectFaces.BadFaceTimestamp");
-      
-      detectionRects.emplace_back((s32)std::round(faceIter->GetRect().GetX()),
-                                  (s32)std::round(faceIter->GetRect().GetY()),
-                                  (s32)std::round(faceIter->GetRect().GetWidth()),
-                                  (s32)std::round(faceIter->GetRect().GetHeight()));
-      
-      // Make head pose w.r.t. the historical world origin
-      Pose3d headPose = currentFace.GetHeadPose();
-      headPose.SetParent(_poseData.cameraPose);
-      headPose = headPose.GetWithRespectToRoot();
-
-      DEV_ASSERT(headPose.IsChildOf(_poseOrigin), "VisionSystem.DetectFaces.BadHeadPoseParent");
-      
-      // Leave faces in the output result with no parent pose (b/c we will assume they are w.r.t. the origin)
-      headPose.ClearParent();
-      
-      currentFace.SetHeadPose(headPose);
-    }
-    
-    return RESULT_OK;
-  } // DetectFaces()
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  Result VisionSystem::DetectPets(const Vision::Image& grayImage,
-                                  std::vector<Anki::Rectangle<s32>>& detections)
-  {
-    Result result = RESULT_FAIL;
-    
-    if(detections.empty())
-    {
-      result = _petTracker->Update(grayImage, _currentResult.pets);
-    }
-    else
-    {
-      // Don't look for pets where we've already found something else
-      Vision::Image maskedImage = BlackOutRects(grayImage, detections);
-      result = _petTracker->Update(maskedImage, _currentResult.pets);
-    }
-    
-    if(RESULT_OK != result) {
-      PRINT_NAMED_WARNING("VisionSystem.DetectPets.PetTrackerUpdateFailed", "");
-    }
-    
-    for(auto const& pet : _currentResult.pets)
-    {
-      detections.emplace_back((s32)std::round(pet.GetRect().GetX()),
-                              (s32)std::round(pet.GetRect().GetY()),
-                              (s32)std::round(pet.GetRect().GetWidth()),
-                              (s32)std::round(pet.GetRect().GetHeight()));
-    }
-    return result;
-    
-	} // DetectPets()
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  Result VisionSystem::DetectMotion(Vision::ImageCache& imageCache)
-  {
-
-    Result result = RESULT_OK;
-    
-    _motionDetector->Detect(imageCache, _poseData, _prevPoseData,
-                            _currentResult.observedMotions, _currentResult.debugImageRGBs);
-    
-    return result;
-    
-  } // DetectMotion()
-
-  Result VisionSystem::UpdateOverheadMap(const Vision::ImageRGB& image)
-  {
-    Result result = _overheadMap->Update(image, _poseData, _currentResult.debugImageRGBs);
-    return result;
-  }
-
-  Result VisionSystem::UpdateGroundPlaneClassifier(const Vision::ImageRGB& image)
-  {
-    Result result = _groundPlaneClassifier->Update(image, _poseData, _currentResult.debugImageRGBs,
-                                                   _currentResult.visualObstacles);
-    return result;
-  }
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  Result VisionSystem::DetectLaserPoints(Vision::ImageCache& imageCache)
-  {
-    const bool isDarkExposure = (Util::IsNear(_currentCameraParams.exposureTime_ms, _minCameraExposureTime_ms) &&
-                                 Util::IsNear(_currentCameraParams.gain, _minCameraGain));
-    
-    Result result = _laserPointDetector->Detect(imageCache, _poseData, isDarkExposure,
-                                                _currentResult.laserPoints,
-                                                _currentResult.debugImageRGBs);
-    
-    return result;
+    _faceTracker->Update(maskedImage, _currentResult.faces, _currentResult.updatedFaceIDs);
+  } else {
+    // Nothing already detected, so nothing to black out before looking for faces
+    _faceTracker->Update(grayImage, _currentResult.faces, _currentResult.updatedFaceIDs);
   }
   
+  for(auto faceIter = _currentResult.faces.begin(); faceIter != _currentResult.faces.end(); ++faceIter)
+  {
+    auto & currentFace = *faceIter;
+    
+    DEV_ASSERT(currentFace.GetTimeStamp() == grayImage.GetTimestamp(), "VisionSystem.DetectFaces.BadFaceTimestamp");
+    
+    detectionRects.emplace_back((s32)std::round(faceIter->GetRect().GetX()),
+                                (s32)std::round(faceIter->GetRect().GetY()),
+                                (s32)std::round(faceIter->GetRect().GetWidth()),
+                                (s32)std::round(faceIter->GetRect().GetHeight()));
+    
+    // Make head pose w.r.t. the historical world origin
+    Pose3d headPose = currentFace.GetHeadPose();
+    headPose.SetParent(_poseData.cameraPose);
+    headPose = headPose.GetWithRespectToRoot();
+
+    DEV_ASSERT(headPose.IsChildOf(_poseOrigin), "VisionSystem.DetectFaces.BadHeadPoseParent");
+    
+    // Leave faces in the output result with no parent pose (b/c we will assume they are w.r.t. the origin)
+    headPose.ClearParent();
+    
+    currentFace.SetHeadPose(headPose);
+  }
+  
+  return RESULT_OK;
+} // DetectFaces()
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::DetectPets(const Vision::Image& grayImage,
+                                std::vector<Anki::Rectangle<s32>>& detections)
+{
+  Result result = RESULT_FAIL;
+  
+  if(detections.empty())
+  {
+    result = _petTracker->Update(grayImage, _currentResult.pets);
+  }
+  else
+  {
+    // Don't look for pets where we've already found something else
+    Vision::Image maskedImage = BlackOutRects(grayImage, detections);
+    result = _petTracker->Update(maskedImage, _currentResult.pets);
+  }
+  
+  if(RESULT_OK != result) {
+    PRINT_NAMED_WARNING("VisionSystem.DetectPets.PetTrackerUpdateFailed", "");
+  }
+  
+  for(auto const& pet : _currentResult.pets)
+  {
+    detections.emplace_back((s32)std::round(pet.GetRect().GetX()),
+                            (s32)std::round(pet.GetRect().GetY()),
+                            (s32)std::round(pet.GetRect().GetWidth()),
+                            (s32)std::round(pet.GetRect().GetHeight()));
+  }
+  return result;
+  
+} // DetectPets()
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::DetectMotion(Vision::ImageCache& imageCache)
+{
+
+  Result result = RESULT_OK;
+  
+  _motionDetector->Detect(imageCache, _poseData, _prevPoseData,
+                          _currentResult.observedMotions, _currentResult.debugImageRGBs);
+  
+  return result;
+  
+} // DetectMotion()
+
+Result VisionSystem::UpdateOverheadMap(const Vision::ImageRGB& image)
+{
+  Result result = _overheadMap->Update(image, _poseData, _currentResult.debugImageRGBs);
+  return result;
+}
+
+Result VisionSystem::UpdateGroundPlaneClassifier(const Vision::ImageRGB& image)
+{
+  Result result = _groundPlaneClassifier->Update(image, _poseData, _currentResult.debugImageRGBs,
+                                                 _currentResult.visualObstacles);
+  return result;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::DetectLaserPoints(Vision::ImageCache& imageCache)
+{
+  const bool isDarkExposure = (Util::IsNear(_currentCameraParams.exposureTime_ms, _minCameraExposureTime_ms) &&
+                               Util::IsNear(_currentCameraParams.gain, _minCameraGain));
+  
+  Result result = _laserPointDetector->Detect(imageCache, _poseData, isDarkExposure,
+                                              _currentResult.laserPoints,
+                                              _currentResult.debugImageRGBs);
+  
+  return result;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::DetectIllumination(Vision::ImageCache& imageCache)
+{
+  Result result = _illuminationDetector->Detect(imageCache, 
+                                                _poseData, 
+                                                _currentResult.illumination);
+  return result;
+}
+
 #if 0
 #pragma mark --- Public VisionSystem API Implementations ---
 #endif
-  
-  std::string VisionSystem::GetCurrentModeName() const {
-    return VisionSystem::GetModeName(_mode);
-  }
-  
-  std::string VisionSystem::GetModeName(Util::BitFlags32<VisionMode> mode) const
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string VisionSystem::GetCurrentModeName() const {
+  return VisionSystem::GetModeName(_mode);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string VisionSystem::GetModeName(Util::BitFlags32<VisionMode> mode) const
+{
+  std::string retStr("");
+  for (auto modeIter = VisionMode::Idle; modeIter < VisionMode::Count; ++modeIter)
   {
-    std::string retStr("");
-    for (auto modeIter = VisionMode::Idle; modeIter < VisionMode::Count; ++modeIter)
+    if (mode.IsBitFlagSet(modeIter))
     {
-      if (mode.IsBitFlagSet(modeIter))
-      {
-        if(!retStr.empty()) {
-          retStr += "+";
-        }
-        retStr += EnumToString(modeIter);
+      if(!retStr.empty()) {
+        retStr += "+";
       }
+      retStr += EnumToString(modeIter);
     }
-    return retStr;
-    
-  } // GetModeName()
+  }
+  return retStr;
   
-  VisionMode VisionSystem::GetModeFromString(const std::string& str) const
-  {
-    return VisionModeFromString(str.c_str());
+} // GetModeName()
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+VisionMode VisionSystem::GetModeFromString(const std::string& str) const
+{
+  return VisionModeFromString(str.c_str());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::ClearToolCodeImages()
+{
+  if(_isReadingToolCode) {
+    PRINT_CH_INFO(kLogChannelName, "VisionSystem.ClearToolCodeImages.AlreadyReadingToolCode",
+                  "Cannot clear tool code images while already in the middle of reading tool codes.");
+    return RESULT_FAIL;
   }
   
-#if defined(SEND_IMAGE_ONLY)
-#  error SEND_IMAGE_ONLY doesn't really make sense for Basestation vision system.
-#elif defined(RUN_GROUND_TRUTHING_CAPTURE)
-#  error RUN_GROUND_TRUTHING_CAPTURE not implemented in Basestation vision system.
-#endif
+  _toolCodeImages.clear();
+  return RESULT_OK;
+}
 
-  Result VisionSystem::ClearToolCodeImages()
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::ApplyCLAHE(Vision::ImageCache& imageCache,
+                                const MarkerDetectionCLAHE useCLAHE,
+                                Vision::Image& claheImage)
+{
+  const Vision::ImageCache::Size whichSize = imageCache.GetSize(kMarkerDetector_ScaleMultiplier,
+                                                                Vision::ResizeMethod::Linear);
+  const Vision::Image& inputImageGray = imageCache.GetGray(whichSize);
+  
+  switch(useCLAHE)
   {
-    if(_isReadingToolCode) {
-      PRINT_CH_INFO(kLogChannelName, "VisionSystem.ClearToolCodeImages.AlreadyReadingToolCode",
-                    "Cannot clear tool code images while already in the middle of reading tool codes.");
-      return RESULT_FAIL;
-    }
-    
-    _toolCodeImages.clear();
-    return RESULT_OK;
-  }
-
-  Result VisionSystem::ApplyCLAHE(Vision::ImageCache& imageCache,
-                                  const MarkerDetectionCLAHE useCLAHE,
-                                  Vision::Image& claheImage)
-  {
-    const Vision::ImageCache::Size whichSize = imageCache.GetSize(kMarkerDetector_ScaleMultiplier,
-                                                                  Vision::ResizeMethod::Linear);
-    const Vision::Image& inputImageGray = imageCache.GetGray(whichSize);
-    
-    switch(useCLAHE)
+    case MarkerDetectionCLAHE::Off:
+      _currentUseCLAHE = false;
+      break;
+      
+    case MarkerDetectionCLAHE::On:
+    case MarkerDetectionCLAHE::Both:
+      _currentUseCLAHE = true;
+      break;
+      
+    case MarkerDetectionCLAHE::Alternating:
+      _currentUseCLAHE = !_currentUseCLAHE;
+      break;
+      
+    case MarkerDetectionCLAHE::WhenDark:
     {
-      case MarkerDetectionCLAHE::Off:
-        _currentUseCLAHE = false;
-        break;
-        
-      case MarkerDetectionCLAHE::On:
-      case MarkerDetectionCLAHE::Both:
-        _currentUseCLAHE = true;
-        break;
-        
-      case MarkerDetectionCLAHE::Alternating:
-        _currentUseCLAHE = !_currentUseCLAHE;
-        break;
-        
-      case MarkerDetectionCLAHE::WhenDark:
-      {
-        // Use CLAHE on the current image if it is dark enough
-        static const s32 subSample = 3;
-        const s32 numRows = inputImageGray.GetNumRows();
-        const s32 numCols = inputImageGray.GetNumCols();
-        // Consider that in the loop below, we always start at row 0, and we always start at column 0
-        const s32 count = ((numRows + subSample - 1) / subSample) *
-                          ((numCols + subSample - 1) / subSample);
-        const s32 threshold = kClaheWhenDarkThreshold * count;
+      // Use CLAHE on the current image if it is dark enough
+      static const s32 subSample = 3;
+      const s32 numRows = inputImageGray.GetNumRows();
+      const s32 numCols = inputImageGray.GetNumCols();
+      // Consider that in the loop below, we always start at row 0, and we always start at column 0
+      const s32 count = ((numRows + subSample - 1) / subSample) *
+                        ((numCols + subSample - 1) / subSample);
+      const s32 threshold = kClaheWhenDarkThreshold * count;
 
-        _currentUseCLAHE = true;
-        s32 meanValue = 0;
-        for(s32 i=0; i<numRows; i+=subSample)
+      _currentUseCLAHE = true;
+      s32 meanValue = 0;
+      for(s32 i=0; i<numRows; i+=subSample)
+      {
+        const u8* img_i = inputImageGray.GetRow(i);
+        for(s32 j=0; j<numCols; j+=subSample)
         {
-          const u8* img_i = inputImageGray.GetRow(i);
-          for(s32 j=0; j<numCols; j+=subSample)
-          {
-            meanValue += img_i[j];
-          }
-          if (meanValue >= threshold)
-          {
-            // Image is not dark enough; early out
-            _currentUseCLAHE = false;
-            break;
-          }
+          meanValue += img_i[j];
         }
-        break;
+        if (meanValue >= threshold)
+        {
+          // Image is not dark enough; early out
+          _currentUseCLAHE = false;
+          break;
+        }
       }
-        
-      case MarkerDetectionCLAHE::Count:
-        assert(false);
-        break;
+      break;
     }
-    
-    if(!_currentUseCLAHE)
-    {
-      // Nothing to do: not currently using CLAHE
-      return RESULT_OK;
-    }
-    
-    if(_lastClaheTileSize != kClaheTileSize) {
-      PRINT_NAMED_DEBUG("VisionSystem.Update.ClaheTileSizeUpdated",
-                        "%d -> %d", _lastClaheTileSize, kClaheTileSize);
       
-      _clahe->setTilesGridSize(cv::Size(kClaheTileSize, kClaheTileSize));
-      _lastClaheTileSize = kClaheTileSize;
-    }
-    
-    if(_lastClaheClipLimit != kClaheClipLimit) {
-      PRINT_NAMED_DEBUG("VisionSystem.Update.ClaheClipLimitUpdated",
-                        "%d -> %d", _lastClaheClipLimit, kClaheClipLimit);
-      
-      _clahe->setClipLimit(kClaheClipLimit);
-      _lastClaheClipLimit = kClaheClipLimit;
-    }
-    
-    Tic("CLAHE");
-    _clahe->apply(inputImageGray.get_CvMat_(), claheImage.get_CvMat_());
-    
-    if(kPostClaheSmooth > 0)
-    {
-      s32 kSize = 3*kPostClaheSmooth;
-      if(kSize % 2 == 0) {
-        ++kSize; // Make sure it's odd
-      }
-      cv::GaussianBlur(claheImage.get_CvMat_(), claheImage.get_CvMat_(),
-                       cv::Size(kSize,kSize), kPostClaheSmooth);
-    }
-    else if(kPostClaheSmooth < 0)
-    {
-      static Vision::Image temp(claheImage.GetNumRows(), claheImage.GetNumCols());
-      claheImage.BoxFilter(temp, -kPostClaheSmooth);
-      std::swap(claheImage, temp);
-    }
-    Toc("CLAHE");
-    
-    if(DEBUG_DISPLAY_CLAHE_IMAGE) {
-      _currentResult.debugImageRGBs.push_back({"ImageCLAHE", claheImage});
-    }
-    
-    claheImage.SetTimestamp(inputImageGray.GetTimestamp()); // make sure to preserve timestamp!
-    
-    return RESULT_OK;
-    
-  } // ApplyCLAHE()
+    case MarkerDetectionCLAHE::Count:
+      assert(false);
+      break;
+  }
   
-  
-  Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
-                                              const Vision::Image& claheImage,
-                                              std::vector<Anki::Rectangle<s32>>& detectionRects,
-                                              MarkerDetectionCLAHE useCLAHE)
+  if(!_currentUseCLAHE)
   {
-    Result lastResult = RESULT_OK;
+    // Nothing to do: not currently using CLAHE
+    return RESULT_OK;
+  }
+  
+  if(_lastClaheTileSize != kClaheTileSize) {
+    PRINT_NAMED_DEBUG("VisionSystem.Update.ClaheTileSizeUpdated",
+                      "%d -> %d", _lastClaheTileSize, kClaheTileSize);
+    
+    _clahe->setTilesGridSize(cv::Size(kClaheTileSize, kClaheTileSize));
+    _lastClaheTileSize = kClaheTileSize;
+  }
+  
+  if(_lastClaheClipLimit != kClaheClipLimit) {
+    PRINT_NAMED_DEBUG("VisionSystem.Update.ClaheClipLimitUpdated",
+                      "%d -> %d", _lastClaheClipLimit, kClaheClipLimit);
+    
+    _clahe->setClipLimit(kClaheClipLimit);
+    _lastClaheClipLimit = kClaheClipLimit;
+  }
+  
+  Tic("CLAHE");
+  _clahe->apply(inputImageGray.get_CvMat_(), claheImage.get_CvMat_());
+  
+  if(kPostClaheSmooth > 0)
+  {
+    s32 kSize = 3*kPostClaheSmooth;
+    if(kSize % 2 == 0) {
+      ++kSize; // Make sure it's odd
+    }
+    cv::GaussianBlur(claheImage.get_CvMat_(), claheImage.get_CvMat_(),
+                     cv::Size(kSize,kSize), kPostClaheSmooth);
+  }
+  else if(kPostClaheSmooth < 0)
+  {
+    static Vision::Image temp(claheImage.GetNumRows(), claheImage.GetNumCols());
+    claheImage.BoxFilter(temp, -kPostClaheSmooth);
+    std::swap(claheImage, temp);
+  }
+  Toc("CLAHE");
+  
+  if(DEBUG_DISPLAY_CLAHE_IMAGE) {
+    _currentResult.debugImageRGBs.push_back({"ImageCLAHE", claheImage});
+  }
+  
+  claheImage.SetTimestamp(inputImageGray.GetTimestamp()); // make sure to preserve timestamp!
+  
+  return RESULT_OK;
+  
+} // ApplyCLAHE()
 
-    // Currently assuming we detect markers first, so we won't make use of anything already detected
-    DEV_ASSERT(detectionRects.empty(), "VisionSystem.DetectMarkersWithCLAHE.ExpectingEmptyDetectionRects");
-    
-    const auto whichSize = imageCache.GetSize(kMarkerDetector_ScaleMultiplier, Vision::ResizeMethod::Linear);
-    
-    switch(useCLAHE)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
+                                            const Vision::Image& claheImage,
+                                            std::vector<Anki::Rectangle<s32>>& detectionRects,
+                                            MarkerDetectionCLAHE useCLAHE)
+{
+  Result lastResult = RESULT_OK;
+
+  // Currently assuming we detect markers first, so we won't make use of anything already detected
+  DEV_ASSERT(detectionRects.empty(), "VisionSystem.DetectMarkersWithCLAHE.ExpectingEmptyDetectionRects");
+  
+  const auto whichSize = imageCache.GetSize(kMarkerDetector_ScaleMultiplier, Vision::ResizeMethod::Linear);
+  
+  switch(useCLAHE)
+  {
+    case MarkerDetectionCLAHE::Off:
     {
-      case MarkerDetectionCLAHE::Off:
+      lastResult = _markerDetector->Detect(imageCache.GetGray(whichSize), _currentResult.observedMarkers);
+      break;
+    }
+      
+    case MarkerDetectionCLAHE::On:
+    {
+      DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useOn.ImageIsEmpty");
+      
+      lastResult = _markerDetector->Detect(claheImage, _currentResult.observedMarkers);
+      
+      break;
+    }
+      
+    case MarkerDetectionCLAHE::Both:
+    {
+      DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useBoth.ImageIsEmpty");
+      
+      // First run will put quads into detectionRects
+      lastResult = _markerDetector->Detect(imageCache.GetGray(whichSize), _currentResult.observedMarkers);
+      
+      if(RESULT_OK == lastResult)
       {
-        lastResult = _markerDetector->Detect(imageCache.GetGray(whichSize), _currentResult.observedMarkers);
-        break;
-      }
-        
-      case MarkerDetectionCLAHE::On:
-      {
-        DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useOn.ImageIsEmpty");
-        
+        // Second run will white out existing markerQuads (so we don't
+        // re-detect) and also add new ones
         lastResult = _markerDetector->Detect(claheImage, _currentResult.observedMarkers);
-        
-        break;
-      }
-        
-      case MarkerDetectionCLAHE::Both:
-      {
-        DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useBoth.ImageIsEmpty");
-        
-        // First run will put quads into detectionRects
-        lastResult = _markerDetector->Detect(imageCache.GetGray(whichSize), _currentResult.observedMarkers);
-        
-        if(RESULT_OK == lastResult)
-        {
-          // Second run will white out existing markerQuads (so we don't
-          // re-detect) and also add new ones
-          lastResult = _markerDetector->Detect(claheImage, _currentResult.observedMarkers);
-        }
-        
-        break;
-      }
-        
-      case MarkerDetectionCLAHE::Alternating:
-      {
-        if(_currentUseCLAHE) {
-          DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useAlternating.ImageIsEmpty");
-          lastResult = _markerDetector->Detect(claheImage, _currentResult.observedMarkers);
-        }
-        else {
-          lastResult = _markerDetector->Detect(imageCache.GetGray(whichSize), _currentResult.observedMarkers);
-        }
-        
-        break;
-      }
-        
-      case MarkerDetectionCLAHE::WhenDark:
-      {
-        // NOTE: _currentUseCLAHE should have been set based on image brightness already
-        
-        if(_currentUseCLAHE)
-        {
-          DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useWhenDark.ImageIsEmpty");
-          lastResult = _markerDetector->Detect(claheImage, _currentResult.observedMarkers);
-        }
-        else {
-          lastResult = _markerDetector->Detect(imageCache.GetGray(whichSize), _currentResult.observedMarkers);
-        }
-        
-        break;
-      }
-        
-      case MarkerDetectionCLAHE::Count:
-        assert(false); // should never get here
-        break;
-    }
-    
-    auto markerIter = _currentResult.observedMarkers.begin();
-    while(markerIter != _currentResult.observedMarkers.end())
-    {
-      auto & marker = *markerIter;
-      
-      // Add the bounding rect of the (unwarped) marker to the detection rectangles
-      Quad2f scaledCorners(marker.GetImageCorners());
-      if(kMarkerDetector_ScaleMultiplier != 1)
-      {
-        for(auto & corner : scaledCorners)
-        {
-          corner *= kMarkerDetector_ScaleMultiplier;
-        }
-        
-        marker.SetImageCorners(scaledCorners);
       }
       
-      // Note that the scaled corners might get changed slightly by rolling shutter warping
-      // below, making the detection rect slightly inaccurate, but these rectangles don't need
-      // to be super accurate. And we'd rather still report something being detected here
-      // even if the warping pushes a corner OOB, thereby removing the marker from the
-      // actual reported list.
-      detectionRects.emplace_back(scaledCorners);
+      break;
+    }
       
-      // Instead of correcting the entire image only correct the quads
-      // Apply the appropriate shift to each of the corners of the quad to get a shifted quad
-      if(_doRollingShutterCorrection)
-      {
-        bool allCornersInBounds = true;
-        for(auto & corner : scaledCorners)
-        {
-          const int warpIndex = std::floor(corner.y() / (imageCache.GetOrigNumRows() / _rollingShutterCorrector.GetNumDivisions()));
-          DEV_ASSERT_MSG(warpIndex >= 0 && warpIndex < _rollingShutterCorrector.GetPixelShifts().size(),
-                         "VisionSystem.DetectMarkersWithCLAHE.WarpIndexOOB", "Index:%d Corner y:%f",
-                         warpIndex, corner.y());
-          
-          const Vec2f& pixelShift = _rollingShutterCorrector.GetPixelShifts().at(warpIndex);
-          corner -= pixelShift;
-
-          if(Util::IsFltLTZero(corner.x()) ||
-             Util::IsFltLTZero(corner.y()) ||
-             Util::IsFltGE(corner.x(), (f32)imageCache.GetOrigNumCols()) ||
-             Util::IsFltGE(corner.y(), (f32)imageCache.GetOrigNumRows()))
-          {
-            // Warped corner is outside image bounds. Just drop this entire marker. Technically, we could still
-            // probably estimate its pose just fine, but other things later may expect all corners to be in bounds
-            // so easier just not to risk it.
-            allCornersInBounds = false;
-            break; // no need to warp remaining corners once any one is OOB
-          }
-        }
-        
-        if(!allCornersInBounds)
-        {
-          // Remove this OOB marker from the list entirely
-          PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.DetectMarkersWithCLAHE.RemovingMarkerOOB", 
-                         "%s", Vision::MarkerTypeStrings[marker.GetCode()]);
-          markerIter = _currentResult.observedMarkers.erase(markerIter);
-          continue;
-        }
-        
-        marker.SetImageCorners(scaledCorners); // "scaled" corners are now the warped corners
-      }
-      
-      ++markerIter;
-    }
-    
-    return lastResult;
-    
-  } // DetectMarkersWithCLAHE()
-  
-  void VisionSystem::CheckForGeneralObjectDetections()
-  {
-    std::list<Vision::ObjectDetector::DetectedObject> objects;
-    const bool resultReady = _generalObjectDetector->GetObjects(objects);
-    if(resultReady)
+    case MarkerDetectionCLAHE::Alternating:
     {
-      VisionProcessingResult detectionResult;
-      detectionResult.timestamp = _generalObjectDetectionTimestamp;
-      detectionResult.modesProcessed.SetBitFlag(VisionMode::DetectingGeneralObjects, true);
-      
-      // Convert returned Vision::DetectedObject list to our (Cozmo) ExternalInterface message
-      for(const auto& object : objects)
-      {
-        detectionResult.generalObjects.emplace_back(CladRect(object.rect.GetX(), object.rect.GetY(),
-                                                             object.rect.GetWidth(), object.rect.GetHeight()),
-                                                    object.name, object.timestamp, object.score);
-      }
-      
-      _mutex.lock();
-      _results.emplace(std::move(detectionResult));
-      _mutex.unlock();
-    }
-  }
-  
-  Result VisionSystem::Update(const VisionPoseData&   poseData,
-                              const Vision::ImageRGB& image)
-  {
-    _imageCache->Reset(image);
-    
-    return Update(poseData, *_imageCache);
-  }
-  
-  
-  // This is the regular Update() call
-  Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& imageCache)
-  {
-    Result lastResult = RESULT_OK;
-    
-    if(!_isInitialized || !_camera.IsCalibrated())
-    {
-      PRINT_NAMED_WARNING("VisionSystem.Update.NotReady",
-                          "Must be initialized and have calibrated camera to Update");
-      return RESULT_FAIL;
-    }
-
-    // Make it possible to toggle vision modes using console vars:
-    if(kToggleVisionMode > 0)
-    {
-      const VisionMode mode = static_cast<VisionMode>(kToggleVisionMode);
-      bool enable = true;
-      if(_mode.IsBitFlagSet(mode))
-      {
-        enable = false;
-      }
-      
-      PRINT_CH_INFO(kLogChannelName, "VisionSystem.Update.TogglingVisionModeByConsoleVar",
-                    "%s mode %s", (enable ? "Enabling" : "Disabling"), EnumToString(mode));
-      EnableMode(mode, enable);
-      kToggleVisionMode = 0;
-    }
-    
-    _frameNumber++;
-    
-    // Store the new robot state and keep a copy of the previous one
-    UpdatePoseData(poseData);
-    
-    const Vision::Image& inputImageGray = imageCache.GetGray();
-    
-    // Set up the results for this frame:
-    VisionProcessingResult result;
-    result.timestamp = inputImageGray.GetTimestamp();
-    result.imageQuality = ImageQuality::Unchecked;
-    result.cameraParams.exposureTime_ms = -1;
-    std::swap(result, _currentResult);
-    
-    auto& visionModesProcessed = _currentResult.modesProcessed;
-    visionModesProcessed.ClearFlags();
-    
-    if(kVisionSystemSimulatedDelay_ms > 0)
-    {
-      std::this_thread::sleep_for(std::chrono::milliseconds(kVisionSystemSimulatedDelay_ms));
-    }
-    
-    while(!_nextModes.empty())
-    {
-      const auto& mode = _nextModes.front();
-      EnableMode(mode.first, mode.second);
-      _nextModes.pop();
-    }
-    
-    while(!_nextSchedules.empty())
-    {
-      const auto& entry = _nextSchedules.front();
-
-      const bool isPush = entry.first;
-      if(isPush)
-      {
-        const AllVisionModesSchedule& schedule = entry.second;
-        _modeScheduleStack.push_front(schedule);
-      }
-      else if(_modeScheduleStack.size() > 1)
-      {
-        _modeScheduleStack.pop_front();
-      }
-      else
-      {
-        PRINT_NAMED_WARNING("VisionSystem.Update.NotPoppingLastScheduleInStack", "");
-      }
-      
-      _nextSchedules.pop();
-    }
-    
-    bool& cameraParamsRequested = _nextCameraParams.first;
-    if(cameraParamsRequested)
-    {
-      _currentCameraParams = _nextCameraParams.second;
-      cameraParamsRequested = false;
-    }
-
-    // Apply CLAHE if enabled:
-    DEV_ASSERT(kUseCLAHE_u8 < Util::EnumToUnderlying(MarkerDetectionCLAHE::Count),
-               "VisionSystem.ApplyCLAHE.BadUseClaheVal");
-    MarkerDetectionCLAHE useCLAHE = static_cast<MarkerDetectionCLAHE>(kUseCLAHE_u8);
-    Vision::Image claheImage;
-    
-    // Note: this will do nothing and leave claheImage empty if CLAHE is disabled
-    // entirely or for this frame.
-    lastResult = ApplyCLAHE(imageCache, useCLAHE, claheImage);
-    if(RESULT_OK != lastResult) {
-      PRINT_NAMED_WARNING("VisionSystem.Update.FailedCLAHE", "");
-      return lastResult;
-    }
-
-    // Rolling shutter correction
-    if(_doRollingShutterCorrection)
-    {
-      Tic("RollingShutterComputePixelShifts");
-      _rollingShutterCorrector.ComputePixelShifts(poseData, _prevPoseData, inputImageGray.GetNumRows());
-      Toc("RollingShutterComputePixelShifts");
-    }
-    
-    if(ShouldProcessVisionMode(VisionMode::ComputingStatistics))
-    {
-      Tic("TotalComputingStatistics");
-      _currentResult.imageMean = ComputeMean(inputImageGray, kImageMeanSampleInc);
-      visionModesProcessed.SetBitFlag(VisionMode::ComputingStatistics, true);
-      Toc("TotalComputingStatistics");
-    }
-    
-    std::vector<Anki::Rectangle<s32>> detectionRects;
-
-    if(ShouldProcessVisionMode(VisionMode::DetectingMarkers)) {
-      Tic("TotalDetectingMarkers");
-
-      lastResult = DetectMarkersWithCLAHE(imageCache, claheImage, detectionRects, useCLAHE);
-      if(RESULT_OK != lastResult) {
-        PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
-        return lastResult;
-      }
-      
-      visionModesProcessed.SetBitFlag(VisionMode::DetectingMarkers, true);
-      
-      Toc("TotalDetectingMarkers");
-    }
-    
-    if(ShouldProcessVisionMode(VisionMode::DetectingFaces)) {
-      Tic("TotalDetectingFaces");
-      if((lastResult = DetectFaces(inputImageGray, detectionRects)) != RESULT_OK) {
-        PRINT_NAMED_ERROR("VisionSystem.Update.DetectFacesFailed", "");
-        return lastResult;
-      }
-      visionModesProcessed.SetBitFlag(VisionMode::DetectingFaces, true);
-      Toc("TotalDetectingFaces");
-    }
-    
-    if(ShouldProcessVisionMode(VisionMode::DetectingPets)) {
-      Tic("TotalDetectingPets");
-      if((lastResult = DetectPets(inputImageGray, detectionRects)) != RESULT_OK) {
-        PRINT_NAMED_ERROR("VisionSystem.Update.DetectPetsFailed", "");
-        return lastResult;
-      }
-      visionModesProcessed.SetBitFlag(VisionMode::DetectingPets, true);
-      Toc("TotalDetectingPets");
-    }
-    
-    if(ShouldProcessVisionMode(VisionMode::DetectingMotion))
-    {
-      Tic("TotalDetectingMotion");
-      if((lastResult = DetectMotion(imageCache)) != RESULT_OK) {
-        PRINT_NAMED_ERROR("VisionSystem.Update.DetectMotionFailed", "");
-        return lastResult;
-      }
-      visionModesProcessed.SetBitFlag(VisionMode::DetectingMotion, true);
-      Toc("TotalDetectingMotion");
-    }
-
-    if (ShouldProcessVisionMode(VisionMode::BuildingOverheadMap))
-    {
-      if (imageCache.HasColor()) {
-        Tic("UpdateOverheadMap");
-        lastResult = UpdateOverheadMap(imageCache.GetRGB());
-        Toc("UpdateOverheadMap");
-        if (lastResult != RESULT_OK) {
-          return lastResult;
-        }
-        visionModesProcessed.SetBitFlag(VisionMode::BuildingOverheadMap, true);
+      if(_currentUseCLAHE) {
+        DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useAlternating.ImageIsEmpty");
+        lastResult = _markerDetector->Detect(claheImage, _currentResult.observedMarkers);
       }
       else {
-        PRINT_NAMED_WARNING("VisionSystem.Update.NoColorImage", "No color image!");
+        lastResult = _markerDetector->Detect(imageCache.GetGray(whichSize), _currentResult.observedMarkers);
       }
+      
+      break;
+    }
+      
+    case MarkerDetectionCLAHE::WhenDark:
+    {
+      // NOTE: _currentUseCLAHE should have been set based on image brightness already
+      
+      if(_currentUseCLAHE)
+      {
+        DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useWhenDark.ImageIsEmpty");
+        lastResult = _markerDetector->Detect(claheImage, _currentResult.observedMarkers);
+      }
+      else {
+        lastResult = _markerDetector->Detect(imageCache.GetGray(whichSize), _currentResult.observedMarkers);
+      }
+      
+      break;
+    }
+      
+    case MarkerDetectionCLAHE::Count:
+      assert(false); // should never get here
+      break;
+  }
+  
+  auto markerIter = _currentResult.observedMarkers.begin();
+  while(markerIter != _currentResult.observedMarkers.end())
+  {
+    auto & marker = *markerIter;
+    
+    // Add the bounding rect of the (unwarped) marker to the detection rectangles
+    Quad2f scaledCorners(marker.GetImageCorners());
+    if(kMarkerDetector_ScaleMultiplier != 1)
+    {
+      for(auto & corner : scaledCorners)
+      {
+        corner *= kMarkerDetector_ScaleMultiplier;
+      }
+      
+      marker.SetImageCorners(scaledCorners);
     }
     
-    if (ShouldProcessVisionMode(VisionMode::DetectingVisualObstacles))
+    // Note that the scaled corners might get changed slightly by rolling shutter warping
+    // below, making the detection rect slightly inaccurate, but these rectangles don't need
+    // to be super accurate. And we'd rather still report something being detected here
+    // even if the warping pushes a corner OOB, thereby removing the marker from the
+    // actual reported list.
+    detectionRects.emplace_back(scaledCorners);
+    
+    // Instead of correcting the entire image only correct the quads
+    // Apply the appropriate shift to each of the corners of the quad to get a shifted quad
+    if(_doRollingShutterCorrection)
     {
-      Tic("DetectVisualObstacles");
-      lastResult = UpdateGroundPlaneClassifier(imageCache.GetRGB());
-      Toc("DetectVisualObstacles");
+      bool allCornersInBounds = true;
+      for(auto & corner : scaledCorners)
+      {
+        const int warpIndex = std::floor(corner.y() / (imageCache.GetOrigNumRows() / _rollingShutterCorrector.GetNumDivisions()));
+        DEV_ASSERT_MSG(warpIndex >= 0 && warpIndex < _rollingShutterCorrector.GetPixelShifts().size(),
+                       "VisionSystem.DetectMarkersWithCLAHE.WarpIndexOOB", "Index:%d Corner y:%f",
+                       warpIndex, corner.y());
+        
+        const Vec2f& pixelShift = _rollingShutterCorrector.GetPixelShifts().at(warpIndex);
+        corner -= pixelShift;
+
+        if(Util::IsFltLTZero(corner.x()) ||
+           Util::IsFltLTZero(corner.y()) ||
+           Util::IsFltGE(corner.x(), (f32)imageCache.GetOrigNumCols()) ||
+           Util::IsFltGE(corner.y(), (f32)imageCache.GetOrigNumRows()))
+        {
+          // Warped corner is outside image bounds. Just drop this entire marker. Technically, we could still
+          // probably estimate its pose just fine, but other things later may expect all corners to be in bounds
+          // so easier just not to risk it.
+          allCornersInBounds = false;
+          break; // no need to warp remaining corners once any one is OOB
+        }
+      }
+      
+      if(!allCornersInBounds)
+      {
+        // Remove this OOB marker from the list entirely
+        PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.DetectMarkersWithCLAHE.RemovingMarkerOOB",
+                       "%s", Vision::MarkerTypeStrings[marker.GetCode()]);
+        markerIter = _currentResult.observedMarkers.erase(markerIter);
+        continue;
+      }
+      
+      marker.SetImageCorners(scaledCorners); // "scaled" corners are now the warped corners
+    }
+    
+    ++markerIter;
+  }
+  
+  return lastResult;
+  
+} // DetectMarkersWithCLAHE()
+
+void VisionSystem::CheckForNeuralNetResults()
+{
+  std::list<Vision::SalientPoint> salientPoints;
+  const bool resultReady = _neuralNetRunner->GetDetections(salientPoints);
+  if(resultReady)
+  {
+    VisionProcessingResult detectionResult;
+    detectionResult.timestamp = _neuralNetRunnerTimestamp;
+    detectionResult.modesProcessed.SetBitFlag(VisionMode::RunningNeuralNet, true);
+    std::swap(detectionResult.salientPoints, salientPoints);
+    
+    _mutex.lock();
+    _results.emplace(std::move(detectionResult));
+    _mutex.unlock();
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::Update(const VisionPoseData&   poseData,
+                            const Vision::ImageRGB& image)
+{
+  _imageCache->Reset(image);
+  
+  return Update(poseData, *_imageCache);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// This is the regular Update() call
+Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& imageCache)
+{
+  Result lastResult = RESULT_OK;
+  
+  if(!_isInitialized || !_camera.IsCalibrated())
+  {
+    PRINT_NAMED_WARNING("VisionSystem.Update.NotReady",
+                        "Must be initialized and have calibrated camera to Update");
+    return RESULT_FAIL;
+  }
+
+  // Make it possible to toggle vision modes using console vars:
+  if(kToggleVisionMode > 0)
+  {
+    const VisionMode mode = static_cast<VisionMode>(kToggleVisionMode);
+    bool enable = true;
+    if(_mode.IsBitFlagSet(mode))
+    {
+      enable = false;
+    }
+    
+    PRINT_CH_INFO(kLogChannelName, "VisionSystem.Update.TogglingVisionModeByConsoleVar",
+                  "%s mode %s", (enable ? "Enabling" : "Disabling"), EnumToString(mode));
+    EnableMode(mode, enable);
+    kToggleVisionMode = 0;
+  }
+  
+  _frameNumber++;
+  
+  // Store the new robot state and keep a copy of the previous one
+  UpdatePoseData(poseData);
+  
+  const Vision::Image& inputImageGray = imageCache.GetGray();
+  
+  // Set up the results for this frame:
+  VisionProcessingResult result;
+  result.timestamp = inputImageGray.GetTimestamp();
+  result.imageQuality = ImageQuality::Unchecked;
+  result.cameraParams.exposureTime_ms = -1;
+  std::swap(result, _currentResult);
+  
+  auto& visionModesProcessed = _currentResult.modesProcessed;
+  visionModesProcessed.ClearFlags();
+  
+  if(kVisionSystemSimulatedDelay_ms > 0)
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(kVisionSystemSimulatedDelay_ms));
+  }
+  
+  while(!_nextModes.empty())
+  {
+    const auto& mode = _nextModes.front();
+    EnableMode(mode.first, mode.second);
+    _nextModes.pop();
+  }
+  
+  while(!_nextSchedules.empty())
+  {
+    const auto& entry = _nextSchedules.front();
+
+    const bool isPush = entry.first;
+    if(isPush)
+    {
+      const AllVisionModesSchedule& schedule = entry.second;
+      _modeScheduleStack.push_front(schedule);
+    }
+    else if(_modeScheduleStack.size() > 1)
+    {
+      _modeScheduleStack.pop_front();
+    }
+    else
+    {
+      PRINT_NAMED_WARNING("VisionSystem.Update.NotPoppingLastScheduleInStack", "");
+    }
+    
+    _nextSchedules.pop();
+  }
+  
+  bool& cameraParamsRequested = _nextCameraParams.first;
+  if(cameraParamsRequested)
+  {
+    _currentCameraParams = _nextCameraParams.second;
+    cameraParamsRequested = false;
+  }
+
+  // Apply CLAHE if enabled:
+  DEV_ASSERT(kUseCLAHE_u8 < Util::EnumToUnderlying(MarkerDetectionCLAHE::Count),
+             "VisionSystem.ApplyCLAHE.BadUseClaheVal");
+  MarkerDetectionCLAHE useCLAHE = static_cast<MarkerDetectionCLAHE>(kUseCLAHE_u8);
+  Vision::Image claheImage;
+  
+  // Note: this will do nothing and leave claheImage empty if CLAHE is disabled
+  // entirely or for this frame.
+  lastResult = ApplyCLAHE(imageCache, useCLAHE, claheImage);
+  if(RESULT_OK != lastResult) {
+    PRINT_NAMED_WARNING("VisionSystem.Update.FailedCLAHE", "");
+    return lastResult;
+  }
+
+  // Rolling shutter correction
+  if(_doRollingShutterCorrection)
+  {
+    Tic("RollingShutterComputePixelShifts");
+    _rollingShutterCorrector.ComputePixelShifts(poseData, _prevPoseData, inputImageGray.GetNumRows());
+    Toc("RollingShutterComputePixelShifts");
+  }
+  
+  if(ShouldProcessVisionMode(VisionMode::ComputingStatistics))
+  {
+    Tic("TotalComputingStatistics");
+    _currentResult.imageMean = ComputeMean(inputImageGray, kImageMeanSampleInc);
+    visionModesProcessed.SetBitFlag(VisionMode::ComputingStatistics, true);
+    Toc("TotalComputingStatistics");
+  }
+  
+  std::vector<Anki::Rectangle<s32>> detectionRects;
+
+  if(ShouldProcessVisionMode(VisionMode::DetectingMarkers)) {
+    Tic("TotalDetectingMarkers");
+
+    lastResult = DetectMarkersWithCLAHE(imageCache, claheImage, detectionRects, useCLAHE);
+    if(RESULT_OK != lastResult) {
+      PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
+      return lastResult;
+    }
+    
+    visionModesProcessed.SetBitFlag(VisionMode::DetectingMarkers, true);
+    
+    Toc("TotalDetectingMarkers");
+  }
+  
+  if(ShouldProcessVisionMode(VisionMode::DetectingFaces)) {
+    Tic("TotalDetectingFaces");
+    if((lastResult = DetectFaces(inputImageGray, detectionRects)) != RESULT_OK) {
+      PRINT_NAMED_ERROR("VisionSystem.Update.DetectFacesFailed", "");
+      return lastResult;
+    }
+    visionModesProcessed.SetBitFlag(VisionMode::DetectingFaces, true);
+    Toc("TotalDetectingFaces");
+  }
+  
+  if(ShouldProcessVisionMode(VisionMode::DetectingPets)) {
+    Tic("TotalDetectingPets");
+    if((lastResult = DetectPets(inputImageGray, detectionRects)) != RESULT_OK) {
+      PRINT_NAMED_ERROR("VisionSystem.Update.DetectPetsFailed", "");
+      return lastResult;
+    }
+    visionModesProcessed.SetBitFlag(VisionMode::DetectingPets, true);
+    Toc("TotalDetectingPets");
+  }
+  
+  if(ShouldProcessVisionMode(VisionMode::DetectingMotion))
+  {
+    Tic("TotalDetectingMotion");
+    if((lastResult = DetectMotion(imageCache)) != RESULT_OK) {
+      PRINT_NAMED_ERROR("VisionSystem.Update.DetectMotionFailed", "");
+      return lastResult;
+    }
+    visionModesProcessed.SetBitFlag(VisionMode::DetectingMotion, true);
+    Toc("TotalDetectingMotion");
+  }
+
+  if (ShouldProcessVisionMode(VisionMode::BuildingOverheadMap))
+  {
+    if (imageCache.HasColor()) {
+      Tic("UpdateOverheadMap");
+      lastResult = UpdateOverheadMap(imageCache.GetRGB());
+      Toc("UpdateOverheadMap");
       if (lastResult != RESULT_OK) {
         return lastResult;
       }
-      visionModesProcessed.SetBitFlag(VisionMode::DetectingVisualObstacles, true);
+      visionModesProcessed.SetBitFlag(VisionMode::BuildingOverheadMap, true);
     }
-
-    if(ShouldProcessVisionMode(VisionMode::DetectingOverheadEdges))
-    {
-      Tic("TotalDetectingOverheadEdges");
-
-      lastResult = _overheadEdgeDetector->Detect(imageCache, _poseData, _currentResult);
-      
-      if(lastResult != RESULT_OK) {
-        PRINT_NAMED_ERROR("VisionSystem.Update.DetectOverheadEdgesFailed", "");
-        return lastResult;
-      }
-      visionModesProcessed.SetBitFlag(VisionMode::DetectingOverheadEdges, true);
-      Toc("TotalDetectingOverheadEdges");
+    else {
+      PRINT_NAMED_WARNING("VisionSystem.Update.NoColorImage", "No color image!");
     }
-    
-    if(ShouldProcessVisionMode(VisionMode::ReadingToolCode))
-    {
-      if((lastResult = ReadToolCode(inputImageGray)) != RESULT_OK) {
-        PRINT_NAMED_ERROR("VisionSystem.Update.ReadToolCodeFailed", "");
-        return lastResult;
-      }
-      visionModesProcessed.SetBitFlag(VisionMode::ReadingToolCode, true);
+  }
+  
+  if (ShouldProcessVisionMode(VisionMode::DetectingVisualObstacles))
+  {
+    Tic("DetectVisualObstacles");
+    lastResult = UpdateGroundPlaneClassifier(imageCache.GetRGB());
+    Toc("DetectVisualObstacles");
+    if (lastResult != RESULT_OK) {
+      return lastResult;
     }
-    
-    if(ShouldProcessVisionMode(VisionMode::ComputingCalibration))
-    {
-      switch(kCalibTargetType)
-      {
-        case CameraCalibrator::CalibTargetType::CHECKERBOARD:
-        {
-          lastResult = _cameraCalibrator->ComputeCalibrationFromCheckerboard(_currentResult.cameraCalibration,
-                                                                             _currentResult.debugImageRGBs);
-          break;
-        }
-        case CameraCalibrator::CalibTargetType::QBERT:
-        case CameraCalibrator::CalibTargetType::INVERTED_BOX:
-        {
-          // Marker detection needs to have run before trying to do single taret calibration
-          DEV_ASSERT(visionModesProcessed.IsBitFlagSet(VisionMode::DetectingMarkers),
-                     "VisionSystem.Update.ComputingCalibration.MarkersNotDetected");
-          
-          CameraCalibrator::CalibTargetType targetType = static_cast<CameraCalibrator::CalibTargetType>(kCalibTargetType);
-          lastResult = _cameraCalibrator->ComputeCalibrationFromSingleTarget(targetType,
-                                                                             _currentResult.observedMarkers,
-                                                                             _currentResult.cameraCalibration,
-                                                                             _currentResult.debugImageRGBs);
-          break;
-        }
-      }
-      if(lastResult != RESULT_OK) {
-        PRINT_NAMED_ERROR("VisionSystem.Update.ComputeCalibrationFailed", "");
-        return lastResult;
-      }
-      visionModesProcessed.SetBitFlag(VisionMode::ComputingCalibration, true);
-    }
-    
-    if(ShouldProcessVisionMode(VisionMode::DetectingLaserPoints))
-    {
-      // Skip laser point detection if the Laser FeatureGate is disabled.
-      // TODO: Remove this once laser feature is enabled (COZMO-11185)
-      if(_context->GetFeatureGate()->IsFeatureEnabled(FeatureType::Laser))
-      {
-        Tic("TotalDetectingLaserPoints");
-        if((lastResult = DetectLaserPoints(imageCache)) != RESULT_OK) {
-          PRINT_NAMED_ERROR("VisionSystem.Update.DetectlaserPointsFailed", "");
-          return lastResult;
-        }
-        visionModesProcessed.SetBitFlag(VisionMode::DetectingLaserPoints, true);
-        Toc("TotalDetectingLaserPoints");
-      }
-    }
-
-    // Check for any objects from the detector. It runs asynchronously, so these objects
-    // will be from a different image than the one in the cache and will use their own
-    // VisionProcessingResult.
-    CheckForGeneralObjectDetections();
-    
-    if(ShouldProcessVisionMode(VisionMode::DetectingGeneralObjects))
-    {
-      const bool started = _generalObjectDetector->StartProcessingIfIdle(imageCache);
-      if(started)
-      {
-        // Remember the timestamp of the image used to do object detection
-        _generalObjectDetectionTimestamp = imageCache.GetTimeStamp();
-      }
-    }
-    
-    // NOTE: This should come after any detectors that add things to "detectionRects"
-    //       since it meters exposure based on those.
-    if(ShouldProcessVisionMode(VisionMode::CheckingQuality))
-    {
-      Tic("CheckingImageQuality");
-      lastResult = CheckImageQuality(inputImageGray, detectionRects);
-      Toc("CheckingImageQuality");
-      
-      if(RESULT_OK != lastResult) {
-        PRINT_NAMED_ERROR("VisionSystem.Update.CheckImageQualityFailed", "");
-        return lastResult;
-      }
-      visionModesProcessed.SetBitFlag(VisionMode::CheckingQuality, true);
-    }
-
-    if(ShouldProcessVisionMode(VisionMode::CheckingWhiteBalance))
-    {
-      Tic("CheckingWhiteBalance");
-      lastResult = _imagingPipeline->ComputeWhiteBalanceAdjustment(imageCache.GetRGB(),
-                                                                   _currentResult.cameraParams.whiteBalanceGainR,
-                                                                   _currentResult.cameraParams.whiteBalanceGainG,
-                                                                   _currentResult.cameraParams.whiteBalanceGainB);
-      Toc("CheckingWhiteBalance");
-      
-      if(RESULT_OK != lastResult) {
-        PRINT_NAMED_ERROR("VisionSystem.Update.CheckWhiteBalanceFailed", "");
-        return lastResult;
-      }
-      visionModesProcessed.SetBitFlag(VisionMode::CheckingWhiteBalance, true);
-    }
-    
-    if(ShouldProcessVisionMode(VisionMode::Benchmarking))
-    {
-      Tic("Benchmarking");
-      const Result benchMarkResult = _benchmark->Update(imageCache);
-      Toc("BenchMarking");
-      
-      if(RESULT_OK != benchMarkResult) {
-        PRINT_NAMED_ERROR("VisionSystem.Update.BenchmarkFailed", "");
-        // Continue processing, since this should be independent of other modes
-      }
-      else {
-        visionModesProcessed.SetBitFlag(VisionMode::Benchmarking, true);
-      }
-    }
-    
-    if(ShouldProcessVisionMode(VisionMode::SavingImages) && (ImageSendMode::Off != _imageSaveMode))
-    {
-      Tic("SavingImages");
-      const std::string fullFilename = GetFileNameBasedOnFrameNumber((_imageSaveQuality < 0 ? "png" : "jpg"));
-
-      PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.Update.SavingImage", "Saving to %s",
-                     fullFilename.c_str());
-
-      const Result saveResult = imageCache.GetRGB().Save(fullFilename, _imageSaveQuality);
-
-      Result saveSensorResult = RESULT_OK;
-      if ((ImageSendMode::SingleShotWithSensorData == _imageSaveMode)) {
-        saveSensorResult = SaveSensorData();
-      }
-
-      if((ImageSendMode::SingleShot == _imageSaveMode) || (ImageSendMode::SingleShotWithSensorData == _imageSaveMode))
-      {
-        _imageSaveMode = ImageSendMode::Off;
-      }
-
-      Toc("SavingImages");
-
-      if((RESULT_OK != saveResult) || (RESULT_OK != saveSensorResult))
-      {
-        PRINT_NAMED_ERROR("VisionSystem.Update.SavingImagesFailed", "");
-        // Continue processing, since this should be independent of other modes
-      }
-      else {
-        visionModesProcessed.SetBitFlag(VisionMode::SavingImages, true);
-      }
-    }
-
-    // We've computed everything from this image that we're gonna compute.
-    // Push it onto the queue of results all together.
-    _mutex.lock();
-    _results.push(_currentResult);
-    _mutex.unlock();
-    
-    return lastResult;
-  } // Update()
-
-  Result VisionSystem::SaveSensorData() const {
-
-    const std::string fullFilename = GetFileNameBasedOnFrameNumber("json");
-
-    std::ofstream outFile(fullFilename);
-    if (! outFile.is_open()) {
-      PRINT_NAMED_ERROR("VisionSystem.SaveSensorData.CantOpenFile", "Can't open file %s for writing",
-                        fullFilename.c_str());
-      return RESULT_FAIL;
-    }
-
-    Json::Value config;
-    {
-
-      const HistRobotState& state = _poseData.histState;
-      // prox sensor
-      if (state.WasProxSensorValid()) {
-        config["proxSensor"] = state.GetProxSensorVal_mm();
-      }
-      else {
-        config["proxSensor"] = -1;
-      }
-
-      // cliff sensor
-      config["frontLeftCliff"]  = state.WasCliffDetected(CliffSensor::CLIFF_FL);
-      config["frontRightCliff"] = state.WasCliffDetected(CliffSensor::CLIFF_FR);
-      config["backLeftCliff"]   = state.WasCliffDetected(CliffSensor::CLIFF_BL);
-      config["backRightCliff"]  = state.WasCliffDetected(CliffSensor::CLIFF_BR);
-
-      // was picked up
-      config["wasPickedUp"] = state.WasPickedUp();
-
-      // head angle
-      config["headAngle"] = state.GetHeadAngle_rad();
-      // lift angle
-      config["liftAngle"] = state.GetLiftAngle_rad();
-    }
-
-    Json::StyledWriter writer;
-    outFile << writer.write(config);
-    outFile.close();
-
-    return RESULT_OK;
+    visionModesProcessed.SetBitFlag(VisionMode::DetectingVisualObstacles, true);
   }
 
+  if(ShouldProcessVisionMode(VisionMode::DetectingOverheadEdges))
+  {
+    Tic("TotalDetectingOverheadEdges");
+
+    lastResult = _overheadEdgeDetector->Detect(imageCache, _poseData, _currentResult);
+    
+    if(lastResult != RESULT_OK) {
+      PRINT_NAMED_ERROR("VisionSystem.Update.DetectOverheadEdgesFailed", "");
+      return lastResult;
+    }
+    visionModesProcessed.SetBitFlag(VisionMode::DetectingOverheadEdges, true);
+    Toc("TotalDetectingOverheadEdges");
+  }
+  
+  if(ShouldProcessVisionMode(VisionMode::ReadingToolCode))
+  {
+    if((lastResult = ReadToolCode(inputImageGray)) != RESULT_OK) {
+      PRINT_NAMED_ERROR("VisionSystem.Update.ReadToolCodeFailed", "");
+      return lastResult;
+    }
+    visionModesProcessed.SetBitFlag(VisionMode::ReadingToolCode, true);
+  }
+  
+  if(ShouldProcessVisionMode(VisionMode::ComputingCalibration))
+  {
+    switch(kCalibTargetType)
+    {
+      case CameraCalibrator::CalibTargetType::CHECKERBOARD:
+      {
+        lastResult = _cameraCalibrator->ComputeCalibrationFromCheckerboard(_currentResult.cameraCalibration,
+                                                                           _currentResult.debugImageRGBs);
+        break;
+      }
+      case CameraCalibrator::CalibTargetType::QBERT:
+      case CameraCalibrator::CalibTargetType::INVERTED_BOX:
+      {
+        // Marker detection needs to have run before trying to do single taret calibration
+        DEV_ASSERT(visionModesProcessed.IsBitFlagSet(VisionMode::DetectingMarkers),
+                   "VisionSystem.Update.ComputingCalibration.MarkersNotDetected");
+        
+        CameraCalibrator::CalibTargetType targetType = static_cast<CameraCalibrator::CalibTargetType>(kCalibTargetType);
+        lastResult = _cameraCalibrator->ComputeCalibrationFromSingleTarget(targetType,
+                                                                           _currentResult.observedMarkers,
+                                                                           _currentResult.cameraCalibration,
+                                                                           _currentResult.debugImageRGBs);
+        break;
+      }
+    }
+    if(lastResult != RESULT_OK) {
+      PRINT_NAMED_ERROR("VisionSystem.Update.ComputeCalibrationFailed", "");
+      return lastResult;
+    }
+    visionModesProcessed.SetBitFlag(VisionMode::ComputingCalibration, true);
+  }
+  
+  if(ShouldProcessVisionMode(VisionMode::DetectingLaserPoints))
+  {
+    // Skip laser point detection if the Laser FeatureGate is disabled.
+    // TODO: Remove this once laser feature is enabled (COZMO-11185)
+    if(_context->GetFeatureGate()->IsFeatureEnabled(FeatureType::Laser))
+    {
+      Tic("TotalDetectingLaserPoints");
+      if((lastResult = DetectLaserPoints(imageCache)) != RESULT_OK) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.DetectlaserPointsFailed", "");
+        return lastResult;
+      }
+      visionModesProcessed.SetBitFlag(VisionMode::DetectingLaserPoints, true);
+      Toc("TotalDetectingLaserPoints");
+    }
+  }
+
+  // Check for any objects from the detector. It runs asynchronously, so these objects
+  // will be from a different image than the one in the cache and will use their own
+  // VisionProcessingResult.
+  CheckForNeuralNetResults();
+  
+  if(ShouldProcessVisionMode(VisionMode::RunningNeuralNet))
+  {
+    const bool started = _neuralNetRunner->StartProcessingIfIdle(imageCache);
+    if(started)
+    {
+      // Remember the timestamp of the image used to do object detection
+      _neuralNetRunnerTimestamp = imageCache.GetTimeStamp();
+    }
+  }
+  
+  // Check for illumination state
+  if(ShouldProcessVisionMode(VisionMode::DetectingIllumination))
+  {
+    Tic("DetectingIllumination");
+    lastResult = DetectIllumination(imageCache);
+    Toc("DetectingIllumination");
+    if (lastResult != RESULT_OK) {
+      PRINT_NAMED_ERROR("VisionSystem.Update.DetectIlluminationFailed", "");
+      return lastResult;
+    }
+    visionModesProcessed.SetBitFlag(VisionMode::DetectingIllumination, true);
+  }
+
+  // NOTE: This should come after any detectors that add things to "detectionRects"
+  //       since it meters exposure based on those.
+  if(ShouldProcessVisionMode(VisionMode::CheckingQuality))
+  {
+    Tic("CheckingImageQuality");
+    lastResult = CheckImageQuality(inputImageGray, detectionRects);
+    Toc("CheckingImageQuality");
+    
+    if(RESULT_OK != lastResult) {
+      PRINT_NAMED_ERROR("VisionSystem.Update.CheckImageQualityFailed", "");
+      return lastResult;
+    }
+    visionModesProcessed.SetBitFlag(VisionMode::CheckingQuality, true);
+  }
+
+  if(ShouldProcessVisionMode(VisionMode::CheckingWhiteBalance))
+  {
+    Tic("CheckingWhiteBalance");
+    lastResult = CheckWhiteBalance(imageCache.GetRGB());
+    Toc("CheckingWhiteBalance");
+    
+    if(RESULT_OK != lastResult) {
+      PRINT_NAMED_ERROR("VisionSystem.Update.CheckWhiteBalanceFailed", "");
+      return lastResult;
+    }
+    visionModesProcessed.SetBitFlag(VisionMode::CheckingWhiteBalance, true);
+  }
+  
+  if(ShouldProcessVisionMode(VisionMode::Benchmarking))
+  {
+    Tic("Benchmarking");
+    const Result benchMarkResult = _benchmark->Update(imageCache);
+    Toc("BenchMarking");
+    
+    if(RESULT_OK != benchMarkResult) {
+      PRINT_NAMED_ERROR("VisionSystem.Update.BenchmarkFailed", "");
+      // Continue processing, since this should be independent of other modes
+    }
+    else {
+      visionModesProcessed.SetBitFlag(VisionMode::Benchmarking, true);
+    }
+  }
+  
+  if(ShouldProcessVisionMode(VisionMode::SavingImages) && (ImageSendMode::Off != _imageSaveMode))
+  {
+    Tic("SavingImages");
+    const std::string fullFilename = GetFileNameBasedOnFrameNumber((_imageSaveQuality < 0 ? "png" : "jpg"));
+
+    PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.Update.SavingImage", "Saving to %s",
+                   fullFilename.c_str());
+
+    // Resize into a new image to avoid affecting downstream updates
+    const Vision::ImageRGB& sizedImage = imageCache.GetRGB(_imageSaveSize);
+    const Result saveResult = sizedImage.Save(fullFilename, _imageSaveQuality);
+
+    Result saveSensorResult = RESULT_OK;
+    if((ImageSendMode::SingleShotWithSensorData == _imageSaveMode) || (ImageSendMode::Stream == _imageSaveMode)) {
+      saveSensorResult = SaveSensorData();
+    }
+
+    if((ImageSendMode::SingleShot == _imageSaveMode) || (ImageSendMode::SingleShotWithSensorData == _imageSaveMode))
+    {
+      _imageSaveMode = ImageSendMode::Off;
+    }
+
+    Toc("SavingImages");
+
+    if((RESULT_OK != saveResult) || (RESULT_OK != saveSensorResult))
+    {
+      PRINT_NAMED_ERROR("VisionSystem.Update.SavingImagesFailed", "");
+      // Continue processing, since this should be independent of other modes
+    }
+    else {
+      visionModesProcessed.SetBitFlag(VisionMode::SavingImages, true);
+    }
+  }
+
+  // We've computed everything from this image that we're gonna compute.
+  // Push it onto the queue of results all together.
+  _mutex.lock();
+  _results.push(_currentResult);
+  _mutex.unlock();
+  
+  return lastResult;
+} // Update()
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::SaveSensorData() const {
+
+  const std::string fullFilename = GetFileNameBasedOnFrameNumber("json");
+
+  std::ofstream outFile(fullFilename);
+  if (! outFile.is_open()) {
+    PRINT_NAMED_ERROR("VisionSystem.SaveSensorData.CantOpenFile", "Can't open file %s for writing",
+                      fullFilename.c_str());
+    return RESULT_FAIL;
+  }
+
+  Json::Value config;
+  {
+
+    const HistRobotState& state = _poseData.histState;
+    // prox sensor
+    if (state.WasProxSensorValid()) {
+      config["proxSensor"] = state.GetProxSensorVal_mm();
+    }
+    else {
+      config["proxSensor"] = -1;
+    }
+
+    // cliff sensor
+    config["frontLeftCliff"]  = state.WasCliffDetected(CliffSensor::CLIFF_FL);
+    config["frontRightCliff"] = state.WasCliffDetected(CliffSensor::CLIFF_FR);
+    config["backLeftCliff"]   = state.WasCliffDetected(CliffSensor::CLIFF_BL);
+    config["backRightCliff"]  = state.WasCliffDetected(CliffSensor::CLIFF_BR);
+
+    // robot motion flags
+    // We don't record "WasCameraMoving" since it's HeadMoving || WheelsMoving
+    config["wasCarryingObject"] = state.WasCarryingObject();
+    config["wasMoving"] = state.WasMoving();
+    config["WasHeadMoving"] = state.WasHeadMoving();
+    config["WasLiftMoving"] = state.WasLiftMoving();
+    config["WereWheelsMoving"] = state.WereWheelsMoving();
+    config["wasPickedUp"] = state.WasPickedUp();
+
+    // head angle
+    config["headAngle"] = state.GetHeadAngle_rad();
+    // lift angle
+    config["liftAngle"] = state.GetLiftAngle_rad();
+
+    // camera exposure, gain, white balance
+    // Make sure to get parameters for current image, not next image
+    // NOTE: Due to latency between interface call and actual register writes,
+    // the so-called current params may not actually be current
+    config["requestedCamExposure"] = _currentCameraParams.exposureTime_ms;
+    config["requestedCamGain"] = _currentCameraParams.gain;
+    config["requestedCamWhiteBalanceRed"] = _currentCameraParams.whiteBalanceGainR;
+    config["requestedCamWhiteBalanceGreen"] = _currentCameraParams.whiteBalanceGainG;
+    config["requestedCamWhiteBalanceBlue"] = _currentCameraParams.whiteBalanceGainB;
+
+    // image timestamp
+    config["imageTimestamp"] = _currentResult.timestamp;
+  }
+
+  Json::StyledWriter writer;
+  outFile << writer.write(config);
+  outFile.close();
+
+  return RESULT_OK;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string VisionSystem::GetFileNameBasedOnFrameNumber(const char *extension) const
 {
   // Zero-padded frame number as filename:
@@ -1740,6 +1851,7 @@ std::string VisionSystem::GetFileNameBasedOnFrameNumber(const char *extension) c
   return fullFilename;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool VisionSystem::ShouldProcessVisionMode(VisionMode mode)
 {
   if (!IsModeEnabled(mode))
@@ -1759,30 +1871,14 @@ bool VisionSystem::ShouldProcessVisionMode(VisionMode mode)
   return isTimeToProcess;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CameraParams VisionSystem::GetCurrentCameraParams() const
 {
   // Return nextParams if they have not been set yet otherwise use currentParams
   return (_nextCameraParams.first ? _nextCameraParams.second : _currentCameraParams);
 }
 
-Result VisionSystem::SetAutoExposureParams(const s32 subSample,
-                                           const u8  midValue,
-                                           const f32 midPercentile,
-                                           const f32 maxChangeFraction)
-{
-  Result result = _imagingPipeline->SetExposureParameters(midValue, midPercentile,
-                                                          maxChangeFraction, subSample);
-
-  if(RESULT_OK == result)
-  {
-    PRINT_CH_INFO(kLogChannelName, "VisionSystem.SetAutoExposureParams",
-                  "subSample:%d midVal:%d midPerc:%.3f changeFrac:%.3f",
-                  subSample, midValue, midPercentile, maxChangeFraction);
-  }
-
-  return result;
-}
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result VisionSystem::SetCameraExposureParams(const s32 currentExposureTime_ms,
                                              const s32 minExposureTime_ms,
                                              const s32 maxExposureTime_ms,
@@ -1831,6 +1927,7 @@ Result VisionSystem::SetCameraExposureParams(const s32 currentExposureTime_ms,
   return RESULT_OK;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result VisionSystem::ReadToolCode(const Vision::Image& image)
 {
   //    // DEBUG!
@@ -2347,6 +2444,7 @@ Result VisionSystem::ReadToolCode(const Vision::Image& image)
   return RESULT_OK;
 } // ReadToolCode()
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result VisionSystem::GetSerializedFaceData(std::vector<u8>& albumData,
                                            std::vector<u8>& enrollData) const
 {
@@ -2354,6 +2452,7 @@ Result VisionSystem::GetSerializedFaceData(std::vector<u8>& albumData,
   return _faceTracker->GetSerializedData(albumData, enrollData);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result VisionSystem::SetSerializedFaceData(const std::vector<u8>& albumData,
                                            const std::vector<u8>& enrollData,
                                            std::list<Vision::LoadedKnownFace>& loadedFaces)
@@ -2362,24 +2461,28 @@ Result VisionSystem::SetSerializedFaceData(const std::vector<u8>& albumData,
   return _faceTracker->SetSerializedData(albumData, enrollData, loadedFaces);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result VisionSystem::LoadFaceAlbum(const std::string& albumName, std::list<Vision::LoadedKnownFace> &loadedFaces)
 {
   DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.LoadFaceAlbum.NullFaceTracker");
   return _faceTracker->LoadAlbum(albumName, loadedFaces);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result VisionSystem::SaveFaceAlbum(const std::string& albumName)
 {
   DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.SaveFaceAlbum.NullFaceTracker");
   return _faceTracker->SaveAlbum(albumName);
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void VisionSystem::SetFaceRecognitionIsSynchronous(bool isSynchronous)
 {
   DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.SetFaceRecognitionRunMode.NullFaceTracker");
   _faceTracker->SetRecognitionIsSynchronous(isSynchronous);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool VisionSystem::IsExposureValid(s32 exposure) const
 {
   const bool inRange = IN_RANGE(exposure, _minCameraExposureTime_ms, _maxCameraExposureTime_ms);
@@ -2391,6 +2494,7 @@ bool VisionSystem::IsExposureValid(s32 exposure) const
   return inRange;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool VisionSystem::IsGainValid(f32 gain) const
 {
   const bool inRange = IN_RANGE(gain, _minCameraGain, _maxCameraGain);

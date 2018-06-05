@@ -45,63 +45,6 @@ QuadTreeNode::QuadTreeNode(const Point3f &center, float sideLength, uint8_t leve
   DEV_ASSERT(_quadrant <= EQuadrant::Root, "QuadTreeNode.Constructor.InvalidQuadrant");
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-QuadTreeNode::AxisAlignedQuad::AxisAlignedQuad(const Point2f& p, const Point2f& q)
-: corners{{ 
-    Point2f(fmin(p.x(), q.x()), fmin(p.y(), q.y())),
-    Point2f(fmin(p.x(), q.x()), fmax(p.y(), q.y())),
-    Point2f(fmax(p.x(), q.x()), fmax(p.y(), q.y())),
-    Point2f(fmax(p.x(), q.x()), fmin(p.y(), q.y())) }} {}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::AxisAlignedQuad::Contains(const Point2f& p) const
-{
-  return FLT_GE(p.x(), GetLowerLeft().x()) && FLT_LE(p.x(), GetUpperRight().x()) && 
-         FLT_GE(p.y(), GetLowerLeft().y()) && FLT_LE(p.y(), GetUpperRight().y());
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::AxisAlignedQuad::InHalfPlane(const Halfplane2f& H) const
-{
-  return std::all_of(corners.begin(), corners.end(), [&H](const Point2f& p) { return H.Contains(p); }); 
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::AxisAlignedQuad::InNegativeHalfPlane(const Line2f& l) const
-{
-  return std::all_of(corners.begin(), corners.end(), [&l](const Point2f& p) { return FLT_LT(l.Evaluate(p), 0.f); }); 
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::Contains(const FastPolygon& poly) const
-{
-  // return true if all of the vertices of poly are contained by the bounding box
-  return std::all_of(poly.begin(), poly.end(),[&](auto& p) {return _boundingBox.Contains(p);});
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::IsContainedBy(const ConvexPointSet2f& set) const
-{
-  return std::all_of(_boundingBox.corners.begin(), _boundingBox.corners.end(),[&](auto& p) {return set.Contains(p);});
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::Intersects(const FastPolygon& poly) const
-{
-  // check if any of the bounding box edges create a separating axis
-  if ( poly.GetMinX() > _boundingBox.GetUpperRight().x() ) { return false; }
-  if ( poly.GetMaxX() < _boundingBox.GetLowerLeft().x()  ) { return false; }
-  if ( poly.GetMinY() > _boundingBox.GetUpperRight().y() ) { return false; }
-  if ( poly.GetMaxY() < _boundingBox.GetLowerLeft().y()  ) { return false; }
-
-  // fastPolygon line segments define the halfplane boundary of points in the polygon.
-  // Therefore, we should check if the boundingBox is in the negative halfplane
-  // defined by FastPolygon edge segements
-  return std::none_of(poly.GetEdgeSegments().begin(), poly.GetEdgeSegments().end(), 
-                      [&](const auto& l) { return _boundingBox.InNegativeHalfPlane(l); });
-}
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Quad2f QuadTreeNode::MakeQuadXY(const float padding_mm) const
 {

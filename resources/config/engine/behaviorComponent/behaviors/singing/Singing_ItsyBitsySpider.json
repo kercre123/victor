@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_ItsyBitsySpider",
-  "displayNameKey":"behavior.singing.ItsyBitsySpider",
-  "requiredUnlockId":"Singing_ItsyBitsySpider",
-  "audioSwitchGroup":"Cozmo_Sings_100Bpm",
-  "audioSwitch":"Cozmo_Sings_Itsy_Bitsy_Spider"
-}

@@ -94,6 +94,13 @@ EPlannerStatus IPathPlanner::CheckPlanningStatus() const
     return EPlannerStatus::CompleteNoPlan;
   }
 }
+  
+EPlannerErrorType IPathPlanner::GetErrorType() const
+{
+  return (CheckPlanningStatus() == EPlannerStatus::Error)
+         ? EPlannerErrorType::PlannerFailed // generic
+         : EPlannerErrorType::None;
+}
 
 bool IPathPlanner::GetCompletePath(const Pose3d& currentRobotPose,
                                    Planning::Path &path,

@@ -251,4 +251,15 @@ void _DAS_LogKvMap(DASLogLevel level, const char* eventName, const char* eventVa
 } // extern "C"
 #endif
 
+#if defined(VICOS)
+
+// Expose additional methods for use on this platform
+extern "C" {
+  namespace DAS {
+    bool PostToServer(const std::string & url, const std::string & body, std::string & response) __attribute__((visibility("default")));
+  }
+}
+
+#endif
+
 #endif /* defined(__DAS_H__) */

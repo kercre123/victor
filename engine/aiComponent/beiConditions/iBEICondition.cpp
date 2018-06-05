@@ -19,6 +19,7 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/beiConditions/beiConditionDebugFactors.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -33,7 +34,7 @@ const char* kWebVizModuleName = "behaviorconds";
 }
   
 const char* const IBEICondition::kConditionTypeKey = "conditionType";
-
+bool IBEICondition::_checkDebugFactors = true;
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Json::Value IBEICondition::GenerateBaseConditionConfig(BEIConditionType type)
@@ -57,8 +58,17 @@ BEIConditionType IBEICondition::ExtractConditionType(const Json::Value& config)
 IBEICondition::IBEICondition(const Json::Value& config)
 : _conditionType(ExtractConditionType(config))
 , _debugLabel( MakeUniqueDebugLabel() )
-, _previouslyMet( false )
+, _lastMetValue( false )
 {
+  if( ANKI_DEV_CHEATS ) {
+    _debugFactors.reset( new BEIConditionDebugFactors() );
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IBEICondition::~IBEICondition()
+{
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -100,6 +110,8 @@ void IBEICondition::Init(BehaviorExternalInterface& bei)
   
   InitInternal(bei);
   
+  DEV_ASSERT( !GetOwnerDebugLabel().empty(), "IBEICondition.Init.MissingOwnerLabel" );
+  
   _isInitialized = true;
 }
 
@@ -108,58 +120,90 @@ bool IBEICondition::AreConditionsMet(BehaviorExternalInterface& behaviorExternal
 {
   DEV_ASSERT(_isActive, "IBEICondition.AreConditionsMet.IsInactive");
   DEV_ASSERT(_isInitialized, "IBEICondition.AreConditionsMet.NotInitialized");
+  
+  // If a condition has a child condition, then setting this static flag means it won't check,
+  // send, or reset debug factors. that way, the parent can have full control over when debug
+  // info is sent. this is a bit hacky, but it's effect is in ANKI_DEV_CHEATS only. setting the
+  // flag to false doesn't really need to be wrapped in a macro, but it makes everything a
+  // no-op when shipped
+  const bool checkDebugFactors = _checkDebugFactors;
+  if( ANKI_DEV_CHEATS ) {
+    _checkDebugFactors = false;
+  }
+  
   const bool met = AreConditionsMetInternal(behaviorExternalInterface);
   
   if( ANKI_DEV_CHEATS ) {
-    SendConditionsToWebViz( met, behaviorExternalInterface );
+    if( checkDebugFactors ) {
+      const bool valueChanged = (_lastMetValue != met);
+      _lastMetValue = met;
+      auto& factors = *_debugFactors.get();
+      BuildDebugFactors( factors );
+      // check valueChanged too in case the sole debug factor is _lastMetValue == false.
+      if( valueChanged || factors.HaveChanged() ) {
+        SendConditionsToWebViz( behaviorExternalInterface );
+      }
+      factors.Reset();
+      _checkDebugFactors = true; // other root-level conditions will be evaluated again
+    }
   }
+  _lastMetValue = met;
   
   return met;
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IBEICondition::BuildDebugFactors( BEIConditionDebugFactors& factors ) const
+{
+  const static std::string value = "areConditionsMet";
+  const static std::string name = "conditionLabel";
+  const static std::string owner = "ownerDebugLabel";
+  factors.AddFactor(value, _lastMetValue);
+  factors.AddFactor(owner, _ownerLabel);
+  factors.AddFactor(name, GetDebugLabel());
+  BuildDebugFactorsInternal( factors );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBEICondition::SendConditionsToWebViz( bool conditionsMet, BehaviorExternalInterface& bei ) const
+const BEIConditionDebugFactors& IBEICondition::GetDebugFactors() const
 {
-  auto factors = GetDebugFactors();
-  std::sort(factors.begin(), factors.end(), [](const DebugFactors& a, const DebugFactors& b) {
-    return a.name < b.name;
-  });
-  if( _firstRun
-     || (factors != _previousDebugFactorsList)
-     || (conditionsMet != _previouslyMet) )
-  {
-    _firstRun = false;
-    _previousDebugFactorsList = factors;
-    _previouslyMet = conditionsMet;
-    
-    Json::Value json;
-    json["changed"] = "factors";
-    json["time"] = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    json["owner"] = _ownerLabel;
-    json["name"] = GetDebugLabel();
-    json["value"] = _previouslyMet;
-    auto& list = json["list"];
-    for( const auto& factor : GetDebugFactors() ) {
-      Json::Value elem;
-      elem["name"] = factor.name;
-      elem["value"] = factor.value;
-      list.append( elem );
-    }
-    const auto* webService = bei.GetRobotInfo().GetContext()->GetWebService();
-    webService->SendToWebViz(kWebVizModuleName, json);
+  DEV_ASSERT(ANKI_DEV_CHEATS, "IBEICondition.GetDebugFactors.DevOnly");
+  return *_debugFactors.get();
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BEIConditionDebugFactors& IBEICondition::GetDebugFactors()
+{
+  return const_cast<BEIConditionDebugFactors&>(static_cast<const IBEICondition*>(this)->GetDebugFactors());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IBEICondition::SendConditionsToWebViz( BehaviorExternalInterface& bei ) const
+{
+  const auto* webService = bei.GetRobotInfo().GetContext()->GetWebService();
+  if( !webService->IsWebVizClientSubscribed(kWebVizModuleName) ) {
+    return;
   }
+
+  Json::Value json;
+  json["time"] = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  json["factors"] = _debugFactors->GetJSON();
+  webService->SendToWebViz(kWebVizModuleName, json);
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBEICondition::SendInactiveToWebViz( BehaviorExternalInterface& bei ) const
 {
-  Json::Value json;
-  json["changed"] = "inactive";
-  json["time"] = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  json["name"] = GetDebugLabel();
-  json["owner"] = _ownerLabel;
   const auto* webService = bei.GetRobotInfo().GetContext()->GetWebService();
+  if( !webService->IsWebVizClientSubscribed(kWebVizModuleName) ) {
+    return;
+  }
+  
+  Json::Value json;
+  json["time"] = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  json["inactive"] = GetDebugLabel();
+  json["owner"] = GetOwnerDebugLabel();
   webService->SendToWebViz(kWebVizModuleName, json);
 }
   

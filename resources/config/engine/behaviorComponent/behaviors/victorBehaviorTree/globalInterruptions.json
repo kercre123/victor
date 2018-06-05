@@ -7,6 +7,7 @@
   "behaviors": [
     "MandatoryPhysicalReactions",
     "LowBatteryFindAndGoToHome",
+    "SDK0",
     "TriggerWordDetected",
     "TimerUtilityCoordinator",
     "WeatherResponses",
@@ -16,6 +17,9 @@
     "ReactToSoundAwake",
     "ReactToObstacle",
     "ReactToUnclaimedIntent",
+    "ReactToPutDown",
+    "ReactToPickedUp",
+    "DanceToTheBeat",
     "HighLevelAI"
   ]
 }

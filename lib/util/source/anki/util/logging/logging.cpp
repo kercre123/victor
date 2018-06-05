@@ -166,7 +166,7 @@ void sEventF(const char* name, const KVV& keyvals, const char* format, ...)
   // event is BI event, and the data is specifically formatted to be read on the backend.
   // we should not modify tis data under any circumstance. Hence, no tick timer here
   va_list args;
-  char logString[kMaxStringBufferSize]{0};
+  char logString[kMaxStringBufferSize];
   va_start(args, format);
   vsnprintf(logString, kMaxStringBufferSize, format, args);
   va_end(args);
@@ -193,21 +193,6 @@ void sEvent(const char* name, const KVV& keyvals, const char* strval)
     return;
   }
   gLoggerProvider->PrintEvent(name, keyvals, strval);
-}
-
-void sEventD(DasMsg& dasMessage)
-{
-  if (nullptr == gLoggerProvider) {
-    return;
-  }
-  gLoggerProvider->PrintEvent(dasMessage.event.c_str(), { { "$s1", dasMessage.s1.value.c_str() },
-                                                          { "$s2", dasMessage.s2.value.c_str() },
-                                                          { "$s3", dasMessage.s3.value.c_str() },
-                                                          { "$s4", dasMessage.s4.value.c_str() },
-                                                          { "$i1", dasMessage.i1.value.c_str() },
-                                                          { "$i2", dasMessage.i2.value.c_str() },
-                                                          { "$i3", dasMessage.i3.value.c_str() },
-                                                          { "$i4", dasMessage.i4.value.c_str() } }, "");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -243,20 +228,6 @@ void sErrorV(const char* name, const KVV& keyvals, const char* format, va_list a
   LogError(name, keyvals, logString);
 }
 
-void sErrorD(DasMsg& dasMessage)
-{
-  if (nullptr == gLoggerProvider) {
-    return;
-  }
-  LogError(dasMessage.event.c_str(), { { "$s1", dasMessage.s1.value.c_str() },
-                                       { "$s2", dasMessage.s2.value.c_str() },
-                                       { "$s3", dasMessage.s3.value.c_str() },
-                                       { "$s4", dasMessage.s4.value.c_str() },
-                                       { "$i1", dasMessage.i1.value.c_str() },
-                                       { "$i2", dasMessage.i2.value.c_str() },
-                                       { "$i3", dasMessage.i3.value.c_str() },
-                                       { "$i4", dasMessage.i4.value.c_str() } }, "");
-}
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -314,9 +285,7 @@ void sWarning(const char* name, const KVV& keyvals, const char* strval)
   LogWarning(name, keyvals, strval);
 }
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 void sInfoF(const char* name, const KVV& keyvals, const char* format, ...)
 {
   if (nullptr == gLoggerProvider) {
@@ -344,20 +313,6 @@ void sInfoV(const char* name, const KVV& keyvals, const char* format, va_list ar
   sInfo(name, keyvals, logString);
 }
 
-void sWarningD(DasMsg& dasMessage)
-{
-  if (nullptr == gLoggerProvider) {
-    return;
-  }
-  LogWarning(dasMessage.event.c_str(), { { "$s1", dasMessage.s1.value.c_str() },
-                                         { "$s2", dasMessage.s2.value.c_str() },
-                                         { "$s3", dasMessage.s3.value.c_str() },
-                                         { "$s4", dasMessage.s4.value.c_str() },
-                                         { "$i1", dasMessage.i1.value.c_str() },
-                                         { "$i2", dasMessage.i2.value.c_str() },
-                                         { "$i3", dasMessage.i3.value.c_str() },
-                                         { "$i4", dasMessage.i4.value.c_str() } }, "");
-}
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void sInfo(const char* name, const KVV& keyvals, const char* strval)
 {
@@ -473,6 +428,34 @@ void sLogFlush()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void sLogError(const DasMsg& dasMessage)
+{
+  if (nullptr != gEventProvider) {
+    gEventProvider->LogError(dasMessage);
+  }
+}
+
+void sLogWarning(const DasMsg& dasMessage)
+{
+  if (nullptr != gEventProvider) {
+    gEventProvider->LogWarning(dasMessage);
+  }
+}
+
+void sLogInfo(const DasMsg& dasMessage)
+{
+  if (nullptr != gEventProvider) {
+    gEventProvider->LogInfo(dasMessage);
+  }
+}
+
+void sLogDebug(const DasMsg& dasMessage)
+{
+  if (nullptr != gEventProvider) {
+    gEventProvider->LogDebug(dasMessage);
+  }
+}
+
 
 void sSetGlobal(const char* key, const char* value)
 {

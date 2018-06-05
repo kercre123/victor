@@ -1,5 +1,5 @@
 /**
- * File: logging
+ * File: util/logging/logging.h
  *
  * Author: damjan
  * Created: 4/3/2014
@@ -10,7 +10,7 @@
  *   style: f - takes (...) , v - takes va_list
  *   functions are spelled out, instead of stacked (sErrorF -> calls sErrorV -> calls sError)
  *   to improve on the stack space. If you think about improving on this, please consider macros to re-use code.
- *   If you however feel that we should stack them into one set of function that uses LogLevel as a param, think about
+ *   If you however feel that we should stack them into one set of functions that use LogLevel as a param, think about
  *   need to translate Ank::Util::LogLevel to DasLogLevel and then to ios/android LogLevel.
  *
  * Copyright: Anki, Inc. 2014
@@ -24,6 +24,7 @@
 #include "util/global/globalDefinitions.h"
 #include "util/logging/eventKeys.h"
 #include "util/logging/callstack.h"
+#include "util/logging/logtypes.h"
 
 #include <string>
 #include <vector>
@@ -35,18 +36,10 @@
 namespace Anki {
 namespace Util {
 
-using KVPair = std::pair<const char *, const char *>;
-using KVPairVector = std::vector<KVPair>;
-
 class ITickTimeProvider;
 class ILoggerProvider;
 class ChannelFilter;
 class IEventProvider;
-
-const uint8_t DASMaxSvalLength = 128;
-
-using KVPair = std::pair<const char *, const char *>;
-using KVPairVector = std::vector<KVPair>;
 
 std::string HexDump(const void *value, const size_t len, char delimiter);
 
@@ -61,16 +54,31 @@ extern bool _errG;
 // Global flag to control break-on-error behavior
 extern bool _errBreakOnError;
 
+// DAS message field
 struct DasItem
 {
+  DasItem() = default;
+  DasItem(const std::string & valueStr) { value = valueStr; }
+  DasItem(int64_t valueInt) { value = std::to_string(valueInt); }
+
+  inline const std::string & str() const { return value; }
+  inline const char * c_str() const { return value.c_str(); }
+
   std::string value;
-  DasItem(std::string valueStr) {value = valueStr;}
-  DasItem(int64_t valueInt) {value = std::to_string(valueInt);}
-  DasItem() {value = "";}
 };
 
+//
+// DAS message struct
+//
+// Event name is required. Other fields are optional.
+// Event structures should be declared with DASMSG.
+// Event fields should be assigned with DASMSG_SET.
+//
 struct DasMsg
 {
+  DasMsg(const std::string & eventStr) { event = eventStr; }
+
+  std::string event;
   DasItem s1;
   DasItem s2;
   DasItem s3;
@@ -79,21 +87,58 @@ struct DasMsg
   DasItem i2;
   DasItem i3;
   DasItem i4;
-  std::string event;
-  DasMsg(std::string eventStr) {event = eventStr;}
 };
 
-#define DAS_MSG(ezRef, eventName, documentation) { Anki::Util::DasMsg __DAS_msg(eventName);
-#define FILL_ITEM(dasEntry, value, comment) __DAS_msg.dasEntry = Anki::Util::DasItem(value);
-#define SEND_DAS_MSG_EVENT() sEventD(__DAS_msg); }
-#define SEND_DAS_MSG_WARN() sWarningD(__DAS_msg); }
-#define SEND_DAS_MSG_ERROR() sErrorD(__DAS_msg); }
+//
+// DAS message macros
+//
+#ifndef DOXYGEN
 
-//__attribute__((__deprecated__))
+#define DASMSG(ezRef, eventName, documentation) { Anki::Util::DasMsg __DAS_msg(eventName);
+#define DASMSG_SET(dasEntry, value, comment) __DAS_msg.dasEntry = Anki::Util::DasItem(value);
+#define DASMSG_SEND()         Anki::Util::sLogInfo(__DAS_msg); }
+#define DASMSG_SEND_WARNING() Anki::Util::sLogWarning(__DAS_msg); }
+#define DASMSG_SEND_ERROR()   Anki::Util::sLogError(__DAS_msg); }
+#define DASMSG_SEND_DEBUG()   Anki::Util::sLogDebug(__DAS_msg); }
+
+#else
+
+/*! \defgroup dasmsg Das Messages
+*/
+
+class DasDoxMsg() {}
+
+#define DASMSG(ezRef, eventName, documentation)  }}}}}}}}/** \ingroup dasmsg */ \
+                                            /** \brief eventName */ \
+                                            /** documentation */ \
+                                            class ezRef(): public DasDoxMsg() { \
+                                            public:
+#define DASMSG_SET(dasEntry, value, comment) /** @param dasEntry comment \n*/
+#define DASMSG_SEND }; {{{{{{{{
+#define DASMSG_SEND_WARNING }; {{{{{{{{
+#define DASMSG_SEND_ERROR }; {{{{{{{{
+#define DASMSG_SEND_DEBUG }; {{{{{{{{
+#endif
+
+// Log an error event
+__attribute__((__used__))
+void sLogError(const DasMsg & dasMessage);
+
+// Log a warning event
+__attribute__((__used__))
+void sLogWarning(const DasMsg & dasMessage);
+
+// Log an info event
+__attribute__((__used__))
+void sLogInfo(const DasMsg & dasMessage);
+
+// Log a debug event
+__attribute__((__used__))
+void sLogDebug(const DasMsg & dasMessage);
+
 //
 // "Event level" logging is no longer a thing. Do not use it.
-// Messages intended for DAS should use the explicit DASMESSAGE interface.
-// Other messages should use INFO or DEBUG as appropriate.
+// Messages intended for DAS should use the explicit DASMSG interface declared above.
 //
 __attribute__((__deprecated__))
 __attribute__((__used__))
@@ -102,9 +147,6 @@ void sEventF(const char* name, const KVPairVector & keyvals, const char* format,
 __attribute__((__deprecated__))
 __attribute__((__used__))
 void sEventV(const char* name, const KVPairVector & keyvals, const char* format, va_list args) __attribute__((format(printf,3,0)));
-
-__attribute__((__used__))
-void sEventD(DasMsg& dasMessage);
 
 __attribute__((__used__))
 void sEvent(const char* name, const KVPairVector & keyvals, const char* strval);
@@ -116,9 +158,6 @@ __attribute__((__used__))
 void sErrorV(const char* name, const KVPairVector & keyvals, const char* format, va_list args) __attribute__((format(printf,3,0)));
 
 __attribute__((__used__))
-void sErrorD(DasMsg& dasMessage);
-
-__attribute__((__used__))
 void sError(const char* name, const KVPairVector & keyvals, const char* strval);
 
 __attribute__((__used__))
@@ -126,9 +165,6 @@ void sWarningF(const char* name, const KVPairVector & keyvals, const char* forma
 
 __attribute__((__used__))
 void sWarningV(const char* name, const KVPairVector & keyvals, const char* format, va_list args) __attribute__((format(printf,3,0)));
-
-__attribute__((__used__))
-void sWarningD(DasMsg& dasMessage);
 
 __attribute__((__used__))
 void sWarning(const char* name, const KVPairVector & keyvals, const char* strval);
@@ -288,9 +324,13 @@ constexpr const char * LOG_UNFILTERED = "Unfiltered";
   ::Anki::Util::sChanneledInfoF(channel, name, {}, format, ##__VA_ARGS__); \
 } while(0)
 
+#if ALLOW_DEBUG_LOGGING
 #define PRINT_CH_DEBUG(channel, name, format, ...) do { \
   ::Anki::Util::sChanneledDebugF(channel, name, {}, format, ##__VA_ARGS__); \
 } while(0)
+#else
+#define PRINT_CH_DEBUG(channel, name, format, ...)
+#endif
 
 //
 // Periodic logging with channels.
@@ -402,12 +442,14 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, period, channel, name, format, ##__VA
 // Developer assertions are compiled for debug builds ONLY.
 // Developer assertions are discarded for release and shipping builds.
 //
-// Code blocks that are only used for developer assertions should be guarded with #if DEV_ASSERT_ENABLED.
+// Code blocks that are only used for developer assertions should be guarded with #if ANKI_DEV_ASSERT_ENABLED.
 // Variables that are only used for developer assertions should be guarded with DEV_ASSERT_ONLY.
 
-#define DEV_ASSERT_ENABLED ANKI_DEVELOPER_CODE
+#ifndef ANKI_DEV_ASSERT_ENABLED
+  #define ANKI_DEV_ASSERT_ENABLED ANKI_DEVELOPER_CODE
+#endif
 
-#if DEV_ASSERT_ENABLED
+#if ANKI_DEV_ASSERT_ENABLED
 
 #define DEV_ASSERT_MSG(expr, name, format, ...) do { \
   if (!(expr)) { \

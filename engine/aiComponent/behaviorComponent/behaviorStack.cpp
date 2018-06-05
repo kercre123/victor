@@ -32,10 +32,6 @@
 namespace Anki {
 namespace Cozmo {
 
-namespace{
-  const std::string kWebVizModuleName = "behaviors";
-}
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorStack::~BehaviorStack()
@@ -262,9 +258,20 @@ void BehaviorStack::BroadcastAudioBranch(bool activated)
   if(ANKI_VERIFY(_externalInterface != nullptr, 
                  "BehaviorStack.BroadcastAudioBranch.NoExternalInterface",
                  "")){
-    std::string branchName = BehaviorStack::StackToBehaviorString(_behaviorStack);
-    ExternalInterface::AudioBehaviorBranchUpdate msg(activated, branchName) ;
-    _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+    // Create path of BehaviorIds to broadcast
+    std::vector<BehaviorID> path;
+    path.reserve(_behaviorStack.size());
+    for(auto* behavior : _behaviorStack){
+      auto* cozmoBehavior = dynamic_cast<ICozmoBehavior*>(behavior);
+      if(cozmoBehavior == nullptr){
+        continue;
+      }
+      path.push_back(cozmoBehavior->GetID());
+    }
+    // Broadcast message
+    using namespace ExternalInterface;
+    auto state = activated ? BehaviorStackState::Active : BehaviorStackState::NotActive;
+    _externalInterface->Broadcast(MessageEngineToGame( AudioBehaviorStackUpdate( state, std::move(path) ) ));
   }
 }
 
@@ -329,13 +336,22 @@ void BehaviorStack::SendDebugVizMessages(BehaviorExternalInterface& behaviorExte
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStack::SendDebugBehaviorTreeToWebViz(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  Json::Value data = BuildDebugBehaviorTree(behaviorExternalInterface);
-  
   const auto* context = behaviorExternalInterface.GetRobotInfo().GetContext();
   if( context != nullptr ) {
     const auto* webService = context->GetWebService();
     if( webService != nullptr ){
-      webService->SendToWebViz( kWebVizModuleName, data );
+      const bool behaviorsSub = webService->IsWebVizClientSubscribed("behaviors");
+      const bool behaviorCondsSub = webService->IsWebVizClientSubscribed("behaviorconds");
+      Json::Value data;
+      if( behaviorsSub || behaviorCondsSub ) {
+        data = BuildDebugBehaviorTree(behaviorExternalInterface);
+      }
+      if( behaviorsSub ) {
+        webService->SendToWebViz( "behaviors", data );
+      }
+      if( behaviorCondsSub ) {
+        webService->SendToWebViz( "behaviorconds", data );
+      }
     }
   }
 }

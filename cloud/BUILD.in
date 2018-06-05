@@ -25,6 +25,11 @@ go_project(
     dir = 'process'
 )
 
+go_project(
+    name = 'vic-gateway',
+    dir = 'gateway'
+)
+
 cxx_project(
     name = 'ipctest_cpp',
     srcs = glob(['ipctest/cpp/*.cpp'])

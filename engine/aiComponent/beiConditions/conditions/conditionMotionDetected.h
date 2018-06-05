@@ -40,14 +40,15 @@ protected:
     requiredVisionModes.insert( {VisionMode::DetectingMotion, EVisionUpdateFrequency::High} );
   }
 
-  virtual DebugFactorsList GetDebugFactors() const override;
+  virtual void BuildDebugFactorsInternal( BEIConditionDebugFactors& factors ) const override;
   
 private:
   enum class MotionArea{
     Left,
     Right,
     Top,
-    Ground
+    Ground,
+    Any
   };
 
   // We currently don't have uniform thresholding/calibration on

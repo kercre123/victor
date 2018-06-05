@@ -5,6 +5,7 @@
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
+#include <errno.h>
 
 #include <sys/ioctl.h>
 #include <linux/spi/spidev.h>

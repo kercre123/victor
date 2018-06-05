@@ -1,13 +1,18 @@
 {
-  "behaviorClass": "AnimSequence",
+  "behaviorClass" : "DispatcherStrictPriority",
   "behaviorID": "ReactToGreeting",
 
-  "emotionEventOnActivated": "RespondToShortVoiceCommand",
+  "linkScope": true,
+  "interruptActiveBehavior": true,
 
-  "animTriggers": ["ReactToGreeting"],
-  "respondToUserIntents": [
-    {
-      "type": "greeting_hello"
-    }
+  // all behaviors below this count as "greetings"
+  "associatedActiveFeature": "VC_Greeting",
+
+  "behaviors": [
+    "ReactToHello",
+    "ReactToGoodMorning",
+    "ReactToGoodBye",
+    "ReactToGoodNight"
   ]
 }
+ 

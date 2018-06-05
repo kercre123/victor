@@ -206,6 +206,24 @@ bool StringEndsWith(const std::string& fullString, const std::string& ending)
     return false;
   }
 }
+  
+void StringTrimWhitespaceFromEnd(std::string& s)
+{
+  s.erase(std::find_if(s.rbegin(), s.rend(),
+                       std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+}
+
+void StringTrimWhitespaceFromStart(std::string& s) {
+    s.erase(s.begin(),
+            std::find_if(s.begin(),
+                         s.end(),
+                         std::not1(std::ptr_fun<int, int>(std::isspace))));
+}
+
+void StringTrimWhitespace(std::string& s) {
+  StringTrimWhitespaceFromStart(s);
+  StringTrimWhitespaceFromEnd(s);
+}
 
 bool IsValidUTF8(const uint8_t* b, size_t length)
 {
@@ -412,6 +430,21 @@ void StringReplace( std::string& toChange, const std::string& oldStr, const std:
   }
 }
 
+bool EpochFromDateString(const std::string& dateString, 
+                         const std::string& formatString,
+                         struct tm& outEpoch)
+{
+  if (dateString.empty()) {
+    return false;
+  }
+
+  memset(&outEpoch, 0, sizeof(outEpoch));
+  char* result = strptime(dateString.c_str(), formatString.c_str(), &outEpoch);
+
+  return nullptr != result;
+}
+
+
 uint32_t EpochSecFromIso8601UTCDateString(const std::string& dateString)
 {
   if (dateString.empty()) {
@@ -419,10 +452,9 @@ uint32_t EpochSecFromIso8601UTCDateString(const std::string& dateString)
   }
 
   struct tm ctime;
-  memset(&ctime, 0, sizeof(ctime));
-  char* result = strptime(dateString.c_str(), "%Y-%m-%dT%T", &ctime);
+  const bool success = EpochFromDateString(dateString, "%Y-%m-%dT%T", ctime);
 
-  if (nullptr == result) {
+  if(!success){
     return UINT32_MAX;
   }
 

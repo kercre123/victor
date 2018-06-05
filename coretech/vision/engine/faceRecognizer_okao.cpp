@@ -618,10 +618,12 @@ namespace Vision {
 
         // Log the enrollment ID we just completed and how many album entries it now has
         const size_t numAlbumEntries = entryToReturn.GetAlbumEntries().size();
-        DAS_MSG(count, "robot.vision.face_enrollment_count_reached", "This will be shown when the most number of faces we support is shown")
-        FILL_ITEM(i1, numAlbumEntries, "The current num of entries")
-        FILL_ITEM(i2, _enrollmentID, "The enrollment ID")
-        SEND_DAS_MSG_EVENT()
+        DASMSG(vision_face_enrollment_count_reached,
+               "vision.face_enrollment_count_reached",
+               "This will be shown when the most number of faces we support is shown");
+        DASMSG_SET(i1, numAlbumEntries, "The current num of entries");
+        DASMSG_SET(i2, _enrollmentID, "The enrollment ID");
+        DASMSG_SEND();
 
         enrollmentCountReached = _origEnrollmentCount;
         _origEnrollmentCount = 0; // signifies we've already returned it
@@ -674,8 +676,8 @@ namespace Vision {
     Anki::Util::SetThreadName(pthread_self(), "FaceRecognizer");
     const char* threadName = "FaceRecognizer";
     Util::SetThreadName(pthread_self(), threadName);
-    
-    
+
+
 
 
     while(_isRunningAsync)

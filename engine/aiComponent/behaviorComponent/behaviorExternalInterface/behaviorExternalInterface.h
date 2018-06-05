@@ -35,6 +35,7 @@ namespace Cozmo {
 // Forward Declaration
 class AIComponent;
 class AnimationComponent;
+class BeatDetectorComponent;
 class BehaviorContainer;
 class BehaviorEventComponent;
 class BehaviorTimerManager;
@@ -56,7 +57,9 @@ class PetWorld;
 class ProgressionUnlockComponent;
 class ProxSensorComponent;
 class PublicStateBroadcaster;
+class SDKComponent;
 class DataAccessorComponent;
+class TextToSpeechCoordinator;
 class TouchSensorComponent;
 class VisionComponent;
 class VisionScheduleMediator;
@@ -119,6 +122,7 @@ public:
 
   void Init(AIComponent*                   aiComponent,
             AnimationComponent*            animationComponent,
+            BeatDetectorComponent*         beatDetectorComponent,
             BehaviorContainer*             behaviorContainer,
             BehaviorEventComponent*        behaviorEventComponent,
             BehaviorTimerManager*          behaviorTimers,
@@ -137,9 +141,11 @@ public:
             ProgressionUnlockComponent*    progressionUnlockComponent,
             ProxSensorComponent*           proxSensor,
             PublicStateBroadcaster*        publicStateBroadcaster,
+            SDKComponent*                  sdkComponent,
             Audio::EngineRobotAudioClient* robotAudioClient,
             BEIRobotInfo*                  robotInfo,
             DataAccessorComponent*         dataAccessor,
+            TextToSpeechCoordinator*       TextToSpeechCoordinator,
             TouchSensorComponent*          touchSensorComponent,
             VisionComponent*               visionComponent,
             VisionScheduleMediator*        visionScheduleMediator);
@@ -213,7 +219,15 @@ public:
 
   inline bool HasMicComponent() const { return GetComponentWrapper(BEIComponentID::MicComponent).IsValueValid();}
   MicComponent& GetMicComponent() const {return GetComponentWrapper(BEIComponentID::MicComponent).GetValue<MicComponent>();}
+  
+  inline bool HasBeatDetectorComponent() const { return GetComponentWrapper(BEIComponentID::BeatDetector).IsValueValid();}
+  BeatDetectorComponent& GetBeatDetectorComponent() const {return GetComponentWrapper(BEIComponentID::BeatDetector).GetValue<BeatDetectorComponent>();}
 
+  inline bool HasTextToSpeechCoordinator() const { return GetComponentWrapper(BEIComponentID::TextToSpeechCoordinator).IsValueValid();}
+  TextToSpeechCoordinator& GetTextToSpeechCoordinator() const {return GetComponentWrapper(BEIComponentID::TextToSpeechCoordinator).GetValue<TextToSpeechCoordinator>();}
+
+  inline bool HasSDKComponent() const { return GetComponentWrapper(BEIComponentID::SDK).IsValueValid();}
+  SDKComponent& GetSDKComponent() const {return GetComponentWrapper(BEIComponentID::SDK).GetValue<SDKComponent>();}
 
   // Util functions
   OffTreadsState GetOffTreadsState() const;
@@ -224,6 +238,7 @@ private:
     public:
       CompArrayWrapper(AIComponent*                  aiComponent,
                        AnimationComponent*            animationComponent,
+                       BeatDetectorComponent*         beatDetectorComponent,
                        BehaviorContainer*             behaviorContainer,
                        BehaviorEventComponent*        behaviorEventComponent,
                        BehaviorTimerManager*          behaviorTimers,
@@ -242,9 +257,11 @@ private:
                        ProgressionUnlockComponent*    progressionUnlockComponent,
                        ProxSensorComponent*           proxSensor,
                        PublicStateBroadcaster*        publicStateBroadcaster,
+                       SDKComponent*                  sdkComponent,
                        Audio::EngineRobotAudioClient* robotAudioClient,
                        BEIRobotInfo*                  robotInfo,
                        DataAccessorComponent*         dataAccessor,
+                       TextToSpeechCoordinator*       textToSpeechCoordinator,
                        TouchSensorComponent*          touchSensorComponent,
                        VisionComponent*               visionComponent,
                        VisionScheduleMediator*        visionSchedulMediator);

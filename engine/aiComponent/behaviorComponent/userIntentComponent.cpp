@@ -13,8 +13,9 @@
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponentCloudServer.h"
-#include "engine/aiComponent/behaviorComponent/userIntents.h"
+#include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/aiComponent/behaviorComponent/userIntentMap.h"
+#include "engine/aiComponent/behaviorComponent/userIntents.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
@@ -38,14 +39,19 @@ namespace {
 
 static const size_t kMaxTicksToWarn = 2;
 static const size_t kMaxTicksToClear = 3;
-  
-static const float kPreservedTimeToClear = 60*60*24;
-
 static const char* kCloudIntentJsonKey = "intent";
 static const char* kParamsKey = "params";
 static const char* kAltParamsKey = "parameters"; // "params" is reserved in CLAD
+
 }
-  
+
+size_t UserIntentComponent::sActivatedIntentID = 0;
+
+const UserIntentSource& GetIntentSource(const UserIntentData& intentData)
+{
+  return intentData.source;
+}
+
 UserIntentComponent::UserIntentComponent(const Robot& robot, const Json::Value& userIntentMapConfig)
   : IDependencyManagedComponent( this, BCComponentID::UserIntentComponent )
   , _intentMap( new UserIntentMap(userIntentMapConfig, robot.GetContext()) )
@@ -120,13 +126,95 @@ bool UserIntentComponent::IsAnyUserIntentPending() const
 
 bool UserIntentComponent::IsUserIntentPending(UserIntentTag userIntent) const
 {
-  return (_pendingIntent != nullptr) && (_pendingIntent->GetTag() == userIntent);
+  return (_pendingIntent != nullptr) && (_pendingIntent->intent.GetTag() == userIntent);
+}
+
+UserIntentPtr UserIntentComponent::ActivateUserIntent(UserIntentTag userIntent, const std::string& owner)
+{
+  if( !IsUserIntentPending(userIntent) ) {
+    PRINT_NAMED_ERROR("UserIntentComponent.ActivateIntent.NoActive",
+                      "'%s' is attempting to activate intent '%s', but %s is pending",
+                      owner.c_str(),
+                      UserIntentTagToString(userIntent),
+                      _pendingIntent ? UserIntentTagToString(_pendingIntent->intent.GetTag()) : "nothing");
+    return nullptr;
+  }
+
+  if( _activeIntent != nullptr ) {
+    PRINT_NAMED_WARNING("UserIntentComponent.ActivateIntent.IntentAlreadyActive",
+                        "%s is Trying to activate user intent '%s', but '%s' is still active",
+                        owner.c_str(),
+                        UserIntentTagToString(userIntent),
+                        UserIntentTagToString(_activeIntent->intent.GetTag()));
+  }
+  
+  PRINT_CH_DEBUG("BehaviorSystem", "UserIntentComponent.ActivateUserIntent",
+                 "%s is activating intent '%s'",
+                 owner.c_str(),
+                 UserIntentTagToString(userIntent));
+
+  _activeIntent = std::move(_pendingIntent);
+  _activeIntent->activationID = ++sActivatedIntentID;
+
+  // track the owner for easier debugging
+  _activeIntentOwner = owner;
+
+  return _activeIntent;
+}
+
+void UserIntentComponent::DeactivateUserIntent(UserIntentTag userIntent)
+{
+  if( !IsUserIntentActive(userIntent) ) {
+    PRINT_NAMED_ERROR("UserIntentComponent.DeactivateUserIntent.NotActive",
+                      "Attempting to deactivate intent '%s' (activated by %s) but '%s' is active",
+                      UserIntentTagToString(userIntent),
+                      _activeIntentOwner.c_str(),
+                      _activeIntent ? UserIntentTagToString(_activeIntent->intent.GetTag()) : "nothing");
+    return;
+  }
+  else {
+    PRINT_CH_DEBUG("BehaviorSystem", "UserIntentComponent.DeactivateUserIntent",
+                   "Deactivating intent '%s' (activated by %s)",
+                   UserIntentTagToString(userIntent),
+                   _activeIntentOwner.c_str());
+    _activeIntent.reset();
+    _activeIntentOwner.clear();
+  }
+}
+
+bool UserIntentComponent::IsUserIntentActive(UserIntentTag userIntent) const
+{
+  return ( _activeIntent != nullptr ) && ( _activeIntent->intent.GetTag() == userIntent );
+}
+
+UserIntentPtr UserIntentComponent::GetUserIntentIfActive(UserIntentTag forIntent) const
+{
+  auto ret = IsUserIntentActive(forIntent) ? _activeIntent : nullptr;
+  return ret;
+}
+  
+UserIntentPtr UserIntentComponent::GetActiveUserIntent() const
+{
+  return _activeIntent;
+}
+
+void UserIntentComponent::DropUserIntent(UserIntentTag userIntent)
+{
+  if( IsUserIntentPending(userIntent) ) {
+    _pendingIntent.reset();
+  }
+  else {
+    PRINT_NAMED_WARNING("UserIntentComponent.DropUserIntent.NotPending",
+                        "Trying to drop intent '%s' but %s is pending",
+                        UserIntentTagToString(userIntent),
+                        _pendingIntent ? UserIntentTagToString(_pendingIntent->intent.GetTag()) : "nothing");
+  }
 }
 
 bool UserIntentComponent::IsUserIntentPending(UserIntentTag userIntent, UserIntent& extraData) const
 {
   if( IsUserIntentPending(userIntent) ) {
-    extraData = *_pendingIntent;
+    extraData = _pendingIntent->intent;
     return true;
   }
   else {
@@ -134,106 +222,7 @@ bool UserIntentComponent::IsUserIntentPending(UserIntentTag userIntent, UserInte
   }
 }
 
-void UserIntentComponent::ClearUserIntent(UserIntentTag userIntent)
-{
-  if( (_pendingIntent != nullptr) && (userIntent != _pendingIntent->GetTag()) ) {
-    PRINT_NAMED_WARNING("UserIntentComponent.ClearUserIntent.IncorrectIntent",
-                        "Trying to clear intent '%s' but '%s' is pending. Not clearing",
-                        UserIntentTagToString(userIntent),
-                        UserIntentTagToString(_pendingIntent->GetTag()));
-  }
-  else if( _pendingIntent != nullptr ) {
-    _pendingIntent.reset();
-  }
-}
-  
-UserIntent* UserIntentComponent::ClearUserIntentWithOwnership(UserIntentTag userIntent)
-{
-  if( (_pendingIntent != nullptr) && (userIntent != _pendingIntent->GetTag()) ) {
-    PRINT_NAMED_WARNING( "UserIntentComponent.ClearUserIntentWithOwnership.IncorrectIntent",
-                         "Trying to clear+get intent '%s' but '%s' is pending. Not clearing",
-                         UserIntentTagToString( userIntent),
-                         UserIntentTagToString( _pendingIntent->GetTag() ) );
-    return nullptr;
-  } else if( _pendingIntent != nullptr ) {
-    return _pendingIntent.release();
-  } else {
-    PRINT_NAMED_WARNING( "UserIntentComponent.ClearUserIntentWithOwnership.NothingPending",
-                         "Trying to clear+get intent '%s', but it doesn't exist",
-                         UserIntentTagToString( userIntent ) );
-    return nullptr;
-  }
-}
-  
-void UserIntentComponent::ClearUserIntentWithPreservation(UserIntentTag userIntent, BehaviorID clearingBehavior)
-{
-  if( (_pendingIntent != nullptr) && (userIntent != _pendingIntent->GetTag()) ) {
-    PRINT_NAMED_WARNING( "UserIntentComponent.ClearUserIntentWithPreservation.IncorrectIntent",
-                        "Trying to clear+get intent '%s' but '%s' is pending. Not clearing",
-                        UserIntentTagToString( userIntent),
-                        UserIntentTagToString( _pendingIntent->GetTag() ) );
-  } else if( _pendingIntent != nullptr ) {
-    auto it = std::find_if( _preservedIntents.begin(), _preservedIntents.end(), [userIntent](const auto& p) {
-      return p.tag == userIntent;
-    });
-    
-    if( it != _preservedIntents.end() ) {
-      if( it->intent != nullptr ) {
-        PRINT_NAMED_WARNING( "UserIntentComponent.ClearUserIntentWithPreservation.Replaced",
-                             "A delegate of behavior '%s' never took the preserved intent '%s' before it was replaced by '%s'",
-                             BehaviorTypesWrapper::BehaviorIDToString(it->responsibleBehavior),
-                             UserIntentTagToString(userIntent),
-                             BehaviorTypesWrapper::BehaviorIDToString(clearingBehavior) );
-      }
-      it->intent.reset( _pendingIntent.release() );
-      it->responsibleBehavior = clearingBehavior;
-    } else {
-      std::unique_ptr<UserIntent> intent( _pendingIntent.release() );
-      const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      Preserved preserved{userIntent, std::move(intent), clearingBehavior, currTime};
-      _preservedIntents.emplace_back( std::move(preserved) );
-    }
-  } else {
-    PRINT_NAMED_WARNING( "UserIntentComponent.ClearUserIntentWithPreservation.NothingPending",
-                         "Trying to clear+get intent '%s', but it doesn't exist",
-                         UserIntentTagToString( userIntent ) );
-  }
-}
-  
-UserIntent* UserIntentComponent::TakePreservedUserIntentOwnership(UserIntentTag userIntent)
-{
-  auto it = std::find_if( _preservedIntents.begin(), _preservedIntents.end(), [userIntent](const auto& p) {
-    return p.tag == userIntent;
-  });
-  if( it != _preservedIntents.end() ) {
-    UserIntent* intent = it->intent.release();
-    return intent;
-  } else {
-    PRINT_NAMED_WARNING( "UserIntentComponent.TakePreservedUserIntentOwnership.NotFound",
-                         "Intent '%s' not found in preserved list",
-                         UserIntentTagToString(userIntent) );
-    return nullptr;
-  }
-}
-  
-void UserIntentComponent::ResetPreservedUserIntents(BehaviorID clearingBehavior)
-{
-  auto it = std::find_if( _preservedIntents.begin(), _preservedIntents.end(), [clearingBehavior](const auto& p) {
-    return p.responsibleBehavior == clearingBehavior;
-  });
-  if( it != _preservedIntents.end() ) {
-    if( !ANKI_VERIFY( it->intent == nullptr,
-                      "UserIntentComponent.ResetPreservedUserIntents.Unclaimed",
-                      "The intent '%s' preserved by '%s' was unclaimed",
-                      UserIntentTagToString(it->tag),
-                      BehaviorTypesWrapper::BehaviorIDToString(clearingBehavior) ) )
-    {
-      it->intent.reset();
-    }
-  }
-}
-
-void UserIntentComponent::SetUserIntentPending(UserIntentTag userIntent)
+void UserIntentComponent::SetUserIntentPending(UserIntentTag userIntent, const UserIntentSource& source)
 {
   // The following ensures that this method is only called for intents of type UserIntent_Void.
   // Ideally this would be a compile-time check, but that won't be possible unless all user intents
@@ -247,27 +236,27 @@ void UserIntentComponent::SetUserIntentPending(UserIntentTag userIntent)
   UserIntent intent;
   intent.Unpack( &buffer, 1 ); // hit an assert? your userIntent is not of type UserIntent_Void. use overloaded method
   
-  SetUserIntentPending( std::move(intent) );
+  SetUserIntentPending( std::move(intent), source );
   
   static_assert(std::is_same<std::underlying_type<UserIntentTag>::type, uint8_t>::value,
                 "If you change type, the above needs revisiting");
 }
   
-void UserIntentComponent::SetUserIntentPending(UserIntent&& userIntent)
+void UserIntentComponent::SetUserIntentPending(UserIntent&& userIntent, const UserIntentSource& source)
 {
   if( _pendingIntent != nullptr ) {
     PRINT_NAMED_WARNING("UserIntentComponent.SetUserIntentPending.AlreadyPending",
                         "Setting pending user intent to '%s' which will overwrite '%s'",
                         UserIntentTagToString(userIntent.GetTag()),
-                        UserIntentTagToString(_pendingIntent->GetTag()));
+                        UserIntentTagToString(_pendingIntent->intent.GetTag()));
   }
   
   
   if( _pendingIntent == nullptr ) {
-    _pendingIntent.reset( new UserIntent(userIntent) );
+    _pendingIntent.reset( new UserIntentData(userIntent, source) );
   } else {
-    auto& intent = *_pendingIntent.get();
-    intent = std::move(userIntent);
+    _pendingIntent->intent = std::move(userIntent);
+    _pendingIntent->source = source;
   }
   
   if( ANKI_DEV_CHEATS ) {
@@ -276,6 +265,26 @@ void UserIntentComponent::SetUserIntentPending(UserIntent&& userIntent)
 
   _pendingIntentTick = BaseStationTimer::getInstance()->GetTickCount();
   _pendingIntentTimeoutEnabled = true;
+}
+
+void UserIntentComponent::DevSetUserIntentPending(UserIntentTag userIntent, const UserIntentSource& source)
+{
+  SetUserIntentPending(userIntent, source);
+}
+
+void UserIntentComponent::DevSetUserIntentPending(UserIntent&& userIntent, const UserIntentSource& source)
+{
+  SetUserIntentPending(std::move(userIntent), source);
+}
+
+void UserIntentComponent::DevSetUserIntentPending(UserIntentTag userIntent)
+{
+  SetUserIntentPending(userIntent, UserIntentSource::Unknown);
+}
+
+void UserIntentComponent::DevSetUserIntentPending(UserIntent&& userIntent)
+{
+  SetUserIntentPending(std::move(userIntent), UserIntentSource::Unknown);
 }
 
 void UserIntentComponent::SetUserIntentTimeoutEnabled(bool isEnabled)
@@ -291,7 +300,7 @@ void UserIntentComponent::SetCloudIntentPending(const std::string& cloudIntent)
 {
   _devLastReceivedCloudIntent = cloudIntent;
   
-  SetUserIntentPending( _intentMap->GetUserIntentFromCloudIntent(cloudIntent) );
+  SetUserIntentPending( _intentMap->GetUserIntentFromCloudIntent(cloudIntent), UserIntentSource::Voice );
 }
 
 bool UserIntentComponent::SetCloudIntentPendingFromJSON(const std::string& cloudJsonStr)
@@ -373,7 +382,7 @@ bool UserIntentComponent::SetCloudIntentPendingFromJSONValue(Json::Value json)
   
   _devLastReceivedCloudIntent = cloudIntent;
   
-  SetUserIntentPending( std::move(pendingIntent) );
+  DevSetUserIntentPending( std::move(pendingIntent), UserIntentSource::Voice );
   
   return true;
 }
@@ -422,7 +431,7 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
   
   
   const size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
-  const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  // const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
   // if things pend too long they will queue up and trigger at the wrong time, which will be wrong and
   // confusing. Issue warnings here and clear the pending tick / intent if they aren't handled quickly enough
@@ -448,27 +457,16 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
       if( dt >= kMaxTicksToWarn ) {
         PRINT_NAMED_WARNING("UserIntentComponent.Update.PendingIntentNotCleared.Warn",
                             "Intent '%s' has been pending for %zu ticks",
-                            UserIntentTagToString(_pendingIntent->GetTag()),
+                            UserIntentTagToString(_pendingIntent->intent.GetTag()),
                             dt);
       }
       if( dt >= kMaxTicksToClear ) {
         PRINT_NAMED_ERROR("UserIntentComponent.Update.PendingIntentNotCleared.ForceClear",
                           "Intent '%s' has been pending for %zu ticks, forcing a clear",
-                          UserIntentTagToString(_pendingIntent->GetTag()),
+                          UserIntentTagToString(_pendingIntent->intent.GetTag()),
                           dt);
         _pendingIntent.reset();
         _wasIntentUnclaimed = true;
-      }
-    }
-  }
-  
-  for( auto& preserved : _preservedIntents ) {
-    if( preserved.intent != nullptr ) {
-      if( currTime - preserved.timeAdded > kPreservedTimeToClear ) {
-        PRINT_NAMED_ERROR( "UserIntentComponent.Update.UnclaimedPreserved",
-                           "The preserved intent '%s' was unclaimed",
-                           UserIntentTagToString(preserved.tag) );
-        preserved.intent.reset();
       }
     }
   }
@@ -504,7 +502,7 @@ void UserIntentComponent::OnAppIntent(const ExternalInterface::AppIntent& appInt
   {
     _devLastReceivedAppIntent = appIntent.intent;
     
-    SetUserIntentPending( std::move(intent) );
+    DevSetUserIntentPending( std::move(intent), UserIntentSource::App );
   }
 }
   
@@ -536,7 +534,7 @@ void UserIntentComponent::SendWebVizIntents()
       Json::Value blob;
       blob["intentType"] = "user";
       blob["type"] = "current-intent";
-      blob["value"] = UserIntentTagToString( _pendingIntent->GetTag() );
+      blob["value"] = UserIntentTagToString( _pendingIntent->intent.GetTag() );
       toSend.append(blob);
     }
     

@@ -48,6 +48,9 @@ private:
 
     // if true, links activation scope and WantsToBeActivated with it's delegates
     bool linkScope;
+    
+    // if true, this deactivating this behavior clears all cooldown info
+    bool resetCooldownOnDeactivation;
   };
 
   struct DynamicVariables {

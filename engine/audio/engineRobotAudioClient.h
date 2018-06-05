@@ -22,6 +22,7 @@
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/robotComponents_fwd.h"
 #include "engine/events/ankiEvent.h"
+#include <memory>
 #include <vector>
 
 
@@ -33,7 +34,7 @@ class RobotToEngine;
 class Robot;
 
 namespace Audio {
-
+class AudioBehaviorStackListener;
 
 class EngineRobotAudioClient : public IDependencyManagedComponent<RobotComponentID>, 
                                public AudioEngine::Multiplexer::AudioMuxClient 
@@ -41,13 +42,12 @@ class EngineRobotAudioClient : public IDependencyManagedComponent<RobotComponent
 public:
   using CurveType = AudioEngine::Multiplexer::CurveType;
 
-  EngineRobotAudioClient()
-  : IDependencyManagedComponent(this, RobotComponentID::EngineAudioClient) {}
+  EngineRobotAudioClient();
 
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override {};
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };
@@ -88,14 +88,13 @@ public:
                               int32_t timeInMilliSeconds = 0,
                               CurveType curve = CurveType::Linear ) const override;
 
-  // When the Robot's message handle setup is complete use robot to send message and subscribe audio callback messages
-  void SubscribeAudioCallbackMessages( Robot* robot );
-
-
 private:
   
   Robot* _robot = nullptr;
-  std::vector<Signal::SmartHandle> _signalHandles;
+  std::unique_ptr<AudioBehaviorStackListener> _behaviorListener;
+  std::vector<Signal::SmartHandle>            _signalHandles;
+
+  void SubscribeAudioCallbackMessages( Robot* robot );
   
   void HandleRobotEngineMessage( const AnkiEvent<RobotInterface::RobotToEngine>& message );
 

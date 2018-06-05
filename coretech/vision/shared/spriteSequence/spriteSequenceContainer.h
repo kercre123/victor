@@ -36,10 +36,15 @@ public:
   SpriteSequenceContainer(MappedSequenceContainer&& mappedSequences,
                           UnmappedSequenceContainer&& unmappedSequences);
   
+  
   const Vision::SpriteSequence* const GetSequenceByName(Vision::SpriteName sequenceName) const;
   // stored as file name without extension, not absolute/full file path
   const Vision::SpriteSequence* const GetUnmappedSequenceByFileName(const std::string& fileName) const;
-  
+
+  // If unsure which map the sequence might be in, but need to access it no matter what
+  const Vision::SpriteSequence* const GetSequenceAgnostic(Vision::SpriteName sequenceName,
+                                                          const std::string& fileName) const;
+
 protected:  
   MappedSequenceContainer   _mappedSequences;
   UnmappedSequenceContainer _unmappedSequences;

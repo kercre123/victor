@@ -1,9 +1,20 @@
 {
   "behaviorClass": "AnimSequence",
   "behaviorID": "ReactToObstacle",
-  "displayNameKey":"behavior.ReactToObstacle",
+  
+  "associatedActiveFeature": "NoFeature",
+  "emotionEventOnActivated": "ReactToObstacle",
+
   "animTriggers": ["ReactToObstacle"],
   "wantsToBeActivatedCondition": {
     "conditionType" : "ObstacleDetected"
+  },
+
+  "wantsToCancelSelfCondition": {
+    "conditionType": "Compound",
+    "not": {
+      "conditionType": "OffTreadsState",
+      "targetState": "OnTreads"
+    }
   }
 }

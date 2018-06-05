@@ -91,14 +91,15 @@ namespace Anki {
     void Disable()
     {
       if(enable_) {
-        enable_ = false;
-
+        SetDesiredWheelSpeeds(0.f, 0.f);
         ResetIntegralGainSums();
+
         power_l_ = 0.f;
         power_r_ = 0.f;
-
         HAL::MotorSetPower(MotorID::MOTOR_LEFT_WHEEL, power_l_);
         HAL::MotorSetPower(MotorID::MOTOR_RIGHT_WHEEL, power_r_);
+
+        enable_ = false;
       }
     }
 
@@ -283,8 +284,14 @@ namespace Anki {
     //Set the wheel speeds in mm/sec
     void SetDesiredWheelSpeeds(f32 leftws, f32 rightws)
     {
-      desiredWheelSpeedL_ = leftws;
-      desiredWheelSpeedR_ = rightws;
+      if (enable_) {
+        desiredWheelSpeedL_ = leftws;
+        desiredWheelSpeedR_ = rightws;
+      } else {
+        AnkiDebug("WheelController.SetDesiredWheelSpeeds.Disabled", 
+                  "Ignoring speeds %f and %f while disabled",
+                  leftws, rightws);
+      }
     }
 
     //This function will command a wheel speed to the left and right wheel so that the vehicle follows a trajectory

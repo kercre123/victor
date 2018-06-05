@@ -107,9 +107,7 @@ namespace Anki {
         const u8  PUTDOWN_COUNT      = 40;
         u8 putdownCnt_               = 0;
 
-        u16 cliffValsWhileNotMoving_[HAL::CLIFF_COUNT] = {0};
-
-        const u16 CLIFF_DELTA_FOR_PICKUP = 50;
+        const u8 NUM_CLIFF_SENSORS_FOR_CHANGE_DETECT_PICKUP = 3;
 
         const f32 ACCEL_DISTURBANCE_MOTION_THRESH = 40.f;
         s8 external_accel_disturbance_cnt[3]      = {0};
@@ -297,11 +295,6 @@ namespace Anki {
 
       void ResetPickupVars() {
         pickedUp_ = 0;
-
-        for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
-          cliffValsWhileNotMoving_[i] = 0;
-        }
-
         potentialPickupCnt_ = 0;
         putdownCnt_ = 0;
         external_accel_disturbance_cnt[0] = external_accel_disturbance_cnt[1] = external_accel_disturbance_cnt[2] = 0;
@@ -543,31 +536,24 @@ namespace Anki {
 
         } else {
 
-          // If cliff sensor changes while wheels not moving this is indicative of pickup
-          bool cliffBasedPickupDetect = false;
+          // If enough of the cliff sensors detect cliffs, this is indicative of pickup.
+          u8 numCliffSensorsDetectingChange = 0;
+          for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
+            if (ProxSensors::IsCliffDetected(i)) {
+              ++numCliffSensorsDetectingChange;
+            }
+          }
+          bool cliffBasedPickupDetect = numCliffSensorsDetectingChange >= NUM_CLIFF_SENSORS_FOR_CHANGE_DETECT_PICKUP;
+        
+          // Gyro activity can also indicate pickup.
+          // Different detection thresholds are used depending on whether or not the wheels are moving.
           bool gyroZBasedMotionDetect = false;
           if (!WheelController::AreWheelsMoving() && !WheelController::AreWheelsPowered()) {
-            s16 maxCliffDelta = 0;
-
-            for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
-              if (cliffValsWhileNotMoving_[i] == 0) {
-                cliffValsWhileNotMoving_[i] = ProxSensors::GetCliffValue(i);
-              } else {
-                const s16 absCliffDelta = ABS(cliffValsWhileNotMoving_[i] - ProxSensors::GetCliffValue(i));
-                maxCliffDelta = MAX(maxCliffDelta, absCliffDelta);
-              }
-            }
-
-            cliffBasedPickupDetect = maxCliffDelta > CLIFF_DELTA_FOR_PICKUP;
 
             // As long as wheels aren't moving, we can also check for Z-axis gyro motion
             gyroZBasedMotionDetect = ABS(gyro_robot_frame_filt[2]) > PICKUP_WHILE_WHEELS_NOT_MOVING_GYRO_THRESH[2];
 
           } else {
-
-            for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
-              cliffValsWhileNotMoving_[i] = 0;
-            }
 
             // Is the robot turning at a radically different speed than what it should be experiencing given current wheel speeds?
             // UNEXPECTED_ROTATION_SPEED_THRESH is being used as a multipurpose margin here. Because GetCurrNoSlipBodyRotSpeed() is based

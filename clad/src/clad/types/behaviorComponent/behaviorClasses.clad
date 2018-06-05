@@ -21,6 +21,7 @@ enum uint_8 BehaviorClass {
   AnimSequence,
   AnimSequenceWithFace,
   AnimSequenceWithObject,
+  TextToSpeechLoop,
 
   // basicCubeInteractions
   PickUpCube,
@@ -28,12 +29,14 @@ enum uint_8 BehaviorClass {
   RollBlock,
 
   // basicWorldInteractions
+  ClearChargerArea,
   DriveOffCharger,
   FindFaces,
   FindHome,
   GoHome,
   InteractWithFaces,
   LookAround,
+  MoveHeadToAngle,
   PopAWheelie,
   RequestToGoHome,
   SearchForFace,
@@ -42,12 +45,20 @@ enum uint_8 BehaviorClass {
   TurnToFace,
   WiggleOntoChargerContacts,
 
+  // blackjack
+  BlackJack,
+
   // coordinators
   CoordinateGlobalInterrupts,
+  QuietModeCoordinator,
+
+  // danceToTheBeat
+  DanceToTheBeat,
 
   // devBehaviors
   DevBatteryLogging,
   DevDisplayReadingsOnFace,
+  DevEventSequenceCapture,
   DevImageCapture,
   DevTouchDataCollection,
   DevTurnInPlaceTest,
@@ -149,11 +160,19 @@ enum uint_8 BehaviorClass {
   ReactToSound,
   ReactToUnexpectedMovement,
   ReactToVoiceCommand,
+  StuckOnEdge,
+
+  // robotDrivenDialog
+  PromptUserForVoiceCommand,
+
+  // sdkBehaviors
+  SDKInterface,
 
   // sleeping
   Sleeping,
 
   // timer
+  AdvanceClock,
   ProceduralClock,
   TimerUtilityCoordinator,
 
@@ -163,8 +182,10 @@ enum uint_8 BehaviorClass {
   ReactToTouchPetting,
   ReactToUnclaimedIntent,
   TrackCube,
+  TrackFace,
 
   // weather
+  CoordinateWeather,
   DisplayWeather,
 }
 

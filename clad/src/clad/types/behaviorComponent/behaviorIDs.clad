@@ -16,6 +16,7 @@ enum uint_8 BehaviorID {
   Wait_TestInjectable,
 
   // <root>
+  FindFaces_sdk,
   StackBlocks,
 
   // devBehaviors
@@ -23,8 +24,10 @@ enum uint_8 BehaviorID {
   DevBaseBehavior,
   DevBatteryLogging,
   DevDisplayReadingsOnFace,
+  DevEventSequenceCapture,
   DevImageCapture,
   DevPlannerTest,
+  DevTestPromptUser,
   DevTouchDataCollection,
   DevTurnInPlaceTest,
   DockingTestSimple,
@@ -53,6 +56,7 @@ enum uint_8 BehaviorID {
   ExampleDispatcherScoring,
   ExampleGlobalReactions,
   ExampleProceduralClock,
+  ExampleTextToSpeechLoop,
 
   // examples/globalReactionSubBehaviors
   ExampleFacePositionUpdated,
@@ -79,51 +83,25 @@ enum uint_8 BehaviorID {
   ReactToCubeMoved,
   ReactToPet,
 
-  // singing
-  Singing_AbaDaba,
-  Singing_BeautifulDreamer,
-  Singing_Beethovens5th,
-  Singing_Bingo,
-  Singing_BuffaloGals,
-  Singing_Camptown,
-  Singing_CanCan1,
-  Singing_CanCan2,
-  Singing_DannyBoy,
-  Singing_EntryOfTheGladiators,
-  Singing_FarmerInTheDell,
-  Singing_FrereJacques,
-  Singing_HelloMyBaby,
-  Singing_ItsyBitsySpider,
-  Singing_LaPaloma,
-  Singing_LondonBridge,
-  Singing_MaryHadALittleLamb,
-  Singing_MountainKing,
-  Singing_MuffinMan,
-  Singing_MulberryBush,
-  Singing_MussIDenn,
-  Singing_OdeToJoy,
-  Singing_PachebelCanon,
-  Singing_PopGoesTheWeasel,
-  Singing_RowYourBoat,
-  Singing_Sakura,
-  Singing_SilveryMoon,
-  Singing_TaRaRaBoom,
-  Singing_TakeMeOutToTheBallgame,
-  Singing_TisketTasket,
-  Singing_Toccata,
-  Singing_TurkeyInTheStraw,
-  Singing_TwinkleTwinkle,
-  Singing_VivaldiSpring,
-  Singing_WaterMusic,
-  Singing_WildAboutHarry,
-  Singing_WilliamTell,
-  Singing_YankeeDoodle,
-  Singing_YellowRose,
+  // victorBehaviorTree/blackjack
+  BlackJack,
+  BlackJackHandleRTPResponses,
+  BlackJackHitOrStandPrompt,
+  BlackJackRequestToPlay,
+  BlackJackRequestToPlayAgain,
+  BlackJackTextToSpeech,
 
   // victorBehaviorTree
   ComeHereVoiceCommand,
   CoordinateGlobalInterrupts,
+
+  // victorBehaviorTree/danceToTheBeat
+  DanceToTheBeat,
+
+  // victorBehaviorTree
+  DefaultTextToSpeechLoop,
   DriveOffCharger,
+  DriveOffChargerAnim,
   GlobalInterruptions,
   HighLevelAI,
 
@@ -131,9 +109,8 @@ enum uint_8 BehaviorID {
   ConfirmCharger,
   ConfirmCube,
   Exploring,
-  ExploringDispatcher,
   ExploringExamineObstacle,
-  ExploringFindCharger,
+  ExploringGetIn,
   ExploringVoiceCommand,
 
   // victorBehaviorTree/highLevelDelegates
@@ -141,11 +118,13 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree/highLevelDelegates/getHomeBehaviors
   AcknowledgeCharger,
+  ClearChargerArea,
   FindAndGoToHome,
   FindAndRequestHome,
   FindHome,
   GoHome,
   LowBatteryFindAndGoToHome,
+  RequestHomeBecauseStuck,
   RequestToGoHome,
   WiggleBackOntoChargerFromPlatform,
 
@@ -157,9 +136,6 @@ enum uint_8 BehaviorID {
   LookInPlaceHeadUp,
 
   // victorBehaviorTree/highLevelDelegates/meetVictor
-  EnrollFace,
-  MeetCozmo_FindFaces_Socialize,
-  MeetCozmo_InteractWithFaces,
   MeetVictor,
   RespondToRenameFace,
 
@@ -213,17 +189,30 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree/highLevelDelegates/socialize
   DriveOffChargerIntoSocializing,
-  FindFaces_socialize,
   Socialize,
   SocializeGame,
 
   // victorBehaviorTree/highLevelDelegates
   TrackCube,
+  TrackCubeTest,
+  TrackFaceTest,
 
   // victorBehaviorTree/highLevelDelegates/voiceCommands
+  BlackJackVoiceCommand,
   DoATrickVoiceCommand,
   FistBumpVoiceCommand,
   KeepawayVoiceCommand,
+
+  // victorBehaviorTree
+  ModeSelector,
+
+  // victorBehaviorTree/quietMode
+  BeQuietAnims,
+  BeQuietLoop,
+  QuietMode,
+  QuietModeLowBatteryGoHome,
+  ShutUpAnims,
+  ShutUpMode,
 
   // victorBehaviorTree
   ReactToTouchPetting,
@@ -240,8 +229,11 @@ enum uint_8 BehaviorID {
   ReactToGoodMorning,
   ReactToGoodNight,
   ReactToGreeting,
+  ReactToHello,
   ReactToObstacle,
+  ReactToPickedUp,
   ReactToPlacedOnSlope,
+  ReactToPutDown,
   ReactToRobotOnBack,
   ReactToRobotOnFace,
   ReactToRobotOnSide,
@@ -249,6 +241,10 @@ enum uint_8 BehaviorID {
   ReactToSoundAwake,
   ReactToTriggerDirectionAwake,
   ReactToUnexpectedMovement,
+  StuckOnEdge,
+
+  // victorBehaviorTree/sdkBehaviors
+  SDK0,
 
   // victorBehaviorTree
   SingletonICantDoThat,
@@ -257,6 +253,7 @@ enum uint_8 BehaviorID {
   SingletonCancelTimer,
   SingletonTimerAlreadySet,
   SingletonTimerAntic,
+  SingletonTimerCheckTime,
   SingletonTimerRinging,
   SingletonTimerSet,
   TimerUtilityCoordinator,
@@ -276,6 +273,7 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree/weather
   WeatherResponses,
+  WeatherTextToSpeech,
 }
 
 }

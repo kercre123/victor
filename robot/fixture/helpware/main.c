@@ -147,21 +147,22 @@ int handle_dutprogram_command(const char* cmd, int len) {
   len -= (end-next);
   next = end;
 
-  //2nd arg is 32-bit esn (%08x)
-  errno = 0;
-  unsigned long esn = len > 0 ? strtoul(next, &end, 16) : 0;
-  if( errno != 0 || end <= next || esn > 0xFFFFffff || esn < 0 ) {
-    printf("esn = %lx, errno = %d, end = next+%d\n", esn, errno, end-next );
-    esn = 0;
-    return 2; //report formatting error
-  }
-  printf("esn = %08x\n", (uint32_t)esn);
-  len -= (end-next);
-  next = end;
+  //skip space
+  next++;
+  len--;
+  if( len <= 0 ) //missing ESN param
+    return 917; //ERROR_BAD_ARG
   
-  char argstr[50];
-  snprintf(argstr, sizeof(argstr), "%08x", (uint32_t)esn); //, len > 0 ? len : 0, next); //XXX: tacking on extra args like this doesn't work (spaces do not delimit args in pidopen)
-  return shellcommand((int)timeout_sec, "./headprogram", argstr );
+  //ensure null terminated
+  char argstr[128];
+  if (sizeof(argstr) < len) { len = sizeof(argstr)-1; }
+  memcpy(argstr, next, len);
+  argstr[len]='\0';
+  
+  int retval = shellcommand((int)timeout_sec, "./headprogram", argstr );
+  if( retval >= 100 && retval <= 120 ) //limited range of script errors mapped to fixture error codes
+    retval += 400; //shift to fixture 'headprogram' error range {500-520}
+  return retval;
 }
 
 int handle_shell_timeout_test_command(const char* cmd, int len) {
@@ -473,7 +474,7 @@ int main(int argc, const char* argv[])
     if( !strncmp(argv[x],"/dev/tty",8) )
       tty = argv[x];
   }
-  
+
   printf("serial_init(%s)\n", tty ? tty : FIXTURE_TTY);
   gSerialFd = serial_init( tty ? tty : FIXTURE_TTY, FIXTURE_BAUD);
 

@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_YankeeDoodle",
-  "displayNameKey":"behavior.singing.YankeeDoodle",
-  "requiredUnlockId":"Singing_YankeeDoodle",
-  "audioSwitchGroup":"Cozmo_Sings_80Bpm",
-  "audioSwitch":"Cozmo_Sings_Yankee_Doodle"
-}

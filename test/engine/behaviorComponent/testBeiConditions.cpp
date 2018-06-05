@@ -77,13 +77,13 @@ TEST(BeiConditions, TestBEIConditionFactory)
   auto cond1 = std::make_shared<ConditionLambda>(
     [&val1](BehaviorExternalInterface& behaviorExternalInterface) {
       return val1;
-    });
+    }, "unit_test");
 
   bool val2 = false;
   auto cond2 = std::make_shared<ConditionLambda>(
     [&val2](BehaviorExternalInterface& behaviorExternalInterface) {
       return val2;
-    });
+    }, "unit_test");
 
   Json::Value cond1Config;
   cond1Config["customCondition"] = "cond1";
@@ -218,7 +218,7 @@ TEST(BeiConditions, CreateLambda)
   auto cond = std::make_shared<ConditionLambda>(
     [&val](BehaviorExternalInterface& behaviorExternalInterface) {
       return val;
-    });
+    }, "unit_test");
 
   ASSERT_TRUE( cond != nullptr );
 
@@ -565,7 +565,7 @@ TEST(BeiConditions, CompoundNot)
 
   auto subCond = std::make_shared<ConditionUnitTest>(true);
 
-  auto cond = ConditionCompound::CreateNotCondition( subCond );
+  auto cond = ConditionCompound::CreateNotCondition( subCond, "unit_test" );
 
   EXPECT_EQ(subCond->_initCount, 0);
   EXPECT_EQ(subCond->_setActiveCount, 0);
@@ -618,7 +618,7 @@ TEST(BeiConditions, CompoundAnd)
   auto subCond1 = std::make_shared<ConditionUnitTest>(true);
   auto subCond2 = std::make_shared<ConditionUnitTest>(true);
 
-  auto cond = ConditionCompound::CreateAndCondition( {subCond1, subCond2} );
+  auto cond = ConditionCompound::CreateAndCondition( {subCond1, subCond2}, "unit_test" );
 
   EXPECT_EQ(subCond1->_initCount, 0);
   EXPECT_EQ(subCond1->_setActiveCount, 0);
@@ -684,7 +684,7 @@ TEST(BeiConditions, CompoundOr)
   auto subCond1 = std::make_shared<ConditionUnitTest>(true);
   auto subCond2 = std::make_shared<ConditionUnitTest>(true);
 
-  auto cond = ConditionCompound::CreateOrCondition( {subCond1, subCond2} );
+  auto cond = ConditionCompound::CreateOrCondition( {subCond1, subCond2}, "unit_test" );
 
   EXPECT_EQ(subCond1->_initCount, 0);
   EXPECT_EQ(subCond1->_setActiveCount, 0);
@@ -1195,72 +1195,72 @@ TEST(BeiConditions, UserIntentPending)
   
   // (1) test_user_intent_1  matches the tag
   
-  uic.SetUserIntentPending( USER_INTENT(test_user_intent_1) ); // right intent
+  uic.SetUserIntentPending( USER_INTENT(test_user_intent_1) , UserIntentSource::Voice);  // right intent
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   EXPECT_EQ( cond->GetUserIntentTagSelected(), USER_INTENT(test_user_intent_1) );
   
   
-  uic.ClearUserIntent( USER_INTENT(test_user_intent_1) );
+  uic.DropUserIntent( USER_INTENT(test_user_intent_1) );
   EXPECT_FALSE( cond->AreConditionsMet(bei) ); // no intent
   
   UserIntent_Test_TimeWithUnits timeWithUnits;
-  uic.SetUserIntentPending( UserIntent::Createtest_timeWithUnits(std::move(timeWithUnits)) );
+  uic.SetUserIntentPending( UserIntent::Createtest_timeWithUnits(std::move(timeWithUnits)) , UserIntentSource::Voice); 
   EXPECT_FALSE( cond->AreConditionsMet(bei) ); // wrong intent
-  uic.ClearUserIntent( USER_INTENT(test_timeWithUnits) );
+  uic.DropUserIntent( USER_INTENT(test_timeWithUnits) );
   EXPECT_FALSE( cond->AreConditionsMet(bei) ); // no intent
   
   // (2) set_timer  matches the tag
   
   UserIntent_TimeInSeconds timeInSeconds1; // default
   UserIntent_TimeInSeconds timeInSeconds2{10}; // non default
-  uic.SetUserIntentPending( UserIntent::Createset_timer(std::move(timeInSeconds1)) );
+  uic.SetUserIntentPending( UserIntent::Createset_timer(std::move(timeInSeconds1)) , UserIntentSource::Voice); 
   EXPECT_TRUE( cond->AreConditionsMet(bei) ); // correct intent
   EXPECT_EQ( cond->GetUserIntentTagSelected(), USER_INTENT(set_timer) );
-  uic.ClearUserIntent( USER_INTENT(set_timer) );
+  uic.DropUserIntent( USER_INTENT(set_timer) );
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
-  uic.SetUserIntentPending( UserIntent::Createset_timer(std::move(timeInSeconds2)) );
+  uic.SetUserIntentPending( UserIntent::Createset_timer(std::move(timeInSeconds2)) , UserIntentSource::Voice); 
   EXPECT_TRUE( cond->AreConditionsMet(bei) ); // correct intent
   EXPECT_EQ( cond->GetUserIntentTagSelected(), USER_INTENT(set_timer) );
-  uic.ClearUserIntent( USER_INTENT(set_timer) );
+  uic.DropUserIntent( USER_INTENT(set_timer) );
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
   
   // (3) test_name           matches the tag and name must strictly be empty
   
   UserIntent_Test_Name name1; // default
   UserIntent_Test_Name name2{"whizmo"}; // non default
-  uic.SetUserIntentPending( UserIntent::Createtest_name(std::move(name1)) );
+  uic.SetUserIntentPending( UserIntent::Createtest_name(std::move(name1)) , UserIntentSource::Voice); 
   EXPECT_TRUE( cond->AreConditionsMet(bei) ); // correct intent
   EXPECT_EQ( cond->GetUserIntentTagSelected(), USER_INTENT(test_name) );
-  uic.ClearUserIntent( USER_INTENT(test_name) );
+  uic.DropUserIntent( USER_INTENT(test_name) );
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
-  uic.SetUserIntentPending( UserIntent::Createtest_name(std::move(name2)) );
+  uic.SetUserIntentPending( UserIntent::Createtest_name(std::move(name2)) , UserIntentSource::Voice); 
   EXPECT_FALSE( cond->AreConditionsMet(bei) ); // wrong intent
-  uic.ClearUserIntent( USER_INTENT(test_name) );
+  uic.DropUserIntent( USER_INTENT(test_name) );
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
   
   // (4) test_timeWithUnits  matches the tag and data (60mins)
   
   UserIntent_Test_TimeWithUnits timeWithUnits1{60, UserIntent_Test_Time_Units::m};
   UserIntent_Test_TimeWithUnits timeWithUnits2{20, UserIntent_Test_Time_Units::m};
-  uic.SetUserIntentPending( UserIntent::Createtest_timeWithUnits(std::move(timeWithUnits1)) );
+  uic.SetUserIntentPending( UserIntent::Createtest_timeWithUnits(std::move(timeWithUnits1)) , UserIntentSource::Voice); 
   EXPECT_TRUE( cond->AreConditionsMet(bei) ); // correct intent
   EXPECT_EQ( cond->GetUserIntentTagSelected(), USER_INTENT(test_timeWithUnits) );
-  uic.ClearUserIntent( USER_INTENT(test_timeWithUnits) );
+  uic.DropUserIntent( USER_INTENT(test_timeWithUnits) );
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
-  uic.SetUserIntentPending( UserIntent::Createtest_timeWithUnits(std::move(timeWithUnits2)) );
+  uic.SetUserIntentPending( UserIntent::Createtest_timeWithUnits(std::move(timeWithUnits2)) , UserIntentSource::Voice); 
   EXPECT_FALSE( cond->AreConditionsMet(bei) ); // wrong data
-  uic.ClearUserIntent( USER_INTENT(test_timeWithUnits) );
+  uic.DropUserIntent( USER_INTENT(test_timeWithUnits) );
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
   
   // (5) test_name           matches the tag and lambda must eval (name must be Victor)
   
   UserIntent name5;
   name5.Set_test_name( UserIntent_Test_Name{"Victor"} );
-  uic.SetUserIntentPending( std::move(name5) ); // right intent with right data
+  uic.SetUserIntentPending( std::move(name5) , UserIntentSource::Voice);  // right intent with right data
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   EXPECT_EQ( cond->GetUserIntentTagSelected(), USER_INTENT(test_name) );
-  uic.ClearUserIntent( USER_INTENT(test_name) );
+  uic.DropUserIntent( USER_INTENT(test_name) );
 }
 
 CONSOLE_VAR( unsigned int, kTestBEIConsoleVar, "unit tests", 0);

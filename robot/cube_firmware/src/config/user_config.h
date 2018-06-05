@@ -65,10 +65,10 @@ static const struct advertise_configuration user_adv_conf = {
     .renew_dur = 0,
 
     /// Minimum interval for advertising
-    .intv_min = 160,                   // 100ms (160*0.625ms)
+    .intv_min = 1600,                   // 1s (1600*0.625ms)
 
     /// Maximum interval for advertising
-    .intv_max = 160,                   // 100ms (160*0.625ms)
+    .intv_max = 1600,                   // 1s (1600*0.625ms)
 
     /// Advertising channel map
     .channel_map = 0x7,

@@ -13,9 +13,11 @@
  **/
 
 #include "osState/osState.h"
+#include "util/console/consoleInterface.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
+#include "util/time/universalTime.h"
 
 #include <webots/Supervisor.hpp>
 
@@ -29,29 +31,45 @@
 
 #include <array>
 
+#include <sys/sysctl.h>
+#include <sys/types.h>
+#include <mach/mach.h>
+#include <mach/processor_info.h>
+#include <mach/mach_host.h>
+
 #ifndef SIMULATOR
 #error SIMULATOR should be defined by any target using osState_mac.cpp
 #endif
 
 namespace Anki {
 namespace Cozmo {
-  
+
+CONSOLE_VAR_ENUM(int, kWebvizUpdatePeriod, "OSState", 0, "Off,10ms,100ms,1000ms,10000ms");
+
 namespace {
+  uint32_t kPeriodEnumToMS[] = {0, 10, 100, 1000, 10000};
+
   // Whether or not SetSupervisor() was called
   bool _supervisorIsSet = false;
   webots::Supervisor *_supervisor = nullptr;
-  
+
   RobotID_t _robotID = DEFAULT_ROBOT_ID;
 
-  uint32_t _updatePeriod_ms = 0;
+  // System vars
+  uint32_t _cpuFreq_kHz;      // CPU freq
+  uint32_t _cpuTemp_C;        // Temperature in Celsius
+  float _uptime_s;            // Uptime in seconds
+  float _idleTime_s;          // Idle time in seconds
+  uint32_t _memTotal_kB;      // Total memory in kB
+  uint32_t _memFree_kB;       // Free memory in kB
+  std::vector<std::string> _CPUTimeStats; // CPU time stats lines
 
-  // TODO: Fill this vec with something reasonable if and when
-  //       we ever care to measure CPU stats in sim.
-  std::vector<std::string> _cpu_time_stats_vec = {"cpu 0 1 2 3 4 5 6 7 9 10", 
-                                                  "cpu0 0 1 2 3 4 5 6 7 9 10",
-                                                  "cpu1 0 1 2 3 4 5 6 7 9 10",
-                                                  "cpu2 0 1 2 3 4 5 6 7 9 10",
-                                                  "cpu3 0 1 2 3 4 5 6 7 9 10"};
+  // How often state variables are updated
+  uint32_t _updatePeriod_ms = 0;
+  uint32_t _lastUpdateTime_ms = 0;
+  uint32_t _lastWebvizUpdateTime_ms = 0;
+
+  std::function<void(const Json::Value&)> _webServiceCallback = nullptr;
 
 } // namespace
 
@@ -63,15 +81,21 @@ OSState::OSState()
     // Set RobotID
     const auto* robotIDField = _supervisor->getSelf()->getField("robotID");
     DEV_ASSERT(robotIDField != nullptr, "OSState.Ctor.MissingRobotIDField");
-    _robotID = robotIDField->getSFInt32();    
+    _robotID = robotIDField->getSFInt32();
   }
-  
+
   // Set simulated attributes
   _serialNumString = "12345";
   _osBuildVersion = "12345";
   _ipAddress = "127.0.0.1";
   _ssid = "AnkiNetwork";
+
+  _cpuFreq_kHz = kNominalCPUFreq_kHz;
+  _cpuTemp_C = 0;
+
   _buildSha = ANKI_BUILD_SHA;
+
+  _lastWebvizUpdateTime_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
 }
 
 OSState::~OSState()
@@ -86,11 +110,36 @@ void OSState::SetSupervisor(webots::Supervisor *sup)
 
 void OSState::Update()
 {
-}
+  if (_updatePeriod_ms != 0) {
+    const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+    if (now_ms - _lastUpdateTime_ms > _updatePeriod_ms) {
 
-RobotID_t OSState::GetRobotID() const
-{
-  return _robotID;
+      // Update cpu freq
+      UpdateCPUFreq_kHz();
+
+      // Update temperature reading
+      UpdateTemperature_C();
+
+      _lastUpdateTime_ms = now_ms;
+    }
+  }
+
+  if (kWebvizUpdatePeriod != 0 && _webServiceCallback) {
+    const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+    if (now_ms - _lastWebvizUpdateTime_ms > kPeriodEnumToMS[kWebvizUpdatePeriod]) {
+      UpdateCPUTimeStats();
+
+      Json::Value json;
+      json["deltaTime_ms"] = now_ms - _lastWebvizUpdateTime_ms;
+      auto& usage = json["usage"];
+      for(size_t i = 0; i < _CPUTimeStats.size(); ++i) {
+        usage.append( _CPUTimeStats[i] );
+      }
+      _webServiceCallback(json);
+
+      _lastWebvizUpdateTime_ms = now_ms;
+    }
+  }
 }
 
 void OSState::SetUpdatePeriod(uint32_t milliseconds)
@@ -98,37 +147,149 @@ void OSState::SetUpdatePeriod(uint32_t milliseconds)
   _updatePeriod_ms = milliseconds;
 }
 
-bool OSState::IsCPUThrottling() const
+void OSState::SendToWebVizCallback(const std::function<void(const Json::Value&)>& callback) {
+  _webServiceCallback = callback;
+}
+
+RobotID_t OSState::GetRobotID() const
 {
-  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.IsCPUThrottling.ZeroUpdate");
-  return false;
+  return _robotID;
+}
+
+void OSState::UpdateCPUFreq_kHz() const
+{
+  // Update cpu freq
+  uint32_t frequency;
+  size_t sizeOfFreq = sizeof(frequency);
+  int mib[2] = {CTL_HW, HW_CPU_FREQ};
+
+  if(sysctl(mib, 2, &frequency, &sizeOfFreq, NULL, 0) == 0) {
+    _cpuFreq_kHz = frequency/(1024*1024);
+  } else {
+    _cpuFreq_kHz = kNominalCPUFreq_kHz;
+  }
+}
+
+void OSState::UpdateTemperature_C() const
+{
+  // Update temperature reading
+
+  // 65C: randomly chosen temperature at which throttling does not appear to occur
+  // on physical robot
+  _cpuTemp_C = 65;
+}
+
+void OSState::UpdateUptimeAndIdleTime() const
+{
+  // Update uptime time data, idle time data is not calculated
+  _uptime_s = 0;
+  _idleTime_s = 0;
+
+  struct timeval boottime;
+  size_t sizeOfBoottime = sizeof(boottime);
+  int mib[2] = {CTL_KERN, KERN_BOOTTIME};
+
+  if (sysctl(mib, 2, &boottime, &sizeOfBoottime, NULL, 0) == 0)
+  {
+    time_t bsec = boottime.tv_sec;
+    time_t csec = time(NULL);
+
+    _uptime_s = difftime(csec, bsec);
+  }
+}
+
+void OSState::UpdateMemoryInfo() const
+{
+  // Update total and free memory
+  _memTotal_kB = 0;
+  _memFree_kB = 0;
+
+  struct task_basic_info info;
+  mach_msg_type_number_t sizeOfInfo = sizeof(info);
+
+  kern_return_t kerr = task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t)&info, &sizeOfInfo);
+  if (kerr == KERN_SUCCESS) {
+    _memTotal_kB = static_cast<uint32_t>(info.resident_size / 1024);
+  }
+
+  mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
+  vm_statistics_data_t vmstat;
+
+  kerr = host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&vmstat, &count);
+  if (kerr == KERN_SUCCESS)
+  {
+    _memFree_kB = static_cast<uint32_t>(vmstat.free_count / 1024);
+  }
+}
+
+void OSState::UpdateCPUTimeStats() const
+{
+  // Update CPU time stats lines
+  unsigned int numCPUs;
+  size_t sizeOfNumCPUs = sizeof(numCPUs);
+  int mib[2] = {CTL_HW, HW_NCPU};
+
+  if (sysctl(mib, 2, &numCPUs, &sizeOfNumCPUs, NULL, 0) != 0) {
+    numCPUs = 1;
+  }
+
+  natural_t numCPUsU = 0;
+  processor_info_array_t cpuInfo;
+  mach_msg_type_number_t numCpuInfo;
+
+  kern_return_t kerr = host_processor_info(mach_host_self(), PROCESSOR_CPU_LOAD_INFO, &numCPUsU, &cpuInfo, &numCpuInfo);
+  if (kerr == KERN_SUCCESS) {
+    integer_t total[CPU_STATE_MAX] = {0};
+
+    _CPUTimeStats.resize(numCPUs+1);
+    for (natural_t i = 0; i < numCPUs; ++i) {
+      char temp[79+1];
+      snprintf(temp, sizeof(temp), "CPU%d %d %d %d %d 0 0 0 0 0 0", i, cpuInfo[(CPU_STATE_MAX*i)+CPU_STATE_USER], cpuInfo[(CPU_STATE_MAX*i)+CPU_STATE_NICE], cpuInfo[(CPU_STATE_MAX*i)+CPU_STATE_SYSTEM], cpuInfo[(CPU_STATE_MAX*i)+CPU_STATE_IDLE]);
+      _CPUTimeStats[i+1] = temp;
+
+      total[CPU_STATE_USER] += cpuInfo[(CPU_STATE_MAX*i)+CPU_STATE_USER];
+      total[CPU_STATE_NICE] += cpuInfo[(CPU_STATE_MAX*i)+CPU_STATE_NICE];
+      total[CPU_STATE_SYSTEM] += cpuInfo[(CPU_STATE_MAX*i)+CPU_STATE_SYSTEM];
+      total[CPU_STATE_IDLE] += cpuInfo[(CPU_STATE_MAX*i)+CPU_STATE_IDLE];
+    }
+
+    char temp[79+1];
+    snprintf(temp, sizeof(temp), "CPU %d %d %d %d 0 0 0 0 0 0", total[CPU_STATE_USER], total[CPU_STATE_NICE], total[CPU_STATE_SYSTEM], total[CPU_STATE_IDLE]);
+    _CPUTimeStats[0] = temp;
+  }
 }
 
 uint32_t OSState::GetCPUFreq_kHz() const
 {
-  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.GetCPUFreq_kHz.ZeroUpdate");
-  return kNominalCPUFreq_kHz;
+  if (_updatePeriod_ms == 0) {
+    UpdateCPUFreq_kHz();
+  }
+  return _cpuFreq_kHz;
+}
+
+bool OSState::IsCPUThrottling() const
+{
+  return false;
 }
 
 uint32_t OSState::GetTemperature_C() const
 {
-  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.GetTemperature_C.ZeroUpdate");
-
-  // 65C: randomly chosen temperature at which throttling does not appear to occur
-  // on physical robot
-  return 65;  
+  if (_updatePeriod_ms == 0) {
+    UpdateTemperature_C();
+  }
+  return _cpuTemp_C;
 }
 
 const std::string& OSState::GetSerialNumberAsString()
 {
   return _serialNumString;
 }
-  
+
 const std::string& OSState::GetOSBuildVersion()
 {
   return _osBuildVersion;
 }
-  
+
 const std::string& OSState::GetBuildSha()
 {
   return _buildSha;
@@ -159,9 +320,30 @@ uint64_t OSState::GetWifiRxBytes() const
   return 0;
 }
 
+float OSState::GetUptimeAndIdleTime(float &idleTime_s) const
+{
+  if (_updatePeriod_ms == 0) {
+    UpdateUptimeAndIdleTime();
+  }
+  idleTime_s = _idleTime_s;
+  return _uptime_s;
+}
+
+uint32_t OSState::GetMemoryInfo(uint32_t &freeMem_kB) const
+{
+  if (_updatePeriod_ms == 0) {
+    UpdateMemoryInfo();
+  }
+  freeMem_kB = _memFree_kB;
+  return _memTotal_kB;
+}
+
 const std::vector<std::string>& OSState::GetCPUTimeStats() const
 {
-  return _cpu_time_stats_vec;
+  if (_updatePeriod_ms == 0) {
+    UpdateCPUTimeStats();
+  }
+  return _CPUTimeStats;
 }
 
 const std::string& OSState::GetRobotName() const
@@ -175,6 +357,10 @@ bool OSState::IsInRecoveryMode()
   return false;
 }
 
+bool OSState::HasValidEMR() const
+{
+  return false;
+}
+
 } // namespace Cozmo
 } // namespace Anki
-

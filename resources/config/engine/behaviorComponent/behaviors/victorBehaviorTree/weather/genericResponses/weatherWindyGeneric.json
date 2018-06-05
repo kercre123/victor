@@ -2,7 +2,7 @@
   "behaviorClass": "DisplayWeather",
   "behaviorID" : "WeatherWindyGeneric",
 
-  "animationName" : "",
+  "animationName" : "anim_weather_windy_01",
   "imageLayouts" : [
     "WeatherCondWindy_01"
   ],

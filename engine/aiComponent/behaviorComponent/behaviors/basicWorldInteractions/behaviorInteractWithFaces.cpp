@@ -94,6 +94,9 @@ const char* const kMaxTimeToTrackFaceKey = "maxTimeToTrackFace_s";
 const char* const kClampSmallAnglesKey = "clampSmallAngles";
 const char* const kMinClampPeriodKey = "minClampPeriod_s";
 const char* const kMaxClampPeriodKey = "maxClampPeriod_s";
+
+static const float kTrackingTimeout_s = 2.5f;
+
 }
 
 
@@ -396,6 +399,7 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace()
     trackAction->SetPanTolerance(DEG_TO_RAD(kInteractWithFaces_MinTrackingTiltAngle_deg));
     trackAction->SetClampSmallAnglesToTolerances(_iConfig.clampSmallAngles);
     trackAction->SetClampSmallAnglesPeriod(_iConfig.minClampPeriod_s, _iConfig.maxClampPeriod_s);
+    trackAction->SetUpdateTimeout(kTrackingTimeout_s);
     action->AddAction(trackAction);
   }
   

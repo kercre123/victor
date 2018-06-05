@@ -25,14 +25,13 @@ class ConditionTimerInRange : public IBEICondition
 public:
   explicit ConditionTimerInRange(const Json::Value& config);
 
-  // virtual void ResetInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   
   // By default the timer will be reset when SetActive is called. 
   // This behavior can be modified from JSON or consoleVar
   virtual void SetActiveInternal(BehaviorExternalInterface& bei, bool setActive) override;
   
-  virtual DebugFactorsList GetDebugFactors() const override;
+  virtual void BuildDebugFactorsInternal( BEIConditionDebugFactors& factors ) const override;
   
   // for use when _manualResetOnly
   void Reset();

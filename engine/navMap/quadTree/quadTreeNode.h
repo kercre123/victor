@@ -22,6 +22,8 @@
 #include "engine/navMap/memoryMap/data/memoryMapData.h"
 
 #include "coretech/common/engine/math/fastPolygon2d.h"
+#include "coretech/common/engine/math/axisAlignedHyperCube.h"
+#include "coretech/common/engine/math/ball.h"
 
 #include "util/helpers/noncopyable.h"
 
@@ -82,6 +84,7 @@ public:
 
   // Builds a quad from our coordinates
   Quad2f MakeQuadXY(const float padding_mm=0.0f) const;
+  const AxisAlignedQuad& GetBoundingBox() const { return _boundingBox; }
   
   // return if the node contains any useful data
   bool IsEmptyType() const { return (IsSubdivided() || (_content.data->type == EContentType::Unknown));  }
@@ -96,7 +99,7 @@ public:
   void Fold(FoldFunctorConst accumulator, FoldDirection dir = FoldDirection::BreadthFirst) const;
 
   template <class ConvexType>
-  typename std::enable_if<std::is_base_of<ConvexPolygon, ConvexType>::value>::type
+  typename std::enable_if<std::is_base_of<ConvexPointSet2f, ConvexType>::value>::type
   Fold(FoldFunctorConst accumulator, const ConvexType& region, FoldDirection dir = FoldDirection::BreadthFirst) const;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -114,43 +117,12 @@ public:
   // NOTE: this method is expected to NOT clear the vector before adding neighbors
   void AddSmallestNeighbors(EDirection direction, EClockDirection iterationDirection, NodeCPtrVector& neighbors) const;
  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Collision checks
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // calculates if the polygon intersects the node
-  bool Intersects(const FastPolygon& poly) const;
-  
-  // returns true if this node FULLY contains the given poly
-  bool Contains(const FastPolygon& poly) const;
-
-  // returns true if the given poly FULLY contains this node (this assumes `poly` is convex)
-  bool IsContainedBy(const ConvexPointSet2f& set) const;
   
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Types
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  struct AxisAlignedQuad : public ConvexPointSet<2, f32> {
-    AxisAlignedQuad(const Point2f& p, const Point2f& q);
-
-    // check if a point is contained in AABB
-    virtual bool Contains(const Point2f& p) const override;
-
-    // check if this quad is fully in the halfplane defined by l
-    virtual bool InHalfPlane(const Halfplane2f& H) const override;
-            bool InNegativeHalfPlane(const Line2f& l) const;
-
-    // sorted in CW order for convenience
-    inline const Point2f& GetLowerLeft()  const { return corners[0]; }
-    inline const Point2f& GetUpperLeft()  const { return corners[1]; }
-    inline const Point2f& GetUpperRight() const { return corners[2]; }
-    inline const Point2f& GetLowerRight() const { return corners[3]; }
-    
-    std::vector<const Point2f> corners;
-  };
   
   // info about moving towards a neighbor
   struct MoveInfo {
@@ -196,7 +168,7 @@ private:
   void Fold(FoldFunctor accumulator, FoldDirection dir = FoldDirection::BreadthFirst);
   
   template <class ConvexType>
-  typename std::enable_if<std::is_base_of<ConvexPolygon, ConvexType>::value>::type
+  typename std::enable_if<std::is_base_of<ConvexPointSet2f, ConvexType>::value>::type
   Fold(FoldFunctor accumulator, const ConvexType& region, FoldDirection dir = FoldDirection::BreadthFirst);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -268,13 +240,13 @@ private:
 */
 
 template <class ConvexType>
-inline typename std::enable_if<std::is_base_of<ConvexPolygon, ConvexType>::value>::type
+inline typename std::enable_if<std::is_base_of<ConvexPointSet2f, ConvexType>::value>::type
 QuadTreeNode::Fold(FoldFunctor accumulator, const ConvexType& region, FoldDirection dir)
 {
-  if ( Intersects(region) )
+  if ( _boundingBox.Intersects(region) )
   {    
     // check if we can stop doing overlap checks
-    if ( IsContainedBy(region) )
+    if ( _boundingBox.IsContainedBy(region) )
     {
       Fold(accumulator, dir);
     } else {
@@ -307,13 +279,13 @@ QuadTreeNode::Fold(FoldFunctor accumulator, const ConvexType& region, FoldDirect
 }
 
 template <class ConvexType>
-inline typename std::enable_if<std::is_base_of<ConvexPolygon, ConvexType>::value>::type
+inline typename std::enable_if<std::is_base_of<ConvexPointSet2f, ConvexType>::value>::type
 QuadTreeNode::Fold(FoldFunctorConst accumulator, const ConvexType& region, FoldDirection dir) const
 {
-  if ( Intersects(region) )
+  if ( _boundingBox.Intersects(region) )
   {    
     // check if we can stop doing overlap checks
-    if ( IsContainedBy(region) )
+    if ( _boundingBox.IsContainedBy(region) )
     {
       Fold(accumulator, dir);
     } else {

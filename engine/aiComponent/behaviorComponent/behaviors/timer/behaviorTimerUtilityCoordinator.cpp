@@ -18,14 +18,16 @@
 #include "coretech/common/engine/jsonTools.h"
 
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/timerUtility.h"
-#include "engine/aiComponent/timerUtilityDevFunctions.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimGetInLoop.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimGetInLoop.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorAdvanceClock.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "engine/aiComponent/behaviorComponent/userIntentData.h"
+#include "engine/aiComponent/timerUtility.h"
+#include "engine/aiComponent/timerUtilityDevFunctions.h"
 
 #include "util/console/consoleInterface.h"
 
@@ -240,7 +242,6 @@ void BehaviorTimerUtilityCoordinator::DevAdvanceAnticBySeconds(int seconds)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorTimerUtilityCoordinator::LifetimeParams::LifetimeParams()
 {
-  setTimerIntent = std::make_unique<UserIntent>();
   shouldForceAntic = false;
 }
 
@@ -298,14 +299,21 @@ void BehaviorTimerUtilityCoordinator::InitBehavior()
   BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(SingletonTimerAntic),
                                  BEHAVIOR_CLASS(ProceduralClock),
                                  _iParams.timerAnticBehavior);
+                                
+  BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(SingletonTimerCheckTime),
+                                 BEHAVIOR_CLASS(ProceduralClock),
+                                 _iParams.timerCheckTimeBehavior);
 
   BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(SingletonTimerRinging),
                                  BEHAVIOR_CLASS(AnimGetInLoop),
                                  _iParams.timerRingingBehavior);
 
+  BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(SingletonCancelTimer),
+                                 BEHAVIOR_CLASS(AdvanceClock),
+                                 _iParams.cancelTimerBehavior);
+
   _iParams.timerAlreadySetBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(SingletonTimerAlreadySet));
   _iParams.iCantDoThatBehavior     = BC.FindBehaviorByID(BEHAVIOR_ID(SingletonICantDoThat));
-  _iParams.cancelTimerBehavior     = BC.FindBehaviorByID(BEHAVIOR_ID(SingletonCancelTimer));
   SetupTimerBehaviorFunctions();
 }
 
@@ -319,6 +327,7 @@ void BehaviorTimerUtilityCoordinator::GetAllDelegates(std::set<IBehavior*>& dele
   delegates.insert(_iParams.timerAlreadySetBehavior.get());
   delegates.insert(_iParams.iCantDoThatBehavior.get());
   delegates.insert(_iParams.cancelTimerBehavior.get());
+  delegates.insert(_iParams.timerCheckTimeBehavior.get());
 }
 
 
@@ -326,9 +335,10 @@ void BehaviorTimerUtilityCoordinator::GetAllDelegates(std::set<IBehavior*>& dele
 bool BehaviorTimerUtilityCoordinator::WantsToBeActivatedBehavior() const 
 {
   auto& uic = GetBehaviorComp<UserIntentComponent>();
-  const bool setTimerWantsToRun = uic.IsUserIntentPending(USER_INTENT(set_timer), *_lParams.setTimerIntent);
+  const bool setTimerWantsToRun = uic.IsUserIntentPending(USER_INTENT(set_timer));
   const bool timerShouldRing    = TimerShouldRing();
   const bool cancelTimerPending = uic.IsUserIntentPending(USER_INTENT(cancel_timer));
+  const bool checkTimePending = uic.IsUserIntentPending(USER_INTENT(check_timer));
   
   // Todo - need to have a distinction of polite interrupt on min time vs max time
   // for now, just use max as a hard cut criteria
@@ -340,18 +350,18 @@ bool BehaviorTimerUtilityCoordinator::WantsToBeActivatedBehavior() const
   }
 
 
-  return cancelTimerPending || setTimerWantsToRun || timeToRunAntic || timerShouldRing || _lParams.shouldForceAntic;
+  return cancelTimerPending || setTimerWantsToRun || 
+         timeToRunAntic || timerShouldRing || 
+         _lParams.shouldForceAntic || checkTimePending;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTimerUtilityCoordinator::OnBehaviorActivated() 
 {
-  auto* persistIntentData       = _lParams.setTimerIntent.release();
   bool  persistShouldForceAntic = _lParams.shouldForceAntic;
   _lParams = LifetimeParams();
 
-  _lParams.setTimerIntent.reset(persistIntentData);
   _lParams.shouldForceAntic = persistShouldForceAntic;
 }
 
@@ -376,6 +386,7 @@ void BehaviorTimerUtilityCoordinator::BehaviorUpdate()
   CheckShouldSetTimer();
   CheckShouldCancelTimer();
   CheckShouldPlayAntic();
+  CheckShouldShowTimeRemaining();
   
   _lParams.shouldForceAntic = false;
 }
@@ -412,9 +423,9 @@ void BehaviorTimerUtilityCoordinator::CheckShouldSetTimer()
 {
   auto& uic = GetBehaviorComp<UserIntentComponent>();
   if(uic.IsUserIntentPending(USER_INTENT(set_timer))){
-    uic.ClearUserIntent(USER_INTENT(set_timer));
+    UserIntentPtr intentData = SmartActivateUserIntent(USER_INTENT(set_timer));
 
-    int requestedTime_s = _lParams.setTimerIntent->Get_set_timer().time_s;
+    int requestedTime_s = intentData->intent.Get_set_timer().time_s;
     const bool isTimerInRange = (_iParams.minValidTimer_s <= requestedTime_s) && 
                                 (requestedTime_s          <= _iParams.maxValidTimer_s);
 
@@ -435,13 +446,34 @@ void BehaviorTimerUtilityCoordinator::CheckShouldCancelTimer()
 {
   auto& uic = GetBehaviorComp<UserIntentComponent>();
   if(uic.IsUserIntentPending(USER_INTENT(cancel_timer))){
-    uic.ClearUserIntent(USER_INTENT(cancel_timer));
+    SmartActivateUserIntent(USER_INTENT(cancel_timer));
+
     // Cancel a timer if it is set, otherwise play "I Cant Do That"
-    if(GetTimerUtility().GetTimerHandle() != nullptr){
+    auto handle = GetTimerUtility().GetTimerHandle();
+    if(handle != nullptr){
+      const auto timeRemaining_s = handle->GetTimeRemaining_s();
+      const auto displayTime = _iParams.cancelTimerBehavior->GetTimeDisplayClock_sec();
+      _iParams.cancelTimerBehavior->SetAdvanceClockParams(timeRemaining_s, 0, displayTime);
+      
       GetTimerUtility().ClearTimer();
       TransitionToCancelTimer();
     }else{
       TransitionToNoTimerToCancel();
+    }
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorTimerUtilityCoordinator::CheckShouldShowTimeRemaining()
+{
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
+  if(uic.IsUserIntentPending(USER_INTENT(check_timer))){
+    SmartActivateUserIntent(USER_INTENT(check_timer));
+    if(auto handle = GetTimerUtility().GetTimerHandle()){
+      TransitionToPlayAntic();
+    }else{
+      TransitionToInvalidTimerRequest();
     }
   }
 }
@@ -477,6 +509,14 @@ void BehaviorTimerUtilityCoordinator::TransitionToPlayAntic()
   _iParams.anticTracker->PlayingAntic(GetBEI());
   _iParams.timerAnticBehavior->WantsToBeActivated();
   DelegateNow(_iParams.timerAnticBehavior.get());
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorTimerUtilityCoordinator::TransitionToShowTimeRemaining()
+{
+  _iParams.timerAlreadySetBehavior->WantsToBeActivated();
+  DelegateNow(_iParams.timerAlreadySetBehavior.get());
 }
 
 
@@ -536,89 +576,93 @@ TimerUtility& BehaviorTimerUtilityCoordinator::GetTimerUtility() const
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTimerUtilityCoordinator::SetupTimerBehaviorFunctions() const
-{
-  auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
-  
-  auto startTimerCallback = [&timerUtility, this](){
-    timerUtility.StartTimer(_lParams.setTimerIntent->Get_set_timer().time_s);
+void BehaviorTimerUtilityCoordinator::SetupTimerBehaviorFunctions()
+{  
+  auto startTimerCallback = [this](){
+    auto& uic = GetBehaviorComp<UserIntentComponent>();
+    UserIntentPtr intentData = uic.GetUserIntentIfActive(USER_INTENT(set_timer));
+
+    if( ANKI_VERIFY(intentData != nullptr &&
+                    (intentData->intent.GetTag() == USER_INTENT(set_timer)),
+                    "BehaviorTimerUtilityCoordinator.SetShowClockCallback.IncorrectIntent",
+                    "Active user intent should have been set_timer but wasn't") ) {
+      
+      auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
+      timerUtility.StartTimer(intentData->intent.Get_set_timer().time_s);
+    }
   };
 
   _iParams.setTimerBehavior->SetShowClockCallback(startTimerCallback);
 
-  std::map<Vision::SpriteBoxName, std::function<int()>> timerFuncs;
-  // Tens Digit (left of colon)
-  {
-    auto tenMinsFunc = [&timerUtility](){
-      if(auto timerHandle = timerUtility.GetTimerHandle()){
-        if(timerHandle->GetDisplayHoursRemaining() > 0){
-          const int hoursRemaining = timerHandle->GetDisplayHoursRemaining();
-          return hoursRemaining/10;
+  _iParams.setTimerBehavior->SetGetDigitFunction(BuildTimerFunction());
+  _iParams.timerAnticBehavior->SetGetDigitFunction(BuildTimerFunction());
+  _iParams.timerCheckTimeBehavior->SetGetDigitFunction(BuildTimerFunction());
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorProceduralClock::GetDigitsFunction BehaviorTimerUtilityCoordinator::BuildTimerFunction() const
+{
+  auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
+  return [&timerUtility](const int offset){
+    std::map<Vision::SpriteBoxName, int> outMap;
+    if(auto timerHandle = timerUtility.GetTimerHandle()){
+      const bool displayingHoursOnScreen = timerHandle->GetDisplayHoursRemaining() > 0;
+      const int timeRemaining_s = timerHandle->GetTimeRemaining_s() - offset;
+      
+      const int hoursRemaining = TimerHandle::SecondsToDisplayHours(timeRemaining_s);
+      const int minsRemaining = TimerHandle::SecondsToDisplayMinutes(timeRemaining_s);
+      const int secsRemaining = TimerHandle::SecondsToDisplaySeconds(timeRemaining_s);
+
+      // Tens Digit (left of colon)
+      {
+        int tensDigit = 0;
+        if(displayingHoursOnScreen){
+          tensDigit =  hoursRemaining/10;
         }else{
-          const int minsRemaining = timerHandle->GetDisplayMinutesRemaining();
-          return minsRemaining/10;
+          tensDigit = minsRemaining/10;
         }
-      }else{
-        return 0;
+        outMap.emplace(std::make_pair(Vision::SpriteBoxName::TensLeftOfColon, tensDigit));
       }
-    };
-    timerFuncs.emplace(std::make_pair(Vision::SpriteBoxName::TensLeftOfColon, tenMinsFunc));
-  }
-  // Ones Digit (left of colon)
-  {
-    auto oneMinsFunc = [&timerUtility](){
-      if(auto timerHandle = timerUtility.GetTimerHandle()){
-        if(timerHandle->GetDisplayHoursRemaining() > 0){
-          const int hoursRemaining = timerHandle->GetDisplayHoursRemaining();
-          return hoursRemaining % 10;
+      
+      // Ones Digit (left of colon)
+      {
+        int onesDigit = 0;
+        if(displayingHoursOnScreen){
+          onesDigit = hoursRemaining % 10;
         }else{
-          const int minsRemaining = timerHandle->GetDisplayMinutesRemaining();
-          return minsRemaining % 10;
+          onesDigit = minsRemaining % 10;
         }
-      }else{
-        return 0;
+        outMap.emplace(std::make_pair(Vision::SpriteBoxName::OnesLeftOfColon, onesDigit));
       }
-    };
-    timerFuncs.emplace(std::make_pair(Vision::SpriteBoxName::OnesLeftOfColon, oneMinsFunc));
-  }
-  // Tens Digit (right of colon)
-  {
-    auto tenSecsFunc = [&timerUtility](){
-      if(auto timerHandle = timerUtility.GetTimerHandle()){
-        if(timerHandle->GetDisplayHoursRemaining() > 0){
-          const int minsRemaining = timerHandle->GetDisplayMinutesRemaining();
-          return minsRemaining/10;
+
+      // Tens Digit (right of colon)
+      {
+        int tensDigit = 0;
+        if(displayingHoursOnScreen){
+          tensDigit = minsRemaining/10;
         }else{
-          const int secsRemaining = timerHandle->GetDisplaySecondsRemaining();
-          return secsRemaining/10;
+          tensDigit = secsRemaining/10;
         }
-      }else{
-        return 0;
+        outMap.emplace(std::make_pair(Vision::SpriteBoxName::TensRightOfColon, tensDigit));
       }
-    };
-    timerFuncs.emplace(std::make_pair(Vision::SpriteBoxName::TensRightOfColon, tenSecsFunc));
-  }
-  // Ones Digit (right of colon)
-  {
-    auto oneSecsFunc = [&timerUtility](){
-      if(auto timerHandle = timerUtility.GetTimerHandle()){
-        if(timerHandle->GetDisplayHoursRemaining() > 0){
-          const int minsRemaining = timerHandle->GetDisplayMinutesRemaining();
-          return minsRemaining % 10;
+
+      // Ones Digit (right of colon)
+      {
+        int onesDigit = 0;
+        if(displayingHoursOnScreen){
+          onesDigit = minsRemaining % 10;
         }else{
-          const int secsRemaining = timerHandle->GetDisplaySecondsRemaining();
-          return secsRemaining % 10;
+          onesDigit = secsRemaining % 10;
         }
-      }else{
-        return 0;
+        outMap.emplace(std::make_pair(Vision::SpriteBoxName::OnesRightOfColon, onesDigit));
       }
-    };
-    timerFuncs.emplace(std::make_pair(Vision::SpriteBoxName::OnesRightOfColon, oneSecsFunc));
-  }
-  
-  auto intentionalCopy = timerFuncs;
-  _iParams.setTimerBehavior->SetDigitFunctions(std::move(timerFuncs));
-  _iParams.timerAnticBehavior->SetDigitFunctions(std::move(intentionalCopy));
+
+      return outMap;
+    }else{
+      return outMap;
+    }
+  };
 }
 
 

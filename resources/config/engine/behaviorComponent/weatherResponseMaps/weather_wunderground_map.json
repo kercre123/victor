@@ -1,0 +1,378 @@
+// Values from https://www.wunderground.com/weather/api/d/docs?d=resources/phrase-glossary#current_condition_phrases
+[
+  {
+    "APIValue" : "Light Drizzle",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Heavy Drizzle",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Light Rain",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Heavy Rain",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Light Snow",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Heavy Snow",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Light Snow Grains",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Heavy Snow Grains",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Light Ice Crystals",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Heavy Ice Crystals",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Light Ice Pellets",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Heavy Ice Pellets",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Light Hail",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Heavy Hail",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Light Mist",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Heavy Mist",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Light Fog",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Heavy Fog",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Light Fog Patches",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Heavy Fog Patches",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Light Smoke",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Heavy Smoke",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Light Volcanic Ash",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Heavy Volcanic Ash",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Light Widespread Dust",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Heavy Widespread Dust",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Light Sand",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Heavy Sand",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Light Haze",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Heavy Haze",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Light Spray",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Heavy Spray",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Light Dust Whirls",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Heavy Dust Whirls",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Light Sandstorm",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Heavy Sandstorm",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Light Low Drifting Snow",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Heavy Low Drifting Snow",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Light Low Drifting Widespread Dust",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Heavy Low Drifting Widespread Dust",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Light Low Drifting Sand",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Heavy Low Drifting Sand",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Light Blowing Snow",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Heavy Blowing Snow",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Light Blowing Widespread Dust",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Heavy Blowing Widespread Dust",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Light Blowing Sand",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Heavy Blowing Sand",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Light Rain Mist",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Heavy Rain Mist",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Light Rain Showers",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Heavy Rain Showers",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Light Snow Showers",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Heavy Snow Showers",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Light Snow Blowing Snow Mist",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Heavy Snow Blowing Snow Mist",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Light Ice Pellet Showers",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Heavy Ice Pellet Showers",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Light Hail Showers",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Heavy Hail Showers",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Light Small Hail Showers",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Heavy Small Hail Showers",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Light Thunderstorm",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Heavy Thunderstorm",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Light Thunderstorms and Rain",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Heavy Thunderstorms and Rain",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Light Thunderstorms and Snow",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Heavy Thunderstorms and Snow",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Light Thunderstorms and Ice Pellets",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Heavy Thunderstorms and Ice Pellets",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Light Thunderstorms with Hail",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Heavy Thunderstorms with Hail",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Light Thunderstorms with Small Hail",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Heavy Thunderstorms with Small Hail",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Light Freezing Drizzle",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Heavy Freezing Drizzle",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Light Freezing Rain",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Heavy Freezing Rain",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Light Freezing Fog",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Heavy Freezing Fog",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Patches of Fog",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Shallow Fog",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Partial Fog",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Overcast",
+    "CladType" : "Cloudy"
+  },
+  // Duplicate of accuweather
+  //{
+  //  "APIValue" : "Clear",
+  //  "CladType" : "Sunny"
+  //},
+  // Duplicate of accuweather
+  //{
+  //  "APIValue" : "Partly Cloudy",
+  //  "CladType" : "Cloudy"
+  //},
+  // Duplicate of accuweather
+  //{
+  //  "APIValue" : "Mostly Cloudy",
+  //  "CladType" : "Cloudy"
+  //},
+  {
+    "APIValue" : "Scattered Clouds",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Small Hail",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Squalls",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Funnel Cloud",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Unknown Precipitation",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Unknown",
+    "CladType" : "Sunny"
+  }
+]

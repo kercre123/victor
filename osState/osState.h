@@ -4,8 +4,8 @@
  * Authors: Kevin Yoon
  * Created: 2017-12-11
  *
- * Description: 
- * 
+ * Description:
+ *
  *   Keeps track of OS-level state, mostly for development/debugging purposes
  *
  * Copyright: Anki, Inc. 2017
@@ -17,21 +17,28 @@
 
 #include "coretech/common/shared/types.h"
 #include "util/singleton/dynamicSingleton.h"
+#include "json/json.h"
 
+#include <functional>
 #include <string>
 
-// Forward declaration
+// Forward declarations
 namespace webots {
   class Supervisor;
+}
+namespace Anki {
+  namespace Victor {
+    class DASManager;
+  }
 }
 
 namespace Anki {
 namespace Cozmo {
-  
+
 class OSState : public Util::DynamicSingleton<OSState>
 {
   ANKIUTIL_FRIEND_SINGLETON(OSState);
-    
+
 public:
 
 ~OSState();
@@ -44,22 +51,24 @@ public:
 #endif
 
   void Update();
-  
+
   RobotID_t GetRobotID() const;
 
   // Set how often state should be updated.
   // Affects how often the freq and temperature is updated.
-  // Default is 0 ms which means never update. 
-  // You should leave this at zero only if you don't 
+  // Default is 0 ms which means never update.
+  // You should leave this at zero only if you don't
   // ever care about CPU freq and temperature.
   void SetUpdatePeriod(uint32_t milliseconds);
 
-  // Returns true if CPU frequncy falls below kNominalCPUFreq_kHz
+  void SendToWebVizCallback(const std::function<void(const Json::Value&)>& callback);
+
+  // Returns true if CPU frequency falls below kNominalCPUFreq_kHz
   bool IsCPUThrottling() const;
 
   // Returns current CPU frequency
   uint32_t GetCPUFreq_kHz() const;
-  
+
   // Returns temperature in Celsius
   uint32_t GetTemperature_C() const;
 
@@ -101,25 +110,32 @@ public:
 
   // Returns the os build version (time of build)
   const std::string& GetOSBuildVersion();
-  
+
   const std::string& GetBuildSha();
 
   // Returns the semi-unique name of this robot, Vector_XYXY
   // Where X is a letter and Y is a digit
   // The name can change over the lifetime of the robot
   const std::string& GetRobotName() const;
-  
+
   // Returns whether or not the robot has booted in recovery mode
   // which is done by holding the backpack button down for ~12 seconds
   // while robot is on charger
   bool IsInRecoveryMode();
+
+protected:
+   // Return true if robot has a valid EMR.
+   // This function is "off limits" to normal robot services
+   // but allows vic-dasmgr to check for ESN without crashing.
+  friend class Anki::Victor::DASManager;
+  bool HasValidEMR() const;
 
 private:
   // private ctor
   OSState();
 
   void UpdateWifiInfo();
-  
+
   // Reads the current CPU frequency
   void UpdateCPUFreq_kHz() const;
 
@@ -147,7 +163,7 @@ private:
   std::string _buildSha        = "";
 
 }; // class OSState
-  
+
 } // namespace Cozmo
 } // namespace Anki
 

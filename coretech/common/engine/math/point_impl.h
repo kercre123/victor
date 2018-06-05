@@ -73,6 +73,20 @@ namespace Anki {
     }
   }
   
+  template<PointDimType N, typename T>
+  Point<N,T>::Point(const CladPoint2d& cladPoint)
+  : Point(cladPoint.x, cladPoint.y)
+  {
+    static_assert(N==2, "This constructor only works for 2D points.");
+  }
+  
+  template<PointDimType N, typename T>
+  Point<N,T>::Point(const CladPoint3d& cladPoint)
+  : Point(cladPoint.x, cladPoint.y, cladPoint.z)
+  {
+    static_assert(N==3, "This constructor only works for 3D points.");
+  }
+  
 #if __cplusplus < 201103L
 
   template<PointDimType N, typename T>
@@ -175,6 +189,27 @@ namespace Anki {
     Point<N, T_other> to_cast;
     to_cast.SetCast(*this);
     return to_cast;
+  }
+  
+  template<PointDimType N, typename T>
+  CladPoint2d Point<N,T>::ToCladPoint2d() const
+  {
+    static_assert(N==2, "Only 2D points can be converted directly to CladPoint2d");
+    
+    const CladPoint2d cladPoint(static_cast<float>(this->x()),
+                                static_cast<float>(this->y()));
+    return cladPoint;
+  }
+  
+  template<PointDimType N, typename T>
+  CladPoint3d Point<N,T>::ToCladPoint3d() const
+  {
+    static_assert(N==3, "Only 3D points can be converted directly to CladPoint3d");
+    
+    const CladPoint3d cladPoint(static_cast<float>(this->x()),
+                                static_cast<float>(this->y()),
+                                static_cast<float>(this->z()));
+    return cladPoint;
   }
   
   template<PointDimType N, typename T>

@@ -8,8 +8,6 @@
   "behaviorClass": "LookForFaceAndCube",
   "behaviorID": "PutDownDispatch_LookForFaceAndCube",
   
-  "displayNameKey":"behavior.LookForFaceAndCube",
-  
   // behavior configuration
 
   "bodyTurnSpeed_degPerSec": 180,

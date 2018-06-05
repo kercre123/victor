@@ -44,7 +44,7 @@ public:
     return pathToResource(Scope::CurrentGameLog, path);
   }
 
-  // returns a key for the current platform/OS (eg: osx, android, ios)
+  // returns a key for the current platform/OS (eg: osx, android, vicos, ios)
   static std::string GetOSPlatformString();
 
   // reads resource as json file. returns true if successful.

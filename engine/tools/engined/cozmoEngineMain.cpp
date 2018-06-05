@@ -22,7 +22,6 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/templateHelpers.h"
 
-#include "util/logging/androidLogPrintLogger_vicos.h"
 #include "util/logging/channelFilter.h"
 #include "util/logging/iEventProvider.h"
 #include "util/logging/iFormattedLoggerProvider.h"
@@ -40,7 +39,7 @@
 #endif
 
 #include "anki/cozmo/shared/factory/emrHelper.h"
-#include "platform/victorCrashReports/google_breakpad.h"
+#include "platform/victorCrashReports/victorCrashReporter.h"
 
 #if !defined(DEV_LOGGER_ENABLED)
   #if FACTORY_TEST
@@ -224,16 +223,16 @@ static int cozmo_start(const Json::Value& configuration)
 
   // Log a test event
   {
-     DAS_MSG(ezRef, "engine.main.hello", "Example event");
-     FILL_ITEM(s1, "str1", "Example string 1");
-     FILL_ITEM(s2, "str2", "Example string 2");
-     FILL_ITEM(s3, "str3", "Example string 3");
-     FILL_ITEM(s4, "str4", "Example string 4");
-     FILL_ITEM(i1, 1, "Example int 1");
-     FILL_ITEM(i2, 2, "Example int 2");
-     FILL_ITEM(i3, 3, "Example int 3");
-     FILL_ITEM(i4, 4, "Example int 4");
-     SEND_DAS_MSG_EVENT();
+     DASMSG(engine_main_hello, "engine.main.hello", "Example event");
+     DASMSG_SET(s1, "str1", "Example string 1");
+     DASMSG_SET(s2, "str2", "Example string 2");
+     DASMSG_SET(s3, "str3", "Example string 3");
+     DASMSG_SET(s4, "str4", "Example string 4");
+     DASMSG_SET(i1, 1, "Example int 1");
+     DASMSG_SET(i2, 2, "Example int 2");
+     DASMSG_SET(i3, 3, "Example int 3");
+     DASMSG_SET(i4, 4, "Example int 4");
+     DASMSG_SEND();
   }
 
   LOG_INFO("cozmo_start", "Creating engine");
@@ -296,7 +295,7 @@ int main(int argc, char* argv[])
   signal(SIGTERM, sigterm);
 
   static char const* filenamePrefix = "engine";
-  GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
+  Anki::Victor::InstallCrashReporter(filenamePrefix);
 
   char cwd[PATH_MAX] = { 0 };
   (void)getcwd(cwd, sizeof(cwd));
@@ -398,6 +397,7 @@ int main(int argc, char* argv[])
   int res = cozmo_start(config);
   if (0 != res) {
       printf("failed to start engine\n");
+      Anki::Victor::UninstallCrashReporter();
       exit(res);
   }
 
@@ -414,7 +414,7 @@ int main(int argc, char* argv[])
   LOG_INFO("CozmoEngineMain.main", "Stopping engine");
   res = cozmo_stop();
 
-  GoogleBreakpad::UnInstallGoogleBreakpad();
+  Anki::Victor::UninstallCrashReporter();
 
   return res;
 }

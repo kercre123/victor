@@ -42,9 +42,10 @@ ConditionTimedDedup::ConditionTimedDedup(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionTimedDedup::ConditionTimedDedup(IBEIConditionPtr subCondition, float dedupInterval_ms)
+ConditionTimedDedup::ConditionTimedDedup(IBEIConditionPtr subCondition, float dedupInterval_ms, const std::string& ownerDebugLabel)
 : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::TimedDedup))
 {
+  SetOwnerDebugLabel( ownerDebugLabel );
   _instanceParams.subCondition     = subCondition;
   _instanceParams.dedupInterval_ms = dedupInterval_ms;
   ANKI_VERIFY(_instanceParams.subCondition, "ConditionTimedDedup.Constructor.Direct.NullSubCondition", "" );

@@ -53,6 +53,10 @@ namespace Anki {
       f32 PATH_DIST_OFFSET_CAP_MM = 20;
       f32 PATH_ANGULAR_OFFSET_CAP_RAD = 0.5;
 
+      // Whether or not the steeringController should be actively
+      // trying to drive wheels.
+      bool enable_ = true;
+
       SteerMode currSteerMode_ = SM_PATH_FOLLOW;
 
       // Direct drive
@@ -146,9 +150,23 @@ namespace Anki {
     void ManageDirectDrive();
 
 
-    void ReInit()
+    void Enable()
     {
+      if (!enable_) {
+        WheelController::Enable();
+        enable_ = true;
+      }
     }
+
+    void Disable()
+    {
+      if (enable_) {
+        ExecuteDirectDrive(0,0);
+        WheelController::Disable();
+        enable_ = false;
+      }
+    }
+
 
     //sets the steering controller constants
     void SetGains(f32 k1, f32 k2, f32 dockPathDistOffsetCap_mm, f32 dockPathAngularOffsetCap_rad)
@@ -204,6 +222,10 @@ namespace Anki {
     //This manages at a high level what the steering controller needs to do (steer, use open loop, etc.)
     void Manage()
     {
+      if (!enable_) {
+        return;
+      }
+
 #if(DEBUG_STEERING_CONTROLLER)
       AnkiDebug( "SteeringController.Manage.Mode", "%d", currSteerMode_);
 #endif
@@ -471,6 +493,11 @@ namespace Anki {
 
     void ExecuteDirectDrive(f32 left_vel, f32 right_vel, f32 left_accel, f32 right_accel)
     {
+      if (!enable_) {
+        AnkiDebug("SteeringController.ExecuteDirectDrive.Disabled", "lspeed: %f mm/s, rspeed: %f mm/s", left_vel, right_vel);
+        return;
+      }
+
       //AnkiDebug( "DIRECT DRIVE", "%d: %f   %f  (%f %f)", HAL::GetTimeStamp(), left_vel, right_vel, left_accel, right_accel);
       SetSteerMode(SM_DIRECT_DRIVE);
 
@@ -552,6 +579,11 @@ namespace Anki {
 
     void ExecutePointTurn(f32 angularVel, f32 angularAccel)
     {
+      if (!enable_) {
+        AnkiDebug("SteeringController.ExecutePointTurn.Disabled", "Speed: %f rad/s", angularVel);
+        return;
+      }
+
       AnkiDebug( "SteeringController.ExecutePointTurn_2.Params", "%d: vel %f, accel %f",
                 HAL::GetTimeStamp(), RAD_TO_DEG_F32(angularVel), RAD_TO_DEG_F32(angularAccel));
       
@@ -591,6 +623,11 @@ namespace Anki {
 
     void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel, f32 angleTolerance, bool useShortestDir, uint16_t numHalfRevolutions)
     {
+      if (!enable_) {
+        AnkiDebug("SteeringController.ExecutePointTurn.Disabled", "targetAngle: %f rad, Speed: %f rad/s", targetAngle, maxAngularVel);
+        return;
+      }
+
       AnkiDebug( "SteeringController.ExecutePointTurn.Params", "%d: target %f, vel %f, accel %f, decel %f, tol %f, shortestDir %d, numHalfRevs %d",
                 HAL::GetTimeStamp(),
                 RAD_TO_DEG_F32(targetAngle),
@@ -828,6 +865,11 @@ namespace Anki {
     
     void ExecuteDriveCurvature(f32 speed, f32 curvatureRadius_mm, f32 accel)
     {
+      if (!enable_) {
+        AnkiDebug("SteeringController.ExecuteDriveCurvature.Disabled", "Speed: %f mm/s, curvature: %f mm", speed, curvatureRadius_mm);
+        return;
+      }
+
       // Only care about magnitude of accel
       accel = ABS(accel);
       

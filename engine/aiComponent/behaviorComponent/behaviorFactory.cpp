@@ -14,15 +14,18 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimSequence.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimSequenceWithFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimSequenceWithObject.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorPickUpCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorPutDownBlock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorRollBlock.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorClearChargerArea.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorDriveOffCharger.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorFindFaces.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorFindHome.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorGoHome.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorInteractWithFaces.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorLookAround.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorMoveHeadToAngle.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorPopAWheelie.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorRequestToGoHome.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorSearchForFace.h"
@@ -30,9 +33,13 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorTurn.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorTurnToFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorWiggleOntoChargerContacts.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/blackjack/behaviorBlackJack.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateGlobalInterrupts.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorQuietModeCoordinator.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/danceToTheBeat/behaviorDanceToTheBeat.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevBatteryLogging.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevDisplayReadingsOnFace.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevEventSequenceCapture.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevImageCapture.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTouchDataCollection.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTurnInPlaceTest.h"
@@ -106,7 +113,11 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToSound.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUnexpectedMovement.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorStuckOnEdge.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/robotDrivenDialog/behaviorPromptUserForVoiceCommand.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/sdkBehaviors/behaviorSDKInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/sleeping/behaviorSleeping.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorAdvanceClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h"
@@ -114,6 +125,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToTouchPetting.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToUnclaimedIntent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorTrackCube.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorTrackFace.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/weather/behaviorCoordinateWeather.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/weather/behaviorDisplayWeather.h"
 
 #include "clad/types/behaviorComponent/behaviorTypes.h"
@@ -165,6 +178,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::TextToSpeechLoop:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorTextToSpeechLoop(config));
+      break;
+    }
+    
     case BehaviorClass::PickUpCube:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorPickUpCube(config));
@@ -180,6 +199,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::RollBlock:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorRollBlock(config));
+      break;
+    }
+    
+    case BehaviorClass::ClearChargerArea:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorClearChargerArea(config));
       break;
     }
     
@@ -216,6 +241,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::LookAround:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorLookAround(config));
+      break;
+    }
+    
+    case BehaviorClass::MoveHeadToAngle:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorMoveHeadToAngle(config));
       break;
     }
     
@@ -261,9 +292,27 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::BlackJack:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorBlackJack(config));
+      break;
+    }
+    
     case BehaviorClass::CoordinateGlobalInterrupts:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorCoordinateGlobalInterrupts(config));
+      break;
+    }
+    
+    case BehaviorClass::QuietModeCoordinator:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorQuietModeCoordinator(config));
+      break;
+    }
+    
+    case BehaviorClass::DanceToTheBeat:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDanceToTheBeat(config));
       break;
     }
     
@@ -276,6 +325,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::DevDisplayReadingsOnFace:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDevDisplayReadingsOnFace(config));
+      break;
+    }
+    
+    case BehaviorClass::DevEventSequenceCapture:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDevEventSequenceCapture(config));
       break;
     }
     
@@ -717,9 +772,33 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::StuckOnEdge:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorStuckOnEdge(config));
+      break;
+    }
+    
+    case BehaviorClass::PromptUserForVoiceCommand:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPromptUserForVoiceCommand(config));
+      break;
+    }
+    
+    case BehaviorClass::SDKInterface:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSDKInterface(config));
+      break;
+    }
+    
     case BehaviorClass::Sleeping:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorSleeping(config));
+      break;
+    }
+    
+    case BehaviorClass::AdvanceClock:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorAdvanceClock(config));
       break;
     }
     
@@ -762,6 +841,18 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::TrackCube:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorTrackCube(config));
+      break;
+    }
+    
+    case BehaviorClass::TrackFace:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorTrackFace(config));
+      break;
+    }
+    
+    case BehaviorClass::CoordinateWeather:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorCoordinateWeather(config));
       break;
     }
     

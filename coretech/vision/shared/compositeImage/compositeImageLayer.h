@@ -67,7 +67,9 @@ public:
 
   LayerName        GetLayerName() const { return _layerName;}
   const LayoutMap& GetLayoutMap() const { return _layoutMap;}
+  LayoutMap& GetLayoutMap()             { return _layoutMap;}
   const ImageMap&  GetImageMap()  const { return _imageMap;}
+  ImageMap&  GetImageMap()              { return _imageMap;}
 
   // Returns true if the spritebox maps to a sprite sequence and the name of that sequence has been set
   bool GetSpriteSequenceName(SpriteBoxName sbName, Vision::SpriteName& sequenceName)  const;
@@ -111,16 +113,21 @@ struct CompositeImageLayer::SpriteBox{
   , renderConfig(renderConfig)
   , topLeftCorner(topLeftCorner)
   , width(width)
-  , height(height){}
+  , height(height){
+    ValidateRenderConfig();
+  }
 
   SpriteBox(const SerializedSpriteBox& spriteBox)
   : spriteBoxName(spriteBox.name)
   , renderConfig(spriteBox.renderConfig)
   , topLeftCorner(spriteBox.topLeftX, spriteBox.topLeftY)
   , width(spriteBox.width)
-  , height(spriteBox.height){}
+  , height(spriteBox.height){
+    ValidateRenderConfig();
+  }
 
   SerializedSpriteBox Serialize() const;
+  bool ValidateRenderConfig() const;
 
   SpriteBoxName          spriteBoxName;
   // When the render method is custom hue a hue/saturation value of 0,0 
@@ -142,6 +149,8 @@ struct CompositeImageLayer::SpriteEntry{
               Vision::SpriteName spriteName);
 
   SpriteEntry(Vision::SpriteSequence&& sequence);
+  SpriteEntry(Vision::SpriteHandle spriteHandle);
+
           
   bool operator == (const SpriteEntry& other) const;
   bool operator != (const SpriteEntry& other) const{ return !(*this == other);}

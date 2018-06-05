@@ -40,6 +40,7 @@
 #include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -59,6 +60,8 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/imageTypes.h"
+
+#include "aiComponent/beiConditions/conditions/conditionEyeContact.h"
 
 #include "opencv2/highgui/highgui.hpp"
 
@@ -97,10 +100,12 @@ namespace Cozmo {
     
   CONSOLE_VAR(bool, kEnableMirrorMode,              "Vision.General", false);
   CONSOLE_VAR(bool, kDisplayDetectionsInMirrorMode, "Vision.General", false); // objects, faces, markers
+  CONSOLE_VAR(bool, kDisplayEyeContactInMirrorMode, "Vision.General", false);
+  CONSOLE_VAR(f32,  kMirrorModeGamma,               "Vision.General", 1.f);
   
   // Hack to continue drawing detected objects for a bit after they are detected
   // since object detection is slow
-  CONSOLE_VAR(u32, kKeepDrawingDetectionsFor_ms,   "Vision.General", 500);
+  CONSOLE_VAR(u32, kKeepDrawingSalientPointsFor_ms, "Vision.General", 150);
 
   namespace JsonKey
   {
@@ -430,7 +435,7 @@ namespace Cozmo {
     }
 
     if (!_enabled) {
-      PRINT_CH_INFO("VisionComponent", "VisionComponent.Update.NotEnabled", "");
+      PRINT_PERIODIC_CH_INFO(200, "VisionComponent", "VisionComponent.Update.NotEnabled", "If persistent, camera calibration is probably missing");
       return;
     }
 
@@ -445,7 +450,8 @@ namespace Cozmo {
     {
       // We don't yet have a next image. Get one from camera.
       const bool gotImage = CaptureImage(_bufferedImg);
-
+      _hasStartedCapturingImages = true;
+      
       if(gotImage)
       {
         DEV_ASSERT(!_bufferedImg.IsEmpty(), "VisionComponent.Update.EmptyImageAfterCapture");
@@ -552,12 +558,14 @@ namespace Cozmo {
 
             // Use gamma to make it easier to see
             static std::array<u8,256> gammaLUT{};
-            if(gammaLUT.back() == 0) {
-              const f32 gamma = 1.f / 2.2f;
+            static f32 currentGamma = 0.f;
+            if(!Util::IsFltNear(currentGamma, kMirrorModeGamma)) {
+              currentGamma = kMirrorModeGamma;
+              const f32 invGamma = 1.f / currentGamma;
               const f32 divisor = 1.f / 255.f;
               for(s32 value=0; value<256; ++value)
               {
-                gammaLUT[value] = std::round(255.f * std::powf((f32)value * divisor, gamma));
+                gammaLUT[value] = std::round(255.f * std::powf((f32)value * divisor, invGamma));
               }
             }
 
@@ -990,7 +998,7 @@ namespace Cozmo {
         tryAndReport(&VisionComponent::UpdateImageQuality,        VisionMode::CheckingQuality);
         tryAndReport(&VisionComponent::UpdateWhiteBalance,        VisionMode::CheckingWhiteBalance);
         tryAndReport(&VisionComponent::UpdateLaserPoints,         VisionMode::DetectingLaserPoints);
-        tryAndReport(&VisionComponent::UpdateDetectedObjects,     VisionMode::Count); // Use Count here to always call UpdateDetectedObjects
+        tryAndReport(&VisionComponent::UpdateSalientPoints,       VisionMode::Count); // Use Count here to always call UpdateSalientPoints
         tryAndReport(&VisionComponent::UpdateVisualObstacles,     VisionMode::DetectingVisualObstacles);
 
         // Display any debug images left by the vision system
@@ -1051,9 +1059,8 @@ namespace Cozmo {
         }
 
         // Store frame rate and last image processed time. Time should only move forward.
-        // NOTE: Object detection runs asynchronously, so we ignore those results for this
-        //       purpose.
-        if(!result.modesProcessed.IsBitFlagSet(VisionMode::DetectingGeneralObjects))
+        // NOTE: Neural nets run asynchronously, so we ignore those results for this purpose.
+        if(!result.modesProcessed.IsBitFlagSet(VisionMode::RunningNeuralNet))
         {
           DEV_ASSERT(result.timestamp >= _lastProcessedImageTimeStamp_ms, "VisionComponent.UpdateAllResults.BadTimeStamp");
           _processingPeriod_ms = result.timestamp - _lastProcessedImageTimeStamp_ms;
@@ -1108,29 +1115,44 @@ namespace Cozmo {
     return rect;
   }
   
+  template<typename T>
+  static Point<2,T> MirrorPointHelper(const Point<2,T>& pt)
+  {
+    // TODO: figure out original image resolution?
+    constexpr f32 xmax = (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
+    constexpr f32 heightScale = (f32)FACE_DISPLAY_HEIGHT / (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT;
+    constexpr f32 widthScale  = (f32)FACE_DISPLAY_WIDTH / (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
+    
+    const Point<2,T> pt_mirror(widthScale*(xmax - pt.x()), pt.y()*heightScale);
+    return pt_mirror;
+  }
+  
   static Quad2f DisplayMirroredQuadHelper(const Quad2f& quad)
   {
     // Mirror x coordinates, swap left/right points, and scale for each point in the quad:
-    
-    const f32 xmax = (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH; // TODO: figure out original image resolution?
-    const f32 heightScale = (f32)FACE_DISPLAY_HEIGHT / (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT;
-    const f32 widthScale  = (f32)FACE_DISPLAY_WIDTH / (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
-    
-    const Point2f topLeft( widthScale*(xmax - quad.GetTopRight().x()), heightScale*quad.GetTopRight().y() );
-    const Point2f topRight( widthScale*(xmax - quad.GetTopLeft().x()), heightScale*quad.GetTopLeft().y()  );
-    
-    const Point2f btmLeft(  widthScale*(xmax - quad.GetBottomRight().x()), heightScale*quad.GetBottomRight().y() );
-    const Point2f btmRight( widthScale*(xmax - quad.GetBottomLeft().x()),  heightScale*quad.GetBottomLeft().y()  );
-    
-    const Quad2f quad_mirrored(topLeft, btmLeft, topRight, btmRight);
+    const Quad2f quad_mirrored(MirrorPointHelper(quad.GetTopRight()),
+                               MirrorPointHelper(quad.GetBottomRight()),
+                               MirrorPointHelper(quad.GetTopLeft()),
+                               MirrorPointHelper(quad.GetBottomLeft()));
     
     return quad_mirrored;
+  }
+  
+  template<typename T>
+  static Polygon<2,T> DisplayMirroredPolyHelper(const Polygon<2,T>& poly)
+  {
+    Polygon<2,T> poly_mirrored;
+    for(auto & pt : poly)
+    {
+      poly_mirrored.emplace_back(MirrorPointHelper(pt));
+    }
+    
+    return poly_mirrored;
   }
 
   Result VisionComponent::UpdateVisionMarkers(const VisionProcessingResult& procResult)
   {
     Result lastResult = RESULT_OK;
-
 
     std::list<Vision::ObservedMarker> observedMarkers;
 
@@ -1315,6 +1337,26 @@ namespace Cozmo {
             img.DrawText({1.f, img.GetNumRows()-1}, name, NamedColors::YELLOW, 0.6f, true);
           }
         };
+
+        AddDrawScreenModifier(modFcn);
+      }
+    }
+
+    if(kDisplayEyeContactInMirrorMode)
+    {
+      const u32 maxTimeSinceSeenFaceToLook_ms = ConditionEyeContact::GetMaxTimeSinceTrackedFaceUpdated_ms();
+      const bool making_eye_contact = _robot->GetFaceWorld().IsMakingEyeContact(maxTimeSinceSeenFaceToLook_ms);
+      if(making_eye_contact)
+      {
+        std::function<void (Vision::ImageRGB&)> modFcn = [](Vision::ImageRGB& img)
+        {
+          // Put eye contact indicator right in the middle
+          const f32 x = .5f * (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
+          const f32 y = .5f * (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT;
+          const f32 width = .2f * (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
+          const f32 height = .2f * (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT;
+          img.DrawFilledRect(DisplayMirroredRectHelper(x, y, width, height), NamedColors::YELLOW);
+        };
         
         AddDrawScreenModifier(modFcn);
       }
@@ -1365,55 +1407,62 @@ namespace Cozmo {
     return RESULT_OK;
   } // UpdateMotionCentroid()
 
-  Result VisionComponent::UpdateDetectedObjects(const VisionProcessingResult& procResult)
+  Result VisionComponent::UpdateSalientPoints(const VisionProcessingResult& procResult)
   {
     TimeStamp_t currentTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
-    auto iter = _detectedObjectsToDraw.begin();
-    while(iter != _detectedObjectsToDraw.end() && iter->first < currentTime_ms - kKeepDrawingDetectionsFor_ms)
+    auto iter = _salientPointsToDraw.begin();
+    while(iter != _salientPointsToDraw.end() && iter->first < currentTime_ms - kKeepDrawingSalientPointsFor_ms)
     {
-      iter = _detectedObjectsToDraw.erase(iter);
+      iter = _salientPointsToDraw.erase(iter);
     }
 
-    if(procResult.modesProcessed.IsBitFlagSet(VisionMode::DetectingGeneralObjects))
+    if(procResult.modesProcessed.IsBitFlagSet(VisionMode::RunningNeuralNet))
     {
-      for(auto const& detectedObject : procResult.generalObjects)
+      for(auto const& detectedObject : procResult.salientPoints)
       {
-        using namespace ExternalInterface;
-        _robot->Broadcast(MessageEngineToGame(RobotObservedGenericObject(detectedObject)));
-
-        _detectedObjectsToDraw.push_back({currentTime_ms, detectedObject});
+        // TODO: Notify behaviors somehow
+        _salientPointsToDraw.push_back({currentTime_ms, detectedObject});
       }
     }
 
-    const s32 textHeight = 14;
-    s32 offset = textHeight;
     s32 colorIndex = 0;
-    for(auto const& objectToDraw : _detectedObjectsToDraw)
+    for(auto const& salientPointToDraw : _salientPointsToDraw)
     {
-      const auto& object = objectToDraw.second;
+      const auto& object = salientPointToDraw.second;
 
-      const Rectangle<s32> rect(object.img_rect.x_topLeft, object.img_rect.y_topLeft,
-                                object.img_rect.width, object.img_rect.height);
-      ColorRGBA color = ColorRGBA::CreateFromColorIndex(colorIndex++);
-      _vizManager->DrawCameraRect(rect, color);
-      const std::string caption(object.name + "[" + std::to_string((s32)std::round(100.f*object.score))
+      const Poly2f poly(object.shape);
+      const ColorRGBA color = (object.description.empty() ? NamedColors::RED : ColorRGBA::CreateFromColorIndex(colorIndex++));
+      _vizManager->DrawCameraPoly(poly, color);
+      const std::string caption(object.description + "[" + std::to_string((s32)std::round(100.f*object.score))
                                 + "] t:" + std::to_string(object.timestamp));
-      _vizManager->DrawCameraText(rect.GetTopLeft().CastTo<float>(), caption, color);
+      _vizManager->DrawCameraText(Point2f(object.x_img, object.y_img), caption, color);
       
       if(kDisplayDetectionsInMirrorMode)
       {
-        const std::string str(object.name + ":" + std::to_string((s32)std::round(object.score*100.f)));
-        const auto& rect = object.img_rect;
-        std::function<void (Vision::ImageRGB&)> modFcn = [str,offset,rect,color](Vision::ImageRGB& img)
+        const Point2f centroid(object.x_img, object.y_img);
+        PRINT_NAMED_INFO("VisionComponent.UpdateSalientPoints.MirrorMode",
+                         "Drawing %s poly with %d points. Centroid: (%.2f,%.2f)",
+                         EnumToString(object.salientType), (int)poly.size(), centroid.x(), centroid.y());
+        std::string str(object.description);
+        if(!str.empty())
         {
-          img.DrawText({1.f, offset}, str, NamedColors::YELLOW, 0.6f, true);
-          img.DrawRect(DisplayMirroredRectHelper(rect.x_topLeft, rect.y_topLeft, rect.width, rect.height), color);
+          str += ":" + std::to_string((s32)std::round(object.score*100.f));
+        }
+        std::function<void (Vision::ImageRGB&)> modFcn = [str,centroid,poly,color](Vision::ImageRGB& img)
+        {
+          const Point2f mirroredCentroid = MirrorPointHelper(centroid);
+          if(!str.empty())
+          {
+            const bool kDropShadow = true;
+            const bool kCentered = true;
+            img.DrawText(mirroredCentroid, str, NamedColors::YELLOW, 0.6f, kDropShadow, 1, kCentered);
+          }
+          img.DrawFilledCircle(mirroredCentroid, color, 3);
+          img.DrawPoly(DisplayMirroredPolyHelper(poly), color, 2);
         };
 
         AddDrawScreenModifier(modFcn);
-
-        offset += textHeight;
       }
     }
 
@@ -2312,7 +2361,14 @@ namespace Cozmo {
     // Pair this name and ID in the vision system
     Lock();
     _visionSystem->AssignNameToFace(faceID, name, mergeWithID);
+    int numTotal = static_cast<int>(_visionSystem->GetEnrolledNames().size());
     Unlock();
+    {
+      DASMSG(vision_enrolled_names_new, "vision.enrolled_names.new", "A face was assigned a name");
+      DASMSG_SET(i1, faceID, "The face ID (int)");
+      DASMSG_SET(i2, numTotal, "total number of enrolled faces");
+      DASMSG_SEND();
+    }
   }
 
   void VisionComponent::SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
@@ -2327,6 +2383,7 @@ namespace Cozmo {
   {
     Lock();
     Result result = _visionSystem->EraseFace(faceID);
+    int numRemaining = static_cast<int>(_visionSystem->GetEnrolledNames().size());
     Unlock();
     if(RESULT_OK == result) {
       // Update robot
@@ -2336,6 +2393,12 @@ namespace Cozmo {
       msg.faceID  = faceID;
       msg.name    = "";
       _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+      {
+        DASMSG(vision_enrolled_names_erase, "vision.enrolled_names.erase", "An enrolled face/name was erased");
+        DASMSG_SET(i1, faceID, "The face ID (int)");
+        DASMSG_SET(i2, numRemaining, "total number of remaining enrolled faces");
+        DASMSG_SEND();
+      }
       return RESULT_OK;
     } else {
       return RESULT_FAIL;
@@ -2368,12 +2431,20 @@ namespace Cozmo {
     Vision::RobotRenamedEnrolledFace renamedFace;
     Lock();
     Result result = _visionSystem->RenameFace(faceID, oldName, newName, renamedFace);
+    int numTotal = static_cast<int>(_visionSystem->GetEnrolledNames().size());
     Unlock();
 
     if(RESULT_OK == result)
     {
       SaveFaceAlbumToRobot();
       _robot->Broadcast(ExternalInterface::MessageEngineToGame( std::move(renamedFace) ));
+      
+      {
+        DASMSG(vision_enrolled_names_modify, "vision.enrolled_names.modify", "An enrolled face/name was modified");
+        DASMSG_SET(i1, faceID, "The face ID (int)");
+        DASMSG_SET(i2, numTotal, "total number of enrolled faces");
+        DASMSG_SEND();
+      }
     }
 
     return result;
@@ -2481,6 +2552,8 @@ namespace Cozmo {
        !_visionSystem->IsGainValid(gainG) ||
        !_visionSystem->IsGainValid(gainB))
     {
+      PRINT_PERIODIC_CH_INFO(100, "VisionComponent", "VisionComponent.SetWhiteBalance.InvalidGains",
+                             "gainR=%f gainG=%f gainB=%f", gainR, gainG, gainB);
       return;
     }
 
@@ -2699,7 +2772,8 @@ namespace Cozmo {
 
   void VisionComponent::SetSaveImageParameters(const ImageSendMode saveMode,
                                                const std::string& path,
-                                               const int8_t onRobotQuality)
+                                               const int8_t onRobotQuality,
+                                               const Vision::ImageCache::Size& saveSize)
   {
     if(nullptr != _visionSystem)
     {
@@ -2708,7 +2782,8 @@ namespace Cozmo {
       const std::string fullPath = Util::FileUtils::FullFilePath({cachePath, "images", path});
       _visionSystem->SetSaveParameters(saveMode,
                                        fullPath,
-                                       onRobotQuality);
+                                       onRobotQuality,
+                                       saveSize);
 
       if(saveMode != ImageSendMode::Off)
       {

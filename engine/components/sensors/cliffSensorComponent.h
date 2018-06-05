@@ -66,12 +66,11 @@ public:
   bool IsCliffSensorEnabled() const { return _enableCliffSensor; }
   void SetEnableCliffSensor(const bool val) { _enableCliffSensor = val; }
   
+  // Cliff detection based on RobotState
   bool IsCliffDetected() const { return _cliffDetectedFlags.AreAnyFlagsSet(); }
-  bool IsCliffDetected(CliffSensor sensor) const;
-  
-  void SetCliffDetectedFlags(const uint8_t cliffDetectedFlags) { _cliffDetectedFlags.SetFlags(cliffDetectedFlags); }
+  bool IsCliffDetected(CliffSensor sensor) const { return _cliffDetectedFlags.IsBitFlagSet(sensor); }
   uint8_t GetCliffDetectedFlags() const { return _cliffDetectedFlags.GetFlags(); }
-  
+
   bool IsCliffDetectedStatusBitOn() const { return _cliffDetectedStatusBitOn; }
   
   // Adjusts cliff threshold if necessary

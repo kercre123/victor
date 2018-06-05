@@ -1,0 +1,6 @@
+{
+  "behaviorClass": "ClearChargerArea",
+  "behaviorID": "ClearChargerArea",
+
+  "maxNumAttempts" : 3
+}

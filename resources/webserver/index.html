@@ -28,10 +28,13 @@
 
     var allowConsoleVarsPage = true;
     var allowPerfPage = true;
-    var perfAutoUpdate = false;
+    var perfAutoUpdate = true;
     var perfAutoUpdatePeriod_ms = 1000;
     var perfAutoUpdatePeriodMin_ms = 250;   // Minimum auto update period
     var perfAutoUpdateTimerId = 0;
+    var perfRequestInProgress = false;
+    var perfRequestQueued = false;
+    var perfSavedTriggeredByTimer = false;
 
     var perfItems = [
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:1500000, desc:"CPU freq",        units:"kHz" },
@@ -56,15 +59,21 @@
         '3':{ prevUsedTime:0, prevTotalTime:0 }
     };
 
-    var procAutoUpdate = false;
+    var procAutoUpdate = true;
     var procAutoUpdatePeriod_ms = 1000;
     var procAutoUpdatePeriodMin_ms = 1000;   // Minimum auto update period
     var procAutoUpdateTimerId = 0;
+    var procRequestInProgress = false;
+    var procRequestQueued = false;
+    var procSavedTriggeredByTimer = false;
 
-    var engineAutoUpdate = false;
+    var engineAutoUpdate = true;
     var engineAutoUpdatePeriod_ms = 250;
     var engineAutoUpdatePeriodMin_ms = 250;   // Minimum auto update period
     var engineAutoUpdateTimerId = 0;
+    var engineRequestInProgress = false;
+    var engineRequestQueued = false;
+    var engineSavedTriggeredByTimer = false;
 
     var engineItems = [
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:5,      desc:"Battery (filtered)",        units:"volts" },
@@ -169,7 +178,7 @@
                 $("#consolevars_page_disabled").show();
             }
         } else if (pageName == "page_perf") {
-            if (allowPerfPage && !connectedToWebotsSim) {
+            if (allowPerfPage) {
                 UpdatePerfHeader();
                 $("#perf_page_disabled").hide();
                 $("#perf_page_disabled_webots").hide();
@@ -195,27 +204,15 @@
             }
             else {                
                 $("#perf_main_section").hide();
-                if (connectedToWebotsSim) {
-                    $("#perf_page_disabled_webots").show();
-                    $("#perf_page_disabled").hide();
-                }
-                else {
-                    $("#perf_page_disabled_webots").hide();
-                    $("#perf_page_disabled").show();
-                }
+                $("#perf_page_disabled_webots").hide();
+                $("#perf_page_disabled").show();
             }
         } else if (pageName == "page_processes") {
-            if (!connectedToWebotsSim) {
-                UpdateProcHeader();
-                $("#proc_page_disabled_webots").hide();
-                if (procAutoUpdate) {
-                    // When entering processes page and auto-update is on, do the first update immediately
-                    procAutoUpdateTimerId = setTimeout(SendProcUpdateRequest, 0, true);
-                }
-            }
-            else {
-                $("#proc_main_section").hide();
-                $("#proc_page_disabled_webots").show();
+            UpdateProcHeader();
+            $("#proc_page_disabled_webots").hide();
+            if (procAutoUpdate) {
+                // When entering processes page and auto-update is on, do the first update immediately
+                procAutoUpdateTimerId = setTimeout(SendProcUpdateRequest, 0, true);
             }
         } else if (pageName == "page_engine") {
             if (whichWebServer == whichWebServerEnum.ENGINE) {
@@ -275,6 +272,12 @@
     }
 
     function SendPerfUpdateRequest(triggeredByTimer) {
+        if (perfRequestInProgress) {
+            perfRequestQueued = true;
+            perfSavedTriggeredByTimer = triggeredByTimer;
+            return;
+        }
+        perfRequestInProgress = true;
         var whichStats = "";
         var numItems = perfItems.length;
         for (var i = 0; i < numItems; i++) {
@@ -301,6 +304,11 @@
                     }
                 }
             }
+            perfRequestInProgress = false;
+            if (perfRequestQueued) {
+                perfRequestQueued = false;
+                SendPerfUpdateRequest(perfSavedTriggeredByTimer);
+            }
         });
         if (perfAutoUpdate && triggeredByTimer) {
             perfAutoUpdateTimerId = setTimeout(SendPerfUpdateRequest, perfAutoUpdatePeriod_ms, true);
@@ -319,6 +327,7 @@
         graph.progressbar( "option", "max", totalMem_kB );
     }
 
+    // http://www.linuxhowtos.org/System/procstat.htm
     function CPUTimeInfo(payload, itemIndex) {
         var whichCPU = payload.charAt(3);
         payload = payload.substring(5); // Strip cpu name and space(s)
@@ -389,6 +398,12 @@
         });
     }
     function SendProcUpdateRequest(triggeredByTimer) {
+        if (procRequestInProgress) {
+            procRequestQueued = true;
+            procSavedTriggeredByTimer = triggeredByTimer;
+            return;
+        }
+        procRequestInProgress = true;
         var query = "";
         $('#table_processes tr').each(function() {
             if (query != "") {
@@ -401,6 +416,11 @@
             for (var i = 0; i < payload.length; i++) {
                 var procData = payload[i].split('=');
                 $('#' + procData[0]).find('#status').html(procData[1]);
+            }
+            procRequestInProgress = false;
+            if (procRequestQueued) {
+                procRequestQueued = false;
+                SendProcUpdateRequest(procSavedTriggeredByTimer);
             }
         });
         if (procAutoUpdate && triggeredByTimer) {
@@ -436,6 +456,12 @@
     }
 
     function SendEngineUpdateRequest(triggeredByTimer) {
+        if (engineRequestInProgress) {
+            engineRequestQueued = true;
+            engineSavedTriggeredByTimer = triggeredByTimer;
+            return;
+        }
+        engineRequestInProgress = true;
         var whichStats = "";
         var numItems = engineItems.length;
         for (var i = 0; i < numItems; i++) {
@@ -461,6 +487,11 @@
                         }
                     }
                 }
+            }
+            engineRequestInProgress = false;
+            if (engineRequestQueued) {
+                engineRequestQueued = false;
+                SendEngineUpdateRequest(engineSavedTriggeredByTimer);
             }
         });
         if (engineAutoUpdate && triggeredByTimer) {

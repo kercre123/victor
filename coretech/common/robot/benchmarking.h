@@ -21,10 +21,19 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "coretech/common/robot/config.h"
 #include "coretech/common/robot/fixedLengthList_declarations.h"
 
+#if !defined(ANKI_EMBEDDED_BENCHMARK)
+#if defined(NDEBUG)
+#define ANKI_EMBEDDED_BENCHMARK 0
+#else
+#define ANKI_EMBEDDED_BENCHMARK 1
+#endif
+#endif // ANKI_EMBEDDED_BENCHMARK
+
 namespace Anki
 {
   namespace Embedded
   {
+#if ANKI_EMBEDDED_BENCHMARK
     const s32 MAX_BENCHMARK_EVENTS = 16000;
 
     typedef struct BenchmarkElement
@@ -115,6 +124,14 @@ namespace Anki
       const s32 imageWidth);
 
     s32 GetNameIndex(const char * name, const FixedLengthList<BenchmarkElement> &outputResults);
+#else
+    static inline void BeginBenchmark(const char*)
+    {
+    }
+    static inline void EndBenchmark(const char*)
+    {
+    }
+#endif // ANKI_EMBEDDED_BENCHMARK
   } // namespace Embedded
 } // namespace Anki
 

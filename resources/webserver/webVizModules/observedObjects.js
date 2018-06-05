@@ -55,7 +55,8 @@
         faceElem.empty();
       }
       faceElem.append('<p>id: ' + data["faceID"] + '</p>')
-              .append('<p>t: ' + data["timestamp"] + '</p>');
+              .append('<p>t: ' + data["timestamp"] + '</p>')
+              .append('<p>o: ' + data["originID"] + '</p>')
       if( typeof data.name !== 'undefined' ) {
         faceElem.append('<p>t: ' + data["name"] + '</p>');
       }

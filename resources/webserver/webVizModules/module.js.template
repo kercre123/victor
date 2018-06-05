@@ -3,11 +3,24 @@
  *  This file should turn data into a visualization.
  *  Anything you need will need to be dynamically added
  *  to the DOM.
- *  You have access to d3, jquery, and processing.js
+ *  You have access to d3, jquery, p5, flot, and datatables.
+ *
  *  Instructions:
- *  1) Supply the following four methods
+ *  1) Supply the four required methods in this file
  *  2) Add your module to the list of modules in the 
  *     <head> of webViz.html
+ * 
+ *  Dev tip: Instead of having to build for mac each time you want
+ *    to test something, add a "myMethods.devShouldDumpData = true;" 
+ *    just before "myMethods.init = ". Run with webots, but check the
+ *    Overview tab for a dump of all data sent to your module. Paste
+ *    that in a file resources/webserver/devData.json. Then close
+ *    webots and start a web server in your webserver directory:
+ *      $ cd resources/webserver
+ *      $ python -m SimpleHTTPServer 8888
+ *    and open 127.0.0.1:8888/webViz.html in your browser. Your
+ *    module will be sent the data in the same order they were
+ *    originally received.
  */
 
 (function(myMethods, sendData) {

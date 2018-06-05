@@ -88,8 +88,9 @@ public:
   // checks if the given polygon collides with the given types (any quad with that type)
   virtual bool HasCollisionWithTypes(const FastPolygon& poly, const FullContentArray& types) const override;
   
-  // evaluates func along any node that polygon collides with. returns true if any call to NodePredicate returns true
-  virtual bool Eval(const FastPolygon& poly, const NodePredicate& func) const override;
+  // evaluates f along any node that the region collides with. returns true if any call to NodePredicate returns true
+  bool AnyOf(const FastPolygon& p, NodePredicate f) const override { return AnyOf_T(p, f); }
+  bool AnyOf(const Ball2f& b, NodePredicate f)      const override { return AnyOf_T(b, f); }
   
   // returns true if there are any nodes of the given type, false otherwise
   virtual bool HasContentType(EContentType type) const override;
@@ -102,6 +103,9 @@ public:
   virtual TimeStamp_t GetLastChangedTimeStamp() const override {return _quadTree.GetData()->GetLastObservedTime();}
 
 private:
+  // template specialization
+  template <class ConvexType>
+  bool AnyOf_T(const ConvexType& region, NodePredicate f) const;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
@@ -111,6 +115,14 @@ private:
   QuadTree _quadTree;
   
 }; // class
+  
+template <class ConvexType>
+bool MemoryMap::AnyOf_T(const ConvexType& r, NodePredicate f) const
+{
+  bool retv = false;  
+  _quadTree.Fold<ConvexType>( [&](const auto& n) { retv |= f(n.GetData()); }, r);
+  return retv;
+}
   
 } // namespace
 } // namespace

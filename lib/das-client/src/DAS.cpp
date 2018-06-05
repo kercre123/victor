@@ -16,6 +16,7 @@
 #include "dasLogFileAppender.h"
 #include "dasAppender.h"
 #include "dasFilter.h"
+#include "dasPostToServer.h"
 #include "stringUtils.h"
 #include "json/json.h"
 #include <cassert>
@@ -669,6 +670,13 @@ void getDASGlobalsAndDataString(const std::map<std::string,std::string>* globals
     outGlobalsAndData = oss.str();
   }
 }
+
+#if defined(VICOS)
+bool PostToServer(const std::string & url, const std::string & body, std::string & response)
+{
+  return dasPostToServer(url, body, response);
+}
+#endif
 
 #ifdef __cplusplus
 } // extern "C"

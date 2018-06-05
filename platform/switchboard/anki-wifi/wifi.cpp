@@ -16,7 +16,7 @@
 #include <ifaddrs.h>
 #include "exec_command.h"
 #include "fileutils.h"
-#include "anki-ble/stringutils.h"
+#include "anki-ble/common/stringutils.h"
 #include "log.h"
 #include "wifi.h"
 
@@ -260,7 +260,7 @@ void connectCallback(GObject *source_object, GAsyncResult *result, gpointer user
   g_mutex_unlock(&connectMutex);
 }
 
-static const char* const hiddenAgentPath = "/tmp/vic-switchboard/connman-agent";
+static const char* const hiddenAgentPath = "/tmp/vic_switchboard/connman_agent";
 
 static void HiddenAPCallback(GDBusConnection *connection,
                       const gchar *sender,
@@ -307,7 +307,6 @@ static void HiddenAPCallback(GDBusConnection *connection,
 
     GVariant *response = g_variant_builder_end(dict_builder);
     g_variant_builder_unref(dict_builder);
-    logi("%s", g_variant_print(response, true));
 
     g_dbus_method_invocation_return_value(invocation, response);
   }

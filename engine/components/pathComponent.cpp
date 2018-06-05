@@ -16,9 +16,11 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/carryingComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceAndApproachPlanner.h"
 #include "engine/latticePlanner.h"
+#include "engine/xyPlanner.h"
 #include "engine/minimalAnglePlanner.h"
 #include "engine/pathDolerOuter.h"
 #include "engine/pathPlanner.h"
@@ -29,6 +31,8 @@
 #include "engine/viz/vizManager.h"
 #include "util/logging/logging.h"
 #include <limits>
+
+#define USE_NEW_PLANNER 0
 
 namespace Anki {
 namespace Cozmo {
@@ -113,8 +117,12 @@ void PathComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& depen
     // might not exist (e.g. unit tests)
     _pdo.reset(new PathDolerOuter(context->GetRobotManager()->GetMsgHandler()));
 
-    if (nullptr != context->GetDataPlatform()) {
-      _longPathPlanner.reset(new LatticePlanner(_robot, context->GetDataPlatform()));
+    if (nullptr != context->GetDataPlatform()) {      
+      if (USE_NEW_PLANNER) {
+        _longPathPlanner.reset(new XYPlanner(_robot));
+      } else {
+        _longPathPlanner.reset(new LatticePlanner(_robot, context->GetDataPlatform()));
+      }
     }
     else {
       // For unit tests, or cases where we don't have data, use the short planner in it's place
@@ -320,9 +328,22 @@ void PathComponent::AbortAndSetFailure()
 
 void PathComponent::OnPathComplete()
 {
-  _plannerActive = false;
+  _hasStoppedBeforeExecuting = true;
   _robot->GetContext()->GetVizManager()->ErasePath(_robot->GetID());
-  SetDriveToPoseStatus(ERobotDriveToPoseStatus::Ready);
+  if( !_isReplanning && !_plannerActive ) {
+    // If the planner isn't running (or replanning) then we should be done
+    SetDriveToPoseStatus(ERobotDriveToPoseStatus::Ready);
+  }
+  if( _waitingToMatchReplanOrigin ) {
+    // see if having reached the end of the path means it is complete
+    TryCompletingPath();
+  }
+  if( (_selectedPathPlanner != nullptr) && (_selectedPathPlanner->CheckPlanningStatus() != EPlannerStatus::Running) ) {
+    // we reached the end of the path and the planner isnt running, so there's no chance the robot
+    // will make it to the replanning origin if it hasn't already. Set this as false to allow failure
+    // if the robot isnt in place
+    _waitingToMatchReplanOrigin = false;
+  }
 }
 
 void PathComponent::UpdateCurrentPathSegment(s8 currPathSegment)
@@ -358,12 +379,37 @@ void PathComponent::UpdateCurrentPathSegment(s8 currPathSegment)
 
 void PathComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
+  if( false && _selectedPathPlanner != nullptr ) {
+    PRINT_NAMED_WARNING("PathComponentStatus",
+                        "plannerStatus=%s, driveStatus=%s, stopped=%d",
+                        EPlannerStatusToString( _selectedPathPlanner->CheckPlanningStatus() ),
+                        ERobotDriveToPoseStatusToString( GetDriveToPoseStatus() ),
+                        _hasStoppedBeforeExecuting);
+  }
+  
   if( _plannerActive ) {
     UpdatePlanning();
   }
 
-  if( _driveToPoseStatus == ERobotDriveToPoseStatus::FollowingPath ) {
+  // Try restarting the planner if the robot is following a path to deal with new obstacles or
+  // origin shifts.
+  // Also, to handle an edge case where the robot stopped short of its expected start pose during
+  // replanning, try once to restart the planner, which will decide if it's actually
+  // necessary or possible to do so.
+  const bool tooFarFromReplanStart = _waitingToMatchReplanOrigin
+                                     && _hasStoppedBeforeExecuting
+                                     && (_selectedPathPlanner != nullptr)
+                                     && (_selectedPathPlanner->GetErrorType() == EPlannerErrorType::TooFarFromPlan)
+                                     && (_driveToPoseStatus == ERobotDriveToPoseStatus::ComputingPath);
+  if( (_driveToPoseStatus == ERobotDriveToPoseStatus::FollowingPath) || tooFarFromReplanStart ) {
+    if( tooFarFromReplanStart ) {
+      _waitingToMatchReplanOrigin = false;
+    }
     HandlePossibleOriginChanges();
+  } else if( _waitingToMatchReplanOrigin ) {
+    // Maybe having driven a bit since the last UpdateDependent() means the robot is closer to the start of
+    // its replanned path. Let it attempt to start driving it again
+    TryCompletingPath();
   }
 
   if( IsWaitingForRobotResponse() ) {
@@ -381,13 +427,15 @@ void PathComponent::UpdateDependent(const RobotCompMap& dependentComps)
 
 void PathComponent::HandlePossibleOriginChanges()
 {
-  DEV_ASSERT( _driveToPoseStatus == ERobotDriveToPoseStatus::FollowingPath,
-              "PathComponent.Update.FollowingStateMismatch");
-
   if( !_selectedPathPlanner ) {
     // can't handle any changes if there is no planner
     return;
   }
+  
+  const bool tooFar __attribute((unused)) = (_selectedPathPlanner->GetErrorType() == EPlannerErrorType::TooFarFromPlan);
+  DEV_ASSERT( (_driveToPoseStatus == ERobotDriveToPoseStatus::FollowingPath)
+             || ((_driveToPoseStatus == ERobotDriveToPoseStatus::ComputingPath) && tooFar),
+             "PathComponent.Update.FollowingStateMismatch");
 
   // should always have valid origin since we're planning
   // TODO: COZMO-1637: Once we figure this out, switch these verifies back to dev_asserts for efficiency
@@ -512,7 +560,7 @@ void PathComponent::UpdatePlanning()
     case EPlannerStatus::CompleteWithPlan: {
       _plannerActive = false;
       if (_startFollowingPath) {      // wait here until we are clear to drive
-        HandlePlanComplete();
+        TryCompletingPath();
       }
       break;
     }
@@ -539,18 +587,46 @@ void PathComponent::UpdatePlanning()
   }
 }
 
-void PathComponent::HandlePlanComplete()
+void PathComponent::TryCompletingPath()
 {
+  if( _selectedPathPlanner->CheckPlanningStatus() == EPlannerStatus::Running ) {
+    return;
+  }
+  
+  bool wasReplanning = _isReplanning;
+  _isReplanning = false;
+  
   // get the path
   Planning::GoalID selectedPoseIdx;
   Planning::Path newPath;
 
   const Pose3d& driveCenterPose = _robot->GetDriveCenterPose();
 
+  // NOTE: If object-carrying state changes between the time this function is called
+  //       and the time the path is executed, the robot will either drive too fast and
+  //       potentially fall off cliffs or too slow and potentially look strange.
+  PathMotionProfile cliffSafeMotionProfile = ClampToCliffSafeSpeed(*_pathMotionProfile);
+
   _selectedPathPlanner->GetCompletePath(driveCenterPose,
                                         newPath,
                                         selectedPoseIdx,
-                                        _pathMotionProfile.get());
+                                        &cliffSafeMotionProfile);
+  
+  // the planner finished but returned no path... either the robot is at the goal, some internal error
+  // occurred, or, if the robot was replanning, it probably isn't yet close enough to that position to
+  // start following the path. In the latter case, set a flag so that we can retry picking up this
+  // path up until reaching the end of it
+  if( (newPath.GetNumSegments() == 0)
+      && (_selectedPathPlanner->GetErrorType() == EPlannerErrorType::TooFarFromPlan) )
+  {
+    if( wasReplanning ) {
+      _waitingToMatchReplanOrigin = true;
+    }
+    if( _waitingToMatchReplanOrigin ) {
+      return;
+    }
+  }
+  _waitingToMatchReplanOrigin = false;
 
   // collisions are always OK for empty paths, or if the selected planner actually checked for collisions
   const bool collisionsAcceptable = _selectedPathPlanner->ChecksForCollisions() || newPath.GetNumSegments()==0;
@@ -738,11 +814,11 @@ bool PathComponent::HasCustomMotionProfile() const
   return _hasCustomMotionProfile;
 }
 
-const PathMotionProfile& PathComponent::GetCustomMotionProfile() const
+PathMotionProfile PathComponent::GetCustomMotionProfile() const
 {
   ANKI_VERIFY(_hasCustomMotionProfile, "PathComponent.GetCustomMotionProfile.NoCustomProfile",
               "Trying to get the custom profile, but none is set. This is a bug");
-  return *_pathMotionProfile;
+  return ClampToCliffSafeSpeed(*_pathMotionProfile);
 }
 
 Result PathComponent::ConfigureAndStartPlanner(const std::vector<Pose3d>& poses,
@@ -776,10 +852,13 @@ Result PathComponent::ConfigureAndStartPlanner(const std::vector<Pose3d>& poses,
                     ERobotDriveToPoseStatusToString(_driveToPoseStatus));
       Abort();
     } else {
-      // already executing this plan
+      // it's already executing this plan.
       return RESULT_OK;
     }
   }
+  
+  _waitingToMatchReplanOrigin = false;
+  _hasStoppedBeforeExecuting = false;
 
   _plannerSelectedPoseIndex = selectedPoseIndexPtr;
   _currPlanParams = std::make_unique<PlanParameters>(newPlanParams);
@@ -868,24 +947,26 @@ bool PathComponent::ReplanWithFallbackPlanner()
 void PathComponent::RestartPlannerIfNeeded()
 {
   DEV_ASSERT( _selectedPathPlanner, "PathComponent.NoSelectedPlanner" );
-  DEV_ASSERT( _driveToPoseStatus == ERobotDriveToPoseStatus::FollowingPath,
-              "PathComponent.RestartPlannerIfNeeded.WrongState" );
-
   if( ! _selectedPathPlanner ) {
     // can't replan if we don't have a selected planner
     return;
   }
+  
+  const bool tooFar __attribute((unused)) = (_selectedPathPlanner->GetErrorType() == EPlannerErrorType::TooFarFromPlan);
+  DEV_ASSERT((_driveToPoseStatus == ERobotDriveToPoseStatus::FollowingPath)
+             || ((_driveToPoseStatus == ERobotDriveToPoseStatus::ComputingPath) && tooFar),
+             "PathComponent.RestartPlannerIfNeeded.WrongState");
 
   // if we are already planning, don't cut that off
   if( _plannerActive ) {
     return;
-  } else if (_isReplanning) {
-    _isReplanning = false;
   }
 
   const bool forceReplan = false;
   switch( _selectedPathPlanner->ComputeNewPathIfNeeded( _robot->GetDriveCenterPose(), forceReplan, _replanningCanChangeGoal ) ) {
+
     case EComputePathStatus::Error:
+    {
       if( ReplanWithFallbackPlanner() ) {
         PRINT_CH_INFO("Planner", "PathComponent.RestartIfNeeded.Error.Fallback",
                       "computing a new path resulted in an error, switching to fallback");
@@ -896,13 +977,13 @@ void PathComponent::RestartPlannerIfNeeded()
         // abort in case we are currently following an invalid path
         AbortAndSetFailure();
       }
+      _isReplanning = false;
+    }
       break;
 
     case EComputePathStatus::Running:
     {
       PRINT_CH_DEBUG("Planner", "PathComponent.Replan.Running", "ComputeNewPathIfNeeded running");
-
-      // check if a path is currently being executed
       const Planning::Path currPath = _pdo->GetPath();
       if (currPath.GetNumSegments() > 0)
       {
@@ -912,24 +993,31 @@ void PathComponent::RestartPlannerIfNeeded()
         {
           _isReplanning = true;
           // entire path is not safe, set the current path to just the valid portion
-          if (_pdo->GetLastDoledIdx() >= validSubPath.GetNumSegments())
+          if (_currPathSegment >= validSubPath.GetNumSegments())
           {
-            // we already sent the extent of the valid path, so force stop
+            // the robot already drove the extent of the valid path, so force stop
             PRINT_NAMED_INFO("PathComponent.RestartPlannerIfNeeded", "Replanning and current Path invalid. ESTOP Robot");
             ClearPath();
           } else {
-            _pdo->ReplacePath(validSubPath);
+            if( _pdo->GetLastDoledIdx() >= validSubPath.GetNumSegments() ) {
+              // we already sent the extent of the valid path, so trim it before it's executed
+              TrimRobotPathToLength( validSubPath.GetNumSegments() );
+            }
+            _pdo->ReplacePath( validSubPath );
+            // redraw the path
+            _robot->GetContext()->GetVizManager()->DrawPath(_robot->GetID(), _pdo->GetPath(), NamedColors::EXECUTED_PATH);
           }
         }
       }
-
       _plannerActive = true;
       break;
     }
     case EComputePathStatus::NoPlanNeeded:
+    {
       DEV_ASSERT( _driveToPoseStatus == ERobotDriveToPoseStatus::FollowingPath,
                   "Robot.PathComponent.RestarTPlannerIfNeeded.NoPlan.InconsistentState" );
       // leave state as following
+    }
       break;
   }
 }
@@ -953,7 +1041,21 @@ Result PathComponent::ClearPath()
 
   return _robot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::ClearPath(0)));
 }
-
+  
+Result PathComponent::TrimRobotPathToLength( uint8_t length )
+{
+  Result result = RESULT_OK;
+  if( _pdo != nullptr ) {
+    const uint8_t numSegments = _pdo->GetPath().GetNumSegments();
+    if( numSegments > length ) {
+      const uint8_t numPopBack = numSegments - length;
+      _lastMsgSendTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      result = _robot->SendMessage( RobotInterface::EngineToRobot( RobotInterface::TrimPath( 0, numPopBack ) ) );
+    }
+  }
+  
+  return result;
+}
 
 bool PathComponent::IsActive() const
 {
@@ -1052,6 +1154,8 @@ Result PathComponent::ExecutePath(const Planning::Path& path)
 {
   Result lastResult = RESULT_FAIL;
 
+  _hasStoppedBeforeExecuting = false;
+  
   if (path.GetNumSegments() == 0) {
     PRINT_NAMED_WARNING("PathComponent.ExecutePath.EmptyPath", "");
     lastResult = RESULT_OK;
@@ -1105,6 +1209,34 @@ void PathComponent::SetDriveToPoseStatus(ERobotDriveToPoseStatus newValue)
 
     _driveToPoseStatus = newValue;
   }
+}
+
+PathMotionProfile PathComponent::ClampToCliffSafeSpeed(const PathMotionProfile& motionProfile) const
+{
+  PathMotionProfile cliffSafeMotionProfile = motionProfile;
+  const bool isCarrying = _robot->GetCarryingComponent().IsCarryingObject(); 
+  const float maxSpeed = isCarrying ? 
+                         MAX_SAFE_WHILE_CARRYING_WHEEL_SPEED_MMPS : 
+                         MAX_SAFE_WHEEL_SPEED_MMPS;
+
+  auto ClampSpeedFunc = [maxSpeed, isCarrying](float orig_speed) {
+    if (Util::InRange(orig_speed, -maxSpeed, maxSpeed)) {
+      return orig_speed;
+    } else if (!isCarrying) {
+      // Only print when not carrying since carrying is expected
+      // to further clamp valid speed limits
+      PRINT_NAMED_WARNING("PathComponent.ClampToCliffSafeSpeed.ClampingUnsafeSpeed", 
+                          "%f mm/s will be clamped to %f mm/s", 
+                          orig_speed, maxSpeed);
+    }
+    return CLIP(orig_speed, -maxSpeed, maxSpeed);
+  };
+
+  cliffSafeMotionProfile.speed_mmps        = ClampSpeedFunc(motionProfile.speed_mmps);
+  cliffSafeMotionProfile.reverseSpeed_mmps = ClampSpeedFunc(motionProfile.reverseSpeed_mmps);
+  cliffSafeMotionProfile.dockSpeed_mmps    = ClampSpeedFunc(motionProfile.dockSpeed_mmps);
+
+  return cliffSafeMotionProfile;
 }
 
 }

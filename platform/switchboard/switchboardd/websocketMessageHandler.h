@@ -19,6 +19,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/externalInterface/messageExternalComms.h"
+#include "clad/types/ledTypes.h"
 
 namespace Anki {
 namespace Switchboard {
@@ -47,6 +48,8 @@ private:
   void HandleAnimations(Anki::Cozmo::ExternalComms::Animations unionInstance);
   void HandleAnimations_PlayAnimation(Anki::Cozmo::ExternalComms::PlayAnimation sdkMessage);
   void HandleAnimations_RequestAvailableAnimations(Anki::Cozmo::ExternalComms::RequestAvailableAnimations sdkMessage);
+  void HandleAnimations_SayText(Anki::Cozmo::ExternalComms::SayText sdkMessage);
+  void HandleAnimations_TransferFile(Anki::Cozmo::ExternalComms::TransferFile sdkMessage); 
 
   void HandleMovementAction(Anki::Cozmo::ExternalComms::MovementAction unionInstance);
   void HandleMovementAction_DriveOffChargerContacts(Anki::Cozmo::ExternalComms::DriveOffChargerContacts sdkMessage);
@@ -64,11 +67,20 @@ private:
   void HandleMeetVictor_EraseAllEnrolledFaces(Anki::Cozmo::ExternalComms::EraseAllEnrolledFaces sdkMessage);
   void HandleMeetVictor_SetFaceToEnroll(Anki::Cozmo::ExternalComms::SetFaceToEnroll sdkMessage);
 
+  void HandleVictorDisplay(Anki::Cozmo::ExternalComms::VictorDisplay unionInstance);
+  void HandleVictorDisplay_SetBackpackLEDs(Anki::Cozmo::ExternalComms::SetBackpackLEDs sdkMessage);
+  void HandleVictorDisplay_DisplayFaceImageRGB(Anki::Cozmo::ExternalComms::DisplayFaceImageRGB sdkMessage);
+
+  void HandleCubes(Anki::Cozmo::ExternalComms::Cubes unionInstance);
+  void HandleCubes_SetAllActiveObjectLEDs(Anki::Cozmo::ExternalComms::SetAllActiveObjectLEDs sdkMessage);
+
   Anki::Cozmo::ExternalComms::ExternalComms SendMeetVictorStarted(const Anki::Cozmo::ExternalInterface::MeetVictorStarted& msg);
   Anki::Cozmo::ExternalComms::ExternalComms SendMeetVictorFaceScanStarted(const Anki::Cozmo::ExternalInterface::MeetVictorFaceScanStarted& msg);
   Anki::Cozmo::ExternalComms::ExternalComms SendMeetVictorFaceScanComplete(const Anki::Cozmo::ExternalInterface::MeetVictorFaceScanComplete& msg);
   Anki::Cozmo::ExternalComms::ExternalComms SendFaceEnrollmentCompleted(const Anki::Cozmo::ExternalInterface::FaceEnrollmentCompleted& msg);
   Anki::Cozmo::ExternalComms::ExternalComms SendEnrolledNamesResponse(const Anki::Cozmo::ExternalInterface::EnrolledNamesResponse& msg);
+  
+  Anki::Cozmo::ExternalComms::ExternalComms SendAnimationAvailable(const Anki::Cozmo::ExternalInterface::AnimationAvailable& msg);
 
   Signal::SmartHandle _onEngineMessageHandle;
   SendToWebsocketSignal _sendSignal;

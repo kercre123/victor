@@ -14,6 +14,9 @@
 #include "mics.h"
 #include "touch.h"
 
+static const int RESET_COUNT_MAX = 200 * 5; // 5 second timeout on main execution
+static int reset_count = 0;
+
 void Main_Execution(void) {
   // Do our main execution loop
   Comms::tick();
@@ -25,7 +28,9 @@ void Main_Execution(void) {
   Touch::tick();
 
   // Kick watch dog when we enter our service routine
-  IWDG->KR = 0xAAAA;
+  if (reset_count++ < RESET_COUNT_MAX) {
+    IWDG->KR = 0xAAAA;
+  }
 }
 
 int main (void) {
@@ -52,5 +57,6 @@ int main (void) {
   for (;;) {   
     Power::tick();
     __wfi();
+    reset_count = 0;
   }
 }

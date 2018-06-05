@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_WilliamTell",
-  "displayNameKey":"behavior.singing.WilliamTell",
-  "requiredUnlockId":"Singing_WilliamTell",
-  "audioSwitchGroup":"Cozmo_Sings_80Bpm",
-  "audioSwitch":"Cozmo_Sings_William_Tell"
-}

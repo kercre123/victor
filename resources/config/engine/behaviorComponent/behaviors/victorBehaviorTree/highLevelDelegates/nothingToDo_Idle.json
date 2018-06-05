@@ -8,7 +8,6 @@
   "behaviorClass": "AnimSequence",
   "behaviorID": "NothingToDo_Idle",
 
-  "displayNameKey":"behavior.Bored",
   // anim
   "animTriggers": [ "NothingToDoBoredIdle" ]
 }

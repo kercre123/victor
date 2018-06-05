@@ -27,6 +27,7 @@
 
 #include "coretech/common/engine/utils/timer.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/math/math.h"
 
 #define DEBUG_TRACKING_ACTIONS 0
@@ -35,6 +36,22 @@ namespace Anki {
 namespace Cozmo {
   
 static const char * const kLogChannelName = "Actions";
+
+namespace {
+
+constexpr const char* kConsoleGroup = "TrackingActions";
+
+CONSOLE_VAR_RANGED(f32, kOverride_PanDuration_s, kConsoleGroup, -1.0f, 0.0f, 1.0f);
+CONSOLE_VAR_RANGED(f32, kOverride_TiltDuration_s, kConsoleGroup, -1.0f, 0.0f, 1.0f);
+
+CONSOLE_VAR(bool, kOverride_ClampSmallAngles, kConsoleGroup, false);
+CONSOLE_VAR_RANGED(f32, kOverride_ClampSmallAnglesMinPeriod_s, kConsoleGroup, -1.0f, 0.0f, 5.0f);
+CONSOLE_VAR_RANGED(f32, kOverride_ClampSmallAnglesMaxPeriod_s, kConsoleGroup, -1.0f, 0.0f, 5.0f);
+
+CONSOLE_VAR_RANGED(f32, kOverride_PanTolerance_deg, kConsoleGroup, -1.0f, 0.0f, 20.0f);
+CONSOLE_VAR_RANGED(f32, kOverride_TiltTolerance_deg, kConsoleGroup, -1.0f, 0.0f, 20.0f);
+
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ITrackAction::ITrackAction(const std::string name, const RobotActionType type)
@@ -265,7 +282,6 @@ void ITrackAction::SetMode(Mode newMode)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetPanTolerance(const Radians& panThreshold)
 {
-  DEV_ASSERT(!HasStarted(), "ITrackAction.SetPanTolerance.ActionAlreadyStarted");
   _panTolerance = panThreshold.getAbsoluteVal();
   
   // NOTE: can't be lower than what is used internally on the robot
@@ -281,7 +297,6 @@ void ITrackAction::SetPanTolerance(const Radians& panThreshold)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetTiltTolerance(const Radians& tiltThreshold)
 {
-  DEV_ASSERT(!HasStarted(), "ITrackAction.SetTiltTolerance.ActionAlreadyStarted");
   _tiltTolerance = tiltThreshold.getAbsoluteVal();
   
   // NOTE: can't be lower than what is used internally on the robot
@@ -332,7 +347,7 @@ ActionResult ITrackAction::Init()
   if((ActionResult::SUCCESS == result) && 
      _shouldPlayDrivingAnimation)
   {
-    GetRobot().GetDrivingAnimationHandler().PlayStartAnim();
+    GetRobot().GetDrivingAnimationHandler().StartDrivingAnim();
   }
   return result;
 }
@@ -356,7 +371,7 @@ ActionResult ITrackAction::CheckIfDoneReturnHelper(ActionResult result, bool sto
       return result;
     }
     
-    GetRobot().GetDrivingAnimationHandler().PlayEndAnim();
+    GetRobot().GetDrivingAnimationHandler().EndDrivingAnim();
     _finalActionResult = result; // This will get returned once the end anim completes
     return ActionResult::RUNNING;
   }
@@ -371,11 +386,11 @@ ActionResult ITrackAction::CheckIfDone()
 {
   if(_shouldPlayDrivingAnimation)
   {
-    if(GetRobot().GetDrivingAnimationHandler().IsPlayingEndAnim())
+    if(GetRobot().GetDrivingAnimationHandler().IsPlayingDrivingEndAnim())
     {
       return ActionResult::RUNNING;
     }
-    else if(GetRobot().GetDrivingAnimationHandler().HasFinishedEndAnim())
+    else if(GetRobot().GetDrivingAnimationHandler().HasFinishedDrivingEndAnim())
     {
       DEV_ASSERT(_finalActionResult != ActionResult::NOT_STARTED, "ITrackAction.CheckIfDone.FinalActionResultNotSet");
       return _finalActionResult;
@@ -388,12 +403,21 @@ ActionResult ITrackAction::CheckIfDone()
     PRINT_CH_INFO(kLogChannelName, "ITrackAction.FinishedByOtherAction",
                   "[%d] action %s stopping because we were told to stop when another action stops (and it did)",
                   GetTag(),
-                  GetName().c_str());
-    
+                  GetName().c_str()); 
+   
     return CheckIfDoneReturnHelper(ActionResult::SUCCESS, false);
   }
   
   const f32 currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+  // if console vars are set, update the tolerance. In release, this should compile out to nothing
+  if( kOverride_PanTolerance_deg >= 0.0f ) {
+    SetPanTolerance(DEG_TO_RAD(kOverride_PanTolerance_deg));
+  }
+  
+  if( kOverride_TiltTolerance_deg >= 0.0f ) {
+    SetTiltTolerance(DEG_TO_RAD(kOverride_TiltTolerance_deg));
+  }
   
   // See if there are new absolute pan/tilt angles from the derived class
   Radians absPanAngle = 0, absTiltAngle = 0;
@@ -414,10 +438,11 @@ ActionResult ITrackAction::CheckIfDone()
       }
       
       if(DEBUG_TRACKING_ACTIONS) {
-        PRINT_NAMED_INFO("ITrackAction.CheckIfDone.NewInfo",
-                         "Commanding %sabs angles: pan=%.1fdeg, tilt=%.1fdeg, dist=%1.fmm",
-                         updateResult == UpdateResult::PredictedInfo ? "predicted " : "",
-                         absPanAngle.getDegrees(), absTiltAngle.getDegrees(), distance_mm);
+        PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.NewInfo",
+                      "[%d] Commanding %sabs angles: pan=%.1fdeg, tilt=%.1fdeg, dist=%1.fmm",
+                      GetTag(),
+                      updateResult == UpdateResult::PredictedInfo ? "predicted " : "",
+                      absPanAngle.getDegrees(), absTiltAngle.getDegrees(), distance_mm);
       }
       
       bool angleLargeEnoughForSound = false;
@@ -438,7 +463,9 @@ ActionResult ITrackAction::CheckIfDone()
       if((Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode) &&
          FLT_GE(std::abs(relTiltAngle), _tiltTolerance.ToFloat()))
       {
-        const f32 speed = std::abs(relTiltAngle) / _tiltDuration_sec;
+        const float tiltDuraction_s = kOverride_TiltDuration_s > 0.0f ? kOverride_TiltDuration_s : _tiltDuration_sec;
+        
+        const f32 speed = std::abs(relTiltAngle) / tiltDuraction_s;
         const f32 accel = MAX_HEAD_ACCEL_RAD_PER_S2;
         
         if(RESULT_OK != GetRobot().GetMoveComponent().MoveHeadToAngle(absTiltAngle.ToFloat(), speed, accel))
@@ -501,13 +528,13 @@ ActionResult ITrackAction::CheckIfDone()
           }
           
           // Specify a fixed duration to reach the goal and compute speed from it
-          const f32 wheelspeed_mmps = std::min(MAX_WHEEL_SPEED_MMPS, distance_mm / _timeToReachTarget_sec);
+          const f32 wheelspeed_mmps = std::min(MAX_SAFE_WHEEL_SPEED_MMPS, distance_mm / _timeToReachTarget_sec);
           const f32 accel = MAX_WHEEL_ACCEL_MMPS2; // Expose?
           
           if(DEBUG_TRACKING_ACTIONS) {
-            PRINT_CH_DEBUG(kLogChannelName, "ITrackAction.CheckIfDone.DriveWheelsCurvature",
-                           "d=%f r=%hd relPan=%.1fdeg speed=%f accel=%f",
-                           distance_mm, radius, RAD_TO_DEG(relPanAngle), wheelspeed_mmps, accel);
+            PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.DriveWheelsCurvature",
+                          "[%d] d=%f r=%hd relPan=%.1fdeg speed=%f accel=%f",
+                          GetTag(), distance_mm, radius, RAD_TO_DEG(relPanAngle), wheelspeed_mmps, accel);
           }
           
           Result result = GetRobot().SendRobotMessage<RobotInterface::DriveWheelsCurvature>(wheelspeed_mmps, accel, radius);
@@ -527,14 +554,17 @@ ActionResult ITrackAction::CheckIfDone()
           
           const Radians& turnAngle = rotatedPose.GetRotation().GetAngleAroundZaxis();
 
+          const float panDuration_s = kOverride_PanDuration_s > 0.0f ? kOverride_PanDuration_s : _panDuration_sec;
+          
           // Just turn in place
-          const f32 rotSpeed_radPerSec = std::min(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, std::abs(relPanAngle) / _panDuration_sec);
+          const f32 rotSpeed_radPerSec = std::min(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC,
+                                                  std::abs(relPanAngle) / panDuration_s);
           const f32 accel = MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2;
           
           if(DEBUG_TRACKING_ACTIONS) {
-            PRINT_CH_DEBUG(kLogChannelName, "ITrackAction.CheckIfDone.SetBodyAngle",
-                           "d=%f relPan=%.1fdeg speed=%f accel=%f",
-                           distance_mm, RAD_TO_DEG(relPanAngle), rotSpeed_radPerSec, accel);
+            PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.SetBodyAngle",
+                          "[%d] d=%f relPan=%.1fdeg speed=%f accel=%f",
+                          GetTag(), distance_mm, RAD_TO_DEG(relPanAngle), rotSpeed_radPerSec, accel);
           }
           
           if(RESULT_OK != GetRobot().GetMoveComponent().TurnInPlace(turnAngle.ToFloat(),      // angle_rad
@@ -551,7 +581,15 @@ ActionResult ITrackAction::CheckIfDone()
           angleLargeEnoughForSound = true;
         }
       }
-      
+      else if(DEBUG_TRACKING_ACTIONS) {
+        PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.NoMotion",
+                      "[%d] %sneed to pan (relPanAngle=%f, tol=%f). %sneed to move fwd/bwd",
+                      GetTag(),
+                      needToPan ? "" : "don't",
+                      relPanAngle,
+                      _panTolerance.ToFloat(),
+                      needToMoveFwdBwd ? "" : "don't");
+      }
       
       if(_moveEyes) {
         // Compute horizontal eye movement
@@ -583,9 +621,10 @@ ActionResult ITrackAction::CheckIfDone()
         eyeShiftY = CLIP(eyeShiftY, -shiftLimitY, shiftLimitY);
         
         if(DEBUG_TRACKING_ACTIONS) {
-          PRINT_NAMED_DEBUG("ITrackAction.CheckIfDone.EyeShift",
-                            "Adjusting eye shift to (%.1f,%.1f)",
-                            eyeShiftX, eyeShiftY);
+          PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.EyeShift",
+                        "[%d] Adjusting eye shift to (%.1f,%.1f)",
+                        GetTag(),
+                        eyeShiftX, eyeShiftY);
         }
         
         // Expose as params?
@@ -665,9 +704,9 @@ ActionResult ITrackAction::CheckIfDone()
           }
         }
         else if(DEBUG_TRACKING_ACTIONS) {
-          PRINT_CH_DEBUG(kLogChannelName, "ITrackAction.CheckIfDone.NotTimedOut",
-                         "Current t=%f, LastUpdate t=%f, Timeout=%f",
-                         currentTime, _lastUpdateTime, _updateTimeout_sec);
+          PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.NotTimedOut",
+                        "[%d] Current t=%f, LastUpdate t=%f, Timeout=%f",
+                        GetTag(), currentTime, _lastUpdateTime, _updateTimeout_sec);
         }
       } else {
         // Remove eye shift once "locked on" target
@@ -684,14 +723,27 @@ ActionResult ITrackAction::CheckIfDone()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ITrackAction::UpdateSmallAngleClamping()
 {
-  if( _clampSmallAngles ) {
-    const bool hasClampPeriod = _clampSmallAnglesMaxPeriod_s > 0.0f;
+  const bool clampOverride = kOverride_ClampSmallAnglesMinPeriod_s >= 0.0f &&
+    kOverride_ClampSmallAnglesMaxPeriod_s >= 0.0f;
+
+  const bool clampSmallAngles = kOverride_ClampSmallAngles ? clampOverride : _clampSmallAngles;    
+  
+  if( clampSmallAngles ) {
+    const float clampSmallAnglesMaxPeriod_s = clampOverride ?
+                                              kOverride_ClampSmallAnglesMaxPeriod_s :
+                                              _clampSmallAnglesMaxPeriod_s;
+
+    const float clampSmallAnglesMinPeriod_s = clampOverride ?
+                                              kOverride_ClampSmallAnglesMinPeriod_s :
+                                              _clampSmallAnglesMinPeriod_s;
+
+    const bool hasClampPeriod = clampSmallAnglesMaxPeriod_s > 0.0f;
     if( hasClampPeriod ) {
       const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       const bool shouldClamp = _nextTimeToClampSmallAngles_s < 0.0f || ( currTime_s >= _nextTimeToClampSmallAngles_s );
       if( shouldClamp ) {
         // re-roll the next period
-        const float randPeriod_s = GetRNG().RandDblInRange(_clampSmallAnglesMinPeriod_s, _clampSmallAnglesMaxPeriod_s);
+        const float randPeriod_s = GetRNG().RandDblInRange(clampSmallAnglesMinPeriod_s, clampSmallAnglesMaxPeriod_s);
         _nextTimeToClampSmallAngles_s = currTime_s + randPeriod_s;
       }
       return shouldClamp;
@@ -721,14 +773,15 @@ bool ITrackAction::StopCriteriaMetAndTimeToStop(const f32 relPanAngle, const f32
     
     if(DEBUG_TRACKING_ACTIONS)
     {
-      PRINT_CH_DEBUG(kLogChannelName, "ITrackAction.CheckIfDone.CheckingStopCriteria",
-                     "Pan:%.1fdeg vs %.1f (%c), Tilt:%.1fdeg vs %.1f (%c), Dist:%.1fmm vs (%.1f,%.1f) (%c)",
-                     std::abs(RAD_TO_DEG(relPanAngle)), _stopCriteria.panTol.getDegrees(),
-                     isWithinPanTol ? 'Y' : 'N',
-                     std::abs(RAD_TO_DEG(relTiltAngle)), _stopCriteria.tiltTol.getDegrees(),
-                     isWithinTiltTol ? 'Y' : 'N',
-                     distance_mm, _stopCriteria.minDist_mm, _stopCriteria.maxDist_mm,
-                     isWithinDistTol ? 'Y' : 'N');
+      PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.CheckingStopCriteria",
+                    "[%d] Pan:%.1fdeg vs %.1f (%c), Tilt:%.1fdeg vs %.1f (%c), Dist:%.1fmm vs (%.1f,%.1f) (%c)",
+                    GetTag(), 
+                    std::abs(RAD_TO_DEG(relPanAngle)), _stopCriteria.panTol.getDegrees(),
+                    isWithinPanTol ? 'Y' : 'N',
+                    std::abs(RAD_TO_DEG(relTiltAngle)), _stopCriteria.tiltTol.getDegrees(),
+                    isWithinTiltTol ? 'Y' : 'N',
+                    distance_mm, _stopCriteria.minDist_mm, _stopCriteria.maxDist_mm,
+                    isWithinDistTol ? 'Y' : 'N');
     }
     
     if(isWithinTol)
@@ -754,9 +807,10 @@ bool ITrackAction::StopCriteriaMetAndTimeToStop(const f32 relPanAngle, const f32
       {
         if(DEBUG_TRACKING_ACTIONS)
         {
-          PRINT_CH_DEBUG(kLogChannelName, "ITrackAction.CheckIfDone.StopCriteriaMet",
-                         "Setting start of stop criteria being met to t=%.1fsec",
-                         currentTime);
+          PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.StopCriteriaMet",
+                        "[%d] Setting start of stop criteria being met to t=%.1fsec",
+                        GetTag(),
+                        currentTime);
         }
         
         // Just got (back) into tolerance, set "since" time

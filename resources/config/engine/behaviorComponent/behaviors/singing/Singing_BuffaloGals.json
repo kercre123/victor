@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_BuffaloGals",
-  "displayNameKey":"behavior.singing.BuffaloGals",
-  "requiredUnlockId":"Singing_BuffaloGals",
-  "audioSwitchGroup":"Cozmo_Sings_100Bpm",
-  "audioSwitch":"Cozmo_Sings_Buffalo_Gals"
-}

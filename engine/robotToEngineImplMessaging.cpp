@@ -194,7 +194,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
                                                        const auto temp_degC = message.GetData().Get_imuTemperature().temperature_degC;
                                                        // This prints an info every time we receive this message. This is useful for gathering data
                                                        // in the prototype stages, and could probably be removed in production.
-                                                       LOG_INFO("RobotMessageHandler.ProcessMessage.MessageImuTemperature",
+                                                       LOG_DEBUG("RobotMessageHandler.ProcessMessage.MessageImuTemperature",
                                                                 "IMU temperature: %.3f degC",
                                                                 temp_degC);
                                                        robot->SetImuTemperature(temp_degC);
@@ -212,6 +212,13 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
                                                        robot->Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::ExitPairing()));
                                                      }));
 
+  GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::prepForShutdown,
+                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+                                                       LOG_INFO("RobotMessageHandler.ProcessMessage.Shutdown","");
+                                                       robot->Shutdown();
+                                                     }));
+
+  
   if (robot->HasExternalInterface())
   {
     using namespace ExternalInterface;
@@ -480,7 +487,7 @@ void RobotToEngineImplMessaging::HandleFallingEvent(const AnkiEvent<RobotInterfa
               std::to_string(impactIntensity_int).c_str());       // 's_val'
 
   // TODO: Beam this up to game?
-  // robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(payload)));
+  robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotFallingEvent(msg.duration_ms, msg.impactIntensity)));
 }
 
 void RobotToEngineImplMessaging::HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
@@ -515,6 +522,9 @@ void RobotToEngineImplMessaging::HandleRobotStopped(const AnkiEvent<RobotInterfa
 
   // Stop whatever we were doing
   robot->GetActionList().Cancel();
+
+  // Let robot process know that it can re-enable wheels
+  robot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::RobotStoppedAck()));
 
   // Forward on with EngineToGame event
   robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotStopped()));
@@ -579,8 +589,6 @@ void RobotToEngineImplMessaging::HandleCliffEvent(const AnkiEvent<RobotInterface
   } else {
     LOG_INFO("RobotImplMessaging.HandleCliffEvent.Undetected", "");
   }
-
-  robot->GetCliffSensorComponent().SetCliffDetectedFlags(cliffEvent.detectedFlags);
 
   // Forward on with EngineToGame event
   robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(cliffEvent)));

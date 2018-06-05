@@ -1,0 +1,19 @@
+{
+  "behaviorID": "ExploringGetIn",
+  "behaviorClass": "DispatcherQueue",
+
+  "associatedActiveFeature": "Exploring",
+
+  "behaviors": [
+    "DriveOffCharger",
+    "GetInAnimsInternal"
+  ],
+
+  "anonymousBehaviors": [
+    {
+      "behaviorName": "GetInAnimsInternal",
+      "behaviorClass": "AnimSequence",
+      "animTriggers": ["ExploringLookLeft", "ExploringLookRight"]
+    }
+  ]
+}

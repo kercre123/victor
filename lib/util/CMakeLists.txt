@@ -37,6 +37,10 @@ if (NOT TARGET civetweb)
   add_subdirectory("source/3rd/civetweb")
 endif()
 
+if (NOT TARGET hdr_histogram)
+  add_subdirectory("source/3rd/hdrhistogram_c")
+endif()
+
 # Disable webp until we are going to use it
 # if (NOT TARGET webp)
 #  add_subdirectory("source/3rd/libwebp")

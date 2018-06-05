@@ -194,6 +194,12 @@ const PoseOriginList& BEIRobotInfo::GetPoseOriginList() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RobotEventHandler& BEIRobotInfo::GetRobotEventHandler() const
+{
+  return _robot.GetRobotEventHandler();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Util::RandomGenerator& BEIRobotInfo::GetRNG()
 {
   return _robot.GetRNG();

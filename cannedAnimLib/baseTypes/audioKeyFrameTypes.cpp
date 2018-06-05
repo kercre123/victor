@@ -30,6 +30,7 @@ AudioEventGroupRef& AudioEventGroupRef::operator=( const AudioEventGroupRef& oth
   if (&other == this) {
     return *this;
   }
+  GameObject = other.GameObject;
   Events = other.Events;
   return *this;
 }

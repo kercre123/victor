@@ -53,6 +53,11 @@
 namespace Anki {
 namespace Cozmo {
 
+#if ANKI_CPU_PROFILER_ENABLED
+  CONSOLE_VAR_RANGED(float, kAnimEngine_TimeMax_ms,     ANKI_CPU_CONSOLEVARGROUP, 2, 2, 32);
+  CONSOLE_VAR_ENUM(u8,      kAnimEngine_TimeLogging,    ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
+#endif
+
 AnimEngine::AnimEngine(Util::Data::DataPlatform* dataPlatform)
   : _isInitialized(false)
   , _context(std::make_unique<AnimContext>(dataPlatform))
@@ -116,7 +121,7 @@ Result AnimEngine::Init()
 
 Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
 {
-  //ANKI_CPU_PROFILE("AnimEngine::Update");
+  ANKI_CPU_TICK("AnimEngine::Update", kAnimEngine_TimeMax_ms, Util::CpuProfiler::CpuProfilerLoggingTime(kAnimEngine_TimeLogging));
   if (!_isInitialized) {
     LOG_ERROR("AnimEngine.Update", "Cannot update AnimEngine before it is initialized.");
     return RESULT_FAIL;
@@ -141,9 +146,11 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
       const double maxLatency = ANIM_TIME_STEP_MS + ANIM_OVERTIME_WARNING_THRESH_MS;
       if (timeSinceLastUpdate > maxLatency)
       {
-        DAS_MSG(slow, "cozmo_anim.update.sleep.slow", "This will be show on the slow updates and as such should not be seen very often")
-        FILL_ITEM(i1, timeSinceLastUpdate, "timeSinceLastUpdate as a float")
-        SEND_DAS_MSG_EVENT()
+        DASMSG(cozmo_anim_update_sleep_slow,
+               "cozmo_anim.update.sleep.slow",
+               "This will be shown on the slow updates and as such should not be seen very often")
+        DASMSG_SET(s1, timeSinceLastUpdate, "timeSinceLastUpdate as a float")
+        DASMSG_SEND()
       }
     }
     lastUpdateTimeMs = startUpdateTimeMs;
@@ -165,6 +172,9 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
 
   _ttsComponent->Update();
 
+  // Clear out sprites that have passed their cache time
+  _context->GetDataLoader()->GetSpriteCache()->Update(currTime_nanosec);
+  
   _animationStreamer->Update();
 
 #if ENABLE_CE_RUN_TIME_DIAGNOSTICS
@@ -193,6 +203,12 @@ void AnimEngine::HandleMessage(const RobotInterface::TextToSpeechPrepare & msg)
 void AnimEngine::HandleMessage(const RobotInterface::TextToSpeechDeliver & msg)
 {
   DEV_ASSERT(_ttsComponent, "AnimEngine.TextToSpeechDeliver.InvalidTTSComponent");
+  _ttsComponent->HandleMessage(msg);
+}
+
+void AnimEngine::HandleMessage(const RobotInterface::TextToSpeechPlay & msg)
+{
+  DEV_ASSERT(_ttsComponent, "AnimEngine.TextToSpeechPlay.InvalidTTSComponent");
   _ttsComponent->HandleMessage(msg);
 }
 

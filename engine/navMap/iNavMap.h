@@ -16,16 +16,14 @@
 #include "memoryMap/memoryMapTypes.h"
 #include "memoryMap/data/memoryMapData.h"
 
-#include "coretech/common/engine/math/polygon.h"
+#include "coretech/common/engine/math/fastPolygon2d.h"
 #include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/math/ball.h"
 #include "util/logging/logging.h"
 
 #include <unordered_set>
 
 namespace Anki {
-  
-class FastPolygon;
-
 namespace Cozmo {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -77,11 +75,12 @@ public:
   // the map is modified. Function is expected to clear the vector before returning the new borders
   virtual void CalculateBorders(EContentType innerType, const FullContentArray& outerTypes, BorderRegionVector& outBorders) = 0;
   
-  // checks if the given polygon collides with the given types (any quad with that type)
+  // checks if the given region intersects with a node of the given types
   virtual bool HasCollisionWithTypes(const FastPolygon& poly, const FullContentArray& types) const = 0;
   
-  // evaluates func along any node that polygon collides with. returns true if any call to NodePredicate returns true
-  virtual bool Eval(const FastPolygon& poly, const NodePredicate& func) const = 0;
+  // returns true if any node that intersects with the provided regions evaluates `func` as true.
+  virtual bool AnyOf(const FastPolygon& poly, NodePredicate func) const = 0;
+  virtual bool AnyOf(const Ball2f& b, NodePredicate func) const = 0;
   
   // returns true if there are any nodes of the given type, false otherwise
   virtual bool HasContentType(EContentType type) const = 0;

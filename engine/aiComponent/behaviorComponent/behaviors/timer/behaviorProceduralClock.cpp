@@ -31,14 +31,22 @@ namespace Anki {
 namespace Cozmo {
 
 namespace{
-const char* kClockLayoutKey      = "clockLayout";
-const char* kDigitMapKey         = "digitImageMap";
-const char* kGetInTriggerKey     = "getInAnimTrigger";
-const char* kGetOutTriggerKey    = "getOutAnimTrigger";
-const char* kDisplayClockSKey    = "displayClockFor_s";
-const char* kStaticElementsKey   = "staticElements";
-const char* kShouldTurnToFaceKey = "shouldTurnToFace";
+const char* kClockLayoutKey         = "clockLayout";
+const char* kDigitMapKey            = "digitImageMap";
+const char* kGetInTriggerKey        = "getInAnimTrigger";
+const char* kGetOutTriggerKey       = "getOutAnimTrigger";
+const char* kDisplayClockSKey       = "displayClockFor_s";
+const char* kStaticElementsKey      = "staticElements";
+const char* kShouldTurnToFaceKey    = "shouldTurnToFace";
+
 }
+const std::vector<Vision::SpriteBoxName> BehaviorProceduralClock::DigitDisplayList = 
+{
+  Vision::SpriteBoxName::TensLeftOfColon,
+  Vision::SpriteBoxName::OnesLeftOfColon,
+  Vision::SpriteBoxName::TensRightOfColon,
+  Vision::SpriteBoxName::OnesRightOfColon
+};
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorProceduralClock::BehaviorProceduralClock(const Json::Value& config)
@@ -61,7 +69,7 @@ BehaviorProceduralClock::BehaviorProceduralClock(const Json::Value& config)
 
   _instanceParams.getInAnim = AnimationTriggerFromString(JsonTools::ParseString(config, kGetInTriggerKey, kDebugStr));
   _instanceParams.getOutAnim = AnimationTriggerFromString(JsonTools::ParseString(config, kGetOutTriggerKey, kDebugStr));
-  _instanceParams.totalTimeDisplayClock = JsonTools::ParseUint8(config, kDisplayClockSKey, kDebugStr);
+  _instanceParams.totalTimeDisplayClock_sec = JsonTools::ParseUint8(config, kDisplayClockSKey, kDebugStr);
   JsonTools::GetValueOptional(config, kShouldTurnToFaceKey, _instanceParams.shouldTurnToFace);
 
   // add all static elements
@@ -92,11 +100,22 @@ void BehaviorProceduralClock::GetBehaviorJsonKeys(std::set<const char*>& expecte
     kShouldTurnToFaceKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
+  GetBehaviorJsonKeysInternal(expectedKeys);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorProceduralClock::InitBehavior()
 {
+  auto& accessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetValue<DataAccessorComponent>();
+  auto* spriteCache = accessorComp.GetSpriteCache();
+  auto* seqContainer = accessorComp.GetSpriteSequenceContainer();
+  using Entry = Vision::CompositeImageLayer::SpriteEntry;
+  // set static quadrants
+  for(auto& entry : _instanceParams.staticElements){
+    auto mapEntry = Entry(spriteCache, seqContainer,  entry.second);
+    _instanceParams.staticImageMap.emplace(entry.first, std::move(mapEntry));
+  }
+
   // Setup the composite image
   auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetValue<DataAccessorComponent>();
   Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
@@ -105,46 +124,38 @@ void BehaviorProceduralClock::InitBehavior()
                                                                      _instanceParams.layout, 
                                                                      FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
 
-  if(_instanceParams.getDigitFunctions.size() == 0){
+  auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
+  if(_instanceParams.getDigitFunction == nullptr){
     // TODO: find a way to load this in from data - for now init the clock as one that counts up based on time
     // and allow behaviors to re-set functionality in code only
-    auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
     
-    std::map<Vision::SpriteBoxName, std::function<int()>> countUpFuncs;
-    // Ten Mins Digit
-    {
-      auto tenMinsFunc = [&timerUtility](){
-        const int currentTime_s = timerUtility.GetSystemTime_s();
-        return TimerHandle::SecondsToDisplayMinutes(currentTime_s)/10;
-      };
-      countUpFuncs.emplace(std::make_pair(Vision::SpriteBoxName::TensLeftOfColon, tenMinsFunc));
-    }
-    // One Mins Digit
-    {
-      auto oneMinsFunc = [&timerUtility](){
-        const int currentTime_s = timerUtility.GetSystemTime_s();
-        return TimerHandle::SecondsToDisplayMinutes(currentTime_s) % 10;
-      };
-      countUpFuncs.emplace(std::make_pair(Vision::SpriteBoxName::OnesLeftOfColon, oneMinsFunc));
-    }
-    // Ten seconds digit
-    {
-      auto tenSecsFunc = [&timerUtility](){
-        const int currentTime_s = timerUtility.GetSystemTime_s();
-        return TimerHandle::SecondsToDisplaySeconds(currentTime_s)/10;
-      };
-      countUpFuncs.emplace(std::make_pair(Vision::SpriteBoxName::TensRightOfColon, tenSecsFunc));
-    }
-    // One seconds digit
-    {
-      auto oneSecsFunc = [&timerUtility](){
-        const int currentTime_s = timerUtility.GetSystemTime_s();
-        return TimerHandle::SecondsToDisplaySeconds(currentTime_s) % 10;
-      };
-      countUpFuncs.emplace(std::make_pair(Vision::SpriteBoxName::OnesRightOfColon, oneSecsFunc));
-    }
-    
-    SetDigitFunctions(std::move(countUpFuncs));
+    GetDigitsFunction countUpFunction = [&timerUtility](const int offset){
+      std::map<Vision::SpriteBoxName, int> outMap;
+      const int currentTime_s = timerUtility.GetSystemTime_s() + offset;
+      // Ten Mins Digit
+      {          
+        outMap.emplace(std::make_pair(Vision::SpriteBoxName::TensLeftOfColon, 
+                                      TimerHandle::SecondsToDisplayMinutes(currentTime_s)/10));
+      }
+      // One Mins Digit
+      {
+        outMap.emplace(std::make_pair(Vision::SpriteBoxName::OnesLeftOfColon, 
+                                            TimerHandle::SecondsToDisplayMinutes(currentTime_s) % 10));
+      }
+      // Ten seconds digit
+      {
+        outMap.emplace(std::make_pair(Vision::SpriteBoxName::TensRightOfColon, 
+                                      TimerHandle::SecondsToDisplaySeconds(currentTime_s)/10));
+      }
+      // One seconds digit
+      {
+        outMap.emplace(std::make_pair(Vision::SpriteBoxName::OnesRightOfColon, 
+                       TimerHandle::SecondsToDisplaySeconds(currentTime_s) % 10));
+      }
+      return outMap;
+    };
+
+    SetGetDigitFunction(std::move(countUpFunction));
   }
 }
 
@@ -192,7 +203,17 @@ void BehaviorProceduralClock::TransitionToShowClock()
   _lifetimeParams.currentState = BehaviorState::ShowClock;
   auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
   _lifetimeParams.timeShowClockStarted = timerUtility.GetSystemTime_s();
-  // displaying time on face handled in update loop
+
+  TransitionToShowClockInternal();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorProceduralClock::TransitionToShowClockInternal()
+{
+  for(int i = 0; i < _instanceParams.totalTimeDisplayClock_sec; i++){
+    BuildAndDisplayProceduralClock(i, i*1000);   
+  }
 }
 
 
@@ -217,55 +238,46 @@ void BehaviorProceduralClock::BehaviorUpdate()
     auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
     const int currentTime_s = timerUtility.GetSystemTime_s();
 
-    if(currentTime_s >= (_lifetimeParams.timeShowClockStarted + _instanceParams.totalTimeDisplayClock)){
+    if(currentTime_s >= (_lifetimeParams.timeShowClockStarted + _instanceParams.totalTimeDisplayClock_sec)){
       TransitionToGetOut();
-    }else if(currentTime_s >= _lifetimeParams.nextUpdateTime_s){
-      _lifetimeParams.nextUpdateTime_s = currentTime_s + 1;
-      Vision::CompositeImageLayer::ImageMap empty;
-      BuildAndDisplayProceduralClock(std::move(empty));      
     }
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BehaviorProceduralClock::BuildAndDisplayProceduralClock(Vision::CompositeImageLayer::ImageMap&& imageMap)
+void BehaviorProceduralClock::BuildAndDisplayProceduralClock(const int clockOffset_s, const int displayOffset_ms)
 {
   auto& accessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetValue<DataAccessorComponent>();
   auto* spriteCache = accessorComp.GetSpriteCache();
   auto* seqContainer = accessorComp.GetSpriteSequenceContainer();
   using Entry = Vision::CompositeImageLayer::SpriteEntry;
-  // set static quadrants
-  for(auto& entry : _instanceParams.staticElements){
-    auto mapEntry = Entry(spriteCache, seqContainer,  entry.second);
-    imageMap.emplace(entry.first, std::move(mapEntry));
-  }
 
   // set digits
   bool isLeadingZero = true;
-  const std::vector<Vision::SpriteBoxName> orderedDigits = {Vision::SpriteBoxName::TensLeftOfColon,   
-                                                            Vision::SpriteBoxName::OnesLeftOfColon, 
-                                                            Vision::SpriteBoxName::TensRightOfColon,
-                                                            Vision::SpriteBoxName::OnesRightOfColon};
-  for(auto& spriteBoxName : orderedDigits){
-    const int digitToDisplay = _instanceParams.getDigitFunctions[spriteBoxName]();
-    isLeadingZero &= (digitToDisplay == 0);
+
+  const std::map<Vision::SpriteBoxName, int> digitMap = _instanceParams.getDigitFunction(clockOffset_s);
+
+  Vision::CompositeImageLayer::ImageMap imageMap = _instanceParams.staticImageMap;
+  for(auto& pair : digitMap){
+    isLeadingZero &= (pair.second == 0);
     if(isLeadingZero){
       auto mapEntry = Entry(spriteCache, seqContainer, Vision::SpriteName::Clock_empty_grid);
-      imageMap.emplace(spriteBoxName, std::move(mapEntry));
+      imageMap.emplace(pair.first, std::move(mapEntry));
     }else{
-      auto mapEntry = Entry(spriteCache, seqContainer, _instanceParams.intsToImages[digitToDisplay]);
-      imageMap.emplace(spriteBoxName, std::move(mapEntry));
+      auto mapEntry = Entry(spriteCache, seqContainer, _instanceParams.intsToImages[pair.second]);
+      imageMap.emplace(pair.first, std::move(mapEntry));
     }
   }
   
   
   using namespace Vision;
 
-  CompositeImageLayer* digitLayer = _instanceParams.compImg->GetLayerByName(LayerName::Layer_4);
+  CompositeImageLayer* digitLayer = _instanceParams.compImg->GetLayerByName(LayerName::Clock_Display);
 
-  if(ANKI_VERIFY(digitLayer != nullptr,"BehaviorProceduralClock.BuildAndDisplayProceduralClock.NoDigitLayer",
-                 "Expected digit layout to be specified on Layer_4")){
+  if(ANKI_VERIFY(digitLayer != nullptr,
+                 "BehaviorProceduralClock.BuildAndDisplayProceduralClock.NoDigitLayer",
+                 "Expected digit layout to be specified on Clock_Display")){
     // Grab the image by name and
     digitLayer->SetImageMap(std::move(imageMap));
   }
@@ -283,15 +295,15 @@ void BehaviorProceduralClock::BehaviorUpdate()
     auto intentionalCopy = *digitLayer;
     compImg.AddLayer(std::move(intentionalCopy));
     // Just update the numbers in the image
-    GetBEI().GetAnimationComponent().UpdateCompositeImage(compImg);
+    GetBEI().GetAnimationComponent().UpdateCompositeImage(compImg, displayOffset_ms);
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorProceduralClock::SetDigitFunctions(std::map<Vision::SpriteBoxName, std::function<int()>>&& functions)
+void BehaviorProceduralClock::SetGetDigitFunction(GetDigitsFunction&& function)
 {
-  _instanceParams.getDigitFunctions = functions;
+  _instanceParams.getDigitFunction = function;
 }
 
 

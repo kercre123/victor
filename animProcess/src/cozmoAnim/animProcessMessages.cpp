@@ -39,11 +39,13 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/factory/emrHelper.h"
+#include "anki/cozmo/shared/factory/faultCodes.h"
 
 #include "osState/osState.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleSystem.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
@@ -59,6 +61,9 @@
 // Anonymous namespace for private declarations
 namespace {
 
+  static const int kNumTicksToShutdown = 5;
+  int _countToShutdown = -1;
+  
   // For comms with engine
   constexpr int MAX_PACKET_BUFFER_SIZE = 2048;
   u8 pktBuffer_[MAX_PACKET_BUFFER_SIZE];
@@ -69,7 +74,7 @@ namespace {
   Anki::Cozmo::Audio::ProceduralAudioClient* _proceduralAudioClient = nullptr;
   const Anki::Cozmo::AnimContext*            _context = nullptr;
 
-  CONSOLE_VAR(bool, kDebugFaceDraw_CycleWithButton, "DebugFaceDraw", true);
+  CONSOLE_VAR(bool, kDebugFaceDraw_CycleWithButton, "Face.DebugDraw", true);
 
   bool _connectionFlowInited = false;
   
@@ -244,34 +249,22 @@ void Process_setKeepFaceAliveParameter(const Anki::Cozmo::RobotInterface::SetKee
 
 void Process_addOrUpdateEyeShift(const Anki::Cozmo::RobotInterface::AddOrUpdateEyeShift& msg)
 {
-  const std::string layerName(msg.name, msg.name_length);
-  _animStreamer->GetTrackLayerComponent()->AddOrUpdateEyeShift(layerName,
-                                                               msg.xPix,
-                                                               msg.yPix,
-                                                               msg.duration_ms,
-                                                               msg.xMax,
-                                                               msg.yMax,
-                                                               msg.lookUpMaxScale,
-                                                               msg.lookDownMinScale,
-                                                               msg.outerEyeScaleIncrease);
+  _animStreamer->ProcessAddOrUpdateEyeShift(msg);
 }
 
 void Process_removeEyeShift(const Anki::Cozmo::RobotInterface::RemoveEyeShift& msg)
 {
-  const std::string layerName(msg.name, msg.name_length);
-  _animStreamer->GetTrackLayerComponent()->RemoveEyeShift(layerName, msg.disableTimeout_ms);
+  _animStreamer->ProcessRemoveEyeShift(msg);
 }
 
 void Process_addSquint(const Anki::Cozmo::RobotInterface::AddSquint& msg)
 {
-  const std::string layerName(msg.name, msg.name_length);
-  _animStreamer->GetTrackLayerComponent()->AddSquint(layerName, msg.squintScaleX, msg.squintScaleY, msg.upperLidAngle);
+  _animStreamer->ProcessAddSquint(msg);
 }
 
 void Process_removeSquint(const Anki::Cozmo::RobotInterface::RemoveSquint& msg)
 {
-  const std::string layerName(msg.name, msg.name_length);
-  _animStreamer->GetTrackLayerComponent()->RemoveSquint(layerName, msg.disableTimeout_ms);
+  _animStreamer->ProcessRemoveSquint(msg);
 }
 
 void Process_postAudioEvent(const Anki::AudioEngine::Multiplexer::PostAudioEvent& msg)
@@ -354,6 +347,34 @@ void Process_startRecordingMicsProcessed(const Anki::Cozmo::RobotInterface::Star
                                                   msg.path_length));
 }
 
+void Process_startWakeWordlessStreaming(const Anki::Cozmo::RobotInterface::StartWakeWordlessStreaming& msg)
+{
+  auto* micDataSystem = _context->GetMicDataSystem();
+  if(micDataSystem == nullptr){
+    return;
+  }
+
+  micDataSystem->StartWakeWordlessStreaming();
+}
+  
+void Process_setShouldStreamAfterWakeWord(const Anki::Cozmo::RobotInterface::SetShouldStreamAfterWakeWord& msg)
+{
+  auto* micDataSystem = _context->GetMicDataSystem();
+  if(micDataSystem == nullptr){
+    return;
+  }
+
+  micDataSystem->SetShouldStreamAfterWakeWord(msg.shouldStream);
+}
+
+void Process_resetBeatDetector(const Anki::Cozmo::RobotInterface::ResetBeatDetector& msg)
+{
+  auto* micDataSystem = _context->GetMicDataSystem();
+  if (micDataSystem != nullptr) {
+    micDataSystem->ResetBeatDetector();
+  }
+}
+
 void Process_playbackAudioStart(const Anki::Cozmo::RobotInterface::StartPlaybackAudio& msg)
 {
   using namespace Audio;
@@ -407,6 +428,11 @@ void Process_textToSpeechDeliver(const RobotInterface::TextToSpeechDeliver& msg)
   _animEngine->HandleMessage(msg);
 }
 
+void Process_textToSpeechPlay(const RobotInterface::TextToSpeechPlay& msg)
+{
+  _animEngine->HandleMessage(msg);
+}
+
 void Process_textToSpeechCancel(const RobotInterface::TextToSpeechCancel& msg)
 {
   _animEngine->HandleMessage(msg);
@@ -432,6 +458,15 @@ void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineT
     {
       forwardToRobot = true;
       _context->GetMicDataSystem()->ResetMicListenDirection();
+      break;
+    }
+    case RobotInterface::EngineToRobot::Tag_calmPowerMode:
+    {
+      // Remember the power mode specified by engine so that we can go back to 
+      // it when pairing/debug screens are exited.
+      // Only relay the power mode to robot process if not already in pairing/debug screen.
+      FaceInfoScreenManager::getInstance()->SetCalmPowerModeOnReturnToNone(msg.calmPowerMode);
+      forwardToRobot = FaceInfoScreenManager::getInstance()->GetCurrScreenName() == ScreenName::None;
       break;
     }
 
@@ -495,6 +530,14 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
       AnimComms::DisconnectRobot();
     }
     break;
+    case RobotInterface::RobotToEngine::Tag_prepForShutdown:
+    {
+      PRINT_NAMED_INFO("AnimProcessMessages.ProcessMessageFromRobot.Shutdown","");
+      // Need to wait a couple ticks before actually shutting down so that this message
+      // can be forwarded up to engine
+      _countToShutdown = kNumTicksToShutdown;
+    }
+    break;
     case RobotInterface::RobotToEngine::Tag_micData:
     {
       const auto& payload = msg.micData;
@@ -505,6 +548,12 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
     case RobotInterface::RobotToEngine::Tag_state:
     {
       HandleRobotStateUpdate(msg.state);
+    }
+    break;
+    case RobotInterface::RobotToEngine::Tag_robotStopped:
+    {
+      LOG_INFO("AnimProcessMessages.ProcessMessageFromRobot.RobotStopped", "Abort animation");
+      _animStreamer->Abort();
     }
     break;
     default:
@@ -549,8 +598,27 @@ Result AnimProcessMessages::Init(AnimEngine* animEngine,
   return RESULT_OK;
 }
 
-Result AnimProcessMessages::MonitorConnectionState(void)
+Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_nanosec)
 {
+  // If it has been more than 30 seconds and we still haven't connected to engine
+  // or robot process display a fault code
+  static BaseStationTime_t startTime_nanosec = currTime_nanosec;
+  static const BaseStationTime_t kTimeUntilNoProcessFaultCode_nanosec = Util::SecToNanoSec(30.f);
+  static bool faultCodeDisplayed = false;
+  if(!faultCodeDisplayed &&
+     currTime_nanosec - startTime_nanosec > kTimeUntilNoProcessFaultCode_nanosec)
+  {
+    if(!ANKI_VERIFY(AnimComms::IsConnectedToEngine(),
+                    "AnimProcessMessages.MonitorConnectionState.NotConnectedToEngine",
+                    "Not connected to engine process (currTime_nanosec %llu, startTime_nanosec %llu)",
+                    currTime_nanosec, startTime_nanosec))
+    {
+      faultCodeDisplayed = true;
+      FaultCode::DisplayFaultCode(FaultCode::NO_ENGINE_PROCESS);
+    }
+    // Connection to robot process fault code check is in Update()
+  }
+  
   // Send block connection state when engine connects
   static bool wasConnected = false;
   if (!wasConnected && AnimComms::IsConnectedToEngine()) {
@@ -586,6 +654,19 @@ Result AnimProcessMessages::MonitorConnectionState(void)
 
 Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
 {
+  if(_countToShutdown > 0)
+  {
+    if(--_countToShutdown == 0)
+    {
+      LOG_INFO("AnimProcessMessages.Update.Shutdown","");
+      // RESULT_SHUTDOWN will kick us out of the main update loop
+      // and cause the process to exit cleanly
+      return RESULT_SHUTDOWN;
+    }
+  }
+    
+  ANKI_CPU_PROFILE("AnimProcessMessages::Update");
+
   // Keep trying to init the connection flow until it works
   // which will be when the robot name has been set by switchboard
   if(!_connectionFlowInited)
@@ -595,10 +676,14 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
   
   if (!AnimComms::IsConnectedToRobot()) {
     LOG_WARNING("AnimProcessMessages.Update", "No connection to robot");
+    FaultCode::DisplayFaultCode(FaultCode::NO_ROBOT_PROCESS);
+#if !FACTORY_TEST
+    // Only return failure if this is not the factory test
     return RESULT_FAIL_IO_CONNECTION_CLOSED;
+#endif
   }
 
-  MonitorConnectionState();
+  MonitorConnectionState(currTime_nanosec);
 
   _context->GetMicDataSystem()->Update(currTime_nanosec);
   _context->GetAudioPlaybackSystem()->Update(currTime_nanosec);
@@ -607,40 +692,48 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
   u32 dataLen;
 
   // Process messages from engine
-  while((dataLen = AnimComms::GetNextPacketFromEngine(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
   {
-    Anki::Cozmo::RobotInterface::EngineToRobot msg;
-    memcpy(msg.GetBuffer(), pktBuffer_, dataLen);
-    if (msg.Size() != dataLen) {
-      LOG_WARNING("AnimProcessMessages.Update.EngineToRobot.InvalidSize",
-                  "Invalid message size from engine (%d != %d)",
-                  msg.Size(), dataLen);
-      continue;
+    ANKI_CPU_PROFILE("ProcessMessageFromEngine");
+
+    while((dataLen = AnimComms::GetNextPacketFromEngine(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
+    {
+      Anki::Cozmo::RobotInterface::EngineToRobot msg;
+      memcpy(msg.GetBuffer(), pktBuffer_, dataLen);
+      if (msg.Size() != dataLen) {
+        LOG_WARNING("AnimProcessMessages.Update.EngineToRobot.InvalidSize",
+                    "Invalid message size from engine (%d != %d)",
+                    msg.Size(), dataLen);
+        continue;
+      }
+      if (!msg.IsValid()) {
+        LOG_WARNING("AnimProcessMessages.Update.EngineToRobot.InvalidData", "Invalid message from engine");
+        continue;
+      }
+      ProcessMessageFromEngine(msg);
     }
-    if (!msg.IsValid()) {
-      LOG_WARNING("AnimProcessMessages.Update.EngineToRobot.InvalidData", "Invalid message from engine");
-      continue;
-    }
-    ProcessMessageFromEngine(msg);
   }
 
   // Process messages from robot
-  while ((dataLen = AnimComms::GetNextPacketFromRobot(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
   {
-    Anki::Cozmo::RobotInterface::RobotToEngine msg;
-    memcpy(msg.GetBuffer(), pktBuffer_, dataLen);
-    if (msg.Size() != dataLen) {
-      LOG_WARNING("AnimProcessMessages.Update.RobotToEngine.InvalidSize",
-                  "Invalid message size from robot (%d != %d)",
-                  msg.Size(), dataLen);
-      continue;
+    ANKI_CPU_PROFILE("ProcessMessageFromRobot");
+
+    while ((dataLen = AnimComms::GetNextPacketFromRobot(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
+    {
+      Anki::Cozmo::RobotInterface::RobotToEngine msg;
+      memcpy(msg.GetBuffer(), pktBuffer_, dataLen);
+      if (msg.Size() != dataLen) {
+        LOG_WARNING("AnimProcessMessages.Update.RobotToEngine.InvalidSize",
+                    "Invalid message size from robot (%d != %d)",
+                    msg.Size(), dataLen);
+        continue;
+      }
+      if (!msg.IsValid()) {
+        LOG_WARNING("AnimProcessMessages.Update.RobotToEngine.InvalidData", "Invalid message from robot");
+        continue;
+      }
+      ProcessMessageFromRobot(msg);
+      _proceduralAudioClient->ProcessMessage(msg);
     }
-    if (!msg.IsValid()) {
-      LOG_WARNING("AnimProcessMessages.Update.RobotToEngine.InvalidData", "Invalid message from robot");
-      continue;
-    }
-    ProcessMessageFromRobot(msg);
-    _proceduralAudioClient->ProcessMessage(msg);
   }
 
 #if FACTORY_TEST

@@ -14,7 +14,9 @@
 
 #include "engine/components/blockTapFilterComponent.h"
 #include "engine/components/cubes/cubeAccelComponent.h"
+#include "engine/components/cubes/cubeLightComponent.h"
 #include "engine/components/cubes/ledAnimation.h"
+#include "engine/activeObject.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -32,6 +34,8 @@
 #include "util/jsonWriter/jsonWriter.h"
 #include "util/console/consoleInterface.h"
 
+#include "webServerProcess/src/webService.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -45,11 +49,17 @@ namespace {
   // How long must the object be disconnected before we really remove it from the list of connected objects
   const float kDisconnectTimeout_sec = 5.0f;
 
+  const float kSendWebVizDataPeriod_sec = 1.0f;
+  
   const int kNumCubeLEDs = Util::EnumToUnderlying(CubeConstants::NUM_CUBE_LEDS);
   
-  const std::string kBlockFacIdsKey = "blockFactoryIds";
+  const std::string kBlockFacIdKey = "blockFactoryId";
   
   static bool sResetBlockPoolList = false;
+  
+  const std::string kBlockPoolFilename = "blockPool.json";
+
+  const std::string kWebVizModuleNameCubes = "cubes";
 }
 
   
@@ -75,10 +85,12 @@ void CubeCommsComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
 {
   _robot = robot;
   
-  _blockPoolFactoryIds.clear();
+  _blockPoolFactoryId = "";
   
   // Game to engine message handling:
   if (_robot->HasExternalInterface()) {
+    SubscribeToWebViz();
+    
     auto callback = std::bind(&CubeCommsComponent::HandleGameEvents, this, std::placeholders::_1);
     auto* extInterface = _robot->GetExternalInterface();
     _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BlockPoolEnabledMessage, callback));
@@ -90,18 +102,14 @@ void CubeCommsComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
   // - warn if the json wasn't parsed correctly
   const Util::Data::DataPlatform* platform = robot->GetContextDataPlatform();
   DEV_ASSERT(platform!=nullptr, "CubeCommsComponent.InitDependent.DataPlatformIsNull");
-  const auto blockPoolFile = platform->pathToResource(Util::Data::Scope::Persistent, "blockPoolList.json");
+  const auto blockPoolFile = platform->pathToResource(Util::Data::Scope::Persistent, kBlockPoolFilename);
   bool parsingSuccessful = false;
   if(Util::FileUtils::FileExists(blockPoolFile)) {
     std::string contents = Util::FileUtils::ReadFile(blockPoolFile);
     Json::Value root;
     Json::Reader reader;
     if(reader.parse(contents, root)) {
-      std::vector<std::string> blockFacIds;
-      if(JsonTools::GetVectorOptional(root, kBlockFacIdsKey, blockFacIds)) {
-        std::copy(blockFacIds.begin(), blockFacIds.end(), std::inserter(_blockPoolFactoryIds, _blockPoolFactoryIds.begin()));
-        parsingSuccessful = true;
-      }
+      parsingSuccessful = JsonTools::GetValueOptional(root, kBlockFacIdKey, _blockPoolFactoryId);
     }
   }
   
@@ -131,9 +139,9 @@ void CubeCommsComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
   // handle console function request to delete saved blockpool
   if(sResetBlockPoolList) {
-    _blockPoolFactoryIds.clear();
+    _blockPoolFactoryId = "";
     const Util::Data::DataPlatform* platform = _robot->GetContextDataPlatform();
-    const auto blockPoolFile = platform->pathToResource(Util::Data::Scope::Persistent, "blockPoolList.json");
+    const auto blockPoolFile = platform->pathToResource(Util::Data::Scope::Persistent, kBlockPoolFilename);
     SaveBlockPoolListToJson(blockPoolFile);
     sResetBlockPoolList = false;
     EnableDiscovery(true,0);
@@ -180,6 +188,12 @@ void CubeCommsComponent::UpdateDependent(const RobotCompMap& dependentComps)
     }
 
     _nextDisconnectCheckTime_sec = now_sec + kDisconnectCheckPeriod_sec;
+  }
+  
+  // Send info to web viz occasionally
+  if (now_sec > _nextSendWebVizDataTime_sec) {
+    SendDataToWebViz();
+    _nextSendWebVizDataTime_sec = now_sec + kSendWebVizDataPeriod_sec;
   }
 }
 
@@ -326,11 +340,71 @@ bool CubeCommsComponent::SendCubeLights(const ActiveID& activeId, const CubeLigh
 }
 
 
-void CubeCommsComponent::SendBlockPoolData() const
+void CubeCommsComponent::SubscribeToWebViz()
 {
-  // Persistent pool not yet implemented! (VIC-782)
-  PRINT_NAMED_WARNING("CubeCommsComponent.SendBlockPoolData.NotImplemented",
-                      "Not sending BlockPoolDataMessage - persistent pool  is not yet implemented!");
+  if (!ANKI_DEV_CHEATS) {
+    return;
+  }
+  
+  const auto* context = _robot->GetContext();
+  if (context != nullptr) {
+    auto* webService = context->GetWebService();
+    if (webService != nullptr) {
+      auto onData = [this](const Json::Value& data, const std::function<void(const Json::Value&)>& sendToClient) {
+        const auto& flashCubeLights = data["flashCubeLights"];
+        const bool shouldFlashCubeLights = flashCubeLights.isBool() && flashCubeLights.asBool();
+        if(shouldFlashCubeLights) {
+          // flash lights on all connected cubes
+          for (const auto& mapEntry : _availableCubes) {
+            const auto& activeID = mapEntry.first;
+            const bool connected = mapEntry.second.connected;
+            if (connected) {
+              const auto* object = _robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeID);
+              if (object != nullptr) {
+                _robot->GetCubeLightComponent().PlayLightAnim(object->GetID(), CubeAnimationTrigger::Flash);
+              }
+            }
+          }
+        }
+        
+        const auto& resetBlockPool = data["resetBlockPool"];
+        const bool shouldResetBlockPool = resetBlockPool.isBool() && resetBlockPool.asBool();
+        if(shouldResetBlockPool) {
+          sResetBlockPoolList = true;
+        }
+      };
+      
+      _signalHandles.emplace_back(webService->OnWebVizData(kWebVizModuleNameCubes).ScopedSubscribe(onData));
+    }
+  }
+}
+
+
+void CubeCommsComponent::SendDataToWebViz()
+{
+  if (!ANKI_DEV_CHEATS) {
+    return;
+  }
+  
+  const auto* context = _robot->GetContext();
+  if (context != nullptr) {
+    auto* webService = context->GetWebService();
+    if (webService!= nullptr) {
+      Json::Value toSend = Json::arrayValue;
+      for (const auto& mapEntry : _availableCubes) {
+        Json::Value blob;
+        const auto& cube = mapEntry.second;
+        blob["connected"]     = cube.connected;
+        blob["address"]       = cube.factoryId;
+        blob["lastHeardTime"] = cube.lastHeardTime_sec;
+        if (!cube.connected) {
+          blob["lastRssi"]  = cube.lastRssi;
+        }
+        toSend.append(blob);
+      }
+      webService->SendToWebViz(kWebVizModuleNameCubes, toSend);
+    }
+  }
 }
 
 
@@ -341,9 +415,9 @@ void CubeCommsComponent::HandleGameEvents(const AnkiEvent<ExternalInterface::Mes
     case ExternalInterface::MessageGameToEngineTag::BlockPoolEnabledMessage:
       // delete the persist block pool file, and clear the cached list
       if(event.GetData().Get_BlockPoolEnabledMessage().reset) {
-        _blockPoolFactoryIds.clear();
+        _blockPoolFactoryId = "";
         const Util::Data::DataPlatform* platform = _robot->GetContextDataPlatform();
-        const auto blockPoolFile = platform->pathToResource(Util::Data::Scope::Persistent, "blockPoolList.json");
+        const auto blockPoolFile = platform->pathToResource(Util::Data::Scope::Persistent, kBlockPoolFilename);
         Util::FileUtils::DeleteFile(blockPoolFile);
       }
       EnableDiscovery(event.GetData().Get_BlockPoolEnabledMessage().enable,
@@ -466,12 +540,11 @@ void CubeCommsComponent::HandleConnectionStateChange(const BleFactoryId& factory
     }
     
     // save this cube to preferred cubes to connect to (block pool)
-    auto got = _blockPoolFactoryIds.find(cube->factoryId);
-    if(got==_blockPoolFactoryIds.end()) {
-      _blockPoolFactoryIds.insert(cube->factoryId);
+    if(_blockPoolFactoryId.empty()) {
+      _blockPoolFactoryId = cube->factoryId;
     }
     const Util::Data::DataPlatform* platform = _robot->GetContextDataPlatform();
-    const std::string blockPoolFile = platform->pathToResource(Util::Data::Scope::Persistent, "blockPoolList.json");
+    const std::string blockPoolFile = platform->pathToResource(Util::Data::Scope::Persistent, kBlockPoolFilename);
     SaveBlockPoolListToJson(blockPoolFile);
   } else {
     // log event to das
@@ -532,17 +605,15 @@ void CubeCommsComponent::HandleScanForCubesFinished()
     // If this is the first cube of this type to be seen or if this cube's rssi
     // is higher than the max seen, add it to the list of cubes to connect to
     auto got = candidates.find(type);
-    const bool inBlockPool = _blockPoolFactoryIds.find(facId)!=_blockPoolFactoryIds.end();
+    const bool inBlockPool = _blockPoolFactoryId.compare(facId)==0;
     if(got==candidates.end()) {
       candidates[type] = CandidateCubeInfo{rssi, facId, inBlockPool};
-    } else if(( got->second.inBlockPool &&  inBlockPool && got->second.maxRssiSeen < rssi) ||
-              (!got->second.inBlockPool && (inBlockPool || got->second.maxRssiSeen < rssi))) {
+    } else if(!got->second.inBlockPool && (inBlockPool || got->second.maxRssiSeen < rssi)) {
       // truth table: used to decide if we want to overwrite old with new
+      //
       //   old cube         new cube
       // in block pool?   in block pool?    higher rssi?    should overwrite?
       //    (A)               (B)               (C)             (D)
-      //  yes               yes               yes             yes
-      //  yes               yes               no              no
       //  yes               no                yes             no
       //  yes               no                no              no
       //  no                yes               yes             yes
@@ -550,11 +621,10 @@ void CubeCommsComponent::HandleScanForCubesFinished()
       //  no                no                yes             yes
       //  no                no                no              no
       //
-      //  expression:
-      //    D = (A & B & C) || (!A & (B | C))
-      //
       // prefer the cubes in the blockpool over higher rssi cubes
       candidates[type] = CandidateCubeInfo{rssi, facId, inBlockPool};
+    } else {
+      DEV_ASSERT( !(inBlockPool && got->second.inBlockPool), "CubeCommsComponent.HandleScanForCubesFinished.TwoCubesInBlockPoolNotAllowed");
     }
   }
 
@@ -646,11 +716,7 @@ CubeCommsComponent::CubeInfo* CubeCommsComponent::GetCubeByFactoryId(const BleFa
 void CubeCommsComponent::SaveBlockPoolListToJson(const std::string& blockPoolFile) const
 {
   Util::JsonWriter writer(blockPoolFile);
-  writer.StartList(kBlockFacIdsKey);
-  for(const auto& item : _blockPoolFactoryIds) {
-    writer.AddRawListEntry(item);
-  }
-  writer.EndList();
+  writer.AddEntry(kBlockFacIdKey, _blockPoolFactoryId);
   writer.Close();
 }
 

@@ -13,19 +13,43 @@
 #ifndef __Util_Logging_IEventProvider_H__
 #define __Util_Logging_IEventProvider_H__
 
+#include "logtypes.h"
+
 #include <map>
 #include <string>
+
+// Forward declarations
+namespace Anki {
+  namespace Util {
+    struct DasMsg;
+  }
+}
 
 namespace Anki {
 namespace Util {
 
 class IEventProvider {
 public:
-  // print event should be part of this interface
-  // but in our case it makes more sense to keep it in the iLoggerProvider
-  //virtual void PrintEvent(const char* eventName,
-  //  const std::vector<std::pair<const char*, const char*>>& keyValues,
-  //  const char* eventValue) = 0;
+
+  // Log an error event
+  inline void LogError(const DasMsg & dasMsg) {
+    LogEvent(LOG_LEVEL_ERROR, dasMsg);
+  }
+
+  // Log a warning event
+  inline void LogWarning(const DasMsg & dasMsg) {
+    LogEvent(LOG_LEVEL_WARN, dasMsg);
+  }
+
+  // Log an info event
+  inline void LogInfo(const DasMsg & dasMsg) {
+    LogEvent(LOG_LEVEL_INFO, dasMsg);
+  }
+
+  // Log a debug event
+  inline void LogDebug(const DasMsg & dasMsg) {
+    LogEvent(LOG_LEVEL_DEBUG, dasMsg);
+  }
 
   // sets global properties.
   // all future logs+events will have the updated globals attached to them
@@ -37,13 +61,15 @@ public:
   virtual void EnableNetwork(int reason) {}
   virtual void DisableNetwork(int reason) {}
 
+protected:
+
+  // Log an event at given level
+  // To be implemented by each event provider
+  virtual void LogEvent(LogLevel level, const DasMsg & dasMsg) = 0;
+
 };
-
-
-
 
 } // namespace Util
 } // namespace Anki
 
 #endif // __Util_Logging_IEventProvider_H__
-

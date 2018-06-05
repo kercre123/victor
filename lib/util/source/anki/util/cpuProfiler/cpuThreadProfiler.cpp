@@ -202,7 +202,7 @@ void CpuThreadProfiler::LogAllCalledSamples() const
 
     _currentProfile.LogAllCalledSamples(_threadIndex, _samplesCalledFromThread);
   } else if (kProfilerLogOutput == (int)Output::WebViz) {
-    _currentProfile.PublishToWebService(_webServiceCallback, _threadIndex, _samplesCalledFromThread);
+    _currentProfile.PublishToWebService(_webServiceCallback, GetThreadName(), _threadIndex, _samplesCalledFromThread);
   }
 }
 

@@ -218,6 +218,24 @@ SerializedSpriteBox CompositeImageLayer::SpriteBox::Serialize() const
   return serialized;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CompositeImageLayer::SpriteBox::ValidateRenderConfig() const
+{
+  switch(renderConfig.renderMethod){
+    case SpriteRenderMethod::RGBA:
+    case SpriteRenderMethod::CustomHue:
+    {
+      return true;
+    }
+    default:
+    {
+      PRINT_NAMED_ERROR("CompositeImageLayer.ValidateRenderConfig",
+                        "Sprite Box %s does not have a valid render method",
+                        SpriteBoxNameToString(spriteBoxName));
+      return false;
+    }
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CompositeImageLayer::SpriteEntry::SpriteEntry(SpriteCache* cache,
@@ -226,7 +244,14 @@ CompositeImageLayer::SpriteEntry::SpriteEntry(SpriteCache* cache,
 : _spriteName(spriteName)
 {
   if(Vision::IsSpriteSequence(spriteName, false)){
-    _spriteSequence = *seqContainer->GetSequenceByName(spriteName);
+    auto* seq = seqContainer->GetSequenceByName(spriteName);
+    if(seq != nullptr){
+      _spriteSequence = *seq;
+    }else{
+      PRINT_NAMED_ERROR("CompositeImageLayer.SpriteEntry.SequenceNotInContainer",
+                        "Could not find sequence for SpriteName %s",
+                        SpriteNameToString(spriteName));
+    }
   }else{
     _spriteSequence.AddFrame(cache->GetSpriteHandle(spriteName));
   }
@@ -238,6 +263,11 @@ CompositeImageLayer::SpriteEntry::SpriteEntry(Vision::SpriteSequence&& sequence)
   _spriteSequence = std::move(sequence);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+CompositeImageLayer::SpriteEntry::SpriteEntry(Vision::SpriteHandle spriteHandle)
+{
+  _spriteSequence.AddFrame(spriteHandle);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CompositeImageLayer::SpriteEntry::operator == (const SpriteEntry& other) const {

@@ -10,6 +10,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="/p5.min.js"></script> <!--this has a v0.6.0 bugfix so isn't CDN-->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.16/js/jquery.dataTables.min.js"></script>
   
   <script>
     // add new modules here, which also become the tab
@@ -24,15 +25,21 @@
       VisionScheduleMediator : 'webVizModules/visionScheduleMediator.js',
       ObservedObjects : 'webVizModules/observedObjects.js',
       Mood : 'webVizModules/mood.js',
+      Cpu : 'webVizModules/cpu.js',
       CpuProfile : 'webVizModules/cpuprofile.js',
-      NavMap : 'webVizModules/navMap.js'
+      NavMap : 'webVizModules/navMap.js',
+      Cubes : 'webVizModules/cubes.js'
     }
     var modules8889 = {
       MicData : 'webVizModules/micData.js',
       Animations: 'webVizModules/animations.js',
+      AudioEvents: 'webVizModules/audioEvents.js',
       CpuProfile : 'webVizModules/cpuprofile.js'
     }
   </script>
+
+  <!-- for datatables -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.16/css/jquery.dataTables.min.css">
 
   <style>
     *, *:before, *:after {
@@ -203,6 +210,15 @@
       margin-bottom:20px;
     }
 
+    #devDataDump {
+      overflow-x: scroll;
+      overflow-y: scroll;
+      border:1px solid black;
+      padding:10px;
+      margin:10px;
+      font-family:monospace;
+    }
+
     
   </style>
 
@@ -226,6 +242,11 @@
       <p>Each tab contains its own module. Open the tab to subscribe to the data source for that module.</p>
       <p>To add new modules, start with the template file module.js.template.</p>
       <p><b>Are you always disconnected from the robot? Not seeing new tabs or new functionality? In Chrome, hit Command + Shift + R to re-download all the assets for this site.</b></p>
+
+      <div id="devDataDump" style="display:none;">
+        <div>{</div>
+        <div>}</div>
+      </div>
     </div>
 
     
@@ -238,6 +259,8 @@
   <script>
 
     var modules;
+
+    var fakeData;
 
     var kUpdatePeriod_ms = 200; // todo: maybe a module should request its period?
 
@@ -335,6 +358,12 @@
           }
         
           modules[moduleName].init($('#' + tab_id)[0]);
+
+          if( typeof fakeData !== 'undefined' && typeof fakeData[moduleName] !== 'undefined' ) {
+            fakeData[moduleName].forEach(function(entry){
+              onNewData(moduleName, entry);
+            });
+          }
         }
       });
       $('.popoutIcon').click(function(){
@@ -383,6 +412,18 @@
             alert('The module ' + moduleName + ' has an error. Displayed results may be invalid');
             hasShownAlert = true;
           }
+        }
+        if( modules[moduleName].devShouldDumpData ) {
+          $('#devDataDump').show();
+          var moduleData = $('#devDataDump').find('div[data-tab="' + moduleName + '"]');
+          var container;
+          if( moduleData.length == 0 ) {
+            container = $('<div data-tab="' + moduleName + '">"' + moduleName + '": [</div>').insertBefore('#devDataDump div:last-child');
+          } else {
+            container = $(moduleData[0]);
+            container.text( container.text().slice(0,-1) + ', ' ); // prepare by removing trailing "]" and adding ", "
+          }
+          container.text( container.text() + JSON.stringify(data) + ']' ); 
         }
       }
     }
@@ -441,6 +482,14 @@
     }
     var getPortLink = function(port) {
       return 'http://' + window.location.hostname + ':' + port + window.location.pathname;
+    }
+    var getDevData = function() {
+      var url = 'devData.json';
+      $.getJSON( url, function( data ) {
+        // add a warning about fake data
+        $('#tab-overview p:first-child').html( '<b>USING FAKE DATA!</b> remember to remove ' + url + ' when dev work is done' );
+        fakeData = data;
+      });
     }
 
     var modulesContexts = {};
@@ -524,6 +573,8 @@
           setupSocket();
 
           startUpdateLoop(kUpdatePeriod_ms);
+
+          getDevData();
         } else {
           // increment and continue
           ++moduleIndex;

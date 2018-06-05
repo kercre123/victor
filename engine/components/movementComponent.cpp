@@ -41,7 +41,6 @@ namespace Cozmo {
   
 CONSOLE_VAR(bool, kDebugTrackLocking, "Robot", false);
 CONSOLE_VAR(bool, kCreateUnexpectedMovementObstacles, "Robot", true);
-CONSOLE_VAR(bool, kAllowMovementOnChargerInSdkMode, "Robot", false);
   
 using namespace ExternalInterface;
 
@@ -69,15 +68,15 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
   // Game to engine (in alphabetical order)
   helper.SubscribeGameToEngine<MessageGameToEngineTag::DriveArc>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::DriveWheels>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::EnterSdkMode>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::ExitSdkMode>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::MoveHead>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::MoveLift>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::StopAllMotors>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::TurnInPlaceAtSpeed>();
-  
-  // Engine to game
-  helper.SubscribeEngineToGame<MessageEngineToGameTag::ChargerEvent>();
+}
+
+void MovementComponent::SetAllowedToHandleActions(bool allowedToHandleActions)
+{
+  _isAllowedToHandleActions = allowedToHandleActions;
 }
 
 void MovementComponent::OnRobotDelocalized()
@@ -136,11 +135,6 @@ void MovementComponent::NotifyOfRobotState(const Cozmo::RobotState& robotState)
   }
   
   CheckForUnexpectedMovement(robotState);
-
-  if (kAllowMovementOnChargerInSdkMode) {
-    UnlockTracks(GetTracksLockedBy(kOnChargerInSdkStr), kOnChargerInSdkStr); //Unlock only if the SDK locked the tracks
-  }
-
 }
 
 void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robotState)
@@ -167,7 +161,6 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
   // Don't check for unexpected movement under the following conditions
   if (robotState.status & (uint16_t)RobotStatusFlag::IS_PICKED_UP   ||
       robotState.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER  ||
-      robotState.status & (uint16_t)RobotStatusFlag::CLIFF_DETECTED ||
       robotState.status & (uint16_t)RobotStatusFlag::IS_FALLING)
   {
     _unexpectedMovement.Reset();
@@ -183,15 +176,28 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
   
   UnexpectedMovementType unexpectedMovementType = UnexpectedMovementType::TURNED_BUT_STOPPED;
   
+  bool rotatingWithoutMotorsDetected = false;
+  const bool noGyroRotation = NEAR(zGyro_radps, 0, kGyroTol_radps);
   // Wheels aren't moving (using kMinWheelSpeed_mmps as a dead band)
   if (ABS(lWheelSpeed_mmps) + ABS(rWheelSpeed_mmps) < kMinWheelSpeed_mmps)
   {
-    _unexpectedMovement.Decrement();
-    return;
+    if (noGyroRotation || !_enableRotatedWithoutMotors)
+    {
+      _unexpectedMovement.Decrement();
+      return;
+    }
+    else
+    {
+      // Increment by 5 here to get this case to trigger faster than other cases
+      // The intuition is that this case is easier and more reliable to detect so there should not be any false positives
+      _unexpectedMovement.Increment(5, lWheelSpeed_mmps, rWheelSpeed_mmps, robotState.timestamp);
+      unexpectedMovementType = UnexpectedMovementType::ROTATING_WITHOUT_MOTORS;
+      rotatingWithoutMotorsDetected = true;
+    }
   }
   
   // Gyro says we aren't turning
-  if (NEAR(zGyro_radps, 0, kGyroTol_radps))
+  if (noGyroRotation)
   {
     // But wheels say we are turning (the direction of the wheels are different like during a point turn)
     if (signbit(lWheelSpeed_mmps) != signbit(rWheelSpeed_mmps))
@@ -211,7 +217,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
     }
   }
   // Wheel speeds and gyro agree on the direction we are turning
-  else if (signbit(speedDiff) == signbit(zGyro_radps))
+  else if ((signbit(speedDiff) == signbit(zGyro_radps)) && !rotatingWithoutMotorsDetected)
   {
     // This check is for detecting if we are being turned in the direction we are already turning
     // this is difficult to detect due to physics. For example, we spin faster when carrying a block
@@ -229,8 +235,8 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
     _unexpectedMovement.Decrement();
     return;
   }
-  // Otherwise gyro says we are turning but our wheel speeds don't agree
-  else
+  // Otherwise gyro says we are turning but our non-zero wheel speeds don't agree
+  else if (!rotatingWithoutMotorsDetected)
   {
     // Increment by 2 here to get this case to trigger twice as fast as other cases
     // The intuition is that this case is easier and more reliable to detect so there should not be any false positives
@@ -253,6 +259,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
 
     _unexpectedMovementSide = UnexpectedMovementSide::UNKNOWN;
     
+    // don't create obstacles for ROTATING_WITHOUT_MOTORS or TURNED_IN_SAME_DIRECTION
     const bool isValidTypeOfUnexpectedMovement = (unexpectedMovementType == UnexpectedMovementType::TURNED_BUT_STOPPED ||
                                                   unexpectedMovementType == UnexpectedMovementType::TURNED_IN_OPPOSITE_DIRECTION);
     
@@ -382,14 +389,10 @@ void MovementComponent::RemoveEyeShiftWhenHeadMoves(const std::string& name, Tim
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
 {
-  if (_ignoreDirectDrive)
-  {
-    LOG_INFO("MovementComponent.EventHandler.DriveWheels",
-             "Ignoring DriveWheels message while direct drive is disabled");
-    return;
+  if (!_isAllowedToHandleActions) {
+    LOG_ERROR("MovementComponent.EventHandler.DriveWheels.SDKBehaviorNotActive", "Ignoring ExternalInterface::DriveWheels while SDK behavior is not active.");
   }
-  
-  if (!_drivingWheels && AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK)) {
+  else if (!_drivingWheels && AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK)) {
     LOG_INFO("MovementComponent.EventHandler.DriveWheels.WheelsLocked",
              "Ignoring ExternalInterface::DriveWheels while wheels are locked.");
   } else {
@@ -406,14 +409,10 @@ void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::TurnInPlaceAtSpeed& msg)
 {
-  if (_ignoreDirectDrive)
-  {
-    LOG_INFO("MovementComponent.EventHandler.TurnInPlaceAtSpeed",
-             "Ignoring TurnInPlaceAtSpeed message while direct drive is disabled");
-    return;
+  if (!_isAllowedToHandleActions) {
+    LOG_ERROR("MovementComponent.EventHandler.DriveWheels.SDKBehaviorNotActive", "Ignoring ExternalInterface::TurnInPlaceAtSpeed while SDK behavior is not active.");
   }
-  
-  if (!_drivingWheels && AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK)) {
+  else if (!_drivingWheels && AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK)) {
     LOG_INFO("MovementComponent.EventHandler.TurnInPlaceAtSpeed.WheelsLocked",
              "Ignoring ExternalInterface::TurnInPlaceAtSpeed while wheels are locked.");
   } else {
@@ -436,14 +435,10 @@ void MovementComponent::HandleMessage(const ExternalInterface::TurnInPlaceAtSpee
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::MoveHead& msg)
 {
-  if (_ignoreDirectDrive)
-  {
-    LOG_INFO("MovementComponent.EventHandler.MoveHead",
-             "Ignoring MoveHead message while direct drive is disabled");
-    return;
+  if (!_isAllowedToHandleActions) {
+    LOG_ERROR("MovementComponent.EventHandler.DriveWheels.SDKBehaviorNotActive", "Ignoring ExternalInterface::MoveHead while SDK behavior is not active.");
   }
-  
-  if (!_drivingHead && AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK)) {
+  else if (!_drivingHead && AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK)) {
     LOG_INFO("MovementComponent.EventHandler.MoveHead.HeadLocked",
              "Ignoring ExternalInterface::MoveHead while head is locked.");
   } else {
@@ -459,14 +454,10 @@ void MovementComponent::HandleMessage(const ExternalInterface::MoveHead& msg)
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::MoveLift& msg)
 {
-  if (_ignoreDirectDrive)
-  {
-    LOG_INFO("MovementComponent.EventHandler.MoveLift",
-             "Ignoring MoveLift message while direct drive is disabled");
-    return;
+  if (!_isAllowedToHandleActions) {
+    LOG_ERROR("MovementComponent.EventHandler.DriveWheels.SDKBehaviorNotActive", "Ignoring ExternalInterface::MoveLift while SDK behavior is not active.");
   }
-  
-  if (!_drivingLift && AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK)) {
+  else if (!_drivingLift && AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK)) {
     LOG_INFO("MovementComponent.EventHandler.MoveLift.LiftLocked",
              "Ignoring ExternalInterface::MoveLift while lift is locked.");
   } else {
@@ -482,14 +473,10 @@ void MovementComponent::HandleMessage(const ExternalInterface::MoveLift& msg)
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::DriveArc& msg)
 {
-  if (_ignoreDirectDrive)
-  {
-    LOG_INFO("MovementComponent.EventHandler.DriveArc",
-             "Ignoring DriveArc message while direct drive is disabled");
-    return;
+  if (!_isAllowedToHandleActions) {
+    LOG_ERROR("MovementComponent.EventHandler.DriveWheels.SDKBehaviorNotActive", "Ignoring ExternalInterface::DriveArc while SDK behavior is not active.");
   }
-  
-  if (!_drivingWheels && AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK)) {
+  else if (!_drivingWheels && AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK)) {
     LOG_INFO("MovementComponent.EventHandler.DriveArc.WheelsLocked",
              "Ignoring ExternalInterface::DriveArc while wheels are locked.");
   } else {
@@ -507,6 +494,11 @@ void MovementComponent::HandleMessage(const ExternalInterface::DriveArc& msg)
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::StopAllMotors& msg)
 {
+  if (!_isAllowedToHandleActions) {
+    LOG_ERROR("MovementComponent.EventHandler.DriveWheels.SDKBehaviorNotActive", "Ignoring ExternalInterface::StopAllMotors while SDK behavior is not active.");
+    return;
+  }
+
   StopAllMotors();
 }
 
@@ -539,49 +531,6 @@ void MovementComponent::DirectDriveCheckSpeedAndLockTracks(f32 speed, bool& flag
     {
       LockTracks(tracks, who, debugName);
     }
-  }
-}
-  
-template<>
-void MovementComponent::HandleMessage(const ExternalInterface::ChargerEvent& msg)
-{
-  if (!kAllowMovementOnChargerInSdkMode && _robot->GetContext()->IsInSdkMode())
-  {
-    if (msg.onCharger)
-    {
-      if(!AreAllTracksLockedBy(kAllMotorTracks, kOnChargerInSdkStr))
-      {
-        // Just got put on charger while in SDK mode (and not already locked): Lock motors.
-        LockTracks(kAllMotorTracks, kOnChargerInSdkStr, kOnChargerInSdkStr);
-      }
-    }
-    else
-    {
-      // Just came off charger while in SDK mode: Unlock motors.
-      UnlockTracks(kAllMotorTracks, kOnChargerInSdkStr);
-    }
-  }
-}
-  
-template<>
-void MovementComponent::HandleMessage(const ExternalInterface::EnterSdkMode& msg)
-{
-  if (!kAllowMovementOnChargerInSdkMode &&
-      _robot->GetBatteryComponent().IsOnChargerContacts() &&
-      !AreAllTracksLockedBy(kAllMotorTracks, kOnChargerInSdkStr))
-  {
-    // If SDK mode starts _while_ we are on the charger (and not already locked), lock tracks
-    LockTracks(kAllMotorTracks, kOnChargerInSdkStr, kOnChargerInSdkStr);
-  }
-}
-
-template<>
-void MovementComponent::HandleMessage(const ExternalInterface::ExitSdkMode& msg)
-{
-  if (!kAllowMovementOnChargerInSdkMode && _robot->GetBatteryComponent().IsOnChargerContacts())
-  {
-    // If SDK ends _while_ we are on the charger, make sure to unlock tracks
-    UnlockTracks(kAllMotorTracks, kOnChargerInSdkStr);
   }
 }
   

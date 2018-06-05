@@ -13,11 +13,16 @@
  **/
 
 #include "osState/osState.h"
+#include "util/console/consoleInterface.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
+
+#include "cutils/properties.h"
+
+#include "anki/cozmo/shared/factory/emrHelper.h"
 
 // For getting our ip address
 #include <arpa/inet.h>
@@ -25,11 +30,16 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
+#include <sys/types.h>
+#include <ifaddrs.h>
+#include <string.h>
+#include <netdb.h>
 
 #include <linux/wireless.h>
 
 #include <fstream>
 #include <array>
+#include <iomanip>
 #include <stdlib.h>
 
 #ifdef SIMULATOR
@@ -38,14 +48,24 @@
 
 namespace Anki {
 namespace Cozmo {
-  
+
+CONSOLE_VAR_ENUM(int, kWebvizUpdatePeriod, "OSState", 0, "Off,10ms,100ms,1000ms,10000ms");
+
 namespace {
+  uint32_t kPeriodEnumToMS[] = {0, 10, 100, 1000, 10000};
 
   std::ifstream _cpuFile;
-  std::ifstream _tempFile;
+  std::ifstream _temperatureFile;
   std::ifstream _uptimeFile;
   std::ifstream _memInfoFile;
   std::ifstream _cpuTimeStatsFile;
+
+  std::mutex _cpuMutex;
+  std::mutex _temperatureMutex;
+  std::mutex _MACAddressMutex;
+  std::mutex _uptimeMutex;
+  std::mutex _memInfoMutex;
+  std::mutex _cpuTimeStatsMutex;
 
   const char* kNominalCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq";
   const char* kCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq";
@@ -71,68 +91,50 @@ namespace {
   // How often state variables are updated
   uint32_t _updatePeriod_ms = 0;
   uint32_t _lastUpdateTime_ms = 0;
+  uint32_t _lastWebvizUpdateTime_ms = 0;
+
+  std::function<void(const Json::Value&)> _webServiceCallback = nullptr;
 
 } // namespace
 
-// Searches the .prop property files for the given key and returns the value
-// __system_get_property() from sys/system_properties.h does
-// not work for some reason so we have to read the files manually
 std::string GetProperty(const std::string& key)
 {
-  const std::string kProp = key + "=";
-
-  // First check the regular build.prop
-  std::ifstream infile("/build.prop");
-
-  std::string line;
-  while(std::getline(infile, line))
+  char propBuf[PROPERTY_VALUE_MAX] = {0};
+  int rc = property_get(key.c_str(), propBuf, "");
+  if(rc <= 0)
   {
-    size_t index = line.find(kProp);
-    if(index != std::string::npos)
-    {
-      infile.close();
-      return line.substr(kProp.length());
-    }
+    PRINT_NAMED_WARNING("OSState.GetProperty.FailedToFindProperty",
+                        "Property %s not found",
+                        key.c_str());
   }
 
-  infile.close();
-
-  // If the key wasn't found in /build.prop, then
-  // check the persistent build.prop
-  infile.open("/data/persist/build.prop");
-
-  while(std::getline(infile, line))
-  {
-    size_t index = line.find(kProp);
-    if(index != std::string::npos)
-    {
-      infile.close();
-      return line.substr(kProp.length());
-    }
-  }
-
-  infile.close();
-  
-  return "";
+  return std::string(propBuf);
 }
 
 OSState::OSState()
 {
+  // Suppress unused function error for WriteEMR
+  (void)static_cast<void(*)(size_t, void*, size_t)>(Factory::WriteEMR);
+  (void)static_cast<void(*)(size_t, uint32_t)>(Factory::WriteEMR);
+
   // Get nominal CPU frequency for this robot
-  _tempFile.open(kNominalCPUFreqFile, std::ifstream::in);
-  if(_tempFile.is_open()) {
-    _tempFile >> kNominalCPUFreq_kHz;
+  std::ifstream file;
+  file.open(kNominalCPUFreqFile, std::ifstream::in);
+  if(file.is_open()) {
+    file >> kNominalCPUFreq_kHz;
     PRINT_NAMED_INFO("OSState.Constructor.NominalCPUFreq", "%dkHz", kNominalCPUFreq_kHz);
-    _tempFile.close();
+    file.close();
   }
   else {
     PRINT_NAMED_WARNING("OSState.Constructor.FailedToOpenNominalCPUFreqFile", "%s", kNominalCPUFreqFile);
   }
-  
+
   _cpuFreq_kHz = kNominalCPUFreq_kHz;
   _cpuTemp_C = 0;
 
   _buildSha = ANKI_BUILD_SHA;
+
+  _lastWebvizUpdateTime_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
 }
 
 OSState::~OSState()
@@ -149,7 +151,6 @@ void OSState::Update()
   if (_updatePeriod_ms != 0) {
     const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
     if (now_ms - _lastUpdateTime_ms > _updatePeriod_ms) {
-      
       using namespace std::chrono;
       // const auto startTime = steady_clock::now();
 
@@ -158,12 +159,30 @@ void OSState::Update()
 
       // Update temperature reading
       UpdateTemperature_C();
-      
+
       // const auto now = steady_clock::now();
       // const auto elapsed_us = duration_cast<microseconds>(now - startTime).count();
       // PRINT_NAMED_INFO("OSState", "Update took %lld microseconds", elapsed_us);
 
       _lastUpdateTime_ms = now_ms;
+
+    }
+  }
+
+  if (kWebvizUpdatePeriod != 0 && _webServiceCallback) {
+    const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+    if (now_ms - _lastWebvizUpdateTime_ms > kPeriodEnumToMS[kWebvizUpdatePeriod]) {
+      UpdateCPUTimeStats();
+
+      Json::Value json;
+      json["deltaTime_ms"] = now_ms - _lastWebvizUpdateTime_ms;
+      auto& usage = json["usage"];
+      for(size_t i = 0; i < _CPUTimeStats.size(); ++i) {
+        usage.append( _CPUTimeStats[i] );
+      }
+      _webServiceCallback(json);
+
+      _lastWebvizUpdateTime_ms = now_ms;
     }
   }
 }
@@ -173,49 +192,68 @@ void OSState::SetUpdatePeriod(uint32_t milliseconds)
   _updatePeriod_ms = milliseconds;
 }
 
+void OSState::SendToWebVizCallback(const std::function<void(const Json::Value&)>& callback) {
+  _webServiceCallback = callback;
+}
+
 void OSState::UpdateCPUFreq_kHz() const
 {
   // Update cpu freq
+  std::lock_guard<std::mutex> lock(_cpuMutex);
   _cpuFile.open(kCPUFreqFile, std::ifstream::in);
-  _cpuFile >> _cpuFreq_kHz;
-  _cpuFile.close();
+  if (_cpuFile.is_open()) {
+    _cpuFile >> _cpuFreq_kHz;
+    _cpuFile.close();
+  }
 }
 
 void OSState::UpdateTemperature_C() const
 {
   // Update temperature reading
-  _tempFile.open(kTemperatureFile, std::ifstream::in);
-  _tempFile >> _cpuTemp_C;
-  _tempFile.close();
+  std::lock_guard<std::mutex> lock(_temperatureMutex);
+  _temperatureFile.open(kTemperatureFile, std::ifstream::in);
+  if (_temperatureFile.is_open()) {
+    _temperatureFile >> _cpuTemp_C;
+    _temperatureFile.close();
+  }
 }
 
 void OSState::UpdateUptimeAndIdleTime() const
 {
   // Update uptime and idle time data
+  std::lock_guard<std::mutex> lock(_uptimeMutex);
   _uptimeFile.open(kUptimeFile, std::ifstream::in);
-  _uptimeFile >> _uptime_s >> _idleTime_s;
-  _uptimeFile.close();
+  if (_uptimeFile.is_open()) {
+    _uptimeFile >> _uptime_s >> _idleTime_s;
+    _uptimeFile.close();
+  }
 }
 
 void OSState::UpdateMemoryInfo() const
 {
   // Update total and free memory
+  std::lock_guard<std::mutex> lock(_memInfoMutex);
   _memInfoFile.open(kMemInfoFile, std::ifstream::in);
-  std::string discard;
-  _memInfoFile >> discard >> _memTotal_kB >> discard >> discard >> _memFree_kB;
-  _memInfoFile.close();
+  if (_memInfoFile.is_open()) {
+    std::string discard;
+    _memInfoFile >> discard >> _memTotal_kB >> discard >> discard >> _memFree_kB;
+    _memInfoFile.close();
+  }
 }
 
 void OSState::UpdateCPUTimeStats() const
 {
   // Update CPU time stats lines
+  std::lock_guard<std::mutex> lock(_cpuTimeStatsMutex);
   _cpuTimeStatsFile.open(kCPUTimeStatsFile, std::ifstream::in);
-  static const int kNumCPUTimeStatLines = 5;
-  _CPUTimeStats.resize(kNumCPUTimeStatLines);
-  for (int i = 0; i < kNumCPUTimeStatLines; i++) {
-    std::getline(_cpuTimeStatsFile, _CPUTimeStats[i]);
+  if (_cpuTimeStatsFile.is_open()) {
+    static const int kNumCPUTimeStatLines = 5;
+    _CPUTimeStats.resize(kNumCPUTimeStatLines);
+    for (int i = 0; i < kNumCPUTimeStatLines; i++) {
+      std::getline(_cpuTimeStatsFile, _CPUTimeStats[i]);
+    }
+    _cpuTimeStatsFile.close();
   }
-  _cpuTimeStatsFile.close();
 }
 
 uint32_t OSState::GetCPUFreq_kHz() const
@@ -278,22 +316,14 @@ const std::string& OSState::GetSerialNumberAsString()
 {
   if(_serialNumString.empty())
   {
-    std::ifstream infile("/proc/cmdline");
-
-    std::string line;
-    while(std::getline(infile, line))
-    {
-      static const std::string kProp = "androidboot.serialno=";
-      size_t index = line.find(kProp);
-      if(index != std::string::npos)
-      {
-        _serialNumString = line.substr(index + kProp.length(), 8);
-      }
-    }
-
-    infile.close();
+    std::stringstream ss;
+    ss << std::hex
+       << std::setfill('0')
+       << std::setw(8)
+       << std::uppercase
+       << Factory::GetEMR()->fields.ESN;
+    _serialNumString = ss.str();
   }
-  
   return _serialNumString;
 }
 
@@ -301,73 +331,102 @@ const std::string& OSState::GetOSBuildVersion()
 {
   if(_osBuildVersion.empty())
   {
-    _osBuildVersion = GetProperty("ro.build.version.release");
+    _osBuildVersion = GetProperty("ro.build.display.id");
   }
-  
+
   return _osBuildVersion;
 }
 
-const std::string& OSState::GetBuildSha() 
+const std::string& OSState::GetBuildSha()
 {
   return _buildSha;
 }
 
 const std::string& OSState::GetRobotName() const
 {
-  static std::string name = GetProperty("persist.anki.robot.name");
+  static std::string name = GetProperty("anki.robot.name");
   if(name.empty())
   {
-    name = GetProperty("persist.anki.robot.name");
+    name = GetProperty("anki.robot.name");
   }
   return  name;
 }
-  
+
+static std::string GetIPV4AddressForInterface(const char* if_name) {
+  struct ifaddrs* ifaddr = nullptr;
+  struct ifaddrs* ifa = nullptr;
+  char host[NI_MAXHOST] = {0};
+
+  int rc = getifaddrs(&ifaddr);
+  if (rc == -1) {
+    PRINT_NAMED_ERROR("OSState.GetIPAddress.GetIfAddrsFailed", "%s", strerror(errno));
+    return "";
+  }
+
+  for (ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
+    if (ifa->ifa_addr == nullptr) {
+      continue;
+    }
+
+    if (ifa->ifa_addr->sa_family != AF_INET) {
+      continue;
+    }
+
+    if (!strcmp(ifa->ifa_name, if_name)) {
+      break;
+    }
+  }
+
+  if (ifa != nullptr) {
+    int s = getnameinfo(ifa->ifa_addr,
+                        sizeof(struct sockaddr_in),
+                        host, sizeof(host),
+                        NULL, 0, NI_NUMERICHOST);
+    if (s != 0) {
+      PRINT_NAMED_ERROR("OSState.GetIPAddress.GetNameInfoFailed", "%s", gai_strerror(s));
+      memset(host, 0, sizeof(host));
+    }
+  }
+
+  if (host[0]) {
+    PRINT_NAMED_INFO("OSState.GetIPAddress.IPV4AddressFound", "iface = %s , ip = %s",
+                     if_name, host);
+  } else {
+    PRINT_NAMED_INFO("OSState.GetIPAddress.IPV4AddressNotFound", "iface = %s", if_name);
+  }
+  freeifaddrs(ifaddr);
+  return std::string(host);
+}
+
+static std::string GetWiFiSSIDForInterface(const char* if_name) {
+  int fd = socket(AF_INET, SOCK_DGRAM, 0);
+  if (fd == -1) {
+    ASSERT_NAMED_EVENT(false, "OSState.GetSSID.OpenSocketFail", "");
+    return "";
+  }
+
+  iwreq req;
+  memset(&req, 0, sizeof(req));
+  (void) strncpy(req.ifr_name, if_name, sizeof(req.ifr_name) - 1);
+  char essid[IW_ESSID_MAX_SIZE + 2] = {0};
+  req.u.essid.pointer = essid;
+  req.u.essid.length = sizeof(essid) - 2;
+
+  if (ioctl(fd, SIOCGIWESSID, &req) == -1) {
+    PRINT_NAMED_INFO("OSState.UpdateWifiInfo.FailedToGetSSID", "iface = %s , errno = %s",
+                     if_name, strerror(errno));
+    memset(essid, 0, sizeof(essid));
+  }
+  (void) close(fd);
+  PRINT_NAMED_INFO("OSState.GetSSID", "%s", essid);
+  return std::string(essid);
+}
+
 void OSState::UpdateWifiInfo()
 {
-  // Open a socket to figure out the ip adress of the wlan0 (wifi) interface
   const char* const if_name = "wlan0";
-  struct ifreq ifr;
-  size_t if_name_len=strlen(if_name);
-  if (if_name_len<sizeof(ifr.ifr_name)) {
-    memcpy(ifr.ifr_name,if_name,if_name_len);
-    ifr.ifr_name[if_name_len]=0;
-  } else {
-    ASSERT_NAMED_EVENT(false, "OSState.GetIPAddress.InvalidInterfaceName", "");
-  }
-
-  int fd=socket(AF_INET,SOCK_DGRAM,0);
-  if (fd==-1) {
-    ASSERT_NAMED_EVENT(false, "OSState.GetIPAddress.OpenSocketFail", "");
-  }
-
-  if (ioctl(fd,SIOCGIFADDR,&ifr)==-1) {
-    int temp_errno=errno;
-    close(fd);
-    ASSERT_NAMED_EVENT(false, "OSState.GetIPAddress.IoctlError", "%s", strerror(temp_errno));
-  }
-
-  struct sockaddr_in* ipaddr = (struct sockaddr_in*)&ifr.ifr_addr;
-  _ipAddress = std::string(inet_ntoa(ipaddr->sin_addr));
-
-  // Get SSID
-  iwreq req;
-  strcpy(req.ifr_name, if_name);
-  req.u.data.pointer = (iw_statistics*)malloc(sizeof(iw_statistics));
-  req.u.data.length = sizeof(iw_statistics);
-  
-  const int kSSIDBufferSize = 32;
-  char buffer[kSSIDBufferSize];
-  memset(buffer, 0, sizeof(buffer));
-  req.u.essid.pointer = buffer;
-  req.u.essid.length = kSSIDBufferSize;
-  if(ioctl(fd, SIOCGIWESSID, &req) == -1)
-  {
-    close(fd);
-    ASSERT_NAMED_EVENT(false, "OSState.UpdateWifiInfo.FailedToGetSSID","%s", strerror(errno));
-  }
-  close(fd);
-
-  _ssid = std::string(buffer);
+  _ipAddress = GetIPV4AddressForInterface(if_name);
+  _ssid = GetWiFiSSIDForInterface(if_name);
 }
 
 const std::string& OSState::GetIPAddress(bool update)
@@ -392,6 +451,7 @@ const std::string& OSState::GetSSID(bool update)
 
 std::string OSState::GetMACAddress() const
 {
+  std::lock_guard<std::mutex> lock(_MACAddressMutex);
   std::ifstream macFile;
   macFile.open(kMACAddressFile);
   if (macFile.is_open()) {
@@ -432,6 +492,11 @@ bool OSState::IsInRecoveryMode()
   return Util::FileUtils::FileExists(kRecoveryModeFile);
 }
 
+bool OSState::HasValidEMR() const
+{
+  const auto * emr = Factory::GetEMR();
+  return (emr != nullptr);
+}
+
 } // namespace Cozmo
 } // namespace Anki
-

@@ -38,7 +38,8 @@ const FaceSelectionComponent::FaceSelectionFactorMap FaceSelectionComponent::kDe
   {FaceSelectionPenaltyMultiplier::Distance_m, 4.0f},
   {FaceSelectionPenaltyMultiplier::RelativeBodyAngleRadians, 3.0f},
   {FaceSelectionPenaltyMultiplier::RelativeHeadAngleRadians, 0.1f},
-  {FaceSelectionPenaltyMultiplier::TimeSinceSeen_s, 20.0f},
+  {FaceSelectionPenaltyMultiplier::TimeSinceSeen_s, 10.0f},
+  {FaceSelectionPenaltyMultiplier::TrackingOnly, 100.0f},
   {FaceSelectionPenaltyMultiplier::NotMakingEyeContact, 1.0f} };
 
 
@@ -95,7 +96,7 @@ SmartFaceID FaceSelectionComponent::GetBestFaceToUse(const FaceSelectionFactorMa
   }
   
   // Set up the scoring callback functions
-  typedef std::function<int(const Vision::TrackedFace*)> calcScoreFunction;
+  typedef std::function<float(const Vision::TrackedFace*)> calcScoreFunction;
   using FullCalcScoreArray = Util::FullEnumToValueArrayChecker::FullEnumToValueArray<
     FaceSelectionPenaltyMultiplier,
     calcScoreFunction,
@@ -110,6 +111,8 @@ SmartFaceID FaceSelectionComponent::GetBestFaceToUse(const FaceSelectionFactorMa
      std::bind(&FaceSelectionComponent::CalculateMicDirectionCost, this, std::placeholders::_1)},
     {FaceSelectionPenaltyMultiplier::UnnamedFace,
      std::bind(&FaceSelectionComponent::CalculateUnnamedCost, this, std::placeholders::_1)},
+    {FaceSelectionPenaltyMultiplier::TrackingOnly,
+     std::bind(&FaceSelectionComponent::CalculateTrackingOnlyCost, this, std::placeholders::_1)},    
     {FaceSelectionPenaltyMultiplier::TimeSinceSeen_s,
      std::bind(&FaceSelectionComponent::CalculateTimeSinceSeenCost, this, std::placeholders::_1)},
     {FaceSelectionPenaltyMultiplier::NotMakingEyeContact,
@@ -142,20 +145,20 @@ SmartFaceID FaceSelectionComponent::GetBestFaceToUse(const FaceSelectionFactorMa
       currentScore += (criteriaScore * criteriaFactor);
 
       if( kFaceSelectionDebugging ) {
-        PRINT_CH_DEBUG("Behaviors", "FaceSelectionComponent.Scoring",
-                       "%s: %s = %f * factor %f",
-                       currentID.GetDebugStr().c_str(),
-                       FaceSelectionPenaltyMultiplierToString(criteriaPair.first),
-                       criteriaScore,
-                       criteriaFactor);
+        PRINT_CH_INFO("Behaviors", "FaceSelectionComponent.Scoring",
+                      "%s: %s = %f * factor %f",
+                      currentID.GetDebugStr().c_str(),
+                      FaceSelectionPenaltyMultiplierToString(criteriaPair.first),
+                      criteriaScore,
+                      criteriaFactor);
       }                       
     }
 
     if( kFaceSelectionDebugging ) {
-      PRINT_CH_DEBUG("Behaviors", "FaceSelectionComponent.Scoring",
-                     "%s: total = %f",
-                     currentID.GetDebugStr().c_str(),
-                     currentScore);
+      PRINT_CH_INFO("Behaviors", "FaceSelectionComponent.Scoring",
+                    "%s: total = %f",
+                    currentID.GetDebugStr().c_str(),
+                    currentScore);
     }                       
 
     
@@ -218,11 +221,21 @@ float FaceSelectionComponent::CalculateUnnamedCost(const Vision::TrackedFace* cu
   return currentFace->HasName() ? 0.0f : 1;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float FaceSelectionComponent::CalculateTrackingOnlyCost(const Vision::TrackedFace* currentFace) const
+{
+  // TODO:(bn) is there a better check for this?
+  return currentFace->GetID() < 0 ? 1.0f : 0.0f;
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float FaceSelectionComponent::CalculateTimeSinceSeenCost(const Vision::TrackedFace* currentFace) const
 {
-  return currentFace->GetTimeStamp()/1000.0f;
+  const TimeStamp_t currTime_ms = _robot.GetLastImageTimeStamp();
+  const TimeStamp_t dt_ms = currTime_ms - currentFace->GetTimeStamp();
+
+  return Util::MilliSecToSec((float)dt_ms);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

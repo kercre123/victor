@@ -14,7 +14,6 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorReactToUnexpectedMovement_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionUnexpectedMovement.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/types/unexpectedMovementTypes.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -30,7 +29,7 @@ private:
   friend class BehaviorFactory;
   BehaviorReactToUnexpectedMovement(const Json::Value& config);
   
-  ConditionUnexpectedMovement _unexpectedMovementCondition;
+  IBEIConditionPtr _unexpectedMovementCondition;
   
 public:  
   virtual bool WantsToBeActivatedBehavior() const override;
@@ -42,6 +41,8 @@ protected:
   virtual void GetBehaviorJsonKeys( std::set<const char*>& expectedKeys ) const override {}
 
   virtual void InitBehavior() override;
+  virtual void OnBehaviorEnteredActivatableScope() override;
+  virtual void OnBehaviorLeftActivatableScope() override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override { };
 };

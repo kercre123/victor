@@ -15,6 +15,7 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/beiConditions/beiConditionMessageHelper.h"
+#include "engine/aiComponent/beiConditions/beiConditionDebugFactors.h"
 
 
 namespace Anki {
@@ -65,11 +66,10 @@ bool ConditionMotionDetected::AreConditionsMetInternal(BehaviorExternalInterface
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBEICondition::DebugFactorsList ConditionMotionDetected::GetDebugFactors() const
+void ConditionMotionDetected::BuildDebugFactorsInternal( BEIConditionDebugFactors& factors ) const
 {
-  DebugFactorsList ret;
-  ret.emplace_back("detectedLevel", std::to_string(_lifetimeParams.detectedMotionLevel));
-  return ret;
+  factors.AddFactor( "detectedMotionLevel", _lifetimeParams.detectedMotionLevel );
+  factors.AddFactor( "tickCountMotionObserved", (int)_lifetimeParams.tickCountMotionObserved );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -87,6 +87,13 @@ void ConditionMotionDetected::HandleEvent(const EngineToGameEvent& event, Behavi
         case MotionArea::Right: { observedMotion = EvaluateRight(motionObserved);  break;}
         case MotionArea::Top:   { observedMotion = EvaluateTop(motionObserved);    break;}
         case MotionArea::Ground:{ observedMotion = EvaluateGround(motionObserved); break;}
+        case MotionArea::Any:   {
+          observedMotion = EvaluateLeft(motionObserved)
+                           || EvaluateRight(motionObserved)
+                           || EvaluateTop(motionObserved)
+                           || EvaluateGround(motionObserved);
+        }
+          break;
       }
       if(observedMotion){
         _lifetimeParams.tickCountMotionObserved = BaseStationTimer::getInstance()->GetTickCount();
@@ -162,6 +169,8 @@ ConditionMotionDetected::MotionArea ConditionMotionDetected::AreaStringToEnum(co
     return MotionArea::Top;
   }else if(areaStr == "Ground"){
     return MotionArea::Ground;
+  }else if(areaStr == "Any"){
+    return MotionArea::Any;
   }else{
     DEV_ASSERT(false, "ConditionMotionDetected.AreaStringToEnum.InvalidAreaStr");
     return MotionArea::Ground;

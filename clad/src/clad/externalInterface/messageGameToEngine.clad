@@ -767,6 +767,16 @@ message DisplayFaceImageBinaryChunk {
     bool     interruptRunning
 }
 
+// Sends a chunk of oled data, to be later displayed using DisplayFaceImageRGB
+message DisplayFaceImageRGBChunk {
+    uint_16  faceData[600], // Splitting into chunks of 600 similar to the e2r layer
+    uint_16  numPixels,
+    uint_8   chunkIndex,
+    uint_8   numChunks,
+    uint_32  duration_ms,     // Use uint_32 max value to keep the image on the screen
+    bool     interruptRunning
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Robot / Cube LED Controls
 ///////////////////////////////////////////////////////////////////////////////
@@ -1144,13 +1154,23 @@ message SetCameraSettings {
 message RequestRobotSettings {
 }
 
+// Request a status history
+message RobotHistoryRequest {
+}
+
 // explicit autounion - this will force the values given, and then add every other messages in this file
 // if you do not want to include messages in this union, use the keyword "structure" instead of "message"
 // DO NOT CHANGE ANY EXPLICITLY DECLARED VALUES - they must be compatible across all versions so we can reliably
 // handshake between and App and SDK version combination
 autounion MessageGameToEngine
 {
-  UiDeviceConnectionWrongVersion          UiDeviceConnectionWrongVersion          = 0x00, // DO NOT CHANGE THIS VALUE
+  UiDeviceConnectionWrongVersion UiDeviceConnectionWrongVersion = 0x00, // DO NOT CHANGE THIS VALUE
+  DriveWheels DriveWheels = 0x01,
+  PlayAnimation PlayAnimation = 0x02,
+  MoveHead MoveHead = 0x03,
+  MoveLift MoveLift = 0x04,
+  DriveArc DriveArc = 0x05,
+  RobotHistoryRequest RobotHistoryRequest = 0x06,
 }
 
 

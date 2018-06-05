@@ -6,12 +6,26 @@
     },
     {
       "cloud_intent": "intent_imperative_quiet",
+      "app_intent": "intent_imperative_quiet",
       "user_intent": "imperative_quiet"
+    },
+    {
+      "cloud_intent": "intent_imperative_shutup",
+      "app_intent": "intent_imperative_shutup",
+      "user_intent": "imperative_shutup"
     },
     {
       "cloud_intent": "intent_imperative_come",
       "app_intent": "intent_imperative_come",
       "user_intent": "imperative_come"
+    },
+    {
+      "cloud_intent": "intent_imperative_affirmative",
+      "user_intent": "imperative_affirmative"
+    },
+    {
+      "cloud_intent": "intent_imperative_negative",
+      "user_intent": "imperative_negative"
     },
     {
       "cloud_intent": "intent_global_stop",
@@ -38,6 +52,10 @@
       "user_intent": "status_feeling"
     },
     {
+      "cloud_intent": "intent_clock_checktimer",
+      "user_intent": "check_timer"
+    },
+    {
       "cloud_intent" : "intent_clock_settimer",
       "app_intent" : "intent_clock_settimer",
       "user_intent"  : "set_timer",
@@ -45,6 +63,16 @@
         "timer_duration": "time_s"
       },
       "cloud_numerics": ["timer_duration"]
+    },
+    {
+      "cloud_intent" : "intent_weather",
+      "user_intent"  : "weather_response",
+      "cloud_numerics": ["temperature"],
+      "cloud_substitutions": {
+        "speakable_location_string": "speakableLocationString",
+        "is_forecast": "isForecast",
+        "temperature_unit": "temperatureUnit"
+      }
     },
     {
       "cloud_intent": "intent_system_charger",

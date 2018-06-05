@@ -148,7 +148,7 @@ void PathDolerOuter::Update(const s8 currPathIdx)
   // If there is a free slot on the robot and there are segments left to dole, then dole
   const int numFreeSlots = MAX_NUM_PATH_SEGMENTS_ROBOT - (lastDoledSegmentIdx_ - currPathIdx) - 1;
   
-  if((numFreeSlots > 0) && (lastDoledSegmentIdx_ < pathSizeOnBasestation_-1)) {
+  if((numFreeSlots > 0) && (pathSizeOnBasestation_ > 0) && (lastDoledSegmentIdx_ < pathSizeOnBasestation_-1)) {
     PRINT_NAMED_DEBUG("PathDolerOuter.Update.Doling",
                       "currPathIdx: %i, doling upto %d path segments",
                       currPathIdx, numFreeSlots);

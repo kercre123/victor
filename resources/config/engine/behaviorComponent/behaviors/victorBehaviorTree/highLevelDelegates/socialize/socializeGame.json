@@ -4,9 +4,9 @@
 
   "behaviors" : [
     {
-      "behavior": "SingletonPounceDispatcher",
-      "cooldown_s": 2400.0,
-      "weight": 0.2
+      "behavior": "BlackJackRequestToPlay",
+      "cooldown_s": 1200.0,
+      "weight": 0.4
     },
     {
       "behavior": "FistBump",

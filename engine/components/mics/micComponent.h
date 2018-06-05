@@ -22,6 +22,7 @@ namespace Cozmo {
 
 class MicDirectionHistory;
 class VoiceMessageSystem;
+class Robot;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class MicComponent : public IDependencyManagedComponent<RobotComponentID>
@@ -49,6 +50,9 @@ public:
   VoiceMessageSystem& GetVoiceMessageSystem() { return *_messageSystem; }
   const VoiceMessageSystem& GetVoiceMessageSystem() const { return *_messageSystem; }
 
+  void StartWakeWordlessStreaming();
+  
+  void SetShouldStreamAfterWakeWord(bool shouldStream);
 
 private:
 
@@ -57,6 +61,7 @@ private:
 
   MicDirectionHistory*      _micHistory;
   VoiceMessageSystem*       _messageSystem;
+  Robot*                    _robot;
 };
 
 } // namespace Cozmo

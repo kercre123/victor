@@ -25,6 +25,7 @@ public:
     : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::UnitTestCondition))
     , _val( val )
   {
+    SetOwnerDebugLabel("tests");
   }
   ConditionUnitTest( const Json::Value& config )
     : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::UnitTestCondition))
@@ -47,7 +48,7 @@ public:
     return _val;
   }
   
-  virtual DebugFactorsList GetDebugFactors() const override { return {{"val", std::to_string(_val)}}; }
+  virtual void BuildDebugFactorsInternal( BEIConditionDebugFactors& factors ) const override {}
 
   bool _val = false;
 

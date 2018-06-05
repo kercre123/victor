@@ -196,7 +196,8 @@ message SyncRobot
 
 message CalmPowerMode
 {
-  bool enable
+  bool enable,
+  bool calibOnDisable,
 }
 
 // Tells syscon to pull the plug
@@ -254,6 +255,14 @@ message EnableReadToolCodeMode
   float_32 headPower,
   float_32 liftPower,
   bool enable
+}
+
+// Message for ACKing the RobotStopped message from robot process
+// which re-enables the SteeringController/WheelController which
+// were disabled upon encountering cliff so as not to accidentally
+// drive off it.
+message RobotStoppedAck
+{
 }
 
 message EnableStopOnCliff
@@ -391,6 +400,19 @@ message StartPlaybackAudio
   string  path
 }
 
+message StartWakeWordlessStreaming
+{
+}
+
+message SetShouldStreamAfterWakeWord
+{
+  bool shouldStream,
+}
+
+message ResetBeatDetector
+{
+}
+
 structure ColorRGB
 {
   uint_8 r,
@@ -447,6 +469,7 @@ message DisplayCompositeImageChunk
 message UpdateCompositeImage
 {
   Vision::SerializedSpriteBox serializedSpriteBox, // SpriteBox named count indicates clear the whole layer
+  uint_32                     applyAt_ms, // specify the time in ms from the start of the animation that the update should be applied
   Vision::LayerName           layerName,
   Vision::SpriteName          spriteName // Use Count to indicate erase sprite
 }
@@ -513,7 +536,14 @@ message TextToSpeechPrepare {
 //
 message TextToSpeechDeliver {
   uint_8 ttsID,            // ID of utterance
-  bool triggeredByAnim     // Will TTS be triggered by animation?
+  bool playImmediately     // Should the TTS be played immediately when finished, or is it triggered by message/animation?
+}
+
+//
+// Sent from engine to robot (anim process) to play a prepared TTS
+//
+message TextToSpeechPlay {
+  uint_8 ttsID // ID of utterance
 }
 
 //
@@ -614,6 +644,7 @@ union EngineToRobot
   // Reactions
   EnableStopOnCliff             enableStopOnCliff           = 0x35,
   EnableBraceWhenFalling        enableBraceWhenFalling      = 0x36,
+  RobotStoppedAck               robotStoppedAck             = 0x37,
   
   // TEMP support for 'old' chargers with black stripe and white body
   ChargerDockingStripeColor     chargerDockingStripeColor   = 0x40,
@@ -655,11 +686,17 @@ union EngineToRobot
   RunDebugConsoleFuncMessage    runDebugConsoleFuncMessage  = 0x91,
   TextToSpeechPrepare           textToSpeechPrepare         = 0x92,
   TextToSpeechDeliver           textToSpeechDeliver         = 0x93,
-  TextToSpeechCancel            textToSpeechCancel          = 0x94,
+  TextToSpeechPlay              textToSpeechPlay            = 0x94,
+  TextToSpeechCancel            textToSpeechCancel          = 0x95,
 
-  StartRecordingMicsRaw         startRecordingMicsRaw       = 0x95,
-  StartRecordingMicsProcessed   startRecordingMicsProcessed = 0x96,
-  StartPlaybackAudio            playbackAudioStart          = 0x97,
+  StartRecordingMicsRaw         startRecordingMicsRaw       = 0x96,
+  StartRecordingMicsProcessed   startRecordingMicsProcessed = 0x97,
+  StartPlaybackAudio            playbackAudioStart          = 0x98,
+
+  StartWakeWordlessStreaming    startWakeWordlessStreaming  = 0x99,
+  SetShouldStreamAfterWakeWord  setShouldStreamAfterWakeWord = 0x9A,
+
+  ResetBeatDetector             resetBeatDetector           = 0x9B,
 
   SwitchboardInterface::SetConnectionStatus setConnectionStatus = 0xA0,
   SwitchboardInterface::SetBLEPin           setBLEPin           = 0xA1,

@@ -134,7 +134,7 @@ void RobotDataLoader::LoadNonConfigData()
     }
 
     // Load the gathered files into the container
-    const auto& fileInfo = animLoader.CollectAnimFiles(_platform, paths);
+    const auto& fileInfo = animLoader.CollectAnimFiles(paths);
     animLoader.LoadAnimationsIntoContainer(fileInfo, _cannedAnimations.get());
   }
   
@@ -152,8 +152,7 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
   
   animLoader.LoadAnimationIntoContainer(path, _cannedAnimations.get());
 
-  
-  const auto animName = Util::FileUtils::GetFileName(path);
+  const auto animName = Util::FileUtils::GetFileName(path, true, true);
   const auto* anim = _cannedAnimations->GetAnimation(animName);
   NotifyAnimAdded(animName, anim->GetLastKeyFrameEndTime_ms());
 }
@@ -161,7 +160,8 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
 void RobotDataLoader::LoadSpritePaths()
 {
   // Creates a map of all sprite names to their file names
-  _spritePaths->Load(_platform, "assets/cladToFileMaps/spriteMap.json", "SpriteName");
+  const bool reverseLookupAllowed = true;
+  _spritePaths->Load(_platform, "assets/cladToFileMaps/spriteMap.json", "SpriteName", reverseLookupAllowed);
 
   std::map<std::string, std::string> fileNameToFullPath;
   // Get all independent sprites
@@ -243,15 +243,7 @@ void RobotDataLoader::SetupProceduralAnimation()
   Animation proceduralAnim(kProceduralAnimName);
   _cannedAnimations->AddAnimation(std::move(proceduralAnim));
   
-  Animation* anim = _cannedAnimations->GetAnimation(kProceduralAnimName);
-  assert(anim != nullptr);
-  const bool shouldRenderInEyeHue = true;
-  SpriteSequenceKeyFrame kf(shouldRenderInEyeHue, Vision::SpriteName::Count, true);
-  if(RESULT_OK != anim->AddKeyFrameToBack(kf))
-  {
-    PRINT_NAMED_ERROR("RobotDataLoader.SetupProceduralAnimation.AddProceduralFailed",
-                      "Failed to add keyframe to procedural animation.");
-  }
+  assert(_cannedAnimations->GetAnimation(kProceduralAnimName) != nullptr);
 }
 
 bool RobotDataLoader::DoNonConfigDataLoading(float& loadingCompleteRatio_out)

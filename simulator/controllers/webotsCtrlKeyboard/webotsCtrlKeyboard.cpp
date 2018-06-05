@@ -54,7 +54,7 @@ namespace Cozmo {
   namespace {
 
   static const Transform3d kTeleportToChargerOffset({ M_PI_2_F, Z_AXIS_3D() },
-                                                    { 0.0f, 76.696196f, 6.0f });
+                                                    { 0.0f, 76.696196f, 10.0f });
 
     std::set<int> lastKeysPressed_;
     

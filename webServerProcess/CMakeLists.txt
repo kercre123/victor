@@ -18,7 +18,6 @@ set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
 set(PLATFORM_COMPILE_DEFS "")
 
 if (VICOS)
-    include(breakpad)
     set(PLATFORM_LIBS
         log
     )
@@ -32,7 +31,6 @@ endif()
 
 target_link_libraries(victor_web_library
   PRIVATE
-  util
   cti_vision
   DAS
   osState
@@ -66,9 +64,7 @@ if (VICOS)
     PRIVATE
     victor_web_library
     cti_common
-    util
     victorCrashReports
-    breakpad_client
     ${PLATFORM_LIBS}
   )
 

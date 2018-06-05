@@ -36,6 +36,7 @@ namespace Anki {
 // Forward declarations
 namespace Vision{
 class CompositeImage;
+class RGB565ImageBuilder;
 }
 
 namespace Cozmo {
@@ -115,7 +116,7 @@ public:
   // OutDuration_ms is set to the length of the animation that is playing back
   Result PlayCompositeAnimation(const std::string& animName,
                                 const Vision::CompositeImage& compositeImage, 
-                                u32 getFrameInterval_ms,
+                                u32 frameInterval_ms,
                                 int& outDuration_ms,
                                 bool interruptRunning = true,
                                 AnimationCompleteCallback callback = nullptr);
@@ -145,18 +146,18 @@ public:
   Result DisplayFaceImage(const Vision::ImageRGB& img, u32 duration_ms, bool interruptRunning = false);
   Result DisplayFaceImage(const Vision::ImageRGB565& imgRGB565, u32 duration_ms, bool interruptRunning = false);
   // There is only one composite image in the animation process - duration is the amount of time the image will be displayed on screen
-  // getFrameInterval_ms defines how often the composite images' GetFrame function should be called for internal sprite sequences
-  Result DisplayFaceImage(const Vision::CompositeImage& compositeImage, u32 getFrameInterval_ms, u32 duration_ms, bool interruptRunning = false);
+  // frameInterval_ms defines how often the composite images' GetFrame function should be called for internal sprite sequences
+  Result DisplayFaceImage(const Vision::CompositeImage& compositeImage, u32 frameInterval_ms, u32 duration_ms, bool interruptRunning = false);
   
   // Calling this function provides no gaurentee that the assets will actually be displayed
   // If a compositeFaceImage is currently displayed on the face all layers/image maps within
   // the compositeImage argument will be updated to their new values - set Count in the sprite map
   // for any sprite boxes that should no longer be displayed
-  void UpdateCompositeImage(const Vision::CompositeImage& compositeImage);
+  void UpdateCompositeImage(const Vision::CompositeImage& compositeImage, u32 applyAt_ms = 0);
   
   // Helper function that clears composite image layer - can be accomplished through UpdateCompositeImage
   // as well by specifying count values for sprite boxes/sprites if more nuance is required
-  void ClearCompositeImageLayer(Vision::LayerName layerName);
+  void ClearCompositeImageLayer(Vision::LayerName layerName, u32 applyAt_ms = 0);
   
   // Enable/Disable KeepFaceAlive
   // If enable == false, disableTimeout_ms is the duration over which the face should 
@@ -290,6 +291,8 @@ private:
 
   // Latest state message received from anim process
   AnimationState _animState;
+
+  std::unique_ptr<Vision::RGB565ImageBuilder> _oledImageBuilder;
 
   struct AnimCallbackInfo {
     AnimCallbackInfo(const std::string animName,

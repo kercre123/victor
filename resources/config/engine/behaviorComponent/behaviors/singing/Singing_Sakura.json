@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_Sakura",
-  "displayNameKey":"behavior.singing.Sakura",
-  "requiredUnlockId":"Singing_Sakura",
-  "audioSwitchGroup":"Cozmo_Sings_120Bpm",
-  "audioSwitch":"Cozmo_Sings_Sakura"
-}

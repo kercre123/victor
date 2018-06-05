@@ -13,6 +13,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToRobotOnSide.h"
 
 #include "coretech/common/engine/utils/timer.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionOffTreadsState.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -30,8 +31,8 @@ static const float kWaitTimeBeforeRepeatAnim_s = 15.f;
 BehaviorReactToRobotOnSide::BehaviorReactToRobotOnSide(const Json::Value& config)
 : ICozmoBehavior(config)
 {
-  _offTreadsConditions.emplace_back(OffTreadsState::OnLeftSide);
-  _offTreadsConditions.emplace_back(OffTreadsState::OnRightSide);
+  _offTreadsConditions.emplace_back( std::make_shared<ConditionOffTreadsState>(OffTreadsState::OnLeftSide, GetDebugLabel()) );
+  _offTreadsConditions.emplace_back( std::make_shared<ConditionOffTreadsState>(OffTreadsState::OnRightSide,GetDebugLabel()) );
 }
 
 
@@ -40,8 +41,8 @@ bool BehaviorReactToRobotOnSide::WantsToBeActivatedBehavior() const
 {
   const bool wantsToBeActivated = std::any_of(_offTreadsConditions.begin(),
                                               _offTreadsConditions.end(),
-                                              [this](const ConditionOffTreadsState& condition) {
-                                                return condition.AreConditionsMet(GetBEI());
+                                              [this](const IBEIConditionPtr& condition) {
+                                                return condition->AreConditionsMet(GetBEI());
                                               });
   return wantsToBeActivated;
 }
@@ -51,11 +52,24 @@ bool BehaviorReactToRobotOnSide::WantsToBeActivatedBehavior() const
 void BehaviorReactToRobotOnSide::InitBehavior()
 {
   for (auto& condition : _offTreadsConditions) {
-    condition.Init(GetBEI());
-    condition.SetActive(GetBEI(), true);
+    condition->Init(GetBEI());
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToRobotOnSide::OnBehaviorEnteredActivatableScope() {
+  for (auto& condition : _offTreadsConditions) {
+    condition->SetActive(GetBEI(), true);
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToRobotOnSide::OnBehaviorLeftActivatableScope()
+{
+  for (auto& condition : _offTreadsConditions) {
+    condition->SetActive(GetBEI(), false);
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToRobotOnSide::OnBehaviorActivated()
@@ -73,11 +87,11 @@ void BehaviorReactToRobotOnSide::ReactToBeingOnSide()
   AnimationTrigger anim = AnimationTrigger::Count;
   
   if( GetBEI().GetOffTreadsState() == OffTreadsState::OnLeftSide){
-    anim = AnimationTrigger::ANTICIPATED_ReactToOnLeftSide;
+    anim = AnimationTrigger::ReactToOnLeftSide;
   }
   
   if(GetBEI().GetOffTreadsState() == OffTreadsState::OnRightSide) {
-    anim = AnimationTrigger::ANTICIPATED_ReactToOnRightSide;
+    anim = AnimationTrigger::ReactToOnRightSide;
   }
   
   if(anim != AnimationTrigger::Count){
@@ -136,7 +150,7 @@ void BehaviorReactToRobotOnSide::HoldingLoop()
     }
     else {
       // otherwise, we just loop this animation
-      DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ANTICIPATED_WaitOnSideLoop),
+      DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::WaitOnSideLoop),
                   &BehaviorReactToRobotOnSide::HoldingLoop);
     }
   }

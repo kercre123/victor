@@ -82,6 +82,8 @@ WebotsKeyboardController {
   emotionVal 0.1
   filterLogs TRUE
   randomSeed -1
+  translation 0.5749999999031083 0.3093782216791491 0.3200000000000001
+  rotation 0 0 1 0.5235987739999998
 }
 CozmoVizDisplay {
   filterLogs TRUE

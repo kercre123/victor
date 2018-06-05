@@ -69,6 +69,7 @@ namespace Cozmo {
   const f32 LIFT_HEIGHT_HIGHDOCK                  = 76.f; // For interfacing with a cube that is stacked on top of another cube.
   const f32 LIFT_HEIGHT_CARRY                     = 92.f; // Cube carrying height.
   const f32 LIFT_HEIGHT_LOW_ROLL                  = 68.f; // For rolling a cube that is on the ground.
+  const f32 LIFT_HEIGHT_ABOVE_PROX                = 59.f; // Just above prox sensor. Useful for driving in cluttered spaces.
   
   // Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
   const f32 LIFT_ARM_LENGTH = 66.f;
@@ -214,6 +215,14 @@ namespace Cozmo {
   const f32 MAX_WHEEL_SPEED_MMPS = 220.f;
   const f32 MAX_WHEEL_ACCEL_MMPS2 = 10000.f;  // TODO: Actually measure this!
   
+  // How fast (in mm/sec) can the robot drive without falling off 
+  // (most) straight edge cliffs
+  const f32 MAX_SAFE_WHEEL_SPEED_MMPS = 170.f;
+
+  // How fast (in mm/sec) can the robot drive without falling off 
+  // (most) straight edge cliffs while carrying a cube
+  const f32 MAX_SAFE_WHILE_CARRYING_WHEEL_SPEED_MMPS = 60.f;
+
   // Maximum angular velocity
   // Determined experimentally by turning robot in place at max speed.
   // It can actually spin closer to 360 deg/s, but we use a conservative limit to be sure

@@ -49,6 +49,18 @@ void SpriteSequence::PopFront()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpriteSequence::CacheSequence(SpriteCache* cache, 
+                                   ImgTypeCacheSpec cacheSpec,
+                                   BaseStationTime_t cacheFor_ms,
+                                   const HSImageHandle& hueAndSaturation) const
+{
+  for(auto& frame: _frames){
+    cache->CacheSprite(frame, cacheSpec, cacheFor_ms, hueAndSaturation);
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SpriteSequence::GetFrame(const u32 index, Vision::SpriteHandle& handle) const
 {
   if(_frames.empty()){

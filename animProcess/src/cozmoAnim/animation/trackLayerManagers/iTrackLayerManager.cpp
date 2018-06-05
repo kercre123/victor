@@ -29,7 +29,8 @@ ITrackLayerManager<FRAME_TYPE>::ITrackLayerManager(const Util::RandomGenerator& 
 
 template<class FRAME_TYPE>
 bool ITrackLayerManager<FRAME_TYPE>::ApplyLayersToFrame(FRAME_TYPE& frame,
-                                                        ApplyLayerFunc applyLayerFunc)
+                                                        const TimeStamp_t timeSinceAnimStart_ms,
+                                                        ApplyLayerFunc applyLayerFunc) const
 {
   if (DEBUG_FACE_LAYERING)
   {
@@ -41,70 +42,13 @@ bool ITrackLayerManager<FRAME_TYPE>::ApplyLayersToFrame(FRAME_TYPE& frame,
   }
 
   bool frameUpdated = false;
-  
-  std::list<std::string> layersToErase;
-  
+    
   for (auto layerIter = _layers.begin(); layerIter != _layers.end(); ++layerIter)
   {
-    auto& layerName = layerIter->first;
     auto& layer = layerIter->second;
     
     // Apply the layer's track with frame
-    frameUpdated |= applyLayerFunc(layer.track, layer.startTime_ms, layer.streamTime_ms, frame);
-    
-    layer.streamTime_ms += ANIM_TIME_STEP_MS;
-    
-    if (!layer.track.HasFramesLeft())
-    {
-      // This layer is done...
-      if(layer.isPersistent)
-      {
-        if (layer.track.IsEmpty())
-        {
-          LOG_WARNING("AnimationStreamer.UpdateFace.EmptyPersistentLayer",
-                      "Persistent face layer is empty - perhaps live frames were "
-                      "used? (layer=%s)", layerName.c_str());
-          layer.isPersistent = false;
-        }
-        else
-        {
-          //...but is marked persistent, so keep applying last frame
-          layer.track.MoveToPrevKeyFrame(); // so we're not at end() anymore
-          layer.streamTime_ms -= ANIM_TIME_STEP_MS;
-          
-          if (DEBUG_FACE_LAYERING)
-          {
-            LOG_DEBUG("AnimationStreamer.UpdateFace.HoldingLayer",
-                      "Holding last frame of face layer %s",
-                      layerName.c_str());
-          }
-          
-          layer.sentOnce = true; // mark that it has been sent at least once
-          
-          // We no longer need anything but the last frame (which should now be
-          // "current")
-          layer.track.ClearUpToCurrent();
-        }
-      }
-      else
-      {
-        //...and is not persistent, so delete it
-        if (DEBUG_FACE_LAYERING)
-        {
-          LOG_DEBUG("AnimationStreamer.UpdateFace.RemovingFaceLayer",
-                    "%s (Layers remaining=%lu)",
-                    layerName.c_str(), (unsigned long)_layers.size()-1);
-        }
-        
-        layersToErase.push_back(layerName);
-      }
-    }
-  }
-  
-  // Actually erase elements from the map
-  for (const auto& layerName : layersToErase)
-  {
-    _layers.erase(layerName);
+    frameUpdated |= applyLayerFunc(layer.track, timeSinceAnimStart_ms, frame);
   }
   
   return frameUpdated;
@@ -112,8 +56,7 @@ bool ITrackLayerManager<FRAME_TYPE>::ApplyLayersToFrame(FRAME_TYPE& frame,
 
 template<class FRAME_TYPE>
 Result ITrackLayerManager<FRAME_TYPE>::AddLayer(const std::string& name,
-                                                const Animations::Track<FRAME_TYPE>& track,
-                                                TimeStamp_t delay_ms)
+                                                const Animations::Track<FRAME_TYPE>& track)
 {
   if (_layers.find(name) != _layers.end()) {
     PRINT_NAMED_WARNING("TrackLayerManager.AddLayer.LayerAlreadyExists", "");
@@ -123,10 +66,7 @@ Result ITrackLayerManager<FRAME_TYPE>::AddLayer(const std::string& name,
   
   Layer newLayer;
   newLayer.track = track; // COPY the track in
-  newLayer.track.SetIsLive(true);
   newLayer.track.MoveToStart();
-  newLayer.startTime_ms = delay_ms;
-  newLayer.streamTime_ms = 0;
   newLayer.isPersistent = false;
   newLayer.sentOnce = false;
   
@@ -145,10 +85,7 @@ void ITrackLayerManager<FRAME_TYPE>::AddPersistentLayer(const std::string& name,
   
   Layer newLayer;
   newLayer.track = track;
-  newLayer.track.SetIsLive(false); // don't want keyframes to delete as they play
   newLayer.track.MoveToStart();
-  newLayer.startTime_ms = 0;
-  newLayer.streamTime_ms = 0;
   newLayer.isPersistent = true;
   newLayer.sentOnce = false;
   
@@ -163,20 +100,24 @@ void ITrackLayerManager<FRAME_TYPE>::AddToPersistentLayer(const std::string& lay
   {
     auto& track = layerIter->second.track;
     assert(nullptr != track.GetLastKeyFrame());
+    auto* lastKeyframe = track.GetLastKeyFrame();
     
     // Make keyframe trigger one sample length (plus any internal delay) past
     // the last keyframe's trigger time
-    keyframe.SetTriggerTime(track.GetLastKeyFrame()->GetTriggerTime() +
+    keyframe.SetTriggerTime_ms(lastKeyframe->GetTriggerTime_ms() +
                             ANIM_TIME_STEP_MS +
-                            keyframe.GetTriggerTime());
+                            keyframe.GetTriggerTime_ms());
     
+    lastKeyframe->SetKeyFrameDuration_ms(keyframe.GetTriggerTime_ms() - lastKeyframe->GetTriggerTime_ms());
     track.AddKeyFrameToBack(keyframe);
     layerIter->second.sentOnce = false;
   }
 }
 
 template<class FRAME_TYPE>
-void ITrackLayerManager<FRAME_TYPE>::RemovePersistentLayer(const std::string& layerName, u32 duration_ms)
+void ITrackLayerManager<FRAME_TYPE>::RemovePersistentLayer(const std::string& layerName,
+                                                           TimeStamp_t streamTime_ms,
+                                                           TimeStamp_t duration_ms)
 {
   auto layerIter = _layers.find(layerName);
   if (layerIter != _layers.end())
@@ -190,15 +131,15 @@ void ITrackLayerManager<FRAME_TYPE>::RemovePersistentLayer(const std::string& la
     // Add a layer that takes us back from where this persistent frame leaves
     // off to no adjustment at all.
     Animations::Track<FRAME_TYPE> track;
-    track.SetIsLive(true);
     if (duration_ms > 0)
     {
       FRAME_TYPE firstFrame(layerIter->second.track.GetCurrentKeyFrame());
-      firstFrame.SetTriggerTime(0);
+      firstFrame.SetTriggerTime_ms(streamTime_ms);
+      firstFrame.SetKeyFrameDuration_ms(duration_ms);
       track.AddKeyFrameToBack(std::move(firstFrame));
     }
     FRAME_TYPE lastFrame;
-    lastFrame.SetTriggerTime(duration_ms);
+    lastFrame.SetTriggerTime_ms(streamTime_ms + duration_ms);
     track.AddKeyFrameToBack(std::move(lastFrame));
     
     AddLayer("Remove" + layerName, track);
@@ -240,6 +181,74 @@ bool ITrackLayerManager<FRAME_TYPE>::HasLayer(const std::string& layerName) cons
 {
   return _layers.find(layerName) != _layers.end();
 }
+
+template<class FRAME_TYPE>
+void ITrackLayerManager<FRAME_TYPE>::AdvanceTracks(const TimeStamp_t toTime_ms)
+{
+  std::list<std::string> layersToErase;
+
+  for(auto& pair: _layers){
+    auto& layerName = pair.first;
+    auto& layer = pair.second;
+    layer.track.AdvanceTrack(toTime_ms);
+    if(!layer.isPersistent){
+      layer.track.ClearUpToCurrent();
+    }
+
+    if (!layer.track.HasFramesLeft()){
+      // This layer is done...
+      if(layer.isPersistent)
+      {
+        if (layer.track.IsEmpty())
+        {
+          LOG_WARNING("AnimationStreamer.UpdateFace.EmptyPersistentLayer",
+                      "Persistent face layer is empty - perhaps live frames were "
+                      "used? (layer=%s)", layerName.c_str());
+          layer.isPersistent = false;
+        }
+        else
+        {
+          //...but is marked persistent, so keep applying last frame
+          layer.track.MoveToPrevKeyFrame(); // so we're not at end() anymore
+          layer.track.GetCurrentKeyFrame().SetTriggerTime_ms(toTime_ms);
+          
+          if (DEBUG_FACE_LAYERING)
+          {
+            LOG_DEBUG("AnimationStreamer.UpdateFace.HoldingLayer",
+                      "Holding last frame of face layer %s",
+                      layerName.c_str());
+          }
+          
+          layer.sentOnce = true; // mark that it has been sent at least once
+          
+          // We no longer need anything but the last frame (which should now be
+          // "current")
+          layer.track.ClearUpToCurrent();
+        }
+      }
+      else
+      {
+        //...and is not persistent, so delete it
+        if (DEBUG_FACE_LAYERING)
+        {
+          LOG_DEBUG("AnimationStreamer.UpdateFace.RemovingFaceLayer",
+                    "%s (Layers remaining=%lu)",
+                    layerName.c_str(), (unsigned long)_layers.size()-1);
+        }
+        
+        layersToErase.push_back(layerName);
+      }
+    }
+  }
+  
+  // Actually erase elements from the map
+  for (const auto& layerName : layersToErase)
+  {
+    _layers.erase(layerName);
+  }
+
+}
+
 
 // Explicit instantiation of allowed templated classes
 template class ITrackLayerManager<RobotAudioKeyFrame>;        // AudioLayerManager

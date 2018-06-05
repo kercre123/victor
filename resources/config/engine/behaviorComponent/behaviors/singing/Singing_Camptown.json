@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_Camptown",
-  "displayNameKey":"behavior.singing.Camptown",
-  "requiredUnlockId":"Singing_Camptown",
-  "audioSwitchGroup":"Cozmo_Sings_100Bpm",
-  "audioSwitch":"Cozmo_Sings_Camptown_Races"
-}

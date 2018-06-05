@@ -2,6 +2,8 @@
   "behaviorClass" : "DispatcherQueue",
   "behaviorID" : "ObservingFailedToFindCharger",
 
+  "associatedActiveFeature": "RequestCharger",
+
   "behaviors" : [
     "ReactToFrustrationMajor", // TODO:(bn) custom animation
     "GoToSleep",

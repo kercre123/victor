@@ -193,11 +193,28 @@ generate_clad(
 )
 
 set(CLAD_GO_GEN_SRCS ${CLAD_GO_GEN_SRCS} PARENT_SCOPE)
-string(REPLACE "cladgo/src" "clad/engine" CLAD_CLOUD_CPP_GEN_SRCS ${CLAD_GO_GEN_SRCS})
-string(REPLACE ".go" ".cpp" CLAD_CLOUD_CPP_GEN_SRCS ${CLAD_CLOUD_CPP_GEN_SRCS})
+string(REPLACE "cladgo/src" "clad/engine" CLAD_CLOUD_CPP_GEN_SRCS "${CLAD_GO_GEN_SRCS}")
+string(REPLACE ".go" ".cpp" CLAD_CLOUD_CPP_GEN_SRCS "${CLAD_CLOUD_CPP_GEN_SRCS}")
+
+file(STRINGS "${ANKI_SRCLIST_DIR}/gateway_clad.srcs.lst" GATEWAY_SRCS)
+generate_clad(
+    TARGET "gateway_clad_go"
+    SRCS "${GATEWAY_SRCS}"
+    RELATIVE_SRC_DIR "src"
+    OUTPUT_DIR "${CLAD_GO_OUTPUT_DIR}"
+    EMITTER "${CLAD_GO}"
+    OUTPUT_EXTS ".go"
+    INCLUDES ""
+    OUTPUT_SRCS CLAD_GATEWAY_GEN_SRCS
+)
+
+set(CLAD_GATEWAY_GEN_SRCS ${CLAD_GATEWAY_GEN_SRCS} PARENT_SCOPE)
+string(REPLACE "cladgo/src" "clad/engine" CLAD_GATEWAY_CPP_GEN_SRCS "${CLAD_GATEWAY_GEN_SRCS}")
+string(REPLACE ".go" ".cpp" CLAD_GATEWAY_CPP_GEN_SRCS "${CLAD_GATEWAY_CPP_GEN_SRCS}")
 
 add_library(cloud_clad_cpp STATIC
     ${CLAD_CLOUD_CPP_GEN_SRCS}
+    ${CLAD_GATEWAY_CPP_GEN_SRCS}
 )
 target_include_directories(cloud_clad_cpp
     PUBLIC

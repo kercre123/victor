@@ -11,20 +11,25 @@
 *
 **/
 
+#include "engine/aiComponent/behaviorComponent/devBehaviorComponentMessageHandler.h"
+
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
-#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRerun.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/behaviorComponent/devBehaviorComponentMessageHandler.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
-#include "engine/externalInterface/externalInterface.h"
-#include "engine/robotDataLoader.h"
+#include "engine/aiComponent/behaviorComponent/userIntents.h"
 #include "engine/cozmoContext.h"
+#include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
+#include "engine/robotDataLoader.h"
+
 #include "webServerProcess/src/webService.h"
+
+#include "clad/types/behaviorComponent/userIntent.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -177,7 +182,7 @@ void DevBehaviorComponentMessageHandler::SetupUserIntentEvents()
     
     UserIntentTag tag;
     if( UserIntentTagFromString(intent, tag) ) {
-      uic.SetUserIntentPending( tag );
+      uic.DevSetUserIntentPending(tag);
     } else {
       PRINT_CH_INFO("BehaviorSystem",
                     "DevBehaviorComponentMessageHandler.FakeUserIntentReceived.Invalid",
@@ -315,7 +320,7 @@ void DevBehaviorComponentMessageHandler::SubscribeToWebViz(BehaviorExternalInter
         if( type == "user" ) {
           UserIntentTag tag;
           if( UserIntentTagFromString(request, tag) ) {
-            uic.SetUserIntentPending( tag );
+            uic.DevSetUserIntentPending(tag);
           } else {
             PRINT_CH_INFO("BehaviorSystem",
                           "DevBehaviorComponentMessageHandler.WebVizUserIntentReceived.Invalid",

@@ -24,12 +24,14 @@ class ConditionOffTreadsState : public IBEICondition
 {
 public:
   explicit ConditionOffTreadsState(const Json::Value& config);
-  explicit ConditionOffTreadsState(const OffTreadsState& targetState);
+  explicit ConditionOffTreadsState(const OffTreadsState& targetState, const std::string& ownerDebugLabel);
   
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& bei) const override;
 
 private:
   OffTreadsState _targetState;
+  int _minTimeSinceChange_ms;
+  int _maxTimeSinceChange_ms; // ignored if negative
   
 };
 

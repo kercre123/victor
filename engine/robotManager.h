@@ -57,12 +57,13 @@ public:
   void RemoveRobot(bool robotRejectedConnection);
 
   // Call Robot's Update() function
-  void UpdateRobot();
+  Result UpdateRobot();
 
   // Update robot connection state
   Result UpdateRobotConnection();
 
   RobotInterface::MessageHandler* GetMsgHandler() const { return _robotMessageHandler.get(); }
+  RobotEventHandler& GetRobotEventHandler() { return _robotEventHandler; }
 
   bool ShouldFilterMessage(RobotInterface::RobotToEngineTag msgType) const;
   bool ShouldFilterMessage(RobotInterface::EngineToRobotTag msgType) const;

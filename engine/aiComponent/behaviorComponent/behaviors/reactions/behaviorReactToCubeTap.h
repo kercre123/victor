@@ -124,7 +124,7 @@ private:
 
     // behavior to drive off of the charger
     std::string                                 chargerBehaviorString;
-    std::shared_ptr<BehaviorDriveOffCharger>    chargerBehavior;
+    ICozmoBehaviorPtr                           chargerBehavior;
 
     CubeInfo                                    targetCube;
 

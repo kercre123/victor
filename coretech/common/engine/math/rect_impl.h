@@ -52,6 +52,19 @@ namespace Anki {
     DEV_ASSERT(height >= T(0), "Rectangle.TwoPointConstructor.NegativeHeight");
   }
   
+  template<typename T>
+  Rectangle<T>::Rectangle(const CladRect& cladRect)
+  : Rectangle<T>(cladRect.x_topLeft, cladRect.y_topLeft, cladRect.width, cladRect.height)
+  {
+    
+  }
+  
+  template<typename T>
+  CladRect Rectangle<T>::ToCladRect() const
+  {
+    const CladRect cladRect(this->GetX(), this->GetY(), this->GetWidth(), this->GetHeight());
+    return cladRect;
+  }
   
 #if ANKICORETECH_USE_OPENCV
   template<typename T>

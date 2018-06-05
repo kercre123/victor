@@ -26,6 +26,7 @@
 #include "clad/vizInterface/messageViz.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
+#include "util/helpers/boundedWhile.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
@@ -301,6 +302,27 @@ namespace Anki {
       
       SendMessage(VizInterface::MessageViz(
         VizInterface::CameraLine((uint32_t)color, start.x(), start.y(), end.x(), end.y())));
+    }
+    
+    void VizManager::DrawCameraPoly(const Poly2f& poly, const ColorRGBA& color, const bool isClosed)
+    {
+      ANKI_CPU_PROFILE("VizManager::DrawCameraPoly");
+      
+      auto crnt = poly.begin();
+      auto next = (crnt + 1);
+      auto end  = poly.end();
+      auto upperBound = poly.size() + 1;
+      BOUNDED_WHILE(upperBound, next != end)
+      {
+        DrawCameraLine(*crnt, *next, color);
+        ++crnt;
+        ++next;
+      }
+      
+      if(isClosed)
+      {
+        DrawCameraLine(*crnt, *(poly.begin()), color);
+      }
     }
     
     void VizManager::DrawCameraText(const Point2f& position, const std::string& text, const ColorRGBA& color)

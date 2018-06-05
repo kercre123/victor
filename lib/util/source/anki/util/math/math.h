@@ -365,6 +365,10 @@ inline constexpr double MilliSecToSec(unsigned long long int milliSec) {
   return (double)milliSec / 1000.0;
 }
 
+inline constexpr double MilliSecToNanoSec(double milliSec) {
+  return milliSec * 1000000.0;
+}
+
 inline constexpr float SecToMilliSec(float sec) {
   return sec * 1000.0f;
 }

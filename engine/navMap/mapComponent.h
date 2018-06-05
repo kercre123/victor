@@ -118,6 +118,15 @@ public:
   void ClearRobotToEdge(const Point2f& p, const Point2f& q, const TimeStamp_t t);
 
   void AddProxData(const Poly2f& poly, const MemoryMapData& data);
+
+  template<class ConvexType>
+  bool CheckForCollisions(const ConvexType& r) const;
+  
+  // Remove all prox obstacles from the map.
+  // CAUTION: This will entirely remove _all_ information about prox
+  // obstacles. This should almost never be necessary. Is this really
+  // what you want??
+  void RemoveAllProxObstacles();
   
   ////////////////////////////////////////////////////////////////////////////////
   // Accessors
@@ -182,6 +191,7 @@ private:
   PoseOriginID_t                  _currentMapOriginID;
   ObjectIdToPosesPerOrigin        _reportedPoses;
   Pose3d                          _reportedRobotPose;
+  TimeStamp_t                     _nextTimeoutUpdate_ms;
 
   // use multiple dirty flags to broadcast to different channels in case they have different broadcast rates
   bool                            _vizMessageDirty;
@@ -191,6 +201,27 @@ private:
   bool                            _isRenderEnabled;
   float                           _broadcastRate_sec = -1.0f;      // (Negative means don't send)
 };
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class ConvexType>
+bool MapComponent::CheckForCollisions(const ConvexType& r) const
+{
+  const INavMap* currentMap = GetCurrentMemoryMap();
+  if (currentMap)
+  {
+    return currentMap->AnyOf( r, [] (const auto& data) {
+        const bool retv = (data->type == MemoryMapTypes::EContentType::ObstacleObservable)   ||
+                          (data->type == MemoryMapTypes::EContentType::ObstacleCharger)      ||
+                          (data->type == MemoryMapTypes::EContentType::ObstacleProx)         ||
+                          (data->type == MemoryMapTypes::EContentType::ObstacleUnrecognized) ||
+                          (data->type == MemoryMapTypes::EContentType::Cliff);
+        return retv;
+      });
+  }
+  return false;
+}
+
 
 }
 }

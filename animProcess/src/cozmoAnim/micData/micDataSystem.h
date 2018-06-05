@@ -15,6 +15,7 @@
 #define __AnimProcess_CozmoAnim_MicDataSystem_H_
 
 #include "micDataTypes.h"
+#include "clad/types/beatDetectorTypes.h"
 #include "coretech/common/shared/types.h"
 #include "util/global/globalDefinitions.h"
 
@@ -64,6 +65,8 @@ public:
   void ProcessMicDataPayload(const RobotInterface::MicData& payload);
   void RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT);
   void RecordProcessedAudio(uint32_t duration_ms, const std::string& path);
+  void SetShouldStreamAfterWakeWord(bool shouldStream);
+  void StartWakeWordlessStreaming();
   void Update(BaseStationTime_t currTime_nanosec);
 
 #if ANKI_DEV_CHEATS
@@ -80,6 +83,10 @@ public:
   void UpdateMicJobs();
   void AudioSaveCallback(const std::string& dest);
 
+  BeatInfo GetLatestBeatInfo();
+  
+  void ResetBeatDetector();
+  
 private:
   void RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT);
 

@@ -1,0 +1,35 @@
+/** Clad message definitions for the types of detectable pets 
+ */
+
+#include "clad/types/cladPoint.clad"
+
+namespace Anki {
+namespace Vision {
+
+enum uint_8 SalientPointType 
+{
+  Unknown, // Generally means something is wrong
+  Object,  // For general "objectness" (vs. specific known object types)
+  Person,
+
+  // TODO:
+  // Hand,
+  // Text,
+  // SaturatedColor,
+
+}
+
+structure SalientPoint {
+    uint_32           timestamp,
+    float_32          x_img,          // Location in image coordinates
+    float_32          y_img,          //   "
+    float_32          score,          // On the interval [0,1]
+    float_32          area_fraction,  // As a fraction of the image area (to be independent of resolution), <= 0 if unknown
+    SalientPointType  salientType,
+    string            description,    
+
+    CladPoint2d       shape[uint_8]   // Array of image points defining the shape (for visualization/debugging)
+}
+      
+} // namespace Vision
+} // namespace Anki

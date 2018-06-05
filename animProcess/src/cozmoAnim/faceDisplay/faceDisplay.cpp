@@ -17,6 +17,8 @@
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "coretech/common/engine/array2d_impl.h"
 #include "coretech/vision/engine/image.h"
+#include "util/console/consoleInterface.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/threading/threadPriority.h"
 
 #include "opencv2/highgui.hpp"
@@ -27,10 +29,15 @@
 namespace Anki {
 namespace Cozmo {
 
+#if ANKI_CPU_PROFILER_ENABLED
+  CONSOLE_VAR_RANGED(float, maxDrawTime_ms,      ANKI_CPU_CONSOLEVARGROUP, 5, 5, 32);
+  CONSOLE_VAR_ENUM(u8,      kDrawFace_Logging,   ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
+#endif
+
 namespace {
-  int _faultCodeSock = -1;
+  int _faultCodeFifo = -1;
   uint16_t _fault = FaultCode::NONE;
-  
+
   static const std::string kFaultURL = "support.anki.com";
 }
   
@@ -169,6 +176,8 @@ void FaceDisplay::DrawFaceLoop()
   Anki::Util::SetThreadName(pthread_self(), "DrawFaceLoop");
   while (!_stopDrawFace)
   {
+    ANKI_CPU_TICK("FaceDisplay::DrawFaceLoop", maxDrawTime_ms, Util::CpuProfiler::CpuProfilerLoggingTime(kDrawFace_Logging));
+
     // Lock because we're about to check and change pointers
     _faceDrawMutex.lock();
     if (_faceDrawNextImg != nullptr)
@@ -211,40 +220,46 @@ void FaceDisplay::DrawFaceLoop()
 
 void FaceDisplay::FaultCodeLoop()
 {
-  // Unlink the socket name incase it already exists
-  unlink(FaultCode::kFaultCodeSocketName);
-
-  struct sockaddr_un name;
-  size_t size;
-
-  // Create the local socket
-  _faultCodeSock = socket(PF_LOCAL, SOCK_DGRAM, 0);
-  if(_faultCodeSock < 0)
+  // If the fifo doesn't exist create it
+  if(access(FaultCode::kFaultCodeFifoName, F_OK) == -1)
   {
-    PRINT_NAMED_WARNING("FaceDisplay.FaultCodeLoop.CreateSocketFailed", "%d", errno);
+    int res = mkfifo(FaultCode::kFaultCodeFifoName, S_IRUSR | S_IWUSR);
+    if(res < 0)
+    {
+      printf("FaceDisplay.FaultCodeLoop.mkfifoFailed %d", errno);
+      return;
+    }
+  }
+  
+  _faultCodeFifo = open(FaultCode::kFaultCodeFifoName, O_RDONLY);
+  if(_faultCodeFifo < 0)
+  {
+    PRINT_NAMED_WARNING("FaceDisplay.FaultCodeLoop.OpenFifoFailed", "%d", errno);
     return;
   }
 
-  name.sun_family = AF_LOCAL;
-  strncpy(name.sun_path, FaultCode::kFaultCodeSocketName, sizeof(name.sun_path));
-  name.sun_path[sizeof(name.sun_path) - 1] = '\0';
-  size = (offsetof(struct sockaddr_un, sun_path) + strlen(name.sun_path));
+  // Wait 10 seconds before trying to read and draw fault codes
+  // in order to let things stabilize and have time to do startup fault checks
+  using namespace std::chrono_literals;
+  std::this_thread::sleep_for(10s);
 
-  // Bind the socket to the kFaultCodeSocketName
-  long rc = bind(_faultCodeSock, (struct sockaddr*)&name, (uint32_t)size);
-  if(rc < 0)
-  {
-    PRINT_NAMED_WARNING("FaceDisplay.FaultCodeLoop.BindSocketFailed","%d", errno);
-    return;
-  }
-
+  ssize_t rc = 0;
   const ssize_t kFaultSize = sizeof(uint16_t);
   u8 buf[128];
-  do
+  while(true)
   {
-    // Block until read has data
-    rc = read(_faultCodeSock, buf, sizeof(buf));
-    long numBytes = rc;
+    // Blocks until there is data available
+    rc = read(_faultCodeFifo, buf, sizeof(buf));
+    if(rc < 0)
+    {
+      PRINT_NAMED_WARNING("FaceDisplay.FaultCodeLoop.ReadFailed","%d", errno);
+      close(_faultCodeFifo);
+      _faultCodeFifo = -1;
+      return;
+    }
+
+    ssize_t numBytes = rc;
+
     // Pull off kFaultSize number of bytes from the read data
     // and try to draw it, repeat until there is not enough data
     // left
@@ -265,17 +280,16 @@ void FaceDisplay::FaultCodeLoop()
     }
 
     DrawFaultCode(maxFault);
-    
-  } while(rc > 0);
-}
+  }
+}  
 
 void FaceDisplay::StopFaultCodeThread()
 {
   // Close and unlink the socket if it exists
-  if(_faultCodeSock > 0)
+  if(_faultCodeFifo > 0)
   {
-    close(_faultCodeSock);
-    unlink(FaultCode::kFaultCodeSocketName);
+    close(_faultCodeFifo);
+    _faultCodeFifo = -1;
   }
 }
 

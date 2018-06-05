@@ -16,7 +16,7 @@
 
 #include "coretech/vision/engine/cameraCalibration.h"
 #include "coretech/vision/engine/droppedFrameStats.h"
-#include "coretech/vision/engine/image.h"
+#include "coretech/vision/engine/imageCache.h"
 #include "coretech/vision/engine/visionMarker.h"
 #include "coretech/vision/engine/faceTracker.h"
 #include "engine/components/nvStorageComponent.h"
@@ -31,6 +31,7 @@
 #include "clad/types/cameraParams.h"
 #include "clad/types/loadedKnownFace.h"
 #include "clad/types/robotStatusAndActions.h"
+#include "clad/types/salientPointTypes.h"
 #include "clad/types/visionModes.h"
 
 #include "util/helpers/noncopyable.h"
@@ -154,7 +155,7 @@ struct DockingErrorSignal;
     Result UpdateComputedCalibration(const VisionProcessingResult& result);
     Result UpdateImageQuality(const VisionProcessingResult& procResult);
     Result UpdateVisualObstacles(const VisionProcessingResult& procResult);
-    Result UpdateDetectedObjects(const VisionProcessingResult& result);
+    Result UpdateSalientPoints(const VisionProcessingResult& result);
     Result UpdateWhiteBalance(const VisionProcessingResult& procResult);
 
     const Vision::Camera& GetCamera(void) const;
@@ -222,7 +223,7 @@ struct DockingErrorSignal;
     Result GetCalibrationPoseToRobot(size_t whichPose, Pose3d& p) const;
     
     // Tool code images
-    Result ClearToolCodeImages();    
+    Result ClearToolCodeImages();
     size_t  GetNumStoredToolCodeImages() const;
     std::list<std::vector<u8> > GetToolCodeImageJpegData();
 
@@ -284,7 +285,8 @@ struct DockingErrorSignal;
     Result LoadFaceAlbumFromFile(const std::string& path, std::list<Vision::LoadedKnownFace>& loadedFaces); // Populates list, does not broadcast
     
     // See VisionSystem::SetSaveParameters for details on the arguments
-    void SetSaveImageParameters(const ImageSendMode saveMode, const std::string& path, const int8_t onRobotQuality);
+    void SetSaveImageParameters(const ImageSendMode saveMode, const std::string& path, const int8_t onRobotQuality, 
+                                const Vision::ImageCache::Size& saveSize = Vision::ImageCache::Size::Full);
 
     // This is for faking images being processed for unit tests
     void FakeImageProcessed(TimeStamp_t t);
@@ -319,6 +321,8 @@ struct DockingErrorSignal;
 
     bool LookupGroundPlaneHomography(f32 atHeadAngle, Matrix_3x3f& H) const;
 
+    bool HasStartedCapturingImages() const { return _hasStartedCapturingImages; }
+    
     // Non-rotated points representing the lift cross bar
     std::vector<Point3f> _liftCrossBarSource;
 
@@ -328,6 +332,7 @@ struct DockingErrorSignal;
     std::set<VisionMode> GetVisionModesFromFlags(u32 bitflags) const;
 
     bool _isInitialized = false;
+    bool _hasStartedCapturingImages = false;
     
     Robot* _robot = nullptr;
     const CozmoContext* _context = nullptr;
@@ -335,7 +340,7 @@ struct DockingErrorSignal;
     VisionSystem* _visionSystem = nullptr;
     VizManager*   _vizManager = nullptr;
     std::map<std::string, s32> _vizDisplayIndexMap;
-    std::list<std::pair<TimeStamp_t, ExternalInterface::RobotObservedGenericObject>> _detectedObjectsToDraw;
+    std::list<std::pair<TimeStamp_t, Vision::SalientPoint>> _salientPointsToDraw;
     
     // Robot stores the calibration, camera just gets a reference to it
     // This is so we can share the same calibration data across multiple

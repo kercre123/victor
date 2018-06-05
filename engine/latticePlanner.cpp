@@ -46,6 +46,15 @@ EPlannerStatus LatticePlanner::CheckPlanningStatus() const
 {
   return _impl->CheckPlanningStatus();
 }
+  
+EPlannerErrorType LatticePlanner::GetErrorType() const
+{
+  if( CheckPlanningStatus() == EPlannerStatus::Error ) {
+    return _impl->GetErrorType();
+  } else {
+    return EPlannerErrorType::None;
+  }
+}
 
 void LatticePlanner::StopPlanning()
 {

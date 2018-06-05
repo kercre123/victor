@@ -44,48 +44,43 @@ static constexpr float kAnimationsLoadingRatio = 0.7f;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CannedAnimationLoader::LoadAnimationsIntoContainer(const AnimDirInfo& info, CannedAnimationContainer* container)
 {
-  _containerPtr = container;
   {
     ANKI_CPU_PROFILE("CannedAnimationLoader::LoadAnimations");
-    LoadAnimationsInternal(info);
+    LoadAnimationsInternal(info, container);
     // The threaded animation loading workers each add to the loading ratio
   }
 
   // we're done
   _loadingCompleteRatio.store(1.0f);
-  _containerPtr = nullptr;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CannedAnimationLoader::LoadAnimationIntoContainer(const std::string& path, CannedAnimationContainer* container)
 {
-  _containerPtr = container;
   AnimDirInfo info;
   info.jsonFiles.push_back(path);
   {
     ANKI_CPU_PROFILE("CannedAnimationLoader::LoadAnimationFile");
-    LoadAnimationsInternal(info);
+    LoadAnimationsInternal(info, container);
   }
 
   // TODO: be able to load a face animation
 
   // we're done
   _loadingCompleteRatio.store(1.0f);
-  _containerPtr = nullptr;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-CannedAnimationLoader::AnimDirInfo CannedAnimationLoader::CollectAnimFiles(const Util::Data::DataPlatform* platform, 
-                                                                           const std::vector<std::string>& paths)
+CannedAnimationLoader::AnimDirInfo CannedAnimationLoader::CollectAnimFiles(const std::vector<std::string>& paths)
 {
   ANKI_CPU_PROFILE("CannedAnimationLoader::CollectFiles");
   AnimDirInfo info;
   // animations
   {
     for (const auto& path : paths) {
-      CannedAnimationLoader::WalkAnimationDir(platform, path, info.animFileTimestamps, 
+      CannedAnimationLoader::WalkAnimationDir(_platform, path, info.animFileTimestamps, 
         [&info] (const std::string& filename) {
           info.jsonFiles.push_back(filename);
         });
@@ -148,7 +143,7 @@ void CannedAnimationLoader::AddToLoadingRatio(float delta)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CannedAnimationLoader::LoadAnimationsInternal(const AnimDirInfo& info)
+void CannedAnimationLoader::LoadAnimationsInternal(const AnimDirInfo& info, CannedAnimationContainer* container)
 {
   const double startTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
 
@@ -156,13 +151,14 @@ void CannedAnimationLoader::LoadAnimationsInternal(const AnimDirInfo& info)
   // To help find bad/deprecated animations, try removing this.
   ProceduralFace::EnableClippingWarning(false);
 
-  using MyDispatchWorker = Util::DispatchWorker<3, const std::string&>;
-  MyDispatchWorker::FunctionType loadFileFunc = std::bind(&CannedAnimationLoader::LoadAnimationFile, this, std::placeholders::_1);
+  using MyDispatchWorker = Util::DispatchWorker<3, const std::string&, CannedAnimationContainer*>;
+  MyDispatchWorker::FunctionType loadFileFunc = std::bind(&CannedAnimationLoader::LoadAnimationFile, this, 
+                                                          std::placeholders::_1, std::placeholders::_2);
   MyDispatchWorker myWorker(loadFileFunc);
 
   unsigned long size = info.jsonFiles.size();
   for (int i = 0; i < size; i++) {
-    myWorker.PushJob(info.jsonFiles[i]);
+    myWorker.PushJob(info.jsonFiles[i], container);
     //LOG_DEBUG("CannedAnimationLoader.LoadAnimations", "loaded regular anim %d of %zu", i, size);
   }
 
@@ -178,7 +174,7 @@ void CannedAnimationLoader::LoadAnimationsInternal(const AnimDirInfo& info)
            "Time to load animations = %.2f ms",
            loadTime);
 
-  const auto & animNames = _containerPtr->GetAnimationNames();
+  const auto & animNames = container->GetAnimationNames();
 
   LOG_INFO("CannedAnimationLoader.LoadAnimations.CannedAnimationsCount",
            "Total number of canned animations available = %zu",
@@ -190,7 +186,7 @@ void CannedAnimationLoader::LoadAnimationsInternal(const AnimDirInfo& info)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CannedAnimationLoader::LoadAnimationFile(const std::string& path)
+void CannedAnimationLoader::LoadAnimationFile(const std::string& path, CannedAnimationContainer* container)
 {
   if (_abortLoad.load(std::memory_order_relaxed)) {
     return;
@@ -239,7 +235,7 @@ void CannedAnimationLoader::LoadAnimationFile(const std::string& path)
       // TODO: Should this mutex lock happen here or immediately before this for loop (COZMO-8766)?
       std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
 
-      DefineFromFlatBuf(animClip, strName);
+      DefineFromFlatBuf(animClip, strName, container);
     }
 
   } else {
@@ -249,7 +245,7 @@ void CannedAnimationLoader::LoadAnimationFile(const std::string& path)
     std::string animationId;
     if (success && !animDefs.empty()) {
       std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
-      DefineFromJson(animDefs, animationId);
+      DefineFromJson(animDefs, animationId, container);
 
       // TODO: This warning is useful, but it causes a crash when we use the current mechanism for
       //       animators to preview their work in Maya on the robot. We plan on changing that
@@ -269,16 +265,17 @@ void CannedAnimationLoader::LoadAnimationFile(const std::string& path)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result CannedAnimationLoader::DefineFromFlatBuf(const CozmoAnim::AnimClip* animClip, std::string& animName)
+Result CannedAnimationLoader::DefineFromFlatBuf(const CozmoAnim::AnimClip* animClip, std::string& animName,
+                                                CannedAnimationContainer* container)
 {
   Animation animation(animName);
 
-  Result lastResult = animation.DefineFromFlatBuf(animName, animClip);
-  SetSpriteSequenceContainerOnAnimation(animation);
+  Result lastResult = animation.DefineFromFlatBuf(animName, animClip, 
+                                                  _spriteMap, _spriteSequenceContainer);
 
   const Result res = SanityCheck(lastResult, animation, animName);
   if(res == Result::RESULT_OK){
-    _containerPtr->AddAnimation(std::move(animation));
+    container->AddAnimation(std::move(animation));
   }
   return res;
 
@@ -286,7 +283,8 @@ Result CannedAnimationLoader::DefineFromFlatBuf(const CozmoAnim::AnimClip* animC
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result CannedAnimationLoader::DefineFromJson(const Json::Value& jsonRoot, std::string& animationName)
+Result CannedAnimationLoader::DefineFromJson(const Json::Value& jsonRoot, std::string& animationName,
+                                             CannedAnimationContainer* container)
 {
 
   Json::Value::Members animationNames = jsonRoot.getMemberNames();
@@ -316,29 +314,16 @@ Result CannedAnimationLoader::DefineFromJson(const Json::Value& jsonRoot, std::s
   PRINT_CH_DEBUG(LOG_CHANNEL, "CannedAnimationLoader::DefineFromJson", "Loading '%s'", animationName.c_str());
 
   Animation animation(animationName);
-  Result lastResult = animation.DefineFromJson(animationName, jsonRoot[animationName]);
-  SetSpriteSequenceContainerOnAnimation(animation);
+  Result lastResult = animation.DefineFromJson(animationName, jsonRoot[animationName],
+                                               _spriteMap, _spriteSequenceContainer);
 
   const Result res = SanityCheck(lastResult, animation, animationName);
   if(res == Result::RESULT_OK){
-    _containerPtr->AddAnimation(std::move(animation));
+    container->AddAnimation(std::move(animation));
   }
   return res;
 } // CannedAnimationLoader::DefineFromJson()
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CannedAnimationLoader::SetSpriteSequenceContainerOnAnimation(Animation& animation) const
-{
-  auto& spriteSeqTrack = animation.GetTrack<SpriteSequenceKeyFrame>();
-  const auto& maxCount = Animations::Track<SpriteSequenceKeyFrame>::ConstMaxFramesPerTrack();
-  BOUNDED_WHILE(maxCount, spriteSeqTrack.HasFramesLeft()){
-    auto& keyframe = spriteSeqTrack.GetCurrentKeyFrame();
-    keyframe.GiveKeyframeImageAccess(_spriteMap, _spriteSequenceContainer);
-    spriteSeqTrack.MoveToNextKeyFrame();
-  }
-  spriteSeqTrack.MoveToStart();
-}
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

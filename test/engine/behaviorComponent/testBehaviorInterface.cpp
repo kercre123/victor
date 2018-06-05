@@ -702,7 +702,6 @@ public:
     // otherwise don't do anything
   }
   
-  std::function<void(const UserIntent&)> _onGetData;
   std::string _type;
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
@@ -712,11 +711,7 @@ public:
     return true;
   }
 
-  virtual void OnBehaviorActivated() override {
-    if( _onGetData ) {
-      _onGetData( GetTriggeringUserIntent() );
-    }
-  }
+  virtual void OnBehaviorActivated() override {}
 
 };
 
@@ -736,7 +731,6 @@ TEST(BehaviorInterface, BehaviorRespondsToUserIntents)
   auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
   
   for( int i=0; i<=11; ++i ) {
-    bool callbackFired = false;
     bool expectingCallback = false;
     Json::Value config = ICozmoBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
     
@@ -764,11 +758,6 @@ TEST(BehaviorInterface, BehaviorRespondsToUserIntents)
     
     if( i==1 || i==2 || i==4 || i==7 || i==10 ) {
       expectingCallback = true;
-      // these ones should have data and it should match
-      b._onGetData = [&](const UserIntent& intent) {
-        EXPECT_EQ( intent, passedIntent );
-        callbackFired = true;
-      };
     }
     
     b.Init( bei );
@@ -785,33 +774,44 @@ TEST(BehaviorInterface, BehaviorRespondsToUserIntents)
       {
         passedIntent.Set_test_name( UserIntent_Test_Name{""} );
         EXPECT_TRUE( b.WantsToBeActivated() );
-        uic.SetUserIntentPending( std::move(passedIntent) );
+        uic.DevSetUserIntentPending( std::move(passedIntent) , UserIntentSource::Voice);
         EXPECT_TRUE( b.WantsToBeActivatedInternal() );
-        uic.ClearUserIntent( USER_INTENT(test_name) );
+        uic.DropUserIntent( USER_INTENT(test_name) );
       }
         break;
-      case 1: // behavior is waiting for test_user_intent_1; also, it should clear the intent
+      case 1: // behavior is waiting for test_user_intent_1; also, it should activate the intent
       {
         passedIntent.Set_test_user_intent_1({});
         EXPECT_FALSE( b.WantsToBeActivated() );
-        uic.SetUserIntentPending( passedIntent.GetTag() );
+        uic.DevSetUserIntentPending( passedIntent.GetTag() , UserIntentSource::Voice);
         EXPECT_TRUE( b.WantsToBeActivated() );
         b.OnActivated();
         EXPECT_FALSE( uic.IsUserIntentPending(USER_INTENT(test_user_intent_1)) );
         EXPECT_FALSE( uic.IsAnyUserIntentPending() );
+        EXPECT_TRUE( uic.IsUserIntentActive(USER_INTENT(test_user_intent_1)) );
+        b.OnDeactivated();
+        EXPECT_FALSE( uic.IsUserIntentPending(USER_INTENT(test_user_intent_1)) );
+        EXPECT_FALSE( uic.IsAnyUserIntentPending() );
+        EXPECT_FALSE( uic.IsUserIntentActive(USER_INTENT(test_user_intent_1)) );
       }
         break;
-      case 2: // behavior is waiting for test_name; also, it should clear the intent
+      case 2: // behavior is waiting for test_name; also, it should activate the intent
       case 4: // behavior is waiting for test_name with "Victor"
       case 7: // behavior is waiting for test_name with "Victor"
       {
         passedIntent.Set_test_name( UserIntent_Test_Name{"Victor"} );
         EXPECT_FALSE( b.WantsToBeActivated() );
-        uic.SetUserIntentPending( std::move(passedIntent) );
+        uic.DevSetUserIntentPending( std::move(passedIntent) , UserIntentSource::Voice);
         EXPECT_TRUE( b.WantsToBeActivated() );
         b.OnActivated();
         EXPECT_FALSE( uic.IsUserIntentPending(USER_INTENT(test_name)) );
         EXPECT_FALSE( uic.IsAnyUserIntentPending() );
+        EXPECT_TRUE( uic.IsUserIntentActive(USER_INTENT(test_name)) );
+        b.OnDeactivated();
+        EXPECT_FALSE( uic.IsUserIntentPending(USER_INTENT(test_name)) );
+        EXPECT_FALSE( uic.IsAnyUserIntentPending() );
+        EXPECT_FALSE( uic.IsUserIntentActive(USER_INTENT(test_name)) );
+
       }
         break;
       case 3: // passing a different tag. should not want to start
@@ -820,9 +820,9 @@ TEST(BehaviorInterface, BehaviorRespondsToUserIntents)
       {
         passedIntent.Set_test_user_intent_2({});
         EXPECT_FALSE( b.WantsToBeActivated() );
-        uic.SetUserIntentPending( passedIntent.GetTag() );
+        uic.DevSetUserIntentPending( passedIntent.GetTag() , UserIntentSource::Voice);
         EXPECT_FALSE( b.WantsToBeActivated() );
-        uic.ClearUserIntent( USER_INTENT(test_user_intent_2) );
+        uic.DropUserIntent( USER_INTENT(test_user_intent_2) );
       }
         break;
       case 5: // behavior is waiting for test_name with "Victor" but we give it Cozmo
@@ -831,16 +831,16 @@ TEST(BehaviorInterface, BehaviorRespondsToUserIntents)
       {
         passedIntent.Set_test_name( UserIntent_Test_Name{"Cozmo"} );
         EXPECT_FALSE( b.WantsToBeActivated() );
-        uic.SetUserIntentPending( std::move(passedIntent) );
+        uic.DevSetUserIntentPending( std::move(passedIntent) , UserIntentSource::Voice);
         EXPECT_FALSE( b.WantsToBeActivated() );
-        uic.ClearUserIntent( USER_INTENT(test_name) );
+        uic.DropUserIntent( USER_INTENT(test_name) );
       }
         break;
       case 10: // behavior is waiting for test_name with "".
       {
         passedIntent.Set_test_name( UserIntent_Test_Name{""} );
         EXPECT_FALSE( b.WantsToBeActivated() );
-        uic.SetUserIntentPending( std::move(passedIntent) );
+        uic.DevSetUserIntentPending( std::move(passedIntent) , UserIntentSource::Voice);
         EXPECT_TRUE( b.WantsToBeActivated() );
         b.OnActivated();
         EXPECT_FALSE( uic.IsUserIntentPending(USER_INTENT(test_name)) );
@@ -857,8 +857,6 @@ TEST(BehaviorInterface, BehaviorRespondsToUserIntents)
       }
         break;
     }
-    
-    EXPECT_EQ(callbackFired, expectingCallback);
   }
   
 }

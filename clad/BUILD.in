@@ -34,3 +34,9 @@ cxx_project(
     srcs = glob(['src/clad/cloud/**/*.clad']),
     headers = []
 )
+
+cxx_project(
+    name = 'gateway_clad',
+    srcs = glob(['src/clad/gateway/**/*.clad']),
+    headers = []
+)

@@ -18,6 +18,7 @@
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionOffTreadsState.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -33,25 +34,34 @@ static const float kWaitTimeBeforeRepeatAnim_s = 0.5f;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToRobotOnBack::BehaviorReactToRobotOnBack(const Json::Value& config)
   : ICozmoBehavior(config)
-  , _offTreadsCondition(OffTreadsState::OnBack)
 {
+  _offTreadsCondition = std::make_shared<ConditionOffTreadsState>( OffTreadsState::OnBack, GetDebugLabel() );
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToRobotOnBack::WantsToBeActivatedBehavior() const
 {
-  return _offTreadsCondition.AreConditionsMet(GetBEI());
+  return _offTreadsCondition->AreConditionsMet(GetBEI());
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToRobotOnBack::InitBehavior()
 {
-  _offTreadsCondition.Init(GetBEI());
-  _offTreadsCondition.SetActive(GetBEI(), true);
+  _offTreadsCondition->Init(GetBEI());
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToRobotOnBack::OnBehaviorEnteredActivatableScope() {
+  _offTreadsCondition->SetActive(GetBEI(), true);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToRobotOnBack::OnBehaviorLeftActivatableScope()
+{
+  _offTreadsCondition->SetActive(GetBEI(), false);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToRobotOnBack::OnBehaviorActivated()
@@ -68,7 +78,7 @@ void BehaviorReactToRobotOnBack::FlipDownIfNeeded()
     // Check if cliff detected
     // If not, then calibrate head because we're not likely to be on back if no cliff detected.
     if (robotInfo.GetCliffSensorComponent().IsCliffDetectedStatusBitOn()) {
-      AnimationTrigger anim = AnimationTrigger::ANTICIPATED_FlipDownFromBack;
+      AnimationTrigger anim = AnimationTrigger::FlipDownFromBack;
 
       DelegateIfInControl(new TriggerAnimationAction(anim),
                   &BehaviorReactToRobotOnBack::DelayThenFlipDown);

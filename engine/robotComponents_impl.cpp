@@ -59,6 +59,10 @@ class MicComponent;
 class BatteryComponent;
 class FullRobotPose;
 class DataAccessorComponent;
+class BeatDetectorComponent;
+class TextToSpeechCoordinator;
+class SDKComponent;
+class PhotographyManager;
 
 } // namespace Cozmo
 
@@ -101,7 +105,11 @@ LINK_COMPONENT_TYPE_TO_ENUM(RobotIdleTimeoutComponent,     RobotComponentID, Rob
 LINK_COMPONENT_TYPE_TO_ENUM(MicComponent,                  RobotComponentID, MicComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(BatteryComponent,              RobotComponentID, Battery)
 LINK_COMPONENT_TYPE_TO_ENUM(FullRobotPose,                 RobotComponentID, FullRobotPose)
-LINK_COMPONENT_TYPE_TO_ENUM(DataAccessorComponent,          RobotComponentID, DataAccessor)
+LINK_COMPONENT_TYPE_TO_ENUM(DataAccessorComponent,         RobotComponentID, DataAccessor)
+LINK_COMPONENT_TYPE_TO_ENUM(BeatDetectorComponent,         RobotComponentID, BeatDetector)
+LINK_COMPONENT_TYPE_TO_ENUM(TextToSpeechCoordinator,       RobotComponentID, TextToSpeechCoordinator)
+LINK_COMPONENT_TYPE_TO_ENUM(SDKComponent,                  RobotComponentID, SDK)
+LINK_COMPONENT_TYPE_TO_ENUM(PhotographyManager,            RobotComponentID, PhotographyManager)
 
 // Translate entity into string
 template<>
@@ -115,6 +123,7 @@ std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotCompone
     case Cozmo::RobotComponentID::ActionList:                 { return "ActionList";}
     case Cozmo::RobotComponentID::Animation:                  { return "Animation";}
     case Cozmo::RobotComponentID::Battery:                    { return "Battery";}
+    case Cozmo::RobotComponentID::BeatDetector:               { return "BeatDetector";}
     case Cozmo::RobotComponentID::BlockTapFilter:             { return "BlockTapFilter";}
     case Cozmo::RobotComponentID::BlockWorld:                 { return "BlockWorld";}
     case Cozmo::RobotComponentID::BodyLights:                 { return "BodyLights";}
@@ -140,13 +149,16 @@ std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotCompone
     case Cozmo::RobotComponentID::ObjectPoseConfirmer:        { return "ObjectPoseConfirmer";}
     case Cozmo::RobotComponentID::PathPlanning:               { return "PathPlanning";}
     case Cozmo::RobotComponentID::PetWorld:                   { return "PetWorld";}
+    case Cozmo::RobotComponentID::PhotographyManager:         { return "PhotographyManager";}
     case Cozmo::RobotComponentID::ProgressionUnlock:          { return "ProgressionUnlock";}
     case Cozmo::RobotComponentID::ProxSensor:                 { return "ProxSensor";}
     case Cozmo::RobotComponentID::PublicStateBroadcaster:     { return "PublicStateBroadcaster";}
+    case Cozmo::RobotComponentID::SDK:                        { return "SDK";}
     case Cozmo::RobotComponentID::FullRobotPose:              { return "FullRobotPose";}
     case Cozmo::RobotComponentID::RobotIdleTimeout:           { return "RobotIdleTimeout";}
     case Cozmo::RobotComponentID::RobotToEngineImplMessaging: { return "RobotToEngineImplMessaging";}
     case Cozmo::RobotComponentID::StateHistory:               { return "StateHistory";}
+    case Cozmo::RobotComponentID::TextToSpeechCoordinator:    { return "TextToSpeechCoordinator";}
     case Cozmo::RobotComponentID::TouchSensor:                { return "TouchSensor";}
     case Cozmo::RobotComponentID::Vision:                     { return "Vision";}
     case Cozmo::RobotComponentID::VisionScheduleMediator:     { return "VisionScheduleMediator";}

@@ -27,6 +27,7 @@ namespace Anki {
 namespace Cozmo {
 
 static const char* kNameKey = "Name";
+CONSOLE_VAR(bool, kShouldPreCacheSprites, "Animation", false);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Animation::Animation(const std::string& name)
@@ -37,7 +38,8 @@ Animation::Animation(const std::string& name)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result Animation::DefineFromFlatBuf(const std::string& name, const CozmoAnim::AnimClip* animClip)
+Result Animation::DefineFromFlatBuf(const std::string& name, const CozmoAnim::AnimClip* animClip,
+                                    const Vision::SpritePathMap* spriteMap, Vision::SpriteSequenceContainer* seqContainer)
 {
   /*
   TODO: Does this method and the FlatBuffers schema file need to support
@@ -158,8 +160,17 @@ Result Animation::DefineFromFlatBuf(const std::string& name, const CozmoAnim::An
   if (spriteSequenceData != nullptr) {
     for (int faIdx=0; faIdx < spriteSequenceData->size(); faIdx++) {
       const CozmoAnim::FaceAnimation* faceAnimKeyframe = spriteSequenceData->Get(faIdx);
-      Result addResult = _spriteSequenceTrack.AddKeyFrameToBack(faceAnimKeyframe, name);
-      if(addResult != RESULT_OK) {
+      
+      const Vision::SpriteSequence* spriteSeq = nullptr;
+      TimeStamp_t triggerTime_ms = 0;
+      float scanlineOpacity = 0;
+      u32 frameInterval_ms = ANIM_TIME_STEP_MS;
+      const bool success = SpriteSequenceKeyFrame::ExtractDataFromFlatBuf(faceAnimKeyframe, spriteMap, seqContainer,
+                                                                          spriteSeq, triggerTime_ms, scanlineOpacity);
+      const bool shouldRenderInEyeHue = true;
+      SpriteSequenceKeyFrame kf(spriteSeq, triggerTime_ms, frameInterval_ms, scanlineOpacity, shouldRenderInEyeHue);
+      Result addResult = _spriteSequenceTrack.AddKeyFrameToBack(kf);
+      if(success && addResult != RESULT_OK) {
         PRINT_NAMED_ERROR("Animation.DefineFromFlatBuf.AddKeyFrameFailure",
                           "Adding FaceAnimation frame %d failed.", faIdx);
         return addResult;
@@ -219,11 +230,14 @@ Result Animation::DefineFromFlatBuf(const std::string& name, const CozmoAnim::An
     }
   }
 
+  SetKeyFrameDuration_ms();
   return RESULT_OK;
 }
 
 
-Result Animation::DefineFromJson(const std::string& name, const Json::Value &jsonRoot)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result Animation::DefineFromJson(const std::string& name, const Json::Value &jsonRoot,
+                                 const Vision::SpritePathMap* spriteMap, Vision::SpriteSequenceContainer* seqContainer)
 {
   _name = name;
   
@@ -261,7 +275,21 @@ Result Animation::DefineFromJson(const std::string& name, const Json::Value &jso
     } else if(frameName == LiftHeightKeyFrame::GetClassName()) {
       addResult = _liftTrack.AddKeyFrameToBack(jsonFrame, name);
     } else if(frameName == SpriteSequenceKeyFrame::GetClassName()) {
-      addResult = _spriteSequenceTrack.AddKeyFrameToBack(jsonFrame, name);
+      const Vision::SpriteSequence* spriteSeq = nullptr;
+      TimeStamp_t triggerTime_ms = 0;
+      TimeStamp_t frameUpdateInterval = 0;
+      float scanlineOpacity = 0.f;
+      const bool success = SpriteSequenceKeyFrame::ExtractDataFromJson(jsonFrame, spriteMap, seqContainer,
+                                                                       spriteSeq, triggerTime_ms, 
+                                                                       scanlineOpacity, frameUpdateInterval);
+      if(success){
+        const bool shouldRenderInEyeHue = true;
+        SpriteSequenceKeyFrame kf(spriteSeq, triggerTime_ms, frameUpdateInterval, 
+                                scanlineOpacity, shouldRenderInEyeHue);
+        addResult = _spriteSequenceTrack.AddKeyFrameToBack(kf);
+      }else{
+        addResult = RESULT_FAIL;
+      }
     } else if(frameName == EventKeyFrame::GetClassName()) {
       addResult = _eventTrack.AddKeyFrameToBack(jsonFrame, name);
     } else if(frameName == "DeviceAudioKeyFrame") {
@@ -294,8 +322,10 @@ Result Animation::DefineFromJson(const std::string& name, const Json::Value &jso
     
   } // for each frame
   
+  SetKeyFrameDuration_ms();
   return RESULT_OK;
 }
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
@@ -375,7 +405,7 @@ _turnToRecordedHeadingTrack.__METHOD__(__VA_ARGS__)
 //# define ALL_TRACKS(__METHOD__, __ARG__, __COMBINE_WITH__) ALL_TRACKS_WITH_ARG(__METHOD__, void, __COMBINE_WITH__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result Animation::Init()
+Result Animation::Init(Vision::SpriteCache* cache)
 {
 
 #   if DEBUG_ANIMATIONS
@@ -383,7 +413,9 @@ Result Animation::Init()
 #   endif
   
   ALL_TRACKS(MoveToStart, ;);
-  
+  if(kShouldPreCacheSprites){
+    CacheAnimationSprites(cache);
+  }
   _isInitialized = true;
   
   return RESULT_OK;
@@ -394,6 +426,22 @@ void Animation::Clear()
 {
   ALL_TRACKS(Clear, ;);
   _isInitialized = false;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Animation::ClearUpToCurrent()
+{
+  ALL_TRACKS(ClearUpToCurrent, ;);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Animation::CacheAnimationSprites(Vision::SpriteCache* cache)
+{
+  auto& frameList = _spriteSequenceTrack.GetAllFrames();
+  auto endTime_ms = GetLastKeyFrameEndTime_ms();
+  for(auto& frame: frameList){
+    frame.CacheInternalSprites(cache, endTime_ms);
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -409,10 +457,9 @@ bool Animation::HasFramesLeft() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Animation::SetIsLive(bool isLive)
+void Animation::AdvanceTracks(const TimeStamp_t toTime_ms)
 {
-  _isLive = isLive;
-  ALL_TRACKS(SetIsLive, ;, isLive);
+  ALL_TRACKS(AdvanceTrack, ;, toTime_ms);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -432,6 +479,8 @@ void Animation::AppendAnimation(const Animation& appendAnim)
   _recordHeadingTrack.AppendTrack(appendAnim.GetTrack<RecordHeadingKeyFrame>(), animOffest_ms);
   _turnToRecordedHeadingTrack.AppendTrack(appendAnim.GetTrack<TurnToRecordedHeadingKeyFrame>(), animOffest_ms);
   _robotAudioTrack.AppendTrack(appendAnim.GetTrack<RobotAudioKeyFrame>(), animOffest_ms);
+
+  SetKeyFrameDuration_ms();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -475,20 +524,29 @@ uint32_t Animation::GetLastKeyFrameEndTime_ms() const
   return lastFrameTime_ms;
 }
 
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Animation::SetKeyFrameDuration_ms()
+{
+  ALL_TRACKS(SetKeyFrameDuration_ms, ;);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<class KeyFrameType>
 TimeStamp_t Animation::CompareLastFrameTime(const TimeStamp_t lastFrameTime_ms) const
 {
   const auto& track = GetTrack<KeyFrameType>();
   if (!track.IsEmpty()) {
     // Compare track's last key frame time and lastFrameTime_ms
-    return std::max(lastFrameTime_ms, track.GetLastKeyFrame()->GetTriggerTime());
+    return std::max(lastFrameTime_ms, track.GetLastKeyFrame()->GetTriggerTime_ms());
   }
   // No key frames in track
   return lastFrameTime_ms;
 }
-  
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<class KeyFrameType>
 TimeStamp_t Animation::CompareLastFrameEndTime(const TimeStamp_t lastFrameTime_ms) const
 {

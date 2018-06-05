@@ -1,6 +1,10 @@
 {
   "behaviorID"       : "SingletonTimerRinging",
   "behaviorClass"    : "AnimGetInLoop",
+
+  "associatedActiveFeature": "TimerRinging",
+  "emotionEventOnActivated": "TimerRinging",
+  
   "getIn"            : "TimerRingGetIn",
   "loopAnimation"    : "TimerRing",
   "getOut"           : "TimerRingGetOut",

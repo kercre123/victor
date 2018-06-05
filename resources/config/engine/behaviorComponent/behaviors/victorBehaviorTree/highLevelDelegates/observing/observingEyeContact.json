@@ -10,6 +10,10 @@
 
   "faceSelectionPenalties": [
     {
+      "factor": "TrackingOnly",
+      "multiplier": 10000.0
+    },
+    {
       "factor": "NotMakingEyeContact",
       "multiplier": 1000.0
     },

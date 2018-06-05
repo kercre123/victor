@@ -28,14 +28,14 @@ namespace Animations {
       // a stop message for the previous keyframe because the body motion
       // command for this new keyframe will handle it. This avoids delays
       // introduced by "extra" stop messages being inserted unnecessarily.
-      const TimeStamp_t prevKeyFrameEndTime = (prevKeyFrame->GetTriggerTime() +
-                                               prevKeyFrame->GetDurationTime_ms());
-      if(prevKeyFrameEndTime >= addedKeyFrame.GetTriggerTime() - ANIM_TIME_STEP_MS) {
+      const TimeStamp_t prevKeyFrameEndTime = (prevKeyFrame->GetTriggerTime_ms() +
+                                               prevKeyFrame->GetKeyframeDuration_ms());
+      if(prevKeyFrameEndTime >= addedKeyFrame.GetTriggerTime_ms() - ANIM_TIME_STEP_MS) {
         //PRINT_NAMED_DEBUG("Animations.EnableStopMessageHelper",
         //                  "Disabling stop message for body motion keyframe at t=%d "
         //                  "with duration=%d because of next keyframe at t=%d",
-        //                  prevKeyFrame->GetTriggerTime(), prevKeyFrame->GetDurationTime(),
-        //                  addedKeyFrame.GetTriggerTime());
+        //                  prevKeyFrame->GetTriggerTime_ms(), prevKeyFrame->GetDurationTime(),
+        //                  addedKeyFrame.GetTriggerTime_ms());
         prevKeyFrame->EnableStopMessage(false);
       }
     }
@@ -94,7 +94,7 @@ namespace Animations {
     Result result = AddKeyFrameToBackHelper(keyFrame, prevKeyFrame);
     if(RESULT_OK == result && nullptr != prevKeyFrame)
     {
-      prevKeyFrame->SetDuration(0);
+      prevKeyFrame->SetKeyFrameDuration_ms(0);
     }
     
     return result;
@@ -107,13 +107,49 @@ namespace Animations {
     Result result = AddKeyFrameByTimeHelper(keyFrame, prevKeyFrame);
     if(RESULT_OK == result && nullptr != prevKeyFrame)
     {
-      prevKeyFrame->SetDuration(0);
+      prevKeyFrame->SetKeyFrameDuration_ms(0);
     }
     
     return result;
   }
   
+  template<>
+  void Track<BodyMotionKeyFrame>::SetKeyFrameDuration_ms()
+  {
+    SetKeyFrameDurationHelper();
+  }
   
+  template<>
+  void Track<ProceduralFaceKeyFrame>::SetKeyFrameDuration_ms()
+  {
+    SetKeyFrameDurationHelper();
+  }
+  
+  template<>
+  void Track<SpriteSequenceKeyFrame>::SetKeyFrameDuration_ms()
+  {
+    SetKeyFrameDurationHelper();
+  }
+  
+  template<class FRAME_TYPE>
+  void Track<FRAME_TYPE>::SetKeyFrameDurationHelper()
+  {
+    if(_frames.size() < 2){
+      return;
+    }
+    auto prevIter = _frames.begin();
+    auto nextIter = _frames.begin();
+    nextIter++;
+    const auto upperBound = _frames.size() + 1;
+    BOUNDED_WHILE(upperBound, nextIter != _frames.end()) {
+      // Only override durations which haven't been set
+      if(prevIter->GetKeyframeDuration_ms() == 0){
+        prevIter->SetKeyFrameDuration_ms(nextIter->GetTriggerTime_ms() - prevIter->GetTriggerTime_ms());
+      }
+      prevIter++;
+      nextIter++;
+    }
+  }
   
 } // end namespace Animations
 } // end namespace Cozmo

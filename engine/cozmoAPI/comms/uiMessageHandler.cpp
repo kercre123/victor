@@ -111,6 +111,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case UiConnectionType::SdkOverUdp:  return true;
         case UiConnectionType::SdkOverTcp:  return true;
         case UiConnectionType::Switchboard: return false;
+        case UiConnectionType::Gateway:     return false;
         default:
         {
           PRINT_NAMED_ERROR("IsExternalSdkConnection.BadType", "type = %d", (int)type);
@@ -164,6 +165,11 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case UiConnectionType::Switchboard:
         {
           ISocketComms* comms = new LocalUdpSocketComms(true, Anki::Victor::ENGINE_SWITCH_SERVER_PATH);
+          return comms;
+        }
+        case UiConnectionType::Gateway:
+        {
+          ISocketComms* comms = new LocalUdpSocketComms(true, Anki::Victor::ENGINE_GATEWAY_SERVER_PATH);
           return comms;
         }
         default:
@@ -285,6 +291,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case UiConnectionType::SdkOverUdp:  return kAcceptMessagesFromSDK;
         case UiConnectionType::SdkOverTcp:  return kAcceptMessagesFromSDK;
         case UiConnectionType::Switchboard: return true;
+        case UiConnectionType::Gateway: return true;
         default:
         {
           assert(0);
@@ -1184,12 +1191,12 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
     {
       for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
-	// Ignore switchboard's numDesiredDevices
-	if(i == UiConnectionType::Switchboard)
-	{
-	  continue;
-	}
-	
+        // Ignore switchboard's numDesiredDevices
+        if(i == UiConnectionType::Switchboard || i == UiConnectionType::Gateway)
+        {
+          continue;
+        }
+
         const ISocketComms* socketComms = GetSocketComms(i);
         if (socketComms && socketComms->HasDesiredDevices())
         {

@@ -26,13 +26,19 @@ namespace{
 static const char* kAnimTriggerKey = "animTriggers";
 static const char* kAnimNamesKey   = "animNames";
 static const char* kLoopsKey       = "num_loops";
-static const char* kSupportCharger = "playOnChargerWithoutBody";
+
+static const char* kSupportChargerWithoutBody = "playOnChargerWithoutBody";
+static const char* kSupportChargerWithBody = "playOnChargerWithBody";
+// TODO:(bn) replace this with continuity component or action level anim whitelisting
+
+static const char* kTracksToLock   = "tracksToLock";
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorAnimSequence::InstanceConfig::InstanceConfig() {
   activatableOnCharger = false;
+  lockBodyOnCharger = false;
   numLoops = 0;
 }
 
@@ -76,7 +82,26 @@ BehaviorAnimSequence::BehaviorAnimSequence(const Json::Value& config, bool trigg
   // load loop count
   _iConfig.numLoops = config.get(kLoopsKey, 1).asInt();
 
-  _iConfig.activatableOnCharger = config.get(kSupportCharger, false).asBool();
+  const bool supportChargerWithoutBody = config.get(kSupportChargerWithoutBody, false).asBool();
+  const bool supportChargerWithBody = config.get(kSupportChargerWithBody, false).asBool();
+  _iConfig.activatableOnCharger = supportChargerWithoutBody || supportChargerWithBody;
+  _iConfig.lockBodyOnCharger = supportChargerWithoutBody;  
+  
+  _iConfig.tracksToLock = (u8)AnimTrackFlag::NO_TRACKS;
+  if( !config[kTracksToLock].isNull() ) {
+    for( const auto& trackStr : config[kTracksToLock] ) {
+      if( ANKI_VERIFY(trackStr.isString(), "BehaviorAnimSequence.Ctor.TrackNotString", "Must be array of track strings" ) ) {
+        AnimTrackFlag flag = AnimTrackFlag::NO_TRACKS;
+        if( ANKI_VERIFY( AnimTrackFlagFromString(trackStr.asString(), flag),
+                         "BehaviorAnimSequence.Ctor.InvalidTrack",
+                         "Track '%s' is not a track", trackStr.asString().c_str() ) )
+        {
+          _iConfig.tracksToLock = _iConfig.tracksToLock | static_cast<u8>(flag);
+        }
+      }
+    }
+  }
+  
 }
   
   
@@ -87,7 +112,9 @@ void BehaviorAnimSequence::GetBehaviorJsonKeys(std::set<const char*>& expectedKe
     kAnimTriggerKey,
     kAnimNamesKey,
     kLoopsKey,
-    kSupportCharger,
+    kSupportChargerWithoutBody,
+    kSupportChargerWithBody,
+    kTracksToLock,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -208,16 +235,16 @@ void BehaviorAnimSequence::CallToListeners()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 u8 BehaviorAnimSequence::GetTracksToLock() const
 {
-  if( _iConfig.activatableOnCharger ) {
+  if( _iConfig.lockBodyOnCharger ) {
     const auto& robotInfo = GetBEI().GetRobotInfo();
     if( robotInfo.IsOnChargerPlatform() ) {
       // we are supporting the charger and are on it, so lock out the body
-      return (u8)AnimTrackFlag::BODY_TRACK;
+      return (u8)AnimTrackFlag::BODY_TRACK | _iConfig.tracksToLock;
     }
   }
 
-  // otherwise nothing to lock
-  return (u8)AnimTrackFlag::NO_TRACKS;   
+  // otherwise whatever was specified in config
+  return _iConfig.tracksToLock;
 }
 
 

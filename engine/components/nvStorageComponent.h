@@ -149,7 +149,7 @@ private:
   
   // Data file read/write methods
   void LoadDataFromFiles();
-  void WriteEntryToFile(u32 tag);
+  bool WriteEntryToFile(u32 tag);
   
   // Path of NVStorage data folder
   std::string _kStoragePath;
@@ -230,7 +230,18 @@ private:
   friend class BehaviorFactoryTest;
   friend class BehaviorPlaypenTest;
   void EnableWritingFactory(bool enable) { _writingFactory = enable; }
-  
+
+  // Opens the file (block device) which contains camera calibration
+  // File seek position will be set to the beginning of camera calibration
+  int OpenCameraCalibFile(int openFlags);
+
+  // Reads the camera calibration and populates the corresponding entry in
+  // _tagDataMap
+  void ReadCameraCalibFile();
+
+  // Writes the camera calibration to file (block device)
+  // iter should point to the camera calibration entry in _tagDataMap
+  bool WriteCameraCalibFile(const TagDataMap::iterator& iter);
 };
 
 } // namespace Cozmo

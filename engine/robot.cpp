@@ -39,14 +39,18 @@
 #include "engine/components/cubes/cubeLightComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/inventoryComponent.h"
+#include "engine/components/mics/beatDetectorComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/nvStorageComponent.h"
 #include "engine/components/pathComponent.h"
+#include "engine/components/photographyManager.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
+#include "engine/components/sdkComponent.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
+#include "engine/components/textToSpeech/textToSpeechCoordinator.h"
 #include "engine/components/dataAccessorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
@@ -88,6 +92,7 @@
 #include "util/transport/reliableConnection.h"
 
 #include "anki/cozmo/shared/factory/emrHelper.h"
+#include "anki/cozmo/shared/factory/faultCodes.h"
 
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/highgui/highgui.hpp" // For imwrite() in ProcessImage
@@ -181,11 +186,12 @@ static void EnableCalmPowerMode(ConsoleFunctionContextRef context)
 {
   if (_thisRobot != nullptr) {
     const bool enableCalm = ConsoleArg_Get_Bool(context, "enable");
-    _thisRobot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::CalmPowerMode(enableCalm)));
+    const bool calibOnDisable = ConsoleArg_GetOptional_Bool(context, "calibOnDisable", false);
+    _thisRobot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::CalmPowerMode(enableCalm, calibOnDisable)));
   }
 }
 
-CONSOLE_FUNC(EnableCalmPowerMode, "EnableCalmPowerMode", bool enable);
+CONSOLE_FUNC(EnableCalmPowerMode, "EnableCalmPowerMode", bool enable, optional bool calibOnDisable);
 
 } // end namespace
 
@@ -274,6 +280,10 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::Battery,                    new BatteryComponent());
     _components->AddDependentComponent(RobotComponentID::FullRobotPose,              new FullRobotPose());
     _components->AddDependentComponent(RobotComponentID::DataAccessor,               new DataAccessorComponent());
+    _components->AddDependentComponent(RobotComponentID::BeatDetector,               new BeatDetectorComponent());
+    _components->AddDependentComponent(RobotComponentID::TextToSpeechCoordinator,    new TextToSpeechCoordinator());
+    _components->AddDependentComponent(RobotComponentID::SDK,                        new SDKComponent());
+    _components->AddDependentComponent(RobotComponentID::PhotographyManager,         new PhotographyManager());
     _components->InitComponents(this);
   }
 
@@ -293,9 +303,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   _needToSendLocalizationUpdate = false;
 
   GetRobotToEngineImplMessaging().InitRobotMessageComponent(GetContext()->GetRobotManager()->GetMsgHandler(), this);
-
-  // Setup audio messages
-  GetAudioClient()->SubscribeAudioCallbackMessages(this);
 
   _lastDebugStringHash = 0;
 
@@ -1229,6 +1236,15 @@ Result Robot::Update()
     _syncRobotSentTime_sec = 0.0f;
   }
 
+  //////////// CameraService Update ////////////
+  CameraService::getInstance()->Update();
+
+  const Result factoryRes = UpdateStartupChecks();
+  if(factoryRes != RESULT_OK)
+  {
+    return factoryRes;
+  }
+  
   if (!_gotStateMsgAfterRobotSync)
   {
     LOG_DEBUG("Robot.Update", "Waiting for first full robot state to be handled");
@@ -1258,48 +1274,6 @@ Result Robot::Update()
      }
      lastUpdateTime = currentTime_sec;
   */
-
-  //////////// CameraService Update ////////////
-  CameraService::getInstance()->Update();
-
-  if(FACTORY_TEST && !Factory::GetEMR()->fields.PACKED_OUT_FLAG)
-  {
-    // Once we have gotten a frame from the camera play a sound to indicate
-    // a "successful" boot
-    static bool playedSound = false;
-    if(!playedSound &&
-       CameraService::getInstance()->HaveGottenFrame())
-    {
-      GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(1.f);
-      CompoundActionParallel* action = new CompoundActionParallel();
-      std::weak_ptr<IActionRunner> soundAction = action->AddAction(new PlayAnimationAction("soundTestAnim"));
-
-      // Start WaitForLambdaAction in parallel that will cancel the sound action after 200 milliseconds
-      WaitForLambdaAction* waitAction = new WaitForLambdaAction([soundAction](Robot& robot){
-	static TimeStamp_t start = 0;
-	if(start == 0)
-	{
-	  start = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-	}
-
-	if(BaseStationTimer::getInstance()->GetCurrentTimeStamp() - start > 200)
-	{
-	  start = 0;
-	  auto sp = soundAction.lock();
-	  if(sp != nullptr)
-	  {
-	    sp->Cancel();
-	    return true;
-	  }
-	}
-
-	return false;
-      });
-      action->AddAction(waitAction);
-      GetActionList().AddConcurrentAction(action);
-      playedSound = true;
-    }
-  }
 
   // Check if we have driven off the charger platform - this has to happen before the behaviors which might
   // need this information. This state is useful for knowing not to play a cliff react when just driving off
@@ -2702,7 +2676,8 @@ RobotState Robot::GetDefaultRobotState()
                          0.f, //float liftAngle,
                          AccelData(), //const Anki::Cozmo::AccelData &accel,
                          GyroData(), //const Anki::Cozmo::GyroData &gyro,
-			 0.f, // float batteryVoltage
+                         0.f, // float batteryVoltage
+                         0.f, // float chargerVoltage
                          kDefaultStatus, //uint32_t status,
                          std::move(defaultCliffRawVals), //std::array<uint16_t, 4> cliffDataRaw,
                          ProxSensorDataRaw(), //const Anki::Cozmo::ProxSensorDataRaw &proxData,
@@ -2724,6 +2699,10 @@ RobotInterface::MessageHandler* Robot::GetRobotMessageHandler() const
   return GetContext()->GetRobotManager()->GetMsgHandler();
 }
 
+RobotEventHandler& Robot::GetRobotEventHandler()
+{
+  return GetContext()->GetRobotManager()->GetRobotEventHandler();
+}
 
 Result Robot::ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, f32 yTolFrac) const
 {
@@ -2850,6 +2829,56 @@ void Robot::DevReplaceAIComponent(AIComponent* aiComponent, bool shouldManage)
                                             explicitUpcast,
                                             shouldManage);
 }
+
+Result Robot::UpdateStartupChecks()
+{
+  enum State {
+    FAILED = -1,
+    WAITING,
+    PASSED,
+  };
+
+  const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  static float firstUpdateTime_sec = currentTime_sec;
+  static State state = State::WAITING;
+
+  if(state == State::WAITING)
+  {
+    // Manually capture images here until VisionComponent is up and running
+    if(!GetVisionComponent().HasStartedCapturingImages())
+    {
+      // Try to get a frame
+      u8* buf = nullptr;
+      u32 id = 0;
+      TimeStamp_t t = 0;
+      if(CameraService::getInstance()->CameraGetFrame(buf, id, t))
+      {
+        CameraService::getInstance()->CameraReleaseFrame(id);
+      }
+    }
+    
+    // After 4 seconds, check if we have gotten a frame
+    if(currentTime_sec - firstUpdateTime_sec > 4.f)
+    {
+      using namespace RobotInterface;
+    
+      // If we haven't gotten a frame then display an error code
+      if(!CameraService::getInstance()->HaveGottenFrame())
+      {
+        state = State::FAILED;
+        FaultCode::DisplayFaultCode(FaultCode::CAMERA_FAILURE);
+      }
+      // Otherwise the camera works
+      else
+      {
+        state = State::PASSED;
+      }
+    }
+  }
+  
+  return (state == State::FAILED ? RESULT_FAIL : RESULT_OK);
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

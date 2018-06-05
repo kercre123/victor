@@ -35,6 +35,8 @@
 
 #include <limits>
 
+#define kLogChannelName "Behaviors"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -42,8 +44,6 @@ namespace {
 CONSOLE_VAR(bool, kVizPossibleStackCube, "BehaviorAcknowledgeObject", false);
 CONSOLE_VAR(f32,  kBackupDistance_mm,    "BehaviorAcknowledgeObject", 25.f);
 CONSOLE_VAR(f32,  kBackupSpeed_mmps,     "BehaviorAcknowledgeObject", 100.f);
-
-static const char * const kLogChannelName = "Behaviors";
 
 static const char * const kReactionAnimGroupKey   = "ReactionAnimGroup";
 static const char * const kMaxTurnAngleKey        = "MaxTurnAngle_deg";

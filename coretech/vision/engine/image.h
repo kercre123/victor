@@ -17,6 +17,7 @@
 #include "coretech/common/engine/array2d.h"
 #include "coretech/common/engine/colorRGBA.h"
 #include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/math/quad.h"
 #include "coretech/common/engine/math/rect.h"
 
@@ -115,6 +116,10 @@ namespace Vision {
     // Draw quadrangle defined by four given points
     void DrawQuad(const Quad2f& quad, const ColorRGBA& color, const s32 thickness = 1);
 
+    // Draw generic, unfilled polygon (note, floating point polylines are rounded)
+    void DrawPoly(const Poly2f& poly, const ColorRGBA& color, const s32 thickness = 1, const bool closed = true);
+    void DrawPoly(const Poly2i& poly, const ColorRGBA& color, const s32 thickness = 1, const bool closed = true);
+    
     // Draw a filled convex polygon defined by a list of points
     void DrawFilledConvexPolygon(const std::vector<Point2i> points, const ColorRGBA& color);
 
@@ -124,7 +129,8 @@ namespace Vision {
                   const ColorRGBA& color, 
                   f32 scale = 1.f, 
                   bool dropShadow = false, 
-                  int thickness = 1);
+                  int thickness = 1,
+                  bool centered = false);
 
     // Returns the bounding box dimensions of the text that would be drawn
     // if the same parameters were passed into DrawText()
@@ -336,6 +342,7 @@ namespace Vision {
   public:
     ImageRGB565();
     ImageRGB565(s32 nrows, s32 ncols);
+    explicit ImageRGB565(s32 nrows, s32 ncols, const std::vector<u16>& pixels);
     explicit ImageRGB565(const ImageRGB& imageRGB);
     explicit ImageRGB565(const ImageBase<PixelRGB565>& imageBase) : ImageBase<PixelRGB565>(imageBase) { }
     ImageRGB565(const Array2d<PixelRGB565>& array2d) : ImageBase<PixelRGB565>(array2d) { }
@@ -344,6 +351,8 @@ namespace Vision {
     ImageRGB565& SetFromImageRGB(const ImageRGB& imageRGB);
     ImageRGB565& SetFromImageRGB(const ImageRGB& imageRGB, const std::array<u8, 256>& gammaLUT);
     ImageRGB565& SetFromImageRGB565(const ImageRGB565& imageRGB565);
+
+    ImageRGB565& SetFromVector(const std::vector<u16>& pixels);
     
     // Reference counting assignment (does not copy):
     ImageRGB565& operator= (const ImageBase<PixelRGB565> &other);
@@ -382,6 +391,8 @@ namespace Vision {
   public:
     ImageRGBA();
     ImageRGBA(s32 nrows, s32 ncols); // allocates
+    ImageRGBA(s32 nrows, s32 ncols, const PixelRGBA& fillValue); // allocates
+
     ImageRGBA(const ImageBase<PixelRGBA>& imageBase) : ImageBase<PixelRGBA>(imageBase) { }
     
     // No allocation, just wraps a header around given data.

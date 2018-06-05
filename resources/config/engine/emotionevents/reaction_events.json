@@ -111,6 +111,19 @@
           }
         ]
       }
+    },
+    {
+      "name": "ReactToObstacle",
+      "emotionAffectors": [
+        {
+          "emotionType" : "Confident",
+          "value" : -0.1
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : 0.15
+        }
+      ]
     }
   ]
 }

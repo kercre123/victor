@@ -5,6 +5,7 @@
 
 
 #include "clad/audio/audioCallbackMessage.clad"
+#include "clad/types/beatDetectorTypes.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/motorTypes.clad"
 #include "clad/types/dockingSignals.clad"
@@ -15,7 +16,7 @@
 #include "clad/types/pathEventTypes.clad"
 #include "clad/types/factoryFWOnly.clad"
 #include "clad/types/robotToSwitchboard.clad"
-
+#include "clad/robotInterface/factoryMessages.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -26,6 +27,10 @@ message SyncRobotAck
 }
 
 message RobotServerDisconnect
+{
+}
+
+message PrepForShutdown
 {
 }
 
@@ -48,7 +53,9 @@ message MicDirection
   uint_16   selectedDirection,
   int_16    selectedConfidence,
   float_32  confidenceList[13],
-  int_32  activeState,
+  int_32    activeState,
+  float_32  latestPowerValue,
+  float_32  latestNoiseFloor,
 }
 
 // This message indicates that the robot experienced a freefall event
@@ -112,6 +119,11 @@ message DisplayedFaceImageRGBChunk {
     uint_8   chunkIndex
 }
 
+message BeatDetectorState
+{
+  BeatInfo latestBeat
+}
+
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from robot to engine.
@@ -127,7 +139,7 @@ union RobotToEngine {
 
   // Init / Debug
   SyncRobotAck               syncRobotAck           = 0xB0,
-  //  FREE SLOT!!!                                  = 0xB1,
+  PrepForShutdown            prepForShutdown        = 0xB1,
   MotorActionAck             motorActionAck         = 0xB2,
 
   // Motors / Driving
@@ -161,6 +173,7 @@ union RobotToEngine {
   // TODO: Can probably get rid of these eventually since engine
   //       can access most of this info directly now.
   FWVersionInfo              factoryFirmwareVersion = 0xC9, ///< DEPRECATED, only used by factory firmware
+  RunFactoryTest             runFactoryTest         = 0xCA,
   ManufacturingID            mfgId                  = 0xCB,
   FirmwareVersion            firmwareVersion        = 0xCC,
 
@@ -195,6 +208,8 @@ union RobotToEngine {
   AudioEngine::Multiplexer::AudioCallbackError    audioCallbackError    = 0xE3,
 
   DisplayedFaceImageRGBChunk displayedFaceImageRGBChunk = 0xE4,
+  
+  BeatDetectorState          beatDetectorState      = 0xE5,
 
   // ====== 0xF0 to 0x FE: Unreliable message to the Engine =====
   // From robot process

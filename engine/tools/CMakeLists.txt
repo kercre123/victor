@@ -27,8 +27,6 @@ target_link_libraries(vic-engine
   util
   cozmo_engine
   victorCrashReports
-  # vendor
-  breakpad_client
   # platform
   ${PLATFORM_LIBS}
 )

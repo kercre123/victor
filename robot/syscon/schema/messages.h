@@ -153,8 +153,7 @@ struct BatteryState
   int16_t charger;
   int16_t temperature;
   BatteryFlags flags;
-  int16_t ref_voltage;
-  int16_t _unused;
+  int16_t _unused[2];
 };
 
 struct ButtonState
@@ -229,6 +228,7 @@ struct ContactData
 
 struct LightState
 {
+  // Note: Only the first 12 elements are used, and 4 are spares
   uint8_t ledColors[16];
 };
 

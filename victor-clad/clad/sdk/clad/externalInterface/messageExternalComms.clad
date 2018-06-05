@@ -3,8 +3,10 @@
 // Author: Nicolas Kent
 // Copyright: Anki Inc (c) 2018
 
+#include "clad/types/animationTrigger.clad"
 #include "clad/types/faceEnrollmentResult.clad"
 #include "clad/types/loadedKnownFace.clad"
+#include "clad/types/sayTextStylesSDK.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -439,7 +441,7 @@ union MotorControl {
 //          Robot Animation Messages
 // ====================================================
 
-// PlayAnimation
+
 message PlayAnimation {
     uint_32 numLoops,
     string animationName,
@@ -448,16 +450,47 @@ message PlayAnimation {
     bool    ignoreLiftTrack=0
 }
 
-// RequestAvailableAnimations
+
 message RequestAvailableAnimations {
   
 }
 
-union Animations {
-  PlayAnimation                 playAnimation = 0x00,
-  RequestAvailableAnimations    requestAvailableAnimations = 0x01,
+message AnimationAvailable {
+  string animName
 }
 
+message SayText {
+  string                 text,
+  AnimationTrigger       playEvent,      // Set AnimationTrigger::Count to only play the Tts without an animation
+  SayTextVoiceStyleSDK   voiceStyle,
+  float_32               durationScalar = 1.0,
+  float_32               voicePitch = 0.0,
+  bool                   fitToDuration   // No longer supported
+}
+
+// Upload animations
+enum uint_8 FileType {
+  Animation,
+  FaceImg,
+}
+
+message TransferFile {
+  uint_8   fileBytes[uint_16],
+  uint_16  filePart,
+  uint_16  numFileParts,
+  string   filename,
+  FileType   fileType
+}
+
+union Animations {
+  PlayAnimation                 PlayAnimation = 0x00,
+  RequestAvailableAnimations    RequestAvailableAnimations = 0x01,
+  SayText                       SayText = 0x02,
+  AnimationAvailable            AnimationAvailable = 0x03,
+  TransferFile                  TransferFile = 0x04,
+}
+
+// ====================================================
 //                   Movement Actions
 // ====================================================
 
@@ -515,6 +548,57 @@ union MovementAction {
 }
 
 // ====================================================
+//                    Victor Display
+// ====================================================
+
+message SetBackpackLEDs {
+  uint_32  onColor[3],
+  uint_32  offColor[3],
+  uint_32  onPeriod_ms[3],
+  uint_32  offPeriod_ms[3],
+  uint_32  transitionOnPeriod_ms[3],
+  uint_32  transitionOffPeriod_ms[3],
+  int_32   offset[3]
+}
+
+// Note: using dynamic allocation on uint_16, to avoid overflowing the buffer size
+//       or bloating the other messages.
+message DisplayFaceImageRGB {
+    uint_32  duration_ms,     // Use uint_32 max value to keep the image on the screen
+    uint_16  faceData[uint_16],
+    bool     interruptRunning
+}
+
+union VictorDisplay {
+    Error                       Error                       = 0x00,
+    SetBackpackLEDs             SetBackpackLEDs             = 0x01,
+    DisplayFaceImageRGB         DisplayFaceImageRGB         = 0x02,
+}
+
+
+// ====================================================
+//                         Cubes
+// ====================================================
+
+// See SetActiveObjectLEDs for parameter documentation
+message SetAllActiveObjectLEDs {
+  uint_32  objectID,
+  uint_32  onColor[4],
+  uint_32  offColor[4],
+  uint_32  onPeriod_ms[4],
+  uint_32  offPeriod_ms[4],
+  uint_32  transitionOnPeriod_ms[4],
+  uint_32  transitionOffPeriod_ms[4],
+  int_32   offset[4]
+}
+
+
+union Cubes {
+    Error                       Error                       = 0x00,
+    SetAllActiveObjectLEDs      SetAllActiveObjectLEDs      = 0x01,
+}
+
+// ====================================================
 //                      Outer Union
 // ====================================================
 
@@ -527,6 +611,8 @@ union ExternalComms {
     MotorControl                MotorControl                = 0x05,
     MovementAction              MovementAction              = 0x06,
     Animations                  Animations                  = 0x07,
+    VictorDisplay               VictorDisplay               = 0x08,
+    Cubes                       Cubes                       = 0x09,
 }
 
 } // namespace ExternalComms

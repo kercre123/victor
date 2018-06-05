@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_Bingo",
-  "displayNameKey":"behavior.singing.Bingo",
-  "requiredUnlockId":"Singing_Bingo",
-  "audioSwitchGroup":"Cozmo_Sings_100Bpm",
-  "audioSwitch":"Cozmo_Sings_Bingo"
-}

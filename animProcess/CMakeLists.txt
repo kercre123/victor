@@ -20,7 +20,6 @@ set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
 set(PLATFORM_COMPILE_DEFS "")
 
 if (VICOS)
-    include(breakpad)
     set(PLATFORM_LIBS
         log
         robot_core)
@@ -78,12 +77,12 @@ target_compile_definitions(victor_anim
 
 target_include_directories(victor_anim
   PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src> # allow "android/" prefix
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/lib/util/source/3rd>
   ${PLATFORM_INCLUDES}
 )
 
-# victor_animator binary only builds on Android now
+# victor_anim binary only builds on vicos now
 # mac implementation uses (webotsCtrlAnim)
 if (VICOS)
 
@@ -93,9 +92,16 @@ if (VICOS)
     PRIVATE
     victor_anim
     victorCrashReports
-    breakpad_client
-    cti_common_robot
-    util
+    # NOTE: deliberately using non-robot cti_common here to ease build
+    #       pain given differing include paths for clad types. This still
+    #       does not expose cpplite clad messaging within the anim process 
+    #       (which is undesirable) since this is limited just to the 
+    #       vic-anim executable (vs. using cti_common_robot and thus 
+    #       cpplite clad in the victor_anim library above). Ideally this
+    #       separation would be clearer and cleaner or we would 
+    #       exclusively use one or the other, but that will have to 
+    #       wait for a (much) larger cleanup to cmake / clad / coretech.
+    cti_common
     jsoncpp
     ${PLATFORM_LIBS}
   )

@@ -28,6 +28,7 @@ namespace Anki {
     namespace RobotInterface {
       struct TextToSpeechPrepare;
       struct TextToSpeechDeliver;
+      struct TextToSpeechPlay;
       struct TextToSpeechCancel;
     }
   }
@@ -58,6 +59,7 @@ public:
   // Message handlers
   void HandleMessage(const RobotInterface::TextToSpeechPrepare& msg);
   void HandleMessage(const RobotInterface::TextToSpeechDeliver& msg);
+  void HandleMessage(const RobotInterface::TextToSpeechPlay& msg);
   void HandleMessage(const RobotInterface::TextToSpeechCancel& msg);
 
 protected:

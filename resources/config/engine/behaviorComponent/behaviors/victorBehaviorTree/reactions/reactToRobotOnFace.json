@@ -1,4 +1,10 @@
 {
   "behaviorClass": "ReactToRobotOnFace",
-  "behaviorID": "ReactToRobotOnFace"
+  "behaviorID": "ReactToRobotOnFace",
+  "associatedActiveFeature": "NoFeature",
+
+  "wantsToCancelSelfCondition": {
+    "conditionType": "OffTreadsState",
+    "targetState": "OnTreads"
+  }
 }

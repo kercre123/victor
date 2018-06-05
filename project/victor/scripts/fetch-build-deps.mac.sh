@@ -32,11 +32,9 @@ vlog "Check homebrew dependencies"
     -d python2 \
     ninja \
     python3 \
+    git-lfs \
     libsndfile \
     node
-
-vlog "Android SDK"
-./tools/build/tools/ankibuild/android.py --install-sdk r3
 
 vlog "vicos sdk"
 ./tools/build/tools/ankibuild/vicos.py --install 0.9-r03
@@ -46,6 +44,9 @@ vlog "CMake"
 
 vlog "Go"
 ./tools/build/tools/ankibuild/go.py
+
+vlog "protobuf"
+./tools/build/tools/ankibuild/protobuf.py --install
 
 vlog "Build output dirs"
 mkdir -p generated

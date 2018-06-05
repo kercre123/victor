@@ -31,15 +31,16 @@
 #include "engine/overheadEdge.h"
 #include "engine/robotStateHistory.h"
 #include "engine/rollingShutterCorrector.h"
+#include "engine/vision/cameraCalibrator.h"
+#include "engine/vision/illuminationState.h"
 #include "engine/vision/visionModeSchedule.h"
 #include "engine/vision/visionPoseData.h"
-#include "engine/vision/cameraCalibrator.h"
 
 #include "coretech/common/engine/matlabInterface.h"
 
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/cameraCalibration.h"
-#include "coretech/vision/engine/image.h"
+#include "coretech/vision/engine/imageCache.h"
 #include "coretech/vision/engine/profiler.h"
 #include "coretech/vision/engine/trackedFace.h"
 #include "coretech/vision/engine/trackedPet.h"
@@ -51,6 +52,7 @@
 #include "clad/types/faceEnrollmentPoses.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/loadedKnownFace.h"
+#include "clad/types/salientPointTypes.h"
 #include "clad/types/visionModes.h"
 #include "clad/types/toolCodes.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -68,7 +70,7 @@ namespace Vision {
   class ImageCache;
   class ImagingPipeline;
   class MarkerDetector;
-  class ObjectDetector;
+  class NeuralNetRunner;
   class PetTracker;
 }
   
@@ -77,6 +79,7 @@ namespace Cozmo {
   // Forward declaration:
   class CameraCalibrator;
   class CozmoContext;
+  class IlluminationDetector;
   class LaserPointDetector;
   class MotionDetector;
   class OverheadEdgesDetector;
@@ -94,7 +97,7 @@ namespace Cozmo {
     ImageQuality imageQuality;
     CameraParams cameraParams;
     u8 imageMean;
-    
+
     std::list<ExternalInterface::RobotObservedMotion>           observedMotions;
     std::list<Vision::ObservedMarker>                           observedMarkers;
     std::list<Vision::TrackedFace>                              faces;
@@ -104,9 +107,10 @@ namespace Cozmo {
     std::list<ToolCodeInfo>                                     toolCodes;
     std::list<ExternalInterface::RobotObservedLaserPoint>       laserPoints;
     std::list<Vision::CameraCalibration>                        cameraCalibration;
-    std::list<ExternalInterface::RobotObservedGenericObject>    generalObjects;
     std::list<OverheadEdgeFrame>                                visualObstacles;
-    
+    std::list<Vision::SalientPoint>                             salientPoints;
+    Vision::IlluminationState                                   illumination;
+
     // Used to pass debug images back to main thread for display:
     DebugImageList<Vision::Image>    debugImages;
     DebugImageList<Vision::ImageRGB> debugImageRGBs;
@@ -203,13 +207,7 @@ namespace Cozmo {
                                    const f32 minGain,
                                    const f32 maxGain,
                                    const GammaCurve& gammaCurve);
-
-    // Parameters for how we compute new exposure from image data
-    Result SetAutoExposureParams(const s32 subSample,
-                                 const u8  midValue,
-                                 const f32 midPercentile,
-                                 const f32 maxChangeFraction);
-    
+   
     // Just specify what the current values are (don't actually change the robot's camera)
     Result SetNextCameraExposure(s32 exposure_ms, f32 gain);
     Result SetNextCameraWhiteBalance(f32 whiteBalanceGainR, 
@@ -220,9 +218,11 @@ namespace Cozmo {
     //  saveMode: SingleShot=save one image and wait for this call again
     //            Stream=save according to the mode schedule
     //            Off=no saving until this is called again with one of the above
+    //  subsample: Factor to reduce image size by (1 is no subsampling)
     //  path: Where to save images (relative to <Cache>/camera/images)
     //  quality: -1=PNG, 0-100=JPEG quality
-    void SetSaveParameters(const ImageSendMode saveMode, const std::string& path, const int8_t quality);
+    void SetSaveParameters(const ImageSendMode saveMode, const std::string& path, 
+                           const int8_t quality, const Vision::ImageCache::Size& saveSize);
 
     CameraParams GetCurrentCameraParams() const;
   
@@ -289,9 +289,11 @@ namespace Cozmo {
     
     s32 _frameNumber = 0;
 
-    ImageSendMode  _imageSaveMode = ImageSendMode::Off;
-    s8             _imageSaveQuality = -1;
-    std::string    _imageSavePath;
+    // Image saving and transmitting
+    ImageSendMode             _imageSaveMode = ImageSendMode::Off;
+    s8                        _imageSaveQuality = -1;
+    Vision::ImageCache::Size  _imageSaveSize = Vision::ImageCache::Size::Full;
+    std::string               _imageSavePath;
     
     // Snapshots of robot state
     bool _wasCalledOnce    = false;
@@ -306,20 +308,21 @@ namespace Cozmo {
     VizManager*                   _vizManager = nullptr;
 
     // Sub-components for detection/tracking/etc:
-    std::unique_ptr<Vision::FaceTracker>    _faceTracker;
-    std::unique_ptr<Vision::PetTracker>     _petTracker;
-    std::unique_ptr<Vision::MarkerDetector> _markerDetector;
-    std::unique_ptr<LaserPointDetector>     _laserPointDetector;
-    std::unique_ptr<MotionDetector>         _motionDetector;
-    std::unique_ptr<OverheadEdgesDetector>  _overheadEdgeDetector;
-    std::unique_ptr<CameraCalibrator>       _cameraCalibrator;
-    std::unique_ptr<OverheadMap>            _overheadMap;
-    std::unique_ptr<GroundPlaneClassifier>  _groundPlaneClassifier;
+    std::unique_ptr<Vision::FaceTracker>            _faceTracker;
+    std::unique_ptr<Vision::PetTracker>             _petTracker;
+    std::unique_ptr<Vision::MarkerDetector>         _markerDetector;
+    std::unique_ptr<LaserPointDetector>             _laserPointDetector;
+    std::unique_ptr<MotionDetector>                 _motionDetector;
+    std::unique_ptr<OverheadEdgesDetector>          _overheadEdgeDetector;
+    std::unique_ptr<CameraCalibrator>               _cameraCalibrator;
+    std::unique_ptr<OverheadMap>                    _overheadMap;
+    std::unique_ptr<GroundPlaneClassifier>          _groundPlaneClassifier;
+    std::unique_ptr<IlluminationDetector>           _illuminationDetector;
 
-    std::unique_ptr<Vision::Benchmark>      _benchmark;
-    std::unique_ptr<Vision::ObjectDetector> _generalObjectDetector;
+    std::unique_ptr<Vision::Benchmark>              _benchmark;
+    std::unique_ptr<Vision::NeuralNetRunner>        _neuralNetRunner;
     
-    TimeStamp_t                   _generalObjectDetectionTimestamp = 0;
+    TimeStamp_t                   _neuralNetRunnerTimestamp = 0;
     
     // Tool code stuff
     TimeStamp_t                   _firstReadToolCodeTime_ms = 0;
@@ -359,11 +362,13 @@ namespace Cozmo {
     // Will use color if not empty, or gray otherwise
     Result DetectMotion(Vision::ImageCache& imageCache);
 
+    Result DetectIllumination(Vision::ImageCache& imageCache);
+
     Result UpdateOverheadMap(const Vision::ImageRGB& image);
 
     Result UpdateGroundPlaneClassifier(const Vision::ImageRGB& image);
     
-    void CheckForGeneralObjectDetections();
+    void CheckForNeuralNetResults();
     
     Result ReadToolCode(const Vision::Image& image);
     
@@ -372,6 +377,9 @@ namespace Cozmo {
     Result EnableMode(VisionMode whichMode, bool enabled);
 
     Result SaveSensorData() const;
+    
+    // Populates whiteBalanceGains in _currentResult with adjusted values
+    Result CheckWhiteBalance(const Vision::ImageRGB& img);
     
     // Contrast-limited adaptive histogram equalization (CLAHE)
     cv::Ptr<cv::CLAHE> _clahe;

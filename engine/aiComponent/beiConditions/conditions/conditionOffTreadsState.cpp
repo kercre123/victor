@@ -13,6 +13,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionOffTreadsState.h"
 
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 
@@ -27,18 +28,34 @@ ConditionOffTreadsState::ConditionOffTreadsState(const Json::Value& config)
               "ConditionOffTreadsState.Config.IncorrectString",
               "%s is not a valid OffTreadsState",
               targetStateStr.c_str());
+  _minTimeSinceChange_ms = config.get("minTimeSinceChange_ms", 0).asInt();
+  if( _minTimeSinceChange_ms < 0 ) {
+    _minTimeSinceChange_ms = 0;
+  }
+  _maxTimeSinceChange_ms = config.get("maxTimeSinceChange_ms", -1).asInt();
 }
 
-ConditionOffTreadsState::ConditionOffTreadsState(const OffTreadsState& targetState)
+ConditionOffTreadsState::ConditionOffTreadsState(const OffTreadsState& targetState,
+                                                 const std::string& ownerDebugLabel)
   : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::OffTreadsState))
+  , _minTimeSinceChange_ms(0)
+  , _maxTimeSinceChange_ms(-1)
 {
+  SetOwnerDebugLabel(ownerDebugLabel);
   _targetState = targetState;
 }
 
 bool ConditionOffTreadsState::AreConditionsMetInternal(BehaviorExternalInterface& bei) const
 {
+  bool ret = false;
   const OffTreadsState currState = bei.GetRobotInfo().GetOffTreadsState();
-  return (currState == _targetState);
+  if( currState == _targetState ) {
+    const TimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    const TimeStamp_t lastChangedTime_ms = bei.GetRobotInfo().GetOffTreadsStateLastChangedTime_ms();
+    ret = (currTime_ms - lastChangedTime_ms >= _minTimeSinceChange_ms)
+          && ( (_maxTimeSinceChange_ms < 0) || (currTime_ms - lastChangedTime_ms <= _maxTimeSinceChange_ms) );
+  }
+  return ret;
 }
 
 }

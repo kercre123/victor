@@ -171,7 +171,7 @@ void BehaviorPickUpCube::TransitionToSuccessReaction()
 {
   if(!ShouldStreamline()){
     DEBUG_SET_STATE(DoingFinalReaction);
-    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ReactToBlockPickupSuccess));
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToBlockPickupSuccess));
   }
 }
 

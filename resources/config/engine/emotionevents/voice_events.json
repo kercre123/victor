@@ -45,6 +45,40 @@
           }
         ]
       }
+    },
+    {
+      "name" : "BeQuietVoiceCommand",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Stimulated",
+          "value" : -1.0
+        }
+      ],
+      "repetitionPenalty": {
+        "nodes" : [
+          {
+            "x" : 0.0,
+            "y" : 1.0
+          }
+        ]
+      }
+    },
+    {
+      "name" : "NoValidVoiceIntent",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Stimulated",
+          "value" : -0.6
+        }
+      ],
+      "repetitionPenalty": {
+        "nodes" : [
+          {
+            "x" : 0.0,
+            "y" : 1.0
+          }
+        ]
+      }
     }
   ]
 }

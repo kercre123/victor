@@ -89,8 +89,13 @@ public:
                            bool triggerRecognized);
   void DrawMicInfo(const RobotInterface::MicData& micData);
   void DrawCameraImage(const Vision::ImageRGB565& img);
+  
+  // Sets the power mode message to send when returning to none screen
+  void SetCalmPowerModeOnReturnToNone(const RobotInterface::CalmPowerMode& msg) { _calmModeMsgOnNone = msg; }
 
 private:
+  const AnimContext* _context = nullptr;
+  
   std::unique_ptr<Vision::ImageRGB565> _scratchDrawingImg;
 
   bool IsDebugScreen(ScreenName screen) const;
@@ -101,6 +106,10 @@ private:
   // Gets the current screen
   FaceInfoScreen* GetScreen(ScreenName name);
   
+  // Resets the lift and head angles observed thus far.
+  // Called everytime the screen changes.
+  void ResetObservedHeadAndLiftAngles();
+
   // Process wheel, head, lift, button motion for menu navigation
   void ProcessMenuNavigation(const RobotState& state);
   u32 _wheelMovingForwardsCount;
@@ -110,6 +119,9 @@ private:
   
   // Flag indicating when debug screens have been unlocked
   bool _debugInfoScreensUnlocked;
+
+  // Power mode to set when returning to None screen
+  RobotInterface::CalmPowerMode _calmModeMsgOnNone;
   
   // Map of all screen names to their associated screen objects
   std::unordered_map<ScreenName, FaceInfoScreen> _screenMap;
@@ -132,6 +144,10 @@ private:
   // Draw the _scratchDrawingImg to the face
   void DrawScratch();
 
+  // Updates the FAC screen if needed
+  void UpdateFAC();
+
+  void UpdateCameraTestMode(uint32_t curTime_ms);
   
   static const Point2f kDefaultTextStartingLoc_pix;
   static const u32 kDefaultTextSpacing_pix;
@@ -166,7 +182,7 @@ private:
   WebService::WebService* _webService;
   
   bool _drawFAC = false;
-
+  
   // Reboot Linux
   void Reboot();
 

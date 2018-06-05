@@ -1,10 +1,11 @@
 {
   "behaviorClass" : "LeaveAMessage",
   "behaviorID"    : "LeaveAMessage",
-
+  
+  "associatedActiveFeature": "RecordingMessage",
+  
   "respondToUserIntents" :
   [
     { "type": "message_record" }
-  ],
-  "claimUserIntentData" : true
+  ]
 }

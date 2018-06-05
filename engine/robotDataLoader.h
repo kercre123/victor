@@ -14,6 +14,7 @@
 #define ANKI_COZMO_BASESTATION_ROBOT_DATA_LOADER_H
 
 #include "clad/types/animationTrigger.h"
+#include "clad/types/behaviorComponent/weatherConditionTypes.h"
 #include "clad/types/compositeImageLayouts.h"
 #include "clad/types/compositeImageMaps.h"
 #include "clad/types/cubeAnimationTrigger.h"
@@ -107,6 +108,7 @@ public:
   const Json::Value& GetWebServerEngineConfig() const        { return _webServerEngineConfig; }
   const Json::Value& GetDasEventConfig() const               { return _dasEventConfig; }
   const Json::Value& GetUserIntentConfig() const             { return _userIntentsConfig; }
+  const Json::Value* GetTextToSpeechConfig() const           { return &_textToSpeechConfig; }
 
   // images are stored as a map of stripped file name (no file extension) to full path
   const Vision::SpritePathMap* GetSpritePaths()       const { assert(_spritePaths != nullptr); return _spritePaths.get(); }
@@ -117,8 +119,13 @@ public:
   using CompImageMap      = std::unordered_map<Vision::CompositeImageMap, Vision::CompositeImage::LayerImageMap, Anki::Util::EnumHasher>;
   using CompLayoutMap     = std::unordered_map<Vision::CompositeImageLayout, Vision::CompositeImage, Anki::Util::EnumHasher>;
   
-  const CompImageMap*  GetCompImageMap()  const { return _compImageMap.get();}
-  const CompLayoutMap* GetCompLayoutMap() const { return _compLayoutMap.get();}
+  const CompImageMap*  GetCompImageMap()  const { assert(_compImageMap); return _compImageMap.get();}
+  const CompLayoutMap* GetCompLayoutMap() const { assert(_compLayoutMap); return _compLayoutMap.get();}
+
+  // weather response map
+  using WeatherResponseMap = std::unordered_map<std::string, WeatherConditionType>;
+
+  const WeatherResponseMap* GetWeatherResponseMap() const { assert(_weatherResponseMap); return _weatherResponseMap.get();}
   
 
   bool IsCustomAnimLoadEnabled() const;
@@ -156,6 +163,8 @@ private:
   void LoadSpritePaths();
 
   void LoadCompositeImageMaps();
+
+  void LoadWeatherResponseMaps();
 
   // Outputs a map of file name (no path or extensions) to the full file path
   // Useful for clad mappings/lookups
@@ -206,6 +215,8 @@ private:
 
   std::unique_ptr<CompImageMap>  _compImageMap;
   std::unique_ptr<CompLayoutMap> _compLayoutMap;
+
+  std::unique_ptr<WeatherResponseMap> _weatherResponseMap;
 
 
   bool                  _isNonConfigDataLoaded = false;

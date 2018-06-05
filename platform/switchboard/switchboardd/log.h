@@ -15,7 +15,7 @@
 
 #define debug_logging
 
-#include "anki-ble/log.h"
+#include "anki-ble/common/log.h"
 #include <cstdio>
 #include <thread>
 #include <stdlib.h>

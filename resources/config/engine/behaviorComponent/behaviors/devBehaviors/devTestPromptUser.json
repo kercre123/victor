@@ -1,0 +1,17 @@
+{
+  "behaviorID" : "DevTestPromptUser",
+  "behaviorClass" : "PromptUserForVoiceCommand",
+
+  "earConAudioEventBegin"               : "Play__Robot_Vic_Sfx__Wake_Word_On",
+  "earConAudioEventSuccess"             : "Play__Robot_Vic_Sfx__Wake_Word_Success",
+  "earConAudioEventNeutral"             : "Play__Robot_Vic_Sfx__Wake_Word_Off",
+  "vocalPromptString"                   : "Test Prompt: say a command",
+  "vocalResponseToIntentString"         : "Got an intent",
+  "vocalResponseToBadIntentString"      : "Didn't get an intent",
+  "vocalRepromptString"                 : "Try again",
+  "maxNumberOfReprompts"                : 1,
+  "stopListeningOnIntents"              : true,
+  "backpackLights"                      : true,
+  "playListeningGetIn"                  : true,
+  "playListeningGetOut"                 : true
+}

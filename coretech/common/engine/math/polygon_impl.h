@@ -45,6 +45,54 @@ Polygon<N,T>::Polygon( std::initializer_list< Point<N,T> > points )
 }
 
 template <PolygonDimType N, typename T>
+Polygon<N,T>::Polygon(const std::vector<CladPoint2d>& cladPoints)
+{
+  static_assert(N == 2, "Must use 2D to convert from vector of CladPoint2d");
+  this->reserve(cladPoints.size());
+  for(auto& cladPoint : cladPoints)
+  {
+    this->emplace_back(cladPoint);
+  }
+}
+  
+template <PolygonDimType N, typename T>
+Polygon<N,T>::Polygon(const std::vector<CladPoint3d>& cladPoints)
+{
+  static_assert(N == 3, "Must use 3D to convert from vector of CladPoint3d");
+  this->reserve(cladPoints.size());
+  for(auto& cladPoint : cladPoints)
+  {
+    this->emplace_back(cladPoint);
+  }
+}
+ 
+template <PolygonDimType N, typename T>
+std::vector<CladPoint2d> Polygon<N,T>::ToCladPoint2dVector() const
+{
+  static_assert(N == 2, "Must use 2D to convert to vector of CladPoint2d");
+  std::vector<CladPoint2d> vec;
+  vec.reserve(this->size());
+  for(const auto& point : _points)
+  {
+    vec.emplace_back(CladPoint2d(point.x(), point.y()));
+  }
+  return vec;
+}
+
+template <PolygonDimType N, typename T>
+std::vector<CladPoint3d> Polygon<N,T>::ToCladPoint3dVector() const
+{
+  static_assert(N == 3, "Must use 3D to convert to vector of CladPoint3d");
+  std::vector<CladPoint3d> vec;
+  vec.reserve(this->size());
+  for(const auto& point : _points)
+  {
+    vec.emplace_back(CladPoint3d(point.x(), point.y(), point.z()));
+  }
+  return vec;
+}
+  
+template <PolygonDimType N, typename T>
 Polygon<N,T>::Polygon(const Polygon<N+1,T>& other)
 {
   for( const auto& point : other ) {
@@ -53,6 +101,12 @@ Polygon<N,T>::Polygon(const Polygon<N+1,T>& other)
   }
 }
 
+template <PolygonDimType N, typename T>
+Polygon<N,T>::Polygon(const Rectangle<T>& rect)
+  : _points{rect.GetTopLeft(), rect.GetTopRight(), rect.GetBottomRight(), rect.GetBottomLeft()}
+{
+  static_assert(N == 2, "Must use 2D for rectangles");
+}
 
 template <PolygonDimType N, typename T>
 Polygon<N,T>::Polygon(const RotatedRectangle& rect)
@@ -62,6 +116,11 @@ Polygon<N,T>::Polygon(const RotatedRectangle& rect)
   ImportQuad2d(rect.GetQuad());
 }
 
+template <PolygonDimType N, typename T>
+Polygon<N,T>::Polygon(const Quadrilateral<2, T>& quad)
+{
+  ImportQuad2d(quad);
+}
 
 template <PolygonDimType N, typename T>
 void Polygon<N,T>::ImportQuad(const Quadrilateral<N,T>& quad)

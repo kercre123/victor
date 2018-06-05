@@ -1,0 +1,139 @@
+// Values from https://developer.accuweather.com/weather-icons
+[
+  {
+    "APIValue" : "Sunny",
+    "CladType" : "Sunny"
+  },
+  {
+    "APIValue" : "Mostly Sunny",
+    "CladType" : "Sunny"
+  },
+  {
+    "APIValue" : "Partly Sunny",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Intermittent Clouds",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Hazy Sunshine",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Mostly Cloudy",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Cloudy",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Dreary (Overcast)",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Fog",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Showers",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Partly Sunny w/ Showers",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "T-Storms",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Mostly Cloudy w/ T-Storms",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Partly Sunny w/ T-Storms",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Rain",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Flurries",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Mostly Cloudy w/ Flurries",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Partly Sunny w/ Flurries",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Snow",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Mostly Cloudy w/ Snow",
+    "CladType" : "Snow"
+  },
+  {
+    "APIValue" : "Ice",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Sleet",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Freezing Rain",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Rain and Snow",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Hot",
+    "CladType" : "Sunny"
+  },
+  {
+    "APIValue" : "Cold",
+    "CladType" : "Cold"
+  },
+  {
+    "APIValue" : "Windy",
+    "CladType" : "Windy"
+  },
+  {
+    "APIValue" : "Clear",
+    "CladType" : "Sunny"
+  },
+  {
+    "APIValue" : "Mostly Clear",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Partly Cloudy",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Hazy Moonlight",
+    "CladType" : "Cloudy"
+  },
+  {
+    "APIValue" : "Partly Cloudy w/ Showers",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Mostly Cloudy w/ Showers",
+    "CladType" : "Rain"
+  },
+  {
+    "APIValue" : "Partly Cloudy w/ T-Storms",
+    "CladType" : "Rain"
+  }
+]

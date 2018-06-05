@@ -11,10 +11,22 @@ having him complete an OTA (over the air) update.
 
 ## Building 
 
-To build `mac-client`, simply run this command from the root of your `victor` repo:
+To build `mac-client`, simply run the [build command](/apps/demos/ble-pairing/mac-client/build_client.sh) from the root of your `victor` repo:
 ```
 ./apps/demos/ble-pairing/mac-client/build_client.sh
 ```
+
+## Quick Start - OTAing with Ease
+
+After you are paired once with your robot (see `Running` section), you can run this oneline command to update your robot `"Vector A2B2"` (if your robot is not already connected to the internet, this command will try to connect your robot to `AnkiRobits` for you):
+`./mac-client -f A2B2 --ota-update http://example.com/update.ota`
+
+If you want to speed things up and perform an OTA with the robot in AP mode, you can simply do:
+`./mac-client -f A2B2 --ota-update-ap http://example.com/update.ota`
+
+You can specify `--local (-l)` with the `--ota-update-ap` command to specify a local file instead of a URL.
+
+This command might not work 100% of the time because it involves using MacOS api to try to connect your Mac to Victor's wifi network, which is a little tempermental.
 
 ## Running
 
@@ -48,6 +60,16 @@ everything worked, you should see the Victor cli prompt appear:
 ```
 vector-R1A4#
 ```
+
+## Performing Tasks Synchronously
+
+You can add the `-s` arg followed by a string to perform the CLI commands non-interactively.
+
+For example, you can do:
+
+`./mac-client -f A2B2 -s 'wifi-scan; wifi-connect:MyWifiSsid|MyPassword; wifi-ip'`.
+
+This command will 1) scan for wifi, and then when finished will 2) connect to "MyWifiSsid" with password "MyPassword". 3) After the connection request is successful or fails, the app will request the robot's IP.
 
 ## Using the Victor Cli
 

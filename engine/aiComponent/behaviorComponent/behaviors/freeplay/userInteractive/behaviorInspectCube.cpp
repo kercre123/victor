@@ -399,11 +399,15 @@ void BehaviorInspectCube::UpdateTracking()
 void BehaviorInspectCube::TransitionToKeepaway()
 {
   CancelDelegates(false);      
-  DelegateIfInControl(_iConfig.keepawayBehavior.get(),
-                      [this](){
-                        CancelSelf();
-                      });
-  SET_STATE(InspectCubeState::Keepaway);
+  if(_iConfig.keepawayBehavior->WantsToBeActivatedBehavior()){
+    DelegateIfInControl(_iConfig.keepawayBehavior.get(),
+                        [this](){
+                          CancelSelf();
+                        });
+    SET_STATE(InspectCubeState::Keepaway);
+  } else {
+    CancelSelf();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

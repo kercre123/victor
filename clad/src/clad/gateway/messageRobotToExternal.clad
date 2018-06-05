@@ -1,0 +1,105 @@
+namespace Anki {
+namespace Victor {
+namespace Gateway {
+
+message UiDeviceConnected {
+  string placeholder,
+}
+
+structure AnimationCompleted {
+  string animationName,
+}
+
+union ActionCompletedUnion {
+  AnimationCompleted          animationCompleted = 0x01,
+}
+
+enum int_32 RobotActionType {
+    UNKNOWN = -1,
+}
+
+enum uint_32 ActionResult {
+  SUCCESS                 = 0, // This is still zero
+  RUNNING                 = 16777216,
+  CANCELLED_WHILE_RUNNING = 33554432,
+}
+
+message RobotCompletedAction {
+    uint_32 idTag,                                 // The identifier of the specific action that completed
+    RobotActionType      actionType,
+    ActionResult         result,
+    ActionResult         subActionResults[uint_8], // vector of all results from this action's subActions
+    ActionCompletedUnion completionInfo,
+}
+
+// Tell the app the robot is starting a facial scan for the Meet Victor flow
+message MeetVictorFaceScanStarted
+{
+}
+
+// Tell the app the robot is finishing a facial scan for the Meet Victor flow
+message MeetVictorFaceScanComplete
+{
+}
+
+enum uint_8 FaceEnrollmentResult
+{
+    Success = 0,
+
+    // Failures:
+    SawWrongFace,
+    SawMultipleFaces,
+    TimedOut,
+    SaveFailed,
+    Incomplete,
+    Cancelled,
+    NameInUse,
+    UnknownFailure
+}
+
+message FaceEnrollmentCompleted
+{
+  FaceEnrollmentResult result,
+  int_32               faceID,
+  string               name
+}
+
+message FeatureStatus {
+  string featureName,
+  string source, // Voice, App, AI, Unknown
+}
+
+union Status {
+  FeatureStatus                    FeatureStatus                       = 0x00,
+  MeetVictorFaceScanStarted        MeetVictorFaceScanStarted           = 0x01,
+  MeetVictorFaceScanComplete       MeetVictorFaceScanComplete          = 0x02,
+  FaceEnrollmentCompleted          FaceEnrollmentCompleted             = 0x03,
+}
+
+message TimeStampedStatus {
+  Status status,
+  uint_32 timestamp_ms,
+}
+
+message RobotHistoryResponse {
+  TimeStampedStatus  messages[uint_16],
+}
+
+// Anything that the robot wishes to push to the app that 
+// is not a response to a request from the app.
+union Event {
+  Status                           status                              = 0x00,
+  // BatteryEvents, etc.
+}
+
+// Note: these values and messages must match the values that get added to MessageEngineToGame
+union MessageRobotToExternal {
+  UiDeviceConnected                 UiDeviceConnected                  = 0x00, // DO NOT CHANGE THIS VALUE
+  RobotCompletedAction              RobotCompletedAction               = 0x01,
+  Event                             Event                              = 0x02,
+  RobotHistoryResponse              robotHistoryResponse               = 0x03,
+}
+
+} // Gateway
+} // Victor
+} // Anki

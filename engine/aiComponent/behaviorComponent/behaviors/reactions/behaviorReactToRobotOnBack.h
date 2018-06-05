@@ -10,12 +10,10 @@
  *
  **/
 
-#ifndef __Cozmo_Basestation_Behaviors_BeahviorReactToRobotOnBack_H__
-#define __Cozmo_Basestation_Behaviors_BeahviorReactToRobotOnBack_H__
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorReactToRobotOnBack_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorReactToRobotOnBack_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-
-#include "engine/aiComponent/beiConditions/conditions/conditionOffTreadsState.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -39,12 +37,14 @@ protected:
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
 
   virtual void InitBehavior() override;
+  virtual void OnBehaviorEnteredActivatableScope() override;
+  virtual void OnBehaviorLeftActivatableScope() override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
 
 private:
 
-  ConditionOffTreadsState _offTreadsCondition;
+  IBEIConditionPtr _offTreadsCondition;
   
   void FlipDownIfNeeded();
   void DelayThenFlipDown();

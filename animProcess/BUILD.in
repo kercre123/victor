@@ -12,7 +12,8 @@ cxx_project(
     ],
     headers = cxx_header_glob(['.']),
     platform_headers = [
-        ('android', glob(['**/*.h']))
+        ('vicos', glob(['**/*_vicos.h'])),
+        ('mac', glob(['**/*_mac.h']))
     ]
 )
 

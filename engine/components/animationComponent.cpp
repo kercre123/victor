@@ -29,6 +29,7 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/shared/compositeImage/compositeImage.h"
+#include "coretech/vision/shared/rgb565Image/rgb565ImageBuilder.h"
 
 #include "json/json.h"
 
@@ -56,6 +57,7 @@ AnimationComponent::AnimationComponent()
 , _isAnimating(false)
 , _currAnimName("")
 , _currAnimTag(0)
+, _oledImageBuilder(new Vision::RGB565ImageBuilder)
 , _compositeImageID(0)
 {
 
@@ -80,6 +82,7 @@ void AnimationComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
       helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayProceduralFace>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SetFaceHue>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayFaceImageBinaryChunk>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayFaceImageRGBChunk>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableKeepFaceAlive>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SetKeepFaceAliveParameters>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadAnimationFile>();
@@ -263,7 +266,7 @@ Result AnimationComponent::PlayAnimByName(const std::string& animName,
 
 Result AnimationComponent::PlayCompositeAnimation(const std::string& animName,
                                                   const Vision::CompositeImage& compositeImage, 
-                                                  u32 getFrameInterval_ms,
+                                                  u32 frameInterval_ms,
                                                   int& outDuration_ms,
                                                   bool interruptRunning,
                                                   AnimationCompleteCallback callback)
@@ -312,7 +315,7 @@ Result AnimationComponent::PlayCompositeAnimation(const std::string& animName,
   }
 
   outDuration_ms = anim->GetLastKeyFrameEndTime_ms();
-  return DisplayFaceImage(compositeImage, getFrameInterval_ms, outDuration_ms, interruptRunning);
+  return DisplayFaceImage(compositeImage, frameInterval_ms, outDuration_ms, interruptRunning);
 }
 
   
@@ -518,7 +521,7 @@ void AnimationComponent::SetAnimationCallback(const std::string& animName,
   {
     auto it = _callbackMap.find(currTag);
     if (it != _callbackMap.end()) {
-      PRINT_NAMED_WARNING("AnimationComponent.PlayAnimByName.StaleTag", "%d", currTag);
+      PRINT_NAMED_WARNING("AnimationComponent.SetAnimationCallback.StaleTag", "%d", currTag);
       it->second.ExecuteCallback(AnimResult::Stale);
       _callbackMap.erase(it);
     }
@@ -530,7 +533,7 @@ void AnimationComponent::SetAnimationCallback(const std::string& animName,
 }
 
 
-Result AnimationComponent::DisplayFaceImage(const Vision::CompositeImage& compositeImage, u32 getFrameInterval_ms, u32 duration_ms, bool interruptRunning)
+Result AnimationComponent::DisplayFaceImage(const Vision::CompositeImage& compositeImage, u32 frameInterval_ms, u32 duration_ms, bool interruptRunning)
 {
   // TODO: Is this what interruptRunning should mean?
   //       Or should it queue on anim process side and optionally interrupt currently executing anim?
@@ -542,14 +545,19 @@ Result AnimationComponent::DisplayFaceImage(const Vision::CompositeImage& compos
   // Send the image to the animation process in chunks
   const std::vector<Vision::CompositeImageChunk> imageChunks = compositeImage.GetImageChunks();
   for(const auto& chunk: imageChunks){
-    _robot->SendRobotMessage<RobotInterface::DisplayCompositeImageChunk>(_compositeImageID, getFrameInterval_ms, duration_ms, chunk);
+    _robot->SendRobotMessage<RobotInterface::DisplayCompositeImageChunk>(_compositeImageID, frameInterval_ms, duration_ms, chunk);
+  }
+  
+  if(imageChunks.empty()){
+    PRINT_NAMED_WARNING("AnimationComponent.DisplayFaceImage.NoImageChunksToSend", "");
+    return RESULT_FAIL;
   }
 
   _compositeImageID++;
   return RESULT_OK;
 }
 
-void AnimationComponent::UpdateCompositeImage(const Vision::CompositeImage& compositeImage)
+void AnimationComponent::UpdateCompositeImage(const Vision::CompositeImage& compositeImage, u32 applyAt_ms)
 {
   for(const auto& layoutPair : compositeImage.GetLayerLayoutMap()){
     Vision::LayerName layerName = layoutPair.first;
@@ -557,23 +565,30 @@ void AnimationComponent::UpdateCompositeImage(const Vision::CompositeImage& comp
       Vision::SerializedSpriteBox serializedSpriteBox = spritePair.second.Serialize();
       Vision::CompositeImageLayer::SpriteEntry entry;
       layoutPair.second.GetSpriteEntry(spritePair.second, entry);
-      _robot->SendRobotMessage<RobotInterface::UpdateCompositeImage>(serializedSpriteBox, layerName, entry._spriteName);
+      _robot->SendRobotMessage<RobotInterface::UpdateCompositeImage>(serializedSpriteBox, 
+                                                                     applyAt_ms, 
+                                                                     layerName, 
+                                                                     entry._spriteName);
     }
   }
 }
 
 
-void AnimationComponent::ClearCompositeImageLayer(Vision::LayerName layerName)
+void AnimationComponent::ClearCompositeImageLayer(Vision::LayerName layerName, u32 applyAt_ms)
 {
   // Setup empty sprite entry
   Vision::CompositeImageLayer::SpriteEntry entry;
 
   // Setup empty spriteBox
   Vision::SpriteRenderConfig renderConfig;
+  renderConfig.renderMethod = Vision::SpriteRenderMethod::RGBA;
   Point2i topLeft(0,0);
   Vision::CompositeImageLayer::SpriteBox sb(Vision::SpriteBoxName::Count, renderConfig, topLeft, 0, 0);
   
-  _robot->SendRobotMessage<RobotInterface::UpdateCompositeImage>(sb.Serialize(), layerName, entry._spriteName);
+  _robot->SendRobotMessage<RobotInterface::UpdateCompositeImage>(sb.Serialize(), 
+                                                                 applyAt_ms, 
+                                                                 layerName, 
+                                                                 entry._spriteName);
 }
 
 Result AnimationComponent::EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms) const
@@ -724,6 +739,32 @@ void AnimationComponent::HandleMessage(const ExternalInterface::DisplayFaceImage
 
   // Convert ExternalInterface version of DisplayFaceImage to RobotInterface version and send
   _robot->SendRobotMessage<RobotInterface::DisplayFaceImageBinaryChunk>(msg.duration_ms, msg.faceData, msg.imageId, msg.chunkIndex);
+}
+
+template<>
+void AnimationComponent::HandleMessage(const ExternalInterface::DisplayFaceImageRGBChunk& msg)
+{
+  if (!_isInitialized) {
+    PRINT_NAMED_WARNING("AnimationComponent.DisplayFaceImageRGB.Uninitialized", "");
+    return;
+  }
+
+  _oledImageBuilder->AddDataChunk(msg.faceData, msg.chunkIndex, msg.numPixels);
+
+  uint32_t fullMask = 0;
+  for( int i=0; i<msg.numChunks; ++i )
+  {
+    fullMask |= (1L << i);
+  }
+
+  // did we recieve every chunk we need?
+  if( (_oledImageBuilder->GetRecievedChunkMask() ^ fullMask) == 0 )
+  {
+    Vision::ImageRGB565 image(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH, _oledImageBuilder->GetAllData());
+    DisplayFaceImage(image, msg.duration_ms, msg.interruptRunning);
+
+    _oledImageBuilder->Clear();
+  }
 }
 
 template<>

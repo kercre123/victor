@@ -68,7 +68,7 @@ public:
   void LoadAnimationsIntoContainer(const AnimDirInfo& info, CannedAnimationContainer* container);
   void LoadAnimationIntoContainer(const std::string& path, CannedAnimationContainer* container);
 
-  static AnimDirInfo CollectAnimFiles(const Util::Data::DataPlatform* platform, const std::vector<std::string>& paths);
+  AnimDirInfo CollectAnimFiles(const std::vector<std::string>& paths);
 
 private:
   
@@ -83,23 +83,18 @@ private:
   float _perAnimationLoadingRatio = 0.0f;
   std::mutex _parallelLoadingMutex;
 
-  // pointer to the container passed in on Load calls for reference by member functions
-  CannedAnimationContainer* _containerPtr = nullptr;
-
   static void WalkAnimationDir(const Util::Data::DataPlatform* platform,
                                const std::string& animationDir, AnimDirInfo::TimestampMap& timestamps,
                                const std::function<void(const std::string& filePath)>& walkFunc);
 
-  void LoadAnimationsInternal(const AnimDirInfo& info);
+  void LoadAnimationsInternal(const AnimDirInfo& info, CannedAnimationContainer* container);
   
   void AddToLoadingRatio(float delta);
 
-  void LoadAnimationFile(const std::string& path);
+  void LoadAnimationFile(const std::string& path, CannedAnimationContainer* container);
 
-  Result DefineFromJson(const Json::Value& jsonRoot, std::string& loadedAnimName);
-  Result DefineFromFlatBuf(const CozmoAnim::AnimClip* animClip, std::string& animName);
-  void SetSpriteSequenceContainerOnAnimation(Animation& animation) const;
-  
+  Result DefineFromJson(const Json::Value& jsonRoot, std::string& loadedAnimName, CannedAnimationContainer* container);
+  Result DefineFromFlatBuf(const CozmoAnim::AnimClip* animClip, std::string& animName, CannedAnimationContainer* container);  
   Result SanityCheck(Result lastResult, Animation& animation, std::string& animationName) const;
 
 };

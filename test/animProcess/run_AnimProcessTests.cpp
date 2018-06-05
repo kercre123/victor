@@ -38,7 +38,7 @@ int main(int argc, char ** argv)
 
   //LEAKING HERE
   Anki::Util::PrintfLoggerProvider* loggerProvider = new Anki::Util::PrintfLoggerProvider();
-  loggerProvider->SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
+  loggerProvider->SetMinLogLevel(Anki::Util::LOG_LEVEL_DEBUG);
   Anki::Util::gLoggerProvider = loggerProvider;
 
 
@@ -83,7 +83,7 @@ int main(int argc, char ** argv)
 
   // Initialize AndroidHAL singleton without supervisor
   CameraService::SetSupervisor(nullptr);
-  
+
   // Initialize OSState singleton without supervisor
   OSState::SetSupervisor(nullptr);
 

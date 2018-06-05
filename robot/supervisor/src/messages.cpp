@@ -1,4 +1,5 @@
 #include "messages.h"
+#include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/hal.h"
 #include <math.h>
 
@@ -136,6 +137,7 @@ namespace Anki {
         robotState_.status |= ProxSensors::IsAnyCliffDetected() ? CLIFF_DETECTED : 0;
         robotState_.status |= IMUFilter::IsFalling() ? IS_FALLING : 0;
         robotState_.batteryVoltage = HAL::BatteryGetVoltage();
+        robotState_.chargerVoltage = HAL::ChargerGetVoltage();
 #ifdef  SIMULATOR
         if(isForcedDelocalizing_)
         {
@@ -175,9 +177,10 @@ namespace Anki {
 
       void Process_calmPowerMode(const RobotInterface::CalmPowerMode& msg)
       {
-        AnkiInfo("Messages.Process_calmPowerMode.enable", "%d", msg.enable);
+        AnkiInfo("Messages.Process_calmPowerMode.enable", "enable: %d, calib: %d", msg.enable, msg.calibOnDisable);
         HAL::PowerState newPowerMode = msg.enable ? HAL::POWER_MODE_CALM : HAL::POWER_MODE_ACTIVE;
         HAL::PowerSetMode(newPowerMode);
+        Robot::CalibrateMotorsOnNextCalmModeExit(msg.calibOnDisable);
       }
 
       void Process_absLocalizationUpdate(const RobotInterface::AbsoluteLocalizationUpdate& msg)
@@ -556,6 +559,12 @@ namespace Anki {
           HAL::MotorSetPower(MotorID::MOTOR_LIFT, 0);
           LiftController::Enable();
         }
+      }
+
+      void Process_robotStoppedAck(const RobotInterface::RobotStoppedAck& msg)
+      {
+        AnkiInfo("Messages.Process_robotStoppedAck", "");
+        SteeringController::Enable();
       }
 
       void Process_enableStopOnCliff(const RobotInterface::EnableStopOnCliff& msg)

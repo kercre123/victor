@@ -2,8 +2,8 @@
  * File:          webotsCtrlAnim.cpp
  * Date:
  * Description:   Cozmo 2.0 animation process for Webots simulation
- * Author:        
- * Modifications: 
+ * Author:
+ * Modifications:
  */
 
 #include "cozmoAnim/animEngine.h"
@@ -49,32 +49,32 @@ int main(int argc, char **argv)
 {
   // parse commands
   WebotsCtrlShared::ParsedCommandLine params = WebotsCtrlShared::ParseCommandLine(argc, argv);
-  
+
   // create platform.
   // Unfortunately, CozmoAPI does not properly receive a const DataPlatform, and that change
   // is too big of a change, since it involves changing down to the context, so create a non-const platform
   //const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0]);
   Util::Data::DataPlatform dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlAnim");
-  
+
   // Set Webots supervisor
   OSState::SetSupervisor(&animSupervisor);
 
   // - create and set logger
-  Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN,
+  Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::LOG_LEVEL_WARN,
                                                                                         params.colorizeStderrOutput);
   Util::MultiFormattedLoggerProvider loggerProvider({
     printfLoggerProvider
   });
-  loggerProvider.SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
+  loggerProvider.SetMinLogLevel(Anki::Util::LOG_LEVEL_DEBUG);
   Util::gLoggerProvider = &loggerProvider;
   Util::sSetGlobal(DPHYS, "0xdeadffff00000001");
-  
+
   // - console filter for logs
   if ( params.filterLog )
   {
     using namespace Anki::Util;
     ChannelFilter* consoleFilter = new ChannelFilter();
-    
+
     // load file config
     Json::Value consoleFilterConfig;
     const std::string& consoleFilterConfigPath = "config/engine/console_filter_config.json";
@@ -82,19 +82,19 @@ int main(int argc, char **argv)
     {
       LOG_ERROR("webotsCtrlAnim.main.loadConsoleConfig", "Failed to parse Json file '%s'", consoleFilterConfigPath.c_str());
     }
-    
+
     // initialize console filter for this platform
     const std::string& platformOS = dataPlatform.GetOSPlatformString();
     const Json::Value& consoleFilterConfigOnPlatform = consoleFilterConfig[platformOS];
     consoleFilter->Initialize(consoleFilterConfigOnPlatform);
-    
+
     // set filter in the loggers
     std::shared_ptr<const IChannelFilter> filterPtr( consoleFilter );
     printfLoggerProvider->SetFilter(filterPtr);
-    
+
     // also parse additional info for providers
     printfLoggerProvider->ParseLogLevelSettings(consoleFilterConfigOnPlatform);
-    
+
   }
   else
   {
@@ -103,10 +103,10 @@ int main(int argc, char **argv)
 
   // Start with a step so that we can attach to the process here for debugging
   animSupervisor.step(ANIM_TIME_STEP_MS);
-  
+
   // Set up the console vars to load from file, if it exists
   ANKI_CONSOLE_SYSTEM_INIT("consoleVarsAnim.ini");
-  
+
   // Initialize the API
   AnimEngine animEngine(&dataPlatform);
   animEngine.Init();
@@ -121,12 +121,11 @@ int main(int argc, char **argv)
   {
     double currTimeNanoseconds = Util::SecToNanoSec(animSupervisor.getTime());
     animEngine.Update(Util::numeric_cast<BaseStationTime_t>(currTimeNanoseconds));
-    
+
     tick_start = std::chrono::system_clock::now();
-    
+
   } // while still stepping
 
   Util::gLoggerProvider = nullptr;
   return 0;
 }
-

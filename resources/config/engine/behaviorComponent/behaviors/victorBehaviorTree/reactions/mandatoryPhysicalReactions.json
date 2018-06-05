@@ -6,6 +6,7 @@
   "interruptActiveBehavior": true,
 
   "behaviors": [
+    "StuckOnEdge",
     "ReactToRobotOnBack",
     "ReactToRobotOnFace",
     "ReactToRobotOnSide",

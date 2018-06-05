@@ -17,6 +17,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionOffTreadsState.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
@@ -32,23 +33,33 @@ static const float kRobotMinLiftAngleForArmUpAnim_s = 45.f;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToRobotOnFace::BehaviorReactToRobotOnFace(const Json::Value& config)
 : ICozmoBehavior(config)
-, _offTreadsCondition(OffTreadsState::OnFace)
 {
+  _offTreadsCondition = std::make_shared<ConditionOffTreadsState>( OffTreadsState::OnFace, GetDebugLabel() );
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToRobotOnFace::WantsToBeActivatedBehavior() const
 {
-  return _offTreadsCondition.AreConditionsMet(GetBEI());
+  return _offTreadsCondition->AreConditionsMet(GetBEI());
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToRobotOnFace::InitBehavior()
 {
-  _offTreadsCondition.Init(GetBEI());
-  _offTreadsCondition.SetActive(GetBEI(), true);
+  _offTreadsCondition->Init(GetBEI());
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToRobotOnFace::OnBehaviorEnteredActivatableScope() {
+  _offTreadsCondition->SetActive(GetBEI(), true);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToRobotOnFace::OnBehaviorLeftActivatableScope()
+{
+  _offTreadsCondition->SetActive(GetBEI(), false);
 }
 
 

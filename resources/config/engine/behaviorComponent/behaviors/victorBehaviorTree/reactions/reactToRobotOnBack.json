@@ -1,4 +1,10 @@
 {
   "behaviorClass": "ReactToRobotOnBack",
-  "behaviorID": "ReactToRobotOnBack"
+  "behaviorID": "ReactToRobotOnBack",
+  "associatedActiveFeature": "NoFeature",
+
+  "wantsToCancelSelfCondition": {
+    "conditionType": "OffTreadsState",
+    "targetState": "OnTreads"
+  }
 }

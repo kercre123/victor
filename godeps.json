@@ -1,4 +1,8 @@
 {
+  "github.com/golang/glog": {
+    "commit": "23def4e6c14b4da8ac2ed8007337bc5eb5007998",
+    "branch": "master"
+  },
   "google.golang.org/genproto": {
     "commit": "f8c8703595236ae70fdf8789ecb656ea0bcdcf46",
     "branch": "master"
@@ -12,7 +16,7 @@
     "branch": "active"
   },
   "github.com/golang/protobuf": {
-    "commit": "bbd03ef6da3a115852eaf24c8a1c46aeb39aa175",
+    "commit": "b4deda0973fb4c70b50d226b1af49f3da59f5265",
     "branch": "master"
   },
   "github.com/google/uuid": {
@@ -50,5 +54,8 @@
   "github.com/anki/opus-go": {
     "commit": "db270449b5224095453ece81e0d67577067430e1",
     "branch": "v2"
+  },
+  "github.com/grpc-ecosystem/grpc-gateway": {
+    "commit": "07f5e79768022f9a3265235f0db4ac8c3f675fec"
   }
 }

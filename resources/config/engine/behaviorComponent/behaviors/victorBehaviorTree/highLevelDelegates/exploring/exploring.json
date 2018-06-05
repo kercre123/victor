@@ -1,14 +1,20 @@
 {
   "behaviorID": "Exploring",
-  "behaviorClass": "DispatcherStrictPriority",
+  "behaviorClass": "DispatcherStrictPriorityWithCooldown",
 
   "interruptActiveBehavior": true,
 
-  "behaviors": 
-  [
-    "DriveOffCharger",
-    "ExploringInternal",    // doesn't want to activate without a charger
-    "ExploringFindCharger"  // only wants to activate when there's no charger
+  "associatedActiveFeature": "Exploring",
+
+  "behaviors": [    
+    {
+      "behavior": "ReactToMotion",
+      "cooldown_s": 10.0
+    },
+    {
+      "behavior": "ExploringInternal",
+      "cooldown_s": 0.0
+    }
   ],
 
   "anonymousBehaviors": [
@@ -16,10 +22,15 @@
       "behaviorName" : "ExploringInternal",
       "behaviorClass": "Exploring",
 
-      "minSearchRadius_m": 0.4,
+      "minSearchRadius_m": 0.25,
       "maxSearchRadius_m": 1.0,
       "maxChargerDistance_m": 2.0,
-      "pAcceptKnownAreas": 0.4
+      "pAcceptKnownAreas": 0.4,
+
+      "motionProfile": {
+        "speed_mmps": 120.0,
+        "isCustom": true
+      }
     }
   ]
 }

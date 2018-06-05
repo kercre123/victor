@@ -2,8 +2,18 @@
   "behaviorClass" : "DispatcherStrictPriorityWithCooldown",
   "behaviorID" : "FindAndGoToHome",
 
+  "associatedActiveFeature": "GoHome",
+
   "interruptActiveBehavior" : true,
   "linkScope": true,
+
+  "wantsToCancelSelfCondition": {
+    "conditionType": "Compound",
+    "not": {
+      "conditionType": "OffTreadsState",
+      "targetState": "OnTreads"
+    }
+  },
 
   "behaviors" : [
     {

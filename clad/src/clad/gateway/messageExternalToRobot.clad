@@ -1,0 +1,56 @@
+namespace Anki {
+namespace Victor {
+namespace Gateway {
+
+message UiDeviceConnectionWrongVersion {
+  string placeHolder,
+}
+
+message DriveWheels {
+  float_32 lwheel_speed_mmps,
+  float_32 rwheel_speed_mmps,
+  float_32 lwheel_accel_mmps2 = 0.0,
+  float_32 rwheel_accel_mmps2 = 0.0,
+}
+
+message PlayAnimation {
+  uint_32 numLoops,
+  string  animationName,
+  bool    ignoreBodyTrack = 0,
+  bool    ignoreHeadTrack = 0,
+  bool    ignoreLiftTrack = 0,
+}
+
+message MoveHead {
+  float_32 speed_rad_per_sec,
+}
+
+message MoveLift {
+  float_32 speed_rad_per_sec,
+}
+
+message DriveArc {
+  float_32 speed,               // Target speed in mm/sec
+                                // If curvatureRadius_mm == 0, the speed is in rad/s where +ve means CCW rotation.
+  float_32 accel,               // Acceleration to approach target speed in mm/sec^2 (Sign is ignored)
+                                // (or rad/s^2 if curvatureRadius_mm == 0)
+                                // 0: Max acceleration
+  int_16 curvatureRadius_mm     // Radius of arc to drive
+                                // u16_MAX or u16_MIN: Straight
+                                // +ve: curves left, -ve: curves right
+                                // 0: Point turn
+}
+
+// Note: these values and messages must match the values that get added to MessageGameToEngine
+union MessageExternalToRobot {
+  UiDeviceConnectionWrongVersion UiDeviceConnectionWrongVersion = 0x00, // DO NOT CHANGE THIS VALUE
+  DriveWheels                    DriveWheels                    = 0x01,
+  PlayAnimation                  PlayAnimation                  = 0x02,
+  MoveHead                       MoveHead                       = 0x03,
+  MoveLift                       MoveLift                       = 0x04,
+  DriveArc                       DriveArc                       = 0x05,
+}
+
+} // Gateway
+} // Victor
+} // Anki

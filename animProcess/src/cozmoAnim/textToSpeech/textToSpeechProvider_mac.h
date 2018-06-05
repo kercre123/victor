@@ -8,18 +8,23 @@
  *
  */
 
-#ifndef __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_mac_H__
-#define __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_mac_H__
+#ifndef __cozmo_textToSpeech_textToSpeechProvider_mac_H__
+#define __cozmo_textToSpeech_textToSpeechProvider_mac_H__
 
 #include "util/helpers/ankiDefines.h"
 
 #if defined(ANKI_PLATFORM_OSX)
 
 #include "textToSpeechProvider.h"
+#include "textToSpeechProviderConfig.h"
+
 #include <string>
 
-// Forward declarations (Cozmo)
+// Forward declarations
 namespace Anki {
+  namespace Util {
+    class RandomGenerator;
+  }
   namespace Cozmo {
     class AnimContext;
   }
@@ -37,21 +42,23 @@ namespace TextToSpeech {
 class TextToSpeechProviderImpl
 {
 public:
-  TextToSpeechProviderImpl(const AnimContext* ctx, const Json::Value& tts_platform_config);
+  TextToSpeechProviderImpl(const Cozmo::AnimContext* ctx, const Json::Value& tts_platform_config);
   ~TextToSpeechProviderImpl();
-  
+
   Result CreateAudioData(const std::string& text, float durationScalar, TextToSpeechProviderData& data);
 
 private:
   // Configurable parameters
-  std::string _tts_language;
-  std::string _tts_voice;
-  int _tts_speed;
-  int _tts_shaping;
-  bool _tts_licensed;
-  
+  std::unique_ptr<TextToSpeechProviderConfig> _tts_config;
+
+  // License state
+  bool _tts_licensed = false;
+
   // Opaque handle to Acapela TTS SDK
   void* _lpBabTTS = nullptr;
+
+  // Pointer to RNG provided by context
+  Anki::Util::RandomGenerator * _rng = nullptr;
 
 }; // class TextToSpeechProviderImpl
 
@@ -61,4 +68,4 @@ private:
 
 #endif // ANKI_PLATFORM_OSX
 
-#endif //__Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_H__
+#endif //__victor_textToSpeech_textToSpeechProvider_H__

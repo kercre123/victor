@@ -14,7 +14,8 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorReactToCliff_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include <vector>
+#include "engine/components/sensors/cliffSensorComponent.h"
+#include <array>
 
 namespace Anki {
 namespace Cozmo {
@@ -43,6 +44,8 @@ protected:
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
+
   virtual void HandleWhileInScopeButNotActivated(const EngineToGameEvent& event) override;
   virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
   
@@ -54,7 +57,6 @@ private:
   void TransitionToPlayingStopReaction();
   void TransitionToPlayingCliffReaction();
   void TransitionToBackingUp();
-  void SendFinishedReactToCliffMessage();
   
   // Based on which cliff sensor(s) was tripped, select an appropriate pre-animation action
   CompoundActionSequential* GetCliffPreReactAction(uint8_t cliffDetectedFlags);
@@ -66,20 +68,27 @@ private:
   };
   
   struct InstanceConfig {
-    IBEIConditionPtr cliffDetectedCondition;
+    InstanceConfig();
+    ICozmoBehaviorPtr stuckOnEdgeBehavior;
   };
-  
+
+  InstanceConfig _iConfig;
+
   struct DynamicVariables {
     DynamicVariables();
-    u16 cliffDetectThresholdAtStart;
     bool quitReaction;
     State state;
     bool gotCliff;
-    uint8_t detectedFlags;
+    bool gotStop;
     bool shouldStopDueToCharger;
+    bool wantsToBeActivated;
+
+    struct Persistent {
+      std::array<u16, CliffSensorComponent::kNumCliffSensors> cliffValsAtStart;
+    };
+    Persistent persistent;
   };
   
-  InstanceConfig _iConfig;
   DynamicVariables _dVars;
   
 }; // class BehaviorReactToCliff

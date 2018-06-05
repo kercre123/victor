@@ -11,6 +11,7 @@
  **/
 
 #include "clad/types/behaviorComponent/userIntent.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/cozmoContext.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
@@ -242,6 +243,8 @@ TEST(BehaviorHighLevelAI, PostBehaviorSuggestionsConsidered)
     }
   };
   
+  BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec(5.0) );
+  
   for( const auto& tup : expected ) {
     
     const auto& intentName = std::get<0>(tup);
@@ -256,11 +259,11 @@ TEST(BehaviorHighLevelAI, PostBehaviorSuggestionsConsidered)
     // set an intent pending
     auto intent = tih.GetCompletedIntent( intentName );
     auto intentTag = intent.GetTag();
-    // meet victor needs a name to activate
+    // meet victor needs a special name to activate and deactivate again
     if( intentTag == USER_INTENT(meet_victor) ) {
-      intent.Set_meet_victor( UserIntent_MeetVictor{"cozmo"} );
+      intent.Set_meet_victor( UserIntent_MeetVictor{"Special name for unit tests to end enrollment"} );
     }
-    uic.SetUserIntentPending( std::move(intent) );
+    uic.DevSetUserIntentPending( std::move(intent), UserIntentSource::Unknown );
     
     for( int i=0; i<10; ++i ) {
       if( !uic.IsUserIntentPending(intentTag) ) {

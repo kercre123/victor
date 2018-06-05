@@ -13,9 +13,15 @@
 // Our Includes
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/shared/factory/faultCodes.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+
+#ifdef IMU_DEBUG
+#include "hdr_histogram.h"
+#include "hdr_histogram_log.h"
+#endif
 
 #include <thread>
 #include <mutex>
@@ -105,6 +111,7 @@ bool OpenIMU()
   const char* err = imu_open();
   if (err) {
     AnkiError("HAL.InitIMU.OpenFailed", "%s", err);
+    FaultCode::DisplayFaultCode(FaultCode::IMU_FAILURE);
     return false;
   }
   imu_init();
@@ -115,6 +122,22 @@ bool OpenIMU()
 // Processing loop for reading imu on a thread
 void ProcessLoop()
 {
+#ifdef IMU_DEBUG
+  const s32 IMU_HDR_GRANULARITY = 1;
+  const double IMU_HDR_MULTIPLIER = 1.0;
+  const u32 IMU_HDR_RATE_LIMIT = 1000;
+  const u32 IMU_HDR_SIG_FIG = 1;
+  const u32 IMU_HDR_MIN_VALUE = 1;
+  const u32 IMU_HDR_MAX_VALUE = 30000;
+  struct hdr_histogram *_hdr;
+  u32 hdr_print_rate_limit = 0;
+
+  hdr_init(IMU_HDR_MIN_VALUE,
+           IMU_HDR_MAX_VALUE,
+           IMU_HDR_SIG_FIG,
+           &_hdr);
+#endif
+
   if(!OpenIMU())
   {
     return;
@@ -130,6 +153,16 @@ void ProcessLoop()
     auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     std::chrono::duration<double, std::micro> sleepTime = std::chrono::milliseconds(5) - elapsed;
     std::this_thread::sleep_for(sleepTime);
+
+#ifdef IMU_DEBUG
+    hdr_record_value(_hdr, elapsed.count());
+
+    if(!(++hdr_print_rate_limit % IMU_HDR_RATE_LIMIT)) {
+      hdr_percentiles_print(_hdr, stdout, IMU_HDR_GRANULARITY,
+                            IMU_HDR_MULTIPLIER, CLASSIC);
+      hdr_print_rate_limit = 0;
+    }
+#endif
   }
 
   imu_close();

@@ -13,14 +13,16 @@
  * Copyright: Anki, Inc. 2017
  */
 
+#include "engine/audio/engineRobotAudioClient.h"
 
 #include "audioEngine/multiplexer/audioCladMessageHelper.h"
-#include "engine/audio/engineRobotAudioClient.h"
+#include "engine/audio/audioBehaviorStackListener.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotManager.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "util/logging/logging.h"
@@ -32,6 +34,21 @@ namespace Audio {
 
 namespace AECH = AudioEngine::Multiplexer::CladMessageHelper; 
 namespace AMD = AudioMetaData;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+EngineRobotAudioClient::EngineRobotAudioClient()
+: IDependencyManagedComponent( this, RobotComponentID::EngineAudioClient )
+{
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void EngineRobotAudioClient::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+{
+  // Create & setup behavior listener
+  _behaviorListener.reset( new AudioBehaviorStackListener( *this, robot->GetContext() ) );
+  // Subscribe to audio messages
+  SubscribeAudioCallbackMessages( robot );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Engine Robot Audio Client Helper Methods
@@ -146,14 +163,24 @@ void EngineRobotAudioClient::SubscribeAudioCallbackMessages( Robot* robot )
   doRobotSubscribe(RobotInterface::RobotToEngineTag::audioCallbackError, &EngineRobotAudioClient::HandleRobotEngineMessage);
   
   // Add Listeners to GameToEngine messages
-  auto robotVolumeCallback = [this] ( const AnkiEvent<ExternalInterface::MessageGameToEngine>& message ) {
+  auto robotVolumeCallbackFunc = [this] ( const AnkiEvent<ExternalInterface::MessageGameToEngine>& message )
+  {
     const ExternalInterface::SetRobotVolume& msg = message.GetData().Get_SetRobotVolume();
     SetRobotMasterVolume( msg.volume );
   };
   
-  IExternalInterface* gameToEngineInterface = _robot->GetContext()->GetExternalInterface();
-  if ( gameToEngineInterface ) {
-    _signalHandles.push_back(gameToEngineInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume, robotVolumeCallback));
+  // Add Listenters to EngineToGame messages
+  auto audioBehaviorStackUpdateFunc = [this] ( const AnkiEvent<ExternalInterface::MessageEngineToGame>& message )
+  {
+    _behaviorListener->HandleAudioBehaviorMessage( message.GetData().Get_AudioBehaviorStackUpdate() );
+  };
+  
+  IExternalInterface* externalInterface = _robot->GetContext()->GetExternalInterface();
+  if ( externalInterface ) {
+    _signalHandles.push_back(externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume,
+                                                          robotVolumeCallbackFunc));
+    _signalHandles.push_back(externalInterface->Subscribe(ExternalInterface::MessageEngineToGameTag::AudioBehaviorStackUpdate,
+                                                          audioBehaviorStackUpdateFunc));
   }
 }
 

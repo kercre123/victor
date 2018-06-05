@@ -17,6 +17,8 @@
 
 #include "coretech/common/engine/math/point.h"
 
+#include "clad/types/cladPoint.h"
+
 #include <vector>
 
 namespace Anki {
@@ -25,6 +27,9 @@ using PolygonDimType = size_t;
 
 template<PolygonDimType N, typename T>
 class Quadrilateral;
+
+template<typename T>
+class Rectangle;
 
 class RotatedRectangle;
 
@@ -41,18 +46,27 @@ public:
 
   // Initialize polygon from list of points. Assumes points are already in clockwise order!
   Polygon(std::initializer_list< Point<N,T> > points);
-
+  
   // Construct from polygon living in one dimension higher. Last
   // dimension simply gets dropped. For example, this allows
   // construction of a 2D quad from a 3D polygon, by simply using the
   // (x,y) coordinates and ignoring z.
   Polygon(const Polygon<N+1,T>& other);
 
-  // convert from a rotated rectangle
-  Polygon(const RotatedRectangle& rect);
+  // convert from common 2d objects
+  explicit Polygon(const Rectangle<T>& rect);
+  explicit Polygon(const RotatedRectangle& rect);
+  explicit Polygon(const Quadrilateral<2, T>& quad);
+  
+  // Initialize 2D/3D polygons from a list of clad points. Assumes points are already in clockwise order!
+  Polygon(const std::vector<CladPoint2d>& cladPoints);
+  Polygon(const std::vector<CladPoint3d>& cladPoints);
+
+  // Get a vector of CladPoints
+  std::vector<CladPoint2d> ToCladPoint2dVector() const;
+  std::vector<CladPoint3d> ToCladPoint3dVector() const;
 
   // Import from a 2D quad
-  // NOTE: this is difficult to make into a constructor because of SortCornersClockwise
   void ImportQuad2d(const Quadrilateral<2, T>& quad);
 
   // Import from a quadrilateral > 2D
@@ -110,6 +124,8 @@ protected:
 
 using Poly2f = Polygon<2, f32>;
 using Poly3f = Polygon<3, f32>;
+using Poly2i = Polygon<2, s32>;
+using Poly3i = Polygon<3, s32>;
 
 }
 

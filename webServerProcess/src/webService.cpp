@@ -13,6 +13,12 @@
 
 #include "webService.h"
 
+#if !defined(ANKI_NO_WEBSERVER_ENABLED)
+  #define ANKI_NO_WEBSERVER_ENABLED 0
+#endif
+
+#if !ANKI_NO_WEBSERVER_ENABLED
+
 #if USE_DAS
 #include "DAS/DAS.h"
 #endif
@@ -214,9 +220,12 @@ void ExecCommand(const std::vector<std::string>& args)
 
 static int
 ProcessRequest(struct mg_connection *conn, WebService::WebService::RequestType requestType,
-               const std::string& param1, const std::string& param2, const std::string& param3 = "", bool waitAndSendResponse = true)
+               const std::string& param1, const std::string& param2, const std::string& param3 = "",
+               bool waitAndSendResponse = true, WebService::WebService::ExternalCallback extCallback = nullptr,
+               void* cbdata = nullptr)
 {
-  WebService::WebService::Request* requestPtr = new WebService::WebService::Request(requestType, param1, param2, param3);
+  WebService::WebService::Request* requestPtr = new WebService::WebService::Request(requestType, param1, param2,
+                                                                                    param3, extCallback, cbdata);
 
   struct mg_context *ctx = mg_get_context(conn);
   WebService::WebService* that = static_cast<WebService::WebService*>(mg_get_user_data(ctx));
@@ -436,24 +445,26 @@ TempEngineToApp(struct mg_connection *conn, void *cbdata)
                                         WebService::WebService::RequestType::RT_TempEngineToApp );
 }
 
-
 WebService::WebService::Request::Request(RequestType rt,
                                          const std::string& param1,
                                          const std::string& param2,
-                                         const std::string& param3)
+                                         const std::string& param3,
+                                         ExternalCallback extCallback,
+                                         void* cbdata)
 {
   _requestType = rt;
   _param1 = param1;
   _param2 = param2;
   _param3 = param3;
+  _externalCallback = extCallback;
+  _cbdata = cbdata,
   _result = "";
   _resultReady = false;
   _done = false;
 }
 WebService::WebService::Request::Request(RequestType rt, const std::string& param1, const std::string& param2)
-  : Request(rt, param1, param2, "")
+  : Request(rt, param1, param2, "", nullptr, nullptr)
 {
-
 }
 
 static int
@@ -576,8 +587,6 @@ static int GetMainRobotInfo(struct mg_connection *conn, void *cbdata)
 }
 
 
-#ifndef SIMULATOR
-
 static int GetPerfStats(struct mg_connection *conn, void *cbdata)
 {
   using namespace std::chrono;
@@ -698,6 +707,8 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
   return 1;
 }
 
+
+#ifndef SIMULATOR
 
 static int SystemCtl(struct mg_connection *conn, void *cbdata)
 {
@@ -943,8 +954,8 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
   mg_set_request_handler(_ctx, "/dasinfo", dasinfo, 0);
   mg_set_request_handler(_ctx, "/getinitialconfig", GetInitialConfig, 0);
   mg_set_request_handler(_ctx, "/getmainrobotinfo", GetMainRobotInfo, 0);
-#ifndef SIMULATOR
   mg_set_request_handler(_ctx, "/getperfstats", GetPerfStats, 0);
+#ifndef SIMULATOR
   mg_set_request_handler(_ctx, "/systemctl", SystemCtl, 0);
   mg_set_request_handler(_ctx, "/getprocessstatus", GetProcessStatus, 0);
   mg_set_request_handler(_ctx, "/processstatus", ProcessStatus, 0);
@@ -1063,7 +1074,6 @@ void WebService::Update()
             }
           }
           break;
-
         case RT_ConsoleVarList:
           {
             const std::string& key = requestPtr->_param1;
@@ -1082,7 +1092,6 @@ void WebService::Update()
             }
           }
           break;
-
         case RT_ConsoleFuncList:
           {
             const std::string& key = requestPtr->_param1;
@@ -1101,7 +1110,6 @@ void WebService::Update()
             }
           }
           break;
-
         case RT_ConsoleFuncCall:
           {
             const std::string& func = requestPtr->_param1;
@@ -1127,6 +1135,16 @@ void WebService::Update()
             }
             else {
               LOG_INFO("WebService.FuncCallNotFound", "CONSOLE_FUNC %s %s not found", func.c_str(), args.c_str());
+            }
+          }
+          break;
+        case RT_External:
+          {
+            // Call out to the external update handler
+            DEV_ASSERT(requestPtr->_externalCallback != nullptr, "Expecting valid externalCallback pointer");
+            const int returnCode = requestPtr->_externalCallback(requestPtr);
+            if (returnCode == 0) {
+              LOG_INFO("WebService.Update", "External callback failed");
             }
           }
           break;
@@ -1206,6 +1224,18 @@ void WebService::AddRequest(Request* requestPtr)
 void WebService::RegisterRequestHandler(std::string uri, mg_request_handler handler, void* cbdata)
 {
   mg_set_request_handler(_ctx, uri.c_str(), handler, cbdata);
+}
+
+int WebService::ProcessRequestExternal(struct mg_connection* conn, void* cbdata,
+                                       ExternalCallback extCallback, const std::string& param1,
+                                       const std::string& param2, const std::string& param3)
+{
+  // This is a request coming from an 'external' handler that wants WebService
+  // to process the request at the end of the tick (in WebService::Update)
+  static const bool waitAndSendResponse = true;
+  return ProcessRequest(conn, WebService::WebService::RequestType::RT_External,
+                        param1, param2, param3, waitAndSendResponse, extCallback,
+                        cbdata);
 }
 
 static std::string sanitize_tag(const std::string& tag)
@@ -1434,6 +1464,18 @@ void WebService::SendToWebSockets(const std::string& moduleName, const Json::Val
     }
   }
 }
+  
+bool WebService::IsWebVizClientSubscribed(const std::string& moduleName) const
+{
+  for( const auto& connData : _webSocketConnections ) {
+    if( (moduleName.empty() && !connData.subscribedModules.empty()) // any module subscribed
+        || (connData.subscribedModules.find( moduleName ) != connData.subscribedModules.end()) )
+    {
+      return true;
+    }
+  }
+  return false;
+}
 
 int WebService::HandleWebSocketsConnect(const struct mg_connection* conn, void* cbparams)
 {
@@ -1588,3 +1630,55 @@ void WebService::OnCloseWebSocket(const struct mg_connection* conn)
 } // namespace WebService
 } // namespace Cozmo
 } // namespace Anki
+
+#else
+
+namespace Anki {
+namespace Cozmo {
+namespace WebService {
+
+  WebService::WebService()
+  {
+  }
+
+  WebService::~WebService()
+  {
+  }
+
+  void WebService::Start(Anki::Util::Data::DataPlatform* /*platform*/, const Json::Value& /*config*/)
+  {
+  }
+
+  void WebService::Update()
+  {
+  }
+
+  void WebService::Stop()
+  {
+  }
+
+  void WebService::SendToWebSockets(const std::string& /*moduleName*/, const Json::Value& /*data*/) const
+  {
+  }
+
+  bool WebService::IsWebVizClientSubscribed(const std::string& /*moduleName*/) const
+  {
+    return false;
+  }
+
+  void WebService::RegisterRequestHandler(std::string /*uri*/, mg_request_handler /*handler*/, void* /*cbdata*/)
+  {
+  }
+
+  int WebService::ProcessRequestExternal(struct mg_connection* /*conn*/, void* /*cbdata*/,
+                                         ExternalCallback /*extCallback*/, const std::string& /*param1*/,
+                                         const std::string& /*param2*/, const std::string& /*param3*/)
+  {
+    return 1;
+  }
+
+} // namespace WebService
+} // namespace Cozmo
+} // namespace Anki
+
+#endif // ANKI_WEBSERVICE_ENABLED
