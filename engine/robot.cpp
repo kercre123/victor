@@ -1285,11 +1285,7 @@ Result Robot::Update()
   //////////// CameraService Update ////////////
   CameraService::getInstance()->Update();
 
-  const Result factoryRes = UpdateStartupChecks();
-  if(factoryRes != RESULT_OK)
-  {
-    return factoryRes;
-  }
+  UpdateStartupChecks();
   END_DONT_RUN_AFTER_PACKOUT
   
   if (!_gotStateMsgAfterTimeSync)

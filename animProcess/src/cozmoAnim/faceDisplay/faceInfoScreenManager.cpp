@@ -40,6 +40,7 @@
 #include "osState/osState.h"
 
 #include "anki/cozmo/shared/factory/emrHelper.h"
+#include "anki/cozmo/shared/factory/faultCodes.h"
 
 #include <chrono>
 #include <iomanip>
@@ -1225,6 +1226,13 @@ void FaceInfoScreenManager::EnablePairingScreen(bool enable)
 {
   if (enable && GetCurrScreenName() != ScreenName::Pairing) {
     LOG_INFO("FaceInfoScreenManager.EnablePairingScreen.Enable", "");
+    // Clear any fault code so we can draw to the face and
+    // actually pair. If the fault code is from a process crashing
+    // this will not execute when the button is double pressed since
+    // we need robot, anim, engine, and switchboard all communicating
+    // for pairing to start. If the fault code is something besides a
+    // process crash, this will clear it.
+    FaultCode::DisplayFaultCode(0);
     SetScreen(ScreenName::Pairing);
   } else if (!enable && GetCurrScreenName() == ScreenName::Pairing) {
     LOG_INFO("FaceInfoScreenManager.EnablePairingScreen.Disable", "");
