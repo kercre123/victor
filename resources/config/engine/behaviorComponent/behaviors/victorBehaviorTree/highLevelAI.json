@@ -185,7 +185,6 @@
           "to": "NappingOnCharger",
           "condition": {
             "conditionType": "SimpleMood",
-            "from": "MedStim",
             "to": "LowStim"
           }
         }
@@ -316,7 +315,6 @@
           "to": "Napping",
           "condition": {
             "conditionType": "SimpleMood",
-            "from": "MedStim",
             "to": "LowStim"
           }
         }
@@ -466,6 +464,13 @@
                 "customCondition": "WakeUpFromNap"
               },
               {
+                "conditionType": "IlluminationDetected",
+                "triggerStates": ["Illuminated"],
+                "confirmationTime": 1.0,
+                "confirmationMinNum": 3,
+                "ignoreUnknown": false
+              },
+              {
                 "conditionType": "Compound",
                 "and": [
                   {
@@ -562,6 +567,13 @@
               },
               {
                 "customCondition": "WakeUpFromNap"
+              },
+              {
+                "conditionType": "IlluminationDetected",
+                "triggerStates": ["Illuminated"],
+                "confirmationTime": 1.0,
+                "confirmationMinNum": 3,
+                "ignoreUnknown": false
               },
               {
                 "conditionType": "Compound",

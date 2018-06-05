@@ -57,9 +57,9 @@
   {
     "ClassifierConfigPath"       : "config/engine/vision/illuminationClassifier/illuminationClassifier.json",
 
-    "FeaturePercentileSubsample" : 4,                     // Stride for building histogram to compute percentiles
-    "IlluminatedMinProbability"  : 0.75,                  // Min probability to result in 'Illuminated' class
-    "DarkenedMaxProbability"     : 0.25                   // Max probability to result in 'Darkened' class
+    "FeaturePercentileSubsample" : 42,                    // Stride for building histogram to compute percentiles
+    "IlluminatedMinProbability"  : 0.85,                  // Min probability to result in 'Illuminated' class
+    "DarkenedMaxProbability"     : 0.15                   // Max probability to result in 'Darkened' class
   },
 
   "ImageQuality" :

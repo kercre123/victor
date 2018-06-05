@@ -1,13 +1,33 @@
 {
   "behaviorID"    : "ReactToIlluminationOff",
-  "behaviorClass" : "DispatcherPassThrough",
+  "behaviorClass" : "ReactToIllumination",
   
-  "delegateID" : "Sleeping",
+  "reactionEmotion": "ReactToDark",
+  
+  "positiveCondition": {
+    "conditionType"     : "IlluminationDetected",
+    "triggerStates"     : ["Darkened"],
+    "confirmationTime"  : 2.0,
+    "confirmationMinNum": 4,
+    "ignoreUnknown"     : false
+  },
+  
+  "negativeCondition": {
+    "conditionType"     : "IlluminationDetected",
+    "triggerStates"     : ["Illuminated"],
+    "confirmationTime"  : 2.0,
+    "confirmationMinNum": 4,
+    "ignoreUnknown"     : false
+  },
+  
+  "lookHeadAngle": 70,
+  "lookWaitTime": 10.0,
+  "lookTurnAngle": 45,
+  "numLookChecks": 3,
 
-  "wantsToBeActivatedCondition":
-    {"conditionType"     : "IlluminationDetected",
-     "targetState"       : "Darkened",
-     "confirmationTime"  : 10.0,
-     "confirmationMinNum": 10,
-     "ignoreUnknown"     : true}
+  "wantsToBeActivatedCondition": {
+    "conditionType"      : "BehaviorTimer",
+    "timerName"          : "ReactToIllumination",
+    "cooldown_s"         : 30.0
+  }
 }

@@ -111,6 +111,15 @@
           }
         ]
       }
+    },
+    {
+      "name": "ReactToDark",
+      "emotionAffectors": [
+        {
+          "emotionType" : "Stimulated",
+          "value" : -1.0
+        }
+      ]
     }
   ]
 }

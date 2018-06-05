@@ -143,6 +143,7 @@ enum uint_8 BehaviorClass {
   ReactToCliff,
   ReactToCubeTap,
   ReactToFrustration,
+  ReactToIllumination,
   ReactToMicDirection,
   ReactToMotion,
   ReactToMotorCalibration,

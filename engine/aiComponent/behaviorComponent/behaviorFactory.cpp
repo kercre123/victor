@@ -98,6 +98,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCliff.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCubeTap.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToFrustration.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToIllumination.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMicDirection.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMotion.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMotorCalibration.h"
@@ -680,6 +681,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::ReactToIllumination:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToIllumination(config));
+      break;
+    }
+
     case BehaviorClass::ReactToMicDirection:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToMicDirection(config));
