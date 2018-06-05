@@ -32,6 +32,10 @@ Result BehaviorPlaypenDriftCheck::OnBehaviorActivatedInternal()
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
+  // Enable tracking filtered touch sensor values
+  // Will be disabled by BehaviorPlaypenDriveForwards
+  robot.EnableTrackTouchSensorFilt(true);
+  
   robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingMics(PlaypenConfig::kDurationOfAudioToRecord_ms,
                                                                                      false,
                                                                                      GetLogger().GetLogName()+"head_lift")));

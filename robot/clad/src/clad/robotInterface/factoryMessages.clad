@@ -9,6 +9,9 @@ enum uint_8 FactoryTest {
   MIC_TEST,
   SPEAKER_TEST,
 
+  // Overload this message for touch sensor invalid
+  // playpen failure message
+  TOUCH_SENSOR_INVALID,
   COUNT
 }
 

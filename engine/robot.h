@@ -626,8 +626,24 @@ public:
 
   void Shutdown() { _toldToShutdown = true; }
   bool ToldToShutdown() const { return _toldToShutdown; }
+
+  // Calculates min, max, and stddev of the recent filtered touch sensor values
+  void GetTouchSensorFiltResults(f32& min, f32& max, f32& stddev) const;
+
+  // Whether or not to store filtered touch sensor values
+  void EnableTrackTouchSensorFilt(bool enable)
+  {
+    _trackTouchSensorFilt = enable;
+    if(enable)
+    {
+      _touchSensorFiltDeque.clear();
+    }
+  }
   
-protected:  
+protected:
+  bool _trackTouchSensorFilt = false;
+  std::deque<f32> _touchSensorFiltDeque;
+  
   bool _toldToShutdown = false;
   
   std::unique_ptr<PoseOriginList> _poseOrigins;

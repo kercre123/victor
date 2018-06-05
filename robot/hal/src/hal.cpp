@@ -50,6 +50,12 @@ namespace { // "Private members"
   // so we cache the last non-0xFFFF value and return this as the latest touch sensor reading
   u16 lastValidTouchIntensity_;
 
+  bool touchSensorRawOutsideValidRange_ = false; 
+  static const size_t TOUCH_BOX_FILTER_SIZE = 80;
+  u16 touchBoxFilter_[TOUCH_BOX_FILTER_SIZE] = {0};
+  size_t touchBoxFilterInd_ = 0;
+  u32 touchBoxFilterSum_ = 0;
+  
   PowerState desiredPowerMode_;
 
   // Flag to prevent spamming of unexepected power mode warning
@@ -448,8 +454,40 @@ void ProcessTouchLevel(void)
 {
   if(bodyData_->touchLevel[0] != 0xFFFF) {
     lastValidTouchIntensity_ = bodyData_->touchLevel[HAL::BUTTON_CAPACITIVE];
+
+    #if FACTORY_TEST
+    // If the raw touch sensor value is outside our valid ranges
+    if(lastValidTouchIntensity_ < HAL::MIN_VALID_RAW_TOUCH || lastValidTouchIntensity_ > HAL::MAX_VALID_RAW_TOUCH)
+    {
+      AnkiInfo("ProcessTouchLevel.OutsideValidRange","%u", lastValidTouchIntensity_);
+      touchSensorRawOutsideValidRange_ = true;
+    }
+
+    // Add reading to box filter array and sum
+    u16& valueToOverride = touchBoxFilter_[touchBoxFilterInd_++];
+    touchBoxFilterSum_ -= valueToOverride;
+    touchBoxFilterSum_ += lastValidTouchIntensity_;
+    valueToOverride = lastValidTouchIntensity_;
+    
+    if(touchBoxFilterInd_ >= TOUCH_BOX_FILTER_SIZE)
+    {
+      touchBoxFilterInd_ = 0;
+    }
+    #endif
   }
 }
+
+#if FACTORY_TEST
+bool HAL::IsTouchSensorValid()
+{
+  return !touchSensorRawOutsideValidRange_;
+}
+
+f32 HAL::GetTouchSensorFilt()
+{
+  return touchBoxFilterSum_ / ((f32)TOUCH_BOX_FILTER_SIZE);
+}
+#endif
 
 // Get the number of microseconds since boot
 u32 HAL::GetMicroCounter(void)
