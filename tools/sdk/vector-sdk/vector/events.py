@@ -6,6 +6,9 @@ Event handler used to make functions subscribe to robot events.
 
 __all__ = ['EventHandler']
 
+import asyncio
+from concurrent.futures import CancelledError
+from grpc._channel import _Rendezvous
 import logging
 
 from . import util
@@ -30,17 +33,21 @@ class EventHandler:
 
     def close(self):
         self.listening_for_events = False
+        self.event_task.cancel()
         self._loop.run_until_complete(self.event_task)
 
     async def _handle_events(self):
-        req = protocol.EventRequest()
-        async for e in self._connection.EventStream(req):
-            if not self.listening_for_events:
-                break
-            event_type = e.event.WhichOneof("event_type")
-            if event_type in self.subscribers.keys():
-                for func in self.subscribers[event_type]:
-                    func(event_type, getattr(e.event, event_type))
+        try:
+            req = protocol.EventRequest()
+            async for e in self._connection.EventStream(req):
+                if not self.listening_for_events:
+                    break
+                event_type = e.event.WhichOneof("event_type")
+                if event_type in self.subscribers.keys():
+                    for func in self.subscribers[event_type]:
+                        func(event_type, getattr(e.event, event_type))
+        except CancelledError:
+            self.logger.debug('Event handler task was cancelled. This is expected during disconnection.')
 
     def subscribe(self, event_type, func):
         if event_type not in self.subscribers.keys():

@@ -1,2 +1,2 @@
-aiogrpc
+aiogrpc>=1.4
 googleapis-common-protos

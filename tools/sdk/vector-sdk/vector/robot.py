@@ -38,14 +38,15 @@ class Robot:
             loop = asyncio.get_event_loop()
         self.loop = loop
         self.address = ':'.join([ip, port])
+        self.channel = None
         self.connection = None
         self.events = events.EventHandler(self.loop)
 
     def connect(self):
         credentials = aiogrpc.ssl_channel_credentials(root_certificates=self.trusted_certs)
         self.logger.info("Connecting to {}".format(self.address))
-        channel = aiogrpc.secure_channel(self.address, credentials)
-        self.connection = client.ExternalInterfaceStub(channel)
+        self.channel = aiogrpc.secure_channel(self.address, credentials)
+        self.connection = client.ExternalInterfaceStub(self.channel)
         self.events.start(self.connection)
 
     def disconnect(self, wait_for_tasks=True):
@@ -53,6 +54,8 @@ class Robot:
             for task in self.pending:
                 task.wait_for_completed()
         self.events.close()
+        if self.channel:
+            self.loop.run_until_complete(self.channel.close())
         if self.is_loop_owner:
             self.loop.close()
 
