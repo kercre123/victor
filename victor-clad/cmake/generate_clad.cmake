@@ -79,6 +79,7 @@ function(generate_clad)
         add_library(${genclad_LIBRARY} STATIC
             ${OUTPUT_FILES}
         )
+        anki_build_target_license(${genclad_LIBRARY} "ANKI")
     endif()
 
     if (genclad_TARGET)
@@ -151,6 +152,7 @@ function(generate_clad_cpplite)
         add_library(${genclad_LIBRARY} STATIC
             ${CLAD_GEN_OUTPUTS}
         )
+        anki_build_target_license(${genclad_LIBRARY} "ANKI")
     endif()
 endfunction()
 
@@ -214,6 +216,7 @@ function(generate_clad_c)
         add_library(${genclad_LIBRARY} STATIC
             ${CLAD_GEN_OUTPUTS}
         )
+        anki_build_target_license(${genclad_LIBRARY} "ANKI")
     endif()
 endfunction()
 
@@ -299,6 +302,7 @@ function(generate_clad_cpp)
         add_library(${genclad_LIBRARY} STATIC
             ${CLAD_GEN_OUTPUTS}
         )
+        anki_build_target_license(${genclad_LIBRARY} "ANKI")
     endif()
 
 endfunction()

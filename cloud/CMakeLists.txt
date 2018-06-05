@@ -36,10 +36,12 @@ endmacro()
 
 macro(_build_cloud_executable target_name)
   anki_build_go_executable(${target_name} ${ANKI_SRCLIST_DIR} "${__extra_go_deps}")
+  anki_build_target_license(${target_name} "ANKI")
 endmacro()
 
 macro(_build_cloud_c_library target_name header_name)
   anki_build_go_c_library(${target_name} ${header_name} ${ANKI_SRCLIST_DIR} "${__extra_go_deps}")
+  anki_build_target_license(${target_name} "ANKI")
 endmacro()
 
 # voicetest project (mac only)
@@ -52,6 +54,7 @@ if (MACOSX)
 
   # create C target
   anki_build_cxx_executable(voicetest ${ANKI_SRCLIST_DIR} ${VOICEGO_HEADER})
+  anki_build_target_license(voicetest "ANKI")
   anki_disable_default_build(voicetest)
 
   # tell voicetest where to find voicego.h
@@ -81,6 +84,7 @@ if (MACOSX)
   _add_chipper_flags(proctest_go)
   get_filename_component(PROCTEST_HEADER_DIR ${PROCTEST_GO_HEADER} DIRECTORY)
   anki_build_cxx_executable(proctest ${ANKI_SRCLIST_DIR} ${PROCTEST_GO_HEADER})
+  anki_build_target_license(proctest "ANKI")
   target_include_directories(proctest PUBLIC ${PROCTEST_HEADER_DIR})
   target_compile_definitions(proctest PUBLIC "HEADER_NAME=\"proctest_go.h\"")
   target_link_libraries(proctest PRIVATE util_audio proctest_go ${SECURITY_FRAMEWORK})
@@ -95,6 +99,7 @@ endif()
 _build_cloud_executable(ipctest_go)
 anki_disable_default_build(ipctest_go)
 anki_build_cxx_executable(ipctest_cpp ${ANKI_SRCLIST_DIR})
+anki_build_target_license(ipctest_cpp "ANKI")
 target_link_libraries(ipctest_cpp PRIVATE cti_messaging)
 anki_disable_default_build(ipctest_cpp)
 
@@ -155,3 +160,4 @@ add_custom_command(
   DEPENDS "${GATEWAY_PROTO_FILES}" "${GATEWAY_PROTOC_GENERATORS}"
 )
 _build_cloud_executable(vic-gateway)
+_add_chipper_flags(vic-gateway)

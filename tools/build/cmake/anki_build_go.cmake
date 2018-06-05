@@ -87,6 +87,7 @@ macro(__anki_build_go_fake_target target_name)
   define_property(TARGET PROPERTY GO_LDFLAGS BRIEF_DOCS "a" FULL_DOCS "b")
   set_target_properties(${target_name}_fake_dep PROPERTIES EXCLUDE_FROM_ALL TRUE
                                                            INCLUDE_DIRECTORIES "")
+  anki_build_target_license(${target_name}_fake_dep "ANKI")
 endmacro()
 
 #

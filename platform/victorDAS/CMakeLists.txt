@@ -8,6 +8,7 @@ include(anki_build_strip)
 if (VICOS)
 
   anki_build_cxx_library(victorDAS ${ANKI_SRCLIST_DIR})
+  anki_build_target_license(victorDAS "ANKI")
 
   target_link_libraries(victorDAS
     PUBLIC

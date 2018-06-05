@@ -18,6 +18,7 @@ include(anki_build_strip)
 if (VICOS)
 
   anki_build_cxx_library(victorCrashReports ${ANKI_SRCLIST_DIR} STATIC)
+  anki_build_target_license(victorCrashReports "ANKI")
 
   target_include_directories(victorCrashReports
     PRIVATE

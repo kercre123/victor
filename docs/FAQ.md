@@ -155,3 +155,12 @@ to get:
 ```
 ### How do I increase the max files limit on macos Sierra and greater? (when seeing an error like `[Errno 24] Too many open files`)
   - Follow instructions at https://gist.github.com/tombigel/d503800a282fcadbee14b537735d202c
+
+### Is this Open Source license ok for use?
+  - https://ankiinc.atlassian.net/wiki/spaces/ET/pages/380436502/Open+Source+Software
+
+### I just downloaded this library from github, can I use it?
+  - https://ankiinc.atlassian.net/wiki/spaces/ET/pages/380436502/Open+Source+Software
+
+### How do I add licensing information to a library I just added?
+  More information [here](/docs/development/licenses.md)

@@ -9,6 +9,7 @@ include(anki_build_cxx)
 if (VICOS)
 
   anki_build_cxx_executable(vic-dasmgr ${ANKI_SRCLIST_DIR})
+  anki_build_target_license(vic-dasmgr "ANKI")
 
   target_include_directories(vic-dasmgr
     PRIVATE

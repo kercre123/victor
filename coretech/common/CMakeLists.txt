@@ -14,6 +14,7 @@ endif()
 include(anki_build_cxx)
 
 anki_build_cxx_library(cti_common ${ANKI_SRCLIST_DIR} STATIC)
+anki_build_target_license(cti_common "ANKI" "CC0")
 
 target_compile_definitions(cti_common
   PUBLIC
@@ -71,6 +72,7 @@ add_dependencies(cti_common cti_common_clad)
 #
 
 anki_build_cxx_library(cti_common_robot ${ANKI_SRCLIST_DIR} STATIC)
+anki_build_target_license(cti_common_robot "ANKI")
 
 target_link_libraries(cti_common_robot
   PUBLIC
@@ -105,6 +107,7 @@ if (MACOSX)
   #
 
   anki_build_cxx_executable(cti_common_test_shared ${ANKI_SRCLIST_DIR})
+  anki_build_target_license(cti_common_test_shared "ANKI")
 
   target_compile_options(cti_common_test_shared
     PRIVATE
@@ -129,6 +132,7 @@ if (MACOSX)
   #
 
   anki_build_cxx_executable(cti_common_test_engine ${ANKI_SRCLIST_DIR})
+  anki_build_target_license(cti_common_test_engine "ANKI")
 
   target_compile_definitions(cti_common_test_engine
     PRIVATE

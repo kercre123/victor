@@ -5,6 +5,7 @@ project(osState)
 include(anki_build_cxx)
 
 anki_build_cxx_library(osState ${ANKI_SRCLIST_DIR})
+anki_build_target_license(osState "ANKI")
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_COMPILE_DEFS "")

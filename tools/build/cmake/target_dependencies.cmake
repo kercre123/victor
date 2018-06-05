@@ -1,0 +1,37 @@
+function(target_dependencies target RESULT)
+  get_property(link_libraries TARGET ${target} PROPERTY LINK_LIBRARIES)
+
+  set(all_dependencies)
+
+  list(LENGTH link_libraries count)
+  while(count GREATER 0)
+    list(GET link_libraries 0 target)
+    list(REMOVE_AT link_libraries 0)
+
+    if(TARGET ${target})
+      list(APPEND all_dependencies ${target})
+
+      get_property(type TARGET ${target} PROPERTY TYPE)
+      if(${type} STREQUAL "INTERFACE_LIBRARY")
+        get_property(additional_link_libraries TARGET ${target} PROPERTY INTERFACE_LINK_LIBRARIES)
+        list(APPEND link_libraries ${additional_link_libraries})
+      else()
+        get_property(additional_link_libraries TARGET ${target} PROPERTY LINK_LIBRARIES)
+        list(APPEND link_libraries ${additional_link_libraries})
+      endif()
+    else()
+      list(APPEND all_dependencies ${target})
+    endif()
+
+    list(LENGTH link_libraries count)
+    if(count)
+        list(REMOVE_DUPLICATES link_libraries)
+    endif()
+  endwhile()
+
+  list(LENGTH all_dependencies count)
+  if(count)
+    list(REMOVE_DUPLICATES all_dependencies)
+  endif()
+  set(${RESULT} "${all_dependencies}" PARENT_SCOPE)
+endfunction()

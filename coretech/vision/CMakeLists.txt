@@ -18,6 +18,7 @@ if(VISION_PROFILER)
 endif()
 
 anki_build_cxx_library(cti_vision ${ANKI_SRCLIST_DIR} STATIC)
+anki_build_target_license(cti_vision "ANKI" "BSD-2" "BSD-3")
 
 set_target_properties(cti_vision 
   PROPERTIES
@@ -86,6 +87,7 @@ if (MACOSX)
   include(gtest)
 
   anki_build_cxx_executable(cti_vision_test ${ANKI_SRCLIST_DIR})
+  anki_build_target_license(cti_vision_test "ANKI")
 
   target_link_libraries(cti_vision_test
     PRIVATE

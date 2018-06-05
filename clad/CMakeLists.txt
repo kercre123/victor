@@ -95,6 +95,8 @@ target_link_libraries(robot_clad
     clad
 )
 
+anki_build_target_license(robot_clad "ANKI")
+
 file(STRINGS "${ANKI_SRCLIST_DIR}/viz_clad.srcs.lst" ROBOT_SRCS)
 generate_clad_cpp(
     SRCS ${ROBOT_SRCS}
@@ -224,6 +226,8 @@ target_link_libraries(cloud_clad_cpp
     clad
 )
 
+anki_build_target_license(cloud_clad_cpp "ANKI")
+
 add_custom_target(engine_clad_python_hash ALL DEPENDS ${CLAD_HASH_PY_GEN_SRCS})
 add_custom_target(engine_clad_csharp_hash ALL DEPENDS ${CLAD_HASH_CS_GEN_SRCS})
 
@@ -246,3 +250,5 @@ target_link_libraries(engine_clad
     cti_vision_clad
     util_clad
 )
+
+anki_build_target_license(engine_clad "ANKI")

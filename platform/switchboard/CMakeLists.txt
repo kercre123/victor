@@ -8,6 +8,7 @@ include(anki_build_cxx)
 include(sodium)
 
 anki_build_cxx_library(switchboard ${ANKI_SRCLIST_DIR} STATIC)
+anki_build_target_license(switchboard "ANKI" "CC0")
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
@@ -65,6 +66,7 @@ target_include_directories(switchboard
 )
 
 anki_build_cxx_executable(vic-switchboard ${ANKI_SRCLIST_DIR})
+anki_build_target_license(vic-switchboard "ANKI")
 
 target_link_libraries(vic-switchboard
   PRIVATE

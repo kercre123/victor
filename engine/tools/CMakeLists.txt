@@ -20,6 +20,7 @@ elseif (MACOSX)
 endif()
 
 anki_build_cxx_executable(vic-engine ${ANKI_SRCLIST_DIR})
+anki_build_target_license(vic-engine "ANKI")
 
 target_link_libraries(vic-engine
   PRIVATE

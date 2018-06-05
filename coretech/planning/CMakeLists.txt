@@ -15,6 +15,7 @@ include(anki_build_cxx)
 #
 
 anki_build_cxx_library(cti_planning ${ANKI_SRCLIST_DIR} STATIC)
+anki_build_target_license(cti_planning "ANKI")
 
 target_compile_definitions(cti_planning
   PRIVATE
@@ -50,6 +51,7 @@ target_include_directories(cti_planning
 #
 
 anki_build_cxx_library(cti_planning_robot ${ANKI_SRCLIST_DIR} STATIC)
+anki_build_target_license(cti_planning_robot "ANKI")
 
 target_compile_definitions(cti_planning_robot
   PRIVATE
@@ -87,6 +89,7 @@ if (MACOSX)
   #
   
   anki_build_cxx_executable(cti_planning_standalone ${ANKI_SRCLIST_DIR})
+  anki_build_target_license(cti_planning_standalone "ANKI")
   target_compile_definitions(cti_planning_standalone
     PRIVATE
     CORETECH_ENGINE
@@ -108,6 +111,7 @@ if (MACOSX)
   #
 
   anki_build_cxx_executable(cti_planning_test ${ANKI_SRCLIST_DIR})
+  anki_build_target_license(cti_planning_test "ANKI")
 
   target_compile_definitions(cti_planning_test
     PRIVATE

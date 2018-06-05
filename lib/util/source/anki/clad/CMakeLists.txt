@@ -40,6 +40,8 @@ target_link_libraries(util_clad
     clad
 )
 
+anki_build_target_license(util_clad "ANKI")
+
 anki_build_strip(TARGET util_clad)
 
 generate_clad_py(

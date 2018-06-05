@@ -39,6 +39,9 @@ endif()
 
 if (NOT TARGET hdr_histogram)
   add_subdirectory("source/3rd/hdrhistogram_c")
+  foreach(target hdr_histogram hdr_histogram_static hdr_histogram_test hdr_histogram_log_test hdr_atomic_test perftest hdr_decoder)
+  anki_build_target_license(${target} "BSD-2,${CMAKE_CURRENT_SOURCE_DIR}/source/3rd/hdrhistogram_c/LICENSE.txt")
+  endforeach()
 endif()
 
 # Disable webp until we are going to use it

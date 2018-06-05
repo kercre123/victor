@@ -14,6 +14,7 @@ set(JSONCPP_INCLUDE_DIR ${util}/source/3rd/jsoncpp)
 set(JSONCPP_LIBRARY jsoncpp)
 
 anki_build_cxx_executable(utilUnitTest ${ANKI_SRCLIST_DIR})
+anki_build_target_license(utilUnitTest "ANKI")
 
 target_compile_definitions(utilUnitTest PRIVATE
   UNIT_TEST=1
