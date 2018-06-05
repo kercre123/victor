@@ -3,7 +3,8 @@
   "behaviorClass" : "DispatcherQueue",
 
   "associatedActiveFeature": "Sleeping",
-  
+  "emotionEventOnActivated": "Sleeping",
+
   "behaviors": [
     "GoToSleep",
     "SleepingInternal"

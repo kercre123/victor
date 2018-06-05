@@ -147,7 +147,16 @@
           "value": -0.25
         }
       ]
-    }    
+    },
+    {
+      "name": "Sleeping",
+      "emotionAffectors": [                     
+        {
+          "emotionType": "Stimulated",
+          "value": -1.0
+        }
+      ]
+    }
   ]
 }
 
