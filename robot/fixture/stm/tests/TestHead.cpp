@@ -116,6 +116,23 @@ void TestHeadDutProgram(void)
     throw ERROR_HEADPGM; //default
 }
 
+static void TestHeadFuseLockdown(void)
+{
+  //Power cycle to blow the fuses (only if proper secdat was written)
+  Board::powerOff(PWR_VEXT);
+  Board::powerOff(PWR_VBAT);
+  Timer::delayMs(1000);
+  
+  ConsolePrintf("blow secdat fuses...");
+  Board::powerOn(PWR_VEXT);
+  Board::powerOn(PWR_VBAT);
+  Timer::delayMs(5000); //thar she blows!
+  ConsolePrintf("done\n");
+  
+  Board::powerOff(PWR_VEXT);
+  Board::powerOff(PWR_VBAT);
+}
+
 static void HeadFlexFlowReport(void)
 {
   FLEXFLOW::printf("<flex> ESN %08x </flex>\n", headnfo.esn);
@@ -126,6 +143,7 @@ TestFunction* TestHead1GetTests(void)
   static TestFunction m_tests[] = {
     TestHeadForceBoot,
     TestHeadDutProgram,
+    TestHeadFuseLockdown,
     HeadFlexFlowReport,
     NULL,
   };
