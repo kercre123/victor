@@ -18,15 +18,18 @@ extern "C" {
 #define FIXMODE_BODY0A         4
 #define FIXMODE_BODY0          5
 #define FIXMODE_BODY1          6
-#define FIXMODE_BODY2          7
-#define FIXMODE_BODY3          8
+#define FIXMODE_BODY1_OL       7
+#define FIXMODE_BODY2          8
+#define FIXMODE_BODY3          9
 
 #define FIXMODE_HEAD1          11
-#define FIXMODE_HEAD2          12
-#define FIXMODE_HELPER1        13
+#define FIXMODE_HEAD1_OL       12
+#define FIXMODE_HEAD2          13
+#define FIXMODE_HELPER1        14
 
 #define FIXMODE_BACKPACK1      16
 
+#define FIXMODE_CUBE_OL        18 /*DEBUG*/
 #define FIXMODE_CUBEFCC        19
 #define FIXMODE_CUBE0          20 /*DEBUG*/
 #define FIXMODE_CUBE1          21
@@ -36,9 +39,11 @@ extern "C" {
 #define FIXMODE_ROBOT1         26
 #define FIXMODE_ROBOT2         27
 #define FIXMODE_ROBOT3         28
+#define FIXMODE_ROBOT3_OL      29
 
 #define FIXMODE_INFO           31
 #define FIXMODE_PACKOUT        33
+#define FIXMODE_PACKOUT_OL     34
 #define FIXMODE_RECHARGE0      37
 #define FIXMODE_RECHARGE1      38
 
@@ -77,6 +82,7 @@ TestFunction* fixtureGetTests(void); //gets tests for the current fixmode
 int           fixtureGetTestCount(void); //gets the # of test functions for the current fixmode
 bool          fixtureValidateFixmodeInfo(bool print=0); //dev tool - validate const info array. print=1 -> print the array to console
 uint32_t      fixtureGetSerial(void); // Get a serial number for a device in the normal 12.20 fixture.sequence format
+uint32_t      fixtureReadSerial(void); // Read-only (NO MODIFY) current serial number position 12.20 format
 int           fixtureReadSequence(void); //read the current sequence #. DOES NOT make any sequence changes. reporting API only.
 #endif
 
@@ -90,18 +96,18 @@ int           fixtureReadSequence(void); //read the current sequence #. DOES NOT
   { "BODY0A"      , TestBodyDetect      , TestBody0GetTests           , TestBodyCleanup             , FIXMODE_BODY0A      },  /*4*/   \
   { "BODY0"       , TestBodyDetect      , TestBody0GetTests           , TestBodyCleanup             , FIXMODE_BODY0       },  /*5*/   \
   { "BODY1"       , TestBodyDetect      , TestBody1GetTests           , TestBodyCleanup             , FIXMODE_BODY1       },  /*6*/   \
-  { "BODY2"       , TestBodyDetect      , TestBody2GetTests           , TestBodyCleanup             , FIXMODE_BODY2       },  /*7*/   \
-  { "BODY3"       , TestBodyDetect      , TestBody3GetTests           , TestBodyCleanup             , FIXMODE_BODY3       },  /*8*/   \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
+  { "BODY1-OL"    , TestBodyDetect      , TestBody1GetTests           , TestBodyCleanup             , FIXMODE_BODY1_OL    },  /*7*/   \
+  { "BODY2"       , TestBodyDetect      , TestBody2GetTests           , TestBodyCleanup             , FIXMODE_BODY2       },  /*8*/   \
+  { "BODY3"       , TestBodyDetect      , TestBody3GetTests           , TestBodyCleanup             , FIXMODE_BODY3       },  /*9*/   \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { "HEAD1"       , TestHeadDetect      , TestHead1GetTests           , TestHeadCleanup             , FIXMODE_HEAD1       },  /*11*/  \
-  { "HEAD2"       , TestHeadDetect      , TestHead2GetTests           , TestHeadCleanup             , FIXMODE_HEAD2       },  /*12*/  \
-  { "HELPER1"     , TestHeadDetect      , TestHelper1GetTests         , TestHeadCleanup             , FIXMODE_HELPER1     },  /*13*/  \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
+  { "HEAD1-OL"    , TestHeadDetect      , TestHead1GetTests           , TestHeadCleanup             , FIXMODE_HEAD1_OL    },  /*12*/  \
+  { "HEAD2"       , TestHeadDetect      , TestHead2GetTests           , TestHeadCleanup             , FIXMODE_HEAD2       },  /*13*/  \
+  { "HELPER1"     , TestHeadDetect      , TestHelper1GetTests         , TestHeadCleanup             , FIXMODE_HELPER1     },  /*14*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { "BACKPACK1"   , TestBackpackDetect  , TestBackpack1GetTests       , TestBackpackCleanup         , FIXMODE_BACKPACK1   },  /*16*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
+  { "CUBE-OL"     , TestCubeDetect      , TestCubeOLGetTests          , TestCubeCleanup             , FIXMODE_CUBE_OL     },  /*18*/  \
   { "CUBEFCC"     , TestCubeDetect      , TestCubeFccGetTests         , TestCubeCleanup             , FIXMODE_CUBEFCC     },  /*19*/  \
   { "CUBE0"       , TestCubeDetect      , TestCube0GetTests           , TestCubeCleanup             , FIXMODE_CUBE0       },  /*20*/  \
   { "CUBE1"       , TestCubeDetect      , TestCube1GetTests           , TestCubeCleanup             , FIXMODE_CUBE1       },  /*21*/  \
@@ -112,12 +118,12 @@ int           fixtureReadSequence(void); //read the current sequence #. DOES NOT
   { "ROBOT1"      , TestRobotDetect     , TestRobot1GetTests          , TestRobotCleanup            , FIXMODE_ROBOT1      },  /*26*/  \
   { "ROBOT2"      , TestRobotDetect     , TestRobot2GetTests          , TestRobotCleanup            , FIXMODE_ROBOT2      },  /*27*/  \
   { "ROBOT3"      , TestRobotDetect     , TestRobot3GetTests          , TestRobotCleanup            , FIXMODE_ROBOT3      },  /*28*/  \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
+  { "ROBOT3-OL"   , TestRobotDetect     , TestRobot3GetTests          , TestRobotCleanup            , FIXMODE_ROBOT3_OL   },  /*29*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { "ROBOTINFO"   , TestRobotDetect     , TestRobotInfoGetTests       , TestRobotCleanup            , FIXMODE_INFO        },  /*31*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { "PACKOUT"     , TestRobotDetect     , TestRobotPackoutGetTests    , TestRobotCleanup            , FIXMODE_PACKOUT     },  /*33*/  \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
+  { "PACKOUT-OL"  , TestRobotDetect     , TestRobotPackoutGetTests    , TestRobotCleanup            , FIXMODE_PACKOUT_OL  },  /*34*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { "RECHARGE0"   , TestRobotDetect     , TestRobotRechargeGetTests   , TestRobotCleanup            , FIXMODE_RECHARGE0   },  /*37*/  \
