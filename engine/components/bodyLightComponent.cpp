@@ -69,20 +69,16 @@ void BodyLightComponent::UpdateChargingLightConfig()
   BackpackLightsState state = BackpackLightsState::OffCharger;
   if(_robot->IsOnCharger())
   {
-    if(_robot->IsChargerOOS())
-    {
-      state = BackpackLightsState::BadCharger;
-    }
-    // If battery voltage is less than 3V it must be on charger
-    // with a disconnected battery which should be indicated with 
-    // Charged lights.
-    else if(_robot->IsCharging() && _robot->GetBatteryVoltage() > 3.f)
+    // Robot should normally be in charging state for 30 minutes
+    // after being placed on charger.
+    if(_robot->IsCharging())
     {
       state = BackpackLightsState::Charging;
     }
-    else
+    // If for any reason the robot is on charger, but not charging, show idle lights.
+    else 
     {
-      state = BackpackLightsState::Charged;
+      state = BackpackLightsState::Idle_09;  // Empty lights
     }
   }
   else if(_robot->GetBatteryVoltage() < LOW_BATTERY_THRESH_VOLTS)
@@ -94,7 +90,7 @@ void BodyLightComponent::UpdateChargingLightConfig()
 #if FACTORY_TEST
   else
   {
-    state = BackpackLightsState::Idle_09;
+    state = BackpackLightsState::Idle_09;  // Empty lights
   }
 #endif
   
