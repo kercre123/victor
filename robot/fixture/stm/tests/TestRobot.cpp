@@ -874,7 +874,7 @@ static void btn_sample_(int *press_cnt, int *release_cnt)
 
 void TestRobotButton(void)
 {
-  led_manage_(1); //reset leds
+  led_manage_(1, 250*1000, RCOM_PRINT_LEVEL_CMD); //reset leds
   
   ConsolePrintf("Waiting for button...\n");
   
