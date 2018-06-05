@@ -5,27 +5,27 @@ asset_project(
                 ('assets', 'cladToFileMaps/*.json'),
                 ('assets', 'RewardedActions/RewardedActions.json'),
                 ('assets', 'cubeFirmware/cube.dfu'),
-                ('externals/anki-thirdparty/sensory', 'hey_cosmo_and_commands/trigger_anki_x_en_us_01_hey_cosmo_sfs14_b3e3cbba/anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery01_am.raw'),
-                ('externals/anki-thirdparty/sensory', 'hey_cosmo_and_commands/trigger_anki_x_en_us_01_hey_cosmo_sfs14_b3e3cbba/anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery01_search_4.raw'),
-                ('externals/anki-thirdparty/sensory', 'hey_cosmo_and_commands/trigger_anki_x_en_us_02_hey_cosmo_sfs14_b3e3cbba/anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery02_am.raw'),
-                ('externals/anki-thirdparty/sensory', 'hey_cosmo_and_commands/trigger_anki_x_en_us_02_hey_cosmo_sfs14_b3e3cbba/anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery02_search_4.raw'),
-                ('externals/anki-thirdparty/sensory', 'hey_cosmo_and_commands/trigger_anki_x_en_us_01_cosmo_sfs14_b3e3cbba/anki_x_cosmo_en_us_sfs14_b3e3cbba_delivery01_am.raw'),
-                ('externals/anki-thirdparty/sensory', 'hey_cosmo_and_commands/trigger_anki_x_en_us_01_cosmo_sfs14_b3e3cbba/anki_x_cosmo_en_us_sfs14_b3e3cbba_delivery01_search_10.raw'),
-                ('externals/anki-thirdparty/sensory', 'hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b/anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_am.raw'),
-                ('externals/anki-thirdparty/sensory', 'hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b/anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_5.raw'),
-                ('externals/anki-thirdparty/sensory', 'hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b/anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_7.raw'),
-                ('externals/anki-thirdparty/sensory', 'hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b/anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_10.raw'),
-                ('externals/anki-thirdparty/sensory', 'hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b/anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_14.raw'),
-                ('externals/anki-thirdparty/sensory', 'hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b/anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_18.raw'),
-                ('externals/anki-thirdparty/sensory', 'hey_vector/trigger_ai_x_fr_01s_heyvector_sfs14_a51d9f15/ai_x_heyvector_fr_sfs14_a51d9f15_delivery01s_am.raw'),
-                ('externals/anki-thirdparty/sensory', 'hey_vector/trigger_ai_x_fr_01s_heyvector_sfs14_a51d9f15/ai_x_heyvector_fr_sfs14_a51d9f15_delivery01s_search_11.raw'),
-                ('externals/animation-assets', 'animations/**/*.bin'),
-                ('externals/animation-assets', 'animationGroups/**/*.json'),
-                ('externals/animation-assets', 'sprites/**/*.png'),
-                ('externals/animation-assets', 'faceAnimations/**/*.png'),
-                ('externals/animation-assets', 'anim_manifest.json'),
-                ('externals/animation-assets', 'compositeImageResources/imageLayouts/**/*.json'),
-                ('externals/animation-assets', 'compositeImageResources/imageMaps/**/*.json'),
+                ('EXTERNALS/anki-thirdparty/sensory', 'hey_cosmo_and_commands/trigger_anki_x_en_us_01_hey_cosmo_sfs14_b3e3cbba/anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery01_am.raw'),
+                ('EXTERNALS/anki-thirdparty/sensory', 'hey_cosmo_and_commands/trigger_anki_x_en_us_01_hey_cosmo_sfs14_b3e3cbba/anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery01_search_4.raw'),
+                ('EXTERNALS/anki-thirdparty/sensory', 'hey_cosmo_and_commands/trigger_anki_x_en_us_02_hey_cosmo_sfs14_b3e3cbba/anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery02_am.raw'),
+                ('EXTERNALS/anki-thirdparty/sensory', 'hey_cosmo_and_commands/trigger_anki_x_en_us_02_hey_cosmo_sfs14_b3e3cbba/anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery02_search_4.raw'),
+                ('EXTERNALS/anki-thirdparty/sensory', 'hey_cosmo_and_commands/trigger_anki_x_en_us_01_cosmo_sfs14_b3e3cbba/anki_x_cosmo_en_us_sfs14_b3e3cbba_delivery01_am.raw'),
+                ('EXTERNALS/anki-thirdparty/sensory', 'hey_cosmo_and_commands/trigger_anki_x_en_us_01_cosmo_sfs14_b3e3cbba/anki_x_cosmo_en_us_sfs14_b3e3cbba_delivery01_search_10.raw'),
+                ('EXTERNALS/anki-thirdparty/sensory', 'hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b/anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_am.raw'),
+                ('EXTERNALS/anki-thirdparty/sensory', 'hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b/anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_5.raw'),
+                ('EXTERNALS/anki-thirdparty/sensory', 'hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b/anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_7.raw'),
+                ('EXTERNALS/anki-thirdparty/sensory', 'hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b/anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_10.raw'),
+                ('EXTERNALS/anki-thirdparty/sensory', 'hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b/anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_14.raw'),
+                ('EXTERNALS/anki-thirdparty/sensory', 'hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b/anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_18.raw'),
+                ('EXTERNALS/anki-thirdparty/sensory', 'hey_vector/trigger_ai_x_fr_01s_heyvector_sfs14_a51d9f15/ai_x_heyvector_fr_sfs14_a51d9f15_delivery01s_am.raw'),
+                ('EXTERNALS/anki-thirdparty/sensory', 'hey_vector/trigger_ai_x_fr_01s_heyvector_sfs14_a51d9f15/ai_x_heyvector_fr_sfs14_a51d9f15_delivery01s_search_11.raw'),
+                ('EXTERNALS/animation-assets', 'animations/**/*.bin'),
+                ('EXTERNALS/animation-assets', 'animationGroups/**/*.json'),
+                ('EXTERNALS/animation-assets', 'sprites/**/*.png'),
+                ('EXTERNALS/animation-assets', 'faceAnimations/**/*.png'),
+                ('EXTERNALS/animation-assets', 'anim_manifest.json'),
+                ('EXTERNALS/animation-assets', 'compositeImageResources/imageLayouts/**/*.json'),
+                ('EXTERNALS/animation-assets', 'compositeImageResources/imageMaps/**/*.json'),
                 ],
                 prefix = 'assets'
             ),
@@ -37,12 +37,12 @@ asset_project(
     srcs = [],
     platform_srcs = [
         ('vicos', subdir_glob([
-            ('externals/victor-audio-assets/victor_robot/victor_linux', '**/*')
+            ('EXTERNALS/victor-audio-assets/victor_robot/victor_linux', '**/*')
             ],
             prefix = 'sound')
         ),
         ('mac', subdir_glob([
-            ('externals/victor-audio-assets/victor_robot/dev_mac', '**/*')
+            ('EXTERNALS/victor-audio-assets/victor_robot/dev_mac', '**/*')
             ],
             prefix = 'sound')
         ),
@@ -54,12 +54,12 @@ asset_project(
     srcs = [],
     platform_srcs = [
         ('vicos', subdir_glob([
-            ('externals/local-audio-assets/victor_robot/victor_linux', '**/*')
+            ('EXTERNALS/local-audio-assets/victor_robot/victor_linux', '**/*')
             ],
             prefix = 'sound')
         ),
         ('mac', subdir_glob([
-            ('externals/local-audio-assets/victor_robot/dev_mac', '**/*')
+            ('EXTERNALS/local-audio-assets/victor_robot/dev_mac', '**/*')
             ],
             prefix = 'sound')
         ),
@@ -106,12 +106,12 @@ asset_project(
     srcs = [],
     platform_srcs = [
         ('mac', subdir_glob([
-            ('externals/anki-thirdparty/acapela/AcapelaTTS_for_Mac_V9.450','**/*'),
+            ('EXTERNALS/anki-thirdparty/acapela/AcapelaTTS_for_Mac_V9.450','**/*'),
             ],
             prefix = 'tts')
         ),
         ('vicos', subdir_glob([
-            ('externals/anki-thirdparty/acapela/Voices_for_Android_iOS_LinuxEmbedded','**/*'),
+            ('EXTERNALS/anki-thirdparty/acapela/Voices_for_Android_iOS_LinuxEmbedded','**/*'),
             ],
             prefix = 'tts')
         ),
