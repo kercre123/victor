@@ -448,12 +448,14 @@ Result VisionSystem::SetNextCameraWhiteBalance(f32 whiteBalanceGainR,
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void VisionSystem::SetSaveParameters(const ImageSendMode saveMode, const std::string& path, 
-                                     const int8_t quality, const Vision::ImageCache::Size& saveSize)
+                                     const int8_t quality, const Vision::ImageCache::Size& saveSize,
+                                     const bool removeRadialDistortion)
 {
   _imageSaveMode = saveMode;
   _imageSavePath = path;
   _imageSaveQuality = std::min(int8_t(100), quality);
   _imageSaveSize = saveSize;
+  _imageSaveRemoveDistortion = removeRadialDistortion;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1740,7 +1742,24 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
 
     // Resize into a new image to avoid affecting downstream updates
     const Vision::ImageRGB& sizedImage = imageCache.GetRGB(_imageSaveSize);
-    const Result saveResult = sizedImage.Save(fullFilename, _imageSaveQuality);
+    Result saveResult = RESULT_FAIL;
+    if(_imageSaveRemoveDistortion)
+    {
+      if(_camera.IsCalibrated())
+      {
+        Vision::ImageRGB imgUndistorted;
+        sizedImage.Undistort(*_camera.GetCalibration(), imgUndistorted);
+        saveResult = imgUndistorted.Save(fullFilename, _imageSaveQuality);
+      }
+      else
+      {
+        PRINT_NAMED_WARNING("VisionSystem.Update.NoCalibrationForSavingUndistorted", "");
+      }
+    }
+    else
+    {
+      saveResult = sizedImage.Save(fullFilename, _imageSaveQuality);
+    }
 
     Result saveSensorResult = RESULT_OK;
     if((ImageSendMode::SingleShotWithSensorData == _imageSaveMode) || (ImageSendMode::Stream == _imageSaveMode)) {

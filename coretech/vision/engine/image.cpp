@@ -12,6 +12,7 @@
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/vision/engine/cameraCalibration.h"
 #include "coretech/vision/engine/image_impl.h"
 
 #include "util/fileUtils/fileUtils.h"
@@ -479,6 +480,16 @@ namespace Vision {
   {
     DEV_ASSERT(size%2==0, "ImageBase.BoxFilter.SizeNotMultipleOf2");
     cv::boxFilter(this->get_CvMat_(), filtered.get_CvMat_(), -1, cv::Size(size, size));
+  }
+  
+  template<typename T>
+  void ImageBase<T>::Undistort(const CameraCalibration& calib, ImageBase<T>& undistortedImage) const
+  {
+    undistortedImage.Allocate(GetNumRows(), GetNumCols());
+    const CameraCalibration scaledCalib = calib.GetScaled(GetNumRows(), GetNumCols());
+    cv::undistort(this->get_CvMat_(), undistortedImage.get_CvMat_(),
+                  scaledCalib.GetCalibrationMatrix().get_CvMatx_(),
+                  scaledCalib.GetDistortionCoeffs());
   }
   
   // Explicit instantation for each image type:

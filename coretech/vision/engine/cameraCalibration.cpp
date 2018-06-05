@@ -103,6 +103,35 @@ namespace Vision {
 
   }
   
+  CameraCalibration& CameraCalibration::Scale(u16 nrows, u16 ncols)
+  {
+    if(ncols == _ncols && nrows == _nrows)
+    {
+      // Special case, early out
+      return *this;
+    }
+    
+    const f32 xscale = (f32)ncols / (f32)_ncols;
+    const f32 yscale = (f32)nrows / (f32)_nrows;
+    
+    _focalLength_x *= xscale;
+    _focalLength_y *= yscale;
+    _center.x()    *= xscale;
+    _center.y()    *= yscale;
+    
+    _nrows = nrows;
+    _ncols = ncols;
+    
+    return *this;
+  }
+  
+  CameraCalibration CameraCalibration::GetScaled(u16 nrows, u16 ncols) const
+  {
+    CameraCalibration scaledCalib(*this);
+    scaledCalib.Scale(nrows,ncols);
+    return scaledCalib;
+  }
+  
   template<typename PRECISION>
   SmallSquareMatrix<3,PRECISION> CameraCalibration::GetCalibrationMatrix() const
   {

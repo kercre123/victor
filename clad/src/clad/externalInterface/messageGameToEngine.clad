@@ -305,10 +305,11 @@ message SetRobotImageSendMode {
 
 // SaveImages (via VizController)
 message SaveImages {
-    ImageSendMode mode,            // For single image vs. streaming (aka continuous saving)
-    int_8         qualityOnRobot,  // 0: disable on-robot saving, [1-100]:JPEG quality, -1: use PNG
-    string        path             // Relative to "<webotsControllersDir>/webotsCtrlViz/saved_images"
-                                   // (on robot, relative to "<reourceCacheDir>/camera/images")
+    ImageSendMode mode,                    // For single image vs. streaming (aka continuous saving)
+    int_8         qualityOnRobot,          // 0: disable on-robot saving, [1-100]:JPEG quality, -1: use PNG
+    bool          removeRadialDistortion = 0,
+    string        path                     // Relative to "<webotsControllersDir>/webotsCtrlViz/saved_images"
+                                           // (on robot, relative to "<reourceCacheDir>/camera/images")
 }
 
 // Enable/disable the streaming of colored images
