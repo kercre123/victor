@@ -277,7 +277,7 @@ Result Animation::DefineFromJson(const std::string& name, const Json::Value &jso
     } else if(frameName == SpriteSequenceKeyFrame::GetClassName()) {
       const Vision::SpriteSequence* spriteSeq = nullptr;
       TimeStamp_t triggerTime_ms = 0;
-      TimeStamp_t frameUpdateInterval = 0;
+      TimeStamp_t frameUpdateInterval = ANIM_TIME_STEP_MS;
       float scanlineOpacity = 0.f;
       const bool success = SpriteSequenceKeyFrame::ExtractDataFromJson(jsonFrame, spriteMap, seqContainer,
                                                                        spriteSeq, triggerTime_ms, 

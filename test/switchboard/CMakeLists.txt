@@ -5,6 +5,7 @@ project(test-vic-switchboard)
 include(anki_build_cxx)
 
 anki_build_cxx_executable(test-vic-switchboard ${ANKI_SRCLIST_DIR})
+anki_build_target_license(test-vic-switchboard "ANKI")
 
 target_link_libraries(test-vic-switchboard
   PRIVATE

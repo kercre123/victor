@@ -81,8 +81,13 @@ message TimeStampedStatus {
   uint_32 timestamp_ms,
 }
 
-message RobotHistoryResponse {
+message RobotHistoryResult {
   TimeStampedStatus  messages[uint_16],
+}
+
+// Response to request for control from behavior system
+message SDKActivationResult {
+  uint_32 slot,
 }
 
 // Anything that the robot wishes to push to the app that 
@@ -97,7 +102,8 @@ union MessageRobotToExternal {
   UiDeviceConnected                 UiDeviceConnected                  = 0x00, // DO NOT CHANGE THIS VALUE
   RobotCompletedAction              RobotCompletedAction               = 0x01,
   Event                             Event                              = 0x02,
-  RobotHistoryResponse              robotHistoryResponse               = 0x03,
+  RobotHistoryResult                RobotHistoryResult                 = 0x03,
+  SDKActivationResult               SDKActivationResult                = 0x04,
 }
 
 } // Gateway

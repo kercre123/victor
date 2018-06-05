@@ -7,6 +7,7 @@ project(anki-ble)
 include(anki_build_cxx)
 
 anki_build_cxx_library(anki-ble ${ANKI_SRCLIST_DIR})
+anki_build_target_license(anki-ble "ANKI" "BSD-2")
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")

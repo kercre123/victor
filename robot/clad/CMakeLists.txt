@@ -218,4 +218,6 @@ target_include_directories(robot_clad_cpplite
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad/robot>
 )
 
+anki_build_target_license(robot_clad_cpplite "ANKI")
+
 add_dependencies(robot_clad_cpplite cti_vision_clad_cpplite)

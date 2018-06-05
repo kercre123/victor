@@ -38,14 +38,15 @@ class Robot:
             loop = asyncio.get_event_loop()
         self.loop = loop
         self.address = ':'.join([ip, port])
+        self.channel = None
         self.connection = None
         self.events = events.EventHandler(self.loop)
 
     def connect(self):
         credentials = aiogrpc.ssl_channel_credentials(root_certificates=self.trusted_certs)
         self.logger.info("Connecting to {}".format(self.address))
-        channel = aiogrpc.secure_channel(self.address, credentials)
-        self.connection = client.ExternalInterfaceStub(channel)
+        self.channel = aiogrpc.secure_channel(self.address, credentials)
+        self.connection = client.ExternalInterfaceStub(self.channel)
         self.events.start(self.connection)
 
     def disconnect(self, wait_for_tasks=True):
@@ -53,6 +54,8 @@ class Robot:
             for task in self.pending:
                 task.wait_for_completed()
         self.events.close()
+        if self.channel:
+            self.loop.run_until_complete(self.channel.close())
         if self.is_loop_owner:
             self.loop.close()
 
@@ -130,29 +133,26 @@ class Robot:
         self.logger.info(f'{type(result)}: {str(result).strip()}')
         return result
 
-    async def set_wheel_motors_turn(self, turn_speed, turn_accel=0.0):
-        sys.exit("'{}' is not yet implemented in grpc".format(__name__))
-        message = _clad_message.DriveArc(speed=turn_speed, accel=turn_accel)
-        innerWrappedMessage = _clad_message.MotorControl(DriveArc=message)
-        outerWrappedMessage = _clad_message.ExternalComms(MotorControl=innerWrappedMessage)
+    @actions._as_actionable
+    async def set_wheel_motors_turn(self, turn_speed, turn_accel=0.0, curvatureRadius_mm=0):
+        drive_arc_request = protocol.DriveArcRequest(speed=turn_speed, accel=turn_accel, curvatureRadius_mm=1)
+        result = await self.connection.DriveArc(drive_arc_request)
+        self.logger.info(f'{type(result)}: {str(result).strip()}')
+        return result
 
-        await self.socket.send(outerWrappedMessage.pack())
-
+    @actions._as_actionable
     async def set_head_motor(self, speed):
-        sys.exit("'{}' is not yet implemented in grpc".format(__name__))
-        message = _clad_message.MoveHead(speed_rad_per_sec=speed)
-        innerWrappedMessage = _clad_message.MotorControl(MoveHead=message)
-        outerWrappedMessage = _clad_message.ExternalComms(MotorControl=innerWrappedMessage)
+        set_head_request = protocol.MoveHeadRequest(speed_rad_per_sec=speed)
+        result = await self.connection.MoveHead(set_head_request)
+        self.logger.info(f'{type(result)}: {str(result).strip()}')
+        return result
 
-        await self.socket.send(outerWrappedMessage.pack())
-
+    @actions._as_actionable
     async def set_lift_motor(self, speed):
-        sys.exit("'{}' is not yet implemented in grpc".format(__name__))
-        message = _clad_message.MoveLift(speed_rad_per_sec=speed)
-        innerWrappedMessage = _clad_message.MotorControl(MoveLift=message)
-        outerWrappedMessage = _clad_message.ExternalComms(MotorControl=innerWrappedMessage)
-
-        await self.socket.send(outerWrappedMessage.pack())
+        set_lift_request = protocol.MoveLiftRequest(speed_rad_per_sec=speed)
+        result = await self.connection.MoveLift(set_lift_request)
+        self.logger.info(f'{type(result)}: {str(result).strip()}')
+        return result
 
     async def meet_victor(self, name):
         sys.exit("'{}' is not yet implemented in grpc".format(__name__))

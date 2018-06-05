@@ -45,7 +45,7 @@ setup(
     ],
     zip_safe=True,
     keywords='anki vector robot robotics sdk'.split(),
-    install_requires=['aiogrpc',
+    install_requires=['aiogrpc>=1.4',
                       'docopt',
                       'googleapis-common-protos'],
 )

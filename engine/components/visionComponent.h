@@ -286,7 +286,8 @@ struct DockingErrorSignal;
     
     // See VisionSystem::SetSaveParameters for details on the arguments
     void SetSaveImageParameters(const ImageSendMode saveMode, const std::string& path, const int8_t onRobotQuality, 
-                                const Vision::ImageCache::Size& saveSize = Vision::ImageCache::Size::Full);
+                                const Vision::ImageCache::Size& saveSize = Vision::ImageCache::Size::Full,
+                                const bool removeRadialDistortion = false);
 
     // This is for faking images being processed for unit tests
     void FakeImageProcessed(TimeStamp_t t);

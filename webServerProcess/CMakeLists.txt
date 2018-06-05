@@ -12,6 +12,7 @@ include(anki_build_cxx)
 #
 
 anki_build_cxx_library(victor_web_library ${ANKI_SRCLIST_DIR})
+anki_build_target_license(victor_web_library "ANKI")
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
@@ -59,6 +60,7 @@ target_include_directories(victor_web_library
 if (VICOS)
 
   anki_build_cxx_executable(vic-webserver ${ANKI_SRCLIST_DIR})
+  anki_build_target_license(vic-webserver "ANKI")
 
   target_link_libraries(vic-webserver
     PRIVATE

@@ -57,7 +57,7 @@ add_library(ble_cozmo
   shared/BLECozmoMessage.cpp
   ${PLATFORM_SRCS}
 )
-
+anki_build_target_license(ble_cozmo "ANKI")
 include(anki_build_strip)
 anki_build_strip(TARGET ble_cozmo)
 

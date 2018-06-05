@@ -47,6 +47,7 @@ endif()
 #
 
 anki_build_cxx_library(cozmo_physics ${ANKI_SRCLIST_DIR})
+anki_build_target_license(cozmo_physics "ANKI")
 
 #
 # suppress warnings about old GLUT declarations used by webots
@@ -79,6 +80,7 @@ symlink_target(
 #
 
 anki_build_cxx_library(webotsCtrlCommon ${ANKI_SRCLIST_DIR} STATIC)
+anki_build_target_license(webotsCtrlCommon "ANKI")
 
 target_link_libraries(webotsCtrlCommon
   PUBLIC
@@ -120,6 +122,7 @@ endmacro(webots_build_cxx_executable)
 #
 
 webots_build_cxx_executable(webotsCtrlLightCube ${ANKI_SRCLIST_DIR})
+anki_build_target_license(webotsCtrlLightCube "ANKI")
 
 target_link_libraries(webotsCtrlLightCube
   PRIVATE
@@ -150,6 +153,7 @@ symlink_target(
 
 
 webots_build_cxx_executable(webotsCtrlViz ${ANKI_SRCLIST_DIR})
+anki_build_target_license(webotsCtrlViz "ANKI")
 
 target_link_libraries(webotsCtrlViz
   PRIVATE
@@ -175,6 +179,7 @@ symlink_target(
 # webotsCtrlRobot2
 #
 webots_build_cxx_executable(webotsCtrlRobot2 ${ANKI_SRCLIST_DIR})
+anki_build_target_license(webotsCtrlRobot2 "ANKI")
 
 target_link_libraries(webotsCtrlRobot2
   PRIVATE
@@ -214,6 +219,7 @@ symlink_target(
 #
 
 webots_build_cxx_executable(webotsCtrlAnim ${ANKI_SRCLIST_DIR})
+anki_build_target_license(webotsCtrlAnim "ANKI")
 
 target_link_libraries(webotsCtrlAnim
   PRIVATE
@@ -252,6 +258,7 @@ symlink_target(
 #
 
 webots_build_cxx_executable(webotsCtrlWebServer ${ANKI_SRCLIST_DIR})
+anki_build_target_license(webotsCtrlWebServer "ANKI")
 
 target_link_libraries(webotsCtrlWebServer
   PRIVATE
@@ -282,6 +289,7 @@ symlink_target(
 #
 
 webots_build_cxx_executable(webotsCtrlGameEngine2 ${ANKI_SRCLIST_DIR})
+anki_build_target_license(webotsCtrlGameEngine2 "ANKI")
 
 target_link_libraries(webotsCtrlGameEngine2
   PRIVATE
@@ -322,6 +330,7 @@ symlink_target(
 #
 
 webots_build_cxx_executable(webotsCtrlKeyboard ${ANKI_SRCLIST_DIR})
+anki_build_target_license(webotsCtrlKeyboard "ANKI")
 
 target_link_libraries(webotsCtrlKeyboard
   PRIVATE
@@ -359,6 +368,7 @@ symlink_target(
 #
 
 webots_build_cxx_executable(webotsCtrlBuildServerTest ${ANKI_SRCLIST_DIR})
+anki_build_target_license(webotsCtrlBuildServerTest "ANKI")
 
 target_link_libraries(webotsCtrlBuildServerTest
   PRIVATE
@@ -396,6 +406,7 @@ symlink_target(
 #
 
 webots_build_cxx_executable(webotsCtrlDevLog ${ANKI_SRCLIST_DIR})
+anki_build_target_license(webotsCtrlDevLog "ANKI")
 
 target_link_libraries(webotsCtrlDevLog
   PRIVATE

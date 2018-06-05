@@ -36,6 +36,8 @@ if (VICOS)
           "${SIGNALESSENCE_LIB_PATH}/lib${LIB}.a"
           INTERFACE_INCLUDE_DIRECTORIES
           "${SIGNALESSENCE_INCLUDE_PATHS}")
+
+      anki_build_target_license(${LIB} "Proprietary")
   endforeach()
 elseif (MACOSX)
   foreach(LIB ${SIGNALESSENCE_LIBS})
@@ -45,5 +47,7 @@ elseif (MACOSX)
           "${SIGNALESSENCE_LIB_PATH}/lib${LIB}.dylib"
           INTERFACE_INCLUDE_DIRECTORIES
           "${SIGNALESSENCE_INCLUDE_PATHS}")
+
+      anki_build_target_license(${LIB} "Proprietary")
   endforeach()
 endif()

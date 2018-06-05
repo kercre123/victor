@@ -22,6 +22,7 @@ endif()
 if (VICOS)
 
   anki_build_cxx_executable(vic-testcrash ${ANKI_SRCLIST_DIR})
+  anki_build_target_license(vic-testcrash "ANKI")
 
   target_link_libraries(vic-testcrash
     PRIVATE

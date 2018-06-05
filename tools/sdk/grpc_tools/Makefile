@@ -78,6 +78,12 @@ test_curl: .require_ip
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/drive_arc -d '{"speed":0, "accel":0, "curvatureRadius_mm":0}'
 	@echo
 
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/sdk_activation -d '{"slot":"SDK0"}'
+	@echo
+
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/cancel_sdk_activation -d '{"slot":"SDK0"}'
+	@echo
+
 update_time: .require_ip
 	ssh root@$(ANKI_ROBOT_HOST) -t date --set='@$(shell date +%s)'
 

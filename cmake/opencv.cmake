@@ -48,9 +48,9 @@ endif()
 # Add the include directory for each OpenCV module:
 foreach(OPENCV_MODULE ${OPENCV_LIBS})
   add_library(${OPENCV_MODULE} ${LIB_TYPE} IMPORTED)
-  
+
   set(MODULE_INCLUDE_PATH "${CORETECH_EXTERNAL_DIR}/${OPENCV_DIR}/modules/${OPENCV_MODULE}/include")
-  
+
   set(include_paths
       ${MODULE_INCLUDE_PATH}
       ${OPENCV2_INCLUDE_PATH})
@@ -60,6 +60,7 @@ foreach(OPENCV_MODULE ${OPENCV_LIBS})
                         ${OPENCV_LIB_DIR}/libopencv_${OPENCV_MODULE}.${LIB_EXT}${LIB_POSTFIX}
                         INTERFACE_INCLUDE_DIRECTORIES
                         "${include_paths}")
+  anki_build_target_license(${OPENCV_MODULE} "BSD-3")
 
   list(APPEND OPENCV_INCLUDE_PATHS ${MODULE_INCLUDE_PATH})
 
@@ -98,6 +99,11 @@ foreach(LIB ${OPENCV_EXTERNAL_LIBS})
         IMPORTED_LOCATION
         ${OPENCV_3RDPARTY_LIB_DIR}/lib${LIB}.a)
 endforeach()
+
+anki_build_target_license(libpng "libpng-license")
+anki_build_target_license(libtiff "BSD-like")
+anki_build_target_license(libjpeg "libpjeg-license")
+anki_build_target_license(libprotobuf "BSD-3")
 
 message(STATUS "including OpenCV-${OPENCV_VERSION}, [Modules: ${OPENCV_LIBS}], [3rdParty: ${OPENCV_EXTERNAL_LIBS}]")
 

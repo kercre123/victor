@@ -159,6 +159,7 @@ function(generate_clad_cpp)
         add_library(${genclad_LIBRARY} STATIC
             ${CLAD_GEN_OUTPUTS}
         )
+        anki_build_target_license(${genclad_LIBRARY} "ANKI")
     endif()
 
 endfunction()

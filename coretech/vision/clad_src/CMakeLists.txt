@@ -64,3 +64,5 @@ target_include_directories(cti_vision_clad_cpplite
   PUBLIC
   $<BUILD_INTERFACE:${CPPLITE_ROBOT_OUTPUT_DIR}>
 )
+
+anki_build_target_license(cti_vision_clad_cpplite "ANKI")

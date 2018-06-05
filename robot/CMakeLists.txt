@@ -59,6 +59,8 @@ target_compile_definitions(robot_hal
   #HAL_DUMMY_BODY # Uncomment if deploying on head only
 )
 
+anki_build_target_license(robot_hal "ANKI")
+
 # Create a lib for cube firmware led animation code, so
 # we can link into it from webotsCtrlLightCube
 if (MACOSX)
@@ -113,6 +115,7 @@ elseif (MACOSX)
 endif()
 
 anki_build_cxx_library(robot_transport ${ANKI_SRCLIST_DIR} STATIC)
+anki_build_target_license(robot_transport "ANKI")
 
 target_compile_definitions(robot_transport
   PRIVATE
@@ -130,10 +133,11 @@ add_executable(displayFaultCode
 )
 target_compile_options(displayFaultCode PRIVATE ${ANKI_BUILD_CXX_COMPILE_OPTIONS})
 target_compile_definitions(displayFaultCode PRIVATE ${ANKI_BUILD_CXX_COMPILE_DEFINITIONS})
-
+anki_build_target_license(displayFaultCode "ANKI")
 anki_build_cxx_library(supervisor ${ANKI_SRCLIST_DIR} STATIC
   ${PLATFORM_SRCS}
 )
+anki_build_target_license(supervisor "ANKI")
 
 target_link_libraries(supervisor
   PRIVATE
@@ -183,6 +187,7 @@ endif()
 if (VICOS)
 
   anki_build_cxx_library(spine ${ANKI_SRCLIST_DIR} STATIC)
+  anki_build_target_license(spine "ANKI")
 
   target_include_directories(spine
     PRIVATE
@@ -205,6 +210,7 @@ endif()
 if (VICOS)
 
   anki_build_cxx_executable(vic-robot ${ANKI_SRCLIST_DIR})
+  anki_build_target_license(vic-robot "ANKI")
 
   target_compile_definitions(vic-robot
     PRIVATE

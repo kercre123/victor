@@ -5,7 +5,8 @@ include(anki_build_cxx)
 include(anki_build_go)
 include(anki_build_util)
 
-set(GATEWAY_GRPC_OUTPUT "${CMAKE_SOURCE_DIR}/generated/go/src/proto/external_interface/external_interface.pb.go" "${CMAKE_SOURCE_DIR}/generated/go/src/proto/external_interface/external_interface.pb.gw.go")
+set(GATEWAY_GRPC_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/go/src/proto/external_interface")
+set(GATEWAY_GRPC_OUTPUT "${GATEWAY_GRPC_OUTPUT_DIR}/external_interface.pb.go" "${GATEWAY_GRPC_OUTPUT_DIR}/external_interface.pb.gw.go")
 set(__extra_go_deps "${CLAD_GO_GEN_SRCS}" "${GATEWAY_GRPC_OUTPUT}" "${CLAD_GATEWAY_GEN_SRCS}")
 
 if (NOT EXISTS "${ANKI_EXTERNAL_DIR}/chipper_key")
@@ -36,10 +37,12 @@ endmacro()
 
 macro(_build_cloud_executable target_name)
   anki_build_go_executable(${target_name} ${ANKI_SRCLIST_DIR} "${__extra_go_deps}")
+  anki_build_target_license(${target_name} "ANKI")
 endmacro()
 
 macro(_build_cloud_c_library target_name header_name)
   anki_build_go_c_library(${target_name} ${header_name} ${ANKI_SRCLIST_DIR} "${__extra_go_deps}")
+  anki_build_target_license(${target_name} "ANKI")
 endmacro()
 
 # voicetest project (mac only)
@@ -52,6 +55,7 @@ if (MACOSX)
 
   # create C target
   anki_build_cxx_executable(voicetest ${ANKI_SRCLIST_DIR} ${VOICEGO_HEADER})
+  anki_build_target_license(voicetest "ANKI")
   anki_disable_default_build(voicetest)
 
   # tell voicetest where to find voicego.h
@@ -81,6 +85,7 @@ if (MACOSX)
   _add_chipper_flags(proctest_go)
   get_filename_component(PROCTEST_HEADER_DIR ${PROCTEST_GO_HEADER} DIRECTORY)
   anki_build_cxx_executable(proctest ${ANKI_SRCLIST_DIR} ${PROCTEST_GO_HEADER})
+  anki_build_target_license(proctest "ANKI")
   target_include_directories(proctest PUBLIC ${PROCTEST_HEADER_DIR})
   target_compile_definitions(proctest PUBLIC "HEADER_NAME=\"proctest_go.h\"")
   target_link_libraries(proctest PRIVATE util_audio proctest_go ${SECURITY_FRAMEWORK})
@@ -95,6 +100,7 @@ endif()
 _build_cloud_executable(ipctest_go)
 anki_disable_default_build(ipctest_go)
 anki_build_cxx_executable(ipctest_cpp ${ANKI_SRCLIST_DIR})
+anki_build_target_license(ipctest_cpp "ANKI")
 target_link_libraries(ipctest_cpp PRIVATE cti_messaging)
 anki_disable_default_build(ipctest_cpp)
 
@@ -138,6 +144,7 @@ set(GATEWAY_PROTO_FILES "${CMAKE_CURRENT_SOURCE_DIR}/gateway/external_interface.
 
 add_custom_command(
   OUTPUT ${GATEWAY_GRPC_OUTPUT}
+  COMMAND mkdir -p ${GATEWAY_GRPC_OUTPUT_DIR}
   COMMAND ${CMAKE_COMMAND} -E env "PATH=${PROTOBUF_HOME}/go/bin:$ENV{PATH}"
     ${PROTOBUF_HOME}/bin/protoc "-I${CMAKE_CURRENT_SOURCE_DIR}/gateway"
     -I"${PROTOBUF_HOME}/include"
@@ -155,3 +162,4 @@ add_custom_command(
   DEPENDS "${GATEWAY_PROTO_FILES}" "${GATEWAY_PROTOC_GENERATORS}"
 )
 _build_cloud_executable(vic-gateway)
+_add_chipper_flags(vic-gateway)

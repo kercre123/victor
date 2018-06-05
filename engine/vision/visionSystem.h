@@ -222,7 +222,8 @@ namespace Cozmo {
     //  path: Where to save images (relative to <Cache>/camera/images)
     //  quality: -1=PNG, 0-100=JPEG quality
     void SetSaveParameters(const ImageSendMode saveMode, const std::string& path, 
-                           const int8_t quality, const Vision::ImageCache::Size& saveSize);
+                           const int8_t quality, const Vision::ImageCache::Size& saveSize,
+                           const bool removeRadialDistortion);
 
     CameraParams GetCurrentCameraParams() const;
   
@@ -290,10 +291,12 @@ namespace Cozmo {
     s32 _frameNumber = 0;
 
     // Image saving and transmitting
+    // TODO: Make this a (CLAD?) struct?
     ImageSendMode             _imageSaveMode = ImageSendMode::Off;
     s8                        _imageSaveQuality = -1;
     Vision::ImageCache::Size  _imageSaveSize = Vision::ImageCache::Size::Full;
     std::string               _imageSavePath;
+    bool                      _imageSaveRemoveDistortion = false;
     
     // Snapshots of robot state
     bool _wasCalledOnce    = false;

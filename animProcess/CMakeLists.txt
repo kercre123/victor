@@ -14,7 +14,7 @@ include(sensory)
 include(robot_core)
 
 anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
-
+anki_build_target_license(victor_anim "ANKI")
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
 set(PLATFORM_COMPILE_DEFS "")
@@ -87,6 +87,7 @@ target_include_directories(victor_anim
 if (VICOS)
 
   anki_build_cxx_executable(vic-anim ${ANKI_SRCLIST_DIR})
+  anki_build_target_license(vic-anim "ANKI")
 
   target_link_libraries(vic-anim
     PRIVATE

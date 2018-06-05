@@ -18,6 +18,7 @@
 
 #include "clad/types/batteryTypes.h"
 
+#include "coretech/common/shared/radians.h"
 #include "coretech/common/shared/types.h"
 
 #include "util/entityComponent/iDependencyManagedComponent.h"
@@ -41,6 +42,11 @@ public:
 
   // IDependencyManagedComponent functions
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+  };
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::BlockWorld);
+    dependencies.insert(RobotComponentID::Movement);
+    dependencies.insert(RobotComponentID::FullRobotPose);
   };
   virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComponents) override {
     Init(robot);
@@ -100,14 +106,13 @@ public:
   // if not currently in a low battery state.
   float GetLowBatteryTimeSec() const;
   
-  void SetOnChargerPlatform(bool onPlatform);
-  
 private:
   
   void Init(Robot* _robot);
   
   void SetOnChargeContacts(const bool onChargeContacts);
   void SetIsCharging(const bool isCharging);
+  void UpdateOnChargerPlatform();
   
   Robot* _robot = nullptr;
   
@@ -131,6 +136,10 @@ private:
 
   // The timestamp of the RobotState message with the latest data
   TimeStamp_t _lastMsgTimestamp = 0;
+  
+  // The pitch angle of the robot when it was last on the charger
+  // contacts (and not moving).
+  Radians _lastOnChargerContactsPitchAngle;
   
   std::unique_ptr<BlockWorldFilter> _chargerFilter;
   

@@ -40,6 +40,8 @@ if(CLAD_VICTOR_EMIT_CPP)
     target_link_libraries(sdk_clad_cpp
         clad
     )
+
+    anki_build_target_license(sdk_clad_cpp "ANKI")
 endif()
 
 if(CLAD_VICTOR_EMIT_PYTHON)

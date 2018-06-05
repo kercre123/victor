@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.6)
 
+# uncomment this to display internal cmake state for targets, useful for debugging
+# set_property(GLOBAL PROPERTY GLOBAL_DEPENDS_DEBUG_MODE 1)
+
 list(APPEND CMAKE_MODULE_PATH
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/victor-clad/cmake
@@ -17,6 +20,7 @@ include(ccache)
 
 include(import)
 include(clean_clad_targets)
+include(license)
 
 # These are used by some android cmake toolchains
 # They appear to be ignored by the android-sdk toolchain that works with gradle/Android Studio
@@ -190,3 +194,22 @@ endif()
 if (CLEAN_CLAD_TARGETS)
   clean_clad_targets()
 endif()
+
+# Note: if these dependencies are not included in this top-level cmake
+#       file then their targets are local and we can't query them
+#       for licenses here
+#
+# Recommend moving for leaf CMakeLists.txt to this file
+
+include(opencv)
+# do audio repo later include(lib/audio/cmake/wwise.cmake)
+include(okao)
+include(flatbuffers)
+include(sodium)
+include(breakpad)
+include(aubio)
+include(sensory)
+# include(text2speech)
+include(signalessence)
+
+check_licenses()

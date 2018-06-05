@@ -366,6 +366,10 @@ public:
 
   // Updates pose to be on charger
   Result SetPoseOnCharger();
+  
+  // Update's the robot's pose to be in front of the
+  // charger as if it had just rolled off the charger.
+  Result SetPosePostRollOffCharger();
 
   // Sets the charger that it's docking to
   void           SetCharger(const ObjectID& chargerID) { _chargerID = chargerID; }

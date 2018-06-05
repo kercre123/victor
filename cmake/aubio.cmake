@@ -12,6 +12,7 @@ endif()
 set(AUBIO_LIBS aubio)
 
 add_library(aubio STATIC IMPORTED)
+anki_build_target_license(aubio "GPL-3.0")
 
 set_target_properties(aubio PROPERTIES
   IMPORTED_LOCATION "${LIBAUBIO_LIB_PATH}"

@@ -5,6 +5,7 @@ project(cubeBleClient)
 include(anki_build_cxx)
 
 anki_build_cxx_library(cubeBleClient ${ANKI_SRCLIST_DIR})
+anki_build_target_license(cubeBleClient "ANKI")
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")

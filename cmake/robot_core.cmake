@@ -21,5 +21,7 @@ if (VICOS)
       INTERFACE_INCLUDE_DIRECTORIES
       "${CMAKE_SOURCE_DIR}/robot/core/inc"
     )
+    anki_build_target_license(${LIB} "ANKI")
+
   endforeach()
 endif()

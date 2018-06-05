@@ -5,6 +5,7 @@ project(cti_messaging)
 include(anki_build_cxx)
 
 anki_build_cxx_library(cti_messaging ${ANKI_SRCLIST_DIR} STATIC)
+anki_build_target_license(cti_messaging "ANKI")
 
 set_target_properties(cti_messaging PROPERTIES
   FOLDER "CoreTech"#/Basestation"
@@ -25,6 +26,7 @@ target_include_directories(cti_messaging
 )
 
 anki_build_cxx_library(cti_messaging_robot ${ANKI_SRCLIST_DIR} STATIC)
+anki_build_target_license(cti_messaging_robot "ANKI")
 
 target_compile_definitions(cti_messaging_robot
   PRIVATE

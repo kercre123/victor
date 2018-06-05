@@ -5,6 +5,7 @@ project(canned_anim_lib)
 include(anki_build_cxx)
 
 anki_build_cxx_library(canned_anim_lib_anim ${ANKI_SRCLIST_DIR} STATIC)
+anki_build_target_license(canned_anim_lib_anim "ANKI")
 
 include(flatbuffers)
 
@@ -22,6 +23,7 @@ target_link_libraries(canned_anim_lib_anim
 )
 
 anki_build_cxx_library(canned_anim_lib_engine ${ANKI_SRCLIST_DIR} STATIC)
+anki_build_target_license(canned_anim_lib_engine "ANKI")
 
 target_compile_definitions(canned_anim_lib_engine PRIVATE CAN_STREAM=false)
 

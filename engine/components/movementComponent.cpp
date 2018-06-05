@@ -10,6 +10,8 @@
  *
  **/
 
+#include "engine/components/movementComponent.h"
+
 #include "coretech/common/robot/utilities.h"
 #include "coretech/common/shared/types.h"
 #include "engine/ankiEventUtil.h"
@@ -20,7 +22,6 @@
 #include "engine/components/animTrackHelpers.h"
 #include "engine/components/batteryComponent.h"
 #include "engine/components/dockingComponent.h"
-#include "engine/components/movementComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"

@@ -29,6 +29,9 @@
 namespace Anki {
 namespace Vision {
   
+  // Forward Declarations
+  class CameraCalibration;
+  
   enum class ResizeMethod : u8 {
     NearestNeighbor = 0,
     Linear,
@@ -177,6 +180,10 @@ namespace Vision {
     // Runs a boxFilter of the given size on this image outputing filtered
     virtual void BoxFilter(ImageBase<T>& filtered, u32 size) const;
 
+    // Remove radial distortion. If the calibration is for a different resolution image,
+    // it will be scaled to match this image's resolution before undistorting.
+    void Undistort(const CameraCalibration& calib, ImageBase<T>& undistortedImage) const;
+    
   protected:
     template<typename DerivedType>
     DerivedType GetROI(Rectangle<s32>& roiRect);

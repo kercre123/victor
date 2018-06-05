@@ -73,6 +73,8 @@ target_link_libraries(util_audio
   ${PLATFORM_LIBS}
 )
 
+anki_build_target_license(util_audio "ANKI")
+
 anki_build_strip(TARGET util_audio)
 
 #export(TARGETS ankiutil FILE ankiutil-config.cmake)

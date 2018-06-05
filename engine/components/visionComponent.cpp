@@ -1881,10 +1881,9 @@ namespace Cozmo {
       cv::imencode(".jpg", img.get_CvMat_(), imgVec, std::vector<int>({CV_IMWRITE_JPEG_QUALITY, 50}));
 
       Vision::Image imgUndistorted(img.GetNumRows(),img.GetNumCols());
-      cv::undistort(img.get_CvMat_(), imgUndistorted.get_CvMat_(),
-                    _camera->GetCalibration()->GetCalibrationMatrix().get_CvMatx_(),
-                    _camera->GetCalibration()->GetDistortionCoeffs());
-
+      DEV_ASSERT(_camera->IsCalibrated(), "VisionComponent.GetCalibrationImageJpegData.NoCalibration");
+      img.Undistort(*_camera->GetCalibration(), imgUndistorted);
+      
       std::vector<u8> imgVecUndistort;
       cv::imencode(".jpg", imgUndistorted.get_CvMat_(), imgVecUndistort, std::vector<int>({CV_IMWRITE_JPEG_QUALITY, 50}));
 
@@ -2638,9 +2637,8 @@ namespace Cozmo {
       if(kDisplayUndistortedImages)
       {
         Vision::ImageRGB imgUndistorted(numRows,numCols);
-        cv::undistort(image_out.get_CvMat_(), imgUndistorted.get_CvMat_(),
-                      _camera->GetCalibration()->GetCalibrationMatrix().get_CvMatx_(),
-                      _camera->GetCalibration()->GetDistortionCoeffs());
+        DEV_ASSERT(_camera->IsCalibrated(), "VisionComponent.GetCalibrationImageJpegData.NoCalibration");
+        image_out.Undistort(*_camera->GetCalibration(), imgUndistorted);
         imgUndistorted.Display("UndistortedImage");
       }
 
@@ -2773,7 +2771,8 @@ namespace Cozmo {
   void VisionComponent::SetSaveImageParameters(const ImageSendMode saveMode,
                                                const std::string& path,
                                                const int8_t onRobotQuality,
-                                               const Vision::ImageCache::Size& saveSize)
+                                               const Vision::ImageCache::Size& saveSize,
+                                               const bool removeRadialDistortion)
   {
     if(nullptr != _visionSystem)
     {
@@ -2783,14 +2782,15 @@ namespace Cozmo {
       _visionSystem->SetSaveParameters(saveMode,
                                        fullPath,
                                        onRobotQuality,
-                                       saveSize);
+                                       saveSize,
+                                       removeRadialDistortion);
 
       if(saveMode != ImageSendMode::Off)
       {
         EnableMode(VisionMode::SavingImages, true);
       }
 
-      PRINT_CH_DEBUG("VisionComponent", "VisionComponent.HandleMessage.SaveImages",
+      PRINT_CH_DEBUG("VisionComponent", "VisionComponent.SetSaveImageParameters.SaveImages",
                      "Setting image save mode to %s. Saving to: %s",
                      EnumToString(saveMode), fullPath.c_str());
     }
@@ -2799,7 +2799,9 @@ namespace Cozmo {
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::SaveImages& payload)
   {
-    SetSaveImageParameters(payload.mode, payload.path, payload.qualityOnRobot);
+    SetSaveImageParameters(payload.mode, payload.path, payload.qualityOnRobot,
+                           Vision::ImageCache::Size::Full,
+                           payload.removeRadialDistortion);
   }
 
   template<>

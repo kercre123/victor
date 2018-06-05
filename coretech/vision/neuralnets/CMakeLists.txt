@@ -76,6 +76,7 @@ elseif (MACOSX)
 endif()
 
 anki_build_cxx_executable(${TARGET_NAME} ${ANKI_SRCLIST_DIR})
+anki_build_target_license(${TARGET_NAME} "ANKI")
 
 target_compile_definitions(${TARGET_NAME}
   PRIVATE

@@ -27,4 +27,6 @@ set_target_properties(signal_essence PROPERTIES
   "${SIGNALESSENCE_INCLUDE_PATHS}"
 )
 
+anki_build_target_license(signal_essence "ANKI" "Proprietary")
+
 set_source_files_properties(${SIGNALESSENCE_PROJ_SRC}/policy_actions.c PROPERTIES COMPILE_FLAGS -Wno-shorten-64-to-32)

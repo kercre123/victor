@@ -44,4 +44,5 @@ foreach(LIB ${OKAO_LIBS})
     "${OKAO_LIB_PATH}/libe${LIB}.a"
     INTERFACE_INCLUDE_DIRECTORIES
     "${OKAO_INCLUDE_PATH}")
+  anki_build_target_license(${LIB} "Proprietary")
 endforeach()

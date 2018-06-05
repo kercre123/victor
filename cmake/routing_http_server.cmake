@@ -22,6 +22,7 @@ foreach(LIB ${ROUTING_HTTP_LIBS})
     "${ROUTING_HTTP_LIB_PATH}/lib${LIB}.a"
     INTERFACE_INCLUDE_DIRECTORIES
     "${ROUTING_HTTP_INCLUDE_PATH}")
+  anki_build_target_license(${LIB} "BSD-2")
 endforeach()
 
 list(APPEND ROUTING_HTTP_LIBS ${PLATFORM_ROUTING_HTTP_LIBS})

@@ -16,6 +16,7 @@ include(anki_build_cxx)
 # cozmo_engine
 #
 anki_build_cxx_library(cozmo_engine ${ANKI_SRCLIST_DIR})
+anki_build_target_license(cozmo_engine "ANKI")
 
 
 set(PLATFORM_LIBS "")

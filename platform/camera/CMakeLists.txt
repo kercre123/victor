@@ -30,12 +30,14 @@ PRIVATE
 )
 
 set_target_properties(camera_client PROPERTIES LINKER_LANGUAGE C)
+anki_build_target_license(camera_client "ANKI")
 
 endif()
 
 include(anki_build_cxx)
 
 anki_build_cxx_library(cameraService ${ANKI_SRCLIST_DIR})
+anki_build_target_license(cameraService "ANKI" "GPL-2.0")
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
