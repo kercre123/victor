@@ -20,18 +20,41 @@
 namespace Anki {
 namespace Cozmo {
 
+const char* kTriggerStatesKey = "triggerStates";
+
 ConditionIlluminationDetected::ConditionIlluminationDetected( const Json::Value& config )
 : IBEICondition( config )
 {
-  std::string targetStateString = JsonTools::ParseString( config, "targetState", 
-                                                          "ConditionIlluminationDetected.Constructor" );
-  if( !EnumFromString( targetStateString, _params.targetState ) )
+  // Parse trigger states
+  std::vector<std::string> stateStrs;
+  IlluminationState state;
+  std::string infoStr = "[";
+  if( JsonTools::GetVectorOptional( config, kTriggerStatesKey, stateStrs ) )
   {
-    PRINT_NAMED_ERROR( "ConditionIlluminationDetected.Constructor.InvalidState",
-                      "Target state %s is not a valid IlluminationState", targetStateString.c_str() );
-    // TODO: Bail or invalidate object somehow?
+    for( auto iter = stateStrs.begin(); iter != stateStrs.end(); ++iter )
+    {
+      if( !EnumFromString( *iter, state ) )
+      {
+        PRINT_NAMED_ERROR( "ConditionIlluminationDetected.Constuctor.InvalidState",
+                          "Target state %s is not a valid IlluminationState", iter->c_str() );
+      }
+      else
+      {
+        _params.triggerStates.push_back( state );
+        infoStr += *iter + ", ";
+      }
+    }
+    infoStr += "]";
+    PRINT_NAMED_DEBUG( "ConditionIlluminationDetected.Constuctor.ParsedStates",
+                        "Parsed %s: %s", kTriggerStatesKey, infoStr.c_str() );
+  }
+  else
+  {
+    PRINT_NAMED_ERROR( "ConditionIlluminationDetected.Constructor.NoStates",
+                       "No states specified" );
   }
 
+  // Parse other parameters
   _params.confirmationTime_s = JsonTools::ParseFloat( config, "confirmationTime",
                                                       "ConditionIlluminationDetected.Constructor" );
   _params.confirmationMinNum = JsonTools::ParseUInt32( config, "confirmationMinNum",
@@ -52,14 +75,14 @@ void ConditionIlluminationDetected::InitInternal( BehaviorExternalInterface& bei
   _messageHelper.reset( new BEIConditionMessageHelper( this, bei ) );
   _messageHelper->SubscribeToTags( {EngineToGameTag::RobotObservedIllumination} );
 
-  _matchState = MatchState::WaitingForMatch;
-  _matchStartTime = 0;
-  _matchedEvents = 0;
+  _variables.matchState = MatchState::WaitingForStart;
+  _variables.matchStartTime = 0;
+  _variables.matchedEvents = 0;
 }
 
 bool ConditionIlluminationDetected::AreConditionsMetInternal( BehaviorExternalInterface& bei ) const
 {
-  return MatchState::MatchConfirmed == _matchState;
+  return MatchState::MatchConfirmed == _variables.matchState;
 }
 
 void ConditionIlluminationDetected::HandleEvent( const EngineToGameEvent& event, BehaviorExternalInterface& bei )
@@ -68,7 +91,8 @@ void ConditionIlluminationDetected::HandleEvent( const EngineToGameEvent& event,
   {
     case ExternalInterface::MessageEngineToGameTag::RobotObservedIllumination:
     {
-      HandleIllumination( event );
+      const auto& msg = event.GetData().Get_RobotObservedIllumination();  
+      TickStateMachine( msg.timestamp, msg.state );
       break;
     }
     default:
@@ -78,74 +102,92 @@ void ConditionIlluminationDetected::HandleEvent( const EngineToGameEvent& event,
   }
 }
 
-void ConditionIlluminationDetected::HandleIllumination( const EngineToGameEvent& event )
+void ConditionIlluminationDetected::TickStateMachine( const TimeStamp_t& currTime, const IlluminationState& obsState )
 {
-  const auto& msg = event.GetData().Get_RobotObservedIllumination();
 
-  if( _params.ignoreUnknown && IlluminationState::Unknown == msg.state )
+  if( _params.ignoreUnknown && IlluminationState::Unknown == obsState )
   {
     return;
   }
 
-  switch( _matchState )
+  switch( _variables.matchState )
   {
-    case MatchState::WaitingForMatch:
+    case MatchState::WaitingForStart:
     {
-      PRINT_NAMED_INFO("ConditionIlluminationDetected.HandleIllumination.Waiting", "%s",
-                       EnumToString(_params.targetState) );
-      if( msg.state == _params.targetState )
-      {
-        _matchState = MatchState::ConfirmingMatch;
-        _matchStartTime = msg.timestamp;
-        _matchedEvents = 0;
-      }
-      break;
+      PRINT_NAMED_DEBUG("ConditionIlluminationDetected.HandleIllumination.StateMachine", 
+                        "Waiting for trigger states" );
+      if( !IsTriggerState( obsState ) ) { break; }
+
+      _variables.matchState = MatchState::ConfirmingMatch;
+      _variables.matchStartTime = currTime;
+      _variables.matchedEvents = 0;
+      // Fall through to next state immediately
     }
     case MatchState::ConfirmingMatch:
     {
-      if( msg.state != _params.targetState )
+      PRINT_NAMED_DEBUG("ConditionIlluminationDetected.HandleIllumination.StateMachine", 
+                        "Confirming match" );
+      if( !IsTriggerState( obsState ) )
       {
-        _matchState = MatchState::WaitingForMatch;
+        Reset();
+        break;
       }
-      else
+   
+      ++_variables.matchedEvents;
+      if( !IsTimePassed( currTime, _params.confirmationTime_s ) || 
+          _variables.matchedEvents < _params.confirmationMinNum )
       {
-        PRINT_NAMED_INFO("ConditionIlluminationDetected.HandleIllumination.Confirming", "%s",
-                         EnumToString(_params.targetState) );
-        if( msg.timestamp < _matchStartTime )
-        {
-          PRINT_NAMED_ERROR("ConditionIlluminationDetected.HandleIllumination.TimeError",
-                            "Time has gone backwards!");
-          _matchState = MatchState::WaitingForMatch;
-          break;
-        }
+        break;
+      }
 
-        ++_matchedEvents;
-        bool enoughTime = Util::IsFltGT( (msg.timestamp - _matchStartTime) / 1000.f, _params.confirmationTime_s );
-        bool enoughEvents = _matchedEvents >= _params.confirmationMinNum;
-        if( enoughTime && enoughEvents )
-        {
-          _matchState = MatchState::MatchConfirmed;
-        }
-      }
-      break;
+      _variables.matchState = MatchState::MatchConfirmed;
+      _variables.matchStartTime = currTime;
+      // Fall through to next state immediately
     }
     case MatchState::MatchConfirmed:
     {
-      PRINT_NAMED_INFO("ConditionIlluminationDetected.HandleIllumination.Matched", "%s",
-                       EnumToString(_params.targetState) );
-      if( msg.state != _params.targetState )
+      PRINT_NAMED_DEBUG("ConditionIlluminationDetected.HandleIllumination.StateMachine", 
+                        "Match confirmed" );
+      if( !IsTriggerState( obsState ) )
       {
-        _matchState = MatchState::WaitingForMatch;
+        Reset();
       }
       break;
     }
     default:
     {
       PRINT_NAMED_ERROR("ConditionIlluminationDetected.HandleIllumination.InvalidState", "");
-      _matchState = MatchState::WaitingForMatch;
+      Reset();
     }
   }
 }
 
+bool ConditionIlluminationDetected::IsTimePassed( const TimeStamp_t& t, const f32& dur ) const
+{
+  if( t < _variables.matchStartTime )
+  {
+    PRINT_NAMED_ERROR("ConditionIlluminationDetected.HandleIllumination.TimeError",
+                      "Time has gone backwards!");
+    return false;
+  }
+
+  return Util::IsFltGT( (t - _variables.matchStartTime) / 1000.0f, dur );
 }
+
+bool ConditionIlluminationDetected::IsTriggerState( const IlluminationState& state ) const
+{
+  for( auto iter = _params.triggerStates.begin(); iter != _params.triggerStates.end(); ++iter )
+  {
+    if( *iter == state ) { return true; }
+  }
+  return false;
 }
+
+void ConditionIlluminationDetected::Reset()
+{
+  _variables.matchState = MatchState::WaitingForStart;
+  _variables.matchedEvents = 0;
+}
+
+} // end namespace Cozmo
+} // end namespace Anki

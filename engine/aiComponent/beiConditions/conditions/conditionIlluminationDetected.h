@@ -4,7 +4,8 @@
  * Author: Humphrey Hu
  * Created: June 01 2018
  *
- * Description: Condition that checks the observed scene illumination for a particular state
+ * Description: Condition that checks the observed scene illumination entering and/or
+ * leaving from specified states
  * 
  * Copyright: Anki, Inc. 2018
  * 
@@ -31,6 +32,9 @@ public:
 
   virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& request) const override;
 
+  // Resets the condition to inactive
+  void Reset();
+
 protected:
 
   virtual void InitInternal( BehaviorExternalInterface& bei ) override;
@@ -41,27 +45,33 @@ private:
 
   struct ConfigParams
   {
-    IlluminationState targetState; // State that causes trigger
-    f32 confirmationTime_s;        // Number of seconds state must match to trigger condition
-    u32 confirmationMinNum;        // Min number of match events to trigger condition
-    bool ignoreUnknown;            // Whether to ignore Unknown illuminations
+    std::vector<IlluminationState> triggerStates; // Triggered by entering these states
+    f32 confirmationTime_s;                       // Number of seconds state must match to trigger condition
+    u32 confirmationMinNum;                       // Min number of match events to trigger condition
+    bool ignoreUnknown;                           // Whether to ignore Unknown illuminations
   };
-  
-  ConfigParams _params;
-  std::unique_ptr<BEIConditionMessageHelper> _messageHelper;
   
   enum class MatchState
   {
-    WaitingForMatch,
+    WaitingForStart,
     ConfirmingMatch,
     MatchConfirmed
   };
+  
+  struct DynamicVariables
+  {
+    MatchState   matchState;     // State of matching process
+    TimeStamp_t  matchStartTime; // Time at which first match in series received (if matched)
+    u32          matchedEvents;  // Number of matches in current series
+  };
 
-  MatchState   _matchState;     // State of matching process
-  TimeStamp_t  _matchStartTime; // Time at which first match in series received (if matched)
-  u32          _matchedEvents;  // Number of matches in current series
+  ConfigParams _params;
+  DynamicVariables _variables;
+  std::unique_ptr<BEIConditionMessageHelper> _messageHelper;
 
-  void HandleIllumination( const EngineToGameEvent& event );
+  void TickStateMachine( const TimeStamp_t& currTime, const IlluminationState& obsState );
+  bool IsTimePassed( const TimeStamp_t& t, const f32& dur ) const;
+  bool IsTriggerState( const IlluminationState& state ) const;
 };
 
 } // end namespace Cozmo
