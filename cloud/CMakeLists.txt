@@ -5,7 +5,8 @@ include(anki_build_cxx)
 include(anki_build_go)
 include(anki_build_util)
 
-set(GATEWAY_GRPC_OUTPUT "${CMAKE_SOURCE_DIR}/generated/go/src/proto/external_interface/external_interface.pb.go" "${CMAKE_SOURCE_DIR}/generated/go/src/proto/external_interface/external_interface.pb.gw.go")
+set(GATEWAY_GRPC_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/go/src/proto/external_interface")
+set(GATEWAY_GRPC_OUTPUT "${GATEWAY_GRPC_OUTPUT_DIR}/external_interface.pb.go" "${GATEWAY_GRPC_OUTPUT_DIR}/external_interface.pb.gw.go")
 set(__extra_go_deps "${CLAD_GO_GEN_SRCS}" "${GATEWAY_GRPC_OUTPUT}" "${CLAD_GATEWAY_GEN_SRCS}")
 
 if (NOT EXISTS "${ANKI_EXTERNAL_DIR}/chipper_key")
@@ -143,6 +144,7 @@ set(GATEWAY_PROTO_FILES "${CMAKE_CURRENT_SOURCE_DIR}/gateway/external_interface.
 
 add_custom_command(
   OUTPUT ${GATEWAY_GRPC_OUTPUT}
+  COMMAND mkdir -p ${GATEWAY_GRPC_OUTPUT_DIR}
   COMMAND ${CMAKE_COMMAND} -E env "PATH=${PROTOBUF_HOME}/go/bin:$ENV{PATH}"
     ${PROTOBUF_HOME}/bin/protoc "-I${CMAKE_CURRENT_SOURCE_DIR}/gateway"
     -I"${PROTOBUF_HOME}/include"
