@@ -526,11 +526,13 @@ enum uint_32 GenericEvent
   Play__Robot_Vic_Vo__React_Curious_Short = 3797167345,
   Play__Robot_Vic_Vo__React_Happy = 42102062,
   Play__Robot_Vic_Vo__React_Plaintive = 1628182670,
+  Play__Robot_Vic_Vo__React_Sad = 996939768,
   Play__Robot_Vic_Vo__React_Surprised = 3602654771,
   Play__Robot_Vic_Vo__React_Wake_Word = 3499138811,
   Play__Robot_Vic_Vo__React_Wake_Word_Surprised = 515534641,
   Play__Robot_Vic_Vo__Temp_Fist_Bump = 1376298574,
   Play__Robot_Vic__External_Voice_Message = 3168753800,
+  Play__Robot_Vic__External_Voice_Text = 2774572774,
   Play__Robot_Vo__Codelab_Conducting_01 = 2126150744,
   Play__Robot_Vo__Codelab_Countdown_01 = 2593818563,
   Play__Robot_Vo__Codelab_Countdown_02 = 2593818560,
@@ -1110,6 +1112,7 @@ enum uint_32 Robot_Sfx
 enum uint_32 Robot_Vic
 {
   External_Voice_Message = 3168753800,
+  External_Voice_Text = 2774572774,
   Invalid = 0,  // Use this to check for Invalid events
 }
 
@@ -1389,6 +1392,7 @@ enum uint_32 Robot_Vic_Vo
   React_Curious_Short = 3797167345,
   React_Happy = 42102062,
   React_Plaintive = 1628182670,
+  React_Sad = 996939768,
   React_Surprised = 3602654771,
   React_Wake_Word = 3499138811,
   React_Wake_Word_Surprised = 515534641,

@@ -85,6 +85,15 @@ enum uint_32 Music_Dimmer
   Music_Full = 2880332950,
 }
 
+enum uint_32 Robot_Vic_External_Language
+{
+  English = 3383237639,
+  French = 3133094709,
+  German = 4290373403,
+  Invalid = 0,
+  Japanese = 2008704848,
+}
+
 enum uint_32 Robot_Vic_Petting_Level
 {
   Invalid = 0,
@@ -116,6 +125,7 @@ enum uint_32 StateGroupType
   Mood = 3128647864,
   Music = 3991942870,
   Music_Dimmer = 920031443,
+  Robot_Vic_External_Language = 2984487667,
   Robot_Vic_Petting_Level = 3399985269,
   Robot_Vic_Quiet = 3765614597,
   Robot_Vic_Vc = 3929179650,

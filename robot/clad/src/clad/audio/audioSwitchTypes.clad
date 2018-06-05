@@ -234,24 +234,7 @@ enum uint_32 SwitchGroupType
   Robot_Vic_Tread_Drive = 4283612440,
   Robot_Vic_Tread_Speed = 724346585,
   Sparked = 62349551,
-  Vic_Robot_External_Voice_Language = 529560570,
-  Vic_Robot_External_Voice_Length = 3060912632,
   World_Event = 846944294,
-}
-
-enum uint_32 Vic_Robot_External_Voice_Language
-{
-  English = 3383237639,
-  French = 3133094709,
-  Invalid = 0,
-}
-
-enum uint_32 Vic_Robot_External_Voice_Length
-{
-  Invalid = 0,
-  Name = 797654004,
-  Sentece_Short = 1210666079,
-  Sentence_Long = 1016630823,
 }
 
 enum uint_32 World_Event
