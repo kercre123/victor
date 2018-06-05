@@ -142,9 +142,9 @@ static void dbg_test_comm_loop_(int nloops, int rmin, int rmax)
     //else if( sensorSelect == 4 )
       rcomGet(rmin+rand()%rmod, RCOM_SENSOR_DEBUG_INC);
     //else { sensorSelect = -1; break; }    
-    rcomRlg(0, 0, 0);
-    rcomRlg(1, 0, 0);
-    try { for(int x=2; x<=8; x++) { rcomRlg(x, 0, 0); } } catch(int e) {}
+    //rcomRlg(0, 0, 0);
+    //rcomRlg(1, 0, 0);
+    try { for(int x=0; x<=8; x++) { rcomRlg(x, 0, 0); } } catch(int e) {}
   }
 }
 
