@@ -316,6 +316,14 @@ void check_battery_discharge(struct BodyToHead*  bodyData) {
     charge_cycles++;
 
     if ((charge_cycles & 0x7F)==0) { printf("battery is %.2fV\r", bodyData->battery.battery * BATTERY_SCALE); }
+    if ((charge_cycles & 0x1FF)==0) {
+      mm_debug("battery is %.2fV (%d) [ext %d, temp %d flags %d]. We are %scharging",
+               bodyData->battery.battery * BATTERY_SCALE,
+               bodyData->battery.battery,
+               bodyData->battery.charger,
+               bodyData->battery.temperature,
+               bodyData->battery.flags,
+               gLifeTesting.do_discharge?"dis":""); }
 
     if (bodyData->battery.battery > BAT_CHARGED_THRESHOLD) {
       if (!gLifeTesting.do_discharge) {
@@ -588,13 +596,13 @@ int main(int argc, const char* argv[])
   int errCode = hal_init(SPINE_TTY, SPINE_BAUD);
   if (errCode) { error_exit(errCode, "hal_init"); }
 
-  hal_set_mode(RobotMode_RUN);
+//  hal_set_mode(RobotMode_RUN);
 
   //kick off the body frames
   hal_send_frame(PAYLOAD_DATA_FRAME, &gHeadData, sizeof(gHeadData));
 
-  usleep(5000);
-  hal_send_frame(PAYLOAD_DATA_FRAME, &gHeadData, sizeof(gHeadData));
+  /* usleep(5000); */
+  /* hal_send_frame(PAYLOAD_DATA_FRAME, &gHeadData, sizeof(gHeadData)); */
 
 
   while (--argc>0) {
@@ -617,7 +625,7 @@ int main(int argc, const char* argv[])
 
     const struct SpineMessageHeader* hdr = get_a_frame(5);
     if (!hdr) {
-      if (++badcomms > 100)
+      if (++badcomms > 1000)
       {
         printf("can't get frame\n");
         exit(1);

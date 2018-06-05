@@ -240,7 +240,6 @@ void display_render_16bit_text(uint8_t* bitmap, int layer, const Font* font)
         unsigned char c = restrict_to_printable(*text++, font->CharStart, font->CharEnd);
 
         const uint16_t* glyph = ((uint16_t*)font->glyphs) + (c * font->BitWidth);
-//        const uint16_t* glyph = &Font->glyphs[c * font->BitWidth];
         int i;
         for (i=0; i<font->BitWidth; i++)
 
@@ -279,7 +278,7 @@ void display_render_32bit_text(uint8_t* bitmap, int layer, const Font* font)
     const char* text = gDisplay.text[layer]+(line*font->CharsPerLine);
     if (*text)  {
       ddprintf("^ %s\n", text);
-      for (col=0;col<font->CharsPerLine; col++)
+      for (col=0; col<font->CharsPerLine; col++)
       {
         unsigned char c = restrict_to_printable(*text++, font->CharStart, font->CharEnd);
 
@@ -362,9 +361,6 @@ void display_render(uint8_t layermask) {
 
 void display_draw_text(int layer, int line , uint16_t fg, uint16_t bg, const char* text, int len, bool centered)
 {
-  if( layer == DISPLAY_LAYER_LARGE && len > gFont[layer].CharsPerLine ) {
-    layer = DISPLAY_LAYER_LARGE_SKINNY;
-  }
   const Font* font =  gFont[layer];
   assert(line < font->LineCount);
   int nchars =  min(len, font->CharsPerLine);
