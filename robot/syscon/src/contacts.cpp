@@ -17,6 +17,8 @@ static int txReadIndex;
 static int txWriteIndex;
 static bool transmitting;
 
+bool Contacts::dataQueued;
+
 static inline void set_rx() {
   USART2->CR1 = 0;
   __nop(); __nop(); __nop(); __nop(); __nop();
@@ -71,11 +73,12 @@ void Contacts::init(void) {
 void Contacts::forward(const ContactData& pkt) {
   NVIC_DisableIRQ(USART2_IRQn);
 
-  Analog::delayCharge();
-
   for (int i = 0; i < sizeof(pkt.data); i++) {
     uint8_t byte = pkt.data[i];
     if (!byte) continue ;
+
+    Analog::inhibitCharge(true);
+    Contacts::dataQueued = true;
 
     //prevent buffer wrap by dropping chars
     int nextWriteIndex = txWriteIndex+1 >= sizeof(txData) ? 0 : txWriteIndex+1;
@@ -128,10 +131,11 @@ extern "C" void USART2_IRQHandler(void) {
                     | USART_CR1_TXEIE
                     ;
       } else {
+        Contacts::dataQueued = false;
         set_rx();
       }
     }
-    
+
     if( USART2->CR1 & USART_CR1_TXEIE ) { //STATE: transmit-active
       if (txReadIndex != txWriteIndex) {
         if (USART2->ISR & USART_ISR_TXE) {
@@ -157,11 +161,10 @@ extern "C" void USART2_IRQHandler(void) {
     volatile uint8_t rxd = USART2->RDR;
         
     if( status & (USART_ISR_ORE | USART_ISR_FE) ) { //framing and/or overrun error
-      //rxd = USART2->RDR; //flush the rdr & shift register
-      //rxd = USART2->RDR;
+      USART2->RQR = USART_RQR_RXFRQ;
       USART2->ICR = USART_ICR_ORECF | USART_ICR_FECF; //clear flags
     } else if (rxDataIndex < sizeof(rxData.data) && !ignore) {
-      Analog::delayCharge();
+      Analog::inhibitCharge();
       rxData.data[rxDataIndex++] = rxd;
     }
   }

@@ -37,18 +37,20 @@ static const int LIGHT_COLORS     = 3;
 static const int LIGHT_SHIFT      = 17 + 2; // 2 is to account for prescalar
 static const uint8_t DARK_OFFSET  = 200; // 245 = 0% dark
 
-static uint8_t value[LIGHT_CHANNELS][LIGHT_COLORS] = {
+static const uint8_t default_value[LIGHT_CHANNELS][LIGHT_COLORS] = {
   { 0xFF, 0xFF, 0xFF },
   { 0x00, 0x00, 0x00 },
   { 0x00, 0x00, 0x00 },
   { 0x00, 0x00, 0x00 }
 };
+static uint8_t value[LIGHT_CHANNELS][LIGHT_COLORS];
 
 static LightChannel light[LIGHT_CHANNELS * LIGHT_COLORS + 1];
 static LightChannel *current_light;
 static bool disabled;
 
 void Lights::init(void) {
+  memcpy(value, default_value, sizeof(value));
   disabled = false;
   leds_off();
 }
@@ -58,7 +60,7 @@ void Lights::receive(const uint8_t* data) {
 }
 
 void Lights::disable(void) {
-  memset(value, 0, sizeof(value));
+  memcpy(value, default_value, sizeof(value));
   disabled = true;
 }
 

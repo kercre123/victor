@@ -320,7 +320,7 @@ Result spine_get_frame() {
         BootBodyData_.touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
         BootBodyData_.battery.flags = POWER_ON_CHARGER;
 
-        BootBodyData_.battery.battery = (int16_t)(5.0/kBatteryScale);
+        BootBodyData_.battery.main_voltage = (int16_t)(5.0/kBatteryScale);
         BootBodyData_.battery.charger = (int16_t)(5.0/kBatteryScale);
         bodyData_ = &BootBodyData_;
       }
@@ -556,7 +556,7 @@ bool HAL::HandleLatestMicData(SendDataFunction sendDataFunc)
 f32 HAL::BatteryGetVoltage()
 {
   // scale raw ADC counts to voltage (conversion factor from Vandiver)
-  return kBatteryScale * bodyData_->battery.battery;
+  return kBatteryScale * bodyData_->battery.main_voltage;
 }
 
 bool HAL::BatteryIsCharging()

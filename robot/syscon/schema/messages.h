@@ -107,6 +107,13 @@ enum {
 };
 typedef uint32_t PowerState;
 
+// ENUM PowerFlags
+enum {
+  POWER_DISCONNECT_CHARGER = 0x8000,
+  POWER_CONNECT_CHARGER    = 0x4000,
+};
+typedef uint32_t PowerFlags;
+
 // ENUM LedIndexes
 enum {
   LED0_RED    = 0,
@@ -149,7 +156,7 @@ struct MotorPower
 
 struct BatteryState
 {
-  int16_t battery;
+  int16_t main_voltage; // This is battery voltage when the charger is unpowered / disconnected from VEXT
   int16_t charger;
   int16_t temperature;
   BatteryFlags flags;
@@ -235,7 +242,7 @@ struct LightState
 struct HeadToBody
 {
   uint32_t framecounter;
-  PowerState powerState;
+  PowerFlags powerFlags;
   int16_t motorPower[4];
   struct LightState lightState;
   uint8_t _unused[32];  // Future expansion
