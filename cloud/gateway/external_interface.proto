@@ -56,6 +56,14 @@ service ExternalInterface {
       body: "*"
     };
   }
+
+  // Request control from behavior system
+  rpc SDKBehaviorActivation(SDKActivationRequest) returns (SDKActivationResult) {
+    option (google.api.http) = {
+      post: "/v1/sdk_activation",
+      body: "*"
+    };
+  }
 }
 
 message ResultStatus {
@@ -65,7 +73,6 @@ message ResultStatus {
 message Animation {
   string name = 1;
 }
-
 
 message DriveWheelsRequest {
   float left_wheel_mmps   = 1;
@@ -113,7 +120,6 @@ message PlayAnimationResult {
   ResultStatus status = 1;
 }
 
-
 message ListAnimationsRequest {}
 
 message ListAnimationsResult {
@@ -150,7 +156,7 @@ message TimeStampedStatus {
 message RobotHistoryRequest {
 }
 
-message RobotHistoryResponse {
+message RobotHistoryResult {
   repeated TimeStampedStatus messages = 1;
 }
 
@@ -166,4 +172,14 @@ message EventRequest {}
 message EventResult {
   ResultStatus status = 1;
   Event event = 2;
+}
+
+message SDKActivationRequest {
+  uint32 slot = 1; // TODO Use BehaviorSlot
+  bool enable = 2;
+}
+
+message SDKActivationResult {
+  ResultStatus status = 1;
+  uint32 slot = 2;
 }

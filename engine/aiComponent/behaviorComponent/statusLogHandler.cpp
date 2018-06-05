@@ -76,7 +76,7 @@ void StatusLogHandler::SaveStatusHistory( const ExternalInterface::Status& statu
   
 void StatusLogHandler::SendStatusHistory()
 {
-  ExternalInterface::RobotHistoryResponse response;
+  ExternalInterface::RobotHistoryResult response;
   response.messages.reserve( _statusHistory->size() );
   for( size_t i=0; i<_statusHistory->size(); ++i ) {
     const auto& elem = (*_statusHistory.get())[i];

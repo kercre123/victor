@@ -11,6 +11,7 @@
 #include "clad/types/animationEvents.clad"
 #include "clad/types/behaviorComponent/behaviorIDs.clad"
 #include "clad/types/behaviorComponent/behaviorObjectives.clad"
+#include "clad/types/behaviorSlot.clad"
 #include "clad/types/debugConsoleTypes.clad"
 #include "clad/types/deviceDataTypes.clad"
 #include "clad/types/engineErrorCodes.clad"
@@ -1013,8 +1014,13 @@ message TimeStampedStatus {
   uint_32 timestamp_ms,
 }
 
-message RobotHistoryResponse {
+message RobotHistoryResult {
   TimeStampedStatus  messages[uint_16],
+}
+
+// Response to request for control from behavior system
+message SDKActivationResult {
+    BehaviorSlot slot,
 }
 
 // Anything that the robot wishes to push to the app that 
@@ -1033,7 +1039,8 @@ autounion MessageEngineToGame
   UiDeviceConnected                 UiDeviceConnected                  = 0x00, // DO NOT CHANGE THIS VALUE
   RobotCompletedAction              RobotCompletedAction               = 0x01,
   Event                             Event                              = 0x02,
-  RobotHistoryResponse              RobotHistoryResponse               = 0x03,
+  RobotHistoryResult                RobotHistoryResult                 = 0x03,
+  SDKActivationResult               SDKActivationResult                = 0x04,
 }
 
 } // namespace ExternalInterface

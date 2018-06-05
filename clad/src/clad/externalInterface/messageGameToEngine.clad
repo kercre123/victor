@@ -8,6 +8,7 @@
 #include "clad/externalInterface/messageActions.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/types/actionTypes.clad"
+#include "clad/types/behaviorSlot.clad"
 #include "clad/types/controllerChannels.clad"
 #include "clad/types/cubeAnimationTrigger.clad"
 #include "clad/types/customObjectMarkers.clad"
@@ -1158,6 +1159,11 @@ message RequestRobotSettings {
 message RobotHistoryRequest {
 }
 
+message SDKActivationRequest {
+  BehaviorSlot slot,
+  bool enable,
+}
+
 // explicit autounion - this will force the values given, and then add every other messages in this file
 // if you do not want to include messages in this union, use the keyword "structure" instead of "message"
 // DO NOT CHANGE ANY EXPLICITLY DECLARED VALUES - they must be compatible across all versions so we can reliably
@@ -1171,6 +1177,7 @@ autounion MessageGameToEngine
   MoveLift MoveLift = 0x04,
   DriveArc DriveArc = 0x05,
   RobotHistoryRequest RobotHistoryRequest = 0x06,
+  SDKActivationRequest SDKActivationRequest = 0x07,
 }
 
 

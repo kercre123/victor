@@ -82,10 +82,18 @@ func ProtoDriveArcToClad(msg *extint.DriveArcRequest) *gw_clad.MessageExternalTo
 		msg.CurvatureRadiusMm = math.MaxInt16
 	}
 	return gw_clad.NewMessageExternalToRobotWithDriveArc(&gw_clad.DriveArc{
-		Speed:  msg.Speed,
+		Speed: msg.Speed,
 		Accel: msg.Accel,
 		CurvatureRadius_mm: int16(msg.CurvatureRadiusMm),
 		// protobuf does not have a 16-bit integer representation, this conversion is used to satisfy the specs specified in the clad
+	})
+}
+
+// TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
+func ProtoSDKActivationToClad(msg *extint.SDKActivationRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithSDKActivationRequest(&gw_clad.SDKActivationRequest{
+		Slot: msg.Slot,
+		Enable: msg.Enable,
 	})
 }
 
@@ -256,6 +264,23 @@ func (c *rpcService) EventStream(in *extint.EventRequest, stream extint.External
 		}
 	}
 	return nil
+}
+
+// Request control from behavior system
+func (m *rpcService) SDKBehaviorActivation(ctx context.Context, in *extint.SDKActivationRequest) (*extint.SDKActivationResult, error) {
+	log.Println("Received rpc request SDKBehaviorActivation(", in, ")")
+	_, err := WriteToEngine(engineSock, ProtoSDKActivationToClad(in))
+	if err != nil {
+		return nil, err
+	}
+	return &extint.SDKActivationResult{
+		// TODO Set data for Slot and ResultStatus
+		//Slot: &extint.Slot{
+		//},
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
 }
 
 func newServer() *rpcService {
