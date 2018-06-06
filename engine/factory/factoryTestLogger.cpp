@@ -272,34 +272,6 @@ namespace Cozmo {
     return AppendToFile(ss.str());
   }
   
-  bool FactoryTestLogger::Append(const ToolCodeInfo& data)
-  {
-    std::stringstream ss;
-    if (_exportJson) {
-      Json::Value& node = _json["ToolCode"];
-      node["Code"] = EnumToString(data.code);
-      node["Expected_L"][0] = data.expectedCalibDotLeft_x;
-      node["Expected_L"][1] = data.expectedCalibDotLeft_y;
-      node["Expected_R"][0] = data.expectedCalibDotRight_x;
-      node["Expected_R"][1] = data.expectedCalibDotRight_y;
-      node["Observed_L"][0] = data.observedCalibDotLeft_x;
-      node["Observed_L"][1] = data.observedCalibDotLeft_y;
-      node["Observed_R"][0] = data.observedCalibDotRight_x;
-      node["Observed_R"][1] = data.observedCalibDotRight_y;
-      ss << "[ToolCode]\n" << node;
-    } else {
-      ss << "\n[ToolCode]"
-      << "\nCode: " << EnumToString(data.code)
-      << "\nExpected_L: " << data.expectedCalibDotLeft_x  << ", " << data.expectedCalibDotLeft_y
-      << "\nExpected_R: " << data.expectedCalibDotRight_x << ", " << data.expectedCalibDotRight_y
-      << "\nObserved_L: " << data.observedCalibDotLeft_x  << ", " << data.observedCalibDotLeft_y
-      << "\nObserved_R: " << data.observedCalibDotRight_x << ", " << data.observedCalibDotRight_y;
-    }
-    
-    PRINT_NAMED_INFO("FactoryTestLogger.Append.ToolCodeInfo", "%s", ss.str().c_str());
-    return AppendToFile(ss.str());
-  }
-
   bool FactoryTestLogger::Append(const BirthCertificate& data)
   {
     std::stringstream ss;

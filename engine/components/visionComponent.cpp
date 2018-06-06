@@ -263,9 +263,6 @@ namespace Cozmo {
 
       // Got a new calibration: rebuild the LUT for ground plane homographies
       PopulateGroundPlaneHomographyLUT();
-
-      // Fine-tune calibration using tool code dots
-      //_robot->GetActionList().QueueActionNext(new ReadToolCodeAction(_robot));
     }
 
     if(kRollingShutterCorrectionEnabled)
@@ -399,16 +396,6 @@ namespace Cozmo {
       return _visionSystem->IsModeEnabled(mode);
     } else {
       return false;
-    }
-  }
-
-  Result VisionComponent::EnableToolCodeCalibration(bool enable)
-  {
-    if(nullptr != _visionSystem) {
-      return _visionSystem->EnableToolCodeCalibration(enable);
-    } else {
-      PRINT_NAMED_ERROR("VisionComponent.EnableToolCodeCalibration.NullVisionSystem", "");
-      return RESULT_FAIL;
     }
   }
 
@@ -993,7 +980,6 @@ namespace Cozmo {
 
         tryAndReport(&VisionComponent::UpdateMotionCentroid,      VisionMode::DetectingMotion);
         tryAndReport(&VisionComponent::UpdateOverheadEdges,       VisionMode::DetectingOverheadEdges);
-        tryAndReport(&VisionComponent::UpdateToolCode,            VisionMode::ReadingToolCode);
         tryAndReport(&VisionComponent::UpdateComputedCalibration, VisionMode::ComputingCalibration);
         tryAndReport(&VisionComponent::UpdateImageQuality,        VisionMode::CheckingQuality);
         tryAndReport(&VisionComponent::UpdateWhiteBalance,        VisionMode::CheckingWhiteBalance);
@@ -1478,19 +1464,6 @@ namespace Cozmo {
 
     return RESULT_OK;
   }
-
-  Result VisionComponent::UpdateToolCode(const VisionProcessingResult& procResult)
-  {
-    for(auto & info : procResult.toolCodes)
-    {
-      ExternalInterface::RobotReadToolCode msg;
-      msg.info = info;
-      _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
-    }
-
-    return RESULT_OK;
-  }
-
 
   Result VisionComponent::UpdateComputedCalibration(const VisionProcessingResult& procResult)
   {
@@ -2063,49 +2036,6 @@ namespace Cozmo {
 
     return RESULT_OK;
   } // FindFactoryTestDotCentroids()
-
-  Result VisionComponent::ClearToolCodeImages()
-  {
-    if(nullptr == _visionSystem || !_visionSystem->IsInitialized())
-    {
-      PRINT_NAMED_ERROR("VisionComponent.ClearToolCodeImages.VisionSystemNotReady", "");
-      return RESULT_FAIL;
-    }
-    else
-    {
-      return _visionSystem->ClearToolCodeImages();
-    }
-  }
-
-  size_t VisionComponent::GetNumStoredToolCodeImages() const
-  {
-    return _visionSystem->GetNumStoredToolCodeImages();
-  }
-
-  std::list<std::vector<u8> > VisionComponent::GetToolCodeImageJpegData()
-  {
-    const auto& images = _visionSystem->GetToolCodeImages();
-
-    // Do jpeg compression
-    std::list<std::vector<u8> > rawJpegData;
-    for (auto const& img : images)
-    {
-      // Compress to jpeg
-      std::vector<u8> imgVec;
-      cv::imencode(".jpg", img.get_CvMat_(), imgVec, std::vector<int>({CV_IMWRITE_JPEG_QUALITY, 75}));
-
-      /*
-       std::string imgFilename = "savedImg_" + std::to_string(imgIdx) + ".jpg";
-       FILE* fp = fopen(imgFilename.c_str(), "w");
-       fwrite(imgVec.data(), imgVec.size(), 1, fp);
-       fclose(fp);
-       */
-
-      rawJpegData.emplace_back(std::move(imgVec));
-    }
-
-    return rawJpegData;
-  }
 
   inline static size_t GetPaddedNumBytes(size_t numBytes)
   {

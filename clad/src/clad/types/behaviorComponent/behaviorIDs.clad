@@ -44,7 +44,6 @@ enum uint_8 BehaviorID {
   PlaypenInitChecks,
   PlaypenMotorCalibration,
   PlaypenPickupCube,
-  PlaypenReadToolCode,
   PlaypenSoundCheck,
   PlaypenTest,
   PlaypenWaitToStart,

@@ -539,28 +539,6 @@ namespace Anki {
         }
       }
 
-      void Process_enableReadToolCodeMode(const RobotInterface::EnableReadToolCodeMode& msg)
-      {
-        //AnkiDebug( "ReadToolCodeMode", "enabled: %d, liftPower: %f, headPower: %f", msg.enable, msg.liftPower, msg.headPower);
-        if (msg.enable) {
-          HeadController::Disable();
-          f32 p = CLIP(msg.headPower, -0.5f, 0.5f);
-          HAL::MotorSetPower(MotorID::MOTOR_HEAD, p);
-
-          LiftController::Disable();
-          p = CLIP(msg.liftPower, -0.5f, 0.5f);
-          HAL::MotorSetPower(MotorID::MOTOR_LIFT, p);
-
-        } else {
-
-          HAL::MotorSetPower(MotorID::MOTOR_HEAD, 0);
-          HeadController::Enable();
-
-          HAL::MotorSetPower(MotorID::MOTOR_LIFT, 0);
-          LiftController::Enable();
-        }
-      }
-
       void Process_robotStoppedAck(const RobotInterface::RobotStoppedAck& msg)
       {
         AnkiInfo("Messages.Process_robotStoppedAck", "");

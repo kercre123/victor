@@ -110,7 +110,6 @@ std::map<NVEntryTag, u32> NVStorageComponent::_maxFactoryEntrySizeTable = {
                                                           // Single blob manufacturing entries start here
                                                           {NVEntryTag::NVEntry_BirthCertificate,   0},
                                                           {NVEntryTag::NVEntry_CameraCalib,        0},
-                                                          {NVEntryTag::NVEntry_ToolCodeInfo,       0},
                                                           {NVEntryTag::NVEntry_CalibPose,          0},
                                                           {NVEntryTag::NVEntry_CalibMetaInfo,      0},
                                                           {NVEntryTag::NVEntry_ObservedCubePose,   0},
@@ -128,9 +127,6 @@ std::map<NVEntryTag, u32> NVStorageComponent::_maxFactoryEntrySizeTable = {
                                                           {NVEntryTag::NVEntry_CalibImage4,        0},
                                                           {NVEntryTag::NVEntry_CalibImage5,        0},
                                                           {NVEntryTag::NVEntry_CalibImage6,        0},
-                                                          
-                                                          {NVEntryTag::NVEntry_ToolCodeImageLeft,  0},
-                                                          {NVEntryTag::NVEntry_ToolCodeImageRight, 0},
                                                           
                                                           // Pre-playpen tags
                                                           {NVEntryTag::NVEntry_PrePlaypenResults,   0},

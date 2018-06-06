@@ -466,7 +466,6 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
       switch (messageTag)
       {
         case GameToEngineTag::CalibrateMotors:                  return true;
-        case GameToEngineTag::ReadToolCode:                     return true;
         case GameToEngineTag::IMURequest:                       return true;
         case GameToEngineTag::StartControllerTestMode:          return true;
         case GameToEngineTag::RawPWM:                           return true;

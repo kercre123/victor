@@ -151,7 +151,6 @@ struct DockingErrorSignal;
     Result UpdateMotionCentroid(const VisionProcessingResult& result);
     Result UpdateLaserPoints(const VisionProcessingResult& result);
     Result UpdateOverheadEdges(const VisionProcessingResult& result);
-    Result UpdateToolCode(const VisionProcessingResult& result);
     Result UpdateComputedCalibration(const VisionProcessingResult& result);
     Result UpdateImageQuality(const VisionProcessingResult& procResult);
     Result UpdateVisualObstacles(const VisionProcessingResult& procResult);
@@ -164,11 +163,6 @@ struct DockingErrorSignal;
     const std::shared_ptr<Vision::CameraCalibration> GetCameraCalibration() const;
     bool IsCameraCalibrationSet() const { return _camera->IsCalibrated(); }
     Result ClearCalibrationImages();
-    
-    // If enabled, the camera calibration will be updated based on the
-    // position of the centroids of the dots that are part of the tool codes.
-    // Fails if vision system is already in the middle of reading tool code.
-    Result EnableToolCodeCalibration(bool enable);
       
     TimeStamp_t GetLastProcessedImageTimeStamp() const;
     
@@ -222,11 +216,6 @@ struct DockingErrorSignal;
     // Get the specified calibration pose to the robot. 'whichPose' must be [0,numCalibrationimages].
     Result GetCalibrationPoseToRobot(size_t whichPose, Pose3d& p) const;
     
-    // Tool code images
-    Result ClearToolCodeImages();
-    size_t  GetNumStoredToolCodeImages() const;
-    std::list<std::vector<u8> > GetToolCodeImageJpegData();
-
     // For factory test behavior use only: tell vision component to find the
     // four dots for the test target and compute camera pose. Result is
     // broadcast via an EngineToGame::RobotCompletedFactoryDotTest message.

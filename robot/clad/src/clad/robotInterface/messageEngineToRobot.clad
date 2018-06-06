@@ -250,13 +250,6 @@ message EnableMotorPower
   bool    enable
 }
 
-message EnableReadToolCodeMode
-{
-  float_32 headPower,
-  float_32 liftPower,
-  bool enable
-}
-
 // Message for ACKing the RobotStopped message from robot process
 // which re-enables the SteeringController/WheelController which
 // were disabled upon encountering cliff so as not to accidentally
@@ -638,13 +631,12 @@ union EngineToRobot
   SetCliffDetectThresholds      setCliffDetectThresholds    = 0x32,
 
   // Calibration
-  EnableReadToolCodeMode        enableReadToolCodeMode      = 0x33,
-  StartMotorCalibration         startMotorCalibration       = 0x34,
+  StartMotorCalibration         startMotorCalibration       = 0x33,
 
   // Reactions
-  EnableStopOnCliff             enableStopOnCliff           = 0x35,
-  EnableBraceWhenFalling        enableBraceWhenFalling      = 0x36,
-  RobotStoppedAck               robotStoppedAck             = 0x37,
+  EnableStopOnCliff             enableStopOnCliff           = 0x34,
+  EnableBraceWhenFalling        enableBraceWhenFalling      = 0x35,
+  RobotStoppedAck               robotStoppedAck             = 0x36,
   
   // TEMP support for 'old' chargers with black stripe and white body
   ChargerDockingStripeColor     chargerDockingStripeColor   = 0x40,

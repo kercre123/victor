@@ -110,12 +110,6 @@ namespace Anki {
           break;
         }
 
-        case RobotActionType::READ_TOOL_CODE:
-        {
-          _completionUnion.Set_readToolCodeCompleted(ReadToolCodeCompleted());
-          break;
-        }
-
         case RobotActionType::PLAY_ANIMATION:
         {
           _completionUnion.Set_animationCompleted(AnimationCompleted());

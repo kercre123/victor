@@ -443,9 +443,6 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     _awaitingConfirmationTreadState = OffTreadsState::OnTreads;
     // Allows this to be called instantly
     _timeOffTreadStateChanged_ms = currentTimestamp - kRobotTimeToConsiderOfftreads_ms;
-
-    // Check the lift to see if tool changed while we were picked up
-    //GetActionList().QueueActionNext(new ReadToolCodeAction(*this));
   }
 
   //////////

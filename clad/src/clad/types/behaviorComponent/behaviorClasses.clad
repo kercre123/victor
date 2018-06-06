@@ -77,7 +77,6 @@ enum uint_8 BehaviorClass {
   PlaypenInitChecks,
   PlaypenMotorCalibration,
   PlaypenPickupCube,
-  PlaypenReadToolCode,
   PlaypenSoundCheck,
   PlaypenTest,
   PlaypenWaitToStart,

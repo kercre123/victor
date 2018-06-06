@@ -26,7 +26,6 @@
 #include "clad/externalInterface/messageActions.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/animationTypes.h"
-#include "clad/types/toolCodes.h"
 #include "clad/types/visionModes.h"
 #include "util/bitFlags/bitFlags.h"
 #include "util/helpers/templateHelpers.h"
@@ -738,44 +737,6 @@ namespace Cozmo {
       std::function<bool(Robot&)> _lambda;
       f32 _timeout_sec;
     };
-    
-    
-    class ReadToolCodeAction : public IAction
-    {
-    public:
-      
-      ReadToolCodeAction(bool doCalibration = false);
-      virtual ~ReadToolCodeAction();
-      
-      virtual f32 GetTimeoutInSeconds() const override { return 5.f; }
-      
-      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
-      
-    protected:
-      
-      virtual ActionResult Init() override;
-      virtual ActionResult CheckIfDone() override;
-      
-    private:
-      
-      std::string       _name = "ReadToolCode";
-      bool              _doCalibration = false;
-      ToolCodeInfo      _toolCodeInfo;
-      
-      CompoundActionParallel _headAndLiftDownAction;
-      
-      //const TimeStamp_t kRequiredStillTime_ms    = 500;
-  
-      enum class State : u8 {
-        WaitingToGetInPosition,
-        WaitingForRead,
-        ReadCompleted
-      } _state;
-  
-      // Handler for the tool code being read
-      Signal::SmartHandle        _toolReadSignalHandle;
-      
-    }; // class ReadToolCodeAction
     
 } // namespace Cozmo
 } // namespace Anki

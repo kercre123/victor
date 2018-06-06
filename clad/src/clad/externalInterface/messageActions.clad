@@ -206,11 +206,6 @@ message FacePlant {
   bool usePreDockPose
 }
 
-// ReadToolCode
-message ReadToolCode {
-
-}
-
 // RealignWithObject
 // Realign with object when accidently moved by a small amount.
 message RealignWithObject {
@@ -495,7 +490,6 @@ union RobotActionUnion {
   PlayAnimationGroup            playAnimationGroup,
   PlayAnimationTrigger          playAnimationTrigger,
   PopAWheelie                   popAWheelie,
-  ReadToolCode                  readToolCode,
   RealignWithObject             realignWithObject,
   RollObject                    rollObject,
   SayText                       sayText,

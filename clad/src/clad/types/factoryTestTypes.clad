@@ -19,7 +19,6 @@ enum uint_8 FactoryTestState {
   TakeCalibrationImages,    // Take and save images of calibration patterns
   ComputeCameraCalibration, // Compute calibration and check that values are reasonable
   WaitForCameraCalibration,
-  ReadLiftToolCode,
   GotoPickupPose,
   StartPickup,
   PickingUpBlock,

@@ -1359,16 +1359,12 @@ namespace Cozmo {
       SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage4);
       SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage5);
       SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage6);
-      
-      SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ToolCodeImageLeft);
-      SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ToolCodeImageRight);
     }
     SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults);
     SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_IMUInfo);
     SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib);
     SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibMetaInfo);
     SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibPose);
-    SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo);
     SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ObservedCubePose);
     SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_BirthCertificate);
     
@@ -2636,20 +2632,6 @@ namespace Cozmo {
         
         break;
       }
-      case NVStorage::NVEntryTag::NVEntry_ToolCodeInfo:
-      {
-        ToolCodeInfo info;
-        if (recvdData->size() != MakeWordAligned(info.Size())) {
-          LOG_INFO("HandleNVStorageOpResult.ToolCodeInfo.UnexpectedSize",
-                   "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
-          break;
-        }
-        info.Unpack(recvdData->data(), info.Size());
-        
-        _factoryTestLogger.Append(info);
-        
-        break;
-      }
       case NVStorage::NVEntryTag::NVEntry_CalibPose:
       {
         PoseData info;
@@ -2717,8 +2699,6 @@ namespace Cozmo {
       case NVStorage::NVEntryTag::NVEntry_CalibImage4:
       case NVStorage::NVEntryTag::NVEntry_CalibImage5:
       case NVStorage::NVEntryTag::NVEntry_CalibImage6:
-      case NVStorage::NVEntryTag::NVEntry_ToolCodeImageLeft:
-      case NVStorage::NVEntryTag::NVEntry_ToolCodeImageRight:
       {
         char outFile[128];
         sprintf(outFile,  "nvstorage_output_%s.jpg", EnumToString(msg.tag));

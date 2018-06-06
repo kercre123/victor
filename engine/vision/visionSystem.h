@@ -54,7 +54,6 @@
 #include "clad/types/loadedKnownFace.h"
 #include "clad/types/salientPointTypes.h"
 #include "clad/types/visionModes.h"
-#include "clad/types/toolCodes.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 #include "util/bitFlags/bitFlags.h"
@@ -104,7 +103,6 @@ namespace Cozmo {
     std::list<Vision::TrackedPet>                               pets;
     std::list<OverheadEdgeFrame>                                overheadEdges;
     std::list<Vision::UpdatedFaceID>                            updatedFaceIDs;
-    std::list<ToolCodeInfo>                                     toolCodes;
     std::list<ExternalInterface::RobotObservedLaserPoint>       laserPoints;
     std::list<Vision::CameraCalibration>                        cameraCalibration;
     std::list<OverheadEdgeFrame>                                visualObstacles;
@@ -139,8 +137,6 @@ namespace Cozmo {
     Result PushNextModeSchedule(AllVisionModesSchedule&& schedule);
     Result PopModeSchedule();
     
-    Result EnableToolCodeCalibration(bool enable);
-    
     // This is main Update() call to be called in a loop from above.
 
     Result Update(const VisionPoseData&      robotState,
@@ -156,10 +152,6 @@ namespace Cozmo {
     size_t GetNumStoredCalibrationImages() const { return _cameraCalibrator->GetNumStoredCalibrationImages(); }
     const std::vector<CameraCalibrator::CalibImage>& GetCalibrationImages() const {return _cameraCalibrator->GetCalibrationImages();}
     const std::vector<Pose3d>& GetCalibrationPoses() const { return _cameraCalibrator->GetCalibrationPoses();}
-
-    Result ClearToolCodeImages();
-    size_t GetNumStoredToolCodeImages() const {return _toolCodeImages.size();}
-    const std::vector<Vision::Image>& GetToolCodeImages() const {return _toolCodeImages;}
 
     // VisionMode <-> String Lookups
     std::string GetModeName(Util::BitFlags32<VisionMode> mode) const;
@@ -286,8 +278,6 @@ namespace Cozmo {
     ModeScheduleStack _modeScheduleStack;
     std::queue<std::pair<bool,AllVisionModesSchedule>> _nextSchedules;
     
-    bool _calibrateFromToolCode = false;
-    
     s32 _frameNumber = 0;
 
     // Image saving and transmitting
@@ -326,12 +316,6 @@ namespace Cozmo {
     std::unique_ptr<Vision::NeuralNetRunner>        _neuralNetRunner;
     
     TimeStamp_t                   _neuralNetRunnerTimestamp = 0;
-    
-    // Tool code stuff
-    TimeStamp_t                   _firstReadToolCodeTime_ms = 0;
-    const TimeStamp_t             kToolCodeMotionTimeout_ms = 1000;
-    std::vector<Vision::Image>    _toolCodeImages;
-    bool                          _isReadingToolCode;
     
     Result UpdatePoseData(const VisionPoseData& newPoseData);
     Radians GetCurrentHeadAngle();
@@ -372,8 +356,6 @@ namespace Cozmo {
     Result UpdateGroundPlaneClassifier(const Vision::ImageRGB& image);
     
     void CheckForNeuralNetResults();
-    
-    Result ReadToolCode(const Vision::Image& image);
     
     bool ShouldProcessVisionMode(VisionMode mode);
     

@@ -40,7 +40,6 @@
 #include "clad/types/gameStatusFlag.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/sdkStatusTypes.clad"
-#include "clad/types/toolCodes.clad"
 #include "clad/types/uiConnectionTypes.clad"
 #include "clad/types/unlockTypes.clad"
 #include "clad/types/visionModes.clad"
@@ -451,11 +450,6 @@ structure ConnectedObjectState {
 
 message ConnectedObjectStates {
     ConnectedObjectState objects[uint_8]
-}
-
-// RobotReadToolCode
-message RobotReadToolCode {
-  ToolCodeInfo info
 }
 
 // RobotEnrolledFace - Broadcast by BehaviorEnrollFace when it completes

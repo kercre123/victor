@@ -148,7 +148,6 @@ private:
   friend class BehaviorPlaypenTest;
   friend class BehaviorPlaypenWaitToStart;
   friend class BehaviorPlaypenCameraCalibration;
-  friend class BehaviorPlaypenReadToolCode;
 
   Robot& _robot;
 };
