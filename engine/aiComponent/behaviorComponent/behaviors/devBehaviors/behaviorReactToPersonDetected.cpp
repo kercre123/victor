@@ -90,8 +90,7 @@ void BehaviorReactToPersonDetected::OnBehaviorActivated()
 {
   // reset dynamic variables
   _dVars = DynamicVariables();
-  
-  // TODO: the behavior is active now, time to do something!
+
   PRINT_CH_DEBUG("Behaviors", "BehaviorReactToPersonDetected.OnBehaviorActivated", "I am active!");
 
   auto& component = GetBEI().GetAIComponent().GetComponent<SalientPointsDetectorComponent>();
