@@ -17,11 +17,32 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorReactToPersonDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionPersonDetected.h"
 #include "engine/aiComponent/salientPointsDetectorComponent.h"
-#include "behaviorReactToPersonDetected.h"
+#include "engine/components/bodyLightComponent.h"
 
 namespace Anki {
 namespace Cozmo {
-  
+
+namespace {
+const BackpackLights kLightsOn = {
+    .onColors               = {{NamedColors::YELLOW,NamedColors::RED,NamedColors::BLUE}},
+    .offColors              = {{NamedColors::YELLOW,NamedColors::RED,NamedColors::BLUE}},
+    .onPeriod_ms            = {{0,0,0}},
+    .offPeriod_ms           = {{0,0,0}},
+    .transitionOnPeriod_ms  = {{0,0,0}},
+    .transitionOffPeriod_ms = {{0,0,0}},
+    .offset                 = {{0,0,0}}
+};
+
+const BackpackLights kLightsOff = {
+    .onColors               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
+    .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
+    .onPeriod_ms            = {{0,0,0}},
+    .offPeriod_ms           = {{0,0,0}},
+    .transitionOnPeriod_ms  = {{0,0,0}},
+    .transitionOffPeriod_ms = {{0,0,0}},
+    .offset                 = {{0,0,0}}
+};
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToPersonDetected::InstanceConfig::InstanceConfig()
@@ -37,6 +58,7 @@ BehaviorReactToPersonDetected::DynamicVariables::DynamicVariables()
 void BehaviorReactToPersonDetected::DynamicVariables::Reset()
 {
   state = State::Starting;
+  blinkOn = false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -130,6 +152,7 @@ void BehaviorReactToPersonDetected::BehaviorUpdate()
 
   if (_dVars.state == State::Starting) {
     PRINT_CH_INFO("Behaviors", "BehaviorReactToPersonDetected.BehaviorUpdate", "Starting the turn");
+    BlinkLight(true);
     TurnTowardsPoint();
   }
   else if (_dVars.state == State::Turning) {
@@ -138,8 +161,15 @@ void BehaviorReactToPersonDetected::BehaviorUpdate()
   }
   else if (_dVars.state == State::Completed) {
     PRINT_CH_INFO("Behaviors", "BehaviorReactToPersonDetected.BehaviorUpdate", "Finished turning");
+    BlinkLight(false);
     TransitionToCompleted();
   }
+}
+
+void BehaviorReactToPersonDetected::BlinkLight(bool on)
+{
+  _dVars.blinkOn = on;
+  GetBEI().GetBodyLightComponent().SetBackpackLights( _dVars.blinkOn ? kLightsOn : kLightsOff );
 }
 
 void BehaviorReactToPersonDetected::TurnTowardsPoint()
