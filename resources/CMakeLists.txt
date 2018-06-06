@@ -3,14 +3,25 @@ include(anki_build_copy_assets)
 set(ASSET_OUTPUT_RELATIVE_DSTS)
 set(ASSET_OUTPUT_FILES)
 
-anki_build_copy_assets_py(
-    TARGET cozmo_resources_assets
-    SRCLIST_DIR ${ANKI_SRCLIST_DIR}
-    OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources"
-    RELATIVE_OUTPUT_DIR "cozmo_resources"
-    OUT_DSTS ASSET_OUTPUT_FILES
-    OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
-)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    anki_build_copy_assets(
+        TARGET cozmo_resources_assets
+        SRCLIST_DIR ${ANKI_SRCLIST_DIR}
+        OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources"
+        RELATIVE_OUTPUT_DIR "cozmo_resources"
+        OUT_DSTS ASSET_OUTPUT_FILES
+        OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
+    )
+else()
+    anki_build_copy_assets_py(
+        TARGET cozmo_resources_assets
+        SRCLIST_DIR ${ANKI_SRCLIST_DIR}
+        OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources"
+        RELATIVE_OUTPUT_DIR "cozmo_resources"
+        OUT_DSTS ASSET_OUTPUT_FILES
+        OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
+    )
+endif()
 
 # Override sound target for locally generated sound banks
 set(sound_target cozmo_resources_sound)
@@ -38,7 +49,16 @@ if(0)
     )
 endif()
 
-if(MACOSX)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    anki_build_copydirectory_assets(
+        TARGET ${sound_target}
+        SRCLIST_DIR "externals/victor-audio-assets/victor_robot/victor_linux"
+        OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources/sound"
+        RELATIVE_OUTPUT_DIR "cozmo_resources/sound"
+        OUT_DSTS ASSET_OUTPUT_FILES
+        OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
+    )
+elseif(MACOSX)
     anki_build_copy_assets_py(
         TARGET ${sound_target}
         SRCLIST_DIR ${ANKI_SRCLIST_DIR}
@@ -57,49 +77,91 @@ else()
         OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
     )
 endif()
-
 add_dependencies(${sound_target} cozmo_resources_assets)
 
-anki_build_copy_assets_py(
-    TARGET cozmo_resources_config
-    SRCLIST_DIR ${ANKI_SRCLIST_DIR}
-    OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources"
-    RELATIVE_OUTPUT_DIR "cozmo_resources"
-    OUT_DSTS ASSET_OUTPUT_FILES
-    OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
-)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    anki_build_copy_assets(
+        TARGET cozmo_resources_config
+        SRCLIST_DIR ${ANKI_SRCLIST_DIR}
+        OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources"
+        RELATIVE_OUTPUT_DIR "cozmo_resources"
+        OUT_DSTS ASSET_OUTPUT_FILES
+        OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
+    )
+else()
+    anki_build_copy_assets_py(
+        TARGET cozmo_resources_config
+        SRCLIST_DIR ${ANKI_SRCLIST_DIR}
+        OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources"
+        RELATIVE_OUTPUT_DIR "cozmo_resources"
+        OUT_DSTS ASSET_OUTPUT_FILES
+        OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
+    )
+endif()
 add_dependencies(cozmo_resources_config ${sound_target})
 
 # Factory test shouldn't have webserver resources
 if (NOT FACTORY_TEST)
-  anki_build_copy_assets_py(
-      TARGET cozmo_resources_webserver
-      SRCLIST_DIR ${ANKI_SRCLIST_DIR}
-      OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources"
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        anki_build_copy_assets(
+            TARGET cozmo_resources_webserver
+            SRCLIST_DIR ${ANKI_SRCLIST_DIR}
+            OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources"
+            RELATIVE_OUTPUT_DIR "cozmo_resources"
+            OUT_DSTS ASSET_OUTPUT_FILES
+            OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
+        )
+    else()
+        anki_build_copy_assets_py(
+            TARGET cozmo_resources_webserver
+            SRCLIST_DIR ${ANKI_SRCLIST_DIR}
+            OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources"
+            RELATIVE_OUTPUT_DIR "cozmo_resources"
+            OUT_DSTS ASSET_OUTPUT_FILES
+            OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
+        )
+    endif()
+    add_dependencies(cozmo_resources_webserver cozmo_resources_config)
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    anki_build_copy_assets(
+        TARGET cozmo_bundle
+        SRCLIST_DIR ${ANKI_SRCLIST_DIR}
+        OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets"
+        OUT_DSTS ASSET_OUTPUT_FILES
+        OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
+    )
+else()
+    anki_build_copy_assets_py(
+        TARGET cozmo_bundle
+        SRCLIST_DIR ${ANKI_SRCLIST_DIR}
+        OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets"
+        OUT_DSTS ASSET_OUTPUT_FILES
+        OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
+    )
+endif()
+add_dependencies(cozmo_bundle cozmo_resources_webserver)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    anki_build_copy_assets(
+      TARGET        cozmo_resources_tts
+      SRCLIST_DIR   ${ANKI_SRCLIST_DIR}
+      OUTPUT_DIR   "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources"
       RELATIVE_OUTPUT_DIR "cozmo_resources"
       OUT_DSTS ASSET_OUTPUT_FILES
       OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
-  )
-  add_dependencies(cozmo_resources_webserver cozmo_resources_config)
+    )
+else()
+    anki_build_copy_assets_py(
+      TARGET        cozmo_resources_tts
+      SRCLIST_DIR   ${ANKI_SRCLIST_DIR}
+      OUTPUT_DIR   "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources"
+      RELATIVE_OUTPUT_DIR "cozmo_resources"
+      OUT_DSTS ASSET_OUTPUT_FILES
+      OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
+    )
 endif()
-
-anki_build_copy_assets_py(
-    TARGET cozmo_bundle
-    SRCLIST_DIR ${ANKI_SRCLIST_DIR}
-    OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets"
-    OUT_DSTS ASSET_OUTPUT_FILES
-    OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
-)
-add_dependencies(cozmo_bundle cozmo_resources_webserver)
-
-anki_build_copy_assets_py(
-  TARGET        cozmo_resources_tts
-  SRCLIST_DIR   ${ANKI_SRCLIST_DIR}
-  OUTPUT_DIR   "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources"
-  RELATIVE_OUTPUT_DIR "cozmo_resources"
-  OUT_DSTS ASSET_OUTPUT_FILES
-  OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
-)
 add_dependencies(cozmo_resources_tts cozmo_bundle)
 
 set(ASSET_TARGETS
