@@ -412,8 +412,11 @@ public:
   // Figure out absolute body pan and head tilt angles to turn towards a point in an image.
   // Note that the head tilt is approximate because this function makes the simplifying
   // assumption that the head rotates around the camera center.
+  // If isPointNormalized=true, imgPoint.x() and .y() must be on the interval [0,1] and
+  // are assumed to be relative to image size.
   Result ComputeTurnTowardsImagePointAngles(const Point2f& imgPoint, const TimeStamp_t timestamp,
-                                            Radians& absPanAngle, Radians& absTiltAngle) const;
+                                            Radians& absPanAngle, Radians& absTiltAngle,
+                                            const bool isPointNormalized = false) const;
 
   // These change the robot's internal (basestation) representation of its
   // head angle, and lift angle, but do NOT actually command the

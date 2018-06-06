@@ -35,11 +35,17 @@
 #include <vector>
 
 namespace Anki {
+  
+  // Forward declaration
+  namespace Vision {
+    struct SalientPoint;
+  }
+  
 namespace Cozmo {
   
     // Forward declaration
     class ObservableObject;
-
+  
     // Turn in place by a given angle, wherever the robot is when the action is executed.
     //
     // If isAbsolute==true, then angle_rad specifies the absolute body angle to turn to,
@@ -458,6 +464,10 @@ namespace Cozmo {
 
       TurnTowardsImagePointAction(const Point2f& imgPoint, const TimeStamp_t imgTimeStamp);
       
+      // Constructor for turning towards a SalientPoint, whose (x,y) location is in normalized
+      // coordinates (and which has its own timestamp)
+      TurnTowardsImagePointAction(const Vision::SalientPoint& salientPoint);
+      
     protected:
       virtual ActionResult Init() override;
       
@@ -465,6 +475,7 @@ namespace Cozmo {
       
       Point2f     _imgPoint;
       TimeStamp_t _timestamp;
+      bool        _isPointNormalized;
       
     }; // class TurnTowardsImagePointAction
     
