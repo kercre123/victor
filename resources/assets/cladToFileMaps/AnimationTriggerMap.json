@@ -1096,6 +1096,15 @@
     "AnimName": "ag_surprise"
   },
   {
+    "CladEvent": "TakeAPictureFocusing",
+    "AnimName": "ag_takepicture_focusing"
+  },
+  {
+    "CladEvent": "TakeAPictureCapture",
+    "AnimName": "ag_takepicture_capture"
+  },
+
+  {
     "CladEvent": "TextToSpeechGetIn",
     "AnimName": "ag_texttospeech_getin_01"
   },

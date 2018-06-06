@@ -135,6 +135,10 @@ enum uint_8 BehaviorClass {
   ObservingLookAtFaces,
   ObservingWithoutTurn,
 
+  // photoTaking
+  AestheticallyCenterFaces,
+  TakeAPhotoCoordinator,
+
   // proxBehaviors
   ProxGetToDistance,
 

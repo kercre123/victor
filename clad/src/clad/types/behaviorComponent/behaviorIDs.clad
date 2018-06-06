@@ -247,6 +247,11 @@ enum uint_8 BehaviorID {
   // victorBehaviorTree
   SingletonICantDoThat,
 
+  // victorBehaviorTree/takeAPhoto
+  FrameFaces,
+  TakeAPhotoCoordinator,
+  TakingPhotoAnimation,
+
   // victorBehaviorTree/timer
   SingletonCancelTimer,
   SingletonTimerAlreadySet,

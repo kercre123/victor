@@ -54,6 +54,7 @@ class MoodManager;
 class MovementComponent;
 class ObjectPoseConfirmer;
 class PetWorld;
+class PhotographyManager;
 class ProgressionUnlockComponent;
 class ProxSensorComponent;
 class PublicStateBroadcaster;
@@ -138,6 +139,7 @@ public:
             MovementComponent*             movementComponent,
             ObjectPoseConfirmer*           objectPoseConfirmer,
             PetWorld*                      petWorld,
+            PhotographyManager*            photographyManager,
             ProgressionUnlockComponent*    progressionUnlockComponent,
             ProxSensorComponent*           proxSensor,
             PublicStateBroadcaster*        publicStateBroadcaster,
@@ -175,6 +177,9 @@ public:
   inline bool HasDelegationComponent() const { return GetComponentWrapper(BEIComponentID::Delegation).IsValueValid();}
   inline DelegationComponent& GetDelegationComponent() const  { return GetComponentWrapper(BEIComponentID::Delegation).GetValue<DelegationComponent>();}
   
+  inline bool HasPhotographyManager() const { return GetComponentWrapper(BEIComponentID::PhotographyManager).IsValueValid();}
+  PhotographyManager& GetPhotographyManager() const { return GetComponentWrapper(BEIComponentID::PhotographyManager).GetValue<PhotographyManager>();}
+
   inline bool HasPublicStateBroadcaster() const { return GetComponentWrapper(BEIComponentID::PublicStateBroadcaster).IsValueValid();}
   PublicStateBroadcaster& GetRobotPublicStateBroadcaster() const { return GetComponentWrapper(BEIComponentID::PublicStateBroadcaster).GetValue<PublicStateBroadcaster>();}
   
@@ -254,6 +259,7 @@ private:
                        MovementComponent*             movementComponent,
                        ObjectPoseConfirmer*           objectPoseConfirmer,
                        PetWorld*                      petWorld,
+                       PhotographyManager*            photographyManager,
                        ProgressionUnlockComponent*    progressionUnlockComponent,
                        ProxSensorComponent*           proxSensor,
                        PublicStateBroadcaster*        publicStateBroadcaster,

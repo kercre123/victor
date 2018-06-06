@@ -22,7 +22,7 @@ namespace Anki {
 namespace Cozmo {
 
 class PhotographyManager : public IDependencyManagedComponent<RobotComponentID>, 
-                             private Anki::Util::noncopyable
+                           private Anki::Util::noncopyable
 {
 public:
   PhotographyManager();

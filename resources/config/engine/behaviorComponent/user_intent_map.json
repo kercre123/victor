@@ -75,6 +75,13 @@
       }
     },
     {
+      "cloud_intent" : "intent_photo_take",
+      "user_intent"  : "take_a_photo",
+      "cloud_substitutions": {
+        "entity_photo_selfie": "emptyOrSelfie"
+      }
+    },
+    {
       "cloud_intent": "intent_system_charger",
       "app_intent": "intent_system_charger",
       "user_intent": "system_charger"

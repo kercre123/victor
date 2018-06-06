@@ -84,7 +84,8 @@ BehaviorReactToVoiceCommand::DynamicVariables::DynamicVariables() :
   reactionDirection( kMicDirectionUnknown ),
   streamingBeginTime( 0.0f ),
   intentStatus( EIntentStatus::NoIntentHeard ),
-  isListening( false )
+  isListening( false ),
+  timestampToDisableTurnFor(0)
 {
 
 }
@@ -275,7 +276,7 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
   OnStreamingBegin();
 
   // Play a reaction behavior if we were told to ...
-  if ( _iVars.turnOnTrigger && _iVars.reactionBehavior )
+  if ( _iVars.turnOnTrigger && _iVars.reactionBehavior && IsTurnEnabled() )
   {
     const MicDirectionIndex triggerDirection = GetReactionDirection();
     _iVars.reactionBehavior->SetReactDirection( triggerDirection );
@@ -564,7 +565,7 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
     // Play a reaction behavior if we were told to ...
     // ** only in the case that we've heard a valid intent **
     const bool heardValidIntent = ( _dVars.intentStatus == EIntentStatus::IntentHeard );
-    if ( heardValidIntent && _iVars.turnOnIntent && _iVars.reactionBehavior )
+    if ( heardValidIntent && _iVars.turnOnIntent && _iVars.reactionBehavior && IsTurnEnabled() )
     {
       const MicDirectionIndex triggerDirection = GetReactionDirection();
       _iVars.reactionBehavior->SetReactDirection( triggerDirection );
@@ -617,6 +618,15 @@ void BehaviorReactToVoiceCommand::TransitionToIntentReceived()
     DelegateIfInControl( new TriggerLiftSafeAnimationAction( intentReaction ) );
   }
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorReactToVoiceCommand::IsTurnEnabled() const
+{
+  const auto ts = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  return ts != _dVars.timestampToDisableTurnFor;
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

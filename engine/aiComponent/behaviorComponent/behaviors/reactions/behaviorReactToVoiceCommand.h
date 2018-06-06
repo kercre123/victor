@@ -44,6 +44,11 @@ public:
   // since they are generic PlayAnim behaviors (reactToVoiceCommand_Wakeup)
   virtual void AddListener(ISubtaskListener* listener) override {};
 
+  // Allow other behaviors to specify a timestamp (generally the current timestamp)
+  // on which the turn on trigger/intent is disabled
+  void DisableTurnForTimestamp(TimeStamp_t timestampToDisableFor){
+    _dVars.timestampToDisableTurnFor = timestampToDisableFor;
+  }
 
 protected:
 
@@ -144,11 +149,14 @@ private:
     float                     streamingBeginTime;
     EIntentStatus             intentStatus;
     bool                      isListening;
+    TimeStamp_t               timestampToDisableTurnFor;                      
 
   } _dVars;
 
   // these are dynamic vars that live beyond the activation scope ...
   MicDirectionIndex         _triggerDirection;
+
+  bool IsTurnEnabled() const;
 
 }; // class BehaviorReactToVoiceCommand
 

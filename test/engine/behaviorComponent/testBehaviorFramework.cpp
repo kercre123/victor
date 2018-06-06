@@ -88,6 +88,7 @@ void InitBEIPartial( const BEIComponentMap& map, BehaviorExternalInterface& bei 
            GetFromMap<MovementComponent>(map, BEIComponentID::MovementComponent),
            GetFromMap<ObjectPoseConfirmer>(map, BEIComponentID::ObjectPoseConfirmer),
            GetFromMap<PetWorld>(map, BEIComponentID::PetWorld),
+           GetFromMap<PhotographyManager>(map, BEIComponentID::PhotographyManager),
            GetFromMap<ProgressionUnlockComponent>(map, BEIComponentID::ProgressionUnlock),
            GetFromMap<ProxSensorComponent>(map, BEIComponentID::ProxSensor),
            GetFromMap<PublicStateBroadcaster>(map, BEIComponentID::PublicStateBroadcaster),

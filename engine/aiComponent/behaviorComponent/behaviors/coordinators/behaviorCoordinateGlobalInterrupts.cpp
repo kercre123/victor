@@ -20,10 +20,13 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimGetInLoop.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorHighLevelAI.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/components/mics/micComponent.h"
+#include "engine/components/photographyManager.h"
 
 #include "util/helpers/boundedWhile.h"
 
@@ -115,6 +118,9 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
   BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(TimerUtilityCoordinator),
                                  BEHAVIOR_CLASS(TimerUtilityCoordinator),
                                  _iConfig.timerCoordBehavior);
+  BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(TriggerWordDetected),
+                                 BEHAVIOR_CLASS(ReactToVoiceCommand),
+                                 _iConfig.reactToVoiceCommandBehavior);
   
   _iConfig.triggerWordPendingCond = BEIConditionFactory::CreateBEICondition(BEIConditionType::TriggerWordPending, GetDebugLabel());
   _iConfig.triggerWordPendingCond->Init(GetBEI());
@@ -215,6 +221,23 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
     _dVars.isSuppressingStreaming = shouldSuppressStreaming;
   }
 
+  // If we are responding to "take a photo", and the user is not requesting a selfie
+  // Disable the react to voice command turn so that Victor takes the photo in his current direction
+  // Exception: If storage is full we want to turn towards the user to let them know
+  {
+    auto& uic = GetBehaviorComp<UserIntentComponent>();
+    UserIntent intent;
+    const bool isPhotoPending = uic.IsUserIntentPending(USER_INTENT(take_a_photo), intent);
+    if(isPhotoPending){
+      const auto& takeAPhoto = intent.Get_take_a_photo();
+      const bool isNotASelfie = takeAPhoto.empty_or_selfie.empty();
+      const bool isStorageFull = GetBEI().GetPhotographyManager().IsPhotoStorageFull();
+      if(isNotASelfie && !isStorageFull){
+        const auto ts = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+        _iConfig.reactToVoiceCommandBehavior->DisableTurnForTimestamp(ts);
+      }
+    }
+  }
 }
 
 
