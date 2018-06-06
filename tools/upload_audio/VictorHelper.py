@@ -35,7 +35,7 @@ class VictorHelper(object) :
         try:
             return_code = self.pull_data(ip, self.MICDATA_SRC, output_dir)
             return return_code
-        except (subprocess.CalledProcessError, subprocess.SubprocessError):
+        except (subprocess.CalledProcessError, subprocess.SubprocessError, subprocess.TimeoutExpired):
             return 1
 
 

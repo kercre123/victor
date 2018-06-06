@@ -12,11 +12,7 @@ from CommonHelper import CommonHelper
 app = Flask(__name__)
 app.config.from_object(settings)
 
-upload_folder = 'upload'
 SRCDIR = os.path.dirname(os.path.abspath(__file__))
-DATADIR = os.path.join(SRCDIR, upload_folder)
-victor_audio_folder = 'victor_audio'
-VICTOR_FOLDER = os.path.join(SRCDIR, victor_audio_folder)
 # The name of column in table
 column_name = 'name'
 column_age = 'age'
@@ -50,77 +46,51 @@ def query():
             flash(ERROR_MESSAGE)
         else:
             dynamo_db = DynamoDB(json_data)
-            data_list = dynamo_db.filterValues()
+            data_list = dynamo_db.filter_values()
             return render_template('data_table.html', list = data_list)
     return render_template('query.html')
 
-@app.route("/upload", methods=['GET', 'POST'])
-def upload():
-    if request.method == 'POST':
-        name_obj = request.form['name']
-        age = request.form['age']
-        distance = request.form['distance']
-        dropbox_path = request.form['dropbox_path']
-        date = request.form['date']
-        gender = request.form['radio']
-        file_obj = request.files['file']
-
-        if file_obj:
-            filename = secure_filename(file_obj.filename)
-            file_full = os.path.join(DATADIR, filename)
-            file_obj.save(file_full)
-
-            if not dropbox_path.startswith("/"):
-                dropbox_path = "/{}".format(dropbox_path)
-            if not dropbox_path.endswith("/"):
-                dropbox_path = "{}/".format(dropbox_path)
-
-            path_db = "{}{}".format(dropbox_path, filename)
-            dropbox_uploader = DropboxFileUploader(file_full, dropbox_path)
-            dropbox_uploader.uploadFile()
-            
-            ######################
-
-            json_data = {}
-            json_data[column_name] = name_obj
-            json_data[column_age] = age
-            json_data[column_distance] = distance
-            json_data[column_dropbox_path] = "{}{}".format(dropbox_path, filename)
-            json_data[column_date] = date
-            json_data[column_gender] = gender
-            
-            dynamo_db = DynamoDB(json_data)
-            dynamo_db.putItem()
-            # Delete temp file
-            CommonHelper().delete_folder(DATADIR, upload_folder)
-            return render_template('success_message.html', message="File uploaded successfully")
-    return render_template('upload.html')
-
-###############################
 @app.route("/upload-from-victor", methods=['GET', 'POST'])
 def upload_from_victor():
     ERROR_EMPTY_MESSAGE = 'You should fill Victor\'s IP field.'
     ERROR_NOT_FOUND_MESSAGE = 'Cannot find any Victor that match the IP address. Please try again.'
+    # setup variable
+    time_string = CommonHelper().get_time_string()
+    upload_folder = "{}_{}".format("upload", time_string)
+    DATADIR = os.path.join(SRCDIR, upload_folder)
+
+    format_datetime = CommonHelper().get_datetime_format()
+    dropbox_folder = "/Anki/{}/".format(format_datetime)
     if request.method == 'POST':
         user_name = request.form['name']
         age = request.form['age']
         distance = request.form['distance']
         gender = request.form['radio']
-        file_obj = request.files.getlist('file')
-
-        if len(file_obj) != 0:
-            for file in file_obj:
-                filename = "{}_{}_{}_{}_{}".format(user_name, age, gender, distance, secure_filename((file.filename).split("/")[-1]))
-                file_full = os.path.join(DATADIR, filename)
-                file.save(file_full)
-            current_time = time.strftime("%Y_%m_%d")
-            dropbox_folder = "/{}/".format(current_time)
-            dropbox_uploader = DropboxFileUploader(DATADIR, dropbox_folder)
-            dropbox_uploader.uploadFolder()
-            # Delete temp file
-            CommonHelper().delete_folder(DATADIR, upload_folder)
-            CommonHelper().delete_folder(VICTOR_FOLDER, victor_audio_folder)
-            return render_template('success_message.html', message="Files uploaded successfully")
+        victor_ip = request.form['vic_ip']
+        prefix_name = "{}_{}_{}_{}".format(user_name, age, gender, distance)
+        if (victor_ip.strip() != "" and user_name.strip() != ""):
+            result = VictorHelper.pull_data_to_machine(victor_ip, DATADIR)
+            if result == 1:
+                flash(ERROR_NOT_FOUND_MESSAGE)
+            else:
+                # upload to dynamodb
+                json_data = {}
+                json_data[column_name] = user_name
+                json_data[column_age] = age
+                json_data[column_distance] = distance
+                json_data[column_date] = format_datetime
+                json_data[column_gender] = gender
+                
+                dynamo_db = DynamoDB(json_data)
+                dynamo_db.put_item_into_db()
+                CommonHelper().add_prefix_files_in_directory(DATADIR, prefix_name)
+                dropbox_uploader = DropboxFileUploader(DATADIR, dropbox_folder)
+                dropbox_uploader.upload_folder()
+                # remove temp files
+                CommonHelper().delete_folder(DATADIR)
+                return render_template('success_message.html', message="File uploaded successfully")
+        else:
+            flash(ERROR_EMPTY_MESSAGE)
     return render_template('find_victor_audio_files.html')
 ################################################################
 if __name__ == "__main__":

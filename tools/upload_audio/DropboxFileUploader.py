@@ -29,7 +29,7 @@ class DropboxFileUploader():
         self.localfile = local_file
         self.folderpath = folder_path
 
-    def dropboxInstance(self):
+    def dropbox_instance(self):
         # Check for an access token
         if (len(self.token) == 0):
             sys.exit("ERROR: Looks like you didn't add your access token. Open up backup-and-restore-example.py in a text editor and paste in your token in line 14.")
@@ -45,11 +45,11 @@ class DropboxFileUploader():
             sys.exit(
                 "ERROR: Invalid access token; try re-generating an access token from the app console on the web.")
 
-        self.checkFileDetails(dbx)
+        self.check_file_details(dbx)
         return dbx
 
     # Uploads contents of localfile to Dropbox
-    def uploadToDropbox(self, dbx):
+    def upload_to_dropbox(self, dbx):
         self.backuppath = "{}{}".format(self.folderpath, os.path.basename(self.localfile))
         with open(self.localfile, 'rb') as f:
             # We use WriteMode=overwrite to make sure that the settings in the file
@@ -71,28 +71,28 @@ class DropboxFileUploader():
 
 
     # Adding few functions to check file details
-    def checkFileDetails(self, dbx):
+    def check_file_details(self, dbx):
         print("Checking file details")
 
         for entry in dbx.files_list_folder('').entries:
             print("File list is : ")
             print(entry.name)
 
-    def uploadFile(self):
-        dbx = self.dropboxInstance()
+    def upload_file(self):
+        dbx = self.dropbox_instance()
 
         print("Creating backup...")
         # Create a backup of the current settings file
-        self.uploadToDropbox(dbx)
+        self.upload_to_dropbox(dbx)
 
         print("Done!")
 
-    def uploadFolder(self):
-        dbx = self.dropboxInstance()
+    def upload_folder(self):
+        dbx = self.dropbox_instance()
 
         # enumerate local files recursively
         for root, dirs, files in os.walk(self.localfile):
             for filename in files:
                 # construct the full local path
                 self.localfile = os.path.join(root, filename)
-                self.uploadToDropbox(dbx)
+                self.upload_to_dropbox(dbx)

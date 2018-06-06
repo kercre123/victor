@@ -4,6 +4,7 @@ import json
 import decimal
 from boto3.dynamodb.conditions import Key, Attr
 import settings
+from botocore.exceptions import ClientError
 
 class DynamoDB():
 
@@ -14,36 +15,44 @@ class DynamoDB():
     ITEM = u'Items'
 
     json_data = ""
-    dynamodb = boto3.resource(DATABASE, region_name=REGION)
-    table = dynamodb.Table(TABLE)
 
     def __init__(self, json_data):
         self.json_data = json.dumps(json_data)
 
-    def putItemToTable(self, table, item):
+    def get_database(self):
+        try:
+            dynamodb = boto3.resource(self.DATABASE, region_name=self.REGION)
+            return dynamodb
+        except ClientError as e:
+            print("Unexpected error: {}".format(e))
+            return
+
+    def get_table(self):
+        return self.get_database().Table(self.TABLE)
+
+    def put_item_to_table(self, table, item):
         table.put_item(Item={
                             'name': item['name'],
                             'age': item['age'],
                             'distance': item['distance'],
-                            'dropbox_path': item['dropbox_path'],
                             'date': item['date'],
                             'gender': item['gender']
             }
         )
 
-    def putItem(self):
+    def put_item_into_db(self):
         items = json.loads(self.json_data, parse_float = decimal.Decimal)
-        self.putItemToTable(self.table, items)
+        self.put_item_to_table(self.get_table(), items)
         print("Done")
 
-    def filterValues(self):
+    def filter_values(self):
         datas = None
         for key, value in json.loads(self.json_data, parse_float = decimal.Decimal).items():
             if datas == None:
                 datas = Key(key).eq(value)
             else:
                 datas = datas & Key(key).eq(value)
-        response = self.table.scan(FilterExpression=datas)
+        response = self.get_table().scan(FilterExpression=datas)
         for i in response[self.ITEM]:
             print(json.dumps(i, cls=DecimalEncoder))
         return response[self.ITEM]

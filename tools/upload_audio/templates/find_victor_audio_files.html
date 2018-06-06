@@ -104,23 +104,12 @@ button:hover {
     <input type="radio" name="radio" value="female">
     <span class="checkmark"></span>
     </label>
-    </p>
 
     <label><b>Distance</b></label>
     <input type="text" placeholder="Enter Distance" name="distance" required>
 
-    <label><b>Audio folder</b></label>
-    <input type="file" name="file" onchange="selectFolder(event);" webkitdirectory mozdirectory msdirectory odirectory directory multiple="multiple" required/>
-    <script>
-    function selectFolder(e) {
-       for (var i = 0; i < e.target.files.length; i++) {
-          var s = e.target.files[i].name + '\n';
-          s += e.target.files[i].size + ' Bytes\n';
-          s += e.target.files[i].type;
-          // alert(s);
-       }
-    }
-    </script>
+    <label><b>Victor's IP</b></label>
+    <input type="text" placeholder="Enter Victor's IP" name="vic_ip" required>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
