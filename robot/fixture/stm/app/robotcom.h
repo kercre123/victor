@@ -67,7 +67,10 @@ const int ccr_sr_cnt[12] = {0,2,4,2,2,2,2,4,2,1,1,4}; //number of CCC sensor fie
 enum rcom_pwr_st_e {
   RCOM_PWR_ON = 0,
   RCOM_PWR_OFF = 1,
-  RCOM_PWR_OFF_IMMEDIATE = 2,
+  //RCOM_PWR_OFF_IMMEDIATE = 2,
+  
+  RCOM_PWR_ON_CHGEN   = RCOM_PWR_ON  | 0x8000, //explicitly enable charging
+  RCOM_PWR_OFF_nCHGEN = RCOM_PWR_OFF | 0x8000, //explicitly disable charging
 };
 
 typedef struct {
