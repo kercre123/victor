@@ -107,28 +107,6 @@ message MovingLiftPostDock
   DockAction action
 }
 
-message RampTraverseStart
-{
-  uint_32  timestamp,
-}
-
-message RampTraverseComplete
-{
-  uint_32  timestamp,
-  bool didSucceed,
-}
-
-message BridgeTraverseStart
-{
-  uint_32  timestamp,
-}
-
-message BridgeTraverseComplete
-{
-  uint_32  timestamp,
-  bool didSucceed,
-}
-
 message ChargerMountComplete
 {		
   uint_32  timestamp,

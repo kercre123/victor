@@ -494,29 +494,6 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::FacePlant&
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
-IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TraverseObject& msg)
-{
-  ObjectID selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
-
-  if(static_cast<bool>(msg.usePreDockPose)) {
-    DriveToAndTraverseObjectAction* action = new DriveToAndTraverseObjectAction(selectedObjectID);
-    if(msg.motionProf.isCustom)
-    {
-      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
-    }
-    return action;
-  } else {
-    TraverseObjectAction* traverseAction = new TraverseObjectAction(selectedObjectID);
-    if(msg.motionProf.isCustom)
-    {
-      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, traverseAction);
-    }
-    return traverseAction;
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::MountCharger& msg)
 {
   ObjectID selectedObjectID;
@@ -997,7 +974,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(trackObject,              TrackToObject,            0),
       DEFINE_HANDLER(trackLaserPoint,          TrackToLaserPoint,        0),
       DEFINE_HANDLER(trackPet,                 TrackToPet,               0),
-      DEFINE_HANDLER(traverseObject,           TraverseObject,           1),
       DEFINE_HANDLER(turnInPlace,              TurnInPlace,              0),
       DEFINE_HANDLER(turnTowardsFace,          TurnTowardsFace,          0),
       DEFINE_HANDLER(turnTowardsImagePoint,    TurnTowardsImagePoint,    0),
@@ -1406,8 +1382,6 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::RobotCompletedAct
   switch(msg.actionType)
   {
     case RobotActionType::ALIGN_WITH_OBJECT:
-    case RobotActionType::ASCEND_OR_DESCEND_RAMP:
-    case RobotActionType::CROSS_BRIDGE:
     case RobotActionType::MOUNT_CHARGER:
     case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
     case RobotActionType::PICKUP_OBJECT_HIGH:

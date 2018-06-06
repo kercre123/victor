@@ -55,16 +55,6 @@ namespace Cozmo {
     // Platform piece:
     Platform_LARGE,
 
-    // Bridges
-    Bridge_LONG,
-    Bridge_SHORT,
-
-    //////////////////////////////////////////////////////////////////////////
-    // Ramps
-    //
-    Ramp_Basic,
-
-
     //////////////////////////////////////////////////////////////////////////
     // Charger
     //
@@ -129,9 +119,6 @@ namespace Cozmo {
     FlatMat_ANKI_LOGO_8BIT = 0,
     FlatMat_LAVA_PLAYTEST  = 0,
     Platform_LARGE         = 0,
-    Bridge_LONG            = 0,
-    Bridge_SHORT           = 0,
-    Ramp_Basic             = 0,
     Charger_Basic          = 0,
     ProxObstacle           = 0,
     CliffDetection         = 0,
@@ -174,9 +161,6 @@ namespace Cozmo {
     FlatMat_ANKI_LOGO_8BIT = 0,
     FlatMat_LAVA_PLAYTEST  = 0,
     Platform_LARGE         = 0,
-    Bridge_LONG            = 0,
-    Bridge_SHORT           = 0,
-    Ramp_Basic             = 0,
     Charger_Basic          = 1,
     ProxObstacle           = 0,
     CliffDetection         = 0,

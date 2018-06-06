@@ -61,24 +61,6 @@ namespace Anki {
       // in history at time t. It just may not be very close at all...
       Result GetHistPoseAtTime(TimeStamp_t t, Anki::Embedded::Pose2d& p);
 
-      // Sets whether robot is on a ramp or not (the actual sloped portion),
-      // and notifies the basestation when there is a change in ramp state.
-      Result SetOnRamp(bool onRamp);
-
-      // Sets whether robot is on a bridge or not, and notifies the
-      // basestation when there is a change in bridge state.
-      Result SetOnBridge(bool onBridge);
-
-      // Returns true if robot is detected to be on a ramp.
-      // This only works if the ramp is traversed using the controller.
-      // i.e. Can't detect when manually driving up ramp.
-      bool IsOnRamp();
-
-      // Returns true if robot is detected to be on a bridge.
-      // This only works if the bridge is traversed using the controller.
-      // i.e. Can't detect when manually driving over a bridge.
-      bool IsOnBridge();
-
       // Returns distance between the current pose and the given xy coordinates
       f32 GetDistTo(const f32 x, const f32 y);
 

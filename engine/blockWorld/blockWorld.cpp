@@ -27,7 +27,6 @@
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/block.h"
-#include "engine/bridge.h"
 #include "engine/charger.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
@@ -47,7 +46,6 @@
 #include "engine/objectPoseConfirmer.h"
 #include "engine/platform.h"
 #include "engine/potentialObjectsForLocalizingTo.h"
-#include "engine/ramp.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/viz/vizManager.h"
@@ -187,19 +185,6 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
 
     // Platform piece:
     //_objectLibrary[ObjectFamily::Mat].AddObject(new Platform(Platform::Type::LARGE_PLATFORM));
-
-    // Long Bridge
-    //_objectLibrary[ObjectFamily::Mat].AddObject(new Bridge(Bridge::Type::LONG_BRIDGE));
-
-    // Short Bridge
-    // TODO: Need to update short bridge markers so they don't look so similar to long bridge at oblique viewing angle
-    // _objectLibrary[ObjectFamily::Mat].AddObject(new MatPiece(MatPiece::Type::SHORT_BRIDGE));
-
-
-    //////////////////////////////////////////////////////////////////////////
-    // Ramps
-    //
-    //_objectLibrary[ObjectFamily::RAMPS].AddObject(new Ramp());
 
 
     //////////////////////////////////////////////////////////////////////////

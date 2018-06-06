@@ -311,12 +311,6 @@ message TrackToPet {
     Vision::PetType  petType      // Set to Unknown to use any pet type (ignored if ID set)
 }
 
-// TraverseObject
-message TraverseObject {
-  PathMotionProfile motionProf,
-  bool usePreDockPose
-}
-
 // TurnInPlace
 // If isAbsolute == 0, turns the specified number of radians, *relative to the robot's current heading*
 // If isAbsolute != 0, turns to the specified absolute orientation.
@@ -513,7 +507,6 @@ union RobotActionUnion {
   TrackToObject                 trackObject,
   TrackToLaserPoint             trackLaserPoint,
   TrackToPet                    trackPet,
-  TraverseObject                traverseObject,
   TurnInPlace                   turnInPlace,
   TurnTowardsFace               turnTowardsFace,
   TurnTowardsImagePoint         turnTowardsImagePoint,

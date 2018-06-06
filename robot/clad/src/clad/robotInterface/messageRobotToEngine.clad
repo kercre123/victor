@@ -155,10 +155,6 @@ union RobotToEngine {
   LiftLoad                   liftLoad               = 0xBA,
   PickAndPlaceResult         pickAndPlaceResult     = 0xBB,
   ChargerMountComplete       chargerMountCompleted  = 0xBC,
-  RampTraverseStart          rampTraverseStarted    = 0xBD,
-  RampTraverseComplete       rampTraverseCompleted  = 0xBE,
-  BridgeTraverseStart        bridgeTraverseStarted  = 0xBF,
-  BridgeTraverseComplete     bridgeTraverseCompleted= 0xC0,
 
   // Sensors
   // FREE SLOT                                      = 0xC1,

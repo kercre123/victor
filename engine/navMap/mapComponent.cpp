@@ -137,7 +137,6 @@ MemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily fam
 
     case ObjectFamily::Invalid:
     case ObjectFamily::Unknown:
-    case ObjectFamily::Ramp:
     case ObjectFamily::Mat:
     break;
   };

@@ -138,19 +138,7 @@ namespace Cozmo {
   
   
   // TODO: This needs to be sync'd with whatever is in BlockDefinitions.h
-  const f32 DEFAULT_BLOCK_MARKER_WIDTH_MM = 25.f;
-  
-  // The distance to the bridge ground marker that the robot must
-  // achieve before we can consider it aligned with the bridge enough
-  // to start driving straight. This should be the minimum distance that
-  // the robot can reliably "dock" to the marker.
-  const f32 BRIDGE_ALIGNED_MARKER_DISTANCE = 60.f;
-  
-  // Distance between the marker at the end of the bridge
-  // and the desired pose of the robot when it is considered
-  // to be off the bridge.
-  const f32 MARKER_TO_OFF_BRIDGE_POSE_DIST = 80.f;
-  
+  const f32 DEFAULT_BLOCK_MARKER_WIDTH_MM = 25.f;  
   
   // Distance to the charger ramp marker that the robot must
   // achieve before we can consider it aligned with the charger enough

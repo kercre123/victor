@@ -34,10 +34,8 @@ enum int_32 RobotActionType {
     UNKNOWN = -1,
 
     ALIGN_WITH_OBJECT,
-    ASCEND_OR_DESCEND_RAMP,
     BACKUP_ONTO_CHARGER,
     CALIBRATE_MOTORS,
-    CROSS_BRIDGE,
     DEVICE_AUDIO,              // This calls audio from WWise
     DISPLAY_FACE_IMAGE,
     DISPLAY_PROCEDURAL_FACE,

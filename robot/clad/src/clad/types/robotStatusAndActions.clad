@@ -46,9 +46,6 @@ enum uint_8 DockAction
   DA_ALIGN_SPECIAL,   // Align as if we are picking up an object (want to get lift
                       // fingers into object grooves) but will not move the lift before
                       // or afterwards
-  DA_RAMP_ASCEND,     // Going up a ramp
-  DA_RAMP_DESCEND,    // Going down a ramp
-  DA_CROSS_BRIDGE,    // Crossing a bridge
   DA_BACKUP_ONTO_CHARGER,           // Reverse onto the charger platform
   DA_BACKUP_ONTO_CHARGER_USE_CLIFF, // Reverse onto the charger platform, using cliff sensors for angle correction
 }

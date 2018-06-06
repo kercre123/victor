@@ -55,8 +55,6 @@ namespace Anki {
         // Localization:
         f32 x_=0.f, y_=0.f;  // mm
         Radians orientation_(0.f);
-        bool onRamp_ = false;
-        bool onBridge_ = false;
 
         // Pose of the robot's drive center which is carry state dependent
         f32 driveCenter_x_ = 0.f, driveCenter_y_ = 0.f;
@@ -400,8 +398,6 @@ namespace Anki {
       Result Init() {
         SetCurrPose(0,0,0);
 
-        onRamp_ = false;
-
         prevLeftWheelPos_ = HAL::MotorGetPosition(MotorID::MOTOR_LEFT_WHEEL);
         prevRightWheelPos_ = HAL::MotorGetPosition(MotorID::MOTOR_RIGHT_WHEEL);
 
@@ -412,83 +408,6 @@ namespace Anki {
         return RESULT_OK;
       }
 
-      Result SendRampTraverseStartMessage()
-      {
-        RampTraverseStart msg;
-        msg.timestamp = HAL::GetTimeStamp();
-        if(RobotInterface::SendMessage(msg)) {
-          return RESULT_OK;
-        }
-        return RESULT_FAIL;
-      }
-
-      Result SendRampTraverseComplete(const bool success)
-      {
-        RampTraverseComplete msg;
-        msg.timestamp = HAL::GetTimeStamp();
-        msg.didSucceed = success;
-        if(RobotInterface::SendMessage(msg)) {
-          return RESULT_OK;
-        }
-        return RESULT_FAIL;
-      }
-
-      Result SetOnRamp(bool onRamp)
-      {
-        Result lastResult = RESULT_OK;
-        if(onRamp == true && onRamp_ == false) {
-          // We weren't on a ramp but now we are
-          RampTraverseStart msg;
-          msg.timestamp = HAL::GetTimeStamp();
-          if(RobotInterface::SendMessage(msg) == false) {
-            lastResult = RESULT_FAIL;
-          }
-        }
-        else if(onRamp == false && onRamp_ == true) {
-          // We were on a ramp and now we're not
-          RampTraverseComplete msg;
-          msg.timestamp = HAL::GetTimeStamp();
-          if(RobotInterface::SendMessage(msg) == false) {
-            lastResult = RESULT_FAIL;
-          }
-        }
-
-        onRamp_ = onRamp;
-
-        return lastResult;
-      }
-
-      bool IsOnRamp() {
-        return onRamp_;
-      }
-
-
-      Result SetOnBridge(bool onBridge)
-      {
-        Result lastResult = RESULT_OK;
-
-        if(onBridge == true && onBridge_ == false) {
-          // We weren't on a bridge but now we are
-          BridgeTraverseStart msg;
-          msg.timestamp = HAL::GetTimeStamp();
-          if(RobotInterface::SendMessage(msg) == false) {
-            lastResult = RESULT_FAIL;
-          }
-        }
-        else if(onBridge == false && onBridge_ == true) {
-          // We were on a bridge and no we're not
-          BridgeTraverseComplete msg;
-          msg.timestamp = HAL::GetTimeStamp();
-          if(RobotInterface::SendMessage(msg) == false) {
-            lastResult = RESULT_FAIL;
-          }
-        }
-        return lastResult;
-      }
-
-      bool IsOnBridge() {
-        return onBridge_;
-      }
       
       f32 GetDriveCenterOffset()
       {

@@ -136,11 +136,9 @@ namespace Anki {
         }
 
         // These actions don't set completion unions
-        case RobotActionType::ASCEND_OR_DESCEND_RAMP:
         case RobotActionType::BACKUP_ONTO_CHARGER:
         case RobotActionType::CALIBRATE_MOTORS:
         case RobotActionType::COMPOUND:
-        case RobotActionType::CROSS_BRIDGE:
         case RobotActionType::DISPLAY_FACE_IMAGE:
         case RobotActionType::DISPLAY_PROCEDURAL_FACE:
         case RobotActionType::DRIVE_OFF_CHARGER_CONTACTS:

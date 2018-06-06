@@ -44,12 +44,6 @@ namespace Anki {
         const u32 START_BACKOUT_PLACE_HIGH_TIMEOUT_MS = 500;
         const u32 START_BACKOUT_PLACE_LOW_TIMEOUT_MS = 1000;
 
-        const f32 RAMP_TRAVERSE_SPEED_MMPS = 40;
-        const f32 ON_RAMP_ANGLE_THRESH = 0.15;
-        const f32 OFF_RAMP_ANGLE_THRESH = 0.05;
-
-        const f32 BRIDGE_TRAVERSE_SPEED_MMPS = 40;
-
         // Distance at which robot should start driving blind
         // along last generated docking path during DockAction::DA_PICKUP_HIGH.
         const u32 HIGH_DOCK_POINT_OF_NO_RETURN_DIST_MM = ORIGIN_TO_HIGH_LIFT_DIST_MM + 40;
@@ -79,9 +73,6 @@ namespace Anki {
         f32 dockSpeed_mmps_ = 0;
         f32 dockAccel_mmps2_ = 0;
         f32 dockDecel_mmps2_ = 0;
-
-        // Distance to last known docking marker pose
-        f32 lastMarkerDist_;
 
         CarryState carryState_ = CarryState::CARRY_NONE;
 
@@ -329,17 +320,6 @@ namespace Anki {
               case DockAction::DA_ALIGN_SPECIAL:
                 dockOffsetDistX_ = ORIGIN_TO_LOW_LIFT_DIST_MM;
                 break;
-              case DockAction::DA_RAMP_ASCEND:
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
-                dockOffsetDistX_ = 0;
-                break;
-              case DockAction::DA_RAMP_DESCEND:
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
-                dockOffsetDistX_ = 30; // can't wait until we are actually on top of the marker to say we're done!
-                break;
-              case DockAction::DA_CROSS_BRIDGE:
-                dockOffsetDistX_ = BRIDGE_ALIGNED_MARKER_DISTANCE;
-                break;
               case DockAction::DA_POST_DOCK_ROLL:
                 // Skip docking completely and go straight to Setting lift for Post Dock
                 mode_ = SET_LIFT_POSTDOCK;
@@ -430,20 +410,6 @@ namespace Anki {
                   #endif
                   SendPickAndPlaceResultMessage(true, BlockStatus::NO_BLOCK);
                   Reset();
-                } else if(action_ == DockAction::DA_RAMP_DESCEND) {
-                  #if(DEBUG_PAP_CONTROLLER)
-                  AnkiDebug( "PAP", "TRAVERSE_RAMP_DOWN\n");
-                  #endif
-                  // Start driving forward (blindly) -- wheel guides!
-                  SteeringController::ExecuteDirectDrive(RAMP_TRAVERSE_SPEED_MMPS, RAMP_TRAVERSE_SPEED_MMPS);
-                  mode_ = TRAVERSE_RAMP_DOWN;
-                } else if (action_ == DockAction::DA_CROSS_BRIDGE) {
-                  #if(DEBUG_PAP_CONTROLLER)
-                  AnkiDebug( "PAP", "ENTER_BRIDGE\n");
-                  #endif
-                  // Start driving forward (blindly) -- wheel guides!
-                  SteeringController::ExecuteDirectDrive(BRIDGE_TRAVERSE_SPEED_MMPS, BRIDGE_TRAVERSE_SPEED_MMPS);
-                  mode_ = ENTER_BRIDGE;
                 } else {
                   #if(DEBUG_PAP_CONTROLLER)
                   AnkiDebug( "PAP", "SET_LIFT_POSTDOCK\n");
@@ -494,13 +460,6 @@ namespace Anki {
                   StartBackingOut();
                 }
               }
-            }
-            else if (action_ == DockAction::DA_RAMP_ASCEND && (fabsf(IMUFilter::GetPitch()) > ON_RAMP_ANGLE_THRESH) )
-            {
-              DockingController::StopDocking();
-              SteeringController::ExecuteDirectDrive(RAMP_TRAVERSE_SPEED_MMPS, RAMP_TRAVERSE_SPEED_MMPS);
-              mode_ = TRAVERSE_RAMP;
-              Localization::SetOnRamp(true);
             }
             break;
           }
@@ -713,76 +672,6 @@ namespace Anki {
               if (HeadController::IsInPosition()) {
                 Reset();
               }
-            }
-            break;
-          }
-          case TRAVERSE_RAMP_DOWN:
-          {
-            if(IMUFilter::GetPitch() < -ON_RAMP_ANGLE_THRESH) {
-#if(DEBUG_PAP_CONTROLLER)
-              AnkiDebug( "PAP", "Switching out of TRAVERSE_RAMP_DOWN to TRAVERSE_RAMP (angle = %f)\n", IMUFilter::GetPitch());
-#endif
-              Localization::SetOnRamp(true);
-              mode_ = TRAVERSE_RAMP;
-            }
-            break;
-          }
-          case TRAVERSE_RAMP:
-          {
-            if ( fabsf(IMUFilter::GetPitch()) < OFF_RAMP_ANGLE_THRESH ) {
-              #if(DEBUG_PAP_CONTROLLER)
-              AnkiDebug( "PAP", "IDLE (from TRAVERSE_RAMP)\n");
-              #endif
-              Reset();
-              Localization::SetOnRamp(false);
-            }
-            break;
-          }
-          case ENTER_BRIDGE:
-          {
-            // Keep driving until the marker on the other side of the bridge is seen.
-            if ( Localization::GetDistTo(ptStamp_.x, ptStamp_.y) > BRIDGE_ALIGNED_MARKER_DISTANCE) {
-              // Set vision marker to look for marker
-              //DockingController::StartTrackingOnly(dockToMarker2_, markerWidth_);
-              UpdatePoseSnapshot();
-              mode_ = TRAVERSE_BRIDGE;
-              #if(DEBUG_PAP_CONTROLLER)
-              AnkiDebug( "PAP", "TRAVERSE_BRIDGE");
-              #endif
-              Localization::SetOnBridge(true);
-            }
-            break;
-          }
-          case TRAVERSE_BRIDGE:
-          {
-            if (DockingController::IsBusy()) {
-              lastMarkerDist_ = DockingController::GetDistToLastDockMarker();
-              if (lastMarkerDist_ < 100.f) {
-                // We're tracking the end marker.
-                // Keep driving until we're off.
-                UpdatePoseSnapshot();
-                mode_ = LEAVE_BRIDGE;
-                #if(DEBUG_PAP_CONTROLLER)
-                AnkiDebug( "PAP", "LEAVING_BRIDGE: relMarkerX = %f", lastMarkerDist_);
-                #endif
-              }
-            } else {
-              // Marker tracking timedout. Start it again.
-              //DockingController::StartTrackingOnly(dockToMarker2_, markerWidth_);
-              #if(DEBUG_PAP_CONTROLLER)
-              AnkiDebug( "PAP", "TRAVERSE_BRIDGE: Restarting tracking");
-              #endif
-            }
-            break;
-          }
-          case LEAVE_BRIDGE:
-          {
-            if ( Localization::GetDistTo(ptStamp_.x, ptStamp_.y) > lastMarkerDist_ + MARKER_TO_OFF_BRIDGE_POSE_DIST) {
-              #if(DEBUG_PAP_CONTROLLER)
-              AnkiDebug( "PAP", "IDLE (from TRAVERSE_BRIDGE)\n");
-              #endif
-              Reset();
-              Localization::SetOnBridge(false);
             }
             break;
           }

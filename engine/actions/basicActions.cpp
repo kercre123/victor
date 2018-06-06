@@ -1649,66 +1649,6 @@ namespace Anki {
       completionUnion.Set_objectInteractionCompleted(std::move( info ));
     }
     
-#pragma mark ---- TraverseObjectAction ----
-    
-    TraverseObjectAction::TraverseObjectAction(ObjectID objectID)
-    : IActionRunner("TraverseObject",
-                    RobotActionType::TRAVERSE_OBJECT,
-                    (u8)AnimTrackFlag::BODY_TRACK)
-    , _objectID(objectID)
-    {
-  
-    }
-    
-    void TraverseObjectAction::SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2) {
-      _speed_mmps = speed_mmps;
-      _accel_mmps2 = accel_mmps2;
-    }
-    
-    ActionResult TraverseObjectAction::UpdateInternal()
-    {
-      // Select the chosen action based on the object's type, if we haven't
-      // already
-      if(_chosenAction == nullptr) {
-        ActionableObject* object = dynamic_cast<ActionableObject*>(GetRobot().GetBlockWorld().GetLocatedObjectByID(_objectID));
-        if(object == nullptr) {
-          PRINT_NAMED_ERROR("TraverseObjectAction.UpdateInternal.ObjectNotFound",
-                            "Could not get actionable object with ID = %d from world.", _objectID.GetValue());
-          return ActionResult::BAD_OBJECT;
-        }
-        
-        if(object->GetType() == ObjectType::Bridge_LONG ||
-           object->GetType() == ObjectType::Bridge_SHORT)
-        {
-          CrossBridgeAction* bridgeAction = new CrossBridgeAction(_objectID);
-          bridgeAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2, _decel_mmps2);
-          bridgeAction->ShouldSuppressTrackLocking(true);
-          _chosenAction.reset(bridgeAction);
-          _chosenAction->SetRobot(&GetRobot());
-        }
-        else if(object->GetType() == ObjectType::Ramp_Basic) {
-          AscendOrDescendRampAction* rampAction = new AscendOrDescendRampAction(_objectID);
-          rampAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2, _decel_mmps2);
-          rampAction->ShouldSuppressTrackLocking(true);
-          _chosenAction.reset(rampAction);
-          _chosenAction->SetRobot(&GetRobot());
-        }
-        else {
-          PRINT_NAMED_ERROR("TraverseObjectAction.UpdateInternal.CannotTraverseObjectType",
-                            "Robot %d was asked to traverse object ID=%d of type %s, but "
-                            "that traversal is not defined.", GetRobot().GetID(),
-                            object->GetID().GetValue(), ObjectTypeToString(object->GetType()));
-          
-          return ActionResult::BAD_OBJECT;
-        }
-      }
-      
-      // Now just use chosenAction's Update()
-      assert(_chosenAction != nullptr);
-      return _chosenAction->Update();
-      
-    } // Update()
-    
 #pragma mark ---- TurnTowardsPoseAction ----
     
     TurnTowardsPoseAction::TurnTowardsPoseAction(const Pose3d& pose, Radians maxTurnAngle)

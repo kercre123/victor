@@ -1368,17 +1368,6 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendTraverseSelectedObject(PathMotionProfile motionProf,
-                                                      const bool usePreDockPose)
-    {
-      ExternalInterface::TraverseObject m;
-      m.motionProf = motionProf;
-      m.usePreDockPose = usePreDockPose;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_TraverseObject(m);
-      SendMessage(message);
-    }
-
     void UiGameController::SendMountCharger(s32 objectID,
                                             PathMotionProfile motionProf,
                                             const bool useCliffSensorCorrection)
