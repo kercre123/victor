@@ -47,7 +47,6 @@ private:
   enum class State : uint8_t {
     Starting=0,
     Turning,
-    TurnedAndWaiting,
     Completed
   };
 
