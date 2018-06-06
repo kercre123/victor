@@ -132,7 +132,6 @@ private:
   struct CubeInfo
   {
     BleFactoryId factoryId;
-    ObjectType objectType;
     float lastHeardTime_sec;
     int lastRssi;
     bool connected;

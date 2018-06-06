@@ -91,9 +91,6 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
 // How "recently" a cube can be seen for it not to get updated via UpdateStacks
 CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
 
-// Frequency/cooldown to warn about active objects that are seen while not connected
-CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10.0f);
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   BlockWorld::BlockWorld()
   : UnreliableComponent<BCComponentID>(this, BCComponentID::BlockWorld)
@@ -1265,29 +1262,6 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
         // Unique objects just match based on type (already set above)
         std::vector<ObservableObject*> objectsFound;
         FindLocatedMatchingObjects(filter, objectsFound);
-
-        if(objSeen->IsActive())
-        {
-          static std::unordered_map<int, float> warningCooldown; // won't warn again until cooldown is done
-          const f32 currentTimeSec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-          const f32 cooldownTime   = warningCooldown[objSeen->GetID().GetValue()]; // will create and init to 0 first time
-          if ( currentTimeSec >= cooldownTime )
-          {
-            const ActiveObject* conObjMatch = GetConnectedActiveObjectByID( objSeen->GetID() );
-            if(nullptr == conObjMatch)
-            {
-              // We expect to have already heard from all (powered) active objects,
-              // so if we see one we haven't heard from (and therefore added) yet, then
-              // perhaps it isn't on?
-              PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.NoMatchForActiveObject",
-                                  "Observed active object of type %s but it's not connected. Is the battery plugged in?",
-                                  EnumToString(objSeen->GetType()));
-
-              // we just warned, set cooldown
-              warningCooldown[objSeen->GetID().GetValue()] = currentTimeSec + kUnconnectedObservationCooldownDuration_sec;
-            }
-          }
-        }
 
         bool matchedCarryingObject = false;
         for(ObservableObject* objectFound : objectsFound)

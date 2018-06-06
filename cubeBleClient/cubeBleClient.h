@@ -97,6 +97,11 @@ public:
   
 private:
   
+#ifdef SIMULATOR
+  // sim-only: Turn off cube lights on the specified cube
+  void SendLightsOffToCube(const BleFactoryId& factoryId);
+#endif
+  
   // callbacks for advertisement messages:
   std::vector<ObjectAvailableCallback> _objectAvailableCallbacks;
   

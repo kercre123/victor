@@ -40,6 +40,9 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
+  // This is the only cube type that we expect to communicate with
+  const ObjectType kValidCubeType = ObjectType::Block_LIGHTCUBE1;
+  
   // How long to remain in discovery mode
   const float kDefaultDiscoveryTime_sec = 3.f;
 
@@ -438,7 +441,11 @@ void CubeCommsComponent::HandleGameEvents(const AnkiEvent<ExternalInterface::Mes
 void CubeCommsComponent::HandleObjectAvailable(const ExternalInterface::ObjectAvailable& msg)
 {
   // Ensure that this message is referring to a light cube, not some other object
-  DEV_ASSERT(IsValidLightCube(msg.objectType, false), "CubeCommsComponent.HandleObjectAvailable.UnknownType");
+  DEV_ASSERT_MSG(msg.objectType == kValidCubeType,
+                 "CubeCommsComponent.HandleObjectAvailable.InvalidType",
+                 "%s is not a valid object type. We expect to hear only from objects of type %s",
+                 ObjectTypeToString(msg.objectType),
+                 ObjectTypeToString(kValidCubeType));
 
   // Is this cube already in our list?
   auto* cube = GetCubeByFactoryId(msg.factory_id);
@@ -452,7 +459,6 @@ void CubeCommsComponent::HandleObjectAvailable(const ExternalInterface::ObjectAv
     // Add this cube to the list of available cubes
     CubeInfo newCube;
     newCube.factoryId = msg.factory_id;
-    newCube.objectType = msg.objectType;
     newCube.lastRssi = msg.rssi;
     newCube.lastHeardTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     newCube.connected = false;
@@ -529,14 +535,14 @@ void CubeCommsComponent::HandleConnectionStateChange(const BleFactoryId& factory
   {
     // log event to das
     Anki::Util::sInfoF("robot.accessory_connection", {{DDATA,"connected"}}, "%s,%s",
-                       cube->factoryId.c_str(), EnumToString(cube->objectType));
+                       cube->factoryId.c_str(), EnumToString(kValidCubeType));
 
     // Add active object to blockworld
-    objID = _robot->GetBlockWorld().AddConnectedActiveObject(activeId, cube->factoryId, cube->objectType);
+    objID = _robot->GetBlockWorld().AddConnectedActiveObject(activeId, cube->factoryId, kValidCubeType);
     if (objID.IsSet()) {
       PRINT_NAMED_INFO("CubeCommsComponent.HandleConnectionStateChange.Connected",
-                       "Object %d (activeID %d, factoryID %s, objectType '%s')",
-                       objID.GetValue(), activeId, cube->factoryId.c_str(), EnumToString(cube->objectType));
+                       "Object %d (activeID %d, factoryID %s)",
+                       objID.GetValue(), activeId, cube->factoryId.c_str());
     }
     
     // save this cube to preferred cubes to connect to (block pool)
@@ -549,7 +555,7 @@ void CubeCommsComponent::HandleConnectionStateChange(const BleFactoryId& factory
   } else {
     // log event to das
     Anki::Util::sInfoF("robot.accessory_connection", {{DDATA,"disconnected"}}, "%s,%s",
-                       cube->factoryId.c_str(), EnumToString(cube->objectType));
+                       cube->factoryId.c_str(), EnumToString(kValidCubeType));
 
     // Remove active object from blockworld if it exists, and remove all instances in all origins
     objID = _robot->GetBlockWorld().RemoveConnectedActiveObject(activeId);
@@ -559,7 +565,7 @@ void CubeCommsComponent::HandleConnectionStateChange(const BleFactoryId& factory
                    cube->factoryId.c_str(), cube->connected);
 
   // Viz info
-  _robot->GetContext()->GetVizManager()->SendObjectConnectionState(activeId, cube->objectType, cube->connected);
+  _robot->GetContext()->GetVizManager()->SendObjectConnectionState(activeId, kValidCubeType, cube->connected);
 
   // TODO: arguably blockworld should do this, because when do we want to remove/add objects and not notify?
   if (objID.IsSet()) {
@@ -567,7 +573,7 @@ void CubeCommsComponent::HandleConnectionStateChange(const BleFactoryId& factory
     using namespace ExternalInterface;
     _robot->Broadcast(MessageEngineToGame(ObjectConnectionState(objID.GetValue(),
                                                                 cube->factoryId,
-                                                                cube->objectType,
+                                                                kValidCubeType,
                                                                 cube->connected)));
   }
 }
@@ -577,63 +583,40 @@ void CubeCommsComponent::HandleScanForCubesFinished()
 {
   _discovering = false;
 
+  if (_availableCubes.empty()) {
+    PRINT_NAMED_INFO("CubeCommsComponent.HandleScanForCubesFinished.NoCubesFound",
+                     "List of available cubes is empty - no advertising cubes were found during scanning. Sad!");
+    return;
+  }
+  
   PRINT_NAMED_INFO("CubeCommsComponent.HandleScanForCubesFinished.ScanningForCubesEnded",
-                   "Done scanning for cubes");
+                   "Done scanning for cubes. Number of available cubes %zu",
+                   _availableCubes.size());
   
   // Discovery period has ended. Loop over list of available cubes and connect to
-  // as many as possible, preferring those with high RSSI.
-
-  struct CandidateCubeInfo
-  {
-    int maxRssiSeen;
-    BleFactoryId factoryId;
-    bool inBlockPool;
-  };
-  
-  // list of valid objects to connect to, ordered by type
-  //  if we encounter multiple objects of the same-type
-  //  then we select the one with highest rssi seen in the
-  //        discovery period, if it is blockpool preferred
-  std::map<ObjectType, CandidateCubeInfo> candidates;
-
+  // the blockpool-preferred cube if possible, else the cube with highest RSSI.
+  BleFactoryId cubeToConnectTo = "";
+  auto maxRssiSeen = std::numeric_limits<int>::min();
   for (const auto& mapEntry : _availableCubes) {
     const auto& cube = mapEntry.second;
-    const auto& type = cube.objectType;
     const auto& rssi = cube.lastRssi;
     const auto& facId = cube.factoryId;
     
-    // If this is the first cube of this type to be seen or if this cube's rssi
-    // is higher than the max seen, add it to the list of cubes to connect to
-    auto got = candidates.find(type);
-    const bool inBlockPool = _blockPoolFactoryId.compare(facId)==0;
-    if(got==candidates.end()) {
-      candidates[type] = CandidateCubeInfo{rssi, facId, inBlockPool};
-    } else if(!got->second.inBlockPool && (inBlockPool || got->second.maxRssiSeen < rssi)) {
-      // truth table: used to decide if we want to overwrite old with new
-      //
-      //   old cube         new cube
-      // in block pool?   in block pool?    higher rssi?    should overwrite?
-      //    (A)               (B)               (C)             (D)
-      //  yes               no                yes             no
-      //  yes               no                no              no
-      //  no                yes               yes             yes
-      //  no                yes               no              yes
-      //  no                no                yes             yes
-      //  no                no                no              no
-      //
-      // prefer the cubes in the blockpool over higher rssi cubes
-      candidates[type] = CandidateCubeInfo{rssi, facId, inBlockPool};
-    } else {
-      DEV_ASSERT( !(inBlockPool && got->second.inBlockPool), "CubeCommsComponent.HandleScanForCubesFinished.TwoCubesInBlockPoolNotAllowed");
+    if (facId == _blockPoolFactoryId) {
+      cubeToConnectTo = facId;
+      break;
+    } else if (rssi > maxRssiSeen) {
+      cubeToConnectTo = facId;
+      maxRssiSeen = rssi;
     }
   }
-
-  // Connect to the selected cubes
-  for (const auto& entry : candidates) {
-    const auto& factoryId = entry.second.factoryId;
-    if (!_cubeBleClient->ConnectToCube(factoryId)) {
-      PRINT_NAMED_WARNING("CubeCommsComponent.HandleScanForCubesFinished.FailedConnecting", "Failed connecting to cube with factory ID %s", factoryId.c_str());
-    }
+  
+  DEV_ASSERT(!cubeToConnectTo.empty(), "CubeCommsComponent.HandleScanForCubesFinished.NoCubeChosen");
+  
+  if (!_cubeBleClient->ConnectToCube(cubeToConnectTo)) {
+    PRINT_NAMED_WARNING("CubeCommsComponent.HandleScanForCubesFinished.FailedConnecting",
+                        "Failed connecting to cube with factory ID %s",
+                        cubeToConnectTo.c_str());
   }
 }
 

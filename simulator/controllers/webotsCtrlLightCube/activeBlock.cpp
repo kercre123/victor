@@ -174,18 +174,13 @@ Result Init()
   
   // Grab ObjectType and its integer value
   const auto& typeString = typeField->getSFString();
+  objectType_ = ObjectTypeFromString(typeString);
   
-  // Hack to map Victor's circle and square cube types to "1" and "2"
-  if(typeString == "Block_LIGHTCUBE_CIRCLE") {
-    objectType_ = ObjectType::Block_LIGHTCUBE1;
-  }
-  else if(typeString == "Block_LIGHTCUBE_SQUARE") {
-    objectType_ = ObjectType::Block_LIGHTCUBE2;
-  }
-  else {
-    objectType_ = ObjectTypeFromString(typeString);
-  }
-  DEV_ASSERT(IsValidLightCube(objectType_, false), "ActiveBlock.Init.InvalidObjectType");
+  DEV_ASSERT_MSG(objectType_ == ObjectType::Block_LIGHTCUBE1,
+                 "ActiveBlock.Init.InvalidLightCubeType",
+                 "Invalid object type \"%s\". Only Block_LIGHTCUBE1 should be an active "
+                 "object. All other object types should not be active blocks.",
+                 typeString.c_str());
 
   // Generate a factory ID
   // If PROTO factoryID is nonempty, use that.

@@ -210,6 +210,11 @@ bool CubeBleClient::DisconnectFromCube(const BleFactoryId& factoryId)
 {
   DEV_ASSERT(IsConnectedToCube(factoryId), "CubeBleClient.ConnectToCube.NotConnected");
   
+  // The simulated cubes do not know if they are 'connected' or not,
+  // so we need to send a 'black' light animation to the cube so it
+  // doesn't continue to play its current light animation.
+  SendLightsOffToCube(factoryId);
+  
   // Disable and remove the receiver associated with this cube;
   const auto receiverIt = _cubeReceiverMap.find(factoryId);
   if (receiverIt != _cubeReceiverMap.end()) {
@@ -314,6 +319,21 @@ bool CubeBleClient::Update()
 void CubeBleClient::SetCubeFirmwareFilepath(const std::string& cubeFirmwarePath)
 {
   // not needed for mac build, since we don't flash cubes with mac builds
+}
+
+  
+void CubeBleClient::SendLightsOffToCube(const BleFactoryId& factoryId)
+{
+  static const CubeLightKeyframe blackKeyframe({{0, 0, 0}}, 0, 0, 0);
+  
+  CubeLightKeyframeChunk keyframeChunk;
+  keyframeChunk.startingIndex = 0;
+  keyframeChunk.keyframes.fill(blackKeyframe);
+  
+  CubeLightSequence lightSequence(0, {{0, 0, 0, 0}});
+  
+  SendMessageToLightCube(factoryId, MessageEngineToCube(std::move(keyframeChunk)));
+  SendMessageToLightCube(factoryId, MessageEngineToCube(std::move(lightSequence)));
 }
 
 
