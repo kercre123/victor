@@ -11,12 +11,13 @@
  **/
 
 
-#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorReactToPersonDetected.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionPersonDetected.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionMotionDetected.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorReactToPersonDetected.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionPersonDetected.h"
+#include "engine/aiComponent/salientPointsDetectorComponent.h"
+#include "behaviorReactToPersonDetected.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -36,7 +37,6 @@ BehaviorReactToPersonDetected::DynamicVariables::DynamicVariables()
 void BehaviorReactToPersonDetected::DynamicVariables::Reset()
 {
   state = State::Starting;
-  sawAPerson = false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -54,7 +54,7 @@ BehaviorReactToPersonDetected::~BehaviorReactToPersonDetected()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToPersonDetected::WantsToBeActivatedBehavior() const
 {
-  PRINT_CH_INFO("Behaviors", "BehaviorReactToPersonDetected.WantsToBeActivatedBehavior.Called", "Wake Up?");
+  PRINT_CH_DEBUG("Behaviors", "BehaviorReactToPersonDetected.WantsToBeActivatedBehavior.Called", "Wake Up?");
 
   return true;
 }
@@ -63,7 +63,7 @@ bool BehaviorReactToPersonDetected::WantsToBeActivatedBehavior() const
 void BehaviorReactToPersonDetected::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
   modifiers.wantsToBeActivatedWhenCarryingObject = false;
-  modifiers.wantsToBeActivatedWhenOffTreads = true;
+  modifiers.wantsToBeActivatedWhenOffTreads = false;
   modifiers.wantsToBeActivatedWhenOnCharger = true;
   modifiers.behaviorAlwaysDelegates = false;
 }
@@ -92,14 +92,17 @@ void BehaviorReactToPersonDetected::OnBehaviorActivated()
   _dVars = DynamicVariables();
   
   // TODO: the behavior is active now, time to do something!
-  PRINT_CH_INFO("Behaviors", "BehaviorReactToPersonDetected.OnBehaviorActivated", "I am active!");
+  PRINT_CH_DEBUG("Behaviors", "BehaviorReactToPersonDetected.OnBehaviorActivated", "I am active!");
+
+  auto& component = GetBEI().GetAIComponent().GetComponent<SalientPointsDetectorComponent>();
+  component.GetLastPersonDetectedData(_dVars.lastPersonDetected);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToPersonDetected::BehaviorUpdate() 
 {
-  PRINT_CH_INFO("Behaviors", "BehaviorReactToPersonDetected.BehaviorUpdate", "I am being updated");
+  PRINT_CH_DEBUG("Behaviors", "BehaviorReactToPersonDetected.BehaviorUpdate", "I am being updated");
 
 
   const bool motorsMoving = GetBEI().GetRobotInfo().GetMoveComponent().IsMoving();
@@ -121,9 +124,8 @@ void BehaviorReactToPersonDetected::BehaviorUpdate()
     return;
   }
 
-
   if( ! IsActivated() ) {
-    PRINT_CH_INFO("Behaviors", "BehaviorReactToPersonDetected.BehaviorUpdate", "I am actually not active :(");
+    PRINT_CH_DEBUG("Behaviors", "BehaviorReactToPersonDetected.BehaviorUpdate", "I am actually not active :(");
     return;
   }
 
@@ -132,7 +134,7 @@ void BehaviorReactToPersonDetected::BehaviorUpdate()
     TurnTowardsPoint();
   }
   else if (_dVars.state == State::Turning) {
-    PRINT_CH_INFO("Behaviors", "BehaviorReactToPersonDetected.BehaviorUpdate", "Waiting for turn to be completed");
+    PRINT_CH_DEBUG("Behaviors", "BehaviorReactToPersonDetected.BehaviorUpdate", "Waiting for turn to be completed");
     return;
   }
   else if (_dVars.state == State::Completed) {
@@ -145,10 +147,12 @@ void BehaviorReactToPersonDetected::TurnTowardsPoint()
 {
   _dVars.state = State::Turning;
 
-  const float angle = 30; // degrees
-  auto* action = new TurnInPlaceAction(DEG_TO_RAD(angle), false);
-  action->SetAccel( MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2 );
-  action->SetMaxSpeed( MAX_BODY_ROTATION_SPEED_RAD_PER_SEC );
+  PRINT_CH_INFO("Behaviors", "BehaviorReactToPersonDetected.TurnTowardsPoint.TurningInfo", 
+                "Turning towards %f, %f at timestamp %d",
+                _dVars.lastPersonDetected.x_img,
+                _dVars.lastPersonDetected.y_img,
+                _dVars.lastPersonDetected.timestamp);
+  auto* action = new TurnTowardsImagePointAction(_dVars.lastPersonDetected);
 
   CancelDelegates(false);
   DelegateIfInControl(action, [this](ActionResult result) {

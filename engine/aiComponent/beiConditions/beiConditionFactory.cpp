@@ -252,7 +252,7 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     }
     case BEIConditionType::PersonDetected:
     {
-      strategy = std::make_shared<ConditionPersonDetected>(config);
+      condition = std::make_shared<ConditionPersonDetected>(config);
       break;
     }
     case BEIConditionType::ObjectInitialDetection:

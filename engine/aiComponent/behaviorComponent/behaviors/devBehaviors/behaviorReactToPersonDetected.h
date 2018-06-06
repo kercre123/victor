@@ -60,7 +60,9 @@ private:
     DynamicVariables();
     void Reset();
     State state;
-    bool sawAPerson = false;
+
+    Vision::SalientPoint lastPersonDetected;
+
   };
 
 

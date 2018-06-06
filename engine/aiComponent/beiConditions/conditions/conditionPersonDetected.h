@@ -1,10 +1,10 @@
 /**
- * File: conditionPersonDetected.h
+ * File: conditionPersonDetected.cpp
  *
  * Author: Lorenzo Riano
  * Created: 5/31/18
  *
- * Description: Condition which is true when a person is detected
+ * Description: Condition which is true when a person is detected. Uses SalientPointDetectorComponent
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -32,9 +32,6 @@ protected:
   void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   void GetRequiredVisionModes(std::set<VisionModeRequest>& requiredVisionModes) const override;
-
-private:
-  void HandleEvent(const EngineToGameEvent& event, BehaviorExternalInterface& bei) override;
 
 };
 

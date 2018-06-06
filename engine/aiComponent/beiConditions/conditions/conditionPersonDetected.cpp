@@ -4,7 +4,7 @@
  * Author: Lorenzo Riano
  * Created: 5/31/18
  *
- * Description: 
+ * Description: Condition which is true when a person is detected. Uses SalientPointDetectorComponent
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -45,7 +45,7 @@ ConditionPersonDetected::InitInternal(BehaviorExternalInterface& behaviorExterna
 
 bool ConditionPersonDetected::AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  PRINT_CH_INFO("Behaviors", "ConditionPersonDetected.AreConditionsMetInternal.Called", "");
+  PRINT_CH_DEBUG("Behaviors", "ConditionPersonDetected.AreConditionsMetInternal.Called", "");
 
   auto& component = behaviorExternalInterface.GetAIComponent().GetComponent<SalientPointsDetectorComponent>();
   return component.PersonDetected();
@@ -59,21 +59,7 @@ Anki::Cozmo::ConditionPersonDetected::GetRequiredVisionModes(std::set<Anki::Cozm
 //  requiredVisionModes.insert( {VisionMode::DetectingMotion, EVisionUpdateFrequency::High} );
 }
 
-void Anki::Cozmo::ConditionPersonDetected::HandleEvent(const EngineToGameEvent& event,
-                                                       BehaviorExternalInterface& bei)
-{
-
-  switch (event.GetData().GetTag()) {
-    // TODO react to the right tag
-
-    default:
-      PRINT_NAMED_WARNING("ConditionPersonDetected.HandleEvent.InvalidEvent", "");
-      break;
-  }
-
 } // namespace Cozmo
-}
-
 } // namespace Anki
 
 
