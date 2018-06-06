@@ -57,9 +57,9 @@ std::string GetComponentStringForID<Cozmo::AIComponentID>(Cozmo::AIComponentID e
     case Cozmo::AIComponentID::InformationAnalyzer:               { return "InformationAnalyzer";}
     case Cozmo::AIComponentID::ObjectInteractionInfoCache:        { return "ObjectInteractionInfoCache";}
     case Cozmo::AIComponentID::Puzzle:                            { return "Puzzle";}
+    case Cozmo::AIComponentID::SalientPointsDetectorComponent:    { return "SalientPointsDetectorComponent";}
     case Cozmo::AIComponentID::TimerUtility:                      { return "TimerUtility";}
     case Cozmo::AIComponentID::Whiteboard:                        { return "Whiteboard";}
-    case Cozmo::AIComponentID::SalientPointsDetectorComponent:    { return "SalientPointsDetectorComponent";}
     case Cozmo::AIComponentID::Count:                             { return "Count";}
   }
 }
