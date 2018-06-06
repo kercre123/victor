@@ -253,6 +253,11 @@ const char* DBG_cmd_substitution(const char *line, int len)
 #define DETECT_CURRENT_MA   100
 #define SYSCON_CHG_PWR_DELAY_MS 250 /*delay from robot's on-charger detect until charging starts*/
 
+#define IS_FIXMODE_ROBOT1()   ( g_fixmode==FIXMODE_ROBOT1  || g_fixmode==FIXMODE_ROBOT1_OL )
+#define IS_FIXMODE_ROBOT3()   ( g_fixmode==FIXMODE_ROBOT3  || g_fixmode==FIXMODE_ROBOT3_OL )
+#define IS_FIXMODE_PACKOUT()  ( g_fixmode==FIXMODE_PACKOUT || g_fixmode==FIXMODE_PACKOUT_OL )
+#define IS_FIXMODE_OFFLINE()  ( g_fixmode==FIXMODE_ROBOT1_OL || g_fixmode==FIXMODE_ROBOT3_OL || g_fixmode==FIXMODE_PACKOUT_OL )
+
 int detect_ma = 0, detect_mv = 0;
 
 //test info reported to flexflow
@@ -346,7 +351,7 @@ void TestRobotCleanup(void)
 
 void read_robot_info_(void)
 {
-  if( g_fixmode == FIXMODE_ROBOT1 ) {
+  if( IS_FIXMODE_ROBOT1() ) {
     //memset( &flexnfo, 0, sizeof(flexnfo) );
     flexnfo.bsv = *rcomBsv();
     rcomPrintBsv(&flexnfo.bsv); //log
@@ -392,7 +397,7 @@ void TestRobotInfo(void)
   //Board::powerOn(PWR_VBAT); //XXX Debug: work on body pcba w/o battery
   ConsolePrintf("detect current avg %i mA\n", detect_ma);
   
-  if( g_fixmode > FIXMODE_ROBOT1 ) {
+  if( !IS_FIXMODE_ROBOT1() ) {
     ConsolePrintf("Resetting comms interface\n");
     Board::powerOff(PWR_VEXT, 500); //turn power off to disable charging
     Contacts::setModeRx();
@@ -530,7 +535,7 @@ void TestRobotTreads(void)
   TestRobotTreads_(127, 1500, 600);
   
   //low power (72): speed 870-1070, travel 400-550
-  if( g_fixmode <= FIXMODE_ROBOT3_OL )
+  if( !IS_FIXMODE_PACKOUT() )
     TestRobotTreads_(75, 750, 300);
   
   #endif
@@ -579,13 +584,13 @@ static robot_range_dat_t* robot_range_test_(uint8_t sensor, int8_t power)
   const uint8_t NNsettle = 50;
   
   //force to known starting position
-  if( g_fixmode != FIXMODE_ROBOT1 ) {
+  if( !IS_FIXMODE_ROBOT1() ) {
     if( DEBUG_PRINT ) ConsolePrintf("%s move to starting position [%i,%i]\n", lift ? "LIFT" : "HEAD", -liftPwrMax, -headPwrMax);
     test.start_active = rcomMot(NNstart, sensor, 0, 0, -liftPwrMax, -headPwrMax, printlvl)[NNstart-1].enc.pos;
   }
   if( DEBUG_PRINT ) ConsolePrintf("%s get passive start position\n", lift ? "LIFT" : "HEAD");
   test.start_passive = rcomGet(NNsettle, sensor, printlvl)[NNsettle-1].enc.pos; //allow time for mechanics to settle
-  if( g_fixmode == FIXMODE_ROBOT1 )
+  if( IS_FIXMODE_ROBOT1() )
     test.start_active = test.start_passive;
   
   //move up
@@ -683,14 +688,14 @@ void TestRobotRange(void)
   #else
   
   //High Power
-  if( g_fixmode == FIXMODE_ROBOT1 ) {
+  if( IS_FIXMODE_ROBOT1() ) {
     //NO HEAD/ARMS ATTACHED = NO STOP!
     //lift travel ~450-500 in each direction
     //head travel ~800-850 in each direction
     robot_range_t lift = { /*power*/  75, /*travel_min*/ 400, /*travel_max*/ 9999, /*speed_min*/ 1800 };
     robot_range_t head = { /*power*/ 100, /*travel_min*/ 700, /*travel_max*/ 9999, /*speed_min*/ 2300 };
     TestRobotRange( &lift, &head );
-  } else if( g_fixmode <= FIXMODE_ROBOT3_OL ) { //skip PACKOUT
+  } else if( !IS_FIXMODE_PACKOUT() ) {
     //lift: travel 195-200, speed 760-1600
     //head: travel 550-560, speed 2130-2400
     robot_range_t lift = { /*power*/  75, /*travel_min*/ 170, /*travel_max*/ 230, /*speed_min*/  650 };
@@ -699,14 +704,14 @@ void TestRobotRange(void)
   }
   
   //Low Power
-  if( g_fixmode == FIXMODE_ROBOT1 ) {
+  if( IS_FIXMODE_ROBOT1() ) {
     //NO HEAD/ARMS ATTACHED = NO STOP!
     //lift travel ~550-600 in each direction
     //head travel ~650-??? in each direction
     robot_range_t lift = { /*power*/  50, /*travel_min*/ 400, /*travel_max*/ 9999, /*speed_min*/ 800 };
     robot_range_t head = { /*power*/  55, /*travel_min*/ 550, /*travel_max*/ 9999, /*speed_min*/ 700 };
     TestRobotRange( &lift, &head );
-  } else { //ROBOT3,PACKOUT
+  } else {
     //lift: travel 190-200, speed 580-1520
     //head: travel 545-555, speed 900-1230
     robot_range_t lift = { /*power*/  65, /*travel_min*/ 170, /*travel_max*/  230, /*speed_min*/ 400 };
@@ -720,10 +725,10 @@ void TestRobotRange(void)
 void EmrChecks(void)
 {
   //Make sure previous tests have passed
-  if( g_fixmode == FIXMODE_ROBOT3 || g_fixmode == FIXMODE_ROBOT3_OL ) {
+  if( IS_FIXMODE_ROBOT3() ) {
     //no previous. first fixture with head attached
   }
-  if( g_fixmode == FIXMODE_PACKOUT /*|| g_fixmode == FIXMODE_PACKOUT_OL*/ ) {
+  if( IS_FIXMODE_PACKOUT() && !IS_FIXMODE_OFFLINE() ) {
     uint32_t ppReady  = rcomGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
     uint32_t ppPassed = rcomGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
     if( ppReady != 1 || ppPassed != 1 ) {
@@ -732,12 +737,12 @@ void EmrChecks(void)
   }
   
   //require retest on all downstream fixtures after rework
-  if( g_fixmode == FIXMODE_ROBOT3 /*|| g_fixmode == FIXMODE_ROBOT3_OL*/ ) {
+  if( IS_FIXMODE_ROBOT3() && !IS_FIXMODE_OFFLINE() ) {
     rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 0 );
     rcomSmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), 0 );
     rcomSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 0 );
   }
-  if( g_fixmode == FIXMODE_PACKOUT /*|| g_fixmode == FIXMODE_PACKOUT_OL*/ ) {
+  if( IS_FIXMODE_PACKOUT() && !IS_FIXMODE_OFFLINE() ) {
     //will throw error if Robit has been packed out
     rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 0 );
   }
@@ -745,10 +750,10 @@ void EmrChecks(void)
 
 void EmrUpdate(void)
 {
-  if( g_fixmode == FIXMODE_ROBOT3 /*|| g_fixmode == FIXMODE_ROBOT3_OL*/ ) {
+  if( IS_FIXMODE_ROBOT3() && !IS_FIXMODE_OFFLINE() ) {
     rcomSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 1 );
   }
-  if( g_fixmode == FIXMODE_PACKOUT /*|| g_fixmode == FIXMODE_PACKOUT_OL*/ ) {
+  if( IS_FIXMODE_PACKOUT() && !IS_FIXMODE_OFFLINE() ) {
     rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 1 );
   }
 }
@@ -757,13 +762,13 @@ void RobotPowerDown(void)
 {
   ConsolePrintf("robot power down\n");
   
-  if( g_fixmode >= FIXMODE_ROBOT2 )
+  if( !IS_FIXMODE_ROBOT1() )
   {
     rcomPwr(RCOM_PWR_OFF);
     Contacts::powerOn(); //immdediately turn on power to prevent rebooting
     cleanup_preserve_vext = 1; //leave power on for removal detection (no cleanup pwr cycle)
   } 
-  else //ROBOT1
+  else
   {
     Contacts::powerOn(); //turn on power to prevent rebooting
     cleanup_preserve_vext = 1; //leave power on for removal detection (no cleanup pwr cycle)
@@ -818,7 +823,8 @@ static void led_manage_(int reset, int frame_period, int printlvl)
   static uint32_t Tframe=0, idx=0, last_idx=0;
   
   if( reset & 1 ) {
-    for(int x=0; x < (g_fixmode==FIXMODE_ROBOT1 ? 10 : 1); x++)
+    int resetCnt = IS_FIXMODE_ROBOT1() ? 10 : 1;
+    for(int x=0; x < resetCnt; x++)
       rcomLed( (uint8_t*)leds[0], printlvl );
     Tframe=0, idx=0, last_idx=0;
     return;
@@ -831,7 +837,7 @@ static void led_manage_(int reset, int frame_period, int printlvl)
   
   if( idx != last_idx ) //new frame
     rcomLed( (uint8_t*)leds[idx], printlvl );
-  else if( g_fixmode == FIXMODE_ROBOT1 ) //spine requires packet spamming
+  else if( IS_FIXMODE_ROBOT1() ) //spine requires packet spamming
     rcomLed( (uint8_t*)leds[idx], RCOM_PRINT_LEVEL_NONE );
   
   last_idx = idx;
@@ -1040,9 +1046,9 @@ void Recharge(void)
 extern void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv );
 static void ChargeTest(void)
 {
-  if( g_fixmode == FIXMODE_ROBOT1 )
+  if( IS_FIXMODE_ROBOT1() )
     RobotChargeTest( 425, 4000 ); //test charging circuit
-  else //ROBOT3, PACKOUT
+  else
     RobotChargeTest( 425, 4100 ); //test charging circuit
 }
 
@@ -1223,7 +1229,7 @@ static void BatteryCheck(void)
   if( flexnfo.bat_mv < VBAT_MV_MINIMUM )
     throw ERROR_BAT_UNDERVOLT;
   
-  if( g_fixmode == FIXMODE_PACKOUT || g_fixmode == FIXMODE_PACKOUT_OL ) {
+  if( IS_FIXMODE_PACKOUT() ) {
     if( flexnfo.bat_mv > VBAT_MV_MAXIMUM )
       throw ERROR_BAT_OVERVOLT;
   }

@@ -35,7 +35,8 @@ extern "C" {
 #define FIXMODE_CUBE1          21
 #define FIXMODE_CUBE2          22
 
-#define FIXMODE_ROBOT0         25
+#define FIXMODE_ROBOT0         24
+#define FIXMODE_ROBOT1_OL      25
 #define FIXMODE_ROBOT1         26
 #define FIXMODE_ROBOT2         27
 #define FIXMODE_ROBOT3         28
@@ -113,8 +114,8 @@ int           fixtureReadSequence(void); //read the current sequence #. DOES NOT
   { "CUBE1"       , TestCubeDetect      , TestCube1GetTests           , TestCubeCleanup             , FIXMODE_CUBE1       },  /*21*/  \
   { "CUBE2"       , TestCubeDetect      , TestCube2GetTests           , TestCubeCleanup             , FIXMODE_CUBE2       },  /*22*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
-  { "ROBOT0"      , TestRobotDetect     , TestRobot0GetTests          , TestRobotCleanup            , FIXMODE_ROBOT0      },  /*25*/  \
+  { "ROBOT0"      , TestRobotDetect     , TestRobot0GetTests          , TestRobotCleanup            , FIXMODE_ROBOT0      },  /*24*/  \
+  { "ROBOT1-OL"   , TestRobotDetect     , TestRobot1GetTests          , TestRobotCleanup            , FIXMODE_ROBOT1_OL   },  /*25*/  \
   { "ROBOT1"      , TestRobotDetect     , TestRobot1GetTests          , TestRobotCleanup            , FIXMODE_ROBOT1      },  /*26*/  \
   { "ROBOT2"      , TestRobotDetect     , TestRobot2GetTests          , TestRobotCleanup            , FIXMODE_ROBOT2      },  /*27*/  \
   { "ROBOT3"      , TestRobotDetect     , TestRobot3GetTests          , TestRobotCleanup            , FIXMODE_ROBOT3      },  /*28*/  \
