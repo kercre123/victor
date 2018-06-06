@@ -12,6 +12,7 @@
 
 #include "engine/actions/basicActions.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/types/salientPointTypes.h"
 #include "coretech/common/engine/math/poseOriginList.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/dockActions.h"
@@ -1868,15 +1869,23 @@ namespace Anki {
     : PanAndTiltAction(0, 0, true, true)
     , _imgPoint(imgPoint)
     , _timestamp(t)
+    , _isPointNormalized(false)
     {
       SetName("TurnTowardsImagePointAction");
       SetType(RobotActionType::TURN_TOWARDS_IMAGE_POINT);
     }
     
+    TurnTowardsImagePointAction::TurnTowardsImagePointAction(const Vision::SalientPoint& salientPoint)
+    : TurnTowardsImagePointAction( Point2f(salientPoint.x_img, salientPoint.y_img), salientPoint.timestamp )
+    {
+      _isPointNormalized = true;
+    }
+    
     ActionResult TurnTowardsImagePointAction::Init()
     {
       Radians panAngle, tiltAngle;
-      Result result = GetRobot().ComputeTurnTowardsImagePointAngles(_imgPoint, _timestamp, panAngle, tiltAngle);
+      Result result = GetRobot().ComputeTurnTowardsImagePointAngles(_imgPoint, _timestamp, panAngle, tiltAngle,
+                                                                    _isPointNormalized);
       if(RESULT_OK != result)
       {
         PRINT_NAMED_WARNING("TurnTowardsImagePointAction.Init.ComputeTurnTowardsImagePointAnglesFailed",

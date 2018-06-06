@@ -2770,10 +2770,32 @@ Result Robot::ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, 
 }
 
 Result Robot::ComputeTurnTowardsImagePointAngles(const Point2f& imgPoint, const TimeStamp_t timestamp,
-                                                 Radians& absPanAngle, Radians& absTiltAngle) const
+                                                 Radians& absPanAngle, Radians& absTiltAngle,
+                                                 const bool isPointNormalized) const
 {
+  if(!GetVisionComponent().GetCamera().IsCalibrated())
+  {
+    LOG_ERROR("Robot.ComputeTurnTowardsImagePointAngles.MissingCalibration", "");
+    return RESULT_FAIL;
+  }
+  
   auto calib = GetVisionComponent().GetCamera().GetCalibration();
-  const Point2f pt = imgPoint - calib->GetCenter();
+  
+  Point2f pt( imgPoint );
+  if(isPointNormalized)
+  {
+    if(!Util::InRange(pt.x(), 0.f, 1.f) || !Util::InRange(pt.y(), 0.f, 1.f))
+    {
+      LOG_ERROR("Robot.ComputeTurnTowardsImagePointAngles.PointNotNormalized",
+                "%s not on interval [0,1]", pt.ToString().c_str());
+      return RESULT_FAIL;
+    }
+    
+    // Scale normalized point to "calibration" resolution
+    pt.x() *= (f32)calib->GetNcols();
+    pt.y() *= (f32)calib->GetNrows();
+  }
+  pt -= calib->GetCenter();
 
   HistRobotState histState;
   TimeStamp_t t;
