@@ -1333,7 +1333,9 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
       bool allCornersInBounds = true;
       for(auto & corner : scaledCorners)
       {
-        const int warpIndex = std::floor(corner.y() / (imageCache.GetOrigNumRows() / _rollingShutterCorrector.GetNumDivisions()));
+        const s32 fullNumRows = imageCache.GetNumRows(Vision::ImageCache::Size::Full);
+        const s32 fullNumCols = imageCache.GetNumCols(Vision::ImageCache::Size::Full);
+        const int warpIndex = std::floor(corner.y() / (fullNumRows / _rollingShutterCorrector.GetNumDivisions()));
         DEV_ASSERT_MSG(warpIndex >= 0 && warpIndex < _rollingShutterCorrector.GetPixelShifts().size(),
                        "VisionSystem.DetectMarkersWithCLAHE.WarpIndexOOB", "Index:%d Corner y:%f",
                        warpIndex, corner.y());
@@ -1343,8 +1345,8 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
 
         if(Util::IsFltLTZero(corner.x()) ||
            Util::IsFltLTZero(corner.y()) ||
-           Util::IsFltGE(corner.x(), (f32)imageCache.GetOrigNumCols()) ||
-           Util::IsFltGE(corner.y(), (f32)imageCache.GetOrigNumRows()))
+           Util::IsFltGE(corner.x(), (f32)fullNumCols) ||
+           Util::IsFltGE(corner.y(), (f32)fullNumRows))
         {
           // Warped corner is outside image bounds. Just drop this entire marker. Technically, we could still
           // probably estimate its pose just fine, but other things later may expect all corners to be in bounds
