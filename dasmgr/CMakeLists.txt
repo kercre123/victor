@@ -11,6 +11,8 @@ if (VICOS)
   anki_build_cxx_executable(vic-dasmgr ${ANKI_SRCLIST_DIR})
   anki_build_target_license(vic-dasmgr "ANKI")
 
+  target_compile_options(vic-dasmgr PRIVATE -Wconversion -Wsign-conversion -Wshorten-64-to-32 -Wsign-compare)
+
   target_include_directories(vic-dasmgr
     PRIVATE
     ${CMAKE_SOURCE_DIR}
@@ -20,6 +22,7 @@ if (VICOS)
     PRIVATE
     victorCrashReports
     osState
+    DAS
     util
   )
 

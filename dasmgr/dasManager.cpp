@@ -8,6 +8,7 @@
 */
 
 #include "dasManager.h"
+#include "DAS/DAS.h"
 
 #include "osState/osState.h"
 
@@ -30,6 +31,23 @@ using LogLevel = Anki::Util::ILoggerProvider::LogLevel;
 // Log options
 #define LOG_CHANNEL "DASManager"
 
+// Local constants
+
+namespace {
+
+  // Which DAS endpoint do we use?
+  constexpr const char * DAS_URL = "https://sqs.us-west-2.amazonaws.com/792379844846/DasInternal-dasinternalSqs-1HN6JX3NZPGNT";
+
+  // How many events do we buffer before send? Counted by events.
+  constexpr const size_t QUEUE_THRESHOLD_SIZE = 1000;
+
+  // How often do we process queued events? Counted by log records.
+  constexpr const int PROCESS_QUEUE_INTERVAL = 1000;
+
+  // How often do we process statistics? Counted by log records.
+  constexpr const int PROCESS_STATS_INTERVAL = 1000;
+}
+
 //
 // Victor CSV log helpers
 //
@@ -38,17 +56,15 @@ using LogLevel = Anki::Util::ILoggerProvider::LogLevel;
 // See also: util/logging/victorLogger_vicos.cpp
 //
 //static constexpr const char * EVENT_FORMAT = "@%s\x1f%s\x1f%s\x1f%s\x1f%s\x1f%s\x1f%s\x1f%s\x1f%s";
-
-// How often do we process queued events? Counted by log records.
-static constexpr int PROCESS_QUEUE_INTERVAL = 1000;
-
-// How often do we process statistics? Counted by log records.
-static constexpr int PROCESS_STATS_INTERVAL = 1000;
+//
 
 // Convert android log timestamp to Anki DAS equivalent
-static inline uint64_t GetTimeStamp(const AndroidLogEntry& logEntry)
+static inline int64_t GetTimeStamp(const AndroidLogEntry& logEntry)
 {
-  return (logEntry.tv_sec * 1000) + (logEntry.tv_nsec / 1000000);
+  const int64_t tv_sec = logEntry.tv_sec;
+  const int64_t tv_nsec = logEntry.tv_nsec;
+  const int64_t ts = (tv_sec * 1000) + (tv_nsec / 1000000);
+  return ts;
 }
 
 // Convert android log level to Anki DAS equivalent
@@ -83,9 +99,7 @@ namespace Victor {
 void DASManager::ProcessEvent(LogEvent && logEvent)
 {
   // Record global state
-
   _eventQueue.push_back(std::move(logEvent));
-
   ++_eventCount;
 
 }
@@ -110,10 +124,9 @@ bool DASManager::ParseLogEntry(const AndroidLogEntry & logEntry, LogEvent & logE
       strings.push_back(std::string(pos));
       break;
     }
-    strings.push_back(std::string(pos, end-pos));
+    strings.push_back(std::string(pos, (size_t)(end-pos)));
     pos = end+1;
   }
-
 
   if (strings.size() != Anki::Util::DAS::FIELD_COUNT) {
     LOG_ERROR("DASManager.ParseLogEntry", "Unable to parse %s from %s (%zu != %d)",
@@ -125,22 +138,31 @@ bool DASManager::ParseLogEntry(const AndroidLogEntry & logEntry, LogEvent & logE
   static_assert(Anki::Util::DAS::FIELD_COUNT == 9, "DAS field count does not match declarations");
 
   // Populate event struct
+  // Note that DAS uses SIGNED int64 for timestamp and sequence.
+  // Unsigned values are coerced to match the spec.
+  logEvent.seq = (int64_t) _seq++;
   logEvent.source = tag;
   logEvent.profile_id = _profile_id;
-  logEvent.feature_type = _feature_type;
-  logEvent.feature_run_id = _feature_run_id;
-  logEvent.seq = _seq++;
   logEvent.ts = GetTimeStamp(logEntry);
   logEvent.level = GetLogLevel(logEntry);
   logEvent.name = std::move(strings[0]);
-  logEvent.s1 = std::move(strings[2]);
-  logEvent.s2 = std::move(strings[3]);
-  logEvent.s3 = std::move(strings[4]);
-  logEvent.s4 = std::move(strings[5]);
-  logEvent.i1 = std::atoll(strings[6].c_str());
-  logEvent.i2 = std::atoll(strings[7].c_str());
-  logEvent.i3 = std::atoll(strings[8].c_str());
-  logEvent.i4 = std::atoll(strings[9].c_str());
+  logEvent.s1 = std::move(strings[1]);
+  logEvent.s2 = std::move(strings[2]);
+  logEvent.s3 = std::move(strings[3]);
+  logEvent.s4 = std::move(strings[4]);
+  logEvent.i1 = std::atoll(strings[5].c_str());
+  logEvent.i2 = std::atoll(strings[6].c_str());
+  logEvent.i3 = std::atoll(strings[7].c_str());
+  logEvent.i4 = std::atoll(strings[8].c_str());
+
+  // Is this the start of a new feature?
+  if (logEvent.name == Anki::Util::DAS::FEATURE_START) {
+    _feature_run_id = logEvent.s3;
+    _feature_type = logEvent.s4;
+  }
+
+  logEvent.feature_run_id = _feature_run_id;
+  logEvent.feature_type = _feature_type;
 
   return true;
 }
@@ -171,14 +193,161 @@ void DASManager::ProcessLogEntry(const AndroidLogEntry & logEntry)
   ProcessEvent(std::move(logEvent));
 }
 
+static inline void serialize(std::ostringstream & ostr, const std::string & key, const std::string & val)
+{
+  // TO DO: Guard against embedded quotes in value
+  ostr << '"' << key << '"';
+  ostr << ':';
+  ostr << '"' << val << '"';
+}
+
+static inline void serialize(std::ostringstream & ostr, const std::string & key, int64_t val)
+{
+  ostr << '"' << key << '"';
+  ostr << ':';
+  ostr << val;
+}
+
+static inline void serialize(std::ostringstream & ostr, const std::string & key, LogLevel val)
+{
+  ostr << '"' << key << '"';
+  ostr << ':';
+  ostr << '"';
+  switch (val)
+  {
+    case LogLevel::LOG_LEVEL_ERROR:
+      ostr << "error";
+      break;
+    case LogLevel::LOG_LEVEL_WARN:
+      ostr << "warning";
+      break;
+    case LogLevel::LOG_LEVEL_EVENT:
+      ostr << "event";
+      break;
+    case LogLevel::LOG_LEVEL_INFO:
+      ostr << "info";
+      break;
+    case LogLevel::LOG_LEVEL_DEBUG:
+      ostr << "debug";
+      break;
+    case LogLevel::_LOG_LEVEL_COUNT:
+      ostr << "count";
+      break;
+  }
+  ostr << '"';
+}
+
+
+void DASManager::Serialize(std::ostringstream & ostr, const LogEvent & event)
+{
+  //
+  // TO DO: robot_id, boot_id, and robot_version are constant for lifetime of the service.
+  // Feature_run_id and feature_type only change is response to specific events.
+  // These fields could be preformatted for efficiency.
+  //
+  ostr << '{';
+  serialize(ostr, "source", event.source);
+  ostr << ',';
+  serialize(ostr, "event", event.name);
+  ostr << ',';
+  serialize(ostr, "ts", event.ts);
+  ostr << ',';
+  serialize(ostr, "seq", event.seq);
+  ostr << ',';
+  serialize(ostr, "level", event.level);
+  ostr << ',';
+  serialize(ostr, "robot_id", _robot_id);
+  ostr << ',';
+  serialize(ostr, "robot_version", _robot_version);
+  ostr << ',';
+  serialize(ostr, "boot_id", _boot_id);
+  ostr << ',';
+  serialize(ostr, "profile_id", event.profile_id);
+  ostr << ',';
+  serialize(ostr, "feature_type", event.feature_type);
+  ostr << ',';
+  serialize(ostr, "feature_run_id", event.feature_run_id);
+
+  // S1-S4 fields are OPTIONAL and may be empty.
+  // If they are empty, there's no need to send them.
+  // DAS ingestion does not distinguish between empty string and null.
+  if (!event.s1.empty()) {
+    ostr << ',';
+    serialize(ostr, "s1", event.s1);
+  }
+  if (!event.s2.empty()) {
+    ostr << ',';
+    serialize(ostr, "s2", event.s2);
+  }
+  if (!event.s3.empty()) {
+    ostr << ',';
+    serialize(ostr, "s3", event.s3);
+  }
+  if (!event.s4.empty()) {
+    ostr << ',';
+    serialize(ostr, "s4", event.s4);
+  }
+
+
+  // I1-I4 fields are OPTIONAL and may be empty.
+  // If they are empty, there's no need to send them.
+  // DAS ingestion does not distinguish between 0 and null.
+  if (event.i1 != 0) {
+    ostr << ',';
+    serialize(ostr, "i1", event.i1);
+  }
+  if (event.i2 != 0) {
+    ostr << ',';
+    serialize(ostr, "i2", event.i2);
+  }
+  if (event.i3 != 0) {
+    ostr << ',';
+    serialize(ostr, "i3", event.i3);
+  }
+  if (event.i4 != 0) {
+    ostr << ',';
+    serialize(ostr, "i4", event.i4);
+  }
+  ostr << '}';
+}
+
+void DASManager::Serialize(std::ostringstream & ostr, const EventQueue & eventQueue)
+{
+  ostr << '[';
+  for (const auto & event : eventQueue) {
+      Serialize(ostr, event);
+      ostr << ',';
+  }
+  // Remove trailing separator?
+  if (!eventQueue.empty()) {
+    ostr.seekp(-1, std::ostringstream::cur);
+  }
+  ostr << ']';
+
+}
 //
 // Process queued entries
 void DASManager::ProcessQueue()
 {
-  if (!_eventQueue.empty()) {
-    LOG_DEBUG("DASManager.ProcessQueue", "Processing %zu events", _eventQueue.size());
-    _eventQueue.clear();
+  const size_t nEvents = _eventQueue.size();
+  if (nEvents < QUEUE_THRESHOLD_SIZE) {
+    // Keep filling current buffer
+    return;
   }
+
+  LOG_DEBUG("DASManager.ProcessQueue", "Post %zu events to %s", nEvents, DAS_URL);
+
+  std::ostringstream ostr;
+  Serialize(ostr, _eventQueue);
+
+  std::string response;
+  const bool success = DAS::PostToServer(DAS_URL, ostr.str(), response);
+  if (!success) {
+    // TO DO: Retry after fail? Write to backing store?
+    LOG_ERROR("DASManager.ProcessQueue", "Failed to upload %zu events (%s)", nEvents, response.c_str());
+  }
+
+  _eventQueue.clear();
 }
 
 //
@@ -218,9 +387,16 @@ Result DASManager::Run(const bool & shutdown)
       _robot_id = osState->GetSerialNumberAsString();
     } else {
       LOG_ERROR("DASManager.Run.InvalidEMR", "INVALID EMR - NO ESN");
-      _robot_id = "invalid";
     }
+    _robot_version = osState->GetOSBuildVersion() + "@" + osState->GetBuildSha();
+    Cozmo::OSState::removeInstance();
   }
+
+  // TO DO VIC-2925: Track profile_id, feature_type, _feature_run_id
+  _boot_id = Anki::Util::GetUUIDString();
+  _profile_id = "system";
+  _feature_type = "system";
+  _feature_run_id = _boot_id;
 
   //
   // Android log API is documented here:

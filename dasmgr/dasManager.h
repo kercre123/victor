@@ -42,8 +42,8 @@ private:
   struct LogEvent
   {
     std::string name;
-    uint64_t ts;
-    uint64_t seq;
+    int64_t ts;
+    int64_t seq;
     LogLevel level;
     std::string profile_id;
     std::string feature_type;
@@ -59,16 +59,20 @@ private:
     int64_t i4;
   };
 
+  using EventQueue = std::deque<LogEvent>;
+
   // Global state
   std::string _robot_id;
   std::string _robot_version;
-  std::string _profile_id = "system";
-  std::string _feature_type = "system";
-  std::string _feature_run_id = "system";
+  std::string _boot_id;
+  std::string _profile_id;
+  std::string _feature_type;
+  std::string _feature_run_id;
+
   uint64_t _seq = 0;
 
   // Event queue
-  std::deque<LogEvent> _eventQueue;
+  EventQueue _eventQueue;
 
   // Bookkeeping
   uint64_t _entryCount = 0;
@@ -89,6 +93,10 @@ private:
 
   // Log stats
   void ProcessStats();
+
+  // Event serialization
+  void Serialize(std::ostringstream & ostr, const LogEvent & event);
+  void Serialize(std::ostringstream & ostr, const EventQueue & eventQueue);
 
 };
 

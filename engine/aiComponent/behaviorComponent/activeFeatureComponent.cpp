@@ -21,6 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/cozmoContext.h"
+#include "util/logging/DAS.h"
 #include "util/string/stringUtils.h"
 #include "webServerProcess/src/webService.h"
 
@@ -36,7 +37,7 @@ void ActiveFeatureComponent::InitDependent( Robot* robot, const BCCompMap& depen
 {
   _context = dependentComponents.GetValue<BEIRobotInfo>().GetContext();
   _lastUsedIntentActivationID = 0;
-  
+
   _statusLogHandler.reset( new StatusLogHandler( _context ) );
 }
 
@@ -46,9 +47,9 @@ void ActiveFeatureComponent::UpdateDependent(const BCCompMap& dependentComponent
 
   // Only bother to do an update if the behavior stack changed
   const size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
-  
+
   if( behaviorIterator.GetLastTickBehaviorStackChanged() == currTick ) {
-    
+
     // get the feature at the end of the stack
     ActiveFeature newFeature = ActiveFeature::NoFeature;
     auto callback = [&newFeature](const ICozmoBehavior& behavior) {
@@ -80,7 +81,7 @@ void ActiveFeatureComponent::UpdateDependent(const BCCompMap& dependentComponent
 
       // the default is that the robot activated the intent on it's own
       std::string intentSource = "AI";
-      
+
       if( activeIntent != nullptr ) {
         // only consider a single source to be activated by an intent
         if( newFeature != ActiveFeature::NoFeature &&
@@ -90,9 +91,9 @@ void ActiveFeatureComponent::UpdateDependent(const BCCompMap& dependentComponent
           _lastUsedIntentActivationID = activeIntent->activationID;
         }
       }
-      
+
       OnFeatureChanged( newFeature, _activeFeature, intentSource );
-      
+
       _activeFeature = newFeature;
     }
   }
@@ -116,7 +117,7 @@ void ActiveFeatureComponent::SendActiveFeatureToWebViz(const std::string& intent
     }
   }
 }
-  
+
 void ActiveFeatureComponent::OnFeatureChanged(const ActiveFeature& newFeature, const ActiveFeature& oldFeature, const std::string& source)
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -138,7 +139,7 @@ void ActiveFeatureComponent::OnFeatureChanged(const ActiveFeature& newFeature, c
 
     // NOTE: this event is inspected by the DAS Manager to determine the feature id and type columns, so be
     // especially careful if changing it
-    DASMSG(behavior_featureEnd, "behavior.feature.start", "A new feature is active");
+    DASMSG(behavior_featureStart, Anki::Util::DAS::FEATURE_START, "A new feature is active");
     DASMSG_SET(s1, ActiveFeatureToString(newFeature), "The feature");
     DASMSG_SET(s2, source, "The source of the intent (possible values are AI, App, Voice, or Unknown)");
     DASMSG_SET(s3, uuid, "A unique ID associated with this feature run");
@@ -147,9 +148,9 @@ void ActiveFeatureComponent::OnFeatureChanged(const ActiveFeature& newFeature, c
 
     _lastFeatureActivatedTime_s = currTime_s;
   }
-  
+
   _statusLogHandler->SetFeature( ActiveFeatureToString(newFeature), source );
-  
+
   SendActiveFeatureToWebViz(source);
 }
 
