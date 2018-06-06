@@ -1421,8 +1421,12 @@ namespace Cozmo {
     {
       for(auto const& detectedObject : procResult.salientPoints)
       {
-        // TODO: Notify behaviors somehow
-        _salientPointsToDraw.push_back({currentTime_ms, detectedObject});
+        _salientPointsToDraw.emplace_back(currentTime_ms, detectedObject);
+        for(auto const& salientPoint : procResult.salientPoints)
+        {
+          _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedSalientPoint(salientPoint)));
+          _salientPointsToDraw.emplace_back(currentTime_ms, salientPoint);
+        }
       }
     }
 
