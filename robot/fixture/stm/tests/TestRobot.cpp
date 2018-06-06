@@ -530,7 +530,7 @@ void TestRobotTreads(void)
   TestRobotTreads_(127, 1500, 600);
   
   //low power (72): speed 870-1070, travel 400-550
-  if( g_fixmode <= FIXMODE_ROBOT3 )
+  if( g_fixmode <= FIXMODE_ROBOT3_OL )
     TestRobotTreads_(75, 750, 300);
   
   #endif
@@ -690,7 +690,7 @@ void TestRobotRange(void)
     robot_range_t lift = { /*power*/  75, /*travel_min*/ 400, /*travel_max*/ 9999, /*speed_min*/ 1800 };
     robot_range_t head = { /*power*/ 100, /*travel_min*/ 700, /*travel_max*/ 9999, /*speed_min*/ 2300 };
     TestRobotRange( &lift, &head );
-  } else if( g_fixmode <= FIXMODE_ROBOT3 ) { //skip PACKOUT
+  } else if( g_fixmode <= FIXMODE_ROBOT3_OL ) { //skip PACKOUT
     //lift: travel 195-200, speed 760-1600
     //head: travel 550-560, speed 2130-2400
     robot_range_t lift = { /*power*/  75, /*travel_min*/ 170, /*travel_max*/ 230, /*speed_min*/  650 };
@@ -720,10 +720,10 @@ void TestRobotRange(void)
 void EmrChecks(void)
 {
   //Make sure previous tests have passed
-  if( g_fixmode == FIXMODE_ROBOT3 ) {
+  if( g_fixmode == FIXMODE_ROBOT3 || g_fixmode == FIXMODE_ROBOT3_OL ) {
     //no previous. first fixture with head attached
   }
-  if( g_fixmode == FIXMODE_PACKOUT ) {
+  if( g_fixmode == FIXMODE_PACKOUT /*|| g_fixmode == FIXMODE_PACKOUT_OL*/ ) {
     uint32_t ppReady  = rcomGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
     uint32_t ppPassed = rcomGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
     if( ppReady != 1 || ppPassed != 1 ) {
@@ -731,13 +731,13 @@ void EmrChecks(void)
     }
   }
   
-  //requrie retest on all downstream fixtures after rework
-  if( g_fixmode == FIXMODE_ROBOT3 ) {
+  //require retest on all downstream fixtures after rework
+  if( g_fixmode == FIXMODE_ROBOT3 /*|| g_fixmode == FIXMODE_ROBOT3_OL*/ ) {
     rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 0 );
     rcomSmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), 0 );
     rcomSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 0 );
   }
-  if( g_fixmode == FIXMODE_PACKOUT ) {
+  if( g_fixmode == FIXMODE_PACKOUT /*|| g_fixmode == FIXMODE_PACKOUT_OL*/ ) {
     //will throw error if Robit has been packed out
     rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 0 );
   }
@@ -745,17 +745,11 @@ void EmrChecks(void)
 
 void EmrUpdate(void)
 {
-  #define DVT4_DISABLE_PACKOUT_FLAG_DEBUG 0
-  
-  if( g_fixmode == FIXMODE_ROBOT3 ) {
+  if( g_fixmode == FIXMODE_ROBOT3 /*|| g_fixmode == FIXMODE_ROBOT3_OL*/ ) {
     rcomSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 1 );
   }
-  if( g_fixmode == FIXMODE_PACKOUT ) {
-    #if DVT4_DISABLE_PACKOUT_FLAG_DEBUG > 0
-    #warning "packout flag update disabled"
-    #else
+  if( g_fixmode == FIXMODE_PACKOUT /*|| g_fixmode == FIXMODE_PACKOUT_OL*/ ) {
     rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 1 );
-    #endif
   }
 }
 
@@ -1229,7 +1223,7 @@ static void BatteryCheck(void)
   if( flexnfo.bat_mv < VBAT_MV_MINIMUM )
     throw ERROR_BAT_UNDERVOLT;
   
-  if( g_fixmode == FIXMODE_PACKOUT ) {
+  if( g_fixmode == FIXMODE_PACKOUT || g_fixmode == FIXMODE_PACKOUT_OL ) {
     if( flexnfo.bat_mv > VBAT_MV_MAXIMUM )
       throw ERROR_BAT_OVERVOLT;
   }
