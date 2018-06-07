@@ -156,7 +156,7 @@ bool DASManager::ParseLogEntry(const AndroidLogEntry & logEntry, LogEvent & logE
   logEvent.i4 = std::atoll(strings[8].c_str());
 
   // Is this the start of a new feature?
-  if (logEvent.name == Anki::Util::DAS::FEATURE_START) {
+  if (logEvent.name == DASMSG_FEATURE_START) {
     _feature_run_id = logEvent.s3;
     _feature_type = logEvent.s4;
   }

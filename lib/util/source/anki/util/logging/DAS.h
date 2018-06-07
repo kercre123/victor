@@ -63,15 +63,17 @@ constexpr const char FIELD_MARKER = '\x1F';
 //
 constexpr const int FIELD_COUNT = 9;
 
-//
-// DAS feature start event
-// This is the name of the event used to indicate start a new feature scope.
-// If this value changes, or event parameters change, DASManager must be updated to match.
-//
-constexpr const char * FEATURE_START = "behavior.feature.start";
 
 } // end namespace DAS
 } // end namespace Util
 } // end namespace Anki
 
+
+//
+// DAS feature start event
+// This is the name of the event used to indicate start a new feature scope.
+// If this value changes, or event parameters change, DASManager must be updated to match.
+// This is declared as a macro, not a constexpr, so it can be expanded by doxygen.
+//
+#define DASMSG_FEATURE_START "behavior.feature.start"
 #endif // __util_logging_DAS_h
