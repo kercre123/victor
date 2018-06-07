@@ -1192,6 +1192,7 @@ autounion MessageGameToEngine
   DriveArc DriveArc = 0x05,
   RobotHistoryRequest RobotHistoryRequest = 0x06,
   SDKActivationRequest SDKActivationRequest = 0x07,
+  DisplayFaceImageRGBChunk DisplayFaceImageRGBChunk = 0x08,
 }
 
 
