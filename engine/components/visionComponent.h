@@ -400,6 +400,9 @@ struct DockingErrorSignal;
       WaitingForFrame
     };
     CaptureFormatState _captureFormatState = CaptureFormatState::None;
+
+    // Future used for async YUV to RGB conversion
+    std::future<Vision::ImageRGB> _cvtYUV2RGBFuture;
     
     std::vector<u8> _albumData, _enrollData; // for loading / saving face data
     

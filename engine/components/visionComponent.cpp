@@ -2542,6 +2542,19 @@ namespace Cozmo {
 
   bool VisionComponent::CaptureImage(Vision::ImageRGB& image_out)
   {
+    // Wait until the current async conversion is finished before getting another
+    // frame
+    if(_cvtYUV2RGBFuture.valid())
+    {
+      if(_cvtYUV2RGBFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+      {
+        image_out = _cvtYUV2RGBFuture.get();
+        return true;
+      }
+      
+      return false;
+    }
+    
     auto cameraService = CameraService::getInstance();
 
     const int numRows = cameraService->CameraGetHeight();
@@ -2570,20 +2583,34 @@ namespace Cozmo {
     {
       if(format == ImageEncoding::YUV420sp)
       {
-        image_out = Vision::ImageRGB(CAMERA_SENSOR_RESOLUTION_HEIGHT, CAMERA_SENSOR_RESOLUTION_WIDTH);
-        // Wrap the YUV data in an opencv mat
-        // A 1280x720 YUV420sp image is 1280x1080 bytes
-        // A full Y channel followed by interleaved 2x2 subsampled UV
-        // Calculate the number of rows of bytes of YUV data that corresponds to
-        // CAMERA_SENSOR_RESOLUTION_WIDTH cols of data
-        constexpr u16 kNumYUVRows =
-          (2 * (CAMERA_SENSOR_RESOLUTION_HEIGHT/2 * CAMERA_SENSOR_RESOLUTION_WIDTH/2) /
-          CAMERA_SENSOR_RESOLUTION_WIDTH) + CAMERA_SENSOR_RESOLUTION_HEIGHT;
-        cv::Mat yuv(kNumYUVRows, CAMERA_SENSOR_RESOLUTION_WIDTH, CV_8UC1, buffer);
-        // Convert from YUV to BGR directly into image_out
-        // BGR appears to actually result in RGB data, there is a similar bug
-        // when converting from RGB565 to RGB
-        cv::cvtColor(yuv, image_out.get_CvMat_(), cv::COLOR_YUV2BGR_NV21);
+        // Create async future to do the YUV to RGB conversion since it is slow
+        _cvtYUV2RGBFuture = std::async(std::launch::async,
+          [image_out, buffer, imageCaptureSystemTimestamp_ms, imageId]() mutable -> Vision::ImageRGB
+          {
+            image_out.Allocate(CAMERA_SENSOR_RESOLUTION_HEIGHT, CAMERA_SENSOR_RESOLUTION_WIDTH);
+
+            // Wrap the YUV data in an opencv mat
+            // A 1280x720 YUV420sp image is 1280x1080 bytes
+            // A full Y channel followed by interleaved 2x2 subsampled UV
+            // Calculate the number of rows of bytes of YUV data that corresponds to
+            // CAMERA_SENSOR_RESOLUTION_WIDTH cols of data
+            constexpr u16 kNumYUVRows =
+              (2 * (CAMERA_SENSOR_RESOLUTION_HEIGHT/2 * CAMERA_SENSOR_RESOLUTION_WIDTH/2) /
+               CAMERA_SENSOR_RESOLUTION_WIDTH) + CAMERA_SENSOR_RESOLUTION_HEIGHT;
+            cv::Mat yuv(kNumYUVRows, CAMERA_SENSOR_RESOLUTION_WIDTH, CV_8UC1, buffer);
+            // Convert from YUV to BGR directly into image_out
+            // BGR appears to actually result in RGB data, there is a similar bug
+            // when converting from RGB565 to RGB
+            cv::cvtColor(yuv, image_out.get_CvMat_(), cv::COLOR_YUV2BGR_NV21);      
+
+            // Create image with proper imageID and timestamp
+            image_out.SetTimestamp(imageCaptureSystemTimestamp_ms);
+            image_out.SetImageId(imageId);
+
+            return image_out;
+          });
+        
+        return false;
       }
       else if(format == ImageEncoding::RawRGB)
       {
