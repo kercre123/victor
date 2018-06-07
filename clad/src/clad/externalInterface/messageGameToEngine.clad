@@ -521,6 +521,10 @@ message LoadFaceAlbumFromFile {
   bool   isRelativePath=1  // If true, use 'path' relative to internal album path
 }
 
+message SetCameraCaptureFormat {
+  ImageEncoding format
+}
+
 message SetMemoryMapRenderEnabled {
   bool enabled
 }

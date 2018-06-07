@@ -85,6 +85,7 @@ typedef struct {
 typedef enum {
   ANKI_CAMERA_MSG_C2S_PARAMS_ID_EXP,
   ANKI_CAMERA_MSG_C2S_PARAMS_ID_AWB,
+  ANKI_CAMERA_MSG_C2S_PARAMS_ID_FORMAT,
 } anki_camera_params_id_t;
 
 typedef struct {
@@ -92,6 +93,13 @@ typedef struct {
   uint8_t data[sizeof(((struct anki_camera_msg*)0)->payload) - sizeof(anki_camera_params_id_t)];
 } anki_camera_msg_params_payload_t;
 
+typedef enum {
+  ANKI_CAM_FORMAT_BAYER_MIPI_BGGR10,
+  ANKI_CAM_FORMAT_RAW = ANKI_CAM_FORMAT_BAYER_MIPI_BGGR10,
+  ANKI_CAM_FORMAT_RGB888,
+  ANKI_CAM_FORMAT_YUV,
+} anki_camera_pixel_format_t;
+  
 // END: shared types
 
 
@@ -124,6 +132,8 @@ int camera_set_exposure(struct anki_camera_handle* camera, uint16_t exposure_ms,
 
 int camera_set_awb(struct anki_camera_handle* camera, float r_gain, float g_gain, float b_gain);
 
+int camera_set_capture_format(struct anki_camera_handle* camera, anki_camera_pixel_format_t format);
+  
 // Get current status of camera system
 anki_camera_status_t camera_status(struct anki_camera_handle* camera);
 

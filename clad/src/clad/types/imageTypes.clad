@@ -11,6 +11,7 @@ enum uint_8 ImageEncoding
   RawGray, // no compression
   RawRGB,  // no compression, just [RGBRGBRG...]
   YUYV,
+  YUV420sp,
   BAYER,
   JPEGGray,
   JPEGColor,

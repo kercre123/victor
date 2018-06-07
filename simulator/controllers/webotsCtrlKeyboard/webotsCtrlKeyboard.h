@@ -158,6 +158,8 @@ protected:
   void TouchBackSensor();
 
   void CycleConnectionFlowState();
+
+  void ToggleCameraCaptureFormat();
   
   // ==== End of key press functions ====
   

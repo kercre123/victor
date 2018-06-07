@@ -159,6 +159,9 @@ namespace Cozmo {
 
   const u16 DEFAULT_CAMERA_RESOLUTION_WIDTH  = 640;
   const u16 DEFAULT_CAMERA_RESOLUTION_HEIGHT = 360;
+
+  const u16 CAMERA_SENSOR_RESOLUTION_WIDTH  = 1280;
+  const u16 CAMERA_SENSOR_RESOLUTION_HEIGHT = 720;
   
   /***************************************************************************
    *

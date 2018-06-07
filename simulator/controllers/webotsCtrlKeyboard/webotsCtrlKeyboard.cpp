@@ -2028,7 +2028,7 @@ namespace Cozmo {
     
     REGISTER_KEY_FCN('C', MOD_NONE,      LogCliffSensorData,    "Request cliff sensor log");
     REGISTER_KEY_FCN('C', MOD_SHIFT,     ExecuteBehavior,       "Execute behavior in 'behaviorName'");
-//      REGISTER_KEY_FCN('C', MOD_ALT,       , "");
+    REGISTER_KEY_FCN('C', MOD_ALT,       ToggleCameraCaptureFormat, "Toggle camera capture format between RGB and YUV");
 //      REGISTER_KEY_FCN('C', MOD_ALT_SHIFT, , "");
     
     REGISTER_KEY_FCN('D', MOD_NONE,      ToggleVizDisplay,      "Toggle viz display");
@@ -2533,7 +2533,21 @@ namespace Cozmo {
     // in the pose of the Webots::Node
     return GetPose3dOfNode(root_);
   }
-
+  
+  void WebotsKeyboardController::ToggleCameraCaptureFormat()
+  {
+    ExternalInterface::SetCameraCaptureFormat msg;
+    static bool yuv = true;
+    LOG_INFO("ToggleCameraCaptureFormat",
+             "Switching to %s",
+             yuv ? "YUV" : "RGB");
+    msg.format = (yuv ? ImageEncoding::YUV420sp : ImageEncoding::RawRGB);
+    yuv = !yuv;
+    
+    ExternalInterface::MessageGameToEngine msgWrapper;
+    msgWrapper.Set_SetCameraCaptureFormat(msg);
+    SendMessage(msgWrapper);
+  }
     
   s32 WebotsKeyboardController::UpdateInternal()
   {

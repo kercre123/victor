@@ -887,7 +887,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   GetDockingComponent().SetPickingOrPlacing(IS_STATUS_FLAG_SET(IS_PICKING_OR_PLACING));
   _isPickedUp = IS_STATUS_FLAG_SET(IS_PICKED_UP);
   _powerButtonPressed = IS_STATUS_FLAG_SET(IS_BUTTON_PRESSED);
-
+  
   // Save the entire flag for sending to game
   _lastStatusFlags = msg.status;
 
@@ -2647,7 +2647,8 @@ Result Robot::UpdateStartupChecks()
       u8* buf = nullptr;
       u32 id = 0;
       TimeStamp_t t = 0;
-      if(CameraService::getInstance()->CameraGetFrame(buf, id, t))
+      ImageEncoding format;
+      if(CameraService::getInstance()->CameraGetFrame(buf, id, t, format))
       {
         CameraService::getInstance()->CameraReleaseFrame(id);
       }

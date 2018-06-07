@@ -50,7 +50,7 @@ static const uint64_t HEARTBEAT_INTERVAL_US = 200000;
 // custom toolchain, or we will move the camera system back into the
 // engine instead of using a separate process.
 
-#define ANKI_CAMERA_MAX_PACKETS 8
+#define ANKI_CAMERA_MAX_PACKETS 12
 #define ANKI_CAMERA_MAX_FRAME_COUNT 6
 
 //
@@ -113,6 +113,8 @@ struct anki_camera_handle_private {
   // private
   struct client_ctx camera_client;
 };
+
+static struct anki_camera_handle_private s_camera_handle;
 
 static ssize_t read_fd(int fd, void *ptr, size_t nbytes, int *recvfd)
 {
@@ -381,6 +383,48 @@ static int add_locked_slot(struct client_ctx *ctx, uint8_t slot, uint32_t frame_
   return rc;
 }
 
+static void lock_all_slots(struct client_ctx *ctx)
+{
+  uint8_t *data = ctx->camera_buf.data;
+  if (data == NULL) {
+    return;
+  }
+  
+  anki_camera_buf_header_t *header = (anki_camera_buf_header_t *)data;
+
+  for (uint32_t slot = 0; slot < ANKI_CAMERA_MAX_FRAME_COUNT; ++slot) {
+    // lock slot
+    uint32_t lock_status = 0;
+    _Atomic uint32_t *slot_lock = &(header->locks.frame_locks[slot]);
+    if (!atomic_compare_exchange_strong(slot_lock, &lock_status, 1)) {
+      continue;
+    }
+
+    ctx->locked_slots[slot] |= LOCKED_FLAG;
+  }
+}
+
+static void unlock_all_slots(struct client_ctx *ctx)
+{
+  uint8_t *data = ctx->camera_buf.data;
+  if (data == NULL) {
+    return;
+  }
+  
+  anki_camera_buf_header_t *header = (anki_camera_buf_header_t *)data;
+
+  for (uint32_t slot = 0; slot < ANKI_CAMERA_MAX_FRAME_COUNT; ++slot) {
+    // unlock slot
+    uint32_t lock_status = 1;
+    _Atomic uint32_t *slot_lock = &(header->locks.frame_locks[slot]);
+    if (!atomic_compare_exchange_strong(slot_lock, &lock_status, 0)) {
+      continue;
+    }
+
+    ctx->locked_slots[slot] = 0;
+  }
+}
+
 static int get_locked_frame(struct client_ctx *ctx, uint32_t slot, uint32_t *out_frame_id)
 {
   assert(slot < ANKI_CAMERA_MAX_FRAME_COUNT);
@@ -499,6 +543,22 @@ static int process_one_message(struct client_ctx *ctx, struct anki_camera_msg *m
   }
   break;
   case ANKI_CAMERA_MSG_S2C_BUFFER: {
+
+    unlock_all_slots(ctx);
+
+    // If we already have a fd then unmap it
+    // since we are getting a new one
+    if(ctx->camera_buf.camera_capture_fd > 0)
+    {
+      rc = unmap_camera_capture_buf(ctx);
+      if(rc < 0)
+      {
+        loge("%s: ANKI_CAMERA_MSG_S2C_BUFFER unmap failed %d", __func__, rc);
+      }
+    }
+
+    s_camera_handle.current_frame_id = UINT32_MAX;
+    
     // payload contains len
     uint32_t buffer_size;
     memcpy(&buffer_size, msg->payload, sizeof(buffer_size));
@@ -611,7 +671,6 @@ static int event_loop(struct client_ctx *ctx)
     rc = select(max_fd + 1, &read_fds, &write_fds, NULL, &timeout);
 
     if (rc == -1) {
-      loge("%s: select failed: %s", __func__, strerror(errno));
       break;
     }
 
@@ -699,8 +758,6 @@ static void *camera_client_thread(void *camera_handle_ptr)
 //
 // Public API
 //
-
-static struct anki_camera_handle_private s_camera_handle;
 
 #define CAMERA_HANDLE_P(camera) ((struct anki_camera_handle_private *)(camera))
 
@@ -809,6 +866,13 @@ int camera_frame_acquire(struct anki_camera_handle *camera, anki_camera_frame_t 
     goto UNLOCK;
   }
 
+  if(frame->timestamp == 0)
+  {
+    logw("%s: invalid timestamp for frame\n", __func__);
+    rc = -1;
+    goto UNLOCK;
+  }
+
   CAMERA_HANDLE_P(camera)->current_frame_id = frame->frame_id;
 
   add_locked_slot(client, slot, frame->frame_id);
@@ -845,8 +909,10 @@ int camera_frame_release(struct anki_camera_handle *camera, uint32_t frame_id)
   uint32_t slot;
   rc = get_locked_slot(client, frame_id, &slot);
   if (rc == -1) {
-    loge("%s: failed to find slot for frame_id %u", __func__, frame_id);
-    return rc;
+    // Not really an error, just means someone asked us to release a frame we
+    // don't know about
+    logw("%s: failed to find slot for frame_id %u", __func__, frame_id);
+    return 0;
   }
 
   // unlock slot
@@ -897,6 +963,20 @@ int camera_set_awb(struct anki_camera_handle* camera, float r_gain, float g_gain
   anki_camera_msg_params_payload_t payload;
   payload.id = ANKI_CAMERA_MSG_C2S_PARAMS_ID_AWB;
   memcpy(payload.data, &awb, sizeof(awb));
+
+  return enqueue_message_with_payload(&CAMERA_HANDLE_P(camera)->camera_client, 
+                                      ANKI_CAMERA_MSG_C2S_PARAMS, &payload, sizeof(payload));
+}
+
+int camera_set_capture_format(struct anki_camera_handle* camera, anki_camera_pixel_format_t format)
+{
+  // Lock all slots to prevent access to the shared memory that is
+  // going to be deallocated by changing the capture format
+  lock_all_slots(&CAMERA_HANDLE_P(camera)->camera_client);
+  
+  anki_camera_msg_params_payload_t payload;
+  payload.id = ANKI_CAMERA_MSG_C2S_PARAMS_ID_FORMAT;
+  memcpy(payload.data, &format, sizeof(format));
 
   return enqueue_message_with_payload(&CAMERA_HANDLE_P(camera)->camera_client, 
                                       ANKI_CAMERA_MSG_C2S_PARAMS, &payload, sizeof(payload));

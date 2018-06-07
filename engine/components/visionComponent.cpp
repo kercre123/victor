@@ -166,7 +166,8 @@ namespace Cozmo {
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveImages>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::DevSubscribeVisionModes>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::DevUnsubscribeVisionModes>();
-
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::SetCameraCaptureFormat>();
+      
       // Separate list for engine messages to listen to:
       helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotConnectionResponse>();
     }
@@ -433,6 +434,12 @@ namespace Cozmo {
       return;
     }
 
+    // Don't bother updating while we are waiting for a capture format change to take effect
+    if(UpdateCaptureFormatChange())
+    {
+      return;
+    }
+    
     if(_bufferedImg.IsEmpty())
     {
       // We don't yet have a next image. Get one from camera.
@@ -686,31 +693,30 @@ namespace Cozmo {
     }
     else
     {
-      if(!_paused) {
-        ANKI_CPU_PROFILE("VC::SetNextImage.LockedSwap");
-        Lock();
+      // Do this even when paused
+      ANKI_CPU_PROFILE("VC::SetNextImage.LockedSwap");
+      Lock();
 
-        const bool isDroppingFrame = !_nextImg.IsEmpty() || (kSimulateDroppedFrameFraction > 0.f &&
-                                                             _robot->GetContext()->GetRandom()->RandDbl() < kSimulateDroppedFrameFraction);
-        if(isDroppingFrame)
-        {
-          PRINT_CH_DEBUG("VisionComponent",
-                         "VisionComponent.SetNextImage.DroppedFrame",
-                         "Setting next image with t=%u, but existing next image from t=%u not yet processed (currently on t=%u).",
-                         image.GetTimestamp(),
-                         _nextImg.GetTimestamp(),
-                         _currentImg.GetTimestamp());
-        }
-        _dropStats.Update(isDroppingFrame);
-
-        // Make encoded image the new "next" image
-        std::swap(_nextImg, image);
-        didSwapNextImage = true;
-
-        DEV_ASSERT(!_nextImg.IsEmpty(), "VisionComponent.SetNextImage.NextImageEmpty");
-
-        Unlock();
+      const bool isDroppingFrame = !_nextImg.IsEmpty() || (kSimulateDroppedFrameFraction > 0.f &&
+                                                           _robot->GetContext()->GetRandom()->RandDbl() < kSimulateDroppedFrameFraction);
+      if(isDroppingFrame)
+      {
+        PRINT_CH_DEBUG("VisionComponent",
+                       "VisionComponent.SetNextImage.DroppedFrame",
+                       "Setting next image with t=%u, but existing next image from t=%u not yet processed (currently on t=%u).",
+                       image.GetTimestamp(),
+                       _nextImg.GetTimestamp(),
+                       _currentImg.GetTimestamp());
       }
+      _dropStats.Update(isDroppingFrame);
+
+      // Make encoded image the new "next" image
+      std::swap(_nextImg, image);
+      didSwapNextImage = true;
+
+      DEV_ASSERT(!_nextImg.IsEmpty(), "VisionComponent.SetNextImage.NextImageEmpty");
+
+      Unlock();
     }
 
     return (didSwapNextImage) ? RESULT_OK : RESULT_FAIL;
@@ -2557,13 +2563,41 @@ namespace Cozmo {
     u8* buffer = nullptr;
     u32 imageId = 0;
     TimeStamp_t imageCaptureSystemTimestamp_ms = 0;
-
-    const bool gotImage = cameraService->CameraGetFrame(buffer, imageId, imageCaptureSystemTimestamp_ms);
+    ImageEncoding format;
+    
+    const bool gotImage = cameraService->CameraGetFrame(buffer, imageId, imageCaptureSystemTimestamp_ms, format);
     if(gotImage)
     {
-      // Create ImageRGB object from image buffer
-      image_out = Vision::ImageRGB(numRows, numCols, buffer);
-
+      if(format == ImageEncoding::YUV420sp)
+      {
+        image_out = Vision::ImageRGB(CAMERA_SENSOR_RESOLUTION_HEIGHT, CAMERA_SENSOR_RESOLUTION_WIDTH);
+        // Wrap the YUV data in an opencv mat
+        // A 1280x720 YUV420sp image is 1280x1080 bytes
+        // A full Y channel followed by interleaved 2x2 subsampled UV
+        // Calculate the number of rows of bytes of YUV data that corresponds to
+        // CAMERA_SENSOR_RESOLUTION_WIDTH cols of data
+        constexpr u16 kNumYUVRows =
+          (2 * (CAMERA_SENSOR_RESOLUTION_HEIGHT/2 * CAMERA_SENSOR_RESOLUTION_WIDTH/2) /
+          CAMERA_SENSOR_RESOLUTION_WIDTH) + CAMERA_SENSOR_RESOLUTION_HEIGHT;
+        cv::Mat yuv(kNumYUVRows, CAMERA_SENSOR_RESOLUTION_WIDTH, CV_8UC1, buffer);
+        // Convert from YUV to BGR directly into image_out
+        // BGR appears to actually result in RGB data, there is a similar bug
+        // when converting from RGB565 to RGB
+        cv::cvtColor(yuv, image_out.get_CvMat_(), cv::COLOR_YUV2BGR_NV21);
+      }
+      else if(format == ImageEncoding::RawRGB)
+      {
+        // Create ImageRGB object from image buffer
+        image_out = Vision::ImageRGB(numRows, numCols, buffer);
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("VisionComponent.CaptureImage.UnexpectedFormat",
+                          "Camera returned unexpected image format %s",
+                          EnumToString(format));
+        return false;
+      }
+      
       if(kDisplayUndistortedImages)
       {
         Vision::ImageRGB imgUndistorted(numRows,numCols);
@@ -2609,6 +2643,98 @@ namespace Cozmo {
     _liftCrossBarSource = std::move(liftCrossBar);
   }
 
+  bool VisionComponent::SetCameraCaptureFormat(ImageEncoding format)
+  {
+    // If the future is already valid then we are currently waiting for
+    // a previous format change to take effect
+    if(_captureFormatState != CaptureFormatState::None)
+    {
+      PRINT_NAMED_WARNING("VisionComponent.SetCameraCaptureFormat.StillSettingPrevFormat",
+                          "Still waiting for previous format %s to be applied",
+                          EnumToString(_desiredImageFormat));
+      return false;
+    }
+
+    // Pause and wait for VisionSystem to finish processing the current image
+    // before changing formats since that will release all shared camera memory
+    Pause(true);
+
+    _desiredImageFormat = format;
+
+    _captureFormatState = CaptureFormatState::WaitingForProcessingToStop;
+
+    return true;
+  }
+
+  bool VisionComponent::UpdateCaptureFormatChange()
+  {
+    switch(_captureFormatState)
+    {
+      case CaptureFormatState::None:
+      {
+        return false;  
+      }
+      
+      case CaptureFormatState::WaitingForProcessingToStop:
+      {
+        Lock();
+        const bool curImgEmpty = _currentImg.IsEmpty();
+
+        // If the current image is empty so
+        // VisionSystem has finished processing it
+        if(curImgEmpty)
+        {
+          // _currentImg is empty so check if we need to release _nextImg
+          // before changing capture formats (deallocates all image memory)
+          if(!_nextImg.IsEmpty())
+          {
+            ReleaseImage(_nextImg);
+          }
+
+          // Make sure to also clear image cache
+          _visionSystem->ClearImageCache();
+
+          // Tell the camera to change format now that nothing is
+          // using the shared camera memory
+          auto cameraService = CameraService::getInstance();
+          cameraService->CameraSetCaptureFormat(_desiredImageFormat);
+
+          // Clear desired format
+          _desiredImageFormat = ImageEncoding::NoneImageEncoding;
+
+          _captureFormatState = CaptureFormatState::WaitingForFrame;        
+        }
+        
+        Unlock();
+        
+        return true;
+      }   
+
+      case CaptureFormatState::WaitingForFrame:
+      {
+        Lock();
+        const bool nextImgEmpty = _nextImg.IsEmpty();
+        Unlock();
+        
+        // If the next image to no longer empty,
+        // it indicates the camera is giving us frames again
+        if(!nextImgEmpty)
+        {
+          // Unpause now that the format has changed and we
+          // are getting images from the camera again
+          Pause(false);
+
+          _captureFormatState = CaptureFormatState::None;
+        }
+
+        return false;
+      }
+    }
+
+    return false;
+  }
+
+  
 #pragma mark -
 #pragma mark Message Handlers
 
@@ -2744,6 +2870,12 @@ namespace Cozmo {
   void VisionComponent::HandleMessage(const ExternalInterface::DevUnsubscribeVisionModes& payload)
   {
     _robot->GetVisionScheduleMediator().DevOnly_SelfUnsubscribeVisionMode(GetVisionModesFromFlags(payload.bitFlags));
+  }
+
+  template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::SetCameraCaptureFormat& msg)
+  {
+    SetCameraCaptureFormat(msg.format);
   }
 
   std::set<VisionMode> VisionComponent::GetVisionModesFromFlags(u32 bitflags) const
