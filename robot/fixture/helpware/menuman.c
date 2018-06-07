@@ -197,7 +197,7 @@ void process_monitor(Process* proc){
 
 
 #define MOTOR_TEST_POWER 0x3FFF
-#define MOTOR_TEST_DROPS  50
+#define MOTOR_TEST_DROPS 300
 
 uint64_t gMotorTestCycles = 0;
 
@@ -225,11 +225,15 @@ void command_motors(struct HeadToBody* data)
 {
   static int drop_count = 0;
   if (gMotorTestCycles) {
-    int i;
-    int16_t power = (gMotorTestCycles%2) ? MOTOR_TEST_POWER : -MOTOR_TEST_POWER;
-    for (i=0;i<MOTOR_COUNT;i++) {
-      data->motorPower[i] = power * (1 -2*(i%2));
-    }
+    int16_t liftPower = ((drop_count/75)%2) ? MOTOR_TEST_POWER : -MOTOR_TEST_POWER;
+    int16_t headPower = ((drop_count/150)%2) ? MOTOR_TEST_POWER : -MOTOR_TEST_POWER;
+    int16_t wheelPower = (gMotorTestCycles%2) ? MOTOR_TEST_POWER : -MOTOR_TEST_POWER;
+    printf("Motor Power of 0: %d\n",data->motorPower[0]);
+    data->motorPower[0] = wheelPower;
+    data->motorPower[1] = -wheelPower;
+    data->motorPower[2] = liftPower;
+    data->motorPower[3] = headPower;
+    
     if (drop_count)
     {
       drop_count--;
