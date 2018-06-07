@@ -20,6 +20,14 @@ from .messaging import external_interface_pb2_grpc as client
 
 module_logger = logging.getLogger(__name__)
 
+# TODO Remove this when the proto file is using an enum instead of a number
+class SDK_PRIORITY_LEVEL:
+    '''Enum used to specify the priority level that the program requests to run at'''
+
+    # Runs below level "MandatoryPhysicalReactions" and "LowBatteryFindAndGoToHome", and above "TriggerWordDetected".
+    SDK_HIGH_PRIORITY  = 0 
+
+
 class Robot:
     def __init__(self, ip, cert_file, port="443",
                  loop=None, is_async=False, default_logging=True):
@@ -47,18 +55,34 @@ class Robot:
         self.logger.info("Connecting to {}".format(self.address))
         self.channel = aiogrpc.secure_channel(self.address, credentials)
         self.connection = client.ExternalInterfaceStub(self.channel)
+        self.request_control()
         self.events.start(self.connection)
 
     def disconnect(self, wait_for_tasks=True):
         if self.is_async and wait_for_tasks:
             for task in self.pending:
                 task.wait_for_completed()
+        self.release_control()
         self.events.close()
         if self.channel:
             self.loop.run_until_complete(self.channel.close())
         if self.is_loop_owner:
             self.loop.close()
 
+    @actions._as_actionable
+    async def request_control(self, priority_level=SDK_PRIORITY_LEVEL.SDK_HIGH_PRIORITY):
+        sdk_activation_request = protocol.SDKActivationRequest(slot=priority_level, enable=True)
+        result = await self.connection.SDKBehaviorActivation(sdk_activation_request)
+        self.logger.info(f'{type(result)}: {str(result).strip()}')
+        return result 
+
+    @actions._as_actionable
+    async def release_control(self, priority_level=SDK_PRIORITY_LEVEL.SDK_HIGH_PRIORITY):
+        sdk_activation_request = protocol.SDKActivationRequest(slot=priority_level, enable=False)
+        result = await self.connection.SDKBehaviorActivation(sdk_activation_request)
+        self.logger.info(f'{type(result)}: {str(result).strip()}')
+        return result 
+    
     def __enter__(self):
         self.connect()
         return self
@@ -94,11 +118,6 @@ class Robot:
                 chunks.append(chunk)
                 chunk = fh.read(chunk_size)
         return chunks
-
-    # #TODO Refactor out of robot.py
-    # class FileType(IntEnum):
-    #     Animation = 0
-    #     FaceImg = 1
 
     #TODO Refactor out of robot.py
     MAX_MSG_SIZE = 2048

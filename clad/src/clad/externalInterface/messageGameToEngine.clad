@@ -1172,6 +1172,7 @@ message RequestRobotSettings {
 message RobotHistoryRequest {
 }
 
+// Request control from behavior system
 message SDKActivationRequest {
   BehaviorSlot slot,
   bool enable,
