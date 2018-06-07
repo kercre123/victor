@@ -146,13 +146,6 @@ void SetOKText(void)
 void WaitForDeviceOff(bool error, int debounce_ms = 500);
 void WaitForDeviceOff(bool error, int debounce_ms)
 {
-  Board::powerOff(PWR_VEXT);
-  Board::powerOff(PWR_VBAT);
-  Board::powerOff(PWR_CUBEBAT,100);
-  Board::powerOff(PWR_DUTPROG);
-  Board::powerOff(PWR_DUTVDD);
-  Board::powerOff(PWR_UAMP);
-  
   #if APP_DEBUG > 0
   ConsolePrintf("waiting for device off (%ims)\n", debounce_ms);
   #endif

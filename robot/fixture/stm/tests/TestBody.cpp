@@ -131,6 +131,8 @@ bool TestBodyDetect(void)
 void TestBodyCleanup(void)
 {
   mcu_power_down_();
+  Board::powerOff(PWR_VEXT);
+  Board::powerOff(PWR_VBAT);
 }
 
 static void BodyShortCircuitTest(void)
