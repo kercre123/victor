@@ -56,7 +56,7 @@ void
 Anki::Cozmo::ConditionPersonDetected::GetRequiredVisionModes(std::set<Anki::Cozmo::VisionModeRequest>& requiredVisionModes) const
 {
   //TODO we need person detection mode here
-  requiredVisionModes.insert( {VisionMode::RunningNeuralNet, EVisionUpdateFrequency::High} );
+  requiredVisionModes.insert( {VisionMode::RunningNeuralNet, EVisionUpdateFrequency::Low} );
 }
 
 } // namespace Cozmo

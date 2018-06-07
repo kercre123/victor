@@ -117,6 +117,9 @@ void BehaviorReactToPersonDetected::OnBehaviorActivated()
 
   auto& component = GetBEI().GetAIComponent().GetComponent<SalientPointsDetectorComponent>();
   component.GetLastPersonDetectedData(_dVars.lastPersonDetected);
+
+  DEV_ASSERT(_dVars.lastPersonDetected.salientType == Vision::SalientPointType::Person,
+             "BehaviorReactToPersonDetected.OnBehaviorActivated.LastSalientPointMustBePerson");
 }
 
 
