@@ -374,6 +374,14 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::CalibrateM
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::CliffAlignToWhite& msg)
+{
+  return new CliffAlignToWhiteAction();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::DriveStraight& msg)
 {
   return new DriveStraightAction(msg.dist_mm, msg.speed_mmps, msg.shouldPlayAnimation);
@@ -937,6 +945,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
 
       DEFINE_HANDLER(alignWithObject,          AlignWithObject,          0),
       DEFINE_HANDLER(calibrateMotors,          CalibrateMotors,          0),
+      DEFINE_HANDLER(cliffAlignToWhite,        CliffAlignToWhite,        0),
       DEFINE_HANDLER(driveOffChargerContacts,  DriveOffChargerContacts,  1),
       DEFINE_HANDLER(driveStraight,            DriveStraight,            0),
       DEFINE_HANDLER(facePlant,                FacePlant,                0),

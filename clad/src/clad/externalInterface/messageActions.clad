@@ -42,6 +42,10 @@ message CalibrateMotors {
     bool calibrateLift
 }
 
+// CliffAlignToWhite
+message CliffAlignToWhite {
+}
+
 // DriveOffChargerContacts
 //  Mostly useful for SDK usage where motors are locked while on the charger.
 //  This action drives forward slightly to get off the charger.
@@ -473,6 +477,7 @@ message WaitForImages {
 union RobotActionUnion {
   AlignWithObject               alignWithObject,
   CalibrateMotors               calibrateMotors,
+  CliffAlignToWhite             cliffAlignToWhite,
   DriveOffChargerContacts       driveOffChargerContacts,
   DriveStraight                 driveStraight,
   FacePlant                     facePlant,

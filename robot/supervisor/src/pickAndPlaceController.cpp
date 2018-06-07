@@ -154,6 +154,20 @@ namespace Anki {
 
         const u32 _kPopAWheelieTimeout_ms = 500;
 
+        // Cliff alignment to white line
+        typedef enum {
+          INIT,
+          ALIGNING,
+          ALIGNED
+        } CliffAlignState;
+
+        CliffAlignState cliffAlignState_        = INIT;
+        bool            cliffAlignCW_           = false;
+        Radians         cliffAlignStartAngle_   = 0.f;
+
+        const u32       CLIFF_ALIGN_TIMEOUT_MS  = 4000; 
+        u32             cliffAlignStartTime_ms_ = 0;
+
       } // "private" namespace
 
       void SetChargerStripeIsBlack(const bool b) {
@@ -188,40 +202,47 @@ namespace Anki {
         Localization::GetCurrPose(ptStamp_.x, ptStamp_.y, angleStamp_);
       }
 
-      Result SendPickAndPlaceResultMessage(const bool success,
-                                           const BlockStatus blockStatus)
+      void SendPickAndPlaceResultMessage(const bool success,
+                                         const BlockStatus blockStatus)
       {
         PickAndPlaceResult msg;
         msg.timestamp = HAL::GetTimeStamp();
         msg.didSucceed = success;
         msg.blockStatus = blockStatus;
         msg.result = DockingController::GetDockingResult();
-
-        if(RobotInterface::SendMessage(msg)) {
-          return RESULT_OK;
+        if(!RobotInterface::SendMessage(msg)) {
+          AnkiWarn("PAP.SendPickAndPlaceResultMessage.SendFailed", ""); 
         }
-        return RESULT_FAIL;
       }
 
-      Result SendMovingLiftPostDockMessage()
+      void SendMovingLiftPostDockMessage()
       {
         MovingLiftPostDock msg;
         msg.action = action_;
-        if(RobotInterface::SendMessage(msg)) {
-          return RESULT_OK;
+        if(!RobotInterface::SendMessage(msg)) {
+          AnkiWarn("PAP.SendMovingLiftPostDockMessage.SendFailed", ""); 
         }
-        return RESULT_FAIL;
       }
 
-      Result SendChargerMountCompleteMessage(const bool success)
+      void SendChargerMountCompleteMessage(const bool success)
       {
         ChargerMountComplete msg;
         msg.timestamp = HAL::GetTimeStamp();
         msg.didSucceed = success;
-        if(RobotInterface::SendMessage(msg)) {
-          return RESULT_OK;
+        if(!RobotInterface::SendMessage(msg)) {
+          AnkiWarn("PAP.SendChargerMountCompleteMessage.SendFailed", ""); 
         }
-        return RESULT_FAIL;
+      }
+
+      void SendCliffAlignCompleteMessage(const bool success)
+      {
+        AnkiInfo("PAP.SendCliffAlignCompleteMessage.Result", "%d", success);
+        CliffAlignComplete msg;
+        msg.timestamp = HAL::GetTimeStamp();
+        msg.didSucceed = success;
+        if(!RobotInterface::SendMessage(msg)) {
+          AnkiWarn("PAP.SendCliffAlignCompleteMessage.SendFailed", "");
+        }
       }
 
       static void StartBackingOut()
@@ -331,6 +352,10 @@ namespace Anki {
                 transitionTime_ = HAL::GetTimeStamp() + 7000;
                 useCliffSensorAlignment_ = (action_ == DockAction::DA_BACKUP_ONTO_CHARGER_USE_CLIFF);
                 mode_ = BACKUP_ON_CHARGER;
+                break;
+              case DockAction::DA_CLIFF_ALIGN_TO_WHITE:
+                mode_ = CLIFF_ALIGN_TO_WHITE;
+                cliffAlignState_ = INIT;
                 break;
               default:
                 AnkiError( "PAP.SET_LIFT_PREDOCK.InvalidAction", "%hhu", action_);
@@ -787,6 +812,82 @@ namespace Anki {
             }
             break;
           }
+          case CLIFF_ALIGN_TO_WHITE:
+          {
+            const bool white_l = ProxSensors::IsWhiteDetected(HAL::CLIFF_FL);
+            const bool white_r = ProxSensors::IsWhiteDetected(HAL::CLIFF_FR);
+
+            switch(cliffAlignState_) {
+              case INIT:
+              {
+                cliffAlignStartAngle_ = Localization::GetCurrPose_angle();
+                cliffAlignStartTime_ms_ = HAL::GetTimeStamp();
+
+                // Check that at least one of the front cliff sensors is detecting white    
+                if (white_l && white_r) {
+                  cliffAlignState_ = ALIGNED;
+                } else if (white_l || white_r) {
+                  cliffAlignState_ = ALIGNING;
+                  cliffAlignCW_ = white_r;
+                } else {
+                  SendCliffAlignCompleteMessage(false);
+                  Reset();
+                }
+                break;
+              }
+              case ALIGNING:
+              {
+                // Check that the amount of rotation since start has not
+                // exceeded limit of 120 degrees, which is a little more
+                // than the max rotation that is physically possibly in the
+                // habitat from a pose where one front cliff sensor is
+                // detecting white to a pose where both are.
+                if (fabsf((cliffAlignStartAngle_ - Localization::GetCurrPose_angle()).ToFloat()) > DEG_TO_RAD(120)) {
+                  AnkiInfo("PAP.CLIFF_ALIGN_TO_WHITE.TurnedTooMuch", "");
+                  SendCliffAlignCompleteMessage(false);
+                  Reset();
+                  break;
+                }
+
+                if (HAL::GetTimeStamp() - cliffAlignStartTime_ms_ > CLIFF_ALIGN_TIMEOUT_MS) {
+                  AnkiInfo("PAP.CLIFF_ALIGN_TO_WHITE.Timeout", "");
+                  SendCliffAlignCompleteMessage(false);
+                  Reset();
+                  break;
+                }
+
+                // Update wheel speeds for alignment
+                f32 lSpeed = 0.f;
+                f32 rSpeed = 0.f;
+                if (white_l && white_r) {
+                  cliffAlignState_ = ALIGNED;
+                } else if (cliffAlignCW_) {
+                  if (!white_l) {
+                    lSpeed = dockSpeed_mmps_;
+                  }
+                  if (!white_r) {
+                    rSpeed = -dockSpeed_mmps_;
+                  }
+                } else {
+                  if (!white_l) {
+                    lSpeed = -dockSpeed_mmps_;
+                  }
+                  if (!white_r) {
+                    rSpeed = dockSpeed_mmps_;
+                  }
+                }
+                SteeringController::ExecuteDirectDrive(lSpeed, rSpeed);
+                break;
+              }
+              case ALIGNED:
+              {
+                SendCliffAlignCompleteMessage(true);
+                Reset();
+                break;
+              }
+            }
+            break;
+          }
           default:
           {
             Reset();
@@ -871,6 +972,22 @@ namespace Anki {
                     rel_x,
                     rel_y,
                     rel_angle);
+      }
+
+      void CliffAlignToWhite()
+      {
+        DockToBlock(DockAction::DA_CLIFF_ALIGN_TO_WHITE,
+                                              false,  // doLiftLoadCheck (ignored)
+                                              30,     // speed_mmps
+                                              0, 0);  // accel (ignored)
+      }
+
+      void StopCliffAlignToWhite()
+      {
+        if (mode_ != IDLE && action_ == DockAction::DA_CLIFF_ALIGN_TO_WHITE) {
+          SendCliffAlignCompleteMessage(false);
+          Reset();
+        }
       }
 
 

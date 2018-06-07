@@ -35,6 +35,7 @@ enum int_32 RobotActionType {
     ALIGN_WITH_OBJECT,
     BACKUP_ONTO_CHARGER,
     CALIBRATE_MOTORS,
+    CLIFF_ALIGN_TO_WHITE,
     DEVICE_AUDIO,              // This calls audio from WWise
     DISPLAY_FACE_IMAGE,
     DISPLAY_PROCEDURAL_FACE,

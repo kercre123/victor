@@ -557,6 +557,15 @@ namespace Anki {
         }
       }
 
+      void Process_cliffAlignToWhiteAction(const RobotInterface::CliffAlignToWhiteAction& msg)
+      {
+        if (msg.start) {
+          PickAndPlaceController::CliffAlignToWhite();
+        } else {
+          PickAndPlaceController::StopCliffAlignToWhite();
+        }
+      }
+
       void Process_enableBraceWhenFalling(const RobotInterface::EnableBraceWhenFalling& msg)
       {
         IMUFilter::EnableBraceWhenFalling(msg.enable);

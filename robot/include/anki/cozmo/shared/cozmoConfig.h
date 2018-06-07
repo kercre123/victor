@@ -188,7 +188,16 @@ namespace Cozmo {
   const f32 kCliffSensorXOffsetFront_mm = 2.f;   // x (longitudinal) offset from robot origin to front cliff sensors
   const f32 kCliffSensorXOffsetRear_mm  = -50.f; // x (longitudinal) offset from robot origin to rear cliff sensors
   
-  
+
+  // The minimum value expected of cliff sensor when
+  // it's detecting a white line in the habitat
+  // TODO (VIC-3550): Merge with kChargerCliffBlackThreshold? 
+  const u16 MIN_CLIFF_STOP_ON_WHITE_VAL = 500;
+
+  // Amount below MIN_CLIFF_STOP_ON_WHITE_VAL at which a white
+  // value is undetected
+  const u16 CLIFF_STOP_ON_WHITE_HYSTERSIS = 50;
+
   /***************************************************************************
    *
    *                          Speeds and Accels

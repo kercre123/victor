@@ -507,6 +507,14 @@ namespace Cozmo {
     
     enableCliffSensor = !enableCliffSensor;
   }
+
+  void WebotsKeyboardController::DoCliffAlignToWhite()
+  {
+    ExternalInterface::CliffAlignToWhite msg;
+    ExternalInterface::MessageGameToEngine msgWrapper;
+    msgWrapper.Set_CliffAlignToWhite(msg);
+    SendMessage(msgWrapper);
+  }
   
   void WebotsKeyboardController::ToggleTestBackpackLights()
   {
@@ -2108,7 +2116,7 @@ namespace Cozmo {
     REGISTER_KEY_FCN('S', MOD_NONE,      MoveHeadUp, "Move head up");
     REGISTER_KEY_FCN('S', MOD_SHIFT,     MoveHeadUp, "Move head up (half speed)");
 //    REGISTER_KEY_FCN('S', MOD_ALT,       , "");
-//    REGISTER_KEY_FCN('S', MOD_ALT_SHIFT, , "");
+    REGISTER_KEY_FCN('S', MOD_ALT_SHIFT, DoCliffAlignToWhite, "If one front sensor is detecting white (> MIN_CLIFF_STOP_ON_WHITE_VAL) then rotate until other front sensor detects it as well.");
     
     REGISTER_KEY_FCN('T', MOD_NONE,      ExecuteTestPlan,     "Execute test plan");
     REGISTER_KEY_FCN('T', MOD_ALT,       ToggleTrackToFace,   "Track to face");

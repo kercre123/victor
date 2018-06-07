@@ -47,6 +47,10 @@ namespace Anki {
         // Bits correspond to each of the cliff sensors
         uint8_t _cliffDetectedFlags = 0;
 
+        // Bits correspond to each of the cliff sensors 
+        // detecting white (> MIN_CLIFF_STOP_ON_WHITE_VAL)
+        uint8_t _whiteDetectedFlags = 0;
+
         bool _enableCliffDetect = true;
         bool _wasAnyCliffDetected = false;
         bool _wasPickedup      = false;
@@ -163,6 +167,14 @@ namespace Anki {
           } else if (alreadyDetected && _cliffVals[i] > cliffUndetectThresh) {
             _cliffDetectedFlags &= ~(1<<i);
           }
+
+          // Update white status
+          const bool whiteAlreadyDetected = (_whiteDetectedFlags & (1<<i)) != 0;
+          if (!whiteAlreadyDetected && _cliffVals[i] > MIN_CLIFF_STOP_ON_WHITE_VAL) {
+            _whiteDetectedFlags |= (1<<i);
+          } else if (whiteAlreadyDetected && _cliffVals[i] < MIN_CLIFF_STOP_ON_WHITE_VAL - CLIFF_STOP_ON_WHITE_HYSTERSIS ) {
+            _whiteDetectedFlags &= ~(1<<i);
+          }
         }
 
         f32 leftSpeed, rightSpeed;
@@ -271,6 +283,16 @@ namespace Anki {
         return _cliffDetectedFlags & (1 << ind);
       }
 
+      bool IsAnyWhiteDetected()
+      {
+        return _whiteDetectedFlags != 0;
+      }
+
+      bool IsWhiteDetected(u32 ind)
+      {
+        return _whiteDetectedFlags & (1 << ind);
+      }
+
       void EnableCliffDetector(bool enable) {
         AnkiInfo("ProxSensors.EnableCliffDetector", "%d", enable);
         _enableCliffDetect = enable;
@@ -311,6 +333,7 @@ namespace Anki {
         _wasPickedup       = false;
 
         _cliffDetectedFlags = 0;
+        _whiteDetectedFlags = 0;
 
         SetAllCliffDetectThresholds(CLIFF_SENSOR_THRESHOLD_DEFAULT);
 

@@ -40,6 +40,10 @@ namespace Anki {
 
       bool IsCliffDetected(u32 ind);
       
+      bool IsAnyWhiteDetected();
+
+      bool IsWhiteDetected(u32 ind);
+
       void SetCliffDetectThreshold(u32 ind, u16 level);
       
       void SetAllCliffDetectThresholds(u16 level);
