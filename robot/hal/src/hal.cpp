@@ -199,6 +199,17 @@ Result spine_wait_for_first_frame(spine_ctx_t spine)
       else if (hdr->payload_type == PAYLOAD_VERSION) {
         record_body_version( (VersionInfo*)(hdr+1) );
       }
+      else if (hdr->payload_type == PAYLOAD_BOOT_FRAME) {
+        initialized = true;
+        //extract button data from stub packet and put in fake full packet
+        uint8_t button_pressed = ((struct MicroBodyToHead*)(hdr+1))->buttonPressed;
+        BootBodyData_.touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
+        BootBodyData_.battery.flags = POWER_ON_CHARGER;
+
+        BootBodyData_.battery.battery = (int16_t)(5.0/kBatteryScale);
+        BootBodyData_.battery.charger = (int16_t)(5.0/kBatteryScale);
+        bodyData_ = &BootBodyData_;
+      }
       else {
         LOGD("Unknown Frame Type %x\n", hdr->payload_type);
       }
@@ -328,6 +339,7 @@ Result spine_get_frame() {
         BootBodyData_.battery.battery = (int16_t)(5.0/kBatteryScale);
         BootBodyData_.battery.charger = (int16_t)(5.0/kBatteryScale);
         bodyData_ = &BootBodyData_;
+        result = RESULT_OK;
       }
       else {
         LOGD("Unknown Frame Type %x\n", hdr->payload_type);
