@@ -832,7 +832,7 @@ static void led_manage_(int reset, int frame_period, int printlvl)
   if( reset & 1 ) {
     int resetCnt = IS_FIXMODE_ROBOT1() ? 10 : 1;
     for(int x=0; x < resetCnt; x++)
-      rcomLed( (uint8_t*)leds[0], printlvl );
+      rcomLed( (uint8_t*)leds[0], !x ? printlvl : RCOM_PRINT_LEVEL_NONE );
     Tframe=0, idx=0, last_idx=0;
     return;
   }
