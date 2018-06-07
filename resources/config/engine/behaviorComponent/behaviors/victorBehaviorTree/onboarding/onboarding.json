@@ -1,0 +1,18 @@
+{
+  "behaviorID": "Onboarding",
+  "behaviorClass": "Onboarding",
+
+  "associatedActiveFeature": "Onboarding",
+
+  "interruptions": [
+    "MandatoryPhysicalReactions",
+    "LowBatteryFindAndGoToHome",
+    "OnboardingPlacedOnCharger", // is suppressed during first stage
+    "OnboardingPickedUp",        // is suppressed during first stage
+    "DriveOffCharger",           // is suppressed during first stage
+    "TriggerWordDetected"        // may sometimes be suppressed
+  ],
+
+  // for stages after the initial wakeup stage
+  "wakeUpBehavior": "NormalWakeUp"
+}

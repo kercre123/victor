@@ -115,7 +115,12 @@ void DevBehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCom
       PRINT_NAMED_WARNING("DevBehaviorComponentMessageHandler.InitDependent.NoDefaultFreeplayBehavior", "");
       return;
     }
-    BehaviorID freeplayBehaviorID = ICozmoBehavior::ExtractBehaviorIDFromConfig(freeplayBehaviorConfig);
+    BehaviorID freeplayBehaviorID = BEHAVIOR_ID(ModeSelector);
+    if( freeplayBehaviorConfig["normalBaseBehavior"].isString() ) {
+      const auto& behStr = freeplayBehaviorConfig["normalBaseBehavior"].asString();
+      const bool found = BehaviorIDFromString( behStr, freeplayBehaviorID );
+      ANKI_VERIFY(found, "DevBehComponentMessageHandler.InitDependent.MissingBaseBehavior", "Could not find %s", behStr.c_str());
+    }
     ICozmoBehaviorPtr freeplayBehavior = bContainer.FindBehaviorByID(freeplayBehaviorID);
     ICozmoBehaviorPtr waitBehavior = bContainer.FindBehaviorByID(kWaitBehaviorID);    
 

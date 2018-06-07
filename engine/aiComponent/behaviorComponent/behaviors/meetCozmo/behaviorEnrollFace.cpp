@@ -704,6 +704,9 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
                   _dVars.persistent.state, EnumToString(info.result));
 
     if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
+      const auto& msgRef = info;
+      ExternalInterface::FaceEnrollmentCompleted msgCopy{msgRef};
+      GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast( ExternalInterface::MessageEngineToGame{std::move(msgCopy)} );
       GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast( ExternalMessageRouter::Wrap(std::move(info)) );
     }
 

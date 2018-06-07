@@ -1,4 +1,7 @@
 {
-  "behaviorID" : "DevBaseBehavior"
+  "onboardingBehavior": "Onboarding",
+  "normalBaseBehavior": "InitNormalOperation",
+  "devBaseBehavior"   : "DevBaseBehavior"
+  // factory behavior is hardcoded
 }
 

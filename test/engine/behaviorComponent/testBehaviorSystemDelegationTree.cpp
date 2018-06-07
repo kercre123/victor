@@ -169,6 +169,7 @@ TEST(DelegationTree, CheckActiveFeatures)
   std::set< ActiveFeature > unusedActiveFeatures = {{
     ActiveFeature::PlayingMessage,
     ActiveFeature::RecordingMessage,
+    ActiveFeature::Onboarding, // exists but in a different stack. todo: tests for onboarding.
   }};
 
   ////////////////////////////////////////////////////////////////////////////////

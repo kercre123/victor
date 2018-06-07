@@ -1,0 +1,4 @@
+{
+  "behaviorID" : "OnboardingAsleep",
+  "behaviorClass": "Wait"
+}

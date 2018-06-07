@@ -54,7 +54,7 @@ public:
   virtual void UpdateDependent(const BCCompMap& dependentComponents) override;
   virtual void GetInitDependencies(BCCompIDSet& dependencies) const override 
   {
-    dependencies.insert(BCComponentID::BaseBehaviorWrapper);
+    dependencies.insert(BCComponentID::BehaviorsBootLoader);
     dependencies.insert(BCComponentID::BehaviorExternalInterface);
     dependencies.insert(BCComponentID::AsyncMessageComponent);
   }

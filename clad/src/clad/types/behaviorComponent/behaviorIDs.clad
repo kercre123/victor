@@ -202,7 +202,17 @@ enum uint_8 BehaviorID {
   KeepawayVoiceCommand,
 
   // victorBehaviorTree
+  InitNormalOperation,
   ModeSelector,
+  NormalWakeUp,
+
+  // victorBehaviorTree/onboarding
+  Onboarding,
+  OnboardingAsleep,
+  OnboardingLookAtUser,
+  OnboardingPickedUp,
+  OnboardingPlacedOnCharger,
+  OnboardingWakeUp,
 
   // victorBehaviorTree/quietMode
   BeQuietAnims,

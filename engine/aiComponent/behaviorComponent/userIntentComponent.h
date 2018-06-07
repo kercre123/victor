@@ -128,6 +128,11 @@ public:
   void DevSetUserIntentPending(UserIntentTag userIntent);
   void DevSetUserIntentPending(UserIntent&& userIntent);
 
+  // set/clear whitelisted intents. Everything else will be unmatched. For now this is only tags since
+  // the only use case is tags, not full UserIntent objects
+  void SetWhitelistedIntents( const std::set<UserIntentTag>& whitelisted ) { _whitelistedIntents = whitelisted; }
+  void ClearWhitelistedIntents() { _whitelistedIntents.clear(); }
+
   // this allows us to temporarilty disable the warning when we haven't responded to a pending intent
   // useful when we know a behavior down the line will consume the intent, but we still
   // have some work to do at the moment
@@ -186,6 +191,9 @@ private:
   std::unique_ptr<BehaviorComponentCloudServer> _server;
   
   bool _wasIntentUnclaimed = false;
+  
+  // if non-empty, only these cloud/app intents will match a user intent
+  std::set<UserIntentTag> _whitelistedIntents;
   
   const CozmoContext* _context = nullptr; // for webviz
   

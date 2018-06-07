@@ -328,6 +328,15 @@ namespace Cozmo {
                         neutralFaceAnimName.c_str());
     }
     
+    const std::string sleepingFaceAnimName = "anim_face_sleeping";
+    _bootFaceAnimation = _context->GetDataLoader()->GetCannedAnimation(sleepingFaceAnimName);
+    if (_bootFaceAnimation == nullptr)
+    {
+      PRINT_NAMED_ERROR("AnimationStreamer.Constructor.SleepingDataNotFound",
+                        "Could not find expected sleeping face animation file called %s",
+                        sleepingFaceAnimName.c_str());
+    }
+    
     
     // Do this after the ProceduralFace class has set to use the right neutral face
     _proceduralTrackComponent->Init();
@@ -337,16 +346,12 @@ namespace Cozmo {
     _faceImageRGB565.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
     _faceImageGrayscale.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
    
-
-    // TODO: _Might_ need to disable this eventually if there are conflicts
-    //       with wake up animations or something on startup. The only reason
-    //       this is here is to make sure there's something on the face and
-    //       currently there's no face animation that the engine automatically
-    //       initiates on startup.
-    // 
-    // Turn on neutral face by default at startup
-    // Otherwise face is blank until an animation is played.
-    SetStreamingAnimation(_neutralFaceAnimation, kNotAnimatingTag);
+    // Use the sleeping animation, fall back on neutral eyes
+    if( _bootFaceAnimation != nullptr ) {
+      SetStreamingAnimation(_bootFaceAnimation, kNotAnimatingTag);
+    } else {
+      SetStreamingAnimation(_neutralFaceAnimation, kNotAnimatingTag);
+    }
 
     return RESULT_OK;
   }

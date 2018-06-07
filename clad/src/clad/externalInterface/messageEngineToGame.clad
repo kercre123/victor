@@ -31,6 +31,7 @@
 #include "clad/types/nvStorageTypes.clad"
 #include "clad/types/objectFamilies.clad"
 #include "clad/types/objectTypes.clad"
+#include "clad/types/onboardingStages.clad"
 #include "clad/types/offTreadsStates.clad"
 #include "clad/types/petTypes.clad"
 #include "clad/types/poseStructs.clad"
@@ -889,21 +890,16 @@ message GuardDogEnd {
 //////////////////////////////////  Onboarding  ///////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-enum uint_8 OnboardingStateEnum
-{
-  Inactive,
-  ErrorCozmo,
-  ErrorCubeMoved,
-  ErrorCubeWrongSideUp,
-  ErrorFinal,
-  WaitForShowCube,
-  WaitForOKCubeDiscovered,
-  WaitForInspectCube,
-  WaitForFinalContinue,
+message OnboardingState {
+  OnboardingStages stage
 }
 
-message OnboardingState {
-  OnboardingStateEnum stateNum
+message OnboardingOnCharger {
+  bool onCharger,
+}
+
+message OnboardingPickedUp {
+  bool pickedUp,
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -67,6 +67,13 @@ void MicComponent::SetShouldStreamAfterWakeWord(bool shouldStream)
   RobotInterface::SetShouldStreamAfterWakeWord msg{shouldStream};
   _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MicComponent::SetTriggerWordDetectionEnabled(bool enabled)
+{
+  RobotInterface::SetTriggerWordDetectionEnabled msg{enabled};
+  _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
+}
 
 } // namespace Cozmo
 } // namespace Anki

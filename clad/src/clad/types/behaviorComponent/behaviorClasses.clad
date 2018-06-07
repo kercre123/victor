@@ -135,6 +135,10 @@ enum uint_8 BehaviorClass {
   ObservingLookAtFaces,
   ObservingWithoutTurn,
 
+  // onboarding
+  Onboarding,
+  OnboardingInterruptionHead,
+
   // photoTaking
   AestheticallyCenterFaces,
   TakeAPhotoCoordinator,

@@ -1,0 +1,10 @@
+{
+  "behaviorID": "NormalWakeUp",
+  "behaviorClass" : "AnimSequence",
+
+  "associatedActiveFeature": "NoFeature",
+
+  "playOnChargerWithoutBody": true,
+
+  "animTriggers": ["ConnectWakeUp"]
+}

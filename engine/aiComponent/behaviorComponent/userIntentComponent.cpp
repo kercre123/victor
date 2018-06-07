@@ -380,6 +380,15 @@ bool UserIntentComponent::SetCloudIntentPendingFromJSONValue(Json::Value json)
     return false;
   }
   
+  
+  if( !_whitelistedIntents.empty() ) {
+    // only pass on whitelisted intents
+    if( _whitelistedIntents.find(userIntentTag) == _whitelistedIntents.end() ) {
+      PRINT_NAMED_INFO( "UserIntentComponent.IgnoringNonWhitelist.Cloud", "Ignoring intent %s", UserIntentTagToString(userIntentTag) );
+      pendingIntent = UserIntent::Createunmatched_intent({});
+    }
+  }
+  
   _devLastReceivedCloudIntent = cloudIntent;
   
   DevSetUserIntentPending( std::move(pendingIntent), UserIntentSource::Voice );
@@ -501,6 +510,15 @@ void UserIntentComponent::OnAppIntent(const ExternalInterface::AppIntent& appInt
                    appIntent.intent.c_str() ) )
   {
     _devLastReceivedAppIntent = appIntent.intent;
+    
+    if( !_whitelistedIntents.empty() ) {
+      // only pass on whitelisted intents
+      if( _whitelistedIntents.find(userIntentTag) == _whitelistedIntents.end() ) {
+        PRINT_NAMED_INFO( "UserIntentComponent.IgnoringNonWhitelist.App", "Ignoring intent %s", UserIntentTagToString(userIntentTag) );
+        const static UserIntent unmatchedIntent = UserIntent::Createunmatched_intent({});
+        intent = unmatchedIntent;
+      }
+    }
     
     DevSetUserIntentPending( std::move(intent), UserIntentSource::App );
   }

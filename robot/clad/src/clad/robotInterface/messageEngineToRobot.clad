@@ -402,6 +402,11 @@ message SetShouldStreamAfterWakeWord
   bool shouldStream,
 }
 
+message SetTriggerWordDetectionEnabled
+{
+  bool enabled,
+}
+
 message ResetBeatDetector
 {
 }
@@ -687,8 +692,9 @@ union EngineToRobot
 
   StartWakeWordlessStreaming    startWakeWordlessStreaming  = 0x99,
   SetShouldStreamAfterWakeWord  setShouldStreamAfterWakeWord = 0x9A,
+  SetTriggerWordDetectionEnabled setTriggerWordDetectionEnabled = 0x9B,
 
-  ResetBeatDetector             resetBeatDetector           = 0x9B,
+  ResetBeatDetector             resetBeatDetector           = 0x9C,
 
   SwitchboardInterface::SetConnectionStatus setConnectionStatus = 0xA0,
   SwitchboardInterface::SetBLEPin           setBLEPin           = 0xA1,

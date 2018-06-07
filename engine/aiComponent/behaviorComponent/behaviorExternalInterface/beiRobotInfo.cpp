@@ -307,6 +307,12 @@ Util::Data::DataPlatform* BEIRobotInfo::GetDataPlatform() const
 {
   return _robot.GetContextDataPlatform();
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+NVStorageComponent& BEIRobotInfo::GetNVStorageComponent() const
+{
+  return _robot.GetNVStorageComponent();
+}
 
   
 } // namespace Cozmo
