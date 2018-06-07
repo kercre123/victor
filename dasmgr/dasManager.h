@@ -78,6 +78,8 @@ private:
   uint64_t _entryCount = 0;
   uint64_t _eventCount = 0;
   uint64_t _sleepCount = 0;
+  uint64_t _uploadSuccessCount = 0;
+  uint64_t _uploadFailCount = 0;
 
   // Process a log message
   void ProcessLogEntry(const AndroidLogEntry & logEntry);
