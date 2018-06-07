@@ -31,6 +31,7 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevEventSequenceCapture.h"
@@ -42,6 +43,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/random/randomGenerator.h"
 
 #include <chrono>
 #include <fstream>
@@ -102,6 +104,7 @@ const char* const kClassNamesKey = "class_names";
 const char* const kSequenceSetupTimeKey = "sequence_setup_time";
 const char* const kPreEventCaptureTimeKey = "pre_event_capture_time";
 const char* const kPostEventCaptureTimeKey = "post_event_capture_time";
+const char* const kEnableRandomHeadTiltKey = "enable_random_head_tilt";
 }
 
 
@@ -133,9 +136,11 @@ BehaviorDevEventSequenceCapture::BehaviorDevEventSequenceCapture(const Json::Val
   std::string methodStr = JsonTools::ParseString(config, kImageResizeMethodKey, "BehaviorDevEventSequenceCapture");
   _iConfig.imageSaveSize = Vision::ImageCache::StringToSize(scaleStr, methodStr);
 
-  _iConfig.sequenceSetupTime = JsonTools::ParseFloat(config, kSequenceSetupTimeKey, "BehaviorDevEventSequenceCapture");  
+  _iConfig.sequenceSetupTime = JsonTools::ParseFloat(config, kSequenceSetupTimeKey, "BehaviorDevEventSequenceCapture");
   _iConfig.preEventCaptureTime = JsonTools::ParseFloat(config, kPreEventCaptureTimeKey, "BehaviorDevEventSequenceCapture");
-  _iConfig.postEventCaptureTime = JsonTools::ParseFloat(config, kPostEventCaptureTimeKey, "BehaviorDevEventSequenceCapture");  
+  _iConfig.postEventCaptureTime = JsonTools::ParseFloat(config, kPostEventCaptureTimeKey, "BehaviorDevEventSequenceCapture");
+
+  _iConfig.enableRandomHeadTilt = JsonTools::ParseBool(config, kEnableRandomHeadTiltKey, "BehaviorDevEventSequenceCapture");
 
   if(config.isMember(kClassNamesKey))
   {
@@ -322,6 +327,16 @@ void BehaviorDevEventSequenceCapture::BehaviorUpdate()
         _dVars.seqState = SequenceState::Setup;
         _dVars.currentSeqNumber = numCurrentSeqs;
         _dVars.waitStartTime_s = currTime_s;
+
+        if( _iConfig.enableRandomHeadTilt )
+        {
+          double headAngle = GetBEI().GetRobotInfo().GetRNG().RandDblInRange( MIN_HEAD_ANGLE, MAX_HEAD_ANGLE );
+          IActionRunner* tiltAction = new MoveHeadToAngleAction( headAngle );
+          PRINT_CH_DEBUG( "Behavior", "BehaviorDevEventSequenceCapture.TiltHead",
+                          "Tilting head to %f", RAD_TO_DEG(headAngle) );
+          DelegateIfInControl( tiltAction );
+        }
+
         GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Timer_Beep,
                                                  GO::Behavior);
         GetBEI().GetBodyLightComponent().SetBackpackLights( kLightsSetup );

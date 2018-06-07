@@ -59,6 +59,8 @@ private:
     float       preEventCaptureTime;
     float       postEventCaptureTime;
 
+    bool        enableRandomHeadTilt;
+
     std::list<std::string> classNames;
   };
 
