@@ -337,7 +337,7 @@ void BehaviorDevEventSequenceCapture::BehaviorUpdate()
           DelegateIfInControl( tiltAction );
         }
 
-        GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Timer_Beep,
+        GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Lift_High_Down_Long_Effort,
                                                  GO::Behavior);
         GetBEI().GetBodyLightComponent().SetBackpackLights( kLightsSetup );
         PRINT_CH_DEBUG("Behaviors", "BehaviorDevEventSequenceCapture.startSequence", 
@@ -357,7 +357,7 @@ void BehaviorDevEventSequenceCapture::BehaviorUpdate()
                                                GetRelSequenceSavePath(),
                                                _iConfig.imageSaveQuality,
                                                _iConfig.imageSaveSize);
-        GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Timer_Beep,
+        GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Timer_Countdown,
                                                  GO::Behavior);
         GetBEI().GetBodyLightComponent().SetBackpackLights( kLightsPreCap );
         PRINT_CH_DEBUG("Behaviors", "BehaviorDevEventSequenceCapture.setupSequence", 
@@ -392,7 +392,7 @@ void BehaviorDevEventSequenceCapture::BehaviorUpdate()
                                                GetRelSequenceSavePath(),
                                                _iConfig.imageSaveQuality,
                                                _iConfig.imageSaveSize);
-        GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Timer_Beep,
+        GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Timer_Cancel,
                                                  GO::Behavior);
         GetBEI().GetBodyLightComponent().SetBackpackLights( kLightsWaiting );
         PRINT_CH_DEBUG("Behaviors", "BehaviorDevEventSequenceCapture.endSequence", 
