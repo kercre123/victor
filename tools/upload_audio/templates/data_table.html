@@ -42,7 +42,6 @@ a:hover {
                 <th>Age</th>
                 <th>Gender</th>
                 <th>Distance</th>
-                <th>Dropbox path</th>
             </tr>
             {% for dict in list %}
                 <tr>
@@ -51,7 +50,6 @@ a:hover {
                     <td>{{ dict['age'] }}</td>
                     <td>{{ dict['gender'] }}</td>
                     <td>{{ dict['distance'] }}</td>
-                    <td>{{ dict['dropbox_path'] }}</td>
                 </tr>
             {% endfor %}
         </table>
