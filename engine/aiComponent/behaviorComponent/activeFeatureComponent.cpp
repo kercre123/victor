@@ -21,6 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/cozmoContext.h"
+#include "util/logging/logging.h"
 #include "util/logging/DAS.h"
 #include "util/string/stringUtils.h"
 #include "webServerProcess/src/webService.h"
@@ -139,7 +140,7 @@ void ActiveFeatureComponent::OnFeatureChanged(const ActiveFeature& newFeature, c
 
     // NOTE: this event is inspected by the DAS Manager to determine the feature id and type columns, so be
     // especially careful if changing it
-    DASMSG(behavior_featureStart, Anki::Util::DAS::FEATURE_START, "A new feature is active");
+    DASMSG(behavior_feature_start, DASMSG_FEATURE_START, "A new feature is active");
     DASMSG_SET(s1, ActiveFeatureToString(newFeature), "The feature");
     DASMSG_SET(s2, source, "The source of the intent (possible values are AI, App, Voice, or Unknown)");
     DASMSG_SET(s3, uuid, "A unique ID associated with this feature run");

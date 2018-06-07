@@ -103,7 +103,7 @@ struct DasMsg
 
 #else
 
-/*! \defgroup dasmsg Das Messages
+/*! \defgroup dasmsg DAS Messages
 */
 
 class DasDoxMsg() {}
