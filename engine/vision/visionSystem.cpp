@@ -114,6 +114,7 @@ static const char * const kLogChannelName = "VisionSystem";
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 VisionSystem::VisionSystem(const CozmoContext* context)
 : _rollingShutterCorrector()
+, _lastRollingShutterCorrectionTime(0)
 , _imageCache(new Vision::ImageCache())
 , _context(context)
 , _imagingPipeline(new Vision::ImagingPipeline())
@@ -609,10 +610,11 @@ bool VisionSystem::IsInitialized() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-u8 VisionSystem::ComputeMean(const Vision::Image& inputImageGray, const s32 sampleInc)
+u8 VisionSystem::ComputeMean(Vision::ImageCache& imageCache, const s32 sampleInc)
 {
   DEV_ASSERT(sampleInc >= 1, "VisionSystem.ComputeMean.BadIncrement");
   
+  const Vision::Image& inputImageGray = imageCache.GetGray();
   s32 sum=0;
   const s32 numRows = inputImageGray.GetNumRows();
   const s32 numCols = inputImageGray.GetNumCols();
@@ -633,10 +635,12 @@ u8 VisionSystem::ComputeMean(const Vision::Image& inputImageGray, const s32 samp
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result VisionSystem::CheckImageQuality(const Vision::Image& inputImage,
+Result VisionSystem::CheckImageQuality(Vision::ImageCache& imageCache,
                                        const std::vector<Anki::Rectangle<s32>>& detections)
 {
 #   define DEBUG_IMAGE_HISTOGRAM 0
+
+  const Vision::Image& inputImage = imageCache.GetGray();
 
   // Compute the exposure we would like to have
   f32 exposureAdjFrac = 1.f;
@@ -796,14 +800,17 @@ Result VisionSystem::CheckImageQuality(const Vision::Image& inputImage,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result VisionSystem::CheckWhiteBalance(const Vision::ImageRGB& img)
+Result VisionSystem::CheckWhiteBalance(Vision::ImageCache& imageCache)
 {
+  DEV_ASSERT(imageCache.HasColor(), "VisionSystem.CheckWhiteBalance.NoColor");
+  const Vision::ImageRGB& img = imageCache.GetRGB();
+
   f32 adjR = 1.f, adjB = 1.f;
   
   Result result = _imagingPipeline->ComputeWhiteBalanceAdjustment(img, adjR, adjB);
   
   if(RESULT_OK != result) {
-    PRINT_NAMED_ERROR("VisionSystem.UpdateWhiteBalance.ComputeWhiteBalanceAdjustmentFailed", "");
+    PRINT_NAMED_ERROR("VisionSystem.CheckWhiteBalance.ComputeWhiteBalanceAdjustmentFailed", "");
     return result;
   }
   
@@ -887,11 +894,13 @@ Vision::Image BlackOutRects(const Vision::Image& img, const std::vector<Anki::Re
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result VisionSystem::DetectFaces(const Vision::Image& grayImage,
+Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache,
                                  std::vector<Anki::Rectangle<s32>>& detectionRects)
 {
   DEV_ASSERT(_faceTracker != nullptr, "VisionSystem.DetectFaces.NullFaceTracker");
  
+  const Vision::Image& grayImage = imageCache.GetGray();
+
   /*
   // Periodic printouts of face tracker timings
   static TimeStamp_t lastProfilePrint = 0;
@@ -965,9 +974,10 @@ Result VisionSystem::DetectFaces(const Vision::Image& grayImage,
 } // DetectFaces()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result VisionSystem::DetectPets(const Vision::Image& grayImage,
+Result VisionSystem::DetectPets(Vision::ImageCache& imageCache,
                                 std::vector<Anki::Rectangle<s32>>& detections)
 {
+  const Vision::Image& grayImage = imageCache.GetGray();
   Result result = RESULT_FAIL;
   
   if(detections.empty())
@@ -1009,14 +1019,18 @@ Result VisionSystem::DetectMotion(Vision::ImageCache& imageCache)
   
 } // DetectMotion()
 
-Result VisionSystem::UpdateOverheadMap(const Vision::ImageRGB& image)
+Result VisionSystem::UpdateOverheadMap(Vision::ImageCache& imageCache)
 {
+  DEV_ASSERT(imageCache.HasColor(), "VisionSystem.UpdateOverheadMap.NoColor");
+  const Vision::ImageRGB& image = imageCache.GetRGB();
   Result result = _overheadMap->Update(image, _poseData, _currentResult.debugImageRGBs);
   return result;
 }
 
-Result VisionSystem::UpdateGroundPlaneClassifier(const Vision::ImageRGB& image)
+Result VisionSystem::UpdateGroundPlaneClassifier(Vision::ImageCache& imageCache)
 {
+  DEV_ASSERT(imageCache.HasColor(), "VisionSystem.UpdateGroundPlaneClassifier.NoColor");
+  const Vision::ImageRGB& image = imageCache.GetRGB();
   Result result = _groundPlaneClassifier->Update(image, _poseData, _currentResult.debugImageRGBs,
                                                  _currentResult.visualObstacles);
   return result;
@@ -1359,6 +1373,21 @@ void VisionSystem::CheckForNeuralNetResults()
   }
 }
 
+void VisionSystem::UpdateRollingShutter(const VisionPoseData& poseData, const Vision::ImageCache& imageCache)
+{
+  // If we've already updated the corrector at this timestamp, don't have to do it again
+  if(!_doRollingShutterCorrection || (imageCache.GetTimeStamp() <= _lastRollingShutterCorrectionTime))
+  {
+    return;
+  }
+
+  Tic("RollingShutterComputePixelShifts");
+  s32 numRows = imageCache.GetNumRows(Vision::ImageCache::Size::Full);
+  _rollingShutterCorrector.ComputePixelShifts(poseData, _prevPoseData, numRows);
+  Toc("RollingShutterComputePixelShifts");
+  _lastRollingShutterCorrectionTime = imageCache.GetTimeStamp();
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result VisionSystem::Update(const VisionPoseData&   poseData,
                             const Vision::ImageRGB& image)
@@ -1399,14 +1428,9 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   
   _frameNumber++;
   
-  // Store the new robot state and keep a copy of the previous one
-  UpdatePoseData(poseData);
-  
-  const Vision::Image& inputImageGray = imageCache.GetGray();
-  
   // Set up the results for this frame:
   VisionProcessingResult result;
-  result.timestamp = inputImageGray.GetTimestamp();
+  result.timestamp = imageCache.GetTimeStamp();
   result.imageQuality = ImageQuality::Unchecked;
   result.cameraParams.exposureTime_ms = -1;
   std::swap(result, _currentResult);
@@ -1414,11 +1438,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   auto& visionModesProcessed = _currentResult.modesProcessed;
   visionModesProcessed.ClearFlags();
   
-  if(kVisionSystemSimulatedDelay_ms > 0)
-  {
-    std::this_thread::sleep_for(std::chrono::milliseconds(kVisionSystemSimulatedDelay_ms));
-  }
-  
+  // Process mode flags and schedules
   while(!_nextModes.empty())
   {
     const auto& mode = _nextModes.front();
@@ -1447,6 +1467,9 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     
     _nextSchedules.pop();
   }
+
+  // Store the new robot state and keep a copy of the previous one
+  UpdatePoseData(poseData);
   
   bool& cameraParamsRequested = _nextCameraParams.first;
   if(cameraParamsRequested)
@@ -1454,7 +1477,22 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     _currentCameraParams = _nextCameraParams.second;
     cameraParamsRequested = false;
   }
-
+  
+  if(IsModeEnabled(VisionMode::Idle))
+  {
+    // Push the empty result and bail
+    _mutex.lock();
+    _results.push(_currentResult);
+    _mutex.unlock();
+    return RESULT_OK;
+  }
+  
+  if(kVisionSystemSimulatedDelay_ms > 0)
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(kVisionSystemSimulatedDelay_ms));
+  }
+  
+  // Begin image processing
   // Apply CLAHE if enabled:
   DEV_ASSERT(kUseCLAHE_u8 < Util::EnumToUnderlying(MarkerDetectionCLAHE::Count),
              "VisionSystem.ApplyCLAHE.BadUseClaheVal");
@@ -1468,19 +1506,11 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     PRINT_NAMED_WARNING("VisionSystem.Update.FailedCLAHE", "");
     return lastResult;
   }
-
-  // Rolling shutter correction
-  if(_doRollingShutterCorrection)
-  {
-    Tic("RollingShutterComputePixelShifts");
-    _rollingShutterCorrector.ComputePixelShifts(poseData, _prevPoseData, inputImageGray.GetNumRows());
-    Toc("RollingShutterComputePixelShifts");
-  }
   
   if(ShouldProcessVisionMode(VisionMode::ComputingStatistics))
   {
     Tic("TotalComputingStatistics");
-    _currentResult.imageMean = ComputeMean(inputImageGray, kImageMeanSampleInc);
+    _currentResult.imageMean = ComputeMean(imageCache, kImageMeanSampleInc);
     visionModesProcessed.SetBitFlag(VisionMode::ComputingStatistics, true);
     Toc("TotalComputingStatistics");
   }
@@ -1488,22 +1518,25 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   std::vector<Anki::Rectangle<s32>> detectionRects;
 
   if(ShouldProcessVisionMode(VisionMode::DetectingMarkers)) {
-    Tic("TotalDetectingMarkers");
+    // Marker detection uses rolling shutter compensation
+    UpdateRollingShutter(poseData, imageCache);
 
+    Tic("TotalDetectingMarkers");
     lastResult = DetectMarkersWithCLAHE(imageCache, claheImage, detectionRects, useCLAHE);
     if(RESULT_OK != lastResult) {
       PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
       return lastResult;
     }
-    
     visionModesProcessed.SetBitFlag(VisionMode::DetectingMarkers, true);
-    
     Toc("TotalDetectingMarkers");
   }
   
   if(ShouldProcessVisionMode(VisionMode::DetectingFaces)) {
     Tic("TotalDetectingFaces");
-    if((lastResult = DetectFaces(inputImageGray, detectionRects)) != RESULT_OK) {
+    // NOTE: To use rolling shutter in DetectFaces, call UpdateRollingShutterHere
+    // See: VIC-1417 
+    // UpdateRollingShutter(poseData, imageCache);
+    if((lastResult = DetectFaces(imageCache, detectionRects)) != RESULT_OK) {
       PRINT_NAMED_ERROR("VisionSystem.Update.DetectFacesFailed", "");
       return lastResult;
     }
@@ -1513,7 +1546,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   
   if(ShouldProcessVisionMode(VisionMode::DetectingPets)) {
     Tic("TotalDetectingPets");
-    if((lastResult = DetectPets(inputImageGray, detectionRects)) != RESULT_OK) {
+    if((lastResult = DetectPets(imageCache, detectionRects)) != RESULT_OK) {
       PRINT_NAMED_ERROR("VisionSystem.Update.DetectPetsFailed", "");
       return lastResult;
     }
@@ -1536,7 +1569,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   {
     if (imageCache.HasColor()) {
       Tic("UpdateOverheadMap");
-      lastResult = UpdateOverheadMap(imageCache.GetRGB());
+      lastResult = UpdateOverheadMap(imageCache);
       Toc("UpdateOverheadMap");
       if (lastResult != RESULT_OK) {
         return lastResult;
@@ -1544,19 +1577,24 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       visionModesProcessed.SetBitFlag(VisionMode::BuildingOverheadMap, true);
     }
     else {
-      PRINT_NAMED_WARNING("VisionSystem.Update.NoColorImage", "No color image!");
+      PRINT_NAMED_WARNING("VisionSystem.Update.NoColorImage", "Could not process overhead map. No color image!");
     }
   }
   
   if (ShouldProcessVisionMode(VisionMode::DetectingVisualObstacles))
   {
-    Tic("DetectVisualObstacles");
-    lastResult = UpdateGroundPlaneClassifier(imageCache.GetRGB());
-    Toc("DetectVisualObstacles");
-    if (lastResult != RESULT_OK) {
-      return lastResult;
+    if (imageCache.HasColor()) {
+      Tic("DetectVisualObstacles");
+      lastResult = UpdateGroundPlaneClassifier(imageCache);
+      Toc("DetectVisualObstacles");
+      if (lastResult != RESULT_OK) {
+        return lastResult;
+      }
+      visionModesProcessed.SetBitFlag(VisionMode::DetectingVisualObstacles, true);
     }
-    visionModesProcessed.SetBitFlag(VisionMode::DetectingVisualObstacles, true);
+    else {
+      PRINT_NAMED_WARNING("VisionSystem.Update.NoColorImage", "Could not process visual obstacles. No color image!");
+    }
   }
 
   if(ShouldProcessVisionMode(VisionMode::DetectingOverheadEdges))
@@ -1654,7 +1692,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   if(ShouldProcessVisionMode(VisionMode::CheckingQuality))
   {
     Tic("CheckingImageQuality");
-    lastResult = CheckImageQuality(inputImageGray, detectionRects);
+    lastResult = CheckImageQuality(imageCache, detectionRects);
     Toc("CheckingImageQuality");
     
     if(RESULT_OK != lastResult) {
@@ -1666,15 +1704,20 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
 
   if(ShouldProcessVisionMode(VisionMode::CheckingWhiteBalance))
   {
-    Tic("CheckingWhiteBalance");
-    lastResult = CheckWhiteBalance(imageCache.GetRGB());
-    Toc("CheckingWhiteBalance");
-    
-    if(RESULT_OK != lastResult) {
-      PRINT_NAMED_ERROR("VisionSystem.Update.CheckWhiteBalanceFailed", "");
-      return lastResult;
+    if (imageCache.HasColor()) {
+      Tic("CheckingWhiteBalance");
+      lastResult = CheckWhiteBalance(imageCache);
+      Toc("CheckingWhiteBalance");
+      
+      if(RESULT_OK != lastResult) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.CheckWhiteBalanceFailed", "");
+        return lastResult;
+      }
+      visionModesProcessed.SetBitFlag(VisionMode::CheckingWhiteBalance, true);
     }
-    visionModesProcessed.SetBitFlag(VisionMode::CheckingWhiteBalance, true);
+    else {
+      PRINT_NAMED_WARNING("VisionSystem.Update.NoColorImage", "Could not check white balance. No color image!" );
+    }
   }
   
   if(ShouldProcessVisionMode(VisionMode::Benchmarking))

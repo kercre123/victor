@@ -225,12 +225,6 @@ namespace Cozmo {
     void  ShouldDoRollingShutterCorrection(bool b) { _doRollingShutterCorrection = b; }
     bool  IsDoingRollingShutterCorrection() const { return _doRollingShutterCorrection; }
     
-    Result CheckImageQuality(const Vision::Image& inputImage,
-                             const std::vector<Anki::Rectangle<s32>>& detectionRects);
-    
-    // Will use color if not empty, or gray otherwise
-    Result DetectLaserPoints(Vision::ImageCache& imageCache);
-    
     bool IsExposureValid(s32 exposure) const;
     
     bool IsGainValid(f32 gain) const;
@@ -244,8 +238,8 @@ namespace Cozmo {
   protected:
   
     RollingShutterCorrector _rollingShutterCorrector;
-
     bool _doRollingShutterCorrection = false;
+    TimeStamp_t _lastRollingShutterCorrectionTime;
     
 #   if ANKI_COZMO_USE_MATLAB_VISION
     // For prototyping with Matlab
@@ -331,6 +325,11 @@ namespace Cozmo {
       Count
     };
     
+    // Updates the rolling shutter corrector
+    // Will only recompute compensation once per timestamp, so can be called multiple times
+    void UpdateRollingShutter(const VisionPoseData& poseData, const Vision::ImageCache& imageCache);
+
+    // Uses grayscale
     Result ApplyCLAHE(Vision::ImageCache& imageCache, const MarkerDetectionCLAHE useCLAHE, Vision::Image& claheImage);
     
     Result DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
@@ -338,22 +337,35 @@ namespace Cozmo {
                                   std::vector<Anki::Rectangle<s32>>& detectionRects,
                                   MarkerDetectionCLAHE useCLAHE);
     
-    static u8 ComputeMean(const Vision::Image& inputImageGray, const s32 sampleInc);
+    // Uses grayscale
+    static u8 ComputeMean(Vision::ImageCache& imageCache, const s32 sampleInc);
     
-    Result DetectFaces(const Vision::Image& grayImage,
+    // Uses grayscale
+    Result CheckImageQuality(Vision::ImageCache& imageCache,
+                             const std::vector<Anki::Rectangle<s32>>& detectionRects);
+    
+    // Will use color if not empty, or gray otherwise
+    Result DetectLaserPoints(Vision::ImageCache& imageCache);
+
+    // Uses grayscale
+    Result DetectFaces(Vision::ImageCache& imageCache,
                        std::vector<Anki::Rectangle<s32>>& detectionRects);
-                       
-    Result DetectPets(const Vision::Image& grayImage,
+    
+    // Uses grayscale
+    Result DetectPets(Vision::ImageCache& imageCache,
                       std::vector<Anki::Rectangle<s32>>& ignoreROIs);
     
     // Will use color if not empty, or gray otherwise
     Result DetectMotion(Vision::ImageCache& imageCache);
 
+    // Uses grayscale
     Result DetectIllumination(Vision::ImageCache& imageCache);
 
-    Result UpdateOverheadMap(const Vision::ImageRGB& image);
+    // Uses color
+    Result UpdateOverheadMap(Vision::ImageCache& image);
 
-    Result UpdateGroundPlaneClassifier(const Vision::ImageRGB& image);
+    // Uses colors
+    Result UpdateGroundPlaneClassifier(Vision::ImageCache& image);
     
     void CheckForNeuralNetResults();
     
@@ -364,7 +376,8 @@ namespace Cozmo {
     Result SaveSensorData() const;
     
     // Populates whiteBalanceGains in _currentResult with adjusted values
-    Result CheckWhiteBalance(const Vision::ImageRGB& img);
+    // Uses color
+    Result CheckWhiteBalance(Vision::ImageCache& img);
     
     // Contrast-limited adaptive histogram equalization (CLAHE)
     cv::Ptr<cv::CLAHE> _clahe;
