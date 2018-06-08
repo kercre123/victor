@@ -16,6 +16,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorsBootLoader.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRerun.h"
@@ -63,6 +64,12 @@ void DevBehaviorComponentMessageHandler::GetInitDependencies(BCCompIDSet& depend
   dependencies.insert(BCComponentID::BehaviorSystemManager);
   dependencies.insert(BCComponentID::BehaviorContainer);
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void DevBehaviorComponentMessageHandler::AdditionalInitAccessibleComponents(BCCompIDSet& components) const
+{
+  components.insert(BCComponentID::BehaviorsBootLoader);
+}
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -71,6 +78,7 @@ void DevBehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCom
   auto& bContainer = dependentComponents.GetValue<BehaviorContainer>();
   auto& bsm = dependentComponents.GetValue<BehaviorSystemManager>();
   auto& bei = dependentComponents.GetValue<BehaviorExternalInterface>();
+  auto& behaviorsBootLoader = dependentComponents.GetValue<BehaviorsBootLoader>();
 
   if(_robot.HasExternalInterface()){
     
@@ -110,32 +118,21 @@ void DevBehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCom
       PRINT_NAMED_WARNING("DevBehaviorComponentMessageHandler.InitDependent.NoDataLoader", "");
       return;
     }
-    const Json::Value& freeplayBehaviorConfig = dataLoader->GetVictorFreeplayBehaviorConfig();
-    if(freeplayBehaviorConfig.empty()){
-      PRINT_NAMED_WARNING("DevBehaviorComponentMessageHandler.InitDependent.NoDefaultFreeplayBehavior", "");
-      return;
-    }
-    BehaviorID freeplayBehaviorID = BEHAVIOR_ID(ModeSelector);
-    if( freeplayBehaviorConfig["normalBaseBehavior"].isString() ) {
-      const auto& behStr = freeplayBehaviorConfig["normalBaseBehavior"].asString();
-      const bool found = BehaviorIDFromString( behStr, freeplayBehaviorID );
-      ANKI_VERIFY(found, "DevBehComponentMessageHandler.InitDependent.MissingBaseBehavior", "Could not find %s", behStr.c_str());
-    }
-    ICozmoBehaviorPtr freeplayBehavior = bContainer.FindBehaviorByID(freeplayBehaviorID);
-    ICozmoBehaviorPtr waitBehavior = bContainer.FindBehaviorByID(kWaitBehaviorID);    
+    ICozmoBehaviorPtr waitBehavior = bContainer.FindBehaviorByID(kWaitBehaviorID);
 
     // Go to Wait behavior when debug screens are enabled so as 
     // not to interrupt while user is trying to look at something.
     // Go to freeplayBehavior as defined in victor_behavior_config.json
     // when leaving debug screens
-    auto debugScreenModeHandler = [&bsm, freeplayBehavior, waitBehavior](const RobotToEngineEvent& event) {
+    auto debugScreenModeHandler = [&bsm, &behaviorsBootLoader, waitBehavior](const RobotToEngineEvent& event) {
       const auto& msg = event.GetData().Get_debugScreenMode();
       PRINT_CH_INFO("BehaviorSystem", "DevBehaviorComponentMessageHandler.DebugScreenModeChange", "%d", msg.enabled);
 
       if (msg.enabled) {
         bsm.ResetBehaviorStack(waitBehavior.get());
       } else {
-        bsm.ResetBehaviorStack(freeplayBehavior.get());
+        IBehavior* bootBehavior = behaviorsBootLoader.GetBootBehavior();
+        bsm.ResetBehaviorStack(bootBehavior);
       }
 
     };
