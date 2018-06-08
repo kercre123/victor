@@ -26,8 +26,8 @@
 #include "engine/robotDataLoader.h"
 #include "engine/robotInterface/messageHandler.h"
 
-/* Note CPP files must explicitly include logging.h for correct expansion of DASMSG macros */
 #include "util/logging/logging.h"
+#include "util/logging/DAS.h"
 
 namespace Anki {
 

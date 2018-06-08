@@ -50,6 +50,7 @@
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
+#include "util/logging/DAS.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/multiLoggerProvider.h"
 #include "util/time/universalTime.h"
@@ -534,7 +535,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
         LOG_WARNING("CozmoEngine.Update.UpdateRobotFailed", "Update robot failed with %d", result);
         return result;
       }
-      
+
       UpdateLatencyInfo();
       break;
     }

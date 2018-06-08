@@ -53,6 +53,7 @@
 #include "util/helpers/boundedWhile.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
+#include "util/logging/DAS.h"
 #include "util/threading/threadPriority.h"
 #include "util/bitFlags/bitFlags.h"
 
@@ -97,12 +98,12 @@ namespace Cozmo {
   CONSOLE_VAR(bool, kVisualizeObservedMarkersIn3D, "Vision.General", false);
   CONSOLE_VAR(bool, kDrawMarkerNames,              "Vision.General", false); // In viz camera view
   CONSOLE_VAR(bool, kDisplayUndistortedImages,     "Vision.General", false);
-    
+
   CONSOLE_VAR(bool, kEnableMirrorMode,              "Vision.General", false);
   CONSOLE_VAR(bool, kDisplayDetectionsInMirrorMode, "Vision.General", false); // objects, faces, markers
   CONSOLE_VAR(bool, kDisplayEyeContactInMirrorMode, "Vision.General", false);
   CONSOLE_VAR(f32,  kMirrorModeGamma,               "Vision.General", 1.f);
-  
+
   // Hack to continue drawing detected objects for a bit after they are detected
   // since object detection is slow
   CONSOLE_VAR(u32, kKeepDrawingSalientPointsFor_ms, "Vision.General", 150);
@@ -167,7 +168,7 @@ namespace Cozmo {
       helper.SubscribeGameToEngine<MessageGameToEngineTag::DevSubscribeVisionModes>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::DevUnsubscribeVisionModes>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SetCameraCaptureFormat>();
-      
+
       // Separate list for engine messages to listen to:
       helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotConnectionResponse>();
     }
@@ -439,13 +440,13 @@ namespace Cozmo {
     {
       return;
     }
-    
+
     if(_bufferedImg.IsEmpty())
     {
       // We don't yet have a next image. Get one from camera.
       const bool gotImage = CaptureImage(_bufferedImg);
       _hasStartedCapturingImages = true;
-      
+
       if(gotImage)
       {
         DEV_ASSERT(!_bufferedImg.IsEmpty(), "VisionComponent.Update.EmptyImageAfterCapture");
@@ -1097,16 +1098,16 @@ namespace Cozmo {
     // TODO: Figure out the original image resolution?
     const f32 heightScale = (f32)FACE_DISPLAY_HEIGHT / (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT;
     const f32 widthScale  = (f32)FACE_DISPLAY_WIDTH / (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
-    
+
     const f32 x_topRight = x_topLeft + width; // will become upper left after mirroring
     const Rectangle<f32> rect((f32)FACE_DISPLAY_WIDTH - widthScale*x_topRight, // mirror rectangle for display
                               y_topLeft * heightScale,
                               width * widthScale,
                               height * heightScale);
-    
+
     return rect;
   }
-  
+
   template<typename T>
   static Point<2,T> MirrorPointHelper(const Point<2,T>& pt)
   {
@@ -1114,11 +1115,11 @@ namespace Cozmo {
     constexpr f32 xmax = (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
     constexpr f32 heightScale = (f32)FACE_DISPLAY_HEIGHT / (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT;
     constexpr f32 widthScale  = (f32)FACE_DISPLAY_WIDTH / (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
-    
+
     const Point<2,T> pt_mirror(widthScale*(xmax - pt.x()), pt.y()*heightScale);
     return pt_mirror;
   }
-  
+
   static Quad2f DisplayMirroredQuadHelper(const Quad2f& quad)
   {
     // Mirror x coordinates, swap left/right points, and scale for each point in the quad:
@@ -1126,10 +1127,10 @@ namespace Cozmo {
                                MirrorPointHelper(quad.GetBottomRight()),
                                MirrorPointHelper(quad.GetTopLeft()),
                                MirrorPointHelper(quad.GetBottomLeft()));
-    
+
     return quad_mirrored;
   }
-  
+
   template<typename T>
   static Polygon<2,T> DisplayMirroredPolyHelper(const Polygon<2,T>& poly)
   {
@@ -1138,7 +1139,7 @@ namespace Cozmo {
     {
       poly_mirrored.emplace_back(MirrorPointHelper(pt));
     }
-    
+
     return poly_mirrored;
   }
 
@@ -1242,7 +1243,7 @@ namespace Cozmo {
         {
           VisualizeObservedMarkerIn3D(visionMarker);
         }
-        
+
         if(kDisplayDetectionsInMirrorMode)
         {
           const auto& quad = visionMarker.GetImageCorners();
@@ -1257,10 +1258,10 @@ namespace Cozmo {
               img.DrawText({1., img.GetNumRows()-1}, name.substr(strlen("MARKER_"),std::string::npos), drawColor);
             }
           };
-          
+
           AddDrawScreenModifier(modFcn);
         }
-        
+
         observedMarkers.push_back(std::move(visionMarker));
       }
     } // if(!procResult.observedMarkers.empty())
@@ -1314,12 +1315,12 @@ namespace Cozmo {
 
         _robot->GetFaceWorld().SetFaceEnrollmentComplete(true);
       }
-      
+
       if(kDisplayDetectionsInMirrorMode)
       {
         const auto& rect = faceDetection.GetRect();
         const auto& name = faceDetection.GetName();
-        
+
         std::function<void (Vision::ImageRGB&)> modFcn = [rect, name](Vision::ImageRGB& img)
         {
           img.DrawRect(DisplayMirroredRectHelper(rect.GetX(), rect.GetY(), rect.GetWidth(), rect.GetHeight()),
@@ -1349,7 +1350,7 @@ namespace Cozmo {
           const f32 height = .2f * (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT;
           img.DrawFilledRect(DisplayMirroredRectHelper(x, y, width, height), NamedColors::YELLOW);
         };
-        
+
         AddDrawScreenModifier(modFcn);
       }
     }
@@ -1429,7 +1430,7 @@ namespace Cozmo {
       const std::string caption(object.description + "[" + std::to_string((s32)std::round(100.f*object.score))
                                 + "] t:" + std::to_string(object.timestamp));
       _vizManager->DrawCameraText(Point2f(object.x_img, object.y_img), caption, color);
-      
+
       if(kDisplayDetectionsInMirrorMode)
       {
         const Point2f centroid(object.x_img, object.y_img);
@@ -1862,7 +1863,7 @@ namespace Cozmo {
       Vision::Image imgUndistorted(img.GetNumRows(),img.GetNumCols());
       DEV_ASSERT(_camera->IsCalibrated(), "VisionComponent.GetCalibrationImageJpegData.NoCalibration");
       img.Undistort(*_camera->GetCalibration(), imgUndistorted);
-      
+
       std::vector<u8> imgVecUndistort;
       cv::imencode(".jpg", imgUndistorted.get_CvMat_(), imgVecUndistort, std::vector<int>({CV_IMWRITE_JPEG_QUALITY, 50}));
 
@@ -2373,7 +2374,7 @@ namespace Cozmo {
     {
       SaveFaceAlbumToRobot();
       _robot->Broadcast(ExternalInterface::MessageEngineToGame( std::move(renamedFace) ));
-      
+
       {
         DASMSG(vision_enrolled_names_modify, "vision.enrolled_names.modify", "An enrolled face/name was modified");
         DASMSG_SET(i1, faceID, "The face ID (int)");
@@ -2551,10 +2552,10 @@ namespace Cozmo {
         image_out = _cvtYUV2RGBFuture.get();
         return true;
       }
-      
+
       return false;
     }
-    
+
     auto cameraService = CameraService::getInstance();
 
     const int numRows = cameraService->CameraGetHeight();
@@ -2577,7 +2578,7 @@ namespace Cozmo {
     u32 imageId = 0;
     TimeStamp_t imageCaptureSystemTimestamp_ms = 0;
     ImageEncoding format;
-    
+
     const bool gotImage = cameraService->CameraGetFrame(buffer, imageId, imageCaptureSystemTimestamp_ms, format);
     if(gotImage)
     {
@@ -2601,7 +2602,7 @@ namespace Cozmo {
             // Convert from YUV to BGR directly into image_out
             // BGR appears to actually result in RGB data, there is a similar bug
             // when converting from RGB565 to RGB
-            cv::cvtColor(yuv, image_out.get_CvMat_(), cv::COLOR_YUV2BGR_NV21);      
+            cv::cvtColor(yuv, image_out.get_CvMat_(), cv::COLOR_YUV2BGR_NV21);
 
             // Create image with proper imageID and timestamp
             image_out.SetTimestamp(imageCaptureSystemTimestamp_ms);
@@ -2609,7 +2610,7 @@ namespace Cozmo {
 
             return image_out;
           });
-        
+
         return false;
       }
       else if(format == ImageEncoding::RawRGB)
@@ -2624,7 +2625,7 @@ namespace Cozmo {
                           EnumToString(format));
         return false;
       }
-      
+
       if(kDisplayUndistortedImages)
       {
         Vision::ImageRGB imgUndistorted(numRows,numCols);
@@ -2699,9 +2700,9 @@ namespace Cozmo {
     {
       case CaptureFormatState::None:
       {
-        return false;  
+        return false;
       }
-      
+
       case CaptureFormatState::WaitingForProcessingToStop:
       {
         Lock();
@@ -2729,20 +2730,20 @@ namespace Cozmo {
           // Clear desired format
           _desiredImageFormat = ImageEncoding::NoneImageEncoding;
 
-          _captureFormatState = CaptureFormatState::WaitingForFrame;        
+          _captureFormatState = CaptureFormatState::WaitingForFrame;
         }
-        
+
         Unlock();
-        
+
         return true;
-      }   
+      }
 
       case CaptureFormatState::WaitingForFrame:
       {
         Lock();
         const bool nextImgEmpty = _nextImg.IsEmpty();
         Unlock();
-        
+
         // If the next image to no longer empty,
         // it indicates the camera is giving us frames again
         if(!nextImgEmpty)
@@ -2761,7 +2762,7 @@ namespace Cozmo {
     return false;
   }
 
-  
+
 #pragma mark -
 #pragma mark Message Handlers
 

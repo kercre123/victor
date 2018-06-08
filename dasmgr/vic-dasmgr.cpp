@@ -11,6 +11,7 @@
 #include "platform/victorCrashReports/victorCrashReporter.h"
 
 #include "util/logging/logging.h"
+#include "util/logging/DAS.h"
 #include "util/logging/victorLogger.h"
 
 #include <signal.h>

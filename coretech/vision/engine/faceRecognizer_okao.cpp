@@ -16,6 +16,7 @@
 #include "faceRecognizer_okao.h"
 
 #include "util/logging/logging.h"
+#include "util/logging/DAS.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/console/consoleInterface.h"
 #include "util/helpers/boundedWhile.h"
