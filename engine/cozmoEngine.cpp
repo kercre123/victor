@@ -324,8 +324,13 @@ Result CozmoEngine::Init(const Json::Value& config) {
   _context->GetRobotManager()->Init(_config);
 
   // TODO: Specify random seed from config?
-  //       Setting to non-zero value for now for repeatable testing.
-  _context->SetRandomSeed(1);
+  uint32_t seed = 0; // will choose random seed
+# ifdef ANKI_PLATFORM_OSX
+  {
+    seed = 1; // Setting to non-zero value for now for repeatable testing.
+  }
+# endif
+  _context->SetRandomSeed(seed);
 
   // VIC-722: Set this automatically using location services
   //          and/or set from UI/SDK?

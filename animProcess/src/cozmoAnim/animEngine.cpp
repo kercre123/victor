@@ -131,6 +131,14 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
   DEV_ASSERT(_context, "AnimEngine.Update.InvalidContext");
   DEV_ASSERT(_ttsComponent, "AnimEngine.Update.InvalidTTSComponent");
   DEV_ASSERT(_animationStreamer, "AnimEngine.Update.InvalidAnimationStreamer");
+  
+  uint32_t seed = 0; // will choose random seed
+# ifdef ANKI_PLATFORM_OSX
+  {
+    seed = 1; // Setting to non-zero value for now for repeatable testing.
+  }
+# endif
+  _context->SetRandomSeed(seed);
 
 #if ENABLE_CE_SLEEP_TIME_DIAGNOSTICS || ENABLE_CE_RUN_TIME_DIAGNOSTICS
   const double startUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
