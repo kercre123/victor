@@ -100,6 +100,10 @@ namespace Cozmo {
     std::set<Vision::FaceID_t> GetFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms,
                                                        bool includeRecognizableOnly = false) const;
 
+    // Returns smart face IDs observed since seenSinceTime_ms (inclusive)
+    std::vector<SmartFaceID> GetSmartFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms,
+                                                          bool includeRecognizableOnly = false) const;
+
     // Returns true if any faces are in the world
     bool HasAnyFaces(TimeStamp_t seenSinceTime_ms = 0, bool includeRecognizableOnly = false) const;
 

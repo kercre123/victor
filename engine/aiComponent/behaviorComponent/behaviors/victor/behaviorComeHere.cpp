@@ -94,13 +94,7 @@ void BehaviorComeHere::TurnTowardsFace()
 {
   DEBUG_SET_STATE(TurnTowardsFace);
   // Get all faces we have locations for  
-  std::vector<SmartFaceID> allFaces;
-  {
-    const std::set<Vision::FaceID_t> possibleFaces = GetBEI().GetFaceWorld().GetFaceIDs();
-    for(auto& entry : possibleFaces){
-      allFaces.emplace_back(GetBEI().GetFaceWorld().GetSmartFaceID(entry));
-    }
-  }
+  auto allFaces = GetBEI().GetFaceWorld().GetSmartFaceIDsObservedSince(0);
 
   const auto& faceSelectionComp = GetAIComp<FaceSelectionComponent>();
   // Select face based on priority penalties

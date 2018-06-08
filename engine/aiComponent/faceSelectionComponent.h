@@ -23,7 +23,6 @@
 
 #include "clad/types/faceSelectionTypes.h"
 
-#include <set>
 #include <unordered_map>
 
 

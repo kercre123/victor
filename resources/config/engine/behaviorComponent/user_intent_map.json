@@ -78,7 +78,7 @@
       "cloud_intent" : "intent_photo_take_extend",
       "user_intent"  : "take_a_photo",
       "cloud_substitutions": {
-        "entity_photo_selfie": "emptyOrSelfie"
+        "entity_photo_selfie": "empty_or_selfie"
       }
     },
     {

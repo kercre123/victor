@@ -16,6 +16,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
+#include "engine/aiComponent/faceSelectionComponent.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -34,24 +36,36 @@ protected:
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   
+  virtual void InitBehavior() override;
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
 
 private:
+  enum class BehaviorState{
+    SearchForFace,
+    CenterFace
+  };
 
   struct InstanceConfig {
     InstanceConfig();
-    // TODO: put configuration variables here
+    ICozmoBehaviorPtr findFacesBehavior;
+    FaceSelectionComponent::FaceSelectionFactorMap criteriaMap;
   };
 
   struct DynamicVariables {
     DynamicVariables();
-    // TODO: put member variables here
+    BehaviorState state;
+    TimeStamp_t timeFaceSearchShouldEnd;
   };
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
+
+  void TransitionToSearchForFaces();
+  void TransitionToCenterFace();
+  const Vision::TrackedFace* GetBestFaceToCenter();
+
   
 };
 
