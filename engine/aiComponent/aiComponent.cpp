@@ -89,7 +89,7 @@ void AIComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& depende
       _aiComponents->AddDependentComponent(AIComponentID::InformationAnalyzer,               new AIInformationAnalyzer());
       _aiComponents->AddDependentComponent(AIComponentID::ObjectInteractionInfoCache,        new ObjectInteractionInfoCache(*robot));
       _aiComponents->AddDependentComponent(AIComponentID::Puzzle,                            new PuzzleComponent(*robot));
-      _aiComponents->AddDependentComponent(AIComponentID::SalientPointsDetectorComponent,    new SalientPointsDetectorComponent(*robot));
+      _aiComponents->AddDependentComponent(AIComponentID::SalientPointsDetectorComponent,    new SalientPointsDetectorComponent());
       _aiComponents->AddDependentComponent(AIComponentID::TimerUtility,                      new TimerUtility());
       _aiComponents->AddDependentComponent(AIComponentID::Whiteboard,                        new AIWhiteboard(*robot));
     }

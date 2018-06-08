@@ -21,18 +21,19 @@
 namespace Anki {
 namespace Cozmo {
 
-class ConditionPersonDetected : public IBEICondition, private IBEIConditionEventHandler
+class ConditionSalientPointDetected : public IBEICondition
 {
 public:
-  explicit ConditionPersonDetected(const Json::Value& config);
-  ConditionPersonDetected();
-  ~ConditionPersonDetected() override ;
+  explicit ConditionSalientPointDetected(const Json::Value& config);
+  ConditionSalientPointDetected() = delete;
+  ~ConditionSalientPointDetected() override ;
 
 protected:
   void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   void GetRequiredVisionModes(std::set<VisionModeRequest>& requiredVisionModes) const override;
 
+  Vision::SalientPointType _targetSalientPoint;
 };
 
 } // namespace Anki

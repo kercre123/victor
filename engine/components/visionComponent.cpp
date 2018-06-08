@@ -12,6 +12,8 @@
  **/
 
 
+#include "engine/aiComponent/salientPointsDetectorComponent.h"
+#include "engine/aiComponent/aiComponent.h"
 #include "engine/actions/basicActions.h"
 #include "camera/cameraService.h"
 #include "engine/ankiEventUtil.h"
@@ -1419,6 +1421,8 @@ namespace Cozmo {
 
     if(procResult.modesProcessed.IsBitFlagSet(VisionMode::RunningNeuralNet))
     {
+      // Notify the SalientPointsDetectorComponent that we have a bunch of new detections
+      _robot->GetAIComponent().GetComponent<SalientPointsDetectorComponent>().addSalientPoints(procResult.salientPoints);
       for(auto const& detectedObject : procResult.salientPoints)
       {
         _salientPointsToDraw.emplace_back(currentTime_ms, detectedObject);

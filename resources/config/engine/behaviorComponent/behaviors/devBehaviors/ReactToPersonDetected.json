@@ -3,6 +3,7 @@
   "behaviorClass": "ReactToPersonDetected",
 
   "wantsToBeActivatedCondition": {
-    "conditionType": "PersonDetected"
+    "conditionType":      "SalientPointDetected",
+    "targetSalientPoint": "Person"
   }
 }

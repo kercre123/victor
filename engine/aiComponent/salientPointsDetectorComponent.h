@@ -4,7 +4,7 @@
  * Author: Lorenzo Riano
  * Created: 06/04/18
  *
- * Description: A component for salient points. Listens to messages and categorize them based on their type
+ * Description: A component for salient points. Listens to messages and categorizes them based on their type
  *
  * Copyright: Anki, Inc. 2016
  *
@@ -22,11 +22,12 @@
 #include "coretech/vision/engine/faceIdTypes.h"
 #include "engine/aiComponent/aiBeacon.h"
 #include "engine/aiComponent/aiComponents_fwd.h"
-#include "engine/aiComponent/beiConditions/iBEIConditionEventHandler.h"
 #include "engine/externalInterface/externalInterface_fwd.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
+
+#include<list>
 
 
 namespace Anki {
@@ -57,7 +58,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // constructor
-  explicit SalientPointsDetectorComponent(Robot& robot);
+  explicit SalientPointsDetectorComponent();
 
   ~SalientPointsDetectorComponent() override ;
 
@@ -66,24 +67,46 @@ public:
   // end IDependencyManagedComponent<AIComponentID> functions
 
   bool PersonDetected() const;
-  void GetLastPersonDetectedData(Vision::SalientPoint& salientPoint) const;
 
-  template<typename T>
-  void HandleMessage(const T& msg);
+  // returns false if no person data is available (e.g. it's been fetched already)
+  template <typename Container>
+  void GetLastPersonDetectedData(Container& salientPoints) const {
+
+//    PRINT_CH_INFO("Behaviors","SalientPointsDetectorComponent.GetLastPersonDetectedData", "Passed list has %d points",
+//                  int(salientPoints.size()));
+//    PRINT_CH_INFO("Behaviors","SalientPointsDetectorComponent.GetLastPersonDetectedData", "There's %d salient points",
+//                  int(_latestSalientPoints.size()));
+
+
+    std::copy_if(_latestSalientPoints.begin(), _latestSalientPoints.end(), std::back_inserter(salientPoints),
+                 [](const Vision::SalientPoint& p) {
+                   PRINT_CH_INFO("Behaviors","SalientPointsDetectorComponent.GetLastPersonDetectedData",
+                                 "Checking a point with type %s",
+                                Vision::SalientPointTypeToString(p.salientType));
+                   return p.salientType == Vision::SalientPointType::Person;
+                 }
+    );
+//    PRINT_CH_INFO("Behaviors","SalientPointsDetectorComponent.GetLastPersonDetectedData", " %zu elements have been copied",
+//                  salientPoints.size());
+  }
+
+  template <typename Container>
+  void addSalientPoints(const Container& c) {
+    std::copy(std::begin(c), std::end(c), std::begin(_latestSalientPoints));
+  }
 
 private:
-  
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // the robot this whiteboard belongs to
-  Robot& _robot;
-  // signal handles for events we register to. These are currently unsubscribed when destroyed
-  std::vector<Signal::SmartHandle> _signalHandles;
-  mutable Vision::SalientPoint _lastPersonDetected; // TODO made mutable here for testing
+  // A list of latest received salient points. Will be overwritten if a new batch arrives
+  mutable std::list<Vision::SalientPoint> _latestSalientPoints; // TODO mutable is temporary for checking
 
   mutable float _timeSinceLastObservation = 0; // TODO this is temporary for testing
+
+  Robot* _robot;
 
 };
 

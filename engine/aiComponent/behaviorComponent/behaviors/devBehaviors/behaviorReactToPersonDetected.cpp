@@ -15,7 +15,7 @@
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorReactToPersonDetected.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionPersonDetected.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionSalientPointDetected.h"
 #include "engine/aiComponent/salientPointsDetectorComponent.h"
 #include "engine/components/bodyLightComponent.h"
 
@@ -55,10 +55,12 @@ BehaviorReactToPersonDetected::DynamicVariables::DynamicVariables()
   Reset();
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToPersonDetected::DynamicVariables::Reset()
 {
   state = State::Starting;
   blinkOn = false;
+  lastPersonDetected = Vision::SalientPoint();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -87,7 +89,7 @@ void BehaviorReactToPersonDetected::GetBehaviorOperationModifiers(BehaviorOperat
   modifiers.wantsToBeActivatedWhenCarryingObject = false;
   modifiers.wantsToBeActivatedWhenOffTreads = false;
   modifiers.wantsToBeActivatedWhenOnCharger = true;
-  modifiers.behaviorAlwaysDelegates = false;
+  modifiers.behaviorAlwaysDelegates = true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -116,10 +118,34 @@ void BehaviorReactToPersonDetected::OnBehaviorActivated()
   PRINT_CH_DEBUG("Behaviors", "BehaviorReactToPersonDetected.OnBehaviorActivated", "I am active!");
 
   auto& component = GetBEI().GetAIComponent().GetComponent<SalientPointsDetectorComponent>();
-  component.GetLastPersonDetectedData(_dVars.lastPersonDetected);
+  std::list<Vision::SalientPoint> latestPersons;
+
+  //Get all the latest persons
+  component.GetLastPersonDetectedData(latestPersons);
+
+  if (latestPersons.empty()) {
+    PRINT_NAMED_ERROR("BehaviorReactToPersonDetected.OnBehaviorActivated.NoPersonDetected", ""
+        "Activated but no person available? There's a bug somewhere!");
+    CancelSelf();
+    return;
+  }
+
+  // Select the best one
+  // TODO for the moment choose the biggest salient point
+  auto maxElementIter = std::max_element(latestPersons.begin(), latestPersons.end(),
+                                         [](const Vision::SalientPoint& p1, const Vision::SalientPoint& p2) {
+                                           return p1.area_fraction < p2.area_fraction;
+                                         }
+  );
+  _dVars.lastPersonDetected = *maxElementIter;
+
 
   DEV_ASSERT(_dVars.lastPersonDetected.salientType == Vision::SalientPointType::Person,
              "BehaviorReactToPersonDetected.OnBehaviorActivated.LastSalientPointMustBePerson");
+
+  // Action!
+  TransitionToTurnTowardsPoint();
+
 }
 
 
@@ -133,7 +159,6 @@ void BehaviorReactToPersonDetected::BehaviorUpdate()
   const bool pickedUp = GetBEI().GetRobotInfo().IsPickedUp();
 
   // for the moment only handle the case where the robot is moving
-
   if (motorsMoving) {
     if (_dVars.state != State::Turning) {
       // the robot is moving not because we told it to do so
@@ -153,33 +178,21 @@ void BehaviorReactToPersonDetected::BehaviorUpdate()
     return;
   }
 
-  if (_dVars.state == State::Starting) {
-    PRINT_CH_INFO("Behaviors", "BehaviorReactToPersonDetected.BehaviorUpdate", "Starting the turn");
-    BlinkLight(true);
-    TurnTowardsPoint();
-  }
-  else if (_dVars.state == State::Turning) {
-    PRINT_CH_DEBUG("Behaviors", "BehaviorReactToPersonDetected.BehaviorUpdate", "Waiting for turn to be completed");
-    return;
-  }
-  else if (_dVars.state == State::Completed) {
-    PRINT_CH_INFO("Behaviors", "BehaviorReactToPersonDetected.BehaviorUpdate", "Finished turning");
-    BlinkLight(false);
-    TransitionToCompleted();
-  }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToPersonDetected::BlinkLight(bool on)
 {
   _dVars.blinkOn = on;
   GetBEI().GetBodyLightComponent().SetBackpackLights( _dVars.blinkOn ? kLightsOn : kLightsOff );
 }
 
-void BehaviorReactToPersonDetected::TurnTowardsPoint()
+void BehaviorReactToPersonDetected::TransitionToTurnTowardsPoint()
 {
+  BlinkLight(true);
   _dVars.state = State::Turning;
 
-  PRINT_CH_INFO("Behaviors", "BehaviorReactToPersonDetected.TurnTowardsPoint.TurningInfo", 
+  PRINT_CH_INFO("Behaviors", "BehaviorReactToPersonDetected.TransitionToTurnTowardsPoint.TurningInfo",
                 "Turning towards %f, %f at timestamp %d",
                 _dVars.lastPersonDetected.x_img,
                 _dVars.lastPersonDetected.y_img,
@@ -187,26 +200,25 @@ void BehaviorReactToPersonDetected::TurnTowardsPoint()
   auto* action = new TurnTowardsImagePointAction(_dVars.lastPersonDetected);
 
   CancelDelegates(false);
-  DelegateIfInControl(action, [this](ActionResult result) {
-    FinishedTurning();
-  });
+  DelegateIfInControl(action, &BehaviorReactToPersonDetected::TransitionToFinishedTurning);
 }
 
-void BehaviorReactToPersonDetected::FinishedTurning() {
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToPersonDetected::TransitionToFinishedTurning() {
 
-  PRINT_CH_INFO("Behaviors", "BehaviorReactToPersonDetected.FinishedTurning", "Finished turning");
+  PRINT_CH_INFO("Behaviors", "BehaviorReactToPersonDetected.TransitionToFinishedTurning", "Finished turning");
   _dVars.state = State::Completed;
+
+  // There might be some other actions here, but completing for the moment
+  TransitionToCompleted();
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToPersonDetected::TransitionToCompleted()
 {
+  BlinkLight(false);
   // for the moment just stop doing stuff
   _dVars.state = State::Completed;
-  CancelDelegates(false);
-  if (IsActivated()) {
-    CancelSelf();
-  }
 }
 
 } // namespace Cozmo

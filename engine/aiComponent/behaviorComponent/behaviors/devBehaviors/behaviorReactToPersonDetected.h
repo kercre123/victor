@@ -18,7 +18,7 @@
 namespace Anki {
 namespace Cozmo {
 
-class ConditionPersonDetected;
+class ConditionSalientPointDetected;
 
 class BehaviorReactToPersonDetected : public ICozmoBehavior
 {
@@ -40,8 +40,8 @@ protected:
 
 private:
 
-  void TurnTowardsPoint();
-  void FinishedTurning();
+  void TransitionToTurnTowardsPoint();
+  void TransitionToFinishedTurning();
   void TransitionToCompleted();
   void BlinkLight(bool on);
 
