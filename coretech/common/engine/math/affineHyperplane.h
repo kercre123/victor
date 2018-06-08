@@ -57,6 +57,21 @@ public:
 using Line2f      = AffineHyperplane<2, f32>;
 using Halfplane2f = Halfplane<2, f32>;
 
+// helper method for line intersection
+inline bool GetIntersectionPoint(const Line2f& l1, const Line2f& l2, Point2f& p)
+{
+  auto det = [](const Point2f& a, const Point2f& b) { return a[0] * b[1] - b[0] * a[1]; };
+
+  // if the determinant of the a of each line is 0, the lines are parallel
+  float div = det(l2.a, l1.a);
+  if ( NEAR_ZERO(div) ) { return false; }
+
+  p.x() = det({l1.b, l2.b},       {l1.a[1], l2.a[1]}) / div;
+  p.y() = det({l1.a[0], l2.a[0]}, {l1.b, l2.b}      ) / div;
+  return true;
+};
+
+
 }
 
 #endif

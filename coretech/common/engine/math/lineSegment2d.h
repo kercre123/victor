@@ -41,6 +41,9 @@ public:
   // returns true is there's a single point of intersection
   bool IntersectsAt(const LineSegment& l, Point2f& location) const;
   
+  // Create a Line perpendicular to the line segment, intersecting at the midpoint
+  Line2f GetPerpendicularBisector() const;
+  
   // length of line segment
   float Length() const { return std::hypot(dX, dY); }
   
