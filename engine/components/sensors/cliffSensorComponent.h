@@ -70,8 +70,6 @@ public:
   bool IsCliffDetected() const { return _cliffDetectedFlags.AreAnyFlagsSet(); }
   bool IsCliffDetected(CliffSensor sensor) const { return _cliffDetectedFlags.IsBitFlagSet(sensor); }
   uint8_t GetCliffDetectedFlags() const { return _cliffDetectedFlags.GetFlags(); }
-
-  bool IsCliffDetectedStatusBitOn() const { return _cliffDetectedStatusBitOn; }
   
   // Adjusts cliff threshold if necessary
   void UpdateCliffDetectThresholds();
@@ -107,9 +105,6 @@ private:
   
   bool _enableCliffSensor = true;
   Util::BitFlags8<CliffSensor> _cliffDetectedFlags;
-  
-  // True if the robot is reporting CLIFF_DETECTED in its status message
-  bool _cliffDetectedStatusBitOn = false;
   
   uint32_t _lastMsgTimestamp = 0;
   

@@ -42,7 +42,6 @@ bool EngineMessagingClient::Init() {
                 kEngineMessageFrequency_s);
   _handleEngineMessageTimer.client = &_client;
   _handleEngineMessageTimer.signal = &_pairingStatusSignal;
-  _handleEngineMessageTimer.websocketSignal = &_engineMessageSignal;
   return true;
 }
 
@@ -92,8 +91,6 @@ void EngineMessagingClient::sEvEngineMessageHandler(struct ev_loop* loop, struct
     if (messageTag == EMessageTag::EnterPairing || messageTag == EMessageTag::ExitPairing) {
       // Emit signal for message
       wData->signal->emit(message);
-    } else {
-      wData->websocketSignal->emit(message);
     }
   }
 }

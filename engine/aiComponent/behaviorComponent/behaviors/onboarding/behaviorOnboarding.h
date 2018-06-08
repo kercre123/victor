@@ -54,6 +54,7 @@ protected:
   
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void InitBehavior() override;
+  virtual void OnBehaviorEnteredActivatableScope() override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
@@ -65,6 +66,8 @@ private:
   
   // returns the current stage logic class, even if it is interrupted
   StagePtr& GetCurrentStage();
+  
+  void InitStages(bool resetExisting = true);
   
   // Checks for delegation and possibly delegates to interruptions. Returns true if an interruption is running
   bool CheckAndDelegateInterruptions();

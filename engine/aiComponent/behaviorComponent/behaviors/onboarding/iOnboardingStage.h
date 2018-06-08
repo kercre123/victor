@@ -104,18 +104,6 @@ private:
   bool _triggerEnabled = false;
   UserIntentTag _whitelisted = USER_INTENT(INVALID);
 };
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// a temporary class for stages I haven't made yet
-// todo: get rid of this
-class OnboardingStageWIP : public IOnboardingStage
-{
-public:
-  virtual void GetAllDelegates( std::set<BehaviorID>& delegates ) const override {}
-  virtual IBehavior* GetBehavior( BehaviorExternalInterface& bei ) override { return nullptr; }
-  virtual void OnBehaviorDeactivated( BehaviorExternalInterface& bei ) override {}
-  virtual void OnContinue( BehaviorExternalInterface& bei ) override {}
-};
 
 } // namespace Cozmo
 } // namespace Anki

@@ -86,6 +86,32 @@ TEST(LineSegment, TestIntersection)
   
 }
 
+// Perpendicular Bisector
+TEST(LineSegment, TestBisector)
+{
+  {
+    Anki::LineSegment l1( {-5.0f, -5.0f}, {5.0f, 5.0f});
+    Anki::Line2f bi = l1.GetPerpendicularBisector();
+ 
+    ASSERT_TRUE( bi.Contains({-1.f, 1.f}) );
+    ASSERT_TRUE( bi.Contains({1.f, -1.f}) );
+    ASSERT_TRUE( bi.Contains({0.f, 0.f}) );
+
+    ASSERT_FALSE( bi.Contains({0.f, 2.f}) );
+  }
+
+  {
+    Anki::LineSegment l1( {0.f, 5.0f}, {10.0f, 5.0f});
+    Anki::Line2f bi = l1.GetPerpendicularBisector();
+ 
+    ASSERT_TRUE( bi.Contains({5.f, 5.f}) );
+    ASSERT_TRUE( bi.Contains({5.f, 0.f}) );
+
+    ASSERT_FALSE( bi.Contains({0.f, 0.f}) );
+    ASSERT_FALSE( bi.Contains({0.f, 5.f}) );
+  }
+}
+
 // Contains
 TEST(LineSegment, TestContains)
 {

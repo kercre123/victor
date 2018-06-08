@@ -21,7 +21,6 @@
 #include <stdlib.h>
 #include "libev/libev.h"
 #include "bleClient/bleClient.h"
-#include "anki-websocket/websocketServer.h"
 #include "switchboardd/securePairing.h"
 #include "switchboardd/taskExecutor.h"
 #include "switchboardd/engineMessagingClient.h"
@@ -122,7 +121,6 @@ namespace Switchboard {
       std::unique_ptr<TaskExecutor> _taskExecutor;
       std::unique_ptr<BleClient> _bleClient;
       std::unique_ptr<SecurePairing> _securePairing;
-      std::unique_ptr<WebsocketServer> _websocketServer;
       std::shared_ptr<EngineMessagingClient> _engineMessagingClient;
   };
 }

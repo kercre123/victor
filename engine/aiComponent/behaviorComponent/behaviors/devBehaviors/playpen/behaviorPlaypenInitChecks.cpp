@@ -36,7 +36,7 @@ Result BehaviorPlaypenInitChecks::OnBehaviorActivatedInternal()
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   // Should not be seeing any cliffs
-  if(robot.GetCliffSensorComponent().IsCliffDetectedStatusBitOn())
+  if(robot.GetCliffSensorComponent().IsCliffDetected())
   {
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::CLIFF_UNEXPECTED, RESULT_FAIL);
   }

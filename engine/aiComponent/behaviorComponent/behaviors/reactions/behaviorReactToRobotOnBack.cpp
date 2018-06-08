@@ -77,7 +77,7 @@ void BehaviorReactToRobotOnBack::FlipDownIfNeeded()
     const auto& robotInfo = GetBEI().GetRobotInfo();
     // Check if cliff detected
     // If not, then calibrate head because we're not likely to be on back if no cliff detected.
-    if (robotInfo.GetCliffSensorComponent().IsCliffDetectedStatusBitOn()) {
+    if (robotInfo.GetCliffSensorComponent().IsCliffDetected()) {
       AnimationTrigger anim = AnimationTrigger::FlipDownFromBack;
 
       DelegateIfInControl(new TriggerAnimationAction(anim),

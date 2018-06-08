@@ -150,7 +150,7 @@ public:
 
   // returns true if someone reported a failure to use the given object (by ID), less than the specified seconds ago
   // close to the given location with the given reason(s).
-  // recentSecs: use negative for any time at all, 0 for failed this tick, positive for failed less than X ago
+  // recentSecs: use negative for any time at all, 0 for failed this tick, positive for failed less than X secs ago
   // atPose: where to compare
   // distThreshold_mm: set to negative to not compare poses, set to 0 or positive for atPose or around by X distance
   // angleThreshold: set to M_PI for any rotation, set to anything else for rotation difference with atPose's rotation

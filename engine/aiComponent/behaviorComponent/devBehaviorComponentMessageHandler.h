@@ -43,6 +43,7 @@ public:
   virtual void InitDependent(Robot* robot, const BCCompMap& dependentComponents) override;
   virtual void UpdateDependent(const BCCompMap& dependentComponents) override {};
   virtual void GetInitDependencies(BCCompIDSet& dependencies) const override;
+  virtual void AdditionalInitAccessibleComponents(BCCompIDSet& components) const override;
   virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {};
 
 public:

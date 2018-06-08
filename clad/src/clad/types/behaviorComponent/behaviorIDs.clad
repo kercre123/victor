@@ -210,7 +210,9 @@ enum uint_8 BehaviorID {
   // victorBehaviorTree/onboarding
   Onboarding,
   OnboardingAsleep,
+  OnboardingCubeTrick,
   OnboardingLookAtUser,
+  OnboardingLookForCube,
   OnboardingLowBattery,
   OnboardingPickedUp,
   OnboardingPlacedOnCharger,

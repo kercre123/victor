@@ -184,7 +184,6 @@ void BehaviorsBootLoader::InitOnboarding()
 IBehavior* BehaviorsBootLoader::GetBootBehavior()
 {
   ANKI_VERIFY( _bootBehavior != nullptr, "BehaviorsBootLoader.GetBootBehavior.BootNotInitialized", "Requested behavior before initialization");
-  ANKI_VERIFY( !_hasGrabbedBootBehavior, "BehaviorsBootLoader.GetBootBehavior.DoubleRequest", "Only get the boot behavior once");
   _hasGrabbedBootBehavior = true;
   return _bootBehavior;
 }
