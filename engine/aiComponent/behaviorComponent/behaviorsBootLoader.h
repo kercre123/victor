@@ -23,7 +23,14 @@
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 
+#include <list>
+
 namespace Anki {
+  
+namespace Util {
+  class IConsoleFunction;
+}
+  
 namespace Cozmo {
 
 class BehaviorContainer;
@@ -81,6 +88,8 @@ private:
   };
   
   Behaviors _behaviors;
+  
+  std::list<Anki::Util::IConsoleFunction> _consoleFuncs;
 };
 
 }

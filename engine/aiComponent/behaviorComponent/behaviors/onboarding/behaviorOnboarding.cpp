@@ -14,7 +14,6 @@
 
 
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboarding.h"
-#include "clad/types/nvStorageTypes.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/aiWhiteboard.h"
@@ -41,6 +40,9 @@ const std::string BehaviorOnboarding::kOnboardingStageKey = "onboardingStage";
 namespace {
   const char* const kInterruptionsKey = "interruptions";
   const char* const kWakeUpKey = "wakeUpBehavior";
+  
+  const float kRequiredChargeTime_s = 5*60.0f;
+  const float kExtraChargingTimePerDischargePeriod_s = 1.0f; // if off the charger for 1 min, must charge an additional 1*X mins
   
   // these should match OnboardingStages (clad)
   CONSOLE_VAR_ENUM(int, kDevMoveToStage, "Onboarding", 0, "NotStarted,FinishedWelcomeHome,FinishedMeetVictor,Complete,DevDoNothing");
@@ -124,6 +126,7 @@ BehaviorOnboarding::BehaviorOnboarding(const Json::Value& config)
     GameToEngineTag::SetOnboardingStage,
     GameToEngineTag::OnboardingContinue,
     GameToEngineTag::OnboardingSkip,
+    GameToEngineTag::OnboardingRetryCharging,
   });
 }
 
@@ -233,6 +236,11 @@ void BehaviorOnboarding::InitBehavior()
       RequestSkip();
     };
     _iConfig.consoleFuncs.emplace_front( "Skip", std::move(skipFunc), "Onboarding", "" );
+    
+    auto retryChargingFunc = [this](ConsoleFunctionContextRef context) {
+      RequestRetryCharging();
+    };
+    _iConfig.consoleFuncs.emplace_front( "RetryCharging", std::move(retryChargingFunc), "Onboarding", "" );
   }
   
   {
@@ -303,6 +311,8 @@ void BehaviorOnboarding::BehaviorUpdate()
     return;
   }
   
+  UpdateBatteryInfo();
+  
   IBehavior* stageBehavior = nullptr;
   if( !CheckAndDelegateInterruptions() ) {
     // no interruptions want to run or are running
@@ -310,14 +320,17 @@ void BehaviorOnboarding::BehaviorUpdate()
     // if OnboardingPlacedOnCharger or OnboardingPickedUp ended, message the app
     if( _dVars.lastInterruption == BEHAVIOR_ID(OnboardingPlacedOnCharger) ) {
       auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
-      if( ei != nullptr ) {
-        ExternalInterface::OnboardingOnCharger msg{false};
+      // only send if not low battery, since UpdateLowBattery handles that case
+      if( !_dVars.batteryInfo.lowBattery && (ei != nullptr) ) {
+        ExternalInterface::OnboardingOnCharger msg{false, false, -1.0f };
+        PRINT_CH_INFO("Behaviors", "Onboarding.OnboardingOnCharger", "false, false, -1");
         ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
       }
     } else if( _dVars.lastInterruption == BEHAVIOR_ID(OnboardingPickedUp) ) {
       auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
       if( ei != nullptr ) {
         ExternalInterface::OnboardingPickedUp msg{false};
+        PRINT_CH_INFO("Behaviors", "OnboardingPickedUp", "false");
         ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
       }
     }
@@ -428,6 +441,8 @@ void BehaviorOnboarding::AlwaysHandleInScope(const GameToEngineEvent& event)
     RequestContinue();
   } else if( event.GetData().GetTag() == ExternalInterface::MessageGameToEngineTag::OnboardingSkip ) {
     RequestSkip();
+  } else if( event.GetData().GetTag() == ExternalInterface::MessageGameToEngineTag::OnboardingRetryCharging ) {
+    RequestRetryCharging();
   }
 }
 
@@ -453,13 +468,14 @@ void BehaviorOnboarding::MoveToStage( const OnboardingStages& stage )
       // Complete, the robot would pop out into normal operation, but there's one stage left to
       // run that accompanies app onboarding, which simply waits some amount of time for a voice
       // command without doing anything too crazy (like an unprompted fistbump). Since the complete
-      // state is saved to NVStorage, any reboots starting now will boot in normal mode, and any
+      // state is saved to disk, any reboots starting now will boot in normal mode, and any
       // other app onboarding that begins right after a reboot will have normal robot behavior (so
       // for now, an unprompted fistbump could occur).
       const auto& msgRef = saveState; // force copy ctor
       ExternalInterface::OnboardingState msgCopy{msgRef};
       ei->Broadcast( ExternalInterface::MessageEngineToGame{std::move(msgCopy)} );
     }
+    PRINT_CH_INFO("Behaviors", "OnboardingState", "saved");
     ei->Broadcast( ExternalMessageRouter::Wrap(std::move(saveState)) );
   }
   
@@ -468,6 +484,9 @@ void BehaviorOnboarding::MoveToStage( const OnboardingStages& stage )
     auto& whiteboard = GetAIComp<AIWhiteboard>();
     whiteboard.SetMostRecentOnboardingStage( stage );
   }
+  
+  // log
+  PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.MoveToStage", "Onboarding moving to stage %s", OnboardingStagesToString(stage));
   
   // actually change to the next stage
   _dVars.currentStage = stage;
@@ -517,12 +536,9 @@ bool BehaviorOnboarding::CheckAndDelegateInterruptions()
     const auto& interruption = _iConfig.interruptions[i];
     const auto& interruptionID = _iConfig.interruptionIDs[i];
     if( (_dVars.currentStage == OnboardingStages::NotStarted)
-        && ((interruptionID == BEHAVIOR_ID(OnboardingPlacedOnCharger))
-            || (interruptionID == BEHAVIOR_ID(OnboardingPickedUp))
-            || (interruptionID == BEHAVIOR_ID(DriveOffCharger)) ) )
+         && (interruptionID == BEHAVIOR_ID(DriveOffCharger)) )
     {
-      // todo: we recently combined the wake up and welcome home stages, and this `continue` was
-      // supposed to only be for the wake up stage. So i may have to change this
+      // first stage has a special drive off charger
       continue;
     }
     if( !_dVars.receivedContinue
@@ -568,21 +584,26 @@ void BehaviorOnboarding::Interrupt( ICozmoBehaviorPtr interruption, BehaviorID i
   
   // notify app of certain interruptions
   // MandatoryPhysicalReactions: no app update needed for now
-  // LowBatteryFindAndGoToHome : will send featureStatus
-  // TriggerWordDetected       : will send normal messages (todo)
-  // OnboardingPickedUp and OnboardingPlacedOnCharger: send a message
+  // OnboardingLowBattery      : start charging countdown logic
+  // TriggerWordDetected       : will send normal messages
+  // OnboardingPickedUp        : sends messages here
+  // OnboardingPlacedOnCharger : only send if not low battery, since OnboardingLowBattery handles that
   if( interruptionID == BEHAVIOR_ID(OnboardingPlacedOnCharger) ) {
     auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
-    if( ei != nullptr ) {
-      ExternalInterface::OnboardingOnCharger msg{true};
+    if( !_dVars.batteryInfo.lowBattery && (ei != nullptr) ) {
+      ExternalInterface::OnboardingOnCharger msg{true, false, -1.0f};
+      PRINT_CH_INFO("Behaviors", "OnboardingOnCharger", "true, false, -1");
       ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
     }
   } else if( interruptionID == BEHAVIOR_ID(OnboardingPickedUp) ) {
     auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
     if( ei != nullptr ) {
       ExternalInterface::OnboardingPickedUp msg{true};
+      PRINT_CH_INFO("Behaviors", "OnboardingPickedUp", "true");
       ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
     }
+  } else if( interruptionID == BEHAVIOR_ID(OnboardingLowBattery) ) {
+    StartLowBatteryCountdown();
   }
   
   // disable trigger word during most interruptions, except trigger word obviously. Trigger word wouldn't
@@ -620,9 +641,18 @@ void BehaviorOnboarding::TerminateOnboarding()
 void BehaviorOnboarding::RequestContinue()
 {
   _dVars.receivedContinue = true;
-  // if the user placed the robot on the charger, continue acts as the command to get it off
   if( (_dVars.state == BehaviorState::Interrupted) || (_dVars.state == BehaviorState::InterruptedButComplete) ) {
-    if( _dVars.lastInterruption == BEHAVIOR_ID(OnboardingPlacedOnCharger) ) {
+    if( _dVars.lastInterruption == BEHAVIOR_ID(OnboardingLowBattery) ) {
+      // the app should only be sending this if the battery is out of low battery mode
+      if( GetBEI().GetRobotInfo().GetBatteryLevel() == BatteryLevel::Low ) {
+        PRINT_NAMED_WARNING("BehaviorOnboarding.RequestContinue.LowBattery", "App requested off charger, but not done");
+      }
+      _dVars.batteryInfo = BatteryInfo(); // reset. This will re-trigger everything if it is still low battery
+      DEV_ASSERT( IsControlDelegated(), "Should be delegating to OnboardingLowBattery" );
+      // start driving off the charger
+      CancelDelegates(false);
+    } else if( _dVars.lastInterruption == BEHAVIOR_ID(OnboardingPlacedOnCharger) ) {
+      // if the user placed the robot on the charger, continue acts as the command to get it off
       DEV_ASSERT( IsControlDelegated(), "Should be delegating to PlacedOnCharger" );
       // start driving off the charger
       CancelDelegates(false);
@@ -651,6 +681,14 @@ void BehaviorOnboarding::RequestSkip()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboarding::RequestRetryCharging()
+{
+  _dVars.batteryInfo = BatteryInfo();
+  _dVars.batteryInfo.lowBattery = false;
+  StartLowBatteryCountdown();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboarding::SetTriggerWordEnabled(bool enabled)
 {
   if( _dVars.lastTriggerWordEnabled != enabled ) {
@@ -678,6 +716,82 @@ void BehaviorOnboarding::SetAllowAnyIntent()
     auto& uic = GetBehaviorComp<UserIntentComponent>();
     uic.ClearWhitelistedIntents();
     _dVars.lastWhitelistedIntent = USER_INTENT(INVALID);
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboarding::UpdateBatteryInfo()
+{
+  auto& info = _dVars.batteryInfo;
+  if( !info.lowBattery ) {
+    return;
+  }
+ 
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  // robot should be charging for the first 30 mins or so of being on contacts, so use IsOnChargerContacts instead of IsCharging
+  const bool currOnCharger = GetBEI().GetRobotInfo().IsOnChargerContacts();
+  const bool currOnChargerPlatform = GetBEI().GetRobotInfo().IsOnChargerPlatform();
+  if( currOnCharger && !info.onCharger ) {
+    info.onCharger = true;
+    float requiredChargeTime_s;
+    if( (info.timeChargingDone_s < 0.0f) || (info.timeRemovedFromCharger < 0.0f) ) {
+      // was never on charger before
+      requiredChargeTime_s = kRequiredChargeTime_s;
+      info.timeChargingDone_s = requiredChargeTime_s + currTime_s;
+    } else {
+      // not the first time on the charger, so there should be a timeRemovedFromCharger.
+      const float elapsedOffChargerTime_s = currTime_s - info.timeRemovedFromCharger;
+      info.timeChargingDone_s += elapsedOffChargerTime_s * (1.0f + kExtraChargingTimePerDischargePeriod_s);
+      info.timeChargingDone_s = Anki::Util::Min(info.timeChargingDone_s, currTime_s + kRequiredChargeTime_s);
+      requiredChargeTime_s = info.timeChargingDone_s - currTime_s;
+    }
+    auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
+    if( ei != nullptr ) {
+      ExternalInterface::OnboardingOnCharger msg{true, true, requiredChargeTime_s};
+      PRINT_CH_INFO("Behaviors", "OnboardingOnCharger", "true, true, %f", requiredChargeTime_s);
+      ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
+    }
+    info.sentOutOfLowBattery = false;
+  } else if( !currOnCharger && !currOnChargerPlatform && info.onCharger ) {
+    // this also checked charger platform in case it slips off contact while wiggling onto charger
+    info.onCharger = false;
+    info.timeRemovedFromCharger = currTime_s;
+    auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
+    if( ei != nullptr ) {
+      ExternalInterface::OnboardingOnCharger msg{false, true, -1.0f}; // no need to calc the time since the app just pauses it
+      PRINT_CH_INFO("Behaviors", "OnboardingOnCharger", "false, true, -1");
+      ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
+    }
+  }
+  
+  if( currOnCharger && !info.sentOutOfLowBattery && (GetBEI().GetRobotInfo().GetBatteryLevel() != BatteryLevel::Low) ) {
+    // tell the app we're out of low battery state. This will mean that if the countdown hasn't expired
+    // yet, then when it does, it will show the Resume screen. If the app countdown expires before this is
+    // sent, it will display something about checking cables, and should send a RetryCharging.
+    auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
+    if( ei != nullptr ) {
+      ExternalInterface::OnboardingLowBattery msg{false};
+      PRINT_CH_INFO("Behaviors", "OnboardingLowBattery", "false");
+      ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
+    }
+    info.sentOutOfLowBattery = true;
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboarding::StartLowBatteryCountdown()
+{
+  auto& info = _dVars.batteryInfo;
+  // only start it if not already started, since low battery can get interrupted by mandatory reactions
+  if( !info.lowBattery ) {
+    info.lowBattery = true;
+    
+    auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
+    if( ei != nullptr ) {
+      ExternalInterface::OnboardingLowBattery msg{true};
+      PRINT_CH_INFO("Behaviors", "OnboardingLowBattery", "true");
+      ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
+    }
   }
 }
 

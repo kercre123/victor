@@ -5,8 +5,8 @@
   "associatedActiveFeature": "Onboarding",
 
   "interruptions": [
-    "MandatoryPhysicalReactions",
-    "LowBatteryFindAndGoToHome",
+    "MandatoryPhysicalReactions", // todo: get rid of robot on side? might interfere with low battery
+    "OnboardingLowBattery",
     "OnboardingPlacedOnCharger", // is suppressed during first stage
     "OnboardingPickedUp",        // is suppressed during first stage
     "DriveOffCharger",           // is suppressed during first stage

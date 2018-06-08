@@ -62,6 +62,7 @@ enum uint_8 BehaviorID {
   ExampleObjectMoved,
   ExampleObjectPositionUpdated,
   ExamplePetInitialDetection,
+  OnboardingReactToWelcomeHome,
 
   // hiking
   Hiking_BringCubeToBeacon,
@@ -210,8 +211,11 @@ enum uint_8 BehaviorID {
   Onboarding,
   OnboardingAsleep,
   OnboardingLookAtUser,
+  OnboardingLowBattery,
   OnboardingPickedUp,
   OnboardingPlacedOnCharger,
+  OnboardingSluggishDriveOffCharger,
+  OnboardingWaitForWelcomeHome,
   OnboardingWakeUp,
 
   // victorBehaviorTree/quietMode

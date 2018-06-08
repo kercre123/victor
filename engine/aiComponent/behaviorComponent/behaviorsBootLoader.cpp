@@ -29,6 +29,7 @@
 #include "engine/unitTestKey.h"
 #include "util/entityComponent/dependencyManagedEntity.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 
 
@@ -113,6 +114,12 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
     _eventHandles.push_back( ei->Subscribe(ExternalInterface::MessageEngineToGameTag::OnboardingState,
                                            onOnboardingStage) );
   }
+  
+  auto resetOnboarding = [this](ConsoleFunctionContextRef context) {
+    Util::FileUtils::DeleteFile( _saveFolder + BehaviorOnboarding::kOnboardingFilename );
+    Util::FileUtils::DeleteFile( _saveFolder );
+  };
+  _consoleFuncs.emplace_front( "ResetOnboarding", std::move(resetOnboarding), "Onboarding", "" );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

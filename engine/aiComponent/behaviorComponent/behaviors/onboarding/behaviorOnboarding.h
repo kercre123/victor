@@ -72,6 +72,9 @@ private:
   // Moves to the next IOnboardingStage
   void MoveToStage( const OnboardingStages& state );
   
+  void UpdateBatteryInfo();
+  void StartLowBatteryCountdown();
+  
   // Interrupts any active stages with OnInterrupted(), caches info about interruptionID, and
   // messages the app for some interruptions so they can dim the screen or show a modal, etc.
   void Interrupt( ICozmoBehaviorPtr interruption, BehaviorID interruptionID );
@@ -79,6 +82,7 @@ private:
   // App or devtool queues an event for continue/skip
   void RequestContinue();
   void RequestSkip();
+  void RequestRetryCharging();
   
   // Put this behavior in a state where it waits for the BSM to switch behavior stacks
   void TerminateOnboarding();
@@ -118,10 +122,18 @@ private:
     } type;
     double time_s;
     union {
-      // continue and type have no params
+      // continue and skip have no params
       GameToEngineEvent gameToEngineEvent;
       EngineToGameEvent engineToGameEvent;
     };
+  };
+  
+  struct BatteryInfo {
+    bool lowBattery = false;
+    bool onCharger = false;
+    bool sentOutOfLowBattery = false;
+    float timeChargingDone_s = -1.0f;
+    float timeRemovedFromCharger = -1.0f;
   };
 
   struct InstanceConfig {
@@ -168,6 +180,8 @@ private:
     bool currentStageBehaviorFinished;
     
     bool receivedContinue;
+
+    BatteryInfo batteryInfo;
     
     bool devConsoleStagePending;
     OnboardingStages devConsoleStage;

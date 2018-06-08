@@ -11,6 +11,7 @@
 #include "clad/types/animationEvents.clad"
 #include "clad/types/behaviorComponent/behaviorIDs.clad"
 #include "clad/types/behaviorComponent/behaviorObjectives.clad"
+#include "clad/types/behaviorComponent/userIntent.clad"
 #include "clad/types/behaviorSlot.clad"
 #include "clad/types/debugConsoleTypes.clad"
 #include "clad/types/deviceDataTypes.clad"
@@ -897,10 +898,25 @@ message OnboardingState {
 
 message OnboardingOnCharger {
   bool onCharger,
+  bool needsToCharge,
+  float_32 requiredChargeTime_s, // if needsToCharge, how long it should remain there
+}
+
+message OnboardingLowBattery {
+  bool lowBattery,
 }
 
 message OnboardingPickedUp {
   bool pickedUp,
+}
+
+// not onboarding 
+message WakeWordBegin {
+}
+
+message WakeWordEnd {
+  bool intentHeard,
+  UserIntent intent,
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -27,9 +27,12 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMicDirection.h"
+#include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/movementComponent.h"
+#include "engine/externalInterface/externalInterface.h"
+#include "engine/externalInterface/externalMessageRouter.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/components/mics/micComponent.h"
@@ -252,6 +255,12 @@ void BehaviorReactToVoiceCommand::HandleWhileActivated( const RobotToEngineEvent
 void BehaviorReactToVoiceCommand::OnBehaviorActivated()
 {
   _dVars = DynamicVariables();
+  
+  auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
+  if( ei != nullptr ) {
+    ExternalInterface::WakeWordBegin msg;
+    ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
+  }
 
   // cache our reaction direction at the start in case we were told to turn
   // upon hearing the trigger word
@@ -302,6 +311,24 @@ void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
   {
     BodyLightComponent& blc = GetBEI().GetBodyLightComponent();
     blc.StopLoopingBackpackLights( _dVars.lightsHandle );
+  }
+  
+  auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
+  if( ei != nullptr ) {
+    ExternalInterface::WakeWordEnd msg;
+    msg.intentHeard = (_dVars.intentStatus != EIntentStatus::NoIntentHeard);
+    if( msg.intentHeard ) {
+      UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
+      // we use this dirty dirty method here instead of sending this message directly from the uic
+      // since we know whether the intent was heard here, and it's nice that the same behavior
+      // on activation/deactivation sends the two messages. if the uic sent the end message, it
+      // might be sent without an initial message.
+      const UserIntentData* intentData = uic.GetPendingUserIntent();
+      if( intentData != nullptr ) {
+        msg.intent = intentData->intent;
+      }
+    }
+    ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
   }
 
   // we've done all we can, now it's up to the next behavior to consume the user intent

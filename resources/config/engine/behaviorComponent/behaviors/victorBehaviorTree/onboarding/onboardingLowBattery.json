@@ -1,0 +1,22 @@
+{
+  "behaviorID": "OnboardingLowBattery",
+  "behaviorClass": "DispatcherQueue",
+
+  "wantsToBeActivatedCondition" : {
+    "conditionType": "BatteryLevel",
+    "targetBatteryLevel": "Low"
+  },
+
+  "behaviors" : [
+    "LowBatteryFindAndGoToHome",
+    "SittingOnChargerInternal" 
+  ],
+
+  "anonymousBehaviors": [
+    {
+      // sit on charger waiting for Continue
+      "behaviorName": "SittingOnChargerInternal",
+      "behaviorClass": "OnboardingInterruptionHead"
+    }
+  ]
+}

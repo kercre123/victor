@@ -110,6 +110,10 @@ public:
   // should use the above version that checks that the explicit user intent is matching what the caller
   // expects
   UserIntentPtr GetActiveUserIntent() const;
+  
+  // You really really really shouldn't use this. You should almost always be able to check against
+  // a specific intent, or GetActiveUserIntent(). 
+  const UserIntentData* /* DONT USE THIS */ GetPendingUserIntent() const { return _pendingIntent.get(); }
 
   // A helper function to drop a user intent without responding to it. This is meant to be called for a
   // pending user intent and will make it no longer pending without ever making it active. This is generally
