@@ -105,6 +105,8 @@ const char* const kSequenceSetupTimeKey = "sequence_setup_time";
 const char* const kPreEventCaptureTimeKey = "pre_event_capture_time";
 const char* const kPostEventCaptureTimeKey = "post_event_capture_time";
 const char* const kEnableRandomHeadTiltKey = "enable_random_head_tilt";
+const char* const kMinHeadTiltKey = "min_head_tilt";
+const char* const kMaxHeadTiltKey = "max_head_tilt";
 }
 
 
@@ -141,6 +143,19 @@ BehaviorDevEventSequenceCapture::BehaviorDevEventSequenceCapture(const Json::Val
   _iConfig.postEventCaptureTime = JsonTools::ParseFloat(config, kPostEventCaptureTimeKey, "BehaviorDevEventSequenceCapture");
 
   _iConfig.enableRandomHeadTilt = JsonTools::ParseBool(config, kEnableRandomHeadTiltKey, "BehaviorDevEventSequenceCapture");
+  if( _iConfig.enableRandomHeadTilt )
+  {
+    _iConfig.minHeadTilt = MIN_HEAD_ANGLE;
+    _iConfig.maxHeadTilt = MAX_HEAD_ANGLE;
+    if( JsonTools::GetValueOptional(config, kMinHeadTiltKey, _iConfig.minHeadTilt) )
+    {
+      _iConfig.minHeadTilt = DEG_TO_RAD( _iConfig.minHeadTilt );
+    }
+    if( JsonTools::GetValueOptional(config, kMaxHeadTiltKey, _iConfig.maxHeadTilt) )
+    {
+      _iConfig.maxHeadTilt = DEG_TO_RAD( _iConfig.maxHeadTilt );
+    }
+  }
 
   if(config.isMember(kClassNamesKey))
   {
@@ -330,7 +345,7 @@ void BehaviorDevEventSequenceCapture::BehaviorUpdate()
 
         if( _iConfig.enableRandomHeadTilt )
         {
-          double headAngle = GetBEI().GetRobotInfo().GetRNG().RandDblInRange( MIN_HEAD_ANGLE, MAX_HEAD_ANGLE );
+          double headAngle = GetBEI().GetRobotInfo().GetRNG().RandDblInRange( _iConfig.minHeadTilt, _iConfig.maxHeadTilt );
           IActionRunner* tiltAction = new MoveHeadToAngleAction( headAngle );
           PRINT_CH_DEBUG( "Behavior", "BehaviorDevEventSequenceCapture.TiltHead",
                           "Tilting head to %f", RAD_TO_DEG(headAngle) );
