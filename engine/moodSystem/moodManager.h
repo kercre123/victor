@@ -92,6 +92,10 @@ public:
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
     dependencies.insert(RobotComponentID::EngineAudioClient);
   }
+  virtual void AdditionalUpdateAccessibleComponents(RobotCompIDSet& components) const override {
+    components.insert(RobotComponentID::RobotStatsTracker);
+  }
+
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
   //////
   // end IDependencyManagedComponent functions
@@ -246,6 +250,8 @@ private:
 
   float _lastAudioSendTime_s = 0.0f;
   float _lastWebVizSendTime_s = 0.0f;
+
+  double _cumlPosStimDeltaToAdd = 0.0;
 };
   
 
