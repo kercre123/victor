@@ -87,13 +87,9 @@ void CliffSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
       _cliffDataFilt[i] = Util::IsNearZero(_cliffDataFilt[i]) ?
                           _cliffDataRaw[i] :
                           (kCliffFiltCoef * _cliffDataFilt[i]) + ((1.f - kCliffFiltCoef) * static_cast<float>(_cliffDataRaw[i]));
-
-      // Update detection state
-      _cliffDetectedFlags.SetBitFlag(static_cast<CliffSensor>(i), _cliffDataFilt[i] < _cliffDetectThresholds[i]);
     }
   }
-  
-  _cliffDetectedStatusBitOn = (msg.status & (uint32_t)RobotStatusFlag::CLIFF_DETECTED) != 0;
+  _cliffDetectedFlags = msg.cliffDetectedFlags;
   
   _lastMsgTimestamp = msg.timestamp;
   

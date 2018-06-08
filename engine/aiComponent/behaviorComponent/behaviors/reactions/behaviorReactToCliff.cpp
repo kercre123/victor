@@ -44,6 +44,16 @@ static const float kCliffBackupSpeed_mmps = 100.0f;
 // that the stop value if it's true cliff, but we
 // use some margin here to account for sensor noise.
 static const u16   kSuspiciousCliffValDiff = 20;
+
+// If this many RobotStopped messages are received
+// while activated, then stop trying to do the cliff
+// reaction because maybe it's backing us up too far.
+static const int   kMaxNumRobotStopsBeforeSkippingReactionAnim = 3;
+
+// If this many RobotStopped messages are received
+// while activated, then just give up and go to StuckOnEdge.
+// It's probably too dangerous to keep trying anything
+static const int   kMaxNumRobotStopsBeforeGivingUp = 5;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -64,6 +74,7 @@ BehaviorReactToCliff::DynamicVariables::DynamicVariables()
 
   const auto kInitVal = std::numeric_limits<u16>::max();
   std::fill(persistent.cliffValsAtStart.begin(), persistent.cliffValsAtStart.end(), kInitVal);
+  persistent.numStops = 0;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -159,6 +170,14 @@ void BehaviorReactToCliff::OnBehaviorActivated()
 
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToCliff::TransitionToStuckOnEdge()
+{
+  ANKI_VERIFY(_iConfig.stuckOnEdgeBehavior->WantsToBeActivated(),
+              "BehaviorReactToCliff.TransitionToStuckOnEdge.DoesNotWantToBeActivated", 
+              "");
+  DelegateIfInControl(_iConfig.stuckOnEdgeBehavior.get());
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::TransitionToPlayingStopReaction()
@@ -169,9 +188,8 @@ void BehaviorReactToCliff::TransitionToPlayingStopReaction()
     return;
   }
 
-  // in case latency spiked between the Stop and Cliff message, add a small extra delay
-  const float latencyDelay_s = 0.05f;
-  const float maxWaitTime_s = (1.0f / 1000.0f ) * CLIFF_EVENT_DELAY_MS + latencyDelay_s;
+  // in case latency spiked between the Stop and Cliff message
+  const float maxWaitTime_s = (1.0f / 1000.0f ) * CLIFF_EVENT_DELAY_MS;
 
   // Wait for the cliff event before jumping to cliff reaction
   auto waitForCliffLambda = [this](Robot& robot) {
@@ -192,13 +210,43 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction()
   } else {
     Anki::Util::sInfo("robot.cliff_detected", {}, "");
 
-    auto& robotInfo = GetBEI().GetRobotInfo();
-    auto action = GetCliffPreReactAction(robotInfo.GetCliffSensorComponent().GetCliffDetectedFlags());
+    auto cliffDetectedFlags = GetBEI().GetRobotInfo().GetCliffSensorComponent().GetCliffDetectedFlags();
+    if (cliffDetectedFlags == 0) {
+      // For some reason no cliffs are detected. Just leave the reaction.
+      PRINT_NAMED_INFO("BehaviorReactToCliff.TransitionToPlayingCliffReaction.NoCliffs", "");
+      CancelSelf();
+      return;
+    }
 
-    AnimationTrigger reactionAnim = AnimationTrigger::ReactToCliff;
-    action->AddAction(new TriggerLiftSafeAnimationAction(reactionAnim));
+    // Did we get too many RobotStopped messages for this
+    // activation of the behavior? Must be in a very "cliffy" area.
+    // Just go to StuckOnEdge to be safe.
+    if (_dVars.persistent.numStops > kMaxNumRobotStopsBeforeGivingUp) {
+      PRINT_NAMED_INFO("BehaviorReactToCliff.TransitionToPlayingCliffReaction.TooManyRobotStops", "");
+      TransitionToStuckOnEdge();
+      return;
+    }
 
-    DelegateIfInControl(action, &BehaviorReactToCliff::TransitionToBackingUp);
+    // Get the pre-react action/animation to play
+    auto action = GetCliffPreReactAction(cliffDetectedFlags);
+    if (action == nullptr) {
+      // No action was returned because the detected cliffs represent 
+      // a precarious situation so just delegate to StuckOnEdge.
+      PRINT_NAMED_INFO("BehaviorReactToCliff.TransitionToPlayingCliffReaction.StuckOnEdge", 
+                       "%x", 
+                       cliffDetectedFlags);
+      TransitionToStuckOnEdge();
+    } else {
+
+      // Did we get too many RobotStopped messages for this
+      // activation of the behavior? Try not playing this backup reaction.
+      if (_dVars.persistent.numStops <= kMaxNumRobotStopsBeforeSkippingReactionAnim) {
+        AnimationTrigger reactionAnim = AnimationTrigger::ReactToCliff;
+        action->AddAction(new TriggerLiftSafeAnimationAction(reactionAnim));
+      }
+
+      DelegateIfInControl(action, &BehaviorReactToCliff::TransitionToBackingUp);
+    }
   }
 }
 
@@ -228,8 +276,7 @@ void BehaviorReactToCliff::TransitionToBackingUp()
                         PRINT_NAMED_INFO("BehaviorReactToCliff.TransitionToBackingUp.StillStuckOnEdge", 
                                          "%x", 
                                          cliffComponent.GetCliffDetectedFlags());
-                        _iConfig.stuckOnEdgeBehavior->WantsToBeActivated();
-                        DelegateIfInControl(_iConfig.stuckOnEdgeBehavior.get());
+                        TransitionToStuckOnEdge();
                       }
                   });
   }
@@ -263,15 +310,20 @@ void BehaviorReactToCliff::BehaviorUpdate()
     return;
   }
 
-  // Delegate to StuckOnEdge if unexpected motion detected while
-  // cliff is still detected since it means treads are spinning
-  const bool unexpectedMovement = GetBEI().GetMovementComponent().IsUnexpectedMovementDetected();
-  const bool cliffDetected = GetBEI().GetRobotInfo().GetCliffSensorComponent().IsCliffDetected();
-  if (unexpectedMovement && cliffDetected) {
-    PRINT_NAMED_INFO("BehaviorReactToCliff.Update.StuckOnEdge", "");
-    _iConfig.stuckOnEdgeBehavior->WantsToBeActivated();
-    DelegateNow(_iConfig.stuckOnEdgeBehavior.get());
-  }
+  // TODO: This exit on unexpected movement is probably good to have, 
+  // but it appears the cliff reactions cause unexpected movement to 
+  // trigger falsely, so commenting out until unexpected movement
+  // is modified to have fewer false positives.
+  //  
+  // // Delegate to StuckOnEdge if unexpected motion detected while
+  // // cliff is still detected since it means treads are spinning
+  // const bool unexpectedMovement = GetBEI().GetMovementComponent().IsUnexpectedMovementDetected();
+  // const bool cliffDetected = GetBEI().GetRobotInfo().GetCliffSensorComponent().IsCliffDetected();
+  // if (unexpectedMovement && cliffDetected) {
+  //   PRINT_NAMED_INFO("BehaviorReactToCliff.Update.StuckOnEdge", "");
+  //   _iConfig.stuckOnEdgeBehavior->WantsToBeActivated();
+  //   DelegateNow(_iConfig.stuckOnEdgeBehavior.get());
+  // }
 
   // Cancel if picked up
   const bool isPickedUp = GetBEI().GetRobotInfo().IsPickedUp();
@@ -288,12 +340,13 @@ void BehaviorReactToCliff::BehaviorUpdate()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToCliff::HandleWhileInScopeButNotActivated(const EngineToGameEvent& event)
+void BehaviorReactToCliff::AlwaysHandleInScope(const EngineToGameEvent& event)
 {
+  const bool alreadyActivated = IsActivated();
   switch( event.GetData().GetTag() ) {
     case EngineToGameTag::CliffEvent: {
       const auto detectedFlags = event.GetData().Get_CliffEvent().detectedFlags;
-      if((detectedFlags != 0) && !_dVars.quitReaction) {
+      if(!alreadyActivated && (detectedFlags != 0) && !_dVars.quitReaction) {
         PRINT_NAMED_WARNING("BehaviorReactToCliff.CliffWithoutStop",
                             "Got a cliff event but stop isn't running, skipping straight to cliff react (bad latency?)");
         // this should only happen if latency gets bad because otherwise we should stay in the stop reaction
@@ -311,6 +364,7 @@ void BehaviorReactToCliff::HandleWhileInScopeButNotActivated(const EngineToGameE
       _dVars.quitReaction = false;
       _dVars.gotStop = true;
       _dVars.state = State::PlayingStopReaction;
+      ++_dVars.persistent.numStops;
 
       // Record triggered cliff sensor value(s) and compare to what they are when wheels
       // stop moving. If the values are higher, the cliff is suspicious and we should quit.
@@ -319,12 +373,17 @@ void BehaviorReactToCliff::HandleWhileInScopeButNotActivated(const EngineToGameE
       const auto& cliffData = cliffComp.GetCliffDataRaw();
       std::copy(cliffData.begin(), cliffData.end(), _dVars.persistent.cliffValsAtStart.begin());
       PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.CliffValsAtStart", 
-                    "%u %u %u %u", 
+                    "%u %u %u %u (alreadyActivated: %d)", 
                     _dVars.persistent.cliffValsAtStart[0], 
                     _dVars.persistent.cliffValsAtStart[1],
                     _dVars.persistent.cliffValsAtStart[2],
-                    _dVars.persistent.cliffValsAtStart[3]);
+                    _dVars.persistent.cliffValsAtStart[3],
+                    alreadyActivated);
 
+      if (alreadyActivated) {
+        CancelDelegates(false);
+        OnBehaviorActivated();
+      }
       break;
     }
     case EngineToGameTag::ChargerEvent:
@@ -383,6 +442,8 @@ CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(uint8_t c
   float amountToDrive_mm = 0.f;
   bool turnThenDrive = true;
 
+  PRINT_NAMED_INFO("ReactToCliff.GetCliffPreReactAction.CliffsDetected", "0x%x", cliffDetectedFlags);
+
   // TODO: These actions should most likely be replaced by animations.
   switch (cliffDetectedFlags) {
     case (FL | FR):
@@ -410,17 +471,7 @@ CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(uint8_t c
       amountToDrive_mm = 35.f;
       amountToTurn_deg = -135.f;
       turnThenDrive = false;
-      break;
-    case (FL | BL):
-      // Left side hanging off edge. Try to turn back onto the surface.
-      amountToTurn_deg = 90.f;
-      amountToDrive_mm = -30.f;
-      break;
-    case (FR | BR):
-      // Right side hanging off edge. Try to turn back onto the surface.
-      amountToTurn_deg = -90.f;
-      amountToDrive_mm = -30.f;
-      break;
+      break;  
     case (BL | BR):
       // Hit cliff straight-on driving backwards. Flip around to face the cliff.
       amountToDrive_mm = 35.f;
@@ -428,9 +479,9 @@ CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(uint8_t c
       turnThenDrive = false;
       break;
     default:
-      // In the default case, just play the stop reaction and move on.
-      action->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffDetectorStop));
-      break;
+      // This is some scary configuration that we probably shouldn't move from.
+      delete(action);
+      return nullptr;
   }
 
   auto turnAction = new TurnInPlaceAction(DEG_TO_RAD(amountToTurn_deg), false);

@@ -776,7 +776,7 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     RAD_TO_DEG(payload.state.gyro.z));
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_GYRO, Anki::NamedColors::GREEN, txt);
 
-  bool cliffDetected = payload.state.status & (uint32_t)RobotStatusFlag::CLIFF_DETECTED;
+  bool cliffDetected = payload.state.cliffDetectedFlags > 0;
   sprintf(txt, "Cliff: {%4u, %4u, %4u, %4u} thresh: {%4u, %4u, %4u, %4u}",
           payload.state.cliffDataRaw[0],
           payload.state.cliffDataRaw[1],
