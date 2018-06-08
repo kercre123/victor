@@ -20,6 +20,7 @@
 #include "coretech/vision/shared/compositeImage/compositeImageBuilder.h"
 //#include "cozmoAnim/animation/trackLayerManagers/faceLayerManager.h"
 
+#include "cannedAnimLib/cannedAnims/animationInterpolator.h"
 #include "cannedAnimLib/proceduralFace/proceduralFaceDrawer.h"
 #include "coretech/vision/shared/spriteSequence/spriteSequence.h"
 #include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"
@@ -208,6 +209,90 @@ namespace Cozmo {
   // which we don't care to indicate on the face.
   CONSOLE_VAR(u32,  kThermalThrottlingMinTemp_C,   "AnimationStreamer", 65);
 
+
+  //////////
+  /// Manual Playback Console Vars - allow user to play back/hold single frames within an animation
+  /////////
+  bool kIsInManualUpdateMode    = false;
+  u32 kCurrentManualFrameNumber = 0;
+  static TimeStamp_t* sDevRelativeTimePtr       = nullptr;
+  static Vision::ImageRGB565* sDevBufferFacePtr = nullptr;
+  static Animation** sStreamingAnimationPtrPtr  = nullptr;
+
+  void ToggleManualControlOfAnimStreamer(ConsoleFunctionContextRef context)
+  {
+    kIsInManualUpdateMode = !kIsInManualUpdateMode;
+    if(kIsInManualUpdateMode && (sDevRelativeTimePtr != nullptr)){
+      kCurrentManualFrameNumber = *sDevRelativeTimePtr/ANIM_TIME_STEP_MS;
+    }
+  }
+  
+  CONSOLE_FUNC(ToggleManualControlOfAnimStreamer, "ManualAnimationPlayback");
+  CONSOLE_VAR(bool, kShouldDisplayKeyframeNumber, "ManualAnimationPlayback", false);
+  CONSOLE_VAR(u32,  kNumberOfFramesToIncrement,   "ManualAnimationPlayback", 1);
+
+  void IncrementPlaybackFrame(ConsoleFunctionContextRef context)
+  {
+    kCurrentManualFrameNumber += kNumberOfFramesToIncrement;
+  }
+  
+  CONSOLE_FUNC(IncrementPlaybackFrame, "ManualAnimationPlayback");
+
+  std::string DevGetFaceImagFolder() {
+    const auto faceImgsFolder = "dev_face_imgs";
+    const Util::Data::DataPlatform* platform = s_context->GetDataPlatform();
+    auto folder = platform->pathToResource( Util::Data::Scope::Cache, faceImgsFolder );
+    folder = Util::FileUtils::AddTrailingFileSeparator( folder );
+    return folder;
+  }
+
+  void CaptureFaceImage(ConsoleFunctionContextRef context)
+  {
+    if(sDevBufferFacePtr != nullptr){
+      auto folder = DevGetFaceImagFolder();
+      
+      // make sure our folder structure exists
+      if ( Util::FileUtils::DirectoryDoesNotExist( folder ) )
+      {
+        Util::FileUtils::CreateDirectory( folder, false, true );
+      }
+      
+      std::string animName;
+      if((sStreamingAnimationPtrPtr != nullptr) &&
+         (*sStreamingAnimationPtrPtr != nullptr)){
+        animName = (*sStreamingAnimationPtrPtr)->GetName();
+      }
+      
+      const std::string filename = ( folder + animName + "_" + std::to_string(kCurrentManualFrameNumber) + ".png" );
+      if(Util::FileUtils::FileExists(filename)){
+        Util::FileUtils::DeleteFile(filename);
+      }
+
+      sDevBufferFacePtr->Save(filename);
+    }
+  }
+  
+  CONSOLE_FUNC(CaptureFaceImage, "ManualAnimationPlayback");
+
+  void ClearCapturedFaces(ConsoleFunctionContextRef context)
+  {
+    auto folder = DevGetFaceImagFolder();
+    if ( Util::FileUtils::DirectoryExists( folder ) )
+    {
+      Util::FileUtils::RemoveDirectory( folder );
+    }
+  }
+  
+  CONSOLE_FUNC(ClearCapturedFaces, "ManualAnimationPlayback");
+
+
+
+  //////////
+  /// End Manual Playback Console Vars
+  /////////
+
+
+
   // Allows easy disabling of KeepFaceAlive using the console system (i.e., without a message interface)
   // This is useful for the animators to disable KeepFaceAlive while testing eye shapes, etc.
   static bool s_enableKeepFaceAlive = true;
@@ -280,6 +365,7 @@ namespace Cozmo {
   CONSOLE_VAR(bool, kShouldDisplayPlaybackTime, "AnimationStreamer", false);
 
   } // namespace
+
 #undef CONSOLE_GROUP
 
   AnimationStreamer::AnimationStreamer(const AnimContext* context)
@@ -295,6 +381,9 @@ namespace Cozmo {
     CopyIntoProceduralAnimation();
 
     if(ANKI_DEV_CHEATS) {
+      sDevRelativeTimePtr = &_relativeStreamTime_ms;
+      sDevBufferFacePtr = &_faceDrawBuf;
+      sStreamingAnimationPtrPtr = &_streamingAnimation;
       if (!s_faceDataOverrideRegistered) {
         s_context = context;
         s_faceDataOverride.RegisterFaceWithConsoleVars();
@@ -358,6 +447,9 @@ namespace Cozmo {
   
   AnimationStreamer::~AnimationStreamer()
   {
+    sDevRelativeTimePtr       = nullptr;
+    sDevBufferFacePtr         = nullptr;
+    sStreamingAnimationPtrPtr = nullptr;
     Util::SafeDelete(_proceduralAnimation);
 
     FaceDisplay::removeInstance();
@@ -466,6 +558,64 @@ namespace Cozmo {
     
     return result;
   }
+
+  void AnimationStreamer::SendAnimationMessages(AnimationMessageWrapper& stateToSend)
+  {
+
+#     if DEBUG_ANIMATION_STREAMING
+#       define DEBUG_STREAM_KEYFRAME_MESSAGE(__KF_NAME__) \
+                PRINT_CH_INFO(kLogChannelName, \
+                              "AnimationStreamer.SendAnimationMessages", \
+                              "Streaming %sKeyFrame at t=%dms.", __KF_NAME__, \
+                              _relativeStreamTime_ms)
+#     else
+#       define DEBUG_STREAM_KEYFRAME_MESSAGE(__KF_NAME__)
+#     endif
+
+    if(SendIfTrackUnlocked(stateToSend.moveHeadMessage, AnimTrackFlag::HEAD_TRACK)) {
+      DEBUG_STREAM_KEYFRAME_MESSAGE("HeadAngle");
+    }
+    
+    if(SendIfTrackUnlocked(stateToSend.moveLiftMessage, AnimTrackFlag::LIFT_TRACK)) {
+      DEBUG_STREAM_KEYFRAME_MESSAGE("LiftHeight");
+    }
+    
+    if(SendIfTrackUnlocked(stateToSend.bodyMotionMessage, AnimTrackFlag::BODY_TRACK)) {
+      DEBUG_STREAM_KEYFRAME_MESSAGE("BodyMotion");
+    }
+    
+    if(SendIfTrackUnlocked(stateToSend.recHeadMessage, AnimTrackFlag::BODY_TRACK)) {
+      DEBUG_STREAM_KEYFRAME_MESSAGE("RecordHeading");
+    }
+
+    if(SendIfTrackUnlocked(stateToSend.turnToRecHeadMessage, AnimTrackFlag::BODY_TRACK)) {
+      DEBUG_STREAM_KEYFRAME_MESSAGE("TurnToRecordedHeading");
+    }
+
+    if (SendIfTrackUnlocked(stateToSend.backpackLightsMessage, AnimTrackFlag::BACKPACK_LIGHTS_TRACK)) {
+      EnableBackpackAnimationLayer(true);
+    }
+
+    if(stateToSend.audioKeyFrameMessage != nullptr){
+      _animAudioClient->PlayAudioKeyFrame( *stateToSend.audioKeyFrameMessage, _context->GetRandom() );
+    }
+
+    // Send AnimationEvent directly up to engine if it's time to play one
+    if (stateToSend.eventMessage != nullptr){
+      DEBUG_STREAM_KEYFRAME_MESSAGE("Event");
+      RobotInterface::SendAnimToEngine(*stateToSend.eventMessage);
+      Util::SafeDelete(stateToSend.eventMessage);
+    }
+
+    if(stateToSend.haveFaceToSend){
+      DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
+      BufferFaceToSend(stateToSend.faceImg);
+    }
+
+#     undef DEBUG_STREAM_KEYFRAME_MESSAGE
+
+  }
+
 
   void AnimationStreamer::Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageBinaryChunk& msg) 
   {
@@ -815,6 +965,7 @@ namespace Cozmo {
   
   Result AnimationStreamer::InitStreamingAnimation(Tag withTag, bool shouldOverrideEyeHue, bool shouldRenderInEyeHue)
   {
+    kCurrentManualFrameNumber = 0;
     auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
     Result lastResult = _streamingAnimation->Init(spriteCache);
     if(lastResult == RESULT_OK)
@@ -862,11 +1013,11 @@ namespace Cozmo {
   //
   // TODO: Take in EngineToRobot& instead of ptr?
   //       i.e. Why doesn't KeyFrame::GetStreamMessage() return a ref?
-  bool AnimationStreamer::SendIfTrackUnlocked(RobotInterface::EngineToRobot* msg, AnimTrackFlag track)
+  bool AnimationStreamer::SendIfTrackUnlocked(RobotInterface::EngineToRobot*& msg, AnimTrackFlag track)
   {
     bool res = false;
     if(msg != nullptr) {
-      if (!IsTrackLocked((u8)track)) {
+      if (!IsTrackLocked(_lockedTracks, (u8)track)) {
         switch(track) {
           case AnimTrackFlag::HEAD_TRACK:
           case AnimTrackFlag::LIFT_TRACK:
@@ -881,7 +1032,7 @@ namespace Cozmo {
             break;
         }
       }
-      delete msg;
+      Util::SafeDelete(msg);
     }
     return res;
   }
@@ -925,7 +1076,7 @@ namespace Cozmo {
   }
   
   
-  void AnimationStreamer::GetStreamableFace(const ProceduralFace& procFace, Vision::ImageRGB565& outImage) const
+  void AnimationStreamer::GetStreamableFace(const AnimContext* context, const ProceduralFace& procFace, Vision::ImageRGB565& outImage)
   {
     if(kProcFace_Display == (int)FaceDisplayType::Test)
     {
@@ -946,8 +1097,8 @@ namespace Cozmo {
     }
     else
     {
-      DEV_ASSERT(_context != nullptr, "AnimationStreamer.BufferFaceToSend.NoContext");
-      DEV_ASSERT(_context->GetRandom() != nullptr, "AnimationStreamer.BufferFaceToSend.NoRNGinContext");
+      DEV_ASSERT(context != nullptr, "AnimationStreamer.BufferFaceToSend.NoContext");
+      DEV_ASSERT(context->GetRandom() != nullptr, "AnimationStreamer.BufferFaceToSend.NoRNGinContext");
 
       if(s_faceDataReset) {
         s_faceDataOverride = s_faceDataBaseline = procFace;
@@ -1031,9 +1182,9 @@ namespace Cozmo {
           newProcFace.SetScanlineOpacity(s_faceDataOverride.GetScanlineOpacity());
         }
 
-        ProceduralFaceDrawer::DrawFace(newProcFace, *_context->GetRandom(), outImage);
+        ProceduralFaceDrawer::DrawFace(newProcFace, *context->GetRandom(), outImage);
       } else {
-        ProceduralFaceDrawer::DrawFace(procFace, *_context->GetRandom(), outImage);
+        ProceduralFaceDrawer::DrawFace(procFace, *context->GetRandom(), outImage);
       }
     }
   }
@@ -1331,49 +1482,32 @@ namespace Cozmo {
   } // SendEndOfAnimation()
 
 
-  Result AnimationStreamer::StreamProceduralTracks()
+  Result AnimationStreamer::ExtractMessagesFromProceduralTracks(AnimationMessageWrapper& stateToSend) const
   {
     Result lastResult = RESULT_OK;
     
-    // Add more stuff to send buffer from various layers
+    // We don't have an animation but we still have procedural layers to so
+    // apply them    
     if(_proceduralTrackComponent->HaveLayersToSend())
     {
-      // We don't have an animation but we still have procedural layers to so
-      // apply them
-      TrackLayerComponent::LayeredKeyFrames layeredKeyFrames;
-      _proceduralTrackComponent->ApplyLayersToAnim(nullptr,
-                                                   _relativeStreamTime_ms,
-                                                   layeredKeyFrames,
-                                                   false);
-      
-      // If we have audio keyframe to play
-      if(layeredKeyFrames.haveAudioKeyFrame)
-      {
-        _animAudioClient->PlayAudioKeyFrame( layeredKeyFrames.audioKeyFrame, _context->GetRandom() );
+      // Lock the face track if it's not time for a new procedural face
+      u8 lockedTracks = _lockedTracks;
+      const bool isFaceTrackAlreadyLocked = IsTrackLocked(lockedTracks, (u8)AnimTrackFlag::FACE_TRACK);
+      const bool isTimeForProceduralFace = BaseStationTimer::getInstance()->GetCurrentTimeStamp() >= _nextProceduralFaceAllowedTime_ms;
+      if(!isFaceTrackAlreadyLocked && !isTimeForProceduralFace){
+        lockedTracks |= (u8)AnimTrackFlag::FACE_TRACK;
       }
+
+      ExtractMessagesRelatedToProceduralTrackComponent(_context, nullptr, _proceduralTrackComponent.get(),
+                                                       lockedTracks, _relativeStreamTime_ms, false, stateToSend);
       
-      // If we have backpack keyframes to send
-      if(layeredKeyFrames.haveBackpackKeyFrame)
-      {
-        if (SendIfTrackUnlocked(layeredKeyFrames.backpackKeyFrame.GetStreamMessage(_relativeStreamTime_ms), AnimTrackFlag::BACKPACK_LIGHTS_TRACK)) {
-          EnableBackpackAnimationLayer(true);
-        }
-      }
-      
-      // If we have face keyframes to send
-      const bool shouldDrawFaceLayer = BaseStationTimer::getInstance()->GetCurrentTimeStamp() > _nextProceduralFaceAllowedTime_ms;
-      if(layeredKeyFrames.haveFaceKeyFrame && shouldDrawFaceLayer)
-      {
-        GetStreamableFace(layeredKeyFrames.faceKeyFrame.GetFace(), _faceDrawBuf);
-        BufferFaceToSend(_faceDrawBuf);
-      }
     }
     
     return lastResult;
-  }// StreamProceduralTracks()
+  }// ExtractMessagesFromProceduralTracks()
   
   
-  Result AnimationStreamer::UpdateStreamingAnimation(bool storeFace)
+  Result AnimationStreamer::ExtractMessagesFromStreamingAnim(AnimationMessageWrapper& stateToSend) 
   {
     Result lastResult = RESULT_OK;
     
@@ -1387,18 +1521,6 @@ namespace Cozmo {
     {
       return RESULT_OK;
     }
-    
-    const TimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-    
-    // Grab references to some of the tracks
-    // Some tracks are managed by the TrackLayerComponent
-    auto & headTrack        = _streamingAnimation->GetTrack<HeadAngleKeyFrame>();
-    auto & liftTrack        = _streamingAnimation->GetTrack<LiftHeightKeyFrame>();
-    auto & bodyTrack        = _streamingAnimation->GetTrack<BodyMotionKeyFrame>();
-    auto & recordHeadingTrack = _streamingAnimation->GetTrack<RecordHeadingKeyFrame>();
-    auto & turnToRecordedHeadingTrack = _streamingAnimation->GetTrack<TurnToRecordedHeadingKeyFrame>();
-    auto & eventTrack       = _streamingAnimation->GetTrack<EventKeyFrame>();
-    auto & spriteSeqTrack    = _streamingAnimation->GetTrack<SpriteSequenceKeyFrame>();
 
     if(!_startOfAnimationSent) {
       SendStartOfAnimation();
@@ -1411,136 +1533,131 @@ namespace Cozmo {
       //              "Animation.Update", "%d bytes left to send this Update.",
       //              numBytesToSend);
     }
-    
-    // Apply any track layers to the animation
-    TrackLayerComponent::LayeredKeyFrames layeredKeyFrames;
-    _proceduralTrackComponent->ApplyLayersToAnim(_streamingAnimation,
-                                                 _relativeStreamTime_ms,
-                                                 layeredKeyFrames,
-                                                 storeFace);
-          
-#     if DEBUG_ANIMATION_STREAMING
-#       define DEBUG_STREAM_KEYFRAME_MESSAGE(__KF_NAME__) \
-                PRINT_CH_INFO(kLogChannelName, \
-                              "AnimationStreamer.UpdateStreamingAnimation", \
-                              "Streaming %sKeyFrame at t=%dms.", __KF_NAME__, \
-                              _relativeStreamTime_ms)
-#     else
-#       define DEBUG_STREAM_KEYFRAME_MESSAGE(__KF_NAME__)
-#     endif
-    
-    if(SendIfTrackUnlocked(headTrack.GetCurrentStreamingMessage(_relativeStreamTime_ms), AnimTrackFlag::HEAD_TRACK)) {
-      DEBUG_STREAM_KEYFRAME_MESSAGE("HeadAngle");
-    }
-    
-    if(SendIfTrackUnlocked(liftTrack.GetCurrentStreamingMessage(_relativeStreamTime_ms), AnimTrackFlag::LIFT_TRACK)) {
-      DEBUG_STREAM_KEYFRAME_MESSAGE("LiftHeight");
-    }
 
-    // Send AnimationEvent directly up to engine if it's time to play one
-    if (eventTrack.HasFramesLeft() &&
-        eventTrack.GetCurrentKeyFrame().IsTimeToPlay(_relativeStreamTime_ms))
+    // Tracks which have no procedural alterations - grab any messages directly
     {
-      DEBUG_STREAM_KEYFRAME_MESSAGE("Event");
-      
-      // Get keyframe and send contents to engine
-      auto eventKeyFrame = eventTrack.GetCurrentKeyFrame();
+      auto & headTrack                  = _streamingAnimation->GetTrack<HeadAngleKeyFrame>();
+      auto & liftTrack                  = _streamingAnimation->GetTrack<LiftHeightKeyFrame>();
+      auto & bodyTrack                  = _streamingAnimation->GetTrack<BodyMotionKeyFrame>();
+      auto & recordHeadingTrack         = _streamingAnimation->GetTrack<RecordHeadingKeyFrame>();
+      auto & turnToRecordedHeadingTrack = _streamingAnimation->GetTrack<TurnToRecordedHeadingKeyFrame>();
 
-      AnimationEvent eventMsg;
-      eventMsg.event_id = eventKeyFrame.GetAnimEvent();
-      eventMsg.timestamp = currTime_ms;
-      eventMsg.tag = _tag;
-      RobotInterface::SendAnimToEngine(eventMsg);
+      stateToSend.moveHeadMessage      = headTrack.GetCurrentStreamingMessage(_relativeStreamTime_ms);
+      stateToSend.moveLiftMessage      = liftTrack.GetCurrentStreamingMessage(_relativeStreamTime_ms);
+      stateToSend.bodyMotionMessage    = bodyTrack.GetCurrentStreamingMessage(_relativeStreamTime_ms);
+      stateToSend.recHeadMessage       = recordHeadingTrack.GetCurrentStreamingMessage(_relativeStreamTime_ms);
+      stateToSend.turnToRecHeadMessage = turnToRecordedHeadingTrack.GetCurrentStreamingMessage(_relativeStreamTime_ms);
 
-      eventTrack.MoveToNextKeyFrame();
-    }
-    
-    // Non-procedural faces (raw pixel data/images) take precedence over procedural faces (parameterized faces
-    // like idles, keep alive, or normal animated faces)
-    const bool spriteSeqHasData = !IsTrackLocked((u8)AnimTrackFlag::FACE_IMAGE_TRACK) &&
-                                  spriteSeqTrack.HasFramesLeft() &&
-                                  spriteSeqTrack.GetCurrentKeyFrame().IsTimeToPlay(_relativeStreamTime_ms);
-    
-    bool newSpriteSeqData =  false;
-    bool needToRenderFaceIntoCompositeImage = false;
-    if(spriteSeqHasData){
-      auto& faceKeyFrame = spriteSeqTrack.GetCurrentKeyFrame();
-      
-      newSpriteSeqData = faceKeyFrame.NewImageContentAvailable(_relativeStreamTime_ms);
-      needToRenderFaceIntoCompositeImage = layeredKeyFrames.haveFaceKeyFrame;
-    }
-    
-    
-    if(newSpriteSeqData || needToRenderFaceIntoCompositeImage)
-    {
-      auto & faceKeyFrame = spriteSeqTrack.GetCurrentKeyFrame();
-      
-      // Insert animation face keyframes into composite image
-      if(layeredKeyFrames.haveFaceKeyFrame &&
-         faceKeyFrame.AllowProceduralEyeOverlays()){
-        auto& compImg = faceKeyFrame.GetCompositeImage();
-        InsertFaceKeyframeIntoCompImg(layeredKeyFrames, compImg);
+      auto & eventTrack = _streamingAnimation->GetTrack<EventKeyFrame>();
+      // Send AnimationEvent directly up to engine if it's time to play one
+      if (eventTrack.HasFramesLeft() &&
+          eventTrack.GetCurrentKeyFrame().IsTimeToPlay(_relativeStreamTime_ms))
+      {
+        // Get keyframe and send contents to engine
+        const TimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+        auto& eventKeyFrame = eventTrack.GetCurrentKeyFrame();
+
+        stateToSend.eventMessage = new AnimationEvent();
+        stateToSend.eventMessage->event_id = eventKeyFrame.GetAnimEvent();
+        stateToSend.eventMessage->timestamp = currTime_ms;
+        stateToSend.eventMessage->tag = _tag;
       }
-      
-      // Render and display the face
-      Vision::SpriteHandle handle;
-      const bool gotImage = faceKeyFrame.GetFaceImageHandle(_relativeStreamTime_ms, handle);
-      if(gotImage){
-        Vision::HSImageHandle hsHandle = std::make_shared<Vision::HueSatWrapper>(0,0);
-        if(handle->IsContentCached(hsHandle).rgba){
-          const auto& imgRGB = handle->GetCachedSpriteContentsRGBA(hsHandle);
-          // Display the ImageRGB565 directly to the face, without modification
-          _faceDrawBuf.SetFromImageRGB(imgRGB);
-        }else{
-          auto imgRGB = handle->GetSpriteContentsRGBA(hsHandle);
-          // Display the ImageRGB565 directly to the face, without modification
-          _faceDrawBuf.SetFromImageRGB(imgRGB);
+    }
+
+    // Apply any track layers to the animation
+    const bool storeFace = true;
+    ExtractMessagesRelatedToProceduralTrackComponent(_context, _streamingAnimation, _proceduralTrackComponent.get(),
+                                                     _lockedTracks, _relativeStreamTime_ms, storeFace, stateToSend);
+    
+    
+    auto & spriteSeqTrack    = _streamingAnimation->GetTrack<SpriteSequenceKeyFrame>();
+    if(ShouldRenderSpriteTrack(spriteSeqTrack, _lockedTracks, _relativeStreamTime_ms, false)){
+      const TimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      _nextProceduralFaceAllowedTime_ms = currTime_ms + kMinTimeBetweenLastNonProcFaceAndNextProcFace_ms;
+    }
+  
+    return lastResult;
+  } // ExtractMessagesFromStreamingAnim()
+
+  
+  Result AnimationStreamer::ExtractMessagesRelatedToProceduralTrackComponent(const AnimContext* context,
+                                                                             Animation* anim,
+                                                                             TrackLayerComponent* trackComp,
+                                                                             const u8 tracksCurrentlyLocked,
+                                                                             const TimeStamp_t timeSinceAnimStart_ms,
+                                                                             bool storeFace,
+                                                                             AnimationMessageWrapper& stateToSend)
+  {
+    TrackLayerComponent::LayeredKeyFrames layeredKeyFrames;
+    trackComp->ApplyLayersToAnim(anim,
+                                 timeSinceAnimStart_ms,
+                                 layeredKeyFrames,
+                                 storeFace);
+    
+    if(layeredKeyFrames.haveBackpackKeyFrame && 
+       !IsTrackLocked(tracksCurrentlyLocked, (u8)AnimTrackFlag::BACKPACK_LIGHTS_TRACK))
+    {
+      stateToSend.backpackLightsMessage = layeredKeyFrames.backpackKeyFrame.GetStreamMessage(timeSinceAnimStart_ms);
+    }
+    
+    if(layeredKeyFrames.haveAudioKeyFrame &&
+       !IsTrackLocked(tracksCurrentlyLocked, (u8)AnimTrackFlag::AUDIO_TRACK))
+    {
+      // TODO: Kevin K. - Avoid this copy w/ restructuring
+      stateToSend.audioKeyFrameMessage = new RobotAudioKeyFrame(layeredKeyFrames.audioKeyFrame);
+    }
+    
+    bool needToRenderStreamable = !IsTrackLocked(tracksCurrentlyLocked, (u8)AnimTrackFlag::FACE_TRACK);
+    if(anim != nullptr){
+      auto & spriteSeqTrack = anim->GetTrack<SpriteSequenceKeyFrame>();
+      needToRenderStreamable &= layeredKeyFrames.haveFaceKeyFrame &&
+                                ShouldRenderProceduralFace(spriteSeqTrack, 
+                                                           tracksCurrentlyLocked, 
+                                                           timeSinceAnimStart_ms);
+                               
+    }
+    
+    if(needToRenderStreamable){
+      GetStreamableFace(context, layeredKeyFrames.faceKeyFrame.GetFace(), stateToSend.faceImg);
+      stateToSend.haveFaceToSend = true;
+    }
+    
+    if(anim != nullptr){
+      auto & spriteSeqTrack = anim->GetTrack<SpriteSequenceKeyFrame>();
+      if(ShouldRenderSpriteTrack(spriteSeqTrack, tracksCurrentlyLocked, timeSinceAnimStart_ms, needToRenderStreamable)){
+        auto & faceKeyFrame = spriteSeqTrack.GetCurrentKeyFrame();
+        
+        // Insert the procedural/streamable face into the composite anim if necessary
+        if(needToRenderStreamable){
+          auto& compImg = faceKeyFrame.GetCompositeImage();
+          InsertStreamableFaceIntoCompImg(stateToSend.faceImg, compImg);
+        }
+        
+        // Render and display the face
+        Vision::SpriteHandle handle;
+        const bool gotImage = faceKeyFrame.GetFaceImageHandle(timeSinceAnimStart_ms, handle);
+        if(gotImage){
+          Vision::HSImageHandle hsHandle = std::make_shared<Vision::HueSatWrapper>(0,0);
+          if(handle->IsContentCached(hsHandle).rgba){
+            const auto& imgRGB = handle->GetCachedSpriteContentsRGBA(hsHandle);
+            // Display the ImageRGB565 directly to the face, without modification
+            stateToSend.faceImg.SetFromImageRGB(imgRGB);
+          }else{
+            auto imgRGB = handle->GetSpriteContentsRGBA(hsHandle);
+            // Display the ImageRGB565 directly to the face, without modification
+            stateToSend.faceImg.SetFromImageRGB(imgRGB);
+          }
+          
+          stateToSend.haveFaceToSend = true;
         }
       }
-      
-      if (gotImage) {
-        DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
-        BufferFaceToSend(_faceDrawBuf);
-        _nextProceduralFaceAllowedTime_ms = currTime_ms + kMinTimeBetweenLastNonProcFaceAndNextProcFace_ms;
-      }
-    }
-    else if(layeredKeyFrames.haveFaceKeyFrame)
-    {
-      GetStreamableFace(layeredKeyFrames.faceKeyFrame.GetFace(), _faceDrawBuf);
-      BufferFaceToSend(_faceDrawBuf);
     }
     
-    if(layeredKeyFrames.haveBackpackKeyFrame)
-    {
-      if (SendIfTrackUnlocked(layeredKeyFrames.backpackKeyFrame.GetStreamMessage(_relativeStreamTime_ms), AnimTrackFlag::BACKPACK_LIGHTS_TRACK)) {
-        EnableBackpackAnimationLayer(true);
-      }
-    }
-      
-    if(layeredKeyFrames.haveAudioKeyFrame)
-    {
-      _animAudioClient->PlayAudioKeyFrame( layeredKeyFrames.audioKeyFrame, _context->GetRandom() );
-    }
-    
-    if(SendIfTrackUnlocked(bodyTrack.GetCurrentStreamingMessage(_relativeStreamTime_ms), AnimTrackFlag::BODY_TRACK)) {
-      DEBUG_STREAM_KEYFRAME_MESSAGE("BodyMotion");
-    }
-    
-    if(SendIfTrackUnlocked(recordHeadingTrack.GetCurrentStreamingMessage(_relativeStreamTime_ms), AnimTrackFlag::BODY_TRACK)) {
-      DEBUG_STREAM_KEYFRAME_MESSAGE("RecordHeading");
-    }
-
-    if(SendIfTrackUnlocked(turnToRecordedHeadingTrack.GetCurrentStreamingMessage(_relativeStreamTime_ms), AnimTrackFlag::BODY_TRACK)) {
-      DEBUG_STREAM_KEYFRAME_MESSAGE("TurnToRecordedHeading");
-    }
-    
-#     undef DEBUG_STREAM_KEYFRAME_MESSAGE
-    
-    return lastResult;
-  } // UpdateStreamingAnimation()
+    return RESULT_OK;
+  }
   
   
-  Result AnimationStreamer::StreamTracks()
+  Result AnimationStreamer::ExtractAnimationMessages(AnimationMessageWrapper& stateToSend)
   {
     ANKI_CPU_PROFILE("AnimationStreamer::Update");
     Result lastResult = RESULT_OK;
@@ -1583,7 +1700,7 @@ namespace Cozmo {
       } // if(IsStreamingAnimFinished())
       else {
         // We do want to store this face to the robot since it's coming from an actual animation
-        lastResult = UpdateStreamingAnimation(true);
+        lastResult = ExtractMessagesFromStreamingAnim(stateToSend);
         streamUpdated = true;
         _lastAnimationStreamTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
         // Send an end-of-animation keyframe when done
@@ -1594,7 +1711,7 @@ namespace Cozmo {
           StopTracksInUse();
           lastResult = SendEndOfAnimation();
           if (_animAudioClient->HasActiveEvents()) {
-            PRINT_NAMED_WARNING("AnimationStreamer.UpdateStreamingAnimation.EndOfAnimation.ActiveAudioEvent",
+            PRINT_NAMED_WARNING("AnimationStreamer.ExtractMessagesFromStreamingAnim.EndOfAnimation.ActiveAudioEvent",
                                 "AnimName: '%s'", _streamingAnimation->GetName().c_str());
           }
         }
@@ -1606,11 +1723,11 @@ namespace Cozmo {
     // If we didn't do any streaming above, but we've still got layers to stream
     if(!streamUpdated)
     {
-      lastResult = StreamProceduralTracks();
+      lastResult = ExtractMessagesFromProceduralTracks(stateToSend);
     }
      
     return lastResult;
-  } // StreamTracks()
+  } // ExtractAnimationMessages()
 
   void AnimationStreamer::SetKeepAliveIfAppropriate()
   {
@@ -1659,52 +1776,72 @@ namespace Cozmo {
 
 
   Result AnimationStreamer::Update()
-  {        
-    // TODO: Send this data up to engine via some new CozmoAnimState message
-    /*
-    const CozmoContext* cozmoContext = robot.GetContext();
-    VizManager* vizManager = robot.GetContext()->GetVizManager();
-    DEV_ASSERT(nullptr != vizManager, "Expecting a non-null VizManager");
-
-    // Update name in viz:
-    if(nullptr == _streamingAnimation && nullptr == _idleAnimation)
-    {
-      vizManager->SetText(VizManager::ANIMATION_NAME, NamedColors::WHITE, "Anim: <none>");
-      cozmoContext->SetSdkStatus(SdkStatusType::Anim, "None");
-    } else if(nullptr != _streamingAnimation) {
-      vizManager->SetText(VizManager::ANIMATION_NAME, NamedColors::WHITE, "Anim: %s",
-                          _streamingAnimation->GetName().c_str());
-      cozmoContext->SetSdkStatus(SdkStatusType::Anim, std::string(_streamingAnimation->GetName()));
-    } else if(nullptr != _idleAnimation) {
-      vizManager->SetText(VizManager::ANIMATION_NAME, NamedColors::WHITE, "Anim[Idle]: %s",
-                          _idleAnimation->GetName().c_str());
-      cozmoContext->SetSdkStatus(SdkStatusType::Anim, std::string("Idle:") + _idleAnimation->GetName());
+  {
+    if(kIsInManualUpdateMode){
+      _relativeStreamTime_ms = kCurrentManualFrameNumber * ANIM_TIME_STEP_MS;
     }
-     */
     
+    Result lastResult = RESULT_OK;
+    AnimationMessageWrapper messageWrapper(_faceDrawBuf);
     
+
     // Make sure the proceduralTrackLayers and streaming animation
     // are advanced to the appropriate keyframe
     _proceduralTrackComponent->AdvanceTracks(_relativeStreamTime_ms);
     if(_streamingAnimation != nullptr){
       _streamingAnimation->AdvanceTracks(_relativeStreamTime_ms);
-
+      
       // Procedural animation is not presistent
       if(_streamingAnimation == _proceduralAnimation){
-       _proceduralAnimation->ClearUpToCurrent();
+        _proceduralAnimation->ClearUpToCurrent();
+      }
+    }
+    
+    if(!kIsInManualUpdateMode){
+
+      // Check to see if we're not streaming anything and a keep alive should take over
+      SetKeepAliveIfAppropriate();
+      
+      // Get the data to send to the robot
+      lastResult = ExtractAnimationMessages(messageWrapper);
+
+      if(_incrementTimeThisTick){
+        _relativeStreamTime_ms += ANIM_TIME_STEP_MS;
+      }
+      _incrementTimeThisTick = true;
+
+    }else if(_streamingAnimation != nullptr){
+      // TODO: Move this render process into the interpolator - should not be part of
+      // Animation streaming, but too large a change to make right now
+      
+      const bool storeFace = true;
+      ExtractMessagesRelatedToProceduralTrackComponent(_context,
+                                                       _streamingAnimation,
+                                                       _proceduralTrackComponent.get(),
+                                                       _lockedTracks,
+                                                       _relativeStreamTime_ms,
+                                                       storeFace,
+                                                       messageWrapper);
+      
+      AnimationInterpolator::GetInterpolationMessages(_streamingAnimation, 
+                                                      kCurrentManualFrameNumber, 
+                                                      messageWrapper);
+      if(kShouldDisplayKeyframeNumber && messageWrapper.haveFaceToSend){
+        // Build display str secs:ms
+        std::string frameNum = std::to_string(kCurrentManualFrameNumber);
+      
+        ColorRGBA color = NamedColors::GREEN;
+      
+        const Point2f pos(20,20);
+        const float scale = 0.5f;
+        
+        messageWrapper.faceImg.DrawText(pos, frameNum, color, scale);
       }
     }
 
-    // Check to see if we're not streaming anything and a keep alive should take over
-    SetKeepAliveIfAppropriate();
-    
-    // Update the stream
-    const Result lastResult = StreamTracks();
+    // Send the data 
+    SendAnimationMessages(messageWrapper);
 
-    if(_incrementTimeThisTick){
-      _relativeStreamTime_ms += ANIM_TIME_STEP_MS;
-    }
-    _incrementTimeThisTick = true;
 
     // Tick audio engine
     _animAudioClient->Update();
@@ -1860,15 +1997,11 @@ namespace Cozmo {
     _proceduralAnimation->SetName(EnumToString(AnimConstants::PROCEDURAL_ANIM));
   }
 
-  void AnimationStreamer::InsertFaceKeyframeIntoCompImg(
-    const TrackLayerComponent::LayeredKeyFrames& layeredKeyFrames,
-    Vision::CompositeImage& image)
+  void AnimationStreamer::InsertStreamableFaceIntoCompImg(Vision::ImageRGB565& streamableFace,
+                                                          Vision::CompositeImage& image)
   {
-    Vision::ImageRGB565 img565(_faceDrawBuf.GetNumRows(), _faceDrawBuf.GetNumCols());
-    GetStreamableFace(layeredKeyFrames.faceKeyFrame.GetFace(), img565);
-    
-    auto* rgbaImg = new Vision::ImageRGBA(img565.GetNumRows(), img565.GetNumCols());
-    rgbaImg->SetFromRGB565(img565);
+    auto* rgbaImg = new Vision::ImageRGBA(streamableFace.GetNumRows(), streamableFace.GetNumCols());
+    rgbaImg->SetFromRGB565(streamableFace);
     auto handle = std::make_shared<Vision::SpriteWrapper>(rgbaImg);
     
     using namespace Vision;
@@ -1894,6 +2027,48 @@ namespace Cozmo {
     // add layer to comp image
     image.AddLayer(std::move(eyeLayer));
   }
+
+  bool AnimationStreamer::ShouldRenderProceduralFace(const Animations::Track<SpriteSequenceKeyFrame>& spriteTrack,
+                                                     const u8 tracksCurrentlyLocked,
+                                                     TimeStamp_t relativeStreamTime_ms)
+  {
+    const bool spriteSeqHasData = !IsTrackLocked(tracksCurrentlyLocked, (u8)AnimTrackFlag::FACE_TRACK) &&
+                                  spriteTrack.HasFramesLeft() &&
+                                  spriteTrack.GetCurrentKeyFrame().IsTimeToPlay(relativeStreamTime_ms);
+    
+    bool newSpriteSeqData =  false;
+    bool allowEyeOverlays = false;
+    if(spriteSeqHasData){
+      auto& faceKeyFrame = spriteTrack.GetCurrentKeyFrame();
+      newSpriteSeqData = faceKeyFrame.NewImageContentAvailable(relativeStreamTime_ms);
+      allowEyeOverlays = faceKeyFrame.AllowProceduralEyeOverlays();
+    }
+
+    return !newSpriteSeqData || allowEyeOverlays;
+  }
+
+  bool AnimationStreamer::ShouldRenderSpriteTrack(const Animations::Track<SpriteSequenceKeyFrame>& spriteTrack,
+                                                  const u8 tracksCurrentlyLocked,
+                                                  TimeStamp_t relativeStreamTime_ms,
+                                                  const bool proceduralFaceRendered)
+  {
+    // Non-procedural faces (raw pixel data/images) take precedence over procedural faces (parameterized faces
+    // like idles, keep alive, or normal animated faces)
+    const bool spriteSeqHasData = !IsTrackLocked(tracksCurrentlyLocked, (u8)AnimTrackFlag::FACE_TRACK) &&
+                                  spriteTrack.HasFramesLeft() &&
+                                  spriteTrack.GetCurrentKeyFrame().IsTimeToPlay(relativeStreamTime_ms);
+    
+    bool newSpriteSeqData =  false;
+    bool needToRenderFaceIntoCompositeImage = false;
+    if(spriteSeqHasData){
+      auto& faceKeyFrame = spriteTrack.GetCurrentKeyFrame();
+      
+      newSpriteSeqData = faceKeyFrame.NewImageContentAvailable(relativeStreamTime_ms);
+      needToRenderFaceIntoCompositeImage = proceduralFaceRendered;
+    }
+    return newSpriteSeqData || needToRenderFaceIntoCompositeImage;
+  }
+
   
 } // namespace Cozmo
 } // namespace Anki
