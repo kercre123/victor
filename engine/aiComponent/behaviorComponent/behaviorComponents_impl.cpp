@@ -39,6 +39,7 @@ class UserIntentComponent;
 class ActiveFeatureComponent;
 class ActiveBehaviorIterator;
 class BehaviorsBootLoader;
+class RobotStatsTracker;
 
 } // namespace Cozmo
 
@@ -62,6 +63,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(UserIntentComponent,                BCComponentID, U
 LINK_COMPONENT_TYPE_TO_ENUM(ActiveFeatureComponent,             BCComponentID, ActiveFeature)
 LINK_COMPONENT_TYPE_TO_ENUM(ActiveBehaviorIterator,             BCComponentID, ActiveBehaviorIterator)
 LINK_COMPONENT_TYPE_TO_ENUM(BehaviorsBootLoader,                BCComponentID, BehaviorsBootLoader)
+LINK_COMPONENT_TYPE_TO_ENUM(RobotStatsTracker,                  BCComponentID, RobotStatsTracker)
 
 // Translate entity into string
 template<>
@@ -90,6 +92,7 @@ std::string GetComponentStringForID<Cozmo::BCComponentID>(Cozmo::BCComponentID e
     case Cozmo::BCComponentID::ActiveFeature:                      { return "ActiveFeature";}
     case Cozmo::BCComponentID::ActiveBehaviorIterator:             { return "ActiveBehaviorIterator";}
     case Cozmo::BCComponentID::BehaviorsBootLoader:                { return "BehaviorsBootLoader";}
+    case Cozmo::BCComponentID::RobotStatsTracker:                  { return "RobotStatsTracker";}
     case Cozmo::BCComponentID::Count:                              { return "Count";}
   }
 }

@@ -66,6 +66,7 @@ enum class RobotComponentID{
   PublicStateBroadcaster,
   SDK,
   RobotIdleTimeout,
+  RobotStatsTracker,
   RobotToEngineImplMessaging,
   StateHistory,
   TextToSpeechCoordinator,

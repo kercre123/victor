@@ -37,21 +37,23 @@
 #include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/components/cubes/cubeLightComponent.h"
+#include "engine/components/dataAccessorComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/inventoryComponent.h"
 #include "engine/components/mics/beatDetectorComponent.h"
+#include "engine/components/mics/micComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/nvStorageComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/photographyManager.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
+#include "engine/components/robotStatsTracker.h"
 #include "engine/components/sdkComponent.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/textToSpeech/textToSpeechCoordinator.h"
-#include "engine/components/dataAccessorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/cozmoContext.h"
@@ -59,7 +61,6 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/fullRobotPose.h"
-#include "engine/components/mics/micComponent.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/moodSystem/stimulationFaceDisplay.h"
 #include "engine/navMap/mapComponent.h"
@@ -283,6 +284,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::TextToSpeechCoordinator,    new TextToSpeechCoordinator());
     _components->AddDependentComponent(RobotComponentID::SDK,                        new SDKComponent());
     _components->AddDependentComponent(RobotComponentID::PhotographyManager,         new PhotographyManager());
+    _components->AddDependentComponent(RobotComponentID::RobotStatsTracker,          new RobotStatsTracker());
     _components->InitComponents(this);
   }
 
