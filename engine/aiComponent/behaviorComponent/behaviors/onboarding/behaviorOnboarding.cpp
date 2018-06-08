@@ -20,8 +20,10 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/iOnboardingStage.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/onboardingStageWakeUpWelcomeHome.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/onboardingStageApp.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/onboardingStageCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/onboardingStageMeetVictor.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/onboardingStageWakeUpWelcomeHome.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -202,22 +204,6 @@ void BehaviorOnboarding::InitBehavior()
                  BehaviorIDToString(_iConfig.wakeUpID) );
   }
   
-  {
-    // init stages
-    _iConfig.stages[OnboardingStages::NotStarted].reset( new OnboardingStageWakeUpWelcomeHome{} );
-    _iConfig.stages[OnboardingStages::FinishedWelcomeHome].reset( new OnboardingStageMeetVictor{} );
-    // _iConfig.stages[OnboardingStages::FinishedMeetVictor].reset( new OnboardingStageCube{} );
-    // this stage only runs if app onboarding directly follows robot onboarding, since BehaviorOnboarding
-    // only activates if the onboarding stage is < Complete. This stage just keeps the robot quiet
-    // while you peruse the app, and is not necessary if you restart app onboarding after having used
-    // the robot for a while
-    // stages[OnboardingStages::Complete].reset( new OnboardingStageApp{} );
-    
-    // temp WIP stages that get automatically skipped:
-    _iConfig.stages[OnboardingStages::FinishedMeetVictor].reset( new OnboardingStageWIP{} );
-    _iConfig.stages[OnboardingStages::Complete].reset( new OnboardingStageWIP{} );
-  }
-  
   if( ANKI_DEV_CHEATS ) {
     // init dev tools
     auto setStageFunc = [this](ConsoleFunctionContextRef context) {
@@ -252,6 +238,12 @@ void BehaviorOnboarding::InitBehavior()
       FileUtils::CreateDirectory( _iConfig.saveFolder, false, true );
     }
   }
+}
+  
+void BehaviorOnboarding::OnBehaviorEnteredActivatableScope()
+{
+  // don't do this in InitBehavior so the stages don't exist in regular robot operation
+  InitStages();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -301,6 +293,9 @@ void BehaviorOnboarding::BehaviorUpdate()
     if( _dVars.devConsoleStage == OnboardingStages::Complete ) {
       TerminateOnboarding();
     } else {
+      if( static_cast<u8>(_dVars.devConsoleStage) < static_cast<u8>(_dVars.currentStage) ) {
+        InitStages(false);
+      }
       MoveToStage( _dVars.devConsoleStage );
     }
     _dVars.devConsoleStagePending = false;
@@ -445,6 +440,29 @@ void BehaviorOnboarding::AlwaysHandleInScope(const GameToEngineEvent& event)
     RequestRetryCharging();
   }
 }
+  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboarding::InitStages(bool resetExisting)
+{
+  // init stages
+  if( resetExisting || !_iConfig.stages[OnboardingStages::NotStarted] ) {
+    _iConfig.stages[OnboardingStages::NotStarted].reset( new OnboardingStageWakeUpWelcomeHome{} );
+  }
+  if( resetExisting || !_iConfig.stages[OnboardingStages::FinishedWelcomeHome] ) {
+    _iConfig.stages[OnboardingStages::FinishedWelcomeHome].reset( new OnboardingStageMeetVictor{} );
+  }
+  if( resetExisting || !_iConfig.stages[OnboardingStages::FinishedMeetVictor] ) {
+    _iConfig.stages[OnboardingStages::FinishedMeetVictor].reset( new OnboardingStageCube{} );
+  }
+  if( resetExisting || !_iConfig.stages[OnboardingStages::Complete] ) {
+    // this stage only runs if app onboarding directly follows robot onboarding, since BehaviorOnboarding
+    // only activates if the onboarding stage is < Complete. This stage just keeps the robot quiet
+    // while you peruse the app, and is not necessary if you restart app onboarding after having used
+    // the robot for a while
+    _iConfig.stages[OnboardingStages::Complete].reset( new OnboardingStageApp{} );
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboarding::MoveToStage( const OnboardingStages& stage )
@@ -525,6 +543,11 @@ void BehaviorOnboarding::MoveToStage( const OnboardingStages& stage )
   // start with trigger word disabled and no whitelist
   SetTriggerWordEnabled(false);
   SetAllowAnyIntent();
+  
+  // drop all IOnboardingStage objects prior to this one so their destructors run
+  for( size_t i=0; i<static_cast<u8>(stage); ++i ) {
+    _iConfig.stages[static_cast<OnboardingStages>(i)].reset();
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -635,6 +658,8 @@ void BehaviorOnboarding::TerminateOnboarding()
     ei->Broadcast( ExternalInterface::MessageEngineToGame{std::move(state)} );
   }
   _dVars.state = BehaviorState::WaitingForTermination;
+  // destroy stages so they don't linger for the rest of the robot's life
+  _iConfig.stages.clear();
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -794,6 +819,7 @@ void BehaviorOnboarding::StartLowBatteryCountdown()
     }
   }
 }
+  
 
 }
 }

@@ -78,11 +78,15 @@ void BehaviorPickUpCube::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorPickUpCube::WantsToBeActivatedBehavior() const
 {
-  // check even if we haven't seen a block so that we can pickup blocks we know of
-  // that are outside FOV
-  ObjectID targetID;
-  CalculateTargetID(targetID);
-  return targetID.IsSet();
+  if( _dVars.idSetExternally ) {
+    return _dVars.targetBlockID.IsSet();
+  } else {
+    // check even if we haven't seen a block so that we can pickup blocks we know of
+    // that are outside FOV
+    ObjectID targetID;
+    CalculateTargetID(targetID);
+    return targetID.IsSet();
+  }
 }
 
 

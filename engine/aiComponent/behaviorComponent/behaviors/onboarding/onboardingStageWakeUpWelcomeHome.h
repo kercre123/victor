@@ -56,6 +56,7 @@ public:
     
     _step = Step::Asleep;
     _currentBehavior = _behaviors[_step];
+    DebugTransition("Waiting for continue to wake up");
   }
   
   virtual void OnContinue( BehaviorExternalInterface& bei ) override
@@ -159,9 +160,9 @@ private:
     SetTriggerWordEnabled(false);
   }
   
-  void DebugTransition(const std::string& toPrint)
+  void DebugTransition(const std::string& stepName)
   {
-    PRINT_CH_INFO("Behaviors", "Onboarding.WakeUpWelcomeHome.Transition", "Transitioning to %s", toPrint.c_str());
+    PRINT_CH_INFO("Behaviors", "Onboarding.WakeUpWelcomeHome.Transition", "Transitioning to %s", stepName.c_str());
   }
   
   enum class Step : uint8_t {

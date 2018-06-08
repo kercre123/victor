@@ -899,7 +899,7 @@ message OnboardingState {
 message OnboardingOnCharger {
   bool onCharger,
   bool needsToCharge,
-  float_32 requiredChargeTime_s, // if needsToCharge, how long it should remain there
+  float_32 requiredChargeTime_s, // if onCharger and needsToCharge, how long it should remain there
 }
 
 message OnboardingLowBattery {
@@ -908,6 +908,13 @@ message OnboardingLowBattery {
 
 message OnboardingPickedUp {
   bool pickedUp,
+}
+
+message OnboardingSeesCube {
+  bool seesCube,
+}
+
+message OnboardingCantFindCube {
 }
 
 // not onboarding 

@@ -1,0 +1,5 @@
+{
+  "behaviorID"    : "OnboardingLookForCube",
+  "behaviorClass" : "AnimSequence",
+  "animTriggers"  : ["OnboardingLookForCube"]
+}

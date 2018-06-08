@@ -668,6 +668,10 @@
     "AnimName": "ag_bored_getout"
   },
   {
+    "CladEvent": "OnboardingLookForCube",
+    "AnimName": "ag_cubetapping_searchforcube"
+  },
+  {
     "CladEvent": "DEPRECATED_OnLearnedPlayerName",
     "AnimName": "ag_freeplay_reacttoface_longname"
   },
