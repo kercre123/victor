@@ -15,8 +15,14 @@ def exec(cmd):
 # Root folder path of repo
 TOPLEVEL = exec(['git', 'rev-parse', '--show-toplevel'])
 
+# Path to helper scripts
+SCRIPTS = os.path.join(TOPLEVEL, 'project', 'victor', 'scripts')
+
+# Path to robot_sh.sh
+ROBOT_SH = os.path.join(SCRIPTS, 'robot_sh.sh')
+
 # Path to vicos_which.sh
-VICOS_WHICH = os.path.join(TOPLEVEL, 'project', 'victor', 'scripts', 'vicos_which.sh')
+VICOS_WHICH = os.path.join(SCRIPTS, 'vicos_which.sh')
 
 # Path to vicos addr2line
 ADDR2LINE = exec([VICOS_WHICH, 'addr2line'])
@@ -65,7 +71,7 @@ def show_tombstone(tombstone, options):
   if re.search('^tombstone', tombstone):
     tombstone = "/data/tombstones/{}".format(tombstone)
   # Fetch tombstone from robot
-  cmd = ["adb", "shell", "cat", tombstone]
+  cmd = [ROBOT_SH, "cat", tombstone]
   output = exec(cmd)
   output = output.split('\r\n')
   # Process tombstone
@@ -75,12 +81,12 @@ def show_tombstone(tombstone, options):
 def main():
   # Parse options
   parser = argparse.ArgumentParser(description='Show victor tombstone')
-  parser.add_argument('--configuration',
-                      '-c',
+  parser.add_argument('-c',
                       dest='configuration',
                       action='store',
                       choices=['Debug', 'Release'],
-                      help='Configuration name (%choices)'
+                      help='Configuration name (%choices)',
+                      required=True
   )
   parser.add_argument(dest='tombstones',
                       action='append',
