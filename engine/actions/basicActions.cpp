@@ -25,6 +25,7 @@
 #include "engine/components/carryingComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
+#include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/drivingAnimationHandler.h"
@@ -2332,6 +2333,12 @@ namespace Anki {
     
     ActionResult CliffAlignToWhiteAction::Init()
     {
+      // Store stop-on-white state and disable it if it's currently enabled
+      _resumeStopOnWhite = GetRobot().GetCliffSensorComponent().IsStopOnWhiteEnabled();
+      if (_resumeStopOnWhite) {
+        GetRobot().GetCliffSensorComponent().EnableStopOnWhite(false);
+      }
+
       // Send align action message to robot
       GetRobot().SendRobotMessage<RobotInterface::CliffAlignToWhiteAction>(true);
       
@@ -2353,7 +2360,12 @@ namespace Anki {
     
     CliffAlignToWhiteAction::~CliffAlignToWhiteAction()
     {
-      GetRobot().SendRobotMessage<RobotInterface::CliffAlignToWhiteAction>(false);
+      if (_state == State::Waiting) {
+        GetRobot().SendRobotMessage<RobotInterface::CliffAlignToWhiteAction>(false);
+      }
+      if (_resumeStopOnWhite) {
+        GetRobot().GetCliffSensorComponent().EnableStopOnWhite(true);
+      }
     }
     
     ActionResult CliffAlignToWhiteAction::CheckIfDone()

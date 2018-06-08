@@ -89,6 +89,13 @@ public:
   
   // Compute the estimated pose of the cliff obstacle for the given cliff event.
   bool ComputeCliffPose(const CliffEvent& cliffEvent, Pose3d& cliffPose) const;
+
+  // Enable/Disable stopping the robot when cliff sensor detects something 
+  // as reflective as the white border of the habitat.
+  void EnableStopOnWhite(bool stopOnWhite);
+
+  // Returns whether or not stop-on-white is enabled
+  bool IsStopOnWhiteEnabled() const { return _stopOnWhiteEnabled; }
   
 private:
   
@@ -127,6 +134,7 @@ private:
 
   uint32_t _nextCliffThresholdUpdateToRobot_ms = 0;
   
+  bool _stopOnWhiteEnabled = false;
 };
 
 

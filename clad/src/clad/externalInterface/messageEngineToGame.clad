@@ -182,6 +182,7 @@ message RobotPoked {
 }
 
 message RobotStopped {
+  StopReason reason
 }
 
 message RobotOffTreadsStateChanged {

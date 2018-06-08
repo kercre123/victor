@@ -263,6 +263,13 @@ message EnableStopOnCliff
   bool enable
 }
 
+// When enabled stops the robot whenever it encounters a 
+// cliff reading that is higher than MIN_CLIFF_STOP_ON_WHITE_VAL
+message EnableStopOnWhite
+{
+  bool enable
+}
+
 // Message to start/stop action that aligns the cliffs sensors with a white line.
 // Assumes at least one of the front cliffs sensors is already detecting
 // a value greater than MIN_CLIFF_STOP_ON_WHITE_VAL.
@@ -652,6 +659,7 @@ union EngineToRobot
   EnableBraceWhenFalling        enableBraceWhenFalling      = 0x35,
   RobotStoppedAck               robotStoppedAck             = 0x36,
   CliffAlignToWhiteAction       cliffAlignToWhiteAction     = 0x37,
+  EnableStopOnWhite             enableStopOnWhite           = 0x38,
   
   // TEMP support for 'old' chargers with black stripe and white body
   ChargerDockingStripeColor     chargerDockingStripeColor   = 0x40,

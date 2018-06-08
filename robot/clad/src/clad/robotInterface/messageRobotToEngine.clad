@@ -68,7 +68,7 @@ message FallingEvent {
 
 message RobotStopped
 {
-  uint_8 reason  // reserved for later in case we need reasons
+  StopReason reason,
 }
 
 message PathFollowingEvent

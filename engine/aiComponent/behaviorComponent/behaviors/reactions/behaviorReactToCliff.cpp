@@ -304,6 +304,10 @@ void BehaviorReactToCliff::HandleWhileInScopeButNotActivated(const EngineToGameE
     }
 
     case EngineToGameTag::RobotStopped: {
+      if (event.GetData().Get_RobotStopped().reason != StopReason::CLIFF) {
+        break;
+      }
+      
       _dVars.quitReaction = false;
       _dVars.gotStop = true;
       _dVars.state = State::PlayingStopReaction;

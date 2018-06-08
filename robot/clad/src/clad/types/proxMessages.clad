@@ -14,6 +14,11 @@ enum uint_8 CliffSensor {
   CLIFF_COUNT
 }
 
+enum uint_8 StopReason {
+  CLIFF,   // Cliff encountered
+  WHITE,   // White (> MIN_CLIFF_STOP_ON_WHITE_VAL) encountered
+}
+
 // If detected, (x_mm, y_mm) represent the location the cliff was detected
 message CliffEvent {
   uint_32  timestamp,

@@ -768,6 +768,11 @@ namespace Cozmo {
       // Handler for the cliff align action completing
       Signal::SmartHandle        _signalHandle;
       
+      // Whether or not to restore stopOnWhite setting when
+      // action completes since it must be disabled for this
+      // action to work.
+      bool _resumeStopOnWhite = false;
+
     }; // class CliffAlignToWhiteAction
 
 

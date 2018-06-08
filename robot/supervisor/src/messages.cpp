@@ -550,6 +550,11 @@ namespace Anki {
         ProxSensors::EnableStopOnCliff(msg.enable);
       }
 
+      void Process_enableStopOnWhite(const RobotInterface::EnableStopOnWhite& msg)
+      {
+        ProxSensors::EnableStopOnWhite(msg.enable);
+      }
+
       void Process_setCliffDetectThresholds(const SetCliffDetectThresholds& msg)
       {
         for (int i = 0 ; i < HAL::CLIFF_COUNT ; i++) {
