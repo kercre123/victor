@@ -28,7 +28,7 @@ using namespace Anki::Cozmo;
 
 constexpr uint8_t track1 = (u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::LIFT_TRACK;
 constexpr uint8_t track2 = (u8)AnimTrackFlag::BACKPACK_LIGHTS_TRACK | (u8)AnimTrackFlag::AUDIO_TRACK;
-constexpr uint8_t track3 = (u8)AnimTrackFlag::FACE_IMAGE_TRACK | (u8)AnimTrackFlag::EVENT_TRACK;
+constexpr uint8_t track3 = (u8)AnimTrackFlag::FACE_TRACK | (u8)AnimTrackFlag::EVENT_TRACK;
 
 namespace {
   std::vector<std::string> actionsDestroyed;
