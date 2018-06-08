@@ -10,11 +10,11 @@
  *
  **/
 
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorReactToPersonDetected.h"
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorReactToPersonDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionSalientPointDetected.h"
 #include "engine/aiComponent/salientPointsDetectorComponent.h"
 #include "engine/components/bodyLightComponent.h"
@@ -61,6 +61,7 @@ void BehaviorReactToPersonDetected::DynamicVariables::Reset()
   state = State::Starting;
   blinkOn = false;
   lastPersonDetected = Vision::SalientPoint();
+  hasToStop = false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -113,7 +114,7 @@ void BehaviorReactToPersonDetected::GetBehaviorJsonKeys(std::set<const char*>& e
 void BehaviorReactToPersonDetected::OnBehaviorActivated() 
 {
   // reset dynamic variables
-  _dVars = DynamicVariables();
+  _dVars.Reset();
 
   PRINT_CH_DEBUG("Behaviors", "BehaviorReactToPersonDetected.OnBehaviorActivated", "I am active!");
 
@@ -126,7 +127,7 @@ void BehaviorReactToPersonDetected::OnBehaviorActivated()
   if (latestPersons.empty()) {
     PRINT_NAMED_ERROR("BehaviorReactToPersonDetected.OnBehaviorActivated.NoPersonDetected", ""
         "Activated but no person available? There's a bug somewhere!");
-    CancelSelf();
+    _dVars.hasToStop = true;
     return;
   }
 
@@ -154,6 +155,10 @@ void BehaviorReactToPersonDetected::BehaviorUpdate()
 {
   PRINT_CH_DEBUG("Behaviors", "BehaviorReactToPersonDetected.BehaviorUpdate", "I am being updated");
 
+  if (_dVars.hasToStop) {
+    TransitionToCompleted();
+    return;
+  }
 
   const bool motorsMoving = GetBEI().GetRobotInfo().GetMoveComponent().IsMoving();
   const bool pickedUp = GetBEI().GetRobotInfo().IsPickedUp();

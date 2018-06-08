@@ -63,6 +63,7 @@ private:
 
     Vision::SalientPoint lastPersonDetected;
     bool blinkOn;
+    bool hasToStop;
 
   };
 

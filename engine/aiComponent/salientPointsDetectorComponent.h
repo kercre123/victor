@@ -58,7 +58,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // constructor
-  explicit SalientPointsDetectorComponent();
+  SalientPointsDetectorComponent();
 
   ~SalientPointsDetectorComponent() override ;
 
@@ -72,12 +72,6 @@ public:
   template <typename Container>
   void GetLastPersonDetectedData(Container& salientPoints) const {
 
-//    PRINT_CH_INFO("Behaviors","SalientPointsDetectorComponent.GetLastPersonDetectedData", "Passed list has %d points",
-//                  int(salientPoints.size()));
-//    PRINT_CH_INFO("Behaviors","SalientPointsDetectorComponent.GetLastPersonDetectedData", "There's %d salient points",
-//                  int(_latestSalientPoints.size()));
-
-
     std::copy_if(_latestSalientPoints.begin(), _latestSalientPoints.end(), std::back_inserter(salientPoints),
                  [](const Vision::SalientPoint& p) {
                    PRINT_CH_INFO("Behaviors","SalientPointsDetectorComponent.GetLastPersonDetectedData",
@@ -86,8 +80,6 @@ public:
                    return p.salientType == Vision::SalientPointType::Person;
                  }
     );
-//    PRINT_CH_INFO("Behaviors","SalientPointsDetectorComponent.GetLastPersonDetectedData", " %zu elements have been copied",
-//                  salientPoints.size());
   }
 
   template <typename Container>

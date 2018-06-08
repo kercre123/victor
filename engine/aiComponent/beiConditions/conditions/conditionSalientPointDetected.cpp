@@ -22,7 +22,6 @@ namespace Cozmo {
 
 ConditionSalientPointDetected::ConditionSalientPointDetected(const Json::Value& config)
     : IBEICondition(config)
-//    : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::SalientPointDetected))
 {
 
   const std::string& targetSalientPoint = JsonTools::ParseString(config, "targetSalientPoint",
@@ -39,8 +38,7 @@ ConditionSalientPointDetected::~ConditionSalientPointDetected()
 
 }
 
-void
-ConditionSalientPointDetected::InitInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void ConditionSalientPointDetected::InitInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // no need to subscribe to messages here, the SalientPointsDetectorComponent will do that for us
 }

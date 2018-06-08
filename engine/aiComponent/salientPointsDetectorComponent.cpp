@@ -14,7 +14,6 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/salientPointsDetectorComponent.h"
 #include "engine/cozmoContext.h"
-#include "engine/drivingAnimationHandler.h"
 #include "engine/robot.h"
 #include "util/console/consoleInterface.h"
 #include "util/random/randomGenerator.h"
