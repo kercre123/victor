@@ -53,8 +53,6 @@ void Daemon::Start() {
   Christen();
 
   InitializeEngineComms();
-  _websocketServer = std::make_unique<WebsocketServer>(_engineMessagingClient);
-  _websocketServer->Start();
   Log::Write("Finished Starting");
 
   // Initialize Ble Ipc Timer
