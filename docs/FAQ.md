@@ -38,6 +38,7 @@ Open the web server (see above) and look for "console vars/funcs".
   - Manually deploy the full libraries (with symbols) to the robot; they are located in `_build/vicos/<Debug/Release>/lib/*.so.full`
   - `scp _build/vicos/<Debug/Release>/lib/<one_or_more_of_the_libraries>.so.full /anki/lib/<one_or_more_of_the_libraries>.so`
   - Reproduce the crash and you should now see symbols
+  - [Follow these detailed instructions for using the Tombstone file (with stack trace)](https://ankiinc.atlassian.net/wiki/spaces/VD/pages/404652111/Victor+Crash+Reports)
   
 ### How do I do performance analysis/benchmarking on robot?
   - Use simpleperf to generate list of highest overhead functions in a process by running [`project/victor/simpleperf/HOW-simpleperf.sh`](/project/victor/simpleperf/HOW-simpleperf.sh)
