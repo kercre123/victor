@@ -89,6 +89,8 @@ enum int_32 AnimationTrigger
   MeetCozmoRenameFaceSayName,           // Say player's new name when rename occurs
   MeetCozmoDuplicateName,               // the given name is already taken
   
+  NeutralFace,
+  
   NothingToDoBoredIdle,                 // Cozmo doesn't have anything to do in freeplay - idling (not playing game sequence)
 
   ObservingIdleEyesOnly,
@@ -281,7 +283,6 @@ enum int_32 AnimationTrigger
   DEPRECATED_MajorWin,
   DEPRECATED_MeetCozmoGetIn,                       // Meet Cozmo Activity get in animation
   DEPRECATED_NamedFaceInitialGreeting,
-  DEPRECATED_NeutralFace,
   DEPRECATED_NothingToDoBoredEvent,             // Cozmo doesn't have anything to do in freeplay - bored game in the middle
   DEPRECATED_NothingToDoBoredIntro,             // Cozmo doesn't have anything to do in freeplay - start of bored game sequence
   DEPRECATED_NothingToDoBoredOutro,             // Cozmo doesn't have anything to do in freeplay - end of bored game sequence

@@ -220,6 +220,7 @@ namespace Cozmo {
     
     Animation*  _streamingAnimation = nullptr;
     Animation*  _neutralFaceAnimation = nullptr;
+    Animation*  _bootFaceAnimation = nullptr;
 
      // for creating animations "live" or dynamically
     Animation*  _proceduralAnimation = nullptr;

@@ -105,6 +105,12 @@ void CliffSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
     SendCliffDetectThresholdsToRobot();
     _nextCliffThresholdUpdateToRobot_ms = 0;
   }
+
+  // Check if StopOnWhite should be auto disabled due to pickup
+  if (_stopOnWhiteEnabled && _robot->IsPickedUp()) {
+    PRINT_NAMED_INFO("CliffSensorComponent.NotifyOfRobotStateInternal.AutoDisableStopOnWhiteDueToPickup", "");
+    EnableStopOnWhite(false);
+  }
 }
 
 
@@ -308,6 +314,18 @@ bool CliffSensorComponent::ComputeCliffPose(const CliffEvent& cliffEvent, Pose3d
   return true;
 }
 
+void CliffSensorComponent::EnableStopOnWhite(bool stopOnWhite)
+{
+  if (_stopOnWhiteEnabled != stopOnWhite) {
+    if (stopOnWhite && _robot->IsPickedUp()) {
+      PRINT_NAMED_WARNING("CliffSensorComponent.EnableStopOnWhite.IgnoredDueToPickup", "");
+    } else {
+      PRINT_NAMED_INFO("CliffSensorComponent.EnableStopOnWhite", "%d", stopOnWhite);
+      _stopOnWhiteEnabled = stopOnWhite;
+      _robot->SendRobotMessage<RobotInterface::EnableStopOnWhite>(stopOnWhite);
+    }
+  }
+}
   
 } // Cozmo namespace
 } // Anki namespace

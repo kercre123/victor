@@ -3,6 +3,7 @@
   "behaviorClass": "Wait",
 
   "associatedActiveFeature": "NoFeature",
+  "emotionEventOnActivated": "ReactToPickedUp",
 
   "wantsToBeActivatedCondition": {
     "conditionType": "OffTreadsState",

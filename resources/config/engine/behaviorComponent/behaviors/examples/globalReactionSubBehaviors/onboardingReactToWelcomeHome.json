@@ -1,0 +1,5 @@
+{
+  "behaviorID": "OnboardingReactToWelcomeHome",
+  "behaviorClass": "AnimSequence",
+  "animTriggers": ["FistBumpSuccess"]
+}

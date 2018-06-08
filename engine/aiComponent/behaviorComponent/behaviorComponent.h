@@ -62,26 +62,6 @@ namespace Audio {
 class BehaviorAudioComponent;
 }
 
-
-class BaseBehaviorWrapper : public IDependencyManagedComponent<BCComponentID>
-{
-public:
-  BaseBehaviorWrapper(IBehavior* baseBehavior)
-  : IDependencyManagedComponent(this, BCComponentID::BaseBehaviorWrapper)
-  , _baseBehavior(baseBehavior){}
-
-  virtual ~BaseBehaviorWrapper(){}
-
-
-  virtual void InitDependent(Robot* robot, const BCCompMap& dependentComponents) override {};
-  virtual void UpdateDependent(const BCCompMap& dependentComponents) override {};
-  virtual void GetInitDependencies(BCCompIDSet& dependencies) const override {};
-  virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {};
-
-  IBehavior* _baseBehavior;
-
-};
-
 class BehaviorComponent : public IBehaviorMessageSubscriber,
                           public IDependencyManagedComponent<AIComponentID>,
                           private Util::noncopyable

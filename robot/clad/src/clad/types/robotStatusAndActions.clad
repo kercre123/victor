@@ -48,6 +48,8 @@ enum uint_8 DockAction
                       // or afterwards
   DA_BACKUP_ONTO_CHARGER,           // Reverse onto the charger platform
   DA_BACKUP_ONTO_CHARGER_USE_CLIFF, // Reverse onto the charger platform, using cliff sensors for angle correction
+  DA_CLIFF_ALIGN_TO_WHITE,    // Squares up the robot such the two front cliff sensors are over the white line
+                              // of the habitat, provided one of the sensors is already detecting white.
 }
 
 enum uint_8 CarryState

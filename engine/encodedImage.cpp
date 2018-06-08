@@ -200,6 +200,7 @@ namespace Cozmo {
       case ImageEncoding::JPEGColorHalfWidth:
       case ImageEncoding::RawRGB:
       case ImageEncoding::YUYV:
+      case ImageEncoding::YUV420sp:
       case ImageEncoding::BAYER:
       {
         return true;

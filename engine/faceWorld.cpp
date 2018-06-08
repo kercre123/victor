@@ -767,6 +767,20 @@ namespace Cozmo {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  std::vector<SmartFaceID> FaceWorld::GetSmartFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms,
+                                                                   bool includeRecognizableOnly) const
+  {
+    std::set< Vision::FaceID_t > faces = GetFaceIDsObservedSince(seenSinceTime_ms,
+                                                                 includeRecognizableOnly);
+    
+    std::vector<SmartFaceID> smartFaces;
+    for(auto& entry : faces){
+      smartFaces.emplace_back(GetSmartFaceID(entry));
+    }
+    return smartFaces;
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   bool FaceWorld::HasAnyFaces(TimeStamp_t seenSinceTime_ms, bool includeRecognizableOnly) const
   {
     auto faceEntryIter = _faceEntries.begin();

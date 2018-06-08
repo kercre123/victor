@@ -15,6 +15,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const faceImagePixelsPerChunk = 600
+
 func WriteToEngine(conn ipc.Conn, msg *gw_clad.MessageExternalToRobot) (int, error) {
 	var err error
 	var buf bytes.Buffer
@@ -62,28 +64,28 @@ func ProtoPlayAnimationToClad(msg *extint.PlayAnimationRequest) *gw_clad.Message
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
 func ProtoMoveHeadToClad(msg *extint.MoveHeadRequest) *gw_clad.MessageExternalToRobot {
 	return gw_clad.NewMessageExternalToRobotWithMoveHead(&gw_clad.MoveHead{
-		Speed_rad_per_sec:  msg.SpeedRadPerSec,
+		Speed_rad_per_sec: msg.SpeedRadPerSec,
 	})
 }
 
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
 func ProtoMoveLiftToClad(msg *extint.MoveLiftRequest) *gw_clad.MessageExternalToRobot {
 	return gw_clad.NewMessageExternalToRobotWithMoveLift(&gw_clad.MoveLift{
-		Speed_rad_per_sec:  msg.SpeedRadPerSec,
+		Speed_rad_per_sec: msg.SpeedRadPerSec,
 	})
 }
 
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
 func ProtoDriveArcToClad(msg *extint.DriveArcRequest) *gw_clad.MessageExternalToRobot {
 	// Bind msg.CurvatureRadiusMm which is an int32 to an int16 boundary to prevent overflow
-	if (msg.CurvatureRadiusMm < math.MinInt16) {
+	if msg.CurvatureRadiusMm < math.MinInt16 {
 		msg.CurvatureRadiusMm = math.MinInt16
-	} else if (msg.CurvatureRadiusMm > math.MaxInt16) {
+	} else if msg.CurvatureRadiusMm > math.MaxInt16 {
 		msg.CurvatureRadiusMm = math.MaxInt16
 	}
 	return gw_clad.NewMessageExternalToRobotWithDriveArc(&gw_clad.DriveArc{
-		Speed: msg.Speed,
-		Accel: msg.Accel,
+		Speed:              msg.Speed,
+		Accel:              msg.Accel,
 		CurvatureRadius_mm: int16(msg.CurvatureRadiusMm),
 		// protobuf does not have a 16-bit integer representation, this conversion is used to satisfy the specs specified in the clad
 	})
@@ -92,15 +94,27 @@ func ProtoDriveArcToClad(msg *extint.DriveArcRequest) *gw_clad.MessageExternalTo
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
 func ProtoSDKActivationToClad(msg *extint.SDKActivationRequest) *gw_clad.MessageExternalToRobot {
 	return gw_clad.NewMessageExternalToRobotWithSDKActivationRequest(&gw_clad.SDKActivationRequest{
-		Slot: msg.Slot,
+		Slot:   msg.Slot,
 		Enable: msg.Enable,
+	})
+}
+
+// TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
+func FaceImageChunkToClad(faceData [faceImagePixelsPerChunk]uint16, pixelCount uint16, chunkIndex uint8, chunkCount uint8, duration_ms uint32, interruptRunning bool) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithDisplayFaceImageRGBChunk(&gw_clad.DisplayFaceImageRGBChunk{
+		FaceData:         faceData,
+		NumPixels:        pixelCount,
+		ChunkIndex:       chunkIndex,
+		NumChunks:        chunkCount,
+		Duration_ms:      duration_ms,
+		InterruptRunning: interruptRunning,
 	})
 }
 
 func CladFeatureStatusToProto(msg *gw_clad.FeatureStatus) *extint.FeatureStatus {
 	return &extint.FeatureStatus{
 		FeatureName: msg.FeatureName,
-		Source: msg.Source,
+		Source:      msg.Source,
 	}
 }
 
@@ -236,6 +250,54 @@ func (m *rpcService) DriveArc(ctx context.Context, in *extint.DriveArcRequest) (
 		return nil, err
 	}
 	return &extint.DriveArcResult{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
+func SendFaceDataAsChunks(in *extint.DisplayFaceImageRGBRequest, chunkCount int, pixelsPerChunk int, totalPixels int) error {
+
+	var convertedUint16Data [faceImagePixelsPerChunk]uint16
+
+	// cycle until we run out of bytes to transfer
+	for i := 0; i < chunkCount; i++ {
+
+		pixelCount := faceImagePixelsPerChunk
+		if i == chunkCount-1 {
+			pixelCount = totalPixels - faceImagePixelsPerChunk*i
+		}
+
+		firstByte := (pixelsPerChunk * 2) * i
+		finalByte := firstByte + (pixelCount * 2)
+		slicedBinaryData := in.FaceData[firstByte:finalByte]
+
+		for j := 0; j < pixelCount; j++ {
+			uintAsBytes := slicedBinaryData[j*2 : j*2+2]
+			convertedUint16Data[j] = binary.BigEndian.Uint16(uintAsBytes)
+		}
+
+		// Copy a subset of the pixels to the bytes?
+		message := FaceImageChunkToClad(convertedUint16Data, uint16(pixelCount), uint8(i), uint8(chunkCount), in.DurationMs, in.InterruptRunning)
+
+		_, err := WriteToEngine(engineSock, message)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *rpcService) DisplayFaceImageRGB(ctx context.Context, in *extint.DisplayFaceImageRGBRequest) (*extint.DisplayFaceImageRGBResult, error) {
+	log.Println("Received rpc request SetOLEDToSolidColor(", in, ")")
+
+	const totalPixels = 17664
+	chunkCount := (totalPixels + faceImagePixelsPerChunk + 1) / faceImagePixelsPerChunk
+
+	SendFaceDataAsChunks(in, chunkCount, faceImagePixelsPerChunk, totalPixels)
+
+	return &extint.DisplayFaceImageRGBResult{
 		Status: &extint.ResultStatus{
 			Description: "Message sent to engine",
 		},

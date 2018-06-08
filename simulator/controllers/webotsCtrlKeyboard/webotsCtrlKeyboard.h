@@ -45,6 +45,7 @@ protected:
   void SearchForNearbyObject();
   void ToggleCliffSensorEnable();
   void ToggleTestBackpackLights();
+  void DoCliffAlignToWhite();
   
   void ToggleTrackToFace();
   void ToggleTrackToObject();
@@ -158,6 +159,8 @@ protected:
   void TouchBackSensor();
 
   void CycleConnectionFlowState();
+
+  void ToggleCameraCaptureFormat();
   
   // ==== End of key press functions ====
   

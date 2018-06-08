@@ -1,5 +1,5 @@
 /**
- * File: logging
+ * File: util/logging/logging.cpp
  *
  * Author: damjan
  * Created: 4/3/2014
@@ -30,7 +30,7 @@
 #include <sstream>
 #include <signal.h>
 
-namespace Anki{
+namespace Anki {
 namespace Util {
 
 std::string HexDump(const void *value, const size_t len, char delimiter)
@@ -80,21 +80,22 @@ using KVV = std::vector<std::pair<const char*, const char*>>;
 
 void AddTickCount(std::ostringstream& oss)
 {
-  if ( gTickTimeProvider ) {
+  if (gTickTimeProvider != nullptr) {
     oss << "(tc";
     oss << std::right << std::setw(4) << std::setfill('0') << gTickTimeProvider->GetTickCount();
     oss << ") ";
   }
-  oss << ": ";
 }
 
-std::string PrependTickCount(const char* logString)
+std::string PrependTickCount(const char * logString)
 {
-  std::ostringstream oss;
-  AddTickCount(oss);
-  oss << logString;
-
-  return std::string(oss.str());
+  if (gTickTimeProvider != nullptr) {
+    std::ostringstream oss;
+    AddTickCount(oss);
+    oss << logString;
+    return oss.str();
+  }
+  return logString;
 }
 
 void LogError(const char* name, const KVV& keyvals, const char* logString)
@@ -125,10 +126,12 @@ void LogChanneledInfo(const char* channel, const char* name, const KVV& keyvals,
 
   // set tick count and channel name if available
   std::ostringstream finalLogStr;
-  AddTickCount(finalLogStr);
+  if (gTickTimeProvider != nullptr) {
+    AddTickCount(finalLogStr);
+  }
 
   std::string channelNameString(channel);
-  if(gChannelFilter.IsInitialized()) {
+  if (gChannelFilter.IsInitialized()) {
     if(!gChannelFilter.IsChannelRegistered(channelNameString)) {
       PRINT_NAMED_ERROR("UnregisteredChannel", "Channel @%s not registered!", channel);
     } else {

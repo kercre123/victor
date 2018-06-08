@@ -23,6 +23,7 @@
 #include "clad/types/ledTypes.clad"
 #include "clad/types/keepFaceAliveParameters.clad"
 #include "clad/types/objectTypes.clad"
+#include "clad/types/onboardingStages.clad"
 #include "clad/types/nvStorageTypes.clad"
 #include "clad/types/pathMotionProfile.clad"
 #include "clad/types/poseStructs.clad"
@@ -521,6 +522,10 @@ message LoadFaceAlbumFromFile {
   bool   isRelativePath=1  // If true, use 'path' relative to internal album path
 }
 
+message SetCameraCaptureFormat {
+  ImageEncoding format
+}
+
 message SetMemoryMapRenderEnabled {
   bool enabled
 }
@@ -866,7 +871,16 @@ message StopCubeAnim {
 // Onboarding
 ///////////////////////////////////////////////////////////////////////////////
 
-message TransitionToNextOnboardingState {
+message OnboardingContinue {
+}
+message OnboardingSkip {
+}
+message OnboardingRetryCharging {
+}
+
+// for internal use only
+message SetOnboardingStage {
+  OnboardingStages stage,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1160,6 +1174,7 @@ message RequestRobotSettings {
 message RobotHistoryRequest {
 }
 
+// Request control from behavior system
 message SDKActivationRequest {
   BehaviorSlot slot,
   bool enable,
@@ -1179,6 +1194,7 @@ autounion MessageGameToEngine
   DriveArc DriveArc = 0x05,
   RobotHistoryRequest RobotHistoryRequest = 0x06,
   SDKActivationRequest SDKActivationRequest = 0x07,
+  DisplayFaceImageRGBChunk DisplayFaceImageRGBChunk = 0x08,
 }
 
 

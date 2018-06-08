@@ -50,6 +50,7 @@
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
+#include "util/logging/DAS.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/multiLoggerProvider.h"
 #include "util/time/universalTime.h"
@@ -323,8 +324,13 @@ Result CozmoEngine::Init(const Json::Value& config) {
   _context->GetRobotManager()->Init(_config);
 
   // TODO: Specify random seed from config?
-  //       Setting to non-zero value for now for repeatable testing.
-  _context->SetRandomSeed(1);
+  uint32_t seed = 0; // will choose random seed
+# ifdef ANKI_PLATFORM_OSX
+  {
+    seed = 1; // Setting to non-zero value for now for repeatable testing.
+  }
+# endif
+  _context->SetRandomSeed(seed);
 
   // VIC-722: Set this automatically using location services
   //          and/or set from UI/SDK?
@@ -534,7 +540,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
         LOG_WARNING("CozmoEngine.Update.UpdateRobotFailed", "Update robot failed with %d", result);
         return result;
       }
-      
+
       UpdateLatencyInfo();
       break;
     }

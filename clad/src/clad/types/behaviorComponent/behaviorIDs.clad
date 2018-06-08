@@ -62,6 +62,7 @@ enum uint_8 BehaviorID {
   ExampleObjectMoved,
   ExampleObjectPositionUpdated,
   ExamplePetInitialDetection,
+  OnboardingReactToWelcomeHome,
 
   // hiking
   Hiking_BringCubeToBeacon,
@@ -202,7 +203,20 @@ enum uint_8 BehaviorID {
   KeepawayVoiceCommand,
 
   // victorBehaviorTree
+  InitNormalOperation,
   ModeSelector,
+  NormalWakeUp,
+
+  // victorBehaviorTree/onboarding
+  Onboarding,
+  OnboardingAsleep,
+  OnboardingLookAtUser,
+  OnboardingLowBattery,
+  OnboardingPickedUp,
+  OnboardingPlacedOnCharger,
+  OnboardingSluggishDriveOffCharger,
+  OnboardingWaitForWelcomeHome,
+  OnboardingWakeUp,
 
   // victorBehaviorTree/quietMode
   BeQuietAnims,
@@ -248,6 +262,7 @@ enum uint_8 BehaviorID {
   SingletonICantDoThat,
 
   // victorBehaviorTree/takeAPhoto
+  FindFacesPhoto,
   FrameFaces,
   TakeAPhotoCoordinator,
   TakingPhotoAnimation,

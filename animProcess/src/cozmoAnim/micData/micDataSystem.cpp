@@ -137,6 +137,14 @@ void MicDataSystem::SetShouldStreamAfterWakeWord(bool shouldStream)
     _micDataProcessor->SetShouldStreamAfterTrigger(shouldStream);
   }
 }
+  
+void MicDataSystem::SetTriggerWordDetectionEnabled(bool enabled)
+{
+  if (_micDataProcessor != nullptr)
+  {
+    _micDataProcessor->SetTriggerWordDetectionEnabled(enabled);
+  }
+}
 
 void MicDataSystem::StartWakeWordlessStreaming()
 {

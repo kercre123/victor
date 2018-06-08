@@ -68,7 +68,7 @@ message FallingEvent {
 
 message RobotStopped
 {
-  uint_8 reason  // reserved for later in case we need reasons
+  StopReason reason,
 }
 
 message PathFollowingEvent
@@ -155,6 +155,7 @@ union RobotToEngine {
   LiftLoad                   liftLoad               = 0xBA,
   PickAndPlaceResult         pickAndPlaceResult     = 0xBB,
   ChargerMountComplete       chargerMountCompleted  = 0xBC,
+  CliffAlignComplete         cliffAlignComplete     = 0xBD,
 
   // Sensors
   // FREE SLOT                                      = 0xC1,

@@ -1,0 +1,7 @@
+{
+  // this is used in meet victor for now, although the design calls for the robot to be looking around.
+  // it should probably look around AND for faces so it has a better chance of finding one for meet
+  "behaviorID": "OnboardingLookAtUser",
+  "behaviorClass": "ObservingLookAtFaces"
+}
+

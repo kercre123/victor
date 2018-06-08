@@ -11,7 +11,7 @@
 
 
  // TODO:  VIC-26 - Migrate Audio in BehaviorEnrollFace
-// This class controlls music state which is not realevent when playing audio on the robot
+// This class controls music state which is not relevant when playing audio on the robot
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorEnrollFace.h"
 
 #include "engine/actions/animActions.h"
@@ -48,8 +48,8 @@
 
 #include "util/console/consoleInterface.h"
 
-/* Note CPP files must explicitly include logging.h for correct expansion of DASMSG macros */
 #include "util/logging/logging.h"
+#include "util/logging/DAS.h"
 
 #define CONSOLE_GROUP "Behavior.EnrollFace"
 
@@ -704,6 +704,9 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
                   _dVars.persistent.state, EnumToString(info.result));
 
     if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
+      const auto& msgRef = info;
+      ExternalInterface::FaceEnrollmentCompleted msgCopy{msgRef};
+      GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast( ExternalInterface::MessageEngineToGame{std::move(msgCopy)} );
       GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast( ExternalMessageRouter::Wrap(std::move(info)) );
     }
 

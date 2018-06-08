@@ -24,6 +24,7 @@ private:
   UnitTestKey(){}
   
   friend class TestBehaviorHighLevelAI;
+  friend class TestBehaviorFramework;
   friend class BehaviorDirectoryStructure_Run_Test;
 };
 

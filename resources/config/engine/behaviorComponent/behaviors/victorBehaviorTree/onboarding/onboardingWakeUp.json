@@ -1,0 +1,12 @@
+{
+  "behaviorID" : "OnboardingWakeUp",
+  "behaviorClass" : "AnimSequence",
+
+  "associatedActiveFeature": "Sleeping",
+  
+  "playOnChargerWithoutBody": true,
+  
+  "animTriggers": [
+    "ConnectWakeUp"
+  ]
+}

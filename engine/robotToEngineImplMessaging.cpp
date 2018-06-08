@@ -473,7 +473,7 @@ void RobotToEngineImplMessaging::HandleRobotStopped(const AnkiEvent<RobotInterfa
   RobotInterface::RobotStopped payload = message.GetData().Get_robotStopped();
   Util::sInfoF("RobotImplMessaging.HandleRobotStopped",
                {{DDATA, ""}},
-               "%d", payload.reason);
+               "%hhu", payload.reason);
 
   // This is a somewhat overloaded use of enableCliffSensor, but currently only cliffs
   // trigger this RobotStopped message so it's not too crazy.
@@ -488,7 +488,7 @@ void RobotToEngineImplMessaging::HandleRobotStopped(const AnkiEvent<RobotInterfa
   robot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::RobotStoppedAck()));
 
   // Forward on with EngineToGame event
-  robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotStopped()));
+  robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotStopped(payload.reason)));
 }
 
 void RobotToEngineImplMessaging::HandlePotentialCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

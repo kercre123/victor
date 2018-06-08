@@ -72,13 +72,15 @@ namespace Anki
       // Sets the camera parameters (non-blocking call)
       void CameraSetParameters(u16 exposure_ms, f32 gain);
       void CameraSetWhiteBalanceParameters(f32 r_gain, f32 g_gain, f32 b_gain);
-
+      void CameraSetCaptureFormat(ImageEncoding format);
+      
       // Points provided frame to a buffer of image data if available.
       // Returns true if image available.
       // If this method results in acquiring a frame, the frame is locked, ensuring
       // that the camera system will not update the buffer.
       // The caller is responsible for releasing the lock by calling CameraFrameRelease.
-      bool CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms);
+      bool CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms,
+                          ImageEncoding& format);
 
       // Releases lock on buffer for specified frameID acquired by calling CameraGetFrame.
       bool CameraReleaseFrame(u32 imageID);

@@ -89,6 +89,23 @@
           "value" : 1.0
         }
       ]
+    },
+    {
+      "name" : "ReactToPickedUp",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Happy",
+          "value" : 0.2
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : 0.2
+        },
+        {
+          "emotionType" : "Social",
+          "value" : 1.0
+        }
+      ]
     }
   ]
 }

@@ -47,6 +47,7 @@ namespace Anki {
         PICKUP_ANIM,
         BACKUP_ON_CHARGER,
         DRIVE_FORWARD,
+        CLIFF_ALIGN_TO_WHITE,
       } Mode;
 
       Result Init();
@@ -86,6 +87,11 @@ namespace Anki {
                          const f32 rel_x,
                          const f32 rel_y,
                          const f32 rel_angle);
+
+      // Start and stop action to align cliff sensors to "white" line
+      // One front sensor must already be detecting white when this is called.
+      void CliffAlignToWhite();
+      void StopCliffAlignToWhite();
 
       // Abort whatever pick or place action we're currently doing
       void Reset();

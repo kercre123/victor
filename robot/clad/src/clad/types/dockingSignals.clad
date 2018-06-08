@@ -113,6 +113,14 @@ message ChargerMountComplete
   bool didSucceed,
 }
 
+// Not really a docking action in the sense that it doesn't
+// care about a visual marker. Uses cliff sensors only.
+message CliffAlignComplete
+{		
+  uint_32  timestamp,
+  bool didSucceed,
+}
+
 structure GoalPose
 {
   RobotPose pose,

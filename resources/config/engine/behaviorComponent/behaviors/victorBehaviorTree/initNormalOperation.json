@@ -1,0 +1,9 @@
+{
+  "behaviorID": "InitNormalOperation",
+  "behaviorClass": "DispatcherQueue",
+
+  "behaviors": [
+    "NormalWakeUp",
+    "ModeSelector"
+  ]
+}

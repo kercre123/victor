@@ -20,6 +20,14 @@ from .messaging import external_interface_pb2_grpc as client
 
 module_logger = logging.getLogger(__name__)
 
+# TODO Remove this when the proto file is using an enum instead of a number
+class SDK_PRIORITY_LEVEL:
+    '''Enum used to specify the priority level that the program requests to run at'''
+
+    # Runs below level "MandatoryPhysicalReactions" and "LowBatteryFindAndGoToHome", and above "TriggerWordDetected".
+    SDK_HIGH_PRIORITY  = 0 
+
+
 class Robot:
     def __init__(self, ip, cert_file, port="443",
                  loop=None, is_async=False, default_logging=True):
@@ -47,18 +55,34 @@ class Robot:
         self.logger.info("Connecting to {}".format(self.address))
         self.channel = aiogrpc.secure_channel(self.address, credentials)
         self.connection = client.ExternalInterfaceStub(self.channel)
+        self.request_control()
         self.events.start(self.connection)
 
     def disconnect(self, wait_for_tasks=True):
         if self.is_async and wait_for_tasks:
             for task in self.pending:
                 task.wait_for_completed()
+        self.release_control()
         self.events.close()
         if self.channel:
             self.loop.run_until_complete(self.channel.close())
         if self.is_loop_owner:
             self.loop.close()
 
+    @actions._as_actionable
+    async def request_control(self, priority_level=SDK_PRIORITY_LEVEL.SDK_HIGH_PRIORITY):
+        sdk_activation_request = protocol.SDKActivationRequest(slot=priority_level, enable=True)
+        result = await self.connection.SDKBehaviorActivation(sdk_activation_request)
+        self.logger.info(f'{type(result)}: {str(result).strip()}')
+        return result 
+
+    @actions._as_actionable
+    async def release_control(self, priority_level=SDK_PRIORITY_LEVEL.SDK_HIGH_PRIORITY):
+        sdk_activation_request = protocol.SDKActivationRequest(slot=priority_level, enable=False)
+        result = await self.connection.SDKBehaviorActivation(sdk_activation_request)
+        self.logger.info(f'{type(result)}: {str(result).strip()}')
+        return result 
+    
     def __enter__(self):
         self.connect()
         return self
@@ -94,11 +118,6 @@ class Robot:
                 chunks.append(chunk)
                 chunk = fh.read(chunk_size)
         return chunks
-
-    # #TODO Refactor out of robot.py
-    # class FileType(IntEnum):
-    #     Animation = 0
-    #     FaceImg = 1
 
     #TODO Refactor out of robot.py
     MAX_MSG_SIZE = 2048
@@ -280,25 +299,28 @@ class Robot:
     async def set_cube_lights( self, cube_id, light, color_profile=lights.white_balanced_cube_profile ):
         await self.set_cube_light_corners( cube_id, *[light, light, light, light], color_profile)
 
-    async def set_oled_to_color(self, color, duration_sec, interrupt_running=True):
-        message = _clad_message.DisplayFaceImageRGB()
+    @actions._as_actionable
+    async def set_oled_with_image_data(self, image_data, duration_sec, interrupt_running=True):
+        if not isinstance(image_data, list):
+            raise ValueError("set_oled_with_image_data expected a list")
+        if len(image_data) != 35328:
+            raise ValueError("set_oled_with_image_data expected a list of 35328 bytes - (2 bytes each for 17664 pixels)")
+
+        # generate the message
+        message = protocol.DisplayFaceImageRGBRequest()
+        # create byte array at the oled resolution
+        message.face_data = bytes(image_data)
         message.duration_ms = int(1000 * duration_sec)
+        message.interrupt_running = interrupt_running
 
-        rgb565 = [
-            ((color.int_color >> 24) & 0xff) >> 3,
-            ((color.int_color >> 16) & 0xff) >> 2,
-            ((color.int_color >> 8) & 0xff) >> 3
-            ]
+        result = await self.connection.DisplayFaceImageRGB(message)
+        self.logger.info(f'{type(result)}: {str(result).strip()}')
+        return result
 
-        int_565_color = (rgb565[0]<<11) | (rgb565[1] << 5) | rgb565[2]
+    def set_oled_to_color(self, color, duration_sec, interrupt_running=True):
 
-        message.faceData = [int_565_color] * 17664
-        message.interruptRunning = interrupt_running
-
-        innerWrappedMessage = _clad_message.VictorDisplay(DisplayFaceImageRGB=message)
-        outerWrappedMessage = _clad_message.ExternalComms(VictorDisplay=innerWrappedMessage)
-
-        await self.socket.send(outerWrappedMessage.pack())
+        byte_list = color.rgb565_bytepair * 17664
+        return self.set_oled_with_image_data(byte_list, duration_sec, interrupt_running)
 
 
 class AsyncRobot(Robot):

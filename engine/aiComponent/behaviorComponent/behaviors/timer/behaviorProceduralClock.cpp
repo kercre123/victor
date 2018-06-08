@@ -310,13 +310,7 @@ void BehaviorProceduralClock::SetGetDigitFunction(GetDigitsFunction&& function)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SmartFaceID BehaviorProceduralClock::UpdateTargetFace()
 {
-  const bool considerTrackingOnlyFaces = false;
-  std::set< Vision::FaceID_t > faces = GetBEI().GetFaceWorld().GetFaceIDs(considerTrackingOnlyFaces);
-  
-  std::vector<SmartFaceID> smartFaces;
-  for(auto& entry : faces){
-    smartFaces.emplace_back(GetBEI().GetFaceWorld().GetSmartFaceID(entry));
-  }
+  auto smartFaces = GetBEI().GetFaceWorld().GetSmartFaceIDsObservedSince(0);
 
   const auto& faceSelection = GetAIComp<FaceSelectionComponent>();
   FaceSelectionComponent::FaceSelectionFactorMap criteriaMap;

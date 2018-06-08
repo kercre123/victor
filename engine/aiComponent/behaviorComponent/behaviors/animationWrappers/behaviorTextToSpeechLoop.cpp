@@ -153,12 +153,13 @@ void BehaviorTextToSpeechLoop::OnBehaviorActivated()
     SetTextToSay(_iConfig.devTestUtteranceString, SayTextIntent::Unprocessed);
   }
 
-  if(!ANKI_VERIFY(kInvalidUtteranceID != _dVars.utteranceID,
-                  "BehaviorTextToSpeechLoop.InvalidUtteranceID",
-                  "Utterance text must be set before this behavior is activated")){
+  if(kInvalidUtteranceID == _dVars.utteranceID) {
+    PRINT_NAMED_WARNING("BehaviorTextToSpeechLoop.InvalidUtteranceID",
+                        "Utterance text must be set before this behavior is activated");
     // In practice, we should never be here, but for unit tests and realworld MISuse-cases, its best if 
     // we exit smoothly rather than outright CancelSelf() here
     TransitionToEmergencyGetOut();
+    return;
   }
 
   if( !_iConfig.idleDuringTTSGeneration || (UtteranceState::Ready == _dVars.utteranceState) ){

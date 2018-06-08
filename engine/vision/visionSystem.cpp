@@ -2011,5 +2011,10 @@ bool VisionSystem::IsGainValid(f32 gain) const
   return inRange;
 }
 
+void VisionSystem::ClearImageCache()
+{
+  _imageCache->ReleaseMemory();
+}
+
 } // namespace Cozmo
 } // namespace Anki

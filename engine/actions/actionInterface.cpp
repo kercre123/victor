@@ -132,6 +132,7 @@ namespace Anki {
         // These actions don't set completion unions
         case RobotActionType::BACKUP_ONTO_CHARGER:
         case RobotActionType::CALIBRATE_MOTORS:
+        case RobotActionType::CLIFF_ALIGN_TO_WHITE:
         case RobotActionType::COMPOUND:
         case RobotActionType::DISPLAY_FACE_IMAGE:
         case RobotActionType::DISPLAY_PROCEDURAL_FACE:

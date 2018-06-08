@@ -39,7 +39,7 @@ namespace {
   constexpr const char * DAS_URL = "https://sqs.us-west-2.amazonaws.com/792379844846/DasInternal-dasinternalSqs-1HN6JX3NZPGNT";
 
   // How many events do we buffer before send? Counted by events.
-  constexpr const size_t QUEUE_THRESHOLD_SIZE = 1000;
+  constexpr const size_t QUEUE_THRESHOLD_SIZE = 256;
 
   // How often do we process queued events? Counted by log records.
   constexpr const int PROCESS_QUEUE_INTERVAL = 1000;
@@ -342,9 +342,12 @@ void DASManager::ProcessQueue()
 
   std::string response;
   const bool success = DAS::PostToServer(DAS_URL, ostr.str(), response);
-  if (!success) {
+  if (success) {
+    ++_uploadSuccessCount;
+  } else {
     // TO DO: Retry after fail? Write to backing store?
     LOG_ERROR("DASManager.ProcessQueue", "Failed to upload %zu events (%s)", nEvents, response.c_str());
+    ++_uploadFailCount;
   }
 
   _eventQueue.clear();
@@ -354,7 +357,9 @@ void DASManager::ProcessQueue()
 // Log some process stats
 void DASManager::ProcessStats()
 {
-  LOG_DEBUG("DASManager.ProcessStats", "%llu entries %llu events %llu sleeps", _entryCount, _eventCount, _sleepCount);
+  LOG_DEBUG("DASManager.ProcessStats",
+            "%llu entries %llu events %llu sleeps %llu uploadSuccess %llu uploadFail",
+            _entryCount, _eventCount, _sleepCount, _uploadSuccessCount, _uploadFailCount);
 
   static struct rusage ru;
   if (getrusage(RUSAGE_SELF, &ru) == 0) {

@@ -14,6 +14,7 @@
 
 #include "engine/actions/actionContainers.h"
 #include "engine/aiComponent/behaviorComponent/asyncMessageGateComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorsBootLoader.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -68,12 +69,12 @@ BehaviorSystemManager::~BehaviorSystemManager()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSystemManager::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
 {
-  auto& baseBehaviorWrapper = dependentComponents.GetValue<BaseBehaviorWrapper>();
+  auto& behaviorsBootloader = dependentComponents.GetValue<BehaviorsBootLoader>();
   auto& bei = dependentComponents.GetValue<BehaviorExternalInterface>();
   auto& async = dependentComponents.GetValue<AsyncMessageGateComponent>();
 
   InitConfiguration(*robot,
-                    baseBehaviorWrapper._baseBehavior,
+                    behaviorsBootloader.GetBootBehavior(),
                     bei,
                     &async);
 }
@@ -91,17 +92,6 @@ Result BehaviorSystemManager::InitConfiguration(Robot& robot,
   DEV_ASSERT(_initializationStage == InitializationStage::SystemNotInitialized &&
              baseBehavior != nullptr,
              "BehaviorSystemManager.InitConfiguration.AlreadyInitialized");
-
-  // If this is the factory test forcibly set baseBehavior as playpen as long as the robot has not been through packout
-  bool startInPlaypen = false;
-#if FACTORY_TEST
-  startInPlaypen = !Factory::GetEMR()->fields.PACKED_OUT_FLAG && !OSState::getInstance()->IsInRecoveryMode();
-#endif
-  if(startInPlaypen)
-  {
-    baseBehavior = behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(PlaypenTest)).get();
-    DEV_ASSERT(baseBehavior != nullptr, "BehaviorSystemManager.InitConfiguration.ForcingPlaypen.Null");
-  }
 
   // Assumes there's only one instance of the behavior external interface
   _behaviorExternalInterface = &behaviorExternalInterface;

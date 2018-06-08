@@ -25,6 +25,7 @@
 #include "engine/components/carryingComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
+#include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/drivingAnimationHandler.h"
@@ -2319,6 +2320,71 @@ namespace Anki {
       _imageProcSignalHandle.reset();
       return ActionResult::SUCCESS;
     }
+    
+
+#pragma mark ---- CliffAlignToWhiteAction ----
+    
+    CliffAlignToWhiteAction::CliffAlignToWhiteAction()
+    : IAction("CliffAlignToWhite",
+              RobotActionType::CLIFF_ALIGN_TO_WHITE,
+              (u8)AnimTrackFlag::BODY_TRACK)
+    {
+    }
+    
+    ActionResult CliffAlignToWhiteAction::Init()
+    {
+      // Store stop-on-white state and disable it if it's currently enabled
+      _resumeStopOnWhite = GetRobot().GetCliffSensorComponent().IsStopOnWhiteEnabled();
+      if (_resumeStopOnWhite) {
+        GetRobot().GetCliffSensorComponent().EnableStopOnWhite(false);
+      }
+
+      // Send align action message to robot
+      GetRobot().SendRobotMessage<RobotInterface::CliffAlignToWhiteAction>(true);
+      
+      // Subscribe to CliffAlignComplete msg
+      auto actionStartedLambda = [this](const AnkiEvent<RobotInterface::RobotToEngine>& event)
+      {
+        const auto& payload = event.GetData().Get_cliffAlignComplete();
+        PRINT_CH_INFO("Actions", "CliffAlignToWhiteAction.Init.CliffAlignComplete",
+                      "[%d] Success: %d",
+                      GetTag(), payload.didSucceed);
+        _state = payload.didSucceed ? State::Success : State::Fail;
+      };
+      
+      _signalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(RobotInterface::RobotToEngineTag::cliffAlignComplete,
+                                                                     actionStartedLambda);
+      
+      return ActionResult::SUCCESS;
+    }
+    
+    CliffAlignToWhiteAction::~CliffAlignToWhiteAction()
+    {
+      if (_state == State::Waiting) {
+        GetRobot().SendRobotMessage<RobotInterface::CliffAlignToWhiteAction>(false);
+      }
+      if (_resumeStopOnWhite) {
+        GetRobot().GetCliffSensorComponent().EnableStopOnWhite(true);
+      }
+    }
+    
+    ActionResult CliffAlignToWhiteAction::CheckIfDone()
+    {
+      ActionResult result = ActionResult::RUNNING;
+
+      switch(_state) {
+        case State::Success:
+          PRINT_CH_INFO("Actions", "CliffAlignToWhiteAction.CheckIfDone.Success", "");
+          return ActionResult::SUCCESS;
+        case State::Fail:
+          PRINT_CH_INFO("Actions", "CliffAlignToWhiteAction.CheckIfDone.Fail", "");
+          return ActionResult::CLIFF_ALIGN_FAILED;
+        default:
+          break;
+      } 
+      
+      return result;
+    } // CheckIfDone()
     
   }
 }

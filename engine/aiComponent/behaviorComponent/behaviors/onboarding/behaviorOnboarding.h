@@ -1,0 +1,198 @@
+/**
+ * File: behaviorOnboarding.h
+ *
+ * Author: ross
+ * Created: 2018-06-01
+ *
+ * Description: The linear progressor for onboarding. It manages interruptions common to all stages,
+ *              messaging, calls to IOnboardingStage's for progresson logic, and delegation requested
+ *              by the stages.
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
+
+#ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorOnboarding__
+#define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorOnboarding__
+#pragma once
+
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "util/signals/simpleSignal_fwd.h"
+
+namespace Anki {
+
+namespace Util{
+  class IConsoleFunction;
+}
+  
+namespace Cozmo {
+
+class IOnboardingStage;
+enum class OnboardingStages : uint8_t;
+  
+class BehaviorOnboarding : public ICozmoBehavior
+{
+public: 
+  virtual ~BehaviorOnboarding() = default;
+  
+  // Sets the activation stage, but doesn't save to nv storage or anything. Incoming messages do that
+  void SetOnboardingStage( OnboardingStages stage ) { _dVars.currentStage = stage; }
+
+  const static std::string kOnboardingFolder;
+  const static std::string kOnboardingFilename;
+  const static std::string kOnboardingStageKey;
+  
+protected:
+
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
+  explicit BehaviorOnboarding(const Json::Value& config);  
+
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  
+  virtual bool WantsToBeActivatedBehavior() const override;
+  virtual void InitBehavior() override;
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
+  virtual void BehaviorUpdate() override;
+  
+  virtual void AlwaysHandleInScope(const GameToEngineEvent& event) override;
+
+private:
+  using StagePtr = std::shared_ptr<IOnboardingStage>;
+  
+  // returns the current stage logic class, even if it is interrupted
+  StagePtr& GetCurrentStage();
+  
+  // Checks for delegation and possibly delegates to interruptions. Returns true if an interruption is running
+  bool CheckAndDelegateInterruptions();
+  
+  // Moves to the next IOnboardingStage
+  void MoveToStage( const OnboardingStages& state );
+  
+  void UpdateBatteryInfo();
+  void StartLowBatteryCountdown();
+  
+  // Interrupts any active stages with OnInterrupted(), caches info about interruptionID, and
+  // messages the app for some interruptions so they can dim the screen or show a modal, etc.
+  void Interrupt( ICozmoBehaviorPtr interruption, BehaviorID interruptionID );
+  
+  // App or devtool queues an event for continue/skip
+  void RequestContinue();
+  void RequestSkip();
+  void RequestRetryCharging();
+  
+  // Put this behavior in a state where it waits for the BSM to switch behavior stacks
+  void TerminateOnboarding();
+  
+  void SetTriggerWordEnabled(bool enabled);
+  void SetAllowedIntent(UserIntentTag tag);
+  void SetAllowAnyIntent();
+
+  // before dealing with any stages, make sure the eyes animation wakes up based on the current stage.
+  // the initial wake up stage handles its own wake up animations
+  enum class WakeUpState : uint8_t {
+    Asleep=0,
+    WakingUp,
+    Complete,
+  };
+  
+  enum class BehaviorState : uint8_t {
+    StageNotStarted=0,
+    StageRunning,
+    Interrupted,
+    InterruptedButComplete, // stage is done, but don't progress until the interruption finishes
+    WaitingForTermination,
+  };
+  
+  // all events are queued so that their order is the same whether its an app event or dev tools event.
+  // this holds the event data.
+  struct PendingEvent {
+    explicit PendingEvent(const EngineToGameEvent& event);
+    explicit PendingEvent(const GameToEngineEvent& event);
+    PendingEvent(){} // only for Continue and Skip
+    ~PendingEvent();
+    enum {
+      Continue,
+      Skip,
+      GameToEngine,
+      EngineToGame,
+    } type;
+    double time_s;
+    union {
+      // continue and skip have no params
+      GameToEngineEvent gameToEngineEvent;
+      EngineToGameEvent engineToGameEvent;
+    };
+  };
+  
+  struct BatteryInfo {
+    bool lowBattery = false;
+    bool onCharger = false;
+    bool sentOutOfLowBattery = false;
+    float timeChargingDone_s = -1.0f;
+    float timeRemovedFromCharger = -1.0f;
+  };
+
+  struct InstanceConfig {
+    InstanceConfig();
+    
+    BehaviorID wakeUpID;
+    ICozmoBehaviorPtr wakeUpBehavior;
+    
+    std::vector<BehaviorID> interruptionIDs;
+    std::vector<ICozmoBehaviorPtr> interruptions;
+    
+    std::unordered_map<OnboardingStages,StagePtr> stages;
+    
+    std::list<Anki::Util::IConsoleFunction> consoleFuncs;
+    
+    std::string saveFolder;
+  };
+  
+  struct DynamicVariables {
+    DynamicVariables();
+    
+    WakeUpState wakeUpState;
+    BehaviorState state;
+    
+    OnboardingStages currentStage;
+    
+    IBehavior* lastBehavior;
+    bool lastTriggerWordEnabled;
+    UserIntentTag lastWhitelistedIntent;
+    BehaviorID lastInterruption;
+    
+    
+    // pending requests from the app, devtools, or messages requested by the stage. While app and
+    // engine messages are received in a known order, dev events are not, and so to make sure the dev
+    // event works the same way as the app will eventually work, they are all cached here until being
+    // passed to the class for stage logic. This recreates some of the functionality of AsycMessageGateComponent,
+    // but allows for different messages for different stages. map key is time_s
+    std::multimap<double, PendingEvent> pendingEvents;
+    // event handlers for messages requested by the stage
+    std::vector<Signal::SmartHandle> stageEventHandles;
+    
+    // gets set to true after the stage's behavior finishes and before it is next processed in BehaviorUpdate,
+    // so that a stage's OnBehaviorDeactivated gets called
+    bool currentStageBehaviorFinished;
+    
+    bool receivedContinue;
+
+    BatteryInfo batteryInfo;
+    
+    bool devConsoleStagePending;
+    OnboardingStages devConsoleStage;
+  };
+
+  InstanceConfig _iConfig;
+  DynamicVariables _dVars;
+  
+};
+
+} // namespace Cozmo
+} // namespace Anki
+
+#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorOnboarding__

@@ -45,9 +45,9 @@ enum class BCComponentID{
   FaceWorld,
   RobotInfo,
   UserIntentComponent,
-  BaseBehaviorWrapper,
   ActiveFeature,
   ActiveBehaviorIterator,
+  BehaviorsBootLoader,
   Count
 };
 

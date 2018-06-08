@@ -1,4 +1,4 @@
-# victor
+# victor (aka Vector)
 
 `victor` is the _code name_ for the next iteration of the Cozmo product line. This repo contains code for the embedded firmware (syscon), robotics, animation, engine, and app layers.
 
@@ -214,3 +214,6 @@ Check out the [Frequently Asked Questions](/docs/FAQ.md) page. When you get new 
 [Victor DVT3 ssh connection](https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/368476326/Victor+DVT3+ssh+connection)
 
 [Victor DVT3 OTA Instructions](https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/323321886/Victor+OTA+update+using+Mac-Client+tool#VictorOSand\OTAupdateusingMac-Clienttool-OTA)
+
+----
+Copyright (C) 2018 Anki Inc.

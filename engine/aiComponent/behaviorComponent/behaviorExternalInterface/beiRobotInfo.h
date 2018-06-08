@@ -47,6 +47,7 @@ class DrivingAnimationHandler;
 class IExternalInterface;
 class MoodManager;
 class MovementComponent;
+class NVStorageComponent;
 class ObjectPoseConfirmer;
 class PathComponent;
 class ProgressionUnlockComponent;
@@ -97,6 +98,7 @@ public:
   f32 GetLiftAngle() const;
   f32 GetLiftHeight() const;
   MovementComponent& GetMoveComponent() const;
+  NVStorageComponent& GetNVStorageComponent() const;
   ObjectPoseConfirmer& GetObjectPoseConfirmer() const;
   OffTreadsState GetOffTreadsState() const;
   TimeStamp_t GetOffTreadsStateLastChangedTime_ms() const; // note: engine time, not robot time

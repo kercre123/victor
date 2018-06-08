@@ -43,6 +43,7 @@ class BlockWorldFilter;
 class ObservableObject;
 class Robot;
 class SmartFaceID;
+enum class OnboardingStages : uint8_t;
 
 namespace DefaultFailToUseParams {
 constexpr static const float kTimeObjectInvalidAfterFailure_sec = 30.f;
@@ -242,13 +243,20 @@ public:
   // clears the post behavior suggestions
   void ClearPostBehaviorSuggestions();
   
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Events
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // template for all events we subscribe to
   template<typename T>
   void HandleMessage(const T& msg);
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Onboarding
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  OnboardingStages GetCurrentOnboardingStage() { return _onboardingStage; }
+  void SetMostRecentOnboardingStage(OnboardingStages stage) { _onboardingStage = stage; } // doesn't save or broadcast
 
 private:
 
@@ -338,6 +346,9 @@ private:
   ObjectID _victor_cubeToEat;
   
   std::unordered_map<PostBehaviorSuggestions, size_t> _postBehaviorSuggestions;
+  
+  // holds the current onboarding stage to avoid having to listen for it or read it from disk
+  OnboardingStages _onboardingStage;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

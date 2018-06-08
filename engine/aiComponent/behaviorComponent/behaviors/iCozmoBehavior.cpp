@@ -122,7 +122,7 @@ void ICozmoBehavior::InjectBehaviorClassAndIDIntoConfig(BehaviorClass behaviorCl
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorID ICozmoBehavior::ExtractBehaviorIDFromConfig(const Json::Value& config,
-                                                  const std::string& fileName)
+                                                       const std::string& fileName)
 {
   const std::string debugName = "IBeh.NoBehaviorIdSpecified";
   const std::string behaviorID_str = JsonTools::ParseString(config, kBehaviorIDConfigKey, debugName);

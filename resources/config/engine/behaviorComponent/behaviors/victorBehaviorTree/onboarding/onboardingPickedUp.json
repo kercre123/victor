@@ -1,0 +1,18 @@
+{
+  "behaviorID": "OnboardingPickedUp",
+  "behaviorClass": "OnboardingInterruptionHead",
+
+  
+  "wantsToBeActivatedCondition": {
+    "conditionType": "Compound",
+    "not": {
+      "conditionType": "OffTreadsState",
+      "targetState": "OnTreads"
+    }
+  },
+
+  "wantsToCancelSelfCondition": {
+    "conditionType": "OffTreadsState",
+    "targetState": "OnTreads"
+  }
+}

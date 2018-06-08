@@ -738,6 +738,44 @@ namespace Cozmo {
       f32 _timeout_sec;
     };
     
+    
+    // CliffAlignToWhite
+    //
+    // Uses cliff sensors to align both front sensors with the
+    // white border line of the habitat.
+    // Requires that one front cliff sensor is already on a white line.
+    class CliffAlignToWhiteAction : public IAction
+    {
+    public:
+      CliffAlignToWhiteAction();
+      
+      virtual ~CliffAlignToWhiteAction();
+      
+    protected:
+      
+      virtual ActionResult Init() override;
+      virtual ActionResult CheckIfDone() override;
+      
+    private:
+      enum class State : u8 {
+        Waiting,
+        Success,
+        Fail
+      };
+
+      State _state = State::Waiting;
+
+      // Handler for the cliff align action completing
+      Signal::SmartHandle        _signalHandle;
+      
+      // Whether or not to restore stopOnWhite setting when
+      // action completes since it must be disabled for this
+      // action to work.
+      bool _resumeStopOnWhite = false;
+
+    }; // class CliffAlignToWhiteAction
+
+
 } // namespace Cozmo
 } // namespace Anki
 

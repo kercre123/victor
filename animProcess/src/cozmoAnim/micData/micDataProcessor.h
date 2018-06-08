@@ -64,6 +64,8 @@ public:
   float GetIncomingMicDataPercentUsed();
   
   void SetShouldStreamAfterTrigger(bool shouldStream) { _shouldStreamAfterTrigger = shouldStream; }
+  
+  void SetTriggerWordDetectionEnabled(bool enabled) { _triggerEnabled = enabled; }
 
   BeatDetector& GetBeatDetector() { assert(nullptr != _beatDetector); return *_beatDetector.get(); }
   
@@ -100,6 +102,7 @@ private:
   bool _processThreadStop = false;
   bool _robotWasMoving = false;
   bool _shouldStreamAfterTrigger = true;
+  bool _triggerEnabled = true;
 
   // Internal buffer used to add to the streaming audio once a trigger is detected
   static constexpr uint32_t kImmediateBufferSize = kPreTriggerOverlapSize_ms / kTimePerSEBlock_ms;

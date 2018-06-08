@@ -507,6 +507,14 @@ namespace Cozmo {
     
     enableCliffSensor = !enableCliffSensor;
   }
+
+  void WebotsKeyboardController::DoCliffAlignToWhite()
+  {
+    ExternalInterface::CliffAlignToWhite msg;
+    ExternalInterface::MessageGameToEngine msgWrapper;
+    msgWrapper.Set_CliffAlignToWhite(msg);
+    SendMessage(msgWrapper);
+  }
   
   void WebotsKeyboardController::ToggleTestBackpackLights()
   {
@@ -2028,7 +2036,7 @@ namespace Cozmo {
     
     REGISTER_KEY_FCN('C', MOD_NONE,      LogCliffSensorData,    "Request cliff sensor log");
     REGISTER_KEY_FCN('C', MOD_SHIFT,     ExecuteBehavior,       "Execute behavior in 'behaviorName'");
-//      REGISTER_KEY_FCN('C', MOD_ALT,       , "");
+    REGISTER_KEY_FCN('C', MOD_ALT,       ToggleCameraCaptureFormat, "Toggle camera capture format between RGB and YUV");
 //      REGISTER_KEY_FCN('C', MOD_ALT_SHIFT, , "");
     
     REGISTER_KEY_FCN('D', MOD_NONE,      ToggleVizDisplay,      "Toggle viz display");
@@ -2108,7 +2116,7 @@ namespace Cozmo {
     REGISTER_KEY_FCN('S', MOD_NONE,      MoveHeadUp, "Move head up");
     REGISTER_KEY_FCN('S', MOD_SHIFT,     MoveHeadUp, "Move head up (half speed)");
 //    REGISTER_KEY_FCN('S', MOD_ALT,       , "");
-//    REGISTER_KEY_FCN('S', MOD_ALT_SHIFT, , "");
+    REGISTER_KEY_FCN('S', MOD_ALT_SHIFT, DoCliffAlignToWhite, "If one front sensor is detecting white (> MIN_CLIFF_STOP_ON_WHITE_VAL) then rotate until other front sensor detects it as well.");
     
     REGISTER_KEY_FCN('T', MOD_NONE,      ExecuteTestPlan,     "Execute test plan");
     REGISTER_KEY_FCN('T', MOD_ALT,       ToggleTrackToFace,   "Track to face");
@@ -2533,7 +2541,21 @@ namespace Cozmo {
     // in the pose of the Webots::Node
     return GetPose3dOfNode(root_);
   }
-
+  
+  void WebotsKeyboardController::ToggleCameraCaptureFormat()
+  {
+    ExternalInterface::SetCameraCaptureFormat msg;
+    static bool yuv = true;
+    LOG_INFO("ToggleCameraCaptureFormat",
+             "Switching to %s",
+             yuv ? "YUV" : "RGB");
+    msg.format = (yuv ? ImageEncoding::YUV420sp : ImageEncoding::RawRGB);
+    yuv = !yuv;
+    
+    ExternalInterface::MessageGameToEngine msgWrapper;
+    msgWrapper.Set_SetCameraCaptureFormat(msg);
+    SendMessage(msgWrapper);
+  }
     
   s32 WebotsKeyboardController::UpdateInternal()
   {

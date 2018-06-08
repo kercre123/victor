@@ -66,6 +66,7 @@ public:
   void RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT);
   void RecordProcessedAudio(uint32_t duration_ms, const std::string& path);
   void SetShouldStreamAfterWakeWord(bool shouldStream);
+  void SetTriggerWordDetectionEnabled(bool enabled);
   void StartWakeWordlessStreaming();
   void Update(BaseStationTime_t currTime_nanosec);
 

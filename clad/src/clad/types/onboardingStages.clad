@@ -1,0 +1,23 @@
+// Onboarding stages
+// Author: ross
+// Copyright: Anki Inc (c) 2018
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 OnboardingStages
+{
+  // PLEASE KEEP ORDERED CHRONOLOGICALLY AND SEQUENTIALLY (for dev tools to work)
+
+  NotStarted = 0, // hasn't said "welcome home"
+  FinishedWelcomeHome,
+  FinishedMeetVictor,
+  
+  Complete, // has fully completed robot onboarding (but perhaps not the app onboarding)
+
+  // if you manually set your state to this, it will start awake with eyes on but motionless
+  DevDoNothing,
+}
+
+}
+}
