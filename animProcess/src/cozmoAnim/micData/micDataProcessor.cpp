@@ -98,7 +98,7 @@ namespace {
   CONSOLE_VAR(bool, kMicData_UseFallbackBeam, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_ForceDisableMicDataProc, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_ForceEnableMicDataProc, CONSOLE_GROUP, false);
-  CONSOLE_VAR(bool, kMicData_CollectAllTriggers, CONSOLE_GROUP, false);
+  CONSOLE_VAR(bool, kMicData_CollectRawTriggers, CONSOLE_GROUP, false);
 # undef CONSOLE_GROUP
 
 }
@@ -259,33 +259,42 @@ TimeStamp_t MicDataProcessor::CreateTriggerWordDetectedJobs()
   }
 
   // Now we set up the optional job for recording _just_ the trigger that was just recognized
-  if (kMicData_CollectAllTriggers)
   {
-    auto triggerJob = std::make_shared<MicDataInfo>();
-    triggerJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggersOnly"});
-    triggerJob->_writeNameBase = ""; // Use the autogen names in this subfolder
-    triggerJob->_numMaxFiles = 100;
-    bool saveToFile = true;
-    triggerJob->EnableDataCollect(MicDataType::Raw, saveToFile);
-    triggerJob->EnableDataCollect(MicDataType::Processed, saveToFile);
-    triggerJob->_audioSaveCallback = std::bind(&MicDataSystem::AudioSaveCallback, _micDataSystem, std::placeholders::_1);
+    bool saveTriggerOnly = false;
+# if ANKI_DEV_CHEATS
+    saveTriggerOnly = true;
+# endif // ANKI_DEV_CHEATS
 
-    // We only record a little extra time beyond what we're stuffing in below
-    constexpr uint32_t timeAfterTriggerEnd_ms = 170;
-    triggerJob->SetTimeToRecord(timeAfterTriggerEnd_ms);
+    if (saveTriggerOnly)
+    {
+      auto triggerJob = std::make_shared<MicDataInfo>();
+      triggerJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggersOnly"});
+      triggerJob->_writeNameBase = ""; // Use the autogen names in this subfolder
+      triggerJob->_numMaxFiles = 100;
+      triggerJob->EnableDataCollect(MicDataType::Processed, saveTriggerOnly);
+      if (kMicData_CollectRawTriggers)
+      {
+        triggerJob->EnableDataCollect(MicDataType::Raw, saveTriggerOnly);
+      }
+      triggerJob->_audioSaveCallback = std::bind(&MicDataSystem::AudioSaveCallback, _micDataSystem, std::placeholders::_1);
 
-    for (size_t i=0; i<maxIndex; ++i)
-    {
-      const auto& audioBlock = _immediateAudioBuffer[i].audioBlock;
-      triggerJob->CollectProcessedAudio(audioBlock.data(), audioBlock.size());
+      // We only record a little extra time beyond what we're stuffing in below
+      constexpr uint32_t timeAfterTriggerEnd_ms = 170;
+      triggerJob->SetTimeToRecord(timeAfterTriggerEnd_ms);
+
+      for (size_t i=0; i<maxIndex; ++i)
+      {
+        const auto& audioBlock = _immediateAudioBuffer[i].audioBlock;
+        triggerJob->CollectProcessedAudio(audioBlock.data(), audioBlock.size());
+      }
+      for (size_t i=0; i<_immediateAudioBufferRaw.size(); ++i)
+      {
+        const auto& audioBlock = _immediateAudioBufferRaw[i];
+        triggerJob->CollectRawAudio(audioBlock.data(), audioBlock.size());
+      }
+      const auto notStreamingJob = false;
+      _micDataSystem->AddMicDataJob(triggerJob, notStreamingJob);
     }
-    for (size_t i=0; i<_immediateAudioBufferRaw.size(); ++i)
-    {
-      const auto& audioBlock = _immediateAudioBufferRaw[i];
-      triggerJob->CollectRawAudio(audioBlock.data(), audioBlock.size());
-    }
-    const auto notStreamingJob = false;
-    _micDataSystem->AddMicDataJob(triggerJob, notStreamingJob);
   }
 
   TimeStamp_t mostRecentTimestamp = _immediateAudioBuffer[_procAudioRawComplete-1].timestamp;
