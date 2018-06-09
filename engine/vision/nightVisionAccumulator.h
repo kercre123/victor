@@ -24,7 +24,9 @@ class NightVisionAccumulator
 {
 public:
 
-  NightVisionAccumulator(const Json::Value& config);
+  NightVisionAccumulator();
+  
+  Result Init(const Json::Value& config);
 
   void AddImage( const Vision::Image& img, const VisionPoseData& poseData );
   void Reset();

@@ -27,6 +27,7 @@
 #include "engine/vision/imageSaver.h"
 #include "engine/vision/laserPointDetector.h"
 #include "engine/vision/motionDetector.h"
+#include "engine/vision/nightVisionAccumulator.h"
 #include "engine/vision/overheadEdgesDetector.h"
 #include "engine/vision/overheadMap.h"
 #include "engine/vision/visionModesHelpers.h"
@@ -119,6 +120,7 @@ VisionSystem::VisionSystem(const CozmoContext* context)
 : _rollingShutterCorrector()
 , _lastRollingShutterCorrectionTime(0)
 , _imageCache(new Vision::ImageCache())
+, _nightImageCache(new Vision::ImageCache())
 , _context(context)
 , _imagingPipeline(new Vision::ImagingPipeline())
 , _poseOrigin("VisionSystemOrigin")
@@ -130,6 +132,7 @@ VisionSystem::VisionSystem(const CozmoContext* context)
 , _cameraCalibrator(new CameraCalibrator(*this))
 , _illuminationDetector(new IlluminationDetector())
 , _imageSaver(new ImageSaver(_camera))
+, _nightVisionAccumulator(new NightVisionAccumulator())
 , _benchmark(new Vision::Benchmark())
 , _neuralNetRunner(new Vision::NeuralNetRunner())
 , _clahe(cv::createCLAHE())
@@ -276,6 +279,18 @@ Result VisionSystem::Init(const Json::Value& config)
   if( illuminationResult != RESULT_OK )
   {
     PRINT_NAMED_ERROR("VisionSystem.Init.IlluminationDetectorInitFailed", "");
+    return RESULT_FAIL;
+  }
+
+  if(!config.isMember("NightVisionAccumulator"))
+  {
+    PRINT_NAMED_ERROR("VisionSystem.Init.MissingNightVisionAccumulatorConfigFIeld", "");
+    return RESULT_FAIL;
+  }
+  Result nightVisionResult = _nightVisionAccumulator->Init(config["NightVisionAccumulator"]);
+  if( nightVisionResult != RESULT_OK )
+  {
+    PRINT_NAMED_ERROR("VisionSystem.Init.NightVisionAccumulatorInitFailed", "");
     return RESULT_FAIL;
   }
 
@@ -1508,18 +1523,19 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   }
   
   // Begin image processing
-  // Apply CLAHE if enabled:
-  DEV_ASSERT(kUseCLAHE_u8 < Util::EnumToUnderlying(MarkerDetectionCLAHE::Count),
-             "VisionSystem.ApplyCLAHE.BadUseClaheVal");
-  MarkerDetectionCLAHE useCLAHE = static_cast<MarkerDetectionCLAHE>(kUseCLAHE_u8);
-  Vision::Image claheImage;
-  
-  // Note: this will do nothing and leave claheImage empty if CLAHE is disabled
-  // entirely or for this frame.
-  lastResult = ApplyCLAHE(imageCache, useCLAHE, claheImage);
-  if(RESULT_OK != lastResult) {
-    PRINT_NAMED_WARNING("VisionSystem.Update.FailedCLAHE", "");
-    return lastResult;
+  bool usingNightVision = false;
+  Vision::ImageCache* nightVisionCache = nullptr;
+  if(ShouldProcessVisionMode(VisionMode::NightVision))
+  {
+    usingNightVision = true;
+    _nightVisionAccumulator->AddImage( imageCache.GetGray(), poseData );
+    
+    Vision::Image nightImage;
+    if( _nightVisionAccumulator->GetOutput( nightImage ) )
+    {
+      _nightImageCache->Reset( nightImage );
+      nightVisionCache = _nightImageCache.get();
+    }
   }
   
   if(ShouldProcessVisionMode(VisionMode::ComputingStatistics))
@@ -1533,17 +1549,36 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   std::vector<Anki::Rectangle<s32>> detectionRects;
 
   if(ShouldProcessVisionMode(VisionMode::DetectingMarkers)) {
-    // Marker detection uses rolling shutter compensation
-    UpdateRollingShutter(poseData, imageCache);
 
-    Tic("TotalDetectingMarkers");
-    lastResult = DetectMarkersWithCLAHE(imageCache, claheImage, detectionRects, useCLAHE);
-    if(RESULT_OK != lastResult) {
-      PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
-      return lastResult;
+    // Apply CLAHE if enabled:
+    DEV_ASSERT(kUseCLAHE_u8 < Util::EnumToUnderlying(MarkerDetectionCLAHE::Count),
+              "VisionSystem.ApplyCLAHE.BadUseClaheVal");
+    MarkerDetectionCLAHE useCLAHE = static_cast<MarkerDetectionCLAHE>(kUseCLAHE_u8);
+    Vision::Image claheImage;
+    
+    Vision::ImageCache* markerProcCache = usingNightVision ? nightVisionCache : &imageCache;
+    
+    if( nullptr != markerProcCache )
+    {
+      // Note: this will do nothing and leave claheImage empty if CLAHE is disabled
+      // entirely or for this frame.
+      lastResult = ApplyCLAHE(*markerProcCache, useCLAHE, claheImage);
+      if(RESULT_OK != lastResult) {
+        PRINT_NAMED_WARNING("VisionSystem.Update.FailedCLAHE", "");
+        return lastResult;
+      }
+      // Marker detection uses rolling shutter compensation
+      UpdateRollingShutter(poseData, *markerProcCache);
+
+      Tic("TotalDetectingMarkers");
+      lastResult = DetectMarkersWithCLAHE(*markerProcCache, claheImage, detectionRects, useCLAHE);
+      if(RESULT_OK != lastResult) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
+        return lastResult;
+      }
+      visionModesProcessed.SetBitFlag(VisionMode::DetectingMarkers, true);
+      Toc("TotalDetectingMarkers");
     }
-    visionModesProcessed.SetBitFlag(VisionMode::DetectingMarkers, true);
-    Toc("TotalDetectingMarkers");
   }
   
   if(ShouldProcessVisionMode(VisionMode::DetectingFaces)) {

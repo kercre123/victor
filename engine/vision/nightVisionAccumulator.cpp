@@ -10,6 +10,7 @@
  **/
 
 #include "engine/vision/nightVisionAccumulator.h"
+#include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/vision/engine/imageBrightnessHistogram.h"
 
@@ -37,14 +38,25 @@ u8 ScalePixel(u8 p, const f32& k)
   return static_cast<u8>( pK );
 }
 
-NightVisionAccumulator::NightVisionAccumulator(const Json::Value& config)
+NightVisionAccumulator::NightVisionAccumulator()
 {
-  _minNumImages = JsonTools::ParseUInt32( config, kMinAccImagesKey, "Vision.NightVisionAccumulator.Constructor" );
-  _histSubsample = JsonTools::ParseInt32( config, kHistSubsampleKey, "Vision.NightVisionAccumulator.Constructor" );
-  _contrastTargetPercentile = JsonTools::ParseFloat( config, kTargetPercentileKey, "Vision.NightVisionAccumulator.Constructor" );
-  _contrastTargetValue = JsonTools::ParseUint8( config, kTargetValueKey, "Vision.NightVisionAccumulator.Constructor" );
-
+  Reset(); 
+}
+Result NightVisionAccumulator::Init( const Json::Value& config )
+{
+  #define PARSE_PARAM(conf, key, var) \
+  if( !JsonTools::GetValueOptional( conf, key, var ) ) \
+  { \
+    PRINT_NAMED_ERROR( "NightVisionAccumulator.Init.MissingParameter", "Could not parse parameter: %s", key ); \
+    return RESULT_FAIL; \
+  }
+  
+  PARSE_PARAM( config, kMinAccImagesKey, _minNumImages );
+  PARSE_PARAM( config, kHistSubsampleKey, _histSubsample );
+  PARSE_PARAM( config, kTargetPercentileKey, _contrastTargetPercentile );
+  PARSE_PARAM( config, kTargetValueKey, _contrastTargetValue );
   Reset();
+  return RESULT_OK;
 }
 
 void NightVisionAccumulator::Reset()
