@@ -141,6 +141,9 @@ struct DockingErrorSignal;
     // requesting the format change and will continue to
     // wait until we once again recieve frames from the camera
     bool   SetCameraCaptureFormat(ImageEncoding format);
+    
+    // Returns true while camera format is in the process of changing
+    bool   IsWaitingForCaptureFormatChange() const;
 
     // Set whether or not we draw each processed image to the robot's screen
     // (Not using the word "face" because of confusion with "faces" in vision)
@@ -164,7 +167,8 @@ struct DockingErrorSignal;
     Result UpdateVisualObstacles(const VisionProcessingResult& procResult);
     Result UpdateSalientPoints(const VisionProcessingResult& result);
     Result UpdateWhiteBalance(const VisionProcessingResult& procResult);
-
+    Result UpdatePhotoManager(const VisionProcessingResult& procResult);
+    
     const Vision::Camera& GetCamera(void) const;
     Vision::Camera& GetCamera(void);
     
@@ -282,9 +286,14 @@ struct DockingErrorSignal;
     Result LoadFaceAlbumFromFile(const std::string& path, std::list<Vision::LoadedKnownFace>& loadedFaces); // Populates list, does not broadcast
     
     // See VisionSystem::SetSaveParameters for details on the arguments
-    void SetSaveImageParameters(const ImageSendMode saveMode, const std::string& path, const int8_t onRobotQuality, 
+    // NOTE: if path is empty, it will default to <cachePath>/camera/images (where cachePath comes from DataPlatform)
+    void SetSaveImageParameters(const ImageSendMode saveMode,
+                                const std::string& path,
+                                const std::string& basename,
+                                const int8_t onRobotQuality,
                                 const Vision::ImageCache::Size& saveSize = Vision::ImageCache::Size::Full,
-                                const bool removeRadialDistortion = false);
+                                const bool removeRadialDistortion = false,
+                                const f32 thumbnailScaleFraction = 0.f);
 
     // This is for faking images being processed for unit tests
     void FakeImageProcessed(TimeStamp_t t);

@@ -89,6 +89,7 @@ class MovementComponent;
 class NVStorageComponent;
 class ObjectPoseConfirmer;
 class PetWorld;
+class PhotographyManager;
 class ProgressionUnlockComponent;
 class RobotEventHandler;
 class RobotGyroDriftDetector;
@@ -307,7 +308,10 @@ public:
   
   const SDKComponent&    GetSDKComponent()    const { return GetComponent<SDKComponent>(); }
   SDKComponent&          GetSDKComponent()          { return GetComponent<SDKComponent>(); }
-
+  
+  const PhotographyManager& GetPhotographyManager() const {return GetComponent<PhotographyManager>();}
+  PhotographyManager&       GetPhotographyManager()       {return GetComponent<PhotographyManager>();}
+  
   const PoseOriginList&  GetPoseOriginList() const { return *_poseOrigins.get(); }
 
   ObjectPoseConfirmer& GetObjectPoseConfirmer() { return GetComponent<ObjectPoseConfirmer>(); }

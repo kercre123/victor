@@ -79,6 +79,7 @@ namespace Cozmo {
   class CameraCalibrator;
   class CozmoContext;
   class IlluminationDetector;
+  class ImageSaver;
   class LaserPointDetector;
   class MotionDetector;
   class OverheadEdgesDetector;
@@ -114,7 +115,6 @@ namespace Cozmo {
     DebugImageList<Vision::ImageRGB> debugImageRGBs;
   };
   
-
   class VisionSystem : public Vision::Profiler
   {
   public:
@@ -212,10 +212,16 @@ namespace Cozmo {
     //            Off=no saving until this is called again with one of the above
     //  subsample: Factor to reduce image size by (1 is no subsampling)
     //  path: Where to save images (relative to <Cache>/camera/images)
+    //  basename: Filename without extension (leave empty to use auto-numbering)
     //  quality: -1=PNG, 0-100=JPEG quality
-    void SetSaveParameters(const ImageSendMode saveMode, const std::string& path, 
-                           const int8_t quality, const Vision::ImageCache::Size& saveSize,
-                           const bool removeRadialDistortion);
+    //  thumbnailScaleFraction (as fraction of saveSize), in range [0,1], 0 to disable
+    void SetSaveParameters(const ImageSendMode saveMode,
+                           const std::string& path,
+                           const std::string& basename,
+                           const int8_t quality,
+                           const Vision::ImageCache::Size& saveSize,
+                           const bool removeRadialDistortion,
+                           const f32 thumbnailScaleFraction);
 
     CameraParams GetCurrentCameraParams() const;
   
@@ -275,14 +281,6 @@ namespace Cozmo {
     std::queue<std::pair<bool,AllVisionModesSchedule>> _nextSchedules;
     
     s32 _frameNumber = 0;
-
-    // Image saving and transmitting
-    // TODO: Make this a (CLAD?) struct?
-    ImageSendMode             _imageSaveMode = ImageSendMode::Off;
-    s8                        _imageSaveQuality = -1;
-    Vision::ImageCache::Size  _imageSaveSize = Vision::ImageCache::Size::Full;
-    std::string               _imageSavePath;
-    bool                      _imageSaveRemoveDistortion = false;
     
     // Snapshots of robot state
     bool _wasCalledOnce    = false;
@@ -307,6 +305,7 @@ namespace Cozmo {
     std::unique_ptr<OverheadMap>                    _overheadMap;
     std::unique_ptr<GroundPlaneClassifier>          _groundPlaneClassifier;
     std::unique_ptr<IlluminationDetector>           _illuminationDetector;
+    std::unique_ptr<ImageSaver>                     _imageSaver;
 
     std::unique_ptr<Vision::Benchmark>              _benchmark;
     std::unique_ptr<Vision::NeuralNetRunner>        _neuralNetRunner;
@@ -392,7 +391,6 @@ namespace Cozmo {
     std::queue<VisionProcessingResult> _results;
     VisionProcessingResult _currentResult;
 
-    std::string GetFileNameBasedOnFrameNumber(const char *extension) const;
 }; // class VisionSystem
   
 } // namespace Cozmo

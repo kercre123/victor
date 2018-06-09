@@ -24,6 +24,7 @@
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/visionComponent.h"
+#include "engine/cozmoContext.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_ProxObstacle.h"
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
@@ -490,10 +491,15 @@ void BehaviorExploringExamineObstacle::DevTakePhoto() const
   }
   
   // save
-  const std::string path = Util::FileUtils::FullFilePath({ "exploringObstacles" });
+  const std::string path = Util::FileUtils::FullFilePath({
+    GetBEI().GetRobotInfo().GetContext()->GetDataPlatform()->GetCachePath("camera"),
+    "images",
+    "exploringObstacles"
+  });
   auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
   visionComponent.SetSaveImageParameters(ImageSendMode::SingleShot,
                                          path,
+                                         "", // No basename: rely on auto-numbering
                                          kImageQuality);
 
 }

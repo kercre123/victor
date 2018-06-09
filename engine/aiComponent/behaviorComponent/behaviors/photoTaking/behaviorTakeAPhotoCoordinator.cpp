@@ -103,13 +103,21 @@ void BehaviorTakeAPhotoCoordinator::OnBehaviorActivated()
                       "");
   }
 
-  GetBEI().GetPhotographyManager().EnablePhotoMode(true);
+  if(RESULT_OK != GetBEI().GetPhotographyManager().EnablePhotoMode(true))
+  {
+    PRINT_NAMED_ERROR("BehaviorTakeAPhotoCoordinator.OnBehaviorActivated.EnablePhotoModeFailed",
+                      "");
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTakeAPhotoCoordinator::OnBehaviorDeactivated()
 {
-  GetBEI().GetPhotographyManager().EnablePhotoMode(false);
+  if(RESULT_OK != GetBEI().GetPhotographyManager().EnablePhotoMode(false))
+  {
+    PRINT_NAMED_ERROR("BehaviorTakeAPhotoCoordinator.OnBehaviorDectivated.DisablePhotoModeFailed",
+                      "");
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

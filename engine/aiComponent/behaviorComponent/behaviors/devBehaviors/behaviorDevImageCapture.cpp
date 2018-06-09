@@ -202,7 +202,8 @@ std::string BehaviorDevImageCapture::GetSavePath() const
     return _iConfig.imageSavePath;
   }
   
-  return Util::FileUtils::FullFilePath({_iConfig.imageSavePath, *_dVars.currentClassIter});
+  const std::string& cachePath = GetBEI().GetRobotInfo().GetContext()->GetDataPlatform()->GetCachePath("camera");
+  return Util::FileUtils::FullFilePath({cachePath, "images", _iConfig.imageSavePath, *_dVars.currentClassIter});
 }
 
 
@@ -234,13 +235,8 @@ void BehaviorDevImageCapture::BehaviorUpdate()
 
   if(_dVars.currentClassIter != _iConfig.classNames.end())
   {
-    // Note this root path is simply copied from what vision component uses. Ideally we'd share it
-    // rather than assuming this is where the images go, but hey, this is a dev behavior, so good
-    // enough for now.
-    static const std::string rootPath = GetBEI().GetRobotInfo().GetContext()->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "camera/images");
-    
     using namespace Util;
-    const size_t numFiles = FileUtils::FilesInDirectory(FileUtils::FullFilePath({rootPath, GetSavePath()})).size();
+    const size_t numFiles = FileUtils::FilesInDirectory(GetSavePath()).size();
     
     std::function<void(Vision::ImageRGB&)> drawClassName = [this,numFiles](Vision::ImageRGB& img)
     {
@@ -257,17 +253,14 @@ void BehaviorDevImageCapture::BehaviorUpdate()
 
   if( wasTouched && !isTouched ) {
     // just "released", see if it's been long enough to count as a "hold"
+    ImageSendMode sendMode = ImageSendMode::Off;
     if( currTime_s >= _dVars.touchStartedTime_s + kHoldTimeForStreaming_s ) {
       PRINT_CH_DEBUG("Behaviors", "BehaviorDevImageCapture.touch.longPress", "long press release");
         
       // toggle streaming
       _dVars.isStreaming = !_dVars.isStreaming;
 
-      const ImageSendMode sendMode = _dVars.isStreaming ? ImageSendMode::Stream : ImageSendMode::Off;
-      visionComponent.SetSaveImageParameters(sendMode,
-                                             GetSavePath(),
-                                             _iConfig.imageSaveQuality,
-                                             _iConfig.imageSaveSize);
+      sendMode = (_dVars.isStreaming ? ImageSendMode::Stream : ImageSendMode::Off);
       
       if( _dVars.isStreaming ) {
         BlinkLight();
@@ -285,22 +278,16 @@ void BehaviorDevImageCapture::BehaviorUpdate()
                                                  GO::Behavior);
       }
 
-
-      if (_iConfig.saveSensorData) {
-        visionComponent.SetSaveImageParameters(ImageSendMode::SingleShotWithSensorData,
-                                               GetSavePath(),
-                                               _iConfig.imageSaveQuality,
-                                               _iConfig.imageSaveSize);
-      }
-      else {
-        visionComponent.SetSaveImageParameters(ImageSendMode::SingleShot,
-                                               GetSavePath(),
-                                               _iConfig.imageSaveQuality,
-                                               _iConfig.imageSaveSize);
-      }
-
+      sendMode = (_iConfig.saveSensorData ? ImageSendMode::SingleShotWithSensorData : ImageSendMode::SingleShot);
+     
       BlinkLight();
     }
+    
+    visionComponent.SetSaveImageParameters(sendMode,
+                                           GetSavePath(),
+                                           "", // No basename: rely on auto-numbering
+                                           _iConfig.imageSaveQuality,
+                                           _iConfig.imageSaveSize);
   }
   else if( !wasTouched && isTouched ) {
     PRINT_CH_DEBUG("Behaviors", "BehaviorDevImageCapture.touch.newTouch", "new press");
@@ -310,6 +297,7 @@ void BehaviorDevImageCapture::BehaviorUpdate()
       // we were streaming but now should stop because there was a new touch
       visionComponent.SetSaveImageParameters(ImageSendMode::Off,
                                              GetSavePath(),
+                                             "", // No basename: rely on auto-numbering
                                              _iConfig.imageSaveQuality,
                                              _iConfig.imageSaveSize);
 

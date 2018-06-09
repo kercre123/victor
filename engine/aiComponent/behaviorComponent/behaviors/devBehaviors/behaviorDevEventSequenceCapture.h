@@ -94,6 +94,7 @@ private:
 
   std::string GetRelClassSavePath() const;
   std::string GetRelSequenceSavePath() const;
+  std::string GetAbsSequenceSavePath() const;
   std::string GetAbsInfoSavePath() const;
   std::string GetAbsBaseSavePath() const;
   void SwitchToNextClass();

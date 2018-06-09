@@ -24,6 +24,7 @@
 #include "engine/robot.h"
 #include "engine/vision/groundPlaneClassifier.h"
 #include "engine/vision/illuminationDetector.h"
+#include "engine/vision/imageSaver.h"
 #include "engine/vision/laserPointDetector.h"
 #include "engine/vision/motionDetector.h"
 #include "engine/vision/overheadEdgesDetector.h"
@@ -126,6 +127,7 @@ VisionSystem::VisionSystem(const CozmoContext* context)
 , _overheadEdgeDetector(new OverheadEdgesDetector(_camera, _vizManager, *this))
 , _cameraCalibrator(new CameraCalibrator(*this))
 , _illuminationDetector(new IlluminationDetector())
+, _imageSaver(new ImageSaver(_camera))
 , _benchmark(new Vision::Benchmark())
 , _neuralNetRunner(new Vision::NeuralNetRunner())
 , _clahe(cv::createCLAHE())
@@ -442,15 +444,22 @@ Result VisionSystem::SetNextCameraWhiteBalance(f32 whiteBalanceGainR,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void VisionSystem::SetSaveParameters(const ImageSendMode saveMode, const std::string& path, 
-                                     const int8_t quality, const Vision::ImageCache::Size& saveSize,
-                                     const bool removeRadialDistortion)
+void VisionSystem::SetSaveParameters(const ImageSendMode saveMode,
+                                     const std::string& path,
+                                     const std::string& basename,
+                                     const int8_t quality,
+                                     const Vision::ImageCache::Size& saveSize,
+                                     const bool removeRadialDistortion,
+                                     const f32 thumbnailScaleFraction)
 {
-  _imageSaveMode = saveMode;
-  _imageSavePath = path;
-  _imageSaveQuality = std::min(int8_t(100), quality);
-  _imageSaveSize = saveSize;
-  _imageSaveRemoveDistortion = removeRadialDistortion;
+  const Result result = _imageSaver->SetParams( ImageSaver::Params{
+    path, basename, saveMode, quality, saveSize, thumbnailScaleFraction, removeRadialDistortion
+  });
+  
+  if(RESULT_OK != result)
+  {
+    PRINT_NAMED_ERROR("VisionSystem.SetSaveParameters.BadParams", "");
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1735,50 +1744,24 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     }
   }
   
-  if(ShouldProcessVisionMode(VisionMode::SavingImages) && (ImageSendMode::Off != _imageSaveMode))
+  if(ShouldProcessVisionMode(VisionMode::SavingImages) && _imageSaver->WantsToSave())
   {
     Tic("SavingImages");
-    const std::string fullFilename = GetFileNameBasedOnFrameNumber((_imageSaveQuality < 0 ? "png" : "jpg"));
-
-    PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.Update.SavingImage", "Saving to %s",
-                   fullFilename.c_str());
-
-    // Resize into a new image to avoid affecting downstream updates
-    const Vision::ImageRGB& sizedImage = imageCache.GetRGB(_imageSaveSize);
-    Result saveResult = RESULT_FAIL;
-    if(_imageSaveRemoveDistortion)
-    {
-      if(_camera.IsCalibrated())
-      {
-        Vision::ImageRGB imgUndistorted;
-        sizedImage.Undistort(*_camera.GetCalibration(), imgUndistorted);
-        saveResult = imgUndistorted.Save(fullFilename, _imageSaveQuality);
-      }
-      else
-      {
-        PRINT_NAMED_WARNING("VisionSystem.Update.NoCalibrationForSavingUndistorted", "");
-      }
-    }
-    else
-    {
-      saveResult = sizedImage.Save(fullFilename, _imageSaveQuality);
-    }
-
-    Result saveSensorResult = RESULT_OK;
-    if((ImageSendMode::SingleShotWithSensorData == _imageSaveMode) || (ImageSendMode::Stream == _imageSaveMode)) {
-      saveSensorResult = SaveSensorData();
-    }
-
-    if((ImageSendMode::SingleShot == _imageSaveMode) || (ImageSendMode::SingleShotWithSensorData == _imageSaveMode))
-    {
-      _imageSaveMode = ImageSendMode::Off;
-    }
-
+    
+    // Check this before calling Save(), since that can modify imageSaver's state
+    const bool shouldSaveSensorData = _imageSaver->ShouldSaveSensorData();
+    
+    const Result saveResult = _imageSaver->Save(imageCache, _frameNumber);
+    
+    const Result saveSensorResult = (shouldSaveSensorData ? SaveSensorData() : RESULT_OK);
+    
     Toc("SavingImages");
 
-    if((RESULT_OK != saveResult) || (RESULT_OK != saveSensorResult))
+    if((RESULT_OK != saveResult) || (RESULT_OK != saveSensorResult)) // || (RESULT_OK != thumbnailResult))
     {
-      PRINT_NAMED_ERROR("VisionSystem.Update.SavingImagesFailed", "");
+      PRINT_NAMED_ERROR("VisionSystem.Update.SavingImagesFailed", "Image:%s SensorData:%s",
+                        (RESULT_OK == saveResult ? "OK" : "FAIL"),
+                        (RESULT_OK == saveSensorResult ? "OK" : "FAIL"));
       // Continue processing, since this should be independent of other modes
     }
     else {
@@ -1798,8 +1781,11 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result VisionSystem::SaveSensorData() const {
 
-  const std::string fullFilename = GetFileNameBasedOnFrameNumber("json");
+  const std::string fullFilename = _imageSaver->GetFullFilename(_frameNumber, "json");
 
+  PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.SaveSensorData.Filename", "Saving to %s",
+                 fullFilename.c_str());
+  
   std::ofstream outFile(fullFilename);
   if (! outFile.is_open()) {
     PRINT_NAMED_ERROR("VisionSystem.SaveSensorData.CantOpenFile", "Can't open file %s for writing",
@@ -1858,19 +1844,6 @@ Result VisionSystem::SaveSensorData() const {
   outFile.close();
 
   return RESULT_OK;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::string VisionSystem::GetFileNameBasedOnFrameNumber(const char *extension) const
-{
-  // Zero-padded frame number as filename:
-  char filename[32];
-  snprintf(filename, sizeof(filename)-1, "%08d.%s", _frameNumber, extension);
-
-  const std::string fullFilename = Util::FileUtils::FullFilePath({_imageSavePath, filename});
-  PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.SaveSensorData.GetFileNameBasedOnFrameNumber", "Saving to %s",
-                 fullFilename.c_str());
-  return fullFilename;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

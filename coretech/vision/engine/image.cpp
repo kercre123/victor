@@ -485,11 +485,20 @@ namespace Vision {
   template<typename T>
   void ImageBase<T>::Undistort(const CameraCalibration& calib, ImageBase<T>& undistortedImage) const
   {
+    DEV_ASSERT( (this != &undistortedImage) && (this->GetDataPointer() != undistortedImage.GetDataPointer()),
+               "ImageBase.Undistort.CannotOperateInPlace");
+    
     undistortedImage.Allocate(GetNumRows(), GetNumCols());
     const CameraCalibration scaledCalib = calib.GetScaled(GetNumRows(), GetNumCols());
-    cv::undistort(this->get_CvMat_(), undistortedImage.get_CvMat_(),
-                  scaledCalib.GetCalibrationMatrix().get_CvMatx_(),
-                  scaledCalib.GetDistortionCoeffs());
+    try {
+      cv::undistort(this->get_CvMat_(), undistortedImage.get_CvMat_(),
+                    scaledCalib.GetCalibrationMatrix().get_CvMatx_(),
+                    scaledCalib.GetDistortionCoeffs());
+    }
+    catch (cv::Exception& e) {
+      PRINT_NAMED_ERROR("ImageBase.Undistort.OpenCvUndistortFailed",
+                        "%s", e.what());
+    }
   }
   
   // Explicit instantation for each image type:

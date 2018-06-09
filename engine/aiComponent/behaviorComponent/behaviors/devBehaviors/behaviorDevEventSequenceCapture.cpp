@@ -243,9 +243,15 @@ std::string BehaviorDevEventSequenceCapture::GetRelSequenceSavePath() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string BehaviorDevEventSequenceCapture::GetAbsSequenceSavePath() const
+{
+  return Util::FileUtils::FullFilePath({GetAbsBaseSavePath(), GetRelSequenceSavePath()});
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string BehaviorDevEventSequenceCapture::GetAbsInfoSavePath() const
 {
-  return Util::FileUtils::FullFilePath({GetAbsBaseSavePath(), GetRelSequenceSavePath(), "sequenceInfo.json"});
+  return Util::FileUtils::FullFilePath({GetAbsSequenceSavePath(), "sequenceInfo.json"});
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -339,7 +345,8 @@ void BehaviorDevEventSequenceCapture::BehaviorUpdate()
         _dVars.waitStartTime_s = currTime_s;
         _dVars.seqStartTimeStamp = GetTimestamp();
         visionComponent.SetSaveImageParameters(ImageSendMode::Stream,
-                                               GetRelSequenceSavePath(),
+                                               GetAbsSequenceSavePath(),
+                                               "", // No basename: use auto-numbering
                                                _iConfig.imageSaveQuality,
                                                _iConfig.imageSaveSize);
         GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Timer_Beep,
@@ -374,7 +381,8 @@ void BehaviorDevEventSequenceCapture::BehaviorUpdate()
         _dVars.seqState = SequenceState::Waiting;
         _dVars.seqEndTimeStamp = GetTimestamp();
         visionComponent.SetSaveImageParameters(ImageSendMode::Off,
-                                               GetRelSequenceSavePath(),
+                                               GetAbsSequenceSavePath(),
+                                               "", // No basename: use auto-numbering
                                                _iConfig.imageSaveQuality,
                                                _iConfig.imageSaveSize);
         GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Timer_Beep,

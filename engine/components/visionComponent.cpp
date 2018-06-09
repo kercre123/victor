@@ -18,6 +18,7 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/dockingComponent.h"
+#include "engine/components/photographyManager.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/navMap/mapComponent.h"
@@ -193,7 +194,7 @@ namespace Cozmo {
 #   define GET_JSON_PARAMETER(__json__, __fieldName__, __variable__) \
     do { \
       if(!JsonTools::GetValueOptional(__json__, __fieldName__, __variable__)) { \
-        PRINT_NAMED_ERROR("VisionSystem.Init.MissingJsonParameter", "%s", __fieldName__); \
+        PRINT_NAMED_ERROR("Vision.Init.MissingJsonParameter", "%s", __fieldName__); \
         return; \
     }} while(0)
 
@@ -993,7 +994,8 @@ namespace Cozmo {
         tryAndReport(&VisionComponent::UpdateLaserPoints,         VisionMode::DetectingLaserPoints);
         tryAndReport(&VisionComponent::UpdateSalientPoints,       VisionMode::Count); // Use Count here to always call UpdateSalientPoints
         tryAndReport(&VisionComponent::UpdateVisualObstacles,     VisionMode::DetectingVisualObstacles);
-
+        tryAndReport(&VisionComponent::UpdatePhotoManager,        VisionMode::SavingImages);
+        
         // Display any debug images left by the vision system
         if(ANKI_DEV_CHEATS)
         {
@@ -1588,6 +1590,12 @@ namespace Cozmo {
     return RESULT_OK;
   }
 
+  Result VisionComponent::UpdatePhotoManager(const VisionProcessingResult& procResult)
+  {
+    _robot->GetPhotographyManager().SetLastPhotoTimeStamp(procResult.timestamp);
+    return RESULT_OK;
+  }
+  
   bool VisionComponent::WasHeadRotatingTooFast(TimeStamp_t t,
                                                const f32 headTurnSpeedLimit_radPerSec,
                                                const int numImuDataToLookBack) const
@@ -2762,7 +2770,11 @@ namespace Cozmo {
     return false;
   }
 
-
+  bool VisionComponent::IsWaitingForCaptureFormatChange() const
+  {
+    return (CaptureFormatState::None != _captureFormatState);
+  }
+  
 #pragma mark -
 #pragma mark Message Handlers
 
@@ -2854,20 +2866,29 @@ namespace Cozmo {
 
   void VisionComponent::SetSaveImageParameters(const ImageSendMode saveMode,
                                                const std::string& path,
+                                               const std::string& basename,
                                                const int8_t onRobotQuality,
                                                const Vision::ImageCache::Size& saveSize,
-                                               const bool removeRadialDistortion)
+                                               const bool removeRadialDistortion,
+                                               const f32 thumbnailScaleFraction)
   {
     if(nullptr != _visionSystem)
     {
-      const std::string cachePath = _robot->GetContext()->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "camera");
-
-      const std::string fullPath = Util::FileUtils::FullFilePath({cachePath, "images", path});
+      std::string fullPath(path);
+      if(fullPath.empty())
+      {
+        // If no path specified, default to <cachePath>/camera/images
+        const std::string cachePath = _robot->GetContext()->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "camera");
+        fullPath = Util::FileUtils::FullFilePath({cachePath, "images"});
+      }
+      
       _visionSystem->SetSaveParameters(saveMode,
                                        fullPath,
+                                       basename,
                                        onRobotQuality,
                                        saveSize,
-                                       removeRadialDistortion);
+                                       removeRadialDistortion,
+                                       thumbnailScaleFraction);
 
       if(saveMode != ImageSendMode::Off)
       {
@@ -2883,7 +2904,8 @@ namespace Cozmo {
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::SaveImages& payload)
   {
-    SetSaveImageParameters(payload.mode, payload.path, payload.qualityOnRobot,
+    SetSaveImageParameters(payload.mode, payload.path, "",
+                           payload.qualityOnRobot,
                            Vision::ImageCache::Size::Full,
                            payload.removeRadialDistortion);
   }
