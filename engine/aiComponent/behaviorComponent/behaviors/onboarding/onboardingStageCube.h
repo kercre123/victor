@@ -143,17 +143,17 @@ public:
           DebugTransition( "Trick Success." );
         }
         if( (_putDownBehavior != nullptr) && _putDownBehavior->WantsToBeActivated() ) {
-          DebugTransition("PuttingCubeDown");
+          DebugTransition("Putting down cube");
           _step = Step::PuttingCubeDown;
           _selectedBehavior = _behaviors[_step];
         } else {
-          DebugTransition( "Complete" );
+          DebugTransition("Complete");
           _step = Step::Complete;
           _selectedBehavior = nullptr;
         }
       }
     } else if( _step == Step::PuttingCubeDown ) {
-      DebugTransition( "Complete" );
+      DebugTransition("Complete");
       _step = Step::Complete;
       _selectedBehavior = nullptr;
     }
@@ -182,6 +182,7 @@ public:
       if( seesCube ) {
         const auto& cubes = _cubeKnownCondition->GetObjects( bei );
         if( !cubes.empty() ) {
+          DebugTransition("Found a cube");
           // pick one for now. it will probably be a seen cube + connected cube, or just a seen cube if we can't connect
           const auto* cube = cubes.front();
           _objectID = cube->GetID();
@@ -190,6 +191,7 @@ public:
       } else if( currTime_ms >= _timeStartedSearching_ms + 1000*kMaxSearchDuration_s ) {
         auto* ei = bei.GetRobotInfo().GetExternalInterface();
         if( ei != nullptr ){
+          DebugTransition("Can't find a cube");
           ExternalInterface::OnboardingCantFindCube cantFindCubeMsg{};
           ei->Broadcast( ExternalMessageRouter::Wrap(std::move(cantFindCubeMsg)) );
           TransitionToLookingAtUser();
@@ -202,13 +204,14 @@ private:
   
   void TransitionToLookingAtUser()
   {
+    DebugTransition("Waiting on continue to begin");
     _step = Step::LookingAtUser;
     _selectedBehavior = _behaviors[_step];
   }
   
   void TransitionToLookingForCube( BehaviorExternalInterface& bei )
   {
-    DebugTransition( "LookingForCube" );
+    DebugTransition("Looking for cube");
     _step = Step::LookingForCube;
     _selectedBehavior = _behaviors[_step];
     _cubeKnownCondition->SetActive( bei, true ); // no deactivate needed since this gets destroyed when the stage ends
@@ -223,7 +226,7 @@ private:
   
   void TransitionToCubeTrick( BehaviorExternalInterface& bei )
   {
-    DebugTransition( "CubeTrick" );
+    DebugTransition("Doing a trick");
     auto* ei = bei.GetRobotInfo().GetExternalInterface();
     if( ei != nullptr ){
       ExternalInterface::OnboardingSeesCube seesCubeMsg{true};
@@ -238,9 +241,9 @@ private:
     ++_attemptCount;
   }
   
-  void DebugTransition(const std::string& stepName)
+  void DebugTransition(const std::string& debugInfo)
   {
-    PRINT_CH_INFO("Behaviors", "Onboarding.Cube.Transition", "Transitioning to %s", stepName.c_str());
+    PRINT_CH_INFO("Behaviors", "OnboardingStatus.Cube", "%s", debugInfo.c_str());
   }
   
   enum class Step : uint8_t {

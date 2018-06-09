@@ -75,6 +75,7 @@ public:
   virtual void OnSkip( BehaviorExternalInterface& bei ) override
   {
     // skip always moves to the next stage (unable to speak trigger word, or unable to speak intent)
+    DebugTransition("Skipped. Stage complete");
     _step = Step::Complete;
     _currentBehavior = nullptr;
   }
@@ -102,7 +103,7 @@ public:
       // if on the charger, drive off
       _currentBehavior = _behaviors[Step::DriveOffCharger];
       if( _currentBehavior->WantsToBeActivated() ) {
-        DebugTransition("OnboardingSluggishDriveOffCharger");
+        DebugTransition("Driving off charger");
         _step = Step::DriveOffCharger;
       } else {
         TransitionToWaitingForTrigger();
@@ -111,6 +112,7 @@ public:
       TransitionToWaitingForTrigger();
     } else if( _step == Step::WelcomeHomeReaction ) {
       // done
+      DebugTransition("Stage complete");
       _step = Step::Complete;
       _currentBehavior = nullptr;
     } else {
@@ -135,7 +137,7 @@ private:
   
   void TransitionToWaitingForTrigger()
   {
-    DebugTransition("WaitingForTrigger");
+    DebugTransition("Waiting for trigger word (no commands accepted)");
     _step = Step::WaitingForTrigger;
     _currentBehavior = _behaviors[_step];
     SetTriggerWordEnabled(true);
@@ -145,7 +147,7 @@ private:
   
   void TransitionToWaitingForWelcomeHome()
   {
-    DebugTransition("WaitingForWelcomeHome");
+    DebugTransition("Waiting for welcome home voice command");
     _step = Step::WaitingForWelcomeHome;
     _currentBehavior = _behaviors[_step];
     SetTriggerWordEnabled(true);
@@ -154,15 +156,15 @@ private:
   
   void TransitionToWelcomeHomeReaction()
   {
-    DebugTransition("WelcomeHomeReaction");
+    DebugTransition("Playing welcome home reaction");
     _step = Step::WelcomeHomeReaction;
     _currentBehavior = _behaviors[_step];
     SetTriggerWordEnabled(false);
   }
   
-  void DebugTransition(const std::string& stepName)
+  void DebugTransition(const std::string& debugInfo)
   {
-    PRINT_CH_INFO("Behaviors", "Onboarding.WakeUpWelcomeHome.Transition", "Transitioning to %s", stepName.c_str());
+    PRINT_CH_INFO("Behaviors", "OnboardingStatus.WakeUpWelcomeHome", "%s", debugInfo.c_str());
   }
   
   enum class Step : uint8_t {

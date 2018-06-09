@@ -42,11 +42,13 @@ public:
     _selectedBehavior = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingLookAtUser) );
     
     // disable trigger word until continue
+    DebugTransition("Waiting on continue to begin");
     SetTriggerWordEnabled(false);
   }
   
   virtual void OnContinue( BehaviorExternalInterface& bei ) override
   {
+    DebugTransition("Waiting on voice command");
     // enable trigger word
     SetTriggerWordEnabled(true);
   }
@@ -68,15 +70,15 @@ public:
   {
     const auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
     if( uic.IsAnyUserIntentPending() && !uic.IsUserIntentPending( USER_INTENT(unmatched_intent) ) ) {
-      DebugTransition( "User intent. done!" );
+      DebugTransition("User intent. Onboarding is done!");
       _selectedBehavior = nullptr;
     }
   }
   
 private:
-  void DebugTransition(const std::string& stepName)
+  void DebugTransition(const std::string& debugInfo)
   {
-    PRINT_CH_INFO("Behaviors", "Onboarding.App.Transition", "Transitioning to %s", stepName.c_str());
+    PRINT_CH_INFO("Behaviors", "OnboardingStatus.App", "%s", debugInfo.c_str());
   }
   
   IBehavior* _selectedBehavior = nullptr;

@@ -61,6 +61,7 @@ public:
     
     SetupConsoleFuncs(bei);
     
+    DebugTransition("Waiting on continue to begin");
     // disable trigger word for now
     SetTriggerWordEnabled(false);
   }
@@ -70,10 +71,12 @@ public:
     if( _step == Step::Complete ) {
       return;
     } else if( _step == Step::LookingAround ) {
+      DebugTransition("Waiting on \"my name is\"");
       SetTriggerWordEnabled(true);
       SetAllowedIntent( USER_INTENT(meet_victor) );
     } else if( _step == Step::LookAtUser ) {
       // done
+      DebugTransition("Complete");
       _step = Step::Complete;
       _selectedBehavior = nullptr;
     } else {
@@ -84,6 +87,7 @@ public:
   virtual void OnSkip( BehaviorExternalInterface& bei ) override
   {
     // all skips move to the next stage
+    DebugTransition("Skipping. Complete");
     _selectedBehavior = nullptr;
     _step = Step::Complete;
   }
@@ -91,6 +95,7 @@ public:
   virtual void OnBehaviorDeactivated( BehaviorExternalInterface& bei ) override
   {
     if( (_step == Step::MeetVictor) || (_step == Step::RenameFace) ) {
+      DebugTransition("Finished meeting victor, looking around, waiting for continue or rename face");
       _step = Step::LookAtUser;
       _selectedBehavior = _behaviors[_step];
       SetTriggerWordEnabled( false ); // no more intents for this stage
@@ -103,6 +108,7 @@ public:
   {
     if( (interruptingBehavior == BEHAVIOR_ID(OnboardingPlacedOnCharger)) && !_enrollmentSuccessful ) {
       // resume from the beginning
+      DebugTransition("Interruption will resume from the beginning");
       _step = Step::LookingAround;
       SetTriggerWordEnabled(false);
       return false;
@@ -114,6 +120,7 @@ public:
   
   virtual void OnResume( BehaviorExternalInterface& bei, BehaviorID interruptingBehavior ) override
   {
+    DebugTransition("Resuming");
     _selectedBehavior = _behaviors[_step];
   }
   
@@ -124,6 +131,7 @@ public:
     }
     if( (_step == Step::LookingAround) && _behaviors[Step::MeetVictor]->WantsToBeActivated() ) {
       // move to meet victor when the voice intent triggers it
+      DebugTransition("Meeting victor");
       _step = Step::MeetVictor;
       _selectedBehavior = _behaviors[_step];
       
@@ -156,6 +164,7 @@ public:
       return;
     }
     if( event.GetData().GetTag() == GameToEngineTag::UpdateEnrolledFaceByID ) {
+      DebugTransition("Renaming face");
       _step = Step::RenameFace;
       _selectedBehavior = _behaviors[_step];
     }
@@ -175,6 +184,11 @@ public:
   }
   
 private:
+  
+  void DebugTransition(const std::string& debugInfo)
+  {
+    PRINT_CH_INFO("Behaviors", "OnboardingStatus.MeetVictor", "%s", debugInfo.c_str());
+  }
   
   void SetupConsoleFuncs(BehaviorExternalInterface& bei)
   {

@@ -256,12 +256,17 @@ void BehaviorOnboarding::OnBehaviorActivated()
   
   // default to no trigger word allowed
   SetTriggerWordEnabled( false );
+  PRINT_CH_INFO("Behaviors",
+                "BehaviorOnboarding.OnBehaviorActivated.OnboardingStatus",
+                "Starting onboarding in %s",
+                OnboardingStagesToString(stage));
   
   if( _dVars.currentStage == OnboardingStages::NotStarted ) {
     // wake up is handled by stage, which gets delegated to in BehaviorUpdate.
     _dVars.wakeUpState = WakeUpState::Complete;
     // no need to activate anything, Update() does that
   } else {
+    PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.OnBehaviorActivated.OnboardingStatus", "Waking up");
     _dVars.wakeUpState = WakeUpState::WakingUp;
     ANKI_VERIFY( _iConfig.wakeUpBehavior->WantsToBeActivated(),
                  "BehaviorOnboarding.OnBehaviorActivated.WakeUp", "Wake up doesnt want to run");
@@ -273,6 +278,7 @@ void BehaviorOnboarding::OnBehaviorActivated()
 
 void BehaviorOnboarding::OnBehaviorDeactivated()
 {
+  PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.OnBehaviorDeactivated.OnboardingStatus", "Onboarding complete");
   SetTriggerWordEnabled( true );
   SetAllowAnyIntent();
 }
@@ -318,7 +324,7 @@ void BehaviorOnboarding::BehaviorUpdate()
       // only send if not low battery, since UpdateLowBattery handles that case
       if( !_dVars.batteryInfo.lowBattery && (ei != nullptr) ) {
         ExternalInterface::OnboardingOnCharger msg{false, false, -1.0f };
-        PRINT_CH_INFO("Behaviors", "Onboarding.OnboardingOnCharger", "false, false, -1");
+        PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus", "No longer placed on charger");
         ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
       }
     } else if( _dVars.lastInterruption == BEHAVIOR_ID(OnboardingPickedUp) ) {
@@ -326,6 +332,7 @@ void BehaviorOnboarding::BehaviorUpdate()
       if( ei != nullptr ) {
         ExternalInterface::OnboardingPickedUp msg{false};
         PRINT_CH_INFO("Behaviors", "OnboardingPickedUp", "false");
+        PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus", "Put back down, resuming");
         ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
       }
     }
@@ -504,7 +511,7 @@ void BehaviorOnboarding::MoveToStage( const OnboardingStages& stage )
   }
   
   // log
-  PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.MoveToStage", "Onboarding moving to stage %s", OnboardingStagesToString(stage));
+  PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.MoveToStage.OnboardingStatus", "Onboarding moving to stage %s", OnboardingStagesToString(stage));
   
   // actually change to the next stage
   _dVars.currentStage = stage;
@@ -614,15 +621,15 @@ void BehaviorOnboarding::Interrupt( ICozmoBehaviorPtr interruption, BehaviorID i
   if( interruptionID == BEHAVIOR_ID(OnboardingPlacedOnCharger) ) {
     auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
     if( !_dVars.batteryInfo.lowBattery && (ei != nullptr) ) {
+      PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus", "Placed on charger, waiting for continue");
       ExternalInterface::OnboardingOnCharger msg{true, false, -1.0f};
-      PRINT_CH_INFO("Behaviors", "OnboardingOnCharger", "true, false, -1");
       ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
     }
   } else if( interruptionID == BEHAVIOR_ID(OnboardingPickedUp) ) {
     auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
     if( ei != nullptr ) {
+      PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus", "Picked up. Waiting to be put down");
       ExternalInterface::OnboardingPickedUp msg{true};
-      PRINT_CH_INFO("Behaviors", "OnboardingPickedUp", "true");
       ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
     }
   } else if( interruptionID == BEHAVIOR_ID(OnboardingLowBattery) ) {
@@ -675,8 +682,11 @@ void BehaviorOnboarding::RequestContinue()
       _dVars.batteryInfo = BatteryInfo(); // reset. This will re-trigger everything if it is still low battery
       DEV_ASSERT( IsControlDelegated(), "Should be delegating to OnboardingLowBattery" );
       // start driving off the charger
+      PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus",
+                    "Robot is charged and received continue. Resuming");
       CancelDelegates(false);
     } else if( _dVars.lastInterruption == BEHAVIOR_ID(OnboardingPlacedOnCharger) ) {
+      PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus", "Resuming from charger");
       // if the user placed the robot on the charger, continue acts as the command to get it off
       DEV_ASSERT( IsControlDelegated(), "Should be delegating to PlacedOnCharger" );
       // start driving off the charger
@@ -763,28 +773,32 @@ void BehaviorOnboarding::UpdateBatteryInfo()
       // was never on charger before
       requiredChargeTime_s = kRequiredChargeTime_s;
       info.timeChargingDone_s = requiredChargeTime_s + currTime_s;
+      PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus",
+                    "Low battery on charger. Countdown started at %f", requiredChargeTime_s);
     } else {
       // not the first time on the charger, so there should be a timeRemovedFromCharger.
       const float elapsedOffChargerTime_s = currTime_s - info.timeRemovedFromCharger;
       info.timeChargingDone_s += elapsedOffChargerTime_s * (1.0f + kExtraChargingTimePerDischargePeriod_s);
       info.timeChargingDone_s = Anki::Util::Min(info.timeChargingDone_s, currTime_s + kRequiredChargeTime_s);
       requiredChargeTime_s = info.timeChargingDone_s - currTime_s;
+      PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus",
+                    "Low battery on charger. Countdown resuming at %f", requiredChargeTime_s);
     }
     auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
     if( ei != nullptr ) {
       ExternalInterface::OnboardingOnCharger msg{true, true, requiredChargeTime_s};
-      PRINT_CH_INFO("Behaviors", "OnboardingOnCharger", "true, true, %f", requiredChargeTime_s);
       ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
     }
     info.sentOutOfLowBattery = false;
   } else if( !currOnCharger && !currOnChargerPlatform && info.onCharger ) {
     // this also checked charger platform in case it slips off contact while wiggling onto charger
     info.onCharger = false;
+    PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus",
+                  "Low battery off charger. Countdown paused");
     info.timeRemovedFromCharger = currTime_s;
     auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
     if( ei != nullptr ) {
       ExternalInterface::OnboardingOnCharger msg{false, true, -1.0f}; // no need to calc the time since the app just pauses it
-      PRINT_CH_INFO("Behaviors", "OnboardingOnCharger", "false, true, -1");
       ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
     }
   }
@@ -796,10 +810,11 @@ void BehaviorOnboarding::UpdateBatteryInfo()
     auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
     if( ei != nullptr ) {
       ExternalInterface::OnboardingLowBattery msg{false};
-      PRINT_CH_INFO("Behaviors", "OnboardingLowBattery", "false");
       ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
     }
     info.sentOutOfLowBattery = true;
+    PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus",
+                  "Robot is charged now. Waiting on continue");
   }
 }
   
@@ -811,10 +826,12 @@ void BehaviorOnboarding::StartLowBatteryCountdown()
   if( !info.lowBattery ) {
     info.lowBattery = true;
     
+    PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus",
+                  "Low battery. Countdown will start when on charger");
+    
     auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
     if( ei != nullptr ) {
       ExternalInterface::OnboardingLowBattery msg{true};
-      PRINT_CH_INFO("Behaviors", "OnboardingLowBattery", "true");
       ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
     }
   }
