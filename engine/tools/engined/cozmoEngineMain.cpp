@@ -26,6 +26,7 @@
 #include "util/logging/iEventProvider.h"
 #include "util/logging/iFormattedLoggerProvider.h"
 #include "util/logging/logging.h"
+#include "util/logging/DAS.h"
 #include "util/logging/multiLoggerProvider.h"
 #include "util/logging/victorLogger.h"
 #include "util/string/stringUtils.h"

@@ -26,7 +26,6 @@
 #include "clad/externalInterface/messageActions.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/animationTypes.h"
-#include "clad/types/toolCodes.h"
 #include "clad/types/visionModes.h"
 #include "util/bitFlags/bitFlags.h"
 #include "util/helpers/templateHelpers.h"
@@ -416,37 +415,6 @@ namespace Cozmo {
     }; // class MoveLiftToHeightAction
     
     
-    // This is just a selector for AscendOrDescendRampAction or
-    // CrossBridgeAction, depending on the object's type.
-    class TraverseObjectAction : public IActionRunner
-    {
-    public:
-      TraverseObjectAction(ObjectID objectID);
-      virtual ~TraverseObjectAction()
-      {
-        if(_chosenAction != nullptr)
-        {
-          _chosenAction->PrepForCompletion();
-        }
-      }
-      
-      void SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2);
-      
-    protected:
-      
-      // Update will just call the chosenAction's implementation
-      virtual ActionResult UpdateInternal() override;
-      virtual void Reset(bool shouldUnlockTracks = true) override { }
-      
-      ObjectID       _objectID;
-      std::unique_ptr<IActionRunner> _chosenAction = nullptr;
-      f32            _speed_mmps;
-      f32            _accel_mmps2;
-      f32            _decel_mmps2;
-      
-    }; // class TraverseObjectAction
-    
-    
     // Tilt head and rotate body to face the given pose.
     // Use angles specified at construction to control the body rotation.
     class TurnTowardsPoseAction : public PanAndTiltAction
@@ -771,16 +739,17 @@ namespace Cozmo {
     };
     
     
-    class ReadToolCodeAction : public IAction
+    // CliffAlignToWhite
+    //
+    // Uses cliff sensors to align both front sensors with the
+    // white border line of the habitat.
+    // Requires that one front cliff sensor is already on a white line.
+    class CliffAlignToWhiteAction : public IAction
     {
     public:
+      CliffAlignToWhiteAction();
       
-      ReadToolCodeAction(bool doCalibration = false);
-      virtual ~ReadToolCodeAction();
-      
-      virtual f32 GetTimeoutInSeconds() const override { return 5.f; }
-      
-      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
+      virtual ~CliffAlignToWhiteAction();
       
     protected:
       
@@ -788,26 +757,25 @@ namespace Cozmo {
       virtual ActionResult CheckIfDone() override;
       
     private:
-      
-      std::string       _name = "ReadToolCode";
-      bool              _doCalibration = false;
-      ToolCodeInfo      _toolCodeInfo;
-      
-      CompoundActionParallel _headAndLiftDownAction;
-      
-      //const TimeStamp_t kRequiredStillTime_ms    = 500;
-  
       enum class State : u8 {
-        WaitingToGetInPosition,
-        WaitingForRead,
-        ReadCompleted
-      } _state;
-  
-      // Handler for the tool code being read
-      Signal::SmartHandle        _toolReadSignalHandle;
+        Waiting,
+        Success,
+        Fail
+      };
+
+      State _state = State::Waiting;
+
+      // Handler for the cliff align action completing
+      Signal::SmartHandle        _signalHandle;
       
-    }; // class ReadToolCodeAction
-    
+      // Whether or not to restore stopOnWhite setting when
+      // action completes since it must be disabled for this
+      // action to work.
+      bool _resumeStopOnWhite = false;
+
+    }; // class CliffAlignToWhiteAction
+
+
 } // namespace Cozmo
 } // namespace Anki
 

@@ -22,7 +22,7 @@ namespace Anki {
 
 // cache useful data for minor speedup of intersection checks
 LineSegment::LineSegment(const Point2f& from, const Point2f& to) 
-: AffineHyperplane( Point2f(from.y() - to.y(),to.x() - from.x()), 0)
+: AffineHyperplane( Point2f(from.y() - to.y(),to.x() - from.x()), (from.x()-to.x()) * to.y() + (to.y() - from.y()) * to.x() )
 , from(from)
 , to(to)
 , minX(fmin(from.x(), to.x())) 
@@ -109,30 +109,20 @@ LineSegment::EOrientation LineSegment::Orientation(const Point2f& p) const
   }
 }
 
-bool LineSegment::IntersectsAt(const LineSegment& l, Point2f& location) const {
-
-  const bool isIntersecting = IntersectsWith(l); // quickly check for intersection
-  if (! isIntersecting) { // nothing to see here
-    return false;
-  }
-
-  Point2f xdiff(this->dX, l.dX);
-  Point2f ydiff(this->dY, l.dY);
-
-  auto det = [](const Point2f& a, const Point2f& b) {
-    return a.x() * b.y() - a.y() * b.x();
-  };
-
-  float div = det(xdiff, ydiff);
-  if (div == 0) { // collinear or overlapping
-    return false;
-  }
-  Point2f d = Point2f(det(this->to, this->from),
-                      det(l.to, l.from));
-  location.x() = det(d, xdiff) / div;
-  location.y() = det(d, ydiff) / div;
-  return true;
+bool LineSegment::IntersectsAt(const LineSegment& l, Point2f& location) const
+{
+  // shortcutting will stop GetInterSectionPoint from running if the line-segments do not
+  // intersect, even if the infinite lines defined by the two points do. If you want
+  // the intersection of the infinite lines, call `GeGetIntersectionPoint` directly.
+  return IntersectsWith(l) && GetIntersectionPoint(*this, l, location);
 }
+
+Line2f LineSegment::GetPerpendicularBisector() const
+{
+  Point2f mid = (from + to) * .5f;
+  return Line2f( {dX, dY}, -dX * mid.x() - dY * mid.y() );
+}
+
 
 } // namespace Anki
 

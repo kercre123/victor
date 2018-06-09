@@ -248,9 +248,6 @@ protected:
                      const bool useApproachAngle = false,
                      const f32 approachAngle_rad = 0);
   
-  void SendTraverseSelectedObject(PathMotionProfile motionProf,
-                                  const bool usePreDockPose);
-
   void SendMountCharger(const s32 objectID,
                         PathMotionProfile motionProf,
                         const bool useCliffSensorCorrection = true);

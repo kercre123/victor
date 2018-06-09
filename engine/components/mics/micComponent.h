@@ -53,6 +53,8 @@ public:
   void StartWakeWordlessStreaming();
   
   void SetShouldStreamAfterWakeWord(bool shouldStream);
+  
+  void SetTriggerWordDetectionEnabled(bool enabled);
 
 private:
 

@@ -446,7 +446,7 @@ GTEST_TEST(ColorPixels, RGB565Conversion)
 #undef SCALE
 }
 
-GTEST_TEST(ImageCache, ImageCacheGray)
+GTEST_TEST(ImageCache, CachedGetters)
 {
   using namespace Anki::Vision;
   
@@ -463,8 +463,10 @@ GTEST_TEST(ImageCache, ImageCacheGray)
   cache.Reset(imgGray);
   
   ASSERT_EQ(false, cache.HasColor());
-  ASSERT_EQ(nrows, cache.GetOrigNumRows());
-  ASSERT_EQ(ncols, cache.GetOrigNumCols());
+  ASSERT_EQ(nrows, cache.GetNumRows(ImageCache::Size::Full));
+  ASSERT_EQ(ncols, cache.GetNumCols(ImageCache::Size::Full));
+  ASSERT_EQ(nrows, cache.GetNumRows(ImageCache::Size::Sensor));
+  ASSERT_EQ(ncols, cache.GetNumCols(ImageCache::Size::Sensor));
   
   ImageCache::GetType getType;
   
@@ -472,7 +474,7 @@ GTEST_TEST(ImageCache, ImageCacheGray)
   const Vision::Image& getResult = cache.GetGray(ImageCache::Size::Full, &getType);
   ASSERT_EQ(imgGray.GetDataPointer(), getResult.GetDataPointer());
   
-  // Getting original should not have required any resizing/computation
+  // Getting full-size should not have required any resizing/computation since it was equivalent to Sensor
   ASSERT_EQ(ImageCache::GetType::FullyCached, getType);
   
   // Compute new resized entry
@@ -558,6 +560,56 @@ GTEST_TEST(ImageCache, ImageCacheGray)
   ASSERT_EQ(true, cache.HasColor());
   cache.GetRGB(ImageCache::Size::Half_NN, &getType);
   ASSERT_EQ(ImageCache::GetType::NewEntry, getType);
+}
+
+GTEST_TEST(ImageCache, DifferingSensorAndFullSize)
+{
+  using namespace Anki::Vision;
+  
+  ImageCache cache;
+  
+  const s32 nrows = 16;
+  const s32 ncols = 32;
+  const f32 fullScaleFactor = 0.5f;
+  Vision::ImageRGB sensorImg(nrows, ncols);
+  cache.Reset(sensorImg, fullScaleFactor);
+  
+  ASSERT_EQ(true, cache.HasColor());
+  ASSERT_EQ(nrows, cache.GetNumRows(ImageCache::Size::Sensor));
+  ASSERT_EQ(ncols, cache.GetNumCols(ImageCache::Size::Sensor));
+  ASSERT_EQ(nrows/2, cache.GetNumRows(ImageCache::Size::Full));
+  ASSERT_EQ(ncols/2, cache.GetNumCols(ImageCache::Size::Full));
+  ASSERT_EQ(nrows/4, cache.GetNumRows(ImageCache::Size::Half_NN));
+  ASSERT_EQ(ncols/4, cache.GetNumCols(ImageCache::Size::Half_NN));
+  ASSERT_EQ(nrows/8, cache.GetNumRows(ImageCache::Size::Quarter_NN));
+  ASSERT_EQ(ncols/8, cache.GetNumCols(ImageCache::Size::Quarter_NN));
+  
+  ImageCache::GetType getType;
+  
+  const Vision::ImageRGB& sensorRGB = cache.GetRGB(ImageCache::Size::Sensor, &getType);
+  ASSERT_EQ(nrows, sensorRGB.GetNumRows());
+  ASSERT_EQ(ncols, sensorRGB.GetNumCols());
+  ASSERT_EQ(ImageCache::GetType::FullyCached, getType);
+  
+  const Vision::ImageRGB& fullSizeImage = cache.GetRGB(ImageCache::Size::Full, &getType);
+  ASSERT_EQ(nrows/2, fullSizeImage.GetNumRows());
+  ASSERT_EQ(ncols/2, fullSizeImage.GetNumCols());
+  ASSERT_EQ(ImageCache::GetType::NewEntry, getType);
+  
+  const Vision::ImageRGB& halfSizeColor = cache.GetRGB(ImageCache::Size::Half_Linear, &getType);
+  ASSERT_EQ(nrows/4, halfSizeColor.GetNumRows());
+  ASSERT_EQ(ncols/4, halfSizeColor.GetNumCols());
+  ASSERT_EQ(ImageCache::GetType::NewEntry, getType);
+  
+  const Vision::Image& fullGray = cache.GetGray(ImageCache::Size::Full, &getType);
+  ASSERT_EQ(nrows/2, fullGray.GetNumRows());
+  ASSERT_EQ(ncols/2, fullGray.GetNumCols());
+  ASSERT_EQ(ImageCache::GetType::ComputeFromExisting, getType);
+  
+  const Vision::Image& sensorGray = cache.GetGray(ImageCache::Size::Sensor, &getType);
+  ASSERT_EQ(nrows, sensorGray.GetNumRows());
+  ASSERT_EQ(ncols, sensorGray.GetNumCols());
+  ASSERT_EQ(ImageCache::GetType::ComputeFromExisting, getType);
 }
 
 

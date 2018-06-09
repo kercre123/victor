@@ -122,7 +122,7 @@ void ICozmoBehavior::InjectBehaviorClassAndIDIntoConfig(BehaviorClass behaviorCl
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorID ICozmoBehavior::ExtractBehaviorIDFromConfig(const Json::Value& config,
-                                                  const std::string& fileName)
+                                                       const std::string& fileName)
 {
   const std::string debugName = "IBeh.NoBehaviorIdSpecified";
   const std::string behaviorID_str = JsonTools::ParseString(config, kBehaviorIDConfigKey, debugName);
@@ -899,9 +899,9 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
   }
 
   if(_tickDontActivateSetFor == BaseStationTimer::getInstance()->GetTickCount()){
-    PRINT_NAMED_INFO("ICozmoBehavior.WantsToBeActivatedBase.DontActivateDueToCoordinator",
-                    "Behavior %s was asked not to activate during tick %zu by coordinator %s",
-                    GetDebugLabel().c_str(), _tickDontActivateSetFor, _dontActivateCoordinator.c_str());
+    PRINT_PERIODIC_CH_INFO(200,"ICozmoBehavior.WantsToBeActivatedBase.DontActivateDueToCoordinator",
+                           "Behavior %s was [still] asked not to activate during tick %zu by coordinator %s",
+                           GetDebugLabel().c_str(), _tickDontActivateSetFor, _dontActivateCoordinator.c_str());
     return false;
   }
 

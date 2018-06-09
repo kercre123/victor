@@ -50,44 +50,45 @@ BehaviorExternalInterface::~BehaviorExternalInterface()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
 {
-  auto& aiComponent            = dependentComponents.GetValue<AIComponent>();
-  auto& behaviorContainer      = dependentComponents.GetValue<BehaviorContainer>();
-  auto& behaviorEventComponent = dependentComponents.GetValue<BehaviorEventComponent>();
-  auto& behaviorTimers         = dependentComponents.GetValue<BehaviorTimerManager>();
-  auto& blockWorld             = dependentComponents.GetValue<BlockWorld>();
-  auto& delegationComponent    = dependentComponents.GetValue<DelegationComponent>();
-  auto& faceWorld              = dependentComponents.GetValue<FaceWorld>();
-  auto& robotInfo              = dependentComponents.GetValue<BEIRobotInfo>();
+  auto* aiComponent            = dependentComponents.GetBasePtr<AIComponent>();
+  auto* behaviorContainer      = dependentComponents.GetBasePtr<BehaviorContainer>();
+  auto* behaviorEventComponent = dependentComponents.GetBasePtr<BehaviorEventComponent>();
+  auto* behaviorTimers         = dependentComponents.GetBasePtr<BehaviorTimerManager>();
+  auto* blockWorld             = dependentComponents.GetBasePtr<BlockWorld>();
+  auto* delegationComponent    = dependentComponents.GetBasePtr<DelegationComponent>();
+  auto* faceWorld              = dependentComponents.GetBasePtr<FaceWorld>();
+  auto* robotInfo              = dependentComponents.GetBasePtr<BEIRobotInfo>();
 
-  Init(&aiComponent,
-       &robot->GetAnimationComponent(),
-       &robot->GetBeatDetectorComponent(),
-       &behaviorContainer,
-       &behaviorEventComponent,
-       &behaviorTimers,
-       &blockWorld,
-       &robot->GetBodyLightComponent(),
-       &robot->GetCubeAccelComponent(), 
-       &robot->GetCubeLightComponent(),
-       &delegationComponent,
-       &faceWorld,
-       &robot->GetMapComponent(),
-       &robot->GetMicComponent(),
-       &robot->GetMoodManager(),
-       &robot->GetMoveComponent(),
-       &robot->GetObjectPoseConfirmer(),
-       &robot->GetPetWorld(),
-       &robot->GetProgressionUnlockComponent(),
-       &robot->GetProxSensorComponent(),
-       &robot->GetPublicStateBroadcaster(),
-       &robot->GetSDKComponent(),
+  Init(aiComponent,
+       robot->GetComponentPtr<AnimationComponent>(),
+       robot->GetComponentPtr<BeatDetectorComponent>(),
+       behaviorContainer,
+       behaviorEventComponent,
+       behaviorTimers,
+       blockWorld,
+       robot->GetComponentPtr<BodyLightComponent>(),
+       robot->GetComponentPtr<CubeAccelComponent>(), 
+       robot->GetComponentPtr<CubeLightComponent>(),
+       delegationComponent,
+       faceWorld,
+       robot->GetComponentPtr<MapComponent>(),
+       robot->GetComponentPtr<MicComponent>(),
+       robot->GetComponentPtr<MoodManager>(),
+       robot->GetComponentPtr<MovementComponent>(),
+       robot->GetComponentPtr<ObjectPoseConfirmer>(),
+       robot->GetComponentPtr<PetWorld>(),
+       robot->GetComponentPtr<PhotographyManager>(),
+       robot->GetComponentPtr<ProgressionUnlockComponent>(),
+       robot->GetComponentPtr<ProxSensorComponent>(),
+       robot->GetComponentPtr<PublicStateBroadcaster>(),
+       robot->GetComponentPtr<SDKComponent>(),
        robot->GetAudioClient(),
-       &robotInfo,
+       robotInfo,
        robot->GetComponentPtr<DataAccessorComponent>(),
-       &robot->GetTextToSpeechCoordinator(),
-       &robot->GetTouchSensorComponent(),
-       &robot->GetVisionComponent(),
-       &robot->GetVisionScheduleMediator());
+       robot->GetComponentPtr<TextToSpeechCoordinator>(),
+       robot->GetComponentPtr<TouchSensorComponent>(),
+       robot->GetComponentPtr<VisionComponent>(),
+       robot->GetComponentPtr<VisionScheduleMediator>());
 }
 
 
@@ -110,6 +111,7 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                      MovementComponent*             movementComponent,
                                      ObjectPoseConfirmer*           objectPoseConfirmer,
                                      PetWorld*                      petWorld,
+                                     PhotographyManager*            photographyManager,
                                      ProgressionUnlockComponent*    progressionUnlockComponent,
                                      ProxSensorComponent*           proxSensor,
                                      PublicStateBroadcaster*        publicStateBroadcaster,
@@ -140,6 +142,7 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                                      movementComponent,
                                                      objectPoseConfirmer,
                                                      petWorld,
+                                                     photographyManager,
                                                      progressionUnlockComponent,
                                                      proxSensor,
                                                      publicStateBroadcaster,
@@ -184,6 +187,7 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
                                                               MovementComponent*             movementComponent,
                                                               ObjectPoseConfirmer*           objectPoseConfirmer,
                                                               PetWorld*                      petWorld,
+                                                              PhotographyManager*            photographyManager,
                                                               ProgressionUnlockComponent*    progressionUnlockComponent,
                                                               ProxSensorComponent*           proxSensor,
                                                               PublicStateBroadcaster*        publicStateBroadcaster,
@@ -215,6 +219,7 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
     {BEIComponentID::MovementComponent,       BEIComponentWrapper(movementComponent)},
     {BEIComponentID::ObjectPoseConfirmer,     BEIComponentWrapper(objectPoseConfirmer)},
     {BEIComponentID::PetWorld,                BEIComponentWrapper(petWorld)},
+    {BEIComponentID::PhotographyManager,      BEIComponentWrapper(photographyManager)},
     {BEIComponentID::ProgressionUnlock,       BEIComponentWrapper(progressionUnlockComponent)},
     {BEIComponentID::ProxSensor,              BEIComponentWrapper(proxSensor)},
     {BEIComponentID::PublicStateBroadcaster,  BEIComponentWrapper(publicStateBroadcaster)},

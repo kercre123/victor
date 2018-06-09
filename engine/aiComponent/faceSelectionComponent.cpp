@@ -72,14 +72,8 @@ bool FaceSelectionComponent::ParseFaceSelectionFactorMap(const Json::Value& conf
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SmartFaceID FaceSelectionComponent::GetBestFaceToUse(const FaceSelectionFactorMap& criteriaMap) const
 {
-  const auto& faces = _faceWorld.GetFaceIDs();
-  std::vector<SmartFaceID> smartFaces;
-
-  for(auto faceID : faces) {
-    smartFaces.emplace_back( _faceWorld.GetSmartFaceID( faceID ) );
-  }
-  
-  return GetBestFaceToUse(criteriaMap, smartFaces);
+  auto smartFaceIDs = _faceWorld.GetSmartFaceIDsObservedSince(0);
+  return GetBestFaceToUse(criteriaMap, smartFaceIDs);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

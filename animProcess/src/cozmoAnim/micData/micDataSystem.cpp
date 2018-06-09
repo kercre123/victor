@@ -137,6 +137,14 @@ void MicDataSystem::SetShouldStreamAfterWakeWord(bool shouldStream)
     _micDataProcessor->SetShouldStreamAfterTrigger(shouldStream);
   }
 }
+  
+void MicDataSystem::SetTriggerWordDetectionEnabled(bool enabled)
+{
+  if (_micDataProcessor != nullptr)
+  {
+    _micDataProcessor->SetTriggerWordDetectionEnabled(enabled);
+  }
+}
 
 void MicDataSystem::StartWakeWordlessStreaming()
 {
@@ -151,6 +159,7 @@ void MicDataSystem::StartWakeWordlessStreaming()
   newJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggeredCapture"});
   newJob->_writeNameBase = ""; //use autogen names
   newJob->_numMaxFiles = 100;
+  newJob->_type = CloudMic::StreamType::Blackjack;
   bool saveToFile = false;
 #if ANKI_DEV_CHEATS
   saveToFile = true;
@@ -335,7 +344,11 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         _streamingAudioIndex = 0;
   
         // Send out the message announcing the trigger word has been detected
-        SendUdpMessage(CloudMic::Message::Createhotword({}));
+        auto hw = CloudMic::Hotword{CloudMic::StreamType::Normal};
+        if (_currentStreamingJob != nullptr) {
+          hw.mode = _currentStreamingJob->_type;
+        }
+        SendUdpMessage(CloudMic::Message::Createhotword(std::move(hw)));
         PRINT_NAMED_INFO("MicDataSystem.Update.StreamingStart", "");
       }
       else

@@ -279,7 +279,8 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
   // Get centroid of all the motion within the ground plane, if we have one to reason about
   Quad2f imgQuad;
   poseData.groundPlaneROI.GetImageQuad(poseData.groundPlaneHomography,
-                                       imageCache.GetOrigNumCols(), imageCache.GetOrigNumRows(),
+                                       imageCache.GetNumCols(Vision::ImageCache::Size::Full),
+                                       imageCache.GetNumRows(Vision::ImageCache::Size::Full),
                                        imgQuad);
 
   imgQuad *= 1.f/(f32)Params::kLaser_scaleMultiplier;
@@ -366,7 +367,8 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
     Vision::ImageRGB saliencyImageFullSize;
     if(Params::kLaser_scaleMultiplier > 1)
     {
-      saliencyImageFullSize.Allocate(imageCache.GetOrigNumRows(), imageCache.GetOrigNumCols());
+      saliencyImageFullSize.Allocate(imageCache.GetNumRows(Vision::ImageCache::Size::Full),
+                                     imageCache.GetNumCols(Vision::ImageCache::Size::Full));
       _debugImage.Resize(saliencyImageFullSize, Vision::ResizeMethod::NearestNeighbor);
     }
 
@@ -479,7 +481,8 @@ Result LaserPointDetector::Detect(Vision::ImageCache& imageCache,
     Vision::ImageRGB saliencyImageFullSize;
     if(Params::kLaser_scaleMultiplier > 1)
     {
-      saliencyImageFullSize.Allocate(imageCache.GetOrigNumRows(), imageCache.GetOrigNumCols());
+      saliencyImageFullSize.Allocate(imageCache.GetNumRows(Vision::ImageCache::Size::Full),
+                                     imageCache.GetNumCols(Vision::ImageCache::Size::Full));
       _debugImage.Resize(saliencyImageFullSize, Vision::ResizeMethod::NearestNeighbor);
     }
 

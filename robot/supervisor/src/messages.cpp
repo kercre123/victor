@@ -114,6 +114,8 @@ namespace Anki {
 
         robotState_.backpackTouchSensorRaw = HAL::GetButtonState(HAL::BUTTON_CAPACITIVE);
 
+        robotState_.cliffDetectedFlags = ProxSensors::GetCliffDetectedFlags();
+
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
 
         robotState_.status = 0;
@@ -539,28 +541,6 @@ namespace Anki {
         }
       }
 
-      void Process_enableReadToolCodeMode(const RobotInterface::EnableReadToolCodeMode& msg)
-      {
-        //AnkiDebug( "ReadToolCodeMode", "enabled: %d, liftPower: %f, headPower: %f", msg.enable, msg.liftPower, msg.headPower);
-        if (msg.enable) {
-          HeadController::Disable();
-          f32 p = CLIP(msg.headPower, -0.5f, 0.5f);
-          HAL::MotorSetPower(MotorID::MOTOR_HEAD, p);
-
-          LiftController::Disable();
-          p = CLIP(msg.liftPower, -0.5f, 0.5f);
-          HAL::MotorSetPower(MotorID::MOTOR_LIFT, p);
-
-        } else {
-
-          HAL::MotorSetPower(MotorID::MOTOR_HEAD, 0);
-          HeadController::Enable();
-
-          HAL::MotorSetPower(MotorID::MOTOR_LIFT, 0);
-          LiftController::Enable();
-        }
-      }
-
       void Process_robotStoppedAck(const RobotInterface::RobotStoppedAck& msg)
       {
         AnkiInfo("Messages.Process_robotStoppedAck", "");
@@ -572,10 +552,24 @@ namespace Anki {
         ProxSensors::EnableStopOnCliff(msg.enable);
       }
 
+      void Process_enableStopOnWhite(const RobotInterface::EnableStopOnWhite& msg)
+      {
+        ProxSensors::EnableStopOnWhite(msg.enable);
+      }
+
       void Process_setCliffDetectThresholds(const SetCliffDetectThresholds& msg)
       {
         for (int i = 0 ; i < HAL::CLIFF_COUNT ; i++) {
           ProxSensors::SetCliffDetectThreshold(i, msg.thresholds[i]);
+        }
+      }
+
+      void Process_cliffAlignToWhiteAction(const RobotInterface::CliffAlignToWhiteAction& msg)
+      {
+        if (msg.start) {
+          PickAndPlaceController::CliffAlignToWhite();
+        } else {
+          PickAndPlaceController::StopCliffAlignToWhite();
         }
       }
 

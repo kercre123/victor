@@ -26,6 +26,26 @@ class Color:
         '''int: The encoded integer value of the color.'''
         return self._int_color
 
+    @property
+    def rgb565_bytepair(self):
+        '''bytes[]: two bytes representing an int16 color with rgb565 encoding
+
+        This format reflects the robot's oled color range, and performing this
+        conversion will reduce network traffic when sending oled data.
+        '''
+
+        red5 = ((self._int_color >> 24) & 0xff) >> 3
+        green6 = ((self._int_color >> 16) & 0xff) >> 2
+        blue5 = ((self._int_color >> 8) & 0xff) >> 3
+
+        green3Hi = green6 >> 3
+        green3Low = green6 & 0x07
+
+        int_565_color_lowbyte = (green3Low << 5) | blue5
+        int_565_color_highbyte = (red5 << 3) | green3Hi
+
+        return [int_565_color_highbyte, int_565_color_lowbyte]
+
 
 #: :class:`Color`: Green color instance.
 green = Color(name="green", int_color=0x00ff00ff)

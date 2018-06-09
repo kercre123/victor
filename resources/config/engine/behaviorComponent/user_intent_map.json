@@ -28,7 +28,7 @@
       "user_intent": "imperative_negative"
     },
     {
-      "cloud_intent": "intent_global_stop",
+      "cloud_intent": "intent_global_stop_extend",
       "user_intent": "cancel_timer"
     },
     {
@@ -56,7 +56,7 @@
       "user_intent": "check_timer"
     },
     {
-      "cloud_intent" : "intent_clock_settimer",
+      "cloud_intent" : "intent_clock_settimer_extend",
       "app_intent" : "intent_clock_settimer",
       "user_intent"  : "set_timer",
       "cloud_substitutions": {
@@ -65,13 +65,20 @@
       "cloud_numerics": ["timer_duration"]
     },
     {
-      "cloud_intent" : "intent_weather",
+      "cloud_intent" : "intent_weather_extend",
       "user_intent"  : "weather_response",
       "cloud_numerics": ["temperature"],
       "cloud_substitutions": {
         "speakable_location_string": "speakableLocationString",
         "is_forecast": "isForecast",
         "temperature_unit": "temperatureUnit"
+      }
+    },
+    {
+      "cloud_intent" : "intent_photo_take_extend",
+      "user_intent"  : "take_a_photo",
+      "cloud_substitutions": {
+        "entity_photo_selfie": "empty_or_selfie"
       }
     },
     {
@@ -85,13 +92,13 @@
       "user_intent": "system_sleep"
     },
     {
-      "cloud_intent": "intent_play_specific",
+      "cloud_intent": "intent_play_specific_extend",
       "app_intent": "intent_play_specific",
       "user_intent": "play_specific"
     },
     {
       "user_intent": "meet_victor",
-      "cloud_intent": "intent_names_username",
+      "cloud_intent": "intent_names_username_extend",
       "app_intent": "intent_meet_victor",
       "app_substitutions": {
         "param": "username"
@@ -99,12 +106,12 @@
     },
     {
       "user_intent": "message_record",
-      "cloud_intent": "intent_message_recordmessage",
+      "cloud_intent": "intent_message_recordmessage_extend",
       "app_intent": "intent_message_recordmessage"
     },
     {
       "user_intent": "message_playback",
-      "cloud_intent": "intent_message_playmessage",
+      "cloud_intent": "intent_message_playmessage_extend",
       "app_intent": "intent_message_playmessage"
     },
     {

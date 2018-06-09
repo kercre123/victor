@@ -104,7 +104,7 @@ func main() {
 
 	// send hotword
 	fmt.Println("Sent: 0 samples")
-	msgIO.Send(cloud.NewMessageWithHotword(&cloud.Void{}))
+	msgIO.Send(cloud.NewMessageWithHotword(&cloud.Hotword{Mode: cloud.StreamType_Normal}))
 	buf := data
 	sent := 0
 	const chunkSamples = 16000 / 1000 * chunkMs

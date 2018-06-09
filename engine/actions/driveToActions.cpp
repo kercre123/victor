@@ -1573,24 +1573,6 @@ namespace Anki {
     }
     
     
-#pragma mark ---- DriveToAndTraverseObjectAction ----
-    
-    DriveToAndTraverseObjectAction::DriveToAndTraverseObjectAction(const ObjectID& objectID,
-                                                                   Radians maxTurnTowardsFaceAngle_rad,
-                                                                   const bool sayName)
-    : IDriveToInteractWithObject(objectID,
-                                 PreActionPose::ENTRY,
-                                 0,
-                                 false,
-                                 0,
-                                 maxTurnTowardsFaceAngle_rad,
-                                 sayName)
-    {
-      TraverseObjectAction* action = new TraverseObjectAction(objectID);
-      SetProxyTag(action->GetTag());
-      AddAction(action);
-    }
-    
 #pragma mark ---- DriveToReAlignWithObjectAction ----
     
     DriveToRealignWithObjectAction::DriveToRealignWithObjectAction(ObjectID objectID,

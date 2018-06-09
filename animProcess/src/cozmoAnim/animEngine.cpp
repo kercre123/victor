@@ -90,6 +90,14 @@ Result AnimEngine::Init()
     LOG_INFO("AnimEngine.Init.ReInit", "Reinitializing already-initialized CozmoEngineImpl with new config.");
   }
 
+  uint32_t seed = 0; // will choose random seed
+# ifdef ANKI_PLATFORM_OSX
+  {
+    seed = 1; // Setting to non-zero value for now for repeatable testing.
+  }
+# endif
+  _context->SetRandomSeed(seed);
+
   OSState::getInstance()->SetUpdatePeriod(1000);
 
   RobotDataLoader * dataLoader = _context->GetDataLoader();

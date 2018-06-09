@@ -57,7 +57,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenInitChecks.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenMotorCalibration.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenPickupCube.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenReadToolCode.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenSoundCheck.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenWaitToStart.h"
@@ -93,6 +92,10 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/messaging/behaviorPlaybackMessage.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingLookAtFaces.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingWithoutTurn.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboarding.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingInterruptionHead.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/photoTaking/behaviorAestheticallyCenterFaces.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/photoTaking/behaviorTakeAPhotoCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/proxBehaviors/behaviorProxGetToDistance.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeCubeMoved.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeFace.h"
@@ -436,12 +439,6 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
-    case BehaviorClass::PlaypenReadToolCode:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorPlaypenReadToolCode(config));
-      break;
-    }
-    
     case BehaviorClass::PlaypenSoundCheck:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorPlaypenSoundCheck(config));
@@ -649,6 +646,30 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::ObservingWithoutTurn:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorObservingWithoutTurn(config));
+      break;
+    }
+    
+    case BehaviorClass::Onboarding:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorOnboarding(config));
+      break;
+    }
+    
+    case BehaviorClass::OnboardingInterruptionHead:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorOnboardingInterruptionHead(config));
+      break;
+    }
+    
+    case BehaviorClass::AestheticallyCenterFaces:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorAestheticallyCenterFaces(config));
+      break;
+    }
+    
+    case BehaviorClass::TakeAPhotoCoordinator:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorTakeAPhotoCoordinator(config));
       break;
     }
     

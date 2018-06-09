@@ -54,7 +54,6 @@
 #include "clad/types/loadedKnownFace.h"
 #include "clad/types/salientPointTypes.h"
 #include "clad/types/visionModes.h"
-#include "clad/types/toolCodes.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 #include "util/bitFlags/bitFlags.h"
@@ -104,7 +103,6 @@ namespace Cozmo {
     std::list<Vision::TrackedPet>                               pets;
     std::list<OverheadEdgeFrame>                                overheadEdges;
     std::list<Vision::UpdatedFaceID>                            updatedFaceIDs;
-    std::list<ToolCodeInfo>                                     toolCodes;
     std::list<ExternalInterface::RobotObservedLaserPoint>       laserPoints;
     std::list<Vision::CameraCalibration>                        cameraCalibration;
     std::list<OverheadEdgeFrame>                                visualObstacles;
@@ -139,8 +137,6 @@ namespace Cozmo {
     Result PushNextModeSchedule(AllVisionModesSchedule&& schedule);
     Result PopModeSchedule();
     
-    Result EnableToolCodeCalibration(bool enable);
-    
     // This is main Update() call to be called in a loop from above.
 
     Result Update(const VisionPoseData&      robotState,
@@ -156,10 +152,6 @@ namespace Cozmo {
     size_t GetNumStoredCalibrationImages() const { return _cameraCalibrator->GetNumStoredCalibrationImages(); }
     const std::vector<CameraCalibrator::CalibImage>& GetCalibrationImages() const {return _cameraCalibrator->GetCalibrationImages();}
     const std::vector<Pose3d>& GetCalibrationPoses() const { return _cameraCalibrator->GetCalibrationPoses();}
-
-    Result ClearToolCodeImages();
-    size_t GetNumStoredToolCodeImages() const {return _toolCodeImages.size();}
-    const std::vector<Vision::Image>& GetToolCodeImages() const {return _toolCodeImages;}
 
     // VisionMode <-> String Lookups
     std::string GetModeName(Util::BitFlags32<VisionMode> mode) const;
@@ -233,12 +225,6 @@ namespace Cozmo {
     void  ShouldDoRollingShutterCorrection(bool b) { _doRollingShutterCorrection = b; }
     bool  IsDoingRollingShutterCorrection() const { return _doRollingShutterCorrection; }
     
-    Result CheckImageQuality(const Vision::Image& inputImage,
-                             const std::vector<Anki::Rectangle<s32>>& detectionRects);
-    
-    // Will use color if not empty, or gray otherwise
-    Result DetectLaserPoints(Vision::ImageCache& imageCache);
-    
     bool IsExposureValid(s32 exposure) const;
     
     bool IsGainValid(f32 gain) const;
@@ -248,12 +234,14 @@ namespace Cozmo {
     
     f32 GetMinCameraGain() const { return _minCameraGain; }
     f32 GetMaxCameraGain() const { return _maxCameraGain; }
+
+    void ClearImageCache();
     
   protected:
   
     RollingShutterCorrector _rollingShutterCorrector;
-
     bool _doRollingShutterCorrection = false;
+    TimeStamp_t _lastRollingShutterCorrectionTime;
     
 #   if ANKI_COZMO_USE_MATLAB_VISION
     // For prototyping with Matlab
@@ -285,8 +273,6 @@ namespace Cozmo {
     using ModeScheduleStack = std::list<AllVisionModesSchedule>;
     ModeScheduleStack _modeScheduleStack;
     std::queue<std::pair<bool,AllVisionModesSchedule>> _nextSchedules;
-    
-    bool _calibrateFromToolCode = false;
     
     s32 _frameNumber = 0;
 
@@ -327,12 +313,6 @@ namespace Cozmo {
     
     TimeStamp_t                   _neuralNetRunnerTimestamp = 0;
     
-    // Tool code stuff
-    TimeStamp_t                   _firstReadToolCodeTime_ms = 0;
-    const TimeStamp_t             kToolCodeMotionTimeout_ms = 1000;
-    std::vector<Vision::Image>    _toolCodeImages;
-    bool                          _isReadingToolCode;
-    
     Result UpdatePoseData(const VisionPoseData& newPoseData);
     Radians GetCurrentHeadAngle();
     Radians GetPreviousHeadAngle();
@@ -347,6 +327,11 @@ namespace Cozmo {
       Count
     };
     
+    // Updates the rolling shutter corrector
+    // Will only recompute compensation once per timestamp, so can be called multiple times
+    void UpdateRollingShutter(const VisionPoseData& poseData, const Vision::ImageCache& imageCache);
+
+    // Uses grayscale
     Result ApplyCLAHE(Vision::ImageCache& imageCache, const MarkerDetectionCLAHE useCLAHE, Vision::Image& claheImage);
     
     Result DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
@@ -354,26 +339,37 @@ namespace Cozmo {
                                   std::vector<Anki::Rectangle<s32>>& detectionRects,
                                   MarkerDetectionCLAHE useCLAHE);
     
-    static u8 ComputeMean(const Vision::Image& inputImageGray, const s32 sampleInc);
+    // Uses grayscale
+    static u8 ComputeMean(Vision::ImageCache& imageCache, const s32 sampleInc);
     
-    Result DetectFaces(const Vision::Image& grayImage,
+    // Uses grayscale
+    Result CheckImageQuality(Vision::ImageCache& imageCache,
+                             const std::vector<Anki::Rectangle<s32>>& detectionRects);
+    
+    // Will use color if not empty, or gray otherwise
+    Result DetectLaserPoints(Vision::ImageCache& imageCache);
+
+    // Uses grayscale
+    Result DetectFaces(Vision::ImageCache& imageCache,
                        std::vector<Anki::Rectangle<s32>>& detectionRects);
-                       
-    Result DetectPets(const Vision::Image& grayImage,
+    
+    // Uses grayscale
+    Result DetectPets(Vision::ImageCache& imageCache,
                       std::vector<Anki::Rectangle<s32>>& ignoreROIs);
     
     // Will use color if not empty, or gray otherwise
     Result DetectMotion(Vision::ImageCache& imageCache);
 
+    // Uses grayscale
     Result DetectIllumination(Vision::ImageCache& imageCache);
 
-    Result UpdateOverheadMap(const Vision::ImageRGB& image);
+    // Uses color
+    Result UpdateOverheadMap(Vision::ImageCache& image);
 
-    Result UpdateGroundPlaneClassifier(const Vision::ImageRGB& image);
+    // Uses colors
+    Result UpdateGroundPlaneClassifier(Vision::ImageCache& image);
     
     void CheckForNeuralNetResults();
-    
-    Result ReadToolCode(const Vision::Image& image);
     
     bool ShouldProcessVisionMode(VisionMode mode);
     
@@ -382,7 +378,8 @@ namespace Cozmo {
     Result SaveSensorData() const;
     
     // Populates whiteBalanceGains in _currentResult with adjusted values
-    Result CheckWhiteBalance(const Vision::ImageRGB& img);
+    // Uses color
+    Result CheckWhiteBalance(Vision::ImageCache& img);
     
     // Contrast-limited adaptive histogram equalization (CLAHE)
     cv::Ptr<cv::CLAHE> _clahe;

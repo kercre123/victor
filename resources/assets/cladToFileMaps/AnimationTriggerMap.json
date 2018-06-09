@@ -648,7 +648,7 @@
     "AnimName" : "ag_greeting_happy"
   },
   {
-    "CladEvent": "DEPRECATED_NeutralFace",
+    "CladEvent": "NeutralFace",
     "AnimName" : "ag_neutral_face"
   },
   {
@@ -666,6 +666,10 @@
   {
     "CladEvent": "DEPRECATED_NothingToDoBoredOutro",
     "AnimName": "ag_bored_getout"
+  },
+  {
+    "CladEvent": "OnboardingLookForCube",
+    "AnimName": "ag_cubetapping_searchforcube"
   },
   {
     "CladEvent": "DEPRECATED_OnLearnedPlayerName",
@@ -1095,6 +1099,15 @@
     "CladEvent": "DEPRECATED_Surprise",
     "AnimName": "ag_surprise"
   },
+  {
+    "CladEvent": "TakeAPictureFocusing",
+    "AnimName": "ag_takepicture_focusing"
+  },
+  {
+    "CladEvent": "TakeAPictureCapture",
+    "AnimName": "ag_takepicture_capture"
+  },
+
   {
     "CladEvent": "TextToSpeechGetIn",
     "AnimName": "ag_texttospeech_getin_01"

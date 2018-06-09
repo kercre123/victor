@@ -16,6 +16,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/activeBehaviorIterator.h"
 #include "engine/aiComponent/behaviorComponent/activeFeatureComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorsBootLoader.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorAudioComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
@@ -118,41 +119,6 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
     }
   }
 
-  // BaseBehavior Wrapper
-  if(!entity->HasComponent(BCComponentID::BaseBehaviorWrapper)){
-    ICozmoBehaviorPtr baseBehavior;
-
-    const CozmoContext* context = robot.GetContext();
-    RobotDataLoader* dataLoader = nullptr;
-    if(context == nullptr){
-      PRINT_NAMED_WARNING("BehaviorComponent.GenerateManagedComponents.NoContext",
-                          "wont be able to load behaviors from context componenets. May be OK in unit tests");
-    }else{
-      dataLoader = context->GetDataLoader();
-    }
-    Json::Value blankActivitiesConfig;
-    const Json::Value& behaviorSystemConfig = (dataLoader != nullptr) ?
-      dataLoader->GetVictorFreeplayBehaviorConfig() : blankActivitiesConfig;
-
-
-    BehaviorContainer& bc = entity->GetValue<BehaviorContainer>();
-    if(!behaviorSystemConfig.empty()){
-      BehaviorID baseBehaviorID = ICozmoBehavior::ExtractBehaviorIDFromConfig(behaviorSystemConfig);
-      baseBehavior = bc.FindBehaviorByID(baseBehaviorID);
-      DEV_ASSERT(baseBehavior != nullptr,
-                 "BehaviorComponent.Init.InvalidbaseBehavior");
-    }else{
-      // Need a base behavior, so make it base behavior wait
-      Json::Value config = ICozmoBehavior::CreateDefaultBehaviorConfig(BEHAVIOR_CLASS(Wait), BEHAVIOR_ID(Wait));
-      const bool ret = bc.CreateAndStoreBehavior(config);
-      DEV_ASSERT(ret, "BehaviorComponent.CreateWaitBehavior.Failed");
-      baseBehavior = bc.FindBehaviorByID(BEHAVIOR_ID(Wait));
-      DEV_ASSERT(baseBehavior != nullptr, "BehaviorComponent.CreateWaitBehavior.WaitNotInContainers");
-    }
-    entity->AddDependentComponent(BCComponentID::BaseBehaviorWrapper,
-                                  new BaseBehaviorWrapper(baseBehavior.get()));
-  }
-
   // Behavior Event Anim Response Director
   if(!entity->HasComponent(BCComponentID::BehaviorEventAnimResponseDirector)){
     entity->AddDependentComponent(BCComponentID::BehaviorEventAnimResponseDirector,
@@ -207,6 +173,23 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
 
   if(!entity->HasComponent(BCComponentID::ActiveBehaviorIterator)) {
     entity->AddDependentComponent(BCComponentID::ActiveBehaviorIterator, new ActiveBehaviorIterator);
+  }
+  
+  if(!entity->HasComponent(BCComponentID::BehaviorsBootLoader)) {
+    const CozmoContext* context = robot.GetContext();
+    RobotDataLoader* dataLoader = nullptr;
+    if(context == nullptr){
+      PRINT_NAMED_WARNING("BehaviorComponent.GenerateManagedComponents.NoContext",
+                          "wont be able to load behaviors from context componenets. May be OK in unit tests");
+    }else{
+      dataLoader = context->GetDataLoader();
+    }
+    Json::Value blankActivitiesConfig;
+    const Json::Value& behaviorSystemConfig = (dataLoader != nullptr)
+                                              ? dataLoader->GetVictorFreeplayBehaviorConfig()
+                                              : blankActivitiesConfig;
+    
+    entity->AddDependentComponent(BCComponentID::BehaviorsBootLoader, new BehaviorsBootLoader{behaviorSystemConfig});    
   }
 }
 

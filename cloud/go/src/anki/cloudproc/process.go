@@ -5,10 +5,12 @@ import (
 	"anki/util"
 	"clad/cloud"
 	"context"
+	"fmt"
 	"net"
 	"strings"
 
 	"github.com/anki/sai-chipper-voice/client/chipper"
+	pb "github.com/anki/sai-chipper-voice/proto/anki/chipperpb"
 	"github.com/google/uuid"
 )
 
@@ -133,6 +135,13 @@ procloop:
 					p.writeMic(cloud.NewMessageWithTestStarted(&cloud.Void{}))
 				}
 
+				mode := msg.msg.GetHotword().Mode
+				serverMode, ok := modeMap[mode]
+				if !ok {
+					p.writeError("mode", fmt.Sprint("unknown mode:", mode))
+					continue
+				}
+
 				var stream *chipper.Stream
 				var chipperConn *chipper.Conn
 				var err error
@@ -151,7 +160,8 @@ procloop:
 							FrameSize:  60},
 						SessionId: uuid.New().String()[:16],
 						Handler:   p.opts.handler,
-						SaveAudio: p.opts.saveAudio})
+						SaveAudio: p.opts.saveAudio,
+						Mode:      serverMode})
 					if err != nil {
 						p.writeError("newstream", err.Error())
 						// debug cause of lookup failure
@@ -179,7 +189,7 @@ procloop:
 
 				ctx = p.newVoiceContext(chipperConn, stream, cloudChan)
 
-				logVerbose("Received hotword event, created context in", int(ctxTime), "ms")
+				logVerbose("Received hotword event", serverMode, "created context in", int(ctxTime), "ms")
 
 			case cloud.MessageTag_DebugFile:
 				p.writeResponse(msg.msg)
@@ -273,4 +283,10 @@ func logVerbose(a ...interface{}) {
 		return
 	}
 	log.Println(a...)
+}
+
+var modeMap = map[cloud.StreamType]pb.RobotMode{
+	cloud.StreamType_Normal:         pb.RobotMode_VOICE_COMMAND,
+	cloud.StreamType_Blackjack:      pb.RobotMode_GAME,
+	cloud.StreamType_KnowledgeGraph: pb.RobotMode_KNOWLEDGE_GRAPH,
 }

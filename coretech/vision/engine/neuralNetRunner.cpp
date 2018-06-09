@@ -191,7 +191,8 @@ bool NeuralNetRunner::StartProcessingIfIdle(ImageCache& imageCache)
     _imgBeingProcessed.Allocate(_processingHeight, _processingWidth);
     const ImageCache::Size kImageSize = ImageCache::Size::Full;
     const Vision::ResizeMethod kResizeMethod = Vision::ResizeMethod::Linear;
-    imageCache.GetRGB(kImageSize).Resize(_imgBeingProcessed, kResizeMethod);
+    const Vision::ImageRGB& imgOrig = imageCache.GetRGB(kImageSize);
+    imgOrig.Resize(_imgBeingProcessed, kResizeMethod);
     
     // Apply gamma (no-op if gamma is set to 1.0)
     ApplyGamma(_imgBeingProcessed);
@@ -204,8 +205,8 @@ bool NeuralNetRunner::StartProcessingIfIdle(ImageCache& imageCache)
     }
 
     // Store its size relative to original size so we can rescale object detections later
-    _heightScale = (f32)imageCache.GetOrigNumRows();
-    _widthScale  = (f32)imageCache.GetOrigNumCols();
+    _heightScale = (f32)imgOrig.GetNumRows();
+    _widthScale  = (f32)imgOrig.GetNumCols();
     
     PRINT_CH_INFO(kLogChannelName, "NeuralNetRunner.StartProcessingIfIdle.ProcessingImage",
                   "Detecting salient points in %dx%d image t=%u",

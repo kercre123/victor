@@ -572,47 +572,6 @@ namespace Anki {
       
     }; // class RollObjectAction
 
-    
-    class CrossBridgeAction : public IDockAction
-    {
-    public:
-      CrossBridgeAction(ObjectID bridgeID);
-      
-    protected:
-      
-      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ENTRY; }
-      
-      virtual ActionResult SelectDockAction(ActionableObject* object) override;
-      
-      virtual ActionResult Verify() override;
-      
-      // Crossing a bridge _does_ require the second dockMarker,
-      // so override the virtual method for setting it
-      virtual const Vision::KnownMarker* GetDockMarker2(const std::vector<PreActionPose>& preActionPoses,
-                                                        const size_t closestIndex) override;
-      
-    }; // class CrossBridgeAction
-    
-    
-    class AscendOrDescendRampAction : public IDockAction
-    {
-    public:
-      AscendOrDescendRampAction(ObjectID rampID);
-      
-    protected:
-      
-      virtual ActionResult SelectDockAction(ActionableObject* object) override;
-      
-      virtual ActionResult Verify() override;
-      
-      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ENTRY; }
-      
-      // Give the robot a little longer to start ascending/descending before
-      // checking if it is done
-      virtual f32 GetCheckIfDoneDelayInSeconds() const override { return 1.f; }
-      
-    }; // class AscendOrDescendRampAction
-    
   }
 }
 

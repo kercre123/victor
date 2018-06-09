@@ -87,13 +87,9 @@ void CliffSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
       _cliffDataFilt[i] = Util::IsNearZero(_cliffDataFilt[i]) ?
                           _cliffDataRaw[i] :
                           (kCliffFiltCoef * _cliffDataFilt[i]) + ((1.f - kCliffFiltCoef) * static_cast<float>(_cliffDataRaw[i]));
-
-      // Update detection state
-      _cliffDetectedFlags.SetBitFlag(static_cast<CliffSensor>(i), _cliffDataFilt[i] < _cliffDetectThresholds[i]);
     }
   }
-  
-  _cliffDetectedStatusBitOn = (msg.status & (uint32_t)RobotStatusFlag::CLIFF_DETECTED) != 0;
+  _cliffDetectedFlags = msg.cliffDetectedFlags;
   
   _lastMsgTimestamp = msg.timestamp;
   
@@ -104,6 +100,12 @@ void CliffSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
       msg.timestamp >= _nextCliffThresholdUpdateToRobot_ms) {
     SendCliffDetectThresholdsToRobot();
     _nextCliffThresholdUpdateToRobot_ms = 0;
+  }
+
+  // Check if StopOnWhite should be auto disabled due to pickup
+  if (_stopOnWhiteEnabled && _robot->IsPickedUp()) {
+    PRINT_NAMED_INFO("CliffSensorComponent.NotifyOfRobotStateInternal.AutoDisableStopOnWhiteDueToPickup", "");
+    EnableStopOnWhite(false);
   }
 }
 
@@ -308,6 +310,18 @@ bool CliffSensorComponent::ComputeCliffPose(const CliffEvent& cliffEvent, Pose3d
   return true;
 }
 
+void CliffSensorComponent::EnableStopOnWhite(bool stopOnWhite)
+{
+  if (_stopOnWhiteEnabled != stopOnWhite) {
+    if (stopOnWhite && _robot->IsPickedUp()) {
+      PRINT_NAMED_WARNING("CliffSensorComponent.EnableStopOnWhite.IgnoredDueToPickup", "");
+    } else {
+      PRINT_NAMED_INFO("CliffSensorComponent.EnableStopOnWhite", "%d", stopOnWhite);
+      _stopOnWhiteEnabled = stopOnWhite;
+      _robot->SendRobotMessage<RobotInterface::EnableStopOnWhite>(stopOnWhite);
+    }
+  }
+}
   
 } // Cozmo namespace
 } // Anki namespace

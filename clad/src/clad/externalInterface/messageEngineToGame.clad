@@ -11,6 +11,7 @@
 #include "clad/types/animationEvents.clad"
 #include "clad/types/behaviorComponent/behaviorIDs.clad"
 #include "clad/types/behaviorComponent/behaviorObjectives.clad"
+#include "clad/types/behaviorComponent/userIntent.clad"
 #include "clad/types/behaviorSlot.clad"
 #include "clad/types/debugConsoleTypes.clad"
 #include "clad/types/deviceDataTypes.clad"
@@ -31,6 +32,7 @@
 #include "clad/types/nvStorageTypes.clad"
 #include "clad/types/objectFamilies.clad"
 #include "clad/types/objectTypes.clad"
+#include "clad/types/onboardingStages.clad"
 #include "clad/types/offTreadsStates.clad"
 #include "clad/types/petTypes.clad"
 #include "clad/types/poseStructs.clad"
@@ -40,7 +42,6 @@
 #include "clad/types/gameStatusFlag.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/sdkStatusTypes.clad"
-#include "clad/types/toolCodes.clad"
 #include "clad/types/uiConnectionTypes.clad"
 #include "clad/types/unlockTypes.clad"
 #include "clad/types/visionModes.clad"
@@ -183,6 +184,7 @@ message RobotPoked {
 }
 
 message RobotStopped {
+  StopReason reason
 }
 
 message RobotOffTreadsStateChanged {
@@ -457,11 +459,6 @@ structure ConnectedObjectState {
 
 message ConnectedObjectStates {
     ConnectedObjectState objects[uint_8]
-}
-
-// RobotReadToolCode
-message RobotReadToolCode {
-  ToolCodeInfo info
 }
 
 // RobotEnrolledFace - Broadcast by BehaviorEnrollFace when it completes
@@ -901,21 +898,38 @@ message GuardDogEnd {
 //////////////////////////////////  Onboarding  ///////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-enum uint_8 OnboardingStateEnum
-{
-  Inactive,
-  ErrorCozmo,
-  ErrorCubeMoved,
-  ErrorCubeWrongSideUp,
-  ErrorFinal,
-  WaitForShowCube,
-  WaitForOKCubeDiscovered,
-  WaitForInspectCube,
-  WaitForFinalContinue,
+message OnboardingState {
+  OnboardingStages stage
 }
 
-message OnboardingState {
-  OnboardingStateEnum stateNum
+message OnboardingOnCharger {
+  bool onCharger,
+  bool needsToCharge,
+  float_32 requiredChargeTime_s, // if onCharger and needsToCharge, how long it should remain there
+}
+
+message OnboardingLowBattery {
+  bool lowBattery,
+}
+
+message OnboardingPickedUp {
+  bool pickedUp,
+}
+
+message OnboardingSeesCube {
+  bool seesCube,
+}
+
+message OnboardingCantFindCube {
+}
+
+// not onboarding 
+message WakeWordBegin {
+}
+
+message WakeWordEnd {
+  bool intentHeard,
+  UserIntent intent,
 }
 
 ///////////////////////////////////////////////////////////////////////////////

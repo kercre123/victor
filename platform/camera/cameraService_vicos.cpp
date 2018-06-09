@@ -161,7 +161,30 @@ namespace Anki {
       camera_set_awb(_camera, r_gain, g_gain, b_gain);
     }
 
-    bool CameraService::CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms)
+    void CameraService::CameraSetCaptureFormat(ImageEncoding format)
+    { 
+      anki_camera_pixel_format_t cameraFormat;
+      switch(format)
+      {
+        case ImageEncoding::YUV420sp:
+          cameraFormat = ANKI_CAM_FORMAT_YUV;
+          break;
+        case ImageEncoding::RawRGB:
+          cameraFormat = ANKI_CAM_FORMAT_RGB888;
+          break;
+        case ImageEncoding::BAYER:
+          cameraFormat = ANKI_CAM_FORMAT_BAYER_MIPI_BGGR10;
+          break;
+        default:
+          PRINT_NAMED_WARNING("CameraService.CameraSetCaptureFormat.UnsupportedFormat",
+                              "%s", EnumToString(format));
+          return;
+      }
+      PRINT_NAMED_INFO("CameraService.CameraSetCaptureFormat.SetFormat","%s", EnumToString(format));
+      camera_set_capture_format(_camera, cameraFormat);
+    }
+
+    bool CameraService::CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms, ImageEncoding& format)
     {
       std::lock_guard<std::mutex> lock(_lock);
       anki_camera_frame_t* capture_frame = NULL;
@@ -191,6 +214,17 @@ namespace Anki {
       _imageFrameID = imageID;
       frame = capture_frame->data;
 
+      switch(capture_frame->format)
+      {
+        case ANKI_CAM_FORMAT_BAYER_MIPI_BGGR10:
+        case ANKI_CAM_FORMAT_RGB888:
+          format = ImageEncoding::RawRGB;
+          break;
+        case ANKI_CAM_FORMAT_YUV:
+          format = ImageEncoding::YUV420sp;
+          break;
+      }
+      
       return true;
     } // CameraGetFrame()
 

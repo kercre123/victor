@@ -20,27 +20,33 @@
 #ifndef ANKI_COZMO_BASESTATION_ROBOT_H
 #define ANKI_COZMO_BASESTATION_ROBOT_H
 
-#include "coretech/common/engine/math/pose.h"
-#include "coretech/common/shared/types.h"
 #include "anki/cozmo/shared/animationTag.h"
+
+#include "engine/actionableObject.h"
 #include "engine/encodedImage.h"
-#include "util/entityComponent/entity.h"
 #include "engine/events/ankiEvent.h"
-#include "util/entityComponent/dependencyManagedEntity.h"
-#include "engine/ramp.h"
 #include "engine/fullRobotPose.h"
 #include "engine/robotComponents_fwd.h"
+#include "engine/viz/vizManager.h"
+
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/shared/types.h"
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/visionMarker.h"
+
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationTypes.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/ledTypes.h"
 #include "clad/types/robotStatusAndActions.h"
+
+#include "util/entityComponent/dependencyManagedEntity.h"
+#include "util/entityComponent/entity.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal.hpp"
 #include "util/stats/recentStatsAccumulator.h"
+
 #include <queue>
 #include <time.h>
 #include <unordered_map>
@@ -354,15 +360,6 @@ public:
   Result LocalizeToMat(const MatPiece* matSeen, MatPiece* existingMatPiece);
 
   Result LocalizeToObject(const ObservableObject* seenObject, ObservableObject* existingObject);
-
-  // True if we are on the sloped part of a ramp
-  bool IsOnRamp() const { return _onRamp; }
-
-  // Set whether or not the robot is on a ramp
-  Result SetOnRamp(bool t);
-
-  // Just sets the ramp to use and in which direction, not whether robot is on it yet
-  void SetRamp(const ObjectID& rampID, const Ramp::TraversalDirection direction);
 
   // Updates pose to be on charger
   Result SetPoseOnCharger();
@@ -692,13 +689,6 @@ protected:
   bool             _isHeadCalibrated = true;
   bool             _isLiftCalibrated = true;
 
-  // Ramping
-  bool             _onRamp = false;
-  ObjectID         _rampID;
-  Point2f          _rampStartPosition;
-  f32              _rampStartHeight;
-  Ramp::TraversalDirection _rampDirection;
-
   // Charge base ID that is being docked to
   ObjectID         _chargerID;
 
@@ -810,11 +800,6 @@ inline const Pose3d& Robot::GetDriveCenterPose(void) const
               _driveCenterPose.GetNamedPathToRoot(false).c_str());
 
   return _driveCenterPose;
-}
-
-inline void Robot::SetRamp(const ObjectID& rampID, const Ramp::TraversalDirection direction) {
-  _rampID = rampID;
-  _rampDirection = direction;
 }
 
 inline f32 Robot::GetLocalizedToDistanceSq() const {

@@ -431,19 +431,15 @@ void BehaviorInteractWithFaces::TransitionToTriggerEmotionEvent()
 void BehaviorInteractWithFaces::SelectFaceToTrack() const
 {  
   const bool considerTrackingOnlyFaces = false;
-  std::set< Vision::FaceID_t > faces = GetBEI().GetFaceWorld().GetFaceIDsObservedSince(_dVars.lastImageTimestampWhileRunning,
-                                                                                 considerTrackingOnlyFaces);
+  auto smartFaceIDs = GetBEI().GetFaceWorld().GetSmartFaceIDsObservedSince(_dVars.lastImageTimestampWhileRunning,
+                                                                           considerTrackingOnlyFaces);
   
-  std::vector<SmartFaceID> smartFaces;
-  for(auto& entry : faces){
-    smartFaces.emplace_back(GetBEI().GetFaceWorld().GetSmartFaceID(entry));
-  }
   const auto& faceSelection = GetAIComp<FaceSelectionComponent>();
   FaceSelectionComponent::FaceSelectionFactorMap criteriaMap;
   criteriaMap.insert(std::make_pair(FaceSelectionPenaltyMultiplier::UnnamedFace, 1000));
   criteriaMap.insert(std::make_pair(FaceSelectionPenaltyMultiplier::RelativeHeadAngleRadians, 1));
   criteriaMap.insert(std::make_pair(FaceSelectionPenaltyMultiplier::RelativeBodyAngleRadians, 3));
-  _dVars.targetFace = faceSelection.GetBestFaceToUse(criteriaMap, smartFaces);
+  _dVars.targetFace = faceSelection.GetBestFaceToUse(criteriaMap, smartFaceIDs);
 }
 
 

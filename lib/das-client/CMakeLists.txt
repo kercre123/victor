@@ -37,7 +37,7 @@ if (VICOS)
   )
 
   set(PLATFORM_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/vicos)
-  set(PLATFORM_LIBS log curl)
+  set(PLATFORM_LIBS log curl z)
 
 elseif (ANDROID)
 

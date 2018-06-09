@@ -1,0 +1,6 @@
+{
+  "behaviorID": "OnboardingCubeTrick",
+  "behaviorClass": "PickUpCube",
+
+  "retryCount": 1
+}

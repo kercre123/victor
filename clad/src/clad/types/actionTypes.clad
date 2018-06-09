@@ -5,7 +5,6 @@
 
 #include "clad/audio/audioEventTypes.clad"
 //#include "clad/types/actionResults.clad"
-#include "clad/types/toolCodes.clad"
 #include "clad/types/unexpectedMovementTypes.clad"
 
 namespace Anki {
@@ -34,10 +33,9 @@ enum int_32 RobotActionType {
     UNKNOWN = -1,
 
     ALIGN_WITH_OBJECT,
-    ASCEND_OR_DESCEND_RAMP,
     BACKUP_ONTO_CHARGER,
     CALIBRATE_MOTORS,
-    CROSS_BRIDGE,
+    CLIFF_ALIGN_TO_WHITE,
     DEVICE_AUDIO,              // This calls audio from WWise
     DISPLAY_FACE_IMAGE,
     DISPLAY_PROCEDURAL_FACE,
@@ -63,7 +61,6 @@ enum int_32 RobotActionType {
     PLAY_ANIMATION,
     PLAY_CUBE_ANIMATION,
     POP_A_WHEELIE,
-    READ_TOOL_CODE,
     ROLL_OBJECT_LOW,           // Possible sub-type of PickAndPlaceAction
     SAY_TEXT,
     SEARCH_FOR_NEARBY_OBJECT,
@@ -119,11 +116,6 @@ structure TrackFaceCompleted {
   int_32 faceID
 }
 
-// Used by ReadToolCodeAction
-structure ReadToolCodeCompleted {
-  ToolCodeInfo info // info.code will be UnknownTool if failure
-}
-
 // Used by TurnInPlaceAction
 structure TurnInPlaceCompleted {
   uint_32 relocalizedCnt,  // number of times relocalization occurred during the turn
@@ -140,7 +132,6 @@ union ActionCompletedUnion {
   AnimationCompleted          animationCompleted,
   DeviceAudioCompleted        deviceAudioCompleted,
   TrackFaceCompleted          trackFaceCompleted,
-  ReadToolCodeCompleted       readToolCodeCompleted,
   TurnInPlaceCompleted        turnInPlaceCompleted,
   DefaultCompleted            defaultCompleted,
 }

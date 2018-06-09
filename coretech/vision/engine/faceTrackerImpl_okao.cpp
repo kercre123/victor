@@ -18,6 +18,7 @@
 #include "coretech/common/engine/math/rect_impl.h"
 #include "coretech/common/engine/math/rotation.h"
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/vision/engine/okaoParamInterface.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/helpers/boundedWhile.h"
@@ -51,7 +52,36 @@ namespace Vision {
     // because this runs on a different thread and has no robot/context.
     static const uint32_t kRandomSeed = 1;
   }
-  
+
+  // Use this to trigger a reinitialization on next Update()
+  CONSOLE_VAR(bool, kReinitDetector, "Vision.FaceDetectorCommon", false);
+
+  namespace DetectParams {
+    // Parameters common to all face detection modes
+    CONSOLE_VAR_RANGED(s32,                  kMinFaceSize,          "Vision.FaceDetectorCommon", 48, 20, 8192);
+    CONSOLE_VAR_RANGED(s32,                  kMaxFaceSize,          "Vision.FaceDetectorCommon", 640, 20, 8192);
+    CONSOLE_VAR_ENUM(s32,                    kPoseAngle,            "Vision.FaceDetectorCommon", Okao::GetIndex(Okao::PoseAngle::Front), Okao::GetConsoleString<Okao::PoseAngle>().c_str());
+    CONSOLE_VAR_ENUM(s32,                    kRollAngle,            "Vision.FaceDetectorCommon", Okao::GetIndex(Okao::RollAngle::UpperPm45), Okao::GetConsoleString<Okao::RollAngle>().c_str());
+    CONSOLE_VAR_ENUM(s32,                    kSearchDensity,        "Vision.FaceDetectorCommon", Okao::GetIndex(Okao::SearchDensity::Normal), Okao::GetConsoleString<Okao::SearchDensity>().c_str());
+    CONSOLE_VAR_RANGED(s32,                  kFaceThreshold,        "Vision.FaceDetectorCommon", 500, 1, 1000);
+    CONSOLE_VAR_ENUM(s32,                    kDetectionMode,        "Vision.FaceDetectorCommon", Okao::GetIndex(Okao::DetectionMode::Movie), Okao::GetConsoleString<Okao::DetectionMode>().c_str());
+    // Movie only
+    CONSOLE_VAR_RANGED(s32,                  kSearchInitialCycle,   "Vision.FaceDetectorMovie", 2, 1, 45);
+    CONSOLE_VAR_RANGED(s32,                  kSearchNewCycle,       "Vision.FaceDetectorMovie", 2, 1, 45);
+    CONSOLE_VAR_RANGED(s32,                  kSearchNewInterval,    "Vision.FaceDetectorMovie", 5, -1, 45);
+    CONSOLE_VAR_RANGED(s32,                  kLostMaxRetry,         "Vision.FaceDetectorMovie", 2, 0, 300);
+    CONSOLE_VAR_RANGED(s32,                  kLostMaxHold,          "Vision.FaceDetectorMovie", 2, 0, 300);
+    CONSOLE_VAR_RANGED(s32,                  kSteadinessPosition,   "Vision.FaceDetectorMovie", 10, 0, 30);
+    CONSOLE_VAR_RANGED(s32,                  kSteadinessSize,       "Vision.FaceDetectorMovie", 10, 0, 30);
+    CONSOLE_VAR_RANGED(s32,                  kTrackingSwapRatio,    "Vision.FaceDetectorMovie", 400, 100, 10000);
+    CONSOLE_VAR_RANGED(s32,                  kDelayCount,           "Vision.FaceDetectorMovie", 1, 0, 10);
+    CONSOLE_VAR_ENUM(s32,                    kTrackingAccuracy,     "Vision.FaceDetectorMovie", Okao::GetIndex(Okao::TrackingAccuracy::High), Okao::GetConsoleString<Okao::TrackingAccuracy>().c_str());
+    CONSOLE_VAR(     bool,                   kEnableAngleExtension, "Vision.FaceDetectorMovie", false);
+    CONSOLE_VAR(     bool,                   kEnablePoseExtension,  "Vision.FaceDetectorMovie", true);
+    CONSOLE_VAR(     bool,                   kUseHeadTracking,      "Vision.FaceDetectorMovie", true);
+    CONSOLE_VAR(     bool,                   kDirectionMask,        "Vision.FaceDetectorMovie", false);
+  }
+
   FaceTracker::Impl::Impl(const Camera& camera,
                           const std::string& modelPath,
                           const Json::Value& config)
@@ -111,10 +141,9 @@ namespace Vision {
       return RESULT_FAIL_MEMORY;
     }
 
-    std::string detectionMode = "video";
-    if(SetParamHelper(_config, "DetectionMode", detectionMode))
+    switch(Okao::GetEnum<Okao::DetectionMode>(DetectParams::kDetectionMode))
     {
-      if(detectionMode == "video")
+      case Okao::DetectionMode::Movie:
       {
         _okaoDetectorHandle = OKAO_DT_CreateHandle(_okaoCommonHandle, DETECTION_MODE_MOVIE, MaxFaces);
         if(NULL == _okaoDetectorHandle) {
@@ -123,76 +152,107 @@ namespace Vision {
         }
         
         // Adjust some detection parameters
-        // TODO: Expose these for setting at runtime
-        okaoResult = OKAO_DT_MV_SetDelayCount(_okaoDetectorHandle, 1); // have to see faces for more than one frame
-        if(OKAO_NORMAL != okaoResult) {
-          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetDelayCountFailed", "");
-          return RESULT_FAIL_INVALID_PARAMETER;
-        }
-        
-        okaoResult = OKAO_DT_MV_SetSearchCycle(_okaoDetectorHandle, 2, 2, 5);
+        okaoResult = OKAO_DT_MV_SetSearchCycle(_okaoDetectorHandle, 
+                                               DetectParams::kSearchInitialCycle, 
+                                               DetectParams::kSearchNewCycle, 
+                                               DetectParams::kSearchNewInterval);
         if(OKAO_NORMAL != okaoResult) {
           PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetSearchCycleFailed", "");
           return RESULT_FAIL_INVALID_PARAMETER;
         }
 
-        okaoResult = OKAO_DT_MV_SetDirectionMask(_okaoDetectorHandle, false);
+        okaoResult = OKAO_DT_MV_SetLostParam(_okaoDetectorHandle, 
+                                             DetectParams::kLostMaxRetry,
+                                             DetectParams::kLostMaxHold);
+        if(OKAO_NORMAL != okaoResult) {
+          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetLostFailed", "");
+          return RESULT_FAIL_INVALID_PARAMETER;
+        }
+
+        okaoResult = OKAO_DT_MV_SetSteadinessParam(_okaoDetectorHandle, 
+                                                   DetectParams::kSteadinessPosition,
+                                                   DetectParams::kSteadinessSize);
+        if(OKAO_NORMAL != okaoResult) {
+          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetSteadinessFailed", "");
+          return RESULT_FAIL_INVALID_PARAMETER;
+        }
+
+        okaoResult = OKAO_DT_MV_SetTrackingSwapParam(_okaoDetectorHandle, DetectParams::kTrackingSwapRatio);
+        if(OKAO_NORMAL != okaoResult) {
+          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetSwapRatioFailed", "");
+          return RESULT_FAIL_INVALID_PARAMETER;
+        }
+
+        okaoResult = OKAO_DT_MV_SetDelayCount(_okaoDetectorHandle, DetectParams::kDelayCount); // have to see faces for more than one frame
+        if(OKAO_NORMAL != okaoResult) {
+          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetDelayCountFailed", "");
+          return RESULT_FAIL_INVALID_PARAMETER;
+        }
+        
+        okaoResult = OKAO_DT_MV_SetAccuracy(_okaoDetectorHandle, Okao::GetOkao<Okao::TrackingAccuracy>(DetectParams::kTrackingAccuracy));
+        if(OKAO_NORMAL != okaoResult) {
+          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetAccuracyFailed", "");
+          return RESULT_FAIL_INVALID_PARAMETER;
+        }
+        
+        okaoResult = OKAO_DT_MV_SetAngleExtension(_okaoDetectorHandle, DetectParams::kEnableAngleExtension);
+        if(OKAO_NORMAL != okaoResult) {
+          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetAngleExtensionFailed", "");
+          return RESULT_FAIL_INVALID_PARAMETER;
+        }
+
+        okaoResult = OKAO_DT_MV_SetPoseExtension(_okaoDetectorHandle, DetectParams::kEnablePoseExtension, 
+                                                 DetectParams::kUseHeadTracking);
+        if(OKAO_NORMAL != okaoResult) {
+          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetPoseExtensionFailed", "");
+          return RESULT_FAIL_INVALID_PARAMETER;
+        }
+
+        okaoResult = OKAO_DT_MV_SetDirectionMask(_okaoDetectorHandle, DetectParams::kDirectionMask);
         if(OKAO_NORMAL != okaoResult) {
           PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetDirectionMaskFailed", "");
           return RESULT_FAIL_INVALID_PARAMETER;
         }
         
-        okaoResult = OKAO_DT_MV_SetPoseExtension(_okaoDetectorHandle, true, true);
-        if(OKAO_NORMAL != okaoResult) {
-          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetPoseExtensionFailed", "");
-          return RESULT_FAIL_INVALID_PARAMETER;
-        }
-        
-        okaoResult = OKAO_DT_MV_SetAccuracy(_okaoDetectorHandle, TRACKING_ACCURACY_HIGH);
-        if(OKAO_NORMAL != okaoResult) {
-          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetAccuracyFailed", "");
-          return RESULT_FAIL_INVALID_PARAMETER;
-        }
+        break;
       }
-        
-      else if(detectionMode == "singleImage")
+      case Okao::DetectionMode::Still:
       {
         _okaoDetectorHandle = OKAO_DT_CreateHandle(_okaoCommonHandle, DETECTION_MODE_STILL, MaxFaces);
         if(NULL == _okaoDetectorHandle) {
           PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibDetectionHandleAllocFail.StillMode", "");
           return RESULT_FAIL_MEMORY;
         }
-      }
-        
-      else {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.Init.UnknownDetectionMode",
-                          "Requested mode = %s", detectionMode.c_str());
+        break;
+      } 
+      default:
+      {
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Init.UnknownDetectionMode", "");
         return RESULT_FAIL;
       }
     }
     
-    //okaoResult = OKAO_DT_SetAngle(_okaoDetectorHandle, POSE_ANGLE_HALF_PROFILE,
-    //                              ROLL_ANGLE_U45 | ROLL_ANGLE_2 | ROLL_ANGLE_10);
-    okaoResult = OKAO_DT_SetAngle(_okaoDetectorHandle, POSE_ANGLE_FRONT, ROLL_ANGLE_U45);
-    if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetAngleFailed", "");
-      return RESULT_FAIL_INVALID_PARAMETER;
-    }
-    
-    s32 minFaceSize = 48;
-    s32 maxFaceSize = 640;
-    SetParamHelper(_config, "minFaceSize", minFaceSize);
-    SetParamHelper(_config, "maxFaceSize", maxFaceSize);
-
-    okaoResult = OKAO_DT_SetSizeRange(_okaoDetectorHandle, minFaceSize, maxFaceSize);
+    okaoResult = OKAO_DT_SetSizeRange(_okaoDetectorHandle, DetectParams::kMinFaceSize, 
+                                      DetectParams::kMaxFaceSize);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetSizeRangeFailed", "");
       return RESULT_FAIL_INVALID_PARAMETER;
     }
     
-    s32 detectionThreshold = 500;
-    SetParamHelper(_config, "detectionThreshold", detectionThreshold);
-    okaoResult = OKAO_DT_SetThreshold(_okaoDetectorHandle, detectionThreshold);
+    okaoResult = OKAO_DT_SetAngle(_okaoDetectorHandle, Okao::GetOkao<Okao::PoseAngle>(DetectParams::kPoseAngle), 
+                                  Okao::GetOkao<Okao::RollAngle>(DetectParams::kRollAngle));
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetAngleFailed", "");
+      return RESULT_FAIL_INVALID_PARAMETER;
+    }
+    
+    okaoResult = OKAO_DT_SetSearchDensity(_okaoDetectorHandle, Okao::GetOkao<Okao::SearchDensity>(DetectParams::kSearchDensity));
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetSearchDensityFailed", "");
+      return RESULT_FAIL_INVALID_PARAMETER;
+    }
+
+    okaoResult = OKAO_DT_SetThreshold(_okaoDetectorHandle, DetectParams::kFaceThreshold);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetThresholdFailed",
                         "FaceLib Result Code=%d", okaoResult);
@@ -283,11 +343,19 @@ namespace Vision {
   
   FaceTracker::Impl::~Impl()
   {
+    Deinit();
+  }
+
+  void FaceTracker::Impl::Deinit()
+  {
+    _isInitialized = false;
+
     //Util::SafeDeleteArray(_workingMemory);
     //Util::SafeDeleteArray(_backupMemory);
 
     // Must release album handles before common handle
     _recognizer.Shutdown();
+    _recognizer.EraseAllFaces();
 
     if(NULL != _okaoSmileDetectHandle) {
       if(OKAO_NORMAL != OKAO_SM_DeleteHandle(_okaoSmileDetectHandle)) {
@@ -651,6 +719,15 @@ namespace Vision {
       return RESULT_FAIL;
     }
     
+    if(kReinitDetector)
+    {
+      PRINT_NAMED_INFO("FaceTrackerImpl.Update.Reinit",
+                       "Reinitializing face tracker with current parameters");
+      Deinit();
+      Init();
+      kReinitDetector = false;
+    }
+
     DEV_ASSERT(frameOrig.IsContinuous(), "FaceTrackerImpl.Update.NonContinuousImage");
     
     INT32 okaoResult = OKAO_NORMAL;
@@ -1154,7 +1231,6 @@ namespace Vision {
     return _recognizer.SetSerializedData(albumData, enrollData, loadedFaces);
   }
 
-  
 } // namespace Vision
 } // namespace Anki
 

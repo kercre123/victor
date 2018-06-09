@@ -55,6 +55,7 @@
 #include "util/helpers/boundedWhile.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
+#include "util/logging/DAS.h"
 #include "util/threading/threadPriority.h"
 #include "util/bitFlags/bitFlags.h"
 
@@ -99,12 +100,12 @@ namespace Cozmo {
   CONSOLE_VAR(bool, kVisualizeObservedMarkersIn3D, "Vision.General", false);
   CONSOLE_VAR(bool, kDrawMarkerNames,              "Vision.General", false); // In viz camera view
   CONSOLE_VAR(bool, kDisplayUndistortedImages,     "Vision.General", false);
-    
+
   CONSOLE_VAR(bool, kEnableMirrorMode,              "Vision.General", false);
   CONSOLE_VAR(bool, kDisplayDetectionsInMirrorMode, "Vision.General", false); // objects, faces, markers
   CONSOLE_VAR(bool, kDisplayEyeContactInMirrorMode, "Vision.General", false);
   CONSOLE_VAR(f32,  kMirrorModeGamma,               "Vision.General", 1.f);
-  
+
   // Hack to continue drawing detected objects for a bit after they are detected
   // since object detection is slow
   CONSOLE_VAR(u32, kKeepDrawingSalientPointsFor_ms, "Vision.General", 150);
@@ -168,6 +169,7 @@ namespace Cozmo {
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveImages>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::DevSubscribeVisionModes>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::DevUnsubscribeVisionModes>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::SetCameraCaptureFormat>();
 
       // Separate list for engine messages to listen to:
       helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotConnectionResponse>();
@@ -265,9 +267,6 @@ namespace Cozmo {
 
       // Got a new calibration: rebuild the LUT for ground plane homographies
       PopulateGroundPlaneHomographyLUT();
-
-      // Fine-tune calibration using tool code dots
-      //_robot->GetActionList().QueueActionNext(new ReadToolCodeAction(_robot));
     }
 
     if(kRollingShutterCorrectionEnabled)
@@ -404,16 +403,6 @@ namespace Cozmo {
     }
   }
 
-  Result VisionComponent::EnableToolCodeCalibration(bool enable)
-  {
-    if(nullptr != _visionSystem) {
-      return _visionSystem->EnableToolCodeCalibration(enable);
-    } else {
-      PRINT_NAMED_ERROR("VisionComponent.EnableToolCodeCalibration.NullVisionSystem", "");
-      return RESULT_FAIL;
-    }
-  }
-
   static Result GetImageHistState(const Robot&      robot,
                                   const TimeStamp_t imageTimeStamp,
                                   HistRobotState&   imageHistState,
@@ -448,12 +437,18 @@ namespace Cozmo {
       return;
     }
 
+    // Don't bother updating while we are waiting for a capture format change to take effect
+    if(UpdateCaptureFormatChange())
+    {
+      return;
+    }
+
     if(_bufferedImg.IsEmpty())
     {
       // We don't yet have a next image. Get one from camera.
       const bool gotImage = CaptureImage(_bufferedImg);
       _hasStartedCapturingImages = true;
-      
+
       if(gotImage)
       {
         DEV_ASSERT(!_bufferedImg.IsEmpty(), "VisionComponent.Update.EmptyImageAfterCapture");
@@ -701,31 +696,30 @@ namespace Cozmo {
     }
     else
     {
-      if(!_paused) {
-        ANKI_CPU_PROFILE("VC::SetNextImage.LockedSwap");
-        Lock();
+      // Do this even when paused
+      ANKI_CPU_PROFILE("VC::SetNextImage.LockedSwap");
+      Lock();
 
-        const bool isDroppingFrame = !_nextImg.IsEmpty() || (kSimulateDroppedFrameFraction > 0.f &&
-                                                             _robot->GetContext()->GetRandom()->RandDbl() < kSimulateDroppedFrameFraction);
-        if(isDroppingFrame)
-        {
-          PRINT_CH_DEBUG("VisionComponent",
-                         "VisionComponent.SetNextImage.DroppedFrame",
-                         "Setting next image with t=%u, but existing next image from t=%u not yet processed (currently on t=%u).",
-                         image.GetTimestamp(),
-                         _nextImg.GetTimestamp(),
-                         _currentImg.GetTimestamp());
-        }
-        _dropStats.Update(isDroppingFrame);
-
-        // Make encoded image the new "next" image
-        std::swap(_nextImg, image);
-        didSwapNextImage = true;
-
-        DEV_ASSERT(!_nextImg.IsEmpty(), "VisionComponent.SetNextImage.NextImageEmpty");
-
-        Unlock();
+      const bool isDroppingFrame = !_nextImg.IsEmpty() || (kSimulateDroppedFrameFraction > 0.f &&
+                                                           _robot->GetContext()->GetRandom()->RandDbl() < kSimulateDroppedFrameFraction);
+      if(isDroppingFrame)
+      {
+        PRINT_CH_DEBUG("VisionComponent",
+                       "VisionComponent.SetNextImage.DroppedFrame",
+                       "Setting next image with t=%u, but existing next image from t=%u not yet processed (currently on t=%u).",
+                       image.GetTimestamp(),
+                       _nextImg.GetTimestamp(),
+                       _currentImg.GetTimestamp());
       }
+      _dropStats.Update(isDroppingFrame);
+
+      // Make encoded image the new "next" image
+      std::swap(_nextImg, image);
+      didSwapNextImage = true;
+
+      DEV_ASSERT(!_nextImg.IsEmpty(), "VisionComponent.SetNextImage.NextImageEmpty");
+
+      Unlock();
     }
 
     return (didSwapNextImage) ? RESULT_OK : RESULT_FAIL;
@@ -995,7 +989,6 @@ namespace Cozmo {
 
         tryAndReport(&VisionComponent::UpdateMotionCentroid,      VisionMode::DetectingMotion);
         tryAndReport(&VisionComponent::UpdateOverheadEdges,       VisionMode::DetectingOverheadEdges);
-        tryAndReport(&VisionComponent::UpdateToolCode,            VisionMode::ReadingToolCode);
         tryAndReport(&VisionComponent::UpdateComputedCalibration, VisionMode::ComputingCalibration);
         tryAndReport(&VisionComponent::UpdateImageQuality,        VisionMode::CheckingQuality);
         tryAndReport(&VisionComponent::UpdateWhiteBalance,        VisionMode::CheckingWhiteBalance);
@@ -1107,16 +1100,16 @@ namespace Cozmo {
     // TODO: Figure out the original image resolution?
     const f32 heightScale = (f32)FACE_DISPLAY_HEIGHT / (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT;
     const f32 widthScale  = (f32)FACE_DISPLAY_WIDTH / (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
-    
+
     const f32 x_topRight = x_topLeft + width; // will become upper left after mirroring
     const Rectangle<f32> rect((f32)FACE_DISPLAY_WIDTH - widthScale*x_topRight, // mirror rectangle for display
                               y_topLeft * heightScale,
                               width * widthScale,
                               height * heightScale);
-    
+
     return rect;
   }
-  
+
   template<typename T>
   static Point<2,T> MirrorPointHelper(const Point<2,T>& pt)
   {
@@ -1124,11 +1117,11 @@ namespace Cozmo {
     constexpr f32 xmax = (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
     constexpr f32 heightScale = (f32)FACE_DISPLAY_HEIGHT / (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT;
     constexpr f32 widthScale  = (f32)FACE_DISPLAY_WIDTH / (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
-    
+
     const Point<2,T> pt_mirror(widthScale*(xmax - pt.x()), pt.y()*heightScale);
     return pt_mirror;
   }
-  
+
   static Quad2f DisplayMirroredQuadHelper(const Quad2f& quad)
   {
     // Mirror x coordinates, swap left/right points, and scale for each point in the quad:
@@ -1136,10 +1129,10 @@ namespace Cozmo {
                                MirrorPointHelper(quad.GetBottomRight()),
                                MirrorPointHelper(quad.GetTopLeft()),
                                MirrorPointHelper(quad.GetBottomLeft()));
-    
+
     return quad_mirrored;
   }
-  
+
   template<typename T>
   static Polygon<2,T> DisplayMirroredPolyHelper(const Polygon<2,T>& poly)
   {
@@ -1148,7 +1141,7 @@ namespace Cozmo {
     {
       poly_mirrored.emplace_back(MirrorPointHelper(pt));
     }
-    
+
     return poly_mirrored;
   }
 
@@ -1252,7 +1245,7 @@ namespace Cozmo {
         {
           VisualizeObservedMarkerIn3D(visionMarker);
         }
-        
+
         if(kDisplayDetectionsInMirrorMode)
         {
           const auto& quad = visionMarker.GetImageCorners();
@@ -1267,10 +1260,10 @@ namespace Cozmo {
               img.DrawText({1., img.GetNumRows()-1}, name.substr(strlen("MARKER_"),std::string::npos), drawColor);
             }
           };
-          
+
           AddDrawScreenModifier(modFcn);
         }
-        
+
         observedMarkers.push_back(std::move(visionMarker));
       }
     } // if(!procResult.observedMarkers.empty())
@@ -1324,12 +1317,12 @@ namespace Cozmo {
 
         _robot->GetFaceWorld().SetFaceEnrollmentComplete(true);
       }
-      
+
       if(kDisplayDetectionsInMirrorMode)
       {
         const auto& rect = faceDetection.GetRect();
         const auto& name = faceDetection.GetName();
-        
+
         std::function<void (Vision::ImageRGB&)> modFcn = [rect, name](Vision::ImageRGB& img)
         {
           img.DrawRect(DisplayMirroredRectHelper(rect.GetX(), rect.GetY(), rect.GetWidth(), rect.GetHeight()),
@@ -1359,7 +1352,7 @@ namespace Cozmo {
           const f32 height = .2f * (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT;
           img.DrawFilledRect(DisplayMirroredRectHelper(x, y, width, height), NamedColors::YELLOW);
         };
-        
+
         AddDrawScreenModifier(modFcn);
       }
     }
@@ -1445,7 +1438,7 @@ namespace Cozmo {
       const std::string caption(object.description + "[" + std::to_string((s32)std::round(100.f*object.score))
                                 + "] t:" + std::to_string(object.timestamp));
       _vizManager->DrawCameraText(Point2f(object.x_img, object.y_img), caption, color);
-      
+
       if(kDisplayDetectionsInMirrorMode)
       {
         const Point2f centroid(object.x_img, object.y_img);
@@ -1486,19 +1479,6 @@ namespace Cozmo {
 
     return RESULT_OK;
   }
-
-  Result VisionComponent::UpdateToolCode(const VisionProcessingResult& procResult)
-  {
-    for(auto & info : procResult.toolCodes)
-    {
-      ExternalInterface::RobotReadToolCode msg;
-      msg.info = info;
-      _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
-    }
-
-    return RESULT_OK;
-  }
-
 
   Result VisionComponent::UpdateComputedCalibration(const VisionProcessingResult& procResult)
   {
@@ -1891,7 +1871,7 @@ namespace Cozmo {
       Vision::Image imgUndistorted(img.GetNumRows(),img.GetNumCols());
       DEV_ASSERT(_camera->IsCalibrated(), "VisionComponent.GetCalibrationImageJpegData.NoCalibration");
       img.Undistort(*_camera->GetCalibration(), imgUndistorted);
-      
+
       std::vector<u8> imgVecUndistort;
       cv::imencode(".jpg", imgUndistorted.get_CvMat_(), imgVecUndistort, std::vector<int>({CV_IMWRITE_JPEG_QUALITY, 50}));
 
@@ -2071,49 +2051,6 @@ namespace Cozmo {
 
     return RESULT_OK;
   } // FindFactoryTestDotCentroids()
-
-  Result VisionComponent::ClearToolCodeImages()
-  {
-    if(nullptr == _visionSystem || !_visionSystem->IsInitialized())
-    {
-      PRINT_NAMED_ERROR("VisionComponent.ClearToolCodeImages.VisionSystemNotReady", "");
-      return RESULT_FAIL;
-    }
-    else
-    {
-      return _visionSystem->ClearToolCodeImages();
-    }
-  }
-
-  size_t VisionComponent::GetNumStoredToolCodeImages() const
-  {
-    return _visionSystem->GetNumStoredToolCodeImages();
-  }
-
-  std::list<std::vector<u8> > VisionComponent::GetToolCodeImageJpegData()
-  {
-    const auto& images = _visionSystem->GetToolCodeImages();
-
-    // Do jpeg compression
-    std::list<std::vector<u8> > rawJpegData;
-    for (auto const& img : images)
-    {
-      // Compress to jpeg
-      std::vector<u8> imgVec;
-      cv::imencode(".jpg", img.get_CvMat_(), imgVec, std::vector<int>({CV_IMWRITE_JPEG_QUALITY, 75}));
-
-      /*
-       std::string imgFilename = "savedImg_" + std::to_string(imgIdx) + ".jpg";
-       FILE* fp = fopen(imgFilename.c_str(), "w");
-       fwrite(imgVec.data(), imgVec.size(), 1, fp);
-       fclose(fp);
-       */
-
-      rawJpegData.emplace_back(std::move(imgVec));
-    }
-
-    return rawJpegData;
-  }
 
   inline static size_t GetPaddedNumBytes(size_t numBytes)
   {
@@ -2445,7 +2382,7 @@ namespace Cozmo {
     {
       SaveFaceAlbumToRobot();
       _robot->Broadcast(ExternalInterface::MessageEngineToGame( std::move(renamedFace) ));
-      
+
       {
         DASMSG(vision_enrolled_names_modify, "vision.enrolled_names.modify", "An enrolled face/name was modified");
         DASMSG_SET(i1, faceID, "The face ID (int)");
@@ -2614,6 +2551,19 @@ namespace Cozmo {
 
   bool VisionComponent::CaptureImage(Vision::ImageRGB& image_out)
   {
+    // Wait until the current async conversion is finished before getting another
+    // frame
+    if(_cvtYUV2RGBFuture.valid())
+    {
+      if(_cvtYUV2RGBFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+      {
+        image_out = _cvtYUV2RGBFuture.get();
+        return true;
+      }
+
+      return false;
+    }
+
     auto cameraService = CameraService::getInstance();
 
     const int numRows = cameraService->CameraGetHeight();
@@ -2635,12 +2585,54 @@ namespace Cozmo {
     u8* buffer = nullptr;
     u32 imageId = 0;
     TimeStamp_t imageCaptureSystemTimestamp_ms = 0;
+    ImageEncoding format;
 
-    const bool gotImage = cameraService->CameraGetFrame(buffer, imageId, imageCaptureSystemTimestamp_ms);
+    const bool gotImage = cameraService->CameraGetFrame(buffer, imageId, imageCaptureSystemTimestamp_ms, format);
     if(gotImage)
     {
-      // Create ImageRGB object from image buffer
-      image_out = Vision::ImageRGB(numRows, numCols, buffer);
+      if(format == ImageEncoding::YUV420sp)
+      {
+        // Create async future to do the YUV to RGB conversion since it is slow
+        _cvtYUV2RGBFuture = std::async(std::launch::async,
+          [image_out, buffer, imageCaptureSystemTimestamp_ms, imageId]() mutable -> Vision::ImageRGB
+          {
+            image_out.Allocate(CAMERA_SENSOR_RESOLUTION_HEIGHT, CAMERA_SENSOR_RESOLUTION_WIDTH);
+
+            // Wrap the YUV data in an opencv mat
+            // A 1280x720 YUV420sp image is 1280x1080 bytes
+            // A full Y channel followed by interleaved 2x2 subsampled UV
+            // Calculate the number of rows of bytes of YUV data that corresponds to
+            // CAMERA_SENSOR_RESOLUTION_WIDTH cols of data
+            constexpr u16 kNumYUVRows =
+              (2 * (CAMERA_SENSOR_RESOLUTION_HEIGHT/2 * CAMERA_SENSOR_RESOLUTION_WIDTH/2) /
+               CAMERA_SENSOR_RESOLUTION_WIDTH) + CAMERA_SENSOR_RESOLUTION_HEIGHT;
+            cv::Mat yuv(kNumYUVRows, CAMERA_SENSOR_RESOLUTION_WIDTH, CV_8UC1, buffer);
+            // Convert from YUV to BGR directly into image_out
+            // BGR appears to actually result in RGB data, there is a similar bug
+            // when converting from RGB565 to RGB
+            cv::cvtColor(yuv, image_out.get_CvMat_(), cv::COLOR_YUV2BGR_NV21);
+
+            // Create image with proper imageID and timestamp
+            image_out.SetTimestamp(imageCaptureSystemTimestamp_ms);
+            image_out.SetImageId(imageId);
+
+            return image_out;
+          });
+
+        return false;
+      }
+      else if(format == ImageEncoding::RawRGB)
+      {
+        // Create ImageRGB object from image buffer
+        image_out = Vision::ImageRGB(numRows, numCols, buffer);
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("VisionComponent.CaptureImage.UnexpectedFormat",
+                          "Camera returned unexpected image format %s",
+                          EnumToString(format));
+        return false;
+      }
 
       if(kDisplayUndistortedImages)
       {
@@ -2686,6 +2678,98 @@ namespace Cozmo {
 
     _liftCrossBarSource = std::move(liftCrossBar);
   }
+
+  bool VisionComponent::SetCameraCaptureFormat(ImageEncoding format)
+  {
+    // If the future is already valid then we are currently waiting for
+    // a previous format change to take effect
+    if(_captureFormatState != CaptureFormatState::None)
+    {
+      PRINT_NAMED_WARNING("VisionComponent.SetCameraCaptureFormat.StillSettingPrevFormat",
+                          "Still waiting for previous format %s to be applied",
+                          EnumToString(_desiredImageFormat));
+      return false;
+    }
+
+    // Pause and wait for VisionSystem to finish processing the current image
+    // before changing formats since that will release all shared camera memory
+    Pause(true);
+
+    _desiredImageFormat = format;
+
+    _captureFormatState = CaptureFormatState::WaitingForProcessingToStop;
+
+    return true;
+  }
+
+  bool VisionComponent::UpdateCaptureFormatChange()
+  {
+    switch(_captureFormatState)
+    {
+      case CaptureFormatState::None:
+      {
+        return false;
+      }
+
+      case CaptureFormatState::WaitingForProcessingToStop:
+      {
+        Lock();
+        const bool curImgEmpty = _currentImg.IsEmpty();
+
+        // If the current image is empty so
+        // VisionSystem has finished processing it
+        if(curImgEmpty)
+        {
+          // _currentImg is empty so check if we need to release _nextImg
+          // before changing capture formats (deallocates all image memory)
+          if(!_nextImg.IsEmpty())
+          {
+            ReleaseImage(_nextImg);
+          }
+
+          // Make sure to also clear image cache
+          _visionSystem->ClearImageCache();
+
+          // Tell the camera to change format now that nothing is
+          // using the shared camera memory
+          auto cameraService = CameraService::getInstance();
+          cameraService->CameraSetCaptureFormat(_desiredImageFormat);
+
+          // Clear desired format
+          _desiredImageFormat = ImageEncoding::NoneImageEncoding;
+
+          _captureFormatState = CaptureFormatState::WaitingForFrame;
+        }
+
+        Unlock();
+
+        return true;
+      }
+
+      case CaptureFormatState::WaitingForFrame:
+      {
+        Lock();
+        const bool nextImgEmpty = _nextImg.IsEmpty();
+        Unlock();
+
+        // If the next image to no longer empty,
+        // it indicates the camera is giving us frames again
+        if(!nextImgEmpty)
+        {
+          // Unpause now that the format has changed and we
+          // are getting images from the camera again
+          Pause(false);
+
+          _captureFormatState = CaptureFormatState::None;
+        }
+
+        return false;
+      }
+    }
+
+    return false;
+  }
+
 
 #pragma mark -
 #pragma mark Message Handlers
@@ -2822,6 +2906,12 @@ namespace Cozmo {
   void VisionComponent::HandleMessage(const ExternalInterface::DevUnsubscribeVisionModes& payload)
   {
     _robot->GetVisionScheduleMediator().DevOnly_SelfUnsubscribeVisionMode(GetVisionModesFromFlags(payload.bitFlags));
+  }
+
+  template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::SetCameraCaptureFormat& msg)
+  {
+    SetCameraCaptureFormat(msg.format);
   }
 
   std::set<VisionMode> VisionComponent::GetVisionModesFromFlags(u32 bitflags) const

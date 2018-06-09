@@ -1,7 +1,7 @@
 package cloudproc
 
 import (
-	pb "github.com/anki/sai-chipper-voice/grpc/pb"
+	pb "github.com/anki/sai-chipper-voice/proto/anki/chipperpb"
 )
 
 // Handler aliases the IntentService field from our protobuf that determines

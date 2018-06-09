@@ -41,6 +41,7 @@
 #include <mutex>
 #include <list>
 #include <vector>
+#include <future>
 
 namespace Anki {
 
@@ -134,6 +135,13 @@ struct DockingErrorSignal;
     // turning too fast or head is moving too fast) will be considered
     void   EnableVisionWhileMovingFast(bool enable);
 
+    // Set the camera's capture format
+    // Non blocking but will cause VisionComponent/System to
+    // wait until no one is using the shared camera memory before
+    // requesting the format change and will continue to
+    // wait until we once again recieve frames from the camera
+    bool   SetCameraCaptureFormat(ImageEncoding format);
+
     // Set whether or not we draw each processed image to the robot's screen
     // (Not using the word "face" because of confusion with "faces" in vision)
     void   EnableDrawImagesToScreen(bool enable) { _drawImagesToScreen = enable; }
@@ -151,7 +159,6 @@ struct DockingErrorSignal;
     Result UpdateMotionCentroid(const VisionProcessingResult& result);
     Result UpdateLaserPoints(const VisionProcessingResult& result);
     Result UpdateOverheadEdges(const VisionProcessingResult& result);
-    Result UpdateToolCode(const VisionProcessingResult& result);
     Result UpdateComputedCalibration(const VisionProcessingResult& result);
     Result UpdateImageQuality(const VisionProcessingResult& procResult);
     Result UpdateVisualObstacles(const VisionProcessingResult& procResult);
@@ -164,11 +171,6 @@ struct DockingErrorSignal;
     const std::shared_ptr<Vision::CameraCalibration> GetCameraCalibration() const;
     bool IsCameraCalibrationSet() const { return _camera->IsCalibrated(); }
     Result ClearCalibrationImages();
-    
-    // If enabled, the camera calibration will be updated based on the
-    // position of the centroids of the dots that are part of the tool codes.
-    // Fails if vision system is already in the middle of reading tool code.
-    Result EnableToolCodeCalibration(bool enable);
       
     TimeStamp_t GetLastProcessedImageTimeStamp() const;
     
@@ -222,11 +224,6 @@ struct DockingErrorSignal;
     // Get the specified calibration pose to the robot. 'whichPose' must be [0,numCalibrationimages].
     Result GetCalibrationPoseToRobot(size_t whichPose, Pose3d& p) const;
     
-    // Tool code images
-    Result ClearToolCodeImages();
-    size_t  GetNumStoredToolCodeImages() const;
-    std::list<std::vector<u8> > GetToolCodeImageJpegData();
-
     // For factory test behavior use only: tell vision component to find the
     // four dots for the test target and compute camera pose. Result is
     // broadcast via an EngineToGame::RobotCompletedFactoryDotTest message.
@@ -390,6 +387,22 @@ struct DockingErrorSignal;
     VisionPoseData   _currentPoseData;
     VisionPoseData   _nextPoseData;
     bool             _visionWhileMovingFastEnabled = false;
+
+    ImageEncoding _desiredImageFormat = ImageEncoding::NoneImageEncoding;
+    // State machine to make sure nothing is using the shared memory from the camera system
+    // before we request a different camera capture format as well as to wait
+    // until we get a frame from the camera after changing formats before unpausing
+    // vision component
+    enum class CaptureFormatState
+    {
+      None,
+      WaitingForProcessingToStop,
+      WaitingForFrame
+    };
+    CaptureFormatState _captureFormatState = CaptureFormatState::None;
+
+    // Future used for async YUV to RGB conversion
+    std::future<Vision::ImageRGB> _cvtYUV2RGBFuture;
     
     std::vector<u8> _albumData, _enrollData; // for loading / saving face data
     
@@ -423,6 +436,11 @@ struct DockingErrorSignal;
 
     // Sets the WhiteBalance gains of the camera
     void SetWhiteBalanceSettings(f32 gainR, f32 gainG, f32 gainB);
+
+    // Updates the state of requesting for a camera capture format change
+    // Returns true if we are currently waiting for a camera capture format
+    // change
+    bool UpdateCaptureFormatChange();
     
     // Factory centroid finder: returns the centroids of the 4 factory test dots,
     // computes camera pose w.r.t. the target and broadcasts a RobotCompletedFactoryDotTest
@@ -436,6 +454,11 @@ struct DockingErrorSignal;
   }; // class VisionComponent
   
   inline void VisionComponent::Pause(bool isPaused) {
+    if(_paused == isPaused)
+    {
+      return;
+    }
+
     PRINT_CH_INFO("VisionComponent", "VisionComponent.Pause.Set", "Setting Paused from %d to %d",
                   _paused, isPaused);
     _paused = isPaused;

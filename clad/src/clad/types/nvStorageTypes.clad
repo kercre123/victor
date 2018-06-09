@@ -57,7 +57,6 @@ namespace NVStorage {
     // Single blob manufacturing entries start here
     NVEntry_BirthCertificate   = 0x80000000,
     NVEntry_CameraCalib        = 0x80000001,
-    NVEntry_ToolCodeInfo       = 0x80000002,
     NVEntry_CalibPose          = 0x80000003,
     NVEntry_CalibMetaInfo      = 0x80000004,
     NVEntry_ObservedCubePose   = 0x80000005,
@@ -75,9 +74,6 @@ namespace NVStorage {
     NVEntry_CalibImage4 = 0x80040000,
     NVEntry_CalibImage5 = 0x80050000,
     NVEntry_CalibImage6 = 0x80060000,
-
-    NVEntry_ToolCodeImageLeft  = 0x80100000,
-    NVEntry_ToolCodeImageRight = 0x80110000,
 
     // ==== Pre-playpen tags =====
     // Tags that start with 0xC000 are special factory entires.

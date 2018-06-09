@@ -36,7 +36,7 @@ import time
 
 mic_data = vs.VictorWebsocket("192.168.43.54")
 
-while test.mic_socket_established == False:
+while mic_data.mic_socket_established == False:
   print("Waiting for websocket")
   time.sleep(2)
 print("connection established")

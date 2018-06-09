@@ -37,10 +37,17 @@ public:
   
   virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
+
+  // Event/Message handling
+  template<typename T>
+  void HandleMessage(const T& msg);
   
 private:
   
   Robot* _robot = nullptr;  
+  bool _sdkWantsControl = false;
+
+  std::vector<::Signal::SmartHandle> _signalHandles;
 };
 
 } // namespace Cozmo

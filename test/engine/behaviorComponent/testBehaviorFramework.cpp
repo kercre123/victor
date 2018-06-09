@@ -23,6 +23,7 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorsBootLoader.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -36,6 +37,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
+#include "engine/unitTestKey.h"
 #include "gtest/gtest.h"
 
 #include <string>
@@ -88,6 +90,7 @@ void InitBEIPartial( const BEIComponentMap& map, BehaviorExternalInterface& bei 
            GetFromMap<MovementComponent>(map, BEIComponentID::MovementComponent),
            GetFromMap<ObjectPoseConfirmer>(map, BEIComponentID::ObjectPoseConfirmer),
            GetFromMap<PetWorld>(map, BEIComponentID::PetWorld),
+           GetFromMap<PhotographyManager>(map, BEIComponentID::PhotographyManager),
            GetFromMap<ProgressionUnlockComponent>(map, BEIComponentID::ProgressionUnlock),
            GetFromMap<ProxSensorComponent>(map, BEIComponentID::ProxSensor),
            GetFromMap<PublicStateBroadcaster>(map, BEIComponentID::PublicStateBroadcaster),
@@ -164,8 +167,8 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
     auto entity = std::make_unique<BehaviorComponent::EntityType>();
 
     entity->AddDependentComponent(BCComponentID::AIComponent, _robot->GetComponentPtr<AIComponent>(), false);
-    auto wrapper = new BaseBehaviorWrapper(baseBehavior);
-    entity->AddDependentComponent(BCComponentID::BaseBehaviorWrapper, wrapper);
+    auto bootLoader = new BehaviorsBootLoader(baseBehavior, {});
+    entity->AddDependentComponent(BCComponentID::BehaviorsBootLoader, bootLoader);
     entity->AddDependentComponent(BCComponentID::BehaviorContainer, _behaviorContainer.get(), false);
 
     BehaviorComponent::GenerateManagedComponents(*_robot, entity);
@@ -225,7 +228,9 @@ void TestBehaviorFramework::SetDefaultBaseBehavior()
     const Json::Value& behaviorSystemConfig = (dataLoader != nullptr) ?
            dataLoader->GetVictorFreeplayBehaviorConfig() : blankActivitiesConfig;
 
-    BehaviorID baseBehaviorID = ICozmoBehavior::ExtractBehaviorIDFromConfig(behaviorSystemConfig);
+    BehaviorID baseBehaviorID = BEHAVIOR_ID(Anonymous);
+    const bool validBehavior = BehaviorIDFromString(behaviorSystemConfig["normalBaseBehavior"].asString(), baseBehaviorID);
+    DEV_ASSERT(validBehavior, "Base behavior not found");
     
     auto& bc = GetBehaviorContainer();
     baseBehavior = bc.FindBehaviorByID(baseBehaviorID).get();

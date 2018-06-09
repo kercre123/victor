@@ -35,10 +35,10 @@ class DelegationComponent;
 class DevBehaviorComponentMessageHandler;
 class FaceWorld;
 class BEIRobotInfo;
-class BaseBehaviorWrapper;
 class UserIntentComponent;
 class ActiveFeatureComponent;
 class ActiveBehaviorIterator;
+class BehaviorsBootLoader;
 
 } // namespace Cozmo
 
@@ -58,10 +58,10 @@ LINK_COMPONENT_TYPE_TO_ENUM(DelegationComponent,                BCComponentID, D
 LINK_COMPONENT_TYPE_TO_ENUM(DevBehaviorComponentMessageHandler, BCComponentID, DevBehaviorComponentMessageHandler)
 LINK_COMPONENT_TYPE_TO_ENUM(FaceWorld,                          BCComponentID, FaceWorld)
 LINK_COMPONENT_TYPE_TO_ENUM(BEIRobotInfo,                       BCComponentID, RobotInfo)
-LINK_COMPONENT_TYPE_TO_ENUM(BaseBehaviorWrapper,                BCComponentID, BaseBehaviorWrapper)
 LINK_COMPONENT_TYPE_TO_ENUM(UserIntentComponent,                BCComponentID, UserIntentComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(ActiveFeatureComponent,             BCComponentID, ActiveFeature)
 LINK_COMPONENT_TYPE_TO_ENUM(ActiveBehaviorIterator,             BCComponentID, ActiveBehaviorIterator)
+LINK_COMPONENT_TYPE_TO_ENUM(BehaviorsBootLoader,                BCComponentID, BehaviorsBootLoader)
 
 // Translate entity into string
 template<>
@@ -85,11 +85,11 @@ std::string GetComponentStringForID<Cozmo::BCComponentID>(Cozmo::BCComponentID e
     case Cozmo::BCComponentID::DevBehaviorComponentMessageHandler: { return "DevBehaviorComponentMessageHandler";}
     case Cozmo::BCComponentID::FaceWorld:                          { return "FaceWorld";}
     case Cozmo::BCComponentID::RobotInfo:                          { return "RobotInfo";}
-    case Cozmo::BCComponentID::BaseBehaviorWrapper:                { return "BaseBehaviorWrapper";}
     case Cozmo::BCComponentID::UserIntentComponent:                { return "UserIntentComponent";}
     case Cozmo::BCComponentID::BehaviorTimerManager:               { return "BehaviorTimerManager";}
     case Cozmo::BCComponentID::ActiveFeature:                      { return "ActiveFeature";}
     case Cozmo::BCComponentID::ActiveBehaviorIterator:             { return "ActiveBehaviorIterator";}
+    case Cozmo::BCComponentID::BehaviorsBootLoader:                { return "BehaviorsBootLoader";}
     case Cozmo::BCComponentID::Count:                              { return "Count";}
   }
 }

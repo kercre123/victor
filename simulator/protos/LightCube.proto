@@ -82,7 +82,10 @@ PROTO LightCube [
       error("Markers not defined for LightCube with specified objectType")
     end }%
     
+    %{ if fields.objectType.value == "Block_LIGHTCUBE1" then }%
     active TRUE 
-    activeID IS ID
+    %{ else }%
+    active FALSE
+    %{ end }%    
   }
 }

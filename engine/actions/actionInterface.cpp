@@ -110,12 +110,6 @@ namespace Anki {
           break;
         }
 
-        case RobotActionType::READ_TOOL_CODE:
-        {
-          _completionUnion.Set_readToolCodeCompleted(ReadToolCodeCompleted());
-          break;
-        }
-
         case RobotActionType::PLAY_ANIMATION:
         {
           _completionUnion.Set_animationCompleted(AnimationCompleted());
@@ -136,11 +130,10 @@ namespace Anki {
         }
 
         // These actions don't set completion unions
-        case RobotActionType::ASCEND_OR_DESCEND_RAMP:
         case RobotActionType::BACKUP_ONTO_CHARGER:
         case RobotActionType::CALIBRATE_MOTORS:
+        case RobotActionType::CLIFF_ALIGN_TO_WHITE:
         case RobotActionType::COMPOUND:
-        case RobotActionType::CROSS_BRIDGE:
         case RobotActionType::DISPLAY_FACE_IMAGE:
         case RobotActionType::DISPLAY_PROCEDURAL_FACE:
         case RobotActionType::DRIVE_OFF_CHARGER_CONTACTS:

@@ -44,12 +44,6 @@ namespace Anki {
         const u32 START_BACKOUT_PLACE_HIGH_TIMEOUT_MS = 500;
         const u32 START_BACKOUT_PLACE_LOW_TIMEOUT_MS = 1000;
 
-        const f32 RAMP_TRAVERSE_SPEED_MMPS = 40;
-        const f32 ON_RAMP_ANGLE_THRESH = 0.15;
-        const f32 OFF_RAMP_ANGLE_THRESH = 0.05;
-
-        const f32 BRIDGE_TRAVERSE_SPEED_MMPS = 40;
-
         // Distance at which robot should start driving blind
         // along last generated docking path during DockAction::DA_PICKUP_HIGH.
         const u32 HIGH_DOCK_POINT_OF_NO_RETURN_DIST_MM = ORIGIN_TO_HIGH_LIFT_DIST_MM + 40;
@@ -79,9 +73,6 @@ namespace Anki {
         f32 dockSpeed_mmps_ = 0;
         f32 dockAccel_mmps2_ = 0;
         f32 dockDecel_mmps2_ = 0;
-
-        // Distance to last known docking marker pose
-        f32 lastMarkerDist_;
 
         CarryState carryState_ = CarryState::CARRY_NONE;
 
@@ -163,6 +154,20 @@ namespace Anki {
 
         const u32 _kPopAWheelieTimeout_ms = 500;
 
+        // Cliff alignment to white line
+        typedef enum {
+          INIT,
+          ALIGNING,
+          ALIGNED
+        } CliffAlignState;
+
+        CliffAlignState cliffAlignState_        = INIT;
+        bool            cliffAlignCW_           = false;
+        Radians         cliffAlignStartAngle_   = 0.f;
+
+        const u32       CLIFF_ALIGN_TIMEOUT_MS  = 4000; 
+        u32             cliffAlignStartTime_ms_ = 0;
+
       } // "private" namespace
 
       void SetChargerStripeIsBlack(const bool b) {
@@ -197,40 +202,47 @@ namespace Anki {
         Localization::GetCurrPose(ptStamp_.x, ptStamp_.y, angleStamp_);
       }
 
-      Result SendPickAndPlaceResultMessage(const bool success,
-                                           const BlockStatus blockStatus)
+      void SendPickAndPlaceResultMessage(const bool success,
+                                         const BlockStatus blockStatus)
       {
         PickAndPlaceResult msg;
         msg.timestamp = HAL::GetTimeStamp();
         msg.didSucceed = success;
         msg.blockStatus = blockStatus;
         msg.result = DockingController::GetDockingResult();
-
-        if(RobotInterface::SendMessage(msg)) {
-          return RESULT_OK;
+        if(!RobotInterface::SendMessage(msg)) {
+          AnkiWarn("PAP.SendPickAndPlaceResultMessage.SendFailed", ""); 
         }
-        return RESULT_FAIL;
       }
 
-      Result SendMovingLiftPostDockMessage()
+      void SendMovingLiftPostDockMessage()
       {
         MovingLiftPostDock msg;
         msg.action = action_;
-        if(RobotInterface::SendMessage(msg)) {
-          return RESULT_OK;
+        if(!RobotInterface::SendMessage(msg)) {
+          AnkiWarn("PAP.SendMovingLiftPostDockMessage.SendFailed", ""); 
         }
-        return RESULT_FAIL;
       }
 
-      Result SendChargerMountCompleteMessage(const bool success)
+      void SendChargerMountCompleteMessage(const bool success)
       {
         ChargerMountComplete msg;
         msg.timestamp = HAL::GetTimeStamp();
         msg.didSucceed = success;
-        if(RobotInterface::SendMessage(msg)) {
-          return RESULT_OK;
+        if(!RobotInterface::SendMessage(msg)) {
+          AnkiWarn("PAP.SendChargerMountCompleteMessage.SendFailed", ""); 
         }
-        return RESULT_FAIL;
+      }
+
+      void SendCliffAlignCompleteMessage(const bool success)
+      {
+        AnkiInfo("PAP.SendCliffAlignCompleteMessage.Result", "%d", success);
+        CliffAlignComplete msg;
+        msg.timestamp = HAL::GetTimeStamp();
+        msg.didSucceed = success;
+        if(!RobotInterface::SendMessage(msg)) {
+          AnkiWarn("PAP.SendCliffAlignCompleteMessage.SendFailed", "");
+        }
       }
 
       static void StartBackingOut()
@@ -329,17 +341,6 @@ namespace Anki {
               case DockAction::DA_ALIGN_SPECIAL:
                 dockOffsetDistX_ = ORIGIN_TO_LOW_LIFT_DIST_MM;
                 break;
-              case DockAction::DA_RAMP_ASCEND:
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
-                dockOffsetDistX_ = 0;
-                break;
-              case DockAction::DA_RAMP_DESCEND:
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
-                dockOffsetDistX_ = 30; // can't wait until we are actually on top of the marker to say we're done!
-                break;
-              case DockAction::DA_CROSS_BRIDGE:
-                dockOffsetDistX_ = BRIDGE_ALIGNED_MARKER_DISTANCE;
-                break;
               case DockAction::DA_POST_DOCK_ROLL:
                 // Skip docking completely and go straight to Setting lift for Post Dock
                 mode_ = SET_LIFT_POSTDOCK;
@@ -351,6 +352,10 @@ namespace Anki {
                 transitionTime_ = HAL::GetTimeStamp() + 7000;
                 useCliffSensorAlignment_ = (action_ == DockAction::DA_BACKUP_ONTO_CHARGER_USE_CLIFF);
                 mode_ = BACKUP_ON_CHARGER;
+                break;
+              case DockAction::DA_CLIFF_ALIGN_TO_WHITE:
+                mode_ = CLIFF_ALIGN_TO_WHITE;
+                cliffAlignState_ = INIT;
                 break;
               default:
                 AnkiError( "PAP.SET_LIFT_PREDOCK.InvalidAction", "%hhu", action_);
@@ -430,20 +435,6 @@ namespace Anki {
                   #endif
                   SendPickAndPlaceResultMessage(true, BlockStatus::NO_BLOCK);
                   Reset();
-                } else if(action_ == DockAction::DA_RAMP_DESCEND) {
-                  #if(DEBUG_PAP_CONTROLLER)
-                  AnkiDebug( "PAP", "TRAVERSE_RAMP_DOWN\n");
-                  #endif
-                  // Start driving forward (blindly) -- wheel guides!
-                  SteeringController::ExecuteDirectDrive(RAMP_TRAVERSE_SPEED_MMPS, RAMP_TRAVERSE_SPEED_MMPS);
-                  mode_ = TRAVERSE_RAMP_DOWN;
-                } else if (action_ == DockAction::DA_CROSS_BRIDGE) {
-                  #if(DEBUG_PAP_CONTROLLER)
-                  AnkiDebug( "PAP", "ENTER_BRIDGE\n");
-                  #endif
-                  // Start driving forward (blindly) -- wheel guides!
-                  SteeringController::ExecuteDirectDrive(BRIDGE_TRAVERSE_SPEED_MMPS, BRIDGE_TRAVERSE_SPEED_MMPS);
-                  mode_ = ENTER_BRIDGE;
                 } else {
                   #if(DEBUG_PAP_CONTROLLER)
                   AnkiDebug( "PAP", "SET_LIFT_POSTDOCK\n");
@@ -494,13 +485,6 @@ namespace Anki {
                   StartBackingOut();
                 }
               }
-            }
-            else if (action_ == DockAction::DA_RAMP_ASCEND && (fabsf(IMUFilter::GetPitch()) > ON_RAMP_ANGLE_THRESH) )
-            {
-              DockingController::StopDocking();
-              SteeringController::ExecuteDirectDrive(RAMP_TRAVERSE_SPEED_MMPS, RAMP_TRAVERSE_SPEED_MMPS);
-              mode_ = TRAVERSE_RAMP;
-              Localization::SetOnRamp(true);
             }
             break;
           }
@@ -716,76 +700,6 @@ namespace Anki {
             }
             break;
           }
-          case TRAVERSE_RAMP_DOWN:
-          {
-            if(IMUFilter::GetPitch() < -ON_RAMP_ANGLE_THRESH) {
-#if(DEBUG_PAP_CONTROLLER)
-              AnkiDebug( "PAP", "Switching out of TRAVERSE_RAMP_DOWN to TRAVERSE_RAMP (angle = %f)\n", IMUFilter::GetPitch());
-#endif
-              Localization::SetOnRamp(true);
-              mode_ = TRAVERSE_RAMP;
-            }
-            break;
-          }
-          case TRAVERSE_RAMP:
-          {
-            if ( fabsf(IMUFilter::GetPitch()) < OFF_RAMP_ANGLE_THRESH ) {
-              #if(DEBUG_PAP_CONTROLLER)
-              AnkiDebug( "PAP", "IDLE (from TRAVERSE_RAMP)\n");
-              #endif
-              Reset();
-              Localization::SetOnRamp(false);
-            }
-            break;
-          }
-          case ENTER_BRIDGE:
-          {
-            // Keep driving until the marker on the other side of the bridge is seen.
-            if ( Localization::GetDistTo(ptStamp_.x, ptStamp_.y) > BRIDGE_ALIGNED_MARKER_DISTANCE) {
-              // Set vision marker to look for marker
-              //DockingController::StartTrackingOnly(dockToMarker2_, markerWidth_);
-              UpdatePoseSnapshot();
-              mode_ = TRAVERSE_BRIDGE;
-              #if(DEBUG_PAP_CONTROLLER)
-              AnkiDebug( "PAP", "TRAVERSE_BRIDGE");
-              #endif
-              Localization::SetOnBridge(true);
-            }
-            break;
-          }
-          case TRAVERSE_BRIDGE:
-          {
-            if (DockingController::IsBusy()) {
-              lastMarkerDist_ = DockingController::GetDistToLastDockMarker();
-              if (lastMarkerDist_ < 100.f) {
-                // We're tracking the end marker.
-                // Keep driving until we're off.
-                UpdatePoseSnapshot();
-                mode_ = LEAVE_BRIDGE;
-                #if(DEBUG_PAP_CONTROLLER)
-                AnkiDebug( "PAP", "LEAVING_BRIDGE: relMarkerX = %f", lastMarkerDist_);
-                #endif
-              }
-            } else {
-              // Marker tracking timedout. Start it again.
-              //DockingController::StartTrackingOnly(dockToMarker2_, markerWidth_);
-              #if(DEBUG_PAP_CONTROLLER)
-              AnkiDebug( "PAP", "TRAVERSE_BRIDGE: Restarting tracking");
-              #endif
-            }
-            break;
-          }
-          case LEAVE_BRIDGE:
-          {
-            if ( Localization::GetDistTo(ptStamp_.x, ptStamp_.y) > lastMarkerDist_ + MARKER_TO_OFF_BRIDGE_POSE_DIST) {
-              #if(DEBUG_PAP_CONTROLLER)
-              AnkiDebug( "PAP", "IDLE (from TRAVERSE_BRIDGE)\n");
-              #endif
-              Reset();
-              Localization::SetOnBridge(false);
-            }
-            break;
-          }
           case PICKUP_ANIM:
           {
             switch(pickupAnimMode_)
@@ -898,6 +812,82 @@ namespace Anki {
             }
             break;
           }
+          case CLIFF_ALIGN_TO_WHITE:
+          {
+            const bool white_l = ProxSensors::IsWhiteDetected(HAL::CLIFF_FL);
+            const bool white_r = ProxSensors::IsWhiteDetected(HAL::CLIFF_FR);
+
+            switch(cliffAlignState_) {
+              case INIT:
+              {
+                cliffAlignStartAngle_ = Localization::GetCurrPose_angle();
+                cliffAlignStartTime_ms_ = HAL::GetTimeStamp();
+
+                // Check that at least one of the front cliff sensors is detecting white    
+                if (white_l && white_r) {
+                  cliffAlignState_ = ALIGNED;
+                } else if (white_l || white_r) {
+                  cliffAlignState_ = ALIGNING;
+                  cliffAlignCW_ = white_r;
+                } else {
+                  SendCliffAlignCompleteMessage(false);
+                  Reset();
+                }
+                break;
+              }
+              case ALIGNING:
+              {
+                // Check that the amount of rotation since start has not
+                // exceeded limit of 120 degrees, which is a little more
+                // than the max rotation that is physically possibly in the
+                // habitat from a pose where one front cliff sensor is
+                // detecting white to a pose where both are.
+                if (fabsf((cliffAlignStartAngle_ - Localization::GetCurrPose_angle()).ToFloat()) > DEG_TO_RAD(120)) {
+                  AnkiInfo("PAP.CLIFF_ALIGN_TO_WHITE.TurnedTooMuch", "");
+                  SendCliffAlignCompleteMessage(false);
+                  Reset();
+                  break;
+                }
+
+                if (HAL::GetTimeStamp() - cliffAlignStartTime_ms_ > CLIFF_ALIGN_TIMEOUT_MS) {
+                  AnkiInfo("PAP.CLIFF_ALIGN_TO_WHITE.Timeout", "");
+                  SendCliffAlignCompleteMessage(false);
+                  Reset();
+                  break;
+                }
+
+                // Update wheel speeds for alignment
+                f32 lSpeed = 0.f;
+                f32 rSpeed = 0.f;
+                if (white_l && white_r) {
+                  cliffAlignState_ = ALIGNED;
+                } else if (cliffAlignCW_) {
+                  if (!white_l) {
+                    lSpeed = dockSpeed_mmps_;
+                  }
+                  if (!white_r) {
+                    rSpeed = -dockSpeed_mmps_;
+                  }
+                } else {
+                  if (!white_l) {
+                    lSpeed = -dockSpeed_mmps_;
+                  }
+                  if (!white_r) {
+                    rSpeed = dockSpeed_mmps_;
+                  }
+                }
+                SteeringController::ExecuteDirectDrive(lSpeed, rSpeed);
+                break;
+              }
+              case ALIGNED:
+              {
+                SendCliffAlignCompleteMessage(true);
+                Reset();
+                break;
+              }
+            }
+            break;
+          }
           default:
           {
             Reset();
@@ -982,6 +972,22 @@ namespace Anki {
                     rel_x,
                     rel_y,
                     rel_angle);
+      }
+
+      void CliffAlignToWhite()
+      {
+        DockToBlock(DockAction::DA_CLIFF_ALIGN_TO_WHITE,
+                                              false,  // doLiftLoadCheck (ignored)
+                                              50,     // speed_mmps
+                                              0, 0);  // accel (ignored)
+      }
+
+      void StopCliffAlignToWhite()
+      {
+        if (mode_ != IDLE && action_ == DockAction::DA_CLIFF_ALIGN_TO_WHITE) {
+          SendCliffAlignCompleteMessage(false);
+          Reset();
+        }
       }
 
 

@@ -1,0 +1,9 @@
+{
+  "behaviorClass": "FindFaces",
+  "behaviorID": "FindFacesPhoto",
+  
+  "maxFaceAgeToLook_ms": 15000,
+
+  "stoppingCondition": "AnyFace",
+  "searchBehavior": "LookInPlaceHeadUp" 
+}

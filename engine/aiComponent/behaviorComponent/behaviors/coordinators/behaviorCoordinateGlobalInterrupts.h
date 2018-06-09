@@ -22,6 +22,7 @@ namespace Cozmo {
 
 // forward declarations
 class BehaviorHighLevelAI;
+class BehaviorReactToVoiceCommand;
 class BehaviorTimerUtilityCoordinator;
 
 
@@ -50,6 +51,7 @@ private:
     ICozmoBehaviorPtr wakeWordBehavior;
     std::vector<ICozmoBehaviorPtr> toSuppressWhenSleeping;
     std::shared_ptr<BehaviorTimerUtilityCoordinator> timerCoordBehavior;
+    std::shared_ptr<BehaviorReactToVoiceCommand> reactToVoiceCommandBehavior;
     ICozmoBehaviorPtr reactToObstacleBehavior;
     
     ICozmoBehaviorPtr meetVictorBehavior;

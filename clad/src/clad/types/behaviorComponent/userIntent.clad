@@ -46,6 +46,11 @@ structure UserIntent_WeatherResponse
 
 }
 
+structure UserIntent_TakeAPhoto
+{
+  string  empty_or_selfie,
+}
+
 structure UserIntent_RecordMessage
 {
   string given_name,
@@ -99,6 +104,7 @@ union dupes_allowed UserIntent
   UserIntent_Void             cancel_timer,
   UserIntent_TimeInSeconds    set_timer,
   UserIntent_WeatherResponse  weather_response,
+  UserIntent_TakeAPhoto       take_a_photo,
   UserIntent_Void             system_charger,
   UserIntent_Void             status_feeling,
   UserIntent_Void             system_sleep,

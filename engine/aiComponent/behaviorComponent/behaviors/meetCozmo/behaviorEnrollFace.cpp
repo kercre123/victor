@@ -11,7 +11,7 @@
 
 
  // TODO:  VIC-26 - Migrate Audio in BehaviorEnrollFace
-// This class controlls music state which is not realevent when playing audio on the robot
+// This class controls music state which is not relevant when playing audio on the robot
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorEnrollFace.h"
 
 #include "engine/actions/animActions.h"
@@ -47,6 +47,9 @@
 #include "clad/types/enrolledFaceStorage.h"
 
 #include "util/console/consoleInterface.h"
+
+#include "util/logging/logging.h"
+#include "util/logging/DAS.h"
 
 #define CONSOLE_GROUP "Behavior.EnrollFace"
 
@@ -88,7 +91,7 @@ CONSOLE_VAR(s32,               kEnrollFace_NumImagesToWait,                     
 CONSOLE_VAR(s32,               kEnrollFace_DefaultMaxFacesVisible,              CONSOLE_GROUP, 1); // > this is "too many"
 CONSOLE_VAR(f32,               kEnrollFace_DefaultTooManyFacesTimeout_sec,      CONSOLE_GROUP, 2.f);
 CONSOLE_VAR(f32,               kEnrollFace_DefaultTooManyFacesRecentTime_sec,   CONSOLE_GROUP, 0.5f);
-  
+
 CONSOLE_VAR(u32,               kEnrollFace_TicksForKnownNameBeforeFail,         CONSOLE_GROUP, 35);
 CONSOLE_VAR(TimeStamp_t,       kEnrollFace_TimeStopMovingAfterManualTurn_ms,    CONSOLE_GROUP, 8000);
 CONSOLE_VAR(TimeStamp_t,       kEnrollFace_MaxInterruptionBeforeReset_ms,       CONSOLE_GROUP, 10000);
@@ -108,27 +111,27 @@ BehaviorEnrollFace::InstanceConfig::InstanceConfig()
 {
   timeout_sec = kEnrollFace_Timeout_sec;
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorEnrollFace::DynamicVariables::DynamicVariables()
 {
   // Settings ok: initialize rest of behavior state
   saveSucceeded = false;
-  
+
   observedUnusableID  = Vision::UnknownFaceID;
   observedUnusableName.clear();
-  
+
   startTime_sec       = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  
+
   timeScanningStarted_ms = 0;
   timeStartedLookingForFace_ms = 0;
-  
+
   lastFaceSeenTime_ms            = 0;
   startedSeeingMultipleFaces_sec = 0.f;
-  
+
   lastRelBodyAngle    = 0.f;
   totalBackup_mm      = 0.f;
-  
+
   saveEnrollResult    = ActionResult::NOT_STARTED;
   saveAlbumResult     = ActionResult::NOT_STARTED;
 }
@@ -159,14 +162,14 @@ BehaviorEnrollFace::BehaviorEnrollFace(const Json::Value& config)
   _iConfig.tooManyFacesRecentTime_sec = config.get(kTooManyFacesRecentTimeKey, kEnrollFace_DefaultTooManyFacesRecentTime_sec).asFloat();
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
   delegates.insert( _iConfig.driveOffChargerBehavior.get() );
   delegates.insert( _iConfig.putDownBlockBehavior.get() );
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
@@ -187,7 +190,7 @@ void BehaviorEnrollFace::CheckForIntentData() const
     // activate the intent
     uic.ActivateUserIntent( USER_INTENT(meet_victor), GetDebugLabel() );
   }
-    
+
   UserIntentPtr intentData = uic.GetUserIntentIfActive(USER_INTENT(meet_victor));
   if( intentData != nullptr ) {
     const auto& meetVictor = intentData->intent.Get_meet_victor();
@@ -206,7 +209,7 @@ bool BehaviorEnrollFace::WantsToBeActivatedBehavior() const
   auto& uic = GetBehaviorComp<UserIntentComponent>();
   const bool pendingIntent = uic.IsUserIntentPending(USER_INTENT(meet_victor) );
   const bool isWaitingResume = (_dVars.persistent.state != State::NotStarted);
-  
+
   const bool wantsToBeActivated = pendingIntent || isWaitingResume;
   return wantsToBeActivated;
 }
@@ -226,7 +229,7 @@ Result BehaviorEnrollFace::InitEnrollmentSettings()
   _dVars.saveToRobot   = _dVars.persistent.settings->saveToRobot;
   _dVars.useMusic      = _dVars.persistent.settings->useMusic;
   _dVars.sayName       = _dVars.persistent.settings->sayName;
-  
+
   _dVars.enrollingSpecificID = (_dVars.faceID != Vision::UnknownFaceID);
 
   if(_dVars.faceName.empty())
@@ -255,7 +258,7 @@ Result BehaviorEnrollFace::InitEnrollmentSettings()
 
   return RESULT_OK;
 }
-  
+
 void BehaviorEnrollFace::InitBehavior()
 {
   const auto& BC = GetBEI().GetBehaviorContainer();
@@ -273,18 +276,18 @@ void BehaviorEnrollFace::InitBehavior()
 void BehaviorEnrollFace::OnBehaviorActivated()
 {
   CheckForIntentData();
-  
+
   // reset dynamic variables
   {
     auto persistent = std::move(_dVars.persistent);
     _dVars = DynamicVariables();
     _dVars.persistent = std::move(persistent);
     _dVars.timeout_sec = _iConfig.timeout_sec;
-    
+
     const auto& moveComp = GetBEI().GetMovementComponent();
     _dVars.wasUnexpectedRotationWithoutMotorsEnabled = moveComp.IsUnexpectedRotationWithoutMotorsEnabled();
   }
-  
+
   const Result settingsResult = InitEnrollmentSettings();
   if(RESULT_OK != settingsResult)
   {
@@ -295,7 +298,7 @@ void BehaviorEnrollFace::OnBehaviorActivated()
     }
     return;
   }
-  
+
   // Check if we were interrupted and need to fast forward:
   switch(_dVars.persistent.state)
   {
@@ -333,8 +336,8 @@ void BehaviorEnrollFace::OnBehaviorActivated()
       // Not fast forwarding: just start at the beginning
       SET_STATE(NotStarted);
   }
-  
-  
+
+
   // Reset flag in FaceWorld because we're starting a new enrollment and will
   // be waiting for this new enrollment to be "complete" after this
   GetBEI().GetFaceWorldMutable().SetFaceEnrollmentComplete(false);
@@ -372,7 +375,7 @@ void BehaviorEnrollFace::BehaviorUpdate()
       return;
     }
   }
-  
+
   if( !IsActivated() ) {
     if( _dVars.persistent.state != State::NotStarted ) {
       // interrupted
@@ -396,12 +399,12 @@ void BehaviorEnrollFace::BehaviorUpdate()
     CancelSelf();
     return;
   }
-  
-  
+
+
   if( !GetBEI().GetRobotInfo().IsOnChargerPlatform() ) {
     _dVars.persistent.didEverLeaveCharger = true;
   }
-  
+
   const bool justPlacedOnCharger = _dVars.persistent.didEverLeaveCharger && GetBEI().GetRobotInfo().IsOnChargerPlatform();
   if( justPlacedOnCharger && (_dVars.persistent.state != State::Enrolling) ) {
     // user placed the robot on the charger. cancel. Don't cancel for Enrolling since that needs
@@ -499,7 +502,7 @@ void BehaviorEnrollFace::BehaviorUpdate()
           TransitionToLookingForFace();
         }
       }
-      
+
       if( finishedScanning ) {
         // tell the app we've finished scanning
         if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
@@ -525,7 +528,7 @@ void BehaviorEnrollFace::BehaviorUpdate()
               ++numPartialFacesSeen;
             }
           }
-          
+
           DASMSG(behavior_meet_victor_scan_end, "behavior.meet_victor.scan_end", "Face scanning ended in meet victor");
           DASMSG_SET(i1, timeSpentScanning_ms, "Time spent scanning faces (ms)");
           DASMSG_SET(i2, timeBeforeFirstFace_ms, "Time scanning before seeing the first face (ms)");
@@ -551,7 +554,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
   // Leave general-purpose / session-only enrollment enabled (i.e. not for a specific face)
   GetBEI().GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
   _dVars.persistent.lastDeactivationTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  
+
   auto& moveComp = GetBEI().GetMovementComponent();
   moveComp.EnableUnexpectedRotationWithoutMotors( _dVars.wasUnexpectedRotationWithoutMotorsEnabled );
 
@@ -570,7 +573,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
     // in this state
     _dVars.persistent.state = _dVars.failedState;
   }
-  
+
   if( ANKI_DEVELOPER_CODE ) {
     // in unit tests, this behavior will always want to re-activate when Cancel via the delegation component,
     // unless we disable enrollment. Use a special name (one that would almost certainly never be spoken)
@@ -665,7 +668,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
 
     } // switch(_state)
   }
-  
+
   int numInterruptions = _dVars.persistent.numInterruptions;
 
   // If incomplete, we are being interrupted by something. Don't broadcast completion
@@ -701,6 +704,9 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
                   _dVars.persistent.state, EnumToString(info.result));
 
     if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
+      const auto& msgRef = info;
+      ExternalInterface::FaceEnrollmentCompleted msgCopy{msgRef};
+      GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast( ExternalInterface::MessageEngineToGame{std::move(msgCopy)} );
       GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast( ExternalMessageRouter::Wrap(std::move(info)) );
     }
 
@@ -709,16 +715,16 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
   } else {
     numInterruptions = ++_dVars.persistent.numInterruptions;
   }
-  
+
   auto& uic = GetBehaviorComp<UserIntentComponent>();
   if( uic.IsUserIntentActive( USER_INTENT(meet_victor) ) ) {
     uic.DeactivateUserIntent( USER_INTENT(meet_victor) );
   }
-  
+
   if( info.result == FaceEnrollmentResult::Success ) {
     GetAIComp<AIWhiteboard>().OfferPostBehaviorSuggestion( PostBehaviorSuggestions::Socialize );
   }
-  
+
   {
     DASMSG(behavior_meet_victor_end, "behavior.meet_victor.end", "Meet victor completed");
     DASMSG_SET(s1,
@@ -801,7 +807,7 @@ bool BehaviorEnrollFace::CanMoveTreads() const
 void BehaviorEnrollFace::TransitionToDriveOffCharger()
 {
   SET_STATE(DriveOffCharger);
-  
+
   auto next = [this](){
     if( GetBEI().GetRobotInfo().GetCarryingComponent().IsCarryingObject() ) {
       TransitionToPutDownBlock();
@@ -809,39 +815,39 @@ void BehaviorEnrollFace::TransitionToDriveOffCharger()
       TransitionToLookingForFace();
     }
   };
-  
+
   if( _iConfig.driveOffChargerBehavior->WantsToBeActivated() ) {
     DelegateNow( _iConfig.driveOffChargerBehavior.get(), next);
   } else {
     next();
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::TransitionToPutDownBlock()
 {
   SET_STATE(PutDownBlock);
-  
+
   auto next = [this](){
     TransitionToLookingForFace();
   };
-  
+
   if( _iConfig.putDownBlockBehavior->WantsToBeActivated() ) {
     DelegateNow( _iConfig.putDownBlockBehavior.get(), next);
   } else {
     next();
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::TransitionToLookingForFace()
 {
   const bool playScanningGetOut = (State::Enrolling == _dVars.persistent.state);
-  
+
   if( _dVars.timeStartedLookingForFace_ms == 0 ) {
     _dVars.timeStartedLookingForFace_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   }
-  
+
   // enable detection of unexpected rotation for the remainder of the behavior. This is reset
   // to its original value upon behavior deactivation. Note that ReactToUnexpectedMotion is suppressed
   // during this behavior
@@ -921,7 +927,7 @@ void BehaviorEnrollFace::TransitionToLookingForFace()
                     ExternalInterface::MeetVictorFaceScanStarted status;
                     GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast( ExternalMessageRouter::Wrap(std::move(status)) );
                   }
-                  
+
                   {
                     DASMSG(behavior_meet_victor_scan_start, "behavior.meet_victor.scan_start", "Face scanning started in meet victor");
                     DASMSG_SEND();
@@ -937,7 +943,7 @@ void BehaviorEnrollFace::TransitionToLookingForFace()
 void BehaviorEnrollFace::TransitionToEnrolling()
 {
   SET_STATE(Enrolling);
-  
+
   _dVars.timeScanningStarted_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
   // Actually enable directed enrollment of the selected face in the vision system
@@ -993,7 +999,7 @@ void BehaviorEnrollFace::TransitionToSayingName()
   CancelDelegates(false);
 
   CompoundActionSequential* finalAnimation = new CompoundActionSequential();
-  
+
   if(_dVars.sayName)
   {
     if(_dVars.saveID == Vision::UnknownFaceID)
@@ -1086,21 +1092,21 @@ void BehaviorEnrollFace::TransitionToSayingIKnowThatName()
   }
 
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::TransitionToWrongFace( const std::string& faceName )
 {
   SET_STATE(EmotingConfusion);
-  
+
   _dVars.failedState = State::Failed_WrongFace;
 
   CancelDelegates(false);
-  
+
   // todo: locale
   const std::string text = "youre    " + faceName;
   auto* sayNameAction = new SayTextAction(text, SayTextIntent::Name_FirstIntroduction_1);
   sayNameAction->SetAnimationTrigger(AnimationTrigger::MeetVictorSawWrongFace);
-  
+
   DelegateIfInControl(sayNameAction, [this](ActionResult result) {
     if( ActionResult::SUCCESS != result ) {
       PRINT_NAMED_WARNING("BehaviorEnrollFace.TransitionToWrongFace.AnimFailed", "");
@@ -1117,7 +1123,7 @@ void BehaviorEnrollFace::TransitionToFailedState( State state, const std::string
   _dVars.failedState = state;
 
   CancelDelegates(false);
-  
+
   auto* action = new TriggerLiftSafeAnimationAction(AnimationTrigger::MeetVictorConfusion);
 
   DelegateIfInControl(action, [this, state, stateName](ActionResult result) {
@@ -1394,7 +1400,7 @@ bool BehaviorEnrollFace::IsSeeingTooManyFaces(FaceWorld& faceWorld, const TimeSt
                                   0); // Avoid unsigned math rollover
 
   auto recentlySeenFaceIDs = faceWorld.GetFaceIDsObservedSince(recentTime);
-  
+
   for( const auto& faceID : recentlySeenFaceIDs ) {
     const Vision::TrackedFace* face = faceWorld.GetFace(faceID);
     // only save info on the face if it is known this tick, but don't remove saved faces
@@ -1403,7 +1409,7 @@ bool BehaviorEnrollFace::IsSeeingTooManyFaces(FaceWorld& faceWorld, const TimeSt
       _dVars.isFaceNamed[faceID] = (faceID > 0) && face->HasName();
     }
   }
-  
+
 
   const bool hasRecentlySeenTooManyFaces = recentlySeenFaceIDs.size() > _iConfig.maxFacesVisible;
   if(hasRecentlySeenTooManyFaces)
@@ -1450,7 +1456,7 @@ void BehaviorEnrollFace::UpdateFaceToEnroll()
 {
   const FaceWorld& faceWorld = GetBEI().GetFaceWorld();
   auto& robotInfo = GetBEI().GetRobotInfo();
-  
+
   const bool unexpectedMovement = GetBEI().GetMovementComponent().IsUnexpectedMovementDetected();
   const bool pickedUp = robotInfo.IsPickedUp();
   if( unexpectedMovement || pickedUp ) {
@@ -1769,7 +1775,7 @@ void BehaviorEnrollFace::HandleWhileActivated(const GameToEngineEvent& event)
                         MessageGameToEngineTagToString(event.GetData().GetTag()));
   }
 }
-  
+
 bool BehaviorEnrollFace::WasMovedRecently() const
 {
   const TimeStamp_t currentTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();

@@ -49,6 +49,14 @@ service ExternalInterface {
       body: "*"
     };
   }
+  // Sets LCD to a solid color
+  rpc DisplayFaceImageRGB(DisplayFaceImageRGBRequest) returns (DisplayFaceImageRGBResult) {
+    option (google.api.http) = {
+      post: "/v1/display_face_image_rgb",
+      body: "*"
+    };
+  }
+
   // Current groundwork for a streaming events endpoint
   rpc EventStream(EventRequest) returns (stream EventResult) {
     option (google.api.http) = {
@@ -130,6 +138,16 @@ message ListAnimationsResult {
 message FeatureStatus {
   string feature_name = 1;
   string source      = 2; // Voice, App, AI, Unknown
+}
+
+message DisplayFaceImageRGBRequest {
+  bytes face_data = 1;
+  uint32 duration_ms = 2;
+  bool interrupt_running = 3;
+}
+
+message DisplayFaceImageRGBResult {
+  ResultStatus status = 1;
 }
 
 message MeetVictorFaceScanStarted

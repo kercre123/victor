@@ -138,19 +138,7 @@ namespace Cozmo {
   
   
   // TODO: This needs to be sync'd with whatever is in BlockDefinitions.h
-  const f32 DEFAULT_BLOCK_MARKER_WIDTH_MM = 25.f;
-  
-  // The distance to the bridge ground marker that the robot must
-  // achieve before we can consider it aligned with the bridge enough
-  // to start driving straight. This should be the minimum distance that
-  // the robot can reliably "dock" to the marker.
-  const f32 BRIDGE_ALIGNED_MARKER_DISTANCE = 60.f;
-  
-  // Distance between the marker at the end of the bridge
-  // and the desired pose of the robot when it is considered
-  // to be off the bridge.
-  const f32 MARKER_TO_OFF_BRIDGE_POSE_DIST = 80.f;
-  
+  const f32 DEFAULT_BLOCK_MARKER_WIDTH_MM = 25.f;  
   
   // Distance to the charger ramp marker that the robot must
   // achieve before we can consider it aligned with the charger enough
@@ -171,6 +159,9 @@ namespace Cozmo {
 
   const u16 DEFAULT_CAMERA_RESOLUTION_WIDTH  = 640;
   const u16 DEFAULT_CAMERA_RESOLUTION_HEIGHT = 360;
+
+  const u16 CAMERA_SENSOR_RESOLUTION_WIDTH  = 1280;
+  const u16 CAMERA_SENSOR_RESOLUTION_HEIGHT = 720;
   
   /***************************************************************************
    *
@@ -197,7 +188,16 @@ namespace Cozmo {
   const f32 kCliffSensorXOffsetFront_mm = 2.f;   // x (longitudinal) offset from robot origin to front cliff sensors
   const f32 kCliffSensorXOffsetRear_mm  = -50.f; // x (longitudinal) offset from robot origin to rear cliff sensors
   
-  
+
+  // The minimum value expected of cliff sensor when
+  // it's detecting a white line in the habitat
+  // TODO (VIC-3550): Merge with kChargerCliffBlackThreshold? 
+  const u16 MIN_CLIFF_STOP_ON_WHITE_VAL = 500;
+
+  // Amount below MIN_CLIFF_STOP_ON_WHITE_VAL at which a white
+  // value is undetected
+  const u16 CLIFF_STOP_ON_WHITE_HYSTERSIS = 50;
+
   /***************************************************************************
    *
    *                          Speeds and Accels

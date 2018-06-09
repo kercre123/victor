@@ -38,7 +38,6 @@ PRIVATE
   libgmodule-2.0.so.0
   libpcre.so.1
   libcutils.so.0
-  civetweb
   util
   victorCrashReports
   anki-ble
@@ -61,7 +60,6 @@ target_include_directories(switchboard
   $<BUILD_INTERFACE:${VICOS_SDK}/sysroot/usr/include/gio-unix-2.0>
   $<BUILD_INTERFACE:${VICOS_SDK}/sysroot/usr/include/glib-2.0>
   $<BUILD_INTERFACE:${VICOS_SDK}/sysroot/usr/lib/glib-2.0/include>
-  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/lib/util/source/3rd>
   ${PLATFORM_INCLUDES}
 )
 
@@ -88,7 +86,6 @@ target_link_libraries(vic-switchboard
   libgmodule-2.0.so.0
   libpcre.so.1
   libcutils.so.0
-  civetweb
   util
   victorCrashReports
   anki-ble

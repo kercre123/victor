@@ -27,9 +27,12 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMicDirection.h"
+#include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/movementComponent.h"
+#include "engine/externalInterface/externalInterface.h"
+#include "engine/externalInterface/externalMessageRouter.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/components/mics/micComponent.h"
@@ -84,7 +87,8 @@ BehaviorReactToVoiceCommand::DynamicVariables::DynamicVariables() :
   reactionDirection( kMicDirectionUnknown ),
   streamingBeginTime( 0.0f ),
   intentStatus( EIntentStatus::NoIntentHeard ),
-  isListening( false )
+  isListening( false ),
+  timestampToDisableTurnFor(0)
 {
 
 }
@@ -251,6 +255,12 @@ void BehaviorReactToVoiceCommand::HandleWhileActivated( const RobotToEngineEvent
 void BehaviorReactToVoiceCommand::OnBehaviorActivated()
 {
   _dVars = DynamicVariables();
+  
+  auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
+  if( ei != nullptr ) {
+    ExternalInterface::WakeWordBegin msg;
+    ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
+  }
 
   // cache our reaction direction at the start in case we were told to turn
   // upon hearing the trigger word
@@ -275,7 +285,7 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
   OnStreamingBegin();
 
   // Play a reaction behavior if we were told to ...
-  if ( _iVars.turnOnTrigger && _iVars.reactionBehavior )
+  if ( _iVars.turnOnTrigger && _iVars.reactionBehavior && IsTurnEnabled() )
   {
     const MicDirectionIndex triggerDirection = GetReactionDirection();
     _iVars.reactionBehavior->SetReactDirection( triggerDirection );
@@ -301,6 +311,24 @@ void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
   {
     BodyLightComponent& blc = GetBEI().GetBodyLightComponent();
     blc.StopLoopingBackpackLights( _dVars.lightsHandle );
+  }
+  
+  auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
+  if( ei != nullptr ) {
+    ExternalInterface::WakeWordEnd msg;
+    msg.intentHeard = (_dVars.intentStatus != EIntentStatus::NoIntentHeard);
+    if( msg.intentHeard ) {
+      UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
+      // we use this dirty dirty method here instead of sending this message directly from the uic
+      // since we know whether the intent was heard here, and it's nice that the same behavior
+      // on activation/deactivation sends the two messages. if the uic sent the end message, it
+      // might be sent without an initial message.
+      const UserIntentData* intentData = uic.GetPendingUserIntent();
+      if( intentData != nullptr ) {
+        msg.intent = intentData->intent;
+      }
+    }
+    ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
   }
 
   // we've done all we can, now it's up to the next behavior to consume the user intent
@@ -564,7 +592,7 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
     // Play a reaction behavior if we were told to ...
     // ** only in the case that we've heard a valid intent **
     const bool heardValidIntent = ( _dVars.intentStatus == EIntentStatus::IntentHeard );
-    if ( heardValidIntent && _iVars.turnOnIntent && _iVars.reactionBehavior )
+    if ( heardValidIntent && _iVars.turnOnIntent && _iVars.reactionBehavior && IsTurnEnabled() )
     {
       const MicDirectionIndex triggerDirection = GetReactionDirection();
       _iVars.reactionBehavior->SetReactDirection( triggerDirection );
@@ -617,6 +645,15 @@ void BehaviorReactToVoiceCommand::TransitionToIntentReceived()
     DelegateIfInControl( new TriggerLiftSafeAnimationAction( intentReaction ) );
   }
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorReactToVoiceCommand::IsTurnEnabled() const
+{
+  const auto ts = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  return ts != _dVars.timestampToDisableTurnFor;
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

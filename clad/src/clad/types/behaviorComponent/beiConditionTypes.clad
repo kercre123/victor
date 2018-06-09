@@ -20,6 +20,7 @@ enum uint_8 BEIConditionType {
   ConsoleVar,
   CubeTapped,
   BatteryLevel,
+  BecameTrueThisTick,
   BeatDetected,
   BehaviorTimer,
   Emotion,

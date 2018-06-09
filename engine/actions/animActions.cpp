@@ -26,6 +26,9 @@
 #include "engine/robotDataLoader.h"
 #include "engine/robotInterface/messageHandler.h"
 
+#include "util/logging/logging.h"
+#include "util/logging/DAS.h"
+
 namespace Anki {
 
   namespace Cozmo {
@@ -161,7 +164,7 @@ namespace Anki {
       }
       else {
         const ActionResult res = PlayAnimationAction::Init();
-        
+
         auto* dataLoader = GetRobot().GetContext()->GetDataLoader();
         const std::set<AnimationTrigger>& dasBlacklistedTriggers = dataLoader->GetDasBlacklistedAnimationTriggers();
         const bool isBlacklisted = std::find(dasBlacklistedTriggers.begin(), dasBlacklistedTriggers.end(), _animTrigger)
@@ -170,10 +173,10 @@ namespace Anki {
         if( res == ActionResult::SUCCESS && !isBlacklisted ) {
           const auto simpleMood = GetRobot().GetMoodManager().GetSimpleMood();
           const float headAngle_deg = Util::RadToDeg(GetRobot().GetComponent<FullRobotPose>().GetHeadAngle());
-          
+
           // NOTE: you can add events to the blacklist in das_event_config.json to block them from sending here
-          
-          DASMSG(anim, "action.play_animation",
+
+          DASMSG(action_play_animation, "action.play_animation",
                  "An animation has been started on the robot (that wasn't blacklisted for DAS)");
           DASMSG_SET(s1, _animName, "The animation clip name");
           DASMSG_SET(s2, _animGroupName, "The animation group name");

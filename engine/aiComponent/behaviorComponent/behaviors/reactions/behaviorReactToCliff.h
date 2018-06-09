@@ -46,7 +46,7 @@ protected:
   
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
-  virtual void HandleWhileInScopeButNotActivated(const EngineToGameEvent& event) override;
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
   virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
   
   virtual void BehaviorUpdate() override;
@@ -54,6 +54,7 @@ protected:
 private:
   using base = ICozmoBehavior;
   
+  void TransitionToStuckOnEdge();
   void TransitionToPlayingStopReaction();
   void TransitionToPlayingCliffReaction();
   void TransitionToBackingUp();
@@ -82,8 +83,8 @@ private:
     bool gotStop;
     bool shouldStopDueToCharger;
     bool wantsToBeActivated;
-
     struct Persistent {
+      int numStops;
       std::array<u16, CliffSensorComponent::kNumCliffSensors> cliffValsAtStart;
     };
     Persistent persistent;

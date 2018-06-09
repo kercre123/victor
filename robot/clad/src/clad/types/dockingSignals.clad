@@ -107,29 +107,15 @@ message MovingLiftPostDock
   DockAction action
 }
 
-message RampTraverseStart
-{
-  uint_32  timestamp,
-}
-
-message RampTraverseComplete
-{
-  uint_32  timestamp,
-  bool didSucceed,
-}
-
-message BridgeTraverseStart
-{
-  uint_32  timestamp,
-}
-
-message BridgeTraverseComplete
-{
-  uint_32  timestamp,
-  bool didSucceed,
-}
-
 message ChargerMountComplete
+{		
+  uint_32  timestamp,
+  bool didSucceed,
+}
+
+// Not really a docking action in the sense that it doesn't
+// care about a visual marker. Uses cliff sensors only.
+message CliffAlignComplete
 {		
   uint_32  timestamp,
   bool didSucceed,

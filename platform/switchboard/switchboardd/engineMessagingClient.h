@@ -57,7 +57,6 @@ private:
     ev_timer timer;
     LocalUdpClient* client;
     EngineMessageSignal* signal;
-    EngineMessageSignal* websocketSignal;
   } _handleEngineMessageTimer;
 
   static uint8_t sMessageData[2048];

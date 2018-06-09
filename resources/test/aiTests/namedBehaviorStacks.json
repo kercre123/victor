@@ -7,7 +7,7 @@
   "highLevelAI_stack" : {
     "stackIsForTestOnly" : false,
     "stack" : [
-      "DevBaseBehavior",
+      "InitNormalOperation",
       "ModeSelector",
       "CoordinateGlobalInterrupts",
       "GlobalInterruptions",
@@ -17,7 +17,7 @@
   "driveOffChargerIntoObserving_stack" : {
     "stackIsForTestOnly" : false,
     "stack" : [
-    "DevBaseBehavior",
+    "InitNormalOperation",
     "ModeSelector",
     "CoordinateGlobalInterrupts",
     "GlobalInterruptions",

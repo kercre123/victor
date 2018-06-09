@@ -5,6 +5,8 @@ import logging
 from statistics import mode, StatisticsError
 
 class VictorWebsocket(object):
+
+  ERROR_CONNECT_MESSAGE = "The connection to Robot had problem, please restart it and try again!"
   def __init__(self, robot_ip):
     self.logger = self.logging()
 
@@ -25,6 +27,8 @@ class VictorWebsocket(object):
     self.intent_socket_established = False
     self.intent_stream_flag = False
 
+    self.send_success = False
+
     self.mic_data_raw_results = {"dominant": [], "confidence": [0]*12}
 
     self.init_micdata_socket()
@@ -32,18 +36,18 @@ class VictorWebsocket(object):
 
   def init_micdata_socket(self):
     mic_websocket_url = "ws://{0}:{1}/socket".format(self.robot_ip, self.micdata_port)
-    
+
     self.ws_micdata = websocket.WebSocketApp(mic_websocket_url,
                                     on_message = self.on_mic_message,
                                     on_error = self.on_error,
                                     on_close = self.on_close)
-    
+
     self.ws_micdata.on_open = self.on_open_mic
     self.ws_micdata.keep_running = True 
 
     #Seperate background thread, to handle incoming messages
     self.wst_micdata = threading.Thread(target=self.ws_micdata.run_forever)
-    self.wst_micdata.daemon = True 
+    self.wst_micdata.daemon = True
     self.wst_micdata.start()
 
   def close_mic_socket(self):
@@ -51,11 +55,12 @@ class VictorWebsocket(object):
     return
 
   def on_open_mic(self, ws):
+    self.mic_socket_established = True
+    self.logger.info("mic socket established")
     self.subscribeData["module"] = "micdata"
     subscribe_message = json.dumps(self.subscribeData)
     self.logger.info("Now waiting for a reply")
-    ws.send(subscribe_message)
-    self.mic_socket_established = True
+    self.send_success = self.send_message(ws, subscribe_message)
 
   def on_mic_message(self, ws, message):
     if self.mic_stream_flag == True:
@@ -126,11 +131,12 @@ class VictorWebsocket(object):
     return
 
   def on_open_intent(self, ws):
+    self.intent_socket_established = True
+    self.logger.info("intent socket established")
     self.subscribeData["module"] = "intents"
     subscribe_message = json.dumps(self.subscribeData)
     self.logger.info("Now waiting for a reply")
-    ws.send(subscribe_message)
-    self.intent_socket_established = True
+    self.send_success = self.send_message(ws, subscribe_message)
 
   def on_intent_message(self, ws, message):
     pass
@@ -147,9 +153,19 @@ class VictorWebsocket(object):
   def on_error(self, ws, error):
     self.logger.info(error)
 
-  def on_close(ws):
+  def on_close(self, ws):
     self.logger.info("### closed ###")
-  
+
+  def send_message(self, websocket_object, json_message):
+    is_success = False
+    try:
+        websocket_object.send(json_message)
+        is_success = True
+    except Exception as e:
+        self.logger.error(self.ERROR_CONNECT_MESSAGE)
+        exit()
+    return is_success
+
   def logging(self):
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)

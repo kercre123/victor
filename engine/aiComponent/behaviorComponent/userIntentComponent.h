@@ -110,6 +110,10 @@ public:
   // should use the above version that checks that the explicit user intent is matching what the caller
   // expects
   UserIntentPtr GetActiveUserIntent() const;
+  
+  // You really really really shouldn't use this. You should almost always be able to check against
+  // a specific intent, or GetActiveUserIntent(). 
+  const UserIntentData* /* DONT USE THIS */ GetPendingUserIntent() const { return _pendingIntent.get(); }
 
   // A helper function to drop a user intent without responding to it. This is meant to be called for a
   // pending user intent and will make it no longer pending without ever making it active. This is generally
@@ -127,6 +131,11 @@ public:
   void DevSetUserIntentPending(UserIntent&& userIntent, const UserIntentSource& source);
   void DevSetUserIntentPending(UserIntentTag userIntent);
   void DevSetUserIntentPending(UserIntent&& userIntent);
+
+  // set/clear whitelisted intents. Everything else will be unmatched. For now this is only tags since
+  // the only use case is tags, not full UserIntent objects
+  void SetWhitelistedIntents( const std::set<UserIntentTag>& whitelisted ) { _whitelistedIntents = whitelisted; }
+  void ClearWhitelistedIntents() { _whitelistedIntents.clear(); }
 
   // this allows us to temporarilty disable the warning when we haven't responded to a pending intent
   // useful when we know a behavior down the line will consume the intent, but we still
@@ -186,6 +195,9 @@ private:
   std::unique_ptr<BehaviorComponentCloudServer> _server;
   
   bool _wasIntentUnclaimed = false;
+  
+  // if non-empty, only these cloud/app intents will match a user intent
+  std::set<UserIntentTag> _whitelistedIntents;
   
   const CozmoContext* _context = nullptr; // for webviz
   

@@ -447,7 +447,7 @@ void InternalStatesBehavior::BehaviorUpdate()
     if( robotInfo.IsOnChargerPlatform() ) {
       robotStateColor.SetG(1.0f);
     }
-    if( robotInfo.GetCliffSensorComponent().IsCliffDetectedStatusBitOn() ) {
+    if( robotInfo.GetCliffSensorComponent().IsCliffDetected() ) {
       robotStateColor.SetR(1.0f);
     }
 

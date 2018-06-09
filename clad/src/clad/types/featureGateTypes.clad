@@ -1,6 +1,7 @@
 namespace Anki {
 namespace Cozmo {
 
+// when updating this enum, please update the console enum kFeatureEnumString in cozmoFeatureGate.cpp
 enum uint_8 FeatureType {
   Invalid,
   AndroidConnectionFlow,

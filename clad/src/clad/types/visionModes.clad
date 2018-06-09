@@ -12,7 +12,6 @@ namespace Cozmo {
     DetectingFaces,
     DetectingMotion,
     DetectingOverheadEdges,
-    ReadingToolCode,
     ComputingCalibration,
     CheckingQuality,
     CheckingWhiteBalance,

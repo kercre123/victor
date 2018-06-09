@@ -178,8 +178,8 @@ void MicDataProcessor::InitVAD()
 
 void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float score)
 {
-  // Ignore extra triggers during streaming
-  if (_micDataSystem->HasStreamingJob())
+  // Ignore extra triggers during streaming, or if the trigger detection routine was explicitly disabled
+  if (_micDataSystem->HasStreamingJob() || !_triggerEnabled)
   {
     return;
   }

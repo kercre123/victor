@@ -231,6 +231,10 @@ namespace Anki {
       return;
     }
 
+    void CameraService::CameraSetCaptureFormat(ImageEncoding format)
+    {
+      return;
+    }
 
     Result CameraService::InitCamera()
     {
@@ -238,7 +242,7 @@ namespace Anki {
     }
 
     // Starts camera frame synchronization
-    bool CameraService::CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms)
+    bool CameraService::CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms, ImageEncoding& format)
     {
       if (nullptr == headCam_) {
         return false;
@@ -342,6 +346,8 @@ namespace Anki {
       // Mark that we've already sent the image for the current time
       lastImageCapturedTime_ms_ = currentImageTime_ms;
 
+      format = ImageEncoding::RawRGB;
+      
       return true;
 
     } // CameraGetFrame()

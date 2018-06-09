@@ -65,7 +65,6 @@
 #include "engine/navMap/mapComponent.h"
 #include "engine/objectPoseConfirmer.h"
 #include "engine/petWorld.h"
-#include "engine/ramp.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotGyroDriftDetector.h"
 #include "engine/robotIdleTimeoutComponent.h"
@@ -444,9 +443,6 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     _awaitingConfirmationTreadState = OffTreadsState::OnTreads;
     // Allows this to be called instantly
     _timeOffTreadStateChanged_ms = currentTimestamp - kRobotTimeToConsiderOfftreads_ms;
-
-    // Check the lift to see if tool changed while we were picked up
-    //GetActionList().QueueActionNext(new ReadToolCodeAction(*this));
   }
 
   //////////
@@ -891,7 +887,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   GetDockingComponent().SetPickingOrPlacing(IS_STATUS_FLAG_SET(IS_PICKING_OR_PLACING));
   _isPickedUp = IS_STATUS_FLAG_SET(IS_PICKED_UP);
   _powerButtonPressed = IS_STATUS_FLAG_SET(IS_BUTTON_PRESSED);
-
+  
   // Save the entire flag for sending to game
   _lastStatusFlags = msg.status;
 
@@ -915,113 +911,55 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     DEV_ASSERT(msg.pose_frame_id <= GetPoseFrameID(), "Robot.UpdateFullRobotState.FrameFromFuture");
     const bool frameIsCurrent = msg.pose_frame_id == GetPoseFrameID();
 
-    Pose3d newPose;
+    // This is "normal" mode, where we update pose history based on the
+    // reported odometry from the physical robot
 
-    if (IsOnRamp()) {
-// Unsupported, remove in new PR
-//
-//      // Sanity check:
-//      DEV_ASSERT(_rampID.IsSet(), "Robot.UpdateFullRobotState.InvalidRampID");
-//
-//      // Don't update pose history while on a ramp.
-//      // Instead, just compute how far the robot thinks it has gone (in the plane)
-//      // and compare that to where it was when it started traversing the ramp.
-//      // Adjust according to the angle of the ramp we know it's on.
-//
-//      const f32 distanceTraveled = (Point2f(msg.pose.x, msg.pose.y) - _rampStartPosition).Length();
-//
-//      Ramp* ramp = dynamic_cast<Ramp*>(GetBlockWorld().GetLocatedObjectByID(_rampID, ObjectFamily::Ramp));
-//      if(ramp == nullptr) {
-//        PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.NoRampWithID",
-//                          "Updating robot %d's state while on a ramp, but Ramp object with ID=%d not found in the world.",
-//                          _ID, _rampID.GetValue());
-//        return RESULT_FAIL;
-//      }
-//
-//      // Progress must be along ramp's direction (init assuming ascent)
-//      Radians headingAngle = ramp->GetPose().GetRotationAngle<'Z'>();
-//
-//      // Initialize tilt angle assuming we are ascending
-//      Radians tiltAngle = ramp->GetAngle();
-//
-//      switch(_rampDirection)
-//      {
-//        case Ramp::DESCENDING:
-//          tiltAngle    *= -1.f;
-//          headingAngle += M_PI_F;
-//          break;
-//        case Ramp::ASCENDING:
-//          break;
-//
-//        default:
-//          PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.UnexpectedRampDirection",
-//                            "Robot is on a ramp, expecting the ramp direction to be either "
-//                            "ASCEND or DESCENDING, not %d", _rampDirection);
-//          return RESULT_FAIL;
-//      }
-//
-//      const f32 heightAdjust = distanceTraveled*sin(tiltAngle.ToFloat());
-//      const Point3f newTranslation(_rampStartPosition.x() + distanceTraveled*cos(headingAngle.ToFloat()),
-//                                   _rampStartPosition.y() + distanceTraveled*sin(headingAngle.ToFloat()),
-//                                   _rampStartHeight + heightAdjust);
-//
-//      const RotationMatrix3d R_heading(headingAngle, Z_AXIS_3D());
-//      const RotationMatrix3d R_tilt(tiltAngle, Y_AXIS_3D());
-//
-//      newPose = Pose3d(R_tilt*R_heading, newTranslation, GetComponent<FullRobotPose>().GetPose().GetParent());
-//      //SetPose(newPose); // Done by UpdateCurrPoseFromHistory() below
+    // Ignore physical robot's notion of z from the message? (msg.pose_z)
+    f32 pose_z = 0.f;
 
+
+    // Need to put the odometry update in terms of the current robot origin
+    if (!GetPoseOriginList().ContainsOriginID(msg.pose_origin_id))
+    {
+      LOG_WARNING("Robot.UpdateFullRobotState.BadOriginID",
+                  "Received RobotState with originID=%u, only %zu pose origins available",
+                  msg.pose_origin_id, GetPoseOriginList().GetSize());
+      return RESULT_FAIL;
+    }
+
+    const Pose3d& origin = GetPoseOriginList().GetOriginByID(msg.pose_origin_id);
+
+    // Initialize new pose to be within the reported origin
+    Pose3d newPose(msg.pose.angle, Z_AXIS_3D(), {msg.pose.x, msg.pose.y, msg.pose.z}, origin);
+
+    // It's possible the pose origin to which this update refers has since been
+    // rejiggered and is now the child of another origin. To add to history below,
+    // we must first flatten it. We do all this before "fixing" pose_z because pose_z
+    // will be w.r.t. robot origin so we want newPose to already be as well.
+    newPose = newPose.GetWithRespectToRoot();
+
+    if(msg.pose_frame_id == GetPoseFrameID()) {
+      // Frame IDs match. Use the robot's current Z (but w.r.t. world origin)
+      pose_z = GetPose().GetWithRespectToRoot().GetTranslation().z();
     } else {
-      // This is "normal" mode, where we update pose history based on the
-      // reported odometry from the physical robot
-
-      // Ignore physical robot's notion of z from the message? (msg.pose_z)
-      f32 pose_z = 0.f;
-
-
-      // Need to put the odometry update in terms of the current robot origin
-      if (!GetPoseOriginList().ContainsOriginID(msg.pose_origin_id))
-      {
-        LOG_WARNING("Robot.UpdateFullRobotState.BadOriginID",
-                    "Received RobotState with originID=%u, only %zu pose origins available",
-                    msg.pose_origin_id, GetPoseOriginList().GetSize());
-        return RESULT_FAIL;
+      // This is an old odometry update from a previous pose frame ID. We
+      // need to look up the correct Z value to use for putting this
+      // message's (x,y) odometry info into history. Since it comes from
+      // pose history, it will already be w.r.t. world origin, since that's
+      // how we store everything in pose history.
+      HistRobotState histState;
+      lastResult = GetStateHistory()->GetLastStateWithFrameID(msg.pose_frame_id, histState);
+      if (lastResult != RESULT_OK) {
+        LOG_ERROR("Robot.UpdateFullRobotState.GetLastPoseWithFrameIdError",
+                  "Failed to get last pose from history with frame ID=%d",
+                  msg.pose_frame_id);
+        return lastResult;
       }
+      pose_z = histState.GetPose().GetWithRespectToRoot().GetTranslation().z();
+    }
 
-      const Pose3d& origin = GetPoseOriginList().GetOriginByID(msg.pose_origin_id);
+    newPose.SetTranslation({newPose.GetTranslation().x(), newPose.GetTranslation().y(), pose_z});
 
-      // Initialize new pose to be within the reported origin
-      newPose = Pose3d(msg.pose.angle, Z_AXIS_3D(), {msg.pose.x, msg.pose.y, msg.pose.z}, origin);
-
-      // It's possible the pose origin to which this update refers has since been
-      // rejiggered and is now the child of another origin. To add to history below,
-      // we must first flatten it. We do all this before "fixing" pose_z because pose_z
-      // will be w.r.t. robot origin so we want newPose to already be as well.
-      newPose = newPose.GetWithRespectToRoot();
-
-      if(msg.pose_frame_id == GetPoseFrameID()) {
-        // Frame IDs match. Use the robot's current Z (but w.r.t. world origin)
-        pose_z = GetPose().GetWithRespectToRoot().GetTranslation().z();
-      } else {
-        // This is an old odometry update from a previous pose frame ID. We
-        // need to look up the correct Z value to use for putting this
-        // message's (x,y) odometry info into history. Since it comes from
-        // pose history, it will already be w.r.t. world origin, since that's
-        // how we store everything in pose history.
-        HistRobotState histState;
-        lastResult = GetStateHistory()->GetLastStateWithFrameID(msg.pose_frame_id, histState);
-        if (lastResult != RESULT_OK) {
-          LOG_ERROR("Robot.UpdateFullRobotState.GetLastPoseWithFrameIdError",
-                    "Failed to get last pose from history with frame ID=%d",
-                    msg.pose_frame_id);
-          return lastResult;
-        }
-        pose_z = histState.GetPose().GetWithRespectToRoot().GetTranslation().z();
-      }
-
-      newPose.SetTranslation({newPose.GetTranslation().x(), newPose.GetTranslation().y(), pose_z});
-
-    } // if/else on ramp
 
     // Add to history
     const HistRobotState histState(newPose,
@@ -1605,41 +1543,6 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
   robotPoseWrtObject.SetParent(existingObject->GetPose());
   //robotPoseWrtMat.SetName(std::string("Robot_") + std::to_string(robot->GetID()));
 
-# if 0
-  // Don't snap to horizontal or discrete Z levels when we see a mat marker
-  // while on a ramp
-  if (IsOnRamp() == false)
-  {
-    // If there is any significant rotation, make sure that it is roughly
-    // around the Z axis
-    Radians rotAngle;
-    Vec3f rotAxis;
-    robotPoseWrtObject.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
-
-    if (std::abs(rotAngle.ToFloat()) > DEG_TO_RAD(5) && !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(15))) {
-      LOG_WARNING("Robot.LocalizeToObject.OutOfPlaneRotation",
-                  "Refusing to localize to %s because "
-                  "Robot %d's Z axis would not be well aligned with the world Z axis. "
-                  "(angle=%.1fdeg, axis=(%.3f,%.3f,%.3f)",
-                  existingObject->GetType().GetName().c_str(), GetID(),
-                  rotAngle.getDegrees(), rotAxis.x(), rotAxis.y(), rotAxis.z());
-      return RESULT_FAIL;
-    }
-
-    // Snap to purely horizontal rotation
-    // TODO: Snap to surface of mat?
-    /*
-      if(existingMatPiece->IsPoseOn(robotPoseWrtObject, 0, 10.f)) {
-      Vec3f robotPoseWrtObject_trans = robotPoseWrtObject.GetTranslation();
-      robotPoseWrtObject_trans.z() = existingObject->GetDrivingSurfaceHeight();
-      robotPoseWrtObject.SetTranslation(robotPoseWrtObject_trans);
-      }
-    */
-    robotPoseWrtObject.SetRotation( robotPoseWrtObject.GetRotationAngle<'Z'>(), Z_AXIS_3D() );
-
-  } // if robot is on ramp
-# endif
-
   // Add the new vision-based pose to the robot's history. Note that we use
   // the pose w.r.t. the origin for storing poses in history.
   Pose3d robotPoseWrtOrigin = robotPoseWrtObject.GetWithRespectToRoot();
@@ -1824,35 +1727,31 @@ Result Robot::LocalizeToMat(const MatPiece* matSeen, MatPiece* existingMatPiece)
   robotPoseWrtMat.SetParent(existingMatPiece->GetPose());
   //robotPoseWrtMat.SetName(std::string("Robot_") + std::to_string(robot->GetID()));
 
-  // Don't snap to horizontal or discrete Z levels when we see a mat marker
-  // while on a ramp
-  if (IsOnRamp() == false)
-  {
-    // If there is any significant rotation, make sure that it is roughly
-    // around the Z axis
-    Radians rotAngle;
-    Vec3f rotAxis;
-    robotPoseWrtMat.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
 
-    if (std::abs(rotAngle.ToFloat()) > DEG_TO_RAD(5) && !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(15))) {
-      LOG_WARNING("Robot.LocalizeToMat.OutOfPlaneRotation",
-                  "Refusing to localize to %s because "
-                  "Robot %d's Z axis would not be well aligned with the world Z axis. "
-                  "(angle=%.1fdeg, axis=(%.3f,%.3f,%.3f)",
-                  ObjectTypeToString(existingMatPiece->GetType()), GetID(),
-                  rotAngle.getDegrees(), rotAxis.x(), rotAxis.y(), rotAxis.z());
-      return RESULT_FAIL;
-    }
+  // If there is any significant rotation, make sure that it is roughly
+  // around the Z axis
+  Radians rotAngle;
+  Vec3f rotAxis;
+  robotPoseWrtMat.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
 
-    // Snap to purely horizontal rotation and surface of the mat
-    if (existingMatPiece->IsPoseOn(robotPoseWrtMat, 0, 10.f)) {
-      Vec3f robotPoseWrtMat_trans = robotPoseWrtMat.GetTranslation();
-      robotPoseWrtMat_trans.z() = existingMatPiece->GetDrivingSurfaceHeight();
-      robotPoseWrtMat.SetTranslation(robotPoseWrtMat_trans);
-    }
-    robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D() );
+  if (std::abs(rotAngle.ToFloat()) > DEG_TO_RAD(5) && !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(15))) {
+    LOG_WARNING("Robot.LocalizeToMat.OutOfPlaneRotation",
+                "Refusing to localize to %s because "
+                "Robot %d's Z axis would not be well aligned with the world Z axis. "
+                "(angle=%.1fdeg, axis=(%.3f,%.3f,%.3f)",
+                ObjectTypeToString(existingMatPiece->GetType()), GetID(),
+                rotAngle.getDegrees(), rotAxis.x(), rotAxis.y(), rotAxis.z());
+    return RESULT_FAIL;
+  }
 
-  } // if robot is on ramp
+  // Snap to purely horizontal rotation and surface of the mat
+  if (existingMatPiece->IsPoseOn(robotPoseWrtMat, 0, 10.f)) {
+    Vec3f robotPoseWrtMat_trans = robotPoseWrtMat.GetTranslation();
+    robotPoseWrtMat_trans.z() = existingMatPiece->GetDrivingSurfaceHeight();
+    robotPoseWrtMat.SetTranslation(robotPoseWrtMat_trans);
+  }
+  robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D() );
+
 
   if (!_localizedToFixedObject && !existingMatPiece->IsMoveable()) {
     // If we have not yet seen a fixed mat, and this is a fixed mat, rejigger
@@ -1889,36 +1788,6 @@ Result Robot::LocalizeToMat(const MatPiece* matSeen, MatPiece* existingMatPiece)
       _localizedToFixedObject = true;
     }
   }
-
-  /*
-  // Don't snap to horizontal or discrete Z levels when we see a mat marker
-  // while on a ramp
-  if(IsOnRamp() == false)
-  {
-  // If there is any significant rotation, make sure that it is roughly
-  // around the Z axis
-  Radians rotAngle;
-  Vec3f rotAxis;
-  robotPoseWrtMat.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
-  const float dotProduct = DotProduct(rotAxis, Z_AXIS_3D());
-  const float dotProductThreshold = 0.0152f; // 1.f - std::cos(DEG_TO_RAD(10)); // within 10 degrees
-  if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
-  PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RobotNotOnHorizontalPlane",
-  "Robot's Z axis is not well aligned with the world Z axis. "
-  "(angle=%.1fdeg, axis=(%.3f,%.3f,%.3f)\n",
-  rotAngle.getDegrees(), rotAxis.x(), rotAxis.y(), rotAxis.z());
-  }
-
-  // Snap to purely horizontal rotation and surface of the mat
-  if(existingMatPiece->IsPoseOn(robotPoseWrtMat, 0, 10.f)) {
-  Vec3f robotPoseWrtMat_trans = robotPoseWrtMat.GetTranslation();
-  robotPoseWrtMat_trans.z() = existingMatPiece->GetDrivingSurfaceHeight();
-  robotPoseWrtMat.SetTranslation(robotPoseWrtMat_trans);
-  }
-  robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D() );
-
-  } // if robot is on ramp
-  */
 
   // Add the new vision-based pose to the robot's history. Note that we use
   // the pose w.r.t. the origin for storing poses in history.
@@ -1982,85 +1851,6 @@ Result Robot::LocalizeToMat(const MatPiece* matSeen, MatPiece* existingMatPiece)
   return RESULT_OK;
 
 } // LocalizeToMat()
-
-Result Robot::SetOnRamp(bool t)
-{
-  ANKI_CPU_PROFILE("Robot::SetOnRamp");
-
-  if (t == _onRamp) {
-    // Nothing to do
-    return RESULT_OK;
-  }
-
-  // We are either transition onto or off of a ramp
-
-  Ramp* ramp = dynamic_cast<Ramp*>(GetBlockWorld().GetLocatedObjectByID(_rampID, ObjectFamily::Ramp));
-  if (ramp == nullptr) {
-    LOG_WARNING("Robot.SetOnRamp.NoRampWithID",
-                "Robot %d is transitioning on/off of a ramp, but Ramp object with ID=%d not found in the world",
-                _ID, _rampID.GetValue());
-    return RESULT_FAIL;
-  }
-
-  assert(_rampDirection == Ramp::ASCENDING || _rampDirection == Ramp::DESCENDING);
-
-  const bool transitioningOnto = (t == true);
-
-  if (transitioningOnto) {
-    // Record start (x,y) position coming from robot so basestation can
-    // compute actual (x,y,z) position from upcoming odometry updates
-    // coming from robot (which do not take slope of ramp into account)
-    _rampStartPosition = {GetComponent<FullRobotPose>().GetPose().GetTranslation().x(), GetComponent<FullRobotPose>().GetPose().GetTranslation().y()};
-    _rampStartHeight   = GetComponent<FullRobotPose>().GetPose().GetTranslation().z();
-
-    LOG_INFO("Robot.SetOnRamp.TransitionOntoRamp",
-             "Robot %d transitioning onto ramp %d, using start (%.1f,%.1f,%.1f)",
-             _ID, ramp->GetID().GetValue(), _rampStartPosition.x(), _rampStartPosition.y(), _rampStartHeight);
-
-  } else {
-    Result res;
-    // Just do an absolute pose update, setting the robot's position to
-    // where we "know" he should be when he finishes ascending or
-    // descending the ramp
-    switch(_rampDirection)
-    {
-      case Ramp::ASCENDING:
-        res = SetNewPose(ramp->GetPostAscentPose(WHEEL_BASE_MM).GetWithRespectToRoot());
-        break;
-
-      case Ramp::DESCENDING:
-        res = SetNewPose(ramp->GetPostDescentPose(WHEEL_BASE_MM).GetWithRespectToRoot());
-        break;
-
-      default:
-        LOG_WARNING("Robot.SetOnRamp.UnexpectedRampDirection",
-                    "When transitioning on/off ramp, expecting the ramp direction to be either "
-                    "ASCENDING or DESCENDING, not %d.", _rampDirection);
-        return RESULT_FAIL;
-    }
-
-    if (res != RESULT_OK) {
-      LOG_WARNING("Robot.SetOnRamp.SetNewPose", "Robot %d failed to set new pose", _ID);
-      return res;
-    }
-
-    _rampDirection = Ramp::UNKNOWN;
-
-    const TimeStamp_t timeStamp = GetStateHistory()->GetNewestTimeStamp();
-
-    LOG_INFO("Robot.SetOnRamp.TransitionOffRamp",
-             "Robot %d transitioning off of ramp %d, at (%.1f,%.1f,%.1f) @ %.1fdeg, timeStamp = %d",
-             _ID, ramp->GetID().GetValue(),
-             GetComponent<FullRobotPose>().GetPose().GetTranslation().x(), GetComponent<FullRobotPose>().GetPose().GetTranslation().y(), GetComponent<FullRobotPose>().GetPose().GetTranslation().z(),
-             GetComponent<FullRobotPose>().GetPose().GetRotationAngle<'Z'>().getDegrees(),
-             timeStamp);
-  } // if/else transitioning onto ramp
-
-  _onRamp = t;
-
-  return RESULT_OK;
-
-} // SetOnRamp()
 
 
 Result Robot::SetPoseOnCharger()
@@ -2666,6 +2456,7 @@ RobotState Robot::GetDefaultRobotState()
                          std::move(defaultCliffRawVals), //std::array<uint16_t, 4> cliffDataRaw,
                          ProxSensorDataRaw(), //const Anki::Cozmo::ProxSensorDataRaw &proxData,
                          0, // touch intensity value when not touched (from capacitive touch sensor)
+                         0, // uint8_t cliffDetectedFlags,
                          -1); //int8_t currPathSegment
 
   return state;
@@ -2857,7 +2648,8 @@ Result Robot::UpdateStartupChecks()
       u8* buf = nullptr;
       u32 id = 0;
       TimeStamp_t t = 0;
-      if(CameraService::getInstance()->CameraGetFrame(buf, id, t))
+      ImageEncoding format;
+      if(CameraService::getInstance()->CameraGetFrame(buf, id, t, format))
       {
         CameraService::getInstance()->CameraReleaseFrame(id);
       }

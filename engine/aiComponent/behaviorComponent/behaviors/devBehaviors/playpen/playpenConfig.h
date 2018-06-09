@@ -208,16 +208,6 @@ static u32 kFFTExpectedFreq_hz         = 1024;
 // The allowed +/- deviation of the FFT frequency from the expected value
 static u32 kFFTFreqTolerance_hz        = 20;
 
-// ----------Tool Code----------
-// Number of tool codes we should be seeing
-static const u32 kNumToolCodes = 2;
-
-// Allowed difference between expected and actual x pixel values of detected tool codes
-static f32       kToolCodeDistThreshX_pix = 20.f;
-
-// Allowed difference between expected and actual y pixel values of detected tool codes
-static f32       kToolCodeDistThreshY_pix = 40.f;
-
 // ----------Pickup Cube----------
 // Expected cube pose x relative to playpen starting pose
 static f32 kExpectedCubePoseX_mm                = 420;

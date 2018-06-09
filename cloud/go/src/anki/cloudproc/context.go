@@ -114,7 +114,8 @@ func (ctx *voiceContext) sendAudio(samples []byte, cloudChan cloudChans) {
 }
 
 func sendResponse(resp *chipper.IntentResult, cloudChan cloudChans) {
-	metadata := fmt.Sprintf("text/confidence: %s/%f", resp.QueryText, resp.IntentConfidence)
+	metadata := fmt.Sprintf("text: %s  confidence: %f  handler: %s",
+		resp.QueryText, resp.IntentConfidence, resp.Service)
 	buf := bytes.Buffer{}
 	if resp.Parameters != nil && len(resp.Parameters) > 0 {
 		encoder := json.NewEncoder(&buf)

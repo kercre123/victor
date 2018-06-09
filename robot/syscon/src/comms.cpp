@@ -274,6 +274,7 @@ static void ProcessMessage(InboundPacket& packet) {
         missed_frames = 0;
         Power::wakeUp();
         Motors::receive(&packet.headToBody);
+        Analog::receive(&packet.headToBody);
         Lights::receive(packet.headToBody.lightState.ledColors);
         break ;
       case PAYLOAD_CONT_DATA:

@@ -356,7 +356,7 @@ std::string RemovePII(const std::string& s)
 
 std::string GetUUIDString()
 {
-  Anki::Util::RandomGenerator rand;
+  static Anki::Util::RandomGenerator rand;
   union uuidTranslator {
     UUIDBytes uuidBytes;
     struct uint64s {

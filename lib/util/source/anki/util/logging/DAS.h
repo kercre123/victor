@@ -11,6 +11,22 @@
 #ifndef __util_logging_DAS_h
 #define __util_logging_DAS_h
 
+//
+// This file must be #included by each CPP file that uses DASMSG macros, to
+// ensure that macros are expanded correctly by doxygen.  If this file
+// is included through an intermediate header, code will compile correctly
+// but doxygen will not expand macros as expected.
+//
+#if !defined(__INCLUDE_LEVEL__)
+#error "This header may not be included by other headers. We rely on GCC __INCLUDE_LEVEL__ to enforce this restriction."
+#error "If your compiler does not define __INCLUDE_LEVEL__, please add an appropriate check for your compiler."
+#endif
+
+#if (__INCLUDE_LEVEL__ > 1)
+#error "This header must be included directly from your CPP file. This header may not be included by other headers."
+#error "If this header is included by another header, doxygen macros will not expand correctly."
+#endif
+
 namespace Anki {
 namespace Util {
 namespace DAS {
@@ -66,5 +82,109 @@ constexpr const int FIELD_COUNT = 9;
 } // end namespace DAS
 } // end namespace Util
 } // end namespace Anki
+
+namespace Anki {
+namespace Util {
+
+//
+// DAS message field
+//
+struct DasItem
+{
+  DasItem() = default;
+  DasItem(const std::string & valueStr) { value = valueStr; }
+  DasItem(int64_t valueInt) { value = std::to_string(valueInt); }
+
+  inline const std::string & str() const { return value; }
+  inline const char * c_str() const { return value.c_str(); }
+
+  std::string value;
+};
+
+//
+// DAS message struct
+//
+// Event name is required. Other fields are optional.
+// Event structures should be declared with DASMSG.
+// Event fields should be assigned with DASMSG_SET.
+//
+struct DasMsg
+{
+  DasMsg(const std::string & eventStr) { event = eventStr; }
+
+  std::string event;
+  DasItem s1;
+  DasItem s2;
+  DasItem s3;
+  DasItem s4;
+  DasItem i1;
+  DasItem i2;
+  DasItem i3;
+  DasItem i4;
+};
+
+// Log an error event
+__attribute__((__used__))
+void sLogError(const DasMsg & dasMessage);
+
+// Log a warning event
+__attribute__((__used__))
+void sLogWarning(const DasMsg & dasMessage);
+
+// Log an info event
+__attribute__((__used__))
+void sLogInfo(const DasMsg & dasMessage);
+
+// Log a debug event
+__attribute__((__used__))
+void sLogDebug(const DasMsg & dasMessage);
+
+} // end namespace Util
+} // end namespace Anki
+
+//
+// DAS feature start event
+// This is the name of the event used to indicate start a new feature scope.
+// If this value changes, or event parameters change, DASManager must be updated to match.
+// This is declared as a macro, not a constexpr, so it can be expanded by doxygen.
+//
+#define DASMSG_FEATURE_START "behavior.feature.start"
+
+
+//
+// DAS message macros
+//
+// These macros are used to ensure that developers provide some description of each event defined.
+// Note these macros are expanded two ways!  In normal compilation, they are expanded into C++
+// variable declarations and logging calls.  When processed by doxygen, they are are expanded
+// into syntactically invalid C++ that contains magic directives to produce readable documentation.
+//
+#ifndef DOXYGEN
+
+#define DASMSG(ezRef, eventName, documentation) { Anki::Util::DasMsg __DAS_msg(eventName);
+#define DASMSG_SET(dasEntry, value, comment) __DAS_msg.dasEntry = Anki::Util::DasItem(value);
+#define DASMSG_SEND()         Anki::Util::sLogInfo(__DAS_msg); }
+#define DASMSG_SEND_WARNING() Anki::Util::sLogWarning(__DAS_msg); }
+#define DASMSG_SEND_ERROR()   Anki::Util::sLogError(__DAS_msg); }
+#define DASMSG_SEND_DEBUG()   Anki::Util::sLogDebug(__DAS_msg); }
+
+#else
+
+/*! \defgroup dasmsg DAS Messages
+*/
+
+class DasDoxMsg() {}
+
+#define DASMSG(ezRef, eventName, documentation)  }}}}}}}}/** \ingroup dasmsg */ \
+                                            /** \brief eventName */ \
+                                            /** documentation */ \
+                                            class ezRef(): public DasDoxMsg() { \
+                                            public:
+#define DASMSG_SET(dasEntry, value, comment) /** @param dasEntry comment \n*/
+#define DASMSG_SEND };
+#define DASMSG_SEND_WARNING };
+#define DASMSG_SEND_ERROR };
+#define DASMSG_SEND_DEBUG };
+#endif
 
 #endif // __util_logging_DAS_h

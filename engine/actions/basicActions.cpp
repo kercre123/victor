@@ -25,6 +25,7 @@
 #include "engine/components/carryingComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
+#include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/drivingAnimationHandler.h"
@@ -1650,66 +1651,6 @@ namespace Anki {
       completionUnion.Set_objectInteractionCompleted(std::move( info ));
     }
     
-#pragma mark ---- TraverseObjectAction ----
-    
-    TraverseObjectAction::TraverseObjectAction(ObjectID objectID)
-    : IActionRunner("TraverseObject",
-                    RobotActionType::TRAVERSE_OBJECT,
-                    (u8)AnimTrackFlag::BODY_TRACK)
-    , _objectID(objectID)
-    {
-  
-    }
-    
-    void TraverseObjectAction::SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2) {
-      _speed_mmps = speed_mmps;
-      _accel_mmps2 = accel_mmps2;
-    }
-    
-    ActionResult TraverseObjectAction::UpdateInternal()
-    {
-      // Select the chosen action based on the object's type, if we haven't
-      // already
-      if(_chosenAction == nullptr) {
-        ActionableObject* object = dynamic_cast<ActionableObject*>(GetRobot().GetBlockWorld().GetLocatedObjectByID(_objectID));
-        if(object == nullptr) {
-          PRINT_NAMED_ERROR("TraverseObjectAction.UpdateInternal.ObjectNotFound",
-                            "Could not get actionable object with ID = %d from world.", _objectID.GetValue());
-          return ActionResult::BAD_OBJECT;
-        }
-        
-        if(object->GetType() == ObjectType::Bridge_LONG ||
-           object->GetType() == ObjectType::Bridge_SHORT)
-        {
-          CrossBridgeAction* bridgeAction = new CrossBridgeAction(_objectID);
-          bridgeAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2, _decel_mmps2);
-          bridgeAction->ShouldSuppressTrackLocking(true);
-          _chosenAction.reset(bridgeAction);
-          _chosenAction->SetRobot(&GetRobot());
-        }
-        else if(object->GetType() == ObjectType::Ramp_Basic) {
-          AscendOrDescendRampAction* rampAction = new AscendOrDescendRampAction(_objectID);
-          rampAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2, _decel_mmps2);
-          rampAction->ShouldSuppressTrackLocking(true);
-          _chosenAction.reset(rampAction);
-          _chosenAction->SetRobot(&GetRobot());
-        }
-        else {
-          PRINT_NAMED_ERROR("TraverseObjectAction.UpdateInternal.CannotTraverseObjectType",
-                            "Robot %d was asked to traverse object ID=%d of type %s, but "
-                            "that traversal is not defined.", GetRobot().GetID(),
-                            object->GetID().GetValue(), ObjectTypeToString(object->GetType()));
-          
-          return ActionResult::BAD_OBJECT;
-        }
-      }
-      
-      // Now just use chosenAction's Update()
-      assert(_chosenAction != nullptr);
-      return _chosenAction->Update();
-      
-    } // Update()
-    
 #pragma mark ---- TurnTowardsPoseAction ----
     
     TurnTowardsPoseAction::TurnTowardsPoseAction(const Pose3d& pose, Radians maxTurnAngle)
@@ -2380,108 +2321,70 @@ namespace Anki {
       return ActionResult::SUCCESS;
     }
     
-#pragma mark ---- ReadToolCodeAction ----
+
+#pragma mark ---- CliffAlignToWhiteAction ----
     
-    ReadToolCodeAction::ReadToolCodeAction(bool doCalibration)
-    : IAction("ReadToolCode",
-              RobotActionType::READ_TOOL_CODE,
-              (u8)AnimTrackFlag::NO_TRACKS)
-    , _doCalibration(doCalibration)
-    , _headAndLiftDownAction()
+    CliffAlignToWhiteAction::CliffAlignToWhiteAction()
+    : IAction("CliffAlignToWhite",
+              RobotActionType::CLIFF_ALIGN_TO_WHITE,
+              (u8)AnimTrackFlag::BODY_TRACK)
     {
-      _toolCodeInfo.code = ToolCode::UnknownTool;
     }
     
-    ActionResult ReadToolCodeAction::Init()
+    ActionResult CliffAlignToWhiteAction::Init()
     {
-      PRINT_NAMED_ERROR("ReadToolCodeAction.Deprecated", 
-                        "ReadToolCode functionality deprecated 1/31/18. See JIRA VIC-1189");
-      return ActionResult::ABORT;
+      // Store stop-on-white state and disable it if it's currently enabled
+      _resumeStopOnWhite = GetRobot().GetCliffSensorComponent().IsStopOnWhiteEnabled();
+      if (_resumeStopOnWhite) {
+        GetRobot().GetCliffSensorComponent().EnableStopOnWhite(false);
+      }
 
-      // Put the head and lift down for read
-      _headAndLiftDownAction.AddAction(new MoveHeadToAngleAction(MIN_HEAD_ANGLE));
-      _headAndLiftDownAction.AddAction(new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK, READ_TOOL_CODE_LIFT_HEIGHT_TOL_MM));
-      _headAndLiftDownAction.SetRobot(&GetRobot());
-
-      _state = State::WaitingToGetInPosition;
+      // Send align action message to robot
+      GetRobot().SendRobotMessage<RobotInterface::CliffAlignToWhiteAction>(true);
       
-      _toolReadSignalHandle = GetRobot().GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotReadToolCode,
-         [this] (const AnkiEvent<ExternalInterface::MessageEngineToGame> &msg) {
-           _toolCodeInfo = msg.GetData().Get_RobotReadToolCode().info;
-           PRINT_CH_INFO("Actions", "ReadToolCodeAction.SignalHandler",
-                            "Read tool code: %s", EnumToString(_toolCodeInfo.code));
-           this->_state = State::ReadCompleted;
-      });
+      // Subscribe to CliffAlignComplete msg
+      auto actionStartedLambda = [this](const AnkiEvent<RobotInterface::RobotToEngine>& event)
+      {
+        const auto& payload = event.GetData().Get_cliffAlignComplete();
+        PRINT_CH_INFO("Actions", "CliffAlignToWhiteAction.Init.CliffAlignComplete",
+                      "[%d] Success: %d",
+                      GetTag(), payload.didSucceed);
+        _state = payload.didSucceed ? State::Success : State::Fail;
+      };
+      
+      _signalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(RobotInterface::RobotToEngineTag::cliffAlignComplete,
+                                                                     actionStartedLambda);
       
       return ActionResult::SUCCESS;
     }
     
-    ReadToolCodeAction::~ReadToolCodeAction()
+    CliffAlignToWhiteAction::~CliffAlignToWhiteAction()
     {
-      _headAndLiftDownAction.PrepForCompletion();
-      if(HasRobot()){
-        // NOTE::STR 1/31/18 Removing call to (now) private VisionComponent scheduling fuctions
-        // See jira VIC-1189 for details on current plans for ToolCode functionality
-        // GetRobot().GetVisionComponent().EnableMode(VisionMode::ReadingToolCode, false);        
+      if (_state == State::Waiting) {
+        GetRobot().SendRobotMessage<RobotInterface::CliffAlignToWhiteAction>(false);
+      }
+      if (_resumeStopOnWhite) {
+        GetRobot().GetCliffSensorComponent().EnableStopOnWhite(true);
       }
     }
     
-    ActionResult ReadToolCodeAction::CheckIfDone()
+    ActionResult CliffAlignToWhiteAction::CheckIfDone()
     {
-      PRINT_NAMED_ERROR("ReadToolCodeAction.Deprecated", 
-                        "ReadToolCode functionality deprecated 1/31/18. See JIRA VIC-1189");
-      return ActionResult::ABORT;
-
       ActionResult result = ActionResult::RUNNING;
-      
-      switch(_state)
-      {
-        case State::WaitingToGetInPosition:
-        {
-          // Wait for head and lift to get into position (i.e. the action to complete)
-          result = _headAndLiftDownAction.Update();
-          if(ActionResult::SUCCESS == result)
-          {
-            result = ActionResult::RUNNING; // return value should still be running
-            
-            Result setCalibResult = GetRobot().GetVisionComponent().EnableToolCodeCalibration(_doCalibration);
-            if(RESULT_OK != setCalibResult) {
-              PRINT_CH_INFO("Actions", "ReadToolCodeAction.CheckIfDone.FailedToSetCalibration", "");
-              result = ActionResult::FAILED_SETTING_CALIBRATION;
-            } else {
-              // Tell the VisionSystem thread to check the tool code in the next image it gets.
-              // It will disable this mode when it completes.
 
-              // NOTE::STR 1/31/18 Removing call to (now) private VisionComponent scheduling fuctions
-              // GetRobot().GetVisionComponent().EnableMode(VisionMode::ReadingToolCode, true);
-              _state = State::WaitingForRead;
-            }
-          }
+      switch(_state) {
+        case State::Success:
+          PRINT_CH_INFO("Actions", "CliffAlignToWhiteAction.CheckIfDone.Success", "");
+          return ActionResult::SUCCESS;
+        case State::Fail:
+          PRINT_CH_INFO("Actions", "CliffAlignToWhiteAction.CheckIfDone.Fail", "");
+          return ActionResult::CLIFF_ALIGN_FAILED;
+        default:
           break;
-        }
-          
-        case State::WaitingForRead:
-          // Nothing to do
-          break;
-          
-        case State::ReadCompleted:
-          if(_toolCodeInfo.code == ToolCode::UnknownTool) {
-            result = ActionResult::UNKNOWN_TOOL_CODE;
-          } else {
-            result = ActionResult::SUCCESS;
-          }
-          break;
-      }
+      } 
       
       return result;
     } // CheckIfDone()
     
-    void ReadToolCodeAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
-    {
-      ReadToolCodeCompleted toolCodeComplete;
-      toolCodeComplete.info = _toolCodeInfo;
-      completionUnion.Set_readToolCodeCompleted(std::move( toolCodeComplete ));
-    }
-
   }
 }

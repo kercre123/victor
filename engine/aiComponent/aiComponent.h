@@ -50,6 +50,7 @@ public:
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
     dependencies.insert(RobotComponentID::MoodManager);
     dependencies.insert(RobotComponentID::DataAccessor);
+    dependencies.insert(RobotComponentID::NVStorage);
   };
   virtual void UpdateDependent(const RobotCompMap& dependentComponents) override;
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {

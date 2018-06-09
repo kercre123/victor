@@ -483,18 +483,6 @@ namespace Anki {
       
       virtual ~DriveToFacePlantAction() { }
     };
-
-    // Common compound action
-    class DriveToAndTraverseObjectAction : public IDriveToInteractWithObject
-    {
-    public:
-      DriveToAndTraverseObjectAction(const ObjectID& objectID,
-                                     Radians maxTurnTowardsFaceAngle_rad = 0.f,
-                                     const bool sayName = false);
-      
-      virtual ~DriveToAndTraverseObjectAction() { }
-      
-    };
     
     class DriveToRealignWithObjectAction : public CompoundActionSequential
     {

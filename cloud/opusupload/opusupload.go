@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 
 	"github.com/anki/sai-chipper-voice/client/chipper"
-	pb "github.com/anki/sai-chipper-voice/grpc/pb"
+	pb "github.com/anki/sai-chipper-voice/proto/anki/chipperpb"
 	"github.com/google/uuid"
 )
 

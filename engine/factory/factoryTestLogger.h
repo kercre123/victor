@@ -52,7 +52,6 @@ public:
   // Appends struct as formatted entry to log file
   bool Append(const FactoryTestResultEntry& data);
   bool Append(const CameraCalibration& data);
-  bool Append(const ToolCodeInfo& data);
   bool Append(const BirthCertificate& data);
   bool Append(const IMUInfo& data);
   bool Append(const IMUTempDuration& data);

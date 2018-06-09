@@ -78,7 +78,6 @@ enum uint_8 BehaviorClass {
   PlaypenInitChecks,
   PlaypenMotorCalibration,
   PlaypenPickupCube,
-  PlaypenReadToolCode,
   PlaypenSoundCheck,
   PlaypenTest,
   PlaypenWaitToStart,
@@ -136,6 +135,14 @@ enum uint_8 BehaviorClass {
   // observing
   ObservingLookAtFaces,
   ObservingWithoutTurn,
+
+  // onboarding
+  Onboarding,
+  OnboardingInterruptionHead,
+
+  // photoTaking
+  AestheticallyCenterFaces,
+  TakeAPhotoCoordinator,
 
   // proxBehaviors
   ProxGetToDistance,

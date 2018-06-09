@@ -21,6 +21,7 @@
 #include "coretech/vision/shared/compositeImage/compositeImageLayer.h"
 #include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cannedAnimLib/cannedAnims/animation.h"
+#include "cannedAnimLib/cannedAnims/animationMessageWrapper.h"
 #include "cannedAnimLib/baseTypes/track.h"
 #include "clad/types/keepFaceAliveParameters.h"
 
@@ -131,7 +132,7 @@ namespace Cozmo {
 
     // Sets all tracks that should be locked
     void SetLockedTracks(u8 whichTracks)   { _lockedTracks = whichTracks; }
-    bool IsTrackLocked(u8 trackFlag) const { return ((_lockedTracks & trackFlag) == trackFlag); }
+
 
     // Lock or unlock an individual track
     void LockTrack(AnimTrackFlag track) { _lockedTracks |= (u8)track; }
@@ -151,86 +152,17 @@ namespace Cozmo {
     
 
   private:
-    
-    Result SetStreamingAnimation(Animation* anim,
-                                 Tag tag,
-                                 u32 numLoops = 1,
-                                 bool interruptRunning = true,
-                                 bool shouldOverrideEyeHue = false,
-                                 bool shouldRenderInEyeHue = true,
-                                 bool isInternalAnim = true,
-                                 bool shouldClearProceduralAnim = true);
-
-    // Initialize the streaming of an animation with a given tag
-    // (This will call anim->Init())
-    // if shouldOverrideEyeHue is set to true the value of shouldRenderInEyeHue will be applied
-    // to all sprites in the animation's SpriteSequenceTrack
-    Result InitStreamingAnimation(Tag withTag, bool shouldOverrideEyeHue = false, bool shouldRenderInEyeHue = true);
-    
-    // Update Stream of either the streaming animation or procedural tracks
-    Result StreamTracks();
-    // Actually stream the animation (called each tick)
-    Result UpdateStreamingAnimation(bool storeFace);
-    // Used to stream _just_ the stuff left in the various layers (all procedural stuff)
-    Result StreamProceduralTracks();
-
-    void SetKeepAliveIfAppropriate();
-    // Indicates if keep alive is currently playing
-    bool IsKeepAlivePlaying() const;
-    
-    // This performs the test cases for the animation while loop
-    bool ShouldProcessAnimationFrame( Animation* anim, TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
-    
-    // Sends the start of animation message to engine
-    Result SendStartOfAnimation();
-
-    // Sends the end of animation message to engine if the
-    // number of commanded loops of the animation has completed.
-    // If abortingAnim == true, then the message is sent even if all loops were not completed.
-    Result SendEndOfAnimation(bool abortingAnim = false);
-    
-    // Enables/Disables the backpack lights animation layer on the robot
-    // if it hasn't already been enabled/disabled
-    Result EnableBackpackAnimationLayer(bool enable);
-    
-    // Check whether the animation is done
-    bool IsStreamingAnimFinished() const;
-    
-    void StopTracks(const u8 whichTracks);
-    
-    void StopTracksInUse() {
-      // In case we are aborting an animation, stop any tracks that were in use
-      // (For now, this just means motor-based tracks.) Note that we don't
-      // stop tracks we weren't using, in case we were, for example, playing
-      // a head animation while driving a path.
-      StopTracks(_tracksInUse);
-    }
-        
-    // pass the started/stopped animation name to webviz
-    void SendAnimationToWebViz( bool starting ) const;
-
-    // Copy the contents of the animation into the procedural animation
-    // while maintaining expected properties of the procedural anim
-    void CopyIntoProceduralAnimation(Animation* desiredAnim = nullptr);
-
-    void InsertFaceKeyframeIntoCompImg(const TrackLayerComponent::LayeredKeyFrames& layeredKeyFrames,
-                                       Vision::CompositeImage& image);
-    
     const AnimContext* _context = nullptr;
     
     Animation*  _streamingAnimation = nullptr;
     Animation*  _neutralFaceAnimation = nullptr;
+    Animation*  _bootFaceAnimation = nullptr;
 
      // for creating animations "live" or dynamically
     Animation*  _proceduralAnimation = nullptr;
 
     std::unique_ptr<TrackLayerComponent>  _proceduralTrackComponent;
-    
-    void GetStreamableFace(const ProceduralFace& procFace, Vision::ImageRGB565& outImage) const;
-    void BufferFaceToSend(Vision::ImageRGB565& image);
 
-    void UpdateCaptureFace(const Vision::ImageRGB565& faceImg565);
-    
     u32 _numLoops = 1;
     u32 _loopCtr  = 0;
 
@@ -271,10 +203,7 @@ namespace Cozmo {
     
     // Last time we streamed anything
     f32 _lastAnimationStreamTime = std::numeric_limits<f32>::lowest();
-    
-    // Sends msg to appropriate destination as long as the specified track is unlocked
-    bool SendIfTrackUnlocked(RobotInterface::EngineToRobot* msg, AnimTrackFlag track);
-    
+
     Tag _tag;
     
     // For track locking
@@ -327,6 +256,106 @@ namespace Cozmo {
     u32           _numTicsToSendAnimState            = 0;
 
     bool _redirectFaceImagesToDebugScreen = false;
+
+    static bool IsTrackLocked(u8 lockedTracks, u8 trackFlagToCheck) {
+      return ((lockedTracks & trackFlagToCheck) == trackFlagToCheck);
+    }
+    
+    void SendAnimationMessages(AnimationMessageWrapper& stateToSend);
+
+    Result SetStreamingAnimation(Animation* anim,
+                                 Tag tag,
+                                 u32 numLoops = 1,
+                                 bool interruptRunning = true,
+                                 bool shouldOverrideEyeHue = false,
+                                 bool shouldRenderInEyeHue = true,
+                                 bool isInternalAnim = true,
+                                 bool shouldClearProceduralAnim = true);
+
+    // Initialize the streaming of an animation with a given tag
+    // (This will call anim->Init())
+    // if shouldOverrideEyeHue is set to true the value of shouldRenderInEyeHue will be applied
+    // to all sprites in the animation's SpriteSequenceTrack
+    Result InitStreamingAnimation(Tag withTag, bool shouldOverrideEyeHue = false, bool shouldRenderInEyeHue = true);
+    
+    // Update Stream of either the streaming animation or procedural tracks
+    Result ExtractAnimationMessages(AnimationMessageWrapper& stateToSend);
+    // Actually stream the animation (called each tick)
+    Result ExtractMessagesFromStreamingAnim(AnimationMessageWrapper& stateToSend);
+    // Used to stream _just_ the stuff left in the various layers (all procedural stuff)
+    Result ExtractMessagesFromProceduralTracks(AnimationMessageWrapper& stateToSend) const;
+
+    // Combine the tracks inside of the specified animations with the tracks in the track layer component
+    // specified, and then assign the output to stateToSend
+    static Result ExtractMessagesRelatedToProceduralTrackComponent(const AnimContext* context,
+                                                                   Animation* anim,
+                                                                   TrackLayerComponent* trackComp,
+                                                                   const u8 tracksCurrentlyLocked,
+                                                                   const TimeStamp_t timeSinceAnimStart_ms,
+                                                                   bool storeFace,
+                                                                   AnimationMessageWrapper& stateToSend);
+    
+    
+    void SetKeepAliveIfAppropriate();
+    // Indicates if keep alive is currently playing
+    bool IsKeepAlivePlaying() const;
+    
+    // This performs the test cases for the animation while loop
+    bool ShouldProcessAnimationFrame( Animation* anim, TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
+    
+    // Sends the start of animation message to engine
+    Result SendStartOfAnimation();
+
+    // Sends the end of animation message to engine if the
+    // number of commanded loops of the animation has completed.
+    // If abortingAnim == true, then the message is sent even if all loops were not completed.
+    Result SendEndOfAnimation(bool abortingAnim = false);
+    
+    // Enables/Disables the backpack lights animation layer on the robot
+    // if it hasn't already been enabled/disabled
+    Result EnableBackpackAnimationLayer(bool enable);
+    
+    // Check whether the animation is done
+    bool IsStreamingAnimFinished() const;
+    
+    void StopTracks(const u8 whichTracks);
+    
+    void StopTracksInUse() {
+      // In case we are aborting an animation, stop any tracks that were in use
+      // (For now, this just means motor-based tracks.) Note that we don't
+      // stop tracks we weren't using, in case we were, for example, playing
+      // a head animation while driving a path.
+      StopTracks(_tracksInUse);
+    }
+        
+    // pass the started/stopped animation name to webviz
+    void SendAnimationToWebViz( bool starting ) const;
+
+    // Copy the contents of the animation into the procedural animation
+    // while maintaining expected properties of the procedural anim
+    void CopyIntoProceduralAnimation(Animation* desiredAnim = nullptr);
+
+    static void InsertStreamableFaceIntoCompImg(Vision::ImageRGB565& streamableFace,
+                                                Vision::CompositeImage& image);
+
+    // Inspects streaming track's sprite sequence track to see whether procedural
+    // eyes are needed this tick
+    static bool ShouldRenderProceduralFace(const Animations::Track<SpriteSequenceKeyFrame>& spriteTrack,
+                                           const u8 tracksCurrentlyLocked,
+                                           TimeStamp_t relativeStreamTime_ms);
+    static bool ShouldRenderSpriteTrack(const Animations::Track<SpriteSequenceKeyFrame>& spriteTrack,
+                                        const u8 tracksCurrentlyLocked,
+                                        TimeStamp_t relativeStreamTime_ms,
+                                        const bool proceduralFaceRendered);
+
+    static void GetStreamableFace(const AnimContext* context, const ProceduralFace& procFace, Vision::ImageRGB565& outImage);
+    void BufferFaceToSend(Vision::ImageRGB565& image);
+
+    void UpdateCaptureFace(const Vision::ImageRGB565& faceImg565);
+    
+    // Sends msg to appropriate destination as long as the specified track is unlocked
+    bool SendIfTrackUnlocked(RobotInterface::EngineToRobot*& msg, AnimTrackFlag track);
+  
   }; // class AnimationStreamer
   
 } // namespace Cozmo

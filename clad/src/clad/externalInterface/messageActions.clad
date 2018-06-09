@@ -42,6 +42,10 @@ message CalibrateMotors {
     bool calibrateLift
 }
 
+// CliffAlignToWhite
+message CliffAlignToWhite {
+}
+
 // DriveOffChargerContacts
 //  Mostly useful for SDK usage where motors are locked while on the charger.
 //  This action drives forward slightly to get off the charger.
@@ -206,11 +210,6 @@ message FacePlant {
   bool usePreDockPose
 }
 
-// ReadToolCode
-message ReadToolCode {
-
-}
-
 // RealignWithObject
 // Realign with object when accidently moved by a small amount.
 message RealignWithObject {
@@ -309,12 +308,6 @@ message TrackToPet {
     float_32         timeout_sec, // Give up after not seeing a pet for this long (0 to never give up)
     uint_32          petID,       // Set to UnknownFaceID (-1) to use first of specified PetType
     Vision::PetType  petType      // Set to Unknown to use any pet type (ignored if ID set)
-}
-
-// TraverseObject
-message TraverseObject {
-  PathMotionProfile motionProf,
-  bool usePreDockPose
 }
 
 // TurnInPlace
@@ -484,6 +477,7 @@ message WaitForImages {
 union RobotActionUnion {
   AlignWithObject               alignWithObject,
   CalibrateMotors               calibrateMotors,
+  CliffAlignToWhite             cliffAlignToWhite,
   DriveOffChargerContacts       driveOffChargerContacts,
   DriveStraight                 driveStraight,
   FacePlant                     facePlant,
@@ -501,7 +495,6 @@ union RobotActionUnion {
   PlayAnimationGroup            playAnimationGroup,
   PlayAnimationTrigger          playAnimationTrigger,
   PopAWheelie                   popAWheelie,
-  ReadToolCode                  readToolCode,
   RealignWithObject             realignWithObject,
   RollObject                    rollObject,
   SayText                       sayText,
@@ -513,7 +506,6 @@ union RobotActionUnion {
   TrackToObject                 trackObject,
   TrackToLaserPoint             trackLaserPoint,
   TrackToPet                    trackPet,
-  TraverseObject                traverseObject,
   TurnInPlace                   turnInPlace,
   TurnTowardsFace               turnTowardsFace,
   TurnTowardsImagePoint         turnTowardsImagePoint,

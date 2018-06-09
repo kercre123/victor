@@ -70,8 +70,6 @@ public:
   bool IsCliffDetected() const { return _cliffDetectedFlags.AreAnyFlagsSet(); }
   bool IsCliffDetected(CliffSensor sensor) const { return _cliffDetectedFlags.IsBitFlagSet(sensor); }
   uint8_t GetCliffDetectedFlags() const { return _cliffDetectedFlags.GetFlags(); }
-
-  bool IsCliffDetectedStatusBitOn() const { return _cliffDetectedStatusBitOn; }
   
   // Adjusts cliff threshold if necessary
   void UpdateCliffDetectThresholds();
@@ -89,6 +87,13 @@ public:
   
   // Compute the estimated pose of the cliff obstacle for the given cliff event.
   bool ComputeCliffPose(const CliffEvent& cliffEvent, Pose3d& cliffPose) const;
+
+  // Enable/Disable stopping the robot when cliff sensor detects something 
+  // as reflective as the white border of the habitat.
+  void EnableStopOnWhite(bool stopOnWhite);
+
+  // Returns whether or not stop-on-white is enabled
+  bool IsStopOnWhiteEnabled() const { return _stopOnWhiteEnabled; }
   
 private:
   
@@ -100,9 +105,6 @@ private:
   
   bool _enableCliffSensor = true;
   Util::BitFlags8<CliffSensor> _cliffDetectedFlags;
-  
-  // True if the robot is reporting CLIFF_DETECTED in its status message
-  bool _cliffDetectedStatusBitOn = false;
   
   uint32_t _lastMsgTimestamp = 0;
   
@@ -127,6 +129,7 @@ private:
 
   uint32_t _nextCliffThresholdUpdateToRobot_ms = 0;
   
+  bool _stopOnWhiteEnabled = false;
 };
 
 

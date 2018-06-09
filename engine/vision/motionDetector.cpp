@@ -494,13 +494,19 @@ Result MotionDetector::Detect(Vision::ImageCache&     imageCache,
   if(imageCache.HasColor())
   {
     const Vision::ImageRGB& imageColor = imageCache.GetRGB(imageSize);
-    return DetectHelper(imageColor, imageCache.GetOrigNumRows(), imageCache.GetOrigNumCols(), scaleMultiplier,
+    return DetectHelper(imageColor,
+                        imageCache.GetNumRows(Vision::ImageCache::Size::Full),
+                        imageCache.GetNumCols(Vision::ImageCache::Size::Full),
+                        scaleMultiplier,
                         crntPoseData, prevPoseData, observedMotions, debugImageRGBs);
   }
   else
   {
     const Vision::Image& imageGray = imageCache.GetGray(imageSize);
-    return DetectHelper(imageGray, imageCache.GetOrigNumRows(), imageCache.GetOrigNumCols(), scaleMultiplier,
+    return DetectHelper(imageGray,
+                        imageCache.GetNumRows(Vision::ImageCache::Size::Full),
+                        imageCache.GetNumCols(Vision::ImageCache::Size::Full),
+                        scaleMultiplier,
                         crntPoseData, prevPoseData, observedMotions, debugImageRGBs);
   }
 }

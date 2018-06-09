@@ -136,45 +136,6 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
                                                        robot->UpdateFullRobotState(payload);
                                                      }));
 
-
-
-  // lambda for some simple message handling
-  GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::rampTraverseStarted,
-                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
-                                                       ANKI_CPU_PROFILE("RobotTag::rampTraverseStarted");
-                                                       LOG_INFO("RobotMessageHandler.ProcessMessage",
-                                                                "Robot %d reported it started traversing a ramp.",
-                                                                robot->GetID());
-                                                       robot->SetOnRamp(true);
-                                                     }));
-
-  GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::rampTraverseCompleted,
-                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
-                                                       ANKI_CPU_PROFILE("RobotTag::rampTraverseCompleted");
-                                                       LOG_INFO("RobotMessageHandler.ProcessMessage",
-                                                                "Robot %d reported it completed traversing a ramp.",
-                                                                robot->GetID());
-                                                       robot->SetOnRamp(false);
-                                                     }));
-
-  GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::bridgeTraverseStarted,
-                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
-                                                       ANKI_CPU_PROFILE("RobotTag::bridgeTraverseStarted");
-                                                       LOG_INFO("RobotMessageHandler.ProcessMessage",
-                                                                "Robot %d reported it started traversing a bridge.",
-                                                                robot->GetID());
-                                                       //SetOnBridge(true);
-                                                     }));
-
-  GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::bridgeTraverseCompleted,
-                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
-                                                       ANKI_CPU_PROFILE("RobotTag::bridgeTraverseCompleted");
-                                                       LOG_INFO("RobotMessageHandler.ProcessMessage",
-                                                                "Robot %d reported it completed traversing a bridge.",
-                                                                robot->GetID());
-                                                       //SetOnBridge(false);
-                                                     }));
-
   GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::chargerMountCompleted,
                                                          [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                            ANKI_CPU_PROFILE("RobotTag::chargerMountCompleted");
@@ -512,7 +473,7 @@ void RobotToEngineImplMessaging::HandleRobotStopped(const AnkiEvent<RobotInterfa
   RobotInterface::RobotStopped payload = message.GetData().Get_robotStopped();
   Util::sInfoF("RobotImplMessaging.HandleRobotStopped",
                {{DDATA, ""}},
-               "%d", payload.reason);
+               "%hhu", payload.reason);
 
   // This is a somewhat overloaded use of enableCliffSensor, but currently only cliffs
   // trigger this RobotStopped message so it's not too crazy.
@@ -527,7 +488,7 @@ void RobotToEngineImplMessaging::HandleRobotStopped(const AnkiEvent<RobotInterfa
   robot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::RobotStoppedAck()));
 
   // Forward on with EngineToGame event
-  robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotStopped()));
+  robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotStopped(payload.reason)));
 }
 
 void RobotToEngineImplMessaging::HandlePotentialCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

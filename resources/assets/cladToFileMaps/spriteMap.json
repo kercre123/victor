@@ -116,6 +116,42 @@
     "SpriteName": "face_chargerdocking_severerequest"
   },
   {
+    "CladEvent": "Face_LookAtDevice",
+    "SpriteName": "face_lookatdevice"
+  },
+  {
+    "CladEvent": "Face_Messaging_DeletedLong",
+    "SpriteName": "face_messaging_deleted_long"
+  },
+  {
+    "CladEvent": "Face_Messaging_DeletedShort",
+    "SpriteName": "face_messaging_deleted_short"
+  },
+  {
+    "CladEvent": "Face_Messaging_GetIn",
+    "SpriteName": "face_messaging_getin"
+  },
+  {
+    "CladEvent": "Face_Messaging_GetOut",
+    "SpriteName": "face_messaging_getout"
+  },
+  {
+    "CladEvent": "Face_Messaging_Loop",
+    "SpriteName": "face_messaging_loop"
+  },
+  {
+    "CladEvent": "Face_Messaging_Rewind",
+    "SpriteName": "face_messaging_rewind"
+  },
+  {
+    "CladEvent": "Face_Messaging_TTS",
+    "SpriteName": "face_messaging_tts"
+  },
+  {
+    "CladEvent": "Face_Messaging_TTS_GetOut",
+    "SpriteName": "face_messaging_tts_getout"
+  },
+  {
     "CladEvent": "Face_TimerCancel_GetIn_01",
     "SpriteName": "face_timercancel_getin_01"
   },

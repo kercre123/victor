@@ -43,7 +43,7 @@ namespace Util {
 }
   
 namespace Vision {
-  
+
   class FaceTracker::Impl : public Profiler
   {
   public:
@@ -100,7 +100,11 @@ namespace Vision {
 
   private:
     
+    // Creates new face detectors using current parameters
     Result Init();
+
+    // Destructs current face detectors
+    void Deinit();
 
     bool   DetectFaceParts(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
                            INT32 detectionIndex, Vision::TrackedFace& face);

@@ -374,6 +374,14 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::CalibrateM
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::CliffAlignToWhite& msg)
+{
+  return new CliffAlignToWhiteAction();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::DriveStraight& msg)
 {
   return new DriveStraightAction(msg.dist_mm, msg.speed_mmps, msg.shouldPlayAnimation);
@@ -489,29 +497,6 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::FacePlant&
     // We don't care about a specific marker just that we are docking with the correct object
     action->SetShouldVisuallyVerifyObjectOnly(true);
     return action;
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TraverseObject& msg)
-{
-  ObjectID selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
-
-  if(static_cast<bool>(msg.usePreDockPose)) {
-    DriveToAndTraverseObjectAction* action = new DriveToAndTraverseObjectAction(selectedObjectID);
-    if(msg.motionProf.isCustom)
-    {
-      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
-    }
-    return action;
-  } else {
-    TraverseObjectAction* traverseAction = new TraverseObjectAction(selectedObjectID);
-    if(msg.motionProf.isCustom)
-    {
-      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, traverseAction);
-    }
-    return traverseAction;
   }
 }
 
@@ -828,14 +813,6 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimat
   return newAction;
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::ReadToolCode& msg)
-{
-  return new ReadToolCodeAction();
-}
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SearchForNearbyObject& msg)
@@ -968,6 +945,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
 
       DEFINE_HANDLER(alignWithObject,          AlignWithObject,          0),
       DEFINE_HANDLER(calibrateMotors,          CalibrateMotors,          0),
+      DEFINE_HANDLER(cliffAlignToWhite,        CliffAlignToWhite,        0),
       DEFINE_HANDLER(driveOffChargerContacts,  DriveOffChargerContacts,  1),
       DEFINE_HANDLER(driveStraight,            DriveStraight,            0),
       DEFINE_HANDLER(facePlant,                FacePlant,                0),
@@ -985,7 +963,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(playAnimationGroup,       PlayAnimationGroup,       0),
       DEFINE_HANDLER(playAnimationTrigger,     PlayAnimationTrigger,     0),
       DEFINE_HANDLER(popAWheelie,              PopAWheelie,              1),
-      DEFINE_HANDLER(readToolCode,             ReadToolCode,             0),
       DEFINE_HANDLER(realignWithObject,        RealignWithObject,        1),
       DEFINE_HANDLER(rollObject,               RollObject,               1),
       DEFINE_HANDLER(sayText,                  SayText,                  0),
@@ -997,7 +974,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(trackObject,              TrackToObject,            0),
       DEFINE_HANDLER(trackLaserPoint,          TrackToLaserPoint,        0),
       DEFINE_HANDLER(trackPet,                 TrackToPet,               0),
-      DEFINE_HANDLER(traverseObject,           TraverseObject,           1),
       DEFINE_HANDLER(turnInPlace,              TurnInPlace,              0),
       DEFINE_HANDLER(turnTowardsFace,          TurnTowardsFace,          0),
       DEFINE_HANDLER(turnTowardsImagePoint,    TurnTowardsImagePoint,    0),
@@ -1406,8 +1382,6 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::RobotCompletedAct
   switch(msg.actionType)
   {
     case RobotActionType::ALIGN_WITH_OBJECT:
-    case RobotActionType::ASCEND_OR_DESCEND_RAMP:
-    case RobotActionType::CROSS_BRIDGE:
     case RobotActionType::MOUNT_CHARGER:
     case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
     case RobotActionType::PICKUP_OBJECT_HIGH:
