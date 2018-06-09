@@ -64,11 +64,11 @@ CozmoBot2 {
   colorizeStderrOutput TRUE
 }
 WebotsKeyboardController {
+  behaviorName "ModeSelector"
   intent "{\"intent\": \"intent_play_specific\", \"params\": {\"entity_behavior\": \"fist_bump\"}}"
+  emotionVal 0.1
   consoleVarName "DevDispatchAfterShake"
   consoleVarValue "1"
-  emotionName "Stimulated"
-  emotionVal 0.1
   colorizeStderrOutput TRUE
   translation -0.24686749 0.2921897 0.08
   rotation 0 0 1 6.0213859
