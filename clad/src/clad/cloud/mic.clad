@@ -2,7 +2,17 @@ namespace Anki {
 namespace Cozmo {
 namespace CloudMic {
 
+enum uint_8 StreamType {
+	Normal,
+	Blackjack,
+	KnowledgeGraph
+}
+
 structure Void {
+}
+
+structure Hotword {
+	StreamType mode
 }
 
 structure Filename {
@@ -25,7 +35,7 @@ structure IntentError {
 }
 
 union dupes_allowed Message {
-	Void hotword,
+	Hotword hotword,
 	AudioData audio,
 	Void stopSignal,
 	Filename debugFile,

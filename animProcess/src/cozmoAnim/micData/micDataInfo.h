@@ -15,6 +15,7 @@
 
 #include "micDataTypes.h"
 #include "audioUtil/audioDataTypes.h"
+#include "clad/cloud/mic.h"
 #include "util/bitFlags/bitFlags.h"
 
 #include <cstdint>
@@ -36,6 +37,7 @@ public:
   bool                          _doFFTProcess     = false;
   bool                          _repeating        = false;
   uint32_t                      _numMaxFiles      = kDefaultFilesToCapture;
+  CloudMic::StreamType          _type             = CloudMic::StreamType::Normal;
   std::string                   _writeLocationDir;
   std::string                   _writeNameBase;
 
