@@ -444,16 +444,31 @@ int main(int argc, const char* argv[])
   printf("serial_init(%s)\n", tty ? tty : FIXTURE_TTY);
   gSerialFd = serial_init( tty ? tty : FIXTURE_TTY, FIXTURE_BAUD);
 
-  serial_write(gSerialFd, (uint8_t*)"\x1b\x1b\n", 4);
-  serial_write(gSerialFd, (uint8_t*)"reset\n", 6);
+  //serial_write(gSerialFd, (uint8_t*)"\x1b\x1b\n", 4);
+  //serial_write(gSerialFd, (uint8_t*)"reset\n", 6);
 
   enable_kbhit(1);
 
   //process bootup
-  exit = fixture_serial(gSerialFd);
-  exit |= user_terminal();
+  //exit = fixture_serial(gSerialFd);
+  //exit |= user_terminal();
   printf("helper build " __DATE__ " " __TIME__ "\n");
   fflush(stdout);
+
+  //init display
+  const char center[] = "0 b booting...\n"; //set color and center text (if any)
+  const char* lines[] = {
+    "0 \n", //clear
+    "1 helper compile date:\n",
+    "2 " __DATE__ " " __TIME__ "\n",
+    "7 reset fixture       \n" };
+  helper_lcdshow_command_parse(center, strlen(center));
+  for(x=0; x<sizeof(lines)/sizeof(const char*); x++) {
+    helper_lcdset_command_parse( lines[x], strlen(lines[x]) );
+  }
+  
+  serial_write(gSerialFd, (uint8_t*)"\x1b\x1b\n", 4);
+  serial_write(gSerialFd, (uint8_t*)"reset\n", 6);
 
   while (!exit)
   {

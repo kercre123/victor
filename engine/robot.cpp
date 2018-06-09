@@ -870,6 +870,16 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // Set flag indicating that robot state messages have been received
   _lastMsgTimestamp = msg.timestamp;
   _newStateMsgAvailable = true;
+
+  if(_trackTouchSensorFilt)
+  {
+    // Keep track of the last 6000 (3 min) filtered touch sensor values
+    _touchSensorFiltDeque.push_back(msg.backpackTouchSensorFilt);
+    if(_touchSensorFiltDeque.size() > 6000)
+    {
+      _touchSensorFiltDeque.pop_front();
+    }
+  }
   
   // Update head angle
   SetHeadAngle(msg.headAngle);
@@ -1275,11 +1285,7 @@ Result Robot::Update()
   //////////// CameraService Update ////////////
   CameraService::getInstance()->Update();
 
-  const Result factoryRes = UpdateStartupChecks();
-  if(factoryRes != RESULT_OK)
-  {
-    return factoryRes;
-  }
+  UpdateStartupChecks();
   END_DONT_RUN_AFTER_PACKOUT
   
   if (!_gotStateMsgAfterTimeSync)
@@ -2803,6 +2809,7 @@ RobotState Robot::GetDefaultRobotState()
                          0.f, //float rwheel_speed_mmps,
                          0.f, //float headAngle
                          0.f, //float liftAngle,
+                         0.f, //float touchSensorFilt
                          AccelData(), //const Anki::Cozmo::AccelData &accel,
                          GyroData(), //const Anki::Cozmo::GyroData &gyro,
                          5.f, //float batteryVoltage,
@@ -3019,6 +3026,34 @@ Result Robot::UpdateStartupChecks()
   }
   
   return (state == State::FAILED ? RESULT_FAIL : RESULT_OK);
+}
+
+void Robot::GetTouchSensorFiltResults(f32& min, f32& max, f32& stddev) const
+{
+  if(_touchSensorFiltDeque.empty())
+  {
+    PRINT_NAMED_WARNING("Robot.GetTouchSensorFiltResults.DequeEmpty","");
+    min = 0;
+    max = 0;
+    stddev = 0;
+    return;
+  }
+  
+  // Get the min and max filtered touch sensor values
+  auto minmax = std::minmax_element(_touchSensorFiltDeque.begin(),
+                                    _touchSensorFiltDeque.end());
+  min = *minmax.first;
+  max = *minmax.second;
+
+  // Calculate standard deviation
+  f32 sum = std::accumulate(_touchSensorFiltDeque.begin(), _touchSensorFiltDeque.end(), 0.0);
+  f32 mean = sum / _touchSensorFiltDeque.size();
+
+  std::vector<f32> diff(_touchSensorFiltDeque.size());
+  std::transform(_touchSensorFiltDeque.begin(), _touchSensorFiltDeque.end(), diff.begin(),
+                 [mean](float x) { return x - mean; });
+  f32 sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
+  stddev = std::sqrt(sq_sum / _touchSensorFiltDeque.size());
 }
 
 

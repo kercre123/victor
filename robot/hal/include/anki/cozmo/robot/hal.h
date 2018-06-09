@@ -200,6 +200,18 @@ typedef enum
  */
 u16 GetButtonState(const ButtonID button_id);
 
+#if FACTORY_TEST
+// Returns the box-filtered touch sensor value
+f32 GetTouchSensorFilt();
+
+static const u16 MIN_VALID_RAW_TOUCH = 500;
+static const u16 MAX_VALID_RAW_TOUCH = 700;
+
+// Returns true if the raw touch sensor value has always been
+// within MIN/MAX_VALID_RAW_TOUCH
+bool IsTouchSensorValid();
+#endif
+ 
 /************************************************************************
  * \section Battery
  */

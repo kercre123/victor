@@ -77,6 +77,14 @@ static std::string kDataDirPath           = "/data/data/com.anki.victor";
 // If data dir is larger than this size, it is deleted
 static ssize_t     kMaxDataDirSize_bytes  = 200000000;
 
+// Threshold on the difference between max and min filtered touch sensor
+// values during playpen
+static f32 kMaxMinTouchSensorFiltDiff = 6.f;
+
+// Max allowed standard deviation of filtered touch sensor values
+// during playpen
+static f32 kTouchSensorFiltStdDevThresh = 1.5f;
+ 
 // ----------InitChecks----------
 // Whether or not to check firmware version
 static bool      kCheckFirmwareVersion = true;

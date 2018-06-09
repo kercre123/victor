@@ -219,6 +219,6 @@ static const Font gLargeFont = {
 	LARGE_FONT_CHAR_START,
 	LARGE_FONT_CHAR_END,
 	1, /* CenteredByDefault */
-	0,
+	1,
 	gLargeFontGlyphs
 };

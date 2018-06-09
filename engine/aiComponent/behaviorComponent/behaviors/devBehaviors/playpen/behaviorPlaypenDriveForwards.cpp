@@ -35,6 +35,17 @@ Result BehaviorPlaypenDriveForwards::OnBehaviorActivatedInternal()
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
+  // Disable tracking filtered touch sensor values
+  // Was enabled by BehaviorPlaypenDriftCheck
+  robot.EnableTrackTouchSensorFilt(false);
+
+  TouchSensorFilt touchSensorFilt;
+  robot.GetTouchSensorFiltResults(touchSensorFilt.min, touchSensorFilt.max, touchSensorFilt.stddev);
+  if(!GetLogger().Append("touchSensorOnCharger", touchSensorFilt))
+  {
+    PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::WRITE_TO_LOG_FAILED, RESULT_FAIL);
+  }
+  
   // Clear and pause cliff sensor component so it doesn't try to update the cliff thresholds
   robot.GetCliffSensorComponent().SetPause(true);
   CliffSensorComponent::CliffSensorDataArray thresholds = {{PlaypenConfig::kCliffSensorThreshold,
@@ -65,7 +76,12 @@ Result BehaviorPlaypenDriveForwards::OnBehaviorActivatedInternal()
   
   _waitingForCliffsState = WAITING_FOR_FRONT_CLIFFS;
   
-  DelegateIfInControl(action, [this](ActionResult result) {
+  DelegateIfInControl(action, [this, &robot](ActionResult result) {
+
+    // Enable tracking filtered touch sensor values
+    // Will be disabled by BehaviorPlaypenEndChecks
+    robot.EnableTrackTouchSensorFilt(true);
+      
     // Seeing the cliff will cause the drive straight action to be cancelled
     // Action should only complete with CANCELLED_WHILE_RUNNING, if it completes in any other manner then
     // fail

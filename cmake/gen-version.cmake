@@ -32,7 +32,7 @@ endif()
 
 # default to "dev" build flavor
 set(ANKI_BUILD_TYPE "d")
-if (NOT ${CMAKE_BUILD_TYPE} STREQUAL "Release")
+if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
     set(ANKI_BUILD_TYPE "")
 endif()
 
