@@ -28,5 +28,8 @@
   "pre_event_capture_time": 5.0,
 
   // Time to capture data after event
-  "post_event_capture_time": 5.0
+  "post_event_capture_time": 5.0,
+
+  // Whether to randomly tilt the head upon starting sequence
+  "enable_random_head_tilt": true
 }
