@@ -294,6 +294,13 @@ enum uint_8 BehaviorID {
   // victorBehaviorTree/weather
   WeatherResponses,
   WeatherTextToSpeech,
+
+  // messaging
+  MessagingRecordNoRecipient,
+  MessagingRecordUnknownRecipient,
+  MessagingRecordMailboxFull,
+  MessagingRecordTTS,
+  MessagingPlaybackTTS
 }
 
 }

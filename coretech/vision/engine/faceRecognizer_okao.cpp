@@ -421,9 +421,9 @@ namespace Vision {
           PRINT_NAMED_WARNING("FaceRecognizer.UpdateRecognitionData.ConfusedTwoNamedIDs",
                               "While tracking face %d with ID=%d (%s), recognized as ID=%d (%s). Not merging!",
                               -_detectionInfo.nID, faceID,
-                              Util::HidePersonallyIdentifiableInfo(faceIDenrollData->second.GetName().c_str()),
+                              faceIDenrollData->second.GetName().piiGuardedString(),
                               recognizedID,
-                              Util::HidePersonallyIdentifiableInfo(recIDenrollData->second.GetName().c_str()));
+                              recIDenrollData->second.GetName().piiGuardedString());
 
           RemoveTrackingID(_detectionInfo.nID);
           faceID = recognizedID; // So that we'll udpate the tracking ID to face ID info below
@@ -1410,7 +1410,7 @@ namespace Vision {
   {
     auto iter = _enrollmentData.find(matchedID);
     newDebugInfo.emplace_back(FaceRecognitionMatch{
-      .name = (iter == _enrollmentData.end() ? "" : iter->second.GetName()),
+      .name = (iter == _enrollmentData.end() ? std::string("") : iter->second.GetName().asString()),
       .matchedID = matchedID,
       .score  = score,
     });
@@ -1527,7 +1527,7 @@ namespace Vision {
           {
             auto iter = _enrollmentData.find(matchedID);
             newDebugInfo.emplace_back(FaceRecognitionMatch{
-              .name = (iter == _enrollmentData.end() ? "" : iter->second.GetName()),
+              .name = (iter == _enrollmentData.end() ? std::string("") : iter->second.GetName().asString()),
               .matchedID = matchedID,
               .score  = scores[iResult],
             });
@@ -1626,7 +1626,7 @@ namespace Vision {
                               "Match at index %d (AlbumEntry:%d ID:%d Score:%d) is named ('%s'). Using it and merging.",
                               matchingAlbumEntries[matchIndex], matchingID, matchingScore,
                               nextIndex, matchingAlbumEntries[nextIndex], nextMatchingID, scores[nextIndex],
-                              Util::HidePersonallyIdentifiableInfo(nextMatchIter->second.GetName().c_str()));
+                              nextMatchIter->second.GetName().piiGuardedString());
 
                 // Log IDs in s_val and scores in DDATA:
                 Util::sInfoF("robot.vision.face_recognition.using_lower_ranked_match",
@@ -2196,7 +2196,7 @@ namespace Vision {
 
         PRINT_CH_INFO("FaceRecognizer", "RenameFace.Success", "Renamed ID=%d from '%s' to '%s'",
                       faceID, Util::HidePersonallyIdentifiableInfo(oldName.c_str()),
-                      Util::HidePersonallyIdentifiableInfo(enrollIter->second.GetName().c_str()));
+                      enrollIter->second.GetName().piiGuardedString());
 
         // Construct and then swap to make sure we miss fields that get added to LoadedKnownFace later
         Vision::RobotRenamedEnrolledFace temp(enrollIter->second.GetFaceID(),
@@ -2210,7 +2210,7 @@ namespace Vision {
         PRINT_NAMED_WARNING("FaceRecognizer.RenameFace.OldNameMismatch",
                             "OldName '%s' does not match stored name '%s' for ID=%d",
                             Util::HidePersonallyIdentifiableInfo(oldName.c_str()),
-                            Util::HidePersonallyIdentifiableInfo(enrollIter->second.GetName().c_str()),
+                            enrollIter->second.GetName().piiGuardedString(),
                             faceID);
 
         return RESULT_FAIL;
@@ -2298,7 +2298,7 @@ namespace Vision {
 
             PRINT_CH_INFO(LOG_CHANNEL, "SetSerializedData.AddedEnrollmentDataEntry",
                           "User '%s' with ID=%d. Seconds since: Enrolled=%lld Updated=%lld Seen=%lld",
-                          Util::HidePersonallyIdentifiableInfo(faceName.c_str()),
+                          faceName.piiGuardedString(),
                           faceID, secSinceEnrolled, secSinceUpdated, secSinceSeen);
           }
         }
@@ -2692,7 +2692,7 @@ namespace Vision {
                                                           entry.GetName()) );
 
                 PRINT_CH_INFO(LOG_CHANNEL, "LoadAlbum.LoadedEnrollmentData", "ID=%d, '%s'",
-                              faceID, Util::HidePersonallyIdentifiableInfo(entry.GetName().c_str()));
+                              faceID, entry.GetName().piiGuardedString());
 
                 loadedEnrollmentData[faceID] = std::move(entry);
               }

@@ -330,6 +330,38 @@ void TestBehaviorFramework::ApplyAdditionalRequirementsBeforeDelegation(IBehavio
       uic.SetUserIntentPending(std::move(intent), UserIntentSource::Unknown);
     }
   }
+
+  // message record
+  {
+    ICozmoBehavior* delCozPtr = dynamic_cast<ICozmoBehavior*>(delegate);
+    const bool delegatingToBehavior = (delCozPtr != nullptr)
+                                   && (delCozPtr->GetClass() == BEHAVIOR_CLASS(LeaveAMessage));
+
+    if( delegatingToBehavior ) {
+      auto& uic =
+      GetBehaviorExternalInterface().GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
+
+      UserIntent_RecordMessage intentData{"Bentley"};
+      UserIntent intent = UserIntent::Createmessage_record(std::move(intentData));
+      uic.SetUserIntentPending(std::move(intent), UserIntentSource::Unknown);
+    }
+  }
+
+  // message playback
+  {
+    ICozmoBehavior* delCozPtr = dynamic_cast<ICozmoBehavior*>(delegate);
+    const bool delegatingToBehavior = (delCozPtr != nullptr)
+                                   && (delCozPtr->GetClass() == BEHAVIOR_CLASS(PlaybackMessage));
+
+    if( delegatingToBehavior ) {
+      auto& uic =
+      GetBehaviorExternalInterface().GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
+
+      UserIntent_PlaybackMessage intentData{"Bentley"};
+      UserIntent intent = UserIntent::Createmessage_playback(std::move(intentData));
+      uic.SetUserIntentPending(std::move(intent), UserIntentSource::Unknown);
+    }
+  }
 }
 
 

@@ -166,11 +166,9 @@ TEST(DelegationTree, CheckActiveFeatures)
 
   // Add any active feature definitions here which exist but aren't yet used in the main behavior tree
   // (e.g. because they are still under development). This must be removed once they are used
-  std::set< ActiveFeature > unusedActiveFeatures = {{
-    ActiveFeature::PlayingMessage,
-    ActiveFeature::RecordingMessage,
+  std::set< ActiveFeature > unusedActiveFeatures = {
     ActiveFeature::Onboarding, // exists but in a different stack. todo: tests for onboarding.
-  }};
+  };
 
   ////////////////////////////////////////////////////////////////////////////////
   

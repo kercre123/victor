@@ -52,6 +52,7 @@ enum uint_8 SpriteName
   Face_Bored_Event_04,
   Face_ChargerDocking_SevereRequest,
 
+  // messaging sprite sequences
   Face_LookAtDevice,
   Face_Messaging_DeletedLong,
   Face_Messaging_DeletedShort,
@@ -129,7 +130,8 @@ enum_concept bool IsSpriteSequence[SpriteName] {
   Face_Bored_Event_02 = 1,
   Face_Bored_Event_04 = 1,
   Face_ChargerDocking_SevereRequest = 1,
-  
+
+  // messaging sprite sequences
   Face_LookAtDevice = 1,
   Face_Messaging_DeletedLong = 1,
   Face_Messaging_DeletedShort = 1,

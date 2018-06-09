@@ -13,6 +13,8 @@
     "KeepawayVoiceCommand",
     "BlackJackVoiceCommand",
     "ComeHereVoiceCommand",
+    "LeaveAMessage",
+    "PlaybackMessage",
     "MeetVictor"
   ]
 }

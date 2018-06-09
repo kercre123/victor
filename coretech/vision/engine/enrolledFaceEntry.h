@@ -19,6 +19,8 @@
 
 #include "clad/types/enrolledFaceStorage.h"
 
+#include "util/global/globalDefinitions.h"
+
 #include <chrono>
 #include <string>
 #include <vector>
@@ -33,6 +35,39 @@ namespace Json {
 
 namespace Anki {
 namespace Vision {
+
+// Literally a data type that represents the name of a user (which is generally mapped with a face)
+// Giving it a concrete data type to abstract away the comparison of phonetically similar names
+// * essentially an std::string wrapper that handles comparison for us *
+class UserName
+{
+public:
+  UserName( const std::string& name );
+  UserName() { } // empty string
+
+  // allowing default copy/move constructor/assignment functions
+
+  UserName& operator=( const std::string& name );
+
+  bool operator==( const UserName& rhs ) const;
+  bool operator==( const std::string& rhs ) const;
+  bool operator==( const char* rhs ) const;
+
+  // allow implicit cast to std::string
+  operator std::string() const { return _name; }
+
+  // simulate a minimal set of std::string functions since that's how it's expected to be used
+  bool                empty() const { return _name.empty(); }
+  const char*         c_str() const { return _name.c_str(); }
+  const std::string&  asString() const { return _name; }
+
+  // use this for any debugging or clad messages where we want to obfuscate the names of the users
+  const char*         piiGuardedString() const { return Util::HidePersonallyIdentifiableInfo( _name.c_str() ); }
+
+
+private:
+  std::string _name;
+};
 
 class EnrolledFaceEntry
 {
@@ -74,7 +109,7 @@ public:
   TrackingID_t   GetTrackingID() const { return _trackID; }
   TrackingID_t   GetPreviousTrackingID() const { return _prevTrackID; }
   
-  const std::string& GetName() const { return _name; }
+  const UserName& GetName() const { return _name; }
   
   RecognitionScore  GetScore() const { return _score; }
   
@@ -162,7 +197,7 @@ protected:
   TrackingID_t        _trackID     = UnknownFaceID;  // The last associated tracker ID
   TrackingID_t        _prevTrackID = UnknownFaceID;  // The previous track ID in case it changed
   
-  std::string         _name;
+  UserName            _name;
   RecognitionScore    _score = 1000;  // [0,1000]
   
   AlbumEntryID_t      _sessionOnlyAlbumEntry;

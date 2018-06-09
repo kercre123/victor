@@ -17,6 +17,7 @@
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 #include "util/global/globalDefinitions.h"
+#include "util/string/stringUtils.h"
 
 #include <json/json.h>
 
@@ -38,6 +39,37 @@ inline static Json::LargestInt TimeToInt64(EnrolledFaceEntry::Time time)
   using namespace std::chrono;
   auto jsonTime = Util::numeric_cast<Json::LargestInt>(duration_cast<seconds>(time.time_since_epoch()).count());
   return jsonTime;
+}
+
+UserName::UserName(const std::string& name) :
+  _name( Util::StringToLower(name) )
+{
+
+}
+
+UserName& UserName::operator=( const std::string& name )
+{
+  _name = Util::StringToLower(name);
+  return *this;
+}
+
+bool UserName::operator==( const UserName& rhs ) const
+{
+  return ( _name == rhs._name );
+}
+
+bool UserName::operator==( const std::string& rhs ) const
+{
+  // use a temp UserName to ensure proper formatting of the _name string
+  const UserName rhsUserName( rhs );
+  return ( *this == rhsUserName );
+}
+
+bool UserName::operator==( const char* rhs ) const
+{
+  // use a temp UserName to ensure proper formatting of the _name string
+  const UserName rhsUserName( rhs );
+  return ( *this == rhsUserName );
 }
   
 EnrolledFaceEntry::EnrolledFaceEntry(FaceID_t withID, Time enrollmentTime)
@@ -169,7 +201,7 @@ void EnrolledFaceEntry::FillJson(Json::Value& entry) const
   using namespace std::chrono;
   
   // NOTE: Save times as "number of ticks since epoch"
-  entry[JsonKey::name]               = _name;
+  entry[JsonKey::name]               = _name.asString();
   entry[JsonKey::enrollmentTime]     = TimeToInt64(_enrollmentTime);
   entry[JsonKey::lastDataUpdateTime] = TimeToInt64(_lastDataUpdateTime);
   
@@ -205,7 +237,7 @@ EnrolledFaceStorage EnrolledFaceEntry::ConvertToEnrolledFaceStorage() const
   message.enrollmentTimeCount     = duration_cast<seconds>(_enrollmentTime.time_since_epoch()).count();
   message.lastDataUpdateTimeCount = duration_cast<seconds>(_lastDataUpdateTime.time_since_epoch()).count();
   message.faceID                  = _faceID;
-  message.name                    = _name;
+  message.name                    = _name.asString();
   
   message.albumEntries.reserve(_albumEntrySeenTimes.size());
   message.albumEntryUpdateTimes.reserve(_albumEntrySeenTimes.size());

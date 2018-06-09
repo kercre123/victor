@@ -13,8 +13,14 @@
 #ifndef __Engine_Components_VoiceMessageSystem_H_
 #define __Engine_Components_VoiceMessageSystem_H_
 
+#include "engine/components/mics/voiceMessageTypes.h"
+#include "coretech/vision/engine/faceIdTypes.h"
 #include "util/logging/logging.h"
+#include "util/signals/signalHolder.h"
+
+#include <functional>
 #include <string>
+#include <tuple>
 
 
 namespace Json {
@@ -27,7 +33,7 @@ namespace Cozmo {
 class Robot;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class VoiceMessageSystem
+class VoiceMessageSystem : public Util::SignalHolder
 {
 public:
 
@@ -41,22 +47,34 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Message Access API
 
-  using MessageID = uint32_t;
-  static constexpr MessageID kInvalidMessageID = 0;
+  enum class SortType
+  {
+    None,
+    OldestToNewest,
+    NewestToOldest,
+  };
 
-  bool CanRecordNewMessage() const;
-  void DeleteMessage( MessageID id );
+  // are there any messages for the specified user?
+  bool HasUnreadMessages( const std::string& name ) const;
+
+  // return a list of all of the messages for the specified user
+  VoiceMessageList GetUnreadMessages( const std::string& name, SortType sortType = SortType::None ) const;
+  VoiceMessageUserList GetUnreadMessages( SortType sortType = SortType::None ) const;
+
+  // removes the specified message from disk if it exists
+  void DeleteMessage( VoiceMessageID id );
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Playback/Recording API
+  // Recording/Playback
 
-  uint32_t GetRecordingMessageDurationMS() const;
-  MessageID StartRecordingMessage( const std::string& name = "" );
+  using OnCompleteCallback = std::function<void()>;
 
-  bool HasUnreadMessages() const;
+  // attempts to start a recording for the specified user
+  // returns Success and begins recording, or returns the error code on failure
+  RecordMessageResult StartRecordingMessage( const std::string& name, uint32_t maxDuration_ms = 0, OnCompleteCallback = {} );
 
-  void PlaybackRecordedMessage( MessageID messageId );
-  void PlaybackFirstUnreadMessage();
+  // playback the specified voice message; returns the either Success or the error code
+  EVoiceMessageError PlaybackRecordedMessage( VoiceMessageID messageId, OnCompleteCallback = {} );
 
 
 private:
@@ -67,7 +85,7 @@ private:
   using MessageIndex = size_t;
   using FileHandle = std::string;
 
-  static constexpr MessageIndex kNumMessageSlots    = 4;
+  static constexpr MessageIndex kNumMessageSlots    = 10;
   static constexpr MessageIndex kInvalidSlot        = kNumMessageSlots;
 
   enum class EMessageStatus : uint8_t
@@ -83,29 +101,45 @@ private:
     MessageRecord();
 
     bool HasMessage() const { return ( status != EMessageStatus::Invalid ); }
+    bool operator==( const MessageRecord& other ) const { return ( id == other.id ); }
 
-    MessageID                   id;
+    VoiceMessageID              id;
     EMessageStatus              status;
     std::string                 recipientName;
     FileHandle                  fileHandle;
-    int64_t                     date;
+  };
+
+  // store info for any currently playing message
+  struct ActiveMessage
+  {
+    const MessageRecord*        messageRecord = nullptr;
+    OnCompleteCallback          callback;
   };
 
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Internal functions
 
+  uint32_t GetDefaultRecordingMessageDurationMS() const;
+
   MessageIndex GetFreeMessageIndex() const;
-  bool CreateNewMessageInternal( MessageIndex index, const std::string& recipient );
+  void CreateNewMessageInternal( MessageIndex index, const std::string& recipient );
   void DeleteMessageInternal( MessageRecord& message );
 
   inline MessageRecord& GetMessageRecordAtIndex( MessageIndex index );
   inline const MessageRecord& GetMessageRecordAtIndex( MessageIndex index ) const;
 
-  MessageIndex GetMessageIndex( MessageID id ) const;
+  MessageIndex GetMessageIndex( VoiceMessageID id ) const;
 
   std::string GetDefaultFilename( MessageIndex index ) const;
   FileHandle GetDefaultFileHandle( MessageIndex index ) const;
+
+  void OnRecordingComplete( const std::string& path );
+  void OnPlaybackComplete( const std::string& path );
+
+  // Internal helpers
+
+  bool IsSameRecipient( const std::string& lhs, const std::string& rhs ) const;
   
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -132,8 +166,10 @@ private:
 
   std::string               _saveFolder;
   MessageRecord             _messages[kNumMessageSlots];
+  ActiveMessage             _currentRecording;
+  ActiveMessage             _currentPlayback;
 
-  static MessageID          s_uniqueMessageID;
+  static VoiceMessageID     s_uniqueMessageID;
 };
 
 

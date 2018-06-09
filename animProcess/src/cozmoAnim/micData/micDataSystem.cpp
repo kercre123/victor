@@ -527,6 +527,20 @@ void MicDataSystem::AudioSaveCallback(const std::string& dest)
   {
     SendUdpMessage(CloudMic::Message::CreatedebugFile(CloudMic::Filename{dest}));
   }
+
+  // let the world know our recording is now complete
+  {
+    // we have a buffer length of 255 and our path needs to fit into this buffer
+    // shouldn't be a problem, but if we ever hit this we'll need to find another solution
+    DEV_ASSERT( dest.length() <= 255, "MicDataSystem::AudioSaveCallback path is too long for MicRecordingComplete message" );
+
+    RobotInterface::MicRecordingComplete event;
+
+    memcpy( event.path, dest.c_str(), dest.length() );
+    event.path_length = dest.length();
+
+    AnimProcessMessages::SendAnimToEngine( std::move( event ) );
+  }
 }
 
 BeatInfo MicDataSystem::GetLatestBeatInfo()

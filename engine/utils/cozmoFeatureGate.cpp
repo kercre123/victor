@@ -38,7 +38,8 @@ static const char* kFeatureEnumString =
   "Laser,"
   "Singing,"
   "LocalNotifications,"
-  "Exploring";
+  "Exploring,"
+  "Messaging";
 
 CONSOLE_VAR_ENUM( uint8_t,  kFeatureToEdit,   kConsoleFeatureGroup,  0, kFeatureEnumString );
 

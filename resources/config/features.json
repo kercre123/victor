@@ -46,6 +46,10 @@
   {
     "feature": "Exploring",
     "enabled": true
+  },
+  {
+    "feature": "Messaging",
+    "enabled": false
   }
 ]
 

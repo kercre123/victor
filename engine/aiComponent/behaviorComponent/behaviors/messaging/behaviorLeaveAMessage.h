@@ -14,10 +14,13 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorLeaveAMessage_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/components/mics/voiceMessageTypes.h"
 
 
 namespace Anki {
 namespace Cozmo {
+
+class BehaviorTextToSpeechLoop;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class BehaviorLeaveAMessage : public ICozmoBehavior
@@ -52,6 +55,21 @@ protected:
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // State Transitions
+
+  void TransitionToRecordingMessage();
+  void TransitionToFailureResponse();
+  void TransitionToInvalidRecipient();
+  void TransitionToMailboxFull();
+
+  void OnMessagedRecordingComplete();
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Helpers
+
+  bool DoesRequireKnownUser() const;
+  void PlayTextToSpeech( const std::string& ttsString, BehaviorSimpleCallback callback = {} );
 
 private:
 
@@ -61,6 +79,15 @@ private:
   struct InstanceConfig
   {
     InstanceConfig();
+
+    float         recordDuration;
+    bool          requireKnownUser;
+
+    std::string   ttsErrorNoRecipient;
+    std::string   ttsErrorUnknownRecipient;
+    std::string   ttsErrorMailboxFull;
+
+    std::shared_ptr<BehaviorTextToSpeechLoop> ttsBehavior;
 
   } _iVars;
 
@@ -72,9 +99,8 @@ private:
   {
     DynamicVariables();
 
-    // note: temp
-    float         startedRecordingTime;
-    std::string   messageRecipient;
+    std::string          messageRecipient;
+    VoiceMessageID       messageId;
 
   } _dVars;
 

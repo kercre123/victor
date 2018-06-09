@@ -51,7 +51,26 @@ namespace Anki {
 namespace Util {
 
   // Simply returns given string unless ANKI_PRIVACY_GUARD is enabled, in which case "<PII>" is returned.
-  const char * HidePersonallyIdentifiableInfo(const char* str);
+  inline const char * HidePersonallyIdentifiableInfo(const char* str);
+
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// inlined definitions ...
+
+const char * HidePersonallyIdentifiableInfo(const char* str)
+{
+  #if ANKI_PRIVACY_GUARD
+  {
+    static const char * const kPrivacyString = "<PII>";
+    return kPrivacyString;
+  }
+  #else
+  {
+    return str;
+  }
+  #endif // ANKI_PRIVACY_GUARD
+}
 
 }
 }

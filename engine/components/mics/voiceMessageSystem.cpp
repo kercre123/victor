@@ -13,11 +13,16 @@
 // #include "engine/components/mics/voiceMessageSystem.h"
 #include "voiceMessageSystem.h"
 #include "engine/robot.h"
+#include "engine/components/visionComponent.h"
+#include "engine/cozmoContext.h"
+#include "engine/robotInterface/messageHandler.h"
+#include "engine/robotManager.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
+#include "util/string/stringUtils.h"
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 
@@ -25,7 +30,8 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "json/json.h"
 
-#include <chrono>
+#include <algorithm>
+#include <unordered_set>
 
 
 #define DEBUG_VOICESYSTEM 0
@@ -38,47 +44,50 @@ namespace Cozmo {
 #if REMOTE_CONSOLE_ENABLED
   namespace {
     VoiceMessageSystem*             sVMSystem      = nullptr;
-    VoiceMessageSystem::MessageID   sVMMessageID   = VoiceMessageSystem::kInvalidMessageID;
   }
 
-  void RecordMessage( ConsoleFunctionContextRef context )
+  void RecordMessageFor( ConsoleFunctionContextRef context )
   {
     if ( nullptr != sVMSystem )
     {
-      const char* name = ConsoleArg_GetOptional_String( context, "name", "" );
-      sVMMessageID = sVMSystem->StartRecordingMessage( name );
+      const char* name = ConsoleArg_GetOptional_String( context, "name", nullptr );
+      if ( nullptr != name )
+      {
+        sVMSystem->StartRecordingMessage( name );
+      }
     }
   }
-  CONSOLE_FUNC( RecordMessage, "VoiceMessage", optional const char* name );
+  CONSOLE_FUNC( RecordMessageFor, "VoiceMessage", const char* name );
 
-  void PlaybackMessage( ConsoleFunctionContextRef context )
+  void PlaybackNextMessageFor( ConsoleFunctionContextRef context )
   {
-    const VoiceMessageSystem::MessageID id = ConsoleArg_GetOptional_UInt32( context, "messageId", sVMMessageID );
-    if ( ( nullptr != sVMSystem ) && ( id != VoiceMessageSystem::kInvalidMessageID ) )
+    const char* name = ConsoleArg_GetOptional_String( context, "name", nullptr );
+    if ( nullptr != name )
     {
-      sVMSystem->PlaybackRecordedMessage( id );
+      VoiceMessageList messages = sVMSystem->GetUnreadMessages( name, VoiceMessageSystem::SortType::OldestToNewest );
+      if ( !messages.empty() )
+      {
+        sVMSystem->PlaybackRecordedMessage( messages.front() );
+        sVMSystem->DeleteMessage( messages.front() );
+      }
     }
   }
-  CONSOLE_FUNC( PlaybackMessage, "VoiceMessage", optional uint32 messageId );
+  CONSOLE_FUNC( PlaybackNextMessageFor, "VoiceMessage", const char* name );
 
-  void PlayNextMessage( ConsoleFunctionContextRef context )
+  void DeleteMessagesFor( ConsoleFunctionContextRef context )
   {
-    if ( nullptr != sVMSystem )
+    const char* name = ConsoleArg_GetOptional_String( context, "name", nullptr );
+    if ( nullptr != name )
     {
-      sVMSystem->PlaybackFirstUnreadMessage();
+      VoiceMessageList messages = sVMSystem->GetUnreadMessages( name );
+      for ( const auto& message : messages )
+      {
+        sVMSystem->DeleteMessage( message );
+      }
     }
   }
-  CONSOLE_FUNC( PlayNextMessage, "VoiceMessage" );
+  CONSOLE_FUNC( DeleteMessagesFor, "VoiceMessage", const char* name );
 
-  void DeleteMessage( ConsoleFunctionContextRef context )
-  {
-    const VoiceMessageSystem::MessageID id = ConsoleArg_GetOptional_UInt32( context, "messageId", sVMMessageID );
-    if ( ( nullptr != sVMSystem ) && ( id != VoiceMessageSystem::kInvalidMessageID ) )
-    {
-      sVMSystem->DeleteMessage( id );
-    }
-  }
-  CONSOLE_FUNC( DeleteMessage, "VoiceMessage", optional uint32 messageId );
 #endif // REMOTE_CONSOLE_ENABLED
 
 
@@ -91,13 +100,12 @@ namespace {
   const float         kMessageRecordDuration                            = 10.0f;
 }
 
-VoiceMessageSystem::MessageID VoiceMessageSystem::s_uniqueMessageID{ kInvalidMessageID };
+VoiceMessageID VoiceMessageSystem::s_uniqueMessageID{ kInvalidVoiceMessageId };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 VoiceMessageSystem::MessageRecord::MessageRecord() :
-  id( kInvalidMessageID ),
-  status( EMessageStatus::Invalid ),
-  date( 0 )
+  id( kInvalidVoiceMessageId ),
+  status( EMessageStatus::Invalid )
 {
 
 }
@@ -137,7 +145,7 @@ void VoiceMessageSystem::Initialize( Robot* robot )
   if ( FileUtils::DirectoryDoesNotExist( _saveFolder ) )
   {
     FileUtils::CreateDirectory( _saveFolder, false, true );
-    PRINT_CH_DEBUG( "MicData", "VoiceMessageSystem", "Creating message directory: %s", _saveFolder.c_str() );
+    PRINT_CH_DEBUG( "VoiceMessage", "VoiceMessageSystem", "Creating message directory: %s", _saveFolder.c_str() );
   }
 
   LoadMessageSystem();
@@ -147,6 +155,23 @@ void VoiceMessageSystem::Initialize( Robot* robot )
   if ( VerifyAndSyncMessageRecords() )
   {
     Debug_PrintMessageRecords();
+  }
+
+  {
+    using namespace RobotInterface;
+
+    MessageHandler* messageHandler = _robot->GetRobotMessageHandler();
+    AddSignalHandle( messageHandler->Subscribe( RobotToEngineTag::audioPlaybackEnd, [this]( const AnkiEvent<RobotToEngine>& event )
+    {
+      const AudioPlaybackEnd& audioEvent = event.GetData().Get_audioPlaybackEnd();
+      OnPlaybackComplete( audioEvent.path );
+    } ) );
+
+    AddSignalHandle( messageHandler->Subscribe( RobotToEngineTag::micRecordingComplete, [this]( const AnkiEvent<RobotToEngine>& event )
+    {
+      const MicRecordingComplete& audioEvent = event.GetData().Get_micRecordingComplete();
+      OnRecordingComplete( audioEvent.path );
+    } ) );
   }
 }
 
@@ -215,7 +240,7 @@ void VoiceMessageSystem::LoadMessageSystem()
   }
   else
   {
-    PRINT_CH_DEBUG( "MicData", "VoiceMessageSystem", "Failed to load voice message metadata file: %s", filename.c_str() );
+    PRINT_CH_DEBUG( "VoiceMessage", "VoiceMessageSystem", "Failed to load voice message metadata file: %s", filename.c_str() );
   }
 }
 
@@ -224,7 +249,6 @@ void VoiceMessageSystem::WriteMessageRecordToJson( const MessageRecord& message,
 {
   value["handle"]     = message.fileHandle;
   value["name"]       = message.recipientName;
-  value["date"]       = message.date;
   value["id"]         = message.id;
   value["status"]     = static_cast<Json::UInt>(message.status);
 }
@@ -234,7 +258,6 @@ void VoiceMessageSystem::ReadMessageRecordFromJson( const Json::Value& value, Me
 {
   message.fileHandle      = value["handle"].asString();
   message.recipientName   = value["name"].asString();
-  message.date            = value["date"].asInt64();
   message.id              = value["id"].asUInt();
   message.status          = static_cast<EMessageStatus>(value["status"].asUInt());
 }
@@ -253,7 +276,7 @@ bool VoiceMessageSystem::VerifyAndSyncMessageRecords()
     // if we have a valid file handle, we must have a valid file on disk
     messageIsValid &= ( message.fileHandle.empty() || Util::FileUtils::FileExists( message.fileHandle ) );
     // I can't see how this is possible, but doesn't hurt to check
-    messageIsValid &= ( !message.HasMessage() || ( message.id != kInvalidMessageID ) );
+    messageIsValid &= ( !message.HasMessage() || ( message.id != kInvalidVoiceMessageId ) );
 
     if ( !messageIsValid )
     {
@@ -277,7 +300,7 @@ bool VoiceMessageSystem::VerifyAndSyncMessageRecords()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-uint32_t VoiceMessageSystem::GetRecordingMessageDurationMS() const
+uint32_t VoiceMessageSystem::GetDefaultRecordingMessageDurationMS() const
 {
   return static_cast<uint32_t>(kMessageRecordDuration * 1000.0f);
 }
@@ -298,7 +321,7 @@ VoiceMessageSystem::FileHandle VoiceMessageSystem::GetDefaultFileHandle( Message
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-VoiceMessageSystem::MessageIndex VoiceMessageSystem::GetMessageIndex( MessageID id ) const
+VoiceMessageSystem::MessageIndex VoiceMessageSystem::GetMessageIndex( VoiceMessageID id ) const
 {
   MessageIndex index = kInvalidSlot;
 
@@ -332,44 +355,33 @@ VoiceMessageSystem::MessageIndex VoiceMessageSystem::GetFreeMessageIndex() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool VoiceMessageSystem::CanRecordNewMessage() const
-{
-  const MessageIndex index = GetFreeMessageIndex();
-  return ( index != kInvalidSlot );
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool VoiceMessageSystem::CreateNewMessageInternal( MessageIndex index, const std::string& recipient )
+void VoiceMessageSystem::CreateNewMessageInternal( MessageIndex index, const std::string& recipient )
 {
   // this is where we're going to save our recording
   MessageRecord& message = GetMessageRecordAtIndex( index );
 
-  // note: move this deletion outside of creation and assert if we're overwriting a valid message.
-  //       force the caller to explicitely delete the message prior to creating a new message.
-  DeleteMessageInternal( message );
-
-  // wrap the id around if we've managed to get that far :)
-  if ( s_uniqueMessageID == std::numeric_limits<MessageID>::max() )
+  if ( message.HasMessage() )
   {
-    s_uniqueMessageID = kInvalidMessageID;
+    PRINT_NAMED_WARNING( "VoiceMessageSystem", "New voice message will overwrite existing unread message" );
+    DeleteMessageInternal( message );
   }
 
-  // note: system time doesn't persist between boots and may only be set when there's an internet connection.
-  //       since we only use date to detemine creation order, simply store an incremented counter.
-  //       actually, s_uniqueMessageID might already double as this
+  // wrap the id around if we've managed to get that far :)
+  if ( s_uniqueMessageID == std::numeric_limits<VoiceMessageID>::max() )
+  {
+    s_uniqueMessageID = kInvalidVoiceMessageId;
+  }
+
   {
     message.fileHandle      = GetDefaultFileHandle( index );
-    message.recipientName   = recipient;
-    message.date            = std::chrono::system_clock::now().time_since_epoch().count();
+    message.recipientName   = Util::StringToLower( recipient ); // note: change this when we have the UserName class pulled out
     message.id              = ++s_uniqueMessageID;
     message.status          = EMessageStatus::Unread;
   }
-
-  return true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void VoiceMessageSystem::DeleteMessage( MessageID id )
+void VoiceMessageSystem::DeleteMessage( VoiceMessageID id )
 {
   const MessageIndex index = GetMessageIndex( id );
   if ( kInvalidSlot != index )
@@ -384,7 +396,7 @@ void VoiceMessageSystem::DeleteMessage( MessageID id )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void VoiceMessageSystem::DeleteMessageInternal( MessageRecord& message )
 {
-  PRINT_CH_DEBUG( "MicData", "VoiceMessageSystem", "[Slot %d] Deleting message with id [%u]",
+  PRINT_CH_DEBUG( "VoiceMessage", "VoiceMessageSystem", "[Slot %d] Deleting message with id [%u]",
                   (int)GetMessageIndex( message.id ), message.id );
 
   if ( Util::FileUtils::FileExists( message.fileHandle ) )
@@ -396,97 +408,228 @@ void VoiceMessageSystem::DeleteMessageInternal( MessageRecord& message )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-VoiceMessageSystem::MessageID VoiceMessageSystem::StartRecordingMessage( const std::string& name )
+RecordMessageResult VoiceMessageSystem::StartRecordingMessage( const std::string& name,
+                                                               uint32_t duration_ms,
+                                                               OnCompleteCallback callback )
 {
   using namespace RobotInterface;
 
-  MessageID newMessageId = kInvalidMessageID;
+  RecordMessageResult result;
+  result.id = kInvalidVoiceMessageId;
+  result.error = EVoiceMessageError::MailboxFull;
 
   const MessageIndex index = GetFreeMessageIndex();
   if ( kInvalidSlot != index )
   {
-    // note: should probably do this on a callback
-    if ( CreateNewMessageInternal( index, name ) )
+    if ( nullptr == _currentRecording.messageRecord )
     {
+      CreateNewMessageInternal( index, name );
       const MessageRecord& messageRecord = GetMessageRecordAtIndex( index );
 
       // generate a filename (not the actual filename on disk since the anim process changes it)
       const std::string filename = GetDefaultFilename( index );
 
       // use default duration and location
-      const uint32_t duration = GetRecordingMessageDurationMS();
+      const uint32_t duration = ( ( duration_ms != 0 ) ? duration_ms : GetDefaultRecordingMessageDurationMS() );
       StartRecordingMicsProcessed micMessage( duration, filename );
 
       // send a message to the anim process to tell it to start recording
       _robot->SendMessage( EngineToRobot( std::move(micMessage) ) );
 
-      PRINT_CH_DEBUG( "MicData", "VoiceMessageSystem", "[Slot %d] Recording message with id [%u], filename [%s]", (int)index, messageRecord.id, filename.c_str() );
+      _currentRecording.messageRecord = &messageRecord;
+      _currentRecording.callback = std::move( callback );
 
-      newMessageId = messageRecord.id;
+      PRINT_CH_INFO( "VoiceMessage", "VoiceMessageSystem.Record",
+                     "[Slot %d] Recording message with id [%u], filename [%s]",
+                     (int)index, messageRecord.id, filename.c_str() );
+
+      result.id = messageRecord.id;
       SaveMessageSystem();
+
+      result.error = EVoiceMessageError::Success;
+    }
+    else
+    {
+      result.error = EVoiceMessageError::MessageAlreadyActive;
     }
   }
 
-  return newMessageId;
+  return result;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void VoiceMessageSystem::PlaybackRecordedMessage( MessageID messageId )
+EVoiceMessageError VoiceMessageSystem::PlaybackRecordedMessage( VoiceMessageID messageId, OnCompleteCallback callback )
 {
+  EVoiceMessageError result = EVoiceMessageError::InvalidMessage;
+
   const MessageIndex index = GetMessageIndex( messageId );
   if ( kInvalidSlot != index )
   {
-    PRINT_CH_DEBUG( "MicData", "VoiceMessageSystem", "[Slot %d] Playing message with id [%u]", (int)index, messageId );
+    if ( nullptr == _currentPlayback.messageRecord )
+    {
+      PRINT_CH_INFO( "VoiceMessage", "VoiceMessageSystem.Playback", "[Slot %d] Playing message with id [%u]", (int)index, messageId );
 
-    MessageRecord& message = GetMessageRecordAtIndex( index );
-    message.status = EMessageStatus::Read;
+      MessageRecord& message = GetMessageRecordAtIndex( index );
+      message.status = EMessageStatus::Read;
 
-    RobotInterface::StartPlaybackAudio playbackMessage( message.fileHandle );
-    _robot->SendMessage( RobotInterface::EngineToRobot( std::move(playbackMessage) ) );
+      RobotInterface::StartPlaybackAudio playbackMessage( message.fileHandle );
+      _robot->SendMessage( RobotInterface::EngineToRobot( std::move(playbackMessage) ) );
 
-    // save out since our data has changed
-    SaveMessageSystem();
+      _currentPlayback.messageRecord = &message;
+      _currentPlayback.callback = std::move( callback );
+
+      // save out since our data has changed
+      SaveMessageSystem();
+
+      result = EVoiceMessageError::Success;
+    }
+    else
+    {
+      result = EVoiceMessageError::MessageAlreadyActive;
+    }
+  }
+  else
+  {
+    PRINT_CH_INFO( "VoiceMessage", "VoiceMessageSystem.Playback", "Couldn't find message with id [%u]", messageId );
+  }
+
+  return result;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void VoiceMessageSystem::OnRecordingComplete( const std::string& path )
+{
+  if ( ( _currentRecording.messageRecord != nullptr ) && ( _currentRecording.messageRecord->fileHandle == path ) )
+  {
+    OnCompleteCallback callback = std::move( _currentRecording.callback );
+
+    // delete this before we call the callback so that the user can fire off another recording from the callback
+    _currentRecording = ActiveMessage();
+
+    if ( callback )
+    {
+      callback();
+    }
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void VoiceMessageSystem::PlaybackFirstUnreadMessage()
+void VoiceMessageSystem::OnPlaybackComplete( const std::string& path )
 {
-  MessageID unreadId = kInvalidMessageID;
-  int64_t unreadDate = std::numeric_limits<int64_t>::max();
-
-  // walk through our messages and grab the earliest unread message
-  for ( MessageIndex index = 0; index < kNumMessageSlots; ++index )
+  if ( ( _currentPlayback.messageRecord != nullptr ) && ( _currentPlayback.messageRecord->fileHandle == path ) )
   {
-    const MessageRecord& record = _messages[index];
+    OnCompleteCallback callback = std::move( _currentPlayback.callback );
 
-    const bool messageIsUnread = ( record.status == EMessageStatus::Unread );
-    const bool messageIsEarliest = ( record.date < unreadDate );
-    if ( messageIsUnread && messageIsEarliest )
+    // delete this before we call the callback so that the user can fire off another recording from the callback
+    _currentRecording = ActiveMessage();
+
+    if ( callback )
     {
-      unreadId    = record.id;
-      unreadDate  = record.date;
+      callback();
+    }
+
+    _currentPlayback = ActiveMessage();
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool VoiceMessageSystem::IsSameRecipient( const std::string& lhs, const std::string& rhs ) const
+{
+  // note: convert to UserName object when implemented
+  return Util::StringCaseInsensitiveEquals( lhs, rhs );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool VoiceMessageSystem::HasUnreadMessages( const std::string& name ) const
+{
+  VoiceMessageList messages = GetUnreadMessages( name, SortType::None );
+  return !messages.empty();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+VoiceMessageList VoiceMessageSystem::GetUnreadMessages( const std::string& name, SortType sortType ) const
+{
+  VoiceMessageList messages;
+
+  const std::string recipient = Util::StringToLower( name );
+
+  // grab all of the messages that are for the specified recipient
+  for ( const auto& message : _messages )
+  {
+    const bool isUnread = ( EMessageStatus::Unread == message.status );
+    const bool isRecipient = IsSameRecipient( recipient, message.recipientName );
+    if ( isUnread && isRecipient )
+    {
+      messages.push_back( message.id );
     }
   }
 
-  if ( kInvalidMessageID != unreadId )
+  // luckily our message id's are guaranteed to be in chronological order, so simply sort by the id
+  switch ( sortType )
   {
-    PlaybackRecordedMessage( unreadId );
+    case SortType::OldestToNewest:
+      std::sort( messages.begin(), messages.end(), []( VoiceMessageID lhs, VoiceMessageID rhs )
+      {
+        return ( lhs < rhs );
+      });
+      break;
+
+    case SortType::NewestToOldest:
+      std::sort( messages.begin(), messages.end(), []( VoiceMessageID lhs, VoiceMessageID rhs )
+      {
+        return ( lhs > rhs );
+      });
+      break;
+
+    case SortType::None:
+      break;
   }
+
+  return messages;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool VoiceMessageSystem::HasUnreadMessages() const
+VoiceMessageUserList VoiceMessageSystem::GetUnreadMessages( SortType sortType ) const
 {
-  bool hasMessage = false;
+  VoiceMessageUserList userMessages;
 
-  for ( MessageIndex index = 0; index < kNumMessageSlots; ++index )
+  // grab all of our unique names, then build our list of messages from that
+  // note: we can easily speed this up by storing our messages by recipient, but with only 10 max messages
+  //       this will be negligible
+  std::vector<std::string> recipients;
+  for ( const auto& message : _messages )
   {
-    const MessageRecord& record = _messages[index];
-    hasMessage |= ( record.status == EMessageStatus::Unread );
+    bool found = false;
+    for ( const std::string& name : recipients )
+    {
+      if ( IsSameRecipient( name, message.recipientName ) )
+      {
+        found = true;
+        break;
+      }
+    }
+
+    if ( !found )
+    {
+      recipients.emplace_back( message.recipientName );
+    }
   }
 
-  return hasMessage;
+  // now recipients should contain all of our unique recipients
+  for ( const std::string& name : recipients )
+  {
+    VoiceMessageUser user;
+
+    user.recipient = name;
+    user.messages = GetUnreadMessages( name, sortType );
+
+    if ( !user.messages.empty() )
+    {
+      userMessages.push_back( user );
+    }
+  }
+
+  return userMessages;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -498,31 +641,29 @@ void VoiceMessageSystem::Debug_PrintMessageRecords() const
     {
       if ( !message.HasMessage() )
       {
-        PRINT_CH_DEBUG( "MicData", "VoiceMessageSystem", "[Slot %d] Empty", index );
+        PRINT_CH_DEBUG( "VoiceMessage", "VoiceMessageSystem", "[Slot %d] Empty", index );
       }
       else
       {
-        PRINT_CH_DEBUG( "MicData", "VoiceMessageSystem", "[Slot %d] %s", index,
+        PRINT_CH_DEBUG( "VoiceMessage", "VoiceMessageSystem", "[Slot %d] %s", index,
                        Util::FileUtils::GetFileName( message.fileHandle ).c_str() );
-        PRINT_CH_DEBUG( "MicData", "VoiceMessageSystem", "         Name: %s",
+        PRINT_CH_DEBUG( "VoiceMessage", "VoiceMessageSystem", "         Name: %s",
                         !message.recipientName.empty() ? message.recipientName.c_str() : "All" );
-        PRINT_CH_DEBUG( "MicData", "VoiceMessageSystem", "         ID: %u",
+        PRINT_CH_DEBUG( "VoiceMessage", "VoiceMessageSystem", "         ID: %u",
                         message.id );
-        PRINT_CH_DEBUG( "MicData", "VoiceMessageSystem", "         Status: %s",
+        PRINT_CH_DEBUG( "VoiceMessage", "VoiceMessageSystem", "         Status: %s",
                         ( message.status == EMessageStatus::Invalid ) ?
                         "Invalid" :
                         ( ( message.status == EMessageStatus::Unread ) ? "Unread" : "Read" ) );
-        PRINT_CH_DEBUG( "MicData", "VoiceMessageSystem", "         Date: %lld",
-                        message.date );
       }
     };
 
-    PRINT_CH_DEBUG( "MicData", "VoiceMessageSystem", "********** Voice Message System **********" );
+    PRINT_CH_DEBUG( "VoiceMessage", "VoiceMessageSystem", "********** Voice Message System **********" );
     for ( MessageIndex index = 0; index < kNumMessageSlots; ++index )
     {
       printMessage( (int)index, _messages[index] );
     }
-    PRINT_CH_DEBUG( "MicData", "VoiceMessageSystem", "******************************************" );
+    PRINT_CH_DEBUG( "VoiceMessage", "VoiceMessageSystem", "******************************************" );
   }
   #endif
 }

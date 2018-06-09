@@ -47,6 +47,7 @@ UserIntentMap::UserIntentMap(const Json::Value& config, const CozmoContext* ctx)
 {
   // for validation
   std::unordered_set<UserIntentTag> foundUserIntent;
+  std::unordered_set<UserIntentTag> gatedUserIntent;
   
   ANKI_VERIFY(config[kUserIntentMapKey].size() > 0,
               "UserIntentMap.InvalidConfig",
@@ -65,7 +66,7 @@ UserIntentMap::UserIntentMap(const Json::Value& config, const CozmoContext* ctx)
     
     // check if this user intent is enabled (feature gate), and skip it if not
     {
-      const std::string& featureName = config.get( kFeatureGateKey, "" ).asString();
+      const std::string& featureName = mapping.get( kFeatureGateKey, "" ).asString();
       if( !featureName.empty() && (ctx != nullptr) ) {
         FeatureType feature = FeatureType::Invalid;
         ANKI_VERIFY( FeatureTypeFromString( featureName, feature ),
@@ -80,6 +81,7 @@ UserIntentMap::UserIntentMap(const Json::Value& config, const CozmoContext* ctx)
                             featureName.c_str(),
                             userIntentStr.c_str() );
           // this will be an unmatched intent!
+          gatedUserIntent.insert( intentTag );
           continue;
         }
       }
@@ -201,7 +203,8 @@ UserIntentMap::UserIntentMap(const Json::Value& config, const CozmoContext* ctx)
       using Tag = std::underlying_type<UserIntentTag>::type;
       for( Tag i{0}; i<static_cast<Tag>( USER_INTENT(test_SEPARATOR) ); ++i ) {
         if( i != static_cast<Tag>(_unmatchedUserIntent) ) {
-          DEV_ASSERT_MSG( foundUserIntent.find(static_cast<UserIntentTag>(i)) != foundUserIntent.end(),
+          DEV_ASSERT_MSG( foundUserIntent.find(static_cast<UserIntentTag>(i)) != foundUserIntent.end()
+                       || gatedUserIntent.find(static_cast<UserIntentTag>(i)) != gatedUserIntent.end(),
                           "UserIntentMap.Ctor.MissingUserIntents",
                           "Every user intent found in clad must appear in json. You're missing '%s'",
                           UserIntentTagToString( static_cast<UserIntentTag>(i)) );

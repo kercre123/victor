@@ -15,6 +15,7 @@ enum uint_8 FeatureType {
   Singing,
   LocalNotifications,
   Exploring,
+  Messaging,
 }
 
 structure FeatureToggle {

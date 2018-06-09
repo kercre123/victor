@@ -56,17 +56,24 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   bool IsValidFile( const std::string& path ) const;
 
+  // audio loading jobs
   void StartNextJobInQueue();
-  static void StartAudioPlaybackJob( std::shared_ptr<AudioPlaybackJob> audiojob );
+  static void LoadAudioPlaybackData( std::shared_ptr<AudioPlaybackJob> audiojob );
+
+  // audio playback
+  void BeginAudioPlayback();
+  void OnAudioPlaybackBegin();
+  void OnAudioPlaybackEnd();
 
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Member Data
 
-  const AnimContext*    _animContext;
+  const AnimContext*                  _animContext;
 
-  std::shared_ptr<AudioPlaybackJob> _currentJob;
-  std::queue<AudioPlaybackJob*> _jobQueue;
+  std::shared_ptr<AudioPlaybackJob>   _currentJob;
+  std::queue<AudioPlaybackJob*>       _jobQueue;
+  bool                                _isJobLoading;
 };
 
 } //  namespace Audio

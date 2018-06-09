@@ -46,6 +46,7 @@ void MicComponent::GetInitDependencies( RobotCompIDSet& dependencies ) const
 {
   // we could allow our sub-systems to add to this, but it's simple enough at this point
   dependencies.insert( RobotComponentID::CozmoContextWrapper );
+  dependencies.insert( RobotComponentID::Vision );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

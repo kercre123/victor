@@ -78,9 +78,9 @@ BehaviorTextToSpeechLoop::BehaviorTextToSpeechLoop(const Json::Value& config)
     _iConfig.idleDuringTTSGeneration = true;
   }
 
-  JsonTools::GetCladEnumFromJSON(config, kGetInAnimationKey, _iConfig.getInTrigger, debugName);
+  JsonTools::GetCladEnumFromJSON(config, kGetInAnimationKey, _iConfig.getInTrigger, debugName, false);
   JsonTools::GetCladEnumFromJSON(config, kLoopAnimationKey, _iConfig.loopTrigger, debugName);
-  JsonTools::GetCladEnumFromJSON(config, kGetOutAnimationKey, _iConfig.getOutTrigger, debugName);
+  JsonTools::GetCladEnumFromJSON(config, kGetOutAnimationKey, _iConfig.getOutTrigger, debugName, false);
   JsonTools::GetCladEnumFromJSON(config, kEmergencyGetOutAnimationKey, _iConfig.emergencyGetOutTrigger, debugName);
 
   // TODO:(str) we will eventually need to support anim keyframe driven tts
@@ -239,8 +239,13 @@ void BehaviorTextToSpeechLoop::TransitionToGetIn()
     }
     TransitionToSpeakingLoop();
   };
-  DelegateIfInControl(new TriggerLiftSafeAnimationAction(_iConfig.getInTrigger, 1, true, _iConfig.tracksToLock),
-                      callback);
+
+  if(AnimationTrigger::Count == _iConfig.getInTrigger){
+    callback();
+  } else {
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(_iConfig.getInTrigger, 1, true, _iConfig.tracksToLock),
+                        callback);
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -254,8 +259,12 @@ void BehaviorTextToSpeechLoop::TransitionToSpeakingLoop()
 void BehaviorTextToSpeechLoop::TransitionToGetOut()
 {
   SET_STATE(GetOut);
-  DelegateIfInControl(new TriggerLiftSafeAnimationAction(_iConfig.getOutTrigger, 1, true, _iConfig.tracksToLock),
-                      [this](){ CancelSelf(); } );
+  if(AnimationTrigger::Count == _iConfig.getOutTrigger){
+    CancelSelf();
+  } else {
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(_iConfig.getOutTrigger, 1, true, _iConfig.tracksToLock),
+                        [this](){ CancelSelf(); } );
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

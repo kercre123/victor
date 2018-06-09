@@ -15,10 +15,13 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorPlaybackMessage_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/components/mics/voiceMessageTypes.h"
 
 
 namespace Anki {
 namespace Cozmo {
+
+class BehaviorTextToSpeechLoop;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class BehaviorPlaybackMessage : public ICozmoBehavior
@@ -53,6 +56,25 @@ protected:
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // State Transitions
+
+  void TransitionToPlayingFirstMessage();
+  void TransitionToPlayingNextMessage();
+  void TransitionToFailureResponse();
+  void TransitionToNoMessagesResponse();
+  void TransitionToFinishedMessages();
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Helpers ...
+
+  // plays the next message in our internal list (starting at the end)
+  void PlaybackNextMessage();
+  void OnMessagePlaybackComplete( VoiceMessageID id );
+
+  void PlayNextRecipientTTS();
+  void PlayTextToSpeech( const std::string& ttsString, BehaviorSimpleCallback callback = {} );
+  
 
 private:
 
@@ -62,6 +84,13 @@ private:
   struct InstanceConfig
   {
     InstanceConfig();
+
+    std::string ttsAnnounceSingle;
+    std::string ttsAnnouncePlural;
+    std::string ttsErrorNoRecipient;
+    std::string ttsErrorNoMessages;
+
+    std::shared_ptr<BehaviorTextToSpeechLoop> ttsBehavior;
 
   } _iVars;
 
@@ -73,8 +102,10 @@ private:
   {
     DynamicVariables();
 
-    float         startedRecordingTime; // temp
-    std::string   messageRecipient;
+    std::string          messageRecipient;
+    VoiceMessageList     messages;
+    VoiceMessageUserList allMessages;
+    VoiceMessageID       activeMessageId;
 
   } _dVars;
 

@@ -2400,13 +2400,14 @@ namespace Cozmo {
     auto namePairList = _visionSystem->GetEnrolledNames();
     Unlock();
 
+    // Enrolled names are guaranteed to be lowercase
+    // ** The UserName class will handle matching for us when it's implemented **
+    
     auto tolower = [](const char c) { return std::tolower(c); };
     std::string lcName{name};
     std::transform(lcName.begin(), lcName.end(), lcName.begin(), tolower);
     for( const auto& nameEntry : namePairList ) {
-      std::string existingNameCopy = nameEntry.name;
-      std::transform(existingNameCopy.begin(), existingNameCopy.end(), existingNameCopy.begin(), tolower);
-      if( existingNameCopy == lcName ) {
+      if( nameEntry.name == lcName ) {
         return true;
       }
     }

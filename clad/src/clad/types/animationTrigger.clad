@@ -125,6 +125,13 @@ enum int_32 AnimationTrigger
   MeetCozmoRenameFaceSayName,           // Say player's new name when rename occurs
   MeetCozmoDuplicateName,               // the given name is already taken
 
+  MessagingMessageGetIn,
+  MessagingMessageLoop,
+  MessagingMessageGetOut,
+  MessagingMessageRecordReaction,
+  MessagingMessageDeletedShort,
+  MessagingMessageRewind,
+
   NeutralFace,
   
   NothingToDoBoredIdle,                 // Cozmo doesn't have anything to do in freeplay - idling (not playing game sequence)

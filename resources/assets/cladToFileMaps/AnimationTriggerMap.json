@@ -1493,6 +1493,30 @@
     "AnimName": "ag_cubetapping_getout"
   },
   {
+    "CladEvent": "MessagingMessageGetIn",
+    "AnimName": "ag_message_getin"
+  },
+  {
+    "CladEvent": "MessagingMessageLoop",
+    "AnimName": "ag_message_loop"
+  },
+  {
+    "CladEvent": "MessagingMessageGetOut",
+    "AnimName": "ag_message_getout"
+  },
+  {
+    "CladEvent": "MessagingMessageRecordReaction",
+    "AnimName": "ag_message_record_reaction"
+  },
+  {
+    "CladEvent": "MessagingMessageDeletedShort",
+    "AnimName": "ag_message_messages_deleted_short"
+  },
+  {
+    "CladEvent": "MessagingMessageRewind",
+    "AnimName": "ag_message_rewind"
+  },
+  {
     "CladEvent": "ShutUp",
     "AnimName": "ag_vc_shutup"
   }
