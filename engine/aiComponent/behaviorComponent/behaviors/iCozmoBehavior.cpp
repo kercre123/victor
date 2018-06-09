@@ -37,6 +37,7 @@
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
+#include "engine/components/robotStatsTracker.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
@@ -47,8 +48,9 @@
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "clad/types/behaviorComponent/userIntent.h"
 #include "clad/types/behaviorComponent/activeFeatures.h"
+#include "clad/types/behaviorComponent/behaviorStats.h"
+#include "clad/types/behaviorComponent/userIntent.h"
 
 #include "util/enums/stringToEnumMapper.hpp"
 #include "util/fileUtils/fileUtils.h"
@@ -78,6 +80,7 @@ static const char* kResetTimersKey                   = "resetTimers";
 static const char* kEmotionEventOnActivatedKey       = "emotionEventOnActivated";
 static const char* kPostBehaviorSuggestionKey        = "postBehaviorSuggestion";
 static const char* kAssociatedActiveFeature          = "associatedActiveFeature";
+static const char* kBehaviorStatToIncrement          = "behaviorStatToIncrement";
 
 static const std::string kIdleLockPrefix             = "Behavior_";
 
@@ -319,7 +322,17 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
                  "Active feature '%s' invalid in behavior '%s'",
                  featureStr.c_str(),
                  GetDebugLabel().c_str() );
-  } 
+  }
+
+  if( config[kBehaviorStatToIncrement].isString() ) {
+    _behaviorStatToIncrement.reset(new BehaviorStat);
+    const auto& statStr = config[kBehaviorStatToIncrement].asString();
+    ANKI_VERIFY( BehaviorStatFromString( statStr, *_behaviorStatToIncrement ),
+                 "ICozmoBehavior.ReadFromJson.InalidBehaviorStat",
+                 "Behavior stat to increment '%s' invalid in behavior '%s'",
+                 statStr.c_str(),
+                 GetDebugLabel().c_str() );
+  }                 
   
   return true;
 }
@@ -353,6 +366,7 @@ std::vector<const char*> ICozmoBehavior::GetAllJsonKeys() const
     kAnonymousBehaviorMapKey,
     kPostBehaviorSuggestionKey,
     kAssociatedActiveFeature,
+    kBehaviorStatToIncrement
   };
   expectedKeys.insert( expectedKeys.end(), std::begin(baseKeys), std::end(baseKeys) );
 
@@ -765,6 +779,12 @@ void ICozmoBehavior::OnActivatedInternal()
   if( !_emotionEventOnActivated.empty() ) {
     GetBEI().GetMoodManager().TriggerEmotionEvent(_emotionEventOnActivated, currTime_s);
   }
+
+  if( _behaviorStatToIncrement ) {
+    GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(*_behaviorStatToIncrement);
+  }
+
+  GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::BehaviorActived);
   
   OnBehaviorActivated();
 }

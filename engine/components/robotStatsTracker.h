@@ -24,6 +24,7 @@ namespace Anki {
 namespace Cozmo {
 
 enum class ActiveFeature : uint32_t;
+enum class BehaviorStat : uint32_t;
 
 class RobotStatsTracker : public IDependencyManagedComponent<RobotComponentID>,
                           public UnreliableComponent<BCComponentID>, 
@@ -38,6 +39,8 @@ public:
   void IncreaseStimulationCumulativePositiveDelta(float delta);
   
   void IncrementActiveFeature(const ActiveFeature& feature, const std::string& intentSource);
+
+  void IncrementBehaviorStat(const BehaviorStat& stat);
 
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);

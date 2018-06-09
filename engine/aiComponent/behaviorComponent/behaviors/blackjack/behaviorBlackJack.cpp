@@ -12,13 +12,15 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/blackjack/behaviorBlackJack.h"
 
+#include "clad/types/behaviorComponent/behaviorStats.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/robotDrivenDialog/behaviorPromptUserForVoiceCommand.h"
-#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
+#include "engine/components/robotStatsTracker.h"
 
 #define SET_STATE(s) do{ \
                           _dVars.state = EState::s; \
@@ -322,6 +324,8 @@ void BehaviorBlackJack::TransitionToEndGame(){
 
   SET_STATE(EndGame);
 
+  GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::BlackjackGameComplete);
+
   TriggerAnimationAction* endGameAction = nullptr;
   switch(_dVars.outcome){
     case EOutcome::Tie:
@@ -331,11 +335,13 @@ void BehaviorBlackJack::TransitionToEndGame(){
     }
     case EOutcome::VictorWinsBlackJack:
     {
+      GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::BlackjackDealerWon);
       endGameAction = new TriggerAnimationAction(AnimationTrigger::BlackJack_VictorBlackJackWin);
       break;
     }
     case EOutcome::VictorWins:
     {
+      GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::BlackjackDealerWon);
       endGameAction = new TriggerAnimationAction(AnimationTrigger::BlackJack_VictorWin);
       break;
     }

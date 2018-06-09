@@ -13,6 +13,7 @@
 #include "engine/components/robotStatsTracker.h"
 
 #include "clad/types/behaviorComponent/activeFeatures.h"
+#include "clad/types/behaviorComponent/behaviorStats.h"
 #include "clad/types/behaviorComponent/userIntent.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
@@ -33,6 +34,7 @@ static const char* kJsonStatsFilename = "stats.json";
 
 static const char* kStimCategory = "Stim";
 static const char* kActiveFeatureCategory = "Feature";
+static const char* kBehaviorStatCategory = "BStat";
 
 static const char* kRobotStatsSeparator = ".";
 
@@ -120,6 +122,12 @@ void RobotStatsTracker::IncrementActiveFeature(const ActiveFeature& feature, con
 {
   IncreaseHelper(kActiveFeatureCategory + std::string(kRobotStatsSeparator) + intentSource,
                  ActiveFeatureToString(feature), 1);
+}
+
+
+void RobotStatsTracker::IncrementBehaviorStat(const BehaviorStat& stat)
+{
+  IncreaseHelper(kBehaviorStatCategory, BehaviorStatToString(stat), 1);
 }
 
 void RobotStatsTracker::IncreaseHelper(const std::string& prefix, const std::string& stat, uint64_t delta)

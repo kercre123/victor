@@ -29,6 +29,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
+#include "engine/components/robotStatsTracker.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/events/ankiEvent.h"
@@ -43,6 +44,7 @@
 #include "coretech/vision/engine/faceTracker.h"
 #include "coretech/vision/engine/trackedFace.h"
 
+#include "clad/types/behaviorComponent/behaviorStats.h"
 #include "clad/types/behaviorComponent/userIntent.h"
 #include "clad/types/enrolledFaceStorage.h"
 
@@ -697,6 +699,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
     if(info.result == FaceEnrollmentResult::Success)
     {
       BehaviorObjectiveAchieved(BehaviorObjective::EnrolledFaceWithName);
+      GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::EnrolledFace);
     }
 
     // Log enrollment to DAS, with result type

@@ -55,7 +55,7 @@ class DriveToObjectAction;
 enum class ObjectInteractionIntention;
 class UnitTestKey;
 enum class ActiveFeature : uint32_t;
-class ActiveFeatureMetaData;
+enum class BehaviorStat : uint32_t;
 
 class ISubtaskListener;
 class IReactToFaceListener;
@@ -521,6 +521,9 @@ private:
   // A behavior can specify an associated ActiveFeature. If it does, the ActiveFeatureComponent can check this
   // while the behavior is active on the stack
   std::unique_ptr<ActiveFeature> _associatedActiveFeature;
+
+  // if set, increment this behavior stat when this behavior activates
+  std::unique_ptr<BehaviorStat> _behaviorStatToIncrement;
   
   // true when the trigger word is pending, in which case ICozmoBehavior will
   // 1) WantToBeActivated, in the absence of other negative conditions
