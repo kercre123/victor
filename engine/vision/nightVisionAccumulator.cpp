@@ -17,23 +17,23 @@
 namespace Anki {
 namespace Cozmo {
 
-const char* kMinAccImagesKey = "min_num_images";
-const char* kHistSubsampleKey = "hist_subsample";
-const char* kTargetPercentileKey = "target_percentile";
-const char* kTargetValueKey = "target_value";
+const char* kMinAccImagesKey     = "MinNumImages";
+const char* kHistSubsampleKey    = "HistSubsample";
+const char* kTargetPercentileKey = "TargetPercentile";
+const char* kTargetValueKey      = "TargetValue";
 
-u32 CastPixel(const u8& p) { return (u32) p; }
+u16 CastPixel(const u8& p) { return (u16) p; }
 
-u8 DividePixel(const u32& p, const u32& count)
+u8 DividePixel(const u16& p, const u16& count)
 {
-  u32 out = p / count;
+  u16 out = p / count;
   if( out > 255 ) { out = 255; }
   return static_cast<u8>( out );
 }
 
 u8 ScalePixel(u8 p, const f32& k)
 {
-  u32 pK = static_cast<u32>( p * k );
+  u16 pK = static_cast<u16>( p * k );
   if( pK > 255 ) { pK = 255; }
   return static_cast<u8>( pK );
 }
@@ -64,7 +64,6 @@ Result NightVisionAccumulator::Init( const Json::Value& config )
 void NightVisionAccumulator::Reset()
 {
   _numAccImages = 0;
-  _accumulator.Clear();
 }
 
 void NightVisionAccumulator::AddImage( const Vision::Image& img, 
@@ -85,13 +84,19 @@ void NightVisionAccumulator::AddImage( const Vision::Image& img,
     _accumulator.FillWith( 0 );
   }
 
-  // Cast img to u32 type to add
-  static ImageAcc castImg;
-  castImg.Allocate( img.GetNumRows(), img.GetNumCols() );
-  std::function<u32(const u8&)> castOp = std::bind(&CastPixel, std::placeholders::_1);
-  img.ApplyScalarFunction( castOp, castImg );
+  if( img.GetNumRows() != _accumulator.GetNumRows() ||
+      img.GetNumCols() != _accumulator.GetNumCols() )
+  {
+    PRINT_NAMED_ERROR("NightVisionAccumulator.AddImage.SizeError", "");
+    Reset();
+    return;
+  }
 
-  _accumulator += castImg;
+  // Cast img to u16 type to add
+  _castImage.Allocate( img.GetNumRows(), img.GetNumCols() );
+  std::function<u16(const u8&)> castOp = std::bind(&CastPixel, std::placeholders::_1);
+  img.ApplyScalarFunction( castOp, _castImage );
+  _accumulator += _castImage;
   _numAccImages++;
 }
 
@@ -104,7 +109,7 @@ bool NightVisionAccumulator::GetOutput( Vision::Image& out ) const
 
   // Divide by the number of images
   out.Allocate( _accumulator.GetNumRows(), _accumulator.GetNumCols() );
-  std::function<u8(const u32&)> divOp = std::bind(&DividePixel, std::placeholders::_1, _numAccImages);
+  std::function<u8(const u16&)> divOp = std::bind(&DividePixel, std::placeholders::_1, _numAccImages);
   _accumulator.ApplyScalarFunction(divOp, out);
 
   // Compute image histogram and scale contrast

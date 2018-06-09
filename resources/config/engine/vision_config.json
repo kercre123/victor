@@ -36,7 +36,8 @@
     "ComputingStatistics"    : false,  // NOTE: enabled but not scheduled!
     "DetectingGeneralObjects": 1,
     "SavingImages"           : 5,
-    "DetectingIllumination"  : 1
+    "DetectingIllumination"  : 1,
+    "NightVision"            : 1
   },
 
   "ColorImages" : true,        // Whether color images are enabled on startup (can still be toggled later)
@@ -79,6 +80,14 @@
 
     "TimeBeforeErrorMessage_ms" :       3000,  // How long VisionSystem must detect "bad" quality before notifying game
     "RepeatedErrorMessageInterval_ms" : 300000 // Time between error messages once triggered
+  },
+
+  "NightVision" :
+  {
+    "MinNumImages":     10,
+    "HistSubsample":    4,
+    "TargetPercentile": 95,
+    "TargetValue":      240
   },
 
   "PerformanceLogging" :

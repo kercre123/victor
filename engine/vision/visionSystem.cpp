@@ -282,12 +282,12 @@ Result VisionSystem::Init(const Json::Value& config)
     return RESULT_FAIL;
   }
 
-  if(!config.isMember("NightVisionAccumulator"))
+  if(!config.isMember("NightVision"))
   {
     PRINT_NAMED_ERROR("VisionSystem.Init.MissingNightVisionAccumulatorConfigFIeld", "");
     return RESULT_FAIL;
   }
-  Result nightVisionResult = _nightVisionAccumulator->Init(config["NightVisionAccumulator"]);
+  Result nightVisionResult = _nightVisionAccumulator->Init(config["NightVision"]);
   if( nightVisionResult != RESULT_OK )
   {
     PRINT_NAMED_ERROR("VisionSystem.Init.NightVisionAccumulatorInitFailed", "");
@@ -1533,8 +1533,13 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     Vision::Image nightImage;
     if( _nightVisionAccumulator->GetOutput( nightImage ) )
     {
+      PRINT_NAMED_INFO("VisionSystem.Update.NightVision", "Has night vision output");
       _nightImageCache->Reset( nightImage );
       nightVisionCache = _nightImageCache.get();
+    }
+    else
+    {
+      PRINT_NAMED_INFO("VisionSystem.Update.NightVision", "Still buffering night vision output");
     }
   }
   

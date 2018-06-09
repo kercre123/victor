@@ -41,8 +41,10 @@ public:
 
 private:
 
-  using ImageAcc = Array2d<u32>;
+  // NOTE We get array allocation failures using u32
+  using ImageAcc = Array2d<u16>;
   ImageAcc _accumulator;
+  ImageAcc _castImage;
   u32 _numAccImages;
 
   u32 _minNumImages;
