@@ -29,6 +29,7 @@ namespace Cozmo {
     SavingImages,
     RunningNeuralNet, 
     DetectingIllumination,
+    NightVision,
     Count
   }
       
