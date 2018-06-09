@@ -18,6 +18,11 @@
 #include "engine/vision/visionPoseData.h"
 
 namespace Anki {
+
+namespace Vision {
+  class ImageBrightnessHistogram;
+}
+
 namespace Cozmo {
 
 class NightVisionAccumulator
@@ -44,6 +49,8 @@ private:
   s32 _histSubsample;
   f32 _contrastTargetPercentile;
   u8 _contrastTargetValue;
+
+  std::unique_ptr<Vision::ImageBrightnessHistogram> _contrastHist;
 };
 
 } // end namespace Cozmo

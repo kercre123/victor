@@ -39,9 +39,11 @@ u8 ScalePixel(u8 p, const f32& k)
 }
 
 NightVisionAccumulator::NightVisionAccumulator()
+: _contrastHist( new Vision::ImageBrightnessHistogram )
 {
-  Reset(); 
+  Reset();
 }
+
 Result NightVisionAccumulator::Init( const Json::Value& config )
 {
   #define PARSE_PARAM(conf, key, var) \
@@ -106,10 +108,9 @@ bool NightVisionAccumulator::GetOutput( Vision::Image& out ) const
   _accumulator.ApplyScalarFunction(divOp, out);
 
   // Compute image histogram and scale contrast
-  static Vision::ImageBrightnessHistogram hist;
-  hist.Reset();
-  hist.FillFromImage( out, _histSubsample );
-  u8 val = hist.ComputePercentile( _contrastTargetPercentile );
+  _contrastHist->Reset();
+  _contrastHist->FillFromImage( out, _histSubsample );
+  u8 val = _contrastHist->ComputePercentile( _contrastTargetPercentile );
   f32 scale = static_cast<f32>(_contrastTargetValue) / val;
   std::function<u8(const u8)> scaleOp = std::bind(&ScalePixel, std::placeholders::_1, scale);
   out.ApplyScalarFunction(scaleOp);
