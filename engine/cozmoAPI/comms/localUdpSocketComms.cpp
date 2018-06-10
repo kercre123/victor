@@ -38,13 +38,13 @@ bool LocalUdpSocketComms::Init(UiConnectionType connectionType, const Json::Valu
   if(_udpServer->HasClient()) {
     _udpServer->Disconnect();
   }
-  
+
   _udpServer->StopListening();
   _udpServer->StartListening(_socket);
-  
+
   return true;
 }
-  
+
 void LocalUdpSocketComms::OnEnableConnection(bool wasEnabled, bool isEnabled) {
   if (isEnabled) {
     _udpServer->StartListening(_socket);
@@ -57,17 +57,18 @@ void LocalUdpSocketComms::OnEnableConnection(bool wasEnabled, bool isEnabled) {
 
 void LocalUdpSocketComms::UpdateInternal() {
   ANKI_CPU_PROFILE("LocalUdpSocketComms::Update");
-  
-  // See if we lost the client since last upate
+
+  // See if we lost the client since last update
   if (_hasClient && !_udpServer->HasClient()) {
     PRINT_CH_INFO("UiComms", "LocalUdpSocketComms.Update.ClientLost", "Client Connection to Device %d lost", _connectedId);
     _udpServer->Disconnect();
+    _hasClient = false;
   }
 }
 
 bool LocalUdpSocketComms::ConnectToDeviceByID(DeviceId deviceId) {
   assert(deviceId != kDeviceIdInvalid);
-  
+
   if (_connectedId == kDeviceIdInvalid) {
     _connectedId = deviceId;
     return true;
@@ -81,7 +82,7 @@ bool LocalUdpSocketComms::ConnectToDeviceByID(DeviceId deviceId) {
 
 bool LocalUdpSocketComms::DisconnectDeviceByID(DeviceId deviceId) {
   assert(deviceId != kDeviceIdInvalid);
-  
+
   if ((_connectedId != kDeviceIdInvalid) && (_connectedId == deviceId)) {
     _udpServer->Disconnect();
     return true;
@@ -110,21 +111,21 @@ uint32_t LocalUdpSocketComms::GetNumConnectedDevices() const {
 
 bool LocalUdpSocketComms::SendMessageInternal(const Comms::MsgPacket& msgPacket) {
   ANKI_CPU_PROFILE("LocalUdpSocketComms::SendMessage");
-  
+
   if (IsConnected()) {
     const ssize_t res = _udpServer->Send((const char*)&msgPacket.dataLen, sizeof(msgPacket.dataLen) + msgPacket.dataLen);
-
     if (res < 0) {
+      LOG_ERROR("LocalUdpSocketComms.SendMessageInternal.FailedSend", "Failed to send message from %d to %d",
+        msgPacket.sourceId, msgPacket.destId);
+      _udpServer->Disconnect();
       return false;
-    } else {
-      return true;
     }
+    return true;
   }
-
   return false;
 }
 
-bool LocalUdpSocketComms::RecvMessageInternal(std::vector<uint8_t>& outBuffer) {  
+bool LocalUdpSocketComms::RecvMessageInternal(std::vector<uint8_t>& outBuffer) {
   // Reserve memory
   outBuffer.clear();
   outBuffer.reserve(MAX_PACKET_BUFFER_SIZE);
@@ -159,7 +160,7 @@ bool LocalUdpSocketComms::RecvMessageInternal(std::vector<uint8_t>& outBuffer) {
 
   const uint8_t* sourceBuffer = outBuffer.data() + sizeof(kMessageHeaderSize);
   outBuffer = { sourceBuffer, sourceBuffer + msgSize };
-  
+
   return true;
 }
 
@@ -167,7 +168,7 @@ bool LocalUdpSocketComms::IsConnected() const {
   if ((kDeviceIdInvalid != _connectedId) && _udpServer->HasClient()) {
     return true;
   }
-  
+
   return false;
 }
 
