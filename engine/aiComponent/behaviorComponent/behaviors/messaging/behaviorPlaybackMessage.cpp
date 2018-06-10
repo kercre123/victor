@@ -341,4 +341,5 @@ void BehaviorPlaybackMessage::PlayNextRecipientTTS()
 } // namespace Anki
 
 #undef PRINT_DEBUG
+#undef PRINT_INFO
 

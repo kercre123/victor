@@ -300,7 +300,11 @@ enum uint_8 BehaviorID {
   MessagingRecordUnknownRecipient,
   MessagingRecordMailboxFull,
   MessagingRecordTTS,
-  MessagingPlaybackTTS
+  MessagingPlaybackTTS,
+
+  // knowledge graph
+  KnowledgeGraphQuestion,
+  KnowledgeGraphTTS,
 }
 
 }

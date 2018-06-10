@@ -110,6 +110,7 @@ union dupes_allowed UserIntent
   UserIntent_Void             system_sleep,
   UserIntent_RecordMessage    message_record,
   UserIntent_PlaybackMessage  message_playback,
+  UserIntent_Void             knowledge_question,
 
 
   // for tests

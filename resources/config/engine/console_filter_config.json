@@ -55,7 +55,8 @@
       { "channel": "InventoryComponent",   "enabled": false },
       { "channel": "TextToSpeech",         "enabled": false },
       { "channel": "MicData",              "enabled": true },
-      { "channel": "FaceInfoScreenManager", "enabled": true }
+      { "channel": "FaceInfoScreenManager", "enabled": true },
+      { "channel": "KnowledgeGraph",       "enabled": true }
     ],
     "levels":
     [
@@ -105,7 +106,8 @@
       { "channel": "PerfMetric",           "enabled": true },
       { "channel": "VoiceCommands",        "enabled": false },
       { "channel": "InventoryComponent",   "enabled": false },
-      { "channel": "TextToSpeech",         "enabled": false }
+      { "channel": "TextToSpeech",         "enabled": false },
+      { "channel": "KnowledgeGraph",       "enabled": true }
     ],
     "levels":
     [
@@ -155,7 +157,8 @@
       { "channel": "PerfMetric",           "enabled": true },
       { "channel": "VoiceCommands",        "enabled": false },
       { "channel": "InventoryComponent",   "enabled": false },
-      { "channel": "TextToSpeech",         "enabled": false }
+      { "channel": "TextToSpeech",         "enabled": false },
+      { "channel": "KnowledgeGraph",       "enabled": true }
     ],
     "levels":
     [

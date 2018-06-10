@@ -1,0 +1,11 @@
+{
+  "behaviorClass" : "TextToSpeechLoop",
+  "behaviorID"    : "KnowledgeGraphTTS",
+  
+  "associatedActiveFeature": "KnowledgeGraph",
+  
+  "getInAnimation"           : "TextToSpeechGetIn",
+  "loopAnimation"            : "TextToSpeechGetLoop",
+  "getOutAnimation"          : "TextToSpeechGetOut",
+  "emergencyGetOutAnimation" : "TextToSpeechGetOut"
+}

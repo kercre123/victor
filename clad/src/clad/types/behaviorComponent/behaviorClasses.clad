@@ -123,6 +123,9 @@ enum uint_8 BehaviorClass {
   PuzzleMaze,
   TrackLaser,
 
+  // knowledge graph
+  KnowledgeGraphQuestion,
+
   // meetCozmo
   EnrollFace,
   RespondToRenameFace,

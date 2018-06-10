@@ -121,6 +121,12 @@
       "cloud_intent": "intent_explore_start",
       "app_intent": "explore_start",
       "feature_gate": "Exploring"
+    },
+    {
+      "user_intent": "knowledge_question",
+      "cloud_intent": "intent_knowledge_promptquestion",
+      "app_intent": "knowledge_question",
+      "feature_gate": "KnowledgeGraph"
     }
   ],
 
