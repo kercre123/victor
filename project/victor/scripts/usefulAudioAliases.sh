@@ -17,6 +17,10 @@ alias victor_audio_robot_build_deploy_update_local_assets='GET_GIT_ROOT; victor_
 # Mac (Webots) Build
 alias victor_audio_webots_build_update_local_assets='GET_GIT_ROOT; victor_audio_update_local_assets -p mac -c Release -b'
 
+# Reset CMake flag to use project assets
+alias victor_audio_robot_build_project_assets='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_build.sh -c Release -p vicos -a -DUSE_LOCAL_AUDIO_ASSETS=OFF -f'
+alias victor_audio_webots_build_project_assets='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_build.sh -c Release -p mac -a -DUSE_LOCAL_AUDIO_ASSETS=OFF -f'
+
 # Clean assset directories
 alias victor_audio_clean_local_assets='GET_GIT_ROOT; rm -rf ${GIT_PROJ_ROOT}/EXTERNALS/local-audio-assets'
 alias victor_audio_clean_project_assets='GET_GIT_ROOT; rm -rf $VICTOR_WWISE_PROJECT_TRUNK_PATH/VictorAudio/GeneratedSoundBanks'

@@ -146,15 +146,16 @@ def main(args):
 
     # Update & generate audio CLAD
     if args.update_clad:
-        Logger.info('Updating audio event list and CLAD files. Do NOT check in updated audio files!!!')
+        Logger.info('Updating audio event list. Do NOT check in updated audio files!!!')
 
         # Update audio event list
-        result = UpdateAudioAssets.main(['update', '-'])
+        result = UpdateAudioAssets.main(['update-alt-workspace', __victor_external_path])
         if result != os.EX_OK:
             Logger.error('\'{0}\' Failed'.format('UpdateAudioAssets.py update'))
             return os.EX_SOFTWARE
         # Generate audio CLAD
-        result = UpdateAudioAssets.main(['generate'])
+        Logger.info('Generate CLAD files. Do NOT check in updated audio files!!!')
+        result = UpdateAudioAssets.main(['generate', '--soundBankDir', __victor_external_path])
         if result != os.EX_OK:
             Logger.error('\'{0}\' Failed'.format('UpdateAudioAssets.py generate'))
             return os.EX_SOFTWARE
@@ -233,9 +234,9 @@ def parse_args(argv=[], print_usage=False):
     parser.add_argument('--build-deploy', '-b', dest='build_deploy', action='store_true',
                         help='Force Build Victor and deploy updated assets')
     parser.add_argument('--configuration', '-c', dest='configuration', metavar='configuration',
-                        help='Build configuration {Debug,Release}')
+                        help='Build configuration {Debug, Release}')
     parser.add_argument('--platform', '-p', dest='platform', metavar='platform',
-                        help='Build target platform {android,mac}')
+                        help='Build target platform {mac, vicos}')
 
     if print_usage:
         parser.print_help()
