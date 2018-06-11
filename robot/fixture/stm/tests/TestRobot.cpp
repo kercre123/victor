@@ -1269,7 +1269,7 @@ static void RobotFlexFlowPackoutReport(void)
 
 static void BatteryCheck(void)
 {
-  const int VBAT_MV_MINIMUM = 3600;
+  const int VBAT_MV_MINIMUM = 3700;
   const int VBAT_MV_MAXIMUM = 4050;
   
   ConsolePrintf("battery check\n");
