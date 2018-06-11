@@ -750,7 +750,18 @@ void EmrChecks(void)
 
 void EmrUpdate(void)
 {
+  //from clad/src/clad/types/factoryTestTypes.clad
+  enum PlaypenTestMask {
+    BackpackElectricalError      = 0x00000001,
+    UnexpectedTouchDetectedError = 0x00000002,
+    NoisyTouchSensorError        = 0x00000004,
+    CubeRadioError               = 0x00000008,
+  };
+
   if( IS_FIXMODE_ROBOT3() && !IS_FIXMODE_OFFLINE() ) {
+    uint32_t PlaypenTestMask = BackpackElectricalError | UnexpectedTouchDetectedError | NoisyTouchSensorError;
+    ConsolePrintf("playpen disable test mask %08x\n", PlaypenTestMask);
+    rcomSmr( EMR_FIELD_OFS(playpenTestDisableMask), PlaypenTestMask );
     rcomSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 1 );
   }
   if( IS_FIXMODE_PACKOUT() && !IS_FIXMODE_OFFLINE() ) {
@@ -1158,8 +1169,28 @@ static void RobotLogCollect(void)
   int ofs = 0;
   for( int i=0; i<numlogs; i++ )
   {
+    int len = 0;
+    flexnfo.log[i] = NULL;
+    flexnfo.loglen[i] = 0;
+    
     //ConsolePrintf("reading robot log%u:\n", i);
-    int len = rcomRlg(i, &logbuf[ofs], logbufsize-1-ofs);
+    error_t e = ERROR_OK;
+    try { len = rcomRlg(i, &logbuf[ofs], logbufsize-1-ofs); } catch(int err) { e=err; len=0; }
+    
+    //DEBUG
+    if( e != ERROR_OK && !g_isReleaseBuild ) {
+      ConsolePrintf("LOG READ ERROR: %i -- press a key to approve\n", e);
+      if( e == ERROR_ROBOT_MISSING_LOGFILE )
+        ConsolePrintf("ERROR_ROBOT_MISSING_LOGFILE\n");
+      while( ConsoleReadChar() > -1 );
+      uint32_t Tstart = Timer::get();
+      while( Timer::elapsedUs(Tstart) < 3*1000*1000 ) {
+        if( ConsoleReadChar() > -1 ) { e=ERROR_OK; break; }
+      }
+    }//-*/
+    
+    if( e != ERROR_OK )
+      throw e;
     
     if( len > 0 ) {
       logbuf[ofs+len] = '\0'; //null terminate
@@ -1243,12 +1274,12 @@ static void BatteryCheck(void)
 }
 
 void SadBeep(void) {
-  rcomEng(RCOM_ENG_IDX_SOUND, RCOM_ENG_SOUND_DAT0_TONE_BEEP, 200 /*volume*/);
+  rcomEng(RCOM_ENG_IDX_SOUND, RCOM_ENG_SOUND_DAT0_TONE_BEEP, 255 /*volume*/);
   Timer::delayMs(750); //wait for sound to finish
 }
 
 void TurkeysDone(void) {
-  rcomEng(RCOM_ENG_IDX_SOUND, RCOM_ENG_SOUND_DAT0_TONE_BELL, 127 /*volume*/);
+  rcomEng(RCOM_ENG_IDX_SOUND, RCOM_ENG_SOUND_DAT0_TONE_BELL, 255 /*volume*/);
   Timer::delayMs(750); //wait for sound to finish
 }
 
@@ -1340,9 +1371,11 @@ TestFunction* TestRobotPackoutGetTests(void) {
     BatteryCheck,
     RobotLogCollect,
     SadBeep, //eng sound cmd only works before packout flag set
+    //RobotFlexFlowPackoutReport,
     EmrUpdate, //set packout flag, timestamp
+    TurkeysDone,
     RobotPowerDown,
-    RobotFlexFlowPackoutReport,
+    //RobotFlexFlowPackoutReport,
     NULL,
   };
   return m_tests;
