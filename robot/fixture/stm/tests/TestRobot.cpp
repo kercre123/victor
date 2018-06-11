@@ -1210,15 +1210,6 @@ static void RobotLogCollect(void)
 
 static void RobotFlexFlowPackoutReport(void)
 {
-  //XXX validate nfo
-  if( !flexnfo.esn || flexnfo.esn == 0xFFFFffff || !flexnfo.bsv.ein[0] || flexnfo.bsv.ein[0] == 0xFFFFffff ) //|| !flexnfo.bat_mv ) 
-  {
-    ConsolePrintf("BAD_ARG: PackoutReport() esn=%08x ein=%08x bat_mv=%i\n", flexnfo.esn, flexnfo.bsv.ein[0], flexnfo.bat_mv);
-    throw ERROR_BAD_ARG;
-  }
-  //if( !flexnfo.packoutdate )
-  //  throw ERROR_BAD_ARG;
-  
   //dump collected robot logs
   for( int i=0; i<numlogs; i++ ) {
     FLEXFLOW::printf("<flex> log packout_%08x_log%u.log\n", flexnfo.esn, i);
@@ -1248,6 +1239,28 @@ static void RobotFlexFlowPackoutReport(void)
     FLEXFLOW::printf("vbat %imV %i\n", flexnfo.bat_mv, flexnfo.bat_raw);
   }
   FLEXFLOW::printf("</flex>\n");
+  
+  //validate required stuffs
+  bool valid_head_esn = !( flexnfo.esn==0 || flexnfo.esn==0xFFFFffff || (flexnfo.esn&0xFFF00000)==0 );
+  if( !valid_head_esn )
+    throw ERROR_ROBOT_INVALID_ESN;
+  
+  bool valid_body_ein = !( flexnfo.bsv.ein[0]==0 || flexnfo.bsv.ein[0]==0xFFFFffff || (flexnfo.bsv.ein[0]&0xFFF00000)==0 );
+  if( !valid_body_ein ) {
+    if( !g_isReleaseBuild ) //allow empty ein for debug
+      ConsolePrintf("---INVALID EIN---\n");
+    else
+      throw ERROR_ROBOT_INVALID_BODY_EIN;
+  }
+  
+  //if( !flexnfo.packoutdate )
+  //  throw ERROR_BAD_ARG;
+  
+  //DEBUG check
+  if( !flexnfo.bat_mv && !g_isReleaseBuild ) {
+    ConsolePrintf("----------\nBAD_ARG: PackoutReport() esn=%08x ein=%08x bat_mv=%i\n----------\n", flexnfo.esn, flexnfo.bsv.ein[0], flexnfo.bat_mv);
+    throw ERROR_BAD_ARG;
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -1371,11 +1384,10 @@ TestFunction* TestRobotPackoutGetTests(void) {
     BatteryCheck,
     RobotLogCollect,
     SadBeep, //eng sound cmd only works before packout flag set
-    //RobotFlexFlowPackoutReport,
     EmrUpdate, //set packout flag, timestamp
-    TurkeysDone,
+    TurkeysDone, //DEBUG: does this work with PVT OS eng changes?
     RobotPowerDown,
-    //RobotFlexFlowPackoutReport,
+    RobotFlexFlowPackoutReport,
     NULL,
   };
   return m_tests;
