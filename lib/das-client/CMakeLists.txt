@@ -102,6 +102,6 @@ target_link_libraries(DAS
   ${PLATFORM_LIBS}
 )
 
-anki_build_target_license(DAS "ANKI" "MIT")
+anki_build_target_license(DAS "ANKI" "MIT,${CMAKE_CURRENT_SOURCE_DIR}/src/LICENSE")
 
 anki_build_strip(TARGET DAS)

@@ -19,7 +19,7 @@ foreach(LIB ${BREAKPAD_LIBS})
         "${BREAKPAD_LIB_PATH}/lib${LIB}.a"
         INTERFACE_INCLUDE_DIRECTORIES
         "${BREAKPAD_INCLUDE_PATHS}")
-    anki_build_target_license(${LIB} "BSD-3")
+    anki_build_target_license(${LIB} "BSD-4,${CMAKE_SOURCE_DIR}/licenses/breakpad.license")
     # message(STATUS "LIB: ${LIB}")
 endforeach()
 

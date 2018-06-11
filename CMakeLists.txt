@@ -201,15 +201,13 @@ endif()
 #
 # Recommend moving for leaf CMakeLists.txt to this file
 
-#include(opencv)
-## do audio repo later include(lib/audio/cmake/wwise.cmake)
-#include(okao)
-#include(flatbuffers)
-#include(sodium)
-#include(breakpad)
-#include(aubio)
-#include(sensory)
-## include(text2speech)
-#include(signalessence)
+include(opencv)
+include(okao)
+include(flatbuffers)
+include(sodium)
+include(breakpad)
+include(aubio)
+include(sensory)
+include(signalessence)
 
 check_licenses()

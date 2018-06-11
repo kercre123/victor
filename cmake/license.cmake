@@ -4,82 +4,61 @@
 include(get_all_targets)
 include(target_dependencies)
 
-# https://github.com/OpenSourceOrg/licenses
+if(NOT MACOSX)
+option(ENFORCE_LICENSES "Fail a build on any license irregularities." OFF)
+endif()
 
-SET(KNOWN_LICENSES
-  "AAL" "AFL-3.0" "AGPL-3.0" "APL-1.0" "APSL-2.0" "Apache-1.1" "Apache-2.0" "Artistic-1.0" "Artistic-2.0"
-  "BSD-2" "BSD-3" "BSD-4" "BSL-1.0"
-  "CATOSL-1.1" "CDDL-1.0" "CECILL-2.1" "CNRI-Python" "CPAL-1.0" "CPL-1.0" "CUA-OPL-1.0" "CVW"
-  "ECL-1.0" "ECL-2.0" "EFL-1.0" "EFL-2.0" "EPL-1.0" "EUDatagrid" "EUPL-1.1" "Entessa"
-  "Fair" "Frameworx-1.0"
-  "GFDL-1.2" "GFDL-1.3" "GPL-1.0" "GPL-2.0" "GPL-3.0"
-  "HPND"
-  "IPA" "IPL-1.0" "ISC" "ISC:wraptext" "Intel"
-  "LGPL-2.0" "LGPL-2.1" "LGPL-3.0" "LPL-1.0" "LPL-1.02" "LPPL-1.3c" "LiLiQ-P-1.1" "LiLiQ-R+" "LiLiQ-R-1.1" 
-  "MIT" "MPL-1.0" "MPL-1.1" "MPL-2.0" "MS-PL" "MS-RL" "MirOS" "Motosoto" "Multics"
-  "NASA-1.3" "NCSA" "NGPL" "NPOSL-3.0" "NTP" "Naumen" "Nokia"
-  "OCLC-2.0" "OFL-1.1" "OGTSL" "OPL-2.1" "OSL-1.0" "OSL-2.1" "OSL-3.0"
-  "PHP-3.0" "PostgreSQL" "Python-2.0"
-  "QPL-1.0"
-  "RPL-1.1" "RPL-1.5" "RPSL-1.0" "RSCPL"
-  "SISSL" "SPL-1.0" "Simple-2.0" "Sleepycat"
-  "UPL"
-  "VSL-1.0"
-  "W3C" "WXwindows" "Watcom-1.0"
-  "Xnet"
-  "ZPL-2.0" "Zlib"
+if(ENFORCE_LICENSES)
+  set(MESSAGE_STATUS FATAL_ERROR)
+else()
+  set(MESSAGE_STATUS STATUS)
+endif()
 
-  # additional licenses referenced by Anki documentation but not part of OpenSourceOrg/licenses
-  "Anki-Inc." "Apache-1.0" "CC0" "CCBY" "CCBY-SA" "SSL" "WTFPL" "Unlicense" "Proprietary" "Public Domain" "SAAS"
-)
+file(STRINGS ${CMAKE_SOURCE_DIR}/docs/development/licenses.md license_file ENCODING UTF-8)
+list(REMOVE_AT license_file 0)
+foreach(line ${license_file})
+    string(SUBSTRING "${line}" 0 1 firstchar)
+    if(NOT firstchar STREQUAL "|")
+      continue()
+    endif()
 
-# https://ankiinc.atlassian.net/wiki/spaces/ET/pages/380305449/Open+Source+License+Go+Caution+Stop+List+Distributed+Software
+    string(REPLACE "|" ";" columns "${line}")
 
-set(GO_LICENSES
-  "Anki-Inc."
-  "Proprietary"
+    list(LENGTH columns columns_count)
+    if(NOT columns_count EQUAL 6)
+      message(FATAL_ERROR "Malformed license table, with ${columns_count} columns instead of 6 for '${line}'")
+    endif()
 
-  "Artistic-2.0"
-  "Apache-1.1" "Apache-2.0"
-  "BSD-2" "BSD-3" "BSD-4" "BSL-1.0"
-  "CC0" "CCBY"
-  "MIT"
-  "PHP-3.0"
-  "Public Domain"
-  "Python-2.0"
-  "WTFPL"
-  "Zlib"
-  "Unlicense"
-)
+    list(GET columns 1 license)
+    list(GET columns 2 approval)
 
-set(CAUTION_LICENSES
-  "Apache-1.0"
-  "EPL-1.0"
-  "GPL-2.0"
-  "LGPL-2.1"
-  "MPL-1.1" "MPL-2.0"
-  "CDDL-1.0" "CPL-1.0"
-  "IPL-1.0"
-)
+    string(STRIP "${license}" license)
+    string(STRIP "${approval}" approval)
 
-set(STOP_LICENSES
-  "GPL-3.0"
-  "LGPL-3.0"
-  "Sleepycat"
-  "CCBY-SA"
-  "SAAS"
-)
-
-# all messages to cmake output, do not cause a build break
-set(LICENSE_CAUTION_MODE STATUS)
-set(LICENSE_STOP_MODE STATUS)
+    if(approval STREQUAL "Go")
+        list(APPEND GO_LICENSES ${license})
+    elseif(approval STREQUAL "Stop")
+        list(APPEND STOP_LICENSES ${license})
+    elseif(approval STREQUAL "Caution")
+        list(APPEND CAUTION_LICENSES ${license})
+    elseif(approval STREQUAL "Reviewing")
+        list(APPEND REVIEWING_LICENSES ${license})
+    endif()
+    list(APPEND ALL_LICENSES ${license})
+endforeach()
 
 function(anki_build_target_license target)
+  set_property(TARGET ${target} APPEND PROPERTY APPROVED_LICENSE 0)
+
   foreach(arg IN LISTS ARGN)
-    # shortcut for Anki, Inc.
+
+    # Anki and Commercial licenses need no license file
 
     if(arg STREQUAL "ANKI")
-      set(arg "Anki-Inc.,${CMAKE_SOURCE_DIR}/LICENSE")
+      continue()
+    endif()
+    if(arg STREQUAL "Commercial")
+      continue()
     endif()
 
     # split string separated by comma, e.g. "license,file"
@@ -94,45 +73,57 @@ function(anki_build_target_license target)
     elseif(fields_count EQUAL 1)
       # license, missing file
       list(GET fields 0 license)
-      message(STATUS "WARNING: missing path to license file for ${license} on ${target} target")
-      return()
+      unset(file)
 
     else()
       # missing license, missing file
-      message(STATUS "WARNING: missing license information for ${target} target")
+      message(${MESSAGE_STATUS} "WARNING: missing license information for ${target} target")
       return()
     endif()
 
     # check against known, caution and stop lists
 
-    list(FIND KNOWN_LICENSES ${license} found)
+    string(REPLACE "-like" "" license "${license}") # ignore -like licenses defer to base license
+
+    list(FIND ALL_LICENSES ${license} found)
     if(found EQUAL -1)
-      message(STATUS "ERROR: unrecognised license ${license} for ${target} target")
+      message(${MESSAGE_STATUS} "ERROR: unrecognised license ${license} for ${target} target")
+      return()
+    endif()
+
+    list(FIND REVIEWING_LICENSES ${license} found)
+    if(found GREATER_EQUAL 0)
+      message(${MESSAGE_STATUS} "WARNING: license ${license} for ${target} target is under review")
       return()
     endif()
 
     list(FIND CAUTION_LICENSES ${license} found)
     if(found GREATER_EQUAL 0)
-      message(${LICENSE_CAUTION_MODE} "CAUTION: license ${license} for ${target} target needs approval")
+      message(${MESSAGE_STATUS} "CAUTION: license ${license} for ${target} target needs approval")
       return()
     endif()
 
     list(FIND STOP_LICENSES ${license} found)
     if(found GREATER_EQUAL 0)
-      message(${LICENSE_STOP_MODE} "STOP: license ${license} for ${target} target needs approval")
+      message(${MESSAGE_STATUS} "STOP: license ${license} for ${target} target needs approval")
       return()
     endif()
 
-    # output to binary directory
-    if(IS_ABSOLUTE ${file})
-      file(COPY ${file} DESTINATION ${CMAKE_BINARY_DIR}/licences/${target}-${license})
+    if(file)
+      # output to binary directory
+      if(IS_ABSOLUTE ${file})
+        file(COPY ${file} DESTINATION ${CMAKE_BINARY_DIR}/licences/${target}-${license})
+      else()
+        message(FATAL_ERROR "${target} target is using a relative path, ${file}, for it's ${license} license")
+        return()
+      endif()
     else()
-      message(FATAL_ERROR "${target} target is using a relative path, ${file}, for it's ${license} license")
+      message(${MESSAGE_STATUS} "WARNING: missing path to license file for ${license} on ${target} target")
       return()
     endif()
   endforeach()
 
-  # set_property(TARGET ${target} APPEND PROPERTY APPROVED_LICENSE 1)
+  set_property(TARGET ${target} APPEND PROPERTY APPROVED_LICENSE 1)
 endfunction()
 
 function(check_licenses)
@@ -178,9 +169,9 @@ function(check_licenses)
           message("${target} ${license}")
         endif()
 
-        get_property(prop TARGET ${target} PROPERTY APPROVED_LICENSE)
-        if(NOT prop)
-          message(STATUS "WARNING: licensing information missing or is not approved for ${target} target")
+        get_property(isset TARGET ${target} PROPERTY APPROVED_LICENSE SET)
+        if(NOT isset)
+          message(${MESSAGE_STATUS} "WARNING: licensing information missing for ${target} target")
         endif()
 
       endif()

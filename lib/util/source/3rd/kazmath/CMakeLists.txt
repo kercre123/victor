@@ -20,6 +20,6 @@ target_include_directories(kazmath PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>)
 
-anki_build_target_license(kazmath "BSD-2,${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md")
+anki_build_target_license(kazmath "BSD-4,${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md")
 
 export(TARGETS kazmath FILE kazmath-config.cmake)

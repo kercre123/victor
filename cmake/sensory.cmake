@@ -18,5 +18,5 @@ foreach(LIB ${SENSORY_LIBS})
     "${SENSORY_LIB_PATH}/lib${LIB}.a"
     INTERFACE_INCLUDE_DIRECTORIES
     "${SENSORY_INCLUDE_PATH}")
-  anki_build_target_license(${LIB} "Proprietary")
+  # anki_build_target_license(${LIB} "Commercial")
 endforeach()
