@@ -473,6 +473,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
 
       JsonTools::GetValueOptional(jsonRoot, "scanlineOpacity", scanlineOpacity);
       JsonTools::GetValueOptional(jsonRoot, "frameDuration_ms", frameUpdateInterval);
+      JsonTools::GetValueOptional(jsonRoot, "triggerTime_ms", triggerTime_ms);
 
       return outSeq != nullptr;
     }
