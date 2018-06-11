@@ -55,6 +55,7 @@ public:
     _behaviors[Step::WelcomeHomeReaction]    = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingReactToWelcomeHome) );
     
     _step = Step::Asleep;
+    _stepAfterResumeFromCharger = Step::Asleep; // this is state is ignored since it could never happen outside initialization
     _currentBehavior = _behaviors[_step];
     DebugTransition("Waiting for continue to wake up");
   }
@@ -64,9 +65,7 @@ public:
     if( _step == Step::Complete ) {
       return;
     } else if( _step == Step::Asleep ) {
-      DebugTransition("WakingUp");
-      _step = Step::WakingUp;
-      _currentBehavior = _behaviors[_step];
+      TransitionToWakingUp();
     } else {
       DEV_ASSERT(false, "OnboardingStageWakeUp.UnexpectedOnContinue");
     }
@@ -88,7 +87,18 @@ public:
   
   virtual void OnResume( BehaviorExternalInterface& bei, BehaviorID interruptingBehavior ) override
   {
-    if( (_step == Step::WaitingForTrigger) && (interruptingBehavior == BEHAVIOR_ID(TriggerWordDetected) ) ) {
+    const bool justGotTrigger = (_step == Step::WaitingForTrigger) && (interruptingBehavior == BEHAVIOR_ID(TriggerWordDetected));
+    auto* driveOffCharger = _behaviors[Step::DriveOffCharger];
+    if( driveOffCharger->WantsToBeActivated() ) {
+      DebugTransition("Driving off charger");
+      if( justGotTrigger ) {
+        _stepAfterResumeFromCharger = Step::WaitingForWelcomeHome;
+      } else {
+        _stepAfterResumeFromCharger = _step;
+      }
+      _step = Step::DriveOffCharger;
+      _currentBehavior = driveOffCharger;
+    } else if( justGotTrigger ) {
       // successful trigger ==> resume from next step
       TransitionToWaitingForWelcomeHome();
     }
@@ -109,7 +119,7 @@ public:
         TransitionToWaitingForTrigger();
       }
     } else if( _step == Step::DriveOffCharger ) {
-      TransitionToWaitingForTrigger();
+      OnFinishedDrivingOffCharger();
     } else if( _step == Step::WelcomeHomeReaction ) {
       // done
       DebugTransition("Stage complete");
@@ -122,7 +132,13 @@ public:
   
   virtual void Update( BehaviorExternalInterface& bei ) override
   {
-    if( _step == Step::Complete ) {
+    if( _step == Step::DriveOffCharger ) {
+      auto castPtr = dynamic_cast<ICozmoBehavior*>(_behaviors[Step::DriveOffCharger]);
+      if( (castPtr != nullptr) && !castPtr->IsActivated() && !castPtr->WantsToBeActivated() ) {
+        // Driving off the charger got canceled
+        OnFinishedDrivingOffCharger();
+      }
+    } else if( _step == Step::Complete ) {
       return;
     } else if( _step == Step::WaitingForWelcomeHome ) {
       const auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
@@ -134,6 +150,13 @@ public:
   }
   
 private:
+  
+  void TransitionToWakingUp()
+  {
+    DebugTransition("WakingUp");
+    _step = Step::WakingUp;
+    _currentBehavior = _behaviors[_step];
+  }
   
   void TransitionToWaitingForTrigger()
   {
@@ -162,6 +185,28 @@ private:
     SetTriggerWordEnabled(false);
   }
   
+  void OnFinishedDrivingOffCharger()
+  {
+    switch( _stepAfterResumeFromCharger ) {
+      case Step::Asleep: // initialization value, meaning it was part of the regular wakeup sequence
+      case Step::DriveOffCharger:
+      case Step::WaitingForTrigger:
+        TransitionToWaitingForTrigger();
+        break;
+      case Step::WakingUp:
+        TransitionToWakingUp();
+        break;
+      case Step::WaitingForWelcomeHome:
+        TransitionToWaitingForWelcomeHome();
+        break;
+      case Step::Complete:
+      case Step::WelcomeHomeReaction:
+        DEV_ASSERT(false, "OnboardingStageWakeUp.UnexpectedDriveOffCharger");
+        break;
+    }
+    _stepAfterResumeFromCharger = Step::Asleep; // reset
+  }
+  
   void DebugTransition(const std::string& debugInfo)
   {
     PRINT_CH_INFO("Behaviors", "OnboardingStatus.WakeUpWelcomeHome", "%s", debugInfo.c_str());
@@ -179,6 +224,7 @@ private:
   
   Step _step;
   IBehavior* _currentBehavior = nullptr;
+  Step _stepAfterResumeFromCharger = Step::Asleep;
   
   std::unordered_map<Step,IBehavior*> _behaviors;
 };

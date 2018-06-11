@@ -51,8 +51,8 @@ void BehaviorRespondToRenameFace::GetBehaviorJsonKeys(std::set<const char*>& exp
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRespondToRenameFace::HandleWhileInScopeButNotActivated(const GameToEngineEvent& event)
 {
-  auto & msg = event.GetData().Get_UpdateEnrolledFaceByID();
   
+  auto & msg = event.GetData().Get_UpdateEnrolledFaceByID();
   _name   = msg.newName;
   _faceID = msg.faceID;
 }
@@ -61,6 +61,8 @@ void BehaviorRespondToRenameFace::HandleWhileInScopeButNotActivated(const GameTo
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorRespondToRenameFace::WantsToBeActivatedBehavior() const
 {
+  // todo: this behavior shouldn't respond if the vision system didn't actually handle it, which
+  // can happen if the wrong original name is used (maybe we just get rid of that param?)
   const bool haveValidName = !_name.empty();
   return haveValidName;
 }
@@ -94,10 +96,23 @@ void BehaviorRespondToRenameFace::OnBehaviorActivated()
   //  
   //  DelegateIfInControl(turnTowardsFace);
   
-  SayTextAction* sayName = new SayTextAction(_name, SayTextIntent::Name_Normal);
-  sayName->SetAnimationTrigger(_animTrigger);
+  auto* action = new CompoundActionSequential();
   
-  DelegateIfInControl(sayName);
+  {
+    // 1. Say name once
+    SayTextAction* sayNameAction1 = new SayTextAction(_name, SayTextIntent::Name_FirstIntroduction_1);
+    sayNameAction1->SetAnimationTrigger(AnimationTrigger::MeetVictorSayName);
+    action->AddAction(sayNameAction1);
+  }
+  
+  {
+    // 2. Repeat name
+    SayTextAction* sayNameAction2 = new SayTextAction(_name, SayTextIntent::Name_FirstIntroduction_2);
+    sayNameAction2->SetAnimationTrigger(AnimationTrigger::MeetVictorSayNameAgain);
+    action->AddAction(sayNameAction2);
+  }
+  
+  DelegateIfInControl(action);
   
   _name.clear();
   _faceID = Vision::UnknownFaceID;

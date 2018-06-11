@@ -15,9 +15,9 @@
 #pragma once
 
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/iOnboardingStage.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/behaviorComponent/userIntent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "util/console/consoleFunction.h"
@@ -52,6 +52,7 @@ public:
     _behaviors[Step::LookingAround] = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingLookAtUser) );
     _behaviors[Step::MeetVictor]    = GetBehaviorByID( bei, BEHAVIOR_ID(MeetVictor) );
     _behaviors[Step::LookAtUser]    = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingLookAtUser) );
+    _behaviors[Step::WaitForReScan] = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingLookAtUser) );
     _behaviors[Step::RenameFace]    = GetBehaviorByID( bei, BEHAVIOR_ID(RespondToRenameFace) );
     _enrollmentSuccessful = false;
     _step = Step::LookingAround;
@@ -74,6 +75,19 @@ public:
       DebugTransition("Waiting on \"my name is\"");
       SetTriggerWordEnabled(true);
       SetAllowedIntent( USER_INTENT(meet_victor) );
+    } else if( _step == Step::WaitForReScan ) {
+      DebugTransition("Trying to start meet victor again for rescan");
+      // restart
+      ANKI_VERIFY(!_enrollmentName.empty(), "OnboardingStageMeetVictor.OnContinue.NoName", "Unknown name!");
+      const bool sayName = true;
+      const bool saveFaceToRobot = true;
+      const bool useMusic = false;
+      const s32 faceID = Vision::UnknownFaceID;
+      ExternalInterface::SetFaceToEnroll setFaceToEnroll(_enrollmentName, faceID, faceID, saveFaceToRobot, sayName, useMusic);
+      auto* ei = bei.GetRobotInfo().GetExternalInterface();
+      if( ei != nullptr ) {
+        ei->Broadcast(ExternalInterface::MessageGameToEngine{std::move(setFaceToEnroll)});
+      }
     } else if( _step == Step::LookAtUser ) {
       // done
       DebugTransition("Complete");
@@ -94,11 +108,11 @@ public:
   
   virtual void OnBehaviorDeactivated( BehaviorExternalInterface& bei ) override
   {
-    if( (_step == Step::MeetVictor) || (_step == Step::RenameFace) ) {
-      DebugTransition("Finished meeting victor, looking around, waiting for continue or rename face");
-      _step = Step::LookAtUser;
-      _selectedBehavior = _behaviors[_step];
-      SetTriggerWordEnabled( false ); // no more intents for this stage
+    if( _step == Step::MeetVictor ) {
+      _enrollmentEnded = true;
+      TryEndingMeetVictor();
+    } else if( _step == Step::RenameFace ) {
+      TransitionToLookAtFace();
     } else {
       DEV_ASSERT(false, "OnboardingStageMeetVictor.UnexpectedEndToBehavior");
     }
@@ -110,64 +124,37 @@ public:
       // resume from the beginning
       DebugTransition("Interruption will resume from the beginning");
       _step = Step::LookingAround;
-      SetTriggerWordEnabled(false);
-      return false;
-    } else {
-      // if enrollment finished, consider this stage done when it gets interrupted
-      return _enrollmentSuccessful;
     }
+    // always resume, even if enrollment finished, in case they place the robot on the charger but still
+    // want to rename their name
+    return false;
   }
   
   virtual void OnResume( BehaviorExternalInterface& bei, BehaviorID interruptingBehavior ) override
   {
     DebugTransition("Resuming");
     _selectedBehavior = _behaviors[_step];
+    const bool triggerEnabled = _step == Step::LookingAround || _step == Step::WaitForReScan;
+    SetTriggerWordEnabled( triggerEnabled );
   }
   
   virtual void Update( BehaviorExternalInterface& bei ) override
   {
     if( _step == Step::Complete ) {
       return;
-    }
-    if( (_step == Step::LookingAround) && _behaviors[Step::MeetVictor]->WantsToBeActivated() ) {
+    } else if( ((_step == Step::LookingAround) || (_step == Step::WaitForReScan)) && _behaviors[Step::MeetVictor]->WantsToBeActivated() ) {
       // move to meet victor when the voice intent triggers it
-      DebugTransition("Meeting victor");
-      _step = Step::MeetVictor;
+      TransitionToMeetVictor();
+    } else if( _behaviors[Step::RenameFace]->WantsToBeActivated() ) {
+      DebugTransition("Renaming face");
+      _step = Step::RenameFace;
       _selectedBehavior = _behaviors[_step];
-      
-      // get the pending intent's username so that devtools can rename it (original name must be known to rename)
-      if( ANKI_DEV_CHEATS ) {
-        const auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
-        UserIntent pendingIntent;
-        if( uic.IsUserIntentPending( USER_INTENT(meet_victor), pendingIntent ) ) {
-          _devEnrollmentName = pendingIntent.Get_meet_victor().username;
-        } else {
-          _devEnrollmentName = "";
-        }
-      }
     }
-  }
-  
-  virtual void GetAdditionalMessages( std::set<GameToEngineTag>& tags ) const override
-  {
-    tags.insert( GameToEngineTag::UpdateEnrolledFaceByID );
   }
   
   virtual void GetAdditionalMessages( std::set<EngineToGameTag>& tags ) const override
   {
     tags.insert( EngineToGameTag::FaceEnrollmentCompleted );
-  }
-
-  virtual void OnMessage( BehaviorExternalInterface& bei, const GameToEngineEvent& event ) override
-  {
-    if( _step == Step::Complete ) {
-      return;
-    }
-    if( event.GetData().GetTag() == GameToEngineTag::UpdateEnrolledFaceByID ) {
-      DebugTransition("Renaming face");
-      _step = Step::RenameFace;
-      _selectedBehavior = _behaviors[_step];
-    }
   }
   
   virtual void OnMessage( BehaviorExternalInterface& bei, const EngineToGameEvent& event ) override
@@ -176,14 +163,58 @@ public:
       return;
     }
     if( event.GetData().GetTag() == EngineToGameTag::FaceEnrollmentCompleted ) {
-      if( event.GetData().Get_FaceEnrollmentCompleted().result == FaceEnrollmentResult::Success ) {
+      const auto& msg = event.GetData().Get_FaceEnrollmentCompleted();
+      _enrollmentName = msg.name;
+      if( msg.result == FaceEnrollmentResult::Success ) {
         // now, any interruptions to this stage should consider it as completed
         _enrollmentSuccessful = true;
+        _receivedEnrollmentResult = true;
+        TryEndingMeetVictor();
+      } else if( msg.result != FaceEnrollmentResult::Incomplete ) {
+        _enrollmentSuccessful = false;
+        _receivedEnrollmentResult = true;
+        TryEndingMeetVictor();
       }
     }
   }
   
 private:
+  
+  void TransitionToMeetVictor()
+  {
+    DebugTransition("Meeting victor");
+    _step = Step::MeetVictor;
+    _selectedBehavior = _behaviors[_step];
+    
+    _receivedEnrollmentResult = false;
+    _enrollmentEnded = false;
+  }
+         
+  void TransitionToWaitForReScan()
+  {
+    DebugTransition("Scanning failed. Waiting for Continue to scan again, or another \"my name is\"");
+    _step = Step::WaitForReScan;
+    _selectedBehavior = _behaviors[_step];
+  }
+  
+  void TransitionToLookAtFace()
+  {
+    DebugTransition("Finished meeting victor, looking around, waiting for continue or rename face");
+    _step = Step::LookAtUser;
+    _selectedBehavior = _behaviors[_step];
+    SetTriggerWordEnabled( false ); // no more intents for this stage
+  }
+  
+  void TryEndingMeetVictor()
+  {
+    if( _receivedEnrollmentResult && _enrollmentEnded ) {
+      if( _enrollmentSuccessful ) {
+        TransitionToLookAtFace();
+      } else {
+        TransitionToWaitForReScan();
+      }
+    }
+  }
   
   void DebugTransition(const std::string& debugInfo)
   {
@@ -197,14 +228,14 @@ private:
     if( ANKI_DEV_CHEATS ) {
       if( _consoleFuncs.empty() ) {
         auto func = [&bei,this](ConsoleFunctionContextRef context) {
-          if( _devEnrollmentName.empty() ) {
+          if( _enrollmentName.empty() ) {
             // probably called before onboarding
             return;
           }
           const char* stateName = ConsoleArg_Get_String(context, "newName");
           ExternalInterface::UpdateEnrolledFaceByID msg;
           msg.faceID = 1; // just assume only one face, since this is onboarding. 0th is invalid, so must be 1
-          msg.oldName = _devEnrollmentName;
+          msg.oldName = _enrollmentName;
           msg.newName = stateName;
           bei.GetRobotInfo().GetExternalInterface()->Broadcast( ExternalInterface::MessageGameToEngine{std::move(msg)} );
         };
@@ -218,6 +249,7 @@ private:
     LookingAround,
     MeetVictor,
     LookAtUser,
+    WaitForReScan,
     RenameFace,
     Complete,
   };
@@ -226,10 +258,13 @@ private:
   IBehavior* _selectedBehavior = nullptr;
   bool _enrollmentSuccessful = false;
   
+  bool _receivedEnrollmentResult = false;
+  bool _enrollmentEnded = false;
+  std::string _enrollmentName;
+  
   std::unordered_map<Step, IBehavior*> _behaviors;
   
   std::list<Anki::Util::IConsoleFunction> _consoleFuncs;
-  std::string _devEnrollmentName; // cache the enrolled name so console vars can change it
 };
 
 } // namespace Cozmo

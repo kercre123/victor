@@ -209,8 +209,9 @@ bool BehaviorEnrollFace::WantsToBeActivatedBehavior() const
   auto& uic = GetBehaviorComp<UserIntentComponent>();
   const bool pendingIntent = uic.IsUserIntentPending(USER_INTENT(meet_victor) );
   const bool isWaitingResume = (_dVars.persistent.state != State::NotStarted);
+  const bool requestedRescan = _dVars.persistent.requestedRescan;
 
-  const bool wantsToBeActivated = pendingIntent || isWaitingResume;
+  const bool wantsToBeActivated = pendingIntent || isWaitingResume || requestedRescan;
   return wantsToBeActivated;
 }
 
@@ -238,7 +239,7 @@ Result BehaviorEnrollFace::InitEnrollmentSettings()
     return RESULT_FAIL;
   }
 
-  if( GetBEI().GetVisionComponent().IsNameTaken( _dVars.faceName ) ) {
+  if( GetBEI().GetVisionComponent().IsNameTaken( _dVars.faceName )  && !_dVars.enrollingSpecificID ) {
     TransitionToSayingIKnowThatName();
     return RESULT_FAIL;
   }
@@ -298,6 +299,8 @@ void BehaviorEnrollFace::OnBehaviorActivated()
     }
     return;
   }
+  
+  _dVars.persistent.requestedRescan = false;
 
   // Check if we were interrupted and need to fast forward:
   switch(_dVars.persistent.state)
@@ -1729,6 +1732,7 @@ void BehaviorEnrollFace::HandleWhileInScopeButNotActivated(const GameToEngineEve
                     msg.saveID, msg.observedID, Util::HidePersonallyIdentifiableInfo(msg.name.c_str()));
 
       *_dVars.persistent.settings = msg;
+      _dVars.persistent.requestedRescan = true;
       break;
     }
 

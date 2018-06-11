@@ -396,13 +396,17 @@ void BehaviorOnboarding::BehaviorUpdate()
       if( stageBehavior != nullptr ) {
         if( (stageBehavior != _dVars.lastBehavior) && !stageBehavior->WantsToBeActivated() ) {
           PRINT_NAMED_WARNING( "BehaviorOnboarding.BehaviorUpdate.DoesntWantToActivate",
-                               "Behavior %s doesn't want to activate",
+                               "Transition from %s to %s, but doesn't want to activate!",
+                               _dVars.lastBehavior == nullptr ? "null" : _dVars.lastBehavior->GetDebugLabel().c_str(),
                                stageBehavior->GetDebugLabel().c_str() );
           // move to next stage
           stageBehavior = nullptr;
         } else {
           break;
         }
+      } else {
+        PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.BehaviorUodate.OnboardingStatus",
+                      "Stage %s signaled it is complete", OnboardingStagesToString(_dVars.currentStage));
       }
       
       // stageBehavior wasn't valid, so move to next stage
@@ -565,18 +569,16 @@ bool BehaviorOnboarding::CheckAndDelegateInterruptions()
   for( size_t i=0; i<_iConfig.interruptions.size(); ++i ) {
     const auto& interruption = _iConfig.interruptions[i];
     const auto& interruptionID = _iConfig.interruptionIDs[i];
-    if( (_dVars.currentStage == OnboardingStages::NotStarted)
-         && (interruptionID == BEHAVIOR_ID(DriveOffCharger)) )
-    {
-      // first stage has a special drive off charger
-      continue;
-    }
-    if( !_dVars.receivedContinue
-        && (_dVars.currentStage == OnboardingStages::NotStarted)
-        && (interruptionID == BEHAVIOR_ID(MandatoryPhysicalReactions)))
-    {
-      // make sure no interruptions run
-      continue;
+    
+    // special logic for first stage
+    if( _dVars.currentStage == OnboardingStages::NotStarted ) {
+      if( interruptionID == BEHAVIOR_ID(DriveOffCharger) ) {
+        // first stage has a special drive off charger
+        continue;
+      } else if( !_dVars.receivedContinue ) {
+        // dont run interruptions if we havent received the first Continue, which would drive the robot off charger
+        continue;
+      }
     }
     
     if( interruption->IsActivated() ) {
@@ -758,6 +760,21 @@ void BehaviorOnboarding::SetAllowAnyIntent()
 void BehaviorOnboarding::UpdateBatteryInfo()
 {
   auto& info = _dVars.batteryInfo;
+  
+  if( !info.lowBattery
+     && !_dVars.receivedContinue
+     && (_dVars.currentStage == OnboardingStages::NotStarted)
+     && (GetBEI().GetRobotInfo().GetBatteryLevel() == BatteryLevel::Low) )
+  {
+    auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
+    if( ei != nullptr ) {
+      ExternalInterface::OnboardingLowBattery msg{true};
+      ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
+    }
+    info.lowBattery = true;
+  }
+  
+  
   if( !info.lowBattery ) {
     return;
   }
