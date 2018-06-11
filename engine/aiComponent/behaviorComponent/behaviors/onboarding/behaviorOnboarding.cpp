@@ -396,7 +396,7 @@ void BehaviorOnboarding::BehaviorUpdate()
       if( stageBehavior != nullptr ) {
         if( (stageBehavior != _dVars.lastBehavior) && !stageBehavior->WantsToBeActivated() ) {
           PRINT_NAMED_WARNING( "BehaviorOnboarding.BehaviorUpdate.DoesntWantToActivate",
-                               "Transition from %s to %s, but doesn't want to activate!",
+                               "OnboardingStatus: Transition from %s to %s, but it doesn't want to activate!",
                                _dVars.lastBehavior == nullptr ? "null" : _dVars.lastBehavior->GetDebugLabel().c_str(),
                                stageBehavior->GetDebugLabel().c_str() );
           // move to next stage

@@ -115,9 +115,12 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
                                            onOnboardingStage) );
   }
   
-  auto resetOnboarding = [this](ConsoleFunctionContextRef context) {
+  auto resetOnboarding = [ei,this](ConsoleFunctionContextRef context) {
     Util::FileUtils::DeleteFile( _saveFolder + BehaviorOnboarding::kOnboardingFilename );
     Util::FileUtils::DeleteFile( _saveFolder );
+    if( ei != nullptr ) {
+      ei->Broadcast(ExternalInterface::MessageGameToEngine{ExternalInterface::EraseAllEnrolledFaces{}});
+    }
   };
   _consoleFuncs.emplace_front( "ResetOnboarding", std::move(resetOnboarding), "Onboarding", "" );
 }
