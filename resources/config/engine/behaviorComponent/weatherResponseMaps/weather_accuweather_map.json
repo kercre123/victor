@@ -1,9 +1,10 @@
 // Values from https://developer.accuweather.com/weather-icons
 [
-  {
-    "APIValue" : "Sunny",
-    "CladType" : "Sunny"
-  },
+  // Duplicate of The Weather Company.
+  // {
+  //   "APIValue" : "Sunny",
+  //   "CladType" : "Sunny"
+  // },
   {
     "APIValue" : "Mostly Sunny",
     "CladType" : "Sunny"
