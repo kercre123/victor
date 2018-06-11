@@ -67,12 +67,15 @@ void BodyLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
 
 void BodyLightComponent::UpdateChargingLightConfig()
 {
-  BackpackLightsState state = BackpackLightsState::OffCharger;
-  if(_robot->GetBatteryComponent().IsOnChargerContacts())
+  // Display off lights if 
+  // (1) off charger, or
+  // (2) on charger but not charging or battery is full.
+  BackpackLightsState state = BackpackLightsState::Off;
+  if(_robot->GetBatteryComponent().IsOnChargerContacts() &&
+     _robot->GetBatteryComponent().IsCharging() && 
+     !_robot->GetBatteryComponent().IsBatteryFull())
   {
-    state = _robot->GetBatteryComponent().IsBatteryFull() ?
-            BackpackLightsState::Charged :
-            BackpackLightsState::Charging;
+    state = BackpackLightsState::Charging;
   }
   else if(_robot->GetBatteryComponent().IsBatteryLow())
   {
@@ -197,12 +200,10 @@ const char* BodyLightComponent::StateToString(const BackpackLightsState& state) 
   {
     case BackpackLightsState::BadCharger:
       return "BadCharger";
-    case BackpackLightsState::Charged:
-      return "Charged";
     case BackpackLightsState::Charging:
       return "Charging";
-    case BackpackLightsState::OffCharger:
-      return "OffCharger";
+    case BackpackLightsState::Off:
+      return "Off";
     case BackpackLightsState::Idle_09:
       return "Idle_09";
   }
