@@ -201,14 +201,19 @@ void process_monitor(Process* proc){
 
 
 #define MOTOR_TEST_POWER 0x3FFF
-#define MOTOR_TEST_DROPS  50
+#define WHEEL_TEST_DROPS 300
+#define LIFT_TEST_DROPS 75
+#define HEAD_TEST_DROPS 150
 
-uint64_t gMotorTestCycles = 0;
+bool gMotorTestCycles = false;
+int16_t gLiftTestPower = MOTOR_TEST_POWER;
+int16_t gHeadTestPower = MOTOR_TEST_POWER;
+int16_t gWheelTestPower = MOTOR_TEST_POWER;
 
 void start_motor_test(bool lockMenus)
 {
   if (!gMotorTestCycles) {
-    gMotorTestCycles =1 ;
+    gMotorTestCycles = true;
   }
   mm_debug_x("starting motor test\n");
   menu_set_busy(lockMenus);
@@ -218,7 +223,7 @@ void start_motor_test(bool lockMenus)
 int stop_motor_test(void)
 {
   if (gMotorTestCycles) {
-    gMotorTestCycles = 0;
+    gMotorTestCycles = false;
     menu_set_busy(0);
     return 1;
   }
@@ -227,23 +232,45 @@ int stop_motor_test(void)
 
 void command_motors(struct HeadToBody* data)
 {
-  static int drop_count = 0;
+  static int lift_drop_count = 0;
+  static int wheel_drop_count = 0;
+  static int head_drop_count = 0;
+
+
   if (gMotorTestCycles) {
-    int i;
-    int16_t power = (gMotorTestCycles%2) ? MOTOR_TEST_POWER : -MOTOR_TEST_POWER;
-    for (i=0;i<MOTOR_COUNT;i++) {
-      data->motorPower[i] = power * (1 -2*(i%2));
-    }
-    if (drop_count)
+    data->motorPower[MOTOR_LEFT] = gWheelTestPower;
+    data->motorPower[MOTOR_RIGHT] = -gWheelTestPower;
+    data->motorPower[MOTOR_LIFT] = gLiftTestPower;
+    data->motorPower[MOTOR_HEAD] = gHeadTestPower;
+    
+    if (lift_drop_count)
     {
-      drop_count--;
+      lift_drop_count--;
     }
     else {
-      gMotorTestCycles++;
-      drop_count = MOTOR_TEST_DROPS;
+      gLiftTestPower = -gLiftTestPower;
+      lift_drop_count = LIFT_TEST_DROPS;
+    }
+
+    if (wheel_drop_count){
+      wheel_drop_count--;
+    }
+    else {
+      gWheelTestPower = -gWheelTestPower;
+      wheel_drop_count = WHEEL_TEST_DROPS;
+    }
+
+    if (head_drop_count)
+    {
+      head_drop_count--;
+    }
+    else {
+      gHeadTestPower = -gHeadTestPower;
+      head_drop_count = HEAD_TEST_DROPS;
     }
   }
 }
+
 
 
 #define CHARGE_DISABLE_PERIOD 40 // 200ms
