@@ -5,7 +5,6 @@
 
 #include "encoders.h"
 #include "motors.h"
-#include "analog.h"
 #include "messages.h"
 #include "timer.h"
 
@@ -15,11 +14,6 @@ static const int MAX_POWER = 0x8000;
 static const uint16_t MOTOR_PERIOD = 20000; // 20khz
 static const int16_t MOTOR_MAX_POWER = SYSTEM_CLOCK / MOTOR_PERIOD;
 
-enum TargetEnable {
-  TARGET_ENABLE_MOTORS,
-  TARGET_ENABLE_CHARGER
-};
-
 enum MotorDirection {
   DIRECTION_UNINIT = 0,
   DIRECTION_FORWARD,
@@ -28,8 +22,6 @@ enum MotorDirection {
 };
 
 struct MotorConfig {
-  bool            charge_exclusive;
-
   // Pin BRSS
   volatile uint32_t* P_BSRR;
   uint32_t           P_Set;
@@ -63,25 +55,21 @@ struct MotorStatus {
 
 static const MotorConfig MOTOR_DEF[MOTOR_COUNT] = {
   {
-    true,
     &LTP1::bank->BSRR, LTP1::mask,
     &TIM1->CCR2, CONFIG_N(LTN1),
     &TIM1->CCR2, CONFIG_N(LTN2)
   },
   {
-    false,
     &RTP1::bank->BSRR, RTP1::mask,
     &TIM1->CCR1, CONFIG_N(RTN1),
     &TIM1->CCR1, CONFIG_N(RTN2)
   },
   {
-    false,
     &LP1::bank->BSRR, LP1::mask,
     &TIM1->CCR3, CONFIG_N(LN1),
     &TIM1->CCR4, CONFIG_N(LN2)
   },
   {
-    false,
     &HP1::bank->BSRR, HP1::mask,
     &TIM3->CCR2, CONFIG_N(HN1),
     &TIM3->CCR4, CONFIG_N(HN2)
@@ -91,11 +79,6 @@ static const MotorConfig MOTOR_DEF[MOTOR_COUNT] = {
 static MotorStatus motorStatus[MOTOR_COUNT];
 static int16_t motorPower[MOTOR_COUNT];
 static int moterServiced;
-
-// How many main execution ticks before we reenable our charger
-static const int DISABLE_ON_TIME = 200;
-static TargetEnable targetEnable = TARGET_ENABLE_CHARGER;
-static int idleTimer = 0;
 
 static void Motors::receive(HeadToBody *payload) {
   moterServiced = MOTOR_SERVICE_COUNTDOWN;
@@ -182,16 +165,6 @@ void Motors::init() {
   // Setup motor power
   memset(&motorStatus, 0, sizeof(motorStatus));
 
-  // Make sure N pins are outputs driven low
-  LN1::mode(MODE_OUTPUT);
-  LN2::mode(MODE_OUTPUT);
-  HN1::mode(MODE_OUTPUT);
-  HN2::mode(MODE_OUTPUT);
-  RTN1::mode(MODE_OUTPUT);
-  RTN2::mode(MODE_OUTPUT);
-  LTN1::mode(MODE_OUTPUT);
-  LTN2::mode(MODE_OUTPUT);
-
   // Preconfigure the timers for the motor treads
   LN1::alternate(2);
   LN2::alternate(2);
@@ -231,13 +204,6 @@ void Motors::stop() {
   RTN2::mode(MODE_OUTPUT);
   LTN1::mode(MODE_OUTPUT);
   LTN2::mode(MODE_OUTPUT);
-
-  MicroWait(5000);
-
-  LP1::mode(MODE_INPUT);
-  HP1::mode(MODE_INPUT);
-  RTP1::mode(MODE_INPUT);
-  LTP1::mode(MODE_INPUT);
 }
 
 static MotorDirection motorDirection(int power) {
@@ -253,44 +219,10 @@ static MotorDirection motorDirection(int power) {
 // This treats 0 power as a 'transitional' state
 // This can be optimized so that if in configured and direction has not changed, to reconfigure the pins, otherwise set power
 void Motors::tick() {
-  // Charge circuit enable logic
-  TargetEnable desiredEnable = (++idleTimer) < DISABLE_ON_TIME ? TARGET_ENABLE_MOTORS : TARGET_ENABLE_CHARGER;
-
-  if (targetEnable != desiredEnable) {
-    // Disable phase
-    switch (desiredEnable) {
-    case TARGET_ENABLE_MOTORS:
-      Analog::allowCharge(false);
-      break ;
-
-    case TARGET_ENABLE_CHARGER:
-      Analog::allowCharge(true);
-      break ;
-    }
-
-    targetEnable = desiredEnable;
-    return ;
-  }
-
   // Configure pins
   for(int i = 0; i < MOTOR_COUNT; i++) {
     MotorConfig* config =  (MotorConfig*) &MOTOR_DEF[i];
     MotorStatus* state = &motorStatus[i];
-
-    // Make sure motors are enabled by next phase
-    // We will need to table this power change for one transition
-    if (config->charge_exclusive) {
-      // Reset our timer
-      if (state->power != 0) {
-        idleTimer = 0;
-      }
-
-      // Cannot service this motor if the motor is inactive
-      if (targetEnable != TARGET_ENABLE_MOTORS) {
-        continue ;
-      }
-    }
-
     MotorDirection direction = motorDirection(state->power);
 
     // Motor is configured and running

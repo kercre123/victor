@@ -892,7 +892,7 @@ void process_incoming_frame(struct BodyToHead* bodyData)
     }
     if (printmask & (1<<show_BAT)) {
       print_response(":%i %i\n",
-                     bodyData->battery.battery,
+                     bodyData->battery.main_voltage,
                      bodyData->battery.temperature);
     }
     if (printmask & (1<<show_PROX)) {

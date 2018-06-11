@@ -35,6 +35,10 @@ struct HeadToBody gHeadData = {0};
 
 void core_common_on_exit(void)
 {
+  //stop motors and restore charger before shutdown
+  memset(&gHeadData, 0, sizeof(gHeadData));
+  gHeadData.powerFlags = POWER_CONNECT_CHARGER;
+  hal_send_frame(PAYLOAD_DATA_FRAME, &gHeadData, sizeof(gHeadData));
   //TODO: hal_terminate();
 }
 
@@ -278,18 +282,8 @@ void screen_test(void)
   }
 }
 
-void write_ccc_frame(void) {
-  struct ContactData ccdata={{0}};
-  hal_send_frame(PAYLOAD_CONT_DATA, &ccdata, sizeof(ccdata));
-}
 
 void manage_life_tests() {
-  if (gLifeTesting.battery && gLifeTesting.do_discharge) {
-    if (++gLifeTesting.cc_cycles >= CHARGE_DISABLE_PERIOD) {
-      //write a cc frame to disable charging for a while
-      write_ccc_frame();
-    }
-  }
   if (gLifeTesting.flash) {
   }
   if (gLifeTesting.motors ) {
@@ -315,29 +309,29 @@ void check_battery_discharge(struct BodyToHead*  bodyData) {
   if (gLifeTesting.battery) {
     charge_cycles++;
 
-    if ((charge_cycles & 0x7F)==0) { printf("battery is %.2fV\r", bodyData->battery.battery * BATTERY_SCALE); }
+    if ((charge_cycles & 0x7F)==0) { printf("battery is %.2fV\r", bodyData->battery.main_voltage * BATTERY_SCALE); }
     if ((charge_cycles & 0x1FF)==0) {
       mm_debug("battery is %.2fV (%d) [ext %d, temp %d flags %d]. We are %scharging",
-               bodyData->battery.battery * BATTERY_SCALE,
-               bodyData->battery.battery,
+               bodyData->battery.main_voltage * BATTERY_SCALE,
+               bodyData->battery.main_voltage,
                bodyData->battery.charger,
                bodyData->battery.temperature,
                bodyData->battery.flags,
                gLifeTesting.do_discharge?"dis":""); }
 
-    if (bodyData->battery.battery > BAT_CHARGED_THRESHOLD) {
+    if (bodyData->battery.main_voltage > BAT_CHARGED_THRESHOLD) {
       if (!gLifeTesting.do_discharge) {
         mm_debug("Battery charged for %d cycles to %fV", charge_cycles,
-                 bodyData->battery.battery * BATTERY_SCALE);
-        if (gLifeTesting.battery)
-          gLifeTesting.do_discharge = true;
+                 bodyData->battery.main_voltage * BATTERY_SCALE);
+        gLifeTesting.do_discharge = true;
+
         charge_cycles = 0;
       }
     }
-    if (bodyData->battery.battery < BAT_DISCHARGED_THRESHOLD) {
+    if (bodyData->battery.main_voltage < BAT_DISCHARGED_THRESHOLD) {
       if (gLifeTesting.do_discharge) {
         mm_debug("Battery discharged for %d cycles to %fV", charge_cycles,
-                 bodyData->battery.battery * BATTERY_SCALE);
+                 bodyData->battery.main_voltage * BATTERY_SCALE);
         gLifeTesting.do_discharge = false;
         charge_cycles = 0;
       }
@@ -515,6 +509,10 @@ void populate_outgoing_frame(void) {
     //make sure motors are off
     memset(gHeadData.motorPower, 0, sizeof(gHeadData.motorPower));
   }
+  if (gLifeTesting.battery) {
+    gHeadData.powerFlags = gLifeTesting.do_discharge ? POWER_DISCONNECT_CHARGER : POWER_CONNECT_CHARGER;
+  }
+
 }
 
 //static const float HAL_SEC_PER_TICK = (1.0 / 256) / 48000000;

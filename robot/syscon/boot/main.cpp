@@ -12,8 +12,6 @@
 #include "common.h"
 #include "hardware.h"
 
-//#define DISABLE_WDOG
-
 extern "C" void StartApplication(const uint32_t* stack, VectorPtr reset);
 
 static const uint16_t MAIN_EXEC_PRESCALE = 4; // Timer prescale
@@ -34,7 +32,13 @@ bool validate(void) {
 static bool boot_test(void) {
   // Failure count reached max
   if (APP->faultCounter[MAX_FAULT_COUNT - 1] != FAULT_NONE) {
-    BODY_TX::reset();
+    if (APP->faultCounter[MAX_FAULT_COUNT - 1] == FAULT_USER_WIPE) {
+      BODY_TX::mode(MODE_ALTERNATE);
+    } else {
+      // Signal recovery
+      BODY_TX::reset();
+    }
+
     return false;
   }
 
@@ -49,7 +53,7 @@ static bool boot_test(void) {
 
 void timer_init(void) {
   // Start our cheese watchdog
-  #ifndef DISABLE_WDOG
+  #ifndef DEBUG
   // Start the watchdog up
   IWDG->KR = 0xCCCC;
   IWDG->KR = 0x5555;
@@ -64,7 +68,7 @@ void timer_init(void) {
   TIM14->DIER = TIM_DIER_UIE;
   TIM14->CR1 = TIM_CR1_CEN;
 
-  NVIC_SetPriority(TIM14_IRQn, 3);
+  NVIC_SetPriority(TIM14_IRQn, 1);
   NVIC_EnableIRQ(TIM14_IRQn);
 }
 
@@ -83,8 +87,8 @@ extern "C" void TIM14_IRQHandler(void) {
 
 int main(void) {
   Power::init();
-  timer_init();
   Analog::init();
+  timer_init();
 
   // If fingerprint is invalid, cert is invalid, or reset counter is zero
   // 1) Wipe flash
@@ -99,7 +103,7 @@ int main(void) {
     // Hardware watchdog trap
     Comms::run();
   }
-  
+
   // Clear reset pin flag (for reset detect).
   RCC->CSR |= RCC_CSR_RMVF;
 
