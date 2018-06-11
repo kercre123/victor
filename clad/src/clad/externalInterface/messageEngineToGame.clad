@@ -1055,6 +1055,7 @@ autounion MessageEngineToGame
   Event                             Event                              = 0x02,
   RobotHistoryResult                RobotHistoryResult                 = 0x03,
   SDKActivationResult               SDKActivationResult                = 0x04,
+  RobotState                        RobotState                         = 0x05, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
 }
 
 } // namespace ExternalInterface

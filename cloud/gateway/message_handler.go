@@ -157,6 +157,62 @@ func CladStatusToProto(msg *gw_clad.Status) *extint.Status {
 	return status
 }
 
+func CladPoseToProto(msg *gw_clad.PoseStruct3d) *extint.PoseStruct {
+	return &extint.PoseStruct{
+		X:        msg.X,
+		Y:        msg.Y,
+		Z:        msg.Z,
+		Q0:       msg.Q0,
+		Q1:       msg.Q1,
+		Q2:       msg.Q2,
+		Q3:       msg.Q3,
+		OriginId: msg.OriginID,
+	}
+}
+
+func CladAccelDataToProto(msg *gw_clad.AccelData) *extint.AccelData {
+	return &extint.AccelData{
+		X: msg.X,
+		Y: msg.Y,
+		Z: msg.Z,
+	}
+}
+
+func CladGyroDataToProto(msg *gw_clad.GyroData) *extint.GyroData {
+	return &extint.GyroData{
+		X: msg.X,
+		Y: msg.Y,
+		Z: msg.Z,
+	}
+}
+
+func CladRobotStateToProto(msg *gw_clad.RobotState) *extint.RobotStateResult {
+	var robot_state *extint.RobotState
+	robot_state = &extint.RobotState{
+		Pose:                  CladPoseToProto(&msg.Pose),
+		PoseAngleRad:          msg.PoseAngle_rad,
+		PosePitchRad:          msg.PosePitch_rad,
+		LeftWheelSpeedMmps:    msg.LeftWheelSpeed_mmps,
+		RightWheelSpeedMmps:   msg.RightWheelSpeed_mmps,
+		HeadAngleRad:          msg.HeadAngle_rad,
+		LiftHeightMm:          msg.LiftHeight_mm,
+		BatteryVoltage:        msg.BatteryVoltage,
+		Accel:                 CladAccelDataToProto(&msg.Accel),
+		Gyro:                  CladGyroDataToProto(&msg.Gyro),
+		CarryingObjectId:      msg.CarryingObjectID,
+		CarryingObjectOnTopId: msg.CarryingObjectOnTopID,
+		HeadTrackingObjectId:  msg.HeadTrackingObjectID,
+		LocalizedToObjectId:   msg.LocalizedToObjectID,
+		LastImageTimeStamp:    msg.LastImageTimeStamp,
+		Status:                msg.Status,
+		GameStatus:            uint32(msg.GameStatus), // protobuf does not have a uint8 representation, so cast to a uint32
+	}
+
+	return &extint.RobotStateResult{
+		RobotState: robot_state,
+	}
+}
+
 func CladEventToProto(msg *gw_clad.Event) *extint.EventResult {
 	var event *extint.Event
 	switch tag := msg.Tag(); tag {
@@ -302,6 +358,31 @@ func (m *rpcService) DisplayFaceImageRGB(ctx context.Context, in *extint.Display
 			Description: "Message sent to engine",
 		},
 	}, nil
+}
+
+// TODO: This should be handled as an event stream once RobotState is made an event
+// Long running message for sending events to listening sdk users
+func (c *rpcService) RobotStateStream(in *extint.RobotStateRequest, stream extint.ExternalInterface_RobotStateStreamServer) error {
+	log.Println("Received rpc request RobotStateStream(", in, ")")
+
+	stream_channel := make(chan RobotToExternalResult, 16)
+	engineChanMap[gw_clad.MessageRobotToExternalTag_RobotState] = stream_channel
+	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_RobotState)
+	log.Println(engineChanMap[gw_clad.MessageRobotToExternalTag_RobotState])
+
+	for result := range stream_channel {
+		log.Println("Got result:", result)
+		robot_state := CladRobotStateToProto(result.Message.GetRobotState())
+		log.Println("Made RobotState:", robot_state)
+		if err := stream.Send(robot_state); err != nil {
+			return err
+		} else if err = stream.Context().Err(); err != nil {
+			// This is the case where the user disconnects the stream
+			// We should still return the err in case the user doesn't think they disconnected
+			return err
+		}
+	}
+	return nil
 }
 
 // Long running message for sending events to listening sdk users

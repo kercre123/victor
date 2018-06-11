@@ -49,6 +49,130 @@ class Robot:
         self.channel = None
         self.connection = None
         self.events = events.EventHandler(self.loop)
+        # Robot state/sensor data
+        self._pose:util.Pose = None
+        self._pose_angle_rad:float = None
+        self._pose_pitch_rad:float = None
+        self._left_wheel_speed_mmps:float = None
+        self._right_wheel_speed_mmps:float = None
+        self._head_angle_rad:float = None
+        self._lift_height_mm:float = None
+        self._battery_voltage:float = None
+        self._accel:util.Vector3 = None
+        self._gyro:util.Vector3 = None
+        self._carrying_object_id:float = None
+        self._carrying_object_on_top_id:float = None
+        self._head_tracking_object_id:float = None
+        self._localized_to_object_id:float = None
+        self._last_image_time_stamp:float = None
+        self._status:float = None
+        self._game_status:float = None
+
+    @property
+    def pose(self):
+        ''':class:`vector.util.Pose`: The current pose (position and orientation) of vector'''
+        return self._pose
+
+    @property
+    def pose_angle_rad(self):
+        '''Vector's pose angle (heading in X-Y plane).'''
+        return self._pose_angle_rad
+
+    @property
+    def pose_pitch_rad(self):
+        '''Vector's pose pitch (angle up/down).'''
+        return self._pose_pitch_rad
+    
+    @property
+    def left_wheel_speed_mmps(self):
+        '''Vector's left wheel speed in mm/sec'''
+        return self._left_wheel_speed_mmps
+    
+    @property
+    def right_wheel_speed_mmps(self):
+        '''Vector's right wheel speed in mm/sec'''
+        return self._right_wheel_speed_mmps
+
+    @property
+    def head_angle_rad(self):
+        '''Vector's head angle (up/down).'''
+        return self._head_angle_rad
+
+    @property
+    def lift_height_mm(self):
+        '''Height of Vector's lift from the ground.'''
+        return self._lift_height_mm
+    
+    @property
+    def battery_voltage(self):
+        '''The current battery voltage'''
+        return self._battery_voltage
+    
+    @property
+    def accel(self):
+        ''':class:`cozmo.util.Vector3`: The current accelerometer reading (x, y, z)'''
+        return self._accel
+
+    @property
+    def gyro(self):
+        ''':class:`cozmo.util.Vector3`: The current gyroscope reading (x, y, z)'''
+        return self._gyro
+    
+    @property
+    def carrying_object_id(self):
+        '''The ID of the object currently being carried (-1 if none)'''
+        return self._carrying_object_id
+
+    @property
+    def carrying_object_on_top_id(self):
+        '''The ID of the object on top of the object currently being carried (-1 if none)'''
+        return self._carrying_object_on_top_id
+    
+    @property
+    def head_tracking_object_id(self):
+        '''The ID of the object the head is tracking to (-1 if none)'''
+        return self._head_tracking_object_id
+
+    @property
+    def localized_to_object_id(self):
+        '''The ID of the object that the robot is localized to (-1 if none)'''
+        return self._localized_to_object_id
+    
+    @property
+    def last_image_time_stamp(self):
+        '''The robot's timestamp for the last image seen.'''
+        return self._last_image_time_stamp
+    
+    @property
+    def status(self):
+        return self._status
+
+    @property
+    def game_status(self):
+        return self._game_status
+
+    # Unpack streamed data to robot's internal properties
+    def unpack_robot_state(self, _, msg):
+        self._pose = util.Pose(x=msg.pose.x, y=msg.pose.y, z=msg.pose.z,
+                               q0=msg.pose.q0, q1=msg.pose.q1,
+                               q2=msg.pose.q2, q3=msg.pose.q3,
+                               origin_id=msg.pose.origin_id)
+        self._pose_angle_rad = msg.pose_angle_rad
+        self._pose_pitch_rad = msg.pose_pitch_rad
+        self._left_wheel_speed_mmps = msg.left_wheel_speed_mmps
+        self._right_wheel_speed_mmps = msg.right_wheel_speed_mmps
+        self._head_angle_rad = msg.head_angle_rad
+        self._lift_height_mm = msg.lift_height_mm
+        self._battery_voltage = msg.battery_voltage
+        self._accel = util.Vector3(msg.accel.x, msg.accel.y, msg.accel.z)
+        self._gyro = util.Vector3(msg.gyro.x, msg.gyro.y, msg.gyro.z)
+        self._carrying_object_id = msg.carrying_object_id
+        self._carrying_object_on_top_id = msg.carrying_object_on_top_id
+        self._head_tracking_object_id = msg.head_tracking_object_id
+        self._localized_to_object_id = msg.localized_to_object_id
+        self._last_image_time_stamp = msg.last_image_time_stamp
+        self._status = msg.status
+        self._game_status = msg.game_status
 
     def connect(self):
         credentials = aiogrpc.ssl_channel_credentials(root_certificates=self.trusted_certs)
@@ -57,12 +181,19 @@ class Robot:
         self.connection = client.ExternalInterfaceStub(self.channel)
         self.request_control()
         self.events.start(self.connection)
+        # Subscribe to a callback that updates the robot's local properties
+        self.events.subscribe("robot_state", self.unpack_robot_state)
 
     def disconnect(self, wait_for_tasks=True):
         if self.is_async and wait_for_tasks:
             for task in self.pending:
                 task.wait_for_completed()
-        self.release_control()
+        
+        try:
+            self.release_control().wait_for_completed()
+        except AttributeError as err:
+            pass
+        
         self.events.close()
         if self.channel:
             self.loop.run_until_complete(self.channel.close())

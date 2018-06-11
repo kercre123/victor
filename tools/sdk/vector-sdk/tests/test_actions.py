@@ -32,6 +32,10 @@ def main():
     # Use the same loop to avoid closing it too early
     loop = asyncio.get_event_loop()
 
+    print("------ Synchronous Robot using with ------")
+    with vector.Robot(args.ip, str(cert), loop=loop) as robot:
+        robot.events.subscribe('robot_state', test_subscriber)
+        robot.play_anim("anim_poked_giggle")
 
     print("------ Synchronous Robot using with ------")
     with vector.Robot(args.ip, str(cert), loop=loop) as robot:
@@ -57,6 +61,7 @@ def main():
 
     print("------ Asynchronous Robot using with ------")
     with vector.AsyncRobot(args.ip, str(cert), loop=loop) as robot:
+        robot.events.subscribe('robot_state', test_subscriber)
         robot.play_anim("anim_poked_giggle").wait_for_completed()
         robot.set_wheel_motors(100.0, 100.0).wait_for_completed()
 
