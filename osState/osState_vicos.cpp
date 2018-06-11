@@ -18,6 +18,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
+#include "util/string/stringUtils.h"
 #include "util/time/universalTime.h"
 
 #include "cutils/properties.h"
@@ -77,6 +78,7 @@ namespace {
   const char* kCPUTimeStatsFile = "/proc/stat";
   const char* kWifiTxBytesFile = "/sys/class/net/wlan0/statistics/tx_bytes";
   const char* kWifiRxBytesFile = "/sys/class/net/wlan0/statistics/rx_bytes";
+  const char* kBootIDFile = "/proc/sys/kernel/random/boot_id";
 
   // System vars
   uint32_t _cpuFreq_kHz;      // CPU freq
@@ -496,6 +498,19 @@ bool OSState::HasValidEMR() const
 {
   const auto * emr = Factory::GetEMR();
   return (emr != nullptr);
+}
+
+const std::string & OSState::GetBootID()
+{
+  if (_bootID.empty()) {
+    // http://0pointer.de/blog/projects/ids.html
+    _bootID = Util::FileUtils::ReadFile(kBootIDFile);
+    Anki::Util::StringTrimWhitespaceFromEnd(_bootID);
+    if (_bootID.empty()) {
+      LOG_ERROR("OSState.GetBootID", "Unable to read boot ID from %s", kBootIDFile);
+    }
+  }
+  return _bootID;
 }
 
 } // namespace Cozmo

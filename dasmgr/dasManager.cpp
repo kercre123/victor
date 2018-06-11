@@ -394,14 +394,17 @@ Result DASManager::Run(const bool & shutdown)
       LOG_ERROR("DASManager.Run.InvalidEMR", "INVALID EMR - NO ESN");
     }
     _robot_version = osState->GetOSBuildVersion() + "@" + osState->GetBuildSha();
+    _boot_id = osState->GetBootID();
     Cozmo::OSState::removeInstance();
   }
 
-  // TO DO VIC-2925: Track profile_id, feature_type, _feature_run_id
-  _boot_id = Anki::Util::GetUUIDString();
   _profile_id = "system";
   _feature_type = "system";
-  _feature_run_id = _boot_id;
+  _feature_run_id = Anki::Util::GetUUIDString();
+
+  // Log global parameters so we can match up log data with DAS records
+  LOG_INFO("DASManager.Run", "robot_id=%s robot_version=%s boot_id=%s feature_run_id=%s",
+           _robot_id.c_str(), _robot_version.c_str(), _boot_id.c_str(), _feature_run_id.c_str());
 
   //
   // Android log API is documented here:

@@ -118,6 +118,9 @@ public:
   // The name can change over the lifetime of the robot
   const std::string& GetRobotName() const;
 
+  // Return GUID string generated each time robot boots
+  const std::string& GetBootID();
+
   // Returns whether or not the robot has booted in recovery mode
   // which is done by holding the backpack button down for ~12 seconds
   // while robot is on charger
@@ -161,6 +164,7 @@ private:
   std::string _serialNumString = "";
   std::string _osBuildVersion  = "";
   std::string _buildSha        = "";
+  std::string _bootID          = "";
 
 }; // class OSState
 

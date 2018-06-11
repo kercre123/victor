@@ -362,5 +362,20 @@ bool OSState::HasValidEMR() const
   return false;
 }
 
+const std::string & OSState::GetBootID()
+{
+  if (_bootID.empty()) {
+    char buf[BUFSIZ] = "";
+    size_t bufsiz = sizeof(buf);
+    if (sysctlbyname("kern.bootsessionuuid", &buf, &bufsiz, NULL, 0) == 0) {
+      _bootID = std::string(buf, bufsiz);
+    }
+    if (_bootID.empty()) {
+      LOG_ERROR("OSState.GetBootID", "Unable to read boot session ID");
+    }
+  }
+  return _bootID;
+}
+
 } // namespace Cozmo
 } // namespace Anki
