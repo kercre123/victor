@@ -7,6 +7,7 @@ extern "C" {
 
 #include <stdint.h>
 #include "tests.h"
+#include "time.h"
 
 //-----------------------------------------------------------------------------
 //                  Fixture Modes
@@ -85,6 +86,9 @@ bool          fixtureValidateFixmodeInfo(bool print=0); //dev tool - validate co
 uint32_t      fixtureGetSerial(void); // Get a serial number for a device in the normal 12.20 fixture.sequence format
 uint32_t      fixtureReadSerial(void); // Read-only (NO MODIFY) current serial number position 12.20 format
 int           fixtureReadSequence(void); //read the current sequence #. DOES NOT make any sequence changes. reporting API only.
+void          fixtureSetTime(time_t time);
+time_t        fixtureGetTime(void);
+bool          fixtureTimeIsValid(void);
 #endif
 
 //Init data for g_fixmode_info[] - keep all mode info organized in one file!
@@ -204,6 +208,8 @@ typedef int error_t;
 #define ERROR_ROBOT_TEST_SEQUENCE         370 // This test cannot run until all previous tests have passed
 #define ERROR_ROBOT_PACKED_OUT            371 // test or function is locked because the robot is packed out
 #define ERROR_ROBOT_MISSING_LOGFILE       372 // expected logfile not found on this robot
+#define ERROR_ROBOT_INVALID_ESN           373 // invalid ESN read from the robot
+#define ERROR_ROBOT_INVALID_BODY_EIN      374 // invalid EIN read from robot body pcba
 
 //<export heading> Testport Errors - charge contact communications (BODY ROBOT PACKOUT)
 #define ERROR_TESTPORT_CMD_TIMEOUT        400 //timeout waiting for response to a command

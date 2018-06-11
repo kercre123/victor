@@ -15,15 +15,32 @@
 #include "tests.h"
 #include "timer.h"
 
+#include "stm32f2xx.h"
+#include "stm32f2xx_rtc.h"
+
 //global fixture data
 int g_fixmode = FIXMODE_NONE;
 const fixmode_info_t g_fixmode_info[] = { FIXMODE_INFO_INIT_DATA };
 const int g_num_fixmodes = sizeof(g_fixmode_info) / sizeof(fixmode_info_t);
 bool g_allowOutdated = false;
 
-//initialize
-void fixtureInit(void) {
+static void rtc_init_(void);
+
+void fixtureInit(void)
+{
+  Board::init();
+  
   //ConsolePrintf("fixtureInit()\n");
+  
+  //Try to restore saved mode
+  g_fixmode = FIXMODE_NONE;
+  if ( g_flashParams.fixtureTypeOverride > FIXMODE_NONE && g_flashParams.fixtureTypeOverride < g_num_fixmodes ) {
+    if( g_fixmode_info[g_fixmode].name != NULL ) { //Prevent invalid modes
+      g_fixmode = g_flashParams.fixtureTypeOverride;
+    }
+  }
+  
+  rtc_init_();
 }
 
 //safe method to get fixture name. default string if null, or invalid fixmode.
@@ -169,3 +186,170 @@ uint32_t fixtureReadSerial(void) {
 int fixtureReadSequence(void) {
   return GetSequence(0); //read only, no sequence changes or flash update
 }
+
+//-----------------------------------------------------------------------------
+//                  RTC
+//-----------------------------------------------------------------------------
+
+#define FIXTURE_RTC_DEBUG 0
+
+//backup register metadata cfg
+const uint32_t RTC_BACKUP_REG_INIT    = RTC_BKP_DR0;
+const uint32_t RTC_BACKUP_REG_CENTURY = RTC_BKP_DR1;
+const uint32_t RTC_INIT_VALUE = 0x32F2;
+
+/*
+char* rtctime_str(RTC_TimeTypeDef *time) {
+  static char str[10];
+  snprintf(str,sizeof(str)-1, "%0.2d:%0.2d:%0.2d", time->RTC_Hours, time->RTC_Minutes, time->RTC_Seconds);
+  str[sizeof(str)-1] = '\0';
+  return str;
+}
+*/
+
+char* unixtime_str(time_t time) {
+  static char str[10];
+  time = time % (24*3600); //discard date
+  snprintf(str,sizeof(str)-1, "%0.2d:%0.2d:%0.2d", time/3600, (time%3600)/60, time%60 );
+  str[sizeof(str)-1] = '\0';
+  return str;
+}
+
+void fixtureSetTime(time_t time)
+{
+  bool rtc_inited = RTC_ReadBackupRegister(RTC_BACKUP_REG_INIT) == RTC_INIT_VALUE;
+  
+  struct { RTC_DateTypeDef date; RTC_TimeTypeDef time; } rtc;
+  memset(&rtc, 0, sizeof(rtc));
+  
+  //unix -> stm rtc format
+  struct tm bdtime = *localtime(&time); //intermediate "broken-down time" (clib)
+  uint32_t century = 1900 + 100*(bdtime.tm_year/100);
+  rtc.date.RTC_Year = bdtime.tm_year %100;  //years since 1900 -> {0..99}
+  rtc.date.RTC_Month = bdtime.tm_mon +1;    //{0..11} -> {1..12}
+  rtc.date.RTC_Date = bdtime.tm_mday;       //{1..31}
+  rtc.date.RTC_WeekDay = bdtime.tm_wday +1; //{0..6} -> {1..7}
+  rtc.time.RTC_H12 = RTC_H12_AM; //not used, but make sure it's valid
+  rtc.time.RTC_Hours = bdtime.tm_hour;
+  rtc.time.RTC_Minutes = bdtime.tm_min;
+  rtc.time.RTC_Seconds = bdtime.tm_sec;
+  
+  #if FIXTURE_RTC_DEBUG > 0
+  ConsolePrintf("fixtureSetTime,%i,%08x,%s,%s", rtc_inited, time, unixtime_str(time), asctime(&bdtime)); //asctime appends '\n'
+  #endif
+  
+  if( rtc_inited ) {
+    RTC_SetTime(RTC_Format_BIN, &rtc.time);
+    RTC_SetDate(RTC_Format_BIN, &rtc.date);
+    RTC_WriteBackupRegister(RTC_BACKUP_REG_CENTURY, century);
+  }
+}
+
+time_t fixtureGetTime(void)
+{
+  time_t time = 0;
+  bool valid = fixtureTimeIsValid();
+  
+  struct { RTC_DateTypeDef date; RTC_TimeTypeDef time; } rtc;
+  RTC_GetDate(RTC_Format_BIN, &rtc.date);
+  RTC_GetTime(RTC_Format_BIN, &rtc.time);
+  
+  //stm rtc format -> unix
+  struct tm bdtime; memset(&bdtime,0,sizeof(bdtime));
+  bdtime.tm_year = valid ? RTC_ReadBackupRegister(RTC_BACKUP_REG_CENTURY) - 1900 + rtc.date.RTC_Year : rtc.date.RTC_Year;
+  bdtime.tm_mon = rtc.date.RTC_Month -1;
+  bdtime.tm_mday = rtc.date.RTC_Date;
+  bdtime.tm_wday = rtc.date.RTC_WeekDay -1;
+  bdtime.tm_hour = rtc.time.RTC_Hours;
+  bdtime.tm_min = rtc.time.RTC_Minutes;
+  bdtime.tm_sec = rtc.time.RTC_Seconds;
+  
+  if( valid )
+    time = mktime(&bdtime); //"broken-down time" (clib) -> unix
+  
+  #if FIXTURE_RTC_DEBUG > 0
+  ConsolePrintf("fixtureGetTime,%i,%08x,%s,%s", valid, time, unixtime_str(time), asctime(&bdtime)); //asctime appends '\n'
+  #endif
+  
+  return time;
+}
+
+bool fixtureTimeIsValid(void) {
+  return RTC_ReadBackupRegister(RTC_BACKUP_REG_INIT) == RTC_INIT_VALUE && 
+         RTC_ReadBackupRegister(RTC_BACKUP_REG_CENTURY) >= 1900;
+}
+
+static void rtc_init_(void)
+{
+  #if FIXTURE_RTC_DEBUG > 0
+  ConsolePrintf("********** RTC Init **********\n");
+  #endif
+  
+  if (RTC_ReadBackupRegister(RTC_BACKUP_REG_INIT) != RTC_INIT_VALUE)
+  {
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);
+    PWR_BackupAccessCmd(ENABLE);
+    
+    //set up 32k LSE
+    RCC_LSEConfig(RCC_LSE_ON);
+    while(RCC_GetFlagStatus(RCC_FLAG_LSERDY) == RESET)
+      ;
+    RCC_RTCCLKConfig(RCC_RTCCLKSource_LSE);
+    RCC_RTCCLKCmd(ENABLE);
+    RTC_WaitForSynchro(); //APB register synchronization
+    
+    //RTC init
+    RTC_InitTypeDef RTC_InitStructure;
+    RTC_InitStructure.RTC_AsynchPrediv = 0x7F; //clock prescaler for 32768 -> 1Hz
+    RTC_InitStructure.RTC_SynchPrediv = 0xFF;  //"
+    RTC_InitStructure.RTC_HourFormat = RTC_HourFormat_24;
+    if (RTC_Init(&RTC_InitStructure) == ERROR) {
+      #if FIXTURE_RTC_DEBUG > 0
+      ConsolePrintf(">> !! RTC Prescaler Config failed !! <<\n");
+      #endif
+    }
+    
+    //RTC_TimeRegulate(); /* Configure the time register */
+    RTC_TimeTypeDef rtcTime;
+    rtcTime.RTC_H12 = RTC_H12_AM;
+    rtcTime.RTC_Hours = 0;
+    rtcTime.RTC_Minutes = 0;
+    rtcTime.RTC_Seconds = 0;
+    
+    if( RTC_SetTime(RTC_Format_BIN, &rtcTime) == ERROR ) {
+      #if FIXTURE_RTC_DEBUG > 0
+      ConsolePrintf(">> !! RTC Set Time failed. !! <<\n");
+      #endif
+    } else {
+      RTC_WriteBackupRegister(RTC_BACKUP_REG_INIT, RTC_INIT_VALUE);
+      RTC_WriteBackupRegister(RTC_BACKUP_REG_CENTURY, 0);
+      
+      #if FIXTURE_RTC_DEBUG > 0
+      ConsolePrintf("RTC initialized\n");
+      #endif
+    }
+  }
+  else
+  {
+    #if FIXTURE_RTC_DEBUG > 0
+    if (RCC_GetFlagStatus(RCC_FLAG_PORRST) != RESET) //Power On Reset
+      ConsolePrintf("Power On Reset occurred....\n");
+    else if (RCC_GetFlagStatus(RCC_FLAG_PINRST) != RESET) //Pin Reset
+      ConsolePrintf("External Reset occurred....\n");
+    else
+      ConsolePrintf("Unknown Reset occurred....\n");
+    #endif
+    
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);
+    PWR_BackupAccessCmd(ENABLE);
+    RTC_WaitForSynchro();
+    
+    //RTC_ClearFlag(RTC_FLAG_ALRAF); //Clear the RTC Alarm Flag
+    //EXTI_ClearITPendingBit(EXTI_Line17); //Clear the EXTI Line 17 Pending bit (Connected internally to RTC Alarm)
+  }
+  
+  #if FIXTURE_RTC_DEBUG > 0
+  fixtureGetTime();
+  #endif
+}
+

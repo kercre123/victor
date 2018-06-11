@@ -26,7 +26,7 @@ const bool g_isReleaseBuild = !NOT_FOR_FACTORY;
 
 #include "app_release_ver.h"
 u8 g_fixtureReleaseVersion = (NOT_FOR_FACTORY) ? 0 : (APP_RELEASE_VERSION);
-#define BUILD_INFO "Victor DVT4"
+#define BUILD_INFO "Victor PVT"
 
 #define USE_START_BTN 0
 #define APP_DEBUG 0
@@ -195,6 +195,8 @@ static void printFixtureInfo() {
   ConsolePrintf("fixture,hw,%i,%s,serial,%i,%03x,seq,%05x\n", Board::revision(), Board::revString(), FIXTURE_SERIAL, FIXTURE_SERIAL, fixtureReadSequence());
   ConsolePrintf("fixture,build,%s,%s %s\n", BUILD_INFO, __DATE__, __TIME__);
   ConsolePrintf("fixture,fw,%03d,%s,mode,%i,%s\n", g_fixtureReleaseVersion, (NOT_FOR_FACTORY > 0 ? "debug" : "release"), g_fixmode, fixtureName() );
+  time_t time = fixtureGetTime();
+  ConsolePrintf("fixture,rtc,%i,%08x,%s", fixtureTimeIsValid(), time, ctime(&time) ); //ctime appends '\n'
 }
 
 // Walk through tests one by one - logging to the PC and to the Device flash
@@ -447,16 +449,6 @@ int main(void)
   InitConsole();
   InitRandom();
   Board::init();
-  
-  //Try to restore saved mode
-  g_fixmode = FIXMODE_NONE;
-  if ( g_flashParams.fixtureTypeOverride > FIXMODE_NONE && g_flashParams.fixtureTypeOverride < g_num_fixmodes ) {
-    if( g_fixmode_info[g_fixmode].name != NULL ) { //Prevent invalid modes
-      g_fixmode = g_flashParams.fixtureTypeOverride;
-    }
-  }
-  
-  //TODO: ^^move board init/rev stuff into fixture init
   fixtureInit();
   Meter::init();
 
