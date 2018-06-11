@@ -191,27 +191,36 @@ int fixtureReadSequence(void) {
 //                  RTC
 //-----------------------------------------------------------------------------
 
-#define FIXTURE_RTC_DEBUG 0
+#define FIXTURE_RTC_DEBUG 1
 
 //backup register metadata cfg
 const uint32_t RTC_BACKUP_REG_INIT    = RTC_BKP_DR0;
 const uint32_t RTC_BACKUP_REG_CENTURY = RTC_BKP_DR1;
 const uint32_t RTC_INIT_VALUE = 0x32F2;
 
-/*
-char* rtctime_str(RTC_TimeTypeDef *time) {
-  static char str[10];
-  snprintf(str,sizeof(str)-1, "%0.2d:%0.2d:%0.2d", time->RTC_Hours, time->RTC_Minutes, time->RTC_Seconds);
-  str[sizeof(str)-1] = '\0';
-  return str;
-}
-*/
-
 char* unixtime_str(time_t time) {
   static char str[10];
   time = time % (24*3600); //discard date
   snprintf(str,sizeof(str)-1, "%0.2d:%0.2d:%0.2d", time/3600, (time%3600)/60, time%60 );
   str[sizeof(str)-1] = '\0';
+  return str;
+}
+
+const char* fixtureTimeStr(time_t time)
+{
+  static char str[21];
+  
+  //squeeze clib localtime/asctime string to 20chars (our max display size)
+  char* ltime = ctime(&time); //"Sun Sep 16 01:03:52 1973\n\0"
+  memcpy( str+0,  ltime+0,  7 );  //"Sun Sep"
+  memcpy( str+7,  ltime+8,  8 );  //"16 01:03"
+  memcpy( str+15, ltime+19, 5 );  //" 1973"
+  str[20] = '\0';
+  
+  #if FIXTURE_RTC_DEBUG > 0
+  ConsolePrintf("fixtureTimeStr,%08x,%s,%s", time, str, ltime);
+  #endif
+  
   return str;
 }
 
@@ -235,7 +244,7 @@ void fixtureSetTime(time_t time)
   rtc.time.RTC_Seconds = bdtime.tm_sec;
   
   #if FIXTURE_RTC_DEBUG > 0
-  ConsolePrintf("fixtureSetTime,%i,%08x,%s,%s", rtc_inited, time, unixtime_str(time), asctime(&bdtime)); //asctime appends '\n'
+  ConsolePrintf("fixtureSetTime,%i,%08x,%s", rtc_inited, time, asctime(&bdtime)); //asctime appends '\n'
   #endif
   
   if( rtc_inited ) {
@@ -268,7 +277,7 @@ time_t fixtureGetTime(void)
     time = mktime(&bdtime); //"broken-down time" (clib) -> unix
   
   #if FIXTURE_RTC_DEBUG > 0
-  ConsolePrintf("fixtureGetTime,%i,%08x,%s,%s", valid, time, unixtime_str(time), asctime(&bdtime)); //asctime appends '\n'
+  ConsolePrintf("fixtureGetTime,%i,%08x,%s", valid, time, asctime(&bdtime)); //asctime appends '\n'
   #endif
   
   return time;

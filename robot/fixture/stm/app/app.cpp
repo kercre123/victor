@@ -196,7 +196,7 @@ static void printFixtureInfo() {
   ConsolePrintf("fixture,build,%s,%s %s\n", BUILD_INFO, __DATE__, __TIME__);
   ConsolePrintf("fixture,fw,%03d,%s,mode,%i,%s\n", g_fixtureReleaseVersion, (NOT_FOR_FACTORY > 0 ? "debug" : "release"), g_fixmode, fixtureName() );
   time_t time = fixtureGetTime();
-  ConsolePrintf("fixture,rtc,%i,%08x,%s", fixtureTimeIsValid(), time, ctime(&time) ); //ctime appends '\n'
+  ConsolePrintf("fixture,rtc,%i,%08x,%s\n", fixtureTimeIsValid(), time, fixtureTimeStr(time) );
 }
 
 // Walk through tests one by one - logging to the PC and to the Device flash

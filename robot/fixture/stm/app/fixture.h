@@ -89,6 +89,7 @@ int           fixtureReadSequence(void); //read the current sequence #. DOES NOT
 void          fixtureSetTime(time_t time);
 time_t        fixtureGetTime(void);
 bool          fixtureTimeIsValid(void);
+const char*   fixtureTimeStr(time_t time); //short (20char) string representation of the timestamp
 #endif
 
 //Init data for g_fixmode_info[] - keep all mode info organized in one file!
