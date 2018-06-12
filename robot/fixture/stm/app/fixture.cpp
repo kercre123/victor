@@ -193,17 +193,58 @@ int fixtureReadSequence(void) {
 
 #define FIXTURE_RTC_DEBUG 1
 
+#if FIXTURE_RTC_DEBUG > 0
+#warning fixture RTC debug enabled
+#endif
+
 //backup register metadata cfg
 const uint32_t RTC_BACKUP_REG_INIT    = RTC_BKP_DR0;
 const uint32_t RTC_BACKUP_REG_CENTURY = RTC_BKP_DR1;
 const uint32_t RTC_INIT_VALUE = 0x32F2;
 
-char* unixtime_str(time_t time) {
+char* unixtimestr_(time_t time) {
   static char str[10];
   time = time % (24*3600); //discard date
   snprintf(str,sizeof(str)-1, "%0.2d:%0.2d:%0.2d", time/3600, (time%3600)/60, time%60 );
   str[sizeof(str)-1] = '\0';
   return str;
+}
+
+char* rtcstr_(RTC_DateTypeDef *date, RTC_TimeTypeDef *time) {
+  static char str[32];
+  int len = snprintf(str,sizeof(str),
+    "%u %02u/%02u/%02u %02u:%02u:%02u",
+    date->RTC_WeekDay,
+    date->RTC_Date, date->RTC_Month, date->RTC_Year,
+    time->RTC_Hours, time->RTC_Minutes, time->RTC_Seconds);
+  str[len] = '\0';
+  return str;
+}
+
+static void APB_register_sync(void) {
+  ErrorStatus esync = RTC_WaitForSynchro(); //APB register synchronization
+  if( esync != /*ErrorStatus.*/SUCCESS ) {
+    ConsolePrintf(">> !! APB reg sync error %i !! <<\n", esync);
+  }
+}
+
+ErrorStatus RTC_SetDateTime_(RTC_DateTypeDef* RTC_DateStruct, RTC_TimeTypeDef* RTC_TimeStruct)
+{
+  APB_register_sync();
+  
+  ErrorStatus edate = RTC_SetDate(RTC_Format_BIN, RTC_DateStruct);
+  APB_register_sync();
+  Timer::wait(250);
+  
+  ErrorStatus etime = RTC_SetTime(RTC_Format_BIN, RTC_TimeStruct);
+  APB_register_sync();
+  Timer::wait(250);
+  
+  if( etime != /*ErrorStatus.*/SUCCESS || edate != /*ErrorStatus.*/SUCCESS ) {
+    ConsolePrintf(">> !! RTC_SetDateTime ERROR: edate %i etime %i !! <<\n", edate, etime );
+    return ERROR;
+  }
+  return SUCCESS;
 }
 
 const char* fixtureTimeStr(time_t time)
@@ -218,7 +259,7 @@ const char* fixtureTimeStr(time_t time)
   str[20] = '\0';
   
   #if FIXTURE_RTC_DEBUG > 0
-  ConsolePrintf("fixtureTimeStr,%08x,%s,%s", time, str, ltime);
+  ConsolePrintf("fixtureTimeStr,%010u,%s,%s", time, str, ltime);
   #endif
   
   return str;
@@ -227,7 +268,6 @@ const char* fixtureTimeStr(time_t time)
 void fixtureSetTime(time_t time)
 {
   bool rtc_inited = RTC_ReadBackupRegister(RTC_BACKUP_REG_INIT) == RTC_INIT_VALUE;
-  
   struct { RTC_DateTypeDef date; RTC_TimeTypeDef time; } rtc;
   memset(&rtc, 0, sizeof(rtc));
   
@@ -244,13 +284,15 @@ void fixtureSetTime(time_t time)
   rtc.time.RTC_Seconds = bdtime.tm_sec;
   
   #if FIXTURE_RTC_DEBUG > 0
-  ConsolePrintf("fixtureSetTime,%i,%08x,%s", rtc_inited, time, asctime(&bdtime)); //asctime appends '\n'
+  char *ltime = asctime(&bdtime); ltime[24] = '\0'; //rm newline
+  ConsolePrintf("fixtureSetTime,%i,%010u,%s,%s,%u\n", rtc_inited, time, ltime, rtcstr_(&rtc.date,&rtc.time), century );
   #endif
   
   if( rtc_inited ) {
-    RTC_SetTime(RTC_Format_BIN, &rtc.time);
-    RTC_SetDate(RTC_Format_BIN, &rtc.date);
-    RTC_WriteBackupRegister(RTC_BACKUP_REG_CENTURY, century);
+    ErrorStatus e = RTC_SetDateTime_(&rtc.date, &rtc.time);
+    RTC_WriteBackupRegister(RTC_BACKUP_REG_CENTURY, e==SUCCESS ? century : 0); //invalidate on error
+  } else {
+    ConsolePrintf(">> !! fixtureSetTime failed, rtc not initialized !! <<\n");
   }
 }
 
@@ -260,12 +302,15 @@ time_t fixtureGetTime(void)
   bool valid = fixtureTimeIsValid();
   
   struct { RTC_DateTypeDef date; RTC_TimeTypeDef time; } rtc;
+  APB_register_sync();
   RTC_GetDate(RTC_Format_BIN, &rtc.date);
+  APB_register_sync();
   RTC_GetTime(RTC_Format_BIN, &rtc.time);
   
   //stm rtc format -> unix
   struct tm bdtime; memset(&bdtime,0,sizeof(bdtime));
-  bdtime.tm_year = valid ? RTC_ReadBackupRegister(RTC_BACKUP_REG_CENTURY) - 1900 + rtc.date.RTC_Year : rtc.date.RTC_Year;
+  uint32_t century = RTC_ReadBackupRegister(RTC_BACKUP_REG_CENTURY);
+  bdtime.tm_year = valid ? century-1900 + rtc.date.RTC_Year : rtc.date.RTC_Year;
   bdtime.tm_mon = rtc.date.RTC_Month -1;
   bdtime.tm_mday = rtc.date.RTC_Date;
   bdtime.tm_wday = rtc.date.RTC_WeekDay -1;
@@ -277,7 +322,8 @@ time_t fixtureGetTime(void)
     time = mktime(&bdtime); //"broken-down time" (clib) -> unix
   
   #if FIXTURE_RTC_DEBUG > 0
-  ConsolePrintf("fixtureGetTime,%i,%08x,%s", valid, time, asctime(&bdtime)); //asctime appends '\n'
+  char *ltime = asctime(&bdtime); ltime[24] = '\0'; //rm newline
+  ConsolePrintf("fixtureGetTime,%i,%010u,%s,%s,%u\n", valid, time, ltime, rtcstr_(&rtc.date,&rtc.time), century );
   #endif
   
   return time;
@@ -294,18 +340,18 @@ static void rtc_init_(void)
   ConsolePrintf("********** RTC Init **********\n");
   #endif
   
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);
+  PWR_BackupAccessCmd(ENABLE);
+  
   if (RTC_ReadBackupRegister(RTC_BACKUP_REG_INIT) != RTC_INIT_VALUE)
   {
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);
-    PWR_BackupAccessCmd(ENABLE);
-    
     //set up 32k LSE
     RCC_LSEConfig(RCC_LSE_ON);
     while(RCC_GetFlagStatus(RCC_FLAG_LSERDY) == RESET)
       ;
     RCC_RTCCLKConfig(RCC_RTCCLKSource_LSE);
     RCC_RTCCLKCmd(ENABLE);
-    RTC_WaitForSynchro(); //APB register synchronization
+    APB_register_sync();
     
     //RTC init
     RTC_InitTypeDef RTC_InitStructure;
@@ -318,21 +364,18 @@ static void rtc_init_(void)
       #endif
     }
     
-    //RTC_TimeRegulate(); /* Configure the time register */
-    RTC_TimeTypeDef rtcTime;
-    rtcTime.RTC_H12 = RTC_H12_AM;
-    rtcTime.RTC_Hours = 0;
-    rtcTime.RTC_Minutes = 0;
-    rtcTime.RTC_Seconds = 0;
+    struct { RTC_DateTypeDef date; RTC_TimeTypeDef time; } rtc;
+    memset( &rtc, 0, sizeof(rtc) );
+    rtc.date.RTC_WeekDay = RTC_Weekday_Thursday;
+    rtc.date.RTC_Month = 1; //Jan
+    rtc.date.RTC_Date = 1;  //1
+    rtc.date.RTC_Year = 70; //1970
+    rtc.time.RTC_H12 = RTC_H12_AM;
     
-    if( RTC_SetTime(RTC_Format_BIN, &rtcTime) == ERROR ) {
-      #if FIXTURE_RTC_DEBUG > 0
-      ConsolePrintf(">> !! RTC Set Time failed. !! <<\n");
-      #endif
-    } else {
+    ErrorStatus e = RTC_SetDateTime_(&rtc.date, &rtc.time);
+    if( e == SUCCESS ) {
       RTC_WriteBackupRegister(RTC_BACKUP_REG_INIT, RTC_INIT_VALUE);
       RTC_WriteBackupRegister(RTC_BACKUP_REG_CENTURY, 0);
-      
       #if FIXTURE_RTC_DEBUG > 0
       ConsolePrintf("RTC initialized\n");
       #endif
@@ -349,16 +392,72 @@ static void rtc_init_(void)
       ConsolePrintf("Unknown Reset occurred....\n");
     #endif
     
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);
-    PWR_BackupAccessCmd(ENABLE);
-    RTC_WaitForSynchro();
-    
-    //RTC_ClearFlag(RTC_FLAG_ALRAF); //Clear the RTC Alarm Flag
-    //EXTI_ClearITPendingBit(EXTI_Line17); //Clear the EXTI Line 17 Pending bit (Connected internally to RTC Alarm)
+    APB_register_sync();
   }
   
   #if FIXTURE_RTC_DEBUG > 0
   fixtureGetTime();
+  #endif
+}
+
+
+//-----------------------------------------------------------------------------
+//                  RTC Testbench
+//-----------------------------------------------------------------------------
+
+#define RTC_TESTBENCH_EN  1
+
+void testprint_(const char* prefix, time_t time, const char* post) {
+  //e.g. "prefix,1,12345678,Thu Jan  1 00:00:00 1970,post
+  //const bool rtc_inited = RTC_ReadBackupRegister(RTC_BACKUP_REG_INIT) == RTC_INIT_VALUE;
+  const bool valid = fixtureTimeIsValid();
+  char *ltime = ctime(&time); //"Sun Sep 16 01:03:52 1973\n\0"
+  ltime[24] = '\0';
+  
+  ConsolePrintf("%s,%i,%010d,%s,%s,\n", 
+    prefix ? prefix : "",
+    valid,
+    time,
+    ltime,
+    post ? post : ""
+  );
+}
+
+extern void fixtureRtcTestbench(void);
+void fixtureRtcTestbench(void)
+{
+  #if RTC_TESTBENCH_EN > 0
+  #warning "RTC Testbench Enabled"
+  
+  typedef struct { time_t time; const char* str; } rtc_tb_t;
+  rtc_tb_t test[] = {
+    {         0, "Thu Jan  1 00:00:00 1970"},
+    {         1, "Thu Jan  1 00:00:01 1970"},
+    {3234567890, "Fri Jul 01 03:04:50 2072"},
+    {4123456789, "Wed Sep 01 04:39:49 2100"}
+  };
+  const int numTests = sizeof(test)/sizeof(rtc_tb_t);
+  int numerrors = 0;
+  
+  ConsolePrintf("********** RTC Testbench **********\n");
+  ConsolePrintf("inited:%i valid:%i\n", RTC_ReadBackupRegister(RTC_BACKUP_REG_INIT) == RTC_INIT_VALUE, fixtureTimeIsValid());
+  
+  for(int n=0; n<numTests; n++)
+  {
+    ConsolePrintf("TEST %02i:%010d %s\n", n, test[n].time, test[n].str);
+    testprint_("  set", test[n].time, 0);
+    fixtureSetTime( test[n].time );
+    
+    for(int x=0; x<2; x++) {
+      time_t tget = fixtureGetTime();
+      numerrors = tget != test[n].time+x ? numerrors+1 : numerrors;
+      testprint_("  get", tget, tget != test[n].time+x ? "----MISMATCH----" : 0 );
+      Timer::delayMs(1010);
+    }
+  }
+  ConsolePrintf("num errors: %i\n", numerrors);
+  ConsolePrintf("********** RTC Test Done **********\n");
+  
   #endif
 }
 
