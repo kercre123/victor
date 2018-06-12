@@ -81,6 +81,11 @@ static uint8_t inbound_raw[MAX_INBOUND_SIZE];
 
 static int missed_frames = 0;
 
+// Receive buffer stuff
+static int previousIndex = 0;
+static int receivedWords;
+static CommsState state;
+
 static uint32_t crc(const void* ptr, int length) {
   const uint32_t* data = (const uint32_t*) ptr;
 
@@ -121,6 +126,9 @@ void Comms::init(void) {
   DMA1_Channel5->CPAR = (uint32_t)&USART1->RDR;
   DMA1_Channel5->CMAR = (uint32_t)inbound_raw;
   DMA1_Channel5->CNDTR = sizeof(inbound_raw);
+
+  reset();
+
   DMA1_Channel5->CCR = DMA_CCR_MINC
                      | DMA_CCR_CIRC
                      | DMA_CCR_TCIE
@@ -130,6 +138,15 @@ void Comms::init(void) {
 
   static const AckMessage ack = { ACK_APPLICATION };
   enqueue(PAYLOAD_ACK, &ack, sizeof(ack));
+}
+
+void Comms::reset() {
+  __disable_irq();
+  // Clear out any received bytes
+  state = COMM_STATE_SYNC;
+  receivedWords = 0;
+  memset(inbound_raw, 0, sizeof(inbound_raw));
+  __enable_irq();
 }
 
 void Comms::enqueue(PayloadId kind, const void* packet, int size) {
@@ -274,8 +291,8 @@ static void ProcessMessage(InboundPacket& packet) {
         missed_frames = 0;
         Power::wakeUp();
         Motors::receive(&packet.headToBody);
-        Analog::receive(&packet.headToBody);
         Lights::receive(packet.headToBody.lightState.ledColors);
+        Analog::receive(&packet.headToBody);
         break ;
       case PAYLOAD_CONT_DATA:
         Contacts::forward(packet.contactData);
@@ -293,10 +310,6 @@ static void ProcessMessage(InboundPacket& packet) {
 
 extern "C" void DMA1_Channel4_5_IRQHandler(void) {
   // Find number of words transfered
-  static int previousIndex = 0;
-  static int receivedWords = 0;
-  static CommsState state = COMM_STATE_SYNC;
-
   int currentIndex = MAX_INBOUND_SIZE - DMA1_Channel5->CNDTR;
 
   static InboundPacket packet;
@@ -378,7 +391,7 @@ extern "C" void DMA1_Channel4_5_IRQHandler(void) {
         // Process the message
         ProcessMessage(packet);
 
-        // Clear out our payload
+        // Clear out our payload       
         memcpy(&packet.raw[0], &packet.raw[packetLength], receivedWords - packetLength);
         receivedWords -= packetLength;
         state = COMM_STATE_SYNC;
