@@ -9,34 +9,35 @@
  * Modifications:
  */
 
-#include "engine/cozmoEngine.h"
-#include "engine/cozmoContext.h"
-#include "engine/components/batteryComponent.h"
-#include "engine/externalInterface/externalInterface.h"
-#include "engine/events/ankiEvent.h"
-#include "engine/robotInterface/messageHandler.h"
-#include "engine/ankiEventUtil.h"
-#include "engine/debug/cladLoggerProvider.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "engine/ankiEventUtil.h"
+#include "engine/components/batteryComponent.h"
+#include "engine/components/mics/micComponent.h"
+#include "engine/components/mics/micDirectionHistory.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
+#include "engine/cozmoAPI/comms/uiMessageHandler.h"
+#include "engine/cozmoContext.h"
+#include "engine/cozmoEngine.h"
+#include "engine/debug/cladLoggerProvider.h"
 #include "engine/deviceData/deviceDataManager.h"
-#include "engine/components/mics/micComponent.h"
-#include "engine/components/mics/micDirectionHistory.h"
+#include "engine/events/ankiEvent.h"
+#include "engine/externalInterface/externalInterface.h"
+#include "engine/factory/factoryTestLogger.h"
 #include "engine/perfMetric.h"
-#include "engine/utils/parsingConstants/parsingConstants.h"
-#include "engine/viz/vizManager.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
+#include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
 #include "engine/util/transferQueue/transferQueueMgr.h"
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/cozmoFeatureGate.h"
-#include "engine/factory/factoryTestLogger.h"
-#include "engine/cozmoAPI/comms/uiMessageHandler.h"
+#include "engine/utils/parsingConstants/parsingConstants.h"
+#include "engine/viz/vizManager.h"
+#include "engine/wallTime.h"
 #include "webServerProcess/src/webService.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -61,6 +62,7 @@
 #include <ctime>
 #include <iomanip>
 #include <sstream>
+#include <time.h>
 
 #if USE_DAS
 #include <DAS/DAS.h>

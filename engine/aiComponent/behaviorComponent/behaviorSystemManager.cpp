@@ -27,8 +27,6 @@
 #include "engine/robot.h"
 #include "engine/viz/vizManager.h"
 
-#include "osState/osState.h"
-
 #include "coretech/common/engine/utils/timer.h"
 
 #include "util/cpuProfiler/cpuProfiler.h"
