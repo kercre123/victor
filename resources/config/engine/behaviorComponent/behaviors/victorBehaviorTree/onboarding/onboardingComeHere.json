@@ -1,0 +1,12 @@
+{
+  "behaviorID": "OnboardingComeHere",
+  "behaviorClass": "DriveToFace",
+
+  "timeUntilCancelFaceTrack_s": 5.0,
+  "minDriveToFaceDistanceKey_mm": 200//,
+
+
+
+  // "maxFaceAgeBeforeMicDirection_s": 5.0,
+  // "useMicDirectionBeforeActivation": true
+}

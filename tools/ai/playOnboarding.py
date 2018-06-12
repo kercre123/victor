@@ -121,7 +121,7 @@ def display(stdscr):
              ('r', 'Reset onboarding', 'ResetOnboarding'),
              ('b', 'retry Battery charging', 'RetryCharging'),
              ('f', 'rename Face')]
-  stages = ['NotStarted','FinishedWelcomeHome','FinishedMeetVictor','Complete','DevDoNothing']
+  stages = ['NotStarted','FinishedComeHere','FinishedMeetVictor','Complete','DevDoNothing']
 
   bottomHeight = 12
   selectedIndex = 0

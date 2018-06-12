@@ -9,8 +9,8 @@ enum uint_8 OnboardingStages
 {
   // PLEASE KEEP ORDERED CHRONOLOGICALLY AND SEQUENTIALLY (for dev tools to work)
 
-  NotStarted = 0, // hasn't said "welcome home"
-  FinishedWelcomeHome,
+  NotStarted = 0, // hasn't said "come here"
+  FinishedComeHere,
   FinishedMeetVictor,
   
   Complete, // has fully completed robot onboarding (but perhaps not the app onboarding)

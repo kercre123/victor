@@ -55,7 +55,7 @@ void BehaviorOnboardingInterruptionHead::OnBehaviorActivated()
   _dVars = DynamicVariables();
   
   const OnboardingStages currentStage = GetAIComp<AIWhiteboard>().GetCurrentOnboardingStage();
-  if( static_cast<u8>(currentStage) < static_cast<u8>(OnboardingStages::FinishedWelcomeHome) ) {
+  if( static_cast<u8>(currentStage) < static_cast<u8>(OnboardingStages::FinishedComeHere) ) {
     // head should still be down
     auto* action = new MoveHeadToAngleAction( DEG_TO_RAD(-22.0f) );
     DelegateIfInControl(action);

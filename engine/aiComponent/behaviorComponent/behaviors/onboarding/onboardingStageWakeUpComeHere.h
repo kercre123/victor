@@ -1,18 +1,18 @@
 /**
- * File: onboardingStageWakeUpWelcomeHome.h
+ * File: onboardingStageWakeUpComeHere.h
  *
  * Author: ross
  * Created: 2018-06-02
  *
  * Description: The robot wakes up, drive off the charger, waits for a trigger word, waits for a second
- *              trigger word + "welcome home" voice command, plays a reaction
+ *              trigger word + "come here" voice command, plays a reaction
  *
  * Copyright: Anki, Inc. 2018
  *
  **/
 
-#ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_Onboarding_OnboardingStageWakeUpWelcomeHome__
-#define __Engine_AiComponent_BehaviorComponent_Behaviors_Onboarding_OnboardingStageWakeUpWelcomeHome__
+#ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_Onboarding_OnboardingStageWakeUpComeHere__
+#define __Engine_AiComponent_BehaviorComponent_Behaviors_Onboarding_OnboardingStageWakeUpComeHere__
 #pragma once
 
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/iOnboardingStage.h"
@@ -23,18 +23,19 @@
 namespace Anki {
 namespace Cozmo {
 
-class OnboardingStageWakeUpWelcomeHome : public IOnboardingStage
+class OnboardingStageWakeUpComeHere : public IOnboardingStage
 {
 public:
-  virtual ~OnboardingStageWakeUpWelcomeHome() = default;
+  virtual ~OnboardingStageWakeUpComeHere() = default;
   
   virtual void GetAllDelegates( std::set<BehaviorID>& delegates ) const override
   {
     delegates.insert( BEHAVIOR_ID(OnboardingAsleep) );
     delegates.insert( BEHAVIOR_ID(OnboardingWakeUp) );
     delegates.insert( BEHAVIOR_ID(OnboardingSluggishDriveOffCharger) );
-    delegates.insert( BEHAVIOR_ID(OnboardingWaitForWelcomeHome) );
-    delegates.insert( BEHAVIOR_ID(OnboardingReactToWelcomeHome) ); // this might get moved to the beginning of the next stage
+    delegates.insert( BEHAVIOR_ID(OnboardingWaitForComeHere) );
+    delegates.insert( BEHAVIOR_ID(OnboardingComeHere) );
+    delegates.insert( BEHAVIOR_ID(OnboardingFinishedComeHere) );
   }
   
   IBehavior* GetBehavior( BehaviorExternalInterface& bei ) override
@@ -47,12 +48,13 @@ public:
     SetTriggerWordEnabled(false);
     
     _behaviors.clear();
-    _behaviors[Step::Asleep]                 = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingAsleep) );
-    _behaviors[Step::WakingUp]               = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingWakeUp) );
-    _behaviors[Step::DriveOffCharger]        = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingSluggishDriveOffCharger) );
-    _behaviors[Step::WaitingForTrigger]      = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingWaitForWelcomeHome) );
-    _behaviors[Step::WaitingForWelcomeHome]  = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingWaitForWelcomeHome) );
-    _behaviors[Step::WelcomeHomeReaction]    = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingReactToWelcomeHome) );
+    _behaviors[Step::Asleep]                   = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingAsleep) );
+    _behaviors[Step::WakingUp]                 = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingWakeUp) );
+    _behaviors[Step::DriveOffCharger]          = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingSluggishDriveOffCharger) );
+    _behaviors[Step::WaitingForTrigger]        = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingWaitForComeHere) );
+    _behaviors[Step::WaitingForComeHere]       = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingWaitForComeHere) );
+    _behaviors[Step::ComeHere]                 = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingComeHere) );
+    _behaviors[Step::ComeHereResumeOrComplete] = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingFinishedComeHere) );
     
     _step = Step::Asleep;
     _stepAfterResumeFromCharger = Step::Asleep; // this is state is ignored since it could never happen outside initialization
@@ -81,8 +83,9 @@ public:
   
   virtual bool OnInterrupted( BehaviorExternalInterface& bei, BehaviorID interruptingBehavior ) override
   {
-    // stage is complete upon interruption if welcome home finished
-    return (_step == Step::WelcomeHomeReaction);
+    // stage is complete upon interruption if come here finished
+    // todo: cliff reaction for Step::ComeHere should not be done, but should resume as ComeHereResumeOrComplete
+    return (_step == Step::ComeHereResumeOrComplete);
   }
   
   virtual void OnResume( BehaviorExternalInterface& bei, BehaviorID interruptingBehavior ) override
@@ -92,7 +95,7 @@ public:
     if( driveOffCharger->WantsToBeActivated() ) {
       DebugTransition("Driving off charger");
       if( justGotTrigger ) {
-        _stepAfterResumeFromCharger = Step::WaitingForWelcomeHome;
+        _stepAfterResumeFromCharger = Step::WaitingForComeHere;
       } else {
         _stepAfterResumeFromCharger = _step;
       }
@@ -100,7 +103,7 @@ public:
       _currentBehavior = driveOffCharger;
     } else if( justGotTrigger ) {
       // successful trigger ==> resume from next step
-      TransitionToWaitingForWelcomeHome();
+      TransitionToWaitingForComeHere();
     }
   }
   
@@ -120,7 +123,9 @@ public:
       }
     } else if( _step == Step::DriveOffCharger ) {
       OnFinishedDrivingOffCharger();
-    } else if( _step == Step::WelcomeHomeReaction ) {
+    } else if( _step == Step::ComeHere ) {
+      TransitionToComeHereReaction();
+    } else if( _step == Step::ComeHereResumeOrComplete ) {
       // done
       DebugTransition("Stage complete");
       _step = Step::Complete;
@@ -140,11 +145,11 @@ public:
       }
     } else if( _step == Step::Complete ) {
       return;
-    } else if( _step == Step::WaitingForWelcomeHome ) {
+    } else if( _step == Step::WaitingForComeHere ) {
       const auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
-      if( uic.IsUserIntentPending( USER_INTENT(greeting_hello) ) ) {
-        // successful intent ==> next step
-        TransitionToWelcomeHomeReaction();
+      if( uic.IsUserIntentPending( USER_INTENT(imperative_come) ) ) {
+        // successful intent ==> next step (come here)
+        TransitionToComeHere();
       }
     }
   }
@@ -168,19 +173,27 @@ private:
     SetAllowedIntent( USER_INTENT(unmatched_intent) );
   }
   
-  void TransitionToWaitingForWelcomeHome()
+  void TransitionToWaitingForComeHere()
   {
-    DebugTransition("Waiting for welcome home voice command");
-    _step = Step::WaitingForWelcomeHome;
+    DebugTransition("Waiting for come here voice command");
+    _step = Step::WaitingForComeHere;
     _currentBehavior = _behaviors[_step];
     SetTriggerWordEnabled(true);
-    SetAllowedIntent( USER_INTENT(greeting_hello) );
+    SetAllowedIntent( USER_INTENT(imperative_come) );
   }
   
-  void TransitionToWelcomeHomeReaction()
+  void TransitionToComeHere()
   {
-    DebugTransition("Playing welcome home reaction");
-    _step = Step::WelcomeHomeReaction;
+    DebugTransition("Running come here behavior");
+    _step = Step::ComeHere;
+    _currentBehavior = _behaviors[_step];
+    // keep the trigger word the same, so that "hey vector come here" still works if the user tries to steer the robot
+  }
+  
+  void TransitionToComeHereReaction()
+  {
+    DebugTransition("Playing come here reaction");
+    _step = Step::ComeHereResumeOrComplete;
     _currentBehavior = _behaviors[_step];
     SetTriggerWordEnabled(false);
   }
@@ -196,12 +209,15 @@ private:
       case Step::WakingUp:
         TransitionToWakingUp();
         break;
-      case Step::WaitingForWelcomeHome:
-        TransitionToWaitingForWelcomeHome();
+      case Step::WaitingForComeHere:
+        TransitionToWaitingForComeHere();
+        break;
+      case Step::ComeHere:
+        TransitionToComeHere();
         break;
       case Step::Complete:
-      case Step::WelcomeHomeReaction:
-        DEV_ASSERT(false, "OnboardingStageWakeUp.UnexpectedDriveOffCharger");
+      case Step::ComeHereResumeOrComplete:
+        DEV_ASSERT(false, "OnboardingStageWakeUpComeHere.UnexpectedDriveOffCharger");
         break;
     }
     _stepAfterResumeFromCharger = Step::Asleep; // reset
@@ -209,7 +225,7 @@ private:
   
   void DebugTransition(const std::string& debugInfo)
   {
-    PRINT_CH_INFO("Behaviors", "OnboardingStatus.WakeUpWelcomeHome", "%s", debugInfo.c_str());
+    PRINT_CH_INFO("Behaviors", "OnboardingStatus.WakeUpComeHere", "%s", debugInfo.c_str());
   }
   
   enum class Step : uint8_t {
@@ -217,9 +233,10 @@ private:
     WakingUp,
     DriveOffCharger,
     WaitingForTrigger,
-    WaitingForWelcomeHome,
-    WelcomeHomeReaction,
-    Complete,
+    WaitingForComeHere,
+    ComeHere,
+    ComeHereResumeOrComplete, // what happens after ComeHere, or, if the robot hits a cliff during ComeHere, the after behavior
+    Complete, // waiting for cleaning
   };
   
   Step _step;

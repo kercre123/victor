@@ -120,6 +120,11 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
     Util::FileUtils::DeleteFile( _saveFolder );
     if( ei != nullptr ) {
       ei->Broadcast(ExternalInterface::MessageGameToEngine{ExternalInterface::EraseAllEnrolledFaces{}});
+      
+      ExternalInterface::BlockPoolEnabledMessage clearBlockpool;
+      clearBlockpool.reset = true;
+      clearBlockpool.enable = false; // require reboot
+      ei->Broadcast(ExternalInterface::MessageGameToEngine{std::move(clearBlockpool)});
     }
   };
   _consoleFuncs.emplace_front( "ResetOnboarding", std::move(resetOnboarding), "Onboarding", "" );

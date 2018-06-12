@@ -23,7 +23,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/onboardingStageApp.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/onboardingStageCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/onboardingStageMeetVictor.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/onboardingStageWakeUpWelcomeHome.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/onboardingStageWakeUpComeHere.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -47,7 +47,7 @@ namespace {
   const float kExtraChargingTimePerDischargePeriod_s = 1.0f; // if off the charger for 1 min, must charge an additional 1*X mins
   
   // these should match OnboardingStages (clad)
-  CONSOLE_VAR_ENUM(int, kDevMoveToStage, "Onboarding", 0, "NotStarted,FinishedWelcomeHome,FinishedMeetVictor,Complete,DevDoNothing");
+  CONSOLE_VAR_ENUM(int, kDevMoveToStage, "Onboarding", 0, "NotStarted,FinishedComeHere,FinishedMeetVictor,Complete,DevDoNothing");
 }
   
 
@@ -145,6 +145,9 @@ void BehaviorOnboarding::GetBehaviorOperationModifiers(BehaviorOperationModifier
   modifiers.wantsToBeActivatedWhenOffTreads = true;
   modifiers.wantsToBeActivatedWhenOnCharger = true;
   modifiers.behaviorAlwaysDelegates = false;
+  
+  // always look for faces, even during the initial stages, so come here has a higher chance of success
+  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Med });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -458,10 +461,10 @@ void BehaviorOnboarding::InitStages(bool resetExisting)
 {
   // init stages
   if( resetExisting || !_iConfig.stages[OnboardingStages::NotStarted] ) {
-    _iConfig.stages[OnboardingStages::NotStarted].reset( new OnboardingStageWakeUpWelcomeHome{} );
+    _iConfig.stages[OnboardingStages::NotStarted].reset( new OnboardingStageWakeUpComeHere{} );
   }
-  if( resetExisting || !_iConfig.stages[OnboardingStages::FinishedWelcomeHome] ) {
-    _iConfig.stages[OnboardingStages::FinishedWelcomeHome].reset( new OnboardingStageMeetVictor{} );
+  if( resetExisting || !_iConfig.stages[OnboardingStages::FinishedComeHere] ) {
+    _iConfig.stages[OnboardingStages::FinishedComeHere].reset( new OnboardingStageMeetVictor{} );
   }
   if( resetExisting || !_iConfig.stages[OnboardingStages::FinishedMeetVictor] ) {
     _iConfig.stages[OnboardingStages::FinishedMeetVictor].reset( new OnboardingStageCube{} );
