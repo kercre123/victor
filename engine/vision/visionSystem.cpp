@@ -27,7 +27,7 @@
 #include "engine/vision/imageSaver.h"
 #include "engine/vision/laserPointDetector.h"
 #include "engine/vision/motionDetector.h"
-#include "engine/vision/nightVisionAccumulator.h"
+#include "engine/vision/nightVisionFilter.h"
 #include "engine/vision/overheadEdgesDetector.h"
 #include "engine/vision/overheadMap.h"
 #include "engine/vision/visionModesHelpers.h"
@@ -132,7 +132,7 @@ VisionSystem::VisionSystem(const CozmoContext* context)
 , _cameraCalibrator(new CameraCalibrator(*this))
 , _illuminationDetector(new IlluminationDetector())
 , _imageSaver(new ImageSaver(_camera))
-, _nightVisionAccumulator(new NightVisionAccumulator())
+, _nightVisionFilter(new NightVisionFilter())
 , _benchmark(new Vision::Benchmark())
 , _neuralNetRunner(new Vision::NeuralNetRunner())
 , _clahe(cv::createCLAHE())
@@ -284,13 +284,13 @@ Result VisionSystem::Init(const Json::Value& config)
 
   if(!config.isMember("NightVision"))
   {
-    PRINT_NAMED_ERROR("VisionSystem.Init.MissingNightVisionAccumulatorConfigFIeld", "");
+    PRINT_NAMED_ERROR("VisionSystem.Init.MissingNightVisionFilterConfigField", "");
     return RESULT_FAIL;
   }
-  Result nightVisionResult = _nightVisionAccumulator->Init(config["NightVision"]);
+  Result nightVisionResult = _nightVisionFilter->Init(config["NightVision"]);
   if( nightVisionResult != RESULT_OK )
   {
-    PRINT_NAMED_ERROR("VisionSystem.Init.NightVisionAccumulatorInitFailed", "");
+    PRINT_NAMED_ERROR("VisionSystem.Init.NightVisionFilterInitFailed", "");
     return RESULT_FAIL;
   }
 
@@ -1528,18 +1528,18 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   if(ShouldProcessVisionMode(VisionMode::NightVision))
   {
     usingNightVision = true;
-    _nightVisionAccumulator->AddImage( imageCache.GetGray(), poseData );
+    _nightVisionFilter->AddImage( imageCache.GetGray(), poseData );
     
     Vision::Image nightImage;
-    if( _nightVisionAccumulator->GetOutput( nightImage ) )
+    if( _nightVisionFilter->GetOutput( nightImage ) )
     {
-      PRINT_NAMED_INFO("VisionSystem.Update.NightVision", "Has night vision output");
+      PRINT_NAMED_DEBUG("VisionSystem.Update.NightVision", "Has night vision output");
       _nightImageCache->Reset( nightImage );
       nightVisionCache = _nightImageCache.get();
     }
     else
     {
-      PRINT_NAMED_INFO("VisionSystem.Update.NightVision", "Still buffering night vision output");
+      PRINT_NAMED_DEBUG("VisionSystem.Update.NightVision", "Still buffering night vision output");
     }
   }
   
@@ -1755,6 +1755,18 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       return lastResult;
     }
     visionModesProcessed.SetBitFlag(VisionMode::CheckingQuality, true);
+
+    // NOTE Enable night vision?
+    if(_currentResult.imageQuality == ImageQuality::TooDark && !IsModeEnabled(VisionMode::NightVision))
+    {
+      EnableMode(VisionMode::NightVision, true);
+      PRINT_NAMED_INFO("VisionSystem.Update.TooDark", "Image too dark. Enabling night vision");
+    }
+    else if(_currentResult.imageQuality != ImageQuality::TooDark && IsModeEnabled(VisionMode::NightVision))
+    {
+      EnableMode(VisionMode::NightVision, false);
+      PRINT_NAMED_INFO("VisionSystem.Update.NoLongerDark", "Image no longer too dark. Disabling night vision");
+    }
   }
 
   if(ShouldProcessVisionMode(VisionMode::CheckingWhiteBalance))

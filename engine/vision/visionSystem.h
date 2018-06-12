@@ -86,7 +86,7 @@ namespace Cozmo {
   class Robot;
   class VizManager;
   class GroundPlaneClassifier;
-  class NightVisionAccumulator;
+  class NightVisionFilter;
   
   // Everything that can be generated from one image in one big package:
   struct VisionProcessingResult
@@ -308,7 +308,7 @@ namespace Cozmo {
     std::unique_ptr<GroundPlaneClassifier>          _groundPlaneClassifier;
     std::unique_ptr<IlluminationDetector>           _illuminationDetector;
     std::unique_ptr<ImageSaver>                     _imageSaver;
-    std::unique_ptr<NightVisionAccumulator>         _nightVisionAccumulator;
+    std::unique_ptr<NightVisionFilter>              _nightVisionFilter;
 
     std::unique_ptr<Vision::Benchmark>              _benchmark;
     std::unique_ptr<Vision::NeuralNetRunner>        _neuralNetRunner;

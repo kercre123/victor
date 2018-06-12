@@ -18,7 +18,8 @@
     "BuildingOverheadMap"        : false,
     "DetectingVisualObstacles"   : false,
     "RunningNeuralNet"           : false,
-    "DetectingIllumination"      : true
+    "DetectingIllumination"      : true,
+    "NightVision"                : false
   },
 
   "InitialModeSchedules" :
@@ -84,10 +85,13 @@
 
   "NightVision" :
   {
-    "MinNumImages":     10,
-    "HistSubsample":    4,
-    "TargetPercentile": 95,
-    "TargetValue":      240
+    "MinNumImages"       : 3,   // [1+] Minimum number of images in accumulator before outputting
+    "HistSubsample"      : 8,   // [1+] Image subsampling stride for computing histogram for percentile
+    "TargetPercentile"   : 50,  // [0-100] Image intensity percentile to compute for contrast adjustment
+    "TargetValue"        : 240, // [0-255] Target percentile is scaled to this for contrast adjustment
+    "BodyAngleThreshold" : 1,   // Max allowable body angle change in deg
+    "BodyPoseThreshold"  : 1,   // Max allowable body movement in mm
+    "HeadAngleThreshold" : 1    // Max allowable head angle change in deg
   },
 
   "PerformanceLogging" :
