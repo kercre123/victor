@@ -25,7 +25,6 @@
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
-#include "engine/robotDataLoader.h"
 #include "engine/viz/vizManager.h"
 
 #include "osState/osState.h"

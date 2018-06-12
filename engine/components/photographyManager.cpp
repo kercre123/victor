@@ -15,16 +15,44 @@
 #include "engine/components/photographyManager.h"
 #include "engine/components/visionComponent.h"
 #include "engine/robot.h"
+#include "engine/robotDataLoader.h"
 
 #include "util/console/consoleInterface.h"
+
+#include <sstream>
+#include <iomanip>
+
+// Log options
+#define LOG_CHANNEL "PhotographyManager"
 
 namespace Anki {
 namespace Cozmo {
 
+
 CONSOLE_VAR(bool, kDevIsStorageFull, "Photography", false);
-  
+
 // If true, requires OS version that supports camera format change
 CONSOLE_VAR(bool, kTakePhoto_UseFullSensorResolution, "Photography", false);
+
+namespace
+{
+  const std::string kPhotoManagerFolder = "photos";
+  const std::string kPhotoManagerFilename = "photos.json";
+  
+  // Overridden by config file
+  int kMaxSlots           = 20;
+  bool kRemoveDistortion  = true;
+  int8_t kSaveQuality     = 95;
+  float kThumbnailScale   = 0.125f;
+  
+  const char* kModuleName = "PhotographyManager";
+  
+  static const std::string kNextPhotoIDKey = "NextPhotoID";
+  static const std::string kPhotoInfosKey = "PhotoInfos";
+  static const std::string kIDKey = "ID";
+  static const std::string kTimeStampKey = "TimeStamp";
+  static const std::string kCopiedKey = "Copied";
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
 PhotographyManager::PhotographyManager()
@@ -37,6 +65,36 @@ PhotographyManager::PhotographyManager()
 void PhotographyManager::InitDependent(Robot* robot, const RobotCompMap& dependentComponents)
 {
   _visionComponent = robot->GetComponentPtr<VisionComponent>();
+
+  const auto& config = robot->GetContext()->GetDataLoader()->GetPhotographyConfig();
+  kMaxSlots = JsonTools::GetValue<s32>(config["MaxSlots"]);
+  kRemoveDistortion = JsonTools::ParseBool(config, "RemoveDistortion", kModuleName);
+  kSaveQuality = JsonTools::GetValue<int8_t>(config["SaveQuality"]);
+  kThumbnailScale = JsonTools::GetValue<float>(config["ThumbnailScale"]);
+  
+  _platform = robot->GetContextDataPlatform();
+  DEV_ASSERT(_platform != nullptr, "PhotographyManager.InitDependent.DataPlatformIsNull");
+
+  _savePath = _platform->pathToResource(Util::Data::Scope::Persistent, kPhotoManagerFolder);
+  if (!Util::FileUtils::CreateDirectory(_savePath))
+  {
+    LOG_ERROR("PhotographyManager.InitDependent.FailedToCreateFolder", "Failed to create folder %s", _savePath.c_str());
+    return;
+  }
+  
+  _fullPathPhotoInfoFile = Util::FileUtils::FullFilePath({_savePath, kPhotoManagerFilename});
+  if (Util::FileUtils::FileExists(_fullPathPhotoInfoFile))
+  {
+    if (!LoadPhotosFile())
+    {
+      LOG_ERROR("PhotographyManager.InitDependent.FailedLoadingPhotosFile", "Error loading photos file");
+    }
+  }
+  else
+  {
+    LOG_WARNING("PhotographyManager.InitDependent.NoPhotosFile", "Photos file not found; creating new one");
+    SavePhotosFile();
+  }
 }
 
 
@@ -75,7 +133,7 @@ Result PhotographyManager::EnablePhotoMode(bool enable)
 
   if(!IsReadyToSwitchModes())
   {
-    PRINT_NAMED_WARNING("PhotographyManager.EnablePhotoMode.NotReady", "");
+    LOG_WARNING("PhotographyManager.EnablePhotoMode.NotReady", "");
     return RESULT_FAIL;
   }
 
@@ -83,8 +141,8 @@ Result PhotographyManager::EnablePhotoMode(bool enable)
   _visionComponent->SetCameraCaptureFormat(format);
   _state = (enable ? State::WaitingForPhotoModeEnable : State::WaitingForPhotoModeDisable);
   
-  PRINT_CH_INFO("Behaviors", "PhotographyManager.EnablePhotoMode.FormatChange",
-                "Requesting format: %s", EnumToString(format));
+  LOG_INFO("PhotographyManager.EnablePhotoMode.FormatChange",
+           "Requesting format: %s", EnumToString(format));
 
   return RESULT_OK;
 }
@@ -101,31 +159,31 @@ bool PhotographyManager::IsReadyToTakePhoto() const
 {
   return (State::InPhotoMode == _state);
 }
- 
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool PhotographyManager::IsPhotoStorageFull()
 { 
-  return kDevIsStorageFull;
+  return kDevIsStorageFull || _photoInfos.size() >= kMaxSlots;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string PhotographyManager::GetSavePath() const
 {
-  // TODO: Populate this with real save path
-  return "";
+  return _savePath;
 }
-  
-  
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::string PhotographyManager::GetBasename() const
+std::string PhotographyManager::GetBasename(int photoID) const
 {
-  // TODO: Populate this with real base filename
-  return "";
+  std::ostringstream ss;
+  ss << std::setw(6) << std::setfill('0') << photoID;
+  return "photo_" + ss.str();
 }
-  
-  
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 PhotographyManager::PhotoHandle PhotographyManager::TakePhoto()
 {
@@ -133,32 +191,27 @@ PhotographyManager::PhotoHandle PhotographyManager::TakePhoto()
 
   if(!IsReadyToTakePhoto())
   {
-    PRINT_NAMED_WARNING("PhotographyManager.TakePhoto.NotReady", "");
+    LOG_WARNING("PhotographyManager.TakePhoto.NotReady", "");
     return 0;
   }
 
-  // TODO: Get fron Json config?
-  const bool   kRemoveDistortion = true;
-  const int8_t kSaveQuality = 95;
-  const f32    kThumbnailScale = 0.125f;
-  
   const auto photoSize = (kTakePhoto_UseFullSensorResolution ?
                           Vision::ImageCache::Size::Sensor :
                           Vision::ImageCache::Size::Full);
-  
-  PRINT_CH_INFO("Behavior", "PhotographyManager.TakePhoto.SettingSaveParams", "");
-  
+
+  LOG_INFO("PhotographyManager.TakePhoto.SettingSaveParams", "");
+
   _visionComponent->SetSaveImageParameters(ImageSendMode::SingleShot,
                                            GetSavePath(),
-                                           GetBasename(),
+                                           GetBasename(_nextPhotoID),
                                            kSaveQuality,
                                            photoSize,
                                            kRemoveDistortion,
                                            kThumbnailScale);
-  
+
   _lastRequestedPhotoHandle = _visionComponent->GetLastProcessedImageTimeStamp();
   _state = State::WaitingForTakePhoto;
-  
+
   return _lastRequestedPhotoHandle;
 }
 
@@ -168,11 +221,27 @@ void PhotographyManager::SetLastPhotoTimeStamp(TimeStamp_t timestamp)
 {
   static_assert(sizeof(PhotoHandle) >= sizeof(TimeStamp_t), "PhotoHandle alias must be able to accomodate TimeStamps");
   _lastSavedPhotoHandle = timestamp;
-  
+
   if(WasPhotoTaken(_lastRequestedPhotoHandle))
   {
     // Last TakePhoto call is completed, go back to InPhotoMode, meaning we are ready to take more photos
     _state = State::InPhotoMode;
+
+    // Record info about the photo in the 'photos info'
+    // Note: When VIC-3649 "Add engine support for getting the current wall time" is done, use it here?
+    using namespace std::chrono;
+    const auto time_s = duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
+    const auto epochTimestamp = static_cast<int>(time_s);
+    static const bool copiedToApp = false;
+    _photoInfos.push_back(PhotoInfo(_nextPhotoID, epochTimestamp, copiedToApp));
+    const auto index = static_cast<uint32_t>(_photoInfos.size() - 1);
+    LOG_INFO("PhotographyManager.SetLastPhotoTimeStamp",
+             "Photo with ID %i and epoch date/time %i saved at index %u",
+             _nextPhotoID, epochTimestamp, index);
+
+    _nextPhotoID++;
+
+    SavePhotosFile();
   }
 }
 
@@ -182,6 +251,123 @@ bool PhotographyManager::WasPhotoTaken(const PhotoHandle handle) const
 {
   return (_lastSavedPhotoHandle > handle);
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool PhotographyManager::LoadPhotosFile()
+{
+  Json::Value data;
+  if (!_platform->readAsJson(_fullPathPhotoInfoFile, data))
+  {
+    LOG_ERROR("PhotographyManager.LoadPhotosFile.Failed", "Failed to read %s", _fullPathPhotoInfoFile.c_str());
+    return false;
+  }
+
+  _nextPhotoID = data[kNextPhotoIDKey].asInt();
+
+  _photoInfos.clear();
+  for (const auto& info : data[kPhotoInfosKey])
+  {
+    const int id = info[kIDKey].asInt();
+    const TimeStamp_t dateTimeTaken = info[kTimeStampKey].asUInt();
+    const bool copied = info[kCopiedKey].asBool();
+
+    _photoInfos.push_back(PhotoInfo(id, dateTimeTaken, copied));
+  }
+  
+  const auto numPhotos = _photoInfos.size();
+  if (numPhotos > kMaxSlots)
+  {
+    LOG_WARNING("PhotographyManager.LoadPhotosFile.DeletingPhotos",
+                "Removing some photos because there are now fewer slots (configuration change)");
+    // Delete the oldest photo(s)
+    for (int i = 0; i < numPhotos - kMaxSlots; i++)
+    {
+      // Delete the first photo in the list; DeletePhotoByID will compress the list
+      static const bool savePhotosFile = false;
+      DeletePhotoByID(_photoInfos[0]._id, savePhotosFile);
+    }
+    SavePhotosFile();
+  }
+
+  return true;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void PhotographyManager::SavePhotosFile()
+{
+  Json::Value data;
+
+  data[kNextPhotoIDKey] = _nextPhotoID;
+  Json::Value emptyArray(Json::arrayValue);
+  data[kPhotoInfosKey] = emptyArray;
+  for (const auto& info : _photoInfos)
+  {
+    Json::Value infoJson;
+    infoJson[kIDKey]        = info._id;
+    infoJson[kTimeStampKey] = info._dateTimeTaken;
+    infoJson[kCopiedKey]    = info._copiedToApp;
+    
+    data[kPhotoInfosKey].append(infoJson);
+  }
+
+  if (!_platform->writeAsJson(_fullPathPhotoInfoFile, data))
+  {
+    LOG_ERROR("PhotographyManager.SavePhotosFile.Failed", "Failed to write photos info file");
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool PhotographyManager::DeletePhotoByID(const int id, const bool savePhotosFile)
+{
+  int index = PhotoIndexFromID(id);
+  if (index < 0)
+  {
+    return false;
+  }
+
+  // Delete the photo itself, and its thumbnail, from disk
+  const auto& baseName = GetBasename(id);
+  Util::FileUtils::DeleteFile(Util::FileUtils::FullFilePath({_savePath, baseName + "." + GetPhotoExtension()}));
+  Util::FileUtils::DeleteFile(Util::FileUtils::FullFilePath({_savePath, baseName + "." + GetThumbExtension()}));
+
+  const auto newSize = _photoInfos.size() - 1;
+  for ( ; index < newSize; index++)
+  {
+    _photoInfos[index] = _photoInfos[index + 1];
+  }
+  _photoInfos.resize(newSize);
+
+  LOG_INFO("PhotographyManager.DeletePhotoByID", "Photo with ID %i, at index %i, deleted", id, index);
+  if (savePhotosFile)
+  {
+    SavePhotosFile();
+  }
+  return true;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+int PhotographyManager::PhotoIndexFromID(const int id) const
+{
+  int index = 0;
+  for ( ; index < _photoInfos.size(); index++)
+  {
+    if (_photoInfos[index]._id == id)
+    {
+      break;
+    }
+  }
+  if (index >= _photoInfos.size())
+  {
+    LOG_ERROR("PhotographyManager.PhotoIndexFromID", "Photo ID %i not found", id);
+    return -1;
+  }
+  return index;
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

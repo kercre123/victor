@@ -13,10 +13,15 @@
 #ifndef __Cozmo_Basestation_Components_PhotographyManager_H__
 #define __Cozmo_Basestation_Components_PhotographyManager_H__
 
+#include "engine/cozmoContext.h"
 #include "engine/robotComponents_fwd.h"
 
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
+
+#include "coretech/common/engine/utils/timer.h"
+
+#include <vector>
 
 namespace Anki {
 namespace Cozmo {
@@ -69,11 +74,22 @@ public:
   // Called by VisionComponent when photo has been taken and saved
   void SetLastPhotoTimeStamp(TimeStamp_t timestamp);
 
+  // Load/save the photos 'database' json file
+  bool LoadPhotosFile();
+  void SavePhotosFile();
+
+  // Delete a photo
+  bool DeletePhotoByID(const int id, const bool savePhotosFile = true);
+  
+  static const char * GetPhotoExtension() { return "jpg"; }
+  static const char * GetThumbExtension() { return "thm.jpg"; }
+
 private:
-  
+
   std::string GetSavePath() const;
-  std::string GetBasename() const;
-  
+  std::string GetBasename(int photoID) const;
+  int PhotoIndexFromID(const int id) const; // Returns photo info index, or -1 if not found
+
   enum class State {
     Idle,
     WaitingForPhotoModeEnable,
@@ -81,12 +97,27 @@ private:
     WaitingForTakePhoto,
     WaitingForPhotoModeDisable,
   };
-  
+
+  Util::Data::DataPlatform* _platform = nullptr;
   State             _state = State::Idle;
   VisionComponent*  _visionComponent = nullptr;
   PhotoHandle       _lastRequestedPhotoHandle = 0;
   PhotoHandle       _lastSavedPhotoHandle = 0;
+  int               _nextPhotoID = 0;
+  std::string       _savePath = "";
+  std::string       _fullPathPhotoInfoFile = "";
 
+  struct PhotoInfo
+  {
+    PhotoInfo() {}
+    PhotoInfo(int id, TimeStamp_t dt, bool copied) : _id(id), _dateTimeTaken(dt), _copiedToApp(copied) {}
+
+    int         _id;
+    TimeStamp_t _dateTimeTaken;
+    bool        _copiedToApp;
+  };
+
+  std::vector<PhotoInfo> _photoInfos;
 };
 
 
