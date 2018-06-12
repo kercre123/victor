@@ -1,69 +1,115 @@
 #!/bin/sh
-
-# Updates the Victor robot firmware on a connected android device
+# Updates the syscon firmware on a networked Victor robot
 #
 # Must first build the syscon firmware using
 #  > cd robot
 #  > ./vmake.sh
 #
 
+set -e
+set -u
+
 # Go to directory of this script
 SCRIPT_PATH=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || echo $0))
+SCRIPT_NAME=$(basename ${0})
 GIT=`which git`
 if [ -z $GIT ]
 then
     echo git not found
     exit 1
 fi
-TOPLEVEL=`$GIT rev-parse --show-toplevel`
+: ${TOPLEVEL:=`$GIT rev-parse --show-toplevel`}
+
+if [ -e ${SCRIPT_PATH}/victor_env.sh ]; then
+    # This is so that this same dfu script can be used for 
+    # standalone syscon update packages containing victor_env.sh
+    # in the same folder.
+    source ${SCRIPT_PATH}/victor_env.sh
+else
+    source ${SCRIPT_PATH}/../project/victor/scripts/victor_env.sh
+fi
 
 cd "${SCRIPT_PATH}"
 
-ADB=adb
-if [ -e $TOPLEVEL/local.properties ]; then
-    ANDROID_HOME=`egrep sdk.dir $TOPLEVEL/local.properties | awk -F= '{print $2;}'`
-    ADB=$ANDROID_HOME/platform-tools/adb
-    if [ ! -x $ADB ]; then
-        ADB=adb
-    fi
+# Settings can be overridden through environment
+: ${VERBOSE:=0}
+: ${STAGING_DIR:="/anki/bin/dfu_staging"}
+DFU_PROGRAM="${SCRIPT_PATH}/hal/dfu/dfu"
+DFU_PAYLOAD="${SCRIPT_PATH}/syscon/build/syscon.dfu"
+
+function logv() {
+  if [ $VERBOSE -eq 1 ]; then
+    echo -n "[$SCRIPT_NAME] "
+    echo $*;
+  fi
+}
+
+function usage() {
+  echo "$SCRIPT_NAME [OPTIONS]"
+  echo "options:"
+  echo "  -h                      print this message"
+  echo "  -v                      print verbose output"
+  echo "  -d DFU_PROGRAM          DFU program to use"
+  echo "  -p DFU_PAYLOAD          syscon payload file to use"
+  echo "  -s ANKI_ROBOT_HOST      hostname or ip address of robot"
+}
+
+while getopts "hvd:p:s:" opt; do
+  case $opt in
+    h)
+      usage && exit 0
+      ;;
+    v)
+      VERBOSE=1
+      ;;
+    d)
+      DFU_PROGRAM="${OPTARG}"
+      ;;
+    p)
+      DFU_PAYLOAD="${OPTARG}"
+      ;;      
+    s)
+      ANKI_ROBOT_HOST="${OPTARG}"
+      ;;
+    *)
+      usage && exit 1
+      ;;
+  esac
+done
+
+robot_set_host
+
+if [ -z "${ANKI_ROBOT_HOST+x}" ]; then
+  echo "ERROR: unspecified robot target. Pass the '-s' flag or set ANKI_ROBOT_HOST"
+  usage
+  exit 1
 fi
 
-# List connect devices
-$ADB devices
+echo "ANKI_ROBOT_HOST: ${ANKI_ROBOT_HOST}"
 
-# Grab the IDs of all the connected devices / emulators
-IDS=($($ADB devices | sed '1,1d' | sed '$d' | cut -f 1 | sort))
-NUMIDS=${#IDS[@]}
-
-# Check for number of connected devices / emulators
-if [[ 0 -eq "$NUMIDS" ]]; then
-    # No IDs, exit
-    echo "No android devices detected - nothing to do."
-    exit -1;
+# Check that DFU files exist
+if [ ! -e ${DFU_PROGRAM} ]; then
+  echo "ERROR: DFU program not found. Run make from robot/hal/dfu/ to build."
+  exit
+fi
+if [ ! -e ${DFU_PAYLOAD} ]; then
+  echo "ERROR: DFU payload not found. Run vmake.sh to build"
+  exit
 fi
 
-ISROOT=`$ADB root`
-if [[ ${#ISROOT} -lt 31 ]]; then
-    echo "Running userinit"
-    $ADB shell -x "./data/local/tmp/userinit.sh"
-fi
+echo "Stopping robot processes"
+robot_sh systemctl stop anki-robot.target
 
-cd hal/dfu
-make
-#make the remote schtuff?
-$ADB push dfu /data/local/tmp
-cd ../..
-$ADB push syscon/build/syscon.dfu /data/local/tmp
-
-# Shell into android device and execute dfu process
-$ADB shell -x "
-export LD_LIBRARY_PATH=/data/local/tmp
-cd /data/local/tmp
-./dfu syscon.dfu
+# Remount rootfs read-write if necessary
+MOUNT_STATE=$(\
+    robot_sh "grep ' / ext4.*\sro[\s,]' /proc/mounts > /dev/null 2>&1 && echo ro || echo rw"\
+)
+[[ "$MOUNT_STATE" == "ro" ]] && logv "remount rw /" && robot_sh "/bin/mount -o remount,rw /"
 
 function cleanup() {
   # Remount rootfs read-only
   [[ "$MOUNT_STATE" == "ro" ]] && logv "remount ro /" &&  robot_sh "/bin/mount -o remount,ro /"    
+  exit
 }
 
 # trap ctrl-c and call ctrl_c()
@@ -91,9 +137,9 @@ while [ $NUM_RETRIES -ge 0 ]; do
         spawn ssh ${ANKI_ROBOT_USER}@${ANKI_ROBOT_HOST}
         expect "~ #"
         send "${STAGING_DIR}/${DFU_PROGRAM_BASENAME} ${STAGING_DIR}/${DFU_PAYLOAD_BASENAME}\n"
-        set timeout 5
+        set timeout 8
         expect {
-            "requesting validation" {
+            "Success!" {
                 send_user "DFU_SUCCESS"
             }
             timeout {

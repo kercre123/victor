@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import argparse
 import struct
@@ -18,12 +18,13 @@ import time
 #   uint32_t PLAYPEN_PASSED_FLAG;
 #   uint32_t PACKED_OUT_FLAG;
 #   uint32_t PACKED_OUT_DATE; //Unix time?
-#   uint32_t reserved[48];
+#   uint32_t reserved[47];
+#   uint32_t playpenTestDisableMask;
 #   uint32_t playpen[8];
 #   uint32_t fixture[192];
 # } EMR;
 
-emr_format="<LLLLLLLL48L8L192L"
+emr_format="<LLLLLLLL47LL8L192L"
 
 def auto_int(x):
   return int(x, 0)
@@ -39,9 +40,14 @@ parser.add_argument('--playpen-passed-flag', action='store', type=auto_int, defa
 parser.add_argument('--packed-out-flag', action='store', type=auto_int, default=1, help="packed out flag")
 parser.add_argument('--packed-out-date', action='store', type=auto_int, default=int(time.time()),
                     help="packed out date (seconds since unix epoch)")
-parser.add_argument('--out', action='store', type=argparse.FileType('w'), default="./birthcertificate",
+parser.add_argument('--playpen-test-disable-mask', action='store', type=auto_int, default=0, help="playpen test disable mask")
+parser.add_argument('--out', action='store', type=argparse.FileType('wb'), default="./birthcertificate",
                     help="file to store birthcertificate in")
 args = parser.parse_args()
+
+reserved_zeros = ([0] * 47)
+playpen_zeros  = ([0] * 8)
+fixture_zeros  = ([0] * 192)
 
 str = struct.pack(emr_format,
                   args.esn,
@@ -52,7 +58,11 @@ str = struct.pack(emr_format,
                   args.playpen_passed_flag,
                   args.packed_out_flag,
                   args.packed_out_date,
-                  *([0] * 248));
+                  *reserved_zeros,
+                  args.playpen_test_disable_mask,
+                  *playpen_zeros,
+                  *fixture_zeros);
+
 args.out.write(str)
 args.out.close()
 
