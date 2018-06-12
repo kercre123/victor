@@ -430,7 +430,7 @@ void handle_LifeTestScreen(void* param)
 void handle_LifeTestSquareWave(void* param)
 {
   printf("Square Wave Test Selected\n");
-  gLifeTesting.square_wave_proc.proc_fd = pidopen("./testsquarewave.sh", "", &gLifeTesting.square_wave_proc.wait_pid);
+  gLifeTesting.square_wave_proc.proc_fd = pidopen("./testsquarewav.sh", "", &gLifeTesting.square_wave_proc.wait_pid);
   gLifeTesting.square_wave = true;
 }
 
