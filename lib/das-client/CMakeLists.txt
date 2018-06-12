@@ -13,7 +13,6 @@ set(SRCS
   src/dasInit.cpp
   src/dasLogFileAppender.cpp
   src/fileUtils.cpp
-  src/jsoncpp.cpp
   src/stringUtils.cpp
   src/stringUtils.h
   src/taskExecutor.cpp
@@ -100,8 +99,9 @@ target_include_directories(DAS
 
 target_link_libraries(DAS
   ${PLATFORM_LIBS}
+  jsoncpp
 )
 
-anki_build_target_license(DAS "ANKI" "MIT,${CMAKE_CURRENT_SOURCE_DIR}/src/LICENSE")
+anki_build_target_license(DAS "ANKI")
 
 anki_build_strip(TARGET DAS)

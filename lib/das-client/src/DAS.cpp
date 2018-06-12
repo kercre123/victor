@@ -243,19 +243,19 @@ void DASConfigure(const char* configurationJsonFilePath,
   if (nullptr != configurationJsonFilePath) {
     // load configuration
     std::string config = AnkiUtil::StringFromContentsOfFile(configurationJsonFilePath);
-    DASClient::Json::Value root;
-    DASClient::Json::Reader reader;
+    Json::Value root;
+    Json::Reader reader;
     bool parsingSuccessful = reader.parse(config, root);
     if (parsingSuccessful) {
       DASLogLevel localMinLogLevel = DASLogLevelNameToEnum(root["dasConfig"]
                                                            .get("localMinLogLevel", "info")
                                                            .asString());
       sDASLevelOverride.SetRootLogLevel(localMinLogLevel);
-      const DASClient::Json::Value& localOverrides = root["dasConfig"].get("localMinLogLevelOverrides",
-                                                                DASClient::Json::objectValue);
+      const Json::Value& localOverrides = root["dasConfig"].get("localMinLogLevelOverrides",
+                                                                Json::objectValue);
       for (const std::string& key : localOverrides.getMemberNames()) {
         DASLogLevel levelForKey = DASLogLevelNameToEnum(localOverrides
-                                                        .get(key, DASClient::Json::stringValue).asString());
+                                                        .get(key, Json::stringValue).asString());
         sDASLevelOverride.SetMinLogLevel(key, levelForKey);
       }
 
@@ -269,19 +269,19 @@ void DASConfigure(const char* configurationJsonFilePath,
         uint flush_interval = Anki::Das::DasAppender::kDefaultFlushIntervalSeconds;
         if( root["dasConfig"].isMember("flushInterval") )
         {
-          flush_interval = root["dasConfig"].get("flushInterval", DASClient::Json::uintValue).asUInt();
+          flush_interval = root["dasConfig"].get("flushInterval", Json::uintValue).asUInt();
         }
 
         size_t maxLogLength = Anki::Das::kDefaultMaxLogLength;
         if( root["dasConfig"].isMember("maxLogLength") )
         {
-          maxLogLength = root["dasConfig"].get("maxLogLength", DASClient::Json::uintValue).asUInt();
+          maxLogLength = root["dasConfig"].get("maxLogLength", Json::uintValue).asUInt();
         }
 
         size_t maxLogFiles = Anki::Das::kDasDefaultMaxLogFiles;
         if( root["dasConfig"].isMember("maxLogFiles") )
         {
-          maxLogFiles = root["dasConfig"].get("maxLogFiles", DASClient::Json::uintValue).asUInt();
+          maxLogFiles = root["dasConfig"].get("maxLogFiles", Json::uintValue).asUInt();
         }
 
         sRemoteAppender.reset(new Anki::Das::DasAppender(sDasLogDir, url,flush_interval,
