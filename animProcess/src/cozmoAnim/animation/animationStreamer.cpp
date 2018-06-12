@@ -53,6 +53,7 @@
 #include <opencv2/imgproc.hpp>
 
 #include "jo_gif/jo_gif.h"
+#include "gif-h/gif.h"
 
 #include <stdio.h>
 #include <time.h>
@@ -308,7 +309,9 @@ namespace Cozmo {
   static std::string s_frameFilename;
   static int s_frame = 0;
   static int s_framesToCapture = 0;
-  static jo_gif_t s_gif;
+  static jo_gif_t s_gif1;
+  static struct GifWriter s_gif2;
+  static int s_gifVersion = 1;
   static clock_t s_frameStart;
   static FILE* s_tga = nullptr;
 
@@ -324,10 +327,18 @@ namespace Cozmo {
       const std::string cacheFilename = dataPlatform->pathToResource(Util::Data::Scope::Cache, s_frameFilename);
 
       if(s_frameFilename.find(".gif") != std::string::npos) {
-        s_gif = jo_gif_start(cacheFilename.c_str(), FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT, -1, 255);
-        if(s_gif.fp != nullptr) {
+        s_gifVersion = 1;
+        s_gif1 = jo_gif_start(cacheFilename.c_str(), FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT, 0, 256);
+        if(s_gif1.fp != nullptr) {
           s_framesToCapture = numFrames;
         }
+
+      } else if(s_frameFilename.find(".GIF") != std::string::npos) {
+        s_gifVersion = 2;
+        if (GifBegin(&s_gif2, cacheFilename.c_str(), FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT, 0, 8)) {
+          s_framesToCapture = numFrames;
+        }
+
       } else {
         s_tga = fopen(cacheFilename.c_str(), "wb");
         if(s_tga != nullptr) {
@@ -1226,8 +1237,11 @@ namespace Cozmo {
       if(s_tga != NULL) {
         fwrite(frame.GetDataPointer(), sizeof(uint8_t), FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT*4, s_tga);
       } else {
-        if(elapsed == 0) elapsed = 1;
-        jo_gif_frame(&s_gif, (uint8_t*)frame.GetDataPointer(), elapsed, false);
+        if(s_gifVersion == 1) {
+          jo_gif_frame(&s_gif1, (uint8_t*)frame.GetDataPointer(), 4, false);
+        } else {
+          GifWriteFrame(&s_gif2, (uint8_t*)frame.GetDataPointer(), FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT, elapsed*100);
+        }
       }
 
       ++s_frame;
@@ -1235,7 +1249,11 @@ namespace Cozmo {
         if(s_tga != NULL) {
           fclose(s_tga);
         } else {
-          jo_gif_end(&s_gif);
+          if(s_gifVersion == 1) {
+            jo_gif_end(&s_gif1);
+          } else {
+            GifEnd(&s_gif2);
+          }
         }
 
         s_framesToCapture = 0;
