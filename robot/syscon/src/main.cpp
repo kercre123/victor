@@ -51,6 +51,7 @@ int main (void) {
   Motors::init();
   Touch::init();
   I2C::init();
+  Lights::init();
   Timer::init();
 
   // Low priority interrupts are now our main execution
