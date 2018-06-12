@@ -1,0 +1,31 @@
+project(libev)
+
+add_library(libev STATIC
+  ev.c
+  ev.h
+)
+
+anki_build_target_license(libev "BSD-2.0,${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+
+target_compile_options(libev PUBLIC
+  -Wno-undef
+  -Wno-comment
+  -Wno-strict-aliasing
+  -Wno-unused-value
+  -Wno-parentheses
+  -Wno-c++1z-compat
+)
+
+target_compile_definitions(libev PUBLIC
+  EV_STANDALONE=1
+  EV_USE_MONOTONIC=1
+  EV_USE_SELECT=1
+  EV_USE_POLL=0
+  EV_USE_EPOLL=0
+  EV_MULTIPLICITY=1
+  EV_IDLE_ENABLE=1
+)
+
+target_include_directories(libev PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+)

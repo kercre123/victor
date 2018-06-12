@@ -13,7 +13,7 @@
 #include "ipc.h"
 #include "anki_ble_uuids.h"
 #include "gatt_constants.h"
-#include "libev/libev.h"
+#include "ev++.h"
 #include "log.h"
 #include "stringutils.h"
 #include "strlcpy.h"

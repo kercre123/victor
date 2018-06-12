@@ -11,7 +11,7 @@
  **/
 
 #include "ipc-client.h"
-#include "libev/libev.h"
+#include "ev++.h"
 #include "log.h"
 #include "memutils.h"
 #include "strlcpy.h"

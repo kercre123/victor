@@ -29,6 +29,7 @@ PRIVATE
   clad
   cti_common
   engine_clad
+  libev
 # platform
   ${PLATFORM_LIBS}
 )

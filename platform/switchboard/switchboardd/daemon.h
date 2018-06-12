@@ -19,7 +19,7 @@
  *
  **/
 #include <stdlib.h>
-#include "libev/libev.h"
+#include "ev++.h"
 #include "bleClient/bleClient.h"
 #include "switchboardd/securePairing.h"
 #include "switchboardd/taskExecutor.h"

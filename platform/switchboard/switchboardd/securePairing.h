@@ -18,7 +18,7 @@
 #include <math.h>
 #include <string.h>
 #include "switchboardd/log.h"
-#include "libev/libev.h"
+#include "ev++.h"
 #include "switchboardd/INetworkStream.h"
 #include "switchboardd/keyExchange.h"
 #include "switchboardd/pairingMessages.h"

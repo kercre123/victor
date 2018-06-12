@@ -18,7 +18,7 @@
 
 #include <string>
 #include <signals/simpleSignal.hpp>
-#include "libev/libev.h"
+#include "ev++.h"
 #include "coretech/messaging/shared/socketConstants.h"
 #include "coretech/messaging/shared/TcpClient.h"
 #include "coretech/messaging/shared/LocalUdpClient.h"

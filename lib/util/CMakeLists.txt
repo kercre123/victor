@@ -49,6 +49,10 @@ endif()
 #  add_subdirectory("source/3rd/libwebp")
 # endif()
 
+if (NOT TARGET libev)
+  add_subdirectory("source/3rd/libev")
+endif()
+
 if (NOT TARGET audio_util)
   add_subdirectory("source/anki/audioUtil")
 endif()
