@@ -2,11 +2,14 @@
 #include "hardware.h"
 
 #include "power.h"
+#include "analog.h"
 #include "vectors.h"
 #include "flash.h"
 #include "motors.h"
 #include "encoders.h"
 #include "opto.h"
+#include "mics.h"
+#include "lights.h"
 
 #include "contacts.h"
 
@@ -38,6 +41,20 @@ static PowerMode desiredState = POWER_CALM;
 void Power::init(void) {
   RCC->APB1ENR |= APB1_CLOCKS;
   RCC->APB2ENR |= APB2_CLOCKS;
+}
+
+static inline void enableHead(void) {
+  MAIN_EN::mode(MODE_OUTPUT);
+  MAIN_EN::set();
+  Mics::start();
+  Lights::init();
+}
+
+static inline void disableHead(void) {
+  MAIN_EN::mode(MODE_OUTPUT);
+  MAIN_EN::reset();
+  Mics::stop();
+  Lights::disable();
 }
 
 static void markForErase(void) {
@@ -133,41 +150,39 @@ void Power::tick(void) {
   PowerMode desired = desiredState;
 
   if (currentState != desired) {
-    // Disable optical sensors
+    // Power reduction code
     if (currentState == POWER_ACTIVE) {
       Opto::stop();
       Encoders::stop();
+      Mics::reduce(true);
     } else if (desired == POWER_ACTIVE) {
       Encoders::init();
       Opto::start();
+      Mics::reduce(false);
     }
 
     currentState = desired;
+
+    switch (currentState) {
+      case POWER_ERASE:
+        markForErase();
+        enterBootloader();
+        return ;
+      case POWER_STOP:
+        disableHead();
+        break ;
+      default:
+        enableHead();
+        break ;
+    }
   }
 
   switch (currentState) {
-    case POWER_ERASE:
-      markForErase();
-      enterBootloader();
-      break ;
     case POWER_STOP:
-      POWER_EN::pull(PULL_NONE);
-      POWER_EN::reset();
-      POWER_EN::mode(MODE_OUTPUT);
+      Analog::setPower(false);
       break ;
     default:
-      POWER_EN::pull(PULL_UP);
-      POWER_EN::mode(MODE_INPUT);
+      Analog::setPower(true);
       break ;
   }
-}
-
-void Power::disableHead(void) {
-  MAIN_EN::mode(MODE_OUTPUT);
-  MAIN_EN::reset();
-}
-
-void Power::enableHead(void) {
-  MAIN_EN::mode(MODE_OUTPUT);
-  MAIN_EN::set();
 }

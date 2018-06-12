@@ -4,12 +4,12 @@
 
 #include "stm32f0xx.h"
 
-static inline void waitForFlash(void) {
+static void waitForFlash(void) {
   while (FLASH->SR & FLASH_SR_BSY) ;
   FLASH->SR = FLASH_SR_EOP;
 }
 
-static inline void unlockFlash(void) {
+static void unlockFlash(void) {
   waitForFlash();
 
   if (FLASH->CR & FLASH_CR_LOCK) {
@@ -18,7 +18,7 @@ static inline void unlockFlash(void) {
   }
 }
 
-static inline void lockFlash(void) {
+static void lockFlash(void) {
   FLASH->CR |= FLASH_CR_LOCK;
 }
 

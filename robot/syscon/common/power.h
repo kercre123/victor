@@ -14,8 +14,6 @@ namespace Power {
   void tick(void);
   void wakeUp(void);
   void setMode(PowerMode);
-  void disableHead();
-  void enableHead();
 }
 
 #endif

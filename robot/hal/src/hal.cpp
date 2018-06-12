@@ -50,12 +50,12 @@ namespace { // "Private members"
   // so we cache the last non-0xFFFF value and return this as the latest touch sensor reading
   u16 lastValidTouchIntensity_;
 
-  bool touchSensorRawOutsideValidRange_ = false; 
+  bool touchSensorRawOutsideValidRange_ = false;
   static const size_t TOUCH_BOX_FILTER_SIZE = 80;
   u16 touchBoxFilter_[TOUCH_BOX_FILTER_SIZE] = {0};
   size_t touchBoxFilterInd_ = 0;
   u32 touchBoxFilterSum_ = 0;
-  
+
   PowerState desiredPowerMode_;
 
   // Flag to prevent spamming of unexepected power mode warning
@@ -67,9 +67,9 @@ namespace { // "Private members"
   // Last time a HeadToBody frame was sent
   TimeStamp_t lastH2BSendTime_ms_ = 0;
 
-  // The maximum time expected to elapse before we're sure that 
+  // The maximum time expected to elapse before we're sure that
   // syscon should have changed to the desired power mode,
-  // indexed by desired power mode. 
+  // indexed by desired power mode.
   static const TimeStamp_t MAX_POWER_MODE_SWITCH_TIME_MS[2] = {100,          // Calm->Active timeout
                                                                1000 + 100};  // Active->Calm timeout
 
@@ -206,7 +206,7 @@ Result spine_wait_for_first_frame(spine_ctx_t spine)
         BootBodyData_.touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
         BootBodyData_.battery.flags = POWER_ON_CHARGER;
 
-        BootBodyData_.battery.battery = (int16_t)(5.0/kBatteryScale);
+        BootBodyData_.battery.main_voltage = (int16_t)(5.0/kBatteryScale);
         BootBodyData_.battery.charger = (int16_t)(5.0/kBatteryScale);
         bodyData_ = &BootBodyData_;
       }
@@ -336,7 +336,7 @@ Result spine_get_frame() {
         BootBodyData_.touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
         BootBodyData_.battery.flags = POWER_ON_CHARGER;
 
-        BootBodyData_.battery.battery = (int16_t)(5.0/kBatteryScale);
+        BootBodyData_.battery.main_voltage = (int16_t)(5.0/kBatteryScale);
         BootBodyData_.battery.charger = (int16_t)(5.0/kBatteryScale);
         bodyData_ = &BootBodyData_;
         result = RESULT_OK;
@@ -405,10 +405,10 @@ Result HAL::Step(void)
     // Print warning if power mode is unexpected
     const HAL::PowerState currPowerMode = PowerGetMode();
     if (currPowerMode != desiredPowerMode_) {
-      if ( ((lastPowerSetModeTime_ms_ == 0) && reportUnexpectedPowerMode_) || 
+      if ( ((lastPowerSetModeTime_ms_ == 0) && reportUnexpectedPowerMode_) ||
            ((lastPowerSetModeTime_ms_ > 0) && ((now_ms - lastPowerSetModeTime_ms_ > MAX_POWER_MODE_SWITCH_TIME_MS[desiredPowerMode_])))
            ) {
-        AnkiWarn("HAL.Step.UnexpectedPowerMode", 
+        AnkiWarn("HAL.Step.UnexpectedPowerMode",
                  "Curr mode: %u, Desired mode: %u, now: %ums, lastSetModeTime: %ums, lastH2BSendTime: %ums",
                  currPowerMode, desiredPowerMode_, now_ms, lastPowerSetModeTime_ms_, lastH2BSendTime_ms_);
         lastPowerSetModeTime_ms_ = 0;  // Reset time to avoid spamming warning
@@ -480,7 +480,7 @@ void ProcessTouchLevel(void)
     touchBoxFilterSum_ -= valueToOverride;
     touchBoxFilterSum_ += lastValidTouchIntensity_;
     valueToOverride = lastValidTouchIntensity_;
-    
+
     if(touchBoxFilterInd_ >= TOUCH_BOX_FILTER_SIZE)
     {
       touchBoxFilterInd_ = 0;
@@ -610,7 +610,7 @@ bool HAL::HandleLatestMicData(SendDataFunction sendDataFunc)
 f32 HAL::BatteryGetVoltage()
 {
   // scale raw ADC counts to voltage (conversion factor from Vandiver)
-  return kBatteryScale * bodyData_->battery.battery;
+  return kBatteryScale * bodyData_->battery.main_voltage;
 }
 
 bool HAL::BatteryIsCharging()
