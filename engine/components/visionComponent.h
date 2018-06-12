@@ -168,7 +168,8 @@ struct DockingErrorSignal;
     Result UpdateSalientPoints(const VisionProcessingResult& result);
     Result UpdateWhiteBalance(const VisionProcessingResult& procResult);
     Result UpdatePhotoManager(const VisionProcessingResult& procResult);
-    
+    Result UpdateDetectedIllumination(const VisionProcessingResult& procResult);
+
     const Vision::Camera& GetCamera(void) const;
     Vision::Camera& GetCamera(void);
     

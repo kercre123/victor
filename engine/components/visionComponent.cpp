@@ -976,26 +976,26 @@ namespace Cozmo {
 
         // NOTE: UpdateVisionMarkers will also update BlockWorld (which broadcasts
         //  object observations and should be done before sending RobotProcessedImage below!)
-        tryAndReport(&VisionComponent::UpdateVisionMarkers,       VisionMode::DetectingMarkers);
+        tryAndReport(&VisionComponent::UpdateVisionMarkers,        VisionMode::DetectingMarkers);
 
         // NOTE: UpdateFaces will also update FaceWorld (which broadcasts face observations
         //  and should be done before sending RobotProcessedImage below!)
-        tryAndReport(&VisionComponent::UpdateFaces,               VisionMode::DetectingFaces);
+        tryAndReport(&VisionComponent::UpdateFaces,                VisionMode::DetectingFaces);
 
         // NOTE: UpdatePets will also update PetWorld (which broadcasts pet face observations
         //  and should be done before sending RobotProcessedImage below!)
-        tryAndReport(&VisionComponent::UpdatePets,                VisionMode::DetectingPets);
+        tryAndReport(&VisionComponent::UpdatePets,                 VisionMode::DetectingPets);
 
-        tryAndReport(&VisionComponent::UpdateMotionCentroid,      VisionMode::DetectingMotion);
-        tryAndReport(&VisionComponent::UpdateOverheadEdges,       VisionMode::DetectingOverheadEdges);
-        tryAndReport(&VisionComponent::UpdateComputedCalibration, VisionMode::ComputingCalibration);
-        tryAndReport(&VisionComponent::UpdateImageQuality,        VisionMode::CheckingQuality);
-        tryAndReport(&VisionComponent::UpdateWhiteBalance,        VisionMode::CheckingWhiteBalance);
-        tryAndReport(&VisionComponent::UpdateLaserPoints,         VisionMode::DetectingLaserPoints);
-        tryAndReport(&VisionComponent::UpdateSalientPoints,       VisionMode::Count); // Use Count here to always call UpdateSalientPoints
-        tryAndReport(&VisionComponent::UpdateVisualObstacles,     VisionMode::DetectingVisualObstacles);
-        tryAndReport(&VisionComponent::UpdatePhotoManager,        VisionMode::SavingImages);
-        
+        tryAndReport(&VisionComponent::UpdateMotionCentroid,       VisionMode::DetectingMotion);
+        tryAndReport(&VisionComponent::UpdateOverheadEdges,        VisionMode::DetectingOverheadEdges);
+        tryAndReport(&VisionComponent::UpdateComputedCalibration,  VisionMode::ComputingCalibration);
+        tryAndReport(&VisionComponent::UpdateImageQuality,         VisionMode::CheckingQuality);
+        tryAndReport(&VisionComponent::UpdateWhiteBalance,         VisionMode::CheckingWhiteBalance);
+        tryAndReport(&VisionComponent::UpdateLaserPoints,          VisionMode::DetectingLaserPoints);
+        tryAndReport(&VisionComponent::UpdateSalientPoints,        VisionMode::Count); // Use Count here to always call UpdateSalientPoints
+        tryAndReport(&VisionComponent::UpdateVisualObstacles,      VisionMode::DetectingVisualObstacles);
+        tryAndReport(&VisionComponent::UpdatePhotoManager,         VisionMode::SavingImages);
+        tryAndReport(&VisionComponent::UpdateDetectedIllumination, VisionMode::DetectingIllumination);
         // Display any debug images left by the vision system
         if(ANKI_DEV_CHEATS)
         {
@@ -1596,6 +1596,13 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
+  Result VisionComponent::UpdateDetectedIllumination(const VisionProcessingResult& procResult)
+  {
+    ExternalInterface::RobotObservedIllumination msg( procResult.illumination );
+    _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+    return RESULT_OK;
+  }
+
   bool VisionComponent::WasHeadRotatingTooFast(TimeStamp_t t,
                                                const f32 headTurnSpeedLimit_radPerSec,
                                                const int numImuDataToLookBack) const

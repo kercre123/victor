@@ -9,6 +9,8 @@
  * Copyright: Anki, Inc. 2018
  **/
 
+#include "clad/types/featureGateTypes.h"
+
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/math/linearClassifier_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -16,8 +18,8 @@
 #include "coretech/vision/engine/imageCache.h"
 
 #include "engine/cozmoContext.h"
+#include "engine/utils/cozmoFeatureGate.h"
 #include "engine/vision/illuminationDetector.h"
-#include "engine/vision/illuminationState.h"
 #include "engine/vision/visionPoseData.h"
 
 #include "util/math/math.h"
@@ -28,7 +30,8 @@ namespace Anki {
 namespace Cozmo {
 
 IlluminationDetector::IlluminationDetector() 
-: _classifier( new LinearClassifier() ) {}
+: _featureGate( nullptr )
+, _classifier( new LinearClassifier() ) {}
 
 Result IlluminationDetector::Init( const Json::Value& config, const CozmoContext* context )
 {
@@ -90,17 +93,26 @@ Result IlluminationDetector::Init( const Json::Value& config, const CozmoContext
   PARSE_PARAM(config, "FeaturePercentileSubsample", _featPercSubsample, s32, GetValueOptional);
   PARSE_PARAM(config, "IlluminatedMinProbability", _illumMinProb, f32, GetValueOptional);
   PARSE_PARAM(config, "DarkenedMaxProbability", _darkMaxProb, f32, GetValueOptional);
+  PARSE_PARAM(config, "AllowMovement", _allowMovement, bool, GetValueOptional);
   
+  _featureGate = context->GetFeatureGate();
+
   return RESULT_OK;
 }
 
 Result IlluminationDetector::Detect( Vision::ImageCache& cache,
                                      const VisionPoseData& poseData,
-                                     Vision::IlluminationState& illumination )
+                                     ExternalInterface::RobotObservedIllumination& illumination )
 {
   // If the robot moved, clear buffer and bail
-  illumination = Vision::IlluminationState::Unknown;
+  illumination.timestamp = cache.GetTimeStamp();
+  illumination.state = IlluminationState::Unknown;
 
+  if( !_featureGate->IsFeatureEnabled(FeatureType::ReactToIllumination) )
+  {
+    return RESULT_OK;
+  }
+  
   if( !CanRunDetection( poseData ) )
   {
     _featureBuffer.clear();
@@ -125,11 +137,11 @@ Result IlluminationDetector::Detect( Vision::ImageCache& cache,
 
   if( prob > _illumMinProb )
   {
-    illumination = Vision::IlluminationState::Illuminated;
+    illumination.state = IlluminationState::Illuminated;
   }
   else if( prob < _darkMaxProb )
   {
-    illumination = Vision::IlluminationState::Darkened;
+    illumination.state = IlluminationState::Darkened;
   }
 
   #ifndef NDEBUG
@@ -150,19 +162,19 @@ Result IlluminationDetector::Detect( Vision::ImageCache& cache,
   return RESULT_OK;
 }
 
-bool IlluminationDetector::CanRunDetection( const VisionPoseData& poseData )
+bool IlluminationDetector::CanRunDetection( const VisionPoseData& poseData ) const
 {
   const HistRobotState& state = poseData.histState;
-  return !state.WasCarryingObject() && !state.WasMoving() &&
-         !state.WasHeadMoving() && !state.WasLiftMoving() &&
-         !state.WereWheelsMoving() && !state.WasPickedUp();
+  const bool notMoving = !state.WasMoving() && !state.WasHeadMoving() && 
+                         !state.WasLiftMoving() && !state.WereWheelsMoving();
+  return !state.WasCarryingObject() && !state.WasPickedUp() && (_allowMovement || notMoving);
 }
 
 void IlluminationDetector::GenerateFeatures( Vision::ImageCache& cache )
 {
   Vision::ImageBrightnessHistogram hist;
   hist.FillFromImage( cache.GetGray(), _featPercSubsample );
-  std::vector<u8> percentiles = hist.ComputePercentiles( _featPercentiles );
+  const std::vector<u8> percentiles = hist.ComputePercentiles( _featPercentiles );
   
   #ifndef NDEBUG
   std::string f;

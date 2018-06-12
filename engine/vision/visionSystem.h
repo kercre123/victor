@@ -32,7 +32,6 @@
 #include "engine/robotStateHistory.h"
 #include "engine/rollingShutterCorrector.h"
 #include "engine/vision/cameraCalibrator.h"
-#include "engine/vision/illuminationState.h"
 #include "engine/vision/visionModeSchedule.h"
 #include "engine/vision/visionPoseData.h"
 
@@ -108,7 +107,7 @@ namespace Cozmo {
     std::list<Vision::CameraCalibration>                        cameraCalibration;
     std::list<OverheadEdgeFrame>                                visualObstacles;
     std::list<Vision::SalientPoint>                             salientPoints;
-    Vision::IlluminationState                                   illumination;
+    ExternalInterface::RobotObservedIllumination                illumination;
 
     // Used to pass debug images back to main thread for display:
     DebugImageList<Vision::Image>    debugImages;

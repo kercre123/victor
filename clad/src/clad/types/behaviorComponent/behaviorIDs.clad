@@ -238,6 +238,7 @@ enum uint_8 BehaviorID {
   ProceduralTurnToMicDirection,
   ReactToCliff,
   ReactToCubeTap,
+  ReactToDarkness,
   ReactToFrustrationMajor,
   ReactToGoodBye,
   ReactToGoodMorning,

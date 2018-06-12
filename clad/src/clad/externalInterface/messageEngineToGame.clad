@@ -391,6 +391,12 @@ message RobotObservedLaserPoint {
     int_16   ground_y_mm
 }
 
+// RobotObservedIllumination
+message RobotObservedIllumination {
+    uint_32           timestamp,
+    IlluminationState state
+}
+
 // RobotDeletedFace - sent when an _observed_ face has been deleted (e.g. if not seen for too long)
 message RobotDeletedFace {
     int_32  faceID

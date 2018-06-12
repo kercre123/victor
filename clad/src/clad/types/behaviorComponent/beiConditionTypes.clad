@@ -28,6 +28,7 @@ enum uint_8 BEIConditionType {
   FaceKnown,
   FacePositionUpdated,
   FeatureGate,
+  IlluminationDetected,
   Lambda,
   MotionDetected,
   ObjectInitialDetection,

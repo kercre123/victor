@@ -27,6 +27,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionFaceKnown.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFacePositionUpdated.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFeatureGate.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionIlluminationDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionMotionDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectInitialDetection.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectKnown.h"
@@ -248,6 +249,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::FeatureGate:
     {
       condition = std::make_shared<ConditionFeatureGate>(config);
+      break;
+    }
+    case BEIConditionType::IlluminationDetected:
+    {
+      condition = std::make_shared<ConditionIlluminationDetected>(config);
       break;
     }
     case BEIConditionType::MotionDetected:
