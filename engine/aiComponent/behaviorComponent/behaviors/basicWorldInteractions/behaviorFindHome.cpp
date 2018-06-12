@@ -153,7 +153,11 @@ void BehaviorFindHome::TransitionToHeadStraight()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindHome::TransitionToSearchAnim()
 {
-  DelegateIfInControl(new TriggerAnimationAction(_iConfig.searchAnimTrigger),
+  CompoundActionSequential* seq = new CompoundActionSequential();
+  seq->AddAction(new TriggerAnimationAction(_iConfig.searchAnimTrigger));
+  seq->AddAction(new WaitForImagesAction(3, VisionMode::DetectingMarkers));
+
+  DelegateIfInControl(seq,
                       [this]() {
                         ++_dVars.numSearchesCompleted;
                         TransitionToRandomDrive();
