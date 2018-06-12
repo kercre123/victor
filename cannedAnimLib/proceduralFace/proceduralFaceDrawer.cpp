@@ -3,8 +3,6 @@
 
 #include "coretech/common/engine/array2d_impl.h"
 
-//#include "coretech/vision/engine/trackedFace.h"
-
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
@@ -13,6 +11,12 @@
 #include "util/math/math.h"
 #include "util/math/numericCast.h"
 #include "util/random/randomGenerator.h"
+
+// switch std::round() to macro for easier change, currently defers to cast
+#define ROUND(x) (x) // std::round(x)
+
+// switch Util::numeric_cast_clamped() to macro for easier change
+#define NUMERIC_CAST_CLAMPED(x) (u8)(x) // Util::numeric_cast_clamped<u8>(x)
 
 namespace Anki {
 namespace Cozmo {
@@ -193,7 +197,7 @@ namespace Cozmo {
 #endif // PROCEDURALFACE_NOISE_FEATURE
 
   void ProceduralFaceDrawer::DrawEye(const ProceduralFace& faceData, WhichEye whichEye,
-                                     Vision::ImageRGB& faceImg, Rectangle<f32>& eyeBoundingBox)
+                                     Vision::Image& faceImg, Rectangle<f32>& eyeBoundingBox)
   {
     const s32 eyeWidth  = ProceduralFace::NominalEyeWidth;
     const s32 eyeHeight = ProceduralFace::NominalEyeHeight;
@@ -224,7 +228,7 @@ namespace Cozmo {
       //ANKI_CPU_PROFILE("EyeShapePoly");
       // Upper right corner
       if(upRightRadX > 0 && upRightRadY > 0) {
-        cv::ellipse2Poly(cv::Point(std::round(halfEyeWidth  - upRightRadX), std::round(-halfEyeHeight + upRightRadY)),
+        cv::ellipse2Poly(cv::Point(ROUND(halfEyeWidth - upRightRadX), ROUND(-halfEyeHeight + upRightRadY)),
                          cv::Size(upRightRadX,upRightRadY), 0, 270, 360, kProcFace_EllipseDelta, segment);
         eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
       } else {
@@ -233,7 +237,7 @@ namespace Cozmo {
 
       // Lower right corner
       if(lowRightRadX > 0 && lowRightRadY > 0) {
-        cv::ellipse2Poly(cv::Point(std::round(halfEyeWidth - lowRightRadX), std::round(halfEyeHeight - lowRightRadY)),
+        cv::ellipse2Poly(cv::Point(ROUND(halfEyeWidth - lowRightRadX), ROUND(halfEyeHeight - lowRightRadY)),
                          cv::Size(lowRightRadX,lowRightRadY), 0, 0, 90, kProcFace_EllipseDelta, segment);
         eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
       } else {
@@ -242,7 +246,7 @@ namespace Cozmo {
 
       // Lower left corner
       if(lowLeftRadX > 0 && lowLeftRadY > 0) {
-        cv::ellipse2Poly(cv::Point(std::round(-halfEyeWidth  + lowLeftRadX), std::round(halfEyeHeight - lowLeftRadY)),
+        cv::ellipse2Poly(cv::Point(ROUND(-halfEyeWidth + lowLeftRadX), ROUND(halfEyeHeight - lowLeftRadY)),
                          cv::Size(lowLeftRadX,lowLeftRadY), 0, 90, 180, kProcFace_EllipseDelta, segment);
         eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
       } else {
@@ -251,7 +255,7 @@ namespace Cozmo {
 
       // Upper left corner
       if(upLeftRadX > 0 && upLeftRadY > 0) {
-        cv::ellipse2Poly(cv::Point(std::round(-halfEyeWidth + upLeftRadX), std::round(-halfEyeHeight + upLeftRadY)),
+        cv::ellipse2Poly(cv::Point(ROUND(-halfEyeWidth + upLeftRadX), ROUND(-halfEyeHeight + upLeftRadY)),
                          cv::Size(upLeftRadX,upLeftRadY), 0, 180, 270, kProcFace_EllipseDelta, segment);
         eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
       } else {
@@ -267,16 +271,16 @@ namespace Cozmo {
       const f32 angleRad = DEG_TO_RAD(angleDeg);
       const f32 yAngleAdj = -halfEyeWidth * std::tan(angleRad);
       lowerLidPoly = {
-        {(s32)std::round( halfEyeWidth + 1.f), (s32)std::round(halfEyeHeight - lowerLidY - yAngleAdj)}, // Upper right corner
-        {(s32)std::round( halfEyeWidth + 1.f), (s32)std::round(halfEyeHeight + 1.f)}, // Lower right corner
-        {(s32)std::round(-halfEyeWidth - 1.f), (s32)std::round(halfEyeHeight + 1.f)}, // Lower left corner
-        {(s32)std::round(-halfEyeWidth - 1.f), (s32)std::round(halfEyeHeight - lowerLidY + yAngleAdj)}, // Upper left corner
+        {(s32)ROUND( halfEyeWidth + 1.f), (s32)ROUND(halfEyeHeight - lowerLidY - yAngleAdj)}, // Upper right corner
+        {(s32)ROUND( halfEyeWidth + 1.f), (s32)ROUND(halfEyeHeight + 1.f)}, // Lower right corner
+        {(s32)ROUND(-halfEyeWidth - 1.f), (s32)ROUND(halfEyeHeight + 1.f)}, // Lower left corner
+        {(s32)ROUND(-halfEyeWidth - 1.f), (s32)ROUND(halfEyeHeight - lowerLidY + yAngleAdj)}, // Upper left corner
       };
       // Add bend:
       const f32 yRad = faceData.GetParameter(whichEye, Parameter::LowerLidBend) * static_cast<f32>(eyeHeight);
       if(yRad != 0) {
-        const f32 xRad = std::round(halfEyeWidth / std::cos(angleRad));
-        cv::ellipse2Poly(cv::Point(0, std::round(halfEyeHeight - lowerLidY)),
+        const f32 xRad = ROUND(halfEyeWidth / std::cos(angleRad));
+        cv::ellipse2Poly(cv::Point(0, ROUND(halfEyeHeight - lowerLidY)),
                          cv::Size(xRad,yRad), angleDeg, 180, 360, kProcFace_EllipseDelta, segment);
         DEV_ASSERT(std::abs(segment.front().x - lowerLidPoly.back().x)<3 &&
                    std::abs(segment.front().y - lowerLidPoly.back().y)<3,
@@ -296,16 +300,16 @@ namespace Cozmo {
       const f32 angleRad = DEG_TO_RAD(angleDeg);
       const f32 yAngleAdj = -halfEyeWidth * std::tan(angleRad);
       upperLidPoly = {
-        {(s32)std::round(-halfEyeWidth - 1.f), (s32)std::round(-halfEyeHeight + upperLidY + yAngleAdj)}, // Lower left corner
-        {(s32)std::round(-halfEyeWidth - 1.f), (s32)std::round(-halfEyeHeight - 1.f)}, // Upper left corner
-        {(s32)std::round( halfEyeWidth + 1.f), (s32)std::round(-halfEyeHeight - 1.f)}, // Upper right corner
-        {(s32)std::round( halfEyeWidth + 1.f), (s32)std::round(-halfEyeHeight + upperLidY - yAngleAdj)}, // Lower right corner
+        {(s32)ROUND(-halfEyeWidth - 1.f), (s32)ROUND(-halfEyeHeight + upperLidY + yAngleAdj)}, // Lower left corner
+        {(s32)ROUND(-halfEyeWidth - 1.f), (s32)ROUND(-halfEyeHeight - 1.f)}, // Upper left corner
+        {(s32)ROUND( halfEyeWidth + 1.f), (s32)ROUND(-halfEyeHeight - 1.f)}, // Upper right corner
+        {(s32)ROUND( halfEyeWidth + 1.f), (s32)ROUND(-halfEyeHeight + upperLidY - yAngleAdj)}, // Lower right corner
       };
       // Add bend:
       const f32 yRad = faceData.GetParameter(whichEye, Parameter::UpperLidBend) * static_cast<f32>(eyeHeight);
       if(yRad != 0) {
-        const f32 xRad = std::round(halfEyeWidth / std::cos(angleRad));
-        cv::ellipse2Poly(cv::Point(0, std::round(-halfEyeHeight + upperLidY)),
+        const f32 xRad = ROUND(halfEyeWidth / std::cos(angleRad));
+        cv::ellipse2Poly(cv::Point(0, ROUND(-halfEyeHeight + upperLidY)),
                          cv::Size(xRad,yRad), angleDeg, 0, 180, kProcFace_EllipseDelta, segment);
         DEV_ASSERT(std::abs(segment.front().x - upperLidPoly.back().x)<3 &&
                    std::abs(segment.front().y - upperLidPoly.back().y)<3,
@@ -356,8 +360,8 @@ namespace Cozmo {
       };
 
       Point<2,f32> temp = W * pointF32;
-      point.x = std::round(temp.x());
-      point.y = std::round(temp.y());
+      point.x = ROUND(temp.x());
+      point.y = ROUND(temp.y());
 
 #if PROCEDURALFACE_GLOW_FEATURE
       // Use glow warp to figure out larger bounding box which contains glow as well
@@ -377,8 +381,8 @@ namespace Cozmo {
         };
 
         Point<2,f32> temp = W * pointF32;
-        point.x = std::round(temp.x());
-        point.y = std::round(temp.y());
+        point.x = ROUND(temp.x());
+        point.y = ROUND(temp.y());
       }
     }
     //ANKI_CPU_PROFILE_STOP(prof_applyMat);
@@ -450,7 +454,7 @@ namespace Cozmo {
       // Inner Glow = the brighter glow at the center of the eye that falls off radially towards the edge of the eye
       // Outer Glow = the "halo" effect around the outside of the eye shape
       // Add inner glow to the eye shape, before we compute the outer glow, so that boundaries conditions match.
-      if(kProcFace_HotspotRender) {
+      if(kProcFace_HotspotRender && !Util::IsNearZero(scaledEyeWidth) && !Util::IsNearZero(scaledEyeHeight)) {
         ANKI_CPU_PROFILE("HotspotRender");
         const f32 sigmaX = kProcFace_HotspotFalloff*scaledEyeWidth;
         const f32 sigmaY = kProcFace_HotspotFalloff*scaledEyeHeight;
@@ -474,7 +478,7 @@ namespace Cozmo {
               const f32 falloff = fastExp(-f32(dx*dx)*invInnerGlowSigmaX_sq - f32(dy*dy)*invInnerGlowSigmaY_sq);
               DEV_ASSERT_MSG(Util::InRange(falloff, 0.f, 1.f), "ProceduralFaceDrawer.DrawEye.BadInnerGlowFalloffValue", "%f", falloff);
 
-              eyeValue = Util::numeric_cast_clamped<u8>(std::round(static_cast<f32>(eyeValue) * falloff));
+              eyeValue = NUMERIC_CAST_CLAMPED(ROUND(static_cast<f32>(eyeValue) * falloff));
             }
           }
         }
@@ -555,20 +559,6 @@ namespace Cozmo {
         }
       }
 
-      const f32 hueFactor = faceData.GetHue();
-      DEV_ASSERT(Util::InRange(hueFactor, 0.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidHue");
-      const u8 drawHue = std::round(255.f*hueFactor);
-
-      f32 satFactor = 1.0f;
-#if PROCEDURALFACE_ANIMATED_SATURATION
-      satFactor *= faceData.GetParameter(whichEye, Parameter::Saturation);
-#endif
-#if PROCEDURALFACE_PROCEDURAL_SATURATION
-      satFactor *= faceData.GetSaturation();
-#endif
-      DEV_ASSERT(Util::InRange(satFactor, -1.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidSaturation");
-      const u8 drawSat = std::round(255.f * satFactor);
-
       const f32 eyeLightness = faceData.GetParameter(whichEye, Parameter::Lightness);
       DEV_ASSERT(Util::InRange(eyeLightness, -1.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidLightness");
 
@@ -580,15 +570,15 @@ namespace Cozmo {
         DEV_ASSERT_MSG(upperLeft.x()>=0 && bottomRight.x()<faceImg.GetNumCols(), "ProceduralFaceDrawer.DrawEye.BadCol", "%f %f", upperLeft.x(), bottomRight.x());
         for(s32 i=upperLeft.y(); i<=bottomRight.y(); ++i) {
 
-          Vision::PixelRGB* faceImg_i = faceImg.GetRow(i);
-          const u8*  eyeShape_i = _eyeShape.GetRow(i);
+          u8* faceImg_i = faceImg.GetRow(i);
+          const u8* eyeShape_i = _eyeShape.GetRow(i);
 #if PROCEDURALFACE_GLOW_FEATURE
-          const u8*  glowImg_i  = _glowImg.GetRow(i);
+          const u8* glowImg_i  = _glowImg.GetRow(i);
 #endif
 
           for(s32 j=upperLeft.x(); j<=bottomRight.x(); ++j) {
 
-            const u8 eyeValue  = eyeShape_i[j];
+            const u8 eyeValue = eyeShape_i[j];
 #if PROCEDURALFACE_GLOW_FEATURE
             const u8 glowValue = glowImg_i[j];
             const bool somethingToDraw = (eyeValue > 0 || glowValue > 0);
@@ -619,10 +609,7 @@ namespace Cozmo {
               // Put the final value into the face image
               // Note: If we're drawing the right eye, there may already be something in the image
               //       from when we drew the left eye (e.g. with large glow), so use max
-              Vision::PixelRGB& facePixel = faceImg_i[j];
-              facePixel.r() = drawHue;
-              facePixel.g() = drawSat;
-              facePixel.b() = std::max(facePixel.b(), Util::numeric_cast_clamped<u8>(std::round(newValue)));
+              faceImg_i[j] = std::max(faceImg_i[j], NUMERIC_CAST_CLAMPED(ROUND(newValue)));
             }
           }
         }
@@ -643,63 +630,43 @@ namespace Cozmo {
   {
     ANKI_CPU_PROFILE("DrawFace");
 
-    DrawCacheState state = DrawCacheState::MaybeSomethingToDraw; // set to MustDraw to force all stages to render, previous pipeline
-    state = DrawEyes(faceData, state);
-    state = TransformFace(faceData, state);
-    state = ApplyScanlines(_faceCache.imgRGB[_faceCache.finalFace], faceData.GetScanlineOpacity(), state);
-    state = DistortScanlines(faceData, state);
-    if(PROCEDURALFACE_NOISE_FEATURE && (kProcFace_NoiseNumFrames > 0)) {
-      state = ConvertColorspace(_faceCache.img565, state);
-      state = ApplyNoise(rng, _faceCache.img565, output, state);
-    } else {
-      state = ConvertColorspace(output, state);
-    }
+    bool dirty = false; // set to true to force all stages to render, previous pipeline
+    dirty = DrawEyes(faceData, dirty);
+    dirty = TransformFace(faceData, dirty);
+    dirty = ApplyScanlines(_faceCache.img8[_faceCache.finalFace], faceData.GetScanlineOpacity(), dirty);
+    dirty = DistortScanlines(faceData, dirty);
+    dirty = ApplyNoise(rng, dirty);
+    dirty = ConvertColorspace(faceData, output, dirty);
   } // DrawFace()
 
-  ProceduralFaceDrawer::DrawCacheState ProceduralFaceDrawer::DrawEyes(const ProceduralFace& faceData, DrawCacheState state)
+  bool ProceduralFaceDrawer::DrawEyes(const ProceduralFace& faceData, bool dirty)
   {
     ANKI_CPU_PROFILE("DrawEyes");
 
-    if(state == DrawCacheState::NothingToDraw) {
-      // Nothing to draw, early out
-      return state;
-    }
-
-    if (faceData.GetParameter(WhichEye::Left, Parameter::EyeScaleX) <= 0.0f ||
-        faceData.GetParameter(WhichEye::Left, Parameter::EyeScaleY) <= 0.0f ||
-        faceData.GetParameter(WhichEye::Right, Parameter::EyeScaleY) <= 0.0f ||
-        faceData.GetParameter(WhichEye::Right, Parameter::EyeScaleY) <= 0.0f) {
-
-        // Negative or zero scale, i.e. nothing to draw, early out
-        return DrawCacheState::NothingToDraw;
-    }
-
-    if(state == DrawCacheState::MaybeSomethingToDraw) {
+    if(!dirty) {
       if (_faceCache.faceData.GetParameters(WhichEye::Left) != faceData.GetParameters(WhichEye::Left) ||
           _faceCache.faceData.GetParameters(WhichEye::Right) != faceData.GetParameters(WhichEye::Right) ||
           !Util::IsFltNear(_faceCache.faceData.GetHue(), faceData.GetHue()) ||
           !Util::IsFltNear(_faceCache.faceData.GetSaturation(), faceData.GetSaturation())) {
         // Something changed, we must draw
-        state = DrawCacheState::MustDraw;
+        dirty = true;
       }
     }
 
-    if(state == DrawCacheState::MustDraw) {
+    if(dirty) {
       // Update parameters used to generate this cached image
       _faceCache.faceData.SetParameters(WhichEye::Left, faceData.GetParameters(WhichEye::Left));
       _faceCache.faceData.SetParameters(WhichEye::Right, faceData.GetParameters(WhichEye::Right));
-      _faceCache.faceData.SetHue(faceData.GetHue());
-      _faceCache.faceData.SetSaturation(faceData.GetSaturation());
 
       // Target image for this stage
       // Eyes are always first, assign first element in face cache
       _faceCache.finalFace = _faceCache.eyes = 0;
       DEV_ASSERT(_faceCache.finalFace < _faceCache.kSize, "ProceduralFaceDrawer.DistortScanlines.FaceCacheTooSmall");
-      _faceCache.imgRGB[_faceCache.eyes].Allocate(ProceduralFace::HEIGHT, ProceduralFace::WIDTH); // Will do nothing if already the right size
-      _faceCache.imgRGB[_faceCache.eyes].FillWith(Vision::PixelRGB(0,0,0));
+      _faceCache.img8[_faceCache.eyes].Allocate(ProceduralFace::HEIGHT, ProceduralFace::WIDTH); // Will do nothing if already the right size
+      _faceCache.img8[_faceCache.eyes].FillWith(0);
 
-      DrawEye(_faceCache.faceData, WhichEye::Left, _faceCache.imgRGB[_faceCache.eyes], _leftBBox);
-      DrawEye(_faceCache.faceData, WhichEye::Right, _faceCache.imgRGB[_faceCache.eyes], _rightBBox);
+      DrawEye(_faceCache.faceData, WhichEye::Left, _faceCache.img8[_faceCache.eyes], _leftBBox);
+      DrawEye(_faceCache.faceData, WhichEye::Right, _faceCache.img8[_faceCache.eyes], _rightBBox);
 
       // Update face bounding box from eye extents
       // Required for RGB565 conversion, updated here in case no-other stages are applied (e.g. debugging)
@@ -707,35 +674,25 @@ namespace Cozmo {
       _faceColMax = std::max(_leftBBox.GetXmax(), _rightBBox.GetXmax());
       _faceRowMin = std::min(_leftBBox.GetY(), _rightBBox.GetY());
       _faceRowMax = std::max(_leftBBox.GetYmax(), _rightBBox.GetYmax());
-
-      if(_faceRowMax < _faceRowMin || _faceColMax < _faceColMin) {
-        // Eye parameters resulted in zero area can early out
-        return DrawCacheState::NothingToDraw;
-      }
     }
 
-    return state;
+    return dirty;
   } // DrawEyes()
 
-  ProceduralFaceDrawer::DrawCacheState ProceduralFaceDrawer::TransformFace(const ProceduralFace& faceData, DrawCacheState state)
+  bool ProceduralFaceDrawer::TransformFace(const ProceduralFace& faceData, bool dirty)
   {
     ANKI_CPU_PROFILE("TransformFace");
 
-    if(state == DrawCacheState::NothingToDraw) {
-      // Nothing to draw, early out
-      return state;
-    }
-
-    if(state == DrawCacheState::MaybeSomethingToDraw) {
+    if(!dirty) {
       if(_faceCache.faceData.GetFaceAngle() != faceData.GetFaceAngle() ||
          _faceCache.faceData.GetFacePosition() != faceData.GetFacePosition() ||
          _faceCache.faceData.GetFaceScale() != faceData.GetFaceScale()) {
 
-         state = DrawCacheState::MustDraw;
+         dirty = true;
       }
     }
 
-    if(state == DrawCacheState::MustDraw) {
+    if(dirty) {
       _faceCache.faceData.SetFaceAngle(faceData.GetFaceAngle());
       _faceCache.faceData.SetFacePosition(faceData.GetFacePosition());
       _faceCache.faceData.SetFaceScale(faceData.GetFaceScale());
@@ -746,8 +703,8 @@ namespace Cozmo {
         // Assign a new element in the face cache to use as output from cv::warpAffine
         _faceCache.finalFace = _faceCache.transformedFace = _faceCache.eyes+1;
         DEV_ASSERT(_faceCache.finalFace < _faceCache.kSize, "ProceduralFaceDrawer, face cache too small.");
-        _faceCache.imgRGB[_faceCache.transformedFace].Allocate(ProceduralFace::HEIGHT, ProceduralFace::WIDTH);
-        _faceCache.imgRGB[_faceCache.transformedFace].FillWith(Vision::PixelRGB(0,0,0));
+        _faceCache.img8[_faceCache.transformedFace].Allocate(ProceduralFace::HEIGHT, ProceduralFace::WIDTH);
+        _faceCache.img8[_faceCache.transformedFace].FillWith(0);
 
         SmallMatrix<2, 3, float> W = GetTransformationMatrix(_faceCache.faceData.GetFaceAngle(),
                                                              _faceCache.faceData.GetFaceScale().x(), _faceCache.faceData.GetFaceScale().y(),
@@ -755,7 +712,7 @@ namespace Cozmo {
                                                              static_cast<f32>(ProceduralFace::WIDTH)*0.5f,
                                                              static_cast<f32>(ProceduralFace::HEIGHT)*0.5f);
 
-        cv::warpAffine(_faceCache.imgRGB[_faceCache.eyes].get_CvMat_(), _faceCache.imgRGB[_faceCache.transformedFace].get_CvMat_(), W.get_CvMatx_(),
+        cv::warpAffine(_faceCache.img8[_faceCache.eyes].get_CvMat_(), _faceCache.img8[_faceCache.transformedFace].get_CvMat_(), W.get_CvMatx_(),
                        cv::Size(ProceduralFace::WIDTH, ProceduralFace::HEIGHT), cv::INTER_NEAREST);
 
         std::array<Quad2f,2> leftRightQuads;
@@ -793,22 +750,12 @@ namespace Cozmo {
       _faceRowMax = Util::Clamp(_faceRowMax, 0, ProceduralFace::HEIGHT-1);
     }
 
-    if(_faceRowMax < _faceRowMin || _faceColMax < _faceColMin) {
-      // Transform resulted in zero area face can early out
-      return DrawCacheState::NothingToDraw;
-    }
-
-    return state;
+    return dirty;
   } // TransformFace()
 
-  ProceduralFaceDrawer::DrawCacheState ProceduralFaceDrawer::DistortScanlines(const ProceduralFace& faceData, DrawCacheState state)
+  bool ProceduralFaceDrawer::DistortScanlines(const ProceduralFace& faceData, bool dirty)
   {
     ANKI_CPU_PROFILE("DistortScanlines");
-
-    if(state == DrawCacheState::NothingToDraw) {
-      // Nothing to draw, early out
-      return state;
-    }
 
     // Distort the scanlines
     auto scanlineDistorter = faceData.GetScanlineDistorter();
@@ -820,12 +767,12 @@ namespace Cozmo {
       //       output image, this allows eye rendering and face transforms to be cached and the
       //       scanline distortion applied to the original output rather than a face that has already
       //       had scanline distortion applied.
-      state = DrawCacheState::MustDraw;
+      dirty = true;
 
       _faceCache.finalFace = _faceCache.distortedFace = _faceCache.transformedFace+1;
       DEV_ASSERT(_faceCache.finalFace < _faceCache.kSize, "ProceduralFaceDrawer, face cache too small.");
-      _faceCache.imgRGB[_faceCache.distortedFace].Allocate(ProceduralFace::HEIGHT, ProceduralFace::WIDTH);
-      _faceCache.imgRGB[_faceCache.distortedFace].FillWith(Vision::PixelRGB(0,0,0));
+      _faceCache.img8[_faceCache.distortedFace].Allocate(ProceduralFace::HEIGHT, ProceduralFace::WIDTH);
+      _faceCache.img8[_faceCache.distortedFace].FillWith(0);
 
       s32 newColMin = _faceColMin;
       s32 newColMax = _faceColMax;
@@ -836,8 +783,8 @@ namespace Cozmo {
         const s32 shift = scanlineDistorter->GetEyeDistortionAmount(eyeFrac) * sizeof(Vision::PixelRGB);
 
         if(shift < 0) {
-          const Vision::PixelRGB* faceImg_row = _faceCache.imgRGB[_faceCache.transformedFace].GetRow(row);
-          Vision::PixelRGB* img_row = _faceCache.imgRGB[_faceCache.distortedFace].GetRow(row);
+          const u8* faceImg_row = _faceCache.img8[_faceCache.transformedFace].GetRow(row);
+          u8* img_row = _faceCache.img8[_faceCache.distortedFace].GetRow(row);
           memcpy(img_row, faceImg_row-shift, ProceduralFace::WIDTH+shift);
 
           if(_faceColMin+shift < newColMin) {
@@ -846,8 +793,8 @@ namespace Cozmo {
             newColMin = _faceColMin+shift;
           }
         } else if(shift > 0) {
-          const Vision::PixelRGB* faceImg_row = _faceCache.imgRGB[_faceCache.transformedFace].GetRow(row);
-          Vision::PixelRGB* img_row = _faceCache.imgRGB[_faceCache.distortedFace].GetRow(row);
+          const u8* faceImg_row = _faceCache.img8[_faceCache.transformedFace].GetRow(row);
+          u8* img_row = _faceCache.img8[_faceCache.distortedFace].GetRow(row);
           memcpy(img_row+shift, faceImg_row, ProceduralFace::WIDTH-shift);
 
           if(_faceColMax+shift > newColMax) {
@@ -860,94 +807,100 @@ namespace Cozmo {
 
       _faceColMin = newColMin;
       _faceColMax = newColMax;
-
-      if(_faceColMax < _faceColMin) {
-        return DrawCacheState::NothingToDraw;
-      }
     } else {
       // No scanline distortion, pass forward the cached face transform as output
       _faceCache.finalFace = _faceCache.distortedFace = _faceCache.transformedFace;
     }
 
-    return state;
+    return dirty;
   } // DistortScanlines()
 
-#if PROCEDURALFACE_NOISE_FEATURE
-  ProceduralFaceDrawer::DrawCacheState ProceduralFaceDrawer::ApplyNoise(const Util::RandomGenerator& rng, const Vision::ImageRGB565& input, Vision::ImageRGB565& output, DrawCacheState state)
+  bool ProceduralFaceDrawer::ApplyNoise(const Util::RandomGenerator& rng, bool dirty)
   {
-    ANKI_CPU_PROFILE("ApplyNoise");
+    if(PROCEDURALFACE_NOISE_FEATURE && (kProcFace_NoiseNumFrames > 0)) {
+      ANKI_CPU_PROFILE("ApplyNoise");
 
-    output.Allocate(ProceduralFace::HEIGHT, ProceduralFace::WIDTH);
-    output.FillWith(Vision::PixelRGB(0,0,0));
+      _faceCache.finalFace = _faceCache.distortedFace+1;
+      DEV_ASSERT(_faceCache.finalFace < _faceCache.kSize, "ProceduralFaceDrawer, face cache too small.");
+      _faceCache.img8[_faceCache.finalFace].Allocate(ProceduralFace::HEIGHT, ProceduralFace::WIDTH);
+      if(dirty) {
+        _faceCache.img8[_faceCache.finalFace].FillWith(0);
+      }
 
-    if(state == DrawCacheState::NothingToDraw) {
-      // Nothing else to draw, early out
-      return state;
-    }
+      dirty = true;
 
-    state = DrawCacheState::MustDraw;
+      // Assign a new face cache for noise, the reason for the changes.
+      // If the eyes haven't changed, the face hasn't changed and no-scanline distorter
+      // then there is no work to do until the noise stage
 
-    // Assign a new face cache for noise, the reason for the changes.
-    // If the eyes haven't changed, the face hasn't changed and no-scanline distorter
-    // then there is no work to do until the noise stage
+      // TODO: https://ankiinc.atlassian.net/browse/VIC-3646 NEON-ise noise function
 
-    const Array2d<f32>& noiseImg = GetNoiseImage(rng);
-    bool hadSomethingToDraw = false;
+      // TODO: https://ankiinc.atlassian.net/browse/VIC-3647 Apply noise to eyes individually rather than entire face
 
-    for(s32 i=_faceRowMin; i<=_faceRowMax; ++i) {
-      const Vision::PixelRGB565* eyeShape_i = input.GetRow(i);
-      const f32* noiseImg_i = noiseImg.GetRow(i);
-      Vision::PixelRGB565* faceImg_i = output.GetRow(i);
+      const Array2d<f32>& noiseImg = GetNoiseImage(rng);
 
-      for(s32 j=_faceColMin; j<=_faceColMax; ++j) {
-        const bool somethingToDraw = (eyeShape_i[j].GetValue() != 0);
-        if (somethingToDraw) {
-          hadSomethingToDraw = true;
-          
-          const u8 r = eyeShape_i[j].r();
-          const u8 g = eyeShape_i[j].g();
-          const u8 b = eyeShape_i[j].b();
-          const f32 noise = noiseImg_i[j];
+      for(s32 i=_faceRowMin; i<=_faceRowMax; ++i) {
+        const f32* noiseImg_i = noiseImg.GetRow(i);
+        const u8* eyeShape_i = _faceCache.img8[_faceCache.distortedFace].GetRow(i);
+        u8* faceImg_i = _faceCache.img8[_faceCache.finalFace].GetRow(i);
 
-          // Put the final value into the face image
-          Vision::PixelRGB565& facePixel = faceImg_i[j];
-          facePixel.SetValue(Util::numeric_cast_clamped<u8>(static_cast<f32>(r) * noise),
-                             Util::numeric_cast_clamped<u8>(static_cast<f32>(g) * noise),
-                             Util::numeric_cast_clamped<u8>(static_cast<f32>(b) * noise));
+        noiseImg_i += _faceColMin;
+        eyeShape_i += _faceColMin;
+        faceImg_i += _faceColMin;
+
+        for(s32 j=_faceColMin; j<=_faceColMax; ++j) {
+          *faceImg_i = Util::numeric_cast_clamped<u8>(static_cast<f32>(*eyeShape_i) * (*noiseImg_i));
+          ++noiseImg_i;
+          ++eyeShape_i;
+          ++faceImg_i;
         }
       }
     }
 
-    // This is the first time in the pipeline that each pixel is touched individually, if the brightness
-    // or other parameters reduce the image to black then we can skip the RGB565 conversion
-
-    if(!hadSomethingToDraw) {
-      return DrawCacheState::NothingToDraw;
-    }
-
-    return state;
+    return dirty;
   } // ApplyNoise()
-#endif // PROCEDURALFACE_NOISE_FEATURE
 
-  ProceduralFaceDrawer::DrawCacheState ProceduralFaceDrawer::ConvertColorspace(Vision::ImageRGB565& output, DrawCacheState state)
+  bool ProceduralFaceDrawer::ConvertColorspace(const ProceduralFace& faceData, Vision::ImageRGB565& output, bool dirty)
   {
-    // If we don't have anything to draw we're done
-
-    if(state == DrawCacheState::NothingToDraw) {
-      return state;
-    }
-
-    state = DrawCacheState::MustDraw;
-
+    ANKI_CPU_PROFILE("ConvertColorspace");
+    
     output.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
     output.FillWith(Vision::PixelRGB(0,0,0));
 
-    // ... otherwise convert final image, limited by bounding box, to RGB565
-    Rectangle<s32> eyesROI(_faceColMin, _faceRowMin, _faceColMax-_faceColMin+1, _faceRowMax-_faceRowMin+1);
-    Vision::ImageRGB565 roi = output.GetROI(eyesROI);
-    _faceCache.imgRGB[_faceCache.finalFace].GetROI(eyesROI).ConvertHSV2RGB565(roi);
+    if(!dirty) {
+      if (!Util::IsFltNear(_faceCache.faceData.GetHue(), faceData.GetHue()) ||
+          !Util::IsFltNear(_faceCache.faceData.GetSaturation(), faceData.GetSaturation())) {
+        // Something changed, we must draw
+        dirty = true;
+      }
+    }
 
-    return state;
+    if (dirty) {
+      // Update parameters used to generate this cached image
+      _faceCache.faceData.SetHue(faceData.GetHue());
+      _faceCache.faceData.SetSaturation(faceData.GetSaturation());
+
+      const f32 hueFactor = faceData.GetHue();
+      DEV_ASSERT(Util::InRange(hueFactor, 0.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidHue");
+      const u8 drawHue = ROUND(255.f*hueFactor);
+
+      f32 satFactor = 1.0f;
+#if PROCEDURALFACE_ANIMATED_SATURATION
+      satFactor *= faceData.GetParameter(whichEye, Parameter::Saturation);
+#endif
+#if PROCEDURALFACE_PROCEDURAL_SATURATION
+      satFactor *= faceData.GetSaturation();
+#endif
+      DEV_ASSERT(Util::InRange(satFactor, -1.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidSaturation");
+      const u8 drawSat = ROUND(255.f * satFactor);
+
+      // ... otherwise convert final image, limited by bounding box, to RGB565
+      Rectangle<s32> eyesROI(_faceColMin, _faceRowMin, _faceColMax-_faceColMin+1, _faceRowMax-_faceRowMin+1);
+      Vision::ImageRGB565 roi = output.GetROI(eyesROI);
+      _faceCache.img8[_faceCache.finalFace].GetROI(eyesROI).ConvertV2RGB565(drawHue, drawSat, roi);
+    }
+
+    return dirty;
   } // ConvertColorspace()
 
   bool ProceduralFaceDrawer::GetNextBlinkFrame(ProceduralFace& faceData,
@@ -1045,21 +998,17 @@ namespace Cozmo {
 
   } // GetNextBlinkFrame()
   
-  ProceduralFaceDrawer::DrawCacheState ProceduralFaceDrawer::ApplyScanlines(Vision::ImageRGB& imageHsv, const float opacity, DrawCacheState state)
+  bool ProceduralFaceDrawer::ApplyScanlines(Vision::ImageRGB& imageHsv, const float opacity, bool dirty)
   {
-    if(PROCEDURALFACE_SCANLINE_FEATURE && kProcFace_Scanlines) {
+#if PROCEDURALFACE_SCANLINE_FEATURE
+    if(kProcFace_Scanlines) {
       ANKI_CPU_PROFILE("ApplyScanlines");
-
-      if(state == DrawCacheState::NothingToDraw) {
-        // Nothing to draw, early out
-        return state;
-      }
 
       const bool applyScanlines = !Util::IsNear(opacity, 1.f);
       if (applyScanlines) {
-        state = DrawCacheState::MustDraw;
+        DEV_ASSERT(Util::InRange(opacity, 0.f, 1.f), "ProceduralFaceDrawer.ApplyScanlines.InvalidOpacity");
 
-        DEV_ASSERT(Util::InRange(opacity, 0.f, 1.f), "ProceduralFaceDrawer.ApplyCurrentFaceHue.InvalidOpacity");
+        dirty = true;
 
         const auto nRows = imageHsv.GetNumRows();
         const auto nCols = imageHsv.GetNumCols();
@@ -1075,7 +1024,53 @@ namespace Cozmo {
         }
       }
     }
-    return state;
+#endif
+
+    return dirty;
+  } // ApplyScanlines()
+
+  bool ProceduralFaceDrawer::ApplyScanlines(Vision::Image& image8, const float opacity, bool dirty)
+  {
+#if PROCEDURALFACE_SCANLINE_FEATURE
+    if(kProcFace_Scanlines) {
+      ANKI_CPU_PROFILE("ApplyScanlines");
+
+      DEV_ASSERT(Util::InRange(opacity, 0.f, 1.f), "ProceduralFaceDrawer.ApplyScanlines.InvalidOpacity");
+
+      const bool is0 = Util::IsNear(opacity, 0.f);
+      const bool is1 = Util::IsNear(opacity, 1.f);
+      if (is0) {
+        dirty = true;
+
+        const auto nRows = image8.GetNumRows();
+        const auto nCols = image8.GetNumCols();
+
+        for (int i=0 ; i < nRows ; i++) {
+          if (ShouldApplyScanlineToRow(i)) {
+            u8* thisRow = image8.GetRow(i);
+            memset(thisRow, 0, nCols);
+          }
+        }
+      } else if (!is1) {
+        dirty = true;
+
+        const auto nRows = image8.GetNumRows();
+        const auto nCols = image8.GetNumCols();
+
+        for (int i=0 ; i < nRows ; i++) {
+          if (ShouldApplyScanlineToRow(i)) {
+            u8* thisRow = image8.GetRow(i);
+            for (int j=0 ; j < nCols ; j++) {
+              *thisRow *= opacity;
+              ++thisRow;
+            }
+          }
+        }
+      }
+    }
+#endif
+
+    return dirty;
   } // ApplyScanlines()
 } // namespace Cozmo
 } // namespace Anki

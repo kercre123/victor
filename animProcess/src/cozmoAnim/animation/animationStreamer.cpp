@@ -65,6 +65,7 @@ namespace Anki {
 namespace Cozmo {
 
 #define CONSOLE_GROUP "Face.ParameterizedFace"
+
   enum class FaceDisplayType {
     Normal,
     Test,

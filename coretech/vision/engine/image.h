@@ -208,7 +208,10 @@ namespace Vision {
     
   }; // class ImageBase
   
-  
+  // Forward declaration:
+  class ImageRGBA;
+  class ImageRGB565;
+
   // Grayscale (i.e. scalar-valued) image, 8bpp
   class Image : public ImageBase<u8>
   {
@@ -277,6 +280,8 @@ namespace Vision {
 
     void BoxFilter(ImageBase<u8>& filtered, u32 size) const override;
 
+    void ConvertV2RGB565(u8 hue, u8 sat, ImageRGB565& output);
+
   protected:
     virtual cv::Scalar GetCvColor(const ColorRGBA& color) const override;
 
@@ -284,12 +289,7 @@ namespace Vision {
   
   }; // class Image
   
-  
-  // Forward declaration:
-  class ImageRGBA;
-  class ImageRGB565;
-  
-  // RGB Color image, 24bpp
+    // RGB Color image, 24bpp
   class ImageRGB : public ImageBase<PixelRGB>
   {
   public:

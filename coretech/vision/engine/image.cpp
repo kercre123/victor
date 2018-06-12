@@ -830,6 +830,66 @@ namespace Vision {
     }
   }
 
+#define SATURATE_CAST(x) (x) // cv::saturate_cast<u8>
+  void Image::ConvertV2RGB565(u8 hue, u8 sat, ImageRGB565& output)
+  {
+    output.Allocate(GetNumRows(), GetNumCols());
+
+    f32 h = (f32)hue * (360/256.f) * (1/60.f);
+    f32 s = (f32)sat * (1/255.f);
+    u32 i = floor(h);
+    h -= i;
+
+    u32 numRows = GetNumRows();
+    u32 numCols = GetNumCols();
+
+    if(this->IsContinuous() && output.IsContinuous())
+    {
+      numCols *= numRows;
+      numRows = 1;
+    }
+
+    for(u32 r = 0; r < numRows; r++)
+    {
+      const u8* row = reinterpret_cast<u8*>(GetRow(r));
+      u16* out = reinterpret_cast<u16*>(output.GetRow(r));
+
+      u32 c = 0;
+
+#ifdef __ARM_NEON__
+      // https://ankiinc.atlassian.net/browse/VIC-3644
+      // NEON version of ConvertV2RGB565
+#endif
+
+      for(; c < numCols; c++)
+      {
+        f32 v = (*row) * (1.f/255.f);
+
+        static const int sector_data[][3]= {{1,3,0}, {1,0,2},
+                                            {3,0,1}, {0,2,1},
+                                            {0,1,3}, {2,1,0}};
+
+        float vpqt[4];
+        vpqt[0] = v;
+        vpqt[1] = v * (1.f - s);
+        vpqt[2] = v * (1.f - (s * h));
+        vpqt[3] = v * (1.f - (s * (1.f - h)));
+
+        u16 b = SATURATE_CAST(vpqt[sector_data[i][0]] * 255);
+        u16 g = SATURATE_CAST(vpqt[sector_data[i][1]] * 255);
+        u16 r = SATURATE_CAST(vpqt[sector_data[i][2]] * 255);
+
+        *out = (r << 8 & 0xF800) |
+               (g << 3 & 0x07E0) |
+               (b >> 3);
+
+        ++row;
+        ++out;
+      }
+    }
+  }
+#undef SATURATE_CAST
+
   void ImageRGB::ConvertHSV2RGB565(ImageRGB565& output)
   {
     output.Allocate(GetNumRows(), GetNumCols());

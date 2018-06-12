@@ -33,8 +33,8 @@ int main(int argc, char ** argv)
 {
   // For victor rendering
   kProcFace_HotspotRender = true;
-  kProcFace_AntiAliasingSize = 5.f;
-  kProcFace_AntiAliasingFilter = 0;
+  kProcFace_AntiAliasingSize = 3;
+  kProcFace_AntiAliasingFilter = 3;
 
   //LEAKING HERE
   Anki::Util::PrintfLoggerProvider* loggerProvider = new Anki::Util::PrintfLoggerProvider();

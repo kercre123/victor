@@ -29,30 +29,26 @@ namespace Cozmo {
     //  with the final image converting to a RGB565 texture to be sent to the robot.
     //
     //  Each state in the pipeline follows a similar path:
-    //  1) Did an earlier stage result in nothing to draw?
-    //       If yes, early out. Frequently this is a transform that results in zero area
-    //       eyes or face
-    //  2) Did an earlier stage change the input to this stage?
-    //       If yes, then this stage must render
+    //  1) Did an earlier stage change the input to this stage?
+    //       If yes, then this stage must render and clear the surface
     //       If no, then compare the latest face data with the face data used to generate
     //       the cached image, if the face data has changed this stage must render
-    //  3) Render this stage
+    //  2) Render this stage
     //       Update the cached face data with the latest face data
     //       Use the face cache of the previous stage as input
     //       Assign a face cache for this stage as output
     //       Apply the stage
-    //  4) Don't render this stage
+    //  3) Don't render this stage
     //       Leave the cached face data as it was
     //       Take the input from the previous stage and pass it on as the output from this
     //       stage, no image copy required
-    //  5) Keep track of the latest face cache, this will be the final image
+    //  4) Keep track of the latest face cache, this will be the final image
     //
     //  A key concept here is passing indexes into the cache for inputs and outputs, e.g.
     //  if there is no face transform then the input to the noise stage can be the output
     //  from the eyes stage. This is an alternative to the face transform performing a memcpy
-    //  from it's input to it's output. However, it comes at a cost of making all surfaces
-    //  RGB instead of keeping some I8. It's possible that color can be applied after the
-    //  noise has been added, potentially during the HSV conversion.
+    //  from its input to its output. All surfaces are I8 except the final, upon which
+    //  last stage is converted from V (with constant H and S) to RGB565.
     //
     //  The code for each stage is kept largely as the original.
     //  Scanline distortion has changed from modifying the input image to generating a new
@@ -62,17 +58,7 @@ namespace Cozmo {
     //  Similarly for the noise.
     //
     //  ApplyScanlines is a special case as it is part of the public API and used elsewhere,
-    //  it's functionality has been retained and does not affect the face cache.
-
-    //  And thusly each stage can affect the pipeline state where:
-    //    a) transforms in area or color result in zeor area or black and therefore NothingToDraw
-    //    b) indeterminant state, the stage must determine if there is MaybeSomethingToDraw
-    //    c) a previous stage has made modifications requiring all following stages MustDraw
-    enum class DrawCacheState {
-      NothingToDraw,
-      MaybeSomethingToDraw,
-      MustDraw
-    };
+    //  its functionality has been retained and does not affect the face cache.
 
     // Closes eyes and switches interlacing. Call until it returns false, which
     // indicates there are no more blink frames and the face is back in its
@@ -87,7 +73,8 @@ namespace Cozmo {
     // Although the type of the input image is ImageRGB, it should be an HSV image, i.e.
     // the 'red' channel is hue, 'green' channel is saturation, and 'blue' channel is value
 
-    static DrawCacheState ApplyScanlines(Vision::ImageRGB& imageHsv, const float opacity, DrawCacheState state = DrawCacheState::MustDraw);
+    static bool ApplyScanlines(Vision::ImageRGB& imageHsv, const float opacity, bool dirty = true);
+    static bool ApplyScanlines(Vision::Image& image8, const float opacity, bool dirty = true);
 
   private:
 
@@ -99,7 +86,7 @@ namespace Cozmo {
     // is just using ImageRGB as a "3 channel image" since we don't (yet) have an ImageHSV.
     // The resulting face image is converted to RGB by DrawFace at the end.
     static void DrawEye(const ProceduralFace& faceData, WhichEye whichEye,
-                        Vision::ImageRGB& faceHsv, Rectangle<f32>& eyeBoundingBox);
+                        Vision::Image& faceHsv, Rectangle<f32>& eyeBoundingBox);
     
     static SmallMatrix<2,3,f32> GetTransformationMatrix(f32 angleDeg, f32 scaleX, f32 scaleY,
                                                         f32 tX, f32 tY, f32 x0 = 0.f, f32 y0 = 0.f);
@@ -118,7 +105,7 @@ namespace Cozmo {
       // at the end. These is treated as an HSV images, potentially one per stage in the face
       // pipeline
       static const int kSize = 4;
-      Vision::ImageRGB imgRGB[kSize];
+      Vision::Image img8[kSize];
       Vision::ImageRGB565 img565;
       int eyes;
       int transformedFace;
@@ -137,11 +124,11 @@ namespace Cozmo {
     static s32 _faceRowMin;
     static s32 _faceRowMax;
 
-    static DrawCacheState DrawEyes(const ProceduralFace& faceData, DrawCacheState state);
-    static DrawCacheState TransformFace(const ProceduralFace& faceData, DrawCacheState state);
-    static DrawCacheState DistortScanlines(const ProceduralFace& faceData, DrawCacheState state);
-    static DrawCacheState ApplyNoise(const Util::RandomGenerator& rng, const Vision::ImageRGB565& input, Vision::ImageRGB565& output, DrawCacheState state);
-    static DrawCacheState ConvertColorspace(Vision::ImageRGB565& output, DrawCacheState state);
+    static bool DrawEyes(const ProceduralFace& faceData, bool dirty);
+    static bool TransformFace(const ProceduralFace& faceData, bool dirty);
+    static bool DistortScanlines(const ProceduralFace& faceData, bool dirty);
+    static bool ApplyNoise(const Util::RandomGenerator& rng, bool dirty);
+    static bool ConvertColorspace(const ProceduralFace& faceData, Vision::ImageRGB565& output, bool dirty);
 
 #if PROCEDURALFACE_NOISE_FEATURE
     static const Array2d<f32>& GetNoiseImage(const Util::RandomGenerator& rng);

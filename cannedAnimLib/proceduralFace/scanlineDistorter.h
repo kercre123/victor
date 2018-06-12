@@ -16,6 +16,10 @@
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/point.h"
 
+#include "coretech/common/engine/math/matrix_impl.h"
+#include "util/random/randomGenerator.h"
+#include "util/console/consoleInterface.h"
+
 #include <array>
 #include <vector>
 
@@ -27,13 +31,15 @@ namespace Util {
   
 namespace Vision {
   class ImageRGB;
+  class Image;
 }
 
 namespace Cozmo {
   
 class ProceduralFace;
 
-  
+CONSOLE_VAR_EXTERN(s32, kProcFaceScanline_OffNoiseMaxWidth);
+
 class ScanlineDistorter
 {
 public:
@@ -49,10 +55,40 @@ public:
   
   // Given the "warp" matrix which positions/scales the eye in the face, draws the corresponding "off"
   // noise into the image.
+  template<typename T>
   void AddOffNoise(const SmallMatrix<2,3,f32>& warpMatrix,
                    const s32 eyeHeight, const s32 eyeWidth,
-                   Vision::ImageRGB& faceImg) const;
-  
+                   T& faceImg) const
+  {
+    for(const auto & pt : _offNoisePoints)
+    {
+      const Point3f eyePt(eyeWidth*pt.x(), eyeHeight*pt.y(), 1.f);
+      const Point2f noisePt = warpMatrix * eyePt;
+      const s32 row = Util::Clamp((s32)std::round(noisePt.y()), 0, faceImg.GetNumRows()-1);
+      const s32 col = Util::Clamp((s32)std::round(noisePt.x()), 0, faceImg.GetNumCols()-1);
+
+      if(kProcFaceScanline_OffNoiseMaxWidth > 1)
+      {
+        const s32 width = GetRNG().RandIntInRange(1,kProcFaceScanline_OffNoiseMaxWidth);
+
+        const s32 rightWidth = width/2;
+        const s32 leftWidth = (width % 2 ? (width-1)/2 : width/2);
+
+        for(s32 c = col-leftWidth; c <= col+rightWidth; ++c)
+        {
+          if(Util::InRange(c, 0, faceImg.GetNumCols()-1))
+          {
+            faceImg(row,c) = 0;
+          }
+        }
+      }
+      else
+      {
+        faceImg(row,col) = 0;
+      }
+    }
+  }
+
   // Gets sequence of distortions using the ScanlineDistorter in the given faceData.
   // Call until it returns false, which indicates there are no more distortion frames and the face is back in its
   // original state. The output "offset" indicates the desired timing since the previous state.
