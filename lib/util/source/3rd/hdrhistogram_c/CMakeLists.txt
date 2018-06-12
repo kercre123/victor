@@ -38,7 +38,7 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src")
 
-option(HDR_HISTOGRAM_BUILD_PROGRAMS "Build tests and examples" ON)
+option(HDR_HISTOGRAM_BUILD_PROGRAMS "Build tests and examples" OFF)
 if(HDR_HISTOGRAM_BUILD_PROGRAMS)
   add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/test")
   add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/examples")
