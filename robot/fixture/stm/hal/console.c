@@ -350,10 +350,31 @@ static void SetLotCode(void)
   SetFixtureText();
 }
 
+static void GetTime(void)
+{
+  time_t time = fixtureGetTime(); //rtc time
+  ConsolePrintf("%010u,%i,%s", time, fixtureTimeIsValid(), ctime(&time));
+}
+
 static void SetTime(void)
 {
+  time_t time = 0;
   char* arg = GetArgument(1);  
-  sscanf(arg, "%i", &g_time);
+  sscanf(arg, "%u", (uint32_t*)&time);
+  
+  //ConsolePrintf("settime %010u          %s", time, ctime(&time)); //DEBUG
+  fixtureSetTime(time);
+  
+  //readback verify
+  int delayms = 0;
+  try{ sscanf(GetArgument(2), "%u", &delayms); } catch(...){}
+  Timer::delayMs(delayms); //DEBUG
+  GetTime();
+}
+
+extern void fixtureRtcTestbench(void);
+static void RtcTestbench(void) {
+  fixtureRtcTestbench(); //runs testbench, if enabled
 }
 
 static void SetDateCode(void)
@@ -504,6 +525,8 @@ static CommandFunction m_functions[] =
   {"GetEsn", GetEsnCmd, FALSE},
   {"SetSerial", SetSerial, FALSE},
   {"SetTime", SetTime, FALSE},
+  {"GetTime", GetTime, FALSE},
+  {"RtcTestbench", RtcTestbench, FALSE},
   {"Current", TestCurrent, FALSE},
   {"DumpFixtureSerials", DumpFixtureSerials, FALSE},
   {"Voltage", TestVoltage, FALSE},
@@ -619,6 +642,13 @@ int ConsoleFlushLine(void) {
   int n = line_len; //report how many chars we're dumping
   line_len = 0;
   return n;
+}
+
+int ConsoleGetIndex_(bool clear) {
+  int val = m_index;
+  if( clear )
+    m_index = 0;
+  return val;
 }
 
 void ConsoleProcessChar_(char c)
