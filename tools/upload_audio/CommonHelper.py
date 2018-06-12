@@ -20,4 +20,5 @@ class CommonHelper() :
     def add_prefix_files_in_directory(self, directory, expected_prefix_name):
         for root, dirs, files in os.walk(directory):
             for filename in files:
-                os.rename(os.path.join(root, filename), os.path.join(root, "{}_{}".format(expected_prefix_name, filename)))
+                os.rename(os.path.join(root, filename),
+                          os.path.join(root, "{}_{}".format(expected_prefix_name, filename)))

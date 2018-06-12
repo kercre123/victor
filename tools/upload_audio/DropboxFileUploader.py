@@ -1,15 +1,3 @@
-# Prerequisites :
-# 1.SetUp dropbox sdk to be able to use Dropbox Api's
-# $ sudo pip install dropbox
-# By default python dropbox sdk is based upon the python 3.5
-#
-# 2. Create an App on dropbox console (https://www.dropbox.com/developers/apps) which will be used and validated to do
-# the file upload and restore using dropbox api. Mostly you need an access token to connect to Dropbox before actual file/folder operations.
-#
-# 3. Once done with code, run the script by following command
-# $ python SFileUploader.py // if python3.5 is default
-
-
 import sys, os
 import dropbox
 
@@ -21,18 +9,18 @@ class DropboxFileUploader():
 
     token = settings.TOKEN
 
-    localfile = ""
-    backuppath = "" # Keep the forward slash before destination filename
-    folderpath = ""
+    local_file_dbx = ""
+    backup_path = "" # Keep the forward slash before destination filename
+    folder_path_dbx = ""
 
     def __init__(self, local_file, folder_path):
-        self.localfile = local_file
-        self.folderpath = folder_path
+        self.local_file_dbx = local_file
+        self.folder_path_dbx = folder_path
 
     def dropbox_instance(self):
         # Check for an access token
         if (len(self.token) == 0):
-            sys.exit("ERROR: Looks like you didn't add your access token. Open up backup-and-restore-example.py in a text editor and paste in your token in line 14.")
+            sys.exit("ERROR: Looks like you didn't add your access token.")
 
         # Create an instance of a Dropbox class, which can make requests to the API.
         print("Creating a Dropbox object...")
@@ -50,13 +38,13 @@ class DropboxFileUploader():
 
     # Uploads contents of localfile to Dropbox
     def upload_to_dropbox(self, dbx):
-        self.backuppath = "{}{}".format(self.folderpath, os.path.basename(self.localfile))
-        with open(self.localfile, 'rb') as f:
+        self.backup_path = "{}{}".format(self.folder_path_dbx, os.path.basename(self.local_file_dbx))
+        with open(self.local_file_dbx, 'rb') as f:
             # We use WriteMode=overwrite to make sure that the settings in the file
             # are changed on upload
-            print("Uploading " + self.localfile + " to Dropbox as " + self.backuppath + "...")
+            print("Uploading " + self.local_file_dbx + " to Dropbox as " + self.backup_path + "...")
             try:
-                dbx.files_upload(f.read(), self.backuppath, mode=WriteMode('overwrite'))
+                dbx.files_upload(f.read(), self.backup_path, mode=WriteMode('overwrite'))
             except ApiError as err:
                 # This checks for the specific error where a user doesn't have enough Dropbox space quota to upload this file
                 if (err.error.is_path() and
@@ -91,8 +79,8 @@ class DropboxFileUploader():
         dbx = self.dropbox_instance()
 
         # enumerate local files recursively
-        for root, dirs, files in os.walk(self.localfile):
+        for root, dirs, files in os.walk(self.local_file_dbx):
             for filename in files:
                 # construct the full local path
-                self.localfile = os.path.join(root, filename)
+                self.local_file_dbx = os.path.join(root, filename)
                 self.upload_to_dropbox(dbx)

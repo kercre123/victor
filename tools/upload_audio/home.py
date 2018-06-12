@@ -21,13 +21,17 @@ column_date = 'date'
 column_dropbox_path = 'dropbox_path'
 column_gender = 'gender'
 
+#Error message
+ERROR_MESSAGE = 'You should fill at least one field.'
+ERROR_EMPTY_MESSAGE = 'You should fill Victor\'s IP field.'
+ERROR_NOT_FOUND_MESSAGE = 'Cannot find any Victor that match the IP address. Please try again.'
+
 @app.route("/")
 def home():
     return render_template('home.html')
 
 @app.route("/query", methods=['GET', 'POST'])
 def query():
-    ERROR_MESSAGE = 'You should fill at least one field.'
     if request.method == 'POST':
         name_obj = request.form['name']
         age = request.form['age']
@@ -52,8 +56,6 @@ def query():
 
 @app.route("/upload-from-victor", methods=['GET', 'POST'])
 def upload_from_victor():
-    ERROR_EMPTY_MESSAGE = 'You should fill Victor\'s IP field.'
-    ERROR_NOT_FOUND_MESSAGE = 'Cannot find any Victor that match the IP address. Please try again.'
     # setup variable
     time_string = CommonHelper().get_time_string()
     upload_folder = "{}_{}".format("upload", time_string)
