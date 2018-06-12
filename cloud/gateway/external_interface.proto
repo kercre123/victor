@@ -78,6 +78,50 @@ service ExternalInterface {
       body: "*"
     };
   }
+
+  // Meet Victor
+  rpc AppIntent(AppIntentRequest) returns (AppIntentResult) {
+    option (google.api.http) = {
+      post: "/v1/app_intent",
+      body: "*"
+    };
+  }
+  rpc CancelFaceEnrollment(CancelFaceEnrollmentRequest) returns (CancelFaceEnrollmentResult) {
+    option (google.api.http) = {
+      post: "/v1/cancel_face_enrollment",
+      body: "*"
+    };
+  }
+  rpc RequestEnrolledNames(RequestEnrolledNamesRequest) returns (RequestEnrolledNamesResult) {
+    option (google.api.http) = {
+      post: "/v1/request_enrolled_names",
+      body: "*"
+    };
+  }
+  rpc UpdateEnrolledFaceByID(UpdateEnrolledFaceByIDRequest) returns (UpdateEnrolledFaceByIDResult) {
+    option (google.api.http) = {
+      post: "/v1/update_enrolled_face_by_id",
+      body: "*"
+    };
+  }
+  rpc EraseEnrolledFaceByID(EraseEnrolledFaceByIDRequest) returns (EraseEnrolledFaceByIDResult) {
+    option (google.api.http) = {
+      post: "/v1/erase_enrolled_face_by_id",
+      body: "*"
+    };
+  }
+  rpc EraseAllEnrolledFaces(EraseAllEnrolledFacesRequest) returns (EraseAllEnrolledFacesResult) {
+    option (google.api.http) = {
+      post: "/v1/erase_all_enrolled_faces",
+      body: "*"
+    };
+  }
+  rpc SetFaceToEnroll(SetFaceToEnrollRequest) returns (SetFaceToEnrollResult) {
+    option (google.api.http) = {
+      post: "/v1/set_face_to_enroll",
+      body: "*"
+    };
+  }
 }
 
 message ResultStatus {
@@ -166,9 +210,9 @@ message MeetVictorFaceScanComplete
 
 message Status {
   oneof status_type {
-     FeatureStatus                   featureStatus                = 1;
-     MeetVictorFaceScanStarted       meetVictorFaceScanStarted    = 2;
-     MeetVictorFaceScanComplete      meetVictorFaceScanComplete   = 3;
+     FeatureStatus                   featureStatus                    = 1;
+     MeetVictorFaceScanStarted       meet_victor_face_scan_started    = 2;
+     MeetVictorFaceScanComplete      meet_victor_face_scan_complete   = 3;
   }
 }
 
@@ -261,4 +305,104 @@ message SDKActivationRequest {
 message SDKActivationResult {
   ResultStatus status = 1;
   uint32 slot = 2;
+}
+
+// Meet Victor
+message AppIntentRequest {
+  string intent = 1;
+  string param = 2;
+}
+
+enum FaceEnrollmentResult
+{
+    SUCCESS = 0;
+
+    // Failures:
+    SAW_WRONG_FACE = 1;
+    SAW_MULTIPLE_FACES = 2;
+    TIMED_OUT = 3;
+    SAVE_FAILED = 4;
+    INCOMPLETE = 5;
+    CANCELLED = 6;
+    NAME_IN_USE = 7;
+    UNKNOWN_FAILURE = 8;
+}
+
+message AppIntentResult {
+  ResultStatus status = 1;
+}
+
+message FaceEnrollmentCompleted {
+  FaceEnrollmentResult result = 1;
+  int32               face_id = 2;
+  string               name = 3;
+}
+
+message CancelFaceEnrollmentRequest {
+}
+
+message CancelFaceEnrollmentResult {
+  ResultStatus status = 1;
+}
+
+message RequestEnrolledNamesRequest {
+}
+
+message LoadedKnownFace {
+    int64   seconds_since_first_enrolled = 1;
+    int64   seconds_since_last_updated = 2;
+    int64   seconds_since_last_seen = 3;
+    int32   face_id = 4;
+    string  name = 5;
+}
+
+message RobotRenamedEnrolledFace {
+    int32   face_id = 1;
+    string   name = 2;
+}
+
+message RequestEnrolledNamesResult {
+  ResultStatus status = 1;
+  repeated LoadedKnownFace faces = 2;
+}
+
+message UpdateEnrolledFaceByIDRequest {
+  int32 face_id = 1;
+  string old_name = 2;
+  string new_name = 3;
+}
+
+message UpdateEnrolledFaceByIDResult {
+  ResultStatus status = 1;
+}
+
+message EraseEnrolledFaceByIDRequest {
+  int32 face_id = 1;
+}
+
+message EraseEnrolledFaceByIDResult {
+  ResultStatus status = 1;
+}
+
+message EraseAllEnrolledFacesRequest {
+}
+
+message EraseAllEnrolledFacesResult {
+  ResultStatus status = 1;
+}
+
+message SetFaceToEnrollRequest {
+    string  name = 1;
+
+    int32   observed_id = 2;  // The ID of a specific observed face to enroll (0 for next one we see)
+    int32   save_id = 3;      // The ID of an existing face to merge final enrollment into (0 for none,
+                          // i.e. use observedID)
+
+    bool    save_to_robot = 4;   // Save to robot's NVStorage when done (NOTE: will (re)save everyone enrolled!)
+    bool    say_name = 5;       // Play say-name/celebration animations on success before completing
+    bool    use_music = 6;       // Starts special music during say-name animations (will leave music playing!)
+  
+}
+message SetFaceToEnrollResult {
+  ResultStatus status = 1;
 }

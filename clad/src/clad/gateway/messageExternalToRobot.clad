@@ -61,6 +61,72 @@ message SDKActivationRequest {
   bool enable,
 }
 
+// ====================================================
+//                      Meet Victor
+// ====================================================
+
+// The app requests that the robot perform some non-instantaneous action, usually
+// an action with an associated voice command, such as "go to your charger"
+// todo (VIC-1398): eventually AppIntent should be its own union of structures, but
+// currently there's only one intent, with one arg, and it's not possible to transmit
+// a union over the temporary webservice handler. This will need replacing once the
+// real app->engine channel is working
+//
+// Start Meet Victor
+message AppIntent {
+  string intent,
+  string param,
+}
+
+// CancelFaceEnrollment - Unsets face enrollment settings, meaning BehaviorEnrollFace will no
+//                        longer be activatable
+//
+// Cancels Meet Victor.
+message CancelFaceEnrollment {
+}
+
+// Request a list of names and IDs
+message RequestEnrolledNames {
+}
+
+// Rename given ID+oldName pair to use newName. For safety if current face with given ID
+// does not match oldName, nothing happens.
+// On success, a RobotLoadedKnownFace message with faceID and newName will be sent.
+message UpdateEnrolledFaceByID {
+  int_32 faceID,
+  string oldName,
+  string newName
+}
+
+// Erase a face record by ID
+message EraseEnrolledFaceByID {
+  int_32 faceID
+}
+
+// Erase all enrolled faces (use with care!)
+message EraseAllEnrolledFaces {
+}
+
+// SetFaceToEnroll - Send face enrollments settings. Actual face enrollment only happens
+//                   when the BehaviorEnrollFace runs. That behavior requires these settings
+//                   be sent in order to be activatable.
+//
+// If you want to change where the enrolled face is saved (e.g., merge final enrollment into an
+// existing face), use this before `AppIntent`.
+//
+// SetFaceToEnroll can be used to "rescan" a face, either from scratch, or to add new data to an existing face
+message SetFaceToEnroll {
+    string name,
+
+    int_32 observedID=0,  // The ID of a specific observed face to enroll (0 for next one we see)
+    int_32 saveID=0,      // The ID of an existing face to merge final enrollment into (0 for none,
+                          // i.e. use observedID)
+
+    bool saveToRobot=1,   // Save to robot's NVStorage when done (NOTE: will (re)save everyone enrolled!)
+    bool sayName=0,       // Play say-name/celebration animations on success before completing
+    bool useMusic=0       // Starts special music during say-name animations (will leave music playing!)
+}
+
 // Note: these values and messages must match the values that get added to MessageGameToEngine
 union MessageExternalToRobot {
   UiDeviceConnectionWrongVersion UiDeviceConnectionWrongVersion = 0x00, // DO NOT CHANGE THIS VALUE
@@ -72,6 +138,13 @@ union MessageExternalToRobot {
   RobotHistoryRequest            RobotHistoryRequest            = 0x06,
   SDKActivationRequest           SDKActivationRequest           = 0x07,
   DisplayFaceImageRGBChunk       DisplayFaceImageRGBChunk       = 0x08,
+  AppIntent                      AppIntent                      = 0x09,
+  CancelFaceEnrollment           CancelFaceEnrollment           = 0x0A,
+  RequestEnrolledNames           RequestEnrolledNames           = 0x0B,           
+  UpdateEnrolledFaceByID         UpdateEnrolledFaceByID         = 0x0C,
+  EraseEnrolledFaceByID          EraseEnrolledFaceByID          = 0x0D,
+  EraseAllEnrolledFaces          EraseAllEnrolledFaces          = 0x0E,
+  SetFaceToEnroll                SetFaceToEnroll                = 0x0F,    
 }
 
 } // Gateway

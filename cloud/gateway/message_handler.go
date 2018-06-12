@@ -111,6 +111,50 @@ func FaceImageChunkToClad(faceData [faceImagePixelsPerChunk]uint16, pixelCount u
 	})
 }
 
+func ProtoAppIntentToClad(msg *extint.AppIntentRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithAppIntent(&gw_clad.AppIntent{
+		Param:  msg.Param,
+		Intent: msg.Intent,
+	})
+}
+
+func ProtoRequestEnrolledNamesToClad(msg *extint.RequestEnrolledNamesRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithRequestEnrolledNames(&gw_clad.RequestEnrolledNames{})
+}
+
+func ProtoCancelFaceEnrollmentToClad(msg *extint.CancelFaceEnrollmentRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithCancelFaceEnrollment(&gw_clad.CancelFaceEnrollment{})
+}
+
+func ProtoUpdateEnrolledFaceByIDToClad(msg *extint.UpdateEnrolledFaceByIDRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithUpdateEnrolledFaceByID(&gw_clad.UpdateEnrolledFaceByID{
+		FaceID:  msg.FaceId,
+		OldName: msg.OldName,
+		NewName: msg.NewName,
+	})
+}
+
+func ProtoEraseEnrolledFaceByIDToClad(msg *extint.EraseEnrolledFaceByIDRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithEraseEnrolledFaceByID(&gw_clad.EraseEnrolledFaceByID{
+		FaceID: msg.FaceId,
+	})
+}
+
+func ProtoEraseAllEnrolledFacesToClad(msg *extint.EraseAllEnrolledFacesRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithEraseAllEnrolledFaces(&gw_clad.EraseAllEnrolledFaces{})
+}
+
+func ProtoSetFaceToEnrollToClad(msg *extint.SetFaceToEnrollRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithSetFaceToEnroll(&gw_clad.SetFaceToEnroll{
+		Name:        msg.Name,
+		ObservedID:  msg.ObservedId,
+		SaveID:      msg.SaveId,
+		SaveToRobot: msg.SaveToRobot,
+		SayName:     msg.SayName,
+		UseMusic:    msg.UseMusic,
+	})
+}
+
 func CladFeatureStatusToProto(msg *gw_clad.FeatureStatus) *extint.FeatureStatus {
 	return &extint.FeatureStatus{
 		FeatureName: msg.FeatureName,
@@ -139,6 +183,12 @@ func CladStatusToProto(msg *gw_clad.Status) *extint.Status {
 		status = &extint.Status{
 			StatusType: &extint.Status_MeetVictorFaceScanStarted{
 				CladMeetVictorFaceScanStartedToProto(msg.GetMeetVictorFaceScanStarted()),
+			},
+		}
+	case gw_clad.StatusTag_FaceEnrollmentCompleted:
+		status = &extint.Status{
+			StatusType: &extint.Status_MeetVictorFaceScanComplete{
+				CladMeetVictorFaceScanCompleteToProto(msg.GetMeetVictorFaceScanComplete()),
 			},
 		}
 	case gw_clad.StatusTag_MeetVictorFaceScanComplete:
@@ -383,6 +433,116 @@ func (c *rpcService) RobotStateStream(in *extint.RobotStateRequest, stream extin
 		}
 	}
 	return nil
+}
+	
+func (m *rpcService) AppIntent(ctx context.Context, in *extint.AppIntentRequest) (*extint.AppIntentResult, error) {
+	log.Println("Received rpc request AppIntent(", in, ")")
+	_, err := WriteToEngine(engineSock, ProtoAppIntentToClad(in))
+	if err != nil {
+		return nil, err
+	}
+	return &extint.AppIntentResult{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
+func (m *rpcService) CancelFaceEnrollment(ctx context.Context, in *extint.CancelFaceEnrollmentRequest) (*extint.CancelFaceEnrollmentResult, error) {
+	log.Println("Received rpc request CancelFaceEnrollment(", in, ")")
+	_, err := WriteToEngine(engineSock, ProtoCancelFaceEnrollmentToClad(in))
+	if err != nil {
+		return nil, err
+	}
+	return &extint.CancelFaceEnrollmentResult{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
+func (m *rpcService) RequestEnrolledNames(ctx context.Context, in *extint.RequestEnrolledNamesRequest) (*extint.RequestEnrolledNamesResult, error) {
+	log.Println("Received rpc request RequestEnrolledNames(", in, ")")
+	enrolledNamesResponse := make(chan RobotToExternalResult)
+	engineChanMap[gw_clad.MessageRobotToExternalTag_EnrolledNamesResponse] = enrolledNamesResponse
+	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_EnrolledNamesResponse)
+	_, err := WriteToEngine(engineSock, ProtoRequestEnrolledNamesToClad(in))
+	if err != nil {
+		return nil, err
+	}
+	names := <-enrolledNamesResponse
+	var faces []*extint.LoadedKnownFace
+	for _, element := range names.Message.GetEnrolledNamesResponse().Faces {
+		var newFace = extint.LoadedKnownFace{
+			SecondsSinceFirstEnrolled: element.SecondsSinceFirstEnrolled,
+			SecondsSinceLastUpdated:   element.SecondsSinceLastUpdated,
+			SecondsSinceLastSeen:      element.SecondsSinceLastSeen,
+			FaceId:                    element.FaceID,
+			Name:                      element.Name,
+		}
+		faces = append(faces, &newFace)
+	}
+	return &extint.RequestEnrolledNamesResult{
+		Status: &extint.ResultStatus{
+			Description: "Enrolled names returned",
+		},
+		Faces: faces,
+	}, nil
+}
+
+// TODO Wait for response RobotRenamedEnrolledFace
+func (m *rpcService) UpdateEnrolledFaceByID(ctx context.Context, in *extint.UpdateEnrolledFaceByIDRequest) (*extint.UpdateEnrolledFaceByIDResult, error) {
+	log.Println("Received rpc request UpdateEnrolledFaceByID(", in, ")")
+	_, err := WriteToEngine(engineSock, ProtoUpdateEnrolledFaceByIDToClad(in))
+	if err != nil {
+		return nil, err
+	}
+	return &extint.UpdateEnrolledFaceByIDResult{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
+// TODO Wait for response RobotRenamedEnrolledFace
+func (m *rpcService) EraseEnrolledFaceByID(ctx context.Context, in *extint.EraseEnrolledFaceByIDRequest) (*extint.EraseEnrolledFaceByIDResult, error) {
+	log.Println("Received rpc request EraseEnrolledFaceByID(", in, ")")
+	_, err := WriteToEngine(engineSock, ProtoEraseEnrolledFaceByIDToClad(in))
+	if err != nil {
+		return nil, err
+	}
+	return &extint.EraseEnrolledFaceByIDResult{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
+// TODO Wait for response RobotErasedAllEnrolledFaces
+func (m *rpcService) EraseAllEnrolledFaces(ctx context.Context, in *extint.EraseAllEnrolledFacesRequest) (*extint.EraseAllEnrolledFacesResult, error) {
+	log.Println("Received rpc request EraseAllEnrolledFaces(", in, ")")
+	_, err := WriteToEngine(engineSock, ProtoEraseAllEnrolledFacesToClad(in))
+	if err != nil {
+		return nil, err
+	}
+	return &extint.EraseAllEnrolledFacesResult{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
+func (m *rpcService) SetFaceToEnroll(ctx context.Context, in *extint.SetFaceToEnrollRequest) (*extint.SetFaceToEnrollResult, error) {
+	log.Println("Received rpc request SetFaceToEnroll(", in, ")")
+	_, err := WriteToEngine(engineSock, ProtoSetFaceToEnrollToClad(in))
+	if err != nil {
+		return nil, err
+	}
+	return &extint.SetFaceToEnrollResult{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
 }
 
 // Long running message for sending events to listening sdk users

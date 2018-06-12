@@ -304,30 +304,29 @@ class Robot:
         self.logger.info(f'{type(result)}: {str(result).strip()}')
         return result
 
+    # Meet Victor
+    @actions._as_actionable
     async def meet_victor(self, name):
-        sys.exit("'{}' is not yet implemented in grpc".format(__name__))
-        message = _clad_message.AppIntent('intent_meet_victor', name)
-        innerWrappedMessage = _clad_message.MeetVictor(AppIntent=message)
-        outerWrappedMessage = _clad_message.ExternalComms(MeetVictor=innerWrappedMessage)
+        req = protocol.AppIntentRequest(intent='intent_meet_victor', param=name) # TODO: add body tracks
+        result = await self.connection.AppIntent(req)
+        self.logger.debug(result)
+        return result
 
-        await self.socket.send(outerWrappedMessage.pack())
-
+    @actions._as_actionable
     async def cancel_face_enrollment(self):
-        sys.exit("'{}' is not yet implemented in grpc".format(__name__))
-        message = _clad_message.CancelFaceEnrollment()
-        innerWrappedMessage = _clad_message.MeetVictor(CancelFaceEnrollment=message)
-        outerWrappedMessage = _clad_message.ExternalComms(MeetVictor=innerWrappedMessage)
+        req = protocol.CancelFaceEnrollmentRequest()
+        result = await self.connection.CancelFaceEnrollment(req)
+        self.logger.debug(result)
+        return result
 
-        await self.socket.send(outerWrappedMessage.pack())
-
+    @actions._as_actionable
     async def request_enrolled_names(self):
-        sys.exit("'{}' is not yet implemented in grpc".format(__name__))
-        message = _clad_message.RequestEnrolledNames()
-        innerWrappedMessage = _clad_message.MeetVictor(RequestEnrolledNames=message)
-        outerWrappedMessage = _clad_message.ExternalComms(MeetVictor=innerWrappedMessage)
+        req = protocol.RequestEnrolledNamesRequest()
+        result = await self.connection.RequestEnrolledNames(req)
+        self.logger.debug(result)
+        return result
 
-        await self.socket.send(outerWrappedMessage.pack())
-
+    @actions._as_actionable
     async def update_enrolled_face_by_id(self, face_id, old_name, new_name):
         '''Update the name enrolled for a given face.
 
@@ -336,42 +335,38 @@ class Robot:
             old_name (string): The old name of the face (must be correct, otherwise message is ignored).
             new_name (string): The new name for the face.
         '''
-        sys.exit("'{}' is not yet implemented in grpc".format(__name__))
-        message = _clad_message.UpdateEnrolledFaceByID(face_id, old_name, new_name)
-        innerWrappedMessage = _clad_message.MeetVictor(UpdateEnrolledFaceByID=message)
-        outerWrappedMessage = _clad_message.ExternalComms(MeetVictor=innerWrappedMessage)
+        req = protocol.UpdateEnrolledFaceByIDRequest(faceID=face_id, oldName=old_name, newName=new_name)
+        result = await self.connection.UpdateEnrolledFaceByID(req)
+        self.logger.debug(result)
+        return result
 
-        await self.socket.send(outerWrappedMessage.pack())
-
+    @actions._as_actionable
     async def erase_enrolled_face_by_id(self, face_id):
         '''Erase the enrollment (name) record for the face with this ID.
 
         Args:
             face_id (int): The ID of the face to erase.
         '''
-        sys.exit("'{}' is not yet implemented in grpc".format(__name__))
-        message = _clad_message.EraseEnrolledFaceByID(face_id)
-        innerWrappedMessage = _clad_message.MeetVictor(EraseEnrolledFaceByID=message)
-        outerWrappedMessage = _clad_message.ExternalComms(MeetVictor=innerWrappedMessage)
+        req = protocol.EraseEnrolledFaceByIDRequest(faceID = face_id)
+        result = await self.connection.EraseEnrolledFaceByID(req)
+        self.logger.debug(result)
+        return result
 
-        await self.socket.send(outerWrappedMessage.pack())
-
+    @actions._as_actionable
     async def erase_all_enrolled_faces(self):
         '''Erase the enrollment (name) records for all faces.
         '''
-        sys.exit("'{}' is not yet implemented in grpc".format(__name__))
-        message = _clad_message.EraseAllEnrolledFaces()
-        innerWrappedMessage = _clad_message.MeetVictor(EraseAllEnrolledFaces=message)
-        outerWrappedMessage = _clad_message.ExternalComms(MeetVictor=innerWrappedMessage)
+        req = protocol.EraseAllEnrolledFacesRequest()
+        result = await self.connection.EraseAllEnrolledFaces(req)
+        self.logger.debug(result)
+        return result
 
-        await self.socket.send(outerWrappedMessage.pack())
-
+    @actions._as_actionable
     async def set_face_to_enroll(self, name, observedID=0, saveID=0, saveToRobot=True, sayName=False, useMusic=False):
-        sys.exit("'{}' is not yet implemented in grpc".format(__name__))
-        message = _clad_message.SetFaceToEnroll(name, observedID, saveID, saveToRobot, sayName, useMusic)
-        innerWrappedMessage = _clad_message.MeetVictor(SetFaceToEnroll=message)
-        outerWrappedMessage = _clad_message.ExternalComms(MeetVictor=innerWrappedMessage)
-        await self.socket.send(outerWrappedMessage.pack())
+        req = protocol.SetFaceToEnrollRequest(name=name, observedID=observedID, saveID=saveID, saveToRobot=saveToRobot, sayName=sayName, useMusic=useMusic)
+        result = await self.connection.SetFaceToEnroll(req)
+        self.logger.debug(result)
+        return result
 
     async def set_lift_height(self, height_mm, max_speed_radps=0.0, accel_radps2=0.0, duration_sec=0.0):
         message = _clad_message.SetLiftHeight(
