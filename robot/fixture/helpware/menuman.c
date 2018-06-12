@@ -282,10 +282,12 @@ typedef struct lifeTester_ {
   bool flash;
   bool motors;
   bool screen;
+  bool square_wave;
   /* status */
   bool do_discharge;
   uint16_t cc_cycles; //charge contact cycles
   Process burn_proc;
+  Process square_wave_proc;
 } LifeTester;
 
 LifeTester  gLifeTesting;
@@ -324,6 +326,9 @@ void manage_life_tests() {
   if (gLifeTesting.cpu) {
     //print any output;
     process_monitor(&gLifeTesting.burn_proc);
+  }
+  if(gLifeTesting.square_wave){
+    process_monitor(&gLifeTesting.square_wave_proc);
   }
 }
 
@@ -422,11 +427,19 @@ void handle_LifeTestScreen(void* param)
   gLifeTesting.screen = true;
 }
 
+void handle_LifeTestSquareWave(void* param)
+{
+  printf("Square Wave Test Selected\n");
+  gLifeTesting.square_wave_proc.proc_fd = pidopen("./testsquarewave.sh", "", &gLifeTesting.square_wave_proc.wait_pid);
+  gLifeTesting.square_wave = true;
+}
+
 void handle_LifeTestAll(void* param) {
   handle_LifeTestBattery(param);
   handle_LifeTestCpu(param);
   handle_LifeTestMotors(param);
   handle_LifeTestScreen(param);
+  handle_LifeTestSquareWave(param);
 }
 
 
@@ -484,6 +497,7 @@ MENU_ITEMS(LifeTest)= {
   MENU_ACTION("CPU / Flash ", LifeTestCpu),
   MENU_ACTION("Run Motors", LifeTestMotors),
   MENU_ACTION("Cycle Screens", LifeTestScreen),
+  MENU_ACTION("Play Square Wave", LifeTestSquareWave),
   MENU_ACTION("ALL", LifeTestAll),
 };
 MENU_CREATE(LifeTest);
