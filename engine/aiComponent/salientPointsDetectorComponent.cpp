@@ -53,29 +53,29 @@ void SalientPointsDetectorComponent::UpdateDependent(const AICompMap& dependentC
 bool SalientPointsDetectorComponent::PersonDetected() const
 {
   // TODO Here I'm cheating: test if x seconds have passed and if so create a fake salient point with a person
-  _latestSalientPoints.clear();
-  DEV_ASSERT(_robot != nullptr, "SalientPointsDetectorComponent.PersonDetected.RobotCantBeNull");
-  float currentTickCount = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if ((currentTickCount - _timeSinceLastObservation) > 3 ) { // 3 seconds
-
-
-    Vision::SalientPoint personDetected;
-
-    personDetected.timestamp = _robot->GetLastImageTimeStamp();
-    personDetected.salientType = Vision::SalientPointType::Person;
-
-    // Random image coordinates
-    personDetected.y_img = float(_robot->GetContext()->GetRandom()->RandDbl());
-    personDetected.x_img = float(_robot->GetContext()->GetRandom()->RandDbl());
-
-    _latestSalientPoints.push_back(std::move(personDetected));
-
-    PRINT_CH_INFO("Behaviors", "SalientPointsDetectorComponent.SalientPointDetected.ConditionTrue", "");
-    _timeSinceLastObservation = currentTickCount;
-  }
-  else {
-    PRINT_CH_DEBUG("Behaviors", "SalientPointsDetectorComponent.SalientPointDetected.ConditionFalse", "");
-  }
+//  _latestSalientPoints.clear();
+//  DEV_ASSERT(_robot != nullptr, "SalientPointsDetectorComponent.PersonDetected.RobotCantBeNull");
+//  float currentTickCount = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+//  if ((currentTickCount - _timeSinceLastObservation) > 3 ) { // 3 seconds
+//
+//
+//    Vision::SalientPoint personDetected;
+//
+//    personDetected.timestamp = _robot->GetLastImageTimeStamp();
+//    personDetected.salientType = Vision::SalientPointType::Person;
+//
+//    // Random image coordinates
+//    personDetected.y_img = float(_robot->GetContext()->GetRandom()->RandDbl());
+//    personDetected.x_img = float(_robot->GetContext()->GetRandom()->RandDbl());
+//
+//    _latestSalientPoints.push_back(std::move(personDetected));
+//
+//    PRINT_CH_INFO("Behaviors", "SalientPointsDetectorComponent.SalientPointDetected.ConditionTrue", "");
+//    _timeSinceLastObservation = currentTickCount;
+//  }
+//  else {
+//    PRINT_CH_DEBUG("Behaviors", "SalientPointsDetectorComponent.SalientPointDetected.ConditionFalse", "");
+//  }
 
   // TODO Here is the only thing that should go in
   return std::any_of(_latestSalientPoints.begin(), _latestSalientPoints.end(),

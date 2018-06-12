@@ -68,23 +68,29 @@ public:
 
   bool PersonDetected() const;
 
-  // returns false if no person data is available (e.g. it's been fetched already)
+  // Remove all the Person salient points from the local container and move them to the new one
   template <typename Container>
   void GetLastPersonDetectedData(Container& salientPoints) const {
 
-    std::copy_if(_latestSalientPoints.begin(), _latestSalientPoints.end(), std::back_inserter(salientPoints),
-                 [](const Vision::SalientPoint& p) {
-                   PRINT_CH_INFO("Behaviors","SalientPointsDetectorComponent.GetLastPersonDetectedData",
-                                 "Checking a point with type %s",
-                                Vision::SalientPointTypeToString(p.salientType));
-                   return p.salientType == Vision::SalientPointType::Person;
-                 }
+    //Solution adapted from https://stackoverflow.com/a/32155973/1047543
+
+    // partition: all elements that should not be moved come before
+    // (note that the condition is false) all elements that should be moved.
+    // stable_partition maintains relative order in each group
+    auto p = std::stable_partition(_latestSalientPoints.begin(), _latestSalientPoints.end(),
+                                   [](const Vision::SalientPoint& p) {
+                                     return p.salientType != Vision::SalientPointType::Person;
+                                   }
     );
+    salientPoints.insert(salientPoints.end(), std::make_move_iterator(p),
+                         std::make_move_iterator(_latestSalientPoints.end()));
+    _latestSalientPoints.erase(p, _latestSalientPoints.end());
   }
 
   template <typename Container>
   void addSalientPoints(const Container& c) {
-    std::copy(std::begin(c), std::end(c), std::begin(_latestSalientPoints));
+    _latestSalientPoints.insert(_latestSalientPoints.end(), std::begin(c), std::end(c));
+
   }
 
 private:
@@ -96,7 +102,7 @@ private:
   // A list of latest received salient points. Will be overwritten if a new batch arrives
   mutable std::list<Vision::SalientPoint> _latestSalientPoints; // TODO mutable is temporary for checking
 
-  mutable float _timeSinceLastObservation = 0; // TODO this is temporary for testing
+//  mutable float _timeSinceLastObservation = 0; // TODO this is temporary for testing
 
   Robot* _robot;
 
