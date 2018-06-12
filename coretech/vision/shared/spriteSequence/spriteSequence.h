@@ -33,8 +33,11 @@ public:
   enum class LoopConfig{
     Loop,
     Hold,
+    DoNothing,
     Error
   };
+
+  static LoopConfig LoopConfigFromString(const std::string& config);
 
   SpriteSequence(LoopConfig config = LoopConfig::Hold);
   virtual ~SpriteSequence();
@@ -56,6 +59,8 @@ public:
   
   // Clear the underlying container
   void Clear() { _frames.clear();};
+
+  void SetLoopConfig(LoopConfig config){ _loopConfig = config;}
 
 private:
   // Returns true if the moddedIndex was set properly
