@@ -324,7 +324,14 @@ void helper_temp_manage(bool force_update)
   bool update = force_update || Timer::elapsedUs(TtempUpdate) > update_interval;
   bool changed = 0;
   
-  if( update ) {
+  if( ConsoleGetIndex_() > 0 && !force_update ) {
+    //play nice with console mode - don't interrupt
+    if( Timer::elapsedUs(TtempUpdate) > 180*1000*1000 ) { //something got stuck
+      ConsoleGetIndex_(true);
+      while( ConsoleReadChar() > -1 );
+      ConsolePrintf("...\nconsole input cleared\n");
+    }
+  } else if( update ) {
     int tempC = helperGetTempC(); //read new temp
     last_update_successful = tempC >= 0;
     changed = tempC != HelperTempC;
