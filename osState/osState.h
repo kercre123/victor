@@ -126,6 +126,12 @@ public:
   // while robot is on charger
   bool IsInRecoveryMode();
 
+  // True if we've synced time with a time server
+  bool IsWallTimeSynced() const;
+
+  // True if timezone is set (and therefore we can get local time)
+  bool HasTimezone() const;
+
 protected:
    // Return true if robot has a valid EMR.
    // This function is "off limits" to normal robot services

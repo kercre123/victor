@@ -377,5 +377,17 @@ const std::string & OSState::GetBootID()
   return _bootID;
 }
 
+bool OSState::IsWallTimeSynced() const
+{
+  // assume mac is always synced (not really accurate... but good enough)
+  return true;
+}
+
+bool OSState::HasTimezone() const
+{
+  // assume mac always has locale set
+  return true;
+}
+
 } // namespace Cozmo
 } // namespace Anki
