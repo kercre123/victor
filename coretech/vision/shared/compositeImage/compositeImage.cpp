@@ -181,13 +181,11 @@ std::vector<CompositeImageChunk> CompositeImage::GetImageChunks() const
         baseChunk.spriteName = spriteName;
       }else{
         // perform a reverse lookup on the sprite 
-        Vision::SpriteSequence seq;
         std::string fullSpritePath;
         Vision::SpriteHandle handle;
         // Get Handle -> Sprite Path -> Sprite name that maps to that path
         // Each step is reliant on the previous one's value being set
-        if(layerPair.second.GetSpriteSequence(spriteBoxPair.first, seq) &&
-           seq.GetFrame(0, handle) &&
+        if(layerPair.second.GetFrame(spriteBoxPair.first, 0, handle) &&
            handle->GetFullSpritePath(fullSpritePath) &&
            _spriteCache->GetSpritePathMap()->GetKeyForValueConst(fullSpritePath, spriteName)){
           baseChunk.spriteName = spriteName;
@@ -297,7 +295,7 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
     // If implementation quad was found, draw it into the image at the point
     // specified by the layout quad def
     Vision::SpriteHandle  handle;
-    if(spriteEntry._spriteSequence.GetFrame(frameIdx, handle)){
+    if(spriteEntry.GetFrame(frameIdx, handle)){
       switch(spriteBox.renderConfig.renderMethod){
         case SpriteRenderMethod::RGBA:
         {
@@ -372,7 +370,7 @@ uint CompositeImage::GetFullLoopLength(){
   uint maxSequenceLength = 0;
   auto callback = [&maxSequenceLength](Vision::LayerName layerName, SpriteBoxName spriteBoxName, 
                                        const SpriteBox& spriteBox, const SpriteEntry& spriteEntry){
-    const auto numFrames = spriteEntry._spriteSequence.GetNumFrames();
+    const auto numFrames = spriteEntry.GetNumFrames();
     maxSequenceLength = (numFrames > maxSequenceLength) ? numFrames : maxSequenceLength;
   };
 
@@ -399,10 +397,10 @@ void CompositeImage::CacheInternalSprites(Vision::SpriteCache* cache, const Time
 {
   auto callback = [cache, endTime_ms](Vision::LayerName layerName, SpriteBoxName spriteBoxName, 
                                        const SpriteBox& spriteBox, const SpriteEntry& spriteEntry){
-    const auto numFrames = spriteEntry._spriteSequence.GetNumFrames();
+    const auto numFrames = spriteEntry.GetNumFrames();
     Vision::SpriteHandle handle;
     for(auto i = 0; i < numFrames; i++){
-      if(ANKI_VERIFY(spriteEntry._spriteSequence.GetFrame(i, handle),
+      if(ANKI_VERIFY(spriteEntry.GetFrame(i, handle),
                      "CompositeImage.CacheInternalSprites.FailedToGetFrame", 
                      "Get Frame %d failed for layer %s and spriteBoxName %s",
                      i, LayerNameToString(layerName), SpriteBoxNameToString(spriteBoxName))){

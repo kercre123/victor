@@ -374,7 +374,8 @@ namespace Cozmo {
     bool SequenceShouldAdvance() const { return _keyframeDuration_ms != 0;}
  
     // Apply the update to the composite image
-    void ApplyCompositeImageUpdate(CompositeImageUpdateSpec&& updateSpec);
+    void ApplyCompositeImageUpdate(const TimeStamp_t timeSinceAnimStart_ms, 
+                                   CompositeImageUpdateSpec&& updateSpec);
 
     std::unique_ptr<Vision::CompositeImage> _compositeImage;
     bool _compositeImageUpdated = false;
