@@ -48,43 +48,41 @@ ITrackAction::ITrackAction(const std::string name, const RobotActionType type)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ITrackAction::~ITrackAction()
 {
-  // Make sure eye shift gets removed
-  GetRobot().GetAnimationComponent().RemoveEyeShift(_kEyeShiftLayerName);
-  
-
-  // Set default eye dart distance
-  // NOTE: It may not have been at default before, but it doesn't seem worth
-  //       exposing the parameters to the engine just for this.
-  //       Currently, the only way it wouldn't have previously been at default
-  //       is if it was changed via G2E::SetKeepFaceAliveParameter message.
-  GetRobot().GetAnimationComponent().SetKeepFaceAliveParameterToDefault(KeepFaceAliveParameter::EyeDartMaxDistance_pix);
-  
   if(HasRobot()){
+    // Make sure eye shift gets removed
+    GetRobot().GetAnimationComponent().RemoveEyeShift(_kEyeShiftLayerName);
+    
+
+    // Set default eye dart distance
+    // NOTE: It may not have been at default before, but it doesn't seem worth
+    //       exposing the parameters to the engine just for this.
+    //       Currently, the only way it wouldn't have previously been at default
+    //       is if it was changed via G2E::SetKeepFaceAliveParameter message.
+    GetRobot().GetAnimationComponent().SetKeepFaceAliveParameterToDefault(KeepFaceAliveParameter::EyeDartMaxDistance_pix);
+    
     // Make sure we abort any sound actions we triggered
     GetRobot().GetActionList().Cancel(_soundAnimTag);
-  }
 
-  if(HasStarted())
-  {
-    // Make sure we don't leave the head/body moving
-    switch(_mode)
+    if(HasStarted())
     {
-      case Mode::HeadAndBody:
-        GetRobot().GetMoveComponent().StopBody();
-        GetRobot().GetMoveComponent().StopHead();
-        break;
-        
-      case Mode::BodyOnly:
-        GetRobot().GetMoveComponent().StopBody();
-        break;
-        
-      case Mode::HeadOnly:
-        GetRobot().GetMoveComponent().StopHead();
-        break;
+      // Make sure we don't leave the head/body moving
+      switch(_mode)
+      {
+        case Mode::HeadAndBody:
+          GetRobot().GetMoveComponent().StopBody();
+          GetRobot().GetMoveComponent().StopHead();
+          break;
+          
+        case Mode::BodyOnly:
+          GetRobot().GetMoveComponent().StopBody();
+          break;
+          
+        case Mode::HeadOnly:
+          GetRobot().GetMoveComponent().StopHead();
+          break;
+      }
     }
-  }
   
-  if(HasRobot()){
     GetRobot().GetDrivingAnimationHandler().ActionIsBeingDestroyed();
   }
 }

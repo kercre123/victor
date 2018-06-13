@@ -53,7 +53,9 @@ namespace Anki {
     
     TurnInPlaceAction::~TurnInPlaceAction()
     {
-      GetRobot().GetAnimationComponent().RemoveEyeShift(_kEyeShiftLayerName);
+      if(HasRobot()){
+        GetRobot().GetAnimationComponent().RemoveEyeShift(_kEyeShiftLayerName);
+      }
     }
     
     void TurnInPlaceAction::SetRequestedTurnAngle(const f32 turnAngle_rad)
@@ -862,12 +864,14 @@ namespace Anki {
     
     MoveHeadToAngleAction::~MoveHeadToAngleAction()
     {
-      // Make sure eye shift gets removed, by this action, or by the MoveComponent if "hold" is enabled
-      if(_holdEyes) {
-        GetRobot().GetMoveComponent().RemoveEyeShiftWhenHeadMoves(_kEyeShiftLayerName, 3*ANIM_TIME_STEP_MS);
-      } else {
-        GetRobot().GetAnimationComponent().RemoveEyeShift(_kEyeShiftLayerName);
-      } 
+      if(HasRobot()){
+        // Make sure eye shift gets removed, by this action, or by the MoveComponent if "hold" is enabled
+        if(_holdEyes) {
+          GetRobot().GetMoveComponent().RemoveEyeShiftWhenHeadMoves(_kEyeShiftLayerName, 3*ANIM_TIME_STEP_MS);
+        } else {
+          GetRobot().GetAnimationComponent().RemoveEyeShift(_kEyeShiftLayerName);
+        }
+      }
     }
     
     bool MoveHeadToAngleAction::IsHeadInPosition() const
@@ -1913,7 +1917,7 @@ namespace Anki {
       SetAction(nullptr);
       
       // In case we got interrupted and didn't get a chance to do this
-      if(_tracksLocked) {
+      if(HasRobot() && _tracksLocked) {
         GetRobot().GetMoveComponent().UnlockTracks((u8)AnimTrackFlag::HEAD_TRACK |
                                                (u8)AnimTrackFlag::BODY_TRACK,
                                                GetTag());
