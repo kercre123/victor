@@ -64,6 +64,7 @@ private:
 
   using DASEventQueue = std::deque<DASEvent>;
   using DASEventQueuePtr = std::shared_ptr<DASEventQueue>;
+  using DASEventQueuePtrQueue = std::deque<DASEventQueuePtr>;
   using LogLevel = Anki::Util::LogLevel;
   using TaskExecutor = Anki::Util::TaskExecutor;
 
@@ -82,22 +83,45 @@ private:
 
   // Worker thread and thread-safe counters
   TaskExecutor _worker;
-  std::atomic_uint64_t _workerSuccessCount = {0};
-  std::atomic_uint64_t _workerFailCount = {0};
+  std::atomic_uint32_t _workerSuccessCount = {0};
+  std::atomic_uint32_t _workerFailCount = {0};
+  std::atomic_uint32_t _workerDeferralCount = {0};
+  std::atomic_uint32_t _workerDroppedCount = {0};
+
+  // Queue of deferred uploads. This member is only accessed from
+  // worker thread so it does not need a mutex.
+  DASEventQueuePtrQueue _workerDeferrals;
 
   // Bookkeeping
   uint64_t _entryCount = 0;
   uint64_t _eventCount = 0;
   uint64_t _sleepCount = 0;
 
-// Event serialization
+  // Event serialization
   void Serialize(std::ostringstream & ostr, const DASEvent & event);
   void Serialize(std::ostringstream & ostr, const DASEventQueue & eventQueue);
 
-// Upload queued events to server
-  void PerformUpload(const DASEventQueuePtr eventQueue);
+  // Attempt to upload a single event queue to DAS endpoint.
+  // This is called on the worker thread.
+  // Returns true on successful upload.
+  bool PostToServer(const DASEventQueue & eventQueue);
 
-  // Submit queue for upload to server
+  // Perform retry of deferred uploads.
+  // This is called on the worker thread in response to a successful upload.
+  // Failed retries are left at the front of the retry queue.
+  void PerformDeferredUploads();
+
+  // Enqueue events for delivery at some time in the future
+  // This is called on the worker thread in response to a failed upload.
+  // If deferral queue is full, the oldest events are discarded.
+  void PerformDeferral(DASEventQueuePtr eventQueue);
+
+  // Upload queued events to server.
+  // This is called on the worker thread.
+  void PerformUpload(DASEventQueuePtr eventQueue);
+
+  // Submit queue for upload to server.
+  // This is called on the main thread to process a queue of events.
   void EnqueueForUpload(DASEventQueuePtr eventQueue);
 
 // Process an event struct
@@ -109,10 +133,12 @@ private:
 // Process a log message
   void ProcessLogEntry(const AndroidLogEntry & logEntry);
 
-  // Log stats
+  // Log some process stats.
+  // This is called on the main thread at regular intervals.
   void ProcessStats();
 
-  // Shutdown helpers
+  // Shutdown helpers. These are called on the main thread
+  // when process is shutting down.
   void FlushEventQueue();
   void FlushUploadQueue();
 
