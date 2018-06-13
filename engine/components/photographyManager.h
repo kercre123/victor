@@ -88,6 +88,7 @@ private:
 
   std::string GetSavePath() const;
   std::string GetBasename(int photoID) const;
+  const std::string& GetStateString() const;
   int PhotoIndexFromID(const int id) const; // Returns photo info index, or -1 if not found
 
   enum class State {
@@ -106,6 +107,7 @@ private:
   int               _nextPhotoID = 0;
   std::string       _savePath = "";
   std::string       _fullPathPhotoInfoFile = "";
+  bool              _disableWhenPossible = false;
 
   struct PhotoInfo
   {

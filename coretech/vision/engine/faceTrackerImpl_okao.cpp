@@ -744,7 +744,8 @@ namespace Vision {
                                      GRAY_ORDER_Y0Y1Y2Y3, _okaoDetectionResultHandle);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_WARNING("FaceTrackerImpl.Update.FaceLibDetectFail",
-                          "FaceLib Result Code=%d", okaoResult);
+                          "FaceLib Result Code=%d, dataPtr=%p, nWidth=%d, nHeight=%d",
+                          okaoResult, dataPtr, nWidth, nHeight);
       return RESULT_FAIL;
     }
     

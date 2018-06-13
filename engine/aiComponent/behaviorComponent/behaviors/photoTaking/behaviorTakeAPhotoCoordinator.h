@@ -59,6 +59,7 @@ private:
   void TransitionToStorageIsFull();
   void TransitionToFrameFaces();
   void TransitionToTakeAPhotoAnimations();
+  void TransitionToTakePhoto();
   void CaptureCurrentImage();
   
 };

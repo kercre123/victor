@@ -82,7 +82,8 @@ Result ImageSaver::Save(Vision::ImageCache& imageCache, const s32 frameNumber)
 {
   const std::string fullFilename = GetFullFilename(frameNumber, (_params.quality < 0 ? "png" : PhotographyManager::GetPhotoExtension()));
   
-  PRINT_CH_INFO(kLogChannelName, "ImageSaver.Save.SavingImage", "Saving to %s", fullFilename.c_str());
+  PRINT_CH_INFO(kLogChannelName, "ImageSaver.Save.SavingImage", "Saving image with timestamp %u to %s",
+                imageCache.GetTimeStamp(), fullFilename.c_str());
   
   // Resize into a new image to avoid affecting downstream updates
   Vision::ImageRGB sizedImage = imageCache.GetRGB(_params.size);

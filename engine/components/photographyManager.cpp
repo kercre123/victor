@@ -28,17 +28,17 @@
 namespace Anki {
 namespace Cozmo {
 
-
 CONSOLE_VAR(bool, kDevIsStorageFull, "Photography", false);
 
 // If true, requires OS version that supports camera format change
-CONSOLE_VAR(bool, kTakePhoto_UseFullSensorResolution, "Photography", false);
-
+CONSOLE_VAR(bool, kTakePhoto_UseSensorResolution, "Photography", true);
+    
 namespace
 {
   const std::string kPhotoManagerFolder = "photos";
   const std::string kPhotoManagerFilename = "photos.json";
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
   // Overridden by config file
   int kMaxSlots           = 20;
   bool kRemoveDistortion  = true;
@@ -97,7 +97,23 @@ void PhotographyManager::InitDependent(Robot* robot, const RobotCompMap& depende
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const std::string& PhotographyManager::GetStateString() const
+{
+  static const std::map<State, std::string> LUT{
+    {State::Idle,                      "Idle"},
+    {State::WaitingForPhotoModeEnable, "WaitingForPhotoModeEnable"},
+    {State::InPhotoMode,               "InPhotoMode"},
+    {State::WaitingForTakePhoto,       "WaitingForTakePhoto"},
+    {State::WaitingForPhotoModeDisable,"WaitingForPhotoModeDisable"},
+  };
+  
+  auto iter = LUT.find(_state);
+  DEV_ASSERT(iter != LUT.end(), "PhotographyManager.GetSate.BadState");
+  return iter->second;
+}
 
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void PhotographyManager::UpdateDependent(const RobotCompMap& dependentComps)
 {
@@ -107,13 +123,27 @@ void PhotographyManager::UpdateDependent(const RobotCompMap& dependentComps)
     {
       if(State::WaitingForPhotoModeDisable == _state)
       {
+        LOG_INFO("PhotographyManager.UpdateDependent.CompletedPhotoModeDisable",
+                 "Was in State %s, switching to Idle", GetStateString().c_str());
         _state = State::Idle;
       }
       else
       {
+        LOG_INFO("PhotographyManager.UpdateDependent.CompletedPhotoModeEnable",
+                 "Was in State %s, switching to InPhotoMode", GetStateString().c_str());
         _state = State::InPhotoMode;
       }
     }
+  }
+  
+  // Make sure we get photo mode disabled once possible, if requested
+  if(_disableWhenPossible && IsReadyToSwitchModes())
+  {
+    LOG_INFO("PhotographyManager.UpdateDependent.DisablingPhotoMode",
+             "Disable was queued. Doing now.");
+    _visionComponent->SetCameraCaptureFormat(ImageEncoding::RawRGB);
+    _state = State::WaitingForPhotoModeDisable;
+    _disableWhenPossible = false;
   }
 }
 
@@ -121,8 +151,7 @@ void PhotographyManager::UpdateDependent(const RobotCompMap& dependentComps)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result PhotographyManager::EnablePhotoMode(bool enable)
 {
-  // TODO: remove this once VIC-3589 is fixed
-  if(!kTakePhoto_UseFullSensorResolution)
+  if(!kTakePhoto_UseSensorResolution)
   {
     // No format change: immediately in photo mode
     _state = State::InPhotoMode;
@@ -133,7 +162,19 @@ Result PhotographyManager::EnablePhotoMode(bool enable)
 
   if(!IsReadyToSwitchModes())
   {
-    LOG_WARNING("PhotographyManager.EnablePhotoMode.NotReady", "");
+    // Special case: can't disable photo mode because we're waiting on something else: queue to disable when ready
+    if(!enable)
+    {
+      LOG_INFO("PhotographyManager.EnablePhotoMode.QueuingDisable", "Current State: %s",
+               GetStateString().c_str());
+      _disableWhenPossible = true;
+      return RESULT_OK;
+    }
+    
+    // Should have checked IsReady before calling!
+    LOG_WARNING("PhotographyManager.EnablePhotoMode.NotReadyToSwitchModes",
+                "Trying to enable. Current State: %s",
+                GetStateString().c_str());
     return RESULT_FAIL;
   }
 
@@ -142,7 +183,7 @@ Result PhotographyManager::EnablePhotoMode(bool enable)
   _state = (enable ? State::WaitingForPhotoModeEnable : State::WaitingForPhotoModeDisable);
   
   LOG_INFO("PhotographyManager.EnablePhotoMode.FormatChange",
-           "Requesting format: %s", EnumToString(format));
+           "Requesting format: %s, New State: %s", EnumToString(format), GetStateString().c_str());
 
   return RESULT_OK;
 }
@@ -191,16 +232,14 @@ PhotographyManager::PhotoHandle PhotographyManager::TakePhoto()
 
   if(!IsReadyToTakePhoto())
   {
-    LOG_WARNING("PhotographyManager.TakePhoto.NotReady", "");
+    LOG_WARNING("PhotographyManager.TakePhoto.NotReady", "Current State: %s", GetStateString().c_str());
     return 0;
   }
 
-  const auto photoSize = (kTakePhoto_UseFullSensorResolution ?
+  const auto photoSize = (kTakePhoto_UseSensorResolution ?
                           Vision::ImageCache::Size::Sensor :
                           Vision::ImageCache::Size::Full);
-
-  LOG_INFO("PhotographyManager.TakePhoto.SettingSaveParams", "");
-
+    
   _visionComponent->SetSaveImageParameters(ImageSendMode::SingleShot,
                                            GetSavePath(),
                                            GetBasename(_nextPhotoID),
@@ -211,7 +250,12 @@ PhotographyManager::PhotoHandle PhotographyManager::TakePhoto()
 
   _lastRequestedPhotoHandle = _visionComponent->GetLastProcessedImageTimeStamp();
   _state = State::WaitingForTakePhoto;
-
+  
+  LOG_INFO("PhotographyManager.TakePhoto.SetSaveParams",
+           "Resolution: %s, RequestedHandle: %zu",
+           (kTakePhoto_UseSensorResolution ? "Sensor" : "Full"),
+           _lastRequestedPhotoHandle);
+  
   return _lastRequestedPhotoHandle;
 }
 
@@ -221,7 +265,11 @@ void PhotographyManager::SetLastPhotoTimeStamp(TimeStamp_t timestamp)
 {
   static_assert(sizeof(PhotoHandle) >= sizeof(TimeStamp_t), "PhotoHandle alias must be able to accomodate TimeStamps");
   _lastSavedPhotoHandle = timestamp;
-
+  
+  LOG_INFO("PhotographyManager.SetLastPhotoTimeStamp.SettingHandle",
+           "Saved Handle: %zu (Last Requested: %zu)",
+           _lastSavedPhotoHandle, _lastRequestedPhotoHandle);
+  
   if(WasPhotoTaken(_lastRequestedPhotoHandle))
   {
     // Last TakePhoto call is completed, go back to InPhotoMode, meaning we are ready to take more photos
