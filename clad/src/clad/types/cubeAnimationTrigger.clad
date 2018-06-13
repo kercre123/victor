@@ -15,17 +15,7 @@ enum int_32 CubeAnimationTrigger
   Connected,
   CubePouncePlayerLose,
   CubePouncePlayerWin,
-  Dance_01,
-  Dance_02,
-  Dance_03,
-  Dance_04,
-  Dance_05,
-  Dance_06,
-  DanceFadeOff,
   DrivingTo,
-  FeedingBlank,
-  FeedingCyanCycle,
-  FeedingCyanSolid,
   Flash,
   GatherCubesAllCubesInBeacon,
   GatherCubesCubeInBeacon,
@@ -41,7 +31,6 @@ enum int_32 CubeAnimationTrigger
   TestRotation,
   Visible,
   WakeUp,
-  Workout,
 
   Count
 }

@@ -109,7 +109,6 @@ enum uint_8 BehaviorClass {
   VisitInterestingEdge,
 
   // freeplay/oneShots
-  Dance,
   Singing,
 
   // freeplay/putDownDispatch

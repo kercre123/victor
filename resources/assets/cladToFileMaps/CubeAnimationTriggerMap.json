@@ -16,48 +16,8 @@
         "AnimName": "cubePouncePlayerWin"
     },
     {
-        "CladEvent": "Dance_01",
-        "AnimName": "dancing_01"
-    },
-    {
-        "CladEvent": "Dance_02",
-        "AnimName": "dancing_02"
-    },
-    {
-        "CladEvent": "Dance_03",
-        "AnimName": "dancing_03"
-    },
-    {
-        "CladEvent": "Dance_04",
-        "AnimName": "dancing_04"
-    },
-    {
-        "CladEvent": "Dance_05",
-        "AnimName": "dancing_05"
-    },
-    {
-        "CladEvent": "Dance_06",
-        "AnimName": "dancing_06"
-    },
-    {
-        "CladEvent": "DanceFadeOff",
-        "AnimName": "fadeOff_1sec"
-    },
-    {
         "CladEvent": "DrivingTo",
         "AnimName": "interacting"
-    },
-    {
-        "CladEvent": "FeedingBlank",
-        "AnimName": "feedingBlank"
-    },
-    {
-        "CladEvent": "FeedingCyanCycle",
-        "AnimName": "feedingCyanCycle"
-    },
-    {
-        "CladEvent": "FeedingCyanSolid",
-        "AnimName": "feedingCyanSolid"
     },
     {
         "CladEvent": "Flash",
@@ -118,10 +78,6 @@
     {
         "CladEvent": "WakeUp",
         "AnimName": "wakeUp"
-    },
-    {
-        "CladEvent": "Workout",
-        "AnimName": "workout"
     }
 ]
 
