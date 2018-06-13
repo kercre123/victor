@@ -22,25 +22,25 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-  const char* const kConsoleGroup = "BeatDetectorComponent";
+  #define CONSOLE_GROUP "BeatDetectorComponent"
   
   // Minimum beat detector confidence to be considered an actual beat
-  CONSOLE_VAR_RANGED(float, kConfidenceThreshold, kConsoleGroup, 0.25f, 0.01f, 50.f);
+  CONSOLE_VAR_RANGED(float, kConfidenceThreshold, CONSOLE_GROUP, 0.25f, 0.01f, 50.f);
   
   // Length of time to keep a history of detected beats
-  CONSOLE_VAR_RANGED(float, kBeatHistoryWindowSize_sec, kConsoleGroup, 10.f, 1.f, 60.f);
+  CONSOLE_VAR_RANGED(float, kBeatHistoryWindowSize_sec, CONSOLE_GROUP, 10.f, 1.f, 60.f);
   
   // Minimum number of beats that we must have accumulated in
   // the history window in order to say a beat is detected
-  CONSOLE_VAR_RANGED(int, kMinNumBeatsInHistory, kConsoleGroup, 8, 2, 50);
+  CONSOLE_VAR_RANGED(int, kMinNumBeatsInHistory, CONSOLE_GROUP, 8, 2, 50);
   
   // Detected tempo must be steadily within this window
   // in order to say a beat is detected
-  CONSOLE_VAR_RANGED(float, kTempoSteadyThreshold_bpm, kConsoleGroup, 5, 1, 25);
+  CONSOLE_VAR_RANGED(float, kTempoSteadyThreshold_bpm, CONSOLE_GROUP, 5, 1, 25);
   
   // Used to fake a detected beat. If greater than 0, then a series of confident
   // beats is created at the given bpm.
-  CONSOLE_VAR_RANGED(float, kFakeBeat_bpm, kConsoleGroup, -1.f, -1.f, 200.f);
+  CONSOLE_VAR_RANGED(float, kFakeBeat_bpm, CONSOLE_GROUP, -1.f, -1.f, 200.f);
 }
 
   

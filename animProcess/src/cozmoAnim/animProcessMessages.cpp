@@ -74,10 +74,9 @@ namespace {
   Anki::Cozmo::Audio::ProceduralAudioClient* _proceduralAudioClient = nullptr;
   const Anki::Cozmo::AnimContext*            _context = nullptr;
 
-  CONSOLE_VAR(bool, kDebugFaceDraw_CycleWithButton, "Face.DebugDraw", true);
-
   bool _connectionFlowInited = false;
   
+#if REMOTE_CONSOLE_ENABLED
   static void ListAnimations(ConsoleFunctionContextRef context)
   {
     context->channel->WriteLog("<html>\n");
@@ -137,6 +136,7 @@ namespace {
     }
   }
   CONSOLE_FUNC(RecordMicDataClip, "MicData");
+#endif // REMOTE_CONSOLE_ENABLED
 }
 
 namespace Anki {

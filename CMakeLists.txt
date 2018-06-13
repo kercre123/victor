@@ -88,7 +88,8 @@ foreach(opt ${opts})
   if(opt STREQUAL "ANKI_BUILD_SHA")
     # ignore, set previously
 
-  elseif(opt MATCHES "ANKI_")
+  # we whitelist which defines are allowed to be added to prevent hidden, unexpected defines from sneaking in
+  elseif((opt MATCHES "ANKI_") OR (opt MATCHES "REMOTE_CONSOLE_ENABLED"))
     get_property(helpstring CACHE ${opt} PROPERTY HELPSTRING)
     if(${helpstring} MATCHES "cached value")
       # value was set from a previous run, but not this run, turn off

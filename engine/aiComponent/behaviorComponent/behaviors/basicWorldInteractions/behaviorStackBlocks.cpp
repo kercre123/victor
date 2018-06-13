@@ -42,8 +42,6 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-CONSOLE_VAR(f32, kBSB_ScoreIncreaseForAction, "Behavior.StackBlocks", 0.8f);
-CONSOLE_VAR(f32, kBSB_MaxTurnTowardsFaceBeforePickupAngle_deg, "Behavior.StackBlocks", 90.f);
 
 static const char* const kStackInAnyOrientationKey = "stackInAnyOrientation";
 static const char* const kPickupBehaviorIDKey      = "pickupBehaviorID";

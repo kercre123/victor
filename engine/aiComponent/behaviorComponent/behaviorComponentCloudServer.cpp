@@ -31,7 +31,9 @@ BehaviorComponentCloudServer::BehaviorComponentCloudServer(const CozmoContext* c
 : _callback(std::move(callback))
 , _shutdown(false)
 , _sleepMs(sleepMs)
+#if SEND_CLOUD_DEV_RESULTS
 , _context(context)
+#endif
 {
   _listenThread = std::thread([this, name] { RunThread(std::move(name)); });
 

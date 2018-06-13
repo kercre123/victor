@@ -24,10 +24,18 @@
 // the code and in case we want to set it differently via other build flags later without changing code.
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #if defined(NDEBUG)
-  #define ANKI_DEVELOPER_CODE     0
-  #define ANKI_DEV_CHEATS         1 // enabled as tests are failing in release
-  #define ANKI_PROFILING_ENABLED  1
-  #define ANKI_PRIVACY_GUARD      1 // PII not displayed in release logs!!!
+  #ifndef ANKI_DEVELOPER_CODE
+    #define ANKI_DEVELOPER_CODE     0
+  #endif
+  #ifndef ANKI_DEV_CHEATS
+    #define ANKI_DEV_CHEATS         1 // This is the expected behavior on "release" builds, overridden with command-line defines for shipping builds
+  #endif
+  #ifndef ANKI_PROFILING_ENABLED
+    #define ANKI_PROFILING_ENABLED  1
+  #endif
+  #ifndef ANKI_PRIVACY_GUARD
+    #define ANKI_PRIVACY_GUARD      1 // PII not displayed in release logs!!!
+  #endif
 #else
   #define ANKI_DEVELOPER_CODE     1
   #define ANKI_DEV_CHEATS         1

@@ -53,6 +53,7 @@ Anki::Cozmo::BehaviorTimerUtilityCoordinator* sCoordinator = nullptr;
 /// Dev/testing functions
 ///////////
 
+#if ANKI_DEV_CHEATS
 CONSOLE_VAR(u32, kAdvanceAnticSeconds,   "TimerUtility.AdvanceAnticSeconds", 10);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -80,6 +81,7 @@ void AdvanceAnticBySeconds(int seconds)
 
 CONSOLE_FUNC(ForceAntic, "TimerUtility.ForceAntic");
 CONSOLE_FUNC(AdvanceAntic, "TimerUtility.AdvanceAntic");
+#endif // ANKI_DEV_CHEATS
 
 ///////////
 /// AnticTracker

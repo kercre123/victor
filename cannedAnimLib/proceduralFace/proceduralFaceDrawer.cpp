@@ -27,7 +27,6 @@ namespace Cozmo {
     None           = 0,
     BoxFilter      = 1,
     GaussianFilter = 2,
-    NEONBoxFilter  = 3, // Note: anti-aliasing size is hard-coded to 3 for this option
   };
 
   CONSOLE_VAR_ENUM(u8,      kProcFace_LineType,                   CONSOLE_GROUP, 1, "Line_4,Line_8,Line_AA"); // Only affects OpenCV drawing, not post-smoothing
@@ -37,8 +36,8 @@ namespace Cozmo {
   CONSOLE_VAR(bool,         kProcFace_HotspotRender,              CONSOLE_GROUP, true); // Render glow
   CONSOLE_VAR_RANGED(f32,   kProcFace_HotspotFalloff,             CONSOLE_GROUP, 0.48f, 0.05f, 1.f);
 
-  CONSOLE_VAR_RANGED(s32,   kProcFace_AntiAliasingSize,           CONSOLE_GROUP, 3, 0, 15); // full image antialiasing
-  CONSOLE_VAR_ENUM(uint8_t, kProcFace_AntiAliasingFilter,         CONSOLE_GROUP, (uint8_t)Filter::NEONBoxFilter, "None,Box,Gaussian,Box (NEON code; size 3)");
+  CONSOLE_VAR_RANGED(s32,   kProcFace_AntiAliasingSize,           CONSOLE_GROUP, 3, 0, 15); // full image antialiasing (3 will use NEON)
+  CONSOLE_VAR_ENUM(uint8_t, kProcFace_AntiAliasingFilter,         CONSOLE_GROUP, (uint8_t)Filter::BoxFilter, "None,Box,Gaussian");
   CONSOLE_VAR_RANGED(f32,   kProcFace_AntiAliasingSigmaFraction,  CONSOLE_GROUP, 0.5f, 0.0f, 1.0f);
 
 
@@ -170,8 +169,10 @@ namespace Cozmo {
       CreateNoiseImage(rng),
     }};
 
+  #if REMOTE_CONSOLE_ENABLED
     kProcFace_NoiseMinLightness = Anki::Util::Clamp(kProcFace_NoiseMinLightness, 0.f, kProcFace_NoiseMaxLightness);
     kProcFace_NoiseMaxLightness = Anki::Util::Clamp(kProcFace_NoiseMaxLightness, kProcFace_NoiseMinLightness, 2.f);
+  #endif // REMOTE_CONSOLE_ENABLED
 
     static f32 kProcFace_NoiseMinLightness_old = kProcFace_NoiseMinLightness;
     static f32 kProcFace_NoiseMaxLightness_old = kProcFace_NoiseMaxLightness;
@@ -526,36 +527,48 @@ namespace Cozmo {
       // Antialiasing (AFTER glow because it changes eyeShape, which we use to compute the glow above)
       if(kProcFace_AntiAliasingSize > 0) {
         ANKI_CPU_PROFILE("AntiAliasing");
+#if REMOTE_CONSOLE_ENABLED
         if(kProcFace_AntiAliasingSize % 2 == 0) {
           ++kProcFace_AntiAliasingSize; // Antialiasing filter size should be odd
         }
+#else
+        static_assert(kProcFace_AntiAliasingSize % 2 == 1, "kProcFace_AntiAliasingSize must be odd");
+#endif // REMOTE_CONSOLE_ENABLED
         switch(kProcFace_AntiAliasingFilter) {
           case (uint8_t)Filter::BoxFilter:
-            cv::boxFilter(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), -1, cv::Size(kProcFace_AntiAliasingSize,kProcFace_AntiAliasingSize));
-            break;
-          case (uint8_t)Filter::GaussianFilter:
-            cv::GaussianBlur(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), cv::Size(kProcFace_AntiAliasingSize,kProcFace_AntiAliasingSize),
-                             (f32)kProcFace_AntiAliasingSize * kProcFace_AntiAliasingSigmaFraction);
-            break;
-          case (uint8_t)Filter::NEONBoxFilter: {
-            kProcFace_AntiAliasingSize = 3;
-            const f32 displayedEyeWidth = bottomRight.x() - upperLeft.x();
-            const f32 displayedEyeHeight = bottomRight.y() - upperLeft.y();
-            if((displayedEyeWidth > 3.0) && (displayedEyeHeight > 3.0)) {
-              // The portion of the eye to be displayed is at least 3 pixels wide and tall, so it is safe to use NEON box filter
+          {
+            const bool usingNEON = (kProcFace_AntiAliasingSize == 3);
+            if(usingNEON)
+            {
+              const f32 displayedEyeWidth = bottomRight.x() - upperLeft.x();
+              const f32 displayedEyeHeight = bottomRight.y() - upperLeft.y();
+              if((displayedEyeWidth > 3.0) && (displayedEyeHeight > 3.0)) {
+                // The portion of the eye to be displayed is at least 3 pixels wide and tall, so it is safe to use NEON box filter
+                static Vision::Image temp(_eyeShape.GetNumRows(), _eyeShape.GetNumCols());
+                temp.FillWith(0);
+                Vision::Image tempImage = temp.GetROI(eyeBoundingBoxS32);
+                eyeShapeROI.BoxFilter(tempImage, kProcFace_AntiAliasingSize);
+                std::swap(_eyeShape, temp);
+              } else {
+                // The eye is 3 pixels or less in at least one dimension, so the NEON box filter in Anki::Vision::Image::BoxFilter() will cause
+                // a crash (that problem is documented in jira VIC-3221). We'll fall back on cv::boxFilter() for now to avoid that crash.
+                // TODO: Update this to use the NEON box filter in Anki::Vision::Image::BoxFilter() after jira VIC-3221 has been fixed.
+                cv::boxFilter(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), -1, cv::Size(kProcFace_AntiAliasingSize,kProcFace_AntiAliasingSize));
+              }
+            }
+            else
+            {
               static Vision::Image temp(_eyeShape.GetNumRows(), _eyeShape.GetNumCols());
               temp.FillWith(0);
               Vision::Image tempImage = temp.GetROI(eyeBoundingBoxS32);
               eyeShapeROI.BoxFilter(tempImage, kProcFace_AntiAliasingSize);
-              std::swap(_eyeShape, temp);
-            } else {
-              // The eye is 3 pixels or less in at least one dimension, so the NEON box filter in Anki::Vision::Image::BoxFilter() will cause
-              // a crash (that problem is documented in jira VIC-3221). We'll fall back on cv::boxFilter() for now to avoid that crash.
-              // TODO: Update this to use the NEON box filter in Anki::Vision::Image::BoxFilter() after jira VIC-3221 has been fixed. 
-              cv::boxFilter(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), -1, cv::Size(kProcFace_AntiAliasingSize,kProcFace_AntiAliasingSize));
             }
             break;
           }
+          case (uint8_t)Filter::GaussianFilter:
+            cv::GaussianBlur(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), cv::Size(kProcFace_AntiAliasingSize,kProcFace_AntiAliasingSize),
+                             (f32)kProcFace_AntiAliasingSize * kProcFace_AntiAliasingSigmaFraction);
+            break;
         }
       }
 

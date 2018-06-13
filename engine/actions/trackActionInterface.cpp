@@ -39,17 +39,17 @@ static const char * const kLogChannelName = "Actions";
 
 namespace {
 
-constexpr const char* kConsoleGroup = "TrackingActions";
+#define CONSOLE_GROUP "TrackingActions"
 
-CONSOLE_VAR_RANGED(f32, kOverride_PanDuration_s, kConsoleGroup, -1.0f, 0.0f, 1.0f);
-CONSOLE_VAR_RANGED(f32, kOverride_TiltDuration_s, kConsoleGroup, -1.0f, 0.0f, 1.0f);
+CONSOLE_VAR_RANGED(f32, kOverride_PanDuration_s, CONSOLE_GROUP, -1.0f, 0.0f, 1.0f);
+CONSOLE_VAR_RANGED(f32, kOverride_TiltDuration_s, CONSOLE_GROUP, -1.0f, 0.0f, 1.0f);
 
-CONSOLE_VAR(bool, kOverride_ClampSmallAngles, kConsoleGroup, false);
-CONSOLE_VAR_RANGED(f32, kOverride_ClampSmallAnglesMinPeriod_s, kConsoleGroup, -1.0f, 0.0f, 5.0f);
-CONSOLE_VAR_RANGED(f32, kOverride_ClampSmallAnglesMaxPeriod_s, kConsoleGroup, -1.0f, 0.0f, 5.0f);
+CONSOLE_VAR(bool, kOverride_ClampSmallAngles, CONSOLE_GROUP, false);
+CONSOLE_VAR_RANGED(f32, kOverride_ClampSmallAnglesMinPeriod_s, CONSOLE_GROUP, -1.0f, 0.0f, 5.0f);
+CONSOLE_VAR_RANGED(f32, kOverride_ClampSmallAnglesMaxPeriod_s, CONSOLE_GROUP, -1.0f, 0.0f, 5.0f);
 
-CONSOLE_VAR_RANGED(f32, kOverride_PanTolerance_deg, kConsoleGroup, -1.0f, 0.0f, 20.0f);
-CONSOLE_VAR_RANGED(f32, kOverride_TiltTolerance_deg, kConsoleGroup, -1.0f, 0.0f, 20.0f);
+CONSOLE_VAR_RANGED(f32, kOverride_PanTolerance_deg, CONSOLE_GROUP, -1.0f, 0.0f, 20.0f);
+CONSOLE_VAR_RANGED(f32, kOverride_TiltTolerance_deg, CONSOLE_GROUP, -1.0f, 0.0f, 20.0f);
 
 }
   

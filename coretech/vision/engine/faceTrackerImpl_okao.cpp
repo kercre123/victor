@@ -54,7 +54,9 @@ namespace Vision {
   }
 
   // Use this to trigger a reinitialization on next Update()
+  #if REMOTE_CONSOLE_ENABLED
   CONSOLE_VAR(bool, kReinitDetector, "Vision.FaceDetectorCommon", false);
+  #endif // REMOTE_CONSOLE_ENABLED
 
   namespace DetectParams {
     // Parameters common to all face detection modes
@@ -719,6 +721,7 @@ namespace Vision {
       return RESULT_FAIL;
     }
     
+  #if REMOTE_CONSOLE_ENABLED
     if(kReinitDetector)
     {
       PRINT_NAMED_INFO("FaceTrackerImpl.Update.Reinit",
@@ -727,6 +730,7 @@ namespace Vision {
       Init();
       kReinitDetector = false;
     }
+  #endif // REMOTE_CONSOLE_ENABLED
 
     DEV_ASSERT(frameOrig.IsContinuous(), "FaceTrackerImpl.Update.NonContinuousImage");
     

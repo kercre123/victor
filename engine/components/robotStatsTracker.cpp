@@ -63,10 +63,10 @@ void ResetRobotStats( ConsoleFunctionContextRef context )
 
 }
 
-static const char* kConsoleGroup = "RobotStats";
+#define CONSOLE_GROUP "RobotStats"
 
-CONSOLE_FUNC( ResetRobotStats, kConsoleGroup, const char* typeResetToConfirm );
-CONSOLE_VAR_RANGED( f32, kRobotStatsWritePeriod_s, kConsoleGroup, 60.0f, 0.01f, 300.0f );
+CONSOLE_FUNC( ResetRobotStats, CONSOLE_GROUP, const char* typeResetToConfirm );
+CONSOLE_VAR_RANGED( f32, kRobotStatsWritePeriod_s, CONSOLE_GROUP, 60.0f, 0.01f, 300.0f );
 
 RobotStatsTracker::RobotStatsTracker()
   : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::RobotStatsTracker)

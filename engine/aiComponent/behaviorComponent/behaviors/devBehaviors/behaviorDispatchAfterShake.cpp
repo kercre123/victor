@@ -33,8 +33,11 @@ const float kAccelMagnitudeShakingStartedThreshold = 16000.f;
   
 const char* const kBehaviorsKey = "behaviors";
 
+#if REMOTE_CONSOLE_ENABLED
 // set to > 0 from console to fake the repeated "shakes" (shakes are hard to do in webots sim)
 CONSOLE_VAR(unsigned int, kDevDispatchAfterShake, "DevBaseBehavior", 0);
+#endif
+
 // how long you have to shake/pause
 CONSOLE_VAR_RANGED(float, kShakeTime, "DevBaseBehavior", 0.1f, 0.01f, 2.0f);
   
@@ -143,13 +146,16 @@ void BehaviorDispatchAfterShake::BehaviorUpdate()
 
   const auto& robotInfo = GetBEI().GetRobotInfo();
   
+#if REMOTE_CONSOLE_ENABLED
   if( kDevDispatchAfterShake > 0 ) {
     
     _dVars.countShaken = kDevDispatchAfterShake;
     kDevDispatchAfterShake = 0;
     _dVars.shakingSession = false;
     
-  } else {
+  } else
+#endif // REMOTE_CONSOLE_ENABLED
+  {
     
     const bool isBeingShaken = (robotInfo.GetHeadAccelMagnitudeFiltered() > kAccelMagnitudeShakingStartedThreshold);
     const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
