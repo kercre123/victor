@@ -285,7 +285,6 @@ typedef struct lifeTester_ {
   bool square_wave;
   /* status */
   bool do_discharge;
-  uint16_t cc_cycles; //charge contact cycles
   Process burn_proc;
   Process square_wave_proc;
 } LifeTester;
@@ -382,11 +381,11 @@ void handle_MainBurn(void* param) {
   wait_for_process(pidout, fd);
 }
 
-void handle_MainPlaySound(void* param) {
-  printf("PlaySound Selected\n");
+
+void handle_MainCubeTest(void* param) {
+  printf("CubeTest Selected\n");
   pid_t pidout;
-  int fd = pidopen("./testsound.sh", "", &pidout);
-  wait_for_process(pidout, fd);
+  pidopen("./cubetest.sh", "", &pidout);
 }
 
 void handle_MainMotorTest(void* param) {
@@ -508,7 +507,7 @@ MENU_ITEMS(Main) = {
   MENU_SUBMENU("TX 11g", TXG),
   MENU_SUBMENU("TX 11b", TXB),
   MENU_ACTION("Burn CPU", MainBurn ),
-  MENU_ACTION("Play Sound", MainPlaySound ),
+  MENU_ACTION("Cube Test", MainCubeTest ),
   MENU_ACTION("Motor Test", MainMotorTest ),
   MENU_SUBMENU("Life Testing", LifeTest),
 };
@@ -551,12 +550,18 @@ void populate_outgoing_frame(void) {
     memset(gHeadData.motorPower, 0, sizeof(gHeadData.motorPower));
   }
   if (gLifeTesting.battery) {
+    if (gLifeTesting.do_discharge && !(gHeadData.powerFlags & POWER_DISCONNECT_CHARGER))
+    {
+      printf("Setting POWER_DISCONNECT_CHARGER flag\n");
+    }
+    else if (!gLifeTesting.do_discharge && !(gHeadData.powerFlags & POWER_CONNECT_CHARGER))
+    {
+      printf("Setting POWER_CONNECT_CHARGER flag\n");
+    }
     gHeadData.powerFlags = gLifeTesting.do_discharge ? POWER_DISCONNECT_CHARGER : POWER_CONNECT_CHARGER;
   }
 
 }
-
-//static const float HAL_SEC_PER_TICK = (1.0 / 256) / 48000000;
 
 #define MENU_TREAD_VELOCITY_THRESHOLD 1
 #define MENU_TREAD_TRIGGER_DELTA       120
