@@ -58,6 +58,8 @@
 #include <stdio.h>
 #include <time.h>
 
+#include "cozmoAnim/audio/cozmoAudioController.h"  // Prototype
+
 #define DEBUG_ANIMATION_STREAMING 0
 #define DEBUG_ANIMATION_STREAMING_AUDIO 0
 
@@ -461,6 +463,9 @@ namespace Cozmo {
     } else {
       SetStreamingAnimation(_neutralFaceAnimation, kNotAnimatingTag);
     }
+    
+    // Prototype
+    _context->GetAudioController()->ActivateParameterValueUpdates(true);
 
     return RESULT_OK;
   }
@@ -1806,6 +1811,18 @@ namespace Cozmo {
 
   Result AnimationStreamer::Update()
   {
+    
+    // Prototype set face saturation using TtS
+    AudioEngine::AudioRTPCValue out_value = 0.0f;
+    static const auto ttsParm = AudioMetaData::GameParameter::ParameterType::Robot_Vic_Meter_Bus_Tts;
+    if (_context->GetAudioController()->GetActivatedParameterValue(ttsParm, out_value)) {
+      // Adjust value for saturation
+      float f_Val = ((out_value / 48.0f) + 1.0f);
+      Util::Clamp(f_Val, 0.0f, 1.0f);
+      ProceduralFace::SetSaturation(f_Val);
+//      PRINT_NAMED_WARNING("AnimationStreamer.Update", "out_val %f - f_val %f", out_value, f_Val);
+    }
+    
     if(kIsInManualUpdateMode){
       _relativeStreamTime_ms = kCurrentManualFrameNumber * ANIM_TIME_STEP_MS;
     }

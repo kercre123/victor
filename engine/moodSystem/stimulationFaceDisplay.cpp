@@ -53,7 +53,7 @@ void StimulationFaceDisplay::InitDependent(Cozmo::Robot* robot, const RobotCompM
 
 void StimulationFaceDisplay::UpdateDependent(const RobotCompMap& dependentComps)
 {
-  if( !kStimFace_enabled ) {
+  if( !kStimFace_enabled || true ) {
     return;
   }
              
