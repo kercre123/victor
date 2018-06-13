@@ -15,7 +15,7 @@
 
 #include "engine/pathPlanner.h"
 #include "coretech/planning/shared/goalDefs.h"
-#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/point.h"
 #include "coretech/common/engine/math/pose.h"
 
 #include "util/helpers/noncopyable.h"
@@ -28,6 +28,8 @@
 
 namespace Anki {
 
+struct Arc;
+class LineSegment;
 
 namespace Cozmo {
 
@@ -55,8 +57,7 @@ public:
 
   virtual void StopPlanning() override {}
 
-  virtual EPlannerStatus CheckPlanningStatus() const override;
-  
+  virtual EPlannerStatus CheckPlanningStatus() const override { return _status; }
   
   // Returns true if this planner checks for fatal obstacle collisions
   bool ChecksForCollisions() const override { return true; }
@@ -78,81 +79,35 @@ protected:
 
   EComputePathStatus ComputePath(const Pose3d& startPose, const Pose3d& targetPose) override;
 
-  bool GetCompletePath_Internal(const Pose3d& robotPose, Planning::Path &path) override                                { path = _path; return true;}
-  bool GetCompletePath_Internal(const Pose3d& robotPose, Planning::Path &path, Planning::GoalID& targetIndex) override { path = _path; return true;}
+  bool GetCompletePath_Internal(const Pose3d& robotPose, Planning::Path &path) override;
+  bool GetCompletePath_Internal(const Pose3d& robotPose, Planning::Path &path, Planning::GoalID& targetIndex) override;
 
 private:
-
-  struct State {
-    Point2f pose;
-    Point2f prevPose;
-    float g;
-    float f; // f = g + h
-  };
-
-  class OpenList : private std::vector<State>
-  {
-  public:
-    using std::vector<State>::clear;
-    using std::vector<State>::empty;
-
-    inline void emplace(State&& s)
-    {
-      emplace_back(s);
-      std::push_heap(begin(), end(), [](const State& a, const State& b) { return (a.f > b.f); });
-    }
-
-    inline State pop()
-    {
-      std::pop_heap(begin(), end(), [](const State& a, const State& b) { return (a.f > b.f); });
-      State result( std::move(back()) );
-      pop_back();
-      return result;
-    }
-  };
-  
-  struct StateHasher
-  {
-    // hash to integer values since we probably don't care about sub-millimeter precision anyway
-    s64 operator()(const State& s) const { return ((s64) s.pose.x()) << 32 | ((s64) s.pose.y()); }
-  };
-   
-  struct StateEqual
-  {
-    long operator()(const State& s, const State& t) const { return ((s32)s.pose.x() == (s32)t.pose.x()) && ((s32)s.pose.y() == (s32)t.pose.y()); }
-  };
-
-  using ClosedList = std::unordered_set<State, StateHasher, StateEqual>;
-
-  // initialization, main loop, and path post processing of classical A* implementation that searches from 
-  // all states in _targets to closest planner state to _start
-  // TODO: break this in into its own helper class since it plans in reverse
-  bool AStar(); 
-
-  // check if the state is goal of the planner (different depending on forward/backward search)
-  bool IsGoalState(const State& candidate);
-
-  // returns true if State is in the closed set
-  // bool IsClosedState(const State& s);
-  bool IsClosedState(const Point2f& p);
-
-  // returns true if the state is one of the target poses we are planning to
-  bool IsTargetState(const Point2f& p);
-
-  // Gets the valid successors of the state and inserts them to the open list
-  void ExpandState(const State& currState);
+  // convert a set of way points to a smooth path
+  Planning::Path BuildPath(const std::vector<Point2f>& plan) const;
 
   // builds a simplified list of waypoints from closed set
-  std::vector<Point2f> GenerateWayPoints(const State& start);
+  std::vector<Point2f> GenerateWayPoints(const std::vector<Point2f>& plan) const;
 
-  // convert a set of way points to a smooth path
-  Planning::Path BuildPlan(const std::vector<Point2f>& waypoints);
+  // given a set of points, generate the largest safe circumscibed arc for each turn
+  std::vector<Planning::PathSegment> SmoothCorners(const std::vector<Point2f>& pts) const;
+
+  // if p corresponds to a pose in _targets, return the correspondance index. if it is not, returns _targets.size()
+  Planning::GoalID FindGoalIndex(const Point2f& p) const;
+
+  // returns true if the provided path segment is safe. Since PathSegments are unions, it assumes
+  // the caller of this method has already determined the segment type.
+  bool IsArcSegmentSafe(const Planning::PathSegment& p) const;
+  bool IsLineSegmentSafe(const Planning::PathSegment& p) const;
+  bool IsPointSegmentSafe(const Planning::PathSegment& p) const;
+
+  bool IsArcSafe(const Arc& a, float padding) const;
+  bool IsLineSafe(const LineSegment& l, float padding) const;
+  bool IsPointSafe(const Point2f& p, float padding) const;
 
   const MapComponent&  _map;
   Pose2d               _start;
   std::vector<Pose2d>  _targets;
-  OpenList             _open;
-  ClosedList           _closed;
   EPlannerStatus       _status;
 };
     
