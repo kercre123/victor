@@ -1185,7 +1185,9 @@ Result Robot::Update()
     return RESULT_OK;
   }
 
-  static bool wasChargerStripeIsBlack = kChargerStripeIsBlack;
+  // Always send the "charger stripe color" the first time,
+  // then only if the console var changes thereafter.
+  static bool wasChargerStripeIsBlack = !kChargerStripeIsBlack;
   if (kChargerStripeIsBlack != wasChargerStripeIsBlack) {
     SendMessage(RobotInterface::EngineToRobot(RobotInterface::ChargerDockingStripeColor(kChargerStripeIsBlack)));
     wasChargerStripeIsBlack = kChargerStripeIsBlack;
