@@ -5,4 +5,5 @@ ${GIT_PROJ_ROOT}/project/victor/build-victor.sh \
 		-c Debug \
 		-p mac \
 		-g Xcode \
-		-C
+		-C \
+		"$@"
