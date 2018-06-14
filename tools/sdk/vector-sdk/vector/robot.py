@@ -440,16 +440,16 @@ class Robot:
 
     # TODO Factor all OLED code out into class like cozmo.oled_face
     @actions._as_actionable
-    async def set_oled_with_image_data(self, image_data, duration_sec, interrupt_running=True):
-        if not isinstance(image_data, list):
-            raise ValueError("set_oled_with_image_data expected a list")
+    async def set_oled_with_screen_data(self, image_data, duration_sec, interrupt_running=True):
+        if not isinstance(image_data, bytes):
+            raise ValueError("set_oled_with_screen_data expected bytes")
         if len(image_data) != 35328:
-            raise ValueError("set_oled_with_image_data expected a list of 35328 bytes - (2 bytes each for 17664 pixels)")
+            raise ValueError("set_oled_with_screen_data expected 35328 bytes - (2 bytes each for 17664 pixels)")
 
         # generate the message
         message = protocol.DisplayFaceImageRGBRequest()
         # create byte array at the oled resolution
-        message.face_data = bytes(image_data)
+        message.face_data = image_data
         message.duration_ms = int(1000 * duration_sec)
         message.interrupt_running = interrupt_running
 
@@ -459,8 +459,8 @@ class Robot:
 
     def set_oled_to_color(self, color, duration_sec, interrupt_running=True):
 
-        byte_list = color.rgb565_bytepair * 17664
-        return self.set_oled_with_image_data(byte_list, duration_sec, interrupt_running)
+        image_data = bytes(color.rgb565_bytepair * 17664)
+        return self.set_oled_with_screen_data(image_data, duration_sec, interrupt_running)
 
 
 class AsyncRobot(Robot):
