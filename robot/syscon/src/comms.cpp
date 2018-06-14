@@ -274,6 +274,8 @@ static void ProcessMessage(InboundPacket& packet) {
 
     switch (packet.header.payload_type) {
       case PAYLOAD_SHUT_DOWN:
+        // Prevent system from waking itself up for 1 second
+        missed_frames = 0;
         Power::setMode(POWER_STOP);
         break ;
       case PAYLOAD_MODE_CHANGE:
