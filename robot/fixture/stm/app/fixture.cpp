@@ -441,7 +441,7 @@ static void rtc_init_(void)
 //                  RTC Testbench
 //-----------------------------------------------------------------------------
 
-#define RTC_TESTBENCH_EN  1
+#define RTC_TESTBENCH_EN  0
 
 void testprint_(const char* prefix, time_t time, const char* post) {
   char *ltime = ctime(&time); ltime[24] = '\0'; //"Sun Sep 16 01:03:52 1973\n\0"
