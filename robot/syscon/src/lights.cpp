@@ -51,12 +51,16 @@ static bool disabled;
 
 void Lights::init(void) {
   memcpy(value, default_value, sizeof(value));
-  disabled = false;
-  leds_off();
+  enable();
 }
 
 void Lights::receive(const uint8_t* data) {
   memcpy(value, data, sizeof(value));
+}
+
+void Lights::enable() {
+  disabled = false;
+  leds_off();
 }
 
 void Lights::disable(void) {

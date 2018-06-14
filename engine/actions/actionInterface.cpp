@@ -565,7 +565,7 @@ namespace Anki {
     IAction::~IAction()
     {
       // release any subscriptions held by the VSM for this Action
-      if(!_requiredVisionModes.empty()) {
+      if(HasRobot() && !_requiredVisionModes.empty()) {
         PRINT_CH_DEBUG(kLogChannelName, "IAction.Update.UnSettingVisionModes",
                         "Action %s [%d] Releasing VisionModes",
                         GetName().c_str(),
