@@ -9,6 +9,7 @@ import logging
 
 from . import messaging
 from .robot import Robot, AsyncRobot
+from . import oled_face
 
 logger = logging.getLogger('victor')
 

@@ -57,6 +57,19 @@ enum uint_8 FaceEnrollmentResult
     UnknownFailure
 }
 
+message LoadedKnownFace {
+    int_64   secondsSinceFirstEnrolled,
+    int_64   secondsSinceLastUpdated,
+    int_64   secondsSinceLastSeen,
+    int_32   faceID,
+    string   name,
+}
+
+// Receives the requested list of names and IDs.
+message EnrolledNamesResponse {
+  LoadedKnownFace faces[uint_8],
+}
+
 message FaceEnrollmentCompleted
 {
   FaceEnrollmentResult result,
@@ -88,6 +101,55 @@ message RobotHistoryResult {
 // Response to request for control from behavior system
 message SDKActivationResult {
   uint_32 slot,
+  bool enabled,
+}
+
+structure PoseStruct3d
+  {
+    // Translation
+    float_32 x,
+    float_32 y,
+    float_32 z,
+    
+    // Rotation quaternion
+    float_32 q0,          
+    float_32 q1,          
+    float_32 q2,          
+    float_32 q3,          
+
+    uint_32 originID, // Which coordinate frame this pose is in (0 for none or unknown)
+}
+
+structure AccelData {
+  float_32 x,  // mm/s^2
+  float_32 y,
+  float_32 z
+}
+
+structure GyroData {
+  float_32 x,  // rad/s
+  float_32 y,
+  float_32 z
+}
+
+message RobotState {
+    PoseStruct3d pose,
+    float_32 poseAngle_rad,    // heading in X-Y plane
+    float_32 posePitch_rad,    // robot pitch angle
+    float_32 leftWheelSpeed_mmps,
+    float_32 rightWheelSpeed_mmps,
+    float_32 headAngle_rad,
+    float_32 liftHeight_mm,
+    float_32 batteryVoltage,
+    AccelData accel,                // in head frame (mm/s^2)
+    GyroData gyro,                  // in head frame (rad/s)
+    int_32   carryingObjectID,      // will be -1 if not carrying object
+    int_32   carryingObjectOnTopID, // will be -1 if no object on top of object being carried
+    int_32   headTrackingObjectID,  // will be -1 if head is not tracking to any object
+    int_32   localizedToObjectID,   // Will be -1 if not localized to any object
+    uint_32  lastImageTimeStamp,    // Last image processed by the vision system
+    uint_32  status,                // See RobotStatusFlag in robotStatusAndActions.clad
+    uint_8   gameStatus             // See GameStatusFlag in cozmoTypes.h
 }
 
 // Anything that the robot wishes to push to the app that 
@@ -104,6 +166,8 @@ union MessageRobotToExternal {
   Event                             Event                              = 0x02,
   RobotHistoryResult                RobotHistoryResult                 = 0x03,
   SDKActivationResult               SDKActivationResult                = 0x04,
+  RobotState                        RobotState                         = 0x05, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  EnrolledNamesResponse             EnrolledNamesResponse              = 0x06,
 }
 
 } // Gateway

@@ -31,9 +31,11 @@ CONSOLE_VAR(bool, kVisionBenchmark_DisplayImages,     CONSOLE_GROUP, false); // 
 CONSOLE_VAR(s32,  kVisionBenchmark_ScaleMultiplier,   CONSOLE_GROUP, 1);
   
 // Toggle corresponding modes at runtime
+#if REMOTE_CONSOLE_ENABLED
 CONSOLE_VAR(std::underlying_type<Benchmark::Mode>::type, kVisionBenchmark_ToggleMode, CONSOLE_GROUP, 0);
 CONSOLE_VAR(bool, kVisionBenchmark_EnableAllModes,  CONSOLE_GROUP, false);
 CONSOLE_VAR(bool, kVisionBenchmark_DisableAllModes, CONSOLE_GROUP, false);
+#endif // REMOTE_CONSOLE_ENABLED
   
 #undef CONSOLE_GROUP
 }
@@ -63,6 +65,7 @@ Result Benchmark::Update(ImageCache& imageCache)
     return RESULT_OK;
   }
   
+#if REMOTE_CONSOLE_ENABLED
   // Update modes based on any console vars that are set:
   if(kVisionBenchmark_ToggleMode != 0)
   {
@@ -85,6 +88,7 @@ Result Benchmark::Update(ImageCache& imageCache)
     _enabledModes.ClearFlags();
     kVisionBenchmark_DisableAllModes = false;
   }
+#endif // REMOTE_CONSOLE_ENABLED
   
   Result result = RESULT_OK;
   bool anyFailures = false;

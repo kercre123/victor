@@ -6,7 +6,7 @@ classdef VisionMarkerTrained
         %TrainingImageDir = '~/Box Sync/Cozmo SE/VisionMarkers/symbolsWithFiducials/unpadded/rotated';
         
         RootImageDir = '~/Dropbox (Anki, Inc)/VisionMarkers - Final';
-        VictorImageDir = '/Victor/DVT3/trainingImages_white';
+        VictorImageDir = '/Victor/DVT4/trainingImages_white';
         
         TrainingImageDir = { ...
             fullfile(VisionMarkerTrained.RootImageDir, VisionMarkerTrained.VictorImageDir, 'charger/rotated'), ...

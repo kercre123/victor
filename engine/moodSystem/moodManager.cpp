@@ -21,6 +21,7 @@
 #include "engine/actions/actionInterface.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/audio/engineRobotAudioClient.h"
+#include "engine/components/robotStatsTracker.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -53,8 +54,6 @@ namespace {
 static const char* kActionResultEmotionEventKey = "actionResultEmotionEvents";
 static const char* kAudioParametersMapKey = "audioParameterMap";
 static const char* kSimpleMoodAudioKey = "simpleMoodAudioParameters";
-
-CONSOLE_VAR(bool, kSendMoodToViz, "VizDebug", true);
 
 CONSOLE_VAR(float, kMoodManager_AudioSendPeriod_s, "MoodManager", 0.5f);
 CONSOLE_VAR(float, kMoodManager_WebVizPeriod_s, "MoodManager", 1.0f);
@@ -336,6 +335,21 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
     }
   }
 
+  if( dependentComps.HasComponent(RobotComponentID::RobotStatsTracker) ){
+
+    // update stats tracker (integral of total stim)
+    const float stimulated = GetEmotion(EmotionType::Stimulated).GetValue();
+    const float delta = timeDelta * stimulated;
+    if( delta > 0.0f ) {
+      dependentComps.GetValue<RobotStatsTracker>().IncreaseStimulationSeconds(delta);
+    }
+
+    if( _cumlPosStimDeltaToAdd > 0.0 ) {
+      dependentComps.GetValue<RobotStatsTracker>().IncreaseStimulationCumulativePositiveDelta(_cumlPosStimDeltaToAdd);
+      _cumlPosStimDeltaToAdd = 0.0;
+    }
+  }
+  
   SendEmotionsToGame();
 
   #if SEND_MOOD_TO_VIZ_DEBUG
@@ -585,6 +599,11 @@ void MoodManager::TriggerEmotionEvent(const std::string& eventName, float curren
         PRINT_CH_INFO("Mood", "MoodManager.TriggerFixedEmotion",
                       "Skipping TriggerEmotionEvent for emotion '%s' since it's fixed",
                       EmotionTypeToString(emotionAffector.GetType()));
+      }
+
+      // for stats tracking in the update loop
+      if( emotionAffector.GetType() == EmotionType::Stimulated ) {
+        _cumlPosStimDeltaToAdd += penalizedDeltaValue;
       }
     }
 

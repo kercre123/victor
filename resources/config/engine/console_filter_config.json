@@ -56,6 +56,7 @@
       { "channel": "TextToSpeech",         "enabled": false },
       { "channel": "MicData",              "enabled": true },
       { "channel": "FaceInfoScreenManager", "enabled": true },
+      { "channel": "RobotStats",            "enabled": true },
       { "channel": "KnowledgeGraph",       "enabled": true }
     ],
     "levels":

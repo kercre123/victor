@@ -93,12 +93,15 @@ namespace {
   Anki::AudioUtil::SpeechRecognizer::IndexType _currentTriggerSearchIndex = 5;
 
 # define CONSOLE_GROUP "MicData"
-  CONSOLE_VAR_RANGED(s32, kMicData_NextTriggerIndex, CONSOLE_GROUP, _currentTriggerSearchIndex, 0, kTriggerDataListLen-1);
-  CONSOLE_VAR(bool, kMicData_SaveRawFullIntent, CONSOLE_GROUP, false);
-  CONSOLE_VAR(bool, kMicData_UseFallbackBeam, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_ForceDisableMicDataProc, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_ForceEnableMicDataProc, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_CollectRawTriggers, CONSOLE_GROUP, false);
+
+#if ANKI_DEV_CHEATS
+  CONSOLE_VAR_RANGED(s32, kMicData_NextTriggerIndex, CONSOLE_GROUP, _currentTriggerSearchIndex, 0, kTriggerDataListLen-1);
+  CONSOLE_VAR(bool, kMicData_SaveRawFullIntent, CONSOLE_GROUP, false);
+#endif // ANKI_DEV_CHEATS
+
 # undef CONSOLE_GROUP
 
 }
@@ -107,11 +110,12 @@ namespace Anki {
 namespace Cozmo {
 namespace MicData {
 
+CONSOLE_VAR_RANGED(float, maxProcessingTimePerDrop_ms,      "CpuProfiler", 5, 5, 32);
+
 #if ANKI_CPU_PROFILER_ENABLED
-  CONSOLE_VAR_RANGED(float, maxProcessingTimePerDrop_ms,      ANKI_CPU_CONSOLEVARGROUP, 5, 5, 32);
-  CONSOLE_VAR_RANGED(float, maxTriggerProcTime_ms,            ANKI_CPU_CONSOLEVARGROUP, 10, 10, 32);
-  CONSOLE_VAR_ENUM(u8,      kMicDataProcessorRaw_Logging,     ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
-  CONSOLE_VAR_ENUM(u8,      kMicDataProcessorTrigger_Logging, ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
+CONSOLE_VAR_RANGED(float, maxTriggerProcTime_ms,            ANKI_CPU_CONSOLEVARGROUP, 10, 10, 32);
+CONSOLE_VAR_ENUM(u8,      kMicDataProcessorRaw_Logging,     ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
+CONSOLE_VAR_ENUM(u8,      kMicDataProcessorTrigger_Logging, ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
 #endif
 
 constexpr auto kCladMicDataTypeSize = sizeof(RobotInterface::MicData::data)/sizeof(RobotInterface::MicData::data[0]);
@@ -656,12 +660,13 @@ void MicDataProcessor::ProcessTriggerLoop()
       job->CollectProcessedAudio(processedAudio.data(), processedAudio.size());
     }
 
-    kMicData_NextTriggerIndex = Util::Clamp(kMicData_NextTriggerIndex, 0, kTriggerDataListLen-1);
+#if ANKI_DEV_CHEATS
     if (kMicData_NextTriggerIndex != _currentTriggerSearchIndex)
     {
       _currentTriggerSearchIndex = kMicData_NextTriggerIndex;
       _recognizer->SetRecognizerIndex(_currentTriggerSearchIndex);
     }
+#endif // ANKI_DEV_CHEATS
 
     // Run the trigger detection, which will use the callback defined above
     // Note we skip it if there is no activity as of the latest processed audioblock

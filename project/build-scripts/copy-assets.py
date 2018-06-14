@@ -40,6 +40,8 @@ def CopyAssets(source_dest_files, source_dir, output_dir, cmake=None):
     for (destdir, sources) in dircopies.items():
         srcs = [os.path.join(source_dir, x) for x in sources]
         dst = os.path.join(output_dir, destdir)
+        if not os.path.exists(dst):
+            os.makedirs(dst)
         subprocess.call([cmake, '-E', 'copy_if_different'] + srcs + [dst])
 
     # stuff in copies (probably empty, usually?) has to be individually copied

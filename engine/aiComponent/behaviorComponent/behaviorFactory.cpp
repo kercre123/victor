@@ -76,7 +76,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorLookInPlaceMemoryMap.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorThinkAboutBeacons.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorVisitInterestingEdge.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/oneShots/behaviorDance.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/oneShots/behaviorSinging.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/putDownDispatch/behaviorLookForFaceAndCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorFistBump.h"
@@ -102,6 +101,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeObject.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCliff.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCubeTap.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToDarkness.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToFrustration.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMicDirection.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMotion.h"
@@ -121,6 +121,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/sdkBehaviors/behaviorSDKInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/sleeping/behaviorSleeping.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorAdvanceClock.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorDisplayWallTime.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h"
@@ -553,12 +554,6 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
-    case BehaviorClass::Dance:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorDance(config));
-      break;
-    }
-    
     case BehaviorClass::Singing:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorSinging(config));
@@ -703,6 +698,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::ReactToDarkness:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToDarkness(config));
+      break;
+    }
+    
     case BehaviorClass::ReactToFrustration:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToFrustration(config));
@@ -814,6 +815,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::AdvanceClock:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorAdvanceClock(config));
+      break;
+    }
+    
+    case BehaviorClass::DisplayWallTime:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDisplayWallTime(config));
       break;
     }
     

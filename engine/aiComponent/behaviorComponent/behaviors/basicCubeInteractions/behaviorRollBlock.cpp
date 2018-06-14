@@ -38,8 +38,6 @@ namespace{
 static const char* const kRetryCountKey = "rollRetryCount";
 static const char* const kIsBlockRotationImportant = "isBlockRotationImportant";
 static const float kMaxDistCozmoIsRollingCube_mm = 120;
-
-CONSOLE_VAR(f32, kBRB_ScoreIncreaseForAction, "Behavior.RollBlock", 0.8f);
   
 }
 

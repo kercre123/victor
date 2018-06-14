@@ -63,6 +63,7 @@ class BeatDetectorComponent;
 class TextToSpeechCoordinator;
 class SDKComponent;
 class PhotographyManager;
+class RobotStatsTracker;
 
 } // namespace Cozmo
 
@@ -110,6 +111,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(BeatDetectorComponent,         RobotComponentID, Bea
 LINK_COMPONENT_TYPE_TO_ENUM(TextToSpeechCoordinator,       RobotComponentID, TextToSpeechCoordinator)
 LINK_COMPONENT_TYPE_TO_ENUM(SDKComponent,                  RobotComponentID, SDK)
 LINK_COMPONENT_TYPE_TO_ENUM(PhotographyManager,            RobotComponentID, PhotographyManager)
+LINK_COMPONENT_TYPE_TO_ENUM(RobotStatsTracker,             RobotComponentID, RobotStatsTracker)
 
 // Translate entity into string
 template<>
@@ -156,6 +158,7 @@ std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotCompone
     case Cozmo::RobotComponentID::SDK:                        { return "SDK";}
     case Cozmo::RobotComponentID::FullRobotPose:              { return "FullRobotPose";}
     case Cozmo::RobotComponentID::RobotIdleTimeout:           { return "RobotIdleTimeout";}
+    case Cozmo::RobotComponentID::RobotStatsTracker:          { return "RobotStatsTracker";}      
     case Cozmo::RobotComponentID::RobotToEngineImplMessaging: { return "RobotToEngineImplMessaging";}
     case Cozmo::RobotComponentID::StateHistory:               { return "StateHistory";}
     case Cozmo::RobotComponentID::TextToSpeechCoordinator:    { return "TextToSpeechCoordinator";}

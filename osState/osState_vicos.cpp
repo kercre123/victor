@@ -18,6 +18,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
+#include "util/string/stringUtils.h"
 #include "util/time/universalTime.h"
 
 #include "cutils/properties.h"
@@ -34,6 +35,8 @@
 #include <ifaddrs.h>
 #include <string.h>
 #include <netdb.h>
+#include <sys/timex.h>
+#include <sys/stat.h>
 
 #include <linux/wireless.h>
 
@@ -50,6 +53,8 @@ namespace Anki {
 namespace Cozmo {
 
 CONSOLE_VAR_ENUM(int, kWebvizUpdatePeriod, "OSState", 0, "Off,10ms,100ms,1000ms,10000ms");
+CONSOLE_VAR(bool, kOSState_FakeNoTime, "OSState", false);
+CONSOLE_VAR(bool, kOSState_FakeNoTimezone, "OSState", false);
 
 namespace {
   uint32_t kPeriodEnumToMS[] = {0, 10, 100, 1000, 10000};
@@ -77,6 +82,9 @@ namespace {
   const char* kCPUTimeStatsFile = "/proc/stat";
   const char* kWifiTxBytesFile = "/sys/class/net/wlan0/statistics/tx_bytes";
   const char* kWifiRxBytesFile = "/sys/class/net/wlan0/statistics/rx_bytes";
+  const char* kBootIDFile = "/proc/sys/kernel/random/boot_id";
+  const char* kLocalTimeFile = "/data/etc/localtime";
+  constexpr const char* kUniversalTimeFile = "/usr/share/zoneinfo/Universal";
 
   // System vars
   uint32_t _cpuFreq_kHz;      // CPU freq
@@ -94,6 +102,13 @@ namespace {
   uint32_t _lastWebvizUpdateTime_ms = 0;
 
   std::function<void(const Json::Value&)> _webServiceCallback = nullptr;
+
+  // helper to allow compile-time static_asserts on length of a const string
+  constexpr int GetConstStrLength(const char* str)
+  {
+    return *str ? 1 + GetConstStrLength(str + 1) : 0;
+  }
+
 
 } // namespace
 
@@ -496,6 +511,144 @@ bool OSState::HasValidEMR() const
 {
   const auto * emr = Factory::GetEMR();
   return (emr != nullptr);
+}
+
+const std::string & OSState::GetBootID()
+{
+  if (_bootID.empty()) {
+    // http://0pointer.de/blog/projects/ids.html
+    _bootID = Util::FileUtils::ReadFile(kBootIDFile);
+    Anki::Util::StringTrimWhitespaceFromEnd(_bootID);
+    if (_bootID.empty()) {
+      LOG_ERROR("OSState.GetBootID", "Unable to read boot ID from %s", kBootIDFile);
+    }
+  }
+  return _bootID;
+}
+
+bool OSState::IsWallTimeSynced() const
+{
+  if (kOSState_FakeNoTime) {
+    return false;
+  }
+  
+  struct timex txc = {};
+
+  if (adjtimex(&txc) < 0) {
+    LOG_ERROR("OSState.IsWallTimeSynced.CantGetTimex", "Invalid return from adjtimex");
+    return false;
+  }
+
+  if (txc.status & STA_UNSYNC) {
+    return false;
+  }
+
+  return true;
+}
+
+bool OSState::HasTimezone() const
+{
+  if (kOSState_FakeNoTimezone) {
+    return false;
+  }
+  
+  if (!Util::FileUtils::FileExists(kUniversalTimeFile)) {
+    LOG_ERROR("OSState.HasTimezone.NoUniversalTimeFile",
+              "Unable to find universal time file '%s', cant check for timezone (assuming none)",
+              kUniversalTimeFile);
+    return false;
+  }
+
+  if (!Util::FileUtils::FileExists(kLocalTimeFile)) {
+    LOG_ERROR("OSState.HasTimezone.NoLocalTimeFile",
+              "Missing local time file '%s'",
+              kLocalTimeFile);
+    return false;
+  }
+
+  // local time should be a symlink to something, either Universal (meaning we don't have a timezone) or a
+  // specific timezone
+  struct stat linkStatus;
+  const int ok = lstat(kLocalTimeFile, &linkStatus);
+  if (ok < 0) {
+    LOG_ERROR("OSState.HasTimezone.CantStatLink",
+              "lstat(%s) returned %d, error %s",
+              kLocalTimeFile,
+              ok,
+              strerror(errno));
+    return false;
+  }
+
+  if (!S_ISLNK(linkStatus.st_mode)) {
+    LOG_ERROR("OSState.HasTimezone.LocalTimeNotALink",
+              "Local time file '%s' exists but isn't a symlink",
+              kLocalTimeFile);
+    return false;
+  }
+
+  // check which file the kLocalTimeFile is a symlink to
+
+  // the path string length can be variable. Rather than dynamically allocating it, just make sure our
+  // statically allocated buffer is large enough
+  static const size_t linkPathLen = 1024;
+  static_assert (GetConstStrLength(kUniversalTimeFile) < linkPathLen,
+                 "OSState.HasTimezone.InvalidFilePath");
+    
+  if( linkStatus.st_size >= linkPathLen ) {
+    LOG_ERROR("OSState.HasTimezone.LinkNameTooLong",
+              "Link path size is %ld, but we only made room for %zu",
+              linkStatus.st_size,
+              linkPathLen);
+    // this means it can't be pointing to kUniversalTimeFile (we static assert that that path will fit within
+    // the buffer), so it must be some really long file. It seems likely that this is a timezone with a long
+    // name, so return true, but it technically could be pointing to any file
+    return true;
+  }
+
+  char linkPath[linkPathLen];
+  const ssize_t written = readlink(kLocalTimeFile, linkPath, linkPathLen);
+  if (written < 0 || written >= linkPathLen) {
+    LOG_ERROR("OSState.HasTimezone.CantReadLink",
+              "File '%s' looks like a symlink, but can't be read (returned %d, error %s)",
+              kLocalTimeFile,
+              written,
+              strerror(errno));
+    return false;
+  }
+
+  linkPath[written] = '\0';
+
+  // if timezone isn't set, path is either kUniversalTimeFile or ../../kUniversalTimeFile
+  const char* found = strstr(linkPath, kUniversalTimeFile);
+  if (nullptr == found) {
+    // string doesn't match, so the link is pointing to some other file
+
+    if( Util::FileUtils::FileExists(linkPath) ) {
+      // valid file to link to (assume it's a time zone)
+      return true;
+    }
+    else {
+      LOG_ERROR("OSState.HasTimezone.InvalidSymLink",
+                "File '%s' is a sym link to '%s' which does not exist",
+                kLocalTimeFile,
+                linkPath);
+      return false;
+    }
+  }
+
+  if (found != linkPath) {
+    // double check that it's just prefixed with ../../
+    if (found != linkPath + 5 ||
+        strstr(linkPath, "../../") != linkPath) {
+      LOG_WARNING("OSState.HasTimezone.InvalidPath",
+                  "'%s' is a symlink to '%s' which doesn't meet expectations",
+                  kLocalTimeFile,
+                  linkPath);
+    }
+  }
+
+  // since kUniversalTimeFile is being linked to, we don't have a timezone
+  return false;
 }
 
 } // namespace Cozmo

@@ -73,8 +73,6 @@ public:
 
   // Returns true if the spritebox maps to a sprite sequence and the name of that sequence has been set
   bool GetSpriteSequenceName(SpriteBoxName sbName, Vision::SpriteName& sequenceName)  const;
-  // Returns true if image has been set for sprite box name and seq has been set
-  bool GetSpriteSequence(SpriteBoxName sbName, Vision::SpriteSequence& seq)  const;
 
   // Merges all sprite boxes/image maps from other image into this image
   void MergeInLayer(const CompositeImageLayer& otherLayer);
@@ -88,6 +86,9 @@ public:
   // Returns true if composite image has an image map entry that matches the sprite box
   // Returns false if image is not set
   bool GetSpriteEntry(const SpriteBox& sb, SpriteEntry& outEntry) const;
+  
+  bool GetFrame(SpriteBoxName sbName, const u32 index, 
+                Vision::SpriteHandle& handle) const;
 
   // Functions which replace existing map with a new map
   void SetImageMap(const Json::Value& imageMapSpec,
@@ -146,7 +147,8 @@ struct CompositeImageLayer::SpriteEntry{
   SpriteEntry(){};
   SpriteEntry(SpriteCache* cache,
               SpriteSequenceContainer* seqContainer,
-              Vision::SpriteName spriteName);
+              Vision::SpriteName spriteName,
+              uint frameStartOffset = 0);
 
   SpriteEntry(Vision::SpriteSequence&& sequence);
   SpriteEntry(Vision::SpriteHandle spriteHandle);
@@ -155,6 +157,13 @@ struct CompositeImageLayer::SpriteEntry{
   bool operator == (const SpriteEntry& other) const;
   bool operator != (const SpriteEntry& other) const{ return !(*this == other);}
 
+  Vision::SpriteName GetSpriteName() const { return _spriteName;}
+  bool GetFrame(const u32 index, Vision::SpriteHandle& handle) const;
+  uint GetNumFrames() const { return _frameStartOffset + _spriteSequence.GetNumFrames(); }
+
+private:
+  // Allow sprite entries to offset 
+  uint _frameStartOffset = 0;
   Vision::SpriteSequence _spriteSequence;
   // For serialization only
   Vision::SpriteName _spriteName = Vision::SpriteName::Count;

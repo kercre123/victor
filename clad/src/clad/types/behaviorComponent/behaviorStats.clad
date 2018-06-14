@@ -1,0 +1,42 @@
+/**
+ * File: behaviorStats.clad
+ *
+ * Author: Brad Neuman
+ * Created: 2018-06-08
+ *
+ * Description: Stat types to track things that happen in behaviors
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
+
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_32 BehaviorStat {
+
+  AnimationPlayed,
+  AttemptedFistBump,
+  AttemptedPounceOnCube,
+  BehaviorActived,
+  BlackjackDealerWon,
+  BlackjackGameComplete,
+  EnrolledFace,
+  FistBumpSuccess,
+  MountedCharger,
+  PettingBlissIncrease,
+  PettingReachedMaxBliss,
+  PickedUpCube,
+  PounceOnCubeSuccess,
+  ReactedToCliff,
+  ReactedToEyeContact,
+  ReactedToMotion,
+  ReactedToSound,
+  ReactedToTriggerWord,
+  RolledCube,
+  
+} // enum class BehaviorObjectives
+  
+} // namespace Cozmo
+} // namespace Anki

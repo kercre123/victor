@@ -109,6 +109,7 @@ union dupes_allowed UserIntent
   UserIntent_Void             check_timer,
   UserIntent_Void             cancel_timer,
   UserIntent_TimeInSeconds    set_timer,
+  UserIntent_Void             show_clock,
   UserIntent_WeatherResponse  weather_response,
   UserIntent_TakeAPhoto       take_a_photo,
   UserIntent_Void             system_charger,

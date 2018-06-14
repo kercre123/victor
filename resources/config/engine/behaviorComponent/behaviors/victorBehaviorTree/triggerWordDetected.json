@@ -3,7 +3,8 @@
   "behaviorID": "TriggerWordDetected",
 
   "associatedActiveFeature": "NoFeature",
-
+  "behaviorStatToIncrement": "ReactedToTriggerWord",
+  
   "playListeningGetInAnim"  : true,
 
   "earConAudioEventBegin"   : "Play__Robot_Vic_Sfx__Wake_Word_On",

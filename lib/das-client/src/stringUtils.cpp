@@ -84,8 +84,8 @@ std::map<std::string,std::string> JsonToStringMap(const std::string &jsonString)
 {
   std::map<std::string,std::string> stringMap;
 
-  DASClient::Json::Value root;
-  DASClient::Json::Reader reader;
+  Json::Value root;
+  Json::Reader reader;
   bool parsingSuccessful = reader.parse(jsonString, root);
   if(parsingSuccessful) {
     for (auto const& id : root.getMemberNames()) {
@@ -99,13 +99,13 @@ std::map<std::string,std::string> JsonToStringMap(const std::string &jsonString)
 
 std::string StringMapToJson(const std::map<std::string,std::string> &stringMap)
 {
-  DASClient::Json::Value root;
+  Json::Value root;
 
   for (auto const& kv : stringMap) {
     root[kv.first] = kv.second;
   }
 
-  DASClient::Json::FastWriter writer;
+  Json::FastWriter writer;
   writer.omitEndingLineFeed();
   std::string outputJson = writer.write(root);
 
@@ -114,13 +114,13 @@ std::string StringMapToJson(const std::map<std::string,std::string> &stringMap)
 
 std::string StringMapToPrettyJson(const std::map<std::string,std::string> &stringMap)
 {
-  DASClient::Json::Value root;
+  Json::Value root;
 
   for (auto const& kv : stringMap) {
     root[kv.first] = kv.second;
   }
 
-  DASClient::Json::StyledWriter writer;
+  Json::StyledWriter writer;
   std::string outputJson = writer.write(root);
 
   return outputJson;

@@ -1,0 +1,78 @@
+{
+  "behaviorID": "ShowWallTime",  
+  "behaviorClass" : "DisplayWallTime",
+ 
+  "associatedActiveFeature": "Clock",
+
+  "respondToUserIntents": [
+    { "type": "show_clock" }
+  ],
+
+  "getInAnimTrigger" : "ClockGetIn",
+  "getOutAnimTrigger" : "ClockGetOut",
+  "displayClockFor_s" : 5,
+
+  "clockLayout" : [{  
+    "layerName" : "Clock_Display",
+    "spriteBoxLayout" : [
+      {
+        "spriteBoxName": "TensLeftOfColon",
+        "spriteRenderMethod" : "CustomHue",
+        "x": 27,
+        "y": 26,
+        "width": 29,
+        "height": 43
+      },
+      {
+        "spriteBoxName": "OnesLeftOfColon",
+        "spriteRenderMethod" : "CustomHue",
+        "x": 57,
+        "y": 26,
+        "width": 29,
+        "height": 43
+      },
+      {
+        "spriteBoxName": "Colon",
+        "spriteRenderMethod" : "CustomHue",
+        "x": 87,
+        "y": 27,
+        "width": 10,
+        "height": 43
+      },
+      {
+        "spriteBoxName": "TensRightOfColon",
+        "spriteRenderMethod" : "CustomHue",
+        "x": 98,
+        "y": 26,
+        "width": 29,
+        "height": 43
+      },
+      {
+        "spriteBoxName": "OnesRightOfColon",
+        "spriteRenderMethod" : "CustomHue",
+        "x": 128,
+        "y": 26,
+        "width": 29,
+        "height": 43
+      }
+    ]
+  }],
+  // allows template elements which have a static image to be specified once
+  "staticElements":
+  {
+    "Colon": "Clock_colon"
+  },
+
+  "digitImageMap": [
+    "Clock_00",
+    "Clock_01",
+    "Clock_02",
+    "Clock_03",
+    "Clock_04",
+    "Clock_05",
+    "Clock_06",
+    "Clock_07",
+    "Clock_08",
+    "Clock_09"
+  ]
+}

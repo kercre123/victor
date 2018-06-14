@@ -1,0 +1,1 @@
+minidump_stackwalk filter=lfs diff=lfs merge=lfs -text

@@ -11,7 +11,7 @@
 #include "switchboardd/keyExchange.h"
 #include "switchboardd/securePairing.h"
 #include "switchboardd/savedSessionManager.h"
-#include "libev/libev.h"
+#include "ev++.h"
 #include "test_INetworkStream.h"
 
 struct TestData {

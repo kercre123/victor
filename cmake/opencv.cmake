@@ -60,7 +60,7 @@ foreach(OPENCV_MODULE ${OPENCV_LIBS})
                         ${OPENCV_LIB_DIR}/libopencv_${OPENCV_MODULE}.${LIB_EXT}${LIB_POSTFIX}
                         INTERFACE_INCLUDE_DIRECTORIES
                         "${include_paths}")
-  anki_build_target_license(${OPENCV_MODULE} "BSD-3")
+  anki_build_target_license(${OPENCV_MODULE} "BSD-4,${CMAKE_SOURCE_DIR}/licenses/opencv.license")
 
   list(APPEND OPENCV_INCLUDE_PATHS ${MODULE_INCLUDE_PATH})
 
@@ -100,10 +100,10 @@ foreach(LIB ${OPENCV_EXTERNAL_LIBS})
         ${OPENCV_3RDPARTY_LIB_DIR}/lib${LIB}.a)
 endforeach()
 
-anki_build_target_license(libpng "libpng-license")
-anki_build_target_license(libtiff "BSD-like")
-anki_build_target_license(libjpeg "libpjeg-license")
-anki_build_target_license(libprotobuf "BSD-3")
+anki_build_target_license(libpng "libpng,${CMAKE_SOURCE_DIR}/licenses/libpng.license")
+anki_build_target_license(libtiff "ISC,${CMAKE_SOURCE_DIR}/licenses/libtiff.license")
+anki_build_target_license(libjpeg "BSD-3-like,${CMAKE_SOURCE_DIR}/licenses/libjpeg-turbo.license")
+anki_build_target_license(libprotobuf "BSD-3,${CMAKE_SOURCE_DIR}/licenses/protobuf.license")
 
 message(STATUS "including OpenCV-${OPENCV_VERSION}, [Modules: ${OPENCV_LIBS}], [3rdParty: ${OPENCV_EXTERNAL_LIBS}]")
 

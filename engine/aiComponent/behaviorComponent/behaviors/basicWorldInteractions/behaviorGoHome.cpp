@@ -25,12 +25,16 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
 #include "engine/components/carryingComponent.h"
+#include "engine/components/robotStatsTracker.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/navMap/mapComponent.h"
+
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/math/polygon_impl.h"
+
+#include "clad/types/behaviorComponent/behaviorStats.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -408,6 +412,7 @@ void BehaviorGoHome::TransitionToMountCharger()
                       [this](ActionResult result) {
                         const auto resultCategory = IActionRunner::GetActionResultCategory(result);
                         if (resultCategory == ActionResultCategory::SUCCESS) {
+                          GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::MountedCharger);
                           TransitionToPlayingNuzzleAnim();
                         } else if ((resultCategory == ActionResultCategory::RETRY) &&
                                    (_dVars.mountChargerRetryCount++ < _iConfig.mountChargerRetryCount)) {

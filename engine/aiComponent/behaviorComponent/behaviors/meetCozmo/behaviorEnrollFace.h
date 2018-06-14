@@ -167,6 +167,8 @@ private:
       TimeStamp_t    lastTimeUserMovedRobot = 0;
       TimeStamp_t    lastDeactivationTime_ms = 0;
       
+      bool           requestedRescan = false;
+      
       using EnrollmentSettings = ExternalInterface::SetFaceToEnroll;
       std::unique_ptr<EnrollmentSettings> settings;
       

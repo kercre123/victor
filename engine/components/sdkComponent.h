@@ -41,13 +41,19 @@ public:
   // Event/Message handling
   template<typename T>
   void HandleMessage(const T& msg);
+
+  bool SDKWantsControl();
+  void SDKBehaviorActivation(bool enabled);
   
 private:
   
   Robot* _robot = nullptr;  
   bool _sdkWantsControl = false;
+  bool _sdkBehaviorActivated = false;
 
   std::vector<::Signal::SmartHandle> _signalHandles;
+
+  void DispatchSDKActivationResult(bool enabled);
 };
 
 } // namespace Cozmo

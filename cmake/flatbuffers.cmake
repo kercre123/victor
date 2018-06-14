@@ -17,5 +17,5 @@ foreach(LIB ${FLATBUFFERS_LIBS})
     "${FLATBUFFERS_LIB_PATH}/lib${LIB}.a"
     INTERFACE_INCLUDE_DIRECTORIES
     "${FLATBUFFERS_INCLUDE_PATH}")
-  anki_build_target_license(${LIB} "Apache-2.0")
+  anki_build_target_license(${LIB} "Apache-2.0,${CMAKE_SOURCE_DIR}/licenses/flatbuffers.license")
 endforeach()

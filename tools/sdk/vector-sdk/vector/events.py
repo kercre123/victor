@@ -24,17 +24,21 @@ class EventHandler:
         self._connection = None
         self.listening_for_events = False
         self.event_task = None
+        self.robot_state_task = None
         self.subscribers = {}
 
     def start(self, connection):
         self._connection = connection
         self.listening_for_events = True
         self.event_task = self._loop.create_task(self._handle_events())
+        self.robot_state_task = self._loop.create_task(self._handle_robot_state_stream())
 
     def close(self):
         self.listening_for_events = False
         self.event_task.cancel()
+        self.robot_state_task.cancel()
         self._loop.run_until_complete(self.event_task)
+        self._loop.run_until_complete(self.robot_state_task)
 
     async def _handle_events(self):
         try:
@@ -46,6 +50,20 @@ class EventHandler:
                 if event_type in self.subscribers.keys():
                     for func in self.subscribers[event_type]:
                         func(event_type, getattr(e.event, event_type))
+        except CancelledError:
+            self.logger.debug('Event handler task was cancelled. This is expected during disconnection.')
+
+    # TODO: Remove after RobotState stream is handled as an event
+    async def _handle_robot_state_stream(self):
+        stream_type = "robot_state"
+        try:
+            req = protocol.RobotStateRequest()
+            async for res in self._connection.RobotStateStream(req):
+                if not self.listening_for_events:
+                    break
+                if stream_type in self.subscribers:
+                    for func in self.subscribers[stream_type]:
+                        func(stream_type, getattr(res, stream_type))
         except CancelledError:
             self.logger.debug('Event handler task was cancelled. This is expected during disconnection.')
 

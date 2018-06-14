@@ -11,20 +11,22 @@
  *
  **/
 
-#include "engine/actions/animActions.h"
-#include "engine/actions/basicActions.h"
-#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCliff.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/components/sensors/cliffSensorComponent.h"
-#include "engine/components/movementComponent.h"
-#include "engine/events/ankiEvent.h"
-#include "engine/externalInterface/externalInterface.h"
-#include "engine/moodSystem/moodManager.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/behaviorComponent/behaviorIDs.h"
+#include "clad/types/behaviorComponent/behaviorStats.h"
 #include "clad/types/proxMessages.h"
+#include "engine/actions/animActions.h"
+#include "engine/actions/basicActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCliff.h"
+#include "engine/components/movementComponent.h"
+#include "engine/components/robotStatsTracker.h"
+#include "engine/components/sensors/cliffSensorComponent.h"
+#include "engine/events/ankiEvent.h"
+#include "engine/externalInterface/externalInterface.h"
+#include "engine/moodSystem/moodManager.h"
 #include <limits>
 
 namespace Anki {
@@ -205,6 +207,8 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction()
 {
   DEBUG_SET_STATE(PlayingCliffReaction);
 
+  GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::ReactedToCliff);
+  
   if(ShouldStreamline()){
     TransitionToBackingUp();
   } else {

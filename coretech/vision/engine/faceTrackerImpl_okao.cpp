@@ -54,7 +54,9 @@ namespace Vision {
   }
 
   // Use this to trigger a reinitialization on next Update()
+  #if REMOTE_CONSOLE_ENABLED
   CONSOLE_VAR(bool, kReinitDetector, "Vision.FaceDetectorCommon", false);
+  #endif // REMOTE_CONSOLE_ENABLED
 
   namespace DetectParams {
     // Parameters common to all face detection modes
@@ -719,6 +721,7 @@ namespace Vision {
       return RESULT_FAIL;
     }
     
+  #if REMOTE_CONSOLE_ENABLED
     if(kReinitDetector)
     {
       PRINT_NAMED_INFO("FaceTrackerImpl.Update.Reinit",
@@ -727,6 +730,7 @@ namespace Vision {
       Init();
       kReinitDetector = false;
     }
+  #endif // REMOTE_CONSOLE_ENABLED
 
     DEV_ASSERT(frameOrig.IsContinuous(), "FaceTrackerImpl.Update.NonContinuousImage");
     
@@ -740,7 +744,8 @@ namespace Vision {
                                      GRAY_ORDER_Y0Y1Y2Y3, _okaoDetectionResultHandle);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_WARNING("FaceTrackerImpl.Update.FaceLibDetectFail",
-                          "FaceLib Result Code=%d", okaoResult);
+                          "FaceLib Result Code=%d, dataPtr=%p, nWidth=%d, nHeight=%d",
+                          okaoResult, dataPtr, nWidth, nHeight);
       return RESULT_FAIL;
     }
     

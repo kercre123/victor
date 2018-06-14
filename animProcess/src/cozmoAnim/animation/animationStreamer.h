@@ -351,7 +351,9 @@ namespace Cozmo {
     static void GetStreamableFace(const AnimContext* context, const ProceduralFace& procFace, Vision::ImageRGB565& outImage);
     void BufferFaceToSend(Vision::ImageRGB565& image);
 
+  #if ANKI_DEV_CHEATS
     void UpdateCaptureFace(const Vision::ImageRGB565& faceImg565);
+  #endif // ANKI_DEV_CHEATS
     
     // Sends msg to appropriate destination as long as the specified track is unlocked
     bool SendIfTrackUnlocked(RobotInterface::EngineToRobot*& msg, AnimTrackFlag track);

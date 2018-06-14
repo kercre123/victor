@@ -53,6 +53,7 @@
 #include <opencv2/imgproc.hpp>
 
 #include "jo_gif/jo_gif.h"
+#include "gif-h/gif.h"
 
 #include <stdio.h>
 #include <time.h>
@@ -64,6 +65,7 @@ namespace Anki {
 namespace Cozmo {
 
 #define CONSOLE_GROUP "Face.ParameterizedFace"
+
   enum class FaceDisplayType {
     Normal,
     Test,
@@ -91,9 +93,11 @@ namespace Cozmo {
 
   static ProceduralFace s_faceDataOverride; // incoming values from console var system
   static ProceduralFace s_faceDataBaseline; // baseline to compare against, differences mean override the incoming animation
+  static bool s_faceDataReset = false;
+
+#if ANKI_DEV_CHEATS
   static const AnimContext* s_context; // copy of AnimContext in first constructed AnimationStreamer, needed for GetDataPlatform
   static bool s_faceDataOverrideRegistered = false;
-  static bool s_faceDataReset = false;
   static uint8_t s_gammaLUT[3][256];// RGB x 256 entries
 
   void ResetFace(ConsoleFunctionContextRef context)
@@ -164,6 +168,7 @@ namespace Cozmo {
   }
 
   CONSOLE_FUNC(LoadFaceGammaLUT, CONSOLE_GROUP, const char* filename);
+#endif // ANKI_DEV_CHEATS
 
   namespace{
     
@@ -194,10 +199,12 @@ namespace Cozmo {
     SET_DEFAULT(EyeDartDownMinScale, 0.85f)
   };
   #undef SET_DEFAULT
-  
-  CONSOLE_VAR(bool, kFullAnimationAbortOnAudioTimeout, "AnimationStreamer", false);
-  CONSOLE_VAR(u32, kAnimationAudioAllowedBufferTime_ms, "AnimationStreamer", 250);
 
+  bool kIsInManualUpdateMode    = false;
+  u32 kCurrentManualFrameNumber = 0;
+  CONSOLE_VAR(bool, kShouldDisplayKeyframeNumber, "ManualAnimationPlayback", false);
+
+#if ANKI_DEV_CHEATS
   // Whether or not to display themal throttling indicator on face
   CONSOLE_VAR(bool, kDisplayThermalThrottling, "AnimationStreamer", true);
 
@@ -213,8 +220,6 @@ namespace Cozmo {
   //////////
   /// Manual Playback Console Vars - allow user to play back/hold single frames within an animation
   /////////
-  bool kIsInManualUpdateMode    = false;
-  u32 kCurrentManualFrameNumber = 0;
   static TimeStamp_t* sDevRelativeTimePtr       = nullptr;
   static Vision::ImageRGB565* sDevBufferFacePtr = nullptr;
   static Animation** sStreamingAnimationPtrPtr  = nullptr;
@@ -228,7 +233,6 @@ namespace Cozmo {
   }
   
   CONSOLE_FUNC(ToggleManualControlOfAnimStreamer, "ManualAnimationPlayback");
-  CONSOLE_VAR(bool, kShouldDisplayKeyframeNumber, "ManualAnimationPlayback", false);
   CONSOLE_VAR(u32,  kNumberOfFramesToIncrement,   "ManualAnimationPlayback", 1);
 
   void IncrementPlaybackFrame(ConsoleFunctionContextRef context)
@@ -284,6 +288,7 @@ namespace Cozmo {
   }
   
   CONSOLE_FUNC(ClearCapturedFaces, "ManualAnimationPlayback");
+ #endif // ANKI_DEV_CHEATS
 
 
 
@@ -296,6 +301,8 @@ namespace Cozmo {
   // Allows easy disabling of KeepFaceAlive using the console system (i.e., without a message interface)
   // This is useful for the animators to disable KeepFaceAlive while testing eye shapes, etc.
   static bool s_enableKeepFaceAlive = true;
+
+#if ANKI_DEV_CHEATS
   void ToggleKeepFaceAlive(ConsoleFunctionContextRef context)
   {
     s_enableKeepFaceAlive = !s_enableKeepFaceAlive;
@@ -308,7 +315,9 @@ namespace Cozmo {
   static std::string s_frameFilename;
   static int s_frame = 0;
   static int s_framesToCapture = 0;
-  static jo_gif_t s_gif;
+  static jo_gif_t s_gif1;
+  static struct GifWriter s_gif2;
+  static int s_gifVersion = 1;
   static clock_t s_frameStart;
   static FILE* s_tga = nullptr;
 
@@ -324,10 +333,18 @@ namespace Cozmo {
       const std::string cacheFilename = dataPlatform->pathToResource(Util::Data::Scope::Cache, s_frameFilename);
 
       if(s_frameFilename.find(".gif") != std::string::npos) {
-        s_gif = jo_gif_start(cacheFilename.c_str(), FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT, -1, 255);
-        if(s_gif.fp != nullptr) {
+        s_gifVersion = 1;
+        s_gif1 = jo_gif_start(cacheFilename.c_str(), FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT, 0, 256);
+        if(s_gif1.fp != nullptr) {
           s_framesToCapture = numFrames;
         }
+
+      } else if(s_frameFilename.find(".GIF") != std::string::npos) {
+        s_gifVersion = 2;
+        if (GifBegin(&s_gif2, cacheFilename.c_str(), FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT, 0, 8)) {
+          s_framesToCapture = numFrames;
+        }
+
       } else {
         s_tga = fopen(cacheFilename.c_str(), "wb");
         if(s_tga != nullptr) {
@@ -361,6 +378,7 @@ namespace Cozmo {
   }
 
   CONSOLE_FUNC(CaptureFace, "Face", optional const char* filename, optional int numFrames);
+#endif // ANKI_DEV_CHEATS
 
   CONSOLE_VAR(bool, kShouldDisplayPlaybackTime, "AnimationStreamer", false);
 
@@ -380,7 +398,8 @@ namespace Cozmo {
   {
     CopyIntoProceduralAnimation();
 
-    if(ANKI_DEV_CHEATS) {
+  #if ANKI_DEV_CHEATS
+    {
       sDevRelativeTimePtr = &_relativeStreamTime_ms;
       sDevBufferFacePtr = &_faceDrawBuf;
       sStreamingAnimationPtrPtr = &_streamingAnimation;
@@ -390,6 +409,7 @@ namespace Cozmo {
         s_faceDataOverrideRegistered = true;
       }
     }
+  #endif // ANKI_DEV_CHEATS
   }
   
   Result AnimationStreamer::Init()
@@ -447,9 +467,11 @@ namespace Cozmo {
   
   AnimationStreamer::~AnimationStreamer()
   {
+  #if ANKI_DEV_CHEATS
     sDevRelativeTimePtr       = nullptr;
     sDevBufferFacePtr         = nullptr;
     sStreamingAnimationPtrPtr = nullptr;
+  #endif // ANKI_DEV_CHEATS
     Util::SafeDelete(_proceduralAnimation);
 
     FaceDisplay::removeInstance();
@@ -1189,6 +1211,7 @@ namespace Cozmo {
     }
   }
 
+#if ANKI_DEV_CHEATS
   // Conversions to and from linear space i.e. sRGB to linear and linear to sRGB
   // used when populating the lookup tables for gamma correction.
   // https://github.com/hsluv/hsluv/releases/tag/_legacyjs6.0.4
@@ -1212,7 +1235,6 @@ namespace Cozmo {
       return (float)(c / 12.92f);
     }
   }
-
   void AnimationStreamer::UpdateCaptureFace(const Vision::ImageRGB565& faceImg565)
   {
     if(s_framesToCapture > 0) {
@@ -1226,8 +1248,11 @@ namespace Cozmo {
       if(s_tga != NULL) {
         fwrite(frame.GetDataPointer(), sizeof(uint8_t), FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT*4, s_tga);
       } else {
-        if(elapsed == 0) elapsed = 1;
-        jo_gif_frame(&s_gif, (uint8_t*)frame.GetDataPointer(), elapsed, false);
+        if(s_gifVersion == 1) {
+          jo_gif_frame(&s_gif1, (uint8_t*)frame.GetDataPointer(), 4, false);
+        } else {
+          GifWriteFrame(&s_gif2, (uint8_t*)frame.GetDataPointer(), FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT, elapsed*100);
+        }
       }
 
       ++s_frame;
@@ -1235,13 +1260,18 @@ namespace Cozmo {
         if(s_tga != NULL) {
           fclose(s_tga);
         } else {
-          jo_gif_end(&s_gif);
+          if(s_gifVersion == 1) {
+            jo_gif_end(&s_gif1);
+          } else {
+            GifEnd(&s_gif2);
+          }
         }
 
         s_framesToCapture = 0;
       }
     }
   }
+#endif // ANKI_DEV_CHEATS
 
   void AnimationStreamer::BufferFaceToSend(Vision::ImageRGB565& faceImg565)
   {
@@ -1252,6 +1282,7 @@ namespace Cozmo {
                    faceImg565.GetNumCols(), faceImg565.GetNumRows(),
                    FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
 
+#if ANKI_DEV_CHEATS
     static int kProcFace_GammaType_old = (int)FaceGammaType::None;
     static f32 kProcFace_Gamma_old = -1.f;
 
@@ -1301,8 +1332,6 @@ namespace Cozmo {
       }
     }
 
-#if ANKI_DEV_CHEATS
-
     UpdateCaptureFace(faceImg565);
 
     // Draw red square in corner of face if thermal issues
@@ -1325,7 +1354,7 @@ namespace Cozmo {
       const Point2f position(25, 25);
       faceImg565.DrawText(position, tempStr, alertColor, 1.f);
     }
-#endif
+#endif // ANKI_DEV_CHEATS
 
     if(SHOULD_SEND_DISPLAYED_FACE_TO_ENGINE){
       // Send the final buffered face back over to engine

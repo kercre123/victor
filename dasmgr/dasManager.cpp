@@ -26,7 +26,7 @@
 #include <thread>
 
 // Imported types
-using LogLevel = Anki::Util::ILoggerProvider::LogLevel;
+using LogLevel = Anki::Util::LogLevel;
 
 // Log options
 #define LOG_CHANNEL "DASManager"
@@ -41,8 +41,8 @@ namespace {
   // How many events do we buffer before send? Counted by events.
   constexpr const size_t QUEUE_THRESHOLD_SIZE = 256;
 
-  // How often do we process queued events? Counted by log records.
-  constexpr const int PROCESS_QUEUE_INTERVAL = 1000;
+  // How many queues are we willing to hold for deferred send? Counted by queues, not events.
+  constexpr const size_t MAX_DEFERRALS_SIZE = 4;
 
   // How often do we process statistics? Counted by log records.
   constexpr const int PROCESS_STATS_INTERVAL = 1000;
@@ -92,107 +92,6 @@ inline LogLevel GetLogLevel(const AndroidLogEntry& logEntry)
   return LogLevel::LOG_LEVEL_ERROR;
 }
 
-namespace Anki {
-namespace Victor {
-
-// Process an event struct
-void DASManager::ProcessEvent(LogEvent && logEvent)
-{
-  // Record global state
-  _eventQueue.push_back(std::move(logEvent));
-  ++_eventCount;
-
-}
-
-//
-// Parse a log entry
-bool DASManager::ParseLogEntry(const AndroidLogEntry & logEntry, LogEvent & logEvent)
-{
-  const char * tag = logEntry.tag;
-  const char * message = logEntry.message;
-
-  // These values are always set by library so we don't need to check them
-  assert(tag != nullptr);
-  assert(message != nullptr);
-
-  // Anki::Util::StringSplit ignores trailing separator so don't use it
-  std::vector<std::string> strings;
-  const char * pos = message+1; // (skip leading event marker)
-  while (1) {
-    const char * end = strchr(pos, Anki::Util::DAS::FIELD_MARKER);
-    if (end == nullptr) {
-      strings.push_back(std::string(pos));
-      break;
-    }
-    strings.push_back(std::string(pos, (size_t)(end-pos)));
-    pos = end+1;
-  }
-
-  if (strings.size() != Anki::Util::DAS::FIELD_COUNT) {
-    LOG_ERROR("DASManager.ParseLogEntry", "Unable to parse %s from %s (%zu != %d)",
-              message, tag, strings.size(), Anki::Util::DAS::FIELD_COUNT);
-    return false;
-  }
-
-  // If field count changes, we need to update this code
-  static_assert(Anki::Util::DAS::FIELD_COUNT == 9, "DAS field count does not match declarations");
-
-  // Populate event struct
-  // Note that DAS uses SIGNED int64 for timestamp and sequence.
-  // Unsigned values are coerced to match the spec.
-  logEvent.seq = (int64_t) _seq++;
-  logEvent.source = tag;
-  logEvent.profile_id = _profile_id;
-  logEvent.ts = GetTimeStamp(logEntry);
-  logEvent.level = GetLogLevel(logEntry);
-  logEvent.name = std::move(strings[0]);
-  logEvent.s1 = std::move(strings[1]);
-  logEvent.s2 = std::move(strings[2]);
-  logEvent.s3 = std::move(strings[3]);
-  logEvent.s4 = std::move(strings[4]);
-  logEvent.i1 = std::atoll(strings[5].c_str());
-  logEvent.i2 = std::atoll(strings[6].c_str());
-  logEvent.i3 = std::atoll(strings[7].c_str());
-  logEvent.i4 = std::atoll(strings[8].c_str());
-
-  // Is this the start of a new feature?
-  if (logEvent.name == DASMSG_FEATURE_START) {
-    _feature_run_id = logEvent.s3;
-    _feature_type = logEvent.s4;
-  }
-
-  logEvent.feature_run_id = _feature_run_id;
-  logEvent.feature_type = _feature_type;
-
-  return true;
-}
-//
-// Process a log entry
-//
-void DASManager::ProcessLogEntry(const AndroidLogEntry & logEntry)
-{
-  const char * message = logEntry.message;
-  const char * tag = logEntry.tag;
-  assert(message != nullptr);
-  assert(tag != nullptr);
-
-  ++_entryCount;
-
-  // Does this record look like a DAS entry?
-  if (*message != Anki::Util::DAS::EVENT_MARKER) {
-    return;
-  }
-
-  // Can we parse it?
-  LogEvent logEvent;
-  if (!ParseLogEntry(logEntry, logEvent)) {
-    LOG_ERROR("DASManager.ProcessLogEntry", "Unable to parse event from tag %s", tag);
-    return;
-  }
-
-  ProcessEvent(std::move(logEvent));
-}
-
 static inline void serialize(std::ostringstream & ostr, const std::string & key, const std::string & val)
 {
   // TO DO: Guard against embedded quotes in value
@@ -237,8 +136,10 @@ static inline void serialize(std::ostringstream & ostr, const std::string & key,
   ostr << '"';
 }
 
+namespace Anki {
+namespace Victor {
 
-void DASManager::Serialize(std::ostringstream & ostr, const LogEvent & event)
+void DASManager::Serialize(std::ostringstream & ostr, const DASEvent & event)
 {
   //
   // TO DO: robot_id, boot_id, and robot_version are constant for lifetime of the service.
@@ -288,7 +189,6 @@ void DASManager::Serialize(std::ostringstream & ostr, const LogEvent & event)
     serialize(ostr, "s4", event.s4);
   }
 
-
   // I1-I4 fields are OPTIONAL and may be empty.
   // If they are empty, there's no need to send them.
   // DAS ingestion does not distinguish between 0 and null.
@@ -311,7 +211,7 @@ void DASManager::Serialize(std::ostringstream & ostr, const LogEvent & event)
   ostr << '}';
 }
 
-void DASManager::Serialize(std::ostringstream & ostr, const EventQueue & eventQueue)
+void DASManager::Serialize(std::ostringstream & ostr, const DASEventQueue & eventQueue)
 {
   ostr << '[';
   for (const auto & event : eventQueue) {
@@ -323,43 +223,242 @@ void DASManager::Serialize(std::ostringstream & ostr, const EventQueue & eventQu
     ostr.seekp(-1, std::ostringstream::cur);
   }
   ostr << ']';
+}
+
+
+//
+// Attempt to upload queued events.
+// This is called on the worker thread.
+// Return true on successful upload.
+//
+bool DASManager::PostToServer(const DASEventQueue & eventQueue)
+{
+  const size_t nEvents = eventQueue.size();
+
+  LOG_DEBUG("DASManager.PostToServer", "Upload %zu events to %s", nEvents, DAS_URL);
+
+  std::ostringstream ostr;
+  std::string response;
+
+  Serialize(ostr, eventQueue);
+
+  const bool success = DAS::PostToServer(DAS_URL, ostr.str(), response);
+  if (success) {
+    LOG_DEBUG("DASManager.PostToServer.UploadSuccess", "Uploaded %zu events", nEvents);
+    ++_workerSuccessCount;
+    DASMSG(dasmgr_upload_success, "dasmgr.upload.success", "Sent after each successful upload");
+    DASMSG_SET(i1, _workerSuccessCount, "Worker success count");
+    DASMSG_SET(i2, _workerFailCount, "Worker fail count");
+    DASMSG_SET(i3, _workerDeferralCount, "Worker deferral count");
+    DASMSG_SET(i4, _workerDroppedCount, "Worker dropped count");
+    DASMSG_SEND();
+    return true;
+  } else {
+    LOG_ERROR("DASManager.PostToServer.UploadFailed", "Failed to upload %zu events (%s)", nEvents, response.c_str());
+    ++_workerFailCount;
+    DASMSG(dasmgr_upload_failed, "dasmgr.upload.failed", "Sent after each failed upload");
+    DASMSG_SET(s1, response, "HTTP response");
+    DASMSG_SET(i1, _workerSuccessCount, "Worker success count");
+    DASMSG_SET(i2, _workerFailCount, "Worker fail count");
+    DASMSG_SET(i3, _workerDeferralCount, "Worker deferral count");
+    DASMSG_SET(i4, _workerDroppedCount, "Worker dropped count");
+    DASMSG_SEND();
+    return false;
+  }
+}
+
+//
+// Process queue of deferred events until empty or failure.
+// In case of failure, events are left at front of queue.
+//
+void DASManager::PerformDeferredUploads()
+{
+  while (!_workerDeferrals.empty()) {
+    const auto front = _workerDeferrals.front();
+    const bool success = PostToServer(*front);
+    if (success) {
+      LOG_DEBUG("DASManager.PerformDeferredUploads.UploadSuccess", "Uploaded %zu events", front->size());
+      _workerDeferrals.pop_front();
+    } else {
+      LOG_DEBUG("DASManager.PerformDeferredUploads.UploadFailed", "Failed to upload %zu events", front->size());
+      break;
+    }
+  }
+}
+
+//
+// Move event queue into deferral queue.  If deferral queue is at capacity,
+// discard the oldest data.
+//
+void DASManager::PerformDeferral(DASEventQueuePtr eventQueue)
+{
+  // Preconditions
+  DEV_ASSERT(_workerDeferrals.size() <= MAX_DEFERRALS_SIZE, "DASManager.PerformDeferral.InvalidDeferralQueue");
+
+  if (_workerDeferrals.size() >= MAX_DEFERRALS_SIZE) {
+    LOG_ERROR("DASManager.PerformDeferral", "Dropping %zu deferred events", _workerDeferrals.front()->size());
+    _workerDeferrals.pop_front();
+    ++_workerDroppedCount;
+  }
+  _workerDeferrals.push_back(eventQueue);
+  ++_workerDeferralCount;
+}
+
+//
+// Upload events to DAS endpoint
+// This is called on background worker thread to avoid blocking main read loop.
+//
+void DASManager::PerformUpload(DASEventQueuePtr eventQueue)
+{
+  // Preconditions
+  DEV_ASSERT(eventQueue != nullptr, "DASManager.PerformUpload.InvalidQueue");
+  DEV_ASSERT(eventQueue->size() > 0, "DASManager.PerformUpload.InvalidQueueSize");
+
+  // Attempt to post event queue to server
+  const bool success = PostToServer(*eventQueue);
+  if (success) {
+    // Attempt any deferred uploads
+    PerformDeferredUploads();
+  } else {
+    // Try again later
+    PerformDeferral(eventQueue);
+  }
 
 }
-//
-// Process queued entries
-void DASManager::ProcessQueue()
+
+void DASManager::EnqueueForUpload(DASEventQueuePtr eventQueue)
 {
-  const size_t nEvents = _eventQueue.size();
-  if (nEvents < QUEUE_THRESHOLD_SIZE) {
-    // Keep filling current buffer
+  // Preconditions
+  DEV_ASSERT(eventQueue != nullptr, "DASManager.EnqueueForUpload.InvalidQueue");
+
+  LOG_DEBUG("DASManager.EnqueueForUpload", "Enqueue %zu events for upload", eventQueue->size());
+
+  auto task = [this, eventQueue]() {
+    PerformUpload(eventQueue);
+  };
+
+  _worker.Wake(task, "EnqueueForUpload");
+}
+
+// Process an event struct
+void DASManager::ProcessEvent(DASEvent && event)
+{
+  // Preconditions
+  DEV_ASSERT(_eventQueue != nullptr, "DASManager.ProcessEvent.InvalidQueue");
+
+  _eventQueue->push_back(std::move(event));
+  ++_eventCount;
+
+  // If we have reached threshold size, move active queue to worker thread and start a new queue
+  if (_eventQueue->size() >= QUEUE_THRESHOLD_SIZE) {
+    EnqueueForUpload(_eventQueue);
+    _eventQueue = std::make_shared<DASEventQueue>();
+  }
+}
+
+//
+// Parse a log entry
+bool DASManager::ParseLogEntry(const AndroidLogEntry & logEntry, DASEvent & event)
+{
+  const char * tag = logEntry.tag;
+  const char * message = logEntry.message;
+
+  // These values are always set by library so we don't need to check them
+  DEV_ASSERT(tag != nullptr, "DASManager.ParseLogEntry.InvalidTag");
+  DEV_ASSERT(message != nullptr, "DASManager.ParseLogEntry.InvalidMessage");
+
+  // Anki::Util::StringSplit ignores trailing separator so don't use it
+  std::vector<std::string> strings;
+  const char * pos = message+1; // (skip leading event marker)
+  while (1) {
+    const char * end = strchr(pos, Anki::Util::DAS::FIELD_MARKER);
+    if (end == nullptr) {
+      strings.push_back(std::string(pos));
+      break;
+    }
+    strings.push_back(std::string(pos, (size_t)(end-pos)));
+    pos = end+1;
+  }
+
+  if (strings.size() != Anki::Util::DAS::FIELD_COUNT) {
+    LOG_ERROR("DASManager.ParseLogEntry", "Unable to parse %s from %s (%zu != %d)",
+              message, tag, strings.size(), Anki::Util::DAS::FIELD_COUNT);
+    return false;
+  }
+
+  // If field count changes, we need to update this code
+  static_assert(Anki::Util::DAS::FIELD_COUNT == 9, "DAS field count does not match declarations");
+
+  // Populate event struct
+  // Note that DAS uses SIGNED int64 for timestamp and sequence.
+  // Unsigned values are coerced to match the spec.
+  event.seq = (int64_t) _seq++;
+  event.source = tag;
+  event.profile_id = _profile_id;
+  event.ts = GetTimeStamp(logEntry);
+  event.level = GetLogLevel(logEntry);
+  event.name = std::move(strings[0]);
+  event.s1 = std::move(strings[1]);
+  event.s2 = std::move(strings[2]);
+  event.s3 = std::move(strings[3]);
+  event.s4 = std::move(strings[4]);
+  event.i1 = std::atoll(strings[5].c_str());
+  event.i2 = std::atoll(strings[6].c_str());
+  event.i3 = std::atoll(strings[7].c_str());
+  event.i4 = std::atoll(strings[8].c_str());
+
+  // Is this the start of a new feature?
+  if (event.name == DASMSG_FEATURE_START) {
+    _feature_run_id = event.s3;
+    _feature_type = event.s4;
+  }
+
+  event.feature_run_id = _feature_run_id;
+  event.feature_type = _feature_type;
+
+  return true;
+}
+//
+// Process a log entry
+//
+void DASManager::ProcessLogEntry(const AndroidLogEntry & logEntry)
+{
+  const char * message = logEntry.message;
+  const char * tag = logEntry.tag;
+  assert(message != nullptr);
+  assert(tag != nullptr);
+
+  ++_entryCount;
+
+  // Does this record look like a DAS entry?
+  if (*message != Anki::Util::DAS::EVENT_MARKER) {
     return;
   }
 
-  LOG_DEBUG("DASManager.ProcessQueue", "Post %zu events to %s", nEvents, DAS_URL);
-
-  std::ostringstream ostr;
-  Serialize(ostr, _eventQueue);
-
-  std::string response;
-  const bool success = DAS::PostToServer(DAS_URL, ostr.str(), response);
-  if (success) {
-    ++_uploadSuccessCount;
-  } else {
-    // TO DO: Retry after fail? Write to backing store?
-    LOG_ERROR("DASManager.ProcessQueue", "Failed to upload %zu events (%s)", nEvents, response.c_str());
-    ++_uploadFailCount;
+  // Can we parse it?
+  DASEvent event;
+  if (!ParseLogEntry(logEntry, event)) {
+    LOG_ERROR("DASManager.ProcessLogEntry", "Unable to parse event from tag %s", tag);
+    return;
   }
 
-  _eventQueue.clear();
+  ProcessEvent(std::move(event));
 }
+
 
 //
 // Log some process stats
+//
 void DASManager::ProcessStats()
 {
-  LOG_DEBUG("DASManager.ProcessStats",
-            "%llu entries %llu events %llu sleeps %llu uploadSuccess %llu uploadFail",
-            _entryCount, _eventCount, _sleepCount, _uploadSuccessCount, _uploadFailCount);
+  LOG_DEBUG("DASManager.ProcessStats.QueueStats",
+            "entries=%llu events=%llu sleeps=%llu "
+            "workerSuccess=%u workerFail=%u workerDeferral=%u workerDropped=%u",
+            _entryCount, _eventCount, _sleepCount,
+            (uint32_t) _workerSuccessCount,
+            (uint32_t) _workerFailCount,
+            (uint32_t) _workerDeferralCount,
+            (uint32_t) _workerDroppedCount);
 
   static struct rusage ru;
   if (getrusage(RUSAGE_SELF, &ru) == 0) {
@@ -367,12 +466,44 @@ void DASManager::ProcessStats()
     /* ixrss = integral shared memory size */
     /* idrss = integral unshared data size */
     /* isrss = integral unshared stack size */
-    LOG_DEBUG("DASManager.ProcessStats",
+    LOG_DEBUG("DASManager.ProcessStats.MemoryStats",
       "maxrss=%ld ixrss=%ld idrss=%ld isrss=%ld",
       ru.ru_maxrss, ru.ru_ixrss, ru.ru_idrss, ru.ru_isrss);
   }
 }
 
+//
+// Enqueue any outstanding events
+//
+void DASManager::FlushEventQueue()
+{
+  DEV_ASSERT(_eventQueue != nullptr, "DASManager.FlushEventQueue.InvalidQueue");
+  const auto nEvents = _eventQueue->size();
+  if (nEvents > 0) {
+    LOG_DEBUG("DASManager.FlushEventQueue", "Flush %zu pending events", nEvents);
+    EnqueueForUpload(_eventQueue);
+    _eventQueue.reset();
+  }
+}
+
+//
+// Attempt to complete any pending uploads
+//
+void DASManager::FlushUploadQueue()
+{
+  //
+  // Create a task to block until pending uploads have been processed.
+  // TO DO: How can we put a time bound on this?
+  //
+  LOG_DEBUG("DASManager.FlushUploadQueue", "Waiting for uploads to complete");
+
+  auto task = []() {
+    // Task is blocked until it reaches front of queue
+    LOG_DEBUG("DASManager.FlushUploadQueue", "Upload queue is clear");
+  };
+
+  _worker.WakeSync(task, "FlushUploadQueue");
+}
 //
 // Process log entries until shutdown flag becomes true.
 // The shutdown flag is declared const because this function
@@ -383,7 +514,7 @@ Result DASManager::Run(const bool & shutdown)
 {
   Result result = RESULT_OK;
 
-  LOG_DEBUG("DASManager.Run", "Start");
+  LOG_DEBUG("DASManager.Run", "Begin reading loop");
 
   {
     auto * osState = Anki::Cozmo::OSState::getInstance();
@@ -394,14 +525,17 @@ Result DASManager::Run(const bool & shutdown)
       LOG_ERROR("DASManager.Run.InvalidEMR", "INVALID EMR - NO ESN");
     }
     _robot_version = osState->GetOSBuildVersion() + "@" + osState->GetBuildSha();
+    _boot_id = osState->GetBootID();
     Cozmo::OSState::removeInstance();
   }
 
-  // TO DO VIC-2925: Track profile_id, feature_type, _feature_run_id
-  _boot_id = Anki::Util::GetUUIDString();
   _profile_id = "system";
   _feature_type = "system";
-  _feature_run_id = _boot_id;
+  _feature_run_id = Anki::Util::GetUUIDString();
+
+  // Log global parameters so we can match up log data with DAS records
+  LOG_INFO("DASManager.Run", "robot_id=%s robot_version=%s boot_id=%s feature_run_id=%s",
+           _robot_id.c_str(), _robot_version.c_str(), _boot_id.c_str(), _feature_run_id.c_str());
 
   //
   // Android log API is documented here:
@@ -447,11 +581,6 @@ Result DASManager::Run(const bool & shutdown)
     // Dispose of this log entry
     ProcessLogEntry(logEntry);
 
-    // Process queue at regular intervals
-    if (_entryCount % PROCESS_QUEUE_INTERVAL == 0) {
-      ProcessQueue();
-    }
-
     // Print stats at regular intervals
     if (_entryCount % PROCESS_STATS_INTERVAL == 0) {
       ProcessStats();
@@ -459,10 +588,18 @@ Result DASManager::Run(const bool & shutdown)
 
   }
 
-  // Clean up
-  LOG_DEBUG("DASManager.Run", "Stop (result %d)", result);
-  android_logger_list_close(log);
+  LOG_DEBUG("DASManager.Run", "End reading loop");
 
+  // Clean up
+  LOG_DEBUG("DASManager.Run", "Cleaning up");
+  android_logger_list_close(log);
+  FlushEventQueue();
+  FlushUploadQueue();
+
+  // Report final stats
+  ProcessStats();
+
+  LOG_DEBUG("DASManager.Run", "Done(result %d)", result);
   return result;
 }
 

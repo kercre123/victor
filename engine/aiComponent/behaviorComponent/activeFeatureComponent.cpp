@@ -20,6 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/statusLogHandler.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
+#include "engine/components/robotStatsTracker.h"
 #include "engine/cozmoContext.h"
 #include "util/logging/logging.h"
 #include "util/logging/DAS.h"
@@ -94,6 +95,10 @@ void ActiveFeatureComponent::UpdateDependent(const BCCompMap& dependentComponent
       }
 
       OnFeatureChanged( newFeature, _activeFeature, intentSource );
+
+      if( newFeature != ActiveFeature::NoFeature ) {
+        dependentComponents.GetValue<RobotStatsTracker>().IncrementActiveFeature(newFeature, intentSource);
+      }
 
       _activeFeature = newFeature;
     }

@@ -12,6 +12,8 @@
 
 #include "engine/actions/dockActions.h"
 
+#include "clad/types/animationTypes.h"
+#include "clad/types/behaviorComponent/behaviorStats.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/driveToActions.h"
@@ -25,6 +27,7 @@
 #include "engine/components/dockingComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
+#include "engine/components/robotStatsTracker.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -32,7 +35,6 @@
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotInterface/messageHandler.h"
-#include "clad/types/animationTypes.h"
 #include "util/cladHelpers/cladEnumToStringMap.h"
 #include "util/console/consoleInterface.h"
 #include "util/helpers/templateHelpers.h"
@@ -1528,6 +1530,10 @@ namespace Anki {
 
       } // switch(_dockAction)
 
+      if( result == ActionResult::SUCCESS ) {
+        GetRobot().GetComponent<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::PickedUpCube);
+      }
+
       return result;
 
     } // Verify()
@@ -2443,6 +2449,10 @@ namespace Anki {
           break;
 
       } // switch(_dockAction)
+
+      if( result == ActionResult::SUCCESS ) {
+        GetRobot().GetComponent<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::RolledCube);
+      }
 
       return result;
 

@@ -96,8 +96,10 @@ CONSOLE_VAR(u32, kVisionSystemSimulatedDelay_ms, "Vision.General", 0);
 
 CONSOLE_VAR(u32, kCalibTargetType, "Vision.Calibration", (u32)CameraCalibrator::CalibTargetType::CHECKERBOARD);
 
+#if REMOTE_CONSOLE_ENABLED
 // If non-zero, toggles the corresponding VisionMode and sets back to 0
 CONSOLE_VAR(u32, kToggleVisionMode, "Vision.General", 0);
+#endif
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace {
@@ -1398,10 +1400,12 @@ void VisionSystem::UpdateRollingShutter(const VisionPoseData& poseData, const Vi
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result VisionSystem::Update(const VisionPoseData&   poseData,
-                            const Vision::ImageRGB& image)
+Result VisionSystem::Update(const VisionPoseData&      poseData,
+                            const Vision::ImageRGB&    image,
+                            const f32                  fullScaleFactor,
+                            const Vision::ResizeMethod fullScaleMethod)
 {
-  _imageCache->Reset(image);
+  _imageCache->Reset(image, fullScaleFactor, fullScaleMethod);
   
   return Update(poseData, *_imageCache);
 }
@@ -1419,6 +1423,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     return RESULT_FAIL;
   }
 
+#if REMOTE_CONSOLE_ENABLED
   // Make it possible to toggle vision modes using console vars:
   if(kToggleVisionMode > 0)
   {
@@ -1434,6 +1439,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     EnableMode(mode, enable);
     kToggleVisionMode = 0;
   }
+#endif
   
   _frameNumber++;
   

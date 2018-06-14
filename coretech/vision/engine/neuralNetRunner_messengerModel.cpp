@@ -36,7 +36,6 @@ namespace {
 #define CONSOLE_GROUP "Vision.NeuralNetRunner"
 
   CONSOLE_VAR_RANGED(f32, kNeuralNetRunner_TimeoutDuration_sec,  CONSOLE_GROUP, 10.f, 1., 15.f);
-  CONSOLE_VAR(s32,        kNeuralNetRunner_PrintTimingFrequency, CONSOLE_GROUP, 1);
 
 #undef CONSOLE_GROUP
 }

@@ -59,7 +59,8 @@ DirectionIndex MicImmediateDirection::GetDominantDirection() const
   // Does not currently consider confidence level
   auto bestIndex = kDirectionUnknown;
   uint32_t bestCount = 0;
-  for (auto i = kFirstIndex; i <= kLastIndex; ++i)
+  // Ignore kLastIndex (unknown), since that is accumulated whenever the robot moves
+  for (auto i = kFirstIndex; i < kLastIndex; ++i)
   {
     if (_micDirectionsCount[i] > bestCount)
     {

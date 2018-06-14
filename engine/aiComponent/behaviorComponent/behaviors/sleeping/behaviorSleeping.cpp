@@ -27,16 +27,16 @@ namespace Cozmo {
 
 namespace {
 
-static const char* kConsoleGroup = "Sleeping";
+#define CONSOLE_GROUP "Sleeping"
 
-CONSOLE_VAR_RANGED(f32, kSleepingStirSpacing_min_s, kConsoleGroup, 20.0f, 0.0f, 7200.0f);
-CONSOLE_VAR_RANGED(f32, kSleepingStirSpacing_max_s, kConsoleGroup, 40.0f, 0.0f, 7200.0f);
+CONSOLE_VAR_RANGED(f32, kSleepingStirSpacing_min_s, CONSOLE_GROUP, 20.0f, 0.0f, 7200.0f);
+CONSOLE_VAR_RANGED(f32, kSleepingStirSpacing_max_s, CONSOLE_GROUP, 40.0f, 0.0f, 7200.0f);
 
-CONSOLE_VAR_RANGED(f32, kSleepingBoutSpacing_min_s, kConsoleGroup, 1.5f, 0.0f, 30.0f);
-CONSOLE_VAR_RANGED(f32, kSleepingBoutSpacing_max_s, kConsoleGroup, 8.0f, 0.0f, 7200.0f);
+CONSOLE_VAR_RANGED(f32, kSleepingBoutSpacing_min_s, CONSOLE_GROUP, 1.5f, 0.0f, 30.0f);
+CONSOLE_VAR_RANGED(f32, kSleepingBoutSpacing_max_s, CONSOLE_GROUP, 8.0f, 0.0f, 7200.0f);
 
-CONSOLE_VAR_RANGED(u32, kSleepingBoutNumStirs_min, kConsoleGroup, 2, 1, 10);
-CONSOLE_VAR_RANGED(u32, kSleepingBoutNumStirs_max, kConsoleGroup, 5, 1, 10);
+CONSOLE_VAR_RANGED(u32, kSleepingBoutNumStirs_min, CONSOLE_GROUP, 2, 1, 10);
+CONSOLE_VAR_RANGED(u32, kSleepingBoutNumStirs_max, CONSOLE_GROUP, 5, 1, 10);
 
 constexpr const char* kSleepingFaceLoopAnimClip = "anim_face_sleeping";
 

@@ -30,8 +30,8 @@ ProceduralFace::Value ProceduralFace::_saturation = DefaultSaturation;
 Vision::Image ProceduralFace::_hueImage = Vision::Image(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH, static_cast<u8>(_hue * std::numeric_limits<u8>::max()));
 Vision::Image ProceduralFace::_satImage = Vision::Image(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH, static_cast<u8>(_saturation * std::numeric_limits<u8>::max()));
 
-  
 #define CONSOLE_GROUP "Face.ParameterizedFace"
+
 // Set up hue and saturation console functions
 std::unique_ptr<Anki::Util::IConsoleFunction> ProceduralFace::_hueConsoleFunc = std::unique_ptr<Anki::Util::IConsoleFunction>(new Anki::Util::IConsoleFunction("ProcFace_Hue", HueConsoleFunction, CONSOLE_GROUP, "float hue") );
 std::unique_ptr<Anki::Util::IConsoleFunction> ProceduralFace::_saturationConsoleFunc = std::unique_ptr<Anki::Util::IConsoleFunction>(new Anki::Util::IConsoleFunction("ProcFace_Saturation", SaturationConsoleFunction, CONSOLE_GROUP, "float saturation") );
@@ -722,6 +722,7 @@ void ProceduralFace::RemoveScanlineDistorter()
 }
 
 #define CONSOLE_GROUP "Face.ParameterizedFace"
+
 void ProceduralFace::RegisterFaceWithConsoleVars() {
    new Util::ConsoleVar<float>(_faceCenter[0],
                                "kProcFace_CenterX", CONSOLE_GROUP,

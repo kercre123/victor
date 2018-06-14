@@ -53,9 +53,12 @@ public:
   // reads resource as json file. returns true if successful.
   static bool readAsJson(const std::string& resourceName, Json::Value& data);
 
-  // write dat to json file. returns true if successful.
+  // write data to json file. returns true if successful.
   bool writeAsJson(const Scope& resourceScope, const std::string& resourceName, const Json::Value& data) const;
 
+  // write data to json file. returns true if successful.
+  bool writeAsJson(const std::string& resourceName, const Json::Value& data) const;
+  
 private:
   const std::string _persistentPath;
   const std::string _cachePath;

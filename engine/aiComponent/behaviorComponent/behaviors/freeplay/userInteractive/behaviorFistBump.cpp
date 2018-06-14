@@ -19,12 +19,14 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/movementComponent.h"
+#include "engine/components/robotStatsTracker.h"
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 
+#include "clad/types/behaviorComponent/behaviorStats.h"
 #include "clad/types/behaviorComponent/behaviorTimerTypes.h"
 
 #include "util/console/consoleInterface.h"
@@ -234,7 +236,9 @@ void BehaviorFistBump::BehaviorUpdate()
     }
     case State::RequestInitialFistBump:
     {
-      DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FistBumpRequestOnce));
+      DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FistBumpRequestOnce), [this]() {
+          GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::AttemptedFistBump);
+        });
       _dVars.state = State::RequestingFistBump;
       break;
     }
@@ -293,6 +297,7 @@ void BehaviorFistBump::BehaviorUpdate()
     }
     case State::CompleteSuccess:
     {
+      GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::FistBumpSuccess);
       // Fall through
     }
     case State::CompleteFail:

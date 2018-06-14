@@ -54,6 +54,8 @@ enum int_32 AnimationTrigger
   ChargerDockingSevereRequest,
   ChargerDockingSevereRequestGetout,
   ChargerReaction,
+  ClockGetIn,
+  ClockGetOut,
   ConnectWakeUp,
   CubePounceFake,
   CubePounceGetIn,

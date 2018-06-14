@@ -3,6 +3,7 @@
   "behaviorID" : "ReactToSoundAwake",
 
   "associatedActiveFeature": "NoFeature",
+  "behaviorStatToIncrement": "ReactedToSound",
 
   "wantsToBeActivatedCondition": {
     // when the robot gets put down, the sound of being put down can trigger this reaction. 

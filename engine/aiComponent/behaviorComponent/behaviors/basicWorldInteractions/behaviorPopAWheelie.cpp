@@ -32,7 +32,6 @@ namespace Anki {
 namespace Cozmo {
 
 namespace{
-CONSOLE_VAR(f32, kBPW_ScoreIncreaseForAction, "Behavior.PopAWheelie", 0.8f);
 CONSOLE_VAR(s32, kBPW_MaxRetries,         "Behavior.PopAWheelie", 1);
 
 } // end namespace

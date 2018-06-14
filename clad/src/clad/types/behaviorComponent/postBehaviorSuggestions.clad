@@ -14,6 +14,8 @@ enum uint_8 PostBehaviorSuggestions {
   Socialize,
   PlayWithCube,
   Nothing,
+  Sleep,
+  SleepOnCharger,
 }
 
 } // namespace Cozmo

@@ -11,6 +11,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorKeepaway.h"
 
+#include "clad/types/behaviorComponent/behaviorStats.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
@@ -18,6 +19,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/robotStatsTracker.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/moodSystem/moodManager.h"
@@ -371,6 +373,8 @@ void BehaviorKeepaway::TransitionToPouncing()
 {
   GetBEI().GetMoodManager().TriggerEmotionEvent("KeepawayPounce");
 
+  GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::AttemptedPounceOnCube);
+
   _dVars.victorGotLastPoint = false;
   float startingPitch = GetBEI().GetRobotInfo().GetPitchAngle().getDegrees();
   _dVars.pounceSuccessPitch_deg = startingPitch + _iConfig.pounceSuccessPitchDiff_deg;
@@ -410,6 +414,8 @@ void BehaviorKeepaway::TransitionToReacting()
 
   SET_STATE(KeepawayState::Reacting);
   if(_dVars.gameOver){
+    GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::PounceOnCubeSuccess);
+
     AnimationTrigger winResponseAnim = _dVars.victorGotLastPoint ? 
                                         AnimationTrigger::CubePounceWinSession :
                                         AnimationTrigger::CubePounceLoseSession;

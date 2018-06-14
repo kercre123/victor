@@ -102,18 +102,24 @@ bool DataPlatform::readAsJson(const std::string& resourceName, Json::Value& data
   return success;
 }
 
-// write dat to json file. returns true if successful.
+// write data to json file. returns true if successful.
 bool DataPlatform::writeAsJson(const Scope& resourceScope, const std::string& resourceName, const Json::Value& data) const
 {
   const std::string jsonFilename = pathToResource(resourceScope, resourceName);
-  LOG_INFO("DataPlatform.writeAsJson", "writing to %s", jsonFilename.c_str());
-  if (!Util::FileUtils::CreateDirectory(jsonFilename, true, true)) {
-    LOG_ERROR("DataPlatform.writeAsJson", "Failed to create folder %s", jsonFilename.c_str());
+  return writeAsJson(jsonFilename, data);
+}
+
+// write data to json file. returns true if successful.
+bool DataPlatform::writeAsJson(const std::string& resourceName, const Json::Value& data) const
+{
+  LOG_INFO("DataPlatform.writeAsJson", "writing to %s", resourceName.c_str());
+  if (!Util::FileUtils::CreateDirectory(resourceName, true, true)) {
+    LOG_ERROR("DataPlatform.writeAsJson", "Failed to create folder %s", resourceName.c_str());
     return false;
   }
   Json::StyledStreamWriter writer;
   std::fstream fs;
-  fs.open(jsonFilename, std::ios::out);
+  fs.open(resourceName, std::ios::out);
   if (!fs.is_open()) {
     return false;
   }

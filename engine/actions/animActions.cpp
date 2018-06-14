@@ -10,7 +10,6 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/actions/dockActions.h"
@@ -20,11 +19,15 @@
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/cubeLightComponent.h"
+#include "engine/components/robotStatsTracker.h"
 #include "engine/cozmoContext.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotInterface/messageHandler.h"
+
+#include "clad/types/behaviorComponent/behaviorStats.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "util/logging/logging.h"
 #include "util/logging/DAS.h"
@@ -86,6 +89,8 @@ namespace Anki {
         _wasAborted = true;
         return ActionResult::ANIM_ABORTED;
       }
+
+      GetRobot().GetComponent<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::BehaviorActived);
 
       return ActionResult::SUCCESS;
     }

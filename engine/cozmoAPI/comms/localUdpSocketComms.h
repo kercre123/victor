@@ -23,27 +23,27 @@ namespace Cozmo {
 class LocalUdpSocketComms : public ISocketComms
 {
 public:
-  
+
   explicit LocalUdpSocketComms(bool isEnabled, std::string socket);
   virtual ~LocalUdpSocketComms();
-  
+
   virtual bool Init(UiConnectionType connectionType, const Json::Value& config) override;
 
   virtual bool AreMessagesGrouped() const override { return false; }
-  
+
   virtual bool ConnectToDeviceByID(DeviceId deviceId) override;
   virtual bool DisconnectDeviceByID(DeviceId deviceId) override;
   virtual bool DisconnectAllDevices() override;
-  
+
   virtual void GetAdvertisingDeviceIDs(std::vector<ISocketComms::DeviceId>& outDeviceIds) override;
-  
+
   virtual uint32_t GetNumConnectedDevices() const override;
-  
+
 protected:
   virtual void UpdateInternal() override;
 
 private:
-  
+
   // ============================== Private Member Functions ==============================
 
   virtual bool SendMessageInternal(const Comms::MsgPacket& msgPacket) override;
@@ -52,9 +52,9 @@ private:
   virtual void OnEnableConnection(bool wasEnabled, bool isEnabled) override;
 
   bool IsConnected() const;
-  
+
   // ============================== Private Member Vars ==============================
-  
+
   const uint32_t        MAX_PACKET_BUFFER_SIZE = 2048;
   const uint16_t        kMessageHeaderSize = 2;
   std::unique_ptr<LocalUdpServer>       _udpServer;

@@ -226,8 +226,9 @@ private:
   bool _areWheelsMoving = false;
   bool _enableRotatedWithoutMotors = false;
 
-  // TODO Set to false so it is only enabled when BehaviorSDKInterface is activated.
-  bool _isAllowedToHandleActions = true;//false;
+  // If false, actions only run when an instance of BehaviorSDKInterface is activated.
+  // TODO Set this to be false
+  bool _isAllowedToHandleActions = true;
   
   std::list<Signal::SmartHandle> _eventHandles;
   

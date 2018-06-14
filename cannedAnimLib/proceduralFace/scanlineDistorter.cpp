@@ -15,30 +15,24 @@
 #include "cannedAnimLib/baseTypes/keyframe.h"
 #include "cannedAnimLib/proceduralFace/proceduralFace.h"
 
-#include "coretech/common/engine/math/matrix_impl.h"
-#include "coretech/vision/engine/image.h" 
+#include "coretech/vision/engine/image.h"
 
-#include "util/console/consoleInterface.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
-#include "util/random/randomGenerator.h"
 
 #define CONSOLE_GROUP_NAME "Face.ScanlineDistortion"
 
 namespace Anki {
 namespace Cozmo {
   
-namespace {
-  
-  // Fraction of (nominal) eye area to be off (note: does not consider "Width" parameter below)
-  CONSOLE_VAR_RANGED(f32, kProcFaceScanline_OffNoiseProb, CONSOLE_GROUP_NAME, 0.1f, 0.f, 1.f);
-  
-  // Max width of each "off" noise bar
-  CONSOLE_VAR(s32, kProcFaceScanline_OffNoiseMaxWidth, CONSOLE_GROUP_NAME, 3);
-  
-  // Max amount to randomly shift control-point distortion shifts left and right, per scanline
-  CONSOLE_VAR(s32, kProcFaceScanline_MaxShiftNoise, CONSOLE_GROUP_NAME, 3);
-}
+// Fraction of (nominal) eye area to be off (note: does not consider "Width" parameter below)
+CONSOLE_VAR_RANGED(f32, kProcFaceScanline_OffNoiseProb, CONSOLE_GROUP_NAME, 0.1f, 0.f, 1.f);
+
+// Max width of each "off" noise bar
+CONSOLE_VAR(s32, kProcFaceScanline_OffNoiseMaxWidth, CONSOLE_GROUP_NAME, 3);
+
+// Max amount to randomly shift control-point distortion shifts left and right, per scanline
+CONSOLE_VAR(s32, kProcFaceScanline_MaxShiftNoise, CONSOLE_GROUP_NAME, 3);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Util::RandomGenerator& ScanlineDistorter::GetRNG()
@@ -158,40 +152,6 @@ s32 ScanlineDistorter::GetEyeDistortionAmount(f32 eyeFrac) const
   return distortionAmount_pix;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ScanlineDistorter::AddOffNoise(const SmallMatrix<2,3,f32>& warpMatrix,
-                                    const s32 eyeHeight, const s32 eyeWidth,
-                                    Vision::ImageRGB& faceImg) const
-{
-  for(const auto & pt : _offNoisePoints)
-  {
-    const Point3f eyePt(eyeWidth*pt.x(), eyeHeight*pt.y(), 1.f);
-    const Point2f noisePt = warpMatrix * eyePt;
-    const s32 row = Util::Clamp((s32)std::round(noisePt.y()), 0, faceImg.GetNumRows()-1);
-    const s32 col = Util::Clamp((s32)std::round(noisePt.x()), 0, faceImg.GetNumCols()-1);
-    
-    if(kProcFaceScanline_OffNoiseMaxWidth > 1)
-    {
-      const s32 width = GetRNG().RandIntInRange(1,kProcFaceScanline_OffNoiseMaxWidth);
-      
-      const s32 rightWidth = width/2;
-      const s32 leftWidth = (width % 2 ? (width-1)/2 : width/2);
-      
-      for(s32 c = col-leftWidth; c <= col+rightWidth; ++c)
-      {
-        if(Util::InRange(c, 0, faceImg.GetNumCols()-1))
-        {
-          faceImg(row,c) = 0;
-        }
-      }
-    }
-    else
-    {
-      faceImg(row,col) = 0;
-    }
-  }
-}
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ScanlineDistorter::GetNextDistortionFrame(const f32 degree, ProceduralFace& faceData, TimeStamp_t& timeInc)
 {

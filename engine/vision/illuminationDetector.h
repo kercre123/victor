@@ -12,7 +12,7 @@
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/matrix.h"
 #include "coretech/vision/engine/image.h"
-#include "engine/vision/illuminationState.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 
 #include "json/json-forwards.h"
 
@@ -39,6 +39,7 @@ namespace Cozmo {
 // Forward declarations
 class CozmoContext;
 struct VisionPoseData;
+class CozmoFeatureGate;
 
 /** 
  * Class for detecting the scene illumination state
@@ -62,7 +63,7 @@ public:
   // Perform illumination detection if the robot is not moving
   Result Detect( Vision::ImageCache& cache, 
                  const VisionPoseData& poseData,
-                 Vision::IlluminationState& illumination );
+                 ExternalInterface::RobotObservedIllumination& illumination );
 
 private:
 
@@ -70,13 +71,15 @@ private:
   std::set<f32> _featPercentiles;    // Percentiles to compute for features
   u32 _featWindowLength;             // Number of sequential timepoints to use for features
   
+  CozmoFeatureGate* _featureGate;
   std::unique_ptr<LinearClassifier> _classifier;
   std::deque<f32> _featureBuffer;
   f32 _illumMinProb;
   f32 _darkMaxProb;
+  bool _allowMovement;
 
   // Checks for movement, returns whether detection can happen or not
-  static bool CanRunDetection( const VisionPoseData& poseData );
+  bool CanRunDetection( const VisionPoseData& poseData ) const;
 
   // Computes image features and pushes them to the head of the feature buffer
   void GenerateFeatures( Vision::ImageCache& cache );

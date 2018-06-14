@@ -856,6 +856,18 @@ void RobotDataLoader::LoadRobotConfigs()
                 jsonFilename.c_str());
     }
   }
+
+  // Photography config
+  {
+    static const std::string jsonFilename = "config/engine/photography_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _photographyConfig);
+    if (!success)
+    {
+      LOG_ERROR("RobotDataLoader.PhotographyConfigNotFound",
+                "Photography Config file %s not found or failed to parse",
+                jsonFilename.c_str());
+    }
+  }
 }
 
 bool RobotDataLoader::DoNonConfigDataLoading(float& loadingCompleteRatio_out)

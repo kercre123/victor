@@ -568,7 +568,7 @@ void AnimationComponent::UpdateCompositeImage(const Vision::CompositeImage& comp
       _robot->SendRobotMessage<RobotInterface::UpdateCompositeImage>(serializedSpriteBox, 
                                                                      applyAt_ms, 
                                                                      layerName, 
-                                                                     entry._spriteName);
+                                                                     entry.GetSpriteName());
     }
   }
 }
@@ -588,7 +588,7 @@ void AnimationComponent::ClearCompositeImageLayer(Vision::LayerName layerName, u
   _robot->SendRobotMessage<RobotInterface::UpdateCompositeImage>(sb.Serialize(), 
                                                                  applyAt_ms, 
                                                                  layerName, 
-                                                                 entry._spriteName);
+                                                                 entry.GetSpriteName());
 }
 
 Result AnimationComponent::EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms) const

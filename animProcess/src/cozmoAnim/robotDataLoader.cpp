@@ -241,7 +241,8 @@ void RobotDataLoader::SetupProceduralAnimation()
   // currently maintains control of both canned animations and sprite sequences this
   // is the best spot to put it for the time being
   Animation proceduralAnim(kProceduralAnimName);
-  _cannedAnimations->AddAnimation(std::move(proceduralAnim));
+  bool outOverwrite = false;
+  _cannedAnimations->AddAnimation(std::move(proceduralAnim), outOverwrite);
   
   assert(_cannedAnimations->GetAnimation(kProceduralAnimName) != nullptr);
 }

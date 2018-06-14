@@ -47,6 +47,10 @@ public:
     dependencies.insert(BCComponentID::ActiveBehaviorIterator);
     dependencies.insert(BCComponentID::UserIntentComponent);
   }
+  
+  virtual void AdditionalUpdateAccessibleComponents(BCCompIDSet& components) const override {
+    components.insert(BCComponentID::RobotStatsTracker);
+  }
   virtual void UpdateDependent(const BCCompMap& dependentComponents) override;
 
   // get the current active feature (or ActiveFeature::None if none is active)

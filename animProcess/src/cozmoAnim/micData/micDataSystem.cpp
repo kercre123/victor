@@ -51,8 +51,12 @@ namespace {
   CONSOLE_FUNC(ClearMicData, "zHiddenForSafety");
 
 #endif
+
+#if ANKI_DEV_CHEATS
   CONSOLE_VAR_RANGED(u32, kMicData_ClipRecordTime_ms, CONSOLE_GROUP, 4000, 500, 15000);
   CONSOLE_VAR(bool, kMicData_SaveRawFullIntent_Wakewordless, CONSOLE_GROUP, false);
+#endif // ANKI_DEV_CHEATS
+
 # undef CONSOLE_GROUP
 
 }
@@ -89,11 +93,10 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform)
 
   if (!_writeLocationDir.empty())
   {
+  #if ANKI_DEV_CHEATS
     Util::FileUtils::CreateDirectory(_writeLocationDir);
-
-    #if ANKI_DEV_CHEATS
-      _debugMicDataWriteLocation = _writeLocationDir;
-    #endif
+    _debugMicDataWriteLocation = _writeLocationDir;
+  #endif
   }
 
   const RobotID_t robotID = OSState::getInstance()->GetRobotID();

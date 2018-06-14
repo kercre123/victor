@@ -1,0 +1,6 @@
+{
+  "MaxSlots" : 20,
+  "RemoveDistortion" : true,
+  "SaveQuality" : 95,
+  "ThumbnailScale" : 0.125
+}

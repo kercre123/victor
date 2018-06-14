@@ -111,6 +111,50 @@ func FaceImageChunkToClad(faceData [faceImagePixelsPerChunk]uint16, pixelCount u
 	})
 }
 
+func ProtoAppIntentToClad(msg *extint.AppIntentRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithAppIntent(&gw_clad.AppIntent{
+		Param:  msg.Param,
+		Intent: msg.Intent,
+	})
+}
+
+func ProtoRequestEnrolledNamesToClad(msg *extint.RequestEnrolledNamesRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithRequestEnrolledNames(&gw_clad.RequestEnrolledNames{})
+}
+
+func ProtoCancelFaceEnrollmentToClad(msg *extint.CancelFaceEnrollmentRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithCancelFaceEnrollment(&gw_clad.CancelFaceEnrollment{})
+}
+
+func ProtoUpdateEnrolledFaceByIDToClad(msg *extint.UpdateEnrolledFaceByIDRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithUpdateEnrolledFaceByID(&gw_clad.UpdateEnrolledFaceByID{
+		FaceID:  msg.FaceId,
+		OldName: msg.OldName,
+		NewName: msg.NewName,
+	})
+}
+
+func ProtoEraseEnrolledFaceByIDToClad(msg *extint.EraseEnrolledFaceByIDRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithEraseEnrolledFaceByID(&gw_clad.EraseEnrolledFaceByID{
+		FaceID: msg.FaceId,
+	})
+}
+
+func ProtoEraseAllEnrolledFacesToClad(msg *extint.EraseAllEnrolledFacesRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithEraseAllEnrolledFaces(&gw_clad.EraseAllEnrolledFaces{})
+}
+
+func ProtoSetFaceToEnrollToClad(msg *extint.SetFaceToEnrollRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithSetFaceToEnroll(&gw_clad.SetFaceToEnroll{
+		Name:        msg.Name,
+		ObservedID:  msg.ObservedId,
+		SaveID:      msg.SaveId,
+		SaveToRobot: msg.SaveToRobot,
+		SayName:     msg.SayName,
+		UseMusic:    msg.UseMusic,
+	})
+}
+
 func CladFeatureStatusToProto(msg *gw_clad.FeatureStatus) *extint.FeatureStatus {
 	return &extint.FeatureStatus{
 		FeatureName: msg.FeatureName,
@@ -141,6 +185,12 @@ func CladStatusToProto(msg *gw_clad.Status) *extint.Status {
 				CladMeetVictorFaceScanStartedToProto(msg.GetMeetVictorFaceScanStarted()),
 			},
 		}
+	case gw_clad.StatusTag_FaceEnrollmentCompleted:
+		status = &extint.Status{
+			StatusType: &extint.Status_MeetVictorFaceScanComplete{
+				CladMeetVictorFaceScanCompleteToProto(msg.GetMeetVictorFaceScanComplete()),
+			},
+		}
 	case gw_clad.StatusTag_MeetVictorFaceScanComplete:
 		status = &extint.Status{
 			StatusType: &extint.Status_MeetVictorFaceScanComplete{
@@ -155,6 +205,62 @@ func CladStatusToProto(msg *gw_clad.Status) *extint.Status {
 		return nil
 	}
 	return status
+}
+
+func CladPoseToProto(msg *gw_clad.PoseStruct3d) *extint.PoseStruct {
+	return &extint.PoseStruct{
+		X:        msg.X,
+		Y:        msg.Y,
+		Z:        msg.Z,
+		Q0:       msg.Q0,
+		Q1:       msg.Q1,
+		Q2:       msg.Q2,
+		Q3:       msg.Q3,
+		OriginId: msg.OriginID,
+	}
+}
+
+func CladAccelDataToProto(msg *gw_clad.AccelData) *extint.AccelData {
+	return &extint.AccelData{
+		X: msg.X,
+		Y: msg.Y,
+		Z: msg.Z,
+	}
+}
+
+func CladGyroDataToProto(msg *gw_clad.GyroData) *extint.GyroData {
+	return &extint.GyroData{
+		X: msg.X,
+		Y: msg.Y,
+		Z: msg.Z,
+	}
+}
+
+func CladRobotStateToProto(msg *gw_clad.RobotState) *extint.RobotStateResult {
+	var robot_state *extint.RobotState
+	robot_state = &extint.RobotState{
+		Pose:                  CladPoseToProto(&msg.Pose),
+		PoseAngleRad:          msg.PoseAngle_rad,
+		PosePitchRad:          msg.PosePitch_rad,
+		LeftWheelSpeedMmps:    msg.LeftWheelSpeed_mmps,
+		RightWheelSpeedMmps:   msg.RightWheelSpeed_mmps,
+		HeadAngleRad:          msg.HeadAngle_rad,
+		LiftHeightMm:          msg.LiftHeight_mm,
+		BatteryVoltage:        msg.BatteryVoltage,
+		Accel:                 CladAccelDataToProto(&msg.Accel),
+		Gyro:                  CladGyroDataToProto(&msg.Gyro),
+		CarryingObjectId:      msg.CarryingObjectID,
+		CarryingObjectOnTopId: msg.CarryingObjectOnTopID,
+		HeadTrackingObjectId:  msg.HeadTrackingObjectID,
+		LocalizedToObjectId:   msg.LocalizedToObjectID,
+		LastImageTimeStamp:    msg.LastImageTimeStamp,
+		Status:                msg.Status,
+		GameStatus:            uint32(msg.GameStatus), // protobuf does not have a uint8 representation, so cast to a uint32
+	}
+
+	return &extint.RobotStateResult{
+		RobotState: robot_state,
+	}
 }
 
 func CladEventToProto(msg *gw_clad.Event) *extint.EventResult {
@@ -304,6 +410,141 @@ func (m *rpcService) DisplayFaceImageRGB(ctx context.Context, in *extint.Display
 	}, nil
 }
 
+// TODO: This should be handled as an event stream once RobotState is made an event
+// Long running message for sending events to listening sdk users
+func (c *rpcService) RobotStateStream(in *extint.RobotStateRequest, stream extint.ExternalInterface_RobotStateStreamServer) error {
+	log.Println("Received rpc request RobotStateStream(", in, ")")
+
+	stream_channel := make(chan RobotToExternalResult, 16)
+	engineChanMap[gw_clad.MessageRobotToExternalTag_RobotState] = stream_channel
+	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_RobotState)
+	log.Println(engineChanMap[gw_clad.MessageRobotToExternalTag_RobotState])
+
+	for result := range stream_channel {
+		log.Println("Got result:", result)
+		robot_state := CladRobotStateToProto(result.Message.GetRobotState())
+		log.Println("Made RobotState:", robot_state)
+		if err := stream.Send(robot_state); err != nil {
+			return err
+		} else if err = stream.Context().Err(); err != nil {
+			// This is the case where the user disconnects the stream
+			// We should still return the err in case the user doesn't think they disconnected
+			return err
+		}
+	}
+	return nil
+}
+	
+func (m *rpcService) AppIntent(ctx context.Context, in *extint.AppIntentRequest) (*extint.AppIntentResult, error) {
+	log.Println("Received rpc request AppIntent(", in, ")")
+	_, err := WriteToEngine(engineSock, ProtoAppIntentToClad(in))
+	if err != nil {
+		return nil, err
+	}
+	return &extint.AppIntentResult{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
+func (m *rpcService) CancelFaceEnrollment(ctx context.Context, in *extint.CancelFaceEnrollmentRequest) (*extint.CancelFaceEnrollmentResult, error) {
+	log.Println("Received rpc request CancelFaceEnrollment(", in, ")")
+	_, err := WriteToEngine(engineSock, ProtoCancelFaceEnrollmentToClad(in))
+	if err != nil {
+		return nil, err
+	}
+	return &extint.CancelFaceEnrollmentResult{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
+func (m *rpcService) RequestEnrolledNames(ctx context.Context, in *extint.RequestEnrolledNamesRequest) (*extint.RequestEnrolledNamesResult, error) {
+	log.Println("Received rpc request RequestEnrolledNames(", in, ")")
+	enrolledNamesResponse := make(chan RobotToExternalResult)
+	engineChanMap[gw_clad.MessageRobotToExternalTag_EnrolledNamesResponse] = enrolledNamesResponse
+	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_EnrolledNamesResponse)
+	_, err := WriteToEngine(engineSock, ProtoRequestEnrolledNamesToClad(in))
+	if err != nil {
+		return nil, err
+	}
+	names := <-enrolledNamesResponse
+	var faces []*extint.LoadedKnownFace
+	for _, element := range names.Message.GetEnrolledNamesResponse().Faces {
+		var newFace = extint.LoadedKnownFace{
+			SecondsSinceFirstEnrolled: element.SecondsSinceFirstEnrolled,
+			SecondsSinceLastUpdated:   element.SecondsSinceLastUpdated,
+			SecondsSinceLastSeen:      element.SecondsSinceLastSeen,
+			FaceId:                    element.FaceID,
+			Name:                      element.Name,
+		}
+		faces = append(faces, &newFace)
+	}
+	return &extint.RequestEnrolledNamesResult{
+		Status: &extint.ResultStatus{
+			Description: "Enrolled names returned",
+		},
+		Faces: faces,
+	}, nil
+}
+
+// TODO Wait for response RobotRenamedEnrolledFace
+func (m *rpcService) UpdateEnrolledFaceByID(ctx context.Context, in *extint.UpdateEnrolledFaceByIDRequest) (*extint.UpdateEnrolledFaceByIDResult, error) {
+	log.Println("Received rpc request UpdateEnrolledFaceByID(", in, ")")
+	_, err := WriteToEngine(engineSock, ProtoUpdateEnrolledFaceByIDToClad(in))
+	if err != nil {
+		return nil, err
+	}
+	return &extint.UpdateEnrolledFaceByIDResult{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
+// TODO Wait for response RobotRenamedEnrolledFace
+func (m *rpcService) EraseEnrolledFaceByID(ctx context.Context, in *extint.EraseEnrolledFaceByIDRequest) (*extint.EraseEnrolledFaceByIDResult, error) {
+	log.Println("Received rpc request EraseEnrolledFaceByID(", in, ")")
+	_, err := WriteToEngine(engineSock, ProtoEraseEnrolledFaceByIDToClad(in))
+	if err != nil {
+		return nil, err
+	}
+	return &extint.EraseEnrolledFaceByIDResult{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
+// TODO Wait for response RobotErasedAllEnrolledFaces
+func (m *rpcService) EraseAllEnrolledFaces(ctx context.Context, in *extint.EraseAllEnrolledFacesRequest) (*extint.EraseAllEnrolledFacesResult, error) {
+	log.Println("Received rpc request EraseAllEnrolledFaces(", in, ")")
+	_, err := WriteToEngine(engineSock, ProtoEraseAllEnrolledFacesToClad(in))
+	if err != nil {
+		return nil, err
+	}
+	return &extint.EraseAllEnrolledFacesResult{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
+func (m *rpcService) SetFaceToEnroll(ctx context.Context, in *extint.SetFaceToEnrollRequest) (*extint.SetFaceToEnrollResult, error) {
+	log.Println("Received rpc request SetFaceToEnroll(", in, ")")
+	_, err := WriteToEngine(engineSock, ProtoSetFaceToEnrollToClad(in))
+	if err != nil {
+		return nil, err
+	}
+	return &extint.SetFaceToEnrollResult{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
 // Long running message for sending events to listening sdk users
 func (c *rpcService) EventStream(in *extint.EventRequest, stream extint.ExternalInterface_EventStreamServer) error {
 	log.Println("Received rpc request EventStream(", in, ")")
@@ -328,19 +569,52 @@ func (c *rpcService) EventStream(in *extint.EventRequest, stream extint.External
 	return nil
 }
 
-// Request control from behavior system
 func (m *rpcService) SDKBehaviorActivation(ctx context.Context, in *extint.SDKActivationRequest) (*extint.SDKActivationResult, error) {
 	log.Println("Received rpc request SDKBehaviorActivation(", in, ")")
+	if (in.Enable) {
+		// Request control from behavior system
+		return SDKBehaviorRequestActivation(in)
+	}
+
+	return SDKBehaviorRequestDeactivation(in)
+}
+
+// Request control from behavior system.
+func SDKBehaviorRequestActivation(in *extint.SDKActivationRequest) (*extint.SDKActivationResult, error) {
+	// We are enabling the SDK behavior. Wait for the engine-to-game reply
+	// that the SDK behavior was activated.
+	sdk_activation_result := make(chan RobotToExternalResult)
+	engineChanMap[gw_clad.MessageRobotToExternalTag_SDKActivationResult] = sdk_activation_result
+	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_SDKActivationResult)
+
 	_, err := WriteToEngine(engineSock, ProtoSDKActivationToClad(in))
 	if err != nil {
 		return nil, err
 	}
+	result:= <-sdk_activation_result
 	return &extint.SDKActivationResult{
-		// TODO Set data for Slot and ResultStatus
-		//Slot: &extint.Slot{
-		//},
 		Status: &extint.ResultStatus{
-			Description: "Message sent to engine",
+			Description: "SDKActivationResult returned",
+		},
+		Slot: result.Message.GetSDKActivationResult().Slot,
+		Enabled: result.Message.GetSDKActivationResult().Enabled,
+	}, nil
+}
+
+func SDKBehaviorRequestDeactivation(in *extint.SDKActivationRequest) (*extint.SDKActivationResult, error) {
+	// Deactivate the SDK behavior. Note that we don't wait for a reply
+	// so that our SDK program can exit immediately.
+	_, err := WriteToEngine(engineSock, ProtoSDKActivationToClad(in))
+	if err != nil {
+		return nil, err
+	}
+
+	// Note: SDKActivationResult contains Slot and Enabled, which we are currently
+	// ignoring when we deactivate the SDK behavior since we are not waiting for
+	// the SDKActivationResult message to return.
+	return &extint.SDKActivationResult{
+		Status: &extint.ResultStatus{
+			Description: "SDKActivationResult returned",
 		},
 	}, nil
 }

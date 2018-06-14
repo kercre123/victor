@@ -391,6 +391,12 @@ message RobotObservedLaserPoint {
     int_16   ground_y_mm
 }
 
+// RobotObservedIllumination
+message RobotObservedIllumination {
+    uint_32           timestamp,
+    IlluminationState state
+}
+
 // RobotDeletedFace - sent when an _observed_ face has been deleted (e.g. if not seen for too long)
 message RobotDeletedFace {
     int_32  faceID
@@ -1035,6 +1041,7 @@ message RobotHistoryResult {
 // Response to request for control from behavior system
 message SDKActivationResult {
     BehaviorSlot slot,
+    bool enabled,
 }
 
 // Anything that the robot wishes to push to the app that 
@@ -1055,6 +1062,8 @@ autounion MessageEngineToGame
   Event                             Event                              = 0x02,
   RobotHistoryResult                RobotHistoryResult                 = 0x03,
   SDKActivationResult               SDKActivationResult                = 0x04,
+  RobotState                        RobotState                         = 0x05, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  EnrolledNamesResponse             EnrolledNamesResponse              = 0x06,  
 }
 
 } // namespace ExternalInterface

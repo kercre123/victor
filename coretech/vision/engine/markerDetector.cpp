@@ -162,7 +162,7 @@ Result MarkerDetector::Detect(const Image& inputImageGray, std::list<ObservedMar
 {
   ANKI_CPU_PROFILE("MarkerDetector_Detect");
   
-  DEV_ASSERT(_params->isInitialized, "MarkerDetector.Detect.ParamsNoInitialized");
+  DEV_ASSERT(_params->isInitialized, "MarkerDetector.Detect.ParamsNotInitialized");
   
   _memory->ResetBuffers(inputImageGray.GetNumRows(), inputImageGray.GetNumCols(), _params->maxMarkers);
   
@@ -202,6 +202,7 @@ Result MarkerDetector::Detect(const Image& inputImageGray, std::list<ObservedMar
                                               _memory->_offchipScratch);
   
   if(result != RESULT_OK) {
+    PRINT_NAMED_ERROR("MarkerDetector.Detect.DetectFiducialMarkersFailed", "");
     return result;
   }
   

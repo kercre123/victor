@@ -118,14 +118,13 @@ private:
 
   
   enum class BackpackLightsState {
-    OffCharger,
+    Off,
     Charging,
-    Charged,
     BadCharger,
     Idle_09,
   };
   
-  BackpackLightsState             _curBackpackChargeState = BackpackLightsState::OffCharger;
+  BackpackLightsState             _curBackpackChargeState = BackpackLightsState::Off;
   
   Result SetBackpackLightsInternal(const BackpackLights& lights);
   void StartLoopingBackpackLightsInternal(BackpackLights lights, BackpackLightSourceType source, BackpackLightDataLocator& lightLocator_out);

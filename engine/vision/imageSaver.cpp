@@ -12,6 +12,7 @@
 
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/imageCache.h"
+#include "engine/components/photographyManager.h"
 #include "engine/vision/imageSaver.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/math/math.h"
@@ -79,9 +80,10 @@ bool ImageSaver::ShouldSaveSensorData() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ImageSaver::Save(Vision::ImageCache& imageCache, const s32 frameNumber)
 {
-  const std::string fullFilename = GetFullFilename(frameNumber, (_params.quality < 0 ? "png" : "jpg"));
+  const std::string fullFilename = GetFullFilename(frameNumber, (_params.quality < 0 ? "png" : PhotographyManager::GetPhotoExtension()));
   
-  PRINT_CH_INFO(kLogChannelName, "ImageSaver.Save.SavingImage", "Saving to %s", fullFilename.c_str());
+  PRINT_CH_INFO(kLogChannelName, "ImageSaver.Save.SavingImage", "Saving image with timestamp %u to %s",
+                imageCache.GetTimeStamp(), fullFilename.c_str());
   
   // Resize into a new image to avoid affecting downstream updates
   Vision::ImageRGB sizedImage = imageCache.GetRGB(_params.size);
@@ -104,7 +106,7 @@ Result ImageSaver::Save(Vision::ImageCache& imageCache, const s32 frameNumber)
   Result thumbnailResult = RESULT_OK;
   if((RESULT_OK == saveResult) && Util::IsFltGTZero(_params.thumbnailScale))
   {
-    const std::string fullFilename = GetFullFilename(frameNumber, (_params.quality < 0 ? "thm.png" : "thm.jpg"));
+    const std::string fullFilename = GetFullFilename(frameNumber, (_params.quality < 0 ? "thm.png" : PhotographyManager::GetThumbExtension()));
     Vision::ImageRGB thumbnail;
     sizedImage.Resize(_params.thumbnailScale);
     thumbnailResult = sizedImage.Save(fullFilename);

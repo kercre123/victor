@@ -40,6 +40,7 @@ static const char* kFeatureEnumString =
   "LocalNotifications,"
   "Exploring,"
   "Messaging,"
+  "ReactToIllumination,"
   "KnowledgeGraph";
 
 CONSOLE_VAR_ENUM( uint8_t,  kFeatureToEdit,   kConsoleFeatureGroup,  0, kFeatureEnumString );

@@ -89,9 +89,8 @@ BackpackAnimation* BackpackLightAnimationContainer::GetAnimation(const std::stri
 Result BackpackLightAnimationContainer::DefineFromJson(const Json::Value& jsonRoot)
 {
   // These strings directly correspond to the BackpackLightsStates in bodyLightComponent.h
-  _animations.emplace("OffCharger", BodyLightComponent::GetOffBackpackLights());
+  _animations.emplace("Off", BodyLightComponent::GetOffBackpackLights());
   AddBackpackLightStateValues("Charging",   jsonRoot["charging"]);
-  AddBackpackLightStateValues("Charged",    jsonRoot["charged"]);
   AddBackpackLightStateValues("BadCharger", jsonRoot["badCharger"]);
   AddBackpackLightStateValues("Idle_09",    jsonRoot["idle_09"]);
   return RESULT_OK;

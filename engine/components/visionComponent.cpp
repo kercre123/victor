@@ -96,9 +96,11 @@ namespace Cozmo {
   // Set to a value greater than 0 to randomly drop that fraction of frames, for testing
   CONSOLE_VAR_RANGED(f32, kSimulateDroppedFrameFraction, "Vision.General", 0.f, 0.f, 1.f); // DO NOT COMMIT > 0!
 
-  CONSOLE_VAR(bool, kVisualizeObservedMarkersIn3D, "Vision.General", false);
-  CONSOLE_VAR(bool, kDrawMarkerNames,              "Vision.General", false); // In viz camera view
-  CONSOLE_VAR(bool, kDisplayUndistortedImages,     "Vision.General", false);
+  CONSOLE_VAR(bool, kVisualizeObservedMarkersIn3D,  "Vision.General", false);
+  // If > 0, displays detected marker names in Viz Camera Display (still at fixed scale) and
+  // and in mirror mode (at specified scale)
+  CONSOLE_VAR_RANGED(f32,  kDisplayMarkerNamesScale,"Vision.General", 0.f, 0.f, 1.f);
+  CONSOLE_VAR(bool, kDisplayUndistortedImages,      "Vision.General", false);
 
   CONSOLE_VAR(bool, kEnableMirrorMode,              "Vision.General", false);
   CONSOLE_VAR(bool, kDisplayDetectionsInMirrorMode, "Vision.General", false); // objects, faces, markers
@@ -437,7 +439,8 @@ namespace Cozmo {
     }
 
     // Don't bother updating while we are waiting for a capture format change to take effect
-    if(UpdateCaptureFormatChange())
+    UpdateCaptureFormatChange();
+    if(CaptureFormatState::WaitingForProcessingToStop == _captureFormatState)
     {
       return;
     }
@@ -452,6 +455,12 @@ namespace Cozmo {
       {
         DEV_ASSERT(!_bufferedImg.IsEmpty(), "VisionComponent.Update.EmptyImageAfterCapture");
 
+        UpdateCaptureFormatChange(_bufferedImg.GetNumRows());
+        if(CaptureFormatState::WaitingForFrame == _captureFormatState)
+        {
+          return;
+        }
+        
         // Compress to jpeg and send to game and viz
         // Do this before setting next image since it swaps the image and invalidates it
         Result lastResult = CompressAndSendImage(_bufferedImg, kImageCompressQuality, "camera");
@@ -587,7 +596,6 @@ namespace Cozmo {
     // Fill in the pose data for the given image, by querying robot history
     HistRobotState imageHistState;
     TimeStamp_t imageHistTimeStamp;
-    bool didSwapNextImage = false;
 
     Result lastResult = GetImageHistState(*_robot, image.GetTimestamp(), imageHistState, imageHistTimeStamp);
 
@@ -686,42 +694,40 @@ namespace Cozmo {
       _vizManager->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
                            "Vision: <PAUSED>");
     }
-
-    if(_isSynchronous)
-    {
-      if(!_paused) {
-        UpdateVisionSystem(_nextPoseData, image);
-      }
-    }
     else
     {
-      // Do this even when paused
-      ANKI_CPU_PROFILE("VC::SetNextImage.LockedSwap");
-      Lock();
-
-      const bool isDroppingFrame = !_nextImg.IsEmpty() || (kSimulateDroppedFrameFraction > 0.f &&
-                                                           _robot->GetContext()->GetRandom()->RandDbl() < kSimulateDroppedFrameFraction);
-      if(isDroppingFrame)
+      if(_isSynchronous)
       {
-        PRINT_CH_DEBUG("VisionComponent",
-                       "VisionComponent.SetNextImage.DroppedFrame",
-                       "Setting next image with t=%u, but existing next image from t=%u not yet processed (currently on t=%u).",
-                       image.GetTimestamp(),
-                       _nextImg.GetTimestamp(),
-                       _currentImg.GetTimestamp());
+        UpdateVisionSystem(_nextPoseData, image);
       }
-      _dropStats.Update(isDroppingFrame);
-
-      // Make encoded image the new "next" image
-      std::swap(_nextImg, image);
-      didSwapNextImage = true;
-
-      DEV_ASSERT(!_nextImg.IsEmpty(), "VisionComponent.SetNextImage.NextImageEmpty");
-
-      Unlock();
+      else
+      {
+        ANKI_CPU_PROFILE("VC::SetNextImage.LockedSwap");
+        Lock();
+        
+        const bool isDroppingFrame = !_nextImg.IsEmpty() || (kSimulateDroppedFrameFraction > 0.f &&
+                                                             _robot->GetContext()->GetRandom()->RandDbl() < kSimulateDroppedFrameFraction);
+        if(isDroppingFrame)
+        {
+          PRINT_CH_DEBUG("VisionComponent",
+                         "VisionComponent.SetNextImage.DroppedFrame",
+                         "Setting next image with t=%u, but existing next image from t=%u not yet processed (currently on t=%u).",
+                         image.GetTimestamp(),
+                         _nextImg.GetTimestamp(),
+                         _currentImg.GetTimestamp());
+        }
+        _dropStats.Update(isDroppingFrame);
+        
+        // Make given image the new "next" image, to be processed once the vision thread is done with "current"
+        std::swap(_nextImg, image);
+        
+        DEV_ASSERT(!_nextImg.IsEmpty(), "VisionComponent.SetNextImage.NextImageEmpty");
+        
+        Unlock();
+      }
     }
-
-    return (didSwapNextImage) ? RESULT_OK : RESULT_FAIL;
+    
+    return RESULT_OK;
 
   } // SetNextImage()
 
@@ -822,7 +828,20 @@ namespace Cozmo {
                                            const Vision::ImageRGB& image)
   {
     ANKI_CPU_PROFILE("VC::UpdateVisionSystem");
-    Result result = _visionSystem->Update(poseData, image);
+    
+    DEV_ASSERT((ImageEncoding::RawRGB == _currentImageFormat) || (ImageEncoding::YUV420sp == _currentImageFormat),
+               "VisionComponent.UpdateVisionSystem.UnsupportedFormat");
+    
+    ANKI_VERIFY((_currentImageFormat == ImageEncoding::RawRGB && image.GetNumRows()==DEFAULT_CAMERA_RESOLUTION_HEIGHT) ||
+                (_currentImageFormat == ImageEncoding::YUV420sp && image.GetNumRows()==CAMERA_SENSOR_RESOLUTION_HEIGHT),
+                "VisionComponent.UpdateVisionSystem.FormatSizeMismatch",
+                "Format: %s, NumRows:%d", ImageEncodingToString(_currentImageFormat), image.GetNumRows());
+    
+    const f32 sensorToFullDownsampleFactor = (_currentImageFormat == ImageEncoding::RawRGB ?
+                                              1.f : // Sensor and Full are the same
+                                              (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT / (f32)CAMERA_SENSOR_RESOLUTION_HEIGHT);
+    const Vision::ResizeMethod resizeMethod = Vision::ResizeMethod::Linear;
+    Result result = _visionSystem->Update(poseData, image, sensorToFullDownsampleFactor, resizeMethod);
     if(RESULT_OK != result) {
       PRINT_NAMED_WARNING("VisionComponent.UpdateVisionSystem.UpdateFailed", "");
     }
@@ -885,8 +904,8 @@ namespace Cozmo {
 
     ANKI_CPU_REMOVE_THIS_THREAD();
 
-    PRINT_NAMED_INFO("VisionComponent.Processor",
-                     "Terminated Robot VisionComponent::Processor thread");
+    PRINT_CH_INFO("VisionComponent", "VisionComponent.Processor.TerminatedVisionSystemThread",
+                  "Terminated VisionComponent::Processor thread");
   } // Processor()
 
 
@@ -976,26 +995,26 @@ namespace Cozmo {
 
         // NOTE: UpdateVisionMarkers will also update BlockWorld (which broadcasts
         //  object observations and should be done before sending RobotProcessedImage below!)
-        tryAndReport(&VisionComponent::UpdateVisionMarkers,       VisionMode::DetectingMarkers);
+        tryAndReport(&VisionComponent::UpdateVisionMarkers,        VisionMode::DetectingMarkers);
 
         // NOTE: UpdateFaces will also update FaceWorld (which broadcasts face observations
         //  and should be done before sending RobotProcessedImage below!)
-        tryAndReport(&VisionComponent::UpdateFaces,               VisionMode::DetectingFaces);
+        tryAndReport(&VisionComponent::UpdateFaces,                VisionMode::DetectingFaces);
 
         // NOTE: UpdatePets will also update PetWorld (which broadcasts pet face observations
         //  and should be done before sending RobotProcessedImage below!)
-        tryAndReport(&VisionComponent::UpdatePets,                VisionMode::DetectingPets);
+        tryAndReport(&VisionComponent::UpdatePets,                 VisionMode::DetectingPets);
 
-        tryAndReport(&VisionComponent::UpdateMotionCentroid,      VisionMode::DetectingMotion);
-        tryAndReport(&VisionComponent::UpdateOverheadEdges,       VisionMode::DetectingOverheadEdges);
-        tryAndReport(&VisionComponent::UpdateComputedCalibration, VisionMode::ComputingCalibration);
-        tryAndReport(&VisionComponent::UpdateImageQuality,        VisionMode::CheckingQuality);
-        tryAndReport(&VisionComponent::UpdateWhiteBalance,        VisionMode::CheckingWhiteBalance);
-        tryAndReport(&VisionComponent::UpdateLaserPoints,         VisionMode::DetectingLaserPoints);
-        tryAndReport(&VisionComponent::UpdateSalientPoints,       VisionMode::Count); // Use Count here to always call UpdateSalientPoints
-        tryAndReport(&VisionComponent::UpdateVisualObstacles,     VisionMode::DetectingVisualObstacles);
-        tryAndReport(&VisionComponent::UpdatePhotoManager,        VisionMode::SavingImages);
-        
+        tryAndReport(&VisionComponent::UpdateMotionCentroid,       VisionMode::DetectingMotion);
+        tryAndReport(&VisionComponent::UpdateOverheadEdges,        VisionMode::DetectingOverheadEdges);
+        tryAndReport(&VisionComponent::UpdateComputedCalibration,  VisionMode::ComputingCalibration);
+        tryAndReport(&VisionComponent::UpdateImageQuality,         VisionMode::CheckingQuality);
+        tryAndReport(&VisionComponent::UpdateWhiteBalance,         VisionMode::CheckingWhiteBalance);
+        tryAndReport(&VisionComponent::UpdateLaserPoints,          VisionMode::DetectingLaserPoints);
+        tryAndReport(&VisionComponent::UpdateSalientPoints,        VisionMode::Count); // Use Count here to always call UpdateSalientPoints
+        tryAndReport(&VisionComponent::UpdateVisualObstacles,      VisionMode::DetectingVisualObstacles);
+        tryAndReport(&VisionComponent::UpdatePhotoManager,         VisionMode::SavingImages);
+        tryAndReport(&VisionComponent::UpdateDetectedIllumination, VisionMode::DetectingIllumination);
         // Display any debug images left by the vision system
         if(ANKI_DEV_CHEATS)
         {
@@ -1232,7 +1251,7 @@ namespace Cozmo {
                                       NamedColors::BLUE : NamedColors::RED);
         _vizManager->DrawCameraQuad(corners, drawColor, NamedColors::GREEN);
 
-        if(kDrawMarkerNames)
+        if(Util::IsFltGTZero(kDisplayMarkerNamesScale))
         {
           Rectangle<f32> boundingRect(corners);
           std::string markerName(visionMarker.GetCodeName());
@@ -1255,9 +1274,10 @@ namespace Cozmo {
             //const Rectangle<f32> rect(quad);
             //img.DrawRect(DisplayMirroredRectHelper(rect.GetX(), rect.GetY(), rect.GetWidth(), rect.GetHeight()), drawColor, 3);
             img.DrawQuad(DisplayMirroredQuadHelper(quad), drawColor, 3);
-            if(kDrawMarkerNames)
+            if(Util::IsFltGTZero(kDisplayMarkerNamesScale))
             {
-              img.DrawText({1., img.GetNumRows()-1}, name.substr(strlen("MARKER_"),std::string::npos), drawColor);
+              img.DrawText({1., img.GetNumRows()-1}, name.substr(strlen("MARKER_"),std::string::npos),
+                           drawColor, kDisplayMarkerNamesScale);
             }
           };
 
@@ -1596,6 +1616,13 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
+  Result VisionComponent::UpdateDetectedIllumination(const VisionProcessingResult& procResult)
+  {
+    ExternalInterface::RobotObservedIllumination msg( procResult.illumination );
+    _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+    return RESULT_OK;
+  }
+
   bool VisionComponent::WasHeadRotatingTooFast(TimeStamp_t t,
                                                const f32 headTurnSpeedLimit_radPerSec,
                                                const int numImuDataToLookBack) const
@@ -2695,25 +2722,35 @@ namespace Cozmo {
     // Pause and wait for VisionSystem to finish processing the current image
     // before changing formats since that will release all shared camera memory
     Pause(true);
+    
+    // Clear the next image so that it doesn't get swapped in to current immediately
+    Lock();
+    ReleaseImage(_nextImg);
+    Unlock();
 
     _desiredImageFormat = format;
 
     _captureFormatState = CaptureFormatState::WaitingForProcessingToStop;
 
+    PRINT_CH_INFO("VisionComponent", "VisionComponent.SetCamerCaptureFormat.RequestingSwitch",
+                  "From %s to %s",
+                  ImageEncodingToString(_currentImageFormat), ImageEncodingToString(_desiredImageFormat));
+    
     return true;
   }
 
-  bool VisionComponent::UpdateCaptureFormatChange()
+  void VisionComponent::UpdateCaptureFormatChange(s32 gotNumRows)
   {
     switch(_captureFormatState)
     {
       case CaptureFormatState::None:
       {
-        return false;
+        return;
       }
 
       case CaptureFormatState::WaitingForProcessingToStop:
       {
+        PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateCaptureFormatChange.WaitingForProcessingToStop", "");
         Lock();
         const bool curImgEmpty = _currentImg.IsEmpty();
 
@@ -2721,13 +2758,6 @@ namespace Cozmo {
         // VisionSystem has finished processing it
         if(curImgEmpty)
         {
-          // _currentImg is empty so check if we need to release _nextImg
-          // before changing capture formats (deallocates all image memory)
-          if(!_nextImg.IsEmpty())
-          {
-            ReleaseImage(_nextImg);
-          }
-
           // Make sure to also clear image cache
           _visionSystem->ClearImageCache();
 
@@ -2736,39 +2766,52 @@ namespace Cozmo {
           auto cameraService = CameraService::getInstance();
           cameraService->CameraSetCaptureFormat(_desiredImageFormat);
 
-          // Clear desired format
-          _desiredImageFormat = ImageEncoding::NoneImageEncoding;
-
+          PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateCaptureFormatChange.SwitchToWaitForFrame",
+                        "Now in %s", ImageEncodingToString(_currentImageFormat));
+          
           _captureFormatState = CaptureFormatState::WaitingForFrame;
         }
 
         Unlock();
 
-        return true;
+        return;
       }
 
       case CaptureFormatState::WaitingForFrame:
       {
-        Lock();
-        const bool nextImgEmpty = _nextImg.IsEmpty();
-        Unlock();
-
-        // If the next image to no longer empty,
-        // it indicates the camera is giving us frames again
-        if(!nextImgEmpty)
+        PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateCaptureFormatChange.WaitingForFrameWithNewFormat", "");
+        
+        s32 expectedNumRows = 0;
+        switch(_desiredImageFormat)
         {
-          // Unpause now that the format has changed and we
-          // are getting images from the camera again
-          Pause(false);
-
+          case ImageEncoding::RawRGB:
+            expectedNumRows = DEFAULT_CAMERA_RESOLUTION_HEIGHT;
+            break;
+            
+          case ImageEncoding::YUV420sp:
+            expectedNumRows = CAMERA_SENSOR_RESOLUTION_HEIGHT;
+            break;
+            
+          default:
+            PRINT_NAMED_ERROR("VisionComponent.UpdateCaptureFormatChange.BadDesiredFormat", "%s",
+                              ImageEncodingToString(_desiredImageFormat));
+            return;
+        }
+        
+        if(gotNumRows == expectedNumRows)
+        {
+          DEV_ASSERT(_paused, "VisionComponent.UpdateCaptureFormatChange.ExpectingVisionComponentToBePaused");
           _captureFormatState = CaptureFormatState::None;
+          _currentImageFormat = _desiredImageFormat;
+          _desiredImageFormat = ImageEncoding::NoneImageEncoding;
+          Pause(false); // now that state/format are updated, un-pause the vision system
+          PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateCaptureFormatChange.FormatChangeComplete",
+                        "New format: %s, NumRows=%d", ImageEncodingToString(_currentImageFormat), gotNumRows);
         }
 
-        return false;
+        return;
       }
     }
-
-    return false;
   }
 
   bool VisionComponent::IsWaitingForCaptureFormatChange() const

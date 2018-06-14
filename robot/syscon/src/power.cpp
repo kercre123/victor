@@ -1,6 +1,7 @@
 #include "common.h"
 #include "hardware.h"
 
+#include "comms.h"
 #include "power.h"
 #include "analog.h"
 #include "vectors.h"
@@ -44,17 +45,16 @@ void Power::init(void) {
 }
 
 static inline void enableHead(void) {
-  MAIN_EN::mode(MODE_OUTPUT);
   MAIN_EN::set();
   Mics::start();
-  Lights::init();
+  Lights::enable();
 }
 
 static inline void disableHead(void) {
-  MAIN_EN::mode(MODE_OUTPUT);
   MAIN_EN::reset();
   Mics::stop();
   Lights::disable();
+  Comms::reset();
 }
 
 static void markForErase(void) {
@@ -144,6 +144,11 @@ void Power::wakeUp() {
 
 void Power::setMode(PowerMode set) {
   desiredState = set;
+
+  // Alter power to the head immediately
+  if (set == POWER_STOP) {
+    disableHead();
+  }
 }
 
 void Power::tick(void) {
@@ -159,22 +164,19 @@ void Power::tick(void) {
       Encoders::init();
       Opto::start();
       Mics::reduce(false);
+    } 
+    
+    if (currentState == POWER_STOP) {
+      enableHead();
+    }
+
+    if (desired == POWER_ERASE) {
+      markForErase();
+      enterBootloader();
+      return ;
     }
 
     currentState = desired;
-
-    switch (currentState) {
-      case POWER_ERASE:
-        markForErase();
-        enterBootloader();
-        return ;
-      case POWER_STOP:
-        disableHead();
-        break ;
-      default:
-        enableHead();
-        break ;
-    }
   }
 
   switch (currentState) {

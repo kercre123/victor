@@ -23,11 +23,12 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
+#include "engine/audio/engineRobotAudioClient.h"
+#include "engine/components/robotStatsTracker.h"
 #include "engine/moodSystem/moodManager.h"
 
-// audio
-#include "engine/audio/engineRobotAudioClient.h"
 #include "clad/audio/audioEventTypes.h"
+#include "clad/types/behaviorComponent/behaviorStats.h"
 
 #include <vector>
 #include <memory>
@@ -295,10 +296,12 @@ void BehaviorReactToTouchPetting::BehaviorUpdate()
         if( nowAtMaxBliss ) {
           // reached max bliss this time
           GetBEI().GetMoodManager().TriggerEmotionEvent("PettingReachedMaxBliss");
+          GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::PettingReachedMaxBliss);
         }
         else {
           // "leveled up" but did not reach max
           GetBEI().GetMoodManager().TriggerEmotionEvent("PettingBlissLevelIncrease");
+          GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::PettingBlissIncrease);
         }
       }
       break;

@@ -362,5 +362,32 @@ bool OSState::HasValidEMR() const
   return false;
 }
 
+const std::string & OSState::GetBootID()
+{
+  if (_bootID.empty()) {
+    char buf[BUFSIZ] = "";
+    size_t bufsiz = sizeof(buf);
+    if (sysctlbyname("kern.bootsessionuuid", &buf, &bufsiz, NULL, 0) == 0) {
+      _bootID = std::string(buf, bufsiz);
+    }
+    if (_bootID.empty()) {
+      LOG_ERROR("OSState.GetBootID", "Unable to read boot session ID");
+    }
+  }
+  return _bootID;
+}
+
+bool OSState::IsWallTimeSynced() const
+{
+  // assume mac is always synced (not really accurate... but good enough)
+  return true;
+}
+
+bool OSState::HasTimezone() const
+{
+  // assume mac always has locale set
+  return true;
+}
+
 } // namespace Cozmo
 } // namespace Anki

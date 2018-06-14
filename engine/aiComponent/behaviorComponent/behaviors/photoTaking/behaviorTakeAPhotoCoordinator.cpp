@@ -13,14 +13,23 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/photoTaking/behaviorTakeAPhotoCoordinator.h"
 
+#include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/components/photographyManager.h"
+#include "engine/robot.h"
 
+#include "util/console/consoleInterface.h"
 
 namespace Anki {
 namespace Cozmo {
+  
+namespace {
+  // TODO: Move to console vars or Json config
+ static constexpr f32 kReadyToTakePhotoTimeout_sec = 3.f;
+ static constexpr f32 kTakingPhotoTimeout_sec      = 6.f;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorTakeAPhotoCoordinator::InstanceConfig::InstanceConfig()
@@ -55,6 +64,7 @@ bool BehaviorTakeAPhotoCoordinator::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTakeAPhotoCoordinator::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
+  modifiers.visionModesForActiveScope->insert({ VisionMode::SavingImages, EVisionUpdateFrequency::High });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -147,14 +157,63 @@ void BehaviorTakeAPhotoCoordinator::TransitionToTakeAPhotoAnimations()
               "BehaviorTakeAPhotoCoordinator.TransitionToTakeAPhotoAnimations.DoesNotWantToBeActivated", 
               "");
   DelegateIfInControl(_iConfig.takePhotoAnimationsBehavior.get(), 
-                      &BehaviorTakeAPhotoCoordinator::CaptureCurrentImage);
+                      &BehaviorTakeAPhotoCoordinator::TransitionToTakePhoto);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorTakeAPhotoCoordinator::TransitionToTakePhoto()
+{
+  if(GetBEI().GetPhotographyManager().IsReadyToTakePhoto())
+  {
+    // We should normally be ready immediately because the animations should have taken long enough to switch
+    // camera formats
+    CaptureCurrentImage();
+  }
+  else
+  {
+    // We generally should not need to wait any more than for the animations to play, so issue an error and
+    // wait for the photo manager to be ready to take a photo and *then* transition
+    PRINT_NAMED_ERROR("BehaviorTakeAPhotoCoordinator.TransitionToTakePhoto.NotReadyAfterAnimating", "");
+    
+    WaitForLambdaAction* waitAction = new WaitForLambdaAction([](Robot& robot) {
+      return robot.GetPhotographyManager().IsReadyToTakePhoto();
+    }, kReadyToTakePhotoTimeout_sec);
+    
+    auto transition = [this](ActionResult result) {
+      if(ActionResult::SUCCESS == result) {
+        this->CaptureCurrentImage();
+      }
+      else {
+        PRINT_NAMED_ERROR("BehaviorTakeAPhotoCoordinator.TransitionToTakePhoto.NotReadyAfterTimeout", "");
+      }
+    };
+    
+    DelegateIfInControl(waitAction, transition);
+  }
+}
 
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTakeAPhotoCoordinator::CaptureCurrentImage()
 {
-  GetBEI().GetPhotographyManager().TakePhoto();
+  auto photoHandle = GetBEI().GetPhotographyManager().TakePhoto();
+  
+  // Wait for photo to be taken before continuing
+  WaitForLambdaAction* waitAction = new WaitForLambdaAction([photoHandle](Robot& robot) {
+    return robot.GetPhotographyManager().WasPhotoTaken(photoHandle);
+  }, kTakingPhotoTimeout_sec);
+  
+  DelegateIfInControl(waitAction, [photoHandle](ActionResult result) {
+    if(ActionResult::SUCCESS == result) {
+      PRINT_CH_INFO("Behaviors", "BehaviorTakeAPhotoCoordinator.CaptureCurrentImage.PhotoWasTaken",
+                    "Handle: %zu", photoHandle);
+    }
+    else {
+      PRINT_NAMED_ERROR("BehaviorTakeAPhotoCoordinator.CaptureCurrentImage.TakePhotoTimedOut",
+                        "Handle: %zu Timeout: %.2fsec",
+                        photoHandle, kTakingPhotoTimeout_sec);
+    }
+  });
 }
 
 }

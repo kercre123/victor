@@ -109,7 +109,6 @@ enum uint_8 BehaviorClass {
   VisitInterestingEdge,
 
   // freeplay/oneShots
-  Dance,
   Singing,
 
   // freeplay/putDownDispatch
@@ -155,6 +154,7 @@ enum uint_8 BehaviorClass {
   AcknowledgeObject,
   ReactToCliff,
   ReactToCubeTap,
+  ReactToDarkness,
   ReactToFrustration,
   ReactToMicDirection,
   ReactToMotion,
@@ -182,6 +182,7 @@ enum uint_8 BehaviorClass {
 
   // timer
   AdvanceClock,
+  DisplayWallTime,
   ProceduralClock,
   TimerUtilityCoordinator,
 

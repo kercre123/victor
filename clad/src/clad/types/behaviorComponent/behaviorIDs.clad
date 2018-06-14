@@ -62,7 +62,6 @@ enum uint_8 BehaviorID {
   ExampleObjectMoved,
   ExampleObjectPositionUpdated,
   ExamplePetInitialDetection,
-  OnboardingReactToWelcomeHome,
 
   // hiking
   Hiking_BringCubeToBeacon,
@@ -89,6 +88,9 @@ enum uint_8 BehaviorID {
   BlackJackRequestToPlay,
   BlackJackRequestToPlayAgain,
   BlackJackTextToSpeech,
+
+  // victorBehaviorTree/clock
+  ShowWallTime,
 
   // victorBehaviorTree
   ComeHereVoiceCommand,
@@ -131,12 +133,17 @@ enum uint_8 BehaviorID {
   InspectCube,
   InteractWithFaces,
   Keepaway,
-  LeaveAMessage,
   LookInPlaceHeadUp,
 
   // victorBehaviorTree/highLevelDelegates/meetVictor
   MeetVictor,
   RespondToRenameFace,
+
+  // victorBehaviorTree/highLevelDelegates/messaging
+  LeaveAMessage,
+  MessagingPlaybackTTS,
+  MessagingRecordTTS,
+  PlaybackMessage,
 
   // victorBehaviorTree/highLevelDelegates
   NothingToDo_Idle,
@@ -165,9 +172,6 @@ enum uint_8 BehaviorID {
   PlayWithCube,
   PopAWheelie,
   RollCubeVoiceCommand,
-
-  // victorBehaviorTree/highLevelDelegates
-  PlaybackMessage,
 
   // victorBehaviorTree/highLevelDelegates/pounceWithProx
   SingletonPounceApproachWithProx,
@@ -210,14 +214,16 @@ enum uint_8 BehaviorID {
   // victorBehaviorTree/onboarding
   Onboarding,
   OnboardingAsleep,
+  OnboardingComeHere,
   OnboardingCubeTrick,
+  OnboardingFinishedComeHere,
   OnboardingLookAtUser,
   OnboardingLookForCube,
   OnboardingLowBattery,
   OnboardingPickedUp,
   OnboardingPlacedOnCharger,
   OnboardingSluggishDriveOffCharger,
-  OnboardingWaitForWelcomeHome,
+  OnboardingWaitForComeHere,
   OnboardingWakeUp,
 
   // victorBehaviorTree/quietMode
@@ -238,6 +244,7 @@ enum uint_8 BehaviorID {
   ProceduralTurnToMicDirection,
   ReactToCliff,
   ReactToCubeTap,
+  ReactToDarkness,
   ReactToFrustrationMajor,
   ReactToGoodBye,
   ReactToGoodMorning,
@@ -294,13 +301,6 @@ enum uint_8 BehaviorID {
   // victorBehaviorTree/weather
   WeatherResponses,
   WeatherTextToSpeech,
-
-  // messaging
-  MessagingRecordNoRecipient,
-  MessagingRecordUnknownRecipient,
-  MessagingRecordMailboxFull,
-  MessagingRecordTTS,
-  MessagingPlaybackTTS,
 
   // knowledge graph
   KnowledgeGraphQuestion,

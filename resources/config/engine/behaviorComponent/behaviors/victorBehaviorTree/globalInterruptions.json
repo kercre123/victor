@@ -9,6 +9,7 @@
     "LowBatteryFindAndGoToHome",
     "SDK0",
     "TriggerWordDetected",
+    "ShowWallTime",
     "TimerUtilityCoordinator",
     "WeatherResponses",
     "TakeAPhotoCoordinator",
@@ -20,6 +21,7 @@
     "ReactToUnclaimedIntent",
     "ReactToPutDown",
     "ReactToPickedUp",
+    "ReactToDarkness",
     "DanceToTheBeat",
     "HighLevelAI"
   ]

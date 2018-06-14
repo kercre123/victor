@@ -54,6 +54,7 @@ class ProgressionUnlockComponent;
 class PublicStateBroadcaster;
 class Robot;
 class RobotEventHandler;
+class SDKComponent;
 class VisionComponent;
 
 struct AccelData;
@@ -108,6 +109,7 @@ public:
   const PoseOriginList&  GetPoseOriginList() const;
   RobotEventHandler& GetRobotEventHandler() const;
   Util::RandomGenerator& GetRNG();
+  SDKComponent& GetSDKComponent() const;
   const Pose3d& GetWorldOrigin()  const;
   PoseOriginID_t GetWorldOriginID() const;
   u32 GetHeadSerialNumber() const;

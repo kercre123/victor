@@ -65,6 +65,10 @@
       "cloud_numerics": ["timer_duration"]
     },
     {
+      "cloud_intent": "intent_clock_time",
+      "user_intent": "show_clock"
+    },
+    {
       "cloud_intent" : "intent_weather_extend",
       "user_intent"  : "weather_response",
       "cloud_numerics": ["temperature"],

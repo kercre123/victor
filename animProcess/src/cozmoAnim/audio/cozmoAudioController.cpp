@@ -84,6 +84,7 @@ namespace Console {
 CONSOLE_VAR( bool, kWriteAudioProfilerCapture, "CozmoAudioController", false );
 CONSOLE_VAR( bool, kWriteAudioOutputCapture, "CozmoAudioController", false );
 
+#if REMOTE_CONSOLE_ENABLED
 // Console Functions
 // Session Logs
 void SetWriteAudioProfilerCapture( ConsoleFunctionContextRef context )
@@ -239,6 +240,7 @@ CONSOLE_FUNC( SetAudioState, consolePath, const char* stateGroup, const char* st
 CONSOLE_FUNC( SetAudioSwitchState, consolePath, const char* switchGroup, const char* state, uint64 gameObjectId );
 CONSOLE_FUNC( SetAudioParameter, consolePath, const char* parameter, float value, optional uint64 gameObjectId );
 CONSOLE_FUNC( StopAllAudioEvents, consolePath, optional uint64 gameObjectId );
+#endif // REMOTE_CONSOLE_ENABLED
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

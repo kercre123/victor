@@ -8,22 +8,24 @@
     "APIValue" : "Heavy Drizzle",
     "CladType" : "Rain"
   },
-  {
-    "APIValue" : "Light Rain",
-    "CladType" : "Rain"
-  },
-  {
-    "APIValue" : "Heavy Rain",
-    "CladType" : "Rain"
-  },
-  {
-    "APIValue" : "Light Snow",
-    "CladType" : "Snow"
-  },
-  {
-    "APIValue" : "Heavy Snow",
-    "CladType" : "Snow"
-  },
+  // Duplicate of The Weather Company.
+  // {
+  //   "APIValue" : "Light Rain",
+  //   "CladType" : "Rain"
+  // },
+  // Duplicate of The Weather Company.
+  // {
+  //   "APIValue" : "Heavy Rain",
+  //   "CladType" : "Rain"
+  // },
+  // {
+  //   "APIValue" : "Light Snow",
+  //   "CladType" : "Snow"
+  // },
+  // {
+  //   "APIValue" : "Heavy Snow",
+  //   "CladType" : "Snow"
+  // },
   {
     "APIValue" : "Light Snow Grains",
     "CladType" : "Snow"

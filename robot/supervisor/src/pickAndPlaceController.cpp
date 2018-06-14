@@ -92,12 +92,18 @@ namespace Anki {
         bool chargerStripeIsBlack_ = true;
 #endif
 
-        // Threshold used to distinguish black stripe on charger from the white body
+        // Threshold used to distinguish white stripe on charger from the dark grey body
 #ifdef SIMULATOR
         const u16 kChargerCliffBlackThreshold = 880;
 #else
-        const u16 kChargerCliffBlackThreshold = 400;
+        const u16 kChargerCliffBlackThreshold = 350;
 #endif
+        
+        // During charger docking, we sometimes wait for certain conditions
+        // to occur before "turning on" cliff sensor stripe correction when
+        // backing up onto the charger.
+        bool cliffSensorCorrectionEnabledBL_ = false;
+        bool cliffSensorCorrectionEnabledBR_ = false;
 
         // Charger docking wheel speeds for backing onto the charger:
         const float kChargerDockingSpeedHigh = -30.f;
@@ -351,6 +357,8 @@ namespace Anki {
                 SteeringController::ExecuteDirectDrive(kChargerDockingSpeedHigh, kChargerDockingSpeedHigh);
                 transitionTime_ = HAL::GetTimeStamp() + 7000;
                 useCliffSensorAlignment_ = (action_ == DockAction::DA_BACKUP_ONTO_CHARGER_USE_CLIFF);
+                cliffSensorCorrectionEnabledBL_ = false;
+                cliffSensorCorrectionEnabledBR_ = false;
                 mode_ = BACKUP_ON_CHARGER;
                 break;
               case DockAction::DA_CLIFF_ALIGN_TO_WHITE:
@@ -787,10 +795,21 @@ namespace Anki {
                   rightSpeed = kChargerDockingSpeedLow;
                 }
               } else {
-                // Slow down one of the sides if it's seeing white
-                if (!isBlackBL && isBlackBR) {
+                // Slow down one of the sides if it's seeing white, but only
+                // if we have first seen black at some point.
+                // This is to ensure that the robot does not veer away from
+                // the charger on initial approach with light-colored tables.
+                if (isBlackBL) {
+                  cliffSensorCorrectionEnabledBL_ = true;
+                }
+                if (isBlackBR) {
+                  cliffSensorCorrectionEnabledBR_ = true;
+                }
+
+                if (cliffSensorCorrectionEnabledBL_ && !isBlackBL) {
                   leftSpeed = kChargerDockingSpeedLow;
-                } else if (isBlackBL && !isBlackBR) {
+                }
+                if (cliffSensorCorrectionEnabledBR_ && !isBlackBR) {
                   rightSpeed = kChargerDockingSpeedLow;
                 }
               }

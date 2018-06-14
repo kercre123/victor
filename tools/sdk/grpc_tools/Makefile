@@ -50,6 +50,10 @@ test_curl_events: .require_ip
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/event_stream -d '{}'
 	@echo
 
+test_robot_state_stream: .require_ip
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/robot_state_stream -d '{}'
+	@echo
+
 test_curl: .require_ip
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/drive_wheels -d '{"left_wheel_mmps":100.0,"right_wheel_mmps":-100.0,"left_wheel_mmps2":0.0,"right_wheel_mmps2":0.0}'
 	@echo
@@ -82,6 +86,38 @@ test_curl: .require_ip
 	@echo
 
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/cancel_sdk_activation -d '{"slot":"SDK0"}'
+	@echo
+
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/display_face_image_rgb -d @test_assets/oled_color.json
+	@echo
+
+test_meet_victor: .require_ip
+	# First, turn on behaviors (by shaking), then say "Hey Vector, my name is Bobert"
+
+	# Should return list of known people
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/request_enrolled_names -d '{}'
+	@echo
+
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/update_enrolled_face_by_id -d '{"face_id":1,"old_name":"Bobert","new_name":"Boberta"}'
+	@echo
+
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/set_face_to_enroll -d '{"name":"Boberta","observed_id":1,"save_id":0,"save_to_robot":true,"say_name":true,"use_music":true}'
+	@echo
+
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/cancel_face_enrollment -d '{}'
+	@echo
+
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/erase_enrolled_face_by_id -d '{"face_id":1}'
+	@echo
+
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/erase_all_enrolled_faces -d '{}'
+	@echo
+
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/app_intent -d '{"intent":"intent_meet_victor","param":"Bobert"}'
+	@echo
+
+	# Should be empty list of names
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/request_enrolled_names -d '{}'
 	@echo
 
 update_time: .require_ip

@@ -57,11 +57,23 @@ private:
   // NO SEQEUNCES SHOULD BE IN THIS ARRAY FOR MORE THAN A DAY OR TWO AND DEFINITELY NOT IN SHIPPING CODE
   Vision::SpriteSequenceContainer::UnmappedSequenceContainer _unmappedSequences;
 
-  void LoadSequenceImageFrames(Vision::SpriteCache* cache,
-                               const std::string& fullDirectoryPath, 
-                               Vision::SpriteName sequenceName);
+  void LoadSequence(Vision::SpriteCache* cache,
+                    const std::string& fullDirectoryPath, 
+                    Vision::SpriteName sequenceName);
+  
+  // Legacy implementation of loading sprite sequences 
+  // uses png names to determine image order and plays images straight through with a hold on the final frame
+  void LoadSequenceLegacy(Vision::SpriteCache* cache,
+                          const std::string& fullDirectoryPath, 
+                          const std::vector<std::string>& relativeImgNames,
+                          Vision::SpriteSequence& outSeq) const;
 
-
+  // Use the json specification to load pngs at their relative file path
+  void LoadSequenceFromSpec(Vision::SpriteCache* cache,
+                            const std::string& fullDirectoryPath,
+                            const Json::Value& spec,
+                            const std::vector<std::string>& relativeImgNames,
+                            Vision::SpriteSequence& outSeq) const;
 };
 
 } // namespace Cozmo

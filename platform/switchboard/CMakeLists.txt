@@ -8,7 +8,7 @@ include(anki_build_cxx)
 include(sodium)
 
 anki_build_cxx_library(switchboard ${ANKI_SRCLIST_DIR} STATIC)
-anki_build_target_license(switchboard "ANKI" "CC0")
+anki_build_target_license(switchboard "ANKI" "CC0,${CMAKE_SOURCE_DIR}/licenses/CC0.license")
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")

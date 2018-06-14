@@ -168,7 +168,8 @@ struct DockingErrorSignal;
     Result UpdateSalientPoints(const VisionProcessingResult& result);
     Result UpdateWhiteBalance(const VisionProcessingResult& procResult);
     Result UpdatePhotoManager(const VisionProcessingResult& procResult);
-    
+    Result UpdateDetectedIllumination(const VisionProcessingResult& procResult);
+
     const Vision::Camera& GetCamera(void) const;
     Vision::Camera& GetCamera(void);
     
@@ -398,6 +399,8 @@ struct DockingErrorSignal;
     bool             _visionWhileMovingFastEnabled = false;
 
     ImageEncoding _desiredImageFormat = ImageEncoding::NoneImageEncoding;
+    ImageEncoding _currentImageFormat = ImageEncoding::RawRGB;
+    
     // State machine to make sure nothing is using the shared memory from the camera system
     // before we request a different camera capture format as well as to wait
     // until we get a frame from the camera after changing formats before unpausing
@@ -447,9 +450,7 @@ struct DockingErrorSignal;
     void SetWhiteBalanceSettings(f32 gainR, f32 gainG, f32 gainB);
 
     // Updates the state of requesting for a camera capture format change
-    // Returns true if we are currently waiting for a camera capture format
-    // change
-    bool UpdateCaptureFormatChange();
+    void UpdateCaptureFormatChange(s32 gotNumRows=0);
     
     // Factory centroid finder: returns the centroids of the 4 factory test dots,
     // computes camera pose w.r.t. the target and broadcasts a RobotCompletedFactoryDotTest

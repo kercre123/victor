@@ -1,7 +1,7 @@
 package main
 
 import (
-	"anki/cert"
+	"anki/robot"
 	"encoding/binary"
 	"fmt"
 	"os"
@@ -34,5 +34,5 @@ func checkCloudDataFiles() error {
 		return err
 	}
 
-	return cert.CheckFactoryCloudFiles("/factory/cloud", esn)
+	return robot.CheckFactoryCloudFiles("/factory/cloud", esn)
 }

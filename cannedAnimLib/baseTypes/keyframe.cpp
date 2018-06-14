@@ -280,9 +280,9 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     {
       Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
       _compositeImage.reset(new Vision::CompositeImage(faceHueAndSaturation, spriteSeq, !shouldRenderInEyeHue));
-      _keyframeDuration_ms = spriteSeq->GetNumFrames() * ANIM_TIME_STEP_MS;
       _triggerTime_ms = triggerTime_ms;
       _internalUpdateInterval_ms = frameInterval_ms;
+      _keyframeDuration_ms = spriteSeq->GetNumFrames() * _internalUpdateInterval_ms;
       ANKI_VERIFY((_internalUpdateInterval_ms != 0) &&
                   ((_internalUpdateInterval_ms % ANIM_TIME_STEP_MS) == 0),
                   "SpriteSequenceKeyFrame.SetCompositeImage.InvalidTimeStep",
@@ -390,10 +390,14 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     }
 
 
-    void SpriteSequenceKeyFrame::ApplyCompositeImageUpdate(CompositeImageUpdateSpec&& updateSpec)
+    void SpriteSequenceKeyFrame::ApplyCompositeImageUpdate(const TimeStamp_t timeSinceAnimStart_ms,
+                                                           CompositeImageUpdateSpec&& updateSpec)
     {
       auto& compImg = GetCompositeImage();
       auto* layer = compImg.GetLayerByName(updateSpec.layerName);
+      const auto currentFrameNumber = GetFrameNumberForTime(timeSinceAnimStart_ms);
+      Vision::CompositeImageLayer::SpriteEntry entry(updateSpec.spriteCache, updateSpec.seqContainer, 
+                                                      updateSpec.spriteName, currentFrameNumber);
       if(layer != nullptr){
         // clear the whole layer if no sprite box name specified
         if(updateSpec.spriteBox.spriteBoxName == Vision::SpriteBoxName::Count){
@@ -403,13 +407,13 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
                            LayerNameToString(updateSpec.layerName));
         }else{
           layer->AddToLayout(updateSpec.spriteBox.spriteBoxName, updateSpec.spriteBox);
-          layer->AddToImageMap(updateSpec.spriteCache, updateSpec.seqContainer,
-                               updateSpec.spriteBox.spriteBoxName, updateSpec.spriteName);
+          layer->AddToImageMap(updateSpec.spriteBox.spriteBoxName, entry);
         }
       }else{
+
         Vision::CompositeImageLayer layer(updateSpec.layerName);
         layer.AddToLayout(updateSpec.spriteBox.spriteBoxName, updateSpec.spriteBox);
-        Vision::CompositeImageLayer::SpriteEntry entry(updateSpec.spriteCache, updateSpec.seqContainer, updateSpec.spriteName);
+
         layer.AddToImageMap(updateSpec.spriteBox.spriteBoxName, entry);
         compImg.AddLayer(std::move(layer));
         PRINT_NAMED_INFO("AnimationStreamer.UpdateCompositeImage.AddingLayer",
@@ -473,6 +477,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
 
       JsonTools::GetValueOptional(jsonRoot, "scanlineOpacity", scanlineOpacity);
       JsonTools::GetValueOptional(jsonRoot, "frameDuration_ms", frameUpdateInterval);
+      JsonTools::GetValueOptional(jsonRoot, "triggerTime_ms", triggerTime_ms);
 
       return outSeq != nullptr;
     }
@@ -522,7 +527,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       BOUNDED_WHILE(mapBound, iter != _compositeImageUpdateMap.end()){
         if(iter->first <= timeSinceAnimStart_ms){
           auto updateSpec = iter->second;
-          ApplyCompositeImageUpdate(std::move(updateSpec));
+          ApplyCompositeImageUpdate(timeSinceAnimStart_ms, std::move(updateSpec));
           // erase element/move iterator
           _compositeImageUpdateMap.erase(iter);
           iter = _compositeImageUpdateMap.begin();
