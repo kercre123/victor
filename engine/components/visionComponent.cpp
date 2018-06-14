@@ -96,9 +96,11 @@ namespace Cozmo {
   // Set to a value greater than 0 to randomly drop that fraction of frames, for testing
   CONSOLE_VAR_RANGED(f32, kSimulateDroppedFrameFraction, "Vision.General", 0.f, 0.f, 1.f); // DO NOT COMMIT > 0!
 
-  CONSOLE_VAR(bool, kVisualizeObservedMarkersIn3D, "Vision.General", false);
-  CONSOLE_VAR(bool, kDrawMarkerNames,              "Vision.General", false); // In viz camera view
-  CONSOLE_VAR(bool, kDisplayUndistortedImages,     "Vision.General", false);
+  CONSOLE_VAR(bool, kVisualizeObservedMarkersIn3D,  "Vision.General", false);
+  // If > 0, displays detected marker names in Viz Camera Display (still at fixed scale) and
+  // and in mirror mode (at specified scale)
+  CONSOLE_VAR_RANGED(f32,  kDisplayMarkerNamesScale,"Vision.General", 0.f, 0.f, 1.f);
+  CONSOLE_VAR(bool, kDisplayUndistortedImages,      "Vision.General", false);
 
   CONSOLE_VAR(bool, kEnableMirrorMode,              "Vision.General", false);
   CONSOLE_VAR(bool, kDisplayDetectionsInMirrorMode, "Vision.General", false); // objects, faces, markers
@@ -1249,7 +1251,7 @@ namespace Cozmo {
                                       NamedColors::BLUE : NamedColors::RED);
         _vizManager->DrawCameraQuad(corners, drawColor, NamedColors::GREEN);
 
-        if(kDrawMarkerNames)
+        if(Util::IsFltGTZero(kDisplayMarkerNamesScale))
         {
           Rectangle<f32> boundingRect(corners);
           std::string markerName(visionMarker.GetCodeName());
@@ -1272,9 +1274,10 @@ namespace Cozmo {
             //const Rectangle<f32> rect(quad);
             //img.DrawRect(DisplayMirroredRectHelper(rect.GetX(), rect.GetY(), rect.GetWidth(), rect.GetHeight()), drawColor, 3);
             img.DrawQuad(DisplayMirroredQuadHelper(quad), drawColor, 3);
-            if(kDrawMarkerNames)
+            if(Util::IsFltGTZero(kDisplayMarkerNamesScale))
             {
-              img.DrawText({1., img.GetNumRows()-1}, name.substr(strlen("MARKER_"),std::string::npos), drawColor);
+              img.DrawText({1., img.GetNumRows()-1}, name.substr(strlen("MARKER_"),std::string::npos),
+                           drawColor, kDisplayMarkerNamesScale);
             }
           };
 
