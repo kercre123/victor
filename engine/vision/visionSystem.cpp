@@ -1525,21 +1525,24 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   // Begin image processing
   bool usingNightVision = false;
   Vision::ImageCache* nightVisionCache = nullptr;
-  if(ShouldProcessVisionMode(VisionMode::NightVision))
+  if( _context->GetFeatureGate()->IsFeatureEnabled(FeatureType::NightVision) )
   {
-    usingNightVision = true;
-    _nightVisionFilter->AddImage( imageCache.GetGray(), poseData );
-    
-    Vision::Image nightImage;
-    if( _nightVisionFilter->GetOutput( nightImage ) )
+    if(ShouldProcessVisionMode(VisionMode::NightVision))
     {
-      PRINT_NAMED_DEBUG("VisionSystem.Update.NightVision", "Has night vision output");
-      _nightImageCache->Reset( nightImage );
-      nightVisionCache = _nightImageCache.get();
-    }
-    else
-    {
-      PRINT_NAMED_DEBUG("VisionSystem.Update.NightVision", "Still buffering night vision output");
+      usingNightVision = true;
+      _nightVisionFilter->AddImage( imageCache.GetGray(), poseData );
+      
+      Vision::Image nightImage;
+      if( _nightVisionFilter->GetOutput( nightImage ) )
+      {
+        PRINT_NAMED_DEBUG("VisionSystem.Update.NightVision", "Has night vision output");
+        _nightImageCache->Reset( nightImage );
+        nightVisionCache = _nightImageCache.get();
+      }
+      else
+      {
+        PRINT_NAMED_DEBUG("VisionSystem.Update.NightVision", "Still buffering night vision output");
+      }
     }
   }
   
@@ -1758,16 +1761,19 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     }
     visionModesProcessed.SetBitFlag(VisionMode::CheckingQuality, true);
 
-    // NOTE Enable night vision?
-    if(_currentResult.imageQuality == ImageQuality::TooDark && !IsModeEnabled(VisionMode::NightVision))
+    // Enable night vision when image is too dark
+    if( _context->GetFeatureGate()->IsFeatureEnabled(FeatureType::NightVision) )
     {
-      EnableMode(VisionMode::NightVision, true);
-      PRINT_NAMED_INFO("VisionSystem.Update.TooDark", "Image too dark. Enabling night vision");
-    }
-    else if(_currentResult.imageQuality != ImageQuality::TooDark && IsModeEnabled(VisionMode::NightVision))
-    {
-      EnableMode(VisionMode::NightVision, false);
-      PRINT_NAMED_INFO("VisionSystem.Update.NoLongerDark", "Image no longer too dark. Disabling night vision");
+      if(_currentResult.imageQuality == ImageQuality::TooDark && !IsModeEnabled(VisionMode::NightVision))
+      {
+        EnableMode(VisionMode::NightVision, true);
+        PRINT_NAMED_INFO("VisionSystem.Update.TooDark", "Image too dark. Enabling night vision");
+      }
+      else if(_currentResult.imageQuality != ImageQuality::TooDark && IsModeEnabled(VisionMode::NightVision))
+      {
+        EnableMode(VisionMode::NightVision, false);
+        PRINT_NAMED_INFO("VisionSystem.Update.NoLongerDark", "Image no longer too dark. Disabling night vision");
+      }
     }
   }
 
