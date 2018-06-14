@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 #include <assert.h>
 
 #include <sys/ioctl.h>
@@ -48,7 +49,7 @@ int main(void)   //int argc, char** argv) {
     uint64_t target = now + TICKS_5MS;
     imu_manage(&data);
     uint64_t elapsed = (steady_clock_now()-now)/1000;
-    
+
     printf("%09lld: %9d <%4d %4d %4d>  [%4d %4d %4d]\r", elapsed, data.timestamp,
            data.gyro[0], data.gyro[1], data.gyro[2],
            data.acc[0], data.acc[1], data.acc[2]);

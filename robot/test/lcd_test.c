@@ -8,7 +8,9 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <fcntl.h>
+#include <time.h>
 #include <sys/ioctl.h>
 #include <linux/types.h>
 #include <linux/spi/spidev.h>
@@ -22,8 +24,8 @@ typedef struct {
 static const int DAT_CLOCK = 10000000;
 static const int MAX_TRANSFER = 0x1000;
 
-#define FRAME_WIDTH     184 
-#define FRAME_HEIGHT    96 
+#define FRAME_WIDTH     184
+#define FRAME_HEIGHT    96
 
 #define RSHIFT 0x1C
 
@@ -77,7 +79,7 @@ GPIO CS_PIN;
 void gpio_set_direction(GPIO gp, int isOutput)
 {
    char ioname[40];
-   snprintf(ioname, 40, "/sys/class/gpio/gpio%d/direction", gp.pin+911); 
+   snprintf(ioname, 40, "/sys/class/gpio/gpio%d/direction", gp.pin+911);
    int fd =  open(ioname, O_WRONLY );
    if (isOutput) {
       write(fd, "out", 3);
@@ -108,7 +110,7 @@ GPIO gpio_create(int gpio_number, int isOutput, int initial_value) {
    gpio_set_direction(gp, isOutput);
 
    //open value fd
-   snprintf(ioname, 32, "/sys/class/gpio/gpio%d/value", gpio_number+911); 
+   snprintf(ioname, 32, "/sys/class/gpio/gpio%d/value", gpio_number+911);
    gp.fd = open(ioname, O_WRONLY );
 
    if (gp.fd > 0) {
@@ -171,7 +173,7 @@ void spi(int cmd, int bytes, const void* data) {
 
 static void lcd_device_init() {
 	int idx;
-  
+
 	for (idx = 0; init_scr[idx].cmd; idx++) {
 		spi(TRUE, 1, &init_scr[idx].cmd);
 		spi(FALSE, init_scr[idx].data_bytes, init_scr[idx].data);
@@ -187,16 +189,16 @@ static void lcd_draw_frame(uint8_t* frame, int sz) {
 int lcd_init(void) {
   static const uint8_t    MODE = 0;
 
-  
+
   // Echo to device to activate backlight
   system("echo 10 > /sys/class/leds/face-backlight/brightness");
   system("echo 1 > /sys/kernel/debug/regulator/8916_l17/enable");
-  
+
 
   // IO Setup
   DnC_PIN = gpio_create(GPIO_LCD_WRX, 1, 1);
   RESET_PIN = gpio_create(GPIO_LCD_RESET, 1, 1);
-  
+
   gpio_set_direction(DnC_PIN, DIR_OUTPUT);
   gpio_set_direction(RESET_PIN, DIR_OUTPUT);
 
@@ -222,7 +224,7 @@ int lcd_init(void) {
 }
 
 
-int lcd_shutdown(void) {
+void lcd_shutdown(void) {
   //todo: turn off screen?
    static const uint8_t SLEEP = 0x10;
    spi(TRUE, 1, &SLEEP);
@@ -254,7 +256,7 @@ int main(int argc, char** argv) {
   {
     return rc;
   }
-  
+
 	// Start drawing stuff to the screen
   if (argc>1) {
      do {

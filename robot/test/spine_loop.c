@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include "../spine/platform/platform.h"
 #include "schema/messages.h"
@@ -29,9 +30,9 @@ void handle_incoming_frame(const struct BodyToHead* data)
      }
      printf("%08x\n", *(crc_t*)(dp));
      printf("CRC = %08x\n",calc_crc((const uint8_t*)data, sizeof(struct BodyToHead)));
-     
+
    }
-   
+
    lastfc = data->framecounter;
    static uint8_t printcount=0;
    if (( ++printcount & RATEMASK ) == 0) {
@@ -89,7 +90,7 @@ int main(int argc, const char* argv[]) {
 
   spine_set_mode(&gSpine, RobotMode_RUN);
 
-   
+
   printf("Starting loop\n");
   LOGD("Starting loop");
 
@@ -124,7 +125,7 @@ int main(int argc, const char* argv[]) {
         }
         read_count = 0;
       }
-      
+
     }
 
     robot_io(&gSpine, false);
