@@ -32,14 +32,6 @@
 #include "util/string/stringUtils.h"
 
 #include "anki/cozmo/shared/factory/emrHelper.h"
-
-#if USE_DAS
-#include "DAS/DAS.h"
-#include "util/logging/DAS.h"
-#include "platform/victorDAS/DASPlatform.h"
-#endif
-
-#include "anki/cozmo/shared/factory/emrHelper.h"
 #include "platform/victorCrashReports/victorCrashReporter.h"
 
 #if !defined(DEV_LOGGER_ENABLED)
@@ -206,35 +198,6 @@ static int cozmo_start(const Json::Value& configuration)
 
   }
   #endif
-
-  #if USE_DAS
-
-  // Initialize DAS configuration with no persistent storage.
-  // Message filtering will be determined by configuration file.
-  const std::string& dasConfigPath = gDataPlatform->GetResourcePath("config/DAS/vic-engine.json");
-  DASConfigure(dasConfigPath.c_str(), nullptr, nullptr);
-
-  // Initialize DAS platform settings.
-  // This is required for each instance of DAS, even if platform settings
-  // are duplicated by multiple services.
-  auto dasPlatform = std::make_unique<Anki::VictorDAS::DASPlatform>(appRunId);
-  DASNativeInit(std::move(dasPlatform), LOG_PROCNAME);
-
-#endif
-
-  // Log a test event
-  {
-     DASMSG(engine_main_hello, "engine.main.hello", "Example event");
-     DASMSG_SET(s1, "str1", "Example string 1");
-     DASMSG_SET(s2, "str2", "Example string 2");
-     DASMSG_SET(s3, "str3", "Example string 3");
-     DASMSG_SET(s4, "str4", "Example string 4");
-     DASMSG_SET(i1, 1, "Example int 1");
-     DASMSG_SET(i2, 2, "Example int 2");
-     DASMSG_SET(i3, 3, "Example int 3");
-     DASMSG_SET(i4, 4, "Example int 4");
-     DASMSG_SEND();
-  }
 
   LOG_INFO("cozmo_start", "Creating engine");
   LOG_INFO("cozmo_start",
