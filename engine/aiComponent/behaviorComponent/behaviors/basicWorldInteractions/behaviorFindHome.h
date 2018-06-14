@@ -51,6 +51,7 @@ private:
     float       minDrivingDist_mm;
     float       maxDrivingDist_mm;
     TimeStamp_t maxObservedAge_ms;
+    int         numImagesToWait;
     
     AnimationTrigger searchAnimTrigger;
     std::unique_ptr<BlockWorldFilter> homeFilter;

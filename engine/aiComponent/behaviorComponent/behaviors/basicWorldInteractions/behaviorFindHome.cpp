@@ -36,6 +36,7 @@ const char* kNumSearchesKey       = "numSearches";
 const char* kMinDrivingDistKey    = "minDrivingDist_mm";
 const char* kMaxDrivingDistKey    = "maxDrivingDist_mm";
 const char* kMaxObservedAgeSecKey = "maxLastObservedAge_sec";
+const char* kNumImagesToWaitKey   = "numImagesToWait";
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -47,6 +48,7 @@ BehaviorFindHome::InstanceConfig::InstanceConfig()
   maxDrivingDist_mm = 0.f;
   maxObservedAge_ms = 0;
   homeFilter        = std::make_unique<BlockWorldFilter>();
+  numImagesToWait   = 0;
 }
 
 
@@ -59,6 +61,7 @@ BehaviorFindHome::InstanceConfig::InstanceConfig(const Json::Value& config, cons
   maxDrivingDist_mm  = JsonTools::ParseFloat(config, kMaxDrivingDistKey, debugName);
   maxObservedAge_ms  = Util::numeric_cast<TimeStamp_t>(1000.f * JsonTools::ParseFloat(config, kMaxObservedAgeSecKey, debugName));
   homeFilter         = std::make_unique<BlockWorldFilter>();
+  numImagesToWait    = JsonTools::ParseUint32(config, kNumImagesToWaitKey,)
 }
 
 
@@ -90,6 +93,7 @@ void BehaviorFindHome::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) 
     kMinDrivingDistKey,
     kMaxDrivingDistKey,
     kMaxObservedAgeSecKey,
+    kNumImagesToWaitForKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 } 
@@ -155,7 +159,7 @@ void BehaviorFindHome::TransitionToSearchAnim()
 {
   CompoundActionSequential* seq = new CompoundActionSequential();
   seq->AddAction(new TriggerAnimationAction(_iConfig.searchAnimTrigger));
-  seq->AddAction(new WaitForImagesAction(3, VisionMode::DetectingMarkers));
+  seq->AddAction(new WaitForImagesAction(_iConfig.numImagesToWait, VisionMode::DetectingMarkers));
 
   DelegateIfInControl(seq,
                       [this]() {
