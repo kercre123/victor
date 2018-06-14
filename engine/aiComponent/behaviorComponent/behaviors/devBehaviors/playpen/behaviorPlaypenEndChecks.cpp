@@ -68,10 +68,14 @@ Result BehaviorPlaypenEndChecks::OnBehaviorActivatedInternal()
   // and that this check is even enabled
   if(!(Factory::GetEMR()->fields.playpenTestDisableMask & PlaypenTestMask::UnexpectedTouchDetectedError))   
   {
-    if(touchSensorFilt.max - touchSensorFilt.min > PlaypenConfig::kMaxMinTouchSensorFiltDiff)
+    // Use threshold from EMR if it's non-zero
+    const f32 emrRangeThresh = Factory::GetEMR()->fields.playpenTouchSensorRangeThresh;
+    const f32 rangeThreshold = NEAR_ZERO(emrRangeThresh) ? PlaypenConfig::kMaxMinTouchSensorFiltDiff : emrRangeThresh;
+
+    if(touchSensorFilt.max - touchSensorFilt.min > rangeThreshold)
     {
       PRINT_NAMED_WARNING("BehaviorPlaypenEndChecks.OnActivated.UnexpectedTouchDetected",
-                          "%f", touchSensorFilt.max - touchSensorFilt.min);
+                          "%f (Max allowed: %f)", touchSensorFilt.max - touchSensorFilt.min, rangeThreshold);
       PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::UNEXPECTED_TOUCH_DETECTED, RESULT_FAIL);
     }
   }
@@ -85,10 +89,14 @@ Result BehaviorPlaypenEndChecks::OnBehaviorActivatedInternal()
   // and that this check is even enabled
   if(!(Factory::GetEMR()->fields.playpenTestDisableMask & PlaypenTestMask::NoisyTouchSensorError))
   {
-    if(touchSensorFilt.stddev > PlaypenConfig::kTouchSensorFiltStdDevThresh)
+    // Use threshold from EMR if it's non-zero
+    const f32 emrStdDevThresh = Factory::GetEMR()->fields.playpenTouchSensorStdDevThresh;
+    const f32 stdDevThreshold = NEAR_ZERO(emrStdDevThresh) ? PlaypenConfig::kTouchSensorFiltStdDevThresh : emrStdDevThresh;
+
+    if(touchSensorFilt.stddev > stdDevThreshold)
     {
       PRINT_NAMED_WARNING("BehaviorPlaypenEndChecks.OnActivated.NoisyTouchSensor",
-                          "%f", touchSensorFilt.stddev);
+                          "%f (Max allowed: %f)", touchSensorFilt.stddev, stdDevThreshold);
       PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::NOISY_TOUCH_SENSOR, RESULT_FAIL);
     }
   }

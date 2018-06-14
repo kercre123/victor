@@ -17,6 +17,16 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/factory/faultCodes.h"
 
+#if FACTORY_TEST
+// HACK: It's pretty gross to include emrHelper.h in vic-robot
+//       but need it for EMR values.
+//       This forced define of RELEASE is to appease globalDefinitions.h
+#ifndef RELEASE
+#define RELEASE
+#endif
+#include "anki/cozmo/shared/factory/emrHelper.h"
+#endif
+
 #include "../spine/spine.h"
 #include "../spine/cc_commander.h"
 
@@ -48,13 +58,27 @@ namespace { // "Private members"
   // update every tick of the robot:
   // some touch values are 0xFFFF, which we want to ignore
   // so we cache the last non-0xFFFF value and return this as the latest touch sensor reading
-  u16 lastValidTouchIntensity_;
+  u16 lastValidTouchIntensity_ = 0;
 
+  // Whether or not an out-of-range value was observed
+  // on the touch sensor.
   bool touchSensorRawOutsideValidRange_ = false;
+
+  // Time at which touchSensorRawOutsideValidRange_ should be updated
+  // Includes a delay to account for charger not being immediately detected.
+  // 2018-06-13: Charger is known to increase noisiness of touch sensor, but we're not fixing it now!
+  TimeStamp_t invalidateTouchSensorTime_ms_ = 0;
+  static const u32 TOUCH_SENSOR_VALIDITY_DELAY_MS = 250;
+
   static const size_t TOUCH_BOX_FILTER_SIZE = 80;
   u16 touchBoxFilter_[TOUCH_BOX_FILTER_SIZE] = {0};
   size_t touchBoxFilterInd_ = 0;
   u32 touchBoxFilterSum_ = 0;
+
+#if FACTORY_TEST
+  u16 kMinValidRawTouch = HAL::MIN_VALID_RAW_TOUCH;
+  u16 kMaxValidRawTouch = HAL::MAX_VALID_RAW_TOUCH;
+#endif  
 
   PowerState desiredPowerMode_;
 
@@ -235,6 +259,19 @@ Result HAL::Init()
 {
   // Set ID
   robotID_ = Anki::Cozmo::DEFAULT_ROBOT_ID;
+
+#if FACTORY_TEST
+  const u32 emrMinValidTouch = Factory::GetEMR()->fields.playpenTouchSensorMinValid;
+  const u32 emrMaxValidTouch = Factory::GetEMR()->fields.playpenTouchSensorMaxValid;
+  if (emrMinValidTouch > 0) {
+    AnkiInfo("HAL.Init.UsingEMRMinValidTouch", "%u", emrMinValidTouch);
+    kMinValidRawTouch = emrMinValidTouch;
+  }
+  if (emrMaxValidTouch > 0) {
+    AnkiInfo("HAL.Init.UsingEMRMaxValidTouch", "%u", emrMaxValidTouch);
+    kMaxValidRawTouch = emrMaxValidTouch;
+  }
+#endif
 
   InitIMU();
 
@@ -468,10 +505,29 @@ void ProcessTouchLevel(void)
     lastValidTouchIntensity_ = bodyData_->touchLevel[HAL::BUTTON_CAPACITIVE];
 
     #if FACTORY_TEST
-    // If the raw touch sensor value is outside our valid ranges
-    if(lastValidTouchIntensity_ < HAL::MIN_VALID_RAW_TOUCH || lastValidTouchIntensity_ > HAL::MAX_VALID_RAW_TOUCH)
-    {
-      AnkiInfo("ProcessTouchLevel.OutsideValidRange","%u", lastValidTouchIntensity_);
+    // Check if the raw touch sensor value is outside our valid ranges
+    // only when not on charger because values are known to be noisy
+    // when on charger.
+    if (!HAL::BatteryIsOnCharger()) {
+      if(lastValidTouchIntensity_ < kMinValidRawTouch || lastValidTouchIntensity_ > kMaxValidRawTouch)
+      {
+        AnkiInfo("ProcessTouchLevel.OutsideValidRange",
+                 "%u [%u:%u]", lastValidTouchIntensity_, kMinValidRawTouch, kMaxValidRawTouch);
+
+        // "Schedule" an invalidation of the touch sensor,
+        // which can be cancelled if a charger is detected very shortly after.
+        if (invalidateTouchSensorTime_ms_ == 0) {
+          invalidateTouchSensorTime_ms_ = HAL::GetTimeStamp() + TOUCH_SENSOR_VALIDITY_DELAY_MS;
+        }
+      }
+    } else {
+      invalidateTouchSensorTime_ms_ = 0;
+    }
+
+    // Check if time to invalidate touch sensor
+    if (invalidateTouchSensorTime_ms_ > 0 && HAL::GetTimeStamp() > invalidateTouchSensorTime_ms_) {
+      AnkiInfo("ProcessTouchLevel.OutsideValidRangeSet","");
+      invalidateTouchSensorTime_ms_ = 0;
       touchSensorRawOutsideValidRange_ = true;
     }
 

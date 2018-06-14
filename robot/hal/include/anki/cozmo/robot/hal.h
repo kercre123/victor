@@ -204,6 +204,7 @@ u16 GetButtonState(const ButtonID button_id);
 // Returns the box-filtered touch sensor value
 f32 GetTouchSensorFilt();
 
+// NOTE: These value can be overridden by values stored in EMR
 static const u16 MIN_VALID_RAW_TOUCH = 500;
 static const u16 MAX_VALID_RAW_TOUCH = 700;
 

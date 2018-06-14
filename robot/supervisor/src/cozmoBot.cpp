@@ -417,11 +417,7 @@ namespace Anki {
           {
             then = now;
             
-            AnkiError("ProcessTouchLevel.OutsideValidRange",
-                      "raw %u is outside [%u:%u]",
-                      HAL::GetButtonState(HAL::BUTTON_CAPACITIVE),
-                      HAL::MIN_VALID_RAW_TOUCH,
-                      HAL::MAX_VALID_RAW_TOUCH);
+            AnkiError("CozmoBot.TouchSensorIsInvalid", "");
           
             using namespace RobotInterface;
             RunFactoryTest msg;

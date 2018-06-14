@@ -79,11 +79,13 @@ static ssize_t     kMaxDataDirSize_bytes  = 200000000;
 
 // Threshold on the difference between max and min filtered touch sensor
 // values during playpen
-static f32 kMaxMinTouchSensorFiltDiff = 6.f;
+// NOTE: This value can be overridden by value stored in EMR
+static f32 kMaxMinTouchSensorFiltDiff = 11.f;
 
 // Max allowed standard deviation of filtered touch sensor values
 // during playpen
-static f32 kTouchSensorFiltStdDevThresh = 1.5f;
+// NOTE: This value can be overridden by value stored in EMR
+static f32 kTouchSensorFiltStdDevThresh = 1.8f;
  
 // ----------InitChecks----------
 // Whether or not to check firmware version

@@ -30,7 +30,11 @@ namespace Factory {
       uint32_t PLAYPEN_PASSED_FLAG;
       uint32_t PACKED_OUT_FLAG;
       uint32_t PACKED_OUT_DATE; //Unix time?
-      uint32_t reserved[47];
+      uint32_t reserved[43];
+      uint32_t playpenTouchSensorMinValid;
+      uint32_t playpenTouchSensorMaxValid;
+      float    playpenTouchSensorRangeThresh;
+      float    playpenTouchSensorStdDevThresh;
       uint32_t playpenTestDisableMask;
       uint32_t playpen[8];
       uint32_t fixture[192];
