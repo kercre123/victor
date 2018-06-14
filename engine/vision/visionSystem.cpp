@@ -1556,9 +1556,11 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   if(ShouldProcessVisionMode(VisionMode::DetectingMarkers)) {
 
     // Apply CLAHE if enabled:
-    DEV_ASSERT(kUseCLAHE_u8 < Util::EnumToUnderlying(MarkerDetectionCLAHE::Count),
-              "VisionSystem.ApplyCLAHE.BadUseClaheVal");
-    MarkerDetectionCLAHE useCLAHE = static_cast<MarkerDetectionCLAHE>(kUseCLAHE_u8);
+    // DEV_ASSERT(kUseCLAHE_u8 < Util::EnumToUnderlying(MarkerDetectionCLAHE::Count),
+    //           "VisionSystem.ApplyCLAHE.BadUseClaheVal");
+    // MarkerDetectionCLAHE useCLAHE = static_cast<MarkerDetectionCLAHE>(kUseCLAHE_u8);
+    MarkerDetectionCLAHE useCLAHE = usingNightVision ? MarkerDetectionCLAHE::On : MarkerDetectionCLAHE::Off;
+    
     Vision::Image claheImage;
     
     Vision::ImageCache* markerProcCache = usingNightVision ? nightVisionCache : &imageCache;
