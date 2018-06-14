@@ -280,9 +280,9 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     {
       Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
       _compositeImage.reset(new Vision::CompositeImage(faceHueAndSaturation, spriteSeq, !shouldRenderInEyeHue));
-      _keyframeDuration_ms = spriteSeq->GetNumFrames() * ANIM_TIME_STEP_MS;
       _triggerTime_ms = triggerTime_ms;
       _internalUpdateInterval_ms = frameInterval_ms;
+      _keyframeDuration_ms = spriteSeq->GetNumFrames() * _internalUpdateInterval_ms;
       ANKI_VERIFY((_internalUpdateInterval_ms != 0) &&
                   ((_internalUpdateInterval_ms % ANIM_TIME_STEP_MS) == 0),
                   "SpriteSequenceKeyFrame.SetCompositeImage.InvalidTimeStep",

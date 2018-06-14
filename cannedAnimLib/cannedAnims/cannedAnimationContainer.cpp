@@ -72,7 +72,7 @@ const Animation* CannedAnimationContainer::GetAnimation(const std::string& name)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CannedAnimationContainer::AddAnimation(Animation&& animation)
+void CannedAnimationContainer::AddAnimation(Animation&& animation, bool& outOverwriting)
 {
   const std::string& name = animation.GetName();
 
@@ -81,6 +81,7 @@ void CannedAnimationContainer::AddAnimation(Animation&& animation)
   auto iter = _animations.find(name);
   if(iter != _animations.end()) {
     _animations.erase(iter);
+    outOverwriting = true;
   }
 
   _animations.emplace(name, std::move(animation));

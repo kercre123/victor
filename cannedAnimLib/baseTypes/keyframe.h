@@ -362,7 +362,11 @@ namespace Cozmo {
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
     
   private:
-    u32 GetFrameNumberForTime(const TimeStamp_t timeSinceAnimStart_ms) const { return timeSinceAnimStart_ms/_internalUpdateInterval_ms;}
+    u32 GetFrameNumberForTime(const TimeStamp_t timeSinceAnimStart_ms) const {
+      return (timeSinceAnimStart_ms > _triggerTime_ms) ?
+             (timeSinceAnimStart_ms - _triggerTime_ms)/_internalUpdateInterval_ms :
+             0;
+    }
     bool HaveKeyframeForTimeStamp(const TimeStamp_t timeSinceAnimStart_ms) const;
     void ValidateScanlineOpacity();
 

@@ -275,7 +275,13 @@ Result CannedAnimationLoader::DefineFromFlatBuf(const CozmoAnim::AnimClip* animC
 
   const Result res = SanityCheck(lastResult, animation, animName);
   if(res == Result::RESULT_OK){
-    container->AddAnimation(std::move(animation));
+    bool outOverwriting = false;
+    container->AddAnimation(std::move(animation), outOverwriting);
+    if(outOverwriting){
+      PRINT_NAMED_WARNING("CannedAnimationLoader.DefineFromFlatBuf.OverwritingExistingAnimation",
+                          "Container already had an animation named %s, overwriting",
+                          animName.c_str());
+    }
   }
   return res;
 
@@ -319,7 +325,13 @@ Result CannedAnimationLoader::DefineFromJson(const Json::Value& jsonRoot, std::s
 
   const Result res = SanityCheck(lastResult, animation, animationName);
   if(res == Result::RESULT_OK){
-    container->AddAnimation(std::move(animation));
+    bool outOverwriting = false;
+    container->AddAnimation(std::move(animation), outOverwriting);
+    if(outOverwriting){
+      PRINT_NAMED_WARNING("CannedAnimationLoader.DefineFromJson.OverwritingExistingAnimation",
+                          "Container already had an animation named %s, overwriting",
+                          animationName.c_str());
+    }
   }
   return res;
 } // CannedAnimationLoader::DefineFromJson()

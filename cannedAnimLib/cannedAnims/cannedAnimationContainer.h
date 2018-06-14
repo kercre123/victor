@@ -33,7 +33,8 @@ public:
   bool  HasAnimation(const std::string& name) const;
   Animation* GetAnimation(const std::string& name);
   const Animation* GetAnimation(const std::string& name) const;
-  void AddAnimation(Animation&& animation);
+  // If adding the new animation overwrites an existing animation, outOverwriting will be set to true
+  void AddAnimation(Animation&& animation, bool& outOverwriting);
 
   std::vector<std::string> GetAnimationNames();
   
