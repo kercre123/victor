@@ -78,7 +78,7 @@ namespace { // "Private members"
 #if FACTORY_TEST
   u16 kMinValidRawTouch = HAL::MIN_VALID_RAW_TOUCH;
   u16 kMaxValidRawTouch = HAL::MAX_VALID_RAW_TOUCH;
-#endif  
+#endif
 
   PowerState desiredPowerMode_;
 
@@ -428,7 +428,7 @@ Result HAL::Step(void)
 
     EventStart(EventType::WRITE_SPINE);
     const TimeStamp_t now_ms = GetTimeStamp();
-    if (desiredPowerMode_ == POWER_MODE_CALM) {
+    if (desiredPowerMode_ == POWER_MODE_CALM && !commander_is_active) {
       if (++calmModeSkipFrameCount_ > NUM_CALM_MODE_SKIP_FRAMES) {
         spine_set_lights(&spine_, &(h2bp->lightState));
         calmModeSkipFrameCount_ = 0;
