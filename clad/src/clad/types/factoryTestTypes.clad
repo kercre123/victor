@@ -143,6 +143,7 @@ enum uint_8 FactoryTestResultCode {
   TOUCH_VALUES_OOR,
   DISTANCE_SENSOR_OOR,
   CERT_CHECK_FAILED,
+  NO_WIFI_APS_DISCOVERED,
 
   // ==== New result codes should be added at the end ========
   // ==== Never delete codes, even if they are deprecated! ===
@@ -215,6 +216,7 @@ enum no_cpp_class uint_32 PlaypenTestMask {
   UnexpectedTouchDetectedError = 0x00000002,
   NoisyTouchSensorError        = 0x00000004,
   CubeRadioError               = 0x00000008,
+  WifiScanError                = 0x00000010,
 }
 
 } // namespace Cozmo

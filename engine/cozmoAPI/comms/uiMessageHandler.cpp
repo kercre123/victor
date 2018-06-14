@@ -350,7 +350,8 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
           if(connectionType == UiConnectionType::Switchboard)
           {
             if(message.GetTag() != ExternalInterface::MessageEngineToGameTag::EnterPairing &&
-               message.GetTag() != ExternalInterface::MessageEngineToGameTag::ExitPairing)
+               message.GetTag() != ExternalInterface::MessageEngineToGameTag::ExitPairing && 
+               message.GetTag() != ExternalInterface::MessageEngineToGameTag::WifiScanRequest)
             {
               if(sendToEveryone)
               {
