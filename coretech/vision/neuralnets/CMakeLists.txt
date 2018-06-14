@@ -7,7 +7,7 @@ message(STATUS "Building NeuralNets process")
 include(anki_build_cxx)
 include(anki_build_strip)
 
-set(TENSORFLOW_PATH  ${CORETECH_EXTERNAL_DIR}/tensorflow)
+set(TENSORFLOW_PATH  ${ANKI_EXTERNAL_DIR}/tensorflow)
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
