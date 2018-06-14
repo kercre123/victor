@@ -88,6 +88,9 @@ test_curl: .require_ip
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/cancel_sdk_activation -d '{"slot":"SDK0"}'
 	@echo
 
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/display_face_image_rgb -d @test_assets/oled_color.json
+	@echo
+
 test_meet_victor: .require_ip
 	# First, turn on behaviors (by shaking), then say "Hey Vector, my name is Bobert"
 
