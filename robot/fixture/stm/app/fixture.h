@@ -86,7 +86,7 @@ bool          fixtureValidateFixmodeInfo(bool print=0); //dev tool - validate co
 uint32_t      fixtureGetSerial(void); // Get a serial number for a device in the normal 12.20 fixture.sequence format
 uint32_t      fixtureReadSerial(void); // Read-only (NO MODIFY) current serial number position 12.20 format
 int           fixtureReadSequence(void); //read the current sequence #. DOES NOT make any sequence changes. reporting API only.
-void          fixtureSetTime(time_t time);
+int           fixtureSetTime(time_t time); //return 0=success
 time_t        fixtureGetTime(void);
 bool          fixtureTimeIsValid(void);
 const char*   fixtureTimeStr(time_t time); //short (20char) string representation of the timestamp

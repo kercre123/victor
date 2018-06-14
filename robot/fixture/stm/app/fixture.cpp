@@ -191,7 +191,7 @@ int fixtureReadSequence(void) {
 //                  RTC
 //-----------------------------------------------------------------------------
 
-#define FIXTURE_RTC_DEBUG 1
+#define FIXTURE_RTC_DEBUG 0
 
 #if FIXTURE_RTC_DEBUG > 0
 #warning fixture RTC debug enabled
@@ -202,13 +202,23 @@ const uint32_t RTC_BACKUP_REG_INIT    = RTC_BKP_DR0;
 const uint32_t RTC_BACKUP_REG_CENTURY = RTC_BKP_DR1;
 const uint32_t RTC_INIT_VALUE = 0x32F2;
 
-char* unixtimestr_(time_t time) {
+enum rtc_error_bits_e {
+  RTC_ERR_NO_INIT         = 0x1000,
+  RTC_ERR_APB_SYNC        = 0x0001,
+  RTC_ERR_SET_TIME        = 0x0002,
+  RTC_ERR_SET_DATE        = 0x0004,
+  RTC_ERR_VERIFY_CENTURY  = 0x0010,
+  RTC_ERR_VERIFY_TIME     = 0x0020,
+  RTC_ERR_VERIFY_DATE     = 0x0040,
+};
+
+/*char* unixtimestr_(time_t time) {
   static char str[10];
   time = time % (24*3600); //discard date
   snprintf(str,sizeof(str)-1, "%0.2d:%0.2d:%0.2d", time/3600, (time%3600)/60, time%60 );
   str[sizeof(str)-1] = '\0';
   return str;
-}
+}*/
 
 char* rtcstr_(RTC_DateTypeDef *date, RTC_TimeTypeDef *time) {
   static char str[32];
@@ -221,30 +231,35 @@ char* rtcstr_(RTC_DateTypeDef *date, RTC_TimeTypeDef *time) {
   return str;
 }
 
-static void APB_register_sync(void) {
+static int APB_register_sync(void) {
   ErrorStatus esync = RTC_WaitForSynchro(); //APB register synchronization
-  if( esync != /*ErrorStatus.*/SUCCESS ) {
+  #if FIXTURE_RTC_DEBUG > 0
+  if( esync != /*ErrorStatus.*/SUCCESS ) 
     ConsolePrintf(">> !! APB reg sync error %i !! <<\n", esync);
-  }
+  #endif
+  return (esync!=SUCCESS ? RTC_ERR_APB_SYNC : 0);
 }
 
-ErrorStatus RTC_SetDateTime_(RTC_DateTypeDef* RTC_DateStruct, RTC_TimeTypeDef* RTC_TimeStruct)
+static int RTC_SetDateTime_(RTC_DateTypeDef* RTC_DateStruct, RTC_TimeTypeDef* RTC_TimeStruct)
 {
-  APB_register_sync();
+  //MUST write date,time registers in proper order (time last)
+  int e = APB_register_sync();
+  if( RTC_SetDate(RTC_Format_BIN, RTC_DateStruct) != /*ErrorStatus.*/SUCCESS )
+    e |= RTC_ERR_SET_DATE;
+  if( RTC_SetTime(RTC_Format_BIN, RTC_TimeStruct) != /*ErrorStatus.*/SUCCESS )
+    e |= RTC_ERR_SET_TIME;
   
-  ErrorStatus edate = RTC_SetDate(RTC_Format_BIN, RTC_DateStruct);
+  #if FIXTURE_RTC_DEBUG > 0
+  if( e != 0 ) ConsolePrintf(">> !! RTC set datetime: e=0x%04x !! <<\n", e);
+  #endif
+  return e;
+}
+
+static void RTC_GetDateTime_(RTC_DateTypeDef* RTC_DateStruct, RTC_TimeTypeDef* RTC_TimeStruct) {
+  //MUST read time->date in proper order (time first)
   APB_register_sync();
-  Timer::wait(250);
-  
-  ErrorStatus etime = RTC_SetTime(RTC_Format_BIN, RTC_TimeStruct);
-  APB_register_sync();
-  Timer::wait(250);
-  
-  if( etime != /*ErrorStatus.*/SUCCESS || edate != /*ErrorStatus.*/SUCCESS ) {
-    ConsolePrintf(">> !! RTC_SetDateTime ERROR: edate %i etime %i !! <<\n", edate, etime );
-    return ERROR;
-  }
-  return SUCCESS;
+  RTC_GetTime(RTC_Format_BIN, RTC_TimeStruct);
+  RTC_GetDate(RTC_Format_BIN, RTC_DateStruct);
 }
 
 const char* fixtureTimeStr(time_t time)
@@ -265,8 +280,9 @@ const char* fixtureTimeStr(time_t time)
   return str;
 }
 
-void fixtureSetTime(time_t time)
+int fixtureSetTime(time_t time)
 {
+  int e = 0;
   bool rtc_inited = RTC_ReadBackupRegister(RTC_BACKUP_REG_INIT) == RTC_INIT_VALUE;
   struct { RTC_DateTypeDef date; RTC_TimeTypeDef time; } rtc;
   memset(&rtc, 0, sizeof(rtc));
@@ -285,15 +301,37 @@ void fixtureSetTime(time_t time)
   
   #if FIXTURE_RTC_DEBUG > 0
   char *ltime = asctime(&bdtime); ltime[24] = '\0'; //rm newline
-  ConsolePrintf("fixtureSetTime,%i,%010u,%s,%s,%u\n", rtc_inited, time, ltime, rtcstr_(&rtc.date,&rtc.time), century );
+  ConsolePrintf("fixtureSetTime,%i,%010u,%s,%s,%u\n", fixtureTimeIsValid(), time, ltime, rtcstr_(&rtc.date,&rtc.time), century );
   #endif
   
   if( rtc_inited ) {
-    ErrorStatus e = RTC_SetDateTime_(&rtc.date, &rtc.time);
-    RTC_WriteBackupRegister(RTC_BACKUP_REG_CENTURY, e==SUCCESS ? century : 0); //invalidate on error
+    e |= RTC_SetDateTime_(&rtc.date, &rtc.time);
+    RTC_WriteBackupRegister(RTC_BACKUP_REG_CENTURY, e==0 ? century : 0); //invalidate on error
+    
+    //readback verify (sanity check finicky hal api)
+    struct { RTC_DateTypeDef date; RTC_TimeTypeDef time; } rtcReadback;
+    RTC_GetDateTime_(&rtcReadback.date, &rtcReadback.time);
+    if( *((uint32_t*)&rtc.date) != *((uint32_t*)&rtcReadback.date) )
+      e |= RTC_ERR_VERIFY_DATE;
+    if( *((uint32_t*)&rtc.time) != *((uint32_t*)&rtcReadback.time) )
+      e |= RTC_ERR_VERIFY_TIME;
+    if( century != RTC_ReadBackupRegister(RTC_BACKUP_REG_CENTURY) )
+      e |= RTC_ERR_VERIFY_CENTURY;
+    
+    #if FIXTURE_RTC_DEBUG > 0
+    if( (e & (RTC_ERR_VERIFY_DATE|RTC_ERR_VERIFY_TIME|RTC_ERR_VERIFY_CENTURY)) != 0 )
+      ConsolePrintf(">> !! fixtureSetTime failed verify. e=0x%04x !! <<\n", e);
+    #endif
+    
   } else {
+    e |= RTC_ERR_NO_INIT;
+    
+    #if FIXTURE_RTC_DEBUG > 0
     ConsolePrintf(">> !! fixtureSetTime failed, rtc not initialized !! <<\n");
+    #endif
   }
+  
+  return e;
 }
 
 time_t fixtureGetTime(void)
@@ -302,10 +340,7 @@ time_t fixtureGetTime(void)
   bool valid = fixtureTimeIsValid();
   
   struct { RTC_DateTypeDef date; RTC_TimeTypeDef time; } rtc;
-  APB_register_sync();
-  RTC_GetDate(RTC_Format_BIN, &rtc.date);
-  APB_register_sync();
-  RTC_GetTime(RTC_Format_BIN, &rtc.time);
+  RTC_GetDateTime_( &rtc.date, &rtc.time );
   
   //stm rtc format -> unix
   struct tm bdtime; memset(&bdtime,0,sizeof(bdtime));
@@ -372,14 +407,15 @@ static void rtc_init_(void)
     rtc.date.RTC_Year = 70; //1970
     rtc.time.RTC_H12 = RTC_H12_AM;
     
-    ErrorStatus e = RTC_SetDateTime_(&rtc.date, &rtc.time);
-    if( e == SUCCESS ) {
+    if( !RTC_SetDateTime_(&rtc.date, &rtc.time) ) {
       RTC_WriteBackupRegister(RTC_BACKUP_REG_INIT, RTC_INIT_VALUE);
       RTC_WriteBackupRegister(RTC_BACKUP_REG_CENTURY, 0);
+      
       #if FIXTURE_RTC_DEBUG > 0
       ConsolePrintf("RTC initialized\n");
       #endif
     }
+    
   }
   else
   {
@@ -392,7 +428,7 @@ static void rtc_init_(void)
       ConsolePrintf("Unknown Reset occurred....\n");
     #endif
     
-    APB_register_sync();
+    //APB_register_sync();
   }
   
   #if FIXTURE_RTC_DEBUG > 0
@@ -408,15 +444,10 @@ static void rtc_init_(void)
 #define RTC_TESTBENCH_EN  1
 
 void testprint_(const char* prefix, time_t time, const char* post) {
-  //e.g. "prefix,1,12345678,Thu Jan  1 00:00:00 1970,post
-  //const bool rtc_inited = RTC_ReadBackupRegister(RTC_BACKUP_REG_INIT) == RTC_INIT_VALUE;
-  const bool valid = fixtureTimeIsValid();
-  char *ltime = ctime(&time); //"Sun Sep 16 01:03:52 1973\n\0"
-  ltime[24] = '\0';
-  
-  ConsolePrintf("%s,%i,%010d,%s,%s,\n", 
+  char *ltime = ctime(&time); ltime[24] = '\0'; //"Sun Sep 16 01:03:52 1973\n\0"
+  ConsolePrintf("%s,%i,%010u,%s,%s,\n", 
     prefix ? prefix : "",
-    valid,
+    fixtureTimeIsValid(),
     time,
     ltime,
     post ? post : ""
@@ -430,11 +461,13 @@ void fixtureRtcTestbench(void)
   #warning "RTC Testbench Enabled"
   
   typedef struct { time_t time; const char* str; } rtc_tb_t;
-  rtc_tb_t test[] = {
-    {         0, "Thu Jan  1 00:00:00 1970"},
-    {         1, "Thu Jan  1 00:00:01 1970"},
+  const rtc_tb_t test[] = {
     {3234567890, "Fri Jul 01 03:04:50 2072"},
-    {4123456789, "Wed Sep 01 04:39:49 2100"}
+    {         1, "Thu Jan  1 00:00:01 1970"},
+    {4123456789, "Wed Sep 01 04:39:49 2100"},
+    {         0, "Thu Jan  1 00:00:00 1970"},
+    {1528756287, "Mon Jun 11 22:31:27 2018"},
+    {1234567890, "Fri Feb 13 23:31:30 2009"},
   };
   const int numTests = sizeof(test)/sizeof(rtc_tb_t);
   int numerrors = 0;
@@ -444,11 +477,11 @@ void fixtureRtcTestbench(void)
   
   for(int n=0; n<numTests; n++)
   {
-    ConsolePrintf("TEST %02i:%010d %s\n", n, test[n].time, test[n].str);
+    ConsolePrintf("TEST %02i:%010u %s\n", n, test[n].time, test[n].str);
     testprint_("  set", test[n].time, 0);
     fixtureSetTime( test[n].time );
     
-    for(int x=0; x<2; x++) {
+    for(int x=0; x<5; x++) {
       time_t tget = fixtureGetTime();
       numerrors = tget != test[n].time+x ? numerrors+1 : numerrors;
       testprint_("  get", tget, tget != test[n].time+x ? "----MISMATCH----" : 0 );
