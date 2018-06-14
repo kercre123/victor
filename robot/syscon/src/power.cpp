@@ -45,14 +45,12 @@ void Power::init(void) {
 }
 
 static inline void enableHead(void) {
-  MAIN_EN::mode(MODE_OUTPUT);
   MAIN_EN::set();
   Mics::start();
   Lights::enable();
 }
 
 static inline void disableHead(void) {
-  MAIN_EN::mode(MODE_OUTPUT);
   MAIN_EN::reset();
   Mics::stop();
   Lights::disable();
