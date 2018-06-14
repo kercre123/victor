@@ -359,17 +359,16 @@ static void GetTime(void)
 static void SetTime(void)
 {
   time_t time = 0;
-  char* arg = GetArgument(1);  
-  sscanf(arg, "%u", (uint32_t*)&time);
+  sscanf(GetArgument(1), "%u", (uint32_t*)&time);
   
   //ConsolePrintf("settime %010u          %s", time, ctime(&time)); //DEBUG
-  fixtureSetTime(time);
+  int e = fixtureSetTime(time);
+  if( e != 0 ) {
+    ConsolePrintf("failed. e=0x%04x\n", e);
+    throw ERROR_UNHANDLED_EXCEPTION;
+  }
   
-  //readback verify
-  int delayms = 0;
-  try{ sscanf(GetArgument(2), "%u", &delayms); } catch(...){}
-  Timer::delayMs(delayms); //DEBUG
-  GetTime();
+  GetTime(); //readback prints formatted time
 }
 
 extern void fixtureRtcTestbench(void);
