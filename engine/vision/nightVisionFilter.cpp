@@ -80,6 +80,7 @@ void NightVisionFilter::AddImage( const Vision::Image& img,
   {
     _accumulator.Allocate( img.GetNumRows(), img.GetNumCols() );
     _accumulator.FillWith( 0 );
+    _castImage.Allocate( img.GetNumRows(), img.GetNumCols() );
   }
   // Otherwise see if robot moved, since filter can only run when stationary
   else if( HasMoved( poseData ) )
@@ -99,10 +100,12 @@ void NightVisionFilter::AddImage( const Vision::Image& img,
   }
 
   // Cast img to u16 type to add
-  _castImage.Allocate( img.GetNumRows(), img.GetNumCols() );
-  std::function<u16(const u8&)> castOp = std::bind(&CastPixel, std::placeholders::_1);
-  img.ApplyScalarFunction( castOp, _castImage );
-  _accumulator += _castImage;
+  cv::Mat_<u16>& castMat = _castImage.get_CvMat_();
+  const cv::Mat_<u8>& imgMat = img.get_CvMat_();
+  cv::Mat_<u16>& accMat = _accumulator.get_CvMat_();
+
+  imgMat.convertTo( castMat, CV_16U );
+  accMat += castMat;
   _lastTimestamp = img.GetTimestamp();
   _numAccImages++;
 }
@@ -119,7 +122,7 @@ bool NightVisionFilter::HasMoved( const VisionPoseData& poseData )
   return robotMoved || !isStill;
 }
 
-bool NightVisionFilter::GetOutput( Vision::Image& out ) const
+bool NightVisionFilter::GetOutput( Vision::Image& out )
 {
   if( _numAccImages < _minNumImages )
   {
@@ -129,8 +132,11 @@ bool NightVisionFilter::GetOutput( Vision::Image& out ) const
   // Divide by the number of images
   out.Allocate( _accumulator.GetNumRows(), _accumulator.GetNumCols() );
   out.SetTimestamp( _lastTimestamp );
-  std::function<u8(const u16&)> divOp = std::bind(&DividePixel, std::placeholders::_1, _numAccImages);
-  _accumulator.ApplyScalarFunction(divOp, out);
+  
+  cv::Mat_<u16>& accMat = _accumulator.get_CvMat_();
+  cv::Mat_<u8>& outMat = out.get_CvMat_();
+  cv::Mat_<u16> avgMat = (accMat / _numAccImages);
+  avgMat.convertTo( outMat, CV_8U );
   return true;
 }
 

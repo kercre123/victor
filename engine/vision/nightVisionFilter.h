@@ -39,7 +39,7 @@ public:
 
   // Generates a noise-reduced composite image from the accumulated images
   // Returns false if not enough images accumulated
-  bool GetOutput( Vision::Image& out ) const;
+  bool GetOutput( Vision::Image& out );
 
 private:
 
@@ -47,6 +47,7 @@ private:
   using ImageAcc = Array2d<u16>;
   ImageAcc _accumulator;
   ImageAcc _castImage;
+  
   TimeStamp_t _lastTimestamp;
   u32 _numAccImages;
   VisionPoseData _lastPoseData;
