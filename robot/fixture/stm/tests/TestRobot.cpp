@@ -369,6 +369,13 @@ void read_robot_info_(void)
     uint32_t packedout    = rcomGmr( EMR_FIELD_OFS(PACKED_OUT_FLAG) );
     flexnfo.packoutdate   = rcomGmr( EMR_FIELD_OFS(PACKED_OUT_DATE) );
     
+    //read playpen calibration
+    uint32_t playpenTouchSensorMinValid     = rcomGmr( EMR_FIELD_OFS(playpenTouchSensorMinValid) );
+    uint32_t playpenTouchSensorMaxValid     = rcomGmr( EMR_FIELD_OFS(playpenTouchSensorMaxValid) );
+    float    playpenTouchSensorRangeThresh  = rcomGmr( EMR_FIELD_OFS(playpenTouchSensorRangeThresh) );
+    float    playpenTouchSensorStdDevThresh = rcomGmr( EMR_FIELD_OFS(playpenTouchSensorStdDevThresh) );
+    uint32_t playpenTestDisableMask         = rcomGmr( EMR_FIELD_OFS(playpenTestDisableMask) );
+    
     ConsolePrintf("EMR[%u] esn         :%08x [%08x]\n", EMR_FIELD_OFS(ESN), flexnfo.esn, esnCmd);
     ConsolePrintf("EMR[%u] hwver       :%u\n", EMR_FIELD_OFS(HW_VER), flexnfo.hwver);
     ConsolePrintf("EMR[%u] model       :%u\n", EMR_FIELD_OFS(MODEL), flexnfo.model);
@@ -377,6 +384,11 @@ void read_robot_info_(void)
     ConsolePrintf("EMR[%u] playpenpass :%u\n", EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), playpenpass);
     ConsolePrintf("EMR[%u] packedout   :%u\n", EMR_FIELD_OFS(PACKED_OUT_FLAG), packedout);
     ConsolePrintf("EMR[%u] packout-date:%u\n", EMR_FIELD_OFS(PACKED_OUT_DATE), flexnfo.packoutdate);
+    ConsolePrintf("EMR[%u] playpenTouchSensorMinValid:%u\n", EMR_FIELD_OFS(playpenTouchSensorMinValid), playpenTouchSensorMinValid);
+    ConsolePrintf("EMR[%u] playpenTouchSensorMaxValid:%u\n", EMR_FIELD_OFS(playpenTouchSensorMaxValid), playpenTouchSensorMaxValid);
+    ConsolePrintf("EMR[%u] playpenTouchSensorRangeThresh :%f\n", EMR_FIELD_OFS(playpenTouchSensorRangeThresh), playpenTouchSensorRangeThresh);
+    ConsolePrintf("EMR[%u] playpenTouchSensorStdDevThresh:%f\n", EMR_FIELD_OFS(playpenTouchSensorStdDevThresh), playpenTouchSensorStdDevThresh);
+    ConsolePrintf("EMR[%u] playpenTestDisableMask:%08x\n", EMR_FIELD_OFS(playpenTestDisableMask), playpenTestDisableMask);
   }
 }
 
