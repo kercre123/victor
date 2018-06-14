@@ -114,6 +114,19 @@ Call Stack (most recent call first):
 ```
 
   * you forgot `-p mac`
+  
+### CMake configuration runs twice in the same build
+```
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /my_victor_dir/_build/vicos/Release
+[0/1] Re-running CMake...
+-- The C compiler identification is Clang 5.0.1
+-- The CXX compiler identification is Clang 5.0.1
+-- CMAKE_C_COMPILER=/Users/username/.anki/vicos-sdk/dist/0.9-r03/prebuilt/bin/arm-oe-linux-gnueabi-clang
+-- CMAKE_CXX_COMPILER=/Users/username/.anki/vicos-sdk/dist/0.9-r03/prebuilt/bin/arm-oe-linux-gnueabi-clang++
+```
+This can cause unpredictable build behavior, and can be fixed by deleting `_build/<platform>/<configuration>/.ninja_log`
 
 ### When profiling I see "...doesn't contain symbol table"
   - This is just a warning, there are no symbol tables for the .so files on the device, instead we use symbols from the symbol cache
