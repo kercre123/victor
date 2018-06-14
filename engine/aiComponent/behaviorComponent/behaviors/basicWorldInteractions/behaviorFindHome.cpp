@@ -61,7 +61,7 @@ BehaviorFindHome::InstanceConfig::InstanceConfig(const Json::Value& config, cons
   maxDrivingDist_mm  = JsonTools::ParseFloat(config, kMaxDrivingDistKey, debugName);
   maxObservedAge_ms  = Util::numeric_cast<TimeStamp_t>(1000.f * JsonTools::ParseFloat(config, kMaxObservedAgeSecKey, debugName));
   homeFilter         = std::make_unique<BlockWorldFilter>();
-  numImagesToWait    = JsonTools::ParseUint32(config, kNumImagesToWaitKey,)
+  numImagesToWait    = JsonTools::ParseUInt32(config, kNumImagesToWaitKey, debugName);
 }
 
 
@@ -93,7 +93,7 @@ void BehaviorFindHome::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) 
     kMinDrivingDistKey,
     kMaxDrivingDistKey,
     kMaxObservedAgeSecKey,
-    kNumImagesToWaitForKey
+    kNumImagesToWaitKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 } 
