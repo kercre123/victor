@@ -343,7 +343,7 @@ bool PhotographyManager::LoadPhotosFile()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void PhotographyManager::SavePhotosFile()
+void PhotographyManager::SavePhotosFile() const
 {
   Json::Value data;
 
@@ -381,6 +381,7 @@ bool PhotographyManager::DeletePhotoByID(const int id, const bool savePhotosFile
   Util::FileUtils::DeleteFile(Util::FileUtils::FullFilePath({_savePath, baseName + "." + GetPhotoExtension()}));
   Util::FileUtils::DeleteFile(Util::FileUtils::FullFilePath({_savePath, baseName + "." + GetThumbExtension()}));
 
+  // Update the 'slots database'
   const auto newSize = _photoInfos.size() - 1;
   for ( ; index < newSize; index++)
   {
@@ -393,6 +394,61 @@ bool PhotographyManager::DeletePhotoByID(const int id, const bool savePhotosFile
   {
     SavePhotosFile();
   }
+  return true;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void PhotographyManager::SendPhotosInfo() const
+{
+  // TODO: Send the list of photoinfos to the app (via protobuff message)
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool PhotographyManager::SendPhotoByID(const int id)
+{
+  static const bool isThumbnail = false;
+  return SendImageHelper(id, isThumbnail);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool PhotographyManager::SendThumbnailByID(const int id)
+{
+  static const bool isThumbnail = true;
+  return SendImageHelper(id, isThumbnail);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool PhotographyManager::SendImageHelper(const int id, const bool isThumbnail)
+{
+  const int index = PhotoIndexFromID(id);
+  if (index < 0)
+  {
+    return false;
+  }
+
+  const auto fullPath = Util::FileUtils::FullFilePath({_savePath,
+                                                       GetBasename(id) + "." +
+                                                       (isThumbnail ? GetThumbExtension() : GetPhotoExtension())});
+
+  // TODO: Read jpg file off disk and send contents to the app (via protobuff message)
+
+  LOG_INFO("PhotographyManager.SendImageHelper", "%s with ID %i, at index %i, sent",
+           (isThumbnail ? "Thumbnail" : "Photo"), id, index);
+
+  if (!isThumbnail)
+  {
+    const auto prevCopiedToApp = _photoInfos[index]._copiedToApp;
+    _photoInfos[index]._copiedToApp = true;
+    if (!prevCopiedToApp)
+    {
+      SavePhotosFile();
+    }
+  }
+
   return true;
 }
 
@@ -417,5 +473,17 @@ int PhotographyManager::PhotoIndexFromID(const int id) const
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//   TODO:  Handle the following requests that will be coming from the App:
+//     GetPhotoInfos{}
+//     GetPhotoForID{int id}
+//     GetThumbnailForID{int id}
+//     DeletePhotoForID{int id}
+// (The last 3 of these messages could potentially be "ForIndex", but by ID is safer.
+//  Imagine several Delete requests coming quickly; each delete can change the indexes of other photos.)
+
+
+
+  
 } // namespace Cozmo
 } // namespace Anki

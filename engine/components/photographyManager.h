@@ -74,17 +74,21 @@ public:
   // Called by VisionComponent when photo has been taken and saved
   void SetLastPhotoTimeStamp(TimeStamp_t timestamp);
 
-  // Load/save the photos 'database' json file
-  bool LoadPhotosFile();
-  void SavePhotosFile();
-
-  // Delete a photo
-  bool DeletePhotoByID(const int id, const bool savePhotosFile = true);
-  
   static const char * GetPhotoExtension() { return "jpg"; }
   static const char * GetThumbExtension() { return "thm.jpg"; }
 
 private:
+
+  // Load/save the photos 'database' json file
+  bool LoadPhotosFile();
+  void SavePhotosFile() const;
+
+  bool DeletePhotoByID(const int id, const bool savePhotosFile = true);
+
+  void SendPhotosInfo() const;
+  bool SendPhotoByID(const int id);
+  bool SendThumbnailByID(const int id);
+  bool SendImageHelper(const int id, const bool isThumbnail);
 
   std::string GetSavePath() const;
   std::string GetBasename(int photoID) const;
