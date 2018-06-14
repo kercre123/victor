@@ -3,7 +3,8 @@
   "behaviorID"    : "KnowledgeGraphTTS",
   
   "associatedActiveFeature": "KnowledgeGraph",
-  
+
+  "idleAnimation"            : "NeutralFace",
   "getInAnimation"           : "TextToSpeechGetIn",
   "loopAnimation"            : "TextToSpeechGetLoop",
   "getOutAnimation"          : "TextToSpeechGetOut",

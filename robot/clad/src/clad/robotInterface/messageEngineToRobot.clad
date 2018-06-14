@@ -411,6 +411,7 @@ message StartPlaybackAudio
 
 message StartWakeWordlessStreaming
 {
+  uint_8 streamType
 }
 
 message SetShouldStreamAfterWakeWord

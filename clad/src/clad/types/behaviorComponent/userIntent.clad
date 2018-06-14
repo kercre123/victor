@@ -61,6 +61,12 @@ structure UserIntent_PlaybackMessage
   string given_name,
 }
 
+structure UserIntent_KnowledgeResponse
+{
+  string answer,
+  string query_text
+}
+
 // test structs. todo: get rid of these in favor of actual structs once
 // there are legit user intents. tests can use the actual structs
 enum uint_8 UserIntent_Test_Time_Units
@@ -111,6 +117,8 @@ union dupes_allowed UserIntent
   UserIntent_RecordMessage    message_record,
   UserIntent_PlaybackMessage  message_playback,
   UserIntent_Void             knowledge_question,
+  UserIntent_KnowledgeResponse knowledge_response,
+  UserIntent_Void             knowledge_unknown,
 
 
   // for tests

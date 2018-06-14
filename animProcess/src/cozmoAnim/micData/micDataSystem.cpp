@@ -29,7 +29,6 @@
 #include "util/math/math.h"
 
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
-#include "clad/cloud/mic.h"
 
 #include <iomanip>
 #include <sstream>
@@ -146,7 +145,7 @@ void MicDataSystem::SetTriggerWordDetectionEnabled(bool enabled)
   }
 }
 
-void MicDataSystem::StartWakeWordlessStreaming()
+void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type)
 {
   if(HasStreamingJob())
   {
@@ -159,7 +158,7 @@ void MicDataSystem::StartWakeWordlessStreaming()
   newJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggeredCapture"});
   newJob->_writeNameBase = ""; //use autogen names
   newJob->_numMaxFiles = 100;
-  newJob->_type = CloudMic::StreamType::Blackjack;
+  newJob->_type = type;
   bool saveToFile = false;
 #if ANKI_DEV_CHEATS
   saveToFile = true;

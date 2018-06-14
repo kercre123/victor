@@ -36,6 +36,7 @@ namespace {
   const char* kDefaultTTSBehaviorID = "DefaultTextToSpeechLoop";
 
   // JSON keys
+  const char* kStreamType                         = "streamType";
   const char* kEarConBegin                        = "earConAudioEventBegin";
   const char* kEarConSuccess                      = "earConAudioEventSuccess";
   const char* kEarConFail                         = "earConAudioEventNeutral";
@@ -63,7 +64,8 @@ namespace {
                         
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPromptUserForVoiceCommand::InstanceConfig::InstanceConfig()
-: earConBegin( AudioMetaData::GameEvent::GenericEvent::Invalid )
+: streamType( CloudMic::StreamType::Normal )
+, earConBegin( AudioMetaData::GameEvent::GenericEvent::Invalid )
 , earConSuccess( AudioMetaData::GameEvent::GenericEvent::Invalid )
 , earConFail( AudioMetaData::GameEvent::GenericEvent::Invalid )
 , ttsBehaviorID(kDefaultTTSBehaviorID)
@@ -96,6 +98,13 @@ BehaviorPromptUserForVoiceCommand::DynamicVariables::DynamicVariables()
 BehaviorPromptUserForVoiceCommand::BehaviorPromptUserForVoiceCommand(const Json::Value& config)
 : ICozmoBehavior(config)
 {
+  // we must have a stream type supplied, else the cloud doesn't know what to do with it
+  // * defaults don't make much sense at this point either
+  const std::string streamTypeString = JsonTools::ParseString(config,
+                                                              kStreamType,
+                                                              "BehaviorPromptUserForVoiceCommand.MissingStreamType");
+  _iConfig.streamType = CloudMic::StreamTypeFromString( streamTypeString );
+
   // ear-con vars
   {
     std::string earConString;
@@ -315,7 +324,7 @@ void BehaviorPromptUserForVoiceCommand::TransitionToListening()
     GetBEI().GetRobotAudioClient().PostEvent(_iConfig.earConBegin, AudioMetaData::GameObjectType::Behavior);
   }
 
-  GetBEI().GetMicComponent().StartWakeWordlessStreaming();
+  GetBEI().GetMicComponent().StartWakeWordlessStreaming(_iConfig.streamType);
   _dVars.streamingBeginTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
   SET_STATE(Listening);

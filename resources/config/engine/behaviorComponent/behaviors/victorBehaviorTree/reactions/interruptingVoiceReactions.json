@@ -15,6 +15,7 @@
     "ComeHereVoiceCommand",
     "LeaveAMessage",
     "PlaybackMessage",
+    "KnowledgeGraphQuestion",
     "MeetVictor"
   ]
 }

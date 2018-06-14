@@ -66,7 +66,7 @@ protected:
   void BeginResponseTTS();
 
   bool IsResponsePending() const;
-  const std::string& GetResponse() const;
+  void ConsumeResponse();
 
   void OnStreamingComplete( BehaviorSimpleCallback next );
 

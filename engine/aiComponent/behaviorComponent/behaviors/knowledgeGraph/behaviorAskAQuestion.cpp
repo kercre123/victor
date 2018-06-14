@@ -25,6 +25,7 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "util/console/consoleInterface.h"
+#include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/behaviorComponent/userIntent.h"
@@ -37,10 +38,8 @@
 
 // notes:
 // + need to check if Houndify connection is valid and respond accordingly if it is not
-// + implement BeginStreamingQuestion()
-// + implement IsResponsePending()
-// + implement GetResponse()
 // + response can be interrupted by "petting him", picking him up, or wakeword
+// + use BehaviorPromptUserForVoiceCommand for the question/response
 
 namespace Anki {
 namespace Cozmo {
@@ -151,7 +150,19 @@ void BehaviorAskAQuestion::BehaviorUpdate()
       // if we've gotten a response from knowledge graph, transition into the response state
       if ( IsResponsePending() )
       {
-        OnStreamingComplete( std::bind( &BehaviorAskAQuestion::TransitionToBeginResponse, this ) );
+        // need to consume the response immediately or the system gets cranky
+        ConsumeResponse();
+
+        // if we have a valid response, go ahead and speak the truth,
+        // else, we need to deliver the bad news
+        if ( !_dVars.responseString.empty() )
+        {
+          OnStreamingComplete( std::bind( &BehaviorAskAQuestion::TransitionToBeginResponse, this ) );
+        }
+        else
+        {
+          OnStreamingComplete( std::bind( &BehaviorAskAQuestion::TransitionToNoResponse, this ) );
+        }
       }
       else
       {
@@ -169,12 +180,18 @@ void BehaviorAskAQuestion::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAskAQuestion::BeginStreamingQuestion()
 {
- // implement me!
+  PRINT_DEBUG( "Knowledge Graph streaming begun ..." );
+
+  GetBEI().GetMicComponent().StartWakeWordlessStreaming( CloudMic::StreamType::KnowledgeGraph );
+  _dVars.streamingBeginTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAskAQuestion::OnStreamingComplete( BehaviorSimpleCallback next )
 {
+  // go into responding state first, then figure out how to reponde
+  _dVars.state = EState::Responding;
+
   // streaming has ended so we need to cancel our looping animation and play our getout
   CancelDelegates();
   DelegateIfInControl( new TriggerAnimationAction( kAnim_StreamingGetOut ), next );
@@ -183,28 +200,59 @@ void BehaviorAskAQuestion::OnStreamingComplete( BehaviorSimpleCallback next )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorAskAQuestion::IsResponsePending() const
 {
-  // implement me!
-
-  const std::string& responseString = GetResponse();
-  return !responseString.empty();
+  const UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
+  return uic.IsAnyUserIntentPending();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const std::string& BehaviorAskAQuestion::GetResponse() const
+void BehaviorAskAQuestion::ConsumeResponse()
 {
-  // implement me!
+  PRINT_DEBUG( "Checking for response" );
 
-  static const std::string kResponse = "Bentley is a dog";
-  return kResponse;
+  // if we have a valid knowledge graph response intent, grab the response string from it
+  // if it's not the knowledge graph response, we simply return the empty string which will be handled appropriately
+  UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
+
+  UserIntent intent;
+  if ( uic.IsUserIntentPending( USER_INTENT(knowledge_response), intent ) )
+  {
+    uic.DropUserIntent( intent.GetTag() );
+
+    // grab the response string
+    const UserIntent_KnowledgeResponse& intentResponse = intent.Get_knowledge_response();
+    _dVars.responseString = intentResponse.answer;
+
+    PRINT_DEBUG( "Knowledge Graph Question:\n %s", Util::HidePersonallyIdentifiableInfo( intentResponse.query_text.c_str() ) );
+    PRINT_DEBUG( "Knowledge Graph Response:\n %s", Util::HidePersonallyIdentifiableInfo( intentResponse.answer.c_str() ) );
+  }
+  else if ( uic.IsUserIntentPending( USER_INTENT(knowledge_unknown) ) )
+  {
+    // don't need to do anything other than clear the response
+    uic.DropUserIntent( USER_INTENT(knowledge_unknown) );
+  }
+  else if ( uic.IsUserIntentPending( USER_INTENT(unmatched_intent) ) )
+  {
+    // this shoudln't really happen, but handle it safely regardless
+    uic.DropUserIntent( USER_INTENT(unmatched_intent) );
+    PRINT_NAMED_WARNING( "BehaviorAskAQuestion", "unmatched_intent returned as response from knowledge graph" );
+  }
+  else
+  {
+    #if ALLOW_DEBUG_LOGGING
+    {
+      // this really shouldn't happen, something went wrong
+      // this will be handled fine, but we should let dev know about it
+      const UserIntentData* intentData = uic.GetPendingUserIntent();
+      const std::string intentString = UserIntentTagToString( intentData ? intentData->intent.GetTag() : UserIntentTag::INVALID );
+      PRINT_NAMED_ERROR( "BehaviorAskAQuestion", "Invalid intent returned from Knowledge Graph: %s", intentString.c_str() );
+    }
+    #endif
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAskAQuestion::BeginResponseTTS()
 {
-  DEV_ASSERT( !_dVars.responseString.empty(), "Responding to knowledge graph request but no response string exists" );
-
-  PRINT_DEBUG( "Response: %s", _dVars.responseString.c_str() );
-
   // delegate to our tts behavior
   _iVars.ttsBehavior->SetTextToSay( _dVars.responseString );
   if ( _iVars.ttsBehavior->WantsToBeActivated() )
@@ -222,25 +270,21 @@ void BehaviorAskAQuestion::BeginResponseTTS()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAskAQuestion::TransitionToBeginResponse()
 {
+  // this should already be set, but doens't hurt to ensure
   _dVars.state = EState::Responding;
 
-  // save our response string so we can TTS it to the user
-  _dVars.responseString = GetResponse();
+  DEV_ASSERT( !_dVars.responseString.empty(), "Responding to knowledge graph request but no response string exists" );
+  PRINT_DEBUG( "Received Knowledge Graph response" );
 
-  // if the response string is empty, it means knowledge graph didn't know what's up, so respond accordingly
-  if ( !_dVars.responseString.empty() )
-  {
-    BeginResponseTTS();
-  }
-  else
-  {
-    TransitionToNoResponse();
-  }
+  // nothing to do but speak the response
+  BeginResponseTTS();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAskAQuestion::TransitionToNoResponse()
 {
+  PRINT_DEBUG( "No response recieved from Knowledge Graph" );
+
   _dVars.state = EState::NoResponse;
 
   DelegateIfInControl( new TriggerLiftSafeAnimationAction( kAnim_NoResponse ) );
@@ -249,6 +293,8 @@ void BehaviorAskAQuestion::TransitionToNoResponse()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAskAQuestion::TransitionToNoConnection()
 {
+  PRINT_DEBUG( "Knowledge Graph not connected" );
+
   _dVars.state = EState::NoConnection;
 
   DelegateIfInControl( new TriggerLiftSafeAnimationAction( kAnim_NoConnection ) );
