@@ -174,12 +174,22 @@ class Robot:
         self._status = msg.status
         self._game_status = msg.game_status
 
+    # TODO Refactor connect and disconnect out of robot class and into class like cozmo.conn
     def connect(self):
         credentials = aiogrpc.ssl_channel_credentials(root_certificates=self.trusted_certs)
         self.logger.info("Connecting to {}".format(self.address))
         self.channel = aiogrpc.secure_channel(self.address, credentials)
         self.connection = client.ExternalInterfaceStub(self.channel)
+
+        # TODO Add a default, configurable timeout to request_control
+        # so that the Python script (such as a tutorial or user script)
+        # doesn't potentially wait forever for the SDK behavior to be
+        # activated, just in case. This means that the caller to the method
+        # that calls request_control needs to return a value to the user's
+        # script indicating that the script should not proceed and will fail
+        # to control the robot.
         self.request_control()
+
         self.events.start(self.connection)
         # Subscribe to a callback that updates the robot's local properties
         self.events.subscribe("robot_state", self.unpack_robot_state)
@@ -188,12 +198,12 @@ class Robot:
         if self.is_async and wait_for_tasks:
             for task in self.pending:
                 task.wait_for_completed()
-        
+
         try:
             self.release_control().wait_for_completed()
         except AttributeError as err:
             pass
-        
+
         self.events.close()
         if self.channel:
             self.loop.run_until_complete(self.channel.close())
@@ -222,6 +232,7 @@ class Robot:
         self.disconnect()
 
     # Animations
+    # TODO Refactor all animation code out into class like Cozmo SDK's cozmo.anim
     async def get_anim_names(self, enable_diagnostics=False):
         sys.exit("'{}' is not yet implemented in grpc".format(__name__))
         message = _clad_message.RequestAvailableAnimations()
@@ -312,6 +323,7 @@ class Robot:
         self.logger.debug(result)
         return result
 
+    # TODO Refactor all face code out into class like cozmo.faces
     @actions._as_actionable
     async def cancel_face_enrollment(self):
         req = protocol.CancelFaceEnrollmentRequest()
@@ -409,6 +421,7 @@ class Robot:
         light_arr = [ light ] * 3
         await self.set_backpack_lights(*light_arr, color_profile)
 
+    # TODO Refactor all cube code into class like cozmo.objects
     async def set_cube_light_corners( self, cube_id, light1, light2, light3, light4, color_profile=lights.white_balanced_cube_profile ):
         message = _clad_message.SetAllActiveObjectLEDs(
             objectID=cube_id,
@@ -425,6 +438,7 @@ class Robot:
     async def set_cube_lights( self, cube_id, light, color_profile=lights.white_balanced_cube_profile ):
         await self.set_cube_light_corners( cube_id, *[light, light, light, light], color_profile)
 
+    # TODO Factor all OLED code out into class like cozmo.oled_face
     @actions._as_actionable
     async def set_oled_with_image_data(self, image_data, duration_sec, interrupt_running=True):
         if not isinstance(image_data, list):

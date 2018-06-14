@@ -68,18 +68,44 @@ void SDKComponent::UpdateDependent(const RobotCompMap& dependentComps)
   // TODO
 }
 
-
+// Receives a message that external SDK wants an SDK behavior to be activated.
 template<>
 void SDKComponent::HandleMessage(const ExternalInterface::SDKActivationRequest& msg)
 {
   if (msg.enable) {
     _sdkWantsControl = true;
+
+    if (_sdkBehaviorActivated) {
+      // SDK wants control and and the SDK Behavior is already running. Send response that SDK behavior is activated.
+      DispatchSDKActivationResult(_sdkBehaviorActivated);
+      return;
+    }
   }
   else {
     _sdkWantsControl = false;
   }
 }
 
+bool SDKComponent::SDKWantsControl()
+{
+  // TODO What slot does the SDK want to run at? Currently only requesting at one slot, SDK0.
+  return _sdkWantsControl;
+}
+
+void SDKComponent::SDKBehaviorActivation(bool enabled)
+{
+  _sdkBehaviorActivated = enabled;
+  DispatchSDKActivationResult(_sdkBehaviorActivated);
+}
+
+void SDKComponent::DispatchSDKActivationResult(bool enabled) {
+  // Communicate to SDK that SDK behavior has been activated or deactivated.
+  // When activated, SDK can control the robot.
+  ExternalInterface::SDKActivationResult sar;
+  sar.slot = BehaviorSlot::SDK_HIGH_PRIORITY; // TODO Allow multiple levels to be used; don't hardcode. Also, this correlates to SDK0. Rename SDK0 to SDK_HIGH_PRIORITY or similar?
+  sar.enabled = enabled;
+  _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(std::move(sar)));  
+}
 
 } // namespace Cozmo
 } // namespace Anki

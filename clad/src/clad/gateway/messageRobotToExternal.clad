@@ -101,6 +101,7 @@ message RobotHistoryResult {
 // Response to request for control from behavior system
 message SDKActivationResult {
   uint_32 slot,
+  bool enabled,
 }
 
 structure PoseStruct3d

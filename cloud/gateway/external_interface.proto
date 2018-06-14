@@ -1,4 +1,7 @@
 // External interface for robot <-> app and robot <-> sdk communication
+//
+// IMPORTANT: After changing this file, you will need to regenerate the
+// Python files by running make in victor/tools/sdk/grpc_tools.
 
 syntax = "proto3";
 
@@ -304,7 +307,8 @@ message SDKActivationRequest {
 
 message SDKActivationResult {
   ResultStatus status = 1;
-  uint32 slot = 2;
+  uint32 slot = 2; // TODO Use BehaviorSlot
+  bool enabled = 3;
 }
 
 // Meet Victor

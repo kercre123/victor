@@ -69,7 +69,7 @@ private:
 
   static u32 _gameActionTagCounter;
 
-  bool _allowedToHandleActions;
+  bool _isAllowedToHandleActions;
 };
 
   

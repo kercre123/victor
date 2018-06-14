@@ -206,6 +206,12 @@ Util::RandomGenerator& BEIRobotInfo::GetRNG()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SDKComponent& BEIRobotInfo::GetSDKComponent() const
+{
+  return _robot.GetSDKComponent();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const Pose3d& BEIRobotInfo::GetWorldOrigin()  const
 {
   return _robot.GetWorldOrigin();

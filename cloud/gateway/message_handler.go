@@ -569,19 +569,52 @@ func (c *rpcService) EventStream(in *extint.EventRequest, stream extint.External
 	return nil
 }
 
-// Request control from behavior system
 func (m *rpcService) SDKBehaviorActivation(ctx context.Context, in *extint.SDKActivationRequest) (*extint.SDKActivationResult, error) {
 	log.Println("Received rpc request SDKBehaviorActivation(", in, ")")
+	if (in.Enable) {
+		// Request control from behavior system
+		return SDKBehaviorRequestActivation(in)
+	}
+
+	return SDKBehaviorRequestDeactivation(in)
+}
+
+// Request control from behavior system.
+func SDKBehaviorRequestActivation(in *extint.SDKActivationRequest) (*extint.SDKActivationResult, error) {
+	// We are enabling the SDK behavior. Wait for the engine-to-game reply
+	// that the SDK behavior was activated.
+	sdk_activation_result := make(chan RobotToExternalResult)
+	engineChanMap[gw_clad.MessageRobotToExternalTag_SDKActivationResult] = sdk_activation_result
+	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_SDKActivationResult)
+
 	_, err := WriteToEngine(engineSock, ProtoSDKActivationToClad(in))
 	if err != nil {
 		return nil, err
 	}
+	result:= <-sdk_activation_result
 	return &extint.SDKActivationResult{
-		// TODO Set data for Slot and ResultStatus
-		//Slot: &extint.Slot{
-		//},
 		Status: &extint.ResultStatus{
-			Description: "Message sent to engine",
+			Description: "SDKActivationResult returned",
+		},
+		Slot: result.Message.GetSDKActivationResult().Slot,
+		Enabled: result.Message.GetSDKActivationResult().Enabled,
+	}, nil
+}
+
+func SDKBehaviorRequestDeactivation(in *extint.SDKActivationRequest) (*extint.SDKActivationResult, error) {
+	// Deactivate the SDK behavior. Note that we don't wait for a reply
+	// so that our SDK program can exit immediately.
+	_, err := WriteToEngine(engineSock, ProtoSDKActivationToClad(in))
+	if err != nil {
+		return nil, err
+	}
+
+	// Note: SDKActivationResult contains Slot and Enabled, which we are currently
+	// ignoring when we deactivate the SDK behavior since we are not waiting for
+	// the SDKActivationResult message to return.
+	return &extint.SDKActivationResult{
+		Status: &extint.ResultStatus{
+			Description: "SDKActivationResult returned",
 		},
 	}, nil
 }

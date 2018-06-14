@@ -898,8 +898,9 @@ using FullActionMessageHandlerArray = Util::FullEnumToValueArrayChecker::FullEnu
 RobotEventHandler::RobotEventHandler(const CozmoContext* context)
 : _context(context)
 {
-  // TODO Set to false so it is only enabled when BehaviorSDKInterface is activated.
-  _allowedToHandleActions = true;//false;
+  // If false, low level motion commands only run when an instance of BehaviorSDKInterface is activated.
+  // TODO Set this to be false
+  _isAllowedToHandleActions = true;
   
   auto externalInterface = _context->GetExternalInterface();
 
@@ -1048,7 +1049,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
 } // RobotEventHandler Constructor
 
 void RobotEventHandler::SetAllowedToHandleActions(bool allowedToHandleActions) {
-  _allowedToHandleActions = allowedToHandleActions;
+  _isAllowedToHandleActions = allowedToHandleActions;
 }
 
 // =====================================================================================================================
@@ -1067,7 +1068,7 @@ u32 RobotEventHandler::GetNextGameActionTag() {
 void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
 {
   auto const& msg = event.GetData();
-  if (!_allowedToHandleActions) {
+  if (!_isAllowedToHandleActions) {
     PRINT_NAMED_ERROR("RobotEventHandler.HandleActionEvents.ActionsNotAllowedUntilSDKBehaviorActivated",
                       "Tag: %s", ExternalInterface::MessageGameToEngineTagToString(msg.GetTag()));
     return;

@@ -1041,6 +1041,7 @@ message RobotHistoryResult {
 // Response to request for control from behavior system
 message SDKActivationResult {
     BehaviorSlot slot,
+    bool enabled,
 }
 
 // Anything that the robot wishes to push to the app that 
