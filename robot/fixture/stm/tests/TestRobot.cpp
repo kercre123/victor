@@ -751,16 +751,15 @@ void EmrChecks(void)
 void EmrUpdate(void)
 {
   //from clad/src/clad/types/factoryTestTypes.clad
-  enum PlaypenTestMask {
-    BackpackElectricalError      = 0x00000001,
-    UnexpectedTouchDetectedError = 0x00000002,
-    NoisyTouchSensorError        = 0x00000004,
-    CubeRadioError               = 0x00000008,
-  };
-
+  uint32_t PlaypenTestMask = 0
+    | 0x00000001  //BackpackElectricalError
+    | 0x00000002  //UnexpectedTouchDetectedError 
+    | 0x00000004  //NoisyTouchSensorError
+    //| 0x00000008  //CubeRadioError
+  ;
+  
   if( IS_FIXMODE_ROBOT3() && !IS_FIXMODE_OFFLINE() ) {
-    uint32_t PlaypenTestMask = BackpackElectricalError | UnexpectedTouchDetectedError | NoisyTouchSensorError;
-    ConsolePrintf("playpen disable test mask %08x\n", PlaypenTestMask);
+    ConsolePrintf("playpen test mask 0x%08x\n", PlaypenTestMask);
     rcomSmr( EMR_FIELD_OFS(playpenTestDisableMask), PlaypenTestMask );
     rcomSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 1 );
   }
