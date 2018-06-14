@@ -89,6 +89,9 @@ enum uint_8 BehaviorID {
   BlackJackRequestToPlayAgain,
   BlackJackTextToSpeech,
 
+  // victorBehaviorTree/clock
+  ShowWallTime,
+
   // victorBehaviorTree
   ComeHereVoiceCommand,
   CoordinateGlobalInterrupts,

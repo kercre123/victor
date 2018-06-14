@@ -196,6 +196,14 @@
     "AnimName": "ag_chargerdocking_reaction"
   },
   {
+    "CladEvent": "ClockGetIn",
+    "AnimName": "ag_timer_set_getin"
+  },
+  {
+    "CladEvent": "ClockGetOut",
+    "AnimName": "ag_timer_set_getout"
+  },
+  {
     "CladEvent": "ConnectWakeUp",
     "AnimName": "ag_connectwakeup"
   },

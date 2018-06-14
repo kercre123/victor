@@ -120,6 +120,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/sdkBehaviors/behaviorSDKInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/sleeping/behaviorSleeping.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorAdvanceClock.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorDisplayWallTime.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h"
@@ -695,7 +696,7 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToCubeTap(config));
       break;
     }
-        
+    
     case BehaviorClass::ReactToDarkness:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToDarkness(config));
@@ -707,7 +708,7 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToFrustration(config));
       break;
     }
-
+    
     case BehaviorClass::ReactToMicDirection:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToMicDirection(config));
@@ -813,6 +814,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::AdvanceClock:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorAdvanceClock(config));
+      break;
+    }
+    
+    case BehaviorClass::DisplayWallTime:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDisplayWallTime(config));
       break;
     }
     

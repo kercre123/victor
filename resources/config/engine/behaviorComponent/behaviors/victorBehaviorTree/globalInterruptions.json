@@ -9,6 +9,7 @@
     "LowBatteryFindAndGoToHome",
     "SDK0",
     "TriggerWordDetected",
+    "ShowWallTime",
     "TimerUtilityCoordinator",
     "WeatherResponses",
     "TakeAPhotoCoordinator",

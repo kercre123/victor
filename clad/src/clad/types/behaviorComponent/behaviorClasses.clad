@@ -179,6 +179,7 @@ enum uint_8 BehaviorClass {
 
   // timer
   AdvanceClock,
+  DisplayWallTime,
   ProceduralClock,
   TimerUtilityCoordinator,
 
