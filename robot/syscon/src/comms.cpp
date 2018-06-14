@@ -141,12 +141,11 @@ void Comms::init(void) {
 }
 
 void Comms::reset() {
-  __disable_irq();
+  NVIC_DisableIRQ(DMA1_Channel4_5_IRQn);
   // Clear out any received bytes
   state = COMM_STATE_SYNC;
-  receivedWords = 0;
   memset(inbound_raw, 0, sizeof(inbound_raw));
-  __enable_irq();
+  NVIC_EnableIRQ(DMA1_Channel4_5_IRQn);
 }
 
 void Comms::enqueue(PayloadId kind, const void* packet, int size) {
