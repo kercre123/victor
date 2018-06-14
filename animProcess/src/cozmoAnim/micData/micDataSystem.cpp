@@ -94,11 +94,10 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform)
 
   if (!_writeLocationDir.empty())
   {
+  #if ANKI_DEV_CHEATS
     Util::FileUtils::CreateDirectory(_writeLocationDir);
-
-    #if ANKI_DEV_CHEATS
-      _debugMicDataWriteLocation = _writeLocationDir;
-    #endif
+    _debugMicDataWriteLocation = _writeLocationDir;
+  #endif
   }
 
   const RobotID_t robotID = OSState::getInstance()->GetRobotID();
