@@ -7,4 +7,5 @@ ${GIT_PROJ_ROOT}/project/victor/build-victor.sh \
 		-DANKI_DEV_CHEATS=0 \
 		-DANKI_PROFILING_ENABLED=0 \
 		-DREMOTE_CONSOLE_ENABLED=0 \
-		-a -DAUDIO_RELEASE=ON
+		-a -DAUDIO_RELEASE=ON \
+		"$@"
