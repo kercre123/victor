@@ -6,8 +6,6 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include "tests.h"
-#include "time.h"
 
 //-----------------------------------------------------------------------------
 //                  Fixture Modes
@@ -59,6 +57,10 @@ extern "C" {
 //-----------------------------------------------------------------------------
 //                  Fixture Mode extended info
 //-----------------------------------------------------------------------------
+
+#ifndef SYSTEST
+#include "tests.h"
+#include "time.h"
 
 typedef struct {
   const char       *name;
@@ -159,6 +161,8 @@ const char*   fixtureTimeStr(time_t time); //short (20char) string representatio
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
 /*FIXMODE_INFO_ARRAY_INIT*/
+
+#endif //ifndef SYSTEST
 
 //-----------------------------------------------------------------------------
 //                  Fixture Errors
