@@ -777,7 +777,14 @@ void RobotPowerDown(void)
     rcomPwr(RCOM_PWR_OFF);
     Contacts::powerOn(); //immdediately turn on power to prevent rebooting
     cleanup_preserve_vext = 1; //leave power on for removal detection (no cleanup pwr cycle)
-  } 
+    
+    /*/DEBUG:
+    ConsolePrintf("delay for manual powerdown check. press a key to skip\n");
+    uint32_t Tstart = Timer::get();
+    while( ConsoleReadChar() > -1 );
+    while( Timer::elapsedUs(Tstart) < 10*1000*1000 ) { if( ConsoleReadChar() > -1 ) break; }
+    //-*/
+  }
   else
   {
     Contacts::powerOn(); //turn on power to prevent rebooting
@@ -1384,7 +1391,6 @@ TestFunction* TestRobotPackoutGetTests(void) {
     RobotLogCollect,
     SadBeep, //eng sound cmd only works before packout flag set
     EmrUpdate, //set packout flag, timestamp
-    TurkeysDone, //DEBUG: does this work with PVT OS eng changes?
     RobotPowerDown,
     RobotFlexFlowPackoutReport,
     NULL,
