@@ -12,6 +12,7 @@ import (
 
 var verbose bool
 var checkDataFunc func() error // overwritten by cert_verify_linux.go
+var certErrorFunc func() bool  // overwritten by cert_error_shipping.go, determines if error should cause exit
 
 func getSocketWithRetry(name string, client string) ipc.Conn {
 	for {
@@ -47,10 +48,15 @@ func testReader(serv ipc.Server, send cloudproc.MsgSender) {
 
 func main() {
 	log.Println("Hello, world!")
+
+	// if we want to error, we should do it after we get socket connections, to make sure
+	// vic-anim is running and able to handle it
+	var tryErrorFunc bool
 	if checkDataFunc != nil {
 		if err := checkDataFunc(); err != nil {
 			log.Println("CLOUD DATA VERIFICATION ERROR:", err)
 			log.Println("(this should not happen on any DVT3 or later robot)")
+			tryErrorFunc = true
 		} else {
 			log.Println("Cloud data verified")
 		}
@@ -72,6 +78,11 @@ func main() {
 	defer micSock.Close()
 	aiSock := getSocketWithRetry(ipc.GetSocketPath("ai_sock"), "cp_ai")
 	defer aiSock.Close()
+
+	// now that we have connection, we can error if necessary
+	if tryErrorFunc && certErrorFunc != nil && certErrorFunc() {
+		return
+	}
 
 	// set up test channel if flags say we should
 	var testRecv *cloudproc.Receiver

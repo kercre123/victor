@@ -1,4 +1,4 @@
-package cert
+package robot
 
 import (
 	"crypto/x509"
@@ -19,6 +19,12 @@ type DeviceCertRecord struct {
 	CertSignatureAlgorithm string `json:"CertSignatureAlgorithm"`
 	CertSignature          string `json:"CertSignature"`
 }
+
+// Filenames for certificate/keys data
+const (
+	CertFilename = "AnkiRobotDeviceCert.pem"
+	KeysFilename = "AnkiRobotDeviceKeys.pem"
+)
 
 // CheckFactoryCloudFiles checks that the factory-programmed "Cloud" directory
 // has been populated with the expected files, and checks that the information
@@ -47,7 +53,7 @@ func CheckFactoryCloudFiles(cloudDir, canonicalESN string) error {
 		}
 	}
 
-	keysFile := filepath.Join(cloudDir, "AnkiRobotDeviceKeys.pem")
+	keysFile := filepath.Join(cloudDir, KeysFilename)
 	if keysBytesPEM, err := ioutil.ReadFile(keysFile); err != nil {
 		return err
 	} else {
@@ -61,7 +67,7 @@ func CheckFactoryCloudFiles(cloudDir, canonicalESN string) error {
 		}
 	}
 
-	certFile := filepath.Join(cloudDir, "AnkiRobotDeviceCert.pem")
+	certFile := filepath.Join(cloudDir, CertFilename)
 	if certBytesPEM, err := ioutil.ReadFile(certFile); err != nil {
 		return err
 	} else {

@@ -36,6 +36,10 @@ macro(__anki_setup_go_environment target_basedir)
 
   list(APPEND __go_build_flags "-o" "${__gobuild_primary_out}")
 
+  if (ANKI_DEV_CHEATS EQUAL 0)
+    list(APPEND __go_build_flags "-tags" "'shipping'")
+  endif()
+
   if (VICOS)
     # set vicos flags for `go build`
     list(APPEND __go_compile_env "GOOS=linux")

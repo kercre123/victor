@@ -17,7 +17,7 @@
 #include <inttypes.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#include <fcntl.h> 
+#include <fcntl.h>
 #include <errno.h>
 #include <stdio.h>
 
@@ -36,21 +36,21 @@ enum : uint16_t {
   //Use higher numbers for head self-tests
   //display precedence over (external) body tests
   DISPLAY_FAILURE       = 990, //nobody will ever see this :(
-  
+
   CAMERA_FAILURE        = 980,
-  
+
   //WIFI                  = 970,
   WIFI_HW_FAILURE       = 970, //local wifi hw checks only
-  
+
   IMU_FAILURE           = 960,
-  
+
   //critical processes
   SYSTEMD               = 919,
   NO_ROBOT_PROCESS      = 917,
   NO_ENGINE_PROCESS     = 915,
   NO_SWITCHBOARD        = 913,
   AUDIO_FAILURE         = 911,
-  
+
   //Body and external errors
   NO_BODY               = 899, //no response from syscon
 
@@ -61,13 +61,16 @@ enum : uint16_t {
   CLIFF_BR              = 892,
   CLIFF_FL              = 891,
   CLIFF_FR              = 890,
-  
+
   //Mic Errors
   MIC_BL                = 873,
   MIC_BR                = 872,
   MIC_FL                = 871,
   MIC_FR                = 870,
-  
+
+  //Cloud Errors
+  CLOUD_CERT            = 850,
+
   // Should always be 800 as the fault code
   // display image for this fault is hardcoded into
   // the animfail program
@@ -91,14 +94,14 @@ static int DisplayFaultCode(uint16_t code)
       return errno;
     }
   }
- 
+
   int fifo = open(FaultCode::kFaultCodeFifoName, O_WRONLY);
   if(fifo < 0)
   {
     printf("DisplayFaultCode: Failed to open fifo %d\n", errno);
     return errno;
   }
-  
+
   // Write the fault code to the socket
   ssize_t numBytes = write(fifo, &code, sizeof(code));
   if(numBytes != sizeof(code))
@@ -113,14 +116,14 @@ static int DisplayFaultCode(uint16_t code)
       return errno;
     }
   }
-  
+
   int rc = close(fifo);
   if(rc < 0)
   {
     printf("DisplayFaultCode: Failed to close fifo %d\n", errno);
     return errno;
   }
-  
+
   return 0;
 }
 
