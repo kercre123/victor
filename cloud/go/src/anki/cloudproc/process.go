@@ -3,11 +3,14 @@ package cloudproc
 import (
 	"anki/log"
 	"anki/util"
+	"bytes"
 	"clad/cloud"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"strings"
+	"time"
 
 	"github.com/anki/sai-chipper-voice/client/chipper"
 	pb "github.com/anki/sai-chipper-voice/proto/anki/chipperpb"
@@ -139,6 +142,12 @@ procloop:
 				serverMode, ok := modeMap[mode]
 				if !ok {
 					p.writeError("mode", fmt.Sprint("unknown mode:", mode))
+					continue
+				}
+
+				// TEMP HACK: fake knowledge graph results until houndify is hooked up on server
+				if mode == cloud.StreamType_KnowledgeGraph {
+					p.fakeKnowledgeGraphResponse()
 					continue
 				}
 
@@ -289,4 +298,29 @@ var modeMap = map[cloud.StreamType]pb.RobotMode{
 	cloud.StreamType_Normal:         pb.RobotMode_VOICE_COMMAND,
 	cloud.StreamType_Blackjack:      pb.RobotMode_GAME,
 	cloud.StreamType_KnowledgeGraph: pb.RobotMode_KNOWLEDGE_GRAPH,
+}
+
+func (p *Process) fakeKnowledgeGraphResponse() {
+	// spawn goroutine to wait 3 seconds and fake response
+	go func() {
+		time.Sleep(3 * time.Second)
+		fakeParams := map[string]string{
+			"answer":      "The San Jose Sharks will win the Stanley Cup in 2019",
+			"answer_type": "InformationCommand",
+			"query_text":  "who will win the 2019 stanley cup",
+			"domains.0":   "sportsball",
+			"domains.1":   "Query Glue",
+		}
+		var buf bytes.Buffer
+		json.NewEncoder(&buf).Encode(fakeParams)
+		result := &cloud.IntentResult{
+			Intent:     "intent_knowledge_response_extend",
+			Parameters: buf.String(),
+			Metadata:   "temp fake response",
+		}
+		msg := cloud.NewMessageWithResult(result)
+		p.signalMicStop()
+		logVerbose("Sending fake KG response", msg)
+		p.writeResponse(msg)
+	}()
 }
