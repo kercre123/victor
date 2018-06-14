@@ -310,6 +310,16 @@ static void HiddenAPCallback(GDBusConnection *connection,
 
     g_dbus_method_invocation_return_value(invocation, response);
   }
+
+  if (!strcmp(method_name, "ReportError")) {
+    gchar *obj;
+    gchar *err;
+
+    g_variant_get(parameters, "(os)", &obj, &err);
+    if (!strcmp(err, "net.connman.Agent.Error.Retry")) {
+      wpaConnectInfo->errRetry = true;
+    }
+  }
 }
 
 GDBusInterfaceVTable hiddenAPVtable = {
@@ -324,6 +334,10 @@ static const gchar introspection_xml[] =
   "      <arg type='o' name='service' direction='in'/>"
   "      <arg type='a{sv}' name='fields' direction='in'/>"
   "      <arg type='a{sv}' name='input' direction='out'/>"
+  "    </method>"
+  "    <method name='ReportError'/>"
+  "      <arg type='o' name='service' direction='in'/>"
+  "      <arg type='s' name='error' direction='in'/>"
   "    </method>"
   "  </interface>"
   "</node>";
@@ -589,9 +603,18 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidd
     }
   }
 
-  // Try to connect to our service
-  bool connect = ConnectToWifiService(service);
+  bool connect = false;
+  unsigned numAttempts = MAX_NUM_ATTEMPTS;
+  do {
+    connectInfo.errRetry = false;
 
+    // Try to connect to our service
+    connect = ConnectToWifiService(service);
+
+    // if the Agent asked us to re-try, we do what it wants
+  } while (agent_registered && connectInfo.errRetry && --numAttempts > 0);
+
+  // let's try one more time just to be sure
   if (!connect) {
     Log::Write("Retry connecting one more time");
     connect = ConnectToWifiService(service);
