@@ -257,7 +257,8 @@ def unpack_tarball(tar_file, file_types=[], put_in_subdir=False, add_metadata=Fa
     #print("Unpacking %s (version %s) (%s files)" % (tar_file, tar_file_rev, len(tar_members)))
     tar.extractall(dest_dir, members=tar_members)
     tar.close()
-    if ".json" in file_types:
+    sprite_sequence = os.path.basename(os.path.dirname(tar_file)) in UNPACK_INTO_SUBDIR
+    if ".json" in file_types and not sprite_sequence:
       json_files = [tar_info.name for tar_info in tar_members if tar_info.name.endswith(".json")]
       json_files = map(lambda x: os.path.join(dest_dir, x), json_files)
       if json_files:
