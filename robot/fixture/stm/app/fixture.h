@@ -262,6 +262,7 @@ typedef int error_t;
 #define ERROR_BODY_CANNOT_POWER_OFF       557 // robot can't turn off. check test connection and button not held. Possible damage on Body PCBA
 #define ERROR_BODY_PROGRAMMED             558 // already has production fw (jtag lock prevents reprogram)
 #define ERROR_BODY_NO_BOOT_MSG            559 // Could not detect production fw boot msg
+#define ERROR_BODY_RANGE_END              560 // RANGE CHECK FOR BODY ERRORS, do not throw this!
 
 //<export heading> Drop Sensor Errors
 //#define ERROR_DROP_LEAKAGE              570 // Drop leakage detected

@@ -210,10 +210,31 @@ static void BodyLoadTestFirmware(void)
   //flush systest line buffer
   Contacts::write("\n\n\n");
   
-  //Run some tests
+  //print version to test contact comms
   cmdSend(CMD_IO_CONTACTS, "getvers");
   
-  //XXX: --- add hardware tests here ---
+  //test tread encoders
+  cmdSend(CMD_IO_CONTACTS, "encoders", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS);
+  if( cmdStatus() >= ERROR_BODY && cmdStatus() < ERROR_BODY_RANGE_END )
+    throw cmdStatus();
+  else if( cmdStatus() != 0 )
+    throw ERROR_BODY;
+  
+  
+  
+  //XXX: TEST DROP SENSORS -----------------------------------
+  
+  
+  //XXX: TEST BATTERY READ -----------------------------------
+  
+  
+  //XXX: TEST POWER SYSTEMS CONTROL -----------------------------------
+  
+  
+  //XXX: TEST MOTOR FETS/SHORTS ---------------------------------------
+  
+  
+  
   
   Board::powerOff(PWR_VEXT);
   Board::powerOff(PWR_VBAT);
