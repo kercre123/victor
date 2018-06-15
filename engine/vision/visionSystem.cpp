@@ -1563,9 +1563,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     //           "VisionSystem.ApplyCLAHE.BadUseClaheVal");
     // MarkerDetectionCLAHE useCLAHE = static_cast<MarkerDetectionCLAHE>(kUseCLAHE_u8);
     MarkerDetectionCLAHE useCLAHE = usingNightVision ? MarkerDetectionCLAHE::On : MarkerDetectionCLAHE::Off;
-    
     Vision::Image claheImage;
-    
     Vision::ImageCache* markerProcCache = usingNightVision ? nightVisionCache : &imageCache;
     
     if( nullptr != markerProcCache )

@@ -80,7 +80,6 @@ void NightVisionFilter::AddImage( const Vision::Image& img,
   {
     _accumulator.Allocate( img.GetNumRows(), img.GetNumCols() );
     _accumulator.FillWith( 0 );
-    _castImage.Allocate( img.GetNumRows(), img.GetNumCols() );
   }
   // Otherwise see if robot moved, since filter can only run when stationary
   else if( HasMoved( poseData ) )
@@ -99,13 +98,10 @@ void NightVisionFilter::AddImage( const Vision::Image& img,
     return;
   }
 
-  // Cast img to u16 type to add
-  cv::Mat_<u16>& castMat = _castImage.get_CvMat_();
   const cv::Mat_<u8>& imgMat = img.get_CvMat_();
   cv::Mat_<u16>& accMat = _accumulator.get_CvMat_();
+  cv::add( accMat, imgMat, accMat, cv::noArray(), CV_16U );
 
-  imgMat.convertTo( castMat, CV_16U );
-  accMat += castMat;
   _lastTimestamp = img.GetTimestamp();
   _numAccImages++;
 }
@@ -113,16 +109,16 @@ void NightVisionFilter::AddImage( const Vision::Image& img,
 bool NightVisionFilter::HasMoved( const VisionPoseData& poseData )
 {
   // Some of these are not set to true if robot moved by human
-  bool robotMoved = poseData.histState.WasCameraMoving() ||
-                    poseData.histState.WasPickedUp() ||
-                    poseData.histState.WasLiftMoving();
+  const bool robotMoved = poseData.histState.WasCameraMoving() ||
+                          poseData.histState.WasPickedUp() ||
+                          poseData.histState.WasLiftMoving();
   // Should always catch case when robot moved by human
-  bool isStill = _lastPoseData.IsBodyPoseSame( poseData, _bodyAngleThresh, _bodyPoseThresh ) &&
-                 _lastPoseData.IsHeadAngleSame( poseData, _headAngleThresh );
+  const bool isStill = _lastPoseData.IsBodyPoseSame( poseData, _bodyAngleThresh, _bodyPoseThresh ) &&
+                       _lastPoseData.IsHeadAngleSame( poseData, _headAngleThresh );
   return robotMoved || !isStill;
 }
 
-bool NightVisionFilter::GetOutput( Vision::Image& out )
+bool NightVisionFilter::GetOutput( Vision::Image& out ) const
 {
   if( _numAccImages < _minNumImages )
   {
@@ -133,10 +129,11 @@ bool NightVisionFilter::GetOutput( Vision::Image& out )
   out.Allocate( _accumulator.GetNumRows(), _accumulator.GetNumCols() );
   out.SetTimestamp( _lastTimestamp );
   
-  cv::Mat_<u16>& accMat = _accumulator.get_CvMat_();
+  const cv::Mat_<u16>& accMat = _accumulator.get_CvMat_();
   cv::Mat_<u8>& outMat = out.get_CvMat_();
-  cv::Mat_<u16> avgMat = (accMat / _numAccImages);
-  avgMat.convertTo( outMat, CV_8U );
+  // NOTE No way to get around conversion to double and back, since OpenCV doesn't seem to support
+  // native integer division
+  accMat.convertTo( outMat, CV_8U, 1.0 / _numAccImages );
   return true;
 }
 
