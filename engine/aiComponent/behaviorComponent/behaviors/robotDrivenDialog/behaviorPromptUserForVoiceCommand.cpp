@@ -204,7 +204,8 @@ void BehaviorPromptUserForVoiceCommand::GetBehaviorJsonKeys(std::set<const char*
     kMaxRepromptKey,
     kProceduralBackpackLights,
     kListeningGetInKey,
-    kListeningGetOutKey
+    kListeningGetOutKey,
+    kStreamType
   };
 
   expectedKeys.insert( std::begin(list), std::end(list) );
