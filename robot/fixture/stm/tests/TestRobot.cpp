@@ -1313,14 +1313,48 @@ static void BatteryCheck(void)
   }
 }
 
-void SadBeep(void) {
-  rcomEng(RCOM_ENG_IDX_SOUND, RCOM_ENG_SOUND_DAT0_TONE_BEEP, 255 /*volume*/);
-  Timer::delayMs(750); //wait for sound to finish
+void EngPlaySound(uint8_t select, uint8_t volume=255, int delayms=750);
+void EngPlaySound(uint8_t select, uint8_t volume, int delayms) {
+  rcomEng(RCOM_ENG_IDX_SOUND, select, volume);
+  Timer::delayMs(delayms); //wait for sound to finish
 }
 
-void TurkeysDone(void) {
-  rcomEng(RCOM_ENG_IDX_SOUND, RCOM_ENG_SOUND_DAT0_TONE_BELL, 255 /*volume*/);
-  Timer::delayMs(750); //wait for sound to finish
+void SadBeep(void) { EngPlaySound(RCOM_ENG_SOUND_DAT0_TONE_BEEP); }
+void TurkeysDone(void) { EngPlaySound(RCOM_ENG_SOUND_DAT0_TONE_BELL); }
+
+void SoundLoop(void)
+{
+  int offContact = 0;
+  while( ConsoleReadChar() > -1 );
+  
+  while(1)
+  {
+    Contacts::setModeRx();
+    Timer::delayMs(10);
+    
+    //play sound
+    if( g_fixmode == FIXMODE_SOUND1 )
+      EngPlaySound(RCOM_ENG_SOUND_DAT0_TONE_BEEP, 255); //SadBeep();
+    else if( g_fixmode == FIXMODE_SOUND2 )
+      EngPlaySound(RCOM_ENG_SOUND_DAT0_TONE_BELL, 255); //TurkeysDone();
+    
+    //robot detect requires power draw
+    Contacts::powerOn();
+    uint32_t Twait = Timer::get();
+    while( Timer::elapsedUs(Twait) < (750+SYSCON_CHG_PWR_DELAY_MS)*1000 )
+    {
+      int current_ma = Meter::getCurrentMa(PWR_VEXT,6);
+      int voltage_mv = Meter::getVoltageMv(PWR_VEXT,4);
+      
+      //error out quickly if robot removed from charge base
+      if ((offContact = current_ma < PRESENT_CURRENT_MA ? offContact + 1 : 0) > 5) {
+        ConsolePrintf("robot off charger\n");
+        break;
+      }
+    }
+    
+    if( ConsoleReadChar() > -1 ) break;
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -1431,6 +1465,15 @@ TestFunction* TestRobotRechargeGetTests(void) {
   static TestFunction m_tests[] = {
     TestRobotInfo,
     Recharge,
+    NULL,
+  };
+  return m_tests;
+}
+
+TestFunction* TestRobotSoundGetTests(void) {
+  static TestFunction m_tests[] = {
+    //TestRobotInfo,
+    SoundLoop,
     NULL,
   };
   return m_tests;
