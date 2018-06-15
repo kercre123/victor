@@ -777,7 +777,7 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ObjectDetector::Run(tensorflow::Tensor imageTensor, std::vector<tensorflow::Tensor>& outputTensors)
+Result NeuralNetModel::Run(tensorflow::Tensor imageTensor, std::vector<tensorflow::Tensor>& outputTensors)
 {
   tensorflow::Status runStatus;
   if (0 == _params.benchmarkRuns)
