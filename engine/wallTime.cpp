@@ -14,6 +14,7 @@
 
 #include "coretech/common/engine/utils/timer.h"
 #include "osState/osState.h"
+#include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 
 #include <ctime>
@@ -30,7 +31,75 @@ static const float kSyncCheckPeriodWhenSynced_s = 60.0f * 60.0f;
 // check more often if we aren't synced (so we get the accurate time after a sync)
 static const float kSyncCheckPeriodWhenNotSynced_s = 1.0f;
 
+#if REMOTE_CONSOLE_ENABLED
+
+void PrintWallTimeToLog(ConsoleFunctionContextRef context)
+{
+  auto* wt = WallTime::getInstance();
+
+  PRINT_NAMED_INFO("WallTime.DEBUG.OSState.IsSynced",
+                   "%s",
+                   OSState::getInstance()->IsWallTimeSynced() ? "yes" : "no");
+  PRINT_NAMED_INFO("WallTime.DEBUG.OSState.HasTimezone",
+                   "%s",
+                   OSState::getInstance()->HasTimezone() ? "yes" : "no");
+  {
+    struct tm time;
+    bool got = wt->GetUTCTime(time);
+    std::string t;
+    if( got ) {
+      t = "accurate";
+    }
+    else {
+      got = wt->GetApproximateUTCTime(time);
+      t = "approximate";
+    }
+
+    if( got ) {
+      PRINT_NAMED_INFO("WallTime.DEBUG.OSState.UTCTime",
+                       "%s: %s",
+                       t.c_str(),
+                       asctime(&time));
+    }
+    else {
+      PRINT_NAMED_WARNING("WallTime.DEBUG.OSState.UTCTime.FAIL",
+                          "could not get time");
+    }
+  }
+
+  {
+    struct tm time;
+    bool got = wt->GetLocalTime(time);
+    std::string t;
+    if( got ) {
+      t = "accurate";
+    }
+    else {
+      got = wt->GetApproximateLocalTime(time);
+      t = "approximate";
+    }
+
+    if( got ) {
+      PRINT_NAMED_INFO("WallTime.DEBUG.OSState.LocalTime",
+                       "%s: %s",
+                       t.c_str(),
+                       asctime(&time));
+    }
+    else {
+      PRINT_NAMED_WARNING("WallTime.DEBUG.OSState.LocalTime.FAIL",
+                          "could not get time");
+    }
+  }
+
 }
+#endif // REMOTE_CONSOLE_ENABLED
+
+}
+
+#define CONSOLE_GROUP "WallTime"
+
+CONSOLE_FUNC( PrintWallTimeToLog, CONSOLE_GROUP );
+CONSOLE_VAR(bool, kFakeWallTimeIsSynced, CONSOLE_GROUP, false);
 
 WallTime::WallTime()
 {
@@ -63,7 +132,7 @@ bool WallTime::GetUTCTime(struct tm& utcTime)
 bool WallTime::GetApproximateUTCTime(struct tm& utcTime)
 {
   using namespace std::chrono;
-  const time_t now = system_clock::to_time_t(system_clock::now());
+  const time_t now = system_clock::to_time_t(GetApproximateTime());
   tm* utc = gmtime(&now);
   if( nullptr != utc ) {
     utcTime = *utc;
@@ -77,9 +146,9 @@ bool WallTime::GetApproximateUTCTime(struct tm& utcTime)
 }
 
 bool WallTime::GetApproximateLocalTime(struct tm& localTime)
-{  
+{
   using namespace std::chrono;
-  const time_t now = system_clock::to_time_t(system_clock::now());
+  const time_t now = system_clock::to_time_t(GetApproximateTime());
   tm* local = localtime(&now);
   if( nullptr != local ) {
     localTime = *local;
@@ -92,8 +161,34 @@ bool WallTime::GetApproximateLocalTime(struct tm& localTime)
   return false;
 }
 
+bool WallTime::GetTime(TimePoint_t& time)
+{
+  if( !IsTimeSynced() ) {
+    return false;
+  }
+
+  time = GetApproximateTime();
+  return true;
+}
+
+WallTime::TimePoint_t WallTime::GetEpochTime()
+{
+  // default constructor uses epoch time
+  return WallTime::TimePoint_t{};
+}
+
+
+WallTime::TimePoint_t WallTime::GetApproximateTime()
+{
+  return std::chrono::system_clock::now();
+}
+
 bool WallTime::IsTimeSynced()
 {
+  if( kFakeWallTimeIsSynced ) {
+    return true;
+  }
+
   // Use base station timer because it's cheap and good enough here, goal is just to not hit the syscall too
   // frequently if this function is called often
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -106,6 +201,45 @@ bool WallTime::IsTimeSynced()
   }
 
   return _wasSynced;
+}
+
+bool WallTime::AreTimePointsInSameDay(const TimePoint_t& a, const TimePoint_t& b)
+{
+  tm aTime;
+  tm bTime;
+
+  {
+    const time_t a_tt = std::chrono::system_clock::to_time_t(a);
+    tm* a_tm = localtime(&a_tt);
+    if( a_tm == nullptr ) {
+      PRINT_NAMED_ERROR("WallTime.AreTimePointsInSameDay.NoLocalTime.ArgA",
+                        "Cant get local time for first argument");
+      // need to return something, possibly better to assume it's the same day to avoid a big reaction or stats
+      // bump
+      return true;
+    }
+    else {
+      aTime = *a_tm;
+    }
+  }
+
+  {
+    const time_t b_tt = std::chrono::system_clock::to_time_t(b);
+    tm* b_tm = localtime(&b_tt);
+    if( b_tm == nullptr ) {
+      PRINT_NAMED_ERROR("WallTime.AreTimePointsInSameDay.NoLocalTime.ArgB",
+                        "Cant get local time for second argument");
+      // need to return something, possibly better to assume it's the same day to avoid a big reaction or stats
+      // bump
+      return true;
+    }
+    else {
+      bTime = *b_tm;
+    }
+  }
+
+  const bool sameDay = ( aTime.tm_yday == bTime.tm_yday );
+  return sameDay;
 }
 
 }
