@@ -38,7 +38,7 @@ void ActiveBehaviorIterator::IterateActiveCozmoBehaviorsForward(CozmoBehaviorCal
 
   if( nullptr == curr ) {
     // start at the base behavior by default
-    curr = _bsm->GetBaseBeahvior();
+    curr = _bsm->GetBaseBehavior();
   }
 
   BOUNDED_WHILE(1000, curr != nullptr) {

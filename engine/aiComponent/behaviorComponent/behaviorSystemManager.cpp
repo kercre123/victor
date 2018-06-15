@@ -209,7 +209,7 @@ const IBehavior* BehaviorSystemManager::GetBehaviorDelegatedTo(const IBehavior* 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const IBehavior* BehaviorSystemManager::GetBaseBeahvior() const
+const IBehavior* BehaviorSystemManager::GetBaseBehavior() const
 {
   if( _behaviorStack != nullptr ) {
     return _behaviorStack->GetBottomOfStack();
@@ -217,6 +217,19 @@ const IBehavior* BehaviorSystemManager::GetBaseBeahvior() const
   else {
     return nullptr;
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const std::string& BehaviorSystemManager::GetTopBehaviorDebugLabel() const
+{
+  if( _behaviorStack != nullptr ) {
+    const IBehavior* behavior = _behaviorStack->GetTopOfStack();
+    if( behavior != nullptr ) {
+      return behavior->GetDebugLabel();
+    }
+  }
+  static const std::string sEmpty = "";
+  return sEmpty;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

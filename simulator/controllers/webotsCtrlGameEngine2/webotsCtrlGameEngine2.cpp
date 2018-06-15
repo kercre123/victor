@@ -28,6 +28,7 @@
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/multiFormattedLoggerProvider.h"
 #include "util/global/globalDefinitions.h"
+#include "util/time/stopWatch.h"
 
 #if ANKI_DEV_CHEATS
 #include "engine/debug/cladLoggerProvider.h"
@@ -194,19 +195,38 @@ int main(int argc, char **argv)
   ANKI_CONSOLE_SYSTEM_INIT("consoleVarsEngine.ini");
 
   // Initialize the API
-  CozmoAPI myCozmo;
-  myCozmo.Start(&dataPlatform, config);
+  CozmoAPI myVictor;
+  myVictor.Start(&dataPlatform, config);
 
   PRINT_NAMED_INFO("webotsCtrlGameEngine.main", "CozmoGame created and initialized.");
+
+  Anki::Util::Time::StopWatch stopWatch("tick");
 
   //
   // Main Execution loop: step the world forward forever
   //
   while (engineSupervisor.step(BS_TIME_STEP_MS) != -1)
   {
-    double currTimeNanoseconds = Util::SecToNanoSec(engineSupervisor.getTime());
-    myCozmo.Update(Util::numeric_cast<BaseStationTime_t>(currTimeNanoseconds));
+    stopWatch.Start();
+    
+    const double currTimeNanoseconds = Util::SecToNanoSec(engineSupervisor.getTime());
+    myVictor.Update(Util::numeric_cast<BaseStationTime_t>(currTimeNanoseconds));
+
+    const float time_ms = Util::numeric_cast<float>(stopWatch.Stop());
+
+    // Record engine tick performance; this includes a call to PerfMetric.
+    // For webots, we 'fake' the sleep time here.  Unlike in Cozmo webots,
+    // we don't actually sleep in this loop
+    static const float kTargetDuration_ms = Util::numeric_cast<float>(BS_TIME_STEP_MS);
+    const float engineFreq_ms = time_ms > kTargetDuration_ms ? time_ms : kTargetDuration_ms;
+    const float sleepTime_ms = time_ms > kTargetDuration_ms ? 0.0f : kTargetDuration_ms - time_ms;
+    const float sleepTimeActual_ms = sleepTime_ms;
+    myVictor.RegisterEngineTickPerformance(Util::numeric_cast<float>(time_ms),
+                                           engineFreq_ms,
+                                           sleepTime_ms,
+                                           sleepTimeActual_ms);
   } // while still stepping
+
 #if ANKI_DEV_CHEATS
   DevLoggingSystem::DestroyInstance();
 #endif

@@ -1293,7 +1293,7 @@ Result Robot::Update()
   // So we can have an arbitrary number of data here that is likely to change want just hash it all
   // together if anything changes without spamming
   snprintf(buffer, sizeof(buffer),
-           "%c%c%c%c%c%c %2dHz %s",
+           "%c%c%c%c%c%c %2dHz",
            GetMoveComponent().IsLiftMoving() ? 'L' : ' ',
            GetMoveComponent().IsHeadMoving() ? 'H' : ' ',
            GetMoveComponent().IsMoving() ? 'B' : ' ',
@@ -1304,9 +1304,7 @@ Result Robot::Update()
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
-           (u8)MIN(((u8)updateRatePerSec), std::numeric_limits<u8>::max()),
-           //currentActivityName.c_str(),
-           _behaviorDebugStr.c_str());
+           (u8)MIN(((u8)updateRatePerSec), std::numeric_limits<u8>::max()));
 
   std::hash<std::string> hasher;
   size_t curr_hash = hasher(std::string(buffer));

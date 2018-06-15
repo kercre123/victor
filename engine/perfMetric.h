@@ -14,7 +14,13 @@
 #ifndef __Cozmo_Engine_PerfMetric_H__
 #define __Cozmo_Engine_PerfMetric_H__
 
+#include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
+#include "engine/aiComponent/behaviorComponent/iBehavior.h"
+#include "clad/types/behaviorComponent/activeFeatures.h"
+
 #include <string>
+#include <queue>
+#include <vector>
 
 
 namespace Anki {
@@ -24,6 +30,7 @@ namespace Cozmo {
 typedef enum
 {
   DT_LOG,
+  DT_RESPONSE_STRING,
   DT_FILE_TEXT,
   DT_FILE_CSV,
 } DumpType;
@@ -32,7 +39,7 @@ typedef enum
 class PerfMetric
 {
 public:
-  explicit PerfMetric(const CozmoContext* cozmoContext);
+  explicit PerfMetric(const CozmoContext* context);
   ~PerfMetric();
 
   void Init();
@@ -42,7 +49,20 @@ public:
               const float sleepDurationIntended_ms,
               const float sleepDurationActual_ms);
 
+  void Start();
+  void Stop();
+  void Dump(const DumpType dumpType, const bool dumpAll,
+            const std::string* fileName = nullptr, std::string* resultStr = nullptr) const;
+  void DumpFiles() const;
+  void WaitSeconds(const float seconds);
+  void WaitTicks(const int ticks);
+  
   void OnRobotDisconnected();
+
+  const CozmoContext* GetContext() { return _context; }
+  
+  int  ParseCommands(std::string& queryString);
+  void ExecuteQueuedCommands(std::string* resultStr = nullptr);
 
   static const char* kLogChannelName;
 
@@ -52,13 +72,8 @@ public:
 
 private:
 
-  void Start();
-  void Stop();
-  void Dump(const DumpType dumpType, const bool dumpAll, const std::string* fileName = nullptr) const;
-  void DumpFiles() const;
-  void Reset();
-
-  void DumpHeading(const DumpType dumpType, FILE* fd) const;
+  void DumpHeading(const DumpType dumpType, const bool showBehaviorHeading,
+                   FILE* fd, std::string* resultStr) const;
   void SendStatusToGame() const;
   bool FrameBufferEmpty() const { return _nextFrameIndex == 0 && !_bufferFilled; }
 
@@ -75,12 +90,11 @@ private:
     uint32_t _messageCountEtG;
     uint32_t _messageCountViz;
 
-    float _wifiLatency_ms;
-
     float _batteryVoltage;
-
-    static const int kStateStringMaxSize = 64;
-    char _state[kStateStringMaxSize]; // Some description of what Cozmo is doing
+    
+    ActiveFeature    _activeFeature;
+    static const int kBehaviorStringMaxSize = 32;
+    char _behavior[kBehaviorStringMaxSize]; // Some description of what Victor is doing
   };
 
   static const int    kNumFramesInBuffer = 5000;
@@ -90,14 +104,48 @@ private:
   bool                _isRecording = false;
   bool                _autoRecord; // Auto-records while connected to robot; see constructor for init
   bool                _startNextFrame = false;
+  bool                _waitMode = false;
+  int                 _waitTicksRemaining = 0;
+  float               _waitTimeToExpire = 0.0f;
 
-  const CozmoContext* _cozmoContext;
+  const CozmoContext* _context;
   std::string         _baseLogDir = "";
   static const std::string _logBaseFileName;
   static const int    kNumCharsInLineBuffer = 256;
   char*               _lineBuffer;
 
   std::vector<Signal::SmartHandle> _signalHandles;
+  
+  typedef enum
+  {
+    START,
+    STOP,
+    DUMP_LOG,
+    DUMP_RESPONSE_STRING,
+    DUMP_FILES,
+    WAIT_SECONDS,
+    WAIT_TICKS,
+  } CommandType;
+  
+  struct PerfMetricCommand
+  {
+    CommandType _command;
+    DumpType    _dumpType;
+    bool        _dumpAll;
+    float       _waitSeconds;
+    int         _waitTicks;
+
+    PerfMetricCommand(CommandType cmd)
+    {
+      _command = cmd; _dumpType = DT_LOG; _dumpAll = true;
+    }
+    PerfMetricCommand(CommandType cmd, DumpType dumpType, bool dumpAll)
+    {
+      _command = cmd; _dumpType = dumpType, _dumpAll = dumpAll;
+    }
+  };
+  
+  std::queue<PerfMetricCommand> _queuedCommands;
 };
 
 
@@ -106,4 +154,3 @@ private:
 
 
 #endif // __Cozmo_Engine_PerfMetric_H__
-

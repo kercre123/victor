@@ -207,8 +207,6 @@ int main(int argc, char* argv[])
 
   while (!gShutdown)
   {
-    // cozmoWebServer->Update();
-
     const auto tickNow = TimeClock::now();
     const auto remaining_us = duration_cast<microseconds>(targetEndFrameTime - tickNow);
 

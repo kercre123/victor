@@ -338,16 +338,16 @@ Result CozmoEngine::Init(const Json::Value& config) {
   //          and/or set from UI/SDK?
   _context->SetLocale("en-US");
 
+  const auto& webService = _context->GetWebService();
+  webService->Start(_context->GetDataPlatform(),
+                    _context->GetDataLoader()->GetWebServerEngineConfig());
+  webService->RegisterRequestHandler("/getenginestats", GetEngineStatsWebServerHandler, this);
+
   _context->GetPerfMetric()->Init();
 
   LOG_INFO("CozmoEngine.Init.Version", "2");
 
   SetEngineState(EngineState::LoadingData);
-
-  const auto& webService = _context->GetWebService();
-  webService->Start(_context->GetDataPlatform(),
-                    _context->GetDataLoader()->GetWebServerEngineConfig());
-  webService->RegisterRequestHandler("/getenginestats", GetEngineStatsWebServerHandler, this);
 
   // DAS Event: "cozmo_engine.init.build_configuration"
   // s_val: Build configuration

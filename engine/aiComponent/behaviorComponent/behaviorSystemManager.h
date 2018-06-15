@@ -98,8 +98,11 @@ public:
   // action or helper)
   const IBehavior* GetBehaviorDelegatedTo(const IBehavior* delegatingBehavior) const;
 
-  // Returns the base behavior at the top of the stack
-  const IBehavior* GetBaseBeahvior() const;
+  // Returns the behavior at the base of the stack
+  const IBehavior* GetBaseBehavior() const;
+  
+  // Returns string label of the behavior at the top of the stack
+  const std::string& GetTopBehaviorDebugLabel() const;
   
   // calls upon the behavior stack to build and return the behavior tree as a flat array in json
   Json::Value BuildDebugBehaviorTree(BehaviorExternalInterface& bei) const;

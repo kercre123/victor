@@ -334,8 +334,6 @@ public:
 
 
 
-  inline const std::string&     GetBehaviorDebugString() const { return _behaviorDebugStr; }
-
   // =========== Localization ===========
 
   bool IsLocalized() const;
@@ -658,8 +656,6 @@ protected:
   // Flag indicating whether a robotStateMessage was ever received
   TimeStamp_t _lastMsgTimestamp;
   bool        _newStateMsgAvailable = false;
-
-  std::string                            _behaviorDebugStr;
 
 
   // Hash to not spam debug messages

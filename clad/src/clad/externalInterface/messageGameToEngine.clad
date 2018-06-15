@@ -1006,7 +1006,6 @@ message LogRawProxData {
 ///////////////////////////////////////////////////////////////////////////////
 
 enum uint_8 PerfMetricCommandType {
-  Reset,
   Start,
   Stop,
   Dump,
