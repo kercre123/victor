@@ -32,8 +32,6 @@ class DropboxFileUploader():
         except AuthError as err:
             sys.exit(
                 "ERROR: Invalid access token; try re-generating an access token from the app console on the web.")
-
-        self.check_file_details(dbx)
         return dbx
 
     # Uploads contents of localfile to Dropbox
@@ -42,7 +40,7 @@ class DropboxFileUploader():
         with open(self.local_file_dbx, 'rb') as f:
             # We use WriteMode=overwrite to make sure that the settings in the file
             # are changed on upload
-            print("Uploading " + self.local_file_dbx + " to Dropbox as " + self.backup_path + "...")
+            print("Uploading {} to Dropbox as {}...".format(self.local_file_dbx, self.backup_path))
             try:
                 dbx.files_upload(f.read(), self.backup_path, mode=WriteMode('overwrite'))
             except ApiError as err:
@@ -56,15 +54,6 @@ class DropboxFileUploader():
                 else:
                     print(err)
                     sys.exit()
-
-
-    # Adding few functions to check file details
-    def check_file_details(self, dbx):
-        print("Checking file details")
-
-        for entry in dbx.files_list_folder('').entries:
-            print("File list is : ")
-            print(entry.name)
 
     def upload_file(self):
         dbx = self.dropbox_instance()

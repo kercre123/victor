@@ -59,21 +59,21 @@ class DynamoDB():
 
     # Helper compare json
     def ordered(obj):
+        result = obj
         if isinstance(obj, dict):
-            return sorted((k, ordered(v)) for k, v in obj.items())
+            result = sorted((k, ordered(v)) for k, v in obj.items())
         if isinstance(obj, list):
-            return sorted(ordered(x) for x in obj)
-        else:
-            return obj
+            result = sorted(ordered(x) for x in obj)
+        return result
 
 
 # Helper class to convert a DynamoDB item to JSON.
 class DecimalEncoder(json.JSONEncoder):
-    def default(self, o):
-        obj = super(DecimalEncoder, self).default(o)
-        if isinstance(o, decimal.Decimal):
-            if o % 1 > 0:
-                obj = float(o)
+    def default(self, item):
+        obj = super(DecimalEncoder, self).default(item)
+        if isinstance(item, decimal.Decimal):
+            if item % 1 > 0:
+                obj = float(item)
             else:
-                obj = int(o)
+                obj = int(item)
         return obj
