@@ -11,7 +11,9 @@
 //-----------------------------------------------------------
 
 //hardware version string
-#if defined(HWVER_DVT3A)
+#if defined(HWVER_REV_D)
+  #define HWVERS "REV-D"
+#elif defined(HWVER_DVT3A)
   #define HWVERS "DVT3A"
 #elif defined(HWVER_DVT2B)
   #define HWVERS "DVT2B"
