@@ -816,7 +816,8 @@ Result ObjectDetector::Run(tensorflow::Tensor imageTensor, std::vector<tensorflo
       }
       if (nullptr != stats)
       {
-        assert(run_metadata.has_step_stats());
+        DEV_ASSERT(run_metadata.has_step_stats(), "ObjectDetector.Detect.Run",
+                   "Run Metadata has not step stats");
         const tensorflow::StepStats& step_stats = run_metadata.step_stats();
         stats->ProcessStepStats(step_stats);
       }
