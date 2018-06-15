@@ -334,8 +334,8 @@ int cmd_process(char* s)
       { I2C_DONE },
     };
     
-    static bool init = 0;
-    if( !init ) { writes_( snformat(b,bz,"init i2c\n") ); init=1; I2C::init(); }
+    static bool i2c_init = 0;
+    if( !i2c_init ) { writes_( snformat(b,bz,"init i2c\n") ); i2c_init=1; I2C::init(); }
     I2C::capture();
     {
       writes_( snformat(b,bz,"init drop sensors\n") );
@@ -372,7 +372,42 @@ int cmd_process(char* s)
   //==========================
   if( !strcmp(cmd, "batread") )
   {
-    return respond_(cmd, STATUS_UNKNOWN_CMD, "XXX implement me");
+    #define VIN_RAW_TO_MV(raw)     (((raw)*2800)>>11)  /*robot_sr_t::bat.raw (adc) to millivolts*/
+    
+    static bool adc_init = 0;
+    if( !adc_init ) {
+      adc_init=1;
+      writes_( snformat(b,bz,"init adc\n") ); 
+      
+      RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
+      RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE); //VIN_SENSE=A4
+      
+      ADC_InitTypeDef adcinit;
+      memset(&adcinit, 0, sizeof(adcinit));
+      adcinit.ADC_Resolution = ADC_Resolution_12b;
+      adcinit.ADC_ContinuousConvMode = DISABLE;
+      adcinit.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_None;
+      adcinit.ADC_ExternalTrigConv = ADC_ExternalTrigConv_T1_TRGO;
+      adcinit.ADC_DataAlign = ADC_DataAlign_Right; //ADC_DataAlign_Left
+      adcinit.ADC_ScanDirection = ADC_ScanDirection_Upward;
+      ADC_Init(ADC1, &adcinit);
+    }
+    
+    writes_( snformat(b,bz,"read VIN adc\n") );
+    VIN_SENSE::init(MODE_ANALOG);
+    for(int n=0; n<10; n++) {
+      ADC_StartOfConversion(ADC1);
+      uint16_t vin_raw = ADC_GetConversionValue(ADC1);
+      writes_( snformat(b,bz,"  %imv %iraw\n", VIN_RAW_TO_MV(vin_raw), vin_raw) );
+      Timer::delayMs(100);
+    }
+    
+    writes_( snformat(b,bz,"disable adc\n") );
+    ADC_DeInit(ADC1);
+    adc_init = 0;
+    
+    writes_( snformat(b,bz,"error check...XXX\n") );
+    return respond_(cmd, STATUS_OK, 0);
   }
   
   //==========================
