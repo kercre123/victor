@@ -781,7 +781,7 @@ Result ObjectDetector::Run(tensorflow::Tensor imageTensor,
                                        std::vector<tensorflow::Tensor>& outputTensors)
 {
   tensorflow::Status runStatus;
-  if (_params.benchmarkRuns == 0)
+  if (0 == _params.benchmarkRuns)
   {
     runStatus = _session->Run({{_params.inputLayerName, imageTensor}},
                               _params.outputLayerNames, {}, &outputTensors);
@@ -801,7 +801,7 @@ Result ObjectDetector::Run(tensorflow::Tensor imageTensor,
     stats.reset(new tensorflow::StatSummarizer(stats_options));
 
     tensorflow::RunOptions run_options;
-    if (stats != nullptr)
+    if (nullptr != stats)
     {
       run_options.set_trace_level(tensorflow::RunOptions::FULL_TRACE);
     }
@@ -815,7 +815,7 @@ Result ObjectDetector::Run(tensorflow::Tensor imageTensor,
       {
         break;
       }
-      if (stats != nullptr)
+      if (nullptr != stats)
       {
         assert(run_metadata.has_step_stats());
         const tensorflow::StepStats& step_stats = run_metadata.step_stats();
