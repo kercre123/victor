@@ -283,7 +283,7 @@ int cmd_process(char* s)
     RTENC::init(MODE_INPUT, PULL_DOWN);
     LTENC::init(MODE_INPUT, PULL_DOWN);
     Board::pwr_vdds(1);
-    Timer::wait(100);
+    Timer::wait(5000);
     rtenc.on = RTENC::read();
     ltenc.on = LTENC::read();
     
@@ -291,7 +291,7 @@ int cmd_process(char* s)
     RTENC::init(MODE_INPUT, PULL_UP);
     LTENC::init(MODE_INPUT, PULL_UP);
     Board::pwr_vdds(0);
-    Timer::wait(100);
+    Timer::wait(5000);
     rtenc.off = RTENC::read();
     ltenc.off = LTENC::read();
     
