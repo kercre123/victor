@@ -15,6 +15,10 @@
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
+
+#include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
+#include "cannedAnimLib/cannedAnims/cannedAnimationLoader.h"
+
 #include "engine/actions/actionContainers.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
@@ -74,7 +78,6 @@
 #include "engine/robotStateHistory.h"
 #include "engine/robotToEngineImplMessaging.h"
 #include "engine/viz/vizManager.h"
-
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
@@ -144,7 +147,36 @@ static void PlayAnimationByName(ConsoleFunctionContextRef context)
   }
 }
 
-CONSOLE_FUNC(PlayAnimationByName, "PlayAnimationByName", const char* animName);
+static void AddAnimation(ConsoleFunctionContextRef context)
+{
+  if (_thisRobot != nullptr) {
+    const char* animFile = ConsoleArg_Get_String(context, "animFile");
+    if (animFile) {
+      const std::string animationFolder = _thisRobot->GetContextDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources, "/assets/animations/");
+      std::string animationPath = animationFolder + animFile;
+
+      auto* robotDataLoader = _thisRobot->GetContext()->GetDataLoader();
+      if (robotDataLoader != nullptr) {
+        auto* animContainer = robotDataLoader->GetCannedAnimationContainer();
+        if (animContainer != nullptr) {
+
+          auto platform = _thisRobot->GetContextDataPlatform();
+          auto spritePaths = _thisRobot->GetComponent<DataAccessorComponent>().GetSpritePaths();
+          auto spriteSequenceContainer = _thisRobot->GetComponent<DataAccessorComponent>().GetSpriteSequenceContainer();
+          std::atomic<float> loadingCompleteRatio(0);
+          std::atomic<bool> abortLoad(false);
+          CannedAnimationLoader animLoader(platform, spritePaths, spriteSequenceContainer, loadingCompleteRatio, abortLoad);
+
+          animLoader.LoadAnimationIntoContainer(animationPath.c_str(), animContainer);
+          PRINT_NAMED_INFO("Robot.AddAnimation", "Loaded animation from %s", animationPath.c_str());
+        }
+      }
+    }
+  }
+}
+
+CONSOLE_FUNC(PlayAnimationByName, "Animation", const char* animName);
+CONSOLE_FUNC(AddAnimation, "Animation", const char* animFile);
 
 // Perform SayTextAction from debug console
 namespace {

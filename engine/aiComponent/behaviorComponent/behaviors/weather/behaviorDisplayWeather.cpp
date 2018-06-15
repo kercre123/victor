@@ -285,7 +285,6 @@ void BehaviorDisplayWeather::DisplayWeatherResponse()
 
   const auto& weatherResponse = intentData->intent.Get_weather_response();
 
-
   auto animationCallback = [this](const AnimationComponent::AnimResult res){
     CancelSelf();
   };
@@ -307,7 +306,14 @@ void BehaviorDisplayWeather::DisplayWeatherResponse()
   if(!success){
     return;
   }
-  
+
+  #if ANKI_DEV_CHEATS
+  // Lookup the temperature display times in the animation in case the animation has been updated
+  // since this behavior was initialized (which will probably only happen during development if an
+  // animator adjusts those times in the animation)
+  ParseDisplayTempTimesFromAnim();
+  #endif
+
   GetBEI().GetAnimationComponent().UpdateCompositeImage(*_dVars.temperatureImg, _iConfig->timeTempShouldAppear_ms);
   GetBEI().GetAnimationComponent().ClearCompositeImageLayer(Vision::LayerName::Weather_Temperature,
                                                             _iConfig->timeTempShouldDisappear_ms);
@@ -414,16 +420,13 @@ void BehaviorDisplayWeather::ParseDisplayTempTimesFromAnim()
     return;
   }
 
-  const TimeStamp_t time_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-
   const auto& track = anim->GetTrack<EventKeyFrame>();
   if(track.TrackLength() == 2){
-    // assumes only one keyframe per eating anim
-    _iConfig->timeTempShouldAppear_ms =  time_ms + track.GetFirstKeyFrame()->GetTriggerTime_ms();
-    _iConfig->timeTempShouldDisappear_ms = time_ms + track.GetLastKeyFrame()->GetTriggerTime_ms();
+    _iConfig->timeTempShouldAppear_ms = track.GetFirstKeyFrame()->GetTriggerTime_ms();
+    _iConfig->timeTempShouldDisappear_ms = track.GetLastKeyFrame()->GetTriggerTime_ms();
     PRINT_CH_INFO("Behaviors",
                   "BehaviorDisplayWeather.ParseDisplayTempTimesFromAnim.TemperatureTimes",
-                  "For animation named %s temp will appear at %d and dissapear at %d",
+                  "For animation named %s temp will appear at %d and disappear at %d",
                   _iConfig->animationName.c_str(),
                   _iConfig->timeTempShouldAppear_ms,
                   _iConfig->timeTempShouldDisappear_ms);

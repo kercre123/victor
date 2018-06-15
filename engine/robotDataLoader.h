@@ -85,7 +85,7 @@ public:
 
   const FileJsonMap& GetEmotionEventJsons()   const { return _emotionEvents; }
   const BehaviorIDJsonMap& GetBehaviorJsons() const { return _behaviors; }
-  
+
   CannedAnimationContainer* GetCannedAnimationContainer() const { return _cannedAnimations.get(); }
   CubeLightAnimationContainer* GetCubeLightAnimations() const { return _cubeLightAnimations.get(); }
   AnimationGroupContainer* GetAnimationGroups() const { return _animationGroups.get(); }

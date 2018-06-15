@@ -119,7 +119,7 @@ namespace {
       text += animationPath;
       context->channel->WriteLog(text.c_str());
     } else {
-      context->channel->WriteLog("PlayAnimation name not specified.");
+      context->channel->WriteLog("AddAnimation file not specified.");
     }
   }
 

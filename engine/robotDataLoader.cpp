@@ -146,6 +146,7 @@ void RobotDataLoader::LoadNonConfigData()
     LoadSpritePaths();
     _spriteCache = std::make_unique<Vision::SpriteCache>(_spritePaths.get());
   }
+
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadSpriteSequences");
     std::vector<std::string> spriteSequenceDirs = {pathToExternalSpriteSequences, pathToEngineSpriteSequences};
@@ -177,13 +178,10 @@ void RobotDataLoader::LoadNonConfigData()
       LoadEmotionEvents();
     }
 
-
-
     {
       ANKI_CPU_PROFILE("RobotDataLoader::LoadDasBlacklistedAnimationTriggers");
       LoadDasBlacklistedAnimationTriggers();
     }
-
 
     {
       ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationTriggerResponses");
@@ -195,6 +193,7 @@ void RobotDataLoader::LoadNonConfigData()
       ANKI_CPU_PROFILE("RobotDataLoader::LoadSayTextActionIntentConfigs");
       SayTextAction::LoadMetadata(*_context->GetDataPlatform());
     }
+
     {
       ANKI_CPU_PROFILE("RobotDataLoader::LoadCompositeImageMaps");
       LoadCompositeImageMaps();
@@ -203,8 +202,9 @@ void RobotDataLoader::LoadNonConfigData()
   
   {
     CannedAnimationLoader animLoader(_platform,
-                                     _spritePaths.get(), _spriteSequenceContainer.get(), 
+                                     _spritePaths.get(), _spriteSequenceContainer.get(),
                                      _loadingCompleteRatio, _abortLoad);
+
     // Create the canned animation container, but don't load any data into it
     // Engine side animations are loaded only when requested
     _cannedAnimations = std::make_unique<CannedAnimationContainer>();
