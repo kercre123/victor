@@ -762,17 +762,26 @@ void EmrChecks(void)
 
 void EmrUpdate(void)
 {
-  //from clad/src/clad/types/factoryTestTypes.clad
-  uint32_t PlaypenTestMask = 0
-    | 0x00000001  //BackpackElectricalError
-    | 0x00000002  //UnexpectedTouchDetectedError 
-    | 0x00000004  //NoisyTouchSensorError
-    //| 0x00000008  //CubeRadioError
-  ;
-  
-  if( IS_FIXMODE_ROBOT3() && !IS_FIXMODE_OFFLINE() ) {
+  if( IS_FIXMODE_ROBOT3() && !IS_FIXMODE_OFFLINE() )
+  {
+    //manual adjustments for playpen touch sensor error thresholds
+    //rcomSmr( EMR_FIELD_OFS(playpenTouchSensorMinValid), 500 ); //default 500
+    //rcomSmr( EMR_FIELD_OFS(playpenTouchSensorMaxValid), 700 ); //default 700
+    //rcomSmr( EMR_FIELD_OFS(playpenTouchSensorRangeThresh), (uint32_t)(11.0f) ); //default 11.0
+    //rcomSmr( EMR_FIELD_OFS(playpenTouchSensorStdDevThresh), (uint32_t)(1.8f) ); //default 1.8
+    
+    //disable some playpen errors
+    const uint32_t PlaypenTestMask = 0 //from clad/src/clad/types/factoryTestTypes.clad
+      //| 0x00000001  //BackpackElectricalError
+      //| 0x00000002  //UnexpectedTouchDetectedError 
+      //| 0x00000004  //NoisyTouchSensorError
+      //| 0x00000008  //CubeRadioError
+      //| 0x00000010  //WifiScanError
+    ;
     ConsolePrintf("playpen test mask 0x%08x\n", PlaypenTestMask);
     rcomSmr( EMR_FIELD_OFS(playpenTestDisableMask), PlaypenTestMask );
+    
+    //allow playpen
     rcomSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 1 );
   }
   if( IS_FIXMODE_PACKOUT() && !IS_FIXMODE_OFFLINE() ) {
