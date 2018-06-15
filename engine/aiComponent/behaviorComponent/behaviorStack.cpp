@@ -362,8 +362,8 @@ Json::Value BehaviorStack::BuildDebugBehaviorTree(BehaviorExternalInterface& beh
    
   Json::Value data;
   data["time"] = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  auto& tree = data["tree"];
-  auto& stack = data["stack"];
+  auto& tree = data["tree"] = Json::arrayValue;
+  auto& stack = data["stack"] = Json::arrayValue;
   
   // construct flat table of tree relationships
   for( const auto& elem : _stackMetadataMap ) {
