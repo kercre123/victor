@@ -236,7 +236,6 @@ int cmd_process(char* s)
     if( console_num_args(s) < 2 )
       return respond_(cmd, STATUS_ARG_NA, "missing-args");
     
-    //since this will probably shut off the mcu, respond before enacting
     int on = strtol(console_getargl(s,1), 0,0);
     Board::pwr_vdds( on > 0 );
     
@@ -259,8 +258,7 @@ int cmd_process(char* s)
   }//-*/
   
   //==========================
-  //battery charger ctrl
-  //>>charger {off,on,low,high}
+  //>>charge power {0,1}
   //==========================
   if( !strcmp(cmd, "charger") )
   {
@@ -272,6 +270,46 @@ int cmd_process(char* s)
     Board::pwr_charge( on > 0 );
     
     return respond_(cmd, STATUS_OK, snformat(b,bz, on ? "on" : "off") );
+  }//-*/
+  
+  //==========================
+  //>>encoder
+  //==========================
+  if( !strcmp(cmd, "encoders") )
+  {
+    struct { int on; int off; } rtenc, ltenc;
+    
+    //test encoder on signal
+    RTENC::init(MODE_INPUT, PULL_DOWN);
+    LTENC::init(MODE_INPUT, PULL_DOWN);
+    Board::pwr_vdds(1);
+    Timer::wait(100);
+    rtenc.on = RTENC::read();
+    ltenc.on = LTENC::read();
+    
+    //test encoder off signal
+    RTENC::init(MODE_INPUT, PULL_UP);
+    LTENC::init(MODE_INPUT, PULL_UP);
+    Board::pwr_vdds(0);
+    Timer::wait(100);
+    rtenc.off = RTENC::read();
+    ltenc.off = LTENC::read();
+    
+    //pin reset
+    RTENC::init(MODE_INPUT, PULL_NONE);
+    LTENC::init(MODE_INPUT, PULL_NONE);
+    
+    bool rtok = rtenc.on==1 && rtenc.off==0;
+    bool ltok = ltenc.on==1 && ltenc.off==0;
+    writes_( snformat(b,bz,"right tread on,off %i,%i %s\n", rtenc.on, rtenc.off, rtok?"":"--FAIL") );
+    writes_( snformat(b,bz,"left  tread on,off %i,%i %s\n", ltenc.on, ltenc.off, ltok?"":"--FAIL") );
+    
+    if( !rtok )
+      return respond_(cmd, ERROR_BODY_TREAD_ENC_RIGHT, 0);
+    if( !ltok )
+      return respond_(cmd, ERROR_BODY_TREAD_ENC_LEFT, 0);
+    
+    return respond_(cmd, STATUS_OK, 0);
   }//-*/
   
   //==========================
