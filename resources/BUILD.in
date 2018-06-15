@@ -46,7 +46,7 @@ asset_project(
             ],
             prefix = 'sound')
         ),
-    ]      
+    ]
 )
 
 asset_project(
@@ -63,7 +63,7 @@ asset_project(
             ],
             prefix = 'sound')
         ),
-    ]      
+    ]
 )
 
 
@@ -73,6 +73,21 @@ asset_project(
                 'config/**/*',
                 ],
            ),
+)
+
+asset_project(
+    name = 'cozmo_resources_shipping',
+    srcs = subdir_glob([
+                ('shipping', '**/*'),
+           ]),
+)
+
+
+asset_project(
+    name = 'cozmo_resources_development',
+    srcs = subdir_glob([
+                ('development', '**/*'),
+           ]),
 )
 
 
@@ -93,14 +108,6 @@ asset_project(
            ),
 )
 
-
-asset_project(
-    name = 'cozmo_bundle',
-    srcs = subdir_glob([
-                ('bundle', 'DASConfig.json'),
-           ]),
-)
-
 asset_project(
     name = 'cozmo_resources_tts',
     srcs = [],
@@ -115,5 +122,5 @@ asset_project(
             ],
             prefix = 'tts')
         ),
-    ],      
+    ],
 )

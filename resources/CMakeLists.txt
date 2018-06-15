@@ -1,3 +1,16 @@
+#
+# resources/CMakeLists.txt
+#
+# cmake rules to determine which files get deployed to robot
+#
+
+#
+# Build options
+#
+# Configure with -DANKI_RESOURCE_SHIPPING=1 to deploy shipping resource files.
+# Configure with -DANKI_RESOURCE_SHIPPING=0 to deploy development resource files.
+# Default is ANKI_RESOURCE_SHIPPING=0.
+#
 include(anki_build_copy_assets)
 
 list(APPEND ASSET_OUTPUT_RELATIVE_DSTS "")
@@ -85,15 +98,6 @@ if (NOT FACTORY_TEST)
 endif()
 
 anki_build_copy_assets(
-    TARGET cozmo_bundle
-    SRCLIST_DIR ${ANKI_SRCLIST_DIR}
-    OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets"
-    OUT_DSTS ASSET_OUTPUT_FILES
-    OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
-)
-add_dependencies(cozmo_bundle cozmo_resources_webserver)
-
-anki_build_copy_assets(
   TARGET        cozmo_resources_tts
   SRCLIST_DIR   ${ANKI_SRCLIST_DIR}
   OUTPUT_DIR   "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources"
@@ -101,15 +105,37 @@ anki_build_copy_assets(
   OUT_DSTS ASSET_OUTPUT_FILES
   OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
 )
-add_dependencies(cozmo_resources_tts cozmo_bundle)
+add_dependencies(cozmo_resources_tts cozmo_resources_webserver)
+
+#
+# Choose extra resource files from shipping or development,
+# then copy them into resources.
+#
+if (ANKI_RESOURCE_SHIPPING)
+  set(cozmo_resources_extra cozmo_resources_shipping)
+else()
+  set(cozmo_resources_extra cozmo_resources_development)
+endif()
+
+anki_build_copy_assets(
+  TARGET ${cozmo_resources_extra}
+  SRCLIST_DIR ${ANKI_SRCLIST_DIR}
+  OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources"
+  RELATIVE_OUTPUT_DIR "cozmo_resources"
+  OUT_DSTS ASSET_OUTPUT_FILES
+  OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
+)
+
+add_dependencies(${cozmo_resources_extra} cozmo_resources_tts)
 
 set(ASSET_TARGETS
     cozmo_resources_assets
     cozmo_resources_config
     cozmo_resources_webserver
     cozmo_resources_tts
+    ${cozmo_resources_extra}
     ${sound_target}
-    cozmo_bundle)
+)
 
 # Remove webserver resources from asset targets if we are building
 # for the factory test
