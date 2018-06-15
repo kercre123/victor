@@ -805,20 +805,20 @@ Result ObjectDetector::Run(tensorflow::Tensor imageTensor, std::vector<tensorflo
       run_options.set_trace_level(tensorflow::RunOptions::FULL_TRACE);
     }
 
-    tensorflow::RunMetadata run_metadata;
+    tensorflow::RunMetadata runMetadata;
     for (uint32_t i = 0; i < _params.benchmarkRuns; ++i)
     {
       runStatus = _session->Run(run_options, {{_params.inputLayerName, imageTensor}},
-                                _params.outputLayerNames, {}, &outputTensors, &run_metadata);
+                                _params.outputLayerNames, {}, &outputTensors, &runMetadata);
       if (!runStatus.ok())
       {
         break;
       }
       if (nullptr != stats)
       {
-        DEV_ASSERT(run_metadata.has_step_stats(), "ObjectDetector.Detect.Run",
+        DEV_ASSERT(runMetadata.has_step_stats(), "ObjectDetector.Detect.Run",
                    "Run Metadata has not step stats");
-        const tensorflow::StepStats& step_stats = run_metadata.step_stats();
+        const tensorflow::StepStats& step_stats = runMetadata.step_stats();
         stats->ProcessStepStats(step_stats);
       }
     }
