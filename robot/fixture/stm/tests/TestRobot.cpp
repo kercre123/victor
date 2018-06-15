@@ -1357,6 +1357,30 @@ void SoundLoop(void)
   }
 }
 
+void LogDownload(void)
+{
+  int nerrs=0;
+  
+  //download until robot runs out of logs...
+  for( int i=0; true ; i++ )
+  {
+    //ConsolePrintf("reading robot log%u:\n", i);
+    error_t e = ERROR_OK; int len=0;
+    try { len = rcomRlg(i, &logbuf[0], logbufsize-1); } catch(int err) { e=err; len=0; }
+    if( len > 0 ) logbuf[len] = '\0'; //null terminate
+    
+    FLEXFLOW::printf("************************ log%i ************************\n", i);
+    FLEXFLOW::printf("<flex> log logdl_%08x_log%u.log\n", flexnfo.esn, i);
+    FLEXFLOW::write( e==ERROR_OK && len>0 ? logbuf : "not found");
+    FLEXFLOW::printf("\n</flex>\n");
+    
+    if( !(e==ERROR_OK && len>0) ) {
+      if( ++nerrs >= 2 )
+        break;
+    }
+  }
+}
+
 //-----------------------------------------------------------------------------
 //                  Get Tests
 //-----------------------------------------------------------------------------
@@ -1474,6 +1498,15 @@ TestFunction* TestRobotSoundGetTests(void) {
   static TestFunction m_tests[] = {
     //TestRobotInfo,
     SoundLoop,
+    NULL,
+  };
+  return m_tests;
+}
+
+TestFunction* TestRobotLogDownloadTests(void) {
+  static TestFunction m_tests[] = {
+    TestRobotInfo,
+    LogDownload,
     NULL,
   };
   return m_tests;
