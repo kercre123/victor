@@ -58,7 +58,7 @@ extern "C" {
 //                  Fixture Mode extended info
 //-----------------------------------------------------------------------------
 
-#ifndef SYSTEST
+#ifndef FIXTURE_EXTERNAL
 #include "tests.h"
 #include "time.h"
 
@@ -255,8 +255,8 @@ typedef int error_t;
 #define ERROR_BODY                        550 // body error (general)
 //#define ERROR_BODY_BOOTLOADER           551 // Can't load bootloader onto body
 //#define ERROR_BODY_OUTOFDATE            552 // Body board is running out of date firmware
-//#define ERROR_BODY_TREAD_ENC_LEFT       553 // left tread encoder failed self test
-//#define ERROR_BODY_TREAD_ENC_RIGHT      554 // right tread encoder failed self test
+#define ERROR_BODY_TREAD_ENC_LEFT         553 // left tread encoder failed self test
+#define ERROR_BODY_TREAD_ENC_RIGHT        554 // right tread encoder failed self test
 //#define ERROR_BODY_BACKPACK_PULL        555 // backpack pull-up incorrect
 //#define ERROR_BODYCOLOR_INVALID         556 // an invalid color code was detected
 #define ERROR_BODY_CANNOT_POWER_OFF       557 // robot can't turn off. check test connection and button not held. Possible damage on Body PCBA
