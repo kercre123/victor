@@ -35,6 +35,7 @@ static const char* kJsonStatsFilename = "stats.json";
 static const char* kStimCategory = "Stim";
 static const char* kActiveFeatureCategory = "Feature";
 static const char* kBehaviorStatCategory = "BStat";
+static const char* kFacesCategory = "Face";
 
 static const char* kRobotStatsSeparator = ".";
 
@@ -128,6 +129,11 @@ void RobotStatsTracker::IncrementActiveFeature(const ActiveFeature& feature, con
 void RobotStatsTracker::IncrementBehaviorStat(const BehaviorStat& stat)
 {
   IncreaseHelper(kBehaviorStatCategory, BehaviorStatToString(stat), 1);
+}
+
+void RobotStatsTracker::IncrementNamedFacesPerDay()
+{
+  IncreaseHelper(kFacesCategory, "NamedFacePerDay", 1);
 }
 
 void RobotStatsTracker::IncreaseHelper(const std::string& prefix, const std::string& stat, uint64_t delta)

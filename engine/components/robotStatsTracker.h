@@ -42,6 +42,10 @@ public:
 
   void IncrementBehaviorStat(const BehaviorStat& stat);
 
+  void IncrementNamedFacesPerDay();
+
+  ////////////////////////////////////////////////////////////////////////////////
+
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
   }

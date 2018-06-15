@@ -2456,6 +2456,8 @@ namespace Cozmo {
 
       _robot->Broadcast(MessageEngineToGame( Vision::LoadedKnownFace(loadedFace) ));
     }
+
+    _robot->GetFaceWorld().InitLoadedKnownFaces(loadedFaces);
   }
 
   void VisionComponent::FakeImageProcessed(TimeStamp_t t)

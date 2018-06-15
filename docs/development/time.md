@@ -40,6 +40,8 @@ needs if you just need to count seconds since things happened. If not, peruse th
       have to worry about time zone jumps causing issues
     * If you want wall time but are OK with it being too old (because it couldn't sync) you can use the
       approximate versions in [wallTime.h](../../engine/wallTime.h)
+    * If you want wall time in an std::chrono format (convenient for comparisons and storage), you can use
+      [`WallTime::GetTime()`](../../engine/wallTime.h)
     * *Warning*: time and timezone can change out from under you during operation, so be careful. Local time
       can jump backwards if the user changes timezone!
 
