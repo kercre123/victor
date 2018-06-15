@@ -5,7 +5,11 @@
 #include "board.h"
 #include "cmd.h"
 #include "contacts.h"
+#include "i2c.h"
+#include "opto.h"
 #include "timer.h"
+
+FailureCode Opto::failure = BOOT_FAIL_NONE;
 
 //-----------------------------------------------------------
 //        Line Parsing (hack, src copy from cube console)
@@ -167,7 +171,7 @@ int cmd_process(char* s)
     
     return respond_(cmd, STATUS_OK, snformat(b,bz, "0x%x", ledbf) );
   }//-*/
-    
+  
   //==========================
   //Delay (for testing)
   //>>delay [#ms]
@@ -273,7 +277,7 @@ int cmd_process(char* s)
   }//-*/
   
   //==========================
-  //>>encoder
+  //Test Tread Encoders
   //==========================
   if( !strcmp(cmd, "encoders") )
   {
@@ -311,6 +315,73 @@ int cmd_process(char* s)
     
     return respond_(cmd, STATUS_OK, 0);
   }//-*/
+  
+  //==========================
+  //Test Drop Sensors
+  //==========================
+  if( !strcmp(cmd, "dropsense") )
+  {
+    #define TARGET(value) sizeof(value), (void*)&value
+    #define VALUE(value) 1, (void*)value
+    uint16_t cliffSense[4];
+    
+    Opto::failure = BOOT_FAIL_NONE;
+    const I2C_Operation I2C_LOOP[] = {
+      { I2C_REG_READ, 0, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[3]) },
+      { I2C_REG_READ, 1, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[2]) },
+      { I2C_REG_READ, 2, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[1]) },
+      { I2C_REG_READ, 3, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[0]) },
+      { I2C_DONE },
+    };
+    
+    static bool init = 0;
+    if( !init ) { writes_( snformat(b,bz,"init i2c\n") ); init=1; I2C::init(); }
+    I2C::capture();
+    {
+      writes_( snformat(b,bz,"init drop sensors\n") );
+      for (int i = 0; i < 4; i++) {
+        I2C::writeReg(i, DROP_SENSOR_ADDRESS, MAIN_CTRL, 0x01);
+        I2C::writeReg(i, DROP_SENSOR_ADDRESS, PS_LED, 6 | (5 << 4));
+        I2C::writeReg(i, DROP_SENSOR_ADDRESS, PS_PULSES, 8);
+        I2C::writeReg(i, DROP_SENSOR_ADDRESS, PS_MEAS_RATE, 3 | (3 << 3) | 0x40);
+        I2C::writeReg(i, DROP_SENSOR_ADDRESS, PS_CAN_0, 0);
+        I2C::writeReg(i, DROP_SENSOR_ADDRESS, PS_CAN_1, 0);
+      }
+      
+      writes_( snformat(b,bz,"read drop sensors\n") );
+      for(int n=0; n<25; n++) {
+        I2C::execute(I2C_LOOP);
+        writes_( snformat(b,bz,"  %05i %05i %05i %05i\n", cliffSense[0], cliffSense[1], cliffSense[2], cliffSense[3]) );
+        Timer::delayMs(500);
+      }
+      
+      writes_( snformat(b,bz,"disable drop sensors\n") );
+      for (int i = 0; i < 4; i++) {
+        I2C::writeReg(i, DROP_SENSOR_ADDRESS, MAIN_CTRL, 0x00);
+      }
+    }
+    I2C::release();
+    
+    //XXX: validate cliff sensor data?????
+    
+    return respond_(cmd, STATUS_OK, 0);
+  }
+  
+  //==========================
+  //Test Battery Read
+  //==========================
+  if( !strcmp(cmd, "batread") )
+  {
+    return respond_(cmd, STATUS_UNKNOWN_CMD, "XXX implement me");
+  }
+  
+  //==========================
+  //Test Motor FETs for shorts
+  //==========================
+  if( !strcmp(cmd, "motorshort") )
+  {
+    return respond_(cmd, STATUS_UNKNOWN_CMD, "XXX implement me");
+  }
   
   //==========================
   //Unknown (catch-all)
