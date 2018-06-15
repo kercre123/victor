@@ -18,7 +18,7 @@ def scan_port(ip, begin_port, end_port):
     print "-" * 60
 
     try:
-        for port in range(begin_port,end_port):  
+        for port in range(begin_port, end_port):  
             sock = socket.socket()
             result = sock.connect_ex((remote_ip, port))
             if result == 0:
