@@ -74,7 +74,7 @@ public:
   
   virtual ~CompositeImage();
 
-  std::vector<CompositeImageChunk> GetImageChunks() const;
+  std::vector<CompositeImageChunk> GetImageChunks(bool emptySpriteBoxesAreValid = false) const;
 
   // Clear out the existing image and replace it with the new layer map 
   void ReplaceCompositeImage(const LayerLayoutMap&& layers,

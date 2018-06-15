@@ -160,6 +160,7 @@ struct CompositeImageLayer::SpriteEntry{
   Vision::SpriteName GetSpriteName() const { return _spriteName;}
   bool GetFrame(const u32 index, Vision::SpriteHandle& handle) const;
   uint GetNumFrames() const { return _frameStartOffset + _spriteSequence.GetNumFrames(); }
+  bool ContentIsValid() const { return _spriteSequence.GetNumFrames() > 0;}
 
 private:
   // Allow sprite entries to offset 

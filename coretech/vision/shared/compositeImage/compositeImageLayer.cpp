@@ -254,7 +254,7 @@ CompositeImageLayer::SpriteEntry::SpriteEntry(SpriteCache* cache,
                         "Could not find sequence for SpriteName %s",
                         SpriteNameToString(spriteName));
     }
-  }else{
+  }else if(spriteName != SpriteName::Count){
     _spriteSequence.AddFrame(cache->GetSpriteHandle(spriteName));
   }
 }

@@ -269,6 +269,7 @@ Result AnimationComponent::PlayCompositeAnimation(const std::string& animName,
                                                   u32 frameInterval_ms,
                                                   int& outDuration_ms,
                                                   bool interruptRunning,
+                                                  bool emptySpriteBoxesAreValid,
                                                   AnimationCompleteCallback callback)
 {
   if (!_isInitialized) {
@@ -315,7 +316,7 @@ Result AnimationComponent::PlayCompositeAnimation(const std::string& animName,
   }
 
   outDuration_ms = anim->GetLastKeyFrameEndTime_ms();
-  return DisplayFaceImage(compositeImage, frameInterval_ms, outDuration_ms, interruptRunning);
+  return DisplayFaceImage(compositeImage, frameInterval_ms, outDuration_ms, interruptRunning, emptySpriteBoxesAreValid);
 }
 
   
@@ -533,7 +534,9 @@ void AnimationComponent::SetAnimationCallback(const std::string& animName,
 }
 
 
-Result AnimationComponent::DisplayFaceImage(const Vision::CompositeImage& compositeImage, u32 frameInterval_ms, u32 duration_ms, bool interruptRunning)
+Result AnimationComponent::DisplayFaceImage(const Vision::CompositeImage& compositeImage, 
+                                            u32 frameInterval_ms, u32 duration_ms, 
+                                            bool interruptRunning, bool emptySpriteBoxesAreValid)
 {
   // TODO: Is this what interruptRunning should mean?
   //       Or should it queue on anim process side and optionally interrupt currently executing anim?
@@ -543,7 +546,7 @@ Result AnimationComponent::DisplayFaceImage(const Vision::CompositeImage& compos
   }
 
   // Send the image to the animation process in chunks
-  const std::vector<Vision::CompositeImageChunk> imageChunks = compositeImage.GetImageChunks();
+  const std::vector<Vision::CompositeImageChunk> imageChunks = compositeImage.GetImageChunks(emptySpriteBoxesAreValid);
   for(const auto& chunk: imageChunks){
     _robot->SendRobotMessage<RobotInterface::DisplayCompositeImageChunk>(_compositeImageID, frameInterval_ms, duration_ms, chunk);
   }

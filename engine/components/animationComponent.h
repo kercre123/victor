@@ -119,6 +119,7 @@ public:
                                 u32 frameInterval_ms,
                                 int& outDuration_ms,
                                 bool interruptRunning = true,
+                                bool emptySpriteBoxesAreValid = false,
                                 AnimationCompleteCallback callback = nullptr);
   
   bool IsPlayingAnimation() const { return _callbackMap.size() > 0; }
@@ -147,7 +148,9 @@ public:
   Result DisplayFaceImage(const Vision::ImageRGB565& imgRGB565, u32 duration_ms, bool interruptRunning = false);
   // There is only one composite image in the animation process - duration is the amount of time the image will be displayed on screen
   // frameInterval_ms defines how often the composite images' GetFrame function should be called for internal sprite sequences
-  Result DisplayFaceImage(const Vision::CompositeImage& compositeImage, u32 frameInterval_ms, u32 duration_ms, bool interruptRunning = false);
+  Result DisplayFaceImage(const Vision::CompositeImage& compositeImage, 
+                          u32 frameInterval_ms, u32 duration_ms, 
+                          bool interruptRunning = false, bool emptySpriteBoxesAreValid = false);
   
   // Calling this function provides no gaurentee that the assets will actually be displayed
   // If a compositeFaceImage is currently displayed on the face all layers/image maps within

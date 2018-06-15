@@ -292,11 +292,13 @@ void BehaviorDisplayWeather::DisplayWeatherResponse()
 
   int outAnimationDuration = 0;
   const bool shouldInterrupt = true;
+  const bool emptySpriteBoxesAllowed = false;
   GetBEI().GetAnimationComponent().PlayCompositeAnimation(_iConfig->animationName,
                                                           *(_iConfig->compImg.get()),
                                                           ANIM_TIME_STEP_MS,
                                                           outAnimationDuration,
                                                           shouldInterrupt,
+                                                          emptySpriteBoxesAllowed,
                                                           animationCallback);
   
   const auto temperature = weatherResponse.temperature;
