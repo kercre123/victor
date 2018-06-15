@@ -39,7 +39,10 @@
 // notes:
 // + need to check if Houndify connection is valid and respond accordingly if it is not
 // + response can be interrupted by "petting him", picking him up, or wakeword
-// + use BehaviorPromptUserForVoiceCommand for the question/response
+// - GetBEI().GetRobotInfo().IsPickedUp()
+// - ExternalInterface::MessageEngineToGameTag::TouchButtonEvent,
+// - ExternalInterface::MessageEngineToGameTag::RobotFallingEvent,
+// * use BehaviorPromptUserForVoiceCommand for the question/response
 
 namespace Anki {
 namespace Cozmo {
