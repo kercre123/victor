@@ -220,7 +220,8 @@ static void BodyLoadTestFirmware(void)
   else if( cmdStatus() != 0 )
     throw ERROR_BODY;
   
-  
+  //DEBUG
+  TestCommon::consoleBridge(TO_CONTACTS,0); //,0,BRIDGE_OPT_CHG_DISABLE);
   
   //XXX: TEST DROP SENSORS -----------------------------------
   
