@@ -213,6 +213,9 @@ static void BodyLoadTestFirmware(void)
   //print version to test contact comms
   cmdSend(CMD_IO_CONTACTS, "getvers");
   
+  //DEBUG
+  TestCommon::consoleBridge(TO_CONTACTS,0); //,0,BRIDGE_OPT_CHG_DISABLE);
+  
   //test tread encoders
   cmdSend(CMD_IO_CONTACTS, "encoders", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS);
   if( cmdStatus() >= ERROR_BODY && cmdStatus() < ERROR_BODY_RANGE_END )
@@ -220,8 +223,7 @@ static void BodyLoadTestFirmware(void)
   else if( cmdStatus() != 0 )
     throw ERROR_BODY;
   
-  //DEBUG
-  TestCommon::consoleBridge(TO_CONTACTS,0); //,0,BRIDGE_OPT_CHG_DISABLE);
+  
   
   //XXX: TEST DROP SENSORS -----------------------------------
   
