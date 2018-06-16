@@ -11,6 +11,21 @@
 
 FailureCode Opto::failure = BOOT_FAIL_NONE;
 
+//picked from from 'robotcom.h'
+//robot sensor index for 'mot' + 'get' cmds
+#define RCOM_SENSOR_NONE        0
+#define RCOM_SENSOR_BATTERY     1
+#define RCOM_SENSOR_CLIFF       2
+#define RCOM_SENSOR_MOT_LEFT    3
+#define RCOM_SENSOR_MOT_RIGHT   4
+#define RCOM_SENSOR_MOT_LIFT    5
+#define RCOM_SENSOR_MOT_HEAD    6
+#define RCOM_SENSOR_PROX_TOF    7
+#define RCOM_SENSOR_BTN_TOUCH   8
+#define RCOM_SENSOR_RSSI        9
+#define RCOM_SENSOR_RX_PKT      10
+#define RCOM_SENSOR_DEBUG_INC   11
+
 //-----------------------------------------------------------
 //        Line Parsing (hack, src copy from cube console)
 //-----------------------------------------------------------
@@ -317,97 +332,141 @@ int cmd_process(char* s)
   }//-*/
   
   //==========================
-  //Test Drop Sensors
+  //Sensor Read (using charge comm protocol)
+  //>>get NN sr 00 00 00 00
+  //:data [data] [data] [data]
+  //<<get 0
   //==========================
-  if( !strcmp(cmd, "dropsense") )
+  if( !strcmp(cmd, "get") )
   {
-    #define TARGET(value) sizeof(value), (void*)&value
-    #define VALUE(value) 1, (void*)value
-    uint16_t cliffSense[4];
+    int nargs = console_num_args(s);
+    if( nargs < 3 )
+      return respond_(cmd, STATUS_ARG_NA, "missing-args");
     
-    Opto::failure = BOOT_FAIL_NONE;
-    const I2C_Operation I2C_LOOP[] = {
-      { I2C_REG_READ, 0, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[3]) },
-      { I2C_REG_READ, 1, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[2]) },
-      { I2C_REG_READ, 2, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[1]) },
-      { I2C_REG_READ, 3, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[0]) },
-      { I2C_DONE },
-    };
+    int NN = strtol(console_getargl(s,1), 0,0);
+    int sr = strtol(console_getargl(s,2), 0,0);
+    if( NN<1 || NN>255 )
+      return respond_(cmd, STATUS_ARG_NA, "NN-invalid");
     
-    static bool i2c_init = 0;
-    if( !i2c_init ) { writes_( snformat(b,bz,"init i2c\n") ); i2c_init=1; I2C::init(); }
-    I2C::capture();
+    //-------------------------------------
+    //Get Battery [:batAdc temp]
+    //-------------------------------------
+    if( sr == RCOM_SENSOR_BATTERY )
     {
-      writes_( snformat(b,bz,"init drop sensors\n") );
-      for (int i = 0; i < 4; i++) {
-        I2C::writeReg(i, DROP_SENSOR_ADDRESS, MAIN_CTRL, 0x01);
-        I2C::writeReg(i, DROP_SENSOR_ADDRESS, PS_LED, 6 | (5 << 4));
-        I2C::writeReg(i, DROP_SENSOR_ADDRESS, PS_PULSES, 8);
-        I2C::writeReg(i, DROP_SENSOR_ADDRESS, PS_MEAS_RATE, 3 | (3 << 3) | 0x40);
-        I2C::writeReg(i, DROP_SENSOR_ADDRESS, PS_CAN_0, 0);
-        I2C::writeReg(i, DROP_SENSOR_ADDRESS, PS_CAN_1, 0);
+      #define VIN_RAW_TO_MV(raw)     (((raw)*2800)>>11)  /*robot_sr_t::bat.raw (adc) to millivolts*/
+      
+      static bool adc_init = 0;
+      if( !adc_init ) {
+        adc_init=1;
+        writes_( snformat(b,bz,"init adc\n") ); 
+        
+        RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
+        RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE); //VIN_SENSE=A4
+        
+        ADC_InitTypeDef adcinit;
+        memset(&adcinit, 0, sizeof(adcinit));
+        adcinit.ADC_Resolution = ADC_Resolution_12b;
+        adcinit.ADC_ContinuousConvMode = DISABLE;
+        adcinit.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_None;
+        adcinit.ADC_ExternalTrigConv = ADC_ExternalTrigConv_T1_TRGO;
+        adcinit.ADC_DataAlign = ADC_DataAlign_Right; //ADC_DataAlign_Left
+        adcinit.ADC_ScanDirection = ADC_ScanDirection_Upward;
+        //ADC_Init(ADC1, &adcinit);
       }
       
-      writes_( snformat(b,bz,"read drop sensors\n") );
-      for(int n=0; n<25; n++) {
-        I2C::execute(I2C_LOOP);
-        writes_( snformat(b,bz,"  %05i %05i %05i %05i\n", cliffSense[0], cliffSense[1], cliffSense[2], cliffSense[3]) );
-        Timer::delayMs(500);
+      //VIN_SENSE::init(MODE_ANALOG);
+      Timer::wait(100);
+      
+      //XXX
+      writes_( snformat(b,bz,"---WARNING--- adc read disabled\n") );
+      
+      writes_( snformat(b,bz,"battery(%i) rawADC temp\n", NN) );
+      for(int n=0; n<NN; n++)
+      {
+        //ADC_StartOfConversion(ADC1);
+        //uint16_t vin_raw = ADC_GetConversionValue(ADC1);
+        uint16_t vin_raw = 2816 + n;
+        
+        writes_( snformat(b,bz,":%i %i %i\n", vin_raw, 0, VIN_RAW_TO_MV(vin_raw)) );
+        Timer::delayMs(5);
       }
       
-      writes_( snformat(b,bz,"disable drop sensors\n") );
-      for (int i = 0; i < 4; i++) {
-        I2C::writeReg(i, DROP_SENSOR_ADDRESS, MAIN_CTRL, 0x00);
+      writes_( snformat(b,bz,"disable adc\n") );
+      VIN_SENSE::init(MODE_INPUT);
+      //ADC_DeInit(ADC1);
+      adc_init = 0;
+      
+      return respond_(cmd, STATUS_OK, 0);
+    }
+    
+    //-------------------------------------
+    //Get Cliff [:fL fR bL bR]
+    //-------------------------------------
+    else if( sr == RCOM_SENSOR_CLIFF )
+    {
+      #define TARGET(value) sizeof(value), (void*)&value
+      #define VALUE(value) 1, (void*)value
+      uint16_t cliffSense[4];
+      
+      static bool i2c_init = 0;
+      if( !i2c_init ) {
+        i2c_init=1;
+        writes_( snformat(b,bz,"init i2c\n") );
+        //I2C::init();
       }
-    }
-    I2C::release();
-    
-    //XXX: validate cliff sensor data?????
-    
-    return respond_(cmd, STATUS_OK, 0);
-  }
-  
-  //==========================
-  //Test Battery Read
-  //==========================
-  if( !strcmp(cmd, "batread") )
-  {
-    #define VIN_RAW_TO_MV(raw)     (((raw)*2800)>>11)  /*robot_sr_t::bat.raw (adc) to millivolts*/
-    
-    static bool adc_init = 0;
-    if( !adc_init ) {
-      adc_init=1;
-      writes_( snformat(b,bz,"init adc\n") ); 
       
-      RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
-      RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE); //VIN_SENSE=A4
+      //I2C::capture();
+      {
+        Opto::failure = BOOT_FAIL_NONE;
+        const I2C_Operation I2C_LOOP[] = {
+          { I2C_REG_READ, 0, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[3]) },
+          { I2C_REG_READ, 1, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[2]) },
+          { I2C_REG_READ, 2, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[1]) },
+          { I2C_REG_READ, 3, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[0]) },
+          { I2C_DONE },
+        };
+        
+        /*writes_( snformat(b,bz,"init drop sensors\n") );
+        for (int i = 0; i < 4; i++) {
+          I2C::writeReg(i, DROP_SENSOR_ADDRESS, MAIN_CTRL, 0x01);
+          I2C::writeReg(i, DROP_SENSOR_ADDRESS, PS_LED, 6 | (5 << 4));
+          I2C::writeReg(i, DROP_SENSOR_ADDRESS, PS_PULSES, 8);
+          I2C::writeReg(i, DROP_SENSOR_ADDRESS, PS_MEAS_RATE, 3 | (3 << 3) | 0x40);
+          I2C::writeReg(i, DROP_SENSOR_ADDRESS, PS_CAN_0, 0);
+          I2C::writeReg(i, DROP_SENSOR_ADDRESS, PS_CAN_1, 0);
+        }*/
+        
+        writes_( snformat(b,bz,"---WARNING--- cliff sensors disabled\n") );
+        
+        writes_( snformat(b,bz,"cliff(%i) fL fR bL bR\n", NN) );
+        for(int n=0; n<NN; n++) {
+          //I2C::execute(I2C_LOOP); //read sensors
+          for(int x=0; x<4; x++) cliffSense[x] = 1234+(4*n)+x;
+          
+          writes_( snformat(b,bz,":%i %i %i %i\n", cliffSense[0], cliffSense[1], cliffSense[2], cliffSense[3]) );
+          Timer::delayMs(5);
+        }
+        
+        /*writes_( snformat(b,bz,"disable drop sensors\n") );
+        for (int i = 0; i < 4; i++) {
+          I2C::writeReg(i, DROP_SENSOR_ADDRESS, MAIN_CTRL, 0x00);
+        }*/
+      }
+      //I2C::release();
       
-      ADC_InitTypeDef adcinit;
-      memset(&adcinit, 0, sizeof(adcinit));
-      adcinit.ADC_Resolution = ADC_Resolution_12b;
-      adcinit.ADC_ContinuousConvMode = DISABLE;
-      adcinit.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_None;
-      adcinit.ADC_ExternalTrigConv = ADC_ExternalTrigConv_T1_TRGO;
-      adcinit.ADC_DataAlign = ADC_DataAlign_Right; //ADC_DataAlign_Left
-      adcinit.ADC_ScanDirection = ADC_ScanDirection_Upward;
-      ADC_Init(ADC1, &adcinit);
+      //XXX: this doesn't exist yet
+      //writes_( snformat(b,bz,"teardown i2c\n") );
+      //I2C::deinit();
+      //i2c_init=1;
+      
+      return respond_(cmd, STATUS_OK, 0);
     }
     
-    writes_( snformat(b,bz,"read VIN adc\n") );
-    VIN_SENSE::init(MODE_ANALOG);
-    for(int n=0; n<10; n++) {
-      ADC_StartOfConversion(ADC1);
-      uint16_t vin_raw = ADC_GetConversionValue(ADC1);
-      writes_( snformat(b,bz,"  %imv %iraw\n", VIN_RAW_TO_MV(vin_raw), vin_raw) );
-      Timer::delayMs(100);
-    }
-    
-    writes_( snformat(b,bz,"disable adc\n") );
-    ADC_DeInit(ADC1);
-    adc_init = 0;
-    
-    writes_( snformat(b,bz,"error check...XXX\n") );
-    return respond_(cmd, STATUS_OK, 0);
+    //-------------------------------------
+    //(unsupported sr type)
+    //-------------------------------------
+    else
+      return respond_(cmd, STATUS_ARG_NA, "unsupported-sensor");
   }
   
   //==========================
