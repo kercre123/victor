@@ -191,7 +191,7 @@ struct ev_loop;
 #endif
 
 /* EV_INLINE is used for functions in header files */
-#if __STDC_VERSION__ >= 199901L || __GNUC__ >= 3
+#if (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)) || (defined(__GNUC__) && (__GNUC__ >= 3))
 # define EV_INLINE static inline
 #else
 # define EV_INLINE static
@@ -851,4 +851,3 @@ EV_API_DECL void ev_async_send     (EV_P_ ev_async *w) EV_THROW;
 EV_CPP(})
 
 #endif
-
