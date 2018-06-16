@@ -372,9 +372,11 @@ void read_robot_info_(void)
     //read playpen calibration
     uint32_t playpenTouchSensorMinValid     = rcomGmr( EMR_FIELD_OFS(playpenTouchSensorMinValid) );
     uint32_t playpenTouchSensorMaxValid     = rcomGmr( EMR_FIELD_OFS(playpenTouchSensorMaxValid) );
-    float    playpenTouchSensorRangeThresh  = rcomGmr( EMR_FIELD_OFS(playpenTouchSensorRangeThresh) );
-    float    playpenTouchSensorStdDevThresh = rcomGmr( EMR_FIELD_OFS(playpenTouchSensorStdDevThresh) );
+    uint32_t playpenTouchSensorRangeThresh  = rcomGmr( EMR_FIELD_OFS(playpenTouchSensorRangeThresh) );
+    uint32_t playpenTouchSensorStdDevThresh = rcomGmr( EMR_FIELD_OFS(playpenTouchSensorStdDevThresh) );
     uint32_t playpenTestDisableMask         = rcomGmr( EMR_FIELD_OFS(playpenTestDisableMask) );
+    
+    #define U32FLOAT(u)     ( *((float*)&(u)) )
     
     ConsolePrintf("EMR[%u] esn         :%08x [%08x]\n", EMR_FIELD_OFS(ESN), flexnfo.esn, esnCmd);
     ConsolePrintf("EMR[%u] hwver       :%u\n", EMR_FIELD_OFS(HW_VER), flexnfo.hwver);
@@ -386,8 +388,8 @@ void read_robot_info_(void)
     ConsolePrintf("EMR[%u] packout-date:%u\n", EMR_FIELD_OFS(PACKED_OUT_DATE), flexnfo.packoutdate);
     ConsolePrintf("EMR[%u] playpenTouchSensorMinValid:%u\n", EMR_FIELD_OFS(playpenTouchSensorMinValid), playpenTouchSensorMinValid);
     ConsolePrintf("EMR[%u] playpenTouchSensorMaxValid:%u\n", EMR_FIELD_OFS(playpenTouchSensorMaxValid), playpenTouchSensorMaxValid);
-    ConsolePrintf("EMR[%u] playpenTouchSensorRangeThresh :%f\n", EMR_FIELD_OFS(playpenTouchSensorRangeThresh), playpenTouchSensorRangeThresh);
-    ConsolePrintf("EMR[%u] playpenTouchSensorStdDevThresh:%f\n", EMR_FIELD_OFS(playpenTouchSensorStdDevThresh), playpenTouchSensorStdDevThresh);
+    ConsolePrintf("EMR[%u] playpenTouchSensorRangeThresh :%f\n", EMR_FIELD_OFS(playpenTouchSensorRangeThresh), U32FLOAT(playpenTouchSensorRangeThresh) );
+    ConsolePrintf("EMR[%u] playpenTouchSensorStdDevThresh:%f\n", EMR_FIELD_OFS(playpenTouchSensorStdDevThresh), U32FLOAT(playpenTouchSensorStdDevThresh) );
     ConsolePrintf("EMR[%u] playpenTestDisableMask:%08x\n", EMR_FIELD_OFS(playpenTestDisableMask), playpenTestDisableMask);
   }
 }
@@ -764,11 +766,16 @@ void EmrUpdate(void)
 {
   if( IS_FIXMODE_ROBOT3() && !IS_FIXMODE_OFFLINE() )
   {
+    #define FLOAT2U32(f)    ( *((uint32_t*)(&(f))) )
+    #define U32FLOAT(u)     ( *((float*)&(u)) )
+    
     //manual adjustments for playpen touch sensor error thresholds
-    //rcomSmr( EMR_FIELD_OFS(playpenTouchSensorMinValid), 500 ); //default 500
-    //rcomSmr( EMR_FIELD_OFS(playpenTouchSensorMaxValid), 700 ); //default 700
-    //rcomSmr( EMR_FIELD_OFS(playpenTouchSensorRangeThresh), (uint32_t)(11.0f) ); //default 11.0
-    //rcomSmr( EMR_FIELD_OFS(playpenTouchSensorStdDevThresh), (uint32_t)(1.8f) ); //default 1.8
+    rcomSmr( EMR_FIELD_OFS(playpenTouchSensorMinValid), 500 ); //default 500
+    rcomSmr( EMR_FIELD_OFS(playpenTouchSensorMaxValid), 700 ); //default 700
+    float rangeThres = 12.1f; //default 11.0
+    rcomSmr( EMR_FIELD_OFS(playpenTouchSensorRangeThresh), FLOAT2U32(rangeThres) );
+    float stdDevThres = 3.1f; //default 1.8
+    rcomSmr( EMR_FIELD_OFS(playpenTouchSensorStdDevThresh), FLOAT2U32(stdDevThres) );
     
     //disable some playpen errors
     const uint32_t PlaypenTestMask = 0 //from clad/src/clad/types/factoryTestTypes.clad
@@ -778,11 +785,20 @@ void EmrUpdate(void)
       //| 0x00000008  //CubeRadioError
       //| 0x00000010  //WifiScanError
     ;
-    ConsolePrintf("playpen test mask 0x%08x\n", PlaypenTestMask);
     rcomSmr( EMR_FIELD_OFS(playpenTestDisableMask), PlaypenTestMask );
-    
-    //allow playpen
     rcomSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 1 );
+    
+    //readback for log
+    uint32_t playpenTouchSensorMinValid     = rcomGmr( EMR_FIELD_OFS(playpenTouchSensorMinValid) );
+    uint32_t playpenTouchSensorMaxValid     = rcomGmr( EMR_FIELD_OFS(playpenTouchSensorMaxValid) );
+    uint32_t playpenTouchSensorRangeThresh  = rcomGmr( EMR_FIELD_OFS(playpenTouchSensorRangeThresh) );
+    uint32_t playpenTouchSensorStdDevThresh = rcomGmr( EMR_FIELD_OFS(playpenTouchSensorStdDevThresh) );
+    uint32_t playpenTestDisableMask         = rcomGmr( EMR_FIELD_OFS(playpenTestDisableMask) );
+    ConsolePrintf("EMR[%u] playpenTouchSensorMinValid:%u\n", EMR_FIELD_OFS(playpenTouchSensorMinValid), playpenTouchSensorMinValid);
+    ConsolePrintf("EMR[%u] playpenTouchSensorMaxValid:%u\n", EMR_FIELD_OFS(playpenTouchSensorMaxValid), playpenTouchSensorMaxValid);
+    ConsolePrintf("EMR[%u] playpenTouchSensorRangeThresh :%f\n", EMR_FIELD_OFS(playpenTouchSensorRangeThresh), U32FLOAT(playpenTouchSensorRangeThresh));
+    ConsolePrintf("EMR[%u] playpenTouchSensorStdDevThresh:%f\n", EMR_FIELD_OFS(playpenTouchSensorStdDevThresh), U32FLOAT(playpenTouchSensorStdDevThresh));
+    ConsolePrintf("EMR[%u] playpenTestDisableMask:%08x\n", EMR_FIELD_OFS(playpenTestDisableMask), playpenTestDisableMask);
   }
   if( IS_FIXMODE_PACKOUT() && !IS_FIXMODE_OFFLINE() ) {
     rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 1 );
