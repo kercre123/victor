@@ -261,16 +261,7 @@ Result HAL::Init()
   robotID_ = Anki::Cozmo::DEFAULT_ROBOT_ID;
 
 #if FACTORY_TEST
-  const u32 emrMinValidTouch = Factory::GetEMR()->fields.playpenTouchSensorMinValid;
-  const u32 emrMaxValidTouch = Factory::GetEMR()->fields.playpenTouchSensorMaxValid;
-  if (emrMinValidTouch > 0) {
-    AnkiInfo("HAL.Init.UsingEMRMinValidTouch", "%u", emrMinValidTouch);
-    kMinValidRawTouch = emrMinValidTouch;
-  }
-  if (emrMaxValidTouch > 0) {
-    AnkiInfo("HAL.Init.UsingEMRMaxValidTouch", "%u", emrMaxValidTouch);
-    kMaxValidRawTouch = emrMaxValidTouch;
-  }
+  UpdateTouchSensorValidRange(); 
 #endif
 
   InitIMU();
@@ -554,6 +545,27 @@ bool HAL::IsTouchSensorValid()
 f32 HAL::GetTouchSensorFilt()
 {
   return touchBoxFilterSum_ / ((f32)TOUCH_BOX_FILTER_SIZE);
+}
+
+void HAL::UpdateTouchSensorValidRange()
+{
+  const u32 emrMinValidTouch = Factory::GetEMR()->fields.playpenTouchSensorMinValid;
+  const u32 emrMaxValidTouch = Factory::GetEMR()->fields.playpenTouchSensorMaxValid;
+  if (emrMinValidTouch > 0) {
+    AnkiInfo("HAL.UpdateTouchSensorValidRange.EMRMinValidTouch", "%u", emrMinValidTouch);
+    kMinValidRawTouch = emrMinValidTouch;
+  } else {
+    kMinValidRawTouch = HAL::MIN_VALID_RAW_TOUCH;
+  }
+  if (emrMaxValidTouch > 0) {
+    AnkiInfo("HAL.UpdateTouchSensorValidRange.EMRMaxValidTouch", "%u", emrMaxValidTouch);
+    kMaxValidRawTouch = emrMaxValidTouch;
+  } else {
+    kMaxValidRawTouch = HAL::MAX_VALID_RAW_TOUCH;
+  }
+
+  // Reset valid flag
+  touchSensorRawOutsideValidRange_ = false;
 }
 #endif
 

@@ -211,6 +211,10 @@ static const u16 MAX_VALID_RAW_TOUCH = 700;
 // Returns true if the raw touch sensor value has always been
 // within MIN/MAX_VALID_RAW_TOUCH
 bool IsTouchSensorValid();
+
+// Checks EMR for new valid ranges
+// Also reset Valid state.
+void UpdateTouchSensorValidRange(); 
 #endif
  
 /************************************************************************

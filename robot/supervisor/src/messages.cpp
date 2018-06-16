@@ -464,6 +464,12 @@ namespace Anki {
                                                     msg.backupDist_mm);
       }
 
+      void Process_playpenStart(const RobotInterface::PlaypenStart& msg) {
+        #if FACTORY_TEST
+          HAL::UpdateTouchSensorValidRange(); 
+        #endif
+      }
+
       void Process_setControllerGains(const RobotInterface::ControllerGains& msg) {
         switch (msg.controller)
         {
