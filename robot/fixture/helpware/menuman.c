@@ -201,14 +201,19 @@ void process_monitor(Process* proc){
 
 
 #define MOTOR_TEST_POWER 0x3FFF
-#define MOTOR_TEST_DROPS  50
+#define WHEEL_TEST_DROPS 300
+#define LIFT_TEST_DROPS 75
+#define HEAD_TEST_DROPS 150
 
-uint64_t gMotorTestCycles = 0;
+bool gMotorTestCycles = false;
+int16_t gLiftTestPower = MOTOR_TEST_POWER;
+int16_t gHeadTestPower = MOTOR_TEST_POWER;
+int16_t gWheelTestPower = MOTOR_TEST_POWER;
 
 void start_motor_test(bool lockMenus)
 {
   if (!gMotorTestCycles) {
-    gMotorTestCycles =1 ;
+    gMotorTestCycles = true;
   }
   mm_debug_x("starting motor test\n");
   menu_set_busy(lockMenus);
@@ -218,7 +223,7 @@ void start_motor_test(bool lockMenus)
 int stop_motor_test(void)
 {
   if (gMotorTestCycles) {
-    gMotorTestCycles = 0;
+    gMotorTestCycles = false;
     menu_set_busy(0);
     return 1;
   }
@@ -227,23 +232,45 @@ int stop_motor_test(void)
 
 void command_motors(struct HeadToBody* data)
 {
-  static int drop_count = 0;
+  static int lift_drop_count = 0;
+  static int wheel_drop_count = 0;
+  static int head_drop_count = 0;
+
+
   if (gMotorTestCycles) {
-    int i;
-    int16_t power = (gMotorTestCycles%2) ? MOTOR_TEST_POWER : -MOTOR_TEST_POWER;
-    for (i=0;i<MOTOR_COUNT;i++) {
-      data->motorPower[i] = power * (1 -2*(i%2));
-    }
-    if (drop_count)
+    data->motorPower[MOTOR_LEFT] = gWheelTestPower;
+    data->motorPower[MOTOR_RIGHT] = -gWheelTestPower;
+    data->motorPower[MOTOR_LIFT] = gLiftTestPower;
+    data->motorPower[MOTOR_HEAD] = gHeadTestPower;
+    
+    if (lift_drop_count)
     {
-      drop_count--;
+      lift_drop_count--;
     }
     else {
-      gMotorTestCycles++;
-      drop_count = MOTOR_TEST_DROPS;
+      gLiftTestPower = -gLiftTestPower;
+      lift_drop_count = LIFT_TEST_DROPS;
+    }
+
+    if (wheel_drop_count){
+      wheel_drop_count--;
+    }
+    else {
+      gWheelTestPower = -gWheelTestPower;
+      wheel_drop_count = WHEEL_TEST_DROPS;
+    }
+
+    if (head_drop_count)
+    {
+      head_drop_count--;
+    }
+    else {
+      gHeadTestPower = -gHeadTestPower;
+      head_drop_count = HEAD_TEST_DROPS;
     }
   }
 }
+
 
 
 #define CHARGE_DISABLE_PERIOD 40 // 200ms
@@ -255,10 +282,11 @@ typedef struct lifeTester_ {
   bool flash;
   bool motors;
   bool screen;
+  bool square_wave;
   /* status */
   bool do_discharge;
-  uint16_t cc_cycles; //charge contact cycles
   Process burn_proc;
+  Process square_wave_proc;
 } LifeTester;
 
 LifeTester  gLifeTesting;
@@ -297,6 +325,9 @@ void manage_life_tests() {
   if (gLifeTesting.cpu) {
     //print any output;
     process_monitor(&gLifeTesting.burn_proc);
+  }
+  if(gLifeTesting.square_wave){
+    process_monitor(&gLifeTesting.square_wave_proc);
   }
 }
 
@@ -350,11 +381,11 @@ void handle_MainBurn(void* param) {
   wait_for_process(pidout, fd);
 }
 
-void handle_MainPlaySound(void* param) {
-  printf("PlaySound Selected\n");
+
+void handle_MainCubeTest(void* param) {
+  printf("CubeTest Selected\n");
   pid_t pidout;
-  int fd = pidopen("./testsound.sh", "", &pidout);
-  wait_for_process(pidout, fd);
+  pidopen("./cubetest.sh", "", &pidout);
 }
 
 void handle_MainMotorTest(void* param) {
@@ -395,11 +426,19 @@ void handle_LifeTestScreen(void* param)
   gLifeTesting.screen = true;
 }
 
+void handle_LifeTestSquareWave(void* param)
+{
+  printf("Square Wave Test Selected\n");
+  gLifeTesting.square_wave_proc.proc_fd = pidopen("./testsquarewav.sh", "", &gLifeTesting.square_wave_proc.wait_pid);
+  gLifeTesting.square_wave = true;
+}
+
 void handle_LifeTestAll(void* param) {
   handle_LifeTestBattery(param);
   handle_LifeTestCpu(param);
   handle_LifeTestMotors(param);
   handle_LifeTestScreen(param);
+  handle_LifeTestSquareWave(param);
 }
 
 
@@ -457,6 +496,7 @@ MENU_ITEMS(LifeTest)= {
   MENU_ACTION("CPU / Flash ", LifeTestCpu),
   MENU_ACTION("Run Motors", LifeTestMotors),
   MENU_ACTION("Cycle Screens", LifeTestScreen),
+  MENU_ACTION("Play Square Wave", LifeTestSquareWave),
   MENU_ACTION("ALL", LifeTestAll),
 };
 MENU_CREATE(LifeTest);
@@ -467,7 +507,7 @@ MENU_ITEMS(Main) = {
   MENU_SUBMENU("TX 11g", TXG),
   MENU_SUBMENU("TX 11b", TXB),
   MENU_ACTION("Burn CPU", MainBurn ),
-  MENU_ACTION("Play Sound", MainPlaySound ),
+  MENU_ACTION("Cube Test", MainCubeTest ),
   MENU_ACTION("Motor Test", MainMotorTest ),
   MENU_SUBMENU("Life Testing", LifeTest),
 };
@@ -510,12 +550,18 @@ void populate_outgoing_frame(void) {
     memset(gHeadData.motorPower, 0, sizeof(gHeadData.motorPower));
   }
   if (gLifeTesting.battery) {
+    if (gLifeTesting.do_discharge && !(gHeadData.powerFlags & POWER_DISCONNECT_CHARGER))
+    {
+      printf("Setting POWER_DISCONNECT_CHARGER flag\n");
+    }
+    else if (!gLifeTesting.do_discharge && !(gHeadData.powerFlags & POWER_CONNECT_CHARGER))
+    {
+      printf("Setting POWER_CONNECT_CHARGER flag\n");
+    }
     gHeadData.powerFlags = gLifeTesting.do_discharge ? POWER_DISCONNECT_CHARGER : POWER_CONNECT_CHARGER;
   }
 
 }
-
-//static const float HAL_SEC_PER_TICK = (1.0 / 256) / 48000000;
 
 #define MENU_TREAD_VELOCITY_THRESHOLD 1
 #define MENU_TREAD_TRIGGER_DELTA       120
