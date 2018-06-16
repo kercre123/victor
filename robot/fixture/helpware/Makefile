@@ -79,7 +79,7 @@ $(CORE):
 	cd $(CORE_DIR) && make all
 
 $(VICOS_ARM_TOOLS_BIN):
-	../../tools/build/tools/ankibuild/vicos.py --install $(VICOS_BUILD_TOOL_VER)
+	../../../tools/build/tools/ankibuild/vicos.py --install $(VICOS_BUILD_TOOL_VER)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	mkdir -p $(OBJDIR)
