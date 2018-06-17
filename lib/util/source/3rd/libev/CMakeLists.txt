@@ -10,7 +10,7 @@ add_library(libev STATIC
   ev.h
 )
 
-anki_build_target_license(libev "BSD-2.0,${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+anki_build_target_license(libev "BSD-3,${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
 
 target_compile_options(libev PRIVATE
   -Wno-comment
