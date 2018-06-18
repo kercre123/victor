@@ -145,7 +145,7 @@ static int respond_(char* cmd, int status, const char* info)
 
 int cmd_process(char* s)
 {
-  char b[50]; int bz = sizeof(b);
+  char b[80]; int bz = sizeof(b);
   
   if(!s)
     return STATUS_NULL;
