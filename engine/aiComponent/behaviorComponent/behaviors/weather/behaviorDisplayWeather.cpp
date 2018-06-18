@@ -129,7 +129,6 @@ void BehaviorDisplayWeather::GetBehaviorJsonKeys(std::set<const char*>& expected
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDisplayWeather::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
-  delegates.insert(_iConfig->textToSpeechBehavior.get());
 }
 
 
@@ -225,12 +224,7 @@ void BehaviorDisplayWeather::InitBehavior()
     return;
   }
 
-  const auto& bc = GetBEI().GetBehaviorContainer();
-  bc.FindBehaviorByIDAndDowncast<BehaviorTextToSpeechLoop>(BEHAVIOR_ID(WeatherTextToSpeech),
-                                                           BEHAVIOR_CLASS(TextToSpeechLoop),
-                                                           _iConfig->textToSpeechBehavior);
   ParseDisplayTempTimesFromAnim();
-  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -244,28 +238,7 @@ void BehaviorDisplayWeather::OnBehaviorActivated()
   UserIntentPtr intentData = uic.GetUserIntentIfActive(USER_INTENT(weather_response));
   DEV_ASSERT(intentData != nullptr, "BehaviorDisplayWeather.InvalidTriggeringIntent");
 
-  const auto& weatherResponse = intentData->intent.Get_weather_response();
-  std::string textToSay;
-  if(WeatherIntentParser::ShouldSayText(weatherResponse, textToSay)){
-    StateWeatherInformation(textToSay);
-  }else{
-    DisplayWeatherResponse();
-  }
-
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDisplayWeather::StateWeatherInformation(const std::string& textToSay)
-{
-  _iConfig->textToSpeechBehavior->SetTextToSay(textToSay);
-  if(_iConfig->textToSpeechBehavior->WantsToBeActivated()){
-    DelegateIfInControl(_iConfig->textToSpeechBehavior.get(),
-                        &BehaviorDisplayWeather::DisplayWeatherResponse);
-  }else{
-    DisplayWeatherResponse();
-  }
-
+  DisplayWeatherResponse();
 }
 
 
