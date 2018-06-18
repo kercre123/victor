@@ -248,6 +248,10 @@ void BehaviorProceduralClock::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorProceduralClock::BuildAndDisplayProceduralClock(const int clockOffset_s, const int displayOffset_ms)
 {
+  // Animation streamer can only apply images/sounds on animation keyframes so ensure displayOffset is aligned to a frame
+  auto displayOffset_aligned_ms = displayOffset_ms;
+  displayOffset_aligned_ms -= (displayOffset_aligned_ms % ANIM_TIME_STEP_MS);
+
   auto& accessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetValue<DataAccessorComponent>();
   auto* spriteCache = accessorComp.GetSpriteCache();
   auto* seqContainer = accessorComp.GetSpriteSequenceContainer();
@@ -295,8 +299,16 @@ void BehaviorProceduralClock::BuildAndDisplayProceduralClock(const int clockOffs
     auto intentionalCopy = *digitLayer;
     compImg.AddLayer(std::move(intentionalCopy));
     // Just update the numbers in the image
-    GetBEI().GetAnimationComponent().UpdateCompositeImage(compImg, displayOffset_ms);
+    GetBEI().GetAnimationComponent().UpdateCompositeImage(compImg, displayOffset_aligned_ms);
   }
+
+  // Have the animation process send ticks at the appropriate time stamp 
+  AudioEngine::Multiplexer::PostAudioEvent audioMessage;
+  audioMessage.gameObject = Anki::AudioMetaData::GameObjectType::Animation;
+  audioMessage.audioEvent = AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Sfx__Timer_Countdown;
+
+  RobotInterface::EngineToRobot wrapper(std::move(audioMessage));
+  GetBEI().GetAnimationComponent().AlterStreamingAnimationAtTime(std::move(wrapper), displayOffset_aligned_ms);
 }
 
 

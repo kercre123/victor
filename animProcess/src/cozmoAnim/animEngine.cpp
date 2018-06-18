@@ -16,6 +16,7 @@
 
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/animation/animationStreamer.h"
+#include "cozmoAnim/animation/streamingAnimationModifier.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/robotDataLoader.h"
@@ -115,7 +116,9 @@ Result AnimEngine::Init()
 
   // Set up message handler
   auto * audioInput = static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput(regId));
-  AnimProcessMessages::Init(this, _animationStreamer.get(), audioInput, _context.get());
+  _streamingAnimationModifier = std::make_unique<StreamingAnimationModifier>(_animationStreamer.get(), audioInput);
+
+  AnimProcessMessages::Init(this, _animationStreamer.get(), _streamingAnimationModifier.get(), audioInput, _context.get());
 
   _context->GetWebService()->Start(_context->GetDataPlatform(),
                                    _context->GetDataLoader()->GetWebServerAnimConfig());
@@ -183,7 +186,13 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
   // Clear out sprites that have passed their cache time
   _context->GetDataLoader()->GetSpriteCache()->Update(currTime_nanosec);
   
+  if(_streamingAnimationModifier != nullptr){
+    _streamingAnimationModifier->ApplyAlterationsBeforeUpdate(_animationStreamer.get());
+  }
   _animationStreamer->Update();
+  if(_streamingAnimationModifier != nullptr){
+    _streamingAnimationModifier->ApplyAlterationsAfterUpdate(_animationStreamer.get());
+  }
 
 #if ENABLE_CE_RUN_TIME_DIAGNOSTICS
   {

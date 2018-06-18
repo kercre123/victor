@@ -47,6 +47,9 @@ class AnimationGroupContainer;
 class CozmoContext;
 class DataAccessorComponent;
 class Robot;
+namespace RobotInterface{
+class EngineToRobot;
+}
   
 class AnimationComponent : public IDependencyManagedComponent<RobotComponentID>, 
                            private Anki::Util::noncopyable, 
@@ -125,6 +128,14 @@ public:
   bool IsPlayingAnimation() const { return _callbackMap.size() > 0; }
   
   Result StopAnimByName(const std::string& animName);
+
+  // Send a message to the animation streamer to be applied at the specified stream time
+  // If the streaming animation is canceled before it hits the stream time this message will be dropped
+  // When applyBeforeTick is true the alteration is displayed to the user that tick (e.g. display a new image)
+  // When false, the alteration is applied after the keyframe's processed (e.g. lock face track on frame 6 after drawing 
+  //   an image, but the animation is only 6 frames long so locking can't be applied at the start of the next tick) 
+  void AlterStreamingAnimationAtTime(RobotInterface::EngineToRobot&& msg, TimeStamp_t relativeStreamTime_ms, bool applyBeforeTick = true);
+
 
   // If you want to play multiple frames in sequence, duration_ms should be a multiple of ANIM_TIME_STEP_MS.
   //

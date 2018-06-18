@@ -355,6 +355,40 @@ Result AnimationComponent::StopAnimByName(const std::string& animName)
 
 }
 
+
+void AnimationComponent::AlterStreamingAnimationAtTime(RobotInterface::EngineToRobot&& msg, 
+                                                       TimeStamp_t relativeStreamTime_ms,  
+                                                       bool applyBeforeTick)
+{
+  RobotInterface::AlterStreamingAnimationAtTime alterMsg;
+  alterMsg.relativeStreamTime_ms = relativeStreamTime_ms;
+  alterMsg.applyBeforeTick = applyBeforeTick;
+  alterMsg.internalTag = static_cast<uint8_t>(msg.GetTag());
+  switch(msg.GetTag()){
+    case RobotInterface::EngineToRobotTag::lockAnimTracks:
+    {
+      alterMsg.lockAnimTracks = std::move(msg.Get_lockAnimTracks());
+      break;
+    }
+    case RobotInterface::EngineToRobotTag::postAudioEvent:
+    {
+      alterMsg.postAudioEvent = std::move(msg.Get_postAudioEvent());
+      break;
+    }
+    default:
+    {
+      PRINT_NAMED_ERROR("AnimationComponent.AlterStreamingAnimationAtTime.UnsupportedMessageType",
+                        "Message Type %s is not currently implemented - update clad and anim process to support",
+                        RobotInterface::EngineToRobotTagToString(msg.GetTag()));
+      break;
+    }
+  }
+  
+  RobotInterface::EngineToRobot wrapper(std::move(alterMsg));
+  _robot->SendMessage(wrapper);
+}
+
+
   
 // Enables only the specified tracks. 
 // Status of other tracks remain unchanged.

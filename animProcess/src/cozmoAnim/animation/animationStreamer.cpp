@@ -529,6 +529,10 @@ namespace Cozmo {
     }
     
     _streamingAnimation = anim;
+    for(const auto& callback: _newAnimationCallbacks){
+      callback();
+    }
+
     if(_streamingAnimation == nullptr) {
       return RESULT_OK;
     }

@@ -16,6 +16,7 @@
 #include "cozmoAnim/robotDataLoader.h"
 
 #include "cozmoAnim/animation/animationStreamer.h"
+#include "cozmoAnim/animation/streamingAnimationModifier.h"
 #include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/audio/audioPlaybackSystem.h"
@@ -34,6 +35,7 @@
 
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageEngineToRobotTag.h"
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_sendAnimToRobot_helper.h"
 
@@ -70,6 +72,7 @@ namespace {
 
   Anki::Cozmo::AnimEngine*                   _animEngine = nullptr;
   Anki::Cozmo::AnimationStreamer*            _animStreamer = nullptr;
+  Anki::Cozmo::StreamingAnimationModifier* _streamingAnimationModifier = nullptr;
   Anki::Cozmo::Audio::EngineRobotAudioInput* _engAudioInput = nullptr;
   Anki::Cozmo::Audio::ProceduralAudioClient* _proceduralAudioClient = nullptr;
   const Anki::Cozmo::AnimContext*            _context = nullptr;
@@ -458,6 +461,11 @@ void Process_setBLEPin(const Anki::Cozmo::SwitchboardInterface::SetBLEPin& msg)
   SetBLEPin(msg.pin);
 }
 
+void Process_alterStreamingAnimation(const RobotInterface::AlterStreamingAnimationAtTime& msg )
+{
+  _streamingAnimationModifier->HandleMessage(msg);
+}
+
 void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg)
 {
   //LOG_WARNING("AnimProcessMessages.ProcessMessageFromEngine", "%d", msg.tag);
@@ -585,6 +593,7 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
 
 Result AnimProcessMessages::Init(AnimEngine* animEngine,
                                  AnimationStreamer* animStreamer,
+                                 StreamingAnimationModifier* streamingAnimationModifier,
                                  Audio::EngineRobotAudioInput* audioInput,
                                  const AnimContext* context)
 {
@@ -599,6 +608,7 @@ Result AnimProcessMessages::Init(AnimEngine* animEngine,
 
   _animEngine             = animEngine;
   _animStreamer           = animStreamer;
+  _streamingAnimationModifier  = streamingAnimationModifier;
   _proceduralAudioClient  = _animStreamer->GetProceduralAudioClient();
   _engAudioInput          = audioInput;
   _context                = context;

@@ -20,6 +20,7 @@ namespace Anki {
   namespace Cozmo {
     class AnimContext;
     class AnimationStreamer;
+    class StreamingAnimationModifier;
     class TextToSpeechComponent;
   }
 }
@@ -68,6 +69,7 @@ protected:
 
   std::unique_ptr<AnimContext>      _context;
   std::unique_ptr<AnimationStreamer>     _animationStreamer;
+  std::unique_ptr<StreamingAnimationModifier> _streamingAnimationModifier;
   std::unique_ptr<TextToSpeechComponent> _ttsComponent;
 
 }; // class AnimEngine

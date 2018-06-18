@@ -567,6 +567,30 @@ message TextToSpeechCancel {
   uint_8 ttsID  // ID of utterance
 }
 
+// If this delay message is sent before a message with the specified tag, when that tag is 
+// received the message will be delayed until the animation streamer reaches the specified time
+// These delays: 
+//   1) will queue 
+//   2) will be applied to messages in the order they are received
+//   3) messages will be dropped if the animation is cleared before reaching the specified timestamp
+// If applyBeforeTick is true the messages will be applied and then the animationStreamer will be ticked
+// otherwise, they will be applied immediately after the animationStreame tick 
+//   (e.g. lock face track as soon as it's updated)
+
+// This message wraps other messages related to streaming animations, and rather than applying the message 
+// when it's received the message will be applied when the current streaming animation reaches the specified stream time
+// If the streaming animation is canceled before it hits the stream time this message will be dropped
+// When applyBeforeTick is true the alteration is displayed to the user that tick (e.g. display a new image)
+// When false, the alteration is applied after the keyframe's processed (e.g. lock face track after drawing an image)
+message AlterStreamingAnimationAtTime {
+  uint_32 relativeStreamTime_ms,
+  bool    applyBeforeTick = 1,
+  uint_8  internalTag, // Indicates which message below is set
+  LockAnimTracks lockAnimTracks,
+  uint_8 padding[1],
+  AudioEngine::Multiplexer::PostAudioEvent postAudioEvent
+}
+
 // ====================================================
 
 enum uint_32 ToRobotAddressSpace
@@ -716,6 +740,7 @@ union EngineToRobot
 
   SwitchboardInterface::SetConnectionStatus setConnectionStatus = 0xA0,
   SwitchboardInterface::SetBLEPin           setBLEPin           = 0xA1,
+  AlterStreamingAnimationAtTime             alterStreamingAnimation   = 0xA2,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }
