@@ -20,9 +20,10 @@
     "ReactToObstacle",
     "ReactToUnclaimedIntent",
     "ReactToPutDown",
-    "ReactToPickedUp",
     "ReactToDarkness",
     "DanceToTheBeat",
+    "WhileInAir",
+    "WhileHeld",
     "HighLevelAI"
   ]
 }

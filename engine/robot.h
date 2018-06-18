@@ -400,7 +400,7 @@ public:
   Pose3d              GetCameraPose(const f32 atAngle) const;
   Transform3d         GetLiftTransformWrtCamera(const f32 atLiftAngle, const f32 atHeadAngle) const;
 
-  OffTreadsState GetOffTreadsState() const {return _offTreadsState;}
+  OffTreadsState GetOffTreadsState() const;
   TimeStamp_t GetOffTreadsStateLastChangedTime_ms() const { return _timeOffTreadStateChanged_ms; }
 
   // Return whether the given pose is in the same origin as the robot's current origin

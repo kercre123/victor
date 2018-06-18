@@ -112,6 +112,8 @@
 namespace Anki {
 namespace Cozmo {
 
+CONSOLE_VAR(bool, kFakeRobotBeingHeld, "Robot", false);
+
 CONSOLE_VAR(bool, kDebugPossibleBlockInteraction, "Robot", false);
 
 // if false, vision system keeps running while picked up, on side, etc.
@@ -2172,6 +2174,15 @@ Transform3d Robot::GetLiftTransformWrtCamera(const f32 atLiftAngle, const f32 at
 
   return liftPoseWrtCam.GetTransform();
 }
+
+OffTreadsState Robot::GetOffTreadsState() const 
+{
+  if(kFakeRobotBeingHeld){
+    return OffTreadsState::Held;
+  }
+  return _offTreadsState;
+}
+
 
 Result Robot::RequestIMU(const u32 length_ms) const
 {

@@ -252,7 +252,6 @@ enum uint_8 BehaviorID {
   ReactToGreeting,
   ReactToHello,
   ReactToObstacle,
-  ReactToPickedUp,
   ReactToPlacedOnSlope,
   ReactToPutDown,
   ReactToRobotOnBack,
@@ -263,6 +262,8 @@ enum uint_8 BehaviorID {
   ReactToTriggerDirectionAwake,
   ReactToUnexpectedMovement,
   StuckOnEdge,
+  WhileHeld,
+  WhileInAir,
 
   // victorBehaviorTree/sdkBehaviors
   SDK0,
