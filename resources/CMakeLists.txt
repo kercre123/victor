@@ -3,19 +3,48 @@
 #
 # cmake rules to determine which files get deployed to robot
 #
-
-#
 # Build options
 #
 # Configure with -DANKI_RESOURCE_SHIPPING=1 to deploy shipping resource files.
 # Configure with -DANKI_RESOURCE_SHIPPING=0 to deploy development resource files.
 # Default is ANKI_RESOURCE_SHIPPING=0.
 #
+# Configure with -DFACTORY_TEST=1 or ANKI_NO_WEBSERVER_ENABLED=1 to prevent deployment of webserver resources.
+# Configure with -DFACTORY_TEST=0 and ANKI_NO_WEBSERVER_ENABLED=0 to allow deployment of webserver resources.
+# Default is FACTORY_TEST=0 and ANKI_NO_WEBSERVER_ENABLED=0.
+#
+# Note use of add_dependencies() to serialize copy operations. This is done to prevent random build failures
+# that occur when parallel processes attempt to create the same directory structure.
+#
+
 include(anki_build_copy_assets)
+
+# Do we want to deploy webserver resources?
+if (FACTORY_TEST OR ANKI_NO_WEBSERVER_ENABLED)
+  set(ANKI_ENABLE_WEBSERVER 0)
+else()
+  set(ANKI_ENABLE_WEBSERVER 1)
+endif()
 
 list(APPEND ASSET_OUTPUT_RELATIVE_DSTS "")
 list(APPEND ASSET_OUTPUT_FILES "")
+list(APPEND ASSET_TARGETS "")
 
+#
+# Helper macro to manage ASSET_TARGETS
+# Add a bogus dependency to each new target to serialize copy operations.
+#
+macro(add_asset_target target)
+  if (ASSET_TARGETS)
+    list(GET ASSET_TARGETS -1 tail)
+    add_dependencies(${target} ${tail})
+  endif()
+  list(APPEND ASSET_TARGETS ${target})
+endmacro()
+
+#
+# cozmo_resources_assets
+#
 anki_build_copy_assets(
     TARGET cozmo_resources_assets
     SRCLIST_DIR ${ANKI_SRCLIST_DIR}
@@ -25,6 +54,11 @@ anki_build_copy_assets(
     OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
 )
 
+add_asset_target(cozmo_resources_assets)
+
+#
+# cozmo_resources_sound
+#
 # Override sound target for locally generated sound banks
 set(sound_target cozmo_resources_sound)
 option(USE_LOCAL_AUDIO_ASSETS "Use local audio assets" OFF)
@@ -71,8 +105,11 @@ else()
     )
 endif()
 
-add_dependencies(${sound_target} cozmo_resources_assets)
+add_asset_target(${sound_target})
 
+#
+# cozmo_resources_config
+#
 anki_build_copy_assets(
     TARGET cozmo_resources_config
     SRCLIST_DIR ${ANKI_SRCLIST_DIR}
@@ -81,11 +118,13 @@ anki_build_copy_assets(
     OUT_DSTS ASSET_OUTPUT_FILES
     OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
 )
-add_dependencies(cozmo_resources_config ${sound_target})
 
+add_asset_target(cozmo_resources_config)
 
-# Factory test shouldn't have webserver resources
-if (NOT FACTORY_TEST)
+#
+# cozmo_resources_webserver
+#
+if (${ANKI_ENABLE_WEBSERVER})
   anki_build_copy_assets(
       TARGET cozmo_resources_webserver
       SRCLIST_DIR ${ANKI_SRCLIST_DIR}
@@ -94,9 +133,12 @@ if (NOT FACTORY_TEST)
       OUT_DSTS ASSET_OUTPUT_FILES
       OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
   )
-  add_dependencies(cozmo_resources_webserver cozmo_resources_config)
+  add_asset_target(cozmo_resources_webserver)
 endif()
 
+#
+# cozmo_resources_tts
+#
 anki_build_copy_assets(
   TARGET        cozmo_resources_tts
   SRCLIST_DIR   ${ANKI_SRCLIST_DIR}
@@ -105,9 +147,11 @@ anki_build_copy_assets(
   OUT_DSTS ASSET_OUTPUT_FILES
   OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
 )
-add_dependencies(cozmo_resources_tts cozmo_resources_webserver)
+
+add_asset_target(cozmo_resources_tts)
 
 #
+# cozmo_resources_development, cozmo_resources_shipping
 # Choose extra resource files from shipping or development,
 # then copy them into resources.
 #
@@ -126,24 +170,12 @@ anki_build_copy_assets(
   OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
 )
 
-add_dependencies(${cozmo_resources_extra} cozmo_resources_tts)
+add_asset_target(${cozmo_resources_extra})
 
-set(ASSET_TARGETS
-    cozmo_resources_assets
-    cozmo_resources_config
-    cozmo_resources_webserver
-    cozmo_resources_tts
-    ${cozmo_resources_extra}
-    ${sound_target}
-)
-
-# Remove webserver resources from asset targets if we are building
-# for the factory test
-if (FACTORY_TEST)
-   list(REMOVE_ITEM ASSET_TARGETS cozmo_resources_webserver)
-endif()
-
+#
+# cozmo_resources_test
 # Bundle test assets on OSX
+#
 if (MACOSX)
     anki_build_copy_assets(
         TARGET cozmo_resources_test
@@ -153,8 +185,7 @@ if (MACOSX)
         OUT_DSTS ASSET_OUTPUT_FILES
         OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
     )
-    add_dependencies(cozmo_resources_test cozmo_resources_tts)
-    list(APPEND ASSET_TARGETS cozmo_resources_test)
+    add_asset_target(cozmo_resources_test)
 endif(MACOSX)
 
 # Uncomment when debugging asset list aggregation

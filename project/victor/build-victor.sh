@@ -96,6 +96,7 @@ while getopts ":x:c:p:a:t:g:F:D:hvfdCTeISX" opt; do
             GENERATOR="${OPTARG}"
             ;;
         F)
+            CONFIGURE=1
             FEATURES="${FEATURES} ${OPTARG}"
             ;;
         t)
