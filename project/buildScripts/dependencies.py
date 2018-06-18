@@ -528,7 +528,7 @@ def files_package(files):
 
 def teamcity_package(tc_dict):
     downloaded_builds = []
-
+    teamcity=True
     tool = "curl"
     ptool = "tar"
     ptool_options = ['-v', '-x', '-z', '-f']
@@ -539,6 +539,9 @@ def teamcity_package(tc_dict):
     password = tc_dict.get("pwd", "")
     user = tc_dict.get("default_usr", "undefined")
     builds = tc_dict.get("builds", "undefined")
+    if user == "undefined":
+        # These artifacts are stored on artifactory.
+        teamcity=False
 
     if not is_up(root_url):
         print "WARNING {0} is not available.  Please check your internet connection.".format(root_url)
@@ -559,9 +562,13 @@ def teamcity_package(tc_dict):
         dist = os.path.join(DEPENDENCY_LOCATION, package)
         #This is different from svn_package because upackage_location instead of loc (it can't be assumed that the package has a folder.
         unpack = [ptool] + ptool_options + [dist, '-C', unpackage_location]
-
-        combined_url = "{0}/repository/download/{1}/{2}/{3}_{4}.{5}".format(root_url, build_type_id, version, package_name, version, ext)
-        pull_down = [tool, '--user', "{0}:{1}".format(user, password), '-f', combined_url, '-o', dist]
+        if teamcity:
+          combined_url = "{0}/repository/download/{1}/{2}/{3}_{4}.{5}".format(root_url, build_type_id, version, package_name, version, ext)
+          pull_down = [tool, '--user', "{0}:{1}".format(user, password), '-f', combined_url, '-o', dist]
+        else:
+          # Note the version is in the path and the name of the file.
+          combined_url = "{0}/{1}/{2}/{4}/{3}_{4}.{5}".format(root_url, build, build_type_id, package_name, version, ext)
+          pull_down = [tool, '-f', combined_url, '-o', dist]
         if VERBOSE:
             pull_down += ['-v']
 
@@ -596,11 +603,12 @@ def teamcity_package(tc_dict):
                 curl_info, err = pipe.communicate()
                 status = pipe.poll()
                 if status == 0:
-                    print "{0} Downloaded.  New version {1} ".format(build.title(), version)
+                    print("{0} Downloaded.  New version {1} ".format(build.title(), version))
                     downloaded_builds.append(build.title())
+                    # TODO: use checksum to verify download
                     break
                 else:
-                    print err
+                    print(err)
                     if os.path.isfile(dist):
                         os.remove(dist)
                     print("ERROR {0}ing {1}.  {2} of {3} attempts.".format(tool, package, n+1, RETRIES))
@@ -659,7 +667,7 @@ def json_parser(version_file):
     CoreTech External to process animation data from cozmo-assets.
 
     Returns:
-        object: Null
+        object: Array
 
     Args:
         version_file: path
@@ -668,6 +676,8 @@ def json_parser(version_file):
     if os.path.isfile(version_file):
         with open(version_file, mode="r") as file_obj:
             djson = json.load(file_obj)
+            if "artifactory" in djson:
+                updated_deps.extend(teamcity_package(djson["artifactory"]))
             if "teamcity" in djson:
                 updated_deps.extend(teamcity_package(djson["teamcity"]))
             if "svn" in djson:

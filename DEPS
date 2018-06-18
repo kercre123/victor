@@ -4,6 +4,20 @@
             "url": "http://sai-platform-temp.s3-website-us-west-2.amazonaws.com/victor-chipper-tmp-client-key/victor-chipper-key"
         }
     },
+    "artifactory": {
+          "builds": {
+            "tensorflow": {
+                "build_type_id": "anki",
+                "extension": "tar.gz",
+                "package_name": "tensorflow",
+                "version": "1",
+	        "checksums" : {
+                   "sha256" : "8f4c537b1411d457d7d7cf5928999119554464f4ac98e697ad87d40ab6e04da1"
+	        }
+            }
+        },
+        "root_url": "http://10.10.7.40:8081/artifactory"
+    },
     "svn": {
         "default_usr": "ankibuildserver",
         "pwd": "FoDmKuxMUjsmNhA49BnWysEfVLWaLdGY",
