@@ -77,9 +77,10 @@ s32 CST_Animations::UpdateSimInternal()
         // Note: MessageGameToEngine uses the UnityAudioClient Connection to set audio state
         using namespace AudioMetaData;
         using namespace AudioEngine::Multiplexer;
+        const auto stateId = static_cast<GameState::GenericState>(GameState::Robot_Vic_System_Tests::Unit_Test);
         MessageGameToEngine audioStateMsg;
-        audioStateMsg.Set_PostAudioGameState(PostAudioGameState(static_cast<GameState::StateGroupType>(GameState::StateGroupType::External_Name),
-                                                                static_cast<GameState::GenericState>(GameState::External_Name::Unit_Test_Mock)));
+        audioStateMsg.Set_PostAudioGameState(PostAudioGameState(GameState::StateGroupType::Robot_Vic_System_Tests,
+                                                                stateId));
         SendMessage(audioStateMsg);
         
         time(&_startedWaitingForAnimations_s);

@@ -13,6 +13,7 @@
 #ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorTextToSpeechLoop__
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorTextToSpeechLoop__
 
+#include "clad/audio/audioSwitchTypes.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimGetInLoop.h"
 
 namespace Anki {
@@ -23,12 +24,15 @@ enum class UtteranceState;
 
 class BehaviorTextToSpeechLoop : public ICozmoBehavior
 {
-public: 
+public:
+  using AudioTtsProcessingStyle = AudioMetaData::SwitchState::Robot_Vic_External_Processing;
+  
   virtual ~BehaviorTextToSpeechLoop();
 
   virtual bool WantsToBeActivatedBehavior() const override final;
 
-  void SetTextToSay(const std::string& textToSay, const SayTextIntent& intent = SayTextIntent::Text);
+  void SetTextToSay(const std::string& textToSay,
+                    const AudioTtsProcessingStyle style = AudioTtsProcessingStyle::Default_Processed);
 
   // allow the TTS to be interrupted
   void Interrupt();

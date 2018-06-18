@@ -22,7 +22,6 @@
 #include "engine/actions/actionContainers.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
-#include "engine/actions/sayTextAction.h"
 #include "engine/activeCube.h"
 #include "engine/activeObjectHelpers.h"
 #include "engine/aiComponent/aiComponent.h"
@@ -183,40 +182,55 @@ static void AddAnimation(ConsoleFunctionContextRef context)
 CONSOLE_FUNC(PlayAnimationByName, "Animation", const char* animName);
 CONSOLE_FUNC(AddAnimation, "Animation", const char* animFile);
 
-// Perform SayTextAction from debug console
+// Perform Text to Speech Coordinator from debug console
 namespace {
 
-constexpr const char * kSayTextPath = "SayTextAction";
-constexpr const char * kVoiceStyles = "Unprocessed,CozmoProcessing_Name,CozmoProcessing_Name_Question,Sentence";
+constexpr const char * kTtsCoordinatorPath = "TtSCoordinator";
+// NOTE: Need to keep kVoiceStyles in sync with AudioMetaData::SwitchState::Robot_Vic_External_Processing in
+//       clad/audio/audioSwitchTypes.clad
+constexpr const char * kVoiceStyles = "Default_Processed,Unprocessed";
 
-CONSOLE_VAR_ENUM(u8, kVoiceStyle, kSayTextPath, 0, kVoiceStyles);
-CONSOLE_VAR_RANGED(f32, kDurationScalar, kSayTextPath, 1.f, 0.25f, 4.f);
-CONSOLE_VAR_RANGED(f32, kPitchScalar, kSayTextPath, 0.f, -1.f, 1.f);
+CONSOLE_VAR_ENUM(u8, kVoiceStyle, kTtsCoordinatorPath, 0, kVoiceStyles);
+CONSOLE_VAR_RANGED(f32, kDurationScalar, kTtsCoordinatorPath, 1.f, 0.25f, 4.f);
 
 void SayText(ConsoleFunctionContextRef context)
 {
   auto * robot = _thisRobot;
   if (robot == nullptr) {
-    LOG_ERROR("Robot.SayText.NoRobot", "No robot connected");
+    LOG_ERROR("Robot.TtSCoordinator.NoRobot", "No robot connected");
     return;
   }
 
   const char * text = ConsoleArg_Get_String(context, "text");
   if (text == nullptr) {
-    LOG_ERROR("Robot.SayText.NoText", "No text string");
+    LOG_ERROR("Robot.TtSCoordinator.NoText", "No text string");
     return;
   }
 
-  LOG_INFO("Robot.SayText", "text(%s) style(%hhu) duration(%f) pitch(%f)",
-           Util::HidePersonallyIdentifiableInfo(text), kVoiceStyle, kDurationScalar, kPitchScalar);
+  // Handle processing state
+  using TtsProcessingStyle = AudioMetaData::SwitchState::Robot_Vic_External_Processing;
+  auto style = TtsProcessingStyle::Invalid;
+  switch (kVoiceStyle) {
+    case 0:
+      style = TtsProcessingStyle::Default_Processed;
+      break;
+      
+    case 1:
+      style = TtsProcessingStyle::Unprocessed;
+      break;
+      
+    default:
+      LOG_ERROR("Robot.SayText.InvalidVoiceStyleEnum", "Unknown value");
+      break;
+  }
+  
+  LOG_INFO("Robot.TtSCoordinator", "text(%s) style(%s) duration(%f)",
+           Util::HidePersonallyIdentifiableInfo(text), EnumToString(style), kDurationScalar);
 
-  const auto style = static_cast<SayTextVoiceStyle>(kVoiceStyle);
-  auto action = std::make_unique<SayTextAction>(text, style, kDurationScalar, kPitchScalar);
-  robot->GetActionList().QueueAction(QueueActionPosition::NOW, action.release());
-
+  robot->GetTextToSpeechCoordinator().CreateUtterance(text, UtteranceTriggerType::Immediate, style);
 }
 
-CONSOLE_FUNC(SayText, kSayTextPath, const char* text);
+CONSOLE_FUNC(SayText, kTtsCoordinatorPath, const char* text);
 
 
 static void EnableCalmPowerMode(ConsoleFunctionContextRef context)

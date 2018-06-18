@@ -1022,14 +1022,15 @@ void BehaviorEnrollFace::TransitionToSayingName()
 
       {
         // 1. Say name once
-        SayTextAction* sayNameAction1 = new SayTextAction(_dVars.faceName, SayTextIntent::Name_FirstIntroduction_1);
+        const auto nameQuestionStr = _dVars.faceName + "?";
+        SayTextAction* sayNameAction1 = new SayTextAction(nameQuestionStr);
         sayNameAction1->SetAnimationTrigger(AnimationTrigger::MeetVictorSayName);
         finalAnimation->AddAction(sayNameAction1);
       }
 
       {
         // 2. Repeat name
-        SayTextAction* sayNameAction2 = new SayTextAction(_dVars.faceName, SayTextIntent::Name_FirstIntroduction_2);
+        SayTextAction* sayNameAction2 = new SayTextAction(_dVars.faceName);
         sayNameAction2->SetAnimationTrigger(AnimationTrigger::MeetVictorSayNameAgain);
         finalAnimation->AddAction(sayNameAction2);
       }
@@ -1038,7 +1039,7 @@ void BehaviorEnrollFace::TransitionToSayingName()
     else
     {
       // This is a re-enrollment
-      SayTextAction* sayNameAction = new SayTextAction(_dVars.faceName, SayTextIntent::Name_Normal);
+      SayTextAction* sayNameAction = new SayTextAction(_dVars.faceName);
       sayNameAction->SetAnimationTrigger(AnimationTrigger::MeetVictorSayName);
       finalAnimation->AddAction(sayNameAction);
     }
@@ -1086,7 +1087,7 @@ void BehaviorEnrollFace::TransitionToSayingIKnowThatName()
 
     // todo: locale
     const std::string sentence = "eye already know a " + _dVars.faceName;
-    SayTextAction* speakAction = new SayTextAction(sentence, SayTextIntent::Text);
+    SayTextAction* speakAction = new SayTextAction(sentence);
     speakAction->SetAnimationTrigger(AnimationTrigger::MeetCozmoDuplicateName);
 
     SET_STATE(SayingIKnowThatName);
@@ -1110,7 +1111,7 @@ void BehaviorEnrollFace::TransitionToWrongFace( const std::string& faceName )
 
   // todo: locale
   const std::string text = "youre    " + faceName;
-  auto* sayNameAction = new SayTextAction(text, SayTextIntent::Name_FirstIntroduction_1);
+  auto* sayNameAction = new SayTextAction(text);
   sayNameAction->SetAnimationTrigger(AnimationTrigger::MeetVictorSawWrongFace);
 
   DelegateIfInControl(sayNameAction, [this](ActionResult result) {

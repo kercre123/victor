@@ -776,7 +776,8 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
           robot.GetContext()->GetVizManager()->SendSaveImages(ImageSendMode::Off);
         }
         
-        IActionRunner* action = new CompoundActionSequential({new SayTextAction("Test Complete", SayTextIntent::Text), new WaitAction(3)});
+        IActionRunner* action = new CompoundActionSequential({new SayTextAction("Test Complete", SayTextAction::AudioTtsProcessingStyle::Unprocessed),
+                                                              new WaitAction(3)});
         DelegateIfInControl(robot, action,
                     [this](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                       if(result == ActionResult::SUCCESS)
@@ -795,7 +796,8 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
           robot.GetContext()->GetVizManager()->SendSaveImages(ImageSendMode::Off);
         }
         
-        IActionRunner* action = new CompoundActionSequential({new SayTextAction("Help", SayTextIntent::Text), new WaitAction(3)});
+        IActionRunner* action = new CompoundActionSequential({new SayTextAction("Help", SayTextAction::AudioTtsProcessingStyle::Unprocessed),
+                                                              new WaitAction(3)});
         DelegateIfInControl(robot, action,
                     [this](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                       if(result == ActionResult::SUCCESS)

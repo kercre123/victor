@@ -180,11 +180,12 @@ void BehaviorPlannerTest::GoToCubePose()
       }
     }
     if( IActionRunner::GetActionResultCategory(res) == ActionResultCategory::RETRY ) {
-      DelegateIfInControl( new SayTextAction( "CUBE RETRY",   SayTextVoiceStyle::Unprocessed ), &BehaviorPlannerTest::GoToCubePose );
+      DelegateIfInControl( new SayTextAction( "CUBE RETRY",   SayTextAction::AudioTtsProcessingStyle::Unprocessed ),
+                           &BehaviorPlannerTest::GoToCubePose );
     } else if( res != ActionResult::SUCCESS ) {
-      DelegateIfInControl( new SayTextAction( "CUBE FAIL",    SayTextVoiceStyle::Unprocessed ) );
+      DelegateIfInControl( new SayTextAction( "CUBE FAIL",    SayTextAction::AudioTtsProcessingStyle::Unprocessed ) );
     } else {
-      DelegateIfInControl( new SayTextAction( "CUBE SUCCESS", SayTextVoiceStyle::Unprocessed ) );
+      DelegateIfInControl( new SayTextAction( "CUBE SUCCESS", SayTextAction::AudioTtsProcessingStyle::Unprocessed ) );
     }
   });
 }
@@ -196,11 +197,12 @@ void BehaviorPlannerTest::GoToFarAwayPose()
   CalcFarAwayPose();
   DelegateIfInControl( new DriveToPoseAction( _dVars.drivePose, false ), [this](const ActionResult& res){
     if( IActionRunner::GetActionResultCategory(res) == ActionResultCategory::RETRY ) {
-      DelegateIfInControl( new SayTextAction( "DRIVE RETRY",   SayTextVoiceStyle::Unprocessed ), &BehaviorPlannerTest::GoToFarAwayPose );
+      DelegateIfInControl( new SayTextAction( "DRIVE RETRY",   SayTextAction::AudioTtsProcessingStyle::Unprocessed ),
+                           &BehaviorPlannerTest::GoToFarAwayPose );
     } else if( res != ActionResult::SUCCESS ) {
-      DelegateIfInControl( new SayTextAction( "DRIVE FAIL",    SayTextVoiceStyle::Unprocessed ) );
+      DelegateIfInControl( new SayTextAction( "DRIVE FAIL",    SayTextAction::AudioTtsProcessingStyle::Unprocessed ) );
     } else {
-      DelegateIfInControl( new SayTextAction( "DRIVE SUCCESS", SayTextVoiceStyle::Unprocessed ) );
+      DelegateIfInControl( new SayTextAction( "DRIVE SUCCESS", SayTextAction::AudioTtsProcessingStyle::Unprocessed ) );
     }
   });
 }

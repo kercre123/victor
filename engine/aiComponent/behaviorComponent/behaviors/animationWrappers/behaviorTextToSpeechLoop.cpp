@@ -121,7 +121,7 @@ BehaviorTextToSpeechLoop::~BehaviorTextToSpeechLoop()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTextToSpeechLoop::SetTextToSay(const std::string& textToSay, const SayTextIntent& intent)
+void BehaviorTextToSpeechLoop::SetTextToSay(const std::string& textToSay, const AudioTtsProcessingStyle style)
 {
   _dVars.textToSay = textToSay;
 
@@ -135,8 +135,9 @@ void BehaviorTextToSpeechLoop::SetTextToSay(const std::string& textToSay, const 
     triggerType = UtteranceTriggerType::KeyFrame;
   }
   _dVars.utteranceID = GetBEI().GetTextToSpeechCoordinator().CreateUtterance(_dVars.textToSay,
-                                                                             intent,
                                                                              triggerType,
+                                                                             style,
+                                                                             1.0f,
                                                                              callback);
 }
 
@@ -151,7 +152,7 @@ void BehaviorTextToSpeechLoop::OnBehaviorActivated()
 {
   // For a standalone test behavior, exampleTextToSpeechLoop
   if(!_iConfig.devTestUtteranceString.empty()){
-    SetTextToSay(_iConfig.devTestUtteranceString, SayTextIntent::Unprocessed);
+    SetTextToSay(_iConfig.devTestUtteranceString, AudioTtsProcessingStyle::Unprocessed);
   }
 
   if(kInvalidUtteranceID == _dVars.utteranceID) {

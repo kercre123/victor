@@ -108,7 +108,6 @@ public:
   const Json::Value& GetWebServerEngineConfig() const        { return _webServerEngineConfig; }
   const Json::Value& GetDasEventConfig() const               { return _dasEventConfig; }
   const Json::Value& GetUserIntentConfig() const             { return _userIntentsConfig; }
-  const Json::Value* GetTextToSpeechConfig() const           { return &_textToSpeechConfig; }
   const Json::Value& GetPhotographyConfig() const            { return _photographyConfig; }
   const Json::Value& GetSettingsConfig() const               { return _settingsConfig; }
 
@@ -205,7 +204,6 @@ private:
   Json::Value _victorFreeplayBehaviorConfig;
   Json::Value _robotVisionConfig;
   Json::Value _visionScheduleMediatorConfig;
-  Json::Value _textToSpeechConfig;
   Json::Value _inventoryConfig;
   Json::Value _webServerEngineConfig;
   Json::Value _dasEventConfig;

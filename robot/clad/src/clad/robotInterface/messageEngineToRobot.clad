@@ -20,7 +20,6 @@
 #include "clad/types/proxMessages.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/robotTestModes.clad"
-#include "clad/types/sayTextStyles.clad"
 #include "clad/types/switchboardToRobot.clad"
 
 namespace Anki {
@@ -539,9 +538,8 @@ message RunDebugConsoleFuncMessage {
 // Sent from engine to robot (anim process) to prepare TTS audio
 //
 message TextToSpeechPrepare {
+  AudioMetaData::SwitchState::Robot_Vic_External_Processing style, // Audio processing style
   float_32 durationScalar, // Duration adjustment
-  float_32 pitchScalar,    // Pitch adjustment
-  SayTextVoiceStyle style, // Audio processing style
   uint_8 ttsID,            // ID of utterance
   string text              // Text to be pronounced
 }

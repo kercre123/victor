@@ -3,12 +3,12 @@
 // Author: Andrew Stein
 // Copyright: Anki Inc (c) 2016
 
+#include "clad/audio/audioSwitchTypes.clad"
 #include "clad/types/actionTypes.clad"
 #include "clad/types/visionModes.clad"
 #include "clad/types/objectFamilies.clad"
 #include "clad/types/pathMotionProfile.clad"
 #include "clad/types/proceduralFaceTypes.clad"
-#include "clad/types/sayTextStyles.clad"
 #include "clad/types/animationTrigger.clad"
 #include "clad/types/petTypes.clad"
 
@@ -233,17 +233,9 @@ message RollObject {
 message SayText {
   string              text,
   AnimationTrigger    playEvent,      // Set AnimationTrigger::Count to only play the Tts without an animation
-  SayTextVoiceStyle   voiceStyle,
+  AudioMetaData::SwitchState::Robot_Vic_External_Processing  voiceStyle,
   float_32            durationScalar = 1.0,
-  float_32            voicePitch = 0.0,
   bool                fitToDuration   // Use Animation Trigger group to generate an animation to fit the duration of the text to speech audio
-}
-
-message SayTextWithIntent {
-  string              text,
-  AnimationTrigger    playEvent,    // Set AnimationTrigger::Count to only play the text without an animation
-  SayTextIntent       intent,       // Intents have predefined values for the voice style and duration scalar
-  bool                fitToDuration // Use Animation Trigger group to generate an animation to fit the duration of the text to speech audio
 }
 
 enum int_32 SearchForNearbyObjectDefaults {
@@ -498,7 +490,6 @@ union RobotActionUnion {
   RealignWithObject             realignWithObject,
   RollObject                    rollObject,
   SayText                       sayText,
-  SayTextWithIntent             sayTextWithIntent,
   SearchForNearbyObject         searchForNearbyObject,
   SetHeadAngle                  setHeadAngle,
   SetLiftHeight                 setLiftHeight,

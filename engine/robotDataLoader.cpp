@@ -192,12 +192,6 @@ void RobotDataLoader::LoadNonConfigData()
     }
 
     {
-      // Load SayText Action Intent Config
-      ANKI_CPU_PROFILE("RobotDataLoader::LoadSayTextActionIntentConfigs");
-      SayTextAction::LoadMetadata(*_context->GetDataPlatform());
-    }
-
-    {
       ANKI_CPU_PROFILE("RobotDataLoader::LoadCompositeImageMaps");
       LoadCompositeImageMaps();
     }
@@ -845,17 +839,6 @@ void RobotDataLoader::LoadRobotConfigs()
     {
       LOG_ERROR("RobotDataLoader.WebServerEngineConfigNotFound",
                 "Web Server Engine Config file %s not found or failed to parse",
-                jsonFilename.c_str());
-    }
-  }
-
-  // TextToSpeechConfig
-  {
-    const std::string jsonFilename = "config/engine/sayTextintentConfig.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _textToSpeechConfig);
-    if( !success){
-      LOG_ERROR("RobotDataLoader.TextToSpeechConfigNotFound",
-                "TextToSpeech Engine Config file %s not found or failed to parse",
                 jsonFilename.c_str());
     }
   }

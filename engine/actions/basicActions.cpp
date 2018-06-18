@@ -2154,7 +2154,7 @@ namespace Anki {
                 }
                 else {
                   // we have a name
-                  SayTextAction* sayText = new SayTextAction(face->GetName(), SayTextIntent::Name_Normal);
+                  SayTextAction* sayText = new SayTextAction(face->GetName());
                   if( _sayNameTriggerCallback ) {
                     AnimationTrigger sayNameAnim = _sayNameTriggerCallback(GetRobot(), _obsFaceID);
                     if( sayNameAnim != AnimationTrigger::Count ) {

@@ -730,20 +730,9 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SayText& s
 {
   SayTextAction* sayTextAction = new SayTextAction(sayText.text,
                                                    sayText.voiceStyle,
-                                                   sayText.durationScalar,
-                                                   sayText.voicePitch);
+                                                   sayText.durationScalar);
   sayTextAction->SetAnimationTrigger(sayText.playEvent);
   sayTextAction->SetFitToDuration(sayText.fitToDuration);
-  return sayTextAction;
-}
-
-// Version for SayTextWithIntent message
-template<>
-IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SayTextWithIntent& sayTextWithIntent)
-{
-  SayTextAction* sayTextAction = new SayTextAction(sayTextWithIntent.text, sayTextWithIntent.intent);
-  sayTextAction->SetAnimationTrigger(sayTextWithIntent.playEvent);
-  sayTextAction->SetFitToDuration(sayTextWithIntent.fitToDuration);
   return sayTextAction;
 }
 
@@ -967,7 +956,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(realignWithObject,        RealignWithObject,        1),
       DEFINE_HANDLER(rollObject,               RollObject,               1),
       DEFINE_HANDLER(sayText,                  SayText,                  0),
-      DEFINE_HANDLER(sayTextWithIntent,        SayTextWithIntent,        0),
       DEFINE_HANDLER(searchForNearbyObject,    SearchForNearbyObject,    0),
       DEFINE_HANDLER(setHeadAngle,             SetHeadAngle,             0),
       DEFINE_HANDLER(setLiftHeight,            SetLiftHeight,            0),
