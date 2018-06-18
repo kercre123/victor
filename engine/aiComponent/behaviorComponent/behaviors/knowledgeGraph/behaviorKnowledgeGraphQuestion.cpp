@@ -10,8 +10,8 @@
  *
  **********************************************************************************************************************/
 
-// #include "engine/aiComponent/behaviorComponent/behaviors/knowledgeGraph/behaviorAskAQuestion.h"
-#include "behaviorAskAQuestion.h"
+// #include "engine/aiComponent/behaviorComponent/behaviors/knowledgeGraph/behaviorKnowledgeGraphQuestion.h"
+#include "behaviorKnowledgeGraphQuestion.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
@@ -31,10 +31,10 @@
 #include "clad/types/behaviorComponent/userIntent.h"
 
 #define PRINT_DEBUG( format, ... ) \
-  PRINT_CH_DEBUG( "KnowledgeGraph", "BehaviorAskAQuestion", format, ##__VA_ARGS__ )
+  PRINT_CH_DEBUG( "KnowledgeGraph", "BehaviorKnowledgeGraphQuestion", format, ##__VA_ARGS__ )
 
 #define PRINT_INFO( format, ... ) \
-  PRINT_CH_INFO( "KnowledgeGraph", "BehaviorAskAQuestion", format, ##__VA_ARGS__ )
+  PRINT_CH_INFO( "KnowledgeGraph", "BehaviorKnowledgeGraphQuestion", format, ##__VA_ARGS__ )
 
 // notes:
 // + need to check if Houndify connection is valid and respond accordingly if it is not
@@ -62,14 +62,14 @@ namespace
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorAskAQuestion::InstanceConfig::InstanceConfig() :
+BehaviorKnowledgeGraphQuestion::InstanceConfig::InstanceConfig() :
   streamingDuration( kDefaultDuration )
 {
 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorAskAQuestion::DynamicVariables::DynamicVariables() :
+BehaviorKnowledgeGraphQuestion::DynamicVariables::DynamicVariables() :
   state( EState::Listening ),
   streamingBeginTime( 0.0f )
 {
@@ -77,7 +77,7 @@ BehaviorAskAQuestion::DynamicVariables::DynamicVariables() :
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorAskAQuestion::BehaviorAskAQuestion( const Json::Value& config ) :
+BehaviorKnowledgeGraphQuestion::BehaviorKnowledgeGraphQuestion( const Json::Value& config ) :
   ICozmoBehavior( config )
 {
   JsonTools::GetValueOptional( config, kKey_Duration, _iVars.streamingDuration );
@@ -85,13 +85,13 @@ BehaviorAskAQuestion::BehaviorAskAQuestion( const Json::Value& config ) :
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAskAQuestion::GetBehaviorJsonKeys( std::set<const char*>& expectedKeys ) const
+void BehaviorKnowledgeGraphQuestion::GetBehaviorJsonKeys( std::set<const char*>& expectedKeys ) const
 {
   expectedKeys.insert( kKey_Duration );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAskAQuestion::InitBehavior()
+void BehaviorKnowledgeGraphQuestion::InitBehavior()
 {
   const BehaviorContainer& container = GetBEI().GetBehaviorContainer();
   container.FindBehaviorByIDAndDowncast<BehaviorTextToSpeechLoop>( BEHAVIOR_ID(KnowledgeGraphTTS),
@@ -100,13 +100,13 @@ void BehaviorAskAQuestion::InitBehavior()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAskAQuestion::GetAllDelegates( std::set<IBehavior*>& delegates ) const
+void BehaviorKnowledgeGraphQuestion::GetAllDelegates( std::set<IBehavior*>& delegates ) const
 {
   delegates.insert( _iVars.ttsBehavior.get() );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAskAQuestion::GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const
+void BehaviorKnowledgeGraphQuestion::GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const
 {
   modifiers.wantsToBeActivatedWhenCarryingObject  = true;
   modifiers.wantsToBeActivatedWhenOnCharger       = true;
@@ -115,13 +115,13 @@ void BehaviorAskAQuestion::GetBehaviorOperationModifiers( BehaviorOperationModif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorAskAQuestion::WantsToBeActivatedBehavior() const
+bool BehaviorKnowledgeGraphQuestion::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAskAQuestion::OnBehaviorActivated()
+void BehaviorKnowledgeGraphQuestion::OnBehaviorActivated()
 {
   _dVars = DynamicVariables();
 
@@ -137,13 +137,13 @@ void BehaviorAskAQuestion::OnBehaviorActivated()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAskAQuestion::OnBehaviorDeactivated()
+void BehaviorKnowledgeGraphQuestion::OnBehaviorDeactivated()
 {
 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAskAQuestion::BehaviorUpdate()
+void BehaviorKnowledgeGraphQuestion::BehaviorUpdate()
 {
   if ( IsActivated() )
   {
@@ -160,11 +160,11 @@ void BehaviorAskAQuestion::BehaviorUpdate()
         // else, we need to deliver the bad news
         if ( !_dVars.responseString.empty() )
         {
-          OnStreamingComplete( std::bind( &BehaviorAskAQuestion::TransitionToBeginResponse, this ) );
+          OnStreamingComplete( std::bind( &BehaviorKnowledgeGraphQuestion::TransitionToBeginResponse, this ) );
         }
         else
         {
-          OnStreamingComplete( std::bind( &BehaviorAskAQuestion::TransitionToNoResponse, this ) );
+          OnStreamingComplete( std::bind( &BehaviorKnowledgeGraphQuestion::TransitionToNoResponse, this ) );
         }
       }
       else
@@ -173,7 +173,7 @@ void BehaviorAskAQuestion::BehaviorUpdate()
         const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
         if ( currentTime > ( _dVars.streamingBeginTime + _iVars.streamingDuration ) )
         {
-          OnStreamingComplete( std::bind( &BehaviorAskAQuestion::TransitionToNoResponse, this ) );
+          OnStreamingComplete( std::bind( &BehaviorKnowledgeGraphQuestion::TransitionToNoResponse, this ) );
         }
       }
     }
@@ -181,7 +181,7 @@ void BehaviorAskAQuestion::BehaviorUpdate()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAskAQuestion::BeginStreamingQuestion()
+void BehaviorKnowledgeGraphQuestion::BeginStreamingQuestion()
 {
   PRINT_DEBUG( "Knowledge Graph streaming begun ..." );
 
@@ -190,7 +190,7 @@ void BehaviorAskAQuestion::BeginStreamingQuestion()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAskAQuestion::OnStreamingComplete( BehaviorSimpleCallback next )
+void BehaviorKnowledgeGraphQuestion::OnStreamingComplete( BehaviorSimpleCallback next )
 {
   // go into responding state first, then figure out how to reponde
   _dVars.state = EState::Responding;
@@ -201,14 +201,14 @@ void BehaviorAskAQuestion::OnStreamingComplete( BehaviorSimpleCallback next )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorAskAQuestion::IsResponsePending() const
+bool BehaviorKnowledgeGraphQuestion::IsResponsePending() const
 {
   const UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
   return uic.IsAnyUserIntentPending();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAskAQuestion::ConsumeResponse()
+void BehaviorKnowledgeGraphQuestion::ConsumeResponse()
 {
   PRINT_DEBUG( "Checking for response" );
 
@@ -237,7 +237,7 @@ void BehaviorAskAQuestion::ConsumeResponse()
   {
     // this shoudln't really happen, but handle it safely regardless
     uic.DropUserIntent( USER_INTENT(unmatched_intent) );
-    PRINT_NAMED_WARNING( "BehaviorAskAQuestion", "unmatched_intent returned as response from knowledge graph" );
+    PRINT_NAMED_WARNING( "BehaviorKnowledgeGraphQuestion", "unmatched_intent returned as response from knowledge graph" );
   }
   else
   {
@@ -247,14 +247,14 @@ void BehaviorAskAQuestion::ConsumeResponse()
       // this will be handled fine, but we should let dev know about it
       const UserIntentData* intentData = uic.GetPendingUserIntent();
       const std::string intentString = UserIntentTagToString( intentData ? intentData->intent.GetTag() : UserIntentTag::INVALID );
-      PRINT_NAMED_ERROR( "BehaviorAskAQuestion", "Invalid intent returned from Knowledge Graph: %s", intentString.c_str() );
+      PRINT_NAMED_ERROR( "BehaviorKnowledgeGraphQuestion", "Invalid intent returned from Knowledge Graph: %s", intentString.c_str() );
     }
     #endif
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAskAQuestion::BeginResponseTTS()
+void BehaviorKnowledgeGraphQuestion::BeginResponseTTS()
 {
   // delegate to our tts behavior
   _iVars.ttsBehavior->SetTextToSay( _dVars.responseString );
@@ -271,7 +271,7 @@ void BehaviorAskAQuestion::BeginResponseTTS()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAskAQuestion::TransitionToBeginResponse()
+void BehaviorKnowledgeGraphQuestion::TransitionToBeginResponse()
 {
   // this should already be set, but doens't hurt to ensure
   _dVars.state = EState::Responding;
@@ -284,7 +284,7 @@ void BehaviorAskAQuestion::TransitionToBeginResponse()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAskAQuestion::TransitionToNoResponse()
+void BehaviorKnowledgeGraphQuestion::TransitionToNoResponse()
 {
   PRINT_DEBUG( "No response recieved from Knowledge Graph" );
 
@@ -294,7 +294,7 @@ void BehaviorAskAQuestion::TransitionToNoResponse()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAskAQuestion::TransitionToNoConnection()
+void BehaviorKnowledgeGraphQuestion::TransitionToNoConnection()
 {
   PRINT_DEBUG( "Knowledge Graph not connected" );
 

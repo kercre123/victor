@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- *  BehaviorAskAQuestion
+ *  BehaviorKnowledgeGraphQuestion
  *  Victor / Engine
  *
  *  Created by Jarrod Hatfield on 5/09/2018
@@ -11,8 +11,8 @@
  *
  **********************************************************************************************************************/
 
-#ifndef __Cozmo_Basestation_Behaviors_BehaviorAskAQuestion_H__
-#define __Cozmo_Basestation_Behaviors_BehaviorAskAQuestion_H__
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorKnowledgeGraphQuestion_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorKnowledgeGraphQuestion_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/components/mics/voiceMessageTypes.h"
@@ -24,10 +24,10 @@ namespace Cozmo {
 class BehaviorTextToSpeechLoop;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class BehaviorAskAQuestion : public ICozmoBehavior
+class BehaviorKnowledgeGraphQuestion : public ICozmoBehavior
 {
   friend class BehaviorFactory;
-  BehaviorAskAQuestion( const Json::Value& config );
+  BehaviorKnowledgeGraphQuestion( const Json::Value& config );
 
 
 public:
@@ -107,9 +107,9 @@ private:
 
   } _dVars;
 
-}; // class BehaviorAskAQuestion
+}; // class BehaviorKnowledgeGraphQuestion
 
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorAskAQuestion_H__
+#endif // __Cozmo_Basestation_Behaviors_BehaviorKnowledgeGraphQuestion_H__
