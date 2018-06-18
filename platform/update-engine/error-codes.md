@@ -23,5 +23,5 @@ Codes in this document must not change after release, they are add only.
 | 215  |                                       |
 | 216  |                                       |
 | 217  |                                       |
-| 218  |                                       |
+| 218  | ESN error                             |
 | 219  | Other Exception                       |

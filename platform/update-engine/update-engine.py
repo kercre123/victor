@@ -35,11 +35,13 @@ MANIFEST_FILE = os.path.join(STATUS_DIR, "manifest.ini")
 MANIFEST_SIG = os.path.join(STATUS_DIR, "manifest.sha256")
 BOOT_STAGING = os.path.join(STATUS_DIR, "boot.img")
 DELTA_STAGING = os.path.join(STATUS_DIR, "delta.bin")
-OTA_PUB_KEY = "/anki/etc/ota.pub"
+OTA_PROD_PUB_KEY = "/anki/etc/ota.pub"
+OTA_DEV_PUB_KEY = "/anki/etc/ota_dev.pub"
 OTA_ENC_PASSWORD = "/anki/etc/ota.pas"
+SOC_ESN_FILE = "/sys/devices/soc0/serial_number"
 HTTP_BLOCK_SIZE = 1024*2  # Tuned to what seems to work best with DD_BLOCK_SIZE
 DD_BLOCK_SIZE = HTTP_BLOCK_SIZE*1024
-SUPPORTED_MANIFEST_VERSIONS = ["0.9.2", "0.9.3", "0.9.4", "0.9.5"]
+SUPPORTED_MANIFEST_VERSIONS = ["0.9.2", "0.9.3", "0.9.4", "0.9.5", "0.9.6"]
 
 DEBUG = False
 
@@ -136,6 +138,41 @@ def verify_signature(file_path_name, sig_path_name, public_key):
     return ret_code == 0, ret_code, openssl_out, openssl_err
 
 
+def verify_maniest_or_die(man_path_name, sig_path_nam):
+    "Verifies the manifest is acceptible to apply, dies if it isn't."
+    def get_manifest(fileobj):
+        "Returns config parsed from INI file in filelike object"
+        config = ConfigParser.ConfigParser({'encryption': '0'})
+        config.readfp(fileobj)
+        return config
+
+    prod_verify_status = verify_signature(man_path_name, sig_path_nam, OTA_PROD_PUB_KEY)
+    if prod_verify_status[0] is True:
+        return get_manifest(open(man_path_name, "r"))
+    else:
+        # Not a valid production key, try, dev key
+        if verify_signature(man_path_name, sig_path_nam, OTA_DEV_PUB_KEY)[0] is not True:
+            die(209,
+                "Manifest failed signature validation, openssl returned {1:d} {2:s} {3:s}".format(*prod_verify_status))
+        # Valid dev signature, see if we're allowed to use it.
+        manifest = get_manifest(open(man_path_name, "r"))
+        if not manifest.has_option("META", "unlock_esns") or not manifest.has_option("META", "unlock_sig"):
+            die(209, "Manifest incorrectly signed")
+        soc_esn = open(SOC_ESN_FILE, "r").read()
+        unlocks_file = os.path.join(STATUS_DIR, "unlock_esns.list")
+        unlocks_sig = os.path.join(STATUS_DIR, "unlocks.sig")
+        open(unlocks_file, "w").write(manifest.get("META", "unlock_esns"))
+        open(unlocks_sig, "w").write(manifest.get("META", "unlock_sig"))
+        unlock_verify_status = verify_signature(unlocks_file, unlocks_sig, OTA_PROD_PUB_KEY)
+        if unlock_verify_status[0] is not True:
+            die(209, "Unlocks signature validitation failed: {1:d} {2:s} {3:s}".format(*unlock_verify_status))
+        # Unlock list signed so valid
+        if soc_esn not in manifest.get("META", "unlock_esns").split(' '):
+            die(218, "This ESN ({}) not in unlock list".format(soc_esn))
+        # This unit is in list so okay
+        return manifest
+
+
 def get_prop(property_name):
     "Gets a value from the property server via subprocess"
     getprop = subprocess.Popen(["/usr/bin/getprop", property_name], shell=False, stdout=subprocess.PIPE)
@@ -169,13 +206,6 @@ def get_slot(kernel_command_line):
         return 'b', 'a'
     else:
         return 'f', 'a'
-
-
-def get_manifest(fileobj):
-    "Returns config parsed from INI file in filelike object"
-    config = ConfigParser.ConfigParser({'encryption': '0'})
-    config.readfp(fileobj)
-    return config
 
 
 class StreamDecompressor(object):
@@ -548,12 +578,7 @@ def update_from_url(url):
             die(200, "Expected manifest signature after manifest.ini. Found \"{0.name}\"".format(manifest_sig_ti))
         with open(MANIFEST_SIG, "wb") as signature:
             signature.write(tar_stream.extractfile(manifest_sig_ti).read())
-        verification_status = verify_signature(MANIFEST_FILE, MANIFEST_SIG, OTA_PUB_KEY)
-        if not verification_status[0]:
-            die(209,
-                "Manifest failed signature validation, openssl returned {1:d} {2:s} {3:s}".format(*verification_status))
-        # Manifest was signed correctly
-        manifest = get_manifest(open(MANIFEST_FILE, "r"))
+        manifest = verify_maniest_or_die(MANIFEST_FILE, MANIFEST_SIG)
         # Inspect the manifest
         if manifest.get("META", "manifest_version") not in SUPPORTED_MANIFEST_VERSIONS:
             die(201, "Unexpected manifest version")
