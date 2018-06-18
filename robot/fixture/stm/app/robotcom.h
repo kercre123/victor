@@ -57,12 +57,13 @@ const int ccr_sr_cnt[12] = {0,2,4,2,2,2,2,4,2,1,1,4}; //number of CCC sensor fie
 
 //debug opts
 #define RCOM_PRINT_LEVEL_DEFAULT      RCOM_PRINT_LEVEL_CMD_DAT_RSP
-#define RCOM_PRINT_LEVEL_CMD_DAT_RSP  0
-#define RCOM_PRINT_LEVEL_CMD_RSP      1
-#define RCOM_PRINT_LEVEL_CMD_DAT      2
-#define RCOM_PRINT_LEVEL_CMD          3
-#define RCOM_PRINT_LEVEL_DAT          4
-#define RCOM_PRINT_LEVEL_NONE         5
+#define RCOM_PRINT_LEVEL_NONE         0
+#define RCOM_PRINT_LEVEL_CMD          1
+#define RCOM_PRINT_LEVEL_DAT          2
+#define RCOM_PRINT_LEVEL_RSP          4
+#define RCOM_PRINT_LEVEL_NFO          8
+#define RCOM_PRINT_LEVEL_CMD_DAT_RSP  (RCOM_PRINT_LEVEL_CMD | RCOM_PRINT_LEVEL_DAT | RCOM_PRINT_LEVEL_RSP)
+#define RCOM_PRINT_LEVEL_ALL          (RCOM_PRINT_LEVEL_CMD | RCOM_PRINT_LEVEL_DAT | RCOM_PRINT_LEVEL_RSP | RCOM_PRINT_LEVEL_NFO)
 
 enum rcom_pwr_st_e {
   RCOM_PWR_ON = 0,

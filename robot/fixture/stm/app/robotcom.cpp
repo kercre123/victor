@@ -132,15 +132,12 @@ static struct { //result of most recent command
 
 //map robotcom's 'printlvl' to cmd option flags
 static inline int printlvl2cmdopts( int printlvl ) {
-  switch( printlvl) {
-    default:
-    case RCOM_PRINT_LEVEL_CMD_DAT_RSP:  return CCC_CMD_OPTS & ~(               0 |                0 |                  0 | CMD_OPTS_LOG_OTHER); //break;
-    case RCOM_PRINT_LEVEL_CMD_RSP:      return CCC_CMD_OPTS & ~(               0 |                0 | CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER); //break;
-    case RCOM_PRINT_LEVEL_CMD_DAT:      return CCC_CMD_OPTS & ~(               0 | CMD_OPTS_LOG_RSP |                  0 | CMD_OPTS_LOG_OTHER); //break;
-    case RCOM_PRINT_LEVEL_CMD:          return CCC_CMD_OPTS & ~(               0 | CMD_OPTS_LOG_RSP | CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER); //break;
-    case RCOM_PRINT_LEVEL_DAT:          return CCC_CMD_OPTS & ~(CMD_OPTS_LOG_CMD | CMD_OPTS_LOG_RSP |                  0 | CMD_OPTS_LOG_OTHER); //break;
-    case RCOM_PRINT_LEVEL_NONE:         return CCC_CMD_OPTS & ~(CMD_OPTS_LOG_CMD | CMD_OPTS_LOG_RSP | CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER); //break;
-  }
+  int cmdopts = CCC_CMD_OPTS & ~(CMD_OPTS_LOG_CMD | CMD_OPTS_LOG_RSP | CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER);
+  if( printlvl & RCOM_PRINT_LEVEL_CMD ) cmdopts |= CMD_OPTS_LOG_CMD;
+  if( printlvl & RCOM_PRINT_LEVEL_DAT ) cmdopts |= CMD_OPTS_LOG_ASYNC; //async==data
+  if( printlvl & RCOM_PRINT_LEVEL_RSP ) cmdopts |= CMD_OPTS_LOG_RSP;
+  if( printlvl & RCOM_PRINT_LEVEL_NFO ) cmdopts |= CMD_OPTS_LOG_OTHER; //info text
+  return cmdopts;
 }
 
 //common error check function

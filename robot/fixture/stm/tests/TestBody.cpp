@@ -11,6 +11,7 @@
 #include "hwid.h"
 #include "meter.h"
 #include "portable.h"
+#include "robotcom.h"
 #include "swd.h"
 #include "systest.h"
 #include "testcommon.h"
@@ -133,6 +134,7 @@ void TestBodyCleanup(void)
   mcu_power_down_();
   Board::powerOff(PWR_VEXT);
   Board::powerOff(PWR_VBAT);
+  rcomSetTarget(0); //reset rcom to charge contacts
 }
 
 static void BodyShortCircuitTest(void)
@@ -213,9 +215,6 @@ static void BodyLoadTestFirmware(void)
   //print version to test contact comms
   cmdSend(CMD_IO_CONTACTS, "getvers");
   
-  //DEBUG
-  TestCommon::consoleBridge(TO_CONTACTS,0); //,0,BRIDGE_OPT_CHG_DISABLE);
-  
   //test tread encoders
   cmdSend(CMD_IO_CONTACTS, "encoders", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS);
   if( cmdStatus() >= ERROR_BODY && cmdStatus() < ERROR_BODY_RANGE_END )
@@ -223,21 +222,21 @@ static void BodyLoadTestFirmware(void)
   else if( cmdStatus() != 0 )
     throw ERROR_BODY;
   
-  
-  
   //XXX: TEST DROP SENSORS -----------------------------------
-  
+  if( g_fixmode < FIXMODE_BODY1 ) {
+    robot_sr_t cliff = rcomGet(3, RCOM_SENSOR_CLIFF, RCOM_PRINT_LEVEL_ALL)[1];
+    ConsolePrintf("cliff = fL:%i fR:%i bR:%i bL:%i\n", cliff.cliff.fL, cliff.cliff.fR, cliff.cliff.bR, cliff.cliff.bL);
+  }
   
   //XXX: TEST BATTERY READ -----------------------------------
-  
+  if( g_fixmode < FIXMODE_BODY1 ) {
+    robot_sr_t bat = rcomGet(3, RCOM_SENSOR_BATTERY, RCOM_PRINT_LEVEL_ALL)[1];
+    ConsolePrintf("battery = %i.%03iV\n", RCOM_BAT_RAW_TO_MV(bat.bat.raw)/1000, RCOM_BAT_RAW_TO_MV(bat.bat.raw)%1000);
+  }
   
   //XXX: TEST POWER SYSTEMS CONTROL -----------------------------------
   
-  
   //XXX: TEST MOTOR FETS/SHORTS ---------------------------------------
-  
-  
-  
   
   Board::powerOff(PWR_VEXT);
   Board::powerOff(PWR_VBAT);
