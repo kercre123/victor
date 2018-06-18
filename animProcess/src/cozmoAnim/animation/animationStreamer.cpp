@@ -792,8 +792,7 @@ namespace Cozmo {
       if(ANKI_VERIFY(builtImage, 
                      "AnimationStreamer.Process_displayCompositeImageChunk.FailedToBuildImage",
                      "Composite image failed to build")){
-        const bool allowProceduralEyeOverlays = true;
-        SetCompositeImage(outImage, msg.get_frame_interval_ms, msg.duration_ms, allowProceduralEyeOverlays);
+        SetCompositeImage(outImage, msg.get_frame_interval_ms, msg.duration_ms);
       }
 
       _compositeImageBuilder.reset();
@@ -875,7 +874,7 @@ namespace Cozmo {
   }
 
   Result AnimationStreamer::SetCompositeImage(Vision::CompositeImage* compImg, u32 frameInterval_ms,
-                                              u32 duration_ms, bool allowProceduralEyeOverlays)
+                                              u32 duration_ms)
   {
     DEV_ASSERT(nullptr != _proceduralAnimation, "AnimationStreamer.SetCompositeImage.NullProceduralAnimation");
     // If procedural animation is streaming set the streaming animation to nullptr 
@@ -902,7 +901,7 @@ namespace Cozmo {
     // Trigger time of keyframe is 0 since we want it to start playing immediately
     auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
     SpriteSequenceKeyFrame kf(spriteCache, compImg, frameInterval_ms,
-                              shouldRenderInEyeHue, allowProceduralEyeOverlays);
+                              shouldRenderInEyeHue);
     kf.SetKeyFrameDuration_ms(duration_ms);
     Result result = _proceduralAnimation->AddKeyFrameToBack(kf);
     if(!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetCompositeImage.FailedToAddKeyFrame", "")))

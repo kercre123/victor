@@ -426,7 +426,7 @@ void CompositeImage::CacheInternalSprites(Vision::SpriteCache* cache, const Time
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CompositeImage::AddEmptyLayer(SpriteSequenceContainer* seqContainer)
+void CompositeImage::AddEmptyLayer(SpriteSequenceContainer* seqContainer, Vision::LayerName layerName)
 {
   Json::Reader reader;
   Json::Value config;
@@ -435,6 +435,8 @@ void CompositeImage::AddEmptyLayer(SpriteSequenceContainer* seqContainer)
     return;
   }
   
+
+  config[CompositeImageConfigKeys::kLayerNameKey] =  LayerNameToString(layerName);
   static CompositeImageLayer layer(config);
   if(layer.GetImageMap().size() == 0){
     CompositeImageLayer::SpriteEntry entry(_spriteCache, seqContainer, SpriteName::Empty_Sprite);

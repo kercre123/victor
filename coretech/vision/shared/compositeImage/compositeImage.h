@@ -123,7 +123,8 @@ public:
   // Utility function which adds the "empty layer" to the image - useful for instances
   // where a blank composite image is needed at the start of an animation so that updates
   // can be applied at a non-zero time
-  void AddEmptyLayer(SpriteSequenceContainer* seqContainer);
+  void AddEmptyLayer(SpriteSequenceContainer* seqContainer, 
+                     Vision::LayerName layerName = Vision::LayerName::EmptyBoxLayer);
 
 private:
   using SpriteBox = CompositeImageLayer::SpriteBox;

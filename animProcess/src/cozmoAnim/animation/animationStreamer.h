@@ -99,7 +99,7 @@ namespace Cozmo {
 
 
     Result SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms);
-    Result SetCompositeImage(Vision::CompositeImage* compImg, u32 frameInterval_ms, u32 duration_ms, bool allowProceduralEyeOverlays);
+    Result SetCompositeImage(Vision::CompositeImage* compImg, u32 frameInterval_ms, u32 duration_ms);
     Result UpdateCompositeImage(Vision::LayerName layerName, 
                                 const Vision::CompositeImageLayer::SpriteBox& spriteBox, 
                                 Vision::SpriteName spriteName,

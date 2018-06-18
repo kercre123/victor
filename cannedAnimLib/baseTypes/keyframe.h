@@ -259,22 +259,19 @@ namespace Cozmo {
     SpriteSequenceKeyFrame(Vision::SpriteHandle spriteHandle,
                            TimeStamp_t triggerTime_ms, 
                            float scanlineOpacity = 1.f,
-                           bool shouldRenderInEyeHue = true,
-                           bool allowProceduralEyeOverlays = false);
+                           bool shouldRenderInEyeHue = true);
 
     SpriteSequenceKeyFrame(const Vision::SpriteSequence* const spriteSeq,
                            TimeStamp_t triggerTime_ms, 
                            u32 frameInterval_ms,
                            float scanlineOpacity = 1.f,
-                           bool shouldRenderInEyeHue = true,
-                           bool allowProceduralEyeOverlays = false);
+                           bool shouldRenderInEyeHue = true);
                            
     // Transfers ownership to the keyframe
     SpriteSequenceKeyFrame(Vision::SpriteCache* spriteCache, 
                            Vision::CompositeImage* compImg, 
                            u32 frameInterval_ms,
-                           float scanlineOpacity = 0.f,
-                           bool allowProceduralEyeOverlays = false);
+                           float scanlineOpacity = 0.f);
 
     //Copy constructor
     SpriteSequenceKeyFrame(const SpriteSequenceKeyFrame& other);
@@ -356,7 +353,7 @@ namespace Cozmo {
 
     void CacheInternalSprites(Vision::SpriteCache* cache, const TimeStamp_t endTime_ms);
     
-    bool AllowProceduralEyeOverlays() const { return _allowProceduralEyeOverlays; }
+    bool AllowProceduralEyeOverlays() const;
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
@@ -385,7 +382,6 @@ namespace Cozmo {
     bool _compositeImageUpdated = false;
     std::multimap<u32, CompositeImageUpdateSpec> _compositeImageUpdateMap;
     
-    bool         _allowProceduralEyeOverlays;
     float        _scanlineOpacity;
     TimeStamp_t  _internalUpdateInterval_ms = ANIM_TIME_STEP_MS;
     

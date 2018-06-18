@@ -208,16 +208,10 @@ void BehaviorDisplayWeather::InitBehavior()
                           mapName.asString().c_str());
     }
   }
-  
-  // If the composite image is empty, we still need to send a template (that has no image map)
-  // so that the temperature will have a layer to be displayed on
-  if(_iConfig->compImg->GetLayerLayoutMap().empty()){
-    auto* seqContainer = dataAccessorComp.GetSpriteSequenceContainer();
-    _iConfig->compImg->AddEmptyLayer(seqContainer);
-    PRINT_NAMED_INFO("BehaviorDisplayWeather.InitBehavior.AddingEmptyCompositeImage",
-                     "Composite image does not exist or behavior %s, adding one so that temperature can be displayed",
-                     GetDebugLabel().c_str());
-  }
+
+  // Add an empty layer that will be filled in by procedural eyes extracted from the animation
+  auto* seqContainer = dataAccessorComp.GetSpriteSequenceContainer();
+  _iConfig->compImg->AddEmptyLayer(seqContainer, Vision::LayerName::Procedural_Eyes);
   
   // Get the animation ptr
   const auto* animContainer = dataAccessorComp.GetCannedAnimationContainer();
