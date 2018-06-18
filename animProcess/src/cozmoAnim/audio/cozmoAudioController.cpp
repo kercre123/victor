@@ -25,6 +25,7 @@
 #include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
+#include "util/helpers/ankiDefines.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/math/numericCast.h"
 #include "util/time/universalTime.h"
@@ -279,9 +280,17 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
     config.audioLocale = AudioLocaleType::EnglishUS;
 
     // Engine Memory
+#if defined(ANKI_PLATFORM_OSX)
+    // Webots play room
+    config.defaultMemoryPoolSize      = ( 8 * 1024 * 1024 );  // 8 MB
+    config.defaultLEMemoryPoolSize    = ( 8 * 1024 * 1024 );  // 8 MB
+    config.ioMemorySize               = ( 4 * 1024 * 1024 );  // 4 MB
+#else
+    // Other Platforms
     config.defaultMemoryPoolSize      = ( 3 * 1024 * 1024 );  // 3 MB
     config.defaultLEMemoryPoolSize    = ( 2 * 1024 * 1024 );  // 2 MB
     config.ioMemorySize               = ( 2 * 1024 * 1024 );  // 2 MB
+#endif
     config.defaultMaxNumPools         = 30;
     config.enableGameSyncPreparation  = true;
     config.enableStreamCache          = true;
