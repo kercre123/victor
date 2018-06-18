@@ -435,7 +435,7 @@ void TestRobotSensors(void)
   robot_sr_t btn    = rcomGet(3, RCOM_SENSOR_BTN_TOUCH )[1];
   
   ConsolePrintf("Sensor Values:\n");
-  ConsolePrintf("  battery = %i.%03iV\n", bat.bat.raw/1000, bat.bat.raw%1000);
+  ConsolePrintf("  battery = %i.%03iV\n", RCOM_BAT_RAW_TO_MV(bat.bat.raw)/1000, RCOM_BAT_RAW_TO_MV(bat.bat.raw)%1000);
   ConsolePrintf("  cliff = fL:%i fR:%i bR:%i bL:%i\n", cliff.cliff.fL, cliff.cliff.fR, cliff.cliff.bR, cliff.cliff.bL);
   ConsolePrintf("  prox = %imm sigRate:%i spad:%i ambientRate:%i\n", prox.prox.rangeMM, prox.prox.signalRate, prox.prox.spadCnt, prox.prox.ambientRate);
   ConsolePrintf("  btn = %i touch=%i\n", btn.btn.btn, btn.btn.touch);
