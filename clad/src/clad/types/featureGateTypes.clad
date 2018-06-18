@@ -16,7 +16,8 @@ enum uint_8 FeatureType {
   LocalNotifications,
   Exploring,
   Messaging,
-  ReactToIllumination
+  ReactToIllumination,
+  KnowledgeGraph
 }
 
 structure FeatureToggle {

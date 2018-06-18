@@ -125,6 +125,24 @@
       "cloud_intent": "intent_explore_start",
       "app_intent": "explore_start",
       "feature_gate": "Exploring"
+    },
+    {
+      "user_intent": "knowledge_question",
+      "cloud_intent": "intent_knowledge_promptquestion",
+      "app_intent": "knowledge_question",
+      "feature_gate": "KnowledgeGraph"
+    },
+    {
+      "user_intent": "knowledge_response",
+      "cloud_intent": "intent_knowledge_response_extend",
+      "app_intent": "knowledge_response",
+      "feature_gate": "KnowledgeGraph"
+    },
+    {
+      "user_intent": "knowledge_unknown",
+      "cloud_intent": "intent_knowledge_no_response",
+      "app_intent": "knowledge_unknown",
+      "feature_gate": "KnowledgeGraph"
     }
   ],
 

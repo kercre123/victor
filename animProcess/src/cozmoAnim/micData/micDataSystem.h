@@ -19,6 +19,7 @@
 #include "coretech/common/shared/types.h"
 #include "util/global/globalDefinitions.h"
 
+#include "clad/cloud/mic.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 
 #include <cstdint>
@@ -67,7 +68,7 @@ public:
   void RecordProcessedAudio(uint32_t duration_ms, const std::string& path);
   void SetShouldStreamAfterWakeWord(bool shouldStream);
   void SetTriggerWordDetectionEnabled(bool enabled);
-  void StartWakeWordlessStreaming();
+  void StartWakeWordlessStreaming(CloudMic::StreamType type);
   void Update(BaseStationTime_t currTime_nanosec);
 
 #if ANKI_DEV_CHEATS

@@ -1,0 +1,13 @@
+{
+  "behaviorClass" : "KnowledgeGraphQuestion",
+  "behaviorID"    : "KnowledgeGraphQuestion",
+  
+  "associatedActiveFeature": "KnowledgeGraph",
+  
+  "respondToUserIntents" :
+  [
+    { "type": "knowledge_question" }
+  ],
+
+  "streamingTimeout" : 7.0
+}

@@ -39,6 +39,7 @@
 // + need to properly localize tts strings
 // + there are many common helper functions and things used between the messaging behavior, create a helpers class
 // + user metadata eg. VisionComponent::IsNameTaken(...) should be moved outside of the vision system
+// + record/playback can be interrupted by "petting him", picking him up, or wakeword?
 
 
 #define PRINT_DEBUG( format, ... ) \
@@ -310,4 +311,5 @@ void BehaviorLeaveAMessage::TransitionToMailboxFull()
 } // namespace Anki
 
 #undef PRINT_DEBUG
+#undef PRINT_INFO
 

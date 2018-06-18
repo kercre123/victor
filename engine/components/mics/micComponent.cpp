@@ -57,23 +57,24 @@ void MicComponent::InitDependent( Cozmo::Robot* robot, const RobotCompMap& depen
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MicComponent::StartWakeWordlessStreaming()
+void MicComponent::StartWakeWordlessStreaming( CloudMic::StreamType streamType )
 {
-  _robot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartWakeWordlessStreaming()));
+  RobotInterface::StartWakeWordlessStreaming message{ static_cast<uint8_t>(streamType) };
+  _robot->SendMessage( RobotInterface::EngineToRobot( std::move(message) ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MicComponent::SetShouldStreamAfterWakeWord(bool shouldStream)
+void MicComponent::SetShouldStreamAfterWakeWord( bool shouldStream )
 {
-  RobotInterface::SetShouldStreamAfterWakeWord msg{shouldStream};
-  _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
+  RobotInterface::SetShouldStreamAfterWakeWord message{shouldStream};
+  _robot->SendMessage(RobotInterface::EngineToRobot( std::move(message)) );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MicComponent::SetTriggerWordDetectionEnabled(bool enabled)
+void MicComponent::SetTriggerWordDetectionEnabled( bool enabled )
 {
-  RobotInterface::SetTriggerWordDetectionEnabled msg{enabled};
-  _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
+  RobotInterface::SetTriggerWordDetectionEnabled message{ enabled };
+  _robot->SendMessage( RobotInterface::EngineToRobot( std::move(message) ) );
 }
 
 } // namespace Cozmo

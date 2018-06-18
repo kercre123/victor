@@ -17,6 +17,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/components/bodyLightComponentTypes.h"
+#include "clad/cloud/mic.h"
 #include "clad/types/animationTrigger.h"
 
 namespace Anki {
@@ -85,6 +86,8 @@ private:
 
   struct InstanceConfig {
     InstanceConfig();
+
+    CloudMic::StreamType streamType;
 
     // earcon is an audible cue to tell the user victor is listening
     AudioMetaData::GameEvent::GenericEvent earConBegin;

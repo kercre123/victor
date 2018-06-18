@@ -302,6 +302,10 @@ enum uint_8 BehaviorID {
   // victorBehaviorTree/weather
   WeatherResponses,
   WeatherTextToSpeech,
+
+  // knowledge graph
+  KnowledgeGraphQuestion,
+  KnowledgeGraphTTS,
 }
 
 }

@@ -84,6 +84,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPounceWithProx.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPuzzleMaze.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorTrackLaser.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/knowledgeGraph/behaviorAskAQuestion.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorEnrollFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorRespondToRenameFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/messaging/behaviorLeaveAMessage.h"
@@ -880,6 +881,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::DisplayWeather:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDisplayWeather(config));
+      break;
+    }
+
+    case BehaviorClass::KnowledgeGraphQuestion:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorAskAQuestion(config));
       break;
     }
     

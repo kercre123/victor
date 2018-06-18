@@ -33,6 +33,7 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 
+#include "clad/cloud/mic.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobotTag.h"
@@ -357,7 +358,7 @@ void Process_startWakeWordlessStreaming(const Anki::Cozmo::RobotInterface::Start
     return;
   }
 
-  micDataSystem->StartWakeWordlessStreaming();
+  micDataSystem->StartWakeWordlessStreaming(static_cast<CloudMic::StreamType>(msg.streamType));
 }
   
 void Process_setShouldStreamAfterWakeWord(const Anki::Cozmo::RobotInterface::SetShouldStreamAfterWakeWord& msg)

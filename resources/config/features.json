@@ -50,6 +50,10 @@
   {
     "feature": "Messaging",
     "enabled": false
+  },
+  {
+    "feature": "KnowledgeGraph",
+    "enabled": true
   }
 ]
 
