@@ -355,7 +355,7 @@ int cmd_process(char* s)
     {
       #define VIN_RAW_TO_MV(raw)     (((raw)*2800)>>11)  /*robot_sr_t::bat.raw (adc) to millivolts*/
       
-      static bool adc_init = 0;
+      /*static bool adc_init = 0;
       if( !adc_init ) {
         adc_init=1;
         writes_( snformat(b,bz,"init adc\n") ); 
@@ -371,14 +371,14 @@ int cmd_process(char* s)
         adcinit.ADC_ExternalTrigConv = ADC_ExternalTrigConv_T1_TRGO;
         adcinit.ADC_DataAlign = ADC_DataAlign_Right; //ADC_DataAlign_Left
         adcinit.ADC_ScanDirection = ADC_ScanDirection_Upward;
-        //ADC_Init(ADC1, &adcinit);
-      }
+        ADC_Init(ADC1, &adcinit);
+      }*/
       
-      //VIN_SENSE::init(MODE_ANALOG);
+      VIN_SENSE::init(MODE_ANALOG);
       Timer::wait(100);
       
       //XXX
-      writes_( snformat(b,bz,"---WARNING--- adc read disabled\n") );
+      writes_( snformat(b,bz,"WARNING: adc disabled. reporting dummy data for debug\n") );
       
       writes_( snformat(b,bz,"battery(%i) rawADC temp\n", NN) );
       for(int n=0; n<NN; n++)
@@ -391,10 +391,11 @@ int cmd_process(char* s)
         Timer::delayMs(5);
       }
       
-      writes_( snformat(b,bz,"disable adc\n") );
       VIN_SENSE::init(MODE_INPUT);
-      //ADC_DeInit(ADC1);
-      adc_init = 0;
+      
+      /*writes_( snformat(b,bz,"disable adc\n") );
+      ADC_DeInit(ADC1);
+      adc_init = 0;*/
       
       return respond_(cmd, STATUS_OK, 0);
     }
@@ -408,12 +409,12 @@ int cmd_process(char* s)
       #define VALUE(value) 1, (void*)value
       uint16_t cliffSense[4];
       
-      static bool i2c_init = 0;
+      /*static bool i2c_init = 0;
       if( !i2c_init ) {
         i2c_init=1;
         writes_( snformat(b,bz,"init i2c\n") );
-        //I2C::init();
-      }
+        I2C::init();
+      }*/
       
       //I2C::capture();
       {
@@ -436,7 +437,8 @@ int cmd_process(char* s)
           I2C::writeReg(i, DROP_SENSOR_ADDRESS, PS_CAN_1, 0);
         }*/
         
-        writes_( snformat(b,bz,"---WARNING--- cliff sensors disabled\n") );
+        //XXX
+        writes_( snformat(b,bz,"WARNING: cliff sensors disabled. reporting dummy data for debug\n") );
         
         writes_( snformat(b,bz,"cliff(%i) fL fR bL bR\n", NN) );
         for(int n=0; n<NN; n++) {
