@@ -73,8 +73,6 @@ set_property(TARGET cti_planning_robot PROPERTY CXX_STANDARD 11)
 target_link_libraries(cti_planning_robot
   PUBLIC
   cti_common_robot
-  PRIVATE
-  ${OPENCV_LIBS}
 )
 
 target_include_directories(cti_planning_robot
