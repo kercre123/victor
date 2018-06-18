@@ -1,1 +1,4 @@
-external_interface*
+*
+
+!.gitignore
+!__init__.py

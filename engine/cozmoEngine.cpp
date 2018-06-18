@@ -38,6 +38,7 @@
 #include "engine/utils/parsingConstants/parsingConstants.h"
 #include "engine/viz/vizManager.h"
 #include "engine/wallTime.h"
+#include "engine/cozmoAPI/comms/protoMessageHandler.h"
 #include "webServerProcess/src/webService.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -191,6 +192,7 @@ static int GetEngineStatsWebServerHandler(struct mg_connection *conn, void *cbda
 
 CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort* messagePipe)
   : _uiMsgHandler(new UiMessageHandler(1, messagePipe))
+  , _protoMsgHandler(new ProtoMessageHandler(messagePipe))
   , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get()))
   , _deviceDataManager(new DeviceDataManager(_uiMsgHandler.get()))
   ,_animationTransferHandler(new AnimationTransfer(_uiMsgHandler.get(),dataPlatform))
@@ -299,7 +301,14 @@ Result CozmoEngine::Init(const Json::Value& config) {
   Result lastResult = _uiMsgHandler->Init(_context.get(), _config);
   if (RESULT_OK != lastResult)
   {
-    PRINT_NAMED_ERROR("CozmoEngine.Init","Error initializing UIMessageHandler");
+    PRINT_NAMED_ERROR("CozmoEngine.Init","Error initializing UiMessageHandler");
+    return lastResult;
+  }
+
+  lastResult = _protoMsgHandler->Init(_context.get(), _config);
+  if (RESULT_OK != lastResult)
+  {
+    PRINT_NAMED_ERROR("CozmoEngine.Init","Error initializing ProtoMessageHandler");
     return lastResult;
   }
 
@@ -444,6 +453,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
 #endif // ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
 
   _uiMsgHandler->ResetMessageCounts();
+  _protoMsgHandler->ResetMessageCounts();
   _context->GetRobotManager()->GetMsgHandler()->ResetMessageCounts();
   _context->GetVizManager()->ResetMessageCount();
 
@@ -468,6 +478,13 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
   if (RESULT_OK != lastResult)
   {
     PRINT_NAMED_ERROR("CozmoEngine.Update", "Error updating UIMessageHandler");
+    return lastResult;
+  }
+
+  lastResult = _protoMsgHandler->Update();
+  if (RESULT_OK != lastResult)
+  {
+    PRINT_NAMED_ERROR("CozmoEngine.Update", "Error updating ProtoMessageHandler");
     return lastResult;
   }
 

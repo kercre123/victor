@@ -20,24 +20,25 @@ namespace Victor {
   // RobotID will be appended to generate unique paths for each robot.
   //
   #ifdef SIMULATOR
-  constexpr char LOCAL_SOCKET_PATH[]  = "/tmp/";
-  constexpr char ANIM_ROBOT_SERVER_PATH[]    = "/tmp/_anim_robot_server_";
-  constexpr char ANIM_ROBOT_CLIENT_PATH[]    = "/tmp/_anim_robot_client_";
-  constexpr char ENGINE_ANIM_SERVER_PATH[]   = "/tmp/_engine_anim_server_";
-  constexpr char ENGINE_ANIM_CLIENT_PATH[]   = "/tmp/_engine_anim_client_";
-  constexpr char ENGINE_SWITCH_SERVER_PATH[] = "/tmp/_engine_switch_server_";
-  constexpr char ENGINE_SWITCH_CLIENT_PATH[] = "/tmp/_engine_switch_client_";
-  constexpr char ENGINE_GATEWAY_SERVER_PATH[] = "/tmp/_engine_gateway_server_";
-  constexpr char ENGINE_GATEWAY_CLIENT_PATH[] = "/tmp/_engine_gateway_client_";
+  constexpr char LOCAL_SOCKET_PATH[]                = "/tmp/";
+  constexpr char ANIM_ROBOT_SERVER_PATH[]           = "/tmp/_anim_robot_server_";
+  constexpr char ANIM_ROBOT_CLIENT_PATH[]           = "/tmp/_anim_robot_client_";
+  constexpr char ENGINE_ANIM_SERVER_PATH[]          = "/tmp/_engine_anim_server_";
+  constexpr char ENGINE_ANIM_CLIENT_PATH[]          = "/tmp/_engine_anim_client_";
+  constexpr char ENGINE_SWITCH_SERVER_PATH[]        = "/tmp/_engine_switch_server_";
+  constexpr char ENGINE_SWITCH_CLIENT_PATH[]        = "/tmp/_engine_switch_client_";
+  constexpr char ENGINE_GATEWAY_SERVER_PATH[]       = "/tmp/_engine_gateway_server_"; // client defined in golang
+  constexpr char ENGINE_GATEWAY_PROTO_SERVER_PATH[] = "/tmp/_engine_gateway_proto_server_"; // client defined in golang
   #else
-  constexpr char LOCAL_SOCKET_PATH[]  = "/dev/";
-  constexpr char ANIM_ROBOT_SERVER_PATH[]  = "/dev/socket/_anim_robot_server_";
-  constexpr char ANIM_ROBOT_CLIENT_PATH[]  = "/dev/socket/_anim_robot_client_";
-  constexpr char ENGINE_ANIM_SERVER_PATH[] = "/dev/socket/_engine_anim_server_";
-  constexpr char ENGINE_ANIM_CLIENT_PATH[] = "/dev/socket/_engine_anim_client_";
-  constexpr char ENGINE_SWITCH_SERVER_PATH[] = "/dev/socket/_engine_switch_server_";
-  constexpr char ENGINE_SWITCH_CLIENT_PATH[] = "/dev/socket/_engine_switch_client_";
-  constexpr char ENGINE_GATEWAY_SERVER_PATH[] = "/dev/socket/_engine_gateway_server_"; // client defined in golang
+  constexpr char LOCAL_SOCKET_PATH[]                = "/dev/";
+  constexpr char ANIM_ROBOT_SERVER_PATH[]           = "/dev/socket/_anim_robot_server_";
+  constexpr char ANIM_ROBOT_CLIENT_PATH[]           = "/dev/socket/_anim_robot_client_";
+  constexpr char ENGINE_ANIM_SERVER_PATH[]          = "/dev/socket/_engine_anim_server_";
+  constexpr char ENGINE_ANIM_CLIENT_PATH[]          = "/dev/socket/_engine_anim_client_";
+  constexpr char ENGINE_SWITCH_SERVER_PATH[]        = "/dev/socket/_engine_switch_server_";
+  constexpr char ENGINE_SWITCH_CLIENT_PATH[]        = "/dev/socket/_engine_switch_client_";
+  constexpr char ENGINE_GATEWAY_SERVER_PATH[]       = "/dev/socket/_engine_gateway_server_"; // client defined in golang
+  constexpr char ENGINE_GATEWAY_PROTO_SERVER_PATH[] = "/dev/socket/_engine_gateway_proto_server_"; // client defined in golang
   #endif
 
 } // Victor

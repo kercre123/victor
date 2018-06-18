@@ -60,8 +60,10 @@ namespace Cozmo {
 // Forward declarations
 class Robot;
 class IExternalInterface;
+class IGatewayInterface;
 class CozmoContext;
 class UiMessageHandler;
+class ProtoMessageHandler;
 class GameMessagePort;
 class AnimationTransfer;
 class DeviceDataManager;
@@ -101,6 +103,7 @@ public:
                                      const float sleepDurationActual_ms) const;
 
   UiMessageHandler* GetUiMsgHandler() const { return _uiMsgHandler.get(); }
+  ProtoMessageHandler* GetProtoMsgHandler() const { return _protoMsgHandler.get(); }
 
   EngineState GetEngineState() { return _engineState; }
 
@@ -118,6 +121,7 @@ protected:
   bool                                                      _isInitialized = false;
   Json::Value                                               _config;
   std::unique_ptr<UiMessageHandler>                         _uiMsgHandler;
+  std::unique_ptr<ProtoMessageHandler>                      _protoMsgHandler;
   std::unique_ptr<CozmoContext>                             _context;
   std::unique_ptr<DeviceDataManager>                        _deviceDataManager;
   Anki::Cozmo::DebugConsoleManager                          _debugConsoleManager;

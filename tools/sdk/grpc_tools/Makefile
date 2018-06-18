@@ -11,14 +11,15 @@ all: python
 python: .PHONY
 	python3 -m pip install grpcio grpcio-tools aiogrpc googleapis-common-protos
 	mkdir -p $(PYTHON_OUT)
-	cp $(GIT_ROOT)/cloud/gateway/external_interface.proto $(PYTHON_OUT)
+	cp $(GIT_ROOT)/cloud/gateway/*.proto $(PYTHON_OUT)
+	sed -i -e 's/"messages.proto"/"vector\/messaging\/messages.proto"/g' $(PYTHON_OUT)/external_interface.proto
 
 	# mkdir -p $(PYTHON_OUT)
 	python3 -m grpc_tools.protoc \
 	-I $(PYTHON_SDK_ROOT) \
 	-I $(GIT_ROOT)/cloud/go/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
 	--python_out=$(PYTHON_SDK_ROOT) --grpc_python_out=$(PYTHON_SDK_ROOT) \
-	$(PYTHON_OUT)/external_interface.proto
+	$(PYTHON_OUT)/*.proto
 
 flat: .PHONY
 	flatc \
@@ -26,7 +27,7 @@ flat: .PHONY
 	-I $(PYTHON_SDK_ROOT) \
 	-I $(GIT_ROOT)/cloud/go/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
 	--proto \
-	$(PYTHON_OUT)/external_interface.proto
+	$(PYTHON_OUT)/*.proto
 
 .require_ip: .PHONY
 ifeq ("$(ANKI_ROBOT_HOST)","")
@@ -52,6 +53,20 @@ test_curl_events: .require_ip
 
 test_robot_state_stream: .require_ip
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/robot_state_stream -d '{}'
+	@echo
+
+test_settings_fake: .require_ip
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/settings -d '{}'
+	@echo
+
+test_ping_pong: .require_ip
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/pang -d '{"ping":10}'
+	@echo
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/bang -d '{"bing":"SomeThing"}'
+	@echo
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/pang -d '{"ping":20}'
+	@echo
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/bang -d '{"bing":"zome_Thing"}'
 	@echo
 
 test_curl: .require_ip

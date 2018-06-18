@@ -1,0 +1,320 @@
+// External interface for robot <-> app and robot <-> sdk communication
+
+syntax = "proto3";
+
+package external_interface;
+
+option optimize_for = LITE_RUNTIME;
+
+message ResultStatus {
+  string description = 1;
+}
+
+message Animation {
+  string name = 1;
+}
+
+message DriveWheelsRequest {
+  float left_wheel_mmps   = 1;
+  float right_wheel_mmps  = 2;
+  float left_wheel_mmps2  = 3;
+  float right_wheel_mmps2 = 4;
+}
+
+message DriveWheelsResult {
+  ResultStatus status = 1;
+}
+
+message MoveHeadRequest {
+  float speed_rad_per_sec = 1;
+}
+
+message MoveHeadResult {
+  ResultStatus status = 1;
+}
+
+message MoveLiftRequest {
+  float speed_rad_per_sec = 1;
+}
+
+message MoveLiftResult {
+  ResultStatus status = 1;
+}
+
+message DriveArcRequest {
+  float speed = 1;
+  float accel = 2;
+  int32 curvatureRadius_mm = 3;
+}
+
+message DriveArcResult {
+  ResultStatus status = 1;
+}
+
+message PlayAnimationRequest {
+  Animation animation = 1;
+  uint32 loops = 2;
+}
+
+message PlayAnimationResult {
+  ResultStatus status = 1;
+}
+
+message ListAnimationsRequest {}
+
+message ListAnimationsResult {
+  ResultStatus status = 1;
+  repeated Animation animation_names = 2;
+}
+
+message FeatureStatus {
+  string feature_name = 1;
+  string source      = 2; // Voice, App, AI, Unknown
+}
+
+message DisplayFaceImageRGBRequest {
+  bytes face_data = 1;
+  uint32 duration_ms = 2;
+  bool interrupt_running = 3;
+}
+
+message DisplayFaceImageRGBResult {
+  ResultStatus status = 1;
+}
+
+message MeetVictorFaceScanStarted
+{
+}
+
+message MeetVictorFaceScanComplete
+{
+}
+
+message Status {
+  oneof status_type {
+     FeatureStatus                   featureStatus                    = 1;
+     MeetVictorFaceScanStarted       meet_victor_face_scan_started    = 2;
+     MeetVictorFaceScanComplete      meet_victor_face_scan_complete   = 3;
+  }
+}
+
+message TimeStampedStatus {
+  Status status = 1;
+  uint32 timestamp_ms = 2;
+}
+
+message RobotHistoryRequest {
+}
+
+message RobotHistoryResult {
+  repeated TimeStampedStatus messages = 1;
+}
+
+message PoseStruct {
+    // Translation
+    float x = 1;
+    float y = 2;
+    float z = 3;
+    
+    // Rotation quaternion
+    float q0 = 4;
+    float q1 = 5;
+    float q2 = 6;
+    float q3 = 7;
+
+    uint32 origin_id = 8; // Which coordinate frame this pose is in (0 for none or unknown)
+}
+
+message AccelData {
+  float x = 1;  // mm/s^2
+  float y = 2;
+  float z = 3;
+}
+
+message GyroData {
+  float x = 1;  // rad/s
+  float y = 2;
+  float z = 3;
+}
+
+message RobotState {
+    PoseStruct pose = 1;
+    float pose_angle_rad = 2;
+    float pose_pitch_rad = 3;
+    float left_wheel_speed_mmps = 4;
+    float right_wheel_speed_mmps = 5;
+    float head_angle_rad = 6;
+    float lift_height_mm = 7;
+    float battery_voltage = 8;
+    AccelData accel = 9;
+    GyroData gyro = 10;
+    int32 carrying_object_id = 11;
+    int32 carrying_object_on_top_id = 12;
+    int32 head_tracking_object_id = 13;
+    int32 localized_to_object_id = 14;
+    uint32 last_image_time_stamp = 15;
+    uint32 status = 16;
+    uint32 game_status = 17;
+}
+
+message Event {
+  oneof event_type {
+    Status                           status                              = 1;
+    // BatteryEvents, etc.
+  }
+}
+
+message EventRequest {}
+
+message EventResult {
+  ResultStatus status = 1;
+  Event event = 2;
+}
+
+// TODO: Remove this request/response once RobotState is made an event
+message RobotStateRequest {}
+
+message RobotStateResult {
+  ResultStatus status = 1;
+  RobotState robot_state = 2;
+}
+
+message SDKActivationRequest {
+  uint32 slot = 1; // TODO Use BehaviorSlot
+  bool enable = 2;
+}
+
+message SDKActivationResult {
+  ResultStatus status = 1;
+  uint32 slot = 2; // TODO Use BehaviorSlot
+  bool enabled = 3;
+}
+
+// Meet Victor
+message AppIntentRequest {
+  string intent = 1;
+  string param = 2;
+}
+
+enum FaceEnrollmentResult
+{
+    SUCCESS = 0;
+
+    // Failures:
+    SAW_WRONG_FACE = 1;
+    SAW_MULTIPLE_FACES = 2;
+    TIMED_OUT = 3;
+    SAVE_FAILED = 4;
+    INCOMPLETE = 5;
+    CANCELLED = 6;
+    NAME_IN_USE = 7;
+    UNKNOWN_FAILURE = 8;
+}
+
+message AppIntentResult {
+  ResultStatus status = 1;
+}
+
+message FaceEnrollmentCompleted {
+  FaceEnrollmentResult result = 1;
+  int32               face_id = 2;
+  string               name = 3;
+}
+
+message CancelFaceEnrollmentRequest {
+}
+
+message CancelFaceEnrollmentResult {
+  ResultStatus status = 1;
+}
+
+message RequestEnrolledNamesRequest {
+}
+
+message LoadedKnownFace {
+    int64   seconds_since_first_enrolled = 1;
+    int64   seconds_since_last_updated = 2;
+    int64   seconds_since_last_seen = 3;
+    int32   face_id = 4;
+    string  name = 5;
+}
+
+message RobotRenamedEnrolledFace {
+    int32   face_id = 1;
+    string   name = 2;
+}
+
+message RequestEnrolledNamesResult {
+  ResultStatus status = 1;
+  repeated LoadedKnownFace faces = 2;
+}
+
+message UpdateEnrolledFaceByIDRequest {
+  int32 face_id = 1;
+  string old_name = 2;
+  string new_name = 3;
+}
+
+message UpdateEnrolledFaceByIDResult {
+  ResultStatus status = 1;
+}
+
+message EraseEnrolledFaceByIDRequest {
+  int32 face_id = 1;
+}
+
+message EraseEnrolledFaceByIDResult {
+  ResultStatus status = 1;
+}
+
+message EraseAllEnrolledFacesRequest {
+}
+
+message EraseAllEnrolledFacesResult {
+  ResultStatus status = 1;
+}
+
+message SetFaceToEnrollRequest {
+    string  name = 1;
+
+    int32   observed_id = 2;  // The ID of a specific observed face to enroll (0 for next one we see)
+    int32   save_id = 3;      // The ID of an existing face to merge final enrollment into (0 for none,
+                          // i.e. use observedID)
+
+    bool    save_to_robot = 4;   // Save to robot's NVStorage when done (NOTE: will (re)save everyone enrolled!)
+    bool    say_name = 5;       // Play say-name/celebration animations on success before completing
+    bool    use_music = 6;       // Starts special music during say-name animations (will leave music playing!)
+  
+}
+message SetFaceToEnrollResult {
+  ResultStatus status = 1;
+}
+
+// TODO: Remove this example code once more code is converted to protobuf
+message Ping {
+  uint64 ping = 1;
+}
+
+// TODO: Remove this example code once more code is converted to protobuf
+message Pong {
+  uint64 pong = 1;
+}
+
+// TODO: Remove this example code once more code is converted to protobuf
+message Bing {
+  string bing = 1;
+}
+
+// TODO: Remove this example code once more code is converted to protobuf
+message Bong {
+  string bong = 1;
+}
+
+message GatewayWrapper {
+  oneof oneof_message_type {
+    Ping ping = 1;
+    Pong pong = 2;
+    Bing bing = 3;
+    Bong bong = 4;
+  }
+}

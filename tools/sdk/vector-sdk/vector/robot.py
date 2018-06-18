@@ -15,8 +15,8 @@ from . import util
 from . import actions
 from . import lights
 from . import events
-from .messaging import external_interface_pb2 as protocol
-from .messaging import external_interface_pb2_grpc as client
+from .messaging import protocol
+from .messaging import client
 
 module_logger = logging.getLogger(__name__)
 

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import asyncio
 from pathlib import Path
 import argparse
@@ -14,16 +15,8 @@ def main():
     cert = Path(args.cert_file)
     cert.resolve()
 
-    print("------ begin testing actions ------")
-
-    def test_subscriber(event_type, event):
-        print(f"Subscriber called for: {event_type} = {event}")
-
-    # Use the same loop to avoid closing it too early
-    loop = asyncio.get_event_loop()
-
     print("------ Fetch robot state from robot's properties ------")
-    with vector.Robot(args.ip, str(cert), loop=loop) as robot:
+    with vector.Robot(args.ip, str(cert)) as robot:
         '''
         Add some operation before testing properties to permit enough time
         for the stream to be setup

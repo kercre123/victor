@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"encoding/binary"
 	"math"
+	"reflect"
 
 	"anki/ipc"
 	"anki/log"
 	gw_clad "clad/gateway"
 	extint "proto/external_interface"
 
+	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -30,6 +32,25 @@ func WriteToEngine(conn ipc.Conn, msg *gw_clad.MessageExternalToRobot) (int, err
 		return -1, status.Errorf(codes.Internal, err.Error())
 	}
 	return engineSock.Write(buf.Bytes())
+}
+
+func WriteProtoToEngine(conn ipc.Conn, msg proto.Message) (int, error) {
+	var err error
+	var buf bytes.Buffer
+	if msg == nil {
+		return -1, status.Errorf(codes.InvalidArgument, "Unable to parse request")
+	}
+	if err = binary.Write(&buf, binary.LittleEndian, uint16(proto.Size(msg))); err != nil {
+		return -1, status.Errorf(codes.Internal, err.Error())
+	}
+	data, err := proto.Marshal(msg)
+	if err != nil {
+		return -1, status.Errorf(codes.Internal, err.Error())
+	}
+	if err = binary.Write(&buf, binary.LittleEndian, data); err != nil {
+		return -1, status.Errorf(codes.Internal, err.Error())
+	}
+	return protoEngineSock.Write(buf.Bytes())
 }
 
 func ClearMapSetting(tag gw_clad.MessageRobotToExternalTag) {
@@ -303,7 +324,7 @@ func (m *rpcService) DriveWheels(ctx context.Context, in *extint.DriveWheelsRequ
 
 func (m *rpcService) PlayAnimation(ctx context.Context, in *extint.PlayAnimationRequest) (*extint.PlayAnimationResult, error) {
 	log.Println("Received rpc request PlayAnimation(", in, ")")
-	animation_result := make(chan RobotToExternalResult)
+	animation_result := make(chan RobotToExternalCladResult)
 	engineChanMap[gw_clad.MessageRobotToExternalTag_RobotCompletedAction] = animation_result
 	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_RobotCompletedAction)
 	_, err := WriteToEngine(engineSock, ProtoPlayAnimationToClad(in))
@@ -415,7 +436,7 @@ func (m *rpcService) DisplayFaceImageRGB(ctx context.Context, in *extint.Display
 func (c *rpcService) RobotStateStream(in *extint.RobotStateRequest, stream extint.ExternalInterface_RobotStateStreamServer) error {
 	log.Println("Received rpc request RobotStateStream(", in, ")")
 
-	stream_channel := make(chan RobotToExternalResult, 16)
+	stream_channel := make(chan RobotToExternalCladResult, 16)
 	engineChanMap[gw_clad.MessageRobotToExternalTag_RobotState] = stream_channel
 	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_RobotState)
 	log.Println(engineChanMap[gw_clad.MessageRobotToExternalTag_RobotState])
@@ -434,7 +455,7 @@ func (c *rpcService) RobotStateStream(in *extint.RobotStateRequest, stream extin
 	}
 	return nil
 }
-	
+
 func (m *rpcService) AppIntent(ctx context.Context, in *extint.AppIntentRequest) (*extint.AppIntentResult, error) {
 	log.Println("Received rpc request AppIntent(", in, ")")
 	_, err := WriteToEngine(engineSock, ProtoAppIntentToClad(in))
@@ -463,7 +484,7 @@ func (m *rpcService) CancelFaceEnrollment(ctx context.Context, in *extint.Cancel
 
 func (m *rpcService) RequestEnrolledNames(ctx context.Context, in *extint.RequestEnrolledNamesRequest) (*extint.RequestEnrolledNamesResult, error) {
 	log.Println("Received rpc request RequestEnrolledNames(", in, ")")
-	enrolledNamesResponse := make(chan RobotToExternalResult)
+	enrolledNamesResponse := make(chan RobotToExternalCladResult)
 	engineChanMap[gw_clad.MessageRobotToExternalTag_EnrolledNamesResponse] = enrolledNamesResponse
 	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_EnrolledNamesResponse)
 	_, err := WriteToEngine(engineSock, ProtoRequestEnrolledNamesToClad(in))
@@ -549,7 +570,7 @@ func (m *rpcService) SetFaceToEnroll(ctx context.Context, in *extint.SetFaceToEn
 func (c *rpcService) EventStream(in *extint.EventRequest, stream extint.ExternalInterface_EventStreamServer) error {
 	log.Println("Received rpc request EventStream(", in, ")")
 
-	events_channel := make(chan RobotToExternalResult, 16)
+	events_channel := make(chan RobotToExternalCladResult, 16)
 	engineChanMap[gw_clad.MessageRobotToExternalTag_Event] = events_channel
 	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_Event)
 	log.Println(engineChanMap[gw_clad.MessageRobotToExternalTag_Event])
@@ -571,7 +592,7 @@ func (c *rpcService) EventStream(in *extint.EventRequest, stream extint.External
 
 func (m *rpcService) SDKBehaviorActivation(ctx context.Context, in *extint.SDKActivationRequest) (*extint.SDKActivationResult, error) {
 	log.Println("Received rpc request SDKBehaviorActivation(", in, ")")
-	if (in.Enable) {
+	if in.Enable {
 		// Request control from behavior system
 		return SDKBehaviorRequestActivation(in)
 	}
@@ -583,7 +604,7 @@ func (m *rpcService) SDKBehaviorActivation(ctx context.Context, in *extint.SDKAc
 func SDKBehaviorRequestActivation(in *extint.SDKActivationRequest) (*extint.SDKActivationResult, error) {
 	// We are enabling the SDK behavior. Wait for the engine-to-game reply
 	// that the SDK behavior was activated.
-	sdk_activation_result := make(chan RobotToExternalResult)
+	sdk_activation_result := make(chan RobotToExternalCladResult)
 	engineChanMap[gw_clad.MessageRobotToExternalTag_SDKActivationResult] = sdk_activation_result
 	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_SDKActivationResult)
 
@@ -591,12 +612,12 @@ func SDKBehaviorRequestActivation(in *extint.SDKActivationRequest) (*extint.SDKA
 	if err != nil {
 		return nil, err
 	}
-	result:= <-sdk_activation_result
+	result := <-sdk_activation_result
 	return &extint.SDKActivationResult{
 		Status: &extint.ResultStatus{
 			Description: "SDKActivationResult returned",
 		},
-		Slot: result.Message.GetSDKActivationResult().Slot,
+		Slot:    result.Message.GetSDKActivationResult().Slot,
 		Enabled: result.Message.GetSDKActivationResult().Enabled,
 	}, nil
 }
@@ -617,6 +638,46 @@ func SDKBehaviorRequestDeactivation(in *extint.SDKActivationRequest) (*extint.SD
 			Description: "SDKActivationResult returned",
 		},
 	}, nil
+}
+
+// Example sending an int to and receiving an int from the engine
+// TODO: Remove this example code once more code is converted to protobuf
+func (m *rpcService) Pang(ctx context.Context, in *extint.Ping) (*extint.Pong, error) {
+	log.Println("Received rpc request Ping(", in, ")")
+	result := make(chan extint.GatewayWrapper)
+	reflectedType := reflect.TypeOf(&extint.GatewayWrapper_Pong{})
+	engineProtoChanMap[reflectedType] = result
+	defer delete(engineProtoChanMap, reflectedType)
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_Ping{
+			in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	pong := <-result
+	return pong.GetPong(), nil
+}
+
+// Example sending a string to and receiving a string from the engine
+// TODO: Remove this example code once more code is converted to protobuf
+func (m *rpcService) Bang(ctx context.Context, in *extint.Bing) (*extint.Bong, error) {
+	log.Println("Received rpc request Bing(", in, ")")
+	result := make(chan extint.GatewayWrapper)
+	reflectedType := reflect.TypeOf(&extint.GatewayWrapper_Bong{})
+	engineProtoChanMap[reflectedType] = result
+	defer delete(engineProtoChanMap, reflectedType)
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_Bing{
+			in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	bong := <-result
+	return bong.GetBong(), nil
 }
 
 func newServer() *rpcService {
