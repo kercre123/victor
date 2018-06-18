@@ -205,7 +205,7 @@
       <Focus>0</Focus>
       <ColumnNumber>2</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>223</TopLine>
+      <TopLine>224</TopLine>
       <CurrentLine>233</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\app\app.cpp</PathWithFileName>
@@ -253,7 +253,7 @@
       <Focus>0</Focus>
       <ColumnNumber>8</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>434</TopLine>
+      <TopLine>435</TopLine>
       <CurrentLine>436</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\app\fixture.cpp</PathWithFileName>
@@ -283,10 +283,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>1</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>880</TopLine>
-      <CurrentLine>896</CurrentLine>
+      <TopLine>119</TopLine>
+      <CurrentLine>142</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\app\robotcom.cpp</PathWithFileName>
       <FilenameWithoutPath>robotcom.cpp</FilenameWithoutPath>
@@ -307,10 +307,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>2</ColumnNumber>
+      <ColumnNumber>78</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>223</TopLine>
-      <CurrentLine>239</CurrentLine>
+      <TopLine>208</TopLine>
+      <CurrentLine>233</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\tests\TestBody.cpp</PathWithFileName>
       <FilenameWithoutPath>TestBody.cpp</FilenameWithoutPath>
@@ -339,10 +339,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>29</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>102</TopLine>
-      <CurrentLine>115</CurrentLine>
+      <TopLine>88</TopLine>
+      <CurrentLine>107</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\tests\TestHead.cpp</PathWithFileName>
       <FilenameWithoutPath>TestHead.cpp</FilenameWithoutPath>
@@ -387,10 +387,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>4</ColumnNumber>
+      <ColumnNumber>2</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>763</TopLine>
-      <CurrentLine>779</CurrentLine>
+      <TopLine>423</TopLine>
+      <CurrentLine>438</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\tests\TestRobot.cpp</PathWithFileName>
       <FilenameWithoutPath>TestRobot.cpp</FilenameWithoutPath>
