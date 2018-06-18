@@ -569,7 +569,7 @@ void print_range_dat(robot_range_dat_t* dat, const char* sensorname) {
 }
 
 //measure speed and range of motion
-static robot_range_dat_t* robot_range_test_(uint8_t sensor, int8_t power)
+static robot_range_dat_t* robot_range_test_(uint8_t sensor, uint8_t NNtest, int8_t power)
 {
   power = ABS(power);
   if( sensor != RCOM_SENSOR_MOT_LIFT && sensor != RCOM_SENSOR_MOT_HEAD ) {
@@ -592,9 +592,7 @@ static robot_range_dat_t* robot_range_test_(uint8_t sensor, int8_t power)
   
   ConsolePrintf("%s range test. power %i\n", lift?"LIFT":"HEAD", (lift ? liftPwr : headPwr));
   
-  //calibrated test params for lift vs head
-  uint8_t NNstart = lift ? 35 : 65;
-  uint8_t NNtest  = lift ? (power >= 75 ? 55 : 85) : (power >= 90 ? 70 : 125);
+  const uint8_t NNstart = lift ? 35 : 65;
   const uint8_t NNsettle = 50;
   
   //force to known starting position
@@ -641,11 +639,11 @@ static robot_range_dat_t* robot_range_test_(uint8_t sensor, int8_t power)
 }
 
 #define RANGE_TEST_DATA_GATHERING 0
-typedef struct { int8_t power; int travel_min; int travel_max; int speed_min; } robot_range_t;
+typedef struct { uint8_t NN; int8_t power; int travel_min; int travel_max; int speed_min; } robot_range_t;
 void TestRobotRange(robot_range_t *testlift, robot_range_t *testhead)
 {
-  robot_range_dat_t lift = *robot_range_test_(RCOM_SENSOR_MOT_LIFT, testlift->power);
-  robot_range_dat_t head = *robot_range_test_(RCOM_SENSOR_MOT_HEAD, testhead->power);
+  robot_range_dat_t lift = *robot_range_test_(RCOM_SENSOR_MOT_LIFT, testlift->NN, testlift->power);
+  robot_range_dat_t head = *robot_range_test_(RCOM_SENSOR_MOT_HEAD, testhead->NN, testhead->power);
   print_range_dat(&lift, "LIFT");
   print_range_dat(&head, "HEAD");
 
@@ -693,12 +691,13 @@ void TestRobotRange(void)
   for(int pwr=100; pwr >= 45; pwr -= 5) {
     if( pwr >= 100 || (pwr < 71 && pwr > 39) ) { //DEBUG limited range of values
       ConsolePrintf("RANGE TEST pwr = %i\n", pwr);
-      robot_range_t lift = { /*power*/ pwr, /*travel_min*/ 0, /*travel_max*/ 99999, /*speed_min*/ 0 };
-      robot_range_t head = { /*power*/ pwr, /*travel_min*/ 0, /*travel_max*/ 99999, /*speed_min*/ 0 };
+      uint8_t NNlift = pwr<75 ? 85 : 55;
+      uint8_t NNhead = pwr<90 ? 125 : 70;
+      robot_range_t lift = { NNlift, /*power*/ pwr, /*travel_min*/ 0, /*travel_max*/ 99999, /*speed_min*/ 0 };
+      robot_range_t head = { NNhead, /*power*/ pwr, /*travel_min*/ 0, /*travel_max*/ 99999, /*speed_min*/ 0 };
       TestRobotRange( &lift, &head );
     }
   }
-  
   #else
   
   //High Power
@@ -706,14 +705,14 @@ void TestRobotRange(void)
     //NO HEAD/ARMS ATTACHED = NO STOP!
     //lift travel ~450-500 in each direction
     //head travel ~800-850 in each direction
-    robot_range_t lift = { /*power*/  75, /*travel_min*/ 400, /*travel_max*/ 9999, /*speed_min*/ 1800 };
-    robot_range_t head = { /*power*/ 100, /*travel_min*/ 700, /*travel_max*/ 9999, /*speed_min*/ 2300 };
+    robot_range_t lift = { /*NN*/  55, /*power*/  75, /*travel_min*/ 400, /*travel_max*/ 9999, /*speed_min*/ 1800 };
+    robot_range_t head = { /*NN*/  70, /*power*/ 100, /*travel_min*/ 700, /*travel_max*/ 9999, /*speed_min*/ 2300 };
     TestRobotRange( &lift, &head );
   } else if( !IS_FIXMODE_PACKOUT() ) {
     //lift: travel 195-200, speed 760-1600
     //head: travel 550-560, speed 2130-2400
-    robot_range_t lift = { /*power*/  75, /*travel_min*/ 170, /*travel_max*/ 230, /*speed_min*/  650 };
-    robot_range_t head = { /*power*/ 100, /*travel_min*/ 520, /*travel_max*/ 590, /*speed_min*/ 1700 };
+    robot_range_t lift = { /*NN*/  55, /*power*/  75, /*travel_min*/ 170, /*travel_max*/ 230, /*speed_min*/  650 };
+    robot_range_t head = { /*NN*/  70, /*power*/ 100, /*travel_min*/ 520, /*travel_max*/ 590, /*speed_min*/ 1700 };
     TestRobotRange( &lift, &head );
   }
   
@@ -722,14 +721,14 @@ void TestRobotRange(void)
     //NO HEAD/ARMS ATTACHED = NO STOP!
     //lift travel ~550-600 in each direction
     //head travel ~650-??? in each direction
-    robot_range_t lift = { /*power*/  50, /*travel_min*/ 400, /*travel_max*/ 9999, /*speed_min*/ 800 };
-    robot_range_t head = { /*power*/  55, /*travel_min*/ 550, /*travel_max*/ 9999, /*speed_min*/ 700 };
+    robot_range_t lift = { /*NN*/  85, /*power*/  50, /*travel_min*/ 400, /*travel_max*/ 9999, /*speed_min*/ 800 };
+    robot_range_t head = { /*NN*/ 125, /*power*/  55, /*travel_min*/ 550, /*travel_max*/ 9999, /*speed_min*/ 700 };
     TestRobotRange( &lift, &head );
   } else {
     //lift: travel 190-200, speed 580-1520
     //head: travel 545-555, speed 900-1230
-    robot_range_t lift = { /*power*/  65, /*travel_min*/ 170, /*travel_max*/  230, /*speed_min*/ 400 };
-    robot_range_t head = { /*power*/  60, /*travel_min*/ 520, /*travel_max*/  590, /*speed_min*/ 700 };
+    robot_range_t lift = { /*NN*/  85, /*power*/  65, /*travel_min*/ 170, /*travel_max*/  230, /*speed_min*/ 400 };
+    robot_range_t head = { /*NN*/ 125, /*power*/  60, /*travel_min*/ 520, /*travel_max*/  590, /*speed_min*/ 700 };
     TestRobotRange( &lift, &head );
   }
   
