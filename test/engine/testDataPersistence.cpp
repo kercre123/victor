@@ -89,14 +89,8 @@ TEST(DataPersistenceComponent, SaveOnShutdown) {
     // check that the data is the same
     EXPECT_EQ(*testIntPtr1, initInt0);
     EXPECT_EQ(*testBoolPtr1, initBool0);
+
     dataPersistenceComp.SavePersistentVariables();
   }
 
-
-// TODO: List of tests to add
-/* 
- * Does version update (SHA and OS) result in emptied data?
- * Reset data by id functionality test
- * DPC direct test (initialize DC object and alter directly)
- */
 };
