@@ -300,6 +300,7 @@ void BehaviorOnboarding::BehaviorUpdate()
   
   if( _dVars.devConsoleStagePending ) {
     if( _dVars.devConsoleStage == OnboardingStages::Complete ) {
+      _dVars.currentStage = OnboardingStages::Complete;
       TerminateOnboarding();
     } else {
       if( static_cast<u8>(_dVars.devConsoleStage) < static_cast<u8>(_dVars.currentStage) ) {
