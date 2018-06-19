@@ -153,6 +153,11 @@ test_meet_victor: .require_ip
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/request_enrolled_names -d '{}'
 	@echo
 
+test_attention_transfer: .require_ip
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/get_latest_attention_transfer -d '{}'
+	@echo
+
+
 update_time: .require_ip
 	ssh root@$(ANKI_ROBOT_HOST) -t date --set='@$(shell date +%s)'
 

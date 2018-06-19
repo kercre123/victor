@@ -16,7 +16,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/activeBehaviorIterator.h"
 #include "engine/aiComponent/behaviorComponent/activeFeatureComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorsBootLoader.h"
+#include "engine/aiComponent/behaviorComponent/attentionTransferComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorAudioComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
@@ -26,6 +26,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorsBootLoader.h"
 #include "engine/aiComponent/behaviorComponent/devBehaviorComponentMessageHandler.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
@@ -180,6 +181,10 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
 
   if(!entity->HasComponent<ActiveBehaviorIterator>()) {
     entity->AddDependentComponent(BCComponentID::ActiveBehaviorIterator, new ActiveBehaviorIterator);
+  }
+
+  if(!entity->HasComponent<AttentionTransferComponent>()) {
+    entity->AddDependentComponent(BCComponentID::AttentionTransferComponent, new AttentionTransferComponent);
   }
   
   if(!entity->HasComponent<BehaviorsBootLoader>()) {
