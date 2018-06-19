@@ -23,6 +23,7 @@ if (VICOS)
     victorCrashReports
     osState
     DAS
+    cti_common
     util
   )
 

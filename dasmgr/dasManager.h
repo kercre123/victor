@@ -22,10 +22,18 @@
 typedef struct AndroidLogEntry_t AndroidLogEntry;
 
 namespace Anki {
+  namespace Victor {
+    class DASConfig;
+  }
+}
+
+namespace Anki {
 namespace Victor {
 
 class DASManager {
 public:
+  // Class constructor
+  DASManager(const DASConfig & dasConfig);
 
   // Run until error or shutdown flag becomes true
   // Returns 0 on successful termination, else error code
@@ -67,6 +75,11 @@ private:
   using DASEventQueuePtrQueue = std::deque<DASEventQueuePtr>;
   using LogLevel = Anki::Util::LogLevel;
   using TaskExecutor = Anki::Util::TaskExecutor;
+
+  // DASConfig parameters
+  std::string _url;
+  size_t _queue_threshold_size;
+  size_t _max_deferrals_size;
 
   // Global state
   std::string _robot_id;

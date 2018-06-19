@@ -7,9 +7,11 @@
 *
 */
 #include "dasManager.h"
+#include "dasConfig.h"
 
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "json/json.h"
 #include "platform/victorCrashReports/victorCrashReporter.h"
-
 #include "util/logging/logging.h"
 #include "util/logging/DAS.h"
 #include "util/logging/victorLogger.h"
@@ -17,11 +19,16 @@
 #include <signal.h>
 #include <stdlib.h>
 
+using DataPlatform = Anki::Util::Data::DataPlatform;
+using DASConfig = Anki::Victor::DASConfig;
+
 #define LOG_PROCNAME "vic-dasmgr"
 #define LOG_CHANNEL  LOG_PROCNAME
 
 namespace
 {
+  constexpr const char DEFAULT_PLATFORM_CONFIG[] = "/anki/etc/config/platform_config.json";
+
   bool gShutdown = false;
 }
 
@@ -29,6 +36,22 @@ void Shutdown(int signum)
 {
   LOG_DEBUG("main.Shutdown", "Shutdown on signal %d", signum);
   gShutdown = true;
+}
+
+static std::unique_ptr<DataPlatform> GetDataPlatform()
+{
+  std::string path = DEFAULT_PLATFORM_CONFIG;
+  const char * cp = getenv("VIC_DASMGR_PLATFORM_CONFIG");
+  if (cp != nullptr) {
+    path = cp;
+  }
+  return DataPlatform::GetDataPlatform(path);
+}
+
+static std::unique_ptr<DASConfig> GetDASConfig(const DataPlatform & dataPlatform)
+{
+  const std::string & path = dataPlatform.GetResourcePath("config/DASConfig.json");
+  return DASConfig::GetDASConfig(path);
 }
 
 int main(int argc, const char * argv[])
@@ -47,8 +70,24 @@ int main(int argc, const char * argv[])
   // Say hello
   LOG_DEBUG("main.hello", "Hello world");
 
+  auto dataPlatform = GetDataPlatform();
+  if (!dataPlatform) {
+    LOG_ERROR("main.InvalidDataPlatform", "Unable to get data platform");
+    Anki::Util::gLoggerProvider = nullptr;
+    Anki::Util::gEventProvider = nullptr;
+    exit(1);
+  }
+
+  auto dasConfig = GetDASConfig(*dataPlatform);
+  if (!dasConfig) {
+    LOG_ERROR("main.InvalidDASConfig", "Unable to get DAS configuration");
+    Anki::Util::gLoggerProvider = nullptr;
+    Anki::Util::gEventProvider = nullptr;
+    exit(1);
+  }
+
   // Process log records until shutdown or error
-  Anki::Victor::DASManager dasManager;
+  Anki::Victor::DASManager dasManager(*dasConfig);
 
   const int status = dasManager.Run(gShutdown);
 

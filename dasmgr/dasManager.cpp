@@ -8,10 +8,10 @@
 */
 
 #include "dasManager.h"
+#include "dasConfig.h"
+
 #include "DAS/DAS.h"
-
 #include "osState/osState.h"
-
 #include "util/logging/logging.h"
 #include "util/logging/DAS.h"
 #include "util/string/stringUtils.h"
@@ -35,14 +35,7 @@ using LogLevel = Anki::Util::LogLevel;
 
 namespace {
 
-  // Which DAS endpoint do we use?
-  constexpr const char * DAS_URL = "https://sqs.us-west-2.amazonaws.com/792379844846/DasInternal-dasinternalSqs-1HN6JX3NZPGNT";
 
-  // How many events do we buffer before send? Counted by events.
-  constexpr const size_t QUEUE_THRESHOLD_SIZE = 256;
-
-  // How many queues are we willing to hold for deferred send? Counted by queues, not events.
-  constexpr const size_t MAX_DEFERRALS_SIZE = 4;
 
   // How often do we process statistics? Counted by log records.
   constexpr const int PROCESS_STATS_INTERVAL = 1000;
@@ -138,6 +131,13 @@ static inline void serialize(std::ostringstream & ostr, const std::string & key,
 
 namespace Anki {
 namespace Victor {
+
+DASManager::DASManager(const DASConfig & dasConfig)
+{
+  _url = dasConfig.GetURL();
+  _queue_threshold_size = dasConfig.GetQueueThresholdSize();
+  _max_deferrals_size = dasConfig.GetMaxDeferralsSize();
+}
 
 void DASManager::Serialize(std::ostringstream & ostr, const DASEvent & event)
 {
@@ -235,14 +235,14 @@ bool DASManager::PostToServer(const DASEventQueue & eventQueue)
 {
   const size_t nEvents = eventQueue.size();
 
-  LOG_DEBUG("DASManager.PostToServer", "Upload %zu events to %s", nEvents, DAS_URL);
+  LOG_DEBUG("DASManager.PostToServer", "Upload %zu events to %s", nEvents, _url.c_str());
 
   std::ostringstream ostr;
   std::string response;
 
   Serialize(ostr, eventQueue);
 
-  const bool success = DAS::PostToServer(DAS_URL, ostr.str(), response);
+  const bool success = DAS::PostToServer(_url, ostr.str(), response);
   if (success) {
     LOG_DEBUG("DASManager.PostToServer.UploadSuccess", "Uploaded %zu events", nEvents);
     ++_workerSuccessCount;
@@ -293,9 +293,9 @@ void DASManager::PerformDeferredUploads()
 void DASManager::PerformDeferral(DASEventQueuePtr eventQueue)
 {
   // Preconditions
-  DEV_ASSERT(_workerDeferrals.size() <= MAX_DEFERRALS_SIZE, "DASManager.PerformDeferral.InvalidDeferralQueue");
+  DEV_ASSERT(_workerDeferrals.size() <= _max_deferrals_size, "DASManager.PerformDeferral.InvalidDeferralQueue");
 
-  if (_workerDeferrals.size() >= MAX_DEFERRALS_SIZE) {
+  if (_workerDeferrals.size() >= _max_deferrals_size) {
     LOG_ERROR("DASManager.PerformDeferral", "Dropping %zu deferred events", _workerDeferrals.front()->size());
     _workerDeferrals.pop_front();
     ++_workerDroppedCount;
@@ -350,7 +350,7 @@ void DASManager::ProcessEvent(DASEvent && event)
   ++_eventCount;
 
   // If we have reached threshold size, move active queue to worker thread and start a new queue
-  if (_eventQueue->size() >= QUEUE_THRESHOLD_SIZE) {
+  if (_eventQueue->size() >= _queue_threshold_size) {
     EnqueueForUpload(_eventQueue);
     _eventQueue = std::make_shared<DASEventQueue>();
   }
@@ -512,7 +512,11 @@ void DASManager::FlushUploadQueue()
 //
 Result DASManager::Run(const bool & shutdown)
 {
-  Result result = RESULT_OK;
+  // Validate configuration
+  if (_url.empty()) {
+    LOG_ERROR("DASManager.Run.InvalidURL", "Invalid URL");
+    return RESULT_FAIL_INVALID_PARAMETER;
+  }
 
   LOG_DEBUG("DASManager.Run", "Begin reading loop");
 
@@ -553,6 +557,8 @@ Result DASManager::Run(const bool & shutdown)
   //
   // Read log records until shutdown flag becomes true.
   //
+  Result result = RESULT_OK;
+
   while (!shutdown) {
     struct log_msg logmsg;
     int rc = android_logger_list_read(log, &logmsg);
