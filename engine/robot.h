@@ -117,6 +117,7 @@ class MapComponent;
 class MicComponent;
 class BatteryComponent;
 class BeatDetectorComponent;
+class HabitatDetectorComponent;
 class TextToSpeechCoordinator;
 class SDKComponent;
 
@@ -307,6 +308,9 @@ public:
 
   const BeatDetectorComponent&    GetBeatDetectorComponent()    const { return GetComponent<BeatDetectorComponent>(); }
   BeatDetectorComponent&          GetBeatDetectorComponent()          { return GetComponent<BeatDetectorComponent>(); }
+  
+  const HabitatDetectorComponent& GetHabitatDetectorComponent() const { return GetComponent<HabitatDetectorComponent>(); }
+  HabitatDetectorComponent&       GetHabitatDetectorComponent()       { return GetComponent<HabitatDetectorComponent>(); }
   
   const SDKComponent&    GetSDKComponent()    const { return GetComponent<SDKComponent>(); }
   SDKComponent&          GetSDKComponent()          { return GetComponent<SDKComponent>(); }

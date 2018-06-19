@@ -94,6 +94,7 @@ structure RobotState
   ProxSensorDataRaw proxData,
   uint_16 backpackTouchSensorRaw,
   uint_8  cliffDetectedFlags,
+  uint_8  whiteDetectedFlags,
   int_8   currPathSegment, // -1 if not traversing a path
 }
 

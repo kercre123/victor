@@ -60,6 +60,7 @@ class BatteryComponent;
 class FullRobotPose;
 class DataAccessorComponent;
 class BeatDetectorComponent;
+class HabitatDetectorComponent;
 class TextToSpeechCoordinator;
 class SDKComponent;
 class PhotographyManager;
@@ -91,6 +92,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(BodyLightComponent,            RobotComponentID, Bod
 LINK_COMPONENT_TYPE_TO_ENUM(CubeAccelComponent,            RobotComponentID, CubeAccel)
 LINK_COMPONENT_TYPE_TO_ENUM(CubeCommsComponent,            RobotComponentID, CubeComms)
 LINK_COMPONENT_TYPE_TO_ENUM(RobotGyroDriftDetector,        RobotComponentID, GyroDriftDetector)
+LINK_COMPONENT_TYPE_TO_ENUM(HabitatDetectorComponent,      RobotComponentID, HabitatDetector)
 LINK_COMPONENT_TYPE_TO_ENUM(DockingComponent,              RobotComponentID, Docking)
 LINK_COMPONENT_TYPE_TO_ENUM(CarryingComponent,             RobotComponentID, Carrying)
 LINK_COMPONENT_TYPE_TO_ENUM(CliffSensorComponent,          RobotComponentID, CliffSensor)
@@ -145,6 +147,7 @@ std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotCompone
     case Cozmo::RobotComponentID::EngineAudioClient:          { return "EngineAudioClient";}
     case Cozmo::RobotComponentID::FaceWorld:                  { return "FaceWorld";}
     case Cozmo::RobotComponentID::GyroDriftDetector:          { return "GyroDriftDetector";}
+    case Cozmo::RobotComponentID::HabitatDetector:            { return "HabitatDetector";}
     case Cozmo::RobotComponentID::Inventory:                  { return "Inventory";}
     case Cozmo::RobotComponentID::Map:                        { return "Map";}
     case Cozmo::RobotComponentID::MicComponent:               { return "MicComponent"; }

@@ -84,6 +84,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPounceWithProx.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPuzzleMaze.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorTrackLaser.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/habitat/behaviorConfirmHabitat.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/knowledgeGraph/behaviorKnowledgeGraphQuestion.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorEnrollFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorRespondToRenameFace.h"
@@ -602,6 +603,18 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::ConfirmHabitat:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorConfirmHabitat(config));
+      break;
+    }
+    
+    case BehaviorClass::KnowledgeGraphQuestion:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorKnowledgeGraphQuestion(config));
+      break;
+    }
+    
     case BehaviorClass::EnrollFace:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorEnrollFace(config));
@@ -881,12 +894,6 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::DisplayWeather:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDisplayWeather(config));
-      break;
-    }
-
-    case BehaviorClass::KnowledgeGraphQuestion:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorKnowledgeGraphQuestion(config));
       break;
     }
     

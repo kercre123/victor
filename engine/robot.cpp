@@ -43,6 +43,7 @@
 #include "engine/components/cubes/cubeLightComponent.h"
 #include "engine/components/dataAccessorComponent.h"
 #include "engine/components/dockingComponent.h"
+#include "engine/components/habitatDetectorComponent.h"
 #include "engine/components/inventoryComponent.h"
 #include "engine/components/mics/beatDetectorComponent.h"
 #include "engine/components/mics/micComponent.h"
@@ -298,6 +299,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::CubeAccel,                  new CubeAccelComponent());
     _components->AddDependentComponent(RobotComponentID::CubeComms,                  new CubeCommsComponent());
     _components->AddDependentComponent(RobotComponentID::GyroDriftDetector,          new RobotGyroDriftDetector());
+    _components->AddDependentComponent(RobotComponentID::HabitatDetector,            new HabitatDetectorComponent());
     _components->AddDependentComponent(RobotComponentID::Docking,                    new DockingComponent());
     _components->AddDependentComponent(RobotComponentID::Carrying,                   new CarryingComponent());
     _components->AddDependentComponent(RobotComponentID::CliffSensor,                new CliffSensorComponent());
@@ -2520,6 +2522,7 @@ RobotState Robot::GetDefaultRobotState()
                          ProxSensorDataRaw(), //const Anki::Cozmo::ProxSensorDataRaw &proxData,
                          0, // touch intensity value when not touched (from capacitive touch sensor)
                          0, // uint8_t cliffDetectedFlags,
+                         0, // uint8_t whiteDetectedFlags
                          -1); //int8_t currPathSegment
 
   return state;

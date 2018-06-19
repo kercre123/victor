@@ -90,6 +90,7 @@ void CliffSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
     }
   }
   _cliffDetectedFlags = msg.cliffDetectedFlags;
+  _whiteDetectedFlags = msg.whiteDetectedFlags;
   
   _lastMsgTimestamp = msg.timestamp;
   

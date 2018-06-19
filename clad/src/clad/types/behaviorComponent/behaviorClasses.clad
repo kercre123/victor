@@ -122,7 +122,10 @@ enum uint_8 BehaviorClass {
   PuzzleMaze,
   TrackLaser,
 
-  // knowledge graph
+  // habitat
+  ConfirmHabitat,
+
+  // knowledgeGraph
   KnowledgeGraphQuestion,
 
   // meetCozmo

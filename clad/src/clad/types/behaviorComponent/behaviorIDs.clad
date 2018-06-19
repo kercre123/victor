@@ -94,6 +94,7 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree
   ComeHereVoiceCommand,
+  ConfirmHabitat,
   CoordinateGlobalInterrupts,
 
   // victorBehaviorTree/danceToTheBeat
@@ -133,6 +134,12 @@ enum uint_8 BehaviorID {
   InspectCube,
   InteractWithFaces,
   Keepaway,
+
+  // victorBehaviorTree/highLevelDelegates/knowledgeGraph
+  KnowledgeGraphQuestion,
+  KnowledgeGraphTTS,
+
+  // victorBehaviorTree/highLevelDelegates
   LookInPlaceHeadUp,
 
   // victorBehaviorTree/highLevelDelegates/meetVictor
@@ -302,10 +309,6 @@ enum uint_8 BehaviorID {
   // victorBehaviorTree/weather
   WeatherResponses,
   WeatherTextToSpeech,
-
-  // knowledge graph
-  KnowledgeGraphQuestion,
-  KnowledgeGraphTTS,
 }
 
 }

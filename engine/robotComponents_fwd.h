@@ -50,6 +50,7 @@ enum class RobotComponentID{
   FaceWorld,
   FullRobotPose,
   GyroDriftDetector,
+  HabitatDetector,
   Inventory,
   Map,
   MicComponent,

@@ -2360,6 +2360,9 @@ namespace Anki {
     
     CliffAlignToWhiteAction::~CliffAlignToWhiteAction()
     {
+      if(!HasRobot()) {
+        return;
+      }
       if (_state == State::Waiting) {
         GetRobot().SendRobotMessage<RobotInterface::CliffAlignToWhiteAction>(false);
       }

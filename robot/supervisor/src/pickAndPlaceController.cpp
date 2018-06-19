@@ -997,7 +997,7 @@ namespace Anki {
       {
         DockToBlock(DockAction::DA_CLIFF_ALIGN_TO_WHITE,
                                               false,  // doLiftLoadCheck (ignored)
-                                              50,     // speed_mmps
+                                              25,     // speed_mmps
                                               0, 0);  // accel (ignored)
       }
 

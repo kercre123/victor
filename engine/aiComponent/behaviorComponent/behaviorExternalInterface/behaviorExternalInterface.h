@@ -44,8 +44,10 @@ class BlockWorld;
 class BodyLightComponent;
 class CubeAccelComponent;
 class CubeLightComponent;
+class CliffSensorComponent;
 class DelegationComponent;
 class FaceWorld;
+class HabitatDetectorComponent;
 class ICozmoBehavior;
 class IExternalInterface;
 class MapComponent;
@@ -131,8 +133,10 @@ public:
             BodyLightComponent*            bodyLightComponent,
             CubeAccelComponent*            cubeAccelComponent,
             CubeLightComponent*            cubeLightComponent,
+            CliffSensorComponent*          cliffSensorComponent,
             DelegationComponent*           delegationComponent,
             FaceWorld*                     faceWorld,
+            HabitatDetectorComponent*      habitatDetectorComponent,
             MapComponent*                  mapComponent,
             MicComponent*                  micComponent,
             MoodManager*                   moodManager,
@@ -210,6 +214,9 @@ public:
   inline bool HasObjectPoseConfirmer() const { return GetComponentWrapper(BEIComponentID::ObjectPoseConfirmer).IsComponentValid();}
   ObjectPoseConfirmer& GetObjectPoseConfirmer() const { return GetComponentWrapper(BEIComponentID::ObjectPoseConfirmer).GetComponent<ObjectPoseConfirmer>();}
 
+  inline bool HasCliffSensorComponent() const { return GetComponentWrapper(BEIComponentID::CliffSensor).IsComponentValid();}
+  CliffSensorComponent& GetCliffSensorComponent() const { return GetComponentWrapper(BEIComponentID::CliffSensor).GetComponent<CliffSensorComponent>();}
+
   inline bool HasCubeAccelComponent() const { return GetComponentWrapper(BEIComponentID::CubeAccel).IsComponentValid();}
   CubeAccelComponent& GetCubeAccelComponent() const { return GetComponentWrapper(BEIComponentID::CubeAccel).GetComponent<CubeAccelComponent>();}
 
@@ -225,6 +232,9 @@ public:
   inline bool HasMicComponent() const { return GetComponentWrapper(BEIComponentID::MicComponent).IsComponentValid();}
   MicComponent& GetMicComponent() const {return GetComponentWrapper(BEIComponentID::MicComponent).GetComponent<MicComponent>();}
   
+  inline bool HasHabitatDetectorComponent() const { return GetComponentWrapper(BEIComponentID::HabitatDetector).IsComponentValid();}
+  HabitatDetectorComponent& GetHabitatDetectorComponent() const { return GetComponentWrapper(BEIComponentID::HabitatDetector).GetComponent<HabitatDetectorComponent>();}
+
   inline bool HasBeatDetectorComponent() const { return GetComponentWrapper(BEIComponentID::BeatDetector).IsComponentValid();}
   BeatDetectorComponent& GetBeatDetectorComponent() const {return GetComponentWrapper(BEIComponentID::BeatDetector).GetComponent<BeatDetectorComponent>();}
 
@@ -251,8 +261,10 @@ private:
                        BodyLightComponent*            bodyLightComponent,
                        CubeAccelComponent*            cubeAccelComponent,
                        CubeLightComponent*            cubeLightComponent,
+                       CliffSensorComponent*          cliffSensorComponent,
                        DelegationComponent*           delegationComponent,
                        FaceWorld*                     faceWorld,
+                       HabitatDetectorComponent*      habitatDetectorComponent,
                        MapComponent*                  mapComponent,
                        MicComponent*                  micComponent,
                        MoodManager*                   moodManager,
