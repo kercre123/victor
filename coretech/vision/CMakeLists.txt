@@ -20,7 +20,7 @@ endif()
 anki_build_cxx_library(cti_vision ${ANKI_SRCLIST_DIR} STATIC)
 anki_build_target_license(cti_vision "ANKI" "BSD-2" "BSD-3")
 
-set_target_properties(cti_vision 
+set_target_properties(cti_vision
   PROPERTIES
   FOLDER "CoreTech"#/Basestation"
 )
@@ -39,8 +39,6 @@ PRIVATE
   $<$<CONFIG:Release>:-O2>
   ${SYMBOL_VISIBILITY_FLAGS}
 )
-
-set_property(TARGET cti_vision PROPERTY CXX_STANDARD 11)
 
 target_include_directories(cti_vision
   PUBLIC

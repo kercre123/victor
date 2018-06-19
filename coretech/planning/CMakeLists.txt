@@ -32,8 +32,6 @@ target_compile_options(cti_planning
   -Os
 )
 
-set_property(TARGET cti_planning PROPERTY CXX_STANDARD 11)
-
 target_link_libraries(cti_planning
   PUBLIC
   cti_common
@@ -68,8 +66,6 @@ target_compile_options(cti_planning_robot
   -Os
 )
 
-set_property(TARGET cti_planning_robot PROPERTY CXX_STANDARD 11)
-
 target_link_libraries(cti_planning_robot
   PUBLIC
   cti_common_robot
@@ -85,7 +81,7 @@ if (MACOSX)
   #
   # cti_planning_standalone
   #
-  
+
   anki_build_cxx_executable(cti_planning_standalone ${ANKI_SRCLIST_DIR})
   anki_build_target_license(cti_planning_standalone "ANKI")
   target_compile_definitions(cti_planning_standalone
