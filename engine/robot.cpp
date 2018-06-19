@@ -54,6 +54,8 @@
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/components/sdkComponent.h"
+#include "engine/components/settingsCommManager.h"
+#include "engine/components/settingsManager.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
@@ -318,6 +320,8 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::TextToSpeechCoordinator,    new TextToSpeechCoordinator());
     _components->AddDependentComponent(RobotComponentID::SDK,                        new SDKComponent());
     _components->AddDependentComponent(RobotComponentID::PhotographyManager,         new PhotographyManager());
+    _components->AddDependentComponent(RobotComponentID::SettingsCommManager,        new SettingsCommManager());
+    _components->AddDependentComponent(RobotComponentID::SettingsManager,            new SettingsManager());
     _components->AddDependentComponent(RobotComponentID::RobotStatsTracker,          new RobotStatsTracker());
     _components->InitComponents(this);
   }

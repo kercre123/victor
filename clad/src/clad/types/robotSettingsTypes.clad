@@ -1,0 +1,32 @@
+// File: RobotSettings
+// Author: Paul Terry
+// Copyright: Anki Inc (c) 2018
+
+
+namespace Anki {
+namespace Cozmo {
+
+
+enum uint_8 MasterVolume
+{
+  Low = 0,
+  MediumLow,
+  Medium,
+  MediumHigh,
+  High
+}
+
+enum uint_8 EyeColor
+{
+  Teal = 0,
+  Orange,
+  Yellow,
+  LimeGreen,
+  AzureBlue,
+  Purple,
+  MatrixGreen
+}
+
+
+} // namespace Cozmo
+} // namespace Anki

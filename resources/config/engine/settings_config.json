@@ -1,0 +1,6 @@
+// This serves to define the settings stored on the robot,
+// as well as their default values.
+{
+  "Robot.MasterVolume" : "Medium",
+  "Robot.EyeColor" : "Teal"
+}

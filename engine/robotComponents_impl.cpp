@@ -64,6 +64,8 @@ class TextToSpeechCoordinator;
 class SDKComponent;
 class PhotographyManager;
 class RobotStatsTracker;
+class SettingsCommManager;
+class SettingsManager;
 
 } // namespace Cozmo
 
@@ -111,6 +113,8 @@ LINK_COMPONENT_TYPE_TO_ENUM(BeatDetectorComponent,         RobotComponentID, Bea
 LINK_COMPONENT_TYPE_TO_ENUM(TextToSpeechCoordinator,       RobotComponentID, TextToSpeechCoordinator)
 LINK_COMPONENT_TYPE_TO_ENUM(SDKComponent,                  RobotComponentID, SDK)
 LINK_COMPONENT_TYPE_TO_ENUM(PhotographyManager,            RobotComponentID, PhotographyManager)
+LINK_COMPONENT_TYPE_TO_ENUM(SettingsCommManager,           RobotComponentID, SettingsCommManager)
+LINK_COMPONENT_TYPE_TO_ENUM(SettingsManager,               RobotComponentID, SettingsManager)
 LINK_COMPONENT_TYPE_TO_ENUM(RobotStatsTracker,             RobotComponentID, RobotStatsTracker)
 
 // Translate entity into string
@@ -156,6 +160,8 @@ std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotCompone
     case Cozmo::RobotComponentID::ProxSensor:                 { return "ProxSensor";}
     case Cozmo::RobotComponentID::PublicStateBroadcaster:     { return "PublicStateBroadcaster";}
     case Cozmo::RobotComponentID::SDK:                        { return "SDK";}
+    case Cozmo::RobotComponentID::SettingsCommManager:        { return "SettingsCommManager";}
+    case Cozmo::RobotComponentID::SettingsManager:            { return "SettingsManager";}
     case Cozmo::RobotComponentID::FullRobotPose:              { return "FullRobotPose";}
     case Cozmo::RobotComponentID::RobotIdleTimeout:           { return "RobotIdleTimeout";}
     case Cozmo::RobotComponentID::RobotStatsTracker:          { return "RobotStatsTracker";}      

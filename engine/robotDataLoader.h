@@ -110,6 +110,7 @@ public:
   const Json::Value& GetUserIntentConfig() const             { return _userIntentsConfig; }
   const Json::Value* GetTextToSpeechConfig() const           { return &_textToSpeechConfig; }
   const Json::Value& GetPhotographyConfig() const            { return _photographyConfig; }
+  const Json::Value& GetSettingsConfig() const               { return _settingsConfig; }
 
   // images are stored as a map of stripped file name (no file extension) to full path
   const Vision::SpritePathMap* GetSpritePaths()       const { assert(_spritePaths != nullptr); return _spritePaths.get(); }
@@ -210,6 +211,7 @@ private:
   Json::Value _dasEventConfig;
   Json::Value _userIntentsConfig;
   Json::Value _photographyConfig;
+  Json::Value _settingsConfig;
 
   std::unique_ptr<Vision::SpritePathMap> _spritePaths;
   std::unique_ptr<Vision::SpriteCache>   _spriteCache;

@@ -868,6 +868,18 @@ void RobotDataLoader::LoadRobotConfigs()
                 jsonFilename.c_str());
     }
   }
+
+  // Settings config
+  {
+    static const std::string jsonFilename = "config/engine/settings_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _settingsConfig);
+    if (!success)
+    {
+      LOG_ERROR("RobotDataLoader.SettingsConfigNotFound",
+                "Settings Config file %s not found or failed to parse",
+                jsonFilename.c_str());
+    }
+  }
 }
 
 bool RobotDataLoader::DoNonConfigDataLoading(float& loadingCompleteRatio_out)

@@ -65,6 +65,8 @@ enum class RobotComponentID{
   ProxSensor,
   PublicStateBroadcaster,
   SDK,
+  SettingsCommManager,
+  SettingsManager,
   RobotIdleTimeout,
   RobotStatsTracker,
   RobotToEngineImplMessaging,
