@@ -296,6 +296,7 @@ private:
   std::unordered_set<std::string> _activeEyeSquintLayers;  
   
   u8 _lockedTracks;
+  std::map<uint32_t, u8> _delayedTracksToLock;
 
   // For tracking whether or not an animation is playing based on
   // AnimStarted and AnimEnded messages

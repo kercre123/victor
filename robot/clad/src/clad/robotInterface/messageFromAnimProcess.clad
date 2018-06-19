@@ -30,9 +30,10 @@ message AnimationStarted
 
 message AnimationEnded
 {
+  uint_32 streamTimeAnimEnded,
   uint_8  tag,
   bool    wasAborted,
-  string animName,
+  string animName
 }
 
 message AnimationEvent

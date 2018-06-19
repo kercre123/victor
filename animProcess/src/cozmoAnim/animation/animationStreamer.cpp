@@ -1522,6 +1522,7 @@ namespace Cozmo {
         endMsg.animName_length = streamingAnimName.length();
         endMsg.tag = _tag;
         endMsg.wasAborted = abortingAnim;
+        endMsg.streamTimeAnimEnded = _relativeStreamTime_ms;
         if (!RobotInterface::SendAnimToEngine(endMsg)) {
           return RESULT_FAIL;
         }

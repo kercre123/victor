@@ -368,6 +368,7 @@ void AnimationComponent::AlterStreamingAnimationAtTime(RobotInterface::EngineToR
     case RobotInterface::EngineToRobotTag::lockAnimTracks:
     {
       alterMsg.lockAnimTracks = std::move(msg.Get_lockAnimTracks());
+      _delayedTracksToLock.emplace(relativeStreamTime_ms, alterMsg.lockAnimTracks.whichTracks);
       break;
     }
     case RobotInterface::EngineToRobotTag::postAudioEvent:
@@ -394,12 +395,22 @@ void AnimationComponent::AlterStreamingAnimationAtTime(RobotInterface::EngineToR
 // Status of other tracks remain unchanged.
 void AnimationComponent::UnlockTracks(u8 tracks)
 {
+  if(!_delayedTracksToLock.empty()){
+    PRINT_NAMED_ERROR("AnimationComponent.UnlockTracks.DelayedTrackLocksPending",
+                      "Unlocking tracks while delayed tracks to lock results in undefined behavior");
+  }
+
   _lockedTracks &= ~tracks;
   _robot->SendRobotMessage<RobotInterface::LockAnimTracks>(_lockedTracks);
 }
 
 void AnimationComponent::UnlockAllTracks()
 {
+  if(!_delayedTracksToLock.empty()){
+    PRINT_NAMED_ERROR("AnimationComponent.UnlockAllTracks.DelayedTrackLocksPending",
+                      "Unlocking tracks while delayed tracks to lock results in undefined behavior");
+  }
+
   if (_lockedTracks != 0) {
     _lockedTracks = 0;
     _robot->SendRobotMessage<RobotInterface::LockAnimTracks>(_lockedTracks);
@@ -410,6 +421,11 @@ void AnimationComponent::UnlockAllTracks()
 // Status of other tracks remain unchanged.
 void AnimationComponent::LockTracks(u8 tracks)
 {
+  if(!_delayedTracksToLock.empty()){
+    PRINT_NAMED_ERROR("AnimationComponent.LockTracks.DelayedTrackLocksPending",
+                      "Locking tracks while delayed tracks to lock results in undefined behavior");
+  }
+
   _lockedTracks |= tracks;
   _robot->SendRobotMessage<RobotInterface::LockAnimTracks>(_lockedTracks);
 }
@@ -861,6 +877,18 @@ void AnimationComponent::HandleAnimStarted(const AnkiEvent<RobotInterface::Robot
 void AnimationComponent::HandleAnimEnded(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   const auto & payload = message.GetData().Get_animEnded();
+
+  if(!_delayedTracksToLock.empty()){
+    const auto& endTime = payload.streamTimeAnimEnded;
+    for(const auto& pair: _delayedTracksToLock){
+      if(pair.first < endTime){
+        _lockedTracks |= pair.second;
+      }else{
+        break;
+      }
+    }
+    _delayedTracksToLock.clear();
+  }
   
   // Verify that expected animation completed and execute callback
   auto it = _callbackMap.find(payload.tag);
