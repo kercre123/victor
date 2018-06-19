@@ -528,7 +528,7 @@ Result DASManager::Run(const bool & shutdown)
     } else {
       LOG_ERROR("DASManager.Run.InvalidEMR", "INVALID EMR - NO ESN");
     }
-    _robot_version = osState->GetOSBuildVersion() + "@" + osState->GetBuildSha();
+    _robot_version = osState->GetRobotVersion();
     _boot_id = osState->GetBootID();
     Cozmo::OSState::removeInstance();
   }

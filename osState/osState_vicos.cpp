@@ -85,6 +85,7 @@ namespace {
   const char* kBootIDFile = "/proc/sys/kernel/random/boot_id";
   const char* kLocalTimeFile = "/data/etc/localtime";
   constexpr const char* kUniversalTimeFile = "/usr/share/zoneinfo/Universal";
+  constexpr const char* kRobotVersionFile = "/anki/etc/version";
 
   // System vars
   uint32_t _cpuFreq_kHz;      // CPU freq
@@ -357,6 +358,16 @@ const std::string& OSState::GetOSBuildVersion()
   return _osBuildVersion;
 }
 
+const std::string& OSState::GetRobotVersion()
+{
+  if (_robotVersion.empty()) {
+    std::ifstream ifs(kRobotVersionFile);
+    ifs >> _robotVersion;
+    Anki::Util::StringTrimWhitespaceFromEnd(_robotVersion);
+  }
+  return _robotVersion;
+}
+
 const std::string& OSState::GetBuildSha()
 {
   return _buildSha;
@@ -536,7 +547,7 @@ bool OSState::IsWallTimeSynced() const
   if (kOSState_FakeNoTime) {
     return false;
   }
-  
+
   struct timex txc = {};
 
   if (adjtimex(&txc) < 0) {
@@ -556,7 +567,7 @@ bool OSState::HasTimezone() const
   if (kOSState_FakeNoTimezone) {
     return false;
   }
-  
+
   if (!Util::FileUtils::FileExists(kUniversalTimeFile)) {
     LOG_ERROR("OSState.HasTimezone.NoUniversalTimeFile",
               "Unable to find universal time file '%s', cant check for timezone (assuming none)",
@@ -598,7 +609,7 @@ bool OSState::HasTimezone() const
   static const size_t linkPathLen = 1024;
   static_assert (GetConstStrLength(kUniversalTimeFile) < linkPathLen,
                  "OSState.HasTimezone.InvalidFilePath");
-    
+
   if( linkStatus.st_size >= linkPathLen ) {
     LOG_ERROR("OSState.HasTimezone.LinkNameTooLong",
               "Link path size is %ld, but we only made room for %zu",

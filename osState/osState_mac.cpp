@@ -88,6 +88,7 @@ OSState::OSState()
   // Set simulated attributes
   _serialNumString = "12345";
   _osBuildVersion = "12345";
+  _robotVersion = "0.0.0";
   _ipAddress = "127.0.0.1";
   _ssid = "AnkiNetwork";
 
@@ -292,6 +293,11 @@ const std::string& OSState::GetSerialNumberAsString()
 const std::string& OSState::GetOSBuildVersion()
 {
   return _osBuildVersion;
+}
+
+const std::string& OSState::GetRobotVersion()
+{
+  return _robotVersion;
 }
 
 const std::string& OSState::GetBuildSha()

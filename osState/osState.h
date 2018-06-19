@@ -111,6 +111,9 @@ public:
   // Returns the os build version (time of build)
   const std::string& GetOSBuildVersion();
 
+  // Returns "major.minor.build" for reporting to DAS
+  const std::string& GetRobotVersion();
+
   const std::string& GetBuildSha();
 
   // Returns the semi-unique name of this robot, Vector_XYXY
@@ -169,6 +172,7 @@ private:
   std::string _ssid            = "";
   std::string _serialNumString = "";
   std::string _osBuildVersion  = "";
+  std::string _robotVersion    = "";
   std::string _buildSha        = "";
   std::string _bootID          = "";
 
