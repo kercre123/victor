@@ -312,8 +312,6 @@ float OSState::GetUptimeAndIdleTime(float &idleTime_s) const
 
 uint32_t OSState::GetMemoryInfo(uint32_t &freeMem_kB, uint32_t &availableMem_kB) const
 {
-  // Better to have this relatively expensive call as on-demand only
-  DEV_ASSERT(_updatePeriod_ms == 0, "OSState.GetMemoryInfo.NonZeroUpdate");
   if (_updatePeriod_ms == 0) {
     UpdateMemoryInfo();
   }
