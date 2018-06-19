@@ -1260,12 +1260,17 @@ void FaceInfoScreenManager::Reboot()
 {
 #ifdef SIMULATOR
   LOG_WARNING("FaceInfoScreenManager.Reboot.NotSupportInSimulator", "");
+  return;
 #else
-  
+
+  // Suppress any error codes that might appear 
+  // as a result of the following reboot
+  FaceDisplay::getInstance()->EnableFaultCodeDisplay(false);
+
   // Need to call reboot in forked process for some reason.
   // Otherwise, reboot doesn't actually happen.
   // Also useful for transitioning to "REBOOTING..." screen anyway.
-  sync(); sync(); sync(); // Linux voodoo
+  sync();
   pid_t pid = fork();
   if (pid == 0)
   {
