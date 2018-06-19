@@ -165,12 +165,21 @@ namespace Anki {
               // If button has been held down for more than SHUTDOWN_TIME_MS
               else if(curTime_ms - timeMark_ms > SHUTDOWN_TIME_MS)
               {
+#if FACTORY_TEST
+                // In factory, don't send PrepForShutdown because processes don't shutdown cleanly
+                // and we get a fault code (i.e. 915 - NO_ENGINE) appear right before the power is pulled.
+                // Instead just call sync and let syscon pull power.
+                AnkiWarn("CozmoBot.CheckForButtonHeld.PossiblyShuttingDown", "Syncing");
+                timeMark_ms = curTime_ms;
+                sync();
+#else
                 timeMark_ms = curTime_ms;
                 state = START;
                 // Send a shutdown message to anim/engine
                 AnkiWarn("CozmoBot.CheckForButtonHeld.Shutdown", "Sending PrepForShutdown");
                 RobotInterface::PrepForShutdown msg;
                 RobotInterface::SendMessage(msg);
+#endif                
               }
             }
             else

@@ -18,6 +18,7 @@
 #include <sstream>
 #include <chrono>
 #include <iomanip>
+#include <unistd.h>
 
 #define ARCHIVE_OLD_LOGS 1
 
@@ -187,6 +188,9 @@ namespace Cozmo {
       const std::string newFileName = _kPathToCopyLogTo + "/log0";
       int rc = std::rename(oldFileName.c_str(), 
                            newFileName.c_str());
+
+      // Make sure files are written to disk
+      sync();
 
       if(rc != 0)
       {
