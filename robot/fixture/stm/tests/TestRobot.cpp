@@ -394,14 +394,21 @@ void read_robot_info_(void)
   }
 }
 
-//read battery voltage
-static int robot_get_batt_mv(int *out_raw)
+const int bat_raw_min = RCOM_BAT_MV_TO_RAW(2500);
+const int bat_raw_max = RCOM_BAT_MV_TO_RAW(6000);
+
+static int robot_get_batt_mv(int *out_raw=0, bool sanity_check=true);
+static int robot_get_batt_mv(int *out_raw, bool sanity_check)
 {
   int bat_raw = rcomGet(1, RCOM_SENSOR_BATTERY)[0].bat.raw;
   int bat_mv = RCOM_BAT_RAW_TO_MV(bat_raw);
   if( out_raw ) *out_raw = bat_raw;
-  
   ConsolePrintf("vbat = %imV (%i)\n", bat_mv, bat_raw);
+  
+  //detect body electrical + fw errors
+  if( sanity_check && (bat_raw < bat_raw_min || bat_raw > bat_raw_max) )
+    throw ERROR_SENSOR_VBAT;
+  
   return bat_mv;
 }
 
@@ -423,25 +430,89 @@ void TestRobotInfo(void)
   //-*/
   
   read_robot_info_();
-  robot_get_batt_mv(0);
+  robot_get_batt_mv(0,false); //no error check
 }
 
-//robot_sr_t get(uint8_t NN, uint8_t sensor
 void TestRobotSensors(void)
 {
-  robot_sr_t bat    = rcomGet(3, RCOM_SENSOR_BATTERY   )[1];
-  robot_sr_t cliff  = rcomGet(3, RCOM_SENSOR_CLIFF     )[1];
-  robot_sr_t prox   = rcomGet(3, RCOM_SENSOR_PROX_TOF  )[1];
-  robot_sr_t btn    = rcomGet(3, RCOM_SENSOR_BTN_TOUCH )[1];
+  robot_sr_t *psr;
+  //robot_sr_t bat    = rcomGet(3, RCOM_SENSOR_BATTERY   )[1];
+  //robot_sr_t cliff  = rcomGet(3, RCOM_SENSOR_CLIFF     )[1];
+  //robot_sr_t prox   = rcomGet(3, RCOM_SENSOR_PROX_TOF  )[1];
+  //robot_sr_t btn    = rcomGet(3, RCOM_SENSOR_BTN_TOUCH )[1];
   
-  ConsolePrintf("Sensor Values:\n");
-  ConsolePrintf("  battery = %i.%03iV\n", RCOM_BAT_RAW_TO_MV(bat.bat.raw)/1000, RCOM_BAT_RAW_TO_MV(bat.bat.raw)%1000);
-  ConsolePrintf("  cliff = fL:%i fR:%i bR:%i bL:%i\n", cliff.cliff.fL, cliff.cliff.fR, cliff.cliff.bR, cliff.cliff.bL);
-  ConsolePrintf("  prox = %imm sigRate:%i spad:%i ambientRate:%i\n", prox.prox.rangeMM, prox.prox.signalRate, prox.prox.spadCnt, prox.prox.ambientRate);
-  ConsolePrintf("  btn = %i touch=%i\n", btn.btn.btn, btn.btn.touch);
+  ConsolePrintf("Sensor Testing...\n");
   
-  //XXX: what should "good" sensor values look like?
+  //BATTERY (ADC input)
+  {
+    const uint8_t NN_bat=3;
+    psr = rcomGet(NN_bat, RCOM_SENSOR_BATTERY);
+    for(int x=0; x<NN_bat; x++) {
+      if( psr[x].bat.raw < bat_raw_min || psr[x].bat.raw > bat_raw_max )
+        throw ERROR_SENSOR_VBAT;
+    }
+    robot_sr_t bat = psr[NN_bat>>1];
+    ConsolePrintf("bat,raw,%i,mv,%i\n", bat.bat.raw, RCOM_BAT_RAW_TO_MV(bat.bat.raw));
+  }
   
+  //CLIFF
+  {
+    //per software team, intermittent 0 values are common. Sensor is 12?-bit max
+    const uint8_t NN_cliff=15, NN_ok=10; //allow a few noise values
+    struct { int fL; int fR; int bL; int bR; } cnt = {0,0,0,0};
+    psr = rcomGet(NN_cliff, RCOM_SENSOR_CLIFF);
+    for(int x=0; x<NN_cliff; x++) 
+    {
+      const int cliff_min=1, cliff_max=1<<12;
+      if( psr[x].cliff.fL >= cliff_min && psr[x].cliff.fL <= cliff_max ) cnt.fL++;
+      if( psr[x].cliff.fR >= cliff_min && psr[x].cliff.fR <= cliff_max ) cnt.fR++;
+      if( psr[x].cliff.bL >= cliff_min && psr[x].cliff.bL <= cliff_max ) cnt.bL++;
+      if( psr[x].cliff.bR >= cliff_min && psr[x].cliff.bR <= cliff_max ) cnt.bR++;
+    }
+    robot_sr_t cliff = psr[NN_cliff>>1];
+    ConsolePrintf("cliff,fL,%i,fR,%i,bL,%i,bR,%i\n", cliff.cliff.fL, cliff.cliff.fR, cliff.cliff.bL, cliff.cliff.bR);
+    ConsolePrintf("..cnt,fL,%i,fR,%i,bL,%i,bR,%i\n", cnt.fL, cnt.fR, cnt.bL, cnt.bR);
+    
+    if( cnt.fL < NN_ok )  throw ERROR_SENSOR_CLIFF_FL;
+    if( cnt.fR < NN_ok )  throw ERROR_SENSOR_CLIFF_FR;
+    if( cnt.bL < NN_ok )  throw ERROR_SENSOR_CLIFF_BL;
+    if( cnt.bR < NN_ok )  throw ERROR_SENSOR_CLIFF_BR;
+  }
+  
+  //TOUCH btn
+  {
+    const uint8_t NN_touch=15, NN_ok=12; //filter some noise
+    int validCnt = 0;
+    psr = rcomGet(NN_touch, RCOM_SENSOR_BTN_TOUCH);
+    for(int x=0; x<NN_touch; x++) {
+      const int touch_min=100, touch_max=1200; //playpen uses range 500-700 (off charger). Ours will be noisier.
+      if( psr[x].btn.touch >= touch_min && psr[x].btn.touch <= touch_max )
+        validCnt++;
+    }
+    robot_sr_t btn = psr[NN_touch>>1];
+    ConsolePrintf("btn,touch,%i,btn,%i,cnt,%i\n", btn.btn.touch, btn.btn.btn, validCnt);
+    
+    if( validCnt < NN_ok )
+      throw ERROR_SENSOR_TOUCH;
+  }
+  
+  //TOF
+  {
+    const uint8_t NN_tof=5, emax=1;
+    int ecount=0;
+    psr = rcomGet(NN_tof, RCOM_SENSOR_PROX_TOF);
+    for(int x=0; x<NN_tof; x++) {
+      //XXX: no idea what valid TOF values look like...
+      //just make sure they are non-zero
+      if( psr[x].prox.rangeMM<1 || psr[x].prox.signalRate<1 || psr[x].prox.spadCnt<1 || psr[x].prox.ambientRate<1 )
+        ecount++;
+    }
+    robot_sr_t prox = psr[NN_tof>>1];
+    ConsolePrintf("prox,mm,%i,sigRate,%i,spad,%i,ambientRate,%i\n", prox.prox.rangeMM, prox.prox.signalRate, prox.prox.spadCnt, prox.prox.ambientRate);
+    
+    if( ecount > emax )
+      throw ERROR_SENSOR_TOF;
+  }
 }
 
 typedef struct { 
@@ -1054,7 +1125,7 @@ int m_Recharge( uint16_t max_charge_time_s, uint16_t bat_limit_mv, uint16_t i_do
   
   Contacts::setModeRx();
   Timer::delayMs(500); //let battery voltage settle
-  int batt_mv = robot_get_batt_mv(0); //get initial battery level
+  int batt_mv = robot_get_batt_mv(); //get initial battery level
   
   uint32_t Tstart = Timer::get();
   while( bat_limit_mv == 0 || batt_mv < bat_limit_mv )
@@ -1067,7 +1138,7 @@ int m_Recharge( uint16_t max_charge_time_s, uint16_t bat_limit_mv, uint16_t i_do
     ConsolePrintf("total charge time: %ds\n", Timer::elapsedUs(Tstart)/1000000 );
     Contacts::setModeRx();
     Timer::delayMs(500); //let battery voltage settle
-    batt_mv = robot_get_batt_mv(0);
+    batt_mv = robot_get_batt_mv();
     
     //charge loop detected robot removal or charge completion?
     if( chgStat != RECHARGE_STATUS_TIMEOUT )
@@ -1122,7 +1193,7 @@ void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
   
   Contacts::setModeRx(); //switch to comm mode
   Timer::delayMs(500); //let battery voltage settle
-  int batt_mv = robot_get_batt_mv(0); //get initial battery level
+  int batt_mv = robot_get_batt_mv(); //get initial battery level
   
   //Turn on charging power
   Board::powerOn(PWR_VEXT,0);
@@ -1185,7 +1256,7 @@ void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
   
   Contacts::setModeRx(); //switch to comm mode
   Timer::delayMs(500); //let battery voltage settle
-  batt_mv = robot_get_batt_mv(0); //get final battery level
+  batt_mv = robot_get_batt_mv(); //get final battery level
   
   ConsolePrintf("charge-current-ma,%d,sample-cnt,%d\r\n", avg, avgCnt);
   ConsolePrintf("charge-current-dbg,avgMax,%d,%d,iMax,%d,%d\r\n", avgMax, avgMaxTime, iMax, iMaxTime);
@@ -1379,18 +1450,20 @@ void LogDownload(void)
   //download until robot runs out of logs...
   for( int i=0; true ; i++ )
   {
-    //ConsolePrintf("reading robot log%u:\n", i);
-    error_t e = ERROR_OK; int len=0;
-    try { len = rcomRlg(i, &logbuf[0], logbufsize-1); } catch(int err) { e=err; len=0; }
-    if( len > 0 ) logbuf[len] = '\0'; //null terminate
-    
     FLEXFLOW::printf("************************ log%i ************************\n", i);
-    FLEXFLOW::printf("<flex> log logdl_%08x_log%u.log\n", flexnfo.esn, i);
-    FLEXFLOW::write( e==ERROR_OK && len>0 ? logbuf : "not found");
-    FLEXFLOW::printf("\n</flex>\n");
+    
+    error_t e = ERROR_OK; int len=0;
+    int printlvl = RCOM_PRINT_LEVEL_ALL; //RCOM_PRINT_LEVEL_CMD | RCOM_PRINT_LEVEL_RSP;
+    try { len = rcomRlg(i, &logbuf[0], logbufsize-1, printlvl); } catch(int err) { e=err; len=0; }
+    if( len > 0 ) {
+      logbuf[len] = '\0'; //null terminate
+      FLEXFLOW::printf("<flex> log logdl_%08x_log%u.log\n", flexnfo.esn, i);
+      FLEXFLOW::write( e==ERROR_OK && len>0 ? logbuf : "not found");
+      FLEXFLOW::printf("\n</flex>\n");
+    }
     
     if( !(e==ERROR_OK && len>0) ) {
-      if( ++nerrs >= 2 )
+      if( ++nerrs >= 1 && i>1 ) //always attempt log0+log1
         break;
     }
   }
@@ -1430,7 +1503,6 @@ TestFunction* TestRobot1GetTests(void) {
     TestRobotTreads,
     TestRobotRange,
     ChargeTest,
-    BatteryCheck,
     RobotPowerDown,
     NULL,
   };
@@ -1464,7 +1536,6 @@ TestFunction* TestRobot3GetTests(void) {
     TestRobotTreads,
     TestRobotRange,
     ChargeTest,
-    BatteryCheck,
     EmrUpdate, //set test complete flags
     TurkeysDone,
     NULL,

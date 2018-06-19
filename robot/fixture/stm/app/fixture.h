@@ -212,6 +212,15 @@ typedef int error_t;
 //#define ERROR_MOTOR_HEAD_SLOW_RANGE     345 // Head can't reach full range when run at low voltage
 //#define ERROR_MOTOR_HEAD_JAM            346 // Jamming test failed on head motor
 
+//<export heading> Sensor Errors
+#define ERROR_SENSOR_VBAT                 350 // unable to read battery voltage. check body firmware. possible SMT problem
+#define ERROR_SENSOR_CLIFF_FL             351 // cliff sensor malfunction (front left)
+#define ERROR_SENSOR_CLIFF_FR             352 // cliff sensor malfunction (front right)
+#define ERROR_SENSOR_CLIFF_BL             353 // cliff sensor malfunction (back left)
+#define ERROR_SENSOR_CLIFF_BR             354 // cliff sensor malfunction (back right)
+#define ERROR_SENSOR_TOF                  355 // distance sensor malfunction
+#define ERROR_SENSOR_TOUCH                356 // touch sensor malfunction
+
 //<export heading> Robot Errors
 #define ERROR_ROBOT_TEST_SEQUENCE         370 // This test cannot run until all previous tests have passed
 #define ERROR_ROBOT_PACKED_OUT            371 // test or function is locked because the robot is packed out
