@@ -75,8 +75,8 @@ public:
   // Returns uptime (and idle time) in seconds
   float GetUptimeAndIdleTime(float &idleTime_s) const;
 
-  // Returns total and free memory in kB
-  uint32_t GetMemoryInfo(uint32_t &freeMem_kB) const;
+  // Returns total and free/available memory in kB
+  uint32_t GetMemoryInfo(uint32_t &freeMem_kB, uint32_t &availableMem_kB) const;
 
   // Returns data about CPU times
   const std::vector<std::string>& GetCPUTimeStats() const;

@@ -206,16 +206,23 @@ namespace Cozmo {
 
 #if ANKI_DEV_CHEATS
   // Whether or not to display themal throttling indicator on face
-  CONSOLE_VAR(bool, kDisplayThermalThrottling, "AnimationStreamer", true);
+  CONSOLE_VAR(bool, kDisplayThermalThrottling, "AnimationStreamer.System", true);
 
   // Temperature beyond which the thermal indicator is displayed on face    
-  CONSOLE_VAR(u32,  kThermalAlertTemp_C,           "AnimationStreamer", 80);
+  CONSOLE_VAR(u32,  kThermalAlertTemp_C,           "AnimationStreamer.System", 80);
 
   // Must be at least this hot for CPU throttling to be considered caused
   // by thermal conditions. It can also throttle because the system is idle
   // which we don't care to indicate on the face.
-  CONSOLE_VAR(u32,  kThermalThrottlingMinTemp_C,   "AnimationStreamer", 65);
+  CONSOLE_VAR(u32,  kThermalThrottlingMinTemp_C,   "AnimationStreamer.System", 65);
 
+  CONSOLE_VAR(bool, kDisplayMemoryPressure, "AnimationStreamer.System", true);
+    
+  // When total/avail > this, display red square (should be > MediumPressureMultiple below)
+  CONSOLE_VAR(u32, kHighMemPressureMultiple, "AnimationStreamer.System", 10);
+  
+  // When total/avail > this, display yellow square (should be < HighPressureMultiple above)
+  CONSOLE_VAR(u32, kMediumMemPressureMultiple, "AnimationStreamer.System", 5);
 
   //////////
   /// Manual Playback Console Vars - allow user to play back/hold single frames within an animation
@@ -1338,25 +1345,46 @@ namespace Cozmo {
     UpdateCaptureFace(faceImg565);
 
     // Draw red square in corner of face if thermal issues
-    const bool isCPUThrottling = OSState::getInstance()->IsCPUThrottling();
-    auto tempC = OSState::getInstance()->GetTemperature_C();
-    const bool tempExceedsAlertThreshold = tempC >= kThermalAlertTemp_C;
-    const bool tempExceedsThrottlingThreshold = tempC >= kThermalThrottlingMinTemp_C;
-    if (kDisplayThermalThrottling && 
-        ((isCPUThrottling && tempExceedsThrottlingThreshold) || (tempExceedsAlertThreshold)) ) {
-
-      // Draw square if CPU is being throttled
-      const ColorRGBA alertColor(1.f, 0.f, 0.f);
-      if (isCPUThrottling) {
-        const Rectangle<f32> rect( 0, 0, 20, 20);
-        faceImg565.DrawFilledRect(rect, alertColor);
+    if (kDisplayThermalThrottling)
+    {
+      const bool isCPUThrottling = OSState::getInstance()->IsCPUThrottling();
+      auto tempC = OSState::getInstance()->GetTemperature_C();
+      const bool tempExceedsAlertThreshold = tempC >= kThermalAlertTemp_C;
+      const bool tempExceedsThrottlingThreshold = tempC >= kThermalThrottlingMinTemp_C;
+      if ((isCPUThrottling && tempExceedsThrottlingThreshold) || (tempExceedsAlertThreshold))
+      {
+        
+        // Draw square if CPU is being throttled
+        const ColorRGBA alertColor(1.f, 0.f, 0.f);
+        if (isCPUThrottling) {
+          const Rectangle<f32> rect( 0, 0, 20, 20);
+          faceImg565.DrawFilledRect(rect, alertColor);
+        }
+        
+        // Display temperature
+        const std::string tempStr = std::to_string(tempC) + "C";
+        const Point2f position(25, 25);
+        faceImg565.DrawText(position, tempStr, alertColor, 1.f);
       }
-
-      // Display temperature
-      const std::string tempStr = std::to_string(tempC) + "C";
-      const Point2f position(25, 25);
-      faceImg565.DrawText(position, tempStr, alertColor, 1.f);
     }
+    
+    // Draw a colored square in the upper right corner if there's memory pressure
+    if (kDisplayMemoryPressure)
+    {
+      uint32_t freeMem_kB = 0, availableMem_kB = 0;
+      const uint32_t totalMem_kB = OSState::getInstance()->GetMemoryInfo(freeMem_kB, availableMem_kB);
+      const s32 memFactor = (availableMem_kB > 0 ? totalMem_kB / availableMem_kB : 1);
+      
+      if(memFactor > kMediumMemPressureMultiple)
+      {
+        const ColorRGBA& memAlertColor = (memFactor > kHighMemPressureMultiple ? NamedColors::RED : NamedColors::YELLOW);
+        const Rectangle<s32> rect(FACE_DISPLAY_WIDTH-30, 0, 30, 25);
+        faceImg565.DrawFilledRect(rect, memAlertColor);
+        faceImg565.DrawText({FACE_DISPLAY_WIDTH-15, 20}, std::to_string(availableMem_kB/1024),
+                            NamedColors::BLACK, 0.55, false, 1, true);
+      }
+    }
+    
 #endif // ANKI_DEV_CHEATS
 
     if(SHOULD_SEND_DISPLAYED_FACE_TO_ENGINE){

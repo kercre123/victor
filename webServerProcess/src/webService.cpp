@@ -665,9 +665,9 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
   std::string stat_mem;
   if (active[kStat_MemoryInfo]) {
     // Memory use
-    uint32_t freeMem_kB;
-    const uint32_t totalMem_kB = osState->GetMemoryInfo(freeMem_kB);
-    stat_mem = std::to_string(totalMem_kB) + "," + std::to_string(freeMem_kB);
+    uint32_t freeMem_kB, availableMem_kB;
+    const uint32_t totalMem_kB = osState->GetMemoryInfo(freeMem_kB, availableMem_kB);
+    stat_mem = std::to_string(totalMem_kB) + "," + std::to_string(freeMem_kB) + "," + std::to_string(availableMem_kB);
   }
 
   std::vector<std::string> stat_cpuStat;

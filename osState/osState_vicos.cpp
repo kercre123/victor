@@ -93,6 +93,7 @@ namespace {
   float _idleTime_s;          // Idle time in seconds
   uint32_t _memTotal_kB;      // Total memory in kB
   uint32_t _memFree_kB;       // Free memory in kB
+  uint32_t _memAvailable_kb;  // Available memory in kB
   std::vector<std::string> _CPUTimeStats; // CPU time stats lines
 
 
@@ -175,6 +176,9 @@ void OSState::Update()
       // Update temperature reading
       UpdateTemperature_C();
 
+      // Update memory info
+      UpdateMemoryInfo();
+
       // const auto now = steady_clock::now();
       // const auto elapsed_us = duration_cast<microseconds>(now - startTime).count();
       // PRINT_NAMED_INFO("OSState", "Update took %lld microseconds", elapsed_us);
@@ -251,7 +255,7 @@ void OSState::UpdateMemoryInfo() const
   _memInfoFile.open(kMemInfoFile, std::ifstream::in);
   if (_memInfoFile.is_open()) {
     std::string discard;
-    _memInfoFile >> discard >> _memTotal_kB >> discard >> discard >> _memFree_kB;
+    _memInfoFile >> discard >> _memTotal_kB >> discard >> discard >> _memFree_kB >> discard >> discard >> _memAvailable_kb;
     _memInfoFile.close();
   }
 }
@@ -305,7 +309,7 @@ float OSState::GetUptimeAndIdleTime(float &idleTime_s) const
   return _uptime_s;
 }
 
-uint32_t OSState::GetMemoryInfo(uint32_t &freeMem_kB) const
+uint32_t OSState::GetMemoryInfo(uint32_t &freeMem_kB, uint32_t &availableMem_kB) const
 {
   // Better to have this relatively expensive call as on-demand only
   DEV_ASSERT(_updatePeriod_ms == 0, "OSState.GetMemoryInfo.NonZeroUpdate");
@@ -313,6 +317,7 @@ uint32_t OSState::GetMemoryInfo(uint32_t &freeMem_kB) const
     UpdateMemoryInfo();
   }
   freeMem_kB = _memFree_kB;
+  availableMem_kB = _memAvailable_kb;
   return _memTotal_kB;
 }
 
