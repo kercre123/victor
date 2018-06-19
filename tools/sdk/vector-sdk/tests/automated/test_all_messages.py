@@ -16,6 +16,7 @@ import time
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 import vector
 
+from vector.messaging import external_interface_pb2
 from vector.messaging import protocol
 from vector.messaging import client
 
@@ -64,7 +65,7 @@ messages_to_test = [
     # SDKBehaviorActivation message
     ( client.ExternalInterfaceServicer.SDKBehaviorActivation,
         protocol.SDKActivationRequest(slot=vector.robot.SDK_PRIORITY_LEVEL.SDK_HIGH_PRIORITY, enable=True), 
-        protocol.SDKActivationResult(status=protocol.ResultStatus(description="Message sent to engine"), slot=vector.robot.SDK_PRIORITY_LEVEL.SDK_HIGH_PRIORITY)),
+        protocol.SDKActivationResult(status=protocol.ResultStatus(description="SDKActivationResult returned"), slot=vector.robot.SDK_PRIORITY_LEVEL.SDK_HIGH_PRIORITY, enabled=True)),
 
     # AppIntent message
     ( client.ExternalInterfaceServicer.AppIntent,
@@ -118,7 +119,7 @@ async def test_message(robot, message_name, message_src, message_input, expected
         return
 
     if len(expected_result_data_fields) != len(result_data_fields):
-        errors.append('TypeError: recieved output that appears to be a different type {0} than the expected output type {1} for message of type {2}'.format(type(result), type(expected_message_output), message_name))
+        errors.append('TypeError: recieved output that appears to be a different type or contains different contents {0} than the expected output type {1} for message of type {2}'.format(type(result), type(expected_message_output), message_name))
         return
 
     # This does not perform a deep comparison, which is difficult to implement in a generic way
@@ -131,7 +132,7 @@ async def run_message_tests(robot, future):
     errors = []
 
     # compile a list of all functions in the interface and the input/output classes we expect them to utilize
-    all_methods_in_interface = protocol.DESCRIPTOR.services_by_name['ExternalInterface'].methods
+    all_methods_in_interface = external_interface_pb2.DESCRIPTOR.services_by_name['ExternalInterface'].methods
     expected_test_list = {}
     for i in all_methods_in_interface:
         expected_test_list[i.name] = {
