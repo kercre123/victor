@@ -54,6 +54,7 @@ const int ccr_sr_cnt[12] = {0,2,4,2,2,2,2,4,2,1,1,4}; //number of CCC sensor fie
 
 //data conversion
 #define RCOM_BAT_RAW_TO_MV(raw)     (((raw)*2800)>>11)  /*robot_sr_t::bat.raw (adc) to millivolts*/
+#define RCOM_BAT_MV_TO_RAW(mv)      (((mv)<<11)/2800)
 
 //debug opts
 #define RCOM_PRINT_LEVEL_DEFAULT      RCOM_PRINT_LEVEL_CMD_DAT_RSP
@@ -100,7 +101,7 @@ void          rcomPwr(rcom_pwr_st_e st, int printlvl = RCOM_PRINT_LEVEL_DEFAULT)
 void          rcomLed(uint8_t *leds12, int printlvl = RCOM_PRINT_LEVEL_DEFAULT); //leds[12] {led0R,G,B,led1R,G,B...}
 robot_sr_t*   rcomMot(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head, int printlvl = RCOM_PRINT_LEVEL_DEFAULT);
 robot_sr_t*   rcomGet(uint8_t NN, uint8_t sensor, int printlvl = RCOM_PRINT_LEVEL_DEFAULT); //NN = #drops (sr vals). returns &sensor[0] of [NN-1]
-int           rcomRlg(uint8_t idx, char *buf, int buf_max_size); //read log 'idx' into buf (NOT null-terminated). return num chars written to buf [e.g. strlen(buf)]
+int           rcomRlg(uint8_t idx, char *buf, int buf_max_size, int printlvl = RCOM_PRINT_LEVEL_DEFAULT); //read log 'idx' into buf (NOT null-terminated). return num chars written to buf [e.g. strlen(buf)]
 void          rcomEng(uint8_t idx, uint8_t dat0=0, uint8_t dat1=0);
 void          rcomSmr(uint8_t idx, uint32_t val);
 uint32_t      rcomGmr(uint8_t idx);

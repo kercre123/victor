@@ -269,11 +269,11 @@ static robot_sr_t* ccc_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t
   cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"fcc %02x %02x 00 00 00 00", mode, cn), 500, CCC_CMD_OPTS);
 }*/
 
-int cccRlg(uint8_t idx, char *buf, int buf_max_size)
+int cccRlg(uint8_t idx, char *buf, int buf_max_size, int printlvl)
 {
   CCC_CMD_DELAY();
   char b[22]; const int bz = sizeof(b);
-  const int opts = CCC_CMD_OPTS | CMD_OPTS_ALLOW_STATUS_ERRS; // | CMD_OPTS_LOG_RAW_RX_DBG) & ~(CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER);
+  const int opts = printlvl2cmdopts(printlvl) | CMD_OPTS_ALLOW_STATUS_ERRS; // | CMD_OPTS_LOG_RAW_RX_DBG;
   cmd_dbuf_t dbuf = { buf, buf_max_size, 0 };
   cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"rlg %02x 00 00 00 00 00", idx), -1000, opts, 0, (dbuf.p && dbuf.size>0 ? &dbuf : 0) );
   if( cmdStatus() == 3 )
@@ -880,7 +880,7 @@ robot_sr_t* rcomGet(uint8_t NN, uint8_t sensor, int printlvl)
     return spine_MotGet_(NN, sensor, 0, 0, 0, 0, printlvl);
 }
 
-int  rcomRlg(uint8_t idx, char *buf, int buf_max_size) { return !rcom_target_spine_nCCC ? cccRlg(idx,buf,buf_max_size) : 0; }
+int  rcomRlg(uint8_t idx, char *buf, int buf_max_size, int printlvl) { return !rcom_target_spine_nCCC ? cccRlg(idx,buf,buf_max_size,printlvl) : 0; }
 void rcomEng(uint8_t idx, uint8_t dat0, uint8_t dat1) { if( !rcom_target_spine_nCCC ) ccc_IdxVal32_(idx, ((dat1<<8)|dat0), "eng", 0); }
 void rcomSmr(uint8_t idx, uint32_t val) {
   if( !rcom_target_spine_nCCC ) {
