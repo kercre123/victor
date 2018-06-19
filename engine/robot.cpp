@@ -2055,7 +2055,7 @@ IExternalInterface* Robot::GetExternalInterface() const
   
 bool Robot::HasGatewayInterface() const
 {
-  if (HasComponent(RobotComponentID::CozmoContextWrapper)){
+  if (HasComponent<ContextWrapper>()){
     return GetContext()->GetGatewayInterface() != nullptr;
   }
   return false;
