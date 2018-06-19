@@ -29,9 +29,9 @@ namespace
 {
   SettingsCommManager* s_SettingsCommManager = nullptr;
 
-  static const char* kConsoleGroup = "RobotSettings";
-
 #if REMOTE_CONSOLE_ENABLED
+
+  static const char* kConsoleGroup = "RobotSettings";
 
   void DebugSetMasterVolume(ConsoleFunctionContextRef context)
   {
