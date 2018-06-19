@@ -193,7 +193,7 @@ static int GetEngineStatsWebServerHandler(struct mg_connection *conn, void *cbda
 CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort* messagePipe)
   : _uiMsgHandler(new UiMessageHandler(1, messagePipe))
   , _protoMsgHandler(new ProtoMessageHandler(messagePipe))
-  , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get()))
+  , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get(), _protoMsgHandler.get()))
   , _deviceDataManager(new DeviceDataManager(_uiMsgHandler.get()))
   ,_animationTransferHandler(new AnimationTransfer(_uiMsgHandler.get(),dataPlatform))
 {

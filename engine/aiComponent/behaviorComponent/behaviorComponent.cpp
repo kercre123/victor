@@ -96,6 +96,7 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
   // Async Message Component
   if(!entity->HasComponent<AsyncMessageGateComponent>()){
     auto messagePtr = new AsyncMessageGateComponent(robot.HasExternalInterface() ? robot.GetExternalInterface() : nullptr,
+                                                    robot.HasGatewayInterface() ? robot.GetGatewayInterface() : nullptr,
                                                                   robot.GetRobotMessageHandler());
     entity->AddDependentComponent(BCComponentID::AsyncMessageComponent, std::move(messagePtr));
   }
@@ -249,6 +250,12 @@ void BehaviorComponent::SubscribeToTags(IBehavior* subscriber, std::set<RobotInt
   gateComp.SubscribeToTags(subscriber, std::move(tags));
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorComponent::SubscribeToTags(IBehavior* subscriber, std::set<AppToEngineTag>&& tags) const
+{
+  AsyncMessageGateComponent& gateComp = GetComponent<AsyncMessageGateComponent>();
+  gateComp.SubscribeToTags(subscriber, std::move(tags));
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorContainer& BehaviorComponent::GetBehaviorContainer()

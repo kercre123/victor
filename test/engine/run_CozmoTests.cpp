@@ -21,6 +21,7 @@
 #include "engine/components/cubes/cubeLightComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/visionComponent.h"
+#include "engine/cozmoAPI/comms/protoMessageHandler.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
@@ -2373,7 +2374,8 @@ int main(int argc, char ** argv)
   //LEAKING HERE
   Anki::Util::Data::DataPlatform* dataPlatform = new Anki::Util::Data::DataPlatform(persistentPath, cachePath, resourcePath);
   UiMessageHandler handler(0, nullptr);
-  cozmoContext = new Anki::Cozmo::CozmoContext(dataPlatform, &handler);
+  ProtoMessageHandler protoHandler(nullptr);
+  cozmoContext = new Anki::Cozmo::CozmoContext(dataPlatform, &handler, &protoHandler);
 
   cozmoContext->GetDataLoader()->LoadRobotConfigs();
   cozmoContext->GetDataLoader()->LoadNonConfigData();

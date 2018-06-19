@@ -65,7 +65,7 @@ Result ProtoMessageHandler::Init(CozmoContext* context, const Json::Value& confi
 
   // We'll use this callback for simple events we care about
   auto commonCallback = std::bind(&ProtoMessageHandler::HandleEvents, this, std::placeholders::_1);
-
+  
   // Subscribe to desired simple events
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapper::OneofMessageTypeCase::kPing, commonCallback)); // TODO: remove this once more examples are written
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapper::OneofMessageTypeCase::kBing, commonCallback)); // TODO: remove this once more examples are written
@@ -164,6 +164,7 @@ void ProtoMessageHandler::Broadcast(const external_interface::GatewayWrapper& me
   DEV_ASSERT(nullptr == _context || _context->IsEngineThread(),
               "UiMessageHandler.GameToEngineRef.BroadcastOffEngineThread");
 
+  DeliverToExternal(message);
   _eventMgr.Broadcast(AnkiEvent<external_interface::GatewayWrapper>(
     BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), static_cast<u32>(message.oneof_message_type_case()), message));
 }
@@ -176,8 +177,9 @@ void ProtoMessageHandler::Broadcast(external_interface::GatewayWrapper&& message
   DEV_ASSERT(nullptr == _context || _context->IsEngineThread(),
               "UiMessageHandler.GameToEngineRef.BroadcastOffEngineThread");
 
+  DeliverToExternal(message);
   _eventMgr.Broadcast(AnkiEvent<external_interface::GatewayWrapper>(
-    BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), static_cast<u32>(message.oneof_message_type_case()), message));
+    BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), static_cast<u32>(message.oneof_message_type_case()), std::move(message)));
 } // Broadcast(MessageGameToEngine &&)
 
 

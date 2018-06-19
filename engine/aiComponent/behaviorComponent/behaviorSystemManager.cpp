@@ -179,6 +179,7 @@ void BehaviorSystemManager::UpdateInActivatableScope(BehaviorExternalInterface& 
     behaviorExternalInterface.GetBehaviorEventComponent()._gameToEngineEvents.clear();
     behaviorExternalInterface.GetBehaviorEventComponent()._engineToGameEvents.clear();
     behaviorExternalInterface.GetBehaviorEventComponent()._robotToEngineEvents.clear();
+    behaviorExternalInterface.GetBehaviorEventComponent()._appToEngineEvents.clear();
 
     _asyncMessageComponent->GetEventsForBehavior(
        entry,
@@ -189,6 +190,9 @@ void BehaviorSystemManager::UpdateInActivatableScope(BehaviorExternalInterface& 
     _asyncMessageComponent->GetEventsForBehavior(
        entry,
        behaviorExternalInterface.GetBehaviorEventComponent()._robotToEngineEvents);
+    _asyncMessageComponent->GetEventsForBehavior(
+       entry,
+       behaviorExternalInterface.GetBehaviorEventComponent()._appToEngineEvents);
 
     entry->Update();
   }

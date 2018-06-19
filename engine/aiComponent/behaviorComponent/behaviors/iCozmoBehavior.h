@@ -295,6 +295,7 @@ protected:
   void SubscribeToTags(std::set<GameToEngineTag>&& tags);
   void SubscribeToTags(std::set<EngineToGameTag>&& tags);
   void SubscribeToTags(std::set<RobotInterface::RobotToEngineTag>&& tags);
+  void SubscribeToTags(std::set<AppToEngineTag>&& tags);
   
   // Function that calls message handling helper functions
   void UpdateMessageHandlingHelpers();
@@ -308,6 +309,7 @@ protected:
   virtual void AlwaysHandleInScope(const GameToEngineEvent& event) { }
   virtual void AlwaysHandleInScope(const EngineToGameEvent& event) { }
   virtual void AlwaysHandleInScope(const RobotToEngineEvent& event) { }
+  virtual void AlwaysHandleInScope(const AppToEngineEvent& event) { }
   
   // Derived classes must override this method to handle events that come in
   // while the behavior is running. In this case, the behavior is allowed to
@@ -318,6 +320,7 @@ protected:
   virtual void HandleWhileActivated(const GameToEngineEvent& event) { }
   virtual void HandleWhileActivated(const EngineToGameEvent& event) { }
   virtual void HandleWhileActivated(const RobotToEngineEvent& event) { }
+  virtual void HandleWhileActivated(const AppToEngineEvent& event) { }
   
   // Derived classes must override this method to handle events that come in
   // only while the behavior is NOT running. If it doesn't matter whether the
@@ -328,6 +331,7 @@ protected:
   virtual void HandleWhileInScopeButNotActivated(const GameToEngineEvent& event) { }
   virtual void HandleWhileInScopeButNotActivated(const EngineToGameEvent& event) { }
   virtual void HandleWhileInScopeButNotActivated(const RobotToEngineEvent& event) { }
+  virtual void HandleWhileInScopeButNotActivated(const AppToEngineEvent& event) { }
   
   // Many behaviors use a pattern of delegating control to a behavior or action, then waiting for it to finish 
   // before selecting what to do next. Behaviors can use the functions below to pass lambdas or member functions
@@ -584,6 +588,7 @@ private:
   std::set<GameToEngineTag> _gameToEngineTags;
   std::set<EngineToGameTag> _engineToGameTags;
   std::set<RobotInterface::RobotToEngineTag> _robotToEngineTags;
+  std::set<AppToEngineTag> _appToEngineTags;
 
   // Behaviors can load in internal "anonymous" behaviors which are not stored
   // in the behavior container and are referenced by string instead of by ID

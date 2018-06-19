@@ -13,6 +13,7 @@
 #ifndef COZMO_PROTO_MESSAGEHANDLER_H
 #define COZMO_PROTO_MESSAGEHANDLER_H
 
+#include "engine/cozmoAPI/comms/iSocketComms.h"
 #include "engine/events/ankiEventMgr.h"
 #include "engine/externalInterface/gatewayInterface.h"
 #include "util/signals/simpleSignal_fwd.h"

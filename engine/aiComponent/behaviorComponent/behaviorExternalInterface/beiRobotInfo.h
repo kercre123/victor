@@ -45,6 +45,7 @@ class CozmoContext;
 class DockingComponent;
 class DrivingAnimationHandler;
 class IExternalInterface;
+class IGatewayInterface;
 class MoodManager;
 class MovementComponent;
 class NVStorageComponent;
@@ -118,6 +119,9 @@ public:
 
   bool HasExternalInterface() const;
   IExternalInterface* GetExternalInterface();
+  
+  bool HasGatewayInterface() const;
+  IGatewayInterface* GetGatewayInterface();
 
   Result ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, f32 yTolFrac) const;
 

@@ -82,6 +82,17 @@ void BehaviorEventComponent::SubscribeToTags(IBehavior* subscriber,
     _messageSubscriber->_ref.SubscribeToTags(subscriber, std::move(tags));
   }
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEventComponent::SubscribeToTags(IBehavior* subscriber,
+                                             std::set<AppToEngineTag>&& tags) const
+{
+  if(ANKI_VERIFY(_messageSubscriber != nullptr,
+                 "BehaviorEventComponent.SubscribeToTags.NoMessageSubscriber",
+                 "")){
+    _messageSubscriber->_ref.SubscribeToTags(subscriber, std::move(tags));
+  }
+}
 
 
 } // namespace Cozmo

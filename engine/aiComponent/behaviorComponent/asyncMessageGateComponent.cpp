@@ -12,6 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/asyncMessageGateComponent.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "engine/externalInterface/gatewayInterface.h"
 
 #include "util/logging/logging.h"
 
@@ -20,9 +21,11 @@ namespace Cozmo {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AsyncMessageGateComponent::AsyncMessageGateComponent(IExternalInterface* externalInterface,
+                                                     IGatewayInterface* gatewayInterface,
                                                      RobotInterface::MessageHandler* robotInterface)
 : IDependencyManagedComponent(this, BCComponentID::AsyncMessageComponent)
 , _externalInterface(externalInterface)
+, _gatewayInterface(gatewayInterface)
 , _robotInterface(robotInterface)
 , _isCacheValid(false)
 , _cachedTracker(new EventTracker())
@@ -53,6 +56,11 @@ void AsyncMessageGateComponent::PrepareCache()
     std::lock_guard<std::mutex> lock(_activeTracker->_robotToEngineMutex);
     _cachedTracker->_robotToEngineEvents = std::move(_activeTracker->_robotToEngineEvents);
     _activeTracker->_robotToEngineEvents.clear();
+  }
+  {
+    std::lock_guard<std::mutex> lock(_activeTracker->_appToEngineMutex);
+    _cachedTracker->_appToEngineEvents = std::move(_activeTracker->_appToEngineEvents);
+    _activeTracker->_appToEngineEvents.clear();
   }
   
   ///
@@ -112,6 +120,25 @@ void AsyncMessageGateComponent::PrepareCache()
         }else{
           _cachedTracker->_cacheMap[behavior]._robotToEngineIdxs.push_back(idx);
         }
+      }
+    }
+  }
+  
+  for(int idx = 0; idx < _cachedTracker->_appToEngineEvents.size(); idx++){
+    auto eventTag = _cachedTracker->_appToEngineEvents[idx].GetData().oneof_message_type_case();
+    auto subscriberIter = _appToEngineSubscribers.find(eventTag);
+    if(subscriberIter != _appToEngineSubscribers.end()){
+      for(auto& behavior : subscriberIter->second){
+        // Create wrapper if necessary
+        auto cacheMapEntry = _cachedTracker->_cacheMap.find(behavior);
+        if(cacheMapEntry == _cachedTracker->_cacheMap.end()){
+          EventListWrapper wrapper;
+          wrapper._appToEngineIdxs.push_back(idx);
+          _cachedTracker->_cacheMap[behavior] = wrapper;
+        }else{
+          _cachedTracker->_cacheMap[behavior]._appToEngineIdxs.push_back(idx);
+        }
+        
       }
     }
   }
@@ -177,6 +204,26 @@ void AsyncMessageGateComponent::GetEventsForBehavior(IBehavior* subscriber,
   if(behaviorEntry != _cachedTracker->_cacheMap.end()){
     for(auto idx: behaviorEntry->second._robotToEngineIdxs){
       events.push_back(_cachedTracker->_robotToEngineEvents[idx]);
+    }
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AsyncMessageGateComponent::GetEventsForBehavior(IBehavior* subscriber,
+                                                     std::vector<const AppToEngineEvent>& events)
+{
+  if(!ANKI_VERIFY(events.empty(),
+      "AsyncMessageGateComponent.GetEventsForBehavior.AppToEngineEvents",
+      "Events not empty")){
+    events.clear();
+  }
+  DEV_ASSERT(_isCacheValid,
+             "AsyncMessageGateComponent.GetATEEventsForBehavior.CacheIsClear");
+  
+  auto behaviorEntry = _cachedTracker->_cacheMap.find(subscriber);
+  if(behaviorEntry != _cachedTracker->_cacheMap.end()){
+    for(auto idx: behaviorEntry->second._appToEngineIdxs){
+      events.push_back(_cachedTracker->_appToEngineEvents[idx]);
     }
   }
 }
@@ -266,6 +313,31 @@ void AsyncMessageGateComponent::SubscribeToTags(IBehavior* subscriber,
                                );
     }else{
       _robotToEngineSubscribers[tag].insert(subscriber);
+    }
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AsyncMessageGateComponent::SubscribeToTags(IBehavior* subscriber,
+                                                std::set<AppToEngineTag>&& tags)
+{
+  if(_gatewayInterface == nullptr){
+    return;
+  }
+  
+  for(auto& tag: tags){
+    auto tagIter = _appToEngineSubscribers.find(tag);
+    if(tagIter == _appToEngineSubscribers.end()){
+      std::set<IBehavior*> subscribers = {subscriber};
+      _appToEngineSubscribers[tag] = subscribers;
+      _eventHandles.push_back(_gatewayInterface->Subscribe(tag,
+                                    [this](const AppToEngineEvent& event){
+                                      std::lock_guard<std::mutex> lock(_activeTracker->_appToEngineMutex);
+                                      _activeTracker->_appToEngineEvents.push_back(event);
+                                    })
+                              );
+    }else{
+      _appToEngineSubscribers[tag].insert(subscriber);
     }
   }
 }

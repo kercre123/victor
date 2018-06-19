@@ -2052,6 +2052,20 @@ IExternalInterface* Robot::GetExternalInterface() const
   DEV_ASSERT(GetContext()->GetExternalInterface() != nullptr, "Robot.ExternalInterface.nullptr");
   return GetContext()->GetExternalInterface();
 }
+  
+bool Robot::HasGatewayInterface() const
+{
+  if (HasComponent(RobotComponentID::CozmoContextWrapper)){
+    return GetContext()->GetGatewayInterface() != nullptr;
+  }
+  return false;
+}
+  
+IGatewayInterface* Robot::GetGatewayInterface() const
+{
+  DEV_ASSERT(GetContext()->GetGatewayInterface() != nullptr, "Robot.GatewayInterface.nullptr");
+  return GetContext()->GetGatewayInterface();
+}
 
 Util::Data::DataPlatform* Robot::GetContextDataPlatform()
 {

@@ -102,6 +102,7 @@ public:
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageGameToEngineTag>&& tags) const override;
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageEngineToGameTag>&& tags) const override;
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<RobotInterface::RobotToEngineTag>&& tags) const override;
+  virtual void SubscribeToTags(IBehavior* subscriber, std::set<AppToEngineTag>&& tags) const override;
 
 protected:
   // Support legacy cozmo code

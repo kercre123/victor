@@ -493,6 +493,10 @@ void ICozmoBehavior::InitInternal()
   for(auto tag: _robotToEngineTags) {
     GetBEI().GetBehaviorEventComponent().SubscribeToTags(this,{tag});
   }
+  
+  for(auto tag : _appToEngineTags) {
+    GetBEI().GetBehaviorEventComponent().SubscribeToTags(this, {tag});
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -684,6 +688,12 @@ void ICozmoBehavior::SubscribeToTags(std::set<EngineToGameTag> &&tags)
 void ICozmoBehavior::SubscribeToTags(std::set<RobotInterface::RobotToEngineTag> &&tags)
 {
   _robotToEngineTags.insert(tags.begin(), tags.end());
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SubscribeToTags(std::set<AppToEngineTag>&& tags)
+{
+  _appToEngineTags.insert(tags.begin(), tags.end());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1101,6 +1111,19 @@ void ICozmoBehavior::UpdateMessageHandlingHelpers()
       HandleWhileActivated(event);
     }else{
       HandleWhileInScopeButNotActivated(event);
+    }
+  }
+  
+  for(const auto& event: stateChangeComp.GetAppToEngineEvents()){
+    // Handle specific callbacks
+    auto iter = _appToEngineTags.find(event.GetData().oneof_message_type_case());
+    if(iter != _appToEngineTags.end()){
+      AlwaysHandleInScope(event);
+      if(IsActivated()){
+        HandleWhileActivated(event);
+      }else{
+        HandleWhileInScopeButNotActivated(event);
+      }
     }
   }
 }

@@ -82,6 +82,7 @@ class CubeCommsComponent;
 class DrivingAnimationHandler;
 class FaceWorld;
 class IExternalInterface;
+class IGatewayInterface;
 class InventoryComponent;
 class MatPiece;
 class MoodManager;
@@ -574,8 +575,10 @@ public:
   using RobotWorldOriginChangedSignal = Signal::Signal<void (RobotID_t)>;
   RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
   bool HasExternalInterface() const;
+  bool HasGatewayInterface() const;
 
   IExternalInterface* GetExternalInterface() const;
+  IGatewayInterface* GetGatewayInterface() const;
 
   RobotInterface::MessageHandler* GetRobotMessageHandler() const;
   RobotEventHandler& GetRobotEventHandler();

@@ -240,6 +240,18 @@ IExternalInterface* BEIRobotInfo::GetExternalInterface()
 {
   return _robot.GetExternalInterface();
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BEIRobotInfo::HasGatewayInterface() const
+{
+  return _robot.HasGatewayInterface();
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IGatewayInterface* BEIRobotInfo::GetGatewayInterface()
+{
+  return _robot.GetGatewayInterface();
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BEIRobotInfo::ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, f32 yTolFrac) const
