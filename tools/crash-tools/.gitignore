@@ -1,0 +1,4 @@
+crashes/*.dmp
+crashes/*.dmp.uploaded
+callstack.txt
+get-callstack-temp
