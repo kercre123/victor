@@ -7,6 +7,7 @@ if (NOT MACOSX)
 endif()
 
 include(opencv)
+include(protobuf)
 include(symlink_target)
 include(anki_build_cxx)
 
@@ -34,6 +35,7 @@ if (MACOSX)
   set(PLATFORM_LIBS
     ${FOUNDATION}
     ${OPENGL}
+    ${PROTOBUF_LIBS}
     ${GLUT}
     ${WEBOTS_LIBS}
     ${WEBOTS_SIM_LIBS}

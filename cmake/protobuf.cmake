@@ -1,4 +1,3 @@
-set(PROTOBUF_INCLUDE_PATH "${CORETECH_EXTERNAL_DIR}/build/protobuf/vicos/include")
 
 set(PROTOBUF_LIBS
   protobuf-lite
@@ -6,8 +5,10 @@ set(PROTOBUF_LIBS
 
 if (VICOS)
   set(PROTOBUF_LIB_PATH "${CORETECH_EXTERNAL_DIR}/build/protobuf/vicos/lib")
+  set(PROTOBUF_INCLUDE_PATH "${CORETECH_EXTERNAL_DIR}/build/protobuf/vicos/include")
 elseif (MACOSX)
   set(PROTOBUF_LIB_PATH "${CORETECH_EXTERNAL_DIR}/build/protobuf/mac/lib")
+  set(PROTOBUF_INCLUDE_PATH "${CORETECH_EXTERNAL_DIR}/build/protobuf/mac/include")
 endif()
 
 foreach(LIB ${PROTOBUF_LIBS})
