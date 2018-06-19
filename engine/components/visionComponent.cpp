@@ -41,6 +41,7 @@
 #include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/opencvThreading.h"
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/quad_impl.h"
@@ -119,6 +120,7 @@ namespace Cozmo {
     const char * const ImageQualityAlertDuration = "TimeBeforeErrorMessage_ms";
     const char * const ImageQualityAlertSpacing = "RepeatedErrorMessageInterval_ms";
     const char * const InitialExposureTime = "InitialExposureTime_ms";
+    const char * const OpenCvThreadMode = "NumOpenCvThreads";
   }
 
   namespace
@@ -199,6 +201,8 @@ namespace Cozmo {
         PRINT_NAMED_ERROR("Vision.Init.MissingJsonParameter", "%s", __fieldName__); \
         return; \
     }} while(0)
+
+    GET_JSON_PARAMETER(config, JsonKey::OpenCvThreadMode, _openCvNumThreads);
 
     const Json::Value& imageQualityConfig = config[JsonKey::ImageQualityGroup];
     GET_JSON_PARAMETER(imageQualityConfig, JsonKey::ImageQualityAlertDuration, kImageQualityAlertDuration_ms);
@@ -318,7 +322,6 @@ namespace Cozmo {
     }
 
     _running = true;
-
     // Note that we're giving the Processor a pointer to "this", so we
     // have to ensure this VisionSystem object outlives the thread.
     _processingThread = std::thread(&VisionComponent::Processor, this);
@@ -860,6 +863,13 @@ namespace Cozmo {
                "VisionComponent.Processor.VisionSystemNotReady");
 
     Anki::Util::SetThreadName(pthread_self(), "VisionSystem");
+
+    // Disable threading by OpenCV
+    Result cvResult = SetNumOpencvThreads( _openCvNumThreads, "VisionComponent.Processor" );
+    if( RESULT_OK != cvResult )
+    {
+      return;
+    }
 
     while (_running) {
 

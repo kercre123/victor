@@ -22,6 +22,7 @@
 #include "cozmoAnim/robotDataLoader.h"
 #include "cozmoAnim/textToSpeech/textToSpeechComponent.h"
 
+#include "coretech/common/engine/opencvThreading.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
@@ -50,6 +51,7 @@
   #define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 0
   #define ENABLE_CE_RUN_TIME_DIAGNOSTICS 0
 #endif
+#define NUM_ANIM_OPENCV_THREADS 0
 
 namespace Anki {
 namespace Cozmo {
@@ -123,6 +125,13 @@ Result AnimEngine::Init()
   _context->GetWebService()->Start(_context->GetDataPlatform(),
                                    _context->GetDataLoader()->GetWebServerAnimConfig());
   FaceInfoScreenManager::getInstance()->Init(_context.get(), _animationStreamer.get());
+
+  // Make sure OpenCV isn't threading
+  Result cvResult = SetNumOpencvThreads( NUM_ANIM_OPENCV_THREADS, "AnimEngine.Init" );
+  if( RESULT_OK != cvResult )
+  {
+    return cvResult;
+  }
 
   LOG_INFO("AnimEngine.Init.Success","Success");
   _isInitialized = true;

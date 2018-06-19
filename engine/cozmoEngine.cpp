@@ -9,6 +9,7 @@
  * Modifications:
  */
 
+#include "coretech/common/engine/opencvThreading.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/ankiEventUtil.h"
@@ -83,6 +84,7 @@
 #endif
 
 #define MIN_NUM_FACTORY_TEST_LOGS_FOR_ARCHIVING 100
+#define NUM_OPENCV_THREADS 0
 
 // Local state variables
 namespace {
@@ -425,6 +427,15 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
   // be doing the updating.
   if( !_hasRunFirstUpdate ) {
     _context->SetEngineThread();
+
+    // Controls OpenCV's built-in multithreading for the calling thread, so we have to do this on the first
+    // call to update due to the threading quirk
+    Result cvResult = SetNumOpencvThreads(NUM_OPENCV_THREADS, "CozmoEngine.Init");
+    if( RESULT_OK != cvResult )
+    {
+      return cvResult;
+    }
+
     _hasRunFirstUpdate = true;
   }
 

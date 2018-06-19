@@ -461,6 +461,9 @@ struct DockingErrorSignal;
     bool _enableAutoExposure = true;
     bool _enableWhiteBalance = true;
     
+    // Threading for OpenCV
+    int _openCvNumThreads = 1;
+    
   }; // class VisionComponent
   
   inline void VisionComponent::Pause(bool isPaused) {
