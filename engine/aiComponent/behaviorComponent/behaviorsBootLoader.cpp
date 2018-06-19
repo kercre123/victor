@@ -66,7 +66,7 @@ BehaviorsBootLoader::BehaviorsBootLoader( IBehavior* overrideBehavior, const Uni
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependentComponents )
+void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependentComps )
 {
   using namespace Util;
   const Data::DataPlatform* platform = robot->GetContextDataPlatform();
@@ -79,7 +79,7 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
   
   _externalInterface = robot->GetExternalInterface();
   
-  _behaviorContainer = dependentComponents.GetBasePtr<BehaviorContainer>();
+  _behaviorContainer = dependentComps.GetComponentPtr<BehaviorContainer>();
   
   // If this is the factory test forcibly set _bootBehavior as playpen as long as the robot has not been through packout
   bool startInPlaypen = false;
@@ -134,7 +134,7 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
 void BehaviorsBootLoader::UpdateDependent(const BCCompMap& dependentComps)
 {
   if( _behaviorToSwitchTo != nullptr ) {
-    auto* bsm = dependentComps.GetBasePtr<BehaviorSystemManager>();
+    auto* bsm = dependentComps.GetComponentPtr<BehaviorSystemManager>();
     if( bsm != nullptr ) {
       bsm->ResetBehaviorStack( _behaviorToSwitchTo );
       _behaviorToSwitchTo = nullptr;

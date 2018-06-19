@@ -32,7 +32,7 @@ class BehaviorTimerManager : public IDependencyManagedComponent<BCComponentID>
 public:
   BehaviorTimerManager();
 
-  virtual void InitDependent( Robot* robot, const BCCompMap& dependentComponents ) override { }
+  virtual void InitDependent( Robot* robot, const BCCompMap& dependentComps ) override { }
   virtual void GetInitDependencies( BCCompIDSet& dependencies ) const override { }
   virtual void GetUpdateDependencies( BCCompIDSet& dependencies ) const override { }
 

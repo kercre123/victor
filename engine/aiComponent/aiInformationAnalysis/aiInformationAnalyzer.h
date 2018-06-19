@@ -59,7 +59,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // IDependencyManagedComponent<AIComponentID> functions
-  virtual void InitDependent(Cozmo::Robot* robot, const AICompMap& dependentComponents) override;
+  virtual void InitDependent(Cozmo::Robot* robot, const AICompMap& dependentComps) override;
   virtual void UpdateDependent(const AICompMap& dependentComps) override;
   // end IDependencyManagedComponent<AIComponentID> functions
   

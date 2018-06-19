@@ -41,7 +41,7 @@ public:
   virtual void GetInitDependencies( RobotCompIDSet& dependencies ) const override;
   virtual void GetUpdateDependencies( RobotCompIDSet& dependencies ) const override {};
   
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
   
   // Is there currently a steady musical beat happening?

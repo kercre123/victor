@@ -533,7 +533,7 @@ void BehaviorKeepaway::UpdateTargetDistance()
 
   bool usingProx = false;
   if(_iConfig.useProxForDistance){
-    auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
+    auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
     bool targetIsInProxFOV = false;
     proxSensor.IsInFOV(targetObject->GetPose(), targetIsInProxFOV);
     u16 proxDist_mm = 0;

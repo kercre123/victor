@@ -62,7 +62,7 @@ PhotographyManager::PhotographyManager()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void PhotographyManager::InitDependent(Robot* robot, const RobotCompMap& dependentComponents)
+void PhotographyManager::InitDependent(Robot* robot, const RobotCompMap& dependentComps)
 {
   _visionComponent = robot->GetComponentPtr<VisionComponent>();
 

@@ -64,11 +64,11 @@ BehaviorSystemManager::~BehaviorSystemManager()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSystemManager::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
+void BehaviorSystemManager::InitDependent(Robot* robot, const BCCompMap& dependentComps)
 {
-  auto& behaviorsBootloader = dependentComponents.GetValue<BehaviorsBootLoader>();
-  auto& bei = dependentComponents.GetValue<BehaviorExternalInterface>();
-  auto& async = dependentComponents.GetValue<AsyncMessageGateComponent>();
+  auto& behaviorsBootloader = dependentComps.GetComponent<BehaviorsBootLoader>();
+  auto& bei = dependentComps.GetComponent<BehaviorExternalInterface>();
+  auto& async = dependentComps.GetComponent<AsyncMessageGateComponent>();
 
   InitConfiguration(*robot,
                     behaviorsBootloader.GetBootBehavior(),
@@ -121,9 +121,9 @@ void BehaviorSystemManager::ResetBehaviorStack(IBehavior* baseBehavior)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSystemManager::UpdateDependent(const BCCompMap& dependentComponents)
+void BehaviorSystemManager::UpdateDependent(const BCCompMap& dependentComps)
 {
-  auto& bei = dependentComponents.GetValue<BehaviorExternalInterface>();
+  auto& bei = dependentComps.GetComponent<BehaviorExternalInterface>();
   ANKI_CPU_PROFILE("BehaviorSystemManager::Update");
   
   if(_initializationStage == InitializationStage::SystemNotInitialized) {

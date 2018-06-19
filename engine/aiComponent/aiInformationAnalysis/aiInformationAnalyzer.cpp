@@ -37,7 +37,7 @@ AIInformationAnalyzer::AIInformationAnalyzer()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIInformationAnalyzer::InitDependent(Cozmo::Robot* robot, const AICompMap& dependentComponents)
+void AIInformationAnalyzer::InitDependent(Cozmo::Robot* robot, const AICompMap& dependentComps)
 {
   _robot = robot;
 }

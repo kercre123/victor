@@ -63,10 +63,10 @@ AnimationComponent::AnimationComponent()
 
 }
 
-void AnimationComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void AnimationComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
-  _dataAccessor = dependentComponents.GetBasePtr<DataAccessorComponent>();
+  _dataAccessor = dependentComps.GetComponentPtr<DataAccessorComponent>();
   const CozmoContext* context = _robot->GetContext();
   _animationGroups = std::make_unique<AnimationGroupWrapper>(*(context->GetDataLoader()->GetAnimationGroups()));
   if (context) {

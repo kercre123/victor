@@ -46,7 +46,7 @@ BlockTapFilterComponent::BlockTapFilterComponent()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BlockTapFilterComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void BlockTapFilterComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   // Null for unit tests

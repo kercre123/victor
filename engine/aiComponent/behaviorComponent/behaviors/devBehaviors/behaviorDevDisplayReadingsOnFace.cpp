@@ -118,7 +118,7 @@ void BehaviorDevDisplayReadingsOnFace::UpdateDisplayPeripheralMotion()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevDisplayReadingsOnFace::UpdateDisplayProxReading()
 {
-  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
+  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
   u16 proxDist_mm = 0;
   const bool isValid = proxSensor.GetLatestDistance_mm(proxDist_mm);
 

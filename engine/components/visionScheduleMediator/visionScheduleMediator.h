@@ -48,7 +48,7 @@ public:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // IDependencyManagedComponent
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::Vision);
     dependencies.insert(RobotComponentID::CozmoContextWrapper);

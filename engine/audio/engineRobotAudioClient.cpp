@@ -42,7 +42,7 @@ EngineRobotAudioClient::EngineRobotAudioClient()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void EngineRobotAudioClient::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void EngineRobotAudioClient::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   // Create & setup behavior listener
   _behaviorListener.reset( new AudioBehaviorStackListener( *this, robot->GetContext() ) );

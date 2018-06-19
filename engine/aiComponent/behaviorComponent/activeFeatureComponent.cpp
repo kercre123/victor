@@ -35,17 +35,17 @@ ActiveFeatureComponent::ActiveFeatureComponent()
 {
 }
 
-void ActiveFeatureComponent::InitDependent( Robot* robot, const BCCompMap& dependentComponents )
+void ActiveFeatureComponent::InitDependent( Robot* robot, const BCCompMap& dependentComps )
 {
-  _context = dependentComponents.GetValue<BEIRobotInfo>().GetContext();
+  _context = dependentComps.GetComponent<BEIRobotInfo>().GetContext();
   _lastUsedIntentActivationID = 0;
 
   _statusLogHandler.reset( new StatusLogHandler( _context ) );
 }
 
-void ActiveFeatureComponent::UpdateDependent(const BCCompMap& dependentComponents)
+void ActiveFeatureComponent::UpdateDependent(const BCCompMap& dependentComps)
 {
-  const auto& behaviorIterator = dependentComponents.GetValue<ActiveBehaviorIterator>();
+  const auto& behaviorIterator = dependentComps.GetComponent<ActiveBehaviorIterator>();
 
   // Only bother to do an update if the behavior stack changed
   const size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
@@ -66,7 +66,7 @@ void ActiveFeatureComponent::UpdateDependent(const BCCompMap& dependentComponent
 
     if( _activeFeature != newFeature ) {
 
-      const auto& uic = dependentComponents.GetValue<UserIntentComponent>();
+      const auto& uic = dependentComps.GetComponent<UserIntentComponent>();
 
       UserIntentPtr activeIntent = uic.GetActiveUserIntent();
 
@@ -97,7 +97,7 @@ void ActiveFeatureComponent::UpdateDependent(const BCCompMap& dependentComponent
       OnFeatureChanged( newFeature, _activeFeature, intentSource );
 
       if( newFeature != ActiveFeature::NoFeature ) {
-        dependentComponents.GetValue<RobotStatsTracker>().IncrementActiveFeature(newFeature, intentSource);
+        dependentComps.GetComponent<RobotStatsTracker>().IncrementActiveFeature(newFeature, intentSource);
       }
 
       _activeFeature = newFeature;

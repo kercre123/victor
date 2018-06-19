@@ -87,9 +87,9 @@ RobotStatsTracker::~RobotStatsTracker()
 #endif
 }
 
-void RobotStatsTracker::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void RobotStatsTracker::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
-  const auto& context = dependentComponents.GetValue<ContextWrapper>().context;
+  const auto& context = dependentComps.GetComponent<ContextWrapper>().context;
   const auto* platform = context->GetDataPlatform();
 
   const std::string& folder = platform->pathToResource( Util::Data::Scope::Persistent, kStatsFolder );

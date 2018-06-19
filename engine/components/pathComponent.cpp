@@ -108,7 +108,7 @@ PathComponent::~PathComponent()
   Abort();
 }
 
-void PathComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void PathComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   const CozmoContext* context =  _robot->GetContext();

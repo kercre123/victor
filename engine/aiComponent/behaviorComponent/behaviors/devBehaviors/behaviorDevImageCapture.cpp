@@ -159,7 +159,7 @@ void BehaviorDevImageCapture::OnBehaviorActivated()
   _dVars.timeToBlink = -1.0f;
   _dVars.blinkOn = false;
 
-  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
+  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetComponent<VisionComponent>();
   visionComponent.EnableDrawImagesToScreen(true);
   
   auto& robotInfo = GetBEI().GetRobotInfo();
@@ -175,7 +175,7 @@ void BehaviorDevImageCapture::OnBehaviorDeactivated()
   // wait for the lift to relax 
   robotInfo.GetMoveComponent().EnableLiftPower(true);
 
-  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
+  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetComponent<VisionComponent>();
   visionComponent.EnableDrawImagesToScreen(false);
 }
 
@@ -216,7 +216,7 @@ void BehaviorDevImageCapture::BehaviorUpdate()
   }
   
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
+  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetComponent<VisionComponent>();
 
   // update light blinking if needed
   if( _dVars.timeToBlink > 0.0f ) {

@@ -44,7 +44,7 @@ InventoryComponent::InventoryComponent()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void InventoryComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void InventoryComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   ReadCurrentInventoryFromRobot();
@@ -59,7 +59,7 @@ void InventoryComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
     helper.SubscribeGameToEngine<MessageGameToEngineTag::InventoryRequestGet>();
   }
 
-  auto& context = dependentComponents.GetValue<ContextWrapper>().context;
+  auto& context = dependentComps.GetComponent<ContextWrapper>().context;
 
   if (nullptr != context->GetDataPlatform())
   {

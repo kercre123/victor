@@ -138,7 +138,7 @@ void BehaviorDisplayWeather::InitBehavior()
   if(_iConfig == nullptr){
     return;
   }
-  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetValue<DataAccessorComponent>();
+  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();
 
   // Initialize composite image
   {
@@ -324,7 +324,7 @@ bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenhei
 
   auto& layer = outImg->GetLayerLayoutMap().begin()->second;
 
-  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetValue<DataAccessorComponent>();
+  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();
 
   auto* spriteCache = dataAccessorComp.GetSpriteCache();
   auto* seqContainer = dataAccessorComp.GetSpriteSequenceContainer();
@@ -370,7 +370,7 @@ bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenhei
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDisplayWeather::ParseDisplayTempTimesFromAnim()
 {
-  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetValue<DataAccessorComponent>();
+  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();
 
   const Animation* anim = nullptr;
   bool gotAnim = false;

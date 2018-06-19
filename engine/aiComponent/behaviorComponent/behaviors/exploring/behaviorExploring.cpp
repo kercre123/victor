@@ -829,7 +829,7 @@ void BehaviorExploring::SampleVisitLocationsFacingObstacle( const INavMap* memor
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploring::PrepRobotForProx()
 {
-  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
+  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
   u16 distance_mm = 0;
   const bool isSensorReadingValid = proxSensor.GetLatestDistance_mm(distance_mm);
   if( !isSensorReadingValid ) {

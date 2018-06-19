@@ -50,7 +50,7 @@ public:
   //////
   virtual void GetInitDependencies(BCCompIDSet& dependencies) const override {}
   virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {};
-  virtual void InitDependent(Cozmo::Robot* robot, const BCCompMap& dependentComponents) override {};
+  virtual void InitDependent(Cozmo::Robot* robot, const BCCompMap& dependentComps) override {};
   //////
   // end IDependencyManagedComponent functions
   //////

@@ -48,9 +48,9 @@ void SDKComponent::GetInitDependencies( RobotCompIDSet& dependencies ) const
 }
 
 
-void SDKComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void SDKComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
-  // TODO It's preferred, where possible, to use dependentComponents rather than caching robot
+  // TODO It's preferred, where possible, to use dependentComps rather than caching robot
   // directly (makes it much easier to write unit tests)
   _robot = robot;
   // Subscribe to messages

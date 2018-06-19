@@ -141,7 +141,7 @@ namespace Cozmo {
   } // VisionSystem()
 
 
-  void VisionComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+  void VisionComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
   {
     _robot = robot;
     _context = _robot->GetContext();
@@ -179,7 +179,7 @@ namespace Cozmo {
     // "Special" viz identifier for the main camera feed
     _vizDisplayIndexMap["camera"] = 0;
 
-    auto& context = dependentComponents.GetValue<ContextWrapper>().context;
+    auto& context = dependentComps.GetComponent<ContextWrapper>().context;
 
     if (nullptr != context->GetDataPlatform())
     {

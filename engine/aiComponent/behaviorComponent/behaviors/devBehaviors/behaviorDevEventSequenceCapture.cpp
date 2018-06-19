@@ -211,7 +211,7 @@ void BehaviorDevEventSequenceCapture::OnBehaviorActivated()
   _dVars.waitStartTime_s = -1.0f;
   _dVars.wasTouched = false;
 
-  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
+  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetComponent<VisionComponent>();
   visionComponent.EnableDrawImagesToScreen(true);
   
   auto& robotInfo = GetBEI().GetRobotInfo();
@@ -229,7 +229,7 @@ void BehaviorDevEventSequenceCapture::OnBehaviorDeactivated()
   // wait for the lift to relax 
   robotInfo.GetMoveComponent().EnableLiftPower(true);
 
-  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
+  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetComponent<VisionComponent>();
   visionComponent.EnableDrawImagesToScreen(false);
 }
 
@@ -320,7 +320,7 @@ void BehaviorDevEventSequenceCapture::BehaviorUpdate()
 
   const float currTime_s = GetTimestampSec();
   float waitTime_s = currTime_s - _dVars.waitStartTime_s;
-  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
+  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetComponent<VisionComponent>();
   int32_t numCurrentSeqs = GetNumCurrentSequences();
 
   // Display the class name and sequence number

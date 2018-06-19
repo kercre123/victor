@@ -60,7 +60,7 @@ ObjectPoseConfirmer::ObjectPoseConfirmer()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ObjectPoseConfirmer::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void ObjectPoseConfirmer::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
 }

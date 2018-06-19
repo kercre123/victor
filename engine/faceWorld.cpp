@@ -85,7 +85,7 @@ namespace Cozmo {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void FaceWorld::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+  void FaceWorld::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
   {
     _robot = robot;
     if(robot->HasExternalInterface()) {

@@ -106,7 +106,7 @@ void BehaviorProceduralClock::GetBehaviorJsonKeys(std::set<const char*>& expecte
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorProceduralClock::InitBehavior()
 {
-  auto& accessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetValue<DataAccessorComponent>();
+  auto& accessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();
   auto* spriteCache = accessorComp.GetSpriteCache();
   auto* seqContainer = accessorComp.GetSpriteSequenceContainer();
   using Entry = Vision::CompositeImageLayer::SpriteEntry;
@@ -117,7 +117,7 @@ void BehaviorProceduralClock::InitBehavior()
   }
 
   // Setup the composite image
-  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetValue<DataAccessorComponent>();
+  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();
   Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
   _instanceParams.compImg = std::make_unique<Vision::CompositeImage>(dataAccessorComp.GetSpriteCache(),
                                                                      faceHueAndSaturation,
@@ -252,7 +252,7 @@ void BehaviorProceduralClock::BuildAndDisplayProceduralClock(const int clockOffs
   auto displayOffset_aligned_ms = displayOffset_ms;
   displayOffset_aligned_ms -= (displayOffset_aligned_ms % ANIM_TIME_STEP_MS);
 
-  auto& accessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetValue<DataAccessorComponent>();
+  auto& accessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();
   auto* spriteCache = accessorComp.GetSpriteCache();
   auto* seqContainer = accessorComp.GetSpriteSequenceContainer();
   using Entry = Vision::CompositeImageLayer::SpriteEntry;

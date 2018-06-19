@@ -84,7 +84,7 @@ CubeCommsComponent::CubeCommsComponent()
   _cubeBleClient->RegisterCubeConnectionCallback(std::bind(&CubeCommsComponent::HandleConnectionStateChange, this, std::placeholders::_1, std::placeholders::_2));
   _cubeBleClient->RegisterScanFinishedCallback(std::bind(&CubeCommsComponent::HandleScanForCubesFinished, this));
 }
-void CubeCommsComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void CubeCommsComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   

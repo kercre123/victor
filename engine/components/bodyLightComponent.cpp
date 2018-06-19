@@ -51,7 +51,7 @@ BodyLightComponent::BodyLightComponent()
 }
 
 
-void BodyLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void BodyLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   _backpackLightAnimations = std::make_unique<BackpackLightWrapper>(

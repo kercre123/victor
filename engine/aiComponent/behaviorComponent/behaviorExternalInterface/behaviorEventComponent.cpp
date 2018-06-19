@@ -35,7 +35,7 @@ BehaviorEventComponent::BehaviorEventComponent()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEventComponent::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
+void BehaviorEventComponent::InitDependent(Robot* robot, const BCCompMap& dependentComps)
 {
   Init(robot->GetAIComponent().GetComponent<BehaviorComponent>());
 }

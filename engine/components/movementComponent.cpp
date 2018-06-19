@@ -52,7 +52,7 @@ MovementComponent::MovementComponent()
 
 }
  
-void MovementComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void MovementComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   if (_robot->HasExternalInterface())

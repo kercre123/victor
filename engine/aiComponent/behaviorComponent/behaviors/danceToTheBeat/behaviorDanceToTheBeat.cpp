@@ -413,7 +413,7 @@ void BehaviorDanceToTheBeat::UnregisterOnBeatCallback()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDanceToTheBeat::GetAnimationBeatDelay_sec(const std::string& animName, float& beatDelay_sec)
 {
-  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetValue<DataAccessorComponent>();
+  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();
   const auto* animContainer = dataAccessorComp.GetCannedAnimationContainer();
   if (animContainer == nullptr) {
     PRINT_NAMED_ERROR("BehaviorDanceToTheBeat.GetAnimationBeatDelay_sec.NullAnimContainer",

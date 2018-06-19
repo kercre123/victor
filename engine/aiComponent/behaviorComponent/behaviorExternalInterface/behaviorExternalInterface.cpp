@@ -48,16 +48,16 @@ BehaviorExternalInterface::~BehaviorExternalInterface()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
+void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dependentComps)
 {
-  auto* aiComponent            = dependentComponents.GetBasePtr<AIComponent>();
-  auto* behaviorContainer      = dependentComponents.GetBasePtr<BehaviorContainer>();
-  auto* behaviorEventComponent = dependentComponents.GetBasePtr<BehaviorEventComponent>();
-  auto* behaviorTimers         = dependentComponents.GetBasePtr<BehaviorTimerManager>();
-  auto* blockWorld             = dependentComponents.GetBasePtr<BlockWorld>();
-  auto* delegationComponent    = dependentComponents.GetBasePtr<DelegationComponent>();
-  auto* faceWorld              = dependentComponents.GetBasePtr<FaceWorld>();
-  auto* robotInfo              = dependentComponents.GetBasePtr<BEIRobotInfo>();
+  auto* aiComponent            = dependentComps.GetComponentPtr<AIComponent>();
+  auto* behaviorContainer      = dependentComps.GetComponentPtr<BehaviorContainer>();
+  auto* behaviorEventComponent = dependentComps.GetComponentPtr<BehaviorEventComponent>();
+  auto* behaviorTimers         = dependentComps.GetComponentPtr<BehaviorTimerManager>();
+  auto* blockWorld             = dependentComps.GetComponentPtr<BlockWorld>();
+  auto* delegationComponent    = dependentComps.GetComponentPtr<DelegationComponent>();
+  auto* faceWorld              = dependentComps.GetComponentPtr<FaceWorld>();
+  auto* robotInfo              = dependentComps.GetComponentPtr<BEIRobotInfo>();
 
   Init(aiComponent,
        robot->GetComponentPtr<AnimationComponent>(),
@@ -159,13 +159,13 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 OffTreadsState BehaviorExternalInterface::GetOffTreadsState() const
 {
-  return GetComponentWrapper(BEIComponentID::RobotInfo).GetValue<BEIRobotInfo>().GetOffTreadsState();
+  return GetComponentWrapper(BEIComponentID::RobotInfo).GetComponent<BEIRobotInfo>().GetOffTreadsState();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Util::RandomGenerator& BehaviorExternalInterface::GetRNG()
 {
-  return GetComponentWrapper(BEIComponentID::RobotInfo).GetValue<BEIRobotInfo>().GetRNG();
+  return GetComponentWrapper(BEIComponentID::RobotInfo).GetComponent<BEIRobotInfo>().GetRNG();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

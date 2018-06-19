@@ -40,7 +40,7 @@ public:
 
   // Note: If shouldManage is true ownership of the component is transfered to the entity
   // DO NOT delete or access the pointer directly after this call - access it through the entity's
-  // GetValue or GetBasePtr calls
+  // GetComponent or GetComponentPtr calls
   void AddDependentComponent(EnumType enumID, 
                              ComponentType* component,
                              bool shouldManage = true);
@@ -54,12 +54,6 @@ public:
   void RemoveComponent(EnumType enumID);
   void ClearEntity();
 
-  bool HasComponent(EnumType enumID) const;
-  
-  const ComponentType& GetComponent(EnumType enumID) const;
-  ComponentType& GetComponent(EnumType enumID);
-
-  ComponentType* GetComponentPtr(EnumType enumID);
 
   // Init all components in their declared dependency order
   void InitComponents(Cozmo::Robot* robot); //tmp for pass through
@@ -68,17 +62,26 @@ public:
   void UpdateComponents();
 
   template<typename T>
-  T& GetValue() const {
+  bool HasComponent() const {
     EnumType enumID = EnumType::Count;
     GetComponentIDForType<EnumType,T>(enumID);
-    return GetComponent(enumID). template GetValue<T>();
+    auto iter = _components.find(enumID);
+    return iter != _components.end(); // to do: is valid
+  }
+
+
+  template<typename T>
+  T& GetComponent() const {
+    EnumType enumID = EnumType::Count;
+    GetComponentIDForType<EnumType,T>(enumID);
+    return GetComponent(enumID). template GetComponent<T>();
   }
 
   template<typename T>
-  T* GetBasePtr() const {
+  T* GetComponentPtr() const {
     EnumType enumID = EnumType::Count;
     GetComponentIDForType<EnumType,T>(enumID);
-    return GetComponent(enumID). template GetBasePtr<T>();
+    return GetComponent(enumID). template GetComponentPtr<T>();
   }
 
 private:
@@ -100,6 +103,13 @@ private:
   std::vector<std::pair<ComponentPtrWrapper,DependentComponents>> _cachedUpdateOrder;
 
   using OrderedDependentVector = std::vector<ComponentPtrWrapper>;
+
+  
+  const ComponentType& GetComponent(EnumType enumID) const;
+  ComponentType& GetComponent(EnumType enumID);
+
+  ComponentType* GetComponentPtr(EnumType enumID);
+
   // provide the ability to iterate over the entity
   OrderedDependentVector GetComponents();
 
@@ -191,15 +201,6 @@ void DependencyManagedEntity<EnumType>::ClearEntity()
 {
   _components.clear();
   _managedComponents.clear();
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template <typename EnumType>
-bool DependencyManagedEntity<EnumType>::HasComponent(EnumType enumID) const
-{
-  auto iter = _components.find(enumID);
-  return iter != _components.end();
 }
 
 

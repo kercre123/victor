@@ -33,7 +33,7 @@ DockingComponent::DockingComponent()
 }
 
 
-void DockingComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void DockingComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
 }

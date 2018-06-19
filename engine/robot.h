@@ -143,7 +143,7 @@ public:
 
   virtual ~ContextWrapper(){}
 
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override {};
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override {};
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
 };
@@ -191,24 +191,25 @@ public:
 
   // =========== Components ===========
 
-  bool HasComponent(RobotComponentID componentID) const {
+  template<typename T>
+  bool HasComponent() const {
     return (_components != nullptr) &&
-           _components->HasComponent(componentID) &&
-           _components->GetComponent(componentID).IsValueValid();
+           _components->HasComponent<T>() &&
+           _components->GetComponent<T>().IsComponentValid();
   }
 
   template<typename T>
-  T& GetComponent() const {return _components->GetValue<T>();}
+  T& GetComponent() const {return _components->GetComponent<T>();}
 
   template<typename T>
-  T& GetComponent() {return _components->GetValue<T>();}
+  T& GetComponent() {return _components->GetComponent<T>();}
 
 
   template<typename T>
-  T* GetComponentPtr() const {return _components->GetBasePtr<T>();}
+  T* GetComponentPtr() const {return _components->GetComponentPtr<T>();}
 
   template<typename T>
-  T* GetComponentPtr() {return _components->GetBasePtr<T>();}
+  T* GetComponentPtr() {return _components->GetComponentPtr<T>();}
 
 
 

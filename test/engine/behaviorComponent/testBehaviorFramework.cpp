@@ -175,7 +175,7 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
 
     DependencyManagedEntity<RobotComponentID> dependencies;
     _robot->GetAIComponent().InitDependent(_robot.get(), dependencies);
-    _behaviorComponent = _robot->GetAIComponent().GetBasePtr<BehaviorComponent>();
+    _behaviorComponent = _robot->GetAIComponent().GetComponentPtr<BehaviorComponent>();
 
     _behaviorComponent->SetComponents(std::move(entity));
     DependencyManagedEntity<AIComponentID> dependentComps;

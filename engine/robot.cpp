@@ -2037,7 +2037,7 @@ Result Robot::SendIMURequest(const u32 length_ms) const
 
 bool Robot::HasExternalInterface() const
 {
-  if (HasComponent(RobotComponentID::CozmoContextWrapper)){
+  if (HasComponent<ContextWrapper>()){
     return GetContext()->GetExternalInterface() != nullptr;
   }
   return false;
@@ -2509,7 +2509,7 @@ RobotState Robot::GetDefaultRobotState()
 
 RobotInterface::MessageHandler* Robot::GetRobotMessageHandler() const
 {
-  if ((!_components->GetComponent(RobotComponentID::CozmoContextWrapper).IsValueValid()) ||
+  if ((!_components->GetComponent<ContextWrapper>().IsComponentValid()) ||
       (GetContext()->GetRobotManager() == nullptr))
   {
     DEV_ASSERT(false, "Robot.GetRobotMessageHandler.nullptr");

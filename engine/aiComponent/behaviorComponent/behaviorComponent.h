@@ -74,7 +74,7 @@ public:
   using ComponentPtr = std::unique_ptr<EntityType>;
 
   // IDependencyManagedComponent<AIComponentID> functions
-  virtual void InitDependent(Robot* robot, const AICompMap& dependentComponents) override;
+  virtual void InitDependent(Robot* robot, const AICompMap& dependentComps) override;
 
   virtual void GetUpdateDependencies(AICompIDSet& dependencies) const override {
     dependencies.insert(AIComponentID::InformationAnalyzer);
@@ -97,7 +97,7 @@ public:
 
 
   template<typename T>
-  T& GetComponent() const {return _comps->GetValue<T>();}
+  T& GetComponent() const {return _comps->GetComponent<T>();}
 
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageGameToEngineTag>&& tags) const override;
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageEngineToGameTag>&& tags) const override;

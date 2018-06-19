@@ -171,7 +171,7 @@ MapComponent::~MapComponent()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MapComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void MapComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   if(_robot->HasExternalInterface())

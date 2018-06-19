@@ -49,7 +49,7 @@ public:
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
   }
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
 
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
 

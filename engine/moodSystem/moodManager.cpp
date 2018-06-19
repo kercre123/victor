@@ -84,16 +84,16 @@ MoodManager::MoodManager()
 MoodManager::~MoodManager()
 {
   // if the robot is destructing, it might not have an action list, so check that here
-  if( _actionCallbackID != 0 && _robot != nullptr && _robot->HasComponent(RobotComponentID::ActionList) ) {
+  if( _actionCallbackID != 0 && _robot != nullptr && _robot->HasComponent<ActionList>() ) {
     _robot->GetActionList().UnregisterCallback(_actionCallbackID);
     _actionCallbackID = 0;
   }
 }
 
-void MoodManager::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void MoodManager::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
-  auto& context = dependentComponents.GetValue<ContextWrapper>().context;
+  auto& context = dependentComps.GetComponent<ContextWrapper>().context;
 
   if (nullptr != context->GetDataPlatform())
   {
@@ -324,28 +324,28 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
     SEND_MOOD_TO_VIZ_DEBUG_ONLY( robotMood.emotion.push_back(emotion.GetValue()) );
   }
 
-  const bool hasAudioComp = dependentComps.HasComponent(RobotComponentID::EngineAudioClient);
+  const bool hasAudioComp = dependentComps.HasComponent<Audio::EngineRobotAudioClient>();
   if( hasAudioComp && ( (currentTime - _lastAudioSendTime_s) > kMoodManager_AudioSendPeriod_s ) ) {
-    SendEmotionsToAudio(dependentComps.GetValue<Audio::EngineRobotAudioClient>());
+    SendEmotionsToAudio(dependentComps.GetComponent<Audio::EngineRobotAudioClient>());
   }
 
-  if( ANKI_DEV_CHEATS && dependentComps.HasComponent(RobotComponentID::CozmoContextWrapper) ) {
+  if( ANKI_DEV_CHEATS && dependentComps.HasComponent<ContextWrapper>() ) {
     if( (currentTime - _lastWebVizSendTime_s) > kMoodManager_WebVizPeriod_s ) {
-      SendMoodToWebViz(dependentComps.GetValue<ContextWrapper>().context);
+      SendMoodToWebViz(dependentComps.GetComponent<ContextWrapper>().context);
     }
   }
 
-  if( dependentComps.HasComponent(RobotComponentID::RobotStatsTracker) ){
+  if( dependentComps.HasComponent<RobotStatsTracker>() ){
 
     // update stats tracker (integral of total stim)
     const float stimulated = GetEmotion(EmotionType::Stimulated).GetValue();
     const float delta = timeDelta * stimulated;
     if( delta > 0.0f ) {
-      dependentComps.GetValue<RobotStatsTracker>().IncreaseStimulationSeconds(delta);
+      dependentComps.GetComponent<RobotStatsTracker>().IncreaseStimulationSeconds(delta);
     }
 
     if( _cumlPosStimDeltaToAdd > 0.0 ) {
-      dependentComps.GetValue<RobotStatsTracker>().IncreaseStimulationCumulativePositiveDelta(_cumlPosStimDeltaToAdd);
+      dependentComps.GetComponent<RobotStatsTracker>().IncreaseStimulationCumulativePositiveDelta(_cumlPosStimDeltaToAdd);
       _cumlPosStimDeltaToAdd = 0.0;
     }
   }
@@ -358,7 +358,7 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
 
   // Can have null robot for unit tests
   if ((nullptr != _robot) &&
-      _robot->HasComponent(RobotComponentID::CozmoContextWrapper) &&
+      _robot->HasComponent<ContextWrapper>() &&
       kSendMoodToViz)
   {
     _robot->GetContext()->GetVizManager()->SendRobotMood(std::move(robotMood));

@@ -41,7 +41,7 @@ ProgressionUnlockComponent::ProgressionUnlockComponent()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ProgressionUnlockComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void ProgressionUnlockComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   Json::Value config;

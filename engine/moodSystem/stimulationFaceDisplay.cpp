@@ -41,7 +41,7 @@ StimulationFaceDisplay::~StimulationFaceDisplay()
 {
 }
 
-void StimulationFaceDisplay::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void StimulationFaceDisplay::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _saturationMap = std::make_unique<Util::GraphEvaluator2d>();
 
@@ -57,7 +57,7 @@ void StimulationFaceDisplay::UpdateDependent(const RobotCompMap& dependentComps)
     return;
   }
              
-  auto& moodManager = dependentComps.GetValue<MoodManager>();
+  auto& moodManager = dependentComps.GetComponent<MoodManager>();
   const float stim = Anki::Util::Clamp(moodManager.GetEmotionValue(EmotionType::Stimulated), 0.0f, 1.0f);
 
   const float alpha = 2.0f/(1.0f+kStimFace_ema_N);
@@ -71,7 +71,7 @@ void StimulationFaceDisplay::UpdateDependent(const RobotCompMap& dependentComps)
   
   const float diff = std::fabs(sat - _lastSentSatLevel);
   if( _lastSentSatLevel < 0.0f || diff > kStimFace_sendThresh ) {
-    auto& animComponent = dependentComps.GetValue<AnimationComponent>();
+    auto& animComponent = dependentComps.GetComponent<AnimationComponent>();
     animComponent.SetFaceSaturation( sat );
     _lastSentSatLevel = sat;
   }

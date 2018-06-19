@@ -39,7 +39,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override {
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override {
     _robot = robot;
   };
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};

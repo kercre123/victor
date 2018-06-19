@@ -36,7 +36,7 @@ RobotGyroDriftDetector::RobotGyroDriftDetector()
 
 }
 
-void RobotGyroDriftDetector::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void RobotGyroDriftDetector::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
 }

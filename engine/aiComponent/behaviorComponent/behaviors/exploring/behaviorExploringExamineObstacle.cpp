@@ -496,7 +496,7 @@ void BehaviorExploringExamineObstacle::DevTakePhoto() const
     "images",
     "exploringObstacles"
   });
-  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
+  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetComponent<VisionComponent>();
   visionComponent.SetSaveImageParameters(ImageSendMode::SingleShot,
                                          path,
                                          "", // No basename: rely on auto-numbering

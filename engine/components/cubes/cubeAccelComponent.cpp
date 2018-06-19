@@ -41,7 +41,7 @@ CubeAccelComponent::CubeAccelComponent()
 }
 
 
-void CubeAccelComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) 
+void CubeAccelComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) 
 {
   _robot = robot;
   // Subscribe to messages

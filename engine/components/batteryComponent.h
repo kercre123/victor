@@ -48,7 +48,7 @@ public:
     dependencies.insert(RobotComponentID::Movement);
     dependencies.insert(RobotComponentID::FullRobotPose);
   };
-  virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComponents) override {
+  virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComps) override {
     Init(robot);
   };
   // end IDependencyManagedComponent functions

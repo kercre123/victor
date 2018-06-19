@@ -55,7 +55,7 @@ TextToSpeechCoordinator::TextToSpeechCoordinator()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TextToSpeechCoordinator::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void TextToSpeechCoordinator::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   // Keep a pointer to robot for message sending
   _robot = robot;
@@ -76,7 +76,7 @@ void TextToSpeechCoordinator::InitDependent(Cozmo::Robot* robot, const RobotComp
     return;
   }
 
-  DataAccessorComponent* dataAccessor = dependentComponents.GetBasePtr<DataAccessorComponent>();
+  DataAccessorComponent* dataAccessor = dependentComps.GetComponentPtr<DataAccessorComponent>();
   const Json::Value& json = *(dataAccessor->GetTextToSpeechConfig());
 
   // Load Intent Config

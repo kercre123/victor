@@ -56,7 +56,7 @@ public:
     dependencies.insert(BCComponentID::BehaviorSystemManager);
   }
   
-  virtual void InitDependent( Robot* robot, const BCCompMap& dependentComponents ) override;
+  virtual void InitDependent( Robot* robot, const BCCompMap& dependentComps ) override;
   virtual void UpdateDependent(const BCCompMap& dependentComps) override;
   
   IBehavior* GetBootBehavior();

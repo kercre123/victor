@@ -39,7 +39,7 @@ public:
   virtual void GetInitDependencies( BCCompIDSet& dependencies ) const override {
     dependencies.insert(BCComponentID::RobotInfo);
   }
-  virtual void InitDependent( Robot* robot, const BCCompMap& dependentComponents ) override;
+  virtual void InitDependent( Robot* robot, const BCCompMap& dependentComps ) override;
   
   virtual void GetUpdateDependencies( BCCompIDSet& dependencies ) const override {
     // ensure the bsm updates first so that the stack is in the new state when this component ticks
@@ -51,7 +51,7 @@ public:
   virtual void AdditionalUpdateAccessibleComponents(BCCompIDSet& components) const override {
     components.insert(BCComponentID::RobotStatsTracker);
   }
-  virtual void UpdateDependent(const BCCompMap& dependentComponents) override;
+  virtual void UpdateDependent(const BCCompMap& dependentComps) override;
 
   // get the current active feature (or ActiveFeature::None if none is active)
   ActiveFeature GetActiveFeature() const;

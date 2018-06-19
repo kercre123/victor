@@ -52,7 +52,7 @@ public:
   // IDependencyManagedComponent functions
   //////
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
-  virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComponents) override {
+  virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComps) override {
     InitBase(robot);
   };
 

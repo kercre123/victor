@@ -50,7 +50,7 @@ void MicComponent::GetInitDependencies( RobotCompIDSet& dependencies ) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MicComponent::InitDependent( Cozmo::Robot* robot, const RobotCompMap& dependentComponents )
+void MicComponent::InitDependent( Cozmo::Robot* robot, const RobotCompMap& dependentComps )
 {
   _messageSystem->Initialize( robot );
   _robot = robot;

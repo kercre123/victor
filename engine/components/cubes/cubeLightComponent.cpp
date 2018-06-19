@@ -90,7 +90,7 @@ CubeLightComponent::CubeLightComponent()
 }
 
 
-void CubeLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void CubeLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   _cubeLightAnimations = std::make_unique<CubeLightAnimWrapper>(*(_robot->GetContext()->GetDataLoader()->GetCubeLightAnimations()));
