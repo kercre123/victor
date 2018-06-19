@@ -381,9 +381,19 @@ static void rtc_init_(void)
   if (RTC_ReadBackupRegister(RTC_BACKUP_REG_INIT) != RTC_INIT_VALUE)
   {
     //set up 32k LSE
+    if( FIXTURE_RTC_DEBUG > 0 ) ConsolePrintf("configuring 32k LSE...");
     RCC_LSEConfig(RCC_LSE_ON);
-    while(RCC_GetFlagStatus(RCC_FLAG_LSERDY) == RESET)
+    volatile int lseWaitCnt=0; const int lseWaitMax=40*1000000; //rocky estimate: 4M waitCnt/s. DS spec >2s max LSE startup time
+    while( RCC_GetFlagStatus(RCC_FLAG_LSERDY) == RESET && ++lseWaitCnt < lseWaitMax )
       ;
+    
+    if( FIXTURE_RTC_DEBUG > 0 ) ConsolePrintf("%s (cnt=%i)\n", lseWaitCnt >= lseWaitMax ? "TIMEOUT!" : "ok", lseWaitCnt);
+    if( lseWaitCnt >= lseWaitMax ) { //timeout. bad,missing xtal?
+      if( FIXTURE_RTC_DEBUG > 0 ) ConsolePrintf("----- RTC INIT FAILED -----\n");
+      RCC_LSEConfig(RCC_LSE_OFF);
+      return;
+    }
+    
     RCC_RTCCLKConfig(RCC_RTCCLKSource_LSE);
     RCC_RTCCLKCmd(ENABLE);
     APB_register_sync();
