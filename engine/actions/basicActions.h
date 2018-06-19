@@ -601,6 +601,10 @@ namespace Cozmo {
       // NO_FACE and no animations will be played
       void SetRequireFaceConfirmation(bool isRequired) { _requireFaceConfirmation = isRequired; }
       
+      // After turning toward the supplied faceID, this sets whether the action locks onto the closest
+      // face in that direction (true) or if it should only lock onto the supplied faceID (false). Defaults to false.
+      void SetLockOnClosestFaceAfterTurn(bool shouldLock) { _lockOnClosestFace = shouldLock; }
+      
       // Template for all events we subscribe to
       template<typename T>
       void HandleMessage(const T& msg);
@@ -629,6 +633,7 @@ namespace Cozmo {
       bool              _sayName                 = false;
       bool              _tracksLocked            = false;
       bool              _requireFaceConfirmation = false;
+      bool              _lockOnClosestFace       = false;
 
       AnimTriggerForFaceCallback _sayNameTriggerCallback;
       AnimTriggerForFaceCallback _noNameTriggerCallback;

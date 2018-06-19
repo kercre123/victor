@@ -75,18 +75,7 @@ void IBehaviorDispatcher::GetBehaviorJsonKeys(std::set<const char*>& expectedKey
 void IBehaviorDispatcher::InitBehavior()
 {
   for( const auto& behaviorStr : _iConfig.behaviorStrs ) {
-    // first check anonymous behaviors
-    ICozmoBehaviorPtr behavior = FindAnonymousBehaviorByName(behaviorStr);
-    if( nullptr == behavior ) {
-      // no match, try behavior IDs
-      const BehaviorID behaviorID = BehaviorTypesWrapper::BehaviorIDFromString(behaviorStr);
-      behavior = GetBEI().GetBehaviorContainer().FindBehaviorByID(behaviorID);
-      
-      DEV_ASSERT_MSG(behavior != nullptr,
-                     "IBehaviorDispatcher.InitBehavior.FailedToFindBehavior",
-                     "Behavior not found: %s",
-                     behaviorStr.c_str());
-    }
+    ICozmoBehaviorPtr behavior = FindBehavior( behaviorStr );
     if(behavior != nullptr){
       _iConfig.behaviors.push_back(behavior);
     }

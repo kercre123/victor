@@ -388,7 +388,9 @@ protected:
   template<typename T>
   bool DelegateIfInControl(IBehavior* delegate, void(T::*callback)());
 
-
+  // Searches both the behavior container and anonymous behaviors. Returns the behavior or nullptr if not
+  // found (and performs an ANKI_VERIFY internally)
+  ICozmoBehaviorPtr FindBehavior( const std::string& behaviorIDStr ) const;
 
   // Behaviors can easily create delegates using "anonymous" behaviors in their config file (see _anonymousBehaviorMap
   // comments below).  This function enables access to those anonymous behaviors.

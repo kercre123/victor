@@ -88,20 +88,7 @@ void BehaviorReactToCubeTap::InitBehavior()
   // grab our charger behavior ...
   if ( !_iVars.chargerBehaviorString.empty() )
   {
-    // try grabbing it from anonymous behaviors first, else we'll grab it from the behavior id
-    ICozmoBehaviorPtr chargerBehavior = FindAnonymousBehaviorByName( _iVars.chargerBehaviorString );
-    if ( nullptr == chargerBehavior )
-    {
-      // no match, try behavior IDs
-      const BehaviorID behaviorID = BehaviorTypesWrapper::BehaviorIDFromString( _iVars.chargerBehaviorString );
-      chargerBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID( behaviorID );
-    }
-
-    // downcast to a BehaviorDriveOffCharger since we're forcing all reactions to be of this behavior
-    DEV_ASSERT_MSG( chargerBehavior != nullptr,
-                    "BehaviorReactToCubeTap.Init",
-                    "Reaction behavior not found: %s", _iVars.chargerBehaviorString.c_str() );
-    _iVars.chargerBehavior = chargerBehavior;
+    _iVars.chargerBehavior = FindBehavior( _iVars.chargerBehaviorString );
   }
 
   SubscribeToTags(

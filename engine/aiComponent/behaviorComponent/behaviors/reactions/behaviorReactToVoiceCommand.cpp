@@ -167,23 +167,11 @@ void BehaviorReactToVoiceCommand::InitBehavior()
   // grab our reaction behavior ...
   if ( !_iVars.reactionBehaviorString.empty() )
   {
-    ICozmoBehaviorPtr reactionBehavior;
-    // try grabbing it from anonymous behaviors first, else we'll grab it from the behavior id
-    reactionBehavior = FindAnonymousBehaviorByName( _iVars.reactionBehaviorString );
-    if ( nullptr == reactionBehavior )
-    {
-      // no match, try behavior IDs
-      const BehaviorID behaviorID = BehaviorTypesWrapper::BehaviorIDFromString( _iVars.reactionBehaviorString );
-      reactionBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID( behaviorID );
-    }
-
+    ICozmoBehaviorPtr reactionBehavior = FindBehavior( _iVars.reactionBehaviorString );
     // downcast to a BehaviorReactToMicDirection since we're forcing all reactions to be of this behavior
-    DEV_ASSERT_MSG( reactionBehavior != nullptr, "BehaviorReactToVoiceCommand.Init",
-                     "Reaction behavior not found: %s", _iVars.reactionBehaviorString.c_str());
     DEV_ASSERT_MSG( reactionBehavior->GetClass() == BehaviorClass::ReactToMicDirection,
                     "BehaviorReactToVoiceCommand.Init",
                     "Reaction behavior specified is not of valid class BehaviorClass::ReactToMicDirection");
-
     _iVars.reactionBehavior = std::static_pointer_cast<BehaviorReactToMicDirection>(reactionBehavior);
   }
 
@@ -210,6 +198,10 @@ void BehaviorReactToVoiceCommand::GetBehaviorOperationModifiers( BehaviorOperati
   modifiers.wantsToBeActivatedWhenOnCharger       = true;
   modifiers.wantsToBeActivatedWhenOffTreads       = true;
   modifiers.behaviorAlwaysDelegates               = true;
+  
+  // Since so many voice commands need faces, this helps improve the changes that a behavior following
+  // this one will know about faces when the behavior starts
+  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

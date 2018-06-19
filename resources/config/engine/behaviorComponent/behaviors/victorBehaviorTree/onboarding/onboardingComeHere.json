@@ -2,11 +2,17 @@
   "behaviorID": "OnboardingComeHere",
   "behaviorClass": "DriveToFace",
 
-  "timeUntilCancelFaceTrack_s": 5.0,
-  "minDriveToFaceDistanceKey_mm": 200//,
+  "alwaysDetectFaces": true,
 
+  "startsWithMicDirection": true,
 
+  "trackFaceOnceKnown": false,
 
-  // "maxFaceAgeBeforeMicDirection_s": 5.0,
-  // "useMicDirectionBeforeActivation": true
+  "animTooClose": "AlreadyAtFace",
+
+  "timeUntilCancelFaceLooking_s": 2.0,
+  "timeUntilCancelFaceSearch_s": 10.0,
+  "minDriveToFaceDistanceKey_mm": 200,
+
+  "searchForFaceBehavior": "ObservingFindFaces"
 }

@@ -20,6 +20,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -1270,7 +1271,22 @@ bool ICozmoBehavior::DelegateIfInControl(IBehavior* delegate, BehaviorSimpleCall
 
   return false;
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ICozmoBehaviorPtr ICozmoBehavior::FindBehavior( const std::string& behaviorIDStr ) const
+{
+  // first check anonymous behaviors
+  ICozmoBehaviorPtr behavior = FindAnonymousBehaviorByName( behaviorIDStr );
+  if( nullptr == behavior ) {
+    // no match, try behavior IDs
+    const BehaviorID behaviorID = BehaviorTypesWrapper::BehaviorIDFromString( behaviorIDStr );
+    behavior = GetBEI().GetBehaviorContainer().FindBehaviorByID( behaviorID );
+    ANKI_VERIFY( behavior != nullptr,
+                "ICozmoBehavior.FindBehavior.InvalidBehavior",
+                "Behavior not found: %s", behaviorIDStr.c_str() );
+  }
+  return behavior;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehaviorPtr ICozmoBehavior::FindAnonymousBehaviorByName(const std::string& behaviorName) const

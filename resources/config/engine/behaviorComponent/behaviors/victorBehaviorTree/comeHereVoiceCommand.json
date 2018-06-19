@@ -19,8 +19,16 @@
       "behaviorClass" : "DriveToFace",
       "associatedActiveFeature": "ComeHere",
 
+      "animTooClose": "AlreadyAtFace",
+
+      "startsWithMicDirection": true,
+
+      "timeUntilCancelFaceLooking_s": 2.0,
       "timeUntilCancelFaceTrack_s": 5.0,
-      "minDriveToFaceDistanceKey_mm": 200
+      "timeUntilCancelFaceSearch_s": 10.0,
+      "minDriveToFaceDistanceKey_mm": 200,
+
+      "searchForFaceBehavior": "ObservingFindFaces"
     }
   ],
 
