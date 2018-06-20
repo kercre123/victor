@@ -29,6 +29,10 @@ public:
   // booleans
   static bool SerializeBool(std::shared_ptr<bool>, Json::Value&);
   static void DeserializeBool(std::shared_ptr<bool>, const Json::Value&);
+
+  // strings
+  static bool SerializeString(std::shared_ptr<std::string>, Json::Value&);
+  static void DeserializeString(std::shared_ptr<std::string>, const Json::Value&);
 };
 
 }
