@@ -42,7 +42,8 @@
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,       desc:"Uptime",          units:"seconds" },
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,       desc:"Idle time",       units:"seconds" },
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,       desc:"Real time clock", units:"" },
-        { activeUpdate:true, val:"", hasGraph:true,  graphMax:429268,  desc:"Memory",          units:"kB",      updateFunction:MemUseInfo },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:438388,  desc:"Memory Claimed",  units:"kB",      updateFunction:MemUseInfo1 },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:438388,  desc:"Memory Used",     units:"kB",      updateFunction:MemUseInfo2 },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"Overall CPU",     units:"%",       updateFunction:CPUTimeInfo },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"CPU0",            units:"%",       updateFunction:CPUTimeInfo },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"CPU1",            units:"%",       updateFunction:CPUTimeInfo },
@@ -315,12 +316,24 @@
         }
     }
 
-    function MemUseInfo(payload, itemIndex) {
+    function MemUseInfo1(payload, itemIndex) {
         var values = payload.split(',');
         var totalMem_kB = parseInt(values[0]);
         var freeMem_kB = parseInt(values[1]);
         var usedMem_kB = totalMem_kB - freeMem_kB;
-        var v = usedMem_kB + " used, " + freeMem_kB + " free";
+        var v = usedMem_kB + " claimed, " + freeMem_kB + " free";
+        $("#id_perf_row_value_" + itemIndex).html(v);        
+        var graph = $('#' + 'id_graph_' + itemIndex);
+        graph.progressbar( "option", "value", usedMem_kB );
+        graph.progressbar( "option", "max", totalMem_kB );
+    }
+
+    function MemUseInfo2(payload, itemIndex) {
+        var values = payload.split(',');
+        var totalMem_kB = parseInt(values[0]);
+        var availMem_kB = parseInt(values[1]);
+        var usedMem_kB = totalMem_kB - availMem_kB;
+        var v = usedMem_kB + " used, " + availMem_kB + " available";
         $("#id_perf_row_value_" + itemIndex).html(v);
         var graph = $('#' + 'id_graph_' + itemIndex);
         graph.progressbar( "option", "value", usedMem_kB );
@@ -588,7 +601,7 @@
             var data = perfItems[r];
             var s = "<tr height='34px'><td><input id='id_perf_checkbox_" + r + "' type='checkbox' onClick='onPerfRowCheckboxClickHandler(" + r + ")'/>" +
                 "</td><td style='text-align:right'>" + data["desc"] +
-                "</td><td style='text-align:right' width='180px' id='id_perf_row_value_" + r +
+                "</td><td style='text-align:right' width='250px' id='id_perf_row_value_" + r +
                 "'></td><td>" + data["units"] + "</td><td width='300px' id='id_graph_" + r + "'></td></tr>";
             table.append(s);
         }
