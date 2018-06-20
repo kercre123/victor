@@ -1382,14 +1382,20 @@ static void RobotFlexFlowPackoutReport(void)
   
   bool valid_body_ein = !( flexnfo.bsv.ein[0]==0 || flexnfo.bsv.ein[0]==0xFFFFffff || (flexnfo.bsv.ein[0]&0xFFF00000)==0 );
   if( !valid_body_ein ) {
-    if( !g_isReleaseBuild ) //allow empty ein for debug
-      ConsolePrintf("---INVALID EIN---\n");
-    else
+    ConsolePrintf("--- ERROR_ROBOT_INVALID_BODY_EIN ---\n");
+    if( g_isReleaseBuild )
       throw ERROR_ROBOT_INVALID_BODY_EIN;
   }
   
-  //if( !flexnfo.packoutdate )
-  //  throw ERROR_BAD_ARG;
+  //sanity check known logs
+  for( int i=0; i<numlogs; i++ ) {
+    int len_min = i==0 ? 750 : 250; //0=playpen (~1450 bytes), 1=cloud (~445 bytes)
+    if( !flexnfo.log[i] || flexnfo.loglen[i] < len_min ) {
+      ConsolePrintf("--- ERROR_ROBOT_BAD_LOGFILE[%i] len %i ---\n", i, flexnfo.loglen[i] );
+      if( g_isReleaseBuild )
+        throw ERROR_ROBOT_BAD_LOGFILE;
+    }
+  }
   
   //DEBUG check
   if( !flexnfo.bat_mv && !g_isReleaseBuild ) {

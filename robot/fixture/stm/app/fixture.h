@@ -227,6 +227,7 @@ typedef int error_t;
 #define ERROR_ROBOT_MISSING_LOGFILE       372 // expected logfile not found on this robot
 #define ERROR_ROBOT_INVALID_ESN           373 // invalid ESN read from the robot
 #define ERROR_ROBOT_INVALID_BODY_EIN      374 // invalid EIN read from robot body pcba
+#define ERROR_ROBOT_BAD_LOGFILE           375 // missing, bad or corrupt logfile
 
 //<export heading> Testport Errors - charge contact communications (BODY ROBOT PACKOUT)
 #define ERROR_TESTPORT_CMD_TIMEOUT        400 //timeout waiting for response to a command
