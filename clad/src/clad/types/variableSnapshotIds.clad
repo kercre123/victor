@@ -3,11 +3,19 @@
 // Created: 2018-06-05
 // Copyright: Anki, inc. 2018
 
+// Note: The Variable Snapshot Component stores the versioning information of the build. If the version
+//       changes, then all data is erased unless the kVariableSnapshotComponent_ResetDataOnNewBuildVersion
+//       console variable is set to false.
+
 
 namespace Anki {
 namespace Cozmo {
 
 enum uint_32 VariableSnapshotId {
+  // robot versioning snapshot variables
+  _RobotOSBuildVersion,
+  _RobotBuildSha,
+
   // unit test snapshot variables
   UnitTestInt0,
   UnitTestBool0,
