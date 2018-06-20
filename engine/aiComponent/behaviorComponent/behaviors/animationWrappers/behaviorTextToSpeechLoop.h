@@ -30,6 +30,9 @@ public:
 
   void SetTextToSay(const std::string& textToSay, const SayTextIntent& intent = SayTextIntent::Text);
 
+  // allow the TTS to be interrupted
+  void Interrupt();
+
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;

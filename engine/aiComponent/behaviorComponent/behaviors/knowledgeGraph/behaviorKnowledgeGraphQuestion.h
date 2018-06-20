@@ -39,6 +39,11 @@ public:
   virtual void GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const override;
   virtual void GetBehaviorJsonKeys( std::set<const char*>& expectedKeys ) const override;
 
+  // wake word will cancel our TTS
+  // note: we're broadly cancelling streaming the entire time we're active; technically we only need to do it
+  //       while we're in the "Responding" state, but I expect this wont play very nice with our wakewordless streaming
+  virtual bool ShouldSuppressTriggerWordResponse() const override { return true; }
+
 
 protected:
 
@@ -51,6 +56,8 @@ protected:
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
+  
+  virtual void HandleWhileActivated( const EngineToGameEvent& event ) override;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // State Transitions
@@ -58,6 +65,7 @@ protected:
   void TransitionToBeginResponse();
   void TransitionToNoResponse();
   void TransitionToNoConnection();
+
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Helpers
@@ -69,6 +77,7 @@ protected:
   void ConsumeResponse();
 
   void OnStreamingComplete( BehaviorSimpleCallback next );
+  void OnResponseInterrupted();
 
 
 private:
@@ -76,9 +85,11 @@ private:
   enum class EState : uint8_t
   {
     Listening,
+    Transition,
     Responding,
     NoResponse,
-    NoConnection
+    NoConnection,
+    Interrupted
   };
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

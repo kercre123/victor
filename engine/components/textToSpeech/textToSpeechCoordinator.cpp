@@ -328,18 +328,11 @@ const bool TextToSpeechCoordinator::CancelUtterance(const uint8_t utteranceID)
     return false;
   }
 
-  auto& utterance = it->second;
-
-  // If the utterance is already playing, it cannot be cancelled
-  if (UtteranceState::Playing == utterance.state){
-    PRINT_NAMED_ERROR("TextToSpeechCoordinator.CancelUtteranceError",
-                      "Cannot cancel utterance %d as it is already playing",
-                      utteranceID);
-    return false;
-  }
-
-  // If the utterance is still in generation, cancel generation 
-  if (UtteranceState::Generating == utterance.state) {
+  // we can cancel the tts at any point during it's lifecycle
+  // notes:
+  //  + if cancelling when it's generating, thread will hang until generation is complete
+  //  + cancelling will clear the wav data in AnkiPluginInterface, regardless of which utteranceID was last delivered
+  {
     PRINT_NAMED_INFO("TextToSpeechCoordinator.CancelUtteranceGeneration", "Cancel ttsID %d", utteranceID);
     RobotInterface::TextToSpeechCancel msg;
     msg.ttsID = utteranceID;

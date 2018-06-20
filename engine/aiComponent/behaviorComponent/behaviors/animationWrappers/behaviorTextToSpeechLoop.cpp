@@ -311,5 +311,12 @@ void BehaviorTextToSpeechLoop::OnUtteranceUpdated(const UtteranceState& state)
   _dVars.utteranceState = state;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorTextToSpeechLoop::Interrupt()
+{
+  CancelDelegates(false);
+  TransitionToEmergencyGetOut();
+}
+
 } // namespace Cozmo
 } // namespace Anki

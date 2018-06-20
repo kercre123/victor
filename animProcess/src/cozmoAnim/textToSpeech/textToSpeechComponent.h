@@ -120,6 +120,8 @@ private:
   // Map of TTSID's to corresponding AudioEventId's for delayed playback
   std::unordered_map<TTSID_t, AudioEngine::AudioEventId> _ttsIDtoAudioEventIdMap;
 
+  TTSID_t _activeTTSID;
+
   // Audio controller provided by context
   AudioController * _audioController = nullptr;
 
@@ -191,9 +193,10 @@ private:
   void SetAudioProcessingStyle(SayTextVoiceStyle style);
   void SetAudioProcessingPitch(float pitchScalar);
   void PostAudioEvent(AudioEngine::AudioEventId eventId, uint8_t ttsID);
+  void StopActiveTTS();
 
   // AudioEngine Callbacks
-  void OnUtteranceCompleted(uint8_t ttsID) const;
+  void OnUtteranceCompleted(uint8_t ttsID);
 
 }; // class TextToSpeechComponent
 

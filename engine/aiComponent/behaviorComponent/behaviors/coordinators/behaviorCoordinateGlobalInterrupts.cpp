@@ -149,20 +149,14 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
   if(!IsActivated()){
     return;
   }
-  
-  const bool triggerWordPending = _iConfig.triggerWordPendingCond->AreConditionsMet(GetBEI());
-  const bool isTimerRinging     = _iConfig.timerCoordBehavior->IsTimerRinging();
-  if(triggerWordPending && isTimerRinging){
-    // Timer is ringing and will handle the pending trigger word instead of the wake word behavior
-    _iConfig.wakeWordBehavior->SetDontActivateThisTick(GetDebugLabel());
-  }
-  
-  bool shouldSuppressStreaming = isTimerRinging;
+
+  bool shouldSuppressTriggerWord = false;
   
   // suppress certain behaviors during sleeping
+  // also allow behaviors on the current stack to suppress the trigger word
   {
     bool highLevelRunning = false;
-    auto callback = [this, &highLevelRunning, &shouldSuppressStreaming](const ICozmoBehavior& behavior) {
+    auto callback = [this, &highLevelRunning, &shouldSuppressTriggerWord](const ICozmoBehavior& behavior) {
       if( behavior.GetID() == BEHAVIOR_ID(HighLevelAI) ) {
         highLevelRunning = true;
       }
@@ -179,14 +173,29 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
         for( const auto& beh : _iConfig.toSuppressWhenSleeping ) {
           beh->SetDontActivateThisTick(GetDebugLabel());
         }
-        shouldSuppressStreaming = true;
+        shouldSuppressTriggerWord = true;
       }
+
+      // allow individual behaviors to suppress streaming
+      // note: could pass in "highLevelRunning" to this function and have the sleeping behaviors suppress themselves
+      shouldSuppressTriggerWord |= behavior.ShouldSuppressTriggerWordResponse();
     };
 
     const auto& behaviorIterator = GetBehaviorComp<ActiveBehaviorIterator>();
     behaviorIterator.IterateActiveCozmoBehaviorsForward( callback, this );
   }
-  
+
+  // timer uses wakeword to suppress alarm
+  {
+    const bool isTimerRinging     = _iConfig.timerCoordBehavior->IsTimerRinging();
+    shouldSuppressTriggerWord |= isTimerRinging;
+  }
+
+  if ( shouldSuppressTriggerWord )
+  {
+    _iConfig.wakeWordBehavior->SetDontActivateThisTick(GetDebugLabel());
+  }
+
   // suppress during meet victor
   {
     if( _iConfig.meetVictorBehavior->IsActivated() ) {
@@ -216,7 +225,10 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
       }
     }
   }
-  
+
+  // this will suppress the streaming POST-wakeword pending
+  // the "do a fist bump" part of "hey victor"
+  const bool shouldSuppressStreaming = shouldSuppressTriggerWord;
   if( shouldSuppressStreaming != _dVars.isSuppressingStreaming ) {
     GetBEI().GetMicComponent().SetShouldStreamAfterWakeWord( !shouldSuppressStreaming );
     _dVars.isSuppressingStreaming = shouldSuppressStreaming;

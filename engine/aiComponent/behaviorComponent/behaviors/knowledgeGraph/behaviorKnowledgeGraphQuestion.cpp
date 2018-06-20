@@ -17,6 +17,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
@@ -38,10 +39,7 @@
 
 // notes:
 // + need to check if Houndify connection is valid and respond accordingly if it is not
-// + response can be interrupted by "petting him", picking him up, or wakeword
-// - GetBEI().GetRobotInfo().IsPickedUp()
-// - ExternalInterface::MessageEngineToGameTag::TouchButtonEvent,
-// - ExternalInterface::MessageEngineToGameTag::RobotFallingEvent,
+// * move "interruptions" into BehaviorTextToSpeechLoop since it's common use case
 // * use BehaviorPromptUserForVoiceCommand for the question/response
 
 namespace Anki {
@@ -81,6 +79,11 @@ BehaviorKnowledgeGraphQuestion::BehaviorKnowledgeGraphQuestion( const Json::Valu
   ICozmoBehavior( config )
 {
   JsonTools::GetValueOptional( config, kKey_Duration, _iVars.streamingDuration );
+
+  SubscribeToTags({{
+    ExternalInterface::MessageEngineToGameTag::TouchButtonEvent,
+    ExternalInterface::MessageEngineToGameTag::RobotFallingEvent, // do we need this?
+  }});
 }
 
 
@@ -143,10 +146,42 @@ void BehaviorKnowledgeGraphQuestion::OnBehaviorDeactivated()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorKnowledgeGraphQuestion::HandleWhileActivated( const EngineToGameEvent& event )
+{
+  using namespace ExternalInterface;
+
+  const MessageEngineToGameTag tag = event.GetData().GetTag();
+  switch ( tag )
+  {
+    case MessageEngineToGameTag::TouchButtonEvent:
+    case MessageEngineToGameTag::RobotFallingEvent:
+    {
+      if ( EState::Responding == _dVars.state )
+      {
+        OnResponseInterrupted();
+      }
+      break;
+    }
+
+    default:
+      break;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnowledgeGraphQuestion::BehaviorUpdate()
 {
   if ( IsActivated() )
   {
+    UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
+    const bool triggerWordPending = uic.IsTriggerWordPending();
+
+    // we should clear this each time it's pending regardless of state so the UIC doesn't complain about it not being handled
+    if ( triggerWordPending )
+    {
+      uic.ClearPendingTriggerWord();
+    }
+
     // if we're recording the user's question, we need to be listening for a response
     if ( EState::Listening == _dVars.state )
     {
@@ -177,6 +212,15 @@ void BehaviorKnowledgeGraphQuestion::BehaviorUpdate()
         }
       }
     }
+    else if ( EState::Responding == _dVars.state )
+    {
+      // if we're playing our response, allow victor to be interrupted
+      const bool isPickedUp = GetBEI().GetRobotInfo().IsPickedUp();
+      if ( isPickedUp || triggerWordPending )
+      {
+        OnResponseInterrupted();
+      }
+    }
   }
 }
 
@@ -193,7 +237,7 @@ void BehaviorKnowledgeGraphQuestion::BeginStreamingQuestion()
 void BehaviorKnowledgeGraphQuestion::OnStreamingComplete( BehaviorSimpleCallback next )
 {
   // go into responding state first, then figure out how to reponde
-  _dVars.state = EState::Responding;
+  _dVars.state = EState::Transition;
 
   // streaming has ended so we need to cancel our looping animation and play our getout
   CancelDelegates();
@@ -273,7 +317,6 @@ void BehaviorKnowledgeGraphQuestion::BeginResponseTTS()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnowledgeGraphQuestion::TransitionToBeginResponse()
 {
-  // this should already be set, but doens't hurt to ensure
   _dVars.state = EState::Responding;
 
   DEV_ASSERT( !_dVars.responseString.empty(), "Responding to knowledge graph request but no response string exists" );
@@ -301,6 +344,20 @@ void BehaviorKnowledgeGraphQuestion::TransitionToNoConnection()
   _dVars.state = EState::NoConnection;
 
   DelegateIfInControl( new TriggerLiftSafeAnimationAction( kAnim_NoConnection ) );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorKnowledgeGraphQuestion::OnResponseInterrupted()
+{
+  DEV_ASSERT( EState::Responding == _dVars.state, "Should only allow interruptions during response state" );
+  PRINT_DEBUG( "Interruption event received" );
+
+  _dVars.state = EState::Interrupted;
+  if ( IsControlDelegated() && _iVars.ttsBehavior.get()->IsActivated() )
+  {
+    PRINT_DEBUG( "Interrupted TTS" );
+    _iVars.ttsBehavior.get()->Interrupt();
+  }
 }
 
 } // namespace Cozmo

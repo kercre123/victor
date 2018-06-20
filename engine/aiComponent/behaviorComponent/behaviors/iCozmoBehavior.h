@@ -210,6 +210,11 @@ public:
   // further down the stack
   void SetDontActivateThisTick(const std::string& coordinatorName);
 
+  // if true, mic streaming will be disabled when victor hears the trigger word, and the wake word behavior will be disabled
+  // note: The trigger word will still be pending, and it is up to the behavior to deal with this however it sees fit.
+  // todo: add a data defined way to suppress the trigger word response from .json
+  virtual bool ShouldSuppressTriggerWordResponse() const { return false; }
+
   // if an active feature is associated with this behavior, return true and set it in arguments
   bool GetAssociatedActiveFeature(ActiveFeature& feature) const;
   

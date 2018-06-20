@@ -52,7 +52,8 @@ namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TextToSpeechComponent::TextToSpeechComponent(const AnimContext* context)
-: _dispatchQueue(Util::Dispatch::Create("TtSpeechComponent"))
+: _activeTTSID(kInvalidTTSID)
+, _dispatchQueue(Util::Dispatch::Create("TtSpeechComponent"))
 {
   DEV_ASSERT(nullptr != context, "TextToSpeechComponent.InvalidContext");
   DEV_ASSERT(nullptr != context->GetAudioController(), "TextToSpeechComponent.InvalidAudioController");
@@ -250,6 +251,10 @@ bool TextToSpeechComponent::PrepareAudioEngine(const TTSID_t ttsID,
 void TextToSpeechComponent::CleanupAudioEngine(const TTSID_t ttsID)
 {
   LOG_INFO("TextToSpeechComponent.CleanupAudioEngine", "Clean up ttsID %d", ttsID);
+
+  if(ttsID == _activeTTSID){
+    StopActiveTTS();
+  }
 
   // Clear previously loaded data
   auto * pluginInterface = _audioController->GetPluginInterface();
@@ -463,18 +468,31 @@ void TextToSpeechComponent::PostAudioEvent(AudioEngine::AudioEventId eventId, ui
             ttsID,
             static_cast<uint32_t>(gameObject));
   AudioEngine::AudioPlayingId playingID = _audioController->PostAudioEvent(eventId, gameObject, audioCallbackContext);
-  if(AudioEngine::kInvalidAudioPlayingId == playingID){
+  if(AudioEngine::kInvalidAudioPlayingId != playingID){
+    _activeTTSID = ttsID;
+    SendAnimToEngine(ttsID, TextToSpeechState::Playing);
+  }
+  else {
     LOG_DEBUG("TextToSpeechComponent.UtteranceFailedToPlay", "Utterance with ttsID %hhu failed to play", ttsID);
     SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
   }
-  SendAnimToEngine(ttsID, TextToSpeechState::Playing);
+}
+
+//
+// stop the currently playing tts
+//
+void TextToSpeechComponent::StopActiveTTS()
+{
+  _audioController->StopAllAudioEvents(static_cast<AudioEngine::AudioGameObject>(kTTSGameObject));
 }
 
 //
 // Handle a callback from the AudioEngine indicating that the TtS Utterance has finished playing
 //
-void TextToSpeechComponent::OnUtteranceCompleted(uint8_t ttsID) const
+void TextToSpeechComponent::OnUtteranceCompleted(uint8_t ttsID)
 {
+  _activeTTSID = kInvalidTTSID;
+
   LOG_DEBUG("TextToSpeechCOmponent.UtteranceCompleted", "Completion callback recieved for ttsID %hhu", ttsID);
   SendAnimToEngine(ttsID, TextToSpeechState::Finished);
 }

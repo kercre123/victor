@@ -85,6 +85,10 @@ public:
 
   const UtteranceState GetUtteranceState( const uint8_t utteranceID) const;
   const bool           PlayUtterance(const uint8_t utteranceID);
+
+  // we can cancel the tts at any point during it's lifecycle, however ...
+  //  + if cancelling when tts is generating, thread will hang until generation is complete
+  //  + cancelling will clear the wav data in AnkiPluginInterface, regardless of which utteranceID was last delivered
   const bool           CancelUtterance(const uint8_t utteranceID);
 
 private:
