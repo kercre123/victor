@@ -94,6 +94,14 @@ enum uint_32 Robot_Vic_External_Language
   Japanese = 2008704848,
 }
 
+enum uint_32 Robot_Vic_External_Processing
+{
+  Invalid = 0,
+  Robot_Vic_External_Processed = 1575276615,
+  Robot_Vic_External_Unit_Test_Mock = 203897895,
+  Robot_Vic_External_Unprocessed = 3289079812,
+}
+
 enum uint_32 Robot_Vic_Petting_Level
 {
   Invalid = 0,
@@ -110,11 +118,29 @@ enum uint_32 Robot_Vic_Quiet
   Robot_Vic_Quiet_On = 3604654675,
 }
 
+enum uint_32 Robot_Vic_System_Tests
+{
+  App_Run = 2777662008,
+  Invalid = 0,
+  Unit_Test = 522293050,
+}
+
 enum uint_32 Robot_Vic_Vc
 {
   Invalid = 0,
   Robot_Vic_Vc_Off = 1551477384,
   Robot_Vic_Vc_On = 3189356050,
+}
+
+enum uint_32 Robot_Vic_Volume
+{
+  High = 3550808449,
+  Invalid = 0,
+  Low = 545371365,
+  Medium = 2849147824,
+  Mediumhigh = 3176515060,
+  Mediumlow = 1216798262,
+  Mute = 2974103762,
 }
 
 enum uint_32 StateGroupType
@@ -126,20 +152,13 @@ enum uint_32 StateGroupType
   Music = 3991942870,
   Music_Dimmer = 920031443,
   Robot_Vic_External_Language = 2984487667,
+  Robot_Vic_External_Processing = 475135532,
   Robot_Vic_Petting_Level = 3399985269,
   Robot_Vic_Quiet = 3765614597,
+  Robot_Vic_System_Tests = 1822792682,
   Robot_Vic_Vc = 3929179650,
-  Time_Of_Day = 207908541,
+  Robot_Vic_Volume = 3279659965,
   Voice_Commands_Mode = 522893720,
-}
-
-enum uint_32 Time_Of_Day
-{
-  Afternoon = 390531879,
-  Evening = 2905060079,
-  Invalid = 0,
-  Morning = 1924633667,
-  Night = 1011622525,
 }
 
 enum uint_32 Voice_Commands_Mode
