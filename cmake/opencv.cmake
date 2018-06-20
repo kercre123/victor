@@ -1,6 +1,6 @@
 set(OPENCV_VERSION 3.4.0)
 
-set(OPENCV_DIR opencv-${OPENCV_VERSION})                                                                        
+set(OPENCV_DIR opencv-${OPENCV_VERSION})
 
 if(VICOS)
   set(OPENCV_3RDPARTY_LIB_DIR ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR}/vicos/3rdparty/lib)
@@ -20,7 +20,9 @@ else()
   set(OPENCV_INCLUDE_PATHS ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR}/mac)
 
 endif()
-                                                                                                    
+
+include(protobuf)
+
 set(OPENCV_LIBS
     calib3d
     features2d
@@ -66,6 +68,8 @@ foreach(OPENCV_MODULE ${OPENCV_LIBS})
 
 endforeach()
 
+set(OPENCV_LIBS ${OPENCV_LIBS} ${PROTOBUF_LIBS})
+
 add_library(opencv_interface INTERFACE IMPORTED)
 set_target_properties(opencv_interface PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES
@@ -73,12 +77,11 @@ set_target_properties(opencv_interface PROPERTIES
 )
 
 if(VICOS)
-  set(OPENCV_EXTERNAL_LIBS     
+  set(OPENCV_EXTERNAL_LIBS
       libpng
       libtiff
       #cpufeatures # missing for vicos build?
-      libjpeg # NOT using turbo jpeg below
-      libprotobuf) 
+      libjpeg) # NOT using turbo jpeg below
 else()
   set(OPENCV_EXTERNAL_LIBS
       IlmImf
@@ -86,11 +89,10 @@ else()
       libpng
       libtiff
       zlib
-      libjpeg 
-      ippicv 
-      ippiw 
-      ittnotify 
-      libprotobuf)
+      libjpeg
+      ippicv
+      ippiw
+      ittnotify)
 endif()
 
 foreach(LIB ${OPENCV_EXTERNAL_LIBS})
@@ -103,7 +105,6 @@ endforeach()
 anki_build_target_license(libpng "libpng,${CMAKE_SOURCE_DIR}/licenses/libpng.license")
 anki_build_target_license(libtiff "ISC,${CMAKE_SOURCE_DIR}/licenses/libtiff.license")
 anki_build_target_license(libjpeg "BSD-3-like,${CMAKE_SOURCE_DIR}/licenses/libjpeg-turbo.license")
-anki_build_target_license(libprotobuf "BSD-3,${CMAKE_SOURCE_DIR}/licenses/protobuf.license")
 
 message(STATUS "including OpenCV-${OPENCV_VERSION}, [Modules: ${OPENCV_LIBS}], [3rdParty: ${OPENCV_EXTERNAL_LIBS}]")
 
@@ -113,7 +114,7 @@ if (MACOSX)
   # Add Frameworks
   find_library(ACCELERATE Accelerate)
   find_library(APPKIT AppKit)
-  find_library(OPENCL OpenCL)                                                               
+  find_library(OPENCL OpenCL)
   list(APPEND OPENCV_LIBS ${ACCELERATE} ${APPKIT} ${OPENCL})
 endif()
 

@@ -6,6 +6,7 @@ message(STATUS "Building NeuralNets process")
 
 include(anki_build_cxx)
 include(anki_build_strip)
+include(protobuf)
 
 set(TENSORFLOW_PATH  ${ANKI_EXTERNAL_DIR}/tensorflow)
 
@@ -39,7 +40,7 @@ if (VICOS)
     -Wl,--whole-archive 
     ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/lib/libtensorflow-core.a
     -Wl,--no-whole-archive
-    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/protobuf/armeabi-v7a/lib/libprotobuf.a 
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/protobuf/armeabi-v7a/lib/libprotobuf.a
     ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/downloads/nsync/builds/default.vicos.c++11/libnsync.a
     c++   # NOTE: VicOS uses libc++, so TensorFlow must be built to match
     dl
@@ -110,7 +111,7 @@ target_include_directories(${TARGET_NAME}
 #       OPENCV_LIBS (if only needed by the DNN module, which we hope to remove) or when
 #       we switch to TensorFlow Lite, which uses Flatbuffers.
 set(OPENCV_LIBS_NO_PROTOBUF ${OPENCV_LIBS}) 
-list(REMOVE_ITEM OPENCV_LIBS_NO_PROTOBUF libprotobuf)
+list(REMOVE_ITEM OPENCV_LIBS_NO_PROTOBUF protobuf)
 
 target_link_libraries(${TARGET_NAME}
   PRIVATE

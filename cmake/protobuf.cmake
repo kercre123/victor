@@ -1,6 +1,11 @@
 
+if(PROTOBUF_INCLUDED)
+  return()
+endif(PROTOBUF_INCLUDED)
+set(PROTOBUF_INCLUDED true)
+
 set(PROTOBUF_LIBS
-  protobuf-lite
+  protobuf
 )
 
 if (VICOS)
