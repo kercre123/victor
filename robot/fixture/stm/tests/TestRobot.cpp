@@ -827,7 +827,7 @@ void EmrChecks(void)
     rcomSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 0 );
   }
   if( IS_FIXMODE_PACKOUT() && !IS_FIXMODE_OFFLINE() ) {
-    //will throw error if Robit has been packed out
+    //will throw error if Ribbit has been packed out
     rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 0 );
   }
 }
@@ -871,6 +871,7 @@ void EmrUpdate(void)
     ConsolePrintf("EMR[%u] playpenTestDisableMask:%08x\n", EMR_FIELD_OFS(playpenTestDisableMask), playpenTestDisableMask);
   }
   if( IS_FIXMODE_PACKOUT() && !IS_FIXMODE_OFFLINE() ) {
+    rcomSmr( EMR_FIELD_OFS(PACKED_OUT_DATE), flexnfo.packoutdate );
     rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 1 );
   }
 }
@@ -1273,6 +1274,25 @@ void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
 //                  Flex Flow
 //-----------------------------------------------------------------------------
 
+static time_t getRtc_(void)
+{
+  time_t now = fixtureGetTime();
+  bool valid = fixtureTimeIsValid();
+  ConsolePrintf("rtc,%i,%010u,%s\n", valid, now, fixtureTimeStr(now) );
+  
+  if( !valid ) {
+    ConsolePrintf("---- ERROR_INVALID_RTC ----\n");
+    if( g_isReleaseBuild && /*IS_FIXMODE_PACKOUT() &&*/ !IS_FIXMODE_OFFLINE() )
+      throw ERROR_INVALID_RTC;
+  }
+  
+  return now;
+}
+
+void TestRobotRtcValid(void) {
+  getRtc_(); //print and error check
+}
+
 char* const logbuf = (char*)app_global_buffer;
 const int logbufsize = APP_GLOBAL_BUF_SIZE;
 STATIC_ASSERT( APP_GLOBAL_BUF_SIZE >= (1024 + 4096) , log_buffer_size_check );
@@ -1323,6 +1343,8 @@ static void RobotLogCollect(void)
 
 static void RobotFlexFlowPackoutReport(void)
 {
+  flexnfo.packoutdate = getRtc_(); //get current clock (+error check)
+  
   //dump collected robot logs
   for( int i=0; i<numlogs; i++ ) {
     FLEXFLOW::printf("<flex> log packout_%08x_log%u.log\n", flexnfo.esn, i);
@@ -1546,6 +1568,7 @@ TestFunction* TestRobot3GetTests(void) {
 TestFunction* TestRobotPackoutGetTests(void) { 
   static TestFunction m_tests[] = {
     TestRobotInfo,
+    TestRobotRtcValid,
     EmrChecks, //check previous test results and reset status flags
     BatteryCheck, //sensor/motors may act strange if battery is low
     TestRobotSensors,
@@ -1555,9 +1578,9 @@ TestFunction* TestRobotPackoutGetTests(void) {
     BatteryCheck,
     RobotLogCollect,
     SadBeep, //eng sound cmd only works before packout flag set
+    RobotFlexFlowPackoutReport, //final report and error checks
     EmrUpdate, //set packout flag, timestamp
     RobotPowerDown,
-    RobotFlexFlowPackoutReport,
     NULL,
   };
   return m_tests;
