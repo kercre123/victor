@@ -185,7 +185,7 @@ func main() {
 	})
 	dopts := []grpc.DialOption{grpc.WithTransportCredentials(dcreds)}
 
-	gwmux := runtime.NewServeMux(runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{EmitDefaults: true}))
+	gwmux := runtime.NewServeMux(runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{EmitDefaults: true, OrigName: true, EnumsAsInts: true}))
 	err = extint.RegisterExternalInterfaceHandlerFromEndpoint(ctx, gwmux, demoAddr, dopts)
 	if err != nil {
 		log.Println("Error during RegisterExternalInterfaceHandlerFromEndpoint:", err)

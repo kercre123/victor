@@ -44,7 +44,7 @@ message MoveLiftResult {
 message DriveArcRequest {
   float speed = 1;
   float accel = 2;
-  int32 curvatureRadius_mm = 3;
+  int32 curvature_radius_mm = 3;
 }
 
 message DriveArcResult {
