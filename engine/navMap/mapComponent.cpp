@@ -433,7 +433,8 @@ void MapComponent::FlagGroundPlaneROIInterestingEdgesAsUncertain()
         return oldData;
     };
 
-  UpdateBroadcastFlags(currentNavMemoryMap->TransformContent(Poly2f((Quad2f)groundPlaneWrtRobot), transform));
+  FastPolygon poly(Poly2f((Quad2f)groundPlaneWrtRobot));
+  UpdateBroadcastFlags(currentNavMemoryMap->TransformContent(poly, transform));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -486,7 +487,7 @@ void MapComponent::FlagProxObstaclesUsingPose()
   const Point2f p1 = pose.GetTranslation();
   const Point2f p2 = (pose.GetTransform() * Transform3d(rot, offset1)).GetTranslation();
   const Point2f p3 = (pose.GetTransform() * Transform3d(rot, offset2)).GetTranslation();
-  const Poly2f triangleExplored({p1, p2, p3});
+  const FastPolygon triangleExplored({p1, p2, p3});
 
   // mark any prox obstacle in triangleExplored as explored
   NodeTransformFunction exploredFunc = [](MemoryMapDataPtr data) -> MemoryMapDataPtr {
@@ -1083,8 +1084,18 @@ void MapComponent::ClearRobotToEdge(const Point2f& p, const Point2f& q, const Ti
     Rotation3d rot = Rotation3d(0.f, Z_AXIS_3D());
     const Point2f r1 = (_robot->GetPose().GetTransform() * Transform3d(rot, rayOffset1)).GetTranslation();
     const Point2f r2 = (_robot->GetPose().GetTransform() * Transform3d(rot, rayOffset2)).GetTranslation();
-    auto quad = ConvexPolygon::ConvexHull({p, q, r1, r2});
+    FastPolygon quad = ConvexPolygon::ConvexHull({p, q, r1, r2});
 
+    ClearRegion(quad, t);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MapComponent::ClearRegion(const BoundedConvexSet2f& region, const TimeStamp_t t) 
+{
+  INavMap* currentMap = GetCurrentMemoryMap();
+  if (currentMap)
+  {
     MemoryMapDataPtr clearData = MemoryMapData(INavMap::EContentType::ClearOfObstacle, t).Clone();
     NodeTransformFunction trfm = [&clearData] (MemoryMapDataPtr currentData) {
       if (currentData->type == EContentType::ObstacleProx) {
@@ -1097,12 +1108,12 @@ void MapComponent::ClearRobotToEdge(const Point2f& p, const Point2f& q, const Ti
         return currentData;
       }
     };
-    UpdateBroadcastFlags(currentMap->Insert(quad, trfm));
+    UpdateBroadcastFlags(currentMap->Insert(region, trfm));
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MapComponent::AddProxData(const Poly2f& poly, const MemoryMapData& data)
+void MapComponent::AddProxData(const BoundedConvexSet2f& region, const MemoryMapData& data)
 {
   INavMap* currentMap = GetCurrentMemoryMap();
   if (currentMap)
@@ -1120,7 +1131,7 @@ void MapComponent::AddProxData(const Poly2f& poly, const MemoryMapData& data)
         return currentData;
       }
     };
-    UpdateBroadcastFlags(currentMap->Insert(poly, trfm));
+    UpdateBroadcastFlags(currentMap->Insert(region, trfm));
   }
 }
   
@@ -1150,6 +1161,24 @@ void MapComponent::InsertData(const Poly2f& polyWRTOrigin, const MemoryMapData& 
   {
     UpdateBroadcastFlags(currentMap->Insert(polyWRTOrigin, data));
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool MapComponent::CheckForCollisions(const BoundedConvexSet2f& region) const
+{
+  const INavMap* currentMap = GetCurrentMemoryMap();
+  if (currentMap)
+  {
+    return currentMap->AnyOf( region, [] (const auto& data) {
+        const bool retv = (data->type == MemoryMapTypes::EContentType::ObstacleObservable)   ||
+                          (data->type == MemoryMapTypes::EContentType::ObstacleCharger)      ||
+                          (data->type == MemoryMapTypes::EContentType::ObstacleProx)         ||
+                          (data->type == MemoryMapTypes::EContentType::ObstacleUnrecognized) ||
+                          (data->type == MemoryMapTypes::EContentType::Cliff);
+        return retv;
+      });
+  }
+  return false;
 }
 
 // NOTE: mrw: we probably want to separate the vision processing code into its own file at some point.
@@ -1429,7 +1458,8 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
           // check if it's occluded before the near plane
           const Vec2f& outerRayFrom = cameraOrigin;
           const Vec2f outerRayTo(rayAtNearPlane.x, rayAtNearPlane.y);
-          occludedBeforeNearPlane = currentNavMemoryMap->HasCollisionWithTypes({{Point2f{outerRayFrom}, Point2f{outerRayTo}}}, typesThatOccludeValidInfoOutOfROI);
+          Poly2f ray = {{outerRayFrom, outerRayTo}};
+          occludedBeforeNearPlane = currentNavMemoryMap->HasCollisionWithTypes(FastPolygon(ray), typesThatOccludeValidInfoOutOfROI);
 
           // update innerRayFrom so that the second ray (if needed) only checks the inside of the ROI plane
           innerRayFrom = outerRayTo; // start inner (innerFrom) where the outer ends (outerTo)
@@ -1467,7 +1497,9 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
 
         // Vec2f innerRayFrom: already calculated for us
         const Vec2f& innerRayTo = candidate3D;
-        occludedInsideROI = currentNavMemoryMap->HasCollisionWithTypes({{Point2f{innerRayFrom}, Point2f{innerRayTo}}}, typesThatOccludeValidInfoInsideROI);
+
+        Poly2f ray = {{innerRayFrom, innerRayTo}};
+        occludedInsideROI = currentNavMemoryMap->HasCollisionWithTypes(FastPolygon(ray), typesThatOccludeValidInfoInsideROI);
       }
 
       // if we cross an object, ignore this point, regardless of whether we saw a border or not

@@ -12,6 +12,7 @@
  **/
 
 #include "coretech/common/engine/math/fastPolygon2d.h"
+#include "coretech/common/engine/math/axisAlignedHyperCube.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "util/helpers/boundedWhile.h"
@@ -36,7 +37,7 @@ FastPolygon::FastPolygon(const Poly2f& basePolygon)
   , _maxX( basePolygon.GetMaxX() )
   , _minY( basePolygon.GetMinY() )
   , _maxY( basePolygon.GetMaxY() )
-  , _circleCenter( basePolygon.ComputeCentroid() )
+  , _circleCenter( ComputeCentroid() )
 {
   CreateEdgeVectors();
   ComputeCircles();
@@ -138,6 +139,20 @@ bool FastPolygon::Contains(const Point2f& pt) const
 bool FastPolygon::InHalfPlane(const Halfplane2f& H) const 
 {
   return std::all_of(begin(), end(), [&H](const Point2f& p) { return H.Contains(p); });
+}
+
+// calculates if the polygon intersects the node
+bool FastPolygon::Intersects(const AxisAlignedQuad& quad) const
+{
+  // check if any of the bounding box edges create a separating axis
+  if (FLT_LT( GetMaxX(), quad.GetMinVertex().x() )) { return false; }
+  if (FLT_LT( GetMaxY(), quad.GetMinVertex().y() )) { return false; }
+  if (FLT_GT( GetMinX(), quad.GetMaxVertex().x() )) { return false; }
+  if (FLT_GT( GetMinY(), quad.GetMaxVertex().y() )) { return false; }
+
+  // fastPolygon line segments define the halfplane boundary of points inside the polygon, 
+  // so check negative halfplane instead
+  return std::none_of(_edgeSegments.begin(), _edgeSegments.end(), [&](const LineSegment& l) { return quad.InNegativeHalfPlane(l); });
 }
 
 float FastPolygon::GetCircumscribedRadius() const

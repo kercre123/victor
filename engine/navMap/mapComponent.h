@@ -117,11 +117,15 @@ public:
   // the region is a line segment of fixed length that is perpendicular to the robot direction
   void ClearRobotToEdge(const Point2f& p, const Point2f& q, const TimeStamp_t t);
 
-  void AddProxData(const Poly2f& poly, const MemoryMapData& data);
+  // flag the region as clear of all positive obstacles
+  void ClearRegion(const BoundedConvexSet2f& region, const TimeStamp_t t);
 
-  template<class ConvexType>
-  bool CheckForCollisions(const ConvexType& r) const;
-  
+  // flag the region as a prox obstacle
+  void AddProxData(const BoundedConvexSet2f& region, const MemoryMapData& data);
+
+  // return true of the specified region contains any objects of known collision types
+  bool CheckForCollisions(const BoundedConvexSet2f& region) const;
+
   // Remove all prox obstacles from the map.
   // CAUTION: This will entirely remove _all_ information about prox
   // obstacles. This should almost never be necessary. Is this really
@@ -203,24 +207,6 @@ private:
 };
 
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<class ConvexType>
-bool MapComponent::CheckForCollisions(const ConvexType& r) const
-{
-  const INavMap* currentMap = GetCurrentMemoryMap();
-  if (currentMap)
-  {
-    return currentMap->AnyOf( r, [] (const auto& data) {
-        const bool retv = (data->type == MemoryMapTypes::EContentType::ObstacleObservable)   ||
-                          (data->type == MemoryMapTypes::EContentType::ObstacleCharger)      ||
-                          (data->type == MemoryMapTypes::EContentType::ObstacleProx)         ||
-                          (data->type == MemoryMapTypes::EContentType::ObstacleUnrecognized) ||
-                          (data->type == MemoryMapTypes::EContentType::Cliff);
-        return retv;
-      });
-  }
-  return false;
-}
 
 
 }

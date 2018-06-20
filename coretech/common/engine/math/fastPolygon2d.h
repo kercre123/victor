@@ -40,7 +40,7 @@ namespace Anki {
 
 // TODO: ConvexPolygon should inherit from ConvexPointSet, but that requires moving Contains
 //       and InHalfplane checks to ConvexPolygon class.
-class FastPolygon : public ConvexPolygon, public ConvexPointSet<2, f32>
+class FastPolygon : public ConvexPolygon, public BoundedConvexSet<2, f32>
 {
 public:
 
@@ -55,6 +55,9 @@ public:
   
   // returns true if the convex polygon is fully contained by the halfplane H
   virtual bool InHalfPlane(const Halfplane2f& H) const override;
+  
+  // intersection with AABB
+  virtual bool Intersects(const AxisAlignedQuad& quad) const override;
   
   const std::vector<LineSegment>& GetEdgeSegments() const { return _edgeSegments; }
   
@@ -78,6 +81,11 @@ public:
   virtual float GetMaxX() const override {return _maxX;}
   virtual float GetMinY() const override {return _minY;}
   virtual float GetMaxY() const override {return _maxY;}
+
+  // get the AABB for this poly
+  inline virtual AxisAlignedQuad GetAxisAlignedBoundingBox() const override {
+    return AxisAlignedQuad({GetMinX(), GetMinY()}, {GetMaxX(), GetMaxY()});
+  }
 
   static void ResetCounts();
   static int _numChecks;

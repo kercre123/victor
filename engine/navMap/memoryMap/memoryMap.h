@@ -38,7 +38,8 @@ public:
   
   // add data to the memory map defined by poly
   virtual bool Insert(const Poly2f& poly, const MemoryMapData& data) override;
-  virtual bool Insert(const Poly2f& poly, NodeTransformFunction transform) override;
+  virtual bool Insert(const BoundedConvexSet2f& r, const MemoryMapData& data) override;
+  virtual bool Insert(const BoundedConvexSet2f& r, NodeTransformFunction transform) override;
   
   // merge the given map into this map by applying to the other's information the given transform
   // although this methods allows merging any INavMemoryMap into any INavMemoryMap, subclasses are not
@@ -57,13 +58,14 @@ public:
   virtual bool TransformContent(NodeTransformFunction transform) override;
   
   // attempt to apply a transformation function to any node intersecting the poly
-  virtual bool TransformContent(const Poly2f& poly, NodeTransformFunction transform) override;
+  virtual bool TransformContent(const BoundedConvexSet2f& poly, NodeTransformFunction transform) override;
 
   // populate a list of all data that matches the predicate
   virtual void FindContentIf(NodePredicate pred, MemoryMapDataConstList& output) const override;
   
   // populate a list of all data that matches the predicate inside poly
-  virtual void FindContentIf(const FastPolygon& poly, NodePredicate pred, MemoryMapDataConstList& output) const override;
+  virtual void FindContentIf(const Poly2f& poly, NodePredicate pred, MemoryMapDataConstList& output) const override;
+  virtual void FindContentIf(const BoundedConvexSet2f& poly, NodePredicate pred, MemoryMapDataConstList& output) const override;
 
   
   // return the size of the area currently explored
@@ -89,8 +91,8 @@ public:
   virtual bool HasCollisionWithTypes(const FastPolygon& poly, const FullContentArray& types) const override;
   
   // evaluates f along any node that the region collides with. returns true if any call to NodePredicate returns true
-  bool AnyOf(const FastPolygon& p, NodePredicate f) const override { return AnyOf_T(p, f); }
-  bool AnyOf(const Ball2f& b, NodePredicate f)      const override { return AnyOf_T(b, f); }
+  bool AnyOf(const Poly2f& p, NodePredicate f)             const override;
+  bool AnyOf(const BoundedConvexSet2f& p, NodePredicate f) const override;
   
   // returns true if there are any nodes of the given type, false otherwise
   virtual bool HasContentType(EContentType type) const override;
@@ -103,10 +105,6 @@ public:
   virtual TimeStamp_t GetLastChangedTimeStamp() const override {return _quadTree.GetData()->GetLastObservedTime();}
 
 private:
-  // template specialization
-  template <class ConvexType>
-  bool AnyOf_T(const ConvexType& region, NodePredicate f) const;
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -116,13 +114,6 @@ private:
   
 }; // class
   
-template <class ConvexType>
-bool MemoryMap::AnyOf_T(const ConvexType& r, NodePredicate f) const
-{
-  bool retv = false;  
-  _quadTree.Fold<ConvexType>( [&](const auto& n) { retv |= f(n.GetData()); }, r);
-  return retv;
-}
   
 } // namespace
 } // namespace

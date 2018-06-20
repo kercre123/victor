@@ -10,11 +10,8 @@
  **/
 #include "quadTree.h"
 
-#include "engine/viz/vizManager.h"
-#include "engine/robot.h"
-
+#include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/math/point_impl.h"
-#include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/common/engine/math/polygon_impl.h"
 
 #include "coretech/messaging/engine/IComms.h"
@@ -68,14 +65,13 @@ float QuadTree::GetContentPrecisionMM() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTree::Insert(const FastPolygon& poly, NodeTransformFunction transform)
+bool QuadTree::Insert(const BoundedConvexSet2f& region, NodeTransformFunction transform)
 {
-  ANKI_CPU_PROFILE("QuadTree::Insert");
-  
-  // if the root does not contain the poly, expand
-  if ( !_boundingBox.Contains( poly ) )
+  // if the root does not contain the region, expand
+  const AxisAlignedQuad aabb = region.GetAxisAlignedBoundingBox();
+  if ( !_boundingBox.Contains( aabb ) )
   {
-    ExpandToFit( poly );
+    ExpandToFit( aabb );
   }
   
   // run the insert on the expanded QT
@@ -87,8 +83,8 @@ bool QuadTree::Insert(const FastPolygon& poly, NodeTransformFunction transform)
 
     node.GetData()->SetLastObservedTime(newData->GetLastObservedTime());
 
-    // split node if we can unsure if the incoming poly will fill the entire area
-    if ( !node.GetBoundingBox().IsContainedBy(poly) && !node.IsSubdivided() && node.CanSubdivide())
+    // split node if we are unsure if the incoming region will fill the entire area
+    if ( !region.ContainsAll(node.GetBoundingBox().GetVertices()) )
     {
       node.Subdivide( _processor );
     }
@@ -101,17 +97,17 @@ bool QuadTree::Insert(const FastPolygon& poly, NodeTransformFunction transform)
       }
     } 
   };
-  Fold(accumulator, poly);
+  Fold(accumulator, region);
 
   // try to cleanup tree
   FoldFunctor merge = [this] (QuadTreeNode& node) { node.TryAutoMerge(_processor); };
-  Fold(merge, poly, FoldDirection::DepthFirst);
+  Fold(merge, region, FoldDirection::DepthFirst);
 
   return contentChanged;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTree::Transform(const Poly2f& poly, NodeTransformFunction transform)
+bool QuadTree::Transform(const BoundedConvexSet2f& region, NodeTransformFunction transform)
 {
   // run the transform
   bool contentChanged = false;
@@ -125,14 +121,15 @@ bool QuadTree::Transform(const Poly2f& poly, NodeTransformFunction transform)
       }
     };
 
-  Fold(trfm, FastPolygon(poly));
+  Fold(trfm, region);
 
   // try to cleanup tree
   FoldFunctor merge = [this] (QuadTreeNode& node) { node.TryAutoMerge(_processor); };
-  Fold(merge, FastPolygon(poly), FoldDirection::DepthFirst);
+  Fold(merge, region, FoldDirection::DepthFirst);
   
   return contentChanged;
 }
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool QuadTree::Transform(NodeTransformFunction transform)
 {
@@ -188,9 +185,6 @@ bool QuadTree::Merge(const QuadTree& other, const Pose3d& transform)
     // if the leaf node is unkown then we don't need to add it
     const bool isUnknown = ( nodeInOther->GetData()->type == EContentType::Unknown );
     if ( !isUnknown ) {
-      // get transformed quad
-      Quad2f transformedQuad2d;
-      transform2d.ApplyTo(nodeInOther->MakeQuadXY(), transformedQuad2d);
       
       // NOTE: there's a precision problem when we add back the quads; when we add a non-axis aligned quad to the map,
       // we modify (if applicable) all quads that intersect with that non-aa quad. When we merge this information into
@@ -202,19 +196,22 @@ bool QuadTree::Merge(const QuadTree& other, const Pose3d& transform)
       // b) scaling down aaQuad to account for this error
       // eg: transformedQuad2d.Scale(0.9f);
       // At this moment is just a known issue
+
+      std::vector<Point2f> corners = nodeInOther->GetBoundingBox().GetVertices();
+      for (Point2f& p : corners) {
+        p = transform2d.GetTransform() * p;
+      }
       
-      // add to this
-      Poly2f transformedPoly;
-      transformedPoly.ImportQuad2d(transformedQuad2d);
-      
-      changed |= Insert(transformedPoly, [&nodeInOther] (auto _) { return nodeInOther->GetData(); });
+      // grab CH to sort verticies into CW order
+      const ConvexPolygon poly = ConvexPolygon::ConvexHull( std::move(corners) );
+      changed |= Insert(FastPolygon(poly), [&nodeInOther] (auto) { return nodeInOther->GetData(); });
     }
   }
   return changed;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTree::ExpandToFit(const Poly2f& polyToCover)
+bool QuadTree::ExpandToFit(const AxisAlignedQuad& region)
 {
   ANKI_CPU_PROFILE("QuadTree::ExpandToFit");
   
@@ -226,11 +223,11 @@ bool QuadTree::ExpandToFit(const Poly2f& polyToCover)
   do
   {
     // find in which direction we are expanding, upgrade root level in that direction (center moves)
-    const Vec2f& direction = polyToCover.ComputeCentroid() - Point2f{GetCenter().x(), GetCenter().y()};
+    const Vec2f& direction = region.GetCentroid() - Point2f{GetCenter().x(), GetCenter().y()};
     expanded = UpgradeRootLevel(direction, kQuadTreeMaxRootDepth, _processor);
 
-    // check if the poly now fits in the expanded root
-    fitsInMap = _boundingBox.Contains(polyToCover);
+    // check if the region now fits in the expanded root
+    fitsInMap = _boundingBox.ContainsAll( {region.GetMinVertex(), region.GetMaxVertex()} );
     
   } while( !fitsInMap && expanded );
 
@@ -238,10 +235,10 @@ bool QuadTree::ExpandToFit(const Poly2f& polyToCover)
   if ( !fitsInMap )
   {
     // shift the root to try to cover the poly, by removing opposite nodes in the map
-    ShiftRoot(polyToCover, _processor);
+    ShiftRoot(region, _processor);
 
     // check if the poly now fits in the expanded root
-    fitsInMap = _boundingBox.Contains(polyToCover);
+    fitsInMap = _boundingBox.ContainsAll( {region.GetMinVertex(), region.GetMaxVertex()} );
   }
   
   // the poly should be contained, if it's not, we have reached the limit of expansions and shifts, and the poly does not
@@ -249,7 +246,7 @@ bool QuadTree::ExpandToFit(const Poly2f& polyToCover)
   if ( !fitsInMap ) {
     PRINT_NAMED_WARNING("QuadTree.Expand.InsufficientExpansion",
       "Quad caused expansion, but expansion was not enough PolyCenter(%.2f, %.2f), Root(%.2f,%.2f) with sideLen(%.2f).",
-      polyToCover.ComputeCentroid().x(), polyToCover.ComputeCentroid().y(),
+      region.GetCentroid().x(), region.GetCentroid().y(),
       GetCenter().x(), GetCenter().y(),
       GetSideLen() );
   }
@@ -259,22 +256,14 @@ bool QuadTree::ExpandToFit(const Poly2f& polyToCover)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTree::ShiftRoot(const Poly2f& requiredPoints, QuadTreeProcessor& processor)
+bool QuadTree::ShiftRoot(const AxisAlignedQuad& region, QuadTreeProcessor& processor)
 {
-  bool xPlusAxisReq  = false;
-  bool xMinusAxisReq = false;
-  bool yPlusAxisReq  = false;
-  bool yMinusAxisReq = false;
   const float rootHalfLen = _sideLen * 0.5f;
 
-  // iterate every point and see what direction they need the root to shift towards
-  for( const Point2f& p : requiredPoints )
-  {
-    xPlusAxisReq  = xPlusAxisReq  || FLT_GE(p.x(), _center.x()+rootHalfLen);
-    xMinusAxisReq = xMinusAxisReq || FLT_LE(p.x(), _center.x()-rootHalfLen);
-    yPlusAxisReq  = yPlusAxisReq  || FLT_GE(p.y(), _center.y()+rootHalfLen);
-    yMinusAxisReq = yMinusAxisReq || FLT_LE(p.y(), _center.y()-rootHalfLen);
-  }
+  const bool xPlusAxisReq  = FLT_GE(region.GetMaxVertex().x(), _center.x()+rootHalfLen);
+  const bool xMinusAxisReq = FLT_LE(region.GetMinVertex().x(), _center.x()-rootHalfLen);
+  const bool yPlusAxisReq  = FLT_GE(region.GetMaxVertex().y(), _center.y()+rootHalfLen);
+  const bool yMinusAxisReq = FLT_LE(region.GetMinVertex().y(), _center.y()-rootHalfLen);
   
   // can't shift +x and -x at the same time
   if ( xPlusAxisReq && xMinusAxisReq ) {

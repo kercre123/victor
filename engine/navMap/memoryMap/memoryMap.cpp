@@ -152,7 +152,7 @@ bool MemoryMap::TransformContent(NodeTransformFunction transform)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MemoryMap::TransformContent(const Poly2f& poly, NodeTransformFunction transform)
+bool MemoryMap::TransformContent(const BoundedConvexSet2f& poly, NodeTransformFunction transform)
 {
   return MONITOR_PERFORMANCE( _quadTree.Transform(poly, transform) );
 }
@@ -206,10 +206,27 @@ bool MemoryMap::HasCollisionWithTypes(const FastPolygon& poly, const FullContent
 {
   // convert type to quadtree node content and to flag (since processor takes in flags)
   const EContentTypePackedType nodeTypeFlags = ConvertContentArrayToFlags(types);
+  const BoundedConvexSet2f& region = poly;
 
-  return AnyOf( poly, [&nodeTypeFlags] (MemoryMapDataConstPtr data) {
+  return AnyOf( region, [&nodeTypeFlags] (MemoryMapDataConstPtr data) {
     return IsInEContentTypePackedType(data->type, nodeTypeFlags);
   });
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool MemoryMap::AnyOf(const Poly2f& p, NodePredicate f) const
+{
+  bool retv = false;  
+  _quadTree.Fold( [&](const auto& node) { retv |= f(node.GetData()); }, FastPolygon(p));
+  return retv;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool MemoryMap::AnyOf(const BoundedConvexSet2f& r, NodePredicate f) const
+{
+  bool retv = false;  
+  _quadTree.Fold( [&](const auto& node) { retv |= f(node.GetData()); }, r);
+  return retv;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -225,14 +242,22 @@ bool MemoryMap::Insert(const Poly2f& poly, const MemoryMapData& data)
 {
   // clone data to make into a shared pointer.
   const auto& dataPtr = data.Clone();
-  return MONITOR_PERFORMANCE( _quadTree.Insert(poly, [&dataPtr] (auto _) { return dataPtr; }) );
+  return MONITOR_PERFORMANCE( _quadTree.Insert(FastPolygon(poly), [&dataPtr] (auto _) { return dataPtr; }) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MemoryMap::Insert(const Poly2f& poly, NodeTransformFunction transform)
+bool MemoryMap::Insert(const BoundedConvexSet2f& r, const MemoryMapData& data)
 {
   // clone data to make into a shared pointer.
-  return MONITOR_PERFORMANCE( _quadTree.Insert(poly, transform) );
+  const auto& dataPtr = data.Clone();
+  return MONITOR_PERFORMANCE( _quadTree.Insert(r, [&dataPtr] (auto _) { return dataPtr; }) );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool MemoryMap::Insert(const BoundedConvexSet2f& r, NodeTransformFunction transform)
+{
+  // clone data to make into a shared pointer.
+  return MONITOR_PERFORMANCE( _quadTree.Insert(r, transform) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -286,7 +311,20 @@ void MemoryMap::FindContentIf(NodePredicate pred, MemoryMapDataConstList& output
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::FindContentIf(const FastPolygon& poly, NodePredicate pred, MemoryMapDataConstList& output) const
+void MemoryMap::FindContentIf(const Poly2f& poly, NodePredicate pred, MemoryMapDataConstList& output) const
+{
+  QuadTreeTypes::FoldFunctorConst accumulator = [&output, &pred] (const QuadTreeNode& node) {
+    MemoryMapDataPtr data = node.GetData();
+    if( pred(data) ) { 
+      output.insert( MemoryMapDataConstPtr(node.GetData()) );
+    }
+  };
+
+  MONITOR_PERFORMANCE( _quadTree.Fold(accumulator, FastPolygon(poly)) );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MemoryMap::FindContentIf(const BoundedConvexSet2f& poly, NodePredicate pred, MemoryMapDataConstList& output) const
 {
   QuadTreeTypes::FoldFunctorConst accumulator = [&output, &pred] (const QuadTreeNode& node) {
     MemoryMapDataPtr data = node.GetData();

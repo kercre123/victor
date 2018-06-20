@@ -133,15 +133,15 @@ namespace {
   }
 
   // straight lines are rectangles the length of the line segment, with robot width
-  inline Poly2f GetLineCollisionSet(const LineSegment& l, float padding) {
+  inline FastPolygon GetLineCollisionSet(const LineSegment& l, float padding) {
     Point2f normal(l.GetFrom().y()-l.GetTo().y(), l.GetTo().x()-l.GetFrom().x());
     normal.MakeUnitLength();
     float width = ROBOT_RADIUS_MM + padding;
 
-    return Poly2f({ l.GetFrom() + normal * width, 
-                    l.GetTo() + normal * width, 
-                    l.GetTo() - normal * width, 
-                    l.GetFrom() - normal * width });
+    return FastPolygon({ l.GetFrom() + normal * width, 
+                         l.GetTo() + normal * width,
+                         l.GetTo() - normal * width,
+                         l.GetFrom() - normal * width });
   }
 
   // for simplicity, check if arcs are safe using multiple disk checks
@@ -395,11 +395,12 @@ std::vector<Point2f> XYPlanner::GenerateWayPoints(const std::vector<Point2f>& pl
   std::vector<Point2f> out;
 
   out.push_back(_start.GetTranslation());
+  
   const Point2f* iter1 = &out.front();
   const Point2f* iter2 = iter1;
 
   for (int i = 0; i < plan.size(); ++i) {
-    const Poly2f p = GetLineCollisionSet({*iter1, plan[i]}, PLANNING_PADDING_MM);
+    const FastPolygon p = GetLineCollisionSet({*iter1, plan[i]}, PLANNING_PADDING_MM);
     const bool collision = _map.CheckForCollisions(p);
 
     if (collision) {

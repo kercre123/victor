@@ -299,7 +299,7 @@ Point<N,T> Polygon<N,T>::GetEdgeVector(size_t idx) const
 }
 
 template <PolygonDimType N, typename T>
-Point<N,T> Polygon<N,T>::ComputeCentroid() const
+Point<N,T> Polygon<N,T>::ComputeWeightedAverage() const
 {
   Point<N, T> ret;
 

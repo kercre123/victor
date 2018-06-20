@@ -14,10 +14,9 @@
 #include "quadTreeNode.h"
 #include "quadTreeProcessor.h"
 
-#include "coretech/common/engine/math/quad_impl.h"
-#include "coretech/common/engine/math/polygon_impl.h"
-#include "util/math/math.h"
+#include "coretech/common/engine/math/point_impl.h"
 
+#include "util/math/math.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 
 #include <unordered_map>
@@ -46,23 +45,9 @@ QuadTreeNode::QuadTreeNode(const Point3f &center, float sideLength, uint8_t leve
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Quad2f QuadTreeNode::MakeQuadXY(const float padding_mm) const
-{
-  const float halfLen = (_sideLen * 0.5f) + padding_mm;
-  Quad2f ret
-  {
-    {_center.x()+halfLen, _center.y()+halfLen}, // up L
-    {_center.x()-halfLen, _center.y()+halfLen}, // lo L
-    {_center.x()+halfLen, _center.y()-halfLen}, // up R
-    {_center.x()-halfLen, _center.y()-halfLen}  // lo R
-  };
-  return ret;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeNode::Subdivide(QuadTreeProcessor& processor)
 {
-  DEV_ASSERT(CanSubdivide() && !IsSubdivided(), "QuadTreeNode.Subdivide.InvalidSubdivide");
+  if ( !CanSubdivide() ) { return; }
   
   const float halfLen    = _sideLen * 0.50f;
   const float quarterLen = halfLen * 0.50f;
@@ -373,6 +358,99 @@ void QuadTreeNode::Fold(FoldFunctorConst accumulator, FoldDirection dir) const
   }
   
   if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
+}
+
+/*
+  For calls that are constrained by some convex region, first we can potentially avoid excess collision checks
+  if the current node is fully contained by the Fold Region. In the example below, nodes 1 through 6 need intersection 
+  checks, but nodes A through D do not since their parent is fully contained by Fold Region
+ 
+                    +-----------------+------------------+
+                    |                 |                  |
+                    |                 |                  |
+                    |                 |                  |
+                    |         1       |        2         |
+                    |                 |                  |
+                    |    . . . . . . . . .<- Fold        |
+                    |    .            |  .   Region      |
+                    +----+----#########--+---------------+
+                    |    .    # A | B #  .               |
+                    |    4    #---+---#  .               |
+                    |    .    # D | C #  .               |
+                    +----+----#########  .     3         |
+                    |    .    |       |  .               |
+                    |    6 . .|. .5. .|. .               |
+                    |         |       |                  |
+                    +---------+-------+------------------+
+
+*/
+
+void QuadTreeNode::Fold(FoldFunctor accumulator, const BoundedConvexSet2f& region, FoldDirection dir)
+{
+  if ( region.Intersects(_boundingBox) )  {    
+    // check if we can stop doing overlap checks
+    if ( region.ContainsAll(_boundingBox.GetVertices()) ) {
+      Fold(accumulator, dir);
+    } else {
+      if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
+
+      // filter out child nodes if we know the region won't intersect based off of AABB checks
+      if ( IsSubdivided() ) {      
+        u8 childFilter = 0b1111; // Bit field represents quadrants (-x, -y), (-x, +y), (+x, -y), (+x, +y)
+
+        const AxisAlignedQuad& aabb = region.GetAxisAlignedBoundingBox();
+        if ( aabb.GetMinVertex().x() > _center.x() ) { childFilter &= 0b0011; } // only +x (top) nodes
+        if ( aabb.GetMaxVertex().x() < _center.x() ) { childFilter &= 0b1100; } // only -x (bot) nodes
+        if ( aabb.GetMinVertex().y() > _center.y() ) { childFilter &= 0b0101; } // only +y (left) nodes
+        if ( aabb.GetMaxVertex().y() < _center.y() ) { childFilter &= 0b1010; } // only -y (right) nodes
+
+        // iterate in reverse order relative to EQuadrant order to save some extra arithmetic
+        u8 idx = 0;
+        do {
+          if (childFilter & 1) { 
+            _childrenPtr[idx]->Fold(accumulator, region, dir); 
+          }
+          ++idx;
+        } while ( childFilter >>= 1 ); 
+      }
+
+      if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
+    }
+  }
+}
+
+void QuadTreeNode::Fold(FoldFunctorConst accumulator, const BoundedConvexSet2f& region, FoldDirection dir) const
+{
+  if ( region.Intersects(_boundingBox) ) {    
+    // check if we can stop doing overlap checks
+    if ( region.ContainsAll(_boundingBox.GetVertices()) ) {
+      Fold(accumulator, dir);
+    } else {
+      if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
+
+      // filter out child nodes if we know the region won't intersect based off of AABB checks
+      if ( IsSubdivided() ) {      
+        u8 childFilter = 0b1111; // Bit field represents quadrants (-x, -y), (-x, +y), (+x, -y), (+x, +y)
+        
+        const AxisAlignedQuad& aabb = region.GetAxisAlignedBoundingBox();
+        if ( aabb.GetMinVertex().x() > _center.x() ) { childFilter &= 0b0011; } // only +x (top) nodes
+        if ( aabb.GetMaxVertex().x() < _center.x() ) { childFilter &= 0b1100; } // only -x (bot) nodes
+        if ( aabb.GetMinVertex().y() > _center.y() ) { childFilter &= 0b0101; } // only +y (left) nodes
+        if ( aabb.GetMaxVertex().y() < _center.y() ) { childFilter &= 0b1010; } // only -y (right) nodes
+
+        // iterate in reverse order relative to EQuadrant order to save some extra arithmetic
+        u8 idx = 0;
+        do {
+          if (childFilter & 1) { 
+            ((const QuadTreeNode*) _childrenPtr[idx].get())->Fold(accumulator, region, dir);
+           }
+          ++idx;
+        } while ( childFilter >>= 1 );
+      }
+
+      if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
+    }
+  }
 }
 
 } // namespace Cozmo

@@ -16,11 +16,12 @@
 #define __COMMON_ENGINE_MATH_BALL_H__
 
 #include "coretech/common/engine/math/pointSet.h"
+#include "coretech/common/engine/math/axisAlignedHyperCube.h"
 
 namespace Anki {
 
 template <DimType N, typename T>
-class Ball : public ConvexPointSet<N, T>
+class Ball : public BoundedConvexSet<N, T>
 {
 public:
   // construction/destruction
@@ -60,28 +61,31 @@ public:
     return ( FLT_LE(dSq, _rSq) );
   }
 
+  // return true if the ball intersects the hypercube
+  virtual bool Intersects(const AxisAlignedHyperCube<N,T>& cube) const override {
+    if ( Contains(cube.GetCentroid()) ) { return true; }
+    
+    // get the closest point in the ball to the hypercube center
+    Point<N,T> vec = cube.GetCentroid() - GetCentroid();
+    vec.MakeUnitLength(); // this needs to be on its own line, since it returns the original length, not a point.
+    return cube.Contains( GetCentroid() + (vec * GetRadius()) );
+  }
+
+  // return smallest AABB that contains the ball
+  virtual AxisAlignedHyperCube<N,T> GetAxisAlignedBoundingBox() const override 
+  {
+    // initialize corner offset to radius
+    Point<N,T> offset(_r);
+    return AxisAlignedHyperCube<N,T>(_p - offset, _p + offset);
+  }
+
 protected:
   Point<N,T> _p;
   T          _r;
   T          _rSq;
 };
 
-class Ball2f : public Ball<2, float>
-{
-public:
-  using Ball::GetMin;
-  using Ball::GetMax;
-
-  // construction/destruction
-  Ball2f(const Point2f& p = Point2f(), const float r = 1.f) : Ball(p, r) {}
-  virtual ~Ball2f() override {}
-
-  inline float GetMinX() const { return GetMin(0); }
-  inline float GetMaxX() const { return GetMax(0); }
-  inline float GetMinY() const { return GetMin(1); }
-  inline float GetMaxY() const { return GetMax(1); }
-};
-
+using Ball2f = Ball<2, f32>;
 using Ball3f = Ball<3, f32>;
 
 }
