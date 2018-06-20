@@ -103,6 +103,9 @@ namespace Anki {
 
       s32 robotID_ = -1;
 
+      // Power
+      HAL::PowerState powerState_ = HAL::POWER_MODE_ACTIVE;
+
       // Motors
       webots::Motor* leftWheelMotor_;
       webots::Motor* rightWheelMotor_;
@@ -902,6 +905,25 @@ namespace Anki {
     {
       return 0; // Simulator never watchdogs
     }
-    
+
+    void HAL::Shutdown()
+    {
+
+    } 
+
+    void HAL::PowerSetMode(const PowerState state)
+    {
+      powerState_ = state;
+      if (powerState_ != POWER_MODE_ACTIVE) {
+        AnkiWarn("HAL.PowerSetMode.UnsupportedMode", 
+                 "Only POWER_MODE_ACTIVE behavior is actually supported in sim");
+      }
+    }
+
+    HAL::PowerState HAL::PowerGetMode()
+    {
+      return powerState_;
+    }
+
   } // namespace Cozmo
 } // namespace Anki

@@ -240,6 +240,11 @@ void IBehaviorPlaypen::SubscribeToTags(std::set<EngineToGameTag>&& tags)
   ICozmoBehavior::SubscribeToTags(std::move(tags));
 }
 
+void IBehaviorPlaypen::SubscribeToTags(std::set<GameToEngineTag>&& tags)
+{
+  ICozmoBehavior::SubscribeToTags(std::move(tags));
+}
+
 bool IBehaviorPlaypen::DelegateIfInControl(IActionRunner* action, SimpleCallback callback)
 {
   // Caller is not checking the action result so fail if the action fails

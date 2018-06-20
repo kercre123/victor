@@ -89,24 +89,24 @@ static const Font gSmallFont = {
   /* int BitWidth; */        SMALL_FONT_WIDTH,
   SMALL_FONT_CHAR_START,
   SMALL_FONT_CHAR_END,
-  1 /* CenteredByDefault& */
+  1, /* CenteredByDefault& */
+  0,
+  gSmallFontGlyph,
 };
 
 
 #include "medium_font.inc"
 #include "big_font.inc"
+#include "large_font.inc"
 #include "huge_font.inc"
-
-
-
-#define HUGE_FONT_START_LINE 1
 
 
 static const Font* gFont[DISPLAY_NUM_LAYERS] = {
   &gSmallFont,
   &gMediumFont,
   &gBigFont,
-  &gHugeFont,
+  &gHugeFont,  //DISPLAY_LAYER_LARGE uses original "Huge" font
+  &gLargeFont, //DISPLAY_LAYER_LARGE_SKINNY uses "Large"
 };
 
 //each screen_line is 8 bits high.
@@ -240,7 +240,6 @@ void display_render_16bit_text(uint8_t* bitmap, int layer, const Font* font)
         unsigned char c = restrict_to_printable(*text++, font->CharStart, font->CharEnd);
 
         const uint16_t* glyph = ((uint16_t*)font->glyphs) + (c * font->BitWidth);
-//        const uint16_t* glyph = &Font->glyphs[c * font->BitWidth];
         int i;
         for (i=0; i<font->BitWidth; i++)
 
@@ -279,7 +278,7 @@ void display_render_32bit_text(uint8_t* bitmap, int layer, const Font* font)
     const char* text = gDisplay.text[layer]+(line*font->CharsPerLine);
     if (*text)  {
       ddprintf("^ %s\n", text);
-      for (col=0;col<font->CharsPerLine; col++)
+      for (col=0; col<font->CharsPerLine; col++)
       {
         unsigned char c = restrict_to_printable(*text++, font->CharStart, font->CharEnd);
 

@@ -497,7 +497,7 @@ ssize_t spine_write_frame(spine_ctx_t spine, PayloadId type, const void* data, i
   const ssize_t outBufferLen = sizeof(spine->buf_tx);
   ssize_t remaining = outBufferLen;
 
-  struct SpineMessageHeader* outHeader = (struct SpineMessageHeader*)spine->buf_tx;
+  struct SpineMessageHeader* outHeader = (struct SpineMessageHeader*)outBytes;
   ssize_t r = spine_construct_header(type, len, outHeader);
   if (r < 0) {
     return r;
@@ -556,6 +556,12 @@ ssize_t spine_write_ccc_frame(spine_ctx_t spine, const struct ContactData* ccc_p
 
     return spine_write(spine, spine->buf_tx,
                        sizeof(struct SpineMessageHeader) + sizeof(struct ContactData) + sizeof(struct SpineMessageFooter));
+}
+
+ssize_t spine_set_lights(spine_ctx_t spine, const struct LightState* light_state)
+{
+  ssize_t r = spine_write_frame(spine, PAYLOAD_LIGHT_STATE, light_state, sizeof(struct LightState));
+  return r;    
 }
 
 ssize_t spine_set_mode(spine_ctx_t spine, int new_mode)

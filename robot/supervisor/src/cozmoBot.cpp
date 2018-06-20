@@ -24,6 +24,8 @@
 #include "timeProfiler.h"
 #include "wheelController.h"
 
+#include "anki/cozmo/shared/factory/emrHelper.h"
+
 #ifndef SIMULATOR
 #include <unistd.h>
 #endif
@@ -42,9 +44,13 @@ namespace Anki {
         // times through the main loop
         u32 robotStateMessageCounter_ = 0;
 
+        bool _calibOnNextCalmModeExit = false;
+
         // Main cycle time errors
         u32 mainTooLongCnt_ = 0;
         u32 mainTooLateCnt_ = 0;
+        u32 maxMainTooLongTime_ = 0;
+        u32 maxMainTooLateTime_ = 0;
         u32 avgMainTooLongTime_ = 0;
         u32 avgMainTooLateTime_ = 0;
         u32 lastCycleStartTime_ = 0;
@@ -159,12 +165,21 @@ namespace Anki {
               // If button has been held down for more than SHUTDOWN_TIME_MS
               else if(curTime_ms - timeMark_ms > SHUTDOWN_TIME_MS)
               {
+#if FACTORY_TEST
+                // In factory, don't send PrepForShutdown because processes don't shutdown cleanly
+                // and we get a fault code (i.e. 915 - NO_ENGINE) appear right before the power is pulled.
+                // Instead just call sync and let syscon pull power.
+                AnkiWarn("CozmoBot.CheckForButtonHeld.PossiblyShuttingDown", "Syncing");
+                timeMark_ms = curTime_ms;
+                sync();
+#else
                 timeMark_ms = curTime_ms;
                 state = START;
                 // Send a shutdown message to anim/engine
                 AnkiWarn("CozmoBot.CheckForButtonHeld.Shutdown", "Sending PrepForShutdown");
                 RobotInterface::PrepForShutdown msg;
                 RobotInterface::SendMessage(msg);
+#endif                
               }
             }
             else
@@ -200,7 +215,11 @@ namespace Anki {
         buttonWasPressed = buttonIsPressed;
       }
 
-      
+      void CalibrateMotorsOnNextCalmModeExit(bool enable)
+      {
+        _calibOnNextCalmModeExit = enable;
+      }
+
       Result step_MainExecution()
       {
         EventStart(EventType::MAIN_STEP);
@@ -217,6 +236,9 @@ namespace Anki {
             ++mainTooLateCnt_;
             EventStop(EventType::MAIN_CYCLE_TOO_LATE);
             avgMainTooLateTime_ = (u32)((f32)(avgMainTooLateTime_ * (mainTooLateCnt_ - 1) + timeBetweenCycles)) / mainTooLateCnt_;
+            if (maxMainTooLateTime_ < timeBetweenCycles) {
+              maxMainTooLateTime_ = timeBetweenCycles;
+            }
           }
         }
 
@@ -234,6 +256,22 @@ namespace Anki {
           cnt = 0;
         }
 */
+
+        //////////////////////////////////////////////////////////////
+        // Check power mode
+        //////////////////////////////////////////////////////////////
+        
+        // If power mode changed from CALM to ACTIVE, trigger calibration
+        static HAL::PowerState lastPowerMode = HAL::POWER_MODE_ACTIVE;
+        HAL::PowerState currPowerMode = HAL::PowerGetMode();
+        if (_calibOnNextCalmModeExit && currPowerMode == HAL::POWER_MODE_ACTIVE && lastPowerMode == HAL::POWER_MODE_CALM) {
+          AnkiInfo("CozmoBot.Update.CalmToActiveCalibration", "");
+          LiftController::StartCalibrationRoutine(true);
+          HeadController::StartCalibrationRoutine(true);
+          _calibOnNextCalmModeExit = false;
+        }
+        lastPowerMode = currPowerMode;
+      
 
         //////////////////////////////////////////////////////////////
         // Test Mode
@@ -316,15 +354,42 @@ namespace Anki {
         // Feedback / Display
         //////////////////////////////////////////////////////////////
 
+        int ROBOT_STATE_SEND_RATE = STATE_MESSAGE_FREQUENCY;
+
+#if FACTORY_TEST
+        // Slow down state message when in calm mode as long
+        // as it's been a few seconds since the backpack button
+        // was last pressed, since it affects how well
+        // the double-press action can be detected.
+        static u32 ticsSinceLastButtonPressed = 0;
+        const u32 COUNTDOWN_TO_THROTTLE_TICS = 400;
+        if (HAL::GetButtonState(HAL::BUTTON_POWER)) {
+          ticsSinceLastButtonPressed = 0;
+        }
+        if ((HAL::PowerGetMode() == HAL::POWER_MODE_CALM) && 
+            (ticsSinceLastButtonPressed > COUNTDOWN_TO_THROTTLE_TICS)) { 
+          ROBOT_STATE_SEND_RATE = 8 * STATE_MESSAGE_FREQUENCY;
+        }
+        ++ticsSinceLastButtonPressed;
+#endif
+
         Messages::UpdateRobotStateMsg();
         ++robotStateMessageCounter_;
-        if(robotStateMessageCounter_ >= STATE_MESSAGE_FREQUENCY) {
+        if(robotStateMessageCounter_ >= ROBOT_STATE_SEND_RATE) {
           Messages::SendRobotStateMsg();
           robotStateMessageCounter_ = 0;
         }
 
         // Now that the robot state msg has been udpated, send mic data (which uses some of robot state)
+#if FACTORY_TEST
+        // Don't send mic data in calm mode (in factory only!)
+        if (HAL::PowerGetMode() == HAL::POWER_MODE_ACTIVE) {
+          Messages::SendMicDataMsgs();
+        }
+#else
         Messages::SendMicDataMsgs();
+#endif
+        
 
         // Print time profile stats
         END_TIME_PROFILE(CozmoBot);
@@ -340,21 +405,51 @@ namespace Anki {
           ++mainTooLongCnt_;
           EventStop(EventType::MAIN_CYCLE_TOO_LONG);
           avgMainTooLongTime_ = (u32)((f32)(avgMainTooLongTime_ * (mainTooLongCnt_ - 1) + cycleTime)) / mainTooLongCnt_;
+          if (maxMainTooLongTime_ < cycleTime) {
+            maxMainTooLongTime_ = cycleTime;
+          }
         }
         lastCycleStartTime_ = cycleStartTime;
 
 
+#if FACTORY_TEST
+        {
+          // Periodically check if the touch sensor has ever
+          // gotten an invalid reading
+          // If is has print an error and send an overloaded
+          // RunFactoryTest message with a test type
+          // of TOUCH_SENSOR_INVALID
+          static TimeStamp_t then = HAL::GetTimeStamp();
+          const TimeStamp_t now = HAL::GetTimeStamp();
+          if((now - then > 1000) &&
+             !HAL::IsTouchSensorValid())
+          {
+            then = now;
+            
+            AnkiError("CozmoBot.TouchSensorIsInvalid", "");
+          
+            using namespace RobotInterface;
+            RunFactoryTest msg;
+            msg.test = FactoryTest::TOUCH_SENSOR_INVALID;
+            SendMessage(msg);
+          }
+        }
+#endif
+          
+
         // Report main cycle time error
         if ((mainTooLateCnt_ > 0 || mainTooLongCnt_ > 0) &&
             (cycleEndTime - lastMainCycleTimeErrorReportTime_ > MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC)) {
-          
-          AnkiWarn( "CozmoBot.MainCycleTimeError", "TooLateCount: %d, avgTooLateTime: %d us, tooLongCount: %d, avgTooLongTime: %d us",
-                   mainTooLateCnt_, avgMainTooLateTime_, mainTooLongCnt_, avgMainTooLongTime_);
+
+          AnkiWarn( "CozmoBot.MainCycleTimeError", "TooLate: %d tics, avg: %d us, max: %d us, TooLong: %d tics, avg: %d us, max: %d us",
+                   mainTooLateCnt_, avgMainTooLateTime_, maxMainTooLateTime_, mainTooLongCnt_, avgMainTooLongTime_, maxMainTooLongTime_);
 
           mainTooLateCnt_ = 0;
           avgMainTooLateTime_ = 0;
+          maxMainTooLateTime_ = 0;
           mainTooLongCnt_ = 0;
           avgMainTooLongTime_ = 0;
+          maxMainTooLongTime_ = 0;
 
           lastMainCycleTimeErrorReportTime_ = cycleEndTime;
         }

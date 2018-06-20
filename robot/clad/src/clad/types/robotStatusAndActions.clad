@@ -22,7 +22,7 @@ enum uint_32 RobotStatusFlag {
     IS_PATHING              = 0x00000080,
     LIFT_IN_POS             = 0x00000100,
     HEAD_IN_POS             = 0x00000200,
-    // FREE FLAG            = 0x00000400,
+    CALM_POWER_MODE         = 0x00000400,
     // FREE FLAG            = 0x00000800,
     IS_ON_CHARGER           = 0x00001000,
     IS_CHARGING             = 0x00002000,
@@ -87,6 +87,7 @@ structure RobotState
   float_32 rwheel_speed_mmps,
   float_32 headAngle,
   float_32 liftAngle,
+  float_32 backpackTouchSensorFilt, // DONT MERGE TO MASTER
   AccelData accel,  // in head-frame (mm/s^2)
   GyroData gyro,    // in head-frame (rad/s)
   float_32 batteryVoltage,

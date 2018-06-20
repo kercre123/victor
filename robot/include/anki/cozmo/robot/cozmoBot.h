@@ -14,6 +14,8 @@ namespace Anki {
 
       Result step_MainExecution();
 
+      void CalibrateMotorsOnNextCalmModeExit(bool enable);
+
     } // namespace Robot
 
   } // namespace Cozmo

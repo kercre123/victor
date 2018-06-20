@@ -4,6 +4,7 @@
 #include "messages.h"
 
 namespace Contacts {
+  extern bool dataQueued;
   void init(void);
   void tick(void);
   void forward(const ContactData& data);

@@ -14,6 +14,9 @@
 #include "mics.h"
 #include "touch.h"
 
+static const int RESET_COUNT_MAX = 200 * 5; // 5 second timeout on main execution
+static int reset_count = 0;
+
 void Main_Execution(void) {
   // Do our main execution loop
   Comms::tick();
@@ -25,7 +28,9 @@ void Main_Execution(void) {
   Touch::tick();
 
   // Kick watch dog when we enter our service routine
-  IWDG->KR = 0xAAAA;
+  if (reset_count++ < RESET_COUNT_MAX) {
+    IWDG->KR = 0xAAAA;
+  }
 }
 
 int main (void) {
@@ -34,22 +39,25 @@ int main (void) {
                 | (SYSCFG_CFGR1_MEM_MODE_0 * 3)
                 ;
 
+  // Create safe interrupt state
+  NVIC->ICER[0]  = ~0;
+  __enable_irq();
+
   Power::init();
-  Analog::init();
   Mics::init();
+  Analog::init();
   Contacts::init();
-  Timer::init();
   Comms::init();
   Motors::init();
-  Lights::init();
   Touch::init();
   I2C::init();
-
-  __enable_irq(); // Start firing interrupts
+  Lights::init();
+  Timer::init();
 
   // Low priority interrupts are now our main execution
   for (;;) {   
     Power::tick();
     __wfi();
+    reset_count = 0;
   }
 }

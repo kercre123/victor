@@ -252,7 +252,6 @@ void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
   if(_securePairing != nullptr) {
     _securePairing->StopPairing();
     Log::Write("BLE Central disconnected.");
-    UpdateAdvertisement(false);
     if(!_isOtaUpdating) {
       _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
     }
@@ -263,6 +262,8 @@ void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
     _completedPairingHandle = nullptr;
     _securePairing = nullptr;
   }
+
+  UpdateAdvertisement(false);
 }
 
 void Daemon::OnBleIpcDisconnected() {
@@ -295,6 +296,10 @@ void Daemon::OnCompletedPairing() {
   // Handle Successful Pairing Event
   // (for now, the handling may be no different than failed pairing)
   UpdateAdvertisement(false);
+  
+  if(_bleClient != nullptr) {
+    _bleClient->StopAdvertising();
+  }
 }
 
 void Daemon::HandlePairingTimeout() {
@@ -468,8 +473,11 @@ void Daemon::OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame
       
       UpdateAdvertisement(true);
       _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SHOW_PRE_PIN);
-      ev_timer_set(&_pairingTimer.timer, kPairingPreConnectionTimeout_s, 0);
+
+      ev_timer_stop(_loop, &_pairingTimer.timer);
+      ev_timer_set(&_pairingTimer.timer, kPairingPreConnectionTimeout_s, 0.);
       ev_timer_start(_loop, &_pairingTimer.timer);
+      
       Log::Write("[PT] Starting pairing timer... pairing will timeout in %d seconds.", kPairingPreConnectionTimeout_s);
       break;
     }

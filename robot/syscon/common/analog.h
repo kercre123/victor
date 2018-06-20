@@ -12,21 +12,19 @@ enum ADC_CHANNEL {
   ADC_VMAIN,
   ADC_BUTTON,
   ADC_TEMP,
-  ADC_VREF,
   ADC_CHANNELS
 };
 
 namespace Analog {
-  extern volatile uint16_t values[ADC_CHANNELS];
   extern bool button_pressed;
-  extern uint16_t battery_voltage;
 
   void init(void);
   void tick(void);
   void stop(void);
   void transmit(BodyToHead* data);
-  void allowCharge(bool);
-  bool delayCharge();
+  void receive(HeadToBody* data);
+  void setPower(bool power);
+  void inhibitCharge(bool force = false);
 };
 
 #endif

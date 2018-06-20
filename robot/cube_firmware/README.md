@@ -9,7 +9,7 @@ The latest cube application firmware image should be available at [resources/ass
 * `cd robot/cube_firmware/bletool`
 * `npm install`
 * ` cd ..`
-* `node bletool ../resources/assets/cubeFirmware/cube.dfu`
+* `node bletool ../../resources/assets/cubeFirmware/cube.dfu`
 
 ## Building cube firmware with [vmake.sh](/robot/vmake.sh)
 

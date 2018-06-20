@@ -132,6 +132,10 @@ void BehaviorPlaypenWaitToStart::OnBehaviorDeactivated()
 
   // Request exit pairing mode to switchboard in case we're in it
   robot.Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::ExitPairing()));
+
+  // Tell robot process that playpen is starting so that it can reset touch sensor valid state
+  // and update range values in case they were updated in emr
+  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::PlaypenStart()));
 }
 
 }

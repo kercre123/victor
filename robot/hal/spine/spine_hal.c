@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <termios.h>
-/* #include <string.h> */
+#include <string.h>
 
 #include "schema/messages.h"
 #include "spine_crc.h"
@@ -154,6 +154,9 @@ static int get_payload_len(PayloadId payload_type, enum MsgDir dir)
   case PAYLOAD_DATA_FRAME:
     return (dir == dir_SEND) ? sizeof(struct HeadToBody) : sizeof(struct BodyToHead);
     break;
+  case PAYLOAD_CONT_DATA:
+    return sizeof(struct ContactData);
+    break;
   case PAYLOAD_VERSION:
     return (dir == dir_SEND) ? 0 : sizeof(struct VersionInfo);
     break;
@@ -168,6 +171,12 @@ static int get_payload_len(PayloadId payload_type, enum MsgDir dir)
     break;
   case PAYLOAD_DFU_PACKET:
     return sizeof(struct WriteDFU);
+    break;
+  case PAYLOAD_SHUT_DOWN:
+    return 0;
+    break;
+  case PAYLOAD_BOOT_FRAME:
+    return sizeof(struct MicroBodyToHead);
     break;
   default:
     break;
@@ -318,7 +327,8 @@ const struct SpineMessageHeader* hal_read_frame()
 
   //At this point we have a valid message header. (spine_sync rejects bad lengths and payloadTypes)
   // Collect the right number of bytes.
-  unsigned int payload_length = ((struct SpineMessageHeader*)gHal.inbuffer)->bytes_to_follow;
+  struct SpineMessageHeader* hdr = (struct SpineMessageHeader*)gHal.inbuffer;
+  unsigned int payload_length = hdr->bytes_to_follow;
   unsigned int total_message_length = SPINE_HEADER_LEN + payload_length + SPINE_CRC_LEN;
 
   spine_debug_x("%d byte payload\n", payload_length);
