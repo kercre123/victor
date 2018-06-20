@@ -331,7 +331,7 @@ bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenhei
 
   // Add sprite boxes as appropriate to the layer
   {
-    const auto& tempIndicator = isFahrenheit ? Vision::SpriteName::Weather_Temp_Fahr : Vision::SpriteName::Weather_Temp_Cel;
+    const auto& tempIndicator = isFahrenheit ? Vision::SpriteName::Weather_Fahrenheit_Indicator : Vision::SpriteName::Weather_Celsius_Indicator;
     layer.AddToImageMap(spriteCache, seqContainer,
                         Vision::SpriteBoxName::TemperatureDegreeIndicator, 
                         tempIndicator);
@@ -339,7 +339,7 @@ bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenhei
   if(temp < 0){
     layer.AddToImageMap(spriteCache, seqContainer,
                         Vision::SpriteBoxName::TemperatureNegativeIndicator, 
-                        Vision::SpriteName::Weather_Temp_Neg);
+                        Vision::SpriteName::Weather_Negative_Indicator);
   }
 
   const auto absTemp = std::abs(temp);

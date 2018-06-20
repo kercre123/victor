@@ -1,0 +1,18 @@
+
+
+namespace Anki {
+namespace Vision {
+
+
+enum uint_8 SpriteName
+{
+  ${sprite_name_str}
+}
+
+enum_concept bool IsSpriteSequence[SpriteName] {
+  ${is_sequence_str}
+}
+
+
+} // namespace Vision
+} // namespace Anki

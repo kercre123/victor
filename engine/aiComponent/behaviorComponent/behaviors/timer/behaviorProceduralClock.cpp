@@ -266,7 +266,7 @@ void BehaviorProceduralClock::BuildAndDisplayProceduralClock(const int clockOffs
   for(auto& pair : digitMap){
     isLeadingZero &= (pair.second == 0);
     if(isLeadingZero){
-      auto mapEntry = Entry(spriteCache, seqContainer, Vision::SpriteName::Clock_empty_grid);
+      auto mapEntry = Entry(spriteCache, seqContainer, Vision::SpriteName::Clock_Empty_Grid);
       imageMap.emplace(pair.first, std::move(mapEntry));
     }else{
       auto mapEntry = Entry(spriteCache, seqContainer, _instanceParams.intsToImages[pair.second]);

@@ -63,7 +63,7 @@
   // allows template elements which have a static image to be specified once
   "staticElements":
   {
-    "Colon": "Clock_colon"
+    "Colon": "Clock_Colon"
   },
 
   "digitImageMap": [

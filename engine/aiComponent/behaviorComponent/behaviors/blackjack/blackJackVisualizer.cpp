@@ -63,120 +63,120 @@ const std::vector<Vision::SpriteBoxName> kDealerCardSlots = {
 // CardID to AssetName lookup
 const std::vector<Vision::SpriteName> kPlayerCardAssets = {
   // Spades
-  Vision::SpriteName::AceOfSpades_Player,
-  Vision::SpriteName::TwoOfSpades_Player,
-  Vision::SpriteName::ThreeOfSpades_Player,
-  Vision::SpriteName::FourOfSpades_Player,
-  Vision::SpriteName::FiveOfSpades_Player,
-  Vision::SpriteName::SixOfSpades_Player,
-  Vision::SpriteName::SevenOfSpades_Player,
-  Vision::SpriteName::EightOfSpades_Player,
-  Vision::SpriteName::NineOfSpades_Player,
-  Vision::SpriteName::TenOfSpades_Player,
-  Vision::SpriteName::JackOfSpades_Player,
-  Vision::SpriteName::QueenOfSpades_Player,
-  Vision::SpriteName::KingOfSpades_Player,
+  Vision::SpriteName::Blackjack_Player_Spadeace,
+  Vision::SpriteName::Blackjack_Player_Spade2,
+  Vision::SpriteName::Blackjack_Player_Spade3,
+  Vision::SpriteName::Blackjack_Player_Spade4,
+  Vision::SpriteName::Blackjack_Player_Spade5,
+  Vision::SpriteName::Blackjack_Player_Spade6,
+  Vision::SpriteName::Blackjack_Player_Spade7,
+  Vision::SpriteName::Blackjack_Player_Spade8,
+  Vision::SpriteName::Blackjack_Player_Spade9,
+  Vision::SpriteName::Blackjack_Player_Spade10,
+  Vision::SpriteName::Blackjack_Player_Spadejack,
+  Vision::SpriteName::Blackjack_Player_Spadequeen,
+  Vision::SpriteName::Blackjack_Player_Spadeking,
   // Hearts
-  Vision::SpriteName::AceOfHearts_Player,
-  Vision::SpriteName::TwoOfHearts_Player,
-  Vision::SpriteName::ThreeOfHearts_Player,
-  Vision::SpriteName::FourOfHearts_Player,
-  Vision::SpriteName::FiveOfHearts_Player,
-  Vision::SpriteName::SixOfHearts_Player,
-  Vision::SpriteName::SevenOfHearts_Player,
-  Vision::SpriteName::EightOfHearts_Player,
-  Vision::SpriteName::NineOfHearts_Player,
-  Vision::SpriteName::TenOfHearts_Player,
-  Vision::SpriteName::JackOfHearts_Player,
-  Vision::SpriteName::QueenOfHearts_Player,
-  Vision::SpriteName::KingOfHearts_Player,
+  Vision::SpriteName::Blackjack_Player_Heartace,
+  Vision::SpriteName::Blackjack_Player_Heart2,
+  Vision::SpriteName::Blackjack_Player_Heart3,
+  Vision::SpriteName::Blackjack_Player_Heart4,
+  Vision::SpriteName::Blackjack_Player_Heart5,
+  Vision::SpriteName::Blackjack_Player_Heart6,
+  Vision::SpriteName::Blackjack_Player_Heart7,
+  Vision::SpriteName::Blackjack_Player_Heart8,
+  Vision::SpriteName::Blackjack_Player_Heart9,
+  Vision::SpriteName::Blackjack_Player_Heart10,
+  Vision::SpriteName::Blackjack_Player_Heartjack,
+  Vision::SpriteName::Blackjack_Player_Heartqueen,
+  Vision::SpriteName::Blackjack_Player_Heartking,
   // Diamonds
-  Vision::SpriteName::AceOfDiamonds_Player,
-  Vision::SpriteName::TwoOfDiamonds_Player,
-  Vision::SpriteName::ThreeOfDiamonds_Player,
-  Vision::SpriteName::FourOfDiamonds_Player,
-  Vision::SpriteName::FiveOfDiamonds_Player,
-  Vision::SpriteName::SixOfDiamonds_Player,
-  Vision::SpriteName::SevenOfDiamonds_Player,
-  Vision::SpriteName::EightOfDiamonds_Player,
-  Vision::SpriteName::NineOfDiamonds_Player,
-  Vision::SpriteName::TenOfDiamonds_Player,
-  Vision::SpriteName::JackOfDiamonds_Player,
-  Vision::SpriteName::QueenOfDiamonds_Player,
-  Vision::SpriteName::KingOfDiamonds_Player,
+  Vision::SpriteName::Blackjack_Player_Diamondace,
+  Vision::SpriteName::Blackjack_Player_Diamond2,
+  Vision::SpriteName::Blackjack_Player_Diamond3,
+  Vision::SpriteName::Blackjack_Player_Diamond4,
+  Vision::SpriteName::Blackjack_Player_Diamond5,
+  Vision::SpriteName::Blackjack_Player_Diamond6,
+  Vision::SpriteName::Blackjack_Player_Diamond7,
+  Vision::SpriteName::Blackjack_Player_Diamond8,
+  Vision::SpriteName::Blackjack_Player_Diamond9,
+  Vision::SpriteName::Blackjack_Player_Diamond10,
+  Vision::SpriteName::Blackjack_Player_Diamondjack,
+  Vision::SpriteName::Blackjack_Player_Diamondqueen,
+  Vision::SpriteName::Blackjack_Player_Diamondking,
   // Clubs
-  Vision::SpriteName::AceOfClubs_Player,
-  Vision::SpriteName::TwoOfClubs_Player,
-  Vision::SpriteName::ThreeOfClubs_Player,
-  Vision::SpriteName::FourOfClubs_Player,
-  Vision::SpriteName::FiveOfClubs_Player,
-  Vision::SpriteName::SixOfClubs_Player,
-  Vision::SpriteName::SevenOfClubs_Player,
-  Vision::SpriteName::EightOfClubs_Player,
-  Vision::SpriteName::NineOfClubs_Player,
-  Vision::SpriteName::TenOfClubs_Player,
-  Vision::SpriteName::JackOfClubs_Player,
-  Vision::SpriteName::QueenOfClubs_Player,
-  Vision::SpriteName::KingOfClubs_Player
+  Vision::SpriteName::Blackjack_Player_Clubsace,
+  Vision::SpriteName::Blackjack_Player_Clubs2,
+  Vision::SpriteName::Blackjack_Player_Clubs3,
+  Vision::SpriteName::Blackjack_Player_Clubs4,
+  Vision::SpriteName::Blackjack_Player_Clubs5,
+  Vision::SpriteName::Blackjack_Player_Clubs6,
+  Vision::SpriteName::Blackjack_Player_Clubs7,
+  Vision::SpriteName::Blackjack_Player_Clubs8,
+  Vision::SpriteName::Blackjack_Player_Clubs9,
+  Vision::SpriteName::Blackjack_Player_Clubs10,
+  Vision::SpriteName::Blackjack_Player_Clubsjack,
+  Vision::SpriteName::Blackjack_Player_Clubsqueen,
+  Vision::SpriteName::Blackjack_Player_Clubsking
 };
 
 const std::vector<Vision::SpriteName> kDealerCardAssets = {
   // Spades
-  Vision::SpriteName::AceOfSpades_Dealer,
-  Vision::SpriteName::TwoOfSpades_Dealer,
-  Vision::SpriteName::ThreeOfSpades_Dealer,
-  Vision::SpriteName::FourOfSpades_Dealer,
-  Vision::SpriteName::FiveOfSpades_Dealer,
-  Vision::SpriteName::SixOfSpades_Dealer,
-  Vision::SpriteName::SevenOfSpades_Dealer,
-  Vision::SpriteName::EightOfSpades_Dealer,
-  Vision::SpriteName::NineOfSpades_Dealer,
-  Vision::SpriteName::TenOfSpades_Dealer,
-  Vision::SpriteName::JackOfSpades_Dealer,
-  Vision::SpriteName::QueenOfSpades_Dealer,
-  Vision::SpriteName::KingOfSpades_Dealer,
+  Vision::SpriteName::Blackjack_Vector_Spadeace,
+  Vision::SpriteName::Blackjack_Vector_Spade2,
+  Vision::SpriteName::Blackjack_Vector_Spade3,
+  Vision::SpriteName::Blackjack_Vector_Spade4,
+  Vision::SpriteName::Blackjack_Vector_Spade5,
+  Vision::SpriteName::Blackjack_Vector_Spade6,
+  Vision::SpriteName::Blackjack_Vector_Spade7,
+  Vision::SpriteName::Blackjack_Vector_Spade8,
+  Vision::SpriteName::Blackjack_Vector_Spade9,
+  Vision::SpriteName::Blackjack_Vector_Spade10,
+  Vision::SpriteName::Blackjack_Vector_Spadejack,
+  Vision::SpriteName::Blackjack_Vector_Spadequeen,
+  Vision::SpriteName::Blackjack_Vector_Spadeking,
   // Hearts
-  Vision::SpriteName::AceOfHearts_Dealer,
-  Vision::SpriteName::TwoOfHearts_Dealer,
-  Vision::SpriteName::ThreeOfHearts_Dealer,
-  Vision::SpriteName::FourOfHearts_Dealer,
-  Vision::SpriteName::FiveOfHearts_Dealer,
-  Vision::SpriteName::SixOfHearts_Dealer,
-  Vision::SpriteName::SevenOfHearts_Dealer,
-  Vision::SpriteName::EightOfHearts_Dealer,
-  Vision::SpriteName::NineOfHearts_Dealer,
-  Vision::SpriteName::TenOfHearts_Dealer,
-  Vision::SpriteName::JackOfHearts_Dealer,
-  Vision::SpriteName::QueenOfHearts_Dealer,
-  Vision::SpriteName::KingOfHearts_Dealer,
+  Vision::SpriteName::Blackjack_Vector_Heartace,
+  Vision::SpriteName::Blackjack_Vector_Heart2,
+  Vision::SpriteName::Blackjack_Vector_Heart3,
+  Vision::SpriteName::Blackjack_Vector_Heart4,
+  Vision::SpriteName::Blackjack_Vector_Heart5,
+  Vision::SpriteName::Blackjack_Vector_Heart6,
+  Vision::SpriteName::Blackjack_Vector_Heart7,
+  Vision::SpriteName::Blackjack_Vector_Heart8,
+  Vision::SpriteName::Blackjack_Vector_Heart9,
+  Vision::SpriteName::Blackjack_Vector_Heart10,
+  Vision::SpriteName::Blackjack_Vector_Heartjack,
+  Vision::SpriteName::Blackjack_Vector_Heartqueen,
+  Vision::SpriteName::Blackjack_Vector_Heartking,
   // Diamonds
-  Vision::SpriteName::AceOfDiamonds_Dealer,
-  Vision::SpriteName::TwoOfDiamonds_Dealer,
-  Vision::SpriteName::ThreeOfDiamonds_Dealer,
-  Vision::SpriteName::FourOfDiamonds_Dealer,
-  Vision::SpriteName::FiveOfDiamonds_Dealer,
-  Vision::SpriteName::SixOfDiamonds_Dealer,
-  Vision::SpriteName::SevenOfDiamonds_Dealer,
-  Vision::SpriteName::EightOfDiamonds_Dealer,
-  Vision::SpriteName::NineOfDiamonds_Dealer,
-  Vision::SpriteName::TenOfDiamonds_Dealer,
-  Vision::SpriteName::JackOfDiamonds_Dealer,
-  Vision::SpriteName::QueenOfDiamonds_Dealer,
-  Vision::SpriteName::KingOfDiamonds_Dealer,
+  Vision::SpriteName::Blackjack_Vector_Diamondace,
+  Vision::SpriteName::Blackjack_Vector_Diamond2,
+  Vision::SpriteName::Blackjack_Vector_Diamond3,
+  Vision::SpriteName::Blackjack_Vector_Diamond4,
+  Vision::SpriteName::Blackjack_Vector_Diamond5,
+  Vision::SpriteName::Blackjack_Vector_Diamond6,
+  Vision::SpriteName::Blackjack_Vector_Diamond7,
+  Vision::SpriteName::Blackjack_Vector_Diamond8,
+  Vision::SpriteName::Blackjack_Vector_Diamond9,
+  Vision::SpriteName::Blackjack_Vector_Diamond10,
+  Vision::SpriteName::Blackjack_Vector_Diamondjack,
+  Vision::SpriteName::Blackjack_Vector_Diamondqueen,
+  Vision::SpriteName::Blackjack_Vector_Diamondking,
   // Clubs
-  Vision::SpriteName::AceOfClubs_Dealer,
-  Vision::SpriteName::TwoOfClubs_Dealer,
-  Vision::SpriteName::ThreeOfClubs_Dealer,
-  Vision::SpriteName::FourOfClubs_Dealer,
-  Vision::SpriteName::FiveOfClubs_Dealer,
-  Vision::SpriteName::SixOfClubs_Dealer,
-  Vision::SpriteName::SevenOfClubs_Dealer,
-  Vision::SpriteName::EightOfClubs_Dealer,
-  Vision::SpriteName::NineOfClubs_Dealer,
-  Vision::SpriteName::TenOfClubs_Dealer,
-  Vision::SpriteName::JackOfClubs_Dealer,
-  Vision::SpriteName::QueenOfClubs_Dealer,
-  Vision::SpriteName::KingOfClubs_Dealer
+  Vision::SpriteName::Blackjack_Vector_Clubsace,
+  Vision::SpriteName::Blackjack_Vector_Clubs2,
+  Vision::SpriteName::Blackjack_Vector_Clubs3,
+  Vision::SpriteName::Blackjack_Vector_Clubs4,
+  Vision::SpriteName::Blackjack_Vector_Clubs5,
+  Vision::SpriteName::Blackjack_Vector_Clubs6,
+  Vision::SpriteName::Blackjack_Vector_Clubs7,
+  Vision::SpriteName::Blackjack_Vector_Clubs8,
+  Vision::SpriteName::Blackjack_Vector_Clubs9,
+  Vision::SpriteName::Blackjack_Vector_Clubs10,
+  Vision::SpriteName::Blackjack_Vector_Clubsjack,
+  Vision::SpriteName::Blackjack_Vector_Clubsqueen,
+  Vision::SpriteName::Blackjack_Vector_Clubsking
 };
 
 const char* kDealAnimationName = "anim_blackjack_deal_01";
@@ -210,7 +210,7 @@ void BlackJackVisualizer::Init(BehaviorExternalInterface& bei)
   uint dealCardSeqDuration_ms = 0;
   const auto* seqContainer = dataAccessorComp.GetSpriteSequenceContainer();
   if(nullptr != seqContainer){
-    auto* seqPtr = seqContainer->GetSequenceByName(Vision::SpriteName::DealSequence_Dealer);
+    auto* seqPtr = seqContainer->GetSequenceByName(Vision::SpriteName::Blackjack_Vector_Back);
     const uint numFrames = seqPtr->GetNumFrames();
     dealCardSeqDuration_ms = numFrames * ANIM_TIME_STEP_MS;
   }
@@ -281,7 +281,7 @@ void BlackJackVisualizer::DealToPlayer(BehaviorExternalInterface& bei, std::func
   Vision::LayerName cardLayerName = kPlayerCardLayers[cardPositionIndex];
   
   PlayCompositeCardAnimationAndLock(bei, kDealAnimationName, cardLayerName, cardSpriteBoxName, 
-                                    cardSpriteName, _displayDealtCardsAt_ms, Vision::SpriteName::DealSequence_Player,
+                                    cardSpriteName, _displayDealtCardsAt_ms, Vision::SpriteName::Blackjack_Player_Back,
                                     _dealCardSeqApplyAt_ms);
   _animCompletedCallback = callback;
 }
@@ -310,7 +310,7 @@ void BlackJackVisualizer::DealToDealer(BehaviorExternalInterface& bei, std::func
   if(card.IsFaceUp()){
     cardSpriteName = kDealerCardAssets[card.GetID()];
   } else {
-    cardSpriteName = Vision::SpriteName::CardBack_Dealer;
+    cardSpriteName = Vision::SpriteName::Blackjack_Vector_Card_Back;
   }
 
   const int cardPositionIndex = (int)dealerHand.size() - 1;
@@ -318,7 +318,7 @@ void BlackJackVisualizer::DealToDealer(BehaviorExternalInterface& bei, std::func
   Vision::LayerName cardLayerName = kDealerCardLayers[cardPositionIndex];
 
   PlayCompositeCardAnimationAndLock(bei, kDealAnimationName, cardLayerName, cardSpriteBoxName, cardSpriteName, 
-                                    _displayDealtCardsAt_ms, Vision::SpriteName::DealSequence_Dealer, 
+                                    _displayDealtCardsAt_ms, Vision::SpriteName::Blackjack_Vector_Back, 
                                     _dealCardSeqApplyAt_ms);
   _animCompletedCallback = callback;
 }
@@ -350,7 +350,7 @@ void BlackJackVisualizer::Flop(BehaviorExternalInterface& bei, std::function<voi
   Vision::LayerName cardLayerName = kDealerCardLayers[cardPositionIndex];
 
   PlayCompositeCardAnimationAndLock(bei, kDealAnimationName, cardLayerName, cardSpriteBoxName, cardSpriteName,
-                                    _displayDealtCardsAt_ms, Vision::SpriteName::FlipSequence_Dealer,
+                                    _displayDealtCardsAt_ms, Vision::SpriteName::Blackjack_Vector_Flipover,
                                     _dealCardSeqApplyAt_ms);
 }
 
@@ -361,7 +361,7 @@ void BlackJackVisualizer::DisplayCharlieFrame(BehaviorExternalInterface& bei, st
   _animCompletedCallback = callback;
 
   PlayCompositeCardAnimationAndLock(bei, kDealAnimationName, Vision::LayerName::PlayerCardOverlay,
-                                    Vision::SpriteBoxName::PlayerCardOverlay, Vision::SpriteName::CharlieFrame,
+                                    Vision::SpriteBoxName::PlayerCardOverlay, Vision::SpriteName::Charlieframe,
                                     _displayDealtCardsAt_ms);
 }
 

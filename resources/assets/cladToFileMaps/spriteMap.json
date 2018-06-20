@@ -1,695 +1,730 @@
 [
   {
-    "CladEvent": "Empty_Sprite",
-    "SpriteName": "empty_sprite"
+    "CladEvent" : "Blackjack_Vector_Card_Back",
+    "SpriteName" : "blackjack_vector_card_back"
   },
   {
-    "CladEvent": "Clock_00",
-    "SpriteName": "clock_00"
+    "CladEvent" : "Blackjack_Vector_Clubs10",
+    "SpriteName" : "blackjack_vector_clubs10"
   },
   {
-    "CladEvent": "Clock_01",
-    "SpriteName": "clock_01"
+    "CladEvent" : "Blackjack_Vector_Clubs2",
+    "SpriteName" : "blackjack_vector_clubs2"
   },
   {
-    "CladEvent": "Clock_02",
-    "SpriteName": "clock_02"
+    "CladEvent" : "Blackjack_Vector_Clubs3",
+    "SpriteName" : "blackjack_vector_clubs3"
   },
   {
-    "CladEvent": "Clock_03",
-    "SpriteName": "clock_03"
+    "CladEvent" : "Blackjack_Vector_Clubs4",
+    "SpriteName" : "blackjack_vector_clubs4"
   },
   {
-    "CladEvent": "Clock_04",
-    "SpriteName": "clock_04"
+    "CladEvent" : "Blackjack_Vector_Clubs5",
+    "SpriteName" : "blackjack_vector_clubs5"
   },
   {
-    "CladEvent": "Clock_05",
-    "SpriteName": "clock_05"
+    "CladEvent" : "Blackjack_Vector_Clubs6",
+    "SpriteName" : "blackjack_vector_clubs6"
   },
   {
-    "CladEvent": "Clock_06",
-    "SpriteName": "clock_06"
+    "CladEvent" : "Blackjack_Vector_Clubs7",
+    "SpriteName" : "blackjack_vector_clubs7"
   },
   {
-    "CladEvent": "Clock_07",
-    "SpriteName": "clock_07"
+    "CladEvent" : "Blackjack_Vector_Clubs8",
+    "SpriteName" : "blackjack_vector_clubs8"
   },
   {
-    "CladEvent": "Clock_08",
-    "SpriteName": "clock_08"
+    "CladEvent" : "Blackjack_Vector_Clubs9",
+    "SpriteName" : "blackjack_vector_clubs9"
   },
   {
-    "CladEvent": "Clock_09",
-    "SpriteName": "clock_09"
+    "CladEvent" : "Blackjack_Vector_Clubsace",
+    "SpriteName" : "blackjack_vector_clubsace"
   },
   {
-    "CladEvent": "Clock_colon",
-    "SpriteName": "clock_colon"
+    "CladEvent" : "Blackjack_Vector_Clubsjack",
+    "SpriteName" : "blackjack_vector_clubsjack"
   },
   {
-    "CladEvent": "Clock_empty_grid",
-    "SpriteName": "clock_empty_grid"
+    "CladEvent" : "Blackjack_Vector_Clubsking",
+    "SpriteName" : "blackjack_vector_clubsking"
   },
   {
-    "CladEvent": "Weather_Temp_Cel",
-    "SpriteName": "weather_celsius_indicator"
+    "CladEvent" : "Blackjack_Vector_Clubsqueen",
+    "SpriteName" : "blackjack_vector_clubsqueen"
   },
   {
-    "CladEvent": "Weather_Temp_Fahr",
-    "SpriteName": "weather_fahrenheit_indicator"
+    "CladEvent" : "Blackjack_Vector_Diamond10",
+    "SpriteName" : "blackjack_vector_diamond10"
   },
   {
-    "CladEvent": "Weather_Temp_Neg",
-    "SpriteName": "weather_negative_indicator"
+    "CladEvent" : "Blackjack_Vector_Diamond2",
+    "SpriteName" : "blackjack_vector_diamond2"
   },
   {
-    "CladEvent": "Weather_Temp_0",
-    "SpriteName": "weather_temp_0"
+    "CladEvent" : "Blackjack_Vector_Diamond3",
+    "SpriteName" : "blackjack_vector_diamond3"
   },
   {
-    "CladEvent": "Weather_Temp_1",
-    "SpriteName": "weather_temp_1"
+    "CladEvent" : "Blackjack_Vector_Diamond4",
+    "SpriteName" : "blackjack_vector_diamond4"
   },
   {
-    "CladEvent": "Weather_Temp_2",
-    "SpriteName": "weather_temp_2"
+    "CladEvent" : "Blackjack_Vector_Diamond5",
+    "SpriteName" : "blackjack_vector_diamond5"
   },
   {
-    "CladEvent": "Weather_Temp_3",
-    "SpriteName": "weather_temp_3"
+    "CladEvent" : "Blackjack_Vector_Diamond6",
+    "SpriteName" : "blackjack_vector_diamond6"
   },
   {
-    "CladEvent": "Weather_Temp_4",
-    "SpriteName": "weather_temp_4"
+    "CladEvent" : "Blackjack_Vector_Diamond7",
+    "SpriteName" : "blackjack_vector_diamond7"
   },
   {
-    "CladEvent": "Weather_Temp_5",
-    "SpriteName": "weather_temp_5"
+    "CladEvent" : "Blackjack_Vector_Diamond8",
+    "SpriteName" : "blackjack_vector_diamond8"
   },
   {
-    "CladEvent": "Weather_Temp_6",
-    "SpriteName": "weather_temp_6"
+    "CladEvent" : "Blackjack_Vector_Diamond9",
+    "SpriteName" : "blackjack_vector_diamond9"
   },
   {
-    "CladEvent": "Weather_Temp_7",
-    "SpriteName": "weather_temp_7"
+    "CladEvent" : "Blackjack_Vector_Diamondace",
+    "SpriteName" : "blackjack_vector_diamondace"
   },
   {
-    "CladEvent": "Weather_Temp_8",
-    "SpriteName": "weather_temp_8"
+    "CladEvent" : "Blackjack_Vector_Diamondjack",
+    "SpriteName" : "blackjack_vector_diamondjack"
   },
   {
-    "CladEvent": "Weather_Temp_9",
-    "SpriteName": "weather_temp_9"
+    "CladEvent" : "Blackjack_Vector_Diamondking",
+    "SpriteName" : "blackjack_vector_diamondking"
   },
   {
-    "CladEvent": "CharlieFrame",
-    "SpriteName": "charlieframe"
-  }, 
+    "CladEvent" : "Blackjack_Vector_Diamondqueen",
+    "SpriteName" : "blackjack_vector_diamondqueen"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Heart10",
+    "SpriteName" : "blackjack_vector_heart10"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Heart2",
+    "SpriteName" : "blackjack_vector_heart2"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Heart3",
+    "SpriteName" : "blackjack_vector_heart3"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Heart4",
+    "SpriteName" : "blackjack_vector_heart4"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Heart5",
+    "SpriteName" : "blackjack_vector_heart5"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Heart6",
+    "SpriteName" : "blackjack_vector_heart6"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Heart7",
+    "SpriteName" : "blackjack_vector_heart7"
+  },
   {
-    "CladEvent": "DealSequence_Player",
-    "SpriteName": "blackjack_player_back"
+    "CladEvent" : "Blackjack_Vector_Heart8",
+    "SpriteName" : "blackjack_vector_heart8"
   },
   {
-    "CladEvent": "FlipSequence_Player",
-    "SpriteName": "blackjack_player_flipover"
-  }, 
+    "CladEvent" : "Blackjack_Vector_Heart9",
+    "SpriteName" : "blackjack_vector_heart9"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Heartace",
+    "SpriteName" : "blackjack_vector_heartace"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Heartjack",
+    "SpriteName" : "blackjack_vector_heartjack"
+  },
   {
-    "CladEvent": "CardBack_Player",
-    "SpriteName": "blackjack_player_card_back"
+    "CladEvent" : "Blackjack_Vector_Heartking",
+    "SpriteName" : "blackjack_vector_heartking"
   },
   {
-    "CladEvent": "AceOfSpades_Player",
-    "SpriteName": "blackjack_player_spadeace"
+    "CladEvent" : "Blackjack_Vector_Heartqueen",
+    "SpriteName" : "blackjack_vector_heartqueen"
   },
   {
-    "CladEvent": "TwoOfSpades_Player",
-    "SpriteName": "blackjack_player_spade2"
+    "CladEvent" : "Blackjack_Vector_Spade10",
+    "SpriteName" : "blackjack_vector_spade10"
   },
   {
-    "CladEvent": "ThreeOfSpades_Player",
-    "SpriteName": "blackjack_player_spade3"
+    "CladEvent" : "Blackjack_Vector_Spade2",
+    "SpriteName" : "blackjack_vector_spade2"
   },
   {
-    "CladEvent": "FourOfSpades_Player",
-    "SpriteName": "blackjack_player_spade4"
+    "CladEvent" : "Blackjack_Vector_Spade3",
+    "SpriteName" : "blackjack_vector_spade3"
   },
   {
-    "CladEvent": "FiveOfSpades_Player",
-    "SpriteName": "blackjack_player_spade5"
+    "CladEvent" : "Blackjack_Vector_Spade4",
+    "SpriteName" : "blackjack_vector_spade4"
   },
   {
-    "CladEvent": "SixOfSpades_Player",
-    "SpriteName": "blackjack_player_spade6"
+    "CladEvent" : "Blackjack_Vector_Spade5",
+    "SpriteName" : "blackjack_vector_spade5"
   },
   {
-    "CladEvent": "SevenOfSpades_Player",
-    "SpriteName": "blackjack_player_spade7"
+    "CladEvent" : "Blackjack_Vector_Spade6",
+    "SpriteName" : "blackjack_vector_spade6"
   },
   {
-    "CladEvent": "EightOfSpades_Player",
-    "SpriteName": "blackjack_player_spade8"
+    "CladEvent" : "Blackjack_Vector_Spade7",
+    "SpriteName" : "blackjack_vector_spade7"
   },
   {
-    "CladEvent": "NineOfSpades_Player",
-    "SpriteName": "blackjack_player_spade9"
+    "CladEvent" : "Blackjack_Vector_Spade8",
+    "SpriteName" : "blackjack_vector_spade8"
   },
   {
-    "CladEvent": "TenOfSpades_Player",
-    "SpriteName": "blackjack_player_spade10"
+    "CladEvent" : "Blackjack_Vector_Spade9",
+    "SpriteName" : "blackjack_vector_spade9"
   },
   {
-    "CladEvent": "JackOfSpades_Player",
-    "SpriteName": "blackjack_player_spadejack"
+    "CladEvent" : "Blackjack_Vector_Spadeace",
+    "SpriteName" : "blackjack_vector_spadeace"
   },
   {
-    "CladEvent": "QueenOfSpades_Player",
-    "SpriteName": "blackjack_player_spadequeen"
+    "CladEvent" : "Blackjack_Vector_Spadejack",
+    "SpriteName" : "blackjack_vector_spadejack"
   },
   {
-    "CladEvent": "KingOfSpades_Player",
-    "SpriteName": "blackjack_player_spadeking"
+    "CladEvent" : "Blackjack_Vector_Spadeking",
+    "SpriteName" : "blackjack_vector_spadeking"
   },
   {
-    "CladEvent": "AceOfHearts_Player",
-    "SpriteName": "blackjack_player_heartace"
+    "CladEvent" : "Blackjack_Vector_Spadequeen",
+    "SpriteName" : "blackjack_vector_spadequeen"
   },
   {
-    "CladEvent": "TwoOfHearts_Player",
-    "SpriteName": "blackjack_player_heart2"
+    "CladEvent" : "Blackjack_Player_Card_Back",
+    "SpriteName" : "blackjack_player_card_back"
   },
   {
-    "CladEvent": "ThreeOfHearts_Player",
-    "SpriteName": "blackjack_player_heart3"
+    "CladEvent" : "Blackjack_Player_Clubs10",
+    "SpriteName" : "blackjack_player_clubs10"
   },
   {
-    "CladEvent": "FourOfHearts_Player",
-    "SpriteName": "blackjack_player_heart4"
+    "CladEvent" : "Blackjack_Player_Clubs2",
+    "SpriteName" : "blackjack_player_clubs2"
   },
   {
-    "CladEvent": "FiveOfHearts_Player",
-    "SpriteName": "blackjack_player_heart5"
+    "CladEvent" : "Blackjack_Player_Clubs3",
+    "SpriteName" : "blackjack_player_clubs3"
   },
   {
-    "CladEvent": "SixOfHearts_Player",
-    "SpriteName": "blackjack_player_heart6"
+    "CladEvent" : "Blackjack_Player_Clubs4",
+    "SpriteName" : "blackjack_player_clubs4"
   },
   {
-    "CladEvent": "SevenOfHearts_Player",
-    "SpriteName": "blackjack_player_heart7"
+    "CladEvent" : "Blackjack_Player_Clubs5",
+    "SpriteName" : "blackjack_player_clubs5"
   },
   {
-    "CladEvent": "EightOfHearts_Player",
-    "SpriteName": "blackjack_player_heart8"
+    "CladEvent" : "Blackjack_Player_Clubs6",
+    "SpriteName" : "blackjack_player_clubs6"
   },
   {
-    "CladEvent": "NineOfHearts_Player",
-    "SpriteName": "blackjack_player_heart9"
+    "CladEvent" : "Blackjack_Player_Clubs7",
+    "SpriteName" : "blackjack_player_clubs7"
   },
   {
-    "CladEvent": "TenOfHearts_Player",
-    "SpriteName": "blackjack_player_heart10"
+    "CladEvent" : "Blackjack_Player_Clubs8",
+    "SpriteName" : "blackjack_player_clubs8"
   },
   {
-    "CladEvent": "JackOfHearts_Player",
-    "SpriteName": "blackjack_player_heartjack"
+    "CladEvent" : "Blackjack_Player_Clubs9",
+    "SpriteName" : "blackjack_player_clubs9"
   },
   {
-    "CladEvent": "QueenOfHearts_Player",
-    "SpriteName": "blackjack_player_heartqueen"
+    "CladEvent" : "Blackjack_Player_Clubsace",
+    "SpriteName" : "blackjack_player_clubsace"
   },
   {
-    "CladEvent": "KingOfHearts_Player",
-    "SpriteName": "blackjack_player_heartking"
+    "CladEvent" : "Blackjack_Player_Clubsjack",
+    "SpriteName" : "blackjack_player_clubsjack"
   },
   {
-    "CladEvent": "AceOfDiamonds_Player",
-    "SpriteName": "blackjack_player_diamondace"
+    "CladEvent" : "Blackjack_Player_Clubsking",
+    "SpriteName" : "blackjack_player_clubsking"
   },
   {
-    "CladEvent": "TwoOfDiamonds_Player",
-    "SpriteName": "blackjack_player_diamond2"
+    "CladEvent" : "Blackjack_Player_Clubsqueen",
+    "SpriteName" : "blackjack_player_clubsqueen"
   },
   {
-    "CladEvent": "ThreeOfDiamonds_Player",
-    "SpriteName": "blackjack_player_diamond3"
+    "CladEvent" : "Blackjack_Player_Diamond10",
+    "SpriteName" : "blackjack_player_diamond10"
   },
   {
-    "CladEvent": "FourOfDiamonds_Player",
-    "SpriteName": "blackjack_player_diamond4"
+    "CladEvent" : "Blackjack_Player_Diamond2",
+    "SpriteName" : "blackjack_player_diamond2"
   },
   {
-    "CladEvent": "FiveOfDiamonds_Player",
-    "SpriteName": "blackjack_player_diamond5"
+    "CladEvent" : "Blackjack_Player_Diamond3",
+    "SpriteName" : "blackjack_player_diamond3"
   },
   {
-    "CladEvent": "SixOfDiamonds_Player",
-    "SpriteName": "blackjack_player_diamond6"
+    "CladEvent" : "Blackjack_Player_Diamond4",
+    "SpriteName" : "blackjack_player_diamond4"
   },
   {
-    "CladEvent": "SevenOfDiamonds_Player",
-    "SpriteName": "blackjack_player_diamond7"
+    "CladEvent" : "Blackjack_Player_Diamond5",
+    "SpriteName" : "blackjack_player_diamond5"
   },
   {
-    "CladEvent": "EightOfDiamonds_Player",
-    "SpriteName": "blackjack_player_diamond8"
+    "CladEvent" : "Blackjack_Player_Diamond6",
+    "SpriteName" : "blackjack_player_diamond6"
   },
   {
-    "CladEvent": "NineOfDiamonds_Player",
-    "SpriteName": "blackjack_player_diamond9"
+    "CladEvent" : "Blackjack_Player_Diamond7",
+    "SpriteName" : "blackjack_player_diamond7"
   },
   {
-    "CladEvent": "TenOfDiamonds_Player",
-    "SpriteName": "blackjack_player_diamond10"
+    "CladEvent" : "Blackjack_Player_Diamond8",
+    "SpriteName" : "blackjack_player_diamond8"
   },
   {
-    "CladEvent": "JackOfDiamonds_Player",
-    "SpriteName": "blackjack_player_diamondjack"
+    "CladEvent" : "Blackjack_Player_Diamond9",
+    "SpriteName" : "blackjack_player_diamond9"
   },
   {
-    "CladEvent": "QueenOfDiamonds_Player",
-    "SpriteName": "blackjack_player_diamondqueen"
+    "CladEvent" : "Blackjack_Player_Diamondace",
+    "SpriteName" : "blackjack_player_diamondace"
   },
   {
-    "CladEvent": "KingOfDiamonds_Player",
-    "SpriteName": "blackjack_player_diamondking"
+    "CladEvent" : "Blackjack_Player_Diamondjack",
+    "SpriteName" : "blackjack_player_diamondjack"
   },
   {
-    "CladEvent": "AceOfClubs_Player",
-    "SpriteName": "blackjack_player_clubsace"
+    "CladEvent" : "Blackjack_Player_Diamondking",
+    "SpriteName" : "blackjack_player_diamondking"
   },
   {
-    "CladEvent": "TwoOfClubs_Player",
-    "SpriteName": "blackjack_player_clubs2"
+    "CladEvent" : "Blackjack_Player_Diamondqueen",
+    "SpriteName" : "blackjack_player_diamondqueen"
   },
   {
-    "CladEvent": "ThreeOfClubs_Player",
-    "SpriteName": "blackjack_player_clubs3"
+    "CladEvent" : "Blackjack_Player_Heart10",
+    "SpriteName" : "blackjack_player_heart10"
   },
   {
-    "CladEvent": "FourOfClubs_Player",
-    "SpriteName": "blackjack_player_clubs4"
+    "CladEvent" : "Blackjack_Player_Heart2",
+    "SpriteName" : "blackjack_player_heart2"
   },
   {
-    "CladEvent": "FiveOfClubs_Player",
-    "SpriteName": "blackjack_player_clubs5"
+    "CladEvent" : "Blackjack_Player_Heart3",
+    "SpriteName" : "blackjack_player_heart3"
   },
   {
-    "CladEvent": "SixOfClubs_Player",
-    "SpriteName": "blackjack_player_clubs6"
+    "CladEvent" : "Blackjack_Player_Heart4",
+    "SpriteName" : "blackjack_player_heart4"
   },
   {
-    "CladEvent": "SevenOfClubs_Player",
-    "SpriteName": "blackjack_player_clubs7"
+    "CladEvent" : "Blackjack_Player_Heart5",
+    "SpriteName" : "blackjack_player_heart5"
   },
   {
-    "CladEvent": "EightOfClubs_Player",
-    "SpriteName": "blackjack_player_clubs8"
+    "CladEvent" : "Blackjack_Player_Heart6",
+    "SpriteName" : "blackjack_player_heart6"
   },
   {
-    "CladEvent": "NineOfClubs_Player",
-    "SpriteName": "blackjack_player_clubs9"
+    "CladEvent" : "Blackjack_Player_Heart7",
+    "SpriteName" : "blackjack_player_heart7"
   },
   {
-    "CladEvent": "TenOfClubs_Player",
-    "SpriteName": "blackjack_player_clubs10"
+    "CladEvent" : "Blackjack_Player_Heart8",
+    "SpriteName" : "blackjack_player_heart8"
   },
   {
-    "CladEvent": "JackOfClubs_Player",
-    "SpriteName": "blackjack_player_clubsjack"
+    "CladEvent" : "Blackjack_Player_Heart9",
+    "SpriteName" : "blackjack_player_heart9"
   },
   {
-    "CladEvent": "QueenOfClubs_Player",
-    "SpriteName": "blackjack_player_clubsqueen"
+    "CladEvent" : "Blackjack_Player_Heartace",
+    "SpriteName" : "blackjack_player_heartace"
   },
   {
-    "CladEvent": "KingOfClubs_Player",
-    "SpriteName": "blackjack_player_clubsking"
+    "CladEvent" : "Blackjack_Player_Heartjack",
+    "SpriteName" : "blackjack_player_heartjack"
   },
   {
-    "CladEvent": "DealSequence_Dealer",
-    "SpriteName": "blackjack_vector_back"
+    "CladEvent" : "Blackjack_Player_Heartking",
+    "SpriteName" : "blackjack_player_heartking"
   },
   {
-    "CladEvent": "FlipSequence_Dealer",
-    "SpriteName": "blackjack_vector_flipover"
+    "CladEvent" : "Blackjack_Player_Heartqueen",
+    "SpriteName" : "blackjack_player_heartqueen"
   },
   {
-    "CladEvent": "CardBack_Dealer",
-    "SpriteName": "blackjack_vector_card_back"
+    "CladEvent" : "Blackjack_Player_Spade10",
+    "SpriteName" : "blackjack_player_spade10"
   },
   {
-    "CladEvent": "AceOfSpades_Dealer",
-    "SpriteName": "blackjack_vector_spadeace"
+    "CladEvent" : "Blackjack_Player_Spade2",
+    "SpriteName" : "blackjack_player_spade2"
   },
   {
-    "CladEvent": "TwoOfSpades_Dealer",
-    "SpriteName": "blackjack_vector_spade2"
+    "CladEvent" : "Blackjack_Player_Spade3",
+    "SpriteName" : "blackjack_player_spade3"
   },
   {
-    "CladEvent": "ThreeOfSpades_Dealer",
-    "SpriteName": "blackjack_vector_spade3"
+    "CladEvent" : "Blackjack_Player_Spade4",
+    "SpriteName" : "blackjack_player_spade4"
   },
   {
-    "CladEvent": "FourOfSpades_Dealer",
-    "SpriteName": "blackjack_vector_spade4"
+    "CladEvent" : "Blackjack_Player_Spade5",
+    "SpriteName" : "blackjack_player_spade5"
   },
   {
-    "CladEvent": "FiveOfSpades_Dealer",
-    "SpriteName": "blackjack_vector_spade5"
+    "CladEvent" : "Blackjack_Player_Spade6",
+    "SpriteName" : "blackjack_player_spade6"
   },
   {
-    "CladEvent": "SixOfSpades_Dealer",
-    "SpriteName": "blackjack_vector_spade6"
+    "CladEvent" : "Blackjack_Player_Spade7",
+    "SpriteName" : "blackjack_player_spade7"
   },
   {
-    "CladEvent": "SevenOfSpades_Dealer",
-    "SpriteName": "blackjack_vector_spade7"
+    "CladEvent" : "Blackjack_Player_Spade8",
+    "SpriteName" : "blackjack_player_spade8"
   },
   {
-    "CladEvent": "EightOfSpades_Dealer",
-    "SpriteName": "blackjack_vector_spade8"
+    "CladEvent" : "Blackjack_Player_Spade9",
+    "SpriteName" : "blackjack_player_spade9"
   },
   {
-    "CladEvent": "NineOfSpades_Dealer",
-    "SpriteName": "blackjack_vector_spade9"
+    "CladEvent" : "Blackjack_Player_Spadeace",
+    "SpriteName" : "blackjack_player_spadeace"
   },
   {
-    "CladEvent": "TenOfSpades_Dealer",
-    "SpriteName": "blackjack_vector_spade10"
+    "CladEvent" : "Blackjack_Player_Spadejack",
+    "SpriteName" : "blackjack_player_spadejack"
   },
   {
-    "CladEvent": "JackOfSpades_Dealer",
-    "SpriteName": "blackjack_vector_spadejack"
+    "CladEvent" : "Blackjack_Player_Spadeking",
+    "SpriteName" : "blackjack_player_spadeking"
   },
   {
-    "CladEvent": "QueenOfSpades_Dealer",
-    "SpriteName": "blackjack_vector_spadequeen"
+    "CladEvent" : "Blackjack_Player_Spadequeen",
+    "SpriteName" : "blackjack_player_spadequeen"
   },
   {
-    "CladEvent": "KingOfSpades_Dealer",
-    "SpriteName": "blackjack_vector_spadeking"
+    "CladEvent" : "Charlieframe",
+    "SpriteName" : "charlieframe"
   },
   {
-    "CladEvent": "AceOfHearts_Dealer",
-    "SpriteName": "blackjack_vector_heartace"
+    "CladEvent" : "Clock_00",
+    "SpriteName" : "clock_00"
   },
   {
-    "CladEvent": "TwoOfHearts_Dealer",
-    "SpriteName": "blackjack_vector_heart2"
+    "CladEvent" : "Clock_01",
+    "SpriteName" : "clock_01"
   },
   {
-    "CladEvent": "ThreeOfHearts_Dealer",
-    "SpriteName": "blackjack_vector_heart3"
+    "CladEvent" : "Clock_02",
+    "SpriteName" : "clock_02"
   },
   {
-    "CladEvent": "FourOfHearts_Dealer",
-    "SpriteName": "blackjack_vector_heart4"
+    "CladEvent" : "Clock_03",
+    "SpriteName" : "clock_03"
   },
   {
-    "CladEvent": "FiveOfHearts_Dealer",
-    "SpriteName": "blackjack_vector_heart5"
+    "CladEvent" : "Clock_04",
+    "SpriteName" : "clock_04"
   },
   {
-    "CladEvent": "SixOfHearts_Dealer",
-    "SpriteName": "blackjack_vector_heart6"
+    "CladEvent" : "Clock_05",
+    "SpriteName" : "clock_05"
   },
   {
-    "CladEvent": "SevenOfHearts_Dealer",
-    "SpriteName": "blackjack_vector_heart7"
+    "CladEvent" : "Clock_06",
+    "SpriteName" : "clock_06"
   },
   {
-    "CladEvent": "EightOfHearts_Dealer",
-    "SpriteName": "blackjack_vector_heart8"
+    "CladEvent" : "Clock_07",
+    "SpriteName" : "clock_07"
   },
   {
-    "CladEvent": "NineOfHearts_Dealer",
-    "SpriteName": "blackjack_vector_heart9"
+    "CladEvent" : "Clock_08",
+    "SpriteName" : "clock_08"
   },
   {
-    "CladEvent": "TenOfHearts_Dealer",
-    "SpriteName": "blackjack_vector_heart10"
+    "CladEvent" : "Clock_09",
+    "SpriteName" : "clock_09"
   },
   {
-    "CladEvent": "JackOfHearts_Dealer",
-    "SpriteName": "blackjack_vector_heartjack"
+    "CladEvent" : "Clock_Colon",
+    "SpriteName" : "clock_colon"
   },
   {
-    "CladEvent": "QueenOfHearts_Dealer",
-    "SpriteName": "blackjack_vector_heartqueen"
+    "CladEvent" : "Clock_Empty_Grid",
+    "SpriteName" : "clock_empty_grid"
   },
   {
-    "CladEvent": "KingOfHearts_Dealer",
-    "SpriteName": "blackjack_vector_heartking"
+    "CladEvent" : "Empty_Sprite",
+    "SpriteName" : "empty_sprite"
   },
   {
-    "CladEvent": "AceOfDiamonds_Dealer",
-    "SpriteName": "blackjack_vector_diamondace"
+    "CladEvent" : "Weather_Celsius_Indicator",
+    "SpriteName" : "weather_celsius_indicator"
   },
   {
-    "CladEvent": "TwoOfDiamonds_Dealer",
-    "SpriteName": "blackjack_vector_diamond2"
+    "CladEvent" : "Weather_Fahrenheit_Indicator",
+    "SpriteName" : "weather_fahrenheit_indicator"
   },
   {
-    "CladEvent": "ThreeOfDiamonds_Dealer",
-    "SpriteName": "blackjack_vector_diamond3"
+    "CladEvent" : "Weather_Negative_Indicator",
+    "SpriteName" : "weather_negative_indicator"
   },
   {
-    "CladEvent": "FourOfDiamonds_Dealer",
-    "SpriteName": "blackjack_vector_diamond4"
+    "CladEvent" : "Weather_Temp_0",
+    "SpriteName" : "weather_temp_0"
   },
   {
-    "CladEvent": "FiveOfDiamonds_Dealer",
-    "SpriteName": "blackjack_vector_diamond5"
+    "CladEvent" : "Weather_Temp_1",
+    "SpriteName" : "weather_temp_1"
   },
   {
-    "CladEvent": "SixOfDiamonds_Dealer",
-    "SpriteName": "blackjack_vector_diamond6"
+    "CladEvent" : "Weather_Temp_2",
+    "SpriteName" : "weather_temp_2"
   },
   {
-    "CladEvent": "SevenOfDiamonds_Dealer",
-    "SpriteName": "blackjack_vector_diamond7"
+    "CladEvent" : "Weather_Temp_3",
+    "SpriteName" : "weather_temp_3"
   },
   {
-    "CladEvent": "EightOfDiamonds_Dealer",
-    "SpriteName": "blackjack_vector_diamond8"
+    "CladEvent" : "Weather_Temp_4",
+    "SpriteName" : "weather_temp_4"
   },
   {
-    "CladEvent": "NineOfDiamonds_Dealer",
-    "SpriteName": "blackjack_vector_diamond9"
+    "CladEvent" : "Weather_Temp_5",
+    "SpriteName" : "weather_temp_5"
   },
   {
-    "CladEvent": "TenOfDiamonds_Dealer",
-    "SpriteName": "blackjack_vector_diamond10"
+    "CladEvent" : "Weather_Temp_6",
+    "SpriteName" : "weather_temp_6"
   },
   {
-    "CladEvent": "JackOfDiamonds_Dealer",
-    "SpriteName": "blackjack_vector_diamondjack"
+    "CladEvent" : "Weather_Temp_7",
+    "SpriteName" : "weather_temp_7"
   },
   {
-    "CladEvent": "QueenOfDiamonds_Dealer",
-    "SpriteName": "blackjack_vector_diamondqueen"
+    "CladEvent" : "Weather_Temp_8",
+    "SpriteName" : "weather_temp_8"
   },
   {
-    "CladEvent": "KingOfDiamonds_Dealer",
-    "SpriteName": "blackjack_vector_diamondking"
+    "CladEvent" : "Weather_Temp_9",
+    "SpriteName" : "weather_temp_9"
   },
   {
-    "CladEvent": "AceOfClubs_Dealer",
-    "SpriteName": "blackjack_vector_clubsace"
+    "CladEvent" : "Pairing_Icon_Key",
+    "SpriteName" : "pairing_icon_key"
   },
   {
-    "CladEvent": "TwoOfClubs_Dealer",
-    "SpriteName": "blackjack_vector_clubs2"
+    "CladEvent" : "Pairing_Icon_Awaiting_App",
+    "SpriteName" : "pairing_icon_awaiting_app"
   },
   {
-    "CladEvent": "ThreeOfClubs_Dealer",
-    "SpriteName": "blackjack_vector_clubs3"
+    "CladEvent" : "Pairing_Icon_Update",
+    "SpriteName" : "pairing_icon_update"
   },
   {
-    "CladEvent": "FourOfClubs_Dealer",
-    "SpriteName": "blackjack_vector_clubs4"
+    "CladEvent" : "Pairing_Icon_Update_Error",
+    "SpriteName" : "pairing_icon_update_error"
   },
   {
-    "CladEvent": "FiveOfClubs_Dealer",
-    "SpriteName": "blackjack_vector_clubs5"
+    "CladEvent" : "Pairing_Icon_Wifi",
+    "SpriteName" : "pairing_icon_wifi"
   },
   {
-    "CladEvent": "SixOfClubs_Dealer",
-    "SpriteName": "blackjack_vector_clubs6"
+    "CladEvent" : "Blackjack_Player_Back",
+    "SpriteName" : "blackjack_player_back"
   },
   {
-    "CladEvent": "SevenOfClubs_Dealer",
-    "SpriteName": "blackjack_vector_clubs7"
+    "CladEvent" : "Blackjack_Player_Flipover",
+    "SpriteName" : "blackjack_player_flipover"
   },
   {
-    "CladEvent": "EightOfClubs_Dealer",
-    "SpriteName": "blackjack_vector_clubs8"
+    "CladEvent" : "Blackjack_Vector_Back",
+    "SpriteName" : "blackjack_vector_back"
   },
   {
-    "CladEvent": "NineOfClubs_Dealer",
-    "SpriteName": "blackjack_vector_clubs9"
+    "CladEvent" : "Blackjack_Vector_Flipover",
+    "SpriteName" : "blackjack_vector_flipover"
   },
   {
-    "CladEvent": "TenOfClubs_Dealer",
-    "SpriteName": "blackjack_vector_clubs10"
+    "CladEvent" : "Face_Bored_Event_02",
+    "SpriteName" : "face_bored_event_02"
   },
   {
-    "CladEvent": "JackOfClubs_Dealer",
-    "SpriteName": "blackjack_vector_clubsjack"
+    "CladEvent" : "Face_Bored_Event_04",
+    "SpriteName" : "face_bored_event_04"
   },
   {
-    "CladEvent": "QueenOfClubs_Dealer",
-    "SpriteName": "blackjack_vector_clubsqueen"
+    "CladEvent" : "Face_Chargerdocking_Severerequest",
+    "SpriteName" : "face_chargerdocking_severerequest"
   },
   {
-    "CladEvent": "KingOfClubs_Dealer",
-    "SpriteName": "blackjack_vector_clubsking"
+    "CladEvent" : "Face_Cloud01",
+    "SpriteName" : "face_cloud01"
   },
   {
-    "CladEvent": "Face_Bored_Event_02",
-    "SpriteName": "face_bored_event_02"
+    "CladEvent" : "Face_Cloud02",
+    "SpriteName" : "face_cloud02"
   },
   {
-    "CladEvent": "Face_Bored_Event_04",
-    "SpriteName": "face_bored_event_04"
+    "CladEvent" : "Face_Cloud03",
+    "SpriteName" : "face_cloud03"
   },
   {
-    "CladEvent": "Face_ChargerDocking_SevereRequest",
-    "SpriteName": "face_chargerdocking_severerequest"
+    "CladEvent" : "Face_Cloud04",
+    "SpriteName" : "face_cloud04"
   },
   {
-    "CladEvent": "Face_LookAtDevice",
-    "SpriteName": "face_lookatdevice"
+    "CladEvent" : "Face_Clouds_Mist",
+    "SpriteName" : "face_clouds_mist"
   },
   {
-    "CladEvent": "Face_Messaging_DeletedLong",
-    "SpriteName": "face_messaging_deleted_long"
+    "CladEvent" : "Face_Knowledgegraph_Answer",
+    "SpriteName" : "face_knowledgegraph_answer"
   },
   {
-    "CladEvent": "Face_Messaging_DeletedShort",
-    "SpriteName": "face_messaging_deleted_short"
+    "CladEvent" : "Face_Knowledgegraph_Getin",
+    "SpriteName" : "face_knowledgegraph_getin"
   },
   {
-    "CladEvent": "Face_Messaging_GetIn",
-    "SpriteName": "face_messaging_getin"
+    "CladEvent" : "Face_Knowledgegraph_Getout",
+    "SpriteName" : "face_knowledgegraph_getout"
   },
   {
-    "CladEvent": "Face_Messaging_GetOut",
-    "SpriteName": "face_messaging_getout"
+    "CladEvent" : "Face_Knowledgegraph_Listening",
+    "SpriteName" : "face_knowledgegraph_listening"
   },
   {
-    "CladEvent": "Face_Messaging_Loop",
-    "SpriteName": "face_messaging_loop"
+    "CladEvent" : "Face_Knowledgegraph_Searching",
+    "SpriteName" : "face_knowledgegraph_searching"
   },
   {
-    "CladEvent": "Face_Messaging_Rewind",
-    "SpriteName": "face_messaging_rewind"
+    "CladEvent" : "Face_Lookatdevice",
+    "SpriteName" : "face_lookatdevice"
   },
   {
-    "CladEvent": "Face_Messaging_TTS",
-    "SpriteName": "face_messaging_tts"
+    "CladEvent" : "Face_Messaging_Deleted_Long",
+    "SpriteName" : "face_messaging_deleted_long"
   },
   {
-    "CladEvent": "Face_Messaging_TTS_GetOut",
-    "SpriteName": "face_messaging_tts_getout"
+    "CladEvent" : "Face_Messaging_Deleted_Short",
+    "SpriteName" : "face_messaging_deleted_short"
   },
   {
-    "CladEvent": "Face_TimerCancel_GetIn_01",
-    "SpriteName": "face_timercancel_getin_01"
+    "CladEvent" : "Face_Messaging_Getin",
+    "SpriteName" : "face_messaging_getin"
   },
   {
-    "CladEvent": "Face_TimerCancel_01",
-    "SpriteName": "face_timercancel_01"
+    "CladEvent" : "Face_Messaging_Getout",
+    "SpriteName" : "face_messaging_getout"
   },
   {
-    "CladEvent": "Face_TimerCancel_02",
-    "SpriteName": "face_timercancel_02"
+    "CladEvent" : "Face_Messaging_Loop",
+    "SpriteName" : "face_messaging_loop"
   },
   {
-    "CladEvent": "Face_TimerLeft_GetIn_01",
-    "SpriteName": "face_timerleft_getin_01"
+    "CladEvent" : "Face_Messaging_Rewind",
+    "SpriteName" : "face_messaging_rewind"
   },
   {
-    "CladEvent": "Face_TimerLeft_GetOut_01",
-    "SpriteName": "face_timerleft_getout_01"
+    "CladEvent" : "Face_Messaging_Tts",
+    "SpriteName" : "face_messaging_tts"
   },
   {
-    "CladEvent": "Face_TimerSet_GetIn_01",
-    "SpriteName": "face_timerset_getin_01"
+    "CladEvent" : "Face_Messaging_Tts_Getout",
+    "SpriteName" : "face_messaging_tts_getout"
   },
   {
-    "CladEvent": "Face_TimerSet_GetIn_02",
-    "SpriteName": "face_timerset_getin_02"
+    "CladEvent" : "Face_Nocloud_Icon",
+    "SpriteName" : "face_nocloud_icon"
   },
   {
-    "CladEvent": "Face_TimerSet_GetOut_01",
-    "SpriteName": "face_timerset_getout_01"
+    "CladEvent" : "Face_Nowifi_Icon",
+    "SpriteName" : "face_nowifi_icon"
   },
   {
-    "CladEvent": "Face_TimerRing_GetIn_02",
-    "SpriteName": "face_timersup_getin_02"
+    "CladEvent" : "Face_Nowifi_Signal",
+    "SpriteName" : "face_nowifi_signal"
   },
   {
-    "CladEvent": "PairingIconKey",
-    "SpriteName": "pairing_icon_key"
+    "CladEvent" : "Face_Rain",
+    "SpriteName" : "face_rain"
   },
   {
-    "CladEvent": "PairingIconAwaitingApp",
-    "SpriteName": "pairing_icon_awaiting_app"
+    "CladEvent" : "Face_Snow01",
+    "SpriteName" : "face_snow01"
   },
   {
-    "CladEvent": "PairingIconUpdate",
-    "SpriteName": "pairing_icon_update"
+    "CladEvent" : "Face_Snow_Mist",
+    "SpriteName" : "face_snow_mist"
   },
   {
-    "CladEvent": "PairingIconUpdateError",
-    "SpriteName": "pairing_icon_update_error"
+    "CladEvent" : "Face_Stars",
+    "SpriteName" : "face_stars"
   },
   {
-    "CladEvent": "PairingIconWifi",
-    "SpriteName": "pairing_icon_wifi"
+    "CladEvent" : "Face_Sunny",
+    "SpriteName" : "face_sunny"
   },
   {
-    "CladEvent": "Face_Cloud_01",
-    "SpriteName": "face_cloud01"
+    "CladEvent" : "Face_Thunderstorms_01",
+    "SpriteName" : "face_thunderstorms_01"
   },
   {
-    "CladEvent": "Face_Cloud_02",
-    "SpriteName": "face_cloud02"
+    "CladEvent" : "Face_Timercancel_01",
+    "SpriteName" : "face_timercancel_01"
   },
   {
-    "CladEvent": "Face_Cloud_03",
-    "SpriteName": "face_cloud03"
+    "CladEvent" : "Face_Timercancel_02",
+    "SpriteName" : "face_timercancel_02"
   },
   {
-    "CladEvent": "Face_Cloud_04",
-    "SpriteName": "face_cloud04"
+    "CladEvent" : "Face_Timercancel_Getin_01",
+    "SpriteName" : "face_timercancel_getin_01"
   },
   {
-    "CladEvent": "Face_Rain_01",
-    "SpriteName": "face_rain"
+    "CladEvent" : "Face_Timerleft_Getin_01",
+    "SpriteName" : "face_timerleft_getin_01"
   },
   {
-    "CladEvent": "Face_Clouds_Mist",
-    "SpriteName": "face_clouds_mist"
+    "CladEvent" : "Face_Timerleft_Getout_01",
+    "SpriteName" : "face_timerleft_getout_01"
   },
   {
-    "CladEvent": "Face_Snow_Mist",
-    "SpriteName": "face_snow_mist"
+    "CladEvent" : "Face_Timerset_Getin_01",
+    "SpriteName" : "face_timerset_getin_01"
   },
   {
-    "CladEvent": "Face_Snow_01",
-    "SpriteName": "face_snow01"
+    "CladEvent" : "Face_Timerset_Getin_02",
+    "SpriteName" : "face_timerset_getin_02"
   },
   {
-    "CladEvent": "Face_Sunny_01",
-    "SpriteName": "face_sunny"
+    "CladEvent" : "Face_Timerset_Getout_01",
+    "SpriteName" : "face_timerset_getout_01"
   },
   {
-    "CladEvent": "Face_Stars_01",
-    "SpriteName": "face_stars"
+    "CladEvent" : "Face_Timersup_Getin_02",
+    "SpriteName" : "face_timersup_getin_02"
   }
 ]
-

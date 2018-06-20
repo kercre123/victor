@@ -48,6 +48,10 @@
     "LayoutName": "sunny_01"
   },
   {
+    "CladEvent": "WeatherCondThunderstorms_01",
+    "LayoutName": "thunderstorms_01"
+  },
+  {
     "CladEvent": "WeatherCondWindy_01",
     "LayoutName": "windy_01"
   },
