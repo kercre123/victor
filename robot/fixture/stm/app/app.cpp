@@ -64,6 +64,7 @@ char* snformat(char *s, size_t n, const char *format, ...) {
 
 // Show the name of the fixture and version information
 extern int HelperTempC;
+extern time_t RtcDisplayTime;
 void SetFixtureText(bool reinit=0);
 void SetFixtureText(bool reinit)
 {
@@ -76,15 +77,23 @@ void SetFixtureText(bool reinit)
   if( !inited )
     helperLcdClear();
   
+  //current mode
+  bool is_fixmode_head = g_fixmode==FIXMODE_HEAD1 || g_fixmode==FIXMODE_HEAD1_OL || g_fixmode==FIXMODE_HEAD2 || g_fixmode==FIXMODE_HELPER1;
+  bool is_fixmode_packout = g_fixmode==FIXMODE_PACKOUT || g_fixmode==FIXMODE_PACKOUT_OL;
+  
   //different colors for debug builds
   char color = 'b';
   if( !g_isReleaseBuild )
     color = m_last_error == ERROR_OK ? 'g' : 'r';
+  if( g_isReleaseBuild && is_fixmode_packout && !fixtureTimeIsValid() ) //packout (release build) indicate if RTC is invalid
+    color = 'r';
   
   //for head programming fixtures, show last written ESN on the display
-  bool headmode = g_fixmode >= FIXMODE_HEAD1 && g_fixmode <= FIXMODE_HELPER1;
-  if( headmode )
+  //for packout fixtures, show current RTC time on the display
+  if( is_fixmode_head )
     helperLcdSetLine(1, snformat(b,bz,"prev esn: 0x%08x", TestHeadGetPrevESN()) );
+  else if( is_fixmode_packout )
+    helperLcdSetLine(1, fixtureTimeStr(RtcDisplayTime) ); //e.g. "Sun Sep16 01:03 1973"
   else if( !inited && !g_isReleaseBuild )
     helperLcdSetLine(1, "DEV-NOT FOR FACTORY!");
   
@@ -106,11 +115,11 @@ void SetFixtureText(bool reinit)
     helperLcdSetLine(4, snformat(b,bz,"                   %u", tempC/10) );
     helperLcdSetLine(5, snformat(b,bz,"                   %u", tempC%10) );
   }//-*/
-  int temp_line = headmode ? 6 : 7; //shift up for head modes (make space for os version info)
+  int temp_line = is_fixmode_head ? 6 : 7; //shift up for head modes (make space for os version info)
   helperLcdSetLine(temp_line, snformat(b,bz,"%iC", tempC) );
   
   //mode-specific info
-  if( !inited && headmode )
+  if( !inited && is_fixmode_head )
     helperLcdSetLine(7, snformat(b,bz,"os-ver %s", helperGetEmmcdlVersion()) );
   
   //show build info and version
@@ -317,7 +326,8 @@ inline void dbgBtnHandler(void)
 
 static uint32_t TtempUpdate = 0;
 int HelperTempC = INT_MIN;
-void helper_temp_manage(bool force_update)
+time_t RtcDisplayTime = 0;
+void helper_temp_rtc_manage(bool force_update)
 {
   static bool last_update_successful = 1;
   int update_interval = last_update_successful ? 10*1000*1000 : 60*1000*1000; //throttle down for debug if not connected to helper head
@@ -331,12 +341,22 @@ void helper_temp_manage(bool force_update)
       while( ConsoleReadChar() > -1 );
       ConsolePrintf("...\nconsole input cleared\n");
     }
-  } else if( update ) {
-    int tempC = helperGetTempC(); //read new temp
-    last_update_successful = tempC >= 0;
-    changed = tempC != HelperTempC;
-    HelperTempC = tempC; //still process failures to display error code
-    TtempUpdate = Timer::get();
+  } else {
+    if( update ) {
+      int tempC = helperGetTempC(); //read new temp
+      last_update_successful = tempC >= 0;
+      changed = tempC != HelperTempC;
+      HelperTempC = tempC; //still process failures to display error code
+      TtempUpdate = Timer::get();
+    }
+    
+    //rtc update check
+    time_t now = fixtureGetTime();
+    now -= now%60; //mask seconds
+    if( now != RtcDisplayTime || force_update ) {
+      RtcDisplayTime = now;
+      changed = 1; //SetFixtureText();
+    }
   }
   
   if( changed )
@@ -407,7 +427,7 @@ static void MainExecution()
     Board::ledOff(Board::LED_GREEN);
     Board::ledOff(Board::LED_YLW);
   }
-  helper_temp_manage(start); //force immediate temp read after test completion
+  helper_temp_rtc_manage(start); //force immediate temp read +clock update after test completion
   
   //DEBUG
   dbgBtnHandler();
@@ -463,7 +483,7 @@ int main(void)
   
   ConsolePrintf("\n----- Victor Test Fixture: -----\n");
   printFixtureInfo();
-  helper_temp_manage(1);
+  helper_temp_rtc_manage(1);
   SetFixtureText();
   
   //DEBUG: runtime validation of the fixmode array
