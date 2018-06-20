@@ -77,6 +77,7 @@ private:
     uint8_t         utteranceID;
     UtteranceState  utteranceState;
     bool            hasSentPlayCommand;
+    bool            cancelOnNextUpdate; 
   };
 
   InstanceConfig   _iConfig;

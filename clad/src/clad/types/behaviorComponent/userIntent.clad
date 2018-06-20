@@ -92,7 +92,9 @@ union dupes_allowed UserIntent
   // PLEASE KEEP ALPHABETIZED 
   // thank you in advance for caring
 
-
+  UserIntent_Void             blackjack_hit,
+  UserIntent_Void             blackjack_stand,
+  UserIntent_Void             blackjack_playagain,
   UserIntent_Void             explore_start,
   UserIntent_Void             greeting_goodbye,
   UserIntent_Void             greeting_goodmorning,

@@ -26,14 +26,20 @@ namespace Util{
 namespace Anki{
 namespace Cozmo{
 
+const int kInvalidCardID = -1;
+const int kAceRank       = 0;
+const int kHandSizeLimit   = 5;
+
 class Card
 { 
 public:
   Card(int cardID, bool faceUp = true);
 
+  const int GetID() const {return _cardID;}
   const int GetRank() const;
   const std::string GetString() const;
 
+  const bool IsAnAce() const {return kAceRank == GetRank();}
   const bool IsFaceUp() const {return _faceUp;}
   void SetFaceUp(bool faceUp) {_faceUp = faceUp;}
 
@@ -50,8 +56,12 @@ class Deck
 public:
   Deck();
 
+  void Init();
   void Shuffle(Anki::Util::RandomGenerator* rng);
   int PopTopCard();
+
+  // Debug/Test
+  void Stack(const std::vector<int>* deckOrder);
 
 private:
   std::vector<int>  _deck;
@@ -68,18 +78,17 @@ public:
 
   void Init(Anki::Util::RandomGenerator* rng = nullptr);
 
-  bool DealCards();
-  bool PlayerHit(bool dealing = false);
-  bool DealerHit(bool faceUp = true);
+  const bool DealToPlayer(const bool faceUp = true);
+  const bool DealToDealer(const bool faceUp = true);
 
   // Show the dealers face down card
   void Flop() {_dealerHand[0].SetFaceUp(true); _hasFlopped = true;}
 
+  const Card& LastCard();
+
   const bool PlayerBusted() const {return ScoreHand(_playerHand) > kBlackJackValue;}
   const bool PlayerHasBlackJack() const {return ScoreHand(_playerHand) == kBlackJackValue;}
-  const bool PlayerWasDealtAnAce() const {return _playerDealtAce;}
-  const bool PlayerHasHit() const {return _playerHasHit;}
-  const bool PlayerHasFiveCardCharlie() const {return (_playerHand.size() >= 5) && (!PlayerBusted());}
+  const bool PlayerHasCharlie() const {return (_playerHand.size() >= kHandSizeLimit) && (!PlayerBusted());}
 
   const bool DealerHasFlopped() const {return _hasFlopped;}
   const bool DealerBusted() const {return ScoreHand(_dealerHand) > kBlackJackValue;}
@@ -95,19 +104,25 @@ public:
   static int ScoreCard(const Card& card);
   static int ScoreHand(const std::vector<Card>& hand);
 
+  // Debug/Test
+  static void StackDeck(const std::vector<int>& stackedDeckOrder);
+  static void StopStackingDeck();
+
 private:
 
   Deck _deck;
   std::vector<Card> _playerHand;
   std::vector<Card> _dealerHand;
-  bool              _playerDealtAce;
-  bool              _playerHasHit;
+  Card*             _lastCard;
+  Card              _invalidCard;
   bool              _hasFlopped;
 
+  // Debug/Test
+  static std::unique_ptr<std::vector<int>> _stackedDeck;
 };
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki
 
 #endif //__Engine_AiComponent_BehaviorComponent_Behaviors_BlackJackSimumation__
  

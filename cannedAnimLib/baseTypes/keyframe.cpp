@@ -1101,6 +1101,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     {
       DEV_ASSERT(backpackKeyframe != nullptr, "BackpackLightsKeyFrame.DefineFromFlatBuf.NullAnim");
       SafeNumericCast(backpackKeyframe->triggerTime_ms(), _triggerTime_ms, animNameDebug.c_str());
+      SafeNumericCast(backpackKeyframe->durationTime_ms(), _motionDuration_ms, animNameDebug.c_str());
       Result lastResult = SetMembersFromFlatBuf(backpackKeyframe, animNameDebug);
       return lastResult;
     }

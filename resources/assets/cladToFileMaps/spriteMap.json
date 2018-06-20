@@ -104,6 +104,450 @@
     "SpriteName": "weather_temp_9"
   },
   {
+    "CladEvent": "CharlieFrame",
+    "SpriteName": "charlieframe"
+  }, 
+  {
+    "CladEvent": "DealSequence_Player",
+    "SpriteName": "blackjack_player_back"
+  },
+  {
+    "CladEvent": "FlipSequence_Player",
+    "SpriteName": "blackjack_player_flipover"
+  }, 
+  {
+    "CladEvent": "CardBack_Player",
+    "SpriteName": "blackjack_player_card_back"
+  },
+  {
+    "CladEvent": "AceOfSpades_Player",
+    "SpriteName": "blackjack_player_spadeace"
+  },
+  {
+    "CladEvent": "TwoOfSpades_Player",
+    "SpriteName": "blackjack_player_spade2"
+  },
+  {
+    "CladEvent": "ThreeOfSpades_Player",
+    "SpriteName": "blackjack_player_spade3"
+  },
+  {
+    "CladEvent": "FourOfSpades_Player",
+    "SpriteName": "blackjack_player_spade4"
+  },
+  {
+    "CladEvent": "FiveOfSpades_Player",
+    "SpriteName": "blackjack_player_spade5"
+  },
+  {
+    "CladEvent": "SixOfSpades_Player",
+    "SpriteName": "blackjack_player_spade6"
+  },
+  {
+    "CladEvent": "SevenOfSpades_Player",
+    "SpriteName": "blackjack_player_spade7"
+  },
+  {
+    "CladEvent": "EightOfSpades_Player",
+    "SpriteName": "blackjack_player_spade8"
+  },
+  {
+    "CladEvent": "NineOfSpades_Player",
+    "SpriteName": "blackjack_player_spade9"
+  },
+  {
+    "CladEvent": "TenOfSpades_Player",
+    "SpriteName": "blackjack_player_spade10"
+  },
+  {
+    "CladEvent": "JackOfSpades_Player",
+    "SpriteName": "blackjack_player_spadejack"
+  },
+  {
+    "CladEvent": "QueenOfSpades_Player",
+    "SpriteName": "blackjack_player_spadequeen"
+  },
+  {
+    "CladEvent": "KingOfSpades_Player",
+    "SpriteName": "blackjack_player_spadeking"
+  },
+  {
+    "CladEvent": "AceOfHearts_Player",
+    "SpriteName": "blackjack_player_heartace"
+  },
+  {
+    "CladEvent": "TwoOfHearts_Player",
+    "SpriteName": "blackjack_player_heart2"
+  },
+  {
+    "CladEvent": "ThreeOfHearts_Player",
+    "SpriteName": "blackjack_player_heart3"
+  },
+  {
+    "CladEvent": "FourOfHearts_Player",
+    "SpriteName": "blackjack_player_heart4"
+  },
+  {
+    "CladEvent": "FiveOfHearts_Player",
+    "SpriteName": "blackjack_player_heart5"
+  },
+  {
+    "CladEvent": "SixOfHearts_Player",
+    "SpriteName": "blackjack_player_heart6"
+  },
+  {
+    "CladEvent": "SevenOfHearts_Player",
+    "SpriteName": "blackjack_player_heart7"
+  },
+  {
+    "CladEvent": "EightOfHearts_Player",
+    "SpriteName": "blackjack_player_heart8"
+  },
+  {
+    "CladEvent": "NineOfHearts_Player",
+    "SpriteName": "blackjack_player_heart9"
+  },
+  {
+    "CladEvent": "TenOfHearts_Player",
+    "SpriteName": "blackjack_player_heart10"
+  },
+  {
+    "CladEvent": "JackOfHearts_Player",
+    "SpriteName": "blackjack_player_heartjack"
+  },
+  {
+    "CladEvent": "QueenOfHearts_Player",
+    "SpriteName": "blackjack_player_heartqueen"
+  },
+  {
+    "CladEvent": "KingOfHearts_Player",
+    "SpriteName": "blackjack_player_heartking"
+  },
+  {
+    "CladEvent": "AceOfDiamonds_Player",
+    "SpriteName": "blackjack_player_diamondace"
+  },
+  {
+    "CladEvent": "TwoOfDiamonds_Player",
+    "SpriteName": "blackjack_player_diamond2"
+  },
+  {
+    "CladEvent": "ThreeOfDiamonds_Player",
+    "SpriteName": "blackjack_player_diamond3"
+  },
+  {
+    "CladEvent": "FourOfDiamonds_Player",
+    "SpriteName": "blackjack_player_diamond4"
+  },
+  {
+    "CladEvent": "FiveOfDiamonds_Player",
+    "SpriteName": "blackjack_player_diamond5"
+  },
+  {
+    "CladEvent": "SixOfDiamonds_Player",
+    "SpriteName": "blackjack_player_diamond6"
+  },
+  {
+    "CladEvent": "SevenOfDiamonds_Player",
+    "SpriteName": "blackjack_player_diamond7"
+  },
+  {
+    "CladEvent": "EightOfDiamonds_Player",
+    "SpriteName": "blackjack_player_diamond8"
+  },
+  {
+    "CladEvent": "NineOfDiamonds_Player",
+    "SpriteName": "blackjack_player_diamond9"
+  },
+  {
+    "CladEvent": "TenOfDiamonds_Player",
+    "SpriteName": "blackjack_player_diamond10"
+  },
+  {
+    "CladEvent": "JackOfDiamonds_Player",
+    "SpriteName": "blackjack_player_diamondjack"
+  },
+  {
+    "CladEvent": "QueenOfDiamonds_Player",
+    "SpriteName": "blackjack_player_diamondqueen"
+  },
+  {
+    "CladEvent": "KingOfDiamonds_Player",
+    "SpriteName": "blackjack_player_diamondking"
+  },
+  {
+    "CladEvent": "AceOfClubs_Player",
+    "SpriteName": "blackjack_player_clubsace"
+  },
+  {
+    "CladEvent": "TwoOfClubs_Player",
+    "SpriteName": "blackjack_player_clubs2"
+  },
+  {
+    "CladEvent": "ThreeOfClubs_Player",
+    "SpriteName": "blackjack_player_clubs3"
+  },
+  {
+    "CladEvent": "FourOfClubs_Player",
+    "SpriteName": "blackjack_player_clubs4"
+  },
+  {
+    "CladEvent": "FiveOfClubs_Player",
+    "SpriteName": "blackjack_player_clubs5"
+  },
+  {
+    "CladEvent": "SixOfClubs_Player",
+    "SpriteName": "blackjack_player_clubs6"
+  },
+  {
+    "CladEvent": "SevenOfClubs_Player",
+    "SpriteName": "blackjack_player_clubs7"
+  },
+  {
+    "CladEvent": "EightOfClubs_Player",
+    "SpriteName": "blackjack_player_clubs8"
+  },
+  {
+    "CladEvent": "NineOfClubs_Player",
+    "SpriteName": "blackjack_player_clubs9"
+  },
+  {
+    "CladEvent": "TenOfClubs_Player",
+    "SpriteName": "blackjack_player_clubs10"
+  },
+  {
+    "CladEvent": "JackOfClubs_Player",
+    "SpriteName": "blackjack_player_clubsjack"
+  },
+  {
+    "CladEvent": "QueenOfClubs_Player",
+    "SpriteName": "blackjack_player_clubsqueen"
+  },
+  {
+    "CladEvent": "KingOfClubs_Player",
+    "SpriteName": "blackjack_player_clubsking"
+  },
+  {
+    "CladEvent": "DealSequence_Dealer",
+    "SpriteName": "blackjack_vector_back"
+  },
+  {
+    "CladEvent": "FlipSequence_Dealer",
+    "SpriteName": "blackjack_vector_flipover"
+  },
+  {
+    "CladEvent": "CardBack_Dealer",
+    "SpriteName": "blackjack_vector_card_back"
+  },
+  {
+    "CladEvent": "AceOfSpades_Dealer",
+    "SpriteName": "blackjack_vector_spadeace"
+  },
+  {
+    "CladEvent": "TwoOfSpades_Dealer",
+    "SpriteName": "blackjack_vector_spade2"
+  },
+  {
+    "CladEvent": "ThreeOfSpades_Dealer",
+    "SpriteName": "blackjack_vector_spade3"
+  },
+  {
+    "CladEvent": "FourOfSpades_Dealer",
+    "SpriteName": "blackjack_vector_spade4"
+  },
+  {
+    "CladEvent": "FiveOfSpades_Dealer",
+    "SpriteName": "blackjack_vector_spade5"
+  },
+  {
+    "CladEvent": "SixOfSpades_Dealer",
+    "SpriteName": "blackjack_vector_spade6"
+  },
+  {
+    "CladEvent": "SevenOfSpades_Dealer",
+    "SpriteName": "blackjack_vector_spade7"
+  },
+  {
+    "CladEvent": "EightOfSpades_Dealer",
+    "SpriteName": "blackjack_vector_spade8"
+  },
+  {
+    "CladEvent": "NineOfSpades_Dealer",
+    "SpriteName": "blackjack_vector_spade9"
+  },
+  {
+    "CladEvent": "TenOfSpades_Dealer",
+    "SpriteName": "blackjack_vector_spade10"
+  },
+  {
+    "CladEvent": "JackOfSpades_Dealer",
+    "SpriteName": "blackjack_vector_spadejack"
+  },
+  {
+    "CladEvent": "QueenOfSpades_Dealer",
+    "SpriteName": "blackjack_vector_spadequeen"
+  },
+  {
+    "CladEvent": "KingOfSpades_Dealer",
+    "SpriteName": "blackjack_vector_spadeking"
+  },
+  {
+    "CladEvent": "AceOfHearts_Dealer",
+    "SpriteName": "blackjack_vector_heartace"
+  },
+  {
+    "CladEvent": "TwoOfHearts_Dealer",
+    "SpriteName": "blackjack_vector_heart2"
+  },
+  {
+    "CladEvent": "ThreeOfHearts_Dealer",
+    "SpriteName": "blackjack_vector_heart3"
+  },
+  {
+    "CladEvent": "FourOfHearts_Dealer",
+    "SpriteName": "blackjack_vector_heart4"
+  },
+  {
+    "CladEvent": "FiveOfHearts_Dealer",
+    "SpriteName": "blackjack_vector_heart5"
+  },
+  {
+    "CladEvent": "SixOfHearts_Dealer",
+    "SpriteName": "blackjack_vector_heart6"
+  },
+  {
+    "CladEvent": "SevenOfHearts_Dealer",
+    "SpriteName": "blackjack_vector_heart7"
+  },
+  {
+    "CladEvent": "EightOfHearts_Dealer",
+    "SpriteName": "blackjack_vector_heart8"
+  },
+  {
+    "CladEvent": "NineOfHearts_Dealer",
+    "SpriteName": "blackjack_vector_heart9"
+  },
+  {
+    "CladEvent": "TenOfHearts_Dealer",
+    "SpriteName": "blackjack_vector_heart10"
+  },
+  {
+    "CladEvent": "JackOfHearts_Dealer",
+    "SpriteName": "blackjack_vector_heartjack"
+  },
+  {
+    "CladEvent": "QueenOfHearts_Dealer",
+    "SpriteName": "blackjack_vector_heartqueen"
+  },
+  {
+    "CladEvent": "KingOfHearts_Dealer",
+    "SpriteName": "blackjack_vector_heartking"
+  },
+  {
+    "CladEvent": "AceOfDiamonds_Dealer",
+    "SpriteName": "blackjack_vector_diamondace"
+  },
+  {
+    "CladEvent": "TwoOfDiamonds_Dealer",
+    "SpriteName": "blackjack_vector_diamond2"
+  },
+  {
+    "CladEvent": "ThreeOfDiamonds_Dealer",
+    "SpriteName": "blackjack_vector_diamond3"
+  },
+  {
+    "CladEvent": "FourOfDiamonds_Dealer",
+    "SpriteName": "blackjack_vector_diamond4"
+  },
+  {
+    "CladEvent": "FiveOfDiamonds_Dealer",
+    "SpriteName": "blackjack_vector_diamond5"
+  },
+  {
+    "CladEvent": "SixOfDiamonds_Dealer",
+    "SpriteName": "blackjack_vector_diamond6"
+  },
+  {
+    "CladEvent": "SevenOfDiamonds_Dealer",
+    "SpriteName": "blackjack_vector_diamond7"
+  },
+  {
+    "CladEvent": "EightOfDiamonds_Dealer",
+    "SpriteName": "blackjack_vector_diamond8"
+  },
+  {
+    "CladEvent": "NineOfDiamonds_Dealer",
+    "SpriteName": "blackjack_vector_diamond9"
+  },
+  {
+    "CladEvent": "TenOfDiamonds_Dealer",
+    "SpriteName": "blackjack_vector_diamond10"
+  },
+  {
+    "CladEvent": "JackOfDiamonds_Dealer",
+    "SpriteName": "blackjack_vector_diamondjack"
+  },
+  {
+    "CladEvent": "QueenOfDiamonds_Dealer",
+    "SpriteName": "blackjack_vector_diamondqueen"
+  },
+  {
+    "CladEvent": "KingOfDiamonds_Dealer",
+    "SpriteName": "blackjack_vector_diamondking"
+  },
+  {
+    "CladEvent": "AceOfClubs_Dealer",
+    "SpriteName": "blackjack_vector_clubsace"
+  },
+  {
+    "CladEvent": "TwoOfClubs_Dealer",
+    "SpriteName": "blackjack_vector_clubs2"
+  },
+  {
+    "CladEvent": "ThreeOfClubs_Dealer",
+    "SpriteName": "blackjack_vector_clubs3"
+  },
+  {
+    "CladEvent": "FourOfClubs_Dealer",
+    "SpriteName": "blackjack_vector_clubs4"
+  },
+  {
+    "CladEvent": "FiveOfClubs_Dealer",
+    "SpriteName": "blackjack_vector_clubs5"
+  },
+  {
+    "CladEvent": "SixOfClubs_Dealer",
+    "SpriteName": "blackjack_vector_clubs6"
+  },
+  {
+    "CladEvent": "SevenOfClubs_Dealer",
+    "SpriteName": "blackjack_vector_clubs7"
+  },
+  {
+    "CladEvent": "EightOfClubs_Dealer",
+    "SpriteName": "blackjack_vector_clubs8"
+  },
+  {
+    "CladEvent": "NineOfClubs_Dealer",
+    "SpriteName": "blackjack_vector_clubs9"
+  },
+  {
+    "CladEvent": "TenOfClubs_Dealer",
+    "SpriteName": "blackjack_vector_clubs10"
+  },
+  {
+    "CladEvent": "JackOfClubs_Dealer",
+    "SpriteName": "blackjack_vector_clubsjack"
+  },
+  {
+    "CladEvent": "QueenOfClubs_Dealer",
+    "SpriteName": "blackjack_vector_clubsqueen"
+  },
+  {
+    "CladEvent": "KingOfClubs_Dealer",
+    "SpriteName": "blackjack_vector_clubsking"
+  },
+  {
     "CladEvent": "Face_Bored_Event_02",
     "SpriteName": "face_bored_event_02"
   },

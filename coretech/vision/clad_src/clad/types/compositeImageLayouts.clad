@@ -25,6 +25,9 @@ enum uint_8 CompositeImageLayout
   WeatherCondSunny_01,
   WeatherCondWindy_01,
 
+  // Layouts for Blackjack
+  PlayerCardLayout,
+  DealerCardLayout,
 
   // Must be last element
   Count

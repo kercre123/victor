@@ -4,9 +4,6 @@
 
   "associatedActiveFeature": "Blackjack",
 
-  // TODO:(str) swap out the anims for Blackjack specific ones
-  "getInAnimation"           : "TextToSpeechGetIn", // "BlackJack_SpeechGetIn",
-  "loopAnimation"            : "TextToSpeechGetLoop", // "BlackJack_SpeechLoop",
-  "getOutAnimation"          : "TextToSpeechGetOut", // "BlackJack_SpeechGetOut",
-  "emergencyGetOutAnimation" : "TextToSpeechGetOut" // "BlackJack_SpeechGetOut"
+  "getInAnimation"           : "BlackJack_SpeechGetIn",
+  "loopAnimation"            : "BlackJack_SpeechShortStatement"
 }

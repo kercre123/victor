@@ -143,6 +143,18 @@
       "cloud_intent": "intent_knowledge_no_response",
       "app_intent": "knowledge_unknown",
       "feature_gate": "KnowledgeGraph"
+    },
+    {
+      "user_intent": "blackjack_hit",
+      "cloud_intent": "intent_blackjack_hit"
+    },
+    {
+      "user_intent": "blackjack_stand",
+      "cloud_intent": "intent_blackjack_stand"
+    },
+    {
+      "user_intent": "blackjack_playagain",
+      "cloud_intent": "intent_blackjack_playagain"
     }
   ],
 

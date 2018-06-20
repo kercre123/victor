@@ -5,7 +5,7 @@
   "respondToUserIntents" : [
     {
       "type" : "play_specific",
-      "entity_behavior" : "blackjack" // TODO:(str) verify BlackJack intents exist
+      "entity_behavior" : "blackjack"
     }
   ],
 

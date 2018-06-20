@@ -824,7 +824,11 @@ namespace Cozmo {
     const bool shouldOverrideEyeHue = true;
     const bool shouldRenderInEyeHue = false;
     const bool isInternalAnim = false;
-    
+
+    // Hack: if _streamingAnimation == _proceduralAnimation, the subsequent CopyIntoProceduralAnimation call
+    // will delete *_streamingAnimation without assigning it to nullptr. This assignment prevents associated
+    // undefined behavior
+    _streamingAnimation = _neutralFaceAnimation;
     CopyIntoProceduralAnimation(_context->GetDataLoader()->GetCannedAnimation(name));
     SetStreamingAnimation(_proceduralAnimation, tag, numLoops, interruptRunning,
                           shouldOverrideEyeHue, shouldRenderInEyeHue, isInternalAnim);
