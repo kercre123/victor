@@ -24,14 +24,15 @@ func main() {
 	}
 	defer conn.Close()
 	fmt.Println("Streaming")
-	opts := chipper.StreamOpts{
-		CompressOpts: chipper.CompressOpts{
-			PreEncoded: true},
-		SessionId: uuid.New().String()[:16]}
+	opts := chipper.IntentOpts{
+		StreamOpts: chipper.StreamOpts{
+			CompressOpts: chipper.CompressOpts{
+				PreEncoded: true},
+			SessionID: uuid.New().String()[:16]}}
 	if *ms {
 		opts.Handler = pb.IntentService_BING_LUIS
 	}
-	stream, err := conn.NewStream(opts)
+	stream, err := conn.NewIntentStream(opts)
 	if err != nil {
 		fmt.Println("Error creating stream:", err)
 		return
@@ -61,12 +62,13 @@ func main() {
 	}
 
 	fmt.Println("Waiting for intent...")
-	result, err := stream.WaitForIntent()
+	response, err := stream.WaitForResponse()
 	if err != nil {
 		fmt.Println("Intent error", err)
 		return
 	}
 
+	result := response.(*chipper.IntentResult)
 	fmt.Println("Result action:", result.Action)
 	fmt.Println("Result\n", result)
 }

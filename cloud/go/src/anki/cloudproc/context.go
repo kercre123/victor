@@ -15,7 +15,7 @@ import (
 
 type voiceContext struct {
 	conn        *chipper.Conn
-	stream      *chipper.Stream
+	stream      chipper.Stream
 	process     *Process
 	bytes       []byte
 	audioStream chan []byte
@@ -56,7 +56,7 @@ func (ctx *voiceContext) close() error {
 	return err.Error()
 }
 
-func (p *Process) newVoiceContext(conn *chipper.Conn, stream *chipper.Stream, cloudChan cloudChans) *voiceContext {
+func (p *Process) newVoiceContext(conn *chipper.Conn, stream chipper.Stream, cloudChan cloudChans) *voiceContext {
 	audioStream := make(chan []byte, 10)
 	ctx := &voiceContext{
 		conn:        conn,
@@ -91,7 +91,7 @@ func (ctx *voiceContext) sendAudio(samples []byte, cloudChan cloudChans) {
 	// set up response routine if this is the first stream
 	ctx.initOnce.Do(func() {
 		go func() {
-			resp, err := ctx.stream.WaitForIntent()
+			resp, err := ctx.stream.WaitForResponse()
 			ctx.respOnce.Do(func() {
 				if ctx.closed {
 					if err != nil {
@@ -107,16 +107,21 @@ func (ctx *voiceContext) sendAudio(samples []byte, cloudChan cloudChans) {
 					return
 				}
 				log.Println("Intent response ->", resp)
-				sendResponse(resp, cloudChan)
+				switch r := resp.(type) {
+				case *chipper.IntentResult:
+					sendIntentResponse(r, cloudChan)
+				case *chipper.KnowledgeGraphResponse:
+					sendKGResponse(r, cloudChan)
+				}
 			})
 		}()
 	})
 }
 
-func sendResponse(resp *chipper.IntentResult, cloudChan cloudChans) {
+func sendIntentResponse(resp *chipper.IntentResult, cloudChan cloudChans) {
 	metadata := fmt.Sprintf("text: %s  confidence: %f  handler: %s",
 		resp.QueryText, resp.IntentConfidence, resp.Service)
-	buf := bytes.Buffer{}
+	var buf bytes.Buffer
 	if resp.Parameters != nil && len(resp.Parameters) > 0 {
 		encoder := json.NewEncoder(&buf)
 		if err := encoder.Encode(resp.Parameters); err != nil {
@@ -127,4 +132,27 @@ func sendResponse(resp *chipper.IntentResult, cloudChan cloudChans) {
 	}
 
 	cloudChan.intent <- &cloud.IntentResult{Intent: resp.Action, Parameters: buf.String(), Metadata: metadata}
+}
+
+func sendKGResponse(resp *chipper.KnowledgeGraphResponse, cloudChan cloudChans) {
+	var buf bytes.Buffer
+	params := map[string]string{
+		"answer":      resp.SpokenText,
+		"answer_type": resp.CommandType,
+		"query_text":  resp.QueryText,
+	}
+	for i, d := range resp.DomainsUsed {
+		params[fmt.Sprintf("domains.%d", i)] = d
+	}
+	encoder := json.NewEncoder(&buf)
+	if err := encoder.Encode(params); err != nil {
+		log.Println("JSON encode error:", err)
+		cloudChan.err <- "json"
+		return
+	}
+	cloudChan.intent <- &cloud.IntentResult{
+		Intent:     "intent_knowledge_response_extend",
+		Parameters: buf.String(),
+		Metadata:   "",
+	}
 }
