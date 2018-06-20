@@ -853,7 +853,7 @@ void EmrUpdate(void)
       //| 0x00000002  //UnexpectedTouchDetectedError 
       //| 0x00000004  //NoisyTouchSensorError
       //| 0x00000008  //CubeRadioError
-      //| 0x00000010  //WifiScanError
+      | 0x00000010  //WifiScanError
     ;
     rcomSmr( EMR_FIELD_OFS(playpenTestDisableMask), PlaypenTestMask );
     rcomSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 1 );
