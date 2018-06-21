@@ -76,7 +76,7 @@ protected:
   bool IsResponsePending() const;
   void ConsumeResponse();
 
-  void OnStreamingComplete( BehaviorSimpleCallback next );
+  void OnStreamingComplete();
   void OnResponseInterrupted();
 
 
@@ -84,8 +84,9 @@ private:
 
   enum class EState : uint8_t
   {
+    TransitionToListening,
     Listening,
-    Transition,
+    TransitionToResponding,
     Responding,
     NoResponse,
     NoConnection,
@@ -113,7 +114,6 @@ private:
     DynamicVariables();
 
     EState              state;
-    float               streamingBeginTime;
     std::string         responseString;
 
   } _dVars;

@@ -48,15 +48,7 @@ namespace Cozmo {
 namespace
 {
   const char* kKey_Duration                       = "streamingTimeout";
-  const float kDefaultDuration                    = 7.0f;
-
-  // animations ...
-  const AnimationTrigger kAnim_StreamingGetIn     = AnimationTrigger::MessagingMessageGetIn;
-  const AnimationTrigger kAnim_StreamingLoop      = AnimationTrigger::MessagingMessageLoop;
-  const AnimationTrigger kAnim_StreamingGetOut    = AnimationTrigger::MessagingMessageGetOut;
-  const AnimationTrigger kAnim_NoResponse         = AnimationTrigger::BlackJack_VictorLose;
-  const AnimationTrigger kAnim_ResponseComplete   = AnimationTrigger::BlackJack_VictorWin;
-  const AnimationTrigger kAnim_NoConnection       = AnimationTrigger::BlackJack_VictorLose;
+  const float kDefaultDuration                    = 10.0f;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -68,8 +60,7 @@ BehaviorKnowledgeGraphQuestion::InstanceConfig::InstanceConfig() :
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorKnowledgeGraphQuestion::DynamicVariables::DynamicVariables() :
-  state( EState::Listening ),
-  streamingBeginTime( 0.0f )
+  state( EState::TransitionToListening )
 {
 
 }
@@ -128,15 +119,9 @@ void BehaviorKnowledgeGraphQuestion::OnBehaviorActivated()
 {
   _dVars = DynamicVariables();
 
-  // open up streaming to record the user's question
-  BeginStreamingQuestion();
-
-  // Play our "I'm listening" animation to prompt the user to being askig their question
-  CompoundActionSequential* messageAnimation = new CompoundActionSequential();
-  messageAnimation->AddAction( new TriggerAnimationAction( kAnim_StreamingGetIn ), true );
-  messageAnimation->AddAction( new TriggerAnimationAction( kAnim_StreamingLoop, 0 ) );
-
-  DelegateIfInControl( messageAnimation );
+  // open up streaming after we play our get-in to avoid motor noise
+  DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphGetIn ),
+                       &BehaviorKnowledgeGraphQuestion::BeginStreamingQuestion );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -188,28 +173,8 @@ void BehaviorKnowledgeGraphQuestion::BehaviorUpdate()
       // if we've gotten a response from knowledge graph, transition into the response state
       if ( IsResponsePending() )
       {
-        // need to consume the response immediately or the system gets cranky
-        ConsumeResponse();
-
-        // if we have a valid response, go ahead and speak the truth,
-        // else, we need to deliver the bad news
-        if ( !_dVars.responseString.empty() )
-        {
-          OnStreamingComplete( std::bind( &BehaviorKnowledgeGraphQuestion::TransitionToBeginResponse, this ) );
-        }
-        else
-        {
-          OnStreamingComplete( std::bind( &BehaviorKnowledgeGraphQuestion::TransitionToNoResponse, this ) );
-        }
-      }
-      else
-      {
-        // if we haven't heard back from the cloud before our timeout, assume it ain't happening
-        const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-        if ( currentTime > ( _dVars.streamingBeginTime + _iVars.streamingDuration ) )
-        {
-          OnStreamingComplete( std::bind( &BehaviorKnowledgeGraphQuestion::TransitionToNoResponse, this ) );
-        }
+        CancelDelegates( false );
+        OnStreamingComplete();
       }
     }
     else if ( EState::Responding == _dVars.state )
@@ -230,18 +195,47 @@ void BehaviorKnowledgeGraphQuestion::BeginStreamingQuestion()
   PRINT_DEBUG( "Knowledge Graph streaming begun ..." );
 
   GetBEI().GetMicComponent().StartWakeWordlessStreaming( CloudMic::StreamType::KnowledgeGraph );
-  _dVars.streamingBeginTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _dVars.state = EState::Listening;
+
+  // loop the listening animation for the duration of our stream
+  TriggerAnimationAction* listeningAnimationAction =
+    new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphListening,
+                                0, // loop forever
+                                true,
+                                static_cast<uint8_t>(AnimTrackFlag::NO_TRACKS),
+                                _iVars.streamingDuration ); // timeout after this duration
+
+  DelegateIfInControl( listeningAnimationAction, &BehaviorKnowledgeGraphQuestion::OnStreamingComplete );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnowledgeGraphQuestion::OnStreamingComplete( BehaviorSimpleCallback next )
+void BehaviorKnowledgeGraphQuestion::OnStreamingComplete()
 {
-  // go into responding state first, then figure out how to reponde
-  _dVars.state = EState::Transition;
+  PRINT_DEBUG( "Streaming is complete" );
 
-  // streaming has ended so we need to cancel our looping animation and play our getout
-  CancelDelegates();
-  DelegateIfInControl( new TriggerAnimationAction( kAnim_StreamingGetOut ), next );
+  // go into responding state first, then figure out how to reponde
+  _dVars.state = EState::TransitionToResponding;
+
+  // see if we got a response from knowledge graph
+  if ( IsResponsePending() )
+  {
+    // need to consume the response immediately or the system gets cranky
+    ConsumeResponse();
+  }
+
+  // did we get a response from knowledge graph?
+  if ( !_dVars.responseString.empty() )
+  {
+    // if so, we want to go down our response path ...
+    DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphSearching ),
+                         &BehaviorKnowledgeGraphQuestion::TransitionToBeginResponse );
+  }
+  else
+  {
+    // if not, let the user know we failed ...
+    DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphSearching ),
+                         &BehaviorKnowledgeGraphQuestion::TransitionToNoResponse );
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -269,8 +263,8 @@ void BehaviorKnowledgeGraphQuestion::ConsumeResponse()
     const UserIntent_KnowledgeResponse& intentResponse = intent.Get_knowledge_response();
     _dVars.responseString = intentResponse.answer;
 
-    PRINT_DEBUG( "Knowledge Graph Question:\n %s", Util::HidePersonallyIdentifiableInfo( intentResponse.query_text.c_str() ) );
-    PRINT_DEBUG( "Knowledge Graph Response:\n %s", Util::HidePersonallyIdentifiableInfo( intentResponse.answer.c_str() ) );
+    PRINT_DEBUG( "Knowledge Graph Question: %s", Util::HidePersonallyIdentifiableInfo( intentResponse.query_text.c_str() ) );
+    PRINT_DEBUG( "Knowledge Graph Response: %s", Util::HidePersonallyIdentifiableInfo( intentResponse.answer.c_str() ) );
   }
   else if ( uic.IsUserIntentPending( USER_INTENT(knowledge_unknown) ) )
   {
@@ -304,14 +298,10 @@ void BehaviorKnowledgeGraphQuestion::BeginResponseTTS()
   _iVars.ttsBehavior->SetTextToSay( _dVars.responseString );
   if ( _iVars.ttsBehavior->WantsToBeActivated() )
   {
-    DelegateIfInControl( _iVars.ttsBehavior.get(), [this]()
-    {
-      // note: this could also be implemented in the get out of the TTS behavior, check with animation team
-      DelegateIfInControl( new TriggerLiftSafeAnimationAction( kAnim_ResponseComplete ) );
-
-      // ... annnnnd we're done
-    });
+    DelegateIfInControl( _iVars.ttsBehavior.get() );
   }
+
+  // ... annnnnd we're done
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -333,7 +323,15 @@ void BehaviorKnowledgeGraphQuestion::TransitionToNoResponse()
 
   _dVars.state = EState::NoResponse;
 
-  DelegateIfInControl( new TriggerLiftSafeAnimationAction( kAnim_NoResponse ) );
+  // our get-out from listening is simply a series of animations
+  CompoundActionSequential* messageAnimation = new CompoundActionSequential();
+  messageAnimation->AddAction( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphSearching ), true );
+  messageAnimation->AddAction( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphGetOut ), true );
+  messageAnimation->AddAction( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphNoAnswer ), true );
+
+  DelegateIfInControl( messageAnimation );
+
+  // ... annnnnd we're done
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -343,7 +341,8 @@ void BehaviorKnowledgeGraphQuestion::TransitionToNoConnection()
 
   _dVars.state = EState::NoConnection;
 
-  DelegateIfInControl( new TriggerLiftSafeAnimationAction( kAnim_NoConnection ) );
+  // currently no distinction between "no reponse", but there will be at some point
+  TransitionToNoResponse();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

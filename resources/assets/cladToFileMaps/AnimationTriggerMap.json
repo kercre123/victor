@@ -1525,6 +1525,30 @@
     "AnimName": "ag_message_rewind"
   },
   {
+    "CladEvent": "KnowledgeGraphGetIn",
+    "AnimName": "ag_knowledgegraph_getin_01"
+  },
+  {
+    "CladEvent": "KnowledgeGraphListening",
+    "AnimName": "ag_knowledgegraph_listening_01"
+  },
+  {
+    "CladEvent": "KnowledgeGraphSearching",
+    "AnimName": "ag_knowledgegraph_searching_01"
+  },
+  {
+    "CladEvent": "KnowledgeGraphAnswer",
+    "AnimName": "ag_knowledgegraph_answer_01"
+  },
+  {
+    "CladEvent": "KnowledgeGraphGetOut",
+    "AnimName": "ag_knowledgegraph_getout_01"
+  },
+  {
+    "CladEvent": "KnowledgeGraphNoAnswer",
+    "AnimName": "ag_blackjack_victorlose"
+  },
+  {
     "CladEvent": "ShutUp",
     "AnimName": "ag_vc_shutup"
   }

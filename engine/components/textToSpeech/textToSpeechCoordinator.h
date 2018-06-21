@@ -31,7 +31,7 @@ namespace Cozmo{
 
 const static uint8_t kInvalidUtteranceID = 0;
 // Utterances should not take longer than this to generate
-const static float kGenerationTimeout_s = 3.0f;
+const static float kGenerationTimeout_s = 10.0f; // making this high until we figure out accurate generation times
 
 // Forward declarations
 class Robot;

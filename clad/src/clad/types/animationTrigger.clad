@@ -112,6 +112,14 @@ enum int_32 AnimationTrigger
   InteractWithFaceTrackingIdle,
   InteractWithFacesInitialNamed,
   InteractWithFacesInitialUnnamed,
+
+  KnowledgeGraphGetIn,
+  KnowledgeGraphListening,
+  KnowledgeGraphSearching,
+  KnowledgeGraphAnswer,
+  KnowledgeGraphGetOut,
+  KnowledgeGraphNoAnswer,
+
   LookInPlaceForFacesBodyPause,
   LookInPlaceForFacesHeadMovePause,
   MeetVictorConfusion,

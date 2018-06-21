@@ -9,5 +9,5 @@
     { "type": "knowledge_question" }
   ],
 
-  "streamingTimeout" : 7.0
+  "streamingTimeout" : 10.0
 }
