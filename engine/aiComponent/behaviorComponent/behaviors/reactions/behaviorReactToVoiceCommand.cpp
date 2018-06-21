@@ -65,6 +65,7 @@ namespace {
   constexpr float            kListeningBuffer_s = 2.0f;
 
   CONSOLE_VAR( bool, kRespondsToTriggerWord, "BehaviorReactToVoiceCommand", true );
+  CONSOLE_VAR( bool, kImmediatelyTriggerEarconAndLights, "BehaviorReactToVoiceCommand", true);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -237,7 +238,12 @@ void BehaviorReactToVoiceCommand::HandleWhileActivated( const RobotToEngineEvent
       const AnimationEvent& animEvent = event.GetData().Get_animEvent();
       if ( animEvent.event_id == AnimEvent::LISTENING_BEGIN )
       {
-        OnVictorListeningBegin();
+        if ( !_dVars.isListening )
+        {
+          OnVictorListeningBegin();
+          PRINT_CH_INFO( "MicData", "BehaviorReactToVoiceCommand.StartListening.StratedByEventKeyframe",
+                         "Starting listening based on event keyframe from animation");
+        }
       }
     }
   }
@@ -247,6 +253,13 @@ void BehaviorReactToVoiceCommand::HandleWhileActivated( const RobotToEngineEvent
 void BehaviorReactToVoiceCommand::OnBehaviorActivated()
 {
   _dVars = DynamicVariables();
+
+  if( kImmediatelyTriggerEarconAndLights ) {
+    OnVictorListeningBegin();
+    PRINT_CH_INFO( "MicData", "BehaviorReactToVoiceCommand.StartListening.OnActivated",
+                   "Starting listening immediately on behavior activation" );
+  }
+
   
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
@@ -463,6 +476,8 @@ void BehaviorReactToVoiceCommand::StartListening()
     if ( !_dVars.isListening )
     {
       OnVictorListeningBegin();
+      PRINT_NAMED_WARNING("BehaviorReactToVoiceCommand.StartListening.ListeningStateSkipped",
+                          "Starting listening after action completed instead of in response to keyframe");
     }
   };
 
