@@ -44,6 +44,8 @@ public:
 
   void IncrementNamedFacesPerDay();
 
+  void IncreaseOdometer(float lWheelDelta_mm, float rWheelDelta_mm, float bodyDelta_mm);
+
   ////////////////////////////////////////////////////////////////////////////////
 
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {

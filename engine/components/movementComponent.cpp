@@ -22,6 +22,7 @@
 #include "engine/components/animTrackHelpers.h"
 #include "engine/components/batteryComponent.h"
 #include "engine/components/dockingComponent.h"
+#include "engine/components/robotStatsTracker.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -135,7 +136,28 @@ void MovementComponent::NotifyOfRobotState(const Cozmo::RobotState& robotState)
     }
   }
   
+  UpdateOdometers(robotState);
+
   CheckForUnexpectedMovement(robotState);
+}
+
+void MovementComponent::UpdateOdometers(const Cozmo::RobotState& robotState)
+{
+  const float lWheelSpeed_mmps  = robotState.lwheel_speed_mmps;
+  const float rWheelSpeed_mmps  = robotState.rwheel_speed_mmps;
+  const float bodySpeed_mmps    = 0.5f * (lWheelSpeed_mmps + rWheelSpeed_mmps);
+
+  // Convert speeds into absolute distances
+  static const float dt = Util::MilliSecToSec(static_cast<float>(STATE_MESSAGE_FREQUENCY * ROBOT_TIME_STEP_MS));
+  const float lWheelDelta_mm = std::fabs(lWheelSpeed_mmps) * dt;
+  const float rWheelDelta_mm = std::fabs(rWheelSpeed_mmps) * dt;
+  const float bodyDelta_mm   = std::fabs(bodySpeed_mmps)   * dt;
+
+  _lWheel_odom_mm += lWheelDelta_mm;
+  _rWheel_odom_mm += rWheelDelta_mm;
+  _body_odom_mm   += bodyDelta_mm;
+
+  _robot->GetComponent<RobotStatsTracker>().IncreaseOdometer(lWheelDelta_mm, rWheelDelta_mm, bodyDelta_mm);
 }
 
 void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robotState)
