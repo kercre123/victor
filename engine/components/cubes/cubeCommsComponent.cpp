@@ -14,7 +14,7 @@
 
 #include "engine/components/blockTapFilterComponent.h"
 #include "engine/components/cubes/cubeAccelComponent.h"
-#include "engine/components/cubes/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/cubes/ledAnimation.h"
 #include "engine/activeObject.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -364,7 +364,7 @@ void CubeCommsComponent::SubscribeToWebViz()
             if (connected) {
               const auto* object = _robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeID);
               if (object != nullptr) {
-                _robot->GetCubeLightComponent().PlayLightAnim(object->GetID(), CubeAnimationTrigger::Flash);
+                _robot->GetCubeLightComponent().PlayLightAnimByTrigger(object->GetID(), CubeAnimationTrigger::Flash);
               }
             }
           }

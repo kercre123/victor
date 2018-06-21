@@ -34,7 +34,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
 #include "engine/aiComponent/continuityComponent.h"
 #include "engine/components/carryingComponent.h"
-#include "engine/components/cubes/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
@@ -1428,15 +1428,15 @@ bool ICozmoBehavior::SmartUnLockTracks(const std::string& who)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ICozmoBehavior::SmartSetCustomLightPattern(const ObjectID& objectID,
                                            const CubeAnimationTrigger& anim,
-                                           const ObjectLights& modifier)
+                                           const CubeLightAnimation::ObjectLights& modifier)
 {
   if(std::find(_customLightObjects.begin(), _customLightObjects.end(), objectID) == _customLightObjects.end()){
-    GetBEI().GetCubeLightComponent().PlayLightAnim(objectID, anim, nullptr, true, modifier);
+    GetBEI().GetCubeLightComponent().PlayLightAnimByTrigger(objectID, anim, nullptr, true, modifier);
     _customLightObjects.push_back(objectID);
     return true;
   }else{
     PRINT_NAMED_INFO("ICozmoBehavior.SmartSetCustomLightPattern.LightsAlreadySet",
-                        "A custom light pattern has already been set on object %d", objectID.GetValue());
+                     "A custom light pattern has already been set on object %d", objectID.GetValue());
     return false;
   }
 }

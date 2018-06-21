@@ -23,7 +23,7 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
 #include "engine/components/carryingComponent.h"
-#include "engine/components/cubes/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
@@ -652,7 +652,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "IDockAction.SetInteracting", "%s[%d] Setting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _dockObjectID.GetValue());
-        GetRobot().GetCubeLightComponent().PlayLightAnim(_dockObjectID, CubeAnimationTrigger::Interacting);
+        GetRobot().GetCubeLightComponent().PlayLightAnimByTrigger(_dockObjectID, CubeAnimationTrigger::Interacting);
         _lightsSet = true;
       }
 

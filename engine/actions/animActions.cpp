@@ -18,7 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/carryingComponent.h"
-#include "engine/components/cubes/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/cozmoContext.h"
 #include "engine/moodSystem/moodManager.h"

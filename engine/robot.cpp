@@ -39,7 +39,7 @@
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
-#include "engine/components/cubes/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/dataAccessorComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/habitatDetectorComponent.h"

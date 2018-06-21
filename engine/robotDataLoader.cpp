@@ -21,12 +21,11 @@
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
 #include "engine/actions/sayTextAction.h"
 #include "engine/animations/animationContainers/backpackLightAnimationContainer.h"
-#include "engine/animations/animationContainers/cubeLightAnimationContainer.h"
 #include "engine/animations/animationGroup/animationGroupContainer.h"
 #include "engine/animations/animationTransfer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/components/bodyLightComponent.h"
-#include "engine/components/cubes/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/cozmoFeatureGate.h"
@@ -87,7 +86,6 @@ namespace Cozmo {
 RobotDataLoader::RobotDataLoader(const CozmoContext* context)
 : _context(context)
 , _platform(_context->GetDataPlatform())
-, _cubeLightAnimations(new CubeLightAnimationContainer())
 , _animationGroups(new AnimationGroupContainer(*context->GetRandom()))
 , _animationTriggerResponses(new Util::CladEnumToStringMap<AnimationTrigger>())
 , _cubeAnimationTriggerResponses(new Util::CladEnumToStringMap<CubeAnimationTrigger>())
@@ -290,24 +288,27 @@ bool RobotDataLoader::IsCustomAnimLoadEnabled() const
 
 void RobotDataLoader::LoadCubeLightAnimations()
 {
+  const auto& fileList = _jsonFiles[FileType::CubeLightAnimation];
+  const auto size = fileList.size();
+
   const double startTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
 
   using MyDispatchWorker = Util::DispatchWorker<3, const std::string&>;
-  MyDispatchWorker::FunctionType loadFileFunc = std::bind(&RobotDataLoader::LoadCubeLightAnimationFile, this, std::placeholders::_1);
+  MyDispatchWorker::FunctionType loadFileFunc = std::bind(&RobotDataLoader::LoadCubeLightAnimationFile, 
+                                                          this, std::placeholders::_1);
   MyDispatchWorker myWorker(loadFileFunc);
 
-  const auto& fileList = _jsonFiles[FileType::CubeLightAnimation];
-  const auto size = fileList.size();
   for (int i = 0; i < size; i++) {
     myWorker.PushJob(fileList[i]);
   }
-
+  
   myWorker.Process();
 
   const double endTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
   double loadTime = endTime - startTime;
   PRINT_CH_INFO("Animations", "RobotDataLoader.LoadCubeLightAnimations.LoadTime",
                 "Time to load cube light animations = %.2f ms", loadTime);
+
 }
 
 void RobotDataLoader::LoadCubeLightAnimationFile(const std::string& path)
@@ -316,9 +317,10 @@ void RobotDataLoader::LoadCubeLightAnimationFile(const std::string& path)
   const bool success = _platform->readAsJson(path.c_str(), animDefs);
   if (success && !animDefs.empty()) {
     std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
-    _cubeLightAnimations->DefineFromJson(animDefs);
+    _cubeLightAnimations.emplace(path, animDefs);
   }
 }
+
 
 void RobotDataLoader::LoadBackpackLightAnimations()
 {

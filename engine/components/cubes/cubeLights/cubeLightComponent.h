@@ -29,67 +29,34 @@
 #include "clad/types/ledTypes.h"
 #include "clad/types/poseStructs.h"
 
-#include "util/entityComponent/iDependencyManagedComponent.h"
+#include "engine/components/cubes/cubeLights/cubeLightAnimation.h"
 #include "engine/robotComponents_fwd.h"
-
 #include "json/json.h"
+
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 
 #include <list>
 #include <vector>
 #include <map>
+#include <unordered_map>
 
 namespace Anki {
 namespace Cozmo {
 
 class ActiveObject;
 class CozmoContext;
+class CubeAnimation;
 class CubeLightAnimationContainer;
 class Robot;
 
 
-using ObjectLEDArray = std::array<u32, 4>;
-struct ObjectLights {
-  ObjectLEDArray onColors{};
-  ObjectLEDArray offColors{};
-  ObjectLEDArray onPeriod_ms{};
-  ObjectLEDArray offPeriod_ms{};
-  ObjectLEDArray transitionOnPeriod_ms{};
-  ObjectLEDArray transitionOffPeriod_ms{};
-  std::array<s32, 4> offset{};
-  bool rotate = false;
-  MakeRelativeMode makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
-  Point2f relativePoint;
-  
-  bool operator==(const ObjectLights& other) const;
-  bool operator!=(const ObjectLights& other) const { return !(*this == other);}
-};
-  
-
-
-// A single light pattern (multiple light patterns make up an animation)
-struct LightPattern
-{
-  // The name of this pattern (used for debugging)
-  std::string name = "";
-  
-  // The object lights for this pattern
-  ObjectLights lights;
-  
-  // How long this pattern should be played
-  u32 duration_ms = 0;
-  
-  // Whether or not this pattern can be overridden by another pattern
-  bool canBeOverridden = true;
-  
-  // Prints information about this pattern
-  void Print() const;
-};
-
 class CubeLightComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
 public:
+  using AnimationHandle = u32;
+
   CubeLightComponent();
 
   //////
@@ -109,7 +76,6 @@ public:
   // end IDependencyManagedComponent functions
   //////
   
-  
   using AnimCompletedCallback = std::function<void(void)>;
   
   // Takes whatever animation is pointed to by the animTrigger and plays it on the
@@ -120,18 +86,28 @@ public:
   // - A duration modifier to increase the duration of all patterns in the animation
   // Plays the animation on the engine layer
   // Returns true if the animation was able to be played
-  bool PlayLightAnim(const ObjectID& objectID,
-                     const CubeAnimationTrigger& animTrigger,
-                     AnimCompletedCallback callback = {},
-                     bool hasModifier = false,
-                     const ObjectLights& modifier = {},
-                     const s32 durationModifier_ms = 0);
+  bool PlayLightAnimByTrigger(const ObjectID& objectID,
+                              const CubeAnimationTrigger& animTrigger,
+                              AnimCompletedCallback callback = {},
+                              bool hasModifier = false,
+                              const CubeLightAnimation::ObjectLights& modifier = {},
+                              const s32 durationModifier_ms = 0);
   
+  bool PlayLightAnim(const ObjectID& objectID,
+                     CubeLightAnimation::Animation& animation,
+                     AnimCompletedCallback callback,
+                     const std::string& debugName,
+                     AnimationHandle& outHandle);
+
+
   // Stops the specified animation pointed to by the animTrigger on an optional object
   // and resumes whatever animation was previously playing
   // By default the specified animation is stopped on all objects
   // Returns true if the animation was stopped
   bool StopLightAnimAndResumePrevious(const CubeAnimationTrigger& animTrigger,
+                                      const ObjectID& objectID = -1);
+
+  bool StopLightAnimAndResumePrevious(const AnimationHandle& handle,
                                       const ObjectID& objectID = -1);
   
   // Stops the specified animation and immediately plays the animTriggerToPlay without allowing
@@ -142,13 +118,10 @@ public:
                             const CubeAnimationTrigger& animTriggerToPlay,
                             AnimCompletedCallback callback = {},
                             bool hasModifier = false,
-                            const ObjectLights& modifier = {});
+                            const CubeLightAnimation::ObjectLights& modifier = {});
   
   // Stops all animations on all objects
   void StopAllAnims();
-  
-  // Returns how long an animation lasts in ms
-  u32 GetAnimDuration(const CubeAnimationTrigger& trigger);
   
   template<typename T>
   void HandleMessage(const T& msg);
@@ -157,20 +130,6 @@ public:
   void OnActiveObjectPoseStateChanged(const ObjectID& objectID,
                                       const PoseState oldPoseState,
                                       const PoseState newPoseState);
-  
-  Result SetObjectLights(const ObjectID& objectID, const ObjectLights& lights);
-  Result SetObjectLights(const ObjectID& objectID,
-                         const WhichCubeLEDs whichLEDs,
-                         const u32 onColor,
-                         const u32 offColor,
-                         const u32 onPeriod_ms,
-                         const u32 offPeriod_ms,
-                         const u32 transitionOnPeriod_ms,
-                         const u32 transitionOffPeriod_ms,
-                         const bool turnOffUnspecifiedLEDs,
-                         const MakeRelativeMode makeRelative,
-                         const Point2f& relativeToPoint,
-                         const bool rotate);
   
   // We don't want to expose Animation layers outside of the cubeLightComponent
   // but there are scenarios where game takes over control of lights and clears
@@ -181,7 +140,6 @@ public:
   bool CanEngineSetLightsOnCube(const ObjectID& objectID);
   
 private:
-
   // Animations can be played on three different layers: User, Engine, or Default
   // User layer is for animations triggered by game
   // Engine layer is for animations triggered within engine
@@ -196,26 +154,23 @@ private:
     
     Count
   };
-  
-  // Multiple LightPatterns make up a LightAnim
-  using LightAnim = std::list<LightPattern>;
-  
-  // Information about an actively playing LightAnim
+
+  // Information about an actively playing Animation
   struct CurrentAnimInfo
   {
     // The name of this anim (used for debugging purposes)
-    std::string name = "";
+    std::string debugName = "";
     
-    // The animation trigger that caused this anim to play
-    CubeAnimationTrigger trigger;
+    // Animation handle used internally/externally to reference playing animations
+    AnimationHandle animationHandle;
     
-    // An iterator to the current light pattern within the LightAnim that is being played
-    LightAnim::iterator curPattern;
+    // An iterator to the current light pattern within the CubeLightAnimation that is being played
+    CubeLightAnimation::Animation::iterator curPattern;
     
-    // An iterator to the last pattern in the current LightAnim
-    LightAnim::iterator endOfPattern;
+    // An iterator to the last pattern in the current CubeLightAnimation
+    CubeLightAnimation::Animation::iterator endOfPattern;
     
-    // The basestation time that the curPattern ends and the next pattern in the LightAnim should
+    // The basestation time that the curPattern ends and the next pattern in the CubeLightAnimation should
     // start playing
     TimeStamp_t timeCurPatternEnds = 0;
     
@@ -240,90 +195,11 @@ private:
     // animation completes
     u32 actionTagCallbackIsFrom = 0;
   };
-  
-  void UpdateInternal(bool shouldPickNextAnim);
-
-  // Only TriggerCubeAnimationAction should call this PlayLightAnim function because
-  // the action will play the animation on the user layer instead of the engine layer
-  friend class TriggerCubeAnimationAction;
-  bool PlayLightAnimFromAction(const ObjectID& objectID,
-                               const CubeAnimationTrigger& animTrigger,
-                               AnimCompletedCallback callback,
-                               const u32& actionTag);
-  
-  // Plays an anim on an obect on the given layer. Optionally takes a callback and/or a modifier to be applied
-  // to the animation
-  // Returns true if the animation was able to be played
-  bool PlayLightAnim(const ObjectID& objectID,
-                     const CubeAnimationTrigger& animTrigger,
-                     const AnimLayerEnum& layer,
-                     AnimCompletedCallback callback = {},
-                     bool hasModifier = false,
-                     const ObjectLights& modifier = {},
-                     const s32 durationModifier_ms = 0);
-  
-  // Stop an animation on a specific layer for an object (or all objects)
-  // shouldPickNextAnimOnStop determines if we can immediately pick a default anim to
-  // start playing on the State layer should there be no Engine anims left
-  // Returns true if the animation was stopped
-  bool StopLightAnim(const CubeAnimationTrigger& animTrigger,
-                     const AnimLayerEnum& layer,
-                     const ObjectID& objectID = -1,
-                     bool shouldPickNextAnim = true);
-  
-  // Stops all animations on a given layer for an object (or all objects)
-  void StopAllAnimsOnLayer(const AnimLayerEnum& layer, const ObjectID& objectID = -1);
-  
-  // Applies the modifier to the animation by augmenting the light values in the animation
-  // Will apply the modifier to all patterns in the animation
-  // Note: Will not modify the duration of the animation
-  void ApplyAnimModifier(const LightAnim& anim,
-                         const ObjectLights& modifier,
-                         LightAnim& modifiedAnim);
-  
-  // Attempts to blend the anim with the currently playing animation on the object
-  // If the anim has any on/offColors that are 0 they get replaced by the current on/offColor on the object
-  // Returns true if the animation was successfully blended
-  bool BlendAnimWithCurLights(const ObjectID& objectID,
-                              const LightAnim& anim,
-                              LightAnim& blendedAnim);
-  
-  // Picks the next default layer animation to play on the object
-  void PickNextAnimForDefaultLayer(const ObjectID& objectID);
-  
-  // Debug function to play subsequent animation triggers on an object with each call to
-  // the function
-  void CycleThroughAnimTriggers(const ObjectID& objectID);
-  
-  // Send a message to game to let them know the object's current light values
-  // Will only send if _sendTransitionMessages is true
-  void SendTransitionMessage(const ObjectID& objectID, const ObjectLights& values);
-  
-  // Enables or disables the playing of only game layer animations
-  void EnableGameLayerOnly(const ObjectID& objectID, bool enable);
-  
-  const char* LayerToString(const AnimLayerEnum& layer) const;
-  
-  Result SetLights(const ActiveObject* object, const bool rotate);
-  
-  // Applies white balancing to a color
-  ColorRGBA WhiteBalanceColor(const ColorRGBA& color) const;
-
-  Robot* _robot = nullptr;
-  struct CubeLightAnimWrapper{
-    CubeLightAnimWrapper(CubeLightAnimationContainer& container)
-    : _container(container){}
-    // Reference to the container of cube light animations
-    CubeLightAnimationContainer& _container;
-  };
-  std::unique_ptr<CubeLightAnimWrapper> _cubeLightAnimations;
-
-  
   // An array of all the animations that are playing on each layer (indexed by layer)
   // Multiple animations can be "playing" on a given layer (hence the list of PatternPlayInfo)
   // This is so that you can blend animations and return to the previously playing animation
   using AnimLayer = std::array<std::list<CurrentAnimInfo>, AnimLayerEnum::Count>;
-  
+
   // Contains information about all animations on all layers for an object
   struct ObjectInfo
   {
@@ -337,8 +213,12 @@ private:
     AnimLayer animationsOnLayer;
     
     // Array (indexed by layer) of dynamically created animations (blended anims and modified anims)
-    std::array<LightAnim, AnimLayerEnum::Count> blendedAnims;
+    std::array<CubeLightAnimation::Animation, AnimLayerEnum::Count> blendedAnims;
   };
+
+  Robot* _robot = nullptr;
+
+  std::unique_ptr<CubeLightAnimationContainer> _cubeLightAnimations;
 
   // Maps objectIDs to ObjectInfo to keep track of the state of each object
   std::map<ObjectID, ObjectInfo> _objectInfo;
@@ -363,6 +243,106 @@ private:
   
   // The last cube light gamma that was sent to the robot (global across all cubes)
   u32 _prevGamma = 0;
+
+  AnimationHandle _nextAnimationHandle = 0;
+  std::unordered_map<CubeAnimationTrigger, AnimationHandle> _triggerToHandleMap;
+  
+  void UpdateInternal(bool shouldPickNextAnim);
+
+  // Only TriggerCubeAnimationAction should call this PlayLightAnim function because
+  // the action will play the animation on the user layer instead of the engine layer
+  friend class TriggerCubeAnimationAction;
+  bool PlayLightAnimFromAction(const ObjectID& objectID,
+                               const CubeAnimationTrigger& animTrigger,
+                               AnimCompletedCallback callback,
+                               const u32& actionTag);
+  
+  // Plays an anim on an obect on the given layer. Optionally takes a callback and/or a modifier to be applied
+  // to the animation
+  // Returns true if the animation was able to be played
+  bool PlayLightAnimByTrigger(const ObjectID& objectID,
+                              const CubeAnimationTrigger& animTrigger,
+                              const AnimLayerEnum& layer,
+                              AnimCompletedCallback callback = {},
+                              bool hasModifier = false,
+                              const CubeLightAnimation::ObjectLights& modifier = {},
+                              const s32 durationModifier_ms = 0);
+
+  bool PlayLightAnimInternal(const ObjectID& objectID,
+                             CubeLightAnimation::Animation& animation,
+                             const AnimLayerEnum& layer,
+                             AnimCompletedCallback callback,
+                             bool hasModifier,
+                             const CubeLightAnimation::ObjectLights& modifier,
+                             const s32 durationModifier_ms,
+                             const std::string& debugName,
+                             AnimationHandle& outHandle);
+  
+  bool StopLightAnimByTrigger(const CubeAnimationTrigger& animTrigger,
+                              const AnimLayerEnum& layer,
+                              const ObjectID& objectID = -1,
+                              bool shouldPickNextAnim = true);
+
+  // Stop an animation on a specific layer for an object (or all objects)
+  // shouldPickNextAnimOnStop determines if we can immediately pick a default anim to
+  // start playing on the State layer should there be no Engine anims left
+  // Returns true if the animation was stopped
+  bool StopLightAnimInternal(const AnimationHandle& animationHandle,
+                             const AnimLayerEnum& layer,
+                             const ObjectID& objectID = -1,
+                             bool shouldPickNextAnim = true);
+  
+  // Stops all animations on a given layer for an object (or all objects)
+  void StopAllAnimsOnLayer(const AnimLayerEnum& layer, const ObjectID& objectID = -1);
+  
+  Result SetCubeLightAnimation(const ObjectID& objectID, const CubeLightAnimation::ObjectLights& lights);
+  Result SetCubeLightAnimation(const ObjectID& objectID,
+                               const WhichCubeLEDs whichLEDs,
+                               const u32 onColor,
+                               const u32 offColor,
+                               const u32 onPeriod_ms,
+                               const u32 offPeriod_ms,
+                               const u32 transitionOnPeriod_ms,
+                               const u32 transitionOffPeriod_ms,
+                               const bool turnOffUnspecifiedLEDs,
+                               const MakeRelativeMode makeRelative,
+                               const Point2f& relativeToPoint,
+                               const bool rotate);
+
+  // Applies the modifier to the animation by augmenting the light values in the animation
+  // Will apply the modifier to all patterns in the animation
+  // Note: Will not modify the duration of the animation
+  void ApplyAnimModifier(const CubeLightAnimation::Animation& anim,
+                         const CubeLightAnimation::ObjectLights& modifier,
+                         CubeLightAnimation::Animation& modifiedAnim);
+  
+  // Attempts to blend the anim with the currently playing animation on the object
+  // If the anim has any on/offColors that are 0 they get replaced by the current on/offColor on the object
+  // Returns true if the animation was successfully blended
+  bool BlendAnimWithCurLights(const ObjectID& objectID,
+                              const CubeLightAnimation::Animation& anim,
+                              CubeLightAnimation::Animation& blendedAnim);
+  
+  // Picks the next default layer animation to play on the object
+  void PickNextAnimForDefaultLayer(const ObjectID& objectID);
+  
+  // Debug function to play subsequent animation triggers on an object with each call to
+  // the function
+  void CycleThroughAnimTriggers(const ObjectID& objectID);
+  
+  // Send a message to game to let them know the object's current light values
+  // Will only send if _sendTransitionMessages is true
+  void SendTransitionMessage(const ObjectID& objectID, const CubeLightAnimation::ObjectLights& values);
+  
+  // Enables or disables the playing of only game layer animations
+  void EnableGameLayerOnly(const ObjectID& objectID, bool enable);
+  
+  const char* LayerToString(const AnimLayerEnum& layer) const;
+  
+  Result SetLights(const ActiveObject* object, const bool rotate);
+  
+  // Applies white balancing to a color
+  ColorRGBA WhiteBalanceColor(const ColorRGBA& color) const;
   
 };
 

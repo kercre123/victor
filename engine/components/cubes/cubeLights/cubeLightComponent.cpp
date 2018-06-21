@@ -16,13 +16,13 @@
  * Copyright: Anki, Inc. 2016
  *
  **/
-#include "engine/components/cubes/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 
 #include "engine/activeCube.h"
 #include "engine/activeObject.h"
 #include "engine/activeObjectHelpers.h"
 #include "engine/actions/actionInterface.h"
-#include "engine/animations/animationContainers/cubeLightAnimationContainer.h"
+#include "engine/components/cubes/cubeLights/cubeLightAnimationContainer.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
@@ -52,7 +52,7 @@ namespace Cozmo {
 
 static constexpr int kNumCubeLeds = Util::EnumToUnderlying(CubeConstants::NUM_CUBE_LEDS);
   
-static const ObjectLights kCubeLightsOff = {
+static const CubeLightAnimation::ObjectLights kCubeLightsOff = {
   .onColors               = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
   .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
   .onPeriod_ms            = {{0,0,0,0}},
@@ -66,7 +66,7 @@ static const ObjectLights kCubeLightsOff = {
 };
   
   
-bool ObjectLights::operator==(const ObjectLights& other) const
+bool CubeLightAnimation::ObjectLights::operator==(const CubeLightAnimation::ObjectLights& other) const
 {
   return this->onColors        == other.onColors &&
   this->offColors              == other.offColors &&
@@ -93,7 +93,7 @@ CubeLightComponent::CubeLightComponent()
 void CubeLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
-  _cubeLightAnimations = std::make_unique<CubeLightAnimWrapper>(*(_robot->GetContext()->GetDataLoader()->GetCubeLightAnimations()));
+  _cubeLightAnimations = std::make_unique<CubeLightAnimationContainer>(_robot->GetContext()->GetDataLoader()->GetCubeLightAnimations());
   // Subscribe to messages
   if( _robot->HasExternalInterface() ) {
     auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _eventHandles);
@@ -225,7 +225,7 @@ void CubeLightComponent::UpdateInternal(bool shouldPickNextAnim)
           // Otherwise only game layer is enable so just turn the lights off
           else
           {
-            Result res = SetObjectLights(objectInfo.first, kCubeLightsOff);
+            Result res = SetCubeLightAnimation(objectInfo.first, kCubeLightsOff);
             if(res != RESULT_OK)
             {
               PRINT_NAMED_WARNING("CubeLightComponent.Update.SetLightsFailed", "");
@@ -247,12 +247,12 @@ void CubeLightComponent::UpdateInternal(bool shouldPickNextAnim)
         const auto& prevObjectAnim = objectInfo.second.animationsOnLayer[layer].back();
         PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.Update.PlayingPrevious",
                       "Have previous anim %s on layer %s id %u",
-                      prevObjectAnim.name.c_str(),
+                      prevObjectAnim.debugName.c_str(),
                       LayerToString(layer),
                       objectInfo.first.GetValue());
         
         SendTransitionMessage(objectInfo.first, prevObjectAnim.curPattern->lights);
-        Result res = SetObjectLights(objectInfo.first, prevObjectAnim.curPattern->lights);
+        Result res = SetCubeLightAnimation(objectInfo.first, prevObjectAnim.curPattern->lights);
         if(res != RESULT_OK)
         {
           PRINT_NAMED_WARNING("CubeLightComponent.Update.SetLightsFailed", "");
@@ -277,7 +277,7 @@ void CubeLightComponent::UpdateInternal(bool shouldPickNextAnim)
       
       // Finally set the lights with the current pattern of the animation
       SendTransitionMessage(objectInfo.first, objectAnim.curPattern->lights);
-      Result res = SetObjectLights(objectInfo.first, objectAnim.curPattern->lights);
+      Result res = SetCubeLightAnimation(objectInfo.first, objectAnim.curPattern->lights);
       if(res != RESULT_OK)
       {
         PRINT_NAMED_WARNING("CubeLightComponent.Update.SetLightsFailed", "");
@@ -292,7 +292,7 @@ bool CubeLightComponent::PlayLightAnimFromAction(const ObjectID& objectID,
                                                  const u32& actionTag)
 {
   const AnimLayerEnum layer = AnimLayerEnum::User;
-  const bool res = PlayLightAnim(objectID, animTrigger, layer, callback);
+  const bool res = PlayLightAnimByTrigger(objectID, animTrigger, layer, callback);
   if(res)
   {
     // iter is guaranteed to be valid otherwise PlayLightAnim will have returned false
@@ -309,200 +309,231 @@ bool CubeLightComponent::PlayLightAnimFromAction(const ObjectID& objectID,
   return res;
 }
 
-bool CubeLightComponent::PlayLightAnim(const ObjectID& objectID,
-                                          const CubeAnimationTrigger& animTrigger,
-                                          AnimCompletedCallback callback,
-                                          bool hasModifier,
-                                          const ObjectLights& modifier,
-                                          const s32 durationModifier_ms)
+bool CubeLightComponent::PlayLightAnimByTrigger(const ObjectID& objectID,
+                                                const CubeAnimationTrigger& animTrigger,
+                                                AnimCompletedCallback callback,
+                                                bool hasModifier,
+                                                const CubeLightAnimation::ObjectLights& modifier,
+                                                const s32 durationModifier_ms)
 {
-  return PlayLightAnim(objectID, animTrigger, AnimLayerEnum::Engine, callback, hasModifier, modifier, durationModifier_ms);
+  return PlayLightAnimByTrigger(objectID, animTrigger, AnimLayerEnum::Engine, callback, hasModifier, modifier, durationModifier_ms);
+}
+
+bool CubeLightComponent::PlayLightAnimByTrigger(const ObjectID& objectID,
+                                                const CubeAnimationTrigger& animTrigger,
+                                                const AnimLayerEnum& layer,
+                                                AnimCompletedCallback callback,
+                                                bool hasModifier,
+                                                const CubeLightAnimation::ObjectLights& modifier,
+                                                const s32 durationModifier_ms)
+{
+  // Get the name of the animation to play for this trigger
+  const std::string& animName = _robot->GetContext()->GetDataLoader()->GetCubeAnimationForTrigger(animTrigger);
+  auto* anim = _cubeLightAnimations->GetAnimation(animName);
+  if(anim == nullptr)
+  {
+    PRINT_NAMED_WARNING("CubeLightComponent.NoAnimForTrigger",
+                        "No animation found for trigger %s", animName.c_str());
+    return false;
+  }
+  
+  AnimationHandle handle;
+  const bool success = PlayLightAnimInternal(objectID, *anim, layer, callback, 
+                                             hasModifier, modifier, durationModifier_ms, animName, handle);
+  if(success){
+    _triggerToHandleMap.emplace(animTrigger, handle);
+  }
+  return success;
 }
 
 bool CubeLightComponent::PlayLightAnim(const ObjectID& objectID,
-                                          const CubeAnimationTrigger& animTrigger,
-                                          const AnimLayerEnum& layer,
-                                          AnimCompletedCallback callback,
-                                          bool hasModifier,
-                                          const ObjectLights& modifier,
-                                          const s32 durationModifier_ms)
+                                       CubeLightAnimation::Animation& animation,
+                                       AnimCompletedCallback callback,
+                                       const std::string& debugName,
+                                       AnimationHandle& outHandle)
+{
+  return PlayLightAnimInternal(objectID, animation, AnimLayerEnum::Engine, callback, false, {}, 0, debugName, outHandle);
+}
+
+bool CubeLightComponent::PlayLightAnimInternal(const ObjectID& objectID,
+                                               CubeLightAnimation::Animation& animation,
+                                               const AnimLayerEnum& layer,
+                                               AnimCompletedCallback callback,
+                                               bool hasModifier,
+                                               const CubeLightAnimation::ObjectLights& modifier,
+                                               const s32 durationModifier_ms,
+                                               const std::string& debugName, 
+                                               AnimationHandle& outHandle)
 {
   auto iter = _objectInfo.find(objectID);
-  if(iter != _objectInfo.end())
-  {
-    auto& objectInfo = iter->second;
-    auto& animationsOnLayer = objectInfo.animationsOnLayer[layer];
-    
-    const bool isPlayingAnim = !animationsOnLayer.empty();
-    const bool isCurAnimBlended = (isPlayingAnim && animationsOnLayer.back().isBlended);
-    
-    // If we are currently playing an animation and it can not be overridden do nothing
-    if(isPlayingAnim &&
-       !animationsOnLayer.back().canBeOverridden)
-    {
-      PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.PlayLightAnim.CantBeOverridden",
-                    "Current anim %s can not be overridden on object %u layer %s",
-                    animationsOnLayer.back().name.c_str(),
-                    objectID.GetValue(),
-                    LayerToString(layer));
-      return false;
-    }
-    
-    // Get the name of the animation to play for this trigger
-    const std::string& animName = _robot->GetContext()->GetDataLoader()->GetCubeAnimationForTrigger(animTrigger);
-    auto* anim = _cubeLightAnimations->_container.GetAnimation(animName);
-    if(anim == nullptr)
-    {
-      PRINT_NAMED_WARNING("CubeLightComponent.NoAnimForTrigger",
-                          "No animation found for trigger %s", animName.c_str());
-      return false;
-    }
-    
-    // If only the game layer is enabled and we are trying to play this animation on a different layer
-    if(objectInfo.isOnlyGameLayerEnabled &&
-       layer != AnimLayerEnum::User)
-    {
-      PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.OnlyGameLayerEnabled",
-                    "Only game layer is enabled, refusing to play anim %s on object %u layer %s",
-                    animName.c_str(),
-                    objectID.GetValue(),
-                    LayerToString(layer));
-      return false;
-    }
-    
-    // If the game/user layer is not enabled and an animation is trying to be played on the game/user layer
-    // don't play it
-    if(!objectInfo.isOnlyGameLayerEnabled &&
-       layer == AnimLayerEnum::User)
-    {
-      PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.PlayLightAnim.NotPlayingUserAnim",
-                    "Refusing to play anim on %s layer when it is not enabled",
-                    LayerToString(layer));
-      return false;
-    }
-    
-    // If we have a modifier to apply to the animation apply it
-    LightAnim modifiedAnim;
-    if(hasModifier)
-    {
-      ApplyAnimModifier(*anim, modifier, modifiedAnim);
-    }
-    
-    // Attempt to blend the animation with the current light pattern. If the animation can not be blended
-    // with the current animation then blendedAnim will be the same as either modifiedAnim or animIter->second
-    LightAnim blendedAnim;
-    const bool didBlend = BlendAnimWithCurLights(objectID,
-                                                 (hasModifier ? modifiedAnim : *anim),
-                                                 blendedAnim);
-    
-    // If the current animation is already a blended animation and the animation to play was able
-    // to be blended with the current animation then do nothing
-    // TODO (Al): Maybe support this ability in the future. Animation duration of blended animations gets
-    // complicated
-    if(isCurAnimBlended && didBlend)
-    {
-      PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.PlayLightAnim.AlreadyPlayingBlendedAnim",
-                    "Can't play a blended anim over already playing blended anim");
-      return false;
-    }
-    
-    CurrentAnimInfo info;
-    info.callback = callback;
-    // Treat modified animations the same as blended animations (ie they live in the blendedAnims array)
-    if(!isCurAnimBlended &&
-       (didBlend || hasModifier))
-    {
-      // Store the blendedAnim in the blendedAnims array so we can grab iterators to it
-      objectInfo.blendedAnims[layer] = blendedAnim;
-      
-      info.name = (isPlayingAnim ? animationsOnLayer.back().name+"+" : "") + animName;
-      info.trigger = animTrigger;
-      info.curPattern = objectInfo.blendedAnims[layer].begin();
-      info.endOfPattern = objectInfo.blendedAnims[layer].end();
-      info.isBlended = true;
-    }
-    else
-    {
-      info.name = animName;
-      info.trigger = animTrigger;
-      info.curPattern = anim->begin();
-      info.endOfPattern = anim->end();
-      
-      // If this animation has no duration then clear the existing animations on the layer
-      if(info.curPattern->duration_ms == 0)
-      {
-        animationsOnLayer.clear();
-      }
-    }
-    
-    // Add the new animation to the list of animations playing on this layer
-    animationsOnLayer.push_back(info);
-    
-    auto& animation = animationsOnLayer.back();
-    
-    const TimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-    
-    // Set this animation's duration modifier
-    animation.durationModifier_ms = durationModifier_ms;
-    
-    animation.timeCurPatternEnds = 0;
-    
-    // If the first pattern in the animation has a non zero duration then update the time the pattern
-    // should end
-    if(animation.curPattern->duration_ms > 0 ||
-       animation.durationModifier_ms != 0)
-    {
-      animation.timeCurPatternEnds = curTime +
-                                     animation.curPattern->duration_ms +
-                                     animation.durationModifier_ms;
-      
-      DEV_ASSERT(animation.timeCurPatternEnds > 0,
-                 "CubeLightComponent.PlayLightAnim.TimeCurPatternEndLessThanZero");
-    }
-    
-    // Whether or not this animation canBeOverridden is defined by whether or not the last pattern in the
-    // animation definition can be overridden
-    animation.canBeOverridden = anim->back().canBeOverridden;
-
-    // If this layer has higher priority then actually set the object lights
-    // User > Engine > Default (User layer takes precedence over all layers)
-    if(layer <= objectInfo.curLayer)
-    {
-      PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.PlayLightAnim.SettingLights",
-                    "Playing trigger %s on layer %s for object %u",
-                    EnumToString(animTrigger),
-                    LayerToString(layer),
-                    objectID.GetValue());
-      
-      // Update the current layer for this object
-      objectInfo.curLayer = layer;
-      
-      SendTransitionMessage(objectID, animation.curPattern->lights);
-      Result res = SetObjectLights(objectID, animation.curPattern->lights);
-      if(res != RESULT_OK)
-      {
-        // Since no light pattern was set, setting the end time of the pattern to zero will make it so that
-        // everytime it is updated nothing will happen (previous pattern will probably be playing)
-        animation.timeCurPatternEnds = 0;
-      }
-    }
-    // Otherwise the animation was still added to the layer but a higher priority layer is currently
-    // playing an animation so we didn't actually set object lights
-    else
-    {
-      PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.PlayLightAnim.LightsNotSet",
-                    "Lights not set on object %u layer %s because current layer is %u",
-                    objectID.GetValue(), LayerToString(layer), objectInfo.curLayer);
-    }
-    return true;
-  }
-  else
+  if(iter == _objectInfo.end())
   {
     PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.PlayLightAnim.InvalidObjectID",
                   "No object with id %u exists in _objectInfo map can't play animation",
                   objectID.GetValue());
     return false;
   }
+
+  auto& objectInfo = iter->second;
+
+  auto& animationsOnLayer = objectInfo.animationsOnLayer[layer];
+  
+  const bool isPlayingAnim = !animationsOnLayer.empty();
+  const bool isCurAnimBlended = (isPlayingAnim && animationsOnLayer.back().isBlended);
+  
+  // If we are currently playing an animation and it can not be overridden do nothing
+  if(isPlayingAnim &&
+      !animationsOnLayer.back().canBeOverridden)
+  {
+    PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.PlayLightAnim.CantBeOverridden",
+                  "Current anim %s can not be overridden on object %u layer %s",
+                  animationsOnLayer.back().debugName.c_str(),
+                  objectID.GetValue(),
+                  LayerToString(layer));
+    return false;
+  }
+  
+
+  
+  // If only the game layer is enabled and we are trying to play this animation on a different layer
+  if(objectInfo.isOnlyGameLayerEnabled &&
+      layer != AnimLayerEnum::User)
+  {
+    PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.OnlyGameLayerEnabled",
+                  "Only game layer is enabled, refusing to play anim %s on object %u layer %s",
+                  debugName.c_str(),
+                  objectID.GetValue(),
+                  LayerToString(layer));
+    return false;
+  }
+  
+  // If the game/user layer is not enabled and an animation is trying to be played on the game/user layer
+  // don't play it
+  if(!objectInfo.isOnlyGameLayerEnabled &&
+      layer == AnimLayerEnum::User)
+  {
+    PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.PlayLightAnim.NotPlayingUserAnim",
+                  "Refusing to play anim on %s layer when it is not enabled",
+                  LayerToString(layer));
+    return false;
+  }
+  
+  // If we have a modifier to apply to the animation apply it
+  CubeLightAnimation::Animation modifiedAnim;
+  if(hasModifier)
+  {
+    ApplyAnimModifier(animation, modifier, modifiedAnim);
+  }
+  
+  // Attempt to blend the animation with the current light pattern. If the animation can not be blended
+  // with the current animation then blendedAnim will be the same as either modifiedAnim or animIter->second
+  CubeLightAnimation::Animation blendedAnim;
+  const bool didBlend = BlendAnimWithCurLights(objectID,
+                                                (hasModifier ? modifiedAnim : animation),
+                                                blendedAnim);
+  
+  // If the current animation is already a blended animation and the animation to play was able
+  // to be blended with the current animation then do nothing
+  // TODO (Al): Maybe support this ability in the future. Animation duration of blended animations gets
+  // complicated
+  if(isCurAnimBlended && didBlend)
+  {
+    PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.PlayLightAnim.AlreadyPlayingBlendedAnim",
+                  "Can't play a blended anim over already playing blended anim");
+    return false;
+  }
+  
+  CurrentAnimInfo info;
+  info.callback = callback;
+  info.animationHandle = _nextAnimationHandle;
+  outHandle = _nextAnimationHandle;
+  _nextAnimationHandle++;
+  // Treat modified animations the same as blended animations (ie they live in the blendedAnims array)
+  if(!isCurAnimBlended &&
+      (didBlend || hasModifier))
+  {
+    // Store the blendedAnim in the blendedAnims array so we can grab iterators to it
+    objectInfo.blendedAnims[layer] = blendedAnim;
+    
+    info.debugName = (isPlayingAnim ? animationsOnLayer.back().debugName+"+" : "") + debugName;
+    info.curPattern = objectInfo.blendedAnims[layer].begin();
+    info.endOfPattern = objectInfo.blendedAnims[layer].end();
+    info.isBlended = true;
+  }
+  else
+  {
+    info.debugName = debugName;
+    info.curPattern = animation.begin();
+    info.endOfPattern = animation.end();
+    
+    // If this animation has no duration then clear the existing animations on the layer
+    if(info.curPattern->duration_ms == 0)
+    {
+      animationsOnLayer.clear();
+    }
+  }
+  
+  // Add the new animation to the list of animations playing on this layer
+  animationsOnLayer.push_back(info);
+  
+  auto& newAnimOnLayer = animationsOnLayer.back();
+  
+  const TimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  
+  // Set this animation's duration modifier
+  newAnimOnLayer.durationModifier_ms = durationModifier_ms;
+  
+  newAnimOnLayer.timeCurPatternEnds = 0;
+  
+  // If the first pattern in the animation has a non zero duration then update the time the pattern
+  // should end
+  if(newAnimOnLayer.curPattern->duration_ms > 0 ||
+      newAnimOnLayer.durationModifier_ms != 0)
+  {
+    newAnimOnLayer.timeCurPatternEnds = curTime +
+                                    newAnimOnLayer.curPattern->duration_ms +
+                                    newAnimOnLayer.durationModifier_ms;
+    
+    DEV_ASSERT(newAnimOnLayer.timeCurPatternEnds > 0,
+                "CubeLightComponent.PlayLightAnim.TimeCurPatternEndLessThanZero");
+  }
+  
+  // Whether or not this animation canBeOverridden is defined by whether or not the last pattern in the
+  // animation definition can be overridden
+  newAnimOnLayer.canBeOverridden = animation.back().canBeOverridden;
+
+  // If this layer has higher priority then actually set the object lights
+  // User > Engine > Default (User layer takes precedence over all layers)
+  if(layer <= objectInfo.curLayer)
+  {
+    PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.PlayLightAnim.SettingLights",
+                  "Playing animation %s on layer %s for object %u",
+                  debugName.c_str(),
+                  LayerToString(layer),
+                  objectID.GetValue());
+    
+    // Update the current layer for this object
+    objectInfo.curLayer = layer;
+    
+    SendTransitionMessage(objectID, newAnimOnLayer.curPattern->lights);
+    Result res = SetCubeLightAnimation(objectID, newAnimOnLayer.curPattern->lights);
+    if(res != RESULT_OK)
+    {
+      // Since no light pattern was set, setting the end time of the pattern to zero will make it so that
+      // everytime it is updated nothing will happen (previous pattern will probably be playing)
+      newAnimOnLayer.timeCurPatternEnds = 0;
+    }
+  }
+  // Otherwise the animation was still added to the layer but a higher priority layer is currently
+  // playing an animation so we didn't actually set object lights
+  else
+  {
+    PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.PlayLightAnim.LightsNotSet",
+                  "Lights not set on object %u layer %s because current layer is %u",
+                  objectID.GetValue(), LayerToString(layer), objectInfo.curLayer);
+  }
+  return true;
+
 }
 
 void CubeLightComponent::StopAllAnims()
@@ -550,41 +581,58 @@ void CubeLightComponent::StopAllAnimsOnLayer(const AnimLayerEnum& layer, const O
 bool CubeLightComponent::StopLightAnimAndResumePrevious(const CubeAnimationTrigger& animTrigger,
                                                         const ObjectID& objectID)
 {
-  return StopLightAnim(animTrigger, AnimLayerEnum::Engine, objectID);
+  return StopLightAnimByTrigger(animTrigger, AnimLayerEnum::Engine, objectID);
 }
 
-bool CubeLightComponent::StopLightAnim(const CubeAnimationTrigger& animTrigger,
-                                       const AnimLayerEnum& layer,
-                                       const ObjectID& objectID,
-                                       bool shouldPickNextAnim)
-{  
-  PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.StopLightAnim",
-                "Stopping %s on object %d on layer %s.",
-                EnumToString(animTrigger),
-                objectID.GetValue(),
-                LayerToString(layer));
+bool CubeLightComponent::StopLightAnimAndResumePrevious(const AnimationHandle& handle,
+                                                        const ObjectID& objectID)
+{
+  return StopLightAnimInternal(handle, AnimLayerEnum::Engine, objectID);
+}
 
-  auto helper = [this](const CubeAnimationTrigger& animTrigger,
+bool CubeLightComponent::StopLightAnimByTrigger(const CubeAnimationTrigger& animTrigger,
+                                                const AnimLayerEnum& layer,
+                                                const ObjectID& objectID,
+                                                bool shouldPickNextAnim)
+{
+  bool success = false;
+  const auto iter = _triggerToHandleMap.find(animTrigger);
+  if(iter != _triggerToHandleMap.end()){
+    success = StopLightAnimInternal(iter->second, layer, objectID);
+    _triggerToHandleMap.erase(iter);
+  }
+  return success;
+}
+
+bool CubeLightComponent::StopLightAnimInternal(const AnimationHandle& animationHandle,
+                                               const AnimLayerEnum& layer,
+                                               const ObjectID& objectID,
+                                               bool shouldPickNextAnim)
+{  
+  auto helper = [this](const AnimationHandle& animationHandle,
                        const ObjectID& objectID,
                        const AnimLayerEnum& layer,
-                       bool& foundAnimWithTrigger) {
+                       bool& foundAnimWithTrigger,
+                       std::string& debugName) {
     auto& iter = _objectInfo[objectID];
     for(auto& anim : iter.animationsOnLayer[layer])
     {
-      if(anim.trigger == animTrigger)
+      if(anim.animationHandle == animationHandle)
       {
         anim.stopNow = true;
         foundAnimWithTrigger = true;
+        debugName = anim.debugName;
       }
     }
   };
 
   bool foundAnimWithTrigger = false;
+  std::string debugName;
   if(objectID.IsUnknown())
   {
     for(auto& iter : _objectInfo)
     {
-      helper(animTrigger, iter.first, layer, foundAnimWithTrigger);
+      helper(animationHandle, iter.first, layer, foundAnimWithTrigger, debugName);
     }
   }
   else
@@ -592,9 +640,18 @@ bool CubeLightComponent::StopLightAnim(const CubeAnimationTrigger& animTrigger,
     const auto& iter = _objectInfo.find(objectID);
     if(iter != _objectInfo.end())
     {
-      helper(animTrigger, objectID, layer, foundAnimWithTrigger);
+      helper(animationHandle, objectID, layer, foundAnimWithTrigger, debugName);
     }
   }
+
+  if(foundAnimWithTrigger){
+    PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.StopLightAnim",
+                  "Stopping %s on object %d on layer %s.",
+                  debugName.c_str(),
+                  objectID.GetValue(),
+                  LayerToString(layer));
+  }
+
   
   // Manually update so the anims are immediately stopped
   UpdateInternal(shouldPickNextAnim);
@@ -609,7 +666,7 @@ bool CubeLightComponent::StopLightAnim(const CubeAnimationTrigger& animTrigger,
        << " currLayer=" << LayerToString(objectInfoPair.second.curLayer) << " [";
     
     for(auto& anim : objectInfoPair.second.animationsOnLayer[layer]) {
-      ss << anim.name << ":" << CubeAnimationTriggerToString( anim.trigger ) << "@" << anim.timeCurPatternEnds;
+      ss << anim.debugName << "@" << anim.timeCurPatternEnds;
       if( anim.stopNow ) {
         ss << ":STOP_NOW";
       }
@@ -621,15 +678,15 @@ bool CubeLightComponent::StopLightAnim(const CubeAnimationTrigger& animTrigger,
   PRINT_CH_DEBUG("CubeLightComponent", "CubeLightComponent.StopLignAnim.Result",
                  "%s anim '%s'. Current state: %s",
                  foundAnimWithTrigger ? "found" : "did not find",
-                 EnumToString(animTrigger),
+                 debugName.c_str(),
                  ss.str().c_str());
     
   return foundAnimWithTrigger;
 }
 
-void CubeLightComponent::ApplyAnimModifier(const LightAnim& anim,
-                                           const ObjectLights& modifier,
-                                           LightAnim& modifiedAnim)
+void CubeLightComponent::ApplyAnimModifier(const CubeLightAnimation::Animation& anim,
+                                           const CubeLightAnimation::ObjectLights& modifier,
+                                           CubeLightAnimation::Animation& modifiedAnim)
 {
   modifiedAnim.clear();
   modifiedAnim.insert(modifiedAnim.begin(), anim.begin(), anim.end());
@@ -654,8 +711,8 @@ void CubeLightComponent::ApplyAnimModifier(const LightAnim& anim,
 }
 
 bool CubeLightComponent::BlendAnimWithCurLights(const ObjectID& objectID,
-                                                const LightAnim& anim,
-                                                LightAnim& blendedAnim)
+                                                const CubeLightAnimation::Animation& anim,
+                                                CubeLightAnimation::Animation& blendedAnim)
 {
   ActiveObject* activeObject = _robot->GetBlockWorld().GetConnectedActiveObjectByID(objectID);
   if(activeObject == nullptr)
@@ -700,14 +757,14 @@ bool CubeLightComponent::StopAndPlayLightAnim(const ObjectID& objectID,
                                               const CubeAnimationTrigger& animTriggerToPlay,
                                               AnimCompletedCallback callback,
                                               bool hasModifier,
-                                              const ObjectLights& modifier)
+                                              const CubeLightAnimation::ObjectLights& modifier)
 {
   DEV_ASSERT(!_objectInfo[objectID].animationsOnLayer[AnimLayerEnum::Engine].empty(),
              "CubeLightComponent.StopAndPlayLightAnim.NoAnimsCurrentlyOnEngineLayer");
   // Stop the anim and prevent the update call in StopLightAnim from picking a next default anim
   // This will prevent the lights from briefly flickering between the calls to stop and play
-  StopLightAnim(animTriggerToStop, AnimLayerEnum::Engine, objectID, false);
-  return PlayLightAnim(objectID, animTriggerToPlay, callback, hasModifier, modifier);
+  StopLightAnimByTrigger(animTriggerToStop, AnimLayerEnum::Engine, objectID, false);
+  return PlayLightAnimByTrigger(objectID, animTriggerToPlay, callback, hasModifier, modifier);
 }
 
 void CubeLightComponent::PickNextAnimForDefaultLayer(const ObjectID& objectID)
@@ -721,50 +778,30 @@ void CubeLightComponent::PickNextAnimForDefaultLayer(const ObjectID& objectID)
   // If CubeSleep is enabled then play the sleep animation
   if(_enableCubeSleep)
   {
-    PlayLightAnim(objectID,
-                  (_skipSleepAnim ? CubeAnimationTrigger::SleepNoFade : CubeAnimationTrigger::Sleep),
-                  AnimLayerEnum::State);
+    PlayLightAnimByTrigger(objectID,
+                           (_skipSleepAnim ? CubeAnimationTrigger::SleepNoFade : CubeAnimationTrigger::Sleep),
+                           AnimLayerEnum::State);
     return;
   }
   
-  CubeAnimationTrigger anim = CubeAnimationTrigger::Connected;
+  CubeAnimationTrigger animTrigger = CubeAnimationTrigger::Connected;
   
   const ObservableObject* object = _robot->GetBlockWorld().GetLocatedObjectByID(objectID);
   if(object != nullptr)
   {
     if(object->IsPoseStateKnown())
     {
-      anim = CubeAnimationTrigger::Visible;
+      animTrigger = CubeAnimationTrigger::Visible;
     }
   }
   
   if(_robot->GetCarryingComponent().GetCarryingObject() == objectID)
   {
-    anim = CubeAnimationTrigger::Carrying;
+    animTrigger = CubeAnimationTrigger::Carrying;
   }
   
-  PlayLightAnim(objectID, anim, AnimLayerEnum::State);
+  PlayLightAnimByTrigger(objectID, animTrigger, AnimLayerEnum::State);
 }
-
-u32 CubeLightComponent::GetAnimDuration(const CubeAnimationTrigger& trigger)
-{
-  const std::string& animName = _robot->GetContext()->GetDataLoader()->GetCubeAnimationForTrigger(trigger);
-  const auto* anim = _cubeLightAnimations->_container.GetAnimation(animName);
-  if(anim == nullptr)
-  {
-    PRINT_NAMED_WARNING("CubeLightComponent.NoAnimForTrigger",
-                        "No animation found for trigger %s", animName.c_str());
-    return 0;
-  }
-  
-  u32 duration_ms = 0;
-  for(const auto& pattern : *anim)
-  {
-    duration_ms += pattern.duration_ms;
-  }
-  return duration_ms;
-}
-
 
 void CubeLightComponent::OnActiveObjectPoseStateChanged(const ObjectID& objectID,
                                                         const PoseState oldPoseState,
@@ -777,12 +814,12 @@ void CubeLightComponent::OnActiveObjectPoseStateChanged(const ObjectID& objectID
   
   if(newPoseState != PoseState::Known) // TODO Change to use function
   {
-    PlayLightAnim(objectID, CubeAnimationTrigger::Connected, AnimLayerEnum::State);
+    PlayLightAnimByTrigger(objectID, CubeAnimationTrigger::Connected, AnimLayerEnum::State);
   }
   else
   {
     // If going to Known change to Visible
-    PlayLightAnim(objectID, CubeAnimationTrigger::Visible, AnimLayerEnum::State);
+    PlayLightAnimByTrigger(objectID, CubeAnimationTrigger::Visible, AnimLayerEnum::State);
   }
 }
 
@@ -799,7 +836,7 @@ void CubeLightComponent::EnableGameLayerOnly(const ObjectID& objectID, bool enab
     if( _onlyGameLayerEnabledForAll != enable ) {
       if(enable)
       {
-        SetObjectLights(objectID, kCubeLightsOff);
+        SetCubeLightAnimation(objectID, kCubeLightsOff);
         for(auto& pair : _objectInfo)
         {
           pair.second.isOnlyGameLayerEnabled = true;
@@ -834,7 +871,7 @@ void CubeLightComponent::EnableGameLayerOnly(const ObjectID& objectID, bool enab
       if( enable != iter->second.isOnlyGameLayerEnabled ) {
         if(enable)
         {
-          SetObjectLights(objectID, kCubeLightsOff);
+          SetCubeLightAnimation(objectID, kCubeLightsOff);
           StopAllAnimsOnLayer(AnimLayerEnum::Engine, objectID);
           StopAllAnimsOnLayer(AnimLayerEnum::State, objectID);
           iter->second.isOnlyGameLayerEnabled = true;
@@ -857,7 +894,7 @@ void CubeLightComponent::EnableGameLayerOnly(const ObjectID& objectID, bool enab
   }
 }
 
-void CubeLightComponent::SendTransitionMessage(const ObjectID& objectID, const ObjectLights& values)
+void CubeLightComponent::SendTransitionMessage(const ObjectID& objectID, const CubeLightAnimation::ObjectLights& values)
 {
   // Convert MS to LED FRAMES
   #define MS_TO_LED_FRAMES(ms)  ((ms) == std::numeric_limits<u32>::max() ?      \
@@ -898,23 +935,7 @@ void CubeLightComponent::SendTransitionMessage(const ObjectID& objectID, const O
   }
 }
 
-void LightPattern::Print() const
-{
-  for(int i = 0; i < 4; i++)
-  {
-    PRINT_CH_DEBUG("CubeLightComponent", "LightPattern.Print",
-                   "%s LED %u, onColor %u, offColor %u, onFrames %u, "
-                   "offFrames %u, transOnFrames %u, transOffFrames %u, offset %u",
-                   name.c_str(),
-                   i, lights.onColors[i],
-                   lights.offColors[i],
-                   lights.onPeriod_ms[i],
-                   lights.offPeriod_ms[i],
-                   lights.transitionOnPeriod_ms[i],
-                   lights.transitionOffPeriod_ms[i],
-                   lights.offset[i]);
-  }
-}
+
 
 const char* CubeLightComponent::LayerToString(const AnimLayerEnum& layer) const
 {
@@ -943,7 +964,7 @@ void CubeLightComponent::HandleMessage(const ExternalInterface::ObjectConnection
     info.isOnlyGameLayerEnabled = _onlyGameLayerEnabledForAll;
     _objectInfo.emplace(msg.objectID, info);
     
-    PlayLightAnim(msg.objectID, CubeAnimationTrigger::WakeUp, AnimLayerEnum::State);
+    PlayLightAnimByTrigger(msg.objectID, CubeAnimationTrigger::WakeUp, AnimLayerEnum::State);
   }
 }
 
@@ -955,7 +976,7 @@ void CubeLightComponent::HandleMessage(const ExternalInterface::PlayCubeAnim& ms
     objectID = _robot->GetBlockWorld().GetSelectedObject();
   }
   
-  PlayLightAnim(objectID, msg.trigger, AnimLayerEnum::User);
+  PlayLightAnimByTrigger(objectID, msg.trigger, AnimLayerEnum::User);
 }
 
 template<>
@@ -966,20 +987,20 @@ void CubeLightComponent::HandleMessage(const ExternalInterface::StopCubeAnim& ms
     objectID = _robot->GetBlockWorld().GetSelectedObject();
   }
   
-  StopLightAnim(msg.trigger, AnimLayerEnum::User, objectID);
+  StopLightAnimByTrigger(msg.trigger, AnimLayerEnum::User, objectID);
 }
 
 template<>
 void CubeLightComponent::HandleMessage(const ExternalInterface::FlashCurrentLightsState& msg)
 {
-  PlayLightAnim(msg.objectID, CubeAnimationTrigger::Flash, AnimLayerEnum::Engine);
+  PlayLightAnimByTrigger(msg.objectID, CubeAnimationTrigger::Flash, AnimLayerEnum::Engine);
 }
 
 void CubeLightComponent::CycleThroughAnimTriggers(const ObjectID& objectID)
 {
   // Each time the function is called play the next CubeAnimationTrigger
   static int t = 0;
-  PlayLightAnim(objectID, static_cast<CubeAnimationTrigger>(t));
+  PlayLightAnimByTrigger(objectID, static_cast<CubeAnimationTrigger>(t));
   t++;
   if(t >= static_cast<int>(CubeAnimationTrigger::Count))
   {
@@ -990,7 +1011,7 @@ void CubeLightComponent::CycleThroughAnimTriggers(const ObjectID& objectID)
 template<>
 void CubeLightComponent::HandleMessage(const ExternalInterface::SetAllActiveObjectLEDs& msg)
 {
-  const ObjectLights lights {
+  const CubeLightAnimation::ObjectLights lights {
     .onColors               = msg.onColor,
     .offColors              = msg.offColor,
     .onPeriod_ms            = msg.onPeriod_ms,
@@ -1003,13 +1024,13 @@ void CubeLightComponent::HandleMessage(const ExternalInterface::SetAllActiveObje
     .relativePoint          = {msg.relativeToX,msg.relativeToY}
   };
   
-  SetObjectLights(msg.objectID, lights);
+  SetCubeLightAnimation(msg.objectID, lights);
 }
 
 template<>
 void CubeLightComponent::HandleMessage(const ExternalInterface::SetActiveObjectLEDs& msg)
 {
-  SetObjectLights(msg.objectID,
+  SetCubeLightAnimation(msg.objectID,
                   msg.whichLEDs,
                   msg.onColor,
                   msg.offColor,
@@ -1032,7 +1053,7 @@ void CubeLightComponent::HandleMessage(const ExternalInterface::EnableCubeLights
   for(const auto& pair : _objectInfo)
   {
     const auto& lightPatterns = pair.second.animationsOnLayer[pair.second.curLayer];
-    ObjectLights lights;
+    CubeLightAnimation::ObjectLights lights;
     if(lightPatterns.empty())
     {
       lights = kCubeLightsOff;
@@ -1057,7 +1078,7 @@ void CubeLightComponent::HandleMessage(const ExternalInterface::RobotDelocalized
     const bool isCarryingCube = _robot->GetCarryingComponent().IsCarryingObject(pair.first);
     if(!isCarryingCube)
     {
-      PlayLightAnim(pair.first, CubeAnimationTrigger::Connected, AnimLayerEnum::State);
+      PlayLightAnimByTrigger(pair.first, CubeAnimationTrigger::Connected, AnimLayerEnum::State);
     }
   }
 }
@@ -1085,8 +1106,8 @@ void CubeLightComponent::HandleMessage(const ExternalInterface::EnableCubeSleep&
   // If we are disabling cube sleep then stop the sleep animation
   if(!_enableCubeSleep)
   {
-    StopLightAnim(CubeAnimationTrigger::Sleep, AnimLayerEnum::State, kAllObjects);
-    StopLightAnim(CubeAnimationTrigger::SleepNoFade, AnimLayerEnum::State, kAllObjects);
+    StopLightAnimByTrigger(CubeAnimationTrigger::Sleep, AnimLayerEnum::State, kAllObjects);
+    StopLightAnimByTrigger(CubeAnimationTrigger::SleepNoFade, AnimLayerEnum::State, kAllObjects);
   }
   
   // Force game layer to be disabled, this will stop any game layer animations
@@ -1095,7 +1116,7 @@ void CubeLightComponent::HandleMessage(const ExternalInterface::EnableCubeSleep&
   EnableGameLayerOnly(kAllObjects, false);
 }
 
-Result CubeLightComponent::SetObjectLights(const ObjectID& objectID, const ObjectLights& values)
+Result CubeLightComponent::SetCubeLightAnimation(const ObjectID& objectID, const CubeLightAnimation::ObjectLights& values)
 {
   ActiveCube* activeObject = nullptr;
   if ( values.makeRelative == MakeRelativeMode::RELATIVE_LED_MODE_OFF )
@@ -1112,7 +1133,7 @@ Result CubeLightComponent::SetObjectLights(const ObjectID& objectID, const Objec
   if(activeObject == nullptr)
   {
     PRINT_CH_INFO("CubeLightController",
-                  "CubeLightController.SetObjectLights.NullActiveObject",
+                  "CubeLightController.SetCubeLightAnimation.NullActiveObject",
                   "Null active object pointer");
     return RESULT_FAIL_INVALID_OBJECT;
   }
@@ -1129,7 +1150,7 @@ Result CubeLightComponent::SetObjectLights(const ObjectID& objectID, const Objec
   if(activeCube == nullptr)
   {
     PRINT_CH_INFO("CubeLightController",
-                  "CubeLightController.SetObjectLights.NullActiveCube",
+                  "CubeLightController.SetCubeLightAnimation.NullActiveCube",
                   "Null active cube pointer");
     return RESULT_FAIL_INVALID_OBJECT;
   }
@@ -1140,7 +1161,7 @@ Result CubeLightComponent::SetObjectLights(const ObjectID& objectID, const Objec
   return SetLights(activeObject, values.rotate);
 }
 
-Result CubeLightComponent::SetObjectLights(const ObjectID& objectID,
+Result CubeLightComponent::SetCubeLightAnimation(const ObjectID& objectID,
                                             const WhichCubeLEDs whichLEDs,
                                             const u32 onColor,
                                             const u32 offColor,
@@ -1170,7 +1191,7 @@ Result CubeLightComponent::SetObjectLights(const ObjectID& objectID,
   if(activeCube == nullptr)
   {
     PRINT_CH_INFO("CubeLightComponent",
-                  "CubeLightComponent.SetObjectLights.NullActiveCube",
+                  "CubeLightComponent.SetCubeLightAnimation.NullActiveCube",
                   "Null active cube pointer (was it null or not a cube?)");
     return RESULT_FAIL_INVALID_OBJECT;
   }

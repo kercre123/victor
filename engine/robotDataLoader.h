@@ -84,10 +84,10 @@ public:
   using BehaviorIDJsonMap = std::unordered_map<BehaviorID,  const Json::Value>;
 
   const FileJsonMap& GetEmotionEventJsons()   const { return _emotionEvents; }
-  const BehaviorIDJsonMap& GetBehaviorJsons() const { return _behaviors; }
+  const BehaviorIDJsonMap& GetBehaviorJsons() const { return _behaviors; }  
+  const FileJsonMap& GetCubeLightAnimations() const { return _cubeLightAnimations; }
 
   CannedAnimationContainer* GetCannedAnimationContainer() const { return _cannedAnimations.get(); }
-  CubeLightAnimationContainer* GetCubeLightAnimations() const { return _cubeLightAnimations.get(); }
   AnimationGroupContainer* GetAnimationGroups() const { return _animationGroups.get(); }
   Util::CladEnumToStringMap<AnimationTrigger>* GetAnimationTriggerResponses() const { return _animationTriggerResponses.get(); }
   Util::CladEnumToStringMap<CubeAnimationTrigger>* GetCubeAnimationTriggerResponses() const { return _cubeAnimationTriggerResponses.get(); }
@@ -140,7 +140,7 @@ private:
   
   void LoadCubeLightAnimations();
   void LoadCubeLightAnimationFile(const std::string& path);
-  
+
   void LoadBackpackLightAnimations();
   void LoadBackpackLightAnimationFile(const std::string& path);
   
@@ -187,7 +187,6 @@ private:
 
   // animation data
   std::unique_ptr<CannedAnimationContainer>            _cannedAnimations;
-  std::unique_ptr<CubeLightAnimationContainer>         _cubeLightAnimations;
   std::unique_ptr<AnimationGroupContainer>             _animationGroups;
   std::unique_ptr<Util::CladEnumToStringMap<AnimationTrigger>>     _animationTriggerResponses;
   std::unique_ptr<Util::CladEnumToStringMap<CubeAnimationTrigger>> _cubeAnimationTriggerResponses;
@@ -199,6 +198,7 @@ private:
 
   std::string _test_anim;
 
+  FileJsonMap  _cubeLightAnimations;
   // robot configs
   Json::Value _robotMoodConfig;
   Json::Value _victorFreeplayBehaviorConfig;

@@ -24,7 +24,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntentComponent_fwd.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
-#include "engine/components/cubes/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/visionScheduleMediator/iVisionModeSubscriber.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator_fwd.h"
 #include "engine/robotInterface/messageHandler.h"
@@ -445,7 +445,7 @@ protected:
   // Allows the behavior to set a custom light pattern which will be automatically canceled if the behavior ends
   bool SmartSetCustomLightPattern(const ObjectID& objectID,
                                   const CubeAnimationTrigger& anim,
-                                  const ObjectLights& modifier = {});
+                                  const CubeLightAnimation::ObjectLights& modifier = {});
   bool SmartRemoveCustomLightPattern(const ObjectID& objectID,
                                      const std::vector<CubeAnimationTrigger>& anims);
 
