@@ -205,16 +205,16 @@ namespace Cozmo {
   CONSOLE_VAR(bool, kShouldDisplayKeyframeNumber, "ManualAnimationPlayback", false);
 
 #if ANKI_DEV_CHEATS
-  // Whether or not to display themal throttling indicator on face
-  CONSOLE_VAR(bool, kDisplayThermalThrottling, "AnimationStreamer.System", true);
+  // Whether or not to display high temperature indicator on face
+  CONSOLE_VAR(bool, kDisplayHighTemperature, "AnimationStreamer.System", true);
 
-  // Temperature beyond which the thermal indicator is displayed on face    
-  CONSOLE_VAR(u32,  kThermalAlertTemp_C,           "AnimationStreamer.System", 80);
+  // Whether or not to display CPU throttling
+  // 2018-06-21: Disabled by default since current OS doesn't throttle for thermal
+  //             reasons and sporadic idle throttling is not worth alerting the dev about.
+  CONSOLE_VAR(bool, kDisplayCPUThrottling, "AnimationStreamer.System", false);
 
-  // Must be at least this hot for CPU throttling to be considered caused
-  // by thermal conditions. It can also throttle because the system is idle
-  // which we don't care to indicate on the face.
-  CONSOLE_VAR(u32,  kThermalThrottlingMinTemp_C,   "AnimationStreamer.System", 65);
+  // Temperature beyond which the thermal indicator is displayed on face
+  CONSOLE_VAR(u32,  kThermalAlertTemp_C, "AnimationStreamer.System", 90);
 
   CONSOLE_VAR(bool, kDisplayMemoryPressure, "AnimationStreamer.System", true);
     
@@ -1348,27 +1348,27 @@ namespace Cozmo {
 
     UpdateCaptureFace(faceImg565);
 
-    // Draw red square in corner of face if thermal issues
-    if (kDisplayThermalThrottling)
+    // Display temperature if exceeds threshold
+    if (kDisplayHighTemperature)
     {
-      const bool isCPUThrottling = OSState::getInstance()->IsCPUThrottling();
       auto tempC = OSState::getInstance()->GetTemperature_C();
-      const bool tempExceedsAlertThreshold = tempC >= kThermalAlertTemp_C;
-      const bool tempExceedsThrottlingThreshold = tempC >= kThermalThrottlingMinTemp_C;
-      if ((isCPUThrottling && tempExceedsThrottlingThreshold) || (tempExceedsAlertThreshold))
+      if (tempC >= kThermalAlertTemp_C)
       {
-        
-        // Draw square if CPU is being throttled
         const ColorRGBA alertColor(1.f, 0.f, 0.f);
-        if (isCPUThrottling) {
-          const Rectangle<f32> rect( 0, 0, 20, 20);
-          faceImg565.DrawFilledRect(rect, alertColor);
-        }
-        
-        // Display temperature
         const std::string tempStr = std::to_string(tempC) + "C";
         const Point2f position(25, 25);
         faceImg565.DrawText(position, tempStr, alertColor, 1.f);
+      }
+    }
+
+    // Draw red square in corner of face if CPU throttling
+    if (kDisplayCPUThrottling) 
+    {
+      if (OSState::getInstance()->IsCPUThrottling())
+      {
+        const ColorRGBA squareColor(1.f, 0.f, 0.f);
+        const Rectangle<f32> rect( 0, 0, 20, 20);
+        faceImg565.DrawFilledRect(rect, squareColor);
       }
     }
     
