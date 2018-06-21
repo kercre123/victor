@@ -98,6 +98,25 @@ message Status {
   }
 }
 
+message Onboarding {
+  oneof onboarding_type {
+    OnboardingState                    onboarding_state              = 1;
+    OnboardingOnCharger                onboarding_on_charger         = 2;
+    OnboardingLowBattery               onboarding_battery            = 3;
+    OnboardingPickedUp                 onboarding_picked_up          = 4;
+    OnboardingSeesCube                 onboarding_sees_cube          = 5;
+    OnboardingCantFindCube             onboarding_cant_find_cube     = 6;
+    OnboardingRobotExpectingContinue   onboarding_expecting_continue = 7;
+  }
+}
+
+message WakeWord {
+  oneof wake_word_type {
+    WakeWordBegin     wake_word_begin    = 1;
+    WakeWordEnd       wake_word_end      = 2;
+  }
+}
+
 message TimeStampedStatus {
   Status status = 1;
   uint32 timestamp_ms = 2;
@@ -160,7 +179,8 @@ message RobotState {
 message Event {
   oneof event_type {
     Status                           status                              = 1;
-    // BatteryEvents, etc.
+    Onboarding                       onboarding                          = 2;
+    WakeWord                         wake_word                           = 3;
   }
 }
 
@@ -310,11 +330,108 @@ message Bong {
   string bong = 1;
 }
 
+enum OnboardingStages
+{
+  NotStarted = 0;
+  FinishedComeHere = 1;
+  FinishedMeetVictor = 2;
+  Complete = 3;
+  DevDoNothing = 4;
+}
+
+message OnboardingState {
+  OnboardingStages stage = 1;
+}
+
+message OnboardingOnCharger {
+  bool on_charger = 1;
+  bool needs_to_charge = 2;
+  float required_charge_time_s = 3;
+}
+
+message OnboardingLowBattery {
+  bool low_battery = 1;
+}
+
+message OnboardingPickedUp {
+  bool picked_up = 1;
+}
+
+message OnboardingSeesCube {
+  bool sees_cube = 1;
+}
+
+message OnboardingCantFindCube {
+}
+
+message OnboardingStateRequest {
+}
+
+message OnboardingStateResponse {
+  ResultStatus status = 1;
+  OnboardingState onboarding_state = 2;
+}
+
+enum OnboardingContinueEnum {
+  Default = 0;
+}
+
+message OnboardingContinue {
+  OnboardingContinueEnum continue_number = 1;
+}
+
+message OnboardingContinueResponse {
+  bool accepted = 1;
+}
+
+message OnboardingSkip {
+}
+
+message OnboardingRetryCharging {
+}
+
+
+message OnboardingInputRequest {
+  oneof oneof_message_type {
+    OnboardingContinue onboarding_continue = 1;
+    OnboardingSkip onboarding_skip = 2;
+    OnboardingRetryCharging onboarding_retry_charging = 3;
+  }
+}
+
+message OnboardingInputResponse {
+  ResultStatus status = 1;
+  oneof oneof_message_type {
+    OnboardingContinueResponse onboarding_continue_response = 2;
+  }
+}
+
+message OnboardingRobotExpectingContinue {
+  OnboardingContinueEnum continue_number = 1;
+}
+
+message WakeWordBegin {
+}
+
+message WakeWordEnd {
+  bool intent_heard = 1;
+  string intent_json = 2; // todo: we send json as a string for now since the engine handling of intents is tightly coupled with clad
+}
+
 message GatewayWrapper {
   oneof oneof_message_type {
-    Ping ping = 1;
-    Pong pong = 2;
-    Bing bing = 3;
-    Bong bong = 4;
+    // ------------ messages sent from robot to app ----------------------
+    Event event = 1;
+    // ------------ onboarding requests and responses --------------------
+    OnboardingStateRequest        onboarding_state_request = 2;
+    OnboardingState               onboarding_state = 3;
+    OnboardingContinue            onboarding_continue = 4;
+    OnboardingContinueResponse    onboarding_continue_response = 5;
+    OnboardingSkip                onboarding_skip = 6;
+    // ------------ test response/response pairs -------------------------
+    Ping ping = 7;
+    Pong pong = 8;
+    Bing bing = 9;
+    Bong bong = 10;
   }
 }

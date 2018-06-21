@@ -870,14 +870,6 @@ message StopCubeAnim {
 // Onboarding
 ///////////////////////////////////////////////////////////////////////////////
 
-message OnboardingContinue {
-}
-message OnboardingSkip {
-}
-message OnboardingRetryCharging {
-}
-
-// for internal use only
 message SetOnboardingStage {
   OnboardingStages stage,
 }

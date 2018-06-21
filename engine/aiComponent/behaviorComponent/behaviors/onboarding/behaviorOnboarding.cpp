@@ -26,6 +26,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/onboardingStageWakeUpComeHere.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/cozmoContext.h"
+#include "engine/externalInterface/cladProtoTypeTranslator.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/externalInterface/externalMessageRouter.h"
 #include "util/console/consoleFunction.h"
@@ -126,9 +127,11 @@ BehaviorOnboarding::BehaviorOnboarding(const Json::Value& config)
   
   SubscribeToTags({
     GameToEngineTag::SetOnboardingStage,
-    GameToEngineTag::OnboardingContinue,
-    GameToEngineTag::OnboardingSkip,
-    GameToEngineTag::OnboardingRetryCharging,
+  });
+  
+  SubscribeToAppTags({
+    AppToEngineTag::kOnboardingContinue,
+    AppToEngineTag::kOnboardingSkip,
   });
 }
 
@@ -324,20 +327,23 @@ void BehaviorOnboarding::BehaviorUpdate()
     
     // if OnboardingPlacedOnCharger or OnboardingPickedUp ended, message the app
     if( _dVars.lastInterruption == BEHAVIOR_ID(OnboardingPlacedOnCharger) ) {
-      auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
+      auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
       // only send if not low battery, since UpdateLowBattery handles that case
-      if( !_dVars.batteryInfo.lowBattery && (ei != nullptr) ) {
-        ExternalInterface::OnboardingOnCharger msg{false, false, -1.0f };
+      if( !_dVars.batteryInfo.lowBattery && (gi != nullptr) ) {
+        auto* onboardingOnCharger = new external_interface::OnboardingOnCharger;
+        onboardingOnCharger->set_on_charger( false );
+        onboardingOnCharger->set_needs_to_charge( false );
+        onboardingOnCharger->set_required_charge_time_s( -1.0f );
         PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus", "No longer placed on charger");
-        ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
+        gi->Broadcast( ExternalMessageRouter::Wrap(onboardingOnCharger) );
       }
     } else if( _dVars.lastInterruption == BEHAVIOR_ID(OnboardingPickedUp) ) {
-      auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
-      if( ei != nullptr ) {
-        ExternalInterface::OnboardingPickedUp msg{false};
-        PRINT_CH_INFO("Behaviors", "OnboardingPickedUp", "false");
+      auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+      if( gi != nullptr ) {
+        auto* onboardingPickedUp = new external_interface::OnboardingPickedUp;
+        onboardingPickedUp->set_picked_up( false );
         PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus", "Put back down, resuming");
-        ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
+        gi->Broadcast( ExternalMessageRouter::Wrap(onboardingPickedUp) );
       }
     }
     const auto lastInterruption = _dVars.lastInterruption;
@@ -364,10 +370,18 @@ void BehaviorOnboarding::BehaviorUpdate()
         GetCurrentStage()->OnResume( GetBEI(), lastInterruption );
       }
       
+      auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
       // send events
       for( const auto& pendingEvent : _dVars.pendingEvents ) {
         if( pendingEvent.second.type == PendingEvent::Continue ) {
+          const bool allowedContinue = true; // todo: use the to-be-created return value of OnContinue
           GetCurrentStage()->OnContinue( GetBEI() );
+          if( gi != nullptr ) {
+            auto* onboardingContinueResponse = new external_interface::OnboardingContinueResponse;
+            onboardingContinueResponse->set_accepted( allowedContinue );
+            gi->Broadcast( ExternalMessageRouter::WrapResponse(onboardingContinueResponse) );
+          }
+          // todo: OnboardingRobotExpectingContinue
         } else if( pendingEvent.second.type == PendingEvent::Skip ) {
           GetCurrentStage()->OnSkip( GetBEI() );
         } else if( pendingEvent.second.type == PendingEvent::GameToEngine ) {
@@ -447,15 +461,18 @@ void BehaviorOnboarding::AlwaysHandleInScope(const GameToEngineEvent& event)
   if( event.GetData().GetTag() == ExternalInterface::MessageGameToEngineTag::SetOnboardingStage ) {
     const auto& msg = event.GetData().Get_SetOnboardingStage();
     MoveToStage( msg.stage );
-  } else if( event.GetData().GetTag() == ExternalInterface::MessageGameToEngineTag::OnboardingContinue ) {
-    RequestContinue();
-  } else if( event.GetData().GetTag() == ExternalInterface::MessageGameToEngineTag::OnboardingSkip ) {
-    RequestSkip();
-  } else if( event.GetData().GetTag() == ExternalInterface::MessageGameToEngineTag::OnboardingRetryCharging ) {
-    RequestRetryCharging();
   }
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboarding::AlwaysHandleInScope(const AppToEngineEvent& event)
+{
+  if( event.GetData().oneof_message_type_case() == external_interface::GatewayWrapper::OneofMessageTypeCase::kOnboardingContinue ) {
+    RequestContinue();
+  } else if( event.GetData().oneof_message_type_case() == external_interface::GatewayWrapper::OneofMessageTypeCase::kOnboardingSkip ) {
+    RequestSkip();
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboarding::InitStages(bool resetExisting)
@@ -508,8 +525,12 @@ void BehaviorOnboarding::MoveToStage( const OnboardingStages& stage )
       ExternalInterface::OnboardingState msgCopy{msgRef};
       ei->Broadcast( ExternalInterface::MessageEngineToGame{std::move(msgCopy)} );
     }
-    PRINT_CH_INFO("Behaviors", "OnboardingState", "saved");
-    ei->Broadcast( ExternalMessageRouter::Wrap(std::move(saveState)) );
+  }
+  if( GetBEI().GetRobotInfo().HasGatewayInterface() ) {
+    auto* onboardingState = new external_interface::OnboardingState;
+    onboardingState->set_stage( CladProtoTypeTranslator::ToProtoEnum(stage) );
+    auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+    gi->Broadcast( ExternalMessageRouter::Wrap(onboardingState) );
   }
   
   // save to whiteboard for convenience
@@ -625,18 +646,22 @@ void BehaviorOnboarding::Interrupt( ICozmoBehaviorPtr interruption, BehaviorID i
   // OnboardingPickedUp        : sends messages here
   // OnboardingPlacedOnCharger : only send if not low battery, since OnboardingLowBattery handles that
   if( interruptionID == BEHAVIOR_ID(OnboardingPlacedOnCharger) ) {
-    auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
-    if( !_dVars.batteryInfo.lowBattery && (ei != nullptr) ) {
+    auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+    if( !_dVars.batteryInfo.lowBattery && (gi != nullptr) ) {
       PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus", "Placed on charger, waiting for continue");
-      ExternalInterface::OnboardingOnCharger msg{true, false, -1.0f};
-      ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
+      auto* onboardingOnCharger = new external_interface::OnboardingOnCharger;
+      onboardingOnCharger->set_on_charger( true );
+      onboardingOnCharger->set_needs_to_charge( false );
+      onboardingOnCharger->set_required_charge_time_s( -1.0f );
+      gi->Broadcast( ExternalMessageRouter::Wrap( onboardingOnCharger) );
     }
   } else if( interruptionID == BEHAVIOR_ID(OnboardingPickedUp) ) {
-    auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
-    if( ei != nullptr ) {
+    auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+    if( gi != nullptr ) {
       PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus", "Picked up. Waiting to be put down");
-      ExternalInterface::OnboardingPickedUp msg{true};
-      ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
+      auto* onboardingPickedUp = new external_interface::OnboardingPickedUp;
+      onboardingPickedUp->set_picked_up( true );
+      gi->Broadcast( ExternalMessageRouter::Wrap(onboardingPickedUp) );
     }
   } else if( interruptionID == BEHAVIOR_ID(OnboardingLowBattery) ) {
     StartLowBatteryCountdown();
@@ -770,10 +795,11 @@ void BehaviorOnboarding::UpdateBatteryInfo()
      && (_dVars.currentStage == OnboardingStages::NotStarted)
      && (GetBEI().GetRobotInfo().GetBatteryLevel() == BatteryLevel::Low) )
   {
-    auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
-    if( ei != nullptr ) {
-      ExternalInterface::OnboardingLowBattery msg{true};
-      ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
+    auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+    if( gi != nullptr ) {
+      auto* onboardingLowBattery = new external_interface::OnboardingLowBattery;
+      onboardingLowBattery->set_low_battery( true );
+      gi->Broadcast( ExternalMessageRouter::Wrap(onboardingLowBattery) );
     }
     info.lowBattery = true;
   }
@@ -805,10 +831,13 @@ void BehaviorOnboarding::UpdateBatteryInfo()
       PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus",
                     "Low battery on charger. Countdown resuming at %f", requiredChargeTime_s);
     }
-    auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
-    if( ei != nullptr ) {
-      ExternalInterface::OnboardingOnCharger msg{true, true, requiredChargeTime_s};
-      ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
+    auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+    if( gi != nullptr ) {
+      auto* onboardingOnCharger = new external_interface::OnboardingOnCharger;
+      onboardingOnCharger->set_on_charger( true );
+      onboardingOnCharger->set_needs_to_charge( true );
+      onboardingOnCharger->set_required_charge_time_s( requiredChargeTime_s );
+      gi->Broadcast( ExternalMessageRouter::Wrap(onboardingOnCharger) );
     }
     info.sentOutOfLowBattery = false;
   } else if( !currOnCharger && !currOnChargerPlatform && info.onCharger ) {
@@ -817,10 +846,13 @@ void BehaviorOnboarding::UpdateBatteryInfo()
     PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus",
                   "Low battery off charger. Countdown paused");
     info.timeRemovedFromCharger = currTime_s;
-    auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
-    if( ei != nullptr ) {
-      ExternalInterface::OnboardingOnCharger msg{false, true, -1.0f}; // no need to calc the time since the app just pauses it
-      ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
+    auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+    if( gi != nullptr ) {
+      auto* onboardingOnCharger = new external_interface::OnboardingOnCharger;
+      onboardingOnCharger->set_on_charger( false );
+      onboardingOnCharger->set_needs_to_charge( true );
+      onboardingOnCharger->set_required_charge_time_s( -1.0f );
+      gi->Broadcast( ExternalMessageRouter::Wrap(onboardingOnCharger) );
     }
   }
   
@@ -828,10 +860,11 @@ void BehaviorOnboarding::UpdateBatteryInfo()
     // tell the app we're out of low battery state. This will mean that if the countdown hasn't expired
     // yet, then when it does, it will show the Resume screen. If the app countdown expires before this is
     // sent, it will display something about checking cables, and should send a RetryCharging.
-    auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
-    if( ei != nullptr ) {
-      ExternalInterface::OnboardingLowBattery msg{false};
-      ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
+    auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+    if( gi != nullptr ) {
+      auto* onboardingLowBattery = new external_interface::OnboardingLowBattery;
+      onboardingLowBattery->set_low_battery( false );
+      gi->Broadcast( ExternalMessageRouter::Wrap(onboardingLowBattery) );
     }
     info.sentOutOfLowBattery = true;
     PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus",
@@ -850,10 +883,11 @@ void BehaviorOnboarding::StartLowBatteryCountdown()
     PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus",
                   "Low battery. Countdown will start when on charger");
     
-    auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
-    if( ei != nullptr ) {
-      ExternalInterface::OnboardingLowBattery msg{true};
-      ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
+    auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+    if( gi != nullptr ) {
+      auto* onboardingLowBattery = new external_interface::OnboardingLowBattery;
+      onboardingLowBattery->set_low_battery( true );
+      gi->Broadcast( ExternalMessageRouter::Wrap(onboardingLowBattery) );
     }
   }
 }

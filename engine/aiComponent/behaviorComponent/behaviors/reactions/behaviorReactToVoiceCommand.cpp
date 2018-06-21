@@ -31,8 +31,8 @@
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/movementComponent.h"
-#include "engine/externalInterface/externalInterface.h"
 #include "engine/externalInterface/externalMessageRouter.h"
+#include "engine/externalInterface/gatewayInterface.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/components/mics/micComponent.h"
@@ -248,10 +248,10 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
 {
   _dVars = DynamicVariables();
   
-  auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
-  if( ei != nullptr ) {
-    ExternalInterface::WakeWordBegin msg;
-    ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
+  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+  if( gi != nullptr ) {
+    auto* wakeWordBegin = new external_interface::WakeWordBegin;
+    gi->Broadcast( ExternalMessageRouter::Wrap(wakeWordBegin) );
   }
 
   // cache our reaction direction at the start in case we were told to turn
@@ -305,11 +305,12 @@ void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
     blc.StopLoopingBackpackLights( _dVars.lightsHandle );
   }
   
-  auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
-  if( ei != nullptr ) {
-    ExternalInterface::WakeWordEnd msg;
-    msg.intentHeard = (_dVars.intentStatus != EIntentStatus::NoIntentHeard);
-    if( msg.intentHeard ) {
+  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+  if( gi != nullptr ) {
+    auto* wakeWordEnd = new external_interface::WakeWordEnd;
+    const bool intentHeard = (_dVars.intentStatus != EIntentStatus::NoIntentHeard);
+    wakeWordEnd->set_intent_heard( intentHeard );
+    if( intentHeard ) {
       UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
       // we use this dirty dirty method here instead of sending this message directly from the uic
       // since we know whether the intent was heard here, and it's nice that the same behavior
@@ -317,10 +318,15 @@ void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
       // might be sent without an initial message.
       const UserIntentData* intentData = uic.GetPendingUserIntent();
       if( intentData != nullptr ) {
-        msg.intent = intentData->intent;
+        // ideally we'd send a proto message structured the same as the intent, but this would mean
+        // duplicating the entire userIntent.clad file for proto, or converting the engine handling
+        // of intents to clad, neither of which I've got time for. 
+        std::stringstream ss;
+        ss << intentData->intent.GetJSON();
+        wakeWordEnd->set_intent_json( ss.str() );
       }
     }
-    ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
+    gi->Broadcast( ExternalMessageRouter::Wrap(wakeWordEnd) );
   }
 
   // we've done all we can, now it's up to the next behavior to consume the user intent

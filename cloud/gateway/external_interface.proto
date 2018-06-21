@@ -70,6 +70,7 @@ service ExternalInterface {
       body: "*"
     };
   }
+  
   // Endpoint for streaming robot state/sensor data
   rpc RobotStateStream(RobotStateRequest) returns (stream RobotStateResult) {
     option (google.api.http) = {
@@ -144,4 +145,21 @@ service ExternalInterface {
       body: "*"
     };
   }
+
+  // Request onboarding state
+  rpc GetOnboardingState(OnboardingStateRequest) returns (OnboardingStateResponse) {
+    option (google.api.http) = {
+      post: "/v1/get_onboarding_state",
+      body: "*"
+    };
+  }
+
+  // Send onboarding input
+  rpc SendOnboardingInput(OnboardingInputRequest) returns (OnboardingInputResponse) {
+    option (google.api.http) = {
+      post: "/v1/send_onboarding_input",
+      body: "*"
+    };
+  }
+
 }

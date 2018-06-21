@@ -77,6 +77,7 @@ func grpcHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Ha
 // TODO: improve the logic for this to allow for multiple simultaneous requests
 func processCladEngineMessages() {
 	var msg gw_clad.MessageRobotToExternal
+	var protoMsg extint.GatewayWrapper
 	var b, block []byte
 	var buf bytes.Buffer
 	for {
@@ -96,7 +97,24 @@ func processCladEngineMessages() {
 			// TODO: treat this as an error condition once VIC-3186 is completed
 			continue
 		}
-		if c, ok := engineChanMap[msg.Tag()]; ok {
+		if msg.Tag() == gw_clad.MessageRobotToExternalTag_Event {
+			msgType := reflect.TypeOf(&extint.GatewayWrapper_Event{}).String()
+			protoMsg = extint.GatewayWrapper{
+				OneofMessageType: &extint.GatewayWrapper_Event{
+					// TODO: Convert all events into proto events
+					CladEventToProto(msg.GetEvent()),
+				},
+			}
+			if c, ok := engineProtoChanMap[msgType]; ok {
+				log.Println("Sending", msgType, "to listener")
+				select {
+				case c <- protoMsg:
+					log.Println("Sent:", msgType)
+				default:
+					log.Println("Failed to send message. There might be a problem with the channel.")
+				}
+			}
+		} else if c, ok := engineChanMap[msg.Tag()]; ok {
 			log.Println("Sending", msg.Tag(), "to listener")
 			select {
 			case c <- RobotToExternalCladResult{Message: msg}:

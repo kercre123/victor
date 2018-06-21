@@ -60,6 +60,7 @@ protected:
   virtual void BehaviorUpdate() override;
   
   virtual void AlwaysHandleInScope(const GameToEngineEvent& event) override;
+  virtual void AlwaysHandleInScope(const AppToEngineEvent& event) override;
 
 private:
   using StagePtr = std::shared_ptr<IOnboardingStage>;

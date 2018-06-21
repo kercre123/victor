@@ -69,6 +69,12 @@ test_ping_pong: .require_ip
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/bang -d '{"bing":"zome_Thing"}'
 	@echo
 
+test_onboarding: .require_ip
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/get_onboarding_state -d '{}'
+	@echo
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/send_onboarding_input -d '{"onboarding_continue":{}}'
+	@echo
+
 test_curl: .require_ip
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/drive_wheels -d '{"left_wheel_mmps":100.0,"right_wheel_mmps":-100.0,"left_wheel_mmps2":0.0,"right_wheel_mmps2":0.0}'
 	@echo

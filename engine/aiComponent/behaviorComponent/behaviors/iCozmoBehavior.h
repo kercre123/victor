@@ -300,7 +300,7 @@ protected:
   void SubscribeToTags(std::set<GameToEngineTag>&& tags);
   void SubscribeToTags(std::set<EngineToGameTag>&& tags);
   void SubscribeToTags(std::set<RobotInterface::RobotToEngineTag>&& tags);
-  void SubscribeToTags(std::set<AppToEngineTag>&& tags);
+  void SubscribeToAppTags(std::set<AppToEngineTag>&& tags); // can't be an overload since it is not a scoped enum
   
   // Function that calls message handling helper functions
   void UpdateMessageHandlingHelpers();

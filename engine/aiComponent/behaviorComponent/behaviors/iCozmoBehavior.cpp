@@ -692,7 +692,7 @@ void ICozmoBehavior::SubscribeToTags(std::set<RobotInterface::RobotToEngineTag> 
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::SubscribeToTags(std::set<AppToEngineTag>&& tags)
+void ICozmoBehavior::SubscribeToAppTags(std::set<AppToEngineTag>&& tags)
 {
   _appToEngineTags.insert(tags.begin(), tags.end());
 }

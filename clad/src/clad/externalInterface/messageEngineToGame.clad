@@ -902,36 +902,6 @@ message OnboardingState {
   OnboardingStages stage
 }
 
-message OnboardingOnCharger {
-  bool onCharger,
-  bool needsToCharge,
-  float_32 requiredChargeTime_s, // if onCharger and needsToCharge, how long it should remain there
-}
-
-message OnboardingLowBattery {
-  bool lowBattery,
-}
-
-message OnboardingPickedUp {
-  bool pickedUp,
-}
-
-message OnboardingSeesCube {
-  bool seesCube,
-}
-
-message OnboardingCantFindCube {
-}
-
-// not onboarding 
-message WakeWordBegin {
-}
-
-message WakeWordEnd {
-  bool intentHeard,
-  UserIntent intent,
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 /////////////////////////////  MEMORY MAP DATA  ///////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

@@ -53,8 +53,8 @@ func WriteProtoToEngine(conn ipc.Conn, msg proto.Message) (int, error) {
 	return protoEngineSock.Write(buf.Bytes())
 }
 
-func createChannel(tag interface{}) (func(), chan extint.GatewayWrapper) {
-	result := make(chan extint.GatewayWrapper)
+func createChannel(tag interface{}, numChannels int) (func(), chan extint.GatewayWrapper) {
+	result := make(chan extint.GatewayWrapper, numChannels)
 	reflectedType := reflect.TypeOf(tag).String()
 	log.Println("Listening for", reflectedType)
 	engineProtoChanMap[reflectedType] = result
@@ -294,11 +294,10 @@ func CladRobotStateToProto(msg *gw_clad.RobotState) *extint.RobotStateResult {
 	}
 }
 
-func CladEventToProto(msg *gw_clad.Event) *extint.EventResult {
-	var event *extint.Event
+func CladEventToProto(msg *gw_clad.Event) *extint.Event {
 	switch tag := msg.Tag(); tag {
 	case gw_clad.EventTag_Status:
-		event = &extint.Event{
+		return &extint.Event{
 			EventType: &extint.Event_Status{
 				CladStatusToProto(msg.GetStatus()),
 			},
@@ -310,9 +309,42 @@ func CladEventToProto(msg *gw_clad.Event) *extint.EventResult {
 		log.Println(tag, "tag is not yet implemented")
 		return nil
 	}
-	return &extint.EventResult{
-		Event: event,
+}
+
+
+func SendOnboardingContinue( in *extint.GatewayWrapper_OnboardingContinue ) (*extint.OnboardingInputResponse, error) {
+	f, result := createChannel(&extint.GatewayWrapper_OnboardingContinueResponse{}, 1)
+	defer f()
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: in,
+	})
+	if err != nil {
+		return nil, err
 	}
+	continue_result := <-result
+	return &extint.OnboardingInputResponse {
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+		OneofMessageType: &extint.OnboardingInputResponse_OnboardingContinueResponse{
+			continue_result.GetOnboardingContinueResponse(),
+		},
+	}, nil
+}
+
+func SendOnboardingSkip( in *extint.GatewayWrapper_OnboardingSkip )  (*extint.OnboardingInputResponse, error) {
+	log.Println("Received rpc request OnboardingSkip(", in, ")")
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: in,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &extint.OnboardingInputResponse{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
 }
 
 // The service definition.
@@ -580,16 +612,16 @@ func (m *rpcService) SetFaceToEnroll(ctx context.Context, in *extint.SetFaceToEn
 func (c *rpcService) EventStream(in *extint.EventRequest, stream extint.ExternalInterface_EventStreamServer) error {
 	log.Println("Received rpc request EventStream(", in, ")")
 
-	events_channel := make(chan RobotToExternalCladResult, 16)
-	engineChanMap[gw_clad.MessageRobotToExternalTag_Event] = events_channel
-	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_Event)
-	log.Println(engineChanMap[gw_clad.MessageRobotToExternalTag_Event])
+	f, eventsChannel := createChannel(&extint.GatewayWrapper_Event{}, 16)
+	defer f()
 
-	for result := range events_channel {
+	for result := range eventsChannel {
 		log.Println("Got result:", result)
-		event := CladEventToProto(result.Message.GetEvent())
-		log.Println("Made event:", event)
-		if err := stream.Send(event); err != nil {
+		eventResult := &extint.EventResult{
+			Event: result.GetEvent(),
+		}
+		log.Println("Made event:", eventResult)
+		if err := stream.Send(eventResult); err != nil {
 			return err
 		} else if err = stream.Context().Err(); err != nil {
 			// This is the case where the user disconnects the stream
@@ -655,7 +687,7 @@ func SDKBehaviorRequestDeactivation(in *extint.SDKActivationRequest) (*extint.SD
 func (m *rpcService) Pang(ctx context.Context, in *extint.Ping) (*extint.Pong, error) {
 	log.Println("Received rpc request Ping(", in, ")")
 
-	f, result := createChannel(&extint.GatewayWrapper_Pong{})
+	f, result := createChannel(&extint.GatewayWrapper_Pong{}, 1)
 	defer f()
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
@@ -675,7 +707,7 @@ func (m *rpcService) Pang(ctx context.Context, in *extint.Ping) (*extint.Pong, e
 func (m *rpcService) Bang(ctx context.Context, in *extint.Bing) (*extint.Bong, error) {
 	log.Println("Received rpc request Bing(", in, ")")
 
-	f, result := createChannel(&extint.GatewayWrapper_Bong{})
+	f, result := createChannel(&extint.GatewayWrapper_Bong{}, 1)
 	defer f()
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
@@ -688,6 +720,46 @@ func (m *rpcService) Bang(ctx context.Context, in *extint.Bing) (*extint.Bong, e
 	}
 	bong := <-result
 	return bong.GetBong(), nil
+}
+
+// Request the current robot onboarding status
+func (m *rpcService) GetOnboardingState(ctx context.Context, in *extint.OnboardingStateRequest) (*extint.OnboardingStateResponse, error) {
+	log.Println("Received rpc request GetOnboardingState(", in, ")")
+	f, result := createChannel(&extint.GatewayWrapper_OnboardingState{}, 1)
+	defer f()
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_OnboardingStateRequest{
+			in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	onboarding_state := <-result
+	return &extint.OnboardingStateResponse{
+		OnboardingState: onboarding_state.GetOnboardingState(),
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
+func (m *rpcService) SendOnboardingInput(ctx context.Context, in *extint.OnboardingInputRequest) (*extint.OnboardingInputResponse, error) {
+	log.Println("Received rpc request OnboardingInputRequest(", in, ")")
+	
+	// oneof_message_type
+	switch x := in.OneofMessageType.(type) {
+	case *extint.OnboardingInputRequest_OnboardingContinue:
+		return SendOnboardingContinue( &extint.GatewayWrapper_OnboardingContinue { 
+			in.GetOnboardingContinue(),
+		})
+	case *extint.OnboardingInputRequest_OnboardingSkip:
+		return SendOnboardingSkip( &extint.GatewayWrapper_OnboardingSkip { 
+			in.GetOnboardingSkip(),
+		})
+	default:
+		return nil, status.Errorf(0, "OnboardingInputRequest.OneofMessageType has unexpected type %T", x)
+	}
 }
 
 func newServer() *rpcService {
