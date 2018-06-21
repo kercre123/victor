@@ -52,17 +52,6 @@ namespace {
   const int kConfirmationConfigProxMaxReading = 28;
   
   const f32 kMinTravelDistanceWithoutSeeingWhite_mm = 260; // length of largest diagonal in habitat
-  
-  bool _devForceOdomToConfirmChargerThreshold = false;
-#if ANKI_DEV_CHEATS
-  // console func helper --- forces the odometry measurement to
-  //  exceed the threshold limit to make the charger pose be unreliable
-  void DevForceOdomToThreshold(ConsoleFunctionContextRef context)
-  {
-    _devForceOdomToConfirmChargerThreshold = true;
-  }
-  CONSOLE_FUNC(DevForceOdomToThreshold, "ConfirmHabitat");
-#endif
 }
     
 
