@@ -55,7 +55,8 @@ func WriteProtoToEngine(conn ipc.Conn, msg proto.Message) (int, error) {
 
 func createChannel(tag interface{}) (func(), chan extint.GatewayWrapper) {
 	result := make(chan extint.GatewayWrapper)
-	reflectedType := reflect.TypeOf(&tag)
+	reflectedType := reflect.TypeOf(tag).String()
+	log.Println("Listening for", reflectedType)
 	engineProtoChanMap[reflectedType] = result
 	return func() {
 		delete(engineProtoChanMap, reflectedType)
@@ -654,7 +655,7 @@ func SDKBehaviorRequestDeactivation(in *extint.SDKActivationRequest) (*extint.SD
 func (m *rpcService) Pang(ctx context.Context, in *extint.Ping) (*extint.Pong, error) {
 	log.Println("Received rpc request Ping(", in, ")")
 
-	f, result := createChannel(extint.GatewayWrapper_Pong{})
+	f, result := createChannel(&extint.GatewayWrapper_Pong{})
 	defer f()
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
@@ -674,7 +675,7 @@ func (m *rpcService) Pang(ctx context.Context, in *extint.Ping) (*extint.Pong, e
 func (m *rpcService) Bang(ctx context.Context, in *extint.Bing) (*extint.Bong, error) {
 	log.Println("Received rpc request Bing(", in, ")")
 
-	f, result := createChannel(extint.GatewayWrapper_Bong{})
+	f, result := createChannel(&extint.GatewayWrapper_Bong{})
 	defer f()
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
