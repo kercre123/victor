@@ -16,12 +16,21 @@ include(anki_build_cxx)
 #
 # cozmo_engine
 #
-set_source_files_properties(${PROTOBUF_OUTPUT}
-                            PROPERTIES GENERATED TRUE)
+
+# Generate c++ protobuf files
+add_custom_command(
+  OUTPUT ${GATEWAY_PROTO_CPP_GEN_HEADERS} ${GATEWAY_PROTO_CPP_GEN_SRCS}
+  COMMAND mkdir -p ${PROTOBUF_OUTPUT_DIR}
+  COMMAND ${PROTOBUF_HOME}/bin/protoc -I"${CMAKE_SOURCE_DIR}/cloud/gateway"
+    -I"${PROTOBUF_HOME}/include"
+    "--cpp_out=${PROTOBUF_OUTPUT_DIR}"
+    ${GATEWAY_PROTO_SRCS}
+  DEPENDS "${GATEWAY_PROTO_SRCS}"
+)
 # NOTE: protobuf generated files must be linked directly to cozmo_engine
 #       Otherwise, there is a problem comparing the default string, and it
 #       generates incorrect serialized messages.
-anki_build_cxx_library(cozmo_engine ${ANKI_SRCLIST_DIR} ${PROTOBUF_OUTPUT})
+anki_build_cxx_library(cozmo_engine ${ANKI_SRCLIST_DIR} ${GATEWAY_PROTO_CPP_GEN_SRCS} ${GATEWAY_PROTO_CPP_GEN_HEADERS})
 anki_build_target_license(cozmo_engine "ANKI")
 
 
