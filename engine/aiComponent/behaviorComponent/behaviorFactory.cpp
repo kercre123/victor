@@ -38,6 +38,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorQuietModeCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/danceToTheBeat/behaviorDanceToTheBeat.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevBatteryLogging.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevDesignCubeLights.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevDisplayReadingsOnFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevEventSequenceCapture.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevImageCapture.h"
@@ -325,6 +326,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::DevBatteryLogging:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDevBatteryLogging(config));
+      break;
+    }
+    
+    case BehaviorClass::DevDesignCubeLights:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDevDesignCubeLights(config));
       break;
     }
     

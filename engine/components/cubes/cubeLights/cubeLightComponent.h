@@ -75,7 +75,12 @@ public:
   //////
   // end IDependencyManagedComponent functions
   //////
-  
+
+  #if ANKI_DEV_CHEATS
+    void SaveLightsToDisk(const std::string& fileName,
+                          const CubeLightAnimation::Animation& anim);
+  #endif
+
   using AnimCompletedCallback = std::function<void(void)>;
   
   // Takes whatever animation is pointed to by the animTrigger and plays it on the

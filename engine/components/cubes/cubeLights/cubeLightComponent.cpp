@@ -81,6 +81,26 @@ bool CubeLightAnimation::ObjectLights::operator==(const CubeLightAnimation::Obje
 }
   
 
+#if ANKI_DEV_CHEATS
+void CubeLightComponent::SaveLightsToDisk(const std::string& fileName,
+                                          const CubeLightAnimation::Animation& anim)
+{
+  auto json = CubeLightAnimation::AnimationToJSON(fileName, anim);
+  const Util::Data::DataPlatform* platform = _robot->GetContext()->GetDataPlatform();
+  auto relFolderPath = "DevLights/";
+  auto fullFolderPath = platform->pathToResource( Util::Data::Scope::Cache, relFolderPath );
+  fullFolderPath = Util::FileUtils::AddTrailingFileSeparator( fullFolderPath );
+
+  if ( Util::FileUtils::DirectoryDoesNotExist( fullFolderPath ) )
+  {
+    Util::FileUtils::CreateDirectory( fullFolderPath, false, true );
+  }
+
+  platform->writeAsJson(fullFolderPath + fileName,
+                        json);
+}
+#endif
+
 CubeLightComponent::CubeLightComponent()
 : IDependencyManagedComponent(this, RobotComponentID::CubeLights)
 {

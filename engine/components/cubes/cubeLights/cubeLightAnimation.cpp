@@ -133,6 +133,101 @@ bool ParseJsonToPattern(const Json::Value& json, LightPattern& pattern)
   return true;
 }
 
+
+Json::Value LEDArrayToJson(const ObjectLEDArray& array)
+{
+  Json::Value outJson;
+  int i = 0;
+  for(u32 data: array){
+    outJson[i] = data;
+    i++;
+  }
+
+  return outJson;
+}
+
+
+Json::Value SignedArrayToJson(const std::array<s32, 4>& array)
+{
+  Json::Value outJson;
+  int i = 0;
+  for(u32 data: array){
+    outJson[i] = data;
+    i++;
+  }
+
+  return outJson;
+}
+
+Json::Value AnimationToJSON(const std::string& animName, const Animation& animation)
+{
+  Json::Value outJson;
+  int i = 0;
+  Json::Value patternArray;
+  for(const auto& pattern: animation){
+    // Pattern metadata
+    Json::Value patternAndMetadata;
+    patternAndMetadata[kDurationKey] = pattern.duration_ms;
+    patternAndMetadata[kPatternDebugNameKey] = pattern.name;
+    // actual pattern
+    {
+      Json::Value patternJSON;
+      {
+        // On Color array
+        Json::Value onColorArray;
+        auto colorArrayIdx = 0;
+        for(const auto& color: pattern.lights.onColors){
+          ColorRGBA rgba(color);
+          Json::Value colorArray;
+          colorArray[0] = rgba.r();
+          colorArray[1] = rgba.g();
+          colorArray[2] = rgba.b();
+          colorArray[3] = rgba.alpha();
+
+          onColorArray[colorArrayIdx] = colorArray;
+          colorArrayIdx++;
+        }
+        patternJSON[kOnColorsKey] = onColorArray;
+      }
+      {
+        // Off Color array
+        Json::Value offColorArray;
+        auto colorArrayIdx = 0;
+        for(const auto& color: pattern.lights.offColors){
+          ColorRGBA rgba(color);
+          Json::Value colorArray;
+          colorArray[0] = rgba.r();
+          colorArray[1] = rgba.g();
+          colorArray[2] = rgba.b();
+          colorArray[3] = rgba.alpha();
+
+          offColorArray[colorArrayIdx] = colorArray;
+          colorArrayIdx++;
+        }
+        patternJSON[kOffColorsKey] = offColorArray;
+      }
+
+      patternJSON[kOnPeriodKey] = LEDArrayToJson(pattern.lights.onPeriod_ms);
+      patternJSON[kOffPeriodKey] = LEDArrayToJson(pattern.lights.offPeriod_ms);
+      patternJSON[kTransitionOnPeriodKey] = LEDArrayToJson(pattern.lights.transitionOnPeriod_ms);
+      patternJSON[kTransitionOffPeriodKey] = LEDArrayToJson(pattern.lights.transitionOffPeriod_ms);
+
+      patternJSON[kOffsetKey] = SignedArrayToJson(pattern.lights.offset);
+      patternJSON[kRotateKey] = pattern.lights.rotate;
+
+
+      patternAndMetadata[kPatternKey] = patternJSON;
+    }
+
+    patternArray[i] = patternAndMetadata;
+  }
+
+  outJson[animName] = patternArray;
+
+  return outJson;
+}
+
+
 void LightPattern::Print() const
 {
   for(int i = 0; i < static_cast<int>(CubeConstants::NUM_CUBE_LEDS); i++)
