@@ -48,9 +48,6 @@ public:
   // Prepare to start animation
   void InitAnimation();
   
-  // Tick Audio Engine each animation frame
-  void Update() const;
-
   // Perform functionality for frame
   void PlayAudioKeyFrame( const RobotAudioKeyFrame& keyFrame, Util::RandomGenerator* randomGen );
   

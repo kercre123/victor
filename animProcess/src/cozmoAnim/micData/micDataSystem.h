@@ -86,6 +86,7 @@ public:
   void AudioSaveCallback(const std::string& dest);
 
   BeatInfo GetLatestBeatInfo();
+  const Anki::Cozmo::RobotInterface::MicDirection& GetLatestMicDirectionMsg() const { return _latestMicDirectionMsg; }
   
   void ResetBeatDetector();
   
@@ -109,6 +110,8 @@ private:
 #if ANKI_DEV_CHEATS
   bool _forceRecordClip = false;
 #endif
+  
+  RobotInterface::MicDirection _latestMicDirectionMsg;
   
   // Members for managing the results of async FFT processing
   struct FFTResultData {

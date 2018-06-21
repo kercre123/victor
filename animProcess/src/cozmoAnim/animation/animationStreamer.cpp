@@ -1907,11 +1907,6 @@ namespace Cozmo {
     // Send the data 
     SendAnimationMessages(messageWrapper);
 
-
-    // Tick audio engine
-    _animAudioClient->Update();
-    
-
     // Send animState message
     if (--_numTicsToSendAnimState == 0) {
       const auto numKeyframes = _proceduralAnimation->GetTrack<SpriteSequenceKeyFrame>().TrackLength();

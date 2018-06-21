@@ -22,25 +22,24 @@ namespace Anki {
     class AnimationStreamer;
     class StreamingAnimationModifier;
     class TextToSpeechComponent;
-  }
-}
-namespace Anki {
-  namespace Cozmo {
+
+    namespace Audio {
+      class CozmoAudioController;
+      class MicrophoneAudioClient;
+    } // Audio
     namespace RobotInterface {
       struct TextToSpeechPrepare;
       struct TextToSpeechDeliver;
       struct TextToSpeechPlay;
       struct TextToSpeechCancel;
-    }
-  }
-}
-namespace Anki {
+    } // RobotInterface
+  } // Cozmo
   namespace Util {
     namespace Data {
       class DataPlatform;
     }
-  }
-}
+  } // Util
+} // Anki
 
 namespace Anki {
 namespace Cozmo {
@@ -65,12 +64,13 @@ public:
 
 protected:
 
-  bool               _isInitialized = false;
-
-  std::unique_ptr<AnimContext>      _context;
-  std::unique_ptr<AnimationStreamer>     _animationStreamer;
-  std::unique_ptr<StreamingAnimationModifier> _streamingAnimationModifier;
-  std::unique_ptr<TextToSpeechComponent> _ttsComponent;
+  bool                                              _isInitialized = false;
+  std::unique_ptr<AnimContext>                      _context;
+  std::unique_ptr<AnimationStreamer>                _animationStreamer;
+  std::unique_ptr<StreamingAnimationModifier>       _streamingAnimationModifier;
+  std::unique_ptr<TextToSpeechComponent>            _ttsComponent;
+  std::unique_ptr<Audio::MicrophoneAudioClient>     _microphoneAudioClient;
+  Audio::CozmoAudioController*                      _audioControllerPtr = nullptr;
 
 }; // class AnimEngine
 

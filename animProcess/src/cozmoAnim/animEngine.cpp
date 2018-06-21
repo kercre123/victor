@@ -14,11 +14,14 @@
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
 
+#include "cozmoAnim/audio/cozmoAudioController.h"
+#include "cozmoAnim/audio/microphoneAudioClient.h"
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/animation/streamingAnimationModifier.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
+#include "cozmoAnim/micData/micDataSystem.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "cozmoAnim/textToSpeech/textToSpeechComponent.h"
 
@@ -77,6 +80,8 @@ AnimEngine::AnimEngine(Util::Data::DataPlatform* dataPlatform)
   if (Anki::Util::gTickTimeProvider == nullptr) {
     Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();
   }
+  
+  _microphoneAudioClient.reset(new Audio::MicrophoneAudioClient(_context->GetAudioController()));
 }
 
 AnimEngine::~AnimEngine()
@@ -115,6 +120,8 @@ Result AnimEngine::Init()
   // Create and set up EngineRobotAudioInput to receive Engine->Robot messages and broadcast Robot->Engine
   auto* audioMux = _context->GetAudioMultiplexer();
   auto regId = audioMux->RegisterInput( new Audio::EngineRobotAudioInput() );
+  // Easy access to Audio Controller
+  _audioControllerPtr = _context->GetAudioController();
 
   // Set up message handler
   auto * audioInput = static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput(regId));
@@ -201,6 +208,14 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
   _animationStreamer->Update();
   if(_streamingAnimationModifier != nullptr){
     _streamingAnimationModifier->ApplyAlterationsAfterUpdate(_animationStreamer.get());
+  }
+  
+  if (_audioControllerPtr != nullptr) {
+    // Update mic info in Audio Engine
+    const auto& micDirectionMsg = _context->GetMicDataSystem()->GetLatestMicDirectionMsg();
+    _microphoneAudioClient->ProcessMessage(micDirectionMsg);
+    // Tick the Audio Engine at the end of each anim frame
+    _audioControllerPtr->Update();
   }
 
 #if ENABLE_CE_RUN_TIME_DIAGNOSTICS

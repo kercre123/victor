@@ -405,7 +405,6 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
 
   #if ANKI_DEV_CHEATS
     // Store off a copy of (one of) the micDirectionData from this update for debug drawing
-    Anki::Cozmo::RobotInterface::MicDirection micDirectionData{};
     bool updatedMicDirection = false;
   #endif
   for (const auto& msg : stolenMessages)
@@ -416,8 +415,8 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     }
     else if (msg->tag == RobotInterface::RobotToEngine::Tag_micDirection)
     {
+      _latestMicDirectionMsg = msg->micDirection;
       #if ANKI_DEV_CHEATS
-        micDirectionData = msg->micDirection;
         updatedMicDirection = true;
       #endif
       RobotInterface::SendAnimToEngine(msg->micDirection);
@@ -438,7 +437,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     if (updatedMicDirection || recordingSecondsRemaining != 0)
     {
       FaceInfoScreenManager::getInstance()->DrawConfidenceClock(
-        micDirectionData,
+        _latestMicDirectionMsg,
         GetIncomingMicDataPercentUsed(),
         recordingSecondsRemaining,
         endTriggerDispTime_ns != 0 || _currentlyStreaming);

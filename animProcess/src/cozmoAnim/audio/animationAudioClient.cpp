@@ -58,13 +58,6 @@ void AnimationAudioClient::InitAnimation()
   std::lock_guard<std::mutex> lock( _lock );
   _activeEvents.clear();
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AnimationAudioClient::Update() const
-{
-  if ( _audioController == nullptr ) { return; }
-  _audioController->Update();
-}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AnimationAudioClient::PlayAudioKeyFrame( const RobotAudioKeyFrame& keyFrame, Util::RandomGenerator* randomGen )
