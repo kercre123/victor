@@ -47,6 +47,18 @@ create_certs: .require_ip
 	scp trust.cert root@$(ANKI_ROBOT_HOST):/data/trust.cert
 	scp trust.key root@$(ANKI_ROBOT_HOST):/data/trust.key
 
+create_certs_mac:
+	cp trust.conf temp_trust.conf
+	echo "DNS.2       = localhost:8443" >> temp_trust.conf
+	openssl req -config temp_trust.conf \
+	-subj "/C=US/ST=California/L=SF/O=Anki/CN=localhost" \
+	-new -x509 -days 1000 -newkey rsa:2048 -nodes -keyout trust.key -out trust.cert
+	rm temp_trust.conf
+	mkdir -p /tmp/anki/gateway
+	cp trust.key /tmp/anki/gateway
+	cp trust.cert /tmp/anki/gateway
+
+
 test_curl_events: .require_ip
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/event_stream -d '{}'
 	@echo
@@ -81,10 +93,10 @@ test_curl: .require_ip
 	sleep 2	
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/drive_wheels -d '{"left_wheel_mmps":0.0,"right_wheel_mmps":0.0,"left_wheel_mmps2":0.0,"right_wheel_mmps2":0.0}'
 	@echo
-	
+
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/play_animation -d '{"animation":{"name":"anim_poked_giggle"},"loops":1}'
 	@echo
-	
+
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/move_head -d '{"speed_rad_per_sec":0.5}'
 	@echo
 	sleep 2

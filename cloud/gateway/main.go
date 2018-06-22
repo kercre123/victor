@@ -26,12 +26,6 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-const (
-	Key  = "/data/trust.key"
-	Cert = "/data/trust.cert"
-	Port = 443
-)
-
 type RobotToExternalCladResult struct {
 	Message gw_clad.MessageRobotToExternal
 	Error   error
@@ -181,11 +175,11 @@ func main() {
 	}
 	demoAddr = fmt.Sprintf("localhost:%d", Port)
 
-	engineSock = getSocketWithRetry("/dev/socket/", "_engine_gateway_server_", "client")
+	engineSock = getSocketWithRetry(SocketPath, "_engine_gateway_server_", "client")
 	defer engineSock.Close()
 	engineChanMap = make(map[gw_clad.MessageRobotToExternalTag](chan RobotToExternalCladResult))
 
-	protoEngineSock = getSocketWithRetry("/dev/socket/", "_engine_gateway_proto_server_", "client")
+	protoEngineSock = getSocketWithRetry(SocketPath, "_engine_gateway_proto_server_", "client")
 	defer protoEngineSock.Close()
 	engineProtoChanMap = make(map[string](chan extint.GatewayWrapper))
 
