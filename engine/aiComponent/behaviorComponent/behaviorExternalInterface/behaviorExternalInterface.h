@@ -61,6 +61,7 @@ class ProgressionUnlockComponent;
 class ProxSensorComponent;
 class PublicStateBroadcaster;
 class SDKComponent;
+class SettingsManager;
 class DataAccessorComponent;
 class TextToSpeechCoordinator;
 class TouchSensorComponent;
@@ -154,7 +155,8 @@ public:
             TextToSpeechCoordinator*       TextToSpeechCoordinator,
             TouchSensorComponent*          touchSensorComponent,
             VisionComponent*               visionComponent,
-            VisionScheduleMediator*        visionScheduleMediator);
+            VisionScheduleMediator*        visionScheduleMediator,
+            SettingsManager*               settingsManager);
     
   virtual ~BehaviorExternalInterface();
 
@@ -244,6 +246,9 @@ public:
   inline bool HasSDKComponent() const { return GetComponentWrapper(BEIComponentID::SDK).IsComponentValid();}
   SDKComponent& GetSDKComponent() const {return GetComponentWrapper(BEIComponentID::SDK).GetComponent<SDKComponent>();}
 
+  inline bool HasSettingsManager() const { return GetComponentWrapper(BEIComponentID::SettingsManager).IsComponentValid();}
+  SettingsManager& GetSettingsManager() const {return GetComponentWrapper(BEIComponentID::SettingsManager).GetComponent<SettingsManager>();}
+  
   // Util functions
   OffTreadsState GetOffTreadsState() const;
   Util::RandomGenerator& GetRNG();
@@ -251,7 +256,7 @@ public:
 private:
   struct CompArrayWrapper{
     public:
-      CompArrayWrapper(AIComponent*                  aiComponent,
+      CompArrayWrapper(AIComponent*                   aiComponent,
                        AnimationComponent*            animationComponent,
                        BeatDetectorComponent*         beatDetectorComponent,
                        BehaviorContainer*             behaviorContainer,
@@ -282,7 +287,8 @@ private:
                        TextToSpeechCoordinator*       textToSpeechCoordinator,
                        TouchSensorComponent*          touchSensorComponent,
                        VisionComponent*               visionComponent,
-                       VisionScheduleMediator*        visionSchedulMediator);
+                       VisionScheduleMediator*        visionSchedulMediator,
+                       SettingsManager*               settingsManager);
       ~CompArrayWrapper(){};
       EntityFullEnumeration<BEIComponentID, BEIComponentWrapper, BEIComponentID::Count> _array;
   };

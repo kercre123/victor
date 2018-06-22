@@ -155,7 +155,7 @@ class Robot : private Util::noncopyable
 {
 public:
 
-  Robot(const RobotID_t robotID, const CozmoContext* context);
+  Robot(const RobotID_t robotID, CozmoContext* context);
   ~Robot();
 
   // =========== Robot properties ===========
@@ -333,6 +333,7 @@ public:
 
   RobotToEngineImplMessaging& GetRobotToEngineImplMessaging() { return GetComponent<RobotToEngineImplMessaging>(); }
 
+  CozmoContext* GetContext() { return _context; }
   const CozmoContext* GetContext() const { return _context; }
 
   const Util::RandomGenerator& GetRNG() const;
@@ -640,7 +641,7 @@ public:
 protected:  
   bool _toldToShutdown = false;
 
-  const CozmoContext* _context;
+  CozmoContext* _context;
   std::unique_ptr<PoseOriginList> _poseOrigins;
 
   using EntityType = DependencyManagedEntity<RobotComponentID>;

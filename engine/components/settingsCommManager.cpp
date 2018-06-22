@@ -18,6 +18,8 @@
 
 #include "util/console/consoleInterface.h"
 
+#include "clad/types/robotSettingsTypes.h"
+
 // Log options
 #define LOG_CHANNEL "SettingsCommManager"
 
@@ -33,19 +35,64 @@ namespace
 
   static const char* kConsoleGroup = "RobotSettings";
 
+  // NOTE: Need to keep kMasterVolumeLevels in sync with MasterVolume in robotSettings.clad
+  constexpr const char* kMasterVolumeLevels = "Mute,Low,MediumLow,Medium,MediumHigh,High";
+  CONSOLE_VAR_ENUM(u8, kMasterVolumeLevel, kConsoleGroup, 0, kMasterVolumeLevels);
   void DebugSetMasterVolume(ConsoleFunctionContextRef context)
   {
-    const std::string volumeSettingValue = ConsoleArg_Get_String(context, "volumeSettingValue");
+    const std::string volumeSettingValue = MasterVolumeToString(static_cast<MasterVolume>(kMasterVolumeLevel));
     s_SettingsCommManager->HandleRobotSettingChangeRequest("Robot.MasterVolume", volumeSettingValue);
   }
-  CONSOLE_FUNC(DebugSetMasterVolume, kConsoleGroup, const char* volumeSettingValue);
-
+  CONSOLE_FUNC(DebugSetMasterVolume, kConsoleGroup);
+  
+  // NOTE: Need to keep kEyeColors in sync with EyeColor in robotSettings.clad
+  constexpr const char* kEyeColors = "Teal,Orange,Yellow,LimeGreen,AzureBlue,Purple,MatrixGreen";
+  CONSOLE_VAR_ENUM(u8, kEyeColor, kConsoleGroup, 0, kEyeColors);
   void DebugSetEyeColor(ConsoleFunctionContextRef context)
   {
-    const std::string eyeColorValue = ConsoleArg_Get_String(context, "eyeColorValue");
+    const std::string eyeColorValue = EyeColorToString(static_cast<EyeColor>(kEyeColor));
     s_SettingsCommManager->HandleRobotSettingChangeRequest("Robot.EyeColor", eyeColorValue);
   }
-  CONSOLE_FUNC(DebugSetEyeColor, kConsoleGroup, const char* eyeColorValue);
+  CONSOLE_FUNC(DebugSetEyeColor, kConsoleGroup);
+
+  void DebugSetLocale(ConsoleFunctionContextRef context)
+  {
+    const std::string localeValue = ConsoleArg_Get_String(context, "localeValue");
+    s_SettingsCommManager->HandleRobotSettingChangeRequest("Robot.Locale", localeValue);
+  }
+  CONSOLE_FUNC(DebugSetLocale, kConsoleGroup, const char* localeValue);
+
+  void DebugSetTimeZone(ConsoleFunctionContextRef context)
+  {
+    const std::string timeZoneValue = ConsoleArg_Get_String(context, "timeZoneValue");
+    s_SettingsCommManager->HandleRobotSettingChangeRequest("Robot.TimeZone", timeZoneValue);
+  }
+  CONSOLE_FUNC(DebugSetTimeZone, kConsoleGroup, const char* timeZoneValue);
+
+  void DebugSetDefaultLocation(ConsoleFunctionContextRef context)
+  {
+    const std::string defaultLocationValue = ConsoleArg_Get_String(context, "defaultLocationValue");
+    s_SettingsCommManager->HandleRobotSettingChangeRequest("Robot.DefaultLocaction", defaultLocationValue);
+  }
+  CONSOLE_FUNC(DebugSetDefaultLocation, kConsoleGroup, const char* defaultLocationValue);
+
+  void DebugToggle24HourClock(ConsoleFunctionContextRef context)
+  {
+    s_SettingsCommManager->HandleRobotSettingToggleRequest("Robot.24HourClock");
+  }
+  CONSOLE_FUNC(DebugToggle24HourClock, kConsoleGroup);
+
+  void DebugToggleTempIsFahrenheit(ConsoleFunctionContextRef context)
+  {
+    s_SettingsCommManager->HandleRobotSettingToggleRequest("Robot.TempIsFahrenheit");
+  }
+  CONSOLE_FUNC(DebugToggleTempIsFahrenheit, kConsoleGroup);
+
+  void DebugToggleDistIsMetric(ConsoleFunctionContextRef context)
+  {
+    s_SettingsCommManager->HandleRobotSettingToggleRequest("Robot.DistIsMetric");
+  }
+  CONSOLE_FUNC(DebugToggleDistIsMetric, kConsoleGroup);
 
 #endif
 }
@@ -91,6 +138,17 @@ bool SettingsCommManager::HandleRobotSettingChangeRequest(const std::string& set
   // TODO Potentially send message to Cloud (only if successful?)
   return true;
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// this is a helper function mostly for testing
+bool SettingsCommManager::HandleRobotSettingToggleRequest(const std::string& settingKey)
+{
+  bool curSetting = _settingsManager->GetRobotSettingAsBool(settingKey);
+  std::string newValue = curSetting ? "false" : "true";
+  return HandleRobotSettingChangeRequest(settingKey, newValue);
+}
+
 
 // TODO:  Message handlers from App
 // TODO:  Message handlers from Cloud

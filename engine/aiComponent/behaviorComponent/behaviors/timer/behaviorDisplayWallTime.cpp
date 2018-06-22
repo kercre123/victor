@@ -14,6 +14,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorDisplayWallTime.h"
 
 #include "engine/aiComponent/timerUtility.h"
+#include "engine/components/settingsManager.h"
 #include "engine/wallTime.h"
 
 #include "util/console/consoleInterface.h"
@@ -111,7 +112,9 @@ BehaviorProceduralClock::GetDigitsFunction BehaviorDisplayWallTime::BuildTimerFu
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDisplayWallTime::ShouldDisplayAsMilitaryTime() const
 {
-  return kShouldDisplayAsMilitaryTime;
+  const auto& settingsManager = GetBEI().GetSettingsManager();
+  const bool clockIs24Hour = settingsManager.GetRobotSettingAsBool("Robot.24HourClock");
+  return kShouldDisplayAsMilitaryTime || clockIs24Hour;
 }
 
 } // namespace Cozmo

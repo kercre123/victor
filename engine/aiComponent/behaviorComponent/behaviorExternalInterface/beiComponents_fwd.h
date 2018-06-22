@@ -31,6 +31,7 @@ enum class BEIComponentID{
   ProxSensor,
   PublicStateBroadcaster,
   SDK,
+  SettingsManager,
   RobotAudioClient,
   RobotInfo,
   TextToSpeechCoordinator,

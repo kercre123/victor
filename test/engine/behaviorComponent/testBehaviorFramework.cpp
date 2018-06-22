@@ -103,7 +103,8 @@ void InitBEIPartial( const BEIComponentMap& map, BehaviorExternalInterface& bei 
            GetFromMap<TextToSpeechCoordinator>(map, BEIComponentID::TextToSpeechCoordinator),
            GetFromMap<TouchSensorComponent>(map, BEIComponentID::TouchSensor),
            GetFromMap<VisionComponent>(map, BEIComponentID::Vision),
-           GetFromMap<VisionScheduleMediator>(map, BEIComponentID::VisionScheduleMediator));
+           GetFromMap<VisionScheduleMediator>(map, BEIComponentID::VisionScheduleMediator),
+           GetFromMap<SettingsManager>(map, BEIComponentID::SettingsManager));
 
 }
 

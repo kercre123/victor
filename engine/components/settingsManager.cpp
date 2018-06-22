@@ -18,6 +18,7 @@
 
 #include "util/console/consoleInterface.h"
 
+#include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/robotSettingsTypes.h"
 
 // Log options
@@ -41,12 +42,10 @@ SettingsManager::SettingsManager()
 }
 
 
-// TODO:  Does this need to be registered somehow such that a bunch of other things are initialized before it?
-// (e.g. to ensure audio system is up, before we set volume settings in this InitDependent call.)
-// Another strategy is to delay setting the settings until the first UpdateDependent call...
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComponents)
 {
+  _robot = robot;
   _audioClient = robot->GetAudioClient();
 
   // Read the default settings config
@@ -56,8 +55,6 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
   {
     const Json::Value& item = (*it);
     _defaultSettings[it.name()] = Setting(item.asString());
-    LOG_INFO("SettingsManager.InitDependent", "JSON item: name is %s; value is %s",
-             it.name().c_str(), item.asString().c_str());
   }
 
   _platform = robot->GetContextDataPlatform();
@@ -124,18 +121,25 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
     SaveSettingsFile();
   }
 
-  // Register the actual setting application methods:
+  // Register the actual setting application methods, for those settings that want to execute code when changed:
   _currentSettings["Robot.MasterVolume"]._settingSetter = &SettingsManager::ApplySettingMasterVolume;
   _currentSettings["Robot.EyeColor"]._settingSetter = &SettingsManager::ApplySettingEyeColor;
+  _currentSettings["Robot.Locale"]._settingSetter = &SettingsManager::ApplySettingLocale;
 
-  // Finally, apply all of the settings we just loaded and/or set
-  ApplyAllCurrentSettings();
+  // Finally, set a flag so we will apply all of the settings
+  // we just loaded and/or set, in the first update
+  _applySettingsNextTick = true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SettingsManager::UpdateDependent(const RobotCompMap& dependentComps)
 {
+  if (_applySettingsNextTick)
+  {
+    _applySettingsNextTick = false;
+    ApplyAllCurrentSettings();
+  }
 }
 
 
@@ -169,6 +173,34 @@ bool SettingsManager::SetRobotSetting(const std::string& key, const std::string&
   }
 
   return true;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string SettingsManager::GetRobotSettingAsString(const std::string& key) const
+{
+  const auto& it = _currentSettings.find(key);
+  if (it == _currentSettings.end())
+  {
+    LOG_ERROR("SettingsManager.GetRobotSetting.InvalidKey", "Invalid key %s", key.c_str());
+    return "Invalid";
+  }
+
+  return it->second._settingValue;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool SettingsManager::GetRobotSettingAsBool(const std::string& key) const
+{
+  const auto& it = _currentSettings.find(key);
+  if (it == _currentSettings.end())
+  {
+    LOG_ERROR("SettingsManager.GetRobotSetting.InvalidKey", "Invalid key %s", key.c_str());
+    return false;
+  }
+
+  return (it->second._settingValue == "true");
 }
 
 
@@ -233,8 +265,8 @@ bool SettingsManager::ApplySettingMasterVolume(const std::string& newValue)
     return false;
   }
 
-  // todo: actually set the volume
   LOG_INFO("ApplySettingMasterVolume.Apply", "Setting robot master volume to %s", newValue.c_str());
+  _robot->GetAudioClient()->SetRobotMasterVolume(masterVolume);
 
   return true;
 }
@@ -251,10 +283,29 @@ bool SettingsManager::ApplySettingEyeColor(const std::string& newValue)
     return false;
   }
 
-  // todo: actually set the eye color
   LOG_INFO("ApplySettingEyeColor.Apply", "Setting robot eye color to %s", newValue.c_str());
+  const auto& config = _robot->GetContext()->GetDataLoader()->GetEyeColorConfig();
+  const auto& eyeColorData = config[newValue];
+  const float hue = eyeColorData["Hue"].asFloat();
+  const float saturation = eyeColorData["Saturation"].asFloat();
+
+  _robot->SendRobotMessage<RobotInterface::SetFaceHue>(hue);
+  _robot->SendRobotMessage<RobotInterface::SetFaceSaturation>(saturation);
+
   return true;
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool SettingsManager::ApplySettingLocale(const std::string& newValue)
+{
+  LOG_INFO("ApplySettingLocale.Apply", "Setting locale to %s", newValue.c_str());
+  // Note: Since Locale utility has no error returns, we can't detect error;
+  // an invalid locale results in setting to the default en-US
+  _robot->GetContext()->SetLocale(newValue);
+  return true;
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

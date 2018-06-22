@@ -1,6 +1,12 @@
 // This serves to define the settings stored on the robot,
 // as well as their default values.
 {
+  "Robot.24HourClock" : "false",
+  "Robot.EyeColor" : "Teal",
+  "Robot.DefaultLocation" : "",
+  "Robot.DistIsMetric" : "true",
+  "Robot.Locale" : "en-US",
   "Robot.MasterVolume" : "Medium",
-  "Robot.EyeColor" : "Teal"
+  "Robot.TempIsFahrenheit" : "true",
+  "Rboot.TimeZone" : "America/Los_Angeles"
 }

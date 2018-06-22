@@ -346,10 +346,6 @@ Result CozmoEngine::Init(const Json::Value& config) {
 # endif
   _context->SetRandomSeed(seed);
 
-  // VIC-722: Set this automatically using location services
-  //          and/or set from UI/SDK?
-  _context->SetLocale("en-US");
-
   const auto& webService = _context->GetWebService();
   webService->Start(_context->GetDataPlatform(),
                     _context->GetDataLoader()->GetWebServerEngineConfig());

@@ -868,6 +868,18 @@ void RobotDataLoader::LoadRobotConfigs()
                 jsonFilename.c_str());
     }
   }
+
+  // Eye color config
+  {
+    static const std::string jsonFilename = "config/engine/eye_color_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _eyeColorConfig);
+    if (!success)
+    {
+      LOG_ERROR("RobotDataLoader.EyeColorConfigNotFound",
+                "Eye Color Config file %s not found or failed to parse",
+                jsonFilename.c_str());
+    }
+  }
 }
 
 bool RobotDataLoader::DoNonConfigDataLoading(float& loadingCompleteRatio_out)

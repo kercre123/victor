@@ -31,7 +31,7 @@
 namespace Anki {
 namespace Cozmo {
 
-RobotManager::RobotManager(const CozmoContext* context)
+RobotManager::RobotManager(CozmoContext* context)
 : _robot(nullptr)
 , _context(context)
 , _robotEventHandler(context)

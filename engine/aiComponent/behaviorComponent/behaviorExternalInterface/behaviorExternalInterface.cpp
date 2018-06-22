@@ -90,7 +90,8 @@ void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dep
        robot->GetComponentPtr<TextToSpeechCoordinator>(),
        robot->GetComponentPtr<TouchSensorComponent>(),
        robot->GetComponentPtr<VisionComponent>(),
-       robot->GetComponentPtr<VisionScheduleMediator>());
+       robot->GetComponentPtr<VisionScheduleMediator>(),
+       robot->GetComponentPtr<SettingsManager>());
 }
 
 
@@ -126,7 +127,8 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                      TextToSpeechCoordinator*       textToSpeechCoordinator,
                                      TouchSensorComponent*          touchSensorComponent,
                                      VisionComponent*               visionComponent,
-                                     VisionScheduleMediator*        visionScheduleMediator)
+                                     VisionScheduleMediator*        visionScheduleMediator,
+                                     SettingsManager*               settingsManager)
 {
   _arrayWrapper = std::make_unique<CompArrayWrapper>(aiComponent,
                                                      animationComponent,
@@ -159,7 +161,8 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                                      textToSpeechCoordinator,
                                                      touchSensorComponent,
                                                      visionComponent,
-                                                     visionScheduleMediator);
+                                                     visionScheduleMediator,
+                                                     settingsManager);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -206,7 +209,8 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
                                                               TextToSpeechCoordinator*       textToSpeechCoordinator,
                                                               TouchSensorComponent*          touchSensorComponent,
                                                               VisionComponent*               visionComponent,
-                                                              VisionScheduleMediator*        visionScheduleMediator)
+                                                              VisionScheduleMediator*        visionScheduleMediator,
+                                                              SettingsManager*               settingsManager)
 : _array({
     {BEIComponentID::AIComponent,             BEIComponentWrapper(aiComponent)},
     {BEIComponentID::Animation,               BEIComponentWrapper(animationComponent)},
@@ -234,6 +238,7 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
     {BEIComponentID::ProxSensor,              BEIComponentWrapper(proxSensor)},
     {BEIComponentID::PublicStateBroadcaster,  BEIComponentWrapper(publicStateBroadcaster)},
     {BEIComponentID::SDK,                     BEIComponentWrapper(sdkComponent)},
+    {BEIComponentID::SettingsManager,         BEIComponentWrapper(settingsManager)},
     {BEIComponentID::RobotAudioClient,        BEIComponentWrapper(robotAudioClient)},
     {BEIComponentID::RobotInfo,               BEIComponentWrapper(robotInfo)},
     {BEIComponentID::TextToSpeechCoordinator, BEIComponentWrapper(textToSpeechCoordinator)},

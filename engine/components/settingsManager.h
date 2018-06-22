@@ -45,8 +45,13 @@ public:
   // end IDependencyManagedComponent functions
   //////
 
+  // Returns true if successful
   bool SetRobotSetting(const std::string& key, const std::string& value,
                        const bool saveSettingsFile = true);
+
+  // Return the setting value (currently only strings or bools supported)
+  std::string GetRobotSettingAsString(const std::string& key) const;
+  bool        GetRobotSettingAsBool(const std::string& key) const;
 
 private:
 
@@ -62,9 +67,11 @@ private:
   SettingsContainer         _currentSettings;
   SettingsContainer         _defaultSettings;
 
+  Robot*                    _robot = nullptr;
   Util::Data::DataPlatform* _platform = nullptr;
   std::string               _savePath = "";
   std::string               _fullPathSettingsFile = "";
+  bool                      _applySettingsNextTick = false;
 
   Audio::EngineRobotAudioClient* _audioClient = nullptr;
 
@@ -76,6 +83,7 @@ private:
 
   bool ApplySettingMasterVolume(const std::string& newValue);
   bool ApplySettingEyeColor(const std::string& newValue);
+  bool ApplySettingLocale(const std::string& newValue);
 };
 
 

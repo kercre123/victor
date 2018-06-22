@@ -277,7 +277,7 @@ static const float kPitchAngleOnFacePlantMin_sim_rads = DEG_TO_RAD(110.f); //Thi
 static const float kPitchAngleOnFacePlantMax_sim_rads = DEG_TO_RAD(-80.f); //This has not been tested
 
 
-Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
+Robot::Robot(const RobotID_t robotID, CozmoContext* context)
 : _context(context)
 , _poseOrigins(new PoseOriginList())
 , _ID(robotID)

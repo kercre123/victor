@@ -32,6 +32,7 @@ namespace RobotInterface {
 class RobotToEngine;
 }
 class Robot;
+enum class MasterVolume : uint8_t;
 
 namespace Audio {
 class AudioBehaviorStackListener;
@@ -59,9 +60,7 @@ public:
 
   // Engine Robot Audio Client Helper Methods
   //--------------------------------------------------------------------------------------------------------------------
-  // Control Robot's master volume
-  // Volume is [0.0 - 1.0]
-  void SetRobotMasterVolume( float volume, int32_t timeInMilliSeconds = 0, CurveType curve = CurveType::Linear );
+  void SetRobotMasterVolume( MasterVolume volume );
 
 
   // Basic Audio Client Methods
