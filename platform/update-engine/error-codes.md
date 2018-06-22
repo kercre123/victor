@@ -5,6 +5,12 @@ Codes in this document must not change after release, they are add only.
 
 | Code | Reason                                |
 |:----:|---------------------------------------|
+|   1  | Switchboard: unknown status           |
+|   2  | Switchboard: OTA in progress          |
+|   3  | Switchboard: OTA completed            |
+|   4  | Switchboard: rebooting                |
+|   5  | Switchboard: Other OTA error          |
+|  10  | OS: Unknown system error              |
 | 200  | Unexpected .tar contents              |
 | 201  | Unhandled manifest version or feature |
 | 202  | Boot Control HAL failure              |
