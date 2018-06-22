@@ -60,6 +60,7 @@ bool LoadBehaviors(const std::string& path, BehaviorIDJsonMap& behaviors)
 
 TEST(BehaviorDirectoryStructure, Run)
 {
+  Anki::Util::_errG = false;
   const std::vector<std::string> directories = {
     "config/engine/behaviorComponent/behaviors/victorBehaviorTree",
     "config/engine/behaviorComponent/behaviors/devBehaviors"

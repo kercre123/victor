@@ -324,6 +324,16 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
 
     }
     
+    bool SpriteSequenceKeyFrame::operator==(const SpriteSequenceKeyFrame& other) const{
+      return (GetTriggerTime_ms() == other.GetTriggerTime_ms()) &&
+      (GetKeyframeDuration_ms() == other.GetKeyframeDuration_ms()) &&
+      (_compositeImageUpdated == other._compositeImageUpdated) &&
+      (*_compositeImage == *other._compositeImage) &&
+      (_internalUpdateInterval_ms  == other._internalUpdateInterval_ms) &&
+      (_scanlineOpacity == other._scanlineOpacity);
+    }
+    
+    
     Result SpriteSequenceKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
       DEV_ASSERT(false, "SpriteSequenceKeyframe.SetMembersFromJSON.ThisFunctionNotSupported.BuildKeyframeDirectly");

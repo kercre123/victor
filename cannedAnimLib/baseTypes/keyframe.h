@@ -63,7 +63,7 @@ namespace Cozmo {
     
     IKeyFrame();
     //IKeyFrame(const Json::Value& root);
-    ~IKeyFrame();
+    virtual ~IKeyFrame();
     
     // Returns true if the animation's time has reached frame's "trigger" time
     bool IsTimeToPlay(TimeStamp_t timeSinceAnimStart_ms) const;
@@ -143,6 +143,14 @@ namespace Cozmo {
   public:
     HeadAngleKeyFrame() {}
     HeadAngleKeyFrame(s8 angle_deg, u8 angle_variability_deg, TimeStamp_t duration_ms);
+
+    bool operator ==(const HeadAngleKeyFrame& other) const{
+      return (GetTriggerTime_ms() == other.GetTriggerTime_ms()) &&
+             (GetKeyframeDuration_ms() == other.GetKeyframeDuration_ms()) &&
+             (_motionDuration_ms == other._motionDuration_ms) &&
+             (_angle_deg  == other._angle_deg) &&
+             (_angleVariability_deg == other._angleVariability_deg);
+    }
     
     Result DefineFromFlatBuf(const CozmoAnim::HeadAngle* headAngleKeyframe, const std::string& animNameDebug);
 
@@ -176,6 +184,15 @@ namespace Cozmo {
   public:
     LiftHeightKeyFrame() { }
     LiftHeightKeyFrame(u8 height_mm, u8 heightVariability_mm, TimeStamp_t duration_ms);
+
+    bool operator ==(const LiftHeightKeyFrame& other) const{
+      return (GetTriggerTime_ms() == other.GetTriggerTime_ms()) &&
+             (GetKeyframeDuration_ms() == other.GetKeyframeDuration_ms()) &&
+             (_motionDuration_ms == other._motionDuration_ms) &&
+             (_height_mm  == other._height_mm) &&
+             (_heightVariability_mm == other._heightVariability_mm);
+    }
+
     
     Result DefineFromFlatBuf(const CozmoAnim::LiftHeight* liftHeightKeyframe, const std::string& animNameDebug);
 
@@ -209,6 +226,13 @@ namespace Cozmo {
   public:
     
     RobotAudioKeyFrame() {}
+
+    bool operator ==(const RobotAudioKeyFrame& other) const{
+      return (GetTriggerTime_ms() == other.GetTriggerTime_ms()) &&
+             (GetKeyframeDuration_ms() == other.GetKeyframeDuration_ms()) &&
+             (_audioReferences == other._audioReferences);
+    }
+
     
     Result DefineFromFlatBuf(const CozmoAnim::RobotAudio* audioKeyframe, const std::string& animNameDebug);
 
@@ -277,6 +301,8 @@ namespace Cozmo {
     SpriteSequenceKeyFrame(const SpriteSequenceKeyFrame& other);
 
     virtual ~SpriteSequenceKeyFrame();
+
+    bool operator ==(const SpriteSequenceKeyFrame& other) const;
     
     static bool ExtractDataFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe,
                                        const Vision::SpritePathMap* spriteMap,
@@ -393,6 +419,12 @@ namespace Cozmo {
     ProceduralFaceKeyFrame(TimeStamp_t triggerTime_ms = 0, TimeStamp_t durationTime_ms = 0);
     ProceduralFaceKeyFrame(const ProceduralFace& face, TimeStamp_t triggerTime_ms = 0, TimeStamp_t durationTime_ms = 0);
 
+    bool operator ==(const ProceduralFaceKeyFrame& other) const{
+      return (GetTriggerTime_ms() == other.GetTriggerTime_ms()) &&
+             (GetKeyframeDuration_ms() == other.GetKeyframeDuration_ms()) &&
+             (_procFace == other._procFace);
+    }
+
     Result DefineFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKeyframe, const std::string& animNameDebug);
     
     #if CAN_STREAM
@@ -449,6 +481,12 @@ namespace Cozmo {
   public:
     EventKeyFrame() { }
 
+    bool operator ==(const EventKeyFrame& other) const{
+      return (GetTriggerTime_ms() == other.GetTriggerTime_ms()) &&
+             (GetKeyframeDuration_ms() == other.GetKeyframeDuration_ms()) &&
+             (_event_id == other._event_id);
+    }
+
     Result DefineFromFlatBuf(const CozmoAnim::Event* eventKeyframe, const std::string& animNameDebug);
     
     #if CAN_STREAM
@@ -480,6 +518,12 @@ namespace Cozmo {
   {
   public:
     BackpackLightsKeyFrame();
+
+    bool operator ==(const BackpackLightsKeyFrame& other) const{
+      return (GetTriggerTime_ms() == other.GetTriggerTime_ms()) &&
+             (GetKeyframeDuration_ms() == other.GetKeyframeDuration_ms()) &&
+             (_motionDuration_ms == other._motionDuration_ms);
+    }
 
     Result DefineFromFlatBuf(CozmoAnim::BackpackLights* backpackKeyframe, const std::string& animNameDebug);
     
@@ -513,6 +557,12 @@ namespace Cozmo {
   public:
     BodyMotionKeyFrame();
     BodyMotionKeyFrame(s16 speed, s16 curvatureRadius_mm, s32 duration_ms);
+
+    bool operator ==(const BodyMotionKeyFrame& other) const{
+      return (GetTriggerTime_ms() == other.GetTriggerTime_ms()) &&
+             (GetKeyframeDuration_ms() == other.GetKeyframeDuration_ms()) &&
+             (_motionDuration_ms == other._motionDuration_ms);
+    }
     
     Result DefineFromFlatBuf(const CozmoAnim::BodyMotion* bodyKeyframe, const std::string& animNameDebug);
 
@@ -557,6 +607,11 @@ namespace Cozmo {
   {
   public:
     RecordHeadingKeyFrame();
+
+    bool operator ==(const RecordHeadingKeyFrame& other) const{
+      return (GetTriggerTime_ms() == other.GetTriggerTime_ms()) &&
+             (GetKeyframeDuration_ms() == other.GetKeyframeDuration_ms());
+    }
     
     Result DefineFromFlatBuf(const CozmoAnim::RecordHeading* recordHeadingKeyframe, const std::string& animNameDebug);
     
@@ -601,6 +656,12 @@ namespace Cozmo {
                                   u16 numHalfRevs,
                                   bool useShortestDir,
                                   s32 duration_ms);
+
+    bool operator ==(const TurnToRecordedHeadingKeyFrame& other) const{
+      return (GetTriggerTime_ms() == other.GetTriggerTime_ms()) &&
+             (GetKeyframeDuration_ms() == other.GetKeyframeDuration_ms()) &&
+             _motionDuration_ms == other._motionDuration_ms;
+    }
     
     Result DefineFromFlatBuf(const CozmoAnim::TurnToRecordedHeading* turnToRecordedHeadingKeyframe, const std::string& animNameDebug);
     

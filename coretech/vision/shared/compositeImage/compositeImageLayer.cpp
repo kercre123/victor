@@ -68,6 +68,14 @@ CompositeImageLayer::~CompositeImageLayer()
 
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CompositeImageLayer::operator==(const CompositeImageLayer& other) const{
+  return _layerName == other._layerName &&
+         _layoutMap == other._layoutMap &&
+         _imageMap  == other._imageMap;
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CompositeImageLayer::GetSpriteSequenceName(SpriteBoxName sbName, Vision::SpriteName& sequenceName)  const
@@ -218,6 +226,7 @@ SerializedSpriteBox CompositeImageLayer::SpriteBox::Serialize() const
   return serialized;
 }
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CompositeImageLayer::SpriteBox::ValidateRenderConfig() const
 {
@@ -236,6 +245,18 @@ bool CompositeImageLayer::SpriteBox::ValidateRenderConfig() const
     }
   }
 }
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CompositeImageLayer::SpriteBox::operator==(const SpriteBox& other) const
+{
+  return (spriteBoxName == other.spriteBoxName) &&
+         (renderConfig  == other.renderConfig) &&
+         (topLeftCorner == other.topLeftCorner) &&
+         (width         == other.width) &&
+         (height        == other.height);
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CompositeImageLayer::SpriteEntry::SpriteEntry(SpriteCache* cache,

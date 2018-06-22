@@ -84,6 +84,12 @@ public:
     return *this;
   }
 
+  bool operator ==(const Track<FRAME_TYPE>& other) const
+  {
+    return _frames == other._frames;
+  }
+
+
   Result AddKeyFrameToBack(const FRAME_TYPE& keyFrame);
 
   // Define from JSON. Second argument is used to print nicer debug strings if something goes wrong.

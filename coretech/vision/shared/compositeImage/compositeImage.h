@@ -73,6 +73,14 @@ public:
                  const Point2i& topLeftCorner = {0,0});
   
   virtual ~CompositeImage();
+  
+  bool operator ==(const CompositeImage& other) const{
+    return (_spriteCache == other._spriteCache) &&
+           (_width == other._width) &&
+           (_height == other._height) &&
+           (_layerMap == other._layerMap);
+  }
+  
 
   std::vector<CompositeImageChunk> GetImageChunks(bool emptySpriteBoxesAreValid = false) const;
 
