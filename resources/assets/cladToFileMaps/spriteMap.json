@@ -604,6 +604,10 @@
     "SpriteName" : "face_knowledgegraph_answer"
   },
   {
+    "CladEvent" : "Face_Knowledgegraph_Fail",
+    "SpriteName" : "face_knowledgegraph_fail"
+  },
+  {
     "CladEvent" : "Face_Knowledgegraph_Getin",
     "SpriteName" : "face_knowledgegraph_getin"
   },
@@ -618,6 +622,14 @@
   {
     "CladEvent" : "Face_Knowledgegraph_Searching",
     "SpriteName" : "face_knowledgegraph_searching"
+  },
+  {
+    "CladEvent" : "Face_Knowledgegraph_Searching_Getin",
+    "SpriteName" : "face_knowledgegraph_searching_getin"
+  },
+  {
+    "CladEvent" : "Face_Knowledgegraph_Searching_Getout",
+    "SpriteName" : "face_knowledgegraph_searching_getout"
   },
   {
     "CladEvent" : "Face_Lookatdevice",

@@ -304,10 +304,6 @@ bool CompositeImageLayer::SpriteEntry::GetFrame(const u32 index, Vision::SpriteH
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CompositeImageLayer::SpriteEntry::operator == (const SpriteEntry& other) const {
-  if(_spriteName == Vision::SpriteName::Count){
-    PRINT_NAMED_ERROR("CompositeImageLayer.SpriteEntry.==Invalid",
-                      "Invalid comparison because spriteName is count");
-  }
   return (_spriteName == other._spriteName) && 
          (_frameStartOffset == other._frameStartOffset);
 }
