@@ -23,6 +23,9 @@ enum uint_8 BehaviorClass {
   AnimSequenceWithObject,
   TextToSpeechLoop,
 
+  // attentionTransfer
+  AttentionTransferIfNeeded,
+
   // basicCubeInteractions
   PickUpCube,
   PutDownBlock,

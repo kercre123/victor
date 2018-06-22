@@ -134,6 +134,8 @@ private:
     std::string reactionBehaviorString;
     std::shared_ptr<BehaviorReactToMicDirection> reactionBehavior;
 
+    ICozmoBehaviorPtr unmatchedIntentBehavior;
+
   } _iVars;
 
 

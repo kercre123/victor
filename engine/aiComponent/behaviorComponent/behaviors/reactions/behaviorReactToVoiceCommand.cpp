@@ -21,22 +21,23 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/attentionTransferComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMicDirection.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/backpackLights/backpackLightComponent.h"
-#include "engine/components/movementComponent.h"
-#include "engine/externalInterface/externalMessageRouter.h"
-#include "engine/externalInterface/gatewayInterface.h"
-#include "engine/cozmoContext.h"
-#include "engine/faceWorld.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/mics/micDirectionHistory.h"
+#include "engine/components/movementComponent.h"
+#include "engine/cozmoContext.h"
+#include "engine/externalInterface/externalMessageRouter.h"
+#include "engine/externalInterface/gatewayInterface.h"
+#include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "micDataTypes.h"
@@ -60,7 +61,6 @@ namespace {
   const char* kIntentListenGetIn                = "playListeningGetInAnim";
   const char* kProceduralBackpackLights         = "backpackLights";
 
-  constexpr AnimationTrigger kInvalidAnimation  = AnimationTrigger::Count;
   constexpr float            kMaxRecordTime_s   = ( (float)MicData::kStreamingTimeout_ms / 1000.0f );
   constexpr float            kListeningBuffer_s = 2.0f;
 
@@ -93,7 +93,7 @@ BehaviorReactToVoiceCommand::DynamicVariables::DynamicVariables() :
 {
 
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& config ) :
   ICozmoBehavior( config ),
@@ -171,10 +171,13 @@ void BehaviorReactToVoiceCommand::InitBehavior()
     ICozmoBehaviorPtr reactionBehavior = FindBehavior( _iVars.reactionBehaviorString );
     // downcast to a BehaviorReactToMicDirection since we're forcing all reactions to be of this behavior
     DEV_ASSERT_MSG( reactionBehavior->GetClass() == BehaviorClass::ReactToMicDirection,
-                    "BehaviorReactToVoiceCommand.Init",
+                    "BehaviorReactToVoiceCommand.Init.IncorrectMicDirectionBehavior",
                     "Reaction behavior specified is not of valid class BehaviorClass::ReactToMicDirection");
     _iVars.reactionBehavior = std::static_pointer_cast<BehaviorReactToMicDirection>(reactionBehavior);
   }
+
+  _iVars.unmatchedIntentBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID( BEHAVIOR_ID(IntentUnmatched) );
+  DEV_ASSERT( _iVars.unmatchedIntentBehavior != nullptr, "BehaviorReactToVoiceCommand.Init.NoUnmatchedIntentBehavior");
 
   SubscribeToTags(
   {{
@@ -189,6 +192,7 @@ void BehaviorReactToVoiceCommand::GetAllDelegates( std::set<IBehavior*>& delegat
   if ( _iVars.reactionBehavior )
   {
     delegates.insert( _iVars.reactionBehavior.get() );
+    delegates.insert( _iVars.unmatchedIntentBehavior.get() );
   }
 }
 
@@ -199,7 +203,7 @@ void BehaviorReactToVoiceCommand::GetBehaviorOperationModifiers( BehaviorOperati
   modifiers.wantsToBeActivatedWhenOnCharger       = true;
   modifiers.wantsToBeActivatedWhenOffTreads       = true;
   modifiers.behaviorAlwaysDelegates               = true;
-  
+
   // Since so many voice commands need faces, this helps improve the changes that a behavior following
   // this one will know about faces when the behavior starts
   modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
@@ -276,7 +280,7 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
     auto& moodManager = GetBEI().GetMoodManager();
     moodManager.TriggerEmotionEvent( "ReactToTriggerWord", MoodManager::GetCurrentTimeInSeconds() );
   }
-  
+
   // Stop all movement so we can listen for a command
   const auto& robotInfo = GetBEI().GetRobotInfo();
   robotInfo.GetMoveComponent().StopAllMotors();
@@ -632,30 +636,28 @@ void BehaviorReactToVoiceCommand::TransitionToIntentReceived()
 {
   _dVars.state = EState::IntentReceived;
 
-  AnimationTrigger intentReaction = kInvalidAnimation;
-
   switch ( _dVars.intentStatus )
   {
     case EIntentStatus::IntentHeard:
       // no animation for valid intent, go straight into the intent behavior
       PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent", "Heard valid user intent, woot!" );
+
+      // also reset the attention transfer counter for unmatched intents (since we got a good one)
+      GetBehaviorComp<AttentionTransferComponent>().ResetAttentionTransfer(AttentionTransferReason::UnmatchedIntent);
       break;
     case EIntentStatus::IntentUnknown:
       PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent", "Heard user intent but could not understand it" );
-      intentReaction = AnimationTrigger::VC_IntentNeutral;
       GetBEI().GetMoodManager().TriggerEmotionEvent( "NoValidVoiceIntent" );
+      if( _iVars.unmatchedIntentBehavior->WantsToBeActivated() ) {
+        // this behavior will (should) interact directly with the attention transfer component
+        DelegateIfInControl(_iVars.unmatchedIntentBehavior.get());
+      }
       break;
     case EIntentStatus::NoIntentHeard:
       PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent", "No user intent was heard" );
-      intentReaction = AnimationTrigger::VC_IntentNeutral;
       GetBEI().GetMoodManager().TriggerEmotionEvent( "NoValidVoiceIntent" );
+      DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::VC_IntentNeutral ) );
       break;
-  }
-
-  if ( kInvalidAnimation != intentReaction )
-  {
-    // NOTE: What about if we're on the charger?
-    DelegateIfInControl( new TriggerLiftSafeAnimationAction( intentReaction ) );
   }
 }
 

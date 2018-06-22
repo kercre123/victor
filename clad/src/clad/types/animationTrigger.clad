@@ -120,6 +120,9 @@ enum int_32 AnimationTrigger
   KnowledgeGraphGetOut,
   KnowledgeGraphNoAnswer,
 
+  LookAtDevice,
+  LookAtDeviceGetIn,
+  LookAtDeviceGetOut,
   LookInPlaceForFacesBodyPause,
   LookInPlaceForFacesHeadMovePause,
   MeetVictorConfusion,

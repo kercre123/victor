@@ -576,6 +576,18 @@
     "AnimName": "ag_freeplay_reacttoface_unidentified"
   },
   {
+    "CladEvent": "LookAtDevice",
+    "AnimName": "ag_lookatdevice_icon"
+  },
+  {
+    "CladEvent": "LookAtDeviceGetIn",
+    "AnimName": "ag_lookatdevice_getin"
+  },
+  {
+    "CladEvent": "LookAtDeviceGetOut",
+    "AnimName": "ag_lookatdevice_getout"
+  },
+  {
     "CladEvent": "DEPRECATED_LaserAcknowledge",
     "AnimName": "ag_laser_react_01"
   },
