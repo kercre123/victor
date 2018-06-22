@@ -307,6 +307,7 @@ enum uint_8 BehaviorID {
   WeatherSnowGeneric,
   WeatherStarsGeneric,
   WeatherSunnyGeneric,
+  WeatherThunderstormsGeneric,
   WeatherWindyGeneric,
 
   // victorBehaviorTree/weather

@@ -73,6 +73,7 @@ const std::vector<std::string> kPathsToEngineAccessibleAnimations = {
   "assets/animations/anim_weather_stars_01.bin",
   "assets/animations/anim_weather_cold_01.bin",
   "assets/animations/anim_weather_windy_01.bin",
+  "assets/animations/anim_weather_thunderstorm_01.bin",
 
   // Blackjack
   "assets/animations/anim_blackjack_gameplay_01.bin",

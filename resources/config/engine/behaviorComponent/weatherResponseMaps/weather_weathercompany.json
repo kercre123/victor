@@ -145,7 +145,7 @@
     }, 
     {
         "APIValue": "Thunderstorms", 
-        "CladType": "Rain"
+        "CladType": "Thunderstorms"
     }, 
     // {
     //     "APIValue": "Scattered Showers", 

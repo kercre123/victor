@@ -29,6 +29,10 @@
       "BehaviorID" : "WeatherSunnyGeneric"
     },
     {
+      "CladType"   : "Thunderstorms",
+      "BehaviorID" : "WeatherThunderstormsGeneric"
+    },
+    {
       "CladType"   : "Windy",
       "BehaviorID" : "WeatherWindyGeneric"
     }

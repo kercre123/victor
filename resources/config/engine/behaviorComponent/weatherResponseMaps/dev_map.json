@@ -34,4 +34,9 @@
     "APIValue" : "stars",
     "CladType" : "Stars"
   }
+  // Duplicate of weather company
+  //{
+  //  "APIValue" : "thunderstorms",
+  //  "CladType" : "Thunderstorms"
+  //}
 ]
