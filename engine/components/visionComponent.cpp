@@ -115,6 +115,10 @@ namespace Cozmo {
   // since object detection is slow
   CONSOLE_VAR(u32, kKeepDrawingSalientPointsFor_ms, "Vision.General", 150);
 
+  // Prints warning if haven't captured valid frame in this amount of time.
+  // Frame rate is expected to be 8fps at minimum, so check 125ms plus some buffer.
+  CONSOLE_VAR(u32, kMaxExpectedTimeBetweenCapturedFrames_ms, "Vision.General", 150);
+
   namespace JsonKey
   {
     const char * const ImageQualityGroup = "ImageQuality";
@@ -2624,6 +2628,7 @@ namespace Cozmo {
     TimeStamp_t imageCaptureSystemTimestamp_ms = 0;
     ImageEncoding format;
 
+    const TimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     const bool gotImage = cameraService->CameraGetFrame(buffer, imageId, imageCaptureSystemTimestamp_ms, format);
     if(gotImage)
     {
@@ -2682,6 +2687,17 @@ namespace Cozmo {
       // Create image with proper imageID and timestamp
       image_out.SetTimestamp(imageCaptureSystemTimestamp_ms);
       image_out.SetImageId(imageId);
+
+      _lastImageCaptureTime_ms = currTime_ms;
+    } else {
+      // No image captured
+      if (!IsWaitingForCaptureFormatChange() &&
+          (_lastImageCaptureTime_ms > 0) && 
+          (currTime_ms > _lastImageCaptureTime_ms + kMaxExpectedTimeBetweenCapturedFrames_ms)) {
+        PRINT_NAMED_WARNING("VisionComponent.CaptureImage.TooLongSinceFrameWasCaptured", 
+                            "last: %dms, now: %dms", 
+                            _lastImageCaptureTime_ms, currTime_ms);
+      }
     }
 
     return gotImage;

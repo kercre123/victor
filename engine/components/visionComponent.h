@@ -413,6 +413,8 @@ struct DockingErrorSignal;
     };
     CaptureFormatState _captureFormatState = CaptureFormatState::None;
 
+    TimeStamp_t _lastImageCaptureTime_ms = 0;
+
     // Future used for async YUV to RGB conversion
     std::future<Vision::ImageRGB> _cvtYUV2RGBFuture;
     

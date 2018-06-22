@@ -861,7 +861,7 @@ int camera_frame_acquire(struct anki_camera_handle *camera, anki_camera_frame_t 
   anki_camera_frame_t *frame = (anki_camera_frame_t *)&data[frame_offset];
 
   if (frame->frame_id == CAMERA_HANDLE_P(camera)->current_frame_id) {
-    logw("%s: duplicate frame: %u\n", __func__, frame->frame_id);
+    //logw("%s: duplicate frame: %u\n", __func__, frame->frame_id);
     rc = -1;
     goto UNLOCK;
   }
