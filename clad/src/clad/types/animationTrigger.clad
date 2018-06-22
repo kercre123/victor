@@ -129,11 +129,11 @@ enum int_32 AnimationTrigger
   MeetVictorSayName,
   MeetVictorSayNameAgain,
   MeetVictorSawWrongFace,
+  MeetVictorDuplicateName,
 
   MeetCozmoFirstEnrollmentCelebration,  // 5. First-time enrollment, big special celebration for new name
   MeetCozmoReEnrollmentSayName,         // 3b. Re-enrollment, say player's name
   MeetCozmoRenameFaceSayName,           // Say player's new name when rename occurs
-  MeetCozmoDuplicateName,               // the given name is already taken
 
   MessagingMessageGetIn,
   MessagingMessageLoop,

@@ -54,12 +54,13 @@ public:
   bool operator==( const char* rhs ) const;
 
   // allow implicit cast to std::string
-  operator std::string() const { return _name; }
+  operator std::string() const { return _displayName; }
 
   // simulate a minimal set of std::string functions since that's how it's expected to be used
-  bool                empty() const { return _name.empty(); }
-  const char*         c_str() const { return _name.c_str(); }
-  const std::string&  asString() const { return _name; }
+  bool                empty() const { return _displayName.empty(); }
+  const char*         c_str() const { return _displayName.c_str(); }
+  const std::string&  asString() const { return _displayName; }
+  const std::string&  asLCString() const { return _name; }
 
   // use this for any debugging or clad messages where we want to obfuscate the names of the users
   const char*         piiGuardedString() const { return Util::HidePersonallyIdentifiableInfo( _name.c_str() ); }
@@ -67,6 +68,7 @@ public:
 
 private:
   std::string _name;
+  std::string _displayName;
 };
 
 class EnrolledFaceEntry

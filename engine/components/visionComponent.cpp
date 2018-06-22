@@ -56,6 +56,7 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 #include "util/logging/DAS.h"
+#include "util/string/stringUtils.h"
 #include "util/threading/threadPriority.h"
 #include "util/bitFlags/bitFlags.h"
 
@@ -2437,14 +2438,8 @@ namespace Cozmo {
     auto namePairList = _visionSystem->GetEnrolledNames();
     Unlock();
 
-    // Enrolled names are guaranteed to be lowercase
-    // ** The UserName class will handle matching for us when it's implemented **
-    
-    auto tolower = [](const char c) { return std::tolower(c); };
-    std::string lcName{name};
-    std::transform(lcName.begin(), lcName.end(), lcName.begin(), tolower);
     for( const auto& nameEntry : namePairList ) {
-      if( nameEntry.name == lcName ) {
+      if( Anki::Util::StringCaseInsensitiveEquals(nameEntry.name, name) ) {
         return true;
       }
     }

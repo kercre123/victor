@@ -637,7 +637,7 @@
   },
   {
     "CladEvent": "MeetVictorSawWrongFace",
-    "AnimName" : "ag_meetvictor_sayname_01"
+    "AnimName" : "ag_meetvictor_youarebob_01"
   },
   {
     "CladEvent": "MeetVictorLookFaceInterrupt",
@@ -648,8 +648,8 @@
     "AnimName": "ag_meetvictor_timeout"
   },
   {
-    "CladEvent": "MeetCozmoDuplicateName",
-    "AnimName": "ag_meetvictor_sayname_01"
+    "CladEvent": "MeetVictorDuplicateName",
+    "AnimName": "ag_meetvictor_alreadyknowbob_01"
   },
   {
     "CladEvent": "DEPRECATED_NamedFaceInitialGreeting",
