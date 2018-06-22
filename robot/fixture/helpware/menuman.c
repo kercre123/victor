@@ -433,7 +433,15 @@ void handle_LifeTestSquareWave(void* param)
   gLifeTesting.square_wave = true;
 }
 
+void handle_LifeTestMotorsScreenSpeaker(void* param) {
+printf("Life Test selected - Motors, Screen, and Speaker only\n");
+  handle_LifeTestMotors(param);
+  handle_LifeTestScreen(param);
+  handle_LifeTestSquareWave(param);
+}
+
 void handle_LifeTestAll(void* param) {
+  printf("Life Test All selected\n");
   handle_LifeTestBattery(param);
   handle_LifeTestCpu(param);
   handle_LifeTestMotors(param);
@@ -507,6 +515,7 @@ MENU_ITEMS(LifeTest)= {
   MENU_ACTION("Run Motors", LifeTestMotors),
   MENU_ACTION("Cycle Screens", LifeTestScreen),
   MENU_ACTION("Play Square Wave", LifeTestSquareWave),
+  MENU_ACTION("ALL (no CPU/batt)", LifeTestMotorsScreenSpeaker),
   MENU_ACTION("ALL", LifeTestAll),
 };
 MENU_CREATE(LifeTest);
