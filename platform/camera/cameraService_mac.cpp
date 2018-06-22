@@ -144,6 +144,11 @@ namespace Anki {
 
     }
 
+    void CameraService::RegisterOnCameraRestartCallback(std::function<void()> callback)
+    {
+      return;
+    }
+    
     TimeStamp_t CameraService::GetTimeStamp(void)
     {
       if (nullptr != _engineSupervisor) {

@@ -194,6 +194,13 @@ namespace Cozmo {
     {
       ReadVisionConfig(context->GetDataLoader()->GetRobotVisionConfig());
     }
+
+    CameraService::getInstance()->RegisterOnCameraRestartCallback([this](){
+        if(IsWaitingForCaptureFormatChange())
+        {
+          _captureFormatState = CaptureFormatState::None;
+        }
+      });
   }
 
   void VisionComponent::ReadVisionConfig(const Json::Value& config)

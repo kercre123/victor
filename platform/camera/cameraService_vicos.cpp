@@ -40,6 +40,7 @@ namespace Anki {
       struct anki_camera_handle* _camera = nullptr;
       bool     _isRestartingCamera = false;
       std::mutex _lock;
+      std::function<void()> _onCameraRestart;
     } // "private" namespace
 
 
@@ -78,6 +79,17 @@ namespace Anki {
     CameraService::~CameraService()
     {
       DeleteCamera();
+    }
+
+    void CameraService::RegisterOnCameraRestartCallback(std::function<void()> callback)
+    {
+      if(_onCameraRestart != nullptr)
+      {
+        LOG_WARNING("CameraService.RegisterOnCameraRestartCallback.Failed",
+                    "Already have callback");
+        return;
+      }
+      _onCameraRestart = callback;
     }
 
     Result CameraService::InitCamera()
@@ -129,6 +141,11 @@ namespace Anki {
       if (_isRestartingCamera && (status == ANKI_CAMERA_STATUS_RUNNING)) {
         LOG_INFO("CameraService.Update.RestartedCameraClient", "");
         _isRestartingCamera = false;
+
+        if(_onCameraRestart != nullptr)
+        {
+          _onCameraRestart();
+        }
       }
 
       if (status != ANKI_CAMERA_STATUS_RUNNING) {
