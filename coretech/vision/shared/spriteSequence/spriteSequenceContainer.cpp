@@ -40,8 +40,8 @@ const Vision::SpriteSequence* const SpriteSequenceContainer::GetSequenceByName(V
 {
   auto seqIter = _mappedSequences.find(sequenceName);
   if(seqIter == _mappedSequences.end()) {
-    PRINT_NAMED_WARNING("SpriteSequenceContainer.GetSequenceByName.UnknownName",
-                        "Unknown sequence requested: %s", Vision::SpriteNameToString(sequenceName));
+    PRINT_NAMED_ERROR("SpriteSequenceContainer.GetSequenceByName.UnknownName",
+                      "Unknown sequence requested: %s", Vision::SpriteNameToString(sequenceName));
     return nullptr;
   } else {
     return &seqIter->second;
@@ -54,8 +54,8 @@ const Vision::SpriteSequence* const SpriteSequenceContainer::GetUnmappedSequence
 {
   auto seqIter = _unmappedSequences.find(fileName);
   if(seqIter == _unmappedSequences.end()) {
-    PRINT_NAMED_WARNING("SpriteSequenceContainer.GetSequenceByName.UnknownName",
-                        "Unknown sequence requested: %s", fileName.c_str());
+    PRINT_NAMED_ERROR("SpriteSequenceContainer.GetSequenceByName.UnknownName",
+                      "Unknown sequence requested: %s", fileName.c_str());
     return nullptr;
   } else {
     return &seqIter->second;
