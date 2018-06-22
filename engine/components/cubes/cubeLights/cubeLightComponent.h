@@ -33,6 +33,7 @@
 #include "engine/robotComponents_fwd.h"
 #include "json/json.h"
 
+#include "util/cladHelpers/cladEnumToStringMap.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -82,7 +83,9 @@ public:
   #endif
 
   using AnimCompletedCallback = std::function<void(void)>;
-  
+
+  CubeLightAnimation::Animation* GetAnimation(const CubeAnimationTrigger& animTrigger);
+
   // Takes whatever animation is pointed to by the animTrigger and plays it on the
   // specified object
   // Optional Arguments
@@ -224,6 +227,7 @@ private:
   Robot* _robot = nullptr;
 
   std::unique_ptr<CubeLightAnimationContainer> _cubeLightAnimations;
+  Util::CladEnumToStringMap<CubeAnimationTrigger>* _triggerToAnimMap;
 
   // Maps objectIDs to ObjectInfo to keep track of the state of each object
   std::map<ObjectID, ObjectInfo> _objectInfo;

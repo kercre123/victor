@@ -14,7 +14,7 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_InternalStateBehavior_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/components/bodyLightComponent.h"
+#include "engine/components/backpackLights/backpackLightComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator_fwd.h"
 
 #include <set>
@@ -128,7 +128,7 @@ private:
   
   std::vector<std::pair<StateID,StateID>> _resumeReplacements;
 
-  BackpackLights _currDebugLights;
+  BackpackLightAnimation::BackpackAnimation _currDebugLights;
   bool _debugLightsDirty = false;
   bool _useDebugLights = false;
   float _lastHearbeatLightTime = -1.0f;

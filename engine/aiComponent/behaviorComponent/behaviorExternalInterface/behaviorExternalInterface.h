@@ -41,7 +41,7 @@ class BehaviorEventComponent;
 class BehaviorTimerManager;
 class BEIRobotInfo;
 class BlockWorld;
-class BodyLightComponent;
+class BackpackLightComponent;
 class CubeAccelComponent;
 class CubeLightComponent;
 class CliffSensorComponent;
@@ -131,7 +131,7 @@ public:
             BehaviorEventComponent*        behaviorEventComponent,
             BehaviorTimerManager*          behaviorTimers,
             BlockWorld*                    blockWorld,
-            BodyLightComponent*            bodyLightComponent,
+            BackpackLightComponent*        backpackLightComponent,
             CubeAccelComponent*            cubeAccelComponent,
             CubeLightComponent*            cubeLightComponent,
             CliffSensorComponent*          cliffSensorComponent,
@@ -228,8 +228,8 @@ public:
   inline bool HasRobotAudioClient() const { return GetComponentWrapper(BEIComponentID::RobotAudioClient).IsComponentValid();}
   Audio::EngineRobotAudioClient& GetRobotAudioClient() const { return GetComponentWrapper(BEIComponentID::RobotAudioClient).GetComponent<Audio::EngineRobotAudioClient>();}
   
-  inline bool HasBodyLightComponent() const { return GetComponentWrapper(BEIComponentID::BodyLightComponent).IsComponentValid();}
-  BodyLightComponent& GetBodyLightComponent() const { return GetComponentWrapper(BEIComponentID::BodyLightComponent).GetComponent<BodyLightComponent>();}
+  inline bool HasBackpackLightComponent() const { return GetComponentWrapper(BEIComponentID::BackpackLightComponent).IsComponentValid();}
+  BackpackLightComponent& GetBackpackLightComponent() const { return GetComponentWrapper(BEIComponentID::BackpackLightComponent).GetComponent<BackpackLightComponent>();}
 
   inline bool HasMicComponent() const { return GetComponentWrapper(BEIComponentID::MicComponent).IsComponentValid();}
   MicComponent& GetMicComponent() const {return GetComponentWrapper(BEIComponentID::MicComponent).GetComponent<MicComponent>();}
@@ -263,7 +263,7 @@ private:
                        BehaviorEventComponent*        behaviorEventComponent,
                        BehaviorTimerManager*          behaviorTimers,
                        BlockWorld*                    blockWorld,
-                       BodyLightComponent*            bodyLightComponent,
+                       BackpackLightComponent*        backpackLightComponent,
                        CubeAccelComponent*            cubeAccelComponent,
                        CubeLightComponent*            cubeLightComponent,
                        CliffSensorComponent*          cliffSensorComponent,

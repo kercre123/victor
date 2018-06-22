@@ -36,7 +36,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevEventSequenceCapture.h"
 #include "engine/audio/engineRobotAudioClient.h"
-#include "engine/components/bodyLightComponent.h"
+#include "engine/components/backpackLights/backpackLightComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
@@ -55,7 +55,7 @@ namespace {
 
 // constexpr const float kLightBlinkPeriod_s = 0.5f;
 
-static const BackpackLights kLightsWaiting = {
+static const BackpackLightAnimation::BackpackAnimation kLightsWaiting = {
   .onColors               = {{NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN}},
   .offColors              = {{NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN}},
   .onPeriod_ms            = {{0,0,0}},
@@ -65,7 +65,7 @@ static const BackpackLights kLightsWaiting = {
   .offset                 = {{0,0,0}}
 };
 
-static const BackpackLights kLightsSetup = {
+static const BackpackLightAnimation::BackpackAnimation kLightsSetup = {
   .onColors               = {{NamedColors::BLUE,NamedColors::BLUE,NamedColors::BLUE}},
   .offColors              = {{NamedColors::BLUE,NamedColors::BLUE,NamedColors::BLUE}},
   .onPeriod_ms            = {{0,0,0}},
@@ -75,7 +75,7 @@ static const BackpackLights kLightsSetup = {
   .offset                 = {{0,0,0}}
 };
 
-static const BackpackLights kLightsPreCap = {
+static const BackpackLightAnimation::BackpackAnimation kLightsPreCap = {
   .onColors               = {{NamedColors::RED,NamedColors::RED,NamedColors::RED}},
   .offColors              = {{NamedColors::RED,NamedColors::RED,NamedColors::RED}},
   .onPeriod_ms            = {{0,0,0}},
@@ -85,7 +85,7 @@ static const BackpackLights kLightsPreCap = {
   .offset                 = {{0,0,0}}
 };
   
-static const BackpackLights kLightsPostCap = {
+static const BackpackLightAnimation::BackpackAnimation kLightsPostCap = {
   .onColors               = {{NamedColors::RED,NamedColors::RED,NamedColors::RED}},
   .offColors              = {{NamedColors::RED,NamedColors::RED,NamedColors::RED}},
   .onPeriod_ms            = {{0,0,0}},
@@ -218,7 +218,7 @@ void BehaviorDevEventSequenceCapture::OnBehaviorActivated()
   // wait for the lift to relax 
   robotInfo.GetMoveComponent().EnableLiftPower(false);
 
-  GetBEI().GetBodyLightComponent().SetBackpackLights( kLightsWaiting );
+  GetBEI().GetBackpackLightComponent().SetBackpackAnimation( kLightsWaiting );
 }
 
 
@@ -363,7 +363,7 @@ void BehaviorDevEventSequenceCapture::BehaviorUpdate()
 
         GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Lift_High_Down_Long_Effort,
                                                  GO::Behavior);
-        GetBEI().GetBodyLightComponent().SetBackpackLights( kLightsSetup );
+        GetBEI().GetBackpackLightComponent().SetBackpackAnimation( kLightsSetup );
         PRINT_CH_DEBUG("Behaviors", "BehaviorDevEventSequenceCapture.startSequence", 
                        "starting sequence %d", _dVars.currentSeqNumber);
       }
@@ -384,7 +384,7 @@ void BehaviorDevEventSequenceCapture::BehaviorUpdate()
                                                _iConfig.imageSaveSize);
         GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Timer_Countdown,
                                                  GO::Behavior);
-        GetBEI().GetBodyLightComponent().SetBackpackLights( kLightsPreCap );
+        GetBEI().GetBackpackLightComponent().SetBackpackAnimation( kLightsPreCap );
         PRINT_CH_DEBUG("Behaviors", "BehaviorDevEventSequenceCapture.setupSequence", 
                        "set up sequence %d", _dVars.currentSeqNumber);
       }
@@ -400,7 +400,7 @@ void BehaviorDevEventSequenceCapture::BehaviorUpdate()
         _dVars.seqEventTimeStamp = GetTimestamp();
         GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Timer_Beep,
                                                  GO::Behavior);
-        GetBEI().GetBodyLightComponent().SetBackpackLights( kLightsPostCap );
+        GetBEI().GetBackpackLightComponent().SetBackpackAnimation( kLightsPostCap );
         PRINT_CH_DEBUG("Behaviors", "BehaviorDevEventSequenceCapture.preCapSequence", 
                        "pre captured sequence %d", _dVars.currentSeqNumber);
       }
@@ -420,7 +420,7 @@ void BehaviorDevEventSequenceCapture::BehaviorUpdate()
                                                _iConfig.imageSaveSize);
         GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Timer_Cancel,
                                                  GO::Behavior);
-        GetBEI().GetBodyLightComponent().SetBackpackLights( kLightsWaiting );
+        GetBEI().GetBackpackLightComponent().SetBackpackAnimation( kLightsWaiting );
         PRINT_CH_DEBUG("Behaviors", "BehaviorDevEventSequenceCapture.endSequence", 
                        "finished sequence %d", _dVars.currentSeqNumber);
         

@@ -23,7 +23,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/audio/engineRobotAudioClient.h"
-#include "engine/components/bodyLightComponent.h"
+#include "engine/components/backpackLights/backpackLightComponent.h"
 #include "engine/components/mics/micComponent.h"
 #include "micDataTypes.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
@@ -304,7 +304,7 @@ void BehaviorPromptUserForVoiceCommand::TransitionToPrompting()
 void BehaviorPromptUserForVoiceCommand::TransitionToListening()
 {
   // Turn on backpack lights to indicate streaming
-  static const BackpackLights kStreamingLights = 
+  static const BackpackLightAnimation::BackpackAnimation kStreamingLights = 
   {
     .onColors               = {{NamedColors::CYAN, NamedColors::CYAN, NamedColors::CYAN}},
     .offColors              = {{NamedColors::CYAN, NamedColors::CYAN, NamedColors::CYAN}},
@@ -316,8 +316,8 @@ void BehaviorPromptUserForVoiceCommand::TransitionToListening()
   };
 
   if(_iConfig.backpackLights){
-    BodyLightComponent& blc = GetBEI().GetBodyLightComponent();
-    blc.StartLoopingBackpackLights(kStreamingLights, BackpackLightSource::Behavior, _dVars.lightsHandle);
+    BackpackLightComponent& blc = GetBEI().GetBackpackLightComponent();
+    blc.StartLoopingBackpackAnimation(kStreamingLights, BackpackLightSource::Behavior, _dVars.lightsHandle);
   }
 
   //Trip the earcon
@@ -464,8 +464,8 @@ void BehaviorPromptUserForVoiceCommand::TransitionToReprompt()
 void BehaviorPromptUserForVoiceCommand::TurnOffBackpackLights()
 {
   if(_iConfig.backpackLights && _dVars.lightsHandle.IsValid()){
-    BodyLightComponent& blc = GetBEI().GetBodyLightComponent();
-    blc.StopLoopingBackpackLights(_dVars.lightsHandle);
+    BackpackLightComponent& blc = GetBEI().GetBackpackLightComponent();
+    blc.StopLoopingBackpackAnimation(_dVars.lightsHandle);
   }
 }
 

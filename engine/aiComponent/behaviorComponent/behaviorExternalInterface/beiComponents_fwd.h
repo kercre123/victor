@@ -12,7 +12,7 @@ enum class BEIComponentID{
   BehaviorEvent,
   BehaviorTimerManager,
   BlockWorld,
-  BodyLightComponent,
+  BackpackLightComponent,
   CubeAccel,
   CubeLight,
   CliffSensor,

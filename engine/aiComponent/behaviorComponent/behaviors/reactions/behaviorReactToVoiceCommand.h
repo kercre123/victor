@@ -15,7 +15,7 @@
 
 #include "clad/audio/audioEventTypes.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/components/bodyLightComponentTypes.h"
+#include "engine/components/backpackLights/backpackLightComponentTypes.h"
 #include "engine/components/mics/micDirectionTypes.h"
 
 

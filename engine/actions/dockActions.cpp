@@ -540,7 +540,7 @@ namespace Anki {
       {
         if (_liftMovingAnimation != AnimationTrigger::Count) {
           // Check that the animation only has sound keyframes
-          bool hasKey = GetRobot().GetContext()->GetDataLoader()->GetAnimationTriggerResponses()->HasKey(_liftMovingAnimation);
+          bool hasKey = GetRobot().GetContext()->GetDataLoader()->GetAnimationTriggerMap()->HasKey(_liftMovingAnimation);
           if (hasKey) {
 
             // Check that the action matches the current action

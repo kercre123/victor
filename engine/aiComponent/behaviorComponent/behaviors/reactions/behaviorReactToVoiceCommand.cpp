@@ -29,7 +29,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMicDirection.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/audio/engineRobotAudioClient.h"
-#include "engine/components/bodyLightComponent.h"
+#include "engine/components/backpackLights/backpackLightComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/externalInterface/externalMessageRouter.h"
 #include "engine/externalInterface/gatewayInterface.h"
@@ -314,8 +314,8 @@ void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
   // in case we were interrupted before we had a chance to turn off backpack ligths, do so now ...
   if ( _iVars.backpackLights && _dVars.lightsHandle.IsValid() )
   {
-    BodyLightComponent& blc = GetBEI().GetBodyLightComponent();
-    blc.StopLoopingBackpackLights( _dVars.lightsHandle );
+    BackpackLightComponent& blc = GetBEI().GetBackpackLightComponent();
+    blc.StopLoopingBackpackAnimation( _dVars.lightsHandle );
   }
   
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
@@ -511,7 +511,7 @@ void BehaviorReactToVoiceCommand::OnVictorListeningBegin()
 {
   using namespace AudioMetaData::GameEvent;
 
-  static const BackpackLights kStreamingLights =
+  static const BackpackLightAnimation::BackpackAnimation kStreamingLights =
   {
     .onColors               = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
     .offColors              = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
@@ -524,8 +524,8 @@ void BehaviorReactToVoiceCommand::OnVictorListeningBegin()
 
   if ( _iVars.backpackLights )
   {
-    BodyLightComponent& blc = GetBEI().GetBodyLightComponent();
-    blc.StartLoopingBackpackLights( kStreamingLights, BackpackLightSource::Behavior, _dVars.lightsHandle );
+    BackpackLightComponent& blc = GetBEI().GetBackpackLightComponent();
+    blc.StartLoopingBackpackAnimation( kStreamingLights, BackpackLightSource::Behavior, _dVars.lightsHandle );
   }
 
   if ( GenericEvent::Invalid != _iVars.earConBegin )
@@ -547,8 +547,8 @@ void BehaviorReactToVoiceCommand::OnVictorListeningEnd()
 
   if ( _iVars.backpackLights && _dVars.lightsHandle.IsValid() )
   {
-    BodyLightComponent& blc = GetBEI().GetBodyLightComponent();
-    blc.StopLoopingBackpackLights( _dVars.lightsHandle );
+    BackpackLightComponent& blc = GetBEI().GetBackpackLightComponent();
+    blc.StopLoopingBackpackAnimation( _dVars.lightsHandle );
   }
 
   // play our "earcon end" audio, which depends on if our intent was successfully heard or not

@@ -31,7 +31,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDockingTestSimple.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/components/bodyLightComponent.h"
+#include "engine/components/backpackLights/backpackLightComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -90,7 +90,7 @@ static const Point3f kObstacleSize_mm = {10, 10, 50};
 static const u32 kExpectedNumPreDockPoses = 1;
 static const f32 kInvalidAngle = 1000;
 
-static const BackpackLights passLights = {
+static const BackpackLightAnimation::BackpackAnimation passLights = {
   .onColors               = {{NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN}},
   .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
   .onPeriod_ms            = {{1000,1000,1000}},
@@ -100,7 +100,7 @@ static const BackpackLights passLights = {
   .offset                 = {{0,0,0}}
 };
 
-static const BackpackLights failLights = {
+static const BackpackLightAnimation::BackpackAnimation failLights = {
   .onColors               = {{NamedColors::RED,NamedColors::RED,NamedColors::RED}},
   .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
   .onPeriod_ms            = {{500,500,500}},
@@ -286,7 +286,7 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
       }
       
       // Turn off backpack lights in case we needed to be manually reset
-      robot.GetBodyLightComponent().SetBackpackLights(failLights);
+      robot.GetBackpackLightComponent().SetBackpackAnimation(failLights);
       
       _dVars.blockObjectIDPickup.UnSet();
       
@@ -857,11 +857,11 @@ void BehaviorDockingTestSimple::SetCurrStateAndFlashLights(State s, Robot& robot
 {
   if(_dVars.yellForHelp)
   {
-    robot.GetBodyLightComponent().SetBackpackLights(failLights);
+    robot.GetBackpackLightComponent().SetBackpackAnimation(failLights);
   }
   else if(_dVars.yellForCompletion)
   {
-    robot.GetBodyLightComponent().SetBackpackLights(passLights);
+    robot.GetBackpackLightComponent().SetBackpackAnimation(passLights);
   }
   SetCurrState(s);
 }

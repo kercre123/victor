@@ -20,11 +20,11 @@
 #include "coretech/vision/shared/compositeImage/compositeImage.h"
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
 #include "engine/actions/sayTextAction.h"
-#include "engine/animations/animationContainers/backpackLightAnimationContainer.h"
+#include "engine/components/backpackLights/backpackLightAnimationContainer.h"
 #include "engine/animations/animationGroup/animationGroupContainer.h"
 #include "engine/animations/animationTransfer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/components/bodyLightComponent.h"
+#include "engine/components/backpackLights/backpackLightComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/utils/cozmoExperiments.h"
@@ -87,9 +87,9 @@ RobotDataLoader::RobotDataLoader(const CozmoContext* context)
 : _context(context)
 , _platform(_context->GetDataPlatform())
 , _animationGroups(new AnimationGroupContainer(*context->GetRandom()))
-, _animationTriggerResponses(new Util::CladEnumToStringMap<AnimationTrigger>())
-, _cubeAnimationTriggerResponses(new Util::CladEnumToStringMap<CubeAnimationTrigger>())
-, _backpackLightAnimations(new BackpackLightAnimationContainer())
+, _animationTriggerMap(new AnimationTriggerMap())
+, _cubeAnimationTriggerMap(new CubeAnimationTriggerMap())
+, _backpackAnimationTriggerMap(new BackpackAnimationTriggerMap())
 , _dasBlacklistedAnimationTriggers()
 {
   _spritePaths = std::make_unique<Vision::SpritePathMap>();
@@ -170,10 +170,13 @@ void RobotDataLoader::LoadNonConfigData()
     }
 
     {
-      ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeAnimationTriggerResponses");
-      LoadCubeAnimationTriggerResponses();
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeAnimationTriggerMap");
+      LoadCubeAnimationTriggerMap();
     }
-
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackAnimationTriggerMap");
+      LoadBackpackAnimationTriggerMap();
+    }
     {
       ANKI_CPU_PROFILE("RobotDataLoader::LoadEmotionEvents");
       LoadEmotionEvents();
@@ -185,8 +188,8 @@ void RobotDataLoader::LoadNonConfigData()
     }
 
     {
-      ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationTriggerResponses");
-      LoadAnimationTriggerResponses();
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationTriggerMap");
+      LoadAnimationTriggerMap();
     }
 
     {
@@ -350,7 +353,7 @@ void RobotDataLoader::LoadBackpackLightAnimationFile(const std::string& path)
   const bool success = _platform->readAsJson(path.c_str(), animDefs);
   if (success && !animDefs.empty()) {
     std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
-    _backpackLightAnimations->DefineFromJson(animDefs);
+    _backpackLightAnimations.emplace(path, animDefs);
   }
 }
 
@@ -705,15 +708,21 @@ std::map<std::string, std::string> RobotDataLoader::CreateFileNameToFullPathMap(
   return fileNameToFullPath;
 }
 
-void RobotDataLoader::LoadAnimationTriggerResponses()
+void RobotDataLoader::LoadAnimationTriggerMap()
 {
-  _animationTriggerResponses->Load(_platform, "assets/cladToFileMaps/AnimationTriggerMap.json", "AnimName");
+  _animationTriggerMap->Load(_platform, "assets/cladToFileMaps/AnimationTriggerMap.json", "AnimName");
 }
 
-void RobotDataLoader::LoadCubeAnimationTriggerResponses()
+void RobotDataLoader::LoadCubeAnimationTriggerMap()
 {
-  _cubeAnimationTriggerResponses->Load(_platform, "assets/cladToFileMaps/CubeAnimationTriggerMap.json", "AnimName");
+  _cubeAnimationTriggerMap->Load(_platform, "assets/cladToFileMaps/CubeAnimationTriggerMap.json", "AnimName");
 }
+
+void RobotDataLoader::LoadBackpackAnimationTriggerMap()
+{
+  _backpackAnimationTriggerMap->Load(_platform, "assets/cladToFileMaps/BackpackAnimationTriggerMap.json", "AnimName");
+}
+
 
 void RobotDataLoader::LoadDasBlacklistedAnimationTriggers()
 {
@@ -915,15 +924,15 @@ bool RobotDataLoader::DoNonConfigDataLoading(float& loadingCompleteRatio_out)
 
 bool RobotDataLoader::HasAnimationForTrigger( AnimationTrigger ev )
 {
-  return _animationTriggerResponses->HasKey(ev);
+  return _animationTriggerMap->HasKey(ev);
 }
 std::string RobotDataLoader::GetAnimationForTrigger( AnimationTrigger ev )
 {
-  return _animationTriggerResponses->GetValue(ev);
+  return _animationTriggerMap->GetValue(ev);
 }
 std::string RobotDataLoader::GetCubeAnimationForTrigger( CubeAnimationTrigger ev )
 {
-  return _cubeAnimationTriggerResponses->GetValue(ev);
+  return _cubeAnimationTriggerMap->GetValue(ev);
 }
 
 

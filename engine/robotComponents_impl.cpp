@@ -37,7 +37,7 @@ class NVStorageComponent;
 class AIComponent;
 class ObjectPoseConfirmer;
 class CubeLightComponent;
-class BodyLightComponent;
+class BackpackLightComponent;
 class CubeAccelComponent;
 class CubeCommsComponent;
 class RobotGyroDriftDetector;
@@ -88,7 +88,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(NVStorageComponent,            RobotComponentID, NVS
 LINK_COMPONENT_TYPE_TO_ENUM(AIComponent,                   RobotComponentID, AIComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(ObjectPoseConfirmer,           RobotComponentID, ObjectPoseConfirmer)
 LINK_COMPONENT_TYPE_TO_ENUM(CubeLightComponent,            RobotComponentID, CubeLights)
-LINK_COMPONENT_TYPE_TO_ENUM(BodyLightComponent,            RobotComponentID, BodyLights)
+LINK_COMPONENT_TYPE_TO_ENUM(BackpackLightComponent,        RobotComponentID, BackpackLights)
 LINK_COMPONENT_TYPE_TO_ENUM(CubeAccelComponent,            RobotComponentID, CubeAccel)
 LINK_COMPONENT_TYPE_TO_ENUM(CubeCommsComponent,            RobotComponentID, CubeComms)
 LINK_COMPONENT_TYPE_TO_ENUM(RobotGyroDriftDetector,        RobotComponentID, GyroDriftDetector)
@@ -134,7 +134,7 @@ std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotCompone
     case Cozmo::RobotComponentID::BeatDetector:               { return "BeatDetector";}
     case Cozmo::RobotComponentID::BlockTapFilter:             { return "BlockTapFilter";}
     case Cozmo::RobotComponentID::BlockWorld:                 { return "BlockWorld";}
-    case Cozmo::RobotComponentID::BodyLights:                 { return "BodyLights";}
+    case Cozmo::RobotComponentID::BackpackLights:             { return "BackpackLights";}
     case Cozmo::RobotComponentID::Carrying:                   { return "Carrying";}
     case Cozmo::RobotComponentID::CliffSensor:                { return "CliffSensor";}
     case Cozmo::RobotComponentID::CozmoContextWrapper:        { return "CozmoContextWrapper";}

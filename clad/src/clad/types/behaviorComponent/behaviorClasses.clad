@@ -57,6 +57,7 @@ enum uint_8 BehaviorClass {
 
   // devBehaviors
   DevBatteryLogging,
+  DevCubeSpinnerConsole,
   DevDesignCubeLights,
   DevDisplayReadingsOnFace,
   DevEventSequenceCapture,

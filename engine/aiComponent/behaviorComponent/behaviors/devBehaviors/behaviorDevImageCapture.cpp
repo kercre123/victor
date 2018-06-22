@@ -22,7 +22,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/audio/engineRobotAudioClient.h"
-#include "engine/components/bodyLightComponent.h"
+#include "engine/components/backpackLights/backpackLightComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
@@ -39,7 +39,7 @@ namespace {
 constexpr const float kLightBlinkPeriod_s = 0.5f;
 constexpr const float kHoldTimeForStreaming_s = 1.0f;
 
-static const BackpackLights kLightsOn = {
+static const BackpackLightAnimation::BackpackAnimation kLightsOn = {
   .onColors               = {{NamedColors::BLACK,NamedColors::RED,NamedColors::BLACK}},
   .offColors              = {{NamedColors::BLACK,NamedColors::RED,NamedColors::BLACK}},
   .onPeriod_ms            = {{0,0,0}},
@@ -49,7 +49,7 @@ static const BackpackLights kLightsOn = {
   .offset                 = {{0,0,0}}
 };
 
-static const BackpackLights kLightsOff = {
+static const BackpackLightAnimation::BackpackAnimation kLightsOff = {
   .onColors               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
   .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
   .onPeriod_ms            = {{0,0,0}},
@@ -316,7 +316,7 @@ void BehaviorDevImageCapture::BlinkLight()
 {
   _dVars.blinkOn = !_dVars.blinkOn;
 
-  GetBEI().GetBodyLightComponent().SetBackpackLights( _dVars.blinkOn ? kLightsOn : kLightsOff );
+  GetBEI().GetBackpackLightComponent().SetBackpackAnimation( _dVars.blinkOn ? kLightsOn : kLightsOff );
 
   // always blink if we are streaming, and set up another blink for single photo if we need to turn off the
   // light

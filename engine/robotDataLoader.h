@@ -14,6 +14,7 @@
 #define ANKI_COZMO_BASESTATION_ROBOT_DATA_LOADER_H
 
 #include "clad/types/animationTrigger.h"
+#include "clad/types/backpackAnimationTriggers.h"
 #include "clad/types/behaviorComponent/weatherConditionTypes.h"
 #include "clad/types/compositeImageLayouts.h"
 #include "clad/types/compositeImageMaps.h"
@@ -83,15 +84,22 @@ public:
   using FileJsonMap       = std::unordered_map<std::string, const Json::Value>;
   using BehaviorIDJsonMap = std::unordered_map<BehaviorID,  const Json::Value>;
 
+  using AnimationTriggerMap = Util::CladEnumToStringMap<AnimationTrigger>;
+  using CubeAnimationTriggerMap = Util::CladEnumToStringMap<CubeAnimationTrigger>;
+  using BackpackAnimationTriggerMap = Util::CladEnumToStringMap<BackpackAnimationTrigger>;
+
+
   const FileJsonMap& GetEmotionEventJsons()   const { return _emotionEvents; }
   const BehaviorIDJsonMap& GetBehaviorJsons() const { return _behaviors; }  
   const FileJsonMap& GetCubeLightAnimations() const { return _cubeLightAnimations; }
+  const FileJsonMap& GetBackpackLightAnimations() const { return _backpackLightAnimations; }
 
   CannedAnimationContainer* GetCannedAnimationContainer() const { return _cannedAnimations.get(); }
   AnimationGroupContainer* GetAnimationGroups() const { return _animationGroups.get(); }
-  Util::CladEnumToStringMap<AnimationTrigger>* GetAnimationTriggerResponses() const { return _animationTriggerResponses.get(); }
-  Util::CladEnumToStringMap<CubeAnimationTrigger>* GetCubeAnimationTriggerResponses() const { return _cubeAnimationTriggerResponses.get(); }
-  BackpackLightAnimationContainer* GetBackpackLightAnimations() const { return _backpackLightAnimations.get(); }
+
+  AnimationTriggerMap* GetAnimationTriggerMap() const { return _animationTriggerMap.get(); }
+  CubeAnimationTriggerMap* GetCubeAnimationTriggerMap() const { return _cubeAnimationTriggerMap.get(); }
+  BackpackAnimationTriggerMap* GetBackpackAnimationTriggerMap() { return _backpackAnimationTriggerMap.get();}
 
   bool HasAnimationForTrigger( AnimationTrigger ev );
   std::string GetAnimationForTrigger( AnimationTrigger ev );
@@ -148,8 +156,9 @@ private:
   void LoadAnimationGroups();
   void LoadAnimationGroupFile(const std::string& path);
   
-  void LoadAnimationTriggerResponses();
-  void LoadCubeAnimationTriggerResponses();
+  void LoadAnimationTriggerMap();
+  void LoadCubeAnimationTriggerMap();
+  void LoadBackpackAnimationTriggerMap();
   
   void AddToLoadingRatio(float delta);
 
@@ -187,11 +196,13 @@ private:
   std::unordered_map<int, std::vector<std::string>> _jsonFiles;
 
   // animation data
-  std::unique_ptr<CannedAnimationContainer>            _cannedAnimations;
-  std::unique_ptr<AnimationGroupContainer>             _animationGroups;
-  std::unique_ptr<Util::CladEnumToStringMap<AnimationTrigger>>     _animationTriggerResponses;
-  std::unique_ptr<Util::CladEnumToStringMap<CubeAnimationTrigger>> _cubeAnimationTriggerResponses;
-  std::unique_ptr<BackpackLightAnimationContainer>     _backpackLightAnimations;
+  std::unique_ptr<CannedAnimationContainer>    _cannedAnimations;
+  std::unique_ptr<AnimationGroupContainer>     _animationGroups;
+
+  std::unique_ptr<AnimationTriggerMap>         _animationTriggerMap;
+  std::unique_ptr<CubeAnimationTriggerMap>     _cubeAnimationTriggerMap;
+  std::unique_ptr<BackpackAnimationTriggerMap> _backpackAnimationTriggerMap;
+
   TimestampMap _animFileTimestamps;
   TimestampMap _groupAnimFileTimestamps;
   TimestampMap _cubeLightAnimFileTimestamps;
@@ -200,6 +211,8 @@ private:
   std::string _test_anim;
 
   FileJsonMap  _cubeLightAnimations;
+  FileJsonMap _backpackLightAnimations;
+
   // robot configs
   Json::Value _robotMoodConfig;
   Json::Value _victorFreeplayBehaviorConfig;
@@ -215,7 +228,7 @@ private:
 
   std::unique_ptr<Vision::SpritePathMap> _spritePaths;
   std::unique_ptr<Vision::SpriteCache>   _spriteCache;
-  std::unique_ptr<Vision::SpriteSequenceContainer>       _spriteSequenceContainer;
+  std::unique_ptr<Vision::SpriteSequenceContainer> _spriteSequenceContainer;
 
   std::unique_ptr<CompImageMap>  _compImageMap;
   std::unique_ptr<CompLayoutMap> _compLayoutMap;

@@ -1,5 +1,5 @@
 /**
- * File: bodyLightComponent.cpp
+ * File: backpackLightComponent.cpp
  *
  * Author: Al Chaussee
  * Created: 1/23/2017
@@ -11,10 +11,10 @@
  *
  **/
 
-#include "engine/components/bodyLightComponent.h"
+#include "engine/components/backpackLights/backpackLightComponent.h"
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
-#include "engine/animations/animationContainers/backpackLightAnimationContainer.h"
+#include "engine/components/backpackLights/backpackLightAnimationContainer.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/components/batteryComponent.h"
 #include "engine/components/visionComponent.h"
@@ -41,21 +41,24 @@ enum class BackpackLightSourcePrivate : BackpackLightSourceType
 
 struct BackpackLightData
 {
-  BackpackLights _lightConfiguration{};
+  BackpackLightAnimation::BackpackAnimation _lightConfiguration{};
 };
 
-BodyLightComponent::BodyLightComponent()
-: IDependencyManagedComponent(this, RobotComponentID::BodyLights)
+BackpackLightComponent::BackpackLightComponent()
+: IDependencyManagedComponent(this, RobotComponentID::BackpackLights)
 {  
-  static_assert((int)LEDId::NUM_BACKPACK_LEDS == 3, "BodyLightComponent.WrongNumBackpackLights");
+  static_assert((int)LEDId::NUM_BACKPACK_LEDS == 3, "BackpackLightComponent.WrongNumBackpackLights");
 }
 
 
-void BodyLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void BackpackLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
-  _backpackLightAnimations = std::make_unique<BackpackLightWrapper>(
-              *(_robot->GetContext()->GetDataLoader()->GetBackpackLightAnimations()));
+  _backpackLightContainer = std::make_unique<BackpackLightAnimationContainer>(
+    _robot->GetContext()->GetDataLoader()->GetBackpackLightAnimations());
+
+  _backpackTriggerToNameMap = _robot->GetContext()->GetDataLoader()->GetBackpackAnimationTriggerMap();
+
   // Subscribe to messages
   if( _robot->HasExternalInterface() ) {
     auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _eventHandles);
@@ -65,50 +68,50 @@ void BodyLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
 }
 
 
-void BodyLightComponent::UpdateChargingLightConfig()
+void BackpackLightComponent::UpdateChargingLightConfig()
 {
   // Display off lights if 
   // (1) off charger, or
   // (2) on charger but not charging or battery is full.
-  BackpackLightsState state = BackpackLightsState::Off;
+  BackpackAnimationTrigger chargeTrigger = BackpackAnimationTrigger::Off;
   if(_robot->GetBatteryComponent().IsOnChargerContacts() &&
      _robot->GetBatteryComponent().IsCharging() && 
      !_robot->GetBatteryComponent().IsBatteryFull())
   {
-    state = BackpackLightsState::Charging;
+    chargeTrigger = BackpackAnimationTrigger::Charging;
   }
   else if(_robot->GetBatteryComponent().IsBatteryLow())
   {
     // Both charger out of spec and low battery backpack lights are the same
     // so instead of duplicating a lightPattern in json just use what we've already got
-    state = BackpackLightsState::BadCharger;
+    chargeTrigger = BackpackAnimationTrigger::BadCharger;
   }
 #if FACTORY_TEST
   else
   {
-    state = BackpackLightsState::Idle_09;
+    chargeTrigger = BackpackAnimationTrigger::Idle_09;
   }
 #endif
   
-  if(state != _curBackpackChargeState)
+  if(chargeTrigger != _internalChargeLightsTrigger)
   {
-    _curBackpackChargeState = state;
-    
-    const auto* anim = _backpackLightAnimations->_container.GetAnimation(StateToString(state));
+    _internalChargeLightsTrigger = chargeTrigger;
+    auto animName = _backpackTriggerToNameMap->GetValue(chargeTrigger);
+    const auto* anim = _backpackLightContainer->GetAnimation(animName);
     if(anim == nullptr)
     {
-      PRINT_NAMED_WARNING("BodyLightComponent.UpdateChargingLightConfig.NullAnim",
-                          "Got null anim for state %s",
-                          StateToString(state));
+      PRINT_NAMED_WARNING("BackpackLightComponent.UpdateChargingLightConfig.NullAnim",
+                          "Got null anim for chargeTrigger %s",
+                          EnumToString(chargeTrigger));
       return;
     }
     
-    SetBackpackLights(*anim);
+    SetBackpackAnimation(*anim);
   }
 }
 
 
-void BodyLightComponent::UpdateDependent(const RobotCompMap& dependentComps)
+void BackpackLightComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
   UpdateChargingLightConfig();
   
@@ -123,11 +126,11 @@ void BodyLightComponent::UpdateDependent(const RobotCompMap& dependentComps)
     // If the best config is still a thing, use it. Otherwise use the off config
     if (newConfig != nullptr)
     {
-      SetBackpackLightsInternal(newConfig->_lightConfiguration);
+      SetBackpackAnimationInternal(newConfig->_lightConfiguration);
     }
     else
     {
-      SetBackpackLightsInternal(GetOffBackpackLights());
+      SetBackpackAnimation(BackpackAnimationTrigger::Off, false);
     }
     
     _curBackpackLightConfig = bestNewConfig;
@@ -135,19 +138,31 @@ void BodyLightComponent::UpdateDependent(const RobotCompMap& dependentComps)
   // Else if both new and cur configs are null then turn lights off
   else if(newConfig == nullptr && curConfig == nullptr)
   {
-    SetBackpackLightsInternal(GetOffBackpackLights());
+    SetBackpackAnimation(BackpackAnimationTrigger::Off, false);
   }
 }
 
-void BodyLightComponent::SetBackpackLights(const BackpackLights& lights)
+void BackpackLightComponent::SetBackpackAnimation(const BackpackLightAnimation::BackpackAnimation& lights)
 {
-  StartLoopingBackpackLightsInternal(lights, Util::EnumToUnderlying(BackpackLightSourcePrivate::Shared), _sharedLightConfig);
+  StartLoopingBackpackAnimationInternal(lights, Util::EnumToUnderlying(BackpackLightSourcePrivate::Shared), _sharedLightConfig);
+}
+
+void BackpackLightComponent::SetBackpackAnimation(const BackpackAnimationTrigger& trigger, bool shouldLoop)
+{
+  auto animName = _backpackTriggerToNameMap->GetValue(trigger);
+  auto anim = _backpackLightContainer->GetAnimation(animName);
+
+  if(shouldLoop){
+    StartLoopingBackpackAnimationInternal(*anim, Util::EnumToUnderlying(BackpackLightSourcePrivate::Shared), _sharedLightConfig);
+  }else{
+    SetBackpackAnimationInternal(*anim);
+  }
 }
 
 template<>
-void BodyLightComponent::HandleMessage(const ExternalInterface::SetBackpackLEDs& msg)
+void BackpackLightComponent::HandleMessage(const ExternalInterface::SetBackpackLEDs& msg)
 {
-  const BackpackLights lights = {
+  const BackpackLightAnimation::BackpackAnimation lights = {
     .onColors               = msg.onColor,
     .offColors              = msg.offColor,
     .onPeriod_ms            = msg.onPeriod_ms,
@@ -157,10 +172,10 @@ void BodyLightComponent::HandleMessage(const ExternalInterface::SetBackpackLEDs&
     .offset                 = msg.offset
   };
   
-  SetBackpackLights(lights);
+  SetBackpackAnimation(lights);
 }
 
-Result BodyLightComponent::SetBackpackLightsInternal(const BackpackLights& lights)
+Result BackpackLightComponent::SetBackpackAnimationInternal(const BackpackLightAnimation::BackpackAnimation& lights)
 {
   // Convert MS to LED FRAMES
   #define MS_TO_LED_FRAMES(ms)  (ms == std::numeric_limits<u32>::max() ? std::numeric_limits<u8>::max() : (((ms)+29)/30))
@@ -179,7 +194,7 @@ Result BodyLightComponent::SetBackpackLightsInternal(const BackpackLights& light
     
     if(DEBUG_LIGHTS)
     {
-      PRINT_CH_DEBUG("BodyLightComponent", "BodyLightComponent.SetBackpackLightsInternal",
+      PRINT_CH_DEBUG("BackpackLightComponent", "BackpackLightComponent.SetBackpackAnimationInternal",
                      "0x%x 0x%x %u %u %u %u %d",
                      lights.onColors[i],
                      lights.offColors[i],
@@ -193,45 +208,15 @@ Result BodyLightComponent::SetBackpackLightsInternal(const BackpackLights& light
   
   return _robot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::SetBackpackLights(lightStates, 0)));
 }
-
-const char* BodyLightComponent::StateToString(const BackpackLightsState& state) const
+ 
+void BackpackLightComponent::StartLoopingBackpackAnimation(const BackpackLightAnimation::BackpackAnimation& lights, BackpackLightSource source, BackpackLightDataLocator& lightLocator_out)
 {
-  switch(state)
-  {
-    case BackpackLightsState::BadCharger:
-      return "BadCharger";
-    case BackpackLightsState::Charging:
-      return "Charging";
-    case BackpackLightsState::Off:
-      return "Off";
-    case BackpackLightsState::Idle_09:
-      return "Idle_09";
-  }
-}
-
-const BackpackLights& BodyLightComponent::GetOffBackpackLights()
-{
-  static const BackpackLights kBackpackLightsOff = {
-    .onColors               = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
-    .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
-    .onPeriod_ms            = {{0,0,0}},
-    .offPeriod_ms           = {{0,0,0}},
-    .transitionOnPeriod_ms  = {{0,0,0}},
-    .transitionOffPeriod_ms = {{0,0,0}},
-    .offset                 = {{0,0,0}}
-  };
-
-  return kBackpackLightsOff;
+  StartLoopingBackpackAnimationInternal(lights, Util::EnumToUnderlying(source), lightLocator_out);
 }
   
-void BodyLightComponent::StartLoopingBackpackLights(BackpackLights lights, BackpackLightSource source, BackpackLightDataLocator& lightLocator_out)
+void BackpackLightComponent::StartLoopingBackpackAnimationInternal(const BackpackLightAnimation::BackpackAnimation& lights, BackpackLightSourceType source, BackpackLightDataLocator& lightLocator_out)
 {
-  StartLoopingBackpackLightsInternal(lights, Util::EnumToUnderlying(source), lightLocator_out);
-}
-  
-void BodyLightComponent::StartLoopingBackpackLightsInternal(BackpackLights lights, BackpackLightSourceType source, BackpackLightDataLocator& lightLocator_out)
-{
-  StopLoopingBackpackLights(lightLocator_out);
+  StopLoopingBackpackAnimation(lightLocator_out);
   
   _backpackLightMap[source].emplace_front(new BackpackLightData{std::move(lights)});
   
@@ -243,11 +228,11 @@ void BodyLightComponent::StartLoopingBackpackLightsInternal(BackpackLights light
   lightLocator_out = std::move(result);
 }
   
-bool BodyLightComponent::StopLoopingBackpackLights(const BackpackLightDataLocator& lightDataLocator)
+bool BackpackLightComponent::StopLoopingBackpackAnimation(const BackpackLightDataLocator& lightDataLocator)
 {
   if (!lightDataLocator.IsValid())
   {
-    PRINT_CH_INFO("BodyLightComponent", "BodyLightComponent::RemoveBackpackLightConfig.InvalidLocator",
+    PRINT_CH_INFO("BackpackLightComponent", "BackpackLightComponent::RemoveBackpackLightConfig.InvalidLocator",
                   "Trying to remove an invalid locator.");
     return false;
   }
@@ -258,7 +243,7 @@ bool BodyLightComponent::StopLoopingBackpackLights(const BackpackLightDataLocato
   }
   else
   {
-    PRINT_NAMED_WARNING("BodyLightComponent.StopLoopingBackpackLights.NoLocators",
+    PRINT_NAMED_WARNING("BackpackLightComponent.StopLoopingBackpackAnimation.NoLocators",
                         "Trying to remove supposedly valid locator but locator list is empty");
     return false;
   }
@@ -271,7 +256,7 @@ bool BodyLightComponent::StopLoopingBackpackLights(const BackpackLightDataLocato
   return true;
 }
   
-std::vector<BackpackLightSourceType> BodyLightComponent::GetLightSourcePriority()
+std::vector<BackpackLightSourceType> BackpackLightComponent::GetLightSourcePriority()
 {
   constexpr BackpackLightSourceType priorityOrder[] =
   {
@@ -287,7 +272,7 @@ std::vector<BackpackLightSourceType> BodyLightComponent::GetLightSourcePriority(
   return std::vector<BackpackLightSourceType>(beginIter, endIter);
 }
   
-BackpackLightDataRefWeak BodyLightComponent::GetBestLightConfig()
+BackpackLightDataRefWeak BackpackLightComponent::GetBestLightConfig()
 {
   if (_backpackLightMap.empty())
   {

@@ -12,6 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenWaitToStart.h"
 
+#include "clad/types/backpackAnimationTriggers.h"
 #include "engine/components/batteryComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/factory/factoryTestLogger.h"
@@ -40,7 +41,7 @@ Result BehaviorPlaypenWaitToStart::OnBehaviorActivatedInternal()
   ClearTimers();
 
   // Turn the middle backpack light green to know that this behavior is running
-  robot.GetBodyLightComponent().SetBackpackLights(_lights);
+  robot.GetBackpackLightComponent().SetBackpackAnimation(_lights);
 
   return RESULT_OK;
 }
@@ -80,7 +81,7 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenWaitToStart::PlaypenUpdateInterna
 
   if(_needLightUpdate)
   {
-    robot.GetBodyLightComponent().SetBackpackLights(_lights);
+    robot.GetBackpackLightComponent().SetBackpackAnimation(_lights);
     _needLightUpdate = false;
   }
 
@@ -129,7 +130,7 @@ void BehaviorPlaypenWaitToStart::OnBehaviorDeactivated()
     .offset                 = {{0,0,0}}
   };
 
-  robot.GetBodyLightComponent().SetBackpackLights(robot.GetBodyLightComponent().GetOffBackpackLights());
+  robot.GetBackpackLightComponent().SetBackpackAnimation(BackpackAnimationTrigger::Off);
 
   // Request exit pairing mode to switchboard in case we're in it
   robot.Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::ExitPairing()));

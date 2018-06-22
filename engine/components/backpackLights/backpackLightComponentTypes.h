@@ -1,5 +1,5 @@
 /**
- * File: bodyLightComponentTypes.h
+ * File: backpackLightComponentTypes.h
  *
  * Author: Lee Crippen
  * Created: 2/13/2017
@@ -10,8 +10,8 @@
  *
  **/
 
-#ifndef __Anki_Cozmo_Basestation_Components_BodyLightComponentTypes_H__
-#define __Anki_Cozmo_Basestation_Components_BodyLightComponentTypes_H__
+#ifndef __Anki_Cozmo_Basestation_Components_BackpackLightComponentTypes_H__
+#define __Anki_Cozmo_Basestation_Components_BackpackLightComponentTypes_H__
 
 #include <list>
 #include <map>
@@ -21,7 +21,7 @@ namespace Anki {
 namespace Cozmo {
 
 struct BackpackLightData;
-class BodyLightComponent;
+class BackpackLightComponent;
 
 
 using BackpackLightSourceType = int32_t;
@@ -47,7 +47,7 @@ public:
   bool IsValid() const { return !_dataPtr.expired(); }
   
 private:
-  friend class BodyLightComponent;
+  friend class BackpackLightComponent;
   
   BackpackLightMap::iterator          _mapIter;
   BackpackLightList::iterator         _listIter;
@@ -58,4 +58,4 @@ private:
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Anki_Cozmo_Basestation_Components_BodyLightComponentTypes_H__
+#endif // __Anki_Cozmo_Basestation_Components_BackpackLightComponentTypes_H__

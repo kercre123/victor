@@ -60,7 +60,7 @@ public:
     dependencies.insert(RobotComponentID::AIComponent);
     dependencies.insert(RobotComponentID::ObjectPoseConfirmer);
     dependencies.insert(RobotComponentID::CubeLights);
-    dependencies.insert(RobotComponentID::BodyLights);
+    dependencies.insert(RobotComponentID::BackpackLights);
     dependencies.insert(RobotComponentID::CubeAccel);
     dependencies.insert(RobotComponentID::CubeComms);
     dependencies.insert(RobotComponentID::GyroDriftDetector);

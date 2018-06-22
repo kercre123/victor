@@ -18,7 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/components/bodyLightComponent.h"
+#include "engine/components/backpackLights/backpackLightComponent.h"
 #include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
@@ -1628,7 +1628,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::StopRobotForSdk& 
   {
     robot->GetActionList().Cancel();
     robot->GetMoveComponent().StopAllMotors();
-    robot->GetBodyLightComponent().ClearAllBackpackLightConfigs();
+    robot->GetBackpackLightComponent().ClearAllBackpackLightConfigs();
   }
 }
 

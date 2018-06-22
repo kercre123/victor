@@ -114,6 +114,7 @@ void CubeLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
 {
   _robot = robot;
   _cubeLightAnimations = std::make_unique<CubeLightAnimationContainer>(_robot->GetContext()->GetDataLoader()->GetCubeLightAnimations());
+  _triggerToAnimMap = robot->GetContext()->GetDataLoader()->GetCubeAnimationTriggerMap();
   // Subscribe to messages
   if( _robot->HasExternalInterface() ) {
     auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _eventHandles);
@@ -327,6 +328,12 @@ bool CubeLightComponent::PlayLightAnimFromAction(const ObjectID& objectID,
     iter->second.animationsOnLayer[layer].back().actionTagCallbackIsFrom = actionTag;
   }
   return res;
+}
+
+CubeLightAnimation::Animation* CubeLightComponent::GetAnimation(const CubeAnimationTrigger& animTrigger)
+{
+  auto animName = _triggerToAnimMap->GetValue(animTrigger);
+  return _cubeLightAnimations->GetAnimation(animName);
 }
 
 bool CubeLightComponent::PlayLightAnimByTrigger(const ObjectID& objectID,

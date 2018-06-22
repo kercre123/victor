@@ -56,7 +56,7 @@ constexpr const char* kBehaviorKey = "behavior";
 constexpr const char* kGetInBehaviorKey = "getInBehavior";
 constexpr const char* kResetBehaviorTimerKey = "resetBehaviorTimer";
 
-static const BackpackLights kLightsOff = {
+static const BackpackLightAnimation::BackpackAnimation kLightsOff = {
   .onColors               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
   .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
   .onPeriod_ms            = {{0,0,0}},
@@ -460,7 +460,7 @@ void InternalStatesBehavior::BehaviorUpdate()
 
     if( _debugLightsDirty ) {
       
-      GetBEI().GetBodyLightComponent().SetBackpackLights(_currDebugLights);
+      GetBEI().GetBackpackLightComponent().SetBackpackAnimation(_currDebugLights);
       _debugLightsDirty = false;
     }
   }

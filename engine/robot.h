@@ -101,7 +101,7 @@ class IExternalInterface;
 struct RobotState;
 class ActiveCube;
 class CubeLightComponent;
-class BodyLightComponent;
+class BackpackLightComponent;
 class RobotToEngineImplMessaging;
 class PublicStateBroadcaster;
 class VisionComponent;
@@ -242,8 +242,8 @@ public:
   inline CubeLightComponent& GetCubeLightComponent() {return GetComponent<CubeLightComponent>();}
   inline const CubeLightComponent& GetCubeLightComponent() const {return GetComponent<CubeLightComponent>();}
 
-  inline BodyLightComponent& GetBodyLightComponent() {return GetComponent<BodyLightComponent>();}
-  inline const BodyLightComponent& GetBodyLightComponent() const {return GetComponent<BodyLightComponent>();}
+  inline BackpackLightComponent& GetBackpackLightComponent() {return GetComponent<BackpackLightComponent>();}
+  inline const BackpackLightComponent& GetBackpackLightComponent() const {return GetComponent<BackpackLightComponent>();}
 
   inline CubeAccelComponent& GetCubeAccelComponent() {return GetComponent<CubeAccelComponent>();}
   inline const CubeAccelComponent& GetCubeAccelComponent() const {return GetComponent<CubeAccelComponent>();}

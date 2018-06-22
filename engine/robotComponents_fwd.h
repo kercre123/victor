@@ -36,7 +36,7 @@ enum class RobotComponentID{
   BeatDetector,
   BlockTapFilter,
   BlockWorld,
-  BodyLights,
+  BackpackLights,
   Carrying,
   CliffSensor,
   CozmoContextWrapper,
