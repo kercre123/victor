@@ -29,7 +29,7 @@ public:
   
 AnimContext::AnimContext(Util::Data::DataPlatform* dataPlatform)
   : _dataPlatform(dataPlatform)
-  , _locale(new Anki::Util::Locale(Anki::Util::Locale::GetNativeLocale()))  
+  , _locale(new Anki::Util::Locale(Anki::Util::Locale::GetNativeLocale()))
   , _random(new Anki::Util::RandomGenerator())
   , _dataLoader(new RobotDataLoader(this))
   , _micDataSystem(new MicData::MicDataSystem(dataPlatform))

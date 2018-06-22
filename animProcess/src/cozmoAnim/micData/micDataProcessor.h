@@ -44,6 +44,9 @@ namespace Anki {
     }
     class SpeechRecognizerTHF;
   }
+  namespace Util {
+    class Locale;
+  }
 }
 
 namespace Anki {
@@ -68,10 +71,13 @@ public:
   void SetTriggerWordDetectionEnabled(bool enabled) { _triggerEnabled = enabled; }
 
   BeatDetector& GetBeatDetector() { assert(nullptr != _beatDetector); return *_beatDetector.get(); }
+
+  void UpdateTriggerForLocale(const Util::Locale& newLocale);
   
 private:
   MicDataSystem* _micDataSystem = nullptr;
   std::string _writeLocationDir = "";
+  std::string _triggerWordDataDir = "";
   // Members for caching off lookup indices for mic processing results
   int _bestSearchBeamIndex = 0;
   int _bestSearchBeamConfidence = 0;

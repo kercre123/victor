@@ -61,7 +61,7 @@ struct SpeechRecognizerTHF::SpeechRecognizerTHFData
   IndexType                         _thfCurrentRecog = InvalidIndex;
   IndexType                         _thfFollowupRecog = InvalidIndex;
   std::map<IndexType, RecogDataSP>  _thfAllRecogs;
-  std::mutex                        _recogMutex;
+  mutable std::recursive_mutex      _recogMutex;
   const recog_t*                    _lastUsedRecognizer = nullptr;
   
   const RecogDataSP RetrieveDataForIndex(IndexType index) const;
@@ -100,6 +100,7 @@ void SpeechRecognizerTHF::SwapAllData(SpeechRecognizerTHF& other)
 
 const RecogDataSP SpeechRecognizerTHF::SpeechRecognizerTHFData::RetrieveDataForIndex(IndexType index) const
 {
+  std::lock_guard<std::recursive_mutex> lock(_recogMutex);
   if (index == InvalidIndex)
   {
     return RecogDataSP();
@@ -118,24 +119,25 @@ const RecogDataSP SpeechRecognizerTHF::SpeechRecognizerTHFData::RetrieveDataForI
 
 void SpeechRecognizerTHF::SetRecognizerIndex(IndexType index)
 {
-  std::lock_guard<std::mutex>(_impl->_recogMutex);
+  std::lock_guard<std::recursive_mutex>(_impl->_recogMutex);
   _impl->_thfCurrentRecog = index;
 }
   
 void SpeechRecognizerTHF::SetRecognizerFollowupIndex(IndexType index)
 {
-  std::lock_guard<std::mutex>(_impl->_recogMutex);
+  std::lock_guard<std::recursive_mutex>(_impl->_recogMutex);
   _impl->_thfFollowupRecog = index;
 }
 
 SpeechRecognizerTHF::IndexType SpeechRecognizerTHF::GetRecognizerIndex() const
 {
-  std::lock_guard<std::mutex>(_impl->_recogMutex);
+  std::lock_guard<std::recursive_mutex>(_impl->_recogMutex);
   return _impl->_thfCurrentRecog;
 }
 
 void SpeechRecognizerTHF::RemoveRecognitionData(IndexType index)
 {
+  std::lock_guard<std::recursive_mutex> lock(_impl->_recogMutex);
   auto indexIter = _impl->_thfAllRecogs.find(index);
   if (indexIter != _impl->_thfAllRecogs.end())
   {
@@ -175,6 +177,7 @@ bool SpeechRecognizerTHF::AddRecognitionDataFromFile(IndexType index,
                                                      const std::string& nnFilePath, const std::string& searchFilePath,
                                                      bool isPhraseSpotted, bool allowsFollowupRecog)
 {
+  std::lock_guard<std::recursive_mutex> lock(_impl->_recogMutex);
   recog_t* createdRecognizer = nullptr;
   searchs_t* createdSearch = nullptr;
   
@@ -263,6 +266,7 @@ bool SpeechRecognizerTHF::AddRecognitionDataFromFile(IndexType index,
 
 void SpeechRecognizerTHF::Cleanup()
 {
+  std::lock_guard<std::recursive_mutex> lock(_impl->_recogMutex);
   _impl->_thfAllRecogs.clear();
   
   if (_impl->_thfSession)
@@ -290,7 +294,12 @@ bool SpeechRecognizerTHF::RecogStatusIsEndCondition(uint16_t status)
 void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsigned int audioDataLen)
 {
   // Intentionally make a local copy of the shared ptr with the current recog data
-  const RecogDataSP currentRecogSP = _impl->RetrieveDataForIndex(GetRecognizerIndex());
+  RecogDataSP currentRecogSP;
+  {
+    std::lock_guard<std::recursive_mutex> lock(_impl->_recogMutex);
+    currentRecogSP = _impl->RetrieveDataForIndex(GetRecognizerIndex());
+  }
+
   if (nullptr == currentRecogSP)
   {
     return;
@@ -354,7 +363,7 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
         if (!sPhraseForceHeard.empty() ||
             thfRecogPrepSeq(_impl->_thfSession, nextRecogSP->GetRecognizer(), currentRecognizer))
         {
-          std::lock_guard<std::mutex>(_impl->_recogMutex);
+          std::lock_guard<std::recursive_mutex>(_impl->_recogMutex);
           PRINT_CH_INFO("VoiceCommands",
                         "SpeechRecognizerTHF.Update",
                         "Switching current recog from %d to %d",

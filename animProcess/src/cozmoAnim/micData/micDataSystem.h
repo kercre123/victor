@@ -48,6 +48,7 @@ namespace Anki {
     namespace Data {
       class DataPlatform;
     }
+    class Locale;
   }
 }
 class LocalUdpServer;
@@ -89,6 +90,8 @@ public:
   const Anki::Cozmo::RobotInterface::MicDirection& GetLatestMicDirectionMsg() const { return _latestMicDirectionMsg; }
   
   void ResetBeatDetector();
+
+  void UpdateLocale(const Util::Locale& newLocale);
   
 private:
   void RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT);

@@ -561,6 +561,11 @@ void MicDataSystem::SendUdpMessage(const CloudMic::Message& msg)
   _udpServer->Send((const char*)buf.data(), (int)buf.size());
 }
 
+void MicDataSystem::UpdateLocale(const Util::Locale& newLocale)
+{
+  _micDataProcessor->UpdateTriggerForLocale(newLocale);
+}
+
 } // namespace MicData
 } // namespace Cozmo
 } // namespace Anki

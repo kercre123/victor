@@ -2514,11 +2514,11 @@ namespace Cozmo {
 
     const u16 exposure_ms_u16 = Util::numeric_cast<u16>(exposure_ms);
 
-    PRINT_CH_INFO("VisionComponent",
-                  "VisionComponent.SetCameraSettings",
-                  "Exp:%ums Gain:%f",
-                  exposure_ms,
-                  gain);
+    PRINT_CH_DEBUG("VisionComponent",
+                   "VisionComponent.SetCameraSettings",
+                   "Exp:%ums Gain:%f",
+                   exposure_ms,
+                   gain);
 
     _visionSystem->SetNextCameraExposure(exposure_ms, gain);
 
@@ -2542,10 +2542,10 @@ namespace Cozmo {
       return;
     }
 
-    PRINT_CH_INFO("VisionComponent",
-                  "VisionComponent.SetWhiteBalanceSettings",
-                  "GainR:%f GainG:%f GainB:%f",
-                  gainR, gainG, gainB);
+    PRINT_CH_DEBUG("VisionComponent",
+                   "VisionComponent.SetWhiteBalanceSettings",
+                   "GainR:%f GainG:%f GainB:%f",
+                   gainR, gainG, gainB);
 
     _visionSystem->SetNextCameraWhiteBalance(gainR, gainG, gainB);
 

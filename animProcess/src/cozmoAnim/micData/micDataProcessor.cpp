@@ -28,6 +28,7 @@
 
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
+#include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
@@ -37,6 +38,18 @@
 
 
 namespace {
+
+  // NOTE: This enum needs to EXACTLY match the number and ordering of the kTriggerDataList array below
+  enum class SupportedLocales
+  {
+    enUS, // default
+    enUK,
+    enAU,
+    frFR,
+    deDE,
+    Count
+  };
+
   struct TriggerData
   {
     std::string dataDir;
@@ -44,53 +57,45 @@ namespace {
     std::string searchFile;
   };
 
+  // NOTE: This array needs to EXACTLY match the number and ordering of the SupportedLocales enum above
   const TriggerData kTriggerDataList[] = 
   {
-    // "HeyVector" trigger trained on adults search 5
-    {
-      .dataDir = "hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b",
-      .netFile = "anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_am.raw",
-      .searchFile = "anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_5.raw"
-    },
-    // "HeyCozmo" trigger trained on adults
-    {
-      .dataDir = "hey_cosmo_and_commands/trigger_anki_x_en_us_01_hey_cosmo_sfs14_b3e3cbba",
-      .netFile = "anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery01_am.raw",
-      .searchFile = "anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery01_search_4.raw"
-    },
-    // "HeyVector" trigger trained on adults search 7
-    {
-      .dataDir = "hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b",
-      .netFile = "anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_am.raw",
-      .searchFile = "anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_7.raw"
-    },
-    // "HeyVector" trigger trained on adults search 10
-    {
-      .dataDir = "hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b",
-      .netFile = "anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_am.raw",
-      .searchFile = "anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_10.raw"
-    },
-    // "HeyVector" trigger trained on adults search 14
-    {
-      .dataDir = "hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b",
-      .netFile = "anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_am.raw",
-      .searchFile = "anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_14.raw"
-    },
-    // "HeyVector" trigger trained on adults search 18
+    // "HeyVector" trigger trained on adults search 18 for enUS
     {
       .dataDir = "hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b",
       .netFile = "anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_am.raw",
       .searchFile = "anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_18.raw"
     },
-    // "HeyVector" frFR trigger trained on adults search 11
+    // "HeyVector" trigger trained on adults search 4 for enUK
+    {
+      .dataDir = "hey_vector/trigger_anki_x_enUK_01s_hey_vector_sfs14_a51d9f15",
+      .netFile = "anki_x_hey_vector_enUK_sfs14_a51d9f15_delivery01s_am.raw",
+      .searchFile = "anki_x_hey_vector_enUK_sfs14_a51d9f15_delivery01s_search_4.raw"
+    },
+    // "HeyVector" trigger trained on adults search 5 for enAU
+    {
+      .dataDir = "hey_vector/trigger_ai_x_enAU_01s_heyvector_sfs14_a51d9f15",
+      .netFile = "ai_x_heyvector_enAU_sfs14_a51d9f15_delivery01s_am.raw",
+      .searchFile = "ai_x_heyvector_enAU_sfs14_a51d9f15_delivery01s_search_5.raw"
+    },
+    // "HeyVector" trigger trained on adults search 11 for frFR
     {
       .dataDir = "hey_vector/trigger_ai_x_fr_01s_heyvector_sfs14_a51d9f15",
       .netFile = "ai_x_heyvector_fr_sfs14_a51d9f15_delivery01s_am.raw",
       .searchFile = "ai_x_heyvector_fr_sfs14_a51d9f15_delivery01s_search_11.raw"
+    },
+    // "HeyVector" trigger trained on adults search 12 for deDE
+    {
+      .dataDir = "hey_vector/trigger_ai_x_de_01s_heyvector_sfs14_a51d9f15",
+      .netFile = "ai_x_heyvector_de_sfs14_a51d9f15_delivery01s_am.raw",
+      .searchFile = "ai_x_heyvector_de_sfs14_a51d9f15_delivery01s_search_12.raw"
     }
   };
   constexpr int32_t kTriggerDataListLen = (int32_t) sizeof(kTriggerDataList) / sizeof(kTriggerDataList[0]);
-  Anki::AudioUtil::SpeechRecognizer::IndexType _currentTriggerSearchIndex = 5;
+  static_assert(kTriggerDataListLen == (int32_t) SupportedLocales::Count, "Need trigger data for each supported locale");
+
+  Anki::AudioUtil::SpeechRecognizer::IndexType _currentTriggerSearchIndex = Anki::AudioUtil::SpeechRecognizer::InvalidIndex;
+  std::atomic<Anki::AudioUtil::SpeechRecognizer::IndexType> _nextTriggerSearchIndex((int32_t) SupportedLocales::enUS);
 
 # define CONSOLE_GROUP "MicData"
   CONSOLE_VAR(bool, kMicData_ForceDisableMicDataProc, CONSOLE_GROUP, false);
@@ -98,7 +103,7 @@ namespace {
   CONSOLE_VAR(bool, kMicData_CollectRawTriggers, CONSOLE_GROUP, false);
 
 #if ANKI_DEV_CHEATS
-  CONSOLE_VAR_RANGED(s32, kMicData_NextTriggerIndex, CONSOLE_GROUP, _currentTriggerSearchIndex, 0, kTriggerDataListLen-1);
+  CONSOLE_VAR_ENUM(int32_t, kMicData_NextTriggerIndex, CONSOLE_GROUP, _nextTriggerSearchIndex, "enUS,enUK,enAU,frFR,deDE");
   CONSOLE_VAR(bool, kMicData_SaveRawFullIntent, CONSOLE_GROUP, false);
 #endif // ANKI_DEV_CHEATS
 
@@ -124,39 +129,26 @@ static_assert(kCladMicDataTypeSize == kRawAudioChunkSize, "Expecting size of Mic
 MicDataProcessor::MicDataProcessor(MicDataSystem* micDataSystem, const std::string& writeLocation, const std::string& triggerWordDataDir)
 : _micDataSystem(micDataSystem)
 , _writeLocationDir(writeLocation)
+, _triggerWordDataDir(triggerWordDataDir)
 , _recognizer(new SpeechRecognizerTHF())
 , _micImmediateDirection(new MicImmediateDirection())
 , _beatDetector(std::make_unique<BeatDetector>())
 {
+  // Init Sensory processing. Note we don't add in a search trigger here, that happens later
   const std::string& pronunciationFileToUse = "";
   (void) _recognizer->Init(pronunciationFileToUse);
 
-  for (int i=0; i < kTriggerDataListLen; ++i)
-  {
-    const auto& data = kTriggerDataList[i];
-    const std::string& netFilePath = Util::FileUtils::FullFilePath({triggerWordDataDir, data.dataDir, data.netFile});
-    const std::string& searchFilePath = Util::FileUtils::FullFilePath({triggerWordDataDir, data.dataDir, data.searchFile});
-    const AudioUtil::SpeechRecognizer::IndexType searchIndex = i;
-    const bool isPhraseSpotted = true;
-    const bool allowsFollowUpRecog = false;
-    const bool success = _recognizer->AddRecognitionDataFromFile(searchIndex, netFilePath, searchFilePath,
-                                                                isPhraseSpotted, allowsFollowUpRecog);
-    DEV_ASSERT_MSG(success,
-                  "MicDataProcessor.Constructor.SpeechRecognizerInit",
-                  "Failed to add speechRecognizer index: %d netFile: %s searchFile %s",
-                  searchIndex, netFilePath.c_str(), searchFilePath.c_str());
-  }
-
-  _recognizer->SetRecognizerIndex(_currentTriggerSearchIndex);
   // Set up the callback that creates the recording job when the trigger is detected
   auto triggerCallback = std::bind(&MicDataProcessor::TriggerWordDetectCallback, 
                                    this, std::placeholders::_1, std::placeholders::_2);
   _recognizer->SetCallback(triggerCallback);
   _recognizer->Start();
 
+  // Init the various SE processing
   MMIfInit(0, nullptr);
   InitVAD();
 
+  // Cache off the indices of the SE processing variables we will be accessing
   _bestSearchBeamIndex = SEDiagGetIndex("fdsearch_best_beam_index");
   _bestSearchBeamConfidence = SEDiagGetIndex("fdsearch_best_beam_confidence");
   _selectedSearchBeamIndex = SEDiagGetIndex("search_result_best_beam_index");
@@ -164,7 +156,10 @@ MicDataProcessor::MicDataProcessor(MicDataSystem* micDataSystem, const std::stri
   _searchConfidenceState = SEDiagGetIndex("fdsearch_confidence_state");
   _policyFallbackFlag = SEDiagGetIndex("policy_fallback_flag");
 
+  // Start the thread doing the SE processing of audio
   _processThread = std::thread(&MicDataProcessor::ProcessRawLoop, this);
+
+  // Start the thread doing the Sensory processing of audio
   _processTriggerThread = std::thread(&MicDataProcessor::ProcessTriggerLoop, this);
 }
 
@@ -443,7 +438,7 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   {
     int32_t newSetting = robotStartedMoving ? 1 : 0;
     SEDiagSetInt32(_policyFallbackFlag, newSetting);
-    PRINT_NAMED_INFO("MicDataProcessor.ProcessMicrophonesSE.SetUseFallbackBeam", "%s", robotStartedMoving ? "true" : "false");
+    PRINT_NAMED_DEBUG("MicDataProcessor.ProcessMicrophonesSE.SetUseFallbackBeam", "%s", robotStartedMoving ? "true" : "false");
   }
 
   if (robotStoppedMoving)
@@ -661,12 +656,52 @@ void MicDataProcessor::ProcessTriggerLoop()
     }
 
 #if ANKI_DEV_CHEATS
-    if (kMicData_NextTriggerIndex != _currentTriggerSearchIndex)
+    if (kMicData_NextTriggerIndex != _nextTriggerSearchIndex)
     {
-      _currentTriggerSearchIndex = kMicData_NextTriggerIndex;
-      _recognizer->SetRecognizerIndex(_currentTriggerSearchIndex);
+      _nextTriggerSearchIndex = kMicData_NextTriggerIndex;
     }
 #endif // ANKI_DEV_CHEATS
+
+    // Change which trigger search is used for recognition, if requested
+    if (_currentTriggerSearchIndex != _nextTriggerSearchIndex)
+    {
+      ANKI_CPU_PROFILE("SwitchTriggerWordSearch");
+      _currentTriggerSearchIndex = _nextTriggerSearchIndex;
+      _recognizer->SetRecognizerIndex(AudioUtil::SpeechRecognizer::InvalidIndex);
+      const AudioUtil::SpeechRecognizer::IndexType singleSlotIndex = 0;
+      _recognizer->RemoveRecognitionData(singleSlotIndex);
+
+      if (_currentTriggerSearchIndex != AudioUtil::SpeechRecognizer::InvalidIndex)
+      {
+        const auto& data = kTriggerDataList[_currentTriggerSearchIndex];
+        const std::string& netFilePath = Util::FileUtils::FullFilePath({_triggerWordDataDir,
+                                                                        data.dataDir,
+                                                                        data.netFile});
+        const std::string& searchFilePath = Util::FileUtils::FullFilePath({_triggerWordDataDir,
+                                                                           data.dataDir,
+                                                                           data.searchFile});
+        const bool isPhraseSpotted = true;
+        const bool allowsFollowUpRecog = false;
+        const bool success = _recognizer->AddRecognitionDataFromFile(singleSlotIndex, netFilePath, searchFilePath,
+                                                                     isPhraseSpotted, allowsFollowUpRecog);
+        if (success)
+        {
+          PRINT_NAMED_INFO("MicDataProcessor.ProcessTriggerLoop.SwitchTriggerSearch",
+                          "Switched speechRecognizer to netFile: %s searchFile %s",
+                          netFilePath.c_str(), searchFilePath.c_str());
+
+          _recognizer->SetRecognizerIndex(singleSlotIndex);
+        }
+        else
+        {
+          _currentTriggerSearchIndex = AudioUtil::SpeechRecognizer::InvalidIndex;
+          _nextTriggerSearchIndex = AudioUtil::SpeechRecognizer::InvalidIndex;
+          PRINT_NAMED_ERROR("MicDataProcessor.ProcessTriggerLoop.FailedSwitchTriggerSearch",
+                            "Failed to add speechRecognizer netFile: %s searchFile %s",
+                            netFilePath.c_str(), searchFilePath.c_str());
+        }
+      }
+    }
 
     // Run the trigger detection, which will use the callback defined above
     // Note we skip it if there is no activity as of the latest processed audioblock
@@ -712,6 +747,57 @@ float MicDataProcessor::GetIncomingMicDataPercentUsed()
   // This way the "fullness" returned is less variable and better covers the worst case
   _rawAudioBufferFullness[inUseIndex] = updatedFullness;
   return MAX(_rawAudioBufferFullness[0], _rawAudioBufferFullness[1]);
+}
+
+void MicDataProcessor::UpdateTriggerForLocale(const Util::Locale& newLocale)
+{
+  SupportedLocales newLocaleToUse = SupportedLocales::enUS;
+
+  const auto& desiredLang = newLocale.GetLanguage();
+  if (desiredLang == Util::Locale::Language::en)
+  {
+    switch(newLocale.GetCountry())
+    {
+      case Util::Locale::CountryISO2::GB:
+      {
+        newLocaleToUse = SupportedLocales::enUK;
+      }
+      break;
+      case Util::Locale::CountryISO2::AU:
+      {
+        newLocaleToUse = SupportedLocales::enAU;
+      }
+      break;
+      default:
+      {
+        // Use enUS for English-speaking countries without their own option
+        newLocaleToUse = SupportedLocales::enUS;
+      }
+    }
+  }
+  else if (desiredLang == Util::Locale::Language::fr)
+  {
+    // All French speakers get the one option we have
+    newLocaleToUse = SupportedLocales::frFR;
+  }
+  else if (desiredLang == Util::Locale::Language::de)
+  {
+    // All German speakers get the one option we have
+    newLocaleToUse = SupportedLocales::deDE;
+  }
+  else
+  {
+    PRINT_NAMED_WARNING("MicDataProcessor.UpdateTriggerForLocale.UnsupportedLocale",
+                        "Language %s requsted but not supported. Defaulting to enUS.",
+                        newLocale.GetLanguageString().c_str());
+  }
+
+  _nextTriggerSearchIndex = (int32_t) newLocaleToUse;
+
+  // Update the console var if possible so it matches what's been set through this call
+#if ANKI_DEV_CHEATS
+  kMicData_NextTriggerIndex = _nextTriggerSearchIndex;
+#endif // ANKI_DEV_CHEATS
 }
 
 
