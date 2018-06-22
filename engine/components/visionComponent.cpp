@@ -60,6 +60,8 @@
 #include "util/threading/threadPriority.h"
 #include "util/bitFlags/bitFlags.h"
 
+#include "anki/cozmo/shared/factory/faultCodes.h"
+
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -3007,6 +3009,8 @@ namespace Cozmo {
             PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.SizeMismatch",
                                 "Expected %zu, got %zu",
                                 NVStorageComponent::MakeWordAligned(payload.Size()), size);
+            FaultCode::DisplayFaultCode(FaultCode::NO_CAMERA_CALIB);
+            return;
           } else {
 
             payload.Unpack(data, size);
@@ -3045,10 +3049,10 @@ namespace Cozmo {
             }
           }
         }
-	// If this is the factory test and we failed to read calibration then use a dummy one
-	// since we should be getting a real one during playpen
-	else if(FACTORY_TEST)
-	{
+        // If this is the factory test and we failed to read calibration then use a dummy one
+        // since we should be getting a real one during playpen
+        else if(FACTORY_TEST)
+        {
           PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.Failed", "");
 
           // TEMP HACK: Use dummy calibration for now since final camera not available yet
@@ -3076,11 +3080,12 @@ namespace Cozmo {
             PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.SendCameraFOVFailed", "");
           }
         }
-	else
-	{
-	  PRINT_NAMED_ERROR("VisionComponent.ReadCameraCalibration.Failed", "");
-	  return;
-	}
+        else
+        {
+          PRINT_NAMED_ERROR("VisionComponent.ReadCameraCalibration.Failed", "");
+          FaultCode::DisplayFaultCode(FaultCode::NO_CAMERA_CALIB);
+          return;
+        }
 
         Enable(true);
       };

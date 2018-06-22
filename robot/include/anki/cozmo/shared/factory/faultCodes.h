@@ -71,6 +71,9 @@ enum : uint16_t {
   //Cloud Errors
   CLOUD_CERT            = 850,
 
+  //Camera config errors
+  NO_CAMERA_CALIB       = 840,
+
   // Should always be 800 as the fault code
   // display image for this fault is hardcoded into
   // the animfail program
