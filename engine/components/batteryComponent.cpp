@@ -99,6 +99,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
 
   // Update raw voltage
   _batteryVoltsRaw = msg.batteryVoltage;
+  _chargerVoltsRaw = msg.chargerVoltage;
 
   // Check if faking low battery
   static bool wasFakeLowBattery = false;

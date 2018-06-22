@@ -116,6 +116,7 @@ static int GetEngineStatsWebServerImpl(WebService::WebService::Request* request)
   std::stringstream ss;
   ss << std::fixed << std::setprecision(3) << batteryComponent.GetBatteryVolts() << '\n';
   ss << std::fixed << std::setprecision(3) << batteryComponent.GetBatteryVoltsRaw() << '\n';
+  ss << std::fixed << std::setprecision(3) << batteryComponent.GetChargerVoltsRaw() << '\n';
   ss << EnumToString(batteryComponent.GetBatteryLevel()) << '\n';
   ss << (batteryComponent.IsCharging() ? "true" : "false") << '\n';
   ss << (batteryComponent.IsOnChargerContacts() ? "true" : "false") << '\n';

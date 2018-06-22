@@ -66,6 +66,9 @@ public:
   // for most use cases.
   float GetBatteryVoltsRaw() const { return _batteryVoltsRaw; }
   
+  // Returns raw charger voltage as reported by the robot
+  float GetChargerVoltsRaw() const { return _chargerVoltsRaw; }
+  
   // Low battery - should charge as soon as possible
   bool IsBatteryLow() const { return _batteryLevel == BatteryLevel::Low; }
   
@@ -118,6 +121,7 @@ private:
   
   float _batteryVoltsRaw = 0.f;
   float _batteryVoltsFilt = 0.f;
+  float _chargerVoltsRaw = 0.f;
 
   BatteryLevel _batteryLevel = BatteryLevel::Unknown;
   
