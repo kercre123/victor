@@ -33,3 +33,10 @@ alias victor_addr2line='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/ad
 alias victor_lnav='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_log_lnav.sh'
 
 alias vicos-which='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/vicos_which.sh'
+
+#
+# Log management
+#
+alias victor_log_upload='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_log_upload.sh'
+alias victor_log_download='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_log_download.sh'
+
