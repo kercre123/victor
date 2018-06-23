@@ -18,6 +18,7 @@
     "LeaveAMessage",
     "PlaybackMessage",
     "KnowledgeGraphQuestion",
-    "MeetVictor"
+    "MeetVictor",
+    "TriggerWordWithoutIntent"
   ]
 }

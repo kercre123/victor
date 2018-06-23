@@ -57,7 +57,7 @@ private:
     RecentOccurrenceTracker::Handle recentOccurrenceHandle;
     int numberOfTimes = 0;
     float amountOfSeconds = 0.0f;
-    AnimationTrigger animIfNotRecent = AnimationTrigger::Count;
+    std::vector<AnimationTrigger> animsIfNotRecent;
   };
 
   InstanceConfig _iConfig;

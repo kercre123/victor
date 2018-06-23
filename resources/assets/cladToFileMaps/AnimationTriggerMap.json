@@ -1615,5 +1615,26 @@
   {
     "CladEvent": "ShutUp",
     "AnimName": "ag_vc_shutup"
+  },
+  {
+    "CladEvent": "NoCloudGetIn",
+    "AnimName": "ag_nocloud_getin"
+  },
+  {
+    "CladEvent": "NoCloudIcon",
+    "AnimName": "ag_nocloud_icon"
+  },
+  {
+    "CladEvent": "NoWifiGetIn",
+    "AnimName": "ag_nowifi_getin"
+  },
+  {
+    "CladEvent": "NoWifiSearching",
+    "AnimName": "ag_nowifi_signal"
+  },
+  {
+    "CladEvent": "NoWifiIcon",
+    "AnimName": "ag_nowifi_icon"
   }
+
 ]

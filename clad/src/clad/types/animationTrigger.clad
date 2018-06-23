@@ -148,6 +148,13 @@ enum int_32 AnimationTrigger
   MessagingMessageDeletedShort,
   MessagingMessageRewind,
 
+  NoCloudGetIn,
+  NoCloudIcon,
+
+  NoWifiGetIn,
+  NoWifiSearching,
+  NoWifiIcon,
+
   NeutralFace,
   
   NothingToDoBoredIdle,                 // Cozmo doesn't have anything to do in freeplay - idling (not playing game sequence)

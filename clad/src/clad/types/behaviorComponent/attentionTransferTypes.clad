@@ -18,9 +18,8 @@ enum uint_8 AttentionTransferReason {
   Invalid = 0,
 
   NoCloudConnection = 1,
-  PhotoStorageFull = 2,
-  CantFindCharger = 3,
-  UnmatchedIntent = 4,
+  NoWifi = 2,
+  UnmatchedIntent = 3,
 
 }
 

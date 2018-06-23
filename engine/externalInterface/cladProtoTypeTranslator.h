@@ -42,8 +42,7 @@ namespace CladProtoTypeTranslator {
 
   CLAD_PROTO_COMPARE_ASSERT(AttentionTransferReason, Invalid);
   CLAD_PROTO_COMPARE_ASSERT(AttentionTransferReason, NoCloudConnection);
-  CLAD_PROTO_COMPARE_ASSERT(AttentionTransferReason, PhotoStorageFull);
-  CLAD_PROTO_COMPARE_ASSERT(AttentionTransferReason, CantFindCharger);
+  CLAD_PROTO_COMPARE_ASSERT(AttentionTransferReason, NoWifi);
   CLAD_PROTO_COMPARE_ASSERT(AttentionTransferReason, UnmatchedIntent);
 
 }

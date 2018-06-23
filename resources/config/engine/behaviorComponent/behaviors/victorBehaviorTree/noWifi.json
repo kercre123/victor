@@ -1,0 +1,16 @@
+{
+  "behaviorClass": "AttentionTransferIfNeeded",
+  "behaviorID": "NoWifi",
+
+  "attentionTransferReason": "NoWifi",
+  "recentOccurrence": {
+    "numberOfTimes": 2,
+    "amountOfSeconds": 300.0
+  },
+
+  "animsIfNotRecent": [
+    "NoWifiGetIn",
+    "NoWifiSearching",
+    "NoWifiIcon"
+  ]
+}

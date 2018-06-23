@@ -26,21 +26,34 @@ namespace Cozmo {
 
 namespace {
 static const char* kReasonKey = "attentionTransferReason";
-static const char* kAnimIfNotRecentKey = "animIfNotRecent";
+static const char* kAnimsIfNotRecentKey = "animsIfNotRecent";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorAttentionTransferIfNeeded::BehaviorAttentionTransferIfNeeded(const Json::Value& config)
  : ICozmoBehavior(config)
-{  
+{
   JsonTools::GetCladEnumFromJSON(config, kReasonKey, _iConfig.reason, GetDebugLabel());
   ANKI_VERIFY( RecentOccurrenceTracker::ParseConfig(config, _iConfig.numberOfTimes, _iConfig.amountOfSeconds),
                "BehaviorAttentionTransferIfNeeded.Constructor.InvalidConfig",
                "Behavior '%s' specified invalid recent occurrence config",
                GetDebugLabel().c_str() );
 
-  const bool shouldAssert = false;
-  JsonTools::GetCladEnumFromJSON(config, kAnimIfNotRecentKey, _iConfig.animIfNotRecent, GetDebugLabel(), shouldAssert);
+  // load anim triggers, if they exist
+  for (const auto& triggerJson : config[kAnimsIfNotRecentKey])
+  {
+    AnimationTrigger anim;
+
+    if( AnimationTriggerFromString( triggerJson.asString(), anim ) ) {
+      _iConfig.animsIfNotRecent.push_back(anim);
+    }
+    else {
+      PRINT_NAMED_ERROR("BehaviorAttentionTransferIfNeeded.AnimTriggers.Invalid",
+                        "Behavior '%s' config specified an invalid animation trigger: '%s'",
+                        GetDebugLabel().c_str(),
+                        triggerJson.asCString());
+    }
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -67,15 +80,15 @@ void BehaviorAttentionTransferIfNeeded::GetBehaviorJsonKeys(std::set<const char*
 {
   const char* list[] = {
     kReasonKey,
-    kAnimIfNotRecentKey
+    kAnimsIfNotRecentKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
   RecentOccurrenceTracker::GetConfigJsonKeys(expectedKeys);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAttentionTransferIfNeeded::OnBehaviorActivated() 
-{  
+void BehaviorAttentionTransferIfNeeded::OnBehaviorActivated()
+{
   GetBehaviorComp<AttentionTransferComponent>().PossibleAttentionTransferNeeded( _iConfig.reason );
 
   if( _iConfig.recentOccurrenceHandle->AreConditionsMet() ) {
@@ -103,8 +116,13 @@ void BehaviorAttentionTransferIfNeeded::TransitionToAttentionTransfer()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAttentionTransferIfNeeded::TransitionToNoAttentionTransfer()
 {
-  if( _iConfig.animIfNotRecent != AnimationTrigger::Count ) {
-    DelegateIfInControl(new TriggerLiftSafeAnimationAction(_iConfig.animIfNotRecent));
+  if( !_iConfig.animsIfNotRecent.empty() ) {
+    CompoundActionSequential* action = new CompoundActionSequential();
+    for( const auto& trigger : _iConfig.animsIfNotRecent ) {
+      action->AddAction(new TriggerLiftSafeAnimationAction(trigger));
+    }
+
+    DelegateIfInControl(action);
   }
 }
 

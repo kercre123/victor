@@ -72,8 +72,11 @@ void AttentionTransferComponent::OnAttentionTransferred(AttentionTransferReason 
     _gi->Broadcast( ExternalMessageRouter::Wrap( attentionTransfer ) );
   }
 
-  _lastAttentionTransferReason = reason;
-  _lastAttentionTransferTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  // special case: don't store "no wifi" since there's no way the app will connect to the robot to see it
+  if( reason != AttentionTransferReason::NoWifi ) {
+    _lastAttentionTransferReason = reason;
+    _lastAttentionTransferTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  }
 }
 
 void AttentionTransferComponent::ResetAttentionTransfer(AttentionTransferReason reason)

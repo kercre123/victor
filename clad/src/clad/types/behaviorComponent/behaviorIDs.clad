@@ -236,6 +236,8 @@ enum uint_8 BehaviorID {
   InitNormalOperation,
   IntentUnmatched,
   ModeSelector,
+  NoCloud,
+  NoWifi,
   NormalWakeUp,
 
   // victorBehaviorTree/onboarding
@@ -290,6 +292,7 @@ enum uint_8 BehaviorID {
   ReactToTriggerDirectionAwake,
   ReactToUnexpectedMovement,
   StuckOnEdge,
+  TriggerWordWithoutIntent,
 
   // victorBehaviorTree/sdkBehaviors
   SDK0,

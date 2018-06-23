@@ -1,0 +1,14 @@
+{
+  "behaviorClass": "AnimSequence",
+  "behaviorID": "TriggerWordWithoutIntent",
+
+  "respondToUserIntents": [
+    {
+      "type": "silence"
+    }
+  ],
+  
+  "associatedActiveFeature": "NoFeature",
+
+  "animTriggers": ["VC_IntentNeutral"]
+}

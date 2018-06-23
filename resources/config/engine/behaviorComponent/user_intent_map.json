@@ -165,6 +165,10 @@
       "user_intent": "names_ask",
       "cloud_intent": "intent_names_ask",
       "app_intent": "intent_names_ask"
+    },
+    {
+      "user_intent": "silence",
+      "cloud_intent": "intent_system_noaudio"
     }
   ],
 

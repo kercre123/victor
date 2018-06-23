@@ -41,6 +41,7 @@
 #include "engine/moodSystem/moodManager.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "micDataTypes.h"
+#include "osState/osState.h"
 #include "util/console/consoleInterface.h"
 
 #include "coretech/common/engine/utils/timer.h"
@@ -52,20 +53,25 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-  const char* kExitOnIntentsKey                 = "stopListeningOnIntents";
+
   const char* kEarConBegin                      = "earConAudioEventBegin";
   const char* kEarConSuccess                    = "earConAudioEventSuccess";
   const char* kEarConFail                       = "earConAudioEventNeutral";
-  const char* kTriggerBehaviorKey               = "behaviorOnTrigger";
   const char* kIntentBehaviorKey                = "behaviorOnIntent";
-  const char* kIntentListenGetIn                = "playListeningGetInAnim";
   const char* kProceduralBackpackLights         = "backpackLights";
+  const char* kNotifyOnErrors                   = "notifyOnErrors";
 
   constexpr float            kMaxRecordTime_s   = ( (float)MicData::kStreamingTimeout_ms / 1000.0f );
   constexpr float            kListeningBuffer_s = 2.0f;
 
-  CONSOLE_VAR( bool, kRespondsToTriggerWord, "BehaviorReactToVoiceCommand", true );
-  CONSOLE_VAR( bool, kImmediatelyTriggerEarconAndLights, "BehaviorReactToVoiceCommand", true);
+#define CONSOLE_GROUP "BehaviorReactToVoiceCommand"
+
+  CONSOLE_VAR( bool, kRespondsToTriggerWord, CONSOLE_GROUP, true );
+
+  // the behavior will always "listed" for at least this long once it hears the wakeword, even if we receive
+  // an error sooner than this. Note that the behavior will also consider the intent to be an error if the
+  // stream doesn't open within this amount of time, so don't lower this number too much
+  CONSOLE_VAR_RANGED( float, kMinListeningTimeout_s, CONSOLE_GROUP, 5.0f, 0.0f, 30.0f);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -73,22 +79,18 @@ BehaviorReactToVoiceCommand::InstanceConfig::InstanceConfig() :
   earConBegin( AudioMetaData::GameEvent::GenericEvent::Invalid ),
   earConSuccess( AudioMetaData::GameEvent::GenericEvent::Invalid ),
   earConFail( AudioMetaData::GameEvent::GenericEvent::Invalid ),
-  turnOnTrigger( false ),
-  turnOnIntent( !turnOnTrigger ),
-  playListeningGetInAnim( true ),
-  exitOnIntents( true ),
-  backpackLights( true )
+  backpackLights( true ),
+  cloudErrorTracker( "VoiceCommandErrorTracker" )
 {
 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToVoiceCommand::DynamicVariables::DynamicVariables() :
-  state( EState::Positioning ),
+  state( EState::GetIn ),
   reactionDirection( kMicDirectionUnknown ),
-  streamingBeginTime( 0.0f ),
+  streamingBeginTime( -1.0f ),
   intentStatus( EIntentStatus::NoIntentHeard ),
-  isListening( false ),
   timestampToDisableTurnFor(0)
 {
 
@@ -99,9 +101,6 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
   ICozmoBehavior( config ),
   _triggerDirection( kMicDirectionUnknown )
 {
-  // do we exit once we've received an intent from the cloud?
-  JsonTools::GetValueOptional( config, kExitOnIntentsKey, _iVars.exitOnIntents );
-
   // do we play ear-con sounds to notify the user when Victor is listening
   {
     std::string earConString;
@@ -124,22 +123,20 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
   // do we play the backpack lights from the behavior, else assume anims will handle it
   JsonTools::GetValueOptional( config, kProceduralBackpackLights, _iVars.backpackLights );
 
-  // by supplying either kTriggerBehaviorKey XOR kIntentBehaviorKey, we're
-  // telling the behavior we want to turn to the mic direction either when hearing
-  // the trigger word or when receiving the intent
-  {
-    _iVars.turnOnTrigger = JsonTools::GetValueOptional( config, kTriggerBehaviorKey, _iVars.reactionBehaviorString );
-    _iVars.turnOnIntent = JsonTools::GetValueOptional( config, kIntentBehaviorKey, _iVars.reactionBehaviorString );
+  // get the behavior to play after an intent comes in
+  JsonTools::GetValueOptional( config, kIntentBehaviorKey, _iVars.reactionBehaviorString );
 
-    if ( _iVars.turnOnTrigger && _iVars.turnOnIntent )
-    {
-      _iVars.turnOnTrigger = false;
-      PRINT_NAMED_WARNING( "BehaviorReactToVoiceCommand.Init",
-                          "Cannot define BOTH %s and %s in json config", kTriggerBehaviorKey, kIntentBehaviorKey );
-    }
-  }
+  int numErrorsToTriggerAnim;
+  float errorTrackingWindow_s;
 
-  JsonTools::GetValueOptional( config, kIntentListenGetIn, _iVars.playListeningGetInAnim );
+  ANKI_VERIFY( RecentOccurrenceTracker::ParseConfig(config[kNotifyOnErrors],
+                                                    numErrorsToTriggerAnim,
+                                                    errorTrackingWindow_s),
+               "BehaviorReactToVoiceCommand.Constructor.InvalidConfig",
+               "Behavior '%s' specified invalid recent occurrence config",
+               GetDebugLabel().c_str() );
+
+  _iVars.cloudErrorHandle = _iVars.cloudErrorTracker.GetHandle(numErrorsToTriggerAnim, errorTrackingWindow_s);
 
   SetRespondToTriggerWord( true );
 }
@@ -149,15 +146,12 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
 void BehaviorReactToVoiceCommand::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   const char* list[] = {
-    kExitOnIntentsKey,
     kEarConBegin,
     kEarConSuccess,
     kEarConFail,
     kProceduralBackpackLights,
     kIntentBehaviorKey,
-    kTriggerBehaviorKey,
-    kTriggerBehaviorKey,
-    kIntentListenGetIn
+    kNotifyOnErrors
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -177,13 +171,21 @@ void BehaviorReactToVoiceCommand::InitBehavior()
   }
 
   _iVars.unmatchedIntentBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID( BEHAVIOR_ID(IntentUnmatched) );
-  DEV_ASSERT( _iVars.unmatchedIntentBehavior != nullptr, "BehaviorReactToVoiceCommand.Init.NoUnmatchedIntentBehavior");
+  DEV_ASSERT( _iVars.unmatchedIntentBehavior != nullptr,
+              "BehaviorReactToVoiceCommand.Init.UnmatchedIntentBehaviorMissing");
+
+  _iVars.noCloudBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID( BEHAVIOR_ID(NoCloud) );
+  DEV_ASSERT( _iVars.noCloudBehavior != nullptr,
+              "BehaviorReactToVoiceCommand.Init.NoCloudBehaviorMissing");
+
+  _iVars.noWifiBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID( BEHAVIOR_ID(NoWifi) );
+  DEV_ASSERT( _iVars.noWifiBehavior != nullptr,
+              "BehaviorReactToVoiceCommand.Init.NoWifiBehaviorMissing");
 
   SubscribeToTags(
-  {{
-    RobotInterface::RobotToEngineTag::triggerWordDetected,
-    RobotInterface::RobotToEngineTag::animEvent
-  }});
+  {
+    RobotInterface::RobotToEngineTag::triggerWordDetected
+  });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -192,8 +194,11 @@ void BehaviorReactToVoiceCommand::GetAllDelegates( std::set<IBehavior*>& delegat
   if ( _iVars.reactionBehavior )
   {
     delegates.insert( _iVars.reactionBehavior.get() );
-    delegates.insert( _iVars.unmatchedIntentBehavior.get() );
   }
+
+  delegates.insert( _iVars.unmatchedIntentBehavior.get() );
+  delegates.insert( _iVars.noCloudBehavior.get() );
+  delegates.insert( _iVars.noWifiBehavior.get() );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -232,39 +237,10 @@ void BehaviorReactToVoiceCommand::AlwaysHandleInScope( const RobotToEngineEvent&
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToVoiceCommand::HandleWhileActivated( const RobotToEngineEvent& event )
-{
-  if ( _dVars.state == EState::Positioning )
-  {
-    const RobotInterface::RobotToEngine::Tag tag = event.GetData().GetTag();
-    if ( tag == RobotInterface::RobotToEngineTag::animEvent )
-    {
-      const AnimationEvent& animEvent = event.GetData().Get_animEvent();
-      if ( animEvent.event_id == AnimEvent::LISTENING_BEGIN )
-      {
-        if ( !_dVars.isListening )
-        {
-          OnVictorListeningBegin();
-          PRINT_CH_INFO( "MicData", "BehaviorReactToVoiceCommand.StartListening.StratedByEventKeyframe",
-                         "Starting listening based on event keyframe from animation");
-        }
-      }
-    }
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnBehaviorActivated()
 {
   _dVars = DynamicVariables();
 
-  if( kImmediatelyTriggerEarconAndLights ) {
-    OnVictorListeningBegin();
-    PRINT_CH_INFO( "MicData", "BehaviorReactToVoiceCommand.StartListening.OnActivated",
-                   "Starting listening immediately on behavior activation" );
-  }
-
-  
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
     auto* wakeWordBegin = new external_interface::WakeWordBegin;
@@ -281,35 +257,12 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
     moodManager.TriggerEmotionEvent( "ReactToTriggerWord", MoodManager::GetCurrentTimeInSeconds() );
   }
 
-  // Stop all movement so we can listen for a command
-  const auto& robotInfo = GetBEI().GetRobotInfo();
-  robotInfo.GetMoveComponent().StopAllMotors();
-
   // Trigger word is heard (since we've been activated) ...
   PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Activated",
                  "Reacting to trigger word from direction [%d] ...",
                  (int)GetReactionDirection() );
 
-  // we start streaming audio as soon as we've played the trigger word
-  OnStreamingBegin();
-
-  // Play a reaction behavior if we were told to ...
-  if ( _iVars.turnOnTrigger && _iVars.reactionBehavior && IsTurnEnabled() )
-  {
-    const MicDirectionIndex triggerDirection = GetReactionDirection();
-    _iVars.reactionBehavior->SetReactDirection( triggerDirection );
-
-    // allow the reaction to not want to run in certain directions/states
-    if ( _iVars.reactionBehavior->WantsToBeActivated() )
-    {
-      DelegateIfInControl( _iVars.reactionBehavior.get(), &BehaviorReactToVoiceCommand::StartListening );
-    }
-  }
-
-  if ( !IsControlDelegated() )
-  {
-    StartListening();
-  }
+  StartListening();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -321,7 +274,7 @@ void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
     BackpackLightComponent& blc = GetBEI().GetBackpackLightComponent();
     blc.StopLoopingBackpackAnimation( _dVars.lightsHandle );
   }
-  
+
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
     auto* wakeWordEnd = new external_interface::WakeWordEnd;
@@ -337,7 +290,7 @@ void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
       if( intentData != nullptr ) {
         // ideally we'd send a proto message structured the same as the intent, but this would mean
         // duplicating the entire userIntent.clad file for proto, or converting the engine handling
-        // of intents to clad, neither of which I've got time for. 
+        // of intents to clad, neither of which I've got time for.
         std::stringstream ss;
         ss << intentData->intent.GetJSON();
         wakeWordEnd->set_intent_json( ss.str() );
@@ -356,6 +309,14 @@ void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::BehaviorUpdate()
 {
+
+  const bool wasStreaming = _dVars.streamingBeginTime >= 0.0f;
+  const bool isStreaming = GetBehaviorComp<UserIntentComponent>().IsCloudStreamOpen();
+
+  if( !wasStreaming && isStreaming ) {
+    OnStreamingBegin();
+  }
+
   if ( _dVars.state == EState::Listening )
   {
     // since this "listening loop" is decoupled from the actual anim process recording,
@@ -373,13 +334,32 @@ void BehaviorReactToVoiceCommand::BehaviorUpdate()
     }
 
     const bool isIntentPending = GetBehaviorComp<UserIntentComponent>().IsAnyUserIntentPending();
-    if ( _iVars.exitOnIntents && isIntentPending)
-    {
+    if ( isIntentPending ) {
       // kill delegates, we'll handle next steps with callbacks
-      // note: passing true to CancelDelegatees did NOT in fact call my callback,
-      //       so calling it myself
+      // note: passing true to CancelDelegatees doesn't call the callback if we also delegate
+      PRINT_CH_INFO("MicData", "BehaviorReactToVoiceCommand.StopListening.IntentPending",
+                    "Stopping listening because an intent is pending");
       CancelDelegates( false );
-      BehaviorReactToVoiceCommand::StopListening();
+      StopListening();
+    }
+    else {
+      const bool isErrorPending = GetBehaviorComp<UserIntentComponent>().WasUserIntentError();
+      const bool neverStartedStreaming = !isStreaming && !wasStreaming;
+      if( isErrorPending || neverStartedStreaming )
+      {
+        const float timeoutStartTime = wasStreaming ? _dVars.streamingBeginTime : GetTimeActivated_s();
+
+        // cloud either returned an error or hasn't opened a stream yet. In either case, this counts as an
+        // error after our min listening time has expired
+        const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+        if( currTime_s >= timeoutStartTime + kMinListeningTimeout_s ) {
+          PRINT_CH_INFO("MicData", "BehaviorReactToVoiceCommand.StopListening.Error",
+                        "Stopping listening because of a(n) %s",
+                        isErrorPending ? "error" : "timeout");
+          CancelDelegates( false );
+          StopListening();
+        }
+      }
     }
   }
   else if ( _dVars.state == EState::Thinking )
@@ -387,7 +367,7 @@ void BehaviorReactToVoiceCommand::BehaviorUpdate()
     // we may receive an intent AFTER we're done listening for various reasons,
     // so poll for it while we're in the thinking state
     // note: does nothing if intent is already set
-    SetUserIntentStatus();
+    UpdateUserIntentStatus();
   }
 }
 
@@ -421,12 +401,17 @@ MicDirectionIndex BehaviorReactToVoiceCommand::GetReactionDirection() const
     // fallback to our trigger direction
     // accuracy is generally off by the amount the robot has turned
     // (see comment in ComputeReactionDirection())
+    PRINT_CH_INFO( "MicData", "BehaviorReactToVoiceCommand.GetReactionDirection.UsingTriggerDirection",
+                   "Didn't have a reaction or trigger direction, so falling back to trigger direction" );
     direction = _triggerDirection;
   }
 
   // this should never happen, but fuck it
   if ( kMicDirectionUnknown == direction )
   {
+    PRINT_NAMED_WARNING("BehaviorReactToVoiceCommand.GetReactionDirection.UsingSelectedHistoryDirection",
+                        "Didn't have a reaction or trigger direction, so falling back to latest selected direction");
+
     // this is the least accurate if called post-intent
     // no difference if called pre-intent / post-trigger word
     direction = GetSelectedDirectionFromMicHistory();
@@ -445,54 +430,40 @@ MicDirectionIndex BehaviorReactToVoiceCommand::GetSelectedDirectionFromMicHistor
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnStreamingBegin()
 {
+  PRINT_CH_INFO("MicData", "BehaviorReactToVoiceCommand.OnStreamingBegin",
+                "Got notice that cloud stream is open");
   _dVars.streamingBeginTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToVoiceCommand::OnStreamingEnd()
-{
-
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::StartListening()
 {
+  _dVars.state = EState::Listening;
+
   // to get into our listening state, we need to play our get-in anim followed by our
   // looping animation.
+  OnVictorListeningBegin();
 
   // we don't want to enter EState::Listening until we're in our loop or else
   // we could end up exiting too soon and looking like garbage
   auto callback = [this]()
   {
-    // have our looping anim abort 10s after streaming started
-    const float elapsed = ( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()
-                             - _dVars.streamingBeginTime );
+    // if for some reason it doesn't look like streaming has begun yet (we didn't get a call from vic-cloud
+    // saying the stream is open) consider the elapsed time to be 0
+    float elapsed = 0.0f;
+    if( _dVars.streamingBeginTime > 0.0f ) {
+      elapsed = ( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()
+                  - _dVars.streamingBeginTime );
+    }
+
     const float timeout = ( kMaxRecordTime_s - elapsed );
     DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::VC_ListeningLoop,
                                                      0, true, (uint8_t)AnimTrackFlag::NO_TRACKS,
                                                      std::max( timeout, 1.0f ) ),
                          &BehaviorReactToVoiceCommand::StopListening );
-
-    // the _dVars.state is purposely decoupled from _dVars.isListening so that we can trigger the listening response
-    // before we go into the listening state flow
-    // this is our fallback in the case where we haven't begun listening by the time the listening state has begun
-    _dVars.state = EState::Listening;
-    if ( !_dVars.isListening )
-    {
-      OnVictorListeningBegin();
-      PRINT_NAMED_WARNING("BehaviorReactToVoiceCommand.StartListening.ListeningStateSkipped",
-                          "Starting listening after action completed instead of in response to keyframe");
-    }
   };
 
-  if ( _iVars.playListeningGetInAnim )
-  {
-    DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::VC_ListeningGetIn ), callback );
-  }
-  else
-  {
-    callback();
-  }
+  DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::VC_ListeningGetIn ), callback );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -502,11 +473,7 @@ void BehaviorReactToVoiceCommand::StopListening()
                       "BehaviorReactToVoiceCommand.State",
                       "Transitioning to EState::IntentReceived from invalid state [%hhu]", _dVars.state );
 
-  // Note: this is currently decoupled with the actual stream from the AnimProcess
-  //       really should be in sync with each other
-  OnStreamingEnd();
-
-  SetUserIntentStatus();
+  UpdateUserIntentStatus();
   TransitionToThinking();
 }
 
@@ -537,17 +504,12 @@ void BehaviorReactToVoiceCommand::OnVictorListeningBegin()
     // Play earcon begin audio
     GetBEI().GetRobotAudioClient().PostEvent( _iVars.earConBegin, AudioMetaData::GameObjectType::Behavior );
   }
-
-  // technically we don't have to trigger this at the same time as EState::Listening, so we need to track this separately
-  _dVars.isListening = true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnVictorListeningEnd()
 {
   using namespace AudioMetaData::GameEvent;
-
-  _dVars.isListening = false;
 
   if ( _iVars.backpackLights && _dVars.lightsHandle.IsValid() )
   {
@@ -576,7 +538,7 @@ void BehaviorReactToVoiceCommand::OnVictorListeningEnd()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToVoiceCommand::SetUserIntentStatus()
+void BehaviorReactToVoiceCommand::UpdateUserIntentStatus()
 {
   UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
   if ( ( _dVars.intentStatus == EIntentStatus::NoIntentHeard ) && uic.IsAnyUserIntentPending() )
@@ -586,12 +548,23 @@ void BehaviorReactToVoiceCommand::SetUserIntentStatus()
 
     _dVars.intentStatus = EIntentStatus::IntentHeard;
 
+    PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.UpdateUserIntentStatus.Heard",
+                   "Heard an intent");
+
     static const UserIntentTag unmatched = USER_INTENT(unmatched_intent);
     if ( uic.IsUserIntentPending( unmatched ) )
     {
       SmartActivateUserIntent( unmatched );
       _dVars.intentStatus = EIntentStatus::IntentUnknown;
+      PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.UpdateUserIntentStatus.Unknown",
+                     "Heard an intent, but it was unknown");
     }
+  }
+  else if( uic.WasUserIntentError() ) {
+    uic.ResetUserIntentError();
+    _dVars.intentStatus = EIntentStatus::Error;
+    PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.UpdateUserIntentStatus.Error",
+                   "latest user intent was an error");
   }
 }
 
@@ -600,29 +573,51 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
 {
   _dVars.state = EState::Thinking;
 
+  PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.TransitionToThinking", "Thinking state starting");
+
   auto callback = [this]()
   {
-    // we're keeping our "listening feedback" open until the last possible moment, since the intent can come in after we've
-    // closed our recording stream.
+    // we're keeping our "listening feedback" open until the last possible moment, since the intent can come
+    // in after we've closed our recording stream.
     OnVictorListeningEnd();
 
     // Play a reaction behavior if we were told to ...
     // ** only in the case that we've heard a valid intent **
+    UpdateUserIntentStatus();
     const bool heardValidIntent = ( _dVars.intentStatus == EIntentStatus::IntentHeard );
-    if ( heardValidIntent && _iVars.turnOnIntent && _iVars.reactionBehavior && IsTurnEnabled() )
+    if ( heardValidIntent && _iVars.reactionBehavior )
     {
-      const MicDirectionIndex triggerDirection = GetReactionDirection();
-      _iVars.reactionBehavior->SetReactDirection( triggerDirection );
+      if( IsTurnEnabled() ) {
+        const MicDirectionIndex triggerDirection = GetReactionDirection();
+        _iVars.reactionBehavior->SetReactDirection( triggerDirection );
 
-      // allow the reaction to not want to run in certain directions/states
-      if ( _iVars.reactionBehavior->WantsToBeActivated() )
+        PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.Thinking.SetReactionDirection",
+                       "Setting reaction behavior direction to [%d]",
+                       (int)triggerDirection);
+
+        // allow the reaction to not want to run in certain directions/states
+        if ( _iVars.reactionBehavior->WantsToBeActivated() )
+        {
+          DelegateIfInControl( _iVars.reactionBehavior.get(), &BehaviorReactToVoiceCommand::TransitionToIntentReceived );
+        }
+        else
+        {
+          PRINT_CH_DEBUG("BehaviorReactToVoiceCommand.Thinking.ReactionDoesntWantToActivate",
+                         "%s: intent reaction behavior '%s' doesn't want to activate",
+                         GetDebugLabel().c_str(),
+                         _iVars.reactionBehavior->GetDebugLabel().c_str());
+        }
+      }
+      else
       {
-        DelegateIfInControl( _iVars.reactionBehavior.get(), &BehaviorReactToVoiceCommand::TransitionToIntentReceived );
+        PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.Thinking.TurnDisabled",
+                       "Turn after intent is received has been disabled this tick, skipping");
       }
     }
 
     if ( !IsControlDelegated() )
     {
+      // handle intent now
       TransitionToIntentReceived();
     }
   };
@@ -638,26 +633,99 @@ void BehaviorReactToVoiceCommand::TransitionToIntentReceived()
 
   switch ( _dVars.intentStatus )
   {
-    case EIntentStatus::IntentHeard:
+    case EIntentStatus::IntentHeard: {
       // no animation for valid intent, go straight into the intent behavior
-      PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent", "Heard valid user intent, woot!" );
+      PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent.Heard", "Heard valid user intent, woot!" );
 
       // also reset the attention transfer counter for unmatched intents (since we got a good one)
       GetBehaviorComp<AttentionTransferComponent>().ResetAttentionTransfer(AttentionTransferReason::UnmatchedIntent);
       break;
-    case EIntentStatus::IntentUnknown:
-      PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent", "Heard user intent but could not understand it" );
+    }
+
+    case EIntentStatus::IntentUnknown: {
+      PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent.Unknown",
+                      "Heard user intent but could not understand it" );
       GetBEI().GetMoodManager().TriggerEmotionEvent( "NoValidVoiceIntent" );
       if( _iVars.unmatchedIntentBehavior->WantsToBeActivated() ) {
         // this behavior will (should) interact directly with the attention transfer component
         DelegateIfInControl(_iVars.unmatchedIntentBehavior.get());
       }
       break;
+    }
+
     case EIntentStatus::NoIntentHeard:
-      PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent", "No user intent was heard" );
+    case EIntentStatus::Error: {
+
+      PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent.Error",
+                      "Intent processing returned an error (or timeout)" );
       GetBEI().GetMoodManager().TriggerEmotionEvent( "NoValidVoiceIntent" );
-      DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::VC_IntentNeutral ) );
+
+      // track that an error occurred
+      _iVars.cloudErrorTracker.AddOccurrence();
+
+      if( _iVars.cloudErrorHandle &&
+          _iVars.cloudErrorHandle->AreConditionsMet() ) {
+        // time to let the user know
+
+        auto errorBehaviorCallback = [this]() {
+          const bool updateNow = true;
+          const bool hasSSID = !OSState::getInstance()->GetSSID(updateNow).empty();
+
+          if( hasSSID ) {
+            PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent.Error.NoCloud",
+                            "has wifi, so error must be on the internet or cloud side" );
+
+            // has wifi, but no cloud
+            if( ANKI_VERIFY( _iVars.noCloudBehavior && _iVars.noCloudBehavior->WantsToBeActivated(),
+                             "BehaviorReactToVoiceCommand.Intent.Error.NoCloud.BehaviorWontActivate",
+                             "No cloud behavior '%s' doesn't want to be activated",
+                             _iVars.noCloudBehavior ? _iVars.noCloudBehavior->GetDebugLabel().c_str() : "<NULL>" ) ) {
+              // this behavior will (should) interact directly with the attention transfer component
+              DelegateIfInControl(_iVars.noCloudBehavior.get());
+            }
+          }
+          else {
+            PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent.Error.NoWifi",
+                            "no wifi SSID, error is local" );
+
+            // no wifi
+            if( ANKI_VERIFY( _iVars.noWifiBehavior && _iVars.noWifiBehavior->WantsToBeActivated(),
+                             "BehaviorReactToVoiceCommand.Intent.Error.NoWifi.BehaviorWontActivate",
+                             "No wifi behavior '%s' doesn't want to be activated",
+                             _iVars.noWifiBehavior ? _iVars.noWifiBehavior->GetDebugLabel().c_str() : "<NULL>" ) ) {
+              // this behavior will (should) interact directly with the attention transfer component
+              DelegateIfInControl(_iVars.noWifiBehavior.get());
+            }
+          }
+        };
+
+        const MicDirectionIndex triggerDirection = GetReactionDirection();
+        _iVars.reactionBehavior->SetReactDirection( triggerDirection );
+
+        PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.Intent.Error.SetReactionDirection",
+                       "Setting reaction behavior direction to [%d]",
+                       (int)triggerDirection);
+
+        // allow the reaction to not want to run in certain directions/states
+        if ( _iVars.reactionBehavior->WantsToBeActivated() )
+        {
+          DelegateIfInControl( _iVars.reactionBehavior.get(), errorBehaviorCallback );
+        }
+        else
+        {
+          PRINT_CH_DEBUG("BehaviorReactToVoiceCommand.Intent.Error",
+                         "%s: intent reaction behavior '%s' doesn't want to activate (in case of intent error)",
+                         GetDebugLabel().c_str(),
+                         _iVars.reactionBehavior->GetDebugLabel().c_str());
+          errorBehaviorCallback();
+        }
+      }
+      else {
+        // not time to tell the user, just play the normal unheard animation
+        DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::VC_IntentNeutral ) );
+      }
       break;
+    }
   }
 }
 
