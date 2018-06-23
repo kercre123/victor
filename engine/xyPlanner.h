@@ -95,20 +95,27 @@ private:
   // if p corresponds to a pose in _targets, return the correspondance index. if it is not, returns _targets.size()
   Planning::GoalID FindGoalIndex(const Point2f& p) const;
 
-  // returns true if the provided path segment is safe. Since PathSegments are unions, it assumes
-  // the caller of this method has already determined the segment type.
-  bool IsArcSegmentSafe(const Planning::PathSegment& p) const;
-  bool IsLineSegmentSafe(const Planning::PathSegment& p) const;
-  bool IsPointSegmentSafe(const Planning::PathSegment& p) const;
+  // Finds the nearest safe point to p. If no safe point exists, default to p
+  Point2f FindNearestSafePoint(const Point2f& p) const;
 
+  // get total cost of traversing the path in the current map
+  float GetPathCollisionPenalty(const Planning::Path& path) const;
+
+  // returns true if the provided region has no collisions with supported types in the map
   bool IsArcSafe(const Arc& a, float padding) const;
   bool IsLineSafe(const LineSegment& l, float padding) const;
   bool IsPointSafe(const Point2f& p, float padding) const;
+
+  // get area of any collision with supported types from the map 
+  float GetArcPenalty(const Arc& a, float padding) const;
+  float GetLinePenalty(const LineSegment& l, float padding) const;
+  float GetPointPenalty(const Point2f& p, float padding) const;
 
   const MapComponent&  _map;
   Pose2d               _start;
   std::vector<Pose2d>  _targets;
   EPlannerStatus       _status;
+  float                _collisionPenalty;
 };
     
     

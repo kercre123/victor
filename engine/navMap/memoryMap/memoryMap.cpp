@@ -230,6 +230,14 @@ bool MemoryMap::AnyOf(const BoundedConvexSet2f& r, NodePredicate f) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float MemoryMap::GetCollisionArea(const BoundedConvexSet2f& region, NodePredicate pred) const
+{
+  float retv = 0.f;  
+  _quadTree.Fold( [&](const auto& node) { if ( pred(node.GetData()) ) { retv += powf(node.GetSideLen(),2);} }, region);
+  return retv;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool MemoryMap::HasContentType(EContentType type) const
 {
   // ask the processor

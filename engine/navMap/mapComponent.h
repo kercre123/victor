@@ -126,6 +126,9 @@ public:
   // return true of the specified region contains any objects of known collision types
   bool CheckForCollisions(const BoundedConvexSet2f& region) const;
 
+  // returns the accumulated area of cells that satisfy the predicate
+  float GetCollisionArea(const BoundedConvexSet2f& region) const;
+
   // Remove all prox obstacles from the map.
   // CAUTION: This will entirely remove _all_ information about prox
   // obstacles. This should almost never be necessary. Is this really
@@ -205,9 +208,6 @@ private:
   bool                            _isRenderEnabled;
   float                           _broadcastRate_sec = -1.0f;      // (Negative means don't send)
 };
-
-
-
 
 }
 }

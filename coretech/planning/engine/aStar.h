@@ -14,33 +14,32 @@
 #define __Coretech_Planning_AStar_H__
 
 #include <unordered_set>
-#include <vector>
-#include <type_traits>
+#include <functional>
 
 namespace Anki {
 
-template<class T>
+
+// please read https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern to understand the template here
+//    We use a template type for the implentation to allow for compile time polymorphism of an abstract class
+//    to avoid the overhead of virtual functions. 
+template<class T, class Impl>
 class IAStarConfig {
 public:
-  class SuccessorIter {
-  public:
-    virtual bool Done() const = 0;
-    virtual void Next() = 0;
-    
-    virtual const T& GetState() const = 0;
-    virtual float    GetCost()  const = 0;
-  };
+  struct Successor { T state; float cost; };
 
-  virtual std::unique_ptr<SuccessorIter> GetSuccessors(const T& p) const = 0; 
+  // we use `decltype(auto)` here to allow for custom iterable types if wanted
+  decltype(auto) GetSuccessors(const T& p) const { return static_cast<Impl const&>(*this).GetSuccessors(p); }
+  float          Heuristic(const T& p)     const { return static_cast<Impl const&>(*this).Heuristic(p); }
+  bool           IsGoal(const T& p)        const { return static_cast<Impl const&>(*this).IsGoal(p); }
+  size_t         GetMaxExpansions()        const { return static_cast<Impl const&>(*this).GetMaxExpansions(); }
 
-  virtual float         Heuristic(const T& p, const T& q)  const = 0;
-  virtual bool          Equal(const T& p, const T& q)      const = 0;
-  virtual s64           Hash(const T& p)                   const = 0; 
-  virtual size_t        GetMaxExpansions()                 const = 0;
+private:
+  // use private constructor and friend class to prevent accidentally templating on wrong derived class
+  IAStarConfig(){};
+  friend Impl;
 };
 
-// template on IAStarConfig to avoid v-table lookups
-template<class T, class ConfigT, typename = typename std::enable_if< std::is_base_of<IAStarConfig<T>, ConfigT>::value >::type>
+template<class T, class ConfigT>
 class AStar {
 public:
 
@@ -48,41 +47,16 @@ public:
   AStar(const ConfigT& config) : _config(config), _open(1024), _closed(1024, StateHasher, StateEqual) {}
 
   // initialization, search loop, and plan construction of classical A* implementation
-  std::vector<T> Search(const std::vector<T>& start, const T& goal)
-  {
-    // clear search sets if we already ran the planner
-    _open.clear();
-    _closed.clear();
-
-    // seed the open list with startStates
-    for (const auto& p : start) {
-      _open.emplace( {p, p, 0, _config.Heuristic(p, goal)} );
-    }
-
-    bool foundGoal = false;
-    typename ClosedList::iterator current = _closed.begin();
-
-    // search loop
-    size_t numExpansions = 0;
-    while( (++numExpansions < _config.GetMaxExpansions()) && !foundGoal && !_open.empty() )  {
-      const auto& closedRecord = _closed.emplace( std::move(_open.pop()) );
-
-      // if the insert was successful, expand
-      if ( closedRecord.second ) {
-        current = closedRecord.first;
-        foundGoal = _config.Equal(current->state, goal);
-
-        for (const auto& succ = _config.GetSuccessors(current->state); !succ->Done(); succ->Next() ) {
-          float newCost = current->g + succ->GetCost();
-          _open.emplace( { succ->GetState(), current->state, newCost, newCost + _config.Heuristic(succ->GetState(), goal)} );
-        }
-      }
-    }
-
-    return ( foundGoal && (current != _closed.end()) ) ? GetPlan(*current) : std::vector<T>();
-  }
+  std::vector<T> Search(const std::vector<T>& start);
 
 private:  
+  // given a state in the closed list, follow the backpointers to the start state for that branch
+  std::vector<T> GetPlan(const T& currState);
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Data Containers
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   // record for sorting open and closed lists
   struct Record {
     T state;
@@ -91,28 +65,13 @@ private:
     float f; // f = g + h
   };
 
-  // given a state in the closed list, follow the backpointers to the start state for that branch
-  std::vector<T> GetPlan(const Record& currState)
-  {
-    std::vector<T> out;
-    auto next = _closed.find({currState.state, currState.state, 0, 0});
-
-    while ( next != _closed.end() ) {
-      out.push_back(next->state);
-      if ( NEAR_ZERO(next->g) ) { break; }
-      next = _closed.find({next->parent, next->parent, 0, 0});
-    }
-
-    return out;
-  }
-  
   // Closed List
-  std::function<s64 (const Record&)> StateHasher = [this] (const Record& s) { 
-    return _config.Hash(s.state); 
+  std::function<size_t (const Record&)> StateHasher = [] (const Record& s) { 
+    return std::hash<T>{}(s.state); 
   };
 
-  std::function<bool (const Record&, const Record&)> StateEqual = [this] (const Record& s, const Record& t) { 
-    return _config.Equal(s.state, t.state); 
+  std::function<bool (const Record&, const Record&)> StateEqual = [] (const Record& s, const Record& t) { 
+    return std::equal_to<T>{}(s.state, t.state); 
   };
 
   using ClosedList = std::unordered_set<Record, decltype(StateHasher), decltype(StateEqual)>;
@@ -134,8 +93,7 @@ private:
 
     inline Record pop()
     {
-      std::pop_heap(this->begin(), this->end(), 
-      [](const Record& a, const Record& b) { return (a.f > b.f); });
+      std::pop_heap(this->begin(), this->end(), [](const Record& a, const Record& b) { return (a.f > b.f); });
       Record result( std::move(this->back()) );
       this->pop_back();
       return result;
@@ -146,11 +104,65 @@ private:
   // Data Members
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  const ConfigT& _config;
-  OpenList       _open;
-  ClosedList     _closed;
+  const IAStarConfig<T, ConfigT>& _config;
+  OpenList                        _open;
+  ClosedList                      _closed;
 };
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class T, class ConfigT>
+inline std::vector<T> AStar<T, ConfigT>::Search(const std::vector<T>& start)
+{
+  // clear search sets if we already ran the planner
+  _open.clear();
+  _closed.clear();
+
+  // seed the open list with startStates
+  for (const auto& p : start) {
+    _open.emplace( {p, p, 0, _config.Heuristic(p)} );
+  }
+
+  bool foundGoal = false;
+  typename ClosedList::iterator current = _closed.begin();
+
+  // search loop
+  size_t numExpansions = 0;
+  while( (++numExpansions < _config.GetMaxExpansions()) && !foundGoal && !_open.empty() )  {
+    const auto& closedRecord = _closed.emplace( std::move(_open.pop()) );
+
+    // if the insert was successful, expand
+    if ( closedRecord.second ) {
+      current = closedRecord.first;
+      foundGoal = _config.IsGoal(current->state);
+
+      using Iter = typename IAStarConfig<T, ConfigT>::Successor;
+      for (const Iter& succ : _config.GetSuccessors(current->state) ) {
+        float newCost = current->g + succ.cost;
+        _open.emplace( { succ.state, current->state, newCost, newCost + _config.Heuristic(succ.state)} );
+      }
+    }
+  }
+
+  return ( foundGoal && (current != _closed.end()) ) ? GetPlan(current->state) : std::vector<T>();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class T, class ConfigT>
+inline std::vector<T> AStar<T, ConfigT>::GetPlan(const T& currState)
+{
+  std::vector<T> out;
+  auto next = _closed.find({currState, currState, 0, 0});
+
+  while ( next != _closed.end() ) {
+    out.push_back(next->state);
+    if ( NEAR_ZERO(next->g) ) { break; }
+    next = _closed.find({next->parent, next->parent, 0, 0});
+  }
+
+  std::reverse(out.begin(), out.end());
+  return out;
+}
 
 } // namespace Anki
 
