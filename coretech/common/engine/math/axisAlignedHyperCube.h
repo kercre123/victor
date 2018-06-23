@@ -15,8 +15,7 @@
 #ifndef __COMMON_ENGINE_MATH_AXIS_ALIGNED_HYPER_CUBE_H__
 #define __COMMON_ENGINE_MATH_AXIS_ALIGNED_HYPER_CUBE_H__
 
-#include "coretech/common/engine/math/ball.h"
-#include "coretech/common/engine/math/fastPolygon2d.h"
+#include "coretech/common/engine/math/affineHyperplane.h"
 
 #include <algorithm>
 
@@ -60,56 +59,27 @@ public:
     return std::all_of( _vertices.begin(), _vertices.end(), [&H](const Point2f& p) { return FLT_LT(H.Evaluate(p), 0.f); } ); 
   }
 
-  // if Hypercube center is contained in the ball, return true. Otherwise find the closest point on the perimeter
-  // of the ball and check if is contained by the hypercube.
-  bool Intersects(const Ball<N,T>& ball) const {
-    if ( ball.Contains(GetCentroid()) ) { return true; }
-    
-    // get the closest point in the ball to the hypercube center
-    Point<N,T> vec = GetCentroid() - ball.GetCentroid();
-    vec.MakeUnitLength(); // this needs to be on its own line, since it returns the original length, not a point.
-    return Contains( ball.GetCentroid() + (vec * ball.GetRadius()) );
-  }
-
-  // returns true if the given set FULLY contains all vertices
-  bool IsContainedBy(const ConvexPointSet<N,T>& set) const {
-    return std::all_of( _vertices.begin(), _vertices.end(),[&](const Point<N,T>& p) {return set.Contains(p);} );
+  // returns true if A is contained in the hypercube
+  bool Contains(const AxisAlignedHyperCube<N,T>& A) const { 
+    return Contains(A.GetMinVertex()) && Contains(A.GetMaxVertex());
   }  
 
   // helper for intersection checks
   inline Point<N,T> GetCentroid() const { return (_vertices.front() + _vertices.back()) * .5; }
 
+  // get the min/max vertices
+  const Point<N,T>& GetMinVertex() const { return _vertices.front(); } 
+  const Point<N,T>& GetMaxVertex() const { return _vertices.back();  } 
+
+  // get all vertices
+  inline const std::vector<Point<N,T>>& GetVertices() const { return _vertices; }
+
 protected:
   std::vector< Point<N,T> > _vertices;
 };
 
-// 2D implementation of Hypercube with some optimizations
-class AxisAlignedQuad : public AxisAlignedHyperCube<2, float> {
-public:
-  using AxisAlignedHyperCube::Contains;
-  using AxisAlignedHyperCube::Intersects;
-  
-  AxisAlignedQuad(const Point2f& p, const Point2f& q) : AxisAlignedHyperCube(p,q) {}
-    
-  // returns true if this node FULLY contains all poly vertices
-  bool Contains(const FastPolygon& poly) const { 
-    return std::all_of( poly.begin(), poly.end(),[this](const Point2f& p) {return Contains(p);} );
-  }
+using AxisAlignedQuad = AxisAlignedHyperCube<2, float>;
 
-  // calculates if the polygon intersects the node
-  bool Intersects(const FastPolygon& poly) const
-  {
-    // check if any of the bounding box edges create a separating axis
-    if (FLT_LT( poly.GetMaxX(), _vertices.front().x() )) { return false; }
-    if (FLT_LT( poly.GetMaxY(), _vertices.front().y() )) { return false; }
-    if (FLT_GT( poly.GetMinX(), _vertices.back().x()  )) { return false; }
-    if (FLT_GT( poly.GetMinY(), _vertices.back().y()  )) { return false; }
-
-    // fastPolygon line segments define the halfplane boundary of points inside the polygon, 
-    // so check negative halfplane instead
-    return std::none_of(poly.GetEdgeSegments().begin(), poly.GetEdgeSegments().end(), [&](const auto& l) { return InNegativeHalfPlane(l); });
-  }
-};
 
 }
 

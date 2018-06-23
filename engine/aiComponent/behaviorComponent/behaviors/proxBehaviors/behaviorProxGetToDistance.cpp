@@ -88,7 +88,7 @@ void BehaviorProxGetToDistance::BehaviorUpdate()
     return;
   }
 
-  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
+  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
 
   u16 proxDist_mm = 0;
   const bool isReadingValid = proxSensor.GetLatestDistance_mm(proxDist_mm);
@@ -122,7 +122,7 @@ void BehaviorProxGetToDistance::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float BehaviorProxGetToDistance::CalculateDistanceToDrive() const
 {
-  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
+  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
   
   u16 proxDist_mm = 0;
   const bool isReadingValid = proxSensor.GetLatestDistance_mm(proxDist_mm);
@@ -181,7 +181,7 @@ bool BehaviorProxGetToDistance::ShouldRecalculateDrive()
 {
   Pose3d sensedObjectPose;
   f32 distSqrSensedChanged_mm = 0.f;
-  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
+  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
   const bool recalculate = proxSensor.CalculateSensedObjectPose(sensedObjectPose) &&
          ComputeDistanceSQBetween(_previousProxObjectPose, sensedObjectPose, distSqrSensedChanged_mm) &&
          distSqrSensedChanged_mm > (kThresholdSensedMoved_mm * kThresholdSensedMoved_mm);
@@ -195,7 +195,7 @@ bool BehaviorProxGetToDistance::ShouldRecalculateDrive()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorProxGetToDistance::IsWithinGoalTolerence() const
 {
-  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
+  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
   u16 proxDist_mm = 0;
   const bool isReadingValid = proxSensor.GetLatestDistance_mm(proxDist_mm);
   if(isReadingValid){

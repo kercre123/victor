@@ -1,0 +1,16 @@
+{
+  "Teal" :
+    { "Hue" : 0.42, "Saturation" : 1.00 },
+  "Orange" :
+    { "Hue" : 0.05, "Saturation" : 0.95 },
+  "Yellow" :
+    { "Hue" : 0.11, "Saturation" : 1.00 },
+  "LimeGreen" :
+    { "Hue" : 0.21, "Saturation" : 1.00 },
+  "AzureBlue" :
+    { "Hue" : 0.57, "Saturation" : 1.00 },
+  "Purple" :
+    { "Hue" : 0.83, "Saturation" : 0.76 },
+  "MatrixGreen" :
+    { "Hue" : 0.30, "Saturation" : 1.00 }
+}

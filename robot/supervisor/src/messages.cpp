@@ -115,6 +115,8 @@ namespace Anki {
         robotState_.backpackTouchSensorRaw = HAL::GetButtonState(HAL::BUTTON_CAPACITIVE);
 
         robotState_.cliffDetectedFlags = ProxSensors::GetCliffDetectedFlags();
+        
+        robotState_.whiteDetectedFlags = ProxSensors::GetWhiteDetectedFlags();
 
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
 

@@ -99,27 +99,37 @@
     document.body.removeChild(elem);
   };
 
+  function clearDisplay() {
+    flatData = undefined;
+    treeData = undefined;
+    svgGroups.rowGroup.selectAll('*').remove();
+    svgGroups.labelGroup.selectAll('*').remove();
+    svgGroups.timeBarsGroup.selectAll('.timeBar').remove();
+    svgGroups.zoomGroup.selectAll('.miniTimeBar').remove();
+  }
+
+  function sendBehavior(behaviorName) {
+    var payload = {'behaviorName': behaviorName};
+    sendData( payload );
+    clearDisplay();
+  }
+
   function addControls(data, container) {
     data.sort();
     // create if needed, then populate a dropdown with behaviorIDs,
-    // and when the user selects one, tell the engine to start that behavior 
+    // and when the user selects one, tell the engine to start that behavior
     var dropDown = $('#behaviorDropdown');
     if( dropDown.length == 0 ) {
       dropDown = $('<select></select>', {id: 'behaviorDropdown'}).appendTo(container);
       dropDown.change(function() {
         if( this.value ) {
-          var payload = {'behaviorName': this.value};
-          sendData( payload );
-
-          flatData = undefined;
-          treeData = undefined;
-          svgGroups.rowGroup.selectAll('*').remove();
-          svgGroups.labelGroup.selectAll('*').remove();
-          svgGroups.timeBarsGroup.selectAll('.timeBar').remove();
-          svgGroups.zoomGroup.selectAll('.miniTimeBar').remove();
+          sendBehavior(this.value);
         }
       });
-      $('<input type="checkbox" id="showActivatable" checked />').appendTo(container)
+      $('<button type"button" id="resend">Resend</button>').click( function() {
+        sendBehavior($('#behaviorDropdown')[0].value);
+      }).appendTo(container);
+      $('<input type="checkbox" id="showActivatable" />').appendTo(container)
         .change( function() {
           showInactive = $(this).is(':checked');
         })
@@ -392,7 +402,7 @@
   var timeCursorPosition=-1;
   var timeCursorTime;
   var maxLabelWidth = 190;
-  var showInactive = true;
+  var showInactive = false;
     
 
   function update(source) {
@@ -817,6 +827,13 @@
       return;
     }
 
+    if( !allData.stack || allData.stack.length == 0 ) {
+      currentBehaviorDiv.text( 'No running behavior' )
+      flatData = undefined;
+      treeData = undefined;
+      return;
+    }
+
     cachedTime = allData.time;
     var stack = allData.stack;
 
@@ -978,6 +995,11 @@
         padding: 5px 10px;
         margin-right:20px;
         float:right;
+      }
+      #resend{
+        padding: 5px 5px;
+        margin-left:10px;
+        margin-right:10px;
       }
       `
   }; // end getStyles

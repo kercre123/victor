@@ -38,7 +38,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComponents) override;
+  virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
   }
@@ -74,20 +74,25 @@ public:
   // Called by VisionComponent when photo has been taken and saved
   void SetLastPhotoTimeStamp(TimeStamp_t timestamp);
 
-  // Load/save the photos 'database' json file
-  bool LoadPhotosFile();
-  void SavePhotosFile();
-
-  // Delete a photo
-  bool DeletePhotoByID(const int id, const bool savePhotosFile = true);
-  
   static const char * GetPhotoExtension() { return "jpg"; }
   static const char * GetThumbExtension() { return "thm.jpg"; }
 
 private:
 
+  // Load/save the photos 'database' json file
+  bool LoadPhotosFile();
+  void SavePhotosFile() const;
+
+  bool DeletePhotoByID(const int id, const bool savePhotosFile = true);
+
+  void SendPhotosInfo() const;
+  bool SendPhotoByID(const int id);
+  bool SendThumbnailByID(const int id);
+  bool SendImageHelper(const int id, const bool isThumbnail);
+
   std::string GetSavePath() const;
   std::string GetBasename(int photoID) const;
+  const std::string& GetStateString() const;
   int PhotoIndexFromID(const int id) const; // Returns photo info index, or -1 if not found
 
   enum class State {
@@ -106,6 +111,7 @@ private:
   int               _nextPhotoID = 0;
   std::string       _savePath = "";
   std::string       _fullPathPhotoInfoFile = "";
+  bool              _disableWhenPossible = false;
 
   struct PhotoInfo
   {

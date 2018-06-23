@@ -207,17 +207,24 @@ namespace Cozmo {
   CONSOLE_VAR(bool, kShouldDisplayKeyframeNumber, "ManualAnimationPlayback", false);
 
 #if ANKI_DEV_CHEATS
-  // Whether or not to display themal throttling indicator on face
-  CONSOLE_VAR(bool, kDisplayThermalThrottling, "AnimationStreamer", true);
+  // Whether or not to display high temperature indicator on face
+  CONSOLE_VAR(bool, kDisplayHighTemperature, "AnimationStreamer.System", true);
 
-  // Temperature beyond which the thermal indicator is displayed on face    
-  CONSOLE_VAR(u32,  kThermalAlertTemp_C,           "AnimationStreamer", 80);
+  // Whether or not to display CPU throttling
+  // 2018-06-21: Disabled by default since current OS doesn't throttle for thermal
+  //             reasons and sporadic idle throttling is not worth alerting the dev about.
+  CONSOLE_VAR(bool, kDisplayCPUThrottling, "AnimationStreamer.System", false);
 
-  // Must be at least this hot for CPU throttling to be considered caused
-  // by thermal conditions. It can also throttle because the system is idle
-  // which we don't care to indicate on the face.
-  CONSOLE_VAR(u32,  kThermalThrottlingMinTemp_C,   "AnimationStreamer", 65);
+  // Temperature beyond which the thermal indicator is displayed on face
+  CONSOLE_VAR(u32,  kThermalAlertTemp_C, "AnimationStreamer.System", 90);
 
+  CONSOLE_VAR(bool, kDisplayMemoryPressure, "AnimationStreamer.System", true);
+    
+  // When total/avail > this, display red square (should be > MediumPressureMultiple below)
+  CONSOLE_VAR(u32, kHighMemPressureMultiple, "AnimationStreamer.System", 10);
+  
+  // When total/avail > this, display yellow square (should be < HighPressureMultiple above)
+  CONSOLE_VAR(u32, kMediumMemPressureMultiple, "AnimationStreamer.System", 5);
 
   //////////
   /// Manual Playback Console Vars - allow user to play back/hold single frames within an animation
@@ -534,6 +541,10 @@ namespace Cozmo {
     }
     
     _streamingAnimation = anim;
+    for(const auto& callback: _newAnimationCallbacks){
+      callback();
+    }
+
     if(_streamingAnimation == nullptr) {
       return RESULT_OK;
     }
@@ -797,8 +808,7 @@ namespace Cozmo {
       if(ANKI_VERIFY(builtImage, 
                      "AnimationStreamer.Process_displayCompositeImageChunk.FailedToBuildImage",
                      "Composite image failed to build")){
-        const bool allowProceduralEyeOverlays = true;
-        SetCompositeImage(outImage, msg.get_frame_interval_ms, msg.duration_ms, allowProceduralEyeOverlays);
+        SetCompositeImage(outImage, msg.get_frame_interval_ms, msg.duration_ms);
       }
 
       _compositeImageBuilder.reset();
@@ -819,7 +829,11 @@ namespace Cozmo {
     const bool shouldOverrideEyeHue = true;
     const bool shouldRenderInEyeHue = false;
     const bool isInternalAnim = false;
-    
+
+    // Hack: if _streamingAnimation == _proceduralAnimation, the subsequent CopyIntoProceduralAnimation call
+    // will delete *_streamingAnimation without assigning it to nullptr. This assignment prevents associated
+    // undefined behavior
+    _streamingAnimation = _neutralFaceAnimation;
     CopyIntoProceduralAnimation(_context->GetDataLoader()->GetCannedAnimation(name));
     SetStreamingAnimation(_proceduralAnimation, tag, numLoops, interruptRunning,
                           shouldOverrideEyeHue, shouldRenderInEyeHue, isInternalAnim);
@@ -880,7 +894,7 @@ namespace Cozmo {
   }
 
   Result AnimationStreamer::SetCompositeImage(Vision::CompositeImage* compImg, u32 frameInterval_ms,
-                                              u32 duration_ms, bool allowProceduralEyeOverlays)
+                                              u32 duration_ms)
   {
     DEV_ASSERT(nullptr != _proceduralAnimation, "AnimationStreamer.SetCompositeImage.NullProceduralAnimation");
     // If procedural animation is streaming set the streaming animation to nullptr 
@@ -907,7 +921,7 @@ namespace Cozmo {
     // Trigger time of keyframe is 0 since we want it to start playing immediately
     auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
     SpriteSequenceKeyFrame kf(spriteCache, compImg, frameInterval_ms,
-                              shouldRenderInEyeHue, allowProceduralEyeOverlays);
+                              shouldRenderInEyeHue);
     kf.SetKeyFrameDuration_ms(duration_ms);
     Result result = _proceduralAnimation->AddKeyFrameToBack(kf);
     if(!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetCompositeImage.FailedToAddKeyFrame", "")))
@@ -1339,26 +1353,47 @@ namespace Cozmo {
 
     UpdateCaptureFace(faceImg565);
 
-    // Draw red square in corner of face if thermal issues
-    const bool isCPUThrottling = OSState::getInstance()->IsCPUThrottling();
-    auto tempC = OSState::getInstance()->GetTemperature_C();
-    const bool tempExceedsAlertThreshold = tempC >= kThermalAlertTemp_C;
-    const bool tempExceedsThrottlingThreshold = tempC >= kThermalThrottlingMinTemp_C;
-    if (kDisplayThermalThrottling && 
-        ((isCPUThrottling && tempExceedsThrottlingThreshold) || (tempExceedsAlertThreshold)) ) {
-
-      // Draw square if CPU is being throttled
-      const ColorRGBA alertColor(1.f, 0.f, 0.f);
-      if (isCPUThrottling) {
-        const Rectangle<f32> rect( 0, 0, 20, 20);
-        faceImg565.DrawFilledRect(rect, alertColor);
+    // Display temperature if exceeds threshold
+    if (kDisplayHighTemperature)
+    {
+      auto tempC = OSState::getInstance()->GetTemperature_C();
+      if (tempC >= kThermalAlertTemp_C)
+      {
+        const ColorRGBA alertColor(1.f, 0.f, 0.f);
+        const std::string tempStr = std::to_string(tempC) + "C";
+        const Point2f position(25, 25);
+        faceImg565.DrawText(position, tempStr, alertColor, 1.f);
       }
-
-      // Display temperature
-      const std::string tempStr = std::to_string(tempC) + "C";
-      const Point2f position(25, 25);
-      faceImg565.DrawText(position, tempStr, alertColor, 1.f);
     }
+
+    // Draw red square in corner of face if CPU throttling
+    if (kDisplayCPUThrottling) 
+    {
+      if (OSState::getInstance()->IsCPUThrottling())
+      {
+        const ColorRGBA squareColor(1.f, 0.f, 0.f);
+        const Rectangle<f32> rect( 0, 0, 20, 20);
+        faceImg565.DrawFilledRect(rect, squareColor);
+      }
+    }
+    
+    // Draw a colored square in the upper right corner if there's memory pressure
+    if (kDisplayMemoryPressure)
+    {
+      uint32_t freeMem_kB = 0, availableMem_kB = 0;
+      const uint32_t totalMem_kB = OSState::getInstance()->GetMemoryInfo(freeMem_kB, availableMem_kB);
+      const s32 memFactor = (availableMem_kB > 0 ? totalMem_kB / availableMem_kB : 1);
+      
+      if(memFactor > kMediumMemPressureMultiple)
+      {
+        const ColorRGBA& memAlertColor = (memFactor > kHighMemPressureMultiple ? NamedColors::RED : NamedColors::YELLOW);
+        const Rectangle<s32> rect(FACE_DISPLAY_WIDTH-30, 0, 30, 25);
+        faceImg565.DrawFilledRect(rect, memAlertColor);
+        faceImg565.DrawText({FACE_DISPLAY_WIDTH-15, 20}, std::to_string(availableMem_kB/1024),
+                            NamedColors::BLACK, 0.55, false, 1, true);
+      }
+    }
+    
 #endif // ANKI_DEV_CHEATS
 
     if(SHOULD_SEND_DISPLAYED_FACE_TO_ENGINE){
@@ -1496,6 +1531,7 @@ namespace Cozmo {
         endMsg.animName_length = streamingAnimName.length();
         endMsg.tag = _tag;
         endMsg.wasAborted = abortingAnim;
+        endMsg.streamTimeAnimEnded = _relativeStreamTime_ms;
         if (!RobotInterface::SendAnimToEngine(endMsg)) {
           return RESULT_FAIL;
         }
@@ -1887,11 +1923,6 @@ namespace Cozmo {
 
     // Send the data 
     SendAnimationMessages(messageWrapper);
-
-
-    // Tick audio engine
-    _animAudioClient->Update();
-    
 
     // Send animState message
     if (--_numTicsToSendAnimState == 0) {

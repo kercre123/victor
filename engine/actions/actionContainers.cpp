@@ -38,7 +38,7 @@ namespace Anki {
       Clear();
     }
     
-    void ActionList::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) 
+    void ActionList::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) 
     {
       _robot = robot;
     }

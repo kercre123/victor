@@ -23,6 +23,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPuzzleMaze.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/puzzleComponent.h"
+#include "engine/cozmoAPI/comms/protoMessageHandler.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -109,6 +110,7 @@ TEST(PuzzleMazeBehavior, DISABLED_BalanceTool)
   // Just run through the test N times and print the average of each puzzle.
   
   UiMessageHandler handler(0, nullptr);
+  ProtoMessageHandler protoHandler(nullptr);
   
   char cwdPath[1256];
   getcwd(cwdPath, 1255);
@@ -119,7 +121,7 @@ TEST(PuzzleMazeBehavior, DISABLED_BalanceTool)
   
   // Really need a data Platform for configs.
   Anki::Util::Data::DataPlatform dataPlatform(persistentPath, cachePath, resourcePath);
-  CozmoContext context(&dataPlatform, &handler);
+  CozmoContext context(&dataPlatform, &handler, &protoHandler);
   
   TestBehaviorFramework testBehaviorFramework;
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;

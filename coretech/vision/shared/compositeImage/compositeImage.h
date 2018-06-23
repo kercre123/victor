@@ -73,8 +73,16 @@ public:
                  const Point2i& topLeftCorner = {0,0});
   
   virtual ~CompositeImage();
+  
+  bool operator ==(const CompositeImage& other) const{
+    return (_spriteCache == other._spriteCache) &&
+           (_width == other._width) &&
+           (_height == other._height) &&
+           (_layerMap == other._layerMap);
+  }
+  
 
-  std::vector<CompositeImageChunk> GetImageChunks() const;
+  std::vector<CompositeImageChunk> GetImageChunks(bool emptySpriteBoxesAreValid = false) const;
 
   // Clear out the existing image and replace it with the new layer map 
   void ReplaceCompositeImage(const LayerLayoutMap&& layers,
@@ -123,7 +131,8 @@ public:
   // Utility function which adds the "empty layer" to the image - useful for instances
   // where a blank composite image is needed at the start of an animation so that updates
   // can be applied at a non-zero time
-  void AddEmptyLayer(SpriteSequenceContainer* seqContainer);
+  void AddEmptyLayer(SpriteSequenceContainer* seqContainer, 
+                     Vision::LayerName layerName = Vision::LayerName::EmptyBoxLayer);
 
 private:
   using SpriteBox = CompositeImageLayer::SpriteBox;

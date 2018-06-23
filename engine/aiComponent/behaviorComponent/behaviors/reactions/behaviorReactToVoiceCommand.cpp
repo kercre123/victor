@@ -21,22 +21,23 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/attentionTransferComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMicDirection.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/audio/engineRobotAudioClient.h"
-#include "engine/components/bodyLightComponent.h"
-#include "engine/components/movementComponent.h"
-#include "engine/externalInterface/externalInterface.h"
-#include "engine/externalInterface/externalMessageRouter.h"
-#include "engine/cozmoContext.h"
-#include "engine/faceWorld.h"
+#include "engine/components/backpackLights/backpackLightComponent.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/mics/micDirectionHistory.h"
+#include "engine/components/movementComponent.h"
+#include "engine/cozmoContext.h"
+#include "engine/externalInterface/externalMessageRouter.h"
+#include "engine/externalInterface/gatewayInterface.h"
+#include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "micDataTypes.h"
@@ -60,11 +61,11 @@ namespace {
   const char* kIntentListenGetIn                = "playListeningGetInAnim";
   const char* kProceduralBackpackLights         = "backpackLights";
 
-  constexpr AnimationTrigger kInvalidAnimation  = AnimationTrigger::Count;
   constexpr float            kMaxRecordTime_s   = ( (float)MicData::kStreamingTimeout_ms / 1000.0f );
   constexpr float            kListeningBuffer_s = 2.0f;
 
   CONSOLE_VAR( bool, kRespondsToTriggerWord, "BehaviorReactToVoiceCommand", true );
+  CONSOLE_VAR( bool, kImmediatelyTriggerEarconAndLights, "BehaviorReactToVoiceCommand", true);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -92,7 +93,7 @@ BehaviorReactToVoiceCommand::DynamicVariables::DynamicVariables() :
 {
 
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& config ) :
   ICozmoBehavior( config ),
@@ -167,25 +168,16 @@ void BehaviorReactToVoiceCommand::InitBehavior()
   // grab our reaction behavior ...
   if ( !_iVars.reactionBehaviorString.empty() )
   {
-    ICozmoBehaviorPtr reactionBehavior;
-    // try grabbing it from anonymous behaviors first, else we'll grab it from the behavior id
-    reactionBehavior = FindAnonymousBehaviorByName( _iVars.reactionBehaviorString );
-    if ( nullptr == reactionBehavior )
-    {
-      // no match, try behavior IDs
-      const BehaviorID behaviorID = BehaviorTypesWrapper::BehaviorIDFromString( _iVars.reactionBehaviorString );
-      reactionBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID( behaviorID );
-    }
-
+    ICozmoBehaviorPtr reactionBehavior = FindBehavior( _iVars.reactionBehaviorString );
     // downcast to a BehaviorReactToMicDirection since we're forcing all reactions to be of this behavior
-    DEV_ASSERT_MSG( reactionBehavior != nullptr, "BehaviorReactToVoiceCommand.Init",
-                     "Reaction behavior not found: %s", _iVars.reactionBehaviorString.c_str());
     DEV_ASSERT_MSG( reactionBehavior->GetClass() == BehaviorClass::ReactToMicDirection,
-                    "BehaviorReactToVoiceCommand.Init",
+                    "BehaviorReactToVoiceCommand.Init.IncorrectMicDirectionBehavior",
                     "Reaction behavior specified is not of valid class BehaviorClass::ReactToMicDirection");
-
     _iVars.reactionBehavior = std::static_pointer_cast<BehaviorReactToMicDirection>(reactionBehavior);
   }
+
+  _iVars.unmatchedIntentBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID( BEHAVIOR_ID(IntentUnmatched) );
+  DEV_ASSERT( _iVars.unmatchedIntentBehavior != nullptr, "BehaviorReactToVoiceCommand.Init.NoUnmatchedIntentBehavior");
 
   SubscribeToTags(
   {{
@@ -200,6 +192,7 @@ void BehaviorReactToVoiceCommand::GetAllDelegates( std::set<IBehavior*>& delegat
   if ( _iVars.reactionBehavior )
   {
     delegates.insert( _iVars.reactionBehavior.get() );
+    delegates.insert( _iVars.unmatchedIntentBehavior.get() );
   }
 }
 
@@ -210,6 +203,10 @@ void BehaviorReactToVoiceCommand::GetBehaviorOperationModifiers( BehaviorOperati
   modifiers.wantsToBeActivatedWhenOnCharger       = true;
   modifiers.wantsToBeActivatedWhenOffTreads       = true;
   modifiers.behaviorAlwaysDelegates               = true;
+
+  // Since so many voice commands need faces, this helps improve the changes that a behavior following
+  // this one will know about faces when the behavior starts
+  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -245,7 +242,12 @@ void BehaviorReactToVoiceCommand::HandleWhileActivated( const RobotToEngineEvent
       const AnimationEvent& animEvent = event.GetData().Get_animEvent();
       if ( animEvent.event_id == AnimEvent::LISTENING_BEGIN )
       {
-        OnVictorListeningBegin();
+        if ( !_dVars.isListening )
+        {
+          OnVictorListeningBegin();
+          PRINT_CH_INFO( "MicData", "BehaviorReactToVoiceCommand.StartListening.StratedByEventKeyframe",
+                         "Starting listening based on event keyframe from animation");
+        }
       }
     }
   }
@@ -255,11 +257,18 @@ void BehaviorReactToVoiceCommand::HandleWhileActivated( const RobotToEngineEvent
 void BehaviorReactToVoiceCommand::OnBehaviorActivated()
 {
   _dVars = DynamicVariables();
+
+  if( kImmediatelyTriggerEarconAndLights ) {
+    OnVictorListeningBegin();
+    PRINT_CH_INFO( "MicData", "BehaviorReactToVoiceCommand.StartListening.OnActivated",
+                   "Starting listening immediately on behavior activation" );
+  }
+
   
-  auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
-  if( ei != nullptr ) {
-    ExternalInterface::WakeWordBegin msg;
-    ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
+  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+  if( gi != nullptr ) {
+    auto* wakeWordBegin = new external_interface::WakeWordBegin;
+    gi->Broadcast( ExternalMessageRouter::Wrap(wakeWordBegin) );
   }
 
   // cache our reaction direction at the start in case we were told to turn
@@ -271,7 +280,7 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
     auto& moodManager = GetBEI().GetMoodManager();
     moodManager.TriggerEmotionEvent( "ReactToTriggerWord", MoodManager::GetCurrentTimeInSeconds() );
   }
-  
+
   // Stop all movement so we can listen for a command
   const auto& robotInfo = GetBEI().GetRobotInfo();
   robotInfo.GetMoveComponent().StopAllMotors();
@@ -309,15 +318,16 @@ void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
   // in case we were interrupted before we had a chance to turn off backpack ligths, do so now ...
   if ( _iVars.backpackLights && _dVars.lightsHandle.IsValid() )
   {
-    BodyLightComponent& blc = GetBEI().GetBodyLightComponent();
-    blc.StopLoopingBackpackLights( _dVars.lightsHandle );
+    BackpackLightComponent& blc = GetBEI().GetBackpackLightComponent();
+    blc.StopLoopingBackpackAnimation( _dVars.lightsHandle );
   }
   
-  auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
-  if( ei != nullptr ) {
-    ExternalInterface::WakeWordEnd msg;
-    msg.intentHeard = (_dVars.intentStatus != EIntentStatus::NoIntentHeard);
-    if( msg.intentHeard ) {
+  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+  if( gi != nullptr ) {
+    auto* wakeWordEnd = new external_interface::WakeWordEnd;
+    const bool intentHeard = (_dVars.intentStatus != EIntentStatus::NoIntentHeard);
+    wakeWordEnd->set_intent_heard( intentHeard );
+    if( intentHeard ) {
       UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
       // we use this dirty dirty method here instead of sending this message directly from the uic
       // since we know whether the intent was heard here, and it's nice that the same behavior
@@ -325,10 +335,15 @@ void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
       // might be sent without an initial message.
       const UserIntentData* intentData = uic.GetPendingUserIntent();
       if( intentData != nullptr ) {
-        msg.intent = intentData->intent;
+        // ideally we'd send a proto message structured the same as the intent, but this would mean
+        // duplicating the entire userIntent.clad file for proto, or converting the engine handling
+        // of intents to clad, neither of which I've got time for. 
+        std::stringstream ss;
+        ss << intentData->intent.GetJSON();
+        wakeWordEnd->set_intent_json( ss.str() );
       }
     }
-    ei->Broadcast( ExternalMessageRouter::Wrap(std::move(msg)) );
+    gi->Broadcast( ExternalMessageRouter::Wrap(wakeWordEnd) );
   }
 
   // we've done all we can, now it's up to the next behavior to consume the user intent
@@ -465,6 +480,8 @@ void BehaviorReactToVoiceCommand::StartListening()
     if ( !_dVars.isListening )
     {
       OnVictorListeningBegin();
+      PRINT_NAMED_WARNING("BehaviorReactToVoiceCommand.StartListening.ListeningStateSkipped",
+                          "Starting listening after action completed instead of in response to keyframe");
     }
   };
 
@@ -498,7 +515,7 @@ void BehaviorReactToVoiceCommand::OnVictorListeningBegin()
 {
   using namespace AudioMetaData::GameEvent;
 
-  static const BackpackLights kStreamingLights =
+  static const BackpackLightAnimation::BackpackAnimation kStreamingLights =
   {
     .onColors               = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
     .offColors              = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
@@ -511,8 +528,8 @@ void BehaviorReactToVoiceCommand::OnVictorListeningBegin()
 
   if ( _iVars.backpackLights )
   {
-    BodyLightComponent& blc = GetBEI().GetBodyLightComponent();
-    blc.StartLoopingBackpackLights( kStreamingLights, BackpackLightSource::Behavior, _dVars.lightsHandle );
+    BackpackLightComponent& blc = GetBEI().GetBackpackLightComponent();
+    blc.StartLoopingBackpackAnimation( kStreamingLights, BackpackLightSource::Behavior, _dVars.lightsHandle );
   }
 
   if ( GenericEvent::Invalid != _iVars.earConBegin )
@@ -534,8 +551,8 @@ void BehaviorReactToVoiceCommand::OnVictorListeningEnd()
 
   if ( _iVars.backpackLights && _dVars.lightsHandle.IsValid() )
   {
-    BodyLightComponent& blc = GetBEI().GetBodyLightComponent();
-    blc.StopLoopingBackpackLights( _dVars.lightsHandle );
+    BackpackLightComponent& blc = GetBEI().GetBackpackLightComponent();
+    blc.StopLoopingBackpackAnimation( _dVars.lightsHandle );
   }
 
   // play our "earcon end" audio, which depends on if our intent was successfully heard or not
@@ -619,30 +636,28 @@ void BehaviorReactToVoiceCommand::TransitionToIntentReceived()
 {
   _dVars.state = EState::IntentReceived;
 
-  AnimationTrigger intentReaction = kInvalidAnimation;
-
   switch ( _dVars.intentStatus )
   {
     case EIntentStatus::IntentHeard:
       // no animation for valid intent, go straight into the intent behavior
       PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent", "Heard valid user intent, woot!" );
+
+      // also reset the attention transfer counter for unmatched intents (since we got a good one)
+      GetBehaviorComp<AttentionTransferComponent>().ResetAttentionTransfer(AttentionTransferReason::UnmatchedIntent);
       break;
     case EIntentStatus::IntentUnknown:
       PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent", "Heard user intent but could not understand it" );
-      intentReaction = AnimationTrigger::VC_IntentNeutral;
       GetBEI().GetMoodManager().TriggerEmotionEvent( "NoValidVoiceIntent" );
+      if( _iVars.unmatchedIntentBehavior->WantsToBeActivated() ) {
+        // this behavior will (should) interact directly with the attention transfer component
+        DelegateIfInControl(_iVars.unmatchedIntentBehavior.get());
+      }
       break;
     case EIntentStatus::NoIntentHeard:
       PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent", "No user intent was heard" );
-      intentReaction = AnimationTrigger::VC_IntentNeutral;
       GetBEI().GetMoodManager().TriggerEmotionEvent( "NoValidVoiceIntent" );
+      DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::VC_IntentNeutral ) );
       break;
-  }
-
-  if ( kInvalidAnimation != intentReaction )
-  {
-    // NOTE: What about if we're on the charger?
-    DelegateIfInControl( new TriggerLiftSafeAnimationAction( intentReaction ) );
   }
 }
 

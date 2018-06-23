@@ -42,8 +42,6 @@ target_compile_options(cti_common
   ${SYMBOL_VISIBILITY_FLAGS}
 )
 
-set_property(TARGET cti_common PROPERTY CXX_STANDARD 11)
-
 target_link_libraries(cti_common
   PUBLIC
   ${CTI_GENERATED_LIBS}
@@ -167,4 +165,3 @@ if (MACOSX)
   )
 
 endif()
-

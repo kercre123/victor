@@ -79,11 +79,13 @@ void InitBEIPartial( const BEIComponentMap& map, BehaviorExternalInterface& bei 
            GetFromMap<BehaviorEventComponent>(map, BEIComponentID::BehaviorEvent),
            GetFromMap<BehaviorTimerManager>(map, BEIComponentID::BehaviorTimerManager),
            GetFromMap<BlockWorld>(map, BEIComponentID::BlockWorld),
-           GetFromMap<BodyLightComponent>(map, BEIComponentID::BodyLightComponent),
+           GetFromMap<BackpackLightComponent>(map, BEIComponentID::BackpackLightComponent),
            GetFromMap<CubeAccelComponent>(map, BEIComponentID::CubeAccel),
            GetFromMap<CubeLightComponent>(map, BEIComponentID::CubeLight),
+           GetFromMap<CliffSensorComponent>(map, BEIComponentID::CliffSensor),
            GetFromMap<DelegationComponent>(map, BEIComponentID::Delegation),
            GetFromMap<FaceWorld>(map, BEIComponentID::FaceWorld),
+           GetFromMap<HabitatDetectorComponent>(map, BEIComponentID::HabitatDetector),
            GetFromMap<MapComponent>(map, BEIComponentID::Map),
            GetFromMap<MicComponent>(map, BEIComponentID::MicComponent),
            GetFromMap<MoodManager>(map, BEIComponentID::MoodManager),
@@ -101,7 +103,8 @@ void InitBEIPartial( const BEIComponentMap& map, BehaviorExternalInterface& bei 
            GetFromMap<TextToSpeechCoordinator>(map, BEIComponentID::TextToSpeechCoordinator),
            GetFromMap<TouchSensorComponent>(map, BEIComponentID::TouchSensor),
            GetFromMap<VisionComponent>(map, BEIComponentID::Vision),
-           GetFromMap<VisionScheduleMediator>(map, BEIComponentID::VisionScheduleMediator));
+           GetFromMap<VisionScheduleMediator>(map, BEIComponentID::VisionScheduleMediator),
+           GetFromMap<SettingsManager>(map, BEIComponentID::SettingsManager));
 
 }
 
@@ -175,7 +178,7 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
 
     DependencyManagedEntity<RobotComponentID> dependencies;
     _robot->GetAIComponent().InitDependent(_robot.get(), dependencies);
-    _behaviorComponent = _robot->GetAIComponent().GetBasePtr<BehaviorComponent>();
+    _behaviorComponent = _robot->GetAIComponent().GetComponentPtr<BehaviorComponent>();
 
     _behaviorComponent->SetComponents(std::move(entity));
     DependencyManagedEntity<AIComponentID> dependentComps;

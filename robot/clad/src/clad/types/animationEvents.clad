@@ -15,6 +15,7 @@ enum uint_8 AnimEvent {
   DEAL_CARDS_BEGIN,
   SWIPE_CARDS_BEGIN,
   DANCE_BEAT_SYNC,
+  CUBE_LIGHT_TOGGLE,
 
   Count
 }

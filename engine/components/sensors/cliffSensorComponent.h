@@ -46,7 +46,7 @@ public:
   // IDependencyManagedComponent functions
   //////
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
-  virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComponents) override {
+  virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComps) override {
     InitBase(robot);
   };
   //////
@@ -70,6 +70,11 @@ public:
   bool IsCliffDetected() const { return _cliffDetectedFlags.AreAnyFlagsSet(); }
   bool IsCliffDetected(CliffSensor sensor) const { return _cliffDetectedFlags.IsBitFlagSet(sensor); }
   uint8_t GetCliffDetectedFlags() const { return _cliffDetectedFlags.GetFlags(); }
+  
+  // White detection based on RobotState
+  bool IsWhiteDetected() const { return _whiteDetectedFlags.AreAnyFlagsSet(); }
+  bool IsWhiteDetected(CliffSensor sensor) const { return _whiteDetectedFlags.IsBitFlagSet(sensor); }
+  uint8_t GetWhiteDetectedFlags() const { return _whiteDetectedFlags.GetFlags(); }
   
   // Adjusts cliff threshold if necessary
   void UpdateCliffDetectThresholds();
@@ -105,6 +110,7 @@ private:
   
   bool _enableCliffSensor = true;
   Util::BitFlags8<CliffSensor> _cliffDetectedFlags;
+  Util::BitFlags8<CliffSensor> _whiteDetectedFlags;
   
   uint32_t _lastMsgTimestamp = 0;
   

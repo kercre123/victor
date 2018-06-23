@@ -61,6 +61,12 @@ structure UserIntent_PlaybackMessage
   string given_name,
 }
 
+structure UserIntent_KnowledgeResponse
+{
+  string answer,
+  string query_text
+}
+
 // test structs. todo: get rid of these in favor of actual structs once
 // there are legit user intents. tests can use the actual structs
 enum uint_8 UserIntent_Test_Time_Units
@@ -86,7 +92,9 @@ union dupes_allowed UserIntent
   // PLEASE KEEP ALPHABETIZED 
   // thank you in advance for caring
 
-
+  UserIntent_Void             blackjack_hit,
+  UserIntent_Void             blackjack_stand,
+  UserIntent_Void             blackjack_playagain,
   UserIntent_Void             explore_start,
   UserIntent_Void             greeting_goodbye,
   UserIntent_Void             greeting_goodmorning,
@@ -103,6 +111,7 @@ union dupes_allowed UserIntent
   UserIntent_Void             check_timer,
   UserIntent_Void             cancel_timer,
   UserIntent_TimeInSeconds    set_timer,
+  UserIntent_Void             show_clock,
   UserIntent_WeatherResponse  weather_response,
   UserIntent_TakeAPhoto       take_a_photo,
   UserIntent_Void             system_charger,
@@ -110,6 +119,9 @@ union dupes_allowed UserIntent
   UserIntent_Void             system_sleep,
   UserIntent_RecordMessage    message_record,
   UserIntent_PlaybackMessage  message_playback,
+  UserIntent_Void             knowledge_question,
+  UserIntent_KnowledgeResponse knowledge_response,
+  UserIntent_Void             knowledge_unknown,
 
 
   // for tests

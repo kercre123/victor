@@ -45,8 +45,6 @@ ConditionIlluminationDetected::ConditionIlluminationDetected( const Json::Value&
       }
     }
     infoStr += "]";
-    PRINT_NAMED_DEBUG( "ConditionIlluminationDetected.Constuctor.ParsedStates",
-                        "Parsed %s: %s", kTriggerStatesKey, infoStr.c_str() );
   }
   else
   {
@@ -114,8 +112,6 @@ void ConditionIlluminationDetected::TickStateMachine( const TimeStamp_t& currTim
   {
     case MatchState::WaitingForStart:
     {
-      PRINT_NAMED_DEBUG("ConditionIlluminationDetected.HandleIllumination.StateMachine", 
-                        "Waiting for trigger states" );
       if( !IsTriggerState( obsState ) ) { break; }
 
       _variables.matchState = MatchState::ConfirmingMatch;
@@ -125,8 +121,6 @@ void ConditionIlluminationDetected::TickStateMachine( const TimeStamp_t& currTim
     }
     case MatchState::ConfirmingMatch:
     {
-      PRINT_NAMED_DEBUG("ConditionIlluminationDetected.HandleIllumination.StateMachine", 
-                        "Confirming match" );
       if( !IsTriggerState( obsState ) )
       {
         Reset();
@@ -146,8 +140,6 @@ void ConditionIlluminationDetected::TickStateMachine( const TimeStamp_t& currTim
     }
     case MatchState::MatchConfirmed:
     {
-      PRINT_NAMED_DEBUG("ConditionIlluminationDetected.HandleIllumination.StateMachine", 
-                        "Match confirmed" );
       if( !IsTriggerState( obsState ) )
       {
         Reset();

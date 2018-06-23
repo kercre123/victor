@@ -14,13 +14,18 @@
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
 
+#include "cozmoAnim/audio/cozmoAudioController.h"
+#include "cozmoAnim/audio/microphoneAudioClient.h"
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/animation/animationStreamer.h"
+#include "cozmoAnim/animation/streamingAnimationModifier.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
+#include "cozmoAnim/micData/micDataSystem.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "cozmoAnim/textToSpeech/textToSpeechComponent.h"
 
+#include "coretech/common/engine/opencvThreading.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
@@ -49,6 +54,7 @@
   #define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 0
   #define ENABLE_CE_RUN_TIME_DIAGNOSTICS 0
 #endif
+#define NUM_ANIM_OPENCV_THREADS 0
 
 namespace Anki {
 namespace Cozmo {
@@ -74,6 +80,8 @@ AnimEngine::AnimEngine(Util::Data::DataPlatform* dataPlatform)
   if (Anki::Util::gTickTimeProvider == nullptr) {
     Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();
   }
+  
+  _microphoneAudioClient.reset(new Audio::MicrophoneAudioClient(_context->GetAudioController()));
 }
 
 AnimEngine::~AnimEngine()
@@ -112,14 +120,25 @@ Result AnimEngine::Init()
   // Create and set up EngineRobotAudioInput to receive Engine->Robot messages and broadcast Robot->Engine
   auto* audioMux = _context->GetAudioMultiplexer();
   auto regId = audioMux->RegisterInput( new Audio::EngineRobotAudioInput() );
+  // Easy access to Audio Controller
+  _audioControllerPtr = _context->GetAudioController();
 
   // Set up message handler
   auto * audioInput = static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput(regId));
-  AnimProcessMessages::Init(this, _animationStreamer.get(), audioInput, _context.get());
+  _streamingAnimationModifier = std::make_unique<StreamingAnimationModifier>(_animationStreamer.get(), audioInput);
+
+  AnimProcessMessages::Init(this, _animationStreamer.get(), _streamingAnimationModifier.get(), audioInput, _context.get());
 
   _context->GetWebService()->Start(_context->GetDataPlatform(),
                                    _context->GetDataLoader()->GetWebServerAnimConfig());
   FaceInfoScreenManager::getInstance()->Init(_context.get(), _animationStreamer.get());
+
+  // Make sure OpenCV isn't threading
+  Result cvResult = SetNumOpencvThreads( NUM_ANIM_OPENCV_THREADS, "AnimEngine.Init" );
+  if( RESULT_OK != cvResult )
+  {
+    return cvResult;
+  }
 
   LOG_INFO("AnimEngine.Init.Success","Success");
   _isInitialized = true;
@@ -183,7 +202,21 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
   // Clear out sprites that have passed their cache time
   _context->GetDataLoader()->GetSpriteCache()->Update(currTime_nanosec);
   
+  if(_streamingAnimationModifier != nullptr){
+    _streamingAnimationModifier->ApplyAlterationsBeforeUpdate(_animationStreamer.get());
+  }
   _animationStreamer->Update();
+  if(_streamingAnimationModifier != nullptr){
+    _streamingAnimationModifier->ApplyAlterationsAfterUpdate(_animationStreamer.get());
+  }
+  
+  if (_audioControllerPtr != nullptr) {
+    // Update mic info in Audio Engine
+    const auto& micDirectionMsg = _context->GetMicDataSystem()->GetLatestMicDirectionMsg();
+    _microphoneAudioClient->ProcessMessage(micDirectionMsg);
+    // Tick the Audio Engine at the end of each anim frame
+    _audioControllerPtr->Update();
+  }
 
 #if ENABLE_CE_RUN_TIME_DIAGNOSTICS
   {

@@ -22,10 +22,13 @@ enum uint_8 BehaviorID {
   // devBehaviors
   DevBaseBehavior,
   DevBatteryLogging,
+  DevCubeSpinnerConsole,
+  DevDesignCubeLights,
   DevDisplayReadingsOnFace,
   DevEventSequenceCapture,
   DevImageCapture,
   DevPlannerTest,
+  DevTestBlackjackViz,
   DevTestPromptUser,
   DevTouchDataCollection,
   DevTurnInPlaceTest,
@@ -89,8 +92,12 @@ enum uint_8 BehaviorID {
   BlackJackRequestToPlayAgain,
   BlackJackTextToSpeech,
 
+  // victorBehaviorTree/clock
+  ShowWallTime,
+
   // victorBehaviorTree
   ComeHereVoiceCommand,
+  ConfirmHabitat,
   CoordinateGlobalInterrupts,
 
   // victorBehaviorTree/danceToTheBeat
@@ -130,6 +137,12 @@ enum uint_8 BehaviorID {
   InspectCube,
   InteractWithFaces,
   Keepaway,
+
+  // victorBehaviorTree/highLevelDelegates/knowledgeGraph
+  KnowledgeGraphQuestion,
+  KnowledgeGraphTTS,
+
+  // victorBehaviorTree/highLevelDelegates
   LookInPlaceHeadUp,
 
   // victorBehaviorTree/highLevelDelegates/meetVictor
@@ -205,6 +218,7 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree
   InitNormalOperation,
+  IntentUnmatched,
   ModeSelector,
   NormalWakeUp,
 
@@ -249,7 +263,6 @@ enum uint_8 BehaviorID {
   ReactToGreeting,
   ReactToHello,
   ReactToObstacle,
-  ReactToPickedUp,
   ReactToPlacedOnSlope,
   ReactToPutDown,
   ReactToRobotOnBack,
@@ -260,6 +273,8 @@ enum uint_8 BehaviorID {
   ReactToTriggerDirectionAwake,
   ReactToUnexpectedMovement,
   StuckOnEdge,
+  WhileHeld,
+  WhileInAir,
 
   // victorBehaviorTree/sdkBehaviors
   SDK0,
@@ -293,6 +308,7 @@ enum uint_8 BehaviorID {
   WeatherSnowGeneric,
   WeatherStarsGeneric,
   WeatherSunnyGeneric,
+  WeatherThunderstormsGeneric,
   WeatherWindyGeneric,
 
   // victorBehaviorTree/weather

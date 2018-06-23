@@ -6,8 +6,9 @@ message(STATUS "Building NeuralNets process")
 
 include(anki_build_cxx)
 include(anki_build_strip)
+include(protobuf)
 
-set(TENSORFLOW_PATH  ${CORETECH_EXTERNAL_DIR}/tensorflow)
+set(TENSORFLOW_PATH  ${ANKI_EXTERNAL_DIR}/tensorflow)
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
@@ -29,14 +30,18 @@ if (VICOS)
   
   set(PLATFORM_INCLUDES
     ${CORETECH_EXTERNAL_DIR}/build/opencv-3.4.0/vicos/include
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/proto
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/protobuf/armeabi-v7a/include
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/downloads/eigen
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/downloads/nsync/public
   )
 
   set(PLATFORM_LIBS
     -Wl,--whole-archive 
     ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/lib/libtensorflow-core.a
     -Wl,--no-whole-archive
-    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/protobuf/armeabi-v7a/lib/libprotobuf.a 
-    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/downloads/nsync/builds/default.vicos.c++11/libnsync.a
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/protobuf/armeabi-v7a/lib/libprotobuf.a
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/downloads/nsync/builds/default.vicos.c++11/libnsync.a
     c++   # NOTE: VicOS uses libc++, so TensorFlow must be built to match
     dl
     log
@@ -61,13 +66,17 @@ elseif (MACOSX)
   
   set(PLATFORM_INCLUDES
     ${CORETECH_EXTERNAL_DIR}/build/opencv-3.4.0/mac
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/proto
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/protobuf/include
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/downloads/eigen
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/downloads/nsync/public
   )
 
   set(PLATFORM_LIBS
     -Wl,-force_load
     ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/lib/libtensorflow-core.a
     ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/protobuf/lib/libprotobuf.a
-    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/downloads/nsync/builds/default.macos.c++11/libnsync.a
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/downloads/nsync/builds/default.macos.c++11/libnsync.a
     ${WEBOTS_LIBS}
     stdc++
     m
@@ -94,10 +103,6 @@ target_include_directories(${TARGET_NAME}
   PRIVATE
   ${PLATFORM_INCLUDES}
   ${TENSORFLOW_PATH}
-  ${TENSORFLOW_PATH}/bazel-tensorflow/external/eigen_archive
-  ${TENSORFLOW_PATH}/bazel-genfiles
-  ${TENSORFLOW_PATH}/bazel-tensorflow/external/protobuf_archive/src
-  ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/downloads/nsync/public
   ${OPENCV_INCLUDE_PATHS}
 )
 
@@ -106,7 +111,7 @@ target_include_directories(${TARGET_NAME}
 #       OPENCV_LIBS (if only needed by the DNN module, which we hope to remove) or when
 #       we switch to TensorFlow Lite, which uses Flatbuffers.
 set(OPENCV_LIBS_NO_PROTOBUF ${OPENCV_LIBS}) 
-list(REMOVE_ITEM OPENCV_LIBS_NO_PROTOBUF libprotobuf)
+list(REMOVE_ITEM OPENCV_LIBS_NO_PROTOBUF protobuf)
 
 target_link_libraries(${TARGET_NAME}
   PRIVATE

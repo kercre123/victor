@@ -20,12 +20,13 @@
 #include "coretech/common/shared/types.h"
 #include "clad/audio/audioEventTypes.h"
 #include "clad/audio/audioGameObjectTypes.h"
-#include "clad/types/sayTextStyles.h"
+#include "clad/audio/audioSwitchTypes.h"
 #include "clad/types/textToSpeechTypes.h"
 #include "util/helpers/templateHelpers.h"
 #include <deque>
 #include <mutex>
-#include <unordered_map>
+#include <map>
+#include <set>
 
 // Forward declarations
 namespace Anki {
@@ -79,9 +80,10 @@ private:
   // -------------------------------------------------------------------------------------------------------------------
   // Private types
   // -------------------------------------------------------------------------------------------------------------------
-  using AudioController = Anki::Cozmo::Audio::CozmoAudioController;
-  using TextToSpeechProvider = Anki::Cozmo::TextToSpeech::TextToSpeechProvider;
-  using DispatchQueue = Anki::Util::Dispatch::Queue;
+  using AudioController = Cozmo::Audio::CozmoAudioController;
+  using AudioTtsProcessingStyle = AudioMetaData::SwitchState::Robot_Vic_External_Processing;
+  using TextToSpeechProvider = TextToSpeech::TextToSpeechProvider;
+  using DispatchQueue = Util::Dispatch::Queue;
   using TTSID_t = uint8_t;
   using EventPair = std::pair<TTSID_t, TextToSpeechState>;
   using EventQueue = std::deque<EventPair>;
@@ -98,8 +100,7 @@ private:
   {
     // TTS request context
     AudioCreationState state = AudioCreationState::None;
-    SayTextVoiceStyle style = SayTextVoiceStyle::Count;
-    float pitchScalar = 0.f;
+    AudioTtsProcessingStyle style = AudioTtsProcessingStyle::Unprocessed;
     AudioEngine::StandardWaveDataContainer* waveData = nullptr;
 
     ~TtsBundle() { Util::SafeDelete(waveData); }
@@ -115,10 +116,12 @@ private:
   mutable std::mutex _lock;
 
   // Map of data bundles
-  std::unordered_map<TTSID_t, TtsBundle> _ttsWaveDataMap;
+  std::map<TTSID_t, TtsBundle> _ttsWaveDataMap;
 
   // Map of TTSID's to corresponding AudioEventId's for delayed playback
-  std::unordered_map<TTSID_t, AudioEngine::AudioEventId> _ttsIDtoAudioEventIdMap;
+  std::set<TTSID_t> _ttsIdSet;
+
+  TTSID_t _activeTTSID;
 
   // Audio controller provided by context
   AudioController * _audioController = nullptr;
@@ -144,7 +147,6 @@ private:
   // Use Text to Speech lib to create audio data & reformat into StandardWaveData format
   // Return nullptr if Text to Speech lib fails to create audio data
   AudioEngine::StandardWaveDataContainer* CreateAudioData(const std::string& text,
-                                                          SayTextVoiceStyle style,
                                                           float durationScalar);
 
   // Find TtsBundle for operation
@@ -157,18 +159,16 @@ private:
   // Return RESULT_OK on success
   Result CreateSpeech(const TTSID_t ttsID,
                       const std::string& text,
-                      const SayTextVoiceStyle style,
-                      const float durationScalar,
-                      const float pitchScalar);
+                      const AudioTtsProcessingStyle style,
+                      const float durationScalar);
 
   // Get the current state of the create speech operation
   AudioCreationState GetOperationState(const TTSID_t ttsID) const;
 
   // Set up Audio Engine to play text's audio data
   // out_duration_ms provides approximate duration of event before processing in audio engine
-  // out_eventId provides audio event that can be used to trigger playback
   // Return false if the audio has NOT been created or is not yet ready. Output parameters will NOT be valid.
-  bool PrepareAudioEngine(const TTSID_t ttsID, float& out_duration_ms, AudioEngine::AudioEventId& out_eventId);
+  bool PrepareAudioEngine(const TTSID_t ttsID, float& out_duration_ms);
 
   // Clear speech audio data from audio engine and clear operation data
   void CleanupAudioEngine(const TTSID_t ttsID);
@@ -188,12 +188,12 @@ private:
   void OnStatePrepared(const TTSID_t ttsID);
 
   // Audio helpers
-  void SetAudioProcessingStyle(SayTextVoiceStyle style);
-  void SetAudioProcessingPitch(float pitchScalar);
-  void PostAudioEvent(AudioEngine::AudioEventId eventId, uint8_t ttsID);
+  void SetAudioProcessingStyle(AudioTtsProcessingStyle style);
+  void PostAudioEvent(uint8_t ttsID);
+  void StopActiveTTS();
 
   // AudioEngine Callbacks
-  void OnUtteranceCompleted(uint8_t ttsID) const;
+  void OnUtteranceCompleted(uint8_t ttsID);
 
 }; // class TextToSpeechComponent
 

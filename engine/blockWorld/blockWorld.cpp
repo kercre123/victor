@@ -104,7 +104,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
   } // BlockWorld() Constructor
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::InitDependent(Robot* robot, const RobotCompMap& dependentComponents)
+  void BlockWorld::InitDependent(Robot* robot, const RobotCompMap& dependentComps)
   {
     _robot = robot;
     DEV_ASSERT(_robot != nullptr, "BlockWorld.Constructor.InvalidRobot");

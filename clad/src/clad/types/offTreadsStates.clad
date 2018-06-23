@@ -13,6 +13,7 @@ enum int_8 OffTreadsState {
   OnLeftSide, 
   OnRightSide, 
   OnFace,
+  Held, // Indicates that the robot is being held by the user - currently unimplemented
   Falling
 }
 

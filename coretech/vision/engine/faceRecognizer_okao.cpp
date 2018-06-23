@@ -105,6 +105,37 @@ namespace Vision {
     return secondsSince;
   }
 
+  // sometimes the face is a list, other times it's a vector, so make it work with any container
+  // todo: clean that up
+  template<template<class ...> class Container_T>
+  inline void EmplaceLoadedKnownFace(const EnrolledFaceEntry& entry,
+                                     Container_T<LoadedKnownFace>& faces,
+                                     const char* debugLabel = nullptr)
+  {
+    using namespace std::chrono;
+
+    auto const nowTime = system_clock::now();
+    const auto lastSeenTime    = entry.FindLastSeenTime();
+    const auto secSinceEpoch   = duration_cast<seconds>(lastSeenTime.time_since_epoch()).count();
+    const s64 secSinceEnrolled = GetSecondsSince(nowTime, entry.GetEnrollmentTime());
+    const s64 secSinceUpdated  = GetSecondsSince(nowTime, entry.GetLastUpdateTime());
+    const s64 secSinceSeen     = GetSecondsSince(nowTime, lastSeenTime);
+
+    faces.emplace_back( LoadedKnownFace(secSinceEnrolled,
+                                        secSinceUpdated,
+                                        secSinceSeen,
+                                        secSinceEpoch,
+                                        entry.GetFaceID(),
+                                        entry.GetName()) );
+
+    if( debugLabel != nullptr ) {
+      PRINT_CH_INFO(LOG_CHANNEL, debugLabel,
+                    "User '%s' with ID=%d. Seconds since: Enrolled=%lld Updated=%lld Seen=%lld",
+                    entry.GetName().piiGuardedString(),
+                    entry.GetFaceID(), secSinceEnrolled, secSinceUpdated, secSinceSeen);
+    }
+  }
+
   FaceRecognizer::FaceRecognizer(const Json::Value& config)
   {
     if(config.isMember(JsonKey::FaceRecognitionGroup))
@@ -2149,14 +2180,9 @@ namespace Vision {
   {
     std::vector<LoadedKnownFace> ret;
     ret.reserve( _enrollmentData.size() );
-    auto const nowTime = std::chrono::system_clock::now();
     for( const auto& entry : _enrollmentData ) {
       if( !entry.second.GetName().empty() ) {
-        ret.emplace_back( LoadedKnownFace{GetSecondsSince(nowTime, entry.second.GetEnrollmentTime()),
-                                          GetSecondsSince(nowTime, entry.second.GetLastUpdateTime()),
-                                          GetSecondsSince(nowTime, entry.second.FindLastSeenTime()),
-                                          entry.second.GetFaceID(),
-                                          entry.second.GetName()} );
+        EmplaceLoadedKnownFace(entry.second, ret);
       }
     }
     return ret;
@@ -2274,13 +2300,10 @@ namespace Vision {
                         "Setting next FaceID=%d", loadedNextFaceID);
 
           _nextFaceID = loadedNextFaceID;
-
-          auto const nowTime = std::chrono::system_clock::now();
-
+          
           for(auto & entry : _enrollmentData)
           {
             const auto & faceID = entry.second.GetFaceID();
-            const auto & faceName = entry.second.GetName();
 
             // Log the ID and num of album entries (as DDATA) of each entry we load
             const size_t numAlbumEntries = entry.second.GetAlbumEntries().size();
@@ -2288,18 +2311,7 @@ namespace Vision {
                          {{DDATA, std::to_string(numAlbumEntries).c_str()}},
                          "%d", faceID);
 
-            const s64 secSinceEnrolled = GetSecondsSince(nowTime, entry.second.GetEnrollmentTime());
-            const s64 secSinceUpdated  = GetSecondsSince(nowTime, entry.second.GetLastUpdateTime());
-            const s64 secSinceSeen     = GetSecondsSince(nowTime, entry.second.FindLastSeenTime());
-
-            loadedFaces.emplace_back(LoadedKnownFace(secSinceEnrolled, secSinceUpdated, secSinceSeen,
-                                                     faceID,
-                                                     faceName));
-
-            PRINT_CH_INFO(LOG_CHANNEL, "SetSerializedData.AddedEnrollmentDataEntry",
-                          "User '%s' with ID=%d. Seconds since: Enrolled=%lld Updated=%lld Seen=%lld",
-                          faceName.piiGuardedString(),
-                          faceID, secSinceEnrolled, secSinceUpdated, secSinceSeen);
+            EmplaceLoadedKnownFace(entry.second, loadedFaces, "SetSerializedData.AddedEnrollmentDataEntry");
           }
         }
       }
@@ -2673,8 +2685,6 @@ namespace Vision {
           }
           else
           {
-            auto const nowTime = std::chrono::system_clock::now();
-
             for(auto & idStr : json.getMemberNames()) {
               FaceID_t faceID = std::stoi(idStr);
               if(!json.isMember(idStr)) {
@@ -2684,15 +2694,7 @@ namespace Vision {
                 result = RESULT_FAIL;
               } else {
                 EnrolledFaceEntry entry(faceID, json[idStr]);
-
-                namesAndIDs.emplace_back( LoadedKnownFace(GetSecondsSince(nowTime, entry.GetEnrollmentTime()),
-                                                          GetSecondsSince(nowTime, entry.GetLastUpdateTime()),
-                                                          GetSecondsSince(nowTime, entry.FindLastSeenTime()),
-                                                          entry.GetFaceID(),
-                                                          entry.GetName()) );
-
-                PRINT_CH_INFO(LOG_CHANNEL, "LoadAlbum.LoadedEnrollmentData", "ID=%d, '%s'",
-                              faceID, entry.GetName().piiGuardedString());
+                EmplaceLoadedKnownFace(entry, namesAndIDs, "LoadAlbum.LoadedEnrollmentData");
 
                 loadedEnrollmentData[faceID] = std::move(entry);
               }

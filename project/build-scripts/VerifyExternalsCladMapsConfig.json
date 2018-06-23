@@ -13,6 +13,32 @@
     ]
   },
   {
+    "mapPath"       : "/resources/assets/cladToFileMaps/BackpackAnimationTriggerMap.json",
+    "resourceKey" : "AnimName",
+
+    "cladPath"      : "/clad/src/clad/types/backpackAnimationTriggers.clad",
+    
+    "resources": [
+      {
+        "basePath" : "/../resources/config/engine/lights/backpackLights",
+        "resourcesAreFiles"   : true
+      }
+    ]
+  },
+  {
+    "mapPath"       : "/resources/assets/cladToFileMaps/CubeAnimationTriggerMap.json",
+    "resourceKey" : "AnimName",
+
+    "cladPath"      : "/clad/src/clad/types/cubeAnimationTrigger.clad",
+    
+    "resources": [
+      {
+        "basePath" : "/../resources/config/engine/lights/cubeLights",
+        "resourcesAreFiles"   : true
+      }
+    ]
+  },  
+  {
     "mapPath"       : "/resources/assets/cladToFileMaps/CompositeImageLayoutMap.json",
     "resourceKey" : "LayoutName",
 

@@ -24,6 +24,7 @@ namespace Cozmo {
 
 // Forward declarations
 class AnimationStreamer;
+class StreamingAnimationModifier;
 class AnimContext;
 class AnimEngine;
 
@@ -39,6 +40,7 @@ public:
   // Arguments may not be null.
   static Result Init(AnimEngine* animEngine,
                      AnimationStreamer* animStreamer,
+                     StreamingAnimationModifier* streamingAnimationModifier,
                      Audio::EngineRobotAudioInput* audioInput,
                      const AnimContext* context);
 

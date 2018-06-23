@@ -61,7 +61,7 @@ void BeatDetectorComponent::GetInitDependencies( RobotCompIDSet& dependencies ) 
 }
 
 
-void BeatDetectorComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void BeatDetectorComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   

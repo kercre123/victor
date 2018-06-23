@@ -69,6 +69,8 @@ namespace Anki
 
       Result InitCamera();
 
+      void RegisterOnCameraRestartCallback(std::function<void()> callback);
+
       // Sets the camera parameters (non-blocking call)
       void CameraSetParameters(u16 exposure_ms, f32 gain);
       void CameraSetWhiteBalanceParameters(f32 r_gain, f32 g_gain, f32 b_gain);

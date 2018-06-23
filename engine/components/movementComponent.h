@@ -43,7 +43,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };
@@ -56,6 +56,8 @@ public:
   
   void OnRobotDelocalized();
   
+  void UpdateOdometers(const Cozmo::RobotState& robotState);
+
   // Checks for unexpected movement specifically while turning such as
   // - Cozmo is turning one direction but you turn him the other way
   // - Cozmo is turning one direction and you turn him faster so he overshoots his turn angle
@@ -200,7 +202,15 @@ public:
   // differs from the most common use case of this component.
   void EnableUnexpectedRotationWithoutMotors(bool enabled) { _enableRotatedWithoutMotors = enabled; }
   bool IsUnexpectedRotationWithoutMotorsEnabled() const { return _enableRotatedWithoutMotors; }
-  
+    
+  // Returns body distance traveled
+  // i.e. Average wheel speed integrated over time
+  double GetBodyOdometer_mm() const { return _body_odom_mm; }
+
+  // Returns individual wheel distance traveled
+  double GetLeftWheelOdometer_mm()  const { return _lWheel_odom_mm; }
+  double GetRightWheelOdometer_mm() const { return _rWheel_odom_mm; }
+
 private:
   
   void InitEventHandlers(IExternalInterface& interface);
@@ -226,8 +236,9 @@ private:
   bool _areWheelsMoving = false;
   bool _enableRotatedWithoutMotors = false;
 
-  // TODO Set to false so it is only enabled when BehaviorSDKInterface is activated.
-  bool _isAllowedToHandleActions = true;//false;
+  // If false, actions only run when an instance of BehaviorSDKInterface is activated.
+  // TODO Set this to be false
+  bool _isAllowedToHandleActions = true;
   
   std::list<Signal::SmartHandle> _eventHandles;
   
@@ -308,6 +319,11 @@ private:
   const u8 kAllMotorTracks = ((u8)AnimTrackFlag::HEAD_TRACK |
                               (u8)AnimTrackFlag::LIFT_TRACK |
                               (u8)AnimTrackFlag::BODY_TRACK);
+
+  // Odometer
+  double _body_odom_mm   = 0.0;
+  double _lWheel_odom_mm = 0.0;
+  double _rWheel_odom_mm = 0.0;
   
 }; // class MovementComponent
   

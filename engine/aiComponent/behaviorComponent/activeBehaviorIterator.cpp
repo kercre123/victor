@@ -26,9 +26,9 @@ ActiveBehaviorIterator::ActiveBehaviorIterator()
 {
 }
 
-void ActiveBehaviorIterator::InitDependent( Robot* robot, const BCCompMap& dependentComponents )
+void ActiveBehaviorIterator::InitDependent( Robot* robot, const BCCompMap& dependentComps )
 {
-  _bsm = dependentComponents.GetBasePtr<BehaviorSystemManager>();
+  _bsm = dependentComps.GetComponentPtr<BehaviorSystemManager>();
 }
 
 void ActiveBehaviorIterator::IterateActiveCozmoBehaviorsForward(CozmoBehaviorCallback operand,
@@ -38,7 +38,7 @@ void ActiveBehaviorIterator::IterateActiveCozmoBehaviorsForward(CozmoBehaviorCal
 
   if( nullptr == curr ) {
     // start at the base behavior by default
-    curr = _bsm->GetBaseBeahvior();
+    curr = _bsm->GetBaseBehavior();
   }
 
   BOUNDED_WHILE(1000, curr != nullptr) {

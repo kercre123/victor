@@ -110,7 +110,7 @@ void BehaviorPounceWithProx::BehaviorUpdate()
     return;
   }
 
-  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
+  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
   u16 dummyDistance_mm = 0;
   const bool isSensorReadingValid = proxSensor.GetLatestDistance_mm(dummyDistance_mm);
   if(isSensorReadingValid){

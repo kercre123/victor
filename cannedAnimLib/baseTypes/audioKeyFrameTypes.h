@@ -47,6 +47,7 @@ struct AudioEventGroupRef {
     : AudioEvent( audioEvent )
     , Volume( volume )
     , Probability( probability ) {}
+    bool operator==( const EventDef& other ) const;
   };
   
   AudioMetaData::GameObjectType GameObject;
@@ -56,13 +57,15 @@ struct AudioEventGroupRef {
   : GameObject( gameObject ) {}
   
   AudioEventGroupRef& operator=( const AudioEventGroupRef& other );
-  
+  bool operator==( const AudioEventGroupRef& other ) const;
+
   void AddEvent( AudioMetaData::GameEvent::GenericEvent audioEvent, float volume, float probability );
   
   // Get an event from the group using probability values. If 'useProbability' is false or if randGen is null
   // the first event in the group will be returned.
   // If probabilty has determined not to play an event nullptr will be returned.
   const EventDef* RetrieveEvent(bool useProbability, Util::RandomGenerator* randGen) const;
+
 };
 
 
@@ -74,6 +77,11 @@ struct AudioStateRef {
                  AudioMetaData::GameState::GenericState state = AudioMetaData::GameState::GenericState::Invalid )
   : StateGroup( stateGroup )
   , State( state ) {}
+  
+  bool operator==( const AudioStateRef& other ) const { 
+    return (StateGroup == other.StateGroup) &&
+           (State == other.State);
+  }
 };
 
 
@@ -88,6 +96,12 @@ struct AudioSwitchRef {
   : SwitchGroup( switchGroup )
   , State( state )
   , GameObject( gameObject ) {}
+
+  bool operator==( const AudioSwitchRef& other ) const { 
+    return (SwitchGroup == other.SwitchGroup) &&
+           (State == other.State) &&
+           (GameObject == other.GameObject);
+  }
 };
 
 
@@ -108,6 +122,14 @@ struct AudioParameterRef {
   , Time_ms( time_ms )
   , Curve( curve )
   , GameObject( gameObject ) {}
+
+  bool operator==( const AudioParameterRef& other ) const { 
+    return (Parameter == other.Parameter) &&
+           (Value == other.Value) &&
+           (Time_ms == other.Time_ms) &&
+           (Curve == other.Curve) &&
+           (GameObject == other.GameObject);
+  }
 };
 
 
@@ -140,6 +162,8 @@ struct AudioRef {
   
   AudioRef( const AudioRef& other );
   AudioRef& operator=( const AudioRef& other );
+  bool operator==( const AudioRef& other ) const;
+
 };
 
 

@@ -598,7 +598,8 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
     kStat_Uptime,
     kStat_IdleTime,
     kStat_RealTimeClock,
-    kStat_MemoryInfo,
+    kStat_MemoryInfo1,
+    kStat_MemoryInfo2,
     kStat_OverallCpu,
     kStat_Cpu0,
     kStat_Cpu1,
@@ -662,12 +663,19 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
     stat_rtc = ss.str();
   }
 
-  std::string stat_mem;
-  if (active[kStat_MemoryInfo]) {
-    // Memory use
-    uint32_t freeMem_kB;
-    const uint32_t totalMem_kB = osState->GetMemoryInfo(freeMem_kB);
-    stat_mem = std::to_string(totalMem_kB) + "," + std::to_string(freeMem_kB);
+  std::string stat_mem1;
+  std::string stat_mem2;
+  if (active[kStat_MemoryInfo1] || active[kStat_MemoryInfo2]) {
+    uint32_t freeMem_kB, availableMem_kB;
+    const uint32_t totalMem_kB = osState->GetMemoryInfo(freeMem_kB, availableMem_kB);
+    if (active[kStat_MemoryInfo1]) {
+      // Memory use 1
+      stat_mem1 = std::to_string(totalMem_kB) + "," + std::to_string(freeMem_kB);
+    }
+    if (active[kStat_MemoryInfo2]) {
+      // Memory use 2
+      stat_mem2 = std::to_string(totalMem_kB) + "," + std::to_string(availableMem_kB);
+    }
   }
 
   std::vector<std::string> stat_cpuStat;
@@ -690,13 +698,14 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
             "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
             "close\r\n\r\n");
 
-  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n",
+  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
             stat_cpuFreq.c_str(),
             stat_temperature.c_str(),
             stat_uptime.c_str(),
             stat_idleTime.c_str(),
             stat_rtc.c_str(),
-            stat_mem.c_str());
+            stat_mem1.c_str(),
+            stat_mem2.c_str());
   mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n",
             stat_cpuStat[0].c_str(),
             stat_cpuStat[1].c_str(),

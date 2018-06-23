@@ -106,7 +106,7 @@ void BehaviorProceduralClock::GetBehaviorJsonKeys(std::set<const char*>& expecte
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorProceduralClock::InitBehavior()
 {
-  auto& accessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetValue<DataAccessorComponent>();
+  auto& accessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();
   auto* spriteCache = accessorComp.GetSpriteCache();
   auto* seqContainer = accessorComp.GetSpriteSequenceContainer();
   using Entry = Vision::CompositeImageLayer::SpriteEntry;
@@ -117,7 +117,7 @@ void BehaviorProceduralClock::InitBehavior()
   }
 
   // Setup the composite image
-  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetValue<DataAccessorComponent>();
+  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();
   Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
   _instanceParams.compImg = std::make_unique<Vision::CompositeImage>(dataAccessorComp.GetSpriteCache(),
                                                                      faceHueAndSaturation,
@@ -248,7 +248,11 @@ void BehaviorProceduralClock::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorProceduralClock::BuildAndDisplayProceduralClock(const int clockOffset_s, const int displayOffset_ms)
 {
-  auto& accessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetValue<DataAccessorComponent>();
+  // Animation streamer can only apply images/sounds on animation keyframes so ensure displayOffset is aligned to a frame
+  auto displayOffset_aligned_ms = displayOffset_ms;
+  displayOffset_aligned_ms -= (displayOffset_aligned_ms % ANIM_TIME_STEP_MS);
+
+  auto& accessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();
   auto* spriteCache = accessorComp.GetSpriteCache();
   auto* seqContainer = accessorComp.GetSpriteSequenceContainer();
   using Entry = Vision::CompositeImageLayer::SpriteEntry;
@@ -262,7 +266,7 @@ void BehaviorProceduralClock::BuildAndDisplayProceduralClock(const int clockOffs
   for(auto& pair : digitMap){
     isLeadingZero &= (pair.second == 0);
     if(isLeadingZero){
-      auto mapEntry = Entry(spriteCache, seqContainer, Vision::SpriteName::Clock_empty_grid);
+      auto mapEntry = Entry(spriteCache, seqContainer, Vision::SpriteName::Clock_Empty_Grid);
       imageMap.emplace(pair.first, std::move(mapEntry));
     }else{
       auto mapEntry = Entry(spriteCache, seqContainer, _instanceParams.intsToImages[pair.second]);
@@ -295,8 +299,16 @@ void BehaviorProceduralClock::BuildAndDisplayProceduralClock(const int clockOffs
     auto intentionalCopy = *digitLayer;
     compImg.AddLayer(std::move(intentionalCopy));
     // Just update the numbers in the image
-    GetBEI().GetAnimationComponent().UpdateCompositeImage(compImg, displayOffset_ms);
+    GetBEI().GetAnimationComponent().UpdateCompositeImage(compImg, displayOffset_aligned_ms);
   }
+
+  // Have the animation process send ticks at the appropriate time stamp 
+  AudioEngine::Multiplexer::PostAudioEvent audioMessage;
+  audioMessage.gameObject = Anki::AudioMetaData::GameObjectType::Animation;
+  audioMessage.audioEvent = AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Sfx__Timer_Countdown;
+
+  RobotInterface::EngineToRobot wrapper(std::move(audioMessage));
+  GetBEI().GetAnimationComponent().AlterStreamingAnimationAtTime(std::move(wrapper), displayOffset_aligned_ms);
 }
 
 

@@ -20,13 +20,12 @@
 #include "coretech/vision/shared/compositeImage/compositeImage.h"
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
 #include "engine/actions/sayTextAction.h"
-#include "engine/animations/animationContainers/backpackLightAnimationContainer.h"
-#include "engine/animations/animationContainers/cubeLightAnimationContainer.h"
+#include "engine/components/backpackLights/backpackLightAnimationContainer.h"
 #include "engine/animations/animationGroup/animationGroupContainer.h"
 #include "engine/animations/animationTransfer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/components/bodyLightComponent.h"
-#include "engine/components/cubes/cubeLightComponent.h"
+#include "engine/components/backpackLights/backpackLightComponent.h"
+#include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/cozmoFeatureGate.h"
@@ -74,6 +73,10 @@ const std::vector<std::string> kPathsToEngineAccessibleAnimations = {
   "assets/animations/anim_weather_stars_01.bin",
   "assets/animations/anim_weather_cold_01.bin",
   "assets/animations/anim_weather_windy_01.bin",
+  "assets/animations/anim_weather_thunderstorm_01.bin",
+
+  // Blackjack
+  "assets/animations/anim_blackjack_gameplay_01.bin",
 };
 
 }
@@ -84,11 +87,10 @@ namespace Cozmo {
 RobotDataLoader::RobotDataLoader(const CozmoContext* context)
 : _context(context)
 , _platform(_context->GetDataPlatform())
-, _cubeLightAnimations(new CubeLightAnimationContainer())
 , _animationGroups(new AnimationGroupContainer(*context->GetRandom()))
-, _animationTriggerResponses(new Util::CladEnumToStringMap<AnimationTrigger>())
-, _cubeAnimationTriggerResponses(new Util::CladEnumToStringMap<CubeAnimationTrigger>())
-, _backpackLightAnimations(new BackpackLightAnimationContainer())
+, _animationTriggerMap(new AnimationTriggerMap())
+, _cubeAnimationTriggerMap(new CubeAnimationTriggerMap())
+, _backpackAnimationTriggerMap(new BackpackAnimationTriggerMap())
 , _dasBlacklistedAnimationTriggers()
 {
   _spritePaths = std::make_unique<Vision::SpritePathMap>();
@@ -146,6 +148,7 @@ void RobotDataLoader::LoadNonConfigData()
     LoadSpritePaths();
     _spriteCache = std::make_unique<Vision::SpriteCache>(_spritePaths.get());
   }
+
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadSpriteSequences");
     std::vector<std::string> spriteSequenceDirs = {pathToExternalSpriteSequences, pathToEngineSpriteSequences};
@@ -168,33 +171,28 @@ void RobotDataLoader::LoadNonConfigData()
     }
 
     {
-      ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeAnimationTriggerResponses");
-      LoadCubeAnimationTriggerResponses();
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeAnimationTriggerMap");
+      LoadCubeAnimationTriggerMap();
     }
-
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackAnimationTriggerMap");
+      LoadBackpackAnimationTriggerMap();
+    }
     {
       ANKI_CPU_PROFILE("RobotDataLoader::LoadEmotionEvents");
       LoadEmotionEvents();
     }
-
-
 
     {
       ANKI_CPU_PROFILE("RobotDataLoader::LoadDasBlacklistedAnimationTriggers");
       LoadDasBlacklistedAnimationTriggers();
     }
 
-
     {
-      ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationTriggerResponses");
-      LoadAnimationTriggerResponses();
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationTriggerMap");
+      LoadAnimationTriggerMap();
     }
 
-    {
-      // Load SayText Action Intent Config
-      ANKI_CPU_PROFILE("RobotDataLoader::LoadSayTextActionIntentConfigs");
-      SayTextAction::LoadMetadata(*_context->GetDataPlatform());
-    }
     {
       ANKI_CPU_PROFILE("RobotDataLoader::LoadCompositeImageMaps");
       LoadCompositeImageMaps();
@@ -203,8 +201,9 @@ void RobotDataLoader::LoadNonConfigData()
   
   {
     CannedAnimationLoader animLoader(_platform,
-                                     _spritePaths.get(), _spriteSequenceContainer.get(), 
+                                     _spritePaths.get(), _spriteSequenceContainer.get(),
                                      _loadingCompleteRatio, _abortLoad);
+
     // Create the canned animation container, but don't load any data into it
     // Engine side animations are loaded only when requested
     _cannedAnimations = std::make_unique<CannedAnimationContainer>();
@@ -293,24 +292,27 @@ bool RobotDataLoader::IsCustomAnimLoadEnabled() const
 
 void RobotDataLoader::LoadCubeLightAnimations()
 {
+  const auto& fileList = _jsonFiles[FileType::CubeLightAnimation];
+  const auto size = fileList.size();
+
   const double startTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
 
   using MyDispatchWorker = Util::DispatchWorker<3, const std::string&>;
-  MyDispatchWorker::FunctionType loadFileFunc = std::bind(&RobotDataLoader::LoadCubeLightAnimationFile, this, std::placeholders::_1);
+  MyDispatchWorker::FunctionType loadFileFunc = std::bind(&RobotDataLoader::LoadCubeLightAnimationFile, 
+                                                          this, std::placeholders::_1);
   MyDispatchWorker myWorker(loadFileFunc);
 
-  const auto& fileList = _jsonFiles[FileType::CubeLightAnimation];
-  const auto size = fileList.size();
   for (int i = 0; i < size; i++) {
     myWorker.PushJob(fileList[i]);
   }
-
+  
   myWorker.Process();
 
   const double endTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
   double loadTime = endTime - startTime;
   PRINT_CH_INFO("Animations", "RobotDataLoader.LoadCubeLightAnimations.LoadTime",
                 "Time to load cube light animations = %.2f ms", loadTime);
+
 }
 
 void RobotDataLoader::LoadCubeLightAnimationFile(const std::string& path)
@@ -319,9 +321,10 @@ void RobotDataLoader::LoadCubeLightAnimationFile(const std::string& path)
   const bool success = _platform->readAsJson(path.c_str(), animDefs);
   if (success && !animDefs.empty()) {
     std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
-    _cubeLightAnimations->DefineFromJson(animDefs);
+    _cubeLightAnimations.emplace(path, animDefs);
   }
 }
+
 
 void RobotDataLoader::LoadBackpackLightAnimations()
 {
@@ -351,7 +354,7 @@ void RobotDataLoader::LoadBackpackLightAnimationFile(const std::string& path)
   const bool success = _platform->readAsJson(path.c_str(), animDefs);
   if (success && !animDefs.empty()) {
     std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
-    _backpackLightAnimations->DefineFromJson(animDefs);
+    _backpackLightAnimations.emplace(path, animDefs);
   }
 }
 
@@ -706,15 +709,21 @@ std::map<std::string, std::string> RobotDataLoader::CreateFileNameToFullPathMap(
   return fileNameToFullPath;
 }
 
-void RobotDataLoader::LoadAnimationTriggerResponses()
+void RobotDataLoader::LoadAnimationTriggerMap()
 {
-  _animationTriggerResponses->Load(_platform, "assets/cladToFileMaps/AnimationTriggerMap.json", "AnimName");
+  _animationTriggerMap->Load(_platform, "assets/cladToFileMaps/AnimationTriggerMap.json", "AnimName");
 }
 
-void RobotDataLoader::LoadCubeAnimationTriggerResponses()
+void RobotDataLoader::LoadCubeAnimationTriggerMap()
 {
-  _cubeAnimationTriggerResponses->Load(_platform, "assets/cladToFileMaps/CubeAnimationTriggerMap.json", "AnimName");
+  _cubeAnimationTriggerMap->Load(_platform, "assets/cladToFileMaps/CubeAnimationTriggerMap.json", "AnimName");
 }
+
+void RobotDataLoader::LoadBackpackAnimationTriggerMap()
+{
+  _backpackAnimationTriggerMap->Load(_platform, "assets/cladToFileMaps/BackpackAnimationTriggerMap.json", "AnimName");
+}
+
 
 void RobotDataLoader::LoadDasBlacklistedAnimationTriggers()
 {
@@ -846,17 +855,6 @@ void RobotDataLoader::LoadRobotConfigs()
     }
   }
 
-  // TextToSpeechConfig
-  {
-    const std::string jsonFilename = "config/engine/sayTextintentConfig.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _textToSpeechConfig);
-    if( !success){
-      LOG_ERROR("RobotDataLoader.TextToSpeechConfigNotFound",
-                "TextToSpeech Engine Config file %s not found or failed to parse",
-                jsonFilename.c_str());
-    }
-  }
-
   // Photography config
   {
     static const std::string jsonFilename = "config/engine/photography_config.json";
@@ -865,6 +863,30 @@ void RobotDataLoader::LoadRobotConfigs()
     {
       LOG_ERROR("RobotDataLoader.PhotographyConfigNotFound",
                 "Photography Config file %s not found or failed to parse",
+                jsonFilename.c_str());
+    }
+  }
+
+  // Settings config
+  {
+    static const std::string jsonFilename = "config/engine/settings_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _settingsConfig);
+    if (!success)
+    {
+      LOG_ERROR("RobotDataLoader.SettingsConfigNotFound",
+                "Settings Config file %s not found or failed to parse",
+                jsonFilename.c_str());
+    }
+  }
+
+  // Eye color config
+  {
+    static const std::string jsonFilename = "config/engine/eye_color_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _eyeColorConfig);
+    if (!success)
+    {
+      LOG_ERROR("RobotDataLoader.EyeColorConfigNotFound",
+                "Eye Color Config file %s not found or failed to parse",
                 jsonFilename.c_str());
     }
   }
@@ -903,15 +925,15 @@ bool RobotDataLoader::DoNonConfigDataLoading(float& loadingCompleteRatio_out)
 
 bool RobotDataLoader::HasAnimationForTrigger( AnimationTrigger ev )
 {
-  return _animationTriggerResponses->HasKey(ev);
+  return _animationTriggerMap->HasKey(ev);
 }
 std::string RobotDataLoader::GetAnimationForTrigger( AnimationTrigger ev )
 {
-  return _animationTriggerResponses->GetValue(ev);
+  return _animationTriggerMap->GetValue(ev);
 }
 std::string RobotDataLoader::GetCubeAnimationForTrigger( CubeAnimationTrigger ev )
 {
-  return _cubeAnimationTriggerResponses->GetValue(ev);
+  return _cubeAnimationTriggerMap->GetValue(ev);
 }
 
 

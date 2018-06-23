@@ -59,3 +59,13 @@ go_project(
     name = 'opusenc',
     dir = 'opusenc'
 )
+
+cxx_project(
+    name = 'gateway_grpc',
+    srcs = ['gateway/external_interface.proto']
+)
+
+cxx_project(
+    name = 'gateway_proto',
+    srcs = glob(['gateway/*.proto'])
+)

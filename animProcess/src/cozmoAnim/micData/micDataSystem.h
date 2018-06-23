@@ -19,6 +19,7 @@
 #include "coretech/common/shared/types.h"
 #include "util/global/globalDefinitions.h"
 
+#include "clad/cloud/mic.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 
 #include <cstdint>
@@ -47,6 +48,7 @@ namespace Anki {
     namespace Data {
       class DataPlatform;
     }
+    class Locale;
   }
 }
 class LocalUdpServer;
@@ -67,7 +69,7 @@ public:
   void RecordProcessedAudio(uint32_t duration_ms, const std::string& path);
   void SetShouldStreamAfterWakeWord(bool shouldStream);
   void SetTriggerWordDetectionEnabled(bool enabled);
-  void StartWakeWordlessStreaming();
+  void StartWakeWordlessStreaming(CloudMic::StreamType type);
   void Update(BaseStationTime_t currTime_nanosec);
 
 #if ANKI_DEV_CHEATS
@@ -85,8 +87,11 @@ public:
   void AudioSaveCallback(const std::string& dest);
 
   BeatInfo GetLatestBeatInfo();
+  const Anki::Cozmo::RobotInterface::MicDirection& GetLatestMicDirectionMsg() const { return _latestMicDirectionMsg; }
   
   void ResetBeatDetector();
+
+  void UpdateLocale(const Util::Locale& newLocale);
   
 private:
   void RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT);
@@ -108,6 +113,8 @@ private:
 #if ANKI_DEV_CHEATS
   bool _forceRecordClip = false;
 #endif
+  
+  RobotInterface::MicDirection _latestMicDirectionMsg;
   
   // Members for managing the results of async FFT processing
   struct FFTResultData {

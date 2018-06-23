@@ -37,7 +37,7 @@ PetWorld::PetWorld()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void PetWorld::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void PetWorld::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
 }

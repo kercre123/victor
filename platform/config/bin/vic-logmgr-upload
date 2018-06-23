@@ -1,0 +1,96 @@
+#!/bin/sh
+#
+# platform/config/bin/vic-logmgr-upload
+#
+# Victor log manager upload
+#
+# This script collects a snapshot of recent log data into a compressed
+# (gzip) file, then uploads the file to an Anki Blobstore bucket.
+#
+# If upload fails, exit with an appropriate error. There is no attempt
+# at retry or deferred send.
+#
+# The default filter specification will capture all messages from Anki service processes.
+# It will also capture system messages reported at ERROR or FATAL level, including tombstone traces
+# reported by debuggerd.
+#
+# Default configuration values may be overridden by environment.
+#
+set -eu
+
+: ${VIC_LOGMGR_DIRECTORY:="/data/data/com.anki.victor/cache/vic-logmgr"}
+: ${VIC_LOGMGR_FORMAT:="printable"}
+: ${VIC_LOGMGR_FILTERSPECS:="vic-anim:V vic-cloud:V vic-crashuploader:V vic-dasmgr:V vic-engine:V vic-gateway:V vic-init:V vic-robot:V vic-switchboard:V vic-watchdog:V vic-webserver:V *:E"}
+
+#
+# Callers must provide APP_URL, APP_KEY and APP_USER on command line.
+# These values are used to establish blobstore credentials.
+# These values should not be stored on the robot.
+#
+APP_URL="$1"
+APP_KEY="$2"
+APP_USER="$3"
+
+if [ -z ${APP_URL} -o -z ${APP_KEY} -o -z ${APP_USER} ]; then
+  echo "Usage: $0 app_url app_key app_user"
+  exit 1
+fi
+
+#
+# Collect some metadata to describe the upload
+#
+esn="`/bin/emr-cat e`"
+timestamp="`/bin/date +%Y-%m-%d-%H-%M-%S`"
+version="`/bin/cat /anki/etc/version`"
+revision="`/bin/cat /anki/etc/revision`"
+osversion="`/bin/cat /etc/os-version`"
+osrevision="`/bin/cat /etc/os-version-rev`"
+pid="$$"
+
+blobdir=${VIC_LOGMGR_DIRECTORY}
+blobname="victor-${esn}-${timestamp}-${pid}.log.gz"
+blobpath="${blobdir}/${blobname}"
+bloburl="${APP_URL}/${blobname}"
+
+#
+# Prepare the file for upload
+#
+
+/bin/mkdir -p ${blobdir}
+
+/usr/bin/logcat \
+   -d \
+   -v ${VIC_LOGMGR_FORMAT} \
+   ${VIC_LOGMGR_FILTERSPECS} | gzip > ${blobpath}
+
+#
+# Use curl to perform upload
+# VIC-3912: Need certificate chain for https validation
+#
+curl -s -f -k -X PUT \
+  -H "Anki-App-Key: ${APP_KEY}" \
+  -H "Usr-Username: ${APP_USER}" \
+  -H "Usr-RobotESN: ${esn}" \
+  -H "Usr-RobotTimestamp: ${timestamp}" \
+  -H "Usr-RobotVersion: ${version}" \
+  -H "Usr-RobotRevision: ${revision}" \
+  -H "Usr-RobotOSVersion: ${osversion}" \
+  -H "Usr-RobotOSRevision: ${osrevision}" \
+  --data-binary @${blobpath} \
+  ${bloburl}
+
+status=$?
+
+/bin/rm -f ${blobpath}
+
+#
+# Note that exit status isn't reliable here.  If blobstore responds with
+# an API error but http status 200, curl still considers it success.
+#
+if [ ${status} -ne 0 ]; then
+  echo "Failed to upload to ${bloburl}"
+  exit 1
+fi
+
+echo "Uploaded ${blobname}"
+exit 0

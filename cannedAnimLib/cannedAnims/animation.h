@@ -37,6 +37,8 @@ public:
 
   Animation(const std::string& name = "");
 
+  bool operator==(const Animation &other) const;
+
   // For reading canned animations from files
   Result DefineFromFlatBuf(const std::string& name, const CozmoAnim::AnimClip* animClip, 
                            const Vision::SpritePathMap* spriteMap, Vision::SpriteSequenceContainer* seqContainer);

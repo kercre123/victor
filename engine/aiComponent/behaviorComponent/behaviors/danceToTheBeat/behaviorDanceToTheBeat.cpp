@@ -15,7 +15,7 @@
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/animations/animationContainers/backpackLightAnimationContainer.h"
+#include "engine/components/backpackLights/backpackLightAnimationContainer.h"
 #include "engine/components/dataAccessorComponent.h"
 #include "engine/components/mics/beatDetectorComponent.h"
 #include "engine/cozmoContext.h"
@@ -40,7 +40,7 @@ namespace {
   // amount to account for messaging/tick latency/timing.
   const float kLatencyCorrectionTime_sec = 0.050f;
   
-  const BackpackLights beatBackpackLights = {
+  const BackpackLightAnimation::BackpackAnimation beatBackpackLights = {
     .onColors               = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
     .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
     .onPeriod_ms            = {{60,60,60}},
@@ -358,8 +358,8 @@ void BehaviorDanceToTheBeat::OnBeat()
   
   if (_iConfig.useBackpackLights) {
     StopBackpackLights();
-    auto& blc = GetBEI().GetBodyLightComponent();
-    blc.StartLoopingBackpackLights(beatBackpackLights,
+    auto& blc = GetBEI().GetBackpackLightComponent();
+    blc.StartLoopingBackpackAnimation(beatBackpackLights,
                                    BackpackLightSource::Behavior,
                                    _dVars.backpackDataRef);
   }
@@ -389,9 +389,9 @@ void BehaviorDanceToTheBeat::OnBeat()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDanceToTheBeat::StopBackpackLights()
 {
-  auto& blc = GetBEI().GetBodyLightComponent();
+  auto& blc = GetBEI().GetBackpackLightComponent();
   if (_dVars.backpackDataRef.IsValid() &&
-      !blc.StopLoopingBackpackLights(_dVars.backpackDataRef)) {
+      !blc.StopLoopingBackpackAnimation(_dVars.backpackDataRef)) {
     PRINT_NAMED_WARNING("BehaviorDanceToTheBeat.StopBackpackLights.FailedStoppingBackpackLights",
                         "Failed to stop backpack lights");
   }
@@ -413,7 +413,7 @@ void BehaviorDanceToTheBeat::UnregisterOnBeatCallback()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDanceToTheBeat::GetAnimationBeatDelay_sec(const std::string& animName, float& beatDelay_sec)
 {
-  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetValue<DataAccessorComponent>();
+  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();
   const auto* animContainer = dataAccessorComp.GetCannedAnimationContainer();
   if (animContainer == nullptr) {
     PRINT_NAMED_ERROR("BehaviorDanceToTheBeat.GetAnimationBeatDelay_sec.NullAnimContainer",

@@ -196,6 +196,14 @@
     "AnimName": "ag_chargerdocking_reaction"
   },
   {
+    "CladEvent": "ClockGetIn",
+    "AnimName": "ag_timer_set_getin"
+  },
+  {
+    "CladEvent": "ClockGetOut",
+    "AnimName": "ag_timer_set_getout"
+  },
+  {
     "CladEvent": "ConnectWakeUp",
     "AnimName": "ag_connectwakeup"
   },
@@ -568,6 +576,18 @@
     "AnimName": "ag_freeplay_reacttoface_unidentified"
   },
   {
+    "CladEvent": "LookAtDevice",
+    "AnimName": "ag_lookatdevice_icon"
+  },
+  {
+    "CladEvent": "LookAtDeviceGetIn",
+    "AnimName": "ag_lookatdevice_getin"
+  },
+  {
+    "CladEvent": "LookAtDeviceGetOut",
+    "AnimName": "ag_lookatdevice_getout"
+  },
+  {
     "CladEvent": "DEPRECATED_LaserAcknowledge",
     "AnimName": "ag_laser_react_01"
   },
@@ -629,7 +649,7 @@
   },
   {
     "CladEvent": "MeetVictorSawWrongFace",
-    "AnimName" : "ag_meetvictor_sayname_01"
+    "AnimName" : "ag_meetvictor_youarebob_01"
   },
   {
     "CladEvent": "MeetVictorLookFaceInterrupt",
@@ -640,8 +660,8 @@
     "AnimName": "ag_meetvictor_timeout"
   },
   {
-    "CladEvent": "MeetCozmoDuplicateName",
-    "AnimName": "ag_meetvictor_sayname_01"
+    "CladEvent": "MeetVictorDuplicateName",
+    "AnimName": "ag_meetvictor_alreadyknowbob_01"
   },
   {
     "CladEvent": "DEPRECATED_NamedFaceInitialGreeting",
@@ -1515,6 +1535,30 @@
   {
     "CladEvent": "MessagingMessageRewind",
     "AnimName": "ag_message_rewind"
+  },
+  {
+    "CladEvent": "KnowledgeGraphGetIn",
+    "AnimName": "ag_knowledgegraph_getin_01"
+  },
+  {
+    "CladEvent": "KnowledgeGraphListening",
+    "AnimName": "ag_knowledgegraph_listening_01"
+  },
+  {
+    "CladEvent": "KnowledgeGraphSearching",
+    "AnimName": "ag_knowledgegraph_searching_01"
+  },
+  {
+    "CladEvent": "KnowledgeGraphAnswer",
+    "AnimName": "ag_knowledgegraph_answer_01"
+  },
+  {
+    "CladEvent": "KnowledgeGraphGetOut",
+    "AnimName": "ag_knowledgegraph_getout_01"
+  },
+  {
+    "CladEvent": "KnowledgeGraphNoAnswer",
+    "AnimName": "ag_blackjack_victorlose"
   },
   {
     "CladEvent": "ShutUp",

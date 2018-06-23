@@ -17,13 +17,8 @@
 
 #include "quadTreeTypes.h"
 
-#include "engine/viz/vizManager.h"
-#include "engine/navMap/memoryMap/memoryMapTypes.h"
 #include "engine/navMap/memoryMap/data/memoryMapData.h"
-
-#include "coretech/common/engine/math/fastPolygon2d.h"
 #include "coretech/common/engine/math/axisAlignedHyperCube.h"
-#include "coretech/common/engine/math/ball.h"
 
 #include "util/helpers/noncopyable.h"
 
@@ -83,7 +78,6 @@ public:
   const NodeContent& GetContent() const   { return _content; }
 
   // Builds a quad from our coordinates
-  Quad2f MakeQuadXY(const float padding_mm=0.0f) const;
   const AxisAlignedQuad& GetBoundingBox() const { return _boundingBox; }
   
   // return if the node contains any useful data
@@ -97,10 +91,7 @@ public:
   // run the provided accumulator function recursively over the tree for all nodes intersecting with region (if provided).
   // NOTE: any recursive call through the QTN should be implemented by fold so all collision checks happen in a consistant manner
   void Fold(FoldFunctorConst accumulator, FoldDirection dir = FoldDirection::BreadthFirst) const;
-
-  template <class ConvexType>
-  typename std::enable_if<std::is_base_of<ConvexPointSet2f, ConvexType>::value>::type
-  Fold(FoldFunctorConst accumulator, const ConvexType& region, FoldDirection dir = FoldDirection::BreadthFirst) const;
+  void Fold(FoldFunctorConst accumulator, const BoundedConvexSet2f& region, FoldDirection dir = FoldDirection::BreadthFirst) const;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Exploration
@@ -138,7 +129,7 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -                 
   
   // return true if this quad can subdivide
-  bool CanSubdivide() const { return _level > 0; }
+  bool CanSubdivide() const { return (_level > 0) && !IsSubdivided(); }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Modification
@@ -166,10 +157,7 @@ private:
   // run the provided accumulator function recursively over the tree for all nodes intersecting with region (if provided).
   // NOTE: mutable recursive calls should remain private to ensure tree invariants are held
   void Fold(FoldFunctor accumulator, FoldDirection dir = FoldDirection::BreadthFirst);
-  
-  template <class ConvexType>
-  typename std::enable_if<std::is_base_of<ConvexPointSet2f, ConvexType>::value>::type
-  Fold(FoldFunctor accumulator, const ConvexType& region, FoldDirection dir = FoldDirection::BreadthFirst);
+  void Fold(FoldFunctor accumulator, const BoundedConvexSet2f& region, FoldDirection dir = FoldDirection::BreadthFirst);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Exploration
@@ -214,108 +202,6 @@ private:
     
 }; // class
   
-/*
-  For calls that are constrained by some convex region, first we can potnetially avoid excess collision checks
-  if the current node is fully contained by the Fold Region. In the example below, nodes 1 through 6 need intersection 
-  checks, but nodes A through D do not since their parent is fully contained by Fold Region
- 
-                    +-----------------+------------------+
-                    |                 |                  |
-                    |                 |                  |
-                    |                 |                  |
-                    |         1       |        2         |
-                    |                 |                  |
-                    |    . . . . . . . . .<- Fold        |
-                    |    .            |  .   Region      |
-                    +----+----#########--+---------------+
-                    |    .    # A | B #  .               |
-                    |    4    #---+---#  .               |
-                    |    .    # D | C #  .               |
-                    +----+----#########  .     3         |
-                    |    .    |       |  .               |
-                    |    6 . .|. .5. .|. .               |
-                    |         |       |                  |
-                    +---------+-------+------------------+
-
-*/
-
-template <class ConvexType>
-inline typename std::enable_if<std::is_base_of<ConvexPointSet2f, ConvexType>::value>::type
-QuadTreeNode::Fold(FoldFunctor accumulator, const ConvexType& region, FoldDirection dir)
-{
-  if ( _boundingBox.Intersects(region) )
-  {    
-    // check if we can stop doing overlap checks
-    if ( _boundingBox.IsContainedBy(region) )
-    {
-      Fold(accumulator, dir);
-    } else {
-      if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
-
-      // filter out child nodes if we know the region won't intersect based off of AABB checks
-      if (IsSubdivided())
-      {      
-        u8 childFilter = 0b1111; // Bit field represents quadrants (-x, -y), (-x, +y), (+x, -y), (+x, +y)
-        
-        if ( region.GetMinX() > _center.x() ) { childFilter &= 0b0011; } // only +x (top) nodes
-        if ( region.GetMaxX() < _center.x() ) { childFilter &= 0b1100; } // only -x (bot) nodes
-        if ( region.GetMinY() > _center.y() ) { childFilter &= 0b0101; } // only +y (left) nodes
-        if ( region.GetMaxY() < _center.y() ) { childFilter &= 0b1010; } // only -y (right) nodes
-
-        // iterate in reverse order relative to EQuadrant order to save some extra arithmetic
-        u8 idx = 0;
-        do
-        {
-          if (childFilter & 1) { 
-            _childrenPtr[idx]->Fold(accumulator, region, dir); 
-          }
-          ++idx;
-        } while ( childFilter >>= 1 ); 
-      }
-
-      if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
-    }
-  }
-}
-
-template <class ConvexType>
-inline typename std::enable_if<std::is_base_of<ConvexPointSet2f, ConvexType>::value>::type
-QuadTreeNode::Fold(FoldFunctorConst accumulator, const ConvexType& region, FoldDirection dir) const
-{
-  if ( _boundingBox.Intersects(region) )
-  {    
-    // check if we can stop doing overlap checks
-    if ( _boundingBox.IsContainedBy(region) )
-    {
-      Fold(accumulator, dir);
-    } else {
-      if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
-
-      // filter out child nodes if we know the region won't intersect based off of AABB checks
-      if (IsSubdivided())
-      {      
-        u8 childFilter = 0b1111; // Bit field represents quadrants (-x, -y), (-x, +y), (+x, -y), (+x, +y)
-        
-        if ( region.GetMinX() > _center.x() ) { childFilter &= 0b0011; } // only +x (top) nodes
-        if ( region.GetMaxX() < _center.x() ) { childFilter &= 0b1100; } // only -x (bot) nodes
-        if ( region.GetMinY() > _center.y() ) { childFilter &= 0b0101; } // only +y (left) nodes
-        if ( region.GetMaxY() < _center.y() ) { childFilter &= 0b1010; } // only -y (right) nodes
-
-        // iterate in reverse order relative to EQuadrant order to save some extra arithmetic
-        u8 idx = 0;
-        do 
-        {
-          if (childFilter & 1) { 
-            ((const QuadTreeNode*) _childrenPtr[idx].get())->Fold(accumulator, region, dir);
-           }
-          ++idx;
-        } while ( childFilter >>= 1 );
-      }
-
-      if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
-    }
-  }
-}
 
 } // namespace
 } // namespace

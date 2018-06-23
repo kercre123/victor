@@ -364,8 +364,8 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
   
   s32 totalFalsePositives = 0;
   
-  DependencyManagedEntity<RobotComponentID> dependentComponents;
-  dependentComponents.AddDependentComponent(RobotComponentID::CozmoContextWrapper, new ContextWrapper(cozmoContext));
+  DependencyManagedEntity<RobotComponentID> dependentComps;
+  dependentComps.AddDependentComponent(RobotComponentID::CozmoContextWrapper, new ContextWrapper(cozmoContext));
   for(s32 iReload=0; iReload<2; ++iReload)
   {
     // All-new robot, face tracker, and face world for each person for this test
@@ -376,7 +376,7 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
     RobotState stateMsg( Robot::GetDefaultRobotState() );
     
     robot.GetVisionComponent().SetIsSynchronous(true);
-    robot.GetVisionComponent().InitDependent(&robot, dependentComponents);
+    robot.GetVisionComponent().InitDependent(&robot, dependentComps);
     
     robot.GetVisionComponent().SetCameraCalibration(camCalib);
     robot.GetVisionComponent().EnableMode(VisionMode::Idle, true);

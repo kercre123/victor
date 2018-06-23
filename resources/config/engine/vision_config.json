@@ -81,6 +81,8 @@
     "RepeatedErrorMessageInterval_ms" : 300000 // Time between error messages once triggered
   },
 
+  "NumOpenCvThreads" : 0, // Number of threads to use with OpenCV. 0 means no threading according to docs. Only affects calls from VisionSystem thread.
+
   "PerformanceLogging" :
   {
     "DropStatsWindowLength_sec"         : 30,  // How long to average dropped image stats

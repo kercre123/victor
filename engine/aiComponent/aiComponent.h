@@ -45,14 +45,14 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override final;
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override final;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
     dependencies.insert(RobotComponentID::MoodManager);
     dependencies.insert(RobotComponentID::DataAccessor);
     dependencies.insert(RobotComponentID::NVStorage);
   };
-  virtual void UpdateDependent(const RobotCompMap& dependentComponents) override;
+  virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::BlockTapFilter);
     dependencies.insert(RobotComponentID::BlockWorld);
@@ -84,10 +84,10 @@ public:
   // Components
   ////////////////////////////////////////////////////////////////////////////////
   template<typename T>
-  T& GetComponent() const {assert(_aiComponents); return _aiComponents->GetValue<T>();}
+  T& GetComponent() const {assert(_aiComponents); return _aiComponents->GetComponent<T>();}
 
   template<typename T>
-  T* GetBasePtr() const {assert(_aiComponents); return _aiComponents->GetBasePtr<T>();}
+  T* GetComponentPtr() const {assert(_aiComponents); return _aiComponents->GetComponentPtr<T>();}
 
   #if ANKI_DEV_CHEATS
   // For test only

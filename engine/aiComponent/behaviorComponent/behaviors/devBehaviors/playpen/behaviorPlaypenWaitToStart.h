@@ -15,7 +15,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/iBehaviorPlaypen.h"
 
-#include "engine/components/bodyLightComponent.h"
+#include "engine/components/backpackLights/backpackLightComponent.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -45,7 +45,7 @@ private:
 
   bool _needLightUpdate = false;
 
-  BackpackLights _lights = {
+  BackpackLightAnimation::BackpackAnimation _lights = {
     .onColors               = {{NamedColors::BLUE,NamedColors::GREEN,NamedColors::RED}},
     .offColors              = {{NamedColors::BLUE,NamedColors::GREEN,NamedColors::RED}},
     .onPeriod_ms            = {{1000,1000,1000}},

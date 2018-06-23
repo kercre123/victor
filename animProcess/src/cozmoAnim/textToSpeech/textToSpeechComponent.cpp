@@ -52,7 +52,8 @@ namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TextToSpeechComponent::TextToSpeechComponent(const AnimContext* context)
-: _dispatchQueue(Util::Dispatch::Create("TtSpeechComponent"))
+: _activeTTSID(kInvalidTTSID)
+, _dispatchQueue(Util::Dispatch::Create("TtSpeechComponent"))
 {
   DEV_ASSERT(nullptr != context, "TextToSpeechComponent.InvalidContext");
   DEV_ASSERT(nullptr != context->GetAudioController(), "TextToSpeechComponent.InvalidAudioController");
@@ -93,32 +94,33 @@ bool TextToSpeechComponent::PopEvent(EventPair & evt)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result TextToSpeechComponent::CreateSpeech(const TTSID_t ttsID,
                                            const std::string& text,
-                                           const SayTextVoiceStyle style,
-                                           const float durationScalar,
-                                           const float pitchScalar)
+                                           const AudioTtsProcessingStyle style,
+                                           const float durationScalar)
 {
   // Prepare to generate TTS on other thread
   LOG_INFO("TextToSpeechComponent.CreateSpeech",
-           "ttsID %d text '%s' style %hhu durationScalar %f pitchScalar %f",
-           ttsID, Util::HidePersonallyIdentifiableInfo(text.c_str()), style, durationScalar, pitchScalar);
+           "ttsID %d text '%s' style '%s' durationScalar %f",
+           ttsID, Util::HidePersonallyIdentifiableInfo(text.c_str()), EnumToString(style), durationScalar);
 
-  const auto it = _ttsWaveDataMap.emplace(ttsID, TtsBundle());
-  if (!it.second) {
-    LOG_ERROR("TextToSpeechComponent.CreateSpeech.DispatchAsync", "ttsID %d already in cache", ttsID);
-    return RESULT_FAIL_INVALID_PARAMETER;
+  {
+    std::lock_guard<std::mutex> lock(_lock);
+    const auto it = _ttsWaveDataMap.emplace(ttsID, TtsBundle());
+    if (!it.second) {
+      LOG_ERROR("TextToSpeechComponent.CreateSpeech.DispatchAsync", "ttsID %d already in cache", ttsID);
+      return RESULT_FAIL_INVALID_PARAMETER;
+    }
+    
+    // Set initial state
+    TtsBundle & ttsBundle = it.first->second;
+    ttsBundle.state = AudioCreationState::Preparing;
+    ttsBundle.style = style;
   }
-
-  // Set initial state
-  TtsBundle & ttsBundle = it.first->second;
-  ttsBundle.state = AudioCreationState::Preparing;
-  ttsBundle.style = style;
-  ttsBundle.pitchScalar = pitchScalar;
-
+  
   // Dispatch work onto another thread
-  Util::Dispatch::Async(_dispatchQueue, [this, ttsID, text, style, durationScalar]
+  Util::Dispatch::Async(_dispatchQueue, [this, ttsID, text, durationScalar]
   {
     PushEvent({ttsID, TextToSpeechState::Preparing});
-    AudioEngine::StandardWaveDataContainer* audioData = CreateAudioData(text, style, durationScalar);
+    AudioEngine::StandardWaveDataContainer* audioData = CreateAudioData(text, durationScalar);
     {
       std::lock_guard<std::mutex> lock(_lock);
       const auto bundle = GetTtsBundle(ttsID);
@@ -159,36 +161,6 @@ TextToSpeechComponent::AudioCreationState TextToSpeechComponent::GetOperationSta
 
   return ttsBundle->state;
 } // GetOperationState()
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//
-// Get wwise audio event for a given voice style
-//
-static AudioEngine::AudioEventId GetAudioEvent(SayTextVoiceStyle style)
-{
-  using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
-  GenericEvent event = GenericEvent::Invalid;
-
-  switch (style) {
-    case SayTextVoiceStyle::Unprocessed:
-      event = GenericEvent::Play__Robot_Vo__External_Unprocessed;
-      break;
-    case SayTextVoiceStyle::CozmoProcessing_Sentence:
-      event = GenericEvent::Play__Robot_Vo__External_Cozmo_Processing;
-      break;
-    case SayTextVoiceStyle::CozmoProcessing_Name:
-      event = GenericEvent::Play__Robot_Vo__External_Cozmo_Processing;
-      break;
-    case SayTextVoiceStyle::CozmoProcessing_Name_Question:
-      event= GenericEvent::Play__Robot_Vo__External_Cozmo_Processing_Question;
-      break;
-    case SayTextVoiceStyle::Count:
-      LOG_ERROR("TextToSpeechComponent.GetAudioEvent", "Invalid SayTextStyle Count");
-      break;
-  }
-
-  return AudioEngine::ToAudioEventId(event);
-} // GetAudioEvent()
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -196,8 +168,7 @@ static AudioEngine::AudioEventId GetAudioEvent(SayTextVoiceStyle style)
 // Deliver audio data to wwise audio engine
 //
 bool TextToSpeechComponent::PrepareAudioEngine(const TTSID_t ttsID,
-                                               float& out_duration_ms,
-                                               AudioEngine::AudioEventId& out_eventId)
+                                               float& out_duration_ms)
 {
   const auto ttsBundle = GetTtsBundle(ttsID);
   if (nullptr == ttsBundle) {
@@ -232,16 +203,14 @@ bool TextToSpeechComponent::PrepareAudioEngine(const TTSID_t ttsID,
     pluginInterface->ClearWavePortalAudioData();
   }
 
-  // Set OUT values
+  // Set OUT value
   out_duration_ms = ttsBundle->waveData->ApproximateDuration_ms();
-  out_eventId = GetAudioEvent(ttsBundle->style);
 
   // Pass ownership of audio data to plugin
   pluginInterface->GiveWavePortalAudioDataOwnership(ttsBundle->waveData);
   ttsBundle->waveData->ReleaseAudioDataOwnership();
 
   SetAudioProcessingStyle(ttsBundle->style);
-  SetAudioProcessingPitch(ttsBundle->pitchScalar);
 
   return true;
 } // PrepareAudioEngine()
@@ -250,6 +219,10 @@ bool TextToSpeechComponent::PrepareAudioEngine(const TTSID_t ttsID,
 void TextToSpeechComponent::CleanupAudioEngine(const TTSID_t ttsID)
 {
   LOG_INFO("TextToSpeechComponent.CleanupAudioEngine", "Clean up ttsID %d", ttsID);
+
+  if(ttsID == _activeTTSID){
+    StopActiveTTS();
+  }
 
   // Clear previously loaded data
   auto * pluginInterface = _audioController->GetPluginInterface();
@@ -287,7 +260,6 @@ void TextToSpeechComponent::ClearAllLoadedAudioData()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngine::StandardWaveDataContainer* TextToSpeechComponent::CreateAudioData(const std::string& text,
-                                                                               SayTextVoiceStyle style,
                                                                                float durationScalar)
 {
   using namespace Util::Time;
@@ -302,12 +274,7 @@ AudioEngine::StandardWaveDataContainer* TextToSpeechComponent::CreateAudioData(c
 
   Result result = RESULT_OK;
   TextToSpeechProviderData waveData;
-
-  if (SayTextVoiceStyle::CozmoProcessing_Name_Question == style) {
-    result = _pvdr->CreateAudioData(text + "?", durationScalar, waveData);
-  } else {
-    result = _pvdr->CreateAudioData(text, durationScalar, waveData);
-  }
+  result = _pvdr->CreateAudioData(text, durationScalar, waveData);
 
   if (DEBUG_TEXTTOSPEECH_COMPONENT) {
     LOG_INFO("TextToSpeechComponent.CreateAudioData", "finish text to wave - time_ms: %f",
@@ -368,58 +335,17 @@ TextToSpeechComponent::TtsBundle* TextToSpeechComponent::GetTtsBundle(const TTSI
   return nullptr;
 } // GetTtsBundle()
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//
-// Determine audio processing state for given voice style
-//
-static AudioMetaData::SwitchState::Cozmo_Voice_Processing GetAudioProcessingSwitchState(SayTextVoiceStyle style)
-{
-  using Cozmo_Voice_Processing = AudioMetaData::SwitchState::Cozmo_Voice_Processing;
 
-  switch (style)
-  {
-    case SayTextVoiceStyle::Unprocessed:
-      return Cozmo_Voice_Processing::Unprocessed;
-    case SayTextVoiceStyle::CozmoProcessing_Name:
-      return Cozmo_Voice_Processing::Name;
-    case SayTextVoiceStyle::CozmoProcessing_Name_Question:
-      return Cozmo_Voice_Processing::Name;
-    case SayTextVoiceStyle::CozmoProcessing_Sentence:
-      return Cozmo_Voice_Processing::Sentence;
-    default:
-      LOG_ERROR("TextToSpeechComponent.GetAudioProcessingSwitchState", "Unexpected style %hhu", style);
-      return Cozmo_Voice_Processing::Unprocessed;
-  }
-}
 
 //
 // Set audio processing switch for next utterance
 //
-void TextToSpeechComponent::SetAudioProcessingStyle(SayTextVoiceStyle style)
+void TextToSpeechComponent::SetAudioProcessingStyle(AudioTtsProcessingStyle style)
 {
-  const auto switchGroup = AudioMetaData::SwitchState::SwitchGroupType::Cozmo_Voice_Processing;
-  const auto switchState = GetAudioProcessingSwitchState(style);
-
+  const auto switchGroup = AudioMetaData::SwitchState::SwitchGroupType::Robot_Vic_External_Processing;
   _audioController->SetSwitchState(
     static_cast<AudioEngine::AudioSwitchGroupId>(switchGroup),
-    static_cast<AudioEngine::AudioSwitchStateId>(switchState),
-    static_cast<AudioEngine::AudioGameObject>(kTTSGameObject)
-  );
-
-}
-
-//
-// Set RTPC pitch param for this utterance
-//
-void TextToSpeechComponent::SetAudioProcessingPitch(float pitchScalar)
-{
-  // Set Cozmo Says Pitch RTPC Parameter
-  const auto paramType = AudioMetaData::GameParameter::ParameterType::External_Process_Pitch;
-  const auto paramVal = pitchScalar;
-
-  _audioController->SetParameter(
-    static_cast<AudioEngine::AudioParameterId>(paramType),
-    static_cast<AudioEngine::AudioRTPCValue>(paramVal),
+    static_cast<AudioEngine::AudioSwitchStateId>(style),
     static_cast<AudioEngine::AudioGameObject>(kTTSGameObject)
   );
 }
@@ -441,7 +367,7 @@ static bool SendAnimToEngine(uint8_t ttsID, TextToSpeechState state, float expec
 //
 // Send audio trigger event for this utterance
 //
-void TextToSpeechComponent::PostAudioEvent(AudioEngine::AudioEventId eventId, uint8_t ttsID)
+void TextToSpeechComponent::PostAudioEvent(uint8_t ttsID)
 {
   AudioEngine::AudioCallbackContext* audioCallbackContext = nullptr;
   const auto callbackFunc = std::bind(&TextToSpeechComponent::OnUtteranceCompleted, this, ttsID);
@@ -458,23 +384,38 @@ void TextToSpeechComponent::PostAudioEvent(AudioEngine::AudioEventId eventId, ui
                                                 callbackFunc();
                                               } );
 
-  const auto gameObject = static_cast<AudioEngine::AudioGameObject>(kTTSGameObject);
-  LOG_DEBUG("TextToSpeechComponent.PostAudioEvent", "ttsID: %hhu gameObject: %u", 
+  using AudioEvent = AudioMetaData::GameEvent::GenericEvent;
+  const auto eventId = AudioEngine::ToAudioEventId( AudioEvent::Play__Robot_Vic__External_Voice_Text );
+  const auto gameObject = static_cast<AudioEngine::AudioGameObject>( kTTSGameObject );
+  LOG_DEBUG("TextToSpeechComponent.PostAudioEvent", "ttsID: %hhu gameObject: %u",
             ttsID,
             static_cast<uint32_t>(gameObject));
   AudioEngine::AudioPlayingId playingID = _audioController->PostAudioEvent(eventId, gameObject, audioCallbackContext);
-  if(AudioEngine::kInvalidAudioPlayingId == playingID){
+  if(AudioEngine::kInvalidAudioPlayingId != playingID){
+    _activeTTSID = ttsID;
+    SendAnimToEngine(ttsID, TextToSpeechState::Playing);
+  }
+  else {
     LOG_DEBUG("TextToSpeechComponent.UtteranceFailedToPlay", "Utterance with ttsID %hhu failed to play", ttsID);
     SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
   }
-  SendAnimToEngine(ttsID, TextToSpeechState::Playing);
+}
+
+//
+// stop the currently playing tts
+//
+void TextToSpeechComponent::StopActiveTTS()
+{
+  _audioController->StopAllAudioEvents(static_cast<AudioEngine::AudioGameObject>(kTTSGameObject));
 }
 
 //
 // Handle a callback from the AudioEngine indicating that the TtS Utterance has finished playing
 //
-void TextToSpeechComponent::OnUtteranceCompleted(uint8_t ttsID) const
+void TextToSpeechComponent::OnUtteranceCompleted(uint8_t ttsID)
 {
+  _activeTTSID = kInvalidTTSID;
+
   LOG_DEBUG("TextToSpeechCOmponent.UtteranceCompleted", "Completion callback recieved for ttsID %hhu", ttsID);
   SendAnimToEngine(ttsID, TextToSpeechState::Finished);
 }
@@ -491,14 +432,13 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechPrep
   const std::string & text = std::string(msg.text, msg.text_length);
   const auto style = msg.style;
   const auto durationScalar = msg.durationScalar;
-  const auto pitchScalar = msg.pitchScalar;
 
   LOG_DEBUG("TextToSpeechComponent.TextToSpeechPrepare",
-            "ttsID %d text %s style %hhu durationScalar %f pitchScalar %f",
-            ttsID, HidePersonallyIdentifiableInfo(text.c_str()), style, durationScalar, pitchScalar);
+            "ttsID %d text %s style %s durationScalar %f",
+            ttsID, HidePersonallyIdentifiableInfo(text.c_str()), EnumToString(style), durationScalar);
 
   // Enqueue request on worker thread
-  const Result result = CreateSpeech(ttsID, text, style, durationScalar, pitchScalar);
+  const Result result = CreateSpeech(ttsID, text, style, durationScalar);
   if (RESULT_OK != result) {
     LOG_ERROR("TextToSpeechComponent.TextToSpeechPrepare", "Unable to create ttsID %d (result %d)", ttsID, result);
     SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
@@ -521,9 +461,7 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechDeli
   SendAnimToEngine(ttsID, TextToSpeechState::Delivering);
 
   float duration_ms = 0.f;
-  AudioEngine::AudioEventId eventId = AudioEngine::kInvalidAudioEventId;
-
-  if (!PrepareAudioEngine(ttsID, duration_ms, eventId)) {
+  if (!PrepareAudioEngine(ttsID, duration_ms)) {
     LOG_ERROR("TextToSpeechComponent.TextToSpeechDeliver", "Unable to prepare audio engine");
     SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
     ClearOperationData(ttsID);
@@ -534,10 +472,10 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechDeli
 
   if (playImmediately) {
     // Tell audio engine to play audio data
-    PostAudioEvent(eventId, ttsID);
+    PostAudioEvent(ttsID);
   } else {
     // Keep a record of the ttsID -> AudioEventId for later playback
-    _ttsIDtoAudioEventIdMap.emplace(ttsID, eventId);
+    _ttsIdSet.emplace(ttsID);
   }
 
   // Notify engine that tts request is done
@@ -556,10 +494,10 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechPlay
 
   LOG_DEBUG("TextToSpeechComponent.HandleMessage.TextToSpeechPlay", "ttsID %d", ttsID);
 
-  auto it = _ttsIDtoAudioEventIdMap.find(ttsID);
-  if(it != _ttsIDtoAudioEventIdMap.end()){
-    PostAudioEvent(it->second, ttsID);
-    _ttsIDtoAudioEventIdMap.erase(ttsID);
+  auto it = _ttsIdSet.find(ttsID);
+  if(it != _ttsIdSet.end()){
+    PostAudioEvent(ttsID);
+    _ttsIdSet.erase(ttsID);
   } else {
     LOG_ERROR("TextToSpeechComponent.HandleMessage.TextToSpeechPlay.InvalidRequest",
               "ttsID %d does not correspond to a valid AudioEventId",

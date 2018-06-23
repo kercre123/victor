@@ -47,6 +47,9 @@ class AnimationGroupContainer;
 class CozmoContext;
 class DataAccessorComponent;
 class Robot;
+namespace RobotInterface{
+class EngineToRobot;
+}
   
 class AnimationComponent : public IDependencyManagedComponent<RobotComponentID>, 
                            private Anki::Util::noncopyable, 
@@ -69,7 +72,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
     dependencies.insert(RobotComponentID::DataAccessor);
@@ -119,11 +122,20 @@ public:
                                 u32 frameInterval_ms,
                                 int& outDuration_ms,
                                 bool interruptRunning = true,
+                                bool emptySpriteBoxesAreValid = false,
                                 AnimationCompleteCallback callback = nullptr);
   
   bool IsPlayingAnimation() const { return _callbackMap.size() > 0; }
   
   Result StopAnimByName(const std::string& animName);
+
+  // Send a message to the animation streamer to be applied at the specified stream time
+  // If the streaming animation is canceled before it hits the stream time this message will be dropped
+  // When applyBeforeTick is true the alteration is displayed to the user that tick (e.g. display a new image)
+  // When false, the alteration is applied after the keyframe's processed (e.g. lock face track on frame 6 after drawing 
+  //   an image, but the animation is only 6 frames long so locking can't be applied at the start of the next tick) 
+  void AlterStreamingAnimationAtTime(RobotInterface::EngineToRobot&& msg, TimeStamp_t relativeStreamTime_ms, bool applyBeforeTick = true);
+
 
   // If you want to play multiple frames in sequence, duration_ms should be a multiple of ANIM_TIME_STEP_MS.
   //
@@ -147,7 +159,9 @@ public:
   Result DisplayFaceImage(const Vision::ImageRGB565& imgRGB565, u32 duration_ms, bool interruptRunning = false);
   // There is only one composite image in the animation process - duration is the amount of time the image will be displayed on screen
   // frameInterval_ms defines how often the composite images' GetFrame function should be called for internal sprite sequences
-  Result DisplayFaceImage(const Vision::CompositeImage& compositeImage, u32 frameInterval_ms, u32 duration_ms, bool interruptRunning = false);
+  Result DisplayFaceImage(const Vision::CompositeImage& compositeImage, 
+                          u32 frameInterval_ms, u32 duration_ms, 
+                          bool interruptRunning = false, bool emptySpriteBoxesAreValid = false);
   
   // Calling this function provides no gaurentee that the assets will actually be displayed
   // If a compositeFaceImage is currently displayed on the face all layers/image maps within
@@ -282,6 +296,7 @@ private:
   std::unordered_set<std::string> _activeEyeSquintLayers;  
   
   u8 _lockedTracks;
+  std::map<uint32_t, u8> _delayedTracksToLock;
 
   // For tracking whether or not an animation is playing based on
   // AnimStarted and AnimEnded messages

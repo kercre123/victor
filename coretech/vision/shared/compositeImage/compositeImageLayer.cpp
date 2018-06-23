@@ -68,6 +68,14 @@ CompositeImageLayer::~CompositeImageLayer()
 
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CompositeImageLayer::operator==(const CompositeImageLayer& other) const{
+  return _layerName == other._layerName &&
+         _layoutMap == other._layoutMap &&
+         _imageMap  == other._imageMap;
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CompositeImageLayer::GetSpriteSequenceName(SpriteBoxName sbName, Vision::SpriteName& sequenceName)  const
@@ -218,6 +226,7 @@ SerializedSpriteBox CompositeImageLayer::SpriteBox::Serialize() const
   return serialized;
 }
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CompositeImageLayer::SpriteBox::ValidateRenderConfig() const
 {
@@ -237,6 +246,18 @@ bool CompositeImageLayer::SpriteBox::ValidateRenderConfig() const
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CompositeImageLayer::SpriteBox::operator==(const SpriteBox& other) const
+{
+  return (spriteBoxName == other.spriteBoxName) &&
+         (renderConfig  == other.renderConfig) &&
+         (topLeftCorner == other.topLeftCorner) &&
+         (width         == other.width) &&
+         (height        == other.height);
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CompositeImageLayer::SpriteEntry::SpriteEntry(SpriteCache* cache,
                                               SpriteSequenceContainer* seqContainer,
@@ -254,7 +275,7 @@ CompositeImageLayer::SpriteEntry::SpriteEntry(SpriteCache* cache,
                         "Could not find sequence for SpriteName %s",
                         SpriteNameToString(spriteName));
     }
-  }else{
+  }else if(spriteName != SpriteName::Count){
     _spriteSequence.AddFrame(cache->GetSpriteHandle(spriteName));
   }
 }
@@ -283,10 +304,6 @@ bool CompositeImageLayer::SpriteEntry::GetFrame(const u32 index, Vision::SpriteH
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CompositeImageLayer::SpriteEntry::operator == (const SpriteEntry& other) const {
-  if(_spriteName == Vision::SpriteName::Count){
-    PRINT_NAMED_ERROR("CompositeImageLayer.SpriteEntry.==Invalid",
-                      "Invalid comparison because spriteName is count");
-  }
   return (_spriteName == other._spriteName) && 
          (_frameStartOffset == other._frameStartOffset);
 }

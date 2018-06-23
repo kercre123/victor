@@ -148,7 +148,7 @@ CompositeImage::~CompositeImage()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::vector<CompositeImageChunk> CompositeImage::GetImageChunks() const
+std::vector<CompositeImageChunk> CompositeImage::GetImageChunks(bool emptySpriteBoxesAreValid) const
 {
   CompositeImageChunk baseChunk;
   // Add all of the values that are constant across all chunks
@@ -189,7 +189,7 @@ std::vector<CompositeImageChunk> CompositeImage::GetImageChunks() const
            handle->GetFullSpritePath(fullSpritePath) &&
            _spriteCache->GetSpritePathMap()->GetKeyForValueConst(fullSpritePath, spriteName)){
           baseChunk.spriteName = spriteName;
-        }else{
+        }else if(!emptySpriteBoxesAreValid){
           PRINT_NAMED_ERROR("CompositeImage.GetImageChunks.SerializingInvalidCompositeImage",
                             "Currently only composite images composed solely of sprite names can be serialized");
         }
@@ -295,7 +295,8 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
     // If implementation quad was found, draw it into the image at the point
     // specified by the layout quad def
     Vision::SpriteHandle  handle;
-    if(spriteEntry.GetFrame(frameIdx, handle)){
+    if(spriteEntry.ContentIsValid() &&
+       spriteEntry.GetFrame(frameIdx, handle)){
       switch(spriteBox.renderConfig.renderMethod){
         case SpriteRenderMethod::RGBA:
         {
@@ -359,6 +360,10 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
           break;
         }
       }
+    }else{
+      PRINT_NAMED_DEBUG("CompositeImage.OverlayImageWithFrame.NoImageForSpriteBox", 
+                        "Sprite Box %s will not be rendered - no valid image found",
+                        SpriteBoxNameToString(spriteBoxName));
     }
   };
   ProcessAllSpriteBoxes(callback);
@@ -421,7 +426,7 @@ void CompositeImage::CacheInternalSprites(Vision::SpriteCache* cache, const Time
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CompositeImage::AddEmptyLayer(SpriteSequenceContainer* seqContainer)
+void CompositeImage::AddEmptyLayer(SpriteSequenceContainer* seqContainer, Vision::LayerName layerName)
 {
   Json::Reader reader;
   Json::Value config;
@@ -430,6 +435,8 @@ void CompositeImage::AddEmptyLayer(SpriteSequenceContainer* seqContainer)
     return;
   }
   
+
+  config[CompositeImageConfigKeys::kLayerNameKey] =  LayerNameToString(layerName);
   static CompositeImageLayer layer(config);
   if(layer.GetImageMap().size() == 0){
     CompositeImageLayer::SpriteEntry entry(_spriteCache, seqContainer, SpriteName::Empty_Sprite);
@@ -491,11 +498,11 @@ void CompositeImage::DrawSubImage(ImageType& baseImage, const ImageType& subImag
 
   // dev only verification that image size is as expected
   ANKI_VERIFY(spriteBox.width == subImage.GetNumCols(), 
-              "CompositeImageBuilder.BuildCompositeImage.InvalidWidth",
+              "CompositeImage.DrawSubImage.InvalidWidth",
               "Quadrant Name:%s Expected Width:%d, Image Width:%d",
               SpriteBoxNameToString(spriteBox.spriteBoxName), spriteBox.width, subImage.GetNumCols());
   ANKI_VERIFY(spriteBox.height == subImage.GetNumRows(), 
-              "CompositeImageBuilder.BuildCompositeImage.InvalidHeight",
+              "CompositeImage.DrawSubImage.InvalidHeight",
               "Quadrant Name:%s Expected Height:%d, Image Height:%d",
               SpriteBoxNameToString(spriteBox.spriteBoxName), spriteBox.height, subImage.GetNumRows());
 }

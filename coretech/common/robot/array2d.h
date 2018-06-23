@@ -795,7 +795,8 @@ namespace Anki
     template<typename Type> Result Array<Type>::InitializeBuffer(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const Flags::Buffer flags)
     {
       if(!rawData) {
-        AnkiError("Anki.Array2d.initialize", "input data buffer is NULL");
+        AnkiError("Anki.Array2d.initialize", "input data buffer is NULL, numRows=%d, numCols=%d, dataLength=%d",
+                  numRows, numCols, dataLength);
         InvalidateArray();
         return RESULT_FAIL_UNINITIALIZED_MEMORY;
       }

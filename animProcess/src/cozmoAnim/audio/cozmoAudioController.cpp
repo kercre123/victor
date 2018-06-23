@@ -12,9 +12,10 @@
  *
  **/
 
+#include "cozmoAnim/audio/cozmoAudioController.h"
+
 #include "audioEngine/audioTypeTranslator.h"
 #include "coretech/common/engine/utils/timer.h"
-#include "cozmoAnim/audio/cozmoAudioController.h"
 #include "cozmoAnim/animContext.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "audioEngine/audioScene.h"
@@ -25,6 +26,7 @@
 #include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
+#include "util/helpers/ankiDefines.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/math/numericCast.h"
 #include "util/time/universalTime.h"
@@ -81,8 +83,9 @@ static void AudioEngineLogCallback( uint32_t, const char*, ErrorLevel, AudioPlay
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace Console {
 // Console Vars
-CONSOLE_VAR( bool, kWriteAudioProfilerCapture, "CozmoAudioController", false );
-CONSOLE_VAR( bool, kWriteAudioOutputCapture, "CozmoAudioController", false );
+#define CONSOLE_PATH "Audio.Controller"
+CONSOLE_VAR( bool, kWriteAudioProfilerCapture, CONSOLE_PATH, false );
+CONSOLE_VAR( bool, kWriteAudioOutputCapture, CONSOLE_PATH, false );
 
 #if REMOTE_CONSOLE_ENABLED
 // Console Functions
@@ -226,20 +229,19 @@ void StopAllAudioEvents( ConsoleFunctionContextRef context )
 }
 
 // Register console var func
-const char* consolePath = "CozmoAudioController";
-CONSOLE_FUNC( SetWriteAudioProfilerCapture, consolePath, bool writeProfiler );
-CONSOLE_FUNC( SetWriteAudioOutputCapture, consolePath, bool writeOutput );
-CONSOLE_FUNC( SetRobotMasterVolume, consolePath, float robotMasterVolume );
-//CONSOLE_FUNC( ToggleOnOffAnimationAudio, consolePath ); // Not Working in audio project yet
-//CONSOLE_FUNC( ToggleOnOffBehaviorAudio, consolePath );  // Not Working in audio project yet
-CONSOLE_FUNC( ToggleOnOffProceduralAudio, consolePath );
-CONSOLE_FUNC( ResetToDefaultVolume, consolePath );
-CONSOLE_FUNC( TestAudio_PinkNoise, consolePath );
-CONSOLE_FUNC( PostAudioEvent, consolePath, const char* event, optional uint64 gameObjectId );
-CONSOLE_FUNC( SetAudioState, consolePath, const char* stateGroup, const char* state );
-CONSOLE_FUNC( SetAudioSwitchState, consolePath, const char* switchGroup, const char* state, uint64 gameObjectId );
-CONSOLE_FUNC( SetAudioParameter, consolePath, const char* parameter, float value, optional uint64 gameObjectId );
-CONSOLE_FUNC( StopAllAudioEvents, consolePath, optional uint64 gameObjectId );
+CONSOLE_FUNC( SetWriteAudioProfilerCapture, CONSOLE_PATH, bool writeProfiler );
+CONSOLE_FUNC( SetWriteAudioOutputCapture, CONSOLE_PATH, bool writeOutput );
+CONSOLE_FUNC( SetRobotMasterVolume, CONSOLE_PATH, float robotMasterVolume );
+//CONSOLE_FUNC( ToggleOnOffAnimationAudio, CONSOLE_PATH ); // Not Working in audio project yet
+//CONSOLE_FUNC( ToggleOnOffBehaviorAudio, CONSOLE_PATH );  // Not Working in audio project yet
+CONSOLE_FUNC( ToggleOnOffProceduralAudio, CONSOLE_PATH );
+CONSOLE_FUNC( ResetToDefaultVolume, CONSOLE_PATH );
+CONSOLE_FUNC( TestAudio_PinkNoise, CONSOLE_PATH );
+CONSOLE_FUNC( PostAudioEvent, CONSOLE_PATH, const char* event, optional uint64 gameObjectId );
+CONSOLE_FUNC( SetAudioState, CONSOLE_PATH, const char* stateGroup, const char* state );
+CONSOLE_FUNC( SetAudioSwitchState, CONSOLE_PATH, const char* switchGroup, const char* state, uint64 gameObjectId );
+CONSOLE_FUNC( SetAudioParameter, CONSOLE_PATH, const char* parameter, float value, optional uint64 gameObjectId );
+CONSOLE_FUNC( StopAllAudioEvents, CONSOLE_PATH, optional uint64 gameObjectId );
 #endif // REMOTE_CONSOLE_ENABLED
 }
 
@@ -279,9 +281,17 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
     config.audioLocale = AudioLocaleType::EnglishUS;
 
     // Engine Memory
+#if defined(ANKI_PLATFORM_OSX)
+    // Webots play room
+    config.defaultMemoryPoolSize      = ( 8 * 1024 * 1024 );  // 8 MB
+    config.defaultLEMemoryPoolSize    = ( 8 * 1024 * 1024 );  // 8 MB
+    config.ioMemorySize               = ( 4 * 1024 * 1024 );  // 4 MB
+#else
+    // Other Platforms
     config.defaultMemoryPoolSize      = ( 3 * 1024 * 1024 );  // 3 MB
     config.defaultLEMemoryPoolSize    = ( 2 * 1024 * 1024 );  // 2 MB
     config.ioMemorySize               = ( 2 * 1024 * 1024 );  // 2 MB
+#endif
     config.defaultMaxNumPools         = 30;
     config.enableGameSyncPreparation  = true;
     config.enableStreamCache          = true;

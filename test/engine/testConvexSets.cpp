@@ -338,3 +338,36 @@ TEST(Ball, InHalfPlane)
     ASSERT_TRUE( b.InHalfPlane(xTangentOpen) );
   }
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// ConvexPolygon Tests
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+GTEST_TEST(ConvexPolygon, GetCentroid)
+{
+  // center should be .5, .5 for both polygons
+  Anki::ConvexPolygon poly1( {
+    {0.0f, 0.0f},
+    {1.0f, 0.0f},
+    {1.0f, 1.0f},
+    {0.0f, 1.0f}
+  } );  
+
+  Anki::ConvexPolygon poly2( {
+    {0.0f, 0.0f},
+    {1.0f, 0.0f},
+    {1.0f, 1.0f},
+    {0.5f, 1.0f}, // extra point on edge should not skew centroid
+    {0.0f, 1.0f}
+  } );
+
+
+  Anki::Point2f centroid1 = poly1.ComputeCentroid();
+  Anki::Point2f centroid2 = poly2.ComputeCentroid();
+
+  EXPECT_FLOAT_EQ(centroid1.x(), .5f);
+  EXPECT_FLOAT_EQ(centroid1.y(), .5f);
+  EXPECT_FLOAT_EQ(centroid2.x(), .5f);
+  EXPECT_FLOAT_EQ(centroid2.y(), .5f);
+}
+

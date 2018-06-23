@@ -29,7 +29,6 @@
 #include "util/math/math.h"
 
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
-#include "clad/cloud/mic.h"
 
 #include <iomanip>
 #include <sstream>
@@ -94,11 +93,10 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform)
 
   if (!_writeLocationDir.empty())
   {
+  #if ANKI_DEV_CHEATS
     Util::FileUtils::CreateDirectory(_writeLocationDir);
-
-    #if ANKI_DEV_CHEATS
-      _debugMicDataWriteLocation = _writeLocationDir;
-    #endif
+    _debugMicDataWriteLocation = _writeLocationDir;
+  #endif
   }
 
   const RobotID_t robotID = OSState::getInstance()->GetRobotID();
@@ -150,7 +148,7 @@ void MicDataSystem::SetTriggerWordDetectionEnabled(bool enabled)
   }
 }
 
-void MicDataSystem::StartWakeWordlessStreaming()
+void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type)
 {
   if(HasStreamingJob())
   {
@@ -163,7 +161,7 @@ void MicDataSystem::StartWakeWordlessStreaming()
   newJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggeredCapture"});
   newJob->_writeNameBase = ""; //use autogen names
   newJob->_numMaxFiles = 100;
-  newJob->_type = CloudMic::StreamType::Blackjack;
+  newJob->_type = type;
   bool saveToFile = false;
 #if ANKI_DEV_CHEATS
   saveToFile = true;
@@ -407,7 +405,6 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
 
   #if ANKI_DEV_CHEATS
     // Store off a copy of (one of) the micDirectionData from this update for debug drawing
-    Anki::Cozmo::RobotInterface::MicDirection micDirectionData{};
     bool updatedMicDirection = false;
   #endif
   for (const auto& msg : stolenMessages)
@@ -418,8 +415,8 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     }
     else if (msg->tag == RobotInterface::RobotToEngine::Tag_micDirection)
     {
+      _latestMicDirectionMsg = msg->micDirection;
       #if ANKI_DEV_CHEATS
-        micDirectionData = msg->micDirection;
         updatedMicDirection = true;
       #endif
       RobotInterface::SendAnimToEngine(msg->micDirection);
@@ -440,7 +437,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     if (updatedMicDirection || recordingSecondsRemaining != 0)
     {
       FaceInfoScreenManager::getInstance()->DrawConfidenceClock(
-        micDirectionData,
+        _latestMicDirectionMsg,
         GetIncomingMicDataPercentUsed(),
         recordingSecondsRemaining,
         endTriggerDispTime_ns != 0 || _currentlyStreaming);
@@ -562,6 +559,11 @@ void MicDataSystem::SendUdpMessage(const CloudMic::Message& msg)
   std::vector<uint8_t> buf(msg.Size());
   msg.Pack(buf.data(), buf.size());
   _udpServer->Send((const char*)buf.data(), (int)buf.size());
+}
+
+void MicDataSystem::UpdateLocale(const Util::Locale& newLocale)
+{
+  _micDataProcessor->UpdateTriggerForLocale(newLocale);
 }
 
 } // namespace MicData

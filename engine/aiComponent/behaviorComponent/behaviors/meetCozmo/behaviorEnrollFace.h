@@ -37,6 +37,7 @@ namespace ExternalInterface {
 namespace Cozmo {
 
 // Forward declaration
+class BehaviorTextToSpeechLoop;
 class FaceWorld;
 
   
@@ -156,6 +157,7 @@ private:
     
     ICozmoBehaviorPtr driveOffChargerBehavior;
     ICozmoBehaviorPtr putDownBlockBehavior;
+    std::shared_ptr<BehaviorTextToSpeechLoop> ttsBehavior;
   };
   
   struct DynamicVariables {

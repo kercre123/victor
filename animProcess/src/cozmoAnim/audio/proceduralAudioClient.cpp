@@ -53,9 +53,10 @@ namespace Audio {
 #endif
 
 namespace {
-  CONSOLE_VAR(uint32_t, kTreadCoolDown_ms, "ProceduralAudioClient", 65);
-  CONSOLE_VAR(uint32_t, kHeadCoolDown_ms, "ProceduralAudioClient", 65);
-  CONSOLE_VAR(uint32_t, kLiftCoolDown_ms, "ProceduralAudioClient", 65);
+  #define CONSOLE_PATH "Audio.Procedural"
+  CONSOLE_VAR(uint32_t, kTreadCoolDown_ms, CONSOLE_PATH, 65);
+  CONSOLE_VAR(uint32_t, kHeadCoolDown_ms, CONSOLE_PATH, 65);
+  CONSOLE_VAR(uint32_t, kLiftCoolDown_ms, CONSOLE_PATH, 65);
   
   static const AudioEngine::AudioGameObject kProceduralGameObj =
     AudioEngine::ToAudioGameObject(AudioMetaData::GameObjectType::Procedural);
@@ -63,7 +64,7 @@ namespace {
   static const uint kFrameCount = 2;
 
 #if ALLOW_CVS_LOG
-  CONSOLE_VAR(bool, kEnableRobotStateLog, "ProceduralAudioClient", false);
+  CONSOLE_VAR(bool, kEnableRobotStateLog, CONSOLE_PATH, false);
   std::ofstream outputFile;
   const size_t _reserveSize = 30;
   std::string _logBuffer[_reserveSize];
@@ -428,7 +429,6 @@ bool ProceduralAudioClient::FrameStateUpdate(bool inCoolDown,
   
   return didUpdate;
 }
-
 
 }
 }

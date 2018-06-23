@@ -44,7 +44,7 @@
       { "channel": "Animations",           "enabled": false }, // Print every animation that is triggered
       { "channel": "Planner",              "enabled": false },
       { "channel": "CubeLightComponent",   "enabled": false },
-      { "channel": "BodyLightComponent",   "enabled": false },
+      { "channel": "BackpackLightComponent",   "enabled": false },
       { "channel": "ReactionTriggers",     "enabled": false },
       { "channel": "Loading",              "enabled": false },
       { "channel": "RobotStateHistory",    "enabled": false },
@@ -56,7 +56,8 @@
       { "channel": "TextToSpeech",         "enabled": false },
       { "channel": "MicData",              "enabled": true },
       { "channel": "FaceInfoScreenManager", "enabled": true },
-      { "channel": "RobotStats",            "enabled": true }
+      { "channel": "RobotStats",            "enabled": true },
+      { "channel": "KnowledgeGraph",       "enabled": true }
     ],
     "levels":
     [
@@ -98,7 +99,7 @@
       { "channel": "NVStorage",            "enabled": false },
       { "channel": "Animations",           "enabled": false },
       { "channel": "CubeLightComponent",   "enabled": false },
-      { "channel": "BodyLightComponent",   "enabled": false },
+      { "channel": "BackpackLightComponent",   "enabled": false },
       { "channel": "ReactionTriggers",     "enabled": false },
       { "channel": "RobotStateHistory",    "enabled": false },
       { "channel": "PublicStateBroadcast", "enabled": false },
@@ -106,7 +107,8 @@
       { "channel": "PerfMetric",           "enabled": true },
       { "channel": "VoiceCommands",        "enabled": false },
       { "channel": "InventoryComponent",   "enabled": false },
-      { "channel": "TextToSpeech",         "enabled": false }
+      { "channel": "TextToSpeech",         "enabled": false },
+      { "channel": "KnowledgeGraph",       "enabled": true }
     ],
     "levels":
     [
@@ -148,7 +150,7 @@
       { "channel": "NVStorage",            "enabled": false },
       { "channel": "Animations",           "enabled": false },
       { "channel": "CubeLightComponent",   "enabled": false },
-      { "channel": "BodyLightComponent",   "enabled": false },
+      { "channel": "BackpackLightComponent",   "enabled": false },
       { "channel": "ReactionTriggers",     "enabled": false },
       { "channel": "RobotStateHistory",    "enabled": false },
       { "channel": "PublicStateBroadcast", "enabled": false },
@@ -156,7 +158,8 @@
       { "channel": "PerfMetric",           "enabled": true },
       { "channel": "VoiceCommands",        "enabled": false },
       { "channel": "InventoryComponent",   "enabled": false },
-      { "channel": "TextToSpeech",         "enabled": false }
+      { "channel": "TextToSpeech",         "enabled": false },
+      { "channel": "KnowledgeGraph",       "enabled": true }
     ],
     "levels":
     [

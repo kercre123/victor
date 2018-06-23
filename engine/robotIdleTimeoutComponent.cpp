@@ -31,7 +31,7 @@ RobotIdleTimeoutComponent::RobotIdleTimeoutComponent()
 
 }
 
-void RobotIdleTimeoutComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void RobotIdleTimeoutComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   if (_robot->HasExternalInterface())

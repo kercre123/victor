@@ -1,0 +1,26 @@
+{
+  "behaviorID": "WhileHeld",
+  "behaviorClass" : "DispatcherStrictPriority",
+
+  "interruptActiveBehavior": true,
+
+  "associatedActiveFeature": "NoFeature",
+
+  "wantsToBeActivatedCondition": {
+    "conditionType": "OffTreadsState",
+    "targetState": "Held"
+  },
+
+  "wantsToCancelSelfCondition": {
+    "conditionType": "Compound",
+    "not": {
+      "conditionType": "OffTreadsState",
+      "targetState": "Held"
+    }
+  },
+
+  "behaviors": [
+    "Wait"
+  ]
+
+}

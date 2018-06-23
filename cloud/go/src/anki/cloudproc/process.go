@@ -137,12 +137,12 @@ procloop:
 
 				mode := msg.msg.GetHotword().Mode
 				serverMode, ok := modeMap[mode]
-				if !ok {
+				if !ok && mode != cloud.StreamType_KnowledgeGraph {
 					p.writeError("mode", fmt.Sprint("unknown mode:", mode))
 					continue
 				}
 
-				var stream *chipper.Stream
+				var stream chipper.Stream
 				var chipperConn *chipper.Conn
 				var err error
 				ctxTime := util.TimeFuncMs(func() {
@@ -152,16 +152,24 @@ procloop:
 						p.writeError("connecting", err.Error())
 						return
 					}
-					stream, err = chipperConn.NewStream(chipper.StreamOpts{
+					streamOpts := chipper.StreamOpts{
 						CompressOpts: chipper.CompressOpts{
 							Compress:   p.opts.compress,
 							Bitrate:    66 * 1024,
 							Complexity: 0,
 							FrameSize:  60},
-						SessionId: uuid.New().String()[:16],
-						Handler:   p.opts.handler,
+						SessionID: uuid.New().String()[:16],
 						SaveAudio: p.opts.saveAudio,
-						Mode:      serverMode})
+					}
+					if mode == cloud.StreamType_KnowledgeGraph {
+						stream, err = chipperConn.NewKGStream(streamOpts)
+					} else {
+						stream, err = chipperConn.NewIntentStream(chipper.IntentOpts{
+							StreamOpts: streamOpts,
+							Handler:    p.opts.handler,
+							Mode:       serverMode,
+						})
+					}
 					if err != nil {
 						p.writeError("newstream", err.Error())
 						// debug cause of lookup failure
@@ -286,7 +294,6 @@ func logVerbose(a ...interface{}) {
 }
 
 var modeMap = map[cloud.StreamType]pb.RobotMode{
-	cloud.StreamType_Normal:         pb.RobotMode_VOICE_COMMAND,
-	cloud.StreamType_Blackjack:      pb.RobotMode_GAME,
-	cloud.StreamType_KnowledgeGraph: pb.RobotMode_KNOWLEDGE_GRAPH,
+	cloud.StreamType_Normal:    pb.RobotMode_VOICE_COMMAND,
+	cloud.StreamType_Blackjack: pb.RobotMode_GAME,
 }

@@ -48,7 +48,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const BCCompMap& dependentComponents) override;
+  virtual void InitDependent(Cozmo::Robot* robot, const BCCompMap& dependentComps) override;
   virtual void GetInitDependencies(BCCompIDSet& dependencies) const override { 
     dependencies.insert(BCComponentID::BehaviorExternalInterface);
   };

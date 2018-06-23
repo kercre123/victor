@@ -27,8 +27,6 @@
 #include "engine/robot.h"
 #include "engine/viz/vizManager.h"
 
-#include "osState/osState.h"
-
 #include "coretech/common/engine/utils/timer.h"
 
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -66,11 +64,11 @@ BehaviorSystemManager::~BehaviorSystemManager()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSystemManager::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
+void BehaviorSystemManager::InitDependent(Robot* robot, const BCCompMap& dependentComps)
 {
-  auto& behaviorsBootloader = dependentComponents.GetValue<BehaviorsBootLoader>();
-  auto& bei = dependentComponents.GetValue<BehaviorExternalInterface>();
-  auto& async = dependentComponents.GetValue<AsyncMessageGateComponent>();
+  auto& behaviorsBootloader = dependentComps.GetComponent<BehaviorsBootLoader>();
+  auto& bei = dependentComps.GetComponent<BehaviorExternalInterface>();
+  auto& async = dependentComps.GetComponent<AsyncMessageGateComponent>();
 
   InitConfiguration(*robot,
                     behaviorsBootloader.GetBootBehavior(),
@@ -123,9 +121,9 @@ void BehaviorSystemManager::ResetBehaviorStack(IBehavior* baseBehavior)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSystemManager::UpdateDependent(const BCCompMap& dependentComponents)
+void BehaviorSystemManager::UpdateDependent(const BCCompMap& dependentComps)
 {
-  auto& bei = dependentComponents.GetValue<BehaviorExternalInterface>();
+  auto& bei = dependentComps.GetComponent<BehaviorExternalInterface>();
   ANKI_CPU_PROFILE("BehaviorSystemManager::Update");
   
   if(_initializationStage == InitializationStage::SystemNotInitialized) {
@@ -181,6 +179,7 @@ void BehaviorSystemManager::UpdateInActivatableScope(BehaviorExternalInterface& 
     behaviorExternalInterface.GetBehaviorEventComponent()._gameToEngineEvents.clear();
     behaviorExternalInterface.GetBehaviorEventComponent()._engineToGameEvents.clear();
     behaviorExternalInterface.GetBehaviorEventComponent()._robotToEngineEvents.clear();
+    behaviorExternalInterface.GetBehaviorEventComponent()._appToEngineEvents.clear();
 
     _asyncMessageComponent->GetEventsForBehavior(
        entry,
@@ -191,6 +190,9 @@ void BehaviorSystemManager::UpdateInActivatableScope(BehaviorExternalInterface& 
     _asyncMessageComponent->GetEventsForBehavior(
        entry,
        behaviorExternalInterface.GetBehaviorEventComponent()._robotToEngineEvents);
+    _asyncMessageComponent->GetEventsForBehavior(
+       entry,
+       behaviorExternalInterface.GetBehaviorEventComponent()._appToEngineEvents);
 
     entry->Update();
   }
@@ -211,7 +213,7 @@ const IBehavior* BehaviorSystemManager::GetBehaviorDelegatedTo(const IBehavior* 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const IBehavior* BehaviorSystemManager::GetBaseBeahvior() const
+const IBehavior* BehaviorSystemManager::GetBaseBehavior() const
 {
   if( _behaviorStack != nullptr ) {
     return _behaviorStack->GetBottomOfStack();
@@ -219,6 +221,19 @@ const IBehavior* BehaviorSystemManager::GetBaseBeahvior() const
   else {
     return nullptr;
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const std::string& BehaviorSystemManager::GetTopBehaviorDebugLabel() const
+{
+  if( _behaviorStack != nullptr ) {
+    const IBehavior* behavior = _behaviorStack->GetTopOfStack();
+    if( behavior != nullptr ) {
+      return behavior->GetDebugLabel();
+    }
+  }
+  static const std::string sEmpty = "";
+  return sEmpty;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

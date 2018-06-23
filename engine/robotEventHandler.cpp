@@ -18,7 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/components/bodyLightComponent.h"
+#include "engine/components/backpackLights/backpackLightComponent.h"
 #include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
@@ -730,20 +730,9 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SayText& s
 {
   SayTextAction* sayTextAction = new SayTextAction(sayText.text,
                                                    sayText.voiceStyle,
-                                                   sayText.durationScalar,
-                                                   sayText.voicePitch);
+                                                   sayText.durationScalar);
   sayTextAction->SetAnimationTrigger(sayText.playEvent);
   sayTextAction->SetFitToDuration(sayText.fitToDuration);
-  return sayTextAction;
-}
-
-// Version for SayTextWithIntent message
-template<>
-IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SayTextWithIntent& sayTextWithIntent)
-{
-  SayTextAction* sayTextAction = new SayTextAction(sayTextWithIntent.text, sayTextWithIntent.intent);
-  sayTextAction->SetAnimationTrigger(sayTextWithIntent.playEvent);
-  sayTextAction->SetFitToDuration(sayTextWithIntent.fitToDuration);
   return sayTextAction;
 }
 
@@ -898,8 +887,9 @@ using FullActionMessageHandlerArray = Util::FullEnumToValueArrayChecker::FullEnu
 RobotEventHandler::RobotEventHandler(const CozmoContext* context)
 : _context(context)
 {
-  // TODO Set to false so it is only enabled when BehaviorSDKInterface is activated.
-  _allowedToHandleActions = true;//false;
+  // If false, low level motion commands only run when an instance of BehaviorSDKInterface is activated.
+  // TODO Set this to be false
+  _isAllowedToHandleActions = true;
   
   auto externalInterface = _context->GetExternalInterface();
 
@@ -966,7 +956,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(realignWithObject,        RealignWithObject,        1),
       DEFINE_HANDLER(rollObject,               RollObject,               1),
       DEFINE_HANDLER(sayText,                  SayText,                  0),
-      DEFINE_HANDLER(sayTextWithIntent,        SayTextWithIntent,        0),
       DEFINE_HANDLER(searchForNearbyObject,    SearchForNearbyObject,    0),
       DEFINE_HANDLER(setHeadAngle,             SetHeadAngle,             0),
       DEFINE_HANDLER(setLiftHeight,            SetLiftHeight,            0),
@@ -1048,7 +1037,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
 } // RobotEventHandler Constructor
 
 void RobotEventHandler::SetAllowedToHandleActions(bool allowedToHandleActions) {
-  _allowedToHandleActions = allowedToHandleActions;
+  _isAllowedToHandleActions = allowedToHandleActions;
 }
 
 // =====================================================================================================================
@@ -1067,7 +1056,7 @@ u32 RobotEventHandler::GetNextGameActionTag() {
 void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
 {
   auto const& msg = event.GetData();
-  if (!_allowedToHandleActions) {
+  if (!_isAllowedToHandleActions) {
     PRINT_NAMED_ERROR("RobotEventHandler.HandleActionEvents.ActionsNotAllowedUntilSDKBehaviorActivated",
                       "Tag: %s", ExternalInterface::MessageGameToEngineTagToString(msg.GetTag()));
     return;
@@ -1639,7 +1628,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::StopRobotForSdk& 
   {
     robot->GetActionList().Cancel();
     robot->GetMoveComponent().StopAllMotors();
-    robot->GetBodyLightComponent().ClearAllBackpackLightConfigs();
+    robot->GetBackpackLightComponent().ClearAllBackpackLightConfigs();
   }
 }
 

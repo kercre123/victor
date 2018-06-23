@@ -14,22 +14,66 @@
 #ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_BlackJackVisualizer__
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BlackJackVisualizer__
 
+#include "coretech/vision/shared/compositeImage/compositeImage.h"
+
+#include <memory>
+
 namespace Anki{
+
+// Fwd Declaration
+namespace Vision{
+class CompositeImage;
+}
+
 namespace Cozmo{
+
+// Fwd Declarations
+class BehaviorExternalInterface;
+class BlackJackGame;
 
 class BlackJackVisualizer{
 public:
-  BlackJackVisualizer();
+  BlackJackVisualizer(const BlackJackGame* game);
 
-  void VisualizeDealing();
-  void VisualizeSpread();
-  void VisualizeFlop();
-  void VisualizeClear();
+  void Init(BehaviorExternalInterface& bei);
 
-  void UpdateVisualization();
+  // This should only be called by the BlackJack behavior from inside the BehaviorUpdate funtion
+  // to allow actions in the visualizer that are synced with the behavior system update tick
+  void Update(BehaviorExternalInterface& bei);
+
+  void DealToPlayer(BehaviorExternalInterface& bei, std::function<void()> callback = nullptr);
+  void DealToDealer(BehaviorExternalInterface& bei, std::function<void()> callback = nullptr);
+
+  // TODO:(str) implement this later depending on whether we get dynamic layouts in time
+  void SpreadPlayerCards(BehaviorExternalInterface& bei);
+
+  void Flop(BehaviorExternalInterface& bei, std::function<void()> callback = nullptr);
+  void DisplayCharlieFrame(BehaviorExternalInterface& bei, std::function<void()> callback = nullptr);
+  void ClearCards(BehaviorExternalInterface& bei);
+
 
 private:
+  // No copy, no default construction
+  BlackJackVisualizer();
 
+  void PlayCompositeCardAnimationAndLock(const BehaviorExternalInterface& bei,
+                                         const char*                      compAnimName,
+                                         const Vision::LayerName&         layerName,
+                                         const Vision::SpriteBoxName&     spriteBoxName,
+                                         const Vision::SpriteName&        cardImageName,
+                                         const uint                       showDealtCardAt_ms,
+                                         const Vision::SpriteName&        cardAnimSeqName = Vision::SpriteName::Count,
+                                         const uint                       applyCardSeqAt_ms = 0);
+
+  const BlackJackGame* _game;
+  std::unique_ptr<Vision::CompositeImage> _compImg;
+
+  uint _dealCardSeqApplyAt_ms = 0;
+  uint _displayDealtCardsAt_ms = 0;
+
+  bool                  _animCompletedLastFrame = false;
+  bool                  _lockTracksNextFrame = false;
+  std::function<void()> _animCompletedCallback = nullptr;
 };
 
 } //namespace Cozmo

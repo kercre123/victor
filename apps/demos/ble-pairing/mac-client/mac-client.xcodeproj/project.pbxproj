@@ -8,11 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		700A714B205A647F00B518CD /* SafeMessageBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 700A7144205A647F00B518CD /* SafeMessageBuffer.h */; };
-		700A714C205A647F00B518CD /* json-forwards.h in Headers */ = {isa = PBXBuildFile; fileRef = 700A7146205A647F00B518CD /* json-forwards.h */; };
-		700A714D205A647F00B518CD /* json.h in Headers */ = {isa = PBXBuildFile; fileRef = 700A7147205A647F00B518CD /* json.h */; };
 		700A714E205A647F00B518CD /* SafeMessageBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 700A7149205A647F00B518CD /* SafeMessageBuffer.cpp */; };
-		700A714F205A647F00B518CD /* jsoncpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 700A714A205A647F00B518CD /* jsoncpp.cpp */; };
 		700A7152205A649800B518CD /* libclad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 700A7138205A639E00B518CD /* libclad.a */; };
+		79E261D120D18E6300AA9573 /* json.h in Headers */ = {isa = PBXBuildFile; fileRef = 79E261CE20D18E6300AA9573 /* json.h */; };
+		79E261D220D18E6300AA9573 /* jsoncpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 79E261CF20D18E6300AA9573 /* jsoncpp.cpp */; };
+		79E261D320D18E6300AA9573 /* json-forwards.h in Headers */ = {isa = PBXBuildFile; fileRef = 79E261D020D18E6300AA9573 /* json-forwards.h */; };
 		DA27D31A206C386E00D4416A /* messageExternalComms.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DA27D315206C386D00D4416A /* messageExternalComms.cpp */; };
 		DA27D31B206C386E00D4416A /* messageExternalComms.h in Headers */ = {isa = PBXBuildFile; fileRef = DA27D318206C386D00D4416A /* messageExternalComms.h */; };
 		DA27D31C206C386E00D4416A /* messageExternalCommsTag.h in Headers */ = {isa = PBXBuildFile; fileRef = DA27D319206C386D00D4416A /* messageExternalCommsTag.h */; };
@@ -51,10 +51,11 @@
 /* Begin PBXFileReference section */
 		700A7138205A639E00B518CD /* libclad.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libclad.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		700A7144205A647F00B518CD /* SafeMessageBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SafeMessageBuffer.h; sourceTree = "<group>"; };
-		700A7146205A647F00B518CD /* json-forwards.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "json-forwards.h"; sourceTree = "<group>"; };
-		700A7147205A647F00B518CD /* json.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = json.h; sourceTree = "<group>"; };
 		700A7149205A647F00B518CD /* SafeMessageBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SafeMessageBuffer.cpp; sourceTree = "<group>"; };
-		700A714A205A647F00B518CD /* jsoncpp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = jsoncpp.cpp; sourceTree = "<group>"; };
+		79E261CE20D18E6300AA9573 /* json.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = json.h; path = ../../../../../../../lib/util/source/3rd/jsoncpp/json/json.h; sourceTree = "<group>"; };
+		79E261CF20D18E6300AA9573 /* jsoncpp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = jsoncpp.cpp; path = ../../../../../../../lib/util/source/3rd/jsoncpp/jsoncpp.cpp; sourceTree = "<group>"; };
+		79E261D020D18E6300AA9573 /* json-forwards.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "json-forwards.h"; path = "../../../../../../../lib/util/source/3rd/jsoncpp/json/json-forwards.h"; sourceTree = "<group>"; };
+		79E261D420D18E6800AA9573 /* jsoncpp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = jsoncpp.cpp; path = source/jsoncpp.cpp; sourceTree = SOURCE_ROOT; };
 		DA27D3082063191900D4416A /* argparse.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = argparse.hpp; sourceTree = "<group>"; };
 		DA27D315206C386D00D4416A /* messageExternalComms.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = messageExternalComms.cpp; sourceTree = "<group>"; };
 		DA27D316206C386D00D4416A /* messageExternalComms_declarations.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = messageExternalComms_declarations.def; sourceTree = "<group>"; };
@@ -142,8 +143,9 @@
 		700A7145205A647F00B518CD /* json */ = {
 			isa = PBXGroup;
 			children = (
-				700A7146205A647F00B518CD /* json-forwards.h */,
-				700A7147205A647F00B518CD /* json.h */,
+				79E261D020D18E6300AA9573 /* json-forwards.h */,
+				79E261CE20D18E6300AA9573 /* json.h */,
+				79E261CF20D18E6300AA9573 /* jsoncpp.cpp */,
 			);
 			path = json;
 			sourceTree = "<group>";
@@ -151,8 +153,8 @@
 		700A7148205A647F00B518CD /* source */ = {
 			isa = PBXGroup;
 			children = (
+				79E261D420D18E6800AA9573 /* jsoncpp.cpp */,
 				700A7149205A647F00B518CD /* SafeMessageBuffer.cpp */,
-				700A714A205A647F00B518CD /* jsoncpp.cpp */,
 			);
 			path = source;
 			sourceTree = "<group>";
@@ -245,10 +247,10 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				700A714D205A647F00B518CD /* json.h in Headers */,
-				700A714C205A647F00B518CD /* json-forwards.h in Headers */,
+				79E261D320D18E6300AA9573 /* json-forwards.h in Headers */,
 				DA27D31C206C386E00D4416A /* messageExternalCommsTag.h in Headers */,
 				700A714B205A647F00B518CD /* SafeMessageBuffer.h in Headers */,
+				79E261D120D18E6300AA9573 /* json.h in Headers */,
 				DA27D31B206C386E00D4416A /* messageExternalComms.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -334,8 +336,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				700A714E205A647F00B518CD /* SafeMessageBuffer.cpp in Sources */,
+				79E261D220D18E6300AA9573 /* jsoncpp.cpp in Sources */,
 				DA27D31A206C386E00D4416A /* messageExternalComms.cpp in Sources */,
-				700A714F205A647F00B518CD /* jsoncpp.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

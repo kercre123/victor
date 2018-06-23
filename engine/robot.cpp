@@ -15,10 +15,13 @@
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
+
+#include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
+#include "cannedAnimLib/cannedAnims/cannedAnimationLoader.h"
+
 #include "engine/actions/actionContainers.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
-#include "engine/actions/sayTextAction.h"
 #include "engine/activeCube.h"
 #include "engine/activeObjectHelpers.h"
 #include "engine/aiComponent/aiComponent.h"
@@ -32,13 +35,14 @@
 #include "engine/components/animationComponent.h"
 #include "engine/components/batteryComponent.h"
 #include "engine/components/blockTapFilterComponent.h"
-#include "engine/components/bodyLightComponent.h"
+#include "engine/components/backpackLights/backpackLightComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
-#include "engine/components/cubes/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/dataAccessorComponent.h"
 #include "engine/components/dockingComponent.h"
+#include "engine/components/habitatDetectorComponent.h"
 #include "engine/components/inventoryComponent.h"
 #include "engine/components/mics/beatDetectorComponent.h"
 #include "engine/components/mics/micComponent.h"
@@ -50,6 +54,8 @@
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/components/sdkComponent.h"
+#include "engine/components/settingsCommManager.h"
+#include "engine/components/settingsManager.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
@@ -74,7 +80,6 @@
 #include "engine/robotStateHistory.h"
 #include "engine/robotToEngineImplMessaging.h"
 #include "engine/viz/vizManager.h"
-
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
@@ -108,6 +113,8 @@
 
 namespace Anki {
 namespace Cozmo {
+
+CONSOLE_VAR(bool, kFakeRobotBeingHeld, "Robot", false);
 
 CONSOLE_VAR(bool, kDebugPossibleBlockInteraction, "Robot", false);
 
@@ -144,42 +151,86 @@ static void PlayAnimationByName(ConsoleFunctionContextRef context)
   }
 }
 
-CONSOLE_FUNC(PlayAnimationByName, "PlayAnimationByName", const char* animName);
+static void AddAnimation(ConsoleFunctionContextRef context)
+{
+  if (_thisRobot != nullptr) {
+    const char* animFile = ConsoleArg_Get_String(context, "animFile");
+    if (animFile) {
+      const std::string animationFolder = _thisRobot->GetContextDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources, "/assets/animations/");
+      std::string animationPath = animationFolder + animFile;
 
-// Perform SayTextAction from debug console
+      auto* robotDataLoader = _thisRobot->GetContext()->GetDataLoader();
+      if (robotDataLoader != nullptr) {
+        auto* animContainer = robotDataLoader->GetCannedAnimationContainer();
+        if (animContainer != nullptr) {
+
+          auto platform = _thisRobot->GetContextDataPlatform();
+          auto spritePaths = _thisRobot->GetComponent<DataAccessorComponent>().GetSpritePaths();
+          auto spriteSequenceContainer = _thisRobot->GetComponent<DataAccessorComponent>().GetSpriteSequenceContainer();
+          std::atomic<float> loadingCompleteRatio(0);
+          std::atomic<bool> abortLoad(false);
+          CannedAnimationLoader animLoader(platform, spritePaths, spriteSequenceContainer, loadingCompleteRatio, abortLoad);
+
+          animLoader.LoadAnimationIntoContainer(animationPath.c_str(), animContainer);
+          PRINT_NAMED_INFO("Robot.AddAnimation", "Loaded animation from %s", animationPath.c_str());
+        }
+      }
+    }
+  }
+}
+
+CONSOLE_FUNC(PlayAnimationByName, "Animation", const char* animName);
+CONSOLE_FUNC(AddAnimation, "Animation", const char* animFile);
+
+// Perform Text to Speech Coordinator from debug console
 namespace {
 
-constexpr const char * kSayTextPath = "SayTextAction";
-constexpr const char * kVoiceStyles = "Unprocessed,CozmoProcessing_Name,CozmoProcessing_Name_Question,Sentence";
+constexpr const char * kTtsCoordinatorPath = "TtSCoordinator";
+// NOTE: Need to keep kVoiceStyles in sync with AudioMetaData::SwitchState::Robot_Vic_External_Processing in
+//       clad/audio/audioSwitchTypes.clad
+constexpr const char * kVoiceStyles = "Default_Processed,Unprocessed";
 
-CONSOLE_VAR_ENUM(u8, kVoiceStyle, kSayTextPath, 0, kVoiceStyles);
-CONSOLE_VAR_RANGED(f32, kDurationScalar, kSayTextPath, 1.f, 0.25f, 4.f);
-CONSOLE_VAR_RANGED(f32, kPitchScalar, kSayTextPath, 0.f, -1.f, 1.f);
+CONSOLE_VAR_ENUM(u8, kVoiceStyle, kTtsCoordinatorPath, 0, kVoiceStyles);
+CONSOLE_VAR_RANGED(f32, kDurationScalar, kTtsCoordinatorPath, 1.f, 0.25f, 4.f);
 
 void SayText(ConsoleFunctionContextRef context)
 {
   auto * robot = _thisRobot;
   if (robot == nullptr) {
-    LOG_ERROR("Robot.SayText.NoRobot", "No robot connected");
+    LOG_ERROR("Robot.TtSCoordinator.NoRobot", "No robot connected");
     return;
   }
 
   const char * text = ConsoleArg_Get_String(context, "text");
   if (text == nullptr) {
-    LOG_ERROR("Robot.SayText.NoText", "No text string");
+    LOG_ERROR("Robot.TtSCoordinator.NoText", "No text string");
     return;
   }
 
-  LOG_INFO("Robot.SayText", "text(%s) style(%hhu) duration(%f) pitch(%f)",
-           Util::HidePersonallyIdentifiableInfo(text), kVoiceStyle, kDurationScalar, kPitchScalar);
+  // Handle processing state
+  using TtsProcessingStyle = AudioMetaData::SwitchState::Robot_Vic_External_Processing;
+  auto style = TtsProcessingStyle::Invalid;
+  switch (kVoiceStyle) {
+    case 0:
+      style = TtsProcessingStyle::Default_Processed;
+      break;
+      
+    case 1:
+      style = TtsProcessingStyle::Unprocessed;
+      break;
+      
+    default:
+      LOG_ERROR("Robot.SayText.InvalidVoiceStyleEnum", "Unknown value");
+      break;
+  }
+  
+  LOG_INFO("Robot.TtSCoordinator", "text(%s) style(%s) duration(%f)",
+           Util::HidePersonallyIdentifiableInfo(text), EnumToString(style), kDurationScalar);
 
-  const auto style = static_cast<SayTextVoiceStyle>(kVoiceStyle);
-  auto action = std::make_unique<SayTextAction>(text, style, kDurationScalar, kPitchScalar);
-  robot->GetActionList().QueueAction(QueueActionPosition::NOW, action.release());
-
+  robot->GetTextToSpeechCoordinator().CreateUtterance(text, UtteranceTriggerType::Immediate, style);
 }
 
-CONSOLE_FUNC(SayText, kSayTextPath, const char* text);
+CONSOLE_FUNC(SayText, kTtsCoordinatorPath, const char* text);
 
 
 static void EnableCalmPowerMode(ConsoleFunctionContextRef context)
@@ -226,7 +277,7 @@ static const float kPitchAngleOnFacePlantMin_sim_rads = DEG_TO_RAD(110.f); //Thi
 static const float kPitchAngleOnFacePlantMax_sim_rads = DEG_TO_RAD(-80.f); //This has not been tested
 
 
-Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
+Robot::Robot(const RobotID_t robotID, CozmoContext* context)
 : _context(context)
 , _poseOrigins(new PoseOriginList())
 , _ID(robotID)
@@ -258,10 +309,11 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::AIComponent,                new AIComponent());
     _components->AddDependentComponent(RobotComponentID::ObjectPoseConfirmer,        new ObjectPoseConfirmer());
     _components->AddDependentComponent(RobotComponentID::CubeLights,                 new CubeLightComponent());
-    _components->AddDependentComponent(RobotComponentID::BodyLights,                 new BodyLightComponent());
+    _components->AddDependentComponent(RobotComponentID::BackpackLights,             new BackpackLightComponent());
     _components->AddDependentComponent(RobotComponentID::CubeAccel,                  new CubeAccelComponent());
     _components->AddDependentComponent(RobotComponentID::CubeComms,                  new CubeCommsComponent());
     _components->AddDependentComponent(RobotComponentID::GyroDriftDetector,          new RobotGyroDriftDetector());
+    _components->AddDependentComponent(RobotComponentID::HabitatDetector,            new HabitatDetectorComponent());
     _components->AddDependentComponent(RobotComponentID::Docking,                    new DockingComponent());
     _components->AddDependentComponent(RobotComponentID::Carrying,                   new CarryingComponent());
     _components->AddDependentComponent(RobotComponentID::CliffSensor,                new CliffSensorComponent());
@@ -284,6 +336,8 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::TextToSpeechCoordinator,    new TextToSpeechCoordinator());
     _components->AddDependentComponent(RobotComponentID::SDK,                        new SDKComponent());
     _components->AddDependentComponent(RobotComponentID::PhotographyManager,         new PhotographyManager());
+    _components->AddDependentComponent(RobotComponentID::SettingsCommManager,        new SettingsCommManager());
+    _components->AddDependentComponent(RobotComponentID::SettingsManager,            new SettingsManager());
     _components->AddDependentComponent(RobotComponentID::RobotStatsTracker,          new RobotStatsTracker());
     _components->InitComponents(this);
   }
@@ -1185,7 +1239,9 @@ Result Robot::Update()
     return RESULT_OK;
   }
 
-  static bool wasChargerStripeIsBlack = kChargerStripeIsBlack;
+  // Always send the "charger stripe color" the first time,
+  // then only if the console var changes thereafter.
+  static bool wasChargerStripeIsBlack = !kChargerStripeIsBlack;
   if (kChargerStripeIsBlack != wasChargerStripeIsBlack) {
     SendMessage(RobotInterface::EngineToRobot(RobotInterface::ChargerDockingStripeColor(kChargerStripeIsBlack)));
     wasChargerStripeIsBlack = kChargerStripeIsBlack;
@@ -1259,7 +1315,7 @@ Result Robot::Update()
   // So we can have an arbitrary number of data here that is likely to change want just hash it all
   // together if anything changes without spamming
   snprintf(buffer, sizeof(buffer),
-           "%c%c%c%c%c%c %2dHz %s",
+           "%c%c%c%c%c%c %2dHz",
            GetMoveComponent().IsLiftMoving() ? 'L' : ' ',
            GetMoveComponent().IsHeadMoving() ? 'H' : ' ',
            GetMoveComponent().IsMoving() ? 'B' : ' ',
@@ -1270,9 +1326,7 @@ Result Robot::Update()
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
-           (u8)MIN(((u8)updateRatePerSec), std::numeric_limits<u8>::max()),
-           //currentActivityName.c_str(),
-           _behaviorDebugStr.c_str());
+           (u8)MIN(((u8)updateRatePerSec), std::numeric_limits<u8>::max()));
 
   std::hash<std::string> hasher;
   size_t curr_hash = hasher(std::string(buffer));
@@ -2003,7 +2057,7 @@ Result Robot::SendIMURequest(const u32 length_ms) const
 
 bool Robot::HasExternalInterface() const
 {
-  if (HasComponent(RobotComponentID::CozmoContextWrapper)){
+  if (HasComponent<ContextWrapper>()){
     return GetContext()->GetExternalInterface() != nullptr;
   }
   return false;
@@ -2013,6 +2067,20 @@ IExternalInterface* Robot::GetExternalInterface() const
 {
   DEV_ASSERT(GetContext()->GetExternalInterface() != nullptr, "Robot.ExternalInterface.nullptr");
   return GetContext()->GetExternalInterface();
+}
+  
+bool Robot::HasGatewayInterface() const
+{
+  if (HasComponent<ContextWrapper>()){
+    return GetContext()->GetGatewayInterface() != nullptr;
+  }
+  return false;
+}
+  
+IGatewayInterface* Robot::GetGatewayInterface() const
+{
+  DEV_ASSERT(GetContext()->GetGatewayInterface() != nullptr, "Robot.GatewayInterface.nullptr");
+  return GetContext()->GetGatewayInterface();
 }
 
 Util::Data::DataPlatform* Robot::GetContextDataPlatform()
@@ -2140,6 +2208,15 @@ Transform3d Robot::GetLiftTransformWrtCamera(const f32 atLiftAngle, const f32 at
 
   return liftPoseWrtCam.GetTransform();
 }
+
+OffTreadsState Robot::GetOffTreadsState() const 
+{
+  if(kFakeRobotBeingHeld){
+    return OffTreadsState::Held;
+  }
+  return _offTreadsState;
+}
+
 
 Result Robot::RequestIMU(const u32 length_ms) const
 {
@@ -2459,6 +2536,7 @@ RobotState Robot::GetDefaultRobotState()
                          ProxSensorDataRaw(), //const Anki::Cozmo::ProxSensorDataRaw &proxData,
                          0, // touch intensity value when not touched (from capacitive touch sensor)
                          0, // uint8_t cliffDetectedFlags,
+                         0, // uint8_t whiteDetectedFlags
                          -1); //int8_t currPathSegment
 
   return state;
@@ -2466,7 +2544,7 @@ RobotState Robot::GetDefaultRobotState()
 
 RobotInterface::MessageHandler* Robot::GetRobotMessageHandler() const
 {
-  if ((!_components->GetComponent(RobotComponentID::CozmoContextWrapper).IsValueValid()) ||
+  if ((!_components->GetComponent<ContextWrapper>().IsComponentValid()) ||
       (GetContext()->GetRobotManager() == nullptr))
   {
     DEV_ASSERT(false, "Robot.GetRobotMessageHandler.nullptr");

@@ -82,6 +82,7 @@ class CubeCommsComponent;
 class DrivingAnimationHandler;
 class FaceWorld;
 class IExternalInterface;
+class IGatewayInterface;
 class InventoryComponent;
 class MatPiece;
 class MoodManager;
@@ -100,7 +101,7 @@ class IExternalInterface;
 struct RobotState;
 class ActiveCube;
 class CubeLightComponent;
-class BodyLightComponent;
+class BackpackLightComponent;
 class RobotToEngineImplMessaging;
 class PublicStateBroadcaster;
 class VisionComponent;
@@ -116,6 +117,7 @@ class MapComponent;
 class MicComponent;
 class BatteryComponent;
 class BeatDetectorComponent;
+class HabitatDetectorComponent;
 class TextToSpeechCoordinator;
 class SDKComponent;
 
@@ -143,7 +145,7 @@ public:
 
   virtual ~ContextWrapper(){}
 
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override {};
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override {};
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
 };
@@ -153,7 +155,7 @@ class Robot : private Util::noncopyable
 {
 public:
 
-  Robot(const RobotID_t robotID, const CozmoContext* context);
+  Robot(const RobotID_t robotID, CozmoContext* context);
   ~Robot();
 
   // =========== Robot properties ===========
@@ -191,24 +193,25 @@ public:
 
   // =========== Components ===========
 
-  bool HasComponent(RobotComponentID componentID) const {
+  template<typename T>
+  bool HasComponent() const {
     return (_components != nullptr) &&
-           _components->HasComponent(componentID) &&
-           _components->GetComponent(componentID).IsValueValid();
+           _components->HasComponent<T>() &&
+           _components->GetComponent<T>().IsComponentValid();
   }
 
   template<typename T>
-  T& GetComponent() const {return _components->GetValue<T>();}
+  T& GetComponent() const {return _components->GetComponent<T>();}
 
   template<typename T>
-  T& GetComponent() {return _components->GetValue<T>();}
+  T& GetComponent() {return _components->GetComponent<T>();}
 
 
   template<typename T>
-  T* GetComponentPtr() const {return _components->GetBasePtr<T>();}
+  T* GetComponentPtr() const {return _components->GetComponentPtr<T>();}
 
   template<typename T>
-  T* GetComponentPtr() {return _components->GetBasePtr<T>();}
+  T* GetComponentPtr() {return _components->GetComponentPtr<T>();}
 
 
 
@@ -239,8 +242,8 @@ public:
   inline CubeLightComponent& GetCubeLightComponent() {return GetComponent<CubeLightComponent>();}
   inline const CubeLightComponent& GetCubeLightComponent() const {return GetComponent<CubeLightComponent>();}
 
-  inline BodyLightComponent& GetBodyLightComponent() {return GetComponent<BodyLightComponent>();}
-  inline const BodyLightComponent& GetBodyLightComponent() const {return GetComponent<BodyLightComponent>();}
+  inline BackpackLightComponent& GetBackpackLightComponent() {return GetComponent<BackpackLightComponent>();}
+  inline const BackpackLightComponent& GetBackpackLightComponent() const {return GetComponent<BackpackLightComponent>();}
 
   inline CubeAccelComponent& GetCubeAccelComponent() {return GetComponent<CubeAccelComponent>();}
   inline const CubeAccelComponent& GetCubeAccelComponent() const {return GetComponent<CubeAccelComponent>();}
@@ -306,6 +309,9 @@ public:
   const BeatDetectorComponent&    GetBeatDetectorComponent()    const { return GetComponent<BeatDetectorComponent>(); }
   BeatDetectorComponent&          GetBeatDetectorComponent()          { return GetComponent<BeatDetectorComponent>(); }
   
+  const HabitatDetectorComponent& GetHabitatDetectorComponent() const { return GetComponent<HabitatDetectorComponent>(); }
+  HabitatDetectorComponent&       GetHabitatDetectorComponent()       { return GetComponent<HabitatDetectorComponent>(); }
+  
   const SDKComponent&    GetSDKComponent()    const { return GetComponent<SDKComponent>(); }
   SDKComponent&          GetSDKComponent()          { return GetComponent<SDKComponent>(); }
   
@@ -327,14 +333,13 @@ public:
 
   RobotToEngineImplMessaging& GetRobotToEngineImplMessaging() { return GetComponent<RobotToEngineImplMessaging>(); }
 
+  CozmoContext* GetContext() { return _context; }
   const CozmoContext* GetContext() const { return _context; }
 
   const Util::RandomGenerator& GetRNG() const;
   Util::RandomGenerator& GetRNG();
 
 
-
-  inline const std::string&     GetBehaviorDebugString() const { return _behaviorDebugStr; }
 
   // =========== Localization ===========
 
@@ -402,7 +407,7 @@ public:
   Pose3d              GetCameraPose(const f32 atAngle) const;
   Transform3d         GetLiftTransformWrtCamera(const f32 atLiftAngle, const f32 atHeadAngle) const;
 
-  OffTreadsState GetOffTreadsState() const {return _offTreadsState;}
+  OffTreadsState GetOffTreadsState() const;
   TimeStamp_t GetOffTreadsStateLastChangedTime_ms() const { return _timeOffTreadStateChanged_ms; }
 
   // Return whether the given pose is in the same origin as the robot's current origin
@@ -575,8 +580,10 @@ public:
   using RobotWorldOriginChangedSignal = Signal::Signal<void (RobotID_t)>;
   RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
   bool HasExternalInterface() const;
+  bool HasGatewayInterface() const;
 
   IExternalInterface* GetExternalInterface() const;
+  IGatewayInterface* GetGatewayInterface() const;
 
   RobotInterface::MessageHandler* GetRobotMessageHandler() const;
   RobotEventHandler& GetRobotEventHandler();
@@ -634,7 +641,7 @@ public:
 protected:  
   bool _toldToShutdown = false;
 
-  const CozmoContext* _context;
+  CozmoContext* _context;
   std::unique_ptr<PoseOriginList> _poseOrigins;
 
   using EntityType = DependencyManagedEntity<RobotComponentID>;
@@ -658,8 +665,6 @@ protected:
   // Flag indicating whether a robotStateMessage was ever received
   TimeStamp_t _lastMsgTimestamp;
   bool        _newStateMsgAvailable = false;
-
-  std::string                            _behaviorDebugStr;
 
 
   // Hash to not spam debug messages

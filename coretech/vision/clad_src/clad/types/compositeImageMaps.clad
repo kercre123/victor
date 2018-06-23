@@ -15,6 +15,7 @@ enum uint_8 CompositeImageMap
   WeatherCondSnow_01,
   WeatherCondStars_01,
   WeatherCondSunny_01,
+  WeatherCondThunderstorms_01,
   WeatherCondWindy_01,
 
   // Must be last element

@@ -2006,14 +2006,8 @@ namespace Anki {
       if(_state == State::Turning || _state == State::WaitingForFace)
       {
         Vision::FaceID_t faceID = msg.faceID;
-        if(_faceID.IsValid())
-        {
-          // We know what face we're looking for. If this is it, set the observed face ID to it.
-          if(_faceID.MatchesFaceID(faceID)) {
-            _obsFaceID = _faceID;
-          }
-        }
-        else
+        const bool allowFaceSwitch = _lockOnClosestFace && (_state == State::WaitingForFace) && !_obsFaceID.IsValid();
+        if( !_faceID.IsValid() || allowFaceSwitch )
         {
           // We are looking for any face.
           // Record this face if it is closer than any we've seen so far
@@ -2030,6 +2024,13 @@ namespace Anki {
                                   _obsFaceID.GetDebugStr().c_str(), _closestDistSq);
               }
             }
+          }
+        }
+        else
+        {
+          // We know what face we're looking for. If this is it, set the observed face ID to it.
+          if(_faceID.MatchesFaceID(faceID)) {
+            _obsFaceID = _faceID;
           }
         }
       }
@@ -2153,7 +2154,7 @@ namespace Anki {
                 }
                 else {
                   // we have a name
-                  SayTextAction* sayText = new SayTextAction(face->GetName(), SayTextIntent::Name_Normal);
+                  SayTextAction* sayText = new SayTextAction(face->GetName());
                   if( _sayNameTriggerCallback ) {
                     AnimationTrigger sayNameAnim = _sayNameTriggerCallback(GetRobot(), _obsFaceID);
                     if( sayNameAnim != AnimationTrigger::Count ) {
@@ -2360,6 +2361,9 @@ namespace Anki {
     
     CliffAlignToWhiteAction::~CliffAlignToWhiteAction()
     {
+      if(!HasRobot()) {
+        return;
+      }
       if (_state == State::Waiting) {
         GetRobot().SendRobotMessage<RobotInterface::CliffAlignToWhiteAction>(false);
       }

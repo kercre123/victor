@@ -1,11 +1,12 @@
 /**
-* File: externalMessageRouter
+* File: externalMessageRouter.h
 *
 * Author: ross
 * Created: may 31 2018
 *
 * Description: Templates to automatically wrap messages included in the MessageEngineToGame union
-*              based on external requirements (the hierarchy in MessageEngineToGame clad).
+*              and the GatewayWrapper protobuf oneof (union) based on external requirements and
+*              event organization (the hierarchy in MessageEngineToGame clad).
 *
 * Copyright: Anki, Inc. 2018
 */
@@ -17,6 +18,11 @@
 #include "util/helpers/templateHelpers.h"
 #include <type_traits>
 
+namespace external_interface {
+  class GatewayWrapper;
+  class OnboardingState;
+}
+
 namespace Anki {
 namespace Cozmo {
 
@@ -24,6 +30,9 @@ class ExternalMessageRouter
 {
 public:
   
+// -------------------------------------------------------------------------------------------------
+// Outbound CLAD Messages
+// -------------------------------------------------------------------------------------------------
   // the hierarchy, based on messageEngineToGame.clad:
   using MessageEngineToGame = ExternalInterface::MessageEngineToGame;
   // which contains
@@ -77,8 +86,19 @@ public:
     return Wrap( std::move(status) );
   }
   
+  // -------------------------------------------------------------------------------------------------
+  // Outbound Proto Messages
+  // -------------------------------------------------------------------------------------------------
+  
+  // handle outbound proto messages that are a response to a request
+  template<typename T>
+  static external_interface::GatewayWrapper WrapResponse( T* msg );
+  
+  // handle outbound proto messages that are NOT a response to a request
+  template<typename T>
+  static external_interface::GatewayWrapper Wrap( T* msg );
+  
 };
-
 
 } // end namespace Cozmo
 } // end namespace Anki

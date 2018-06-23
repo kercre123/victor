@@ -62,6 +62,7 @@ namespace {
   float _idleTime_s;          // Idle time in seconds
   uint32_t _memTotal_kB;      // Total memory in kB
   uint32_t _memFree_kB;       // Free memory in kB
+  uint32_t _memAvailable_kB;  // Available memory in kB
   std::vector<std::string> _CPUTimeStats; // CPU time stats lines
 
   // How often state variables are updated
@@ -87,6 +88,7 @@ OSState::OSState()
   // Set simulated attributes
   _serialNumString = "12345";
   _osBuildVersion = "12345";
+  _robotVersion = "0.0.0";
   _ipAddress = "127.0.0.1";
   _ssid = "AnkiNetwork";
 
@@ -220,6 +222,9 @@ void OSState::UpdateMemoryInfo() const
   {
     _memFree_kB = static_cast<uint32_t>(vmstat.free_count / 1024);
   }
+  
+  // TODO: differentiate available and free
+  _memAvailable_kB = _memFree_kB;
 }
 
 void OSState::UpdateCPUTimeStats() const
@@ -290,6 +295,11 @@ const std::string& OSState::GetOSBuildVersion()
   return _osBuildVersion;
 }
 
+const std::string& OSState::GetRobotVersion()
+{
+  return _robotVersion;
+}
+
 const std::string& OSState::GetBuildSha()
 {
   return _buildSha;
@@ -329,12 +339,13 @@ float OSState::GetUptimeAndIdleTime(float &idleTime_s) const
   return _uptime_s;
 }
 
-uint32_t OSState::GetMemoryInfo(uint32_t &freeMem_kB) const
+uint32_t OSState::GetMemoryInfo(uint32_t &freeMem_kB, uint32_t &availableMem_kB) const
 {
   if (_updatePeriod_ms == 0) {
     UpdateMemoryInfo();
   }
   freeMem_kB = _memFree_kB;
+  availableMem_kB = _memAvailable_kB;
   return _memTotal_kB;
 }
 

@@ -37,11 +37,12 @@ protected:
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
   
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 
 private:
@@ -60,6 +61,14 @@ private:
     PlayAgainPrompt,
     PlayAgain,
     GetOut
+  };
+
+  enum class EDealingState {
+    PlayerFirstCard,
+    DealerFirstCard,
+    PlayerSecondCard,
+    DealerSecondCard,
+    Finished
   };
 
   enum class EOutcome{
@@ -92,15 +101,17 @@ private:
 
   struct DynamicVariables {
     DynamicVariables();
-
-    BlackJackGame       game;
-    BlackJackVisualizer visualizer;
     EState              state;
+    EDealingState       dealingState;
     EOutcome            outcome;
+    bool                hasWishedGoodLuck;
   };
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
+
+  BlackJackGame _game;
+  BlackJackVisualizer _visualizer;
 
   // Helper functions
   IBehavior* SetUpSpeakingBehavior(const std::string& vocalizationString);

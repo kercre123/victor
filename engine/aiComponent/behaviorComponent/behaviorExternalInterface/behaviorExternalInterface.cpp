@@ -48,16 +48,16 @@ BehaviorExternalInterface::~BehaviorExternalInterface()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
+void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dependentComps)
 {
-  auto* aiComponent            = dependentComponents.GetBasePtr<AIComponent>();
-  auto* behaviorContainer      = dependentComponents.GetBasePtr<BehaviorContainer>();
-  auto* behaviorEventComponent = dependentComponents.GetBasePtr<BehaviorEventComponent>();
-  auto* behaviorTimers         = dependentComponents.GetBasePtr<BehaviorTimerManager>();
-  auto* blockWorld             = dependentComponents.GetBasePtr<BlockWorld>();
-  auto* delegationComponent    = dependentComponents.GetBasePtr<DelegationComponent>();
-  auto* faceWorld              = dependentComponents.GetBasePtr<FaceWorld>();
-  auto* robotInfo              = dependentComponents.GetBasePtr<BEIRobotInfo>();
+  auto* aiComponent            = dependentComps.GetComponentPtr<AIComponent>();
+  auto* behaviorContainer      = dependentComps.GetComponentPtr<BehaviorContainer>();
+  auto* behaviorEventComponent = dependentComps.GetComponentPtr<BehaviorEventComponent>();
+  auto* behaviorTimers         = dependentComps.GetComponentPtr<BehaviorTimerManager>();
+  auto* blockWorld             = dependentComps.GetComponentPtr<BlockWorld>();
+  auto* delegationComponent    = dependentComps.GetComponentPtr<DelegationComponent>();
+  auto* faceWorld              = dependentComps.GetComponentPtr<FaceWorld>();
+  auto* robotInfo              = dependentComps.GetComponentPtr<BEIRobotInfo>();
 
   Init(aiComponent,
        robot->GetComponentPtr<AnimationComponent>(),
@@ -66,11 +66,13 @@ void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dep
        behaviorEventComponent,
        behaviorTimers,
        blockWorld,
-       robot->GetComponentPtr<BodyLightComponent>(),
+       robot->GetComponentPtr<BackpackLightComponent>(),
        robot->GetComponentPtr<CubeAccelComponent>(), 
        robot->GetComponentPtr<CubeLightComponent>(),
+       robot->GetComponentPtr<CliffSensorComponent>(),
        delegationComponent,
        faceWorld,
+       robot->GetComponentPtr<HabitatDetectorComponent>(),
        robot->GetComponentPtr<MapComponent>(),
        robot->GetComponentPtr<MicComponent>(),
        robot->GetComponentPtr<MoodManager>(),
@@ -88,7 +90,8 @@ void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dep
        robot->GetComponentPtr<TextToSpeechCoordinator>(),
        robot->GetComponentPtr<TouchSensorComponent>(),
        robot->GetComponentPtr<VisionComponent>(),
-       robot->GetComponentPtr<VisionScheduleMediator>());
+       robot->GetComponentPtr<VisionScheduleMediator>(),
+       robot->GetComponentPtr<SettingsManager>());
 }
 
 
@@ -100,11 +103,13 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                      BehaviorEventComponent*        behaviorEventComponent,
                                      BehaviorTimerManager*          behaviorTimers,
                                      BlockWorld*                    blockWorld,
-                                     BodyLightComponent*            bodyLightComponent,
+                                     BackpackLightComponent*        backpackLightComponent,
                                      CubeAccelComponent*            cubeAccelComponent,
                                      CubeLightComponent*            cubeLightComponent,
+                                     CliffSensorComponent*          cliffSensorComponent,
                                      DelegationComponent*           delegationComponent,
                                      FaceWorld*                     faceWorld,
+                                     HabitatDetectorComponent*      habitatDetectorComponent,
                                      MapComponent*                  mapComponent,
                                      MicComponent*                  micComponent,
                                      MoodManager*                   moodManager,
@@ -122,7 +127,8 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                      TextToSpeechCoordinator*       textToSpeechCoordinator,
                                      TouchSensorComponent*          touchSensorComponent,
                                      VisionComponent*               visionComponent,
-                                     VisionScheduleMediator*        visionScheduleMediator)
+                                     VisionScheduleMediator*        visionScheduleMediator,
+                                     SettingsManager*               settingsManager)
 {
   _arrayWrapper = std::make_unique<CompArrayWrapper>(aiComponent,
                                                      animationComponent,
@@ -131,11 +137,13 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                                      behaviorEventComponent,
                                                      behaviorTimers,
                                                      blockWorld,
-                                                     bodyLightComponent,
+                                                     backpackLightComponent,
                                                      cubeAccelComponent,
                                                      cubeLightComponent,
+                                                     cliffSensorComponent,
                                                      delegationComponent,
                                                      faceWorld,
+                                                     habitatDetectorComponent,
                                                      mapComponent,
                                                      micComponent,
                                                      moodManager,
@@ -153,19 +161,20 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                                      textToSpeechCoordinator,
                                                      touchSensorComponent,
                                                      visionComponent,
-                                                     visionScheduleMediator);
+                                                     visionScheduleMediator,
+                                                     settingsManager);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 OffTreadsState BehaviorExternalInterface::GetOffTreadsState() const
 {
-  return GetComponentWrapper(BEIComponentID::RobotInfo).GetValue<BEIRobotInfo>().GetOffTreadsState();
+  return GetComponentWrapper(BEIComponentID::RobotInfo).GetComponent<BEIRobotInfo>().GetOffTreadsState();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Util::RandomGenerator& BehaviorExternalInterface::GetRNG()
 {
-  return GetComponentWrapper(BEIComponentID::RobotInfo).GetValue<BEIRobotInfo>().GetRNG();
+  return GetComponentWrapper(BEIComponentID::RobotInfo).GetComponent<BEIRobotInfo>().GetRNG();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -176,11 +185,13 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
                                                               BehaviorEventComponent*        behaviorEventComponent,
                                                               BehaviorTimerManager*          behaviorTimers,
                                                               BlockWorld*                    blockWorld,
-                                                              BodyLightComponent*            bodyLightComponent,
+                                                              BackpackLightComponent*        backpackLightComponent,
                                                               CubeAccelComponent*            cubeAccelComponent,
                                                               CubeLightComponent*            cubeLightComponent,
+                                                              CliffSensorComponent*          cliffSensorComponent,
                                                               DelegationComponent*           delegationComponent,
                                                               FaceWorld*                     faceWorld,
+                                                              HabitatDetectorComponent*      habitatDetectorComponent,
                                                               MapComponent*                  mapComponent,
                                                               MicComponent*                  micComponent,
                                                               MoodManager*                   moodManager,
@@ -198,7 +209,8 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
                                                               TextToSpeechCoordinator*       textToSpeechCoordinator,
                                                               TouchSensorComponent*          touchSensorComponent,
                                                               VisionComponent*               visionComponent,
-                                                              VisionScheduleMediator*        visionScheduleMediator)
+                                                              VisionScheduleMediator*        visionScheduleMediator,
+                                                              SettingsManager*               settingsManager)
 : _array({
     {BEIComponentID::AIComponent,             BEIComponentWrapper(aiComponent)},
     {BEIComponentID::Animation,               BEIComponentWrapper(animationComponent)},
@@ -207,12 +219,14 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
     {BEIComponentID::BehaviorEvent,           BEIComponentWrapper(behaviorEventComponent)},
     {BEIComponentID::BehaviorTimerManager,    BEIComponentWrapper(behaviorTimers)},
     {BEIComponentID::BlockWorld,              BEIComponentWrapper(blockWorld)},
-    {BEIComponentID::BodyLightComponent,      BEIComponentWrapper(bodyLightComponent)},
+    {BEIComponentID::BackpackLightComponent,  BEIComponentWrapper(backpackLightComponent)},
     {BEIComponentID::CubeAccel,               BEIComponentWrapper(cubeAccelComponent)},
     {BEIComponentID::CubeLight,               BEIComponentWrapper(cubeLightComponent)},
+    {BEIComponentID::CliffSensor,             BEIComponentWrapper(cliffSensorComponent)},
     {BEIComponentID::DataAccessor,            BEIComponentWrapper(dataAccessor)},
     {BEIComponentID::Delegation,              BEIComponentWrapper(delegationComponent)},
     {BEIComponentID::FaceWorld,               BEIComponentWrapper(faceWorld)},
+    {BEIComponentID::HabitatDetector,         BEIComponentWrapper(habitatDetectorComponent)},
     {BEIComponentID::Map,                     BEIComponentWrapper(mapComponent)},
     {BEIComponentID::MicComponent,            BEIComponentWrapper(micComponent)},
     {BEIComponentID::MoodManager,             BEIComponentWrapper(moodManager)},
@@ -224,6 +238,7 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
     {BEIComponentID::ProxSensor,              BEIComponentWrapper(proxSensor)},
     {BEIComponentID::PublicStateBroadcaster,  BEIComponentWrapper(publicStateBroadcaster)},
     {BEIComponentID::SDK,                     BEIComponentWrapper(sdkComponent)},
+    {BEIComponentID::SettingsManager,         BEIComponentWrapper(settingsManager)},
     {BEIComponentID::RobotAudioClient,        BEIComponentWrapper(robotAudioClient)},
     {BEIComponentID::RobotInfo,               BEIComponentWrapper(robotInfo)},
     {BEIComponentID::TextToSpeechCoordinator, BEIComponentWrapper(textToSpeechCoordinator)},

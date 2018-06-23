@@ -28,6 +28,19 @@ enum uint_8 LayerName
   Weather_Temperature,
   Clock_Display,
 
+  // Blackjack Layers
+  Dealer_1,
+  Dealer_2,
+  Dealer_3,
+  Dealer_4,
+  Dealer_5,
+  Player_1,
+  Player_2,
+  Player_3,
+  Player_4,
+  Player_5,
+  PlayerCardOverlay,
+
   Layer_4,
   Layer_5,
   Layer_6,
@@ -65,6 +78,19 @@ enum uint_8 SpriteBoxName
   WeatherBox_3,
   WeatherBox_4,
   WeatherBox_5,
+
+  // Boxes for rendering cards in Blackjack
+  DealerCardSlot_1,
+  DealerCardSlot_2,
+  DealerCardSlot_3,
+  DealerCardSlot_4,
+  DealerCardSlot_5,
+  PlayerCardSlot_1,
+  PlayerCardSlot_2,
+  PlayerCardSlot_3,
+  PlayerCardSlot_4,
+  PlayerCardSlot_5,
+  PlayerCardOverlay,
 
   Count
 

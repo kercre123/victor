@@ -91,11 +91,12 @@ foreach(opt ${opts})
   # we whitelist which defines are allowed to be added to prevent hidden, unexpected defines from sneaking in
   elseif((opt MATCHES "ANKI_") OR (opt MATCHES "REMOTE_CONSOLE_ENABLED"))
     get_property(helpstring CACHE ${opt} PROPERTY HELPSTRING)
+
     if(${helpstring} MATCHES "cached value")
       # value was set from a previous run, but not this run, turn off
       # Note: remove_definitions #defines the value as OFF (which itself is undefined)
-      add_definitions(-D${opt}=0)
-
+      unset(${opt} CACHE)
+      add_definitions(-U${opt})
     else()
       # value was set this run, from the command-line
       add_definitions(-D${opt}=${${opt}})
@@ -151,6 +152,7 @@ add_subdirectory("animProcess")
 add_subdirectory("webServerProcess")
 add_subdirectory("testCrash")
 add_subdirectory("lib/anki-ble")
+add_subdirectory("lib/crash-reporting-vicos")
 add_subdirectory("lib/micData")
 add_subdirectory("lib/signalEssence")
 add_subdirectory("platform")

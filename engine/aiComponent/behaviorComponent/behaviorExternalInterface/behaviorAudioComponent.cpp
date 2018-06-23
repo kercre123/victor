@@ -108,9 +108,9 @@ BehaviorAudioComponent::BehaviorAudioComponent(Audio::EngineRobotAudioClient* ro
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAudioComponent::InitDependent(Cozmo::Robot* robot, const BCCompMap& dependentComponents)
+void BehaviorAudioComponent::InitDependent(Cozmo::Robot* robot, const BCCompMap& dependentComps)
 {
-  auto& bei = dependentComponents.GetValue<BehaviorExternalInterface>();
+  auto& bei = dependentComps.GetComponent<BehaviorExternalInterface>();
   Init(bei);
 }
 

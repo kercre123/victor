@@ -129,7 +129,6 @@ void BehaviorDisplayWeather::GetBehaviorJsonKeys(std::set<const char*>& expected
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDisplayWeather::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
-  delegates.insert(_iConfig->textToSpeechBehavior.get());
 }
 
 
@@ -139,7 +138,7 @@ void BehaviorDisplayWeather::InitBehavior()
   if(_iConfig == nullptr){
     return;
   }
-  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetValue<DataAccessorComponent>();
+  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();
 
   // Initialize composite image
   {
@@ -208,16 +207,10 @@ void BehaviorDisplayWeather::InitBehavior()
                           mapName.asString().c_str());
     }
   }
-  
-  // If the composite image is empty, we still need to send a template (that has no image map)
-  // so that the temperature will have a layer to be displayed on
-  if(_iConfig->compImg->GetLayerLayoutMap().empty()){
-    auto* seqContainer = dataAccessorComp.GetSpriteSequenceContainer();
-    _iConfig->compImg->AddEmptyLayer(seqContainer);
-    PRINT_NAMED_INFO("BehaviorDisplayWeather.InitBehavior.AddingEmptyCompositeImage",
-                     "Composite image does not exist or behavior %s, adding one so that temperature can be displayed",
-                     GetDebugLabel().c_str());
-  }
+
+  // Add an empty layer that will be filled in by procedural eyes extracted from the animation
+  auto* seqContainer = dataAccessorComp.GetSpriteSequenceContainer();
+  _iConfig->compImg->AddEmptyLayer(seqContainer, Vision::LayerName::Procedural_Eyes);
   
   // Get the animation ptr
   const auto* animContainer = dataAccessorComp.GetCannedAnimationContainer();
@@ -231,12 +224,7 @@ void BehaviorDisplayWeather::InitBehavior()
     return;
   }
 
-  const auto& bc = GetBEI().GetBehaviorContainer();
-  bc.FindBehaviorByIDAndDowncast<BehaviorTextToSpeechLoop>(BEHAVIOR_ID(WeatherTextToSpeech),
-                                                           BEHAVIOR_CLASS(TextToSpeechLoop),
-                                                           _iConfig->textToSpeechBehavior);
   ParseDisplayTempTimesFromAnim();
-  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -250,28 +238,7 @@ void BehaviorDisplayWeather::OnBehaviorActivated()
   UserIntentPtr intentData = uic.GetUserIntentIfActive(USER_INTENT(weather_response));
   DEV_ASSERT(intentData != nullptr, "BehaviorDisplayWeather.InvalidTriggeringIntent");
 
-  const auto& weatherResponse = intentData->intent.Get_weather_response();
-  std::string textToSay;
-  if(WeatherIntentParser::ShouldSayText(weatherResponse, textToSay)){
-    StateWeatherInformation(textToSay);
-  }else{
-    DisplayWeatherResponse();
-  }
-
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDisplayWeather::StateWeatherInformation(const std::string& textToSay)
-{
-  _iConfig->textToSpeechBehavior->SetTextToSay(textToSay);
-  if(_iConfig->textToSpeechBehavior->WantsToBeActivated()){
-    DelegateIfInControl(_iConfig->textToSpeechBehavior.get(),
-                        &BehaviorDisplayWeather::DisplayWeatherResponse);
-  }else{
-    DisplayWeatherResponse();
-  }
-
+  DisplayWeatherResponse();
 }
 
 
@@ -285,18 +252,19 @@ void BehaviorDisplayWeather::DisplayWeatherResponse()
 
   const auto& weatherResponse = intentData->intent.Get_weather_response();
 
-
   auto animationCallback = [this](const AnimationComponent::AnimResult res){
     CancelSelf();
   };
 
   int outAnimationDuration = 0;
   const bool shouldInterrupt = true;
+  const bool emptySpriteBoxesAllowed = false;
   GetBEI().GetAnimationComponent().PlayCompositeAnimation(_iConfig->animationName,
                                                           *(_iConfig->compImg.get()),
                                                           ANIM_TIME_STEP_MS,
                                                           outAnimationDuration,
                                                           shouldInterrupt,
+                                                          emptySpriteBoxesAllowed,
                                                           animationCallback);
   
   const auto temperature = weatherResponse.temperature;
@@ -305,7 +273,14 @@ void BehaviorDisplayWeather::DisplayWeatherResponse()
   if(!success){
     return;
   }
-  
+
+  #if ANKI_DEV_CHEATS
+  // Lookup the temperature display times in the animation in case the animation has been updated
+  // since this behavior was initialized (which will probably only happen during development if an
+  // animator adjusts those times in the animation)
+  ParseDisplayTempTimesFromAnim();
+  #endif
+
   GetBEI().GetAnimationComponent().UpdateCompositeImage(*_dVars.temperatureImg, _iConfig->timeTempShouldAppear_ms);
   GetBEI().GetAnimationComponent().ClearCompositeImageLayer(Vision::LayerName::Weather_Temperature,
                                                             _iConfig->timeTempShouldDisappear_ms);
@@ -349,14 +324,14 @@ bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenhei
 
   auto& layer = outImg->GetLayerLayoutMap().begin()->second;
 
-  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetValue<DataAccessorComponent>();
+  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();
 
   auto* spriteCache = dataAccessorComp.GetSpriteCache();
   auto* seqContainer = dataAccessorComp.GetSpriteSequenceContainer();
 
   // Add sprite boxes as appropriate to the layer
   {
-    const auto& tempIndicator = isFahrenheit ? Vision::SpriteName::Weather_Temp_Fahr : Vision::SpriteName::Weather_Temp_Cel;
+    const auto& tempIndicator = isFahrenheit ? Vision::SpriteName::Weather_Fahrenheit_Indicator : Vision::SpriteName::Weather_Celsius_Indicator;
     layer.AddToImageMap(spriteCache, seqContainer,
                         Vision::SpriteBoxName::TemperatureDegreeIndicator, 
                         tempIndicator);
@@ -364,7 +339,7 @@ bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenhei
   if(temp < 0){
     layer.AddToImageMap(spriteCache, seqContainer,
                         Vision::SpriteBoxName::TemperatureNegativeIndicator, 
-                        Vision::SpriteName::Weather_Temp_Neg);
+                        Vision::SpriteName::Weather_Negative_Indicator);
   }
 
   const auto absTemp = std::abs(temp);
@@ -395,7 +370,7 @@ bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenhei
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDisplayWeather::ParseDisplayTempTimesFromAnim()
 {
-  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetValue<DataAccessorComponent>();
+  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();
 
   const Animation* anim = nullptr;
   bool gotAnim = false;
@@ -412,16 +387,13 @@ void BehaviorDisplayWeather::ParseDisplayTempTimesFromAnim()
     return;
   }
 
-  const TimeStamp_t time_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-
   const auto& track = anim->GetTrack<EventKeyFrame>();
   if(track.TrackLength() == 2){
-    // assumes only one keyframe per eating anim
-    _iConfig->timeTempShouldAppear_ms =  time_ms + track.GetFirstKeyFrame()->GetTriggerTime_ms();
-    _iConfig->timeTempShouldDisappear_ms = time_ms + track.GetLastKeyFrame()->GetTriggerTime_ms();
+    _iConfig->timeTempShouldAppear_ms = track.GetFirstKeyFrame()->GetTriggerTime_ms();
+    _iConfig->timeTempShouldDisappear_ms = track.GetLastKeyFrame()->GetTriggerTime_ms();
     PRINT_CH_INFO("Behaviors",
                   "BehaviorDisplayWeather.ParseDisplayTempTimesFromAnim.TemperatureTimes",
-                  "For animation named %s temp will appear at %d and dissapear at %d",
+                  "For animation named %s temp will appear at %d and disappear at %d",
                   _iConfig->animationName.c_str(),
                   _iConfig->timeTempShouldAppear_ms,
                   _iConfig->timeTempShouldDisappear_ms);

@@ -56,7 +56,8 @@ namespace Cozmo {
   class AnimationStreamer
   {
   public:
-    
+    using NewAnimationCallback = std::function<void()>;
+
     using Tag = AnimationTag;
     using FaceTrack = Animations::Track<ProceduralFaceKeyFrame>;
     
@@ -99,7 +100,7 @@ namespace Cozmo {
 
 
     Result SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms);
-    Result SetCompositeImage(Vision::CompositeImage* compImg, u32 frameInterval_ms, u32 duration_ms, bool allowProceduralEyeOverlays);
+    Result SetCompositeImage(Vision::CompositeImage* compImg, u32 frameInterval_ms, u32 duration_ms);
     Result UpdateCompositeImage(Vision::LayerName layerName, 
                                 const Vision::CompositeImageLayer::SpriteBox& spriteBox, 
                                 Vision::SpriteName spriteName,
@@ -121,6 +122,17 @@ namespace Cozmo {
     void SetDefaultKeepFaceAliveParams();
     void SetParamToDefault(KeepFaceAliveParameter whichParam);
     void SetParam(KeepFaceAliveParameter whichParam, float newValue);
+
+    // Functions passed in here will be called each time a new animation is set to streaming
+    void AddNewAnimationCallback(NewAnimationCallback callback){
+      _newAnimationCallbacks.push_back(callback);
+    }
+
+    // Returns the time in ms that the animation streamer will use to get animation frames
+    // NOTE: This value generally updated at the end of the Update tick, so checks before streamer update
+    // will tell you the stream time used this tick, checks after will show the value for the next call to update
+    TimeStamp_t GetRelativeStreamTime_ms() const { return _relativeStreamTime_ms; }
+
     
     // Set/Reset the amount of time to wait before forcing KeepFaceAlive() after the last stream has stopped
     void SetKeepFaceAliveLastStreamTimeout(const f32 time_s)
@@ -256,6 +268,8 @@ namespace Cozmo {
     u32           _numTicsToSendAnimState            = 0;
 
     bool _redirectFaceImagesToDebugScreen = false;
+
+    std::vector<NewAnimationCallback> _newAnimationCallbacks;
 
     static bool IsTrackLocked(u8 lockedTracks, u8 trackFlagToCheck) {
       return ((lockedTracks & trackFlagToCheck) == trackFlagToCheck);

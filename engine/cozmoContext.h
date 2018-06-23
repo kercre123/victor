@@ -45,6 +45,7 @@ class CozmoAudienceTags;
 class CozmoExperiments;
 class CozmoFeatureGate;
 class IExternalInterface;
+class IGatewayInterface;
 class RobotDataLoader;
 class RobotManager;
 class VizManager;
@@ -78,11 +79,12 @@ class CozmoContext : private Util::noncopyable
 {
 
 public:
-  CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInterface* externalInterface);
+  CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInterface* externalInterface, IGatewayInterface* gatewayInterface);
   CozmoContext();
   virtual ~CozmoContext();
 
   IExternalInterface*                   GetExternalInterface() const { return _externalInterface; }
+  IGatewayInterface*                    GetGatewayInterface() const { return _gatewayInterface; }
   Util::Data::DataPlatform*             GetDataPlatform() const { return _dataPlatform; }
 
   CozmoFeatureGate*                     GetFeatureGate() const { return _featureGate.get(); }
@@ -117,6 +119,7 @@ private:
   // This is passed in and held onto, but not owned by the context (yet.
   // It really should be, and that refactoring will have to happen soon).
   IExternalInterface*                                     _externalInterface = nullptr;
+  IGatewayInterface*                                      _gatewayInterface = nullptr;
   Util::Data::DataPlatform*                               _dataPlatform = nullptr;
 
   // Context holds onto these things for everybody:

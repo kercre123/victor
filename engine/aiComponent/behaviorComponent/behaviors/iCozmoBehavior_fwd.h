@@ -21,6 +21,7 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/externalInterface/messageGameToEngineTag.h"
 #include "clad/robotInterface/messageRobotToEngineTag.h"
+#include "proto/external_interface/messages.pb.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -40,8 +41,11 @@ template<typename TYPE> class AnkiEvent;
 using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
 using EngineToGameEvent = AnkiEvent<ExternalInterface::MessageEngineToGame>;
 using RobotToEngineEvent= AnkiEvent<RobotInterface::RobotToEngine>;
+using AppToEngineEvent  = AnkiEvent<external_interface::GatewayWrapper>;
+  
 using EngineToGameTag   = ExternalInterface::MessageEngineToGameTag;
 using GameToEngineTag   = ExternalInterface::MessageGameToEngineTag;
+using AppToEngineTag    = external_interface::GatewayWrapper::OneofMessageTypeCase;
 
 class BehaviorExternalInterface;
 

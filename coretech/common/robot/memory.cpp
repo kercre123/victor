@@ -87,7 +87,9 @@ namespace Anki
 
       const s32 requestedBytes = static_cast<s32>( reinterpret_cast<size_t>(segmentFooter) + FOOTER_LENGTH - reinterpret_cast<size_t>(bufferNextFree) );
 
-      AnkiConditionalErrorAndReturnValue((usedBytes+requestedBytes) <= totalBytes, NULL, "Anki.MemoryStack.Allocate", "Ran out of scratch space");
+      AnkiConditionalErrorAndReturnValue((usedBytes+requestedBytes) <= totalBytes, NULL, "Anki.MemoryStack.Allocate",
+                                         "Ran out of scratch space, requesting %d bytes, with %d of %d used",
+                                         requestedBytes, usedBytes, totalBytes);
 
       // Is this possible?
       AnkiConditionalErrorAndReturnValue(static_cast<u32>(reinterpret_cast<size_t>(segmentFooter) - reinterpret_cast<size_t>(segmentMemory)) == numBytesRequestedRounded,

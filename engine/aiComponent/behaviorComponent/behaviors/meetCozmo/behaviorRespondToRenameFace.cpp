@@ -100,14 +100,14 @@ void BehaviorRespondToRenameFace::OnBehaviorActivated()
   
   {
     // 1. Say name once
-    SayTextAction* sayNameAction1 = new SayTextAction(_name, SayTextIntent::Name_FirstIntroduction_1);
+    SayTextAction* sayNameAction1 = new SayTextAction(_name);
     sayNameAction1->SetAnimationTrigger(AnimationTrigger::MeetVictorSayName);
     action->AddAction(sayNameAction1);
   }
   
   {
     // 2. Repeat name
-    SayTextAction* sayNameAction2 = new SayTextAction(_name, SayTextIntent::Name_FirstIntroduction_2);
+    SayTextAction* sayNameAction2 = new SayTextAction(_name);
     sayNameAction2->SetAnimationTrigger(AnimationTrigger::MeetVictorSayNameAgain);
     action->AddAction(sayNameAction2);
   }

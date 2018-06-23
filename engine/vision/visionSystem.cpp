@@ -1400,10 +1400,12 @@ void VisionSystem::UpdateRollingShutter(const VisionPoseData& poseData, const Vi
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result VisionSystem::Update(const VisionPoseData&   poseData,
-                            const Vision::ImageRGB& image)
+Result VisionSystem::Update(const VisionPoseData&      poseData,
+                            const Vision::ImageRGB&    image,
+                            const f32                  fullScaleFactor,
+                            const Vision::ResizeMethod fullScaleMethod)
 {
-  _imageCache->Reset(image);
+  _imageCache->Reset(image, fullScaleFactor, fullScaleMethod);
   
   return Update(poseData, *_imageCache);
 }

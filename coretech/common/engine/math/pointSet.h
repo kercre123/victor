@@ -31,8 +31,12 @@
 namespace Anki {
 
 using DimType = size_t;
+
 template<DimType N, typename T> 
 class Halfplane;
+
+template<DimType N, typename T> 
+class AxisAlignedHyperCube;
 
 // any representation of a collection of points that supports Contains checks for a point
 template <DimType N, typename T, typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
@@ -43,6 +47,11 @@ public:
 
   // check if:    x ∈ S
   virtual bool Contains(const Point<N,T>& x) const = 0;
+  
+  // convenience function for checking contains on multiple points:    (x ∈ S) ∀ (x ∈ list)
+  bool ContainsAll(const std::vector<Point<N,T>>& list) const {
+    return std::all_of(list.begin(), list.end(), [this] (const Point<N,T>& x) { return this->Contains(x); });
+  }
 };
 
 // Convex sets are any sets that are closed under convex combinations, of arithmetic types
@@ -57,8 +66,22 @@ public:
   virtual bool InHalfPlane(const Halfplane<N,T>& H) const = 0;
 };
 
-using PointSet2f       = PointSet<2, f32>;
-using ConvexPointSet2f = ConvexPointSet<2, f32>;
+// if the points set can be bounded on all sides, then we can generate an AABB
+template <DimType N, typename T>
+class BoundedConvexSet : public ConvexPointSet<N,T> {
+public:
+  virtual ~BoundedConvexSet() {} 
+
+  virtual AxisAlignedHyperCube<N,T> GetAxisAlignedBoundingBox() const = 0;
+
+  // TODO: I don't know if this belongs here, but this is easiest for now
+  virtual bool Intersects(const AxisAlignedHyperCube<N,T>& C) const = 0;
+};
+
+
+using PointSet2f         = PointSet<2, f32>;
+using ConvexPointSet2f   = ConvexPointSet<2, f32>;
+using BoundedConvexSet2f = BoundedConvexSet<2, f32>;
 
 }
 

@@ -12,8 +12,8 @@ from grpc._channel import _Rendezvous
 import logging
 
 from . import util
-from .messaging import external_interface_pb2 as protocol
-from .messaging import external_interface_pb2_grpc as client
+from .messaging import protocol
+from .messaging import client
 
 MODULE_LOGGER = logging.getLogger(__name__)
 

@@ -64,6 +64,9 @@ public:
   : _layerName(layerName)
   , _layoutMap(std::move(layoutSpec)){}
   virtual ~CompositeImageLayer();
+  
+  bool operator ==(const CompositeImageLayer& other) const;
+
 
   LayerName        GetLayerName() const { return _layerName;}
   const LayoutMap& GetLayoutMap() const { return _layoutMap;}
@@ -126,6 +129,9 @@ struct CompositeImageLayer::SpriteBox{
   , height(spriteBox.height){
     ValidateRenderConfig();
   }
+  
+  bool operator ==(const SpriteBox& other) const;
+
 
   SerializedSpriteBox Serialize() const;
   bool ValidateRenderConfig() const;
@@ -160,6 +166,7 @@ struct CompositeImageLayer::SpriteEntry{
   Vision::SpriteName GetSpriteName() const { return _spriteName;}
   bool GetFrame(const u32 index, Vision::SpriteHandle& handle) const;
   uint GetNumFrames() const { return _frameStartOffset + _spriteSequence.GetNumFrames(); }
+  bool ContentIsValid() const { return _spriteSequence.GetNumFrames() > 0;}
 
 private:
   // Allow sprite entries to offset 

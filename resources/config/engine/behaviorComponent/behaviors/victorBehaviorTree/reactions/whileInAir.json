@@ -1,0 +1,27 @@
+{
+  "behaviorID": "WhileInAir",
+  "behaviorClass" : "DispatcherStrictPriority",
+
+  "interruptActiveBehavior": true,
+
+  "associatedActiveFeature": "NoFeature",
+  "emotionEventOnActivated": "ReactToPickedUp",
+
+  "wantsToBeActivatedCondition": {
+    "conditionType": "OffTreadsState",
+    "targetState": "InAir"
+  },
+
+  "wantsToCancelSelfCondition": {
+    "conditionType": "Compound",
+    "not": {
+      "conditionType": "OffTreadsState",
+      "targetState": "InAir"
+    }
+  },
+
+  "behaviors": [
+    "Wait"
+  ]
+
+}

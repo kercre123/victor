@@ -75,12 +75,17 @@ public:
   // the map is modified. Function is expected to clear the vector before returning the new borders
   virtual void CalculateBorders(EContentType innerType, const FullContentArray& outerTypes, BorderRegionVector& outBorders) = 0;
   
+  // TODO: remove entirely once behaviors no-longer grab INavMap pointers directly - map component can do wrapping to `AnyOf`
   // checks if the given region intersects with a node of the given types
   virtual bool HasCollisionWithTypes(const FastPolygon& poly, const FullContentArray& types) const = 0;
   
+  // returns the accumulated area of cells that satisfy the predicate
+  virtual float GetCollisionArea(const BoundedConvexSet2f& region, NodePredicate func) const = 0;
+  
+  // TODO: remove Poly2f version once behaviors no-longer grab INavMap pointers directly
   // returns true if any node that intersects with the provided regions evaluates `func` as true.
-  virtual bool AnyOf(const FastPolygon& poly, NodePredicate func) const = 0;
-  virtual bool AnyOf(const Ball2f& b, NodePredicate func) const = 0;
+  virtual bool AnyOf(const Poly2f& poly, NodePredicate func) const = 0;
+  virtual bool AnyOf(const BoundedConvexSet2f& region, NodePredicate func) const = 0;
   
   // returns true if there are any nodes of the given type, false otherwise
   virtual bool HasContentType(EContentType type) const = 0;
@@ -94,8 +99,10 @@ public:
   // populate a list of all data that matches the predicate
   virtual void FindContentIf(NodePredicate pred, MemoryMapTypes::MemoryMapDataConstList& output) const = 0;
   
-  // populate a list of all data that matches the predicate inside poly
-  virtual void FindContentIf(const FastPolygon& poly, NodePredicate pred, MemoryMapTypes::MemoryMapDataConstList& output) const = 0;
+  // TODO: remove Poly2f version once behaviors no-longer grab INavMap pointers directly
+  // populate a list of all data that matches the predicate inside region
+  virtual void FindContentIf(const Poly2f& poly, NodePredicate pred, MemoryMapTypes::MemoryMapDataConstList& output) const = 0;
+  virtual void FindContentIf(const BoundedConvexSet2f& region, NodePredicate pred, MemoryMapTypes::MemoryMapDataConstList& output) const = 0;
   
 protected:
   
@@ -106,9 +113,11 @@ protected:
   // NOTE: Leave modifying calls as protected methods, and access them via the friend classes (at the moment only
   //       MapComponent). The classes manage publication of map data, and need to monitor if the map state has changed
 
+  // TODO: remove Poly2f version once behaviors no-longer grab INavMap pointers directly
   // add a poly with the specified content. 
   virtual bool Insert(const Poly2f& poly, const MemoryMapData& data) = 0;
-  virtual bool Insert(const Poly2f& poly, NodeTransformFunction transform) = 0;
+  virtual bool Insert(const BoundedConvexSet2f& r, const MemoryMapData& data) = 0;
+  virtual bool Insert(const BoundedConvexSet2f& r, NodeTransformFunction transform) = 0;
   
   // merge the given map into this map by applying to the other's information the given transform
   // although this methods allows merging any INavMap into any INavMap, subclasses are not
@@ -119,8 +128,8 @@ protected:
   // attempt to apply a transformation function to all nodes in the tree
   virtual bool TransformContent(NodeTransformFunction transform) = 0;
   
-  // attempt to apply a transformation function to all nodes in the tree constrained by poly
-  virtual bool TransformContent(const Poly2f& poly, NodeTransformFunction transform) = 0;
+  // attempt to apply a transformation function to all nodes in the tree constrained by region
+  virtual bool TransformContent(const BoundedConvexSet2f& region, NodeTransformFunction transform) = 0;
 
   // TODO: FillBorder should be local (need to specify a max quad that can perform the operation, otherwise the
   // bounds keeps growing as Cozmo explores). Profiling+Performance required.

@@ -46,7 +46,7 @@ namespace Anki {
       _currDrivingAnimations = _moodBasedDrivingAnims.at(SimpleMoodType::Default);
     }
 
-    void DrivingAnimationHandler::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) 
+    void DrivingAnimationHandler::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) 
     {
       _robot = robot;
       if(_robot->HasExternalInterface()){

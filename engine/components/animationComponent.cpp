@@ -63,10 +63,10 @@ AnimationComponent::AnimationComponent()
 
 }
 
-void AnimationComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void AnimationComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
-  _dataAccessor = dependentComponents.GetBasePtr<DataAccessorComponent>();
+  _dataAccessor = dependentComps.GetComponentPtr<DataAccessorComponent>();
   const CozmoContext* context = _robot->GetContext();
   _animationGroups = std::make_unique<AnimationGroupWrapper>(*(context->GetDataLoader()->GetAnimationGroups()));
   if (context) {
@@ -269,6 +269,7 @@ Result AnimationComponent::PlayCompositeAnimation(const std::string& animName,
                                                   u32 frameInterval_ms,
                                                   int& outDuration_ms,
                                                   bool interruptRunning,
+                                                  bool emptySpriteBoxesAreValid,
                                                   AnimationCompleteCallback callback)
 {
   if (!_isInitialized) {
@@ -315,7 +316,7 @@ Result AnimationComponent::PlayCompositeAnimation(const std::string& animName,
   }
 
   outDuration_ms = anim->GetLastKeyFrameEndTime_ms();
-  return DisplayFaceImage(compositeImage, frameInterval_ms, outDuration_ms, interruptRunning);
+  return DisplayFaceImage(compositeImage, frameInterval_ms, outDuration_ms, interruptRunning, emptySpriteBoxesAreValid);
 }
 
   
@@ -354,17 +355,62 @@ Result AnimationComponent::StopAnimByName(const std::string& animName)
 
 }
 
+
+void AnimationComponent::AlterStreamingAnimationAtTime(RobotInterface::EngineToRobot&& msg, 
+                                                       TimeStamp_t relativeStreamTime_ms,  
+                                                       bool applyBeforeTick)
+{
+  RobotInterface::AlterStreamingAnimationAtTime alterMsg;
+  alterMsg.relativeStreamTime_ms = relativeStreamTime_ms;
+  alterMsg.applyBeforeTick = applyBeforeTick;
+  alterMsg.internalTag = static_cast<uint8_t>(msg.GetTag());
+  switch(msg.GetTag()){
+    case RobotInterface::EngineToRobotTag::lockAnimTracks:
+    {
+      alterMsg.lockAnimTracks = std::move(msg.Get_lockAnimTracks());
+      _delayedTracksToLock.emplace(relativeStreamTime_ms, alterMsg.lockAnimTracks.whichTracks);
+      break;
+    }
+    case RobotInterface::EngineToRobotTag::postAudioEvent:
+    {
+      alterMsg.postAudioEvent = std::move(msg.Get_postAudioEvent());
+      break;
+    }
+    default:
+    {
+      PRINT_NAMED_ERROR("AnimationComponent.AlterStreamingAnimationAtTime.UnsupportedMessageType",
+                        "Message Type %s is not currently implemented - update clad and anim process to support",
+                        RobotInterface::EngineToRobotTagToString(msg.GetTag()));
+      break;
+    }
+  }
+  
+  RobotInterface::EngineToRobot wrapper(std::move(alterMsg));
+  _robot->SendMessage(wrapper);
+}
+
+
   
 // Enables only the specified tracks. 
 // Status of other tracks remain unchanged.
 void AnimationComponent::UnlockTracks(u8 tracks)
 {
+  if(!_delayedTracksToLock.empty()){
+    PRINT_NAMED_ERROR("AnimationComponent.UnlockTracks.DelayedTrackLocksPending",
+                      "Unlocking tracks while delayed tracks to lock results in undefined behavior");
+  }
+
   _lockedTracks &= ~tracks;
   _robot->SendRobotMessage<RobotInterface::LockAnimTracks>(_lockedTracks);
 }
 
 void AnimationComponent::UnlockAllTracks()
 {
+  if(!_delayedTracksToLock.empty()){
+    PRINT_NAMED_ERROR("AnimationComponent.UnlockAllTracks.DelayedTrackLocksPending",
+                      "Unlocking tracks while delayed tracks to lock results in undefined behavior");
+  }
+
   if (_lockedTracks != 0) {
     _lockedTracks = 0;
     _robot->SendRobotMessage<RobotInterface::LockAnimTracks>(_lockedTracks);
@@ -375,6 +421,11 @@ void AnimationComponent::UnlockAllTracks()
 // Status of other tracks remain unchanged.
 void AnimationComponent::LockTracks(u8 tracks)
 {
+  if(!_delayedTracksToLock.empty()){
+    PRINT_NAMED_ERROR("AnimationComponent.LockTracks.DelayedTrackLocksPending",
+                      "Locking tracks while delayed tracks to lock results in undefined behavior");
+  }
+
   _lockedTracks |= tracks;
   _robot->SendRobotMessage<RobotInterface::LockAnimTracks>(_lockedTracks);
 }
@@ -533,7 +584,9 @@ void AnimationComponent::SetAnimationCallback(const std::string& animName,
 }
 
 
-Result AnimationComponent::DisplayFaceImage(const Vision::CompositeImage& compositeImage, u32 frameInterval_ms, u32 duration_ms, bool interruptRunning)
+Result AnimationComponent::DisplayFaceImage(const Vision::CompositeImage& compositeImage, 
+                                            u32 frameInterval_ms, u32 duration_ms, 
+                                            bool interruptRunning, bool emptySpriteBoxesAreValid)
 {
   // TODO: Is this what interruptRunning should mean?
   //       Or should it queue on anim process side and optionally interrupt currently executing anim?
@@ -543,7 +596,7 @@ Result AnimationComponent::DisplayFaceImage(const Vision::CompositeImage& compos
   }
 
   // Send the image to the animation process in chunks
-  const std::vector<Vision::CompositeImageChunk> imageChunks = compositeImage.GetImageChunks();
+  const std::vector<Vision::CompositeImageChunk> imageChunks = compositeImage.GetImageChunks(emptySpriteBoxesAreValid);
   for(const auto& chunk: imageChunks){
     _robot->SendRobotMessage<RobotInterface::DisplayCompositeImageChunk>(_compositeImageID, frameInterval_ms, duration_ms, chunk);
   }
@@ -824,6 +877,18 @@ void AnimationComponent::HandleAnimStarted(const AnkiEvent<RobotInterface::Robot
 void AnimationComponent::HandleAnimEnded(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   const auto & payload = message.GetData().Get_animEnded();
+
+  if(!_delayedTracksToLock.empty()){
+    const auto& endTime = payload.streamTimeAnimEnded;
+    for(const auto& pair: _delayedTracksToLock){
+      if(pair.first < endTime){
+        _lockedTracks |= pair.second;
+      }else{
+        break;
+      }
+    }
+    _delayedTracksToLock.clear();
+  }
   
   // Verify that expected animation completed and execute callback
   auto it = _callbackMap.find(payload.tag);

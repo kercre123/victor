@@ -1,0 +1,38 @@
+// File: backapackAnimationTriggers
+// Author: Kevin M. Karol
+// Created: 6/21/18
+// Copyright: Anki, inc. 2018
+
+
+namespace Anki {
+namespace Cozmo {
+
+enum int_32 BackpackAnimationTrigger
+{
+  // Please keep alphabetical
+
+  Charging,
+  BadCharger,
+  Idle_09,
+  Off,
+  SpinnerBlueCelebration,
+  SpinnerBlueHoldTarget,
+  SpinnerBlueSelectTarget,
+  SpinnerGreenCelebration,
+  SpinnerGreenHoldTarget,
+  SpinnerGreenSelectTarget,
+  SpinnerPurpleCelebration,
+  SpinnerPurpleHoldTarget,
+  SpinnerPurpleSelectTarget,
+  SpinnerRedCelebration,
+  SpinnerRedHoldTarget,
+  SpinnerRedSelectTarget,
+  SpinnerYellowCelebration,
+  SpinnerYellowHoldTarget,
+  SpinnerYellowSelectTarget,
+
+  Count
+}
+
+} // end namespace Cozmo
+} // end namespace Anki

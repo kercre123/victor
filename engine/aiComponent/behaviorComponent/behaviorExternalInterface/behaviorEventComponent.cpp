@@ -35,7 +35,7 @@ BehaviorEventComponent::BehaviorEventComponent()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEventComponent::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
+void BehaviorEventComponent::InitDependent(Robot* robot, const BCCompMap& dependentComps)
 {
   Init(robot->GetAIComponent().GetComponent<BehaviorComponent>());
 }
@@ -75,6 +75,17 @@ void BehaviorEventComponent::SubscribeToTags(IBehavior* subscriber,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEventComponent::SubscribeToTags(IBehavior* subscriber,
                                            std::set<RobotInterface::RobotToEngineTag>&& tags) const
+{
+  if(ANKI_VERIFY(_messageSubscriber != nullptr,
+                 "BehaviorEventComponent.SubscribeToTags.NoMessageSubscriber",
+                 "")){
+    _messageSubscriber->_ref.SubscribeToTags(subscriber, std::move(tags));
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEventComponent::SubscribeToTags(IBehavior* subscriber,
+                                             std::set<AppToEngineTag>&& tags) const
 {
   if(ANKI_VERIFY(_messageSubscriber != nullptr,
                  "BehaviorEventComponent.SubscribeToTags.NoMessageSubscriber",

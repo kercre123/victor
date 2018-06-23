@@ -38,9 +38,9 @@ DataAccessorComponent::~DataAccessorComponent()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DataAccessorComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void DataAccessorComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
-  auto* context = dependentComponents.GetValue<ContextWrapper>().context;
+  auto* context = dependentComps.GetComponent<ContextWrapper>().context;
   auto& dataLoader = *context->GetDataLoader();
   _spritePaths = dataLoader.GetSpritePaths();
   _spriteCache = dataLoader.GetSpriteCache();
@@ -48,7 +48,6 @@ void DataAccessorComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMa
   _compImgMap = dataLoader.GetCompImageMap();
   _compLayoutMap = dataLoader.GetCompLayoutMap();
   _cannedAnimationContainer = dataLoader.GetCannedAnimationContainer();
-  _textToSpeechConfig = dataLoader.GetTextToSpeechConfig();
   _weatherResponseMap = dataLoader.GetWeatherResponseMap();
 }
 

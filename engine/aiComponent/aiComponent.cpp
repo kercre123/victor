@@ -66,7 +66,7 @@ AIComponent::~AIComponent()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void AIComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   const CozmoContext* context = robot->GetContext();
@@ -98,7 +98,7 @@ void AIComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& depende
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIComponent::UpdateDependent(const RobotCompMap& dependentComponents)
+void AIComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
   _aiComponents->UpdateComponents();
   CheckForSuddenObstacle(*_robot);

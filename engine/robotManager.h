@@ -39,7 +39,7 @@ class RobotManager : Util::noncopyable
 {
 public:
 
-  RobotManager(const CozmoContext* context);
+  RobotManager(CozmoContext* context);
 
   ~RobotManager();
 
@@ -70,7 +70,7 @@ public:
 
 protected:
   std::unique_ptr<Robot> _robot;
-  const CozmoContext* _context;
+  CozmoContext* _context;
   RobotEventHandler _robotEventHandler;
   std::unique_ptr<RobotInterface::MessageHandler> _robotMessageHandler;
   std::unique_ptr<RobotInitialConnection> _initialConnection;

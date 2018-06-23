@@ -15,11 +15,10 @@
 #include "quadTreeNode.h"
 #include "quadTreeProcessor.h"
 
-#include "engine/navMap/memoryMap/memoryMapTypes.h"
-#include "coretech/common/engine/math/point.h"
-#include "coretech/common/engine/math/triangle.h"
-
 namespace Anki {
+
+class Pose3d;
+
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -51,14 +50,14 @@ public:
   // Operations
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // notify the QT that the given poly has the specified content. If a NodeTransformFunction is specified instead of 
+  // notify the QT that the given region has the specified content. If a NodeTransformFunction is specified instead of 
   // data, that node will subdivide as necessary and then apply the transform to the default leaf data
-  bool Insert(const FastPolygon& poly, NodeTransformFunction transform);
+  bool Insert(const BoundedConvexSet2f& region, NodeTransformFunction transform);
   
-  // modify content bounded by poly. Note that if the poly extends outside the current size of the root node,
+  // modify content bounded by region. Note that if the region extends outside the current size of the root node,
   // it will not expand the root node
+  bool Transform(const BoundedConvexSet2f& region, NodeTransformFunction transform);
   bool Transform(NodeTransformFunction transform);
-  bool Transform(const Poly2f& poly, NodeTransformFunction transform);
   
   // merge the given quadtree into this quad tree, applying to the quads from other the given transform
   bool Merge(const QuadTree& other, const Pose3d& transform);
@@ -71,7 +70,7 @@ private:
 
   // Expand the root node so that the given quad/point/triangle is included in the navMesh, up to the max root size limit.
   // shiftAllowedCount: number of shifts we can do if the root reaches the max size upon expanding (or already is at max.)
-  bool ExpandToFit(const Poly2f& polyToCover);  
+  bool ExpandToFit(const AxisAlignedQuad& region);  
 
   // quadTrees are always the highest level node, so we cannot change it's parent. If needed, a Merge can insert
   // a quadtree into an existing tree
@@ -79,7 +78,7 @@ private:
 
   // moves this node's center towards the required points, so that they can be included in this node
   // returns true if the root shifts, false if it can't shift to accomodate all points or the points are already contained
-  bool ShiftRoot(const Poly2f& requiredPoints, QuadTreeProcessor& processor);
+  bool ShiftRoot(const AxisAlignedQuad& region, QuadTreeProcessor& processor);
 
   // Convert this node into a parent of its level, delegating its children to the new child that substitutes it
   // In order for a quadtree to be valid, the only way this could work without further operations is calling this

@@ -41,14 +41,16 @@ inline static Json::LargestInt TimeToInt64(EnrolledFaceEntry::Time time)
   return jsonTime;
 }
 
-UserName::UserName(const std::string& name) :
-  _name( Util::StringToLower(name) )
+UserName::UserName(const std::string& name)
+  : _name( Util::StringToLower(name) )
+  , _displayName( name )
 {
 
 }
 
 UserName& UserName::operator=( const std::string& name )
 {
+  _displayName = name;
   _name = Util::StringToLower(name);
   return *this;
 }
@@ -237,7 +239,7 @@ EnrolledFaceStorage EnrolledFaceEntry::ConvertToEnrolledFaceStorage() const
   message.enrollmentTimeCount     = duration_cast<seconds>(_enrollmentTime.time_since_epoch()).count();
   message.lastDataUpdateTimeCount = duration_cast<seconds>(_lastDataUpdateTime.time_since_epoch()).count();
   message.faceID                  = _faceID;
-  message.name                    = _name.asString();
+  message.name                    = _name.asString(); // save formatted string
   
   message.albumEntries.reserve(_albumEntrySeenTimes.size());
   message.albumEntryUpdateTimes.reserve(_albumEntrySeenTimes.size());

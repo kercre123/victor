@@ -16,13 +16,12 @@
       "behaviorName" : "PromptToPlayBlackJack",
       "behaviorClass" : "PromptUserForVoiceCommand",
 
+      "streamType"                       : "Blackjack",
       "earConAudioEventBegin"            : "Play__Robot_Vic_Sfx__Wake_Word_On",
       "earConAudioEventSuccess"          : "Play__Robot_Vic_Sfx__Wake_Word_Success",
       "earConAudioEventNeutral"          : "Play__Robot_Vic_Sfx__Wake_Word_Off",
       "vocalPromptString"                : "Play Blackjack?",
-      "listenAnimOverrideTrigger"        : "BlackJack_RtpIdle",
-      "vocalResponseToBadIntentString"   : "Didn't catch that.", //TODO:(str) "BlackJack_RtpTimeOut"?
-      "maxNumberOfReprompts"             : 1,
+      "maxNumberOfReprompts"             : 0,
       "stopListeningOnIntents"           : true,
       "playListeningGetIn"               : false,
       "playListeningGetOut"              : false,

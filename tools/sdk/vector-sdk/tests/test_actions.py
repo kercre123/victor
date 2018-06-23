@@ -9,11 +9,14 @@ Test actions to make sure they work properly in all combinations:
 * Lastly disconnecting and reconnecting with the same robot
 '''
 
-import asyncio
-from pathlib import Path
 import argparse
+import asyncio
+import os
+from pathlib import Path
+import sys
 import time
 
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import vector
 
 def main():

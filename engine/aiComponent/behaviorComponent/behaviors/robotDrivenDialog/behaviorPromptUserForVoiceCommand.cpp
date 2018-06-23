@@ -23,7 +23,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/audio/engineRobotAudioClient.h"
-#include "engine/components/bodyLightComponent.h"
+#include "engine/components/backpackLights/backpackLightComponent.h"
 #include "engine/components/mics/micComponent.h"
 #include "micDataTypes.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
@@ -36,6 +36,7 @@ namespace {
   const char* kDefaultTTSBehaviorID = "DefaultTextToSpeechLoop";
 
   // JSON keys
+  const char* kStreamType                         = "streamType";
   const char* kEarConBegin                        = "earConAudioEventBegin";
   const char* kEarConSuccess                      = "earConAudioEventSuccess";
   const char* kEarConFail                         = "earConAudioEventNeutral";
@@ -63,7 +64,8 @@ namespace {
                         
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPromptUserForVoiceCommand::InstanceConfig::InstanceConfig()
-: earConBegin( AudioMetaData::GameEvent::GenericEvent::Invalid )
+: streamType( CloudMic::StreamType::Normal )
+, earConBegin( AudioMetaData::GameEvent::GenericEvent::Invalid )
 , earConSuccess( AudioMetaData::GameEvent::GenericEvent::Invalid )
 , earConFail( AudioMetaData::GameEvent::GenericEvent::Invalid )
 , ttsBehaviorID(kDefaultTTSBehaviorID)
@@ -96,6 +98,13 @@ BehaviorPromptUserForVoiceCommand::DynamicVariables::DynamicVariables()
 BehaviorPromptUserForVoiceCommand::BehaviorPromptUserForVoiceCommand(const Json::Value& config)
 : ICozmoBehavior(config)
 {
+  // we must have a stream type supplied, else the cloud doesn't know what to do with it
+  // * defaults don't make much sense at this point either
+  const std::string streamTypeString = JsonTools::ParseString(config,
+                                                              kStreamType,
+                                                              "BehaviorPromptUserForVoiceCommand.MissingStreamType");
+  _iConfig.streamType = CloudMic::StreamTypeFromString( streamTypeString );
+
   // ear-con vars
   {
     std::string earConString;
@@ -195,7 +204,8 @@ void BehaviorPromptUserForVoiceCommand::GetBehaviorJsonKeys(std::set<const char*
     kMaxRepromptKey,
     kProceduralBackpackLights,
     kListeningGetInKey,
-    kListeningGetOutKey
+    kListeningGetOutKey,
+    kStreamType
   };
 
   expectedKeys.insert( std::begin(list), std::end(list) );
@@ -294,7 +304,7 @@ void BehaviorPromptUserForVoiceCommand::TransitionToPrompting()
 void BehaviorPromptUserForVoiceCommand::TransitionToListening()
 {
   // Turn on backpack lights to indicate streaming
-  static const BackpackLights kStreamingLights = 
+  static const BackpackLightAnimation::BackpackAnimation kStreamingLights = 
   {
     .onColors               = {{NamedColors::CYAN, NamedColors::CYAN, NamedColors::CYAN}},
     .offColors              = {{NamedColors::CYAN, NamedColors::CYAN, NamedColors::CYAN}},
@@ -306,8 +316,8 @@ void BehaviorPromptUserForVoiceCommand::TransitionToListening()
   };
 
   if(_iConfig.backpackLights){
-    BodyLightComponent& blc = GetBEI().GetBodyLightComponent();
-    blc.StartLoopingBackpackLights(kStreamingLights, BackpackLightSource::Behavior, _dVars.lightsHandle);
+    BackpackLightComponent& blc = GetBEI().GetBackpackLightComponent();
+    blc.StartLoopingBackpackAnimation(kStreamingLights, BackpackLightSource::Behavior, _dVars.lightsHandle);
   }
 
   //Trip the earcon
@@ -315,7 +325,7 @@ void BehaviorPromptUserForVoiceCommand::TransitionToListening()
     GetBEI().GetRobotAudioClient().PostEvent(_iConfig.earConBegin, AudioMetaData::GameObjectType::Behavior);
   }
 
-  GetBEI().GetMicComponent().StartWakeWordlessStreaming();
+  GetBEI().GetMicComponent().StartWakeWordlessStreaming(_iConfig.streamType);
   _dVars.streamingBeginTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
   SET_STATE(Listening);
@@ -454,8 +464,8 @@ void BehaviorPromptUserForVoiceCommand::TransitionToReprompt()
 void BehaviorPromptUserForVoiceCommand::TurnOffBackpackLights()
 {
   if(_iConfig.backpackLights && _dVars.lightsHandle.IsValid()){
-    BodyLightComponent& blc = GetBEI().GetBodyLightComponent();
-    blc.StopLoopingBackpackLights(_dVars.lightsHandle);
+    BackpackLightComponent& blc = GetBEI().GetBackpackLightComponent();
+    blc.StopLoopingBackpackAnimation(_dVars.lightsHandle);
   }
 }
 

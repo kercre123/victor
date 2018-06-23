@@ -85,6 +85,7 @@ namespace {
   const char* kBootIDFile = "/proc/sys/kernel/random/boot_id";
   const char* kLocalTimeFile = "/data/etc/localtime";
   constexpr const char* kUniversalTimeFile = "/usr/share/zoneinfo/Universal";
+  constexpr const char* kRobotVersionFile = "/anki/etc/version";
 
   // System vars
   uint32_t _cpuFreq_kHz;      // CPU freq
@@ -93,6 +94,7 @@ namespace {
   float _idleTime_s;          // Idle time in seconds
   uint32_t _memTotal_kB;      // Total memory in kB
   uint32_t _memFree_kB;       // Free memory in kB
+  uint32_t _memAvailable_kb;  // Available memory in kB
   std::vector<std::string> _CPUTimeStats; // CPU time stats lines
 
 
@@ -175,6 +177,9 @@ void OSState::Update()
       // Update temperature reading
       UpdateTemperature_C();
 
+      // Update memory info
+      UpdateMemoryInfo();
+
       // const auto now = steady_clock::now();
       // const auto elapsed_us = duration_cast<microseconds>(now - startTime).count();
       // PRINT_NAMED_INFO("OSState", "Update took %lld microseconds", elapsed_us);
@@ -251,7 +256,7 @@ void OSState::UpdateMemoryInfo() const
   _memInfoFile.open(kMemInfoFile, std::ifstream::in);
   if (_memInfoFile.is_open()) {
     std::string discard;
-    _memInfoFile >> discard >> _memTotal_kB >> discard >> discard >> _memFree_kB;
+    _memInfoFile >> discard >> _memTotal_kB >> discard >> discard >> _memFree_kB >> discard >> discard >> _memAvailable_kb;
     _memInfoFile.close();
   }
 }
@@ -305,14 +310,13 @@ float OSState::GetUptimeAndIdleTime(float &idleTime_s) const
   return _uptime_s;
 }
 
-uint32_t OSState::GetMemoryInfo(uint32_t &freeMem_kB) const
+uint32_t OSState::GetMemoryInfo(uint32_t &freeMem_kB, uint32_t &availableMem_kB) const
 {
-  // Better to have this relatively expensive call as on-demand only
-  DEV_ASSERT(_updatePeriod_ms == 0, "OSState.GetMemoryInfo.NonZeroUpdate");
   if (_updatePeriod_ms == 0) {
     UpdateMemoryInfo();
   }
   freeMem_kB = _memFree_kB;
+  availableMem_kB = _memAvailable_kb;
   return _memTotal_kB;
 }
 
@@ -350,6 +354,16 @@ const std::string& OSState::GetOSBuildVersion()
   }
 
   return _osBuildVersion;
+}
+
+const std::string& OSState::GetRobotVersion()
+{
+  if (_robotVersion.empty()) {
+    std::ifstream ifs(kRobotVersionFile);
+    ifs >> _robotVersion;
+    Anki::Util::StringTrimWhitespaceFromEnd(_robotVersion);
+  }
+  return _robotVersion;
 }
 
 const std::string& OSState::GetBuildSha()
@@ -531,7 +545,7 @@ bool OSState::IsWallTimeSynced() const
   if (kOSState_FakeNoTime) {
     return false;
   }
-  
+
   struct timex txc = {};
 
   if (adjtimex(&txc) < 0) {
@@ -551,7 +565,7 @@ bool OSState::HasTimezone() const
   if (kOSState_FakeNoTimezone) {
     return false;
   }
-  
+
   if (!Util::FileUtils::FileExists(kUniversalTimeFile)) {
     LOG_ERROR("OSState.HasTimezone.NoUniversalTimeFile",
               "Unable to find universal time file '%s', cant check for timezone (assuming none)",
@@ -593,7 +607,7 @@ bool OSState::HasTimezone() const
   static const size_t linkPathLen = 1024;
   static_assert (GetConstStrLength(kUniversalTimeFile) < linkPathLen,
                  "OSState.HasTimezone.InvalidFilePath");
-    
+
   if( linkStatus.st_size >= linkPathLen ) {
     LOG_ERROR("OSState.HasTimezone.LinkNameTooLong",
               "Link path size is %ld, but we only made room for %zu",

@@ -15,7 +15,7 @@
 
 #include "clad/audio/audioEventTypes.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/components/bodyLightComponentTypes.h"
+#include "engine/components/backpackLights/backpackLightComponentTypes.h"
 #include "engine/components/mics/micDirectionTypes.h"
 
 
@@ -133,6 +133,8 @@ private:
     // response behavior to hearing the trigger word (or intent)
     std::string reactionBehaviorString;
     std::shared_ptr<BehaviorReactToMicDirection> reactionBehavior;
+
+    ICozmoBehaviorPtr unmatchedIntentBehavior;
 
   } _iVars;
 

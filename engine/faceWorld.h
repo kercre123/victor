@@ -17,18 +17,20 @@
 
 #include "coretech/vision/engine/trackedFace.h"
 
-#include "engine/ankiEventUtil.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
-#include "util/entityComponent/iDependencyManagedComponent.h"
+#include "engine/ankiEventUtil.h"
 #include "engine/robotComponents_fwd.h"
 #include "engine/smartFaceId.h"
 #include "engine/viz/vizManager.h"
+#include "engine/wallTime.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 
 #include "clad/types/actionTypes.h"
 
 #include <map>
 #include <set>
 #include <vector>
+#include <deque>
 
 namespace Anki {
 namespace Cozmo {
@@ -56,7 +58,7 @@ namespace Cozmo {
     //////
     // IDependencyManagedComponent functions
     //////
-    virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+    virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
     virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
         dependencies.insert(RobotComponentID::CozmoContextWrapper);
     };
@@ -141,6 +143,26 @@ namespace Cozmo {
     // IsMakingEyeContact with only return true if it finds a face that is making
     // eye contact and has a time stamp greater than seenSinceTime_ms
     bool IsMakingEyeContact(const u32 withinLast_ms) const;
+
+
+    // Get the wall times that the given face ID has been observed. This implementation returns at most 2
+    // entries with front() being the wall time that was recorded first. On loading time, this will populate
+    // with wall times from enrolled face entries (even if those faces haven't been seen since boot). It will
+    // be updated whenever the face is observed. If it returns 2 entries, then the difference between them can
+    // be used as the delta between when we most recently saw the face and the time before that, e.g. to
+    // determine when we see someone how long it's been since the last time we saw them.  If the face is
+    // unknown, an empty queue will be returned. The queue may contain a single element in the case that it's
+    // an enrolled face loaded from storage, or in the case that the face has only been seen once. Tracking
+    // only (negative) face IDs are not returned here.
+    // 
+    // Note: times are only updated here if wall time is accurate (synced with NTP). Inaccurate times (e.g. if
+    // we're off wifi) won't get added here at all (although times loaded from disk will)
+    using ObservationTimeHistory = std::deque<WallTime::TimePoint_t>;
+    const ObservationTimeHistory& GetWallTimesObserved(const SmartFaceID& faceID);
+    const ObservationTimeHistory& GetWallTimesObserved(Vision::FaceID_t faceID);
+
+    // this should only be called by robot when the face data is loaded
+    void InitLoadedKnownFaces(const std::list<Vision::LoadedKnownFace>& loadedFaces);
     
     // template for all events we subscribe to
     template<typename T>
@@ -194,6 +216,12 @@ namespace Cozmo {
     void SendObjectUpdateToWebViz( const ExternalInterface::RobotObservedFace& msg ) const;
     
     std::vector<Signal::SmartHandle> _eventHandles;
+
+    // For each enrolled face, keep track of the last wall time where we observed it as well as the time
+    // before that in a deque of max size 2. On engine startup, this timestamp will be read from the known
+    // faces saved album data for the initial entry so it can work across boots
+    using ObservationHistoryMap = std::map<Vision::FaceID_t, ObservationTimeHistory>;
+    ObservationHistoryMap _wallTimesObserved;
     
   }; // class FaceWorld
   

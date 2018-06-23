@@ -11,14 +11,15 @@ all: python
 python: .PHONY
 	python3 -m pip install grpcio grpcio-tools aiogrpc googleapis-common-protos
 	mkdir -p $(PYTHON_OUT)
-	cp $(GIT_ROOT)/cloud/gateway/external_interface.proto $(PYTHON_OUT)
+	cp $(GIT_ROOT)/cloud/gateway/*.proto $(PYTHON_OUT)
+	sed -i -e 's/"messages.proto"/"vector\/messaging\/messages.proto"/g' $(PYTHON_OUT)/external_interface.proto
 
 	# mkdir -p $(PYTHON_OUT)
 	python3 -m grpc_tools.protoc \
 	-I $(PYTHON_SDK_ROOT) \
 	-I $(GIT_ROOT)/cloud/go/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
 	--python_out=$(PYTHON_SDK_ROOT) --grpc_python_out=$(PYTHON_SDK_ROOT) \
-	$(PYTHON_OUT)/external_interface.proto
+	$(PYTHON_OUT)/*.proto
 
 flat: .PHONY
 	flatc \
@@ -26,7 +27,7 @@ flat: .PHONY
 	-I $(PYTHON_SDK_ROOT) \
 	-I $(GIT_ROOT)/cloud/go/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
 	--proto \
-	$(PYTHON_OUT)/external_interface.proto
+	$(PYTHON_OUT)/*.proto
 
 .require_ip: .PHONY
 ifeq ("$(ANKI_ROBOT_HOST)","")
@@ -46,6 +47,18 @@ create_certs: .require_ip
 	scp trust.cert root@$(ANKI_ROBOT_HOST):/data/trust.cert
 	scp trust.key root@$(ANKI_ROBOT_HOST):/data/trust.key
 
+create_certs_mac:
+	cp trust.conf temp_trust.conf
+	echo "DNS.2       = localhost:8443" >> temp_trust.conf
+	openssl req -config temp_trust.conf \
+	-subj "/C=US/ST=California/L=SF/O=Anki/CN=localhost" \
+	-new -x509 -days 1000 -newkey rsa:2048 -nodes -keyout trust.key -out trust.cert
+	rm temp_trust.conf
+	mkdir -p /tmp/anki/gateway
+	cp trust.key /tmp/anki/gateway
+	cp trust.cert /tmp/anki/gateway
+
+
 test_curl_events: .require_ip
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/event_stream -d '{}'
 	@echo
@@ -54,16 +67,36 @@ test_robot_state_stream: .require_ip
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/robot_state_stream -d '{}'
 	@echo
 
+test_settings_fake: .require_ip
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/settings -d '{}'
+	@echo
+
+test_ping_pong: .require_ip
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/pang -d '{"ping":10}'
+	@echo
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/bang -d '{"bing":"SomeThing"}'
+	@echo
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/pang -d '{"ping":20}'
+	@echo
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/bang -d '{"bing":"zome_Thing"}'
+	@echo
+
+test_onboarding: .require_ip
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/get_onboarding_state -d '{}'
+	@echo
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/send_onboarding_input -d '{"onboarding_continue":{}}'
+	@echo
+
 test_curl: .require_ip
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/drive_wheels -d '{"left_wheel_mmps":100.0,"right_wheel_mmps":-100.0,"left_wheel_mmps2":0.0,"right_wheel_mmps2":0.0}'
 	@echo
 	sleep 2	
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/drive_wheels -d '{"left_wheel_mmps":0.0,"right_wheel_mmps":0.0,"left_wheel_mmps2":0.0,"right_wheel_mmps2":0.0}'
 	@echo
-	
+
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/play_animation -d '{"animation":{"name":"anim_poked_giggle"},"loops":1}'
 	@echo
-	
+
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/move_head -d '{"speed_rad_per_sec":0.5}'
 	@echo
 	sleep 2
@@ -86,6 +119,9 @@ test_curl: .require_ip
 	@echo
 
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/cancel_sdk_activation -d '{"slot":"SDK0"}'
+	@echo
+
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/display_face_image_rgb -d @test_assets/oled_color.json
 	@echo
 
 test_meet_victor: .require_ip
@@ -116,6 +152,11 @@ test_meet_victor: .require_ip
 	# Should be empty list of names
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/request_enrolled_names -d '{}'
 	@echo
+
+test_attention_transfer: .require_ip
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/get_latest_attention_transfer -d '{}'
+	@echo
+
 
 update_time: .require_ip
 	ssh root@$(ANKI_ROBOT_HOST) -t date --set='@$(shell date +%s)'

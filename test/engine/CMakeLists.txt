@@ -20,7 +20,10 @@ elseif (MACOSX)
 endif()
 
 include(anki_build_cxx)
+include(protobuf)
 include(symlink_target)
+
+set(PLATFORM_LIBS ${PLATFORM_LIBS} ${PROTOBUF_LIBS})
 
 anki_build_cxx_executable(test_engine ${ANKI_SRCLIST_DIR})
 anki_build_target_license(test_engine "ANKI")

@@ -25,6 +25,9 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboarding.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "engine/externalInterface/cladProtoTypeTranslator.h"
+#include "engine/externalInterface/externalMessageRouter.h"
+#include "engine/externalInterface/gatewayInterface.h"
 #include "engine/robot.h"
 #include "engine/unitTestKey.h"
 #include "util/entityComponent/dependencyManagedEntity.h"
@@ -66,7 +69,7 @@ BehaviorsBootLoader::BehaviorsBootLoader( IBehavior* overrideBehavior, const Uni
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependentComponents )
+void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependentComps )
 {
   using namespace Util;
   const Data::DataPlatform* platform = robot->GetContextDataPlatform();
@@ -78,8 +81,9 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
   }
   
   _externalInterface = robot->GetExternalInterface();
+  _gatewayInterface = robot->GetGatewayInterface();
   
-  _behaviorContainer = dependentComponents.GetBasePtr<BehaviorContainer>();
+  _behaviorContainer = dependentComps.GetComponentPtr<BehaviorContainer>();
   
   // If this is the factory test forcibly set _bootBehavior as playpen as long as the robot has not been through packout
   bool startInPlaypen = false;
@@ -115,6 +119,18 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
                                            onOnboardingStage) );
   }
   
+  auto* gi = _gatewayInterface;
+  if( gi != nullptr ) {
+    auto onRequestOnboardingState = [gi,this](const AnkiEvent<external_interface::GatewayWrapper>& appEvent){
+      auto* onboardingState = new external_interface::OnboardingState();
+      onboardingState->set_stage( CladProtoTypeTranslator::ToProtoEnum(_stage) );
+      gi->Broadcast( ExternalMessageRouter::WrapResponse(onboardingState) );
+    };
+    
+    _eventHandles.push_back( gi->Subscribe(external_interface::GatewayWrapper::OneofMessageTypeCase::kOnboardingStateRequest,
+                                           onRequestOnboardingState) );
+  }
+  
   auto resetOnboarding = [ei,this](ConsoleFunctionContextRef context) {
     Util::FileUtils::DeleteFile( _saveFolder + BehaviorOnboarding::kOnboardingFilename );
     Util::FileUtils::DeleteFile( _saveFolder );
@@ -134,7 +150,7 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
 void BehaviorsBootLoader::UpdateDependent(const BCCompMap& dependentComps)
 {
   if( _behaviorToSwitchTo != nullptr ) {
-    auto* bsm = dependentComps.GetBasePtr<BehaviorSystemManager>();
+    auto* bsm = dependentComps.GetComponentPtr<BehaviorSystemManager>();
     if( bsm != nullptr ) {
       bsm->ResetBehaviorStack( _behaviorToSwitchTo );
       _behaviorToSwitchTo = nullptr;
@@ -150,31 +166,31 @@ void BehaviorsBootLoader::InitOnboarding()
   Json::Reader reader;
   Json::Value onboardingStateJSON;
   
-  OnboardingStages stage = OnboardingStages::NotStarted;
+  _stage = OnboardingStages::NotStarted;
   if( !fileContents.empty() && reader.parse( fileContents, onboardingStateJSON ) ) {
     if( ANKI_VERIFY( onboardingStateJSON[BehaviorOnboarding::kOnboardingStageKey].isString(), "BehaviorsBootLoader.InitOnboarding.InvalidKey", "" ) )
     {
       const auto& stageStr = onboardingStateJSON[BehaviorOnboarding::kOnboardingStageKey].asString();
-      ANKI_VERIFY( OnboardingStagesFromString(stageStr, stage),
+      ANKI_VERIFY( OnboardingStagesFromString(stageStr, _stage),
                   "BehaviorsBootLoader.InitOnboarding.InvalidStage",
                   "Stage %s is invalid", stageStr.c_str() );
     }
   }
   
   PRINT_CH_INFO("Behaviors", "BehaviorsBootLoader.InitOnboarding.OnboardingStage",
-                "Robot booted with onboarding state %s", OnboardingStagesToString(stage));
+                "Robot booted with onboarding state %s", OnboardingStagesToString(_stage));
   
-  if( static_cast<u8>(stage) < static_cast<u8>(OnboardingStages::Complete) ) {
+  if( static_cast<u8>(_stage) < static_cast<u8>(OnboardingStages::Complete) ) {
     // explicitly pass the stage so we don't have to worry about when messages are received
     std::shared_ptr<BehaviorOnboarding> castPtr;
     _behaviorContainer->FindBehaviorByIDAndDowncast(BEHAVIOR_ID(Onboarding), BEHAVIOR_CLASS(Onboarding), castPtr);
     if( castPtr != nullptr ) {
-      castPtr->SetOnboardingStage(stage);
+      castPtr->SetOnboardingStage(_stage);
     }
     SetNewBehavior( _behaviors.onboardingBehavior );
-  } else if( stage == OnboardingStages::Complete ) {
+  } else if( _stage == OnboardingStages::Complete ) {
     SetNewBehavior( _behaviors.normalBaseBehavior );
-  } else if( stage == OnboardingStages::DevDoNothing ) {
+  } else if( _stage == OnboardingStages::DevDoNothing ) {
     SetNewBehavior( _behaviors.devBaseBehavior );
   } else {
     DEV_ASSERT(false, "BehaviorsBootLoader.InitOnboarding.UnknownStage");
@@ -183,7 +199,7 @@ void BehaviorsBootLoader::InitOnboarding()
   auto* ei = _externalInterface;
   if( ei != nullptr ) {
     ExternalInterface::SetOnboardingStage message;
-    message.stage = stage;
+    message.stage = _stage;
     ei->Broadcast(ExternalInterface::MessageGameToEngine(std::move(message)));
   }
 }

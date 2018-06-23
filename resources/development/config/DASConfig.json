@@ -1,0 +1,7 @@
+{
+  "dasConfig" : {
+    "url": "https://sqs.us-west-2.amazonaws.com/792379844846/DasInternal-dasinternalSqs-1HN6JX3NZPGNT",
+    "queue_threshold_size": 256,
+    "max_deferrals_size" : 4
+  }
+}

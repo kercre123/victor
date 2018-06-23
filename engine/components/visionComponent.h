@@ -77,7 +77,7 @@ struct DockingErrorSignal;
     //////
     // IDependencyManagedComponent functions
     //////
-    virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+    virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
     virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
       dependencies.insert(RobotComponentID::CozmoContextWrapper);
     };
@@ -399,6 +399,8 @@ struct DockingErrorSignal;
     bool             _visionWhileMovingFastEnabled = false;
 
     ImageEncoding _desiredImageFormat = ImageEncoding::NoneImageEncoding;
+    ImageEncoding _currentImageFormat = ImageEncoding::RawRGB;
+    
     // State machine to make sure nothing is using the shared memory from the camera system
     // before we request a different camera capture format as well as to wait
     // until we get a frame from the camera after changing formats before unpausing
@@ -410,6 +412,8 @@ struct DockingErrorSignal;
       WaitingForFrame
     };
     CaptureFormatState _captureFormatState = CaptureFormatState::None;
+
+    TimeStamp_t _lastImageCaptureTime_ms = 0;
 
     // Future used for async YUV to RGB conversion
     std::future<Vision::ImageRGB> _cvtYUV2RGBFuture;
@@ -448,9 +452,7 @@ struct DockingErrorSignal;
     void SetWhiteBalanceSettings(f32 gainR, f32 gainG, f32 gainB);
 
     // Updates the state of requesting for a camera capture format change
-    // Returns true if we are currently waiting for a camera capture format
-    // change
-    bool UpdateCaptureFormatChange();
+    void UpdateCaptureFormatChange(s32 gotNumRows=0);
     
     // Factory centroid finder: returns the centroids of the 4 factory test dots,
     // computes camera pose w.r.t. the target and broadcasts a RobotCompletedFactoryDotTest
@@ -460,6 +462,9 @@ struct DockingErrorSignal;
     
     bool _enableAutoExposure = true;
     bool _enableWhiteBalance = true;
+    
+    // Threading for OpenCV
+    int _openCvNumThreads = 1;
     
   }; // class VisionComponent
   

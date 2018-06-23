@@ -41,7 +41,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };
@@ -58,7 +58,6 @@ public:
   const RobotDataLoader::CompLayoutMap* GetCompLayoutMap() { assert(_compLayoutMap); return _compLayoutMap; }
   const CannedAnimationContainer* GetCannedAnimationContainer() { assert(_cannedAnimationContainer); return _cannedAnimationContainer; }
   const RobotDataLoader::WeatherResponseMap* GetWeatherResponseMap() const { assert(_weatherResponseMap); return _weatherResponseMap; }
-  const Json::Value* GetTextToSpeechConfig() { assert(_textToSpeechConfig != nullptr); return _textToSpeechConfig; }
 
 private:
   const Vision::SpritePathMap* _spritePaths = nullptr;
@@ -68,7 +67,6 @@ private:
   const RobotDataLoader::CompLayoutMap* _compLayoutMap = nullptr;
   const CannedAnimationContainer* _cannedAnimationContainer = nullptr;
   const RobotDataLoader::WeatherResponseMap* _weatherResponseMap = nullptr;
-  const Json::Value* _textToSpeechConfig = nullptr;
 
 }; // __Cozmo_Basestation_Components_DataAccessorComponent_H__
 

@@ -18,7 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
-#include "engine/components/bodyLightComponent.h"
+#include "engine/components/backpackLights/backpackLightComponent.h"
 
 #include "util/console/consoleInterface.h"
 
@@ -44,7 +44,7 @@ CONSOLE_VAR_RANGED(float, kShakeTime, "DevBaseBehavior", 0.1f, 0.01f, 2.0f);
 // if the robot is put down and no behavior wants to be active after this many ticks, the shake count is reset
 const unsigned int kFailTicksBeforeReset = 10;
   
-static const BackpackLights kLightsSteady =
+static const BackpackLightAnimation::BackpackAnimation kLightsSteady =
 {
   .onColors               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
   .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
@@ -55,7 +55,7 @@ static const BackpackLights kLightsSteady =
   .offset                 = {{0,0,0}}
 };
 
-static const BackpackLights kLightsShake =
+static const BackpackLightAnimation::BackpackAnimation kLightsShake =
 {
   .onColors               = {{NamedColors::RED,NamedColors::BLACK,NamedColors::BLACK}},
   .offColors              = {{NamedColors::RED,NamedColors::BLACK,NamedColors::BLACK}},
@@ -171,14 +171,14 @@ void BehaviorDispatchAfterShake::BehaviorUpdate()
       // shaking stopped for a while
       _dVars.shakingSession = false;
       
-      GetBEI().GetBodyLightComponent().SetBackpackLights(kLightsSteady);
+      GetBEI().GetBackpackLightComponent().SetBackpackAnimation(kLightsSteady);
     }
     if( !_dVars.shakingSession && isBeingShaken && timeElapsed ) {
       // shaking started for a while
       _dVars.shakingSession = true;
       ++_dVars.countShaken;
       
-      GetBEI().GetBodyLightComponent().SetBackpackLights(kLightsShake);
+      GetBEI().GetBackpackLightComponent().SetBackpackAnimation(kLightsShake);
     }
     // shaking is one of those words where if you write it enough times it starts to look wrong.
     

@@ -247,10 +247,8 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     SpriteSequenceKeyFrame::SpriteSequenceKeyFrame(Vision::SpriteHandle spriteHandle,
                                                    TimeStamp_t triggerTime_ms, 
                                                    float scanlineOpacity,
-                                                   bool shouldRenderInEyeHue,
-                                                   bool allowProceduralEyeOverlays)
-    : _allowProceduralEyeOverlays(allowProceduralEyeOverlays)
-    , _scanlineOpacity(scanlineOpacity)
+                                                   bool shouldRenderInEyeHue)
+    : _scanlineOpacity(scanlineOpacity)
     {
       if(ANKI_DEV_CHEATS){
         auto img = spriteHandle->GetSpriteContentsGrayscale();
@@ -273,16 +271,14 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
                                                    TimeStamp_t triggerTime_ms, 
                                                    u32 frameInterval_ms,
                                                    float scanlineOpacity,
-                                                   bool shouldRenderInEyeHue,
-                                                   bool allowProceduralEyeOverlays)
-    : _allowProceduralEyeOverlays(allowProceduralEyeOverlays)
-    , _scanlineOpacity(scanlineOpacity)
+                                                   bool shouldRenderInEyeHue)
+    : _scanlineOpacity(scanlineOpacity)
     {
       Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
       _compositeImage.reset(new Vision::CompositeImage(faceHueAndSaturation, spriteSeq, !shouldRenderInEyeHue));
-      _keyframeDuration_ms = spriteSeq->GetNumFrames() * ANIM_TIME_STEP_MS;
       _triggerTime_ms = triggerTime_ms;
       _internalUpdateInterval_ms = frameInterval_ms;
+      _keyframeDuration_ms = spriteSeq->GetNumFrames() * _internalUpdateInterval_ms;
       ANKI_VERIFY((_internalUpdateInterval_ms != 0) &&
                   ((_internalUpdateInterval_ms % ANIM_TIME_STEP_MS) == 0),
                   "SpriteSequenceKeyFrame.SetCompositeImage.InvalidTimeStep",
@@ -294,10 +290,8 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     SpriteSequenceKeyFrame::SpriteSequenceKeyFrame(Vision::SpriteCache* spriteCache, 
                                                    Vision::CompositeImage* compImg, 
                                                    u32 frameInterval_ms,
-                                                   float scanlineOpacity,
-                                                   bool allowProceduralEyeOverlays)
-    : _allowProceduralEyeOverlays(allowProceduralEyeOverlays)
-    , _scanlineOpacity(scanlineOpacity)
+                                                   float scanlineOpacity)
+    : _scanlineOpacity(scanlineOpacity)
     {
       Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
       _compositeImage = std::make_unique<Vision::CompositeImage>(spriteCache, faceHueAndSaturation);
@@ -319,7 +313,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       _internalUpdateInterval_ms = other._internalUpdateInterval_ms;
       _compositeImageUpdated     = other._compositeImageUpdated;
       _compositeImageUpdateMap   = other._compositeImageUpdateMap;
-      _allowProceduralEyeOverlays = other._allowProceduralEyeOverlays;
       
       if(other._compositeImage != nullptr){
         _compositeImage.reset(new Vision::CompositeImage(*other._compositeImage));
@@ -330,6 +323,16 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     {
 
     }
+    
+    bool SpriteSequenceKeyFrame::operator==(const SpriteSequenceKeyFrame& other) const{
+      return (GetTriggerTime_ms() == other.GetTriggerTime_ms()) &&
+      (GetKeyframeDuration_ms() == other.GetKeyframeDuration_ms()) &&
+      (_compositeImageUpdated == other._compositeImageUpdated) &&
+      (*_compositeImage == *other._compositeImage) &&
+      (_internalUpdateInterval_ms  == other._internalUpdateInterval_ms) &&
+      (_scanlineOpacity == other._scanlineOpacity);
+    }
+    
     
     Result SpriteSequenceKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
@@ -564,6 +567,12 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     {
       _compositeImage->CacheInternalSprites(cache, endTime_ms);
     }
+
+    bool SpriteSequenceKeyFrame::AllowProceduralEyeOverlays() const
+    {
+      return _compositeImage->GetLayerByName(Vision::LayerName::Procedural_Eyes) != nullptr;
+    }
+
 
 #pragma mark -
 #pragma mark ProceduralFaceKeyFrame
@@ -1102,6 +1111,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     {
       DEV_ASSERT(backpackKeyframe != nullptr, "BackpackLightsKeyFrame.DefineFromFlatBuf.NullAnim");
       SafeNumericCast(backpackKeyframe->triggerTime_ms(), _triggerTime_ms, animNameDebug.c_str());
+      SafeNumericCast(backpackKeyframe->durationTime_ms(), _motionDuration_ms, animNameDebug.c_str());
       Result lastResult = SetMembersFromFlatBuf(backpackKeyframe, animNameDebug);
       return lastResult;
     }

@@ -33,6 +33,7 @@ public:
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageGameToEngineTag>&& tags) const = 0;
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageEngineToGameTag>&& tags) const = 0;
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<RobotInterface::RobotToEngineTag>&& tags) const = 0;
+  virtual void SubscribeToTags(IBehavior* subscriber, std::set<AppToEngineTag>&& tags) const = 0;
 };
   
   

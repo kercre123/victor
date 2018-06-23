@@ -29,7 +29,6 @@
 #include "clad/types/poseStructs.clad"
 #include "clad/types/proceduralFaceTypes.clad"
 #include "clad/types/robotTestModes.clad"
-#include "clad/types/sayTextStyles.clad"
 #include "clad/types/uiConnectionTypes.clad"
 #include "clad/types/unlockTypes.clad"
 #include "clad/types/visionModes.clad"
@@ -871,14 +870,6 @@ message StopCubeAnim {
 // Onboarding
 ///////////////////////////////////////////////////////////////////////////////
 
-message OnboardingContinue {
-}
-message OnboardingSkip {
-}
-message OnboardingRetryCharging {
-}
-
-// for internal use only
 message SetOnboardingStage {
   OnboardingStages stage,
 }
@@ -1006,7 +997,6 @@ message LogRawProxData {
 ///////////////////////////////////////////////////////////////////////////////
 
 enum uint_8 PerfMetricCommandType {
-  Reset,
   Start,
   Stop,
   Dump,

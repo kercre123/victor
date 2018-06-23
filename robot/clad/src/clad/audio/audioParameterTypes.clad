@@ -31,6 +31,7 @@ enum uint_32 ParameterType
   Nurture_Repair = 3081923682,
   Relationship = 3723222599,
   Robot_Vic_Confident = 2193267925,
+  Robot_Vic_Environment_Ambient_Volume = 344494516,
   Robot_Vic_Happy = 1391855411,
   Robot_Vic_Head_Accelerate = 2691629051,
   Robot_Vic_Head_Position = 1549905781,

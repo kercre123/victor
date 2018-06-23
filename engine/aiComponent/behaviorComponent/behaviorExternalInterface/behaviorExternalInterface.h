@@ -41,11 +41,13 @@ class BehaviorEventComponent;
 class BehaviorTimerManager;
 class BEIRobotInfo;
 class BlockWorld;
-class BodyLightComponent;
+class BackpackLightComponent;
 class CubeAccelComponent;
 class CubeLightComponent;
+class CliffSensorComponent;
 class DelegationComponent;
 class FaceWorld;
+class HabitatDetectorComponent;
 class ICozmoBehavior;
 class IExternalInterface;
 class MapComponent;
@@ -59,6 +61,7 @@ class ProgressionUnlockComponent;
 class ProxSensorComponent;
 class PublicStateBroadcaster;
 class SDKComponent;
+class SettingsManager;
 class DataAccessorComponent;
 class TextToSpeechCoordinator;
 class TouchSensorComponent;
@@ -85,7 +88,7 @@ class BEIComponentWrapper : public ComponentWrapper {
     // automatically
     std::shared_ptr<BEIComponentAccessGuard> StripComponent() const {return _accessGuard;}
 
-    virtual bool IsValueValidInternal() const override {return _accessGuard.use_count() == 1;}
+    virtual bool IsComponentValidInternal() const override {return _accessGuard.use_count() == 1;}
 
   private:
     std::shared_ptr<BEIComponentAccessGuard> _accessGuard = std::make_shared<BEIComponentAccessGuard>();
@@ -99,8 +102,8 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Robot* robot, const BCCompMap& dependentComponents) override;
-  virtual void UpdateDependent(const BCCompMap& dependentComponents) override {};
+  virtual void InitDependent(Robot* robot, const BCCompMap& dependentComps) override;
+  virtual void UpdateDependent(const BCCompMap& dependentComps) override {};
   virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {};
 
   virtual void GetInitDependencies(BCCompIDSet& dependencies) const override { 
@@ -128,11 +131,13 @@ public:
             BehaviorEventComponent*        behaviorEventComponent,
             BehaviorTimerManager*          behaviorTimers,
             BlockWorld*                    blockWorld,
-            BodyLightComponent*            bodyLightComponent,
+            BackpackLightComponent*        backpackLightComponent,
             CubeAccelComponent*            cubeAccelComponent,
             CubeLightComponent*            cubeLightComponent,
+            CliffSensorComponent*          cliffSensorComponent,
             DelegationComponent*           delegationComponent,
             FaceWorld*                     faceWorld,
+            HabitatDetectorComponent*      habitatDetectorComponent,
             MapComponent*                  mapComponent,
             MicComponent*                  micComponent,
             MoodManager*                   moodManager,
@@ -150,7 +155,8 @@ public:
             TextToSpeechCoordinator*       TextToSpeechCoordinator,
             TouchSensorComponent*          touchSensorComponent,
             VisionComponent*               visionComponent,
-            VisionScheduleMediator*        visionScheduleMediator);
+            VisionScheduleMediator*        visionScheduleMediator,
+            SettingsManager*               settingsManager);
     
   virtual ~BehaviorExternalInterface();
 
@@ -158,82 +164,91 @@ public:
   
   // Access components which the BehaviorSystem can count on will always exist
   // when making decisions
-  AIComponent&             GetAIComponent()               const { return GetComponentWrapper(BEIComponentID::AIComponent).GetValue<AIComponent>();}
-  const FaceWorld&         GetFaceWorld()                 const { return GetComponentWrapper(BEIComponentID::FaceWorld).GetValue<FaceWorld>();}
-  FaceWorld&               GetFaceWorldMutable()                { return GetComponentWrapper(BEIComponentID::FaceWorld).GetValue<FaceWorld>();}
-  const PetWorld&          GetPetWorld()                  const { return GetComponentWrapper(BEIComponentID::PetWorld).GetValue<PetWorld>();}
-  const BlockWorld&        GetBlockWorld()                const { return GetComponentWrapper(BEIComponentID::BlockWorld).GetValue<BlockWorld>();}
-  BlockWorld&              GetBlockWorld()                      { return GetComponentWrapper(BEIComponentID::BlockWorld).GetValue<BlockWorld>();}
-  const BehaviorContainer& GetBehaviorContainer()         const { return GetComponentWrapper(BEIComponentID::BehaviorContainer).GetValue<BehaviorContainer>();}
-  BehaviorEventComponent&  GetBehaviorEventComponent()    const { return GetComponentWrapper(BEIComponentID::BehaviorEvent).GetValue<BehaviorEventComponent>();}
-  BehaviorTimerManager&    GetBehaviorTimerManager()      const { return GetComponentWrapper(BEIComponentID::BehaviorTimerManager).GetValue<BehaviorTimerManager>(); }
+  AIComponent&             GetAIComponent()               const { return GetComponentWrapper(BEIComponentID::AIComponent).GetComponent<AIComponent>();}
+  const FaceWorld&         GetFaceWorld()                 const { return GetComponentWrapper(BEIComponentID::FaceWorld).GetComponent<FaceWorld>();}
+  FaceWorld&               GetFaceWorldMutable()                { return GetComponentWrapper(BEIComponentID::FaceWorld).GetComponent<FaceWorld>();}
+  const PetWorld&          GetPetWorld()                  const { return GetComponentWrapper(BEIComponentID::PetWorld).GetComponent<PetWorld>();}
+  const BlockWorld&        GetBlockWorld()                const { return GetComponentWrapper(BEIComponentID::BlockWorld).GetComponent<BlockWorld>();}
+  BlockWorld&              GetBlockWorld()                      { return GetComponentWrapper(BEIComponentID::BlockWorld).GetComponent<BlockWorld>();}
+  const BehaviorContainer& GetBehaviorContainer()         const { return GetComponentWrapper(BEIComponentID::BehaviorContainer).GetComponent<BehaviorContainer>();}
+  BehaviorEventComponent&  GetBehaviorEventComponent()    const { return GetComponentWrapper(BEIComponentID::BehaviorEvent).GetComponent<BehaviorEventComponent>();}
+  BehaviorTimerManager&    GetBehaviorTimerManager()      const { return GetComponentWrapper(BEIComponentID::BehaviorTimerManager).GetComponent<BehaviorTimerManager>(); }
 
   // Give behaviors/activities access to information about robot
-  BEIRobotInfo& GetRobotInfo() { return GetComponentWrapper(BEIComponentID::RobotInfo).GetValue<BEIRobotInfo>();}
-  const BEIRobotInfo& GetRobotInfo() const { return GetComponentWrapper(BEIComponentID::RobotInfo).GetValue<BEIRobotInfo>();}
+  BEIRobotInfo& GetRobotInfo() { return GetComponentWrapper(BEIComponentID::RobotInfo).GetComponent<BEIRobotInfo>();}
+  const BEIRobotInfo& GetRobotInfo() const { return GetComponentWrapper(BEIComponentID::RobotInfo).GetComponent<BEIRobotInfo>();}
 
   // Access components which may or may not exist - you must call
   // has before get or you may hit a nullptr assert
-  inline bool HasDelegationComponent() const { return GetComponentWrapper(BEIComponentID::Delegation).IsValueValid();}
-  inline DelegationComponent& GetDelegationComponent() const  { return GetComponentWrapper(BEIComponentID::Delegation).GetValue<DelegationComponent>();}
+  inline bool HasDelegationComponent() const { return GetComponentWrapper(BEIComponentID::Delegation).IsComponentValid();}
+  inline DelegationComponent& GetDelegationComponent() const  { return GetComponentWrapper(BEIComponentID::Delegation).GetComponent<DelegationComponent>();}
   
-  inline bool HasPhotographyManager() const { return GetComponentWrapper(BEIComponentID::PhotographyManager).IsValueValid();}
-  PhotographyManager& GetPhotographyManager() const { return GetComponentWrapper(BEIComponentID::PhotographyManager).GetValue<PhotographyManager>();}
+  inline bool HasPhotographyManager() const { return GetComponentWrapper(BEIComponentID::PhotographyManager).IsComponentValid();}
+  PhotographyManager& GetPhotographyManager() const { return GetComponentWrapper(BEIComponentID::PhotographyManager).GetComponent<PhotographyManager>();}
 
-  inline bool HasPublicStateBroadcaster() const { return GetComponentWrapper(BEIComponentID::PublicStateBroadcaster).IsValueValid();}
-  PublicStateBroadcaster& GetRobotPublicStateBroadcaster() const { return GetComponentWrapper(BEIComponentID::PublicStateBroadcaster).GetValue<PublicStateBroadcaster>();}
+  inline bool HasPublicStateBroadcaster() const { return GetComponentWrapper(BEIComponentID::PublicStateBroadcaster).IsComponentValid();}
+  PublicStateBroadcaster& GetRobotPublicStateBroadcaster() const { return GetComponentWrapper(BEIComponentID::PublicStateBroadcaster).GetComponent<PublicStateBroadcaster>();}
   
-  inline bool HasProgressionUnlockComponent() const { return GetComponentWrapper(BEIComponentID::ProgressionUnlock).IsValueValid();}
-  ProgressionUnlockComponent& GetProgressionUnlockComponent() const {return GetComponentWrapper(BEIComponentID::ProgressionUnlock).GetValue<ProgressionUnlockComponent>();}
+  inline bool HasProgressionUnlockComponent() const { return GetComponentWrapper(BEIComponentID::ProgressionUnlock).IsComponentValid();}
+  ProgressionUnlockComponent& GetProgressionUnlockComponent() const {return GetComponentWrapper(BEIComponentID::ProgressionUnlock).GetComponent<ProgressionUnlockComponent>();}
   
-  inline bool HasMoodManager() const { return GetComponentWrapper(BEIComponentID::MoodManager).IsValueValid();}
-  MoodManager& GetMoodManager() const{ return GetComponentWrapper(BEIComponentID::MoodManager).GetValue<MoodManager>();}
+  inline bool HasMoodManager() const { return GetComponentWrapper(BEIComponentID::MoodManager).IsComponentValid();}
+  MoodManager& GetMoodManager() const{ return GetComponentWrapper(BEIComponentID::MoodManager).GetComponent<MoodManager>();}
   
-  inline bool HasMovementComponent() const { return GetComponentWrapper(BEIComponentID::MovementComponent).IsValueValid();}
-  MovementComponent& GetMovementComponent() const{ return GetComponentWrapper(BEIComponentID::MovementComponent).GetValue<MovementComponent>();}
+  inline bool HasMovementComponent() const { return GetComponentWrapper(BEIComponentID::MovementComponent).IsComponentValid();}
+  MovementComponent& GetMovementComponent() const{ return GetComponentWrapper(BEIComponentID::MovementComponent).GetComponent<MovementComponent>();}
   
-  inline bool HasTouchSensorComponent() const { return GetComponentWrapper(BEIComponentID::TouchSensor).IsValueValid();}
-  TouchSensorComponent& GetTouchSensorComponent() const { return GetComponentWrapper(BEIComponentID::TouchSensor).GetValue<TouchSensorComponent>();}
+  inline bool HasTouchSensorComponent() const { return GetComponentWrapper(BEIComponentID::TouchSensor).IsComponentValid();}
+  TouchSensorComponent& GetTouchSensorComponent() const { return GetComponentWrapper(BEIComponentID::TouchSensor).GetComponent<TouchSensorComponent>();}
 
-  inline bool HasVisionComponent() const { return GetComponentWrapper(BEIComponentID::Vision).IsValueValid();}
-  VisionComponent& GetVisionComponent() const { return GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();}
+  inline bool HasVisionComponent() const { return GetComponentWrapper(BEIComponentID::Vision).IsComponentValid();}
+  VisionComponent& GetVisionComponent() const { return GetComponentWrapper(BEIComponentID::Vision).GetComponent<VisionComponent>();}
 
-  inline bool HasVisionScheduleMediator() const { return GetComponentWrapper(BEIComponentID::VisionScheduleMediator).IsValueValid();}
-  VisionScheduleMediator& GetVisionScheduleMediator() const { return GetComponentWrapper(BEIComponentID::VisionScheduleMediator).GetValue<VisionScheduleMediator>();}
+  inline bool HasVisionScheduleMediator() const { return GetComponentWrapper(BEIComponentID::VisionScheduleMediator).IsComponentValid();}
+  VisionScheduleMediator& GetVisionScheduleMediator() const { return GetComponentWrapper(BEIComponentID::VisionScheduleMediator).GetComponent<VisionScheduleMediator>();}
 
-  inline bool HasMapComponent() const { return GetComponentWrapper(BEIComponentID::Map).IsValueValid();}
-  MapComponent& GetMapComponent() const { return GetComponentWrapper(BEIComponentID::Map).GetValue<MapComponent>();}
+  inline bool HasMapComponent() const { return GetComponentWrapper(BEIComponentID::Map).IsComponentValid();}
+  MapComponent& GetMapComponent() const { return GetComponentWrapper(BEIComponentID::Map).GetComponent<MapComponent>();}
 
-  inline bool HasCubeLightComponent() const { return GetComponentWrapper(BEIComponentID::CubeLight).IsValueValid();}
-  CubeLightComponent& GetCubeLightComponent() const { return GetComponentWrapper(BEIComponentID::CubeLight).GetValue<CubeLightComponent>();}
+  inline bool HasCubeLightComponent() const { return GetComponentWrapper(BEIComponentID::CubeLight).IsComponentValid();}
+  CubeLightComponent& GetCubeLightComponent() const { return GetComponentWrapper(BEIComponentID::CubeLight).GetComponent<CubeLightComponent>();}
 
-  inline bool HasObjectPoseConfirmer() const { return GetComponentWrapper(BEIComponentID::ObjectPoseConfirmer).IsValueValid();}
-  ObjectPoseConfirmer& GetObjectPoseConfirmer() const { return GetComponentWrapper(BEIComponentID::ObjectPoseConfirmer).GetValue<ObjectPoseConfirmer>();}
+  inline bool HasObjectPoseConfirmer() const { return GetComponentWrapper(BEIComponentID::ObjectPoseConfirmer).IsComponentValid();}
+  ObjectPoseConfirmer& GetObjectPoseConfirmer() const { return GetComponentWrapper(BEIComponentID::ObjectPoseConfirmer).GetComponent<ObjectPoseConfirmer>();}
 
-  inline bool HasCubeAccelComponent() const { return GetComponentWrapper(BEIComponentID::CubeAccel).IsValueValid();}
-  CubeAccelComponent& GetCubeAccelComponent() const { return GetComponentWrapper(BEIComponentID::CubeAccel).GetValue<CubeAccelComponent>();}
+  inline bool HasCliffSensorComponent() const { return GetComponentWrapper(BEIComponentID::CliffSensor).IsComponentValid();}
+  CliffSensorComponent& GetCliffSensorComponent() const { return GetComponentWrapper(BEIComponentID::CliffSensor).GetComponent<CliffSensorComponent>();}
 
-  inline bool HasAnimationComponent() const { return GetComponentWrapper(BEIComponentID::Animation).IsValueValid();}
-  AnimationComponent& GetAnimationComponent() const { return GetComponentWrapper(BEIComponentID::Animation).GetValue<AnimationComponent>();}
+  inline bool HasCubeAccelComponent() const { return GetComponentWrapper(BEIComponentID::CubeAccel).IsComponentValid();}
+  CubeAccelComponent& GetCubeAccelComponent() const { return GetComponentWrapper(BEIComponentID::CubeAccel).GetComponent<CubeAccelComponent>();}
 
-  inline bool HasRobotAudioClient() const { return GetComponentWrapper(BEIComponentID::RobotAudioClient).IsValueValid();}
-  Audio::EngineRobotAudioClient& GetRobotAudioClient() const { return GetComponentWrapper(BEIComponentID::RobotAudioClient).GetValue<Audio::EngineRobotAudioClient>();}
+  inline bool HasAnimationComponent() const { return GetComponentWrapper(BEIComponentID::Animation).IsComponentValid();}
+  AnimationComponent& GetAnimationComponent() const { return GetComponentWrapper(BEIComponentID::Animation).GetComponent<AnimationComponent>();}
+
+  inline bool HasRobotAudioClient() const { return GetComponentWrapper(BEIComponentID::RobotAudioClient).IsComponentValid();}
+  Audio::EngineRobotAudioClient& GetRobotAudioClient() const { return GetComponentWrapper(BEIComponentID::RobotAudioClient).GetComponent<Audio::EngineRobotAudioClient>();}
   
-  inline bool HasBodyLightComponent() const { return GetComponentWrapper(BEIComponentID::BodyLightComponent).IsValueValid();}
-  BodyLightComponent& GetBodyLightComponent() const { return GetComponentWrapper(BEIComponentID::BodyLightComponent).GetValue<BodyLightComponent>();}
+  inline bool HasBackpackLightComponent() const { return GetComponentWrapper(BEIComponentID::BackpackLightComponent).IsComponentValid();}
+  BackpackLightComponent& GetBackpackLightComponent() const { return GetComponentWrapper(BEIComponentID::BackpackLightComponent).GetComponent<BackpackLightComponent>();}
 
-  inline bool HasMicComponent() const { return GetComponentWrapper(BEIComponentID::MicComponent).IsValueValid();}
-  MicComponent& GetMicComponent() const {return GetComponentWrapper(BEIComponentID::MicComponent).GetValue<MicComponent>();}
+  inline bool HasMicComponent() const { return GetComponentWrapper(BEIComponentID::MicComponent).IsComponentValid();}
+  MicComponent& GetMicComponent() const {return GetComponentWrapper(BEIComponentID::MicComponent).GetComponent<MicComponent>();}
   
-  inline bool HasBeatDetectorComponent() const { return GetComponentWrapper(BEIComponentID::BeatDetector).IsValueValid();}
-  BeatDetectorComponent& GetBeatDetectorComponent() const {return GetComponentWrapper(BEIComponentID::BeatDetector).GetValue<BeatDetectorComponent>();}
+  inline bool HasHabitatDetectorComponent() const { return GetComponentWrapper(BEIComponentID::HabitatDetector).IsComponentValid();}
+  HabitatDetectorComponent& GetHabitatDetectorComponent() const { return GetComponentWrapper(BEIComponentID::HabitatDetector).GetComponent<HabitatDetectorComponent>();}
 
-  inline bool HasTextToSpeechCoordinator() const { return GetComponentWrapper(BEIComponentID::TextToSpeechCoordinator).IsValueValid();}
-  TextToSpeechCoordinator& GetTextToSpeechCoordinator() const {return GetComponentWrapper(BEIComponentID::TextToSpeechCoordinator).GetValue<TextToSpeechCoordinator>();}
+  inline bool HasBeatDetectorComponent() const { return GetComponentWrapper(BEIComponentID::BeatDetector).IsComponentValid();}
+  BeatDetectorComponent& GetBeatDetectorComponent() const {return GetComponentWrapper(BEIComponentID::BeatDetector).GetComponent<BeatDetectorComponent>();}
 
-  inline bool HasSDKComponent() const { return GetComponentWrapper(BEIComponentID::SDK).IsValueValid();}
-  SDKComponent& GetSDKComponent() const {return GetComponentWrapper(BEIComponentID::SDK).GetValue<SDKComponent>();}
+  inline bool HasTextToSpeechCoordinator() const { return GetComponentWrapper(BEIComponentID::TextToSpeechCoordinator).IsComponentValid();}
+  TextToSpeechCoordinator& GetTextToSpeechCoordinator() const {return GetComponentWrapper(BEIComponentID::TextToSpeechCoordinator).GetComponent<TextToSpeechCoordinator>();}
 
+  inline bool HasSDKComponent() const { return GetComponentWrapper(BEIComponentID::SDK).IsComponentValid();}
+  SDKComponent& GetSDKComponent() const {return GetComponentWrapper(BEIComponentID::SDK).GetComponent<SDKComponent>();}
+
+  inline bool HasSettingsManager() const { return GetComponentWrapper(BEIComponentID::SettingsManager).IsComponentValid();}
+  SettingsManager& GetSettingsManager() const {return GetComponentWrapper(BEIComponentID::SettingsManager).GetComponent<SettingsManager>();}
+  
   // Util functions
   OffTreadsState GetOffTreadsState() const;
   Util::RandomGenerator& GetRNG();
@@ -241,18 +256,20 @@ public:
 private:
   struct CompArrayWrapper{
     public:
-      CompArrayWrapper(AIComponent*                  aiComponent,
+      CompArrayWrapper(AIComponent*                   aiComponent,
                        AnimationComponent*            animationComponent,
                        BeatDetectorComponent*         beatDetectorComponent,
                        BehaviorContainer*             behaviorContainer,
                        BehaviorEventComponent*        behaviorEventComponent,
                        BehaviorTimerManager*          behaviorTimers,
                        BlockWorld*                    blockWorld,
-                       BodyLightComponent*            bodyLightComponent,
+                       BackpackLightComponent*        backpackLightComponent,
                        CubeAccelComponent*            cubeAccelComponent,
                        CubeLightComponent*            cubeLightComponent,
+                       CliffSensorComponent*          cliffSensorComponent,
                        DelegationComponent*           delegationComponent,
                        FaceWorld*                     faceWorld,
+                       HabitatDetectorComponent*      habitatDetectorComponent,
                        MapComponent*                  mapComponent,
                        MicComponent*                  micComponent,
                        MoodManager*                   moodManager,
@@ -270,7 +287,8 @@ private:
                        TextToSpeechCoordinator*       textToSpeechCoordinator,
                        TouchSensorComponent*          touchSensorComponent,
                        VisionComponent*               visionComponent,
-                       VisionScheduleMediator*        visionSchedulMediator);
+                       VisionScheduleMediator*        visionSchedulMediator,
+                       SettingsManager*               settingsManager);
       ~CompArrayWrapper(){};
       EntityFullEnumeration<BEIComponentID, BEIComponentWrapper, BEIComponentID::Count> _array;
   };

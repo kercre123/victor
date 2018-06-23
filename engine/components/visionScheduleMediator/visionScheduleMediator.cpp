@@ -44,11 +44,11 @@ VisionScheduleMediator::~VisionScheduleMediator()
 {
 }
 
-void VisionScheduleMediator::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void VisionScheduleMediator::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   // Load up data from the JSON config
   auto& config = 
-    dependentComponents.GetValue<ContextWrapper>().context->GetDataLoader()->GetVisionScheduleMediatorConfig();
+    dependentComps.GetComponent<ContextWrapper>().context->GetDataLoader()->GetVisionScheduleMediatorConfig();
 
   Init(config);
 }
@@ -99,15 +99,15 @@ void VisionScheduleMediator::UpdateDependent(const RobotCompMap& dependentComps)
 {
   // Update the VisionSchedule, if necessary
   if(_subscriptionRecordIsDirty){
-    UpdateVisionSchedule(dependentComps.GetValue<VisionComponent>(),
-                         dependentComps.GetValue<ContextWrapper>().context);
+    UpdateVisionSchedule(dependentComps.GetComponent<VisionComponent>(),
+                         dependentComps.GetComponent<ContextWrapper>().context);
   }
 
   // Update the visualization tools
   if(ANKI_DEV_CHEATS){
     // Send every 50 frames to update corner cases for the vizManager e.g. after init
     if(_framesSinceSendingDebugViz++ >= 50){
-      SendDebugVizMessages(dependentComps.GetValue<ContextWrapper>().context);
+      SendDebugVizMessages(dependentComps.GetComponent<ContextWrapper>().context);
       _framesSinceSendingDebugViz = 0;
     }
   } 

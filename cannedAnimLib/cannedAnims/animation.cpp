@@ -37,6 +37,25 @@ Animation::Animation(const std::string& name)
   
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool Animation::operator==(const Animation &other) const {
+  return (_name == other._name) &&
+         (_headTrack == other._headTrack) &&
+         (_liftTrack == other._liftTrack) &&
+         (_spriteSequenceTrack == other._spriteSequenceTrack) &&
+         (_proceduralFaceTrack == other._proceduralFaceTrack) &&
+         (_eventTrack == other._eventTrack) &&
+         (_backpackLightsTrack == other._backpackLightsTrack) &&
+         (_bodyPosTrack == other._bodyPosTrack) &&
+         (_recordHeadingTrack == other._recordHeadingTrack) &&
+         (_turnToRecordedHeadingTrack == other._turnToRecordedHeadingTrack) &&
+         (_robotAudioTrack == other._robotAudioTrack); 
+}
+
+
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result Animation::DefineFromFlatBuf(const std::string& name, const CozmoAnim::AnimClip* animClip,
                                     const Vision::SpritePathMap* spriteMap, Vision::SpriteSequenceContainer* seqContainer)

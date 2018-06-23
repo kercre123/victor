@@ -34,6 +34,26 @@ AudioEventGroupRef& AudioEventGroupRef::operator=( const AudioEventGroupRef& oth
   Events = other.Events;
   return *this;
 }
+
+bool AudioEventGroupRef::operator==( const AudioEventGroupRef& other ) const 
+{
+  bool eventsEqual = Events.size() == other.Events.size();
+  if(eventsEqual){
+    for(int i = 0; i < Events.size(); i++){
+      eventsEqual &= (Events[i] == other.Events[i]);
+    }
+  }
+  return eventsEqual &&
+         (GameObject == other.GameObject);
+}
+
+bool AudioEventGroupRef::EventDef::operator==( const EventDef& other ) const
+{
+  return (AudioEvent == other.AudioEvent) &&
+         (Volume == other.Volume) &&
+         (Probability == other.Probability);
+}
+
   
 void AudioEventGroupRef::AddEvent( AudioMetaData::GameEvent::GenericEvent audioEvent, float volume, float probability )
 {
@@ -139,6 +159,31 @@ AudioRef& AudioRef::operator=( const AudioRef& other )
   }
   return *this;
 }
+
+bool AudioRef::operator==( const AudioRef& other ) const
+{
+  bool equal = true;
+  equal &= (Tag == other.Tag);
+  if(equal){
+    switch (Tag) {
+      case AudioRefTag::EventGroup:
+        equal &= (EventGroup == other.EventGroup);
+        break;
+      case AudioRefTag::State:
+        equal &= (State == other.State);
+        break;
+      case AudioRefTag::Switch:
+        equal &= (Switch == other.Switch);
+        break;
+      case AudioRefTag::Parameter:
+        equal &= (Parameter == other.Parameter);
+        break;
+    }
+  }
+
+  return equal;
+}
+
 
 
 } // namespace AudioKeyFrameType

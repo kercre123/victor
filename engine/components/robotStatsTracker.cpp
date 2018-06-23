@@ -35,10 +35,13 @@ static const char* kJsonStatsFilename = "stats.json";
 static const char* kStimCategory = "Stim";
 static const char* kActiveFeatureCategory = "Feature";
 static const char* kBehaviorStatCategory = "BStat";
+static const char* kFacesCategory = "Face";
+static const char* kOdomCategory = "Odom";
 
 static const char* kRobotStatsSeparator = ".";
 
 static const float kStimFixedPoint = 1000.0f;
+static const float kOdomFixedPoint = 100000.0f;
 
 #if REMOTE_CONSOLE_ENABLED
 // hack to allow a console func to reset the stats
@@ -86,9 +89,9 @@ RobotStatsTracker::~RobotStatsTracker()
 #endif
 }
 
-void RobotStatsTracker::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void RobotStatsTracker::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
-  const auto& context = dependentComponents.GetValue<ContextWrapper>().context;
+  const auto& context = dependentComps.GetComponent<ContextWrapper>().context;
   const auto* platform = context->GetDataPlatform();
 
   const std::string& folder = platform->pathToResource( Util::Data::Scope::Persistent, kStatsFolder );
@@ -128,6 +131,24 @@ void RobotStatsTracker::IncrementActiveFeature(const ActiveFeature& feature, con
 void RobotStatsTracker::IncrementBehaviorStat(const BehaviorStat& stat)
 {
   IncreaseHelper(kBehaviorStatCategory, BehaviorStatToString(stat), 1);
+}
+
+void RobotStatsTracker::IncrementNamedFacesPerDay()
+{
+  IncreaseHelper(kFacesCategory, "NamedFacePerDay", 1);
+}
+
+void RobotStatsTracker::IncreaseOdometer(float lWheelDelta_mm, float rWheelDelta_mm, float bodyDelta_mm)
+{
+  if( lWheelDelta_mm > 0.0f ) {
+    IncreaseHelper(kOdomCategory, "LWheel", static_cast<uint64_t>(lWheelDelta_mm * kOdomFixedPoint));
+  }
+  if( rWheelDelta_mm > 0.0f ) {
+    IncreaseHelper(kOdomCategory, "RWheel", static_cast<uint64_t>(rWheelDelta_mm * kOdomFixedPoint));
+  }
+  if( bodyDelta_mm > 0.0f ) {
+    IncreaseHelper(kOdomCategory, "Body", static_cast<uint64_t>(bodyDelta_mm * kOdomFixedPoint));
+  }
 }
 
 void RobotStatsTracker::IncreaseHelper(const std::string& prefix, const std::string& stat, uint64_t delta)

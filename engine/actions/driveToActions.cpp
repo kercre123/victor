@@ -19,7 +19,7 @@
 #include "engine/actions/visuallyVerifyActions.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
-#include "engine/components/cubes/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
@@ -325,7 +325,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "DriveToObjectAction.SetInteracting", "%s[%d] Setting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _objectID.GetValue());
-        GetRobot().GetCubeLightComponent().PlayLightAnim(_objectID, CubeAnimationTrigger::DrivingTo);
+        GetRobot().GetCubeLightComponent().PlayLightAnimByTrigger(_objectID, CubeAnimationTrigger::DrivingTo);
         _lightsSet = true;
       }
       
@@ -967,7 +967,7 @@ namespace Anki {
         auto waitLambda = [this](Robot& robot) {
           if (_shouldSetCubeLights) {
             // Keep the cube lights set while the waitForLambda action is running
-            robot.GetCubeLightComponent().PlayLightAnim(_objectID, CubeAnimationTrigger::DrivingTo);
+            robot.GetCubeLightComponent().PlayLightAnimByTrigger(_objectID, CubeAnimationTrigger::DrivingTo);
           }
           
           // if this lambda gets called, that means the drive to must have succeeded.
@@ -1063,7 +1063,7 @@ namespace Anki {
         auto lambdaToWaitFor = [this](Robot& robot) {
           if (_shouldSetCubeLights) {
             // Keep the cube lights set while the waitForLambda action is running
-            GetRobot().GetCubeLightComponent().PlayLightAnim(_objectID, CubeAnimationTrigger::DrivingTo);
+            GetRobot().GetCubeLightComponent().PlayLightAnimByTrigger(_objectID, CubeAnimationTrigger::DrivingTo);
           }
           
           if( _preDockCallback ) {
@@ -1213,7 +1213,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.SetInteracting", "%s[%d] Setting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _objectID.GetValue());
-        GetRobot().GetCubeLightComponent().PlayLightAnim(_objectID, CubeAnimationTrigger::DrivingTo);
+        GetRobot().GetCubeLightComponent().PlayLightAnimByTrigger(_objectID, CubeAnimationTrigger::DrivingTo);
         _lightsSet = true;
       }
       return RESULT_OK;

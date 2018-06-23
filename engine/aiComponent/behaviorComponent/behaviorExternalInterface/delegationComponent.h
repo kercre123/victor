@@ -64,8 +64,8 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Robot* robot, const BCCompMap& dependentComponents) override;
-  virtual void UpdateDependent(const BCCompMap& dependentComponents) override {};
+  virtual void InitDependent(Robot* robot, const BCCompMap& dependentComps) override;
+  virtual void UpdateDependent(const BCCompMap& dependentComps) override {};
   virtual void AdditionalInitAccessibleComponents(BCCompIDSet& components) const override {
     components.insert(BCComponentID::BehaviorSystemManager);
     components.insert(BCComponentID::AIComponent);

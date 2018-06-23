@@ -8,6 +8,7 @@ option(USE_DAS "Enable DAS reporting" OFF)
 include(opencv)
 include(okao)
 include(flatbuffers)
+include(protobuf)
 include(archive)
 include(anki_build_strip)
 include(anki_build_cxx)
@@ -15,7 +16,21 @@ include(anki_build_cxx)
 #
 # cozmo_engine
 #
-anki_build_cxx_library(cozmo_engine ${ANKI_SRCLIST_DIR})
+
+# Generate c++ protobuf files
+add_custom_command(
+  OUTPUT ${GATEWAY_PROTO_CPP_GEN_HEADERS} ${GATEWAY_PROTO_CPP_GEN_SRCS}
+  COMMAND mkdir -p ${PROTOBUF_OUTPUT_DIR}
+  COMMAND ${PROTOBUF_HOME}/bin/protoc -I"${CMAKE_SOURCE_DIR}/cloud/gateway"
+    -I"${PROTOBUF_HOME}/include"
+    "--cpp_out=${PROTOBUF_OUTPUT_DIR}"
+    ${GATEWAY_PROTO_SRCS}
+  DEPENDS "${GATEWAY_PROTO_SRCS}"
+)
+# NOTE: protobuf generated files must be linked directly to cozmo_engine
+#       Otherwise, there is a problem comparing the default string, and it
+#       generates incorrect serialized messages.
+anki_build_cxx_library(cozmo_engine ${ANKI_SRCLIST_DIR} ${GATEWAY_PROTO_CPP_GEN_SRCS} ${GATEWAY_PROTO_CPP_GEN_HEADERS})
 anki_build_target_license(cozmo_engine "ANKI")
 
 
@@ -72,6 +87,7 @@ target_link_libraries(cozmo_engine
   osState
   micdata
   # vendor
+  ${PROTOBUF_LIBS}
   ${FLATBUFFERS_LIBS}
   ${LIBARCHIVE_LIBS}
   # system
@@ -100,7 +116,7 @@ target_include_directories(cozmo_engine
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..> # allows reference to engine/
   #PRIVATE
-  #$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/anki/cozmo/basestation/cozmoAPI>
+  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated>
 )
 
 if (VICOS)

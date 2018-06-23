@@ -19,6 +19,10 @@ message LoadedKnownFace {
     int_64   secondsSinceFirstEnrolled,
     int_64   secondsSinceLastUpdated,
     int_64   secondsSinceLastSeen,
+
+    // wall time (seconds since epoch) that we last saw this face
+    int_64   lastSeenSecondsSinceEpoch,
+    
     int_32   faceID,
     string   name
 }

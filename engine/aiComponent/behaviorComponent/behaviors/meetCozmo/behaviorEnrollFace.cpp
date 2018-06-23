@@ -25,6 +25,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -170,6 +171,7 @@ void BehaviorEnrollFace::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
   delegates.insert( _iConfig.driveOffChargerBehavior.get() );
   delegates.insert( _iConfig.putDownBlockBehavior.get() );
+  delegates.insert( _iConfig.ttsBehavior.get() );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -241,7 +243,10 @@ Result BehaviorEnrollFace::InitEnrollmentSettings()
     return RESULT_FAIL;
   }
 
-  if( GetBEI().GetVisionComponent().IsNameTaken( _dVars.faceName )  && !_dVars.enrollingSpecificID ) {
+  if( GetBEI().GetVisionComponent().IsNameTaken( _dVars.faceName )
+      && !_dVars.enrollingSpecificID
+      && (_dVars.persistent.state == State::NotStarted) )  // if previously interrupted after enrollment completed, this name is ok
+  {
     TransitionToSayingIKnowThatName();
     return RESULT_FAIL;
   }
@@ -267,12 +272,10 @@ void BehaviorEnrollFace::InitBehavior()
   const auto& BC = GetBEI().GetBehaviorContainer();
   _iConfig.driveOffChargerBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(DriveOffCharger) );
   _iConfig.putDownBlockBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(PutDownBlock) );
-  ANKI_VERIFY( _iConfig.driveOffChargerBehavior != nullptr,
-               "BehaviorEnrollFace.InitBehavior.NoDriveOffCharger",
-               "Could not grab behavior ptr for drive off charger" );
-  ANKI_VERIFY( _iConfig.putDownBlockBehavior != nullptr,
-               "BehaviorEnrollFace.InitBehavior.NoPutDownCube",
-               "Could not grab behavior ptr for put down cube" );
+  
+  BC.FindBehaviorByIDAndDowncast( BEHAVIOR_ID(DefaultTextToSpeechLoop),
+                                  BEHAVIOR_CLASS(TextToSpeechLoop),
+                                  _iConfig.ttsBehavior );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1022,14 +1025,15 @@ void BehaviorEnrollFace::TransitionToSayingName()
 
       {
         // 1. Say name once
-        SayTextAction* sayNameAction1 = new SayTextAction(_dVars.faceName, SayTextIntent::Name_FirstIntroduction_1);
+        const auto nameQuestionStr = _dVars.faceName + "?";
+        SayTextAction* sayNameAction1 = new SayTextAction(nameQuestionStr);
         sayNameAction1->SetAnimationTrigger(AnimationTrigger::MeetVictorSayName);
         finalAnimation->AddAction(sayNameAction1);
       }
 
       {
         // 2. Repeat name
-        SayTextAction* sayNameAction2 = new SayTextAction(_dVars.faceName, SayTextIntent::Name_FirstIntroduction_2);
+        SayTextAction* sayNameAction2 = new SayTextAction(_dVars.faceName);
         sayNameAction2->SetAnimationTrigger(AnimationTrigger::MeetVictorSayNameAgain);
         finalAnimation->AddAction(sayNameAction2);
       }
@@ -1038,7 +1042,7 @@ void BehaviorEnrollFace::TransitionToSayingName()
     else
     {
       // This is a re-enrollment
-      SayTextAction* sayNameAction = new SayTextAction(_dVars.faceName, SayTextIntent::Name_Normal);
+      SayTextAction* sayNameAction = new SayTextAction(_dVars.faceName);
       sayNameAction->SetAnimationTrigger(AnimationTrigger::MeetVictorSayName);
       finalAnimation->AddAction(sayNameAction);
     }
@@ -1083,15 +1087,16 @@ void BehaviorEnrollFace::TransitionToSayingIKnowThatName()
 
   if(_dVars.sayName) {
 
-
-    // todo: locale
-    const std::string sentence = "eye already know a " + _dVars.faceName;
-    SayTextAction* speakAction = new SayTextAction(sentence, SayTextIntent::Text);
-    speakAction->SetAnimationTrigger(AnimationTrigger::MeetCozmoDuplicateName);
-
-    SET_STATE(SayingIKnowThatName);
-    DelegateIfInControl(speakAction, [this](ActionResult result) {
-      SET_STATE(Failed_NameInUse);
+    auto* actConfusedAnim = new TriggerLiftSafeAnimationAction(AnimationTrigger::MeetVictorDuplicateName);
+    DelegateIfInControl(actConfusedAnim, [this](ActionResult result) {
+      
+      // todo: locale
+      const std::string sentence = "eye know " + _dVars.faceName;
+      _iConfig.ttsBehavior->SetTextToSay( sentence );
+      ANKI_VERIFY( _iConfig.ttsBehavior->WantsToBeActivated(), "BehaviorEnrollFace.TransitionToSayingIKnowThatName.NoTTS","");
+      DelegateIfInControl(_iConfig.ttsBehavior.get(), [this]() {
+        SET_STATE(Failed_NameInUse);
+      });
     });
   } else {
     TransitionToFailedState(State::Failed_NameInUse,"Failed_NameInUse");
@@ -1107,18 +1112,23 @@ void BehaviorEnrollFace::TransitionToWrongFace( const std::string& faceName )
   _dVars.failedState = State::Failed_WrongFace;
 
   CancelDelegates(false);
-
-  // todo: locale
-  const std::string text = "youre    " + faceName;
-  auto* sayNameAction = new SayTextAction(text, SayTextIntent::Name_FirstIntroduction_1);
-  sayNameAction->SetAnimationTrigger(AnimationTrigger::MeetVictorSawWrongFace);
-
-  DelegateIfInControl(sayNameAction, [this](ActionResult result) {
-    if( ActionResult::SUCCESS != result ) {
-      PRINT_NAMED_WARNING("BehaviorEnrollFace.TransitionToWrongFace.AnimFailed", "");
-    }
-    _dVars.persistent.state = State::Failed_WrongFace;
-    SetDebugStateName("Failed_WrongFace");
+  
+  auto* scanThenConfused = new CompoundActionSequential();
+  u32 numLoops = 1;
+  scanThenConfused->AddAction( new TriggerLiftSafeAnimationAction(AnimationTrigger::MeetVictorGetIn) );
+  scanThenConfused->AddAction( new TriggerLiftSafeAnimationAction(AnimationTrigger::MeetVictorLookFace, numLoops) );
+  scanThenConfused->AddAction( new TriggerLiftSafeAnimationAction(AnimationTrigger::MeetVictorSawWrongFace) );
+  std::string text = faceName + "!";
+  
+  DelegateIfInControl(scanThenConfused, [this,text=std::move(text)](ActionResult result) {
+    // todo: locale
+    
+    _iConfig.ttsBehavior->SetTextToSay( text );
+    ANKI_VERIFY( _iConfig.ttsBehavior->WantsToBeActivated(), "BehaviorEnrollFace.TransitionToWrongFace.NoTTS","");
+    DelegateIfInControl(_iConfig.ttsBehavior.get(), [this]() {
+      _dVars.persistent.state = State::Failed_WrongFace;
+      SetDebugStateName("Failed_WrongFace");
+    });
   });
 }
 

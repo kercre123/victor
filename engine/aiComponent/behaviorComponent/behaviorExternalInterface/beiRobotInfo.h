@@ -45,6 +45,7 @@ class CozmoContext;
 class DockingComponent;
 class DrivingAnimationHandler;
 class IExternalInterface;
+class IGatewayInterface;
 class MoodManager;
 class MovementComponent;
 class NVStorageComponent;
@@ -54,6 +55,7 @@ class ProgressionUnlockComponent;
 class PublicStateBroadcaster;
 class Robot;
 class RobotEventHandler;
+class SDKComponent;
 class VisionComponent;
 
 struct AccelData;
@@ -70,7 +72,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Robot* robot, const BCCompMap& dependentComponents) override {};
+  virtual void InitDependent(Robot* robot, const BCCompMap& dependentComps) override {};
   virtual void GetInitDependencies(BCCompIDSet& dependencies) const override {};
   virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {};
   //////
@@ -108,6 +110,7 @@ public:
   const PoseOriginList&  GetPoseOriginList() const;
   RobotEventHandler& GetRobotEventHandler() const;
   Util::RandomGenerator& GetRNG();
+  SDKComponent& GetSDKComponent() const;
   const Pose3d& GetWorldOrigin()  const;
   PoseOriginID_t GetWorldOriginID() const;
   u32 GetHeadSerialNumber() const;
@@ -116,6 +119,9 @@ public:
 
   bool HasExternalInterface() const;
   IExternalInterface* GetExternalInterface();
+  
+  bool HasGatewayInterface() const;
+  IGatewayInterface* GetGatewayInterface();
 
   Result ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, f32 yTolFrac) const;
 

@@ -25,6 +25,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/types/robotSettingsTypes.h"
 #include "util/logging/logging.h"
 
 
@@ -42,7 +43,7 @@ EngineRobotAudioClient::EngineRobotAudioClient()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void EngineRobotAudioClient::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void EngineRobotAudioClient::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   // Create & setup behavior listener
   _behaviorListener.reset( new AudioBehaviorStackListener( *this, robot->GetContext() ) );
@@ -53,14 +54,32 @@ void EngineRobotAudioClient::InitDependent(Cozmo::Robot* robot, const RobotCompM
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Engine Robot Audio Client Helper Methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void EngineRobotAudioClient::SetRobotMasterVolume(float volume, int32_t timeInMilliSeconds, CurveType curve)
+void EngineRobotAudioClient::SetRobotMasterVolume( MasterVolume volume )
 {
-  DEV_ASSERT(((volume >= 0.0f) && (volume <= 1.0f)), "EngineRobotAudioClient.SetRobotMasterVolume.Volume.InvalidValue");
-  PostParameter(AMD::GameParameter::ParameterType::Robot_Vic_Volume_Master,
-                volume,
-                AMD::GameObjectType::Invalid,
-                timeInMilliSeconds,
-                curve);
+  using AudioVolumeState = AudioMetaData::GameState::Robot_Vic_Volume;
+  auto audioState = AudioVolumeState::Invalid;
+  switch (volume) {
+    case MasterVolume::Mute:
+      audioState = AudioVolumeState::Mute;
+      break;
+    case MasterVolume::Low:
+      audioState = AudioVolumeState::Low;
+      break;
+    case MasterVolume::MediumLow:
+      audioState = AudioVolumeState::Mediumlow;
+      break;
+    case MasterVolume::Medium:
+      audioState = AudioVolumeState::Medium;
+      break;
+    case MasterVolume::MediumHigh:
+      audioState = AudioVolumeState::Mediumhigh;
+      break;
+    case MasterVolume::High:
+      audioState = AudioVolumeState::High;
+      break;
+  }
+  PostGameState( AudioMetaData::GameState::StateGroupType::Robot_Vic_Volume,
+                 static_cast<AudioMetaData::GameState::GenericState>(audioState) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -165,8 +184,11 @@ void EngineRobotAudioClient::SubscribeAudioCallbackMessages( Robot* robot )
   // Add Listeners to GameToEngine messages
   auto robotVolumeCallbackFunc = [this] ( const AnkiEvent<ExternalInterface::MessageGameToEngine>& message )
   {
+    // TODO: Need to be sure this is only used for DEV and Factory work
     const ExternalInterface::SetRobotVolume& msg = message.GetData().Get_SetRobotVolume();
-    SetRobotMasterVolume( msg.volume );
+    DEV_ASSERT(((msg.volume >= 0.0f) && (msg.volume <= 1.0f)),
+               "EngineRobotAudioClient.SetRobotMasterVolume.Volume.InvalidValue");
+    PostParameter( AMD::GameParameter::ParameterType::Robot_Vic_Volume_Master, msg.volume);
   };
   
   // Add Listenters to EngineToGame messages

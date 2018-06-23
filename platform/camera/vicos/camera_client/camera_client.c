@@ -312,15 +312,6 @@ static int mmap_camera_capture_buf(struct client_ctx *ctx)
     goto ION_IMPORT_FAILED;
   }
 
-  struct ion_fd_data ion_info_fd = {
-    .handle = data.handle
-  };
-  rc = ioctl(main_ion_fd, ION_IOC_SHARE, &ion_info_fd);
-  if (rc == -1) {
-    loge("%s: ION map failed: %s\n", __func__, strerror(errno));
-    goto ION_MAP_FAILED;
-  }
-
   size_t buf_size = mem_info->size;
   size_t buf_size_align = (buf_size + 4095U) & (~4095U);
   assert(buf_size == buf_size_align);
@@ -328,7 +319,7 @@ static int mmap_camera_capture_buf(struct client_ctx *ctx)
                       buf_size,
                       PROT_READ | PROT_WRITE,
                       MAP_SHARED,
-                      ion_info_fd.fd,
+                      data.fd,
                       0);
 
   if (buf == MAP_FAILED) {
@@ -337,7 +328,7 @@ static int mmap_camera_capture_buf(struct client_ctx *ctx)
   }
 
   mem_info->ion_fd = main_ion_fd;
-  mem_info->camera_capture_fd = ion_info_fd.fd;
+  mem_info->camera_capture_fd = data.fd;
   mem_info->ion_handle = data.handle;
   mem_info->data = buf;
 
@@ -345,7 +336,7 @@ static int mmap_camera_capture_buf(struct client_ctx *ctx)
 
 ION_MAP_FAILED: {
     struct ion_handle_data handle_data = {
-      .handle = ion_info_fd.handle
+      .handle = data.handle
     };
     rc = ioctl(main_ion_fd, ION_IOC_FREE, &handle_data);
     if (rc == -1) {
@@ -861,7 +852,7 @@ int camera_frame_acquire(struct anki_camera_handle *camera, anki_camera_frame_t 
   anki_camera_frame_t *frame = (anki_camera_frame_t *)&data[frame_offset];
 
   if (frame->frame_id == CAMERA_HANDLE_P(camera)->current_frame_id) {
-    logw("%s: duplicate frame: %u\n", __func__, frame->frame_id);
+    //logw("%s: duplicate frame: %u\n", __func__, frame->frame_id);
     rc = -1;
     goto UNLOCK;
   }

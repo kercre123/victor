@@ -56,7 +56,7 @@ void ImageBase<T>::DrawSubImage(const DerivedType& subImage, const Point2f& topL
       for(s32 relColIdx = 0; relColIdx < numColsToCopy; ++relColIdx){
         if(source_row[relColIdx] != blankPixelValue){
           dest_row[relColIdx] = source_row[relColIdx];
-        }
+        } 
       }
     }
   }

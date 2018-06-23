@@ -35,19 +35,25 @@ public:
   virtual void GetInitDependencies( RobotCompIDSet& dependencies ) const override;
   virtual void GetUpdateDependencies( RobotCompIDSet& dependencies ) const override {};
   
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
 
   // Event/Message handling
   template<typename T>
   void HandleMessage(const T& msg);
+
+  bool SDKWantsControl();
+  void SDKBehaviorActivation(bool enabled);
   
 private:
   
   Robot* _robot = nullptr;  
   bool _sdkWantsControl = false;
+  bool _sdkBehaviorActivated = false;
 
   std::vector<::Signal::SmartHandle> _signalHandles;
+
+  void DispatchSDKActivationResult(bool enabled);
 };
 
 } // namespace Cozmo

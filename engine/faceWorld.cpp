@@ -11,16 +11,17 @@
  *
  **/
 
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/types/enrolledFaceStorage.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/poseOriginList.h"
+#include "engine/components/robotStatsTracker.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
-#include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/externalInterface/messageGameToEngine.h"
-#include "clad/types/enrolledFaceStorage.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "webServerProcess/src/webService.h"
@@ -84,7 +85,7 @@ namespace Cozmo {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void FaceWorld::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+  void FaceWorld::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
   {
     _robot = robot;
     if(robot->HasExternalInterface()) {
@@ -225,6 +226,7 @@ namespace Cozmo {
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   Result FaceWorld::AddOrUpdateFace(const Vision::TrackedFace& face)
   {
+    
     // Head pose is stored w.r.t. historical world origin, but needs its parent
     // set up to be the robot's world origin here, using the origin ID from the
     // time the face was seen
@@ -413,6 +415,50 @@ namespace Cozmo {
 
         faceEntry->face = face;
       }
+
+      // update the observation time. Note that this is using current wall time, which is slightly different
+      // from the actual image timestamp when the face was observed, but should be close enough. Only store if
+      // time is accurate
+      WallTime::TimePoint_t wallTime;
+      if( WallTime::getInstance()->GetTime( wallTime ) ) {
+        auto it = _wallTimesObserved.find(face.GetID());
+        if( it != _wallTimesObserved.end() ) {
+          // update existing entry
+          it->second.push_back(wallTime);
+          while(it->second.size() > 2) {
+            it->second.pop_front();
+          }
+
+          // if the new sighting is in a different day than the last one, we need to update robot stats
+          const auto lastSeen = it->second.front();
+          if( !WallTime::AreTimePointsInSameDay(lastSeen, wallTime) ) {
+            PRINT_NAMED_INFO("FaceWorld.UpdateFace.FaceSeenOnNewDay",
+                             "face %d %s name seen on new day",
+                             face.GetID(),
+                             face.HasName() ? "with" : "without");
+            if( face.HasName() ) {
+              // NOTE: for now only count named faces. Unnamed faces wall times don't get saved to disk, so
+              // this won't really work across boots except for named (aka enrolled) faces
+              _robot->GetComponent<RobotStatsTracker>().IncrementNamedFacesPerDay();
+            }
+          }
+
+        }
+        else {
+          // new entry
+          _wallTimesObserved.emplace( face.GetID(), ObservationTimeHistory{{wallTime}} );
+
+          // if this is an enrolled face and it's the first time we're seeing it, count it
+          if( face.HasName() ) {
+            PRINT_NAMED_INFO("FaceWorld.UpdateFace.NamedFaceFirstDaySeen",
+                             "face %d has been seen for the first time",
+                             face.GetID());
+
+            _robot->GetComponent<RobotStatsTracker>().IncrementNamedFacesPerDay();
+          }
+        }
+      }
+      
     } // if(false == Vision::FaceTracker::IsRecognitionSupported()
 
     // By now, we should have either created a new face or be pointing at an
@@ -994,6 +1040,37 @@ namespace Cozmo {
     }
     return false;
   }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void FaceWorld::InitLoadedKnownFaces(const std::list<Vision::LoadedKnownFace>& loadedFaces)
+  {
+    for( const auto& loadedFace : loadedFaces ) {
+      const auto epoch = WallTime::getInstance()->GetEpochTime();
+      const auto sinceEpoch = std::chrono::seconds(loadedFace.lastSeenSecondsSinceEpoch);
+      const auto wallTime = epoch + sinceEpoch;
+      
+      _wallTimesObserved.emplace( loadedFace.faceID, ObservationTimeHistory{{wallTime}} );
+    }    
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  const FaceWorld::ObservationTimeHistory& FaceWorld::GetWallTimesObserved(const SmartFaceID& faceID)
+  {
+    return GetWallTimesObserved(faceID.GetID());
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  const FaceWorld::ObservationTimeHistory& FaceWorld::GetWallTimesObserved(Vision::FaceID_t faceID)
+  {
+    auto it = _wallTimesObserved.find(faceID);
+    if( it != _wallTimesObserved.end() ) {
+      return it->second;
+    }
+
+    static const ObservationTimeHistory kEmptyQueue;
+    return kEmptyQueue;
+  }
+
 
 } // namespace Cozmo
 } // namespace Anki

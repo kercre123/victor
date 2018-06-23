@@ -62,23 +62,6 @@ enum uint_32 Cozmo_Sings_80Bpm
   Invalid = 0,
 }
 
-enum uint_32 Cozmo_Voice_Processing
-{
-  Invalid = 0,
-  Name = 797654004,
-  Sentence = 906532866,
-  Unprocessed = 860658140,
-}
-
-enum uint_32 External
-{
-  External_Long = 3001056757,
-  External_Maximum = 1931150551,
-  External_Medium = 3619992510,
-  External_Short = 1727626579,
-  Invalid = 0,
-}
-
 enum uint_32 Freeplay_Mood
 {
   Arcade = 1946377065,
@@ -131,12 +114,11 @@ enum uint_32 Mood
   Mood_Sad = 777739821,
 }
 
-enum uint_32 Relationship
+enum uint_32 Robot_Vic_External_Processing
 {
+  Default_Processed = 1906807385,
   Invalid = 0,
-  Realtionship_Bff = 743952678,
-  Realtionship_Friend = 1061927592,
-  Relationship_Stranger = 3087192196,
+  Unprocessed = 860658140,
 }
 
 enum uint_32 Robot_Vic_Head_Direction
@@ -218,13 +200,11 @@ enum uint_32 SwitchGroupType
   Cozmo_Sings_100Bpm = 3759662965,
   Cozmo_Sings_120Bpm = 2987768599,
   Cozmo_Sings_80Bpm = 3366294904,
-  Cozmo_Voice_Processing = 366280094,
-  External = 1442075084,
   Freeplay_Mood = 2205807877,
   Gameplay_Round = 2536359484,
   Invalid = 0,
   Mood = 3128647864,
-  Relationship = 3723222599,
+  Robot_Vic_External_Processing = 475135532,
   Robot_Vic_Head_Direction = 358594767,
   Robot_Vic_Lift_Direction = 3690255634,
   Robot_Vic_Mood_Switch = 1492705913,

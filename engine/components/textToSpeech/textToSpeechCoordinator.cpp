@@ -10,7 +10,7 @@
 *
 **/
 
-#include "textToSpeechCoordinator.h"
+#include "components/textToSpeech/textToSpeechCoordinator.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
@@ -19,7 +19,6 @@
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
 
-#include "clad/types/textToSpeechTypes.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 
@@ -45,8 +44,6 @@ namespace {
   // The coordinator will wait kPlayTimeoutScalar times the expected duration before erroring out on a TTS utterance
   const float kPlayTimeoutScalar = 2.0f;
 }
-// Static members
-TextToSpeechCoordinator::SayIntentConfigMap TextToSpeechCoordinator::_intentConfigs;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TextToSpeechCoordinator::TextToSpeechCoordinator()
@@ -55,7 +52,7 @@ TextToSpeechCoordinator::TextToSpeechCoordinator()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TextToSpeechCoordinator::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void TextToSpeechCoordinator::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   // Keep a pointer to robot for message sending
   _robot = robot;
@@ -70,48 +67,6 @@ void TextToSpeechCoordinator::InitDependent(Cozmo::Robot* robot, const RobotComp
   auto* messageHandler = _robot->GetRobotMessageHandler();
   _signalHandle = messageHandler->Subscribe(RobotInterface::RobotToEngineTag::textToSpeechEvent, 
                                             callback);
-
-  if (!_intentConfigs.empty()) {
-    PRINT_NAMED_WARNING("TextToSpeechCoordinator.LoadMetadata.AttemptToReloadStaticData", "_intentConfigs");
-    return;
-  }
-
-  DataAccessorComponent* dataAccessor = dependentComponents.GetBasePtr<DataAccessorComponent>();
-  const Json::Value& json = *(dataAccessor->GetTextToSpeechConfig());
-
-  // Load Intent Config
-  if (json.isNull() || !json.isObject()) {
-    PRINT_NAMED_ERROR("TextToSpeechCoordinator.LoadMetadata.json.IsNull", "or.NotIsObject");
-    return;
-  }
-
-  // Create Cozmo Says Voice Style map
-  SayTextVoiceStyleMap voiceStyleMap;
-  for (uint8_t aStyleIdx = 0; aStyleIdx <  Util::numeric_cast<uint8_t>(SayTextVoiceStyle::Count); ++aStyleIdx) {
-    const SayTextVoiceStyle aStyle = static_cast<SayTextVoiceStyle>(aStyleIdx);
-    voiceStyleMap.emplace( EnumToString(aStyle), aStyle );
-
-  }
-
-  // Create Say Text Intent Map
-  std::unordered_map<std::string, SayTextIntent> sayTextIntentMap;
-  for (uint8_t anIntentIdx = 0; anIntentIdx < SayTextIntentNumEntries; ++anIntentIdx) {
-    const SayTextIntent anIntent = static_cast<SayTextIntent>(anIntentIdx);
-    sayTextIntentMap.emplace( EnumToString(anIntent), anIntent );
-  }
-
-  // Store metadata's Intent objects
-  for (auto intentJsonIt = json.begin(); intentJsonIt != json.end(); ++intentJsonIt) {
-    const std::string& name = intentJsonIt.key().asString();
-    const auto intentEnumIt = sayTextIntentMap.find( name );
-    DEV_ASSERT(intentEnumIt != sayTextIntentMap.end(),
-               "TextToSpeechCoordinator.LoadMetadata.CanNotFindSayTextIntent");
-    if (intentEnumIt != sayTextIntentMap.end()) {
-      // Store Intent into STATIC var
-      const SayTextIntentConfig config(name, *intentJsonIt, voiceStyleMap);
-      _intentConfigs.emplace( intentEnumIt->second, std::move( config ) );
-    }
-  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -165,10 +120,9 @@ void TextToSpeechCoordinator::UpdateDependent(const RobotCompMap& dependentComps
 // Public Interface methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const uint8_t TextToSpeechCoordinator::CreateUtterance(const std::string& utteranceString,
-                                                       const SayTextVoiceStyle& style,
                                                        const UtteranceTriggerType& triggerType,
+                                                       const AudioTtsProcessingStyle& style,
                                                        const float durationScalar,
-                                                       const float pitchScalar,
                                                        const UtteranceUpdatedCallback callback)
 {
   uint8_t utteranceID = GetNextID();
@@ -185,7 +139,6 @@ const uint8_t TextToSpeechCoordinator::CreateUtterance(const std::string& uttera
   msg.text = utteranceString;
   msg.style = style;
   msg.durationScalar = durationScalar;
-  msg.pitchScalar = pitchScalar;
 
   // Send request to animation process
   const Result result = _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
@@ -207,55 +160,12 @@ const uint8_t TextToSpeechCoordinator::CreateUtterance(const std::string& uttera
   UpdateUtteranceState(utteranceID, TextToSpeechState::Preparing);
 
   PRINT_NAMED_INFO("TextToSpeechCoordinator.CreateUtterance",
-                   "Text '%s' Style '%s' DurScalar %f Pitch %f",
+                   "Text '%s' Style '%s' DurScalar %f",
                    Util::HidePersonallyIdentifiableInfo(utteranceString.c_str()),
                    EnumToString(style),
-                   durationScalar,
-                   pitchScalar);
+                   durationScalar);
 
   return utteranceID;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const uint8_t TextToSpeechCoordinator::CreateUtterance(const std::string& utteranceString, 
-                                                       const SayTextIntent& intent,
-                                                       const UtteranceTriggerType& triggerType,
-                                                       const UtteranceUpdatedCallback callback)
-{
-  // Set style/duration/pitch from intent
-  if (ANKI_VERIFY((intent != SayTextIntent::Count),
-                  "TextToSpeechCoordinator.CreateUtterance.Failed",
-                  "SayTextIntent::Count is not a valid intent")) {
-    const auto it = _intentConfigs.find(intent);
-    if (it != _intentConfigs.end()) {
-      // Set intent values
-      const SayTextIntentConfig& config = it->second;
-      auto & rng = _robot->GetRNG();
-
-      // Set audio processing style type
-      SayTextVoiceStyle style = config.style;
-
-      // Get Duration val
-      const auto & durationTrait = config.FindDurationTraitTextLength(Util::numeric_cast<uint>(utteranceString.length()));
-      float durationScalar = durationTrait.GetDuration(rng);
-
-      // Get Pitch val
-      const auto & pitchTrait = config.FindPitchTraitTextLength(Util::numeric_cast<uint>(utteranceString.length()));
-      float pitchScalar = pitchTrait.GetDuration(rng);
-
-      PRINT_NAMED_INFO("TextToSpeechCoordinator.CreateUtterance.UsingIntent",
-                       "Intent '%s'",
-                       EnumToString(intent));
-
-      return CreateUtterance(utteranceString, style, triggerType, durationScalar, pitchScalar, callback);
-    } else {
-      PRINT_NAMED_ERROR("TextToSpeechCoordinator.CreateUtterance.CanNotFind.SayTextIntentConfig",
-                        "%s",
-                        EnumToString(intent));
-    }
-  } 
-
-  return kInvalidUtteranceID;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -328,18 +238,11 @@ const bool TextToSpeechCoordinator::CancelUtterance(const uint8_t utteranceID)
     return false;
   }
 
-  auto& utterance = it->second;
-
-  // If the utterance is already playing, it cannot be cancelled
-  if (UtteranceState::Playing == utterance.state){
-    PRINT_NAMED_ERROR("TextToSpeechCoordinator.CancelUtteranceError",
-                      "Cannot cancel utterance %d as it is already playing",
-                      utteranceID);
-    return false;
-  }
-
-  // If the utterance is still in generation, cancel generation 
-  if (UtteranceState::Generating == utterance.state) {
+  // we can cancel the tts at any point during it's lifecycle
+  // notes:
+  //  + if cancelling when it's generating, thread will hang until generation is complete
+  //  + cancelling will clear the wav data in AnkiPluginInterface, regardless of which utteranceID was last delivered
+  {
     PRINT_NAMED_INFO("TextToSpeechCoordinator.CancelUtteranceGeneration", "Cancel ttsID %d", utteranceID);
     RobotInterface::TextToSpeechCancel msg;
     msg.ttsID = utteranceID;
@@ -452,100 +355,6 @@ void TextToSpeechCoordinator::UpdateUtteranceState(const uint8_t& ttsID,
     utterance.callback(utterance.state);
   }
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// SayTextIntentConfig methods
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-namespace{
-const char* kStyleKey         = "style";
-const char* kDurationTraitKey = "durationTraits";
-const char* kPitchTraitKey    = "pitchTraits";
-}
-
-TextToSpeechCoordinator::SayTextIntentConfig::SayTextIntentConfig(const std::string& intentName,
-                                                                  const Json::Value& json,
-                                                                  const SayTextVoiceStyleMap& styleMap)
-: name(intentName)
-{
-  // Set Voice Style
-  const auto styleKey = json.get(kStyleKey, Json::Value::null);
-  if (!styleKey.isNull()) {
-    const auto it = styleMap.find(styleKey.asString());
-    DEV_ASSERT(it != styleMap.end(), "TextToSpeechCoordinator.LoadMetadata.IntentStyleNotFound");
-    if (it != styleMap.end()) {
-      style = it->second;
-    }
-  }
-
-  // Duration Traits
-  const auto durationTraitJson = json.get(kDurationTraitKey, Json::Value::null);
-  if (!durationTraitJson.isNull()) {
-    for (auto traitIt = durationTraitJson.begin(); traitIt != durationTraitJson.end(); ++traitIt) {
-      durationTraits.emplace_back(*traitIt);
-    }
-  }
-
-  // Pitch Traits
-  const auto pitchTraitJson = json.get(kPitchTraitKey, Json::Value::null);
-  if (!pitchTraitJson.isNull()) {
-    for (auto traitIt = pitchTraitJson.begin(); traitIt != pitchTraitJson.end(); ++traitIt) {
-      pitchTraits.emplace_back(*traitIt);
-    }
-  }
-
-  DEV_ASSERT(!name.empty(), "TextToSpeechCoordinator.LoadMetadata.Intent.name.IsEmpty");
-  DEV_ASSERT(!durationTraitJson.empty(), "TextToSpeechCoordinator.LoadMetadata.Intent.durationTraits.IsEmpty");
-  DEV_ASSERT(!pitchTraitJson.empty(), "TextToSpeechCoordinator.LoadMetadata.Intent.pitchTraits.IsEmpty");
-} // SayTextIntentConfig()
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const TextToSpeechCoordinator::SayTextIntentConfig::ConfigTrait& TextToSpeechCoordinator::SayTextIntentConfig::FindDurationTraitTextLength(uint textLength) const
-{
-  for (const auto& aTrait : durationTraits) {
-    if (aTrait.textLengthMin <= textLength && aTrait.textLengthMax >= textLength) {
-      return aTrait;
-    }
-  }
-  return durationTraits.front();
-} // FindDurationTraitTextLength()
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const TextToSpeechCoordinator::SayTextIntentConfig::ConfigTrait& TextToSpeechCoordinator::SayTextIntentConfig::FindPitchTraitTextLength(uint textLength) const
-{
-  for (const auto& aTrait : pitchTraits) {
-    if (aTrait.textLengthMin <= textLength && aTrait.textLengthMax >= textLength) {
-      return aTrait;
-    }
-  }
-  return pitchTraits.front();
-} // FindPitchTraitTextLength()
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TextToSpeechCoordinator::SayTextIntentConfig::ConfigTrait::ConfigTrait(const Json::Value& json)
-{
-  textLengthMin = json.get("textLengthMin", Json::Value(std::numeric_limits<uint>::min())).asUInt();
-  textLengthMax = json.get("textLengthMax", Json::Value(std::numeric_limits<uint>::max())).asUInt();
-  rangeMin = json.get("rangeMin", Json::Value(std::numeric_limits<float>::min())).asFloat();
-  rangeMax = json.get("rangeMax", Json::Value(std::numeric_limits<float>::max())).asFloat();
-  rangeStepSize = json.get("stepSize", Json::Value(0.f)).asFloat(); // If No step size use Range Min and don't randomize
-} // ConfigTrait()
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float TextToSpeechCoordinator::SayTextIntentConfig::ConfigTrait::GetDuration(Util::RandomGenerator& randomGen) const
-{
-  // TODO: Move this into Random Util class
-  float resultVal;
-  if (Util::IsFltGTZero( rangeStepSize )) {
-    // (Scalar Range / stepSize) + 1 = number of total possible steps
-    const int stepCount = ((rangeMax - rangeMin) / rangeStepSize) + 1;
-    const auto randStep = randomGen.RandInt( stepCount );
-    resultVal = rangeMin + (rangeStepSize * randStep);
-  }
-  else {
-    resultVal = rangeMin;
-  }
-  return resultVal;
-} // GetDuration()
 
 } // namespace Cozmo
 } // namespace Anki

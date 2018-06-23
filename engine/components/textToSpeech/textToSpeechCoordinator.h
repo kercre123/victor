@@ -15,7 +15,7 @@
 
 #include "engine/robotComponents_fwd.h"
 #include "coretech/common/shared/types.h"
-#include "clad/types/sayTextStyles.h"
+#include "clad/audio/audioSwitchTypes.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 #include "util/helpers/templateHelpers.h"
@@ -31,7 +31,7 @@ namespace Cozmo{
 
 const static uint8_t kInvalidUtteranceID = 0;
 // Utterances should not take longer than this to generate
-const static float kGenerationTimeout_s = 3.0f;
+const static float kGenerationTimeout_s = 10.0f; // making this high until we figure out accurate generation times
 
 // Forward declarations
 class Robot;
@@ -59,7 +59,7 @@ public:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // IDependencyManagedComponent
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::DataAccessor);
   };
@@ -69,22 +69,22 @@ public:
   // IDependencyManagedComponent
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+  using AudioTtsProcessingStyle = AudioMetaData::SwitchState::Robot_Vic_External_Processing;
   using UtteranceUpdatedCallback = std::function<void(const UtteranceState&)>;
 
   const uint8_t CreateUtterance(const std::string& utteranceString,
-                                const SayTextVoiceStyle& style,
                                 const UtteranceTriggerType& triggerType,
+                                const AudioTtsProcessingStyle& style = AudioTtsProcessingStyle::Default_Processed,
                                 const float durationScalar = 1.f,
-                                const float pitchScalar = 0.f,
                                 UtteranceUpdatedCallback callback = nullptr);
 
-  const uint8_t CreateUtterance(const std::string& utteranceString,
-                                const SayTextIntent& intent,
-                                const UtteranceTriggerType& triggerType,
-                                const UtteranceUpdatedCallback callback = nullptr);
 
   const UtteranceState GetUtteranceState( const uint8_t utteranceID) const;
   const bool           PlayUtterance(const uint8_t utteranceID);
+
+  // we can cancel the tts at any point during it's lifecycle, however ...
+  //  + if cancelling when tts is generating, thread will hang until generation is complete
+  //  + cancelling will clear the wav data in AnkiPluginInterface, regardless of which utteranceID was last delivered
   const bool           CancelUtterance(const uint8_t utteranceID);
 
 private:
@@ -105,42 +105,6 @@ private:
   std::unordered_map<uint8_t, UtteranceRecord> _utteranceMap;
 
   Signal::SmartHandle            _signalHandle;
-
-  // SayTextVoiceStyle lookup up by name
-  using SayTextVoiceStyleMap = std::unordered_map<std::string, SayTextVoiceStyle>;
-
-  // Cozmo Says intent metadata config data struct
-  struct SayTextIntentConfig
-  {
-    struct ConfigTrait
-    {
-      uint textLengthMin = std::numeric_limits<uint>::min();
-      uint textLengthMax = std::numeric_limits<uint>::max();
-      float rangeMin = std::numeric_limits<float>::min();;
-      float rangeMax = std::numeric_limits<float>::max();;
-      float rangeStepSize = 0.0f;
-
-      ConfigTrait() = default;
-      ConfigTrait(const Json::Value& json);
-
-      float GetDuration(Util::RandomGenerator& randomGen) const;
-    };
-
-    std::string name = "";
-    SayTextVoiceStyle style = SayTextVoiceStyle::CozmoProcessing_Sentence;
-    std::vector<ConfigTrait> durationTraits;
-    std::vector<ConfigTrait> pitchTraits;
-
-    SayTextIntentConfig() = default;
-    SayTextIntentConfig(const std::string& intentName, const Json::Value& json, const SayTextVoiceStyleMap& styleMap);
-
-    const ConfigTrait& FindDurationTraitTextLength(uint textLength) const;
-    const ConfigTrait& FindPitchTraitTextLength(uint textLength) const;
-  };
-
-  // Store loaded Cozmo Says intent configs
-  using SayIntentConfigMap = std::unordered_map<SayTextIntent, SayTextIntentConfig, Util::EnumHasher>;
-  static SayIntentConfigMap _intentConfigs;
 
   Robot* _robot = nullptr;
 }; // class TextToSpeechCoordinator

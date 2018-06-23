@@ -37,7 +37,9 @@ class BehaviorContainer;
 class BehaviorSystemManager;
 class IBehavior;
 class IExternalInterface;
+class IGatewayInterface;
 class UnitTestKey;
+enum class OnboardingStages : uint8_t;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class BehaviorsBootLoader : public IDependencyManagedComponent<BCComponentID>
@@ -56,7 +58,7 @@ public:
     dependencies.insert(BCComponentID::BehaviorSystemManager);
   }
   
-  virtual void InitDependent( Robot* robot, const BCCompMap& dependentComponents ) override;
+  virtual void InitDependent( Robot* robot, const BCCompMap& dependentComps ) override;
   virtual void UpdateDependent(const BCCompMap& dependentComps) override;
   
   IBehavior* GetBootBehavior();
@@ -68,6 +70,7 @@ private:
   void SetNewBehavior(BehaviorID behavior);
   
   IExternalInterface* _externalInterface = nullptr;
+  IGatewayInterface* _gatewayInterface = nullptr;
   const BehaviorContainer* _behaviorContainer = nullptr;
   
   IBehavior* _bootBehavior = nullptr;
@@ -88,6 +91,8 @@ private:
   };
   
   Behaviors _behaviors;
+  
+  OnboardingStages _stage;
   
   std::list<Anki::Util::IConsoleFunction> _consoleFuncs;
 };

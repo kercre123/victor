@@ -8,10 +8,10 @@
 */
 
 #include "dasManager.h"
+#include "dasConfig.h"
+
 #include "DAS/DAS.h"
-
 #include "osState/osState.h"
-
 #include "util/logging/logging.h"
 #include "util/logging/DAS.h"
 #include "util/string/stringUtils.h"
@@ -35,11 +35,7 @@ using LogLevel = Anki::Util::LogLevel;
 
 namespace {
 
-  // Which DAS endpoint do we use?
-  constexpr const char * DAS_URL = "https://sqs.us-west-2.amazonaws.com/792379844846/DasInternal-dasinternalSqs-1HN6JX3NZPGNT";
 
-  // How many events do we buffer before send? Counted by events.
-  constexpr const size_t QUEUE_THRESHOLD_SIZE = 256;
 
   // How often do we process statistics? Counted by log records.
   constexpr const int PROCESS_STATS_INTERVAL = 1000;
@@ -136,6 +132,13 @@ static inline void serialize(std::ostringstream & ostr, const std::string & key,
 namespace Anki {
 namespace Victor {
 
+DASManager::DASManager(const DASConfig & dasConfig)
+{
+  _url = dasConfig.GetURL();
+  _queue_threshold_size = dasConfig.GetQueueThresholdSize();
+  _max_deferrals_size = dasConfig.GetMaxDeferralsSize();
+}
+
 void DASManager::Serialize(std::ostringstream & ostr, const DASEvent & event)
 {
   //
@@ -222,39 +225,110 @@ void DASManager::Serialize(std::ostringstream & ostr, const DASEventQueue & even
   ostr << ']';
 }
 
+
+//
+// Attempt to upload queued events.
+// This is called on the worker thread.
+// Return true on successful upload.
+//
+bool DASManager::PostToServer(const DASEventQueue & eventQueue)
+{
+  const size_t nEvents = eventQueue.size();
+
+  LOG_DEBUG("DASManager.PostToServer", "Upload %zu events to %s", nEvents, _url.c_str());
+
+  std::ostringstream ostr;
+  std::string response;
+
+  Serialize(ostr, eventQueue);
+
+  const bool success = DAS::PostToServer(_url, ostr.str(), response);
+  if (success) {
+    LOG_DEBUG("DASManager.PostToServer.UploadSuccess", "Uploaded %zu events", nEvents);
+    ++_workerSuccessCount;
+    DASMSG(dasmgr_upload_success, "dasmgr.upload.success", "Sent after each successful upload");
+    DASMSG_SET(i1, _workerSuccessCount, "Worker success count");
+    DASMSG_SET(i2, _workerFailCount, "Worker fail count");
+    DASMSG_SET(i3, _workerDeferralCount, "Worker deferral count");
+    DASMSG_SET(i4, _workerDroppedCount, "Worker dropped count");
+    DASMSG_SEND();
+    return true;
+  } else {
+    LOG_ERROR("DASManager.PostToServer.UploadFailed", "Failed to upload %zu events (%s)", nEvents, response.c_str());
+    ++_workerFailCount;
+    DASMSG(dasmgr_upload_failed, "dasmgr.upload.failed", "Sent after each failed upload");
+    DASMSG_SET(s1, response, "HTTP response");
+    DASMSG_SET(i1, _workerSuccessCount, "Worker success count");
+    DASMSG_SET(i2, _workerFailCount, "Worker fail count");
+    DASMSG_SET(i3, _workerDeferralCount, "Worker deferral count");
+    DASMSG_SET(i4, _workerDroppedCount, "Worker dropped count");
+    DASMSG_SEND();
+    return false;
+  }
+}
+
+//
+// Process queue of deferred events until empty or failure.
+// In case of failure, events are left at front of queue.
+//
+void DASManager::PerformDeferredUploads()
+{
+  while (!_workerDeferrals.empty()) {
+    const auto front = _workerDeferrals.front();
+    const bool success = PostToServer(*front);
+    if (success) {
+      LOG_DEBUG("DASManager.PerformDeferredUploads.UploadSuccess", "Uploaded %zu events", front->size());
+      _workerDeferrals.pop_front();
+    } else {
+      LOG_DEBUG("DASManager.PerformDeferredUploads.UploadFailed", "Failed to upload %zu events", front->size());
+      break;
+    }
+  }
+}
+
+//
+// Move event queue into deferral queue.  If deferral queue is at capacity,
+// discard the oldest data.
+//
+void DASManager::PerformDeferral(DASEventQueuePtr eventQueue)
+{
+  // Preconditions
+  DEV_ASSERT(_workerDeferrals.size() <= _max_deferrals_size, "DASManager.PerformDeferral.InvalidDeferralQueue");
+
+  if (_workerDeferrals.size() >= _max_deferrals_size) {
+    LOG_ERROR("DASManager.PerformDeferral", "Dropping %zu deferred events", _workerDeferrals.front()->size());
+    _workerDeferrals.pop_front();
+    ++_workerDroppedCount;
+  }
+  _workerDeferrals.push_back(eventQueue);
+  ++_workerDeferralCount;
+}
+
 //
 // Upload events to DAS endpoint
 // This is called on background worker thread to avoid blocking main read loop.
 //
 void DASManager::PerformUpload(DASEventQueuePtr eventQueue)
 {
+  // Preconditions
   DEV_ASSERT(eventQueue != nullptr, "DASManager.PerformUpload.InvalidQueue");
   DEV_ASSERT(eventQueue->size() > 0, "DASManager.PerformUpload.InvalidQueueSize");
 
-  const auto nEvents = eventQueue->size();
-
-  LOG_DEBUG("DASManager.PerformUpload", "Upload %zu events to %s", nEvents, DAS_URL);
-
-  // Serialize events to json
-  std::ostringstream ostr;
-  Serialize(ostr, *eventQueue);
-
-  // Send json up to endpoint
-  std::string response;
-  const bool success = DAS::PostToServer(DAS_URL, ostr.str(), response);
+  // Attempt to post event queue to server
+  const bool success = PostToServer(*eventQueue);
   if (success) {
-    ++_workerSuccessCount;
-    return;
+    // Attempt any deferred uploads
+    PerformDeferredUploads();
+  } else {
+    // Try again later
+    PerformDeferral(eventQueue);
   }
-
-  // TO DO: Retry after fail? Write to backing store?
-  LOG_ERROR("DASManager.PerformUpload", "Failed to upload %zu events (%s)", nEvents, response.c_str());
-  ++_workerFailCount;
 
 }
 
 void DASManager::EnqueueForUpload(DASEventQueuePtr eventQueue)
 {
+  // Preconditions
   DEV_ASSERT(eventQueue != nullptr, "DASManager.EnqueueForUpload.InvalidQueue");
 
   LOG_DEBUG("DASManager.EnqueueForUpload", "Enqueue %zu events for upload", eventQueue->size());
@@ -269,12 +343,14 @@ void DASManager::EnqueueForUpload(DASEventQueuePtr eventQueue)
 // Process an event struct
 void DASManager::ProcessEvent(DASEvent && event)
 {
+  // Preconditions
   DEV_ASSERT(_eventQueue != nullptr, "DASManager.ProcessEvent.InvalidQueue");
+
   _eventQueue->push_back(std::move(event));
   ++_eventCount;
 
   // If we have reached threshold size, move active queue to worker thread and start a new queue
-  if (_eventQueue->size() >= QUEUE_THRESHOLD_SIZE) {
+  if (_eventQueue->size() >= _queue_threshold_size) {
     EnqueueForUpload(_eventQueue);
     _eventQueue = std::make_shared<DASEventQueue>();
   }
@@ -375,9 +451,14 @@ void DASManager::ProcessLogEntry(const AndroidLogEntry & logEntry)
 //
 void DASManager::ProcessStats()
 {
-  LOG_DEBUG("DASManager.ProcessStats",
-            "entries=%llu events=%llu sleeps=%llu workerSuccess=%llu workerFail=%llu",
-            _entryCount, _eventCount, _sleepCount, (uint64_t) _workerSuccessCount, (uint64_t) _workerFailCount);
+  LOG_DEBUG("DASManager.ProcessStats.QueueStats",
+            "entries=%llu events=%llu sleeps=%llu "
+            "workerSuccess=%u workerFail=%u workerDeferral=%u workerDropped=%u",
+            _entryCount, _eventCount, _sleepCount,
+            (uint32_t) _workerSuccessCount,
+            (uint32_t) _workerFailCount,
+            (uint32_t) _workerDeferralCount,
+            (uint32_t) _workerDroppedCount);
 
   static struct rusage ru;
   if (getrusage(RUSAGE_SELF, &ru) == 0) {
@@ -385,7 +466,7 @@ void DASManager::ProcessStats()
     /* ixrss = integral shared memory size */
     /* idrss = integral unshared data size */
     /* isrss = integral unshared stack size */
-    LOG_DEBUG("DASManager.ProcessStats",
+    LOG_DEBUG("DASManager.ProcessStats.MemoryStats",
       "maxrss=%ld ixrss=%ld idrss=%ld isrss=%ld",
       ru.ru_maxrss, ru.ru_ixrss, ru.ru_idrss, ru.ru_isrss);
   }
@@ -431,7 +512,11 @@ void DASManager::FlushUploadQueue()
 //
 Result DASManager::Run(const bool & shutdown)
 {
-  Result result = RESULT_OK;
+  // Validate configuration
+  if (_url.empty()) {
+    LOG_ERROR("DASManager.Run.InvalidURL", "Invalid URL");
+    return RESULT_FAIL_INVALID_PARAMETER;
+  }
 
   LOG_DEBUG("DASManager.Run", "Begin reading loop");
 
@@ -443,7 +528,7 @@ Result DASManager::Run(const bool & shutdown)
     } else {
       LOG_ERROR("DASManager.Run.InvalidEMR", "INVALID EMR - NO ESN");
     }
-    _robot_version = osState->GetOSBuildVersion() + "@" + osState->GetBuildSha();
+    _robot_version = osState->GetRobotVersion();
     _boot_id = osState->GetBootID();
     Cozmo::OSState::removeInstance();
   }
@@ -472,6 +557,8 @@ Result DASManager::Run(const bool & shutdown)
   //
   // Read log records until shutdown flag becomes true.
   //
+  Result result = RESULT_OK;
+
   while (!shutdown) {
     struct log_msg logmsg;
     int rc = android_logger_list_read(log, &logmsg);
@@ -514,6 +601,9 @@ Result DASManager::Run(const bool & shutdown)
   android_logger_list_close(log);
   FlushEventQueue();
   FlushUploadQueue();
+
+  // Report final stats
+  ProcessStats();
 
   LOG_DEBUG("DASManager.Run", "Done(result %d)", result);
   return result;

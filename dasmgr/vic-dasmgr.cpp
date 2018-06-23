@@ -7,9 +7,11 @@
 *
 */
 #include "dasManager.h"
+#include "dasConfig.h"
 
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "json/json.h"
 #include "platform/victorCrashReports/victorCrashReporter.h"
-
 #include "util/logging/logging.h"
 #include "util/logging/DAS.h"
 #include "util/logging/victorLogger.h"
@@ -17,11 +19,16 @@
 #include <signal.h>
 #include <stdlib.h>
 
+using DataPlatform = Anki::Util::Data::DataPlatform;
+using DASConfig = Anki::Victor::DASConfig;
+
 #define LOG_PROCNAME "vic-dasmgr"
 #define LOG_CHANNEL  LOG_PROCNAME
 
 namespace
 {
+  constexpr const char DEFAULT_PLATFORM_CONFIG[] = "/anki/etc/config/platform_config.json";
+
   bool gShutdown = false;
 }
 
@@ -29,6 +36,22 @@ void Shutdown(int signum)
 {
   LOG_DEBUG("main.Shutdown", "Shutdown on signal %d", signum);
   gShutdown = true;
+}
+
+static std::unique_ptr<DataPlatform> GetDataPlatform()
+{
+  std::string path = DEFAULT_PLATFORM_CONFIG;
+  const char * cp = getenv("VIC_DASMGR_PLATFORM_CONFIG");
+  if (cp != nullptr) {
+    path = cp;
+  }
+  return DataPlatform::GetDataPlatform(path);
+}
+
+static std::unique_ptr<DASConfig> GetDASConfig(const DataPlatform & dataPlatform)
+{
+  const std::string & path = dataPlatform.GetResourcePath("config/DASConfig.json");
+  return DASConfig::GetDASConfig(path);
 }
 
 int main(int argc, const char * argv[])
@@ -47,31 +70,24 @@ int main(int argc, const char * argv[])
   // Say hello
   LOG_DEBUG("main.hello", "Hello world");
 
-  DASMSG(dasmgr_main_hello, "dasmgr.main.hello", "Sent at application start");
-  DASMSG_SET(s1, "s1", "Test string 1");
-  DASMSG_SET(s2, "s2", "Test string 2");
-  DASMSG_SET(s3, "s3", "Test string 3");
-  DASMSG_SET(s4, "s4", "Test string 4");
-  DASMSG_SET(i1, 111, "Test int 1");
-  DASMSG_SET(i2, 222, "Test int 2");
-  DASMSG_SET(i3, 333, "Test int 3");
-  DASMSG_SET(i4, 444, "Test int 4");
-  DASMSG_SEND();
+  auto dataPlatform = GetDataPlatform();
+  if (!dataPlatform) {
+    LOG_ERROR("main.InvalidDataPlatform", "Unable to get data platform");
+    Anki::Util::gLoggerProvider = nullptr;
+    Anki::Util::gEventProvider = nullptr;
+    exit(1);
+  }
 
-  DASMSG(dasmgr_main_debug, "dasmgr.main.debug", "Test event");
-  DASMSG_SET(s1, "This is a debug event", "Test field");
-  DASMSG_SEND_DEBUG();
-
-  DASMSG(dasmgr_main_warning, "dasmgr.main.warning", "Test event");
-  DASMSG_SET(s1, "This is a warning event", "Test field");
-  DASMSG_SEND_WARNING();
-
-  DASMSG(dasmgr_main_error, "dasmgr.main.error", "Test event");
-  DASMSG_SET(s1, "This is an error event", "Test field");
-  DASMSG_SEND_ERROR();
+  auto dasConfig = GetDASConfig(*dataPlatform);
+  if (!dasConfig) {
+    LOG_ERROR("main.InvalidDASConfig", "Unable to get DAS configuration");
+    Anki::Util::gLoggerProvider = nullptr;
+    Anki::Util::gEventProvider = nullptr;
+    exit(1);
+  }
 
   // Process log records until shutdown or error
-  Anki::Victor::DASManager dasManager;
+  Anki::Victor::DASManager dasManager(*dasConfig);
 
   const int status = dasManager.Run(gShutdown);
 

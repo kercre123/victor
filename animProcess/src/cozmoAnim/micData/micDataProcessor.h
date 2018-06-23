@@ -44,6 +44,9 @@ namespace Anki {
     }
     class SpeechRecognizerTHF;
   }
+  namespace Util {
+    class Locale;
+  }
 }
 
 namespace Anki {
@@ -68,10 +71,13 @@ public:
   void SetTriggerWordDetectionEnabled(bool enabled) { _triggerEnabled = enabled; }
 
   BeatDetector& GetBeatDetector() { assert(nullptr != _beatDetector); return *_beatDetector.get(); }
+
+  void UpdateTriggerForLocale(const Util::Locale& newLocale);
   
 private:
   MicDataSystem* _micDataSystem = nullptr;
   std::string _writeLocationDir = "";
+  std::string _triggerWordDataDir = "";
   // Members for caching off lookup indices for mic processing results
   int _bestSearchBeamIndex = 0;
   int _bestSearchBeamConfidence = 0;
@@ -104,8 +110,15 @@ private:
   bool _shouldStreamAfterTrigger = true;
   bool _triggerEnabled = true;
 
+
+#if ANKI_DEV_CHEATS
+  static constexpr uint32_t kTriggerAudioLength_ms = kTriggerAudioLengthDebug_ms;
+#else
+  static constexpr uint32_t kTriggerAudioLength_ms = kTriggerAudioLengthShipping_ms;
+#endif
+
   // Internal buffer used to add to the streaming audio once a trigger is detected
-  static constexpr uint32_t kImmediateBufferSize = kPreTriggerOverlapSize_ms / kTimePerSEBlock_ms;
+  static constexpr uint32_t kImmediateBufferSize = kTriggerAudioLength_ms / kTimePerSEBlock_ms;
   struct TimedMicData {
     std::array<AudioUtil::AudioSample, kSamplesPerBlock> audioBlock;
     TimeStamp_t timestamp;
@@ -113,7 +126,7 @@ private:
   Util::FixedCircularBuffer<TimedMicData, kImmediateBufferSize> _immediateAudioBuffer;
 
   using RawAudioChunk = std::array<AudioUtil::AudioSample, kRawAudioChunkSize>;
-  static constexpr uint32_t kImmediateBufferRawSize = kPreTriggerOverlapSize_ms / kTimePerChunk_ms;
+  static constexpr uint32_t kImmediateBufferRawSize = kTriggerAudioLength_ms / kTimePerChunk_ms;
   Util::FixedCircularBuffer<RawAudioChunk, kImmediateBufferRawSize> _immediateAudioBufferRaw;
   
   std::mutex _procAudioXferMutex;

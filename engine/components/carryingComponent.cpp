@@ -27,7 +27,7 @@ CarryingComponent::CarryingComponent()
   
 }
 
-void CarryingComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void CarryingComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
 }

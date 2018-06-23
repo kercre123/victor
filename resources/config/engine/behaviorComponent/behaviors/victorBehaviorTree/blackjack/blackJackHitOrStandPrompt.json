@@ -4,13 +4,13 @@
 
   "associatedActiveFeature": "Blackjack",
 
+  "streamType"                          : "Blackjack",
   "earConAudioEventBegin"               : "Play__Robot_Vic_Sfx__Wake_Word_On",
   "earConAudioEventSuccess"             : "Play__Robot_Vic_Sfx__Wake_Word_Success",
   "earConAudioEventNeutral"             : "Play__Robot_Vic_Sfx__Wake_Word_Off",
   "textToSpeechBehaviorID"              : "BlackJackTextToSpeech",
-  "vocalPromptString"                   : "Say yes to hit, no to stand",
-  "listenAnimOverrideTrigger"           : "BlackJack_Idle",
-  "maxNumberOfReprompts"                : 1,
+  "vocalPromptString"                   : "Hit or Stand?",
+  "maxNumberOfReprompts"                : 2,
   "stopListeningOnIntents"              : true,
   "backpackLights"                      : true,
   "playListeningGetIn"                  : false,

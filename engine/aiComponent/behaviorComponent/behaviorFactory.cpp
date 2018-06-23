@@ -15,6 +15,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimSequenceWithFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimSequenceWithObject.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/attentionTransfer/behaviorAttentionTransferIfNeeded.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorPickUpCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorPutDownBlock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorRollBlock.h"
@@ -38,9 +39,12 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorQuietModeCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/danceToTheBeat/behaviorDanceToTheBeat.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevBatteryLogging.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevCubeSpinnerConsole.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevDesignCubeLights.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevDisplayReadingsOnFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevEventSequenceCapture.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevImageCapture.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTestBlackjackViz.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTouchDataCollection.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTurnInPlaceTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDispatchAfterShake.h"
@@ -76,7 +80,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorLookInPlaceMemoryMap.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorThinkAboutBeacons.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorVisitInterestingEdge.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/oneShots/behaviorDance.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/oneShots/behaviorSinging.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/putDownDispatch/behaviorLookForFaceAndCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorFistBump.h"
@@ -85,6 +88,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPounceWithProx.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPuzzleMaze.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorTrackLaser.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/habitat/behaviorConfirmHabitat.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/knowledgeGraph/behaviorKnowledgeGraphQuestion.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorEnrollFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorRespondToRenameFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/messaging/behaviorLeaveAMessage.h"
@@ -121,6 +126,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/sdkBehaviors/behaviorSDKInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/sleeping/behaviorSleeping.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorAdvanceClock.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorDisplayWallTime.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h"
@@ -184,6 +190,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::TextToSpeechLoop:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorTextToSpeechLoop(config));
+      break;
+    }
+    
+    case BehaviorClass::AttentionTransferIfNeeded:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorAttentionTransferIfNeeded(config));
       break;
     }
     
@@ -325,6 +337,18 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::DevCubeSpinnerConsole:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDevCubeSpinnerConsole(config));
+      break;
+    }
+    
+    case BehaviorClass::DevDesignCubeLights:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDevDesignCubeLights(config));
+      break;
+    }
+    
     case BehaviorClass::DevDisplayReadingsOnFace:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDevDisplayReadingsOnFace(config));
@@ -340,6 +364,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::DevImageCapture:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDevImageCapture(config));
+      break;
+    }
+    
+    case BehaviorClass::DevTestBlackjackViz:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDevTestBlackjackViz(config));
       break;
     }
     
@@ -553,12 +583,6 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
-    case BehaviorClass::Dance:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorDance(config));
-      break;
-    }
-    
     case BehaviorClass::Singing:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorSinging(config));
@@ -604,6 +628,18 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::TrackLaser:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorTrackLaser(config));
+      break;
+    }
+    
+    case BehaviorClass::ConfirmHabitat:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorConfirmHabitat(config));
+      break;
+    }
+    
+    case BehaviorClass::KnowledgeGraphQuestion:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorKnowledgeGraphQuestion(config));
       break;
     }
     
@@ -702,7 +738,7 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToCubeTap(config));
       break;
     }
-        
+    
     case BehaviorClass::ReactToDarkness:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToDarkness(config));
@@ -714,7 +750,7 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToFrustration(config));
       break;
     }
-
+    
     case BehaviorClass::ReactToMicDirection:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToMicDirection(config));
@@ -820,6 +856,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::AdvanceClock:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorAdvanceClock(config));
+      break;
+    }
+    
+    case BehaviorClass::DisplayWallTime:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDisplayWallTime(config));
       break;
     }
     

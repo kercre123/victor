@@ -24,6 +24,10 @@
     "MapName": "sunny_01"
   },
   {
+    "CladEvent": "WeatherCondThunderstorms_01",
+    "MapName": "thunderstorms_01"
+  },
+  {
     "CladEvent": "WeatherCondWindy_01",
     "MapName": "windy_01"
   }

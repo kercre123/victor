@@ -90,6 +90,11 @@ namespace Anki {
       {
         return _cliffDetectedFlags;
       }
+      
+      u8 GetWhiteDetectedFlags()
+      {
+        return _whiteDetectedFlags;
+      }
 
       u16 GetCliffValue(u32 ind)
       {

@@ -144,7 +144,7 @@ NVStorageComponent::~NVStorageComponent()
   _signalHandles.clear();
 }
 
-void NVStorageComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) 
+void NVStorageComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) 
 {
   _robot = robot;
   _kStoragePath = (_robot->GetContextDataPlatform() != nullptr ? _robot->GetContextDataPlatform()->pathToResource(Util::Data::Scope::Persistent, "nvStorage/") : "");

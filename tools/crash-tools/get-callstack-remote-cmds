@@ -1,0 +1,34 @@
+# These commands are executed on the VM via ssh
+# This is 'called' from get-callstack.sh
+
+pushd bin
+  rename 's/\.full$//' *.full
+popd
+pushd lib
+  rename 's/\.so\.full$/\.so/' *.so.full
+popd
+
+rm -rf symbols
+DUMP_SYMS_TOOL=./../../dump_syms
+
+echo "Making symbols for * in bin folder"
+pushd bin
+  for i in `ls *`; do
+    echo Processing ${i}...
+    ${DUMP_SYMS_TOOL} $i . > $i.sym || ${DUMP_SYMS_TOOL} -v $i > $i.sym
+    VER=`head -1 $i.sym | awk '{print $4;}'`
+    mkdir -p ../symbols/$i/$VER
+    mv $i.sym ../symbols/$i/$VER/
+  done
+popd
+
+echo "Making symbols for *.so in lib folder"
+pushd lib
+  for i in `ls *.so`; do
+    echo Processing ${i}...
+    ${DUMP_SYMS_TOOL} $i . > $i.sym || ${DUMP_SYMS_TOOL} -v $i > $i.sym
+    VER=`head -1 $i.sym | awk '{print $4;}'`
+    mkdir -p ../symbols/$i/$VER
+    mv $i.sym ../symbols/$i/$VER/
+  done
+popd

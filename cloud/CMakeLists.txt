@@ -5,9 +5,39 @@ include(anki_build_cxx)
 include(anki_build_go)
 include(anki_build_util)
 
+# Grab the gateway files
+file(STRINGS "${ANKI_SRCLIST_DIR}/gateway_grpc.srcs.lst" GATEWAY_GRPC_SRCS)
+file(STRINGS "${ANKI_SRCLIST_DIR}/gateway_proto.srcs.lst" GATEWAY_PROTO_SRCS)
+
+# exclude grpc file from proto sources
+list(FILTER GATEWAY_PROTO_SRCS EXCLUDE REGEX ".*external_interface.proto")
+
 set(GATEWAY_GRPC_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/go/src/proto/external_interface")
-set(GATEWAY_GRPC_OUTPUT "${GATEWAY_GRPC_OUTPUT_DIR}/external_interface.pb.go" "${GATEWAY_GRPC_OUTPUT_DIR}/external_interface.pb.gw.go")
-set(__extra_go_deps "${CLAD_GO_GEN_SRCS}" "${GATEWAY_GRPC_OUTPUT}" "${CLAD_GATEWAY_GEN_SRCS}")
+set(PROTOBUF_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/proto/external_interface")
+
+# Formulate the generated file names
+string(REPLACE ".proto" ".pb.go" GATEWAY_PROTO_GO_GEN_SRCS "${GATEWAY_PROTO_SRCS};${GATEWAY_GRPC_SRCS}")
+string(REPLACE ".proto" ".pb.gw.go" GATEWAY_GRPC_GO_GEN_SRCS "${GATEWAY_GRPC_SRCS}")
+string(REPLACE ".proto" ".pb.h" GATEWAY_PROTO_CPP_GEN_HEADERS "${GATEWAY_PROTO_SRCS}")
+string(REPLACE ".proto" ".pb.cc" GATEWAY_PROTO_CPP_GEN_SRCS "${GATEWAY_PROTO_SRCS}")
+
+# and give those generated files the appropriate pathing
+string(REPLACE "gateway/" "${GATEWAY_GRPC_OUTPUT_DIR}/" GATEWAY_PROTO_GO_GEN_SRCS "${GATEWAY_PROTO_GO_GEN_SRCS}")
+string(REPLACE "gateway/" "${GATEWAY_GRPC_OUTPUT_DIR}/" GATEWAY_GRPC_GO_GEN_SRCS "${GATEWAY_GRPC_GO_GEN_SRCS}")
+string(REPLACE "gateway/" "${PROTOBUF_OUTPUT_DIR}/" GATEWAY_PROTO_CPP_GEN_HEADERS "${GATEWAY_PROTO_CPP_GEN_HEADERS}")
+string(REPLACE "gateway/" "${PROTOBUF_OUTPUT_DIR}/" GATEWAY_PROTO_CPP_GEN_SRCS "${GATEWAY_PROTO_CPP_GEN_SRCS}")
+
+# Full paths for the proto files
+string(REPLACE "gateway/" "${CMAKE_CURRENT_SOURCE_DIR}/gateway/" GATEWAY_GRPC_SRCS "${GATEWAY_GRPC_SRCS}")
+string(REPLACE "gateway/" "${CMAKE_CURRENT_SOURCE_DIR}/gateway/" GATEWAY_PROTO_SRCS "${GATEWAY_PROTO_SRCS}")
+
+# Expose the necessary files for the engine to build thease into it
+set(GATEWAY_PROTO_CPP_GEN_HEADERS "${GATEWAY_PROTO_CPP_GEN_HEADERS}" PARENT_SCOPE)
+set(GATEWAY_PROTO_CPP_GEN_SRCS "${GATEWAY_PROTO_CPP_GEN_SRCS}" PARENT_SCOPE)
+set(GATEWAY_PROTO_SRCS "${GATEWAY_PROTO_SRCS}" PARENT_SCOPE)
+set(PROTOBUF_OUTPUT_DIR "${PROTOBUF_OUTPUT_DIR}" PARENT_SCOPE)
+
+set(__extra_go_deps "${CLAD_GO_GEN_SRCS}" "${GATEWAY_PROTO_GO_GEN_SRCS}" "${GATEWAY_GRPC_GO_GEN_SRCS}" "${CLAD_GATEWAY_GEN_SRCS}")
 
 if (NOT EXISTS "${ANKI_EXTERNAL_DIR}/chipper_key")
   message(WARNING "Need chipper_key file to be able to connect to cloud services!")
@@ -139,27 +169,27 @@ anki_disable_default_build(opusenc)
 # SDK translation service that interfaces between the engine and the external world.
 #
 set(GOPATH_GATEWAY "${CMAKE_CURRENT_SOURCE_DIR}/go")
-set(GATEWAY_PROTOC_GENERATORS "${PROTOBUF_HOME}/go/bin/protoc-gen-go" "${PROTOBUF_HOME}/go/bin/protoc-gen-grpc-gateway")
-set(GATEWAY_PROTO_FILES "${CMAKE_CURRENT_SOURCE_DIR}/gateway/external_interface.proto")
 
+# Generate grpc go files
 add_custom_command(
-  OUTPUT ${GATEWAY_GRPC_OUTPUT}
+  OUTPUT ${GATEWAY_PROTO_GO_GEN_SRCS} ${GATEWAY_GRPC_GO_GEN_SRCS}
   COMMAND mkdir -p ${GATEWAY_GRPC_OUTPUT_DIR}
   COMMAND ${CMAKE_COMMAND} -E env "PATH=${PROTOBUF_HOME}/go/bin:$ENV{PATH}"
     ${PROTOBUF_HOME}/bin/protoc "-I${CMAKE_CURRENT_SOURCE_DIR}/gateway"
     -I"${PROTOBUF_HOME}/include"
     "-I${GOPATH_GATEWAY}/src"
     "-I${GOPATH_GATEWAY}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis"
-    "--go_out=plugins=grpc:${CMAKE_SOURCE_DIR}/generated/go/src/proto/external_interface"
-    "${GATEWAY_PROTO_FILES}"
+    "--go_out=plugins=grpc:${GATEWAY_GRPC_OUTPUT_DIR}"
+    ${GATEWAY_GRPC_SRCS} ${GATEWAY_PROTO_SRCS}
   COMMAND ${CMAKE_COMMAND} -E env "PATH=${PROTOBUF_HOME}/go/bin:$ENV{PATH}"
     ${PROTOBUF_HOME}/bin/protoc -I"${CMAKE_CURRENT_SOURCE_DIR}/gateway"
     -I"${PROTOBUF_HOME}/include"
     -I"${GOPATH_GATEWAY}/src"
     -I"${GOPATH_GATEWAY}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis"
-    "--grpc-gateway_out=logtostderr=true:${CMAKE_SOURCE_DIR}/generated/go/src/proto/external_interface"
-    "${GATEWAY_PROTO_FILES}"
-  DEPENDS "${GATEWAY_PROTO_FILES}" "${GATEWAY_PROTOC_GENERATORS}"
+    "--grpc-gateway_out=logtostderr=true:${GATEWAY_GRPC_OUTPUT_DIR}"
+    ${GATEWAY_GRPC_SRCS} ${GATEWAY_PROTO_SRCS}
+  DEPENDS ${GATEWAY_GRPC_SRCS} ${GATEWAY_PROTO_SRCS}
 )
+
 _build_cloud_executable(vic-gateway)
 _add_chipper_flags(vic-gateway)

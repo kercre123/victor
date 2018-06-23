@@ -1,0 +1,35 @@
+// File: RobotSettings
+// Author: Paul Terry
+// Copyright: Anki Inc (c) 2018
+
+
+namespace Anki {
+namespace Cozmo {
+
+
+// Note: Keep these in sync with kMasterVolumeLevels in settingsCommManager.cpp, for console var
+enum uint_8 MasterVolume
+{
+  Mute = 0,
+  Low,
+  MediumLow,
+  Medium,
+  MediumHigh,
+  High
+}
+
+// Note: Keep these in sync with kEyeColors in settingsCommManager.cpp, for console var
+enum uint_8 EyeColor
+{
+  Teal = 0,
+  Orange,
+  Yellow,
+  LimeGreen,
+  AzureBlue,
+  Purple,
+  MatrixGreen
+}
+
+
+} // namespace Cozmo
+} // namespace Anki

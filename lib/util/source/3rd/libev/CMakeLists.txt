@@ -1,3 +1,8 @@
+#
+# lib/util/source/3rd/libev/CMakeLists.txt
+#
+# cmake declarations for building libev
+#
 project(libev)
 
 add_library(libev STATIC
@@ -5,15 +10,18 @@ add_library(libev STATIC
   ev.h
 )
 
-anki_build_target_license(libev "BSD-2.0,${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+anki_build_target_license(libev "BSD-3,${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
 
-target_compile_options(libev PUBLIC
-  -Wno-undef
+target_compile_options(libev PRIVATE
   -Wno-comment
   -Wno-strict-aliasing
   -Wno-unused-value
   -Wno-parentheses
-  -Wno-c++1z-compat
+  -Wno-extern-initializer
+)
+
+target_compile_options(libev PUBLIC
+  -Wno-c++1z-compat-mangling
 )
 
 target_compile_definitions(libev PUBLIC

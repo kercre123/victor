@@ -20,6 +20,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -33,7 +34,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
 #include "engine/aiComponent/continuityComponent.h"
 #include "engine/components/carryingComponent.h"
-#include "engine/components/cubes/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
@@ -493,6 +494,10 @@ void ICozmoBehavior::InitInternal()
   for(auto tag: _robotToEngineTags) {
     GetBEI().GetBehaviorEventComponent().SubscribeToTags(this,{tag});
   }
+  
+  for(auto tag : _appToEngineTags) {
+    GetBEI().GetBehaviorEventComponent().SubscribeToTags(this, {tag});
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -684,6 +689,12 @@ void ICozmoBehavior::SubscribeToTags(std::set<EngineToGameTag> &&tags)
 void ICozmoBehavior::SubscribeToTags(std::set<RobotInterface::RobotToEngineTag> &&tags)
 {
   _robotToEngineTags.insert(tags.begin(), tags.end());
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SubscribeToAppTags(std::set<AppToEngineTag>&& tags)
+{
+  _appToEngineTags.insert(tags.begin(), tags.end());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1103,6 +1114,19 @@ void ICozmoBehavior::UpdateMessageHandlingHelpers()
       HandleWhileInScopeButNotActivated(event);
     }
   }
+  
+  for(const auto& event: stateChangeComp.GetAppToEngineEvents()){
+    // Handle specific callbacks
+    auto iter = _appToEngineTags.find(event.GetData().oneof_message_type_case());
+    if(iter != _appToEngineTags.end()){
+      AlwaysHandleInScope(event);
+      if(IsActivated()){
+        HandleWhileActivated(event);
+      }else{
+        HandleWhileInScopeButNotActivated(event);
+      }
+    }
+  }
 }
 
 
@@ -1247,7 +1271,22 @@ bool ICozmoBehavior::DelegateIfInControl(IBehavior* delegate, BehaviorSimpleCall
 
   return false;
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ICozmoBehaviorPtr ICozmoBehavior::FindBehavior( const std::string& behaviorIDStr ) const
+{
+  // first check anonymous behaviors
+  ICozmoBehaviorPtr behavior = FindAnonymousBehaviorByName( behaviorIDStr );
+  if( nullptr == behavior ) {
+    // no match, try behavior IDs
+    const BehaviorID behaviorID = BehaviorTypesWrapper::BehaviorIDFromString( behaviorIDStr );
+    behavior = GetBEI().GetBehaviorContainer().FindBehaviorByID( behaviorID );
+    ANKI_VERIFY( behavior != nullptr,
+                "ICozmoBehavior.FindBehavior.InvalidBehavior",
+                "Behavior not found: %s", behaviorIDStr.c_str() );
+  }
+  return behavior;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehaviorPtr ICozmoBehavior::FindAnonymousBehaviorByName(const std::string& behaviorName) const
@@ -1389,15 +1428,15 @@ bool ICozmoBehavior::SmartUnLockTracks(const std::string& who)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ICozmoBehavior::SmartSetCustomLightPattern(const ObjectID& objectID,
                                            const CubeAnimationTrigger& anim,
-                                           const ObjectLights& modifier)
+                                           const CubeLightAnimation::ObjectLights& modifier)
 {
   if(std::find(_customLightObjects.begin(), _customLightObjects.end(), objectID) == _customLightObjects.end()){
-    GetBEI().GetCubeLightComponent().PlayLightAnim(objectID, anim, nullptr, true, modifier);
+    GetBEI().GetCubeLightComponent().PlayLightAnimByTrigger(objectID, anim, nullptr, true, modifier);
     _customLightObjects.push_back(objectID);
     return true;
   }else{
     PRINT_NAMED_INFO("ICozmoBehavior.SmartSetCustomLightPattern.LightsAlreadySet",
-                        "A custom light pattern has already been set on object %d", objectID.GetValue());
+                     "A custom light pattern has already been set on object %d", objectID.GetValue());
     return false;
   }
 }

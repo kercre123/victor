@@ -19,7 +19,7 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/components/carryingComponent.h"
-#include "engine/components/cubes/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoObservableObject.h"
@@ -60,7 +60,7 @@ ObjectPoseConfirmer::ObjectPoseConfirmer()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ObjectPoseConfirmer::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void ObjectPoseConfirmer::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
 }

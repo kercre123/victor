@@ -48,7 +48,6 @@ protected:
   virtual void InitBehavior() override;
 
 private:
-  void StateWeatherInformation(const std::string& textToSay);
   void DisplayWeatherResponse();
 
   struct InstanceConfig {
@@ -57,7 +56,6 @@ private:
     const Json::Value& compLayoutConfig;
     const Json::Value& compMapConfig;
     std::unique_ptr<Vision::CompositeImage> compImg;
-    std::shared_ptr<BehaviorTextToSpeechLoop> textToSpeechBehavior;
 
     // Animation metadata
     std::string animationName;

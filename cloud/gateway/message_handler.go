@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"encoding/binary"
 	"math"
+	"reflect"
 
 	"anki/ipc"
 	"anki/log"
 	gw_clad "clad/gateway"
 	extint "proto/external_interface"
 
+	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -30,6 +32,35 @@ func WriteToEngine(conn ipc.Conn, msg *gw_clad.MessageExternalToRobot) (int, err
 		return -1, status.Errorf(codes.Internal, err.Error())
 	}
 	return engineSock.Write(buf.Bytes())
+}
+
+func WriteProtoToEngine(conn ipc.Conn, msg proto.Message) (int, error) {
+	var err error
+	var buf bytes.Buffer
+	if msg == nil {
+		return -1, status.Errorf(codes.InvalidArgument, "Unable to parse request")
+	}
+	if err = binary.Write(&buf, binary.LittleEndian, uint16(proto.Size(msg))); err != nil {
+		return -1, status.Errorf(codes.Internal, err.Error())
+	}
+	data, err := proto.Marshal(msg)
+	if err != nil {
+		return -1, status.Errorf(codes.Internal, err.Error())
+	}
+	if err = binary.Write(&buf, binary.LittleEndian, data); err != nil {
+		return -1, status.Errorf(codes.Internal, err.Error())
+	}
+	return protoEngineSock.Write(buf.Bytes())
+}
+
+func createChannel(tag interface{}, numChannels int) (func(), chan extint.GatewayWrapper) {
+	result := make(chan extint.GatewayWrapper, numChannels)
+	reflectedType := reflect.TypeOf(tag).String()
+	log.Println("Listening for", reflectedType)
+	engineProtoChanMap[reflectedType] = result
+	return func() {
+		delete(engineProtoChanMap, reflectedType)
+	}, result
 }
 
 func ClearMapSetting(tag gw_clad.MessageRobotToExternalTag) {
@@ -263,11 +294,10 @@ func CladRobotStateToProto(msg *gw_clad.RobotState) *extint.RobotStateResult {
 	}
 }
 
-func CladEventToProto(msg *gw_clad.Event) *extint.EventResult {
-	var event *extint.Event
+func CladEventToProto(msg *gw_clad.Event) *extint.Event {
 	switch tag := msg.Tag(); tag {
 	case gw_clad.EventTag_Status:
-		event = &extint.Event{
+		return &extint.Event{
 			EventType: &extint.Event_Status{
 				CladStatusToProto(msg.GetStatus()),
 			},
@@ -279,9 +309,42 @@ func CladEventToProto(msg *gw_clad.Event) *extint.EventResult {
 		log.Println(tag, "tag is not yet implemented")
 		return nil
 	}
-	return &extint.EventResult{
-		Event: event,
+}
+
+
+func SendOnboardingContinue( in *extint.GatewayWrapper_OnboardingContinue ) (*extint.OnboardingInputResponse, error) {
+	f, result := createChannel(&extint.GatewayWrapper_OnboardingContinueResponse{}, 1)
+	defer f()
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: in,
+	})
+	if err != nil {
+		return nil, err
 	}
+	continue_result := <-result
+	return &extint.OnboardingInputResponse {
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+		OneofMessageType: &extint.OnboardingInputResponse_OnboardingContinueResponse{
+			continue_result.GetOnboardingContinueResponse(),
+		},
+	}, nil
+}
+
+func SendOnboardingSkip( in *extint.GatewayWrapper_OnboardingSkip )  (*extint.OnboardingInputResponse, error) {
+	log.Println("Received rpc request OnboardingSkip(", in, ")")
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: in,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &extint.OnboardingInputResponse{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
 }
 
 // The service definition.
@@ -303,7 +366,7 @@ func (m *rpcService) DriveWheels(ctx context.Context, in *extint.DriveWheelsRequ
 
 func (m *rpcService) PlayAnimation(ctx context.Context, in *extint.PlayAnimationRequest) (*extint.PlayAnimationResult, error) {
 	log.Println("Received rpc request PlayAnimation(", in, ")")
-	animation_result := make(chan RobotToExternalResult)
+	animation_result := make(chan RobotToExternalCladResult)
 	engineChanMap[gw_clad.MessageRobotToExternalTag_RobotCompletedAction] = animation_result
 	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_RobotCompletedAction)
 	_, err := WriteToEngine(engineSock, ProtoPlayAnimationToClad(in))
@@ -415,7 +478,7 @@ func (m *rpcService) DisplayFaceImageRGB(ctx context.Context, in *extint.Display
 func (c *rpcService) RobotStateStream(in *extint.RobotStateRequest, stream extint.ExternalInterface_RobotStateStreamServer) error {
 	log.Println("Received rpc request RobotStateStream(", in, ")")
 
-	stream_channel := make(chan RobotToExternalResult, 16)
+	stream_channel := make(chan RobotToExternalCladResult, 16)
 	engineChanMap[gw_clad.MessageRobotToExternalTag_RobotState] = stream_channel
 	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_RobotState)
 	log.Println(engineChanMap[gw_clad.MessageRobotToExternalTag_RobotState])
@@ -434,7 +497,7 @@ func (c *rpcService) RobotStateStream(in *extint.RobotStateRequest, stream extin
 	}
 	return nil
 }
-	
+
 func (m *rpcService) AppIntent(ctx context.Context, in *extint.AppIntentRequest) (*extint.AppIntentResult, error) {
 	log.Println("Received rpc request AppIntent(", in, ")")
 	_, err := WriteToEngine(engineSock, ProtoAppIntentToClad(in))
@@ -463,7 +526,7 @@ func (m *rpcService) CancelFaceEnrollment(ctx context.Context, in *extint.Cancel
 
 func (m *rpcService) RequestEnrolledNames(ctx context.Context, in *extint.RequestEnrolledNamesRequest) (*extint.RequestEnrolledNamesResult, error) {
 	log.Println("Received rpc request RequestEnrolledNames(", in, ")")
-	enrolledNamesResponse := make(chan RobotToExternalResult)
+	enrolledNamesResponse := make(chan RobotToExternalCladResult)
 	engineChanMap[gw_clad.MessageRobotToExternalTag_EnrolledNamesResponse] = enrolledNamesResponse
 	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_EnrolledNamesResponse)
 	_, err := WriteToEngine(engineSock, ProtoRequestEnrolledNamesToClad(in))
@@ -549,16 +612,16 @@ func (m *rpcService) SetFaceToEnroll(ctx context.Context, in *extint.SetFaceToEn
 func (c *rpcService) EventStream(in *extint.EventRequest, stream extint.ExternalInterface_EventStreamServer) error {
 	log.Println("Received rpc request EventStream(", in, ")")
 
-	events_channel := make(chan RobotToExternalResult, 16)
-	engineChanMap[gw_clad.MessageRobotToExternalTag_Event] = events_channel
-	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_Event)
-	log.Println(engineChanMap[gw_clad.MessageRobotToExternalTag_Event])
+	f, eventsChannel := createChannel(&extint.GatewayWrapper_Event{}, 16)
+	defer f()
 
-	for result := range events_channel {
+	for result := range eventsChannel {
 		log.Println("Got result:", result)
-		event := CladEventToProto(result.Message.GetEvent())
-		log.Println("Made event:", event)
-		if err := stream.Send(event); err != nil {
+		eventResult := &extint.EventResult{
+			Event: result.GetEvent(),
+		}
+		log.Println("Made event:", eventResult)
+		if err := stream.Send(eventResult); err != nil {
 			return err
 		} else if err = stream.Context().Err(); err != nil {
 			// This is the case where the user disconnects the stream
@@ -569,22 +632,157 @@ func (c *rpcService) EventStream(in *extint.EventRequest, stream extint.External
 	return nil
 }
 
-// Request control from behavior system
 func (m *rpcService) SDKBehaviorActivation(ctx context.Context, in *extint.SDKActivationRequest) (*extint.SDKActivationResult, error) {
 	log.Println("Received rpc request SDKBehaviorActivation(", in, ")")
+	if in.Enable {
+		// Request control from behavior system
+		return SDKBehaviorRequestActivation(in)
+	}
+
+	return SDKBehaviorRequestDeactivation(in)
+}
+
+// Request control from behavior system.
+func SDKBehaviorRequestActivation(in *extint.SDKActivationRequest) (*extint.SDKActivationResult, error) {
+	// We are enabling the SDK behavior. Wait for the engine-to-game reply
+	// that the SDK behavior was activated.
+	sdk_activation_result := make(chan RobotToExternalCladResult)
+	engineChanMap[gw_clad.MessageRobotToExternalTag_SDKActivationResult] = sdk_activation_result
+	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_SDKActivationResult)
+
 	_, err := WriteToEngine(engineSock, ProtoSDKActivationToClad(in))
 	if err != nil {
 		return nil, err
 	}
+	result := <-sdk_activation_result
 	return &extint.SDKActivationResult{
-		// TODO Set data for Slot and ResultStatus
-		//Slot: &extint.Slot{
-		//},
+		Status: &extint.ResultStatus{
+			Description: "SDKActivationResult returned",
+		},
+		Slot:    result.Message.GetSDKActivationResult().Slot,
+		Enabled: result.Message.GetSDKActivationResult().Enabled,
+	}, nil
+}
+
+func SDKBehaviorRequestDeactivation(in *extint.SDKActivationRequest) (*extint.SDKActivationResult, error) {
+	// Deactivate the SDK behavior. Note that we don't wait for a reply
+	// so that our SDK program can exit immediately.
+	_, err := WriteToEngine(engineSock, ProtoSDKActivationToClad(in))
+	if err != nil {
+		return nil, err
+	}
+
+	// Note: SDKActivationResult contains Slot and Enabled, which we are currently
+	// ignoring when we deactivate the SDK behavior since we are not waiting for
+	// the SDKActivationResult message to return.
+	return &extint.SDKActivationResult{
+		Status: &extint.ResultStatus{
+			Description: "SDKActivationResult returned",
+		},
+	}, nil
+}
+
+// Example sending an int to and receiving an int from the engine
+// TODO: Remove this example code once more code is converted to protobuf
+func (m *rpcService) Pang(ctx context.Context, in *extint.Ping) (*extint.Pong, error) {
+	log.Println("Received rpc request Ping(", in, ")")
+
+	f, result := createChannel(&extint.GatewayWrapper_Pong{}, 1)
+	defer f()
+
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_Ping{
+			in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	pong := <-result
+	return pong.GetPong(), nil
+}
+
+// Example sending a string to and receiving a string from the engine
+// TODO: Remove this example code once more code is converted to protobuf
+func (m *rpcService) Bang(ctx context.Context, in *extint.Bing) (*extint.Bong, error) {
+	log.Println("Received rpc request Bing(", in, ")")
+
+	f, result := createChannel(&extint.GatewayWrapper_Bong{}, 1)
+	defer f()
+
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_Bing{
+			in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	bong := <-result
+	return bong.GetBong(), nil
+}
+
+// Request the current robot onboarding status
+func (m *rpcService) GetOnboardingState(ctx context.Context, in *extint.OnboardingStateRequest) (*extint.OnboardingStateResponse, error) {
+	log.Println("Received rpc request GetOnboardingState(", in, ")")
+	f, result := createChannel(&extint.GatewayWrapper_OnboardingState{}, 1)
+	defer f()
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_OnboardingStateRequest{
+			in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	onboarding_state := <-result
+	return &extint.OnboardingStateResponse{
+		OnboardingState: onboarding_state.GetOnboardingState(),
 		Status: &extint.ResultStatus{
 			Description: "Message sent to engine",
 		},
 	}, nil
 }
+
+func (m *rpcService) SendOnboardingInput(ctx context.Context, in *extint.OnboardingInputRequest) (*extint.OnboardingInputResponse, error) {
+	log.Println("Received rpc request OnboardingInputRequest(", in, ")")
+	
+	// oneof_message_type
+	switch x := in.OneofMessageType.(type) {
+	case *extint.OnboardingInputRequest_OnboardingContinue:
+		return SendOnboardingContinue( &extint.GatewayWrapper_OnboardingContinue { 
+			in.GetOnboardingContinue(),
+		})
+	case *extint.OnboardingInputRequest_OnboardingSkip:
+		return SendOnboardingSkip( &extint.GatewayWrapper_OnboardingSkip { 
+			in.GetOnboardingSkip(),
+		})
+	default:
+		return nil, status.Errorf(0, "OnboardingInputRequest.OneofMessageType has unexpected type %T", x)
+	}
+}
+
+func (m *rpcService) GetLatestAttentionTransfer(ctx context.Context, in *extint.LatestAttentionTransferRequest) (*extint.LatestAttentionTransferResponse, error) {
+	log.Println("Received rpc request GetLatestAttentionTransfer(", in, ")")
+	f, result := createChannel(&extint.GatewayWrapper_LatestAttentionTransfer{}, 1)
+	defer f()
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_LatestAttentionTransferRequest{
+			in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	attention_transfer := <-result
+	return &extint.LatestAttentionTransferResponse{
+		LatestAttentionTransfer: attention_transfer.GetLatestAttentionTransfer(),
+		Status: &extint.ResultStatus{
+			Description: "Response from engine",
+		},
+	}, nil
+}
+
 
 func newServer() *rpcService {
 	return new(rpcService)

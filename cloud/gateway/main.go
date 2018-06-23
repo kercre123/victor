@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"reflect"
 	"strings"
 	"time"
 
@@ -18,29 +19,30 @@ import (
 	gw_clad "clad/gateway"
 	extint "proto/external_interface"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
 
-const (
-	Key  = "/data/trust.key"
-	Cert = "/data/trust.cert"
-	Port = 443
-)
-
-type RobotToExternalResult struct {
+type RobotToExternalCladResult struct {
 	Message gw_clad.MessageRobotToExternal
 	Error   error
 }
 
 var (
-	demoKeyPair   *tls.Certificate
-	demoCertPool  *x509.CertPool
-	demoAddr      string
+	demoKeyPair  *tls.Certificate
+	demoCertPool *x509.CertPool
+	demoAddr     string
+
+	// protobuf equivalents for clad socket and chan map
+	protoEngineSock    ipc.Conn
+	engineProtoChanMap map[string](chan extint.GatewayWrapper)
+
+	// TODO: remove clad socket and map when there are no more clad messages being used
 	engineSock    ipc.Conn
-	engineChanMap map[gw_clad.MessageRobotToExternalTag](chan RobotToExternalResult)
+	engineChanMap map[gw_clad.MessageRobotToExternalTag](chan RobotToExternalCladResult)
 )
 
 func getSocketWithRetry(socket_dir string, server string, name string) ipc.Conn {
@@ -67,8 +69,9 @@ func grpcHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Ha
 }
 
 // TODO: improve the logic for this to allow for multiple simultaneous requests
-func processEngineMessages() {
+func processCladEngineMessages() {
 	var msg gw_clad.MessageRobotToExternal
+	var protoMsg extint.GatewayWrapper
 	var b, block []byte
 	var buf bytes.Buffer
 	for {
@@ -88,13 +91,63 @@ func processEngineMessages() {
 			// TODO: treat this as an error condition once VIC-3186 is completed
 			continue
 		}
-		if c, ok := engineChanMap[msg.Tag()]; ok {
+		if msg.Tag() == gw_clad.MessageRobotToExternalTag_Event {
+			msgType := reflect.TypeOf(&extint.GatewayWrapper_Event{}).String()
+			protoMsg = extint.GatewayWrapper{
+				OneofMessageType: &extint.GatewayWrapper_Event{
+					// TODO: Convert all events into proto events
+					CladEventToProto(msg.GetEvent()),
+				},
+			}
+			if c, ok := engineProtoChanMap[msgType]; ok {
+				log.Println("Sending", msgType, "to listener")
+				select {
+				case c <- protoMsg:
+					log.Println("Sent:", msgType)
+				default:
+					log.Println("Failed to send message. There might be a problem with the channel.")
+				}
+			}
+		} else if c, ok := engineChanMap[msg.Tag()]; ok {
 			log.Println("Sending", msg.Tag(), "to listener")
 			select {
-			case c <- RobotToExternalResult{Message: msg}:
+			case c <- RobotToExternalCladResult{Message: msg}:
 				log.Println("Sent:", msg.Tag())
 			default:
 				log.Println("Failed to send message. There might be a problem with the channel.")
+			}
+		}
+	}
+}
+
+// TODO: improve the logic for this to allow for multiple simultaneous requests
+func processEngineMessages() {
+	var msg extint.GatewayWrapper
+	var b, block []byte
+	for {
+		msg.Reset()
+		block = protoEngineSock.ReadBlock()
+		if block == nil {
+			log.Println("Error: engine socket returned empty message")
+			continue
+		} else if len(block) < 2 {
+			log.Println("Error: engine socket message too small")
+			continue
+		}
+		b = block[2:]
+
+		if err := proto.Unmarshal(b, &msg); err != nil {
+			log.Println("Decoding error (", err, "):", b)
+			continue
+		}
+		msgType := reflect.TypeOf(msg.OneofMessageType).String()
+		if c, ok := engineProtoChanMap[msgType]; ok {
+			log.Println("Sending", msgType, "to listener")
+			select {
+			case c <- msg:
+				log.Println("Sent:", msgType)
+			default:
+				log.Println("Failed to send", msgType, "message on the given channel.")
 			}
 		}
 	}
@@ -122,9 +175,13 @@ func main() {
 	}
 	demoAddr = fmt.Sprintf("localhost:%d", Port)
 
-	engineSock = getSocketWithRetry("/dev/socket/", "_engine_gateway_server_", "client")
+	engineSock = getSocketWithRetry(SocketPath, "_engine_gateway_server_", "client")
 	defer engineSock.Close()
-	engineChanMap = make(map[gw_clad.MessageRobotToExternalTag](chan RobotToExternalResult))
+	engineChanMap = make(map[gw_clad.MessageRobotToExternalTag](chan RobotToExternalCladResult))
+
+	protoEngineSock = getSocketWithRetry(SocketPath, "_engine_gateway_proto_server_", "client")
+	defer protoEngineSock.Close()
+	engineProtoChanMap = make(map[string](chan extint.GatewayWrapper))
 
 	log.Println("Sockets successfully created")
 
@@ -140,7 +197,7 @@ func main() {
 	})
 	dopts := []grpc.DialOption{grpc.WithTransportCredentials(dcreds)}
 
-	gwmux := runtime.NewServeMux(runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{EmitDefaults: true}))
+	gwmux := runtime.NewServeMux(runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{EmitDefaults: true, OrigName: true, EnumsAsInts: true}))
 	err = extint.RegisterExternalInterfaceHandlerFromEndpoint(ctx, gwmux, demoAddr, dopts)
 	if err != nil {
 		log.Println("Error during RegisterExternalInterfaceHandlerFromEndpoint:", err)
@@ -162,6 +219,7 @@ func main() {
 		},
 	}
 
+	go processCladEngineMessages()
 	go processEngineMessages()
 
 	log.Println("Listening on Port:", Port)

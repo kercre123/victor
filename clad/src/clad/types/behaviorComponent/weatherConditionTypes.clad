@@ -13,6 +13,7 @@ enum uint_8 WeatherConditionType {
   Snow,
   Stars,
   Sunny,
+  Thunderstorms,
   Windy,
 
   Count

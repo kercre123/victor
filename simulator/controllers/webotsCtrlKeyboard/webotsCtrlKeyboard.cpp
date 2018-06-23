@@ -1635,10 +1635,11 @@ namespace Cozmo {
     }
     
     // TODO: Add ability to set action style, voice style, duration scalar and pitch from KB controller
-    sayTextMsg.voiceStyle = (_altKeyPressed ? SayTextVoiceStyle::CozmoProcessing_Sentence :
-                             SayTextVoiceStyle::Unprocessed);
+    using AudioTtsProcessingStyle = Anki::AudioMetaData::SwitchState::Robot_Vic_External_Processing;
+    sayTextMsg.voiceStyle = (_altKeyPressed ?
+                             AudioTtsProcessingStyle::Default_Processed :
+                             AudioTtsProcessingStyle::Unprocessed);
     sayTextMsg.durationScalar = 1.f;
-    sayTextMsg.voicePitch = 0.f;
     sayTextMsg.playEvent = AnimationTrigger::Count;
     
     printf("Saying '%s' in voice style '%s' w/ duration scalar %f\n",

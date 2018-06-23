@@ -4,7 +4,7 @@
 * Author: damjan stulic
 * Created: 8/5/15
 *
-* Description: 
+* Description:
 *
 * Copyright: Anki, inc. 2015
 *
@@ -17,6 +17,7 @@
 #include "util/helpers/includeFstream.h"
 #include "util/helpers/ankiDefines.h"
 #include "util/fileUtils/fileUtils.h"
+#include <memory>
 
 #define LOG_CHANNEL "DataPlatform"
 
@@ -128,6 +129,43 @@ bool DataPlatform::writeAsJson(const std::string& resourceName, const Json::Valu
   return true;
 }
 
+std::unique_ptr<DataPlatform> DataPlatform::GetDataPlatform(const Json::Value & json)
+{
+  if (!json.isObject()) {
+    LOG_ERROR("DataPlatform.GetDataPlatform.InvalidJsonObject", "Invalid json object");
+    return nullptr;
+  }
+
+  const auto & persistentPath = json["DataPlatformPersistentPath"];
+  if (!persistentPath.isString()) {
+    LOG_ERROR("DataPlatform.GetDataPlatform.InvalidPersistentPath", "Invalid persistent path attribute");
+    return nullptr;
+  }
+
+  const auto & cachePath = json["DataPlatformCachePath"];
+  if (!cachePath.isString()) {
+    LOG_ERROR("DataPlatform.GetDataPlatform.InvalidCachePAth", "Invalid cache path attribute");
+    return nullptr;
+  }
+
+  const auto & resourcesPath = json["DataPlatformResourcesPath"];
+  if (!resourcesPath.isString()) {
+    LOG_ERROR("DataPlatform.GetDataPlatform.InvalidResourcesPath", "Invalid resource path attribute");
+    return nullptr;
+  }
+
+  return std::make_unique<DataPlatform>(persistentPath.asString(), cachePath.asString(), resourcesPath.asString());
+}
+
+std::unique_ptr<DataPlatform> DataPlatform::GetDataPlatform(const std::string & path)
+{
+  Json::Value json;
+  if (!readAsJson(path, json)) {
+    LOG_ERROR("DataPlatform.GetDataPlatform.InvalidJsonFile", "Unable to read json from %s", path.c_str());
+    return nullptr;
+  }
+  return GetDataPlatform(json);
+}
 
 } // end namespace Data
 } // end namespace Util

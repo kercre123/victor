@@ -82,6 +82,8 @@ BehaviorReactToDarkness::BehaviorReactToDarkness( const Json::Value& config )
   _iConfig.negativeConfig["confirmationTime"] = _iConfig.lookWaitTime_s;
   _iConfig.negativeConfig["confirmationMinNum"] = lookMinImages;
   _iConfig.negativeConfig["ignoreUnknown"] = false;
+
+  _iConfig.homeFilter = std::make_unique<BlockWorldFilter>();
 }
 
 bool BehaviorReactToDarkness::WantsToBeActivatedBehavior() const

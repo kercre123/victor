@@ -19,6 +19,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include "coretech/common/engine/math/convexIntersection.h"
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/console/consoleInterface.h"
@@ -70,7 +71,7 @@ CONSOLE_VAR(float, kMaxForwardTilt_rad, "ProxSensorComponent", -.08);
 CONSOLE_VAR(float, kMinQualityThreshold, "ProxSensorComponent", 0.05f);
 
 // angle for calculating obstacle width, ~tan(22.5)
-CONSOLE_VAR(float, kSensorAperature, "ProxSensorComponent", 0.4f);
+CONSOLE_VAR(float, kSensorAperture, "ProxSensorComponent", 0.4f);
 
 ProxSensorComponent::ProxSensorComponent() 
 : ISensorComponent(kLogDirName)
@@ -243,27 +244,60 @@ void ProxSensorComponent::UpdateNavMap()
     const Vec3f offsetx_mm( (noObject) ? kMaxObsThreshold_mm 
                                        : fmin(_latestData.distance_mm, kMaxObsThreshold_mm), 0, 0);   
 
-    const Pose3d  objectPos = _robot->GetPose() * Pose3d(0, Z_AXIS_3D(), offsetx_mm);    
-    Rotation3d rot = Rotation3d(0.f, Z_AXIS_3D());
+    // just assume robot center rather the actual sensor pose
+    const Pose3d  robotPose = _robot->GetPose();   
+    const Pose3d  objectPos = robotPose * Pose3d(0, Z_AXIS_3D(), offsetx_mm);    
+    const Rotation3d id = Rotation3d(0.f, Z_AXIS_3D());
 
-    const float obstacleHalfWidth_mm = std::fmin(offsetx_mm.x() * kSensorAperature, ROBOT_BOUNDING_Y) * .5 + kObsPadding_y_mm;
-    Vec3f offset1(-kObsPadding_x_mm,  -obstacleHalfWidth_mm, 0);   
-    Vec3f offset2(-kObsPadding_x_mm,   obstacleHalfWidth_mm, 0);
-    Vec3f offset3(kObsPadding_x_mm * 2, 0, 0);
+    // we would like to clear the whole sensor cone as defined by the aperture, but it creates really large
+    // obstacles if it detects something far away. To prevent planning failures, we would like to clamp
+    // the max obstacle width to the robot width, but that can result in stretching the of the clear region
+    // cone, which causes some map artifacts. To get around this, define the clear region as the intersection
+    // of the sensor cone and a straight beam with obstacle width (which is clamped to robot width).
 
-    const Point2f p1 = (objectPos.GetTransform() * Transform3d(rot, offset1)).GetTranslation();
-    const Point2f p2 = (objectPos.GetTransform() * Transform3d(rot, offset2)).GetTranslation(); 
-    const Point2f p3 = (objectPos.GetTransform() * Transform3d(rot, offset2 + offset3)).GetTranslation();
-    const Point2f p4 = (objectPos.GetTransform() * Transform3d(rot, offset1 + offset3)).GetTranslation();
+    //                                ,,,,------------------p1--p4
+    //           +-------+    ....''''                       |xx|
+    //           | robot |::::                               |xx| (obstacle)
+    //           +-------+    ''''....                       |xx|
+    //                                ''''------------------p2--p3
 
-    // note: the size that gets cleared might not be as large as you think, since we only replace
-    // a prox obstacle with clear space if the clear space leaf quad has its center within
-    // the poly from the robot footprint to line segment (t1,t2)
-    _robot->GetMapComponent().ClearRobotToEdge(p1, p2, lastTimestamp);
+    // sensor points
+    const float sensorBeamHalfWidth_mm = offsetx_mm.x() * kSensorAperture *.5f;
+    const float obstacleHalfWidth_mm = std::fmin(sensorBeamHalfWidth_mm, ROBOT_BOUNDING_Y *.5);
+
+    // use a slightly larger padding for clear than for obstacle to clean up floating point rounding errors
+    const Vec3f sensorOffset1(-kObsPadding_x_mm,  -sensorBeamHalfWidth_mm - kObsPadding_y_mm - .5, 0);   
+    const Vec3f sensorOffset2(-kObsPadding_x_mm,   sensorBeamHalfWidth_mm + kObsPadding_y_mm + .5, 0);
+
+    const Vec3f clampOffset1(-offsetx_mm.x(),  -obstacleHalfWidth_mm - kObsPadding_y_mm, 0);   
+    const Vec3f clampOffset2(-offsetx_mm.x(),   obstacleHalfWidth_mm + kObsPadding_y_mm, 0);
+
+    const Point2f sensorCorner1 = (objectPos.GetTransform() * Transform3d(id, sensorOffset1)).GetTranslation();
+    const Point2f sensorCorner2 = (objectPos.GetTransform() * Transform3d(id, sensorOffset2)).GetTranslation(); 
+
+    const Point2f clampCorner1  = (objectPos.GetTransform() * Transform3d(id, clampOffset1)).GetTranslation();
+    const Point2f clampCorner2  = (objectPos.GetTransform() * Transform3d(id, clampOffset2)).GetTranslation(); 
+
+    // obstacle points
+    const Vec3f obstacleOffset1(-kObsPadding_x_mm,  -obstacleHalfWidth_mm - kObsPadding_y_mm, 0);   
+    const Vec3f obstacleOffset2(-kObsPadding_x_mm,   obstacleHalfWidth_mm + kObsPadding_y_mm, 0);
+    const Vec3f obstacleOffset3(kObsPadding_x_mm * 2, 0, 0);
+
+    const Point2f obstacleP1 = (objectPos.GetTransform() * Transform3d(id, obstacleOffset1)).GetTranslation();
+    const Point2f obstacleP2 = (objectPos.GetTransform() * Transform3d(id, obstacleOffset2)).GetTranslation(); 
+    const Point2f obstacleP3 = (objectPos.GetTransform() * Transform3d(id, obstacleOffset2 + obstacleOffset3)).GetTranslation();
+    const Point2f obstacleP4 = (objectPos.GetTransform() * Transform3d(id, obstacleOffset1 + obstacleOffset3)).GetTranslation();
+
+    // clear sensor beam
+    ConvexIntersection2f intersection;
+    intersection.AddSet( FastPolygon({sensorCorner1, sensorCorner2, robotPose.GetTranslation()}) );   // sensor beam
+    intersection.AddSet( FastPolygon({clampCorner1, clampCorner2, obstacleP2, obstacleP1}) );         // clamp
+
+    _robot->GetMapComponent().ClearRegion( intersection,  lastTimestamp);
 
     // Add proxObstacle if detected and close to robot, and lift is not interfering
     if (_latestData.distance_mm <= kMaxObsThreshold_mm && !noObject && !IsLiftInFOV()) {
-      const Poly2f quad({p1, p2, p3, p4});
+      const FastPolygon quad({obstacleP1, obstacleP2, obstacleP3, obstacleP4});
       Radians angle = _robot->GetPose().GetRotationAngle<'Z'>();
       
       MemoryMapData_ProxObstacle proxData(MemoryMapData_ProxObstacle::NOT_EXPLORED,

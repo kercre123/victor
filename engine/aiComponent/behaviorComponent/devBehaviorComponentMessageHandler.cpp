@@ -73,12 +73,12 @@ void DevBehaviorComponentMessageHandler::AdditionalInitAccessibleComponents(BCCo
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DevBehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCompMap& dependentComponents) 
+void DevBehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCompMap& dependentComps) 
 {
-  auto& bContainer = dependentComponents.GetValue<BehaviorContainer>();
-  auto& bsm = dependentComponents.GetValue<BehaviorSystemManager>();
-  auto& bei = dependentComponents.GetValue<BehaviorExternalInterface>();
-  auto& behaviorsBootLoader = dependentComponents.GetValue<BehaviorsBootLoader>();
+  auto& bContainer = dependentComps.GetComponent<BehaviorContainer>();
+  auto& bsm = dependentComps.GetComponent<BehaviorSystemManager>();
+  auto& bei = dependentComps.GetComponent<BehaviorExternalInterface>();
+  auto& behaviorsBootLoader = dependentComps.GetComponent<BehaviorsBootLoader>();
 
   if(_robot.HasExternalInterface()){
     

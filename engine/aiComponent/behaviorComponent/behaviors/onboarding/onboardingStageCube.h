@@ -20,7 +20,8 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectKnown.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/externalInterface/externalMessageRouter.h"
-#include "engine/externalInterface/externalInterface.h"
+#include "engine/externalInterface/gatewayInterface.h"
+#include "proto/external_interface/messages.pb.h"
 
 #include "json/json.h"
 
@@ -189,11 +190,11 @@ public:
           TransitionToCubeTrick( bei );
         }
       } else if( currTime_ms >= _timeStartedSearching_ms + 1000*kMaxSearchDuration_s ) {
-        auto* ei = bei.GetRobotInfo().GetExternalInterface();
-        if( ei != nullptr ){
+        auto* gi = bei.GetRobotInfo().GetGatewayInterface();
+        if( gi != nullptr ){
           DebugTransition("Can't find a cube");
-          ExternalInterface::OnboardingCantFindCube cantFindCubeMsg{};
-          ei->Broadcast( ExternalMessageRouter::Wrap(std::move(cantFindCubeMsg)) );
+          auto* cantFindCubeMsg = new external_interface::OnboardingCantFindCube;
+          gi->Broadcast( ExternalMessageRouter::Wrap(cantFindCubeMsg) );
           TransitionToLookingAtUser();
         }
       }
@@ -217,20 +218,22 @@ private:
     _cubeKnownCondition->SetActive( bei, true ); // no deactivate needed since this gets destroyed when the stage ends
     _timeStartedSearching_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     
-    auto* ei = bei.GetRobotInfo().GetExternalInterface();
-    if( ei != nullptr ){
-      ExternalInterface::OnboardingSeesCube seesCubeMsg{false};
-      ei->Broadcast( ExternalMessageRouter::Wrap(std::move(seesCubeMsg)) );
+    auto* gi = bei.GetRobotInfo().GetGatewayInterface();
+    if( gi != nullptr ){
+      auto* seesCubeMessage = new external_interface::OnboardingSeesCube;
+      seesCubeMessage->set_sees_cube( false );
+      gi->Broadcast( ExternalMessageRouter::Wrap(seesCubeMessage) );
     }
   }
   
   void TransitionToCubeTrick( BehaviorExternalInterface& bei )
   {
     DebugTransition("Doing a trick");
-    auto* ei = bei.GetRobotInfo().GetExternalInterface();
-    if( ei != nullptr ){
-      ExternalInterface::OnboardingSeesCube seesCubeMsg{true};
-      ei->Broadcast( ExternalMessageRouter::Wrap(std::move(seesCubeMsg)) );
+    auto* gi = bei.GetRobotInfo().GetGatewayInterface();
+    if( gi != nullptr ){
+      auto* seesCubeMessage = new external_interface::OnboardingSeesCube;
+      seesCubeMessage->set_sees_cube( true );
+      gi->Broadcast( ExternalMessageRouter::Wrap(seesCubeMessage) );
     }
     
     // todo: cube lights animation here, or more likely in a new previous step

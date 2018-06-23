@@ -24,7 +24,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntentComponent_fwd.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
-#include "engine/components/cubes/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/visionScheduleMediator/iVisionModeSubscriber.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator_fwd.h"
 #include "engine/robotInterface/messageHandler.h"
@@ -210,6 +210,11 @@ public:
   // further down the stack
   void SetDontActivateThisTick(const std::string& coordinatorName);
 
+  // if true, mic streaming will be disabled when victor hears the trigger word, and the wake word behavior will be disabled
+  // note: The trigger word will still be pending, and it is up to the behavior to deal with this however it sees fit.
+  // todo: add a data defined way to suppress the trigger word response from .json
+  virtual bool ShouldSuppressTriggerWordResponse() const { return false; }
+
   // if an active feature is associated with this behavior, return true and set it in arguments
   bool GetAssociatedActiveFeature(ActiveFeature& feature) const;
   
@@ -295,6 +300,7 @@ protected:
   void SubscribeToTags(std::set<GameToEngineTag>&& tags);
   void SubscribeToTags(std::set<EngineToGameTag>&& tags);
   void SubscribeToTags(std::set<RobotInterface::RobotToEngineTag>&& tags);
+  void SubscribeToAppTags(std::set<AppToEngineTag>&& tags); // can't be an overload since it is not a scoped enum
   
   // Function that calls message handling helper functions
   void UpdateMessageHandlingHelpers();
@@ -308,6 +314,7 @@ protected:
   virtual void AlwaysHandleInScope(const GameToEngineEvent& event) { }
   virtual void AlwaysHandleInScope(const EngineToGameEvent& event) { }
   virtual void AlwaysHandleInScope(const RobotToEngineEvent& event) { }
+  virtual void AlwaysHandleInScope(const AppToEngineEvent& event) { }
   
   // Derived classes must override this method to handle events that come in
   // while the behavior is running. In this case, the behavior is allowed to
@@ -318,6 +325,7 @@ protected:
   virtual void HandleWhileActivated(const GameToEngineEvent& event) { }
   virtual void HandleWhileActivated(const EngineToGameEvent& event) { }
   virtual void HandleWhileActivated(const RobotToEngineEvent& event) { }
+  virtual void HandleWhileActivated(const AppToEngineEvent& event) { }
   
   // Derived classes must override this method to handle events that come in
   // only while the behavior is NOT running. If it doesn't matter whether the
@@ -328,6 +336,7 @@ protected:
   virtual void HandleWhileInScopeButNotActivated(const GameToEngineEvent& event) { }
   virtual void HandleWhileInScopeButNotActivated(const EngineToGameEvent& event) { }
   virtual void HandleWhileInScopeButNotActivated(const RobotToEngineEvent& event) { }
+  virtual void HandleWhileInScopeButNotActivated(const AppToEngineEvent& event) { }
   
   // Many behaviors use a pattern of delegating control to a behavior or action, then waiting for it to finish 
   // before selecting what to do next. Behaviors can use the functions below to pass lambdas or member functions
@@ -384,7 +393,9 @@ protected:
   template<typename T>
   bool DelegateIfInControl(IBehavior* delegate, void(T::*callback)());
 
-
+  // Searches both the behavior container and anonymous behaviors. Returns the behavior or nullptr if not
+  // found (and performs an ANKI_VERIFY internally)
+  ICozmoBehaviorPtr FindBehavior( const std::string& behaviorIDStr ) const;
 
   // Behaviors can easily create delegates using "anonymous" behaviors in their config file (see _anonymousBehaviorMap
   // comments below).  This function enables access to those anonymous behaviors.
@@ -434,7 +445,7 @@ protected:
   // Allows the behavior to set a custom light pattern which will be automatically canceled if the behavior ends
   bool SmartSetCustomLightPattern(const ObjectID& objectID,
                                   const CubeAnimationTrigger& anim,
-                                  const ObjectLights& modifier = {});
+                                  const CubeLightAnimation::ObjectLights& modifier = {});
   bool SmartRemoveCustomLightPattern(const ObjectID& objectID,
                                      const std::vector<CubeAnimationTrigger>& anims);
 
@@ -584,6 +595,7 @@ private:
   std::set<GameToEngineTag> _gameToEngineTags;
   std::set<EngineToGameTag> _engineToGameTags;
   std::set<RobotInterface::RobotToEngineTag> _robotToEngineTags;
+  std::set<AppToEngineTag> _appToEngineTags;
 
   // Behaviors can load in internal "anonymous" behaviors which are not stored
   // in the behavior container and are referenced by string instead of by ID

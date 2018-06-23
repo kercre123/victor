@@ -143,7 +143,7 @@ void BehaviorCoordinateWeather::OnBehaviorActivated()
   if(WeatherIntentParser::IsForecast(weatherResponse)){
     cantDoThat = true;
   }else{
-    auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetValue<DataAccessorComponent>();
+    auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();
 
     const auto condition = WeatherIntentParser::GetCondition(dataAccessorComp.GetWeatherResponseMap(), 
                                                              weatherResponse);

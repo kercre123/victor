@@ -66,7 +66,7 @@ namespace Anki
       //////
       // IDependencyManagedComponent functions
       //////
-      virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComponents) override final;
+      virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComps) override final;
       virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
         dependencies.insert(RobotComponentID::CozmoContextWrapper);
       };

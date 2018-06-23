@@ -9,34 +9,37 @@
  * Modifications:
  */
 
-#include "engine/cozmoEngine.h"
-#include "engine/cozmoContext.h"
-#include "engine/components/batteryComponent.h"
-#include "engine/externalInterface/externalInterface.h"
-#include "engine/events/ankiEvent.h"
-#include "engine/robotInterface/messageHandler.h"
-#include "engine/ankiEventUtil.h"
-#include "engine/debug/cladLoggerProvider.h"
+#include "coretech/common/engine/opencvThreading.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "engine/ankiEventUtil.h"
+#include "engine/components/batteryComponent.h"
+#include "engine/components/mics/micComponent.h"
+#include "engine/components/mics/micDirectionHistory.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
+#include "engine/cozmoAPI/comms/uiMessageHandler.h"
+#include "engine/cozmoContext.h"
+#include "engine/cozmoEngine.h"
+#include "engine/debug/cladLoggerProvider.h"
 #include "engine/deviceData/deviceDataManager.h"
-#include "engine/components/mics/micComponent.h"
-#include "engine/components/mics/micDirectionHistory.h"
+#include "engine/events/ankiEvent.h"
+#include "engine/externalInterface/externalInterface.h"
+#include "engine/factory/factoryTestLogger.h"
 #include "engine/perfMetric.h"
-#include "engine/utils/parsingConstants/parsingConstants.h"
-#include "engine/viz/vizManager.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
+#include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
 #include "engine/util/transferQueue/transferQueueMgr.h"
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/cozmoFeatureGate.h"
-#include "engine/factory/factoryTestLogger.h"
-#include "engine/cozmoAPI/comms/uiMessageHandler.h"
+#include "engine/utils/parsingConstants/parsingConstants.h"
+#include "engine/viz/vizManager.h"
+#include "engine/wallTime.h"
+#include "engine/cozmoAPI/comms/protoMessageHandler.h"
 #include "webServerProcess/src/webService.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -61,6 +64,7 @@
 #include <ctime>
 #include <iomanip>
 #include <sstream>
+#include <time.h>
 
 #if USE_DAS
 #include <DAS/DAS.h>
@@ -80,6 +84,7 @@
 #endif
 
 #define MIN_NUM_FACTORY_TEST_LOGS_FOR_ARCHIVING 100
+#define NUM_OPENCV_THREADS 0
 
 // Local state variables
 namespace {
@@ -111,6 +116,7 @@ static int GetEngineStatsWebServerImpl(WebService::WebService::Request* request)
   std::stringstream ss;
   ss << std::fixed << std::setprecision(3) << batteryComponent.GetBatteryVolts() << '\n';
   ss << std::fixed << std::setprecision(3) << batteryComponent.GetBatteryVoltsRaw() << '\n';
+  ss << std::fixed << std::setprecision(3) << batteryComponent.GetChargerVoltsRaw() << '\n';
   ss << EnumToString(batteryComponent.GetBatteryLevel()) << '\n';
   ss << (batteryComponent.IsCharging() ? "true" : "false") << '\n';
   ss << (batteryComponent.IsOnChargerContacts() ? "true" : "false") << '\n';
@@ -189,7 +195,8 @@ static int GetEngineStatsWebServerHandler(struct mg_connection *conn, void *cbda
 
 CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort* messagePipe)
   : _uiMsgHandler(new UiMessageHandler(1, messagePipe))
-  , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get()))
+  , _protoMsgHandler(new ProtoMessageHandler(messagePipe))
+  , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get(), _protoMsgHandler.get()))
   , _deviceDataManager(new DeviceDataManager(_uiMsgHandler.get()))
   ,_animationTransferHandler(new AnimationTransfer(_uiMsgHandler.get(),dataPlatform))
 {
@@ -297,7 +304,14 @@ Result CozmoEngine::Init(const Json::Value& config) {
   Result lastResult = _uiMsgHandler->Init(_context.get(), _config);
   if (RESULT_OK != lastResult)
   {
-    PRINT_NAMED_ERROR("CozmoEngine.Init","Error initializing UIMessageHandler");
+    PRINT_NAMED_ERROR("CozmoEngine.Init","Error initializing UiMessageHandler");
+    return lastResult;
+  }
+
+  lastResult = _protoMsgHandler->Init(_context.get(), _config);
+  if (RESULT_OK != lastResult)
+  {
+    PRINT_NAMED_ERROR("CozmoEngine.Init","Error initializing ProtoMessageHandler");
     return lastResult;
   }
 
@@ -332,20 +346,16 @@ Result CozmoEngine::Init(const Json::Value& config) {
 # endif
   _context->SetRandomSeed(seed);
 
-  // VIC-722: Set this automatically using location services
-  //          and/or set from UI/SDK?
-  _context->SetLocale("en-US");
+  const auto& webService = _context->GetWebService();
+  webService->Start(_context->GetDataPlatform(),
+                    _context->GetDataLoader()->GetWebServerEngineConfig());
+  webService->RegisterRequestHandler("/getenginestats", GetEngineStatsWebServerHandler, this);
 
   _context->GetPerfMetric()->Init();
 
   LOG_INFO("CozmoEngine.Init.Version", "2");
 
   SetEngineState(EngineState::LoadingData);
-
-  const auto& webService = _context->GetWebService();
-  webService->Start(_context->GetDataPlatform(),
-                    _context->GetDataLoader()->GetWebServerEngineConfig());
-  webService->RegisterRequestHandler("/getenginestats", GetEngineStatsWebServerHandler, this);
 
   // DAS Event: "cozmo_engine.init.build_configuration"
   // s_val: Build configuration
@@ -414,6 +424,15 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
   // be doing the updating.
   if( !_hasRunFirstUpdate ) {
     _context->SetEngineThread();
+
+    // Controls OpenCV's built-in multithreading for the calling thread, so we have to do this on the first
+    // call to update due to the threading quirk
+    Result cvResult = SetNumOpencvThreads(NUM_OPENCV_THREADS, "CozmoEngine.Init");
+    if( RESULT_OK != cvResult )
+    {
+      return cvResult;
+    }
+
     _hasRunFirstUpdate = true;
   }
 
@@ -442,6 +461,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
 #endif // ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
 
   _uiMsgHandler->ResetMessageCounts();
+  _protoMsgHandler->ResetMessageCounts();
   _context->GetRobotManager()->GetMsgHandler()->ResetMessageCounts();
   _context->GetVizManager()->ResetMessageCount();
 
@@ -466,6 +486,13 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
   if (RESULT_OK != lastResult)
   {
     PRINT_NAMED_ERROR("CozmoEngine.Update", "Error updating UIMessageHandler");
+    return lastResult;
+  }
+
+  lastResult = _protoMsgHandler->Update();
+  if (RESULT_OK != lastResult)
+  {
+    PRINT_NAMED_ERROR("CozmoEngine.Update", "Error updating ProtoMessageHandler");
     return lastResult;
   }
 

@@ -127,20 +127,6 @@ int main(void)
 
   auto dataPlatform = createPlatform();
 
-  // Log a test event
-  {
-    DASMSG(anim_main_hello, "anim.main.hello", "Application start");
-    DASMSG_SET(s1, "str1", "Example string 1");
-    DASMSG_SET(s2, "str2", "Example string 2");
-    DASMSG_SET(s3, "str3", "Example string 3")
-    DASMSG_SET(s4, "str4" ,"Example string 4");
-    DASMSG_SET(i1, 1, "Example int 1");
-    DASMSG_SET(i2, 2, "Example int 2");
-    DASMSG_SET(i3, 3, "Example int 3");
-    DASMSG_SET(i4, 4, "Example int 4");
-    DASMSG_SEND();
-  }
-
   // Set up the console vars to load from file, if it exists
   ANKI_CONSOLE_SYSTEM_INIT(dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, "consoleVarsAnim.ini").c_str());
 

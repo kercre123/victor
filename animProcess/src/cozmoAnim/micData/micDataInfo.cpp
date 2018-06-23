@@ -157,10 +157,16 @@ void MicDataInfo::SaveCollectedAudio(const std::string& dataDirectory,
   }
   
   const std::string& newDirPath = Util::FileUtils::FullFilePath({ dataDirectory, nameToUse });
-  Util::FileUtils::CreateDirectory(newDirPath);
+  bool createdNewDir = false;
   const std::string& writeLocationBase = Util::FileUtils::FullFilePath({ newDirPath, nameToUse });
   if (!_rawAudioData.empty())
   {
+    if (_typesToSave.IsBitFlagSet(MicDataType::Raw))
+    {
+      Util::FileUtils::CreateDirectory(newDirPath);
+      createdNewDir = true;
+    }
+
     if (_typesToSave.IsBitFlagSet(MicDataType::Raw) || _doFFTProcess)
     {
       std::string dest = (writeLocationBase + kRawFileExtension);
@@ -204,6 +210,11 @@ void MicDataInfo::SaveCollectedAudio(const std::string& dataDirectory,
   {
     if (_typesToSave.IsBitFlagSet(MicDataType::Processed))
     {
+      if (!createdNewDir)
+      {
+        Util::FileUtils::CreateDirectory(newDirPath);
+        createdNewDir = true;
+      }
       std::string dest = (writeLocationBase + kWavFileExtension);
       if (_audioSaveCallback != nullptr)
       {

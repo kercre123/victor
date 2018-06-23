@@ -42,10 +42,16 @@ public:
 
   void IncrementBehaviorStat(const BehaviorStat& stat);
 
+  void IncrementNamedFacesPerDay();
+
+  void IncreaseOdometer(float lWheelDelta_mm, float rWheelDelta_mm, float bodyDelta_mm);
+
+  ////////////////////////////////////////////////////////////////////////////////
+
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
   }
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
 
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
 

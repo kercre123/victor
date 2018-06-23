@@ -484,8 +484,6 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case GameToEngineTag::ExecuteTestPlan:                  return true;
         case GameToEngineTag::PlannerRunMode:                   return true;
         case GameToEngineTag::StartTestMode:                    return true;
-        case GameToEngineTag::OnboardingContinue:               return true;
-        case GameToEngineTag::OnboardingSkip:                   return true;
         case GameToEngineTag::RequestSetUnlock:                 return true;
         case GameToEngineTag::GetJsonDasLogsMessage:            return true;
         case GameToEngineTag::SaveCalibrationImage:             return true;

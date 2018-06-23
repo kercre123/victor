@@ -23,6 +23,9 @@ enum uint_8 BehaviorClass {
   AnimSequenceWithObject,
   TextToSpeechLoop,
 
+  // attentionTransfer
+  AttentionTransferIfNeeded,
+
   // basicCubeInteractions
   PickUpCube,
   PutDownBlock,
@@ -57,9 +60,12 @@ enum uint_8 BehaviorClass {
 
   // devBehaviors
   DevBatteryLogging,
+  DevCubeSpinnerConsole,
+  DevDesignCubeLights,
   DevDisplayReadingsOnFace,
   DevEventSequenceCapture,
   DevImageCapture,
+  DevTestBlackjackViz,
   DevTouchDataCollection,
   DevTurnInPlaceTest,
   DispatchAfterShake,
@@ -109,7 +115,6 @@ enum uint_8 BehaviorClass {
   VisitInterestingEdge,
 
   // freeplay/oneShots
-  Dance,
   Singing,
 
   // freeplay/putDownDispatch
@@ -122,6 +127,12 @@ enum uint_8 BehaviorClass {
   PounceWithProx,
   PuzzleMaze,
   TrackLaser,
+
+  // habitat
+  ConfirmHabitat,
+
+  // knowledgeGraph
+  KnowledgeGraphQuestion,
 
   // meetCozmo
   EnrollFace,
@@ -180,6 +191,7 @@ enum uint_8 BehaviorClass {
 
   // timer
   AdvanceClock,
+  DisplayWallTime,
   ProceduralClock,
   TimerUtilityCoordinator,
 

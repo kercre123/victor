@@ -52,6 +52,8 @@ namespace Anki {
       
       u8 GetCliffDetectedFlags();
       
+      u8 GetWhiteDetectedFlags();
+      
       u16 GetCliffValue(u32 ind);
 
       // Get corrected ToF distance sensor data

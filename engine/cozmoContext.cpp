@@ -30,8 +30,9 @@ public:
 };
 
 
-CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInterface* externalInterface)
+CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInterface* externalInterface, IGatewayInterface* gatewayInterface)
   : _externalInterface(externalInterface)
+  , _gatewayInterface(gatewayInterface)
   , _dataPlatform(dataPlatform)
   , _featureGate(new CozmoFeatureGate())
   , _random(new Anki::Util::RandomGenerator())
@@ -52,7 +53,7 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
 }
 
 
-CozmoContext::CozmoContext() : CozmoContext(nullptr, nullptr)
+CozmoContext::CozmoContext() : CozmoContext(nullptr, nullptr, nullptr)
 {
 
 }

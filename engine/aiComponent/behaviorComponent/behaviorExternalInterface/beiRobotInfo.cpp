@@ -206,6 +206,12 @@ Util::RandomGenerator& BEIRobotInfo::GetRNG()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SDKComponent& BEIRobotInfo::GetSDKComponent() const
+{
+  return _robot.GetSDKComponent();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const Pose3d& BEIRobotInfo::GetWorldOrigin()  const
 {
   return _robot.GetWorldOrigin();
@@ -233,6 +239,18 @@ bool BEIRobotInfo::HasExternalInterface() const
 IExternalInterface* BEIRobotInfo::GetExternalInterface()
 {
   return _robot.GetExternalInterface();
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BEIRobotInfo::HasGatewayInterface() const
+{
+  return _robot.HasGatewayInterface();
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IGatewayInterface* BEIRobotInfo::GetGatewayInterface()
+{
+  return _robot.GetGatewayInterface();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

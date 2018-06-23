@@ -81,7 +81,7 @@ bool DrawStartPairingScreen(AnimationStreamer* animStreamer)
 void DrawShowPinScreen(AnimationStreamer* animStreamer, const AnimContext* context, const std::string& pin)
 {
   Vision::ImageRGB key;
-  key.Load(context->GetDataLoader()->GetSpritePaths()->GetValue(Vision::SpriteName::PairingIconKey));
+  key.Load(context->GetDataLoader()->GetSpritePaths()->GetValue(Vision::SpriteName::Pairing_Icon_Key));
 
   auto* img = new Vision::ImageRGBA(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
   img->FillWith(Vision::PixelRGBA(0, 0));

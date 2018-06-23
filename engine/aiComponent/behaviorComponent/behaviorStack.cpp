@@ -141,6 +141,7 @@ void BehaviorStack::UpdateBehaviorStack(BehaviorExternalInterface& behaviorExter
     behaviorExternalInterface.GetBehaviorEventComponent()._gameToEngineEvents.clear();
     behaviorExternalInterface.GetBehaviorEventComponent()._engineToGameEvents.clear();
     behaviorExternalInterface.GetBehaviorEventComponent()._robotToEngineEvents.clear();
+    behaviorExternalInterface.GetBehaviorEventComponent()._appToEngineEvents.clear();
     
     asyncMessageGateComp.GetEventsForBehavior(
        _behaviorStack.at(idx),
@@ -151,6 +152,9 @@ void BehaviorStack::UpdateBehaviorStack(BehaviorExternalInterface& behaviorExter
     asyncMessageGateComp.GetEventsForBehavior(
        _behaviorStack.at(idx),
        behaviorExternalInterface.GetBehaviorEventComponent()._robotToEngineEvents);
+    asyncMessageGateComp.GetEventsForBehavior(
+      _behaviorStack.at(idx),
+      behaviorExternalInterface.GetBehaviorEventComponent()._appToEngineEvents);
     
     // Set the actions completed this tick for the top of the stack
     if(idx == (_behaviorStack.size() - 1)){
@@ -362,8 +366,8 @@ Json::Value BehaviorStack::BuildDebugBehaviorTree(BehaviorExternalInterface& beh
    
   Json::Value data;
   data["time"] = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  auto& tree = data["tree"];
-  auto& stack = data["stack"];
+  auto& tree = data["tree"] = Json::arrayValue;
+  auto& stack = data["stack"] = Json::arrayValue;
   
   // construct flat table of tree relationships
   for( const auto& elem : _stackMetadataMap ) {

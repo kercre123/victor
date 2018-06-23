@@ -33,7 +33,7 @@
 #include "util/random/randomGenerator.h"
 
 // todo: remove when lights are removed
-#include "engine/components/bodyLightComponent.h"
+#include "engine/components/backpackLights/backpackLightComponent.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -65,7 +65,7 @@ namespace {
   const bool kUseDebugLights = false;
   
   // backpack lights so I know when this behavior is active
-  static const BackpackLights kLightsOff =
+  static const BackpackLightAnimation::BackpackAnimation kLightsOff =
   {
     .onColors               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
     .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
@@ -76,7 +76,7 @@ namespace {
     .offset                 = {{0,0,0}}
   };
   
-  static const BackpackLights kLightsActiveFront =
+  static const BackpackLightAnimation::BackpackAnimation kLightsActiveFront =
   {
     .onColors               = {{NamedColors::RED,NamedColors::BLACK,NamedColors::BLACK}},
     .offColors              = {{NamedColors::RED,NamedColors::BLACK,NamedColors::BLACK}},
@@ -86,7 +86,7 @@ namespace {
     .transitionOffPeriod_ms = {{0,0,0}},
     .offset                 = {{0,0,0}}
   };
-  static const BackpackLights kLightsActiveSide =
+  static const BackpackLightAnimation::BackpackAnimation kLightsActiveSide =
   {
     .onColors               = {{NamedColors::BLUE,NamedColors::BLACK,NamedColors::BLACK}},
     .offColors              = {{NamedColors::BLUE,NamedColors::BLACK,NamedColors::BLACK}},
@@ -171,7 +171,7 @@ void BehaviorExploringExamineObstacle::OnBehaviorActivated()
     DEV_ASSERT( !_dVars.persistent.seesFrontObstacle, "Should not be facing an obstacle now" );
     
     if( kUseDebugLights ) {
-      GetBEI().GetBodyLightComponent().SetBackpackLights(kLightsActiveSide);
+      GetBEI().GetBackpackLightComponent().SetBackpackAnimation(kLightsActiveSide);
     }
     
     // turn first
@@ -191,7 +191,7 @@ void BehaviorExploringExamineObstacle::OnBehaviorActivated()
     }
     
     if( kUseDebugLights ) {
-      GetBEI().GetBodyLightComponent().SetBackpackLights(kLightsActiveFront);
+      GetBEI().GetBackpackLightComponent().SetBackpackAnimation(kLightsActiveFront);
     }
     
     // todo: should probably back up if this behavior activates and it's too close. for now, the reaction
@@ -254,7 +254,7 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
     
     if( _dVars.state == State::ReturnToCenterEnd ) {
       if( kUseDebugLights ) {
-        GetBEI().GetBodyLightComponent().SetBackpackLights(kLightsOff);
+        GetBEI().GetBackpackLightComponent().SetBackpackAnimation(kLightsOff);
       }
       CancelSelf();
       return;
@@ -283,7 +283,7 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
     
   } else if( _dVars.state == State::ReturnToCenterEnd ) {
     if( kUseDebugLights ) {
-      GetBEI().GetBodyLightComponent().SetBackpackLights(kLightsOff);
+      GetBEI().GetBackpackLightComponent().SetBackpackAnimation(kLightsOff);
     }
     CancelSelf();
     return;
@@ -496,7 +496,7 @@ void BehaviorExploringExamineObstacle::DevTakePhoto() const
     "images",
     "exploringObstacles"
   });
-  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
+  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetComponent<VisionComponent>();
   visionComponent.SetSaveImageParameters(ImageSendMode::SingleShot,
                                          path,
                                          "", // No basename: rely on auto-numbering

@@ -23,7 +23,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorFactoryCentroidExtractor.h"
-#include "engine/components/bodyLightComponent.h"
+#include "engine/components/backpackLights/backpackLightComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
@@ -40,7 +40,7 @@ namespace Cozmo {
 namespace{
 
 // Backpack lights
-static const BackpackLights passLights = {
+static const BackpackLightAnimation::BackpackAnimation passLights = {
   .onColors               = {{NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN}},
   .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
   .onPeriod_ms            = {{1000,1000,1000}},
@@ -50,7 +50,7 @@ static const BackpackLights passLights = {
   .offset                 = {{0,0,0}}
 };
 
-static BackpackLights failLights = {
+static BackpackLightAnimation::BackpackAnimation failLights = {
   .onColors               = {{NamedColors::RED,NamedColors::RED,NamedColors::RED}},
   .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
   .onPeriod_ms            = {{500,500,500}},
@@ -60,11 +60,11 @@ static BackpackLights failLights = {
   .offset                 = {{0,0,0}}
 };
 
-static const BackpackLEDArray fail_onColorRed{{NamedColors::RED,NamedColors::RED,NamedColors::RED}};
-static const BackpackLEDArray fail_onColorOrange{{NamedColors::ORANGE,NamedColors::ORANGE,NamedColors::ORANGE}};
-static const BackpackLEDArray fail_onColorMagenta{{NamedColors::MAGENTA,NamedColors::MAGENTA,NamedColors::MAGENTA}};
-static const BackpackLEDArray fail_onColorBlue{{NamedColors::BLUE,NamedColors::BLUE,NamedColors::BLUE}};
-static const BackpackLEDArray fail_offColor{{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}};
+static const BackpackLightAnimation::BackpackLEDArray fail_onColorRed{{NamedColors::RED,NamedColors::RED,NamedColors::RED}};
+static const BackpackLightAnimation::BackpackLEDArray fail_onColorOrange{{NamedColors::ORANGE,NamedColors::ORANGE,NamedColors::ORANGE}};
+static const BackpackLightAnimation::BackpackLEDArray fail_onColorMagenta{{NamedColors::MAGENTA,NamedColors::MAGENTA,NamedColors::MAGENTA}};
+static const BackpackLightAnimation::BackpackLEDArray fail_onColorBlue{{NamedColors::BLUE,NamedColors::BLUE,NamedColors::BLUE}};
+static const BackpackLightAnimation::BackpackLEDArray fail_offColor{{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}};
 }
 
 
@@ -168,7 +168,7 @@ void BehaviorFactoryCentroidExtractor::TransitionToMovingHead(Robot& robot)
                 {
                   PRINT_NAMED_WARNING("BehaviorFactoryCentroidExtractor.MoveHead", "Moving head to 0 degrees failed");
                   failLights.onColors = fail_onColorMagenta;
-                  robot.GetBodyLightComponent().SetBackpackLights(failLights);
+                  robot.GetBackpackLightComponent().SetBackpackAnimation(failLights);
                 }
               });
 }
@@ -187,7 +187,7 @@ void BehaviorFactoryCentroidExtractor::HandleWhileActivated(const EngineToGameEv
       PRINT_NAMED_WARNING("BehaviorFactoryCentroidExtractor.DotTestFailed",
                           "Failed to find all 4 dots");
       failLights.onColors = fail_onColorRed;
-      robot.GetBodyLightComponent().SetBackpackLights(failLights);
+      robot.GetBackpackLightComponent().SetBackpackAnimation(failLights);
     }
     else
     {
@@ -196,7 +196,7 @@ void BehaviorFactoryCentroidExtractor::HandleWhileActivated(const EngineToGameEv
         PRINT_NAMED_WARNING("BehaviorFactoryCentroidExtractor.DidNotComputeCameraPose",
                             "Failed to compute camPose camera is not calibrated");
         failLights.onColors = fail_onColorOrange;
-        robot.GetBodyLightComponent().SetBackpackLights(failLights);
+        robot.GetBackpackLightComponent().SetBackpackAnimation(failLights);
       }
       else
       {
@@ -243,11 +243,11 @@ void BehaviorFactoryCentroidExtractor::HandleWhileActivated(const EngineToGameEv
         if(doThresholdCheck && exceedsThresh)
         {
           failLights.onColors = fail_onColorBlue;
-          robot.GetBodyLightComponent().SetBackpackLights(failLights);
+          robot.GetBackpackLightComponent().SetBackpackAnimation(failLights);
         }
         else
         {
-          robot.GetBodyLightComponent().SetBackpackLights(passLights);
+          robot.GetBackpackLightComponent().SetBackpackAnimation(passLights);
         }
       }
     }

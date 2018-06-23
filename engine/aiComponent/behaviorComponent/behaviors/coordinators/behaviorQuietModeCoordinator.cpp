@@ -24,7 +24,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
-#include "engine/components/cubes/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/moodSystem/moodManager.h"
 #include "util/console/consoleInterface.h"
 
@@ -215,7 +215,7 @@ void BehaviorQuietModeCoordinator::SimmerDownNow()
   std::vector<const ActiveObject*> connectedCubes;
   GetBEI().GetBlockWorld().FindConnectedActiveMatchingObjects(filter, connectedCubes);
   for( const auto* obj : connectedCubes ) {
-    GetBEI().GetCubeLightComponent().PlayLightAnim( obj->GetID(), CubeAnimationTrigger::SleepNoFade );
+    GetBEI().GetCubeLightComponent().PlayLightAnimByTrigger( obj->GetID(), CubeAnimationTrigger::SleepNoFade );
   }
   
   auto& moodManager = GetBEI().GetMoodManager();

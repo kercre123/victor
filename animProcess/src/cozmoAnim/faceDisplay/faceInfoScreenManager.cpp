@@ -57,7 +57,9 @@
 // Log options
 #define LOG_CHANNEL    "FaceInfoScreenManager"
 
-// Remove this when BLE switchboard is working
+// Forces transition to BLE pairing screen on double button press
+// without waiting for actual START_PAIRING message from switchboard.
+// Mainly useful in sim, where there is currently no switchboard.
 #ifdef SIMULATOR
 #define FORCE_TRANSITION_TO_PAIRING 1
 #else
@@ -107,11 +109,19 @@ namespace {
 
   // Variables for performing connectivity checks in threads
   // and triggering redrawing of screens
+  std::future<void> _mainChecksFuture;
+  std::future<void> _networkChecksFuture;
+  std::atomic<bool> _quitMainChecks{true};
+  std::atomic<bool> _quitNetworkChecks{true};
   std::atomic<bool> _redrawMain{false};
   std::atomic<bool> _redrawNetwork{false};
   std::atomic<bool> _hasAuthAccess{false};
   std::atomic<bool> _hasOTAAccess{false};
   std::atomic<bool> _hasVoiceAccess{false};
+
+  // How often connectivity checks are performed while on 
+  // Main and Network screens.
+  const u32 kIPCheckPeriod_sec = 20;
 }
 
 
@@ -168,7 +178,13 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   #define DISABLE_TIMEOUT(screen) \
     GetScreen(ScreenName::screen)->SetTimeout(0.f, ScreenName::screen);
 
+  #define SET_ENTER_ACTION(screen, lambda) \
+    GetScreen(ScreenName::screen)->SetEnterScreenAction(lambda);
 
+  #define SET_EXIT_ACTION(screen, lambda) \
+    GetScreen(ScreenName::screen)->SetExitScreenAction(lambda);
+
+  // =============== Screens ==================
   // Screens we don't want users to have access to
   // * Microphone visualization
   // * Camera
@@ -177,40 +193,15 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
 
   ADD_SCREEN_WITH_TEXT(Recovery, Recovery, {"RECOVERY MODE"});
   ADD_SCREEN(None, None);
-  GetScreen(ScreenName::None)->SetEnterScreenAction([this]() {
-    // Restore power mode as specified by engine
-    SendAnimToRobot(_calmModeMsgOnNone);
-  });
-  GetScreen(ScreenName::None)->SetExitScreenAction([]() {
-    // Disable calm mode
-    RobotInterface::CalmPowerMode msg;
-    msg.enable = false;
-    msg.calibOnDisable = false;
-    SendAnimToRobot(std::move(msg));
-  });
   ADD_SCREEN(Pairing, Pairing);
   ADD_SCREEN(FAC, None);
   ADD_SCREEN(CustomText, None);
-  // Give the customText screen an exit action of resetting its timeout back to default, since elsewhere we modify it when using it
-  GetScreen(ScreenName::CustomText)->SetExitScreenAction([this]() {
-    SET_TIMEOUT(CustomText, kDefaultScreenTimeoutDuration_s, None);
-  });
-
   ADD_SCREEN(Main, Network);
-  GetScreen(ScreenName::Main)->SetEnterScreenAction([]() {
-    _redrawMain = false;
-  });
-
   ADD_SCREEN_WITH_TEXT(ClearUserData, Main, {"CLEAR USER DATA?"});
   ADD_SCREEN_WITH_TEXT(ClearUserDataFail, Main, {"CLEAR USER DATA FAILED"});
   ADD_SCREEN_WITH_TEXT(Rebooting, Rebooting, {"REBOOTING..."});
   ADD_SCREEN_WITH_TEXT(SelfTest, Main, {"START SELF TEST?"});
-
   ADD_SCREEN(Network, SensorInfo);
-  GetScreen(ScreenName::Network)->SetEnterScreenAction([]() {
-    _redrawNetwork = false;
-  });
-
   ADD_SCREEN(SensorInfo, IMUInfo);
   ADD_SCREEN(IMUInfo, MotorInfo);
   ADD_SCREEN(MotorInfo, MicInfo);
@@ -225,42 +216,88 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   ADD_SCREEN(Camera, Main);    // Last screen cycles back to Main
   ADD_SCREEN(CameraMotorTest, Camera);
 
-  // Recovery screen
-  FaceInfoScreen::MenuItemAction rebootAction = [this]() {
-    LOG_INFO("FaceInfoScreenManager.Recovery.Rebooting", "");
-    this->Reboot();
 
-    return ScreenName::Rebooting;
+  // ========== Screen Customization ========= 
+  // Enter/Exit fcns, menu items, timeouts
+
+  // === None screen ===
+  auto noneEnterFcn = [this, animStreamer]() {
+    // Restore power mode as specified by engine
+    SendAnimToRobot(_calmModeMsgOnNone);
+    if (FACTORY_TEST) {
+      InitConnectionFlow(animStreamer);
+    }
   };
-  ADD_MENU_ITEM_WITH_ACTION(Recovery, "EXIT", rebootAction);
-  ADD_MENU_ITEM(Recovery, "CONTINUE", None);
-  DISABLE_TIMEOUT(Recovery);
-
-  // None screen
-#if FACTORY_TEST
-  FaceInfoScreen::ScreenAction drawInitConnectionScreen = [animStreamer]() {
-    InitConnectionFlow(animStreamer);
+  auto noneExitFcn = []() {
+    // Disable calm mode
+    RobotInterface::CalmPowerMode msg;
+    msg.enable = false;
+    msg.calibOnDisable = false;
+    SendAnimToRobot(std::move(msg));
   };
-  GetScreen(ScreenName::None)->SetEnterScreenAction(drawInitConnectionScreen);
-#endif
+  SET_ENTER_ACTION(None, noneEnterFcn);
+  SET_EXIT_ACTION(None, noneExitFcn);
 
-  // FAC screen
+
+  // === FAC screen ===
+  auto facEnterFcn = [this]() {
+    DrawFAC();
+  };
+  SET_ENTER_ACTION(FAC, facEnterFcn);
   DISABLE_TIMEOUT(FAC);
 
-  // Pairing screen
+
+  // === Pairing screen ===
   // Never timeout. Let switchboard handle timeouts.
   DISABLE_TIMEOUT(Pairing);
 
-  // Main screen menu
+
+  // === Custom screen ===
+  // Give the customText screen an exit action of resetting its timeout back to default, 
+  // since elsewhere we modify it when using it
+  auto customTextEnterFcn = [this]() {
+    DrawCustomText();
+  };
+  auto customTextExitFcn = [this]() {
+    SET_TIMEOUT(CustomText, kDefaultScreenTimeoutDuration_s, None);
+  };
+  SET_ENTER_ACTION(CustomText, customTextEnterFcn);
+  SET_EXIT_ACTION(CustomText, customTextExitFcn);
+
+  // === Main screen ===
+  auto mainEnterFcn = [this]() {
+    DrawMain();
+    if (!FACTORY_TEST) {
+      // Redraw Main screen after connection checks have completed
+      _redrawMain = false;
+      _quitMainChecks = false;
+      auto mainChecksLambda = []() {
+        while (!_quitMainChecks) {
+          LOG_INFO("FaceInfoScreenManager.MainCheckLoop.CheckingConnectivity", "");        
+          _hasOTAAccess = HasOTAAccess();
+          _redrawMain = true;
+          std::this_thread::sleep_for(std::chrono::seconds(kIPCheckPeriod_sec));
+        }
+        LOG_INFO("FaceInfoScreenManager.MainCheckLoop.Quit", "");
+      };
+      AsyncExec(_mainChecksFuture, mainChecksLambda);
+    }
+  };
+  auto mainExitFcn = []() {
+    _quitMainChecks = true;
+  };
+  SET_ENTER_ACTION(Main, mainEnterFcn);
+  SET_EXIT_ACTION(Main, mainExitFcn);
+
   ADD_MENU_ITEM(Main, "EXIT", None);
   // ADD_MENU_ITEM(Main, "Self Test", SelfTest);   // TODO: VIC-1498
   ADD_MENU_ITEM(Main, "CLEAR USER DATA", ClearUserData);
 
-  // Self test screen
+  // === Self test screen ===
   ADD_MENU_ITEM(SelfTest, "EXIT", Main);
   ADD_MENU_ITEM(SelfTest, "CONFIRM", Main);        // TODO: VIC-1498
 
-  // Clear User Data menu
+  // === Clear User Data menu ===
   FaceInfoScreen::MenuItemAction confirmClearUserData = [this]() {
     // Write this file to indicate that the data partition should be wiped on reboot
     if (!Util::FileUtils::WriteFile("/run/wipe-data", "1")) {
@@ -277,34 +314,80 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   ADD_MENU_ITEM_WITH_ACTION(ClearUserData, "CONFIRM", confirmClearUserData);
   SET_TIMEOUT(ClearUserDataFail, 2.f, Main);
 
-  // Camera screen
+
+  // === Network screen ===
+  auto networkEnterFcn = [this]() {
+    DrawNetwork();
+    if (!FACTORY_TEST) {
+      // Redraw Network screen after connection checks have completed
+      _redrawNetwork = false;
+      _quitNetworkChecks = false;
+      auto networkChecksLambda = []() {
+        while (!_quitNetworkChecks) {
+          // TODO (VIC-1816): Check actual hosts for connectivity
+          LOG_INFO("FaceInfoScreenManager.NetworkCheckLoop.CheckingConnectivity", "");
+          auto t1 = std::thread([](){ _hasAuthAccess = false; });
+          auto t2 = std::thread([](){ _hasOTAAccess  = HasOTAAccess(); });
+          _hasVoiceAccess = HasVoiceAccess();
+
+          t1.join();
+          t2.join();
+          _redrawNetwork = true;
+
+          std::this_thread::sleep_for(std::chrono::seconds(kIPCheckPeriod_sec));
+        }
+        LOG_INFO("FaceInfoScreenManager.NetworkCheckLoop.Quit", "");
+      };
+      AsyncExec(_networkChecksFuture, networkChecksLambda);
+    }
+  };
+  auto networkExitFcn = []() {
+    _quitNetworkChecks = true;
+  };
+  SET_ENTER_ACTION(Network, networkEnterFcn);
+  SET_EXIT_ACTION(Network, networkExitFcn);
+
+
+  // === Recovery screen ===
+  FaceInfoScreen::MenuItemAction rebootAction = [this]() {
+    LOG_INFO("FaceInfoScreenManager.Recovery.Rebooting", "");
+    this->Reboot();
+
+    return ScreenName::Rebooting;
+  };
+  ADD_MENU_ITEM_WITH_ACTION(Recovery, "EXIT", rebootAction);
+  ADD_MENU_ITEM(Recovery, "CONTINUE", None);
+  DISABLE_TIMEOUT(Recovery);
+
+    
+  // === Camera screen ===
   FaceInfoScreen::ScreenAction cameraEnterAction = [animStreamer]() {
     StreamCameraImages m;
     m.enable = true;
     RobotInterface::SendAnimToEngine(std::move(m));
     animStreamer->RedirectFaceImagesToDebugScreen(true);
   };
-  FaceInfoScreen::ScreenAction cameraExitAction = [animStreamer]() {
+  auto cameraExitAction = [animStreamer]() {
     StreamCameraImages m;
     m.enable = false;
     RobotInterface::SendAnimToEngine(std::move(m));
     animStreamer->RedirectFaceImagesToDebugScreen(false);
   };
-  GetScreen(ScreenName::Camera)->SetEnterScreenAction(cameraEnterAction);
-  GetScreen(ScreenName::Camera)->SetExitScreenAction(cameraExitAction);
+  SET_ENTER_ACTION(Camera, cameraEnterAction);
+  SET_EXIT_ACTION(Camera, cameraExitAction);
 
-  // Camera Motor Test
+  // === Camera Motor Test ===
   // Add menu item to camera screen to start a test mode where the motors run back and forth
   // and camera images are streamed to the face
   ADD_MENU_ITEM(Camera, "TEST MODE", CameraMotorTest);
   SET_TIMEOUT(CameraMotorTest, 300.f, None);
 
-  GetScreen(ScreenName::CameraMotorTest)->SetEnterScreenAction(cameraEnterAction);
-  FaceInfoScreen::ScreenAction cameraMotorTestExitAction = [cameraExitAction]() {
+  auto cameraMotorTestExitAction = [cameraExitAction]() {
     cameraExitAction();
     SendAnimToRobot(RobotInterface::StopAllMotors());
   };
-  GetScreen(ScreenName::CameraMotorTest)->SetExitScreenAction(cameraMotorTestExitAction);
+  SET_ENTER_ACTION(CameraMotorTest, cameraEnterAction);
+  SET_EXIT_ACTION(CameraMotorTest, cameraMotorTestExitAction);
 
   
   // Check if we booted in recovery mode
@@ -429,54 +512,6 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
   _liftTriggerReady = false;
   _wheelMovingForwardsCount = 0;
   _wheelMovingBackwardsCount = 0;
-
-  // One-shot operations for screens that don't need to be updated by Update()
-  switch(GetCurrScreenName()) {
-    case ScreenName::Main:
-    {
-      DrawMain();
-#if !FACTORY_TEST
-      // Redraw Main screen after connection checks have completed
-      static std::future<void> mainChecksFuture;
-      if (!AsyncExec(mainChecksFuture, []() {
-        _hasOTAAccess = HasOTAAccess();
-        _redrawMain = true;
-      })) {
-        LOG_WARNING("FaceInfoScreenManager.SetScreen.MainScreenConnectionCheckBlocking", "");
-      }
-#endif      
-      break;
-    }
-    case ScreenName::Network:
-    {
-      DrawNetwork();
-#if !FACTORY_TEST
-      static std::future<void> networkChecksFuture;
-      // Redraw Network screen after connection checks have completed
-      if (!AsyncExec(networkChecksFuture, []() {
-        // TODO (VIC-1816): Check actual hosts for connectivity
-        auto t1 = std::thread([](){ _hasAuthAccess = false; });
-        auto t2 = std::thread([](){ _hasOTAAccess  = HasOTAAccess(); });
-        _hasVoiceAccess = HasVoiceAccess();
-
-        t1.join();
-        t2.join();
-        _redrawNetwork = true;
-      })) {
-        LOG_WARNING("FaceInfoScreenManager.SetScreen.NetworkScreenConnectionCheckBlocking", "");
-      }
-#endif      
-      break;
-    }
-    case ScreenName::FAC:
-      DrawFAC();
-      break;
-    case ScreenName::CustomText:
-      DrawCustomText();
-      break;
-    default:
-      break;
-  }
 
 }
 

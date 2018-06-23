@@ -15,6 +15,7 @@
 
 #include "engine/robotComponents_fwd.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
+#include "clad/cloud/mic.h"
 
 
 namespace Anki {
@@ -36,7 +37,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // IDependencyManagedComponent functions
 
-  virtual void InitDependent( Cozmo::Robot* robot, const RobotCompMap& dependentComponents ) override;
+  virtual void InitDependent( Cozmo::Robot* robot, const RobotCompMap& dependentComps ) override;
   virtual void GetInitDependencies( RobotCompIDSet& dependencies ) const override;
   virtual void GetUpdateDependencies( RobotCompIDSet& dependencies ) const override {};
 
@@ -50,11 +51,11 @@ public:
   VoiceMessageSystem& GetVoiceMessageSystem() { return *_messageSystem; }
   const VoiceMessageSystem& GetVoiceMessageSystem() const { return *_messageSystem; }
 
-  void StartWakeWordlessStreaming();
+  void StartWakeWordlessStreaming( CloudMic::StreamType streamType );
   
-  void SetShouldStreamAfterWakeWord(bool shouldStream);
+  void SetShouldStreamAfterWakeWord( bool shouldStream );
   
-  void SetTriggerWordDetectionEnabled(bool enabled);
+  void SetTriggerWordDetectionEnabled( bool enabled );
 
 private:
 

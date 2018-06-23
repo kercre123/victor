@@ -14,7 +14,7 @@
 
 #include "engine/components/blockTapFilterComponent.h"
 #include "engine/components/cubes/cubeAccelComponent.h"
-#include "engine/components/cubes/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/cubes/ledAnimation.h"
 #include "engine/activeObject.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -84,7 +84,7 @@ CubeCommsComponent::CubeCommsComponent()
   _cubeBleClient->RegisterCubeConnectionCallback(std::bind(&CubeCommsComponent::HandleConnectionStateChange, this, std::placeholders::_1, std::placeholders::_2));
   _cubeBleClient->RegisterScanFinishedCallback(std::bind(&CubeCommsComponent::HandleScanForCubesFinished, this));
 }
-void CubeCommsComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void CubeCommsComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   
@@ -364,7 +364,7 @@ void CubeCommsComponent::SubscribeToWebViz()
             if (connected) {
               const auto* object = _robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeID);
               if (object != nullptr) {
-                _robot->GetCubeLightComponent().PlayLightAnim(object->GetID(), CubeAnimationTrigger::Flash);
+                _robot->GetCubeLightComponent().PlayLightAnimByTrigger(object->GetID(), CubeAnimationTrigger::Flash);
               }
             }
           }
