@@ -246,9 +246,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
 #pragma mark SpriteSequenceKeyFrame
     SpriteSequenceKeyFrame::SpriteSequenceKeyFrame(Vision::SpriteHandle spriteHandle,
                                                    TimeStamp_t triggerTime_ms, 
-                                                   float scanlineOpacity,
                                                    bool shouldRenderInEyeHue)
-    : _scanlineOpacity(scanlineOpacity)
     {
       if(ANKI_DEV_CHEATS){
         auto img = spriteHandle->GetSpriteContentsGrayscale();
@@ -263,16 +261,12 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       _compositeImage.reset(new Vision::CompositeImage(faceHueAndSaturation, spriteHandle, !shouldRenderInEyeHue));
       _keyframeDuration_ms = ANIM_TIME_STEP_MS;
       _triggerTime_ms = triggerTime_ms;
-
-      ValidateScanlineOpacity();
     }
 
     SpriteSequenceKeyFrame::SpriteSequenceKeyFrame(const Vision::SpriteSequence* const spriteSeq,
                                                    TimeStamp_t triggerTime_ms, 
                                                    u32 frameInterval_ms,
-                                                   float scanlineOpacity,
                                                    bool shouldRenderInEyeHue)
-    : _scanlineOpacity(scanlineOpacity)
     {
       Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
       _compositeImage.reset(new Vision::CompositeImage(faceHueAndSaturation, spriteSeq, !shouldRenderInEyeHue));
@@ -284,17 +278,15 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
                   "SpriteSequenceKeyFrame.SetCompositeImage.InvalidTimeStep",
                   "Update interval %d is not a multiple of anim time step %d",
                   _internalUpdateInterval_ms, ANIM_TIME_STEP_MS);
-      ValidateScanlineOpacity();
     }
 
     SpriteSequenceKeyFrame::SpriteSequenceKeyFrame(Vision::SpriteCache* spriteCache, 
                                                    Vision::CompositeImage* compImg, 
                                                    u32 frameInterval_ms,
-                                                   float scanlineOpacity)
-    : _scanlineOpacity(scanlineOpacity)
+                                                   bool shouldRenderInEyeHue)
     {
       Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
-      _compositeImage = std::make_unique<Vision::CompositeImage>(spriteCache, faceHueAndSaturation);
+      _compositeImage = std::make_unique<Vision::CompositeImage>(spriteCache, faceHueAndSaturation, !shouldRenderInEyeHue);
       _compositeImage.reset(compImg);
       _internalUpdateInterval_ms = frameInterval_ms;
       ANKI_VERIFY((_internalUpdateInterval_ms != 0) &&
@@ -302,14 +294,12 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
                   "SpriteSequenceKeyFrame.SetCompositeImage.InvalidTimeStep",
                   "Update interval %d is not a multiple of anim time step %d",
                   _internalUpdateInterval_ms, ANIM_TIME_STEP_MS);
-      ValidateScanlineOpacity();
     }
 
     SpriteSequenceKeyFrame::SpriteSequenceKeyFrame(const SpriteSequenceKeyFrame& other)
     {
       _triggerTime_ms            = other._triggerTime_ms;
       _keyframeDuration_ms       = other._keyframeDuration_ms;
-      _scanlineOpacity           = other._scanlineOpacity;
       _internalUpdateInterval_ms = other._internalUpdateInterval_ms;
       _compositeImageUpdated     = other._compositeImageUpdated;
       _compositeImageUpdateMap   = other._compositeImageUpdateMap;
@@ -329,8 +319,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       (GetKeyframeDuration_ms() == other.GetKeyframeDuration_ms()) &&
       (_compositeImageUpdated == other._compositeImageUpdated) &&
       (*_compositeImage == *other._compositeImage) &&
-      (_internalUpdateInterval_ms  == other._internalUpdateInterval_ms) &&
-      (_scanlineOpacity == other._scanlineOpacity);
+      (_internalUpdateInterval_ms  == other._internalUpdateInterval_ms);
     }
     
     
@@ -340,15 +329,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       return RESULT_FAIL;
     }
 
-    void SpriteSequenceKeyFrame::ValidateScanlineOpacity()
-    {
-      // Verify that the scanline opacity is between 0 and 1
-      DEV_ASSERT_MSG(Util::InRange(_scanlineOpacity, 0.f, 1.f),
-                     "SpriteSequenceKeyFrame.Process.InvalidScanlineOpacity",
-                     "Invalid scanline opacity of %f",
-                     _scanlineOpacity);
-      _scanlineOpacity = Util::Clamp(_scanlineOpacity, 0.f, 1.f);
-    }
 
     bool SpriteSequenceKeyFrame::ParseSequenceNameFromString(const Vision::SpritePathMap* spriteMap,
                                                              const std::string& sequenceName, 
@@ -430,8 +410,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
                                                         const Vision::SpritePathMap* spriteMap,
                                                         Vision::SpriteSequenceContainer* seqContainer,
                                                         const Vision::SpriteSequence*& outSeq,
-                                                        TimeStamp_t& triggerTime_ms, 
-                                                        float& scanlineOpacity)
+                                                        TimeStamp_t& triggerTime_ms)
     {
       DEV_ASSERT(faceAnimKeyframe != nullptr, "SpriteSequenceKeyFrame.DefineFromFlatBuf.NullAnim");
       auto seqNameStr = faceAnimKeyframe->animName()->str();
@@ -443,7 +422,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         outSeq = seqContainer->GetUnmappedSequenceByFileName(seqNameStr);
       }
 
-      SafeNumericCast(faceAnimKeyframe->scanlineOpacity(), scanlineOpacity, seqNameStr.c_str());
       SafeNumericCast(faceAnimKeyframe->triggerTime_ms(),  triggerTime_ms, seqNameStr.c_str());
       return success;
     }
@@ -453,7 +431,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
                                                      Vision::SpriteSequenceContainer* seqContainer,
                                                      const Vision::SpriteSequence*& outSeq,
                                                      TimeStamp_t& triggerTime_ms, 
-                                                     float& scanlineOpacity,
                                                      TimeStamp_t& frameUpdateInterval)
     {
       // Get the sprite sequence
@@ -478,7 +455,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         }
       }
 
-      JsonTools::GetValueOptional(jsonRoot, "scanlineOpacity", scanlineOpacity);
       JsonTools::GetValueOptional(jsonRoot, "frameDuration_ms", frameUpdateInterval);
       JsonTools::GetValueOptional(jsonRoot, "triggerTime_ms", triggerTime_ms);
 

@@ -5,12 +5,9 @@ import re
 import shutil
 import tarfile
 
-
-INPUT_ANIMATION_PATH  = "EXTERNALS/animation-assets/animations/"
-OUTPUT_ANIMATION_PATH = "_build/mac/Debug/data/assets/cozmo_resources/assets/dev_animation_data/"
-
-
-
+# This script assumes it is being called from ./project/buildServer/steps/unittestsEngine.sh
+INPUT_ANIMATION_PATH  = "../../../EXTERNALS/animation-assets/animations/"
+OUTPUT_ANIMATION_PATH = "../../../_build/mac/Debug/data/assets/cozmo_resources/assets/dev_animation_data/"
 
 if __name__ == "__main__":
     # clear out existing anim data

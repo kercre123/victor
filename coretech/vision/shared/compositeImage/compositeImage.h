@@ -160,7 +160,7 @@ private:
   // Othrewise, returns HSImage to use in render
   HSImageHandle HowToRenderRGBA(const SpriteRenderConfig& config) const;
 
-  SpriteCache* _spriteCache;
+  SpriteCache* _spriteCache = nullptr;
   // To allow sprite boxes to be rendered the color of the robot's eyes
   // store references to the static face hue/saturation images internally
   const ConstHSImageHandle _faceHSImageHandle;

@@ -870,10 +870,8 @@ namespace Cozmo {
        (_streamingAnimation == _proceduralAnimation)){
       triggerTime_ms = _relativeStreamTime_ms;
     }
-    // Trigger time of keyframe is 0 since we want it to start playing immediately
-    const float scanlineOpacity = 1.f;
 
-    SpriteSequenceKeyFrame kf(spriteHandle, triggerTime_ms, scanlineOpacity, shouldRenderInEyeHue);
+    SpriteSequenceKeyFrame kf(spriteHandle, triggerTime_ms, shouldRenderInEyeHue);
     kf.SetKeyFrameDuration_ms(duration_ms);
     
     Result result = _proceduralAnimation->AddKeyFrameToBack(kf);

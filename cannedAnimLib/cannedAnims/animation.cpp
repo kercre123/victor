@@ -182,12 +182,11 @@ Result Animation::DefineFromFlatBuf(const std::string& name, const CozmoAnim::An
       
       const Vision::SpriteSequence* spriteSeq = nullptr;
       TimeStamp_t triggerTime_ms = 0;
-      float scanlineOpacity = 0;
       u32 frameInterval_ms = ANIM_TIME_STEP_MS;
       const bool success = SpriteSequenceKeyFrame::ExtractDataFromFlatBuf(faceAnimKeyframe, spriteMap, seqContainer,
-                                                                          spriteSeq, triggerTime_ms, scanlineOpacity);
+                                                                          spriteSeq, triggerTime_ms);
       const bool shouldRenderInEyeHue = true;
-      SpriteSequenceKeyFrame kf(spriteSeq, triggerTime_ms, frameInterval_ms, scanlineOpacity, shouldRenderInEyeHue);
+      SpriteSequenceKeyFrame kf(spriteSeq, triggerTime_ms, frameInterval_ms, shouldRenderInEyeHue);
       Result addResult = _spriteSequenceTrack.AddKeyFrameToBack(kf);
       if(success && addResult != RESULT_OK) {
         PRINT_NAMED_ERROR("Animation.DefineFromFlatBuf.AddKeyFrameFailure",
@@ -297,14 +296,12 @@ Result Animation::DefineFromJson(const std::string& name, const Json::Value &jso
       const Vision::SpriteSequence* spriteSeq = nullptr;
       TimeStamp_t triggerTime_ms = 0;
       TimeStamp_t frameUpdateInterval = ANIM_TIME_STEP_MS;
-      float scanlineOpacity = 0.f;
       const bool success = SpriteSequenceKeyFrame::ExtractDataFromJson(jsonFrame, spriteMap, seqContainer,
                                                                        spriteSeq, triggerTime_ms, 
-                                                                       scanlineOpacity, frameUpdateInterval);
+                                                                       frameUpdateInterval);
       if(success){
         const bool shouldRenderInEyeHue = true;
-        SpriteSequenceKeyFrame kf(spriteSeq, triggerTime_ms, frameUpdateInterval, 
-                                scanlineOpacity, shouldRenderInEyeHue);
+        SpriteSequenceKeyFrame kf(spriteSeq, triggerTime_ms, frameUpdateInterval, shouldRenderInEyeHue);
         addResult = _spriteSequenceTrack.AddKeyFrameToBack(kf);
       }else{
         addResult = RESULT_FAIL;
