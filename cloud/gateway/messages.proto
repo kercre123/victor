@@ -256,8 +256,9 @@ message LoadedKnownFace {
     int64   seconds_since_first_enrolled = 1;
     int64   seconds_since_last_updated = 2;
     int64   seconds_since_last_seen = 3;
-    int32   face_id = 4;
-    string  name = 5;
+    int64   last_seen_seconds_since_epoch = 4;
+    int32   face_id = 5;
+    string  name = 6;
 }
 
 message RobotRenamedEnrolledFace {

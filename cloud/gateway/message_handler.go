@@ -540,6 +540,7 @@ func (m *rpcService) RequestEnrolledNames(ctx context.Context, in *extint.Reques
 			SecondsSinceFirstEnrolled: element.SecondsSinceFirstEnrolled,
 			SecondsSinceLastUpdated:   element.SecondsSinceLastUpdated,
 			SecondsSinceLastSeen:      element.SecondsSinceLastSeen,
+			LastSeenSecondsSinceEpoch: element.LastSeenSecondsSinceEpoch,
 			FaceId:                    element.FaceID,
 			Name:                      element.Name,
 		}
