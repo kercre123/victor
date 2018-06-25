@@ -788,21 +788,21 @@ Result NeuralNetModel::Run(tensorflow::Tensor imageTensor, std::vector<tensorflo
   else
   {
     std::unique_ptr<tensorflow::StatSummarizer> stats;
-    tensorflow::StatSummarizerOptions stats_options;
-    stats_options.show_run_order = true;
-    stats_options.run_order_limit = 0;
-    stats_options.show_time = true;
-    stats_options.time_limit = 10;
-    stats_options.show_memory = true;
-    stats_options.memory_limit = 10;
-    stats_options.show_type = true;
-    stats_options.show_summary = true;
-    stats.reset(new tensorflow::StatSummarizer(stats_options));
+    tensorflow::StatSummarizerOptions statsOptions;
+    statsOptions.show_run_order = true;
+    statsOptions.run_order_limit = 0;
+    statsOptions.show_time = true;
+    statsOptions.time_limit = 10;
+    statsOptions.show_memory = true;
+    statsOptions.memory_limit = 10;
+    statsOptions.show_type = true;
+    statsOptions.show_summary = true;
+    stats.reset(new tensorflow::StatSummarizer(statsOptions));
 
-    tensorflow::RunOptions run_options;
+    tensorflow::RunOptions runOptions;
     if (nullptr != stats)
     {
-      run_options.set_trace_level(tensorflow::RunOptions::FULL_TRACE);
+      runOptions.set_trace_level(tensorflow::RunOptions::FULL_TRACE);
     }
     else
     {
@@ -813,7 +813,7 @@ Result NeuralNetModel::Run(tensorflow::Tensor imageTensor, std::vector<tensorflo
     tensorflow::RunMetadata runMetadata;
     for (uint32_t i = 0; i < _params.benchmarkRuns; ++i)
     {
-      runStatus = _session->Run(run_options, {{_params.inputLayerName, imageTensor}},
+      runStatus = _session->Run(runOptions, {{_params.inputLayerName, imageTensor}},
                                 _params.outputLayerNames, {}, &outputTensors, &runMetadata);
       if (!runStatus.ok())
       {
