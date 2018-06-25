@@ -91,10 +91,10 @@ TEST(VariableSnapshotComponent, SaveOnShutdown)
     // identify data to be stored
     std::shared_ptr<bool> testBoolPtr0 = std::make_shared<bool>(initBool0);
 
-    variableSnapshotComp.InitVariableSnapshot<bool>(VariableSnapshotId::UnitTestBool0,
-                                                    testBoolPtr0,
-                                                    VariableSnapshotEncoder::SerializeBool,
-                                                    VariableSnapshotEncoder::DeserializeBool);
+    variableSnapshotComp.InitVariable<bool>(VariableSnapshotId::UnitTestBool0,
+                                            testBoolPtr0,
+                                            VariableSnapshotEncoder::SerializeBool,
+                                            VariableSnapshotEncoder::DeserializeBool);
 
     // the robot now shuts down and automatically saves the data
   }
@@ -110,10 +110,10 @@ TEST(VariableSnapshotComponent, SaveOnShutdown)
     // identify data to be stored
     std::shared_ptr<bool> testBoolPtr1 = std::make_shared<bool>(!initBool0);
 
-    variableSnapshotComp.InitVariableSnapshot<bool>(VariableSnapshotId::UnitTestBool0,
-                                                    testBoolPtr1,
-                                                    VariableSnapshotEncoder::SerializeBool,
-                                                    VariableSnapshotEncoder::DeserializeBool);
+    variableSnapshotComp.InitVariable<bool>(VariableSnapshotId::UnitTestBool0,
+                                            testBoolPtr1,
+                                            VariableSnapshotEncoder::SerializeBool,
+                                            VariableSnapshotEncoder::DeserializeBool);
 
     // check that the data is the same
     EXPECT_EQ(*testBoolPtr1, initBool0);
@@ -143,10 +143,10 @@ TEST(VariableSnapshotComponent, BasicFunctionalityTest)
     // identify data to be stored
     std::shared_ptr<int> testIntPtr0 = std::make_shared<int>(initInt0);
 
-    variableSnapshotComp.InitVariableSnapshot<int>(VariableSnapshotId::UnitTestInt0,
-                                                   testIntPtr0,
-                                                   VariableSnapshotEncoder::SerializeInt,
-                                                   VariableSnapshotEncoder::DeserializeInt);
+    variableSnapshotComp.InitVariable<int>(VariableSnapshotId::UnitTestInt0,
+                                           testIntPtr0,
+                                           VariableSnapshotEncoder::SerializeInt,
+                                           VariableSnapshotEncoder::DeserializeInt);
 
     ++(*testIntPtr0);
 
@@ -165,10 +165,10 @@ TEST(VariableSnapshotComponent, BasicFunctionalityTest)
     // identify data to be stored
     std::shared_ptr<int> testIntPtr1 = std::make_shared<int>(0);
 
-    variableSnapshotComp.InitVariableSnapshot<int>(VariableSnapshotId::UnitTestInt0,
-                                                   testIntPtr1,
-                                                   VariableSnapshotEncoder::SerializeInt,
-                                                   VariableSnapshotEncoder::DeserializeInt);
+    variableSnapshotComp.InitVariable<int>(VariableSnapshotId::UnitTestInt0,
+                                           testIntPtr1,
+                                           VariableSnapshotEncoder::SerializeInt,
+                                           VariableSnapshotEncoder::DeserializeInt);
 
     // check that the data is the same
     EXPECT_EQ(*testIntPtr1, initInt0+1);
@@ -184,7 +184,7 @@ TEST(VariableSnapshotComponent, MultipleInitsFail)
   InitializeTests();
 
   int initInt0 = 20;
-  Anki::Util::_errG = false;
+  auto errGState = Anki::Util::_errG;
 
   // make a robot
   auto robot0 = std::make_unique<Robot>(kRobotId, cozmoContext);
@@ -196,18 +196,21 @@ TEST(VariableSnapshotComponent, MultipleInitsFail)
   std::shared_ptr<int> testIntPtr0 = std::make_shared<int>(initInt0);
   std::shared_ptr<int> testIntPtr1 = std::make_shared<int>(initInt0-1);
 
-  variableSnapshotComp.InitVariableSnapshot<int>(VariableSnapshotId::UnitTestInt0,
-                                                 testIntPtr0,
-                                                 VariableSnapshotEncoder::SerializeInt,
-                                                 VariableSnapshotEncoder::DeserializeInt);
+  variableSnapshotComp.InitVariable<int>(VariableSnapshotId::UnitTestInt0,
+                                         testIntPtr0,
+                                         VariableSnapshotEncoder::SerializeInt,
+                                         VariableSnapshotEncoder::DeserializeInt);
   Anki::Util::_errG = false;
-  variableSnapshotComp.InitVariableSnapshot<int>(VariableSnapshotId::UnitTestInt0,
-                                                 testIntPtr1,
-                                                 VariableSnapshotEncoder::SerializeInt,
-                                                 VariableSnapshotEncoder::DeserializeInt);
+  variableSnapshotComp.InitVariable<int>(VariableSnapshotId::UnitTestInt0,
+                                         testIntPtr1,
+                                         VariableSnapshotEncoder::SerializeInt,
+                                         VariableSnapshotEncoder::DeserializeInt);
 
   // should error here
   EXPECT_TRUE( Anki::Util::_errG );
+
+  // set _errG back to its initial value
+  Anki::Util::_errG = errGState;
 };
 
 // changing version info leads to data reset
@@ -235,15 +238,15 @@ TEST(VariableSnapshotComponent, VersioningInfoDataResetOSBuildVersion)
       return true;
     };
 
-    variableSnapshotComp._variableSnapshotDataMap.at(VariableSnapshotId::_RobotOSBuildVersion)._serializeFn = wrongVersionSeralizeFn;
+    variableSnapshotComp._variableSnapshotDataMap.at(VariableSnapshotId::_RobotOSBuildVersion) = wrongVersionSeralizeFn;
 
     // identify data to be stored
     std::shared_ptr<bool> testBoolPtr0 = std::make_shared<bool>(initBool0);
 
-    variableSnapshotComp.InitVariableSnapshot<bool>(VariableSnapshotId::UnitTestBool0,
-                                                    testBoolPtr0,
-                                                    VariableSnapshotEncoder::SerializeBool,
-                                                    VariableSnapshotEncoder::DeserializeBool);
+    variableSnapshotComp.InitVariable<bool>(VariableSnapshotId::UnitTestBool0,
+                                            testBoolPtr0,
+                                            VariableSnapshotEncoder::SerializeBool,
+                                            VariableSnapshotEncoder::DeserializeBool);
 
     variableSnapshotComp.SaveVariableSnapshots();
   }
@@ -259,13 +262,13 @@ TEST(VariableSnapshotComponent, VersioningInfoDataResetOSBuildVersion)
     // identify data to be stored
     std::shared_ptr<bool> testBoolPtr1 = std::make_shared<bool>(!initBool0);
 
-    variableSnapshotComp.InitVariableSnapshot<bool>(VariableSnapshotId::UnitTestBool0,
-                                                    testBoolPtr1,
-                                                    VariableSnapshotEncoder::SerializeBool,
-                                                    VariableSnapshotEncoder::DeserializeBool);
+    variableSnapshotComp.InitVariable<bool>(VariableSnapshotId::UnitTestBool0,
+                                            testBoolPtr1,
+                                            VariableSnapshotEncoder::SerializeBool,
+                                            VariableSnapshotEncoder::DeserializeBool);
 
     // check that the data is the same
-    ASSERT_TRUE(*testBoolPtr1);
+    EXPECT_TRUE(*testBoolPtr1);
 
     // the robot now automatically saves data as it destructs
   }
@@ -297,15 +300,15 @@ TEST(VariableSnapshotComponent, VersioningInfoDataResetRobotBuildSha)
       return true;
     };
 
-    variableSnapshotComp._variableSnapshotDataMap.at(VariableSnapshotId::_RobotBuildSha)._serializeFn = wrongShaSeralizeFn;
+    variableSnapshotComp._variableSnapshotDataMap.at(VariableSnapshotId::_RobotBuildSha) = wrongShaSeralizeFn;
 
     // identify data to be stored
     std::shared_ptr<bool> testBoolPtr0 = std::make_shared<bool>(initBool0);
 
-    variableSnapshotComp.InitVariableSnapshot<bool>(VariableSnapshotId::UnitTestBool0,
-                                                    testBoolPtr0,
-                                                    VariableSnapshotEncoder::SerializeBool,
-                                                    VariableSnapshotEncoder::DeserializeBool);
+    variableSnapshotComp.InitVariable<bool>(VariableSnapshotId::UnitTestBool0,
+                                            testBoolPtr0,
+                                            VariableSnapshotEncoder::SerializeBool,
+                                            VariableSnapshotEncoder::DeserializeBool);
 
     variableSnapshotComp.SaveVariableSnapshots();
   }
@@ -321,13 +324,13 @@ TEST(VariableSnapshotComponent, VersioningInfoDataResetRobotBuildSha)
     // identify data to be stored
     std::shared_ptr<bool> testBoolPtr1 = std::make_shared<bool>(!initBool0);
 
-    variableSnapshotComp.InitVariableSnapshot<bool>(VariableSnapshotId::UnitTestBool0,
-                                                    testBoolPtr1,
-                                                    VariableSnapshotEncoder::SerializeBool,
-                                                    VariableSnapshotEncoder::DeserializeBool);
+    variableSnapshotComp.InitVariable<bool>(VariableSnapshotId::UnitTestBool0,
+                                            testBoolPtr1,
+                                            VariableSnapshotEncoder::SerializeBool,
+                                            VariableSnapshotEncoder::DeserializeBool);
 
     // check that the data is the same
-    ASSERT_TRUE(*testBoolPtr1);
+    EXPECT_TRUE(*testBoolPtr1);
 
     // the robot now automatically saves data as it destructs
   }
