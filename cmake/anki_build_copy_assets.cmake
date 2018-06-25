@@ -64,6 +64,12 @@ function(anki_build_copy_assets)
         VERBATIM
     )
 
+    if (NOT ${cpassets_DEP_TARGET})
+        set(cpassets_DEP_TARGET ALL)
+    endif()
+
+    add_custom_target(${cpassets_TARGET} ALL DEPENDS ${OUTPUT_FILES})
+
     list(APPEND OUTPUT_RELATIVE_DSTS ${${cpassets_OUT_RELATIVE_DSTS}})
     set(${cpassets_OUT_RELATIVE_DSTS} ${OUTPUT_RELATIVE_DSTS} PARENT_SCOPE)
 
@@ -72,12 +78,6 @@ function(anki_build_copy_assets)
 
     list(APPEND INPUT_FILES ${${cpassets_OUT_SRCS}})
     set(${cpassets_OUT_SRCS} ${INPUT_FILES} PARENT_SCOPE)
-
-    if (NOT ${cpassets_DEP_TARGET})
-        set(cpassets_DEP_TARGET ALL)
-    endif()
-
-    add_custom_target(${cpassets_TARGET} ALL DEPENDS ${OUTPUT_FILES})
 
 endfunction()
 
