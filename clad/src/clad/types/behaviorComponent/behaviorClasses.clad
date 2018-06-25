@@ -39,6 +39,7 @@ enum uint_8 BehaviorClass {
   GoHome,
   InteractWithFaces,
   LookAround,
+  LookAtFaceInFront,
   MoveHeadToAngle,
   PopAWheelie,
   RequestToGoHome,
@@ -194,6 +195,7 @@ enum uint_8 BehaviorClass {
   DisplayWallTime,
   ProceduralClock,
   TimerUtilityCoordinator,
+  WallTimeCoordinator,
 
   // victor
   ComeHere,

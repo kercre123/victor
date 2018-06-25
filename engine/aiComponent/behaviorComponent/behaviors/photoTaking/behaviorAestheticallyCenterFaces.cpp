@@ -151,8 +151,7 @@ void BehaviorAestheticallyCenterFaces::TransitionToCenterFace()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const Vision::TrackedFace* BehaviorAestheticallyCenterFaces::GetBestFaceToCenter()
 {
-  const bool considerTrackingOnlyFaces = false;
-  auto smartFaces = GetBEI().GetFaceWorld().GetSmartFaceIDsObservedSince(0, considerTrackingOnlyFaces);
+  auto smartFaces = GetBEI().GetFaceWorld().GetSmartFaceIDs();
   const auto& faceSelection = GetAIComp<FaceSelectionComponent>();
   auto smartFaceID = faceSelection.GetBestFaceToUse(_iConfig.criteriaMap, smartFaces);
   const Vision::TrackedFace* trackedFace = GetBEI().GetFaceWorld().GetFace(smartFaceID);

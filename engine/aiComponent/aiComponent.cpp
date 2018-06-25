@@ -78,8 +78,9 @@ void AIComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& depende
   {
     _aiComponents = std::make_unique<EntityType>();
     {
-      const MicDirectionHistory& micDirectionHistory = robot->GetMicComponent().GetMicDirectionHistory();
-      auto* faceSelectionComp = new FaceSelectionComponent(*robot, robot->GetFaceWorld(), micDirectionHistory);
+      const MicDirectionHistory& micDirectionHistory = dependentComps.GetComponent<MicComponent>().GetMicDirectionHistory();
+      auto* faceSelectionComp = new FaceSelectionComponent(*robot, dependentComps.GetComponent<FaceWorld>(), 
+                                                           micDirectionHistory, dependentComps.GetComponent<VisionComponent>());
 
       _aiComponents->AddDependentComponent(AIComponentID::BehaviorComponent,          new BehaviorComponent());
       _aiComponents->AddDependentComponent(AIComponentID::ContinuityComponent,        new ContinuityComponent(*robot));

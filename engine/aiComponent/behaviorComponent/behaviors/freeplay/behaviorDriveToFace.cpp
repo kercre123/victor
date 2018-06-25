@@ -411,7 +411,7 @@ bool BehaviorDriveToFace::GetRecentFaceSince( TimeStamp_t sinceTime_ms, SmartFac
   const bool lastFaceInCurrentOrigin = robotInfo.IsPoseInWorldOrigin(facePose);
   if( lastFaceInCurrentOrigin ) {
     timeLastFaceObserved = Anki::Util::Max( sinceTime_ms, timeLastFaceObserved );
-    const auto facesObserved = GetBEI().GetFaceWorld().GetFaceIDsObservedSince(timeLastFaceObserved);
+    const auto facesObserved = GetBEI().GetFaceWorld().GetFaceIDs(timeLastFaceObserved);
     if( facesObserved.size() > 0 ) {
       retFace = GetBEI().GetFaceWorld().GetSmartFaceID( *facesObserved.begin() );
     }

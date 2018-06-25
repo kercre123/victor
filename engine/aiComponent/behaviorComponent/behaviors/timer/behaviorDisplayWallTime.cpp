@@ -24,7 +24,6 @@ namespace Cozmo {
   
 
 namespace{
-CONSOLE_VAR(bool, kShouldDisplayAsMilitaryTime, "Clock", false);  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -114,7 +113,7 @@ bool BehaviorDisplayWallTime::ShouldDisplayAsMilitaryTime() const
 {
   const auto& settingsManager = GetBEI().GetSettingsManager();
   const bool clockIs24Hour = settingsManager.GetRobotSettingAsBool("Robot.24HourClock");
-  return kShouldDisplayAsMilitaryTime || clockIs24Hour;
+  return clockIs24Hour;
 }
 
 } // namespace Cozmo

@@ -431,8 +431,8 @@ void BehaviorInteractWithFaces::TransitionToTriggerEmotionEvent()
 void BehaviorInteractWithFaces::SelectFaceToTrack() const
 {  
   const bool considerTrackingOnlyFaces = false;
-  auto smartFaceIDs = GetBEI().GetFaceWorld().GetSmartFaceIDsObservedSince(_dVars.lastImageTimestampWhileRunning,
-                                                                           considerTrackingOnlyFaces);
+  auto smartFaceIDs = GetBEI().GetFaceWorld().GetSmartFaceIDs(_dVars.lastImageTimestampWhileRunning,
+                                                              considerTrackingOnlyFaces);
   
   const auto& faceSelection = GetAIComp<FaceSelectionComponent>();
   FaceSelectionComponent::FaceSelectionFactorMap criteriaMap;

@@ -322,7 +322,7 @@ void BehaviorProceduralClock::SetGetDigitFunction(GetDigitsFunction&& function)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SmartFaceID BehaviorProceduralClock::UpdateTargetFace()
 {
-  auto smartFaces = GetBEI().GetFaceWorld().GetSmartFaceIDsObservedSince(0);
+  auto smartFaces = GetBEI().GetFaceWorld().GetSmartFaceIDs(0);
 
   const auto& faceSelection = GetAIComp<FaceSelectionComponent>();
   FaceSelectionComponent::FaceSelectionFactorMap criteriaMap;

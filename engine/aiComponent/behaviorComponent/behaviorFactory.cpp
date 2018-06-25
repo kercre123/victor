@@ -26,6 +26,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorGoHome.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorInteractWithFaces.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorLookAround.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorLookAtFaceInFront.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorMoveHeadToAngle.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorPopAWheelie.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorRequestToGoHome.h"
@@ -129,6 +130,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorDisplayWallTime.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorWallTimeCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorConfirmObject.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToTouchPetting.h"
@@ -256,6 +258,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::LookAround:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorLookAround(config));
+      break;
+    }
+    
+    case BehaviorClass::LookAtFaceInFront:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorLookAtFaceInFront(config));
       break;
     }
     
@@ -874,6 +882,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::TimerUtilityCoordinator:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorTimerUtilityCoordinator(config));
+      break;
+    }
+    
+    case BehaviorClass::WallTimeCoordinator:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorWallTimeCoordinator(config));
       break;
     }
     

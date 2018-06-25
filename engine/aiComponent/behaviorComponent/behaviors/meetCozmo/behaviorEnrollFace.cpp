@@ -1415,7 +1415,7 @@ bool BehaviorEnrollFace::IsSeeingTooManyFaces(FaceWorld& faceWorld, const TimeSt
                                   lastImgTime - multipleFaceTimeWindow_ms :
                                   0); // Avoid unsigned math rollover
 
-  auto recentlySeenFaceIDs = faceWorld.GetFaceIDsObservedSince(recentTime);
+  auto recentlySeenFaceIDs = faceWorld.GetFaceIDs(recentTime);
 
   for( const auto& faceID : recentlySeenFaceIDs ) {
     const Vision::TrackedFace* face = faceWorld.GetFace(faceID);
@@ -1492,7 +1492,7 @@ void BehaviorEnrollFace::UpdateFaceToEnroll()
   }
 
   // Get faces observed just in the last image
-  auto observedFaceIDs = faceWorld.GetFaceIDsObservedSince(lastImgTime);
+  auto observedFaceIDs = faceWorld.GetFaceIDs(lastImgTime);
 
   const bool enrollmentIDisSet    = (_dVars.faceID != Vision::UnknownFaceID);
   const bool sawCurrentEnrollFace = (enrollmentIDisSet && observedFaceIDs.count(_dVars.faceID));

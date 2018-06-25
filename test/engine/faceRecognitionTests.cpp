@@ -96,7 +96,7 @@ static void Recognize(Robot& robot, TimeStamp_t timestamp, RobotState& stateMsg,
   {
     Vision::ImageRGB dispImg(img);
 
-    auto faceIDs = robot.GetFaceWorld().GetFaceIDsObservedSince(timestamp);
+    auto faceIDs = robot.GetFaceWorld().GetFaceIDs(timestamp);
     std::list<Vision::TrackedFace> faces;
     for(auto faceID : faceIDs)
     {
@@ -187,7 +187,7 @@ Result Enroll(Robot& robot, TimeStamp_t& fakeTime, RobotState& stateMsg, Vision:
     Recognize(robot, fakeTime, stateMsg, img, enrollFile, "EnrollImage", {userDir});
     
     // Get the faces observed in the current image
-    auto observedFaceIDs = robot.GetFaceWorld().GetFaceIDsObservedSince(img.GetTimestamp());
+    auto observedFaceIDs = robot.GetFaceWorld().GetFaceIDs(img.GetTimestamp());
 
     if(observedFaceIDs.empty())
     {
@@ -268,7 +268,7 @@ Result ShowBlankFrames(s32 N, Robot& robot, TimeStamp_t& fakeTime, RobotState& s
     
     // We should not detect faces in any frames past the "lost" count
     if(iBlank >= 2) {
-      auto observedFaceIDs = robot.GetFaceWorld().GetFaceIDsObservedSince(img.GetTimestamp());
+      auto observedFaceIDs = robot.GetFaceWorld().GetFaceIDs(img.GetTimestamp());
       if(!observedFaceIDs.empty())
       {
         lastResult = RESULT_FAIL;
@@ -451,7 +451,7 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
           stats.totalFrames++;
           
           // Get the faces observed in the current image
-          auto observedFaceIDs = robot.GetFaceWorld().GetFaceIDsObservedSince(img.GetTimestamp());
+          auto observedFaceIDs = robot.GetFaceWorld().GetFaceIDs(img.GetTimestamp());
           
           if(observedFaceIDs.size() != test.names.size()) {
             PRINT_NAMED_WARNING("FaceRecognition.VideoRecognitionAndTracking.WrongNumFacesDetected",

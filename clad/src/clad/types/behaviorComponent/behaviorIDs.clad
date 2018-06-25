@@ -90,6 +90,8 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree/clock
   ShowWallTime,
+  SingletonFindFaceInFrontWallTime,
+  SingletonWallTimeCoordinator,
 
   // victorBehaviorTree
   ComeHereVoiceCommand,

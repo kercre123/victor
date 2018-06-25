@@ -34,7 +34,10 @@
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "engine/components/mics/micComponent.h"
+#include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
+#include "engine/faceWorld.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "engine/unitTestKey.h"
@@ -177,6 +180,9 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
     BehaviorComponent::GenerateManagedComponents(*_robot, entity);
 
     DependencyManagedEntity<RobotComponentID> dependencies;
+    dependencies.AddDependentComponent(RobotComponentID::MicComponent, _robot->GetComponentPtr<MicComponent>(), false);
+    dependencies.AddDependentComponent(RobotComponentID::Vision, _robot->GetComponentPtr<VisionComponent>(), false);
+    dependencies.AddDependentComponent(RobotComponentID::FaceWorld, _robot->GetComponentPtr<FaceWorld>(), false);
     _robot->GetAIComponent().InitDependent(_robot.get(), dependencies);
     _behaviorComponent = _robot->GetAIComponent().GetComponentPtr<BehaviorComponent>();
 
