@@ -1,13 +1,16 @@
-# copies tar and binary animations into a new test folder
+#!/usr/bin/env python3
 
+# copies tar and binary animations into a new test folder
 import os
 import re
 import shutil
 import tarfile
 
 # This script assumes it is being called from ./project/buildServer/steps/unittestsEngine.sh
-INPUT_ANIMATION_PATH  = "../../../EXTERNALS/animation-assets/animations/"
-OUTPUT_ANIMATION_PATH = "../../../_build/mac/Debug/data/assets/cozmo_resources/assets/dev_animation_data/"
+PROJECT_ROOT_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', '..'))
+EXTERNALS_DIR = os.path.join(PROJECT_ROOT_DIR, 'EXTERNALS')
+INPUT_ANIMATION_PATH  = os.path.join(EXTERNALS_DIR, 'animation-assets/animations/')
+OUTPUT_ANIMATION_PATH = os.path.join(PROJECT_ROOT_DIR, '_build/mac/Debug/data/assets/cozmo_resources/assets/dev_animation_data/')
 
 if __name__ == "__main__":
     # clear out existing anim data

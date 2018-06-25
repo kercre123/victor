@@ -73,7 +73,7 @@ fi
 
 
 echo "Copying animation assets for tests"
-python ${TOPLEVEL}/tools/animationScripts/copy_anims_for_test.py
+${TOPLEVEL}/tools/animationScripts/copy_anims_for_test.py
 
 # unit test(s) look for this and dump a file if it's set
 # uncomment to generate a build artifact of all behaviors and their relationships
