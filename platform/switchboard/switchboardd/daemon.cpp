@@ -382,7 +382,7 @@ int Daemon::GetOtaProgress(uint64_t* progressVal, uint64_t* expectedVal) {
   return 0;
 }
 
-void Daemon::HandleOtaUpdateExit(int rc, const std::string& output) {
+void Daemon::HandleOtaUpdateExit(int rc) {
   _taskExecutor->Wake([rc, this] {
     if(rc == 0) {
       uint64_t progressVal = 0;
@@ -450,16 +450,15 @@ void Daemon::OnOtaUpdatedRequest(std::string url) {
 
   // remove progress files if exist
   Log::Write("Ota Update Initialized...");
-  std::string stdout = "";
-  int clearFilesStatus = ExecCommand({ kUpdateEngineExecPath + "/update-engine"}, stdout);
+  int clearFilesStatus = ExecCommand({ kUpdateEngineExecPath + "/update-engine"});
 
   if(clearFilesStatus != 0) {
     // we *shouldn't* let progress file errors keep us from trying to update
     Log::Write("Couldn't clear progress files. Continuing update anyway.");
   }
 
-  Log::Write("Cleared files? %s", stdout.c_str());
-  ExecCommandInBackground({ kUpdateEngineExecPath + "/update-engine", url}, std::bind(&Daemon::HandleOtaUpdateExit, this, std::placeholders::_1, std::placeholders::_2));
+  ExecCommandInBackground({ kUpdateEngineExecPath + "/update-engine", url},
+                          std::bind(&Daemon::HandleOtaUpdateExit, this, std::placeholders::_1));
 }
 
 void Daemon::OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame message) {
