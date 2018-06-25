@@ -203,7 +203,6 @@ WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) 
 
       if (g_str_equal(key, "Favorite")) {
         result.provisioned = g_variant_get_boolean(val);
-        Log::Write("Found favorite: %s", result.provisioned? "true":"false");
       }
     }
 

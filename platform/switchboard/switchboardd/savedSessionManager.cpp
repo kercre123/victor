@@ -81,7 +81,8 @@ RtsKeys SavedSessionManager::LoadRtsKeys() {
     return savedData;
   }
 
-  if(savedData.keys.version != SB_PAIRING_PROTOCOL_VERSION || PairingProtocolVersion::V2) {
+  if((savedData.keys.version != SB_PAIRING_PROTOCOL_VERSION) && 
+    (savedData.keys.version != PairingProtocolVersion::V2)) {
     Log::Error("Old version of RTS keys.");
     savedData.keys.version = -1;
     return savedData;
