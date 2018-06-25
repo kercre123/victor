@@ -64,7 +64,7 @@ struct LightPattern
 using Animation = std::list<LightPattern>;
 
 Json::Value AnimationToJSON(const std::string& animName, const Animation& animation);
-bool ParseCubeAnimationFromJson(const Json::Value& jsonRoot, Animation& outAnimation);
+bool ParseCubeAnimationFromJson(const std::string& animName, const Json::Value& jsonRoot, Animation& outAnimation);
 bool ParseJsonToPattern(const Json::Value& json, LightPattern& pattern);
 
 

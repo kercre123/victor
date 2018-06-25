@@ -127,6 +127,14 @@ public:
                             AnimCompletedCallback callback = {},
                             bool hasModifier = false,
                             const CubeLightAnimation::ObjectLights& modifier = {});
+  // handle will be used to stop an animation, and then set with the handle for the new animToPlay
+  bool StopAndPlayLightAnim(const ObjectID& objectID,
+                            AnimationHandle& handle,
+                            CubeLightAnimation::Animation& animToPlay,
+                            const std::string& debugName,
+                            AnimCompletedCallback callback = {},
+                            bool hasModifier = false,
+                            const CubeLightAnimation::ObjectLights& modifier = {});
   
   // Stops all animations on all objects
   void StopAllAnims();

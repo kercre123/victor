@@ -39,38 +39,26 @@ static const char* kCanBeOverriddenKey     = "canBeOverridden";
 static const char* kPatternDebugNameKey    = "patternDebugName";
 }
 
-bool ParseCubeAnimationFromJson(const Json::Value& jsonRoot, CubeLightAnimation::Animation& outAnimation)
+bool ParseCubeAnimationFromJson(const std::string& animName, const Json::Value& jsonRoot, CubeLightAnimation::Animation& outAnimation)
 {
-  const Json::Value::Members animationNames = jsonRoot.getMemberNames();
-  
-  if(animationNames.empty()){
-    PRINT_NAMED_ERROR("CubeLightAnimationContainer.DefineFromJson.EmptyFile",
-                      "Found no animations in JSON");
+  if(!ANKI_VERIFY(jsonRoot.isArray(), 
+                  "CubeLightAnimation.ParseCubeAnimationFromJson.BaseElementIsNotAnArray", 
+                  "Cube animations are expected to be specified as an array of light patterns")){
     return false;
-  }else if(animationNames.size() != 1){
-    PRINT_NAMED_ERROR("CubeLightAnimationContainer.DefineFromJson.TooManyAnims",
-                      "Expecting only one animation per json file, found %lu. "
-                      "Will use first: %s",
-                      (unsigned long)animationNames.size(), animationNames[0].c_str());
   }
   
-  const std::string& animationName = animationNames[0];
-  const Json::Value& patternContainer = jsonRoot[animationName];
-  
-  
-
-  const s32 numPatterns = patternContainer.size();
+  const s32 numPatterns = jsonRoot.size();
   
   for(s32 patternNum = 0; patternNum < numPatterns; ++patternNum){
     LightPattern pattern;
-    const auto& lightPattern = patternContainer[patternNum];
+    const auto& lightPattern = jsonRoot[patternNum];
     
     if(!lightPattern.isMember(kPatternKey) ||
        !lightPattern.isMember(kDurationKey))
     {
       PRINT_NAMED_ERROR("CubeLightAnimationContainer.ParseJsonToAnim.InvalidJson",
                         "Missing member field in %s json file",
-                        animationName.c_str());
+                        animName.c_str());
       return false;
     }
     
@@ -79,7 +67,7 @@ bool ParseCubeAnimationFromJson(const Json::Value& jsonRoot, CubeLightAnimation:
     {
       PRINT_NAMED_ERROR("CubeLightAnimationContainer.ParseJsonToAnim.InvalidPattern",
                         "Missing member field in one of the pattern definitions in %s json file",
-                        animationName.c_str());
+                        animName.c_str());
       return false;
     }
     
@@ -94,7 +82,7 @@ bool ParseCubeAnimationFromJson(const Json::Value& jsonRoot, CubeLightAnimation:
     if(lightPattern.isMember(kPatternDebugNameKey)){
       pattern.name = lightPattern[kPatternDebugNameKey].asString();
     }else{
-      pattern.name = animationName + std::to_string(patternNum);;
+      pattern.name = animName + std::to_string(patternNum);;
     }
     
     outAnimation.push_back(std::move(pattern));
@@ -161,7 +149,6 @@ Json::Value SignedArrayToJson(const std::array<s32, 4>& array)
 
 Json::Value AnimationToJSON(const std::string& animName, const Animation& animation)
 {
-  Json::Value outJson;
   int i = 0;
   Json::Value patternArray;
   for(const auto& pattern: animation){
@@ -222,9 +209,7 @@ Json::Value AnimationToJSON(const std::string& animName, const Animation& animat
     patternArray[i] = patternAndMetadata;
   }
 
-  outJson[animName] = patternArray;
-
-  return outJson;
+  return patternArray;
 }
 
 

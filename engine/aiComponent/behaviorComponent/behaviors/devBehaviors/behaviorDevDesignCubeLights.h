@@ -42,6 +42,7 @@ protected:
   virtual void BehaviorUpdate() override;
 
 private:
+  static const u32 kInvalidHandle = UINT_MAX;
 
   struct InstanceConfig {
     InstanceConfig();
@@ -50,7 +51,7 @@ private:
   struct DynamicVariables {
     DynamicVariables();
     CubeLightAnimation::ObjectLights currentLights;
-    CubeLightComponent::AnimationHandle handle = 0;
+    CubeLightComponent::AnimationHandle handle = kInvalidHandle;
   };
 
   InstanceConfig _iConfig;

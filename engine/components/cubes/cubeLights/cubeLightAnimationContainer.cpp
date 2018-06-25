@@ -24,11 +24,12 @@ namespace Cozmo {
 CubeLightAnimationContainer::CubeLightAnimationContainer(const InitMap& initializationMap)
 {
   for(const auto& pair: initializationMap){
-    CubeLightAnimation::Animation animation;
-    CubeLightAnimation::ParseCubeAnimationFromJson(pair.second, animation);
     const bool mustHaveExtension = true;
     const bool removeExtension = true;
     auto animName = Util::FileUtils::GetFileName(pair.first, mustHaveExtension, removeExtension);
+    
+    CubeLightAnimation::Animation animation;
+    CubeLightAnimation::ParseCubeAnimationFromJson(animName, pair.second, animation);
     _animations.emplace(std::move(animName), std::move(animation));
   }
 }
