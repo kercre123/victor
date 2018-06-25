@@ -85,7 +85,7 @@ BleCentral* centralContext;
   [as executeAndReturnError:nil];
   
   // Move to wifi-ap mode
-  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiAccessPointRequest>(self, _commVersion, true);
+  Clad::SendRtsMessage<Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest>(self, _commVersion, true);
 }
 
 - (id)init {
@@ -254,33 +254,33 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
       [self HandleReceiveHandshake:bytes length:n];
       break;
     case Clad: {
-      Anki::Victor::ExternalComms::ExternalComms extComms;
+      Anki::Cozmo::ExternalComms::ExternalComms extComms;
       extComms.Unpack((uint8_t*)bytes, n);
         
       if(_commVersion == 1) {
-        if(extComms.GetTag() == Anki::Victor::ExternalComms::ExternalCommsTag::RtsConnection_1) {
-          Anki::Victor::ExternalComms::RtsConnection_1 rtsMsg = extComms.Get_RtsConnection_1();
+        if(extComms.GetTag() == Anki::Cozmo::ExternalComms::ExternalCommsTag::RtsConnection_1) {
+          Anki::Cozmo::ExternalComms::RtsConnection_1 rtsMsg = extComms.Get_RtsConnection_1();
           
           switch(rtsMsg.GetTag()) {
-            case Anki::Victor::ExternalComms::RtsConnection_1Tag::Error:
+            case Anki::Cozmo::ExternalComms::RtsConnection_1Tag::Error:
               //
               break;
-            case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsConnRequest: {
-              Anki::Victor::ExternalComms::RtsConnRequest req = rtsMsg.Get_RtsConnRequest();
+            case Anki::Cozmo::ExternalComms::RtsConnection_1Tag::RtsConnRequest: {
+              Anki::Cozmo::ExternalComms::RtsConnRequest req = rtsMsg.Get_RtsConnRequest();
               [self HandleReceivePublicKey:req];
               break;
             }
-            case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsNonceMessage: {
-              Anki::Victor::ExternalComms::RtsNonceMessage msg = rtsMsg.Get_RtsNonceMessage();
+            case Anki::Cozmo::ExternalComms::RtsConnection_1Tag::RtsNonceMessage: {
+              Anki::Cozmo::ExternalComms::RtsNonceMessage msg = rtsMsg.Get_RtsNonceMessage();
               [self HandleReceiveNonce:msg];
               break;
             }
-            case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsCancelPairing: {
+            case Anki::Cozmo::ExternalComms::RtsConnection_1Tag::RtsCancelPairing: {
               //
               _rtsState = Raw;
               break;
             }
-            case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsAck: {
+            case Anki::Cozmo::ExternalComms::RtsConnection_1Tag::RtsAck: {
               //
               break;
             }
@@ -289,30 +289,30 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
           }
         }
       } else if(_commVersion == 2){
-        if(extComms.GetTag() == Anki::Victor::ExternalComms::ExternalCommsTag::RtsConnection) {
-          Anki::Victor::ExternalComms::RtsConnection rtsMsg = extComms.Get_RtsConnection();
-          Anki::Victor::ExternalComms::RtsConnection_2 rts2Msg = rtsMsg.Get_RtsConnection_2();
+        if(extComms.GetTag() == Anki::Cozmo::ExternalComms::ExternalCommsTag::RtsConnection) {
+          Anki::Cozmo::ExternalComms::RtsConnection rtsMsg = extComms.Get_RtsConnection();
+          Anki::Cozmo::ExternalComms::RtsConnection_2 rts2Msg = rtsMsg.Get_RtsConnection_2();
           
           switch(rts2Msg.GetTag()) {
-            case Anki::Victor::ExternalComms::RtsConnection_2Tag::Error:
+            case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::Error:
               //
               break;
-            case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsConnRequest: {
-              Anki::Victor::ExternalComms::RtsConnRequest req = rts2Msg.Get_RtsConnRequest();
+            case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsConnRequest: {
+              Anki::Cozmo::ExternalComms::RtsConnRequest req = rts2Msg.Get_RtsConnRequest();
               [self HandleReceivePublicKey:req];
               break;
             }
-            case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsNonceMessage: {
-              Anki::Victor::ExternalComms::RtsNonceMessage msg = rts2Msg.Get_RtsNonceMessage();
+            case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsNonceMessage: {
+              Anki::Cozmo::ExternalComms::RtsNonceMessage msg = rts2Msg.Get_RtsNonceMessage();
               [self HandleReceiveNonce:msg];
               break;
             }
-            case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsCancelPairing: {
+            case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsCancelPairing: {
               //
               _rtsState = Raw;
               break;
             }
-            case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsAck: {
+            case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsAck: {
               //
               break;
             }
@@ -352,32 +352,32 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     return;
   }
   
-  Anki::Victor::ExternalComms::ExternalComms extComms;
+  Anki::Cozmo::ExternalComms::ExternalComms extComms;
   extComms.Unpack(msgBuffer, size);
   
   free(msgBuffer);
   
   if(_commVersion == 1) {
-    if(extComms.GetTag() == Anki::Victor::ExternalComms::ExternalCommsTag::RtsConnection_1) {
-      Anki::Victor::ExternalComms::RtsConnection_1 rtsMsg = extComms.Get_RtsConnection_1();
+    if(extComms.GetTag() == Anki::Cozmo::ExternalComms::ExternalCommsTag::RtsConnection_1) {
+      Anki::Cozmo::ExternalComms::RtsConnection_1 rtsMsg = extComms.Get_RtsConnection_1();
       
       switch(rtsMsg.GetTag()) {
-        case Anki::Victor::ExternalComms::RtsConnection_1Tag::Error:
+        case Anki::Cozmo::ExternalComms::RtsConnection_1Tag::Error:
           //
           break;
-        case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsChallengeMessage: {
-          Anki::Victor::ExternalComms::RtsChallengeMessage msg = rtsMsg.Get_RtsChallengeMessage();
+        case Anki::Cozmo::ExternalComms::RtsConnection_1Tag::RtsChallengeMessage: {
+          Anki::Cozmo::ExternalComms::RtsChallengeMessage msg = rtsMsg.Get_RtsChallengeMessage();
           [self HandleChallengeMessage:msg];
           break;
         }
-        case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsChallengeSuccessMessage: {
-          Anki::Victor::ExternalComms::RtsChallengeSuccessMessage msg = rtsMsg.Get_RtsChallengeSuccessMessage();
+        case Anki::Cozmo::ExternalComms::RtsConnection_1Tag::RtsChallengeSuccessMessage: {
+          Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage msg = rtsMsg.Get_RtsChallengeSuccessMessage();
           [self HandleChallengeSuccessMessage:msg];
           break;
         }
-        case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsWifiIpResponse: {
+        case Anki::Cozmo::ExternalComms::RtsConnection_1Tag::RtsWifiIpResponse: {
           //
-          Anki::Victor::ExternalComms::RtsWifiIpResponse msg = rtsMsg.Get_RtsWifiIpResponse();
+          Anki::Cozmo::ExternalComms::RtsWifiIpResponse msg = rtsMsg.Get_RtsWifiIpResponse();
           
           if(_currentCommand == "wifi-ip" && !_readyForNextCommand) {
             if(msg.hasIpV4) {
@@ -407,8 +407,8 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
           
           break;
         }
-        case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsWifiConnectResponse: {
-          Anki::Victor::ExternalComms::RtsWifiConnectResponse msg = rtsMsg.Get_RtsWifiConnectResponse();
+        case Anki::Cozmo::ExternalComms::RtsConnection_1Tag::RtsWifiConnectResponse: {
+          Anki::Cozmo::ExternalComms::RtsWifiConnectResponse msg = rtsMsg.Get_RtsWifiConnectResponse();
           
           if(_currentCommand == "wifi-connect") {
             switch(msg.wifiState) {
@@ -435,9 +435,9 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
           
           break;
         }
-        case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsStatusResponse: {
+        case Anki::Cozmo::ExternalComms::RtsConnection_1Tag::RtsStatusResponse: {
           //
-          Anki::Victor::ExternalComms::RtsStatusResponse msg = rtsMsg.Get_RtsStatusResponse();
+          Anki::Cozmo::ExternalComms::RtsStatusResponse msg = rtsMsg.Get_RtsStatusResponse();
           
           std::string state = "";
           switch(msg.wifiState) {
@@ -464,18 +464,18 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
           
           break;
         }
-        case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsWifiScanResponse: {
-          Anki::Victor::ExternalComms::RtsWifiScanResponse msg = rtsMsg.Get_RtsWifiScanResponse();
+        case Anki::Cozmo::ExternalComms::RtsConnection_1Tag::RtsWifiScanResponse: {
+          Anki::Cozmo::ExternalComms::RtsWifiScanResponse msg = rtsMsg.Get_RtsWifiScanResponse();
           [self HandleWifiScanResponse:msg];
           break;
         }
-        case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsWifiAccessPointResponse: {
-          Anki::Victor::ExternalComms::RtsWifiAccessPointResponse msg = rtsMsg.Get_RtsWifiAccessPointResponse();
+        case Anki::Cozmo::ExternalComms::RtsConnection_1Tag::RtsWifiAccessPointResponse: {
+          Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse msg = rtsMsg.Get_RtsWifiAccessPointResponse();
           [self HandleReceiveAccessPointResponse:msg];
           break;
         }
-        case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsOtaUpdateResponse: {
-          Anki::Victor::ExternalComms::RtsOtaUpdateResponse msg = rtsMsg.Get_RtsOtaUpdateResponse();
+        case Anki::Cozmo::ExternalComms::RtsConnection_1Tag::RtsOtaUpdateResponse: {
+          Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse msg = rtsMsg.Get_RtsOtaUpdateResponse();
           _otaStatusCode = msg.status;
           
           if(_otaStatusCode == 2) {
@@ -514,11 +514,11 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
           
           break;
         }
-        case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsCancelPairing: {
+        case Anki::Cozmo::ExternalComms::RtsConnection_1Tag::RtsCancelPairing: {
           _rtsState = Raw;
           break;
         }
-        case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsAck: {
+        case Anki::Cozmo::ExternalComms::RtsConnection_1Tag::RtsAck: {
           //
           break;
         }
@@ -528,29 +528,29 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     }
   }
   else if(_commVersion == 2) {
-    if(extComms.GetTag() == Anki::Victor::ExternalComms::ExternalCommsTag::RtsConnection) {
-      Anki::Victor::ExternalComms::RtsConnection rtsContainer = extComms.Get_RtsConnection();
-      Anki::Victor::ExternalComms::RtsConnection_2 rtsMsg = rtsContainer.Get_RtsConnection_2();
+    if(extComms.GetTag() == Anki::Cozmo::ExternalComms::ExternalCommsTag::RtsConnection) {
+      Anki::Cozmo::ExternalComms::RtsConnection rtsContainer = extComms.Get_RtsConnection();
+      Anki::Cozmo::ExternalComms::RtsConnection_2 rtsMsg = rtsContainer.Get_RtsConnection_2();
       
       // Handle requests
       [self handleRequest:rtsMsg];
       
       switch(rtsMsg.GetTag()) {
-        case Anki::Victor::ExternalComms::RtsConnection_2Tag::Error:
+        case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::Error:
           //
           break;
-        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsChallengeMessage: {
-          Anki::Victor::ExternalComms::RtsChallengeMessage msg = rtsMsg.Get_RtsChallengeMessage();
+        case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsChallengeMessage: {
+          Anki::Cozmo::ExternalComms::RtsChallengeMessage msg = rtsMsg.Get_RtsChallengeMessage();
           [self HandleChallengeMessage:msg];
           break;
         }
-        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsChallengeSuccessMessage: {
-          Anki::Victor::ExternalComms::RtsChallengeSuccessMessage msg = rtsMsg.Get_RtsChallengeSuccessMessage();
+        case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsChallengeSuccessMessage: {
+          Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage msg = rtsMsg.Get_RtsChallengeSuccessMessage();
           [self HandleChallengeSuccessMessage:msg];
           break;
         }
-        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiConnectResponse: {
-          Anki::Victor::ExternalComms::RtsWifiConnectResponse msg = rtsMsg.Get_RtsWifiConnectResponse();
+        case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsWifiConnectResponse: {
+          Anki::Cozmo::ExternalComms::RtsWifiConnectResponse msg = rtsMsg.Get_RtsWifiConnectResponse();
           switch(msg.wifiState) {
             case 1:
               printf("Vector is connected to the internet.\n");
@@ -574,8 +574,8 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
           
           break;
         }
-        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiIpResponse: {
-          Anki::Victor::ExternalComms::RtsWifiIpResponse msg = rtsMsg.Get_RtsWifiIpResponse();
+        case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsWifiIpResponse: {
+          Anki::Cozmo::ExternalComms::RtsWifiIpResponse msg = rtsMsg.Get_RtsWifiIpResponse();
           
           if(_currentCommand == "wifi-ip" && !_readyForNextCommand) {
             if(msg.hasIpV4) {
@@ -604,10 +604,10 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
           }
           break;
         }
-        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsStatusResponse_2: {
+        case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsStatusResponse_2: {
           //
           if(_currentCommand == "status" && !_readyForNextCommand) {
-            Anki::Victor::ExternalComms::RtsStatusResponse_2 msg = rtsMsg.Get_RtsStatusResponse_2();
+            Anki::Cozmo::ExternalComms::RtsStatusResponse_2 msg = rtsMsg.Get_RtsStatusResponse_2();
             
             std::string state = "";
             switch(msg.wifiState) {
@@ -633,18 +633,18 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
           
           break;
         }
-        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiScanResponse_2: {
-          Anki::Victor::ExternalComms::RtsWifiScanResponse_2 msg = rtsMsg.Get_RtsWifiScanResponse_2();
+        case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsWifiScanResponse_2: {
+          Anki::Cozmo::ExternalComms::RtsWifiScanResponse_2 msg = rtsMsg.Get_RtsWifiScanResponse_2();
           [self HandleWifiScanResponse_2:msg];
           break;
         }
-        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiAccessPointResponse: {
-          Anki::Victor::ExternalComms::RtsWifiAccessPointResponse msg = rtsMsg.Get_RtsWifiAccessPointResponse();
+        case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsWifiAccessPointResponse: {
+          Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse msg = rtsMsg.Get_RtsWifiAccessPointResponse();
           [self HandleReceiveAccessPointResponse:msg];
           break;
         }
-        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsOtaUpdateResponse: {
-          Anki::Victor::ExternalComms::RtsOtaUpdateResponse msg = rtsMsg.Get_RtsOtaUpdateResponse();
+        case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsOtaUpdateResponse: {
+          Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse msg = rtsMsg.Get_RtsOtaUpdateResponse();
           _otaStatusCode = msg.status;
           
           if(_otaStatusCode != 2 && _otaStatusCode != 1) {
@@ -683,18 +683,18 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
           
           break;
         }
-        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsLogResponse: {
+        case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsLogResponse: {
           // Handle receive RtsLogResponse message
-          Anki::Victor::ExternalComms::RtsLogResponse msg = rtsMsg.Get_RtsLogResponse();
+          Anki::Cozmo::ExternalComms::RtsLogResponse msg = rtsMsg.Get_RtsLogResponse();
           
           _currentFileId = msg.fileId;
           _currentFileBuffer.clear();
           
           break;
         }
-        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsFileDownload: {
+        case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsFileDownload: {
           // Handle receive RtsLogResponse message
-          Anki::Victor::ExternalComms::RtsFileDownload msg = rtsMsg.Get_RtsFileDownload();
+          Anki::Cozmo::ExternalComms::RtsFileDownload msg = rtsMsg.Get_RtsFileDownload();
           
           if(msg.fileId != _currentFileId) {
             break;
@@ -736,11 +736,11 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
           
           break;
         }
-        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsCancelPairing: {
+        case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsCancelPairing: {
           _rtsState = Raw;
           break;
         }
-        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsAck: {
+        case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsAck: {
           //
           break;
         }
@@ -751,27 +751,27 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   }
 }
 
-- (void) handleRequest:(Anki::Victor::ExternalComms::RtsConnection_2)msg {
+- (void) handleRequest:(Anki::Cozmo::ExternalComms::RtsConnection_2)msg {
   dispatch_async(_requestQueue, ^(){
     RequestId rid = kUnknown;
     
     switch(msg.GetTag()) {
-      case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsStatusResponse_2:
+      case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsStatusResponse_2:
         rid = kStatus;
         break;
-      case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiScanResponse_2:
+      case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsWifiScanResponse_2:
         rid = kWifiScan;
         break;
-      case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiConnectResponse:
+      case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsWifiConnectResponse:
         rid = kWifiConnect;
         break;
-      case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiIpResponse:
+      case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsWifiIpResponse:
         rid = kWifiIp;
         break;
-      case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiAccessPointResponse:
+      case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsWifiAccessPointResponse:
         rid = kWifiAp;
         break;
-      case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsOtaUpdateResponse:
+      case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsOtaUpdateResponse:
         rid = kOta;
         break;
       default:
@@ -812,7 +812,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     keyParts.push_back(contents.substr(i, 255));
   }
   
-  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsSshRequest>(self, _commVersion, keyParts);
+  Clad::SendRtsMessage<Anki::Cozmo::ExternalComms::RtsSshRequest>(self, _commVersion, keyParts);
 }
 
 - (void) send:(const void*)bytes length:(int)n {
@@ -889,7 +889,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   _rtsState = Clad;
 }
 
-- (void) HandleReceivePublicKey:(const Anki::Victor::ExternalComms::RtsConnRequest&)msg {
+- (void) HandleReceivePublicKey:(const Anki::Cozmo::ExternalComms::RtsConnRequest&)msg {
   if(_verbose) NSLog(@"Received public key from Victor");
   const void* bytes = (const void*)msg.publicKey.data();
   int n = (int)msg.publicKey.size();
@@ -914,7 +914,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     memcpy(_encryptKey, [encKey bytes], crypto_kx_SESSIONKEYBYTES);
     if(_verbose) NSLog(@"Trying to renew connection");
     _reconnection = true;
-    Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsConnResponse>(self, _commVersion, Anki::Victor::ExternalComms::RtsConnType::Reconnection,
+    Clad::SendRtsMessage<Anki::Cozmo::ExternalComms::RtsConnResponse>(self, _commVersion, Anki::Cozmo::ExternalComms::RtsConnType::Reconnection,
                                                                        publicKeyArray);
   } else {
     crypto_kx_keypair(_publicKey, _secretKey);
@@ -942,7 +942,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
       exit(0);
     }
     
-    Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsConnResponse>(self, _commVersion, Anki::Victor::ExternalComms::RtsConnType::FirstTimePair,
+    Clad::SendRtsMessage<Anki::Cozmo::ExternalComms::RtsConnResponse>(self, _commVersion, Anki::Cozmo::ExternalComms::RtsConnType::FirstTimePair,
                                                                        publicKeyArray);
     
     char pin[6];
@@ -966,7 +966,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   }
 }
 
-- (void) HandleReceiveNonce:(const Anki::Victor::ExternalComms::RtsNonceMessage &)msg {
+- (void) HandleReceiveNonce:(const Anki::Cozmo::ExternalComms::RtsNonceMessage &)msg {
   if(_verbose) NSLog(@"Received nonce from Victor");
   memcpy(_nonceIn, msg.toDeviceNonce.data(), crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
   memcpy(_nonceOut, msg.toRobotNonce.data(), crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
@@ -976,21 +976,21 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   uint8_t nonceTag = 0;
   
   if(_commVersion == 1) {
-    nonceTag = (uint8_t)Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsNonceMessage;
+    nonceTag = (uint8_t)Anki::Cozmo::ExternalComms::RtsConnection_1Tag::RtsNonceMessage;
   } else {
-    nonceTag = (uint8_t)Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsNonceMessage;
+    nonceTag = (uint8_t)Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsNonceMessage;
   }
   
-  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsAck>(self, _commVersion, nonceTag);
+  Clad::SendRtsMessage<Anki::Cozmo::ExternalComms::RtsAck>(self, _commVersion, nonceTag);
   // Move to encrypted comms
   if(_verbose) NSLog(@"Setting mode to ENCRYPTED");
   _rtsState = CladSecure;
 }
 
-- (void) HandleChallengeMessage:(const Anki::Victor::ExternalComms::RtsChallengeMessage &)msg {
+- (void) HandleChallengeMessage:(const Anki::Cozmo::ExternalComms::RtsChallengeMessage &)msg {
   if(_verbose) NSLog(@"Received challenge message from Victor: %d", msg.number);
   uint32_t challenge = msg.number;
-  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsChallengeMessage>(self, _commVersion, challenge + 1);
+  Clad::SendRtsMessage<Anki::Cozmo::ExternalComms::RtsChallengeMessage>(self, _commVersion, challenge + 1);
 }
 
 - (std::vector<std::string>) GetWordsFromLine: (std::string)line {
@@ -1018,40 +1018,40 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
 }
 
 - (void) async_WifiScanRequest {
-  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiScanRequest>(self, _commVersion);
+  Clad::SendRtsMessage<Anki::Cozmo::ExternalComms::RtsWifiScanRequest>(self, _commVersion);
 }
 
 - (void) async_StatusRequest {
-  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsStatusRequest>(self, _commVersion);
+  Clad::SendRtsMessage<Anki::Cozmo::ExternalComms::RtsStatusRequest>(self, _commVersion);
 }
 
 - (void) async_WifiConnectRequest:(std::string)ssid password:(std::string)pw hidden:(bool)hid auth:(uint8_t)authType {
   uint8_t requestTimeout_s = 15;
-  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiConnectRequest>(self, _commVersion,
+  Clad::SendRtsMessage<Anki::Cozmo::ExternalComms::RtsWifiConnectRequest>(self, _commVersion,
                                                                            [self hexStr:(char*)ssid.c_str() length:(int)ssid.length()], pw, requestTimeout_s, authType, hid);
 }
 
 - (void) async_WifiIpRequest {
-  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiIpRequest>(self, _commVersion);
+  Clad::SendRtsMessage<Anki::Cozmo::ExternalComms::RtsWifiIpRequest>(self, _commVersion);
 }
 
 - (void) async_WifiApRequest:(bool)enabled {
-  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiAccessPointRequest>(self, _commVersion, enabled);
+  Clad::SendRtsMessage<Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest>(self, _commVersion, enabled);
 }
 
 - (void) async_otaStart:(std::string)url {
-  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsOtaUpdateRequest>(self, _commVersion, url);
+  Clad::SendRtsMessage<Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest>(self, _commVersion, url);
 }
 
 - (void) async_otaCancel {
-  Clad::SendRtsMessage_2<Anki::Victor::ExternalComms::RtsOtaCancelRequest>(self, _commVersion);
+  Clad::SendRtsMessage_2<Anki::Cozmo::ExternalComms::RtsOtaCancelRequest>(self, _commVersion);
 }
 
 - (void) async_otaProgress {
   //
 }
 
-- (void) HandleChallengeSuccessMessage:(const Anki::Victor::ExternalComms::RtsChallengeSuccessMessage&)msg {
+- (void) HandleChallengeSuccessMessage:(const Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage&)msg {
   if(_verbose) [self printSuccess:"### Successfully Created Encrypted Channel ###"];
   
   if(_syncdelegate != nullptr) {
@@ -1116,27 +1116,27 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         printf("Connecting to %s\n", words[1].c_str());
         
         uint8_t requestTimeout_s = 15;
-        Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiConnectRequest>(self, _commVersion,
+        Clad::SendRtsMessage<Anki::Cozmo::ExternalComms::RtsWifiConnectRequest>(self, _commVersion,
                                                                                  [self hexStr:(char*)words[1].c_str() length:(int)words[1].length()], words[2], requestTimeout_s, auth, hidden);
         
       } else if(strcmp(words[0].c_str(), "wifi-ap") == 0) {
         bool enable = (words[1]=="true")?true:false;
-        Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiAccessPointRequest>(self, _commVersion, enable);
+        Clad::SendRtsMessage<Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest>(self, _commVersion, enable);
       } else if(strcmp(words[0].c_str(), "wifi-ip") == 0) {
-        Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiIpRequest>(self, _commVersion);
+        Clad::SendRtsMessage<Anki::Cozmo::ExternalComms::RtsWifiIpRequest>(self, _commVersion);
       } else if(strcmp(words[0].c_str(), "ota-start") == 0) {
         std::string url = "http://ota-cdn.anki.com/vic/dev/werih2382df23ij/full/latest.ota";
         if(words.size() > 1) {
           url = words[1];
         }
-        Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsOtaUpdateRequest>(self, _commVersion, url);
+        Clad::SendRtsMessage<Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest>(self, _commVersion, url);
         _readyForNextCommand = true;
         _currentCommand = "";
       } else if(strcmp(words[0].c_str(), "ota-cancel") == 0) {
         if(_commVersion < 2) {
           printf("ota-cancel not supported in version %d\n", _commVersion);
         } else {
-          Clad::SendRtsMessage_2<Anki::Victor::ExternalComms::RtsOtaCancelRequest>(self, _commVersion);
+          Clad::SendRtsMessage_2<Anki::Cozmo::ExternalComms::RtsOtaCancelRequest>(self, _commVersion);
         }
         _readyForNextCommand = true;
         _currentCommand = "";
@@ -1161,7 +1161,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
           
           printf("Downloading log dump over BLE. This may take a couple minutes.\n");
           std::vector<std::string> filter;
-          Clad::SendRtsMessage_2<Anki::Victor::ExternalComms::RtsLogRequest>(self, _commVersion, 0, filter);
+          Clad::SendRtsMessage_2<Anki::Cozmo::ExternalComms::RtsLogRequest>(self, _commVersion, 0, filter);
         }
       } else if(strcmp(words[0].c_str(), "ssh-send") == 0) {
         NSArray* pathParts = [NSArray arrayWithObjects:NSHomeDirectory(), @".ssh", @"id_rsa_vic_dev.pub", nil];
@@ -1178,7 +1178,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
       } else if(strcmp(words[0].c_str(), "ssh-start") == 0) {
         _readyForNextCommand = false;
         _currentCommand = "ssh-start";
-        Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiIpRequest>(self, _commVersion);
+        Clad::SendRtsMessage<Anki::Cozmo::ExternalComms::RtsWifiIpRequest>(self, _commVersion);
       } else if(strcmp(words[0].c_str(), "help") == 0) {
         _readyForNextCommand = true;
         _currentCommand = "";
@@ -1196,7 +1196,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   });
 }
 
-- (void) HandleWifiScanResponse:(const Anki::Victor::ExternalComms::RtsWifiScanResponse&)msg {
+- (void) HandleWifiScanResponse:(const Anki::Cozmo::ExternalComms::RtsWifiScanResponse&)msg {
   printf("Wifi scan results...\n");
   
   if(msg.statusCode != 0) {
@@ -1252,7 +1252,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   }
 }
 
-- (void) HandleWifiScanResponse_2:(const Anki::Victor::ExternalComms::RtsWifiScanResponse_2&)msg {
+- (void) HandleWifiScanResponse_2:(const Anki::Cozmo::ExternalComms::RtsWifiScanResponse_2&)msg {
   if(_currentCommand == "wifi-scan") {
     printf("Wifi scan results...\n");
     
@@ -1315,7 +1315,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   }
 }
 
-- (void) HandleReceiveAccessPointResponse:(const Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&)msg {
+- (void) HandleReceiveAccessPointResponse:(const Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse&)msg {
   
   if(_currentCommand == "wifi-ap" && !_readyForNextCommand) {
     NSLog(@"Access point enabled with SSID: [%s] PW: [%s]", msg.ssid.c_str(), msg.password.c_str());
