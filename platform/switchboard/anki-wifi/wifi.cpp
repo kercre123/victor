@@ -56,18 +56,6 @@ static const gchar introspection_xml[] =
   "  </interface>"
   "</node>";
 
-static int CalculateSignalLevel(const int strength, const int min, const int max, const int numLevels) {
-  if (strength < min) {
-    return 0;
-  } else if (strength >= max) {
-    return (numLevels - 1);
-  } else {
-    float inputRange = (max - min);
-    float outputRange = numLevels;
-    return (int)((float)(strength - min) * outputRange / inputRange);
-  }
-}
-
 WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) {
   results.clear();
 
@@ -141,7 +129,7 @@ WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) 
   bool configIsHidden = false;
 
   for (gsize i = 0 ; i < g_variant_n_children(services); i++) {
-    WiFiScanResult result{WiFiAuth::AUTH_NONE_OPEN, false, false, 0, "", false};
+    WiFiScanResult result{WiFiAuth::AUTH_NONE_OPEN, false, false, 0, "", false, false};
     GVariant* child = g_variant_get_child_value(services, i);
     GVariant* attrs = g_variant_get_child_value(child, 1);
     bool type_is_wifi = false;
@@ -184,11 +172,7 @@ WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) 
       }
 
       if (g_str_equal(key, "Strength")) {
-        result.signal_level =
-            (uint8_t) CalculateSignalLevel((int) g_variant_get_byte(val),
-                                           0, // min
-                                           100, // max
-                                           4 /* number of levels */);
+        result.signal_level = (uint8_t)g_variant_get_byte(val);
       }
 
       if (g_str_equal(key, "Security")) {
@@ -217,6 +201,10 @@ WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) 
         }
       }
 
+      if (g_str_equal(key, "Favorite")) {
+        result.provisioned = g_variant_get_boolean(val);
+        Log::Write("Found favorite: %s", result.provisioned? "true":"false");
+      }
     }
 
     if (type_is_wifi && iface_is_wlan0) {

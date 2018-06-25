@@ -30,6 +30,7 @@
 #include "anki-ble/common/anki_ble_uuids.h"
 #include "anki-ble/common/ble_advertise_settings.h"
 #include "anki-wifi/wifi.h"
+#include "anki-wifi/exec_command.h"
 #include "cutils/properties.h"
 #include "switchboardd/christen.h"
 #include "platform/victorCrashReports/victorCrashReporter.h"
