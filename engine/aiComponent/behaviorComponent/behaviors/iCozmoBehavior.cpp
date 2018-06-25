@@ -942,7 +942,7 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
   }
 
   if(_tickDontActivateSetFor == BaseStationTimer::getInstance()->GetTickCount()){
-    PRINT_PERIODIC_CH_INFO(200,"ICozmoBehavior.WantsToBeActivatedBase.DontActivateDueToCoordinator",
+    PRINT_PERIODIC_CH_INFO(200,"Behaviors", "ICozmoBehavior.WantsToBeActivatedBase.DontActivateDueToCoordinator",
                            "Behavior %s was [still] asked not to activate during tick %zu by coordinator %s",
                            GetDebugLabel().c_str(), _tickDontActivateSetFor, _dontActivateCoordinator.c_str());
     return false;

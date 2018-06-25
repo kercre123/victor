@@ -7,6 +7,6 @@
   "playOnChargerWithoutBody": true,
   
   "animTriggers": [
-    "ConnectWakeUp"
+    "OnboardingWakeUp"
   ]
 }

@@ -688,8 +688,16 @@
     "AnimName": "ag_bored_getout"
   },
   {
+    "CladEvent": "OnboardingDriveOffCharger",
+    "AnimName": "ag_onboarding_drive_straight"
+  },
+  {
     "CladEvent": "OnboardingLookForCube",
     "AnimName": "ag_cubetapping_searchforcube"
+  },
+  {
+    "CladEvent": "OnboardingWakeUp",
+    "AnimName": "ag_onboarding_wakeup"
   },
   {
     "CladEvent": "DEPRECATED_OnLearnedPlayerName",

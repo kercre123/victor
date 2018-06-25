@@ -159,7 +159,9 @@ enum int_32 AnimationTrigger
   ObservingOnChargerGetIn,
   ObservingOnChargerGetOut,
 
+  OnboardingDriveOffCharger,
   OnboardingLookForCube,
+  OnboardingWakeUp,
 
   PettingLevel1,
   PettingLevel2,
