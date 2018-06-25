@@ -168,6 +168,8 @@ public:
         break;
       case 2:
         msg = Anki::Cozmo::ExternalComms::ExternalComms(Anki::Cozmo::ExternalComms::RtsConnection(Anki::Cozmo::ExternalComms::RtsConnection_2(T(std::forward<Args>(args)...))));
+      case 3:
+        msg = Anki::Cozmo::ExternalComms::ExternalComms(Anki::Cozmo::ExternalComms::RtsConnection(Anki::Cozmo::ExternalComms::RtsConnection_3(T(std::forward<Args>(args)...))));
         break;
       default:
         NSLog(@"The mac client is trying to speak a version we do not know about.");
