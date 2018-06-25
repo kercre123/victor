@@ -1,15 +1,15 @@
 {
   "behaviorClass": "AnimSequence",
-  "behaviorID": "ReactToHello",
+  "behaviorID": "ReactToAffirmative",
 
   "playOnChargerWithoutBody": true,
 
   "emotionEventOnActivated": "RespondToShortVoiceCommand",
 
-  "animTriggers": ["ReactToGreeting"],
+  "animTriggers": ["ReactToAffirmative"],
   "respondToUserIntents": [
     {
-      "type": "greeting_hello"
+      "type": "imperative_affirmative"
     }
   ]
 }

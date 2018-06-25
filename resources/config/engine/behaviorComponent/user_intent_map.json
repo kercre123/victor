@@ -155,6 +155,16 @@
     {
       "user_intent": "blackjack_playagain",
       "cloud_intent": "intent_blackjack_playagain"
+    },
+    {
+      "user_intent": "imperative_lookatme",
+      "cloud_intent": "intent_imperative_lookatme",
+      "app_intent": "intent_imperative_lookatme"
+    },
+    {
+      "user_intent": "names_ask",
+      "cloud_intent": "intent_names_ask",
+      "app_intent": "intent_names_ask"
     }
   ],
 

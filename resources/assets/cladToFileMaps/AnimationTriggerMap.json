@@ -1409,6 +1409,10 @@
     "AnimName": "ag_pounceonmotionfail"
   },
   {
+    "CladEvent": "ReactToAffirmative",
+    "AnimName": "ag_vc_greeting"
+  },
+  {
     "CladEvent": "ReactToGoodBye",
     "AnimName": "ag_vc_goodbye"
   },

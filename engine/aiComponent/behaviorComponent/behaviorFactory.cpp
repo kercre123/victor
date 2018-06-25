@@ -76,7 +76,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/exploring/behaviorExploring.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/exploring/behaviorExploringExamineObstacle.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/feeding/behaviorFeedingEat.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/behaviorDriveToFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorExploreBringCubeToBeacon.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorExploreLookAroundInPlace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorExploreVisitPossibleMarker.h"
@@ -126,6 +125,10 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorStuckOnEdge.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/robotDrivenDialog/behaviorPromptUserForVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/sdkBehaviors/behaviorSDKInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/behaviorDriveToFace.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/behaviorFindFaceAndThen.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/behaviorLookAtMe.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/behaviorSayName.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/sleeping/behaviorSleeping.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorAdvanceClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorDisplayWallTime.h"
@@ -562,12 +565,6 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
-    case BehaviorClass::DriveToFace:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorDriveToFace(config));
-      break;
-    }
-    
     case BehaviorClass::ExploreBringCubeToBeacon:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorExploreBringCubeToBeacon(config));
@@ -859,6 +856,30 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::SDKInterface:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorSDKInterface(config));
+      break;
+    }
+    
+    case BehaviorClass::DriveToFace:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDriveToFace(config));
+      break;
+    }
+    
+    case BehaviorClass::FindFaceAndThen:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorFindFaceAndThen(config));
+      break;
+    }
+    
+    case BehaviorClass::LookAtMe:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorLookAtMe(config));
+      break;
+    }
+    
+    case BehaviorClass::SayName:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSayName(config));
       break;
     }
     

@@ -106,9 +106,6 @@ enum uint_8 BehaviorClass {
   // feeding
   FeedingEat,
 
-  // freeplay
-  DriveToFace,
-
   // freeplay/exploration
   ExploreBringCubeToBeacon,
   ExploreLookAroundInPlace,
@@ -187,6 +184,12 @@ enum uint_8 BehaviorClass {
 
   // sdkBehaviors
   SDKInterface,
+
+  // simpleFaceBehaviors
+  DriveToFace,
+  FindFaceAndThen,
+  LookAtMe,
+  SayName,
 
   // sleeping
   Sleeping,

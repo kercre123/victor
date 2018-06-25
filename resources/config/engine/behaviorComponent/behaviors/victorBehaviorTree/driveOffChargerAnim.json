@@ -4,17 +4,17 @@
   
   "behaviors" : [
     {
-      "behavior": "DriveOffChargerLeft",
+      "behavior": "DriveOffChargerLeftInternal",
       "cooldown_s": 300.0,
       "weight": 1.0
     },
     {
-      "behavior": "DriveOffChargerStraight",
+      "behavior": "DriveOffChargerStraightInternal",
       "cooldown_s": 300.0,
       "weight": 1.0
     },
     {
-      "behavior": "DriveOffChargerRight",
+      "behavior": "DriveOffChargerRightInternal",
       "cooldown_s": 300.0,
       "weight": 1.0
     }
@@ -24,19 +24,19 @@
   
   "anonymousBehaviors": [
     {
-      "behaviorName": "DriveOffChargerLeft",
+      "behaviorName": "DriveOffChargerLeftInternal",
       "behaviorClass": "AnimSequence",
       "animTriggers": ["DriveOffChargerLeft"],
       "playOnChargerWithBody": true
     },
     {
-      "behaviorName": "DriveOffChargerStraight",
+      "behaviorName": "DriveOffChargerStraightInternal",
       "behaviorClass": "AnimSequence",
       "animTriggers": ["DriveOffChargerStraight"],
       "playOnChargerWithBody": true
     },
     {
-      "behaviorName": "DriveOffChargerRight",
+      "behaviorName": "DriveOffChargerRightInternal",
       "behaviorClass": "AnimSequence",
       "animTriggers": ["DriveOffChargerRight"],
       "playOnChargerWithBody": true
