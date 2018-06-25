@@ -10,6 +10,7 @@
       "InitNormalOperation",
       "ModeSelector",
       "CoordinateGlobalInterrupts",
+      "CoordinateWhileInAir",
       "GlobalInterruptions",
       "HighLevelAI"   
     ]
@@ -20,6 +21,7 @@
     "InitNormalOperation",
     "ModeSelector",
     "CoordinateGlobalInterrupts",
+    "CoordinateWhileInAir",
     "GlobalInterruptions",
     "HighLevelAI",
     "ObservingDriveOffCharger"

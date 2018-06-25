@@ -53,6 +53,7 @@ enum uint_8 BehaviorClass {
 
   // coordinators
   CoordinateGlobalInterrupts,
+  CoordinateWhileInAir,
   QuietModeCoordinator,
 
   // danceToTheBeat
@@ -168,7 +169,6 @@ enum uint_8 BehaviorClass {
   ReactToMicDirection,
   ReactToMotion,
   ReactToMotorCalibration,
-  ReactToPet,
   ReactToPlacedOnSlope,
   ReactToReturnedToTreads,
   ReactToRobotOnBack,

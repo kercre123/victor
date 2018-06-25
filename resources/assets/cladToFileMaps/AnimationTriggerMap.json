@@ -972,7 +972,7 @@
     "AnimName": "ag_reacttoblock_stuckonblock"
   },
   {
-    "CladEvent": "ANTICIPATED_ReactToPickup",
+    "CladEvent": "ReactToPickup",
     "AnimName": "ag_reacttocliff_pickup"
   },
   {

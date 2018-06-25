@@ -41,7 +41,7 @@ public:
   // call the operand function on every ICozmoBehavior that is currently active, starting at the specified
   // behavior (defaults to the base behavior) and moving towards behaviors that were delegated to by that
   // behavior, ending with the behavior currently in control
-  void IterateActiveCozmoBehaviorsForward(CozmoBehaviorCallback operand, IBehavior* startingBehavior = nullptr) const;
+  void IterateActiveCozmoBehaviorsForward(CozmoBehaviorCallback operand, const IBehavior* startingBehavior = nullptr) const;
   
   // Return the last tick when the behavior stack was updated (i.e. new behavior delegated to or one was
   // canceled)

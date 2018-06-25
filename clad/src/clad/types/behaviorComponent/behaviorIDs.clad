@@ -80,10 +80,6 @@ enum uint_8 BehaviorID {
   // puzzles
   PuzzleMaze,
 
-  // reactions
-  ReactToCubeMoved,
-  ReactToPet,
-
   // victorBehaviorTree/blackjack
   BlackJack,
   BlackJackHandleRTPResponses,
@@ -99,6 +95,7 @@ enum uint_8 BehaviorID {
   ComeHereVoiceCommand,
   ConfirmHabitat,
   CoordinateGlobalInterrupts,
+  CoordinateWhileInAir,
 
   // victorBehaviorTree/danceToTheBeat
   DanceToTheBeat,
@@ -216,6 +213,11 @@ enum uint_8 BehaviorID {
   FistBumpVoiceCommand,
   KeepawayVoiceCommand,
 
+  // victorBehaviorTree/highLevelDelegates/whileInAir
+  InitialPickupAnimation,
+  WhileInAirDispatcher,
+  WhileInAirResponses,
+
   // victorBehaviorTree
   InitNormalOperation,
   IntentUnmatched,
@@ -273,8 +275,6 @@ enum uint_8 BehaviorID {
   ReactToTriggerDirectionAwake,
   ReactToUnexpectedMovement,
   StuckOnEdge,
-  WhileHeld,
-  WhileInAir,
 
   // victorBehaviorTree/sdkBehaviors
   SDK0,

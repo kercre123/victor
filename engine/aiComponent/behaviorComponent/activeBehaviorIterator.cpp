@@ -32,7 +32,7 @@ void ActiveBehaviorIterator::InitDependent( Robot* robot, const BCCompMap& depen
 }
 
 void ActiveBehaviorIterator::IterateActiveCozmoBehaviorsForward(CozmoBehaviorCallback operand,
-                                                                IBehavior* startingBehavior) const
+                                                                const IBehavior* startingBehavior) const
 {
   const IBehavior* curr = startingBehavior;
 
