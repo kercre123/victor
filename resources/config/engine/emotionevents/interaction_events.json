@@ -106,6 +106,45 @@
           "value" : 1.0
         }
       ]
+    },
+    {
+      "name" : "ExploringExamineObstacle",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Happy",
+          "value" : 0.1
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : 0.1
+        }
+      ]
+    },
+    {
+      "name" : "DanceToTheBeat",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Happy",
+          "value" : 0.1
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : 0.4
+        }
+      ]
+    },
+    {
+      "name" : "ReactToObstacle",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Happy",
+          "value" : 0.0
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : 0.1
+        }
+      ]
     }
   ]
 }
