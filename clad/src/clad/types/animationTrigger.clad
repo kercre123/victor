@@ -201,6 +201,7 @@ enum int_32 AnimationTrigger
   ReactToGoodMorning,
   ReactToGoodNight,
   ReactToGreeting,
+  ReactToHabitat,
   ReactToMotionLeft,
   ReactToMotionTurnLeft,
   ReactToMotionRight,

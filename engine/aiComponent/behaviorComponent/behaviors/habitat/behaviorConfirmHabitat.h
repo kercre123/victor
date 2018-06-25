@@ -63,6 +63,7 @@ protected:
   void TransitionToSeekLineFromCharger();
   void TransitionToBackupForward();
   void TransitionToLocalizeCharger();
+  void TransitionToReactToHabitat();
   
   // helper motions to reposition the robot from certain line positions
   void TransitionToCliffAlignWhite();
@@ -73,12 +74,6 @@ protected:
   // that it is seeing a white line beneath it. This is used as a buffer for engine to
   // catch up and update its internal tracking of white
   void TransitionToWaitForWhite();
-
-  // helper methods -- compute a pose (in world origin) relative to a pose
-  //  or compute a pose in world origin
-  // both functions return true if the operation is possible
-  std::pair<bool,Pose3d> GetPoseInWorldOrigin(const Pose3d& pose) const;
-  std::pair<bool,Pose3d> GetPoseOffsetFromPose(const Pose3d& basePose, Pose3d offset) const;
   
   // returns nullptr if there is no charger seen
   const ObservableObject* GetChargerIfObserved() const;

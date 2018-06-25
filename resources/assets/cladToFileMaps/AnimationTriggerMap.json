@@ -1417,6 +1417,10 @@
     "AnimName": "ag_vc_greeting"
   },
   {
+    "CladEvent": "ReactToHabitat",
+    "AnimName": "ag_reacttohabitat_subtle_01"
+  },
+  {
     "CladEvent": "ReactToTouchInitial",
     "AnimName": "ag_petting_reacttotouch_01"
   },

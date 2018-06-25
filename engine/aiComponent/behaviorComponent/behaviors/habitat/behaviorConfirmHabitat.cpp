@@ -27,14 +27,15 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/driveToActions.h"
-#include "engine/actions/drivePathAction.h"
 #include "engine/actions/compoundActions.h"
+#include "engine/actions/animActions.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
 #include "engine/components/habitatDetectorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/components/pathComponent.h"
+#include "engine/navMap/mapComponent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 #include "engine/viz/vizManager.h"
@@ -43,7 +44,6 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "coretech/planning/shared/path.h"
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/vision/engine/observableObject.h"
 #include "coretech/common/engine/utils/timer.h"
@@ -52,6 +52,10 @@
 
 namespace Anki {
 namespace Cozmo {
+
+namespace
+{
+}
 
 BehaviorConfirmHabitat::DynamicVariables::DynamicVariables()
 {
@@ -118,21 +122,6 @@ void BehaviorConfirmHabitat::OnBehaviorDeactivated()
   _dVars = DynamicVariables();
 }
 
-std::pair<bool,Pose3d> BehaviorConfirmHabitat::GetPoseInWorldOrigin(const Pose3d& pose) const
-{
-  Pose3d temp;
-  bool inSameOrigin = pose.GetWithRespectTo(GetBEI().GetRobotInfo().GetWorldOrigin(), temp);
-  return {inSameOrigin, temp};
-}
-
-std::pair<bool,Pose3d> BehaviorConfirmHabitat::GetPoseOffsetFromPose(const Pose3d& basePose, Pose3d offset) const
-{
-  bool success = true;
-  offset.SetParent(basePose);
-  std::tie(success, offset) = GetPoseInWorldOrigin(offset);
-  return {success, offset};
-}
-
 void BehaviorConfirmHabitat::BehaviorUpdate()
 {
   if(!IsActivated()) {
@@ -147,7 +136,11 @@ void BehaviorConfirmHabitat::BehaviorUpdate()
   std::unique_ptr<IActionRunner> actionToExecute;
   RobotCompletedActionCallback actionCallback = nullptr;
   
-  if(habitatDetector.GetHabitatBeliefState() != HabitatBeliefState::Unknown) {
+  // play the reaction to discovering we are in the habitat, if we are in it
+  if(habitatDetector.GetHabitatBeliefState() == HabitatBeliefState::InHabitat) {
+    TransitionToReactToHabitat();
+    return;
+  } else if(habitatDetector.GetHabitatBeliefState() == HabitatBeliefState::NotInHabitat) {
     CancelSelf();
     return;
   }
@@ -287,6 +280,16 @@ void BehaviorConfirmHabitat::DelegateActionHelper(IActionRunner* action, RobotCo
   }
 }
 
+void BehaviorConfirmHabitat::TransitionToReactToHabitat()
+{
+  PRINT_NAMED_INFO("ConfirmHabitat.TransitionToReactToHabitat","");
+  TriggerAnimationAction* action = new TriggerAnimationAction(AnimationTrigger::ReactToHabitat, 1, true);
+  RobotCompletedActionCallback callback = [this](const ExternalInterface::RobotCompletedAction& msg)->void {
+    this->CancelSelf();
+  };
+  DelegateActionHelper(action, std::move(callback));
+}
+
 void BehaviorConfirmHabitat::TransitionToLocalizeCharger()
 {
   PRINT_NAMED_INFO("ConfirmHabitat.TransitionToLocalizeCharger","");
@@ -416,42 +419,25 @@ void BehaviorConfirmHabitat::TransitionToTurnBackupForward(f32 angle, int backDi
 void BehaviorConfirmHabitat::TransitionToRandomWalk()
 {
   static int count = 1;
-  
   Pose3d robotPose = GetBEI().GetRobotInfo().GetPose();
-  
-  Planning::Path path;
-  bool success = false;
-  Pose3d desiredPoseOffset;
+  Pose3d desiredOffsetPose;
   if(count == 0 || count >= 3) {
-    std::tie(success,desiredPoseOffset) = GetPoseOffsetFromPose(robotPose, Pose3d(Rotation3d( 0, Z_AXIS_3D()), Vec3f(75,0,0)));
-    path.AppendLine(robotPose.GetTranslation().x(),
-                    robotPose.GetTranslation().y(),
-                    desiredPoseOffset.GetTranslation().x(),
-                    desiredPoseOffset.GetTranslation().y(),
-                    50, 200, 500);
+    desiredOffsetPose = Pose3d(Rotation3d(0, Z_AXIS_3D()), Vec3f(100,0,0));
     count = 0;
   } else if(count == 1) {
-    std::tie(success,desiredPoseOffset) = GetPoseOffsetFromPose(robotPose, Pose3d(Rotation3d(0, Z_AXIS_3D()), Vec3f(0,70,0)));
-    path.AppendArc(desiredPoseOffset.GetTranslation().x(),
-                   desiredPoseOffset.GetTranslation().y(),
-                   70, 0, M_PI_4/2,
-                   25, 200, 500);
+    desiredOffsetPose = Pose3d(Rotation3d(-M_PI_4, Z_AXIS_3D()), Vec3f(75,-50,0));
   } else if(count == 2) {
-    std::tie(success,desiredPoseOffset) = GetPoseOffsetFromPose(robotPose, Pose3d(Rotation3d(0, Z_AXIS_3D()), Vec3f(0,-70,0)));
-    path.AppendArc(desiredPoseOffset.GetTranslation().x(),
-                   desiredPoseOffset.GetTranslation().y(),
-                   70, 0, -M_PI_4/2,
-                   25, 200, 500);
+    desiredOffsetPose = Pose3d(Rotation3d(M_PI_4, Z_AXIS_3D()), Vec3f(75,50,0));
   }
-  
-  if(success) {
-    IActionRunner* action = new DrivePathAction(path);
-    DelegateActionHelper(action, nullptr);
-    PRINT_NAMED_INFO("ConfirmHabitat.TransitionToRandomWalk", "ActionNum=%d",count);
-    count++;
-  } else {
-    PRINT_NAMED_WARNING("ConfirmHabitat.TransitionToRandomWalk.NoTransformationBetweenPoses","");
-  }
+  desiredOffsetPose.SetParent(robotPose);
+  GetBEI().GetMapComponent().SetUseProxObstaclesInPlanning(false);
+  IActionRunner* action = new DriveToPoseAction(desiredOffsetPose, false);
+  RobotCompletedActionCallback callback = [this](const ExternalInterface::RobotCompletedAction& msg)->void{
+    GetBEI().GetMapComponent().SetUseProxObstaclesInPlanning(true);
+  };
+  DelegateActionHelper(action, std::move(callback));
+  PRINT_NAMED_INFO("ConfirmHabitat.TransitionToRandomWalk", "ActionNum=%d",count);
+  count++;
 }
 
 void BehaviorConfirmHabitat::TransitionToSeekLineFromCharger()
@@ -464,18 +450,39 @@ void BehaviorConfirmHabitat::TransitionToSeekLineFromCharger()
     return;
   }
   
-  Pose3d chargerPose;
-  bool inSameOrigin;
-  std::tie(inSameOrigin, chargerPose) = GetPoseInWorldOrigin(charger->GetPose());
+  // the origin of the charger located at the tip of the ramp
+  // with the x-axis oriented towards the label
+  const Pose3d& chargerPose = charger->GetPose();
   PRINT_NAMED_INFO("ConfirmHabitat.SeekLineFromCharger","");
-  if(inSameOrigin) {
-    Pose3d desiredPoseOffset;
-    std::tie(std::ignore, desiredPoseOffset) = GetPoseOffsetFromPose(chargerPose,
-              Pose3d(Rotation3d(M_PI_4_F, Z_AXIS_3D()), Vec3f(100,250,0)));
-    
-    IActionRunner* action = new DriveToPoseAction(desiredPoseOffset, false);
-    DelegateActionHelper(action, nullptr);
-  }
+  
+  // these poses are computed relative to the charger
+  // the values selected define a position slightly beyond
+  // the white line of the habitat, assuming the charger
+  // is correctly installed in place
+  static const std::vector<Pose3d> offsetList = {
+    Pose3d(   M_PI_4_F, Z_AXIS_3D(), Vec3f(  53,  159, 0)),
+    Pose3d(   M_PI_4_F, Z_AXIS_3D(), Vec3f(   0,  212, 0)),
+
+    Pose3d(  -M_PI_4_F, Z_AXIS_3D(), Vec3f(  53, -159, 0)),
+    Pose3d(  -M_PI_4_F, Z_AXIS_3D(), Vec3f(   0, -212, 0)),
+
+    Pose3d( 3*M_PI_4_F, Z_AXIS_3D(), Vec3f(-141,  212, 0)),
+    Pose3d( 3*M_PI_4_F, Z_AXIS_3D(), Vec3f(-194,  159, 0)),
+    Pose3d( 3*M_PI_4_F, Z_AXIS_3D(), Vec3f(-247,  106, 0)),
+
+    Pose3d(-3*M_PI_4_F, Z_AXIS_3D(), Vec3f(-141, -212, 0)),
+    Pose3d(-3*M_PI_4_F, Z_AXIS_3D(), Vec3f(-194, -159, 0)),
+    Pose3d(-3*M_PI_4_F, Z_AXIS_3D(), Vec3f(-247, -106, 0)),
+
+    Pose3d(     M_PI_F, Z_AXIS_3D(), Vec3f(-325,    0, 0)),
+  };
+  
+  int index = GetRNG().RandInt((int)offsetList.size());
+  Pose3d desiredOffsetPose = offsetList[index];
+  desiredOffsetPose.SetParent(chargerPose);
+  IActionRunner* action = new DriveToPoseAction(desiredOffsetPose, false);
+  DelegateActionHelper(action, nullptr);
+  
 }
 
 const ObservableObject* BehaviorConfirmHabitat::GetChargerIfObserved() const

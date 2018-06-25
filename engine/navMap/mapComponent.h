@@ -135,6 +135,9 @@ public:
   // what you want??
   void RemoveAllProxObstacles();
   
+  void SetUseProxObstaclesInPlanning(bool enable) { _useProxObstaclesInPlanning = enable; }
+  bool GetUseProxObstaclesInPlanning() const { return _useProxObstaclesInPlanning; }
+  
   ////////////////////////////////////////////////////////////////////////////////
   // Accessors
   ////////////////////////////////////////////////////////////////////////////////
@@ -204,6 +207,9 @@ private:
   bool                            _vizMessageDirty;
   bool                            _gameMessageDirty;
   bool                            _webMessageDirty;
+  
+  // config variable for conditionally enabling/disabling prox obstacles in planning
+  bool                            _useProxObstaclesInPlanning;
   
   bool                            _isRenderEnabled;
   float                           _broadcastRate_sec = -1.0f;      // (Negative means don't send)
