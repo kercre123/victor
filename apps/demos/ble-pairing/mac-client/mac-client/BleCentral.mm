@@ -320,6 +320,38 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
               break;
           }
         }
+      } else if(_commVersion == 3){
+        if(extComms.GetTag() == Anki::Cozmo::ExternalComms::ExternalCommsTag::RtsConnection) {
+          Anki::Cozmo::ExternalComms::RtsConnection rtsMsg = extComms.Get_RtsConnection();
+          Anki::Cozmo::ExternalComms::RtsConnection_3 rts3Msg = rtsMsg.Get_RtsConnection_3();
+          
+          switch(rts3Msg.GetTag()) {
+            case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::Error:
+              //
+              break;
+            case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsConnRequest: {
+              Anki::Cozmo::ExternalComms::RtsConnRequest req = rts3Msg.Get_RtsConnRequest();
+              [self HandleReceivePublicKey:req];
+              break;
+            }
+            case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsNonceMessage: {
+              Anki::Cozmo::ExternalComms::RtsNonceMessage msg = rts3Msg.Get_RtsNonceMessage();
+              [self HandleReceiveNonce:msg];
+              break;
+            }
+            case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsCancelPairing: {
+              //
+              _rtsState = Raw;
+              break;
+            }
+            case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsAck: {
+              //
+              break;
+            }
+            default:
+              break;
+          }
+        }
       }
       
       break;
@@ -748,6 +780,231 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
           break;
       }
     }
+  } else if(_commVersion == 3) {
+    [self handleSecureVersion3: extComms];
+  }
+}
+
+- (void) handleSecureVersion3: (Anki::Cozmo::ExternalComms::ExternalComms)extComms {
+  if(extComms.GetTag() == Anki::Cozmo::ExternalComms::ExternalCommsTag::RtsConnection) {
+    Anki::Cozmo::ExternalComms::RtsConnection rtsContainer = extComms.Get_RtsConnection();
+    Anki::Cozmo::ExternalComms::RtsConnection_3 rtsMsg = rtsContainer.Get_RtsConnection_3();
+    
+    // Handle requests
+    [self handleRequest_3:rtsMsg];
+    
+    switch(rtsMsg.GetTag()) {
+      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::Error:
+        //
+        break;
+      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsChallengeMessage: {
+        Anki::Cozmo::ExternalComms::RtsChallengeMessage msg = rtsMsg.Get_RtsChallengeMessage();
+        [self HandleChallengeMessage:msg];
+        break;
+      }
+      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsChallengeSuccessMessage: {
+        Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage msg = rtsMsg.Get_RtsChallengeSuccessMessage();
+        [self HandleChallengeSuccessMessage:msg];
+        break;
+      }
+      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsWifiConnectResponse: {
+        Anki::Cozmo::ExternalComms::RtsWifiConnectResponse msg = rtsMsg.Get_RtsWifiConnectResponse();
+        switch(msg.wifiState) {
+          case 1:
+            printf("Vector is connected to the internet.\n");
+            break;
+          case 0:
+            printf("Unknown connection status.\n");
+            break;
+          case 2:
+            printf("Vector is connected without internet.\n");
+            break;
+          case 3:
+            printf("Vector is not connected to a network.\n");
+            break;
+          default:
+            break;
+        }
+        
+        if(_currentCommand == "wifi-connect" && !_readyForNextCommand) {
+          _readyForNextCommand = true;
+        }
+        
+        break;
+      }
+      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsWifiIpResponse: {
+        Anki::Cozmo::ExternalComms::RtsWifiIpResponse msg = rtsMsg.Get_RtsWifiIpResponse();
+        
+        if(_currentCommand == "wifi-ip" && !_readyForNextCommand) {
+          if(msg.hasIpV4) {
+            char ipv4String[INET_ADDRSTRLEN] = {0};
+            inet_ntop(AF_INET, msg.ipV4.data(), ipv4String, INET_ADDRSTRLEN);
+            printf("IPv4: %s\n", ipv4String);
+          }
+          
+          if(msg.hasIpV6) {
+            char ipv6String[INET6_ADDRSTRLEN] = {0};
+            inet_ntop(AF_INET6, msg.ipV6.data(), ipv6String, INET6_ADDRSTRLEN);
+            printf("IPv6: %s\n", ipv6String);
+          }
+          
+          _readyForNextCommand = true;
+        } else if(_currentCommand == "ssh-start" && !_readyForNextCommand) {
+          NSString* sshArg = [NSString stringWithFormat:@"root@%d.%d.%d.%d", msg.ipV4[0], msg.ipV4[1], msg.ipV4[2], msg.ipV4[3]];
+          
+          NSString *s = [NSString stringWithFormat:
+                         @"tell application \"Terminal\" to do script \"ssh %@\"", sshArg];
+          
+          NSAppleScript *as = [[NSAppleScript alloc] initWithSource: s];
+          [as executeAndReturnError:nil];
+          
+          _readyForNextCommand = true;
+        }
+        break;
+      }
+      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsStatusResponse_2: {
+        //
+        if(_currentCommand == "status" && !_readyForNextCommand) {
+          Anki::Cozmo::ExternalComms::RtsStatusResponse_2 msg = rtsMsg.Get_RtsStatusResponse_2();
+          
+          std::string state = "";
+          switch(msg.wifiState) {
+            case 1:
+              state = "ONLINE";
+              break;
+            case 0:
+              state = "UNKNOWN";
+              break;
+            case 2:
+              state = "CONNECTED / NO INTERNET";
+              break;
+            case 3:
+              state = "DISCONNECTED";
+              break;
+            default:
+              break;
+          }
+          
+          printf("             ssid = %s\n connection_state = %s\n     access_point = %s\n          version = %s\n  ota_in_progress = %s\n", [self asciiStr:(char*)msg.wifiSsidHex.c_str() length:(int)msg.wifiSsidHex.length()].c_str(), state.c_str(), msg.accessPoint? "true" : "false", msg.version.c_str(), msg.otaInProgress? "true" : "false");
+          _readyForNextCommand = true;
+        }
+        
+        break;
+      }
+      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsWifiScanResponse_3: {
+        Anki::Cozmo::ExternalComms::RtsWifiScanResponse_3 msg = rtsMsg.Get_RtsWifiScanResponse_3();
+        [self HandleWifiScanResponse_3:msg];
+        break;
+      }
+      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsWifiAccessPointResponse: {
+        Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse msg = rtsMsg.Get_RtsWifiAccessPointResponse();
+        [self HandleReceiveAccessPointResponse:msg];
+        break;
+      }
+      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsOtaUpdateResponse: {
+        Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse msg = rtsMsg.Get_RtsOtaUpdateResponse();
+        _otaStatusCode = msg.status;
+        
+        if(_otaStatusCode != 2 && _otaStatusCode != 1) {
+          printf("\nota status code: %d\n", _otaStatusCode);
+        }
+        
+        if(_otaStatusCode == 2) {
+          _otaProgress = msg.current == 0? _otaProgress : msg.current;
+        } else {
+          _otaProgress = msg.current;
+        }
+        _otaExpected = msg.expected;
+        
+        /*
+         * Commenting out for visibility because in next pass, going
+         * to use this code again to show OTA progress bar.
+         */
+        if(_currentCommand == "ota-progress" && !_readyForNextCommand) {
+          if(_otaStatusCode != 2) {
+            _readyForNextCommand = true;
+            _currentCommand = "";
+          }
+          
+          int size = 100;
+          int progress = (int)(((float)_otaProgress/(float)_otaExpected) * size);
+          std::string bar = "";
+          
+          for(int i = 0; i < size; i++) {
+            if(i <= progress) bar += "▓";
+            else bar += "_";
+          }
+          
+          printf("%100s [%d%%] [%llu/%llu] \r", bar.c_str(), progress, msg.current, msg.expected);
+          fflush(stdout);
+        }
+        
+        break;
+      }
+      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsLogResponse: {
+        // Handle receive RtsLogResponse message
+        Anki::Cozmo::ExternalComms::RtsLogResponse msg = rtsMsg.Get_RtsLogResponse();
+        
+        _currentFileId = msg.fileId;
+        _currentFileBuffer.clear();
+        
+        break;
+      }
+      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsFileDownload: {
+        // Handle receive RtsLogResponse message
+        Anki::Cozmo::ExternalComms::RtsFileDownload msg = rtsMsg.Get_RtsFileDownload();
+        
+        if(msg.fileId != _currentFileId) {
+          break;
+        }
+        
+        // Add to buffer
+        _currentFileBuffer.insert(_currentFileBuffer.end(), msg.fileChunk.begin(), msg.fileChunk.end());
+        
+        [self showProgress:(float)msg.packetNumber expected:(float)msg.packetTotal];
+        
+        if(msg.packetNumber == msg.packetTotal) {
+          NSError *error = nil;
+          
+          
+          NSData* data = [NSData dataWithBytes:_currentFileBuffer.data() length:_currentFileBuffer.size()];
+          NSFileManager* fileManager = [NSFileManager defaultManager];
+          
+          NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+          [dateFormatter setDateFormat:@"yyyy-MM-dd-HH-mm-ss"];
+          NSString* fileName = [NSString stringWithFormat:@"vic-logs-%@.tar.bz2", [dateFormatter stringFromDate:[NSDate date]]];
+          
+          NSArray* pathParts = [NSArray arrayWithObjects:_downloadFilePath, fileName, nil];
+          NSString* dirPath = _downloadFilePath;
+          NSString* logPath = [NSString pathWithComponents:pathParts];
+          
+          bool createdDirSuccess = [fileManager createDirectoryAtPath:dirPath withIntermediateDirectories:true attributes:nil error:nil];
+          bool success = [data writeToFile:logPath options:NSDataWritingAtomic error:&error];
+          
+          if(!success || !createdDirSuccess) {
+            printf("IO error while trying to write logs.\n");
+          }
+          
+          if(_currentCommand == "logs" && !_readyForNextCommand) {
+            printf("\nDownloaded logs to %s\n", [logPath UTF8String]);
+            
+            _readyForNextCommand = true;
+          }
+        }
+        
+        break;
+      }
+      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsCancelPairing: {
+        _rtsState = Raw;
+        break;
+      }
+      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsAck: {
+        //
+        break;
+      }
+      default:
+        break;
+    }
   }
 }
 
@@ -780,6 +1037,39 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     
     if(_delegate != nullptr) {
       [_delegate handleResponse:rid message:msg];
+    }
+  });
+}
+
+- (void) handleRequest_3:(Anki::Cozmo::ExternalComms::RtsConnection_3)msg {
+  dispatch_async(_requestQueue, ^(){
+    RequestId rid = kUnknown;
+    
+    switch(msg.GetTag()) {
+      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsStatusResponse_2:
+        rid = kStatus;
+        break;
+      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsWifiScanResponse_3:
+        rid = kWifiScan;
+        break;
+      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsWifiConnectResponse:
+        rid = kWifiConnect;
+        break;
+      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsWifiIpResponse:
+        rid = kWifiIp;
+        break;
+      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsWifiAccessPointResponse:
+        rid = kWifiAp;
+        break;
+      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsOtaUpdateResponse:
+        rid = kOta;
+        break;
+      default:
+        break;
+    }
+    
+    if(_delegate != nullptr) {
+      [_delegate handleResponse_3:rid message:msg];
     }
   });
 }
@@ -869,11 +1159,10 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   }
   
   uint32_t version = *(uint32_t*)(msg + 1);
-  const uint32_t maxVersion = 2;
+  const uint32_t maxVersion = 3;
   
-  if(version != 1 &&
-     version != 2) {
-    // Not Version 1 or Version 2
+  if(version > maxVersion) {
+    // Not Version 1, 2, or 3
     printf("Error: Connected Vector speaks version %d, while our max version is %d!\n", version, maxVersion);
     return;
   } else {
@@ -1245,6 +1534,69 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     
     NSString* ssidStr = [NSString stringWithUTF8String:ssidAscii.c_str()];
     [_wifiAuth setValue:[NSNumber numberWithInt:msg.scanResult[i].authType] forKey:ssidStr];
+  }
+  
+  if(_currentCommand == "wifi-scan" && !_readyForNextCommand) {
+    _readyForNextCommand = true;
+  }
+}
+
+- (void) HandleWifiScanResponse_3:(const Anki::Cozmo::ExternalComms::RtsWifiScanResponse_3&)msg {
+  if(_currentCommand == "wifi-scan") {
+    printf("Wifi scan results...\n");
+    
+    if(msg.statusCode != 0) {
+      printf("Error code: %d\n", msg.statusCode);
+    }
+    
+    printf("Signal      Security      SSID\n");
+    _wifiAuth = [[NSMutableDictionary alloc] init];
+    _wifiHidden = [[NSMutableSet alloc] init];
+    
+    for(int i = 0; i < msg.scanResult.size(); i++) {
+      std::string sec = "none";
+      
+      switch(msg.scanResult[i].authType) {
+        case 0:
+          sec = "none";
+          break;
+        case 1:
+          sec = "WEP ";
+          break;
+        case 2:
+          sec = "WEPS";
+          break;
+        case 3:
+          sec = "IEEE";
+          break;
+        case 4:
+          sec = "PSKo";
+          break;
+        case 5:
+          sec = "EAPo";
+          break;
+        case 6:
+          sec = "PSK ";
+          break;
+        case 7:
+          sec = "EAP";
+          break;
+        default:
+          break;
+      }
+      
+      std::string ssidAscii = [self asciiStr:(char*)msg.scanResult[i].wifiSsidHex.c_str() length:(int)msg.scanResult[i].wifiSsidHex.length()];
+      
+      printf("%d           %s          %s %s %s\n", msg.scanResult[i].signalStrength, sec.c_str(), ssidAscii.c_str(), msg.scanResult[i].hidden? "H" : "_", msg.scanResult[i].provisioned? "*" : " ");
+      
+      NSString* ssidStr = [NSString stringWithUTF8String:ssidAscii.c_str()];
+      [_wifiAuth setValue:[NSNumber numberWithInt:msg.scanResult[i].authType] forKey:ssidStr];
+      
+      if(msg.scanResult[i].hidden) {
+        NSString* ssid = [NSString stringWithUTF8String:msg.scanResult[i].wifiSsidHex.c_str()];
+        [_wifiHidden addObject:ssid];
+      }
+    }
   }
   
   if(_currentCommand == "wifi-scan" && !_readyForNextCommand) {

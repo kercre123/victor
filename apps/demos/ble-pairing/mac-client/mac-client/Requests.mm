@@ -47,6 +47,29 @@
   }
 }
 
+-(void) handleResponse_3:(RequestId)requestId message:(Anki::Cozmo::ExternalComms::RtsConnection_3)msg {
+  /*if(requestId != kUnknown && _currentRequest == requestId) {
+    _currentMessage = msg;
+    
+    // handle incoming message
+    // note: this is a switch in case different
+    // request need to do something before signaling
+    
+    switch(requestId) {
+      case kStatus:
+      case kWifiScan:
+      case kWifiConnect:
+      case kWifiIp:
+      case kWifiAp:
+      case kOta:
+        dispatch_semaphore_signal(_responseSemaphore);
+        break;
+      default:
+        break;
+    }
+  }*/
+}
+
 -(Anki::Cozmo::ExternalComms::RtsStatusResponse_2) getStatus {
   _currentRequest = kStatus;
   [_central async_StatusRequest];

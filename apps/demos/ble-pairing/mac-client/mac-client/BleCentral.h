@@ -100,6 +100,10 @@ enum WiFiAuth : uint8_t {
 - (std::string)asciiStr:(char*)data length:(int)size;
 - (uint8_t)nibbleToNumber:(uint8_t)nibble;
 
+// Versioned handlers
+- (void) handleSecureVersion3: (Anki::Cozmo::ExternalComms::ExternalComms)extComms;
+- (void) handleRequest_3:(Anki::Cozmo::ExternalComms::RtsConnection_3)msg;
+
 - (void) devDownloadOta;
 - (void) handleSend:(const void*)bytes length:(int)n;
 - (void) handleReceive:(const void*)bytes length:(int)n;
@@ -126,6 +130,7 @@ enum WiFiAuth : uint8_t {
 - (void) HandleChallengeSuccessMessage:(const Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage&)msg;
 - (void) HandleWifiScanResponse:(const Anki::Cozmo::ExternalComms::RtsWifiScanResponse&)msg;
 - (void) HandleWifiScanResponse_2:(const Anki::Cozmo::ExternalComms::RtsWifiScanResponse_2&)msg;
+- (void) HandleWifiScanResponse_3:(const Anki::Cozmo::ExternalComms::RtsWifiScanResponse_3&)msg;
 - (void) HandleReceiveAccessPointResponse:(const Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse&)msg;
 
 - (void) send:(const void*)bytes length:(int)n;
