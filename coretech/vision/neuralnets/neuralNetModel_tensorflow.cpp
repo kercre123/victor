@@ -804,6 +804,11 @@ Result NeuralNetModel::Run(tensorflow::Tensor imageTensor, std::vector<tensorflo
     {
       run_options.set_trace_level(tensorflow::RunOptions::FULL_TRACE);
     }
+    else
+    {
+      PRINT_NAMED_ERROR("ObjectDetector.Detect.Run.StatsSummarizerInitFail", "");
+      return RESULT_FAIL;
+    }
 
     tensorflow::RunMetadata runMetadata;
     for (uint32_t i = 0; i < _params.benchmarkRuns; ++i)
