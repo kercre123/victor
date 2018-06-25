@@ -30,6 +30,7 @@
 #include "tensorflow/core/public/session.h"
 #include "tensorflow/core/util/command_line_flags.h"
 #include "tensorflow/core/util/memmapped_file_system.h"
+#include "tensorflow/core/util/stat_summarizer.h"
 
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/quoteMacro.h"
@@ -269,6 +270,7 @@ Result NeuralNetModel::SetParamsFromConfig(const Json::Value& config)
   GetFromConfig(inputWidth);
   GetFromConfig(architecture);
   GetFromConfig(memoryMapGraph);
+  GetFromConfig(benchmarkRuns);
 
   if("ssd_mobilenet" == _params.architecture)
   {
@@ -362,7 +364,8 @@ Result NeuralNetModel::SetOutputTypeFromConfig(const Json::Value& config)
   const std::map<std::string, OutputTypeEntry> kOutputTypeMap{
     {"classification",        {OutputType::Classification,     1} }, 
     {"binary_localization",   {OutputType::BinaryLocalization, 1} },
-    {"anchor_boxes",          {OutputType::AnchorBoxes,          4} },
+    {"anchor_boxes",          {OutputType::AnchorBoxes,        4} },
+    {"segmentation",          {OutputType::Segmentation,       1} },
   };
 
   auto iter = kOutputTypeMap.find(outputTypeStr);
@@ -668,7 +671,7 @@ void NeuralNetModel::GetDetectedObjects(const std::vector<tensorflow::Tensor>& o
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Vision::SalientPoint>& salientPoints)
 {
-  tensorflow::Tensor image_tensor;
+  tensorflow::Tensor imageTensor;
 
   if(_params.useGrayscale)
   {
@@ -701,7 +704,7 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
     }
     DEV_ASSERT(img.isContinuous(), "NeuralNetModel.Detect.ImageNotContinuous");
 
-    image_tensor = tensorflow::Tensor(tensorflow::DT_FLOAT, {
+    imageTensor = tensorflow::Tensor(tensorflow::DT_FLOAT, {
       1, _params.inputHeight, _params.inputWidth, img.channels()
     });
 
@@ -709,21 +712,21 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
     const auto cvType = (img.channels() == 1 ? CV_32FC1 : CV_32FC3);
     
     cv::Mat cvTensor(_params.inputHeight, _params.inputWidth, cvType,
-                     image_tensor.tensor<float, 4>().data());
+                     imageTensor.tensor<float, 4>().data());
 
     img.convertTo(cvTensor, cvType, 1.f/_params.inputScale, _params.inputShift);
   
   }
   else 
   {
-    image_tensor = tensorflow::Tensor(tensorflow::DT_UINT8, {
+    imageTensor = tensorflow::Tensor(tensorflow::DT_UINT8, {
       1, _params.inputHeight, _params.inputWidth, img.channels()
     });
 
     // Resize uint8 input image directly into the uint8 tensor data    
     cv::Mat cvTensor(_params.inputHeight, _params.inputWidth, 
                      (img.channels() == 1 ? CV_8UC1 : CV_8UC3),
-                     image_tensor.tensor<uint8_t, 4>().data());
+                     imageTensor.tensor<uint8_t, 4>().data());
 
     cv::resize(img, cvTensor, cv::Size(_params.inputWidth, _params.inputHeight), 0, 0, kResizeMethod);
   }
@@ -734,11 +737,9 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
              img.cols, img.rows, img.channels(), typeStr, (int)_params.outputLayerNames.size());
   }
 
-  std::vector<tensorflow::Tensor> outputRensors;
-  tensorflow::Status run_status = _session->Run({{_params.inputLayerName, image_tensor}}, _params.outputLayerNames, {}, &outputRensors);
-
-  if (!run_status.ok()) {
-    PRINT_NAMED_ERROR("NeuralNetModel.Detect.DetectionSessionRunFail", "%s", run_status.ToString().c_str());
+  std::vector<tensorflow::Tensor> outputTensors;
+  if (RESULT_FAIL == Run(imageTensor, outputTensors))
+  {
     return RESULT_FAIL;
   }
 
@@ -746,17 +747,23 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
   {
     case OutputType::Classification:
     {
-      GetClassification(outputRensors[0], t, salientPoints);
+      GetClassification(outputTensors[0], t, salientPoints);
       break;
     }
     case OutputType::BinaryLocalization:
     {
-      GetLocalizedBinaryClassification(outputRensors[0], t, salientPoints);
+      GetLocalizedBinaryClassification(outputTensors[0], t, salientPoints);
       break;
     }
     case OutputType::AnchorBoxes:
     {
-      GetDetectedObjects(outputRensors, t, salientPoints);
+      GetDetectedObjects(outputTensors, t, salientPoints);  
+      break;
+    }
+    case OutputType::Segmentation:
+    {
+      // TODO (robert) need to convert the segmenation response map
+      // into salient points
       break;
     }
   }
@@ -767,6 +774,74 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
   }
 
   return RESULT_OK;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result NeuralNetModel::Run(tensorflow::Tensor imageTensor, std::vector<tensorflow::Tensor>& outputTensors)
+{
+  tensorflow::Status runStatus;
+  if (0 == _params.benchmarkRuns)
+  {
+    runStatus = _session->Run({{_params.inputLayerName, imageTensor}},
+                              _params.outputLayerNames, {}, &outputTensors);
+  }
+  else
+  {
+    std::unique_ptr<tensorflow::StatSummarizer> stats;
+    tensorflow::StatSummarizerOptions statsOptions;
+    statsOptions.show_run_order = true;
+    statsOptions.run_order_limit = 0;
+    statsOptions.show_time = true;
+    statsOptions.time_limit = 10;
+    statsOptions.show_memory = true;
+    statsOptions.memory_limit = 10;
+    statsOptions.show_type = true;
+    statsOptions.show_summary = true;
+    stats.reset(new tensorflow::StatSummarizer(statsOptions));
+
+    tensorflow::RunOptions runOptions;
+    if (nullptr != stats)
+    {
+      runOptions.set_trace_level(tensorflow::RunOptions::FULL_TRACE);
+    }
+    else
+    {
+      PRINT_NAMED_ERROR("ObjectDetector.Detect.Run.StatsSummarizerInitFail", "");
+      return RESULT_FAIL;
+    }
+
+    tensorflow::RunMetadata runMetadata;
+    for (uint32_t i = 0; i < _params.benchmarkRuns; ++i)
+    {
+      runStatus = _session->Run(runOptions, {{_params.inputLayerName, imageTensor}},
+                                _params.outputLayerNames, {}, &outputTensors, &runMetadata);
+      if (!runStatus.ok())
+      {
+        break;
+      }
+      if (nullptr != stats)
+      {
+        DEV_ASSERT(runMetadata.has_step_stats(), "ObjectDetector.Detect.Run.NullBenchmarkStats");
+        const tensorflow::StepStats& step_stats = runMetadata.step_stats();
+        stats->ProcessStepStats(step_stats);
+      }
+    }
+    // Print all the stats to the logs
+    // Note: right now all the stats are accummlated so for an average,
+    // division by benchmarkRuns (which shows up as count in the tensorflow
+    // stat summary) is neccesary.
+    stats->PrintStepStats();
+  }
+
+  if (!runStatus.ok())
+  {
+    PRINT_NAMED_ERROR("ObjectDetector.Detect.Run.DetectionSessionRunFail", "%s", runStatus.ToString().c_str());
+    return RESULT_FAIL;
+  }
+  else
+  {
+    return RESULT_OK;
+  }
 }
 
 } // namespace Anki
