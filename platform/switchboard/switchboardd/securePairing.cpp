@@ -340,19 +340,20 @@ void SecurePairing::SendWifiScanResult() {
 
   const uint8_t statusCode = (uint8_t)code;
 
-  std::vector<Anki::Cozmo::ExternalComms::RtsWifiScanResult_2> wifiScanResults;
+  std::vector<Anki::Cozmo::ExternalComms::RtsWifiScanResult_3> wifiScanResults;
 
   for(int i = 0; i < wifiResults.size(); i++) {
-    Anki::Cozmo::ExternalComms::RtsWifiScanResult_2 result = Anki::Cozmo::ExternalComms::RtsWifiScanResult_2(wifiResults[i].auth,
+    Anki::Cozmo::ExternalComms::RtsWifiScanResult_3 result = Anki::Cozmo::ExternalComms::RtsWifiScanResult_3(wifiResults[i].auth,
       wifiResults[i].signal_level,
       wifiResults[i].ssid,
-      wifiResults[i].hidden);
+      wifiResults[i].hidden,
+      wifiResults[i].provisioned);
 
       wifiScanResults.push_back(result);
   }
 
   Log::Write("Sending wifi scan results.");
-  SendRtsMessage<RtsWifiScanResponse_2>(statusCode, wifiScanResults);
+  SendRtsMessage<RtsWifiScanResponse_3>(statusCode, wifiScanResults);
 }
 
 void SecurePairing::SendWifiConnectResult() {
@@ -436,7 +437,7 @@ void SecurePairing::SendFile(uint32_t fileId, std::vector<uint8_t> fileBytes) {
 // Event handling methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-void SecurePairing::HandleRtsConnResponse(const Anki::Cozmo::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsConnResponse(const Anki::Cozmo::ExternalComms::RtsConnection_3& msg) {
   if(!AssertState(CommsState::Clad)) {
     return;
   }
@@ -481,7 +482,7 @@ void SecurePairing::HandleRtsConnResponse(const Anki::Cozmo::ExternalComms::RtsC
   }
 }
 
-void SecurePairing::HandleRtsChallengeMessage(const Cozmo::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsChallengeMessage(const Cozmo::ExternalComms::RtsConnection_3& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -497,7 +498,7 @@ void SecurePairing::HandleRtsChallengeMessage(const Cozmo::ExternalComms::RtsCon
   }
 }
 
-void SecurePairing::HandleRtsWifiConnectRequest(const Cozmo::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsWifiConnectRequest(const Cozmo::ExternalComms::RtsConnection_3& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -541,7 +542,7 @@ void SecurePairing::HandleRtsWifiConnectRequest(const Cozmo::ExternalComms::RtsC
   }
 }
 
-void SecurePairing::HandleRtsWifiIpRequest(const Cozmo::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsWifiIpRequest(const Cozmo::ExternalComms::RtsConnection_3& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -560,7 +561,7 @@ void SecurePairing::HandleRtsWifiIpRequest(const Cozmo::ExternalComms::RtsConnec
   Log::Write("Received wifi ip request.");
 }
 
-void SecurePairing::HandleRtsStatusRequest(const Cozmo::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsStatusRequest(const Cozmo::ExternalComms::RtsConnection_3& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -572,7 +573,7 @@ void SecurePairing::HandleRtsStatusRequest(const Cozmo::ExternalComms::RtsConnec
   }
 }
 
-void SecurePairing::HandleRtsWifiScanRequest(const Cozmo::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsWifiScanRequest(const Cozmo::ExternalComms::RtsConnection_3& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -585,7 +586,7 @@ void SecurePairing::HandleRtsWifiScanRequest(const Cozmo::ExternalComms::RtsConn
   }
 }
 
-void SecurePairing::HandleRtsOtaUpdateRequest(const Cozmo::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsOtaUpdateRequest(const Cozmo::ExternalComms::RtsConnection_3& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -599,7 +600,7 @@ void SecurePairing::HandleRtsOtaUpdateRequest(const Cozmo::ExternalComms::RtsCon
   Log::Write("Starting OTA update.");
 }
 
-void SecurePairing::HandleRtsOtaCancelRequest(const Cozmo::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsOtaCancelRequest(const Cozmo::ExternalComms::RtsConnection_3& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -616,7 +617,7 @@ void SecurePairing::HandleRtsOtaCancelRequest(const Cozmo::ExternalComms::RtsCon
   SendStatusResponse();
 }
 
-void SecurePairing::HandleRtsWifiAccessPointRequest(const Cozmo::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsWifiAccessPointRequest(const Cozmo::ExternalComms::RtsConnection_3& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -649,7 +650,7 @@ void SecurePairing::HandleRtsWifiAccessPointRequest(const Cozmo::ExternalComms::
   }
 }
 
-void SecurePairing::HandleRtsLogRequest(const Cozmo::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsLogRequest(const Cozmo::ExternalComms::RtsConnection_3& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -674,14 +675,14 @@ void SecurePairing::HandleRtsLogRequest(const Cozmo::ExternalComms::RtsConnectio
   SendFile(fileId, logBytes);
 }
 
-void SecurePairing::HandleRtsCancelPairing(const Cozmo::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsCancelPairing(const Cozmo::ExternalComms::RtsConnection_3& msg) {
   Log::Write("Stopping pairing due to client request.");
   StopPairing();
 }
 
 #ifdef DEBUG
 // only handle ssh message in debug build
-void SecurePairing::HandleRtsSsh(const Cozmo::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsSsh(const Cozmo::ExternalComms::RtsConnection_3& msg) {
   // RtsSsh
   if(!AssertState(CommsState::SecureClad)) {
     return;
@@ -705,16 +706,16 @@ void SecurePairing::HandleRtsSsh(const Cozmo::ExternalComms::RtsConnection_2& ms
   }
 }
 #else
-void SecurePairing::HandleRtsSsh(const Cozmo::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsSsh(const Cozmo::ExternalComms::RtsConnection_3& msg) {
   // log in release
   Log::Write("Received ssh key message in non-debug build.");
 }
 #endif
 
-void SecurePairing::HandleRtsAck(const Cozmo::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsAck(const Cozmo::ExternalComms::RtsConnection_3& msg) {
   Anki::Cozmo::ExternalComms::RtsAck ack = msg.Get_RtsAck();
   if(_state == PairingState::AwaitingNonceAck &&
-    ack.rtsConnectionTag == (uint8_t)Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsNonceMessage) {
+    ack.rtsConnectionTag == (uint8_t)Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsNonceMessage) {
     HandleNonceAck();
   } else {
     // ignore msg
@@ -954,7 +955,7 @@ void SecurePairing::UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStat
 template<typename T, typename... Args>
 int SecurePairing::SendRtsMessage(Args&&... args) {
   Anki::Cozmo::ExternalComms::ExternalComms msg = Anki::Cozmo::ExternalComms::ExternalComms(
-    Anki::Cozmo::ExternalComms::RtsConnection(Anki::Cozmo::ExternalComms::RtsConnection_2(T(std::forward<Args>(args)...))));
+    Anki::Cozmo::ExternalComms::RtsConnection(Anki::Cozmo::ExternalComms::RtsConnection_3(T(std::forward<Args>(args)...))));
   std::vector<uint8_t> messageData(msg.Size());
   const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
 

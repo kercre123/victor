@@ -150,43 +150,43 @@ namespace Switchboard {
     void IncrementChallengeCount();
 
     Signal::SmartHandle _rtsConnResponseHandle;
-    void HandleRtsConnResponse(const Cozmo::ExternalComms::RtsConnection_2& msg);
+    void HandleRtsConnResponse(const Cozmo::ExternalComms::RtsConnection_3& msg);
 
     Signal::SmartHandle _rtsChallengeMessageHandle;
-    void HandleRtsChallengeMessage(const Cozmo::ExternalComms::RtsConnection_2& msg);
+    void HandleRtsChallengeMessage(const Cozmo::ExternalComms::RtsConnection_3& msg);
 
     Signal::SmartHandle _rtsWifiConnectRequestHandle;
-    void HandleRtsWifiConnectRequest(const Cozmo::ExternalComms::RtsConnection_2& msg);
+    void HandleRtsWifiConnectRequest(const Cozmo::ExternalComms::RtsConnection_3& msg);
 
     Signal::SmartHandle _rtsWifiIpRequestHandle;
-    void HandleRtsWifiIpRequest(const Cozmo::ExternalComms::RtsConnection_2& msg);
+    void HandleRtsWifiIpRequest(const Cozmo::ExternalComms::RtsConnection_3& msg);
 
     Signal::SmartHandle _rtsRtsStatusRequestHandle;
-    void HandleRtsStatusRequest(const Cozmo::ExternalComms::RtsConnection_2& msg);
+    void HandleRtsStatusRequest(const Cozmo::ExternalComms::RtsConnection_3& msg);
 
     Signal::SmartHandle _rtsWifiScanRequestHandle;
-    void HandleRtsWifiScanRequest(const Cozmo::ExternalComms::RtsConnection_2& msg);
+    void HandleRtsWifiScanRequest(const Cozmo::ExternalComms::RtsConnection_3& msg);
 
     Signal::SmartHandle _rtsOtaUpdateRequestHandle;
-    void HandleRtsOtaUpdateRequest(const Cozmo::ExternalComms::RtsConnection_2& msg);
+    void HandleRtsOtaUpdateRequest(const Cozmo::ExternalComms::RtsConnection_3& msg);
 
     Signal::SmartHandle _rtsOtaCancelRequestHandle;
-    void HandleRtsOtaCancelRequest(const Cozmo::ExternalComms::RtsConnection_2& msg);
+    void HandleRtsOtaCancelRequest(const Cozmo::ExternalComms::RtsConnection_3& msg);
 
     Signal::SmartHandle _rtsWifiAccessPointRequestHandle;
-    void HandleRtsWifiAccessPointRequest(const Cozmo::ExternalComms::RtsConnection_2& msg);
+    void HandleRtsWifiAccessPointRequest(const Cozmo::ExternalComms::RtsConnection_3& msg);
 
     Signal::SmartHandle _rtsCancelPairingHandle;
-    void HandleRtsCancelPairing(const Cozmo::ExternalComms::RtsConnection_2& msg);
+    void HandleRtsCancelPairing(const Cozmo::ExternalComms::RtsConnection_3& msg);
 
     Signal::SmartHandle _rtsAckHandle;
-    void HandleRtsAck(const Cozmo::ExternalComms::RtsConnection_2& msg);
+    void HandleRtsAck(const Cozmo::ExternalComms::RtsConnection_3& msg);
 
     Signal::SmartHandle _rtsLogRequestHandle;
-    void HandleRtsLogRequest(const Cozmo::ExternalComms::RtsConnection_2& msg);
+    void HandleRtsLogRequest(const Cozmo::ExternalComms::RtsConnection_3& msg);
 
     Signal::SmartHandle _rtsSshHandle;
-    void HandleRtsSsh(const Cozmo::ExternalComms::RtsConnection_2& msg);
+    void HandleRtsSsh(const Cozmo::ExternalComms::RtsConnection_3& msg);
     
     // Variables
     const uint8_t kMaxMatchAttempts = 5;

@@ -19,7 +19,7 @@ namespace Anki {
 namespace Switchboard {
   class ExternalCommsCladHandler {
     public:
-    using RtsConnectionSignal = Signal::Signal<void (const Anki::Cozmo::ExternalComms::RtsConnection_2& msg)>;
+    using RtsConnectionSignal = Signal::Signal<void (const Anki::Cozmo::ExternalComms::RtsConnection_3& msg)>;
     
     RtsConnectionSignal& OnReceiveRtsConnResponse() {
       return _receiveRtsConnResponse;
@@ -86,62 +86,62 @@ namespace Switchboard {
       
       if(extComms.GetTag() == Anki::Cozmo::ExternalComms::ExternalCommsTag::RtsConnection) {
         Anki::Cozmo::ExternalComms::RtsConnection rstContainer = extComms.Get_RtsConnection();
-        Anki::Cozmo::ExternalComms::RtsConnection_2 rtsMsg = rstContainer.Get_RtsConnection_2();
+        Anki::Cozmo::ExternalComms::RtsConnection_3 rtsMsg = rstContainer.Get_RtsConnection_3();
         
         switch(rtsMsg.GetTag()) {
-          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::Error:
+          case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::Error:
             //
             break;
-          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsConnResponse: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsConnResponse: {
             _receiveRtsConnResponse.emit(rtsMsg);          
             break;
           }
-          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsChallengeMessage: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsChallengeMessage: {
             _receiveRtsChallengeMessage.emit(rtsMsg);
             break;
           }
-          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsWifiConnectRequest: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsWifiConnectRequest: {
             _receiveRtsWifiConnectRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsWifiIpRequest: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsWifiIpRequest: {
             _receiveRtsWifiIpRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsStatusRequest: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsStatusRequest: {
             _receiveRtsStatusRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsWifiScanRequest: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsWifiScanRequest: {
             _receiveRtsWifiScanRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsOtaUpdateRequest: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsOtaUpdateRequest: {
             _receiveRtsOtaUpdateRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsOtaCancelRequest: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsOtaCancelRequest: {
             _receiveRtsOtaCancelRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsWifiAccessPointRequest: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsWifiAccessPointRequest: {
             _receiveRtsWifiAccessPointRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsCancelPairing: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsCancelPairing: {
             _receiveRtsCancelPairing.emit(rtsMsg);
             break;
           }
-          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsAck: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsAck: {
             _receiveRtsAck.emit(rtsMsg);
             break;
           }
-          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsLogRequest: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsLogRequest: {
             _receiveRtsLogRequest.emit(rtsMsg);
             break;
           }
           // RtsSsh
-          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsSshRequest: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsSshRequest: {
             // only handle ssh message in debug build
             _DEV_ReceiveSshKey.emit(rtsMsg);
             break;
