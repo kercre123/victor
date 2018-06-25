@@ -8,9 +8,9 @@
  * 				components (like timers or faces) that could probably be remembered by the robot. 
  *        Snapshots are currently loaded into memory upon robot startup (so there is no load function).
  *
- * Note: This component stores the versioning information of the build. If the version changes, then all
- *       data is erased unless the kVariableSnapshotComponent_ResetDataOnNewBuildVersion console variable
- *       is set to false.
+ * Note: The Variable Snapshot Component stores the versioning information of the build: the OS build
+ *       version and the robot build SHA. If the version information changes, then all data is erased
+ *       unless the kResetDataOnNewBuildVersion console variable is set to false.
  *
  * Copyright: Anki, Inc. 2018
  */
@@ -57,13 +57,8 @@ public:
   // API functions
   //////
 
-  // SaveVariableSnapshots saves the existing variable snapshots into the component or the subset 
-  // specified by a vector of keys, and returns true if the save succeeded.
-  bool SaveVariableSnapshots();
-
-
-  // InitVariableSnapshot initializes the variable snapshot by looking up the desired id and loading 
-  // its value into the pointer provided by the caller. If there is no existing data, the the pointer 
+  // InitVariable initializes the variable snapshot by looking up the desired id and loading its 
+  // value into the pointer provided by the caller. If there is no existing data, the the pointer 
   // (and its value) remain unchanged. It returns true if a variable snapshot existed and was 
   // successfully loaded. Otherwise, it returns false.
   //
@@ -72,35 +67,37 @@ public:
   // 
   // Note: the serialization function is stored by the component for later use.
   template <typename T>
-  bool InitVariableSnapshot(VariableSnapshotId,
-                            std::shared_ptr<T>,
-                            std::function<bool(std::shared_ptr<T>, Json::Value&)>,
-                            std::function<void(std::shared_ptr<T>, const Json::Value&)>);
+  bool InitVariable(VariableSnapshotId,
+                    std::shared_ptr<T>,
+                    std::function<bool(std::shared_ptr<T>, Json::Value&)>,
+                    std::function<void(std::shared_ptr<T>, const Json::Value&)>);
 
   // save location for data
   static const char* kVariableSnapshotFolder;
   static const char* kVariableSnapshotFilename;
 
+  static void GetSavePath(std::string folderName, std::string filename);
+
 private:
+  
+  // SaveVariableSnapshots saves the existing variable snapshots into the component or the subset 
+  // specified by a vector of keys, and returns true if the save succeeded.
+  bool SaveVariableSnapshots();
+
   using SerializationFnType = std::function<bool(Json::Value&)>;
 
-  // This class defines an interface for objects that are used to represent persistent data in the
-  // variable snapshot component. The interface provides a single function to serialize the data to
-  // a JSON value.
-  class VariableSnapshotObject {
-  public:
-    VariableSnapshotObject(SerializationFnType serializeFn)
-      :  _serializeFn(serializeFn) {};
+  // this data structure stores the function required to serialize data
+  std::unordered_map<VariableSnapshotId, SerializationFnType> _variableSnapshotDataMap;
 
-    // serialization functionality
-    bool Serialize(Json::Value& outJsonData) const { return _serializeFn(outJsonData); };
+  // this data structure points to the Json data loaded by RobotDataLoader
+  RobotDataLoader::VariableSnapshotJsonMap* _variableSnapshotJsonMap;
 
-  private:
-    SerializationFnType _serializeFn;
-  };
-
-  std::unordered_map<VariableSnapshotId, VariableSnapshotObject> _variableSnapshotDataMap;
   Cozmo::Robot* _robot;
+
+  // save path for data
+  std::string _savePath;
+
+  // stores versioning information for the component
   std::shared_ptr<std::string> _osBuildVersionPtr;
   std::shared_ptr<std::string> _buildShaPtr;
 
@@ -108,20 +105,20 @@ private:
 
 
 template <typename T>
-bool VariableSnapshotComponent::InitVariableSnapshot(VariableSnapshotId variableSnapshotId,
-                                                     std::shared_ptr<T> dataValuePtr,
-                                                     std::function<bool(std::shared_ptr<T>, Json::Value&)> serializeFn,
-                                                     std::function<void(std::shared_ptr<T>, const Json::Value&)> deserializeFn)
+bool VariableSnapshotComponent::InitVariable(VariableSnapshotId variableSnapshotId,
+                                             std::shared_ptr<T> dataValuePtr,
+                                             std::function<bool(std::shared_ptr<T>, Json::Value&)> serializeFn,
+                                             std::function<void(std::shared_ptr<T>, const Json::Value&)> deserializeFn)
 {
-  auto& dataAccessorComp = _robot->GetDataAccessorComponent();
   bool isValueLoaded = false;
+
+  ANKI_VERIFY(nullptr != dataValuePtr,
+              "VariableSnapshotComponent",
+              "nullptr is an invalid location to initialize a persistent variable.")
 
   // since dataPtr is a shared pointer of a specific type, we use this wrapper closure to standardize the
   // serialization function signature to be stored in the component and avoid templating.
   auto serializeFnWrapper = [dataValuePtr, serializeFn] (Json::Value& outJson) { return serializeFn(dataValuePtr, outJson); };
-
-  // create a new variable snapshot object with the new shared_ptr and serialization function
-  VariableSnapshotObject newDataObj(serializeFnWrapper);
 
   // TODO: if a variable is reinitialized within one boot cycle, get its info from the data map
   //       for when reinitialization is added as a feature
@@ -135,14 +132,14 @@ bool VariableSnapshotComponent::InitVariableSnapshot(VariableSnapshotId variable
 
   // if the specified object has stored JSON data under the specified name, load it and return true.
   // else save the default data and return false
-  auto variableSnapshotJsonIter = dataAccessorComp.GetVariableSnapshotJsonMap()->find(variableSnapshotId);
-  if(variableSnapshotJsonIter != dataAccessorComp.GetVariableSnapshotJsonMap()->end()) {
+  auto variableSnapshotJsonIter = _variableSnapshotJsonMap->find(variableSnapshotId);
+  if(variableSnapshotJsonIter != _variableSnapshotJsonMap->end()) {
     deserializeFn(dataValuePtr, variableSnapshotJsonIter->second);
     isValueLoaded = true;
   }
 
   // store the new variable snapshot object
-  _variableSnapshotDataMap.emplace(variableSnapshotId, std::move(newDataObj));
+  _variableSnapshotDataMap.emplace(variableSnapshotId, std::move(serializeFnWrapper));
 
   // at this point, the data is a new snapshot by default
   return isValueLoaded;

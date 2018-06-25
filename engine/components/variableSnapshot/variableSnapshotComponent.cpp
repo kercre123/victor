@@ -5,7 +5,7 @@
  * Created: 5/31/2018
  *
  * Description: This is a component meant to provide persistence across boots for data within other 
- * 				components (like timers or faces) that should be remembered by the robot.
+ * 				      components (like timers or faces) that should be remembered by the robot.
  *
  *
  * Copyright: Anki, Inc. 2018
@@ -25,7 +25,7 @@
 namespace Anki {
 namespace Cozmo {
 
-CONSOLE_VAR(bool, kVariableSnapshotComponent_ResetDataOnNewBuildVersion, "VariableSnapshotComponent", true);
+CONSOLE_VAR(bool, kResetDataOnNewBuildVersion, "VariableSnapshotComponent", true);
 
 // save location for data
 const char* VariableSnapshotComponent::kVariableSnapshotFolder = "variableSnapshotStorage";
@@ -34,26 +34,26 @@ const char* VariableSnapshotComponent::kVariableSnapshotFilename = "variableSnap
 
 VariableSnapshotComponent::VariableSnapshotComponent():
   IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::VariableSnapshotComponent),
-  _variableSnapshotDataMap(std::unordered_map<VariableSnapshotId, VariableSnapshotObject>()),
+  _variableSnapshotJsonMap(_robot->GetDataAccessorComponent().GetVariableSnapshotJsonMap()),
   _robot(nullptr) 
 {
 }
 
 VariableSnapshotComponent::~VariableSnapshotComponent() 
 {
+  // upon destruction, save all data
+  SaveVariableSnapshots();
 }
 
-
-//////
-// IDependencyManagedComponent functions
-//////
 void VariableSnapshotComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
 {
   _robot = robot;
-  auto& dataAccessorComp = _robot->GetDataAccessorComponent();
+
+  // initialize save path for the component
+  InitSavePath(kVariableSnapshotFolder, kVariableSnapshotFilename);
 
   // if we want to reset data when there is a new build version, check for a new build version
-  if(kVariableSnapshotComponent_ResetDataOnNewBuildVersion) {
+  if(kResetDataOnNewBuildVersion) {
     // get current build version/SHA
     auto* osState = Anki::Cozmo::OSState::getInstance();
     DEV_ASSERT(osState != nullptr, "VariableSnapshotComponent.VariableSnapshotComponent.InvalidOSState");
@@ -61,55 +61,69 @@ void VariableSnapshotComponent::InitDependent(Cozmo::Robot* robot, const RobotCo
     _buildShaPtr = std::make_shared<std::string>(osState->GetBuildSha());
 
     // get versioning data
-    InitVariableSnapshot<std::string>(VariableSnapshotId::_RobotOSBuildVersion,
-                                      _osBuildVersionPtr,
-                                      VariableSnapshotEncoder::SerializeString,
-                                      VariableSnapshotEncoder::DeserializeString);
-    InitVariableSnapshot<std::string>(VariableSnapshotId::_RobotBuildSha,
-                                      _buildShaPtr,
-                                      VariableSnapshotEncoder::SerializeString,
-                                      VariableSnapshotEncoder::DeserializeString);
+    InitVariable<std::string>(VariableSnapshotId::_RobotOSBuildVersion,
+                              _osBuildVersionPtr,
+                              VariableSnapshotEncoder::SerializeString,
+                              VariableSnapshotEncoder::DeserializeString);
+    InitVariable<std::string>(VariableSnapshotId::_RobotBuildSha,
+                              _buildShaPtr,
+                              VariableSnapshotEncoder::SerializeString,
+                              VariableSnapshotEncoder::DeserializeString);
 
     if(*_osBuildVersionPtr != osState->GetOSBuildVersion() || *_buildShaPtr != osState->GetBuildSha()) {
-      dataAccessorComp.GetVariableSnapshotJsonMap()->clear();
+      _variableSnapshotJsonMap->clear();
       *_osBuildVersionPtr = osState->GetOSBuildVersion();
       *_buildShaPtr = osState->GetBuildSha();
     }
   }
 }
 
-
-//////
-// API functions
-//////
-bool VariableSnapshotComponent::SaveVariableSnapshots()
+static std::string VariableSnapshotComponent::GetSavePath(std::string folderName, std::string filename) 
 {
-  auto& dataAccessorComp = _robot->GetDataAccessorComponent();
   auto platform = _robot->GetContextDataPlatform();
 
-  // get the path to the file
-  std::string saveFolder = platform->pathToResource( Util::Data::Scope::Persistent, kVariableSnapshotFolder );
+  // cache the name of our save directory
+  std::string saveFolder = platform->pathToResource( Util::Data::Scope::Persistent, folderName );
   saveFolder = Util::FileUtils::AddTrailingFileSeparator( saveFolder );
-  std::string pathToVariableSnapshotFile = ( saveFolder + kVariableSnapshotFilename + ".json" );
+
+  // make sure our folder structure exists
+  if(Util::FileUtils::DirectoryDoesNotExist( saveFolder )) {
+    Util::FileUtils::CreateDirectory( saveFolder, false, true );
+    PRINT_CH_DEBUG( "DataLoader", "VariableSnapshot", "Creating variable snapshot directory: %s", saveFolder.c_str() );
+  }
+  
+  // read in our data
+  std::string variableSnapshotSavePath = ( saveFolder + filename + ".json" );
+
+  if(!Util::FileUtils::FileExists( variableSnapshotSavePath )) {
+    PRINT_CH_DEBUG( "DataLoader", "VariableSnapshot", "Creating variable snapshot file: %s", variableSnapshotSavePath.c_str() );
+  }
+
+  return variableSnapshotSavePath;
+}
+
+bool VariableSnapshotComponent::SaveVariableSnapshots()
+{
+  auto platform = _robot->GetContextDataPlatform();
 
   // update the stored json data
-  for(const auto& subscriber : _variableSnapshotDataMap) {
-    Json::Value subscriberJson;
-    VariableSnapshotId variableSnapshotId = subscriber.first;
+  for(const auto& dataMapIter : _variableSnapshotDataMap) {
+    Json::Value outJson;
+    VariableSnapshotId variableSnapshotId = dataMapIter.first;
     
-    subscriber.second.Serialize(subscriberJson);
-    subscriberJson[VariableSnapshotEncoder::kVariableSnapshotIdKey] = VariableSnapshotIdToString(variableSnapshotId);
-    (*dataAccessorComp.GetVariableSnapshotJsonMap())[variableSnapshotId] = std::move(subscriberJson);
+    dataMapIter.second(outJson);
+    outJson[VariableSnapshotEncoder::kVariableSnapshotIdKey] = VariableSnapshotIdToString(variableSnapshotId);
+    (*_variableSnapshotJsonMap)[variableSnapshotId] = std::move(outJson);
   }
 
   // create a json list that will be stored
   Json::Value subscriberListJson;
-  for(const auto& subscriber : *(dataAccessorComp.GetVariableSnapshotJsonMap())) {
+  for(const auto& subscriber : *_variableSnapshotJsonMap) {
     subscriberListJson.append(subscriber.second);
   }
 
   const bool success = platform->writeAsJson(Util::Data::Scope::Persistent, 
-                                             pathToVariableSnapshotFile, 
+                                             VariableSnapshotComponent::variableSnapshotSavePath, 
                                              subscriberListJson);
   return success;
 }

@@ -224,7 +224,7 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
     {BEIComponentID::BehaviorEvent,             BEIComponentWrapper(behaviorEventComponent)},
     {BEIComponentID::BehaviorTimerManager,      BEIComponentWrapper(behaviorTimers)},
     {BEIComponentID::BlockWorld,                BEIComponentWrapper(blockWorld)},
-    {BEIComponentID::BodyLightComponent,        BEIComponentWrapper(bodyLightComponent)},
+    {BEIComponentID::BackpackLightComponent,    BEIComponentWrapper(backpackLightComponent)},
     {BEIComponentID::CubeAccel,                 BEIComponentWrapper(cubeAccelComponent)},
     {BEIComponentID::CubeLight,                 BEIComponentWrapper(cubeLightComponent)},
     {BEIComponentID::CliffSensor,               BEIComponentWrapper(cliffSensorComponent)},

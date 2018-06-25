@@ -3,9 +3,8 @@
 // Created: 2018-06-05
 // Copyright: Anki, inc. 2018
 
-// Note: The Variable Snapshot Component stores the versioning information of the build. If the version
-//       changes, then all data is erased unless the kVariableSnapshotComponent_ResetDataOnNewBuildVersion
-//       console variable is set to false.
+// Note: Snapshots are saved unless the robot software version changes - see VariableSnapshotComponent.h
+//       for more details.
 
 
 namespace Anki {

@@ -699,31 +699,13 @@ void RobotDataLoader::LoadVariableSnapshotJsonMap()
 {
 
   _variableSnapshotJsonMap = std::make_unique<VariableSnapshotJsonMap>();
-
-  // cache the name of our save directory
-  std::string saveFolder = _platform->pathToResource( Util::Data::Scope::Persistent, VariableSnapshotComponent::kVariableSnapshotFolder );
-  saveFolder = Util::FileUtils::AddTrailingFileSeparator( saveFolder );
-
-  // make sure our folder structure exists
-  if(Util::FileUtils::DirectoryDoesNotExist( saveFolder )) {
-    Util::FileUtils::CreateDirectory( saveFolder, false, true );
-    PRINT_CH_DEBUG( "DataLoader", "VariableSnapshot", "Creating variable snapshot directory: %s", saveFolder.c_str() );
-  }
   
-  // read in our data
-  std::string pathToVariableSnapshotFile = ( saveFolder + VariableSnapshotComponent::kVariableSnapshotFilename + ".json" );
-
-  if(!Util::FileUtils::FileExists( pathToVariableSnapshotFile )) {
-    Util::FileUtils::WriteFile( pathToVariableSnapshotFile, "{}" );
-    PRINT_CH_DEBUG( "DataLoader", "VariableSnapshot", "Creating variable snapshot file: %s", pathToVariableSnapshotFile.c_str() );
-  }
-
-  Json::Value outSubscriberJSON;
-  const bool success = _platform->readAsJson(pathToVariableSnapshotFile, outSubscriberJSON);
+  Json::Value outLoadedJson;
+  const bool success = _platform->readAsJson(VariableSnapshotComponent::variableSnapshotSavePath, outLoadedJson);
 
   // check whether the look up was successful and we got back a nonempty JSON array
-  if (success && !outSubscriberJSON.empty() && outSubscriberJSON.isArray()) {
-    for(const auto& subscriberInfo : outSubscriberJSON) {
+  if (success && !outLoadedJson.empty() && outLoadedJson.isArray()) {
+    for(const auto& subscriberInfo : outLoadedJson) {
       // store the json object in the map
       VariableSnapshotId variableSnapshotId = VariableSnapshotIdFromString(subscriberInfo[VariableSnapshotEncoder::kVariableSnapshotIdKey].asString());
       _variableSnapshotJsonMap->emplace(variableSnapshotId, subscriberInfo);
