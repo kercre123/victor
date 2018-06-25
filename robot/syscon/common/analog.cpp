@@ -273,6 +273,7 @@ void Analog::tick(void) {
   static bool has_booted = false;
   
   if (!has_booted && (button_now || on_charger)) {
+    has_booted = true;
     Power::setMode(POWER_CALM);
   }
   #endif
