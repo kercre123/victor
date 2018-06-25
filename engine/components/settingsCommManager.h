@@ -48,6 +48,8 @@ public:
 
   bool HandleRobotSettingChangeRequest(const std::string& settingKey, const std::string& settingValue);
   bool HandleRobotSettingToggleRequest(const std::string& settingKey);
+  
+  void RefreshConsoleVars();
 
 private:
 

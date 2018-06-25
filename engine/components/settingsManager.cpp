@@ -13,6 +13,7 @@
 
 #include "engine/components/settingsManager.h"
 
+#include "engine/components/settingsCommManager.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 
@@ -21,7 +22,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/robotSettingsTypes.h"
 
-// Log options
+
 #define LOG_CHANNEL "SettingsManager"
 
 namespace Anki {
@@ -125,7 +126,7 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
   _currentSettings["Robot.MasterVolume"]._settingSetter = &SettingsManager::ApplySettingMasterVolume;
   _currentSettings["Robot.EyeColor"]._settingSetter = &SettingsManager::ApplySettingEyeColor;
   _currentSettings["Robot.Locale"]._settingSetter = &SettingsManager::ApplySettingLocale;
-
+  
   // Finally, set a flag so we will apply all of the settings
   // we just loaded and/or set, in the first update
   _applySettingsNextTick = true;
@@ -139,6 +140,9 @@ void SettingsManager::UpdateDependent(const RobotCompMap& dependentComps)
   {
     _applySettingsNextTick = false;
     ApplyAllCurrentSettings();
+
+    auto& settingsCommManager = _robot->GetComponent<SettingsCommManager>();
+    settingsCommManager.RefreshConsoleVars();
   }
 }
 
