@@ -34,38 +34,42 @@ const int kRobotId = 0;
 void InitializeTests()
 {
   using namespace Anki::Cozmo;
-  VariableSnapshotComponent::kVariableSnapshotFilename = "unitTestFile";
+  // VariableSnapshotComponent::kVariableSnapshotFilename = "unitTestFile";
 
   // cache the name of our save directory
-  auto robot = std::make_unique<Robot>(kRobotId, cozmoContext);
-  auto platform = robot->GetContextDataPlatform();
-  std::string saveFolder = platform->pathToResource( Anki::Util::Data::Scope::Persistent, VariableSnapshotComponent::kVariableSnapshotFolder );
-  saveFolder = Anki::Util::FileUtils::AddTrailingFileSeparator( saveFolder );
+  // auto robot = std::make_unique<Robot>(kRobotId, cozmoContext);
+  // auto platform = robot->GetContextDataPlatform();
+  // std::string saveFolder = platform->pathToResource( Anki::Util::Data::Scope::Persistent, VariableSnapshotComponent::kVariableSnapshotFolder );
+  // saveFolder = Anki::Util::FileUtils::AddTrailingFileSeparator( saveFolder );
 
-  // make sure our folder structure exists
-  if(Anki::Util::FileUtils::DirectoryDoesNotExist( saveFolder )) {
-    Anki::Util::FileUtils::CreateDirectory( saveFolder, false, true );
-    PRINT_CH_DEBUG( "DataLoader", "VariableSnapshot", "Creating variable snapshot directory: %s", saveFolder.c_str() );
-  }
+  // // make sure our folder structure exists
+  // if(Anki::Util::FileUtils::DirectoryDoesNotExist( saveFolder )) {
+  //   Anki::Util::FileUtils::CreateDirectory( saveFolder, false, true );
+  //   PRINT_CH_DEBUG( "DataLoader", "VariableSnapshot", "Creating variable snapshot directory: %s", saveFolder.c_str() );
+  // }
   
   // read in our data
-  std::string pathToVariableSnapshotFile = ( saveFolder + VariableSnapshotComponent::kVariableSnapshotFilename + ".json" );
+  // std::string pathToVariableSnapshotFile = VariableSnapshotComponent::GetSavePath(platform,
+  //                                                                                 VariableSnapshotComponent::kVariableSnapshotFolder,
+  //                                                                                 VariableSnapshotComponent::kVariableSnapshotFilename);
 };
 
 // removes all test information from storage
 void RemoveTestData()
 {
   using namespace Anki::Cozmo;
-  VariableSnapshotComponent::kVariableSnapshotFilename = "unitTestFile";
+  // VariableSnapshotComponent::kVariableSnapshotFilename = "unitTestFile";
 
   // cache the name of our save directory
   auto robot = std::make_unique<Robot>(kRobotId, cozmoContext);
   auto platform = robot->GetContextDataPlatform();
-  std::string saveFolder = platform->pathToResource( Anki::Util::Data::Scope::Persistent, VariableSnapshotComponent::kVariableSnapshotFolder );
-  saveFolder = Anki::Util::FileUtils::AddTrailingFileSeparator( saveFolder );
+  // std::string saveFolder = platform->pathToResource( Anki::Util::Data::Scope::Persistent, VariableSnapshotComponent::kVariableSnapshotFolder );
+  // saveFolder = Anki::Util::FileUtils::AddTrailingFileSeparator( saveFolder );
 
    // read in our data
-  std::string pathToVariableSnapshotFile = ( saveFolder + VariableSnapshotComponent::kVariableSnapshotFilename + ".json" );
+  std::string pathToVariableSnapshotFile = VariableSnapshotComponent::GetSavePath(platform,
+                                                                                  VariableSnapshotComponent::kVariableSnapshotFolder,
+                                                                                  VariableSnapshotComponent::kVariableSnapshotFilename);
 
   Json::Value emptyJson;
   platform->writeAsJson(Anki::Util::Data::Scope::Persistent, pathToVariableSnapshotFile, emptyJson);
@@ -74,6 +78,7 @@ void RemoveTestData()
 // tests that the save functionality works when the robot is shut down (i.e. destructed)
 TEST(VariableSnapshotComponent, SaveOnShutdown)
 {
+  RemoveTestData();
   InitializeTests();
 
   using namespace Anki::Cozmo;
@@ -91,10 +96,7 @@ TEST(VariableSnapshotComponent, SaveOnShutdown)
     // identify data to be stored
     std::shared_ptr<bool> testBoolPtr0 = std::make_shared<bool>(initBool0);
 
-    variableSnapshotComp.InitVariable<bool>(VariableSnapshotId::UnitTestBool0,
-                                            testBoolPtr0,
-                                            VariableSnapshotEncoder::SerializeBool,
-                                            VariableSnapshotEncoder::DeserializeBool);
+    variableSnapshotComp.InitVariable<bool>(VariableSnapshotId::UnitTestBool0, testBoolPtr0);
 
     // the robot now shuts down and automatically saves the data
   }
@@ -110,17 +112,13 @@ TEST(VariableSnapshotComponent, SaveOnShutdown)
     // identify data to be stored
     std::shared_ptr<bool> testBoolPtr1 = std::make_shared<bool>(!initBool0);
 
-    variableSnapshotComp.InitVariable<bool>(VariableSnapshotId::UnitTestBool0,
-                                            testBoolPtr1,
-                                            VariableSnapshotEncoder::SerializeBool,
-                                            VariableSnapshotEncoder::DeserializeBool);
+    variableSnapshotComp.InitVariable<bool>(VariableSnapshotId::UnitTestBool0, testBoolPtr1);
 
     // check that the data is the same
     EXPECT_EQ(*testBoolPtr1, initBool0);
 
     // the robot now automatically saves data as it destructs
   }
-  RemoveTestData();
 };
 
 // tests that data persists when changed
@@ -128,6 +126,7 @@ TEST(VariableSnapshotComponent, BasicFunctionalityTest)
 {
 
   using namespace Anki::Cozmo;
+  RemoveTestData();
   InitializeTests();
 
   int initInt0 = 20;
@@ -143,10 +142,7 @@ TEST(VariableSnapshotComponent, BasicFunctionalityTest)
     // identify data to be stored
     std::shared_ptr<int> testIntPtr0 = std::make_shared<int>(initInt0);
 
-    variableSnapshotComp.InitVariable<int>(VariableSnapshotId::UnitTestInt0,
-                                           testIntPtr0,
-                                           VariableSnapshotEncoder::SerializeInt,
-                                           VariableSnapshotEncoder::DeserializeInt);
+    variableSnapshotComp.InitVariable<int>(VariableSnapshotId::UnitTestInt0, testIntPtr0);
 
     ++(*testIntPtr0);
 
@@ -165,10 +161,7 @@ TEST(VariableSnapshotComponent, BasicFunctionalityTest)
     // identify data to be stored
     std::shared_ptr<int> testIntPtr1 = std::make_shared<int>(0);
 
-    variableSnapshotComp.InitVariable<int>(VariableSnapshotId::UnitTestInt0,
-                                           testIntPtr1,
-                                           VariableSnapshotEncoder::SerializeInt,
-                                           VariableSnapshotEncoder::DeserializeInt);
+    variableSnapshotComp.InitVariable<int>(VariableSnapshotId::UnitTestInt0, testIntPtr1);
 
     // check that the data is the same
     EXPECT_EQ(*testIntPtr1, initInt0+1);
@@ -181,6 +174,7 @@ TEST(VariableSnapshotComponent, MultipleInitsFail)
 {
 
   using namespace Anki::Cozmo;
+  RemoveTestData();
   InitializeTests();
 
   int initInt0 = 20;
@@ -196,15 +190,9 @@ TEST(VariableSnapshotComponent, MultipleInitsFail)
   std::shared_ptr<int> testIntPtr0 = std::make_shared<int>(initInt0);
   std::shared_ptr<int> testIntPtr1 = std::make_shared<int>(initInt0-1);
 
-  variableSnapshotComp.InitVariable<int>(VariableSnapshotId::UnitTestInt0,
-                                         testIntPtr0,
-                                         VariableSnapshotEncoder::SerializeInt,
-                                         VariableSnapshotEncoder::DeserializeInt);
+  variableSnapshotComp.InitVariable<int>(VariableSnapshotId::UnitTestInt0, testIntPtr0);
   Anki::Util::_errG = false;
-  variableSnapshotComp.InitVariable<int>(VariableSnapshotId::UnitTestInt0,
-                                         testIntPtr1,
-                                         VariableSnapshotEncoder::SerializeInt,
-                                         VariableSnapshotEncoder::DeserializeInt);
+  variableSnapshotComp.InitVariable<int>(VariableSnapshotId::UnitTestInt0, testIntPtr1);
 
   // should error here
   EXPECT_TRUE( Anki::Util::_errG );
@@ -216,6 +204,7 @@ TEST(VariableSnapshotComponent, MultipleInitsFail)
 // changing version info leads to data reset
 TEST(VariableSnapshotComponent, VersioningInfoDataResetOSBuildVersion)
 {
+  RemoveTestData();
   InitializeTests();
 
   using namespace Anki::Cozmo;
@@ -243,12 +232,10 @@ TEST(VariableSnapshotComponent, VersioningInfoDataResetOSBuildVersion)
     // identify data to be stored
     std::shared_ptr<bool> testBoolPtr0 = std::make_shared<bool>(initBool0);
 
-    variableSnapshotComp.InitVariable<bool>(VariableSnapshotId::UnitTestBool0,
-                                            testBoolPtr0,
-                                            VariableSnapshotEncoder::SerializeBool,
-                                            VariableSnapshotEncoder::DeserializeBool);
+    variableSnapshotComp.InitVariable<bool>(VariableSnapshotId::UnitTestBool0, testBoolPtr0);
 
     variableSnapshotComp.SaveVariableSnapshots();
+    RemoveTestData();
   }
 
   // make another robot
@@ -262,10 +249,7 @@ TEST(VariableSnapshotComponent, VersioningInfoDataResetOSBuildVersion)
     // identify data to be stored
     std::shared_ptr<bool> testBoolPtr1 = std::make_shared<bool>(!initBool0);
 
-    variableSnapshotComp.InitVariable<bool>(VariableSnapshotId::UnitTestBool0,
-                                            testBoolPtr1,
-                                            VariableSnapshotEncoder::SerializeBool,
-                                            VariableSnapshotEncoder::DeserializeBool);
+    variableSnapshotComp.InitVariable<bool>(VariableSnapshotId::UnitTestBool0, testBoolPtr1);
 
     // check that the data is the same
     EXPECT_TRUE(*testBoolPtr1);
@@ -278,6 +262,7 @@ TEST(VariableSnapshotComponent, VersioningInfoDataResetOSBuildVersion)
 // changing version robot build sha leads to data reset
 TEST(VariableSnapshotComponent, VersioningInfoDataResetRobotBuildSha)
 {
+  RemoveTestData();
   InitializeTests();
 
   using namespace Anki::Cozmo;
@@ -305,10 +290,7 @@ TEST(VariableSnapshotComponent, VersioningInfoDataResetRobotBuildSha)
     // identify data to be stored
     std::shared_ptr<bool> testBoolPtr0 = std::make_shared<bool>(initBool0);
 
-    variableSnapshotComp.InitVariable<bool>(VariableSnapshotId::UnitTestBool0,
-                                            testBoolPtr0,
-                                            VariableSnapshotEncoder::SerializeBool,
-                                            VariableSnapshotEncoder::DeserializeBool);
+    variableSnapshotComp.InitVariable<bool>(VariableSnapshotId::UnitTestBool0, testBoolPtr0);
 
     variableSnapshotComp.SaveVariableSnapshots();
   }
@@ -324,10 +306,7 @@ TEST(VariableSnapshotComponent, VersioningInfoDataResetRobotBuildSha)
     // identify data to be stored
     std::shared_ptr<bool> testBoolPtr1 = std::make_shared<bool>(!initBool0);
 
-    variableSnapshotComp.InitVariable<bool>(VariableSnapshotId::UnitTestBool0,
-                                            testBoolPtr1,
-                                            VariableSnapshotEncoder::SerializeBool,
-                                            VariableSnapshotEncoder::DeserializeBool);
+    variableSnapshotComp.InitVariable<bool>(VariableSnapshotId::UnitTestBool0, testBoolPtr1);
 
     // check that the data is the same
     EXPECT_TRUE(*testBoolPtr1);
@@ -336,3 +315,6 @@ TEST(VariableSnapshotComponent, VersioningInfoDataResetRobotBuildSha)
   }
   RemoveTestData();
 };
+
+// TODO: make sure to test nullptr issue
+
