@@ -20,12 +20,7 @@
   {
     "en":
     {
-      "voice": "Ryan22k_CO",
-      "speed": 79,
-      "speedTraits": [
-        { "textLengthMin": 0, "textLengthMax": 3, "rangeMin": 50, "rangeMax": 79},
-        { "textLengthMin": 10, "textLengthMax": 999, "rangeMin": 79, "rangeMax": 100}
-      ]
+      "voice": "Ryan22k_CO"
     },
     "fr":
     {
@@ -49,12 +44,7 @@
   {
     "en":
     {
-      "voice": "co-USEnglish-Ryan-22khz/enu/enu_ryan_22k_co.fl.ini",
-      "speed": 79,
-      "speedTraits": [
-        { "textLengthMin": 0, "textLengthMax": 3, "rangeMin": 50, "rangeMax": 79},
-        { "textLengthMin": 10, "textLengthMax": 999, "rangeMin": 79, "rangeMax": 100}
-      ]
+      "voice": "co-USEnglish-Bendnn-22khz/enu/enu_bendnn_22k_co.fl.ini"
     },
     "fr":
     {
