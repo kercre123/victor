@@ -462,6 +462,96 @@ struct RtsChallengeSuccessMessage
 extern const char* RtsChallengeSuccessMessageVersionHashStr;
 extern const uint8_t RtsChallengeSuccessMessageVersionHash[16];
 
+// MESSAGE RtsWifiForgetRequest
+struct RtsWifiForgetRequest
+{
+  bool deleteAll;
+  std::string wifiSsidHex;
+  
+  /**** Constructors ****/
+  RtsWifiForgetRequest() = default;
+  RtsWifiForgetRequest(const RtsWifiForgetRequest& other) = default;
+  RtsWifiForgetRequest(RtsWifiForgetRequest& other) = default;
+  RtsWifiForgetRequest(RtsWifiForgetRequest&& other) noexcept = default;
+  RtsWifiForgetRequest& operator=(const RtsWifiForgetRequest& other) = default;
+  RtsWifiForgetRequest& operator=(RtsWifiForgetRequest&& other) = default;
+  
+  explicit RtsWifiForgetRequest(bool deleteAll,
+    const std::string& wifiSsidHex)
+  : deleteAll(deleteAll)
+  , wifiSsidHex(wifiSsidHex)
+  {}
+  
+  explicit RtsWifiForgetRequest(const uint8_t* buff, size_t len);
+  explicit RtsWifiForgetRequest(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsWifiForgetRequest& other) const;
+  bool operator!=(const RtsWifiForgetRequest& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(deleteAll, wifiSsidHex);
+  }
+};
+
+extern const char* RtsWifiForgetRequestVersionHashStr;
+extern const uint8_t RtsWifiForgetRequestVersionHash[16];
+
+// MESSAGE RtsWifiForgetResponse
+struct RtsWifiForgetResponse
+{
+  bool didDelete;
+  std::string wifiSsidHex;
+  
+  /**** Constructors ****/
+  RtsWifiForgetResponse() = default;
+  RtsWifiForgetResponse(const RtsWifiForgetResponse& other) = default;
+  RtsWifiForgetResponse(RtsWifiForgetResponse& other) = default;
+  RtsWifiForgetResponse(RtsWifiForgetResponse&& other) noexcept = default;
+  RtsWifiForgetResponse& operator=(const RtsWifiForgetResponse& other) = default;
+  RtsWifiForgetResponse& operator=(RtsWifiForgetResponse&& other) = default;
+  
+  explicit RtsWifiForgetResponse(bool didDelete,
+    const std::string& wifiSsidHex)
+  : didDelete(didDelete)
+  , wifiSsidHex(wifiSsidHex)
+  {}
+  
+  explicit RtsWifiForgetResponse(const uint8_t* buff, size_t len);
+  explicit RtsWifiForgetResponse(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsWifiForgetResponse& other) const;
+  bool operator!=(const RtsWifiForgetResponse& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(didDelete, wifiSsidHex);
+  }
+};
+
+extern const char* RtsWifiForgetResponseVersionHashStr;
+extern const uint8_t RtsWifiForgetResponseVersionHash[16];
+
 // MESSAGE RtsWifiConnectRequest
 struct RtsWifiConnectRequest
 {
@@ -560,6 +650,54 @@ struct RtsWifiConnectResponse
 
 extern const char* RtsWifiConnectResponseVersionHashStr;
 extern const uint8_t RtsWifiConnectResponseVersionHash[16];
+
+// MESSAGE RtsWifiConnectResponse_3
+struct RtsWifiConnectResponse_3
+{
+  std::string wifiSsidHex;
+  uint8_t wifiState;
+  uint8_t connectResult;
+  
+  /**** Constructors ****/
+  RtsWifiConnectResponse_3() = default;
+  RtsWifiConnectResponse_3(const RtsWifiConnectResponse_3& other) = default;
+  RtsWifiConnectResponse_3(RtsWifiConnectResponse_3& other) = default;
+  RtsWifiConnectResponse_3(RtsWifiConnectResponse_3&& other) noexcept = default;
+  RtsWifiConnectResponse_3& operator=(const RtsWifiConnectResponse_3& other) = default;
+  RtsWifiConnectResponse_3& operator=(RtsWifiConnectResponse_3&& other) = default;
+  
+  explicit RtsWifiConnectResponse_3(const std::string& wifiSsidHex,
+    uint8_t wifiState,
+    uint8_t connectResult)
+  : wifiSsidHex(wifiSsidHex)
+  , wifiState(wifiState)
+  , connectResult(connectResult)
+  {}
+  
+  explicit RtsWifiConnectResponse_3(const uint8_t* buff, size_t len);
+  explicit RtsWifiConnectResponse_3(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsWifiConnectResponse_3& other) const;
+  bool operator!=(const RtsWifiConnectResponse_3& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(wifiSsidHex, wifiState, connectResult);
+  }
+};
+
+extern const char* RtsWifiConnectResponse_3VersionHashStr;
+extern const uint8_t RtsWifiConnectResponse_3VersionHash[16];
 
 // MESSAGE RtsWifiIpRequest
 struct RtsWifiIpRequest
@@ -1931,8 +2069,8 @@ struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsWifiConnectRequest> {
   using type = Anki::Cozmo::ExternalComms::RtsWifiConnectRequest;
 };
 template<>
-struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsWifiConnectResponse> {
-  using type = Anki::Cozmo::ExternalComms::RtsWifiConnectResponse;
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsWifiConnectResponse_3> {
+  using type = Anki::Cozmo::ExternalComms::RtsWifiConnectResponse_3;
 };
 template<>
 struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsWifiIpRequest> {
@@ -2010,6 +2148,14 @@ template<>
 struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsFileDownload> {
   using type = Anki::Cozmo::ExternalComms::RtsFileDownload;
 };
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsWifiForgetRequest> {
+  using type = Anki::Cozmo::ExternalComms::RtsWifiForgetRequest;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsWifiForgetResponse> {
+  using type = Anki::Cozmo::ExternalComms::RtsWifiForgetResponse;
+};
 
 // UNION RtsConnection_3
 class RtsConnection_3
@@ -2086,12 +2232,12 @@ public:
   void Set_RtsWifiConnectRequest(const Anki::Cozmo::ExternalComms::RtsWifiConnectRequest& new_RtsWifiConnectRequest);
   void Set_RtsWifiConnectRequest(Anki::Cozmo::ExternalComms::RtsWifiConnectRequest&& new_RtsWifiConnectRequest);
   
-  /** RtsWifiConnectResponse **/
-  static RtsConnection_3 CreateRtsWifiConnectResponse(Anki::Cozmo::ExternalComms::RtsWifiConnectResponse&& new_RtsWifiConnectResponse);
-  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsWifiConnectResponse&& new_RtsWifiConnectResponse);
-  const Anki::Cozmo::ExternalComms::RtsWifiConnectResponse& Get_RtsWifiConnectResponse() const;
-  void Set_RtsWifiConnectResponse(const Anki::Cozmo::ExternalComms::RtsWifiConnectResponse& new_RtsWifiConnectResponse);
-  void Set_RtsWifiConnectResponse(Anki::Cozmo::ExternalComms::RtsWifiConnectResponse&& new_RtsWifiConnectResponse);
+  /** RtsWifiConnectResponse_3 **/
+  static RtsConnection_3 CreateRtsWifiConnectResponse_3(Anki::Cozmo::ExternalComms::RtsWifiConnectResponse_3&& new_RtsWifiConnectResponse_3);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsWifiConnectResponse_3&& new_RtsWifiConnectResponse_3);
+  const Anki::Cozmo::ExternalComms::RtsWifiConnectResponse_3& Get_RtsWifiConnectResponse_3() const;
+  void Set_RtsWifiConnectResponse_3(const Anki::Cozmo::ExternalComms::RtsWifiConnectResponse_3& new_RtsWifiConnectResponse_3);
+  void Set_RtsWifiConnectResponse_3(Anki::Cozmo::ExternalComms::RtsWifiConnectResponse_3&& new_RtsWifiConnectResponse_3);
   
   /** RtsWifiIpRequest **/
   static RtsConnection_3 CreateRtsWifiIpRequest(Anki::Cozmo::ExternalComms::RtsWifiIpRequest&& new_RtsWifiIpRequest);
@@ -2226,6 +2372,20 @@ public:
   void Set_RtsFileDownload(const Anki::Cozmo::ExternalComms::RtsFileDownload& new_RtsFileDownload);
   void Set_RtsFileDownload(Anki::Cozmo::ExternalComms::RtsFileDownload&& new_RtsFileDownload);
   
+  /** RtsWifiForgetRequest **/
+  static RtsConnection_3 CreateRtsWifiForgetRequest(Anki::Cozmo::ExternalComms::RtsWifiForgetRequest&& new_RtsWifiForgetRequest);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsWifiForgetRequest&& new_RtsWifiForgetRequest);
+  const Anki::Cozmo::ExternalComms::RtsWifiForgetRequest& Get_RtsWifiForgetRequest() const;
+  void Set_RtsWifiForgetRequest(const Anki::Cozmo::ExternalComms::RtsWifiForgetRequest& new_RtsWifiForgetRequest);
+  void Set_RtsWifiForgetRequest(Anki::Cozmo::ExternalComms::RtsWifiForgetRequest&& new_RtsWifiForgetRequest);
+  
+  /** RtsWifiForgetResponse **/
+  static RtsConnection_3 CreateRtsWifiForgetResponse(Anki::Cozmo::ExternalComms::RtsWifiForgetResponse&& new_RtsWifiForgetResponse);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsWifiForgetResponse&& new_RtsWifiForgetResponse);
+  const Anki::Cozmo::ExternalComms::RtsWifiForgetResponse& Get_RtsWifiForgetResponse() const;
+  void Set_RtsWifiForgetResponse(const Anki::Cozmo::ExternalComms::RtsWifiForgetResponse& new_RtsWifiForgetResponse);
+  void Set_RtsWifiForgetResponse(Anki::Cozmo::ExternalComms::RtsWifiForgetResponse&& new_RtsWifiForgetResponse);
+  
   size_t Unpack(const uint8_t* buff, const size_t len);
   size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
   
@@ -2248,7 +2408,7 @@ private:
     Anki::Cozmo::ExternalComms::RtsChallengeMessage _RtsChallengeMessage;
     Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage _RtsChallengeSuccessMessage;
     Anki::Cozmo::ExternalComms::RtsWifiConnectRequest _RtsWifiConnectRequest;
-    Anki::Cozmo::ExternalComms::RtsWifiConnectResponse _RtsWifiConnectResponse;
+    Anki::Cozmo::ExternalComms::RtsWifiConnectResponse_3 _RtsWifiConnectResponse_3;
     Anki::Cozmo::ExternalComms::RtsWifiIpRequest _RtsWifiIpRequest;
     Anki::Cozmo::ExternalComms::RtsWifiIpResponse _RtsWifiIpResponse;
     Anki::Cozmo::ExternalComms::RtsStatusRequest _RtsStatusRequest;
@@ -2268,6 +2428,8 @@ private:
     Anki::Cozmo::ExternalComms::RtsLogRequest _RtsLogRequest;
     Anki::Cozmo::ExternalComms::RtsLogResponse _RtsLogResponse;
     Anki::Cozmo::ExternalComms::RtsFileDownload _RtsFileDownload;
+    Anki::Cozmo::ExternalComms::RtsWifiForgetRequest _RtsWifiForgetRequest;
+    Anki::Cozmo::ExternalComms::RtsWifiForgetResponse _RtsWifiForgetResponse;
   };
 };
 extern const char* RtsConnection_3VersionHashStr;

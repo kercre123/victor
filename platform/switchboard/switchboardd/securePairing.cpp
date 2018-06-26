@@ -10,7 +10,6 @@
  *
  **/
 
-#include "anki-wifi/wifi.h"
 #include "switchboardd/securePairing.h"
 #include "exec_command.h"
 
@@ -183,6 +182,7 @@ void SecurePairing::SubscribeToCladMessages() {
   _rtsWifiIpRequestHandle = _cladHandler->OnReceiveRtsWifiIpRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsWifiIpRequest, this, std::placeholders::_1));
   _rtsRtsStatusRequestHandle = _cladHandler->OnReceiveRtsStatusRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsStatusRequest, this, std::placeholders::_1));
   _rtsWifiScanRequestHandle = _cladHandler->OnReceiveRtsWifiScanRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsWifiScanRequest, this, std::placeholders::_1));
+  _rtsWifiForgetRequestHandle = _cladHandler->OnReceiveRtsWifiForgetRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsWifiForgetRequest, this, std::placeholders::_1));
   _rtsOtaUpdateRequestHandle = _cladHandler->OnReceiveRtsOtaUpdateRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsOtaUpdateRequest, this, std::placeholders::_1));
   _rtsOtaCancelRequestHandle = _cladHandler->OnReceiveRtsOtaCancelRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsOtaCancelRequest, this, std::placeholders::_1));
   _rtsWifiAccessPointRequestHandle = _cladHandler->OnReceiveRtsWifiAccessPointRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsWifiAccessPointRequest, this, std::placeholders::_1));
@@ -356,14 +356,14 @@ void SecurePairing::SendWifiScanResult() {
   SendRtsMessage<RtsWifiScanResponse_3>(statusCode, wifiScanResults);
 }
 
-void SecurePairing::SendWifiConnectResult() {
+void SecurePairing::SendWifiConnectResult(ConnectWifiResult result) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
 
   // Send challenge and update state
   WiFiState wifiState = Anki::GetWiFiState();
-  SendRtsMessage<RtsWifiConnectResponse>(wifiState.ssid, wifiState.connState);
+  SendRtsMessage<RtsWifiConnectResponse_3>(wifiState.ssid, wifiState.connState, (uint8_t)result);
 }
 
 void SecurePairing::SendWifiAccessPointResponse(bool success, std::string ssid, std::string pw) {
@@ -525,7 +525,7 @@ void SecurePairing::HandleRtsWifiConnectRequest(const Cozmo::ExternalComms::RtsC
     if(online || (connected == ConnectWifiResult::CONNECT_INVALIDKEY)) {
       ev_timer_stop(_loop, &_handleInternet.timer);
       _inetTimerCount = 0;
-      SendWifiConnectResult();
+      SendWifiConnectResult(connected);
     } else {
       ev_timer_again(_loop, &_handleInternet.timer);
     }
@@ -583,6 +583,27 @@ void SecurePairing::HandleRtsWifiScanRequest(const Cozmo::ExternalComms::RtsConn
     SendWifiScanResult();
   } else {
     Log::Write("Received wifi scan request in wrong state.");
+  }
+}
+
+void SecurePairing::HandleRtsWifiForgetRequest(const Cozmo::ExternalComms::RtsConnection_3& msg) {
+  if(!AssertState(CommsState::SecureClad)) {
+    return;
+  }
+
+  if(_state == PairingState::ConfirmedSharedSecret) {
+    // Get message
+    Anki::Cozmo::ExternalComms::RtsWifiForgetRequest forgetMsg = msg.Get_RtsWifiForgetRequest();
+
+    if(forgetMsg.deleteAll) {
+      // remove all 
+    } else {
+      // remove by SSID -- mark as favorite
+      bool success = Anki::RemoveWifiService(forgetMsg.wifiSsidHex);
+      SendRtsMessage<RtsWifiForgetResponse>(success, forgetMsg.wifiSsidHex);
+    }
+  } else {
+    Log::Write("Received wifi forget request in wrong state.");
   }
 }
 
@@ -926,7 +947,7 @@ void SecurePairing::HandleInternetTimerTick() {
   if(online || _inetTimerCount > _wifiConnectTimeout_s) {
     ev_timer_stop(_loop, &_handleInternet.timer);
     _inetTimerCount = 0;
-    SendWifiConnectResult();
+    SendWifiConnectResult(ConnectWifiResult::CONNECT_NONE);
   }
 }
 

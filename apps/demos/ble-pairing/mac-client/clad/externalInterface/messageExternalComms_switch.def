@@ -113,8 +113,8 @@ case Anki::Cozmo::ExternalComms::RtsConnection_3::Tag::RtsChallengeSuccessMessag
 case Anki::Cozmo::ExternalComms::RtsConnection_3::Tag::RtsWifiConnectRequest:
   Process_RtsWifiConnectRequest(msg.Get_RtsWifiConnectRequest());
   break;
-case Anki::Cozmo::ExternalComms::RtsConnection_3::Tag::RtsWifiConnectResponse:
-  Process_RtsWifiConnectResponse(msg.Get_RtsWifiConnectResponse());
+case Anki::Cozmo::ExternalComms::RtsConnection_3::Tag::RtsWifiConnectResponse_3:
+  Process_RtsWifiConnectResponse_3(msg.Get_RtsWifiConnectResponse_3());
   break;
 case Anki::Cozmo::ExternalComms::RtsConnection_3::Tag::RtsWifiIpRequest:
   Process_RtsWifiIpRequest(msg.Get_RtsWifiIpRequest());
@@ -172,6 +172,12 @@ case Anki::Cozmo::ExternalComms::RtsConnection_3::Tag::RtsLogResponse:
   break;
 case Anki::Cozmo::ExternalComms::RtsConnection_3::Tag::RtsFileDownload:
   Process_RtsFileDownload(msg.Get_RtsFileDownload());
+  break;
+case Anki::Cozmo::ExternalComms::RtsConnection_3::Tag::RtsWifiForgetRequest:
+  Process_RtsWifiForgetRequest(msg.Get_RtsWifiForgetRequest());
+  break;
+case Anki::Cozmo::ExternalComms::RtsConnection_3::Tag::RtsWifiForgetResponse:
+  Process_RtsWifiForgetResponse(msg.Get_RtsWifiForgetResponse());
   break;
 }
 switch(msg.GetTag()) {

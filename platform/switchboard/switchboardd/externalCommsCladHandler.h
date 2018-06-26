@@ -45,6 +45,10 @@ namespace Switchboard {
       return _receiveRtsWifiScanRequest;
     }
 
+    RtsConnectionSignal& OnReceiveRtsWifiForgetRequest() {
+      return _receiveRtsWifiForgetRequest;
+    }
+
     RtsConnectionSignal& OnReceiveRtsOtaUpdateRequest() {
       return _receiveRtsOtaUpdateRequest;
     }
@@ -116,6 +120,10 @@ namespace Switchboard {
             _receiveRtsWifiScanRequest.emit(rtsMsg);
             break;
           }
+          case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsWifiForgetRequest: {
+            _receiveRtsWifiForgetRequest.emit(rtsMsg);
+            break;
+          }
           case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsOtaUpdateRequest: {
             _receiveRtsOtaUpdateRequest.emit(rtsMsg);
             break;
@@ -175,6 +183,7 @@ namespace Switchboard {
       RtsConnectionSignal _receiveRtsWifiIpRequest;
       RtsConnectionSignal _receiveRtsStatusRequest;
       RtsConnectionSignal _receiveRtsWifiScanRequest;
+      RtsConnectionSignal _receiveRtsWifiForgetRequest;
       RtsConnectionSignal _receiveRtsOtaUpdateRequest;
       RtsConnectionSignal _receiveRtsWifiAccessPointRequest;
       RtsConnectionSignal _receiveRtsCancelPairing;

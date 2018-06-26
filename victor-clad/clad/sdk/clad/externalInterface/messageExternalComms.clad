@@ -79,6 +79,16 @@ message RtsChallengeSuccessMessage {
     //
 }
 
+message RtsWifiForgetRequest {
+    bool        deleteAll,
+    string      wifiSsidHex,
+}
+
+message RtsWifiForgetResponse {
+    bool        didDelete,
+    string      wifiSsidHex,
+}
+
 message RtsWifiConnectRequest {
     string      wifiSsidHex,
     string      password,
@@ -90,6 +100,12 @@ message RtsWifiConnectRequest {
 message RtsWifiConnectResponse {
     string      wifiSsidHex,
     uint_8      wifiState,
+}
+
+message RtsWifiConnectResponse_3 {
+    string      wifiSsidHex,
+    uint_8      wifiState,
+    uint_8      connectResult,
 }
 
 message RtsWifiIpRequest {
@@ -251,13 +267,13 @@ union RtsConnection_3 {
     RtsChallengeMessage             RtsChallengeMessage         = 0x04,
     RtsChallengeSuccessMessage      RtsChallengeSuccessMessage  = 0x05,
     RtsWifiConnectRequest           RtsWifiConnectRequest       = 0x06,
-    RtsWifiConnectResponse          RtsWifiConnectResponse      = 0x07,
+    RtsWifiConnectResponse_3        RtsWifiConnectResponse_3    = 0x07,
     RtsWifiIpRequest                RtsWifiIpRequest            = 0x08,
     RtsWifiIpResponse               RtsWifiIpResponse           = 0x09,
     RtsStatusRequest                RtsStatusRequest            = 0x0A,
     RtsStatusResponse_2             RtsStatusResponse_2         = 0x0B,     
     RtsWifiScanRequest              RtsWifiScanRequest          = 0x0C,
-    RtsWifiScanResponse_3           RtsWifiScanResponse_3       = 0x0D,     // includes provisioned flag
+    RtsWifiScanResponse_3           RtsWifiScanResponse_3       = 0x0D,  // includes provisioned flag
     RtsOtaUpdateRequest             RtsOtaUpdateRequest         = 0x0E,
     RtsOtaUpdateResponse            RtsOtaUpdateResponse        = 0x0F,
     RtsCancelPairing                RtsCancelPairing            = 0x10,
@@ -270,7 +286,9 @@ union RtsConnection_3 {
     RtsOtaCancelRequest             RtsOtaCancelRequest         = 0x17,     
     RtsLogRequest                   RtsLogRequest               = 0x18,     
     RtsLogResponse                  RtsLogResponse              = 0x19,     
-    RtsFileDownload                 RtsFileDownload             = 0x1A,     
+    RtsFileDownload                 RtsFileDownload             = 0x1A,
+    RtsWifiForgetRequest            RtsWifiForgetRequest        = 0x1B,  // * new in V3
+    RtsWifiForgetResponse           RtsWifiForgetResponse       = 0x1C,  // * new in V3
 }
 
 // The post-factory set of versions

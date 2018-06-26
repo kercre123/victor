@@ -19,6 +19,7 @@
 #include <string.h>
 #include "switchboardd/log.h"
 #include "ev++.h"
+#include "anki-wifi/wifi.h"
 #include "switchboardd/INetworkStream.h"
 #include "switchboardd/keyExchange.h"
 #include "switchboardd/pairingMessages.h"
@@ -140,7 +141,7 @@ namespace Switchboard {
     void SendCancelPairing();
     void SendChallengeSuccess();
     void SendWifiScanResult();
-    void SendWifiConnectResult();
+    void SendWifiConnectResult(ConnectWifiResult result);
     void SendWifiAccessPointResponse(bool success, std::string ssid, std::string pw);
     void SendStatusResponse();
 
@@ -166,6 +167,9 @@ namespace Switchboard {
 
     Signal::SmartHandle _rtsWifiScanRequestHandle;
     void HandleRtsWifiScanRequest(const Cozmo::ExternalComms::RtsConnection_3& msg);
+
+    Signal::SmartHandle _rtsWifiForgetRequestHandle;
+    void HandleRtsWifiForgetRequest(const Cozmo::ExternalComms::RtsConnection_3& msg);
 
     Signal::SmartHandle _rtsOtaUpdateRequestHandle;
     void HandleRtsOtaUpdateRequest(const Cozmo::ExternalComms::RtsConnection_3& msg);

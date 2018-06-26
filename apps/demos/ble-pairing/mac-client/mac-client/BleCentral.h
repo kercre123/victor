@@ -188,6 +188,15 @@ public:
     const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
     [central send:messageData.data() length:(int)packedSize];
   }
+  
+  template<typename T, typename... Args>
+  static void SendRtsMessage_3(BleCentral* central, int commVersion, Args&&... args) {
+    Anki::Cozmo::ExternalComms::ExternalComms msg = Anki::Cozmo::ExternalComms::ExternalComms(Anki::Cozmo::ExternalComms::RtsConnection(Anki::Cozmo::ExternalComms::RtsConnection_3(T(std::forward<Args>(args)...))));
+    
+    std::vector<uint8_t> messageData(msg.Size());
+    const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
+    [central send:messageData.data() length:(int)packedSize];
+  }
 };
 
 #endif /* BleClient_h */

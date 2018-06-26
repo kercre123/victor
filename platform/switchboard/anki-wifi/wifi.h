@@ -124,6 +124,7 @@ struct WPAConnectInfo {
 
 std::string GetObjectPathForService(GVariant* service);
 ConnectWifiResult ConnectToWifiService(ConnManBusService* service);
+bool RemoveWifiService(std::string ssid);
 bool DisconnectFromWifiService(ConnManBusService* service);
 ConnManBusService* GetServiceForPath(std::string objectPath);
 std::string GetHexSsidFromServicePath(const std::string& servicePath);

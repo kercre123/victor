@@ -30,6 +30,7 @@ BleCentral* centralContext;
   printf("# vic shell commands #\n");
   printf("  wifi-scan                                    Scan for wifi networks in range.\n");
   printf("  wifi-connect <ssid> <password>               Connect Vector to a wifi network.\n");
+  printf("  wifi-forget  <ssid>|!all                     Forget a wifi network.\n");
   printf("  wifi-ip                                      Get Victor's IP address\n");
   printf("  wifi-ap <bool>                               Enable/Disable Access Point mode on Vector ('true' or 'false')\n");
   printf("  ota-start <url>                              Start Ota update with provided URL string argument.\n");
@@ -807,8 +808,13 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         [self HandleChallengeSuccessMessage:msg];
         break;
       }
-      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsWifiConnectResponse: {
-        Anki::Cozmo::ExternalComms::RtsWifiConnectResponse msg = rtsMsg.Get_RtsWifiConnectResponse();
+      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsWifiConnectResponse_3: {
+        Anki::Cozmo::ExternalComms::RtsWifiConnectResponse_3 msg = rtsMsg.Get_RtsWifiConnectResponse_3();
+        
+        if(msg.connectResult == 2) {
+          printf("Invalid password.\n");
+        }
+        
         switch(msg.wifiState) {
           case 1:
             printf("Vector is connected to the internet.\n");
@@ -894,6 +900,17 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
       case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsWifiScanResponse_3: {
         Anki::Cozmo::ExternalComms::RtsWifiScanResponse_3 msg = rtsMsg.Get_RtsWifiScanResponse_3();
         [self HandleWifiScanResponse_3:msg];
+        break;
+      }
+      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsWifiForgetResponse: {
+        Anki::Cozmo::ExternalComms::RtsWifiForgetResponse msg = rtsMsg.Get_RtsWifiForgetResponse();
+        
+        if(_currentCommand == "wifi-forget" && !_readyForNextCommand) {
+          printf("\nNetwork forgotten: %s\n", msg.didDelete?"true":"false");
+          
+          _readyForNextCommand = true;
+        }
+        
         break;
       }
       case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsWifiAccessPointResponse: {
@@ -1052,7 +1069,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
       case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsWifiScanResponse_3:
         rid = kWifiScan;
         break;
-      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsWifiConnectResponse:
+      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsWifiConnectResponse_3:
         rid = kWifiConnect;
         break;
       case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsWifiIpResponse:
@@ -1407,10 +1424,17 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         uint8_t requestTimeout_s = 15;
         Clad::SendRtsMessage<Anki::Cozmo::ExternalComms::RtsWifiConnectRequest>(self, _commVersion,
                                                                                  [self hexStr:(char*)words[1].c_str() length:(int)words[1].length()], words[2], requestTimeout_s, auth, hidden);
-        
       } else if(strcmp(words[0].c_str(), "wifi-ap") == 0) {
         bool enable = (words[1]=="true")?true:false;
         Clad::SendRtsMessage<Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest>(self, _commVersion, enable);
+      } else if(strcmp(words[0].c_str(), "wifi-forget") == 0) {
+        if(words.size() < 2) {
+          continue;
+        }
+        
+        std::string ssid = [self hexStr:(char*)words[1].c_str() length:(int)words[1].length()];
+      
+        Clad::SendRtsMessage_3<Anki::Cozmo::ExternalComms::RtsWifiForgetRequest>(self, _commVersion, ssid == "!all", ssid);
       } else if(strcmp(words[0].c_str(), "wifi-ip") == 0) {
         Clad::SendRtsMessage<Anki::Cozmo::ExternalComms::RtsWifiIpRequest>(self, _commVersion);
       } else if(strcmp(words[0].c_str(), "ota-start") == 0) {

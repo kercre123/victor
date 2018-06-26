@@ -415,6 +415,153 @@ bool UnregisterAgent(struct WPAConnectInfo *wpaConnectInfo) {
   return true;
 }
 
+bool RemoveWifiService(std::string ssid) {
+  ConnManBusTechnology* tech_proxy;
+  GError* error;
+  bool success;
+
+  std::string nameFromHex = hexStringToAsciiString(ssid);
+
+  error = nullptr;
+  tech_proxy = conn_man_bus_technology_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
+                                                              G_DBUS_PROXY_FLAGS_NONE,
+                                                              "net.connman",
+                                                              "/net/connman/technology/wifi",
+                                                              nullptr,
+                                                              &error);
+
+  if (error) {
+    loge("error getting proxy for net.connman /net/connman/technology/wifi");
+    return false;
+  }
+
+  ConnManBusManager* manager_proxy;
+  manager_proxy = conn_man_bus_manager_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
+                                                              G_DBUS_PROXY_FLAGS_NONE,
+                                                              "net.connman",
+                                                              "/",
+                                                              nullptr,
+                                                              &error);
+  if (error) {
+    loge("error getting proxy for net.connman /");
+    return false;
+  }
+
+  GVariant* services = nullptr;
+  success = conn_man_bus_manager_call_get_services_sync(manager_proxy,
+                                                        &services,
+                                                        nullptr,
+                                                        &error);
+
+  g_object_unref(manager_proxy);
+  if (error) {
+    loge("Error getting services from connman");
+    return false;
+  }
+
+  if (!success) {
+    loge("connman failed to get list of services");
+    return false;
+  }
+
+  GVariant* serviceVariant = nullptr;
+  GVariant* currentServiceVariant = nullptr;
+  bool foundService = false;
+
+  for (gsize i = 0 ; i < g_variant_n_children(services); i++) {
+    if(foundService) {
+      break;
+    }
+
+    GVariant* child = g_variant_get_child_value(services, i);
+    GVariant* attrs = g_variant_get_child_value(child, 1);
+
+    bool hasName = false;
+    bool matchedName = false;
+    bool matchedInterface = false;
+    bool matchedType = false;
+
+    for (gsize j = 0 ; j < g_variant_n_children(attrs); j++) {
+      GVariant* attr = g_variant_get_child_value(attrs, j);
+      GVariant* key_v = g_variant_get_child_value(attr, 0);
+      GVariant* val_v = g_variant_get_child_value(attr, 1);
+      GVariant* val = g_variant_get_variant(val_v);
+      const char* key = g_variant_get_string(key_v, nullptr);
+
+      if(g_str_equal(key, "Name")) {
+        if(std::string(g_variant_get_string(val, nullptr)) == nameFromHex) {
+          matchedName = true;
+        } else {
+          matchedName = false;
+        }
+        hasName = true;
+      }
+
+      if(g_str_equal(key, "Type")) {
+        if (g_str_equal(g_variant_get_string(val, nullptr), "wifi")) {
+          matchedType = true;
+        } else {
+          matchedType = false;
+        }
+      }
+
+      // Make sure this is for the wlan0 interface and not p2p0
+      if (g_str_equal(key, "Ethernet")) {
+        for (gsize k = 0 ; k < g_variant_n_children(val); k++) {
+          GVariant* ethernet_attr = g_variant_get_child_value(val, k);
+          GVariant* ethernet_key_v = g_variant_get_child_value(ethernet_attr, 0);
+          GVariant* ethernet_val_v = g_variant_get_child_value(ethernet_attr, 1);
+          GVariant* ethernet_val = g_variant_get_variant(ethernet_val_v);
+          const char* ethernet_key = g_variant_get_string(ethernet_key_v, nullptr);
+          if (g_str_equal(ethernet_key, "Interface")) {
+            if (g_str_equal(g_variant_get_string(ethernet_val, nullptr), "wlan0")) {
+              matchedInterface = true;
+            } else {
+              matchedInterface = false;
+              break;
+            }
+          }
+        }
+      }
+
+      if (g_str_equal(key, "State")) {
+        if (g_str_equal(g_variant_get_string(val, nullptr), "online") ||
+            g_str_equal(g_variant_get_string(val, nullptr), "ready") ) {
+          currentServiceVariant = child;
+        }
+      }
+    }
+
+    if(matchedName && matchedInterface && matchedType) {
+      // this is our service
+      serviceVariant = child;
+      foundService = true;
+    }
+  }
+
+  if(!foundService) {
+    loge("Could not find service...");
+    return false;
+  }
+
+  std::string servicePath = GetObjectPathForService(serviceVariant);
+  Log::Write("Removing %s.", servicePath.c_str());
+
+  // Get the ConnManBusService for our object path
+  Log::Write("Service path: %s", servicePath.c_str());
+  ConnManBusService* service = GetServiceForPath(servicePath);
+  if(service == nullptr) {
+    return false;
+  }
+
+  success = conn_man_bus_service_call_remove_sync(
+    service,
+    nullptr,
+    &error);
+
+  return success && !error;
+}
+
 ConnectWifiResult ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidden, GAsyncReadyCallback cb, gpointer userData) {
   ConnManBusTechnology* tech_proxy;
   GError* error;
