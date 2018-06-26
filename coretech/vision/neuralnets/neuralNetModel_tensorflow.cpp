@@ -668,6 +668,50 @@ void NeuralNetModel::GetDetectedObjects(const std::vector<tensorflow::Tensor>& o
   } 
 }
 
+void NeuralNetModel::GetSalientPointsFromResponseMap(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp,
+                                                     std::list<Vision::SalientPoint>& salientPoints)
+{
+  // This raw (Eigen) tensor data appears to be _column_ major (i.e. "not row major"). Ensure that remains true.
+  DEV_ASSERT( !(outputTensor.tensor<float, 2>().Options & Eigen::RowMajor),
+             "NeuralNetModel.GetLocalizedBinaryClassification.OutputNotRowMajor");
+
+  // TODO make sure data is not in column major format
+  // TODO is there a better way to remove const-ness that data() call returns
+  const cv::Mat responseMap(_params.inputHeight, _params.inputWidth, CV_32FC1,
+                            const_cast<float*>(outputTensor.tensor<float, 2>().data()));
+  double min, max;
+  cv::Point2i minLoc, maxLoc;
+  cv::minMaxLoc(responseMap, &min, &max, &minLoc, &maxLoc);
+  // TODO we can put in connected component based filtering later, right now
+  // let's just return the max value location... that normally isn't filtered out anyway
+
+  // Create a SalientPoint to return for each connected component (skipping background component 0)
+  const float widthScale  = 1.f / static_cast<float>(responseMap.cols);
+  const float heightScale = 1.f / static_cast<float>(responseMap.rows);
+
+  // TODO better names?
+  float x = Util::Clamp(maxLoc.x * widthScale,  0.f, 1.f);
+  float y = Util::Clamp(maxLoc.y * heightScale, 0.f, 1.f);
+
+  // TODO actually fill in correct values here this is just a place holder
+  const Poly2f shape( Rectangle<float>(0.f, 0.f, 1.f, 1.f) );
+
+  // TODO not sure what type to use here
+  Vision::SalientPointType type = Vision::SalientPointType::Unknown;
+
+  // TODO not sure what to do about score or average score
+  Vision::SalientPoint salientPoint(timestamp,
+                                    x,
+                                    y,
+                                    1.f,
+                                    1.f * (widthScale*heightScale), // convert to area fraction
+                                    type,
+                                    EnumToString(type),
+                                    shape.ToCladPoint2dVector());
+
+  salientPoints.push_back(std::move(salientPoint));
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Vision::SalientPoint>& salientPoints)
 {
@@ -762,8 +806,7 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
     }
     case OutputType::Segmentation:
     {
-      // TODO (robert) need to convert the segmenation response map
-      // into salient points
+      GetSalientPointsFromResponseMap(outputTensors[0], t, salientPoints);
       break;
     }
   }

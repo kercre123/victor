@@ -76,6 +76,9 @@ private:
   void GetDetectedObjects(const std::vector<tensorflow::Tensor>& outputTensors, TimeStamp_t timestamp,
                           std::list<Vision::SalientPoint>& salientPoints);
 
+  void GetSalientPointsFromResponseMap(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp,
+                                       std::list<Vision::SalientPoint>& salientPoints);
+
   // Thin wrapper to tensorflow run to allow us to turn on benchmarking to logs
   Result Run(tensorflow::Tensor image_tensor, std::vector<tensorflow::Tensor>& outputTensors);
 
