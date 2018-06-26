@@ -5,8 +5,9 @@
  * Created: 5/31/2018
  *
  * Description: This is a component meant to provide persistence across boots for data within other 
- * 				components (like timers or faces) that could probably be remembered by the robot. 
- *        Snapshots are currently loaded into memory upon robot startup (so there is no load function).
+ * 				      components (like timers or faces) that could probably be remembered by the robot. 
+ *              Snapshots are currently loaded into memory upon robot startup (so there is no load 
+ *              function).
  *
  * Note: The Variable Snapshot Component stores the versioning information of the build: the OS build
  *       version and the robot build SHA. If the version information changes, then all data is erased
@@ -101,25 +102,30 @@ bool VariableSnapshotComponent::InitVariable(VariableSnapshotId variableSnapshot
 
   // TODO: use this as it is meant to be used and return false
   const bool hasValidPtr = ANKI_VERIFY(nullptr != dataValuePtr,
-                                         "VariableSnapshotComponent",
-                                         "nullptr is an invalid location to initialize a persistent variable.");
+                                       "VariableSnapshotComponent",
+                                       "nullptr is an invalid location to initialize a persistent variable.");
   if( !hasValidPtr ) {
     return false;
   }
 
   // since dataPtr is a shared pointer of a specific type, we use this wrapper closure to standardize the
   // serialization function signature to be stored in the component and avoid templating.
-  auto serializeFnWrapper = [dataValuePtr] (Json::Value& outJson) { return VariableSnapshotEncoder::Serialize<T>(dataValuePtr, outJson); };
+  auto serializeFnWrapper = [dataValuePtr] (Json::Value& outJson) { 
+    return VariableSnapshotEncoder::Serialize<T>(dataValuePtr, outJson); 
+  };
 
   // TODO: if a variable is reinitialized within one boot cycle, get its info from the data map
   //       for when reinitialization is added as a feature
 
   // if the key exists, then throw an error - reinitialization not currently supported
   auto variableSnapshotIter = _variableSnapshotDataMap.find(variableSnapshotId);
-  ANKI_VERIFY(variableSnapshotIter == _variableSnapshotDataMap.end(), 
-              "VariableSnapshotComponent", 
-              "%s was reinitialized, which is not currently supported.", 
-              VariableSnapshotIdToString(variableSnapshotId));
+  const bool keyNotInDataMap = ANKI_VERIFY(variableSnapshotIter == _variableSnapshotDataMap.end(), 
+                                        "VariableSnapshotComponent", 
+                                        "%s was reinitialized, which is not currently supported.", 
+                                        VariableSnapshotIdToString(variableSnapshotId));
+  if(!keyNotInDataMap) {
+    return false;
+  }
 
   // if the specified object has stored JSON data under the specified name, load it and return true.
   // else save the default data and return false
