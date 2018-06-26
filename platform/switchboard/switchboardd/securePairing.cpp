@@ -14,6 +14,7 @@
 #include "exec_command.h"
 
 #include "anki-wifi/fileutils.h" // RtsSsh
+#include "util/fileUtils/fileUtils.h"
 
 #include <sstream>
 #include <cutils/properties.h>
@@ -597,6 +598,15 @@ void SecurePairing::HandleRtsWifiForgetRequest(const Cozmo::ExternalComms::RtsCo
 
     if(forgetMsg.deleteAll) {
       // remove all 
+      const std::string connmanDir = "/data/lib/connman";
+      std::vector<std::string> configs;
+      Anki::Util::FileUtils::ListAllDirectories(connmanDir, configs);
+
+      for(int i = 0; i < configs.size(); i++) {
+        Anki::Util::FileUtils::RemoveDirectory(connmanDir + "/" + configs[i]);
+      }
+
+      SendRtsMessage<RtsWifiForgetResponse>(true, forgetMsg.wifiSsidHex);
     } else {
       // remove by SSID -- mark as favorite
       bool success = Anki::RemoveWifiService(forgetMsg.wifiSsidHex);

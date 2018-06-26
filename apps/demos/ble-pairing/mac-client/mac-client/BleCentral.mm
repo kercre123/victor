@@ -906,7 +906,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         Anki::Cozmo::ExternalComms::RtsWifiForgetResponse msg = rtsMsg.Get_RtsWifiForgetResponse();
         
         if(_currentCommand == "wifi-forget" && !_readyForNextCommand) {
-          printf("\nNetwork forgotten: %s\n", msg.didDelete?"true":"false");
+          printf("Network forgotten: %s\n", msg.didDelete?"true":"false");
           
           _readyForNextCommand = true;
         }
@@ -1433,8 +1433,10 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         }
         
         std::string ssid = [self hexStr:(char*)words[1].c_str() length:(int)words[1].length()];
-      
-        Clad::SendRtsMessage_3<Anki::Cozmo::ExternalComms::RtsWifiForgetRequest>(self, _commVersion, ssid == "!all", ssid);
+        
+        bool forgetAll = words[1] == "#all";
+        
+        Clad::SendRtsMessage_3<Anki::Cozmo::ExternalComms::RtsWifiForgetRequest>(self, _commVersion, forgetAll, ssid);
       } else if(strcmp(words[0].c_str(), "wifi-ip") == 0) {
         Clad::SendRtsMessage<Anki::Cozmo::ExternalComms::RtsWifiIpRequest>(self, _commVersion);
       } else if(strcmp(words[0].c_str(), "ota-start") == 0) {
