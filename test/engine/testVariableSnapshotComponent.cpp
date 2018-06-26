@@ -35,23 +35,6 @@ void InitializeTests()
 {
   using namespace Anki::Cozmo;
   // VariableSnapshotComponent::kVariableSnapshotFilename = "unitTestFile";
-
-  // cache the name of our save directory
-  // auto robot = std::make_unique<Robot>(kRobotId, cozmoContext);
-  // auto platform = robot->GetContextDataPlatform();
-  // std::string saveFolder = platform->pathToResource( Anki::Util::Data::Scope::Persistent, VariableSnapshotComponent::kVariableSnapshotFolder );
-  // saveFolder = Anki::Util::FileUtils::AddTrailingFileSeparator( saveFolder );
-
-  // // make sure our folder structure exists
-  // if(Anki::Util::FileUtils::DirectoryDoesNotExist( saveFolder )) {
-  //   Anki::Util::FileUtils::CreateDirectory( saveFolder, false, true );
-  //   PRINT_CH_DEBUG( "DataLoader", "VariableSnapshot", "Creating variable snapshot directory: %s", saveFolder.c_str() );
-  // }
-  
-  // read in our data
-  // std::string pathToVariableSnapshotFile = VariableSnapshotComponent::GetSavePath(platform,
-  //                                                                                 VariableSnapshotComponent::kVariableSnapshotFolder,
-  //                                                                                 VariableSnapshotComponent::kVariableSnapshotFilename);
 };
 
 // removes all test information from storage
@@ -63,8 +46,6 @@ void RemoveTestData()
   // cache the name of our save directory
   auto robot = std::make_unique<Robot>(kRobotId, cozmoContext);
   auto platform = robot->GetContextDataPlatform();
-  // std::string saveFolder = platform->pathToResource( Anki::Util::Data::Scope::Persistent, VariableSnapshotComponent::kVariableSnapshotFolder );
-  // saveFolder = Anki::Util::FileUtils::AddTrailingFileSeparator( saveFolder );
 
    // read in our data
   std::string pathToVariableSnapshotFile = VariableSnapshotComponent::GetSavePath(platform,
