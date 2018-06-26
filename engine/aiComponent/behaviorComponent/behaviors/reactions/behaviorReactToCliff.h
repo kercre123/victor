@@ -59,8 +59,8 @@ private:
   void TransitionToPlayingCliffReaction();
   void TransitionToBackingUp();
   
-  // Based on which cliff sensor(s) was tripped, select an appropriate pre-animation action
-  CompoundActionSequential* GetCliffPreReactAction(uint8_t cliffDetectedFlags);
+  // Based on which cliff sensor(s) was tripped, create the appropriate reaction
+  CompoundActionSequential* GetCliffReactAction(uint8_t cliffDetectedFlags);
   
   enum class State {
     PlayingStopReaction,
@@ -74,6 +74,8 @@ private:
   };
 
   InstanceConfig _iConfig;
+
+  float _dramaticCliffReactionPlayableTime_sec = 0.f;  
 
   struct DynamicVariables {
     DynamicVariables();
