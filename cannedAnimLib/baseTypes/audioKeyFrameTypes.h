@@ -158,7 +158,7 @@ struct AudioRef {
   : Tag( AudioRefTag::Parameter )
   , Parameter( std::move(parameterRef) ) {}
   
-  ~AudioRef() {}
+  ~AudioRef();
   
   AudioRef( const AudioRef& other );
   AudioRef& operator=( const AudioRef& other );
