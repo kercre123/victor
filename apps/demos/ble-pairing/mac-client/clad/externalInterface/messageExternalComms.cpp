@@ -1411,6 +1411,106 @@ const uint8_t RtsStatusResponse_2VersionHash[16] = {
     0x64, 0x95, 0x9d, 0x5d, 0x3d, 0xc7, 0xf8, 0x83, 0xaf, 0x1c, 0x5e, 0x72, 0xa7, 0x3a, 0x76, 0x1a 
 };
 
+// MESSAGE RtsStatusResponse_3
+
+RtsStatusResponse_3::RtsStatusResponse_3(const CLAD::SafeMessageBuffer& buffer)
+
+{
+  Unpack(buffer);
+}
+
+RtsStatusResponse_3::RtsStatusResponse_3(const uint8_t* buff, size_t len)
+: RtsStatusResponse_3::RtsStatusResponse_3({const_cast<uint8_t*>(buff), len, false})
+{
+}
+
+size_t RtsStatusResponse_3::Pack(uint8_t* buff, size_t len) const
+{
+  CLAD::SafeMessageBuffer buffer(buff, len, false);
+  return Pack(buffer);
+}
+
+size_t RtsStatusResponse_3::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+  buffer.WritePString<uint8_t>(this->wifiSsidHex);
+  buffer.Write(this->wifiState);
+  buffer.Write(this->accessPoint);
+  buffer.Write(this->bleState);
+  buffer.Write(this->batteryState);
+  buffer.WritePString<uint8_t>(this->version);
+  buffer.Write(this->otaInProgress);
+  buffer.Write(this->hasOwner);
+  const size_t bytesWritten {buffer.GetBytesWritten()};
+  return bytesWritten;
+}
+
+size_t RtsStatusResponse_3::Unpack(const uint8_t* buff, const size_t len)
+{
+  const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+  return Unpack(buffer);
+}
+
+size_t RtsStatusResponse_3::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+  buffer.ReadPString<uint8_t>(this->wifiSsidHex);
+  buffer.Read(this->wifiState);
+  buffer.Read(this->accessPoint);
+  buffer.Read(this->bleState);
+  buffer.Read(this->batteryState);
+  buffer.ReadPString<uint8_t>(this->version);
+  buffer.Read(this->otaInProgress);
+  buffer.Read(this->hasOwner);
+  return buffer.GetBytesRead();
+}
+
+size_t RtsStatusResponse_3::Size() const
+{
+  size_t result = 0;
+  // wifiSsidHex
+  result += 1; // uint_8 (string length)
+  result += this->wifiSsidHex.length(); // uint_8
+  // wifiState
+  result += 1; // uint_8
+  // accessPoint
+  result += 1; // bool
+  // bleState
+  result += 1; // uint_8
+  // batteryState
+  result += 1; // uint_8
+  // version
+  result += 1; // uint_8 (string length)
+  result += this->version.length(); // uint_8
+  // otaInProgress
+  result += 1; // bool
+  // hasOwner
+  result += 1; // bool
+  return result;
+}
+
+bool RtsStatusResponse_3::operator==(const RtsStatusResponse_3& other) const
+{
+  return (this->wifiSsidHex == other.wifiSsidHex &&
+    this->wifiState == other.wifiState &&
+    this->accessPoint == other.accessPoint &&
+    this->bleState == other.bleState &&
+    this->batteryState == other.batteryState &&
+    this->version == other.version &&
+    this->otaInProgress == other.otaInProgress &&
+    this->hasOwner == other.hasOwner);
+}
+
+bool RtsStatusResponse_3::operator!=(const RtsStatusResponse_3& other) const
+{
+  return !(operator==(other));
+}
+
+
+const char* RtsStatusResponse_3VersionHashStr = "ce2a539d91e52493f48e0999a39f12ac";
+
+const uint8_t RtsStatusResponse_3VersionHash[16] = { 
+    0xce, 0x2a, 0x53, 0x9d, 0x91, 0xe5, 0x24, 0x93, 0xf4, 0x8e, 0x9, 0x99, 0xa3, 0x9f, 0x12, 0xac 
+};
+
 // MESSAGE RtsWifiScanRequest
 
 RtsWifiScanRequest::RtsWifiScanRequest(const CLAD::SafeMessageBuffer& buffer)
@@ -2492,6 +2592,150 @@ const char* RtsFileDownloadVersionHashStr = "82db39019a0f489d6f4aa71e2b380093";
 
 const uint8_t RtsFileDownloadVersionHash[16] = { 
     0x82, 0xdb, 0x39, 0x1, 0x9a, 0xf, 0x48, 0x9d, 0x6f, 0x4a, 0xa7, 0x1e, 0x2b, 0x38, 0x0, 0x93 
+};
+
+// MESSAGE RtsCloudSessionRequest
+
+RtsCloudSessionRequest::RtsCloudSessionRequest(const CLAD::SafeMessageBuffer& buffer)
+
+{
+  Unpack(buffer);
+}
+
+RtsCloudSessionRequest::RtsCloudSessionRequest(const uint8_t* buff, size_t len)
+: RtsCloudSessionRequest::RtsCloudSessionRequest({const_cast<uint8_t*>(buff), len, false})
+{
+}
+
+size_t RtsCloudSessionRequest::Pack(uint8_t* buff, size_t len) const
+{
+  CLAD::SafeMessageBuffer buffer(buff, len, false);
+  return Pack(buffer);
+}
+
+size_t RtsCloudSessionRequest::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+  buffer.WritePStringVArray<uint8_t, uint8_t>(this->sessionToken);
+  const size_t bytesWritten {buffer.GetBytesWritten()};
+  return bytesWritten;
+}
+
+size_t RtsCloudSessionRequest::Unpack(const uint8_t* buff, const size_t len)
+{
+  const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+  return Unpack(buffer);
+}
+
+size_t RtsCloudSessionRequest::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+  buffer.ReadPStringVArray<uint8_t, uint8_t>(this->sessionToken);
+  return buffer.GetBytesRead();
+}
+
+size_t RtsCloudSessionRequest::Size() const
+{
+  size_t result = 0;
+  // sessionToken
+  result += 1; // uint_8 (array length)
+  result += 1 * this->sessionToken.size(); // uint_8 (string lengths)
+  for (const std::string& m : this->sessionToken) {
+    result += m.length();
+  }
+  return result;
+}
+
+bool RtsCloudSessionRequest::operator==(const RtsCloudSessionRequest& other) const
+{
+  return (this->sessionToken == other.sessionToken);
+}
+
+bool RtsCloudSessionRequest::operator!=(const RtsCloudSessionRequest& other) const
+{
+  return !(operator==(other));
+}
+
+
+const char* RtsCloudSessionRequestVersionHashStr = "fe507bede0da0cec916bc128cd37eece";
+
+const uint8_t RtsCloudSessionRequestVersionHash[16] = { 
+    0xfe, 0x50, 0x7b, 0xed, 0xe0, 0xda, 0xc, 0xec, 0x91, 0x6b, 0xc1, 0x28, 0xcd, 0x37, 0xee, 0xce 
+};
+
+// MESSAGE RtsCloudSessionResponse
+
+RtsCloudSessionResponse::RtsCloudSessionResponse(const CLAD::SafeMessageBuffer& buffer)
+
+{
+  Unpack(buffer);
+}
+
+RtsCloudSessionResponse::RtsCloudSessionResponse(const uint8_t* buff, size_t len)
+: RtsCloudSessionResponse::RtsCloudSessionResponse({const_cast<uint8_t*>(buff), len, false})
+{
+}
+
+size_t RtsCloudSessionResponse::Pack(uint8_t* buff, size_t len) const
+{
+  CLAD::SafeMessageBuffer buffer(buff, len, false);
+  return Pack(buffer);
+}
+
+size_t RtsCloudSessionResponse::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+  buffer.Write(this->success);
+  buffer.Write(this->statusCode);
+  buffer.WritePStringVArray<uint8_t, uint8_t>(this->clientTokenGuid);
+  const size_t bytesWritten {buffer.GetBytesWritten()};
+  return bytesWritten;
+}
+
+size_t RtsCloudSessionResponse::Unpack(const uint8_t* buff, const size_t len)
+{
+  const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+  return Unpack(buffer);
+}
+
+size_t RtsCloudSessionResponse::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+  buffer.Read(this->success);
+  buffer.Read(this->statusCode);
+  buffer.ReadPStringVArray<uint8_t, uint8_t>(this->clientTokenGuid);
+  return buffer.GetBytesRead();
+}
+
+size_t RtsCloudSessionResponse::Size() const
+{
+  size_t result = 0;
+  // success
+  result += 1; // bool
+  // statusCode
+  result += 1; // uint_8
+  // clientTokenGuid
+  result += 1; // uint_8 (array length)
+  result += 1 * this->clientTokenGuid.size(); // uint_8 (string lengths)
+  for (const std::string& m : this->clientTokenGuid) {
+    result += m.length();
+  }
+  return result;
+}
+
+bool RtsCloudSessionResponse::operator==(const RtsCloudSessionResponse& other) const
+{
+  return (this->success == other.success &&
+    this->statusCode == other.statusCode &&
+    this->clientTokenGuid == other.clientTokenGuid);
+}
+
+bool RtsCloudSessionResponse::operator!=(const RtsCloudSessionResponse& other) const
+{
+  return !(operator==(other));
+}
+
+
+const char* RtsCloudSessionResponseVersionHashStr = "540524021271bea5ef8c2d824f671841";
+
+const uint8_t RtsCloudSessionResponseVersionHash[16] = { 
+    0x54, 0x5, 0x24, 0x2, 0x12, 0x71, 0xbe, 0xa5, 0xef, 0x8c, 0x2d, 0x82, 0x4f, 0x67, 0x18, 0x41 
 };
 
 // MESSAGE Error
@@ -5157,8 +5401,8 @@ RtsConnection_3::RtsConnection_3(const RtsConnection_3& other)
   case Tag::RtsStatusRequest:
     new(&(this->_RtsStatusRequest)) Anki::Cozmo::ExternalComms::RtsStatusRequest(other._RtsStatusRequest);
     break;
-  case Tag::RtsStatusResponse_2:
-    new(&(this->_RtsStatusResponse_2)) Anki::Cozmo::ExternalComms::RtsStatusResponse_2(other._RtsStatusResponse_2);
+  case Tag::RtsStatusResponse_3:
+    new(&(this->_RtsStatusResponse_3)) Anki::Cozmo::ExternalComms::RtsStatusResponse_3(other._RtsStatusResponse_3);
     break;
   case Tag::RtsWifiScanRequest:
     new(&(this->_RtsWifiScanRequest)) Anki::Cozmo::ExternalComms::RtsWifiScanRequest(other._RtsWifiScanRequest);
@@ -5211,6 +5455,12 @@ RtsConnection_3::RtsConnection_3(const RtsConnection_3& other)
   case Tag::RtsWifiForgetResponse:
     new(&(this->_RtsWifiForgetResponse)) Anki::Cozmo::ExternalComms::RtsWifiForgetResponse(other._RtsWifiForgetResponse);
     break;
+  case Tag::RtsCloudSessionRequest:
+    new(&(this->_RtsCloudSessionRequest)) Anki::Cozmo::ExternalComms::RtsCloudSessionRequest(other._RtsCloudSessionRequest);
+    break;
+  case Tag::RtsCloudSessionResponse:
+    new(&(this->_RtsCloudSessionResponse)) Anki::Cozmo::ExternalComms::RtsCloudSessionResponse(other._RtsCloudSessionResponse);
+    break;
   default:
     _tag = Tag::INVALID;
     break;
@@ -5254,8 +5504,8 @@ RtsConnection_3::RtsConnection_3(RtsConnection_3&& other) noexcept
   case Tag::RtsStatusRequest:
     new(&(this->_RtsStatusRequest)) Anki::Cozmo::ExternalComms::RtsStatusRequest(std::move(other._RtsStatusRequest));
     break;
-  case Tag::RtsStatusResponse_2:
-    new(&(this->_RtsStatusResponse_2)) Anki::Cozmo::ExternalComms::RtsStatusResponse_2(std::move(other._RtsStatusResponse_2));
+  case Tag::RtsStatusResponse_3:
+    new(&(this->_RtsStatusResponse_3)) Anki::Cozmo::ExternalComms::RtsStatusResponse_3(std::move(other._RtsStatusResponse_3));
     break;
   case Tag::RtsWifiScanRequest:
     new(&(this->_RtsWifiScanRequest)) Anki::Cozmo::ExternalComms::RtsWifiScanRequest(std::move(other._RtsWifiScanRequest));
@@ -5307,6 +5557,12 @@ RtsConnection_3::RtsConnection_3(RtsConnection_3&& other) noexcept
     break;
   case Tag::RtsWifiForgetResponse:
     new(&(this->_RtsWifiForgetResponse)) Anki::Cozmo::ExternalComms::RtsWifiForgetResponse(std::move(other._RtsWifiForgetResponse));
+    break;
+  case Tag::RtsCloudSessionRequest:
+    new(&(this->_RtsCloudSessionRequest)) Anki::Cozmo::ExternalComms::RtsCloudSessionRequest(std::move(other._RtsCloudSessionRequest));
+    break;
+  case Tag::RtsCloudSessionResponse:
+    new(&(this->_RtsCloudSessionResponse)) Anki::Cozmo::ExternalComms::RtsCloudSessionResponse(std::move(other._RtsCloudSessionResponse));
     break;
   default:
     _tag = Tag::INVALID;
@@ -5354,8 +5610,8 @@ RtsConnection_3& RtsConnection_3::operator=(const RtsConnection_3& other)
   case Tag::RtsStatusRequest:
     new(&(this->_RtsStatusRequest)) Anki::Cozmo::ExternalComms::RtsStatusRequest(other._RtsStatusRequest);
     break;
-  case Tag::RtsStatusResponse_2:
-    new(&(this->_RtsStatusResponse_2)) Anki::Cozmo::ExternalComms::RtsStatusResponse_2(other._RtsStatusResponse_2);
+  case Tag::RtsStatusResponse_3:
+    new(&(this->_RtsStatusResponse_3)) Anki::Cozmo::ExternalComms::RtsStatusResponse_3(other._RtsStatusResponse_3);
     break;
   case Tag::RtsWifiScanRequest:
     new(&(this->_RtsWifiScanRequest)) Anki::Cozmo::ExternalComms::RtsWifiScanRequest(other._RtsWifiScanRequest);
@@ -5408,6 +5664,12 @@ RtsConnection_3& RtsConnection_3::operator=(const RtsConnection_3& other)
   case Tag::RtsWifiForgetResponse:
     new(&(this->_RtsWifiForgetResponse)) Anki::Cozmo::ExternalComms::RtsWifiForgetResponse(other._RtsWifiForgetResponse);
     break;
+  case Tag::RtsCloudSessionRequest:
+    new(&(this->_RtsCloudSessionRequest)) Anki::Cozmo::ExternalComms::RtsCloudSessionRequest(other._RtsCloudSessionRequest);
+    break;
+  case Tag::RtsCloudSessionResponse:
+    new(&(this->_RtsCloudSessionResponse)) Anki::Cozmo::ExternalComms::RtsCloudSessionResponse(other._RtsCloudSessionResponse);
+    break;
   default:
     _tag = Tag::INVALID;
     break;
@@ -5454,8 +5716,8 @@ RtsConnection_3& RtsConnection_3::operator=(RtsConnection_3&& other) noexcept
   case Tag::RtsStatusRequest:
     new(&(this->_RtsStatusRequest)) Anki::Cozmo::ExternalComms::RtsStatusRequest(std::move(other._RtsStatusRequest));
     break;
-  case Tag::RtsStatusResponse_2:
-    new(&(this->_RtsStatusResponse_2)) Anki::Cozmo::ExternalComms::RtsStatusResponse_2(std::move(other._RtsStatusResponse_2));
+  case Tag::RtsStatusResponse_3:
+    new(&(this->_RtsStatusResponse_3)) Anki::Cozmo::ExternalComms::RtsStatusResponse_3(std::move(other._RtsStatusResponse_3));
     break;
   case Tag::RtsWifiScanRequest:
     new(&(this->_RtsWifiScanRequest)) Anki::Cozmo::ExternalComms::RtsWifiScanRequest(std::move(other._RtsWifiScanRequest));
@@ -5507,6 +5769,12 @@ RtsConnection_3& RtsConnection_3::operator=(RtsConnection_3&& other) noexcept
     break;
   case Tag::RtsWifiForgetResponse:
     new(&(this->_RtsWifiForgetResponse)) Anki::Cozmo::ExternalComms::RtsWifiForgetResponse(std::move(other._RtsWifiForgetResponse));
+    break;
+  case Tag::RtsCloudSessionRequest:
+    new(&(this->_RtsCloudSessionRequest)) Anki::Cozmo::ExternalComms::RtsCloudSessionRequest(std::move(other._RtsCloudSessionRequest));
+    break;
+  case Tag::RtsCloudSessionResponse:
+    new(&(this->_RtsCloudSessionResponse)) Anki::Cozmo::ExternalComms::RtsCloudSessionResponse(std::move(other._RtsCloudSessionResponse));
     break;
   default:
     _tag = Tag::INVALID;
@@ -6132,59 +6400,59 @@ void RtsConnection_3::Set_RtsStatusRequest(Anki::Cozmo::ExternalComms::RtsStatus
   }
 }
 
-RtsConnection_3 RtsConnection_3::CreateRtsStatusResponse_2(Anki::Cozmo::ExternalComms::RtsStatusResponse_2&& new_RtsStatusResponse_2)
+RtsConnection_3 RtsConnection_3::CreateRtsStatusResponse_3(Anki::Cozmo::ExternalComms::RtsStatusResponse_3&& new_RtsStatusResponse_3)
 {
   RtsConnection_3 m;
-  m.Set_RtsStatusResponse_2(new_RtsStatusResponse_2);
+  m.Set_RtsStatusResponse_3(new_RtsStatusResponse_3);
   return m;
 }
 
-RtsConnection_3::RtsConnection_3(Anki::Cozmo::ExternalComms::RtsStatusResponse_2&& new_RtsStatusResponse_2)
+RtsConnection_3::RtsConnection_3(Anki::Cozmo::ExternalComms::RtsStatusResponse_3&& new_RtsStatusResponse_3)
 {
-  new(&this->_RtsStatusResponse_2) Anki::Cozmo::ExternalComms::RtsStatusResponse_2(std::move(new_RtsStatusResponse_2));
-  _tag = Tag::RtsStatusResponse_2;
+  new(&this->_RtsStatusResponse_3) Anki::Cozmo::ExternalComms::RtsStatusResponse_3(std::move(new_RtsStatusResponse_3));
+  _tag = Tag::RtsStatusResponse_3;
 }
 
-const Anki::Cozmo::ExternalComms::RtsStatusResponse_2& RtsConnection_3::Get_RtsStatusResponse_2() const
+const Anki::Cozmo::ExternalComms::RtsStatusResponse_3& RtsConnection_3::Get_RtsStatusResponse_3() const
 {
-  assert(_tag == Tag::RtsStatusResponse_2);
-  return this->_RtsStatusResponse_2;
+  assert(_tag == Tag::RtsStatusResponse_3);
+  return this->_RtsStatusResponse_3;
 }
 
-void RtsConnection_3::Set_RtsStatusResponse_2(const Anki::Cozmo::ExternalComms::RtsStatusResponse_2& new_RtsStatusResponse_2)
+void RtsConnection_3::Set_RtsStatusResponse_3(const Anki::Cozmo::ExternalComms::RtsStatusResponse_3& new_RtsStatusResponse_3)
 {
-  if(this->_tag == Tag::RtsStatusResponse_2) {
-    this->_RtsStatusResponse_2 = new_RtsStatusResponse_2;
+  if(this->_tag == Tag::RtsStatusResponse_3) {
+    this->_RtsStatusResponse_3 = new_RtsStatusResponse_3;
   }
   else {
     ClearCurrent();
-    new(&this->_RtsStatusResponse_2) Anki::Cozmo::ExternalComms::RtsStatusResponse_2(new_RtsStatusResponse_2);
-    _tag = Tag::RtsStatusResponse_2;
+    new(&this->_RtsStatusResponse_3) Anki::Cozmo::ExternalComms::RtsStatusResponse_3(new_RtsStatusResponse_3);
+    _tag = Tag::RtsStatusResponse_3;
   }
 }
 
 template<>
-const Anki::Cozmo::ExternalComms::RtsStatusResponse_2& RtsConnection_3::Get_<RtsConnection_3::Tag::RtsStatusResponse_2>() const
+const Anki::Cozmo::ExternalComms::RtsStatusResponse_3& RtsConnection_3::Get_<RtsConnection_3::Tag::RtsStatusResponse_3>() const
 {
-  assert(_tag == Tag::RtsStatusResponse_2);
-  return this->_RtsStatusResponse_2;
+  assert(_tag == Tag::RtsStatusResponse_3);
+  return this->_RtsStatusResponse_3;
 }
 
 template<>
-RtsConnection_3 RtsConnection_3::Create_<RtsConnection_3::Tag::RtsStatusResponse_2>(Anki::Cozmo::ExternalComms::RtsStatusResponse_2 member)
+RtsConnection_3 RtsConnection_3::Create_<RtsConnection_3::Tag::RtsStatusResponse_3>(Anki::Cozmo::ExternalComms::RtsStatusResponse_3 member)
 {
-  return CreateRtsStatusResponse_2(std::move(member));
+  return CreateRtsStatusResponse_3(std::move(member));
 }
 
-void RtsConnection_3::Set_RtsStatusResponse_2(Anki::Cozmo::ExternalComms::RtsStatusResponse_2&& new_RtsStatusResponse_2)
+void RtsConnection_3::Set_RtsStatusResponse_3(Anki::Cozmo::ExternalComms::RtsStatusResponse_3&& new_RtsStatusResponse_3)
 {
-  if (this->_tag == Tag::RtsStatusResponse_2) {
-    this->_RtsStatusResponse_2 = std::move(new_RtsStatusResponse_2);
+  if (this->_tag == Tag::RtsStatusResponse_3) {
+    this->_RtsStatusResponse_3 = std::move(new_RtsStatusResponse_3);
   }
   else {
     ClearCurrent();
-    new(&this->_RtsStatusResponse_2) Anki::Cozmo::ExternalComms::RtsStatusResponse_2(std::move(new_RtsStatusResponse_2));
-    _tag = Tag::RtsStatusResponse_2;
+    new(&this->_RtsStatusResponse_3) Anki::Cozmo::ExternalComms::RtsStatusResponse_3(std::move(new_RtsStatusResponse_3));
+    _tag = Tag::RtsStatusResponse_3;
   }
 }
 
@@ -7140,6 +7408,118 @@ void RtsConnection_3::Set_RtsWifiForgetResponse(Anki::Cozmo::ExternalComms::RtsW
   }
 }
 
+RtsConnection_3 RtsConnection_3::CreateRtsCloudSessionRequest(Anki::Cozmo::ExternalComms::RtsCloudSessionRequest&& new_RtsCloudSessionRequest)
+{
+  RtsConnection_3 m;
+  m.Set_RtsCloudSessionRequest(new_RtsCloudSessionRequest);
+  return m;
+}
+
+RtsConnection_3::RtsConnection_3(Anki::Cozmo::ExternalComms::RtsCloudSessionRequest&& new_RtsCloudSessionRequest)
+{
+  new(&this->_RtsCloudSessionRequest) Anki::Cozmo::ExternalComms::RtsCloudSessionRequest(std::move(new_RtsCloudSessionRequest));
+  _tag = Tag::RtsCloudSessionRequest;
+}
+
+const Anki::Cozmo::ExternalComms::RtsCloudSessionRequest& RtsConnection_3::Get_RtsCloudSessionRequest() const
+{
+  assert(_tag == Tag::RtsCloudSessionRequest);
+  return this->_RtsCloudSessionRequest;
+}
+
+void RtsConnection_3::Set_RtsCloudSessionRequest(const Anki::Cozmo::ExternalComms::RtsCloudSessionRequest& new_RtsCloudSessionRequest)
+{
+  if(this->_tag == Tag::RtsCloudSessionRequest) {
+    this->_RtsCloudSessionRequest = new_RtsCloudSessionRequest;
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsCloudSessionRequest) Anki::Cozmo::ExternalComms::RtsCloudSessionRequest(new_RtsCloudSessionRequest);
+    _tag = Tag::RtsCloudSessionRequest;
+  }
+}
+
+template<>
+const Anki::Cozmo::ExternalComms::RtsCloudSessionRequest& RtsConnection_3::Get_<RtsConnection_3::Tag::RtsCloudSessionRequest>() const
+{
+  assert(_tag == Tag::RtsCloudSessionRequest);
+  return this->_RtsCloudSessionRequest;
+}
+
+template<>
+RtsConnection_3 RtsConnection_3::Create_<RtsConnection_3::Tag::RtsCloudSessionRequest>(Anki::Cozmo::ExternalComms::RtsCloudSessionRequest member)
+{
+  return CreateRtsCloudSessionRequest(std::move(member));
+}
+
+void RtsConnection_3::Set_RtsCloudSessionRequest(Anki::Cozmo::ExternalComms::RtsCloudSessionRequest&& new_RtsCloudSessionRequest)
+{
+  if (this->_tag == Tag::RtsCloudSessionRequest) {
+    this->_RtsCloudSessionRequest = std::move(new_RtsCloudSessionRequest);
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsCloudSessionRequest) Anki::Cozmo::ExternalComms::RtsCloudSessionRequest(std::move(new_RtsCloudSessionRequest));
+    _tag = Tag::RtsCloudSessionRequest;
+  }
+}
+
+RtsConnection_3 RtsConnection_3::CreateRtsCloudSessionResponse(Anki::Cozmo::ExternalComms::RtsCloudSessionResponse&& new_RtsCloudSessionResponse)
+{
+  RtsConnection_3 m;
+  m.Set_RtsCloudSessionResponse(new_RtsCloudSessionResponse);
+  return m;
+}
+
+RtsConnection_3::RtsConnection_3(Anki::Cozmo::ExternalComms::RtsCloudSessionResponse&& new_RtsCloudSessionResponse)
+{
+  new(&this->_RtsCloudSessionResponse) Anki::Cozmo::ExternalComms::RtsCloudSessionResponse(std::move(new_RtsCloudSessionResponse));
+  _tag = Tag::RtsCloudSessionResponse;
+}
+
+const Anki::Cozmo::ExternalComms::RtsCloudSessionResponse& RtsConnection_3::Get_RtsCloudSessionResponse() const
+{
+  assert(_tag == Tag::RtsCloudSessionResponse);
+  return this->_RtsCloudSessionResponse;
+}
+
+void RtsConnection_3::Set_RtsCloudSessionResponse(const Anki::Cozmo::ExternalComms::RtsCloudSessionResponse& new_RtsCloudSessionResponse)
+{
+  if(this->_tag == Tag::RtsCloudSessionResponse) {
+    this->_RtsCloudSessionResponse = new_RtsCloudSessionResponse;
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsCloudSessionResponse) Anki::Cozmo::ExternalComms::RtsCloudSessionResponse(new_RtsCloudSessionResponse);
+    _tag = Tag::RtsCloudSessionResponse;
+  }
+}
+
+template<>
+const Anki::Cozmo::ExternalComms::RtsCloudSessionResponse& RtsConnection_3::Get_<RtsConnection_3::Tag::RtsCloudSessionResponse>() const
+{
+  assert(_tag == Tag::RtsCloudSessionResponse);
+  return this->_RtsCloudSessionResponse;
+}
+
+template<>
+RtsConnection_3 RtsConnection_3::Create_<RtsConnection_3::Tag::RtsCloudSessionResponse>(Anki::Cozmo::ExternalComms::RtsCloudSessionResponse member)
+{
+  return CreateRtsCloudSessionResponse(std::move(member));
+}
+
+void RtsConnection_3::Set_RtsCloudSessionResponse(Anki::Cozmo::ExternalComms::RtsCloudSessionResponse&& new_RtsCloudSessionResponse)
+{
+  if (this->_tag == Tag::RtsCloudSessionResponse) {
+    this->_RtsCloudSessionResponse = std::move(new_RtsCloudSessionResponse);
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsCloudSessionResponse) Anki::Cozmo::ExternalComms::RtsCloudSessionResponse(std::move(new_RtsCloudSessionResponse));
+    _tag = Tag::RtsCloudSessionResponse;
+  }
+}
+
 size_t RtsConnection_3::Unpack(const uint8_t* buff, const size_t len)
 {
   const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -7243,12 +7623,12 @@ size_t RtsConnection_3::Unpack(const CLAD::SafeMessageBuffer& buffer)
       this->_RtsStatusRequest.Unpack(buffer);
     }
     break;
-  case Tag::RtsStatusResponse_2:
+  case Tag::RtsStatusResponse_3:
     if (newTag != oldTag) {
-      new(&(this->_RtsStatusResponse_2)) Anki::Cozmo::ExternalComms::RtsStatusResponse_2(buffer);
+      new(&(this->_RtsStatusResponse_3)) Anki::Cozmo::ExternalComms::RtsStatusResponse_3(buffer);
     }
     else {
-      this->_RtsStatusResponse_2.Unpack(buffer);
+      this->_RtsStatusResponse_3.Unpack(buffer);
     }
     break;
   case Tag::RtsWifiScanRequest:
@@ -7387,6 +7767,22 @@ size_t RtsConnection_3::Unpack(const CLAD::SafeMessageBuffer& buffer)
       this->_RtsWifiForgetResponse.Unpack(buffer);
     }
     break;
+  case Tag::RtsCloudSessionRequest:
+    if (newTag != oldTag) {
+      new(&(this->_RtsCloudSessionRequest)) Anki::Cozmo::ExternalComms::RtsCloudSessionRequest(buffer);
+    }
+    else {
+      this->_RtsCloudSessionRequest.Unpack(buffer);
+    }
+    break;
+  case Tag::RtsCloudSessionResponse:
+    if (newTag != oldTag) {
+      new(&(this->_RtsCloudSessionResponse)) Anki::Cozmo::ExternalComms::RtsCloudSessionResponse(buffer);
+    }
+    else {
+      this->_RtsCloudSessionResponse.Unpack(buffer);
+    }
+    break;
   default:
     break;
   }
@@ -7437,8 +7833,8 @@ size_t RtsConnection_3::Pack(CLAD::SafeMessageBuffer& buffer) const
   case Tag::RtsStatusRequest:
     this->_RtsStatusRequest.Pack(buffer);
     break;
-  case Tag::RtsStatusResponse_2:
-    this->_RtsStatusResponse_2.Pack(buffer);
+  case Tag::RtsStatusResponse_3:
+    this->_RtsStatusResponse_3.Pack(buffer);
     break;
   case Tag::RtsWifiScanRequest:
     this->_RtsWifiScanRequest.Pack(buffer);
@@ -7491,6 +7887,12 @@ size_t RtsConnection_3::Pack(CLAD::SafeMessageBuffer& buffer) const
   case Tag::RtsWifiForgetResponse:
     this->_RtsWifiForgetResponse.Pack(buffer);
     break;
+  case Tag::RtsCloudSessionRequest:
+    this->_RtsCloudSessionRequest.Pack(buffer);
+    break;
+  case Tag::RtsCloudSessionResponse:
+    this->_RtsCloudSessionResponse.Pack(buffer);
+    break;
   default:
     break;
   }
@@ -7534,8 +7936,8 @@ size_t RtsConnection_3::Size() const
   case Tag::RtsStatusRequest:
     result += this->_RtsStatusRequest.Size(); // RtsStatusRequest
     break;
-  case Tag::RtsStatusResponse_2:
-    result += this->_RtsStatusResponse_2.Size(); // RtsStatusResponse_2
+  case Tag::RtsStatusResponse_3:
+    result += this->_RtsStatusResponse_3.Size(); // RtsStatusResponse_3
     break;
   case Tag::RtsWifiScanRequest:
     result += this->_RtsWifiScanRequest.Size(); // RtsWifiScanRequest
@@ -7588,6 +7990,12 @@ size_t RtsConnection_3::Size() const
   case Tag::RtsWifiForgetResponse:
     result += this->_RtsWifiForgetResponse.Size(); // RtsWifiForgetResponse
     break;
+  case Tag::RtsCloudSessionRequest:
+    result += this->_RtsCloudSessionRequest.Size(); // RtsCloudSessionRequest
+    break;
+  case Tag::RtsCloudSessionResponse:
+    result += this->_RtsCloudSessionResponse.Size(); // RtsCloudSessionResponse
+    break;
   default:
     break;
   }
@@ -7622,8 +8030,8 @@ bool RtsConnection_3::operator==(const RtsConnection_3& other) const
     return this->_RtsWifiIpResponse == other._RtsWifiIpResponse;
   case Tag::RtsStatusRequest:
     return this->_RtsStatusRequest == other._RtsStatusRequest;
-  case Tag::RtsStatusResponse_2:
-    return this->_RtsStatusResponse_2 == other._RtsStatusResponse_2;
+  case Tag::RtsStatusResponse_3:
+    return this->_RtsStatusResponse_3 == other._RtsStatusResponse_3;
   case Tag::RtsWifiScanRequest:
     return this->_RtsWifiScanRequest == other._RtsWifiScanRequest;
   case Tag::RtsWifiScanResponse_3:
@@ -7658,6 +8066,10 @@ bool RtsConnection_3::operator==(const RtsConnection_3& other) const
     return this->_RtsWifiForgetRequest == other._RtsWifiForgetRequest;
   case Tag::RtsWifiForgetResponse:
     return this->_RtsWifiForgetResponse == other._RtsWifiForgetResponse;
+  case Tag::RtsCloudSessionRequest:
+    return this->_RtsCloudSessionRequest == other._RtsCloudSessionRequest;
+  case Tag::RtsCloudSessionResponse:
+    return this->_RtsCloudSessionResponse == other._RtsCloudSessionResponse;
   default:
     return true;
   }
@@ -7704,8 +8116,8 @@ void RtsConnection_3::ClearCurrent()
   case Tag::RtsStatusRequest:
     _RtsStatusRequest.~RtsStatusRequest();
     break;
-  case Tag::RtsStatusResponse_2:
-    _RtsStatusResponse_2.~RtsStatusResponse_2();
+  case Tag::RtsStatusResponse_3:
+    _RtsStatusResponse_3.~RtsStatusResponse_3();
     break;
   case Tag::RtsWifiScanRequest:
     _RtsWifiScanRequest.~RtsWifiScanRequest();
@@ -7758,6 +8170,12 @@ void RtsConnection_3::ClearCurrent()
   case Tag::RtsWifiForgetResponse:
     _RtsWifiForgetResponse.~RtsWifiForgetResponse();
     break;
+  case Tag::RtsCloudSessionRequest:
+    _RtsCloudSessionRequest.~RtsCloudSessionRequest();
+    break;
+  case Tag::RtsCloudSessionResponse:
+    _RtsCloudSessionResponse.~RtsCloudSessionResponse();
+    break;
   default:
     break;
   }
@@ -7788,8 +8206,8 @@ const char* RtsConnection_3TagToString(const RtsConnection_3Tag tag) {
     return "RtsWifiIpResponse";
   case RtsConnection_3Tag::RtsStatusRequest:
     return "RtsStatusRequest";
-  case RtsConnection_3Tag::RtsStatusResponse_2:
-    return "RtsStatusResponse_2";
+  case RtsConnection_3Tag::RtsStatusResponse_3:
+    return "RtsStatusResponse_3";
   case RtsConnection_3Tag::RtsWifiScanRequest:
     return "RtsWifiScanRequest";
   case RtsConnection_3Tag::RtsWifiScanResponse_3:
@@ -7824,15 +8242,19 @@ const char* RtsConnection_3TagToString(const RtsConnection_3Tag tag) {
     return "RtsWifiForgetRequest";
   case RtsConnection_3Tag::RtsWifiForgetResponse:
     return "RtsWifiForgetResponse";
+  case RtsConnection_3Tag::RtsCloudSessionRequest:
+    return "RtsCloudSessionRequest";
+  case RtsConnection_3Tag::RtsCloudSessionResponse:
+    return "RtsCloudSessionResponse";
   default:
     return "INVALID";
   }
 }
 
-const char* RtsConnection_3VersionHashStr = "3e5b5bc3488e41ae998fff5ac6fe39b6";
+const char* RtsConnection_3VersionHashStr = "8849d01a69072939c01f49c50b0f0873";
 
 const uint8_t RtsConnection_3VersionHash[16] = { 
-    0x3e, 0x5b, 0x5b, 0xc3, 0x48, 0x8e, 0x41, 0xae, 0x99, 0x8f, 0xff, 0x5a, 0xc6, 0xfe, 0x39, 0xb6 
+    0x88, 0x49, 0xd0, 0x1a, 0x69, 0x7, 0x29, 0x39, 0xc0, 0x1f, 0x49, 0xc5, 0xb, 0xf, 0x8, 0x73 
 };
 
 // UNION RtsConnection

@@ -125,8 +125,8 @@ case Anki::Cozmo::ExternalComms::RtsConnection_3::Tag::RtsWifiIpResponse:
 case Anki::Cozmo::ExternalComms::RtsConnection_3::Tag::RtsStatusRequest:
   Process_RtsStatusRequest(msg.Get_RtsStatusRequest());
   break;
-case Anki::Cozmo::ExternalComms::RtsConnection_3::Tag::RtsStatusResponse_2:
-  Process_RtsStatusResponse_2(msg.Get_RtsStatusResponse_2());
+case Anki::Cozmo::ExternalComms::RtsConnection_3::Tag::RtsStatusResponse_3:
+  Process_RtsStatusResponse_3(msg.Get_RtsStatusResponse_3());
   break;
 case Anki::Cozmo::ExternalComms::RtsConnection_3::Tag::RtsWifiScanRequest:
   Process_RtsWifiScanRequest(msg.Get_RtsWifiScanRequest());
@@ -178,6 +178,12 @@ case Anki::Cozmo::ExternalComms::RtsConnection_3::Tag::RtsWifiForgetRequest:
   break;
 case Anki::Cozmo::ExternalComms::RtsConnection_3::Tag::RtsWifiForgetResponse:
   Process_RtsWifiForgetResponse(msg.Get_RtsWifiForgetResponse());
+  break;
+case Anki::Cozmo::ExternalComms::RtsConnection_3::Tag::RtsCloudSessionRequest:
+  Process_RtsCloudSessionRequest(msg.Get_RtsCloudSessionRequest());
+  break;
+case Anki::Cozmo::ExternalComms::RtsConnection_3::Tag::RtsCloudSessionResponse:
+  Process_RtsCloudSessionResponse(msg.Get_RtsCloudSessionResponse());
   break;
 }
 switch(msg.GetTag()) {

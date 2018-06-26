@@ -58,7 +58,7 @@ enum class RtsConnection_3Tag : uint8_t {
   RtsWifiIpRequest           = 0x8,  // 8
   RtsWifiIpResponse          = 0x9,  // 9
   RtsStatusRequest           = 0xa,  // 10
-  RtsStatusResponse_2        = 0xb,  // 11
+  RtsStatusResponse_3        = 0xb,  // 11
   RtsWifiScanRequest         = 0xc,  // 12
   RtsWifiScanResponse_3      = 0xd,  // 13
   RtsOtaUpdateRequest        = 0xe,  // 14
@@ -76,6 +76,8 @@ enum class RtsConnection_3Tag : uint8_t {
   RtsFileDownload            = 0x1a, // 26
   RtsWifiForgetRequest       = 0x1b, // 27
   RtsWifiForgetResponse      = 0x1c, // 28
+  RtsCloudSessionRequest     = 0x1d, // 29
+  RtsCloudSessionResponse    = 0x1e, // 30
   INVALID                    = 255
 };
 

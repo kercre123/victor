@@ -868,10 +868,10 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         }
         break;
       }
-      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsStatusResponse_2: {
+      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsStatusResponse_3: {
         //
         if(_currentCommand == "status" && !_readyForNextCommand) {
-          Anki::Cozmo::ExternalComms::RtsStatusResponse_2 msg = rtsMsg.Get_RtsStatusResponse_2();
+          Anki::Cozmo::ExternalComms::RtsStatusResponse_3 msg = rtsMsg.Get_RtsStatusResponse_3();
           
           std::string state = "";
           switch(msg.wifiState) {
@@ -891,7 +891,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
               break;
           }
           
-          printf("             ssid = %s\n connection_state = %s\n     access_point = %s\n          version = %s\n  ota_in_progress = %s\n", [self asciiStr:(char*)msg.wifiSsidHex.c_str() length:(int)msg.wifiSsidHex.length()].c_str(), state.c_str(), msg.accessPoint? "true" : "false", msg.version.c_str(), msg.otaInProgress? "true" : "false");
+          printf("             ssid = %s\n connection_state = %s\n     access_point = %s\n          version = %s\n  ota_in_progress = %s\n         hasOwner = %s\n", [self asciiStr:(char*)msg.wifiSsidHex.c_str() length:(int)msg.wifiSsidHex.length()].c_str(), state.c_str(), msg.accessPoint? "true" : "false", msg.version.c_str(), msg.otaInProgress? "true" : "false", msg.hasOwner? "true" : "false");
           _readyForNextCommand = true;
         }
         
@@ -1063,7 +1063,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     RequestId rid = kUnknown;
     
     switch(msg.GetTag()) {
-      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsStatusResponse_2:
+      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsStatusResponse_3:
         rid = kStatus;
         break;
       case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsWifiScanResponse_3:

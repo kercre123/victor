@@ -40,7 +40,7 @@ void Process_RtsWifiConnectResponse_3(const Anki::Cozmo::ExternalComms::RtsWifiC
 void Process_RtsWifiIpRequest(const Anki::Cozmo::ExternalComms::RtsWifiIpRequest& msg);
 void Process_RtsWifiIpResponse(const Anki::Cozmo::ExternalComms::RtsWifiIpResponse& msg);
 void Process_RtsStatusRequest(const Anki::Cozmo::ExternalComms::RtsStatusRequest& msg);
-void Process_RtsStatusResponse_2(const Anki::Cozmo::ExternalComms::RtsStatusResponse_2& msg);
+void Process_RtsStatusResponse_3(const Anki::Cozmo::ExternalComms::RtsStatusResponse_3& msg);
 void Process_RtsWifiScanRequest(const Anki::Cozmo::ExternalComms::RtsWifiScanRequest& msg);
 void Process_RtsWifiScanResponse_3(const Anki::Cozmo::ExternalComms::RtsWifiScanResponse_3& msg);
 void Process_RtsOtaUpdateRequest(const Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest& msg);
@@ -58,6 +58,8 @@ void Process_RtsLogResponse(const Anki::Cozmo::ExternalComms::RtsLogResponse& ms
 void Process_RtsFileDownload(const Anki::Cozmo::ExternalComms::RtsFileDownload& msg);
 void Process_RtsWifiForgetRequest(const Anki::Cozmo::ExternalComms::RtsWifiForgetRequest& msg);
 void Process_RtsWifiForgetResponse(const Anki::Cozmo::ExternalComms::RtsWifiForgetResponse& msg);
+void Process_RtsCloudSessionRequest(const Anki::Cozmo::ExternalComms::RtsCloudSessionRequest& msg);
+void Process_RtsCloudSessionResponse(const Anki::Cozmo::ExternalComms::RtsCloudSessionResponse& msg);
 void Process_Error(const Anki::Cozmo::ExternalComms::Error& msg);
 void Process_RtsConnection_2(const Anki::Cozmo::ExternalComms::RtsConnection_2& msg);
 void Process_RtsConnection_3(const Anki::Cozmo::ExternalComms::RtsConnection_3& msg);

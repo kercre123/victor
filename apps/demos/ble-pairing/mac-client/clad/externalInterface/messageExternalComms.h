@@ -938,6 +938,69 @@ struct RtsStatusResponse_2
 extern const char* RtsStatusResponse_2VersionHashStr;
 extern const uint8_t RtsStatusResponse_2VersionHash[16];
 
+// MESSAGE RtsStatusResponse_3
+struct RtsStatusResponse_3
+{
+  std::string wifiSsidHex;
+  uint8_t wifiState;
+  bool accessPoint;
+  uint8_t bleState;
+  uint8_t batteryState;
+  std::string version;
+  bool otaInProgress;
+  bool hasOwner;
+  
+  /**** Constructors ****/
+  RtsStatusResponse_3() = default;
+  RtsStatusResponse_3(const RtsStatusResponse_3& other) = default;
+  RtsStatusResponse_3(RtsStatusResponse_3& other) = default;
+  RtsStatusResponse_3(RtsStatusResponse_3&& other) noexcept = default;
+  RtsStatusResponse_3& operator=(const RtsStatusResponse_3& other) = default;
+  RtsStatusResponse_3& operator=(RtsStatusResponse_3&& other) = default;
+  
+  explicit RtsStatusResponse_3(const std::string& wifiSsidHex,
+    uint8_t wifiState,
+    bool accessPoint,
+    uint8_t bleState,
+    uint8_t batteryState,
+    const std::string& version,
+    bool otaInProgress,
+    bool hasOwner)
+  : wifiSsidHex(wifiSsidHex)
+  , wifiState(wifiState)
+  , accessPoint(accessPoint)
+  , bleState(bleState)
+  , batteryState(batteryState)
+  , version(version)
+  , otaInProgress(otaInProgress)
+  , hasOwner(hasOwner)
+  {}
+  
+  explicit RtsStatusResponse_3(const uint8_t* buff, size_t len);
+  explicit RtsStatusResponse_3(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsStatusResponse_3& other) const;
+  bool operator!=(const RtsStatusResponse_3& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(wifiSsidHex, wifiState, accessPoint, bleState, batteryState, version, otaInProgress, hasOwner);
+  }
+};
+
+extern const char* RtsStatusResponse_3VersionHashStr;
+extern const uint8_t RtsStatusResponse_3VersionHash[16];
+
 // MESSAGE RtsWifiScanRequest
 struct RtsWifiScanRequest
 {
@@ -1624,6 +1687,96 @@ struct RtsFileDownload
 extern const char* RtsFileDownloadVersionHashStr;
 extern const uint8_t RtsFileDownloadVersionHash[16];
 
+// MESSAGE RtsCloudSessionRequest
+struct RtsCloudSessionRequest
+{
+  std::vector<std::string> sessionToken;
+  
+  /**** Constructors ****/
+  RtsCloudSessionRequest() = default;
+  RtsCloudSessionRequest(const RtsCloudSessionRequest& other) = default;
+  RtsCloudSessionRequest(RtsCloudSessionRequest& other) = default;
+  RtsCloudSessionRequest(RtsCloudSessionRequest&& other) noexcept = default;
+  RtsCloudSessionRequest& operator=(const RtsCloudSessionRequest& other) = default;
+  RtsCloudSessionRequest& operator=(RtsCloudSessionRequest&& other) = default;
+  
+  explicit RtsCloudSessionRequest(const std::vector<std::string>& sessionToken)
+  : sessionToken(sessionToken)
+  {}
+  
+  explicit RtsCloudSessionRequest(const uint8_t* buff, size_t len);
+  explicit RtsCloudSessionRequest(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsCloudSessionRequest& other) const;
+  bool operator!=(const RtsCloudSessionRequest& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(sessionToken);
+  }
+};
+
+extern const char* RtsCloudSessionRequestVersionHashStr;
+extern const uint8_t RtsCloudSessionRequestVersionHash[16];
+
+// MESSAGE RtsCloudSessionResponse
+struct RtsCloudSessionResponse
+{
+  bool success;
+  uint8_t statusCode;
+  std::vector<std::string> clientTokenGuid;
+  
+  /**** Constructors ****/
+  RtsCloudSessionResponse() = default;
+  RtsCloudSessionResponse(const RtsCloudSessionResponse& other) = default;
+  RtsCloudSessionResponse(RtsCloudSessionResponse& other) = default;
+  RtsCloudSessionResponse(RtsCloudSessionResponse&& other) noexcept = default;
+  RtsCloudSessionResponse& operator=(const RtsCloudSessionResponse& other) = default;
+  RtsCloudSessionResponse& operator=(RtsCloudSessionResponse&& other) = default;
+  
+  explicit RtsCloudSessionResponse(bool success,
+    uint8_t statusCode,
+    const std::vector<std::string>& clientTokenGuid)
+  : success(success)
+  , statusCode(statusCode)
+  , clientTokenGuid(clientTokenGuid)
+  {}
+  
+  explicit RtsCloudSessionResponse(const uint8_t* buff, size_t len);
+  explicit RtsCloudSessionResponse(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsCloudSessionResponse& other) const;
+  bool operator!=(const RtsCloudSessionResponse& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(success, statusCode, clientTokenGuid);
+  }
+};
+
+extern const char* RtsCloudSessionResponseVersionHashStr;
+extern const uint8_t RtsCloudSessionResponseVersionHash[16];
+
 // MESSAGE Error
 struct Error
 {
@@ -2085,8 +2238,8 @@ struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsStatusRequest> {
   using type = Anki::Cozmo::ExternalComms::RtsStatusRequest;
 };
 template<>
-struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsStatusResponse_2> {
-  using type = Anki::Cozmo::ExternalComms::RtsStatusResponse_2;
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsStatusResponse_3> {
+  using type = Anki::Cozmo::ExternalComms::RtsStatusResponse_3;
 };
 template<>
 struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsWifiScanRequest> {
@@ -2155,6 +2308,14 @@ struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsWifiForgetRequest> {
 template<>
 struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsWifiForgetResponse> {
   using type = Anki::Cozmo::ExternalComms::RtsWifiForgetResponse;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsCloudSessionRequest> {
+  using type = Anki::Cozmo::ExternalComms::RtsCloudSessionRequest;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsCloudSessionResponse> {
+  using type = Anki::Cozmo::ExternalComms::RtsCloudSessionResponse;
 };
 
 // UNION RtsConnection_3
@@ -2260,12 +2421,12 @@ public:
   void Set_RtsStatusRequest(const Anki::Cozmo::ExternalComms::RtsStatusRequest& new_RtsStatusRequest);
   void Set_RtsStatusRequest(Anki::Cozmo::ExternalComms::RtsStatusRequest&& new_RtsStatusRequest);
   
-  /** RtsStatusResponse_2 **/
-  static RtsConnection_3 CreateRtsStatusResponse_2(Anki::Cozmo::ExternalComms::RtsStatusResponse_2&& new_RtsStatusResponse_2);
-  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsStatusResponse_2&& new_RtsStatusResponse_2);
-  const Anki::Cozmo::ExternalComms::RtsStatusResponse_2& Get_RtsStatusResponse_2() const;
-  void Set_RtsStatusResponse_2(const Anki::Cozmo::ExternalComms::RtsStatusResponse_2& new_RtsStatusResponse_2);
-  void Set_RtsStatusResponse_2(Anki::Cozmo::ExternalComms::RtsStatusResponse_2&& new_RtsStatusResponse_2);
+  /** RtsStatusResponse_3 **/
+  static RtsConnection_3 CreateRtsStatusResponse_3(Anki::Cozmo::ExternalComms::RtsStatusResponse_3&& new_RtsStatusResponse_3);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsStatusResponse_3&& new_RtsStatusResponse_3);
+  const Anki::Cozmo::ExternalComms::RtsStatusResponse_3& Get_RtsStatusResponse_3() const;
+  void Set_RtsStatusResponse_3(const Anki::Cozmo::ExternalComms::RtsStatusResponse_3& new_RtsStatusResponse_3);
+  void Set_RtsStatusResponse_3(Anki::Cozmo::ExternalComms::RtsStatusResponse_3&& new_RtsStatusResponse_3);
   
   /** RtsWifiScanRequest **/
   static RtsConnection_3 CreateRtsWifiScanRequest(Anki::Cozmo::ExternalComms::RtsWifiScanRequest&& new_RtsWifiScanRequest);
@@ -2386,6 +2547,20 @@ public:
   void Set_RtsWifiForgetResponse(const Anki::Cozmo::ExternalComms::RtsWifiForgetResponse& new_RtsWifiForgetResponse);
   void Set_RtsWifiForgetResponse(Anki::Cozmo::ExternalComms::RtsWifiForgetResponse&& new_RtsWifiForgetResponse);
   
+  /** RtsCloudSessionRequest **/
+  static RtsConnection_3 CreateRtsCloudSessionRequest(Anki::Cozmo::ExternalComms::RtsCloudSessionRequest&& new_RtsCloudSessionRequest);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsCloudSessionRequest&& new_RtsCloudSessionRequest);
+  const Anki::Cozmo::ExternalComms::RtsCloudSessionRequest& Get_RtsCloudSessionRequest() const;
+  void Set_RtsCloudSessionRequest(const Anki::Cozmo::ExternalComms::RtsCloudSessionRequest& new_RtsCloudSessionRequest);
+  void Set_RtsCloudSessionRequest(Anki::Cozmo::ExternalComms::RtsCloudSessionRequest&& new_RtsCloudSessionRequest);
+  
+  /** RtsCloudSessionResponse **/
+  static RtsConnection_3 CreateRtsCloudSessionResponse(Anki::Cozmo::ExternalComms::RtsCloudSessionResponse&& new_RtsCloudSessionResponse);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsCloudSessionResponse&& new_RtsCloudSessionResponse);
+  const Anki::Cozmo::ExternalComms::RtsCloudSessionResponse& Get_RtsCloudSessionResponse() const;
+  void Set_RtsCloudSessionResponse(const Anki::Cozmo::ExternalComms::RtsCloudSessionResponse& new_RtsCloudSessionResponse);
+  void Set_RtsCloudSessionResponse(Anki::Cozmo::ExternalComms::RtsCloudSessionResponse&& new_RtsCloudSessionResponse);
+  
   size_t Unpack(const uint8_t* buff, const size_t len);
   size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
   
@@ -2412,7 +2587,7 @@ private:
     Anki::Cozmo::ExternalComms::RtsWifiIpRequest _RtsWifiIpRequest;
     Anki::Cozmo::ExternalComms::RtsWifiIpResponse _RtsWifiIpResponse;
     Anki::Cozmo::ExternalComms::RtsStatusRequest _RtsStatusRequest;
-    Anki::Cozmo::ExternalComms::RtsStatusResponse_2 _RtsStatusResponse_2;
+    Anki::Cozmo::ExternalComms::RtsStatusResponse_3 _RtsStatusResponse_3;
     Anki::Cozmo::ExternalComms::RtsWifiScanRequest _RtsWifiScanRequest;
     Anki::Cozmo::ExternalComms::RtsWifiScanResponse_3 _RtsWifiScanResponse_3;
     Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest _RtsOtaUpdateRequest;
@@ -2430,6 +2605,8 @@ private:
     Anki::Cozmo::ExternalComms::RtsFileDownload _RtsFileDownload;
     Anki::Cozmo::ExternalComms::RtsWifiForgetRequest _RtsWifiForgetRequest;
     Anki::Cozmo::ExternalComms::RtsWifiForgetResponse _RtsWifiForgetResponse;
+    Anki::Cozmo::ExternalComms::RtsCloudSessionRequest _RtsCloudSessionRequest;
+    Anki::Cozmo::ExternalComms::RtsCloudSessionResponse _RtsCloudSessionResponse;
   };
 };
 extern const char* RtsConnection_3VersionHashStr;
