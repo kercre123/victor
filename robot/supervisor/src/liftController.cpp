@@ -257,6 +257,7 @@ namespace Anki {
       {
         calState_ = LCS_LOWER_LIFT;
         isCalibrated_ = false;
+        inPosition_ = false;
         potentialBurnoutStartTime_ms_ = 0;
         Messages::SendMotorCalibrationMsg(MotorID::MOTOR_LIFT, true, autoStarted);
         angleErrorSum_ = 0.f;
@@ -345,6 +346,7 @@ namespace Anki {
               isCalibrated_ = true;
               firstCalibration_ = false;
               calState_ = LCS_IDLE;
+              inPosition_ = true;
               break;
             }
 

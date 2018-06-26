@@ -17,6 +17,7 @@
 #include "localization.h"
 #include "pathFollower.h"
 #include "pickAndPlaceController.h"
+#include "powerModeManager.h"
 #include "proxSensors.h"
 #include "speedController.h"
 #include "steeringController.h"
@@ -182,9 +183,7 @@ namespace Anki {
       void Process_calmPowerMode(const RobotInterface::CalmPowerMode& msg)
       {
         AnkiInfo("Messages.Process_calmPowerMode.enable", "enable: %d, calib: %d", msg.enable, msg.calibOnDisable);
-        HAL::PowerState newPowerMode = msg.enable ? HAL::POWER_MODE_CALM : HAL::POWER_MODE_ACTIVE;
-        HAL::PowerSetMode(newPowerMode);
-        Robot::CalibrateMotorsOnNextCalmModeExit(msg.calibOnDisable);
+        PowerModeManager::EnableActiveMode(!msg.enable, msg.calibOnDisable);
       }
 
       void Process_absLocalizationUpdate(const RobotInterface::AbsoluteLocalizationUpdate& msg)

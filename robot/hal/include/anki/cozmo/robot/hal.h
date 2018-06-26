@@ -260,7 +260,11 @@ typedef enum
 
 /** Command syscon to enter specified power state
  */
-void PowerSetMode(const PowerState state);
+void PowerSetDesiredMode(const PowerState state);
+
+/** Get last desired syscon mode that was commanded
+ */
+PowerState PowerGetDesiredMode();
 
 /** Get syscon's current power state
  */

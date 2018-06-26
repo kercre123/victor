@@ -46,7 +46,7 @@ namespace { // "Private members"
   // so we cache the last non-0xFFFF value and return this as the latest touch sensor reading
   u16 lastValidTouchIntensity_;
 
-  PowerState desiredPowerMode_;
+  HAL::PowerState desiredPowerMode_;
 
   // Flag to prevent spamming of unexepected power mode warning
   bool reportUnexpectedPowerMode_ = false;
@@ -602,11 +602,16 @@ void HAL::Shutdown()
 }
 
 
-void HAL::PowerSetMode(const PowerState state)
+void HAL::PowerSetDesiredMode(const PowerState state)
 {
-  AnkiInfo("HAL.PowerSetMode", "%d", state);
+  AnkiInfo("HAL.PowerSetDesiredMode", "%d", state);
   desiredPowerMode_ = state;
   lastPowerSetModeTime_ms_ = HAL::GetTimeStamp();
+}
+
+HAL::PowerState HAL::PowerGetDesiredMode()
+{
+  return desiredPowerMode_;
 }
 
 HAL::PowerState HAL::PowerGetMode()
