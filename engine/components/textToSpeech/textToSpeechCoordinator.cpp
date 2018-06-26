@@ -133,6 +133,15 @@ const uint8_t TextToSpeechCoordinator::CreateUtterance(const std::string& uttera
               "TextToSpeechCoordinator.KeyframeDrivenTTS.NotYetSupported",
               "Keyframe driven TTS should not be used with the TTSCoordinator until it is fully supported");
 
+  // TODO: warn here that _robot->SendMessage(...) will fail if the string length is greater than 255
+  //       this is because CLAD stores the string length in an uint8_t
+  //       only a warning since KnowledgeGraph is known to send large strings and can fail gracefully
+  if(utteranceString.length() > 255){
+    PRINT_NAMED_WARNING("TextToSpeechCoordinator.CreateUtterance",
+                        "Utterance string cannot be longer than 255 characters (yours is %d)",
+                        (int)utteranceString.length());
+  }
+
   // Compose a request to prepare TTS audio
   RobotInterface::TextToSpeechPrepare msg;
   msg.ttsID = utteranceID;
@@ -242,6 +251,8 @@ const bool TextToSpeechCoordinator::CancelUtterance(const uint8_t utteranceID)
   // notes:
   //  + if cancelling when it's generating, thread will hang until generation is complete
   //  + cancelling will clear the wav data in AnkiPluginInterface, regardless of which utteranceID was last delivered
+  const UtteranceState utteranceState = it->second.state;
+  if((UtteranceState::Invalid != utteranceState) && (UtteranceState::Finished != utteranceState))
   {
     PRINT_NAMED_INFO("TextToSpeechCoordinator.CancelUtteranceGeneration", "Cancel ttsID %d", utteranceID);
     RobotInterface::TextToSpeechCancel msg;
@@ -252,10 +263,10 @@ const bool TextToSpeechCoordinator::CancelUtterance(const uint8_t utteranceID)
                         "Unable to send robot message (result %d)",
                         result);
     }
-  }
 
-  // Mark the record for cleanup
-  UpdateUtteranceState(utteranceID, TextToSpeechState::Invalid);
+    // Mark the record for cleanup
+    UpdateUtteranceState(utteranceID, TextToSpeechState::Invalid);
+  }
 
   return true;
 }
