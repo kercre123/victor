@@ -934,13 +934,18 @@ namespace Anki {
 
     } 
 
-    void HAL::PowerSetMode(const PowerState state)
+    void HAL::PowerSetDesiredMode(const PowerState state)
     {
       powerState_ = state;
       if (powerState_ != POWER_MODE_ACTIVE) {
-        AnkiWarn("HAL.PowerSetMode.UnsupportedMode", 
+        AnkiWarn("HAL.PowerSetDesiredMode.UnsupportedMode", 
                  "Only POWER_MODE_ACTIVE behavior is actually supported in sim");
       }
+    }
+
+    HAL::PowerState HAL::PowerGetDesiredMode()
+    {
+      return powerState_;
     }
 
     HAL::PowerState HAL::PowerGetMode()

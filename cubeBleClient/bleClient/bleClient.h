@@ -48,16 +48,16 @@ namespace Cozmo {
       return _connectionId >= 0;
     };
     
+    // Are we connected to the bluetooth daemon?
+    bool IsConnectedToServer() {
+      return IsConnected();
+    }
+    
     // Start/stop scanning for cubes
     void StartScanForCubes();
     void StopScanForCubes();
     void SetScanDuration(const float duration_sec) {
       _scanDuration_sec = static_cast<ev_tstamp>(duration_sec);
-    }
-    
-    // Should we start a scan immediately upon connection to the BLE server?
-    void SetStartScanUponConnection(const bool set = true) {
-      _startScanUponConnection = set;
     }
 
     void FlashCube(std::vector<uint8_t> cubeFirmware);
@@ -116,7 +116,7 @@ namespace Cozmo {
     void AsyncStartScanCallback(ev::async& w, int revents);
     
     // Callback for timer to occasionally check for connection to server
-    void ConnectionCheckTimerCallback(ev::timer& w, int revents);
+    void ServerConnectionCheckTimerCallback(ev::timer& w, int revents);
     
     // Callback for "scanning for cubes" timer
     void ScanningTimerCallback(ev::timer& w, int revents);
@@ -156,9 +156,6 @@ namespace Cozmo {
 
     // Async signal to begin flashing the cube
     ev::async _asyncFlashCubeSignal;
-    
-    // Should we start scanning for cubes immediately upon connection with server?
-    std::atomic<bool> _startScanUponConnection{false};
     
     // How long to scan for cubes for
     std::atomic<ev_tstamp> _scanDuration_sec{3.f};

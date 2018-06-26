@@ -46,9 +46,6 @@ static f32  kTimeToDisplayResultOnFace_ms = 10000;
 
 // Whether or not to skip checking we have heard from an active object
 static bool kSkipActiveObjectCheck        = false;
-
-// How long to discovery active objects 
-static f32  kActiveObjectDiscoveryTime_s  = 20.f;
  
 // Whether or not to need touch to start playpen
 static bool kUseTouchToStart              = false;

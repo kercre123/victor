@@ -171,11 +171,8 @@ void SdkStatus::OnConnectionSuccess(const ExternalInterface::UiDeviceConnectionS
 
     if(_shouldAutoConnectToCubes)
     {
-      // Reset BlockPool on connection, enabling it if it was disabled. The persistentPool is maintained so
-      // we can quickly reconnect to previously connected objects without having to go through the discovery phase
-      const bool enabled = true;
-      const bool reset = false;
-      _externalInterface->Broadcast(ExternalInterface::MessageGameToEngine(ExternalInterface::BlockPoolEnabledMessage(0, enabled, reset)));
+      // Request a cube connection
+      _externalInterface->Broadcast(ExternalInterface::MessageGameToEngine(ExternalInterface::ConnectToCube()));
     }
   }
   else
@@ -221,13 +218,9 @@ void SdkStatus::OnDisconnect(bool isExitingSDKMode)
 
     if(_shouldAutoDisconnectFromCubes)
     {
-      // Reset BlockPool on disconnection, disabling it to prevent connection to other objects
-      // The persistentPool is maintained so we can quickly reconnect to previously connected objects
-      // without having to go through the discovery phase
-      // This will cause us to disconnect from all connected objects
-      const bool enabled = false;
-      const bool reset = false;
-      _externalInterface->Broadcast(ExternalInterface::MessageGameToEngine(ExternalInterface::BlockPoolEnabledMessage(0, enabled, reset)));
+      // Disconnect from cube immediately
+      const float gracePeriod_sec = 0.f;
+      _externalInterface->Broadcast(ExternalInterface::MessageGameToEngine(ExternalInterface::DisconnectFromCube(gracePeriod_sec)));
     }
 
     _isConnected = false;

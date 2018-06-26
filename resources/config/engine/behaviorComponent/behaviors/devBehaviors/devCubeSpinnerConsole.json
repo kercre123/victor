@@ -1,4 +1,16 @@
 {
   "behaviorID" : "DevCubeSpinnerConsole",
-  "behaviorClass": "DevCubeSpinnerConsole"
+  "behaviorClass": "DevCubeSpinnerConsole",
+
+  "gameConfig" : {
+    "getInLength_ms" : 3000,
+    "timePerLED_ms" : 250,
+    // A float representing the relative speed per round
+    "speedMultipliers" : [
+      1.0,
+      1.5,
+      1.5,
+      3.0
+    ]
+  }
 }

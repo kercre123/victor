@@ -333,12 +333,6 @@ namespace Cozmo {
       uiCamDisplay_ = GetSupervisor()->getDisplay("uiCamDisplay");
     }
     
-    const auto doAutoBlockpoolField = root_->getField("doAutoBlockpool");
-    if (doAutoBlockpoolField) {
-      LOG_INFO("WebotsCtrlKeyboard.Init.DoAutoBlockpool", "%d", doAutoBlockpoolField->getSFBool());
-      EnableAutoBlockpool(doAutoBlockpoolField->getSFBool());
-    }
-    
     _lastObservedImageCentroid.point = {-1.f,-1.f};
   }
   

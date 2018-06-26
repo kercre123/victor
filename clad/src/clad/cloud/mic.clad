@@ -42,7 +42,8 @@ union dupes_allowed Message {
 	Void testStarted,
 	Void streamTimeout,
 	IntentResult result,
-	IntentError error
+	IntentError error,
+	Void streamOpen
 }
 
 

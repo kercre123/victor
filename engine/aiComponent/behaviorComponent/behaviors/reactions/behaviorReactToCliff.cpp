@@ -11,11 +11,6 @@
  *
  **/
 
-#include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/types/animationTrigger.h"
-#include "clad/types/behaviorComponent/behaviorIDs.h"
-#include "clad/types/behaviorComponent/behaviorStats.h"
-#include "clad/types/proxMessages.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
@@ -27,7 +22,20 @@
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/moodSystem/moodManager.h"
+
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/types/animationTrigger.h"
+#include "clad/types/behaviorComponent/behaviorIDs.h"
+#include "clad/types/behaviorComponent/behaviorStats.h"
+#include "clad/types/proxMessages.h"
+
+#include "coretech/common/engine/utils/timer.h"
+
+#include "util/console/consoleInterface.h"
+
 #include <limits>
+
+#define CONSOLE_GROUP "Behavior.ReactToCliff"
 
 namespace Anki {
 namespace Cozmo {
@@ -47,15 +55,13 @@ static const float kCliffBackupSpeed_mmps = 100.0f;
 // use some margin here to account for sensor noise.
 static const u16   kSuspiciousCliffValDiff = 20;
 
-// If this many RobotStopped messages are received
-// while activated, then stop trying to do the cliff
-// reaction because maybe it's backing us up too far.
-static const int   kMaxNumRobotStopsBeforeSkippingReactionAnim = 3;
+// Cooldown for playing more dramatic react to cliff reaction
+CONSOLE_VAR(float, kDramaticReactToCliffCooldown_sec, CONSOLE_GROUP, 3 * 60.f);
 
 // If this many RobotStopped messages are received
 // while activated, then just give up and go to StuckOnEdge.
 // It's probably too dangerous to keep trying anything
-static const int   kMaxNumRobotStopsBeforeGivingUp = 5;
+CONSOLE_VAR(uint32_t, kMaxNumRobotStopsBeforeGivingUp, CONSOLE_GROUP, 5);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -232,7 +238,7 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction()
     }
 
     // Get the pre-react action/animation to play
-    auto action = GetCliffPreReactAction(cliffDetectedFlags);
+    auto action = GetCliffReactAction(cliffDetectedFlags);
     if (action == nullptr) {
       // No action was returned because the detected cliffs represent 
       // a precarious situation so just delegate to StuckOnEdge.
@@ -241,14 +247,6 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction()
                        cliffDetectedFlags);
       TransitionToStuckOnEdge();
     } else {
-
-      // Did we get too many RobotStopped messages for this
-      // activation of the behavior? Try not playing this backup reaction.
-      if (_dVars.persistent.numStops <= kMaxNumRobotStopsBeforeSkippingReactionAnim) {
-        AnimationTrigger reactionAnim = AnimationTrigger::ReactToCliff;
-        action->AddAction(new TriggerLiftSafeAnimationAction(reactionAnim));
-      }
-
       DelegateIfInControl(action, &BehaviorReactToCliff::TransitionToBackingUp);
     }
   }
@@ -432,7 +430,7 @@ void BehaviorReactToCliff::HandleWhileActivated(const EngineToGameEvent& event)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(uint8_t cliffDetectedFlags)
+CompoundActionSequential* BehaviorReactToCliff::GetCliffReactAction(uint8_t cliffDetectedFlags)
 {
   // Bit flags for each of the cliff sensors:
   const uint8_t FL = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_FL));
@@ -443,44 +441,45 @@ CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(uint8_t c
   auto action = new CompoundActionSequential();
 
   float amountToTurn_deg = 0.f;
-  float amountToDrive_mm = 0.f;
-  bool turnThenDrive = true;
 
-  PRINT_NAMED_INFO("ReactToCliff.GetCliffPreReactAction.CliffsDetected", "0x%x", cliffDetectedFlags);
+  // Play dramatic backup reaction once in a while
+  const float currTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const bool doDramaticReaction = currTime_sec > _dramaticCliffReactionPlayableTime_sec;
 
-  // TODO: These actions should most likely be replaced by animations.
+  PRINT_NAMED_INFO("ReactToCliff.GetCliffReactAction.CliffsDetected", "0x%x", cliffDetectedFlags);
+
+  // Play reaction animation based on triggered sensor(s)
+  // Possibly supplement with "dramatic" reaction which involves
+  // turning towards the cliff and backing up in a scared/shocked fashion.
   switch (cliffDetectedFlags) {
     case (FL | FR):
       // Hit cliff straight-on. Play stop reaction and move on
-      action->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffDetectorStop));
+      action->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffFront));
       break;
     case FL:
       // Play stop reaction animation and turn CCW a bit
-      action->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffDetectorStop));
+      action->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffFrontLeft));
       amountToTurn_deg = 15.f;
       break;
     case FR:
       // Play stop reaction animation and turn CW a bit
-      action->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffDetectorStop));
+      action->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffFrontRight));
       amountToTurn_deg = -15.f;
       break;
     case BL:
       // Drive forward and turn CCW to face the cliff
-      amountToDrive_mm = 35.f;
+      action->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffBackLeft));
       amountToTurn_deg = 135.f;
-      turnThenDrive = false;
       break;
     case BR:
       // Drive forward and turn CW to face the cliff
-      amountToDrive_mm = 35.f;
+      action->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffBackRight));
       amountToTurn_deg = -135.f;
-      turnThenDrive = false;
       break;  
     case (BL | BR):
       // Hit cliff straight-on driving backwards. Flip around to face the cliff.
-      amountToDrive_mm = 35.f;
+      action->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffBack));
       amountToTurn_deg = 180.f;
-      turnThenDrive = false;
       break;
     default:
       // This is some scary configuration that we probably shouldn't move from.
@@ -488,28 +487,23 @@ CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(uint8_t c
       return nullptr;
   }
 
-  auto turnAction = new TurnInPlaceAction(DEG_TO_RAD(amountToTurn_deg), false);
-  turnAction->SetAccel(MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2);
-  turnAction->SetMaxSpeed(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC);
+  
+  if (doDramaticReaction) {
+    PRINT_NAMED_INFO("BehaviorReactToCliff.GetCliffReactAction.DoDramaticReaction", "");
 
-  auto driveAction = new DriveStraightAction(amountToDrive_mm, MAX_SAFE_WHEEL_SPEED_MMPS, false);
-  driveAction->SetAccel(MAX_WHEEL_ACCEL_MMPS2);
-  driveAction->SetDecel(MAX_WHEEL_ACCEL_MMPS2);
-
-  if (turnThenDrive) {
+    // Turn to face cliff
     if (amountToTurn_deg != 0.f) {
+      auto turnAction = new TurnInPlaceAction(DEG_TO_RAD(amountToTurn_deg), false);
+      turnAction->SetAccel(MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2);
+      turnAction->SetMaxSpeed(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC);
       action->AddAction(turnAction);
     }
-    if (amountToDrive_mm != 0.f) {
-      action->AddAction(driveAction);
-    }
-  } else {
-    if (amountToDrive_mm != 0.f) {
-      action->AddAction(driveAction);
-    }
-    if (amountToTurn_deg != 0.f) {
-      action->AddAction(turnAction);
-    }
+
+    // Dramatic backup
+    AnimationTrigger reactionAnim = AnimationTrigger::ReactToCliff;
+    action->AddAction(new TriggerLiftSafeAnimationAction(reactionAnim));
+
+    _dramaticCliffReactionPlayableTime_sec = currTime_sec + kDramaticReactToCliffCooldown_sec;
   }
 
   return action;

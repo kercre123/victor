@@ -183,7 +183,10 @@ public:
   // has before get or you may hit a nullptr assert
   inline bool HasDelegationComponent() const { return GetComponentWrapper(BEIComponentID::Delegation).IsComponentValid();}
   inline DelegationComponent& GetDelegationComponent() const  { return GetComponentWrapper(BEIComponentID::Delegation).GetComponent<DelegationComponent>();}
-  
+
+  inline bool HasDataAccessorComponent() const { return GetComponentWrapper(BEIComponentID::DataAccessor).IsComponentValid();}
+  inline DataAccessorComponent& GetDataAccessorComponent() const  { return GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();}
+
   inline bool HasPhotographyManager() const { return GetComponentWrapper(BEIComponentID::PhotographyManager).IsComponentValid();}
   PhotographyManager& GetPhotographyManager() const { return GetComponentWrapper(BEIComponentID::PhotographyManager).GetComponent<PhotographyManager>();}
 

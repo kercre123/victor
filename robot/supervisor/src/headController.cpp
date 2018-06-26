@@ -158,10 +158,7 @@ namespace HeadController {
       potentialBurnoutStartTime_ms_ = 0;
       calState_ = (Factory::GetEMR()->fields.PACKED_OUT_FLAG ? HCS_LOWER_HEAD : HCS_RAISE_HEAD);
       isCalibrated_ = false;
-
-      // After we're done with calibration it shouldn't continue trying to reach 
-      // the head position it was trying to get to before
-      inPosition_ = true;  
+      inPosition_ = false;
     
       Messages::SendMotorCalibrationMsg(MotorID::MOTOR_HEAD, true, autoStarted);
     }
@@ -280,6 +277,7 @@ namespace HeadController {
 
             firstCalibration_ = false;
             calState_ = HCS_IDLE;
+            inPosition_ = true;
             break;
           }
         } // end switch(calState_)

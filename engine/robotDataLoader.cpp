@@ -147,6 +147,11 @@ void RobotDataLoader::LoadNonConfigData()
   }
   
   {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeSpinnerConfig");
+    LoadCubeSpinnerConfig();
+  }
+
+  {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackLightAnimations");
     LoadBackpackLightAnimations();
   }
@@ -695,6 +700,7 @@ void RobotDataLoader::LoadWeatherResponseMaps()
 
 }
 
+
 void RobotDataLoader::LoadVariableSnapshotJsonMap()
 {
   _variableSnapshotJsonMap = std::make_unique<VariableSnapshotJsonMap>();
@@ -716,6 +722,18 @@ void RobotDataLoader::LoadVariableSnapshotJsonMap()
 }
 
 
+void RobotDataLoader::LoadCubeSpinnerConfig()
+{
+  static const std::string jsonFilename = "config/engine/behaviorComponent/cubeSpinnerLightMaps.json";
+  const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _cubeSpinnerConfig);
+  if(!success)
+  {
+    LOG_ERROR("RobotDataLoader.LoadCubeSpinnerConfig",
+              "LoadCubeSpinnerConfig Json config file %s not found or failed to parse",
+              jsonFilename.c_str());
+  }
+}
+
 std::map<std::string, std::string> RobotDataLoader::CreateFileNameToFullPathMap(const std::vector<const char*> & srcDirs, const std::string& fileExtensions) const
 {
   std::map<std::string, std::string> fileNameToFullPath;
@@ -736,6 +754,7 @@ std::map<std::string, std::string> RobotDataLoader::CreateFileNameToFullPathMap(
 
   return fileNameToFullPath;
 }
+
 
 void RobotDataLoader::LoadAnimationTriggerMap()
 {

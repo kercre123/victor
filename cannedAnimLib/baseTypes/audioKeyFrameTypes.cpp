@@ -136,6 +136,24 @@ AudioRef::AudioRef( const AudioRef& other )
   }
 }
 
+AudioRef::~AudioRef()
+{
+  switch (Tag) {
+    case AudioRefTag::EventGroup:
+      EventGroup.~AudioEventGroupRef();
+      break;
+    case AudioRefTag::State:
+      State.~AudioStateRef();
+      break;
+    case AudioRefTag::Switch:
+      Switch.~AudioSwitchRef();
+      break;
+    case AudioRefTag::Parameter:
+      Parameter.~AudioParameterRef();
+      break;
+  }
+}
+
 
 AudioRef& AudioRef::operator=( const AudioRef& other )
 {

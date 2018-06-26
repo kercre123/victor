@@ -121,6 +121,9 @@ public:
   const Json::Value& GetSettingsConfig() const               { return _settingsConfig; }
   const Json::Value& GetEyeColorConfig() const               { return _eyeColorConfig; }
 
+  // Cube Spinner game configuration
+  const Json::Value& GetCubeSpinnerConfig() const             { return _cubeSpinnerConfig; }
+
   // images are stored as a map of stripped file name (no file extension) to full path
   const Vision::SpritePathMap* GetSpritePaths()       const { assert(_spritePaths != nullptr); return _spritePaths.get(); }
   Vision::SpriteSequenceContainer* GetSpriteSequenceContainer() { return _spriteSequenceContainer.get();}
@@ -182,6 +185,8 @@ private:
   void LoadWeatherResponseMaps();
 
   void LoadVariableSnapshotJsonMap();
+  
+  void LoadCubeSpinnerConfig();
 
   // Outputs a map of file name (no path or extensions) to the full file path
   // Useful for clad mappings/lookups
@@ -231,6 +236,8 @@ private:
   Json::Value _photographyConfig;
   Json::Value _settingsConfig;
   Json::Value _eyeColorConfig;
+
+  Json::Value _cubeSpinnerConfig;
 
   std::unique_ptr<Vision::SpritePathMap> _spritePaths;
   std::unique_ptr<Vision::SpriteCache>   _spriteCache;

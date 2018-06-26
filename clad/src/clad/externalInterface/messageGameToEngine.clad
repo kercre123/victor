@@ -1015,10 +1015,34 @@ message PerfMetricGetStatus {
 // BlockPool
 ///////////////////////////////////////////////////////////////////////////////
 
-message BlockPoolEnabledMessage {
-  float_32 discoveryTimeSecs,
-  bool enable,
-  bool reset
+// Attempt to connect to a cube. If a cube is currently connected,
+// this will do nothing.
+message ConnectToCube {
+}
+
+// Requests a disconnection from the currently connected cube.
+// The connection will be held for gracePeriod_sec before actually
+// disconnecting. Any attempt to connect during this "grace period"
+// will succeed instantaneously, so this is useful if you are
+// frequently disconnecting/connecting to cubes. A grace period
+// of 0 will immediately disconnect the cube.
+message DisconnectFromCube {
+  float_32 gracePeriod_sec
+}
+
+// 'Forget' the robot's preferred cube. This will cause the robot to
+// connect to the cube with the highest RSSI (signal strength) next
+// time a connection is requested. Saves this preference to disk.
+// The next cube that the robot connects to will become its
+// preferred cube.
+message ForgetPreferredCube {
+}
+
+// Set the robot's preferred cube and save it to disk. The robot
+// will always attempt to connect to this cube if it is available.
+// This is only used in simulation (for now).
+message SetPreferredCube {
+  string factoryId
 }
 
 message SendAvailableObjects {

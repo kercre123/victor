@@ -12,9 +12,9 @@
 
 #include "engine/components/cubes/cubeLights/cubeLightAnimationContainer.h"
 
-
 #include "coretech/common/engine/colorRGBA.h"
 #include "coretech/common/engine/math/point_impl.h"
+#include "engine/components/cubes/cubeLights/cubeLightAnimationHelpers.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "util/fileUtils/fileUtils.h"
 

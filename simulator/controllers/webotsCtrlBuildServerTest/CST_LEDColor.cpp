@@ -100,13 +100,17 @@ s32 CST_LEDColor::UpdateSimInternal()
       
       SendMoveHeadToAngle(kHeadLookupAngle_rad, 100, 100);
 
+      // Request a cube connection
+      SendConnectToCube();
+      
       SET_TEST_STATE(WaitForHeadUp);
       break;
     }
 
     case TestState::WaitForHeadUp:
     {
-      IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(5, _id >=0,
+      IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(15,
+                                            _id >=0,
                                             NEAR(GetRobotHeadAngle_rad(), kHeadLookupAngle_rad,
                                                  kHeadAngleTolerance_rad)) {
         SET_TEST_STATE(SetRGB);

@@ -24,6 +24,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboarding.h"
+#include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/externalInterface/cladProtoTypeTranslator.h"
 #include "engine/externalInterface/externalMessageRouter.h"
@@ -131,16 +132,13 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
                                            onRequestOnboardingState) );
   }
   
-  auto resetOnboarding = [ei,this](ConsoleFunctionContextRef context) {
+  auto resetOnboarding = [ei,robot,this](ConsoleFunctionContextRef context) {
     Util::FileUtils::DeleteFile( _saveFolder + BehaviorOnboarding::kOnboardingFilename );
     Util::FileUtils::DeleteFile( _saveFolder );
     if( ei != nullptr ) {
       ei->Broadcast(ExternalInterface::MessageGameToEngine{ExternalInterface::EraseAllEnrolledFaces{}});
       
-      ExternalInterface::BlockPoolEnabledMessage clearBlockpool;
-      clearBlockpool.reset = true;
-      clearBlockpool.enable = false; // require reboot
-      ei->Broadcast(ExternalInterface::MessageGameToEngine{std::move(clearBlockpool)});
+      robot->GetCubeCommsComponent().ForgetPreferredCube();
     }
   };
   _consoleFuncs.emplace_front( "ResetOnboarding", std::move(resetOnboarding), "Onboarding", "" );

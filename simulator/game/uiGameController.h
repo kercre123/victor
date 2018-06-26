@@ -91,8 +91,6 @@ protected:
   
   virtual void InitInternal() {}
   virtual s32 UpdateInternal() = 0;
-
-  void EnableAutoBlockpool(bool enable) { _doAutoBlockPool = enable; }
   
   // TODO: These default handlers and senders should be CLAD-generated!
   
@@ -109,6 +107,7 @@ protected:
   virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg){};
   virtual void HandleImageChunk(const ImageChunk& msg){};
   virtual void HandleActiveObjectAccel(const ExternalInterface::ObjectAccel& msg){};
+  virtual void HandleActiveObjectAvailable(const ExternalInterface::ObjectAvailable& msg){};
   virtual void HandleActiveObjectConnectionState(const ExternalInterface::ObjectConnectionState& msg){};
   virtual void HandleActiveObjectMoved(const ExternalInterface::ObjectMoved& msg){};
   virtual void HandleActiveObjectStoppedMoving(const ExternalInterface::ObjectStoppedMoving& msg){};
@@ -294,7 +293,11 @@ protected:
   void SendNVStorageEraseEntry(NVStorage::NVEntryTag tag);
   void SendNVClearPartialPendingWriteData();
   void SendEnableBlockTapFilter(bool enable);
-  void SendEnableBlockPool(double maxDiscoveryTime, bool enabled, bool reset);
+  void SendConnectToCube();
+  void SendDisconnectFromCube(const float gracePeriod_sec);
+  void SendForgetPreferredCube();
+  void SendSetPreferredCube(const std::string& preferredCubeFactoryId);
+  void SendBroadcastObjectAvailable(const bool enable);
 
   ///
   // @brief      Send SetActiveObjectLEDs CLAD message
@@ -488,6 +491,7 @@ private:
   void HandleRobotCompletedActionBase(const ExternalInterface::RobotCompletedAction& msg);
   void HandleImageChunkBase(const ImageChunk& msg);
   void HandleActiveObjectAccelBase(const ExternalInterface::ObjectAccel& msg);
+  void HandleActiveObjectAvailableBase(const ExternalInterface::ObjectAvailable& msg);
   void HandleActiveObjectConnectionStateBase(const ExternalInterface::ObjectConnectionState& msg);
   void HandleActiveObjectMovedBase(const ExternalInterface::ObjectMoved& msg);
   void HandleActiveObjectStoppedMovingBase(const ExternalInterface::ObjectStoppedMoving& msg);
@@ -564,9 +568,6 @@ private:
   const Util::Data::DataPlatform* _dataPlatform = nullptr;
 
   UdpClient _physicsControllerClient;
-
-  bool _doAutoBlockPool;
-  bool _isBlockPoolInitialized;
   
   float _engineLoadedRatio = 0.0f;
   

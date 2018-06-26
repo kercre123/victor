@@ -60,7 +60,8 @@ BehaviorKnowledgeGraphQuestion::InstanceConfig::InstanceConfig() :
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorKnowledgeGraphQuestion::DynamicVariables::DynamicVariables() :
-  state( EState::TransitionToListening )
+  state( EState::TransitionToListening ),
+  ttsGenerationStatus( EGenerationStatus::None )
 {
 
 }
@@ -211,10 +212,8 @@ void BehaviorKnowledgeGraphQuestion::BeginStreamingQuestion()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnowledgeGraphQuestion::OnStreamingComplete()
 {
-  PRINT_DEBUG( "Streaming is complete" );
-
   // go into responding state first, then figure out how to reponde
-  _dVars.state = EState::TransitionToResponding;
+  _dVars.state = EState::Searching;
 
   // see if we got a response from knowledge graph
   if ( IsResponsePending() )
@@ -226,15 +225,40 @@ void BehaviorKnowledgeGraphQuestion::OnStreamingComplete()
   // did we get a response from knowledge graph?
   if ( !_dVars.responseString.empty() )
   {
-    // if so, we want to go down our response path ...
-    DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphSearching ),
-                         &BehaviorKnowledgeGraphQuestion::TransitionToBeginResponse );
+    PRINT_INFO( "Streaming is complete ... valid response received" );
+
+    // start generating the response now so that we can minimize the wait time
+    auto callback = [this]( bool success )
+    {
+      if ( success )
+      {
+        PRINT_INFO( "TTS generation is complete" );
+        _dVars.ttsGenerationStatus = EGenerationStatus::Success;
+      }
+      else
+      {
+        PRINT_INFO( "TTS generation FAILED" );
+        _dVars.ttsGenerationStatus = EGenerationStatus::Fail;
+      }
+    };
+
+    _iVars.ttsBehavior->SetTextToSay( _dVars.responseString, callback );
+
+    // let's transition into our "searching" loop
+    // since we always want to loop at least once, play the get in + loop anim before we do any logic for the tts
+    CompoundActionSequential* messageAnimation = new CompoundActionSequential();
+    messageAnimation->AddAction( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphSearchingGetIn ), true );
+    messageAnimation->AddAction( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphSearching ), true );
+
+    DelegateIfInControl( messageAnimation,
+                         &BehaviorKnowledgeGraphQuestion::TransitionToSearchingLoop );
   }
   else
   {
+    PRINT_INFO( "Streaming is complete ... NO response received" );
+
     // if not, let the user know we failed ...
-    DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphSearching ),
-                         &BehaviorKnowledgeGraphQuestion::TransitionToNoResponse );
+    TransitionToNoResponse();
   }
 }
 
@@ -294,8 +318,9 @@ void BehaviorKnowledgeGraphQuestion::ConsumeResponse()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnowledgeGraphQuestion::BeginResponseTTS()
 {
+  PRINT_DEBUG( "Starting TTS behavior ..." );
+
   // delegate to our tts behavior
-  _iVars.ttsBehavior->SetTextToSay( _dVars.responseString );
   if ( _iVars.ttsBehavior->WantsToBeActivated() )
   {
     DelegateIfInControl( _iVars.ttsBehavior.get() );
@@ -305,12 +330,37 @@ void BehaviorKnowledgeGraphQuestion::BeginResponseTTS()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorKnowledgeGraphQuestion::TransitionToSearchingLoop()
+{
+  // keep looping back here until the tts audio has been generated ...
+  if ( EGenerationStatus::None != _dVars.ttsGenerationStatus )
+  {
+    if ( EGenerationStatus::Success == _dVars.ttsGenerationStatus )
+    {
+      // TTS generation is done, so let's speak it!
+      TransitionToBeginResponse();
+    }
+    else
+    {
+      // we failed to generate the tts, but since we've already looped our searching anim, we just need to get out now
+      DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphSearchingGetOutFail ) );
+
+      // ... annnnnd we're done
+    }
+  }
+  else
+  {
+    DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphSearching ),
+                         &BehaviorKnowledgeGraphQuestion::TransitionToSearchingLoop );
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnowledgeGraphQuestion::TransitionToBeginResponse()
 {
   _dVars.state = EState::Responding;
 
   DEV_ASSERT( !_dVars.responseString.empty(), "Responding to knowledge graph request but no response string exists" );
-  PRINT_DEBUG( "Received Knowledge Graph response" );
 
   // nothing to do but speak the response
   BeginResponseTTS();
@@ -319,15 +369,13 @@ void BehaviorKnowledgeGraphQuestion::TransitionToBeginResponse()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnowledgeGraphQuestion::TransitionToNoResponse()
 {
-  PRINT_DEBUG( "No response recieved from Knowledge Graph" );
-
   _dVars.state = EState::NoResponse;
 
   // our get-out from listening is simply a series of animations
   CompoundActionSequential* messageAnimation = new CompoundActionSequential();
+  messageAnimation->AddAction( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphSearchingGetIn ), true );
   messageAnimation->AddAction( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphSearching ), true );
-  messageAnimation->AddAction( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphGetOut ), true );
-  messageAnimation->AddAction( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphNoAnswer ), true );
+  messageAnimation->AddAction( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphSearchingGetOutFail ), true );
 
   DelegateIfInControl( messageAnimation );
 
@@ -341,7 +389,7 @@ void BehaviorKnowledgeGraphQuestion::TransitionToNoConnection()
 
   _dVars.state = EState::NoConnection;
 
-  // currently no distinction between "no reponse", but there will be at some point
+  // currently no distinction between "no reponse", but there will/may be at some point
   TransitionToNoResponse();
 }
 
@@ -349,13 +397,12 @@ void BehaviorKnowledgeGraphQuestion::TransitionToNoConnection()
 void BehaviorKnowledgeGraphQuestion::OnResponseInterrupted()
 {
   DEV_ASSERT( EState::Responding == _dVars.state, "Should only allow interruptions during response state" );
-  PRINT_DEBUG( "Interruption event received" );
+  PRINT_INFO( "Interruption event received, cancelling TTS" );
 
   _dVars.state = EState::Interrupted;
   if ( IsControlDelegated() && _iVars.ttsBehavior.get()->IsActivated() )
   {
-    PRINT_DEBUG( "Interrupted TTS" );
-    _iVars.ttsBehavior.get()->Interrupt();
+    _iVars.ttsBehavior.get()->Interrupt( false );
   }
 }
 

@@ -45,8 +45,9 @@ namespace ActiveBlock {
 
 namespace {
 
-  // Number of cycles (of length CUBE_TIME_STEP_MS) in between transmission of ObjectAvailable messages
-  const u32 OBJECT_AVAILABLE_MESSAGE_PERIOD = 100;
+  // Length of time in between transmission of ObjectAvailable messages
+  const u32 kObjectAvailableMessagePeriod_ms = 1000;
+  const u32 kObjectAvailableMessagePeriod_cycles = kObjectAvailableMessagePeriod_ms / CUBE_TIME_STEP_MS;
   
   constexpr int kNumCubeLeds = Util::EnumToUnderlying(CubeConstants::NUM_CUBE_LEDS);
   
@@ -95,6 +96,8 @@ namespace {
   std::string factoryID_;
   
   ObjectType objectType_ = ObjectType::UnknownObject;  
+  
+  Util::RandomGenerator randGen_;
   
 } // private namespace
 
@@ -191,10 +194,9 @@ Result Init()
   }
   if (factoryID_.empty()) {
     // factoryID is still empty - generate a unique one.
-    Util::RandomGenerator randGen;
     std::ostringstream ss;
     for (int i=0 ; i < 6 ; i++) {
-      const int rand = randGen.RandIntInRange(0, std::numeric_limits<uint8_t>::max());
+      const int rand = randGen_.RandIntInRange(0, std::numeric_limits<uint8_t>::max());
       ss << std::setw(2) << std::setfill('0') << std::hex << (int) rand << ":";
     }
     factoryID_ = ss.str();
@@ -324,14 +326,16 @@ Result Update() {
       receiver_->nextPacket();
     }
     
-    // Send ObjectAvailable message
-    static u32 objAvailableSendCtr = 0;
+    // Send ObjectAvailable message if it's time.
+    // Start the counter at a random number, or else all cubes
+    // will send advertisement messages at the same time.
+    static u32 objAvailableSendCtr = (u32) randGen_.RandIntInRange(0, kObjectAvailableMessagePeriod_cycles);
     if (objAvailableSendCtr-- == 0) {
       SendMessageHelper(discoveryEmitter_,
                         ExternalInterface::ObjectAvailable(factoryID_,
                                                            objectType_,
                                                            0));
-      objAvailableSendCtr = OBJECT_AVAILABLE_MESSAGE_PERIOD;
+      objAvailableSendCtr = kObjectAvailableMessagePeriod_cycles;
     }
     
     // Update cube LED animations
@@ -372,7 +376,7 @@ Result Update() {
     
     // Send the cube accel message if it's time
     if (++rawCubeAccelInd >= ACCEL_FRAMES_PER_MSG) {
-      SendMessageHelper(emitter_, std::move(cubeAccelMsg_));
+      SendMessageHelper(emitter_, CubeAccelData(cubeAccelMsg_));
       rawCubeAccelInd = 0;
     }
 

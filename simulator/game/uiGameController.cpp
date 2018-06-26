@@ -288,6 +288,11 @@ namespace Anki {
       HandleActiveObjectAccel(msg);
     }
     
+    void UiGameController::HandleActiveObjectAvailableBase(const ExternalInterface::ObjectAvailable& msg)
+    {
+      HandleActiveObjectAvailable(msg);
+    }
+    
     void UiGameController::HandleActiveObjectConnectionStateBase(const ExternalInterface::ObjectConnectionState& msg)
     {
       PRINT_NAMED_INFO("HandleActiveObjectConnectionState", "ObjectID %d (factoryID %s): %s",
@@ -489,8 +494,6 @@ namespace Anki {
     UiGameController::UiGameController(s32 step_time_ms)
     : _webotsOrigin("WebotsOrigin")
     , _firstRobotPoseUpdate( true )
-    , _doAutoBlockPool(true)
-    , _isBlockPoolInitialized(false)
     {
       _stepTimeMS = step_time_ms;
       _robotNode = nullptr;
@@ -608,6 +611,9 @@ namespace Anki {
             break;
           case ExternalInterface::MessageEngineToGame::Tag::ObjectAccel:
             HandleActiveObjectAccelBase(message.Get_ObjectAccel());
+            break;
+          case ExternalInterface::MessageEngineToGame::Tag::ObjectAvailable:
+            HandleActiveObjectAvailableBase(message.Get_ObjectAvailable());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::ObjectConnectionState:
             HandleActiveObjectConnectionStateBase(message.Get_ObjectConnectionState());
@@ -737,14 +743,6 @@ namespace Anki {
           // Allow a little time for the Robot to get set up in the engine, since we just told it to be added
           static const double startTime = _supervisor.getTime();
           if ((_supervisor.getTime() - startTime) > TIME_UNTIL_READY_SEC) {
-            
-            // Initialize the block pool to detect cubes automatically. Ideally we would put this in
-            // InitInternal but it is called before engine can receive messages
-            if (_doAutoBlockPool && !_isBlockPoolInitialized) {
-              SendEnableBlockPool(0, true, false);
-              _isBlockPoolInitialized = true;
-            }
-            
             res = UpdateInternal();
           }
           
@@ -1705,11 +1703,33 @@ namespace Anki {
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
     }
 
-    void UiGameController::SendEnableBlockPool(double maxDiscoveryTime, bool enabled, bool reset)
+    void UiGameController::SendConnectToCube()
     {
-      ExternalInterface::BlockPoolEnabledMessage m(maxDiscoveryTime, enabled, reset);
-      
-      SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
+      using namespace ExternalInterface;
+      SendMessage(MessageGameToEngine(ConnectToCube()));
+    }
+    
+    void UiGameController::SendDisconnectFromCube(const float gracePeriod_sec)
+    {
+      using namespace ExternalInterface;
+      SendMessage(MessageGameToEngine(DisconnectFromCube(gracePeriod_sec)));
+    }
+    
+    void UiGameController::SendForgetPreferredCube()
+    {
+      using namespace ExternalInterface;
+      SendMessage(MessageGameToEngine(ForgetPreferredCube()));
+    }
+    
+    void UiGameController::SendSetPreferredCube(const std::string& preferredCubeFactoryId)
+    {
+      using namespace ExternalInterface;
+      SendMessage(MessageGameToEngine(SetPreferredCube(preferredCubeFactoryId)));
+    }
+    
+    void UiGameController::SendBroadcastObjectAvailable(const bool enable) {
+      using namespace ExternalInterface;
+      SendMessage(MessageGameToEngine(SendAvailableObjects(enable)));
     }
     
     void UiGameController::SendSetActiveObjectLEDs(const u32 objectID,

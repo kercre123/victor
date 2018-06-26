@@ -17,6 +17,7 @@
 #include "messages.h"
 #include "pathFollower.h"
 #include "pickAndPlaceController.h"
+#include "powerModeManager.h"
 #include "proxSensors.h"
 #include "speedController.h"
 #include "steeringController.h"
@@ -41,8 +42,6 @@ namespace Anki {
         // For only sending robot state messages every STATE_MESSAGE_FREQUENCY
         // times through the main loop
         u32 robotStateMessageCounter_ = 0;
-
-        bool _calibOnNextCalmModeExit = false;
 
         // Main cycle time errors
         u32 mainTooLongCnt_ = 0;
@@ -206,11 +205,6 @@ namespace Anki {
         buttonWasPressed = buttonIsPressed;
       }
 
-      void CalibrateMotorsOnNextCalmModeExit(bool enable)
-      {
-        _calibOnNextCalmModeExit = enable;
-      }
-
       Result step_MainExecution()
       {
         EventStart(EventType::MAIN_STEP);
@@ -246,23 +240,7 @@ namespace Anki {
           startTime = cycleStartTime;
           cnt = 0;
         }
-*/
-
-        //////////////////////////////////////////////////////////////
-        // Check power mode
-        //////////////////////////////////////////////////////////////
-        
-        // If power mode changed from CALM to ACTIVE, trigger calibration
-        static HAL::PowerState lastPowerMode = HAL::POWER_MODE_ACTIVE;
-        HAL::PowerState currPowerMode = HAL::PowerGetMode();
-        if (_calibOnNextCalmModeExit && currPowerMode == HAL::POWER_MODE_ACTIVE && lastPowerMode == HAL::POWER_MODE_CALM) {
-          AnkiInfo("CozmoBot.Update.CalmToActiveCalibration", "");
-          LiftController::StartCalibrationRoutine(true);
-          HeadController::StartCalibrationRoutine(true);
-          _calibOnNextCalmModeExit = false;
-        }
-        lastPowerMode = currPowerMode;
-      
+*/    
 
         //////////////////////////////////////////////////////////////
         // Test Mode
@@ -340,6 +318,11 @@ namespace Anki {
         SteeringController::Manage();
         WheelController::Manage();
 
+
+        //////////////////////////////////////////////////////////////
+        // Power management
+        //////////////////////////////////////////////////////////////
+        PowerModeManager::Update();
 
         //////////////////////////////////////////////////////////////
         // Feedback / Display

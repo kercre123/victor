@@ -952,6 +952,30 @@
     "AnimName": "ag_reacttocliff_edge"
   },
   {
+    "CladEvent": "ReactToCliffFront",
+    "AnimName": "ag_reacttocliff_huh_01"
+  },
+  {
+    "CladEvent": "ReactToCliffFrontLeft",
+    "AnimName": "ag_reacttocliff_reaction_front_left"
+  },
+  {
+    "CladEvent": "ReactToCliffFrontRight",
+    "AnimName": "ag_reacttocliff_reaction_front_right"
+  },
+  {
+    "CladEvent": "ReactToCliffBack",
+    "AnimName": "ag_reacttocliff_reaction_back"
+  },
+  {
+    "CladEvent": "ReactToCliffBackLeft",
+    "AnimName": "ag_reacttocliff_reaction_rear_left"
+  },
+  {
+    "CladEvent": "ReactToCliffBackRight",
+    "AnimName": "ag_reacttocliff_reaction_rear_right"
+  },
+  {
     "CladEvent": "ReactToObstacle",
     "AnimName": "ag_rtobstacle_react_01"
   },
@@ -990,10 +1014,6 @@
   {
     "CladEvent": "DEPRECATED_ReactToPokeStartled",
     "AnimName": "ag_pokestartled"
-  },
-  {
-    "CladEvent": "ReactToCliffDetectorStop",
-    "AnimName": "ag_reacttocliff_huh_01"
   },
   {
     "CladEvent": "ReactToUnexpectedMovement",
@@ -1116,7 +1136,11 @@
     "AnimName": "ag_startsleeping"
   },
   {
-    "CladEvent": "StuckOnEdge",
+    "CladEvent": "StuckOnEdgeGetIn",
+    "AnimName": "ag_reacttocliff_stuckonedge_getin"
+  },
+  {
+    "CladEvent": "StuckOnEdgeIdle",
     "AnimName": "ag_reacttocliff_stuckonedge_01"
   },
   {
@@ -1561,7 +1585,19 @@
     "AnimName": "ag_knowledgegraph_listening_01"
   },
   {
+    "CladEvent": "KnowledgeGraphSearchingGetIn",
+    "AnimName": "ag_knowledgegraph_searching_01"
+  },
+  {
     "CladEvent": "KnowledgeGraphSearching",
+    "AnimName": "ag_knowledgegraph_searching_01"
+  },
+  {
+    "CladEvent": "KnowledgeGraphSearchingGetOutSuccess",
+    "AnimName": "ag_knowledgegraph_searching_01"
+  },
+  {
+    "CladEvent": "KnowledgeGraphSearchingGetOutFail",
     "AnimName": "ag_knowledgegraph_searching_01"
   },
   {
@@ -1571,10 +1607,6 @@
   {
     "CladEvent": "KnowledgeGraphGetOut",
     "AnimName": "ag_knowledgegraph_getout_01"
-  },
-  {
-    "CladEvent": "KnowledgeGraphNoAnswer",
-    "AnimName": "ag_blackjack_victorlose"
   },
   {
     "CladEvent": "ShutUp",

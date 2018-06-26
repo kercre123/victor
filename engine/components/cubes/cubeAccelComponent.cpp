@@ -109,16 +109,19 @@ void CubeAccelComponent::HandleCubeAccelData(const ActiveID& activeID,
   const uint32_t objectID = object->GetID();
   
   // Check for taps
-  const auto tapCnt = accelData.tap_count;
-  if (tapCnt != object->GetTapCount()) {
-    object->SetTapCount(tapCnt);
+  const auto prevTapCnt = object->GetTapCount();
+  const auto currTapCnt = accelData.tap_count;
+  if (prevTapCnt != currTapCnt) {
+    object->SetTapCount(currTapCnt);
     
-    ExternalInterface::ObjectTapped objectTapped;
-    objectTapped.timestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-    objectTapped.objectID  = objectID;
-    
-    // Pass to BlockTapFilterComponent
-    _robot->GetBlockTapFilter().HandleObjectTapped(objectTapped);
+    if (prevTapCnt != ActiveObject::kInvalidTapCnt) {
+      ExternalInterface::ObjectTapped objectTapped;
+      objectTapped.timestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      objectTapped.objectID  = objectID;
+      
+      // Pass to BlockTapFilterComponent
+      _robot->GetBlockTapFilter().HandleObjectTapped(objectTapped);
+    }
   }
   
   for (const auto& accelReading : accelData.accelReadings) {

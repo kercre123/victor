@@ -12,6 +12,8 @@
  **/
 
 
+#include "engine/aiComponent/salientPointsDetectorComponent.h"
+#include "engine/aiComponent/aiComponent.h"
 #include "engine/actions/basicActions.h"
 #include "camera/cameraService.h"
 #include "engine/ankiEventUtil.h"
@@ -1458,16 +1460,30 @@ namespace Cozmo {
 
     if(procResult.modesProcessed.IsBitFlagSet(VisionMode::RunningNeuralNet))
     {
+      // Notify the SalientPointsDetectorComponent that we have a bunch of new detections
+      _robot->GetAIComponent().GetComponent<SalientPointsDetectorComponent>().AddSalientPoints(procResult.salientPoints);
       for(auto const& detectedObject : procResult.salientPoints)
       {
-        // TODO: Notify behaviors somehow
-        _salientPointsToDraw.push_back({currentTime_ms, detectedObject});
+        _salientPointsToDraw.emplace_back(currentTime_ms, detectedObject);
+        for(auto const& salientPoint : procResult.salientPoints)
+        {
+          _salientPointsToDraw.emplace_back(currentTime_ms, salientPoint);
+        }
       }
     }
 
     s32 colorIndex = 0;
-    for(auto const& salientPointToDraw : _salientPointsToDraw)
+    for(auto const& unscaledSalientPointToDraw : _salientPointsToDraw)
     {
+      auto salientPointToDraw = unscaledSalientPointToDraw;
+      salientPointToDraw.second.x_img *= DEFAULT_CAMERA_RESOLUTION_WIDTH;
+      salientPointToDraw.second.y_img *= DEFAULT_CAMERA_RESOLUTION_HEIGHT;
+      for(auto &pt : salientPointToDraw.second.shape)
+      {
+        pt.x *= DEFAULT_CAMERA_RESOLUTION_WIDTH;
+        pt.y *= DEFAULT_CAMERA_RESOLUTION_HEIGHT;
+      }
+
       const auto& object = salientPointToDraw.second;
 
       const Poly2f poly(object.shape);
@@ -2647,20 +2663,11 @@ namespace Cozmo {
           {
             image_out.Allocate(CAMERA_SENSOR_RESOLUTION_HEIGHT, CAMERA_SENSOR_RESOLUTION_WIDTH);
 
-            // Wrap the YUV data in an opencv mat
-            // A 1280x720 YUV420sp image is 1280x1080 bytes
-            // A full Y channel followed by interleaved 2x2 subsampled UV
-            // Calculate the number of rows of bytes of YUV data that corresponds to
-            // CAMERA_SENSOR_RESOLUTION_WIDTH cols of data
-            constexpr u16 kNumYUVRows =
-              (2 * (CAMERA_SENSOR_RESOLUTION_HEIGHT/2 * CAMERA_SENSOR_RESOLUTION_WIDTH/2) /
-               CAMERA_SENSOR_RESOLUTION_WIDTH) + CAMERA_SENSOR_RESOLUTION_HEIGHT;
-            cv::Mat yuv(kNumYUVRows, CAMERA_SENSOR_RESOLUTION_WIDTH, CV_8UC1, buffer);
-            // Convert from YUV to BGR directly into image_out
-            // BGR appears to actually result in RGB data, there is a similar bug
-            // when converting from RGB565 to RGB
-            cv::cvtColor(yuv, image_out.get_CvMat_(), cv::COLOR_YUV2BGR_NV21);
-
+            Vision::ConvertYUV420spToRGB(buffer,
+                                         CAMERA_SENSOR_RESOLUTION_HEIGHT,
+                                         CAMERA_SENSOR_RESOLUTION_WIDTH,
+                                         image_out);
+            
             // Create image with proper imageID and timestamp
             image_out.SetTimestamp(imageCaptureSystemTimestamp_ms);
             image_out.SetImageId(imageId);

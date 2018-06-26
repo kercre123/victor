@@ -60,6 +60,8 @@ public:
   const RobotDataLoader::WeatherResponseMap* GetWeatherResponseMap() const { assert(_weatherResponseMap); return _weatherResponseMap; }
   RobotDataLoader::VariableSnapshotJsonMap* GetVariableSnapshotJsonMap() { assert(nullptr != _variableSnapshotJsonMap); return _variableSnapshotJsonMap; }
 
+  const Json::Value& GetCubeSpinnerConfig() const { return _cupeSpinnerConfig; }
+
 private:
   const Vision::SpritePathMap* _spritePaths = nullptr;
   Vision::SpriteCache* _spriteCache = nullptr;
@@ -69,6 +71,7 @@ private:
   const CannedAnimationContainer* _cannedAnimationContainer = nullptr;
   const RobotDataLoader::WeatherResponseMap* _weatherResponseMap = nullptr;
   RobotDataLoader::VariableSnapshotJsonMap* _variableSnapshotJsonMap = nullptr;
+  Json::Value _cupeSpinnerConfig;
 
 }; // __Cozmo_Basestation_Components_DataAccessorComponent_H__
 

@@ -50,6 +50,8 @@ void DataAccessorComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMa
   _cannedAnimationContainer = dataLoader.GetCannedAnimationContainer();
   _weatherResponseMap = dataLoader.GetWeatherResponseMap();
   _variableSnapshotJsonMap = dataLoader.GetVariableSnapshotJsonMap();
+  // Copy, but it's fine
+  _cupeSpinnerConfig = dataLoader.GetCubeSpinnerConfig();
 }
 
   

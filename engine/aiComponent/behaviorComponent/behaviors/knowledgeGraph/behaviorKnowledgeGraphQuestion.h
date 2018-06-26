@@ -62,6 +62,7 @@ protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // State Transitions
 
+  void TransitionToSearchingLoop();
   void TransitionToBeginResponse();
   void TransitionToNoResponse();
   void TransitionToNoConnection();
@@ -86,11 +87,18 @@ private:
   {
     TransitionToListening,
     Listening,
-    TransitionToResponding,
+    Searching,
     Responding,
     NoResponse,
     NoConnection,
     Interrupted
+  };
+
+  enum class EGenerationStatus
+  {
+    None,
+    Success,
+    Fail
   };
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -115,6 +123,7 @@ private:
 
     EState              state;
     std::string         responseString;
+    EGenerationStatus   ttsGenerationStatus;
 
   } _dVars;
 

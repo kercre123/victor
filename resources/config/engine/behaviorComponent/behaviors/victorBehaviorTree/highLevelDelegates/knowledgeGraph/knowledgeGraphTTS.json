@@ -4,7 +4,6 @@
   
   "associatedActiveFeature": "KnowledgeGraph",
 
-  "idleAnimation"            : "KnowledgeGraphAnswer",
   "loopAnimation"            : "KnowledgeGraphAnswer",
   "getOutAnimation"          : "KnowledgeGraphGetOut",
   "emergencyGetOutAnimation" : "KnowledgeGraphGetOut"

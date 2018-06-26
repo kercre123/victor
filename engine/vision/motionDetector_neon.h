@@ -89,9 +89,9 @@ inline s32 MotionDetector::RatioTestNeonHelper<Vision::ImageRGB>(const u8*& imag
 
   const u32 kNumElementsProcessedPerLoop = 8;
   const u32 kSizeOfRGBElement = 3;
-  const u32 kNumIterations = numElementsToProcess - (kNumElementsProcessedPerLoop - 1);
+  const s32 kNumIterations = numElementsToProcess - (kNumElementsProcessedPerLoop - 1);
 
-  u32 i;
+  s32 i;
   for(i = 0; i < kNumIterations; i += kNumElementsProcessedPerLoop)
   {
     // Load deinterleaved RGB data from the previous and current image
@@ -240,9 +240,9 @@ inline s32 MotionDetector::RatioTestNeonHelper<Vision::Image>(const u8*& imagePt
   const float32x4_t kMotionThresh  = vdupq_n_f32(kMotionDetection_RatioThreshold);
 
   const u32 kNumElementsProcessedPerLoop = 8;
-  const u32 kNumIterations = numElementsToProcess - (kNumElementsProcessedPerLoop - 1);
+  const s32 kNumIterations = numElementsToProcess - (kNumElementsProcessedPerLoop - 1);
 
-  u32 i;
+  s32 i;
   for(i = 0; i < kNumIterations; i += kNumElementsProcessedPerLoop)
   {
     // Load deinterleaved RGB data from the previous and current image

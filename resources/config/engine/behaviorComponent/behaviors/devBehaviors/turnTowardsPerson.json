@@ -1,0 +1,14 @@
+{
+  "behaviorID" :   "TurnTowardsPerson",
+  "behaviorClass": "TurnTowardsPerson",
+
+
+  "wantsToBeActivatedCondition": {
+    "conditionType":      "TimedDedup",
+    "dedupInterval_ms":    5000,
+    "subCondition":        {
+      "conditionType": "SalientPointDetected",
+      "targetSalientPoint": "Person"
+    }
+  }
+}

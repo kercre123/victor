@@ -16,6 +16,8 @@
 #include "clad/audio/audioSwitchTypes.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimGetInLoop.h"
 
+#include <functional>
+
 namespace Anki {
 namespace Cozmo {
 
@@ -31,11 +33,20 @@ public:
 
   virtual bool WantsToBeActivatedBehavior() const override final;
 
+  // callback passes in true if generation was completed successfully, false if it failed to generate
+  using UtteranceReadyCallback = std::function<void(bool)>;
   void SetTextToSay(const std::string& textToSay,
+                    const UtteranceReadyCallback readyCallback = {},
                     const AudioTtsProcessingStyle style = AudioTtsProcessingStyle::Default_Processed);
 
+  // true when the utterance has been generated
+  // note: can also pass a callback into SetTextToSay(...)
+  bool IsUtteranceReady() const;
+
   // allow the TTS to be interrupted
-  void Interrupt();
+  // immediate true means it will cancel now and play emergency get out anim
+  // immediate false means it will finish the next loop animation and then exit with the normal get out anim
+  void Interrupt( bool immediate );
 
 protected:
   // Enforce creation through BehaviorFactory
@@ -84,7 +95,8 @@ private:
     uint8_t         utteranceID;
     UtteranceState  utteranceState;
     bool            hasSentPlayCommand;
-    bool            cancelOnNextUpdate; 
+    bool            cancelOnNextUpdate;
+    bool            cancelOnNextLoop;
   };
 
   InstanceConfig   _iConfig;

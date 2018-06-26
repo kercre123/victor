@@ -23,6 +23,7 @@
 #include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/aiComponent/puzzleComponent.h"
+#include "engine/aiComponent/salientPointsDetectorComponent.h"
 #include "engine/aiComponent/timerUtility.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
@@ -82,15 +83,16 @@ void AIComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& depende
       auto* faceSelectionComp = new FaceSelectionComponent(*robot, dependentComps.GetComponent<FaceWorld>(), 
                                                            micDirectionHistory, dependentComps.GetComponent<VisionComponent>());
 
-      _aiComponents->AddDependentComponent(AIComponentID::BehaviorComponent,          new BehaviorComponent());
-      _aiComponents->AddDependentComponent(AIComponentID::ContinuityComponent,        new ContinuityComponent(*robot));
-      _aiComponents->AddDependentComponent(AIComponentID::FaceSelection,              faceSelectionComp);
-      _aiComponents->AddDependentComponent(AIComponentID::FreeplayDataTracker,        new FreeplayDataTracker());
-      _aiComponents->AddDependentComponent(AIComponentID::InformationAnalyzer,        new AIInformationAnalyzer());
-      _aiComponents->AddDependentComponent(AIComponentID::ObjectInteractionInfoCache, new ObjectInteractionInfoCache(*robot));
-      _aiComponents->AddDependentComponent(AIComponentID::Puzzle,                     new PuzzleComponent(*robot));
-      _aiComponents->AddDependentComponent(AIComponentID::TimerUtility,               new TimerUtility());
-      _aiComponents->AddDependentComponent(AIComponentID::Whiteboard,                 new AIWhiteboard(*robot));
+      _aiComponents->AddDependentComponent(AIComponentID::BehaviorComponent,                 new BehaviorComponent());
+      _aiComponents->AddDependentComponent(AIComponentID::ContinuityComponent,               new ContinuityComponent(*robot));
+      _aiComponents->AddDependentComponent(AIComponentID::FaceSelection,                     faceSelectionComp);
+      _aiComponents->AddDependentComponent(AIComponentID::FreeplayDataTracker,               new FreeplayDataTracker());
+      _aiComponents->AddDependentComponent(AIComponentID::InformationAnalyzer,               new AIInformationAnalyzer());
+      _aiComponents->AddDependentComponent(AIComponentID::ObjectInteractionInfoCache,        new ObjectInteractionInfoCache(*robot));
+      _aiComponents->AddDependentComponent(AIComponentID::Puzzle,                            new PuzzleComponent(*robot));
+      _aiComponents->AddDependentComponent(AIComponentID::SalientPointsDetectorComponent,    new SalientPointsDetectorComponent());
+      _aiComponents->AddDependentComponent(AIComponentID::TimerUtility,                      new TimerUtility());
+      _aiComponents->AddDependentComponent(AIComponentID::Whiteboard,                        new AIWhiteboard(*robot));
     }
 
     _aiComponents->InitComponents(robot);
