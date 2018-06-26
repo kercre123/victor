@@ -55,7 +55,7 @@ void BehaviorComponentCloudServer::RunThread(std::string sockName)
   // Start UDP server
   _server.SetBindClients(false);
   _server.StartListening(LOCAL_SOCKET_PATH + sockName);
-  char buf[512];
+  char buf[4096];
   while (!_shutdown) {
     const ssize_t received = _server.Recv(buf, sizeof(buf));
     // ignore an empty reconnect packet that LocalUdpServer might forward
