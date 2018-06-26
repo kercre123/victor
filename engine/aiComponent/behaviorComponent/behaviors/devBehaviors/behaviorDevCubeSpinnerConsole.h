@@ -16,8 +16,13 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
+#include "engine/aiComponent/behaviorComponent/behaviors/cubeSpinner/cubeSpinnerGame.h"
+
 namespace Anki {
 namespace Cozmo {
+
+// forward declaration
+class CubeSpinnerGame;
 
 class BehaviorDevCubeSpinnerConsole : public ICozmoBehavior
 {
@@ -35,19 +40,24 @@ protected:
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   
   virtual bool WantsToBeActivatedBehavior() const override;
+  virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
+
+  virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
 
 private:
 
   struct InstanceConfig {
     InstanceConfig();
-    // TODO: put configuration variables here
+    std::unique_ptr<CubeSpinnerGame> cubeSpinnerGame;
+    Json::Value gameConfig;
   };
 
   struct DynamicVariables {
     DynamicVariables();
-    // TODO: put member variables here
+    ObjectID objID;
+    CubeSpinnerGame::LockResult lastLockResult = CubeSpinnerGame::LockResult::Count;
   };
 
   InstanceConfig _iConfig;

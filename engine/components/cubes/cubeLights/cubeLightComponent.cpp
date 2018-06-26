@@ -23,6 +23,7 @@
 #include "engine/activeObjectHelpers.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/components/cubes/cubeLights/cubeLightAnimationContainer.h"
+#include "engine/components/cubes/cubeLights/cubeLightAnimationHelpers.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
@@ -50,21 +51,6 @@ static constexpr f32 kWhiteBalanceScale = 0.6f;
 namespace Anki {
 namespace Cozmo {
 
-static constexpr int kNumCubeLeds = Util::EnumToUnderlying(CubeConstants::NUM_CUBE_LEDS);
-  
-static const CubeLightAnimation::ObjectLights kCubeLightsOff = {
-  .onColors               = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
-  .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
-  .onPeriod_ms            = {{0,0,0,0}},
-  .offPeriod_ms           = {{0,0,0,0}},
-  .transitionOnPeriod_ms  = {{0,0,0,0}},
-  .transitionOffPeriod_ms = {{0,0,0,0}},
-  .offset                 = {{0,0,0,0}},
-  .rotate                 = false,
-  .makeRelative           = MakeRelativeMode::RELATIVE_LED_MODE_OFF,
-  .relativePoint          = {0,0}
-};
-  
   
 bool CubeLightAnimation::ObjectLights::operator==(const CubeLightAnimation::ObjectLights& other) const
 {
@@ -246,7 +232,7 @@ void CubeLightComponent::UpdateInternal(bool shouldPickNextAnim)
           // Otherwise only game layer is enable so just turn the lights off
           else
           {
-            Result res = SetCubeLightAnimation(objectInfo.first, kCubeLightsOff);
+            Result res = SetCubeLightAnimation(objectInfo.first, CubeLightAnimation::GetLightsOffObjectLights());
             if(res != RESULT_OK)
             {
               PRINT_NAMED_WARNING("CubeLightComponent.Update.SetLightsFailed", "");
@@ -721,7 +707,7 @@ void CubeLightComponent::ApplyAnimModifier(const CubeLightAnimation::Animation& 
   // For every pattern in the animation apply the modifier
   for(auto& pattern : modifiedAnim)
   {
-    for(int i = 0; i < kNumCubeLeds; ++i)
+    for(int i = 0; i < CubeLightAnimation::kNumCubeLEDs; ++i)
     {
       pattern.lights.onColors[i] |= modifier.onColors[i];
       pattern.lights.offColors[i] |= modifier.offColors[i];
@@ -760,7 +746,7 @@ bool CubeLightComponent::BlendAnimWithCurLights(const ObjectID& objectID,
   // with whatever the corresponding color that is currently being displayed on the object
   for(auto& pattern : blendedAnim)
   {
-    for(int i = 0; i < kNumCubeLeds; ++i)
+    for(int i = 0; i < CubeLightAnimation::kNumCubeLEDs; ++i)
     {
       const ActiveObject::LEDstate& ledState = activeObject->GetLEDState(i);
       if(pattern.lights.onColors[i] == 0)
@@ -881,7 +867,7 @@ void CubeLightComponent::EnableGameLayerOnly(const ObjectID& objectID, bool enab
     if( _onlyGameLayerEnabledForAll != enable ) {
       if(enable)
       {
-        SetCubeLightAnimation(objectID, kCubeLightsOff);
+        SetCubeLightAnimation(objectID, CubeLightAnimation::GetLightsOffObjectLights());
         for(auto& pair : _objectInfo)
         {
           pair.second.isOnlyGameLayerEnabled = true;
@@ -916,7 +902,7 @@ void CubeLightComponent::EnableGameLayerOnly(const ObjectID& objectID, bool enab
       if( enable != iter->second.isOnlyGameLayerEnabled ) {
         if(enable)
         {
-          SetCubeLightAnimation(objectID, kCubeLightsOff);
+          SetCubeLightAnimation(objectID, CubeLightAnimation::GetLightsOffObjectLights());
           StopAllAnimsOnLayer(AnimLayerEnum::Engine, objectID);
           StopAllAnimsOnLayer(AnimLayerEnum::State, objectID);
           iter->second.isOnlyGameLayerEnabled = true;
@@ -963,7 +949,7 @@ void CubeLightComponent::SendTransitionMessage(const ObjectID& objectID, const C
     msg.objectType = obj->GetType();
     
     LightState lights;
-    for(u8 i = 0; i < kNumCubeLeds; ++i)
+    for(u8 i = 0; i < CubeLightAnimation::kNumCubeLEDs; ++i)
     {
       msg.lights[i].onColor = values.onColors[i];
       msg.lights[i].offColor = values.offColors[i];
@@ -1101,7 +1087,7 @@ void CubeLightComponent::HandleMessage(const ExternalInterface::EnableCubeLights
     CubeLightAnimation::ObjectLights lights;
     if(lightPatterns.empty())
     {
-      lights = kCubeLightsOff;
+      lights = CubeLightAnimation::GetLightsOffObjectLights();
     }
     else
     {
@@ -1267,7 +1253,7 @@ Result CubeLightComponent::SetLights(const ActiveObject* object, const bool rota
 {
   CubeLights cubeLights;
   cubeLights.rotate = rotate;
-  for(int i = 0; i < kNumCubeLeds; ++i)
+  for(int i = 0; i < CubeLightAnimation::kNumCubeLEDs; ++i)
   {
     // Apply white balancing and encode colors
     const ActiveObject::LEDstate ledState = object->GetLEDState(i);

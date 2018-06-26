@@ -13,6 +13,7 @@
 #ifndef __Anki_Cozmo_Basestation_Components_CubeLightAnimation_fwd_H__
 #define __Anki_Cozmo_Basestation_Components_CubeLightAnimation_fwd_H__
 
+
 #include "clad/types/ledTypes.h"
 #include "coretech/common/engine/math/point.h"
 #include "coretech/common/shared/types.h"
@@ -63,9 +64,6 @@ struct LightPattern
 
 using Animation = std::list<LightPattern>;
 
-Json::Value AnimationToJSON(const std::string& animName, const Animation& animation);
-bool ParseCubeAnimationFromJson(const std::string& animName, const Json::Value& jsonRoot, Animation& outAnimation);
-bool ParseJsonToPattern(const Json::Value& json, LightPattern& pattern);
 
 
 } // namespace CubeLightAnimation

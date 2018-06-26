@@ -30,6 +30,7 @@
 #include "clad/types/poseStructs.h"
 
 #include "engine/components/cubes/cubeLights/cubeLightAnimation.h"
+#include "engine/components/cubes/cubeLights/cubeLightAnimationHelpers.h"
 #include "engine/robotComponents_fwd.h"
 #include "json/json.h"
 

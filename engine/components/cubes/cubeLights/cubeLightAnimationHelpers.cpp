@@ -1,5 +1,5 @@
 /**
- * File: cubeLightAnimation.cpp
+ * File: cubeLightAnimationHelpers.cpp
  *
  * Author: Kevin M. Karol
  * Created: 6/19/18
@@ -11,15 +11,18 @@
  **/
 
 
-#include "engine/components/cubes/cubeLights/cubeLightAnimation.h"
+#include "engine/components/cubes/cubeLights/cubeLightAnimationHelpers.h"
 
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "util/logging/logging.h"
 
+#include <algorithm>
+
 namespace Anki {
 namespace Cozmo {
 namespace CubeLightAnimation {
+
 
 namespace{
 // Pattern Keys
@@ -229,6 +232,71 @@ void LightPattern::Print() const
                    lights.transitionOffPeriod_ms[i],
                    lights.offset[i]);
   }
+}
+  
+void RotateLightPatternCounterClockwise(LightPattern& pattern, uint8_t positionsToRotate)
+{
+  if(positionsToRotate > kNumCubeLEDs){
+    PRINT_NAMED_ERROR("CubeLightAnimationHelpers.RotateLightPatternClockwise.InvalidRotationNumber",
+                      "Can only rotate LEDs %d positions, received request to rotate %d positions",
+                      kNumCubeLEDs, positionsToRotate);
+    return;
+  }
+  #define ROTATE_ARRAY(property) std::rotate(pattern.lights.property.begin(),\
+                                             pattern.lights.property.begin() + (CubeLightAnimation::kNumCubeLEDs - positionsToRotate),\
+                                             pattern.lights.property.end());
+
+  ROTATE_ARRAY(onColors)
+  ROTATE_ARRAY(offColors)
+  ROTATE_ARRAY(onPeriod_ms)
+  ROTATE_ARRAY(offPeriod_ms)
+  ROTATE_ARRAY(transitionOnPeriod_ms)
+  ROTATE_ARRAY(transitionOffPeriod_ms)
+  ROTATE_ARRAY(offset)
+
+  #undef ROTATE_ARRAY
+}
+
+
+void OverwriteLEDs(const LightPattern& source, LightPattern& toOverwrite, const std::set<uint8_t> ledsToOverwrite)
+{
+  for(const auto& led: ledsToOverwrite){
+    toOverwrite.lights.onColors[led]               = source.lights.onColors[led];
+    toOverwrite.lights.offColors[led]              = source.lights.offColors[led];
+    toOverwrite.lights.onPeriod_ms[led]            = source.lights.onPeriod_ms[led];
+    toOverwrite.lights.offPeriod_ms[led]           = source.lights.offPeriod_ms[led];
+    toOverwrite.lights.transitionOnPeriod_ms[led]  = source.lights.transitionOnPeriod_ms[led];
+    toOverwrite.lights.transitionOffPeriod_ms[led] = source.lights.transitionOffPeriod_ms[led];
+    toOverwrite.lights.offset[led]                 = source.lights.offset[led];
+  }
+}
+
+const ObjectLights& GetLightsOffObjectLights()
+{
+  static const CubeLightAnimation::ObjectLights kCubeLightsOff = {
+    .onColors               = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
+    .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
+    .onPeriod_ms            = {{0,0,0,0}},
+    .offPeriod_ms           = {{0,0,0,0}},
+    .transitionOnPeriod_ms  = {{0,0,0,0}},
+    .transitionOffPeriod_ms = {{0,0,0,0}},
+    .offset                 = {{0,0,0,0}},
+    .rotate                 = false,
+    .makeRelative           = MakeRelativeMode::RELATIVE_LED_MODE_OFF,
+    .relativePoint          = {0,0}
+  };
+  return kCubeLightsOff;
+}
+
+
+const LightPattern& GetLightsOffPattern()
+{
+  static const LightPattern kLightsOffPattern = {
+    .name = "LightsOffLights",
+    .lights =  GetLightsOffObjectLights()
+  };
+
+  return kLightsOffPattern;
 }
 
 } // namespace CubeLightAnimation
