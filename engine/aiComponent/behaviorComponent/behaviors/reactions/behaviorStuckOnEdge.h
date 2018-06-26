@@ -43,7 +43,8 @@ protected:
   virtual void BehaviorUpdate() override;
 
 private:
-  void TriggerStuckOnEdgeAnimation();
+  void TriggerGetInAnim();
+  void TriggerIdleAnim();
   
   struct InstanceConfig{
     IBEIConditionPtr  stuckOnEdgeCondition;

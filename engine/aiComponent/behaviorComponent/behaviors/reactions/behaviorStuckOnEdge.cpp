@@ -22,8 +22,7 @@
 namespace Anki {
 namespace Cozmo {
 
-static const float kWaitTimeBeforeRepeatAnim_s = 5.f;
-static const u8 kTracksToLock = (u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::LIFT_TRACK | (u8)AnimTrackFlag::HEAD_TRACK;
+static const u8 kTracksToLock = (u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::LIFT_TRACK;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorStuckOnEdge::BehaviorStuckOnEdge(const Json::Value& config)
@@ -48,7 +47,7 @@ void BehaviorStuckOnEdge::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStuckOnEdge::OnBehaviorActivated()
 {
-  TriggerStuckOnEdgeAnimation();
+  TriggerGetInAnim();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -66,13 +65,19 @@ void BehaviorStuckOnEdge::BehaviorUpdate()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStuckOnEdge::TriggerStuckOnEdgeAnimation()
+void BehaviorStuckOnEdge::TriggerGetInAnim()
 {
-  PRINT_NAMED_INFO("BehaviorStuckOnEdge.TriggerStuckOnEdgeAnimation", "");
-  CompoundActionSequential *action = new CompoundActionSequential();
-  action->AddAction(new TriggerAnimationAction(AnimationTrigger::StuckOnEdge, 1, true, kTracksToLock));
-  action->AddAction(new WaitAction(kWaitTimeBeforeRepeatAnim_s));
-  DelegateIfInControl(action, &BehaviorStuckOnEdge::TriggerStuckOnEdgeAnimation);
+  PRINT_NAMED_INFO("BehaviorStuckOnEdge.TriggerGetInAnim", "");
+  auto action = new TriggerAnimationAction(AnimationTrigger::StuckOnEdgeGetIn, 1, true, kTracksToLock);
+  DelegateIfInControl(action, &BehaviorStuckOnEdge::TriggerIdleAnim);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorStuckOnEdge::TriggerIdleAnim()
+{
+  PRINT_NAMED_INFO("BehaviorStuckOnEdge.TriggerIdleAnim", "");
+  auto action = new TriggerAnimationAction(AnimationTrigger::StuckOnEdgeIdle, 1, true, kTracksToLock);
+  DelegateIfInControl(action, &BehaviorStuckOnEdge::TriggerIdleAnim);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

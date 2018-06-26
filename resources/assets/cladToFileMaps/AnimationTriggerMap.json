@@ -1116,7 +1116,11 @@
     "AnimName": "ag_startsleeping"
   },
   {
-    "CladEvent": "StuckOnEdge",
+    "CladEvent": "StuckOnEdgeGetIn",
+    "AnimName": "ag_reacttocliff_stuckonedge_getin"
+  },
+  {
+    "CladEvent": "StuckOnEdgeIdle",
     "AnimName": "ag_reacttocliff_stuckonedge_01"
   },
   {
