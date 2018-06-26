@@ -250,6 +250,8 @@ int spine_get_payload_len(PayloadId payload_type, enum MsgDir dir)
   case PAYLOAD_DATA_FRAME:
     return (dir == dir_SEND) ? sizeof(struct HeadToBody) : sizeof(struct BodyToHead);
     break;
+  case PAYLOAD_LIGHT_STATE:
+    return sizeof(struct LightState);
   case PAYLOAD_VERSION:
     return (dir == dir_SEND) ? 0 : sizeof(struct VersionInfo);
     break;
