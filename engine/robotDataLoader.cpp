@@ -26,6 +26,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/components/backpackLights/backpackLightComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
+#include "engine/components/variableSnapshot/variableSnapshotComponent.h"
+#include "engine/components/variableSnapshot/variableSnapshotEncoder.h"
 #include "engine/cozmoContext.h"
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/cozmoFeatureGate.h"
@@ -78,8 +80,8 @@ const std::vector<std::string> kPathsToEngineAccessibleAnimations = {
   // Blackjack
   "assets/animations/anim_blackjack_gameplay_01.bin",
 };
-
 }
+
 
 namespace Anki {
 namespace Cozmo {
@@ -96,6 +98,7 @@ RobotDataLoader::RobotDataLoader(const CozmoContext* context)
   _spritePaths = std::make_unique<Vision::SpritePathMap>();
   _compLayoutMap = std::make_unique<CompLayoutMap>();
   _compImageMap = std::make_unique<CompImageMap>();
+
 }
 
 RobotDataLoader::~RobotDataLoader()
@@ -138,6 +141,11 @@ void RobotDataLoader::LoadNonConfigData()
     LoadWeatherResponseMaps();
   }
 
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadVariableSnapshotJsonMap");
+    LoadVariableSnapshotJsonMap();
+  }
+  
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeSpinnerConfig");
     LoadCubeSpinnerConfig();
@@ -692,6 +700,28 @@ void RobotDataLoader::LoadWeatherResponseMaps()
 
 }
 
+
+void RobotDataLoader::LoadVariableSnapshotJsonMap()
+{
+  _variableSnapshotJsonMap = std::make_unique<VariableSnapshotJsonMap>();
+  
+  std::string path = VariableSnapshotComponent::GetSavePath(_platform,
+                                                            VariableSnapshotComponent::kVariableSnapshotFolder,
+                                                            VariableSnapshotComponent::kVariableSnapshotFilename);
+  Json::Value outLoadedJson;
+  const bool success = _platform->readAsJson(path,
+                                             outLoadedJson);
+  // check whether the look up was successful and we got back a nonempty JSON array
+  if (success && !outLoadedJson.empty() && outLoadedJson.isArray()) {
+    for(const auto& loadedInfo : outLoadedJson) {
+      // store the json object in the map
+      VariableSnapshotId variableSnapshotId = VariableSnapshotIdFromString(loadedInfo[VariableSnapshotEncoder::kVariableSnapshotIdKey].asString());
+      _variableSnapshotJsonMap->emplace(variableSnapshotId, loadedInfo);
+    }
+  }
+}
+
+
 void RobotDataLoader::LoadCubeSpinnerConfig()
 {
   static const std::string jsonFilename = "config/engine/behaviorComponent/cubeSpinnerLightMaps.json";
@@ -724,6 +754,7 @@ std::map<std::string, std::string> RobotDataLoader::CreateFileNameToFullPathMap(
 
   return fileNameToFullPath;
 }
+
 
 void RobotDataLoader::LoadAnimationTriggerMap()
 {

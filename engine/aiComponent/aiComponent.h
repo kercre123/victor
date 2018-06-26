@@ -55,6 +55,7 @@ public:
     dependencies.insert(RobotComponentID::MoodManager);
     dependencies.insert(RobotComponentID::NVStorage);
     dependencies.insert(RobotComponentID::Vision);
+    dependencies.insert(RobotComponentID::VariableSnapshotComponent);
   };
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
