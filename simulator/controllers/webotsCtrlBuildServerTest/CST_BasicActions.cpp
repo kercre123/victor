@@ -79,6 +79,9 @@ namespace Anki {
           StartMovieConditional("BasicActions");
           // TakeScreenshotsAtInterval("BasicActions", 1.f);
           
+          // Request a cube connection
+          SendConnectToCube();
+          
           StartingAction(RobotActionType::MOVE_LIFT_TO_HEIGHT);
           SendMoveLiftToHeight(LIFT_HEIGHT_HIGHDOCK, 100, 100);
           SET_TEST_STATE(MoveLiftDown);
