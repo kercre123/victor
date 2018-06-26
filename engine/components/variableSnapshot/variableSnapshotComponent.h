@@ -67,16 +67,14 @@ public:
   // 
   // Note: the serialization function is stored by the component for later use.
   template <typename T>
-  bool InitVariable(VariableSnapshotId,
-                    std::shared_ptr<T>,
-                    std::function<bool(std::shared_ptr<T>, Json::Value&)>,
-                    std::function<void(std::shared_ptr<T>, const Json::Value&)>);
+  bool InitVariable(VariableSnapshotId, std::shared_ptr<T>);
 
   // save location for data
   static const char* kVariableSnapshotFolder;
   static const char* kVariableSnapshotFilename;
 
-  static void GetSavePath(std::string folderName, std::string filename);
+  // creates the path to the desired save location
+  static std::string GetSavePath(const Util::Data::DataPlatform*, std::string, std::string);
 
 private:
   
@@ -93,32 +91,25 @@ private:
   RobotDataLoader::VariableSnapshotJsonMap* _variableSnapshotJsonMap;
 
   Cozmo::Robot* _robot;
-
-  // save path for data
-  std::string _savePath;
-
-  // stores versioning information for the component
-  std::shared_ptr<std::string> _osBuildVersionPtr;
-  std::shared_ptr<std::string> _buildShaPtr;
-
 };
 
 
 template <typename T>
-bool VariableSnapshotComponent::InitVariable(VariableSnapshotId variableSnapshotId,
-                                             std::shared_ptr<T> dataValuePtr,
-                                             std::function<bool(std::shared_ptr<T>, Json::Value&)> serializeFn,
-                                             std::function<void(std::shared_ptr<T>, const Json::Value&)> deserializeFn)
+bool VariableSnapshotComponent::InitVariable(VariableSnapshotId variableSnapshotId, std::shared_ptr<T> dataValuePtr)
 {
   bool isValueLoaded = false;
 
-  ANKI_VERIFY(nullptr != dataValuePtr,
-              "VariableSnapshotComponent",
-              "nullptr is an invalid location to initialize a persistent variable.")
+  // TODO: use this as it is meant to be used and return false
+  const bool hasValidPtr = ANKI_VERIFY(nullptr != dataValuePtr,
+                                         "VariableSnapshotComponent",
+                                         "nullptr is an invalid location to initialize a persistent variable.");
+  if( !hasValidPtr ) {
+    return false;
+  }
 
   // since dataPtr is a shared pointer of a specific type, we use this wrapper closure to standardize the
   // serialization function signature to be stored in the component and avoid templating.
-  auto serializeFnWrapper = [dataValuePtr, serializeFn] (Json::Value& outJson) { return serializeFn(dataValuePtr, outJson); };
+  auto serializeFnWrapper = [dataValuePtr] (Json::Value& outJson) { return VariableSnapshotEncoder::Serialize<T>(dataValuePtr, outJson); };
 
   // TODO: if a variable is reinitialized within one boot cycle, get its info from the data map
   //       for when reinitialization is added as a feature
@@ -134,11 +125,11 @@ bool VariableSnapshotComponent::InitVariable(VariableSnapshotId variableSnapshot
   // else save the default data and return false
   auto variableSnapshotJsonIter = _variableSnapshotJsonMap->find(variableSnapshotId);
   if(variableSnapshotJsonIter != _variableSnapshotJsonMap->end()) {
-    deserializeFn(dataValuePtr, variableSnapshotJsonIter->second);
+    VariableSnapshotEncoder::Deserialize<T>(dataValuePtr, variableSnapshotJsonIter->second);
     isValueLoaded = true;
   }
 
-  // store the new variable snapshot object
+  // store the new serializer
   _variableSnapshotDataMap.emplace(variableSnapshotId, std::move(serializeFnWrapper));
 
   // at this point, the data is a new snapshot by default

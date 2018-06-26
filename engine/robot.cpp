@@ -381,7 +381,7 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
 Robot::~Robot()
 {
   // save variable snapshots before rest of robot components start destructing
-  GetVariableSnapshotComponent().~VariableSnapshotComponent();
+  _components->RemoveComponent(RobotComponentID::VariableSnapshotComponent);
 
   // VIC-1961: Remove touch sensor component before aborting all since there's a DEV_ASSERT crash
   // and we need to write data out from the touch sensor component out. This explicit destruction

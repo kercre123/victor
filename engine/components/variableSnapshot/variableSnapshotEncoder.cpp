@@ -18,51 +18,57 @@
 
 namespace Anki {
 namespace Cozmo {
+namespace VariableSnapshotEncoder {
 
-// encoder defines what the keys in the JSON are
-const char* VariableSnapshotEncoder::kVariableSnapshotIdKey = "variableSnapshotId";
-const char* VariableSnapshotEncoder::kVariableSnapshotKey = "variableSnapshot";
-
+const char* kVariableSnapshotIdKey = "id";
+const char* kVariableSnapshotKey = "data";
 
 // integers
-bool VariableSnapshotEncoder::SerializeInt(std::shared_ptr<int> dataPtr, Json::Value& outJson)
+template<>
+bool Serialize<int>(std::shared_ptr<int> dataPtr, Json::Value& outJson)
 {
   outJson[kVariableSnapshotKey] = *dataPtr;
   return true;
 }
 
-void VariableSnapshotEncoder::DeserializeInt(std::shared_ptr<int> dataPtr, const Json::Value& loadedJson)
+template<>
+void Deserialize<int>(std::shared_ptr<int> dataPtr, const Json::Value& loadedJson)
 {
   *dataPtr = loadedJson[kVariableSnapshotKey].asInt();
 }
 
 
 // booleans
-bool VariableSnapshotEncoder::SerializeBool(std::shared_ptr<bool> dataPtr, Json::Value& outJson)
+template<>
+bool Serialize<bool>(std::shared_ptr<bool> dataPtr, Json::Value& outJson)
 {
   outJson[kVariableSnapshotKey] = *dataPtr;
   return true;
 }
 
-void VariableSnapshotEncoder::DeserializeBool(std::shared_ptr<bool> dataPtr, const Json::Value& loadedJson)
+template<>
+void Deserialize<bool>(std::shared_ptr<bool> dataPtr, const Json::Value& loadedJson)
 {
   *dataPtr = loadedJson[kVariableSnapshotKey].asBool();
 }
 
 
 // strings
-bool VariableSnapshotEncoder::SerializeString(std::shared_ptr<std::string> dataPtr, Json::Value& outJson)
+template<>
+bool Serialize<std::string>(std::shared_ptr<std::string> dataPtr, Json::Value& outJson)
 {
   outJson[kVariableSnapshotKey] = *dataPtr;
   return true;
 }
 
-void VariableSnapshotEncoder::DeserializeString(std::shared_ptr<std::string> dataPtr, const Json::Value& loadedJson)
+template<>
+void Deserialize<std::string>(std::shared_ptr<std::string> dataPtr, const Json::Value& loadedJson)
 {
   *dataPtr = loadedJson[kVariableSnapshotKey].asString();
 }
 
 
+}
 }
 }
 

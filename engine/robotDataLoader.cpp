@@ -697,20 +697,27 @@ void RobotDataLoader::LoadWeatherResponseMaps()
 
 void RobotDataLoader::LoadVariableSnapshotJsonMap()
 {
-
   _variableSnapshotJsonMap = std::make_unique<VariableSnapshotJsonMap>();
   
+    std::string path = VariableSnapshotComponent::GetSavePath(
+                                                              _platform,
+                                                              VariableSnapshotComponent::kVariableSnapshotFolder,
+                                                              VariableSnapshotComponent::kVariableSnapshotFilename);
   Json::Value outLoadedJson;
-  const bool success = _platform->readAsJson(VariableSnapshotComponent::variableSnapshotSavePath, outLoadedJson);
-
+  const bool success = _platform->readAsJson(path,
+                                             outLoadedJson);
+    const bool check1 = !outLoadedJson.empty();
+    const bool check2 = outLoadedJson.isArray();
   // check whether the look up was successful and we got back a nonempty JSON array
-  if (success && !outLoadedJson.empty() && outLoadedJson.isArray()) {
+  if (success && check1 && check2) {
     for(const auto& subscriberInfo : outLoadedJson) {
       // store the json object in the map
       VariableSnapshotId variableSnapshotId = VariableSnapshotIdFromString(subscriberInfo[VariableSnapshotEncoder::kVariableSnapshotIdKey].asString());
       _variableSnapshotJsonMap->emplace(variableSnapshotId, subscriberInfo);
     }
   }
+    bool x = check1;
+    assert(x == x);
 }
 
 

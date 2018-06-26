@@ -22,25 +22,17 @@ namespace Anki {
 namespace Cozmo {
 
 
-class VariableSnapshotEncoder : private Util::noncopyable {
-public:
-
+namespace VariableSnapshotEncoder {
   // encoder defines what the keys in the JSON are
-  static const char* kVariableSnapshotIdKey;
-  static const char* kVariableSnapshotKey;
+  extern const char* kVariableSnapshotIdKey;
+  extern const char* kVariableSnapshotKey;
 
-  // integers
-  static bool SerializeInt(std::shared_ptr<int>, Json::Value&);
-  static void DeserializeInt(std::shared_ptr<int>, const Json::Value&);
+  template <typename T>
+  bool Serialize(std::shared_ptr<T>, Json::Value&);
 
-  // booleans
-  static bool SerializeBool(std::shared_ptr<bool>, Json::Value&);
-  static void DeserializeBool(std::shared_ptr<bool>, const Json::Value&);
-
-  // strings
-  static bool SerializeString(std::shared_ptr<std::string>, Json::Value&);
-  static void DeserializeString(std::shared_ptr<std::string>, const Json::Value&);
-};
+  template <typename T>
+  void Deserialize(std::shared_ptr<T>, const Json::Value&);
+}
 
 }
 }
