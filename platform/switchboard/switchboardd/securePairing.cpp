@@ -392,7 +392,11 @@ void SecurePairing::SendStatusResponse() {
 
   std::string buildNoString(buildNo);
 
-  SendRtsMessage<RtsStatusResponse_2>(state.ssid, state.connState, isApMode, bleState, batteryState, buildNoString, _isOtaUpdating);
+  // todo: will be filled in later with info 
+  // from vic-cloud process comms
+  bool hasOwner = false;
+
+  SendRtsMessage<RtsStatusResponse_3>(state.ssid, state.connState, isApMode, bleState, batteryState, buildNoString, _isOtaUpdating, hasOwner);
 
   Log::Write("Send status response.");
 }

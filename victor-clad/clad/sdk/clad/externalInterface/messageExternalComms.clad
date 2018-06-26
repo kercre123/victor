@@ -141,6 +141,17 @@ message RtsStatusResponse_2 {
     bool        otaInProgress,
 }
 
+message RtsStatusResponse_3 {
+    string      wifiSsidHex,
+    uint_8      wifiState,
+    bool        accessPoint,
+    uint_8      bleState,
+    uint_8      batteryState,
+    string      version,
+    bool        otaInProgress,
+    bool        hasOwner,
+}
+
 message RtsWifiScanRequest {
     //
 }
@@ -218,6 +229,16 @@ message RtsFileDownload {
     uint_8      fileChunk[uint_16],
 }
 
+message RtsCloudSessionRequest {
+    string      sessionToken[uint_8],
+}
+
+message RtsCloudSessionResponse {
+    bool        success,
+    uint_8      statusCode,
+    string      clientTokenGuid[uint_8],
+}
+
 message Error {
     //
 }
@@ -271,7 +292,7 @@ union RtsConnection_3 {
     RtsWifiIpRequest                RtsWifiIpRequest            = 0x08,
     RtsWifiIpResponse               RtsWifiIpResponse           = 0x09,
     RtsStatusRequest                RtsStatusRequest            = 0x0A,
-    RtsStatusResponse_2             RtsStatusResponse_2         = 0x0B,     
+    RtsStatusResponse_3             RtsStatusResponse_3         = 0x0B,  // includes hasOwner field   
     RtsWifiScanRequest              RtsWifiScanRequest          = 0x0C,
     RtsWifiScanResponse_3           RtsWifiScanResponse_3       = 0x0D,  // includes provisioned flag
     RtsOtaUpdateRequest             RtsOtaUpdateRequest         = 0x0E,
@@ -289,6 +310,8 @@ union RtsConnection_3 {
     RtsFileDownload                 RtsFileDownload             = 0x1A,
     RtsWifiForgetRequest            RtsWifiForgetRequest        = 0x1B,  // * new in V3
     RtsWifiForgetResponse           RtsWifiForgetResponse       = 0x1C,  // * new in V3
+    RtsCloudSessionRequest          RtsCloudSessionRequest      = 0x1D,  // * new in V3
+    RtsCloudSessionResponse         RtsCloudSessionResponse     = 0x1E,  // * new in V3
 }
 
 // The post-factory set of versions
