@@ -478,7 +478,6 @@ namespace Vision {
   template<typename T>
   void ImageBase<T>::BoxFilter(ImageBase<T>& filtered, u32 size) const
   {
-    DEV_ASSERT(size%2==0, "ImageBase.BoxFilter.SizeNotMultipleOf2");
     cv::boxFilter(this->get_CvMat_(), filtered.get_CvMat_(), -1, cv::Size(size, size));
   }
   
@@ -638,7 +637,7 @@ namespace Vision {
 
     // Use base class's BoxFilter if the size is not 3 or this is mac
     // (will just use OpenCV's boxFilter)
-    if(size != 3 || IS_MAC)
+    if(size != 3 || IS_MAC || GetNumRows() < 3 || GetNumCols() < 3)
     {
       ImageBase<u8>::BoxFilter(filtered, size);
       return;
@@ -718,7 +717,7 @@ namespace Vision {
     // All arguments are u8*
     #define FILTER_ROW(row1Ptr, row2Ptr, row3Ptr, outputPtr)    \
       {                                                         \
-        u32 c = 1;                                              \
+        s32 c = 1;                                              \
         FILTER_ROW_NEON(row1Ptr, row2Ptr, row3Ptr, outputPtr);  \
                                                                 \
         for(; c < GetNumCols()-1; c++)                          \
