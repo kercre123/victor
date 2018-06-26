@@ -32,6 +32,7 @@ target_compile_definitions(libev PUBLIC
   EV_USE_EPOLL=0
   EV_MULTIPLICITY=1
   EV_IDLE_ENABLE=1
+  EV_CHILD_ENABLE=0
 )
 
 target_include_directories(libev PUBLIC
