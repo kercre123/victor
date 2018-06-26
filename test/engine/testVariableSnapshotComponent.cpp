@@ -204,7 +204,6 @@ TEST(VariableSnapshotComponent, MultipleInitsFail)
 // changing version info leads to data reset
 TEST(VariableSnapshotComponent, VersioningInfoDataResetOSBuildVersion)
 {
-  RemoveTestData();
   InitializeTests();
 
   using namespace Anki::Cozmo;
