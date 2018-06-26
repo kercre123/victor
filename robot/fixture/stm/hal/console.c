@@ -601,6 +601,12 @@ static void ParseCommand(void)
     if (!commandFound && strcmp(buffer, ""))
     {
       ConsolePrintf("Unknown command: %s\n", buffer);
+      
+      /*/DEBUG inspect complete input
+      ConsolePrintf("'");
+      for(int i=0; i<m_numberOfArguments; i++) ConsolePrintf(" %s", GetArgument(i));
+      ConsolePrintf("'\n");
+      //-*/
     }
   }
 }
