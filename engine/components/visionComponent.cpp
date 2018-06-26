@@ -2647,20 +2647,11 @@ namespace Cozmo {
           {
             image_out.Allocate(CAMERA_SENSOR_RESOLUTION_HEIGHT, CAMERA_SENSOR_RESOLUTION_WIDTH);
 
-            // Wrap the YUV data in an opencv mat
-            // A 1280x720 YUV420sp image is 1280x1080 bytes
-            // A full Y channel followed by interleaved 2x2 subsampled UV
-            // Calculate the number of rows of bytes of YUV data that corresponds to
-            // CAMERA_SENSOR_RESOLUTION_WIDTH cols of data
-            constexpr u16 kNumYUVRows =
-              (2 * (CAMERA_SENSOR_RESOLUTION_HEIGHT/2 * CAMERA_SENSOR_RESOLUTION_WIDTH/2) /
-               CAMERA_SENSOR_RESOLUTION_WIDTH) + CAMERA_SENSOR_RESOLUTION_HEIGHT;
-            cv::Mat yuv(kNumYUVRows, CAMERA_SENSOR_RESOLUTION_WIDTH, CV_8UC1, buffer);
-            // Convert from YUV to BGR directly into image_out
-            // BGR appears to actually result in RGB data, there is a similar bug
-            // when converting from RGB565 to RGB
-            cv::cvtColor(yuv, image_out.get_CvMat_(), cv::COLOR_YUV2BGR_NV21);
-
+            Vision::ConvertYUV420spToRGB(buffer,
+                                         CAMERA_SENSOR_RESOLUTION_HEIGHT,
+                                         CAMERA_SENSOR_RESOLUTION_WIDTH,
+                                         image_out);
+            
             // Create image with proper imageID and timestamp
             image_out.SetTimestamp(imageCaptureSystemTimestamp_ms);
             image_out.SetImageId(imageId);
