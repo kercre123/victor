@@ -5,7 +5,7 @@
  * Created: 12/1/2017
  *
  * Description:
- *               Defines interface to simulated cubes
+ *               Defines interface to simulated cubes (mac-specific implementations)
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -55,20 +55,14 @@ namespace { // "Private members"
   // Maps factory ID to webots receiver
   std::map<BleFactoryId, webots::Receiver*> _cubeReceiverMap;
   
-  // simulated 'connection' to cube. Just a boolean that gets set to true
-  // when clients request a connection to a specific cube.
-  std::map<BleFactoryId, bool> _connectedToCube;
-  
-  // If we're actively scanning for advertising cubes
-  bool _scanning = false;
-  
-  // Whether to start scanning immediately upon connection to
-  // the "bluetooth daemon" (which doesn't exist for mac, so
-  // this just means that we should start scanning upon Init())
-  bool _scanUponConnection = false;
-  
   float _scanDuration_sec = 3.f;
   float _scanUntil_sec = 0.f;
+  
+  // Last time we've heard from the connected cube. If you zap the
+  // cube from the webots world to simulate an unsolicited disconnect,
+  // use this value to automatically 'disconnect' it (or else it will
+  // remain 'connected').
+  double _connectedCubeLastHeardTime_sec = 0.f;
   
 } // "private" namespace
 
@@ -129,37 +123,28 @@ void CubeBleClient::SetSupervisor(webots::Supervisor *sup)
 }
 
 
-void CubeBleClient::StartScanUponConnection()
-{
-  DEV_ASSERT(!_inited, "CubeBleClient.StartScanningUponConnection.AlreadyInited");
-  _scanUponConnection = true;
-}
-
-
 void CubeBleClient::SetScanDuration(const float duration_sec)
 {
   _scanDuration_sec = duration_sec;
 }
 
 
-void CubeBleClient::StartScanning()
+void CubeBleClient::StartScanInternal()
 {
-  _scanning = true;
+  _cubeConnectionState = CubeConnectionState::ScanningForCubes;
   _scanUntil_sec = _scanDuration_sec + _engineSupervisor->getTime();
 }
 
 
-void CubeBleClient::StopScanning()
+void CubeBleClient::StopScanInternal()
 {
   _scanUntil_sec = _engineSupervisor->getTime();
 }
 
 
-bool CubeBleClient::SendMessageToLightCube(const BleFactoryId& factoryID, const MessageEngineToCube& msg)
+bool CubeBleClient::SendMessageInternal(const MessageEngineToCube& msg)
 {
-  DEV_ASSERT(IsConnectedToCube(factoryID), "CubeBleClient.SendMessageToLightCube.CubeNotConnected");
-  
-  const int channel = GetEmitterChannel(factoryID);
+  const int channel = GetEmitterChannel(_currentCube);
   _cubeEmitter->setChannel(channel);
   
   u8 buff[msg.Size()];
@@ -171,12 +156,13 @@ bool CubeBleClient::SendMessageToLightCube(const BleFactoryId& factoryID, const 
 }
   
   
-bool CubeBleClient::ConnectToCube(const BleFactoryId& factoryId)
+bool CubeBleClient::RequestConnectInternal(const BleFactoryId& factoryId)
 {
-  DEV_ASSERT(!IsConnectedToCube(factoryId), "CubeBleClient.ConnectToCube.AlreadyConnected");
+  _currentCube = factoryId;
   
   // Grab an available receiver for this cube:
-  DEV_ASSERT(_cubeReceiverMap.find(factoryId) == _cubeReceiverMap.end(), "CubeBleClient.ConnectToCube.ReceiverAlreadyAssigned");
+  DEV_ASSERT(_cubeReceiverMap.find(factoryId) == _cubeReceiverMap.end(),
+             "CubeBleClient.RequestConnectInternal.ReceiverAlreadyAssigned");
   for (auto* rec : _receivers) {
     // Is this receiver already in use by another cube?
     const auto it = std::find_if(_cubeReceiverMap.begin(), _cubeReceiverMap.end(),
@@ -193,77 +179,76 @@ bool CubeBleClient::ConnectToCube(const BleFactoryId& factoryId)
   }
   
   DEV_ASSERT_MSG(_cubeReceiverMap.find(factoryId) != _cubeReceiverMap.end(),
-                 "CubeBleClient.ConnectToCube.NoReceiverAssigned",
+                 "CubeBleClient.RequestConnectInternal.NoReceiverAssigned",
                  "Could not find a free receiver for cube with factory ID %s. Connected to too many cubes?",
                  factoryId.c_str());
   
-  // Mark as connected and immediately call connected callback
-  _connectedToCube[factoryId] = true;
-  for (const auto& callback : _cubeConnectionCallbacks) {
-    callback(factoryId, true);
-  }
+  // Mark as connection pending
+  _cubeConnectionState = CubeConnectionState::PendingConnect;
   return true;
 }
 
 
-bool CubeBleClient::DisconnectFromCube(const BleFactoryId& factoryId)
+bool CubeBleClient::RequestDisconnectInternal()
 {
-  DEV_ASSERT(IsConnectedToCube(factoryId), "CubeBleClient.ConnectToCube.NotConnected");
-  
   // The simulated cubes do not know if they are 'connected' or not,
   // so we need to send a 'black' light animation to the cube so it
   // doesn't continue to play its current light animation.
-  SendLightsOffToCube(factoryId);
+  SendLightsOffToCube();
   
   // Disable and remove the receiver associated with this cube;
-  const auto receiverIt = _cubeReceiverMap.find(factoryId);
+  const auto receiverIt = _cubeReceiverMap.find(_currentCube);
   if (receiverIt != _cubeReceiverMap.end()) {
     auto* receiver = receiverIt->second;
+    // flush the receiver then disable it
+    while (receiver->getQueueLength() > 0) {
+      receiver->nextPacket();
+    }
     receiver->disable();
     _cubeReceiverMap.erase(receiverIt);
   }
   
-  // Mark as disconnected and immediately call disconnected callback
-  _connectedToCube[factoryId] = false;
-  for (const auto& callback : _cubeConnectionCallbacks) {
-    callback(factoryId, false);
-  }
-  return true;
-}
-
-
-bool CubeBleClient::IsConnectedToCube(const BleFactoryId& factoryId)
-{
-  // First check if factoryID exists in _connectedToCube map first.
-  // If it's not even in the map, consider this cube not connected.
-  if (_connectedToCube.find(factoryId) == _connectedToCube.end()) {
-    return false;
-  }
-
-  return _connectedToCube[factoryId];
-}
-
-  
-bool CubeBleClient::Init()
-{
-  if (_scanUponConnection) {
-    _scanUntil_sec = _scanDuration_sec + _engineSupervisor->getTime();
-    _scanning = true;
-  }
-  
-  _inited = true;
+  // Mark as disconnection pending
+  _cubeConnectionState = CubeConnectionState::PendingDisconnect;
   return true;
 }
 
   
-bool CubeBleClient::Update()
+bool CubeBleClient::InitInternal()
 {
-  DEV_ASSERT(_inited, "CubeBleClient.Update.NotInited");
+  return true;
+}
+
+  
+bool CubeBleClient::UpdateInternal()
+{
+  // Check for unwanted disconnects (cube removed from webots world)
+  if (_cubeConnectionState == CubeConnectionState::Connected &&
+      _engineSupervisor->getTime() > _connectedCubeLastHeardTime_sec + 3.0) {
+    PRINT_NAMED_WARNING("CubeBleClient.Update.NotHearingFromCube",
+                        "Disconnecting from cube since we have not heard from it recently.");
+    RequestDisconnectInternal();
+  }
+  
+  if (_cubeConnectionState == CubeConnectionState::PendingConnect) {
+    _cubeConnectionState = CubeConnectionState::Connected;
+    _connectedCubeLastHeardTime_sec = _engineSupervisor->getTime();
+    for (const auto& callback : _cubeConnectionCallbacks) {
+      callback(_currentCube, true);
+    }
+  } else if (_cubeConnectionState == CubeConnectionState::PendingDisconnect) {
+    _cubeConnectionState = CubeConnectionState::UnconnectedIdle;
+    for (const auto& callback : _cubeConnectionCallbacks) {
+      callback(_currentCube, false);
+    }
+    _currentCube.clear();
+  }
   
   // Look for discovery/advertising messages:
   while (_discoveryReceiver->getQueueLength() > 0) {
     // Shove the data into a MessageCubeToEngine and call callbacks.
-    MessageCubeToEngine cubeMessage((uint8_t *) _discoveryReceiver->getData(), (size_t) _discoveryReceiver->getDataSize());
+    MessageCubeToEngine cubeMessage((uint8_t *) _discoveryReceiver->getData(),
+                                    (size_t) _discoveryReceiver->getDataSize());
     const auto sigStrength = _discoveryReceiver->getSignalStrength();
     _discoveryReceiver->nextPacket();
     if (cubeMessage.GetTag() == MessageCubeToEngineTag::available) {
@@ -277,16 +262,21 @@ bool CubeBleClient::Update()
       const double rssiDbl = -100.0 + (sigStrength / 150.0) * 70.0;
       msg.rssi = Util::numeric_cast_clamped<decltype(msg.rssi)>(rssiDbl);
       
-      // Call the appropriate callbacks with the modified message, but only if the state is 'disconnected'
-      // and we are actively scanning
-      if (_scanning && !IsConnectedToCube(msg.factory_id)) {
+      // Call the appropriate callbacks with the modified message, but only if
+      // we are actively scanning and are not connected to this cube
+      const bool connectedToThisCube = (_currentCube == msg.factory_id) &&
+                                       (_cubeConnectionState == CubeConnectionState::Connected);
+      if (_cubeConnectionState == CubeConnectionState::ScanningForCubes &&
+          !connectedToThisCube) {
         for (const auto& callback : _objectAvailableCallbacks) {
           callback(msg);
         }
       }
     } else {
       // Unexpected message type on the discovery channel
-      PRINT_NAMED_WARNING("CubeBleClient.Update.UnexpectedMsg", "Expected ObjectAvailable but received %s", MessageCubeToEngineTagToString(cubeMessage.GetTag()));
+      PRINT_NAMED_WARNING("CubeBleClient.Update.UnexpectedMsg",
+                          "Expected ObjectAvailable but received %s",
+                          MessageCubeToEngineTagToString(cubeMessage.GetTag()));
     }
   }
 
@@ -295,8 +285,10 @@ bool CubeBleClient::Update()
     const auto& factoryId = mapEntry.first;
     auto* receiver = mapEntry.second;
     while (receiver->getQueueLength() > 0) {
-      MessageCubeToEngine cubeMessage((uint8_t *) receiver->getData(), (size_t) receiver->getDataSize());
+      MessageCubeToEngine cubeMessage((uint8_t *) receiver->getData(),
+                                      (size_t) receiver->getDataSize());
       receiver->nextPacket();
+      _connectedCubeLastHeardTime_sec = _engineSupervisor->getTime();
       // Received a light cube message. Call the registered callbacks.
       for (const auto& callback : _cubeMessageCallbacks) {
         callback(factoryId, cubeMessage);
@@ -305,24 +297,19 @@ bool CubeBleClient::Update()
   }
   
   // Check for the end of the scanning period
-  if (_scanning && _engineSupervisor->getTime() >= _scanUntil_sec) {
+  if (_cubeConnectionState == CubeConnectionState::ScanningForCubes
+      && _engineSupervisor->getTime() >= _scanUntil_sec) {
+    _cubeConnectionState = CubeConnectionState::UnconnectedIdle;
     for (const auto& callback : _scanFinishedCallbacks) {
       callback();
     }
-    _scanning = false;
   }
   
   return true;
 }
 
-
-void CubeBleClient::SetCubeFirmwareFilepath(const std::string& cubeFirmwarePath)
-{
-  // not needed for mac build, since we don't flash cubes with mac builds
-}
-
   
-void CubeBleClient::SendLightsOffToCube(const BleFactoryId& factoryId)
+void CubeBleClient::SendLightsOffToCube()
 {
   static const CubeLightKeyframe blackKeyframe({{0, 0, 0}}, 0, 0, 0);
   
@@ -332,8 +319,8 @@ void CubeBleClient::SendLightsOffToCube(const BleFactoryId& factoryId)
   
   CubeLightSequence lightSequence(0, {{0, 0, 0, 0}});
   
-  SendMessageToLightCube(factoryId, MessageEngineToCube(std::move(keyframeChunk)));
-  SendMessageToLightCube(factoryId, MessageEngineToCube(std::move(lightSequence)));
+  SendMessageToLightCube(MessageEngineToCube(std::move(keyframeChunk)));
+  SendMessageToLightCube(MessageEngineToCube(std::move(lightSequence)));
 }
 
 

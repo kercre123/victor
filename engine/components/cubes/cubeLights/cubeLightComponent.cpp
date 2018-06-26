@@ -1311,8 +1311,15 @@ Result CubeLightComponent::SetLights(const ActiveObject* object, const bool rota
     _prevGamma = gamma;
   }
 
-  const bool result = _robot->GetCubeCommsComponent().SendCubeLights((uint32_t)object->GetActiveID(),
-                                                                     cubeLights);
+  bool result = false;
+  const auto& activeId = object->GetActiveID();
+  if (activeId != _robot->GetCubeCommsComponent().GetConnectedCubeActiveId()) {
+    PRINT_NAMED_WARNING("CubeLightComponent.SetLights.ObjectNotConnected",
+                        "Object with activeId %d is not connected",
+                        activeId);
+  } else {
+    result = _robot->GetCubeCommsComponent().SendCubeLights(cubeLights);
+  }
 
   return result ? RESULT_OK : RESULT_FAIL;
 }

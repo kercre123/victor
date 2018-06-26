@@ -51,6 +51,9 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
     case TestState::Init:
     {
       SendEnableBlockTapFilter(false);
+      
+      // Request a cube connection
+      SendConnectToCube();
 
       SET_TEST_STATE(TapCube);
       break;
@@ -58,7 +61,7 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
 
     case TestState::TapCube:
     {
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(_numObjectsConnected == 1, 5) {
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(_numObjectsConnected == 1, 15) {
         _wasTapped = false;
         _wasStopped = false;
         _wasMoved = false;

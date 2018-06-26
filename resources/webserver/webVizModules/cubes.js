@@ -10,8 +10,18 @@
     sendData( payload );
   }
   
-  function resetBlockPool() {
-    var payload = { 'resetBlockPool' : true };
+  function connectCube() {
+    var payload = { 'connectCube' : true };
+    sendData( payload );
+  }
+  
+  function disconnectCube() {
+    var payload = { 'disconnectCube' : true };
+    sendData( payload );
+  }
+  
+  function forgetPreferredCube() {
+    var payload = { 'forgetPreferredCube' : true };
     sendData( payload );
   }
 
@@ -26,12 +36,26 @@
     });
     flashCubesButton.appendTo( elem );
     
-    // Button to reset the "block pool"
-    var resetBlockPoolButton = $('<input class="cubeButton" type="button" value="Reset Block Pool"/>');
-    resetBlockPoolButton.click( function(){
-      resetBlockPool();
+    // Button to request a connection to a cube
+    var connectCubeButton = $('<input class="cubeButton" type="button" value="Connect To Cube"/>');
+    connectCubeButton.click( function(){
+      connectCube();
     });
-    resetBlockPoolButton.appendTo( elem );
+    connectCubeButton.appendTo( elem );
+    
+    // Button to disconnect the current cube
+    var disconnectCubeButton = $('<input class="cubeButton" type="button" value="Disconnect From Cube"/>');
+    disconnectCubeButton.click( function(){
+      disconnectCube();
+    });
+    disconnectCubeButton.appendTo( elem );
+    
+    // Button to reset the "block pool"
+    var forgetPreferredCubeButton = $('<input class="cubeButton" type="button" value="Forget Preferred Cube"/>');
+    forgetPreferredCubeButton.click( function(){
+      forgetPreferredCube();
+    });
+    forgetPreferredCubeButton.appendTo( elem );
 
     cubeInfoDiv = $('<h3 id="cubeInfo"></h3>').appendTo( elem );
    
@@ -41,8 +65,16 @@
     // The engine has sent a new json blob.
     
     cubeInfoDiv.empty(); // remove old
-    cubeInfoDiv.append( '<div class="cubeTypeTitle">' + "Cubes:" + '</div>');
-    data.forEach(function(entry) {
+    cubeInfoDiv.append('<div class="cubeTypeTitle">' + "Connection state: " + data["connectionState"] + '</div>');
+    cubeInfoDiv.append('<div class="cubeTypeTitle">' + "Connected cube: " + data["connectedCube"] + '</div>');
+    cubeInfoDiv.append('<div class="cubeTypeTitle">' + "Preferred cube: " + data["preferredCube"] + '</div>');
+    cubeInfoDiv.append('<div class="cubeTypeTitle">' + "Latest scan results (sorted by signal strength): " + '</div>');
+    function compareRssi(a,b) {
+      return (a.lastRssi < b.lastRssi ? 1 : -1)
+    }
+    cubeData = data["cubeData"];
+    cubeData.sort(compareRssi);
+    cubeData.forEach(function(entry) {
       Object.keys(entry).forEach(function(key) {
         cubeInfoDiv.append( '<div class="cubeEntry">' + key + ': ' + entry[key] + '</div>');
       })

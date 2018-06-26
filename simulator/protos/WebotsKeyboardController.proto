@@ -229,9 +229,6 @@ PROTO WebotsKeyboardController [
   # if false, wait until the user pressed Shift+Enter to connect and start the engine
   # (this gives another thing, e.g. Unity, a chance to connect first)
   field SFBool autoConnect TRUE
-
-  # Whether or not to enable automatic block pool
-  field SFBool doAutoBlockpool TRUE
   
   # Engine's RNG seed
   field SFInt32  randomSeed 0

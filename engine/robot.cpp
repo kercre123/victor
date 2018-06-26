@@ -1120,17 +1120,6 @@ void Robot::SetPhysicalRobot(bool isPhysical)
   // know whether or not we're talking to a physical robot or not so do things that depend on that here.
   // Assumes this function is only called once following connection.
 
-  // Connect to active objects in saved blockpool, but only for physical robots.
-  // For sim robots we make blocks connect automatically by sending BlockPoolEnabledMessage from UiGameController.
-  // (Note that when using Unity+Webots, that message is not sent.)
-  if (isPhysical) {
-    if (GetContext()->GetDataPlatform() != nullptr) {
-      // TODO: init cube comms connection stuff?
-      //_blockFilter->Init(GetContext()->GetDataPlatform()->pathToResource(Util::Data::Scope::External, "blockPool.txt"));
-    }
-  }
-
-
   _isPhysical = isPhysical;
 
   // Modify net timeout depending on robot type - simulated robots shouldn't timeout so we can pause and debug

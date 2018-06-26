@@ -49,7 +49,7 @@ BleClient::BleClient(struct ev_loop* loop)
   // Set up watcher callbacks
   _asyncBreakSignal.set<BleClient, &BleClient::AsyncBreakCallback>(this);
   _asyncStartScanSignal.set<BleClient, &BleClient::AsyncStartScanCallback>(this);
-  _connectionCheckTimer.set<BleClient, &BleClient::ConnectionCheckTimerCallback>(this);
+  _connectionCheckTimer.set<BleClient, &BleClient::ServerConnectionCheckTimerCallback>(this);
   _scanningTimer.set<BleClient, &BleClient::ScanningTimerCallback>(this);
   _asyncFlashCubeSignal.set<BleClient, &BleClient::AsyncFlashCubeCallback>(this);
 }
@@ -84,9 +84,7 @@ void BleClient::Start()
 
 void BleClient::Stop()
 {
-  if (_connectionId >= 0) {
-    DisconnectFromCube();
-  }
+  DisconnectFromCube();
   
   // Signal the ev loop thread to break out of its loop
   _asyncBreakSignal.send();
@@ -99,7 +97,7 @@ void BleClient::Stop()
   
 bool BleClient::Send(const std::vector<uint8_t>& msg)
 {
-  if (!IsConnected()) {
+  if (!IsConnectedToServer()) {
     PRINT_NAMED_WARNING("BleClient.Send.NotConnectedToServer",
                         "Cannot send - not connected to the server");
     return false;
@@ -123,7 +121,7 @@ bool BleClient::Send(const std::vector<uint8_t>& msg)
 
 void BleClient::ConnectToCube(const std::string& address)
 {
-  if (!IsConnected()) {
+  if (!IsConnectedToServer()) {
     PRINT_NAMED_WARNING("BleClient.ConnectToCube.NotConnectedToServer",
                         "Cannot connect to cube - not connected to the server");
     return;
@@ -136,7 +134,7 @@ void BleClient::ConnectToCube(const std::string& address)
 
 void BleClient::DisconnectFromCube()
 {
-  if (!IsConnected()) {
+  if (!IsConnectedToServer()) {
     PRINT_NAMED_WARNING("BleClient.DisconnectFromCube.NotConnectedToServer",
                         "Cannot disconnect from cube - not connected to the server");
     return;
@@ -144,13 +142,19 @@ void BleClient::DisconnectFromCube()
   
   if (_connectionId >= 0) {
     Disconnect(_connectionId);
+  } else if (!_cubeAddress.empty()) {
+    // We don't have a connection ID with the server, but
+    // we still have a cube address. Ask the server to
+    // disconnect this cube by address.
+    DisconnectByAddress(_cubeAddress);
+    _cubeAddress.clear();
   }
 }
 
 
 void BleClient::StartScanForCubes()
 {
-  if (!IsConnected()) {
+  if (!IsConnectedToServer()) {
     PRINT_NAMED_WARNING("BleClient.StartScanForCubes.NotConnectedToServer",
                         "Cannot start a scan - not connected to the server");
     return;
@@ -163,7 +167,7 @@ void BleClient::StartScanForCubes()
 void BleClient::StopScanForCubes()
 {
   _scanningTimer.stop();
-  if (!IsConnected()) {
+  if (!IsConnectedToServer()) {
     PRINT_NAMED_WARNING("BleClient.StopScanForCubes.NotConnectedToServer",
                         "Cannot stop scanning - not connected to the server");
     return;
@@ -178,7 +182,7 @@ void BleClient::StopScanForCubes()
 
 void BleClient::FlashCube(std::vector<uint8_t> cubeFirmware)
 {
-  if (!IsConnected()) {
+  if (!IsConnectedToServer()) {
     PRINT_NAMED_WARNING("BleClient.FlashCube.NotConnectedToServer",
                         "Cannot flash the cube - not connected to the server");
     return;
@@ -315,36 +319,38 @@ void BleClient::AsyncFlashCubeCallback(ev::async& w, int revents)
   }
 }
 
-void BleClient::ConnectionCheckTimerCallback(ev::timer& timer, int revents)
+void BleClient::ServerConnectionCheckTimerCallback(ev::timer& timer, int revents)
 {
   static bool wasConnected = false;
-  if (wasConnected && !IsConnected()) {
-    PRINT_NAMED_WARNING("BleClient.ConnectionCheckTimerCallback.DisconnectedFromServer",
-                        "We've become disconnected from the BLE server - attempting to reconnect");
-    // Server will kill our cube connection once we've become disconnected,
-    // so reset connectionId
-    _connectionId = -1;
-    // Stop scanning for cubes timer
-    _scanningTimer.stop();
+  const bool isConnected = IsConnectedToServer();
+  
+  if (!isConnected) {
+    if (wasConnected) {
+      PRINT_NAMED_WARNING("BleClient.ServerConnectionCheckTimerCallback.DisconnectedFromServer",
+                          "We've become disconnected from the BLE server - attempting to reconnect");
+      // Server will kill our cube connection once we've become disconnected,
+      // so reset connectionId and cube address
+      _connectionId = -1;
+      _cubeAddress.clear();
+      // Stop scanning for cubes timer
+      _scanningTimer.stop();
+    }
     // Immediately attempt to re-connect
     if (!Connect()) {
-      PRINT_NAMED_WARNING("BleClient.LoopThread.ConnectFailed",
+      PRINT_NAMED_WARNING("BleClient.ServerConnectionCheckTimerCallback.ConnectFailed",
                           "Unable to connect to ble server - will retry");
     }
-  } else if (!wasConnected && IsConnected()) {
-    PRINT_NAMED_INFO("BleClient.ConnectionCheckTimerCallback.ConnectedToServer",
+  } else if (!wasConnected && isConnected) {
+    PRINT_NAMED_INFO("BleClient.ServerConnectionCheckTimerCallback.ConnectedToServer",
                      "Connected to the BLE server!");
-    if (_startScanUponConnection) {
-      StartScanForCubes();
-    }
   }
   
   // Fire up the timer again for the appropriate interval
-  timer.start(IsConnected() ?
+  timer.start(isConnected ?
               kDisconnectionCheckTime_sec :
               kConnectionCheckTime_sec);
   
-  wasConnected = IsConnected();
+  wasConnected = isConnected;
 }
 
 

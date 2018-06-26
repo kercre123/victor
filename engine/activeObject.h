@@ -24,6 +24,8 @@ class ActiveObject : public virtual ObservableObject  // NOTE: Cozmo::Observable
 public:
   static const s32 NUM_LEDS = 4;
   
+  static const int kInvalidTapCnt = -1;
+  
   ActiveObject(){};
   
   virtual bool IsActive() const override  { return true; }
@@ -103,7 +105,7 @@ protected:
   
   // Keep track of the current tapCount, which is just an
   // incrementing counter in the raw cube messaging
-  int _tapCount = 0;
+  int _tapCount = kInvalidTapCnt;
   
   // Gamma value to set on lights
   u8 _ledGamma;
