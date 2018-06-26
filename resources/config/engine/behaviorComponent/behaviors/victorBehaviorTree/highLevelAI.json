@@ -243,13 +243,18 @@
       "from": [
         "Observing",
         "Socializing",
-        "PlayingWithCube"
+        "PlayingWithCube",
+        "Exploring",
+        "ExploringVoiceCommand"
       ],
       "interruptingTransitions": [
         {
           "to": "ObservingOnChargerRecentlyPlaced",
           "condition": {
-            "conditionType": "OnCharger"
+            "conditionType": "BecameTrueThisTick",
+            "subCondition": {
+              "conditionType": "OnCharger"
+            }
           },
           "emotionEvent": "PlacedOnCharger"
         }
