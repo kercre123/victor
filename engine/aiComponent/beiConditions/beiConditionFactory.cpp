@@ -29,6 +29,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionFeatureGate.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionIlluminationDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionMotionDetected.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionSalientPointDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectInitialDetection.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectKnown.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectMoved.h"
@@ -309,6 +310,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::RobotTouched:
     {
       condition = std::make_shared<ConditionRobotTouched>(config);
+      break;
+    }
+    case BEIConditionType::SalientPointDetected:
+    {
+      condition = std::make_shared<ConditionSalientPointDetected>(config);
       break;
     }
     case BEIConditionType::SimpleMood:

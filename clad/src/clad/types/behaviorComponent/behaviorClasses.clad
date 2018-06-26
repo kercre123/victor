@@ -76,6 +76,7 @@ enum uint_8 BehaviorClass {
   FactoryCentroidExtractor,
   LiftLoadTest,
   PlannerTest,
+  TurnTowardsPerson,
 
   // devBehaviors/playpen
   PlaypenCameraCalibration,

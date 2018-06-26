@@ -28,6 +28,7 @@ enum uint_8 BehaviorID {
   DevEventSequenceCapture,
   DevImageCapture,
   DevPlannerTest,
+  DevTestPersonDetectorBehavior,
   DevTestBlackjackViz,
   DevTestPromptUser,
   DevTouchDataCollection,
@@ -51,6 +52,9 @@ enum uint_8 BehaviorID {
   PlaypenSoundCheck,
   PlaypenTest,
   PlaypenWaitToStart,
+
+  // devBehaviors
+  TurnTowardsPerson,
 
   // examples
   ExampleAnimGetInLoop,

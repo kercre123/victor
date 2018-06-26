@@ -48,6 +48,7 @@
 #include "clad/types/ledTypes.clad"
 #include "clad/types/memoryMap.clad"
 #include "clad/types/robotToSwitchboard.clad"
+#include "clad/types/salientPointTypes.clad"
 #include "util/ankiLab/ankiLabDef.clad"
 
 namespace Anki {
@@ -377,6 +378,11 @@ message RobotObservedMotion {
     // Pixel coordinate of the point in the image, relative to top-left corner.
     int_16   right_img_x,
     int_16   right_img_y
+}
+
+// SalientPoint
+message RobotObservedSalientPoint {
+    Vision::SalientPoint salientPoint
 }
 
 // RobotObservedLaserPoint

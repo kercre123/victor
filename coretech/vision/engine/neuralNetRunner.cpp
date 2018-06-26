@@ -252,19 +252,6 @@ bool NeuralNetRunner::GetDetections(std::list<SalientPoint>& salientPoints)
       salientPoints = _future.get();
       DEV_ASSERT(!_future.valid(), "NeuralNetRunner.GetDetections.FutureStillValid");
       
-      // The detection will be in normalized coordinates. Need to convert it to original resolution.
-      std::for_each(salientPoints.begin(), salientPoints.end(), [this](SalientPoint& salientPoint)
-                    {
-                      salientPoint.x_img *= _widthScale;
-                      salientPoint.y_img *= _heightScale;
-                      
-                      for(auto &pt : salientPoint.shape)
-                      {
-                        pt.x *= _widthScale;
-                        pt.y *= _heightScale;
-                      }
-                    });
-      
       if(ANKI_DEV_CHEATS)
       {
         if(salientPoints.empty())

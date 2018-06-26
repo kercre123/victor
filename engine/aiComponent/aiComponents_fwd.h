@@ -46,12 +46,16 @@ enum class AIComponentID{
   ObjectInteractionInfoCache,
   // Component that maintains the puzzles victor can solve
   Puzzle,
+  // component for behaviors to access information about salient points being detected
+  SalientPointsDetectorComponent,
   // component that maintains persistant information about the timer utility
   TimerUtility,
   // whiteboard for behaviors to share information, or to store information only useful to behaviors
   Whiteboard,
-  
-  Count
+
+  Count,
+
+
 };
 
 using AIComp =  IDependencyManagedComponent<AIComponentID>;

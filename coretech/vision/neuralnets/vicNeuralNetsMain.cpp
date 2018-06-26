@@ -113,7 +113,7 @@ public:
 // Define helpers for timing and reading / writing images and results (implemented below, after main())
 
 static void GetImage(const std::string& imageFilename, const std::string timestampFilename,
-                     cv::Mat& img, Anki::TimeStamp_t timestamp);
+                     cv::Mat& img, Anki::TimeStamp_t& timestamp);
 
 static void ConvertSalientPointsToJson(const std::list<Anki::Vision::SalientPoint>& salientPoints, Json::Value& detectionResults);
 
@@ -336,7 +336,7 @@ int main(int argc, char **argv)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void GetImage(const std::string& imageFilename, const std::string timestampFilename,
-                     cv::Mat& img, Anki::TimeStamp_t timestamp)
+              cv::Mat& img, Anki::TimeStamp_t& timestamp)
 {
   const std::string ext = imageFilename.substr(imageFilename.size()-3,3);
   if(ext == "bmp")
@@ -359,7 +359,7 @@ void GetImage(const std::string& imageFilename, const std::string timestampFilen
     std::ifstream file(timestampFilename);
     std::string line;
     std::getline(file, line);
-    timestamp = std::stoi(line);
+    timestamp = uint(std::stol(line));
   }
 }
 

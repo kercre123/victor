@@ -12,6 +12,8 @@
  **/
 
 
+#include "engine/aiComponent/salientPointsDetectorComponent.h"
+#include "engine/aiComponent/aiComponent.h"
 #include "engine/actions/basicActions.h"
 #include "camera/cameraService.h"
 #include "engine/ankiEventUtil.h"
@@ -1458,16 +1460,30 @@ namespace Cozmo {
 
     if(procResult.modesProcessed.IsBitFlagSet(VisionMode::RunningNeuralNet))
     {
+      // Notify the SalientPointsDetectorComponent that we have a bunch of new detections
+      _robot->GetAIComponent().GetComponent<SalientPointsDetectorComponent>().AddSalientPoints(procResult.salientPoints);
       for(auto const& detectedObject : procResult.salientPoints)
       {
-        // TODO: Notify behaviors somehow
-        _salientPointsToDraw.push_back({currentTime_ms, detectedObject});
+        _salientPointsToDraw.emplace_back(currentTime_ms, detectedObject);
+        for(auto const& salientPoint : procResult.salientPoints)
+        {
+          _salientPointsToDraw.emplace_back(currentTime_ms, salientPoint);
+        }
       }
     }
 
     s32 colorIndex = 0;
-    for(auto const& salientPointToDraw : _salientPointsToDraw)
+    for(auto const& unscaledSalientPointToDraw : _salientPointsToDraw)
     {
+      auto salientPointToDraw = unscaledSalientPointToDraw;
+      salientPointToDraw.second.x_img *= DEFAULT_CAMERA_RESOLUTION_WIDTH;
+      salientPointToDraw.second.y_img *= DEFAULT_CAMERA_RESOLUTION_HEIGHT;
+      for(auto &pt : salientPointToDraw.second.shape)
+      {
+        pt.x *= DEFAULT_CAMERA_RESOLUTION_WIDTH;
+        pt.y *= DEFAULT_CAMERA_RESOLUTION_HEIGHT;
+      }
+
       const auto& object = salientPointToDraw.second;
 
       const Poly2f poly(object.shape);
