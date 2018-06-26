@@ -577,6 +577,8 @@ private:
   
   // An int that holds tracks disabled using SmartLockTrack
   std::map<std::string, u8> _lockingNameToTracksMap;
+  // Loaded in from data - these tracks will be locked/unlocked automatically when activated/deactivated 
+  u8 _tracksToLockWhileActivated = 0;
 
   bool _hasSetMotionProfile = false;
 

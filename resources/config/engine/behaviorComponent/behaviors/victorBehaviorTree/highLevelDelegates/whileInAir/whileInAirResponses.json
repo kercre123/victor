@@ -1,0 +1,10 @@
+{
+  "behaviorID" : "WhileInAirResponses",
+  "behaviorClass" : "DispatcherStrictPriority",
+
+  "interruptActiveBehavior": false,
+
+  "behaviors": [
+    "Wait"
+  ]
+}

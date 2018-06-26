@@ -150,6 +150,26 @@ bool SettingsCommManager::HandleRobotSettingToggleRequest(const std::string& set
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SettingsCommManager::RefreshConsoleVars()
+{
+#if REMOTE_CONSOLE_ENABLED
+  const auto& masterVolumeValue = _settingsManager->GetRobotSettingAsString("Robot.MasterVolume");
+  MasterVolume masterVolume;
+  if (EnumFromString(masterVolumeValue, masterVolume))
+  {
+    kMasterVolumeLevel = static_cast<u8>(masterVolume);
+  }
+  const auto& eyeColorValue = _settingsManager->GetRobotSettingAsString("Robot.EyeColor");
+  EyeColor eyeColor;
+  if (EnumFromString(eyeColorValue, eyeColor))
+  {
+    kEyeColor = static_cast<u8>(eyeColor);
+  }
+#endif
+}
+
+
 // TODO:  Message handlers from App
 // TODO:  Message handlers from Cloud
 

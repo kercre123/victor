@@ -120,6 +120,9 @@ enum int_32 AnimationTrigger
   KnowledgeGraphGetOut,
   KnowledgeGraphNoAnswer,
 
+  LookAtDevice,
+  LookAtDeviceGetIn,
+  LookAtDeviceGetOut,
   LookInPlaceForFacesBodyPause,
   LookInPlaceForFacesHeadMovePause,
   MeetVictorConfusion,
@@ -156,7 +159,9 @@ enum int_32 AnimationTrigger
   ObservingOnChargerGetIn,
   ObservingOnChargerGetOut,
 
+  OnboardingDriveOffCharger,
   OnboardingLookForCube,
+  OnboardingWakeUp,
 
   PettingLevel1,
   PettingLevel2,
@@ -194,10 +199,12 @@ enum int_32 AnimationTrigger
   ReactToCubeTapCubeTappedLvl3,
   ReactToCubeTapInteractionGetOut,
   ReactToCubeTapInteractionLoop,
+  ReactToAffirmative,
   ReactToGoodBye,
   ReactToGoodMorning,
   ReactToGoodNight,
   ReactToGreeting,
+  ReactToHabitat,
   ReactToMotionLeft,
   ReactToMotionTurnLeft,
   ReactToMotionRight,
@@ -212,6 +219,7 @@ enum int_32 AnimationTrigger
   ReactToOnLeftSide,
   ReactToOnRightSide,
   ReactToPerchedOnBlock,
+  ReactToPickup,
   ReactToPutDown,
   ReactToSoundOffChargerAsleepFront,
   ReactToSoundOffChargerAsleepFrontLeft,
@@ -280,7 +288,6 @@ enum int_32 AnimationTrigger
   WakeupGetout,
 
   // Animation triggers not currently used in Victor, but which we'll probably need eventually
-  ANTICIPATED_ReactToPickup,
   ANTICIPATED_ReactToSoundOffChargerAsleepAmbient,
   ANTICIPATED_ReactToSoundOffChargerObserveAmbient,
   ANTICIPATED_ReactToSoundOnChargerAsleepAmbient,

@@ -282,20 +282,18 @@ namespace Cozmo {
   public:
     SpriteSequenceKeyFrame(Vision::SpriteHandle spriteHandle,
                            TimeStamp_t triggerTime_ms, 
-                           float scanlineOpacity = 1.f,
                            bool shouldRenderInEyeHue = true);
 
     SpriteSequenceKeyFrame(const Vision::SpriteSequence* const spriteSeq,
                            TimeStamp_t triggerTime_ms, 
                            u32 frameInterval_ms,
-                           float scanlineOpacity = 1.f,
                            bool shouldRenderInEyeHue = true);
                            
     // Transfers ownership to the keyframe
     SpriteSequenceKeyFrame(Vision::SpriteCache* spriteCache, 
                            Vision::CompositeImage* compImg, 
                            u32 frameInterval_ms,
-                           float scanlineOpacity = 0.f);
+                           bool shouldRenderInEyeHue = true);
 
     //Copy constructor
     SpriteSequenceKeyFrame(const SpriteSequenceKeyFrame& other);
@@ -308,15 +306,13 @@ namespace Cozmo {
                                        const Vision::SpritePathMap* spriteMap,
                                        Vision::SpriteSequenceContainer* seqContainer,
                                        const Vision::SpriteSequence*& outSeq,
-                                       TimeStamp_t& triggerTime_ms, 
-                                       float& scanlineOpacity);
+                                       TimeStamp_t& triggerTime_ms);
     
     static bool ExtractDataFromJson(const Json::Value &jsonRoot,
                                     const Vision::SpritePathMap* spriteMap,
                                     Vision::SpriteSequenceContainer* seqContainer,
                                     const Vision::SpriteSequence*& outSeq,
                                     TimeStamp_t& triggerTime_ms, 
-                                    float& scanlineOpacity,
                                     TimeStamp_t& frameUpdateInterval);
 
 
@@ -338,7 +334,6 @@ namespace Cozmo {
 
     virtual bool IsDone(const TimeStamp_t timeSinceAnimStart_ms) const override;
     
-    float GetScanlineOpacity() const { return _scanlineOpacity; }
         
     struct CompositeImageUpdateSpec{
       CompositeImageUpdateSpec(Vision::SpriteCache* sCache, 
@@ -391,7 +386,6 @@ namespace Cozmo {
              0;
     }
     bool HaveKeyframeForTimeStamp(const TimeStamp_t timeSinceAnimStart_ms) const;
-    void ValidateScanlineOpacity();
 
     static bool ParseSequenceNameFromString(const Vision::SpritePathMap* spriteMap,
                                             const std::string& sequenceName, 
@@ -408,7 +402,6 @@ namespace Cozmo {
     bool _compositeImageUpdated = false;
     std::multimap<u32, CompositeImageUpdateSpec> _compositeImageUpdateMap;
     
-    float        _scanlineOpacity;
     TimeStamp_t  _internalUpdateInterval_ms = ANIM_TIME_STEP_MS;
     
   }; // class SpriteSequenceKeyFrame

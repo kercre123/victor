@@ -32,6 +32,7 @@ enum uint_8 BehaviorID {
   DevTestPromptUser,
   DevTouchDataCollection,
   DevTurnInPlaceTest,
+  DevViewCubeBackpackLights,
   DockingTestSimple,
   FactoryCentroidExtractor,
   LiftLoadTest,
@@ -80,10 +81,6 @@ enum uint_8 BehaviorID {
   // puzzles
   PuzzleMaze,
 
-  // reactions
-  ReactToCubeMoved,
-  ReactToPet,
-
   // victorBehaviorTree/blackjack
   BlackJack,
   BlackJackHandleRTPResponses,
@@ -94,11 +91,14 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree/clock
   ShowWallTime,
+  SingletonFindFaceInFrontWallTime,
+  SingletonWallTimeCoordinator,
 
   // victorBehaviorTree
   ComeHereVoiceCommand,
   ConfirmHabitat,
   CoordinateGlobalInterrupts,
+  CoordinateWhileInAir,
 
   // victorBehaviorTree/danceToTheBeat
   DanceToTheBeat,
@@ -107,6 +107,7 @@ enum uint_8 BehaviorID {
   DefaultTextToSpeechLoop,
   DriveOffCharger,
   DriveOffChargerAnim,
+  DriveOffChargerStraight,
   GlobalInterruptions,
   HighLevelAI,
 
@@ -215,9 +216,17 @@ enum uint_8 BehaviorID {
   DoATrickVoiceCommand,
   FistBumpVoiceCommand,
   KeepawayVoiceCommand,
+  LookAtMeVoiceCommand,
+  WhatsMyNameVoiceCommand,
+
+  // victorBehaviorTree/highLevelDelegates/whileInAir
+  InitialPickupAnimation,
+  WhileInAirDispatcher,
+  WhileInAirResponses,
 
   // victorBehaviorTree
   InitNormalOperation,
+  IntentUnmatched,
   ModeSelector,
   NormalWakeUp,
 
@@ -252,6 +261,7 @@ enum uint_8 BehaviorID {
   InterruptingVoiceReactions,
   MandatoryPhysicalReactions,
   ProceduralTurnToMicDirection,
+  ReactToAffirmative,
   ReactToCliff,
   ReactToCubeTap,
   ReactToDarkness,
@@ -272,8 +282,6 @@ enum uint_8 BehaviorID {
   ReactToTriggerDirectionAwake,
   ReactToUnexpectedMovement,
   StuckOnEdge,
-  WhileHeld,
-  WhileInAir,
 
   // victorBehaviorTree/sdkBehaviors
   SDK0,

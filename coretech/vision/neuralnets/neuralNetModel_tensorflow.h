@@ -76,12 +76,16 @@ private:
   void GetDetectedObjects(const std::vector<tensorflow::Tensor>& outputTensors, TimeStamp_t timestamp,
                           std::list<Vision::SalientPoint>& salientPoints);
 
+  // Thin wrapper to tensorflow run to allow us to turn on benchmarking to logs
+  Result Run(tensorflow::Tensor image_tensor, std::vector<tensorflow::Tensor>& outputTensors);
+
   // Specified in config, used to determine how to interpret the output of the network, and
   // thus which helper above to call (string to use in JSON config shown for each)
   enum class OutputType {
-    Classification,
-    BinaryLocalization,
-    AnchorBoxes,
+    Classification,     // "classification"
+    BinaryLocalization, // "binary_localization"
+    AnchorBoxes,        // "anchor_boxes"
+    Segmentation,       // "segmentation"
   };
 
   struct 
@@ -113,6 +117,10 @@ private:
     int32_t                   numGridCols = 6;
 
     bool                      verbose = false;
+
+    // Number of times to run benchmarking and report to logs, if this value
+    // is zero benchmarking will not be run
+    int32_t                   benchmarkRuns = 0;
 
     // TODO: Not fully supported yet (VIC-3141)
     bool                      memoryMapGraph = false;

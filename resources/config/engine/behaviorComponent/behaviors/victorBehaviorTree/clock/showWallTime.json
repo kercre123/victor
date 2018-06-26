@@ -1,12 +1,6 @@
 {
   "behaviorID": "ShowWallTime",  
   "behaviorClass" : "DisplayWallTime",
- 
-  "associatedActiveFeature": "Clock",
-
-  "respondToUserIntents": [
-    { "type": "show_clock" }
-  ],
 
   "getInAnimTrigger" : "ClockGetIn",
   "getOutAnimTrigger" : "ClockGetOut",

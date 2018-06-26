@@ -126,11 +126,17 @@ public:
   // return true of the specified region contains any objects of known collision types
   bool CheckForCollisions(const BoundedConvexSet2f& region) const;
 
+  // returns the accumulated area of cells that satisfy the predicate
+  float GetCollisionArea(const BoundedConvexSet2f& region) const;
+
   // Remove all prox obstacles from the map.
   // CAUTION: This will entirely remove _all_ information about prox
   // obstacles. This should almost never be necessary. Is this really
   // what you want??
   void RemoveAllProxObstacles();
+  
+  void SetUseProxObstaclesInPlanning(bool enable) { _useProxObstaclesInPlanning = enable; }
+  bool GetUseProxObstaclesInPlanning() const { return _useProxObstaclesInPlanning; }
   
   ////////////////////////////////////////////////////////////////////////////////
   // Accessors
@@ -202,12 +208,12 @@ private:
   bool                            _gameMessageDirty;
   bool                            _webMessageDirty;
   
+  // config variable for conditionally enabling/disabling prox obstacles in planning
+  bool                            _useProxObstaclesInPlanning;
+  
   bool                            _isRenderEnabled;
   float                           _broadcastRate_sec = -1.0f;      // (Negative means don't send)
 };
-
-
-
 
 }
 }

@@ -6,13 +6,15 @@
   "interruptActiveBehavior": true,
 
   "behaviors": [
-    "ReactToGreeting",
     "DoATrickVoiceCommand",
     "FistBumpVoiceCommand",
     "RollCubeVoiceCommand",
     "KeepawayVoiceCommand",
     "BlackJackVoiceCommand",
+    "ReactToGreeting", // must come somewhere after blackjack since they share the affirmative intent
     "ComeHereVoiceCommand",
+    "LookAtMeVoiceCommand",
+    "WhatsMyNameVoiceCommand",
     "LeaveAMessage",
     "PlaybackMessage",
     "KnowledgeGraphQuestion",

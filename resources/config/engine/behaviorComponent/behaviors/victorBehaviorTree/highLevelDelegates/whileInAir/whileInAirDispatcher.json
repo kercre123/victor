@@ -1,15 +1,12 @@
 {
-  "behaviorID": "WhileInAir",
-  "behaviorClass" : "DispatcherStrictPriority",
-
-  "interruptActiveBehavior": true,
-
-  "associatedActiveFeature": "NoFeature",
-  "emotionEventOnActivated": "ReactToPickedUp",
+  "behaviorClass" : "DispatcherQueue",
+  "behaviorID": "WhileInAirDispatcher",
+  
+  "associatedActiveFeature": "InTheAir",
 
   "wantsToBeActivatedCondition": {
     "conditionType": "OffTreadsState",
-    "targetState": "InAir"
+    "targetState": "InAir"  
   },
 
   "wantsToCancelSelfCondition": {
@@ -20,8 +17,14 @@
     }
   },
 
+  "tracksToLockWhileActivated" : [
+    "BODY_TRACK"
+  ],
+
+
   "behaviors": [
-    "Wait"
+    "InitialPickupAnimation",
+    "WhileInAirResponses"
   ]
 
 }

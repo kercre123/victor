@@ -13,8 +13,11 @@
 
 #include "engine/aiComponent/faceSelectionComponent.h"
 
+#include "coretech/vision/engine/camera.h"
+#include "coretech/vision/engine/cameraCalibration.h"
 #include "engine/actions/basicActions.h"
 #include "engine/components/mics/micDirectionHistory.h"
+#include "engine/components/visionComponent.h"
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
 #include "engine/smartFaceId.h"
@@ -72,7 +75,7 @@ bool FaceSelectionComponent::ParseFaceSelectionFactorMap(const Json::Value& conf
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SmartFaceID FaceSelectionComponent::GetBestFaceToUse(const FaceSelectionFactorMap& criteriaMap) const
 {
-  auto smartFaceIDs = _faceWorld.GetSmartFaceIDsObservedSince(0);
+  auto smartFaceIDs = _faceWorld.GetSmartFaceIDs(0);
   return GetBestFaceToUse(criteriaMap, smartFaceIDs);
 }
 
@@ -163,6 +166,23 @@ SmartFaceID FaceSelectionComponent::GetBestFaceToUse(const FaceSelectionFactorMa
   } // end possible faces
 
   return bestID;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool FaceSelectionComponent::AreFacesInFrontOfRobot(std::vector<SmartFaceID>& faceIDs,
+                                                    TimeStamp_t seenSinceTime_ms,
+                                                    bool includeRecognizableOnly) const
+{
+  // To check if faces are within Robot's range of view, pass in half the camera's FOV as the acceptabel face range
+  auto calibration = _visionComp.GetCamera().GetCalibration();
+  if(calibration != nullptr){
+    const Radians fov = calibration->ComputeHorizontalFOV();
+    faceIDs =_faceWorld.GetSmartFaceIDs(seenSinceTime_ms, includeRecognizableOnly, fov.ToFloat()/2);
+    return !faceIDs.empty();
+  }else{
+    return false;
+  }
 }
 
 

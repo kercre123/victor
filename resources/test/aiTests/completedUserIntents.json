@@ -46,10 +46,17 @@
       "entity_behavior": "keep_away"
     },
     
-    // todo: come here doesn't look for a face or turn to mic direction if it doesnt know of one
-    // "imperative_come": {
-    //   "type": "imperative_come"
-    // },
+    "imperative_come": {
+      "type": "imperative_come"
+    },
+
+    "imperative_lookatme": {
+      "type": "imperative_lookatme"
+    },
+
+    "names_ask": {
+      "type": "names_ask"
+    },
 
     "meet_victor": {
       "type": "meet_victor"

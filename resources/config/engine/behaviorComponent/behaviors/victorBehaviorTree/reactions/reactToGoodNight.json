@@ -2,6 +2,8 @@
   "behaviorClass": "AnimSequence",
   "behaviorID": "ReactToGoodNight",
 
+  "playOnChargerWithoutBody": true,
+
   "emotionEventOnActivated": "RespondToShortVoiceCommand",
   
   "animTriggers": ["ReactToGoodNight"],

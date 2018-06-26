@@ -157,7 +157,8 @@
     "inputShift"          : -1, 
     "minScore"            : 0.5,
     "verbose"             : 0,
-    "pollPeriod_ms"       : 10
+    "pollPeriod_ms"       : 10,
+    "benchmarkRuns"       : 0
 
 
     // // OpenCV DNN w/ MobileNet SSD Model

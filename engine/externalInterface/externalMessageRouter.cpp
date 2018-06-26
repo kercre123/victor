@@ -36,36 +36,40 @@ external_interface::GatewayWrapper ExternalMessageRouter::WrapResponse<T>( T* ms
   return wrapper; \
 }
   
-#define WRAP_EVENT_ONBOARDING_MESSAGE(T,t) \
+#define WRAP_EVENT_MESSAGE_ONEOF(S,T,t)               \
 template<> \
 external_interface::GatewayWrapper ExternalMessageRouter::Wrap<T>( T* msg ) \
 { \
   external_interface::GatewayWrapper wrapper; \
-  wrapper.mutable_event()->mutable_onboarding()->set_allocated_##t( msg ); \
-  return wrapper; \
-}
-  
-#define WRAP_EVENT_WAKEWORD_MESSAGE(T,t) \
-template<> \
-external_interface::GatewayWrapper ExternalMessageRouter::Wrap<T>( T* msg ) \
-{ \
-  external_interface::GatewayWrapper wrapper; \
-  wrapper.mutable_event()->mutable_wake_word()->set_allocated_##t( msg ); \
+  wrapper.mutable_event()->mutable_##S()->set_allocated_##t( msg ); \
   return wrapper; \
 }
 
-WRAP_EVENT_ONBOARDING_MESSAGE( external_interface::OnboardingState,           onboarding_state )
-WRAP_EVENT_ONBOARDING_MESSAGE( external_interface::OnboardingOnCharger,       onboarding_on_charger )
-WRAP_EVENT_ONBOARDING_MESSAGE( external_interface::OnboardingLowBattery,      onboarding_battery )
-WRAP_EVENT_ONBOARDING_MESSAGE( external_interface::OnboardingPickedUp,        onboarding_picked_up )
-WRAP_EVENT_ONBOARDING_MESSAGE( external_interface::OnboardingSeesCube,        onboarding_sees_cube )
-WRAP_EVENT_ONBOARDING_MESSAGE( external_interface::OnboardingCantFindCube,    onboarding_cant_find_cube )
+#define WRAP_EVENT_MESSAGE(T,t)               \
+template<> \
+external_interface::GatewayWrapper ExternalMessageRouter::Wrap<T>( T* msg ) \
+{ \
+  external_interface::GatewayWrapper wrapper; \
+  wrapper.mutable_event()->set_allocated_##t( msg ); \
+  return wrapper; \
+}
+
+WRAP_EVENT_MESSAGE_ONEOF( onboarding, external_interface::OnboardingState,           onboarding_state );
+WRAP_EVENT_MESSAGE_ONEOF( onboarding, external_interface::OnboardingOnCharger,       onboarding_on_charger );
+WRAP_EVENT_MESSAGE_ONEOF( onboarding, external_interface::OnboardingLowBattery,      onboarding_battery );
+WRAP_EVENT_MESSAGE_ONEOF( onboarding, external_interface::OnboardingPickedUp,        onboarding_picked_up );
+WRAP_EVENT_MESSAGE_ONEOF( onboarding, external_interface::OnboardingSeesCube,        onboarding_sees_cube );
+WRAP_EVENT_MESSAGE_ONEOF( onboarding, external_interface::OnboardingCantFindCube,    onboarding_cant_find_cube );
   
-WRAP_EVENT_WAKEWORD_MESSAGE( external_interface::WakeWordBegin,    wake_word_begin )
-WRAP_EVENT_WAKEWORD_MESSAGE( external_interface::WakeWordEnd,      wake_word_end )
+WRAP_EVENT_MESSAGE_ONEOF( wake_word, external_interface::WakeWordBegin,    wake_word_begin );
+WRAP_EVENT_MESSAGE_ONEOF( wake_word, external_interface::WakeWordEnd,      wake_word_end );
+
+WRAP_EVENT_MESSAGE( external_interface::AttentionTransfer, attention_transfer);
 
 WRAP_RESPONSE_MESSAGE( external_interface::OnboardingState,             onboarding_state );
 WRAP_RESPONSE_MESSAGE( external_interface::OnboardingContinueResponse,  onboarding_continue_response );
+
+WRAP_RESPONSE_MESSAGE( external_interface::LatestAttentionTransfer, latest_attention_transfer );
 
 
 } // end namespace Cozmo

@@ -16,6 +16,9 @@
     "files": {
         "chipper_key": {
             "url": "http://sai-platform-temp.s3-website-us-west-2.amazonaws.com/victor-chipper-tmp-client-key/victor-chipper-key"
+        },
+        "victor-blobstore-qalogs-key": {
+            "url": "http://sai-platform-temp.s3-website-us-west-2.amazonaws.com/victor-blobstore-qalogs-client-key/victor-blobstore-qalogs-key"
         }
     },
     "svn": {
@@ -41,11 +44,11 @@
                     "animationGroups",
                     "sprites/spriteSequences"
                 ],
-                "version": "3265"
+                "version": "3301"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
-                "version": "61"
+                "version": "65"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"

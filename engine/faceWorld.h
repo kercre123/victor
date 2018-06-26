@@ -92,19 +92,22 @@ namespace Cozmo {
     const Vision::TrackedFace* GetFace(Vision::FaceID_t faceID) const;
     const Vision::TrackedFace* GetFace(const SmartFaceID& faceID) const;
     
-    // Returns set of face IDs present in the world.
+    // Returns face IDs observed since seenSinceTime_ms (inclusive)
     // Set includeRecognizableOnly=true to only return faces that have been (or can be) recognized.
     // NOTE: This does not necessarily mean they have been recognized as a _named_ person introduced via
     //       MeetCozmo. They could simply be recognized as a session-only person already seen in this session.
-    std::set<Vision::FaceID_t> GetFaceIDs(bool includeRecognizableOnly = false) const;
-    
-    // Returns face IDs observed since seenSinceTime_ms (inclusive)
-    std::set<Vision::FaceID_t> GetFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms,
-                                                       bool includeRecognizableOnly = false) const;
+    // If relativeRobotAngleTolerence_rad is set to something other than 0, only faces within +/- the relative robot
+    // angle will be returned
+    std::set<Vision::FaceID_t> GetFaceIDs(TimeStamp_t seenSinceTime_ms = 0,
+                                          bool includeRecognizableOnly = false,
+                                          float relativeRobotAngleTolerence_rad = kDontCheckRelativeAngle,
+                                          const Radians& angleRelativeRobot_rad = 0) const;
 
     // Returns smart face IDs observed since seenSinceTime_ms (inclusive)
-    std::vector<SmartFaceID> GetSmartFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms,
-                                                          bool includeRecognizableOnly = false) const;
+    std::vector<SmartFaceID> GetSmartFaceIDs(TimeStamp_t seenSinceTime_ms = 0,
+                                             bool includeRecognizableOnly = false,
+                                             float relativeRobotAngleTolerence_rad = kDontCheckRelativeAngle,
+                                             const Radians& angleRelativeRobot_rad = 0) const;
 
     // Returns true if any faces are in the world
     bool HasAnyFaces(TimeStamp_t seenSinceTime_ms = 0, bool includeRecognizableOnly = false) const;
@@ -169,7 +172,8 @@ namespace Cozmo {
     void HandleMessage(const T& msg);
     
   private:
-    
+    static const int kDontCheckRelativeAngle = 0;
+
     Robot* _robot;
     
     // FaceEntry is the internal storage for faces in FaceWorld, which include
@@ -199,7 +203,8 @@ namespace Cozmo {
     bool _lastEnrollmentCompleted = false;
     
     // Helper used by public Get() methods to determine if an entry should be returned
-    bool ShouldReturnFace(const FaceEntry& faceEntry, TimeStamp_t seenSinceTime_ms, bool includeRecognizableOnly) const;
+    bool ShouldReturnFace(const FaceEntry& faceEntry, TimeStamp_t seenSinceTime_ms, bool includeRecognizableOnly,
+                          float relativeRobotAngleTolerence_rad = kDontCheckRelativeAngle, const Radians& angleRelativeRobot_rad = 0) const;
     
     // Removes the face and advances the iterator. Notifies any listeners that
     // the face was removed if broadcast==true.

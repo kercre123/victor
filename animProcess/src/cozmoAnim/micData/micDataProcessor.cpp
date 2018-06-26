@@ -102,6 +102,10 @@ namespace {
   CONSOLE_VAR(bool, kMicData_ForceEnableMicDataProc, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_CollectRawTriggers, CONSOLE_GROUP, false);
 
+  // Time necessary for the VAD logic to wait when there's no activity, before we begin skipping processing for
+  // performance. Note that this probably needs to at least be as long as the trigger, which is ~ 500-750ms.
+  CONSOLE_VAR_RANGED(uint32_t, kMicData_QuietTimeCooldown_ms, CONSOLE_GROUP, 1000, 500, 10000);
+
 #if ANKI_DEV_CHEATS
   CONSOLE_VAR_ENUM(int32_t, kMicData_NextTriggerIndex, CONSOLE_GROUP, _nextTriggerSearchIndex, "enUS,enUK,enAU,frFR,deDE");
   CONSOLE_VAR(bool, kMicData_SaveRawFullIntent, CONSOLE_GROUP, false);
@@ -473,11 +477,11 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
 
     // Keep a counter from the last active vad flag. When it hits 0 don't bother doing
     // the trigger recognition, then reset the counter when the flag is active again
-    constexpr uint32_t kVadCountdown_ms = 4 * 1000;
-    constexpr uint32_t kVadCountdownLimit = kVadCountdown_ms / kTimePerSEBlock_ms;
+    const auto vadCountdown_ms = kMicData_QuietTimeCooldown_ms;
+    const auto vadCountdownLimit = vadCountdown_ms / kTimePerSEBlock_ms;
     if (activityFlag != 0)
     {
-      _vadCountdown = kVadCountdownLimit;
+      _vadCountdown = vadCountdownLimit;
     }
     else if (_vadCountdown > 0)
     {

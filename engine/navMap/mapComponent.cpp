@@ -1181,6 +1181,25 @@ bool MapComponent::CheckForCollisions(const BoundedConvexSet2f& region) const
   return false;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float MapComponent::GetCollisionArea(const BoundedConvexSet2f& region) const
+{
+  const INavMap* currentMap = GetCurrentMemoryMap();
+  if (currentMap)
+  {
+    return currentMap->GetCollisionArea( region, [] (const auto& data) {
+        const bool retv = (data->type == MemoryMapTypes::EContentType::ObstacleObservable)   ||
+                          (data->type == MemoryMapTypes::EContentType::ObstacleCharger)      ||
+                          (data->type == MemoryMapTypes::EContentType::ObstacleProx)         ||
+                          (data->type == MemoryMapTypes::EContentType::ObstacleUnrecognized) ||
+                          (data->type == MemoryMapTypes::EContentType::Cliff);
+        return retv;
+      });
+  }
+  return 0.f;
+}
+
+
 // NOTE: mrw: we probably want to separate the vision processing code into its own file at some point.
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

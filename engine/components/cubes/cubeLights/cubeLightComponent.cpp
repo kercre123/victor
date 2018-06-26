@@ -794,6 +794,24 @@ bool CubeLightComponent::StopAndPlayLightAnim(const ObjectID& objectID,
   return PlayLightAnimByTrigger(objectID, animTriggerToPlay, callback, hasModifier, modifier);
 }
 
+bool CubeLightComponent::StopAndPlayLightAnim(const ObjectID& objectID,
+                                              AnimationHandle& handle,
+                                              CubeLightAnimation::Animation& animToPlay, 
+                                              const std::string& debugName,
+                                              AnimCompletedCallback callback,
+                                              bool hasModifier,
+                                              const CubeLightAnimation::ObjectLights& modifier)
+{
+  DEV_ASSERT(!_objectInfo[objectID].animationsOnLayer[AnimLayerEnum::Engine].empty(),
+             "CubeLightComponent.StopAndPlayLightAnim.NoAnimsCurrentlyOnEngineLayer");
+  // Stop the anim and prevent the update call in StopLightAnim from picking a next default anim
+  // This will prevent the lights from briefly flickering between the calls to stop and play
+  StopLightAnimInternal(handle, AnimLayerEnum::Engine, objectID, false);
+  return PlayLightAnimInternal(objectID, animToPlay, AnimLayerEnum::Engine, callback,
+                               hasModifier, modifier, 0, debugName, handle);
+
+}
+
 void CubeLightComponent::PickNextAnimForDefaultLayer(const ObjectID& objectID)
 {
   if(DEBUG_TEST_ALL_ANIM_TRIGGERS)

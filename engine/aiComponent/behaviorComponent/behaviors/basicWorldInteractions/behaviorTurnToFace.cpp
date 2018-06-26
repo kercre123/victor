@@ -50,7 +50,7 @@ bool BehaviorTurnToFace::WantsToBeActivatedBehavior() const
 {
   Pose3d wastedPose;
   TimeStamp_t lastTimeObserved = GetBEI().GetFaceWorld().GetLastObservedFace(wastedPose);
-  std::set<Vision::FaceID_t> facesObserved = GetBEI().GetFaceWorld().GetFaceIDsObservedSince(lastTimeObserved);
+  std::set<Vision::FaceID_t> facesObserved = GetBEI().GetFaceWorld().GetFaceIDs(lastTimeObserved);
   if(facesObserved.size() > 0){
     _dVars.targetFace = GetBEI().GetFaceWorld().GetSmartFaceID(*facesObserved.begin());
   }

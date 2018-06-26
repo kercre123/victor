@@ -90,14 +90,29 @@ TEST_INTENT(UserIntentsTransitions, RollCube, "roll_cube")
   EXPECT_TRUE(res);
 }
 
-// todo: come here doesn't look for faces if it doesn't know about a face
-//TEST_INTENT(UserIntentsTransitions, ComeHere, "imperative_come")
-//{
-//  UserIntent intent;
-//  intent._tag = UserIntentTag::imperative_come;
-//  const bool res = IntentHelper( intent, BehaviorID::ComeHereVoiceCommand, true );
-//  EXPECT_TRUE(res);
-//}
+TEST_INTENT(UserIntentsTransitions, ComeHere, "imperative_come")
+{
+  UserIntent intent;
+  intent._tag = UserIntentTag::imperative_come;
+  const bool res = IntentHelper( intent, BehaviorID::ComeHereVoiceCommand, true );
+  EXPECT_TRUE(res);
+}
+  
+TEST_INTENT(UserIntentsTransitions, LookAtMe, "imperative_lookatme")
+{
+  UserIntent intent;
+  intent._tag = UserIntentTag::imperative_lookatme;
+  const bool res = IntentHelper( intent, BehaviorID::LookAtMeVoiceCommand, true );
+  EXPECT_TRUE(res);
+}
+  
+TEST_INTENT(UserIntentsTransitions, WhatsMyName, "names_ask")
+{
+  UserIntent intent;
+  intent._tag = UserIntentTag::names_ask;
+  const bool res = IntentHelper( intent, BehaviorID::WhatsMyNameVoiceCommand, true );
+  EXPECT_TRUE(res);
+}
   
 TEST_INTENT(UserIntentsTransitions, MeetVictor, "meet_victor")
 {

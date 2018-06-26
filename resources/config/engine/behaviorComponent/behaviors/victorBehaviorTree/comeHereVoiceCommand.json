@@ -1,34 +1,30 @@
 {
   "behaviorID": "ComeHereVoiceCommand",
-  "behaviorClass": "DispatcherQueue",
+  "behaviorClass": "FindFaceAndThen",
+
+  "associatedActiveFeature": "ComeHere",
 
   "respondToUserIntents" : [
     { "type": "imperative_come" }
   ],
 
-  "behaviors": 
-  [
-    "DriveOffCharger",
-    // todo: this needs a behavior to find a face if there is no face already known
-    "ComeHereInternal"
-  ],
+  "timeUntilCancelFaceLooking_s": 2.0,
+  "timeUntilCancelFaceSearch_s": 10.0,
+  "searchForFaceBehavior": "ObservingFindFaces",
+  "shouldLeaveChargerFirst": true,
+  "driveOffChargerBehavior": "DriveOffChargerStraight",
 
+  "behavior": "ComeHereInternal",
+  
   "anonymousBehaviors": [
     {
       "behaviorName" : "ComeHereInternal",
       "behaviorClass" : "DriveToFace",
-      "associatedActiveFeature": "ComeHere",
 
       "animTooClose": "AlreadyAtFace",
-
-      "startsWithMicDirection": true,
-
-      "timeUntilCancelFaceLooking_s": 2.0,
-      "timeUntilCancelFaceTrack_s": 5.0,
-      "timeUntilCancelFaceSearch_s": 10.0,
-      "minDriveToFaceDistanceKey_mm": 200,
-
-      "searchForFaceBehavior": "ObservingFindFaces"
+      
+      "timeUntilCancelFaceTrack_s": 5.0,      
+      "minDriveToFaceDistanceKey_mm": 200
     }
   ],
 

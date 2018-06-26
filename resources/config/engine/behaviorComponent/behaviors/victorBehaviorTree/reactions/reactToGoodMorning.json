@@ -2,6 +2,8 @@
   "behaviorClass": "AnimSequence",
   "behaviorID": "ReactToGoodMorning",
 
+  "playOnChargerWithoutBody": true,
+
   "emotionEventOnActivated": "RespondToShortVoiceCommand",
 
   "animTriggers": ["ReactToGoodMorning"],

@@ -1,0 +1,15 @@
+{
+  "behaviorClass": "AnimSequence",
+  "behaviorID": "ReactToAffirmative",
+
+  "playOnChargerWithoutBody": true,
+
+  "emotionEventOnActivated": "RespondToShortVoiceCommand",
+
+  "animTriggers": ["ReactToAffirmative"],
+  "respondToUserIntents": [
+    {
+      "type": "imperative_affirmative"
+    }
+  ]
+}

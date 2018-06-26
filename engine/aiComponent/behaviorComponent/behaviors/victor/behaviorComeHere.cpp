@@ -94,7 +94,7 @@ void BehaviorComeHere::TurnTowardsFace()
 {
   DEBUG_SET_STATE(TurnTowardsFace);
   // Get all faces we have locations for  
-  auto allFaces = GetBEI().GetFaceWorld().GetSmartFaceIDsObservedSince(0);
+  auto allFaces = GetBEI().GetFaceWorld().GetSmartFaceIDs(0);
 
   const auto& faceSelectionComp = GetAIComp<FaceSelectionComponent>();
   // Select face based on priority penalties

@@ -1,0 +1,28 @@
+{
+  "behaviorID": "LookAtMeVoiceCommand",
+  "behaviorClass": "FindFaceAndThen",
+
+  "associatedActiveFeature": "LookAtMe",
+
+  "respondToUserIntents" : [
+    { "type": "imperative_lookatme" }
+  ],
+
+  "timeUntilCancelFaceLooking_s": 2.0,
+  "timeUntilCancelFaceSearch_s": 10.0,
+  "searchForFaceBehavior": "ObservingFindFaces",
+  "shouldLeaveChargerFirst": true,
+  "driveOffChargerBehavior": "DriveOffChargerStraight",
+
+  "behavior": "LookAtMeInternal",
+  "timeUntilCancelFollowup_s": 15.0,
+  
+  "anonymousBehaviors": [
+    {
+      "behaviorName" : "LookAtMeInternal",
+      "behaviorClass" : "LookAtMe"
+    }
+  ],
+
+  "postBehaviorSuggestion": "Socialize"
+}

@@ -1,0 +1,26 @@
+{
+  "behaviorID": "WhatsMyNameVoiceCommand",
+  "behaviorClass": "FindFaceAndThen",
+
+  "associatedActiveFeature": "WhatsMyName",
+
+  "respondToUserIntents" : [
+    { "type": "names_ask" }
+  ],
+
+  "timeUntilCancelFaceLooking_s": 2.0,
+  "timeUntilCancelFaceSearch_s": 10.0,
+  "searchForFaceBehavior": "ObservingFindFaces",
+  "shouldLeaveChargerFirst": false,
+
+  "behavior": "WhatsMyNameInternal",
+  
+  "anonymousBehaviors": [
+    {
+      "behaviorName" : "WhatsMyNameInternal",
+      "behaviorClass" : "SayName"
+    }
+  ],
+
+  "postBehaviorSuggestion": "Socialize"
+}

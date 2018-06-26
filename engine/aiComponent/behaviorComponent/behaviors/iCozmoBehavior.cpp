@@ -82,6 +82,7 @@ static const char* kEmotionEventOnActivatedKey       = "emotionEventOnActivated"
 static const char* kPostBehaviorSuggestionKey        = "postBehaviorSuggestion";
 static const char* kAssociatedActiveFeature          = "associatedActiveFeature";
 static const char* kBehaviorStatToIncrement          = "behaviorStatToIncrement";
+static const char* kTracksToLockWhileActivatedKey    = "tracksToLockWhileActivated";
 
 static const std::string kIdleLockPrefix             = "Behavior_";
 
@@ -90,6 +91,7 @@ static const char* kAnonymousBehaviorMapKey          = "anonymousBehaviors";
 static const char* kAnonymousBehaviorName            = "behaviorName";
 
 static const char* kBehaviorDebugLabel               = "debugLabel";
+static const char* kTracksLockedWhileActivatedID     = "tracksLockedWhileActivated";
 }
 
 
@@ -333,7 +335,14 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
                  "Behavior stat to increment '%s' invalid in behavior '%s'",
                  statStr.c_str(),
                  GetDebugLabel().c_str() );
-  }                 
+  }
+  
+  // tracks to lock while activated
+  if(config[kTracksToLockWhileActivatedKey].isArray()){
+    for(const auto& track : config[kTracksToLockWhileActivatedKey]){
+      _tracksToLockWhileActivated |= static_cast<u8>(AnimTrackFlagFromString(track.asString()));
+    }
+  }            
   
   return true;
 }
@@ -367,7 +376,8 @@ std::vector<const char*> ICozmoBehavior::GetAllJsonKeys() const
     kAnonymousBehaviorMapKey,
     kPostBehaviorSuggestionKey,
     kAssociatedActiveFeature,
-    kBehaviorStatToIncrement
+    kBehaviorStatToIncrement,
+    kTracksToLockWhileActivatedKey
   };
   expectedKeys.insert( expectedKeys.end(), std::begin(baseKeys), std::end(baseKeys) );
 
@@ -755,6 +765,9 @@ void ICozmoBehavior::OnActivatedInternal()
                           "_respondToUserIntent said it was responding to the INVALID tag" );
     }
   }
+  if(_tracksToLockWhileActivated != 0){
+    SmartLockTracks(_tracksToLockWhileActivated, kTracksLockedWhileActivatedID, GetDebugLabel());
+  }
 
   // Clear trigger word if responding to it
   if( _respondToTriggerWord ) {
@@ -885,7 +898,6 @@ void ICozmoBehavior::OnDeactivatedInternal()
     GetBEI().GetRobotInfo().GetMoveComponent().UnlockTracks(entry.second, entry.first);
   }
 
-
   _lockingNameToTracksMap.clear();
   _customLightObjects.clear();
   
@@ -930,7 +942,7 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
   }
 
   if(_tickDontActivateSetFor == BaseStationTimer::getInstance()->GetTickCount()){
-    PRINT_PERIODIC_CH_INFO(200,"ICozmoBehavior.WantsToBeActivatedBase.DontActivateDueToCoordinator",
+    PRINT_PERIODIC_CH_INFO(200,"Behaviors", "ICozmoBehavior.WantsToBeActivatedBase.DontActivateDueToCoordinator",
                            "Behavior %s was [still] asked not to activate during tick %zu by coordinator %s",
                            GetDebugLabel().c_str(), _tickDontActivateSetFor, _dontActivateCoordinator.c_str());
     return false;

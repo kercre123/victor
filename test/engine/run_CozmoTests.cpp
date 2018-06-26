@@ -906,9 +906,9 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
     ASSERT_EQ(RESULT_OK, lastResult);
     ASSERT_TRUE(robot.GetFaceWorld().HasAnyFaces());
     ASSERT_NE(nullptr, robot.GetFaceWorld().GetFace(faceID));
-    ASSERT_EQ(1, robot.GetFaceWorld().GetFaceIDs().size());
-    ASSERT_EQ(1, robot.GetFaceWorld().GetFaceIDsObservedSince(fakeTime).size());
-    ASSERT_TRUE(robot.GetFaceWorld().GetFaceIDsObservedSince(fakeTime + 10).empty());
+    ASSERT_EQ(1, robot.GetFaceWorld().GetFaceIDs(0).size());
+    ASSERT_EQ(1, robot.GetFaceWorld().GetFaceIDs(fakeTime).size());
+    ASSERT_TRUE(robot.GetFaceWorld().GetFaceIDs(fakeTime + 10).empty());
   }
 
   fakeTime += 10;
@@ -923,7 +923,7 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   {
     ASSERT_FALSE(robot.GetFaceWorld().HasAnyFaces());
     ASSERT_EQ(nullptr, robot.GetFaceWorld().GetFace(faceID));
-    ASSERT_TRUE(robot.GetFaceWorld().GetFaceIDs().empty());
+    ASSERT_TRUE(robot.GetFaceWorld().GetFaceIDs(0).empty());
   }
 
   // See all objects from close so they all have unconfirmed observations
@@ -943,7 +943,7 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   {
     ASSERT_TRUE(robot.GetFaceWorld().HasAnyFaces());
     ASSERT_NE(nullptr, robot.GetFaceWorld().GetFace(faceID));
-    ASSERT_FALSE(robot.GetFaceWorld().GetFaceIDs().empty());
+    ASSERT_FALSE(robot.GetFaceWorld().GetFaceIDs(0).empty());
   }
 
   // we should have objects 1 and 2, but not 3, since 3 was not in the world before delocalizing

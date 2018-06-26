@@ -193,7 +193,7 @@ SmartFaceID BehaviorObservingLookAtFaces::GetFaceToStareAt()
   // entries that are now equal
 
   const auto& faceWorld = GetBEI().GetFaceWorld();
-  const auto& faces = faceWorld.GetFaceIDsObservedSince( GetRecentFaceTime() );
+  const auto& faces = faceWorld.GetFaceIDs( GetRecentFaceTime() );
 
   for( const auto& rawFaceID : faces ) {
     const SmartFaceID faceID = faceWorld.GetSmartFaceID(rawFaceID);

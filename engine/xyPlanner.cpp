@@ -12,160 +12,24 @@
 
 
 #include "engine/xyPlanner.h"
+#include "engine/xyPlannerConfig.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
-#include "engine/navMap/mapComponent.h"
 
-#include "coretech/planning/engine/aStar.h"
 #include "coretech/planning/engine/geometryHelpers.h"
 
 #include <chrono>
 
-#define RESOLUTION_MM 20.f
-#define ROBOT_RADIUS_MM (ROBOT_BOUNDING_X / 2.f)
-#define PLANNING_PADDING_MM 2.f
 
 namespace Anki {
 namespace Cozmo {
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//  A* Configuration for 2d - 4 connected grid with disk checks
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace {  
-  // definition for GetSuccessors in PlannerConfig
-  const std::vector<Point2f> fourConnectedGrid = { 
-    { RESOLUTION_MM, 0.f},
-    {-RESOLUTION_MM, 0.f},
-    { 0.f, -RESOLUTION_MM},
-    { 0.f,  RESOLUTION_MM}
-  };
-
   // priority list for turn radius
   const std::vector<float> arcRadii = { 100., 70., 30., 10. };
 
   // minimum precision for joining path segments
   const float kPathPrecisionTolerance = .1f;
-}
-
-class PlannerConfig : public IAStarConfig<Point2f> {
-public:
-  PlannerConfig(const MapComponent& map) : _map(map) {}
-
-  // if point is within 1/2 planner resolution step
-  inline virtual bool Equal(const Point2f& p, const Point2f& q) const override
-  { 
-    Point2f d = (p - q).Abs();
-    return FLT_LT(d.x(), RESOLUTION_MM/2) && FLT_LT(d.y(), RESOLUTION_MM/2);
-  };
-
-  // Manhattan Distance
-  inline virtual float Heuristic(const Point2f& p, const Point2f& q) const override 
-  {
-    Point2f d = (p - q).Abs();
-    return (d.x() + d.y());
-  };
-
-  class PointIter : public SuccessorIter {
-  public:
-    PointIter(const Point2f& p, const MapComponent& m) 
-    : _idx(0), _parent(p), _map(m) 
-    {     
-      _state = _parent + fourConnectedGrid[0];
-      if ( IsUnsafe() ) { Next(); } 
-    }
-
-    inline virtual const Point2f& GetState() const override { return _state; } 
-    inline virtual        float GetCost()    const override { return RESOLUTION_MM; } 
-
-    inline virtual bool Done() const override { return (_idx >= fourConnectedGrid.size()); };
-    inline virtual void Next() override {
-      if (++_idx < fourConnectedGrid.size()) { 
-        _state = _parent + fourConnectedGrid[_idx];
-        if ( IsUnsafe() ) { Next(); }
-      } 
-    }
-
-  private:
-    inline bool IsUnsafe() const {
-      return _map.CheckForCollisions( Ball2f(_state, ROBOT_RADIUS_MM + PLANNING_PADDING_MM) );
-    }
-
-    size_t              _idx;
-    Point2f             _state;
-    const Point2f       _parent;
-    const MapComponent& _map;
-  };
-
-  // Check for collisions and return if not obstructed
-  inline virtual std::unique_ptr<SuccessorIter> GetSuccessors(const Point2f& p) const override
-  { 
-    return std::make_unique<PointIter>(GetNearestGridPoint(p), _map);
-  };
-
-  // hash function for sorting states
-  inline virtual s64 Hash(const Point2f& p) const override
-  {
-    return ((s64) p.x()) << 32 | ((s64) p.y()); 
-  };
-
-  // max number of state expansions before terminating
-  inline virtual size_t GetMaxExpansions() const override { return 100000; }
-
-private:
-  // snap to planning grid
-  inline Point2f GetNearestGridPoint(const Point2f& p) const {
-    Point2f nearestCenterIdx = p * (1 / RESOLUTION_MM);
-
-    // truncate via (float->int->float) cast instead of round for speed
-    return nearestCenterIdx.CastTo<int>().CastTo<float>() * RESOLUTION_MM;
-  }
-
-  const MapComponent& _map;
-};
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//  Helpers to create ConvexPointSets for collision detection
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-namespace {
-  // Point turns are just collisions with the spherical robot
-  inline Ball2f GetPointCollisionSet(const Point2f& a, float padding) {
-    return Ball2f(a, ROBOT_RADIUS_MM + padding);
-  }
-
-  // straight lines are rectangles the length of the line segment, with robot width
-  inline FastPolygon GetLineCollisionSet(const LineSegment& l, float padding) {
-    Point2f normal(l.GetFrom().y()-l.GetTo().y(), l.GetTo().x()-l.GetFrom().x());
-    normal.MakeUnitLength();
-    float width = ROBOT_RADIUS_MM + padding;
-
-    return FastPolygon({ l.GetFrom() + normal * width, 
-                         l.GetTo() + normal * width,
-                         l.GetTo() - normal * width,
-                         l.GetFrom() - normal * width });
-  }
-
-  // for simplicity, check if arcs are safe using multiple disk checks
-  inline std::vector<Ball2f> GetArcCollisionSet(const Arc& a, float padding) {
-    // convert to Ball2f to get center and radius
-    Ball2f b = ArcToBall(a);
-
-    // calculate start and sweep angles
-    Vec2f startVec   = a.start - b.GetCentroid();
-    Vec2f endVec     = a.end - b.GetCentroid();
-    Radians startAngle( std::atan2(startVec.y(), startVec.x()) );
-    Radians sweepAngle( std::atan2(endVec.y(), endVec.x()) - startAngle );
-
-    const int nChecks = std::ceil(ABS(sweepAngle.ToFloat() * b.GetRadius()) / RESOLUTION_MM);
-    const float checkLen = sweepAngle.ToFloat() / nChecks;
-
-    std::vector<Ball2f> retv;
-    for (int i = 0; i <= nChecks; ++i) {
-      f32 rad = startAngle.ToFloat() + i*checkLen;
-      retv.emplace_back(b.GetCentroid() + Point2f(std::cos(rad), std::sin(rad))*(ROBOT_RADIUS_MM + padding), ROBOT_RADIUS_MM + padding);
-    }
-
-    return retv;
-  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -175,13 +39,14 @@ XYPlanner::XYPlanner(Robot* robot)
 : IPathPlanner("XYPlanner")
 , _map(robot->GetMapComponent())
 , _start()
-, _targets() {}
+, _targets()
+, _collisionPenalty(0.f) {}
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 EComputePathStatus XYPlanner::ComputeNewPathIfNeeded(const Pose3d& startPose, bool forceReplanFromScratch, bool allowGoalChange)
 {
-  if ( !forceReplanFromScratch && CheckIsPathSafe(_path, 0.f) ) {
+  if ( !forceReplanFromScratch && FLT_LE(GetPathCollisionPenalty( _path ), _collisionPenalty) ) {
     return EComputePathStatus::NoPlanNeeded;
   }
 
@@ -199,18 +64,28 @@ EComputePathStatus XYPlanner::ComputeNewPathIfNeeded(const Pose3d& startPose, bo
   }
 
   _start = startPose;
+  _collisionPenalty = 0.f;
+
+  // expand out of collision state if necessary
+  // NOTE: if no safe point exists, the A* search will timeout, but we probably have bigger problems to deal with.
+  //       Why can we not find a single safe point anywhere within the searchable range of EscapeObstaclePlanner?
+  const Point2f plannerGoal = FindNearestSafePoint(_start.GetTranslation());
 
   using namespace std::chrono;
-
   high_resolution_clock::time_point startTime = high_resolution_clock::now();
 
-  AStar<Point2f, PlannerConfig> planner( (PlannerConfig(_map)) );
-  std::vector<Point2f> plan = planner.Search(plannerStart, _start.GetTranslation());
+  AStar<Point2f, PlannerConfig> planner( (PlannerConfig(_map, plannerGoal)) );
+  std::vector<Point2f> plan = planner.Search(plannerStart);
 
   high_resolution_clock::time_point planTime = high_resolution_clock::now();
 
   if(!plan.empty()) {
+
+    plan.push_back(_start.GetTranslation()); // planner will only go to the nearest safe grid point, so add the real start to shortcut escape obstacle path
+    std::reverse(plan.begin(), plan.end());  // planner runs from goal->start, so reverse it before building path
+
     _path = BuildPath( plan );
+    _collisionPenalty = GetPathCollisionPenalty( _path );
     _status = EPlannerStatus::CompleteWithPlan;
   } else {
     PRINT_NAMED_WARNING("XYPlanner.ComputeNewPathIfNeeded", "No path found!");
@@ -272,34 +147,80 @@ inline Planning::GoalID XYPlanner::FindGoalIndex(const Point2f& p) const
 //  Collision Detection
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-inline bool XYPlanner::IsArcSegmentSafe(const Planning::PathSegment& s) const
-{
-  return IsArcSafe( CreateArc(s), 0.f );
+namespace {
+  // Point turns are just collisions with the spherical robot
+  inline Ball2f GetPointCollisionSet(const Point2f& a, float padding) {
+    return Ball2f(a, kRobotRadius_mm + padding);
+  }
+
+  // straight lines are rectangles the length of the line segment, with robot width
+  inline FastPolygon GetLineCollisionSet(const LineSegment& l, float padding) {
+    Point2f normal(l.GetFrom().y()-l.GetTo().y(), l.GetTo().x()-l.GetFrom().x());
+    normal.MakeUnitLength();
+    float width = kRobotRadius_mm + padding;
+
+    return FastPolygon({ l.GetFrom() + normal * width, 
+                         l.GetTo() + normal * width,
+                         l.GetTo() - normal * width,
+                         l.GetFrom() - normal * width });
+  }
+
+  // for simplicity, check if arcs are safe using multiple disk checks
+  inline std::vector<Ball2f> GetArcCollisionSet(const Arc& a, float padding) {
+    // convert to Ball2f to get center and radius
+    Ball2f b = ArcToBall(a);
+
+    // calculate start and sweep angles
+    Vec2f startVec   = a.start - b.GetCentroid();
+    Vec2f endVec     = a.end - b.GetCentroid();
+    Radians startAngle( std::atan2(startVec.y(), startVec.x()) );
+    Radians sweepAngle( std::atan2(endVec.y(), endVec.x()) - startAngle );
+
+    const int nChecks = std::ceil(ABS(sweepAngle.ToFloat() * b.GetRadius()) / kRobotRadius_mm);
+    const float checkLen = sweepAngle.ToFloat() / nChecks;
+
+    std::vector<Ball2f> retv;
+    for (int i = 0; i <= nChecks; ++i) {
+      f32 rad = startAngle.ToFloat() + i*checkLen;
+      retv.emplace_back(b.GetCentroid() + Point2f(std::cos(rad), std::sin(rad))*(kRobotRadius_mm + padding), kRobotRadius_mm + padding);
+    }
+
+    return retv;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline bool XYPlanner::IsArcSafe(const Arc& a, float padding) const
+inline float XYPlanner::GetArcPenalty(const Arc& arc, float padding) const
 {
-  const auto disks = GetArcCollisionSet(a, padding);
-  return std::none_of(disks.begin(), disks.end(), [this] (const auto& b) { return _map.CheckForCollisions(b); });
+  const auto disks = GetArcCollisionSet(arc, padding);
+  return std::accumulate(disks.begin(), disks.end(), 0.f, 
+    [this] (float cost, const auto& disk) { return cost + _map.GetCollisionArea(disk); }
+  );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline bool XYPlanner::IsLineSegmentSafe(const Planning::PathSegment& s) const
+inline bool XYPlanner::IsArcSafe(const Arc& arc, float padding) const
 {
-  return IsLineSafe( CreateLineSegment(s), 0.);
+  const auto disks = GetArcCollisionSet(arc, padding);
+  return std::none_of(disks.begin(), disks.end(), [this] (const auto& disk) { return _map.CheckForCollisions(disk); });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline bool XYPlanner::IsLineSafe(const LineSegment& l, float padding) const
+inline float XYPlanner::GetLinePenalty(const LineSegment& seg, float padding) const
 {
-  return !_map.CheckForCollisions( GetLineCollisionSet(l, padding) );
+  return _map.GetCollisionArea( GetLineCollisionSet(seg, padding) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline bool XYPlanner::IsPointSegmentSafe(const Planning::PathSegment& s) const
+inline bool XYPlanner::IsLineSafe(const LineSegment& seg, float padding) const
 {
-  return IsPointSafe( CreatePoint2f(s), 0. );
+  return !_map.CheckForCollisions( GetLineCollisionSet(seg, padding) );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+inline float XYPlanner::GetPointPenalty(const Point2f& p, float padding) const
+{
+  return _map.GetCollisionArea( GetPointCollisionSet(p, padding) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -318,32 +239,51 @@ bool XYPlanner::CheckIsPathSafe(const Planning::Path& path, float startAngle) co
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool XYPlanner::CheckIsPathSafe(const Planning::Path& path, float startAngle, Planning::Path& validPath) const 
 {
-  // for now, always return the empty path. If we reuse part of the existing path, it tends to create a lot
-  // of point turns for the first couple of segments
-  for (int i = 0; i < path.GetNumSegments(); ++i) {
-    const Planning::PathSegment& seg = path.GetSegmentConstRef(i);
+  const auto isSafe = [this] (const Planning::PathSegment& seg ) -> bool {
     switch (seg.GetType()) {
-      case Planning::PST_LINE:
-      {
-        if ( !IsLineSegmentSafe(seg) )  { return false; }
-        break;
-      }
-      case Planning::PST_ARC:
-      {
-        if ( !IsArcSegmentSafe(seg) )   { return false; }
-        break;
-      }
-      case Planning::PST_POINT_TURN:
-      {
-        if ( !IsPointSegmentSafe(seg) ) { return false; }
-        break;
-      }
-      default:
-        // error?
-        break;
+      case Planning::PST_POINT_TURN: { return IsPointSafe( CreatePoint2f(seg), 0. ); }
+      case Planning::PST_LINE:       { return IsLineSafe( CreateLineSegment(seg), 0.); }
+      case Planning::PST_ARC:        { return IsArcSafe( CreateArc(seg), 0.f ); }
+      default:                       { return true; }
     }
+  };
+
+  for (int i = 0; i < path.GetNumSegments(); ++i) { 
+    if ( !isSafe(path.GetSegmentConstRef(i)) ) { return false; }
   } 
   return true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float XYPlanner::GetPathCollisionPenalty(const Planning::Path& path) const 
+{
+  const auto getCost = [this] (const Planning::PathSegment& seg ) -> float {
+    switch (seg.GetType()) {
+      case Planning::PST_POINT_TURN: { return GetPointPenalty( CreatePoint2f(seg), 0. ); }
+      case Planning::PST_LINE:       { return GetLinePenalty( CreateLineSegment(seg), 0.); }
+      case Planning::PST_ARC:        { return GetArcPenalty( CreateArc(seg), 0.f ); }
+      default:                       { return 0.f; }
+    }
+  };
+
+  float retv = 0.f;
+  for (int i = 0; i < path.GetNumSegments(); ++i) { 
+    retv += getCost(path.GetSegmentConstRef(i)); 
+  } 
+  return retv;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Point2f XYPlanner::FindNearestSafePoint(const Point2f& p) const
+{
+  AStar<Point2f, EscapeObstaclePlanner> planner( (EscapeObstaclePlanner(_map)) );
+  std::vector<Point2f> plan = planner.Search({p});
+
+  if (plan.empty()) {
+    PRINT_NAMED_WARNING("XYPlanner.FindNearestSafePoint", "Could not find any collision free point near %s", p.ToString().c_str());
+  }
+
+  return plan.empty() ? p : plan.back();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -400,7 +340,7 @@ std::vector<Point2f> XYPlanner::GenerateWayPoints(const std::vector<Point2f>& pl
   const Point2f* iter2 = iter1;
 
   for (int i = 0; i < plan.size(); ++i) {
-    const FastPolygon p = GetLineCollisionSet({*iter1, plan[i]}, PLANNING_PADDING_MM);
+    const FastPolygon p = GetLineCollisionSet({*iter1, plan[i]}, kPlanningPadding_mm);
     const bool collision = _map.CheckForCollisions(p);
 
     if (collision) {
@@ -442,12 +382,12 @@ std::vector<Planning::PathSegment> XYPlanner::SmoothCorners(const std::vector<Po
     for (const float r : arcRadii) {
       // try inscribed arc first since it is faster, otherwise try circumscibed arc
       if ( GetInscribedArc(pts[i-1], pts[i], pts[i+1], r, corner) ) {
-        safeArc = IsArcSafe(corner, PLANNING_PADDING_MM);
+        safeArc = IsArcSafe(corner, kPlanningPadding_mm);
       } 
       if ( !safeArc && GetCircumscribedArc(pts[i-1], pts[i], pts[i+1], r, corner) ) {
-        safeArc = IsArcSafe(corner, PLANNING_PADDING_MM) &&
-                  IsLineSafe({Point2f(x_tail,y_tail), corner.start}, PLANNING_PADDING_MM) && 
-                  IsLineSafe({corner.end, pts[i+1]}, PLANNING_PADDING_MM);
+        safeArc = IsArcSafe(corner, kPlanningPadding_mm) &&
+                  IsLineSafe({Point2f(x_tail,y_tail), corner.start}, kPlanningPadding_mm) && 
+                  IsLineSafe({corner.end, pts[i+1]}, kPlanningPadding_mm);
       }
       if (safeArc) { break; }
     }

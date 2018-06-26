@@ -44,7 +44,7 @@ bool ConditionFaceKnown::AreConditionsMetInternal(BehaviorExternalInterface& beh
   if( _maxFaceAge_s >= 0 ) {
     TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     TimeStamp_t minAge = (currTime > 1000*_maxFaceAge_s) ? (currTime - 1000*_maxFaceAge_s) : 0;
-    faces = faceWorld.GetFaceIDsObservedSince( minAge );
+    faces = faceWorld.GetFaceIDs( minAge );
   } else {
     faces = faceWorld.GetFaceIDs();
   }

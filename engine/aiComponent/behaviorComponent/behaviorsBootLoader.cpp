@@ -167,6 +167,15 @@ void BehaviorsBootLoader::InitOnboarding()
   Json::Value onboardingStateJSON;
   
   _stage = OnboardingStages::NotStarted;
+# if defined(ANKI_PLATFORM_OSX) 
+  {
+    // always start in DevDoNothing stage on mac if no persistent file exists, so that webots work
+    // can continue with a simple console var DevDispatchAfterShake. We can't use Complete since
+    // that would interfere with webots tests
+    _stage = OnboardingStages::DevDoNothing;
+  }
+# endif
+  
   if( !fileContents.empty() && reader.parse( fileContents, onboardingStateJSON ) ) {
     if( ANKI_VERIFY( onboardingStateJSON[BehaviorOnboarding::kOnboardingStageKey].isString(), "BehaviorsBootLoader.InitOnboarding.InvalidKey", "" ) )
     {

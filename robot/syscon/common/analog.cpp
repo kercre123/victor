@@ -32,6 +32,7 @@ static const int32_t    TEMP_SCALE_ADJ  = (int32_t)(0x100000 * (1.000 / 5.336));
 
 static const int POWER_DOWN_TIME = 200 * 4.5;               // Shutdown
 static const int POWER_WIPE_TIME = 200 * 12;                // Enter recovery mode
+static const int MAX_CONTACT_TIME = 200 * 60 * 5;           // 5 minutes
 static const int MAX_CHARGE_TIME = 200 * 60 * 30;           // 30 minutes
 static const int MAX_CHARGE_TIME_WD = MAX_CHARGE_TIME + 5;  // 25ms past MAX_CHARGE_TIME
 
@@ -272,6 +273,7 @@ void Analog::tick(void) {
   static bool has_booted = false;
   
   if (!has_booted && (button_now || on_charger)) {
+    has_booted = true;
     Power::setMode(POWER_CALM);
   }
   #endif
@@ -366,6 +368,12 @@ void Analog::tick(void) {
    
     // Charge circuit disable
     #ifndef BOOTLOADER
+    // Prevent charge contacts from blocking charging entirely (you have 5 minutes, craig)
+    if (vext_debounce >= MAX_CONTACT_TIME && disable_charger) {
+      disable_charger = false;
+      vext_debounce = 0;
+    }
+
     if (disable_charger) {
       nCHG_PWR::set();
       is_charging = false;

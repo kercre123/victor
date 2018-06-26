@@ -2,6 +2,8 @@
   "behaviorClass": "AnimSequence",
   "behaviorID": "ReactToGoodBye",
 
+  "playOnChargerWithoutBody": true,
+
   "emotionEventOnActivated": "RespondToShortVoiceCommand",
 
   "animTriggers": ["ReactToGoodBye"],

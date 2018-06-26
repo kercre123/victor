@@ -64,6 +64,7 @@ bool BehaviorTakeAPhotoCoordinator::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTakeAPhotoCoordinator::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
+  modifiers.wantsToBeActivatedWhenOffTreads = true;
   modifiers.visionModesForActiveScope->insert({ VisionMode::SavingImages, EVisionUpdateFrequency::High });
 }
 

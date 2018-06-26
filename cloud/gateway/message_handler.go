@@ -540,6 +540,7 @@ func (m *rpcService) RequestEnrolledNames(ctx context.Context, in *extint.Reques
 			SecondsSinceFirstEnrolled: element.SecondsSinceFirstEnrolled,
 			SecondsSinceLastUpdated:   element.SecondsSinceLastUpdated,
 			SecondsSinceLastSeen:      element.SecondsSinceLastSeen,
+			LastSeenSecondsSinceEpoch: element.LastSeenSecondsSinceEpoch,
 			FaceId:                    element.FaceID,
 			Name:                      element.Name,
 		}
@@ -761,6 +762,28 @@ func (m *rpcService) SendOnboardingInput(ctx context.Context, in *extint.Onboard
 		return nil, status.Errorf(0, "OnboardingInputRequest.OneofMessageType has unexpected type %T", x)
 	}
 }
+
+func (m *rpcService) GetLatestAttentionTransfer(ctx context.Context, in *extint.LatestAttentionTransferRequest) (*extint.LatestAttentionTransferResponse, error) {
+	log.Println("Received rpc request GetLatestAttentionTransfer(", in, ")")
+	f, result := createChannel(&extint.GatewayWrapper_LatestAttentionTransfer{}, 1)
+	defer f()
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_LatestAttentionTransferRequest{
+			in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	attention_transfer := <-result
+	return &extint.LatestAttentionTransferResponse{
+		LatestAttentionTransfer: attention_transfer.GetLatestAttentionTransfer(),
+		Status: &extint.ResultStatus{
+			Description: "Response from engine",
+		},
+	}, nil
+}
+
 
 func newServer() *rpcService {
 	return new(rpcService)

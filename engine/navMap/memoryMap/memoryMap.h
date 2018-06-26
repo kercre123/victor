@@ -91,9 +91,12 @@ public:
   virtual bool HasCollisionWithTypes(const FastPolygon& poly, const FullContentArray& types) const override;
   
   // evaluates f along any node that the region collides with. returns true if any call to NodePredicate returns true
-  bool AnyOf(const Poly2f& p, NodePredicate f)             const override;
-  bool AnyOf(const BoundedConvexSet2f& p, NodePredicate f) const override;
-  
+  virtual bool AnyOf(const Poly2f& p, NodePredicate f)             const override;
+  virtual bool AnyOf(const BoundedConvexSet2f& p, NodePredicate f) const override;
+
+  // returns the accumulated area of cells that satisfy the predicate
+  virtual float GetCollisionArea(const BoundedConvexSet2f& p, NodePredicate f) const override;
+
   // returns true if there are any nodes of the given type, false otherwise
   virtual bool HasContentType(EContentType type) const override;
   
@@ -113,7 +116,6 @@ private:
   QuadTree _quadTree;
   
 }; // class
-  
   
 } // namespace
 } // namespace

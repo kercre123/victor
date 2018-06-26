@@ -9,7 +9,7 @@
     "LowBatteryFindAndGoToHome",
     "SDK0",
     "TriggerWordDetected",
-    "ShowWallTime",
+    "SingletonWallTimeCoordinator",
     "TimerUtilityCoordinator",
     "WeatherResponses",
     "TakeAPhotoCoordinator",
@@ -17,13 +17,12 @@
     "InterruptingVoiceReactions",
     "ReactToCubeTap",
     "ReactToSoundAwake",
-    "ReactToObstacle",
     "ReactToUnclaimedIntent",
+    "WhileInAirDispatcher",
+    "ReactToObstacle",
     "ReactToPutDown",
     "ReactToDarkness",
     "DanceToTheBeat",
-    "WhileInAir",
-    "WhileHeld",
     "HighLevelAI"
   ]
 }

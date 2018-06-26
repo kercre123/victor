@@ -11,23 +11,27 @@
  *
  **/
 
+#include "engine/faceWorld.h"
+
+
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/enrolledFaceStorage.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/poseOriginList.h"
+#include "coretech/common/shared/radians.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/faceWorld.h"
 #include "engine/robot.h"
+#include "engine/smartFaceId.h"
+
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "webServerProcess/src/webService.h"
 
-#include "anki/cozmo/shared/cozmoConfig.h"
-#include "engine/smartFaceId.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -655,17 +659,23 @@ namespace Cozmo {
   } // Update()
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool FaceWorld::ShouldReturnFace(const FaceEntry& faceEntry, TimeStamp_t seenSinceTime_ms, bool includeRecognizableOnly) const
+  bool FaceWorld::ShouldReturnFace(const FaceEntry& faceEntry, TimeStamp_t seenSinceTime_ms, bool includeRecognizableOnly, 
+                                   float relativeRobotAngleTolerence_rad, const Radians& angleRelativeRobot_rad) const
   {
     if (faceEntry.face.GetTimeStamp() >= seenSinceTime_ms)
     {
       if( !includeRecognizableOnly || faceEntry.face.GetID() > 0 )
       {
-        const bool isWrtRobotOrigin = _robot->IsPoseInWorldOrigin(faceEntry.face.GetHeadPose());
-        if(isWrtRobotOrigin)
-        {
-          return true;
+        bool isFaceValid = _robot->IsPoseInWorldOrigin(faceEntry.face.GetHeadPose());
+        if(isFaceValid &&
+           (relativeRobotAngleTolerence_rad != kDontCheckRelativeAngle)){
+          const Pose3d& robotPose = _robot->GetPose();
+          auto poseDiff = robotPose.GetRotationAngle() - faceEntry.face.GetHeadPose().GetRotationAngle();
+          if(!poseDiff.IsNear(angleRelativeRobot_rad, relativeRobotAngleTolerence_rad)){
+            isFaceValid = false;
+          }
         }
+        return isFaceValid;
       }
     }
 
@@ -783,21 +793,17 @@ namespace Cozmo {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  std::set<Vision::FaceID_t> FaceWorld::GetFaceIDs(bool includeRecognizableOnly) const
-  {
-    return GetFaceIDsObservedSince(0, includeRecognizableOnly);
-  }
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  std::set<Vision::FaceID_t> FaceWorld::GetFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms,
-                                                                bool includeRecognizableOnly) const
+  std::set<Vision::FaceID_t> FaceWorld::GetFaceIDs(TimeStamp_t seenSinceTime_ms,
+                                                   bool includeRecognizableOnly,
+                                                   float relativeRobotAngleTolerence_rad,
+                                                   const Radians& angleRelativeRobot_rad) const
   {
     std::set<Vision::FaceID_t> faceIDs;
     auto faceEntryIter = _faceEntries.begin();
     while(faceEntryIter != _faceEntries.end())
     {
       DEV_ASSERT_MSG(faceEntryIter->first == faceEntryIter->second.face.GetID(),
-                     "FaceWorld.GetFaceIDsObservedSince.MismatchedIDs",
+                     "FaceWorld.GetFaceIDs.MismatchedIDs",
                      "Entry keyed with ID:%d but face has ID:%d",
                      faceEntryIter->first, faceEntryIter->second.face.GetID());
 
@@ -813,11 +819,15 @@ namespace Cozmo {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  std::vector<SmartFaceID> FaceWorld::GetSmartFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms,
-                                                                   bool includeRecognizableOnly) const
+  std::vector<SmartFaceID> FaceWorld::GetSmartFaceIDs(TimeStamp_t seenSinceTime_ms,
+                                                      bool includeRecognizableOnly,
+                                                      float relativeRobotAngleTolerence_rad,
+                                                      const Radians& angleRelativeRobot_rad) const
   {
-    std::set< Vision::FaceID_t > faces = GetFaceIDsObservedSince(seenSinceTime_ms,
-                                                                 includeRecognizableOnly);
+    std::set< Vision::FaceID_t > faces = GetFaceIDs(seenSinceTime_ms,
+                                                    includeRecognizableOnly, 
+                                                    relativeRobotAngleTolerence_rad,
+                                                    angleRelativeRobot_rad);
     
     std::vector<SmartFaceID> smartFaces;
     for(auto& entry : faces){

@@ -1,27 +1,13 @@
 {
   "behaviorID": "OnboardingSluggishDriveOffCharger",
-  "behaviorClass": "DispatcherQueue",
+  "behaviorClass": "AnimSequence",
 
   "associatedActiveFeature": "NoFeature",
 
+  "animTriggers": ["OnboardingDriveOffCharger"],
+  "playOnChargerWithBody": true,
+
   "wantsToBeActivatedCondition": {
     "conditionType": "OnChargerPlatform"
-    // TODO:(bn) also handle off-treads + charger (i.e. carrying the charger)
-  },
-
-  "behaviors" : [
-    // first try the animation
-    "DriveOffChargerAnim",
-
-    // then fall back to a procedural drive if we still aren't off the charger
-    "ProceduralDriveOffCharger"
-  ],
-
-  "anonymousBehaviors": [
-    {
-      "behaviorName": "ProceduralDriveOffCharger",
-      "behaviorClass": "DriveOffCharger",
-      "extraDistanceToDrive_mm": 60.0
-    }
-  ]
+  }
 }

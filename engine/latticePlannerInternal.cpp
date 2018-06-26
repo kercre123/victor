@@ -458,8 +458,15 @@ void LatticePlannerInternal::ImportBlockworldObstaclesIfNeeded(const bool isRepl
 
     GetConvexHullsByType(memoryMap, typesToCalculateBordersWithInterestingEdges, MemoryMapTypes::EContentType::InterestingEdge, convexHulls);
     GetConvexHullsByType(memoryMap, typesToCalculateBordersWithNotInterestingEdges, MemoryMapTypes::EContentType::NotInterestingEdge, convexHulls);
-    GetConvexHullsByType(memoryMap, typesToCalculateBordersWithProx, MemoryMapTypes::EContentType::ObstacleProx, convexHulls);
     GetConvexHullsByType(memoryMap, typesToCalculateBordersWithCliff, MemoryMapTypes::EContentType::Cliff, convexHulls);
+    
+    // VIC-3804 In order to use DriveToPose actions inside the habitat, we need to turn off
+    //          prox obstacles so that we may reach positions where the robot can see the
+    //          white line inside the habitat. Planning gets stalled when the robot observes
+    //          the habitat wall, and often times out otherwise.
+    if(_robot->GetMapComponent().GetUseProxObstaclesInPlanning()) {
+      GetConvexHullsByType(memoryMap, typesToCalculateBordersWithProx, MemoryMapTypes::EContentType::ObstacleProx, convexHulls);
+    }
     
     // todo (VIC-2323): make the charger a ObservableObject and use its boundingPoly as done below
     GetConvexHullsByType(memoryMap, typesToCalculateBordersWithCharger, MemoryMapTypes::EContentType::ObstacleCharger, convexHulls);

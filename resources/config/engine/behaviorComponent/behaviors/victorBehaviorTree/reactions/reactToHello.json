@@ -2,6 +2,8 @@
   "behaviorClass": "AnimSequence",
   "behaviorID": "ReactToHello",
 
+  "playOnChargerWithoutBody": true,
+
   "emotionEventOnActivated": "RespondToShortVoiceCommand",
 
   "animTriggers": ["ReactToGreeting"],

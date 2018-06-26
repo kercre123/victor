@@ -1,0 +1,6 @@
+{
+  "behaviorID": "DriveOffChargerStraight",
+  "behaviorClass": "AnimSequence",
+  "animTriggers": ["DriveOffChargerStraight"],
+  "playOnChargerWithBody": true
+}

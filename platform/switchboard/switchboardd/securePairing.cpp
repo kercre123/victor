@@ -511,7 +511,7 @@ void SecurePairing::HandleRtsWifiConnectRequest(const Cozmo::ExternalComms::RtsC
 
     UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SETTING_WIFI);
 
-    bool connected = Anki::ConnectWiFiBySsid(wifiConnectMessage.wifiSsidHex,
+    ConnectWifiResult connected = Anki::ConnectWiFiBySsid(wifiConnectMessage.wifiSsidHex,
       wifiConnectMessage.password,
       wifiConnectMessage.authType,
       (bool)wifiConnectMessage.hidden,
@@ -521,7 +521,7 @@ void SecurePairing::HandleRtsWifiConnectRequest(const Cozmo::ExternalComms::RtsC
     WiFiState state = Anki::GetWiFiState();
     bool online = state.connState == WiFiConnState::ONLINE;
 
-    if(online) {
+    if(online || (connected == ConnectWifiResult::CONNECT_INVALIDKEY)) {
       ev_timer_stop(_loop, &_handleInternet.timer);
       _inetTimerCount = 0;
       SendWifiConnectResult();
@@ -529,10 +529,12 @@ void SecurePairing::HandleRtsWifiConnectRequest(const Cozmo::ExternalComms::RtsC
       ev_timer_again(_loop, &_handleInternet.timer);
     }
 
-    if(connected) {
+    if(connected == ConnectWifiResult::CONNECT_SUCCESS) {
       Log::Write("Connected to wifi.");
+    } else if(connected == ConnectWifiResult::CONNECT_INVALIDKEY) {
+      Log::Write("Failure to connect: invalid wifi password.");
     } else {
-      Log::Write("Could not connect to wifi.");
+      Log::Write("Failure to connect.");
     }
   } else {
     Log::Write("Received wifi credentials in wrong state.");
@@ -652,8 +654,7 @@ void SecurePairing::HandleRtsLogRequest(const Cozmo::ExternalComms::RtsConnectio
     return;
   }
 
-  std::string output;
-  int exitCode = ExecCommand({"python", "/anki/bin/diagnostics-logger"}, output);
+  int exitCode = ExecCommand({"python", "/anki/bin/diagnostics-logger"});
 
   std::vector<uint8_t> logBytes;
 

@@ -1,30 +1,28 @@
 /**
-* File: behaviorDriveToFace.cpp
-*
-* Author: Kevin M. Karol
-* Created: 2017-06-05
-*
-* Description: Behavior that turns towards and then drives to a face. If no face is known or found, it optionally tries to find it
-*
-* Copyright: Anki, Inc. 2017
-*
-**/
+ * File: behaviorFindFaceAndThen.h
+ *
+ * Author: ross
+ * Created: 2018-06-22
+ *
+ * Description: Finds a face either in the activation direction, or wherever one was last seen,
+ *              and if it finds one, delegates to a followup behavior
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
 
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/behaviorDriveToFace.h"
 
-#include "engine/actions/animActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/behaviorFindFaceAndThen.h"
+
 #include "engine/actions/basicActions.h"
-#include "engine/actions/driveToActions.h"
-#include "engine/actions/trackFaceAction.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/iSimpleFaceBehavior.h"
 #include "engine/faceWorld.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
-#include "util/cladHelpers/cladFromJSONHelpers.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
@@ -32,34 +30,30 @@ namespace Anki {
 namespace Cozmo {
   
 namespace{
-// We want cozmo to slow down as he approaches the face since there's probably
-// an edge.  The decel factor relative to the default profile is arbitrary but
-// tuned based off some testing to attempt the right feeling of "approaching" the face
-const float kArbitraryDecelFactor = 3.0f;
   
 const char* const kTimeUntilCancelFaceLookingKey = "timeUntilCancelFaceLooking_s";
 const char* const kTimeUntilCancelFaceSearchKey  = "timeUntilCancelFaceSearch_s";
-const char* const kTimeUntilCancelFaceTrackKey   = "timeUntilCancelFaceTrack_s";
-const char* const kMinDriveToFaceDistanceKey     = "minDriveToFaceDistanceKey_mm";
+const char* const kTimeUntilCancelFollowupKey    = "timeUntilCancelFollowup_s";
 const char* const kStartsWithMicDirectionKey     = "startsWithMicDirection";
+const char* const kShouldLeaveChargerFirstKey    = "shouldLeaveChargerFirst";
+const char* const kDriveOffChargerBehaviorKey    = "driveOffChargerBehavior";
 const char* const kSearchForFaceBehaviorKey      = "searchForFaceBehavior";
-const char* const kTrackFaceOnceKnownKey         = "trackFaceOnceKnown";
 const char* const kAlwaysDetectFacesKey          = "alwaysDetectFaces";
-const char* const kAnimTooCloseKey               = "animTooClose";
-const char* const kAnimDriveOverrideKey          = "animDriveOverride";
-const char* const kDebugName = "BehaviorDriveToFace";
+const char* const kBehaviorOnceFoundKey          = "behavior";
+  
+const char* const kDebugName = "BehaviorFindFaceAndThen";
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorDriveToFace::InstanceConfig::InstanceConfig()
+BehaviorFindFaceAndThen::InstanceConfig::InstanceConfig()
 {
 
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorDriveToFace::DynamicVariables::DynamicVariables()
+BehaviorFindFaceAndThen::DynamicVariables::DynamicVariables()
 {
   stateEndTime_s         = 0;
   currentState           = State::Invalid;
@@ -70,20 +64,18 @@ BehaviorDriveToFace::DynamicVariables::DynamicVariables()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorDriveToFace::BehaviorDriveToFace(const Json::Value& config)
+BehaviorFindFaceAndThen::BehaviorFindFaceAndThen(const Json::Value& config)
 : ICozmoBehavior(config)
 {
   _iConfig.timeUntilCancelFaceLooking_s = JsonTools::ParseFloat( config, kTimeUntilCancelFaceLookingKey, kDebugName );
+  _iConfig.timeUntilCancelFollowup_s = config.get( kTimeUntilCancelFollowupKey, -1.0f ).asFloat();
   
-  _iConfig.minDriveToFaceDistance_mm = JsonTools::ParseFloat( config, kMinDriveToFaceDistanceKey, kDebugName );
-  
-  _iConfig.startedWithMicDirection = config.get( kStartsWithMicDirectionKey, false ).asBool();
-  
-  _iConfig.trackFaceOnceKnown = config.get( kTrackFaceOnceKnownKey, true ).asBool();
-  if( _iConfig.trackFaceOnceKnown ) {
-    _iConfig.timeUntilCancelTracking_s = JsonTools::ParseFloat( config, kTimeUntilCancelFaceTrackKey, kDebugName );
+  _iConfig.shouldLeaveChargerFirst = JsonTools::ParseBool( config, kShouldLeaveChargerFirstKey, kDebugName );
+  if( _iConfig.shouldLeaveChargerFirst ) {
+    _iConfig.driveOffChargerBehaviorID = JsonTools::ParseString( config, kDriveOffChargerBehaviorKey, kDebugName );
   }
   
+  _iConfig.startedWithMicDirection = config.get( kStartsWithMicDirectionKey, true ).asBool();
   
   _iConfig.alwaysDetectFaces = config.get( kAlwaysDetectFacesKey, false ).asBool();
   
@@ -92,17 +84,11 @@ BehaviorDriveToFace::BehaviorDriveToFace(const Json::Value& config)
     _iConfig.timeUntilCancelSearching_s = JsonTools::ParseFloat( config, kTimeUntilCancelFaceSearchKey, kDebugName );
   }
   
-  
-  JsonTools::GetCladEnumFromJSON(config, kAnimTooCloseKey, _iConfig.animTooClose, kDebugName);
-  _iConfig.animDriveOverride = AnimationTrigger::Count;
-  JsonTools::GetCladEnumFromJSON(config, kAnimDriveOverrideKey, _iConfig.animDriveOverride, kDebugName, false);
-  
-  MakeMemberTunable( _iConfig.timeUntilCancelTracking_s, kTimeUntilCancelFaceTrackKey, kDebugName );
-  MakeMemberTunable( _iConfig.minDriveToFaceDistance_mm, kMinDriveToFaceDistanceKey, kDebugName );
+  _iConfig.behaviorOnceFoundID = JsonTools::ParseString( config, kBehaviorOnceFoundKey, kDebugName );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveToFace::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
+void BehaviorFindFaceAndThen::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
   modifiers.visionModesForActiveScope->insert( {VisionMode::DetectingFaces, EVisionUpdateFrequency::High} );
   if( _iConfig.alwaysDetectFaces ) {
@@ -115,49 +101,62 @@ void BehaviorDriveToFace::GetBehaviorOperationModifiers(BehaviorOperationModifie
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveToFace::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+void BehaviorFindFaceAndThen::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   const char* list[] = {
-    kMinDriveToFaceDistanceKey,
     kStartsWithMicDirectionKey,
-    kTrackFaceOnceKnownKey,
+    kShouldLeaveChargerFirstKey,
+    kDriveOffChargerBehaviorKey,
     kTimeUntilCancelFaceLookingKey,
     kTimeUntilCancelFaceSearchKey,
-    kTimeUntilCancelFaceTrackKey,
+    kTimeUntilCancelFollowupKey,
     kSearchForFaceBehaviorKey,
     kAlwaysDetectFacesKey,
-    kAnimTooCloseKey,
-    kAnimDriveOverrideKey,
+    kBehaviorOnceFoundKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveToFace::GetAllDelegates(std::set<IBehavior*>& delegates) const
+void BehaviorFindFaceAndThen::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
   if( _iConfig.searchFaceBehavior != nullptr ) {
     delegates.insert( _iConfig.searchFaceBehavior.get() );
   }
+  if( _iConfig.driveOffChargerBehavior != nullptr ) {
+    delegates.insert( _iConfig.driveOffChargerBehavior.get() );
+  }
+  if( _iConfig.behaviorOnceFound != nullptr ) {
+    delegates.insert( _iConfig.behaviorOnceFound.get() );
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDriveToFace::WantsToBeActivatedBehavior() const
+bool BehaviorFindFaceAndThen::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveToFace::InitBehavior()
+void BehaviorFindFaceAndThen::InitBehavior()
 {
-  ICozmoBehaviorPtr behavior = nullptr;
   if( !_iConfig.searchBehaviorID.empty() ) {
-    behavior = FindBehavior( _iConfig.searchBehaviorID );
+    _iConfig.searchFaceBehavior = FindBehavior( _iConfig.searchBehaviorID );
   }
-  _iConfig.searchFaceBehavior = behavior;
+  if( !_iConfig.driveOffChargerBehaviorID.empty() ) {
+    _iConfig.driveOffChargerBehavior = FindBehavior( _iConfig.driveOffChargerBehaviorID );
+  }
+  
+  ICozmoBehaviorPtr followupBeh = FindBehavior( _iConfig.behaviorOnceFoundID );
+  _iConfig.behaviorOnceFound = std::dynamic_pointer_cast<ISimpleFaceBehavior>(followupBeh);
+  ANKI_VERIFY( _iConfig.behaviorOnceFound != nullptr,
+               "BehaviorFindFaceAndThen.InitBehavior.InvalidCast",
+               "Behavior '%s' not an ISimpleFaceBehavior",
+               _iConfig.behaviorOnceFoundID.c_str() );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveToFace::OnBehaviorActivated()
+void BehaviorFindFaceAndThen::OnBehaviorActivated()
 {
   _dVars = DynamicVariables();
   
@@ -165,19 +164,23 @@ void BehaviorDriveToFace::OnBehaviorActivated()
   _dVars.lastFaceTimeStamp_ms = _dVars.activationTimeStamp_ms;
   
   const bool hasRecentFace = GetRecentFace( _dVars.targetFace, _dVars.lastFaceTimeStamp_ms );
-  if( _iConfig.startedWithMicDirection ) {
+  const bool onCharger = GetBEI().GetRobotInfo().IsOnChargerPlatform();
+  if( onCharger && _iConfig.shouldLeaveChargerFirst ) {
+    TransitionToDrivingOffCharger();
+  } else if( onCharger ) {
+    TransitionToFindingFaceInCurrentDirection();
+  } else if( _iConfig.startedWithMicDirection ) {
     TransitionToLookingInMicDirection();
   } else if( hasRecentFace ) {
     TransitionToTurningTowardsFace();
   } else {
-    // start looking in the current direction
     TransitionToFindingFaceInCurrentDirection();
   }
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveToFace::BehaviorUpdate()
+void BehaviorFindFaceAndThen::BehaviorUpdate()
 {
   if( !IsActivated() ) {
     return;
@@ -236,18 +239,17 @@ void BehaviorDriveToFace::BehaviorUpdate()
       }
     }
       break;
-    case State::TrackFace:
+    case State::FollowupBehavior:
     {
-      if( _dVars.stateEndTime_s < currentTime_s ) {
-        // done tracking face
+      if( (_dVars.stateEndTime_s >= 0.0f) && (_dVars.stateEndTime_s < currentTime_s) ) {
+        // timeout
         CancelSelf();
       }
     }
       break;
     case State::Invalid:
+    case State::DriveOffCharger:
     case State::TurnTowardsPreviousFace:
-    case State::DriveToFace:
-    case State::AlreadyCloseEnough:
       // nothing to do, or waiting for action/behavior callback
       break;
   }
@@ -255,13 +257,32 @@ void BehaviorDriveToFace::BehaviorUpdate()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveToFace::OnBehaviorDeactivated()
+void BehaviorFindFaceAndThen::OnBehaviorDeactivated()
 {
   _dVars.targetFace.Reset();
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFindFaceAndThen::TransitionToDrivingOffCharger()
+{
+  SET_STATE(DriveOffCharger);
+  auto callback = [this]() {
+    const bool hasRecentFace = GetRecentFace( _dVars.targetFace, _dVars.lastFaceTimeStamp_ms );
+    if( hasRecentFace ) {
+      TransitionToTurningTowardsFace();
+    } else {
+      TransitionToFindingFaceInCurrentDirection();
+    }
+  };
+  if( _iConfig.driveOffChargerBehavior->WantsToBeActivated() ) {
+    DelegateIfInControl( _iConfig.driveOffChargerBehavior.get(), callback );
+  } else {
+    callback();
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveToFace::TransitionToLookingInMicDirection()
+void BehaviorFindFaceAndThen::TransitionToLookingInMicDirection()
 {
   // not doing anything here, just waiting for a face or timeout
   SET_STATE(LookForFaceInMicDirection);
@@ -269,22 +290,17 @@ void BehaviorDriveToFace::TransitionToLookingInMicDirection()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveToFace::TransitionToTurningTowardsFace()
+void BehaviorFindFaceAndThen::TransitionToTurningTowardsFace()
 {
   SET_STATE(TurnTowardsPreviousFace);
-  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace(_dVars.targetFace);
-  if(facePtr != nullptr){
-    Vision::FaceID_t faceID = facePtr->GetID();
+  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace( _dVars.targetFace );
+  if( facePtr != nullptr ) {
     auto* action = new TurnTowardsFaceAction( _dVars.targetFace );
     action->SetLockOnClosestFaceAfterTurn( true ); // accept any face once turning in the direction of targetFace
     action->SetRequireFaceConfirmation( true );
-    auto callback = [this, faceID]( ActionResult result ){
+    auto callback = [this]( ActionResult result ){
       if( result == ActionResult::SUCCESS ) {
-        if( IsRobotAlreadyCloseEnoughToFace( faceID ) ) {
-          TransitionToAlreadyCloseEnough();
-        } else {
-          TransitionToDrivingToFace();
-        }
+        TransitionToFollowupBehavior();
       } else {
         TransitionToFindingFaceInCurrentDirection();
       }
@@ -295,7 +311,7 @@ void BehaviorDriveToFace::TransitionToTurningTowardsFace()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveToFace::TransitionToFindingFaceInCurrentDirection()
+void BehaviorFindFaceAndThen::TransitionToFindingFaceInCurrentDirection()
 {
   // not doing anything here, just waiting for a face or timeout
   SET_STATE( FindFaceInCurrentDirection );
@@ -303,7 +319,7 @@ void BehaviorDriveToFace::TransitionToFindingFaceInCurrentDirection()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveToFace::TransitionToSearchingForFace()
+void BehaviorFindFaceAndThen::TransitionToSearchingForFace()
 {
   SET_STATE( SearchForFace );
   _dVars.stateEndTime_s = 0;
@@ -314,92 +330,40 @@ void BehaviorDriveToFace::TransitionToSearchingForFace()
     if( _iConfig.searchFaceBehavior->WantsToBeActivated() ) {
       DelegateIfInControl( _iConfig.searchFaceBehavior.get() );
     } else {
-      PRINT_NAMED_WARNING("BehaviorDriveToFace.TransitionToSearchingForFace.SearchDoesntWantToActivate",
+      PRINT_NAMED_WARNING("BehaviorFindFaceAndThen.TransitionToSearchingForFace.SearchDoesntWantToActivate",
                           "Search behavior %s doesn't want to activate", _iConfig.searchBehaviorID.c_str() );
     }
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveToFace::TransitionToDrivingToFace()
+void BehaviorFindFaceAndThen::TransitionToFollowupBehavior()
 {
-  SET_STATE(DriveToFace);
-  float distToHead;
-  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace(_dVars.targetFace);
-  if(facePtr != nullptr &&
-     CalculateDistanceToFace(facePtr->GetID(), distToHead) &&
-     _iConfig.animDriveOverride == AnimationTrigger::Count )
-  {
-    DriveStraightAction* driveAction = new DriveStraightAction(distToHead - _iConfig.minDriveToFaceDistance_mm,
-                                                               0.5*MAX_SAFE_WHEEL_SPEED_MMPS);
-    driveAction->SetDecel(DEFAULT_PATH_MOTION_PROFILE.decel_mmps2/kArbitraryDecelFactor);
-    CancelDelegates(false);
-    DelegateIfInControl(driveAction, [this]() {
-      if( _iConfig.trackFaceOnceKnown ) {
-        TransitionToTrackingFace();
-      } else {
-        // done
-        CancelSelf();
-      }
-    });
-  } else if( _iConfig.animDriveOverride != AnimationTrigger::Count ) {
-    auto* action = new TriggerAnimationAction( _iConfig.animDriveOverride );
-    CancelDelegates(false);
-    DelegateIfInControl(action, [this]() {
-      if( _iConfig.trackFaceOnceKnown ) {
-        TransitionToTrackingFace();
-      } else {
-        // done
-        CancelSelf();
-      }
+  SET_STATE(FollowupBehavior);
+  if( _iConfig.timeUntilCancelFollowup_s >= 0.0f ) {
+    _dVars.stateEndTime_s = _iConfig.timeUntilCancelFollowup_s + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  } else {
+    _dVars.stateEndTime_s = -1.0f;
+  }
+  _iConfig.behaviorOnceFound->SetTargetFace( _dVars.targetFace );
+  if( _iConfig.behaviorOnceFound->WantsToBeActivated() ) {
+    DelegateIfInControl( _iConfig.behaviorOnceFound.get(), [this]() {
+      CancelSelf();
     });
   } else {
-    TransitionToAlreadyCloseEnough();
+    CancelSelf();
   }
-}
-
-
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveToFace::TransitionToAlreadyCloseEnough()
-{
-  SET_STATE(AlreadyCloseEnough);
-  auto* action = new TriggerAnimationAction( _iConfig.animTooClose );
-  CancelDelegates(false);
-  DelegateIfInControl(action, [this]() {
-    if( _iConfig.trackFaceOnceKnown ) {
-      TransitionToTrackingFace();
-    } else {
-      // done
-      CancelSelf();
-    }
-  });
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveToFace::TransitionToTrackingFace()
-{
-  SET_STATE(TrackFace);
-  _dVars.stateEndTime_s = 0;
-  // Runs forever - the behavior will be stopped in the Update loop when the
-  // timeout for face tracking is hit
-  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace(_dVars.targetFace);
-  if(facePtr != nullptr){
-    _dVars.stateEndTime_s = _iConfig.timeUntilCancelTracking_s + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    const Vision::FaceID_t faceID = facePtr->GetID();
-    CancelDelegates(false);
-    DelegateIfInControl(new TrackFaceAction(faceID));
-  }
+  
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDriveToFace::GetRecentFace( SmartFaceID& faceID, TimeStamp_t& timeStamp_ms )
+bool BehaviorFindFaceAndThen::GetRecentFace( SmartFaceID& faceID, TimeStamp_t& timeStamp_ms )
 {
   return GetRecentFaceSince( 0, faceID, timeStamp_ms );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDriveToFace::GetRecentFaceSince( TimeStamp_t sinceTime_ms, SmartFaceID& faceID, TimeStamp_t& timeStamp_ms )
+bool BehaviorFindFaceAndThen::GetRecentFaceSince( TimeStamp_t sinceTime_ms, SmartFaceID& faceID, TimeStamp_t& timeStamp_ms )
 {
   SmartFaceID retFace;
   retFace.Reset();
@@ -411,7 +375,7 @@ bool BehaviorDriveToFace::GetRecentFaceSince( TimeStamp_t sinceTime_ms, SmartFac
   const bool lastFaceInCurrentOrigin = robotInfo.IsPoseInWorldOrigin(facePose);
   if( lastFaceInCurrentOrigin ) {
     timeLastFaceObserved = Anki::Util::Max( sinceTime_ms, timeLastFaceObserved );
-    const auto facesObserved = GetBEI().GetFaceWorld().GetFaceIDsObservedSince(timeLastFaceObserved);
+    const auto facesObserved = GetBEI().GetFaceWorld().GetFaceIDs(timeLastFaceObserved);
     if( facesObserved.size() > 0 ) {
       retFace = GetBEI().GetFaceWorld().GetSmartFaceID( *facesObserved.begin() );
     }
@@ -429,44 +393,11 @@ bool BehaviorDriveToFace::GetRecentFaceSince( TimeStamp_t sinceTime_ms, SmartFac
   
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveToFace::SetState_internal(State state, const std::string& stateName)
+void BehaviorFindFaceAndThen::SetState_internal(State state, const std::string& stateName)
 {
   _dVars.currentState = state;
   SetDebugStateName(stateName);
 }
-
-
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDriveToFace::IsRobotAlreadyCloseEnoughToFace(Vision::FaceID_t faceID)
-{
-  float distToHead;
-  if(CalculateDistanceToFace(faceID, distToHead)){
-    return distToHead <= _iConfig.minDriveToFaceDistance_mm;
-  }
-  
-  return false;
-}
-
-
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDriveToFace::CalculateDistanceToFace(Vision::FaceID_t faceID, float& distance)
-{
-  // Get the distance between the robot and the head's pose on the X/Y plane
-  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace(_dVars.targetFace);
-  if(facePtr != nullptr){
-    const auto& robotInfo = GetBEI().GetRobotInfo();
-
-    
-    Pose3d headPoseModified = facePtr->GetHeadPose();
-    headPoseModified.SetTranslation({headPoseModified.GetTranslation().x(),
-      headPoseModified.GetTranslation().y(),
-      robotInfo.GetPose().GetTranslation().z()});
-    return ComputeDistanceBetween(headPoseModified, robotInfo.GetPose(), distance);
-  }
-  
-  return false;
-}
-
   
 
   

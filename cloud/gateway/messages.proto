@@ -181,6 +181,7 @@ message Event {
     Status                           status                              = 1;
     Onboarding                       onboarding                          = 2;
     WakeWord                         wake_word                           = 3;
+    AttentionTransfer                attention_transfer                  = 4;
   }
 }
 
@@ -255,8 +256,9 @@ message LoadedKnownFace {
     int64   seconds_since_first_enrolled = 1;
     int64   seconds_since_last_updated = 2;
     int64   seconds_since_last_seen = 3;
-    int32   face_id = 4;
-    string  name = 5;
+    int64   last_seen_seconds_since_epoch = 4;
+    int32   face_id = 5;
+    string  name = 6;
 }
 
 message RobotRenamedEnrolledFace {
@@ -418,6 +420,35 @@ message WakeWordEnd {
   string intent_json = 2; // todo: we send json as a string for now since the engine handling of intents is tightly coupled with clad
 }
 
+// NOTE: must match attentionTransferTypes.clad
+enum AttentionTransferReason {
+  Invalid = 0;
+
+  NoCloudConnection = 1;
+  PhotoStorageFull = 2;
+  CantFindCharger = 3;
+  UnmatchedIntent = 4;
+}
+
+message AttentionTransfer {
+  AttentionTransferReason reason = 1;
+  float seconds_ago = 2;
+}
+
+message LatestAttentionTransferRequest {
+}
+
+message LatestAttentionTransfer {
+  oneof oneof_message_type {
+    AttentionTransfer attention_transfer = 1;
+  }
+}
+
+message LatestAttentionTransferResponse {
+  ResultStatus status = 1;
+  LatestAttentionTransfer latest_attention_transfer = 2;
+}
+
 message GatewayWrapper {
   oneof oneof_message_type {
     // ------------ messages sent from robot to app ----------------------
@@ -429,9 +460,13 @@ message GatewayWrapper {
     OnboardingContinueResponse    onboarding_continue_response = 5;
     OnboardingSkip                onboarding_skip = 6;
     // ------------ test response/response pairs -------------------------
+    // TODO: remove these once we have more examples
     Ping ping = 7;
     Pong pong = 8;
     Bing bing = 9;
     Bong bong = 10;
+    // ------------ Attention transfer --------------------
+    LatestAttentionTransferRequest latest_attention_transfer_request = 11;
+    LatestAttentionTransfer        latest_attention_transfer = 12;
   }
 }

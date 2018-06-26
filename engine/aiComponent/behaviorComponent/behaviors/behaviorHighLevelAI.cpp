@@ -162,7 +162,7 @@ CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
           }
           
           auto& faceWorld = bei.GetFaceWorld();
-          const auto& faces = faceWorld.GetFaceIDs(true);
+          const auto& faces = faceWorld.GetFaceIDs(0, true);
           for( const auto& faceID : faces ) {
             const auto* face = faceWorld.GetFace(faceID);
             if( face != nullptr ) {
