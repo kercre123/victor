@@ -13,6 +13,8 @@ from pathlib import Path
 import sys
 import time
 
+from google.protobuf.json_format import MessageToJson
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 import vector
 
@@ -39,7 +41,7 @@ messages_to_test = [
 
     # DriveArc message
     ( client.ExternalInterfaceServicer.DriveArc,
-        protocol.DriveArcRequest(speed=0.0, accel=0.0, curvatureRadius_mm=0),
+        protocol.DriveArcRequest(speed=0.0, accel=0.0, curvature_radius_mm=0),
         protocol.DriveArcResult(status=protocol.ResultStatus(description="Message sent to engine")) ),
 
     # MoveHead message
@@ -108,7 +110,10 @@ messages_to_test = [
 async def test_message(robot, message_name, message_src, message_input, expected_message_output, errors):
     # The message_src is used mostly so we can easily verify that the name is supported by the servicer.  In terms of actually making the call its simpler to invoke on the robot
     message_call = getattr(robot.connection, message_name)
+
+    print("Sending: \"{0}\"".format(MessageToJson(message_input, including_default_value_fields=True, preserving_proto_field_name=True) ))
     result = await message_call(message_input)
+    print("Received: \"{0}\"".format(MessageToJson(result, including_default_value_fields=True, preserving_proto_field_name=True) ))
     
     expected_result_data_fields = [a[1] for a in expected_message_output.ListFields()]
     result_data_fields = [a[1] for a in result.ListFields()]
@@ -129,6 +134,7 @@ async def test_message(robot, message_name, message_src, message_input, expected
             errors.append('ValueError: recieved output with incorrect response {0} for message of type {1}, was expecting {2}, failure occurred with field "{3}"'.format(str(result_data_fields), message_name, str(expected_result_data_fields), str(result_data_fields[i])))
 
 async def run_message_tests(robot, future):
+    warnings = []
     errors = []
 
     # compile a list of all functions in the interface and the input/output classes we expect them to utilize
@@ -176,9 +182,9 @@ async def run_message_tests(robot, future):
 
     # squawk if we missed any messages in the inteface
     if len(expected_test_list) > 0:
-        errors.append('NotImplemented: The following messages exist in the interface and do not have a corresponding test: {0}'.format(str(expected_test_list)))
+        warnings.append('NotImplemented: The following messages exist in the interface and do not have a corresponding test: {0}'.format(str(expected_test_list)))
 
-    future.set_result(errors)
+    future.set_result({'warnings':warnings, 'errors':errors})
 
 def main():
     parser = argparse.ArgumentParser()
@@ -196,14 +202,24 @@ def main():
         future = asyncio.Future()
         robot.loop.run_until_complete(run_message_tests(robot, future))
 
-        errors = future.result()
+        testResults = future.result()
+        warnings = testResults['warnings']
+        errors = testResults['errors']
+
+        if len(warnings) != 0:
+            print("------ warnings! ------")
+            for a in warnings:
+                print(a)
+
+        print('\n')
         if len(errors) == 0:
             print("------ all tests finished successfully! ------")
+            print('\n')
         else:
             print("------ tests finished with {0} errors! ------".format(len(errors)))
             for a in errors:
                 print(a)
-        print('\n')
+            sys.exit(1)
 
 if __name__ == "__main__":
     main()
