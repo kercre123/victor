@@ -315,5 +315,28 @@ TEST(VariableSnapshotComponent, VersioningInfoDataResetRobotBuildSha)
   RemoveTestData();
 };
 
-// TODO: make sure to test nullptr issue
+// test that passing in a nullptr results in an error
+TEST(VariableSnapshotComponent, NullPointerError)
+{
+  using namespace Anki::Cozmo;
+  RemoveTestData();
+  InitializeTests();
+
+  auto errGState = Anki::Util::_errG;
+
+  // make a robot
+  auto robot0 = std::make_unique<Robot>(kRobotId, cozmoContext);
+
+  // get and load data
+  auto& variableSnapshotComp = robot0->GetVariableSnapshotComponent();
+
+  Anki::Util::_errG = false;
+  variableSnapshotComp.InitVariable<int>(VariableSnapshotId::UnitTestInt0, nullptr);
+  
+  // should error here
+  EXPECT_TRUE( Anki::Util::_errG );
+
+  // set _errG back to its initial value
+  Anki::Util::_errG = errGState;
+};
 
