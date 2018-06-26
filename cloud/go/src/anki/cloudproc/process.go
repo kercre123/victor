@@ -195,6 +195,9 @@ procloop:
 					continue
 				}
 
+				// signal to engine that we got a connection; the _absence_ of this will
+				// be used to detect server timeout errors
+				p.writeResponse(cloud.NewMessageWithStreamOpen(&cloud.Void{}))
 				ctx = p.newVoiceContext(chipperConn, stream, cloudChan)
 
 				logVerbose("Received hotword event", serverMode, "created context in", int(ctxTime), "ms")
