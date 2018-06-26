@@ -90,8 +90,6 @@ std::string VariableSnapshotComponent::GetSavePath(const Util::Data::DataPlatfor
 
   if(!Util::FileUtils::FileExists( variableSnapshotSavePath )) {
     PRINT_CH_DEBUG( "DataLoader", "VariableSnapshot", "Creating variable snapshot file: %s", variableSnapshotSavePath.c_str() );
-    // Util::FileUtils::WriteFile(VariableSnapshotComponent::GetSavePath(platform, kVariableSnapshotFolder, kVariableSnapshotFilename), 
-    //                     "{}");
   }
 
   return variableSnapshotSavePath;

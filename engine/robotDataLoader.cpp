@@ -699,8 +699,7 @@ void RobotDataLoader::LoadVariableSnapshotJsonMap()
 {
   _variableSnapshotJsonMap = std::make_unique<VariableSnapshotJsonMap>();
   
-    std::string path = VariableSnapshotComponent::GetSavePath(
-                                                              _platform,
+    std::string path = VariableSnapshotComponent::GetSavePath(_platform,
                                                               VariableSnapshotComponent::kVariableSnapshotFolder,
                                                               VariableSnapshotComponent::kVariableSnapshotFilename);
   Json::Value outLoadedJson;
@@ -716,8 +715,6 @@ void RobotDataLoader::LoadVariableSnapshotJsonMap()
       _variableSnapshotJsonMap->emplace(variableSnapshotId, subscriberInfo);
     }
   }
-    bool x = check1;
-    assert(x == x);
 }
 
 
