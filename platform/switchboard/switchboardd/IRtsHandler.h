@@ -29,6 +29,7 @@ public:
   }
   
   virtual bool StartRts() = 0;
+  virtual void StopPairing() = 0;
   
   void SetIsPairing(bool pairing) { _isPairing = pairing; }
   void SetOtaUpdating(bool updating) { _isOtaUpdating = updating; }

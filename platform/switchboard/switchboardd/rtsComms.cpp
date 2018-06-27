@@ -64,7 +64,9 @@ void RtsComms::BeginPairing() {
 }
 
 void RtsComms::StopPairing() {
-  // todo:
+  if(_rtsHandler) {
+    _rtsHandler->StopPairing();
+  }
 }
 
 void RtsComms::SetIsPairing(bool pairing) { 
@@ -138,13 +140,29 @@ void RtsComms::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
           handleHandshake = HandleHandshake(clientVersion);
 
           switch(clientVersion) {
-            case PairingProtocolVersion::CURRENT:
+            case PairingProtocolVersion::CURRENT: {
               _rtsHandler = (IRtsHandler*)new RtsHandlerV3(_stream, 
                               _loop,
                               _engineClient,
                               _isPairing,
                               _isOtaUpdating);
+
+              RtsHandlerV3* _v3 = (RtsHandlerV3*)_rtsHandler;
+              _pinHandle = _v3->OnUpdatedPinEvent().ScopedSubscribe([this](std::string s){
+                this->OnUpdatedPinEvent().emit(s);
+              });
+              _otaHandle = _v3->OnOtaUpdateRequestEvent().ScopedSubscribe([this](std::string s){
+                this->OnOtaUpdateRequestEvent().emit(s);
+              });
+              _endHandle = _v3->OnStopPairingEvent().ScopedSubscribe([this](){
+                this->OnStopPairingEvent().emit();
+              });
+              _completedPairingHandle = _v3->OnCompletedPairingEvent().ScopedSubscribe([this](){
+                this->OnCompletedPairingEvent().emit();
+              });
+
               break;
+            }
             default:
             case PairingProtocolVersion::FACTORY:
               _rtsHandler = (IRtsHandler*)new RtsHandlerV2();

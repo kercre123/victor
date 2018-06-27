@@ -78,6 +78,11 @@ private:
   VoidSignal _stopPairingSignal;
   VoidSignal _completedPairingSignal;
 
+  Signal::SmartHandle _pinHandle;
+  Signal::SmartHandle _otaHandle;
+  Signal::SmartHandle _endHandle;
+  Signal::SmartHandle _completedPairingHandle;
+
   Signal::SmartHandle _onReceivePlainTextHandle;
 
   IRtsHandler* _rtsHandler;

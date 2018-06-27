@@ -15,6 +15,7 @@
 #include "switchboardd/IRtsHandler.h"
 #include "switchboardd/engineMessagingClient.h"
 #include "switchboardd/INetworkStream.h"
+#include "switchboardd/taskExecutor.h"
 #include "switchboardd/externalCommsCladHandler.h"
 #include "anki-wifi/wifi.h"
 
@@ -32,14 +33,20 @@ public:
   bool StartRts();
   void StopPairing();
 
+  // Types
+  using StringSignal = Signal::Signal<void (std::string)>;
+  using VoidSignal = Signal::Signal<void ()>;
+
+  // Events
+  StringSignal& OnUpdatedPinEvent() { return _updatedPinSignal; }
+  StringSignal& OnOtaUpdateRequestEvent() { return _otaUpdateRequestSignal; }
+  VoidSignal& OnStopPairingEvent() { return _stopPairingSignal; }
+  VoidSignal& OnCompletedPairingEvent() { return _completedPairingSignal; }
+
 private:
   // Statics
   static long long sTimeStarted;
   static void sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents);
-  
-  // Types
-  using StringSignal = Signal::Signal<void (std::string)>;
-  using VoidSignal = Signal::Signal<void ()>;
 
   void Reset(bool forced=false);
 
@@ -74,6 +81,7 @@ private:
   INetworkStream* _stream;
   struct ev_loop* _loop;
   std::shared_ptr<EngineMessagingClient> _engineClient;
+  std::unique_ptr<TaskExecutor> _taskExecutor;
   std::unique_ptr<ExternalCommsCladHandler> _cladHandler;
   bool _isPairing;
   bool _isOtaUpdating;
@@ -87,6 +95,7 @@ private:
   const uint8_t kWifiConnectMinTimeout_s = 1;
   const uint8_t kWifiConnectInterval_s = 1;
   const uint8_t kBleIdleConnectionTimeout_s = 5;
+  const uint8_t kMinMessageSize = 2;
   
   std::string _pin;
   uint8_t _challengeAttempts;
@@ -107,13 +116,16 @@ private:
   } _handleTimeoutTimer;
 
   struct ev_TimerStruct _handleInternet;
-
   struct ev_TimerStruct _idleConnectionTimer;
 
   StringSignal _updatedPinSignal;
   StringSignal _otaUpdateRequestSignal;
   VoidSignal _stopPairingSignal;
   VoidSignal _completedPairingSignal;
+
+  VoidSignal _pairingTimeoutSignal;
+  VoidSignal _internetTimerSignal;
+  VoidSignal _idleConnectionSignal;
 
   //
   // V3 Request to Listen for

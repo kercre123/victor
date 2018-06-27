@@ -19,5 +19,9 @@ bool RtsHandlerV2::StartRts() {
   return true;
 }
 
+void RtsHandlerV2::StopPairing() {
+  
+}
+
 } // Switchboard
 } // Anki

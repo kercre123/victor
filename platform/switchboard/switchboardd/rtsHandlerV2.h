@@ -20,6 +20,7 @@ namespace Switchboard {
 class RtsHandlerV2 : public IRtsHandler {
 public:
   bool StartRts();
+  void StopPairing();
 };
 
 } // Switchboard

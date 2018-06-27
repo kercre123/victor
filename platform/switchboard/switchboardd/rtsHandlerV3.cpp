@@ -32,12 +32,18 @@ _stream(stream),
 _loop(evloop),
 _engineClient(engineClient),
 _isPairing(isPairing),
-_isOtaUpdating(isOtaUpdating)
+_isOtaUpdating(isOtaUpdating),
+_pin(""),
+_challengeAttempts(0),
+_totalPairingAttempts(0),
+_numPinDigits(0),
+_pingChallenge(0),
+_abnormalityCount(0),
+_inetTimerCount(0),
+_wifiConnectTimeout_s(15)
 {
-  (void)_stream;
-  (void)_loop;
-  (void)_isPairing;
-  (void)_isOtaUpdating;
+  Log::Write("Instantiate with isPairing:%s", isPairing?"true":"false");
+  sTimeStarted = std::time(0);
 
   // Initialize the key exchange object
   _keyExchange = std::make_unique<KeyExchange>(kNumPinDigits);
@@ -54,13 +60,35 @@ _isOtaUpdating(isOtaUpdating)
   _onFailedDecryptionHandle = _stream->OnFailedDecryptionEvent().ScopedSubscribe(
     std::bind(&RtsHandlerV3::HandleDecryptionFailed, this));
 
+  // Register with private events
+  _pairingTimeoutSignal.SubscribeForever(std::bind(&RtsHandlerV3::HandleTimeout, this));
+  _internetTimerSignal.SubscribeForever(std::bind(&RtsHandlerV3::HandleInternetTimerTick, this));
+  _idleConnectionSignal.SubscribeForever(std::bind(&RtsHandlerV3::HandleIdleTimeout, this));
+
   // Initialize the message handler
   _cladHandler = std::make_unique<ExternalCommsCladHandler>();
   SubscribeToCladMessages();
+
+  // Initialize the task executor
+  _taskExecutor = std::make_unique<TaskExecutor>(_loop);
+
+  // Initialize ev timer
+  _handleTimeoutTimer.signal = &_pairingTimeoutSignal;
+  ev_timer_init(&_handleTimeoutTimer.timer, &RtsHandlerV3::sEvTimerHandler, kPairingTimeout_s, kPairingTimeout_s);
+
+  _handleInternet.signal = &_internetTimerSignal;
+  ev_timer_init(&_handleInternet.timer, &RtsHandlerV3::sEvTimerHandler, kWifiConnectInterval_s, kWifiConnectInterval_s);
+
+  _idleConnectionTimer.signal = &_idleConnectionSignal;
+  ev_timer_init(&_idleConnectionTimer.timer, &RtsHandlerV3::sEvTimerHandler, kBleIdleConnectionTimeout_s, 0);
+  ev_timer_start(_loop, &_idleConnectionTimer.timer);
+  
+  Log::Write("RtsComms V3 starting up.");
 }
 
 bool RtsHandlerV3::StartRts() {
   SendPublicKey();
+  _state = RtsPairingPhase::AwaitingPublicKey;
   
   return true;
 }
@@ -70,14 +98,11 @@ bool RtsHandlerV3::StartRts() {
 //
 
 void RtsHandlerV3::Reset(bool forced) {
-  // todo: Pipe up to rtsComms
-  /*// Tell the stream that we can no longer send over encrypted channel
+  // Tell the stream that we can no longer send over encrypted channel
   _stream->SetEncryptedChannelEstablished(false);
 
   // Send cancel message -- must do this before state is RAW
   SendCancelPairing();
-
-  _commsState = CommsState::Raw;
 
   // Tell key exchange to reset
   _keyExchange->Reset();
@@ -88,22 +113,7 @@ void RtsHandlerV3::Reset(bool forced) {
   // Stop timers
   ev_timer_stop(_loop, &_handleInternet.timer);
   ev_timer_stop(_loop, &_idleConnectionTimer.timer);
-  
-  // Put us back in initial state
-  if(forced) {
-    Log::Write("Client disconnected. Stopping pairing.");
-    ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
-    UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
-  } else if(++_totalPairingAttempts < kMaxPairingAttempts) {
-    Init();
-    Log::Write("SecurePairing restarting.");
-    UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::START_PAIRING);
-  } else {
-    Log::Write("SecurePairing ending due to multiple failures. Requires external restart.");
-    ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
-    _stopPairingSignal.emit();
-    UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
-  }*/
+  ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
 }
 
 //
@@ -661,7 +671,7 @@ void RtsHandlerV3::SendFile(uint32_t fileId, std::vector<uint8_t> fileBytes) {
   if(!AssertState(RtsCommsType::Encrypted)) {
     return;
   }
-  
+
   // Send File
   const size_t chunkSize = 256; // can't be more than 2^16
   size_t fileSizeBytes = fileBytes.size();
@@ -684,12 +694,26 @@ void RtsHandlerV3::SendFile(uint32_t fileId, std::vector<uint8_t> fileBytes) {
 }
 
 void RtsHandlerV3::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
+  _taskExecutor->WakeSync([this, bytes, length]() {
+    if(length < kMinMessageSize) {
+      Log::Write("Length is less than kMinMessageSize.");
+      return;
+    }
 
+    _cladHandler->ReceiveExternalCommsMsg(bytes, length);
+  });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+void RtsHandlerV3::HandleTimeout() {
+  if(_state != RtsPairingPhase::ConfirmedSharedSecret) {
+    Log::Write("Pairing timeout. Client took too long.");
+    Reset();
+  }
+}
 
 void RtsHandlerV3::IncrementChallengeCount() {
   // Increment challenge count
