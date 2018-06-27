@@ -33,15 +33,6 @@
 
 namespace Anki {
 namespace Switchboard {
-  enum PairingState : uint8_t {
-    Initial,
-    AwaitingHandshake,
-    AwaitingPublicKey,
-    AwaitingNonceAck,
-    AwaitingChallengeResponse,
-    ConfirmedSharedSecret
-  };
-
   enum CommsState : uint8_t {
     Raw,
     Clad,
@@ -218,7 +209,7 @@ namespace Switchboard {
     
     CommsState _commsState;
     INetworkStream* _stream;
-    PairingState _state = PairingState::Initial;
+    RtsPairingPhase _state = RtsPairingPhase::Initial;
     RtsKeys _rtsKeys;
     
     std::unique_ptr<KeyExchange> _keyExchange;

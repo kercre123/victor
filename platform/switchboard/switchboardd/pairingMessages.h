@@ -17,6 +17,8 @@
 #define SB_IPv4_SIZE 4
 #define SB_IPv6_SIZE 16
 
+#include <stdint.h>
+
 namespace Anki {
 namespace Switchboard {
   enum PairingProtocolVersion : uint32_t {

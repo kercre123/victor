@@ -136,7 +136,7 @@ void SecurePairing::Init() {
   _inetTimerCount = 0;
 
   // Update our state
-  _state = PairingState::Initial;
+  _state = RtsPairingPhase::Initial;
 
   // Send Handshake
   Log::Write("Sending Handshake to Client.");
@@ -145,7 +145,7 @@ void SecurePairing::Init() {
 
   SendHandshake();
 
-  _state = PairingState::AwaitingHandshake;
+  _state = RtsPairingPhase::AwaitingHandshake;
 }
 
 bool SecurePairing::LoadKeys() {
@@ -320,7 +320,7 @@ void SecurePairing::SendChallenge() {
   // Tell the stream that we can now send over encrypted channel
   _stream->SetEncryptedChannelEstablished(true);
   // Update state to secureClad
-  _state = PairingState::AwaitingChallengeResponse;
+  _state = RtsPairingPhase::AwaitingChallengeResponse;
 
   // Create random challenge value
   randombytes_buf(&_pingChallenge, sizeof(_pingChallenge));
@@ -453,14 +453,14 @@ void SecurePairing::HandleRtsConnResponse(const Anki::Cozmo::ExternalComms::RtsC
     return;
   }
 
-  if(_state == PairingState::AwaitingPublicKey) {
+  if(_state == RtsPairingPhase::AwaitingPublicKey) {
     Anki::Cozmo::ExternalComms::RtsConnResponse connResponse = msg.Get_RtsConnResponse();
 
     if(connResponse.connectionType == Anki::Cozmo::ExternalComms::RtsConnType::FirstTimePair) {
       if(_isPairing && !_isOtaUpdating) {
         ev_timer_stop(_loop, &_idleConnectionTimer.timer);
         HandleInitialPair((uint8_t*)connResponse.publicKey.data(), crypto_kx_PUBLICKEYBYTES);
-        _state = PairingState::AwaitingNonceAck;
+        _state = RtsPairingPhase::AwaitingNonceAck;
       } else {
         Log::Write("Client tried to initial pair while not in pairing mode.");
       }
@@ -475,7 +475,7 @@ void SecurePairing::HandleRtsConnResponse(const Anki::Cozmo::ExternalComms::RtsC
             _rtsKeys.clients[i].sessionRx);
 
           SendNonce();
-          _state = PairingState::AwaitingNonceAck;
+          _state = RtsPairingPhase::AwaitingNonceAck;
           Log::Write("Received renew connection request.");
           break;
         }
@@ -498,7 +498,7 @@ void SecurePairing::HandleRtsChallengeMessage(const Cozmo::ExternalComms::RtsCon
     return;
   }
 
-  if(_state == PairingState::AwaitingChallengeResponse) {
+  if(_state == RtsPairingPhase::AwaitingChallengeResponse) {
     Anki::Cozmo::ExternalComms::RtsChallengeMessage challengeMessage = msg.Get_RtsChallengeMessage();
 
     HandleChallengeResponse((uint8_t*)&challengeMessage.number, sizeof(challengeMessage.number));
@@ -514,7 +514,7 @@ void SecurePairing::HandleRtsWifiConnectRequest(const Cozmo::ExternalComms::RtsC
     return;
   }
 
-  if(_state == PairingState::ConfirmedSharedSecret) {
+  if(_state == RtsPairingPhase::ConfirmedSharedSecret) {
     Anki::Cozmo::ExternalComms::RtsWifiConnectRequest wifiConnectMessage = msg.Get_RtsWifiConnectRequest();
 
     Log::Write("Trying to connect to wifi network.");
@@ -558,7 +558,7 @@ void SecurePairing::HandleRtsWifiIpRequest(const Cozmo::ExternalComms::RtsConnec
     return;
   }
 
-  if(_state == PairingState::ConfirmedSharedSecret) {
+  if(_state == RtsPairingPhase::ConfirmedSharedSecret) {
     std::array<uint8_t, 4> ipV4;
     std::array<uint8_t, 16> ipV6;
 
@@ -577,7 +577,7 @@ void SecurePairing::HandleRtsStatusRequest(const Cozmo::ExternalComms::RtsConnec
     return;
   }
 
-  if(_state == PairingState::ConfirmedSharedSecret) {
+  if(_state == RtsPairingPhase::ConfirmedSharedSecret) {
     SendStatusResponse();
   } else {
     Log::Write("Received status request in the wrong state.");
@@ -589,7 +589,7 @@ void SecurePairing::HandleRtsWifiScanRequest(const Cozmo::ExternalComms::RtsConn
     return;
   }
 
-  if(_state == PairingState::ConfirmedSharedSecret) {
+  if(_state == RtsPairingPhase::ConfirmedSharedSecret) {
     UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SETTING_WIFI);
     SendWifiScanResult();
   } else {
@@ -602,7 +602,7 @@ void SecurePairing::HandleRtsWifiForgetRequest(const Cozmo::ExternalComms::RtsCo
     return;
   }
 
-  if(_state == PairingState::ConfirmedSharedSecret) {
+  if(_state == RtsPairingPhase::ConfirmedSharedSecret) {
     // Get message
     Anki::Cozmo::ExternalComms::RtsWifiForgetRequest forgetMsg = msg.Get_RtsWifiForgetRequest();
 
@@ -632,7 +632,7 @@ void SecurePairing::HandleRtsOtaUpdateRequest(const Cozmo::ExternalComms::RtsCon
     return;
   }
 
-  if(_state == PairingState::ConfirmedSharedSecret && !_isOtaUpdating) {
+  if(_state == RtsPairingPhase::ConfirmedSharedSecret && !_isOtaUpdating) {
     Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest otaMessage = msg.Get_RtsOtaUpdateRequest();
     _otaUpdateRequestSignal.emit(otaMessage.url);
     _isOtaUpdating = true;
@@ -646,7 +646,7 @@ void SecurePairing::HandleRtsOtaCancelRequest(const Cozmo::ExternalComms::RtsCon
     return;
   }
 
-  if(_state == PairingState::ConfirmedSharedSecret && _isOtaUpdating) {
+  if(_state == RtsPairingPhase::ConfirmedSharedSecret && _isOtaUpdating) {
     Anki::CancelBackgroundCommands();
     _isOtaUpdating = false;
     Log::Write("Terminating OTA Update Engine");
@@ -663,7 +663,7 @@ void SecurePairing::HandleRtsWifiAccessPointRequest(const Cozmo::ExternalComms::
     return;
   }
 
-  if(_state == PairingState::ConfirmedSharedSecret) {
+  if(_state == RtsPairingPhase::ConfirmedSharedSecret) {
     Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest accessPointMessage = msg.Get_RtsWifiAccessPointRequest();
     if(accessPointMessage.enable) {
       // enable access point mode on Victor
@@ -729,7 +729,7 @@ void SecurePairing::HandleRtsSsh(const Cozmo::ExternalComms::RtsConnection_3& ms
     return;
   }
 
-  if(_state == PairingState::ConfirmedSharedSecret) {
+  if(_state == RtsPairingPhase::ConfirmedSharedSecret) {
     Anki::Cozmo::ExternalComms::RtsSshRequest sshMsg = msg.Get_RtsSshRequest();
     std::string sshPath = "/home/root/.ssh";
     std::string sshFile = "authorized_keys";
@@ -755,7 +755,7 @@ void SecurePairing::HandleRtsSsh(const Cozmo::ExternalComms::RtsConnection_3& ms
 
 void SecurePairing::HandleRtsAck(const Cozmo::ExternalComms::RtsConnection_3& msg) {
   Anki::Cozmo::ExternalComms::RtsAck ack = msg.Get_RtsAck();
-  if(_state == PairingState::AwaitingNonceAck &&
+  if(_state == RtsPairingPhase::AwaitingNonceAck &&
     ack.rtsConnectionTag == (uint8_t)Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsNonceMessage) {
     HandleNonceAck();
   } else {
@@ -822,7 +822,7 @@ void SecurePairing::HandleInitialPair(uint8_t* publicKey, uint32_t publicKeyLeng
 }
 
 void SecurePairing::HandleTimeout() {
-  if(_state != PairingState::ConfirmedSharedSecret) {
+  if(_state != RtsPairingPhase::ConfirmedSharedSecret) {
     Log::Write("Pairing timeout. Client took too long.");
     Reset();
   }
@@ -861,7 +861,7 @@ void SecurePairing::HandleChallengeResponse(uint8_t* pingChallengeAnswer, uint32
     // update our state
     ev_timer_stop(_loop, &_idleConnectionTimer.timer);
     SendChallengeSuccess();
-    _state = PairingState::ConfirmedSharedSecret;
+    _state = RtsPairingPhase::ConfirmedSharedSecret;
     Log::Green("Challenge answer was accepted. Encrypted channel established.");
 
     if(_isPairing) {
@@ -888,8 +888,8 @@ void SecurePairing::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
     }
 
     if(_commsState == CommsState::Raw) {
-      if(_state == PairingState::Initial ||
-        _state == PairingState::AwaitingHandshake) {
+      if(_state == RtsPairingPhase::Initial ||
+        _state == RtsPairingPhase::AwaitingHandshake) {
         // ************************************************************
         // Handshake Message (first message)
         // This message is fixed. Cannot change. Ever.
@@ -908,7 +908,7 @@ void SecurePairing::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
 
             switch(clientVersion) {
               case PairingProtocolVersion::CURRENT:
-                _rtsHandler = (IRtsHandler*)new RtsHandlerV3();
+                //_rtsHandler = (IRtsHandler*)new RtsHandlerV3();
                 break;
               default:
               case PairingProtocolVersion::FACTORY:
@@ -923,7 +923,7 @@ void SecurePairing::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
             _commsState = CommsState::Clad;
             _rtsHandler->StartRts();
             //@@SendPublicKey();
-            _state = PairingState::AwaitingPublicKey;
+            _state = RtsPairingPhase::AwaitingPublicKey;
           } else {
             // If we can't handle handshake, must cancel
             // THIS SHOULD NEVER HAPPEN

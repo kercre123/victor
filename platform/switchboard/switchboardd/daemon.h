@@ -21,7 +21,8 @@
 #include <stdlib.h>
 #include "ev++.h"
 #include "bleClient/bleClient.h"
-#include "switchboardd/securePairing.h"
+#include "switchboardd/rtsComms.h"
+#include "switchboardd/savedSessionManager.h"
 #include "switchboardd/taskExecutor.h"
 #include "switchboardd/engineMessagingClient.h"
 
@@ -120,7 +121,7 @@ namespace Switchboard {
 
       std::unique_ptr<TaskExecutor> _taskExecutor;
       std::unique_ptr<BleClient> _bleClient;
-      std::unique_ptr<SecurePairing> _securePairing;
+      std::unique_ptr<RtsComms> _securePairing;
       std::shared_ptr<EngineMessagingClient> _engineMessagingClient;
   };
 }
