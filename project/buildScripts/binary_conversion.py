@@ -27,6 +27,7 @@ AUDIO_EVENT_GROUPS_ATTR = "eventGroups"
 AUDIO_EVENT_IDS_ATTR = "eventIds"
 AUDIO_VOLUMES_ATTR = "volumes"
 AUDIO_PROBABILITIES_ATTR = "probabilities"
+AUDIO_NAME_ATTR = "audioName"
 # Deprecated keys
 AUDIO_DEP_EVENT_ATTR = "audioEventId"
 AUDIO_DEP_VOLUME_ATTR = "volume"
@@ -229,7 +230,18 @@ def prep_audio_key_frame_json(keyframe, anim_name):
 
     # Check audio key frame format
     if not AUDIO_DEP_EVENT_ATTR in keyframe:
-        # Key frame is in correct format
+        # Key frame is in correct format, so we'll return it more or less as-is
+
+        # Check every event group and remove the 'audioName' data if present.
+        # We like the 'audioName' field in JSON data for humans, but the engine
+        # only uses an event's numerical ID, so we strip out the name string
+        # before converting to binary format.
+        for eventGroup in keyframe[AUDIO_EVENT_GROUPS_ATTR]:
+            try:
+                del eventGroup[AUDIO_NAME_ATTR]
+            except KeyError:
+                pass
+
         return keyframe
 
     # Migrate to new audio key frame format
