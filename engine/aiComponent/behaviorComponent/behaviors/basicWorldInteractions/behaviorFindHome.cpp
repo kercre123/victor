@@ -171,7 +171,11 @@ void BehaviorFindHome::TransitionToSearchTurn()
                           const auto endHeading = robotPose.GetRotation().GetAngleAroundZaxis();
                           const auto angleSwept_deg = (endHeading - startHeading).getDegrees();
                           DEV_ASSERT(angleSwept_deg < 0.f, "BehaviorFindHome.TransitionToSearchTurn.ShouldTurnClockwise");
-                          DEV_ASSERT(std::abs(angleSwept_deg) < 75.f, "BehaviorFindHome.TransitionToSearchTurn.TurnedTooMuch");
+                          if (std::abs(angleSwept_deg) > 75.f) {
+                            PRINT_NAMED_WARNING("BehaviorFindHome.TransitionToSearchTurn.TurnedTooMuch",
+                                                "The last turn swept an angle of %.2f deg - may have missed seeing the charger due to the camera's limited FOV",
+                                                std::abs(angleSwept_deg));
+                          }
                           _dVars.angleSwept_deg += std::abs(angleSwept_deg);
                           TransitionToSearchTurn();
                         });
