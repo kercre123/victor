@@ -126,6 +126,7 @@ write_row "logfile"
 #parse logfiles
 for infile in ./*.log; do
   echo processing "$infile"
+  dos2unix "$infile"
   linenum=0
   while IFS='' read -r line || [[ -n "$line" ]]; do #https://stackoverflow.com/questions/10929453/read-a-file-line-by-line-assigning-the-value-to-a-variable
     linenum=$((linenum+1))
