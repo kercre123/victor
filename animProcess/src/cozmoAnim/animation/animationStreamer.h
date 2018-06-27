@@ -111,8 +111,9 @@ namespace Cozmo {
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update();
 
-    // Stop currently running animation
-    void Abort(bool shouldClearProceduralAnim = true);
+    // If tag == kNotAnimatingTag, it stops whathever animation may currently be playing.
+    // Otherwise, it stops the currently running animation only if it matches the specified tag.
+    void Abort(Tag tag = kNotAnimatingTag, bool shouldClearProceduralAnim = true);
     
     const std::string GetStreamingAnimationName() const;
     const Animation* GetStreamingAnimation() const { return _streamingAnimation; }

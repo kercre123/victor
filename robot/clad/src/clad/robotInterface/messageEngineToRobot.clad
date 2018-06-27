@@ -298,9 +298,11 @@ message PlayAnim
   string animName,
 }
 
-// Aborts the currently executing animation
+// Aborts the specified animation.
+// If tag == 0 (i.e. kNotAnimatingTag), cancels whatever animation is currently playing.
 message AbortAnimation
 {
+  uint_8  tag,
 }
 
 message EnableKeepFaceAlive

@@ -160,7 +160,7 @@ void AnimationComponent::UpdateDependent(const RobotCompMap& dependentComps)
   while(it != _callbackMap.end()) {
     if (it->second.abortTime_sec != 0 && currTime_sec >= it->second.abortTime_sec) {
       PRINT_NAMED_WARNING("AnimationComponent.Update.AnimTimedOut", "Anim: %s", it->second.animName.c_str());
-      _robot->SendRobotMessage<RobotInterface::AbortAnimation>();
+      _robot->SendRobotMessage<RobotInterface::AbortAnimation>(it->first);
       it->second.ExecuteCallback(AnimResult::Timedout);
       it = _callbackMap.erase(it);
     }
@@ -338,8 +338,8 @@ Result AnimationComponent::StopAnimByName(const std::string& animName)
   if (it != _availableAnims.end()) {
     const Tag tag = IsAnimPlaying(animName);
     if (tag != kNotAnimatingTag) {
-      PRINT_CH_DEBUG(kLogChannelName, "AnimationComponent.StopAnimByName.AbortingAnim", "%s", animName.c_str());
-      return _robot->SendRobotMessage<RobotInterface::AbortAnimation>();
+      PRINT_CH_INFO(kLogChannelName, "AnimationComponent.StopAnimByName.AbortingAnim", "%s (%d)", animName.c_str(), tag);
+      return _robot->SendRobotMessage<RobotInterface::AbortAnimation>(tag);
     }
     else {
       PRINT_NAMED_WARNING("AnimationComponent.StopAnimByName.AnimNotPlaying",

@@ -9,7 +9,7 @@ PROTO CozmoVizDisplay
   field SFBool filterLogs FALSE
   field SFBool colorizeStderrOutput FALSE
   field SFInt32 accelPlotObjectId 0
-  field SFInt32 numBehaviorStackLines 8
+  field SFInt32 numBehaviorStackLines 12
   field SFInt32 numVisionModeLines 8
 
   field SFInt32 numDebugImageDisplays 0 # Vision debug displays in addition to the camera

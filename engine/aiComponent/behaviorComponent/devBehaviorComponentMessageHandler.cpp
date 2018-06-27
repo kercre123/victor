@@ -105,6 +105,22 @@ void DevBehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCom
                                                handlerCallback)
     );
 
+    // Go to Wait behavior when SHOW_PRE_PIN received from switchboard so as 
+    // not to interrupt while user is trying to look at something.
+    auto setConnectionStatusCallback = [&bContainer, &bsm](const GameToEngineEvent& event) {
+      const auto& msg = event.GetData().Get_SetConnectionStatus();
+      if (msg.status == SwitchboardInterface::ConnectionStatus::SHOW_PRE_PIN) {
+        PRINT_CH_INFO("BehaviorSystem", "DevBehaviorComponentMessageHandler.EnterPairing", "");
+        ICozmoBehaviorPtr waitBehavior = bContainer.FindBehaviorByID(kWaitBehaviorID);
+        bsm.ResetBehaviorStack(waitBehavior.get());
+      }
+    };
+
+    _eventHandles.push_back(
+      _robot.GetExternalInterface()->Subscribe(GameToEngineTag::SetConnectionStatus, 
+                                               setConnectionStatusCallback)                                               
+    );
+
 
     // =========== Handle DebugScreenMode message =================
     // TODO: VIC-2416 - Rename this class since it is used in release.
@@ -118,23 +134,21 @@ void DevBehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCom
       PRINT_NAMED_WARNING("DevBehaviorComponentMessageHandler.InitDependent.NoDataLoader", "");
       return;
     }
-    ICozmoBehaviorPtr waitBehavior = bContainer.FindBehaviorByID(kWaitBehaviorID);
-
-    // Go to Wait behavior when debug screens are enabled so as 
-    // not to interrupt while user is trying to look at something.
+    
     // Go to freeplayBehavior as defined in victor_behavior_config.json
-    // when leaving debug screens
-    auto debugScreenModeHandler = [&bsm, &behaviorsBootLoader, waitBehavior](const RobotToEngineEvent& event) {
+    // when leaving debug screens.
+    auto debugScreenModeHandler = [&bsm, &behaviorsBootLoader](const RobotToEngineEvent& event) {
       const auto& msg = event.GetData().Get_debugScreenMode();
       PRINT_CH_INFO("BehaviorSystem", "DevBehaviorComponentMessageHandler.DebugScreenModeChange", "%d", msg.enabled);
-
-      if (msg.enabled) {
-        bsm.ResetBehaviorStack(waitBehavior.get());
-      } else {
+      if (!msg.enabled) {
+        // We only care if the debug screen is disabled.
+        // We don't use this same message (with enabled == true) for going into the wait behavior
+        // because of a race condition which could result in an animation being played from 
+        // engine _after_ the anim process has already played a face animation for the 
+        // pairing scren.
         IBehavior* bootBehavior = behaviorsBootLoader.GetBootBehavior();
         bsm.ResetBehaviorStack(bootBehavior);
       }
-
     };
     _eventHandles.push_back(
       _robot.GetRobotMessageHandler()->Subscribe(RobotInterface::RobotToEngineTag::debugScreenMode, debugScreenModeHandler)

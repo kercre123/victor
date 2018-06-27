@@ -178,8 +178,8 @@ void Process_playAnim(const Anki::Cozmo::RobotInterface::PlayAnim& msg)
 
 void Process_abortAnimation(const Anki::Cozmo::RobotInterface::AbortAnimation& msg)
 {
-  LOG_INFO("AnimProcessMessages.Process_abortAnimation", "Abort animation");
-  _animStreamer->Abort();
+  LOG_INFO("AnimProcessMessages.Process_abortAnimation", "Tag: %d", msg.tag);
+  _animStreamer->Abort(msg.tag);
 }
 
 void Process_displayProceduralFace(const Anki::Cozmo::RobotInterface::DisplayProceduralFace& msg)

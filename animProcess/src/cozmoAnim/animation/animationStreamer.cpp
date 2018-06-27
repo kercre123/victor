@@ -532,7 +532,7 @@ namespace Cozmo {
                           anim != nullptr ? anim->GetName().c_str() : "NULL",
                           _streamingAnimation->GetName().c_str());
 
-      Abort(shouldClearProceduralAnim);
+      Abort(kNotAnimatingTag, shouldClearProceduralAnim);
     }
     
     _streamingAnimation = anim;
@@ -961,9 +961,12 @@ namespace Cozmo {
     return Result::RESULT_FAIL;
   }
   
-  void AnimationStreamer::Abort(bool shouldClearProceduralAnim)
+  void AnimationStreamer::Abort(Tag tag, bool shouldClearProceduralAnim)
   {
-    if (nullptr != _streamingAnimation)
+    // Only abort if the tag matches the currently playing animation or 
+    // the tag is kNotAnimatingTag
+    if (nullptr != _streamingAnimation && 
+        (tag == _tag || tag == kNotAnimatingTag) )
     {
       PRINT_CH_INFO(kLogChannelName,
                     "AnimationStreamer.Abort",
@@ -974,6 +977,8 @@ namespace Cozmo {
                     _startOfAnimationSent,
                     _endOfAnimationSent);
       
+      StopTracksInUse();
+
       if (_startOfAnimationSent) {
         SendEndOfAnimation(true);
       }
