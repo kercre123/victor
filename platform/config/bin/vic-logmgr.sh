@@ -31,7 +31,7 @@
 : ${VIC_LOGMGR_ROTATION_KB:="1024"}
 : ${VIC_LOGMGR_ROTATION_COUNT:="64"}
 : ${VIC_LOGMGR_FORMAT:="printable"}
-: ${VIC_LOGMGR_FILTERSPECS:="vic-anim:V vic-cloud:V vic-engine:V vic-robot:V vic-switchboard:V vic-watchdog:V vic-webserver:V *:E"}
+: ${VIC_LOGMGR_FILTERSPECS:="vic-anim:V vic-cloud:V vic-engine:V vic-robot:V vic-switchboard:V vic-watchdog:V vic-webserver:V vic-gateway:V *:E"}
 
 /bin/mkdir -p ${VIC_LOGMGR_DIRECTORY}
 
