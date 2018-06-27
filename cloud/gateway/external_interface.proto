@@ -169,6 +169,39 @@ service ExternalInterface {
     };
   }
 
+  // Photos
+
+  // Get the photos info
+  rpc PhotosInfo(PhotosInfoRequest) returns (PhotosInfoResponse) {
+    option (google.api.http) = {
+      post: "/v1/photos_info",
+      body: "*"
+    };
+  }
+
+  // Get a photo by ID
+  rpc Photo(PhotoRequest) returns (PhotoResponse) {
+    option (google.api.http) = {
+      post: "/v1/photo",
+      body: "*"
+    };
+  }
+
+  // Get a thumbnail by ID
+  rpc Thumbnail(ThumbnailRequest) returns (ThumbnailResponse) {
+    option (google.api.http) = {
+      post: "/v1/thumbnail",
+      body: "*"
+    };
+  }
+
+  // Delete a photo by ID
+  rpc DeletePhoto(DeletePhotoRequest) returns (DeletePhotoResponse) {
+    option (google.api.http) = {
+      post: "/v1/delete_photo",
+      body: "*"
+    };
+  }
   // Request latest attention transfer message (after connection)
   rpc GetLatestAttentionTransfer(LatestAttentionTransferRequest) returns (LatestAttentionTransferResponse) {
     option (google.api.http) = {

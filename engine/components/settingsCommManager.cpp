@@ -113,6 +113,7 @@ void SettingsCommManager::InitDependent(Robot* robot, const RobotCompMap& depend
 {
   s_SettingsCommManager = this;
   _settingsManager = &robot->GetComponent<SettingsManager>();
+  _gatewayInterface = robot->GetGatewayInterface();
 }
 
 

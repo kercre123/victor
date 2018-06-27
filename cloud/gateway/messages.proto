@@ -480,6 +480,55 @@ message WakeWordEnd {
   string intent_json = 2; // todo: we send json as a string for now since the engine handling of intents is tightly coupled with clad
 }
 
+// Photos
+
+message PhotoInfo {
+  uint32 photo_id = 1;
+  uint32 timestamp_utc = 2;
+  bool copied_to_app = 3;
+}
+
+message PhotosInfoRequest {
+}
+
+message PhotosInfoResponse {
+  ResultStatus status = 1;
+  repeated PhotoInfo photo_infos = 2;
+}
+
+message PhotoRequest {
+  uint32 photo_id = 1;
+}
+
+message Photo {
+  bytes image_data = 1;
+}
+
+message PhotoResponse {
+  ResultStatus status = 1;
+  bool success = 2;
+  Photo photo = 3;
+}
+
+message ThumbnailRequest {
+  uint32 photo_id = 1;
+}
+
+message ThumbnailResponse {
+  ResultStatus status = 1;
+  bool success = 2;
+  Photo photo = 3;
+}
+
+message DeletePhotoRequest {
+  uint32 photo_id = 1;
+}
+
+message DeletePhotoResponse {
+  ResultStatus status = 1;
+  bool success = 2;
+}
+
 // NOTE: must match attentionTransferTypes.clad
 enum AttentionTransferReason {
   Invalid = 0;
@@ -519,15 +568,24 @@ message GatewayWrapper {
     OnboardingContinue            onboarding_continue = 4;
     OnboardingContinueResponse    onboarding_continue_response = 5;
     OnboardingSkip                onboarding_skip = 6;
-    // ------------ test response/response pairs -------------------------
+    // ------------ test request/response pairs --------------------------
     // TODO: remove these once we have more examples
     Ping ping = 7;
     Pong pong = 8;
     Bing bing = 9;
     Bong bong = 10;
-    // ------------ Attention transfer --------------------
+    // ------------ Attention transfer -----------------------------------
     LatestAttentionTransferRequest latest_attention_transfer_request = 11;
     LatestAttentionTransfer        latest_attention_transfer = 12;
+    // ------------ photos request/response pairs ------------------------
+    PhotosInfoRequest             photos_info_request = 13;
+    PhotosInfoResponse            photos_info_response = 14;
+    PhotoRequest                  photo_request = 15;
+    PhotoResponse                 photo_response = 16;
+    ThumbnailRequest              thumbnail_request = 17;
+    ThumbnailResponse             thumbnail_response = 18;
+    DeletePhotoRequest            delete_photo_request = 19;
+    DeletePhotoResponse           delete_photo_response = 20;
   }
 }
 

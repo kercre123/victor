@@ -823,6 +823,79 @@ func (m *rpcService) SendOnboardingInput(ctx context.Context, in *extint.Onboard
 	}
 }
 
+
+func (m *rpcService) PhotosInfo(ctx context.Context, in *extint.PhotosInfoRequest) (*extint.PhotosInfoResponse, error) {
+	log.Println("Received rpc request PhotosInfo(", in, ")")
+
+	f, result := createChannel(&extint.GatewayWrapper_PhotosInfoResponse{}, 1)
+	defer f()
+
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_PhotosInfoRequest{
+			in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	payload := <-result
+	return payload.GetPhotosInfoResponse(), nil
+}
+
+func (m *rpcService) Photo(ctx context.Context, in *extint.PhotoRequest) (*extint.PhotoResponse, error) {
+	log.Println("Received rpc request Photo(", in, ")")
+
+	f, result := createChannel(&extint.GatewayWrapper_PhotoResponse{}, 1)
+	defer f()
+
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_PhotoRequest{
+			in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	payload := <-result
+	return payload.GetPhotoResponse(), nil
+}
+
+func (m *rpcService) Thumbnail(ctx context.Context, in *extint.ThumbnailRequest) (*extint.ThumbnailResponse, error) {
+	log.Println("Received rpc request Thumbnail(", in, ")")
+
+	f, result := createChannel(&extint.GatewayWrapper_ThumbnailResponse{}, 1)
+	defer f()
+
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_ThumbnailRequest{
+			in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	payload := <-result
+	return payload.GetThumbnailResponse(), nil
+}
+
+func (m *rpcService) DeletePhoto(ctx context.Context, in *extint.DeletePhotoRequest) (*extint.DeletePhotoResponse, error) {
+	log.Println("Received rpc request DeletePhoto(", in, ")")
+
+	f, result := createChannel(&extint.GatewayWrapper_DeletePhotoResponse{}, 1)
+	defer f()
+
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_DeletePhotoRequest{
+			in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	payload := <-result
+	return payload.GetDeletePhotoResponse(), nil
+}
+
 func (m *rpcService) GetLatestAttentionTransfer(ctx context.Context, in *extint.LatestAttentionTransferRequest) (*extint.LatestAttentionTransferResponse, error) {
 	log.Println("Received rpc request GetLatestAttentionTransfer(", in, ")")
 	f, result := createChannel(&extint.GatewayWrapper_LatestAttentionTransfer{}, 1)

@@ -71,6 +71,10 @@ WRAP_RESPONSE_MESSAGE( external_interface::OnboardingContinueResponse,  onboardi
 
 WRAP_RESPONSE_MESSAGE( external_interface::LatestAttentionTransfer, latest_attention_transfer );
 
+WRAP_RESPONSE_MESSAGE( external_interface::PhotosInfoResponse,      photos_info_response );
+WRAP_RESPONSE_MESSAGE( external_interface::PhotoResponse,           photo_response );
+WRAP_RESPONSE_MESSAGE( external_interface::ThumbnailResponse,       thumbnail_response );
+WRAP_RESPONSE_MESSAGE( external_interface::DeletePhotoResponse,     delete_photo_response );
 
 } // end namespace Cozmo
 } // end namespace Anki

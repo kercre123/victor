@@ -14,6 +14,9 @@
 
 #include "engine/components/photographyManager.h"
 #include "engine/components/visionComponent.h"
+#include "engine/cozmoAPI/comms/protoMessageHandler.h"
+#include "engine/externalInterface/externalMessageRouter.h"
+#include "engine/externalInterface/gatewayInterface.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 
@@ -22,7 +25,7 @@
 #include <sstream>
 #include <iomanip>
 
-// Log options
+
 #define LOG_CHANNEL "PhotographyManager"
 
 namespace Anki {
@@ -65,13 +68,26 @@ PhotographyManager::PhotographyManager()
 void PhotographyManager::InitDependent(Robot* robot, const RobotCompMap& dependentComps)
 {
   _visionComponent = robot->GetComponentPtr<VisionComponent>();
+  _gatewayInterface = robot->GetGatewayInterface();
+
+  auto* gi = _gatewayInterface;
+  if (gi != nullptr)
+  {
+    auto commonCallback = std::bind(&PhotographyManager::HandleEvents, this, std::placeholders::_1);
+    
+    // Subscribe to desired simple events
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapper::OneofMessageTypeCase::kPhotosInfoRequest,  commonCallback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapper::OneofMessageTypeCase::kPhotoRequest,       commonCallback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapper::OneofMessageTypeCase::kThumbnailRequest,   commonCallback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapper::OneofMessageTypeCase::kDeletePhotoRequest, commonCallback));
+  }
 
   const auto& config = robot->GetContext()->GetDataLoader()->GetPhotographyConfig();
   kMaxSlots = JsonTools::GetValue<s32>(config["MaxSlots"]);
   kRemoveDistortion = JsonTools::ParseBool(config, "RemoveDistortion", kModuleName);
   kSaveQuality = JsonTools::GetValue<int8_t>(config["SaveQuality"]);
   kThumbnailScale = JsonTools::GetValue<float>(config["ThumbnailScale"]);
-  
+
   _platform = robot->GetContextDataPlatform();
   DEV_ASSERT(_platform != nullptr, "PhotographyManager.InitDependent.DataPlatformIsNull");
 
@@ -81,7 +97,7 @@ void PhotographyManager::InitDependent(Robot* robot, const RobotCompMap& depende
     LOG_ERROR("PhotographyManager.InitDependent.FailedToCreateFolder", "Failed to create folder %s", _savePath.c_str());
     return;
   }
-  
+
   _fullPathPhotoInfoFile = Util::FileUtils::FullFilePath({_savePath, kPhotoManagerFilename});
   if (Util::FileUtils::FileExists(_fullPathPhotoInfoFile))
   {
@@ -399,30 +415,8 @@ bool PhotographyManager::DeletePhotoByID(const int id, const bool savePhotosFile
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void PhotographyManager::SendPhotosInfo() const
-{
-  // TODO: Send the list of photoinfos to the app (via protobuff message)
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool PhotographyManager::SendPhotoByID(const int id)
-{
-  static const bool isThumbnail = false;
-  return SendImageHelper(id, isThumbnail);
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool PhotographyManager::SendThumbnailByID(const int id)
-{
-  static const bool isThumbnail = true;
-  return SendImageHelper(id, isThumbnail);
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool PhotographyManager::SendImageHelper(const int id, const bool isThumbnail)
+bool PhotographyManager::SendImageHelper(const int id, const bool isThumbnail,
+                                         external_interface::Photo* photo)
 {
   const int index = PhotoIndexFromID(id);
   if (index < 0)
@@ -430,14 +424,29 @@ bool PhotographyManager::SendImageHelper(const int id, const bool isThumbnail)
     return false;
   }
 
+  // TOOD:  Currently won't work for files > ~65K because we use UDP
+  //   To solve that, we need to chunkify the messages, putting the
+  //   chunks back together in gateway
   const auto fullPath = Util::FileUtils::FullFilePath({_savePath,
                                                        GetBasename(id) + "." +
                                                        (isThumbnail ? GetThumbExtension() : GetPhotoExtension())});
 
-  // TODO: Read jpg file off disk and send contents to the app (via protobuff message)
-
-  LOG_INFO("PhotographyManager.SendImageHelper", "%s with ID %i, at index %i, sent",
+  LOG_INFO("PhotographyManager.SendImageHelper", "%s with ID %i, at index %i, being read and sent",
            (isThumbnail ? "Thumbnail" : "Photo"), id, index);
+
+  const auto binaryData = Util::FileUtils::ReadFileAsBinary(fullPath);
+  LOG_INFO("PhotographyManager.SendImageHelper", "Binary data size is %u",
+           static_cast<uint32_t>(binaryData.size()));
+
+  photo->set_image_data((void*)binaryData.data(), binaryData.size());
+
+  // What the heck is going on?
+  const std::string& dataStr = photo->image_data();
+  for (int i = 0; i < 20; i++)
+  {
+    LOG_INFO("PhotographyManager.SendImageHelper", "Item %i holds %i", i, (int)dataStr[i]);
+  }
+
 
   if (!isThumbnail)
   {
@@ -474,16 +483,115 @@ int PhotographyManager::PhotoIndexFromID(const int id) const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//   TODO:  Handle the following requests that will be coming from the App:
-//     GetPhotoInfos{}
-//     GetPhotoForID{int id}
-//     GetThumbnailForID{int id}
-//     DeletePhotoForID{int id}
-// (The last 3 of these messages could potentially be "ForIndex", but by ID is safer.
-//  Imagine several Delete requests coming quickly; each delete can change the indexes of other photos.)
+void PhotographyManager::HandleEvents(const AnkiEvent<external_interface::GatewayWrapper>& event)
+{
+  switch(event.GetData().oneof_message_type_case())
+  {
+    case external_interface::GatewayWrapper::OneofMessageTypeCase::kPhotosInfoRequest:
+      OnRequestPhotosInfo(event.GetData().photos_info_request());
+      break;
+    case external_interface::GatewayWrapper::OneofMessageTypeCase::kPhotoRequest:
+      OnRequestPhoto(event.GetData().photo_request());
+      break;
+    case external_interface::GatewayWrapper::OneofMessageTypeCase::kThumbnailRequest:
+      OnRequestThumbnail(event.GetData().thumbnail_request());
+      break;
+    case external_interface::GatewayWrapper::OneofMessageTypeCase::kDeletePhotoRequest:
+      OnRequestDeletePhoto(event.GetData().delete_photo_request());
+      break;
+    default:
+      LOG_ERROR("PhotographyManager.HandleEvents",
+                "HandleEvents called for unknown message");
+  }
+}
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void PhotographyManager::OnRequestPhotosInfo(const external_interface::PhotosInfoRequest& photosInfoRequest)
+{
+  LOG_INFO("PhotographyManager.OnRequestPhotosInfo", "Photos info requested");
+  auto* photosInfoResp = new external_interface::PhotosInfoResponse();
+  for (auto i = 0; i < _photoInfos.size(); i++)
+  {
+    const auto& item = _photoInfos[i];
+    external_interface::PhotoInfo* photoInfo = photosInfoResp->add_photo_infos();
+    photoInfo->set_photo_id(item._id);
+    photoInfo->set_timestamp_utc(item._dateTimeTaken);
+    photoInfo->set_copied_to_app(item._copiedToApp);
+  }
+  _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(photosInfoResp));
+}
 
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void PhotographyManager::OnRequestPhoto(const external_interface::PhotoRequest& photoRequest)
+{
+  const auto photoId = photoRequest.photo_id();
+  LOG_INFO("PhotographyManager.OnRequestPhoto", "Requesting photo with ID %u", photoId);
+
+  auto* photoResp = new external_interface::PhotoResponse();
+  //auto* photo = photoResp->mutable_photo();
+  auto* photo = new external_interface::Photo();
+
+  static const bool isThumbnail = false;
+  const bool success = SendImageHelper(photoId, isThumbnail, photo);
+  if (success)
+  {
+    photoResp->set_allocated_photo(photo);
+  }
+  photoResp->set_success(success);
+
+  _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(photoResp));
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void PhotographyManager::OnRequestThumbnail(const external_interface::ThumbnailRequest& thumbnailRequest)
+{
+  const auto photoId = thumbnailRequest.photo_id();
+  LOG_INFO("PhotographyManager.OnRequestThumbnail", "Requesting thumbnail with ID %u", photoId);
+
+  auto* thumbnailResp = new external_interface::ThumbnailResponse();
+  //auto* photo = thumbnailResp->mutable_thumbnail();
+  auto* photo = new external_interface::Photo();
+
+  static const bool isThumbnail = true;
+  const bool success = SendImageHelper(photoId, isThumbnail, photo);
+  if (success)
+  {
+    thumbnailResp->set_allocated_photo(photo);
+  }
+  thumbnailResp->set_success(success);
+  // What the heck is going on?
+  const std::string& dataStr = photo->image_data();
+  for (int i = 0; i < 20; i++)
+  {
+    LOG_INFO("PhotographyManager.OnRequestThumbnail", "Item %i holds %i", i, (int)dataStr[i]);
+  }
+
+
+  _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(thumbnailResp));
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void PhotographyManager::OnRequestDeletePhoto(const external_interface::DeletePhotoRequest& deletePhotoRequest)
+{
+  const auto photoId = deletePhotoRequest.photo_id();
+  LOG_INFO("PhotographyManager.OnRequestDeletePhoto", "Deleting photo with ID %u", photoId);
+  static const bool saveChangeToDisk = true;
+  const bool success = DeletePhotoByID(photoId, saveChangeToDisk);
+  if (!success)
+  {
+    LOG_ERROR("PhotographyManager.OnRequestDeletePhoto", "Failed to delete photo with ID %u", photoId);
+  }
+
+
+  auto* deletePhotoResp = new external_interface::DeletePhotoResponse();
+  deletePhotoResp->set_success(success);
+  _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(deletePhotoResp));
+}
+
+
 } // namespace Cozmo
 } // namespace Anki

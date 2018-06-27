@@ -153,6 +153,16 @@ test_meet_victor: .require_ip
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/request_enrolled_names -d '{}'
 	@echo
 
+test_photos: .require_ip
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/photos_info -d '{}'
+	@echo
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/photo -d '{"photo_id":5}'
+	@echo
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/thumbnail -d '{"photo_id":5}'
+	@echo
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/delete_photo -d '{"photo_id":5}'
+	@echo
+
 test_attention_transfer: .require_ip
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/get_latest_attention_transfer -d '{}'
 	@echo

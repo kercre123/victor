@@ -23,6 +23,7 @@ namespace Anki {
 namespace Cozmo {
 
 class SettingsManager;
+class IGatewayInterface;
 
 
 class SettingsCommManager : public IDependencyManagedComponent<RobotComponentID>,
@@ -54,6 +55,7 @@ public:
 private:
 
   SettingsManager*    _settingsManager = nullptr;
+  IGatewayInterface*  _gatewayInterface = nullptr;
 };
 
 
