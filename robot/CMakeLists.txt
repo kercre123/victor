@@ -78,6 +78,8 @@ target_compile_definitions(cube_led_animator
   ${PLATFORM_COMPILE_DEFS}
   ${ANKI_BUILD_CXX_COMPILE_DEFINITIONS}
 )
+
+anki_build_target_license(cube_led_animator "ANKI")
 endif()
 
 set(PLATFORM_SRCS "")

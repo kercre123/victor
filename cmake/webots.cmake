@@ -51,5 +51,6 @@ if (NOT TARGET webots_plugin_physics)
         $<BUILD_INTERFACE:${WEBOTS_HOME}/include/ode>
     )
 
+    anki_build_target_license(webots_plugin_physics "ANKI")
 endif()
 list(APPEND WEBOTS_PLUGINS webots_plugin_physics)

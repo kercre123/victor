@@ -88,24 +88,40 @@ function(anki_build_target_license target)
     list(FIND ALL_LICENSES ${license} found)
     if(found EQUAL -1)
       message(${MESSAGE_STATUS} "ERROR: unrecognised license ${license} for ${target} target")
+
+      # override previous licensing information
+      set_property(TARGET ${target} PROPERTY APPROVED_LICENSE 0)
+
       return()
     endif()
 
     list(FIND REVIEWING_LICENSES ${license} found)
     if(found GREATER_EQUAL 0)
       message(${MESSAGE_STATUS} "WARNING: license ${license} for ${target} target is under review")
+
+      # override previous licensing information
+      set_property(TARGET ${target} PROPERTY APPROVED_LICENSE 0)
+
       return()
     endif()
 
     list(FIND CAUTION_LICENSES ${license} found)
     if(found GREATER_EQUAL 0)
       message(${MESSAGE_STATUS} "CAUTION: license ${license} for ${target} target needs approval")
+
+      # override previous licensing information
+      set_property(TARGET ${target} PROPERTY APPROVED_LICENSE 0)
+
       return()
     endif()
 
     list(FIND STOP_LICENSES ${license} found)
     if(found GREATER_EQUAL 0)
       message(${MESSAGE_STATUS} "STOP: license ${license} for ${target} target needs approval")
+
+      # override previous licensing information
+      set_property(TARGET ${target} PROPERTY APPROVED_LICENSE 0)
+
       return()
     endif()
 
@@ -123,7 +139,7 @@ function(anki_build_target_license target)
     endif()
   endforeach()
 
-  set_property(TARGET ${target} APPEND PROPERTY APPROVED_LICENSE 1)
+  set_property(TARGET ${target} PROPERTY APPROVED_LICENSE 1)
 endfunction()
 
 function(check_licenses)
@@ -142,6 +158,7 @@ function(check_licenses)
   # take the list of executables and shared libraries and recursively add all dependencies
   set(all_dependencies "${all_executables}")
   foreach(target ${all_executables})
+    target_dependencies(${target} deps)
     list(APPEND all_dependencies ${deps})
   endforeach()
   list(LENGTH all_dependencies count)
@@ -150,7 +167,18 @@ function(check_licenses)
   endif()
 
   # temporarily remove audio targets until this is in master as audio shares cmake files
-  list(REMOVE_ITEM all_dependencies zipreader hijack_audio wave_portal ak_alsa_sink audio_engine audio_multiplexer_engine audio_multiplexer_robot)
+  list(REMOVE_ITEM all_dependencies zipreader hijack_audio wave_portal ak_alsa_sink
+                                    audio_engine audio_multiplexer_engine audio_multiplexer_robot
+                                    AkStreamMgr AkMusicEngine AkSoundEngine AkMemoryMgr AkCompressorFX
+                                    AkDelayFX AkMatrixReverbFX AkMeterFX AkExpanderFX AkParametricEQFX 
+                                    AkGainFX AkPeakLimiterFX AkSoundSeedImpactFX AkRoomVerbFX 
+                                    AkGuitarDistortionFX AkStereoDelayFX AkPitchShifterFX AkTimeStretchFX 
+                                    AkFlangerFX AkConvolutionReverbFX AkTremoloFX AkHarmonizerFX 
+                                    AkRecorderFX McDSPLimiterFX McDSPFutzBoxFX AkSilenceSource 
+                                    AkSineSource AkToneSource AkAudioInputSource AkMotionGeneratorSource 
+                                    AkSoundSeedWooshSource AkSoundSeedWindSource AkSynthOneSource 
+                                    AkVorbisDecoder AkAACDecoder
+                                    CommunicationCentral)
 
   # check all dependencies have license set
   foreach(target ${all_dependencies})
@@ -163,20 +191,56 @@ function(check_licenses)
         # non-source code target
 
       else()
-        if(0)
+        get_property(isset TARGET ${target} PROPERTY APPROVED_LICENSE)
+
+        if(1)
+          if(NOT isset)
+            message(${MESSAGE_STATUS} "WARNING: licensing information missing or not approved for ${target} target")
+          endif()
+
+        else()
           # guess what the license is to bootstrap license settings
           guess_license_for_target(${target} licenses)
-          message("${target} ${license}")
+
+          if(licenses)
+            if(isset)
+              message("${target} has approved licenses, guessed ${licenses}")
+            else()
+              message("${target} is not approved, add one or more of ${licenses}")
+            endif()
+          else()
+            if(isset)
+              message("${target} has approved licenses")
+            else()
+              message("${target} is not approved, did not guess any licenses")
+            endif()
+          endif()
         endif()
 
-        get_property(isset TARGET ${target} PROPERTY APPROVED_LICENSE SET)
-        if(NOT isset)
-          message(${MESSAGE_STATUS} "WARNING: licensing information missing for ${target} target")
-        endif()
 
       endif()
     else()
-      message("### NON TARGET DEPENDENCY ${target}")
+      # linker option is not a known target, i.e. a system library or missing cmake configuration
+
+      # split full name and partial name matches to avoid over-matching anything with a m or z
+      # and simplify matching .so files with version numbers
+      # also handle special case, extra linker options (-wl) on the link line
+
+      foreach(lib "-Wl" asound c curl cutils dl "-ldl" log m z zlib)
+        if(target STREQUAL ${lib})
+          set(found TRUE)
+        endif()
+      endforeach()
+      foreach(lib libcutils libglib libgio libgobject libffi libdl libz libresolv libgmodule libpcre
+                  AudioToolbox AudioUnit CoreAudio CoreFoundation Foundation)
+        if(target MATCHES ${lib})
+          set(found TRUE)
+        endif()
+      endforeach()
+      if(NOT found)
+        message("${target} is not a recognised system lib and does not have cmake configuration including licensing information.")
+      endif()
+
     endif()
   endforeach()
 endfunction()
@@ -205,7 +269,7 @@ function(guess_license_for_file filename licenses_result)
           contents MATCHES "matt michini" OR contents MATCHES "jarrod hatfield" OR
           contents MATCHES "al chaussee" OR contents MATCHES "greg nagel" OR
           contents MATCHES "paul aluri")
-      list(APPEND licenses "Anki")
+      list(APPEND licenses "ANKI")
     endif()
 
     if(contents MATCHES "frank thilo")
@@ -245,7 +309,7 @@ function(guess_license_for_file filename licenses_result)
     endif()
 
     if(contents MATCHES "signal essence")
-      list(APPEND licenses "Copyright 2017 Signal Essence")
+      list(APPEND licenses "Commercial")
     endif()
 
     if(contents MATCHES "sergey lyubka")
@@ -255,7 +319,13 @@ function(guess_license_for_file filename licenses_result)
     if(contents MATCHES "luke benstead")
       list(APPEND licenses "modified BSD")
     endif()
-  
+
+    foreach(license ${licenses})
+      if(license MATCHES "GPL")
+        message("### ${filename} matches against a GPL license")
+      endif()
+    endforeach()
+
   endif()
 
   set(${licenses_result} "${licenses}" PARENT_SCOPE)

@@ -21,11 +21,11 @@
 
 ## Error messages
 
-### `"WARNING: missing license information for TARGET target"`
+### `"WARNING: licensing information missing or not approved for TARGET target"`
 
-  Licensing information is missing for this target, add with `anki_build_target_license(TARGET "<license>,<path to license>" "<license>,<path to license>")`
+  Licensing information is missing for this target, add with `anki_build_target_license(TARGET "<license>,<path to license>" "<license>,<path to license>")` or there is licensing information but the licenses are not approved.
 
-### `"WARNING: missing path to license file for TARGET target"`
+### `"WARNING: missing path to license file for LICENSE on TARGET target"`
 
   Licensing information takes the form `<name of licence>,<path/to/license/file>`, in this instance only the name of the license has been supplied. Add the path to the license file, e.g.
   `anki_build_target_license(TARGET "<license>,<path to license>")`
@@ -68,7 +68,7 @@ Licenses may be:
 - Commercial: Under special conditions
 
 |Identifier   |Use       |Description                                                 | URL                                                                     |
-|:------------:|:--------:| ---------------------------------------------------------- | ----------------------------------------------------------------------- |
+|:-----------:|:--------:| ---------------------------------------------------------- | ----------------------------------------------------------------------- |
 |AAL          |          |Attribution Assurance License                               |https://opensource.org/licenses/AAL                                      |
 |AFL-3.0      |          |Academic Free License, Version 3.0                          |https://opensource.org/licenses/AFL-3.0                                  |
 |AGPL-3.0     |          |GNU AFFERO GENERAL PUBLIC LICENSE, Version 3 (AGPL-3.0)     |https://opensource.org/licenses/AGPL-3.0                                 |
@@ -117,7 +117,7 @@ Licenses may be:
 |ISC:wraptext |          |                                                            |                                                                         |
 |ISC          |          |ISC License (ISC)                                           |https://en.wikipedia.org/wiki/ISC_license                                |
 |jabberpl     |          |Jabber Open Source License                                  |https://opensource.org/licenses/jabberpl                                 |
-|libpng       |Reviewing |                                                            |https://en.wikipedia.org/wiki/Libpng_License                             |
+|libpng       |Go        |                                                            |https://en.wikipedia.org/wiki/Libpng_License                             |
 |LGPL-2.0     |          |                                                            |                                                                         |
 |LGPL-2.1     |Caution   |GNU Lesser General Public License, Version 2.1              |https://en.wikipedia.org/wiki/GNU_Lesser_General_Public_License          |
 |LGPL-3.0     |Stop      |GNU Lesser General Public License, Version 3.0              |https://en.wikipedia.org/wiki/GNU_Lesser_General_Public_License          |

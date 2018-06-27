@@ -18,7 +18,7 @@ if(VISION_PROFILER)
 endif()
 
 anki_build_cxx_library(cti_vision ${ANKI_SRCLIST_DIR} STATIC)
-anki_build_target_license(cti_vision "ANKI" "BSD-2" "BSD-3")
+anki_build_target_license(cti_vision "ANKI" "BSD-3,${CMAKE_CURRENT_SOURCE_DIR}/engine/perspectivePoseEstimation.cpp")
 
 set_target_properties(cti_vision
   PROPERTIES
