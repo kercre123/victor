@@ -36,6 +36,9 @@ namespace Cozmo {
     // BleClient can safely be destroyed once this returns.
     void Stop();
     
+    // Where to find the cube firmware file
+    void SetCubeFirmwareFilepath(const std::string& path) { _cubeFirmwarePath = path; }
+    
     // Send a message to the currently connected cube
     bool Send(const std::vector<uint8_t>& msg);
     
@@ -45,7 +48,7 @@ namespace Cozmo {
     void DisconnectFromCube();
     
     bool IsConnectedToCube() {
-      return _connectionId >= 0;
+      return (_connectionId >= 0) && !_pendingFirmwareCheck;
     };
     
     // Are we connected to the bluetooth daemon?
@@ -59,13 +62,10 @@ namespace Cozmo {
     void SetScanDuration(const float duration_sec) {
       _scanDuration_sec = static_cast<ev_tstamp>(duration_sec);
     }
-
-    void FlashCube(std::vector<uint8_t> cubeFirmware);
     
     using AdvertisementCallback = std::function<void(const std::string& addr, const int rssi)>;
     using ReceiveDataCallback = std::function<void(const std::string& addr, const std::vector<uint8_t>& data)>;
     using ScanFinishedCallback = std::function<void(void)>;
-    using ReceiveFirmwareVersionCallback = std::function<void(const std::string& addr, const std::string& version)>; 
     
     // Advertisement callback gets called whenever we have new scanning results
     void RegisterAdvertisementCallback(const AdvertisementCallback& callback) {
@@ -81,10 +81,6 @@ namespace Cozmo {
     // Gets called when scanning for cubes has completed
     void RegisterScanFinishedCallback(const ScanFinishedCallback& callback) {
       _scanFinishedCallback = callback;
-    }
-
-    void RegisterReceiveFirmwareVersionCallback(const ReceiveFirmwareVersionCallback& callback) {
-      _receiveFirmwareVersionCallback = callback;
     }
     
   protected:
@@ -120,21 +116,27 @@ namespace Cozmo {
     
     // Callback for "scanning for cubes" timer
     void ScanningTimerCallback(ev::timer& w, int revents);
-
-    // Callback for flashing the cube
-    void AsyncFlashCubeCallback(ev::async& w, int revents);
+    
+    // Read the cube firmware file from disk and place it into firmware
+    bool GetCubeFirmwareFromDisk(std::vector<uint8_t>& firmware);
+    
+    // Send the application firmware to the cube over BLE
+    void FlashCube();
     
     // Connection id for the single cube we are connected to.
     // Equal to -1 if we are not connected to a cube.
-    int _connectionId = -1;
+    std::atomic<int> _connectionId{-1};
     
     // Address of the cube to connect to (can only connect to one at a time)
     std::string _cubeAddress;
     
+    // True if we are in the process of checking the cube firmware version or
+    // OTA'ing the cube.
+    std::atomic<bool> _pendingFirmwareCheck{false};
+    
     AdvertisementCallback          _advertisementCallback;
     ReceiveDataCallback            _receiveDataCallback;
     ScanFinishedCallback           _scanFinishedCallback;
-    ReceiveFirmwareVersionCallback _receiveFirmwareVersionCallback;
     
     // The thread that runs the ev loop for server comms callbacks
     std::thread _loopThread;
@@ -153,15 +155,16 @@ namespace Cozmo {
     
     // Timer used to terminate scanning for cubes
     ev::timer _scanningTimer;
-
-    // Async signal to begin flashing the cube
-    ev::async _asyncFlashCubeSignal;
     
     // How long to scan for cubes for
     std::atomic<ev_tstamp> _scanDuration_sec{3.f};
 
-    // path to cube firmware
-    std::vector<uint8_t> _cubeFirmware;
+    // Path to cube firmware
+    std::string _cubeFirmwarePath;
+    
+    // Cube firmware version on disk
+    std::string _cubeFirmwareVersionOnDisk;
+
   };
 
 } // Cozmo
