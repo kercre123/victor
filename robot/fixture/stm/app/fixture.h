@@ -93,6 +93,7 @@ uint32_t      fixtureReadSerial(void); // Read-only (NO MODIFY) current serial n
 int           fixtureReadSequence(void); //read the current sequence #. DOES NOT make any sequence changes. reporting API only.
 int           fixtureSetTime(time_t time); //return 0=success
 time_t        fixtureGetTime(void);
+time_t        fixtureGetSetTime(void); //returns last successful fixtureSetTime() value, 0 if unknown
 bool          fixtureTimeIsValid(void);
 const char*   fixtureTimeStr(time_t time); //short (20char) string representation of the timestamp
 #endif

@@ -354,6 +354,21 @@ static void GetTime(void)
 {
   time_t time = fixtureGetTime(); //rtc time
   ConsolePrintf("%010u,%i,%s", time, fixtureTimeIsValid(), ctime(&time));
+  
+  int arg1 = 0;
+  try { sscanf(GetArgument(1), "%i", &arg1); } catch(...) { arg1=0; }
+  
+  if( arg1 == 1 ) {
+    time_t settime = fixtureGetSetTime();
+    ConsolePrintf("%010u,%i,%s", settime, settime>0, ctime(&settime));
+    
+    int timediff = time - settime;
+    int days  =   timediff/(24*3600);
+    int hours =  (timediff%(24*3600)) / 3600;
+    int min   = ((timediff%(24*3600)) % 3600) / 60;
+    int sec   = ((timediff%(24*3600)) % 3600) % 60;
+    ConsolePrintf("diff,days,%i,hms,%i,%i,%i\n", days, hours, min, sec);
+  }
 }
 
 static void SetTime(void)
@@ -368,7 +383,9 @@ static void SetTime(void)
     throw ERROR_UNHANDLED_EXCEPTION;
   }
   
-  GetTime(); //readback prints formatted time
+  //readback & print formatted
+  time = fixtureGetTime(); //rtc time
+  ConsolePrintf("%010u,%i,%s", time, fixtureTimeIsValid(), ctime(&time));
 }
 
 extern void fixtureRtcTestbench(void);

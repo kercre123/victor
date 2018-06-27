@@ -200,7 +200,10 @@ int fixtureReadSequence(void) {
 //backup register metadata cfg
 const uint32_t RTC_BACKUP_REG_INIT    = RTC_BKP_DR0;
 const uint32_t RTC_BACKUP_REG_CENTURY = RTC_BKP_DR1;
+const uint32_t RTC_BACKUP_REG_SET_TIME  = RTC_BKP_DR2;
+const uint32_t RTC_BACKUP_REG_SET_VALID = RTC_BKP_DR3;
 const uint32_t RTC_INIT_VALUE = 0x32F2;
+const uint32_t RTC_SET_VALID_VALUE = 0xa56c;
 
 enum rtc_error_bits_e {
   RTC_ERR_NO_INIT         = 0x1000,
@@ -210,6 +213,7 @@ enum rtc_error_bits_e {
   RTC_ERR_VERIFY_CENTURY  = 0x0010,
   RTC_ERR_VERIFY_TIME     = 0x0020,
   RTC_ERR_VERIFY_DATE     = 0x0040,
+  RTC_ERR_VERIFY_SETTIME  = 0x0080,
 };
 
 /*char* unixtimestr_(time_t time) {
@@ -307,6 +311,8 @@ int fixtureSetTime(time_t time)
   if( rtc_inited ) {
     e |= RTC_SetDateTime_(&rtc.date, &rtc.time);
     RTC_WriteBackupRegister(RTC_BACKUP_REG_CENTURY, e==0 ? century : 0); //invalidate on error
+    RTC_WriteBackupRegister(RTC_BACKUP_REG_SET_TIME, time);
+    RTC_WriteBackupRegister(RTC_BACKUP_REG_SET_VALID, RTC_SET_VALID_VALUE);
     
     //readback verify (sanity check finicky hal api)
     struct { RTC_DateTypeDef date; RTC_TimeTypeDef time; } rtcReadback;
@@ -317,6 +323,9 @@ int fixtureSetTime(time_t time)
       e |= RTC_ERR_VERIFY_TIME;
     if( century != RTC_ReadBackupRegister(RTC_BACKUP_REG_CENTURY) )
       e |= RTC_ERR_VERIFY_CENTURY;
+    if( RTC_ReadBackupRegister(RTC_BACKUP_REG_SET_TIME) != time ||
+        RTC_ReadBackupRegister(RTC_BACKUP_REG_SET_VALID) != RTC_SET_VALID_VALUE )
+      e |= RTC_ERR_VERIFY_SETTIME;
     
     #if FIXTURE_RTC_DEBUG > 0
     if( (e & (RTC_ERR_VERIFY_DATE|RTC_ERR_VERIFY_TIME|RTC_ERR_VERIFY_CENTURY)) != 0 )
@@ -362,6 +371,18 @@ time_t fixtureGetTime(void)
   #endif
   
   return time;
+}
+
+time_t fixtureGetSetTime(void)
+{
+  time_t time = RTC_ReadBackupRegister(RTC_BACKUP_REG_SET_TIME);
+  bool settime_valid  = RTC_ReadBackupRegister(RTC_BACKUP_REG_SET_VALID) == RTC_SET_VALID_VALUE;
+  
+  #if FIXTURE_RTC_DEBUG > 0
+  ConsolePrintf("fixtureGetSetTime,%i,%i,%010u,%s", fixtureTimeIsValid(), settime_valid, time, ctime(&time) );
+  #endif
+  
+  return settime_valid && fixtureTimeIsValid() ? time : 0;
 }
 
 bool fixtureTimeIsValid(void) {
