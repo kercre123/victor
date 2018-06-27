@@ -31,41 +31,27 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-const char* kSearchAnimKey        = "searchAnimTrigger";
-const char* kNumSearchesKey       = "numSearches";
-const char* kMinDrivingDistKey    = "minDrivingDist_mm";
-const char* kMaxDrivingDistKey    = "maxDrivingDist_mm";
-const char* kMaxObservedAgeSecKey = "maxLastObservedAge_sec";
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorFindHome::InstanceConfig::InstanceConfig()
-{
-  searchAnimTrigger = AnimationTrigger::Count;
-  numSearches       = 0;
-  minDrivingDist_mm = 0.f;
-  maxDrivingDist_mm = 0.f;
-  maxObservedAge_ms = 0;
-  homeFilter        = std::make_unique<BlockWorldFilter>();
+const char* kSearchTurnAnimKey      = "searchTurnAnimTrigger";
+const char* kMinSearchAngleSweepKey = "minSearchAngleSweep_deg";
+const char* kMaxSearchTurnsKey      = "maxSearchTurns";
+const char* kNumSearchesKey         = "numSearches";
+const char* kMinDrivingDistKey      = "minDrivingDist_mm";
+const char* kMaxDrivingDistKey      = "maxDrivingDist_mm";
+const char* kMaxObservedAgeSecKey   = "maxLastObservedAge_sec";
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorFindHome::InstanceConfig::InstanceConfig(const Json::Value& config, const std::string& debugName)
 {
-  JsonTools::GetCladEnumFromJSON(config, kSearchAnimKey, searchAnimTrigger, debugName);
-  numSearches        = JsonTools::ParseUint8(config, kNumSearchesKey, debugName);
-  minDrivingDist_mm  = JsonTools::ParseFloat(config, kMinDrivingDistKey, debugName);
-  maxDrivingDist_mm  = JsonTools::ParseFloat(config, kMaxDrivingDistKey, debugName);
-  maxObservedAge_ms  = Util::numeric_cast<TimeStamp_t>(1000.f * JsonTools::ParseFloat(config, kMaxObservedAgeSecKey, debugName));
-  homeFilter         = std::make_unique<BlockWorldFilter>();
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorFindHome::DynamicVariables::DynamicVariables()
-{
-  numSearchesCompleted = 0;
+  JsonTools::GetCladEnumFromJSON(config, kSearchTurnAnimKey, searchTurnAnimTrigger, debugName);
+  minSearchAngleSweep_deg = JsonTools::ParseFloat(config, kMinSearchAngleSweepKey, debugName);
+  maxSearchTurns          = JsonTools::ParseUint8(config, kMaxSearchTurnsKey, debugName);
+  numSearches             = JsonTools::ParseUint8(config, kNumSearchesKey, debugName);
+  minDrivingDist_mm       = JsonTools::ParseFloat(config, kMinDrivingDistKey, debugName);
+  maxDrivingDist_mm       = JsonTools::ParseFloat(config, kMaxDrivingDistKey, debugName);
+  maxObservedAge_ms       = Util::numeric_cast<TimeStamp_t>(1000.f * JsonTools::ParseFloat(config, kMaxObservedAgeSecKey, debugName));
+  homeFilter              = std::make_unique<BlockWorldFilter>();
 }
 
 
@@ -85,7 +71,9 @@ BehaviorFindHome::BehaviorFindHome(const Json::Value& config)
 void BehaviorFindHome::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   const char* list[] = {
-    kSearchAnimKey,
+    kSearchTurnAnimKey,
+    kMinSearchAngleSweepKey,
+    kMaxSearchTurnsKey,
     kNumSearchesKey,
     kMinDrivingDistKey,
     kMaxDrivingDistKey,
@@ -123,8 +111,7 @@ bool BehaviorFindHome::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindHome::OnBehaviorActivated()
 {
-  _dVars.numSearchesCompleted = 0;
-  
+  _dVars = DynamicVariables();
   
   // If we're carrying a block, we must first put it down
   const auto& robotInfo = GetBEI().GetRobotInfo();
@@ -132,7 +119,7 @@ void BehaviorFindHome::OnBehaviorActivated()
     // Put down the block. Even if it fails, we still just want
     // to move along in the behavior.
     DelegateIfInControl(new PlaceObjectOnGroundAction(),
-                        &BehaviorFindHome::TransitionToSearchAnim);
+                        &BehaviorFindHome::TransitionToSearchTurn);
   } else {
     TransitionToHeadStraight();
   }
@@ -145,27 +132,66 @@ void BehaviorFindHome::TransitionToHeadStraight()
   // front of us.
   DelegateIfInControl(new MoveHeadToAngleAction(0.f),
                       [this]() {
-                        TransitionToSearchAnim();
+                        TransitionToSearchTurn();
                       });
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFindHome::TransitionToSearchAnim()
+void BehaviorFindHome::TransitionToSearchTurn()
 {
-  DelegateIfInControl(new TriggerAnimationAction(_iConfig.searchAnimTrigger),
-                      [this]() {
-                        ++_dVars.numSearchesCompleted;
-                        TransitionToRandomDrive();
-                      });
+  // Have we turned enough to sweep the required angle?
+  // Or have we exceeded the max number of turns?
+  const bool sweptEnough = (_dVars.angleSwept_deg > _iConfig.minSearchAngleSweep_deg);
+  const bool exceededMaxTurns = (_dVars.numTurnsCompleted >= _iConfig.maxSearchTurns);
+  
+  if (sweptEnough || exceededMaxTurns) {
+    PRINT_NAMED_INFO("BehaviorFindHome.TransitionToSearchTurn.CompletedSearch",
+                     "We have completed a full search. Played %d turn animations (max is %d), and swept an angle of %.2f deg (min required sweep angle %.2f deg)",
+                     _dVars.numTurnsCompleted,
+                     _iConfig.maxSearchTurns,
+                     _dVars.angleSwept_deg,
+                     _iConfig.minSearchAngleSweep_deg);
+    ++_dVars.numSearchesCompleted;
+    TransitionToRandomDrive();
+  } else {
+    const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
+    const auto startHeading = robotPose.GetRotation().GetAngleAroundZaxis();
+    
+    // Play a single turn animation then wait for images
+    const u32 numImagesToWaitFor = 3;
+    auto* action = new CompoundActionSequential();
+    action->AddAction(new TriggerAnimationAction(_iConfig.searchTurnAnimTrigger));
+    action->AddAction(new WaitForImagesAction(numImagesToWaitFor, VisionMode::DetectingMarkers));
+    
+    DelegateIfInControl(action,
+                        [this,startHeading]() {
+                          ++_dVars.numTurnsCompleted;
+                          const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
+                          const auto endHeading = robotPose.GetRotation().GetAngleAroundZaxis();
+                          const auto angleSwept_deg = (endHeading - startHeading).getDegrees();
+                          DEV_ASSERT(angleSwept_deg < 0.f, "BehaviorFindHome.TransitionToSearchTurn.ShouldTurnClockwise");
+                          DEV_ASSERT(std::abs(angleSwept_deg) < 75.f, "BehaviorFindHome.TransitionToSearchTurn.TurnedTooMuch");
+                          _dVars.angleSwept_deg += std::abs(angleSwept_deg);
+                          TransitionToSearchTurn();
+                        });
+  }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindHome::TransitionToRandomDrive()
 {
+  // Clear out dVars related to search turns, since we are going to drive
+  // to a new place and begin the turns again.
+  _dVars.angleSwept_deg = 0.f;
+  _dVars.numTurnsCompleted = 0;
+  
   // Have we already completed the required number of searches?
   if (_dVars.numSearchesCompleted >= _iConfig.numSearches) {
+    PRINT_NAMED_WARNING("BehaviorFindHome.TransitionToRandomDrive.DidNotFindCharger",
+                        "Did not find the charger after %d searches - behavior ending.",
+                        _dVars.numSearchesCompleted);
     return;
   }
   
@@ -178,7 +204,7 @@ void BehaviorFindHome::TransitionToRandomDrive()
                                              forceHeadDown,
                                              DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
                                              angleTol);
-  DelegateIfInControl(driveToAction, &BehaviorFindHome::TransitionToSearchAnim);
+  DelegateIfInControl(driveToAction, &BehaviorFindHome::TransitionToSearchTurn);
 }
 
 

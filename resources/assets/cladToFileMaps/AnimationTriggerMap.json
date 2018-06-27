@@ -180,6 +180,10 @@
     "AnimName": "ag_chargerdocking_searchforcharger"
   },
   {
+    "CladEvent": "ChargerDockingSearchSingleTurn",
+    "AnimName": "ag_chargerdocking_searchforchargerturns"
+  },
+  {
     "CladEvent": "ChargerDockingSettle",
     "AnimName": "ag_chargerdocking_settle"
   },

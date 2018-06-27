@@ -50,6 +50,7 @@ enum int_32 AnimationTrigger
   ChargerDockingRequestWaitLoop,
   ChargerDockingRightTurn,
   ChargerDockingSearch,
+  ChargerDockingSearchSingleTurn,
   ChargerDockingSettle,
   ChargerDockingSevereRequest,
   ChargerDockingSevereRequestGetout,

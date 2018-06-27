@@ -2,8 +2,18 @@
   "behaviorClass": "FindHome",
   "behaviorID": "FindHome",
   
-  "searchAnimTrigger" : "ChargerDockingSearch",
+  "searchTurnAnimTrigger" : "ChargerDockingSearchSingleTurn",
   
+  // Robot must sweep at least this angle while searching in place
+  // before moving to a new search location.
+  "minSearchAngleSweep_deg" : 360.0,
+  
+  // Maximum number of turn animations to play before moving
+  // to another location to search.
+  "maxSearchTurns" : 12,
+  
+  // How many 'searches' to complete before giving up. One 'search'
+  // means spinning around in place and looking for the charger.
   "numSearches" : 3,
   
   "minDrivingDist_mm" : 150,

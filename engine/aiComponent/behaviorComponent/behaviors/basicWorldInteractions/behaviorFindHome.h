@@ -45,33 +45,43 @@ protected:
 
 private:
   struct InstanceConfig {
-    InstanceConfig();
+    InstanceConfig() {}
     InstanceConfig(const Json::Value& config, const std::string& debugName);
-    int         numSearches;
-    float       minDrivingDist_mm;
-    float       maxDrivingDist_mm;
-    TimeStamp_t maxObservedAge_ms;
+    float       minSearchAngleSweep_deg = 0.f;
+    int         maxSearchTurns = 0;
+    int         numSearches = 0;
+    float       minDrivingDist_mm = 0.f;
+    float       maxDrivingDist_mm = 0.f;
+    TimeStamp_t maxObservedAge_ms = 0;
     
-    AnimationTrigger searchAnimTrigger;
+    AnimationTrigger searchTurnAnimTrigger = AnimationTrigger::Count;
     std::unique_ptr<BlockWorldFilter> homeFilter;
   };
 
   struct DynamicVariables {
-    DynamicVariables();    
-    int numSearchesCompleted;
+    DynamicVariables() {}
+    
+    // Number of completed 'searches'. One 'search' means
+    // spinning around in place and looking for the charger
+    int numSearchesCompleted = 0;
+    
+    // Number of turn animations played while searching in
+    // place for the charger
+    int numTurnsCompleted = 0;
+    
+    // Cumulative angle swept while searching in place for
+    // the charger
+    float angleSwept_deg = 0.f;
   };
 
   InstanceConfig   _iConfig;
   DynamicVariables _dVars;
   
   void TransitionToHeadStraight();
-  void TransitionToSearchAnim();
+  void TransitionToSearchTurn();
   void TransitionToRandomDrive();
   
   void GetRandomDrivingPose(Pose3d& outPose);
-  
-  
-
   
 };
   
