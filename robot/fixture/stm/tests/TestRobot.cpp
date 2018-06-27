@@ -1483,6 +1483,19 @@ void LogDownload(void)
     error_t e = ERROR_OK; int len=0;
     int printlvl = RCOM_PRINT_LEVEL_ALL; //RCOM_PRINT_LEVEL_CMD | RCOM_PRINT_LEVEL_RSP;
     try { len = rcomRlg(i, &logbuf[0], logbufsize-1, printlvl); } catch(int err) { e=err; len=0; }
+    
+    //DEBUG
+    if( e != ERROR_OK && e != ERROR_ROBOT_MISSING_LOGFILE ) {
+      ConsolePrintf("LOG READ ERROR: %i -- press a key to approve\n", e);
+      while( ConsoleReadChar() > -1 );
+      uint32_t Tstart = Timer::get();
+      while( Timer::elapsedUs(Tstart) < 3*1000*1000 ) {
+        if( ConsoleReadChar() > -1 ) { e=ERROR_OK; break; }
+      }
+      if( e != ERROR_OK )
+        throw e;
+    }//-*/
+    
     if( len > 0 ) {
       logbuf[len] = '\0'; //null terminate
       FLEXFLOW::printf("<flex> log logdl_%08x_log%u.log\n", flexnfo.esn, i);
