@@ -208,9 +208,14 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
         
         //remove the final response line from dbuf datastream
         if( dbuf ) {
-          dbuf->wlen -= (rspLen+1); //line + raw \n char
-          if( dbuf->wlen < (rspLen+1) ) //sanity check
+          if( dbuf->wlen < (rspLen+1) ) { //sanity check
+            dbuf->p[ MAX(dbuf->wlen,0) ] = '\0';
+            ConsolePrintf("INVALID_STATE: cmdSend() dbuf.wlen=%i rspLen=%i\n", dbuf->wlen, rspLen);
+            ConsolePrintf("  rsp :[%s]'%s'\n", RSP_PREFIX, rsp);
+            ConsolePrintf("  dbuf:'%s'\n", dbuf->p );
             throw ERROR_INVALID_STATE;
+          }
+          dbuf->wlen -= (rspLen+1); //line + raw \n char
         }
         
         //echo to log (optionally append debug stats)
