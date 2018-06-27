@@ -42,10 +42,12 @@ _inetTimerCount(0),
 _wifiConnectTimeout_s(15),
 _commsState(CommsState::Raw),
 _stream(stream),
+_rtsHandler(nullptr),
 _loop(evloop),
 _engineClient(engineClient),
 _isPairing(isPairing),
-_isOtaUpdating(isOtaUpdating)
+_isOtaUpdating(isOtaUpdating),
+_rtsVersion(0)
 {
   Log::Write("Instantiate with isPairing:%s", isPairing?"true":"false");
   sTimeStarted = std::time(0);
@@ -96,6 +98,10 @@ SecurePairing::~SecurePairing() {
   _onReceivePlainTextHandle = nullptr;
   _onReceiveEncryptedHandle = nullptr;
   _onFailedDecryptionHandle = nullptr;
+
+  if(_rtsHandler != nullptr) {
+    delete _rtsHandler;
+  }
 
   ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
   ev_timer_stop(_loop, &_handleInternet.timer);
@@ -766,7 +772,8 @@ bool SecurePairing::HandleHandshake(uint16_t version) {
   // Todo: in the future, when there are more versions,
   // this method will need to handle telling this object
   // to properly switch states to adjust to proper version.
-  if(version == PairingProtocolVersion::CURRENT) {
+  if((version == PairingProtocolVersion::CURRENT) ||
+     (version == PairingProtocolVersion::FACTORY)) {
     return true;
   }
   else if(version == PairingProtocolVersion::INVALID) {
@@ -898,11 +905,24 @@ void SecurePairing::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
           } else {
             uint32_t clientVersion = *(uint32_t*)(bytes + 1);
             handleHandshake = HandleHandshake(clientVersion);
+
+            switch(clientVersion) {
+              case PairingProtocolVersion::CURRENT:
+                _rtsHandler = (IRtsHandler*)new RtsHandlerV3();
+                break;
+              default:
+              case PairingProtocolVersion::FACTORY:
+                _rtsHandler = (IRtsHandler*)new RtsHandlerV2();
+                break;
+            }
+
+            _rtsVersion = clientVersion;
           }
 
           if(handleHandshake) {
             _commsState = CommsState::Clad;
-            SendPublicKey();
+            _rtsHandler->StartRts();
+            //@@SendPublicKey();
             _state = PairingState::AwaitingPublicKey;
           } else {
             // If we can't handle handshake, must cancel
@@ -912,8 +932,8 @@ void SecurePairing::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
           }
         } else {
           // ignore msg
-        IncrementAbnormalityCount();
-        Log::Write("Received raw message that is not handshake.");
+          IncrementAbnormalityCount();
+          Log::Write("Received raw message that is not handshake.");
         }
       } else{
         // ignore msg

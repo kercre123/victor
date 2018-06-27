@@ -24,6 +24,7 @@ namespace Switchboard {
     V1                        = 1,
     V2                        = 2,
     V3                        = 3,
+    FACTORY                   = V2,
     CURRENT                   = SB_PAIRING_PROTOCOL_VERSION,
   };
   

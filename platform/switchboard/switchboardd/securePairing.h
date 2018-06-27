@@ -20,6 +20,9 @@
 #include "switchboardd/log.h"
 #include "ev++.h"
 #include "anki-wifi/wifi.h"
+#include "switchboardd/IRtsHandler.h"
+#include "switchboardd/rtsHandlerV2.h"
+#include "switchboardd/rtsHandlerV3.h"
 #include "switchboardd/INetworkStream.h"
 #include "switchboardd/keyExchange.h"
 #include "switchboardd/pairingMessages.h"
@@ -221,6 +224,7 @@ namespace Switchboard {
     std::unique_ptr<KeyExchange> _keyExchange;
     std::unique_ptr<TaskExecutor> _taskExecutor;
     std::unique_ptr<ExternalCommsCladHandler> _cladHandler;
+    IRtsHandler* _rtsHandler;
     
     Signal::SmartHandle _onReceivePlainTextHandle;
     Signal::SmartHandle _onReceiveEncryptedHandle;
@@ -247,6 +251,7 @@ namespace Switchboard {
     std::shared_ptr<EngineMessagingClient> _engineClient;
     bool _isPairing = false;
     bool _isOtaUpdating = false;
+    uint32_t _rtsVersion = 0;
     OtaUpdateSignal _otaUpdateRequestSignal;
     PairingSignal _completedPairingSignal;
     PairingSignal _stopPairingSignal;
