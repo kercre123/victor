@@ -57,6 +57,9 @@ enum uint_8 BehaviorClass {
   CoordinateWhileInAir,
   QuietModeCoordinator,
 
+  // cubeSpinner
+  VectorPlaysCubeSpinner,
+
   // danceToTheBeat
   DanceToTheBeat,
 

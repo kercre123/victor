@@ -99,9 +99,11 @@ void BehaviorDevCubeSpinnerConsole::InitBehavior()
 {
   const auto& lightConfig = GetBEI().GetDataAccessorComponent().GetCubeSpinnerConfig();
 
-  _iConfig.cubeSpinnerGame = std::make_unique<CubeSpinnerGame>(_iConfig.gameConfig, lightConfig,  
+  _iConfig.cubeSpinnerGame = std::make_unique<CubeSpinnerGame>(_iConfig.gameConfig, lightConfig,
+                                                               GetBEI().GetCubeCommsComponent(),
                                                                GetBEI().GetCubeLightComponent(), 
                                                                GetBEI().GetBackpackLightComponent(), 
+                                                               GetBEI().GetBlockWorld(),
                                                                GetBEI().GetRobotInfo().GetRNG());
   
   auto lockedCallback = [this](CubeSpinnerGame::LockResult result){
@@ -117,21 +119,13 @@ void BehaviorDevCubeSpinnerConsole::OnBehaviorActivated()
 {
   // reset dynamic variables
   _dVars = DynamicVariables();
-  BlockWorldFilter filter;
-  filter.AddAllowedFamily(ObjectFamily::LightCube);
-  const ActiveObject* obj = GetBEI().GetBlockWorld().FindConnectedActiveMatchingObject(filter);
-  if(obj != nullptr){
-    _dVars.objID = obj->GetID();
-    _iConfig.cubeSpinnerGame->StartNewGame(_dVars.objID);
-  }else{
-    CancelSelf();
-  }
+  ResetGame();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevCubeSpinnerConsole::BehaviorUpdate() 
 {
-  if( !IsActivated() ) {
+  if( !IsActivated() || !_dVars.hasGameStarted ) {
     return;
   }
 
@@ -150,15 +144,13 @@ void BehaviorDevCubeSpinnerConsole::BehaviorUpdate()
       }
       case CubeSpinnerGame::LockResult::Error:{
         DelegateNow(new TriggerAnimationAction(AnimationTrigger::PounceFail), [this](){
-          _iConfig.cubeSpinnerGame->StopGame();
-          _iConfig.cubeSpinnerGame->StartNewGame(_dVars.objID);
+          ResetGame();
         });
         break;
       }
       case CubeSpinnerGame::LockResult::Complete:{
         DelegateNow(new TriggerAnimationAction(AnimationTrigger::FistBumpSuccess), [this](){
-          _iConfig.cubeSpinnerGame->StopGame();
-          _iConfig.cubeSpinnerGame->StartNewGame(_dVars.objID);
+          ResetGame();
         });
         break;
       }
@@ -173,6 +165,26 @@ void BehaviorDevCubeSpinnerConsole::BehaviorUpdate()
   
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDevCubeSpinnerConsole::OnBehaviorDeactivated()
+{
+  _iConfig.cubeSpinnerGame->StopGame();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDevCubeSpinnerConsole::ResetGame()
+{
+  auto callback = [this](bool gameStartupSuccess, const ObjectID& id){
+    if(gameStartupSuccess){
+      _dVars.hasGameStarted = true;
+      _dVars.objID = id;
+    }else{
+      CancelSelf();
+    }
+  };
+  _iConfig.cubeSpinnerGame->RequestStartNewGame(callback);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevCubeSpinnerConsole::HandleWhileActivated(const EngineToGameEvent& event)

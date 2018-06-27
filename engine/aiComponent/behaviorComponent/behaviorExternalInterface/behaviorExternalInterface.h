@@ -43,6 +43,7 @@ class BEIRobotInfo;
 class BlockWorld;
 class BackpackLightComponent;
 class CubeAccelComponent;
+class CubeCommsComponent;
 class CubeLightComponent;
 class CliffSensorComponent;
 class DelegationComponent;
@@ -133,6 +134,7 @@ public:
             BlockWorld*                    blockWorld,
             BackpackLightComponent*        backpackLightComponent,
             CubeAccelComponent*            cubeAccelComponent,
+            CubeCommsComponent*            cubeCommsComponent,
             CubeLightComponent*            cubeLightComponent,
             CliffSensorComponent*          cliffSensorComponent,
             DelegationComponent*           delegationComponent,
@@ -217,6 +219,9 @@ public:
   inline bool HasCubeLightComponent() const { return GetComponentWrapper(BEIComponentID::CubeLight).IsComponentValid();}
   CubeLightComponent& GetCubeLightComponent() const { return GetComponentWrapper(BEIComponentID::CubeLight).GetComponent<CubeLightComponent>();}
 
+  inline bool HasCubeCommsComponent() const { return GetComponentWrapper(BEIComponentID::CubeComms).IsComponentValid();}
+  CubeCommsComponent& GetCubeCommsComponent() const { return GetComponentWrapper(BEIComponentID::CubeComms).GetComponent<CubeCommsComponent>();}
+
   inline bool HasObjectPoseConfirmer() const { return GetComponentWrapper(BEIComponentID::ObjectPoseConfirmer).IsComponentValid();}
   ObjectPoseConfirmer& GetObjectPoseConfirmer() const { return GetComponentWrapper(BEIComponentID::ObjectPoseConfirmer).GetComponent<ObjectPoseConfirmer>();}
 
@@ -269,6 +274,7 @@ private:
                        BlockWorld*                    blockWorld,
                        BackpackLightComponent*        backpackLightComponent,
                        CubeAccelComponent*            cubeAccelComponent,
+                       CubeCommsComponent*            cubeCommsComponent,
                        CubeLightComponent*            cubeLightComponent,
                        CliffSensorComponent*          cliffSensorComponent,
                        DelegationComponent*           delegationComponent,

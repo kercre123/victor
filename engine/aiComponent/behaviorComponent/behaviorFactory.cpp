@@ -39,6 +39,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateGlobalInterrupts.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateWhileInAir.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorQuietModeCoordinator.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/cubeSpinner/behaviorVectorPlaysCubeSpinner.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/danceToTheBeat/behaviorDanceToTheBeat.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevBatteryLogging.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevCubeSpinnerConsole.h"
@@ -341,6 +342,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::QuietModeCoordinator:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorQuietModeCoordinator(config));
+      break;
+    }
+    
+    case BehaviorClass::VectorPlaysCubeSpinner:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorVectorPlaysCubeSpinner(config));
       break;
     }
     

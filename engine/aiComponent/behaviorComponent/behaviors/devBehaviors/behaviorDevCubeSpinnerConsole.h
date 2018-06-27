@@ -43,6 +43,7 @@ protected:
   virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
+  virtual void OnBehaviorDeactivated() override;
 
   virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
 
@@ -58,11 +59,14 @@ private:
     DynamicVariables();
     ObjectID objID;
     CubeSpinnerGame::LockResult lastLockResult = CubeSpinnerGame::LockResult::Count;
+    bool hasGameStarted = false;
   };
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
   
+  void ResetGame();
+
 };
 
 } // namespace Cozmo

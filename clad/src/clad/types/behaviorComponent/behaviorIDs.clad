@@ -182,6 +182,10 @@ enum uint_8 BehaviorID {
   // victorBehaviorTree/highLevelDelegates
   PickupCube,
 
+  // victorBehaviorTree/highLevelDelegates/playWithCube/activeCubeBehaviors
+  ActiveCubeDispatcher,
+  VectorPlaysCubeSpinner,
+
   // victorBehaviorTree/highLevelDelegates/playWithCube
   PlayRollBlock,
   PlayWithCube,

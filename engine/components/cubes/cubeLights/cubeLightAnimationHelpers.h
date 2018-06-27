@@ -14,16 +14,11 @@
 #define __Anki_Cozmo_Basestation_Components_CubeLightAnimationHelpers_H__
 
 #include "engine/components/cubes/cubeLights/cubeLightAnimation.h"
-
-#include "util/helpers/templateHelpers.h"
-
 #include <set>
 
 namespace Anki {
 namespace Cozmo {
 namespace CubeLightAnimation {
-
-static constexpr int kNumCubeLEDs = Util::EnumToUnderlying(CubeConstants::NUM_CUBE_LEDS);
 
 Json::Value AnimationToJSON(const std::string& animName, const Animation& animation);
 bool ParseCubeAnimationFromJson(const std::string& animName, const Json::Value& jsonRoot, Animation& outAnimation);
