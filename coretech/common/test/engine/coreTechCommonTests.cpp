@@ -207,7 +207,6 @@ TEST(PoseTest, PoseTreeValidity)
   ASSERT_EQ(1, poseOrigin.GetNodeOwnerCount());
   
   PoseID_t tempID = 0;
-  Pose3d* tempPosePtr = nullptr;
   Pose3d grandChild2("GrandKid2");
   {
     // Create temp pose parented to origin, with grandChild2 as its child.
@@ -218,7 +217,6 @@ TEST(PoseTest, PoseTreeValidity)
     tempID = tempPose.GetID();
     tempPose.SetParent(poseOrigin);
     grandChild2.SetParent(tempPose);
-    tempPosePtr = &tempPose;
     Pose3d::AllowUnownedParents(true); // Allow unowned to allow the tempPose going out of scope not to cause an abort
   }
   Pose3d::AllowUnownedParents(false); // GetParent call should abort b/c parent is unowned
@@ -227,7 +225,6 @@ TEST(PoseTest, PoseTreeValidity)
   Pose3d::AllowUnownedParents(true); // Allow unowned parents for the purposes of the rest of this test
   ASSERT_TRUE(Pose3d::AreUnownedParentsAllowed());
   
-  memset((void*)tempPosePtr, 0, sizeof(Pose3d)); // Forcibly nuke tempPose's memory just to be extra nasty
   ASSERT_TRUE(grandChild2.HasSameRootAs(poseOrigin));
   ASSERT_EQ(grandChild2.GetParent().GetName(), "Temp");
   ASSERT_EQ(tempID, grandChild2.GetParent().GetID());
