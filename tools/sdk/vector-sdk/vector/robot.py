@@ -15,8 +15,10 @@ from . import util
 from . import actions
 from . import lights
 from . import events
+from . import world
 from .messaging import protocol
 from .messaging import client
+
 
 module_logger = logging.getLogger(__name__)
 
@@ -49,6 +51,7 @@ class Robot:
         self.channel = None
         self.connection = None
         self.events = events.EventHandler(self.loop)
+        self._world = world.World()
         # Robot state/sensor data
         self._pose:util.Pose = None
         self._pose_angle_rad:float = None
@@ -67,6 +70,10 @@ class Robot:
         self._last_image_time_stamp:float = None
         self._status:float = None
         self._game_status:float = None
+
+    @property
+    def world(self):
+        return self._world       
 
     @property
     def pose(self):
@@ -191,8 +198,14 @@ class Robot:
         self.request_control()
 
         self.events.start(self.connection)
+        # Enable face detection, to allow Vector to add faces to its world view
+        self.enable_vision_mode(enable=True)
         # Subscribe to a callback that updates the robot's local properties
         self.events.subscribe("robot_state", self.unpack_robot_state)
+        # Subscribe to a callback that updates the world view
+        self.events.subscribe("robot_observed_face", self.world.add_update_face_to_world_view)
+        # Subscribe to a callback that updates a face's id
+        self.events.subscribe("robot_changed_observed_face_id", self.world.update_face_id)
 
     def disconnect(self, wait_for_tasks=True):
         if self.is_async and wait_for_tasks:
@@ -378,6 +391,19 @@ class Robot:
         req = protocol.SetFaceToEnrollRequest(name=name, observedID=observedID, saveID=saveID, saveToRobot=saveToRobot, sayName=sayName, useMusic=useMusic)
         result = await self.connection.SetFaceToEnroll(req)
         self.logger.debug(result)
+        return result
+
+    @actions._as_actionable
+    async def enable_vision_mode(self, enable, mode=protocol.VisionMode.Value("VISION_MODE_DETECTING_FACES")):
+        '''Edit the vision mode
+        
+        Args:
+            enable (bool): Enable/Disable the mode specified
+            mode (messaging.protocol.VisionMode): Specifies the vision mode to edit
+        '''
+        enable_vision_mode_request = protocol.EnableVisionModeRequest(mode=mode, enable=enable)
+        result = await self.connection.EnableVisionMode(enable_vision_mode_request)
+        self.logger.info(f'{type(result)}: {str(result).strip()}')
         return result
 
     async def set_lift_height(self, height_mm, max_speed_radps=0.0, accel_radps2=0.0, duration_sec=0.0):

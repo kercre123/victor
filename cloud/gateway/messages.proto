@@ -176,12 +176,72 @@ message RobotState {
     uint32 game_status = 17;
 }
 
+message CladPoint
+{
+  float x = 1;
+  float y = 2;
+}
+
+message CladRect
+{
+  float x_top_left = 1;
+  float y_top_left = 2;
+  float width = 3;
+  float height = 4;
+}
+
+// This is an int8 on the clad side.
+// Proto field names are prefixed with "EXPRESSION_"
+enum FacialExpression
+{
+  option allow_alias = true;
+  EXPRESSION_UNKNOWN = 0;    // e.g. expression estimation disabled.
+
+  EXPRESSION_NEUTRAL = 1;
+  EXPRESSION_HAPPINESS = 2;
+  EXPRESSION_SURPRISE = 3;
+  EXPRESSION_ANGER = 4;
+  EXPRESSION_SADNESS = 5;
+
+  // Clad does not account for "Unknown" in the count.
+  EXPRESSION_COUNT = 5;
+}
+
+message RobotObservedFace {
+    int32 face_id = 1;         // negative: tracked but not recognized; positive: recognized face
+    uint32 timestamp = 2;
+    PoseStruct pose = 3;
+    CladRect img_rect = 4;       // position in image coords
+    string name = 5;           // Empty if none assigned yet
+
+    FacialExpression expression = 6;
+
+    // Individual expression values histogram, sums to 100 (Exception: all zero if expression=Unknown)
+    repeated uint32 expression_values = 7; // This is a uint32 on the clad side
+
+    // Face landmarks
+    repeated CladPoint left_eye = 8;
+    repeated CladPoint right_eye = 9;
+    repeated CladPoint nose = 10;
+    repeated CladPoint mouth = 11;
+}
+
+// RobotChangedObservedFaceID
+//  This generally happens when a tracked face (negative ID) is recognized and
+//  receives a positive ID or when face records get merged
+message RobotChangedObservedFaceID {
+    int32   old_id = 1;
+    int32   new_id = 2;
+}
+
 message Event {
   oneof event_type {
     Status                           status                              = 1;
     Onboarding                       onboarding                          = 2;
     WakeWord                         wake_word                           = 3;
     AttentionTransfer                attention_transfer                  = 4;
+    RobotObservedFace                robot_observed_face                 = 5;
+    RobotChangedObservedFaceID       robot_changed_observed_face_id      = 6;
   }
 }
 
@@ -469,4 +529,40 @@ message GatewayWrapper {
     LatestAttentionTransferRequest latest_attention_transfer_request = 11;
     LatestAttentionTransfer        latest_attention_transfer = 12;
   }
+}
+
+// Proto field names are prefixed with "VISION_MODE_"
+enum VisionMode {
+  VISION_MODE_IDLE = 0;
+  VISION_MODE_DETECTING_MARKERS = 1;
+  VISION_MODE_DETECTING_FACES = 2;
+  VISION_MODE_DETECTING_MOTION = 3;
+  VISION_MODE_DETECTING_OVERHEAD_EDGES = 4;
+  VISION_MODE_COMPUTING_CALIBRATION = 5;
+  VISION_MODE_CHECKING_QUALITY = 6;
+  VISION_MODE_CHECKING_WHITE_BALANCE = 7;
+  VISION_MODE_COMPUTING_STATISTICS = 8;
+  VISION_MODE_DETECTING_PETS = 9;
+  VISION_MODE_ESTIMATING_FACIAL_EXPRESSION = 10;  // No effect if DetectingFaces not enabled
+  VISION_MODE_DETECTING_SMILE_AMOUNT = 11;        //  "
+  VISION_MODE_DETECTING_GAZE = 12;               //  "
+  VISION_MODE_DETECTING_BLINK_AMOUNT = 13;        //  "
+  VISION_MODE_LIMITED_EXPOSURE = 14;
+  VISION_MODE_DETECTING_LASER_POINTS = 15;
+  VISION_MODE_BUILDING_OVERHEAD_MAP = 16;
+  VISION_MODE_DETECTING_VISUAL_OBSTACLES = 17;
+  VISION_MODE_BENCHMARKING = 18;
+  VISION_MODE_SAVING_IMAGES = 19;
+  VISION_MODE_RUNNING_NEURAL_NET = 20; 
+  VISION_MODE_DETECTING_ILLUMINATION = 21;
+  VISION_MODE_COUNT = 22;
+}
+
+message EnableVisionModeRequest {
+   VisionMode mode = 1;
+   bool       enable = 2;
+}
+
+message EnableVisionModeResult {
+  ResultStatus status = 1;
 }

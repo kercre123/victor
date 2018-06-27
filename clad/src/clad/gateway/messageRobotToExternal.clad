@@ -153,6 +153,84 @@ message RobotState {
     uint_8   gameStatus             // See GameStatusFlag in cozmoTypes.h
 }
 
+structure CladPoint2d
+{
+  float_32 x,
+  float_32 y
+}
+
+structure CladRect
+{
+  float_32 x_topLeft,
+  float_32 y_topLeft,
+  float_32 width,
+  float_32 height
+}
+
+enum int_8 FacialExpression
+{
+        Unknown = -1,    // e.g. expression estimation disabled
+
+        Neutral = 0,
+        Happiness,
+        Surprise,
+        Anger,
+        Sadness,
+        
+        Count
+}
+
+structure SmileAmount {
+  bool      wasChecked,  // If false, degree and confidence are not valid (and will both be zero)
+  float_32  amount,      // Ranges from 0.0=Not Smiling to 1.0=Full Smile
+  float_32  confidence   // How confident in "degree", [0.0,1.0]
+}
+
+// Gaze angles are in the image plane and in the range +/- 90 degrees. Left/right are in the image, *not* face's left/right.
+structure Gaze {
+  bool      wasChecked,    // If false, angles will both be invalid (and set to zero)
+  float_32  leftRight_deg, // 0 = looking straight ahead, >0 = towards image right, <0 = towards image left
+  float_32  upDown_deg     // 0 = looking straightahead,  >0 = looking up,          <0 = looking down
+}
+
+// Left/right are as the eyes appear in the image to the viewer, not the face's left/right
+structure BlinkAmount {
+  bool      wasChecked,       // If false, both blink degrees will be invalid (and set to zero)
+  float_32  blinkAmountLeft,  // Ranges from 0.0=no blink (eye fully open) to 1.0=full blink (eye fully closed)
+  float_32  blinkAmountRight  // Left/right are as seen in the image, *not* the face's left and right
+}
+
+// RobotObservedFace
+message RobotObservedFace {
+    int_32        faceID,         // negative: tracked but not recognized; positive: recognized face
+    uint_32       timestamp,
+    PoseStruct3d  pose,
+    CladRect      img_rect,       // position in image coords
+    string        name,           // Empty if none assigned yet
+
+    FacialExpression  expression,
+    SmileAmount       smileAmount,
+    Gaze              gaze,
+    BlinkAmount       blinkAmount,
+
+    // Individual expression values histogram, sums to 100 (Exception: all zero if expression=Unknown)
+    uint_8        expressionValues[uint_8],
+
+    // Face landmarks
+    CladPoint2d   leftEye[uint_8],
+    CladPoint2d   rightEye[uint_8],
+    CladPoint2d   nose[uint_8],
+    CladPoint2d   mouth[uint_8]
+}
+
+// RobotChangedObservedFaceID
+//  This generally happens when a tracked face (negative ID) is recognized and
+//  receives a positive ID or when face records get merged
+message RobotChangedObservedFaceID {
+    int_32   oldID,
+    int_32   newID
+}
+
 // Anything that the robot wishes to push to the app that 
 // is not a response to a request from the app.
 union Event {
@@ -169,6 +247,8 @@ union MessageRobotToExternal {
   SDKActivationResult               SDKActivationResult                = 0x04,
   RobotState                        RobotState                         = 0x05, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   EnrolledNamesResponse             EnrolledNamesResponse              = 0x06,
+  RobotObservedFace                 RobotObservedFace                  = 0x07, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  RobotChangedObservedFaceID        RobotChangedObservedFaceID         = 0x08, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
 }
 
 } // Gateway

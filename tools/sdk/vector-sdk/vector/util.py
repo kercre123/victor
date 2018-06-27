@@ -139,4 +139,33 @@ class Pose:
         return (f"<{self.__class__.__name__}: {self._position} {self._rotation} <Origin Id: {self._origin_id}>>")
 
 
+class ImageRect:
+    '''Image co-ordinates and size'''
 
+    __slots__ = ('_x_top_left', '_y_top_left', '_width', '_height')
+
+    def __init__(self, x_top_left, y_top_left, width, height):
+        self._x_top_left = x_top_left
+        self._y_top_left = y_top_left
+        self._width = width
+        self._height = height
+
+    @property
+    def x_top_left(self):
+        return self._x_top_left
+
+    @property
+    def y_top_left(self):
+        return self._y_top_left
+
+    @property
+    def width(self):
+        return self._width
+
+    @property
+    def height(self):
+        return self._height
+    
+    
+    
+    

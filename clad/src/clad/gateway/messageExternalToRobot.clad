@@ -127,6 +127,38 @@ message SetFaceToEnroll {
     bool useMusic=0       // Starts special music during say-name animations (will leave music playing!)
 }
 
+enum uint_32 VisionMode
+  {
+    Idle                   = 0x00,
+    DetectingMarkers,
+    DetectingFaces,
+    DetectingMotion,
+    DetectingOverheadEdges,
+    ComputingCalibration,
+    CheckingQuality,
+    CheckingWhiteBalance,
+    ComputingStatistics,
+    DetectingPets,
+    EstimatingFacialExpression,  // No effect if DetectingFaces not enabled
+    DetectingSmileAmount,        //  "
+    DetectingGaze,               //  "
+    DetectingBlinkAmount,        //  "
+    LimitedExposure,
+    DetectingLaserPoints,
+    BuildingOverheadMap,
+    DetectingVisualObstacles,
+    Benchmarking,
+    SavingImages,
+    RunningNeuralNet, 
+    DetectingIllumination,
+    Count
+  }
+
+message EnableVisionMode {
+   VisionMode mode,
+   bool       enable
+}
+
 // Note: these values and messages must match the values that get added to MessageGameToEngine
 union MessageExternalToRobot {
   UiDeviceConnectionWrongVersion UiDeviceConnectionWrongVersion = 0x00, // DO NOT CHANGE THIS VALUE
@@ -144,7 +176,8 @@ union MessageExternalToRobot {
   UpdateEnrolledFaceByID         UpdateEnrolledFaceByID         = 0x0C,
   EraseEnrolledFaceByID          EraseEnrolledFaceByID          = 0x0D,
   EraseAllEnrolledFaces          EraseAllEnrolledFaces          = 0x0E,
-  SetFaceToEnroll                SetFaceToEnroll                = 0x0F,    
+  SetFaceToEnroll                SetFaceToEnroll                = 0x0F,
+  EnableVisionMode               EnableVisionMode               = 0x10,
 }
 
 } // Gateway

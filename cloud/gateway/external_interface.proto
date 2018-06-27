@@ -130,6 +130,13 @@ service ExternalInterface {
     };
   }
 
+  rpc EnableVisionMode(EnableVisionModeRequest) returns (EnableVisionModeResult) {
+    option (google.api.http) = {
+      post: "/v1/enable_vision_mode",
+      body: "*"
+    };
+  }
+
   // TODO: sample rpc, remove once we have more real examples
   rpc Pang(Ping) returns (Pong) {
     option (google.api.http) = {
@@ -172,3 +179,4 @@ service ExternalInterface {
 
 
 }
+

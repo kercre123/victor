@@ -104,6 +104,11 @@ messages_to_test = [
         protocol.RequestEnrolledNamesRequest(),
         protocol.RequestEnrolledNamesResult(status=protocol.ResultStatus(description="Enrolled names returned"), faces=[])),
 
+    # EnableVisionMode message
+    ( client.ExternalInterfaceServicer.EnableVisionMode,
+        protocol.EnableVisionModeRequest(mode=protocol.VisionMode.Value("VISION_MODE_DETECTING_FACES"), enable=True),
+        protocol.EnableVisionModeResult(status=protocol.ResultStatus(description="Message sent to engine"))),
+
     # NOTE: Add additional messages here
     ]
 

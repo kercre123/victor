@@ -1040,6 +1040,8 @@ autounion MessageEngineToGame
   SDKActivationResult               SDKActivationResult                = 0x04,
   RobotState                        RobotState                         = 0x05, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   EnrolledNamesResponse             EnrolledNamesResponse              = 0x06,  
+  RobotObservedFace                 RobotObservedFace                  = 0x07, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  RobotChangedObservedFaceID        RobotChangedObservedFaceID         = 0x08, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
 }
 
 } // namespace ExternalInterface

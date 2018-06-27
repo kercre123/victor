@@ -186,6 +186,13 @@ func ProtoSetFaceToEnrollToClad(msg *extint.SetFaceToEnrollRequest) *gw_clad.Mes
 	})
 }
 
+func ProtoEnableVisionModeToClad(msg *extint.EnableVisionModeRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithEnableVisionMode(&gw_clad.EnableVisionMode{
+		Mode:   gw_clad.VisionMode(msg.Mode),
+		Enable: msg.Enable,
+	})
+}
+
 func CladFeatureStatusToProto(msg *gw_clad.FeatureStatus) *extint.FeatureStatus {
 	return &extint.FeatureStatus{
 		FeatureName: msg.FeatureName,
@@ -236,6 +243,60 @@ func CladStatusToProto(msg *gw_clad.Status) *extint.Status {
 		return nil
 	}
 	return status
+}
+
+func CladCladRectToProto(msg *gw_clad.CladRect) *extint.CladRect {
+	return &extint.CladRect{
+		XTopLeft: msg.X_topLeft,
+		YTopLeft: msg.Y_topLeft,
+		Width:    msg.Width,
+		Height:   msg.Height,
+	}
+}
+
+func CladCladPointsToProto(msg []gw_clad.CladPoint2d) []*extint.CladPoint {
+	var points []*extint.CladPoint
+	for _, point := range msg {
+		points = append(points, &extint.CladPoint{X: point.X, Y: point.Y})
+	}
+	return points
+}
+
+func CladExpressionValuesToProto(msg []uint8) []uint32 {
+	var expression_values []uint32
+	for _, val := range msg {
+		expression_values = append(expression_values, uint32(val))
+	}
+	return expression_values
+}
+
+func CladRobotObservedFaceToProto(msg *gw_clad.RobotObservedFace) *extint.RobotObservedFace {
+	// BlinkAmount, Gaze and SmileAmount are not exposed to the SDK
+	return &extint.RobotObservedFace{
+		FaceId:    msg.FaceID,
+		Timestamp: msg.Timestamp,
+		Pose:      CladPoseToProto(&msg.Pose),
+		ImgRect:   CladCladRectToProto(&msg.Img_rect),
+		Name:      msg.Name,
+
+		Expression: extint.FacialExpression(msg.Expression + 1), // protobuf enums have a 0 start value
+
+		// Individual expression values histogram, sums to 100 (Exception: all zero if expressio: msg.
+		ExpressionValues: CladExpressionValuesToProto(msg.ExpressionValues[:]),
+
+		// Face landmarks
+		LeftEye:  CladCladPointsToProto(msg.LeftEye),
+		RightEye: CladCladPointsToProto(msg.RightEye),
+		Nose:     CladCladPointsToProto(msg.Nose),
+		Mouth:    CladCladPointsToProto(msg.Mouth),
+	}
+}
+
+func CladRobotChangedObservedFaceIDToProto(msg *gw_clad.RobotChangedObservedFaceID) *extint.RobotChangedObservedFaceID {
+	return &extint.RobotChangedObservedFaceID{
+		OldId: msg.OldID,
+		NewId: msg.NewID,
+	}
 }
 
 func CladPoseToProto(msg *gw_clad.PoseStruct3d) *extint.PoseStruct {
@@ -311,8 +372,7 @@ func CladEventToProto(msg *gw_clad.Event) *extint.Event {
 	}
 }
 
-
-func SendOnboardingContinue( in *extint.GatewayWrapper_OnboardingContinue ) (*extint.OnboardingInputResponse, error) {
+func SendOnboardingContinue(in *extint.GatewayWrapper_OnboardingContinue) (*extint.OnboardingInputResponse, error) {
 	f, result := createChannel(&extint.GatewayWrapper_OnboardingContinueResponse{}, 1)
 	defer f()
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
@@ -322,7 +382,7 @@ func SendOnboardingContinue( in *extint.GatewayWrapper_OnboardingContinue ) (*ex
 		return nil, err
 	}
 	continue_result := <-result
-	return &extint.OnboardingInputResponse {
+	return &extint.OnboardingInputResponse{
 		Status: &extint.ResultStatus{
 			Description: "Message sent to engine",
 		},
@@ -332,7 +392,7 @@ func SendOnboardingContinue( in *extint.GatewayWrapper_OnboardingContinue ) (*ex
 	}, nil
 }
 
-func SendOnboardingSkip( in *extint.GatewayWrapper_OnboardingSkip )  (*extint.OnboardingInputResponse, error) {
+func SendOnboardingSkip(in *extint.GatewayWrapper_OnboardingSkip) (*extint.OnboardingInputResponse, error) {
 	log.Println("Received rpc request OnboardingSkip(", in, ")")
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: in,
@@ -541,8 +601,8 @@ func (m *rpcService) RequestEnrolledNames(ctx context.Context, in *extint.Reques
 			SecondsSinceLastUpdated:   element.SecondsSinceLastUpdated,
 			SecondsSinceLastSeen:      element.SecondsSinceLastSeen,
 			LastSeenSecondsSinceEpoch: element.LastSeenSecondsSinceEpoch,
-			FaceId:                    element.FaceID,
-			Name:                      element.Name,
+			FaceId: element.FaceID,
+			Name:   element.Name,
 		}
 		faces = append(faces, &newFace)
 	}
@@ -747,15 +807,15 @@ func (m *rpcService) GetOnboardingState(ctx context.Context, in *extint.Onboardi
 
 func (m *rpcService) SendOnboardingInput(ctx context.Context, in *extint.OnboardingInputRequest) (*extint.OnboardingInputResponse, error) {
 	log.Println("Received rpc request OnboardingInputRequest(", in, ")")
-	
+
 	// oneof_message_type
 	switch x := in.OneofMessageType.(type) {
 	case *extint.OnboardingInputRequest_OnboardingContinue:
-		return SendOnboardingContinue( &extint.GatewayWrapper_OnboardingContinue { 
+		return SendOnboardingContinue(&extint.GatewayWrapper_OnboardingContinue{
 			in.GetOnboardingContinue(),
 		})
 	case *extint.OnboardingInputRequest_OnboardingSkip:
-		return SendOnboardingSkip( &extint.GatewayWrapper_OnboardingSkip { 
+		return SendOnboardingSkip(&extint.GatewayWrapper_OnboardingSkip{
 			in.GetOnboardingSkip(),
 		})
 	default:
@@ -784,6 +844,18 @@ func (m *rpcService) GetLatestAttentionTransfer(ctx context.Context, in *extint.
 	}, nil
 }
 
+func (m *rpcService) EnableVisionMode(ctx context.Context, in *extint.EnableVisionModeRequest) (*extint.EnableVisionModeResult, error) {
+	log.Println("Received rpc request EnableVisionMode(", in, ")")
+	_, err := WriteToEngine(engineSock, ProtoEnableVisionModeToClad(in))
+	if err != nil {
+		return nil, err
+	}
+	return &extint.EnableVisionModeResult{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
 
 func newServer() *rpcService {
 	return new(rpcService)

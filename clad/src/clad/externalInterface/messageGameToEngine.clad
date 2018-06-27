@@ -1215,7 +1215,8 @@ autounion MessageGameToEngine
   UpdateEnrolledFaceByID         UpdateEnrolledFaceByID         = 0x0C,
   EraseEnrolledFaceByID          EraseEnrolledFaceByID          = 0x0D,
   EraseAllEnrolledFaces          EraseAllEnrolledFaces          = 0x0E,
-  SetFaceToEnroll                SetFaceToEnroll                = 0x0F,    
+  SetFaceToEnroll                SetFaceToEnroll                = 0x0F,
+  EnableVisionMode               EnableVisionMode               = 0x10,
 }
 
 
