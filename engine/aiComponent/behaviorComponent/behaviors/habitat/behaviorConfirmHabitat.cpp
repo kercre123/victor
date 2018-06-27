@@ -25,6 +25,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/activeBehaviorIterator.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/compoundActions.h"
@@ -55,6 +57,10 @@ namespace Cozmo {
 
 namespace
 {
+  static const std::set<BehaviorID> kPassiveBehaviorsToInterrupt = {
+    BEHAVIOR_ID(Exploring),
+    BEHAVIOR_ID(Observing),
+  };
 }
 
 BehaviorConfirmHabitat::DynamicVariables::DynamicVariables()
@@ -95,13 +101,50 @@ void BehaviorConfirmHabitat::GetAllDelegates(std::set<IBehavior*>& delegates) co
 
 bool BehaviorConfirmHabitat::WantsToBeActivatedBehavior() const
 {
-  const bool onCharger = GetBEI().GetRobotInfo().IsOnChargerPlatform();
+  // note
+  //
+  // conditions defined here:
+  // + robot must not be on the charger PLATFORM
+  // + robot does not have user intent pending
+  // + robot does not have user intent active
+  //
+  // conditions defined in the json:
+  // + robot has been putdown at least 30 seconds ago
   
+  const bool onChargerPlatform = GetBEI().GetRobotInfo().IsOnChargerPlatform();
+  
+  const auto& uic = GetBEI().GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
+  auto activeUserIntentPtr = uic.GetActiveUserIntent();
+  const bool intentsPendingOrActive = uic.IsAnyUserIntentPending() || (activeUserIntentPtr != nullptr);
+
   const auto& habitatDetector = GetBEI().GetHabitatDetectorComponent();
-  HabitatBeliefState hbelief   = habitatDetector.GetHabitatBeliefState();
+  HabitatBeliefState hbelief  = habitatDetector.GetHabitatBeliefState();
   
-  return !onCharger &&
-         hbelief == HabitatBeliefState::Unknown;
+  if(!onChargerPlatform && !intentsPendingOrActive && hbelief == HabitatBeliefState::Unknown) {
+    // it is costly to iterate the behavior stack
+    // therefore we check the interrupt condition last
+    bool canInterrupt = false;
+    // note: this function is called on every active behavior on the stack
+    //  we look for any of the "passive" behaviors that we can interrupt
+    //  otherwise we do not want to interrupt any other acting going on
+    //
+    // important: this function is the place to insert any special case logic
+    //  where a behavior should not be interrupted
+    const auto checkInterruptCallback = [&canInterrupt](const ICozmoBehavior& behavior)->void {
+      auto got = kPassiveBehaviorsToInterrupt.find(behavior.GetID());
+      if(got != kPassiveBehaviorsToInterrupt.end()) {
+        canInterrupt = true;
+      }
+    };
+    const auto& behaviorIterator = GetBehaviorComp<ActiveBehaviorIterator>();
+    behaviorIterator.IterateActiveCozmoBehaviorsForward( checkInterruptCallback, nullptr );
+    return canInterrupt;
+  }
+  // if control reaches here, robot EITHER:
+  // - is on the charger platform
+  // - has a user intent pending/active
+  // - knows its habitat belief state already
+  return false;
 }
 
 void BehaviorConfirmHabitat::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
@@ -419,7 +462,7 @@ void BehaviorConfirmHabitat::TransitionToTurnBackupForward(f32 angle, int backDi
 void BehaviorConfirmHabitat::TransitionToRandomWalk()
 {
   static int count = 1;
-  Pose3d robotPose = GetBEI().GetRobotInfo().GetPose();
+  const Pose3d& robotPose = GetBEI().GetRobotInfo().GetPose();
   Pose3d desiredOffsetPose;
   if(count == 0 || count >= 3) {
     desiredOffsetPose = Pose3d(Rotation3d(0, Z_AXIS_3D()), Vec3f(100,0,0));

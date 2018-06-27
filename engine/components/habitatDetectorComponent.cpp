@@ -16,6 +16,7 @@
 
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
+#include "engine/components/batteryComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/habitatDetectorComponent.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -115,6 +116,10 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
 {
   auto& cliffSensor = dependentComps.GetComponent<CliffSensorComponent>();
   
+  if(_robot->GetBatteryComponent().IsOnChargerPlatform()) {
+    return;
+  }
+  
   // habitat confirmation (or disconfirmation) can occur if we are in the unknown state
   if(_habitatBelief == HabitatBeliefState::Unknown) {
     // determine if we have driven too far without detecting white from cliffs
@@ -146,7 +151,7 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
     u8 numNone = kNumCliffSensors - (numGrey + numWhite);
     
     if(numWhite >= 3 || numNone >= 3) {
-      // impossible configurations
+      // impossible configurations when not on the charger platform
       _habitatBelief = HabitatBeliefState::NotInHabitat;
       _habitatLineRelPose = HabitatLineRelPose::Invalid;
     } else {

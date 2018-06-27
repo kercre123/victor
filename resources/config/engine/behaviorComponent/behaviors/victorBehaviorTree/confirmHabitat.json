@@ -1,4 +1,10 @@
 {
   "behaviorClass" : "ConfirmHabitat",
-  "behaviorID"    : "ConfirmHabitat"
+  "behaviorID"    : "ConfirmHabitat",
+  "associatedActiveFeature": "NoFeature",
+  "wantsToBeActivatedCondition": {
+    "conditionType": "OffTreadsState",
+    "targetState": "OnTreads",
+    "minTimeSinceChange_ms": 30000
+  }
 }
