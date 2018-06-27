@@ -52,11 +52,11 @@ create_certs_mac:
 	echo "DNS.2       = localhost:8443" >> temp_trust.conf
 	openssl req -config temp_trust.conf \
 	-subj "/C=US/ST=California/L=SF/O=Anki/CN=localhost" \
-	-new -x509 -days 1000 -newkey rsa:2048 -nodes -keyout trust.key -out trust.cert
+	-new -x509 -days 1000 -newkey rsa:2048 -nodes -keyout trust_mac.key -out trust_mac.cert
 	rm temp_trust.conf
 	mkdir -p /tmp/anki/gateway
-	cp trust.key /tmp/anki/gateway
-	cp trust.cert /tmp/anki/gateway
+	cp trust_mac.key /tmp/anki/gateway
+	cp trust_mac.cert /tmp/anki/gateway
 
 
 test_curl_events: .require_ip
