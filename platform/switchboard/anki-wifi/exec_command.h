@@ -18,13 +18,13 @@
 
 namespace Anki {
 
-using ExecCommandCallback = std::function<void (int rc, const std::string& output)>;
+using ExecCommandCallback = std::function<void (int rc)>;
 
 void ExecCommandInBackground(const std::vector<std::string>& args,
                              ExecCommandCallback callback,
                              long delayMillis = 0L);
 
-int ExecCommand(const std::vector<std::string>& args, std::string& output);
+int ExecCommand(const std::vector<std::string>& args);
 
 void CancelBackgroundCommands();
 
