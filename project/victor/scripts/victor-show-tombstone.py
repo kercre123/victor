@@ -73,7 +73,7 @@ def show_tombstone(tombstone, options):
   # Fetch tombstone from robot
   cmd = [ROBOT_SH, "cat", tombstone]
   output = exec(cmd)
-  output = output.split('\r\n')
+  output = output.split('\n')
   # Process tombstone
   for line in output:
     show_line(line, options)
