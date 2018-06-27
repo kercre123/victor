@@ -106,7 +106,7 @@ function log_current()
     fi
   done
   
-  echo "$led ${current}mA -- $line (line $linenum)"
+  echo "  $led ${current}mA -- $line (line $linenum)"
   
   #XXX: grep/regex is randomly failing. varies on each run for the same dataset
   #XXX: fail if led/group parse returned empty
@@ -124,20 +124,31 @@ for i in "${!leds[@]}"; do values[${i}]="${leds[$i]}"; done
 write_row "logfile"
 
 #parse logfiles
-for infile in $(find $directory -type f -name "*.log"); do
-  echo processing $infile
+for infile in ./*.log; do
+  echo processing "$infile"
   linenum=0
   while IFS='' read -r line || [[ -n "$line" ]]; do #https://stackoverflow.com/questions/10929453/read-a-file-line-by-line-assigning-the-value-to-a-variable
     linenum=$((linenum+1))
-    if echo $line | grep -q "current"; then #only lines with current measurements (much faster than regex)
-      current=$(echo $line | grep -oP 'current \K([0-9]+)') #parse the current measurement value
+    
+    #filter lines without current measurements (much faster than regex every line)
+    if echo $line | grep -q "current"; then
+      
+      #strip timestamp prefix '[###.######] '
+      if [ "${line:0:1}" == "[" ]; then 
+        line=$(echo $line | grep -oP '\[[0-9]+\.[0-9]+\]\s\K(.)*');
+      fi
+      
+      #parse the current measurement value
+      current=$(echo $line | grep -oP 'current \K([0-9]+)')
+      
+      #skip CUBEBAT startup current measurements
       if [ "$current" != "" ]; then
-        led=$(echo $line | grep -oP '[0-9][\]] \K([^\s]+)') #parse the led name for this measurement
+        led=$(echo $line | grep -oP '^[\w\d\.]+') #parse the led name for this measurement
         log_current "$led" "$current" "$infile" "$line" "$linenum"
       fi
     fi
-  done < $infile
-  write_row $infile
+  done < "$infile"
+  write_row "$infile"
 done
 
 write_maths $numrows
