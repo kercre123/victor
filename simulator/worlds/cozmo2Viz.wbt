@@ -45,7 +45,6 @@ WebotsKeyboardController{
   # engineIP      "192.168.X.X"
   
   redirectViz            TRUE
-  doAutoBlockpool        FALSE
   #filterLogs             TRUE
   colorizeStderrOutput   TRUE
 }
