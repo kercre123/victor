@@ -452,12 +452,16 @@ message OnboardingSkip {
 message OnboardingRetryCharging {
 }
 
+message OnboardingConnectionComplete {
+}
+
 
 message OnboardingInputRequest {
   oneof oneof_message_type {
     OnboardingContinue onboarding_continue = 1;
     OnboardingSkip onboarding_skip = 2;
     OnboardingRetryCharging onboarding_retry_charging = 3;
+    OnboardingConnectionComplete onboarding_connection_complete = 4;
   }
 }
 
@@ -567,24 +571,27 @@ message GatewayWrapper {
     OnboardingContinue            onboarding_continue = 4;
     OnboardingContinueResponse    onboarding_continue_response = 5;
     OnboardingSkip                onboarding_skip = 6;
+    OnboardingConnectionComplete  onboarding_connection_complete = 7;
     // ------------ test request/response pairs --------------------------
     // TODO: remove these once we have more examples
-    Ping ping = 7;
-    Pong pong = 8;
-    Bing bing = 9;
-    Bong bong = 10;
+    Ping ping = 20;
+    Pong pong = 21;
+    Bing bing = 22;
+    Bong bong = 23;
     // ------------ Attention transfer -----------------------------------
-    LatestAttentionTransferRequest latest_attention_transfer_request = 11;
-    LatestAttentionTransfer        latest_attention_transfer = 12;
+    LatestAttentionTransferRequest latest_attention_transfer_request = 30;
+    LatestAttentionTransfer        latest_attention_transfer = 31;
     // ------------ photos request/response pairs ------------------------
-    PhotosInfoRequest             photos_info_request = 13;
-    PhotosInfoResponse            photos_info_response = 14;
-    PhotoRequest                  photo_request = 15;
-    PhotoResponse                 photo_response = 16;
-    ThumbnailRequest              thumbnail_request = 17;
-    ThumbnailResponse             thumbnail_response = 18;
-    DeletePhotoRequest            delete_photo_request = 19;
-    DeletePhotoResponse           delete_photo_response = 20;
+    PhotosInfoRequest             photos_info_request = 40;
+    PhotosInfoResponse            photos_info_response = 41;
+    PhotoRequest                  photo_request = 42;
+    PhotoResponse                 photo_response = 43;
+    ThumbnailRequest              thumbnail_request = 44;
+    ThumbnailResponse             thumbnail_response = 45;
+    DeletePhotoRequest            delete_photo_request = 46;
+    DeletePhotoResponse           delete_photo_response = 47;
+    
+    // (when adding new categories, please create gaps between field numbers)
   }
 }
 

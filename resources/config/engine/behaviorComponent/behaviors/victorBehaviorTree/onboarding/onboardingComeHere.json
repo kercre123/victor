@@ -18,6 +18,7 @@
       "behaviorClass" : "DriveToFace",
 
       "animTooClose": "AlreadyAtFace",
+      "animDriveOverride": "OnboardingComeHere",
       
       "trackFaceOnceKnown": false,     
       "minDriveToFaceDistanceKey_mm": 200

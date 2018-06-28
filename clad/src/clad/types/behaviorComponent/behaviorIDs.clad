@@ -28,8 +28,8 @@ enum uint_8 BehaviorID {
   DevEventSequenceCapture,
   DevImageCapture,
   DevPlannerTest,
-  DevTestPersonDetectorBehavior,
   DevTestBlackjackViz,
+  DevTestPersonDetectorBehavior,
   DevTestPromptUser,
   DevTouchDataCollection,
   DevTurnInPlaceTest,
@@ -246,6 +246,7 @@ enum uint_8 BehaviorID {
   OnboardingComeHere,
   OnboardingCubeTrick,
   OnboardingFinishedComeHere,
+  OnboardingLookAtPhone,
   OnboardingLookAtUser,
   OnboardingLookForCube,
   OnboardingLowBattery,
@@ -253,6 +254,7 @@ enum uint_8 BehaviorID {
   OnboardingPlacedOnCharger,
   OnboardingSluggishDriveOffCharger,
   OnboardingWaitForComeHere,
+  OnboardingWaitForTriggerWord,
   OnboardingWakeUp,
 
   // victorBehaviorTree/quietMode

@@ -76,6 +76,8 @@ private:
   // Moves to the next IOnboardingStage
   void MoveToStage( const OnboardingStages& state );
   
+  void SaveToDisk( const OnboardingStages& stage ) const;
+  
   void UpdateBatteryInfo();
   void StartLowBatteryCountdown();
   
@@ -116,6 +118,7 @@ private:
   struct PendingEvent {
     explicit PendingEvent(const EngineToGameEvent& event);
     explicit PendingEvent(const GameToEngineEvent& event);
+    explicit PendingEvent(const AppToEngineEvent& event);
     PendingEvent(){} // only for Continue and Skip
     ~PendingEvent();
     enum {
@@ -123,12 +126,14 @@ private:
       Skip,
       GameToEngine,
       EngineToGame,
+      AppToEngine,
     } type;
     double time_s;
     union {
       // continue and skip have no params
       GameToEngineEvent gameToEngineEvent;
       EngineToGameEvent engineToGameEvent;
+      AppToEngineEvent  appToEngineEvent;
     };
   };
   

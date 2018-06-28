@@ -16,7 +16,7 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_Onboarding_OnboardingStageApp__
 #pragma once
 
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/iOnboardingStage.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/iOnboardingStage.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 
 namespace Anki {
@@ -46,11 +46,12 @@ public:
     SetTriggerWordEnabled(false);
   }
   
-  virtual void OnContinue( BehaviorExternalInterface& bei ) override
+  virtual bool OnContinue( BehaviorExternalInterface& bei, OnboardingContinueEnum continueNum ) override
   {
     DebugTransition("Waiting on voice command");
     // enable trigger word
     SetTriggerWordEnabled(true);
+    return true;
   }
   
   virtual void OnSkip( BehaviorExternalInterface& bei ) override

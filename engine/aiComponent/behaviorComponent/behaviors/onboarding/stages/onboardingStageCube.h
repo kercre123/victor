@@ -14,7 +14,7 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_Onboarding_OnboardingStageCube__
 #pragma once
 
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/iOnboardingStage.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/iOnboardingStage.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorPickUpCube.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectKnown.h"
@@ -93,15 +93,14 @@ public:
     _timeStartedSearching_ms = 0;
   }
   
-  virtual void OnContinue( BehaviorExternalInterface& bei ) override
+  virtual bool OnContinue( BehaviorExternalInterface& bei, OnboardingContinueEnum continueNum ) override
   {
-    if( _step == Step::Complete ) {
-      return;
-    } else if( _step == Step::LookingAtUser ) {
+    if( _step == Step::LookingAtUser ) {
       TransitionToLookingForCube( bei );
-    } else {
+    } else if( _step != Step::Complete ) {
       DEV_ASSERT(false, "OnboardingStageCube.UnexpectedContinue");
     }
+    return true;
   }
   
   virtual void OnSkip( BehaviorExternalInterface& bei ) override

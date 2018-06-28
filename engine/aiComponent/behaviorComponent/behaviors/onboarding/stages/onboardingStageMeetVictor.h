@@ -14,7 +14,7 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_Onboarding_OnboardingStageMeetVictor__
 #pragma once
 
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/iOnboardingStage.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/iOnboardingStage.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/behaviorComponent/userIntent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -67,11 +67,9 @@ public:
     SetTriggerWordEnabled(false);
   }
   
-  virtual void OnContinue( BehaviorExternalInterface& bei ) override
+  virtual bool OnContinue( BehaviorExternalInterface& bei, OnboardingContinueEnum continueNum ) override
   {
-    if( _step == Step::Complete ) {
-      return;
-    } else if( _step == Step::LookingAround ) {
+    if( _step == Step::LookingAround ) {
       DebugTransition("Waiting on \"my name is\"");
       SetTriggerWordEnabled(true);
       SetAllowedIntent( USER_INTENT(meet_victor) );
@@ -93,9 +91,10 @@ public:
       DebugTransition("Complete");
       _step = Step::Complete;
       _selectedBehavior = nullptr;
-    } else {
+    } else if( _step != Step::Complete ) {
       DEV_ASSERT(false, "OnboardingStageMeetVictor.UnexpectedContinue");
     }
+    return true;
   }
   
   virtual void OnSkip( BehaviorExternalInterface& bei ) override

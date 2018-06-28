@@ -102,6 +102,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingWithoutTurn.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboarding.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingInterruptionHead.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingLookAtPhone.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/photoTaking/behaviorAestheticallyCenterFaces.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/photoTaking/behaviorTakeAPhotoCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/proxBehaviors/behaviorProxGetToDistance.h"
@@ -720,6 +721,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::OnboardingInterruptionHead:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorOnboardingInterruptionHead(config));
+      break;
+    }
+    
+    case BehaviorClass::OnboardingLookAtPhone:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorOnboardingLookAtPhone(config));
       break;
     }
     

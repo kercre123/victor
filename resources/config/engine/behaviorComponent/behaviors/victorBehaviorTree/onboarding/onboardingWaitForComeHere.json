@@ -1,4 +1,6 @@
 {
   "behaviorID": "OnboardingWaitForComeHere",
-  "behaviorClass": "Wait"
+  "behaviorClass": "AnimSequence",
+  "animTriggers": ["OnboardingLookAround"],
+  "playOnChargerWithoutBody": true
 }

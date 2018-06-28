@@ -120,6 +120,7 @@ def display(stdscr):
              ('m', 'Move to stage', 'MoveToStage'),
              ('r', 'Reset onboarding', 'ResetOnboarding'),
              ('b', 'retry Battery charging', 'RetryCharging'),
+             ('p', 'end Phone icon', 'EndPhoneIcon'),
              ('f', 'rename Face')]
   stages = ['NotStarted','FinishedComeHere','FinishedMeetVictor','Complete','DevDoNothing']
 
@@ -198,7 +199,7 @@ def display(stdscr):
           newName = ''
           selectedIndex = 0
           changed=True
-        elif char in 'csrb':
+        elif char in 'csrbp':
           func = [x for x in menu if x[0] == char][0][2]
           sendFunc(robotIP, func)
           selectedIndex = 0

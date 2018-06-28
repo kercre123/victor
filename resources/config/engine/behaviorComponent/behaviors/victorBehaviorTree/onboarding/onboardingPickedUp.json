@@ -2,6 +2,7 @@
   "behaviorID": "OnboardingPickedUp",
   "behaviorClass": "OnboardingInterruptionHead",
 
+  // todo: match InitialPickupAnimation once that contains something other than stubs
   
   "wantsToBeActivatedCondition": {
     "conditionType": "Compound",

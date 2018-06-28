@@ -19,5 +19,10 @@ enum uint_8 OnboardingStages
   DevDoNothing,
 }
 
+enum uint_8 OnboardingContinueEnum 
+{
+  Default = 0,
+}
+
 }
 }

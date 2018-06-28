@@ -26,6 +26,8 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+enum class OnboardingContinueEnum : uint8_t;
 
 class IOnboardingStage : private Anki::Util::noncopyable
 {
@@ -44,7 +46,8 @@ public:
   virtual void OnBegin( BehaviorExternalInterface& bei ) {}
   
   // App (or dev tools) says "Continue"
-  virtual void OnContinue( BehaviorExternalInterface& bei ) = 0;
+  // Should return whether this stage accepts/handles the continue
+  virtual bool OnContinue( BehaviorExternalInterface& bei, OnboardingContinueEnum continueNum ) = 0;
   
   // App (or dev tools) says "Skip"
   virtual void OnSkip( BehaviorExternalInterface& bei ) {}
@@ -68,8 +71,10 @@ public:
   // before GetBehavior().
   virtual void GetAdditionalMessages( std::set<EngineToGameTag>& tags ) const {}
   virtual void GetAdditionalMessages( std::set<GameToEngineTag>& tags ) const {}
+  virtual void GetAdditionalMessages( std::set<AppToEngineTag>& tags ) const {}
   virtual void OnMessage( BehaviorExternalInterface& bei, const EngineToGameEvent& event ) {}
   virtual void OnMessage( BehaviorExternalInterface& bei, const GameToEngineEvent& event ) {}
+  virtual void OnMessage( BehaviorExternalInterface& bei, const AppToEngineEvent& event ) {}
   
   // Called each tick, after any of the above On* methods, but before GetBehavior()
   virtual void Update( BehaviorExternalInterface& bei ) {}

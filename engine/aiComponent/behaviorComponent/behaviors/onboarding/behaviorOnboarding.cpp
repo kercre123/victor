@@ -19,11 +19,11 @@
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/iOnboardingStage.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/onboardingStageApp.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/onboardingStageCube.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/onboardingStageMeetVictor.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/onboardingStageWakeUpComeHere.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/iOnboardingStage.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/onboardingStageApp.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/onboardingStageCube.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/onboardingStageMeetVictor.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/onboardingStageWakeUpComeHere.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/cladProtoTypeTranslator.h"
@@ -93,12 +93,22 @@ BehaviorOnboarding::PendingEvent::PendingEvent(const GameToEngineEvent& event)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorOnboarding::PendingEvent::PendingEvent(const AppToEngineEvent& event)
+{
+  type = PendingEvent::AppToEngine;
+  new(&appToEngineEvent) AppToEngineEvent{event};
+  time_s = event.GetCurrentTime();
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorOnboarding::PendingEvent::~PendingEvent()
 {
   if( type == PendingEvent::GameToEngine ) {
     gameToEngineEvent.~AnkiEvent();
   } else if( type == PendingEvent::EngineToGame ) {
     engineToGameEvent.~AnkiEvent();
+  } else if( type == PendingEvent::AppToEngine ) {
+    appToEngineEvent.~AnkiEvent();
   }
 }
 
@@ -303,6 +313,7 @@ void BehaviorOnboarding::BehaviorUpdate()
   
   if( _dVars.devConsoleStagePending ) {
     if( _dVars.devConsoleStage == OnboardingStages::Complete ) {
+      SaveToDisk( _dVars.devConsoleStage );
       _dVars.currentStage = OnboardingStages::Complete;
       TerminateOnboarding();
     } else {
@@ -374,8 +385,9 @@ void BehaviorOnboarding::BehaviorUpdate()
       // send events
       for( const auto& pendingEvent : _dVars.pendingEvents ) {
         if( pendingEvent.second.type == PendingEvent::Continue ) {
-          const bool allowedContinue = true; // todo: use the to-be-created return value of OnContinue
-          GetCurrentStage()->OnContinue( GetBEI() );
+          // todo: use app message for this
+          OnboardingContinueEnum continueNum = OnboardingContinueEnum::Default;
+          const bool allowedContinue = GetCurrentStage()->OnContinue( GetBEI(), continueNum );
           if( gi != nullptr ) {
             auto* onboardingContinueResponse = new external_interface::OnboardingContinueResponse;
             onboardingContinueResponse->set_accepted( allowedContinue );
@@ -495,20 +507,19 @@ void BehaviorOnboarding::InitStages(bool resetExisting)
     _iConfig.stages[OnboardingStages::Complete].reset( new OnboardingStageApp{} );
   }
 }
+  
+void BehaviorOnboarding::SaveToDisk( const OnboardingStages& stage ) const
+{
+  Json::Value toSave;
+  toSave[kOnboardingStageKey] = OnboardingStagesToString(stage);
+  const std::string filename = _iConfig.saveFolder + kOnboardingFilename;
+  Util::FileUtils::WriteFile( filename, toSave.toStyledString() );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboarding::MoveToStage( const OnboardingStages& stage )
 {
-  ExternalInterface::OnboardingState saveState;
-  saveState.stage = stage;
-  
-  // save to disk
-  {
-    Json::Value toSave;
-    toSave[kOnboardingStageKey] = OnboardingStagesToString(stage);
-    const std::string filename = _iConfig.saveFolder + kOnboardingFilename;
-    Util::FileUtils::WriteFile( filename, toSave.toStyledString() );
-  }
+  SaveToDisk( stage );
   
   // broadcast
   if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
@@ -521,9 +532,8 @@ void BehaviorOnboarding::MoveToStage( const OnboardingStages& stage )
       // state is saved to disk, any reboots starting now will boot in normal mode, and any
       // other app onboarding that begins right after a reboot will have normal robot behavior (so
       // for now, an unprompted fistbump could occur).
-      const auto& msgRef = saveState; // force copy ctor
-      ExternalInterface::OnboardingState msgCopy{msgRef};
-      ei->Broadcast( ExternalInterface::MessageEngineToGame{std::move(msgCopy)} );
+      ExternalInterface::OnboardingState msg{ stage };
+      ei->Broadcast( ExternalInterface::MessageEngineToGame{std::move(msg)} );
     }
   }
   if( GetBEI().GetRobotInfo().HasGatewayInterface() ) {
@@ -574,6 +584,17 @@ void BehaviorOnboarding::MoveToStage( const OnboardingStages& stage )
     GetCurrentStage()->GetAdditionalMessages( tags );
     for( const auto& tag : tags ) {
       _dVars.stageEventHandles.push_back( ei->Subscribe(tag, onEvent) );
+    }
+  }
+  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+  if( gi != nullptr ) {
+    auto onEvent = [this](const AppToEngineEvent& event) {
+      _dVars.pendingEvents.emplace( std::piecewise_construct, std::forward_as_tuple(event.GetCurrentTime()),  std::forward_as_tuple(event) );
+    };
+    std::set<AppToEngineTag> tags;
+    GetCurrentStage()->GetAdditionalMessages( tags );
+    for( const auto& tag : tags ) {
+      _dVars.stageEventHandles.push_back( gi->Subscribe(tag, onEvent) );
     }
   }
   // start with trigger word disabled and no whitelist

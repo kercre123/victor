@@ -15,7 +15,7 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_Onboarding_OnboardingStageWakeUpComeHere__
 #pragma once
 
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/iOnboardingStage.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/iOnboardingStage.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
 #include "util/logging/logging.h"
@@ -30,9 +30,11 @@ public:
   
   virtual void GetAllDelegates( std::set<BehaviorID>& delegates ) const override
   {
+    delegates.insert( BEHAVIOR_ID(OnboardingLookAtPhone) );
     delegates.insert( BEHAVIOR_ID(OnboardingAsleep) );
     delegates.insert( BEHAVIOR_ID(OnboardingWakeUp) );
     delegates.insert( BEHAVIOR_ID(OnboardingSluggishDriveOffCharger) );
+    delegates.insert( BEHAVIOR_ID(OnboardingWaitForTriggerWord) );
     delegates.insert( BEHAVIOR_ID(OnboardingWaitForComeHere) );
     delegates.insert( BEHAVIOR_ID(OnboardingComeHere) );
     delegates.insert( BEHAVIOR_ID(OnboardingFinishedComeHere) );
@@ -48,29 +50,29 @@ public:
     SetTriggerWordEnabled(false);
     
     _behaviors.clear();
+    _behaviors[Step::LookAtPhone]              = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingLookAtPhone) );
     _behaviors[Step::Asleep]                   = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingAsleep) );
     _behaviors[Step::WakingUp]                 = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingWakeUp) );
     _behaviors[Step::DriveOffCharger]          = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingSluggishDriveOffCharger) );
-    _behaviors[Step::WaitingForTrigger]        = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingWaitForComeHere) );
+    _behaviors[Step::WaitingForTrigger]        = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingWaitForTriggerWord) );
     _behaviors[Step::WaitingForComeHere]       = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingWaitForComeHere) );
     _behaviors[Step::ComeHere]                 = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingComeHere) );
     _behaviors[Step::ComeHereResumeOrComplete] = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingFinishedComeHere) );
     
-    _step = Step::Asleep;
-    _stepAfterResumeFromCharger = Step::Asleep; // this is state is ignored since it could never happen outside initialization
+    _step = Step::LookAtPhone;
+    _stepAfterResumeFromCharger = Step::LookAtPhone; // this is state is ignored since it could never happen outside initialization
     _currentBehavior = _behaviors[_step];
-    DebugTransition("Waiting for continue to wake up");
+    DebugTransition("Waiting for OnboardingConnectionComplete to wake up");
   }
   
-  virtual void OnContinue( BehaviorExternalInterface& bei ) override
+  virtual bool OnContinue( BehaviorExternalInterface& bei, OnboardingContinueEnum continueNum ) override
   {
-    if( _step == Step::Complete ) {
-      return;
-    } else if( _step == Step::Asleep ) {
+    if( _step == Step::Asleep ) {
       TransitionToWakingUp();
-    } else {
+    } else if( _step == Step::Complete ) {
       DEV_ASSERT(false, "OnboardingStageWakeUp.UnexpectedOnContinue");
     }
+    return true;
   }
   
   virtual void OnSkip( BehaviorExternalInterface& bei ) override
@@ -112,6 +114,8 @@ public:
     // the previous behavior ended
     if( _step == Step::Complete ) {
       return;
+    } else if( _step == Step::LookAtPhone ) {
+      TransitionToAsleep();
     } else if( _step == Step::WakingUp ) {
       // if on the charger, drive off
       _currentBehavior = _behaviors[Step::DriveOffCharger];
@@ -155,6 +159,13 @@ public:
   }
   
 private:
+  
+  void TransitionToAsleep()
+  {
+    DebugTransition("Asleep. Waiting for continue to wake up");
+    _step = Step::Asleep;
+    _currentBehavior = _behaviors[_step];
+  }
   
   void TransitionToWakingUp()
   {
@@ -201,7 +212,7 @@ private:
   void OnFinishedDrivingOffCharger()
   {
     switch( _stepAfterResumeFromCharger ) {
-      case Step::Asleep: // initialization value, meaning it was part of the regular wakeup sequence
+      case Step::LookAtPhone: // initialization value, meaning it was part of the regular wakeup sequence
       case Step::DriveOffCharger:
       case Step::WaitingForTrigger:
         TransitionToWaitingForTrigger();
@@ -215,12 +226,13 @@ private:
       case Step::ComeHere:
         TransitionToComeHere();
         break;
+      case Step::Asleep:
       case Step::Complete:
       case Step::ComeHereResumeOrComplete:
         DEV_ASSERT(false, "OnboardingStageWakeUpComeHere.UnexpectedDriveOffCharger");
         break;
     }
-    _stepAfterResumeFromCharger = Step::Asleep; // reset
+    _stepAfterResumeFromCharger = Step::LookAtPhone; // reset
   }
   
   void DebugTransition(const std::string& debugInfo)
@@ -229,7 +241,8 @@ private:
   }
   
   enum class Step : uint8_t {
-    Asleep=0,
+    LookAtPhone=0,
+    Asleep,
     WakingUp,
     DriveOffCharger,
     WaitingForTrigger,
@@ -241,7 +254,7 @@ private:
   
   Step _step;
   IBehavior* _currentBehavior = nullptr;
-  Step _stepAfterResumeFromCharger = Step::Asleep;
+  Step _stepAfterResumeFromCharger = Step::LookAtPhone;
   
   std::unordered_map<Step,IBehavior*> _behaviors;
 };

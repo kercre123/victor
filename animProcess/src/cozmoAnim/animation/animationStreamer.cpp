@@ -57,6 +57,7 @@
 
 #include <stdio.h>
 #include <time.h>
+#include <vector>
 
 #define DEBUG_ANIMATION_STREAMING 0
 #define DEBUG_ANIMATION_STREAMING_AUDIO 0
@@ -444,16 +445,6 @@ namespace Cozmo {
                         neutralFaceAnimName.c_str());
     }
     
-    const std::string sleepingFaceAnimName = "anim_face_sleeping";
-    _bootFaceAnimation = _context->GetDataLoader()->GetCannedAnimation(sleepingFaceAnimName);
-    if (_bootFaceAnimation == nullptr)
-    {
-      PRINT_NAMED_ERROR("AnimationStreamer.Constructor.SleepingDataNotFound",
-                        "Could not find expected sleeping face animation file called %s",
-                        sleepingFaceAnimName.c_str());
-    }
-    
-    
     // Do this after the ProceduralFace class has set to use the right neutral face
     _proceduralTrackComponent->Init();
     
@@ -462,12 +453,12 @@ namespace Cozmo {
     _faceImageRGB565.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
     _faceImageGrayscale.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
    
-    // Use the sleeping animation, fall back on neutral eyes
-    if( _bootFaceAnimation != nullptr ) {
-      SetStreamingAnimation(_bootFaceAnimation, kNotAnimatingTag);
-    } else {
-      SetStreamingAnimation(_neutralFaceAnimation, kNotAnimatingTag);
-    }
+    // Start with a blank face (face scale == 0) until the engine has initialized and sent an animation
+    ProceduralFace blankFace;
+    const f32 zeroScale = 0.0f;
+    const std::vector<f32> arbitraryEyes((int)ProceduralEyeParameter::NumParameters, 0.5f);
+    blankFace.SetFromValues(arbitraryEyes, arbitraryEyes, 0.0f, 0.0f, 0.0f, zeroScale, zeroScale, 0.0f);
+    SetProceduralFace(blankFace, std::numeric_limits<u32>::max());
 
     return RESULT_OK;
   }
