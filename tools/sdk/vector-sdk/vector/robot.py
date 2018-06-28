@@ -245,14 +245,17 @@ class Robot:
         self.disconnect()
 
     # Animations
-    # TODO Refactor all animation code out into class like Cozmo SDK's cozmo.anim
+    # @TODO: Refactor all animation code out into class like Cozmo SDK's cozmo.anim
+    # @TODO: In cozmo we fetched and stored the animation list locally in the robot on startup, we should probably do that here too
+    @actions._as_actionable
     async def get_anim_names(self, enable_diagnostics=False):
-        sys.exit("'{}' is not yet implemented in grpc".format(__name__))
-        message = _clad_message.RequestAvailableAnimations()
-        innerWrappedMessage = _clad_message.Animations(RequestAvailableAnimations=message)
-        outerWrappedMessage = _clad_message.ExternalComms(Animations=innerWrappedMessage)
-        await self.socket.send(outerWrappedMessage.pack())
-        return await self.collect_events(enable_diagnostics, 10)
+
+        req = protocol.ListAnimationsRequest()
+        result = await self.connection.ListAnimations(req)
+
+        self.logger.debug('(status: {0}, number_of_animations:{1}'.format(result.status, len(result.animation_names)))
+
+        return [a.name for a in result.animation_names]
 
     @actions._as_actionable
     async def play_anim(self, animation_name, loop_count=1, ignore_body_track=True, ignore_head_track=True, ignore_lift_track=True):

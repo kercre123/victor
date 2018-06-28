@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"math"
 	"reflect"
+	"time"
 
 	"anki/ipc"
 	"anki/log"
@@ -184,6 +185,10 @@ func ProtoSetFaceToEnrollToClad(msg *extint.SetFaceToEnrollRequest) *gw_clad.Mes
 		SayName:     msg.SayName,
 		UseMusic:    msg.UseMusic,
 	})
+}
+
+func ProtoListAnimationsToClad(msg *extint.ListAnimationsRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithRequestAvailableAnimations(&gw_clad.RequestAvailableAnimations{})
 }
 
 func ProtoEnableVisionModeToClad(msg *extint.EnableVisionModeRequest) *gw_clad.MessageExternalToRobot {
@@ -458,7 +463,52 @@ func (m *rpcService) PlayAnimation(ctx context.Context, in *extint.PlayAnimation
 
 func (m *rpcService) ListAnimations(ctx context.Context, in *extint.ListAnimationsRequest) (*extint.ListAnimationsResult, error) {
 	log.Println("Received rpc request ListAnimations(", in, ")")
-	return nil, status.Errorf(codes.Unimplemented, "ListAnimations not yet implemented")
+
+	// NOTE: The channels have been having issues getting clogged
+	//  currently allocating a large number of channels to minimize failures
+	animationAvailableResponse := make(chan RobotToExternalCladResult, 1000)
+	engineChanMap[gw_clad.MessageRobotToExternalTag_AnimationAvailable] = animationAvailableResponse
+	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_AnimationAvailable)
+
+	// NOTE: The end of message has 5 channels because there was an issue
+	//  where with one (or 2) channels the endOfMessage was occasionally in a similar
+	//  way to the clogging on animationAvailableResponse.  This occurred despite
+	//  seeing the intent to broadcast this once from the engine side.
+	endOfMessageResponse := make(chan RobotToExternalCladResult, 5)
+	engineChanMap[gw_clad.MessageRobotToExternalTag_EndOfMessage] = endOfMessageResponse
+	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_EndOfMessage)
+
+	_, err := WriteToEngine(engineSock, ProtoListAnimationsToClad(in))
+	if err != nil {
+		return nil, err
+	}
+
+	var anims []*extint.Animation
+
+	done := false
+	for done == false {
+		select {
+		case chanResponse := <-animationAvailableResponse:
+			var newAnim = extint.Animation{
+				Name: chanResponse.Message.GetAnimationAvailable().AnimName,
+			}
+			anims = append(anims, &newAnim)
+		case chanResponse := <-endOfMessageResponse:
+			if chanResponse.Message.GetEndOfMessage().MessageType == gw_clad.MessageType_AnimationAvailable {
+				log.Println("Final animation list message recieved - count: ", len(anims))
+				done = true
+			}
+		case <-time.After(5 * time.Second):
+			return nil, status.Errorf(codes.DeadlineExceeded, "ListAnimations request timed out")
+		}
+	}
+
+	return &extint.ListAnimationsResult{
+		Status: &extint.ResultStatus{
+			Description: "Available animations returned",
+		},
+		AnimationNames: anims,
+	}, nil
 }
 
 func (m *rpcService) MoveHead(ctx context.Context, in *extint.MoveHeadRequest) (*extint.MoveHeadResult, error) {
@@ -841,7 +891,6 @@ func (m *rpcService) SendOnboardingInput(ctx context.Context, in *extint.Onboard
 		return nil, status.Errorf(0, "OnboardingInputRequest.OneofMessageType has unexpected type %T", x)
 	}
 }
-
 
 func (m *rpcService) PhotosInfo(ctx context.Context, in *extint.PhotosInfoRequest) (*extint.PhotosInfoResponse, error) {
 	log.Println("Received rpc request PhotosInfo(", in, ")")

@@ -24,6 +24,26 @@ enum uint_32 ActionResult {
   CANCELLED_WHILE_RUNNING = 33554432,
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////  META  /////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+enum uint_8 MessageType {
+  AnimationAvailable
+}
+
+message EndOfMessage {
+  MessageType messageType
+}
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////  ANIMATIONS  //////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+message AnimationAvailable {
+  string animName
+}
+
 message RobotCompletedAction {
     uint_32 idTag,                                 // The identifier of the specific action that completed
     RobotActionType      actionType,
@@ -249,6 +269,8 @@ union MessageRobotToExternal {
   EnrolledNamesResponse             EnrolledNamesResponse              = 0x06,
   RobotObservedFace                 RobotObservedFace                  = 0x07, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   RobotChangedObservedFaceID        RobotChangedObservedFaceID         = 0x08, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  AnimationAvailable                AnimationAvailable                 = 0x09,
+  EndOfMessage                      EndOfMessage                       = 0x0A,
 }
 
 } // Gateway

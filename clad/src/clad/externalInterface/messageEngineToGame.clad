@@ -1042,6 +1042,8 @@ autounion MessageEngineToGame
   EnrolledNamesResponse             EnrolledNamesResponse              = 0x06,  
   RobotObservedFace                 RobotObservedFace                  = 0x07, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   RobotChangedObservedFaceID        RobotChangedObservedFaceID         = 0x08, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  AnimationAvailable                AnimationAvailable                 = 0x09,
+  EndOfMessage                      EndOfMessage                       = 0x0A,
 }
 
 } // namespace ExternalInterface

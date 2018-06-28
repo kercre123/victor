@@ -22,6 +22,8 @@ from vector.messaging import external_interface_pb2
 from vector.messaging import protocol
 from vector.messaging import client
 
+interface = client.ExternalInterfaceServicer
+
 # Both the EventStream and RobotStream should be kicked off automatically when we initialize a connection.
 # while I feel it could be useful to verify these events come from the robot in response to the correct 
 # stimula and that the robot state correctly represents its actual state, testing the scope of these two
@@ -29,90 +31,162 @@ from vector.messaging import client
 # webots state management feels improper for a rapid smoke test.
 #  - nicolas 06/18/18
 messages_to_ignore = [
-    client.ExternalInterfaceServicer.EventStream,
-    client.ExternalInterfaceServicer.RobotStateStream
+    interface.EventStream,
+    interface.RobotStateStream,
     ]
+
+class TestResultMatches:
+    _value = None
+    def __init__(self, value):
+        self._value = value
+
+    def get_target_type(self):
+        return type(self._value)
+
+    def test_with(self, target):
+        errors = []
+
+        expected_type = type(self._value)
+        expected_fields = [a[1] for a in self._value.ListFields()]
+
+        target_type = type(target)
+        target_fields = [a[1] for a in target.ListFields()]
+
+        # Casting as string makes the equality check work
+        if str(target_type) != str(expected_type):
+            errors.append('TypeError: recieved output of type {0} when expecting output of type {1}'.format(target_type, expected_type))
+
+        elif len(expected_fields) != len(target_fields):
+            errors.append('TypeError: recieved output that appears to be a different type or contains different contents {0} than the expected output type {1}'.format(target_type, expected_type))
+
+        else:
+            # This does not perform a deep comparison, which is difficult to implement in a generic way
+            for i in range(len(expected_fields)):
+                if target_fields[i] != expected_fields[i]:
+                    errors.append('ValueError: recieved output with incorrect response {0}, was expecting {1}, failure occurred with field "{2}"'.format(str(target_fields), str(expected_fields), str(target_fields[i])))
+        return errors
+
+class TestResultIsTypeWithStatusAndFieldNames:
+    _expected_type = None
+    _status = None
+    _field_names = []
+    def __init__(self, expected_type, status, field_names):
+        self._expected_type = expected_type
+        self._status = status
+        self._field_names = field_names
+
+    def get_target_type(self):
+        return self._expected_type
+
+    def test_with(self, target):
+        errors = []
+
+        target_type = type(target)
+        target_field_names = target.DESCRIPTOR.fields_by_name.keys()
+
+        # Casting as string makes the equality check work
+        if str(target_type) != str(self._expected_type):
+            errors.append('TypeError: recieved output of type {0} when expecting output of type {1}'.format(target_type, self._expected_type))
+
+        elif len(self._field_names) + 1 != len(target.ListFields()):
+            errors.append('TypeError: recieved output of type {0} that has {1} fields when {2} were expected'.format(target_type, len(target.ListFields()), len(self._field_names)+1))
+
+        elif target.status != self._status:
+            errors.append('TypeError: recieved output with status \'{0}\' when \'{1}\' was expected'.format(str(target.status), str(self._status)))
+
+        else:
+
+            for i in self._field_names:
+                if not i in target_field_names:
+                    errors.append('ValueError: recieved output with without the expected field "{0}"'.format(i))
+        return errors
 
 messages_to_test = [
     # DriveWheels message
-    ( client.ExternalInterfaceServicer.DriveWheels, 
+    ( interface.DriveWheels,
         protocol.DriveWheelsRequest(left_wheel_mmps=0.0, right_wheel_mmps=0.0, left_wheel_mmps2=0.0, right_wheel_mmps2=0.0), 
-        protocol.DriveWheelsResult(status=protocol.ResultStatus(description="Message sent to engine")) ),
+        TestResultMatches(protocol.DriveWheelsResult(status=protocol.ResultStatus(description="Message sent to engine"))) ),
 
     # DriveArc message
-    ( client.ExternalInterfaceServicer.DriveArc,
+    ( interface.DriveArc,
         protocol.DriveArcRequest(speed=0.0, accel=0.0, curvature_radius_mm=0),
-        protocol.DriveArcResult(status=protocol.ResultStatus(description="Message sent to engine")) ),
+        TestResultMatches(protocol.DriveArcResult(status=protocol.ResultStatus(description="Message sent to engine"))) ),
 
     # MoveHead message
-    ( client.ExternalInterfaceServicer.MoveHead, 
+    ( interface.MoveHead,
         protocol.MoveHeadRequest(speed_rad_per_sec=0.0),
-        protocol.MoveHeadResult(status=protocol.ResultStatus(description="Message sent to engine")) ),
+        TestResultMatches(protocol.MoveHeadResult(status=protocol.ResultStatus(description="Message sent to engine"))) ),
 
     # MoveLift message
-    ( client.ExternalInterfaceServicer.MoveLift,
+    ( interface.MoveLift,
         protocol.MoveLiftRequest(speed_rad_per_sec=0.0),
-        protocol.MoveLiftResult(status=protocol.ResultStatus(description="Message sent to engine")) ),
+        TestResultMatches(protocol.MoveLiftResult(status=protocol.ResultStatus(description="Message sent to engine"))) ),
 
     # PlayAnimation message
-    ( client.ExternalInterfaceServicer.PlayAnimation, 
+    ( interface.PlayAnimation,
         protocol.PlayAnimationRequest(animation=protocol.Animation(name='anim_poked_giggle'), loops=1), 
-        protocol.PlayAnimationResult(status=protocol.ResultStatus(description="Animation completed")) ),
+        TestResultMatches(protocol.PlayAnimationResult(status=protocol.ResultStatus(description="Animation completed"))) ),
+
+
+    # ListAnimations message
+    ( interface.ListAnimations,
+        protocol.ListAnimationsRequest(),
+        TestResultIsTypeWithStatusAndFieldNames(protocol.ListAnimationsResult, protocol.ResultStatus(description="Available animations returned"), ['animation_names']) ),
 
     # DisplayFaceImageRGB message
-    ( client.ExternalInterfaceServicer.DisplayFaceImageRGB, 
+    ( interface.DisplayFaceImageRGB,
         protocol.DisplayFaceImageRGBRequest(face_data=bytes(vector.color.Color(rgb=[255,0,0]).rgb565_bytepair * 17664), duration_ms=1000, interrupt_running=True), 
-        protocol.DisplayFaceImageRGBResult(status=protocol.ResultStatus(description="Message sent to engine")) ),
+        TestResultMatches(protocol.DisplayFaceImageRGBResult(status=protocol.ResultStatus(description="Message sent to engine"))) ),
 
     # SDKBehaviorActivation message
-    ( client.ExternalInterfaceServicer.SDKBehaviorActivation,
+    ( interface.SDKBehaviorActivation,
         protocol.SDKActivationRequest(slot=vector.robot.SDK_PRIORITY_LEVEL.SDK_HIGH_PRIORITY, enable=True), 
-        protocol.SDKActivationResult(status=protocol.ResultStatus(description="SDKActivationResult returned"), slot=vector.robot.SDK_PRIORITY_LEVEL.SDK_HIGH_PRIORITY, enabled=True)),
+        TestResultMatches(protocol.SDKActivationResult(status=protocol.ResultStatus(description="SDKActivationResult returned"), slot=vector.robot.SDK_PRIORITY_LEVEL.SDK_HIGH_PRIORITY, enabled=True)) ),
 
     # AppIntent message
-    ( client.ExternalInterfaceServicer.AppIntent,
+    ( interface.AppIntent,
         protocol.AppIntentRequest(intent='intent_meet_victor', param='Bobert'), 
-        protocol.AppIntentResult(status=protocol.ResultStatus(description="Message sent to engine"))),
+        TestResultMatches(protocol.AppIntentResult(status=protocol.ResultStatus(description="Message sent to engine"))) ),
 
     # UpdateEnrolledFaceByID message
-    ( client.ExternalInterfaceServicer.UpdateEnrolledFaceByID,
+    ( interface.UpdateEnrolledFaceByID,
         protocol.UpdateEnrolledFaceByIDRequest(face_id=1, old_name="Bobert", new_name="Boberta"),
-        protocol.UpdateEnrolledFaceByIDResult(status=protocol.ResultStatus(description="Message sent to engine"))),
+        TestResultMatches(protocol.UpdateEnrolledFaceByIDResult(status=protocol.ResultStatus(description="Message sent to engine"))) ),
 
     # SetFaceToEnroll message
-    ( client.ExternalInterfaceServicer.SetFaceToEnroll,
+    ( interface.SetFaceToEnroll,
         protocol.SetFaceToEnrollRequest(name="Boberta", observed_id=1, save_id=0, save_to_robot=True, say_name=True, use_music=True), 
-        protocol.SetFaceToEnrollResult(status=protocol.ResultStatus(description="Message sent to engine"))),    
+        TestResultMatches(protocol.SetFaceToEnrollResult(status=protocol.ResultStatus(description="Message sent to engine"))) ),
 
     # CancelFaceEnrollment message
-    ( client.ExternalInterfaceServicer.CancelFaceEnrollment,
+    ( interface.CancelFaceEnrollment,
         protocol.CancelFaceEnrollmentRequest(), 
-        protocol.CancelFaceEnrollmentResult(status=protocol.ResultStatus(description="Message sent to engine"))),
+        TestResultMatches(protocol.CancelFaceEnrollmentResult(status=protocol.ResultStatus(description="Message sent to engine"))) ),
 
     # EraseEnrolledFaceByID message
-    ( client.ExternalInterfaceServicer.EraseEnrolledFaceByID,
+    ( interface.EraseEnrolledFaceByID,
         protocol.EraseEnrolledFaceByIDRequest(face_id=1), 
-        protocol.EraseEnrolledFaceByIDResult(status=protocol.ResultStatus(description="Message sent to engine"))),
+        TestResultMatches(protocol.EraseEnrolledFaceByIDResult(status=protocol.ResultStatus(description="Message sent to engine"))) ),
 
     # EraseAllEnrolledFaces message
-    ( client.ExternalInterfaceServicer.EraseAllEnrolledFaces,
+    ( interface.EraseAllEnrolledFaces,
         protocol.EraseAllEnrolledFacesRequest(), 
-        protocol.EraseAllEnrolledFacesResult(status=protocol.ResultStatus(description="Message sent to engine"))),
+        TestResultMatches(protocol.EraseAllEnrolledFacesResult(status=protocol.ResultStatus(description="Message sent to engine"))) ),
 
     # RequestEnrolledNames message
-    ( client.ExternalInterfaceServicer.RequestEnrolledNames,
+    ( interface.RequestEnrolledNames,
         protocol.RequestEnrolledNamesRequest(),
-        protocol.RequestEnrolledNamesResult(status=protocol.ResultStatus(description="Enrolled names returned"), faces=[])),
+        TestResultMatches(protocol.RequestEnrolledNamesResult(status=protocol.ResultStatus(description="Enrolled names returned"), faces=[])) ),
 
     # EnableVisionMode message
     ( client.ExternalInterfaceServicer.EnableVisionMode,
         protocol.EnableVisionModeRequest(mode=protocol.VisionMode.Value("VISION_MODE_DETECTING_FACES"), enable=True),
-        protocol.EnableVisionModeResult(status=protocol.ResultStatus(description="Message sent to engine"))),
+        TestResultMatches(protocol.EnableVisionModeResult(status=protocol.ResultStatus(description="Message sent to engine"))) ),
 
     # NOTE: Add additional messages here
     ]
 
-async def test_message(robot, message_name, message_src, message_input, expected_message_output, errors):
+async def test_message(robot, message_name, message_src, message_input, test_class, errors):
     # The message_src is used mostly so we can easily verify that the name is supported by the servicer.  In terms of actually making the call its simpler to invoke on the robot
     message_call = getattr(robot.connection, message_name)
 
@@ -120,23 +194,10 @@ async def test_message(robot, message_name, message_src, message_input, expected
     result = await message_call(message_input)
     print("Received: \"{0}\"".format(MessageToJson(result, including_default_value_fields=True, preserving_proto_field_name=True) ))
     
-    expected_result_data_fields = [a[1] for a in expected_message_output.ListFields()]
-    result_data_fields = [a[1] for a in result.ListFields()]
+    new_errors = test_class.test_with(result)
 
-    # Casting as string makes the equality check work
-    if str(type(result)) != str(type(expected_message_output)):
-        errors.append('TypeError: recieved output of type {0} when expecting output of type {1} for message of type {2}'.format(type(result), type(expected_message_output), message_name))
-        return
-
-    if len(expected_result_data_fields) != len(result_data_fields):
-        errors.append('TypeError: recieved output that appears to be a different type or contains different contents {0} than the expected output type {1} for message of type {2}'.format(type(result), type(expected_message_output), message_name))
-        return
-
-    # This does not perform a deep comparison, which is difficult to implement in a generic way
-    for i in range(len(expected_result_data_fields)):
-        # @TODO: Need a way to check if expected_result_data_fields[i] is expecting a wildcard
-        if result_data_fields[i] != expected_result_data_fields[i]:
-            errors.append('ValueError: recieved output with incorrect response {0} for message of type {1}, was expecting {2}, failure occurred with field "{3}"'.format(str(result_data_fields), message_name, str(expected_result_data_fields), str(result_data_fields[i])))
+    for i in new_errors:
+        errors.append('{0}: {1}'.format(message_name, i))
 
 async def run_message_tests(robot, future):
     warnings = []
@@ -160,7 +221,8 @@ async def run_message_tests(robot, future):
     for i in messages_to_test:
         message_call = i[0]
         input_data = i[1]
-        output_data = i[2]
+        test_class = i[2]
+        target_type = test_class.get_target_type()
 
         message_name = message_call.__name__
         # make sure we are expecting this message
@@ -174,13 +236,13 @@ async def run_message_tests(robot, future):
 
             # make sure we are using the correct output class for this message
             expected_output_type = expected_test_list[message_name]['output'].name
-            recieved_output_type = type(output_data).__name__
+            recieved_output_type = target_type.__name__
             if recieved_output_type != expected_output_type:
                 errors.append('OutputData: A test for a message of type {0} expects output data of the type {1}, but {2} was supplied'.format(message_name, expected_output_type, recieved_output_type))
                 continue
 
             print("testing " + message_name)
-            await test_message(robot, message_name, message_call, input_data, output_data, errors)
+            await test_message(robot, message_name, message_call, input_data, test_class, errors)
             del expected_test_list[message_name]
         else:
             errors.append('NotImplemented: A test was defined for the {0} message, which is not in the interface'.format(message_name))

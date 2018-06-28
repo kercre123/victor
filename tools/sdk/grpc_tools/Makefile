@@ -135,6 +135,9 @@ test_curl: .require_ip
 	$(curl_command)/v1/display_face_image_rgb -X POST -d @test_assets/oled_color.json
 	@echo
 
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/list_animations -d '{}'
+	@echo
+
 test_meet_victor: .require_ip
 	# First, turn on behaviors (by shaking), then say "Hey Vector, my name is Bobert"
 
