@@ -64,19 +64,19 @@ private:
 
   // Helper to find the index of the a single output with the highest score, assumed to 
   // correspond to the matching label from the labels file
-  void GetClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp, 
+  Result GetClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp, 
                          std::list<Vision::SalientPoint>& salientPoints);
 
   // Helper to return a set of localization boxes from a grid, assuming a binary classifcation 
   // (e.g. person / no-person in a 6x6 grid). Grid size is specified in JSON config
-  void GetLocalizedBinaryClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp, 
+  Result GetLocalizedBinaryClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp, 
                                         std::list<Vision::SalientPoint>& salientPoints);
 
   // Helper to interpret four outputs as SSD boxes (num detections, scores, classes, and boxes)
-  void GetDetectedObjects(const std::vector<tensorflow::Tensor>& outputTensors, TimeStamp_t timestamp,
+  Result GetDetectedObjects(const std::vector<tensorflow::Tensor>& outputTensors, TimeStamp_t timestamp,
                           std::list<Vision::SalientPoint>& salientPoints);
 
-  void GetSalientPointsFromResponseMap(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp,
+  Result GetSalientPointsFromResponseMap(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp,
                                        std::list<Vision::SalientPoint>& salientPoints);
 
   // Thin wrapper to tensorflow run to allow us to turn on benchmarking to logs

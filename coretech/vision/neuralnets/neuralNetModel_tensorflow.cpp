@@ -421,7 +421,7 @@ Result NeuralNetModel::ReadLabelsFile(const std::string& fileName, std::vector<s
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NeuralNetModel::GetClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp,
+Result NeuralNetModel::GetClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp,
                                        std::list<Vision::SalientPoint>& salientPoints)
 {
   const float* outputData = outputTensor.tensor<float, 2>().data();
@@ -458,10 +458,11 @@ void NeuralNetModel::GetClassification(const tensorflow::Tensor& outputTensor, T
   {
     LOG_INFO("NeuralNetModel.GetClassification.NoObjects", "MinScore: %f", _params.minScore);
   }
+  return RESULT_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NeuralNetModel::GetLocalizedBinaryClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp,
+Result NeuralNetModel::GetLocalizedBinaryClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp,
                                                       std::list<Vision::SalientPoint>& salientPoints)
 {
   // Create a detection box for each grid cell that is above threshold
@@ -601,11 +602,11 @@ void NeuralNetModel::GetLocalizedBinaryClassification(const tensorflow::Tensor& 
       salientPoints.push_back(std::move(salientPoint));
     }
   }
-
+  return RESULT_OK;
 } 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NeuralNetModel::GetDetectedObjects(const std::vector<tensorflow::Tensor>& outputRensors, TimeStamp_t timestamp,
+Result NeuralNetModel::GetDetectedObjects(const std::vector<tensorflow::Tensor>& outputRensors, TimeStamp_t timestamp,
                                         std::list<Vision::SalientPoint>& salientPoints)
 {
   DEV_ASSERT(outputRensors.size() == 4, "NeuralNetModel.GetDetectedObjects.WrongNumOutputs");
@@ -666,9 +667,10 @@ void NeuralNetModel::GetDetectedObjects(const std::vector<tensorflow::Tensor>& o
                (int)salientPoints.size(), _params.minScore, salientPointsStr.c_str());
     }
   } 
+  return RESULT_OK;
 }
 
-void NeuralNetModel::GetSalientPointsFromResponseMap(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp,
+Result NeuralNetModel::GetSalientPointsFromResponseMap(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp,
                                                      std::list<Vision::SalientPoint>& salientPoints)
 {
   tensorflow::Tensor squoozenTensor(tensorflow::DT_FLOAT,
@@ -680,6 +682,7 @@ void NeuralNetModel::GetSalientPointsFromResponseMap(const tensorflow::Tensor& o
                                                                               2})))
   {
     PRINT_NAMED_ERROR("NeuralNetModel.GetSalientPointsFromResponseMap.CopyFromFailed", "");
+    return RESULT_FAIL;
   }
 
   DEV_ASSERT( !(outputTensor.tensor<float, 4>().Options & Eigen::RowMajor),
@@ -721,6 +724,7 @@ void NeuralNetModel::GetSalientPointsFromResponseMap(const tensorflow::Tensor& o
                                     shape.ToCladPoint2dVector());
 
   salientPoints.push_back(std::move(salientPoint));
+  return RESULT_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -798,26 +802,27 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
     return RESULT_FAIL;
   }
 
+  Result result = RESULT_OK;
   switch(_params.outputType)
   {
     case OutputType::Classification:
     {
-      GetClassification(outputTensors[0], t, salientPoints);
+      result = GetClassification(outputTensors[0], t, salientPoints);
       break;
     }
     case OutputType::BinaryLocalization:
     {
-      GetLocalizedBinaryClassification(outputTensors[0], t, salientPoints);
+      result = GetLocalizedBinaryClassification(outputTensors[0], t, salientPoints);
       break;
     }
     case OutputType::AnchorBoxes:
     {
-      GetDetectedObjects(outputTensors, t, salientPoints);  
+      result = GetDetectedObjects(outputTensors, t, salientPoints);  
       break;
     }
     case OutputType::Segmentation:
     {
-      GetSalientPointsFromResponseMap(outputTensors[0], t, salientPoints);
+      result = GetSalientPointsFromResponseMap(outputTensors[0], t, salientPoints);
       break;
     }
   }
