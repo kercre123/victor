@@ -119,7 +119,8 @@ void BehaviorAttentionTransferIfNeeded::TransitionToNoAttentionTransfer()
   if( !_iConfig.animsIfNotRecent.empty() ) {
     CompoundActionSequential* action = new CompoundActionSequential();
     for( const auto& trigger : _iConfig.animsIfNotRecent ) {
-      action->AddAction(new TriggerLiftSafeAnimationAction(trigger));
+      const bool ignoreFailure = true;
+      action->AddAction(new TriggerLiftSafeAnimationAction(trigger), ignoreFailure);
     }
 
     DelegateIfInControl(action);

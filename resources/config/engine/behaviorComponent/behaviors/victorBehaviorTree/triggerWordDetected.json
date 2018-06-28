@@ -7,7 +7,7 @@
 
   "notifyOnErrors": {
     "recentOccurrence": {
-      "numberOfTimes": 4,
+      "numberOfTimes": 2,
       "amountOfSeconds": 300.0
     }
   },

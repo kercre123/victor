@@ -639,8 +639,11 @@ void BehaviorReactToVoiceCommand::TransitionToIntentReceived()
       // no animation for valid intent, go straight into the intent behavior
       PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent.Heard", "Heard valid user intent, woot!" );
 
-      // also reset the attention transfer counter for unmatched intents (since we got a good one)
+      // also reset the attention transfer counters since we got a valid intent
       GetBehaviorComp<AttentionTransferComponent>().ResetAttentionTransfer(AttentionTransferReason::UnmatchedIntent);
+      GetBehaviorComp<AttentionTransferComponent>().ResetAttentionTransfer(AttentionTransferReason::NoWifi);
+      GetBehaviorComp<AttentionTransferComponent>().ResetAttentionTransfer(AttentionTransferReason::NoCloudConnection);
+      _iVars.cloudErrorTracker.Reset();
       break;
     }
 
@@ -652,6 +655,10 @@ void BehaviorReactToVoiceCommand::TransitionToIntentReceived()
         // this behavior will (should) interact directly with the attention transfer component
         DelegateIfInControl(_iVars.unmatchedIntentBehavior.get());
       }
+
+      // even an unknown intent means we got something back from the cloud, so reset those transfer counters
+      GetBehaviorComp<AttentionTransferComponent>().ResetAttentionTransfer(AttentionTransferReason::NoWifi);
+      GetBehaviorComp<AttentionTransferComponent>().ResetAttentionTransfer(AttentionTransferReason::NoCloudConnection);
       break;
     }
 
