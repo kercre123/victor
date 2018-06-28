@@ -37,10 +37,10 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {  
-  const float kPlanningResolution_mm = 20.f;
-  const float kOneOverPlanningResolution = 1/kPlanningResolution_mm;
-  const float kRobotRadius_mm        = ROBOT_BOUNDING_X / 2.f;
-  const float kPlanningPadding_mm    = 2.f;
+  const float kPlanningResolution_mm        = 20.f;
+  const float kOneOverPlanningResolution    = 1/kPlanningResolution_mm;
+  const float kRobotRadius_mm               = ROBOT_BOUNDING_X / 2.f;
+  const float kPlanningPadding_mm           = 3.f;
 
   const size_t kEscapeObstacleMaxExpansions = 10000;
   const size_t kPlanPathMaxExpansions       = 100000;
@@ -59,44 +59,39 @@ namespace {
 class PlannerConfig : public IAStarConfig<Point2f, PlannerConfig> {
 public:
   // define a custom iterator class to avoid dynamic memory allocation
-  class SuccessorList {
+  class SuccessorIter : private std::iterator<std::input_iterator_tag, Successor>{
   public:
-    class SuccessorIter : private std::iterator<std::input_iterator_tag, Successor>{
-    public:
-      SuccessorIter(const SuccessorList& c, size_t idx) : _context(c), _idx(idx) { UpdateState(); }
+    SuccessorIter(const Point2f& p, const MapComponent& m, size_t idx = 0 ) 
+    : _idx(idx), _parent(p), _map(m) { UpdateState(); }
 
-      bool          operator!=(const SuccessorIter& rhs) { return this->_idx != rhs._idx; }
-      Successor     operator*()                          { return {_state, kPlanningResolution_mm}; }
-      SuccessorIter operator++()                         { ++_idx; UpdateState(); return *this; }
-
-    private:
-      inline void UpdateState() {
-        if (_idx >= fourConnectedGrid.size()) { return; }
-        _state = _context._parent + fourConnectedGrid[_idx];
-        if ( _context._map.CheckForCollisions( Ball2f(_state, kRobotRadius_mm + kPlanningPadding_mm) ) ) { ++(*this); }
-      }
-
-      const SuccessorList& _context;
-      size_t               _idx;
-      Point2f              _state;
-    };
-
-    SuccessorList(const Point2f& p, const MapComponent& m) :  _parent(p), _map(m) {}
-
-    SuccessorIter begin() { return SuccessorIter(*this, 0); }
-    SuccessorIter end()   { return SuccessorIter(*this, fourConnectedGrid.size()); }
+    bool          operator!=(const SuccessorIter& rhs) { return this->_idx != rhs._idx; }
+    Successor     operator*()                          { return {_state, kPlanningResolution_mm}; }
+    SuccessorIter operator++()                         { ++_idx; UpdateState(); return *this; }
+    SuccessorIter begin()                              { return SuccessorIter(_parent, _map); }
+    SuccessorIter end()                                { return SuccessorIter(_parent, _map, fourConnectedGrid.size()); }
 
   private:
+    inline void UpdateState() {
+      if (_idx >= fourConnectedGrid.size()) { return; }
+      _state = _parent + fourConnectedGrid[_idx];
+      if ( _map.CheckForCollisions( Ball2f(_state, kRobotRadius_mm + kPlanningPadding_mm) ) ) { ++(*this); }
+    }
+
+    size_t              _idx;
+    Point2f             _state;
     const Point2f       _parent;
     const MapComponent& _map;
   };
   
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  PlannerConfig(const MapComponent& map, const Point2f& goal) : _map(map), _goal(goal) {}
+  PlannerConfig(const MapComponent& map, const volatile bool& stopPlanning, const Point2f& goal) 
+  : _map(map)
+  , _abort(stopPlanning)
+  , _goal(goal) {}
 
   inline bool          IsGoal(const Point2f& p)        const { return IsNearlyEqual(p, _goal, kPlanningResolution_mm/2); }
-  inline SuccessorList GetSuccessors(const Point2f& p) const { return SuccessorList(GetNearestGridPoint(p), _map); };
-  inline size_t        GetMaxExpansions()              const { return kPlanPathMaxExpansions; }
+  inline SuccessorIter GetSuccessors(const Point2f& p) const { return SuccessorIter(GetNearestGridPoint(p), _map); };
+  inline size_t        GetNumExpansions()              const { return _numExpansions; }
+  inline bool          StopPlanning()                        { return _abort || (++_numExpansions > kPlanPathMaxExpansions); }
   inline float         Heuristic(const Point2f& p)     const { 
     // Manhattan Distance
     Point2f d = (p - _goal).Abs();
@@ -104,15 +99,15 @@ public:
   }
 
 private:
-  // snap to planning grid
+  // snap to planning grid via (float->int->float) cast
   inline Point2f GetNearestGridPoint(const Point2f& p) const {
-    // truncate via (float->int->float) cast instead of round for speed
-    Point2f nearestCenterIdx = p * kOneOverPlanningResolution;
-    return nearestCenterIdx.CastTo<int>().CastTo<float>() * kPlanningResolution_mm;
+    return (p * kOneOverPlanningResolution).CastTo<int>().CastTo<float>() * kPlanningResolution_mm;
   }
 
-  const MapComponent& _map;
-  const Point2f&      _goal;
+  const MapComponent&  _map;
+  const volatile bool& _abort;
+  const Point2f&       _goal;
+  size_t               _numExpansions = 0;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -120,10 +115,12 @@ private:
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class EscapeObstaclePlanner : public IAStarConfig<Point2f, EscapeObstaclePlanner> {
 public:
-  EscapeObstaclePlanner(const MapComponent& map) : _map(map) {}
+  EscapeObstaclePlanner(const MapComponent& map, const volatile bool& stopPlanning) 
+  : _map(map)
+  , _abort(stopPlanning) {}
 
   inline float  Heuristic(const Point2f& p) const { return 0.f; };
-  inline size_t GetMaxExpansions()          const { return kEscapeObstacleMaxExpansions; }
+  inline bool   StopPlanning()                    { return _abort || (++_numExpansions > kEscapeObstacleMaxExpansions); }
   inline bool   IsGoal(const Point2f& p)    const { return !_map.CheckForCollisions( Ball2f(p, kRobotRadius_mm + kPlanningPadding_mm) ); }
 
   inline std::array<Successor, 4> GetSuccessors(const Point2f& p) const { 
@@ -134,7 +131,9 @@ public:
   };
 
 private:
-  const MapComponent& _map;
+  const MapComponent&  _map;
+  const volatile bool& _abort;
+  size_t               _numExpansions = 0;
 };
 
 } // namespace Cozmo

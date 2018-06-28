@@ -122,7 +122,7 @@ private:
   };
     
   // container for each node's children
-  using ChildrenVector = std::vector< std::unique_ptr<QuadTreeNode> >;
+  using ChildrenVector = std::vector< std::shared_ptr<QuadTreeNode> >;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Query
@@ -180,7 +180,7 @@ private:
   // NOTE: try to minimize padding in these attributes
 
   // children when subdivided. Can be empty or have 4 nodes
-  std::vector< std::unique_ptr<QuadTreeNode> > _childrenPtr;
+  ChildrenVector _childrenPtr;
 
   // coordinates of this quad
   Point3f _center;

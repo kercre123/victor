@@ -297,7 +297,7 @@ bool QuadTree::ShiftRoot(const AxisAlignedQuad& region, QuadTreeProcessor& proce
   if ( !_childrenPtr.empty() )
   {
     // save my old children so that we can swap them with the new ones
-    std::vector< std::unique_ptr<QuadTreeNode> > oldChildren;
+    ChildrenVector oldChildren;
     std::swap(oldChildren, _childrenPtr);
     
     // create new children
@@ -415,7 +415,7 @@ bool QuadTree::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel, 
   }
 
   // save my old children to store in the child that is taking my spot
-  std::vector< std::unique_ptr<QuadTreeNode> > oldChildren;
+  ChildrenVector oldChildren;
   std::swap(oldChildren, _childrenPtr);
 
   const bool xPlus = FLT_GE_ZERO(direction.x());

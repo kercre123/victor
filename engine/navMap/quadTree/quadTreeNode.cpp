@@ -332,14 +332,22 @@ void QuadTreeNode::AddSmallestNeighbors(EDirection direction,
 // Fold Implementations
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+namespace {
+  // helper to make sure that we have a valid pointer if we are performing multithreaded operations
+  template<class T>
+  std::shared_ptr<T> PreservePointer(const std::shared_ptr<T>& ptr) {
+    const std::weak_ptr<T> weak = ptr;
+    return weak.lock();
+  }
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeNode::Fold(FoldFunctor accumulator, FoldDirection dir)
 {
   if (FoldDirection::BreadthFirst == dir) { accumulator(*this); }
 
-  for ( auto& cPtr : _childrenPtr )
-  {
-    if (cPtr) cPtr->Fold(accumulator, dir);
+  for ( auto& cPtr : _childrenPtr ) {
+    if ( auto observe = PreservePointer<QuadTreeNode>(cPtr) ) { observe->Fold(accumulator, dir); }
   }
 
   if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
@@ -350,11 +358,8 @@ void QuadTreeNode::Fold(FoldFunctorConst accumulator, FoldDirection dir) const
 { 
   if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
   
-  for ( const auto& cPtr : _childrenPtr )
-  {
-    // disambiguate const method call
-    const QuadTreeNode* constPtr = cPtr.get();
-    constPtr->Fold(accumulator, dir);
+  for ( const auto& cPtr : _childrenPtr )  {
+    if ( auto observe = PreservePointer<const QuadTreeNode>(cPtr) ) { observe->Fold(accumulator, dir); }
   }
   
   if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
@@ -408,7 +413,9 @@ void QuadTreeNode::Fold(FoldFunctor accumulator, const BoundedConvexSet2f& regio
         u8 idx = 0;
         do {
           if (childFilter & 1) { 
-            _childrenPtr[idx]->Fold(accumulator, region, dir); 
+            if ( auto observe = PreservePointer<QuadTreeNode>(_childrenPtr[idx]) ) { 
+              observe->Fold(accumulator, region, dir);
+            }
           }
           ++idx;
         } while ( childFilter >>= 1 ); 
@@ -442,8 +449,10 @@ void QuadTreeNode::Fold(FoldFunctorConst accumulator, const BoundedConvexSet2f& 
         u8 idx = 0;
         do {
           if (childFilter & 1) { 
-            ((const QuadTreeNode*) _childrenPtr[idx].get())->Fold(accumulator, region, dir);
-           }
+            if ( auto observe = PreservePointer<const QuadTreeNode>(_childrenPtr[idx]) ) { 
+              observe->Fold(accumulator, region, dir); 
+            }
+          }
           ++idx;
         } while ( childFilter >>= 1 );
       }

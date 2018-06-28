@@ -18,6 +18,8 @@
 
 #include "coretech/planning/engine/geometryHelpers.h"
 
+#include "util/threading/threadPriority.h"
+
 #include <chrono>
 
 
@@ -35,24 +37,130 @@ namespace {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //  XYPlanner
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-XYPlanner::XYPlanner(Robot* robot)
+XYPlanner::XYPlanner(Robot* robot, bool runSync)
 : IPathPlanner("XYPlanner")
 , _map(robot->GetMapComponent())
 , _start()
-, _targets()
-, _collisionPenalty(0.f) {}
+, _targets() 
+, _status(EPlannerStatus::CompleteNoPlan)
+, _collisionPenalty(0.f)
+, _isSynchronous(runSync)
+{
+  static_assert(std::is_const<std::remove_reference_t<decltype(_map)>>::value, 
+                "Map component must be const to guarantee thread safety!");
 
+  _stopThread = runSync;
+  _plannerThread = new std::thread( &XYPlanner::Worker, this );
+}
+
+XYPlanner::~XYPlanner()
+{
+  // stop the thread
+  if( _plannerThread != nullptr ) {
+    _stopThread = true;
+    _threadRequest.notify_all(); // noexcept
+    PRINT_CH_DEBUG("Planner", "XYPlanner.DestroyThread.Join", "");
+    try {
+      _plannerThread->join();
+      PRINT_CH_DEBUG("Planner", "XYPlanner.DestroyThread.Joined", "");
+    }
+    catch (std::runtime_error& err) {
+      PRINT_NAMED_ERROR("XYPlanner.Destroy.Exception", "locking the context mutex threw: %s", err.what());
+      // this will probably crash when we call SafeDelete below
+    }
+    Util::SafeDelete(_plannerThread);
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-EComputePathStatus XYPlanner::ComputeNewPathIfNeeded(const Pose3d& startPose, bool forceReplanFromScratch, bool allowGoalChange)
+void XYPlanner::Worker()
 {
-  if ( !forceReplanFromScratch && FLT_LE(GetPathCollisionPenalty( _path ), _collisionPenalty) ) {
-    return EComputePathStatus::NoPlanNeeded;
+  Anki::Util::SetThreadName(pthread_self(), "XYPlanner");
+
+  while(!_stopThread) {
+    std::unique_lock<std::recursive_mutex> lock(_contextMutex);
+    if( _startPlanner ) {
+      StartPlanner();
+    } else {
+      _threadRequest.wait(lock);
+    }
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+EComputePathStatus XYPlanner::ComputePath(const Pose3d& startPose, const std::vector<Pose3d>& targetPoses)
+{
+  std::vector<Pose2d> goalCopy;  
+  for(const auto& t : targetPoses) { goalCopy.push_back(t); }
+  return InitializePlanner(startPose, goalCopy, true, true);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+EComputePathStatus XYPlanner::ComputeNewPathIfNeeded(const Pose3d& startPose, bool forceReplanFromScratch, bool allowGoalChange) 
+{
+  std::vector<Pose2d> goalCopy = _targets;
+  return InitializePlanner(startPose, goalCopy, forceReplanFromScratch, allowGoalChange);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+EComputePathStatus XYPlanner::InitializePlanner(const Pose2d& start, const std::vector<Pose2d>& targets, bool forceReplan, bool allowGoalChange)
+{
+  // planner will start on next thread cycle
+  if (!forceReplan && _startPlanner) { return EComputePathStatus::Running; }
+  
+  // if the planner is running, flag an abort on the current instance so we can restart ASAP
+  if ( forceReplan && !_contextMutex.try_lock() ) {
+    _stopPlanner = true; 
+    _contextMutex.lock();
+  }
+
+  // we are going to generate a new path, so reset all control variables
+  std::lock_guard<std::recursive_mutex> lg(_contextMutex, std::adopt_lock); 
+
+
+  // make sure the collision cost is monotonically decreasing
+  if (!forceReplan) {
+    const float currentPenalty = GetPathCollisionPenalty( _path );
+    if ( FLT_LE(currentPenalty, _collisionPenalty) ) {
+      _collisionPenalty = currentPenalty;
+      return EComputePathStatus::NoPlanNeeded;
+    }
+  }
+
+  _path.Clear();
+  _start = start;
+  _targets = targets;
+  _allowGoalChange = allowGoalChange;
+  _collisionPenalty = 0.f;
+  _stopPlanner  = false;
+  _startPlanner = true;
+  _status = EPlannerStatus::Running;
+
+  if( _isSynchronous ) { 
+    StartPlanner();
+  } else {
+    _threadRequest.notify_all();
+  }
+
+  return EComputePathStatus::Running;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void XYPlanner::StartPlanner()
+{
+  // grab the lock
+  if( ! _contextMutex.try_lock() ) {
+    PRINT_NAMED_ERROR("XYPlanner.StartPlanner.InternalThreadingError", "Somehow failed to get mutex inside StartPlanning, but we should already have it at this point");
+    return;
+  }
+
+  // clean up planner states
+  std::lock_guard<std::recursive_mutex> lg(_contextMutex, std::adopt_lock);
+  _startPlanner = false;
 
   // convert targets to planner states
   std::vector<Point2f> plannerStart;
-  if (allowGoalChange || (_path.GetNumSegments() == 0)) {
+  if (_allowGoalChange || (_path.GetNumSegments() == 0)) {
     for (const auto& g : _targets) {
       plannerStart.push_back( g.GetTranslation() );
     }
@@ -63,18 +171,17 @@ EComputePathStatus XYPlanner::ComputeNewPathIfNeeded(const Pose3d& startPose, bo
     plannerStart.emplace_back(x,y);
   }
 
-  _start = startPose;
-  _collisionPenalty = 0.f;
-
   // expand out of collision state if necessary
   // NOTE: if no safe point exists, the A* search will timeout, but we probably have bigger problems to deal with.
   //       Why can we not find a single safe point anywhere within the searchable range of EscapeObstaclePlanner?
   const Point2f plannerGoal = FindNearestSafePoint(_start.GetTranslation());
 
+  // profile time it takes to find a plan
   using namespace std::chrono;
   high_resolution_clock::time_point startTime = high_resolution_clock::now();
 
-  AStar<Point2f, PlannerConfig> planner( (PlannerConfig(_map, plannerGoal)) );
+  PlannerConfig config(_map, _stopPlanner, plannerGoal);
+  AStar<Point2f, PlannerConfig> planner( config );
   std::vector<Point2f> plan = planner.Search(plannerStart);
 
   high_resolution_clock::time_point planTime = high_resolution_clock::now();
@@ -88,47 +195,40 @@ EComputePathStatus XYPlanner::ComputeNewPathIfNeeded(const Pose3d& startPose, bo
     _collisionPenalty = GetPathCollisionPenalty( _path );
     _status = EPlannerStatus::CompleteWithPlan;
   } else {
-    PRINT_NAMED_WARNING("XYPlanner.ComputeNewPathIfNeeded", "No path found!");
+    PRINT_NAMED_WARNING("XYPlanner.ComputeNewPathIfNeeded", "No path found!" );
     _status = EPlannerStatus::CompleteNoPlan;
   }
 
+  // profile time it takes to smooth a plan into a valid robot path
   auto smoothTime_ms = duration_cast<std::chrono::milliseconds>(high_resolution_clock::now() - planTime);
   auto planTime_ms = duration_cast<std::chrono::milliseconds>(planTime - startTime);
-  PRINT_NAMED_INFO("XYPlanner.ComputeNewPathIfNeeded", "planning took %s ms, smoothing took %s ms", 
-                    std::to_string(planTime_ms.count()).c_str(), 
-                    std::to_string(smoothTime_ms.count()).c_str() );
-  
-  return (plan.empty()) ? EComputePathStatus::Error : EComputePathStatus::Running;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-EComputePathStatus XYPlanner::ComputePath(const Pose3d& startPose, const Pose3d& targetPose) 
-{ 
-  _path.Clear();
-  std::vector<Pose3d> targets = {targetPose};
-  return ComputePath(startPose, targets); 
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-EComputePathStatus XYPlanner::ComputePath(const Pose3d& startPose, const std::vector<Pose3d>& targetPoses)
-{
-  _path.Clear();
-  _targets.clear();
-  for (const auto t: targetPoses) { _targets.push_back(t); }
-  
-  return ComputeNewPathIfNeeded(startPose, true, true);
+  PRINT_NAMED_INFO("XYPlanner.ComputeNewPathIfNeeded", "planning took %s ms, smoothing took %s ms (%zu expansions)", 
+                   std::to_string(planTime_ms.count()).c_str(), 
+                   std::to_string(smoothTime_ms.count()).c_str(),
+                   config.GetNumExpansions() );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool XYPlanner::GetCompletePath_Internal(const Pose3d& robotPose, Planning::Path &path)
 { 
-  path = _path; 
-  return (_path.GetNumSegments() > 0);
+  Planning::GoalID ignore;
+  return GetCompletePath_Internal(robotPose, path, ignore);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool XYPlanner::GetCompletePath_Internal(const Pose3d& robotPose, Planning::Path &path, Planning::GoalID& targetIndex)
 { 
+  if ( !_contextMutex.try_lock() && ( _status == EPlannerStatus::Error || _status == EPlannerStatus::Running ) ) {
+    if (_status == EPlannerStatus::Error || _status == EPlannerStatus::Running ) {
+      PRINT_NAMED_WARNING("XYPlanner.GetCompletePath_Internal", "Tried to get the path while planner was running");
+      return false;
+    } else {
+      _contextMutex.lock();
+    }
+  }
+
+  std::lock_guard<std::recursive_mutex> lg(_contextMutex, std::adopt_lock); 
+
   path = _path; 
   float x, y, t;
   _path[_path.GetNumSegments()-1].GetEndPose(x,y,t);
@@ -276,7 +376,8 @@ float XYPlanner::GetPathCollisionPenalty(const Planning::Path& path) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Point2f XYPlanner::FindNearestSafePoint(const Point2f& p) const
 {
-  AStar<Point2f, EscapeObstaclePlanner> planner( (EscapeObstaclePlanner(_map)) );
+  EscapeObstaclePlanner config(_map, _stopPlanner);
+  AStar<Point2f, EscapeObstaclePlanner> planner( config );
   std::vector<Point2f> plan = planner.Search({p});
 
   if (plan.empty()) {
