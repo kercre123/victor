@@ -101,6 +101,13 @@ void TestHeadDutProgram(void)
   const int timeout_s = 90 + 60; //XXX: DVT4-RC clocked in at ~87s. Add some margin.
   char b[50]; int bz = sizeof(b);
   
+  //mode differences:
+  //  FIXMODE_HEAD1(rel): dutprogram timeout ESN-PROD HWREV-PROD MODEL-PROD
+  //  FIXMODE_HEAD1(dbg): dutprogram timeout ESN-PROD HWREV-DBG  MODEL-PROD
+  //  FIXMODE_HEAD1-OL  : dutprogram timeout ESN-DBG  HWREV-DBG  MODEL-DBG  nocert //XXX prevent sec-lock.dat (erase emmc only?)
+  //  FIXMODE_HEAD2     : dutprogram timeout ESN-DBG  HWREV-DBG  MODEL-DBG  nocert
+  //  FIXMODE_HELPER1   : dutprogram timeout ESN-DBG  HWREV-DBG  MODEL-DBG  nocert
+  
   //provision ESN
   headnfo.esn = g_fixmode == FIXMODE_HEAD1 ? fixtureGetSerial() : 0x00100000;
   m_previous_esn = headnfo.esn; //even if programming fails, report the (now unusable) ESN
