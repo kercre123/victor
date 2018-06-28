@@ -825,6 +825,8 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
       result = GetSalientPointsFromResponseMap(outputTensors[0], t, salientPoints);
       break;
     }
+    default:
+      LOG_ERROR("NeuralNetModel.Detect.UnknownOutputType", "");
   }
 
   if(_params.verbose)
