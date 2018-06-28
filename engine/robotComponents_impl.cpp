@@ -68,6 +68,7 @@ class RobotStatsTracker;
 class SettingsCommManager;
 class SettingsManager;
 class VariableSnapshotComponent;
+class PowerStateManager;
 
 } // namespace Cozmo
 
@@ -120,6 +121,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(SettingsCommManager,           RobotComponentID, Set
 LINK_COMPONENT_TYPE_TO_ENUM(SettingsManager,               RobotComponentID, SettingsManager)
 LINK_COMPONENT_TYPE_TO_ENUM(RobotStatsTracker,             RobotComponentID, RobotStatsTracker)
 LINK_COMPONENT_TYPE_TO_ENUM(VariableSnapshotComponent,     RobotComponentID, VariableSnapshotComponent)
+LINK_COMPONENT_TYPE_TO_ENUM(PowerStateManager,             RobotComponentID, PowerStateManager)
 
 // Translate entity into string
 template<>
@@ -177,6 +179,7 @@ std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotCompone
     case Cozmo::RobotComponentID::VariableSnapshotComponent:  { return "VariableSnapshotComponent"; }
     case Cozmo::RobotComponentID::Vision:                     { return "Vision";}
     case Cozmo::RobotComponentID::VisionScheduleMediator:     { return "VisionScheduleMediator";}
+    case Cozmo::RobotComponentID::PowerStateManager:          { return "PowerStateManager";}
     case Cozmo::RobotComponentID::Count:                      { return "Count";}
   }
 }

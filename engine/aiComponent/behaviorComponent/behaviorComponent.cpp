@@ -32,6 +32,7 @@
 #include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/powerStateManager.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/faceWorld.h"
 
@@ -88,6 +89,11 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
   if(!entity->HasComponent<RobotStatsTracker>()) {
     entity->AddDependentComponent(BCComponentID::RobotStatsTracker,
       robot.GetComponentPtr<RobotStatsTracker>(), false);
+  }
+
+  if(!entity->HasComponent<PowerStateManager>()) {
+    entity->AddDependentComponent(BCComponentID::PowerStateManager,
+      robot.GetComponentPtr<PowerStateManager>(), false);
   }
 
   //////

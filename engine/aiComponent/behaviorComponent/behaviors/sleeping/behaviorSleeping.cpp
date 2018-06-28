@@ -55,10 +55,10 @@ bool BehaviorSleeping::CanBeGentlyInterruptedNow() const
 void BehaviorSleeping::OnBehaviorActivated()
 {
   _animIsPlaying = false;
+
+  SmartRequestPowerSaveMode();
   
-  TransitionToSleeping();
-  
-  
+  TransitionToSleeping();  
 }
   
 void BehaviorSleeping::OnBehaviorDeactivated()

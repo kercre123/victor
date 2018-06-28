@@ -454,6 +454,9 @@ protected:
   // returned. This pointer will be null if the intent couldn't be activated (i.e. it wasn't pending)
   UserIntentPtr SmartActivateUserIntent(UserIntentTag tag);
 
+  // Request that the robot enter power save mode
+  void SmartRequestPowerSaveMode();  
+
   // Helper function to play an emergency get out through the continuity component
   void PlayEmergencyGetOut(AnimationTrigger anim);
 
@@ -570,11 +573,7 @@ private:
   RobotCompletedActionCallback _delegationCallback;
   
   bool _isActivated;
-  
-  // A set of the locks that a behavior has used to disable reactions
-  // these will be automatically re-enabled on behavior stop
-  std::set<std::string> _smartLockIDs;
-  
+    
   // An int that holds tracks disabled using SmartLockTrack
   std::map<std::string, u8> _lockingNameToTracksMap;
   // Loaded in from data - these tracks will be locked/unlocked automatically when activated/deactivated 
@@ -589,7 +588,9 @@ private:
   bool _alwaysStreamline = false;
   
   bool _initHasBeenCalled = false;
-  
+
+  // for automatically removing a power save request when de-activated
+  std::string _powerSaveRequest;  
   
   ///////
   // Tracking subscribe tags for initialization

@@ -116,6 +116,10 @@ struct DockingErrorSignal;
     Result SetNextImage(Vision::ImageRGB& image);
 
     void Pause(bool isPaused);
+
+    // If the vision thread isn't busy, grab the lock and release all internally held images and return
+    // true. Otherwise, return false
+    bool TryReleaseInternalImages();
     
     // Enable/disable different types of processing
     Result EnableMode(VisionMode mode, bool enable);

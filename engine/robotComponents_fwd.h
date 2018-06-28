@@ -62,6 +62,7 @@ enum class RobotComponentID{
   PathPlanning,
   PetWorld,
   PhotographyManager,
+  PowerStateManager,
   ProgressionUnlock,
   ProxSensor,
   PublicStateBroadcaster,

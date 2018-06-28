@@ -2616,6 +2616,18 @@ namespace Cozmo {
     return r;
   }
 
+  bool VisionComponent::TryReleaseInternalImages()
+  {
+    if( _lock.try_lock() ) {
+      ReleaseImage(_currentImg);
+      ReleaseImage(_nextImg);
+      ReleaseImage(_bufferedImg);
+      Unlock();
+      return true;
+    }
+    return false;
+  }
+
   bool VisionComponent::CaptureImage(Vision::ImageRGB& image_out)
   {
     // Wait until the current async conversion is finished before getting another

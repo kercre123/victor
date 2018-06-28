@@ -50,6 +50,7 @@ enum class BCComponentID{
   BehaviorsBootLoader,
   RobotStatsTracker,
   AttentionTransferComponent,
+  PowerStateManager,
   Count
 };
 

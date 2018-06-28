@@ -37,6 +37,7 @@
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
+#include "engine/components/powerStateManager.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
@@ -909,9 +910,12 @@ void ICozmoBehavior::OnDeactivatedInternal()
     auto& uic = GetBehaviorComp<UserIntentComponent>();
     uic.DeactivateUserIntent( _intentToDeactivate );
     _intentToDeactivate = UserIntentTag::INVALID;
-  }                                         
-  
-  DEV_ASSERT(_smartLockIDs.empty(), "ICozmoBehavior.Stop.DisabledReactionsNotEmpty");
+  }
+
+  if( !_powerSaveRequest.empty() ) {
+    GetBehaviorComp<PowerStateManager>().RemovePowerSaveModeRequest(_powerSaveRequest);
+    _powerSaveRequest.clear();
+  }
 }
 
 
@@ -1484,6 +1488,24 @@ UserIntentPtr ICozmoBehavior::SmartActivateUserIntent(UserIntentTag tag)
   return uic.ActivateUserIntent(tag, GetDebugLabel());
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SmartRequestPowerSaveMode()
+{
+  auto& powerSaveManager = GetBehaviorComp<PowerStateManager>();
+  
+  if( !_powerSaveRequest.empty() ) {
+    PRINT_NAMED_WARNING("ICozmoBehavior.SmartRequestPowerSaveMode.DuplicateRequest",
+                        "%s: Power save mode already requested (with string '%s')",
+                        GetDebugLabel().c_str(),
+                        _powerSaveRequest.c_str());
+    // remove the duplicate request to be safe
+    powerSaveManager.RemovePowerSaveModeRequest(_powerSaveRequest);
+    _powerSaveRequest.clear();
+  }
+
+  _powerSaveRequest = GetDebugLabel();
+  powerSaveManager.RequestPowerSaveMode(_powerSaveRequest);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::PlayEmergencyGetOut(AnimationTrigger anim)

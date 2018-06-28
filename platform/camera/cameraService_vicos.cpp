@@ -170,16 +170,28 @@ namespace Anki {
 
     void CameraService::CameraSetParameters(u16 exposure_ms, f32 gain)
     {
+      if( nullptr == _camera ) {
+        return;
+      }
+
       camera_set_exposure(_camera, exposure_ms, gain);
     }
 
     void CameraService::CameraSetWhiteBalanceParameters(f32 r_gain, f32 g_gain, f32 b_gain)
     {
+      if( nullptr == _camera ) {
+        return;
+      }
+
       camera_set_awb(_camera, r_gain, g_gain, b_gain);
     }
 
     void CameraService::CameraSetCaptureFormat(ImageEncoding format)
-    { 
+    {
+      if( nullptr == _camera ) {
+        return;
+      }
+
       anki_camera_pixel_format_t cameraFormat;
       switch(format)
       {
@@ -203,6 +215,10 @@ namespace Anki {
 
     bool CameraService::CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms, ImageEncoding& format)
     {
+      if( nullptr == _camera ) {
+        return false;
+      }
+
       std::lock_guard<std::mutex> lock(_lock);
       anki_camera_frame_t* capture_frame = NULL;
       int rc = camera_frame_acquire(_camera, &capture_frame);
@@ -247,6 +263,10 @@ namespace Anki {
 
     bool CameraService::CameraReleaseFrame(u32 imageID)
     {
+      if( nullptr == _camera ) {
+        return false;
+      }
+
       std::lock_guard<std::mutex> lock(_lock);
       int rc = camera_frame_release(_camera, imageID);
       return (rc == 0);

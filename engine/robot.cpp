@@ -50,6 +50,7 @@
 #include "engine/components/nvStorageComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/photographyManager.h"
+#include "engine/components/powerStateManager.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/components/robotStatsTracker.h"
@@ -337,6 +338,7 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::TextToSpeechCoordinator,    new TextToSpeechCoordinator());
     _components->AddDependentComponent(RobotComponentID::SDK,                        new SDKComponent());
     _components->AddDependentComponent(RobotComponentID::PhotographyManager,         new PhotographyManager());
+    _components->AddDependentComponent(RobotComponentID::PowerStateManager,          new PowerStateManager());
     _components->AddDependentComponent(RobotComponentID::SettingsCommManager,        new SettingsCommManager());
     _components->AddDependentComponent(RobotComponentID::SettingsManager,            new SettingsManager());
     _components->AddDependentComponent(RobotComponentID::RobotStatsTracker,          new RobotStatsTracker());

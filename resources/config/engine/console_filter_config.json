@@ -57,7 +57,8 @@
       { "channel": "MicData",              "enabled": true },
       { "channel": "FaceInfoScreenManager", "enabled": true },
       { "channel": "RobotStats",            "enabled": true },
-      { "channel": "KnowledgeGraph",       "enabled": true }
+      { "channel": "KnowledgeGraph",       "enabled": true },
+      { "channel": "PowerStates",          "enabled": true}
     ],
     "levels":
     [

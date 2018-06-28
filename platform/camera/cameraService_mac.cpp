@@ -246,6 +246,9 @@ namespace Anki {
       return RESULT_OK;
     }
 
+    void CameraService::DeleteCamera() {
+    }
+
     // Starts camera frame synchronization
     bool CameraService::CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms, ImageEncoding& format)
     {

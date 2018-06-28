@@ -23,6 +23,7 @@
 #include "anki/cozmo/shared/animationTag.h"
 
 #include "engine/actionableObject.h"
+#include "engine/contextWrapper.h"
 #include "engine/encodedImage.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/fullRobotPose.h"
@@ -135,22 +136,6 @@ enum class EngineToRobotTag : uint8_t;
 enum class RobotToEngineTag : uint8_t;
 } // end namespace RobotInterface
 
-
-// CozmoContext is a coretech class - this wrapper allows the context to work
-// with the dependency managed component interface
-class ContextWrapper:  public IDependencyManagedComponent<RobotComponentID> {
-public:
-  ContextWrapper(const CozmoContext* context)
-  : IDependencyManagedComponent(this, RobotComponentID::CozmoContextWrapper)
-  , context(context){}
-  const CozmoContext* context;
-
-  virtual ~ContextWrapper(){}
-
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override {};
-  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
-  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
-};
 
 // indent 2 spaces << that way !!!! coding standards !!!!
 class Robot : private Util::noncopyable

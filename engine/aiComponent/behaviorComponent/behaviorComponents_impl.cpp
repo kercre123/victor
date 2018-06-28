@@ -41,6 +41,7 @@ class ActiveBehaviorIterator;
 class BehaviorsBootLoader;
 class RobotStatsTracker;
 class AttentionTransferComponent;
+class PowerStateManager;
 
 } // namespace Cozmo
 
@@ -66,6 +67,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(ActiveBehaviorIterator,             BCComponentID, A
 LINK_COMPONENT_TYPE_TO_ENUM(BehaviorsBootLoader,                BCComponentID, BehaviorsBootLoader)
 LINK_COMPONENT_TYPE_TO_ENUM(RobotStatsTracker,                  BCComponentID, RobotStatsTracker)
 LINK_COMPONENT_TYPE_TO_ENUM(AttentionTransferComponent,         BCComponentID, AttentionTransferComponent)
+LINK_COMPONENT_TYPE_TO_ENUM(PowerStateManager,                  BCComponentID, PowerStateManager)
 
 // Translate entity into string
 template<>
@@ -96,6 +98,7 @@ std::string GetComponentStringForID<Cozmo::BCComponentID>(Cozmo::BCComponentID e
     case Cozmo::BCComponentID::BehaviorsBootLoader:                { return "BehaviorsBootLoader";}
     case Cozmo::BCComponentID::RobotStatsTracker:                  { return "RobotStatsTracker";}
     case Cozmo::BCComponentID::AttentionTransferComponent:         { return "AttentionTransferComponent";}
+    case Cozmo::BCComponentID::PowerStateManager:                  { return "PowerStateManager";}
     case Cozmo::BCComponentID::Count:                              { return "Count";}
   }
 }
