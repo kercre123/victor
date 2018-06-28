@@ -60,4 +60,10 @@ You may have to click "allow" on an OS popup to allow listening. After this is d
 > curl --cacert trust.cert -X POST https://localhost:8443/v1/event_stream -d '{}'
 ```
 
+All the curl tests should work as well using the WEBOTS=1 flag in make
+
+```bash
+> make test_ping_pong WEBOTS=1
+```
+
 Note that you need to use localhost as the ip and 8443 as the port (OS X gets angry if you try to listen on 443)
