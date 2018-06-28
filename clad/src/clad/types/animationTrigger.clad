@@ -119,7 +119,8 @@ enum int_32 AnimationTrigger
   KnowledgeGraphSearchingGetIn,
   KnowledgeGraphSearching,
   KnowledgeGraphSearchingGetOutSuccess,
-  KnowledgeGraphSearchingGetOutFail,
+  KnowledgeGraphSearchingFail,
+  KnowledgeGraphSearchingFailGetOut,
   KnowledgeGraphAnswer,
   KnowledgeGraphGetOut,
 

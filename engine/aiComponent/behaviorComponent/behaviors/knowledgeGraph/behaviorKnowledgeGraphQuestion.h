@@ -16,6 +16,9 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/components/mics/voiceMessageTypes.h"
+#include "engine/components/backpackLights/backpackLightComponentTypes.h"
+#include "components/textToSpeech/textToSpeechWrapper.h"
+#include "clad/audio/audioEventTypes.h"
 
 
 namespace Anki {
@@ -59,6 +62,7 @@ protected:
   
   virtual void HandleWhileActivated( const EngineToGameEvent& event ) override;
 
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // State Transitions
 
@@ -71,21 +75,34 @@ protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Helpers
 
+  bool IsReadyToStream();
+  // start streaming mic data to knowledge graph
   void BeginStreamingQuestion();
+  // speak back the response we got from knowledge graph
   void BeginResponseTTS();
 
+  // we have a response intent pending from knowledgeGraph
   bool IsResponsePending() const;
+  // translate that response intent into and answer string and store it for later
   void ConsumeResponse();
 
+  // we're done listening to the question
   void OnStreamingComplete();
+  // we allow the response audio to be interrupted under certain conditions
   void OnResponseInterrupted();
+
+  // streaming cues are backpack lights and audio cues to let the user know when to speak
+  void PlayStreamingCues( bool onBegin );
 
 
 private:
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   enum class EState : uint8_t
   {
-    TransitionToListening,
+    GettingIn,
+    WaitingToStream,
     Listening,
     Searching,
     Responding,
@@ -108,8 +125,12 @@ private:
   {
     InstanceConfig();
 
-    float               streamingDuration;
+    double              streamingDuration; // how long before we give up on streaming and bail
+    std::string         readyText; // audio tts to let the user know they can begin speaking
     std::shared_ptr<BehaviorTextToSpeechLoop> ttsBehavior;
+
+    AudioMetaData::GameEvent::GenericEvent earConBegin;
+    AudioMetaData::GameEvent::GenericEvent earConEnd;
 
   } _iVars;
 
@@ -122,10 +143,15 @@ private:
     DynamicVariables();
 
     EState              state;
-    std::string         responseString;
-    EGenerationStatus   ttsGenerationStatus;
+    double              audioCueBeginTime; // the time we begun playing the streaming audio cues
+    double              streamingBeginTime; // the time we begun actually streaming the mic data
+    std::string         responseString; // the text we got back from knowledge graph
+    EGenerationStatus   ttsGenerationStatus; // track the status of the reponse tts
+    BackpackLightDataLocator  lightsHandle; // lights, camera, action!
 
   } _dVars;
+
+  TextToSpeechWrapper _readyTTSWrapper;
 
 }; // class BehaviorKnowledgeGraphQuestion
 

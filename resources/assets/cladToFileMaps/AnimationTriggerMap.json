@@ -1602,7 +1602,7 @@
   },
   {
     "CladEvent": "KnowledgeGraphSearchingGetIn",
-    "AnimName": "ag_knowledgegraph_searching_01"
+    "AnimName": "ag_knowledgegraph_searching_getin_01"
   },
   {
     "CladEvent": "KnowledgeGraphSearching",
@@ -1610,11 +1610,15 @@
   },
   {
     "CladEvent": "KnowledgeGraphSearchingGetOutSuccess",
-    "AnimName": "ag_knowledgegraph_searching_01"
+    "AnimName": "ag_knowledgegraph_searching_getout_01"
   },
   {
-    "CladEvent": "KnowledgeGraphSearchingGetOutFail",
-    "AnimName": "ag_knowledgegraph_searching_01"
+    "CladEvent": "KnowledgeGraphSearchingFail",
+    "AnimName": "ag_knowledgegraph_fail_01"
+  },
+  {
+    "CladEvent": "KnowledgeGraphSearchingFailGetOut",
+    "AnimName": "ag_knowledgegraph_fail_getout_01"
   },
   {
     "CladEvent": "KnowledgeGraphAnswer",
