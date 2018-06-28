@@ -46,6 +46,7 @@ enum uint_32 ParameterType
   Robot_Vic_Screen_Shift_Interpolation_Time = 1775375659,
   Robot_Vic_Social = 240199822,
   Robot_Vic_Stimulation = 651061178,
+  Robot_Vic_Timer_Countdown = 165240122,
   Robot_Vic_Tread_Accelerate = 496587279,
   Robot_Vic_Tread_Speed = 724346585,
   Robot_Vic_Tread_Spin_Speed = 3313708352,
