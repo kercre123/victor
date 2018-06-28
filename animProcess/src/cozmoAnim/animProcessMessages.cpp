@@ -79,6 +79,12 @@ namespace {
   const Anki::Cozmo::AnimContext*            _context = nullptr;
 
   bool _connectionFlowInited = false;
+
+  // The maximum amount of time that can elapse in between 
+  // receipt of RobotState messages before the anim process
+  // considers the robot process to have disconnected
+  const float kNoRobotStateDisconnectTimeout_sec = 2.f;
+  float _pendingRobotDisconnectTime_sec = -1.f;
   
 #if REMOTE_CONSOLE_ENABLED
   static void ListAnimations(ConsoleFunctionContextRef context)
@@ -523,6 +529,8 @@ static void ProcessMicDataMessage(const RobotInterface::MicData& payload)
 
 static void HandleRobotStateUpdate(const Anki::Cozmo::RobotState& robotState)
 {
+  _pendingRobotDisconnectTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + kNoRobotStateDisconnectTimeout_sec;
+
   FaceInfoScreenManager::getInstance()->Update(robotState);
 
 #if ANKI_DEV_CHEATS
@@ -694,14 +702,20 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
   {
     _connectionFlowInited = InitConnectionFlow(_animStreamer);
   }
-  
+
   if (!AnimComms::IsConnectedToRobot()) {
-    LOG_WARNING("AnimProcessMessages.Update", "No connection to robot");
-    FaultCode::DisplayFaultCode(FaultCode::NO_ROBOT_PROCESS);
-#if !FACTORY_TEST
-    // Only return failure if this is not the factory test
-    return RESULT_FAIL_IO_CONNECTION_CLOSED;
-#endif
+    static bool faultCodeDisplayed = false;
+    if (!faultCodeDisplayed) {
+      LOG_WARNING("AnimProcessMessages.Update.NoConnectionToRobot", "");
+      FaultCode::DisplayFaultCode(FaultCode::NO_ROBOT_PROCESS);
+      faultCodeDisplayed = true;
+    }
+  } else if ((_pendingRobotDisconnectTime_sec > 0.f) && 
+      (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _pendingRobotDisconnectTime_sec)) {
+    // Disconnect robot if it hasn't been heard from in a while
+    LOG_WARNING("AnimProcessMessages.Update.RobotStateTimeout", "Disconnecting robot");
+    AnimComms::DisconnectRobot();
+    _pendingRobotDisconnectTime_sec = -1.f;
   }
 
   MonitorConnectionState(currTime_nanosec);
