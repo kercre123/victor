@@ -40,6 +40,7 @@ extern "C" {
 #define FIXMODE_ROBOT2         27
 #define FIXMODE_ROBOT3         28
 #define FIXMODE_ROBOT3_OL      29
+#define FIXMODE_ROBOT_GYM      30
 
 #define FIXMODE_INFO           31
 #define FIXMODE_PACKOUT        33
@@ -131,7 +132,7 @@ const char*   fixtureTimeStr(time_t time); //short (20char) string representatio
   { "ROBOT2"      , TestRobotDetect     , TestRobot2GetTests          , TestRobotCleanup            , FIXMODE_ROBOT2      },  /*27*/  \
   { "ROBOT3"      , TestRobotDetect     , TestRobot3GetTests          , TestRobotCleanup            , FIXMODE_ROBOT3      },  /*28*/  \
   { "ROBOT3-OL"   , TestRobotDetect     , TestRobot3GetTests          , TestRobotCleanup            , FIXMODE_ROBOT3_OL   },  /*29*/  \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
+  { "ROBOT-GYM"   , TestRobotDetect     , TestRobotGymGetTests        , TestRobotCleanup            , FIXMODE_ROBOT_GYM   },  /*30*/  \
   { "ROBOTINFO"   , TestRobotDetect     , TestRobotInfoGetTests       , TestRobotCleanup            , FIXMODE_INFO        },  /*31*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { "PACKOUT"     , TestRobotDetect     , TestRobotPackoutGetTests    , TestRobotCleanup            , FIXMODE_PACKOUT     },  /*33*/  \

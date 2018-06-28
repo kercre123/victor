@@ -397,10 +397,10 @@ void read_robot_info_(void)
 const int bat_raw_min = RCOM_BAT_MV_TO_RAW(2500);
 const int bat_raw_max = RCOM_BAT_MV_TO_RAW(6000);
 
-static int robot_get_batt_mv(int *out_raw=0, bool sanity_check=true);
-static int robot_get_batt_mv(int *out_raw, bool sanity_check)
+static int robot_get_batt_mv(int *out_raw=0, bool sanity_check=true, int printlvl = RCOM_PRINT_LEVEL_DEFAULT);
+static int robot_get_batt_mv(int *out_raw, bool sanity_check, int printlvl)
 {
-  int bat_raw = rcomGet(1, RCOM_SENSOR_BATTERY)[0].bat.raw;
+  int bat_raw = rcomGet(1, RCOM_SENSOR_BATTERY, printlvl)[0].bat.raw;
   int bat_mv = RCOM_BAT_RAW_TO_MV(bat_raw);
   if( out_raw ) *out_raw = bat_raw;
   ConsolePrintf("vbat = %imV (%i)\n", bat_mv, bat_raw);
@@ -1510,6 +1510,43 @@ void LogDownload(void)
   }
 }
 
+void SweatinToTheOldies(void)
+{
+  const int batt_mv_cutoff=3600;
+  int batt_mv=9999;
+  
+  while(1)
+  {
+    //feel the burn
+    try {
+      int8_t treadPwrL=100; int8_t treadPwrR=100; int8_t liftPwr=70; int8_t headPwr=70;
+      int printlvl = RCOM_PRINT_LEVEL_CMD; // | RCOM_PRINT_LEVEL_NFO; // RCOM_PRINT_LEVEL_DAT | RCOM_PRINT_LEVEL_RSP
+      rcomMot(120, RCOM_SENSOR_MOT_LEFT,   treadPwrL, -treadPwrR,  liftPwr, -headPwr, printlvl);
+      rcomMot(120, RCOM_SENSOR_MOT_RIGHT, -treadPwrL,  treadPwrR, -liftPwr,  headPwr, printlvl);
+    } catch(...) {
+    }
+    
+    //Check battery voltage
+    Contacts::setModeRx();
+    Timer::delayMs(50); //let battery voltage settle
+    batt_mv = robot_get_batt_mv(0, true, RCOM_PRINT_LEVEL_NONE);
+    if( batt_mv <= batt_mv_cutoff )
+      break;
+    //-*/
+    
+    //test for robot removal
+    Contacts::powerOn();
+    //Timer::delayMs(SYSCON_CHG_PWR_DELAY_MS); //wait for charger to kick in
+    int current_ma = Meter::getCurrentMa(PWR_VEXT,4);//6);
+    ConsolePrintf("current = %imA\n", current_ma);
+    //int voltage_mv = Meter::getVoltageMv(PWR_VEXT,4);
+    if( current_ma < PRESENT_CURRENT_MA )
+      break;
+    //-*/
+  }
+
+}
+
 //-----------------------------------------------------------------------------
 //                  Get Tests
 //-----------------------------------------------------------------------------
@@ -1635,6 +1672,16 @@ TestFunction* TestRobotLogDownloadTests(void) {
   static TestFunction m_tests[] = {
     TestRobotInfo,
     LogDownload,
+    NULL,
+  };
+  return m_tests;
+}
+
+TestFunction* TestRobotGymGetTests(void)
+{
+  static TestFunction m_tests[] = {
+    TestRobotInfo,
+    SweatinToTheOldies,
     NULL,
   };
   return m_tests;

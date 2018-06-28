@@ -57,6 +57,7 @@ TestFunction* TestRobot0GetTests(void);
 TestFunction* TestRobot1GetTests(void);
 TestFunction* TestRobot2GetTests(void);
 TestFunction* TestRobot3GetTests(void);
+TestFunction* TestRobotGymGetTests(void);
 TestFunction* TestRobotInfoGetTests(void);
 TestFunction* TestRobotPackoutGetTests(void);
 TestFunction* TestRobotRechargeGetTests(void);
