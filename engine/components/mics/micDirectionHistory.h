@@ -38,7 +38,8 @@ public:
                           MicDirectionIndex selectedDirection);
 
   // Interface for requesting the "best" direction
-  MicDirectionIndex GetRecentDirection(TimeStamp_t timeLength_ms = 0) const;
+  static constexpr uint32_t kDefaultDirectionRecentTime_ms = 1000;
+  MicDirectionIndex GetRecentDirection(TimeStamp_t timeLength_ms = kDefaultDirectionRecentTime_ms) const;
   MicDirectionIndex GetDirectionAtTime(TimeStamp_t timestampEnd, TimeStamp_t timeLength_ms) const;
 
   MicDirectionIndex GetSelectedDirection() const { return _mostRecentSelectedDirection; }

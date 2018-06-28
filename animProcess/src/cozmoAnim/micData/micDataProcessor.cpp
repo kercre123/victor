@@ -198,11 +198,16 @@ void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float 
   _micDataSystem->SendMessageToEngine(std::move(engineMessage));
 
   // Tell signal essence software to lock in on the current direction if it's known
-  if (currentDirection != kDirectionUnknown)
-  {
-    std::lock_guard<std::mutex> lock(_seInteractMutex);
-    PolicySetKeyPhraseDirection(currentDirection);
-  }
+  // NOTE: This is disabled for now as we've gotten better accuracy with the direction of the intent
+  // that happens after this point, so it is currently not desireable to lock in the supposed trigger direction,
+  // as that direction can be incorrect due to motor noise, speaker noise, etc.
+  // The code is left here with this comment to make resurrecting this functionality in the SE software easier in the
+  // future, if desired.
+  // if (currentDirection != kDirectionUnknown)
+  // {
+  //   std::lock_guard<std::mutex> lock(_seInteractMutex);
+  //   PolicySetKeyPhraseDirection(currentDirection);
+  // }
 
   PRINT_NAMED_INFO("MicDataProcessor.TWCallback",
                     "Direction index %d at timestamp %d",
@@ -660,10 +665,7 @@ void MicDataProcessor::ProcessTriggerLoop()
     }
 
 #if ANKI_DEV_CHEATS
-    if (kMicData_NextTriggerIndex != _nextTriggerSearchIndex)
-    {
-      _nextTriggerSearchIndex = kMicData_NextTriggerIndex;
-    }
+    _nextTriggerSearchIndex = kMicData_NextTriggerIndex;
 #endif // ANKI_DEV_CHEATS
 
     // Change which trigger search is used for recognition, if requested

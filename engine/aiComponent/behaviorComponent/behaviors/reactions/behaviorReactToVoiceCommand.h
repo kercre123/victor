@@ -88,9 +88,8 @@ protected:
   void ComputeReactionDirection();
   // get the direction we want to react to
   MicDirectionIndex GetReactionDirection() const;
-  // get the "selected direction" from the mic history
-  // this should be the "locked direction" upon trigger word detected
-  MicDirectionIndex GetSelectedDirectionFromMicHistory() const;
+  // get the "best recent" direction from the mic history
+  MicDirectionIndex GetDirectionFromMicHistory() const;
   
   void UpdateUserIntentStatus();
 

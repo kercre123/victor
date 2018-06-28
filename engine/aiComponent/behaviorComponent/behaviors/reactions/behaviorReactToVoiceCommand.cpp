@@ -382,7 +382,7 @@ void BehaviorReactToVoiceCommand::ComputeReactionDirection()
   // soooooo, the anim process should be doing this automatically by sending us an
   // updated "selected direction" after the robot is done moving, so let's just use that
   // if we find this is not working, we can do a bit of pose math and figure shit out
-  _dVars.reactionDirection = GetSelectedDirectionFromMicHistory();
+  _dVars.reactionDirection = GetDirectionFromMicHistory();
 
   #if DEBUG_TRIGGER_WORD_VERBOSE
   {
@@ -414,17 +414,18 @@ MicDirectionIndex BehaviorReactToVoiceCommand::GetReactionDirection() const
 
     // this is the least accurate if called post-intent
     // no difference if called pre-intent / post-trigger word
-    direction = GetSelectedDirectionFromMicHistory();
+    direction = GetDirectionFromMicHistory();
   }
 
   return direction;
 }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-MicDirectionIndex BehaviorReactToVoiceCommand::GetSelectedDirectionFromMicHistory() const
+MicDirectionIndex BehaviorReactToVoiceCommand::GetDirectionFromMicHistory() const
 {
   const MicDirectionHistory& history = GetBEI().GetMicComponent().GetMicDirectionHistory();
-  return history.GetSelectedDirection();
+  const auto& recentDirection = history.GetRecentDirection();
+  return recentDirection;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -589,6 +590,7 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
     {
       if( IsTurnEnabled() ) {
         const MicDirectionIndex triggerDirection = GetReactionDirection();
+        PRINT_NAMED_INFO("BehaviorReactToVoiceCommand.TransitionToThinking.ReactionDirection","%d",triggerDirection);
         _iVars.reactionBehavior->SetReactDirection( triggerDirection );
 
         PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.Thinking.SetReactionDirection",

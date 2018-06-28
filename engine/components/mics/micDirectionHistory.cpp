@@ -195,7 +195,7 @@ MicDirectionIndex MicDirectionHistory::GetBestDirection(const DirectionHistoryCo
 {
   MicDirectionIndex bestIndex = kMicDirectionUnknown;
   uint32_t bestCount = 0;
-  for (MicDirectionIndex i = kFirstMicDirectionIndex; i <= kLastMicDirectionIndex; ++i)
+  for (MicDirectionIndex i = kFirstMicDirectionIndex; i < kNumMicDirections; ++i) // Don't consider unknown direction
   {
     if (directionCount[i] > bestCount)
     {
