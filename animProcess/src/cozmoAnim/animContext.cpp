@@ -16,6 +16,7 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/random/randomGenerator.h"
 
+#define LOG_CHANNEL "AnimContext"
 
 namespace Anki {
 namespace Cozmo {
@@ -26,7 +27,7 @@ public:
   Util::CpuThreadId _id = Util::kCpuThreadIdInvalid;
 };
 
-  
+
 AnimContext::AnimContext(Util::Data::DataPlatform* dataPlatform)
   : _dataPlatform(dataPlatform)
   , _locale(new Anki::Util::Locale(Anki::Util::Locale::GetNativeLocale()))
@@ -64,7 +65,7 @@ void AnimContext::SetRandomSeed(uint32_t seed)
 {
   _random->SetSeed("AnimContext", seed);
 }
-  
+
 
 void AnimContext::SetMainThread()
 {
@@ -90,6 +91,17 @@ void AnimContext::InitAudio(Util::Data::DataPlatform* dataPlatform)
   _audioMux.reset(new AudioEngine::Multiplexer::AudioMultiplexer(new Audio::CozmoAudioController(this)));
   // Audio Mux Input setup is in cozmoAnim.cpp & engineMessages.cpp
 }
-  
+
+void AnimContext::SetLocale(const std::string & locale)
+{
+  using Locale = Anki::Util::Locale;
+
+  LOG_INFO("AnimContext.SetLocale", "Set locale to %s", locale.c_str());
+  _locale = std::make_unique<Locale>(Locale::LocaleFromString(locale));
+
+  if (_micDataSystem != nullptr) {
+    _micDataSystem->UpdateLocale(*_locale);
+  }
+}
 } // namespace Cozmo
 } // namespace Anki

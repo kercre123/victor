@@ -215,16 +215,16 @@ void SayText(ConsoleFunctionContextRef context)
     case 0:
       style = TtsProcessingStyle::Default_Processed;
       break;
-      
+
     case 1:
       style = TtsProcessingStyle::Unprocessed;
       break;
-      
+
     default:
       LOG_ERROR("Robot.SayText.InvalidVoiceStyleEnum", "Unknown value");
       break;
   }
-  
+
   LOG_INFO("Robot.TtSCoordinator", "text(%s) style(%s) duration(%f)",
            Util::HidePersonallyIdentifiableInfo(text), EnumToString(style), kDurationScalar);
 
@@ -948,7 +948,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   GetDockingComponent().SetPickingOrPlacing(IS_STATUS_FLAG_SET(IS_PICKING_OR_PLACING));
   _isPickedUp = IS_STATUS_FLAG_SET(IS_PICKED_UP);
   _powerButtonPressed = IS_STATUS_FLAG_SET(IS_BUTTON_PRESSED);
-  
+
   // Save the entire flag for sending to game
   _lastStatusFlags = msg.status;
 
@@ -1226,7 +1226,7 @@ Result Robot::Update()
   {
     return factoryRes;
   }
-  
+
   if (!_gotStateMsgAfterRobotSync)
   {
     LOG_DEBUG("Robot.Update", "Waiting for first full robot state to be handled");
@@ -1935,7 +1935,7 @@ Result Robot::SetPoseOnCharger()
   return RESULT_OK;
 
 } // SetPoseOnCharger()
-  
+
 
 Result Robot::SetPosePostRollOffCharger()
 {
@@ -1946,7 +1946,7 @@ Result Robot::SetPosePostRollOffCharger()
                         _chargerID.GetValue());
     return RESULT_FAIL;
   }
-  
+
   // Just do an absolute pose update, setting the robot's position to
   // where we "know" he should be when he finishes rolling off the charger.
   Result lastResult = SetNewPose(charger->GetRobotPostRollOffPose().GetWithRespectToRoot());
@@ -1954,13 +1954,13 @@ Result Robot::SetPosePostRollOffCharger()
     PRINT_NAMED_WARNING("Robot.SetPosePostRollOffCharger.SetNewPose", "Failed to set new pose");
     return lastResult;
   }
-  
+
   PRINT_NAMED_INFO("Robot.SetPosePostRollOffCharger.NewRobotPose",
                    "Updated robot pose to be in front of the charger, as if it had just rolled off.");
   return RESULT_OK;
 }
 
-  
+
 // ============ Messaging ================
 
 Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliable, bool hot) const
@@ -2062,7 +2062,7 @@ IExternalInterface* Robot::GetExternalInterface() const
   DEV_ASSERT(GetContext()->GetExternalInterface() != nullptr, "Robot.ExternalInterface.nullptr");
   return GetContext()->GetExternalInterface();
 }
-  
+
 bool Robot::HasGatewayInterface() const
 {
   if (HasComponent<ContextWrapper>()){
@@ -2070,7 +2070,7 @@ bool Robot::HasGatewayInterface() const
   }
   return false;
 }
-  
+
 IGatewayInterface* Robot::GetGatewayInterface() const
 {
   DEV_ASSERT(GetContext()->GetGatewayInterface() != nullptr, "Robot.GatewayInterface.nullptr");
@@ -2203,7 +2203,7 @@ Transform3d Robot::GetLiftTransformWrtCamera(const f32 atLiftAngle, const f32 at
   return liftPoseWrtCam.GetTransform();
 }
 
-OffTreadsState Robot::GetOffTreadsState() const 
+OffTreadsState Robot::GetOffTreadsState() const
 {
   if(kFakeRobotBeingHeld){
     return OffTreadsState::Held;
@@ -2643,9 +2643,9 @@ Result Robot::ComputeTurnTowardsImagePointAngles(const Point2f& imgPoint, const 
     LOG_ERROR("Robot.ComputeTurnTowardsImagePointAngles.MissingCalibration", "");
     return RESULT_FAIL;
   }
-  
+
   auto calib = GetVisionComponent().GetCamera().GetCalibration();
-  
+
   Point2f pt( imgPoint );
   if(isPointNormalized)
   {
@@ -2655,7 +2655,7 @@ Result Robot::ComputeTurnTowardsImagePointAngles(const Point2f& imgPoint, const 
                 "%s not on interval [0,1]", pt.ToString().c_str());
       return RESULT_FAIL;
     }
-    
+
     // Scale normalized point to "calibration" resolution
     pt.x() *= (f32)calib->GetNcols();
     pt.y() *= (f32)calib->GetNrows();
@@ -2728,12 +2728,12 @@ Result Robot::UpdateStartupChecks()
         CameraService::getInstance()->CameraReleaseFrame(id);
       }
     }
-    
+
     // After 4 seconds, check if we have gotten a frame
     if(currentTime_sec - firstUpdateTime_sec > 4.f)
     {
       using namespace RobotInterface;
-    
+
       // If we haven't gotten a frame then display an error code
       if(!CameraService::getInstance()->HaveGottenFrame())
       {
@@ -2747,10 +2747,22 @@ Result Robot::UpdateStartupChecks()
       }
     }
   }
-  
+
   return (state == State::FAILED ? RESULT_FAIL : RESULT_OK);
 }
 
+bool Robot::SetLocale(const std::string & locale)
+{
+  // Note: Since Locale utility has no error returns, we can't detect error;
+  // an invalid locale results in setting to the default en-US
+  DEV_ASSERT(_context != nullptr, "Robot.SetLocale.InvalidContext");
+  _context->SetLocale(locale);
+
+  // Notify animation process
+  SendRobotMessage<RobotInterface::SetLocale>(locale);
+
+  return true;
+}
 
 } // namespace Cozmo
 } // namespace Anki

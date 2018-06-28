@@ -66,7 +66,7 @@ namespace {
 
   static const int kNumTicksToShutdown = 5;
   int _countToShutdown = -1;
-  
+
   // For comms with engine
   constexpr int MAX_PACKET_BUFFER_SIZE = 2048;
   u8 pktBuffer_[MAX_PACKET_BUFFER_SIZE];
@@ -80,12 +80,12 @@ namespace {
 
   bool _connectionFlowInited = false;
 
-  // The maximum amount of time that can elapse in between 
+  // The maximum amount of time that can elapse in between
   // receipt of RobotState messages before the anim process
   // considers the robot process to have disconnected
   const float kNoRobotStateDisconnectTimeout_sec = 2.f;
   float _pendingRobotDisconnectTime_sec = -1.f;
-  
+
 #if REMOTE_CONSOLE_ENABLED
   static void ListAnimations(ConsoleFunctionContextRef context)
   {
@@ -233,7 +233,7 @@ void Process_updateCompositeImage(const Anki::Cozmo::RobotInterface::UpdateCompo
 void Process_playCompositeAnimation(const Anki::Cozmo::RobotInterface::PlayCompositeAnimation& msg)
 {
   const std::string animName(msg.animName, msg.animName_length);
-  
+
   _animStreamer->Process_playCompositeAnimation(animName, msg.tag);
 }
 
@@ -366,7 +366,7 @@ void Process_startWakeWordlessStreaming(const Anki::Cozmo::RobotInterface::Start
 
   micDataSystem->StartWakeWordlessStreaming(static_cast<CloudMic::StreamType>(msg.streamType));
 }
-  
+
 void Process_setShouldStreamAfterWakeWord(const Anki::Cozmo::RobotInterface::SetShouldStreamAfterWakeWord& msg)
 {
   auto* micDataSystem = _context->GetMicDataSystem();
@@ -376,7 +376,7 @@ void Process_setShouldStreamAfterWakeWord(const Anki::Cozmo::RobotInterface::Set
 
   micDataSystem->SetShouldStreamAfterWakeWord(msg.shouldStream);
 }
-  
+
 void Process_setTriggerWordDetectionEnabled(const Anki::Cozmo::RobotInterface::SetTriggerWordDetectionEnabled& msg)
 {
   auto* micDataSystem = _context->GetMicDataSystem();
@@ -468,9 +468,15 @@ void Process_setBLEPin(const Anki::Cozmo::SwitchboardInterface::SetBLEPin& msg)
   SetBLEPin(msg.pin);
 }
 
-void Process_alterStreamingAnimation(const RobotInterface::AlterStreamingAnimationAtTime& msg )
+void Process_alterStreamingAnimation(const RobotInterface::AlterStreamingAnimationAtTime& msg)
 {
   _streamingAnimationModifier->HandleMessage(msg);
+}
+
+void Process_setLocale(const RobotInterface::SetLocale& msg)
+{
+  DEV_ASSERT(_animEngine != nullptr, "AnimProcessMessages.SetLocale.InvalidEngine");
+  _animEngine->HandleMessage(msg);
 }
 
 void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg)
@@ -487,7 +493,7 @@ void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineT
     }
     case RobotInterface::EngineToRobot::Tag_calmPowerMode:
     {
-      // Remember the power mode specified by engine so that we can go back to 
+      // Remember the power mode specified by engine so that we can go back to
       // it when pairing/debug screens are exited.
       // Only relay the power mode to robot process if not already in pairing/debug screen.
       FaceInfoScreenManager::getInstance()->SetCalmPowerModeOnReturnToNone(msg.calmPowerMode);
@@ -647,7 +653,7 @@ Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_na
     }
     // Connection to robot process fault code check is in Update()
   }
-  
+
   // Send block connection state when engine connects
   static bool wasConnected = false;
   if (!wasConnected && AnimComms::IsConnectedToEngine()) {
@@ -693,7 +699,7 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
       return RESULT_SHUTDOWN;
     }
   }
-    
+
   ANKI_CPU_PROFILE("AnimProcessMessages::Update");
 
   // Keep trying to init the connection flow until it works
@@ -710,7 +716,7 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
       FaultCode::DisplayFaultCode(FaultCode::NO_ROBOT_PROCESS);
       faultCodeDisplayed = true;
     }
-  } else if ((_pendingRobotDisconnectTime_sec > 0.f) && 
+  } else if ((_pendingRobotDisconnectTime_sec > 0.f) &&
       (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _pendingRobotDisconnectTime_sec)) {
     // Disconnect robot if it hasn't been heard from in a while
     LOG_WARNING("AnimProcessMessages.Update.RobotStateTimeout", "Disconnecting robot");

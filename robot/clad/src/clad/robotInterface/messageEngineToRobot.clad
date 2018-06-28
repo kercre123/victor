@@ -262,7 +262,7 @@ message EnableStopOnCliff
   bool enable
 }
 
-// When enabled stops the robot whenever it encounters a 
+// When enabled stops the robot whenever it encounters a
 // cliff reading that is higher than MIN_CLIFF_STOP_ON_WHITE_VAL
 message EnableStopOnWhite
 {
@@ -466,7 +466,7 @@ message SetFaceSaturation
 }
 
 // Play animation as part of a composite image
-// Image chunks are sent seperately
+// Image chunks are sent separately
 message PlayCompositeAnimation
 {
   uint_32 compositeImageID, // Link to composite image chunks
@@ -568,17 +568,17 @@ message TextToSpeechCancel {
   uint_8 ttsID  // ID of utterance
 }
 
-// If this delay message is sent before a message with the specified tag, when that tag is 
+// If this delay message is sent before a message with the specified tag, when that tag is
 // received the message will be delayed until the animation streamer reaches the specified time
-// These delays: 
-//   1) will queue 
+// These delays:
+//   1) will queue
 //   2) will be applied to messages in the order they are received
 //   3) messages will be dropped if the animation is cleared before reaching the specified timestamp
 // If applyBeforeTick is true the messages will be applied and then the animationStreamer will be ticked
-// otherwise, they will be applied immediately after the animationStreame tick 
+// otherwise, they will be applied immediately after the animationStreamer tick
 //   (e.g. lock face track as soon as it's updated)
 
-// This message wraps other messages related to streaming animations, and rather than applying the message 
+// This message wraps other messages related to streaming animations, and rather than applying the message
 // when it's received the message will be applied when the current streaming animation reaches the specified stream time
 // If the streaming animation is canceled before it hits the stream time this message will be dropped
 // When applyBeforeTick is true the alteration is displayed to the user that tick (e.g. display a new image)
@@ -590,6 +590,14 @@ message AlterStreamingAnimationAtTime {
   LockAnimTracks lockAnimTracks,
   uint_8 padding[1],
   AudioEngine::Multiplexer::PostAudioEvent postAudioEvent
+}
+
+//
+// Sent from engine to robot (anim process) to set locale preference.
+// Locale string has the format "en-US" for use with Anki::Util::Locale.
+//
+message SetLocale {
+  string locale
 }
 
 // ====================================================
@@ -685,7 +693,7 @@ union EngineToRobot
   RobotStoppedAck               robotStoppedAck             = 0x36,
   CliffAlignToWhiteAction       cliffAlignToWhiteAction     = 0x37,
   EnableStopOnWhite             enableStopOnWhite           = 0x38,
-  
+
   // TEMP support for 'old' chargers with black stripe and white body
   ChargerDockingStripeColor     chargerDockingStripeColor   = 0x40,
 
@@ -694,7 +702,7 @@ union EngineToRobot
   LockAnimTracks                lockAnimTracks              = 0x51,
   AddAnim                       addAnim                     = 0x52,
   AbortAnimation                abortAnimation              = 0x53,
-
+  SetLocale                     setLocale                   = 0x54,
   DrawTextOnScreen              drawTextOnScreen            = 0x55,
 
   DisplayProceduralFace         displayProceduralFace       = 0x56,

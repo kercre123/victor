@@ -315,16 +315,16 @@ public:
 
   const BeatDetectorComponent&    GetBeatDetectorComponent()    const { return GetComponent<BeatDetectorComponent>(); }
   BeatDetectorComponent&          GetBeatDetectorComponent()          { return GetComponent<BeatDetectorComponent>(); }
-  
+
   const HabitatDetectorComponent& GetHabitatDetectorComponent() const { return GetComponent<HabitatDetectorComponent>(); }
   HabitatDetectorComponent&       GetHabitatDetectorComponent()       { return GetComponent<HabitatDetectorComponent>(); }
-  
+
   const SDKComponent&    GetSDKComponent()    const { return GetComponent<SDKComponent>(); }
   SDKComponent&          GetSDKComponent()          { return GetComponent<SDKComponent>(); }
-  
+
   const PhotographyManager& GetPhotographyManager() const {return GetComponent<PhotographyManager>();}
   PhotographyManager&       GetPhotographyManager()       {return GetComponent<PhotographyManager>();}
-  
+
   const PoseOriginList&  GetPoseOriginList() const { return *_poseOrigins.get(); }
 
   ObjectPoseConfirmer& GetObjectPoseConfirmer() { return GetComponent<ObjectPoseConfirmer>(); }
@@ -340,12 +340,12 @@ public:
 
   RobotToEngineImplMessaging& GetRobotToEngineImplMessaging() { return GetComponent<RobotToEngineImplMessaging>(); }
 
-  CozmoContext* GetContext() { return _context; }
+  // Get pointer to robot's runtime context.
+  // Nothing outside of robot is allowed to modify robot's context.
   const CozmoContext* GetContext() const { return _context; }
 
   const Util::RandomGenerator& GetRNG() const;
   Util::RandomGenerator& GetRNG();
-
 
 
   // =========== Localization ===========
@@ -379,7 +379,7 @@ public:
 
   // Updates pose to be on charger
   Result SetPoseOnCharger();
-  
+
   // Update's the robot's pose to be in front of the
   // charger as if it had just rolled off the charger.
   Result SetPosePostRollOffCharger();
@@ -639,13 +639,15 @@ public:
 
   void SetBodyColor(const s32 color);
   const BodyColor GetBodyColor() const { return _bodyColor; }
-  
+
   bool HasReceivedFirstStateMessage() const { return _gotStateMsgAfterRobotSync; }
 
   void Shutdown() { _toldToShutdown = true; }
   bool ToldToShutdown() const { return _toldToShutdown; }
-  
-protected:  
+
+  bool SetLocale(const std::string & locale);
+
+protected:
   bool _toldToShutdown = false;
 
   CozmoContext* _context;

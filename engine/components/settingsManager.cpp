@@ -36,7 +36,7 @@ namespace
 }
 
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SettingsManager::SettingsManager()
 : IDependencyManagedComponent(this, RobotComponentID::SettingsManager)
 {
@@ -126,7 +126,7 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
   _currentSettings["Robot.MasterVolume"]._settingSetter = &SettingsManager::ApplySettingMasterVolume;
   _currentSettings["Robot.EyeColor"]._settingSetter = &SettingsManager::ApplySettingEyeColor;
   _currentSettings["Robot.Locale"]._settingSetter = &SettingsManager::ApplySettingLocale;
-  
+
   // Finally, set a flag so we will apply all of the settings
   // we just loaded and/or set, in the first update
   _applySettingsNextTick = true;
@@ -244,7 +244,7 @@ void SettingsManager::SaveSettingsFile() const
   }
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SettingsManager::ApplyAllCurrentSettings()
 {
@@ -303,13 +303,9 @@ bool SettingsManager::ApplySettingEyeColor(const std::string& newValue)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SettingsManager::ApplySettingLocale(const std::string& newValue)
 {
-  LOG_INFO("ApplySettingLocale.Apply", "Setting locale to %s", newValue.c_str());
-  // Note: Since Locale utility has no error returns, we can't detect error;
-  // an invalid locale results in setting to the default en-US
-  _robot->GetContext()->SetLocale(newValue);
-  return true;
+  DEV_ASSERT(_robot != nullptr, "SettingsManager.ApplySettingLocale.InvalidRobot");
+  return _robot->SetLocale(newValue);
 }
-
 
 } // namespace Cozmo
 } // namespace Anki

@@ -28,6 +28,7 @@ namespace Anki {
       class MicrophoneAudioClient;
     } // Audio
     namespace RobotInterface {
+      struct SetLocale;
       struct TextToSpeechPrepare;
       struct TextToSpeechDeliver;
       struct TextToSpeechPlay;
@@ -57,6 +58,7 @@ public:
   Result Update(BaseStationTime_t currTime_nanosec);
 
   // Message handlers
+  void HandleMessage(const RobotInterface::SetLocale& msg);
   void HandleMessage(const RobotInterface::TextToSpeechPrepare& msg);
   void HandleMessage(const RobotInterface::TextToSpeechDeliver& msg);
   void HandleMessage(const RobotInterface::TextToSpeechPlay& msg);
