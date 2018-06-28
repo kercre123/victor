@@ -671,17 +671,29 @@ void NeuralNetModel::GetDetectedObjects(const std::vector<tensorflow::Tensor>& o
 void NeuralNetModel::GetSalientPointsFromResponseMap(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp,
                                                      std::list<Vision::SalientPoint>& salientPoints)
 {
-  // This raw (Eigen) tensor data appears to be _column_ major (i.e. "not row major"). Ensure that remains true.
-  DEV_ASSERT( !(outputTensor.tensor<float, 2>().Options & Eigen::RowMajor),
+  tensorflow::Tensor squoozenTensor(tensorflow::DT_FLOAT,
+                                    tensorflow::TensorShape({_params.inputWidth, _params.inputHeight, 2}));
+
+  // Reshape tensor from [1, inputWidth, inputHeight, 2] to [inputWidth, inputHeight, 2]
+  if ( !squoozenTensor.CopyFrom(outputTensor, tensorflow::TensorShape({_params.inputWidth,
+                                                                              _params.inputHeight,
+                                                                              2})))
+  {
+    PRINT_NAMED_ERROR("NeuralNetModel.GetSalientPointsFromResponseMap.CopyFromFailed", "");
+  }
+
+  DEV_ASSERT( !(outputTensor.tensor<float, 4>().Options & Eigen::RowMajor),
              "NeuralNetModel.GetLocalizedBinaryClassification.OutputNotRowMajor");
 
   // TODO make sure data is not in column major format
-  // TODO is there a better way to remove const-ness that data() call returns
-  const cv::Mat responseMap(_params.inputHeight, _params.inputWidth, CV_32FC1,
-                            const_cast<float*>(outputTensor.tensor<float, 2>().data()));
-  double min, max;
-  cv::Point2i minLoc, maxLoc;
-  cv::minMaxLoc(responseMap, &min, &max, &minLoc, &maxLoc);
+  cv::Mat responseMap(_params.inputHeight, _params.inputWidth, CV_32FC2,
+                      squoozenTensor.tensor<float, 3>().data());
+  std::vector<cv::Mat> channels;
+  split(responseMap, channels);
+
+  double min(0), max(0);
+  cv::Point2i minLoc(0, 0), maxLoc(0, 0);
+  cv::minMaxLoc(channels[0], &min, &max, &minLoc, &maxLoc);
   // TODO we can put in connected component based filtering later, right now
   // let's just return the max value location... that normally isn't filtered out anyway
 
@@ -696,8 +708,7 @@ void NeuralNetModel::GetSalientPointsFromResponseMap(const tensorflow::Tensor& o
   // TODO actually fill in correct values here this is just a place holder
   const Poly2f shape( Rectangle<float>(0.f, 0.f, 1.f, 1.f) );
 
-  // TODO not sure what type to use here
-  Vision::SalientPointType type = Vision::SalientPointType::Unknown;
+  Vision::SalientPointType type = Vision::SalientPointType::Object;
 
   // TODO not sure what to do about score or average score
   Vision::SalientPoint salientPoint(timestamp,
