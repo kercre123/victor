@@ -48,9 +48,9 @@ CONSOLE_FUNC(SetNewTapHeight, "CubeSpinner");
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CannedAnimationContainer::CannedAnimationContainer()
 {
-  if(ANKI_DEV_CHEATS){
-    s_cubeAnimContainer = this;
-  }
+  #if ANKI_DEV_CHEATS
+  s_cubeAnimContainer = this;
+  #endif
 }
 
 
