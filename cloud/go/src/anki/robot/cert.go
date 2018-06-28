@@ -1,6 +1,7 @@
 package robot
 
 import (
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
@@ -98,4 +99,34 @@ func CheckFactoryCloudFiles(cloudDir, canonicalESN string) error {
 	}
 
 	return nil
+}
+
+// ParseX509Certificate parses an x509 certificate from the given
+// cloud factory directory
+func ParseX509Certificate(cloudDir string) (*x509.Certificate, error) {
+	certBytesPEM, err := PEMData(cloudDir)
+	if err != nil {
+		return nil, err
+	}
+	block, _ := pem.Decode(certBytesPEM)
+	return x509.ParseCertificate(block.Bytes)
+}
+
+// PEMData returns the PEM data located in the given cloud
+// factory directory's certificate file
+func PEMData(cloudDir string) ([]byte, error) {
+	certFile := filepath.Join(cloudDir, CertFilename)
+	certBytesPEM, err := ioutil.ReadFile(certFile)
+	if err != nil {
+		return nil, err
+	}
+	return certBytesPEM, nil
+}
+
+// TLSKeyPair returns the public and private key in the given
+// factory directory as a tls.Certificate
+func TLSKeyPair(cloudDir string) (tls.Certificate, error) {
+	certFile := filepath.Join(cloudDir, CertFilename)
+	keysFile := filepath.Join(cloudDir, KeysFilename)
+	return tls.LoadX509KeyPair(certFile, keysFile)
 }

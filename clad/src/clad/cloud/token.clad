@@ -1,0 +1,40 @@
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 TokenError {
+	NoError,
+	NullToken,
+	InvalidToken,
+	Connection
+}
+
+structure AuthRequest {
+	string sessionToken
+}
+
+structure AuthResponse {
+	string appToken,
+	string jwtToken,
+	TokenError error
+}
+
+structure JwtRequest {
+}
+
+structure JwtResponse {
+	string jwtToken,
+	TokenError error
+}
+
+union TokenRequest {
+	AuthRequest auth,
+	JwtRequest jwt
+}
+
+union TokenResponse {
+	AuthResponse auth,
+	JwtResponse jwt
+}
+
+}
+}

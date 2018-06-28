@@ -23,11 +23,12 @@ const (
 type Option func(o *options)
 
 type options struct {
-	compress  bool
-	chunkMs   uint
-	handler   Handler
-	stop      <-chan struct{}
-	saveAudio bool
+	compress     bool
+	chunkMs      uint
+	handler      Handler
+	stop         <-chan struct{}
+	saveAudio    bool
+	requireToken bool
 }
 
 // WithCompression sets whether compression will be performed on audio
@@ -65,5 +66,14 @@ func WithStopChannel(value <-chan struct{}) Option {
 func WithSaveAudio(value bool) Option {
 	return func(o *options) {
 		o.saveAudio = value
+	}
+}
+
+// WithRequireToken specifies that a failure to obtain an access token from the TMS
+// should be treated as a fatal error for requests (temporary - eventually TMS tokens
+// will be required)
+func WithRequireToken() Option {
+	return func(o *options) {
+		o.requireToken = true
 	}
 }
