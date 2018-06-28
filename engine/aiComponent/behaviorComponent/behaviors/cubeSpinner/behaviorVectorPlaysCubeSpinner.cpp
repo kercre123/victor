@@ -15,11 +15,13 @@
 
 #include "clad/types/animationTrigger.h"
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/actions/driveToActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/cubeSpinner/cubeSpinnerGame.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -35,19 +37,29 @@ namespace Cozmo {
 namespace {
 const char* kGameConfigKey = "gameConfig";
 const char* kLockAnimationName = "anim_spinner_tap_01";
-const float kDistanceFromMarker_mm =  25.0f;
+const float kDistanceFromMarker_mm =  30.0f;
 const float kPreActionAngleTol_deg = 15.0f;
 const int kMaxDistanceFromCube_mm = kDistanceFromMarker_mm + 20;
+const int kMinTimeBetweenTaps_ms = 2000;
 
 // game config
 const char* kMinRoundsToPlayKey = "minRoundsToPlay";
 const char* kMaxRoundsToPlayKey = "maxRoundsToPlay";
+const char* kMaxTimeSearchForCube_ms = "maxTimeSearchForCube_ms";
 
 // vector player config
 const char* kVectorPlayerConfigKey                = "vectorPlayerConfig";
 const char* kOddsOfMissingPatternKey              = "oddsOfMissingPattern";
 const char* kOddsOfTappingAfterCorrectPatternKey  = "oddsOfTappingAfterCorrectPattern";
 const char* kOddsOfTappingCorrectPatternOnLockKey = "oddsOfTappingCorrectPatternOnLock";
+
+// Currently cube spinner relies on "faking" vector's tap in case there are gear/lift issues,
+// cube sensitivity issues, animation variants that apply different amounts of pressure, light lag etc
+// Despite the fact that Vector recognizing what light is on the cube is not handled through the vision system
+// there is a concern from Hanns/Troy that "faking" the interaction is un-Vector-like
+// So if you really really want to break cube spinner and introduce tons of potential bugs that will be extremely 
+// hard to test for go ahead and flip this bool
+CONSOLE_VAR(bool, kIReallyReallyWantToBreakCubeSpinner, "CubeSpinner", false);
 
 }
 
@@ -119,6 +131,8 @@ BehaviorVectorPlaysCubeSpinner::BehaviorVectorPlaysCubeSpinner(const Json::Value
 
   _iConfig.minRoundsToPlay = JsonTools::ParseInt32(config, kMinRoundsToPlayKey, (debugName + kMinRoundsToPlayKey).c_str());
   _iConfig.maxRoundsToPlay = JsonTools::ParseInt32(config, kMaxRoundsToPlayKey, (debugName + kMaxRoundsToPlayKey).c_str());
+  _iConfig.maxLengthSearchForCube_ms = JsonTools::ParseUInt32(config, kMaxTimeSearchForCube_ms,
+                                                              (debugName + kMaxTimeSearchForCube_ms).c_str());
 
   _iConfig.playerConfig = VectorPlayerConfig(config[kVectorPlayerConfigKey]);
 }
@@ -143,8 +157,7 @@ void BehaviorVectorPlaysCubeSpinner::GetBehaviorOperationModifiers(BehaviorOpera
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorVectorPlaysCubeSpinner::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
-  // TODO: insert any behaviors this will delegate to into delegates.
-  // TODO: delete this function if you don't need it
+  delegates.insert(_iConfig.searchBehavior.get());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -154,7 +167,8 @@ void BehaviorVectorPlaysCubeSpinner::GetBehaviorJsonKeys(std::set<const char*>& 
     kGameConfigKey,
     kMinRoundsToPlayKey,
     kMaxRoundsToPlayKey,
-    kVectorPlayerConfigKey
+    kVectorPlayerConfigKey,
+    kMaxTimeSearchForCube_ms
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 
@@ -163,8 +177,9 @@ void BehaviorVectorPlaysCubeSpinner::GetBehaviorJsonKeys(std::set<const char*>& 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorVectorPlaysCubeSpinner::InitBehavior()
 {
-  const auto& lightConfig = GetBEI().GetDataAccessorComponent().GetCubeSpinnerConfig();
+  _iConfig.searchBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(Hiking_LookInPlace360));
 
+  const auto& lightConfig = GetBEI().GetDataAccessorComponent().GetCubeSpinnerConfig();
   _iConfig.cubeSpinnerGame = std::make_unique<CubeSpinnerGame>(_iConfig.gameConfig, lightConfig,
                                                                GetBEI().GetCubeCommsComponent(),
                                                                GetBEI().GetCubeLightComponent(), 
@@ -196,17 +211,52 @@ void BehaviorVectorPlaysCubeSpinner::BehaviorUpdate()
   if( !IsActivated()) {
     return;
   }
-
-  if(!IsControlDelegated() && !IsInPositionToTap()){
-    TransitionToDriveToCube();
+  
+  if(_dVars.stage == BehaviorStage::SearchingForCube &&
+     IsControlDelegated()){
+    if(IsCubePositionKnown()){
+      CancelDelegates();
+      TransitionToFindCubeAndApproachCube();
+    }else{
+      const auto currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      if(currTime_ms > _dVars.timeSearchForCubeShouldEnd_ms){
+        CancelSelf();
+        return;
+      }
+    }
+  }
+  
+  if((_dVars.stage == BehaviorStage::ApproachingCube) &&
+     !IsCubePositionKnown()){
+    TransitionToSearchForCube();
   }
 
-  if(!_dVars.hasGameStarted){
+  if(!IsControlDelegated() && !IsInPositionToTap()){
+    TransitionToFindCubeAndApproachCube();
+  }
+  
+  if(!IsControlDelegated() &&
+     IsInPositionToTap() && 
+     (_dVars.stage < BehaviorStage::WaitingForGameToStart)){
+    if(_dVars.isCubeSpinnerGameReady){
+      _iConfig.cubeSpinnerGame->StartGame();
+      _dVars.stage = BehaviorStage::GameHasStarted;
+    }else{
+      _dVars.stage = BehaviorStage::WaitingForGameToStart;
+    }
+  }
+
+  if(_dVars.stage < BehaviorStage::GameHasStarted){
     return;
   }
 
+  CubeSpinnerGame::GameSnapshot snapshot;
+  _iConfig.cubeSpinnerGame->GetGameSnapshot(snapshot);
+  
+  MakeTapDecision(snapshot);
+  
   if(!IsControlDelegated()){
-    MakeTapDecision();
+    TapIfAppropriate(snapshot);
   }
   
   _iConfig.cubeSpinnerGame->Update();
@@ -217,15 +267,11 @@ void BehaviorVectorPlaysCubeSpinner::BehaviorUpdate()
         break;
       }
       case CubeSpinnerGame::LockResult::Error:{
-        DelegateNow(new TriggerAnimationAction(AnimationTrigger::DEPRECATED_OnSpeedtapRoundPlayerWinLowIntensity), [this](){
-          TransitionToNextGame();
-        });
+        _dVars.nextResponseAnimation = AnimationTrigger::DEPRECATED_OnSpeedtapRoundPlayerWinLowIntensity;
         break;
       }
       case CubeSpinnerGame::LockResult::Complete:{
-        DelegateNow(new TriggerAnimationAction(AnimationTrigger::FistBumpSuccess), [this](){
-          TransitionToNextGame();
-        });
+        _dVars.nextResponseAnimation = AnimationTrigger::FistBumpSuccess;
         break;
       }
       default:{
@@ -236,6 +282,17 @@ void BehaviorVectorPlaysCubeSpinner::BehaviorUpdate()
 
     _dVars.lastLockResult = CubeSpinnerGame::LockResult::Count;
   }
+ 
+
+  // Wait till current tap animation has finished, then respond to it
+  if(!IsControlDelegated() && 
+     (_dVars.nextResponseAnimation != AnimationTrigger::Count)){
+    DelegateIfInControl(new TriggerAnimationAction(_dVars.nextResponseAnimation), [this](){
+      TransitionToNextGame();
+    });
+    _dVars.nextResponseAnimation = AnimationTrigger::Count;
+  }
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -245,19 +302,42 @@ void BehaviorVectorPlaysCubeSpinner::OnBehaviorDeactivated()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVectorPlaysCubeSpinner::TransitionToDriveToCube()
+void BehaviorVectorPlaysCubeSpinner::TransitionToFindCubeAndApproachCube()
 {
-  DriveToAlignWithObjectAction* action = new DriveToAlignWithObjectAction(_dVars.objID,
-                                                                          kDistanceFromMarker_mm);
-  action->SetPreActionPoseAngleTolerance(DEG_TO_RAD(kPreActionAngleTol_deg));
+  ObjectID target;
+  if(!IsCubePositionKnown()){
+    TransitionToSearchForCube();
+  }else if(GetBestGuessObjectID(target) && target.IsSet()){
+    DriveToAlignWithObjectAction* action = new DriveToAlignWithObjectAction(target,
+                                                                            kDistanceFromMarker_mm);
+    action->SetPreActionPoseAngleTolerance(DEG_TO_RAD(kPreActionAngleTol_deg));
 
-  auto* compoundAction = new CompoundActionSequential({
-    new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::HIGH_DOCK),
-    action
-  });
+    auto* compoundAction = new CompoundActionSequential({
+      new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::HIGH_DOCK),
+      action
+    });
 
-  DelegateIfInControl(compoundAction);
+    DelegateIfInControl(compoundAction);
+    _dVars.stage = BehaviorStage::ApproachingCube;
+  }
 }
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorVectorPlaysCubeSpinner::TransitionToSearchForCube()
+{
+  if(IsControlDelegated()){
+    CancelDelegates(false);
+  }
+  
+  ANKI_VERIFY(_iConfig.searchBehavior->WantsToBeActivated(),
+              "BehaviorVectorPlaysCubeSpinner.TransitionToFindCubeAndApproachCube.SearchDoesntWantToBeActivated","");
+  DelegateIfInControl(_iConfig.searchBehavior.get());
+  const auto currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  _dVars.timeSearchForCubeShouldEnd_ms = (currTime_ms + _iConfig.maxLengthSearchForCube_ms);
+  _dVars.stage = BehaviorStage::SearchingForCube;
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorVectorPlaysCubeSpinner::TransitionToNextGame()
@@ -276,77 +356,89 @@ void BehaviorVectorPlaysCubeSpinner::ResetGame()
 {
   auto callback = [this](bool gameStartupSuccess, const ObjectID& id){
     if(gameStartupSuccess){
-      _dVars.hasGameStarted = true;
+      _dVars.isCubeSpinnerGameReady = true;
       _dVars.objID = id;
     }else{
       CancelSelf();
     }
   };
 
-  _dVars.hasGameStarted = false;
+  _dVars.isCubeSpinnerGameReady = false;
   _dVars.objID.UnSet();
-  _iConfig.cubeSpinnerGame->RequestStartNewGame(callback);
+  _iConfig.cubeSpinnerGame->PrepareForNewGame(callback);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVectorPlaysCubeSpinner::MakeTapDecision()
+void BehaviorVectorPlaysCubeSpinner::MakeTapDecision(const CubeSpinnerGame::GameSnapshot& snapshot)
 {
-  bool areLightsCycling = false;
-  uint8_t currentLitLEDIdx = 0;
-  bool isCurrentLightTarget = false;
-  CubeSpinnerGame::LightsLocked lightsLocked; 
-  TimeStamp_t timeUntilNextRotation = 0;
-
-  _iConfig.cubeSpinnerGame->GetGameSnapshot(areLightsCycling, currentLitLEDIdx, isCurrentLightTarget,
-                                            lightsLocked, timeUntilNextRotation);
-  if(!areLightsCycling){
+  if(!snapshot.areLightsCycling){
     return;
   }
 
-  // calculate the current round number                                       
-  auto roundNumber = 0;
-  for(const auto& entry : lightsLocked){
-    if(entry){
-      roundNumber++;
-    }
+
+  const auto currTime_ms =  BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  if((_dVars.timeOfLastTap + kMinTimeBetweenTaps_ms) > currTime_ms){
+    return;
   }
 
   // If starting a new cycle, decide what action we'll take this cycle
-  if(currentLitLEDIdx == 0){
+  if(snapshot.currentLitLEDIdx == 0){
     auto odds = GetBEI().GetRobotInfo().GetRNG().RandDbl();
 
     // failure because robot missed pattern
     if(_dVars.wasLastCycleTarget){
-      if(odds < _iConfig.playerConfig.oddsOfTappingAfterCorrectPattern[roundNumber]){
+      if(odds < _iConfig.playerConfig.oddsOfTappingAfterCorrectPattern[snapshot.roundNumber]){
         const bool shouldSelectLockedIdx = true;
-        _dVars.lightIdxToLock = SelectIndexToLock(lightsLocked, shouldSelectLockedIdx);
+        _dVars.lightIdxToLock = SelectIndexToLock(snapshot.lightsLocked, shouldSelectLockedIdx);
       }
     }
 
 
-    if(isCurrentLightTarget){
+    if(snapshot.isCurrentLightTarget){
       // failure because robot tapped correct light, but on lock 
-      if(odds < _iConfig.playerConfig.oddsOfTappingCorrectPatternOnLock[roundNumber]){
+      if(odds < _iConfig.playerConfig.oddsOfTappingCorrectPatternOnLock[snapshot.roundNumber]){
         const bool shouldSelectLockedIdx = true;
-        _dVars.lightIdxToLock = SelectIndexToLock(lightsLocked, shouldSelectLockedIdx);
+        _dVars.lightIdxToLock = SelectIndexToLock(snapshot.lightsLocked, shouldSelectLockedIdx);
       }
 
       // success
-      if(odds > _iConfig.playerConfig.oddsOfMissingPattern[roundNumber]){
+      if(odds > _iConfig.playerConfig.oddsOfMissingPattern[snapshot.roundNumber]){
         const bool shouldSelectLockedIdx = false;
-        _dVars.lightIdxToLock = SelectIndexToLock(lightsLocked, shouldSelectLockedIdx);
+        _dVars.lightIdxToLock = SelectIndexToLock(snapshot.lightsLocked, shouldSelectLockedIdx);
       }
     }
   }
 
-  _dVars.wasLastCycleTarget = isCurrentLightTarget;
+  _dVars.wasLastCycleTarget = snapshot.isCurrentLightTarget;
+}
 
-  if((_dVars.lightIdxToLock < CubeLightAnimation::kNumCubeLEDs) && 
-     (_dVars.lightIdxToLock == currentLitLEDIdx)){
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorVectorPlaysCubeSpinner::TapIfAppropriate(const CubeSpinnerGame::GameSnapshot& snapshot)
+{
+  if((_dVars.lightIdxToLock < CubeLightAnimation::kNumCubeLEDs) &&
+     (_dVars.lightIdxToLock == snapshot.currentLitLEDIdx)){
+    _dVars.timeOfLastTap = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     _dVars.lightIdxToLock = CubeLightAnimation::kNumCubeLEDs;
     DelegateIfInControl(new PlayAnimationAction(kLockAnimationName));
-    _iConfig.cubeSpinnerGame->LockNow();
+    if(!kIReallyReallyWantToBreakCubeSpinner){
+      _iConfig.cubeSpinnerGame->LockNow();
+    }
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorVectorPlaysCubeSpinner::IsCubePositionKnown() const
+{
+  if(_dVars.objID.IsSet()){
+    const auto* obj = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.objID);
+    return obj != nullptr;
+  }else{
+    const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
+    const auto* obj = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose);
+    return obj != nullptr;
   }
 }
 
@@ -354,6 +446,10 @@ void BehaviorVectorPlaysCubeSpinner::MakeTapDecision()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorVectorPlaysCubeSpinner::IsInPositionToTap() const
 {
+  if(!_dVars.objID.IsSet()){
+    return false;
+  }
+
   const auto* obj = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.objID);
   if(obj != nullptr){
     f32 outDistanceSq = 0;
@@ -366,13 +462,33 @@ bool BehaviorVectorPlaysCubeSpinner::IsInPositionToTap() const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorVectorPlaysCubeSpinner::GetBestGuessObjectID(ObjectID& bestGuessID) const
+{
+  if(_dVars.objID.IsSet()){
+    bestGuessID = _dVars.objID;
+    return true;
+  }else{
+    const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
+    const auto* obj = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose);
+    if(obj != nullptr){
+      bestGuessID = obj->GetID();
+      return true;
+    }else{
+      return false;
+    }
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorVectorPlaysCubeSpinner::HandleWhileActivated(const EngineToGameEvent& event)
 {
   switch(event.GetData().GetTag())
   {
     case EngineToGameTag::ObjectTapped:
     {
-      if(event.GetData().Get_ObjectTapped().objectID == _dVars.objID ){
+      if((_dVars.stage == BehaviorStage::GameHasStarted) && 
+         (event.GetData().Get_ObjectTapped().objectID == _dVars.objID)){
         _iConfig.cubeSpinnerGame->LockNow();
       }
       break;

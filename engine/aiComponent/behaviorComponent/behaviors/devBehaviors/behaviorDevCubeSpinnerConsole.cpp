@@ -179,13 +179,14 @@ void BehaviorDevCubeSpinnerConsole::ResetGame()
 {
   auto callback = [this](bool gameStartupSuccess, const ObjectID& id){
     if(gameStartupSuccess){
+      _iConfig.cubeSpinnerGame->StartGame();
       _dVars.hasGameStarted = true;
       _dVars.objID = id;
     }else{
       CancelSelf();
     }
   };
-  _iConfig.cubeSpinnerGame->RequestStartNewGame(callback);
+  _iConfig.cubeSpinnerGame->PrepareForNewGame(callback);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

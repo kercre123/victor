@@ -207,6 +207,10 @@ namespace Cozmo {
     
     virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms + _keyframeDuration_ms;}
     
+    #if ANKI_DEV_CHEATS
+    void OverrideHeight(u8 newHeight){ _height_mm = newHeight;}
+    #endif
+
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
     virtual Result SetMembersFromFlatBuf(const CozmoAnim::LiftHeight* liftHeightKeyframe, const std::string& animNameDebug = "");

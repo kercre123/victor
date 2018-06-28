@@ -6,6 +6,7 @@
   
   "minRoundsToPlay" : 2,
   "maxRoundsToPlay" : 5,
+  "maxTimeSearchForCube_ms" : 10000, // ten seconds
 
   "vectorPlayerConfig" : {
     // 0-1 scale

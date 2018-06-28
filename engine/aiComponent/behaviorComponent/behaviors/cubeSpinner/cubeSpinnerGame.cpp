@@ -29,6 +29,9 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
+
+CONSOLE_VAR(int, kDedupTimeAfterLock_ms, "CubeSpinner", 1000);
+CONSOLE_VAR(bool, kShouldLockPulseTargetColor, "CubeSpinner", true);
 ////////
 // Light Keys
 ////////
@@ -178,7 +181,7 @@ CubeSpinnerGame::~CubeSpinnerGame()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CubeSpinnerGame::RequestStartNewGame(GameReadyCallback callback)
+void CubeSpinnerGame::PrepareForNewGame(GameReadyCallback callback)
 {
   _currentGame.targetObject.SetToUnknown();
   if(_cubeCommsComponent.IsConnectedToCube()){
@@ -199,11 +202,33 @@ void CubeSpinnerGame::RequestStartNewGame(GameReadyCallback callback)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CubeSpinnerGame::StartGame()
+{
+  if(CanGameStart()){
+    ResetGame();
+    _currentGame.hasStarted = true;
+    return true;
+  }
+  return false;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CubeSpinnerGame::StopGame()
 {
   _backpackLightComponent.ClearAllBackpackLightConfigs();
   _cubeLightComponent.StopLightAnimAndResumePrevious(_currentGame.currentCubeHandle);
   _cubeCommsComponent.RequestDisconnectFromCube(100);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CubeSpinnerGame::CanGameStart() const
+{
+  BlockWorldFilter filter;
+  filter.AddAllowedFamily(ObjectFamily::LightCube);
+  const ActiveObject* obj = _blockWorld.FindConnectedActiveMatchingObject(filter);
+  return obj != nullptr;
 }
 
 
@@ -236,6 +261,10 @@ bool CubeSpinnerGame::ResetGame()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CubeSpinnerGame::Update()
 {
+  if(!_currentGame.hasStarted){
+    return;
+  }
+
   if(_currentGame.lastTimePhaseChanged_ms == kGameHasntStartedTick){
     TransitionToGamePhase(GamePhase::GameGetIn);
   }else if(ANKI_DEV_CHEATS){
@@ -294,6 +323,9 @@ void CubeSpinnerGame::ComposeAndSendLights()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CubeSpinnerGame::LockCurrentLightsIn()
 {
+  const auto currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  _currentGame.lastTimeLightLocked_ms = currTime_ms;
+  
   _currentGame.lightsLocked[GetCurrentCycleIdx()] = true;
   CubeLightAnimation::LightPattern currentCyclePattern = GetCurrentLockPattern();
 
@@ -317,6 +349,11 @@ CubeLightAnimation::LightPattern CubeSpinnerGame::GetCurrentCyclePattern() const
   if(IsCurrentCycleIdxLocked()){
     anim = _cubeLightComponent.GetAnimation(_lightsConfig.lights[_currentGame.targetLightIdx].cubeLockedPulseTrigger);
   }else{
+    anim = _cubeLightComponent.GetAnimation(_lightsConfig.lights[_currentGame.currentCycleLightIdx].cubeCycleTrigger);
+  }
+
+
+  if(kShouldLockPulseTargetColor){
     anim = _cubeLightComponent.GetAnimation(_lightsConfig.lights[_currentGame.currentCycleLightIdx].cubeCycleTrigger);
   }
   
@@ -344,6 +381,13 @@ CubeLightAnimation::LightPattern CubeSpinnerGame::GetCurrentLockPattern() const
 uint8_t CubeSpinnerGame::GetCurrentCycleIdx() const
 {
   return (_currentGame.currentCycleLEDIdx + _currentGame.lastLEDLockedIdx) % CubeLightAnimation::kNumCubeLEDs;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CubeSpinnerGame::IsGameOver() const
+{
+  return GetRoundNumber() == CubeLightAnimation::kNumCubeLEDs;
 }
 
   
@@ -378,6 +422,19 @@ uint8_t CubeSpinnerGame::GetRoundNumber() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CubeSpinnerGame::LockNow()
 {
+  const auto currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+
+  if((_currentGame.lastTimeLightLocked_ms + kDedupTimeAfterLock_ms) > currTime_ms){
+    PRINT_NAMED_INFO("CubeSpinnerGame.LockNow.DuplicateLock", "Received duplicate lock call before timeout");
+    return;
+  }
+
+  // Don't log taps before the game starts or after the game's over
+  if(!_currentGame.hasStarted || IsGameOver() || 
+     (_currentGame.gamePhase < GamePhase::CycleColorsUntilTap)){
+    return;
+  }
+
   LockResult result = LockResult::Error;
 
   const bool colorsMatch = (_currentGame.targetLightIdx == _currentGame.currentCycleLightIdx);
@@ -385,7 +442,7 @@ void CubeSpinnerGame::LockNow()
 
   if(colorsMatch && notAlreadyLocked){
     LockCurrentLightsIn();
-    if(GetRoundNumber() == CubeLightAnimation::kNumCubeLEDs){
+    if(IsGameOver()){
       result = LockResult::Complete;
       TransitionToGamePhase(GamePhase::Celebration);
     }else{
@@ -456,6 +513,8 @@ void CubeSpinnerGame::TransitionToGamePhase(GamePhase phase)
     case GamePhase::Celebration:{
       const bool shouldLoop = false;
       _backpackLightComponent.SetBackpackAnimation(targetLightEntry.backpackCelebrationTrigger, shouldLoop);
+      auto* anim = _cubeLightComponent.GetAnimation(targetLightEntry.cubeCelebrationTrigger);
+      PlayCubeAnimation(*anim);
       break;
     }
   }
@@ -504,17 +563,17 @@ void CubeSpinnerGame::PlayCubeAnimation(CubeLightAnimation::Animation& animToPla
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CubeSpinnerGame::GetGameSnapshot(bool& areLightsCycling, uint8_t& currentLitLEDIdx, bool& isCurrentLightTarget, 
-                                      LightsLocked& lightsLocked, TimeStamp_t& timeUntilNextRotation) const
+void CubeSpinnerGame::GetGameSnapshot(GameSnapshot& outSnapshot) const
 {
-  areLightsCycling = (_currentGame.gamePhase == GamePhase::CycleColorsUntilTap);
-  currentLitLEDIdx = GetCurrentCycleIdx();
-  isCurrentLightTarget = (_currentGame.targetLightIdx == _currentGame.currentCycleLightIdx);
-  lightsLocked = _currentGame.lightsLocked;
+  outSnapshot.areLightsCycling = (_currentGame.gamePhase == GamePhase::CycleColorsUntilTap);
+  outSnapshot.currentLitLEDIdx = GetCurrentCycleIdx();
+  outSnapshot.isCurrentLightTarget = (_currentGame.targetLightIdx == _currentGame.currentCycleLightIdx);
+  outSnapshot.lightsLocked = _currentGame.lightsLocked;
   const auto currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  const auto timeTillNextRotation = (_currentGame.timeNextAdvanceToLED_ms > currTime_ms) ? 
-                                    _currentGame.timeNextAdvanceToLED_ms - currTime_ms : 0;
-  timeUntilNextRotation = timeTillNextRotation ;
+  const auto timeUntilNextRotation = (_currentGame.timeNextAdvanceToLED_ms > currTime_ms) ?
+                                      _currentGame.timeNextAdvanceToLED_ms - currTime_ms : 0;
+  outSnapshot.timeUntilNextRotation = timeUntilNextRotation;
+  outSnapshot.roundNumber = GetRoundNumber();
 }
 
 

@@ -45,6 +45,13 @@ protected:
   virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
   
 private:
+  enum class BehaviorStage{
+    SearchingForCube,
+    ApproachingCube,
+    WaitingForGameToStart,
+    GameHasStarted
+  };
+  
   struct VectorPlayerConfig {
     VectorPlayerConfig(){}
     VectorPlayerConfig(const Json::Value& config);
@@ -60,29 +67,44 @@ private:
     int minRoundsToPlay = 0;
     int maxRoundsToPlay = 0;
     VectorPlayerConfig playerConfig;
+    ICozmoBehaviorPtr searchBehavior;
+    TimeStamp_t maxLengthSearchForCube_ms = 0;
   };
 
   struct DynamicVariables {
     DynamicVariables();
+
+    // Find cube variables
+    TimeStamp_t timeSearchForCubeShouldEnd_ms = 0;
+    // game variables
     ObjectID objID;
     CubeSpinnerGame::LockResult lastLockResult = CubeSpinnerGame::LockResult::Count;
-    bool hasGameStarted = false;
     int roundsLeftToPlay = 0;
-    
+    BehaviorStage stage = BehaviorStage::SearchingForCube;
+    bool isCubeSpinnerGameReady = false;
     // player decision tracker
+    TimeStamp_t timeOfLastTap = 0;
     bool wasLastCycleTarget = false;
     int lightIdxToLock = CubeLightAnimation::kNumCubeLEDs;
+    AnimationTrigger nextResponseAnimation = AnimationTrigger::Count;
   };
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
 
   void ResetGame();
-  void MakeTapDecision();
+  void MakeTapDecision(const CubeSpinnerGame::GameSnapshot& snapshot);
+  void TapIfAppropriate(const CubeSpinnerGame::GameSnapshot& snapshot);
 
+  bool IsCubePositionKnown() const;
   bool IsInPositionToTap() const;
+  
+  // Returns the objectID for the game if its set, otherwise guesses what object we'll connect to
+  // Reutrns true if bestGuessID was set
+  bool GetBestGuessObjectID(ObjectID& bestGuessID) const;
 
-  void TransitionToDriveToCube();
+  void TransitionToFindCubeAndApproachCube();
+  void TransitionToSearchForCube();
   void TransitionToNextGame();
   uint8_t SelectIndexToLock(const CubeSpinnerGame::LightsLocked& lights, bool shouldSelectLockedIdx);
   
