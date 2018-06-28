@@ -54,6 +54,7 @@ enum uint_8 BehaviorID {
   PlaypenWaitToStart,
 
   // devBehaviors
+  TestStackMonitors,
   TurnTowardsPerson,
 
   // examples

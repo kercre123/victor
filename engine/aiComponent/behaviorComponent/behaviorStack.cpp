@@ -17,22 +17,26 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/stackMonitors/stackCycleMonitor.h"
+#include "engine/aiComponent/behaviorComponent/stackMonitors/stackVizMonitor.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/viz/vizManager.h"
 #include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
-#include "webServerProcess/src/webService.h"
-
-// TODO:(bn) put viz manager in BehaviorExternalInterface, then remove these includes
-#include "engine/cozmoContext.h"
 
 namespace Anki {
 namespace Cozmo {
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorStack::BehaviorStack()
+{
+  _stackMonitors.emplace_front( std::make_unique<StackCycleMonitor>() );
+  if( ANKI_DEV_CHEATS ) {
+    _stackMonitors.emplace_front( std::make_unique<StackVizMonitor>() );
+  }
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorStack::~BehaviorStack()
 {
@@ -164,13 +168,10 @@ void BehaviorStack::UpdateBehaviorStack(BehaviorExternalInterface& behaviorExter
     _behaviorStack.at(idx)->Update();
   }
 
-  if( ANKI_DEV_CHEATS ) {
-    SendDebugVizMessages(behaviorExternalInterface);
-    
-    if( behaviorWebVizDirty ) {
-      SendDebugBehaviorTreeToWebViz( behaviorExternalInterface );
-      behaviorWebVizDirty = false;
-    }
+  
+  if( _behaviorStackDirty ) {
+    NotifyOfChange( behaviorExternalInterface );
+    _behaviorStackDirty = false;
   }
 
 }
@@ -201,7 +202,7 @@ void BehaviorStack::PushOntoStack(IBehavior* behavior)
   BroadcastAudioBranch(true);
   behavior->OnActivated();
   
-  behaviorWebVizDirty = true;
+  _behaviorStackDirty = true;
 }
 
 
@@ -216,7 +217,7 @@ void BehaviorStack::PopStack()
   _stackMetadataMap.erase(_behaviorStack.back());
   _behaviorStack.pop_back();
   
-  behaviorWebVizDirty = true;
+  _behaviorStackDirty = true;
 }
   
 
@@ -318,45 +319,14 @@ void BehaviorStack::DebugPrintStack(const std::string& debugStr) const
                    _behaviorStack[i]->GetDebugLabel().c_str());
   }
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStack::SendDebugVizMessages(BehaviorExternalInterface& behaviorExternalInterface) const
-{
-  VizInterface::BehaviorStackDebug data;
-
-  for( const auto& behavior : _behaviorStack ) {
-    data.debugStrings.push_back( behavior->GetDebugLabel() );
-  }
   
-  auto context = behaviorExternalInterface.GetRobotInfo().GetContext();
-  if(context != nullptr){
-    auto vizManager = context->GetVizManager();
-    if(vizManager != nullptr){
-      vizManager->SendBehaviorStackDebug(std::move(data));
-    }
-  }
-}
+
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStack::SendDebugBehaviorTreeToWebViz(BehaviorExternalInterface& behaviorExternalInterface) const
+void BehaviorStack::NotifyOfChange(BehaviorExternalInterface& bei)
 {
-  const auto* context = behaviorExternalInterface.GetRobotInfo().GetContext();
-  if( context != nullptr ) {
-    const auto* webService = context->GetWebService();
-    if( webService != nullptr ){
-      const bool behaviorsSub = webService->IsWebVizClientSubscribed("behaviors");
-      const bool behaviorCondsSub = webService->IsWebVizClientSubscribed("behaviorconds");
-      Json::Value data;
-      if( behaviorsSub || behaviorCondsSub ) {
-        data = BuildDebugBehaviorTree(behaviorExternalInterface);
-      }
-      if( behaviorsSub ) {
-        webService->SendToWebViz( "behaviors", data );
-      }
-      if( behaviorCondsSub ) {
-        webService->SendToWebViz( "behaviorconds", data );
-      }
-    }
+  for( auto& monitor : _stackMonitors ) {
+    monitor->NotifyOfChange( bei, _behaviorStack, this );
   }
 }
 

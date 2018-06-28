@@ -21,6 +21,7 @@
 #include <set>
 #include <unordered_map>
 #include <vector>
+#include <list>
 
 namespace Json {
 class Value;
@@ -35,6 +36,7 @@ class BehaviorExternalInterface;
 class CozmoContext;
 class IBehavior;
 class IExternalInterface;
+class IStackMonitor;
   
 namespace ExternalInterface{
 struct RobotCompletedAction;
@@ -42,7 +44,7 @@ struct RobotCompletedAction;
   
 class BehaviorStack : private Util::noncopyable {
 public:
-  BehaviorStack(){};
+  BehaviorStack();
   virtual ~BehaviorStack();
 
   // Convert a stack to a standardized string format
@@ -60,6 +62,7 @@ public:
                            std::set<IBehavior*>& tickedInStack);
   
   inline IBehavior* GetTopOfStack(){ return _behaviorStack.empty() ? nullptr : _behaviorStack.back();}
+  inline const IBehavior* GetTopOfStack() const { return _behaviorStack.empty() ? nullptr : _behaviorStack.back();}
   inline IBehavior* GetBottomOfStack(){ return _behaviorStack.empty() ? nullptr : _behaviorStack.front();}
   inline bool IsInStack(const IBehavior* behavior) { return _stackMetadataMap.find(behavior) != _stackMetadataMap.end();}
   
@@ -97,7 +100,8 @@ private:
   std::unordered_map<const IBehavior*, StackMetadataEntry> _stackMetadataMap;
   IExternalInterface* _externalInterface = nullptr;
   
-  bool behaviorWebVizDirty = false;
+  bool _behaviorStackDirty = false;
+  std::list<std::unique_ptr<IStackMonitor>> _stackMonitors;
 
   // Let the audio system know that a branch has been activated/deactivated
   void BroadcastAudioBranch(bool activated);
@@ -108,11 +112,7 @@ private:
   // calls all appropriate functions to prepare a delegate to be removed from the stack
   void PrepareDelegatesForRemovalFromStack(IBehavior* delegated);
   
-  // in debug builds, send viz messages to webots
-  void SendDebugVizMessages(BehaviorExternalInterface& behaviorExternalInterface) const;
-  
-  // sends behavior tree to web viz
-  void SendDebugBehaviorTreeToWebViz(BehaviorExternalInterface& behaviorExternalInterface) const;
+  void NotifyOfChange(BehaviorExternalInterface& bei);
   
 };
 
