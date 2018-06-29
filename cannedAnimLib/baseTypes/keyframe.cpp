@@ -1306,7 +1306,7 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
     
     bool BodyMotionKeyFrame::IsDone(const TimeStamp_t timeSinceAnimStart_ms) const
     {
-      if(timeSinceAnimStart_ms < GetTriggerTime_ms()){
+      if(timeSinceAnimStart_ms <= GetTriggerTime_ms()){
         return false;
       }
       
