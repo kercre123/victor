@@ -330,7 +330,9 @@ namespace Anki {
 
         Messages::UpdateRobotStateMsg();
         ++robotStateMessageCounter_;
-        if(robotStateMessageCounter_ >= STATE_MESSAGE_FREQUENCY) {
+        const s32 messagePeriod = ( HAL::PowerGetMode() == HAL::POWER_MODE_CALM ) ? STATE_MESSAGE_FREQUENCY_CALM
+                                                                                  : STATE_MESSAGE_FREQUENCY;
+        if(robotStateMessageCounter_ >= messagePeriod) {
           Messages::SendRobotStateMsg();
           robotStateMessageCounter_ = 0;
         }
