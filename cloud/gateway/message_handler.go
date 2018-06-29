@@ -71,10 +71,10 @@ func ClearMapSetting(tag gw_clad.MessageRobotToExternalTag) {
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
 func ProtoDriveWheelsToClad(msg *extint.DriveWheelsRequest) *gw_clad.MessageExternalToRobot {
 	return gw_clad.NewMessageExternalToRobotWithDriveWheels(&gw_clad.DriveWheels{
-		Lwheel_speed_mmps:  msg.LeftWheelMmps,
-		Rwheel_speed_mmps:  msg.RightWheelMmps,
-		Lwheel_accel_mmps2: msg.LeftWheelMmps2,
-		Rwheel_accel_mmps2: msg.RightWheelMmps2,
+		LeftWheelMmps:   msg.LeftWheelMmps,
+		RightWheelMmps:  msg.RightWheelMmps,
+		LeftWheelMmps2:  msg.LeftWheelMmps2,
+		RightWheelMmps2: msg.RightWheelMmps2,
 	})
 }
 
@@ -96,14 +96,14 @@ func ProtoPlayAnimationToClad(msg *extint.PlayAnimationRequest) *gw_clad.Message
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
 func ProtoMoveHeadToClad(msg *extint.MoveHeadRequest) *gw_clad.MessageExternalToRobot {
 	return gw_clad.NewMessageExternalToRobotWithMoveHead(&gw_clad.MoveHead{
-		Speed_rad_per_sec: msg.SpeedRadPerSec,
+		SpeedRadPerSec: msg.SpeedRadPerSec,
 	})
 }
 
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
 func ProtoMoveLiftToClad(msg *extint.MoveLiftRequest) *gw_clad.MessageExternalToRobot {
 	return gw_clad.NewMessageExternalToRobotWithMoveLift(&gw_clad.MoveLift{
-		Speed_rad_per_sec: msg.SpeedRadPerSec,
+		SpeedRadPerSec: msg.SpeedRadPerSec,
 	})
 }
 
@@ -116,9 +116,9 @@ func ProtoDriveArcToClad(msg *extint.DriveArcRequest) *gw_clad.MessageExternalTo
 		msg.CurvatureRadiusMm = math.MaxInt16
 	}
 	return gw_clad.NewMessageExternalToRobotWithDriveArc(&gw_clad.DriveArc{
-		Speed:              msg.Speed,
-		Accel:              msg.Accel,
-		CurvatureRadius_mm: int16(msg.CurvatureRadiusMm),
+		Speed:             msg.Speed,
+		Accel:             msg.Accel,
+		CurvatureRadiusMm: int16(msg.CurvatureRadiusMm),
 		// protobuf does not have a 16-bit integer representation, this conversion is used to satisfy the specs specified in the clad
 	})
 }
@@ -132,13 +132,13 @@ func ProtoSDKActivationToClad(msg *extint.SDKActivationRequest) *gw_clad.Message
 }
 
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
-func FaceImageChunkToClad(faceData [faceImagePixelsPerChunk]uint16, pixelCount uint16, chunkIndex uint8, chunkCount uint8, duration_ms uint32, interruptRunning bool) *gw_clad.MessageExternalToRobot {
+func FaceImageChunkToClad(faceData [faceImagePixelsPerChunk]uint16, pixelCount uint16, chunkIndex uint8, chunkCount uint8, durationMs uint32, interruptRunning bool) *gw_clad.MessageExternalToRobot {
 	return gw_clad.NewMessageExternalToRobotWithDisplayFaceImageRGBChunk(&gw_clad.DisplayFaceImageRGBChunk{
 		FaceData:         faceData,
 		NumPixels:        pixelCount,
 		ChunkIndex:       chunkIndex,
 		NumChunks:        chunkCount,
-		Duration_ms:      duration_ms,
+		DurationMs:       durationMs,
 		InterruptRunning: interruptRunning,
 	})
 }
@@ -199,18 +199,18 @@ func ProtoEnableVisionModeToClad(msg *extint.EnableVisionModeRequest) *gw_clad.M
 }
 
 func CladFeatureStatusToProto(msg *gw_clad.FeatureStatus) *extint.FeatureStatus {
-	return &extint.FeatureStatus{
-		FeatureName: msg.FeatureName,
-		Source:      msg.Source,
-	}
+	proto_msg := reflect.ValueOf(*msg).Interface().(extint.FeatureStatus)
+	return &proto_msg
 }
 
 func CladMeetVictorFaceScanStartedToProto(msg *gw_clad.MeetVictorFaceScanStarted) *extint.MeetVictorFaceScanStarted {
-	return &extint.MeetVictorFaceScanStarted{}
+	proto_msg := reflect.ValueOf(*msg).Interface().(extint.MeetVictorFaceScanStarted)
+	return &proto_msg
 }
 
 func CladMeetVictorFaceScanCompleteToProto(msg *gw_clad.MeetVictorFaceScanComplete) *extint.MeetVictorFaceScanComplete {
-	return &extint.MeetVictorFaceScanComplete{}
+	proto_msg := reflect.ValueOf(*msg).Interface().(extint.MeetVictorFaceScanComplete)
+	return &proto_msg
 }
 
 func CladStatusToProto(msg *gw_clad.Status) *extint.Status {
@@ -252,8 +252,8 @@ func CladStatusToProto(msg *gw_clad.Status) *extint.Status {
 
 func CladCladRectToProto(msg *gw_clad.CladRect) *extint.CladRect {
 	return &extint.CladRect{
-		XTopLeft: msg.X_topLeft,
-		YTopLeft: msg.Y_topLeft,
+		XTopLeft: msg.XTopLeft,
+		YTopLeft: msg.YTopLeft,
 		Width:    msg.Width,
 		Height:   msg.Height,
 	}
@@ -281,7 +281,7 @@ func CladRobotObservedFaceToProto(msg *gw_clad.RobotObservedFace) *extint.RobotO
 		FaceId:    msg.FaceID,
 		Timestamp: msg.Timestamp,
 		Pose:      CladPoseToProto(&msg.Pose),
-		ImgRect:   CladCladRectToProto(&msg.Img_rect),
+		ImgRect:   CladCladRectToProto(&msg.ImgRect),
 		Name:      msg.Name,
 
 		Expression: extint.FacialExpression(msg.Expression + 1), // protobuf enums have a 0 start value
@@ -337,12 +337,12 @@ func CladRobotStateToProto(msg *gw_clad.RobotState) *extint.RobotStateResult {
 	var robot_state *extint.RobotState
 	robot_state = &extint.RobotState{
 		Pose:                  CladPoseToProto(&msg.Pose),
-		PoseAngleRad:          msg.PoseAngle_rad,
-		PosePitchRad:          msg.PosePitch_rad,
-		LeftWheelSpeedMmps:    msg.LeftWheelSpeed_mmps,
-		RightWheelSpeedMmps:   msg.RightWheelSpeed_mmps,
-		HeadAngleRad:          msg.HeadAngle_rad,
-		LiftHeightMm:          msg.LiftHeight_mm,
+		PoseAngleRad:          msg.PoseAngleRad,
+		PosePitchRad:          msg.PosePitchRad,
+		LeftWheelSpeedMmps:    msg.LeftWheelSpeedMmps,
+		RightWheelSpeedMmps:   msg.RightWheelSpeedMmps,
+		HeadAngleRad:          msg.HeadAngleRad,
+		LiftHeightMm:          msg.LiftHeightMm,
 		BatteryVoltage:        msg.BatteryVoltage,
 		Accel:                 CladAccelDataToProto(&msg.Accel),
 		Gyro:                  CladGyroDataToProto(&msg.Gyro),

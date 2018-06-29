@@ -38,7 +38,7 @@ def goify(arg):
     if not isinstance(arg, str):
         return arg
     arg = arg.replace('::', '_')
-    return arg[:1].upper() + arg[1:]
+    return ''.join([s[:1].upper() + s[1:] for s in arg.split('_')])
 
 type_translations = {
     'bool': 'bool',
@@ -165,7 +165,6 @@ class StructEmitter(ast.NodeVisitor):
                 self.output.write('\t')
                 visitor.visit(member.type, member_name=goify(member.name))
                 self.output.write('\n')
-
         self.output.write('}\n\n')
 
     def emitMethods(self, node):
