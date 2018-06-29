@@ -29,6 +29,7 @@
 #include "anki-ble/common/log.h"
 #include "anki-ble/common/anki_ble_uuids.h"
 #include "anki-ble/common/ble_advertise_settings.h"
+#include "anki-wifi/fileutils.h"
 #include "anki-wifi/wifi.h"
 #include "cutils/properties.h"
 #include "switchboardd/christen.h"
@@ -321,11 +322,25 @@ void Daemon::HandleOtaUpdateProgress() {
 
     if(status == -1) {
       _securePairing->SendOtaProgress(OtaStatusCode::UNKNOWN, progressVal, expectedVal);
-      return;
+    } else {
+      Log::Write("Downloaded %llu/%llu bytes.", progressVal, expectedVal);
+      _securePairing->SendOtaProgress(OtaStatusCode::IN_PROGRESS, progressVal, expectedVal);
     }
+  }
 
-    Log::Write("Downloaded %llu/%llu bytes.", progressVal, expectedVal);
-    _securePairing->SendOtaProgress(OtaStatusCode::IN_PROGRESS, progressVal, expectedVal);
+  if (_isUpdateEngineServiceRunning) {
+    if (access(kUpdateEngineEnvPath.c_str(), F_OK) == -1) {
+      // The update-engine env file has been deleted by systemd
+      _isUpdateEngineServiceRunning = false;
+      int rc = -1;
+      if (access(kUpdateEngineDonePath.c_str(), F_OK) != -1) {
+        rc = 0;
+      }
+      if (access(kUpdateEngineErrorPath.c_str(), F_OK) != -1) {
+        rc = -1;
+      }
+      HandleOtaUpdateExit(rc);
+    }
   }
 }
 
@@ -383,6 +398,8 @@ int Daemon::GetOtaProgress(uint64_t* progressVal, uint64_t* expectedVal) {
 }
 
 void Daemon::HandleOtaUpdateExit(int rc) {
+  (void) unlink(kUpdateEngineEnvPath.c_str());
+  (void) unlink(kUpdateEngineDisablePath.c_str());
   _taskExecutor->Wake([rc, this] {
     if(rc == 0) {
       uint64_t progressVal = 0;
@@ -448,17 +465,61 @@ void Daemon::OnOtaUpdatedRequest(std::string url) {
   ev_timer_again(_loop, &_handleOtaTimer.timer);
   _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::UPDATING_OS);
 
-  // remove progress files if exist
   Log::Write("Ota Update Initialized...");
-  int clearFilesStatus = ExecCommand({ kUpdateEngineExecPath + "/update-engine"});
-
-  if(clearFilesStatus != 0) {
-    // we *shouldn't* let progress file errors keep us from trying to update
-    Log::Write("Couldn't clear progress files. Continuing update anyway.");
+  // If the update-engine.service file is not present then we are running on an older version of
+  // the Victor OS that does not have automatic updates.  Instead, we can just directly launch
+  // /anki/bin/update-engine in the background.
+  if (access(kUpdateEngineServicePath.c_str(), F_OK) == -1) {
+    ExecCommandInBackground({kUpdateEngineExecPath, url},
+                            std::bind(&Daemon::HandleOtaUpdateExit, this, std::placeholders::_1));
+    return;
+  }
+  int rc;
+  // Create the switchboard runtime directory if it doesn't exist
+  rc = CreateDirectory(kSwitchboardRunPath);
+  if (rc) {
+    HandleOtaUpdateExit(rc);
+    return;
+  }
+  // Disable update-engine from running automatically
+  rc = WriteFileAtomically(kUpdateEngineDisablePath, "1");
+  if (rc) {
+    HandleOtaUpdateExit(rc);
+    return;
   }
 
-  ExecCommandInBackground({ kUpdateEngineExecPath + "/update-engine", url},
-                          std::bind(&Daemon::HandleOtaUpdateExit, this, std::placeholders::_1));
+  // Stop any running instance of update-engine
+  rc = ExecCommand({"/bin/systemctl", "stop", "update-engine.service"});
+  if (rc) {
+    HandleOtaUpdateExit(rc);
+    return;
+  }
+
+  // Write out the environment file for update engine to use
+  std::ostringstream updateEngineEnv;
+  updateEngineEnv << "UPDATE_ENGINE_ENABLED=True" << std::endl;
+  updateEngineEnv << "UPDATE_ENGINE_MAX_SLEEP=1" << std::endl; // No sleep, execute right away
+  updateEngineEnv << "UPDATE_ENGINE_URL=\"" << url << "\"" << std::endl;
+  rc = WriteFileAtomically(kUpdateEngineEnvPath, updateEngineEnv.str());
+  if (rc) {
+    HandleOtaUpdateExit(rc);
+    return;
+  }
+
+  // Remove any previous "done" file so that we can run update-engine again
+  (void) unlink(kUpdateEngineDonePath.c_str());
+
+  // Remove the disable file so that update-engine can start
+  (void) unlink(kUpdateEngineDisablePath.c_str());
+
+  // Restart the update-engine service so that our new config will be loaded
+  rc = ExecCommand({"/bin/systemctl", "start", "update-engine.service"});
+
+  if (rc != 0) {
+    HandleOtaUpdateExit(rc);
+    return;
+  }
+  _isUpdateEngineServiceRunning = true;
 }
 
 void Daemon::OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame message) {
