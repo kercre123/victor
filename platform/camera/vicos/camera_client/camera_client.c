@@ -29,7 +29,7 @@
 #include <pthread.h>
 
 // linux kernel header provided for ION memory access
-#include "linux/msm_ion.h"
+#include "linux/ion.h"
 
 #include "camera_client.h"
 #include "log.h"
