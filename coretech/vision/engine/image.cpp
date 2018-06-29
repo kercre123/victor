@@ -629,7 +629,7 @@ namespace Vision {
 
   void Image::BoxFilter(ImageBase<u8>& filtered, u32 size) const
   {
-    #if defined(MAC)
+    #if defined(__APPLE__)
     #define IS_MAC 1
     #else
     #define IS_MAC 0
