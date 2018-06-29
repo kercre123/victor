@@ -93,8 +93,14 @@ enum int_32 AnimationTrigger
   DriveStartDefault,
   DriveStartHappy,
   DriveStartLaunch,
-  ExploringLookLeft,
-  ExploringLookRight,
+
+  ExploringHuhClose,
+  ExploringHuhFar,
+  ExploringLookAround,
+  ExploringScanToLeft,
+  ExploringScanToRight,
+  ExploringScanCenterFromLeft,
+  ExploringScanCenterFromRight,
 
   FistBumpIdle,
   FistBumpRequestOnce,

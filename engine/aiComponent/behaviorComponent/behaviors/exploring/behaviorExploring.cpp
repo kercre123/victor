@@ -469,13 +469,13 @@ void BehaviorExploring::TransitionToArrived()
   _dVars.distToGoal_mm = -1.0f;
   _dVars.numDriveAttemps = 0;
   
-  // turn a couple random angles
   auto* action = new CompoundActionSequential();
-  const float t1 = GetRNG().RandDbl();
-  if( t1 < 0.33f ) {
-    action->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::ExploringLookLeft ) );
-  } else if( t1 < 0.66f ) {
-    action->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::ExploringLookRight ) );
+  const float r = GetRNG().RandDbl();
+  bool animFirst = (r < 0.5f);
+  
+  // anim either goes before or after a random turn
+  if( animFirst ) {
+    action->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::ExploringLookAround ) );
   }
   
   const float angleChange = GetRNG().RandDblInRange( kMinScanAngle, kMaxScanAngle );
@@ -484,11 +484,8 @@ void BehaviorExploring::TransitionToArrived()
   turnAction->SetMaxSpeed(M_PI_2);
   action->AddAction( turnAction );
   
-  const float t2 = GetRNG().RandDbl();
-  if( t2 < 0.33f ) {
-    action->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::ExploringLookLeft ) );
-  } else if( t2 < 0.66f ) {
-    action->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::ExploringLookRight ) );
+  if( !animFirst ) {
+    action->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::ExploringLookAround ) );
   }
 
   DelegateNow( action, [this](const ActionResult& res) {

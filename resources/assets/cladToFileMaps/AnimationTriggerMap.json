@@ -408,12 +408,32 @@
     "AnimName": "ag_driving01_startdriving"
   },
   {
-    "CladEvent": "ExploringLookLeft",
-    "AnimName": "ag_vc_wakeword_turnleft_45degrees"
+    "CladEvent": "ExploringHuhClose",
+    "AnimName": "ag_explorer_huh_close"
   },
   {
-    "CladEvent": "ExploringLookRight",
-    "AnimName": "ag_vc_wakeword_turnright_45degrees"
+    "CladEvent": "ExploringHuhFar",
+    "AnimName": "ag_explorer_huh_far"
+  },
+  {
+    "CladEvent": "ExploringLookAround",
+    "AnimName": "ag_explorer_lookaround"
+  },
+  {
+    "CladEvent": "ExploringScanToLeft",
+    "AnimName": "ag_explorer_scan_left"
+  },
+  {
+    "CladEvent": "ExploringScanToRight",
+    "AnimName": "ag_explorer_scan_right"
+  },
+  {
+    "CladEvent": "ExploringScanCenterFromLeft",
+    "AnimName": "ag_explorer_center_right"
+  },
+  {
+    "CladEvent": "ExploringScanCenterFromRight",
+    "AnimName": "ag_explorer_center_left"
   },
   {
     "CladEvent": "DEPRECATED_FacePlantRoll",

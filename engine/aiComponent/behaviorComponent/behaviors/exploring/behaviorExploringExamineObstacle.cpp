@@ -23,6 +23,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/movementComponent.h"
+#include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/navMap/mapComponent.h"
@@ -47,14 +48,13 @@ namespace {
   const float kDistanceForStartApproach_mm = 80.0f;
   const float kDistanceForStopApproach_mm = 50.0f;
   
-  const float kMaxTurnAngle_deg = 135.0f; // 90 + 45 looks good for coming at a wall at an acute angle
+  const float kMinDistForFarReaction_mm = 80.0f;
   
   // [1-100]:JPEG quality, -1: use PNG
   int8_t kImageQuality = 100;
   const bool kTakePhoto = false;
   
   float kReturnToCenterSpeed_deg_s = 300.0f;
-  float kTurnSpeed_deg_s = 45.0f;
   
   const unsigned int kNumFloodFillSteps = 10;
   
@@ -146,16 +146,6 @@ void BehaviorExploringExamineObstacle::GetBehaviorOperationModifiers( BehaviorOp
   modifiers.wantsToBeActivatedWhenOffTreads = true;
   modifiers.wantsToBeActivatedWhenOnCharger = true;
 }
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploringExamineObstacle::GetBehaviorJsonKeys( std::set<const char*>& expectedKeys ) const
-{
-//  const char* list[] = {
-//    // TODO: insert any possible root-level json keys that this class is expecting.
-//    // TODO: replace this method with a simple {} in the header if this class doesn't use the ctor's "config" argument.
-//  };
-  //expectedKeys.insert( std::begin(list), std::end(list) );
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploringExamineObstacle::OnBehaviorActivated() 
@@ -179,7 +169,10 @@ void BehaviorExploringExamineObstacle::OnBehaviorActivated()
     Pose3d pose3{ pose };
     pose3.SetParent( GetBEI().GetRobotInfo().GetWorldOrigin() );
     pose3.GetWithRespectTo( GetBEI().GetRobotInfo().GetPose(), pose3 );
-    DelegateIfInControl(new TurnTowardsPoseAction( pose3 ), [this](ActionResult res){
+    auto* turnAction = new TurnTowardsPoseAction( pose3 );
+    auto* huhAction = new TriggerLiftSafeAnimationAction{ AnimationTrigger::ExploringHuhFar };
+    auto* turnAndHuh = new CompoundActionSequential({ turnAction, huhAction });
+    DelegateIfInControl( turnAndHuh, [this](ActionResult res){
       TransitionToNextAction();
     });
     
@@ -194,9 +187,15 @@ void BehaviorExploringExamineObstacle::OnBehaviorActivated()
       GetBEI().GetBackpackLightComponent().SetBackpackAnimation(kLightsActiveFront);
     }
     
-    // todo: should probably back up if this behavior activates and it's too close. for now, the reaction
-    // animation moves it back a little bit
-    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ReactToObstacle), [this](ActionResult res){
+    auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
+    u16 distance_mm = 0;
+    // ignore return value (sensor validity). this is only used to select an animation so isnt vital
+    proxSensor.GetLatestDistance_mm( distance_mm );
+    
+    const bool obstacleIsFar = (distance_mm >= kMinDistForFarReaction_mm);
+    const AnimationTrigger huhAnim = obstacleIsFar ? AnimationTrigger::ExploringHuhFar : AnimationTrigger::ExploringHuhClose;
+    auto* huhAction = new TriggerLiftSafeAnimationAction{ huhAnim };
+    DelegateIfInControl(huhAction, [this](ActionResult res){
       TransitionToNextAction();
     });
   }
@@ -238,15 +237,11 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
   if( (_dVars.state == State::Initial) || (_dVars.state == State::DriveToObstacle) ) {
     
     SET_STATE( FirstTurn );
-    // these head motions will probably be animations or something
-    action->AddAction( new MoveHeadToAngleAction( DEG_TO_RAD(15.0f) ) );
-    action->AddAction( new WaitAction( 0.5f ) );
-    action->AddAction( new MoveHeadToAngleAction( DEG_TO_RAD(0.0f) ) );
-    const float angle = _dVars.firstTurnDirectionIsLeft ? -DEG_TO_RAD(kMaxTurnAngle_deg) : DEG_TO_RAD(kMaxTurnAngle_deg);
-    const bool isAbsAngle = false;
-    auto* turnAction = new TurnInPlaceAction(angle, isAbsAngle);
-    turnAction->SetMaxSpeed(DEG_TO_RAD(kTurnSpeed_deg_s));
-    action->AddAction( turnAction );
+    
+    AnimationTrigger turnAnim = _dVars.firstTurnDirectionIsLeft
+                                ? AnimationTrigger::ExploringScanToLeft
+                                : AnimationTrigger::ExploringScanToRight;
+    action->AddAction( new TriggerLiftSafeAnimationAction{ turnAnim } );
     
   } else if( (_dVars.state == State::FirstTurn) || (_dVars.state == State::SecondTurn) ) {
     
@@ -260,26 +255,38 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
       return;
     }
     
-    // these head motions will probably be animations or something
-    action->AddAction( new MoveHeadToAngleAction( DEG_TO_RAD(15.0f) ) );
-    action->AddAction( new WaitAction( 0.5f ) );
-    action->AddAction( new MoveHeadToAngleAction( DEG_TO_RAD(0.0f) ) );
+    
+    auto* parallelAction = new CompoundActionParallel();
+    
+    AnimationTrigger turnAnim;
+    if( _dVars.firstTurnDirectionIsLeft ) {
+      turnAnim = (_dVars.state == State::ReturnToCenter) ? AnimationTrigger::ExploringScanCenterFromLeft : AnimationTrigger::ExploringScanCenterFromRight;
+    } else {
+      turnAnim = (_dVars.state == State::ReturnToCenter) ? AnimationTrigger::ExploringScanCenterFromRight : AnimationTrigger::ExploringScanCenterFromLeft;
+    }
+    auto* animAction = new TriggerLiftSafeAnimationAction{ turnAnim };
+    
     const float angle = _dVars.initialPoseAngle_rad;
     const bool isAbsAngle = true;
     auto* turnToCenterAction = new TurnInPlaceAction(angle, isAbsAngle);
     turnToCenterAction->SetMaxSpeed( DEG_TO_RAD(kReturnToCenterSpeed_deg_s) );
-    action->AddAction( turnToCenterAction );
+    
+    // keep a weakptr to the turn action, so that the whole parallel action can be aborted the moment this one
+    // ends
+    _dVars.scanCenterAction = parallelAction->AddAction( turnToCenterAction );
+    parallelAction->AddAction( animAction );
+    
+    action->AddAction( parallelAction );
    
   } else if( _dVars.state == State::ReturnToCenter ) {
     
     SET_STATE( SecondTurn );
     
     // now turn the other way
-    const float angle = _dVars.firstTurnDirectionIsLeft ? DEG_TO_RAD(kMaxTurnAngle_deg) : -DEG_TO_RAD(kMaxTurnAngle_deg);
-    const bool isAbsAngle = false;
-    auto* turnAction = new TurnInPlaceAction(angle, isAbsAngle);
-    turnAction->SetMaxSpeed(DEG_TO_RAD(kTurnSpeed_deg_s));
-    action->AddAction( turnAction );
+    AnimationTrigger turnAnim = _dVars.firstTurnDirectionIsLeft
+                                ? AnimationTrigger::ExploringScanToRight
+                                : AnimationTrigger::ExploringScanToLeft;
+    action->AddAction( new TriggerLiftSafeAnimationAction{ turnAnim } );
     
   } else if( _dVars.state == State::ReturnToCenterEnd ) {
     if( kUseDebugLights ) {
@@ -344,6 +351,12 @@ void BehaviorExploringExamineObstacle::BehaviorUpdate()
     const bool seenObstacle = RobotSeesObstacleInFront( kDistanceForStopTurn_mm, forActivation );
     if( !seenObstacle ) {
       CancelDelegates( false );
+      TransitionToNextAction();
+    }
+  } else if( (_dVars.state == State::ReturnToCenter) || (_dVars.state == State::ReturnToCenterEnd) ) {
+    if( !_dVars.scanCenterAction.lock() && IsControlDelegated() ) {
+      // finished returning to center but the parallel action hasnt finished. cancel it and begin the next action
+      CancelDelegates(false);
       TransitionToNextAction();
     }
   }

@@ -13,7 +13,7 @@
     {
       "behaviorName": "GetInAnimsInternal",
       "behaviorClass": "AnimSequence",
-      "animTriggers": ["ExploringLookLeft", "ExploringLookRight"]
+      "animTriggers": ["ExploringLookAround"]
     }
   ]
 }
