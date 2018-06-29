@@ -13,6 +13,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateWhileInAir.h"
 
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/activeBehaviorIterator.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -24,17 +25,6 @@ namespace Cozmo {
 
 
 namespace{
-// The set of behaviors which can run while in the air, but will have their treads locked
-static const std::set<BehaviorID> kBehaviorsToLockTreadsWhileInAir = {{ BEHAVIOR_ID(BlackJack),
-                                                                        BEHAVIOR_ID(ReactToTouchPetting),
-                                                                        BEHAVIOR_ID(TakeAPhotoCoordinator),
-                                                                        BEHAVIOR_ID(ShowWallTime),
-                                                                        BEHAVIOR_ID(SingletonCancelTimer),
-                                                                        BEHAVIOR_ID(SingletonTimerAlreadySet),
-                                                                        BEHAVIOR_ID(SingletonTimerAntic),
-                                                                        BEHAVIOR_ID(SingletonTimerCheckTime),
-                                                                        BEHAVIOR_ID(SingletonTimerSet) }};
-
 // The set of behaviors which maintain control of the robot, even when it's in the air
 static const std::set<BehaviorID> kBehaviorStatesToSuppressInAirReaction = {{ BEHAVIOR_ID(BlackJack),
                                                                               BEHAVIOR_ID(ReactToTouchPetting),
@@ -47,6 +37,7 @@ static const std::set<BehaviorID> kBehaviorStatesToSuppressInAirReaction = {{ BE
                                                                               BEHAVIOR_ID(SingletonTimerSet)  }};
 
 const BehaviorID kWhileInAirDispatcher = BEHAVIOR_ID(WhileInAirDispatcher);
+const TimeStamp_t kMaxTimeForInitialPickupReaction_ms = 1000;
 
 }
 
@@ -67,20 +58,11 @@ void BehaviorCoordinateWhileInAir::InitPassThrough()
 {
   const auto& BC = GetBEI().GetBehaviorContainer();
   _whileInAirDispatcher = BC.FindBehaviorByID(kWhileInAirDispatcher);
-  {
-    std::set<BehaviorID> inAirSet;
-    inAirSet.insert(kWhileInAirDispatcher);
-    _inAirDispatcherBehaviorSet = std::make_unique<AreBehaviorsActivatedHelper>(BC, inAirSet);
-  }
+  _initialPickupReaction = BC.FindBehaviorByID(BEHAVIOR_ID(InitialPickupAnimation));
   {
     _suppressInAirBehaviorSet = std::make_unique<AreBehaviorsActivatedHelper>(BC, kBehaviorStatesToSuppressInAirReaction);
   }
-  {
-    _lockTracksBehaviorSet = std::make_unique<AreBehaviorsActivatedHelper>(BC, kBehaviorsToLockTreadsWhileInAir);
-  }
 
-  
-  
   // Saftey check - behaviors that are  in the list need to internally list that they can be activated while in the air
   // or response will not work as expected
   if(ANKI_DEV_CHEATS){
@@ -119,22 +101,26 @@ void BehaviorCoordinateWhileInAir::PassThroughUpdate()
   }
 
   const OffTreadsState offTreadsState = GetBEI().GetRobotInfo().GetOffTreadsState();
-  if((offTreadsState == OffTreadsState::InAir) && !IsInAirDispatcherActive()){
+
+  if(offTreadsState == OffTreadsState::OnTreads){
+    _lastTimeWasOnTreads_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  }
+
+  if((offTreadsState == OffTreadsState::InAir) ||
+     (offTreadsState == OffTreadsState::Falling)){
     SuppressInAirReactionIfAppropriate();
     LockTracksIfAppropriate();
+    SuppressInitialPickupReactionIfAppropriate();
   }else{
     if(_areTreadsLocked){
       GetBEI().GetAnimationComponent().UnlockTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK));
       _areTreadsLocked = false;
     }
   }
-}
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorCoordinateWhileInAir::IsInAirDispatcherActive() const
-{
-  return _inAirDispatcherBehaviorSet->AreBehaviorsActivated();
+  if(offTreadsState == OffTreadsState::OnTreads){
+    _hasPickupReactionPlayed = false;
+  }
 }
 
 
@@ -142,12 +128,8 @@ bool BehaviorCoordinateWhileInAir::IsInAirDispatcherActive() const
 void BehaviorCoordinateWhileInAir::LockTracksIfAppropriate()
 {
   if(!_areTreadsLocked){
-    const bool shouldLock = _lockTracksBehaviorSet->AreBehaviorsActivated();
-
-    if(shouldLock){
-      GetBEI().GetAnimationComponent().LockTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK));
-      _areTreadsLocked = true;
-    }
+    GetBEI().GetAnimationComponent().LockTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK));
+    _areTreadsLocked = true;
   }
 }
 
@@ -161,6 +143,24 @@ void BehaviorCoordinateWhileInAir::SuppressInAirReactionIfAppropriate()
     _whileInAirDispatcher->SetDontActivateThisTick(GetDebugLabel());
   }
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorCoordinateWhileInAir::SuppressInitialPickupReactionIfAppropriate()
+{
+  const TimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  _hasPickupReactionPlayed |= (currTime_ms > (_lastTimeWasOnTreads_ms + kMaxTimeForInitialPickupReaction_ms));
+
+  // Only play the pickup reaction
+  if(_hasPickupReactionPlayed){
+    _initialPickupReaction->SetDontActivateThisTick(GetDebugLabel());
+  }else{
+    if(_initialPickupReaction->IsActivated()){
+      _hasPickupReactionPlayed = true;
+    }
+  }
+}
+
 
 }
 }

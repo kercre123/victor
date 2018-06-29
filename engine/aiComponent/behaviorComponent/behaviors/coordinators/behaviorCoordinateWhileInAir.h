@@ -38,6 +38,12 @@ private:
   bool _areTreadsLocked = false;
   ICozmoBehaviorPtr _whileInAirDispatcher;
 
+  // For tracking initial pickup reaction
+  bool _hasPickupReactionPlayed = false;
+  TimeStamp_t _lastTimeWasOnTreads_ms = 0;
+
+  ICozmoBehaviorPtr _initialPickupReaction;
+
   std::unique_ptr<AreBehaviorsActivatedHelper> _inAirDispatcherBehaviorSet;
   std::unique_ptr<AreBehaviorsActivatedHelper> _suppressInAirBehaviorSet;
   std::unique_ptr<AreBehaviorsActivatedHelper> _lockTracksBehaviorSet;
@@ -46,6 +52,8 @@ private:
 
   void LockTracksIfAppropriate();
   void SuppressInAirReactionIfAppropriate();
+  void SuppressInitialPickupReactionIfAppropriate();
+
 };
 
 } // namespace Cozmo
