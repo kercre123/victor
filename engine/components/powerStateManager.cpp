@@ -30,9 +30,7 @@ namespace {
 
 #define CONSOLE_GROUP "PowerSave"
 
-// TODO:(bn) re-enable. trigger word not working with this yet until Lee's changes go in
-CONSOLE_VAR( bool, kPowerSave_CalmMode, CONSOLE_GROUP, false);
-
+CONSOLE_VAR( bool, kPowerSave_CalmMode, CONSOLE_GROUP, true);
 CONSOLE_VAR( bool, kPowerSave_Camera, CONSOLE_GROUP, true);
 
 }
@@ -190,7 +188,7 @@ void PowerStateManager::ExitPowerSave(const RobotCompMap& components)
   PRINT_CH_INFO("PowerStates", "PowerStateManager.Exit",
                 "Exiting power save mode");
 
-  BOUNDED_WHILE( 100, !_enabledSettings.empty() ) {
+  BOUNDED_WHILE( _enabledSettings.size() + 1, !_enabledSettings.empty() ) {
     const auto setting = *_enabledSettings.begin();
     TogglePowerSaveSetting( components, setting, false );
   }

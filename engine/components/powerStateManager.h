@@ -63,7 +63,7 @@ public:
 
   bool InPowerSaveMode() const { return _inPowerSaveMode; }
 
-  // NOTE: In an idea system, we'd work the opposite way, where specific behaviors or pieces of code could
+  // NOTE: In an ideal system, we'd work the opposite way, where specific behaviors or pieces of code could
   // request a higher power mode, and the _default_ would be power save. This would potentially allow better
   // power saving, but also be harder to debug and have systems understand what to do and not do in power save
   // mode, so for now it's "opt-in" instead of "opt-out"
