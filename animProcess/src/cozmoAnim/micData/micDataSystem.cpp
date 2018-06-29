@@ -433,12 +433,17 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     }
   }
 
+  const auto& rawBufferFullness = GetIncomingMicDataPercentUsed();
+  RobotInterface::MicDataState micDataState{};
+  micDataState.rawBufferFullness = rawBufferFullness;
+  RobotInterface::SendAnimToEngine(micDataState);
+
   #if ANKI_DEV_CHEATS
     if (updatedMicDirection || recordingSecondsRemaining != 0)
     {
       FaceInfoScreenManager::getInstance()->DrawConfidenceClock(
         _latestMicDirectionMsg,
-        GetIncomingMicDataPercentUsed(),
+        rawBufferFullness,
         recordingSecondsRemaining,
         endTriggerDispTime_ns != 0 || _currentlyStreaming);
     }

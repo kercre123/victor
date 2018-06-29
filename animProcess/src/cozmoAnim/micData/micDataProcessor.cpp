@@ -509,9 +509,10 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
     activityFlag = 0;
   }
 
+  const bool isLowPowerMode = static_cast<bool>(robotStatus & (uint16_t)RobotStatusFlag::CALM_POWER_MODE);
   // If we've detected activity, SE signal processing (which includes the fallback policy
   // that will skip spatial filtering, which is enabled while the robot is moving).
-  if (activityFlag == 1)
+  if (!isLowPowerMode && activityFlag == 1)
   {
     static const std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> dummySpeakerOut{};
     {
@@ -546,7 +547,7 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   result.latestNoiseFloor = latestNoiseFloor;
 
   // When we know the robot is moving or there's no current activity (so we didn't do beamforming) clear direction data
-  if (robotIsMoving || (activityFlag != 1))
+  if (robotIsMoving || (activityFlag != 1) || isLowPowerMode)
   {
     result.winningDirection = result.selectedDirection = kDirectionUnknown;
   }

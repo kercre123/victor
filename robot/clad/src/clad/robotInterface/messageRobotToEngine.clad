@@ -58,6 +58,11 @@ message MicDirection
   float_32  latestNoiseFloor,
 }
 
+message MicDataState
+{
+  float_32 rawBufferFullness
+}
+
 // This message indicates that the robot experienced a freefall event
 message FallingEvent {
   uint_32 timestamp,       // When the fall started (as a robot timestamp)
@@ -226,6 +231,7 @@ union RobotToEngine {
   AudioPlaybackBegin         audioPlaybackBegin     = 0xE6,
   AudioPlaybackEnd           audioPlaybackEnd       = 0xE7,
   MicRecordingComplete       micRecordingComplete   = 0xE8,
+  MicDataState               micDataState           = 0xE9,
 
   // ====== 0xF0 to 0x FE: Unreliable message to the Engine =====
   // From robot process
