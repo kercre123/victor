@@ -54,6 +54,7 @@ enum uint_8 BehaviorID {
   PlaypenWaitToStart,
 
   // devBehaviors
+  PowerSaveTest,
   TestStackMonitors,
   TurnTowardsPerson,
 
