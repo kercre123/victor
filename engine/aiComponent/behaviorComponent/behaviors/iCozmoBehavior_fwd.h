@@ -21,7 +21,7 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/externalInterface/messageGameToEngineTag.h"
 #include "clad/robotInterface/messageRobotToEngineTag.h"
-#include "proto/external_interface/messages.pb.h"
+#include "proto/external_interface/shared.pb.h"
 
 namespace Anki {
 namespace Cozmo {

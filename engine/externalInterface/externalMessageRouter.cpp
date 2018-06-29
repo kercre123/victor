@@ -12,7 +12,7 @@
 */
 
 #include "engine/externalInterface/externalMessageRouter.h"
-#include "proto/external_interface/messages.pb.h"
+#include "proto/external_interface/shared.pb.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -70,6 +70,10 @@ WRAP_RESPONSE_MESSAGE( external_interface::OnboardingState,             onboardi
 WRAP_RESPONSE_MESSAGE( external_interface::OnboardingContinueResponse,  onboarding_continue_response );
 
 WRAP_RESPONSE_MESSAGE( external_interface::LatestAttentionTransfer, latest_attention_transfer );
+  
+WRAP_RESPONSE_MESSAGE( external_interface::PullSettingsResponse,    pull_settings_response );
+WRAP_RESPONSE_MESSAGE( external_interface::PushSettingsResponse,    push_settings_response );
+WRAP_RESPONSE_MESSAGE( external_interface::UpdateSettingsResponse,  update_settings_response );
 
 WRAP_RESPONSE_MESSAGE( external_interface::PhotosInfoResponse,      photos_info_response );
 WRAP_RESPONSE_MESSAGE( external_interface::PhotoResponse,           photo_response );

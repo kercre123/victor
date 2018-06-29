@@ -14,7 +14,7 @@
 
 #include "engine/events/ankiEvent.h"
 #include "util/signals/simpleSignal.hpp"
-#include "proto/external_interface/messages.pb.h"
+#include "proto/external_interface/shared.pb.h"
 #include <vector>
 #include <utility>
 

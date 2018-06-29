@@ -11,6 +11,8 @@ option optimize_for = LITE_RUNTIME;
 
 import "google/api/annotations.proto";
 import "messages.proto";
+import "settings.proto";
+import "shared.proto";
 
 service ExternalInterface {
   // Drives the wheel motors
@@ -67,6 +69,9 @@ service ExternalInterface {
   rpc EventStream(EventRequest) returns (stream EventResult) {
     option (google.api.http) = {
       post: "/v1/event_stream",
+      additional_bindings {
+        get: "/v1/event_stream"
+      },
       body: "*"
     };
   }
@@ -210,6 +215,60 @@ service ExternalInterface {
     };
   }
 
+  rpc PullSettings(PullSettingsRequest) returns (PullSettingsResponse) {
+    option (google.api.http) = {
+      post: "/v1/pull_settings",
+      body: "*"
+    };
+  }
 
+  rpc PushSettings(PushSettingsRequest) returns (PushSettingsResponse) {
+    option (google.api.http) = {
+      post: "/v1/push_settings",
+      body: "*"
+    };
+  }
+
+  rpc UpdateSettings(UpdateSettingsRequest) returns (UpdateSettingsResponse) {
+    option (google.api.http) = {
+      post: "/v1/update_settings",
+      body: "*"
+    };
+  }
+
+  rpc WifiScan(WifiScanRequest) returns (WifiScanResponse) {
+    option (google.api.http) = {
+      post: "/v1/wifi_scan",
+      body: "*"
+    };
+  }
+
+  rpc WifiConnect(WifiConnectRequest) returns (WifiConnectResponse) {
+    option (google.api.http) = {
+      post: "/v1/wifi_connect",
+      body: "*"
+    };
+  }
+
+  rpc WifiRemove(WifiRemoveRequest) returns (WifiRemoveResponse) {
+    option (google.api.http) = {
+      post: "/v1/wifi_remove",
+      body: "*"
+    };
+  }
+
+  rpc WifiRemoveAll(WifiRemoveAllRequest) returns (WifiRemoveAllResponse) {
+    option (google.api.http) = {
+      post: "/v1/wifi_remove_all",
+      body: "*"
+    };
+  }
+
+  rpc UserAuthentication(UserAuthenticationRequest) returns (UserAuthenticationResponse) {
+    option (google.api.http) = {
+      post: "/v1/user_authentication",
+      body: "*"
+    };
+  }
 }
 

@@ -15,6 +15,8 @@
 
 #include "engine/robot.h"
 #include "engine/components/settingsManager.h"
+#include "engine/cozmoAPI/comms/protoMessageHandler.h"
+#include "engine/externalInterface/externalMessageRouter.h"
 
 #include "util/console/consoleInterface.h"
 
@@ -114,6 +116,15 @@ void SettingsCommManager::InitDependent(Robot* robot, const RobotCompMap& depend
   s_SettingsCommManager = this;
   _settingsManager = &robot->GetComponent<SettingsManager>();
   _gatewayInterface = robot->GetGatewayInterface();
+  auto* gi = _gatewayInterface;
+  if (gi != nullptr)
+  {
+    auto commonCallback = std::bind(&SettingsCommManager::HandleEvents, this, std::placeholders::_1);
+    // Subscribe to desired simple events
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapper::OneofMessageTypeCase::kPullSettingsRequest,   commonCallback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapper::OneofMessageTypeCase::kPushSettingsRequest,   commonCallback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapper::OneofMessageTypeCase::kUpdateSettingsRequest, commonCallback));
+  }
 }
 
 
@@ -135,7 +146,6 @@ bool SettingsCommManager::HandleRobotSettingChangeRequest(const std::string& set
   }
 
   // TODO Update the jdoc (maybe only if successful?)
-  // TODO Send message to App to acknowledge the change (and whether successful?)
   // TODO Potentially send message to Cloud (only if successful?)
   return true;
 }
@@ -171,8 +181,99 @@ void SettingsCommManager::RefreshConsoleVars()
 }
 
 
-// TODO:  Message handlers from App
-// TODO:  Message handlers from Cloud
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SettingsCommManager::HandleEvents(const AnkiEvent<external_interface::GatewayWrapper>& event)
+{
+  switch(event.GetData().oneof_message_type_case())
+  {
+    case external_interface::GatewayWrapper::OneofMessageTypeCase::kPullSettingsRequest:
+      OnRequestPullSettings(event.GetData().pull_settings_request());
+      break;
+    case external_interface::GatewayWrapper::OneofMessageTypeCase::kPushSettingsRequest:
+      OnRequestPushSettings(event.GetData().push_settings_request());
+      break;
+    case external_interface::GatewayWrapper::OneofMessageTypeCase::kUpdateSettingsRequest:
+      OnRequestUpdateSettings(event.GetData().update_settings_request());
+      break;
+    default:
+      LOG_ERROR("SettingsCommManager.HandleEvents",
+                "HandleEvents called for unknown message");
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SettingsCommManager::OnRequestPullSettings(const external_interface::PullSettingsRequest& pullSettingsRequest)
+{
+  // TODO
+  LOG_INFO("SettingsCommManager.OnRequestPullSettings", "Pull settings request");
+  auto* pullSettingsResp = new external_interface::PullSettingsResponse();
+  _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(pullSettingsResp));
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SettingsCommManager::OnRequestPushSettings(const external_interface::PushSettingsRequest& pushSettingsRequest)
+{
+  // TODO
+  LOG_INFO("SettingsCommManager.OnRequestPushSettings", "Push settings request");
+  
+  auto* pushSettingsResp = new external_interface::PushSettingsResponse();
+  
+  _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(pushSettingsResp));
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SettingsCommManager::OnRequestUpdateSettings(const external_interface::UpdateSettingsRequest& updateSettingsRequest)
+{
+  LOG_INFO("SettingsCommManager.OnRequestUpdateSettings", "Update settings request");
+  const auto& settings = updateSettingsRequest.settings();
+  
+  if (settings.oneof_clock_24_hour_case() == external_interface::RobotSettingsConfig::OneofClock24HourCase::kClock24Hour)
+  {
+    HandleRobotSettingChangeRequest("Robot.24HourClock", settings.clock_24_hour() ? "true" : "false");
+  }
+  if (settings.oneof_eye_color_case() == external_interface::RobotSettingsConfig::OneofEyeColorCase::kEyeColor)
+  {
+    // Cast the protobuf3 enum to our CLAD enum, then call into CLAD to get the string version
+    // todo:  replace the clad enum completely
+    const std::string eyeColor = EnumToString(static_cast<EyeColor>(settings.eye_color()));
+    HandleRobotSettingChangeRequest("Robot.EyeColor", eyeColor);
+  }
+  if (settings.oneof_default_location_case() == external_interface::RobotSettingsConfig::OneofDefaultLocationCase::kDefaultLocation)
+  {
+    HandleRobotSettingChangeRequest("Robot.DefaultLocation", settings.default_location());
+  }
+  if (settings.oneof_dist_is_metric_case() == external_interface::RobotSettingsConfig::OneofDistIsMetricCase::kDistIsMetric)
+  {
+    HandleRobotSettingChangeRequest("Robot.DistIsMetric", settings.dist_is_metric() ? "true" : "false");
+  }
+  if (settings.oneof_locale_case() ==  external_interface::RobotSettingsConfig::OneofLocaleCase::kLocale)
+  {
+    HandleRobotSettingChangeRequest("Robot.Locale", settings.locale());
+  }
+  if (settings.oneof_master_volume_case() == external_interface::RobotSettingsConfig::OneofMasterVolumeCase::kMasterVolume)
+  {
+    // Cast the protobuf3 enum to our CLAD enum, then call into CLAD to get the string version
+    // todo:  replace the clad enum completely
+    const std::string masterVolume = EnumToString(static_cast<MasterVolume>(settings.master_volume()));
+    HandleRobotSettingChangeRequest("Robot.MasterVolume", masterVolume);;
+  }
+  if (settings.oneof_temp_is_fahrenheit_case() == external_interface::RobotSettingsConfig::OneofTempIsFahrenheitCase::kTempIsFahrenheit)
+  {
+    HandleRobotSettingChangeRequest("Robot.TempIsFahrenheit", settings.temp_is_fahrenheit() ? "true" : "false");
+  }
+  if (settings.oneof_time_zone_case() == external_interface::RobotSettingsConfig::OneofTimeZoneCase::kTimeZone)
+  {
+    HandleRobotSettingChangeRequest("Robot.TimeZone", settings.time_zone());
+  }
+
+  auto* updateSettingsResp = new external_interface::UpdateSettingsResponse();
+  // TODO put the jdoc in the response?
+  _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(updateSettingsResp));
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

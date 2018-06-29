@@ -412,7 +412,7 @@ func SendOnboardingSkip(in *extint.GatewayWrapper_OnboardingSkip) (*extint.Onboa
 	}, nil
 }
 
-func SendOnboardingConnectionComplete( in *extint.GatewayWrapper_OnboardingConnectionComplete )  (*extint.OnboardingInputResponse, error) {
+func SendOnboardingConnectionComplete(in *extint.GatewayWrapper_OnboardingConnectionComplete) (*extint.OnboardingInputResponse, error) {
 	log.Println("Received rpc request OnbOnboardingConnectionCompleteoardingSkip(", in, ")")
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: in,
@@ -884,7 +884,7 @@ func (m *rpcService) SendOnboardingInput(ctx context.Context, in *extint.Onboard
 			in.GetOnboardingSkip(),
 		})
 	case *extint.OnboardingInputRequest_OnboardingConnectionComplete:
-		return SendOnboardingConnectionComplete( &extint.GatewayWrapper_OnboardingConnectionComplete { 
+		return SendOnboardingConnectionComplete(&extint.GatewayWrapper_OnboardingConnectionComplete{
 			in.GetOnboardingConnectionComplete(),
 		})
 	default:
@@ -996,6 +996,92 @@ func (m *rpcService) EnableVisionMode(ctx context.Context, in *extint.EnableVisi
 			Description: "Message sent to engine",
 		},
 	}, nil
+}
+
+func (m *rpcService) PushSettings(ctx context.Context, in *extint.PushSettingsRequest) (*extint.PushSettingsResponse, error) {
+	log.Println("Received rpc request PushSettings(", in, ")")
+
+	f, result := createChannel(&extint.GatewayWrapper_PushSettingsResponse{}, 1)
+	defer f()
+
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_PushSettingsRequest{
+			in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	response := <-result
+	return response.GetPushSettingsResponse(), nil
+}
+
+func (m *rpcService) PullSettings(ctx context.Context, in *extint.PullSettingsRequest) (*extint.PullSettingsResponse, error) {
+	log.Println("Received rpc request PullSettings(", in, ")")
+
+	f, result := createChannel(&extint.GatewayWrapper_PullSettingsResponse{}, 1)
+	defer f()
+
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_PullSettingsRequest{
+			in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	response := <-result
+	return response.GetPullSettingsResponse(), nil
+}
+
+func (m *rpcService) UpdateSettings(ctx context.Context, in *extint.UpdateSettingsRequest) (*extint.UpdateSettingsResponse, error) {
+	log.Println("Received rpc request UpdateSettings(", in, ")")
+	tag := reflect.TypeOf(&extint.GatewayWrapper_UpdateSettingsResponse{}).String()
+	if _, ok := engineProtoChanMap[tag]; ok {
+		return &extint.UpdateSettingsResponse{
+			Code: extint.ResultCode_ERROR_UPDATE_IN_PROGRESS,
+		}, nil
+	}
+
+	f, result := createChannel(&extint.GatewayWrapper_UpdateSettingsResponse{}, 1)
+	defer f()
+
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_UpdateSettingsRequest{
+			in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	response := <-result
+	return response.GetUpdateSettingsResponse(), nil
+}
+
+func (m *rpcService) WifiScan(ctx context.Context, in *extint.WifiScanRequest) (*extint.WifiScanResponse, error) {
+	log.Println("Received rpc request WifiScan(", in, ")")
+	return nil, status.Errorf(codes.Unimplemented, "WifiScan not yet implemented")
+}
+
+func (m *rpcService) WifiConnect(ctx context.Context, in *extint.WifiConnectRequest) (*extint.WifiConnectResponse, error) {
+	log.Println("Received rpc request WifiConnect(", in, ")")
+	return nil, status.Errorf(codes.Unimplemented, "WifiConnect not yet implemented")
+}
+
+func (m *rpcService) WifiRemove(ctx context.Context, in *extint.WifiRemoveRequest) (*extint.WifiRemoveResponse, error) {
+	log.Println("Received rpc request WifiRemove(", in, ")")
+	return nil, status.Errorf(codes.Unimplemented, "WifiRemove not yet implemented")
+}
+
+func (m *rpcService) WifiRemoveAll(ctx context.Context, in *extint.WifiRemoveAllRequest) (*extint.WifiRemoveAllResponse, error) {
+	log.Println("Received rpc request WifiRemoveAll(", in, ")")
+	return nil, status.Errorf(codes.Unimplemented, "WifiRemoveAll not yet implemented")
+}
+
+// NOTE: this is the only function that won't need to check the client_token_guid header
+func (m *rpcService) UserAuthentication(ctx context.Context, in *extint.UserAuthenticationRequest) (*extint.UserAuthenticationResponse, error) {
+	log.Println("Received rpc request UserAuthentication(", in, ")")
+	return nil, status.Errorf(codes.Unimplemented, "UserAuthentication not yet implemented")
 }
 
 func newServer() *rpcService {

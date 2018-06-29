@@ -22,7 +22,7 @@
 #include "coretech/messaging/shared/socketConstants.h"
 #include "coretech/messaging/engine/IComms.h"
 
-#include "proto/external_interface/messages.pb.h"
+#include "proto/external_interface/shared.pb.h"
 
 #include "util/cpuProfiler/cpuProfiler.h"
 

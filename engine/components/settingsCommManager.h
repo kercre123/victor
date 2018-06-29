@@ -14,10 +14,12 @@
 #define __Cozmo_Basestation_Components_settingsCommManager_H__
 
 #include "engine/cozmoContext.h"
+#include "engine/externalInterface/gatewayInterface.h"
 #include "engine/robotComponents_fwd.h"
 
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -54,8 +56,15 @@ public:
 
 private:
 
+  void HandleEvents(const AnkiEvent<external_interface::GatewayWrapper>& event);
+  void OnRequestPullSettings  (const external_interface::PullSettingsRequest&    pullSettingsRequest);
+  void OnRequestPushSettings  (const external_interface::PushSettingsRequest&    pushSettingsRequest);
+  void OnRequestUpdateSettings(const external_interface::UpdateSettingsRequest&  updateSettingsRequest);
+
   SettingsManager*    _settingsManager = nullptr;
   IGatewayInterface*  _gatewayInterface = nullptr;
+
+  std::vector<Signal::SmartHandle> _signalHandles;
 };
 
 

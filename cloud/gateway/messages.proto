@@ -234,24 +234,6 @@ message RobotChangedObservedFaceID {
     int32   new_id = 2;
 }
 
-message Event {
-  oneof event_type {
-    Status                           status                              = 1;
-    Onboarding                       onboarding                          = 2;
-    WakeWord                         wake_word                           = 3;
-    AttentionTransfer                attention_transfer                  = 4;
-    RobotObservedFace                robot_observed_face                 = 5;
-    RobotChangedObservedFaceID       robot_changed_observed_face_id      = 6;
-  }
-}
-
-message EventRequest {}
-
-message EventResult {
-  ResultStatus status = 1;
-  Event event = 2;
-}
-
 // TODO: Remove this request/response once RobotState is made an event
 message RobotStateRequest {}
 
@@ -559,40 +541,6 @@ message LatestAttentionTransfer {
 message LatestAttentionTransferResponse {
   ResultStatus status = 1;
   LatestAttentionTransfer latest_attention_transfer = 2;
-}
-
-message GatewayWrapper {
-  oneof oneof_message_type {
-    // ------------ messages sent from robot to app ----------------------
-    Event event = 1;
-    // ------------ onboarding requests and responses --------------------
-    OnboardingStateRequest        onboarding_state_request = 2;
-    OnboardingState               onboarding_state = 3;
-    OnboardingContinue            onboarding_continue = 4;
-    OnboardingContinueResponse    onboarding_continue_response = 5;
-    OnboardingSkip                onboarding_skip = 6;
-    OnboardingConnectionComplete  onboarding_connection_complete = 7;
-    // ------------ test request/response pairs --------------------------
-    // TODO: remove these once we have more examples
-    Ping ping = 20;
-    Pong pong = 21;
-    Bing bing = 22;
-    Bong bong = 23;
-    // ------------ Attention transfer -----------------------------------
-    LatestAttentionTransferRequest latest_attention_transfer_request = 30;
-    LatestAttentionTransfer        latest_attention_transfer = 31;
-    // ------------ photos request/response pairs ------------------------
-    PhotosInfoRequest             photos_info_request = 40;
-    PhotosInfoResponse            photos_info_response = 41;
-    PhotoRequest                  photo_request = 42;
-    PhotoResponse                 photo_response = 43;
-    ThumbnailRequest              thumbnail_request = 44;
-    ThumbnailResponse             thumbnail_response = 45;
-    DeletePhotoRequest            delete_photo_request = 46;
-    DeletePhotoResponse           delete_photo_response = 47;
-    
-    // (when adding new categories, please create gaps between field numbers)
-  }
 }
 
 // Proto field names are prefixed with "VISION_MODE_"
