@@ -3,13 +3,13 @@
 import subprocess
 import os
 
-cmd_ps = [ "ps", "ps | grep vic-\\|anki" ]
+cmd_ps = [ "ps", "ps | grep anki" ]
 cmd_logcat = [ "logcat", "logcat -dt2000" ]
-cmd_logcat_sb = [ "logcat_sb", "logcat -d | grep -m 1000 vic-switchboard" ]
+cmd_logcat_sb = [ "logcat_sb", "logcat -dt 2000 vic-switchboard:V *:S" ]
 cmd_wifi = [ "wifi-config", "cat /data/lib/connman/wifi.config | grep -v Passphrase" ]
 cmd_ifconfig = [ "ifconfig", "ifconfig wlan0" ]
 cmd_iwconfig = [ "iwconfig", "iwconfig wlan0" ]
-cmd_netstat = ["netstat-r", "netstat -r"]
+cmd_netstat = ["netstat-ptlnu", "netstat -ptlnu"]
 cmd_dmesg = [ "dmesg", "dmesg" ]
 cmd_top = [ "top", "top -n 1" ]
 cmd_pinggateway = [ "ping-gateway", "gateway=$(route | grep default | awk '{ print $2 }') && ping -c 4 $gateway" ]
