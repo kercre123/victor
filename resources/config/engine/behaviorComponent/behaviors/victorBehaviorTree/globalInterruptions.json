@@ -15,7 +15,6 @@
     "TakeAPhotoCoordinator",
     "ReactToTouchPetting",
     "InterruptingVoiceReactions",
-    "ReactToCubeTap",
     "ReactToSoundAwake",
     "ReactToUnclaimedIntent",
     "WhileInAirDispatcher",
