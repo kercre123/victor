@@ -37,6 +37,7 @@ if (VICOS)
   )
 
   set(PLATFORM_LIBS
+    victorCrashReports
     -Wl,--whole-archive 
     ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/lib/libtensorflow-core.a
     -Wl,--no-whole-archive

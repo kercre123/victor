@@ -1,5 +1,5 @@
 /**
- * File: standaloneForwardInference.cpp
+ * File: vicNeuralNetsMain.cpp
  *
  * Author: Andrew Stein
  * Date:   1/29/2018
@@ -32,6 +32,7 @@
 #include "util/logging/logging.h"
 
 #ifdef VICOS
+#  include "platform/victorCrashReports/victorCrashReporter.h"
 #  include "util/logging/victorLogger.h"
 #else
 #  include "util/logging/printfLoggerProvider.h"
@@ -69,9 +70,13 @@ static void CleanupAndExit(Anki::Result result)
 {
   LOG_INFO("VicNeuralNets.CleanupAndExit", "result:%d", result);
   Anki::Util::gLoggerProvider = nullptr;
-  // TODO: Add GoogleBreakpad
-  // GoogleBreakpad::UnInstallGoogleBreakpad();
-  sync();
+
+# ifdef VICOS
+  Anki::Victor::UninstallCrashReporter();
+# endif
+
+ sync();
+
   exit(result);
 }
 
@@ -123,18 +128,19 @@ static void ConvertSalientPointsToJson(const std::list<Anki::Vision::SalientPoin
 
 static bool WriteResults(const std::string jsonFilename, const Json::Value& detectionResults);
 
-static cv::Mat ReadBMP(const std::string& input_bmp_name); 
+static cv::Mat ReadBMP(const std::string& input_bmp_name);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 int main(int argc, char **argv)
 {
+  using namespace Anki;
+
   signal(SIGTERM, Shutdown);
 
-  // TODO: Add GoogleBreakpad
-  //static char const* filenamePrefix = "anim";
-  //GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
-
-  using namespace Anki;
+# ifdef VICOS
+  // Install crash handlers
+  Anki::Victor::InstallCrashReporter(LOG_PROCNAME);
+# endif
 
   // Create and set logger, depending on platform
 # ifdef VICOS

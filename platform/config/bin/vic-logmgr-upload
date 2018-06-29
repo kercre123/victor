@@ -20,7 +20,7 @@ set -eu
 
 : ${VIC_LOGMGR_DIRECTORY:="/data/data/com.anki.victor/cache/vic-logmgr"}
 : ${VIC_LOGMGR_FORMAT:="printable"}
-: ${VIC_LOGMGR_FILTERSPECS:="vic-anim:V vic-cloud:V vic-crashuploader:V vic-dasmgr:V vic-engine:V vic-gateway:V vic-init:V vic-robot:V vic-switchboard:V vic-watchdog:V vic-webserver:V *:E"}
+: ${VIC_LOGMGR_FILTERSPECS:="vic-anim:V vic-cloud:V vic-crashuploader:V vic-dasmgr:V vic-engine:V vic-gateway:V vic-init:V vic-neuralnets:V vic-robot:V vic-switchboard:V vic-watchdog:V vic-webserver:V *:E"}
 
 #
 # Callers must provide APP_URL, APP_KEY and APP_USER on command line.
