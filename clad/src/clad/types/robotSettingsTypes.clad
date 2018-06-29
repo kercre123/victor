@@ -7,6 +7,20 @@ namespace Anki {
 namespace Cozmo {
 
 
+// Note: Keep these enum value names the same as those used in settings.proto file,
+// 'message RobotSettingsConfig' (currently in another branch); but they don't have to be in the same order
+enum uint_8 RobotSetting
+{
+  clock_24_hour = 0,
+  eye_color,
+  default_location,
+  dist_is_metric,
+  locale,
+  master_volume,
+  temp_is_fahrenheit,
+  time_zone
+}
+
 // Note: Keep these in sync with kMasterVolumeLevels in settingsCommManager.cpp, for console var
 enum uint_8 MasterVolume
 {

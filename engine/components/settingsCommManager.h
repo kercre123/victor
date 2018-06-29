@@ -21,6 +21,8 @@
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 
+#include "clad/types/robotSettingsTypes.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -49,9 +51,10 @@ public:
   // end IDependencyManagedComponent functions
   //////
 
-  bool HandleRobotSettingChangeRequest(const std::string& settingKey, const std::string& settingValue);
-  bool HandleRobotSettingToggleRequest(const std::string& settingKey);
-  
+  bool HandleRobotSettingChangeRequest(const RobotSetting robotSetting,
+                                       const Json::Value& settingJson);
+  bool HandleRobotSettingToggleRequest(const RobotSetting robotSetting);
+
   void RefreshConsoleVars();
 
 private:
