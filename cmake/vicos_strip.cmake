@@ -1,15 +1,15 @@
 include (anki_build_util)
 
 function(vicos_strip)
+    # Skip separate strip step if not on VICOS
+    if (NOT VICOS)
+        return()
+    endif()
+
     set(options "")
     set(oneValueArgs TARGET)
     set(multiValueArgs "")
     cmake_parse_arguments(astrip "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-    if (NOT VICOS)
-        # Skip separate strip step if not on VICOS
-        return()
-    endif()
 
     get_property(TARGET_TYPE TARGET ${astrip_TARGET} PROPERTY TYPE)
 
@@ -29,8 +29,8 @@ function(vicos_strip)
         COMMAND ${OBJCOPY_CMD} --add-gnu-debuglink
             ${TARGET_OUT_PATH}.full
             ${TARGET_OUT_PATH}
+        COMMAND ${CMAKE_COMMAND} -E touch_nocreate ${TARGET_OUT_PATH}.full
         COMMENT "strip lib ${TARGET_OUT_PATH} -> ${OUTPUT_TARGET_NAME}"
         VERBATIM
     )
 endfunction()
-
