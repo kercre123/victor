@@ -113,9 +113,10 @@ namespace Cozmo {
   CONSOLE_VAR(bool, kDisplayEyeContactInMirrorMode, "Vision.General", false);
   CONSOLE_VAR(f32,  kMirrorModeGamma,               "Vision.General", 1.f);
 
-  // Hack to continue drawing detected objects for a bit after they are detected
-  // since object detection is slow
-  CONSOLE_VAR(u32, kKeepDrawingSalientPointsFor_ms, "Vision.General", 150);
+  // Hack to continue drawing salient points for a bit after they are detected
+  // since neural nets run slowly. If zero, just draw until the next salient point
+  // detection comes in.
+  CONSOLE_VAR(u32, kKeepDrawingSalientPointsFor_ms, "Vision.General", 0);
 
   // Prints warning if haven't captured valid frame in this amount of time.
   // Frame rate is expected to be 8fps at minimum, so check 125ms plus some buffer.
@@ -1452,23 +1453,28 @@ namespace Cozmo {
   {
     TimeStamp_t currentTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
+    const bool usingFixedDrawTime = (kKeepDrawingSalientPointsFor_ms > 0);
+    if(usingFixedDrawTime)
+    {
     auto iter = _salientPointsToDraw.begin();
     while(iter != _salientPointsToDraw.end() && iter->first < currentTime_ms - kKeepDrawingSalientPointsFor_ms)
     {
       iter = _salientPointsToDraw.erase(iter);
     }
+    }
 
     if(procResult.modesProcessed.IsBitFlagSet(VisionMode::RunningNeuralNet))
     {
+      if(!usingFixedDrawTime)
+      {
+        _salientPointsToDraw.clear();
+      }
+      
       // Notify the SalientPointsDetectorComponent that we have a bunch of new detections
       _robot->GetAIComponent().GetComponent<SalientPointsDetectorComponent>().AddSalientPoints(procResult.salientPoints);
-      for(auto const& detectedObject : procResult.salientPoints)
+      for(auto const& salientPoint : procResult.salientPoints)
       {
-        _salientPointsToDraw.emplace_back(currentTime_ms, detectedObject);
-        for(auto const& salientPoint : procResult.salientPoints)
-        {
-          _salientPointsToDraw.emplace_back(currentTime_ms, salientPoint);
-        }
+        _salientPointsToDraw.emplace_back(currentTime_ms, salientPoint);
       }
     }
 
@@ -1496,9 +1502,6 @@ namespace Cozmo {
       if(kDisplayDetectionsInMirrorMode)
       {
         const Point2f centroid(object.x_img, object.y_img);
-        PRINT_NAMED_INFO("VisionComponent.UpdateSalientPoints.MirrorMode",
-                         "Drawing %s poly with %d points. Centroid: (%.2f,%.2f)",
-                         EnumToString(object.salientType), (int)poly.size(), centroid.x(), centroid.y());
         std::string str(object.description);
         if(!str.empty())
         {

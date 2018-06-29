@@ -53,7 +53,6 @@
 
 #define LOG_PROCNAME "vic-neuralnets"
 #define LOG_CHANNEL "NeuralNets"
-#define PRINT_TICTOC_TIMING 1
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace {
@@ -86,10 +85,12 @@ class TicToc
 
   std::string _name;
   TimePoint   _startTime;
-
+  static bool _enabled;
+  
 public:
 
-  #if defined(PRINT_TICTOC_TIMING) && PRINT_TICTOC_TIMING
+  static void Enable(const bool enable) { _enabled = enable; }
+  
   TicToc(const std::string& name)
   : _name(name) 
   , _startTime(ClockType::now())
@@ -99,15 +100,17 @@ public:
 
   ~TicToc()
   {
-    const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(ClockType::now() - _startTime);
-    const std::string eventName("VicNeuralNets.Toc." + _name);
-    LOG_INFO(eventName.c_str(), "%dms", (int)duration.count());
+    if(_enabled)
+    {
+      const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(ClockType::now() - _startTime);
+      const std::string eventName("VicNeuralNets.Toc." + _name);
+      LOG_INFO(eventName.c_str(), "%dms", (int)duration.count());
+    }
   }
-  #else
-  TicToc() { }
-  ~TicToc() { }
-  #endif
+
 };
+
+bool TicToc::_enabled = false;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Define helpers for timing and reading / writing images and results (implemented below, after main())
@@ -115,7 +118,8 @@ public:
 static void GetImage(const std::string& imageFilename, const std::string timestampFilename,
                      cv::Mat& img, Anki::TimeStamp_t& timestamp);
 
-static void ConvertSalientPointsToJson(const std::list<Anki::Vision::SalientPoint>& salientPoints, Json::Value& detectionResults);
+static void ConvertSalientPointsToJson(const std::list<Anki::Vision::SalientPoint>& salientPoints,
+                                       const bool isVerbose, Json::Value& detectionResults);
 
 static bool WriteResults(const std::string jsonFilename, const Json::Value& detectionResults);
 
@@ -135,7 +139,6 @@ int main(int argc, char **argv)
   // Create and set logger, depending on platform
 # ifdef VICOS
   auto logger = std::make_unique<Util::VictorLogger>(LOG_PROCNAME);
-  Util::gLoggerProvider = logger.get();
 # else
   const bool colorizeStderrOutput = false; // TODO: Get from Webots proto in simulation?
   auto logger = std::make_unique<Util::PrintfLoggerProvider>(Anki::Util::LOG_LEVEL_DEBUG,
@@ -144,10 +147,17 @@ int main(int argc, char **argv)
 
   Util::gLoggerProvider = logger.get();
 
+  if(nullptr == Util::gLoggerProvider)
+  {
+    // Having no logger shouldn't kill us but probably isn't what we intended, so issue a warning
+    PRINT_NAMED_WARNING("VicNeuralNets.Main.NullLogger", "");
+  }
+  
   Result result = RESULT_OK;
 
   if(argc < 4)
   {
+    PRINT_NAMED_ERROR("VicNeuralNets.Main.UnexpectedArguments", "");
     std::cout << std::endl << "Usage: " << argv[0] << " <configFile>.json modelPath cachePath <imageFile>" << std::endl;
     std::cout << std::endl << " If no imageFile is provided, polls cachePath for neuralNetImage.png" << std::endl;
     CleanupAndExit(result);
@@ -157,6 +167,25 @@ int main(int argc, char **argv)
   const std::string modelPath(argv[2]);
   const std::string cachePath(argv[3]);
 
+  // Make sure the config file and model path are valid
+  // NOTE: cachePath need not exist yet as it will be created by the NeuralNetRunner
+  if(!Util::FileUtils::FileExists(configFilename))
+  {
+    PRINT_NAMED_ERROR("VicNeuralNets.Main.BadConfigFile", "ConfigFile:%s", configFilename.c_str());
+    result = RESULT_FAIL;
+  }
+  if(!Util::FileUtils::DirectoryExists(modelPath))
+  {
+    PRINT_NAMED_ERROR("VicNeuralNets.Main.BadModelPath", "ModelPath:%s", modelPath.c_str());
+    result = RESULT_FAIL;
+  }
+  if(RESULT_OK != result)
+  {
+    CleanupAndExit(result);
+  }
+  LOG_INFO("VicNeuralNets.Main.Starting", "Config:%s ModelPath:%s CachePath:%s",
+           configFilename.c_str(), modelPath.c_str(), cachePath.c_str());
+  
   // Read config file
   Json::Value config;
   {
@@ -219,6 +248,8 @@ int main(int argc, char **argv)
       PRINT_NAMED_ERROR(argv[0], "Failed to load model from path: %s", modelPath.c_str());
       CleanupAndExit(result);
     }
+    
+    TicToc::Enable(neuralNet.IsVerbose());
   }
   
   LOG_INFO("VicNeuralNets.Main.DetectorInitialized", "Waiting for images");
@@ -265,7 +296,7 @@ int main(int argc, char **argv)
 
       // Convert the results to JSON
       Json::Value detectionResults;
-      ConvertSalientPointsToJson(salientPoints, detectionResults);
+      ConvertSalientPointsToJson(salientPoints, neuralNet.IsVerbose(), detectionResults);
 
       // Write out the Json
       {
@@ -364,7 +395,9 @@ void GetImage(const std::string& imageFilename, const std::string timestampFilen
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ConvertSalientPointsToJson(const std::list<Anki::Vision::SalientPoint>& salientPoints, Json::Value& detectionResults)
+void ConvertSalientPointsToJson(const std::list<Anki::Vision::SalientPoint>& salientPoints,
+                                const bool isVerbose,
+                                Json::Value& detectionResults)
 {
   std::string salientPointsStr;
   
@@ -376,7 +409,7 @@ void ConvertSalientPointsToJson(const std::list<Anki::Vision::SalientPoint>& sal
     salientPointsJson.append(json);
   }  
 
-  if(!salientPoints.empty())
+  if(isVerbose && !salientPoints.empty())
   {
     LOG_INFO("VicNeuralNets.Main.ConvertSalientPointsToJson", 
              "Detected %zu objects: %s", salientPoints.size(), salientPointsStr.c_str());

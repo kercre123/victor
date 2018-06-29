@@ -52,6 +52,7 @@ PROTO CozmoBot2 [
 
   # Simulate slower processing of the neural nets process
   field SFInt32 neuralNetPollingPeriod_ms 250
+  field SFBool  runNeuralNets FALSE   # TODO: Default to TRUE once VIC-4169 is sorted out
 ]
 {
 
@@ -283,10 +284,12 @@ Supervisor {
                   colorizeStderrOutput IS colorizeStderrOutput
                 }
 
+                %{ if fields.runNeuralNets.value then }%
                 # NeuralNet process:
                 NeuralNetProcessor {
                   pollingPeriod_ms IS neuralNetPollingPeriod_ms
                 }
+                %{ end }%
 
                 # This IMU is positioned in the same place as the one in CozmoEngine2.proto
                 # as way to simulate access to the same IMU from both the robot and engine processes 

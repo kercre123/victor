@@ -259,8 +259,8 @@ Result VisionSystem::Init(const Json::Value& config)
     const std::string dnnCachePath = Util::FileUtils::FullFilePath({cachePath, "neural_nets"});
 #   endif
     Result neuralNetResult = _neuralNetRunner->Init(modelPath,
-                                                      dnnCachePath,
-                                                      neuralNetConfig);
+                                                    dnnCachePath,
+                                                    neuralNetConfig);
     if(RESULT_OK != neuralNetResult)
     {
       PRINT_NAMED_ERROR("VisionSystem.Init.NeuralNetInitFailed", "");
