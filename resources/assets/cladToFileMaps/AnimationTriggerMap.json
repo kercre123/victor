@@ -561,7 +561,7 @@
   },
   {
     "CladEvent": "ICantDoThat",
-    "AnimName": "ag_timer_emote"
+    "AnimName": "ag_generic_cantdothat"
   },
   {
     "CladEvent": "DEPRECATED_IdleOnCharger",

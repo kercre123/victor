@@ -41,7 +41,7 @@ structure UserIntent_WeatherResponse
 
   string  condition,
 
-  int_8 temperature,
+  uint_32 temperature,
   string  temperatureUnit,
 
 }
