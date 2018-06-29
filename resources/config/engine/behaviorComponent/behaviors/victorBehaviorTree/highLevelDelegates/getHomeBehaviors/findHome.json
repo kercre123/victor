@@ -19,5 +19,5 @@
   "minDrivingDist_mm" : 150,
   "maxDrivingDist_mm" : 400,
   
-  "maxLastObservedAge_sec" : 60
+  "maxLastObservedAge_sec" : 300
 }

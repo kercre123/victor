@@ -744,7 +744,8 @@
         "ReturningToCharger", // to avoid unclaimed intent
         "Socializing",
         "Exploring",
-        "ExploringVoiceCommand"
+        "ExploringVoiceCommand",
+        "FailedToFindCharger"
       ],
       "interruptingTransitions": [
         {

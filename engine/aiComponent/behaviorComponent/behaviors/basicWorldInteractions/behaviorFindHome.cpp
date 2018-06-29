@@ -98,7 +98,7 @@ bool BehaviorFindHome::WantsToBeActivatedBehavior() const
     recentlyObserved = std::any_of(locatedHomes.begin(),
                                    locatedHomes.end(),
                                    [this](const ObservableObject* obj) {
-                                     const auto nowTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+                                     const auto nowTimestamp = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
                                      return nowTimestamp < obj->GetLastObservedTime() + _iConfig.maxObservedAge_ms;
                                    });
   }
