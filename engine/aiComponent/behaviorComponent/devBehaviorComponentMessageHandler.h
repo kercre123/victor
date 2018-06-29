@@ -41,7 +41,7 @@ class DevBehaviorComponentMessageHandler : public IDependencyManagedComponent<BC
 {
 public:
   virtual void InitDependent(Robot* robot, const BCCompMap& dependentComps) override;
-  virtual void UpdateDependent(const BCCompMap& dependentComps) override {};
+  virtual void UpdateDependent(const BCCompMap& dependentComps) override;
   virtual void GetInitDependencies(BCCompIDSet& dependencies) const override;
   virtual void AdditionalInitAccessibleComponents(BCCompIDSet& components) const override;
   virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {};
@@ -54,6 +54,7 @@ private:
   Robot& _robot;
   std::vector<::Signal::SmartHandle> _eventHandles;
   ICozmoBehaviorPtr _rerunBehavior;
+  size_t _tickInfoScreenEnded; // ignored if 0
 
   void SetupUserIntentEvents();
   

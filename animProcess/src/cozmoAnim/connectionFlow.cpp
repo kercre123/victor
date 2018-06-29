@@ -57,6 +57,8 @@ bool DrawStartPairingScreen(AnimationStreamer* animStreamer)
     return false;
   }
 
+  // Disable face keepalive, but don't re-enable it when ending pairing. The engine will send a message
+  // when it's ready to re-enable it, since it needs time to send its first animation upon resuming
   animStreamer->EnableKeepFaceAlive(false, 0);
   animStreamer->Abort();
 
@@ -270,11 +272,6 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
       if(FACTORY_TEST)
       {
         DrawStartPairingScreen(animStreamer);
-      }
-      else
-      {
-        // Reenable keep face alive
-        animStreamer->EnableKeepFaceAlive(true, 0);
       }
     }
     break;

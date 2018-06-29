@@ -305,6 +305,7 @@ message AbortAnimation
   uint_8  tag,
 }
 
+// Disables Face Keepalive and neutral eyes keepalive
 message EnableKeepFaceAlive
 {
   uint_32 disableTimeout_ms,  // If enable == false, the amount of time to wait before actually disabling

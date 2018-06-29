@@ -1805,23 +1805,30 @@ namespace Cozmo {
        haveStreamedAnything &&
        longEnoughSinceStream)
     {
-      // If we were interrupted from streaming an animation and we've met all the
-      // conditions to even be in this function, then we should make sure we've
-      // got neutral face back on the screen
-      if(_wasAnimationInterruptedWithNothing) {
-        SetStreamingAnimation(_neutralFaceAnimation, kNotAnimatingTag);
-        _wasAnimationInterruptedWithNothing = false;
-      }
-
       if(!FACTORY_TEST)
       {
         if(s_enableKeepFaceAlive)
         {
+          // If we were interrupted from streaming an animation and we've met all the
+          // conditions to even be in this function, then we should make sure we've
+          // got neutral face back on the screen
+          if(_wasAnimationInterruptedWithNothing) {
+            SetStreamingAnimation(_neutralFaceAnimation, kNotAnimatingTag);
+            _wasAnimationInterruptedWithNothing = false;
+          }
+          
           _proceduralTrackComponent->KeepFaceAlive(_keepFaceAliveParams, _relativeStreamTime_ms);
         }
         else
         {
           _proceduralTrackComponent->KeepFaceTheSame();
+        }
+      }
+      else
+      {
+        if(_wasAnimationInterruptedWithNothing) {
+          SetStreamingAnimation(_neutralFaceAnimation, kNotAnimatingTag);
+          _wasAnimationInterruptedWithNothing = false;
         }
       }
     }
@@ -1921,6 +1928,13 @@ namespace Cozmo {
   {
     if (s_enableKeepFaceAlive && !enable) {
       _proceduralTrackComponent->RemoveKeepFaceAlive(_relativeStreamTime_ms, disableTimeout_ms);
+    } else if (enable && !s_enableKeepFaceAlive) {
+      if (_wasAnimationInterruptedWithNothing) {
+        // The last animation ended without a replacement, but neutral eyes weren't inserted because
+        // keepalive was disabled. Now that they're re-enabled, set the neutral eyes.
+        SetStreamingAnimation(_neutralFaceAnimation, kNotAnimatingTag);
+        _wasAnimationInterruptedWithNothing = false;
+      }
     }
     s_enableKeepFaceAlive = enable;
   }

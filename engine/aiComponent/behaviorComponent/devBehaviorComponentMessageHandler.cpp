@@ -23,10 +23,13 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
+#include "engine/components/animationComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
+
+#include "coretech/common/engine/utils/timer.h"
 
 #include "webServerProcess/src/webService.h"
 
@@ -40,12 +43,17 @@ static const BehaviorID kBehaviorIDForDevMessage = BEHAVIOR_ID(DevExecuteBehavio
 static const BehaviorID kWaitBehaviorID = BEHAVIOR_ID(Wait);
 const std::string kWebVizModuleNameBehaviors = "behaviors";
 const std::string kWebVizModuleNameIntents = "intents";
+  
+// This value is enough for things to settle down. This is many ticks, but it's a only pause after
+// exiting a screen, so doesn't look excessive. Testing shows we need a minimum of 6.
+constexpr size_t kTicksBeforeEnableFaceKeepalive = 10;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 DevBehaviorComponentMessageHandler::DevBehaviorComponentMessageHandler(Robot& robot)
 : IDependencyManagedComponent<BCComponentID>(this, BCComponentID::DevBehaviorComponentMessageHandler)
 , _robot(robot)
+, _tickInfoScreenEnded(0)
 {
 
 }
@@ -107,12 +115,21 @@ void DevBehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCom
 
     // Go to Wait behavior when SHOW_PRE_PIN received from switchboard so as 
     // not to interrupt while user is trying to look at something.
-    auto setConnectionStatusCallback = [&bContainer, &bsm](const GameToEngineEvent& event) {
+    auto setConnectionStatusCallback = [&bContainer, &bsm, this](const GameToEngineEvent& event) {
       const auto& msg = event.GetData().Get_SetConnectionStatus();
       if (msg.status == SwitchboardInterface::ConnectionStatus::SHOW_PRE_PIN) {
         PRINT_CH_INFO("BehaviorSystem", "DevBehaviorComponentMessageHandler.EnterPairing", "");
         ICozmoBehaviorPtr waitBehavior = bContainer.FindBehaviorByID(kWaitBehaviorID);
         bsm.ResetBehaviorStack(waitBehavior.get());
+        
+        // Disable neutral eyes while in the dev screens, because symmetry with another call to
+        // enable it in this class
+        _robot.GetAnimationComponent().EnableKeepFaceAlive( false );
+        // Prevent the Update loop from sending an EnableKeepFaceAlive(true) in case the user is
+        // entering and exiting the pairing screen quickly. There's a potential race condition here if the
+        // update loop has just sent a re-enable message but the backpack was also double clicked, but
+        // since the anim process is also calling EnableKeepFaceAlive(false), it should be ok
+        _tickInfoScreenEnded = 0;
       }
     };
 
@@ -137,7 +154,7 @@ void DevBehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCom
     
     // Go to freeplayBehavior as defined in victor_behavior_config.json
     // when leaving debug screens.
-    auto debugScreenModeHandler = [&bsm, &behaviorsBootLoader](const RobotToEngineEvent& event) {
+    auto debugScreenModeHandler = [&bsm, &behaviorsBootLoader, this](const RobotToEngineEvent& event) {
       const auto& msg = event.GetData().Get_debugScreenMode();
       PRINT_CH_INFO("BehaviorSystem", "DevBehaviorComponentMessageHandler.DebugScreenModeChange", "%d", msg.enabled);
       if (!msg.enabled) {
@@ -148,6 +165,9 @@ void DevBehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCom
         // pairing scren.
         IBehavior* bootBehavior = behaviorsBootLoader.GetBootBehavior();
         bsm.ResetBehaviorStack(bootBehavior);
+        
+        // Mark the time the info screen ended so the Update loop can handle re-enabling face keepalive
+        _tickInfoScreenEnded = BaseStationTimer::getInstance()->GetTickCount();
       }
     };
     _eventHandles.push_back(
@@ -157,6 +177,21 @@ void DevBehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCom
 
 
     SetupUserIntentEvents();
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void DevBehaviorComponentMessageHandler::UpdateDependent(const BCCompMap& dependentComps)
+{
+  if( _tickInfoScreenEnded != 0 ) {
+    size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
+    if( currTick - _tickInfoScreenEnded >= kTicksBeforeEnableFaceKeepalive ) {
+      // Re-enable face keepalive after the stack has a chance to send its first animation, if the
+      // resuming behavior actually has an animation
+      _robot.GetAnimationComponent().EnableKeepFaceAlive( true );
+      // reset
+      _tickInfoScreenEnded = 0;
+    }
   }
 }
   
@@ -233,7 +268,7 @@ ICozmoBehaviorPtr DevBehaviorComponentMessageHandler::WrapRequestedBehaviorInDis
   return rerunDispatcher;
 }
   
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void DevBehaviorComponentMessageHandler::SubscribeToWebViz(BehaviorExternalInterface& bei, const BehaviorSystemManager& bsm)
 {
   DEV_ASSERT( _eventHandles.empty(), "only call once" );
