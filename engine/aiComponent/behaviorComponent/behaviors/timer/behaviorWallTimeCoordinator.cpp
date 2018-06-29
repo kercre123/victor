@@ -16,6 +16,7 @@
 #include "clad/audio/audioSwitchTypes.h"
 #include "components/textToSpeech/textToSpeechCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorDisplayWallTime.h"
 #include "engine/components/settingsManager.h"
 #include "engine/faceWorld.h"
 #include "engine/wallTime.h"
@@ -87,8 +88,11 @@ void BehaviorWallTimeCoordinator::InitBehavior()
   auto& behaviorContainer = GetBEI().GetBehaviorContainer();
 
   _iConfig.iCantDoThatBehavior = behaviorContainer.FindBehaviorByID(BEHAVIOR_ID(SingletonICantDoThat));
-  _iConfig.showWallTime        = behaviorContainer.FindBehaviorByID(BEHAVIOR_ID(ShowWallTime));
   _iConfig.lookAtFaceInFront   = behaviorContainer.FindBehaviorByID(BEHAVIOR_ID(SingletonFindFaceInFrontWallTime));
+
+  behaviorContainer.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(ShowWallTime), 
+                                                BEHAVIOR_CLASS(DisplayWallTime),
+                                                _iConfig.showWallTime);
 }
 
 
@@ -157,9 +161,12 @@ void BehaviorWallTimeCoordinator::TransitionToFindFaceInFront()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorWallTimeCoordinator::TransitionToShowWallTime()
 {
-  if(_dVars.shouldSayTime){
-    GetBEI().GetTextToSpeechCoordinator().PlayUtterance(_dVars.utteranceID);
-  }
+  auto playUtteranceCallback = [this](){
+    if(_dVars.shouldSayTime){
+      GetBEI().GetTextToSpeechCoordinator().PlayUtterance(_dVars.utteranceID);
+    }
+  };
+  _iConfig.showWallTime->SetShowClockCallback(playUtteranceCallback);
 
   ANKI_VERIFY(_iConfig.showWallTime->WantsToBeActivated(),
               "BehaviorWallTimeCoordinator.TransitionToShowWallTime.BehaviorDoesntWantToBeActivated", "");
