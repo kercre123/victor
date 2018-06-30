@@ -46,6 +46,11 @@ namespace Cozmo {
     // Stub
   }
 
+  void FaceDisplayImpl::SetFaceBrightness(int level)
+  {
+    lcd_set_brightness(level);
+  }
+
 } // namespace Cozmo
 } // namespace Anki
 

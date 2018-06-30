@@ -39,6 +39,29 @@ namespace {
   uint16_t _fault = FaultCode::NONE;
 
   static const std::string kFaultURL = "support.anki.com";
+
+#if REMOTE_CONSOLE_ENABLED
+  FaceDisplayImpl* sDisplayImpl = nullptr;
+
+  void SetFaceBrightness(ConsoleFunctionContextRef context) {
+    if( nullptr == sDisplayImpl ) {
+      return;
+    }
+
+    const int val = ConsoleArg_GetOptional_Int(context, "val", 1);
+
+    if( val >= 0 && val <= 20 ) {
+      sDisplayImpl->SetFaceBrightness(val);
+    }
+    else {
+      PRINT_NAMED_WARNING("FaceDisplay.SetFaceBrightness.Invalid",
+                          "Brightness value %d is invalid, refusing to set",
+                          val);
+    }
+  }
+
+  CONSOLE_FUNC(SetFaceBrightness, "FaceDisplay", int val);
+#endif
 }
   
 FaceDisplay::FaceDisplay()
@@ -53,10 +76,19 @@ FaceDisplay::FaceDisplay()
 
   _faultCodeThread = std::thread(&FaceDisplay::FaultCodeLoop, this);
   _faultCodeThread.detach();
+
+#if REMOTE_CONSOLE_ENABLED
+  sDisplayImpl = _displayImpl.get();
+#endif
+
 }
 
 FaceDisplay::~FaceDisplay()
 {
+#if REMOTE_CONSOLE_ENABLED
+  sDisplayImpl = nullptr;
+#endif
+
   _stopDrawFace = true;
   _faceDrawThread.join();
 
@@ -85,6 +117,11 @@ void FaceDisplay::DrawToFaceDebug(const Vision::ImageRGB565& img)
   }
 
   DrawToFaceInternal(img);
+}
+
+void FaceDisplay::SetFaceBrightness(LCDBrightness level)
+{
+  _displayImpl->SetFaceBrightness(EnumToUnderlyingType(level));
 }
 
 void FaceDisplay::DrawToFace(const Vision::ImageRGB565& img)

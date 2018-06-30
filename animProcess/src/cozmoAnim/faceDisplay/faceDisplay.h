@@ -17,6 +17,8 @@
 #include "util/singleton/dynamicSingleton.h"
 #include "anki/cozmo/shared/factory/faultCodes.h"
 
+#include "clad/types/lcdTypes.h"
+
 #include <array>
 #include <memory>
 #include <mutex>
@@ -43,6 +45,8 @@ public:
 
   // For drawing to face in various debug modes
   void DrawToFaceDebug(const Vision::ImageRGB565& img);
+
+  void SetFaceBrightness(LCDBrightness level);
 
 protected:
   FaceDisplay();

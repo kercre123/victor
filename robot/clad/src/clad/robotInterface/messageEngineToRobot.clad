@@ -9,11 +9,12 @@
 #include "clad/robotInterface/otaMessages.clad"
 #include "clad/types/animationTypes.clad"
 #include "clad/types/cameraFOVInfo.clad"
-#include "clad/types/controllerChannels.clad"
 #include "clad/types/compositeImageTypes.clad"
+#include "clad/types/controllerChannels.clad"
 #include "clad/types/dockingSignals.clad"
 #include "clad/types/imu.clad"
 #include "clad/types/keepFaceAliveParameters.clad"
+#include "clad/types/lcdTypes.clad"
 #include "clad/types/ledTypes.clad"
 #include "clad/types/motorTypes.clad"
 #include "clad/types/proceduralFaceTypes.clad"
@@ -601,6 +602,10 @@ message SetLocale {
   string locale
 }
 
+message SetLCDBrightnessLevel {
+  LCDBrightness level
+}
+
 // ====================================================
 
 enum uint_32 ToRobotAddressSpace
@@ -751,6 +756,8 @@ union EngineToRobot
   SwitchboardInterface::SetConnectionStatus setConnectionStatus = 0xA0,
   SwitchboardInterface::SetBLEPin           setBLEPin           = 0xA1,
   AlterStreamingAnimationAtTime             alterStreamingAnimation   = 0xA2,
+
+  SetLCDBrightnessLevel setLCDBrightnessLevel = 0xAA,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }

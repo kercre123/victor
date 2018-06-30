@@ -395,6 +395,11 @@ void Process_resetBeatDetector(const Anki::Cozmo::RobotInterface::ResetBeatDetec
   }
 }
 
+void Process_setLCDBrightnessLevel(const Anki::Cozmo::RobotInterface::SetLCDBrightnessLevel& msg)
+{
+  FaceDisplay::getInstance()->SetFaceBrightness(msg.level);
+}
+
 void Process_playbackAudioStart(const Anki::Cozmo::RobotInterface::StartPlaybackAudio& msg)
 {
   using namespace Audio;
