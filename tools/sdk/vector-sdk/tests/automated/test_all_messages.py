@@ -257,12 +257,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("ip")
     parser.add_argument("cert_file")
+    parser.add_argument("--port", default="443")
     args = parser.parse_args()
+    print(args.port)
 
     cert = Path(args.cert_file)
     cert.resolve()
 
-    with vector.Robot(args.ip, str(cert)) as robot:
+    with vector.Robot(args.ip, str(cert), port=args.port) as robot:
         print("------ beginning tests ------")
 
         loop = robot.loop

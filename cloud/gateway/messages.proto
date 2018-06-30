@@ -92,9 +92,9 @@ message MeetVictorFaceScanComplete
 
 message Status {
   oneof status_type {
-     FeatureStatus                   featureStatus                    = 1;
-     MeetVictorFaceScanStarted       meet_victor_face_scan_started    = 2;
-     MeetVictorFaceScanComplete      meet_victor_face_scan_complete   = 3;
+    FeatureStatus                   featureStatus                    = 1;
+    MeetVictorFaceScanStarted       meet_victor_face_scan_started    = 2;
+    MeetVictorFaceScanComplete      meet_victor_face_scan_complete   = 3;
   }
 }
 
@@ -130,18 +130,18 @@ message RobotHistoryResult {
 }
 
 message PoseStruct {
-    // Translation
-    float x = 1;
-    float y = 2;
-    float z = 3;
-    
-    // Rotation quaternion
-    float q0 = 4;
-    float q1 = 5;
-    float q2 = 6;
-    float q3 = 7;
+  // Translation
+  float x = 1;
+  float y = 2;
+  float z = 3;
+  
+  // Rotation quaternion
+  float q0 = 4;
+  float q1 = 5;
+  float q2 = 6;
+  float q3 = 7;
 
-    uint32 origin_id = 8; // Which coordinate frame this pose is in (0 for none or unknown)
+  uint32 origin_id = 8; // Which coordinate frame this pose is in (0 for none or unknown)
 }
 
 message AccelData {
@@ -157,23 +157,23 @@ message GyroData {
 }
 
 message RobotState {
-    PoseStruct pose = 1;
-    float pose_angle_rad = 2;
-    float pose_pitch_rad = 3;
-    float left_wheel_speed_mmps = 4;
-    float right_wheel_speed_mmps = 5;
-    float head_angle_rad = 6;
-    float lift_height_mm = 7;
-    float battery_voltage = 8;
-    AccelData accel = 9;
-    GyroData gyro = 10;
-    int32 carrying_object_id = 11;
-    int32 carrying_object_on_top_id = 12;
-    int32 head_tracking_object_id = 13;
-    int32 localized_to_object_id = 14;
-    uint32 last_image_time_stamp = 15;
-    uint32 status = 16;
-    uint32 game_status = 17;
+  PoseStruct pose = 1;
+  float pose_angle_rad = 2;
+  float pose_pitch_rad = 3;
+  float left_wheel_speed_mmps = 4;
+  float right_wheel_speed_mmps = 5;
+  float head_angle_rad = 6;
+  float lift_height_mm = 7;
+  float battery_voltage = 8;
+  AccelData accel = 9;
+  GyroData gyro = 10;
+  int32 carrying_object_id = 11;
+  int32 carrying_object_on_top_id = 12;
+  int32 head_tracking_object_id = 13;
+  int32 localized_to_object_id = 14;
+  uint32 last_image_time_stamp = 15;
+  uint32 status = 16;
+  uint32 game_status = 17;
 }
 
 message CladPoint

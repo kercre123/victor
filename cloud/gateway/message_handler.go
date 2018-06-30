@@ -199,18 +199,18 @@ func ProtoEnableVisionModeToClad(msg *extint.EnableVisionModeRequest) *gw_clad.M
 }
 
 func CladFeatureStatusToProto(msg *gw_clad.FeatureStatus) *extint.FeatureStatus {
-	proto_msg := reflect.ValueOf(*msg).Interface().(extint.FeatureStatus)
-	return &proto_msg
+	return &extint.FeatureStatus{
+		FeatureName: msg.FeatureName,
+		Source:      msg.Source,
+	}
 }
 
 func CladMeetVictorFaceScanStartedToProto(msg *gw_clad.MeetVictorFaceScanStarted) *extint.MeetVictorFaceScanStarted {
-	proto_msg := reflect.ValueOf(*msg).Interface().(extint.MeetVictorFaceScanStarted)
-	return &proto_msg
+	return &extint.MeetVictorFaceScanStarted{}
 }
 
 func CladMeetVictorFaceScanCompleteToProto(msg *gw_clad.MeetVictorFaceScanComplete) *extint.MeetVictorFaceScanComplete {
-	proto_msg := reflect.ValueOf(*msg).Interface().(extint.MeetVictorFaceScanComplete)
-	return &proto_msg
+	return &extint.MeetVictorFaceScanComplete{}
 }
 
 func CladStatusToProto(msg *gw_clad.Status) *extint.Status {
