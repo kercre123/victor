@@ -29,6 +29,7 @@ class CozmoContext;
 enum class PowerSaveSetting {
   CalmMode,
   Camera,
+  LCDBacklight,
 };
 
 class PowerStateManager : public IDependencyManagedComponent<RobotComponentID>,

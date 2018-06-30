@@ -23,6 +23,8 @@
 #include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
 
+#include "clad/types/lcdTypes.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -32,6 +34,10 @@ namespace {
 
 CONSOLE_VAR( bool, kPowerSave_CalmMode, CONSOLE_GROUP, true);
 CONSOLE_VAR( bool, kPowerSave_Camera, CONSOLE_GROUP, true);
+CONSOLE_VAR( bool, kPowerSave_LCDBacklight, CONSOLE_GROUP, true);
+
+static constexpr const LCDBrightness kLCDBrightnessLow = LCDBrightness::LCDLevel_5mA;
+static constexpr const LCDBrightness kLCDBrightnessNormal = LCDBrightness::LCDLevel_10mA;
 
 }
 
@@ -45,7 +51,7 @@ void PowerStateManager::InitDependent(Cozmo::Robot* robot, const RobotCompMap& d
 {
   _context = dependentComps.GetComponent<ContextWrapper>().context;
 }
-  
+
 void PowerStateManager::UpdateDependent(const RobotCompMap& dependentComps)
 {
   if( !ANKI_VERIFY( _context != nullptr, "PowerStateManager.Update.NoContext", "" ) ) {
@@ -87,11 +93,11 @@ bool PowerStateManager::RemovePowerSaveModeRequest(const std::string& requester)
                  "Removed %zu requests for '%s'",
                  numRemoved,
                  requester.c_str());
-  
+
   return (numRemoved > 0);
 }
 
-  
+
 void PowerStateManager::TogglePowerSaveSetting( const RobotCompMap& components,
                                                 PowerSaveSetting setting,
                                                 bool savePower )
@@ -111,7 +117,7 @@ void PowerStateManager::TogglePowerSaveSetting( const RobotCompMap& components,
   }
 
   bool result = true;
-  
+
   switch( setting ) {
     case PowerSaveSetting::CalmMode: {
       const bool calibOnDisable = true;
@@ -124,7 +130,7 @@ void PowerStateManager::TogglePowerSaveSetting( const RobotCompMap& components,
     case PowerSaveSetting::Camera: {
       if( !CameraService::hasInstance() ) {
         PRINT_NAMED_WARNING("PowerStateManager.Toggle.CameraService.NoInstance",
-                            "Trying to interact with camera service, but it doesn't exist");        
+                            "Trying to interact with camera service, but it doesn't exist");
         result = false;
       }
       else {
@@ -156,6 +162,21 @@ void PowerStateManager::TogglePowerSaveSetting( const RobotCompMap& components,
 
       break;
     }
+
+    case PowerSaveSetting::LCDBacklight: {
+      const auto power = savePower ? kLCDBrightnessLow : kLCDBrightnessNormal;
+      Result sendResult = _context->GetRobotManager()->GetMsgHandler()->SendMessage(
+        RobotInterface::EngineToRobot( RobotInterface::SetLCDBrightnessLevel( power ) ) );
+
+      PRINT_CH_INFO("PowerStates", "PowerStateManager.Toggle.LCD.Set",
+                    "%s (%d) result=%d",
+                    EnumToString(power),
+                    Util::EnumToUnderlying(power),
+                    Util::EnumToUnderlying(sendResult));
+
+      result = (sendResult == RESULT_OK);
+      break;
+    }
   }
 
   if( result && savePower ) {
@@ -163,7 +184,13 @@ void PowerStateManager::TogglePowerSaveSetting( const RobotCompMap& components,
   }
   else if( result && !savePower ) {
     _enabledSettings.erase(setting);
-  }  
+  }
+  else {
+    PRINT_NAMED_WARNING("PowerStateManager.Toggle.Fail",
+                        "Failed to %s setting %d",
+                        savePower ? "enable" : "disable",
+                        Util::EnumToUnderlying(setting));
+  }
 }
 
 
@@ -180,6 +207,10 @@ void PowerStateManager::EnterPowerSave(const RobotCompMap& components)
     TogglePowerSaveSetting( components, PowerSaveSetting::Camera, true );
   }
 
+  if( kPowerSave_LCDBacklight ) {
+    TogglePowerSaveSetting( components, PowerSaveSetting::LCDBacklight, true );
+  }
+
   _inPowerSaveMode = true;
 }
 
@@ -188,11 +219,13 @@ void PowerStateManager::ExitPowerSave(const RobotCompMap& components)
   PRINT_CH_INFO("PowerStates", "PowerStateManager.Exit",
                 "Exiting power save mode");
 
-  BOUNDED_WHILE( _enabledSettings.size() + 1, !_enabledSettings.empty() ) {
+  const size_t limit = _enabledSettings.size() + 1;
+
+  BOUNDED_WHILE( limit, !_enabledSettings.empty() ) {
     const auto setting = *_enabledSettings.begin();
     TogglePowerSaveSetting( components, setting, false );
   }
-  
+
   _inPowerSaveMode = false;
 }
 
