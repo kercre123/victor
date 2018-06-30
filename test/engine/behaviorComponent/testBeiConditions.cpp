@@ -1409,11 +1409,7 @@ TEST(BeiConditions, ObjectKnown)
     "objectTypes": ["Block_LIGHTCUBE1"],
     "maxAge_ms": 1000
   })json";
-  
-  // dont start at tick 0 since that is reserved by blockworld
-  float engineTime_ns = 5e6; // 5ms
-  BaseStationTimer::getInstance()->UpdateTime( engineTime_ns );
-  
+
   IBEIConditionPtr condAnyAge;
   IBEIConditionPtr condInitialTick;
   IBEIConditionPtr cond1000Ms;
@@ -1424,6 +1420,10 @@ TEST(BeiConditions, ObjectKnown)
   TestBehaviorFramework testBehaviorFramework;
   testBehaviorFramework.InitializeStandardBehaviorComponent();
   BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
+  auto& robot = testBehaviorFramework.GetRobot();
+  
+  // dont start at tick 0 since that is reserved by blockworld
+  robot._lastMsgTimestamp = 5; // 5ms
   
   condAnyAge->Init(bei);
   condInitialTick->Init(bei);
@@ -1437,33 +1437,31 @@ TEST(BeiConditions, ObjectKnown)
   EXPECT_FALSE( cond1000Ms->AreConditionsMet(bei) );
   
   // put a cube in front of the robot
-  auto& robot = testBehaviorFramework.GetRobot();
   Block_Cube1x1 testCube(testType);
   ObservableObject* object1 = CubePlacementHelper::CreateObjectLocatedAtOrigin(robot, testType);
   ASSERT_TRUE(nullptr != object1);
   ObjectID objID1 = object1->GetID();
   const Pose3d obj1Pose(0.0f, Z_AXIS_3D(), {100, 0, 0}, robot.GetPose());
+  object1->_lastObservedTime = robot._lastMsgTimestamp;
   auto result = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, obj1Pose, PoseState::Known);
   ASSERT_EQ(RESULT_OK, result);
   
   // lazy man's marker observation
-  robot.GetBlockWorld()._currentObservedMarkerTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  robot.GetBlockWorld()._currentObservedMarkerTimestamp = robot._lastMsgTimestamp;
   
   EXPECT_TRUE( condAnyAge->AreConditionsMet(bei) );
   EXPECT_TRUE( condInitialTick->AreConditionsMet(bei) );
   EXPECT_TRUE( cond1000Ms->AreConditionsMet(bei) );
   
-  float incrementEngineTime_ns = 1.004e9f; // 1004 ms (was first observed at 5ms)
-  BaseStationTimer::getInstance()->UpdateTime(incrementEngineTime_ns);
-  robot.GetBlockWorld()._currentObservedMarkerTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  robot._lastMsgTimestamp = 1004; // 1004 ms (was first observed at 5ms)
+  robot.GetBlockWorld()._currentObservedMarkerTimestamp = robot._lastMsgTimestamp;
   
   EXPECT_TRUE( condAnyAge->AreConditionsMet(bei) );
   EXPECT_FALSE( condInitialTick->AreConditionsMet(bei) );
   EXPECT_TRUE( cond1000Ms->AreConditionsMet(bei) );
   
-  incrementEngineTime_ns = 1.006e9f; // 1006 ms (was first observed at 5ms)
-  BaseStationTimer::getInstance()->UpdateTime(incrementEngineTime_ns);
-  robot.GetBlockWorld()._currentObservedMarkerTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  robot._lastMsgTimestamp = 1006; // 1006 ms (was first observed at 5ms)
+  robot.GetBlockWorld()._currentObservedMarkerTimestamp = robot._lastMsgTimestamp;
   
   EXPECT_TRUE( condAnyAge->AreConditionsMet(bei) );
   EXPECT_FALSE( condInitialTick->AreConditionsMet(bei) );

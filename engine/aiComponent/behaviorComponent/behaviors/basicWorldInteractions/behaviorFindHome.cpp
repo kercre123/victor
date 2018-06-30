@@ -37,7 +37,6 @@ const char* kMaxSearchTurnsKey      = "maxSearchTurns";
 const char* kNumSearchesKey         = "numSearches";
 const char* kMinDrivingDistKey      = "minDrivingDist_mm";
 const char* kMaxDrivingDistKey      = "maxDrivingDist_mm";
-const char* kMaxObservedAgeSecKey   = "maxLastObservedAge_sec";
 }
 
 
@@ -50,7 +49,6 @@ BehaviorFindHome::InstanceConfig::InstanceConfig(const Json::Value& config, cons
   numSearches             = JsonTools::ParseUint8(config, kNumSearchesKey, debugName);
   minDrivingDist_mm       = JsonTools::ParseFloat(config, kMinDrivingDistKey, debugName);
   maxDrivingDist_mm       = JsonTools::ParseFloat(config, kMaxDrivingDistKey, debugName);
-  maxObservedAge_ms       = Util::numeric_cast<TimeStamp_t>(1000.f * JsonTools::ParseFloat(config, kMaxObservedAgeSecKey, debugName));
   homeFilter              = std::make_unique<BlockWorldFilter>();
 }
 
@@ -77,7 +75,6 @@ void BehaviorFindHome::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) 
     kNumSearchesKey,
     kMinDrivingDistKey,
     kMaxDrivingDistKey,
-    kMaxObservedAgeSecKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 } 
@@ -85,26 +82,8 @@ void BehaviorFindHome::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorFindHome::WantsToBeActivatedBehavior() const
 {
-  // Cannot be activated if we already know where a charger is and have seen it recently enough
-  std::vector<const ObservableObject*> locatedHomes;
-  GetBEI().GetBlockWorld().FindLocatedMatchingObjects(*_iConfig.homeFilter, locatedHomes);
-  
-  const bool hasAHome = !locatedHomes.empty();
-  
-  // If a max allowable observation age was given as a parameter,
-  // then check if we have seen a charger recently
-  bool recentlyObserved = true;
-  if (_iConfig.maxObservedAge_ms != 0) {
-    recentlyObserved = std::any_of(locatedHomes.begin(),
-                                   locatedHomes.end(),
-                                   [this](const ObservableObject* obj) {
-                                     const auto nowTimestamp = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
-                                     return nowTimestamp < obj->GetLastObservedTime() + _iConfig.maxObservedAge_ms;
-                                   });
-  }
-  
-  // Not runnable if we have a charger in the world and have recently seen it.
-  return !(hasAHome && recentlyObserved);
+  // WantsToBeActivated conditions defined in the behavior config
+  return true;
 }
 
 

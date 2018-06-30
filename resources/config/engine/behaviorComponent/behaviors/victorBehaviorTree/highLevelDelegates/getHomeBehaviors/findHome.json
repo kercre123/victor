@@ -2,6 +2,23 @@
   "behaviorClass": "FindHome",
   "behaviorID": "FindHome",
   
+  // Cannot be activated if we already know where a charger is and have seen it recently enough
+  "wantsToBeActivatedCondition": {
+    "conditionType": "Compound",
+    "not": {
+      "conditionType": "ObjectKnown",
+      "objectTypes": [ "Charger_Basic" ],
+      "maxAge_ms" : 300000 // cannot be activated if we've seen it in the past 5 minutes
+    }
+  },
+  
+  // Behavior should cancel itself if we see a charger while running
+  "wantsToCancelSelfCondition" : {
+    "conditionType" : "ObjectKnown",
+    "objectTypes" : [ "Charger_Basic" ],
+    "maxAge_ms" : 5000
+  },
+  
   "searchTurnAnimTrigger" : "ChargerDockingSearchSingleTurn",
   
   // Robot must sweep at least this angle while searching in place
@@ -17,7 +34,5 @@
   "numSearches" : 3,
   
   "minDrivingDist_mm" : 150,
-  "maxDrivingDist_mm" : 400,
-  
-  "maxLastObservedAge_sec" : 300
+  "maxDrivingDist_mm" : 400
 }

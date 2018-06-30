@@ -52,7 +52,6 @@ private:
     int         numSearches = 0;
     float       minDrivingDist_mm = 0.f;
     float       maxDrivingDist_mm = 0.f;
-    TimeStamp_t maxObservedAge_ms = 0;
     
     AnimationTrigger searchTurnAnimTrigger = AnimationTrigger::Count;
     std::unique_ptr<BlockWorldFilter> homeFilter;
