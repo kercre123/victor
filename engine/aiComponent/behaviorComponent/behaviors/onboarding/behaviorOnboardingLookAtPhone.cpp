@@ -16,6 +16,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+#include "proto/external_interface/shared.pb.h"
 #include "util/console/consoleFunction.h"
 #include "util/console/consoleInterface.h"
 
@@ -76,7 +77,7 @@ void BehaviorOnboardingLookAtPhone::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingLookAtPhone::HandleWhileActivated(const AppToEngineEvent& event)
 {
-  if( event.GetData().oneof_message_type_case() == AppToEngineTag::kOnboardingConnectionComplete ) {
+  if( event.GetData().GetTag() == AppToEngineTag::kOnboardingConnectionComplete ) {
     const bool headUp = false;
     MoveHeadWithAnimation( headUp );
   }

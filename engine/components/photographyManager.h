@@ -30,6 +30,13 @@ namespace Cozmo {
 
 class VisionComponent;
 class IGatewayInterface;
+namespace external_interface {
+  class Photo;
+  class PhotosInfoRequest;
+  class PhotoRequest;
+  class ThumbnailRequest;
+  class DeletePhotoRequest;
+}
 
 
 class PhotographyManager : public IDependencyManagedComponent<RobotComponentID>, 

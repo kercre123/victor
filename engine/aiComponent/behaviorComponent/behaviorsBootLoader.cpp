@@ -123,12 +123,11 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
   auto* gi = _gatewayInterface;
   if( gi != nullptr ) {
     auto onRequestOnboardingState = [gi,this](const AnkiEvent<external_interface::GatewayWrapper>& appEvent){
-      auto* onboardingState = new external_interface::OnboardingState();
-      onboardingState->set_stage( CladProtoTypeTranslator::ToProtoEnum(_stage) );
+      auto* onboardingState = new external_interface::OnboardingState{ CladProtoTypeTranslator::ToProtoEnum(_stage) };
       gi->Broadcast( ExternalMessageRouter::WrapResponse(onboardingState) );
     };
     
-    _eventHandles.push_back( gi->Subscribe(external_interface::GatewayWrapper::OneofMessageTypeCase::kOnboardingStateRequest,
+    _eventHandles.push_back( gi->Subscribe(external_interface::GatewayWrapperTag::kOnboardingStateRequest,
                                            onRequestOnboardingState) );
   }
   

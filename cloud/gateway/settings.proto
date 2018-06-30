@@ -2,7 +2,7 @@
 
 syntax = "proto3";
 
-package external_interface;
+package Anki.Cozmo.external_interface;
 
 option optimize_for = LITE_RUNTIME;
 

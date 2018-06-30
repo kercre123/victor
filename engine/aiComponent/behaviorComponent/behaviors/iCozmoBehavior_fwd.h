@@ -21,7 +21,6 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/externalInterface/messageGameToEngineTag.h"
 #include "clad/robotInterface/messageRobotToEngineTag.h"
-#include "proto/external_interface/shared.pb.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -36,6 +35,11 @@ namespace ExternalInterface {
 struct RobotCompletedAction;
 }
 
+namespace external_interface {
+  class GatewayWrapper;
+  enum class GatewayWrapperTag : uint8_t;
+}
+
 template<typename TYPE> class AnkiEvent;
 
 using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
@@ -45,7 +49,7 @@ using AppToEngineEvent  = AnkiEvent<external_interface::GatewayWrapper>;
   
 using EngineToGameTag   = ExternalInterface::MessageEngineToGameTag;
 using GameToEngineTag   = ExternalInterface::MessageGameToEngineTag;
-using AppToEngineTag    = external_interface::GatewayWrapper::OneofMessageTypeCase;
+using AppToEngineTag    = external_interface::GatewayWrapperTag;
 
 class BehaviorExternalInterface;
 

@@ -54,6 +54,8 @@
 #include "clad/types/behaviorComponent/behaviorStats.h"
 #include "clad/types/behaviorComponent/userIntent.h"
 
+#include "proto/external_interface/shared.pb.h"
+
 #include "util/enums/stringToEnumMapper.hpp"
 #include "util/fileUtils/fileUtils.h"
 #include "util/math/numericCast.h"
@@ -1133,7 +1135,7 @@ void ICozmoBehavior::UpdateMessageHandlingHelpers()
   
   for(const auto& event: stateChangeComp.GetAppToEngineEvents()){
     // Handle specific callbacks
-    auto iter = _appToEngineTags.find(event.GetData().oneof_message_type_case());
+    auto iter = _appToEngineTags.find(event.GetData().GetTag());
     if(iter != _appToEngineTags.end()){
       AlwaysHandleInScope(event);
       if(IsActivated()){

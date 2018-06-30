@@ -219,8 +219,7 @@ private:
     
     auto* gi = bei.GetRobotInfo().GetGatewayInterface();
     if( gi != nullptr ){
-      auto* seesCubeMessage = new external_interface::OnboardingSeesCube;
-      seesCubeMessage->set_sees_cube( false );
+      auto* seesCubeMessage = new external_interface::OnboardingSeesCube{ false };
       gi->Broadcast( ExternalMessageRouter::Wrap(seesCubeMessage) );
     }
   }
@@ -230,8 +229,7 @@ private:
     DebugTransition("Doing a trick");
     auto* gi = bei.GetRobotInfo().GetGatewayInterface();
     if( gi != nullptr ){
-      auto* seesCubeMessage = new external_interface::OnboardingSeesCube;
-      seesCubeMessage->set_sees_cube( true );
+      auto* seesCubeMessage = new external_interface::OnboardingSeesCube{ true };
       gi->Broadcast( ExternalMessageRouter::Wrap(seesCubeMessage) );
     }
     

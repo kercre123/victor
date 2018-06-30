@@ -16,6 +16,7 @@
 
 #include <stdint.h>
 #include <utility>
+#include <memory>
 
 
 namespace Anki {
@@ -32,25 +33,25 @@ public:
   AnkiEvent(double time, uint32_t type, FwdType&& newData)
   : _currentTime(time)
   , _myType(type)
-  , _data( std::forward<FwdType>(newData) )
-{ }
+  , _data( std::make_shared<DataType>(std::forward<FwdType>(newData)) )
+  { }
 
   template <typename FwdType>
   AnkiEvent(uint32_t type, FwdType&& newData)
   : _currentTime(0.0)
   , _myType(type)
-  , _data( std::forward<FwdType>(newData) )
+  , _data( std::make_shared<DataType>(std::forward<FwdType>(newData)) )
   { }
 
   double GetCurrentTime() const { return _currentTime; }
   uint32_t GetType() const { return _myType; }
-  const DataType& GetData() const { return _data; }
+  const DataType& GetData() const { return *_data; }
   
 protected:
 
   double _currentTime;
   uint32_t _myType;
-  DataType _data;
+  std::shared_ptr<DataType> _data;
   
 }; // class Event
 

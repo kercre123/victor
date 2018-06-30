@@ -14,12 +14,16 @@
 
 #include "engine/events/ankiEvent.h"
 #include "util/signals/simpleSignal.hpp"
-#include "proto/external_interface/shared.pb.h"
 #include <vector>
 #include <utility>
 
 namespace Anki {
 namespace Cozmo {
+  
+namespace external_interface {
+  class GatewayWrapper;
+  enum class GatewayWrapperTag : uint8_t;
+}
 
 class IGatewayInterface {
 public:
@@ -28,7 +32,7 @@ public:
   virtual void Broadcast(const external_interface::GatewayWrapper& message) = 0;
   virtual void Broadcast(external_interface::GatewayWrapper&& message) = 0;
   
-  virtual Signal::SmartHandle Subscribe(const external_interface::GatewayWrapper::OneofMessageTypeCase& tagType, std::function<void(const AnkiEvent<external_interface::GatewayWrapper>&)> messageHandler) = 0;
+  virtual Signal::SmartHandle Subscribe(const external_interface::GatewayWrapperTag& tagType, std::function<void(const AnkiEvent<external_interface::GatewayWrapper>&)> messageHandler) = 0;
 
   virtual uint32_t GetMessageCountOutgoing() const = 0;
   virtual uint32_t GetMessageCountIncoming() const = 0;

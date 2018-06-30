@@ -14,7 +14,6 @@
 #define __Cozmo_Basestation_Components_settingsCommManager_H__
 
 #include "engine/cozmoContext.h"
-#include "engine/externalInterface/gatewayInterface.h"
 #include "engine/robotComponents_fwd.h"
 
 #include "util/entityComponent/iDependencyManagedComponent.h"
@@ -26,9 +25,16 @@
 namespace Anki {
 namespace Cozmo {
 
-class SettingsManager;
+template <typename T>
+class AnkiEvent;
 class IGatewayInterface;
-
+class SettingsManager;
+namespace external_interface {
+  class GatewayWrapper;
+  class PullSettingsRequest;
+  class PushSettingsRequest;
+  class UpdateSettingsRequest;
+}
 
 class SettingsCommManager : public IDependencyManagedComponent<RobotComponentID>,
                             private Anki::Util::noncopyable

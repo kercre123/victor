@@ -20,6 +20,8 @@
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 
+#include "proto/external_interface/shared.pb.h"
+
 #include "util/console/consoleInterface.h"
 
 #include <sstream>
@@ -76,10 +78,10 @@ void PhotographyManager::InitDependent(Robot* robot, const RobotCompMap& depende
     auto commonCallback = std::bind(&PhotographyManager::HandleEvents, this, std::placeholders::_1);
     
     // Subscribe to desired simple events
-    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapper::OneofMessageTypeCase::kPhotosInfoRequest,  commonCallback));
-    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapper::OneofMessageTypeCase::kPhotoRequest,       commonCallback));
-    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapper::OneofMessageTypeCase::kThumbnailRequest,   commonCallback));
-    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapper::OneofMessageTypeCase::kDeletePhotoRequest, commonCallback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPhotosInfoRequest,  commonCallback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPhotoRequest,       commonCallback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kThumbnailRequest,   commonCallback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kDeletePhotoRequest, commonCallback));
   }
 
   const auto& config = robot->GetContext()->GetDataLoader()->GetPhotographyConfig();
@@ -485,18 +487,18 @@ int PhotographyManager::PhotoIndexFromID(const int id) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void PhotographyManager::HandleEvents(const AnkiEvent<external_interface::GatewayWrapper>& event)
 {
-  switch(event.GetData().oneof_message_type_case())
+  switch(event.GetData().GetTag())
   {
-    case external_interface::GatewayWrapper::OneofMessageTypeCase::kPhotosInfoRequest:
+    case external_interface::GatewayWrapperTag::kPhotosInfoRequest:
       OnRequestPhotosInfo(event.GetData().photos_info_request());
       break;
-    case external_interface::GatewayWrapper::OneofMessageTypeCase::kPhotoRequest:
+    case external_interface::GatewayWrapperTag::kPhotoRequest:
       OnRequestPhoto(event.GetData().photo_request());
       break;
-    case external_interface::GatewayWrapper::OneofMessageTypeCase::kThumbnailRequest:
+    case external_interface::GatewayWrapperTag::kThumbnailRequest:
       OnRequestThumbnail(event.GetData().thumbnail_request());
       break;
-    case external_interface::GatewayWrapper::OneofMessageTypeCase::kDeletePhotoRequest:
+    case external_interface::GatewayWrapperTag::kDeletePhotoRequest:
       OnRequestDeletePhoto(event.GetData().delete_photo_request());
       break;
     default:

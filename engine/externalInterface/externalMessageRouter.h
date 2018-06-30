@@ -6,7 +6,8 @@
 *
 * Description: Templates to automatically wrap messages included in the MessageEngineToGame union
 *              and the GatewayWrapper protobuf oneof (union) based on external requirements and
-*              event organization (the hierarchy in MessageEngineToGame clad).
+*              event organization (the hierarchy in clad and proto files)
+ *             TODO: remove clad portions once messages are converted
 *
 * Copyright: Anki, Inc. 2018
 */
@@ -15,13 +16,9 @@
 #define __Engine_ExternalInterface_ExternalMessageRouter_H__
 
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "proto/external_interface/shared.pb.h"
 #include "util/helpers/templateHelpers.h"
 #include <type_traits>
-
-namespace external_interface {
-  class GatewayWrapper;
-  class OnboardingState;
-}
 
 namespace Anki {
 namespace Cozmo {
@@ -30,27 +27,76 @@ class ExternalMessageRouter
 {
 public:
   
-// -------------------------------------------------------------------------------------------------
-// Outbound CLAD Messages
-// -------------------------------------------------------------------------------------------------
-  // the hierarchy, based on messageEngineToGame.clad:
-  using MessageEngineToGame = ExternalInterface::MessageEngineToGame;
-  // which contains
-  using Event = ExternalInterface::Event;
-  // which contains
-  using Status = ExternalInterface::Status;
-  
   // helper that provides type Ret if B is true
   template <bool B, class Ret>
   using ReturnIf = typename std::enable_if<B, Ret>::type;
   
+  template <typename T, typename From>
+  using CanContruct = Anki::Util::is_explicitly_constructible<T, From*>;
+  
+  // -------------------------------------------------------------------------------------------------
+  // Outbound Proto Messages:
+  // If your message is a response to a request, call WrapResponse() on your allocated message pointer.
+  // If your message is NOT a response to a request, call Wrap() on your allocated message pointer
+  // Eventually, gateway changes should render this distinction obsolete
+  // -------------------------------------------------------------------------------------------------
+  
+  using GatewayWrapper = external_interface::GatewayWrapper;
+  // which contains
+  using Event = external_interface::Event;
+  // which contains all of the following:
+  using Status = external_interface::Status;
+  using Onboarding = external_interface::Onboarding;
+  using WakeWord = external_interface::WakeWord;
+  using AttentionTransfer = external_interface::AttentionTransfer;
+  
+  template<typename T>
+  inline static external_interface::GatewayWrapper WrapResponse( T* message )
+  {
+    GatewayWrapper wrapper{ message };
+    return wrapper;
+  }
+  
+  template <typename T>
+  inline static ReturnIf<CanContruct<Event,T>::value, GatewayWrapper>
+  /* GatewayWrapper */ Wrap( T* message )
+  {
+    Event* event = new Event{ message };
+    return WrapResponse( event );
+  }
+  
+  // macro to generate Wrap() methods based on Event types listed in the proto file
+  #define MAKE_MESSAGE_WRAPPER(Type) \
+    template <typename T> \
+    inline static ReturnIf<CanContruct<Type,T>::value, GatewayWrapper> \
+    /* GatewayWrapper */ Wrap( T* message ) \
+    { \
+      auto* msgPtr = new Type{ message }; \
+      return Wrap( msgPtr ); \
+    }
+  MAKE_MESSAGE_WRAPPER(Status)
+  MAKE_MESSAGE_WRAPPER(Onboarding)
+  MAKE_MESSAGE_WRAPPER(WakeWord)
+  MAKE_MESSAGE_WRAPPER(AttentionTransfer)
+  
+  // -------------------------------------------------------------------------------------------------
+  // Outbound CLAD Messages
+  // -------------------------------------------------------------------------------------------------
+  
+  // the hierarchy, based on messageEngineToGame.clad:
+  using MessageEngineToGame = ExternalInterface::MessageEngineToGame;
+  // which contains
+  using CLADEvent = ExternalInterface::Event;
+  // which contains
+  using CLADStatus = ExternalInterface::Status;
+  
   // Is an Event (not part of a request/response pair)
   template <typename T>
-  using CanBeEvent = Anki::Util::is_explicitly_constructible<Event, T>;
+  using CanBeCLADEvent = Anki::Util::is_explicitly_constructible<CLADEvent, T>;
   
-  // Is a sub-status message (which is an Event)
+  // Is a status message (which is an Event)
   template <typename T>
-  using CanBeStatus = Anki::Util::is_explicitly_constructible<Status, T>;
+  using CanBeCLADStatus = Anki::Util::is_explicitly_constructible<CLADStatus, T>;
   
   template <typename T>
   using CanBeEngineToGame = Anki::Util::is_explicitly_constructible<MessageEngineToGame, T>;
@@ -63,7 +109,7 @@ public:
   }
   
   template <typename T>
-  inline static ReturnIf<!CanBeStatus<T>::value && !CanBeEvent<T>::value, MessageEngineToGame>
+  inline static ReturnIf<!CanBeCLADStatus<T>::value && !CanBeCLADEvent<T>::value && CanBeEngineToGame<T>::value, MessageEngineToGame>
   /* MessageEngineToGame */ Wrap(T&& message)
   {
     MessageEngineToGame engineToGame{ std::forward<T>(message) };
@@ -71,33 +117,21 @@ public:
   }
   
   template <typename T>
-  inline static ReturnIf<CanBeEvent<T>::value, MessageEngineToGame>
+  inline static ReturnIf<CanBeCLADEvent<T>::value, MessageEngineToGame>
   /* MessageEngineToGame */ Wrap(T&& message)
   {
-    Event event{ std::forward<T>(message) };
+    CLADEvent event{ std::forward<T>(message) };
     return Wrap( std::move(event) );
   }
 
   template <typename T>
-  inline static ReturnIf<CanBeStatus<T>::value, MessageEngineToGame>
+  inline static ReturnIf<CanBeCLADStatus<T>::value, MessageEngineToGame>
   /* MessageEngineToGame */ Wrap(T&& message)
   {
-    Status status{ std::forward<T>(message) };
+    CLADStatus status{ std::forward<T>(message) };
     return Wrap( std::move(status) );
   }
-  
-  // -------------------------------------------------------------------------------------------------
-  // Outbound Proto Messages
-  // -------------------------------------------------------------------------------------------------
-  
-  // handle outbound proto messages that are a response to a request
-  template<typename T>
-  static external_interface::GatewayWrapper WrapResponse( T* msg );
-  
-  // handle outbound proto messages that are NOT a response to a request
-  template<typename T>
-  static external_interface::GatewayWrapper Wrap( T* msg );
-  
+
 };
 
 } // end namespace Cozmo

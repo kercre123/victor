@@ -121,9 +121,9 @@ void SettingsCommManager::InitDependent(Robot* robot, const RobotCompMap& depend
   {
     auto commonCallback = std::bind(&SettingsCommManager::HandleEvents, this, std::placeholders::_1);
     // Subscribe to desired simple events
-    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapper::OneofMessageTypeCase::kPullSettingsRequest,   commonCallback));
-    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapper::OneofMessageTypeCase::kPushSettingsRequest,   commonCallback));
-    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapper::OneofMessageTypeCase::kUpdateSettingsRequest, commonCallback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPullSettingsRequest,   commonCallback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPushSettingsRequest,   commonCallback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kUpdateSettingsRequest, commonCallback));
   }
 }
 
@@ -184,15 +184,15 @@ void SettingsCommManager::RefreshConsoleVars()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SettingsCommManager::HandleEvents(const AnkiEvent<external_interface::GatewayWrapper>& event)
 {
-  switch(event.GetData().oneof_message_type_case())
+  switch(event.GetData().GetTag())
   {
-    case external_interface::GatewayWrapper::OneofMessageTypeCase::kPullSettingsRequest:
+    case external_interface::GatewayWrapperTag::kPullSettingsRequest:
       OnRequestPullSettings(event.GetData().pull_settings_request());
       break;
-    case external_interface::GatewayWrapper::OneofMessageTypeCase::kPushSettingsRequest:
+    case external_interface::GatewayWrapperTag::kPushSettingsRequest:
       OnRequestPushSettings(event.GetData().push_settings_request());
       break;
-    case external_interface::GatewayWrapper::OneofMessageTypeCase::kUpdateSettingsRequest:
+    case external_interface::GatewayWrapperTag::kUpdateSettingsRequest:
       OnRequestUpdateSettings(event.GetData().update_settings_request());
       break;
     default:

@@ -2,7 +2,7 @@
 
 syntax = "proto3";
 
-package external_interface;
+package Anki.Cozmo.external_interface;
 
 option optimize_for = LITE_RUNTIME;
 
@@ -92,7 +92,7 @@ message MeetVictorFaceScanComplete
 
 message Status {
   oneof status_type {
-    FeatureStatus                   featureStatus                    = 1;
+    FeatureStatus                   feature_status                   = 1;
     MeetVictorFaceScanStarted       meet_victor_face_scan_started    = 2;
     MeetVictorFaceScanComplete      meet_victor_face_scan_complete   = 3;
   }

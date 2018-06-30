@@ -16,6 +16,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 
 #include <vector>
+#include <set>
 
 namespace Anki {
 namespace Cozmo {

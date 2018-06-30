@@ -67,8 +67,8 @@ Result ProtoMessageHandler::Init(CozmoContext* context, const Json::Value& confi
   auto commonCallback = std::bind(&ProtoMessageHandler::HandleEvents, this, std::placeholders::_1);
   
   // Subscribe to desired simple events
-  _signalHandles.push_back(Subscribe(external_interface::GatewayWrapper::OneofMessageTypeCase::kPing, commonCallback)); // TODO: remove this once more examples are written
-  _signalHandles.push_back(Subscribe(external_interface::GatewayWrapper::OneofMessageTypeCase::kBing, commonCallback)); // TODO: remove this once more examples are written
+  _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kPing, commonCallback)); // TODO: remove this once more examples are written
+  _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kBing, commonCallback)); // TODO: remove this once more examples are written
 
   return RESULT_OK;
 }
@@ -76,8 +76,7 @@ Result ProtoMessageHandler::Init(CozmoContext* context, const Json::Value& confi
 
 // TODO: remove this once there are real examples of using proto in the engine code
 void ProtoMessageHandler::PingPong(const external_interface::Ping& ping) {
-  external_interface::Pong* pong = new external_interface::Pong();
-  pong->set_pong(ping.ping() + 1);
+  external_interface::Pong* pong = new external_interface::Pong{ ping.ping() + 1 };
   external_interface::GatewayWrapper wrapper;
   wrapper.set_allocated_pong(pong);
   DeliverToExternal(wrapper); // TODO: make this intelligent (using broadcast or something)
@@ -86,9 +85,7 @@ void ProtoMessageHandler::PingPong(const external_interface::Ping& ping) {
 
 // TODO: remove this once there are real examples of using proto in the engine code
 void ProtoMessageHandler::BingBong(const external_interface::Bing& bing) {
-  external_interface::Bong* bong = new external_interface::Bong();
-  auto str = bing.bing() + "!";
-  bong->set_bong(str);
+  external_interface::Bong* bong = new external_interface::Bong{ bing.bing() + "!" };
   external_interface::GatewayWrapper wrapper;
   wrapper.set_allocated_bong(bong);
   DeliverToExternal(wrapper); // TODO: make this intelligent (using broadcast or something)
@@ -96,12 +93,12 @@ void ProtoMessageHandler::BingBong(const external_interface::Bing& bing) {
 
 
 void ProtoMessageHandler::HandleEvents(const AnkiEvent<external_interface::GatewayWrapper>& event) {
-  switch(event.GetData().oneof_message_type_case())
+  switch(event.GetData().GetTag())
   {
-    case external_interface::GatewayWrapper::OneofMessageTypeCase::kPing:
+    case external_interface::GatewayWrapperTag::kPing:
       PingPong(event.GetData().ping());
       break;
-    case external_interface::GatewayWrapper::OneofMessageTypeCase::kBing:
+    case external_interface::GatewayWrapperTag::kBing:
       BingBong(event.GetData().bing());
       break;
     default:
@@ -166,7 +163,7 @@ void ProtoMessageHandler::Broadcast(const external_interface::GatewayWrapper& me
 
   DeliverToExternal(message);
   _eventMgr.Broadcast(AnkiEvent<external_interface::GatewayWrapper>(
-    BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), static_cast<u32>(message.oneof_message_type_case()), message));
+    BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), static_cast<u32>(message.GetTag()), message));
 }
 
 
@@ -179,12 +176,12 @@ void ProtoMessageHandler::Broadcast(external_interface::GatewayWrapper&& message
 
   DeliverToExternal(message);
   _eventMgr.Broadcast(AnkiEvent<external_interface::GatewayWrapper>(
-    BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), static_cast<u32>(message.oneof_message_type_case()), std::move(message)));
+    BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), static_cast<u32>(message.GetTag()), std::move(message)));
 } // Broadcast(MessageGameToEngine &&)
 
 
 // Provides a way to subscribe to message types using the AnkiEventMgrs
-Signal::SmartHandle ProtoMessageHandler::Subscribe(const external_interface::GatewayWrapper::OneofMessageTypeCase& tagType,
+Signal::SmartHandle ProtoMessageHandler::Subscribe(const external_interface::GatewayWrapperTag& tagType,
                                                 std::function<void(const AnkiEvent<external_interface::GatewayWrapper>&)> messageHandler)
 {
   return _eventMgr.Subscribe(static_cast<u32>(tagType), messageHandler);
