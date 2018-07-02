@@ -152,8 +152,8 @@ for i in "${!leds[@]}"; do values[${i}]="${leds[$i]}"; done
 write_row "logfile" -1
 
 #parse logfiles (*.log or *.txt formats)
-for infile in ./*.log; do parse_file "$infile"; done
-for infile in ./*.txt; do parse_file "$infile"; done
+for infile in ./*.log; do if [ "$infile" != "./*.log" ]; then parse_file "$infile"; fi done
+for infile in ./*.txt; do if [ "$infile" != "./*.txt" ]; then parse_file "$infile"; fi done
 
 write_maths $numrows
 
