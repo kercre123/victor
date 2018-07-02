@@ -578,3 +578,39 @@ message EnableVisionModeRequest {
 message EnableVisionModeResult {
   ResultStatus status = 1;
 }
+
+// Struct containing all the information relevant to how a 
+// path should be modified or traversed.
+// TODO: Include path wonkification parameters
+message PathMotionProfile {
+    float speed_mmps = 1;
+    float accel_mmps2 = 2;
+    float decel_mmps2 = 3;
+    float point_turn_speed_rad_per_sec = 4;
+    float point_turn_accel_rad_per_sec2 = 5;
+    float point_turn_decel_rad_per_sec2 = 6;
+    float dock_speed_mmps = 7;
+    float dock_accel_mmps2 = 8;
+    float dock_decel_mmps2 = 9;
+    float reverse_speed_mmps = 10;
+    bool  is_custom = 11;
+}
+
+enum ActionResult {
+  ACTION_RESULT_SUCCESS                 = 0;
+  ACTION_RESULT_RUNNING                 = 16777216;
+  ACTION_RESULT_CANCELLED_WHILE_RUNNING = 33554432;
+}
+
+// GotoPose
+message GoToPoseRequest {
+  float x_mm = 1;
+  float y_mm = 2;
+  float rad = 3; 
+  PathMotionProfile motion_prof = 4;
+}
+
+message GoToPoseResponse {
+  ActionResult result = 1;
+}
+

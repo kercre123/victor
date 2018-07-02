@@ -331,6 +331,65 @@ class Robot:
         self.logger.info(f'{type(result)}: {str(result).strip()}')
         return result
 
+    @actions._as_actionable
+    async def go_to_pose(self, pose, relative_to_robot=False, motion_prof_map={}):
+        '''Tells Vector to drive to the specified pose and orientation.
+
+        If relative_to_robot is set to True, the given pose will assume the
+        robot's pose as its origin.
+
+        Since the robot understands position by monitoring its tread movement,
+        it does not understand movement in the z axis. This means that the only
+        applicable elements of pose in this situation are position.x position.y
+        and rotation.angle_z.
+
+        Args:
+            pose: (:class:`vector.util.Pose`): The destination pose.
+            relative_to_robot (bool): Whether the given pose is relative to
+                the robot's pose.
+            motion_prof_map (dict): Provide custom speed, acceleration and deceleration 
+                values with which the robot goes to the given pose.
+                speed_mmps (float)
+                accel_mmps2 (float)
+                decel_mmps2 (float)
+                point_turn_speed_rad_per_sec (float)
+                point_turn_accel_rad_per_sec2 (float)
+                point_turn_decel_rad_per_sec2 (float)
+                dock_speed_mmps (float)
+                dock_accel_mmps2 (float)
+                dock_decel_mmps2 (float)
+                reverse_speed_mmps (float)
+                is_custom (bool)
+        
+        Returns:
+            A :class:`vector.messaging.external_interface_pb2.GoToPoseResult` object which 
+            provides an action result.
+        '''
+        default_motion_profile = {
+                            "speed_mmps": 100.0,
+                            "accel_mmps2": 200.0,
+                            "decel_mmps2": 500.0,
+                            "point_turn_speed_rad_per_sec": 2.0,
+                            "point_turn_accel_rad_per_sec2": 10.0,
+                            "point_turn_decel_rad_per_sec2": 10.0,
+                            "dock_speed_mmps": 60.0,
+                            "dock_accel_mmps2": 200.0,
+                            "dock_decel_mmps2": 500.0,
+                            "reverse_speed_mmps": 80.0,
+                            "is_custom": 0
+                        }
+        if relative_to_robot and self.pose:
+            pose = self.pose.define_pose_relative_this(pose)
+        default_motion_profile.update(motion_prof_map)
+        motion_prof = protocol.PathMotionProfile(**default_motion_profile)
+        go_to_pose_request = protocol.GoToPoseRequest(x_mm=pose.position.x, 
+                                                      y_mm=pose.position.y, 
+                                                      rad=pose.rotation.angle_z.radians,
+                                                      motion_prof=motion_prof)
+        result = await self.connection.GoToPose(go_to_pose_request)
+        self.logger.info(f'{type(result)}: {str(result).strip()}')
+        return result
+
     # Meet Victor
     @actions._as_actionable
     async def meet_victor(self, name):

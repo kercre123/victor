@@ -1217,7 +1217,8 @@ autounion MessageGameToEngine
   EraseAllEnrolledFaces          EraseAllEnrolledFaces          = 0x0E,
   SetFaceToEnroll                SetFaceToEnroll                = 0x0F,
   EnableVisionMode               EnableVisionMode               = 0x10,
-  RequestAvailableAnimations     RequestAvailableAnimations     = 0x11,
+  RequestAvailableAnimations     RequestAvailableAnimations     = 0x11,  
+  GotoPose                       GotoPose                       = 0x12,
 }
 
 

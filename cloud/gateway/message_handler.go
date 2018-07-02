@@ -198,6 +198,33 @@ func ProtoEnableVisionModeToClad(msg *extint.EnableVisionModeRequest) *gw_clad.M
 	})
 }
 
+func ProtoPathMotionProfileToClad(msg *extint.PathMotionProfile) gw_clad.PathMotionProfile {
+	return gw_clad.PathMotionProfile{
+		SpeedMmps:                msg.SpeedMmps,
+		AccelMmps2:               msg.AccelMmps2,
+		DecelMmps2:               msg.DecelMmps2,
+		PointTurnSpeedRadPerSec:  msg.PointTurnSpeedRadPerSec,
+		PointTurnAccelRadPerSec2: msg.PointTurnAccelRadPerSec2,
+		PointTurnDecelRadPerSec2: msg.PointTurnDecelRadPerSec2,
+		DockSpeedMmps:            msg.DockSpeedMmps,
+		DockAccelMmps2:           msg.DockAccelMmps2,
+		DockDecelMmps2:           msg.DockDecelMmps2,
+		ReverseSpeedMmps:         msg.ReverseSpeedMmps,
+		IsCustom:                 msg.IsCustom,
+	}
+}
+
+// TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
+func ProtoGoToPoseToClad(msg *extint.GoToPoseRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithGotoPose(&gw_clad.GotoPose{
+		XMm:        msg.XMm,
+		YMm:        msg.YMm,
+		Rad:        msg.Rad,
+		MotionProf: ProtoPathMotionProfileToClad(msg.MotionProf),
+		Level:      0,
+	})
+}
+
 func CladFeatureStatusToProto(msg *gw_clad.FeatureStatus) *extint.FeatureStatus {
 	return &extint.FeatureStatus{
 		FeatureName: msg.FeatureName,
@@ -1082,6 +1109,23 @@ func (m *rpcService) WifiRemoveAll(ctx context.Context, in *extint.WifiRemoveAll
 func (m *rpcService) UserAuthentication(ctx context.Context, in *extint.UserAuthenticationRequest) (*extint.UserAuthenticationResponse, error) {
 	log.Println("Received rpc request UserAuthentication(", in, ")")
 	return nil, status.Errorf(codes.Unimplemented, "UserAuthentication not yet implemented")
+}
+
+func (m *rpcService) GoToPose(ctx context.Context, in *extint.GoToPoseRequest) (*extint.GoToPoseResponse, error) {
+	log.Println("Received rpc request GoToPose(", in, ")")
+
+	go_to_pose_result := make(chan RobotToExternalCladResult)
+	engineChanMap[gw_clad.MessageRobotToExternalTag_RobotCompletedAction] = go_to_pose_result
+	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_RobotCompletedAction)
+
+	_, err := WriteToEngine(engineSock, ProtoGoToPoseToClad(in))
+	if err != nil {
+		return nil, err
+	}
+
+	result := <-go_to_pose_result
+	action_result := result.Message.GetRobotCompletedAction().Result
+	return &extint.GoToPoseResponse{Result: extint.ActionResult(action_result)}, nil
 }
 
 func newServer() *rpcService {

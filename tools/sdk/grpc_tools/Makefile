@@ -200,6 +200,21 @@ test_curl: .require_ip
 	curl --cacert trust.cert https://$(ANKI_ROBOT_HOST)/v1/list_animations -d '{}'
 	@echo
 
+	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/go_to_pose \
+	-d '{"x_mm":100.0, "y_mm":100.0, "rad":0.0, \
+		"motion_prof":{"speed_mmps":110.0, \
+				"accel_mmps2":200.0, \
+				"decel_mmps2": 500.0, \
+				"point_turn_speed_rad_per_sec": 2.0, \
+				"point_turn_accel_rad_per_sec2": 10.0, \
+				"point_turn_decel_rad_per_sec2": 10.0, \
+				"dock_speed_mmps": 60.0, \
+				"dock_accel_mmps2": 200.0, \
+				"dock_decel_mmps2": 500.0, \
+				"reverse_speed_mmps": 80.0, \
+				"is_custom": false}}'
+	@echo
+
 test_meet_victor: .require_ip
 	# First, turn on behaviors (by shaking), then say "Hey Vector, my name is Bobert"
 
@@ -252,7 +267,6 @@ test_settings: .require_ip
 
 	curl --cacert trust.cert https://$(ANKI_ROBOT_HOST)/v1/update_settings -d '{"settings":{"clock_24_hour":true,"eye_color":"TEAL"}}'
 	@echo
-
 
 update_time: .require_ip
 	ssh root@$(ANKI_ROBOT_HOST) -t date --set='@$(shell date +%s)'

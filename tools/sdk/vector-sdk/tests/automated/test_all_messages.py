@@ -183,6 +183,20 @@ messages_to_test = [
         protocol.EnableVisionModeRequest(mode=protocol.VisionMode.Value("VISION_MODE_DETECTING_FACES"), enable=True),
         TestResultMatches(protocol.EnableVisionModeResult(status=protocol.ResultStatus(description="Message sent to engine"))) ),
 
+    ( client.ExternalInterfaceServicer.GoToPose, 
+        protocol.GoToPoseRequest(x_mm=0.0, y_mm=0.0, rad=0.0, motion_prof=protocol.PathMotionProfile(speed_mmps=100.0,
+                                                                                                        accel_mmps2=200.0,
+                                                                                                        decel_mmps2=500.0,
+                                                                                                        point_turn_speed_rad_per_sec=2.0,
+                                                                                                        point_turn_accel_rad_per_sec2=10.0,
+                                                                                                        point_turn_decel_rad_per_sec2=10.0,
+                                                                                                        dock_speed_mmps=60.0,
+                                                                                                        dock_accel_mmps2=200.0,
+                                                                                                        dock_decel_mmps2=500.0,
+                                                                                                        reverse_speed_mmps=80.0,
+                                                                                                        is_custom=0)), 
+        protocol.GoToPoseResponse(result=protocol.ActionResult.Value("ACTION_RESULT_SUCCESS")) ),
+
     # NOTE: Add additional messages here
     ]
 
