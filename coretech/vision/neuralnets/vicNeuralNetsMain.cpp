@@ -22,9 +22,9 @@
 #elif defined(VIC_NEURALNETS_USE_OPENCV_DNN)
 #  include "objectDetector_opencvdnn.h"
 #elif defined(VIC_NEURALNETS_USE_TFLITE)
-#  include "objectDetector_tflite.h"
+#  include "neuralNetModel_tflite.h"
 #else 
-#  error TENSORFLOW or CAFFE2 or OPENCVDNN or TFLITE must be defined
+#  error One of VIC_NEURALNETS_USE_{TENSORFLOW | CAFFE2 | OPENCVDNN | TFLITE} must be defined
 #endif
 
 #include "coretech/common/shared/types.h"

@@ -36,51 +36,19 @@
 #include "util/helpers/quoteMacro.h"
 #include "util/logging/logging.h"
 
+#include "opencv2/imgcodecs/imgcodecs.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+
 #include <cmath>
 #include <fstream>
 
 namespace Anki {
+namespace Vision {
 
 #define LOG_CHANNEL "NeuralNets"
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// TODO: Could use JsonTools:: instead of most of these...
-
-static inline void SetFromConfigHelper(const Json::Value& json, int32_t& value) {
-  value = json.asInt();
-}
-
-static inline void SetFromConfigHelper(const Json::Value& json, float& value) {
-  value = json.asFloat();
-}
-
-static inline void SetFromConfigHelper(const Json::Value& json, bool& value) {
-  value = json.asBool();
-}
-
-static inline void SetFromConfigHelper(const Json::Value& json, std::string& value) {
-  value = json.asString();
-}
-
-static inline void SetFromConfigHelper(const Json::Value& json, std::vector<std::string>& values)
-{
-  if(json.isArray()) {
-    for(const auto& value : json) {
-      values.push_back(value.asString());
-    }
-  } 
-  else {
-    values.push_back(json.asString());
-  }
-}
-
-// static inline void SetFromConfigHelper(const Json::Value& json, uint8_t& value) {
-//   value = json.asUInt();
-// }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 NeuralNetModel::NeuralNetModel()
-: _params{} 
 {
 
 }
@@ -103,7 +71,7 @@ NeuralNetModel::~NeuralNetModel()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result NeuralNetModel::LoadModel(const std::string& modelPath, const Json::Value& config)
 {
-  const Result result = SetParamsFromConfig(config);
+  const Result result = _params.SetFromConfig(config);
   if(RESULT_OK != result) 
   {
     PRINT_NAMED_ERROR("NeuralNetModel.LoadModel.SetParamsFromConfigFailed", "");
@@ -246,178 +214,6 @@ Result NeuralNetModel::LoadModel(const std::string& modelPath, const Json::Value
     LOG_INFO("NeuralNetModel.LoadModel.ReadLabelFileSuccess", "%s", labelsFileName.c_str());
   }
   return readLabelsResult;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result NeuralNetModel::SetParamsFromConfig(const Json::Value& config)
-{
-# define GetFromConfig(keyName) \
-  if(!config.isMember(QUOTE(keyName))) \
-  { \
-    PRINT_NAMED_ERROR("NeuralNetModel.SetParamsFromConfig.MissingConfig", QUOTE(keyName)); \
-    return RESULT_FAIL; \
-  } \
-  else \
-  { \
-    SetFromConfigHelper(config[QUOTE(keyName)], _params.keyName); \
-  }
-  
-  GetFromConfig(verbose);
-  GetFromConfig(labelsFile);
-  GetFromConfig(minScore);  
-  GetFromConfig(graphFile);
-  GetFromConfig(inputHeight);
-  GetFromConfig(inputWidth);
-  GetFromConfig(architecture);
-  GetFromConfig(memoryMapGraph);
-  GetFromConfig(benchmarkRuns);
-
-  if("ssd_mobilenet" == _params.architecture)
-  {
-    _params.inputLayerName = "image_tensor";
-    _params.outputLayerNames = {"detection_scores", "detection_classes", "detection_boxes", "num_detections"};
-    _params.useFloatInput = false;
-    _params.outputType = OutputType::AnchorBoxes;
-
-    if(config.isMember("outputType")) {
-      PRINT_NAMED_WARNING("NeuralNetModel.SetParamsFromConfig.IgnoringOutputType",
-                          "Ignoring outputType and using 'AnchorBoxes' because architecture='ssd_mobilenet' was specified");
-    }
-  }
-  else if(("mobilenet" == _params.architecture) || ("mobilenet_v1" == _params.architecture))
-  { 
-    _params.inputLayerName = "input";
-    _params.outputLayerNames = {"MobilenetV1/Predictions/Softmax"};
-    _params.useFloatInput = true;
-    _params.outputType = OutputType::Classification;
-
-    if(config.isMember("outputType")) {
-      PRINT_NAMED_WARNING("NeuralNetModel.SetParamsFromConfig.IgnoringOutputType",
-                          "Ignoring outputType and using 'Classification' because architecture='mobilenet' was specified");
-    }
-  }
-  else if("custom" == _params.architecture)
-  {
-    GetFromConfig(inputLayerName);
-    GetFromConfig(outputLayerNames);
-    GetFromConfig(useFloatInput);
-    
-    const Result result = SetOutputTypeFromConfig(config);
-    if(RESULT_OK != result) {
-      // SetOutputTypeFromConfig will print an error, just return
-      // up the chain
-      return result;
-    }
-    
-    if(config.isMember("useGrayscale"))
-    {
-      SetFromConfigHelper(config["useGrayscale"], _params.useGrayscale);
-    }
-  }
-  else
-  {
-    PRINT_NAMED_ERROR("NeuralNetModel.SetParamsFromConfig.UnrecognizedArchitecture", "%s",
-                      _params.architecture.c_str());
-    return RESULT_FAIL;
-  }
-
-  if(_params.verbose)
-  {
-    std::string outputNames;
-    for(auto const& outputLayerName : _params.outputLayerNames)
-    {
-      outputNames += outputLayerName + " ";
-    }    
-
-    LOG_INFO("NeuralNetModel.SetParamsFromConfig.Summary", "Arch: %s, %s Input: %s, Outputs: %s",
-             _params.architecture.c_str(), (_params.useGrayscale ? "Grayscale" : "Color"),
-             _params.inputLayerName.c_str(), outputNames.c_str());
-  }
-
-  if(_params.useFloatInput)
-  {
-    // NOTE: Only used when processing in floating point
-    GetFromConfig(inputShift);
-    GetFromConfig(inputScale);
-  }
-
-  return RESULT_OK;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result NeuralNetModel::SetOutputTypeFromConfig(const Json::Value& config)
-{
-  // Convert outputType to enum and validate number of outputs
-  if(!config.isMember("outputType")) {
-    PRINT_NAMED_ERROR("NeuralNetModel.SetOutputTypeFromConfig.MissingOutputType",
-                      "Custom architecture requires outputType to be specified");
-    return RESULT_FAIL;
-  }
-
-  std::string outputTypeStr;
-  SetFromConfigHelper(config["outputType"], outputTypeStr);
-
-  struct OutputTypeEntry {
-    OutputType type;
-    int        numOutputs;
-  };
-  const std::map<std::string, OutputTypeEntry> kOutputTypeMap{
-    {"classification",        {OutputType::Classification,     1} }, 
-    {"binary_localization",   {OutputType::BinaryLocalization, 1} },
-    {"anchor_boxes",          {OutputType::AnchorBoxes,        4} },
-    {"segmentation",          {OutputType::Segmentation,       1} },
-  };
-
-  auto iter = kOutputTypeMap.find(outputTypeStr);
-  if(iter == kOutputTypeMap.end()) {
-    std::string validKeys;
-    for(auto const& entry : kOutputTypeMap) {
-      validKeys += entry.first;
-      validKeys += " ";
-    }
-    PRINT_NAMED_ERROR("NeuralNetModel.SetOutputTypeFromConfig.BadOutputType", "Valid types: %s", validKeys.c_str());
-    return RESULT_FAIL;
-  }
-  else {
-
-    if(_params.outputLayerNames.size() != iter->second.numOutputs)
-    {
-      PRINT_NAMED_ERROR("NeuralNetModel.SetOutputTypeFromConfig.WrongNumberOfOutputs",
-                        "OutputType %s requires %d outputs (%d provided)", 
-                        iter->first.c_str(), iter->second.numOutputs, (int)_params.outputLayerNames.size());
-      return RESULT_FAIL;
-    }
-    _params.outputType = iter->second.type;
-
-    if(OutputType::BinaryLocalization == _params.outputType)
-    {
-      GetFromConfig(numGridRows);
-      GetFromConfig(numGridCols);
-    }
-  }
-
-  return RESULT_OK;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result NeuralNetModel::ReadLabelsFile(const std::string& fileName, std::vector<std::string>& labels_out)
-{
-  std::ifstream file(fileName);
-  if (!file)
-  {
-    PRINT_NAMED_ERROR("NeuralNetModel.ReadLabelsFile.LabelsFileNotFound", "%s", fileName.c_str());
-    return RESULT_FAIL;
-  }
-  
-  labels_out.clear();
-  std::string line;
-  while (std::getline(file, line)) {
-    labels_out.push_back(line);
-  }
-  
-  LOG_INFO("NeuralNetModel.ReadLabelsFile.Success", "Read %d labels", (int)labels_out.size());
-
-  return RESULT_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -745,22 +541,22 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
 
   switch(_params.outputType)
   {
-    case OutputType::Classification:
+    case NeuralNetParams::OutputType::Classification:
     {
       GetClassification(outputTensors[0], t, salientPoints);
       break;
     }
-    case OutputType::BinaryLocalization:
+    case NeuralNetParams::OutputType::BinaryLocalization:
     {
       GetLocalizedBinaryClassification(outputTensors[0], t, salientPoints);
       break;
     }
-    case OutputType::AnchorBoxes:
+    case NeuralNetParams::OutputType::AnchorBoxes:
     {
       GetDetectedObjects(outputTensors, t, salientPoints);  
       break;
     }
-    case OutputType::Segmentation:
+    case NeuralNetParams::OutputType::Segmentation:
     {
       // TODO (robert) need to convert the segmenation response map
       // into salient points
@@ -844,4 +640,5 @@ Result NeuralNetModel::Run(tensorflow::Tensor imageTensor, std::vector<tensorflo
   }
 }
 
+} // namespace Vision
 } // namespace Anki
