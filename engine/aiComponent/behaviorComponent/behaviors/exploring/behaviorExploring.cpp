@@ -14,7 +14,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/exploring/behaviorExploring.h"
 
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/math/lineSegment2d.h"
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
@@ -29,11 +28,12 @@
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
-#include "engine/navMap/memoryMap/data/memoryMapData_Cliff.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_ProxObstacle.h"
+#include "engine/utils/robotPointSamplerHelper.h"
 #include "util/console/consoleInterface.h"
 #include "util/random/randomGenerator.h"
 #include "util/random/randomIndexSampler.h"
+#include "util/random/rejectionSamplerHelper.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -188,6 +188,35 @@ void BehaviorExploring::InitBehavior()
   
   _iConfig.confirmChargerBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(ConfirmCharger) );
   _iConfig.confirmCubeBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(ConfirmCube) );
+  
+  using namespace RobotPointSamplerHelper;
+  _iConfig.openSpacePointEvaluator.reset( new Util::RejectionSamplerHelper<Point2f>() );
+  _iConfig.openSpacePolyEvaluator.reset( new Util::RejectionSamplerHelper<Poly2f>() );
+  
+  // below is a list of factors for rejection sampling. other ideas:
+  // how much of a ray covers unknown ground? (totally possible with current accumulators,
+  //    but # quads in a line segment unknown, so hard to normalize into a probability)
+  // sample only from unknown points... maybe this needs the iNavMap method FindContentIf, and
+  //    then sampled from that? depends on how big the return set is and how many quads share a data obj
+  // sample only in angles near the current angle? hopefully the planner does this job for us
+  
+  _iConfig.condHandleNearCharger = _iConfig.openSpacePointEvaluator->AddCondition(
+    std::make_shared<RejectIfNotInRange>( 0.0f, M_TO_MM(_iConfig.maxChargerDistance_m) )
+  );
+  _iConfig.condHandleCliffs = _iConfig.openSpacePointEvaluator->AddCondition(
+    std::make_shared<RejectIfWouldCrossCliff>( kMinCliffPenaltyDist_mm )
+  );
+  _iConfig.condHandleCliffs->SetAcceptanceInterpolant( kMaxCliffPenaltyDist_mm, GetRNG() );
+  
+  _iConfig.condHandleCollisions = _iConfig.openSpacePolyEvaluator->AddCondition(
+    std::make_shared<RejectIfCollidesWithMemoryMap>( kTypesToBlockSampling )
+  );
+  
+  _iConfig.condHandleUnknowns = _iConfig.openSpacePolyEvaluator->AddCondition(
+    std::make_shared<RejectIfCollidesWithMemoryMap>( kTypesThatAreKnown )
+  );
+  _iConfig.condHandleUnknowns->SetAcceptanceProbability( _iConfig.pAcceptKnownAreas, GetRNG() );
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -545,6 +574,7 @@ std::vector<Pose3d> BehaviorExploring::SampleVisitLocations() const
   return retPoses;
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploring::SampleVisitLocationsOpenSpace( const INavMap* memoryMap,
                                                        bool tooFarFromCharger,
                                                        bool chargerEqualsRobot,
@@ -565,97 +595,32 @@ void BehaviorExploring::SampleVisitLocationsOpenSpace( const INavMap* memoryMap,
     r1 = kChargerRadius_mm;
     r2 = M_TO_MM(_iConfig.maxChargerDistance_m);
   }
-  const float r1sq = r1*r1;
   
-  // gather a list of cliff pose pointers that should not be used outside this method
-  std::set<const Pose3d*> cliffs;
-  MemoryMapTypes::MemoryMapDataConstList wasteList;
-  memoryMap->FindContentIf([&cliffs](MemoryMapDataConstPtr data){
-    if( data->type == MemoryMapTypes::EContentType::Cliff ) {
-      const auto& cliffData = MemoryMapData::MemoryMapDataCast<MemoryMapData_Cliff>(data);
-      cliffs.insert( &cliffData->pose );
-    }
-    return false; // don't actually gather any data
-  }, wasteList);
+  // update cliff positions
+  _iConfig.condHandleCliffs->SetRobotPosition( robotPos );
+  _iConfig.condHandleCliffs->UpdateCliffs( memoryMap );
+  
+  // update charger position
+  _iConfig.condHandleNearCharger->SetOtherPosition( chargerPos );
+  
+  // update memory map
+  _iConfig.condHandleCollisions->SetMemoryMap( memoryMap );
+  _iConfig.condHandleUnknowns->SetMemoryMap( memoryMap );
   
   for( unsigned int cnt=0; cnt<kNumSampleSteps; ++cnt ) {
     
     // sample a point based on either the robot position or charger position
     Point2f sampledPos = tooFarFromCharger ? chargerPos : robotPos;
     {
-      // uniformly sample a point on an annulus between radii (r1,r2) about sampledPos
-      // (there's another way to do this without the sqrt, but it requires three
-      // uniform r.v.'s, and some quick tests show that that ends up being slower)
-      const float theta = M_TWO_PI * static_cast<float>( GetRNG().RandDbl() );
-      const float u = static_cast<float>( GetRNG().RandDbl() );
-      const float r = sqrt( r1sq + (r2*r2 - r1sq)*u );
-      sampledPos.x() += r*cosf(theta);
-      sampledPos.y() += r*sinf(theta);
+      const Point2f pt = RobotPointSamplerHelper::SamplePointInAnnulus( GetRNG(), r1, r2 );
+      sampledPos.x() += pt.x();
+      sampledPos.y() += pt.y();
     }
     
-    // below is a list of factors for rejection sampling. other ideas:
-    // how much of a ray covers unknown ground? (totally possible with current accumulators,
-    //    but # quads in a line segment unknown, so hard to normalize into a probability)
-    // sample only from unknown points... maybe this needs the iNavMap method FindContentIf, and
-    //    then sampled from that? depends on how big the return set is and how many quads share a data obj
-    // sample only in angles near the current angle? hopefully the planner does this job for us
-    // todo: rejection sampling helper class
+    const bool acceptedPoint = _iConfig.openSpacePointEvaluator->Evaluate( GetRNG(), sampledPos );
     
-    // check distance to charger, reject if too far
-    {
-      const float distChargerSq = (sampledPos - chargerPos).LengthSq();
-      if( distChargerSq > M_TO_MM(_iConfig.maxChargerDistance_m)*M_TO_MM(_iConfig.maxChargerDistance_m) ) {
-        continue;
-      }
-    }
-    
-    // check if a vector from the robot to the sample point crosses through a line aligned with the cliff
-    // edge and reject if that intersection point occurs close to the cliff
-    {
-      LineSegment lineRobotToSample{ sampledPos, robotPos };
-      float pAccept = 1.0f; // this may be decremented for multiple cliffs
-      for( const auto* cliffPose : cliffs ) {
-        const Vec3f cliffDirection = (cliffPose->GetRotation() * X_AXIS_3D());
-        // do this in 2d
-        const Vec2f cliffEdgeDirection = CrossProduct( Z_AXIS_3D(), cliffDirection ); // sign doesn't matter
-        const Point2f cliffPos = cliffPose->GetTranslation();
-        // find intersection of lineRobotToSample with cliffEdgeDirection
-        LineSegment cliffLine{ cliffPos + cliffEdgeDirection * kMaxCliffPenaltyDist_mm,
-                               cliffPos - cliffEdgeDirection * kMaxCliffPenaltyDist_mm };
-        Point2f intersectionPoint;
-        const bool intersects = lineRobotToSample.IntersectsAt( cliffLine, intersectionPoint );
-        if( intersects ) {
-          // confirm intersection point lies on cliff edge
-          DEV_ASSERT( AreVectorsAligned( (intersectionPoint - cliffPos), cliffEdgeDirection, 0.001f ),
-                      "BehaviorExploring.SampleVisitLocationsOpenSpace.BadIntersection" );
-          // if the intersection pos is close to the cliff pos, reject. If it's far, accept. interpolate in between.
-          const float distFromCliffSq = (intersectionPoint - cliffPos).LengthSq();
-          const static float minSq = kMinCliffPenaltyDist_mm * kMinCliffPenaltyDist_mm;
-          if( distFromCliffSq < minSq ) {
-            pAccept = 0.0f;
-            // break to then move to next sample point
-            break;
-          }
-          const static float maxSq = kMaxCliffPenaltyDist_mm * kMaxCliffPenaltyDist_mm;
-          const float p = (distFromCliffSq > maxSq)
-                          ? 0.0f
-                          : 1.0f - (distFromCliffSq - minSq) / (maxSq - minSq);
-          // multiple cliffs can contribute to the acceptance probability
-          pAccept -= p;
-          if( pAccept <= 0.0f ) {
-            // break to then move to next sample point
-            break;
-          }
-        }
-      }
-      if( (pAccept <= 0.0f) || (pAccept < GetRNG().RandDbl()) ) {
-        // move to next sample point
-        continue;
-      } else {
-        PRINT_NAMED_INFO( "BehaviorExploring.SampleVisitLocationsOpenSpace.AcceptedCliff",
-                          "Accepted cliff with p=%1.2f",
-                          pAccept );
-      }
+    if( !acceptedPoint ) {
+      continue;
     }
     
     // choose a random angle about the Z axis to create a full test pose
@@ -666,28 +631,10 @@ void BehaviorExploring::SampleVisitLocationsOpenSpace( const INavMap* memoryMap,
     Poly2f footprint;
     footprint.ImportQuad2d(quad);
     
-    // check for collisions, reject if so
-    {
-      const bool hasCollision = memoryMap->HasCollisionWithTypes( footprint, kTypesToBlockSampling );
-      if( hasCollision ) {
-        continue;
-      }
-    }
+    const bool acceptedFootprint = _iConfig.openSpacePolyEvaluator->Evaluate( GetRNG(), footprint );
     
-    // bias towards unknown areas based on config
-    {
-      const bool isKnown = memoryMap->HasCollisionWithTypes( footprint, kTypesThatAreKnown );
-      if( isKnown ) {
-        const float rv = GetRNG().RandDbl();
-        if( rv <= _iConfig.pAcceptKnownAreas ) {
-          PRINT_NAMED_INFO( "BehaviorExploring.SampleVisitLocationsOpenSpace.AcceptKnown",
-                            "Accepting a sample that is known with p=%1.2f",
-                            rv );
-        } else {
-          // move to next sample
-          continue;
-        }
-      }
+    if( !acceptedFootprint ) {
+      continue;
     }
     
     // if we get here, accept!!
