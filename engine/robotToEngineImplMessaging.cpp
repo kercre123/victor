@@ -488,7 +488,12 @@ void RobotToEngineImplMessaging::HandleRobotStopped(const AnkiEvent<RobotInterfa
   robot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::RobotStoppedAck()));
 
   // Forward on with EngineToGame event
-  robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotStopped(payload.reason)));
+  robot->Broadcast(
+    ExternalInterface::MessageEngineToGame(
+      ExternalInterface::RobotStopped(
+        payload.reason,
+        payload.cliffDetectedFlags,
+        payload.whiteDetectedFlags)));
 }
 
 void RobotToEngineImplMessaging::HandlePotentialCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

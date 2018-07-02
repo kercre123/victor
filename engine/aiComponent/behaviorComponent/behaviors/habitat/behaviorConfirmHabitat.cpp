@@ -19,7 +19,6 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/habitat/behaviorConfirmHabitat.h"
 
-#include "clad/types/habitatDetectionTypes.h"
 #include "clad/types/behaviorComponent/behaviorIDs.h"
 #include "clad/externalInterface/messageEngineToGameTag.h"
 
@@ -59,15 +58,25 @@ namespace
 {
   static const std::set<BehaviorID> kPassiveBehaviorsToInterrupt = {
     BEHAVIOR_ID(Exploring),
+    BEHAVIOR_ID(ExploringVoiceCommand),
     BEHAVIOR_ID(Observing),
   };
+  
+  static const char* kOnTreadsTimeCondition = "onTreadsTimeCondition";
+  
+  // minimum time between playing react to white animations
+  static const float kReactToWhiteAnimCooldown_sec = 10.0f;
+  
+  // bit flag representation for each cliff sensor
+  static const uint8_t kFL = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_FL));
+  static const uint8_t kFR = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_FR));
+  static const uint8_t kBL = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_BL));
+  static const uint8_t kBR = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_BR));
 }
 
-BehaviorConfirmHabitat::DynamicVariables::DynamicVariables()
+BehaviorConfirmHabitat::InstanceConfig::InstanceConfig()
 {
-  _phase = ConfirmHabitatPhase::Initial;
-  _randomWalkTooCloseObstacle = false;
-  _lookForChargerAngleSwept_rad = 0.0;
+  onTreadsTimeCondition.reset();
 }
 
 BehaviorConfirmHabitat::BehaviorConfirmHabitat(const Json::Value& config)
@@ -84,6 +93,12 @@ BehaviorConfirmHabitat::BehaviorConfirmHabitat(const Json::Value& config)
   chargerFilter->AddAllowedFamily(ObjectFamily::Charger);
   chargerFilter->AddAllowedType(ObjectType::Charger_Basic);
   _chargerFilter.reset(chargerFilter);
+  
+  DEV_ASSERT(config.isMember(kOnTreadsTimeCondition), "ConfirmHabitat.Ctor.OnTreadsTimeConditionUndefined");
+  _iConfig.onTreadsTimeCondition = BEIConditionFactory::CreateBEICondition(config[kOnTreadsTimeCondition], GetDebugLabel());
+  ANKI_VERIFY(_iConfig.onTreadsTimeCondition != nullptr,
+              "ConfirmHabitat.Ctor.OnTreadsTimeConditionNotConstructed",
+              "OnTreadsTimeCondition specified, but did not build properly");
 }
 
 BehaviorConfirmHabitat::~BehaviorConfirmHabitat()
@@ -93,6 +108,9 @@ BehaviorConfirmHabitat::~BehaviorConfirmHabitat()
 void BehaviorConfirmHabitat::InitBehavior()
 {
   _dVars = DynamicVariables();
+  if(_iConfig.onTreadsTimeCondition != nullptr){
+    _iConfig.onTreadsTimeCondition->Init(GetBEI());
+  }
 }
 
 void BehaviorConfirmHabitat::GetAllDelegates(std::set<IBehavior*>& delegates) const
@@ -108,7 +126,7 @@ bool BehaviorConfirmHabitat::WantsToBeActivatedBehavior() const
   // + robot does not have user intent pending
   // + robot does not have user intent active
   //
-  // conditions defined in the json:
+  // conditions defined in json:
   // + robot has been putdown at least 30 seconds ago
   
   const bool onChargerPlatform = GetBEI().GetRobotInfo().IsOnChargerPlatform();
@@ -120,7 +138,12 @@ bool BehaviorConfirmHabitat::WantsToBeActivatedBehavior() const
   const auto& habitatDetector = GetBEI().GetHabitatDetectorComponent();
   HabitatBeliefState hbelief  = habitatDetector.GetHabitatBeliefState();
   
-  if(!onChargerPlatform && !intentsPendingOrActive && hbelief == HabitatBeliefState::Unknown) {
+  bool onTreadsTimeValid = false;
+  if(_iConfig.onTreadsTimeCondition != nullptr) {
+    onTreadsTimeValid = _iConfig.onTreadsTimeCondition->AreConditionsMet(GetBEI());
+  }
+  
+  if(!onChargerPlatform && !intentsPendingOrActive && hbelief == HabitatBeliefState::Unknown && onTreadsTimeValid) {
     // it is costly to iterate the behavior stack
     // therefore we check the interrupt condition last
     bool canInterrupt = false;
@@ -139,30 +162,57 @@ bool BehaviorConfirmHabitat::WantsToBeActivatedBehavior() const
     const auto& behaviorIterator = GetBehaviorComp<ActiveBehaviorIterator>();
     behaviorIterator.IterateActiveCozmoBehaviorsForward( checkInterruptCallback, nullptr );
     return canInterrupt;
+  } else if(hbelief==HabitatBeliefState::Unknown && _dVars._robotStoppedOnWhite) {
+    return true;
   }
   // if control reaches here, robot EITHER:
   // - is on the charger platform
   // - has a user intent pending/active
   // - knows its habitat belief state already
+  // - has been on the treads for long enough
   return false;
 }
 
 void BehaviorConfirmHabitat::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
+  expectedKeys.insert(kOnTreadsTimeCondition);
 }
 
 void BehaviorConfirmHabitat::OnBehaviorActivated()
 {
   PRINT_NAMED_INFO("ConfirmHabitat.Activated","");
   GetBEI().GetCliffSensorComponent().EnableStopOnWhite(true);
+  
+  // in a previous tick where we evaluated WantsToBeActivated
+  // as true, the reason could either be:
+  // - the robot has met all the conditions to enter ConfirmHabitat
+  //    organically
+  // - OR, the robot got a StopOnWhite message and we want to take
+  //    the opportunity to perform the cliff alignment actions
+  //    if possible.
+  bool doReactToWhite = _dVars._robotStoppedOnWhite;
   _dVars = DynamicVariables();
+  _dVars._robotStoppedOnWhite = doReactToWhite;
 }
 
 void BehaviorConfirmHabitat::OnBehaviorDeactivated()
 {
   PRINT_NAMED_INFO("ConfirmHabitat.Deactivated","");
-  GetBEI().GetCliffSensorComponent().EnableStopOnWhite(false);
   _dVars = DynamicVariables();
+}
+
+void BehaviorConfirmHabitat::OnBehaviorEnteredActivatableScope()
+{
+  if(_iConfig.onTreadsTimeCondition != nullptr) {
+    _iConfig.onTreadsTimeCondition->SetActive(GetBEI(), true);
+  }
+}
+
+void BehaviorConfirmHabitat::OnBehaviorLeftActivatableScope()
+{
+  if(_iConfig.onTreadsTimeCondition != nullptr) {
+    _iConfig.onTreadsTimeCondition->SetActive(GetBEI(), false);
+  }
 }
 
 void BehaviorConfirmHabitat::BehaviorUpdate()
@@ -188,11 +238,19 @@ void BehaviorConfirmHabitat::BehaviorUpdate()
     return;
   }
   
+  
+  
   switch(_dVars._phase) {
     case ConfirmHabitatPhase::Initial:
     {
-      const bool isChargerObserved = GetChargerIfObserved() != nullptr;
-      if(isChargerObserved) {
+      // if the robot stopped on white, play the animation first
+      if(_dVars._robotStoppedOnWhite) {
+        auto lineRelPose = habitatDetector.GetHabitatLineRelPose();
+        _dVars._robotStoppedOnWhite = false;
+        _dVars._phase = ConfirmHabitatPhase::LineDocking;
+        TransitionToReactToWhite(lineRelPose);
+        return;
+      } else if(GetChargerIfObserved() != nullptr) {
         _dVars._phase = ConfirmHabitatPhase::SeekLineFromCharger;
         TransitionToSeekLineFromCharger();
       } else {
@@ -259,11 +317,20 @@ void BehaviorConfirmHabitat::BehaviorUpdate()
           break;
         }
         case HabitatLineRelPose::WhiteFL: // deliberate fallthrough
-        case HabitatLineRelPose::WhiteFR: // deliberate fallthrough
+        case HabitatLineRelPose::WhiteFR:
+        {
+          TransitionToCliffAlignWhite();
+          break;
+        }
+        
         case HabitatLineRelPose::WhiteBL: // deliberate fallthrough
         case HabitatLineRelPose::WhiteBR:
         {
-          TransitionToCliffAlignWhite();
+          // do not align to white using the back cliff sensors
+          // instead move away from the white line
+          f32 angle = habitatDetector.GetHabitatLineRelPose() == HabitatLineRelPose::WhiteBL ?
+                      (M_PI_4_F) : (-M_PI_4_F);
+          TransitionToTurnBackupForward(angle, 0, 30);
           break;
         }
           
@@ -406,6 +473,85 @@ void BehaviorConfirmHabitat::TransitionToCliffAlignWhite()
   DelegateActionHelper(action, std::move(callback));
 }
 
+void BehaviorConfirmHabitat::TransitionToReactToWhite(HabitatLineRelPose lineRelPose)
+{
+  u8 bitFlags = 0;
+  switch(lineRelPose) {
+    case HabitatLineRelPose::WhiteFL: { bitFlags = kFL; break; }
+    case HabitatLineRelPose::WhiteFR: { bitFlags = kFR; break; }
+    case HabitatLineRelPose::WhiteBL: { bitFlags = kBL; break; }
+    case HabitatLineRelPose::WhiteBR: { bitFlags = kBR; break; }
+    
+    case HabitatLineRelPose::WhiteFLFR: { bitFlags = kFL | kFR; break; }
+    case HabitatLineRelPose::WhiteFLBL: { bitFlags = kFL | kBL; break; }
+    case HabitatLineRelPose::WhiteFRBR: { bitFlags = kFR | kBR; break; }
+    case HabitatLineRelPose::WhiteBLBR: { bitFlags = kBL | kBR; break; }
+    
+    default:
+    {
+      bitFlags = 0;
+      break;
+    }
+  }
+  
+  if(bitFlags == 0) {
+    PRINT_NAMED_WARNING("ConfirmHabitat.TransitionReactToWhite.NoWhiteDetected","");
+  }
+  
+  TransitionToReactToWhite(bitFlags);
+}
+
+void BehaviorConfirmHabitat::TransitionToReactToWhite(uint8_t whiteDetectedFlags)
+{
+  PRINT_NAMED_INFO("ConfirmHabitat.TransitionToWhiteReactionAnim", "%d", (int)whiteDetectedFlags);
+  
+  const float currTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const bool doWhiteReactionAnim = currTime_sec > _dVars._nextWhiteReactionAnimTime_sec;
+
+  CompoundActionSequential* action = new CompoundActionSequential();
+
+  if(doWhiteReactionAnim) {
+    AnimationTrigger animToPlay;
+    // Play reaction animation based on triggered sensor(s)
+    switch (whiteDetectedFlags) {
+      case (kFL | kFR): { animToPlay = AnimationTrigger::ExploringHuhClose;       break; }
+      case kFL:         { animToPlay = AnimationTrigger::ExploringHuhClose;       break; }
+      case kFR:         { animToPlay = AnimationTrigger::ExploringHuhClose;       break; }
+      case kBL:
+      case kBR:
+      case (kBL | kBR):
+      {
+        // since Vector doesn't have eyes at the back
+        // of his head, reacting to back cliffs does not
+        // read properly to the user. Do nothing here.
+        PRINT_NAMED_INFO("ConfirmHabitat.TransitionToReactToWhite.BackCliffDetectingWhiteNoReact","");
+        return;
+      }
+      default:
+      {
+        // This is some scary configuration that we probably shouldn't move from.
+        delete(action);
+        PRINT_NAMED_WARNING("ConfirmHabitat.TransitionToReactToWhite.InvalidCliffSensorConfig","");
+        return;
+      }
+    }
+    action->AddAction(new TriggerLiftSafeAnimationAction(animToPlay, 1, true, (u8)AnimTrackFlag::BODY_TRACK));
+    
+    _dVars._nextWhiteReactionAnimTime_sec = currTime_sec + kReactToWhiteAnimCooldown_sec;
+  }
+  
+  // insert a short wait to observe the line
+  // when we receive a StopOnWhite message, there is a 1-2 tick lag for engine to register
+  // that it is seeing a white line beneath it. This is used as a buffer for engine to
+  // catch up and update its internal tracking of white
+  action->AddAction(new WaitForLambdaAction([](Robot& robot)->bool {
+                      return robot.GetHabitatDetectorComponent().GetHabitatLineRelPose() != HabitatLineRelPose::Invalid &&
+                             robot.GetHabitatDetectorComponent().GetHabitatLineRelPose() != HabitatLineRelPose::AllGrey;
+                    },0.1f));
+  
+  DelegateActionHelper(action, nullptr);
+}
+
 void BehaviorConfirmHabitat::TransitionToBackupAndTurn(f32 angle)
 {
   PRINT_NAMED_INFO("ConfirmHabitat.TransitionToBackupAndTurn","");
@@ -461,15 +607,15 @@ void BehaviorConfirmHabitat::TransitionToTurnBackupForward(f32 angle, int backDi
 
 void BehaviorConfirmHabitat::TransitionToRandomWalk()
 {
-  static int count = 1;
+  int index = GetRNG().RandInt(3);
+  
   const Pose3d& robotPose = GetBEI().GetRobotInfo().GetPose();
   Pose3d desiredOffsetPose;
-  if(count == 0 || count >= 3) {
+  if(index == 0) {
     desiredOffsetPose = Pose3d(Rotation3d(0, Z_AXIS_3D()), Vec3f(100,0,0));
-    count = 0;
-  } else if(count == 1) {
+  } else if(index == 1) {
     desiredOffsetPose = Pose3d(Rotation3d(-M_PI_4, Z_AXIS_3D()), Vec3f(75,-50,0));
-  } else if(count == 2) {
+  } else if(index == 2) {
     desiredOffsetPose = Pose3d(Rotation3d(M_PI_4, Z_AXIS_3D()), Vec3f(75,50,0));
   }
   desiredOffsetPose.SetParent(robotPose);
@@ -479,8 +625,7 @@ void BehaviorConfirmHabitat::TransitionToRandomWalk()
     GetBEI().GetMapComponent().SetUseProxObstaclesInPlanning(true);
   };
   DelegateActionHelper(action, std::move(callback));
-  PRINT_NAMED_INFO("ConfirmHabitat.TransitionToRandomWalk", "ActionNum=%d",count);
-  count++;
+  PRINT_NAMED_INFO("ConfirmHabitat.TransitionToRandomWalk", "ActionNum=%d",index);
 }
 
 void BehaviorConfirmHabitat::TransitionToSeekLineFromCharger()
@@ -534,33 +679,11 @@ const ObservableObject* BehaviorConfirmHabitat::GetChargerIfObserved() const
   return GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose, *_chargerFilter);
 }
 
-void BehaviorConfirmHabitat::TransitionToWaitForWhite()
-{
-  PRINT_NAMED_INFO("ConfirmHabitat.TransitionToWaitForWhite","");
-  IActionRunner* action = new WaitForLambdaAction([](Robot& robot)->bool {
-    return robot.GetHabitatDetectorComponent().GetHabitatLineRelPose() != HabitatLineRelPose::Invalid &&
-           robot.GetHabitatDetectorComponent().GetHabitatLineRelPose() != HabitatLineRelPose::AllGrey;
-  },0.2f);
-  DelegateActionHelper(action, nullptr);
-}
-
 void BehaviorConfirmHabitat::HandleWhileActivated(const EngineToGameEvent& event)
 {
   using namespace ExternalInterface;
   switch (event.GetData().GetTag())
   {
-    case EngineToGameTag::RobotStopped:
-    {
-      auto reason = event.GetData().Get_RobotStopped().reason;
-      if(reason == StopReason::WHITE) {
-        const auto& habitatDetector = GetBEI().GetHabitatDetectorComponent();
-        PRINT_NAMED_INFO("ConfirmHabitat.HandleWhileActivated.StopOnWhite",
-                         "%s",EnumToString(habitatDetector.GetHabitatLineRelPose()));
-        CancelDelegates();
-        TransitionToWaitForWhite();
-      }
-      break;
-    }
     case EngineToGameTag::CliffEvent:
     {
       // deliberate fallthrough
@@ -593,6 +716,33 @@ void BehaviorConfirmHabitat::HandleWhileActivated(const EngineToGameEvent& event
       break;
     }
   } // end switch
+}
+
+void BehaviorConfirmHabitat::AlwaysHandleInScope(const EngineToGameEvent& event)
+{
+  using namespace ExternalInterface;
+  switch(event.GetData().GetTag()) {
+    case EngineToGameTag::RobotStopped:
+    {
+      const auto reason = event.GetData().Get_RobotStopped().reason;
+      const auto belief = GetBEI().GetHabitatDetectorComponent().GetHabitatBeliefState();
+      if(reason == StopReason::WHITE && belief == HabitatBeliefState::Unknown) {
+        PRINT_NAMED_INFO("ConfirmHabitat.AlwaysHandleInScope.StoppedOnWhite","");
+        if(IsActivated() || IsControlDelegated()) {
+          CancelDelegates();
+          TransitionToReactToWhite(event.GetData().Get_RobotStopped().whiteDetectedFlags);
+        }
+        // on the next WantsToBeActivated() check for this behavior
+        // this will ensure the confirm habitat behavior is run
+        _dVars._robotStoppedOnWhite = true;
+      }
+      break;
+    }
+    default:
+    {
+      break;
+    }
+  }
 }
 
 }

@@ -50,7 +50,7 @@ namespace {
   // sensors see the white line of the habitat, then these two
   // constants are the min and max range of values for the sensor
   const int kConfirmationConfigProxMinReading = 17;
-  const int kConfirmationConfigProxMaxReading = 28;
+  const int kConfirmationConfigProxMaxReading = 36;
   
   const f32 kMinTravelDistanceWithoutSeeingWhite_mm = 260; // length of largest diagonal in habitat
 }
@@ -84,9 +84,10 @@ void HabitatDetectorComponent::InitDependent(Robot* robot, const RobotCompMap& d
 template<>
 void HabitatDetectorComponent::HandleMessage(const ExternalInterface::RobotOffTreadsStateChanged& msg)
 {
-  if(msg.treadsState!=OffTreadsState::OnTreads) {
+  if(msg.treadsState==OffTreadsState::OnTreads) {
     _habitatBelief = HabitatBeliefState::Unknown;
     _detectedWhiteFromCliffs = false;
+    _robot->GetCliffSensorComponent().EnableStopOnWhite(true);
   }
 }
 
@@ -154,6 +155,7 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
       // impossible configurations when not on the charger platform
       _habitatBelief = HabitatBeliefState::NotInHabitat;
       _habitatLineRelPose = HabitatLineRelPose::Invalid;
+      _robot->GetCliffSensorComponent().EnableStopOnWhite(false);
     } else {
       // note: we take specific actions based on the line-pose determined here
       // inside the behavior ConfirmHabitat
@@ -184,9 +186,11 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
       if(_habitatLineRelPose == HabitatLineRelPose::WhiteFLFR) {
         if(IsProxObservingHabitatWall()) {
           _habitatBelief = HabitatBeliefState::InHabitat;
+          _robot->GetCliffSensorComponent().EnableStopOnWhite(true);
           PRINT_NAMED_INFO("HabitatDetectorComponent.UpdateDependent.InHabitat","");
         } else {
           _habitatBelief = HabitatBeliefState::NotInHabitat;
+          _robot->GetCliffSensorComponent().EnableStopOnWhite(false);
           PRINT_NAMED_INFO("HabitatDetectorComponent.UpdateDependent.NotInHabitat","");
         }
       }

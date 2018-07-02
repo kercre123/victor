@@ -74,6 +74,8 @@ message FallingEvent {
 message RobotStopped
 {
   StopReason reason,
+  uint_8 cliffDetectedFlags,
+  uint_8 whiteDetectedFlags
 }
 
 message PathFollowingEvent

@@ -21,6 +21,7 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_Habitat_BehaviorConfirmHabitat_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "clad/types/habitatDetectionTypes.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -53,8 +54,11 @@ protected:
   
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
+  virtual void OnBehaviorEnteredActivatableScope() override;
+  virtual void OnBehaviorLeftActivatableScope() override;
   virtual void BehaviorUpdate() override;
   virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   
   // state action helper methods
@@ -64,16 +68,13 @@ protected:
   void TransitionToBackupForward();
   void TransitionToLocalizeCharger();
   void TransitionToReactToHabitat();
+  void TransitionToReactToWhite(uint8_t whiteDetectedFlags);
+  void TransitionToReactToWhite(HabitatLineRelPose lineRelPose);
   
   // helper motions to reposition the robot from certain line positions
   void TransitionToCliffAlignWhite();
   void TransitionToBackupAndTurn(f32 angle);
   void TransitionToTurnBackupForward(f32 angle, int backDist_mm, int forwardDist_mm);
-  
-  // when we receive a StopOnWhite message, there is a 1-2 tick lag for engine to register
-  // that it is seeing a white line beneath it. This is used as a buffer for engine to
-  // catch up and update its internal tracking of white
-  void TransitionToWaitForWhite();
   
   // returns nullptr if there is no charger seen
   const ObservableObject* GetChargerIfObserved() const;
@@ -103,14 +104,30 @@ protected:
     // TODO(agm) remove this when we can delegate to
     // another behavior
     f32 _lookForChargerAngleSwept_rad = 0.0;
+    
+    // if we are in the unknown habitat state, then a stop-on-white
+    // message is indicative of possibly being inside the habitat
+    // so use this control flag to activate the behavior
+    bool _robotStoppedOnWhite = false;
+    
+    // time of last reaction animation, for cooldown purposes
+    float _nextWhiteReactionAnimTime_sec = 0.0;
 
-    explicit DynamicVariables();
+    explicit DynamicVariables() = default;
+  };
+  
+  struct InstanceConfig
+  {
+    IBEIConditionPtr onTreadsTimeCondition;
+    
+    explicit InstanceConfig();
   };
   
   // persist this filter because we use it to search for the charger
   std::unique_ptr<BlockWorldFilter> _chargerFilter;
   
   DynamicVariables _dVars;
+  InstanceConfig _iConfig;
 };
 
 }

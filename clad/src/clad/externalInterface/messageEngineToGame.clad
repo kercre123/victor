@@ -184,7 +184,9 @@ message RobotPoked {
 }
 
 message RobotStopped {
-  StopReason reason
+  StopReason reason,
+  uint_8 cliffDetectedFlags,
+  uint_8 whiteDetectedFlags
 }
 
 message RobotOffTreadsStateChanged {
