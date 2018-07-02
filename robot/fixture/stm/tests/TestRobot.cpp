@@ -1358,7 +1358,7 @@ static void RobotFlexFlowPackoutReport(void)
     FLEXFLOW::printf("esn %08x\n", flexnfo.esn );
     FLEXFLOW::printf("hwver %u\n", flexnfo.hwver );
     FLEXFLOW::printf("model %u\n", flexnfo.model );
-    FLEXFLOW::printf("packout-date %08x\n", flexnfo.packoutdate );
+    FLEXFLOW::printf("packout-date %010u %s", flexnfo.packoutdate, ctime(&flexnfo.packoutdate) );
     
     robot_bsv_t* bsv = &flexnfo.bsv;
     FLEXFLOW::printf("body-ein %08x %08x %08x %08x\n", bsv->ein[0], bsv->ein[1], bsv->ein[2], bsv->ein[3] );
