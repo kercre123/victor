@@ -175,56 +175,12 @@ bool InitConnectionFlow(AnimationStreamer* animStreamer)
   return true;
 }
 
-void UpdatePairingLight(bool on)
-{
-  static bool isOn = false;
-  if(!isOn && on)
-  {
-    // Start system pairing light (pulsing orange/green)
-    RobotInterface::EngineToRobot m(RobotInterface::SetSystemLight({
-          .light = {
-            .onColor = 0xFFFF0000,
-            .offColor = 0x00000000,
-            .onFrames = 16,
-            .offFrames = 16,
-            .transitionOnFrames = 16,
-            .transitionOffFrames = 16,
-            .offset = 0
-          }}));
-    AnimComms::SendPacketToRobot((char*)m.GetBuffer(), m.Size());
-    isOn = on;
-  }
-  else if(isOn && !on)
-  {
-    // Turn system pairing light off
-    RobotInterface::EngineToRobot m(RobotInterface::SetSystemLight({
-          .light = {
-            .onColor = 0x00000000,
-            .offColor = 0x00000000,
-            .onFrames = 1,
-            .offFrames = 1,
-            .transitionOnFrames = 0,
-            .transitionOffFrames = 0,
-            .offset = 0
-          }}));
-    AnimComms::SendPacketToRobot((char*)m.GetBuffer(), m.Size());
-    isOn = on;
-  }
-}
-
 void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
                           AnimationStreamer* animStreamer,
                           const AnimContext* context)
 {
   using namespace SwitchboardInterface;
-
-  // Update the pairing light
-  // Turn it on if we are on the START_PAIRING, SHOW_PRE_PIN, or SHOW_PIN screen
-  // Otherwise turn it off
-  UpdatePairingLight((msg.status == ConnectionStatus::START_PAIRING ||
-                      msg.status == ConnectionStatus::SHOW_PRE_PIN ||
-                      msg.status == ConnectionStatus::SHOW_PIN));
-
+  
   // Enable pairing screen if status is anything besides NONE, COUNT, and END_PAIRING
   // Should do nothing if called multiple times with same argument such as when transitioning from
   // START_PAIRING to SHOW_PRE_PIN

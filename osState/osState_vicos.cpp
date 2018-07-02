@@ -73,17 +73,18 @@ namespace {
   std::mutex _cpuTimeStatsMutex;
 
   const char* kNominalCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq";
-  const char* kCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq";
-  const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone3/temp";
-  const char* kMACAddressFile = "/sys/class/net/wlan0/address";
-  const char* kRecoveryModeFile = "/data/unbrick";
-  const char* kUptimeFile = "/proc/uptime";
-  const char* kMemInfoFile = "/proc/meminfo";
-  const char* kCPUTimeStatsFile = "/proc/stat";
-  const char* kWifiTxBytesFile = "/sys/class/net/wlan0/statistics/tx_bytes";
-  const char* kWifiRxBytesFile = "/sys/class/net/wlan0/statistics/rx_bytes";
-  const char* kBootIDFile = "/proc/sys/kernel/random/boot_id";
-  const char* kLocalTimeFile = "/data/etc/localtime";
+  const char* kCPUFreqFile        = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq";
+  const char* kTemperatureFile    = "/sys/devices/virtual/thermal/thermal_zone3/temp";
+  const char* kMACAddressFile     = "/sys/class/net/wlan0/address";
+  const char* kRecoveryModeFile   = "/data/unbrick";
+  const char* kUptimeFile         = "/proc/uptime";
+  const char* kMemInfoFile        = "/proc/meminfo";
+  const char* kCPUTimeStatsFile   = "/proc/stat";
+  const char* kWifiTxBytesFile    = "/sys/class/net/wlan0/statistics/tx_bytes";
+  const char* kWifiRxBytesFile    = "/sys/class/net/wlan0/statistics/rx_bytes";
+  const char* kBootIDFile         = "/proc/sys/kernel/random/boot_id";
+  const char* kLocalTimeFile      = "/data/etc/localtime";
+  const char* kCmdLineFile        = "/proc/cmdline";
   constexpr const char* kUniversalTimeFile = "/usr/share/zoneinfo/Universal";
   constexpr const char* kRobotVersionFile = "/anki/etc/version";
 
@@ -663,6 +664,30 @@ bool OSState::HasTimezone() const
 
   // since kUniversalTimeFile is being linked to, we don't have a timezone
   return false;
+}
+
+bool OSState::IsUserSpaceSecure()
+{
+  static bool read = false;
+  if(!read)
+  {
+    read = true;
+    std::ifstream infile(kCmdLineFile);	
+    std::string line;
+    while(std::getline(infile, line))	
+    {
+      static const char* kKey = "dm=";
+      size_t index = line.find(kKey);	
+      if(index != std::string::npos)	
+      {
+        _isUserSpaceSecure = true;
+        break;
+      }	
+    }	
+    infile.close();
+  }
+
+  return _isUserSpaceSecure;
 }
 
 } // namespace Cozmo

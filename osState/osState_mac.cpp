@@ -400,5 +400,10 @@ bool OSState::HasTimezone() const
   return true;
 }
 
+bool OSState::IsUserSpaceSecure()
+{
+  return true;
+}
+
 } // namespace Cozmo
 } // namespace Anki

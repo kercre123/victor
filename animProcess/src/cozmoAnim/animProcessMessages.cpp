@@ -73,7 +73,7 @@ namespace {
 
   Anki::Cozmo::AnimEngine*                   _animEngine = nullptr;
   Anki::Cozmo::AnimationStreamer*            _animStreamer = nullptr;
-  Anki::Cozmo::StreamingAnimationModifier* _streamingAnimationModifier = nullptr;
+  Anki::Cozmo::StreamingAnimationModifier*   _streamingAnimationModifier = nullptr;
   Anki::Cozmo::Audio::EngineRobotAudioInput* _engAudioInput = nullptr;
   Anki::Cozmo::Audio::ProceduralAudioClient* _proceduralAudioClient = nullptr;
   const Anki::Cozmo::AnimContext*            _context = nullptr;

@@ -397,7 +397,7 @@ namespace Cozmo {
   AnimationStreamer::AnimationStreamer(const AnimContext* context)
   : _context(context)
   , _proceduralTrackComponent(new TrackLayerComponent(context))
-  , _lockedTracks(0)
+  , _lockedTracks((u8)AnimTrackFlag::BACKPACK_LIGHTS_TRACK)
   , _tracksInUse(0)
   , _animAudioClient( new Audio::AnimationAudioClient(context->GetAudioController()) )
   , _proceduralAudioClient( new Audio::ProceduralAudioClient(context->GetAudioController()) )
@@ -408,6 +408,7 @@ namespace Cozmo {
 
   #if ANKI_DEV_CHEATS
     {
+      _lockedTracks = 0;
       sDevRelativeTimePtr = &_relativeStreamTime_ms;
       sDevBufferFacePtr = &_faceDrawBuf;
       sStreamingAnimationPtrPtr = &_streamingAnimation;

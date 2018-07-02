@@ -135,6 +135,9 @@ public:
   // True if timezone is set (and therefore we can get local time)
   bool HasTimezone() const;
 
+  // True if user space is secure
+  bool IsUserSpaceSecure();
+  
 protected:
    // Return true if robot has a valid EMR.
    // This function is "off limits" to normal robot services
@@ -175,7 +178,8 @@ private:
   std::string _robotVersion    = "";
   std::string _buildSha        = "";
   std::string _bootID          = "";
-
+  bool        _isUserSpaceSecure = false;
+  
 }; // class OSState
 
 } // namespace Cozmo

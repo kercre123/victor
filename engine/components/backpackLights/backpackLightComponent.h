@@ -18,6 +18,7 @@
 #include "clad/types/ledTypes.h"
 #include "clad/types/backpackAnimationTriggers.h"
 
+#include "engine/ankiEventUtil.h"
 #include "engine/robotComponents_fwd.h"
 #include "engine/components/backpackLights/backpackLightAnimation.h"
 #include "engine/components/backpackLights/backpackLightComponentTypes.h"
@@ -32,10 +33,12 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <future>
+#include <atomic>
 
 namespace Anki {
 namespace Cozmo {
-
+  
 class Robot;
 class BackpackLightAnimationContainer;
 
@@ -81,6 +84,8 @@ public:
   // Start the backpack lights associated with a trigger
   void SetBackpackAnimation(const BackpackAnimationTrigger& trigger, bool shouldLoop = true);
 
+  void SetPairingLight(bool on);
+  
 private:
   
   Robot*                          _robot = nullptr;
@@ -101,14 +106,39 @@ private:
   // Note: this variable does NOT track the current trigger playing, it tracks internal state for 
   // UpdateChargingLightConfig and should not be used for any other decision making
   BackpackAnimationTrigger _internalChargeLightsTrigger = BackpackAnimationTrigger::Off;
+
+  enum class SystemLightState
+  {
+    Invalid,
+    Off,
+    Pairing,
+    Streaming,
+  };
+  SystemLightState _systemLightState = SystemLightState::Off;
+
+  std::future<void> _offlineCheckFuture;
+  std::atomic<TimeStamp_t> _offlineAtTime_ms;
+
+  bool _offlineIsPulsing = true;
+  TimeStamp_t _offlinePulseTime_ms = 0;
   
   Result SetBackpackAnimationInternal(const BackpackLightAnimation::BackpackAnimation& lights);
   void StartLoopingBackpackAnimationInternal(const BackpackLightAnimation::BackpackAnimation& lights, BackpackLightSourceType source, BackpackLightDataLocator& lightLocator_out);
-    
-  void UpdateChargingLightConfig();
+
+  // Returns a sorted vector based on light source priority
+  // with elements closer to the begining as having higher priorty
   static std::vector<BackpackLightSourceType> GetLightSourcePriority();
+
+  // Returns a weak reference to the best light configuration based on priority
   BackpackLightDataRefWeak GetBestLightConfig();
-  
+
+  // Updates the critical backpack light config if neccessary
+  void UpdateCriticalBackpackLightConfig(bool isCloudStreamOpen);
+
+  // Updates the current system light pattern if neccessary
+  void UpdateSystemLightState(bool isCloudStreamOpen);
+
+  void UpdateOfflineCheck();
 };
 
 }

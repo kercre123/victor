@@ -135,6 +135,13 @@ Result Animation::DefineFromFlatBuf(const std::string& name, const CozmoAnim::An
 
   auto backpackData = keyframes->BackpackLightsKeyFrame();
   if (backpackData != nullptr) {
+
+    #if !ANKI_DEV_CHEATS
+    PRINT_NAMED_ERROR("Animation.DefineFromFlatBuf.AddBackpackLightKeyFrame.NotAllowed",
+                      "%s still has backpacklight keyframes",
+                      name.c_str());
+    #endif
+
     for (int bpIdx=0; bpIdx < backpackData->size(); bpIdx++) {
 
       // TODO: Update the processing of these keyframes to NOT use an intermediate
