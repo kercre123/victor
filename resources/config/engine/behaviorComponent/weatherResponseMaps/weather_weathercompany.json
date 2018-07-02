@@ -39,22 +39,22 @@
         "APIValue": "Drizzle", 
         "CladType": "Rain"
     }, 
-    // {
-    //     "APIValue": "Freezing Rain", 
-    //     "CladType": "Rain"
-    // }, 
+    {
+        "APIValue": "Freezing Rain", 
+        "CladType": "Rain"
+    }, 
     {
         "APIValue": "Light Rain", 
         "CladType": "Rain"
     }, 
-    // {
-    //     "APIValue": "Rain", 
-    //     "CladType": "Rain"
-    // }, 
-    // {
-    //     "APIValue": "Scattered Flurries", 
-    //     "CladType": "Snow"
-    // }, 
+    {
+        "APIValue": "Rain", 
+        "CladType": "Rain"
+    }, 
+    {
+        "APIValue": "Scattered Flurries", 
+        "CladType": "Snow"
+    }, 
     {
         "APIValue": "Light Snow", 
         "CladType": "Snow"
@@ -63,18 +63,18 @@
         "APIValue": "Blowing / Drifting Snow", 
         "CladType": "Snow"
     }, 
-    // {
-    //     "APIValue": "Snow", 
-    //     "CladType": "Snow"
-    // }, 
+    {
+        "APIValue": "Snow", 
+        "CladType": "Snow"
+    }, 
     {
         "APIValue": "Hail", 
         "CladType": "Rain"
     }, 
-    // {
-    //     "APIValue": "Sleet", 
-    //     "CladType": "Rain"
-    // }, 
+    {
+        "APIValue": "Sleet", 
+        "CladType": "Rain"
+    }, 
     {
         "APIValue": "Blowing Dust / Sandstorm", 
         "CladType": "Windy"
@@ -103,22 +103,22 @@
         "APIValue": "Frigid / Ice Crystals", 
         "CladType": "Cold"
     }, 
-    // {
-    //     "APIValue": "Cloudy", 
-    //     "CladType": "Cloudy"
-    // }, 
-    // {
-    //     "APIValue": "Mostly Cloudy", 
-    //     "CladType": "Cloudy"
-    // }, 
-    // {
-    //     "APIValue": "Partly Cloudy", 
-    //     "CladType": "Cloudy"
-    // }, 
-    // {
-    //     "APIValue": "Clear", 
-    //     "CladType": "Sunny"
-    // }, 
+    {
+        "APIValue": "Cloudy", 
+        "CladType": "Cloudy"
+    }, 
+    {
+        "APIValue": "Mostly Cloudy", 
+        "CladType": "Cloudy"
+    }, 
+    {
+        "APIValue": "Partly Cloudy", 
+        "CladType": "Cloudy"
+    }, 
+    {
+        "APIValue": "Clear", 
+        "CladType": "Sunny"
+    }, 
     {
         "APIValue": "Sunny", 
         "CladType": "Sunny"
@@ -135,10 +135,10 @@
         "APIValue": "Mixed Rain & Hail", 
         "CladType": "Rain"
     }, 
-    // {
-    //     "APIValue": "Hot", 
-    //     "CladType": "Sunny"
-    // }, 
+    {
+        "APIValue": "Hot", 
+        "CladType": "Sunny"
+    }, 
     {
         "APIValue": "Isolated Thunderstorms", 
         "CladType": "Rain"
@@ -146,17 +146,9 @@
     {
         "APIValue": "Thunderstorms", 
         "CladType": "Thunderstorms"
-    }, 
-    // {
-    //     "APIValue": "Scattered Showers", 
-    //     "CladType": "Rain"
-    // }, 
+    },
     {
         "APIValue": "Heavy Rain", 
-        "CladType": "Rain"
-    }, 
-    {
-        "APIValue": "Scattered Snow Showers", 
         "CladType": "Rain"
     }, 
     {
@@ -175,10 +167,10 @@
         "APIValue": "Scattered Showers", 
         "CladType": "Rain"
     }, 
-    // {
-    //     "APIValue": "Scattered Snow Showers", 
-    //     "CladType": "Snow"
-    // }, 
+    {
+        "APIValue": "Scattered Snow Showers", 
+        "CladType": "Snow"
+    }, 
     {
         "APIValue": "Scattered Thunderstorms", 
         "CladType": "Rain"

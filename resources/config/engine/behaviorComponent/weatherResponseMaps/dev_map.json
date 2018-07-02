@@ -1,40 +1,38 @@
 // one to one mapping with weather conditions 
 [
-  // Duplicate of accuweather map
+  // Duplicate of weather company map
   //{
   //  "APIValue" : "cloudy",
   //  "CladType" : "Cloudy"
   //},
-  // Duplicate of accuweather map
-  //{
-  //  "APIValue" : "cold",
-  //  "CladType" : "Cold"
-  //},
-  // Duplicate of accuweather map
+  {
+    "APIValue" : "cold",
+    "CladType" : "Cold"
+  },
+  // Duplicate of weather company map
   //{
   //  "APIValue" : "rain",
   //  "CladType" : "Rain"
   //},
-  // Duplicate of accuweather map
+  // Duplicate of weather company map
   //{
   //  "APIValue" : "snow",
   //  "CladType" : "Snow"
   //},
-  // Duplicate of accuweather map
+  // Duplicate of weather company map
   //{
   //  "APIValue" : "sunny",
   //  "CladType" : "Sunny"
   //},
-  // Duplicate of accuweather map
-  //{
-  //  "APIValue" : "windy",
-  //  "CladType" : "Windy"
-  //}
+  {
+    "APIValue" : "windy",
+    "CladType" : "Windy"
+  },
   {
     "APIValue" : "stars",
     "CladType" : "Stars"
   }
-  // Duplicate of weather company
+  // Duplicate of weather company map
   //{
   //  "APIValue" : "thunderstorms",
   //  "CladType" : "Thunderstorms"
