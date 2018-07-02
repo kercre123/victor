@@ -28,11 +28,9 @@ rm -f $outfile
 
 declare -a leds
 leds+=("base");
-leds+=("All.RED"); leds+=("All.GRN"); leds+=("All.BLU");
-leds+=("D1.RED");  leds+=("D1.GRN");  leds+=("D1.BLU");
-leds+=("D2.RED");  leds+=("D2.GRN");  leds+=("D2.BLU");
-leds+=("D3.RED");  leds+=("D3.GRN");  leds+=("D3.BLU");
-leds+=("D4.RED");  leds+=("D4.GRN");  leds+=("D4.BLU");
+leds+=("All.RED"); leds+=("D1.RED"); leds+=("D2.RED"); leds+=("D3.RED"); leds+=("D4.RED");
+leds+=("All.GRN"); leds+=("D1.GRN"); leds+=("D2.GRN"); leds+=("D3.GRN"); leds+=("D4.GRN");
+leds+=("All.BLU"); leds+=("D1.BLU"); leds+=("D2.BLU"); leds+=("D3.BLU"); leds+=("D4.BLU");
 leds+=("file");
 
 declare -a values
@@ -58,19 +56,19 @@ function write_row()
   #dump a row to the outfile
   if [ $hasdata -gt 0 ]; then
     row="";
-    echo "writing row"
+    numrows=$((numrows+1))
+    echo "writing row $numrows: line $linenum of $infile"
     for i in "${!values[@]}"; do
       if [[ "${leds[$i]}" == "file" ]]; then values[$i]="$infile"; fi
       row="$row,${values[$i]}"
     done
     echo $row >> $outfile
-    numrows=$((numrows+1))
   fi
   
   #XXX: grep/regex is randomly failing. varies on each run for the same dataset
   #XXX: fail if we're missing led data
   errcheck=1
-  if [ $errcheck -gt 0 ]; then
+  if [ $errcheck -gt 0 ] && [ $linenum -gt -1 ]; then
     for i in "${!values[@]}"; do
       if [ "${values[$i]}" == "" ]; then
         echo "------PARSE FAIL? incomplete led dataset------"
@@ -119,12 +117,9 @@ function log_current()
   fi
 }
 
-#init column lables
-for i in "${!leds[@]}"; do values[${i}]="${leds[$i]}"; done
-write_row "logfile"
-
-#parse logfiles
-for infile in ./*.log; do
+function parse_file()
+{
+  infile=$1;
   echo processing "$infile"
   dos2unix "$infile"
   linenum=0
@@ -149,8 +144,16 @@ for infile in ./*.log; do
       fi
     fi
   done < "$infile"
-  write_row "$infile"
-done
+  write_row "$infile" -1
+}
+
+#init column lables
+for i in "${!leds[@]}"; do values[${i}]="${leds[$i]}"; done
+write_row "logfile" -1
+
+#parse logfiles (*.log or *.txt formats)
+for infile in ./*.log; do parse_file "$infile"; done
+for infile in ./*.txt; do parse_file "$infile"; done
 
 write_maths $numrows
 
