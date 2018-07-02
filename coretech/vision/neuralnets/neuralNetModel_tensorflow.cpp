@@ -9,6 +9,9 @@
  * Copyright: Anki, Inc. 2018
  **/
 
+// NOTE: this wrapper completely compiles out if we're using a different model (e.g. TFLite)
+#ifdef VIC_NEURALNETS_USE_TENSORFLOW
+
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/math/rect_impl.h"
@@ -214,46 +217,6 @@ Result NeuralNetModel::LoadModel(const std::string& modelPath, const Json::Value
     LOG_INFO("NeuralNetModel.LoadModel.ReadLabelFileSuccess", "%s", labelsFileName.c_str());
   }
   return readLabelsResult;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NeuralNetModel::GetClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp,
-                                       std::list<Vision::SalientPoint>& salientPoints)
-{
-  const float* outputData = outputTensor.tensor<float, 2>().data();
-        
-  float maxScore = _params.minScore;
-  int labelIndex = -1;
-  for(int i=0; i<_labels.size(); ++i)
-  {
-    if(outputData[i] > maxScore)
-    {
-      maxScore = outputData[i];
-      labelIndex = i;
-    }
-  }
-  
-  const Rectangle<int32_t> imgRect(0.f,0.f,1.f,1.f);
-  const Poly2i imgPoly(imgRect);
-  
-  if(labelIndex >= 0)
-  {    
-    Vision::SalientPoint salientPoint(timestamp, 0.5f, 0.5f, maxScore, 1.f,
-                                      Vision::SalientPointType::Object,
-                                      (labelIndex < _labels.size() ? _labels.at((size_t)labelIndex) : "<UNKNOWN>"),
-                                      imgPoly.ToCladPoint2dVector());
-    
-    if(_params.verbose)
-    {
-      LOG_INFO("NeuralNetModel.GetClassification.ObjectFound", "Name: %s, Score: %f", salientPoint.description.c_str(), salientPoint.score);
-    }
-
-    salientPoints.push_back(std::move(salientPoint));
-  }
-  else if(_params.verbose)
-  {
-    LOG_INFO("NeuralNetModel.GetClassification.NoObjects", "MinScore: %f", _params.minScore);
-  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -543,7 +506,8 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
   {
     case NeuralNetParams::OutputType::Classification:
     {
-      GetClassification(outputTensors[0], t, salientPoints);
+      const float* outputData = outputTensor.tensor<float, 2>().data();
+      GetClassification(outputData, t, salientPoints);
       break;
     }
     case NeuralNetParams::OutputType::BinaryLocalization:
@@ -642,3 +606,5 @@ Result NeuralNetModel::Run(tensorflow::Tensor imageTensor, std::vector<tensorflo
 
 } // namespace Vision
 } // namespace Anki
+
+#endif /* VIC_NEURALNETS_USE_TENSORFLOW */

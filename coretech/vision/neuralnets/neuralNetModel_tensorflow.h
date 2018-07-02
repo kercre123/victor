@@ -14,6 +14,9 @@
  * Copyright: Anki, Inc. 2018
  **/
 
+// NOTE: this wrapper completely compiles out if we're using a different model (e.g. TFLite)
+#ifdef VIC_NEURALNETS_USE_TENSORFLOW
+
 #ifndef __Anki_Vision_NeuralNetModel_TensorFlow_H__
 #define __Anki_Vision_NeuralNetModel_TensorFlow_H__
 
@@ -55,11 +58,6 @@ public:
 
 private:
 
-  // Helper to find the index of the a single output with the highest score, assumed to 
-  // correspond to the matching label from the labels file
-  void GetClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp, 
-                         std::list<Vision::SalientPoint>& salientPoints);
-
   // Helper to return a set of localization boxes from a grid, assuming a binary classifcation 
   // (e.g. person / no-person in a 6x6 grid). Grid size is specified in JSON config
   void GetLocalizedBinaryClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp, 
@@ -85,3 +83,5 @@ private:
 } // namespace Anki
 
 #endif /* __Anki_Vision_NeuralNetModel_TensorFlow_H__ */
+
+#endif /* VIC_NEURALNETS_USE_TENSORFLOW */

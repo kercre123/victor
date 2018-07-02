@@ -43,6 +43,9 @@
 #  include <webots/Supervisor.hpp>
 #endif
 
+#include "opencv2/imgcodecs/imgcodecs.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+
 #include <atomic>
 #include <chrono>
 #include <cmath>
@@ -244,7 +247,7 @@ int main(int argc, char **argv)
 # endif
 
   // Initialize the detector
-  NeuralNetModel neuralNet;
+  Vision::NeuralNetModel neuralNet;
   {
     auto ticToc = TicToc("LoadModel");
     result = neuralNet.LoadModel(modelPath, config);

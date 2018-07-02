@@ -1,3 +1,13 @@
+/**
+ * File: neuralNetModel_interface.h
+ *
+ * Author: Andrew Stein
+ * Date:   7/2/2018
+ *
+ * Description: Defines interface and shared helpers for various NeuralNetModel implementations.
+ *
+ * Copyright: Anki, Inc. 2018
+ **/
 
 #ifndef __Anki_Vision_NeuralNetModel_Interface_H__
 #define __Anki_Vision_NeuralNetModel_Interface_H__
@@ -20,19 +30,24 @@ class INeuralNetModel
 {
 public:
   
-  ~INeuralNetModel();
+  ~INeuralNetModel()
+  {
+    
+  }
+  
+  bool IsVerbose() const { return _params.verbose; }
+  
+  // Subclasses are expected to overload the LoadModel and Detect methods below.
+  // Note that we are not using virtual abstract methods here because we have no need for polymorphism.
+  // There will only ever be one "type" of NeuralNetModel present compiled into the system.
+  // There is no implementation of these methods in the .cpp file for this class as they should never
+  // be referenced, only overridden by subclasses.
   
   // Load the model/labels files specified in the config and set up assocated parameters
-  Result LoadModel(const std::string& modelPath, const Json::Value& config)
-  {
-    return RESULT_FAIL;
-  }
+  Result LoadModel(const std::string& modelPath, const Json::Value& config);
   
   // Run forward inference on the given image/timestamp and return any SalientPoints found
-  Result Detect(cv::Mat& img, const TimeStamp_t t, std::list<Vision::SalientPoint>& salientPoints)
-  {
-    return RESULT_FAIL;
-  }
+  Result Detect(cv::Mat& img, const TimeStamp_t t, std::list<Vision::SalientPoint>& salientPoints);
   
 protected:
   
@@ -41,6 +56,12 @@ protected:
   
   // Helper to read simple text labels files (one label per line)
   static Result ReadLabelsFile(const std::string& fileName, std::vector<std::string>& labels_out);
+  
+  // Helper to find the index of the a single output with the highest score, assumed to
+  // correspond to the matching label from the labels file
+  // Implemented for float and uint8 types
+  template<typename T>
+  void GetClassification(const T* outputData, TimeStamp_t timestamp, std::list<Vision::SalientPoint>& salientPoints);
   
   NeuralNetParams                           _params;
   std::vector<std::string>                  _labels;
