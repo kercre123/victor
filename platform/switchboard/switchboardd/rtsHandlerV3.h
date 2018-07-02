@@ -30,11 +30,16 @@ public:
     bool isPairing,
     bool isOtaUpdating);
 
+  ~RtsHandlerV3();
+
   bool StartRts();
   void StopPairing();
+  void SendOtaProgress(int status, uint64_t progress, uint64_t expectedTotal);
+  void HandleTimeout();
 
   // Types
   using StringSignal = Signal::Signal<void (std::string)>;
+  using BoolSignal = Signal::Signal<void (bool)>;
   using VoidSignal = Signal::Signal<void ()>;
 
   // Events
@@ -42,6 +47,7 @@ public:
   StringSignal& OnOtaUpdateRequestEvent() { return _otaUpdateRequestSignal; }
   VoidSignal& OnStopPairingEvent() { return _stopPairingSignal; }
   VoidSignal& OnCompletedPairingEvent() { return _completedPairingSignal; }
+  BoolSignal& OnResetEvent() { return _resetSignal; }
 
 private:
   // Statics
@@ -66,9 +72,7 @@ private:
   void HandleInitialPair(uint8_t* bytes, uint32_t length);
   void HandleCancelSetup();
   void HandleNonceAck();
-  void HandleTimeout();
   void HandleInternetTimerTick();
-  void HandleIdleTimeout();
   void HandleOtaRequest();
   void HandleChallengeResponse(uint8_t* bytes, uint32_t length);
 
@@ -89,17 +93,14 @@ private:
   const uint8_t kMaxMatchAttempts = 5;
   const uint8_t kMaxPairingAttempts = 3;
   const uint32_t kMaxAbnormalityCount = 5;
-  const uint16_t kPairingTimeout_s = 60;
   const uint8_t kWifiApPasswordSize = 8;
   const uint8_t kNumPinDigits = 6;
   const uint8_t kWifiConnectMinTimeout_s = 1;
   const uint8_t kWifiConnectInterval_s = 1;
-  const uint8_t kBleIdleConnectionTimeout_s = 5;
   const uint8_t kMinMessageSize = 2;
   
   std::string _pin;
   uint8_t _challengeAttempts;
-  uint8_t _totalPairingAttempts;
   uint8_t _numPinDigits;
   uint32_t _pingChallenge;
   uint32_t _abnormalityCount;
@@ -113,19 +114,15 @@ private:
   struct ev_TimerStruct {
     ev_timer timer;
     VoidSignal* signal;
-  } _handleTimeoutTimer;
-
-  struct ev_TimerStruct _handleInternet;
-  struct ev_TimerStruct _idleConnectionTimer;
+  } _handleInternet;
 
   StringSignal _updatedPinSignal;
   StringSignal _otaUpdateRequestSignal;
   VoidSignal _stopPairingSignal;
   VoidSignal _completedPairingSignal;
+  BoolSignal _resetSignal;
 
-  VoidSignal _pairingTimeoutSignal;
   VoidSignal _internetTimerSignal;
-  VoidSignal _idleConnectionSignal;
 
   //
   // V3 Request to Listen for

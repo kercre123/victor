@@ -35,7 +35,6 @@ _isPairing(isPairing),
 _isOtaUpdating(isOtaUpdating),
 _pin(""),
 _challengeAttempts(0),
-_totalPairingAttempts(0),
 _numPinDigits(0),
 _pingChallenge(0),
 _abnormalityCount(0),
@@ -61,9 +60,7 @@ _wifiConnectTimeout_s(15)
     std::bind(&RtsHandlerV3::HandleDecryptionFailed, this));
 
   // Register with private events
-  _pairingTimeoutSignal.SubscribeForever(std::bind(&RtsHandlerV3::HandleTimeout, this));
   _internetTimerSignal.SubscribeForever(std::bind(&RtsHandlerV3::HandleInternetTimerTick, this));
-  _idleConnectionSignal.SubscribeForever(std::bind(&RtsHandlerV3::HandleIdleTimeout, this));
 
   // Initialize the message handler
   _cladHandler = std::make_unique<ExternalCommsCladHandler>();
@@ -73,20 +70,23 @@ _wifiConnectTimeout_s(15)
   _taskExecutor = std::make_unique<TaskExecutor>(_loop);
 
   // Initialize ev timer
-  _handleTimeoutTimer.signal = &_pairingTimeoutSignal;
-  ev_timer_init(&_handleTimeoutTimer.timer, &RtsHandlerV3::sEvTimerHandler, kPairingTimeout_s, kPairingTimeout_s);
-
   _handleInternet.signal = &_internetTimerSignal;
   ev_timer_init(&_handleInternet.timer, &RtsHandlerV3::sEvTimerHandler, kWifiConnectInterval_s, kWifiConnectInterval_s);
-
-  _idleConnectionTimer.signal = &_idleConnectionSignal;
-  ev_timer_init(&_idleConnectionTimer.timer, &RtsHandlerV3::sEvTimerHandler, kBleIdleConnectionTimeout_s, 0);
-  ev_timer_start(_loop, &_idleConnectionTimer.timer);
   
   Log::Write("RtsComms V3 starting up.");
 }
 
+RtsHandlerV3::~RtsHandlerV3() {
+  _onReceivePlainTextHandle = nullptr;
+  _onReceiveEncryptedHandle = nullptr;
+  _onFailedDecryptionHandle = nullptr;
+
+  ev_timer_stop(_loop, &_handleInternet.timer);
+  Log::Write("Destroyed handler");
+}
+
 bool RtsHandlerV3::StartRts() {
+  Log::Write("StartRts");
   SendPublicKey();
   _state = RtsPairingPhase::AwaitingPublicKey;
   
@@ -104,16 +104,9 @@ void RtsHandlerV3::Reset(bool forced) {
   // Send cancel message -- must do this before state is RAW
   SendCancelPairing();
 
-  // Tell key exchange to reset
-  _keyExchange->Reset();
-
-  // Clear pin
-  _pin = "000000";
-
-  // Stop timers
-  ev_timer_stop(_loop, &_handleInternet.timer);
-  ev_timer_stop(_loop, &_idleConnectionTimer.timer);
-  ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
+  // Tell RtsComms to reset
+  Log::Write("emit == Reset");
+  _resetSignal.emit(forced);
 }
 
 //
@@ -121,8 +114,7 @@ void RtsHandlerV3::Reset(bool forced) {
 //
 
 void RtsHandlerV3::StopPairing() {
-  _totalPairingAttempts = kMaxPairingAttempts;
-
+  Log::Write("StopPairing/RtsHandlerV3");
   Reset(true);
 }
 
@@ -160,7 +152,6 @@ void RtsHandlerV3::HandleRtsConnResponse(const Anki::Cozmo::ExternalComms::RtsCo
 
     if(connResponse.connectionType == Anki::Cozmo::ExternalComms::RtsConnType::FirstTimePair) {
       if(_isPairing && !_isOtaUpdating) {
-        ev_timer_stop(_loop, &_idleConnectionTimer.timer);
         HandleInitialPair((uint8_t*)connResponse.publicKey.data(), crypto_kx_PUBLICKEYBYTES);
         _state = RtsPairingPhase::AwaitingNonceAck;
       } else {
@@ -336,6 +327,7 @@ void RtsHandlerV3::HandleRtsOtaUpdateRequest(const Cozmo::ExternalComms::RtsConn
 
   if(_state == RtsPairingPhase::ConfirmedSharedSecret && !_isOtaUpdating) {
     Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest otaMessage = msg.Get_RtsOtaUpdateRequest();
+    Log::Write("emit == HandleRtsOtaUpdateRequest");
     _otaUpdateRequestSignal.emit(otaMessage.url);
     _isOtaUpdating = true;
   }
@@ -443,6 +435,7 @@ void RtsHandlerV3::HandleInitialPair(uint8_t* publicKey, uint32_t publicKeyLengt
 
   // Generate a random number with kNumPinDigits digits
   _pin = _keyExchange->GeneratePin();
+  Log::Write("emit == HandleInitialPair");
   _updatedPinSignal.emit(_pin);
 
   // Input client's public key and calculate shared keys
@@ -505,12 +498,12 @@ void RtsHandlerV3::HandleChallengeResponse(uint8_t* pingChallengeAnswer, uint32_
   if(success) {
     // Inform client that we are good to go and
     // update our state
-    ev_timer_stop(_loop, &_idleConnectionTimer.timer);
     SendChallengeSuccess();
     _state = RtsPairingPhase::ConfirmedSharedSecret;
     Log::Green("Challenge answer was accepted. Encrypted channel established.");
 
     if(_isPairing) {
+      Log::Write("emit == HandleChallengeResponse");
       _completedPairingSignal.emit();
     }
   } else {
@@ -693,7 +686,25 @@ void RtsHandlerV3::SendFile(uint32_t fileId, std::vector<uint8_t> fileBytes) {
   }
 }
 
+void RtsHandlerV3::SendCancelPairing() {
+  // Send challenge and update state
+  SendRtsMessage<RtsCancelPairing>();
+  Log::Write("Canceling pairing.");
+}
+
+void RtsHandlerV3::SendOtaProgress(int status, uint64_t progress, uint64_t expectedTotal) {
+  Log::Write("SendOtaProgress");
+  if(!AssertState(RtsCommsType::Encrypted)) {
+    return;
+  }
+  // Send Ota Progress
+  SendRtsMessage<RtsOtaUpdateResponse>(status, progress, expectedTotal);
+  Log::Write("Sending OTA Progress Update");
+}
+
 void RtsHandlerV3::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
+  Log::Write("Handler: Received message."); 
+
   _taskExecutor->WakeSync([this, bytes, length]() {
     if(length < kMinMessageSize) {
       Log::Write("Length is less than kMinMessageSize.");
@@ -709,6 +720,7 @@ void RtsHandlerV3::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 void RtsHandlerV3::HandleTimeout() {
+  Log::Write("HandleTimeout");
   if(_state != RtsPairingPhase::ConfirmedSharedSecret) {
     Log::Write("Pairing timeout. Client took too long.");
     Reset();
@@ -750,11 +762,6 @@ void RtsHandlerV3::HandleInternetTimerTick() {
   }
 }
 
-void RtsHandlerV3::HandleIdleTimeout() {
-  Log::Write("Connection idled. Terminating session.");
-  _stopPairingSignal.emit();
-}
-
 void RtsHandlerV3::UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus state) {
   if(_engineClient == nullptr) {
     // no engine client -- probably testing
@@ -779,6 +786,7 @@ void RtsHandlerV3::sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int
   Log::Write(ss.str().c_str());
 
   struct ev_TimerStruct *wData = (struct ev_TimerStruct*)w;
+  Log::Write("emit == sEvTimerHandler");
   wData->signal->emit();
 }
 

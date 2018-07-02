@@ -48,6 +48,7 @@ namespace Switchboard {
 void Daemon::Start() {
   Log::Write("Loading up Switchboard Daemon");
   _loop = ev_default_loop(0);
+
   _taskExecutor = std::make_unique<Anki::TaskExecutor>(_loop);
 
   // Christen

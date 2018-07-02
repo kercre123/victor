@@ -58,12 +58,18 @@ public:
 
 private:
   // Methods
+  void Init();
   void SendHandshake();
   void HandleMessageReceived(uint8_t* bytes, uint32_t length);
   bool HandleHandshake(uint16_t version);
+  void HandleReset(bool forced);
+  void HandleTimeout();
+  void UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus state);
 
   // Constants
   const uint8_t kMinMessageSize = 2;
+  const uint8_t kMaxPairingAttempts = 3;
+  const uint16_t kPairingTimeout_s = 5;
 
   // Fields
   std::string _pin;
@@ -72,6 +78,7 @@ private:
   std::shared_ptr<EngineMessagingClient> _engineClient;
   bool _isPairing = false;
   bool _isOtaUpdating = false;
+  uint8_t _totalPairingAttempts;
 
   StringSignal _updatedPinSignal;
   StringSignal _otaUpdateRequestSignal;
@@ -82,14 +89,31 @@ private:
   Signal::SmartHandle _otaHandle;
   Signal::SmartHandle _endHandle;
   Signal::SmartHandle _completedPairingHandle;
+  Signal::SmartHandle _resetHandle;
 
   Signal::SmartHandle _onReceivePlainTextHandle;
+  Signal::SmartHandle _onPairingTimeoutReceived;
+
+  struct ev_TimerStruct {
+    ev_timer timer;
+    VoidSignal* signal;
+  } _handleTimeoutTimer;
+
+  VoidSignal _pairingTimeoutSignal;
 
   IRtsHandler* _rtsHandler;
   uint32_t _rtsVersion;
   RtsPairingPhase _state = RtsPairingPhase::Initial;
   std::unique_ptr<TaskExecutor> _taskExecutor;
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Static methods
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  static void sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents) {
+    struct ev_TimerStruct *wData = (struct ev_TimerStruct*)w;
+    wData->signal->emit();
+  }
 };
 
 } // Switchboard

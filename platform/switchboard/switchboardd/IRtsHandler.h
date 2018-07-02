@@ -19,6 +19,7 @@ enum RtsPairingPhase : uint8_t {
 };
 
 enum RtsCommsType : uint8_t {
+  Handshake,
   Unencrypted,
   Encrypted
 };
@@ -26,10 +27,13 @@ enum RtsCommsType : uint8_t {
 class IRtsHandler {
 public:
   virtual ~IRtsHandler() {
+    Log::Write("@@@ Destroyed interface");
   }
   
   virtual bool StartRts() = 0;
   virtual void StopPairing() = 0;
+  virtual void SendOtaProgress(int status, uint64_t progress, uint64_t expectedTotal) = 0;
+  virtual void HandleTimeout() = 0;
   
   void SetIsPairing(bool pairing) { _isPairing = pairing; }
   void SetOtaUpdating(bool updating) { _isOtaUpdating = updating; }

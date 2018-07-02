@@ -20,6 +20,14 @@ bool RtsHandlerV2::StartRts() {
 }
 
 void RtsHandlerV2::StopPairing() {
+
+}
+
+void RtsHandlerV2::SendOtaProgress(int status, uint64_t progress, uint64_t expectedTotal) {
+
+}
+
+void RtsHandlerV2::HandleTimeout() {
   
 }
 

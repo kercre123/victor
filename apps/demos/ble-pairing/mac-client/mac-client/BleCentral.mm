@@ -1253,6 +1253,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     
     char pin[6];
     char garbage[1];
+    
     printf("> Enter pin:\n");
     scanf("%6s",pin);
     scanf("%c", garbage);

@@ -21,6 +21,8 @@ class RtsHandlerV2 : public IRtsHandler {
 public:
   bool StartRts();
   void StopPairing();
+  void SendOtaProgress(int status, uint64_t progress, uint64_t expectedTotal);
+  void HandleTimeout();
 };
 
 } // Switchboard
