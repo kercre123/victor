@@ -351,7 +351,7 @@ void Analog::tick(void) {
     } else {
       power_down_timer = LOW_VOLTAGE_POWER_DOWN_TIME;
     }
-  } else if (CHARGE_CUTOFF && false) {
+  } else if (CHARGE_CUTOFF) {
     // Unpowered, on charger (timeout)
     nCHG_PWR::reset();
     POWER_EN::pull(PULL_NONE);
