@@ -32,7 +32,7 @@ static const int32_t    TEMP_SCALE_ADJ  = (int32_t)(0x100000 * (1.000 / 5.336));
 
 static const int POWER_DOWN_TIME = 200 * 4.5;               // Shutdown
 static const int POWER_WIPE_TIME = 200 * 12;                // Enter recovery mode
-static const int MAX_CONTACT_TIME = 200 * 60 * 5;           // 5 minutes
+static const int MAX_CONTACT_TIME = 200 * 10;               // 10 seconds
 static const int MAX_CHARGE_TIME = 200 * 60 * 30;           // 30 minutes
 static const int MAX_CHARGE_TIME_WD = MAX_CHARGE_TIME + 5;  // 25ms past MAX_CHARGE_TIME
 
@@ -241,6 +241,7 @@ void Analog::inhibitCharge(bool force) {
   // UART may not take over if 
   if (on_charger && !force) return ;
 
+  vext_debounce = 0;
   disable_charger = true;
 }
 #endif
@@ -350,7 +351,7 @@ void Analog::tick(void) {
     } else {
       power_down_timer = LOW_VOLTAGE_POWER_DOWN_TIME;
     }
-  } else if (CHARGE_CUTOFF) {
+  } else if (CHARGE_CUTOFF && false) {
     // Unpowered, on charger (timeout)
     nCHG_PWR::reset();
     POWER_EN::pull(PULL_NONE);
