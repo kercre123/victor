@@ -1478,15 +1478,15 @@
   },
   {
     "CladEvent": "ReactToGoodMorning",
-    "AnimName": "ag_vc_goodmorning"
+    "AnimName": "ag_greeting_goodmorning"
   },
   {
     "CladEvent": "ReactToGoodNight",
-    "AnimName": "ag_gotosleep_getin"
+    "AnimName": "ag_greeting_goodnight"
   },
   {
     "CladEvent": "ReactToGreeting",
-    "AnimName": "ag_vc_greeting"
+    "AnimName": "ag_greeting_hello"
   },
   {
     "CladEvent": "ReactToHabitat",
