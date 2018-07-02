@@ -45,6 +45,8 @@ u32 _pin = 123456;
 const f32 kRobotNameScale = 0.6f;
 const std::string kURL = "anki.com/v";
 const ColorRGBA   kColor(0.9f, 0.9f, 0.9f, 1.f);
+
+bool s_enteredAnyScreen = false;
 }
 
 // Draws BLE name and url to screen
@@ -56,6 +58,8 @@ bool DrawStartPairingScreen(AnimationStreamer* animStreamer)
   {
     return false;
   }
+  
+  s_enteredAnyScreen = true;
 
   // Disable face keepalive, but don't re-enable it when ending pairing. The engine will send a message
   // when it's ready to re-enable it, since it needs time to send its first animation upon resuming
@@ -82,6 +86,8 @@ bool DrawStartPairingScreen(AnimationStreamer* animStreamer)
 // Draws BLE name, key icon, and BLE pin to screen
 void DrawShowPinScreen(AnimationStreamer* animStreamer, const AnimContext* context, const std::string& pin)
 {
+  s_enteredAnyScreen = true;
+  
   Vision::ImageRGB key;
   key.Load(context->GetDataLoader()->GetSpritePaths()->GetValue(Vision::SpriteName::Pairing_Icon_Key));
 
@@ -104,6 +110,8 @@ void DrawShowPinScreen(AnimationStreamer* animStreamer, const AnimContext* conte
 // Uses a png sequence animation to draw wifi icon to screen
 void DrawWifiScreen(AnimationStreamer* animStreamer)
 {
+  s_enteredAnyScreen = true;
+  
   const bool shouldInterrupt = true;
   const bool shouldOverrideEyeHue = true;
   const bool shouldRenderInEyeHue = false;
@@ -114,6 +122,8 @@ void DrawWifiScreen(AnimationStreamer* animStreamer)
 // Uses a png sequence animation to draw os updating icon to screen
 void DrawUpdatingOSScreen(AnimationStreamer* animStreamer)
 {
+  s_enteredAnyScreen = true;
+  
   const bool shouldInterrupt = true;
   const bool shouldOverrideEyeHue = true;
   const bool shouldRenderInEyeHue = false;
@@ -124,6 +134,8 @@ void DrawUpdatingOSScreen(AnimationStreamer* animStreamer)
 // Uses a png sequence animation to draw os updating error icon to screen
 void DrawUpdatingOSErrorScreen(AnimationStreamer* animStreamer)
 {
+  s_enteredAnyScreen = true;
+  
   const bool shouldInterrupt = true;
   const bool shouldOverrideEyeHue = true;
   const bool shouldRenderInEyeHue = false;
@@ -134,6 +146,8 @@ void DrawUpdatingOSErrorScreen(AnimationStreamer* animStreamer)
 // Uses a png sequence animation to draw waiting for app icon to screen
 void DrawWaitingForAppScreen(AnimationStreamer* animStreamer)
 {
+  s_enteredAnyScreen = true;
+  
   const bool shouldInterrupt = true;
   const bool shouldOverrideEyeHue = true;
   const bool shouldRenderInEyeHue = false;
@@ -227,8 +241,6 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
     break;
     case ConnectionStatus::START_PAIRING:
     {
-      // Throttling square is annoying when trying to inspect the display so disable
-      NativeAnkiUtilConsoleSetValueWithString("DisplayThermalThrottling", "false");
       DrawStartPairingScreen(animStreamer);
     }
     break;
@@ -264,8 +276,12 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
     break;
     case ConnectionStatus::END_PAIRING:
     {
-      NativeAnkiUtilConsoleSetValueWithString("DisplayThermalThrottling", "true");
-      animStreamer->Abort();
+      if(s_enteredAnyScreen)
+      {
+        animStreamer->Abort();
+      }
+      s_enteredAnyScreen = false;
+      
 
       // Probably will never get here because we will restart
       // while updating os
