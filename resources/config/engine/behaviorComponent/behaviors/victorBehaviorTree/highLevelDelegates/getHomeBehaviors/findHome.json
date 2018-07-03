@@ -19,11 +19,20 @@
     "maxAge_ms" : 5000
   },
   
+  // Animation trigger for a single ~60 degree "search turn"
   "searchTurnAnimTrigger" : "ChargerDockingSearchSingleTurn",
+  
+  // Animation that is played after the search turn while the robot is capturing images
+  // Note: This is only played if the mood is not "high stim"
+  "searchTurnWaitingForImagesAnimTrigger" : "ChargerDockingSearchWaitForImages",
+  
+  // Anim that is played after capturing images and prior to the next search turn
+  // Note: This is only played if the mood is not "high stim"
+  "searchTurnEndAnimTrigger" : "ChargerDockingSearchSingleTurnEnd",
   
   // Robot must sweep at least this angle while searching in place
   // before moving to a new search location.
-  "minSearchAngleSweep_deg" : 360.0,
+  "minSearchAngleSweep_deg" : 300.0,
   
   // Maximum number of turn animations to play before moving
   // to another location to search.

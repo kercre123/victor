@@ -176,12 +176,16 @@
     "AnimName": "ag_chargerdocking_rightturn"
   },
   {
-    "CladEvent": "ChargerDockingSearch",
-    "AnimName": "ag_chargerdocking_searchforcharger"
-  },
-  {
     "CladEvent": "ChargerDockingSearchSingleTurn",
     "AnimName": "ag_chargerdocking_searchforchargerturns"
+  },
+  {
+    "CladEvent": "ChargerDockingSearchSingleTurnEnd",
+    "AnimName": "ag_chargerdocking_searchforchargerturns_default_getout"
+  },
+  {
+    "CladEvent": "ChargerDockingSearchWaitForImages",
+    "AnimName": "ag_chargerdocking_searchforchargerturns_default_loop"
   },
   {
     "CladEvent": "ChargerDockingSettle",

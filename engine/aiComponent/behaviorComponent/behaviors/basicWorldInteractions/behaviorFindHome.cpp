@@ -20,6 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
+#include "engine/moodSystem/moodManager.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 
 #include "coretech/common/engine/jsonTools.h"
@@ -31,12 +32,14 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-const char* kSearchTurnAnimKey      = "searchTurnAnimTrigger";
-const char* kMinSearchAngleSweepKey = "minSearchAngleSweep_deg";
-const char* kMaxSearchTurnsKey      = "maxSearchTurns";
-const char* kNumSearchesKey         = "numSearches";
-const char* kMinDrivingDistKey      = "minDrivingDist_mm";
-const char* kMaxDrivingDistKey      = "maxDrivingDist_mm";
+const char* kSearchTurnAnimKey                 = "searchTurnAnimTrigger";
+const char* kSearchTurnWaitingForImagesAnimKey = "searchTurnWaitingForImagesAnimTrigger";
+const char* kSearchTurnEndAnimKey              = "searchTurnEndAnimTrigger";
+const char* kMinSearchAngleSweepKey            = "minSearchAngleSweep_deg";
+const char* kMaxSearchTurnsKey                 = "maxSearchTurns";
+const char* kNumSearchesKey                    = "numSearches";
+const char* kMinDrivingDistKey                 = "minDrivingDist_mm";
+const char* kMaxDrivingDistKey                 = "maxDrivingDist_mm";
 }
 
 
@@ -44,6 +47,8 @@ const char* kMaxDrivingDistKey      = "maxDrivingDist_mm";
 BehaviorFindHome::InstanceConfig::InstanceConfig(const Json::Value& config, const std::string& debugName)
 {
   JsonTools::GetCladEnumFromJSON(config, kSearchTurnAnimKey, searchTurnAnimTrigger, debugName);
+  JsonTools::GetCladEnumFromJSON(config, kSearchTurnWaitingForImagesAnimKey, waitForImagesAnimTrigger, debugName);
+  JsonTools::GetCladEnumFromJSON(config, kSearchTurnEndAnimKey, searchTurnEndAnimTrigger, debugName);
   minSearchAngleSweep_deg = JsonTools::ParseFloat(config, kMinSearchAngleSweepKey, debugName);
   maxSearchTurns          = JsonTools::ParseUint8(config, kMaxSearchTurnsKey, debugName);
   numSearches             = JsonTools::ParseUint8(config, kNumSearchesKey, debugName);
@@ -70,6 +75,8 @@ void BehaviorFindHome::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) 
 {
   const char* list[] = {
     kSearchTurnAnimKey,
+    kSearchTurnWaitingForImagesAnimKey,
+    kSearchTurnEndAnimKey,
     kMinSearchAngleSweepKey,
     kMaxSearchTurnsKey,
     kNumSearchesKey,
@@ -134,14 +141,33 @@ void BehaviorFindHome::TransitionToSearchTurn()
     ++_dVars.numSearchesCompleted;
     TransitionToRandomDrive();
   } else {
+    // In high stimulation, just play the search turn animations, but not the
+    // "waiting for images" or "search turn end" animations
+    const auto currMood = GetBEI().GetMoodManager().GetSimpleMood();
+    const bool isHighStim = (currMood == SimpleMoodType::HighStim);
+
+    const u32 numImagesToWaitFor = 3;
+    
+    auto* action = new CompoundActionSequential();
+    
+    // Always do the "search turn"
+    action->AddAction(new TriggerAnimationAction(_iConfig.searchTurnAnimTrigger));
+    
+    if (isHighStim) {
+      action->AddAction(new WaitForImagesAction(numImagesToWaitFor, VisionMode::DetectingMarkers));
+    } else {
+      // In non-high-stim, play a "waiting for images" animation in parallel with the wait for
+      // images action, and play a "search turn end" animation after the "wait for images" anim.
+      auto* loopAndWaitForImagesAction = new CompoundActionParallel();
+      loopAndWaitForImagesAction->AddAction(new TriggerAnimationAction(_iConfig.waitForImagesAnimTrigger));
+      loopAndWaitForImagesAction->AddAction(new WaitForImagesAction(numImagesToWaitFor, VisionMode::DetectingMarkers));
+      action->AddAction(loopAndWaitForImagesAction);
+      action->AddAction(new TriggerAnimationAction(_iConfig.searchTurnEndAnimTrigger));
+    }
+    
+    // Keep track of the pose before the robot starts turning
     const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
     const auto startHeading = robotPose.GetRotation().GetAngleAroundZaxis();
-    
-    // Play a single turn animation then wait for images
-    const u32 numImagesToWaitFor = 3;
-    auto* action = new CompoundActionSequential();
-    action->AddAction(new TriggerAnimationAction(_iConfig.searchTurnAnimTrigger));
-    action->AddAction(new WaitForImagesAction(numImagesToWaitFor, VisionMode::DetectingMarkers));
     
     DelegateIfInControl(action,
                         [this,startHeading]() {

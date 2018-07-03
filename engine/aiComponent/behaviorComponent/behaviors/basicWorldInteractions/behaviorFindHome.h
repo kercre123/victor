@@ -54,6 +54,8 @@ private:
     float       maxDrivingDist_mm = 0.f;
     
     AnimationTrigger searchTurnAnimTrigger = AnimationTrigger::Count;
+    AnimationTrigger searchTurnEndAnimTrigger = AnimationTrigger::Count;
+    AnimationTrigger waitForImagesAnimTrigger = AnimationTrigger::Count;
     std::unique_ptr<BlockWorldFilter> homeFilter;
   };
 
