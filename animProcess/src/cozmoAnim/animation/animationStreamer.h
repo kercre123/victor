@@ -125,7 +125,7 @@ namespace Cozmo {
     void SetParam(KeepFaceAliveParameter whichParam, float newValue);
 
     // Functions passed in here will be called each time a new animation is set to streaming
-    void AddNewAnimationCallback(NewAnimationCallback callback){
+    void AddNewAnimationCallback(NewAnimationCallback callback) {
       _newAnimationCallbacks.push_back(callback);
     }
 

@@ -447,7 +447,7 @@ namespace Cozmo {
     }
     
     // Do this after the ProceduralFace class has set to use the right neutral face
-    _proceduralTrackComponent->Init();
+    _proceduralTrackComponent->Init(*this);
     
     _faceDrawBuf.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
     _procFaceImg.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
@@ -506,7 +506,7 @@ namespace Cozmo {
                      anim != nullptr ? anim->GetName().c_str() : "NULL", tag, numLoops);
     }
     
-    const bool wasStreamingSomething = nullptr != _streamingAnimation;
+    const bool wasStreamingSomething = (nullptr != _streamingAnimation);
     
     if(wasStreamingSomething)
     {

@@ -21,6 +21,7 @@
 #include "clad/types/keepFaceAliveParameters.h"
 #include "coretech/common/shared/types.h"
 #include <functional>
+#include <list>
 #include <map>
 #include <memory>
 #include <vector>
@@ -30,7 +31,7 @@ namespace Anki {
 namespace Cozmo {
 
 class AnimContext;
-
+class AnimationStreamer;
 class AudioLayerManager;
 class BackpackLayerManager;
 class FaceLayerManager;
@@ -56,7 +57,7 @@ public:
   TrackLayerComponent(const AnimContext* context);
   ~TrackLayerComponent();
   
-  void Init();
+  void Init(AnimationStreamer& animStreamer);
   
   void Update();
   void AdvanceTracks(const TimeStamp_t toTime_ms);
@@ -159,6 +160,10 @@ private:
   std::unique_ptr<FaceLayerManager>     _faceLayerManager;
   std::unique_ptr<ProceduralFace>       _lastProceduralFace;
   std::vector<KeepAliveModifier>        _keepAliveModifiers;
+
+  // Audio letancy offset tracking vars
+  mutable bool _validAudioKeyframeIt = false;
+  mutable std::list<RobotAudioKeyFrame>::iterator _audioKeyframeIt;
   
   // Setup and add keep face alive activites to _keepAliveActivities vector
   void SetupKeepFaceAliveActivities();
