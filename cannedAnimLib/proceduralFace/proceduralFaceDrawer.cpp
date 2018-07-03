@@ -12,8 +12,11 @@
 #include "util/math/numericCast.h"
 #include "util/random/randomGenerator.h"
 
-// switch std::round() to macro for easier change, currently defers to cast
-#define ROUND(x) (x) // std::round(x)
+// switch std::round() to macro for easier change
+// switched from (x) to std::round(x) as it was noticed edges were jittering when
+// the roundness of corners was animated (VIC-3930). Keeping as a macro in-case
+// there's a faster way to round()/cast().
+#define ROUND(x) std::round(x)
 
 // switch Util::numeric_cast_clamped() to macro for easier change
 #define NUMERIC_CAST_CLAMPED(x) (u8)(x) // Util::numeric_cast_clamped<u8>(x)
