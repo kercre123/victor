@@ -35,6 +35,13 @@ namespace Anki {
 namespace Anki {
 namespace Cozmo {
 
+enum class DesiredCPUFrequency : uint32_t {
+  Automatic = 0,
+  Manual200MHz = 200000,
+  Manual400Mhz = 400000,
+  Manual533Mhz = 533333,
+};
+
 class OSState : public Util::DynamicSingleton<OSState>
 {
   ANKIUTIL_FRIEND_SINGLETON(OSState);
@@ -71,6 +78,9 @@ public:
 
   // Returns temperature in Celsius
   uint32_t GetTemperature_C() const;
+
+  // set specific CPU frequency, or reset to automatic
+  void SetDesiredCPUFrequency(DesiredCPUFrequency freq);
 
   // Returns uptime (and idle time) in seconds
   float GetUptimeAndIdleTime(float &idleTime_s) const;

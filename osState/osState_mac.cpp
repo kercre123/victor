@@ -172,6 +172,11 @@ void OSState::UpdateCPUFreq_kHz() const
   }
 }
 
+void OSState::SetDesiredCPUFrequency(DesiredCPUFrequency freq)
+{
+  // not supported on mac
+}
+
 void OSState::UpdateTemperature_C() const
 {
   // Update temperature reading
