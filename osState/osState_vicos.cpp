@@ -87,6 +87,7 @@ namespace {
   const char* kCmdLineFile        = "/proc/cmdline";
   constexpr const char* kUniversalTimeFile = "/usr/share/zoneinfo/Universal";
   constexpr const char* kRobotVersionFile = "/anki/etc/version";
+  constexpr const char* kOnChargeContactsPath = "/run/on-charge-contacts";
 
   // System vars
   uint32_t _cpuFreq_kHz;      // CPU freq
@@ -688,6 +689,15 @@ bool OSState::IsUserSpaceSecure()
   }
 
   return _isUserSpaceSecure;
+}
+
+void OSState::SetOnChargeContacts(const bool onChargeContacts) const
+{
+  if (onChargeContacts) {
+    (void) Util::FileUtils::TouchFile(kOnChargeContactsPath);
+  } else {
+    Util::FileUtils::DeleteFile(kOnChargeContactsPath);
+  }
 }
 
 } // namespace Cozmo

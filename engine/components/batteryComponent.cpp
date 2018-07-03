@@ -286,6 +286,7 @@ void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
     using namespace ExternalInterface;
     _robot->Broadcast(MessageEngineToGame(ChargerEvent(onChargeContacts)));
   }
+  OSState::getInstance()->SetOnChargeContacts(onChargeContacts);
 }
 
 

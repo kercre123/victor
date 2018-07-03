@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 namespace Anki {
 namespace Util {
@@ -41,6 +43,9 @@ public:
                                                    const char* withExtension = nullptr, bool recurse = false);
   static std::vector<std::string> FilesInDirectory(const std::string& path, bool useFullPath,
                                                    const std::vector<const char*>& withExtensions, bool recurse = false);
+
+  static bool TouchFile(const std::string& fileName,
+                        mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 
   static bool FileExists(const std::string& fileName);
 
