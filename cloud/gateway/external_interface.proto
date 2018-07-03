@@ -16,12 +16,8 @@ import "shared.proto";
 
 service ExternalInterface {
   // Drives the wheel motors
-  rpc DriveWheels(DriveWheelsRequest) returns (DriveWheelsResult) {
-    option (google.api.http) = {
-      post: "/v1/drive_wheels",
-      body: "*"
-    };
-  }
+  rpc DriveWheels(DriveWheelsRequest) returns (DriveWheelsResult) {}
+
   // Plays an animation by name
   rpc PlayAnimation(PlayAnimationRequest) returns (PlayAnimationResult) {
     option (google.api.http) = {
@@ -29,6 +25,7 @@ service ExternalInterface {
       body: "*"
     };
   }
+
   // Constructs and returns a list of animations
   rpc ListAnimations(ListAnimationsRequest) returns (ListAnimationsResult) {
     option (google.api.http) = {
@@ -36,27 +33,16 @@ service ExternalInterface {
       body: "*"
     };
   }
+
   // Moves the Head
-  rpc MoveHead(MoveHeadRequest) returns (MoveHeadResult) {
-    option (google.api.http) = {
-      post: "/v1/move_head",
-      body: "*"
-    };
-  }
+  rpc MoveHead(MoveHeadRequest) returns (MoveHeadResult) {}
+
   // Moves the Lift
-  rpc MoveLift(MoveLiftRequest) returns (MoveLiftResult) {
-    option (google.api.http) = {
-      post: "/v1/move_lift",
-      body: "*"
-    };
-  }
+  rpc MoveLift(MoveLiftRequest) returns (MoveLiftResult) {}
+
   // Drive arc
-  rpc DriveArc(DriveArcRequest) returns (DriveArcResult) {
-    option (google.api.http) = {
-      post: "/v1/drive_arc",
-      body: "*"
-    };
-  }
+  rpc DriveArc(DriveArcRequest) returns (DriveArcResult) {}
+  
   // Sets LCD to a solid color
   rpc DisplayFaceImageRGB(DisplayFaceImageRGBRequest) returns (DisplayFaceImageRGBResult) {
     option (google.api.http) = {
@@ -146,6 +132,20 @@ service ExternalInterface {
   rpc GoToPose(GoToPoseRequest) returns (GoToPoseResponse) {
     option (google.api.http) = {
       post: "/v1/go_to_pose",
+      body: "*"
+    };
+  }
+
+  rpc DriveOffCharger(DriveOffChargerRequest) returns (DriveOffChargerResult) {
+    option (google.api.http) = {
+      post: "/v1/drive_off_charger",
+      body: "*"
+    };
+  }
+
+  rpc DriveOnCharger(DriveOnChargerRequest) returns (DriveOnChargerResult) {
+    option (google.api.http) = {
+      post: "/v1/drive_on_charger",
       body: "*"
     };
   }

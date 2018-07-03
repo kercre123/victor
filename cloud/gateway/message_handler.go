@@ -835,6 +835,42 @@ func SDKBehaviorRequestDeactivation(in *extint.SDKActivationRequest) (*extint.SD
 	}, nil
 }
 
+func (m *rpcService) DriveOffCharger(ctx context.Context, in *extint.DriveOffChargerRequest) (*extint.DriveOffChargerResult, error) {
+	log.Println("Received rpc request DriveOffChargerRequest(", in, ")")
+
+	f, result := createChannel(&extint.GatewayWrapper_DriveOffChargerResult{}, 1)
+	defer f()
+
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_DriveOffChargerRequest{
+			in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	driveOffChargerResult := <-result
+	return driveOffChargerResult.GetDriveOffChargerResult(), nil
+}
+
+func (m *rpcService) DriveOnCharger(ctx context.Context, in *extint.DriveOnChargerRequest) (*extint.DriveOnChargerResult, error) {
+	log.Println("Received rpc request DriveOnChargerRequest(", in, ")")
+
+	f, result := createChannel(&extint.GatewayWrapper_DriveOnChargerResult{}, 1)
+	defer f()
+
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_DriveOnChargerRequest{
+			in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	driveOnChargerResult := <-result
+	return driveOnChargerResult.GetDriveOnChargerResult(), nil
+}
+
 // Example sending an int to and receiving an int from the engine
 // TODO: Remove this example code once more code is converted to protobuf
 func (m *rpcService) Pang(ctx context.Context, in *extint.Ping) (*extint.Pong, error) {

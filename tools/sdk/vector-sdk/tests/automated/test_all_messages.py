@@ -54,10 +54,10 @@ class TestResultMatches:
 
         # Casting as string makes the equality check work
         if str(target_type) != str(expected_type):
-            errors.append('TypeError: recieved output of type {0} when expecting output of type {1}'.format(target_type, expected_type))
+            errors.append('TypeError: received output of type {0} when expecting output of type {1}'.format(target_type, expected_type))
 
         elif len(expected_fields) != len(target_fields):
-            errors.append('TypeError: recieved output that appears to be a different type or contains different contents {0} than the expected output type {1}'.format(target_type, expected_type))
+            errors.append('TypeError: received output that appears to be a different type or contains different contents {0} than the expected output type {1}'.format(target_type, expected_type))
 
         else:
             # This does not perform a deep comparison, which is difficult to implement in a generic way
@@ -196,6 +196,16 @@ messages_to_test = [
                                                                                                         reverse_speed_mmps=80.0,
                                                                                                         is_custom=0)), 
         protocol.GoToPoseResponse(result=protocol.ActionResult.Value("ACTION_RESULT_SUCCESS")) ),
+
+    # DriveOffCharger message. Assuming robot starts off charger, expected result is 2 or BehaviorResults.BEHAVIOR_WONT_ACTIVATE_STATE.
+    ( interface.DriveOffCharger,
+        protocol.DriveOffChargerRequest(),
+        TestResultMatches(protocol.DriveOffChargerResult(result=2)) ),
+
+    # DriveOnCharger message. Expected result is 1 or BehaviorResults.BEHAVIOR_COMPLETE_STATE.
+    ( interface.DriveOnCharger,
+        protocol.DriveOnChargerRequest(),
+        TestResultMatches(protocol.DriveOnChargerResult(result=1)) ),
 
     # NOTE: Add additional messages here
     ]

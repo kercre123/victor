@@ -118,6 +118,14 @@ test_eye_colors: .require_ip
 	$(curl_command)/v1/update_settings -d '{"settings": {"eye_color": "PURPLE"}}'
 	@echo
 
+test_drive_off_charger: .require_ip
+	$(curl_command)/v1/drive_off_charger -d '{}'
+	@echo
+
+test_drive_on_charger: .require_ip
+	$(curl_command)/v1/drive_on_charger -d '{}'
+	@echo
+
 test_ping_pong: .require_ip
 	$(curl_command)/v1/pang -d '{"ping":10}'
 	@echo

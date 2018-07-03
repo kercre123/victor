@@ -354,6 +354,27 @@ message SetFaceToEnrollResult {
   ResultStatus status = 1;
 }
 
+enum BehaviorResults
+{
+  BEHAVIOR_INVALID_STATE = 0;
+  BEHAVIOR_COMPLETE_STATE = 1;
+  BEHAVIOR_WONT_ACTIVATE_STATE = 2;
+}
+
+message DriveOffChargerRequest {
+}
+
+message DriveOffChargerResult {
+  BehaviorResults result = 1;
+}
+
+message DriveOnChargerRequest {
+}
+
+message DriveOnChargerResult {
+  BehaviorResults result = 1;
+}
+
 // TODO: Remove this example code once more code is converted to protobuf
 message Ping {
   uint64 ping = 1;

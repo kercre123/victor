@@ -311,8 +311,8 @@ class Robot:
         return result
 
     @actions._as_actionable
-    async def set_wheel_motors_turn(self, turn_speed, turn_accel=0.0, curvatureRadius_mm=0):
-        drive_arc_request = protocol.DriveArcRequest(speed=turn_speed, accel=turn_accel, curvatureRadius_mm=1)
+    async def set_wheel_motors_turn(self, turn_speed, turn_accel=0.0, curvature_radius_mm=0):
+        drive_arc_request = protocol.DriveArcRequest(speed=turn_speed, accel=turn_accel, curvature_radius_mm=1)
         result = await self.connection.DriveArc(drive_arc_request)
         self.logger.info(f'{type(result)}: {str(result).strip()}')
         return result
@@ -550,6 +550,22 @@ class Robot:
         image_data = bytes(color.rgb565_bytepair * 17664)
         return self.set_oled_with_screen_data(image_data, duration_sec, interrupt_running)
 
+    # TODO Refactor into Behavior class like Cozmo
+    @actions._as_actionable
+    async def drive_off_charger(self):
+        drive_off_charger_request = protocol.DriveOffChargerRequest()
+        result = await self.connection.DriveOffCharger(drive_off_charger_request)
+        self.logger.info(f'{type(result)}: {str(result).strip()}')
+        return result 
+
+
+    # TODO Refactor into Behavior class like Cozmo
+    @actions._as_actionable
+    async def drive_on_charger(self):
+        drive_on_charger_request = protocol.DriveOnChargerRequest()
+        result = await self.connection.DriveOnCharger(drive_on_charger_request)
+        self.logger.info(f'{type(result)}: {str(result).strip()}')
+        return result 
 
 class AsyncRobot(Robot):
     def __init__(self, *args, **kwargs):
