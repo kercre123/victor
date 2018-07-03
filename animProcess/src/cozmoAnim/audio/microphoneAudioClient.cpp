@@ -29,9 +29,9 @@ namespace Audio {
 namespace {
 #define CONSOLE_PATH "Audio.Microphone"
 // Shift noise floor value
-CONSOLE_VAR(float, kNoiseFloorMin, CONSOLE_PATH, 1.5f);
+CONSOLE_VAR_RANGED(float, kNoiseFloorMin, CONSOLE_PATH, 1.5f, 0.0f, 10.0f);
 // Range of normalize noise floor
-CONSOLE_VAR(float, kNoiseFloorRange, CONSOLE_PATH, 5.5f);
+CONSOLE_VAR_RANGED(float, kNoiseFloorRange, CONSOLE_PATH, 5.5f, 0.0f, 10.0f);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
