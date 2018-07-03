@@ -36,7 +36,6 @@
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/visionMarker.h"
 
-#include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationTypes.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/ledTypes.h"
@@ -82,6 +81,7 @@ class CubeAccelComponent;
 class CubeCommsComponent;
 class DrivingAnimationHandler;
 class DataAccessorComponent;
+enum class EngineErrorCode : uint8_t;
 class FaceWorld;
 class IExternalInterface;
 class IGatewayInterface;
@@ -91,6 +91,7 @@ class MoodManager;
 class MovementComponent;
 class NVStorageComponent;
 class ObjectPoseConfirmer;
+enum class OffTreadsState : int8_t;
 class PetWorld;
 class PhotographyManager;
 class ProgressionUnlockComponent;
@@ -136,6 +137,10 @@ enum class EngineToRobotTag : uint8_t;
 enum class RobotToEngineTag : uint8_t;
 } // end namespace RobotInterface
 
+namespace ExternalInterface {
+class MessageEngineToGame;
+struct RobotState;
+}
 
 // indent 2 spaces << that way !!!! coding standards !!!!
 class Robot : private Util::noncopyable
@@ -704,8 +709,8 @@ protected:
   bool             _gotStateMsgAfterRobotSync = false;
   u32              _lastStatusFlags          = 0;
 
-  OffTreadsState   _offTreadsState                 = OffTreadsState::OnTreads;
-  OffTreadsState   _awaitingConfirmationTreadState = OffTreadsState::OnTreads;
+  OffTreadsState   _offTreadsState;
+  OffTreadsState   _awaitingConfirmationTreadState;
   TimeStamp_t      _timeOffTreadStateChanged_ms    = 0;
   TimeStamp_t      _fallingStartedTime_ms          = 0;
 

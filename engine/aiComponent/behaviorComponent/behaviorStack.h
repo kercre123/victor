@@ -13,6 +13,7 @@
 #ifndef AI_COMPONENT_BEHAVIOR_COMPONENT_BEHAVIOR_STACK
 #define AI_COMPONENT_BEHAVIOR_COMPONENT_BEHAVIOR_STACK
 
+#include "clad/types/robotCompletedAction.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 

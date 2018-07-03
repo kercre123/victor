@@ -13,6 +13,7 @@
 #include "engine/components/cubes/cubeAccelComponent.h"
 
 #include "engine/activeObject.h"
+#include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/blockTapFilterComponent.h"
 #include "engine/components/carryingComponent.h"

@@ -25,6 +25,10 @@ namespace Cozmo {
 
 class BEIConditionMessageHelper;
 
+namespace ExternalInterface {
+struct RobotObservedFace;
+}
+
 class ConditionFacePositionUpdated : public IBEICondition, private IBEIConditionEventHandler
 {
 public:

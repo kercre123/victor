@@ -13,15 +13,17 @@
  * Copyright: Anki, Inc. 2016
  **/
 
+#include "engine/drivingAnimationHandler.h"
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "engine/actions/animActions.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/cozmoContext.h"
-#include "engine/drivingAnimationHandler.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/robot.h"
-#include "clad/externalInterface/messageGameToEngine.h"
+
 #include "util/console/consoleInterface.h"
 #include "util/helpers/boundedWhile.h"
 
@@ -42,6 +44,10 @@ namespace Anki {
                                 { SimpleMoodType::Frustrated, { AnimationTrigger::DriveStartAngry,
                                                                 AnimationTrigger::DriveLoopAngry,
                                                                 AnimationTrigger::DriveEndAngry}} })
+    , _tracksToUnlock( (u8)AnimTrackFlag::NO_TRACKS )
+    , _drivingStartAnimTag( ActionConstants::INVALID_TAG )
+    , _drivingLoopAnimTag(  ActionConstants::INVALID_TAG )
+    , _drivingEndAnimTag(   ActionConstants::INVALID_TAG )
     {
       _currDrivingAnimations = _moodBasedDrivingAnims.at(SimpleMoodType::Default);
     }

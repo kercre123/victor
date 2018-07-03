@@ -18,9 +18,7 @@
 
 #include "engine/robotComponents_fwd.h"
 
-#include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationTrigger.h"
-#include "clad/types/animationTypes.h"
 #include "clad/types/simpleMoodTypes.h"
 
 #include "coretech/common/shared/types.h"
@@ -34,6 +32,9 @@ namespace Anki {
 namespace Cozmo {
   
 class Robot;
+namespace ExternalInterface {
+struct RobotCompletedAction;
+}
     
 class DrivingAnimationHandler : public IDependencyManagedComponent<RobotComponentID>
 {
@@ -123,15 +124,15 @@ private:
   const std::map<SimpleMoodType, DrivingAnimations> _moodBasedDrivingAnims;
         
   u32 _actionTag;
-  u8 _tracksToUnlock = (u8)AnimTrackFlag::NO_TRACKS;
+  u8 _tracksToUnlock;
   bool _isActionLockingTracks = true;
   bool _keepLoopingWithoutPath = false;
       
   std::vector<Signal::SmartHandle> _signalHandles;
 
-  u32 _drivingStartAnimTag = ActionConstants::INVALID_TAG;
-  u32 _drivingLoopAnimTag = ActionConstants::INVALID_TAG;
-  u32 _drivingEndAnimTag = ActionConstants::INVALID_TAG;
+  u32 _drivingStartAnimTag;
+  u32 _drivingLoopAnimTag;
+  u32 _drivingEndAnimTag;
 };
 
 }

@@ -11,6 +11,7 @@
  *
  **/
 
+#include "engine/ankiEventUtil.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/memoryMapToPlanner.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_ObservableObject.h"

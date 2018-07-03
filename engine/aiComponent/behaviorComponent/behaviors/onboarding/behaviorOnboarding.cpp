@@ -181,7 +181,7 @@ void BehaviorOnboarding::GetAllDelegates(std::set<IBehavior*>& delegates) const
       if( ANKI_VERIFY( behavior != nullptr,
                        "BehaviorOnboarding.GetAllDelegates.Null",
                        "Behavior %s is invalid",
-                       BehaviorIDToString(behaviorID)) )
+                       BehaviorTypesWrapper::BehaviorIDToString(behaviorID)) )
       {
         delegates.insert( behavior.get() );
       }
@@ -208,7 +208,7 @@ void BehaviorOnboarding::InitBehavior()
     ICozmoBehaviorPtr behavior = GetBEI().GetBehaviorContainer().FindBehaviorByID( behaviorID );
     if( ANKI_VERIFY( behavior != nullptr,
                      "BehaviorOnboarding.InitBehavior.Null", "Behavior '%s' not found in BC",
-                     BehaviorIDToString(behaviorID) ) )
+                     BehaviorTypesWrapper::BehaviorIDToString(behaviorID) ) )
     {
       _iConfig.interruptions.push_back( behavior );
     }
@@ -218,7 +218,7 @@ void BehaviorOnboarding::InitBehavior()
     _iConfig.wakeUpBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID( _iConfig.wakeUpID );
     ANKI_VERIFY( _iConfig.wakeUpBehavior != nullptr,
                  "BehaviorOnboarding.InitBehavior.NullWakeUp", "Behavior '%s' not found in BC",
-                 BehaviorIDToString(_iConfig.wakeUpID) );
+                 BehaviorTypesWrapper::BehaviorIDToString(_iConfig.wakeUpID) );
   }
   
   if( ANKI_DEV_CHEATS ) {

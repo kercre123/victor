@@ -14,6 +14,7 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorTurnTowardsPerson__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "clad/types/salientPointTypes.h"
 
 namespace Anki {
 namespace Cozmo {

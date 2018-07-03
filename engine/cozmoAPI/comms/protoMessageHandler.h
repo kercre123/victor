@@ -16,6 +16,7 @@
 #include "engine/cozmoAPI/comms/iSocketComms.h"
 #include "engine/events/ankiEventMgr.h"
 #include "engine/externalInterface/gatewayInterface.h"
+#include "proto/external_interface/shared.pb.h"
 #include "util/signals/simpleSignal_fwd.h"
 
 #include <memory>

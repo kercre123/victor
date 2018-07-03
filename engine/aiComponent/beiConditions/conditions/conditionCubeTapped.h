@@ -25,6 +25,10 @@ namespace Cozmo {
 
 class BEIConditionMessageHelper;
 
+namespace ExternalInterface {
+struct ObjectTapped;
+}
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class ConditionCubeTapped : public IBEICondition, private IBEIConditionEventHandler
 {

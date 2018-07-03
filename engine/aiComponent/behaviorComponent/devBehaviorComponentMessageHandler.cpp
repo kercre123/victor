@@ -13,6 +13,7 @@
 
 #include "engine/aiComponent/behaviorComponent/devBehaviorComponentMessageHandler.h"
 
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"

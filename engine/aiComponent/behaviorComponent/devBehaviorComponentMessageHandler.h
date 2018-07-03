@@ -15,10 +15,6 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_DevBehaviorComponentMessageHandler_H__
 #define __Cozmo_Basestation_BehaviorSystem_DevBehaviorComponentMessageHandler_H__
 
-#include "clad/externalInterface/messageEngineToGameTag.h"
-#include "clad/externalInterface/messageGameToEngineTag.h"
-#include "clad/robotInterface/messageRobotToEngineTag.h"
-
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 

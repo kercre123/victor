@@ -21,8 +21,6 @@
 
 #include "coretech/common/engine/utils/timer.h"
 
-#include "clad/externalInterface/messageGameToEngine.h"
-
 
 namespace Anki {
 namespace Cozmo {

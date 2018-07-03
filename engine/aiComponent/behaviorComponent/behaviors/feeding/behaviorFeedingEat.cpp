@@ -30,7 +30,6 @@
 #include "engine/robotDataLoader.h"
 
 #include "coretech/common/engine/utils/timer.h"
-#include "clad/externalInterface/messageEngineToGame.h"
 #include "util/console/consoleInterface.h"
 #include "util/math/math.h"
 

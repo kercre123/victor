@@ -15,6 +15,7 @@
 
 #include "objectPoseConfirmer.h"
 
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "engine/activeObject.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/navMap/mapComponent.h"

@@ -27,8 +27,8 @@
 #include "engine/vision/visionModeSchedule.h"
 #include "engine/vision/visionPoseData.h"
 
-#include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/cameraParams.h"
+#include "clad/types/imageTypes.h"
 #include "clad/types/loadedKnownFace.h"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/salientPointTypes.h"
@@ -64,6 +64,10 @@ class CozmoContext;
 struct VisionProcessingResult;
 class VisionSystem;
 class VizManager;
+  
+namespace ExternalInterface {
+struct RobotCompletedFactoryDotTest;
+}
   
 struct DockingErrorSignal;
 

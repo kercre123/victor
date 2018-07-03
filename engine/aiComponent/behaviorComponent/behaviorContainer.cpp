@@ -14,6 +14,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/behaviorComponent/behaviorTypes.h"
 
 #include "coretech/common/engine/jsonTools.h"

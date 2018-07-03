@@ -11,6 +11,7 @@
  **/
 
 #include "engine/actions/visuallyVerifyActions.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/externalInterface/externalInterface.h"

@@ -25,6 +25,7 @@
 #include "engine/navMap/memoryMap/data/memoryMapData_ProxObstacle.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_ObservableObject.h"
 
+#include "engine/ankiEventUtil.h"
 #include "engine/block.h"
 #include "engine/robot.h"
 #include "engine/robotStateHistory.h"

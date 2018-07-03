@@ -12,6 +12,8 @@
  **/
 
 #include "engine/actions/actionContainers.h"
+
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/actionWatcher.h"
 #include "engine/cozmoContext.h"

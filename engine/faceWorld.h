@@ -18,7 +18,6 @@
 #include "coretech/vision/engine/trackedFace.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
-#include "engine/ankiEventUtil.h"
 #include "engine/robotComponents_fwd.h"
 #include "engine/smartFaceId.h"
 #include "engine/viz/vizManager.h"
@@ -33,10 +32,21 @@
 #include <deque>
 
 namespace Anki {
+  
+namespace Vision {
+struct LoadedKnownFace;
+class TrackedFace;
+}
+  
 namespace Cozmo {
   
   // Forward declarations:
   class Robot;
+  
+  namespace ExternalInterface {
+    struct RobotDeletedFace;
+    struct RobotObservedFace;
+  }
   
   // FaceWorld is updated at the robot component level, same as BehaviorComponent
   // Therefore BCComponents (which are managed by BehaviorComponent) can't declare dependencies on FaceWorld 

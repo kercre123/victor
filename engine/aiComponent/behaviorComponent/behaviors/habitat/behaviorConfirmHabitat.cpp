@@ -20,7 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/habitat/behaviorConfirmHabitat.h"
 
 #include "clad/types/behaviorComponent/behaviorIDs.h"
-#include "clad/externalInterface/messageEngineToGameTag.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"

@@ -16,8 +16,6 @@
 
 #include "coretech/messaging/engine/IComms.h"
 
-#include "clad/externalInterface/messageEngineToGame.h"
-
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/callstack.h"

@@ -14,9 +14,14 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorPlaypenCameraCalibration_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/iBehaviorPlaypen.h"
+#include "clad/types/imageTypes.h"
 
 namespace Anki {
 namespace Cozmo {
+  
+namespace ExternalInterface {
+struct RobotObservedObject;
+}
 
 class BehaviorPlaypenCameraCalibration : public IBehaviorPlaypen
 {

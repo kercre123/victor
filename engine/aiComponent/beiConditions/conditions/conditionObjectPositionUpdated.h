@@ -26,6 +26,10 @@ namespace Anki {
 namespace Cozmo {
 
 class BEIConditionMessageHelper;
+  
+namespace ExternalInterface {
+struct RobotObservedObject;
+}
 
 class ConditionObjectPositionUpdated : public IBEICondition, private IBEIConditionEventHandler
 {

@@ -96,7 +96,7 @@ protected:
     auto behavior = bei.GetBehaviorContainer().FindBehaviorByID( behaviorID );
     ANKI_VERIFY( behavior != nullptr,
                  "IOnboardingStage.GetBehaviorByID.BehaviorNotFound",
-                 "Behavior '%s' not found", BehaviorIDToString(behaviorID) );
+                 "Behavior '%s' not found", BehaviorTypesWrapper::BehaviorIDToString(behaviorID) );
     return behavior.get();
   }
   

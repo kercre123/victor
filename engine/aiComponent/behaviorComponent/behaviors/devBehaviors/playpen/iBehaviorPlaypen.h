@@ -22,6 +22,9 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/playpenConfig.h"
 
+#include "clad/types/factoryTestTypes.h"
+#include "clad/types/nvStorageTypes.h"
+
 #include "coretech/common/engine/utils/timer.h"
 
 namespace Anki {

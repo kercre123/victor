@@ -16,9 +16,10 @@
 
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiComponents_fwd.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "util/entityComponent/componentWrapper.h"
 #include "util/entityComponent/entity.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 
 #include "clad/types/offTreadsStates.h"
 

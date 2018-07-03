@@ -15,10 +15,10 @@
 
 #include "coretech/common/shared/types.h"
 
+#include "clad/types/robotCompletedAction.h"
 #include "engine/aiComponent/behaviorComponent/asyncMessageGateComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/aiComponent/behaviorComponent/iBehaviorRunner.h"
-#include "engine/aiComponent/behaviorComponent/behaviorStack.h"
 #include "json/json-forwards.h"
 #include "util/signals/simpleSignal_fwd.h"
 
@@ -30,6 +30,7 @@ namespace Cozmo {
 
 // Forward declarations
 class BehaviorExternalInterface;
+class BehaviorStack;
 class IBehavior;
 class Robot;
 

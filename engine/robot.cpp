@@ -285,6 +285,8 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
 , _ID(robotID)
 , _syncRobotAcked(false)
 , _lastMsgTimestamp(0)
+, _offTreadsState(OffTreadsState::OnTreads)
+, _awaitingConfirmationTreadState(OffTreadsState::OnTreads)
 , _robotAccelFiltered(0.f, 0.f, 0.f)
 {
   DEV_ASSERT(_context != nullptr, "Robot.Constructor.ContextIsNull");

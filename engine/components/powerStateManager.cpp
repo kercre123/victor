@@ -12,6 +12,7 @@
 
 #include "engine/components/powerStateManager.h"
 
+#include "clad/types/imageTypes.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robotInterface/messageHandler.h"

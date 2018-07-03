@@ -45,6 +45,7 @@
 #include "coretech/vision/engine/faceTracker.h"
 #include "coretech/vision/engine/trackedFace.h"
 
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/behaviorComponent/behaviorStats.h"
 #include "clad/types/behaviorComponent/userIntent.h"
 #include "clad/types/enrolledFaceStorage.h"

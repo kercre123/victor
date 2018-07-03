@@ -22,10 +22,8 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iReactToFaceListener.h"
 #include "engine/aiComponent/faceSelectionComponent.h"
-#include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
-#include "clad/externalInterface/messageEngineToGame.h"
 #include "util/console/consoleInterface.h"
 
 namespace Anki {

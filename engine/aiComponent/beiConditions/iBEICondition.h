@@ -17,7 +17,6 @@
 
 #include "engine/aiComponent/beiConditions/iBEICondition_fwd.h"
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/components/visionScheduleMediator/iVisionModeSubscriber.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator_fwd.h"
 

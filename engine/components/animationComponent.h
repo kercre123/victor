@@ -20,8 +20,6 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "engine/actions/actionInterface.h"
-#include "engine/events/ankiEvent.h"
-#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/types/keepFaceAliveParameters.h"
 #include "coretech/vision/shared/compositeImage/compositeImageLayer.h"
@@ -50,6 +48,8 @@ class Robot;
 namespace RobotInterface{
 class EngineToRobot;
 }
+template <typename T>
+class AnkiEvent;
   
 class AnimationComponent : public IDependencyManagedComponent<RobotComponentID>, 
                            private Anki::Util::noncopyable, 

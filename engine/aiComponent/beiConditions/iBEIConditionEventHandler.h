@@ -21,6 +21,8 @@ namespace Anki {
 namespace Cozmo {
 
 namespace ExternalInterface {
+class MessageGameToEngine;
+class MessageEngineToGame;
 enum class MessageEngineToGameTag : uint8_t;
 enum class MessageGameToEngineTag : uint8_t;
 }

@@ -226,7 +226,7 @@ void BehaviorsBootLoader::SetNewBehavior(BehaviorID behaviorID)
   IBehavior* behavior = _behaviorContainer->FindBehaviorByID(behaviorID).get();
   if( ANKI_VERIFY(behavior != nullptr,
               "BehaviorsBootLoader.SetNewBehavior.Invalid",
-              "No %s", BehaviorIDToString(behaviorID)) )
+              "No %s", BehaviorTypesWrapper::BehaviorIDToString(behaviorID)) )
   {
     if( behavior != _bootBehavior ) {
       if( _hasGrabbedBootBehavior ) {

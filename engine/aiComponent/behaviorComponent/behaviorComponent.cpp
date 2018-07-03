@@ -36,6 +36,9 @@
 #include "engine/components/robotStatsTracker.h"
 #include "engine/faceWorld.h"
 
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
+
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"

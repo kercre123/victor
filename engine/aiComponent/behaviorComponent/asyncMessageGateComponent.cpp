@@ -11,8 +11,12 @@
 **/
 
 #include "engine/aiComponent/behaviorComponent/asyncMessageGateComponent.h"
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/externalInterface/gatewayInterface.h"
+#include "engine/robotInterface/messageHandler.h"
 #include "proto/external_interface/shared.pb.h"
 
 #include "util/logging/logging.h"

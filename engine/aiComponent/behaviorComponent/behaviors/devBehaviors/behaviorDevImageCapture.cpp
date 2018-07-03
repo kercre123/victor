@@ -12,7 +12,6 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevImageCapture.h"
 
-#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/imageTypes.h"
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -27,7 +26,6 @@
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
-#include "engine/externalInterface/externalInterface.h"
 
 #include "util/fileUtils/fileUtils.h"
 

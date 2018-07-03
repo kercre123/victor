@@ -17,7 +17,6 @@
 #include "coretech/common/shared/types.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
-#include "engine/ankiEventUtil.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/overheadEdge.h"
 #include "engine/navMap/iNavMap.h"
@@ -26,6 +25,7 @@
 #include "coretech/vision/engine/observableObjectLibrary.h"
 
 #include "util/helpers/noncopyable.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 #include <assert.h>
 #include <string>

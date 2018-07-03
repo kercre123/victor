@@ -77,7 +77,7 @@ void BehaviorCoordinateWhileInAir::InitPassThrough()
       ANKI_VERIFY(modifiers.wantsToBeActivatedWhenOffTreads,
                   "BehaviorCoordinateWhileInAir.InitPassThrough.BehaviorCantRunInAir",
                   "Behavior %s is listed as a behavior that suppresses the in air reaction, \
-                  but modifier says it can't run while in the air", BehaviorIDToString(id));
+                  but modifier says it can't run while in the air", BehaviorTypesWrapper::BehaviorIDToString(id));
       
     }
   }

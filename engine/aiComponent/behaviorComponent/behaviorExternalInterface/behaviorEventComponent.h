@@ -14,9 +14,7 @@
 #ifndef __Cozmo_Basestation_BehaviorComponent_BehaviorEventComponent_H__
 #define __Cozmo_Basestation_BehaviorComponent_BehaviorEventComponent_H__
 
-#include "clad/externalInterface/messageEngineToGameTag.h"
-#include "clad/externalInterface/messageGameToEngineTag.h"
-#include "clad/robotInterface/messageRobotToEngineTag.h"
+#include "clad/types/robotCompletedAction.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "util/entityComponent/entity.h"
@@ -51,8 +49,8 @@ public:
   void Init(IBehaviorMessageSubscriber& messageSubscriber);
 
   
-  virtual void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageGameToEngineTag>&& tags) const override;
-  virtual void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageEngineToGameTag>&& tags) const override;
+  virtual void SubscribeToTags(IBehavior* subscriber, std::set<GameToEngineTag>&& tags) const override;
+  virtual void SubscribeToTags(IBehavior* subscriber, std::set<EngineToGameTag>&& tags) const override;
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<RobotInterface::RobotToEngineTag>&& tags) const override;
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<AppToEngineTag>&& tags) const override;
 

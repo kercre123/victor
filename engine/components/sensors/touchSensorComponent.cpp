@@ -11,6 +11,7 @@
  **/
 
 #include "engine/components/sensors/touchSensorComponent.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"

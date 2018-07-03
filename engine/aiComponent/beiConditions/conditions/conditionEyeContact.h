@@ -22,7 +22,7 @@ class ConditionEyeContact : public IBEICondition
 {
 public:
   explicit ConditionEyeContact(const Json::Value& config);
-  static u32 GetMaxTimeSinceTrackedFaceUpdated_ms();
+  static uint32_t GetMaxTimeSinceTrackedFaceUpdated_ms();
 
 protected:
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;

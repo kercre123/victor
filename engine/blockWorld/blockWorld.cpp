@@ -26,6 +26,7 @@
 #include "engine/activeObjectHelpers.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/ankiEventUtil.h"
 #include "engine/block.h"
 #include "engine/charger.h"
 #include "engine/components/carryingComponent.h"

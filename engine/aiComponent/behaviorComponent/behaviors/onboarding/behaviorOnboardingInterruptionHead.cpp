@@ -12,6 +12,8 @@
 
 
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingInterruptionHead.h"
+
+#include "clad/types/onboardingStages.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/actions/basicActions.h"
 

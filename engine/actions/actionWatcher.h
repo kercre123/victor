@@ -15,8 +15,8 @@
 #define __Cozmo_Basestation_Actions_ActionWatcher_H__
 
 #include "engine/actions/actionDefinitions.h"
-#include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/actionTypes.h"
+#include "clad/types/robotCompletedAction.h"
 
 #include <list>
 #include <map>

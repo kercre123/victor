@@ -14,6 +14,7 @@
 #ifndef __Engine_AiComponent_BeiConditions_Conditions_ConditionIlluminationDetected_H__
 #define __Engine_AiComponent_BeiConditions_Conditions_ConditionIlluminationDetected_H__
 
+#include "coretech/common/shared/types.h"
 #include "clad/types/imageTypes.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/aiComponent/beiConditions/iBEIConditionEventHandler.h"

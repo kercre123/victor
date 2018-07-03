@@ -13,6 +13,8 @@
 
 #include "engine/aiComponent/behaviorComponent/stackMonitors/stackVizMonitor.h"
 
+#include "clad/vizInterface/messageViz.h"
+#include "engine/ankiEventUtil.h"
 #include "engine/aiComponent/behaviorComponent/behaviorStack.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
