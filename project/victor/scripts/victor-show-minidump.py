@@ -31,23 +31,60 @@ VICOS_WHICH = os.path.join(SCRIPTS, 'vicos_which.sh')
 # Path to vicos addr2line
 ADDR2LINE = exec([VICOS_WHICH, 'addr2line'])
 
-def objfn(obj, options):
-  fn = os.path.join(TOPLEVEL, "_build", "vicos", options.configuration, "bin", obj)
-  if os.path.exists(fn):
-    return fn
-  fn = os.path.join(TOPLEVEL, "_build", "vicos", options.configuration, "lib", obj)
-  if os.path.exists(fn):
-    return fn
+#
+# Global cache of objfn lookup results
+#
+objfn_cache = {}
+
+#
+# Helper function to locate an object file in our build tree.
+# Maintain a cache of results so we don't have to hit the filesystem each time.
+#
+def get_objfn(obj, options):
+  if obj in objfn_cache:
+    return objfn_cache[obj]
+  objfn = os.path.join(TOPLEVEL, "_build", "vicos", options.configuration, "bin", obj)
+  if os.path.exists(objfn):
+    objfn_cache[obj] = objfn
+    return objfn
+  objfn = os.path.join(TOPLEVEL, "_build", "vicos", options.configuration, "lib", obj)
+  if os.path.exists(objfn):
+    objfn_cache[obj] = objfn
+    return objfn
+  objfn_cache[obj] = None
   return None
+
+#
+# Global cache of symfn lookup results
+#
+symfn_cache = {}
+
+#
+# Helper function to locate symbol file for a given object file.
+# If objfn.full exists, use it, else use objfn itself.
+# Maintain a cache of lookup results so we don't have to hit the filesystem every time.
+#
+def get_symfn(objfn):
+  if objfn in symfn_cache:
+    return symfn_cache[objfn]
+  symfn = objfn + ".full"
+  if os.path.exists(symfn):
+    symfn_cache[objfn] = symfn
+    return symfn
+  symfn_cache[objfn] = objfn
+  return objfn
 
 def addr2line(obj, addr, options):
   # Can we find this object in our build tree?
-  fn = objfn(obj, options)
-  if not fn:
+  objfn = get_objfn(obj, options)
+  if not objfn:
     return None
 
-  # Call addr2line to get symbol info from object file
-  cmd = [ADDR2LINE, '-sfCe', fn, addr]
+  # Do we have a symbol file for this object file?
+  symfn = get_symfn(objfn)
+
+  # Call addr2line to get symbol info
+  cmd = [ADDR2LINE, '-sfCe', symfn, addr]
   output = exec(cmd).replace('\n', ' ')
 
   return output
