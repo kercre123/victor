@@ -41,7 +41,6 @@ func (ctx *voiceContext) addBytes(bytes []byte) {
 
 func (ctx *voiceContext) close() error {
 	ctx.closed = true
-	close(ctx.audioStream)
 	close(ctx.done)
 	var err util.Errors
 	err.Append(ctx.stream.Close())
@@ -50,13 +49,12 @@ func (ctx *voiceContext) close() error {
 }
 
 func (p *Process) newVoiceContext(conn *chipper.Conn, stream chipper.Stream, cloudChan cloudChans) *voiceContext {
-	audioStream := make(chan []byte, 10)
 	ctx := &voiceContext{
 		conn:        conn,
 		stream:      stream,
 		process:     p,
 		byteChan:    make(chan []byte),
-		audioStream: audioStream,
+		audioStream: make(chan []byte, 10),
 		done:        make(chan struct{})}
 
 	// start routine to buffer communication between main routine and upload routine
@@ -99,6 +97,7 @@ func (ctx *voiceContext) sendAudio(samples []byte, cloudChan cloudChans) error {
 // something and not ready for more audio yet
 func (ctx *voiceContext) bufferRoutine(streamSize int) {
 	defer close(ctx.byteChan)
+	defer close(ctx.audioStream)
 	audioBuf := make([]byte, 0, streamSize*2)
 	// function to enable/disable streaming case depending on whether we have enough bytes
 	// to send audio
