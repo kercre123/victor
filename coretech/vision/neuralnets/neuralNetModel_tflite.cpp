@@ -27,6 +27,7 @@
 #include "tensorflow/contrib/lite/string_util.h"
 #include "tensorflow/contrib/lite/tools/mutable_op_resolver.h"
 
+
 namespace Anki {
 namespace Vision {
 
@@ -35,6 +36,17 @@ namespace Vision {
 // TODO: Make this a parameter in config?
 const int kNumThreads = 1;
 
+// A TFLite error reporter that uses our error logging system
+struct TFLiteLogReporter : public tflite::ErrorReporter {
+  int Report(const char* format, va_list args) override
+  {
+    ::Anki::Util::sErrorV("NeuralNetModel.TFLiteErrorReporter", {}, format, args);
+    return 0;
+  }
+};
+
+static TFLiteLogReporter sLogReporter;
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 NeuralNetModel::NeuralNetModel()
 { 
@@ -46,7 +58,7 @@ NeuralNetModel::~NeuralNetModel()
 {
   LOG_INFO("NeuralNetModel.Destructor", "");
 }
-
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result NeuralNetModel::LoadModel(const std::string& modelPath, const Json::Value& config)
 {
@@ -62,21 +74,25 @@ Result NeuralNetModel::LoadModel(const std::string& modelPath, const Json::Value
   
   const std::string graphFileName = Util::FileUtils::FullFilePath({modelPath,_params.graphFile});
   
-  _model = tflite::FlatBufferModel::BuildFromFile(graphFileName.c_str());
+  if(!Util::FileUtils::FileExists(graphFileName))
+  {
+    PRINT_NAMED_ERROR("NeuralNetModel.LoadModel.GraphFileDoesNotExist", "%s", graphFileName.c_str());
+    return RESULT_FAIL;
+  }
+  
+  _model = tflite::FlatBufferModel::BuildFromFile(graphFileName.c_str(), &sLogReporter);
   
   if (!_model)
   {
-    PRINT_NAMED_ERROR("NeuralNetModel.LoadModel.FailedToMMapModel", "%s",
-                      graphFileName.c_str());
+    PRINT_NAMED_ERROR("NeuralNetModel.LoadModel.FailedToBuildFromFile", "%s", graphFileName.c_str());
     return RESULT_FAIL;
   }
   
   LOG_INFO("NeuralNetModel.LoadModel.Success", "Loaded: %s",
            graphFileName.c_str());
   
-  _model->error_reporter();
-  
-  LOG_INFO("NeuralNetModel.LoadModel.ResolvedReporter", "");
+  //_model->error_reporter();
+  //LOG_INFO("NeuralNetModel.LoadModel.ResolvedReporter", "");
   
 #ifdef TFLITE_CUSTOM_OPS_HEADER
   tflite::MutableOpResolver resolver;
@@ -185,13 +201,18 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
     }
       
     case NeuralNetParams::OutputType::BinaryLocalization:
+    {
+      const float* outputData = _interpreter->typed_output_tensor<float>(0);
+      GetLocalizedBinaryClassification(outputData, t, salientPoints);
+      break;
+    }
+      
     case NeuralNetParams::OutputType::AnchorBoxes:
+      //GetDetectedObjects(outputTensors, t, salientPoints);
     case NeuralNetParams::OutputType::Segmentation:
     {
       PRINT_NAMED_ERROR("NeuralNetModel.Detect.OutputTypeNotSupported", "TFLite model needs more output types implemented");
       return RESULT_FAIL;
-      //GetLocalizedBinaryClassification(outputTensors[0], t, salientPoints);
-      //GetDetectedObjects(outputTensors, t, salientPoints);
     }
   }
   

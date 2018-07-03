@@ -58,11 +58,6 @@ public:
 
 private:
 
-  // Helper to return a set of localization boxes from a grid, assuming a binary classifcation 
-  // (e.g. person / no-person in a 6x6 grid). Grid size is specified in JSON config
-  void GetLocalizedBinaryClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp, 
-                                        std::list<Vision::SalientPoint>& salientPoints);
-
   // Helper to interpret four outputs as SSD boxes (num detections, scores, classes, and boxes)
   void GetDetectedObjects(const std::vector<tensorflow::Tensor>& outputTensors, TimeStamp_t timestamp,
                           std::list<Vision::SalientPoint>& salientPoints);
@@ -72,10 +67,6 @@ private:
 
   std::unique_ptr<tensorflow::Session>      _session;
   std::unique_ptr<tensorflow::MemmappedEnv> _memmappedEnv;
-  
-  // For OutputType::BinaryLocalization
-  cv::Mat_<uint8_t>                         _detectionGrid;
-  cv::Mat_<int32_t>                         _labelsGrid;
   
 }; // class NeuralNetModel
 

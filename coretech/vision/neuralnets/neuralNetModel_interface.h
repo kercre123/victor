@@ -63,8 +63,18 @@ protected:
   template<typename T>
   void GetClassification(const T* outputData, TimeStamp_t timestamp, std::list<Vision::SalientPoint>& salientPoints);
   
+  // Helper to return a set of localization boxes from a grid, assuming a binary classifcation
+  // (e.g. person / no-person in a 6x6 grid). Grid size is specified in JSON config
+  template<typename T>
+  void GetLocalizedBinaryClassification(const T* outputData, TimeStamp_t timestamp,
+                                        std::list<Vision::SalientPoint>& salientPoints);
+
   NeuralNetParams                           _params;
   std::vector<std::string>                  _labels;
+  
+  // For OutputType::BinaryLocalization
+  cv::Mat_<uint8_t>                         _detectionGrid;
+  cv::Mat_<int32_t>                         _labelsGrid;
   
 };
 

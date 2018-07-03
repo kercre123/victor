@@ -234,18 +234,6 @@ int main(int argc, char **argv)
 
   const std::string jsonFilename = Util::FileUtils::FullFilePath({cachePath, "neuralNetResults.json"});
 
-  LOG_INFO("VicNeuralNets.Main.ImageLoadMode", "%s: %s",
-           (imageFileProvided ? "Loading given image" : "Polling for images at"),
-           imageFilename.c_str());
-
-  
-# ifdef SIMULATOR
-  webots::Supervisor webotsSupervisor;
-  const int kPollPeriod_ms  = webotsSupervisor.getSelf()->getField("pollingPeriod_ms")->getSFInt32();
-# else 
-  const int kPollPeriod_ms = config["pollPeriod_ms"].asInt();
-# endif
-
   // Initialize the detector
   Vision::NeuralNetModel neuralNet;
   {
@@ -260,6 +248,19 @@ int main(int argc, char **argv)
     
     TicToc::Enable(neuralNet.IsVerbose());
   }
+  
+  LOG_INFO("VicNeuralNets.Main.ImageLoadMode", "%s: %s",
+           (imageFileProvided ? "Loading given image" : "Polling for images at"),
+           imageFilename.c_str());
+  
+  
+# ifdef SIMULATOR
+  webots::Supervisor webotsSupervisor;
+  const int kPollPeriod_ms  = webotsSupervisor.getSelf()->getField("pollingPeriod_ms")->getSFInt32();
+# else
+  const int kPollPeriod_ms = config["pollPeriod_ms"].asInt();
+# endif
+
   
   LOG_INFO("VicNeuralNets.Main.DetectorInitialized", "Waiting for images");
 
