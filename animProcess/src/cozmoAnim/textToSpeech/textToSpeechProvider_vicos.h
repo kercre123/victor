@@ -18,6 +18,7 @@
 
 #include "textToSpeechProvider.h"
 #include "textToSpeechProviderConfig.h"
+#include "json/json.h"
 
 #include <string>
 
@@ -45,14 +46,26 @@ public:
   TextToSpeechProviderImpl(const AnimContext* context, const Json::Value& tts_platform_config);
   ~TextToSpeechProviderImpl();
 
+  Result SetLocale(const std::string & locale);
+
   Result CreateAudioData(const std::string& text, float durationScalar, TextToSpeechProviderData& data);
 
 private:
-  // TTS configuration
-  std::unique_ptr<TextToSpeechProviderConfig> _tts_config;
+  // Path to TTS resources
+  std::string _tts_resource_path;
 
-  // RNG provided by context
+  // Configuration options provided to constructor
+  Json::Value _tts_platform_config;
+
+  // RNG provided to constructor
   Anki::Util::RandomGenerator * _rng = nullptr;
+
+ // Current locale, current language
+  std::string _locale;
+  std::string _language;
+
+  // Current configuration options
+  std::unique_ptr<TextToSpeechProviderConfig> _tts_config;
 
   //
   // BABILE Object State
@@ -75,6 +88,12 @@ private:
   //
   BB_S32 _BAB_voicefreq = 0;
   BB_S32 _BAB_samplesize = 0;
+
+  //
+  // Internal state management
+  //
+  Result Initialize(const std::string & locale);
+  void Cleanup();
 
 }; // class TextToSpeechProviderImpl
 

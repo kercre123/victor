@@ -269,7 +269,9 @@ void AnimEngine::HandleMessage(const RobotInterface::SetLocale & msg)
     _context->SetLocale(locale);
   }
 
-  // TO DO: _ttsComponent->SetLocale(locale)
+  if (_ttsComponent != nullptr) {
+    _ttsComponent->SetLocale(locale);
+  }
 
 }
 } // namespace Cozmo

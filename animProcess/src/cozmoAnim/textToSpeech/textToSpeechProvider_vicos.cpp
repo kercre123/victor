@@ -39,34 +39,100 @@ namespace TextToSpeech {
 
 TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* context, const Json::Value& tts_platform_config)
 {
-  // Check for valid data platform before we do any work
-  using DataPlatform = Anki::Util::Data::DataPlatform;
-  using Locale = Anki::Util::Locale;
+  // Caller must provide context & RNG
+  DEV_ASSERT(context != nullptr, "TextToSpeechProviderImpl.InvalidContext");
+  DEV_ASSERT(context->GetRandom() != nullptr, "TextToSpeechProviderImpl.InvalidRNG");
 
-  const DataPlatform * dataPlatform = context->GetDataPlatform();
+  // Check for valid data platform before we do any work
+  const auto * dataPlatform = context->GetDataPlatform();
   if (nullptr == dataPlatform) {
     // This may happen during unit tests
-    LOG_WARNING("TextToSpeechProvider.Initialize.NoDataPlatform", "Missing data platform");
+    LOG_WARNING("TextToSpeechProviderImpl.InvalidDataPlatform", "Missing data platform");
     return;
   }
 
   // Check for valid locale before we do any work
-  const Locale * locale = context->GetLocale();
+  const auto * locale = context->GetLocale();
   if (nullptr == locale) {
     // This may happen during unit tests
-    LOG_WARNING("TextToSpeechProvider.Initialize.NoLocale", "Missing locale");
+    LOG_WARNING("TextToSpeechProviderImpl.InvalidLocale", "Missing locale");
     return;
   }
+
+  // Hold on to anything we will need later
+  _tts_resource_path = dataPlatform->GetResourcePath("tts");
+  _tts_platform_config = tts_platform_config;
+  _rng = context->GetRandom();
+
+  // Initialize with default locale
+  const auto & localeString = locale->GetLocaleString();
+
+  const Result result = Initialize(localeString);
+  if (result != RESULT_OK) {
+    LOG_ERROR("TextToSpeechProviderImpl.InitFailed",
+      "Unable to initialize with locale %s (error %d)",
+      localeString.c_str(), result);
+    return;
+  }
+
+}
+
+TextToSpeechProviderImpl::~TextToSpeechProviderImpl()
+{
+  Cleanup();
+}
+
+void TextToSpeechProviderImpl::Cleanup()
+{
+  // Free memory allocated by BABILE_init
+  if (nullptr != _BAB_Obj) {
+    BABILE_free(_BAB_Obj, _BAB_MemRec);
+    _BAB_Obj = nullptr;
+    _BAB_MemRec = nullptr;
+  }
+
+  // Free memory allocated by BABILE_LoadIniFile
+  if (nullptr != _BAB_LangDba) {
+    destroyLanguageDba(_BAB_LangDba);
+    _BAB_LangDba = nullptr;
+  }
+
+  // Free memory allocated for memory tracker
+  if (nullptr != _BAB_MemParam) {
+    free(_BAB_MemParam);
+    _BAB_MemParam = nullptr;
+  }
+
+  // Reset current locale, current language
+  _locale.clear();
+  _language.clear();
+}
+
+Result TextToSpeechProviderImpl::Initialize(const std::string & locale)
+{
+  LOG_DEBUG("TextToSpeechProvider.Initialize", "Initialize locale %s", locale.c_str());
+
+  if (locale == _locale) {
+    LOG_DEBUG("TextToSpeechProvider.Initialize", "Already using locale %s", locale.c_str());
+    return RESULT_OK;
+  }
+
+  Cleanup();
+
+  std::string language = Anki::Util::Locale::LocaleFromString(locale).GetLanguageString();
+  if (language.empty()) {
+    LOG_ERROR("TextToSpeechProvider.Initialize", "Unable to get language from locale %s", locale.c_str());
+    language = "en";
+  }
+
+  // Initialize configuration
+  _tts_config = std::make_unique<TextToSpeechProviderConfig>(language, _tts_platform_config);
 
   // Initialize license parameters
   const auto tts_userid = AcapelaTTS::GetUserid();
   const auto tts_passwd = AcapelaTTS::GetPassword();
   const auto tts_license = AcapelaTTS::GetLicense();
 
-  // Initialize configuration
-  _tts_config = std::make_unique<TextToSpeechProviderConfig>(locale->GetLanguageString(), tts_platform_config);
-
-  const auto & language = _tts_config->GetLanguage();
   const auto & voice = _tts_config->GetVoice();
   const auto speed = _tts_config->GetSpeed();
   const auto shaping = _tts_config->GetShaping();
@@ -81,10 +147,7 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* context, c
   //
   // Load voice parameters from ini file
   //
-  // VIC-293 TODO: Path to ini file should be determined by data platform & current locale
-  //
-  const std::string & ttsPath = dataPlatform->GetResourcePath("tts");
-  const std::string & iniFile = ttsPath + "/" + voice;
+  const std::string & iniFile = _tts_resource_path + "/" + voice;
   const std::string & loadParams = "*=RAM";
   const char * defaultText = NULL;
   BB_S32 synthAvail = 0;
@@ -96,9 +159,10 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* context, c
 
   _BAB_LangDba = BABILE_loadIniFile(iniFile.c_str(), &nlpeLS, &synthLS, &nlpModule, &synthAvail, &synthModule,
          &defaultText, loadParams.c_str());
+
   if (nullptr == _BAB_LangDba)	{
     LOG_WARNING("TextToSpeechProvider.Initialize.LoadIniFile", "Failed to load ini file %s", iniFile.c_str());
-    return ;
+    return RESULT_FAIL_INVALID_PARAMETER;
   }
 
   LOG_DEBUG("TextToSpeechProvider.Initialize.LoadIniFile",
@@ -143,17 +207,17 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* context, c
 		initializationParameters.nlpInitError
                 initializationParameters.mbrInitError
     */
-    return;
+    return RESULT_FAIL_INVALID_OBJECT;
   }
 
   {
     char version[512] = "";
 
     BABILE_getVersionEx(_BAB_Obj, (BB_TCHAR *) version, sizeof(version)/sizeof(char));
-    BABILE_getSetting(_BAB_Obj, BABIL_PARM_VOICEFREQ, &_BAB_voicefreq);
-    BABILE_getSetting(_BAB_Obj, BABIL_PARM_SAMPLESIZE, &_BAB_samplesize);
+    BABILE_getSetting(_BAB_Obj, BABIL_PARM_VOICEFREQ, (BB_SPTR*) &_BAB_voicefreq);
+    BABILE_getSetting(_BAB_Obj, BABIL_PARM_SAMPLESIZE, (BB_SPTR*) &_BAB_samplesize);
     LOG_INFO("TextToSpeechProvider.Initialize.VersionEx", "TTS library version %s (%s) freq=%ld samplesize=%ld",
-    	BABILE_getVersion(), version, _BAB_voicefreq, _BAB_samplesize);
+    	     BABILE_getVersion(), version, _BAB_voicefreq, _BAB_samplesize);
   }
 
   bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_SPEED, speed);
@@ -186,30 +250,17 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* context, c
                 trailingSilence_ms, bbError);
   }
 
-  _rng = context->GetRandom();
+  _locale = locale;
+  _language = language;
 
+  LOG_INFO("TextToSpeechProviderImpl.Initialize", "Initialized locale %s language %s", _locale.c_str(), _language.c_str());
+
+  return RESULT_OK;
 }
 
-TextToSpeechProviderImpl::~TextToSpeechProviderImpl()
+Result TextToSpeechProviderImpl::SetLocale(const std::string & locale)
 {
-   // Free memory allocated by BABILE_init
-   if (nullptr != _BAB_Obj) {
-     BABILE_free(_BAB_Obj, _BAB_MemRec);
-     _BAB_Obj = nullptr;
-     _BAB_MemRec = nullptr;
-   }
-
-   // Free memory allocated by BABILE_LoadIniFile
-   if (nullptr != _BAB_LangDba) {
-      destroyLanguageDba(_BAB_LangDba);
-      _BAB_LangDba = nullptr;
-   }
-
-   // Free memory allocated for memory tracker
-   if (nullptr != _BAB_MemParam) {
-     free(_BAB_MemParam);
-     _BAB_MemParam = nullptr;
-   }
+  return Initialize(locale);
 }
 
 Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,

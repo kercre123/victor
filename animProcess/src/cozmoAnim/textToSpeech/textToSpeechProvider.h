@@ -91,6 +91,8 @@ public:
   TextToSpeechProvider(const AnimContext* ctx, const Json::Value& tts_config);
   ~TextToSpeechProvider();
 
+  Result SetLocale(const std::string & locale);
+
   Result CreateAudioData(const std::string& text, float durationScalar, TextToSpeechProviderData& data);
 
 private:
