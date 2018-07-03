@@ -83,12 +83,13 @@ void RtsComms::Init() {
   _state = RtsPairingPhase::Initial;
 
   if(_rtsHandler != nullptr) {
-    ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
     // todo:  something about this delete 
     //        is causing a corrupted double linked list crash
     Log::Write("--> Delete");
     delete _rtsHandler;
     _rtsHandler = nullptr;
+
+    ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
   }
 
   // Send Handshake
@@ -184,26 +185,30 @@ void RtsComms::UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus st
 void RtsComms::HandleReset(bool forced) {
   Log::Write("HandleReset");
 
-  _state = RtsPairingPhase::Initial;
+  //const uint32_t delay = 1000;
+  //auto when = std::chrono::steady_clock::now() + std::chrono::milliseconds(delay);
+  _taskExecutor->Wake([this, forced]() {    
+    _state = RtsPairingPhase::Initial;
 
-  // Tell key exchange to reset
-  //_keyExchange->Reset();
-  
-  // Put us back in initial state
-  if(forced) {
-    Log::Write("Client disconnected. Stopping pairing.");
-    ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
-    UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
-  } else if(++_totalPairingAttempts < kMaxPairingAttempts) {
-    Init();
-    Log::Write("SecurePairing restarting.");
-    UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::START_PAIRING);
-  } else {
-    Log::Write("SecurePairing ending due to multiple failures. Requires external restart.");
-    ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
-    _stopPairingSignal.emit();
-    UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
-  }
+    // Tell key exchange to reset
+    //_keyExchange->Reset();
+    
+    // Put us back in initial state
+    if(forced) {
+      Log::Write("Client disconnected. Stopping pairing.");
+      ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
+      UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+    } else if(++_totalPairingAttempts < kMaxPairingAttempts) {
+      Init();
+      Log::Write("SecurePairing restarting.");
+      UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::START_PAIRING);
+    } else {
+      Log::Write("SecurePairing ending due to multiple failures. Requires external restart.");
+      ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
+      _stopPairingSignal.emit();
+      UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+    }
+  });
 }
 
 void RtsComms::HandleTimeout() {

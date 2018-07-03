@@ -143,6 +143,7 @@ void RtsHandlerV3::SubscribeToCladMessages() {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 void RtsHandlerV3::HandleRtsConnResponse(const Anki::Cozmo::ExternalComms::RtsConnection_3& msg) {
+  Log::Write("HandleRtsConnResponse / 0");
   if(!AssertState(RtsCommsType::Unencrypted)) {
     return;
   }
@@ -184,9 +185,11 @@ void RtsHandlerV3::HandleRtsConnResponse(const Anki::Cozmo::ExternalComms::RtsCo
     IncrementAbnormalityCount();
     Log::Write("Received initial pair request in wrong state.");
   }
+  Log::Write("HandleRtsConnResponse / 1");
 }
 
 void RtsHandlerV3::HandleRtsChallengeMessage(const Cozmo::ExternalComms::RtsConnection_3& msg) {
+  Log::Write("HandleRtsChallengeMessage / 0");
   if(!AssertState(RtsCommsType::Encrypted)) {
     return;
   }
@@ -200,6 +203,7 @@ void RtsHandlerV3::HandleRtsChallengeMessage(const Cozmo::ExternalComms::RtsConn
     IncrementAbnormalityCount();
     Log::Write("Received challenge response in wrong state.");
   }
+  Log::Write("HandleRtsChallengeMessage / 1");
 }
 
 void RtsHandlerV3::HandleRtsWifiConnectRequest(const Cozmo::ExternalComms::RtsConnection_3& msg) {
@@ -413,6 +417,7 @@ void RtsHandlerV3::HandleRtsLogRequest(const Cozmo::ExternalComms::RtsConnection
 void RtsHandlerV3::HandleRtsCancelPairing(const Cozmo::ExternalComms::RtsConnection_3& msg) {
   Log::Write("Stopping pairing due to client request.");
   StopPairing();
+  Log::Write("HandleRtsCancelPairing / 1");
 }
 
 void RtsHandlerV3::HandleRtsAck(const Cozmo::ExternalComms::RtsConnection_3& msg) {

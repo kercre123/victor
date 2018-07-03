@@ -1284,8 +1284,10 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   
   if(_commVersion == 1) {
     nonceTag = (uint8_t)Anki::Cozmo::ExternalComms::RtsConnection_1Tag::RtsNonceMessage;
-  } else {
+  } else if(_commVersion == 2) {
     nonceTag = (uint8_t)Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsNonceMessage;
+  } else if(_commVersion == 3) {
+    nonceTag = (uint8_t)Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsNonceMessage;
   }
   
   Clad::SendRtsMessage<Anki::Cozmo::ExternalComms::RtsAck>(self, _commVersion, nonceTag);
