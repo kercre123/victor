@@ -12,11 +12,12 @@
 
 #include "engine/components/powerStateManager.h"
 
-#include "clad/types/imageTypes.h"
+#include "engine/components/mics/micComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
+#include "osState/osState.h"
 #include "platform/camera/cameraService.h"
 #include "util/console/consoleInterface.h"
 #include "util/entityComponent/dependencyManagedEntity.h"
@@ -35,9 +36,17 @@ namespace {
 CONSOLE_VAR( bool, kPowerSave_CalmMode, CONSOLE_GROUP, true);
 CONSOLE_VAR( bool, kPowerSave_Camera, CONSOLE_GROUP, true);
 CONSOLE_VAR( bool, kPowerSave_LCDBacklight, CONSOLE_GROUP, true);
+CONSOLE_VAR( bool, kPowerSave_ThrottleCPU, CONSOLE_GROUP, true);
 
 static constexpr const LCDBrightness kLCDBrightnessLow = LCDBrightness::LCDLevel_5mA;
 static constexpr const LCDBrightness kLCDBrightnessNormal = LCDBrightness::LCDLevel_10mA;
+
+static constexpr const DesiredCPUFrequency kCPUFreqSaveLow = DesiredCPUFrequency::Manual200MHz;
+static constexpr const DesiredCPUFrequency kCPUFreqSaveHigh = DesiredCPUFrequency::Manual400Mhz;
+static constexpr const DesiredCPUFrequency kCPUFreqNormal = DesiredCPUFrequency::Automatic;
+
+static constexpr const float kMicBufferLowMark = 0.1f;
+static constexpr const float kMicBufferHighMark = 0.6f;
 
 }
 
@@ -73,6 +82,26 @@ void PowerStateManager::UpdateDependent(const RobotCompMap& dependentComps)
     if( visionComponent.TryReleaseInternalImages() ) {
       CameraService::getInstance()->DeleteCamera();
       _cameraState = CameraState::Deleted;
+    }
+  }
+
+  if( _inPowerSaveMode && kPowerSave_ThrottleCPU ) {
+    // if we are getting backed up with mic data, flip into the higher (but still low) CPU frequency
+    const float micBufferLevel = dependentComps.GetComponent<MicComponent>().GetBufferFullness();
+
+    if( _cpuThrottleLow && micBufferLevel >= kMicBufferHighMark ) {
+      PRINT_CH_DEBUG("PowerStates", "PowerStateManager.Update.CPU.High",
+                     "Mic buffer fullness %f, kicking into higher CPU mode",
+                     micBufferLevel);
+      OSState::getInstance()->SetDesiredCPUFrequency(kCPUFreqSaveHigh);
+      _cpuThrottleLow = false;
+    }
+    else if( !_cpuThrottleLow && micBufferLevel <= kMicBufferLowMark ) {
+      PRINT_CH_DEBUG("PowerStates", "PowerStateManager.Update.CPU.Low",
+                     "Mic buffer fullness %f, kicking into lower CPU mode",
+                     micBufferLevel);
+      OSState::getInstance()->SetDesiredCPUFrequency(kCPUFreqSaveLow);
+      _cpuThrottleLow = true;
     }
   }
 }
@@ -177,6 +206,20 @@ void PowerStateManager::TogglePowerSaveSetting( const RobotCompMap& components,
       result = (sendResult == RESULT_OK);
       break;
     }
+
+    case PowerSaveSetting::ThrottleCPU: {
+
+      // there are two frequencies used in power save mode, one higher and one lower. The idea is to spend
+      // most of the time in the lower frequency state, but we may need to jump up to the higher state,
+      // e.g. to drain the mic data buffer if it gets backed up. Start out in the higher state, and the code
+      // in UpdateDependent will toggle back and forth as needed
+      const auto freq = savePower ? kCPUFreqSaveHigh : kCPUFreqNormal;
+      OSState::getInstance()->SetDesiredCPUFrequency(freq);
+      _cpuThrottleLow = false;
+
+      PRINT_CH_INFO("PowerStates", "PowerStateManager.Toggle.CPUFreq.Set", "set cpu frequency");
+      break;
+    }
   }
 
   if( result && savePower ) {
@@ -211,6 +254,10 @@ void PowerStateManager::EnterPowerSave(const RobotCompMap& components)
     TogglePowerSaveSetting( components, PowerSaveSetting::LCDBacklight, true );
   }
 
+  if( kPowerSave_ThrottleCPU ) {
+    TogglePowerSaveSetting( components, PowerSaveSetting::ThrottleCPU, true );
+  }
+  
   _inPowerSaveMode = true;
 }
 

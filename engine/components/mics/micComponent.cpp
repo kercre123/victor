@@ -77,5 +77,18 @@ void MicComponent::SetTriggerWordDetectionEnabled( bool enabled )
   _robot->SendMessage( RobotInterface::EngineToRobot( std::move(message) ) );
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MicComponent::SetBufferFullness(float val)
+{
+  if( !Util::InRange( val, 0.0f, 1.0f ) ) {
+    PRINT_NAMED_WARNING("MicComponent.SetBufferFullness.InvalidValue", "Fullness value %f invalid, must be [0, 1]",
+                        val);
+    _fullness = 0.0f;
+  }
+  else {
+    _fullness = val;
+  }
+}
+
 } // namespace Cozmo
 } // namespace Anki

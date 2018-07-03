@@ -57,6 +57,10 @@ public:
   
   void SetTriggerWordDetectionEnabled( bool enabled );
 
+  // set / get the fullness of the audio processing buffer on the robot (float from 0 to 1)
+  void  SetBufferFullness(float val);
+  float GetBufferFullness() const { return _fullness; }
+
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -65,6 +69,7 @@ private:
   MicDirectionHistory*      _micHistory;
   VoiceMessageSystem*       _messageSystem;
   Robot*                    _robot;
+  float                     _fullness;
 };
 
 } // namespace Cozmo

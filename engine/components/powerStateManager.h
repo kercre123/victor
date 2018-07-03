@@ -30,6 +30,7 @@ enum class PowerSaveSetting {
   CalmMode,
   Camera,
   LCDBacklight,
+  ThrottleCPU,
 };
 
 class PowerStateManager : public IDependencyManagedComponent<RobotComponentID>,
@@ -49,6 +50,7 @@ public:
   }
   virtual void AdditionalUpdateAccessibleComponents(RobotCompIDSet& comps) const override {
     comps.insert(RobotComponentID::Vision);
+    comps.insert(RobotComponentID::MicComponent);
   }
 
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
@@ -97,6 +99,8 @@ private:
   };
 
   CameraState _cameraState = CameraState::Running;
+
+  bool _cpuThrottleLow = true;
 };
 
 }
