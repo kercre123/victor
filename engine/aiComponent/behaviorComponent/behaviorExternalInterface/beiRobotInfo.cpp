@@ -16,6 +16,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "engine/robot.h"
 #include "engine/components/batteryComponent.h"
+#include "engine/components/carryingComponent.h"
 
 
 namespace Anki {
@@ -47,6 +48,12 @@ Quad2f BEIRobotInfo::GetBoundingQuadXY(const Pose3d& atPose) const
 CarryingComponent& BEIRobotInfo::GetCarryingComponent() const
 {
   return _robot.GetCarryingComponent();
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BEIRobotInfo::IsCarryingObject() const
+{
+  return GetCarryingComponent().IsCarryingObject();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

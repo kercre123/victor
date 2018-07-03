@@ -720,6 +720,22 @@
     "AnimName": "ag_onboarding_drive_to_face"
   },
   {
+    "CladEvent": "OnboardingCubeDriveGetIn",
+    "AnimName": "ag_onboarding_cube_drive_getin"
+  },
+  {
+    "CladEvent": "OnboardingCubeDriveGetOut",
+    "AnimName": "ag_onboarding_cube_drive_getout"
+  },
+  {
+    "CladEvent": "OnboardingCubeDriveLoop",
+    "AnimName": "ag_onboarding_cube_drive_loop"
+  },
+  {
+    "CladEvent": "OnboardingCubeHuh",
+    "AnimName": "ag_explorer_huh_far"
+  },
+  {
     "CladEvent": "OnboardingDriveOffCharger",
     "AnimName": "ag_onboarding_drive_straight"
   },

@@ -81,7 +81,10 @@ const std::vector<std::string> kPathsToEngineAccessibleAnimations = {
   "assets/animations/anim_blackjack_gameplay_01.bin",
   
   // Cube Spinner
-  "assets/animations/anim_spinner_tap_01.bin"
+  "assets/animations/anim_spinner_tap_01.bin",
+  
+  // Onboarding
+  "assets/animations/anim_cube_reacttocube.bin",
 };
 }
 

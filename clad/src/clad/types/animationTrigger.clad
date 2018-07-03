@@ -178,6 +178,10 @@ enum int_32 AnimationTrigger
   ObservingOnChargerGetOut,
 
   OnboardingComeHere,
+  OnboardingCubeDriveGetIn,
+  OnboardingCubeDriveGetOut,
+  OnboardingCubeDriveLoop,
+  OnboardingCubeHuh,
   OnboardingDriveOffCharger,
   OnboardingLookAround,
   OnboardingLookDown,

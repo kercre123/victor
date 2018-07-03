@@ -41,7 +41,7 @@
     },
     {
         "CladEvent": "Onboarding",
-        "AnimName": "onboarding"
+        "AnimName": "flash"
     },
     {
         "CladEvent": "Sleep",

@@ -227,6 +227,8 @@ void BehaviorOnboarding::InitBehavior()
       const OnboardingStages newStage = static_cast<OnboardingStages>(kDevMoveToStage);
       _dVars.devConsoleStagePending = true;
       _dVars.devConsoleStage = newStage;
+      // save here, which may save twice if onboarding is running, but ensures it saves at least once outside of onboarding
+      SaveToDisk( _dVars.devConsoleStage );
     };
     _iConfig.consoleFuncs.emplace_front( "MoveToStage", std::move(setStageFunc), "Onboarding", "" );
     
@@ -403,6 +405,8 @@ void BehaviorOnboarding::BehaviorUpdate()
       // completion callbacks
       if( _dVars.currentStageBehaviorFinished ) {
         _dVars.currentStageBehaviorFinished = false;
+        // change the lastBehavior so that if the stage requests the same behavior another time, we delegate to it
+        _dVars.lastBehavior = nullptr;
         GetCurrentStage()->OnBehaviorDeactivated( GetBEI() );
       }
       
