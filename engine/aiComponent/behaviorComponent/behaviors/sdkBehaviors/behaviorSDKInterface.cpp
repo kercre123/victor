@@ -179,6 +179,7 @@ void BehaviorSDKInterface::HandleDriveOnChargerComplete() {
 }
 
 void BehaviorSDKInterface::HandleWhileActivated(const AppToEngineEvent& event) {
+  // TODO  bools _isAllowedToHandleActions in both movementComponent and robotEventHandler will need to be set to false when a behavior is running.
   if( event.GetData().GetTag() == external_interface::GatewayWrapperTag::kDriveOffChargerRequest ) {
      DriveOffChargerRequest(event.GetData().drive_off_charger_request());
   } else if( event.GetData().GetTag() == external_interface::GatewayWrapperTag::kDriveOnChargerRequest ) {
