@@ -21,10 +21,15 @@ static uint32_t m_previous_esn = ~0;
 uint32_t TestHeadGetPrevESN(void)
 {
   //initialize on first use (app display at boot)
-  if( m_previous_esn & 0x80000000 ) {
-    m_previous_esn = fixtureReadSerial(); //readSerial returns the next s/n to be allocated
-    if( fixtureReadSequence() > 0 ) //adjust to last used esn
-      m_previous_esn -= 1;
+  if( m_previous_esn & 0x80000000 )
+  {
+    if( g_fixmode == FIXMODE_HEAD1 ) {
+      m_previous_esn = fixtureReadSerial(); //readSerial returns the next s/n to be allocated
+      if( fixtureReadSequence() > 0 ) //adjust to last used esn
+        m_previous_esn -= 1;
+    }
+    else //debug head mode (HEAD1_OL, HEAD2, HELPER1...)
+      m_previous_esn = 0x00100000;
   }
   
   return m_previous_esn;
@@ -104,9 +109,9 @@ void TestHeadDutProgram(void)
   //mode differences:
   //  FIXMODE_HEAD1(rel): dutprogram timeout ESN-PROD HWREV-PROD MODEL-PROD
   //  FIXMODE_HEAD1(dbg): dutprogram timeout ESN-PROD HWREV-DBG  MODEL-PROD
-  //  FIXMODE_HEAD1-OL  : dutprogram timeout ESN-DBG  HWREV-DBG  MODEL-DBG  nocert //XXX prevent sec-lock.dat (erase emmc only?)
+  //  FIXMODE_HEAD1_OL  : dutprogram timeout ESN-DBG  HWREV-DBG  MODEL-DBG  nocert nos //inhibit cloud cert + os write (just test USB connectivity)
   //  FIXMODE_HEAD2     : dutprogram timeout ESN-DBG  HWREV-DBG  MODEL-DBG  nocert
-  //  FIXMODE_HELPER1   : dutprogram timeout ESN-DBG  HWREV-DBG  MODEL-DBG  nocert
+  //  FIXMODE_HELPER1   : dutprogram timeout ESN-DBG  HWREV-DBG  MODEL-DBG  nocert helper
   
   //provision ESN
   headnfo.esn = g_fixmode == FIXMODE_HEAD1 ? fixtureGetSerial() : 0x00100000;
@@ -114,8 +119,18 @@ void TestHeadDutProgram(void)
   int hwrev = g_isReleaseBuild && g_fixmode == FIXMODE_HEAD1 ? CURRENT_HEAD_HW_REV : HEADID_HWREV_DEBUG;
   int model = g_fixmode == FIXMODE_HEAD1 ? CURRENT_HEAD_MODEL : 1 /*debug*/ ;
   
+  //mode options
+  const char *suffix;
+  switch( g_fixmode ) {
+    case FIXMODE_HEAD1:     suffix = ""; break;
+    case FIXMODE_HEAD1_OL:  suffix = "nocert nos"; break;
+    case FIXMODE_HEAD2:     suffix = "nocert"; break;
+    case FIXMODE_HELPER1:   suffix = "nocert helper"; break;
+    default:                suffix = "nocert nos"; break;
+  }
+  
   //helper head does the rest
-  snformat(b,bz,"dutprogram %u %08x %04x %04x %s", timeout_s, headnfo.esn, hwrev, model, g_fixmode == FIXMODE_HEAD1 ? "" : "nocert");
+  snformat(b,bz,"dutprogram %u %08x %04x %04x %s", timeout_s, headnfo.esn, hwrev, model, suffix);
   cmdSend(CMD_IO_HELPER, b, (timeout_s+10)*1000, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS );
   if( cmdStatus() >= ERROR_HEADPGM && cmdStatus() < ERROR_HEADPGM_RANGE_END ) //headprogram exit code range
     throw cmdStatus();
