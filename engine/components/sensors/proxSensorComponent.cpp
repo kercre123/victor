@@ -82,7 +82,7 @@ ProxSensorComponent::ProxSensorComponent()
 
 void ProxSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
 {
-  if (kProxSensorEnabled)
+  if (kProxSensorEnabled && _enabled)
   {
     _lastMsgTimestamp = msg.timestamp;
     _latestDataRaw = msg.proxData;

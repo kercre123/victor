@@ -37,6 +37,7 @@ CONSOLE_VAR( bool, kPowerSave_CalmMode, CONSOLE_GROUP, true);
 CONSOLE_VAR( bool, kPowerSave_Camera, CONSOLE_GROUP, true);
 CONSOLE_VAR( bool, kPowerSave_LCDBacklight, CONSOLE_GROUP, true);
 CONSOLE_VAR( bool, kPowerSave_ThrottleCPU, CONSOLE_GROUP, true);
+CONSOLE_VAR( bool, kPowerSave_ProxSensorMap, CONSOLE_GROUP, true);
 
 static constexpr const LCDBrightness kLCDBrightnessLow = LCDBrightness::LCDLevel_5mA;
 static constexpr const LCDBrightness kLCDBrightnessNormal = LCDBrightness::LCDLevel_10mA;
@@ -220,6 +221,15 @@ void PowerStateManager::TogglePowerSaveSetting( const RobotCompMap& components,
       PRINT_CH_INFO("PowerStates", "PowerStateManager.Toggle.CPUFreq.Set", "set cpu frequency");
       break;
     }
+
+    case PowerSaveSetting::ProxSensorNavMap: {
+      const bool proxEnabled = !savePower;
+      components.GetComponent<ProxSensorComponent>().SetEnabled(proxEnabled);
+      PRINT_CH_DEBUG("PowerStates", "PowerStateManager.Toggle.ProxSensor",
+                     "prox sensor nav map updates %s",
+                     proxEnabled ? "ENABLED" : "DISABLED");
+      break;
+    }
   }
 
   if( result && savePower ) {
@@ -258,6 +268,10 @@ void PowerStateManager::EnterPowerSave(const RobotCompMap& components)
     TogglePowerSaveSetting( components, PowerSaveSetting::ThrottleCPU, true );
   }
   
+  if( kPowerSave_ProxSensorMap ) {
+    TogglePowerSaveSetting( components, PowerSaveSetting::ProxSensorNavMap, true );
+  }
+
   _inPowerSaveMode = true;
 }
 

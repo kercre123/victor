@@ -106,6 +106,9 @@ public:
   // returns false if sensor reading isn't valid
   bool CalculateSensedObjectPose(Pose3d& sensedObjectPose) const;
 
+  // enable or disable this entire component's ability to update the nav map
+  void SetEnabled(bool enabled) { _enabled = enabled; }
+
 private:
 
   void UpdateNavMap();
@@ -132,6 +135,8 @@ private:
   uint32_t _lastMsgTimestamp = 0;
 
   uint32_t _numTicsLiftOutOfFOV = 0;
+
+  bool _enabled = true;
   
 };
 

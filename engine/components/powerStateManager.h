@@ -31,6 +31,7 @@ enum class PowerSaveSetting {
   Camera,
   LCDBacklight,
   ThrottleCPU,
+  ProxSensorNavMap,
 };
 
 class PowerStateManager : public IDependencyManagedComponent<RobotComponentID>,
@@ -51,6 +52,7 @@ public:
   virtual void AdditionalUpdateAccessibleComponents(RobotCompIDSet& comps) const override {
     comps.insert(RobotComponentID::Vision);
     comps.insert(RobotComponentID::MicComponent);
+    comps.insert(RobotComponentID::ProxSensor);
   }
 
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
