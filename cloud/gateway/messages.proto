@@ -492,7 +492,8 @@ message WakeWordEnd {
 message PhotoInfo {
   uint32 photo_id = 1;
   uint32 timestamp_utc = 2;
-  bool copied_to_app = 3;
+  bool photo_copied_to_app = 3;
+  bool thumb_copied_to_app = 4;
 }
 
 message PhotosInfoRequest {
@@ -507,24 +508,30 @@ message PhotoRequest {
   uint32 photo_id = 1;
 }
 
-message Photo {
-  bytes image_data = 1;
+message PhotoPathMessage {
+  bool success = 1;
+  string full_path = 2;
 }
 
 message PhotoResponse {
   ResultStatus status = 1;
   bool success = 2;
-  Photo photo = 3;
+  bytes image = 3;
 }
 
 message ThumbnailRequest {
   uint32 photo_id = 1;
 }
 
+message ThumbnailPathMessage {
+  bool success = 1;
+  string full_path = 2;
+}
+
 message ThumbnailResponse {
   ResultStatus status = 1;
   bool success = 2;
-  Photo photo = 3;
+  bytes image = 3;
 }
 
 message DeletePhotoRequest {

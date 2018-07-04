@@ -95,8 +95,7 @@ private:
 
   bool DeletePhotoByID(const int id, const bool savePhotosFile = true);
 
-  bool SendImageHelper(const int id, const bool isThumbnail,
-                       external_interface::Photo* photo);
+  bool ImageHelper(const int id, const bool isThumbnail, std::string& fullpath);
 
   std::string GetSavePath() const;
   std::string GetBasename(int photoID) const;
@@ -128,15 +127,17 @@ private:
   bool              _disableWhenPossible = false;
   IGatewayInterface* _gatewayInterface = nullptr;
   std::vector<Signal::SmartHandle> _signalHandles;
-  
+
   struct PhotoInfo
   {
     PhotoInfo() {}
-    PhotoInfo(int id, TimeStamp_t dt, bool copied) : _id(id), _dateTimeTaken(dt), _copiedToApp(copied) {}
+    PhotoInfo(int id, TimeStamp_t dt, bool photoCopied, bool thumbCopied)
+      : _id(id), _dateTimeTaken(dt), _photoCopiedToApp(photoCopied), _thumbCopiedToApp(thumbCopied) {}
 
     int         _id;
     TimeStamp_t _dateTimeTaken;
-    bool        _copiedToApp;
+    bool        _photoCopiedToApp;
+    bool        _thumbCopiedToApp;
   };
 
   std::vector<PhotoInfo> _photoInfos;

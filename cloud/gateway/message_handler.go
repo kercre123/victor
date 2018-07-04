@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+	"io/ioutil"
 	"math"
 	"reflect"
 	"time"
@@ -973,10 +974,20 @@ func (m *rpcService) PhotosInfo(ctx context.Context, in *extint.PhotosInfoReques
 	return payload.GetPhotosInfoResponse(), nil
 }
 
+func SendImageHelper(fullpath string) ([]byte, error) {
+	log.Println("Reading file at", fullpath)
+	dat, err := ioutil.ReadFile(fullpath)
+	if err != nil {
+		log.Println("Error reading file ", fullpath)
+		return nil, err
+	}
+	return dat, nil
+}
+
 func (m *rpcService) Photo(ctx context.Context, in *extint.PhotoRequest) (*extint.PhotoResponse, error) {
 	log.Println("Received rpc request Photo(", in, ")")
 
-	f, result := createChannel(&extint.GatewayWrapper_PhotoResponse{}, 1)
+	f, result := createChannel(&extint.GatewayWrapper_PhotoPathMessage{}, 1)
 	defer f()
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
@@ -988,13 +999,37 @@ func (m *rpcService) Photo(ctx context.Context, in *extint.PhotoRequest) (*extin
 		return nil, err
 	}
 	payload := <-result
-	return payload.GetPhotoResponse(), nil
+	if !payload.GetPhotoPathMessage().GetSuccess() {
+		return &extint.PhotoResponse{
+			Status: &extint.ResultStatus{
+				Description: "Photo not found",
+			},
+			Success: false,
+		}, err
+	}
+	imageData, err := SendImageHelper(payload.GetPhotoPathMessage().GetFullPath())
+	if err != nil {
+		return &extint.PhotoResponse{
+			Status: &extint.ResultStatus{
+				Description: "Problem reading photo file",
+			},
+			Success: false,
+			Image:   imageData,
+		}, err
+	}
+	return &extint.PhotoResponse{
+		Status: &extint.ResultStatus{
+			Description: "Photo retrieved from engine",
+		},
+		Success: true,
+		Image:   imageData,
+	}, err
 }
 
 func (m *rpcService) Thumbnail(ctx context.Context, in *extint.ThumbnailRequest) (*extint.ThumbnailResponse, error) {
 	log.Println("Received rpc request Thumbnail(", in, ")")
 
-	f, result := createChannel(&extint.GatewayWrapper_ThumbnailResponse{}, 1)
+	f, result := createChannel(&extint.GatewayWrapper_ThumbnailPathMessage{}, 1)
 	defer f()
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
@@ -1006,7 +1041,31 @@ func (m *rpcService) Thumbnail(ctx context.Context, in *extint.ThumbnailRequest)
 		return nil, err
 	}
 	payload := <-result
-	return payload.GetThumbnailResponse(), nil
+	if !payload.GetThumbnailPathMessage().GetSuccess() {
+		return &extint.ThumbnailResponse{
+			Status: &extint.ResultStatus{
+				Description: "Thumbnail not found",
+			},
+			Success: false,
+		}, err
+	}
+	imageData, err := SendImageHelper(payload.GetThumbnailPathMessage().GetFullPath())
+	if err != nil {
+		return &extint.ThumbnailResponse{
+			Status: &extint.ResultStatus{
+				Description: "Problem reading thumbnail file",
+			},
+			Success: false,
+			Image:   imageData,
+		}, err
+	}
+	return &extint.ThumbnailResponse{
+		Status: &extint.ResultStatus{
+			Description: "Thumbnail retrieved from engine",
+		},
+		Success: true,
+		Image:   imageData,
+	}, err
 }
 
 func (m *rpcService) DeletePhoto(ctx context.Context, in *extint.DeletePhotoRequest) (*extint.DeletePhotoResponse, error) {

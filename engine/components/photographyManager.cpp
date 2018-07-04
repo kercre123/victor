@@ -56,7 +56,8 @@ namespace
   static const std::string kPhotoInfosKey = "PhotoInfos";
   static const std::string kIDKey = "ID";
   static const std::string kTimeStampKey = "TimeStamp";
-  static const std::string kCopiedKey = "Copied";
+  static const std::string kPhotoCopiedKey = "Copied";
+  static const std::string kThumbCopiedKey = "CopiedThumb";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
@@ -298,8 +299,9 @@ void PhotographyManager::SetLastPhotoTimeStamp(TimeStamp_t timestamp)
     using namespace std::chrono;
     const auto time_s = duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
     const auto epochTimestamp = static_cast<int>(time_s);
-    static const bool copiedToApp = false;
-    _photoInfos.push_back(PhotoInfo(_nextPhotoID, epochTimestamp, copiedToApp));
+    static const bool photoCopiedToApp = false;
+    static const bool thumbCopiedToApp = false;
+    _photoInfos.push_back(PhotoInfo(_nextPhotoID, epochTimestamp, photoCopiedToApp, thumbCopiedToApp));
     const auto index = static_cast<uint32_t>(_photoInfos.size() - 1);
     LOG_INFO("PhotographyManager.SetLastPhotoTimeStamp",
              "Photo with ID %i and epoch date/time %i saved at index %u",
@@ -336,9 +338,10 @@ bool PhotographyManager::LoadPhotosFile()
   {
     const int id = info[kIDKey].asInt();
     const TimeStamp_t dateTimeTaken = info[kTimeStampKey].asUInt();
-    const bool copied = info[kCopiedKey].asBool();
+    const bool photoCopied = info[kPhotoCopiedKey].asBool();
+    const bool thumbCopied = info.isMember(kThumbCopiedKey) ? info[kThumbCopiedKey].asBool() : false;
 
-    _photoInfos.push_back(PhotoInfo(id, dateTimeTaken, copied));
+    _photoInfos.push_back(PhotoInfo(id, dateTimeTaken, photoCopied, thumbCopied));
   }
   
   const auto numPhotos = _photoInfos.size();
@@ -371,10 +374,11 @@ void PhotographyManager::SavePhotosFile() const
   for (const auto& info : _photoInfos)
   {
     Json::Value infoJson;
-    infoJson[kIDKey]        = info._id;
-    infoJson[kTimeStampKey] = info._dateTimeTaken;
-    infoJson[kCopiedKey]    = info._copiedToApp;
-    
+    infoJson[kIDKey]          = info._id;
+    infoJson[kTimeStampKey]   = info._dateTimeTaken;
+    infoJson[kPhotoCopiedKey] = info._photoCopiedToApp;
+    infoJson[kThumbCopiedKey] = info._thumbCopiedToApp;
+
     data[kPhotoInfosKey].append(infoJson);
   }
 
@@ -417,8 +421,7 @@ bool PhotographyManager::DeletePhotoByID(const int id, const bool savePhotosFile
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool PhotographyManager::SendImageHelper(const int id, const bool isThumbnail,
-                                         external_interface::Photo* photo)
+bool PhotographyManager::ImageHelper(const int id, const bool isThumbnail, std::string& fullpath)
 {
   const int index = PhotoIndexFromID(id);
   if (index < 0)
@@ -426,38 +429,34 @@ bool PhotographyManager::SendImageHelper(const int id, const bool isThumbnail,
     return false;
   }
 
-  // TOOD:  Currently won't work for files > ~65K because we use UDP
-  //   To solve that, we need to chunkify the messages, putting the
-  //   chunks back together in gateway
-  const auto fullPath = Util::FileUtils::FullFilePath({_savePath,
-                                                       GetBasename(id) + "." +
-                                                       (isThumbnail ? GetThumbExtension() : GetPhotoExtension())});
-
-  LOG_INFO("PhotographyManager.SendImageHelper", "%s with ID %i, at index %i, being read and sent",
-           (isThumbnail ? "Thumbnail" : "Photo"), id, index);
-
-  const auto binaryData = Util::FileUtils::ReadFileAsBinary(fullPath);
-  LOG_INFO("PhotographyManager.SendImageHelper", "Binary data size is %u",
-           static_cast<uint32_t>(binaryData.size()));
-
-  photo->set_image_data((void*)binaryData.data(), binaryData.size());
-
-  // What the heck is going on?
-  const std::string& dataStr = photo->image_data();
-  for (int i = 0; i < 20; i++)
+  fullpath = Util::FileUtils::FullFilePath({_savePath,
+                                            GetBasename(id) + "." +
+                                            (isThumbnail ? GetThumbExtension() : GetPhotoExtension())});
+  
+  if (!Util::FileUtils::FileExists(fullpath))
   {
-    LOG_INFO("PhotographyManager.SendImageHelper", "Item %i holds %i", i, (int)dataStr[i]);
+    LOG_ERROR("PhotographyManager.ImageHelper", "Error finding file %s", fullpath.c_str());
+    return false;
   }
 
 
-  if (!isThumbnail)
+  LOG_INFO("PhotographyManager.ImageHelper", "Getting %s with ID %i, at index %i, with path %s",
+           (isThumbnail ? "thumbnail" : "photo"), id, index, fullpath.c_str());
+
+  bool prevCopiedToApp = false;
+  if (isThumbnail)
   {
-    const auto prevCopiedToApp = _photoInfos[index]._copiedToApp;
-    _photoInfos[index]._copiedToApp = true;
-    if (!prevCopiedToApp)
-    {
-      SavePhotosFile();
-    }
+    prevCopiedToApp = _photoInfos[index]._thumbCopiedToApp;
+    _photoInfos[index]._thumbCopiedToApp = true;
+  }
+  else
+  {
+    prevCopiedToApp = _photoInfos[index]._photoCopiedToApp;
+    _photoInfos[index]._photoCopiedToApp = true;
+  }
+  if (!prevCopiedToApp)
+  {
+    SavePhotosFile();
   }
 
   return true;
@@ -487,19 +486,20 @@ int PhotographyManager::PhotoIndexFromID(const int id) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void PhotographyManager::HandleEvents(const AnkiEvent<external_interface::GatewayWrapper>& event)
 {
-  switch(event.GetData().GetTag())
+  const auto eventData = event.GetData();
+  switch(eventData.GetTag())
   {
-    case external_interface::GatewayWrapperTag::kPhotosInfoRequest:
-      OnRequestPhotosInfo(event.GetData().photos_info_request());
+    case AppToEngineTag::kPhotosInfoRequest:
+      OnRequestPhotosInfo(eventData.photos_info_request());
       break;
-    case external_interface::GatewayWrapperTag::kPhotoRequest:
-      OnRequestPhoto(event.GetData().photo_request());
+    case AppToEngineTag::kPhotoRequest:
+      OnRequestPhoto(eventData.photo_request());
       break;
-    case external_interface::GatewayWrapperTag::kThumbnailRequest:
-      OnRequestThumbnail(event.GetData().thumbnail_request());
+    case AppToEngineTag::kThumbnailRequest:
+      OnRequestThumbnail(eventData.thumbnail_request());
       break;
-    case external_interface::GatewayWrapperTag::kDeletePhotoRequest:
-      OnRequestDeletePhoto(event.GetData().delete_photo_request());
+    case AppToEngineTag::kDeletePhotoRequest:
+      OnRequestDeletePhoto(eventData.delete_photo_request());
       break;
     default:
       LOG_ERROR("PhotographyManager.HandleEvents",
@@ -519,7 +519,8 @@ void PhotographyManager::OnRequestPhotosInfo(const external_interface::PhotosInf
     external_interface::PhotoInfo* photoInfo = photosInfoResp->add_photo_infos();
     photoInfo->set_photo_id(item._id);
     photoInfo->set_timestamp_utc(item._dateTimeTaken);
-    photoInfo->set_copied_to_app(item._copiedToApp);
+    photoInfo->set_photo_copied_to_app(item._photoCopiedToApp);
+    photoInfo->set_thumb_copied_to_app(item._thumbCopiedToApp);
   }
   _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(photosInfoResp));
 }
@@ -531,19 +532,15 @@ void PhotographyManager::OnRequestPhoto(const external_interface::PhotoRequest& 
   const auto photoId = photoRequest.photo_id();
   LOG_INFO("PhotographyManager.OnRequestPhoto", "Requesting photo with ID %u", photoId);
 
-  auto* photoResp = new external_interface::PhotoResponse();
-  //auto* photo = photoResp->mutable_photo();
-  auto* photo = new external_interface::Photo();
-
+  std::string fullpath;
   static const bool isThumbnail = false;
-  const bool success = SendImageHelper(photoId, isThumbnail, photo);
-  if (success)
-  {
-    photoResp->set_allocated_photo(photo);
-  }
-  photoResp->set_success(success);
+  const bool success = ImageHelper(photoId, isThumbnail, fullpath);
 
-  _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(photoResp));
+  auto* msg = new external_interface::PhotoPathMessage();
+  msg->set_success(success);
+  msg->set_full_path(fullpath);
+
+  _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(msg));
 }
 
 
@@ -553,26 +550,15 @@ void PhotographyManager::OnRequestThumbnail(const external_interface::ThumbnailR
   const auto photoId = thumbnailRequest.photo_id();
   LOG_INFO("PhotographyManager.OnRequestThumbnail", "Requesting thumbnail with ID %u", photoId);
 
-  auto* thumbnailResp = new external_interface::ThumbnailResponse();
-  //auto* photo = thumbnailResp->mutable_thumbnail();
-  auto* photo = new external_interface::Photo();
-
+  std::string fullpath;
   static const bool isThumbnail = true;
-  const bool success = SendImageHelper(photoId, isThumbnail, photo);
-  if (success)
-  {
-    thumbnailResp->set_allocated_photo(photo);
-  }
-  thumbnailResp->set_success(success);
-  // What the heck is going on?
-  const std::string& dataStr = photo->image_data();
-  for (int i = 0; i < 20; i++)
-  {
-    LOG_INFO("PhotographyManager.OnRequestThumbnail", "Item %i holds %i", i, (int)dataStr[i]);
-  }
+  const bool success = ImageHelper(photoId, isThumbnail, fullpath);
 
+  auto* msg = new external_interface::ThumbnailPathMessage();
+  msg->set_success(success);
+  msg->set_full_path(fullpath);
 
-  _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(thumbnailResp));
+  _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(msg));
 }
 
 

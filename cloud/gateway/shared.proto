@@ -54,11 +54,12 @@ message GatewayWrapper {
     PhotosInfoRequest             photos_info_request = 40;
     PhotosInfoResponse            photos_info_response = 41;
     PhotoRequest                  photo_request = 42;
-    PhotoResponse                 photo_response = 43;
+    PhotoPathMessage              photo_path_message = 43;
     ThumbnailRequest              thumbnail_request = 44;
-    ThumbnailResponse             thumbnail_response = 45;
+    ThumbnailPathMessage          thumbnail_path_message = 45;
     DeletePhotoRequest            delete_photo_request = 46;
     DeletePhotoResponse           delete_photo_response = 47;
+    
     // ------------ settings pairs ---------------------------------------
     PushSettingsRequest    push_settings_request    = 60;
     PushSettingsResponse   push_settings_response   = 61;
