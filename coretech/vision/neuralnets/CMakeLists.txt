@@ -104,7 +104,9 @@ elseif(BUILD_NEURAL_NET_PROCESS STREQUAL "TFLite")
     set(TARGET_NAME vic-neuralnets)
     
     set(PLATFORM_LIBS
+      victorCrashReports
       ${TENSORFLOW_LITE_PATH}/lib/vicos/libtensorflow-lite.a
+      dl
     )
 
   elseif (MACOSX)
