@@ -56,6 +56,11 @@ BleCentral* centralContext;
   fflush(stdout);
 }
 
+- (void)setHasVersion:(bool)has version:(int)v {
+  _hasVersion = has;
+  _inputVersion = v;
+}
+
 - (void)setVerbose:(bool)enabled {
   _verbose = enabled;
 }
@@ -1175,20 +1180,27 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     return;
   }
   
-  uint32_t version = *(uint32_t*)(msg + 1);
-  const uint32_t maxVersion = 3;
+  uint32_t version;
   
-  if(version > maxVersion) {
-    // Not Version 1, 2, or 3
-    printf("Error: Connected Vector speaks version %d, while our max version is %d!\n", version, maxVersion);
-    return;
+  if(_hasVersion) {
+    version = (uint32_t)_inputVersion;
   } else {
-    printf("* Speaking to Vector with protocol version [%d].\n", version);
+    version = *(uint32_t*)(msg + 1);
+    const uint32_t maxVersion = 3;
+    
+    if(version > maxVersion) {
+      // Not Version 1, 2, or 3
+      printf("Warning: Connected Vector speaks version %d, while our max version is %d. Downgrading to speak FACTORY protocol version.\n", version, maxVersion);
+      version = 2;
+    }
   }
+  
+  printf("* Speaking to Vector with protocol version [%d].\n", version);
   
   // Set version
   _commVersion = version;
   
+  msg[1] = version;
   [self send:bytes length:n];
   
   // Update state

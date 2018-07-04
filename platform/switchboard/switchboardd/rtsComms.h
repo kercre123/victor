@@ -69,7 +69,7 @@ private:
   // Constants
   const uint8_t kMinMessageSize = 2;
   const uint8_t kMaxPairingAttempts = 3;
-  const uint16_t kPairingTimeout_s = 5;
+  const uint16_t kPairingTimeout_s = 60;
 
   // Fields
   std::string _pin;

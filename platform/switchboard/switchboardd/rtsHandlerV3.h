@@ -16,7 +16,7 @@
 #include "switchboardd/engineMessagingClient.h"
 #include "switchboardd/INetworkStream.h"
 #include "switchboardd/taskExecutor.h"
-#include "switchboardd/externalCommsCladHandler.h"
+#include "switchboardd/externalCommsCladHandlerV3.h"
 #include "anki-wifi/wifi.h"
 
 namespace Anki {
@@ -86,7 +86,7 @@ private:
   struct ev_loop* _loop;
   std::shared_ptr<EngineMessagingClient> _engineClient;
   std::unique_ptr<TaskExecutor> _taskExecutor;
-  std::unique_ptr<ExternalCommsCladHandler> _cladHandler;
+  std::unique_ptr<ExternalCommsCladHandlerV3> _cladHandler;
   bool _isPairing;
   bool _isOtaUpdating;
 

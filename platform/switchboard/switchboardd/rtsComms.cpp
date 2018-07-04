@@ -32,7 +32,6 @@ _totalPairingAttempts(0),
 _rtsHandler(nullptr),
 _rtsVersion(0)
 {
-  Log::Write("RtsComms");
   // Register with stream events
   _onReceivePlainTextHandle = _stream->OnReceivedPlainTextEvent().ScopedSubscribe(
     std::bind(&RtsComms::HandleMessageReceived,
@@ -48,16 +47,7 @@ _rtsVersion(0)
 }
 
 RtsComms::~RtsComms() {
-  Log::Write("~RtsComms");
-
-  // cleanup
-  //if(_onReceivePlainTextHandle) {
-  //  _onReceivePlainTextHandle = nullptr;
-  //}
-  //_onPairingTimeoutReceived = nullptr;
-
   if(_rtsHandler != nullptr) {
-    Log::Write("--> Delete");
     delete _rtsHandler;
     _rtsHandler = nullptr;
   }
@@ -67,25 +57,18 @@ RtsComms::~RtsComms() {
   Log::Write("Destroying RtsComms object");
 }
 
-void RtsComms::BeginPairing() {
-  Log::Write("BeginPairing");
-  
+void RtsComms::BeginPairing() {  
   // Clear field values
   _totalPairingAttempts = 0;
 
   Init();
 }
 
-void RtsComms::Init() {
-  Log::Write("Init");
-  
+void RtsComms::Init() {  
   // Update our state
   _state = RtsPairingPhase::Initial;
 
   if(_rtsHandler != nullptr) {
-    // todo:  something about this delete 
-    //        is causing a corrupted double linked list crash
-    Log::Write("--> Delete");
     delete _rtsHandler;
     _rtsHandler = nullptr;
 
@@ -100,39 +83,28 @@ void RtsComms::Init() {
 }
 
 void RtsComms::StopPairing() {
-  Log::Write("StopPairing/RtsComms");
-
   if(_rtsHandler) {
-    Log::Write("???");
     _rtsHandler->StopPairing();
   }
 }
 
 void RtsComms::SetIsPairing(bool pairing) { 
-  Log::Write("SetIsPairing");
-
   _isPairing = pairing;
 
   if(_rtsHandler) {
-    Log::Write("SetIsPairing/??");
     _rtsHandler->SetIsPairing(_isPairing);
   }
 }
 
 void RtsComms::SetOtaUpdating(bool updating) { 
-  Log::Write("SetOtaUpdating");
-
   _isOtaUpdating = updating; 
 
   if(_rtsHandler) {
-    Log::Write("SetOtaUpdating/??");
     _rtsHandler->SetOtaUpdating(_isOtaUpdating);
   }
 }
 
 void RtsComms::SendHandshake() {
-  Log::Write("SendHandshake");
-
   if(_state != RtsPairingPhase::Initial) {
     return;
   }
@@ -158,18 +130,13 @@ void RtsComms::SendHandshake() {
 }
 
 void RtsComms::SendOtaProgress(int status, uint64_t progress, uint64_t expectedTotal) {
-  Log::Write("SendOtaProgress");
-
   // Send Ota Progress
   if(_rtsHandler) {
-    Log::Write("SendOtaProgress/??");
     _rtsHandler->SendOtaProgress(status, progress, expectedTotal);
   }
 }
 
 void RtsComms::UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus state) {
-  Log::Write("UpdateFace");
-  
   if(_engineClient == nullptr) {
     // no engine client -- probably testing
     return;
@@ -183,16 +150,9 @@ void RtsComms::UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus st
 }
 
 void RtsComms::HandleReset(bool forced) {
-  Log::Write("HandleReset");
-
-  //const uint32_t delay = 1000;
-  //auto when = std::chrono::steady_clock::now() + std::chrono::milliseconds(delay);
   _taskExecutor->Wake([this, forced]() {    
     _state = RtsPairingPhase::Initial;
 
-    // Tell key exchange to reset
-    //_keyExchange->Reset();
-    
     // Put us back in initial state
     if(forced) {
       Log::Write("Client disconnected. Stopping pairing.");
@@ -212,22 +172,15 @@ void RtsComms::HandleReset(bool forced) {
 }
 
 void RtsComms::HandleTimeout() {
-  Log::Write("A");
   if(_rtsHandler) {
-    Log::Write("1");
     _rtsHandler->HandleTimeout();
-    Log::Write("2");
   } else {
     // if we aren't beyond handshake, mark as strike
-    Log::Write("11");
     HandleReset(false);
-    Log::Write("22");
   }
-  Log::Write("B");
 }
 
 void RtsComms::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
-  Log::Write("HandleMessageReceived");
   _taskExecutor->WakeSync([this, bytes, length]() {
     if(length < kMinMessageSize) {
       Log::Write("Length is less than kMinMessageSize.");
@@ -252,9 +205,13 @@ void RtsComms::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
           handleHandshake = HandleHandshake(clientVersion);
 
           Log::Write("Searching for compatible comms version...");
-          switch(clientVersion) {
+          _rtsVersion = clientVersion;
+        }
+
+        if(handleHandshake) {
+          Log::Write("Starting RtsHandler");
+          switch(_rtsVersion) {
             case PairingProtocolVersion::CURRENT: {
-              Log::Write("--> Create");
               _rtsHandler = (IRtsHandler*)new RtsHandlerV3(_stream, 
                               _loop,
                               _engineClient,
@@ -279,17 +236,39 @@ void RtsComms::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
 
               break;
             }
-            default:
-            case PairingProtocolVersion::FACTORY:
-              _rtsHandler = (IRtsHandler*)new RtsHandlerV2();
+            case PairingProtocolVersion::FACTORY: {
+              _rtsHandler = (IRtsHandler*)new RtsHandlerV2(_stream, 
+                              _loop,
+                              _engineClient,
+                              _isPairing,
+                              _isOtaUpdating);
+
+              RtsHandlerV2* _v2 = (RtsHandlerV2*)_rtsHandler;
+              _pinHandle = _v2->OnUpdatedPinEvent().ScopedSubscribe([this](std::string s){
+                this->OnUpdatedPinEvent().emit(s);
+              });
+              _otaHandle = _v2->OnOtaUpdateRequestEvent().ScopedSubscribe([this](std::string s){
+                this->OnOtaUpdateRequestEvent().emit(s);
+              });
+              _endHandle = _v2->OnStopPairingEvent().ScopedSubscribe([this](){
+                this->OnStopPairingEvent().emit();
+              });
+              _completedPairingHandle = _v2->OnCompletedPairingEvent().ScopedSubscribe([this](){
+                this->OnCompletedPairingEvent().emit();
+              });
+              _resetHandle = _v2->OnResetEvent().ScopedSubscribe(
+                std::bind(&RtsComms::HandleReset, this, std::placeholders::_1));
               break;
+            }
+            default: {
+              // this case should never happen,
+              // because handleHandshake is true
+              Log::Write("Error: handleHandshake is true, but version is not handled.");
+              StopPairing();
+              return;
+            }
           }
 
-          _rtsVersion = clientVersion;
-        }
-
-        if(handleHandshake) {
-          Log::Write("Starting RtsHandler");
           _rtsHandler->StartRts();
           _onReceivePlainTextHandle = nullptr;
           _state = RtsPairingPhase::AwaitingPublicKey;
@@ -313,7 +292,6 @@ void RtsComms::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
 }
 
 bool RtsComms::HandleHandshake(uint16_t version) {
-  Log::Write("HandleHandshake");
   // our supported versions
   if((version == PairingProtocolVersion::CURRENT) ||
      (version == PairingProtocolVersion::FACTORY)) {

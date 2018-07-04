@@ -88,6 +88,8 @@ RtsKeys SavedSessionManager::LoadRtsKeys() {
     return savedData;
   }
 
+  Log::Write("Loading keys: %s", savedData.keys.id.name);
+
   return savedData;
 }
 
@@ -106,6 +108,8 @@ void SavedSessionManager::SaveRtsKeys(RtsKeys& saveData) {
   memcpy((char*)&saveData.keys.magic, kPrefix, strlen(kPrefix)); 
   saveData.keys.version = SB_PAIRING_PROTOCOL_VERSION;
   saveData.keys.numKnownClients = saveData.clients.size();
+
+  Log::Write("Saving keys: %s", saveData.keys.id.name);
 
   fout.write((char*)&(saveData.keys), sizeof(saveData.keys));
 

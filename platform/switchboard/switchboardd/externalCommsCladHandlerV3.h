@@ -1,5 +1,5 @@
 /**
- * File: externalCommsCladHandler.h
+ * File: externalCommsCladHandlerV3.h
  *
  * Author: Paul Aluri (@paluri)
  * Created: 3/15/2018
@@ -19,7 +19,7 @@
 
 namespace Anki {
 namespace Switchboard {
-  class ExternalCommsCladHandler {
+  class ExternalCommsCladHandlerV3 {
     public:
     using RtsConnectionSignal = Signal::Signal<void (const Anki::Cozmo::ExternalComms::RtsConnection_3& msg)>;
     

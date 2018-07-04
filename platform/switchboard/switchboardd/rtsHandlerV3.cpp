@@ -63,7 +63,7 @@ _wifiConnectTimeout_s(15)
   _internetTimerSignal.SubscribeForever(std::bind(&RtsHandlerV3::HandleInternetTimerTick, this));
 
   // Initialize the message handler
-  _cladHandler = std::make_unique<ExternalCommsCladHandler>();
+  _cladHandler = std::make_unique<ExternalCommsCladHandlerV3>();
   SubscribeToCladMessages();
 
   // Initialize the task executor
@@ -86,7 +86,6 @@ RtsHandlerV3::~RtsHandlerV3() {
 }
 
 bool RtsHandlerV3::StartRts() {
-  Log::Write("StartRts");
   SendPublicKey();
   _state = RtsPairingPhase::AwaitingPublicKey;
   
@@ -105,7 +104,6 @@ void RtsHandlerV3::Reset(bool forced) {
   SendCancelPairing();
 
   // Tell RtsComms to reset
-  Log::Write("emit == Reset");
   _resetSignal.emit(forced);
 }
 
@@ -114,7 +112,6 @@ void RtsHandlerV3::Reset(bool forced) {
 //
 
 void RtsHandlerV3::StopPairing() {
-  Log::Write("StopPairing/RtsHandlerV3");
   Reset(true);
 }
 
@@ -143,7 +140,6 @@ void RtsHandlerV3::SubscribeToCladMessages() {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 void RtsHandlerV3::HandleRtsConnResponse(const Anki::Cozmo::ExternalComms::RtsConnection_3& msg) {
-  Log::Write("HandleRtsConnResponse / 0");
   if(!AssertState(RtsCommsType::Unencrypted)) {
     return;
   }
@@ -185,11 +181,9 @@ void RtsHandlerV3::HandleRtsConnResponse(const Anki::Cozmo::ExternalComms::RtsCo
     IncrementAbnormalityCount();
     Log::Write("Received initial pair request in wrong state.");
   }
-  Log::Write("HandleRtsConnResponse / 1");
 }
 
 void RtsHandlerV3::HandleRtsChallengeMessage(const Cozmo::ExternalComms::RtsConnection_3& msg) {
-  Log::Write("HandleRtsChallengeMessage / 0");
   if(!AssertState(RtsCommsType::Encrypted)) {
     return;
   }
@@ -203,7 +197,6 @@ void RtsHandlerV3::HandleRtsChallengeMessage(const Cozmo::ExternalComms::RtsConn
     IncrementAbnormalityCount();
     Log::Write("Received challenge response in wrong state.");
   }
-  Log::Write("HandleRtsChallengeMessage / 1");
 }
 
 void RtsHandlerV3::HandleRtsWifiConnectRequest(const Cozmo::ExternalComms::RtsConnection_3& msg) {
@@ -331,7 +324,6 @@ void RtsHandlerV3::HandleRtsOtaUpdateRequest(const Cozmo::ExternalComms::RtsConn
 
   if(_state == RtsPairingPhase::ConfirmedSharedSecret && !_isOtaUpdating) {
     Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest otaMessage = msg.Get_RtsOtaUpdateRequest();
-    Log::Write("emit == HandleRtsOtaUpdateRequest");
     _otaUpdateRequestSignal.emit(otaMessage.url);
     _isOtaUpdating = true;
   }
@@ -417,7 +409,6 @@ void RtsHandlerV3::HandleRtsLogRequest(const Cozmo::ExternalComms::RtsConnection
 void RtsHandlerV3::HandleRtsCancelPairing(const Cozmo::ExternalComms::RtsConnection_3& msg) {
   Log::Write("Stopping pairing due to client request.");
   StopPairing();
-  Log::Write("HandleRtsCancelPairing / 1");
 }
 
 void RtsHandlerV3::HandleRtsAck(const Cozmo::ExternalComms::RtsConnection_3& msg) {
@@ -440,7 +431,6 @@ void RtsHandlerV3::HandleInitialPair(uint8_t* publicKey, uint32_t publicKeyLengt
 
   // Generate a random number with kNumPinDigits digits
   _pin = _keyExchange->GeneratePin();
-  Log::Write("emit == HandleInitialPair");
   _updatedPinSignal.emit(_pin);
 
   // Input client's public key and calculate shared keys
@@ -508,7 +498,6 @@ void RtsHandlerV3::HandleChallengeResponse(uint8_t* pingChallengeAnswer, uint32_
     Log::Green("Challenge answer was accepted. Encrypted channel established.");
 
     if(_isPairing) {
-      Log::Write("emit == HandleChallengeResponse");
       _completedPairingSignal.emit();
     }
   } else {
@@ -698,7 +687,6 @@ void RtsHandlerV3::SendCancelPairing() {
 }
 
 void RtsHandlerV3::SendOtaProgress(int status, uint64_t progress, uint64_t expectedTotal) {
-  Log::Write("SendOtaProgress");
   if(!AssertState(RtsCommsType::Encrypted)) {
     return;
   }
@@ -708,8 +696,6 @@ void RtsHandlerV3::SendOtaProgress(int status, uint64_t progress, uint64_t expec
 }
 
 void RtsHandlerV3::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
-  Log::Write("Handler: Received message."); 
-
   _taskExecutor->WakeSync([this, bytes, length]() {
     if(length < kMinMessageSize) {
       Log::Write("Length is less than kMinMessageSize.");
@@ -725,7 +711,6 @@ void RtsHandlerV3::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 void RtsHandlerV3::HandleTimeout() {
-  Log::Write("HandleTimeout");
   if(_state != RtsPairingPhase::ConfirmedSharedSecret) {
     Log::Write("Pairing timeout. Client took too long.");
     Reset();
@@ -791,7 +776,6 @@ void RtsHandlerV3::sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int
   Log::Write(ss.str().c_str());
 
   struct ev_TimerStruct *wData = (struct ev_TimerStruct*)w;
-  Log::Write("emit == sEvTimerHandler");
   wData->signal->emit();
 }
 

@@ -91,6 +91,8 @@ enum WiFiAuth : uint8_t {
   NSString* _downloadFilePath;
 
   bool _isPairing;
+  bool _hasVersion;
+  int _inputVersion;
 }
 
 @property (strong, nonatomic) id delegate;
@@ -153,6 +155,7 @@ enum WiFiAuth : uint8_t {
 - (void)resetDefaults;
 - (void)setVerbose:(bool)enabled;
 - (void)setDownload:(bool)enabled;
+- (void)setHasVersion:(bool)has version:(int)v;
 
 @end
 
