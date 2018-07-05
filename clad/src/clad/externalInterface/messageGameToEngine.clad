@@ -1218,7 +1218,11 @@ autounion MessageGameToEngine
   SetFaceToEnroll                SetFaceToEnroll                = 0x0F,
   EnableVisionMode               EnableVisionMode               = 0x10,
   RequestAvailableAnimations     RequestAvailableAnimations     = 0x11,  
-  GotoPose                       GotoPose                       = 0x12,
+  GotoPose                       GotoPose                       = 0x12,  
+  DriveStraight                  DriveStraight                  = 0x13,
+  TurnInPlace                    TurnInPlace                    = 0x14,
+  SetHeadAngle                   SetHeadAngle                   = 0x15,
+  SetLiftHeight                  SetLiftHeight                  = 0x16,
 }
 
 

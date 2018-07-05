@@ -244,6 +244,34 @@ service ExternalInterface {
     };
   }
 
+  rpc DriveStraight(DriveStraightRequest) returns (DriveStraightResponse) {
+    option (google.api.http) = {
+      post: "/v1/drive_straight",
+      body: "*"
+    };
+  }
+
+  rpc TurnInPlace(TurnInPlaceRequest) returns (TurnInPlaceResponse) {
+    option (google.api.http) = {
+      post: "/v1/turn_in_place",
+      body: "*"
+    };
+  }
+
+  rpc SetHeadAngle(SetHeadAngleRequest) returns (SetHeadAngleResponse) {
+    option (google.api.http) = {
+      post: "/v1/set_head_angle",
+      body: "*"
+    };
+  }
+
+  rpc SetLiftHeight(SetLiftHeightRequest) returns (SetLiftHeightResponse) {
+    option (google.api.http) = {
+      post: "/v1/set_lift_height",
+      body: "*"
+    };
+  }
+  
   rpc WifiScan(WifiScanRequest) returns (WifiScanResponse) {
     option (google.api.http) = {
       post: "/v1/wifi_scan",

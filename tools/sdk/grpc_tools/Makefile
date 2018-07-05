@@ -169,37 +169,13 @@ test_user_authentication: .require_ip
 	@echo
 
 test_curl: .require_ip
-	$(curl_command)/v1/drive_wheels -d '{"left_wheel_mmps":100.0,"right_wheel_mmps":-100.0,"left_wheel_mmps2":0.0,"right_wheel_mmps2":0.0}'
-	@echo
-	sleep 2
-	$(curl_command)/v1/drive_wheels -d '{"left_wheel_mmps":0.0,"right_wheel_mmps":0.0,"left_wheel_mmps2":0.0,"right_wheel_mmps2":0.0}'
-	@echo
-
 	$(curl_command)/v1/play_animation -d '{"animation":{"name":"anim_poked_giggle"},"loops":1}'
 	@echo
 
-	$(curl_command)/v1/move_head -d '{"speed_rad_per_sec":0.5}'
-	@echo
-	sleep 2
-	$(curl_command)/v1/move_head -d '{"speed_rad_per_sec":0}'
+	$(curl_command)/v1/sdk_activation -d '{"slot":0, "enable":true}'
 	@echo
 
-	$(curl_command)/v1/move_lift -d '{"speed_rad_per_sec":0.5}'
-	@echo
-	sleep 2
-	$(curl_command)/v1/move_lift -d '{"speed_rad_per_sec":0}'
-	@echo
-
-	$(curl_command)/v1/drive_arc -d '{"speed":5, "accel":2, "curvatureRadius_mm":10}'
-	@echo
-	sleep 2
-	$(curl_command)/v1/drive_arc -d '{"speed":0, "accel":0, "curvatureRadius_mm":0}'
-	@echo
-
-	$(curl_command)/v1/sdk_activation -d '{"slot":"SDK0"}'
-	@echo
-
-	$(curl_command)/v1/cancel_sdk_activation -d '{"slot":"SDK0"}'
+	$(curl_command)/v1/sdk_activation -d '{"slot":0, "enable":false}'
 	@echo
 
 	$(curl_command)/v1/display_face_image_rgb -d @test_assets/oled_color.json

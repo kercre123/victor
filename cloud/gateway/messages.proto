@@ -642,3 +642,58 @@ message GoToPoseResponse {
   ActionResult result = 1;
 }
 
+message DriveStraightRequest {
+   float speed_mmps = 1;  // Speed should be positive
+   float dist_mm = 2;     // Use +ve for forward, -ve for backward
+   bool should_play_animation = 3;
+}
+
+// TODO: Refactor once the engine sends the action's status
+message DriveStraightResponse {
+  ResultStatus status = 1;
+}
+
+// TurnInPlace
+// If isAbsolute == 0, turns the specified number of radians, *relative to the robot's current heading*
+// If isAbsolute != 0, turns to the specified absolute orientation.
+message TurnInPlaceRequest {
+    float angle_rad = 1; // relative mode: postive turns left negative turns right
+    float speed_rad_per_sec = 2;
+    float accel_rad_per_sec2 = 3;
+    float tol_rad = 4; // This should be no smaller than POINT_TURN_ANGLE_TOL from cozmoEngineConfig.h.
+                            // Smaller values are ignored except 0 which is interpreted to mean
+                            // default tolerance of POINT_TURN_ANGLE_TOL.
+    uint32 is_absolute = 5; // 0: angle_rad is relative to current orientation, 1: angle_rad is absolute angle to turn to
+}
+
+// TODO: Refactor once the engine sends the action's status
+message TurnInPlaceResponse {
+  ResultStatus status = 1;
+}
+
+// SetHeadAngle
+message SetHeadAngleRequest {
+    float angle_rad = 1;
+    float max_speed_rad_per_sec = 2;
+    float accel_rad_per_sec2 = 3;
+    float duration_sec = 4;
+}
+
+// TODO: Refactor once the engine sends the action's status
+message SetHeadAngleResponse {
+  ResultStatus status = 1;
+}
+
+// SetLiftHeight
+message SetLiftHeightRequest {
+    float height_mm = 1;
+    float max_speed_rad_per_sec = 2;
+    float accel_rad_per_sec2 = 3;
+    float duration_sec = 4;
+}
+
+// TODO: Refactor once the engine sends the action's status
+message SetLiftHeightResponse {
+  ResultStatus status = 1;
+}
+

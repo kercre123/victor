@@ -195,7 +195,7 @@ messages_to_test = [
                                                                                                         dock_decel_mmps2=500.0,
                                                                                                         reverse_speed_mmps=80.0,
                                                                                                         is_custom=0)), 
-        protocol.GoToPoseResponse(result=protocol.ActionResult.Value("ACTION_RESULT_SUCCESS")) ),
+        TestResultMatches(protocol.GoToPoseResponse(result=protocol.ActionResult.Value("ACTION_RESULT_SUCCESS"))) ),
 
     # DriveOffCharger message. Assuming robot starts off charger, expected result is 2 or BehaviorResults.BEHAVIOR_WONT_ACTIVATE_STATE.
     ( interface.DriveOffCharger,
@@ -206,6 +206,26 @@ messages_to_test = [
     ( interface.DriveOnCharger,
         protocol.DriveOnChargerRequest(),
         TestResultMatches(protocol.DriveOnChargerResult(result=1)) ),
+
+    # DriveStraight message
+    ( client.ExternalInterfaceServicer.DriveStraight, 
+        protocol.DriveStraightRequest(speed_mmps=0.0, dist_mm=0.0, should_play_animation=False), 
+        TestResultMatches(protocol.DriveStraightResponse(status=protocol.ResultStatus(description="Message sent to engine"))) ),
+    
+    # TurnInPlace message
+    ( client.ExternalInterfaceServicer.TurnInPlace, 
+        protocol.TurnInPlaceRequest(angle_rad=0.0, speed_rad_per_sec=0.0, accel_rad_per_sec2=0.0, tol_rad=0.0, is_absolute=False), 
+        TestResultMatches(protocol.TurnInPlaceResponse(status=protocol.ResultStatus(description="Message sent to engine"))) ),
+    
+    # SetHeadAngle message
+    ( client.ExternalInterfaceServicer.SetHeadAngle, 
+        protocol.SetHeadAngleRequest(angle_rad=0.0, max_speed_rad_per_sec=0.0, accel_rad_per_sec2=0.0, duration_sec=0.0), 
+        TestResultMatches(protocol.SetHeadAngleResponse(status=protocol.ResultStatus(description="Message sent to engine"))) ),
+    
+    # SetLiftHeight message
+    ( client.ExternalInterfaceServicer.SetLiftHeight, 
+        protocol.SetLiftHeightRequest(height_mm=0.0, max_speed_rad_per_sec=0.0, accel_rad_per_sec2=0.0, duration_sec=0.0), 
+        TestResultMatches(protocol.SetLiftHeightResponse(status=protocol.ResultStatus(description="Message sent to engine"))) ),
 
     # NOTE: Add additional messages here
     ]

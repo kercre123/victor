@@ -4,7 +4,9 @@
 '''
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = ['Angle', 'Pose', 'Position', 'Quaternion', 'Vector3', 'setup_basic_logging', 'get_class_logger']
+__all__ = ['Angle', 'Pose', 'Position', 'Quaternion', 'Vector3', 'Distance', 'Speed', 
+            'degrees', 'radians', 'angle_z_to_quaternion', 'distance_mm', 'distance_inches', 'speed_mmps',
+            'setup_basic_logging', 'get_class_logger']
 
 import logging
 import math
@@ -152,6 +154,15 @@ class Angle:
         if not isinstance(other, (int, float)):
             raise TypeError("Unsupported type for * expected number")
         return Angle(radians=(self.radians * other))
+
+
+def degrees(degrees):
+    '''Returns an :class:`vector.util.Angle` instance set to the specified number of degrees.'''
+    return Angle(degrees=degrees)
+
+def radians(radians):
+    '''Returns an :class:`vector.util.Angle` instance set to the specified number of radians.'''
+    return Angle(radians=radians)
 
 
 class Quaternion:
@@ -303,5 +314,128 @@ class ImageRect:
         return self._height
     
     
+class Distance:
+    '''Represents a distance.
+    
+    The class allows distances to be returned in either millimeters or inches.
+    
+    Use the :func:`distance_inches` or :func:`distance_mm` convenience methods to generate
+    a Distance instance.
+    
+    Args:
+        distance_mm (float): The number of millimeters the distance should
+            represent (cannot be combined with ``distance_inches``).
+        distance_inches (float): The number of inches the distance should
+            represent (cannot be combined with ``distance_mm``).
+    '''
+
+    __slots__ = ('_distance_mm')
+
+    def __init__(self, distance_mm=None, distance_inches=None):
+        if distance_mm is None and distance_inches is None:
+            raise ValueError("Expected either the distance_mm or distance_inches keyword argument")
+        if distance_mm and distance_inches:
+            raise ValueError("Expected either the distance_mm or distance_inches keyword argument, not both")
+
+        if distance_inches is not None:
+            distance_mm = distance_inches * 25.4
+        self._distance_mm = distance_mm
+
+    def __repr__(self):
+        return "<%s %.2f mm (%.2f inches)>" % (self.__class__.__name__, self.distance_mm, self.distance_inches)
+
+    def __add__(self, other):
+        if not isinstance(other, Distance):
+            raise TypeError("Unsupported operand for + expected Distance")
+        return distance_mm(self.distance_mm + other.distance_mm)
+
+    def __sub__(self, other):
+        if not isinstance(other, Distance):
+            raise TypeError("Unsupported operand for - expected Distance")
+        return distance_mm(self.distance_mm - other.distance_mm)
+
+    def __mul__(self, other):
+        if not isinstance(other, (int, float)):
+            raise TypeError("Unsupported operand for * expected number")
+        return distance_mm(self.distance_mm * other)
+
+    def __truediv__(self, other):
+        if not isinstance(other, (int, float)):
+            raise TypeError("Unsupported operand for / expected number")
+        return distance_mm(self.distance_mm / other)
+
+    @property
+    def distance_mm(self):
+        '''float: The distance in millimeters'''
+        return self._distance_mm
+
+    @property
+    def distance_inches(self):
+        '''float: The distance in inches'''
+        return self._distance_mm / 25.4
+
+
+def distance_mm(distance_mm):
+    '''Returns an :class:`vector.util.Distance` instance set to the specified number of millimeters.'''
+    return Distance(distance_mm=distance_mm)
+
+
+def distance_inches(distance_inches):
+    '''Returns an :class:`vector.util.Distance` instance set to the specified number of inches.'''
+    return Distance(distance_inches=distance_inches)
+
+
+class Speed:
+    '''Represents a speed.
+    
+    This class allows speeds to be measured  in millimeters per second.
+   
+    Use :func:`speed_mmps` convenience methods to generate
+    a Speed instance.
+    
+    Args:
+        speed_mmps (float): The number of millimeters per second the speed
+            should represent.
+    '''
+
+    __slots__ = ('_speed_mmps')
+
+    def __init__(self, speed_mmps=None):
+        if speed_mmps is None:
+            raise ValueError("Expected speed_mmps keyword argument")
+        self._speed_mmps = speed_mmps
+
+    def __repr__(self):
+        return "<%s %.2f mmps>" % (self.__class__.__name__, self.speed_mmps)
+
+    def __add__(self, other):
+        if not isinstance(other, Speed):
+            raise TypeError("Unsupported operand for + expected Speed")
+        return speed_mmps(self.speed_mmps + other.speed_mmps)
+
+    def __sub__(self, other):
+        if not isinstance(other, Speed):
+            raise TypeError("Unsupported operand for - expected Speed")
+        return speed_mmps(self.speed_mmps - other.speed_mmps)
+
+    def __mul__(self, other):
+        if not isinstance(other, (int, float)):
+            raise TypeError("Unsupported operand for * expected number")
+        return speed_mmps(self.speed_mmps * other)
+
+    def __truediv__(self, other):
+        if not isinstance(other, (int, float)):
+            raise TypeError("Unsupported operand for / expected number")
+        return speed_mmps(self.speed_mmps / other)
+
+    @property
+    def speed_mmps(self):
+        '''float: The speed in millimeters per second (mmps).'''
+        return self._speed_mmps
+
+
+def speed_mmps(speed_mmps):
+    '''Returns an :class:`vector.util.Speed` instance set to the specified millimeters per second speed'''
+    return Speed(speed_mmps=speed_mmps)
     
     

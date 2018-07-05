@@ -226,6 +226,46 @@ func ProtoGoToPoseToClad(msg *extint.GoToPoseRequest) *gw_clad.MessageExternalTo
 	})
 }
 
+func ProtoDriveStraightToClad(msg *extint.DriveStraightRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithDriveStraight(&gw_clad.DriveStraight{
+		SpeedMmps:           msg.SpeedMmps,
+		DistMm:              msg.DistMm,
+		ShouldPlayAnimation: msg.ShouldPlayAnimation,
+	})
+}
+
+func ProtoTurnInPlaceToClad(msg *extint.TurnInPlaceRequest) *gw_clad.MessageExternalToRobot {
+	// Bind IsAbsolute to a uint8 boundary, the clad side uses a uint8, proto side uses uint32
+	if msg.IsAbsolute > math.MaxUint8 {
+		msg.IsAbsolute = math.MaxUint8
+	}
+	return gw_clad.NewMessageExternalToRobotWithTurnInPlace(&gw_clad.TurnInPlace{
+		AngleRad:        msg.AngleRad,
+		SpeedRadPerSec:  msg.SpeedRadPerSec,
+		AccelRadPerSec2: msg.AccelRadPerSec2,
+		TolRad:          msg.TolRad,
+		IsAbsolute:      uint8(msg.IsAbsolute),
+	})
+}
+
+func ProtoSetHeadAngleToClad(msg *extint.SetHeadAngleRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithSetHeadAngle(&gw_clad.SetHeadAngle{
+		AngleRad:          msg.AngleRad,
+		MaxSpeedRadPerSec: msg.MaxSpeedRadPerSec,
+		AccelRadPerSec2:   msg.AccelRadPerSec2,
+		DurationSec:       msg.DurationSec,
+	})
+}
+
+func ProtoSetLiftHeightToClad(msg *extint.SetLiftHeightRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithSetLiftHeight(&gw_clad.SetLiftHeight{
+		HeightMm:          msg.HeightMm,
+		MaxSpeedRadPerSec: msg.MaxSpeedRadPerSec,
+		AccelRadPerSec2:   msg.AccelRadPerSec2,
+		DurationSec:       msg.DurationSec,
+	})
+}
+
 func CladFeatureStatusToProto(msg *gw_clad.FeatureStatus) *extint.FeatureStatus {
 	return &extint.FeatureStatus{
 		FeatureName: msg.FeatureName,
@@ -1221,6 +1261,66 @@ func (m *rpcService) GoToPose(ctx context.Context, in *extint.GoToPoseRequest) (
 	result := <-go_to_pose_result
 	action_result := result.Message.GetRobotCompletedAction().Result
 	return &extint.GoToPoseResponse{Result: extint.ActionResult(action_result)}, nil
+}
+
+func (m *rpcService) DriveStraight(ctx context.Context, in *extint.DriveStraightRequest) (*extint.DriveStraightResponse, error) {
+	log.Println("Received rpc request DriveStraight(", in, ")")
+	_, err := WriteToEngine(engineSock, ProtoDriveStraightToClad(in))
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Refactor once the engine sends the action's status
+	return &extint.DriveStraightResponse{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
+func (m *rpcService) TurnInPlace(ctx context.Context, in *extint.TurnInPlaceRequest) (*extint.TurnInPlaceResponse, error) {
+	log.Println("Received rpc request TurnInPlace(", in, ")")
+	_, err := WriteToEngine(engineSock, ProtoTurnInPlaceToClad(in))
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Refactor once the engine sends the action's status
+	return &extint.TurnInPlaceResponse{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
+func (m *rpcService) SetHeadAngle(ctx context.Context, in *extint.SetHeadAngleRequest) (*extint.SetHeadAngleResponse, error) {
+	log.Println("Received rpc request SetHeadAngle(", in, ")")
+	_, err := WriteToEngine(engineSock, ProtoSetHeadAngleToClad(in))
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Refactor once the engine sends the action's status
+	return &extint.SetHeadAngleResponse{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
+func (m *rpcService) SetLiftHeight(ctx context.Context, in *extint.SetLiftHeightRequest) (*extint.SetLiftHeightResponse, error) {
+	log.Println("Received rpc request SetLiftHeight(", in, ")")
+	_, err := WriteToEngine(engineSock, ProtoSetLiftHeightToClad(in))
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Refactor once the engine sends the action's status
+	return &extint.SetLiftHeightResponse{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
 }
 
 func newServer() *rpcService {

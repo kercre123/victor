@@ -3,7 +3,7 @@
 '''
 '''
 
-__all__ = ['Robot', 'AsyncRobot']
+__all__ = ['MIN_HEAD_ANGLE', 'MAX_HEAD_ANGLE', 'Robot', 'AsyncRobot']
 
 import asyncio
 import logging
@@ -21,6 +21,15 @@ from .messaging import client
 
 
 module_logger = logging.getLogger(__name__)
+
+#### Constants
+
+#: The minimum angle the robot's head can be set to
+MIN_HEAD_ANGLE = util.degrees(-22)
+
+#: The maximum angle the robot's head can be set to
+MAX_HEAD_ANGLE = util.degrees(45)
+
 
 # TODO Remove this when the proto file is using an enum instead of a number
 class SDK_PRIORITY_LEVEL:
@@ -390,6 +399,107 @@ class Robot:
         self.logger.info(f'{type(result)}: {str(result).strip()}')
         return result
 
+    # Movement actions
+    @actions._as_actionable
+    async def drive_straight(self, distance, speed, should_play_anim=False):
+        '''Tells Vector to drive in a straight line
+        
+        Vector will drive for the specified distance (forwards or backwards)
+        
+        Args:
+            distance (vector.util.Distance): The distance to drive
+                (>0 for forwards, <0 for backwards)
+            speed (vector.util.Speed): The speed to drive at
+                (should always be >0, the abs(speed) is used internally)
+            should_play_anim (bool): Whether to play idle animations
+                whilst driving (tilt head, hum, animated eyes, etc.)
+        
+        Returns:
+           A :class:`protocol.DriveStraightResponse` object which provides the result description.
+        '''
+        drive_straight_request = protocol.DriveStraightRequest(speed_mmps=speed.speed_mmps,
+                                                                dist_mm=distance.distance_mm,
+                                                                should_play_animation=should_play_anim)
+        result = await self.connection.DriveStraight(drive_straight_request)
+        self.logger.info(f'{type(result)}: {str(result).strip()}')
+        return result
+
+    @actions._as_actionable
+    async def turn_in_place(self, angle, speed=util.Angle(0.0), accel=util.Angle(0.0), angle_tolerance=util.Angle(0.0), is_absolute=0):
+        '''Turn the robot around its current position.
+        
+        Args:
+            angle (vector.util.Angle): The angle to turn. Positive
+                values turn to the left, negative values to the right.
+            speed (vector.util.Angle): Angular turn speed (per second).
+            accel (vector.util.Angle): Acceleration of angular turn
+                (per second squared).
+            angle_tolerance (vector.util.Angle): angular tolerance
+                to consider the action complete (this is clamped to a minimum
+                of 2 degrees internally).
+            is_absolute (bool): True to turn to a specific angle, False to
+                turn relative to the current pose.
+        
+        Returns:
+            A :class:`protocol.TurnInPlaceResponse` object which provides the result description.
+        '''
+        turn_in_place_request = protocol.TurnInPlaceRequest(angle_rad=angle.radians,
+                                                            speed_rad_per_sec=speed.radians,
+                                                            accel_rad_per_sec2=accel.radians,
+                                                            tol_rad=angle_tolerance.radians,
+                                                            is_absolute=is_absolute)
+        result = await self.connection.TurnInPlace(turn_in_place_request)
+        self.logger.info(f'{type(result)}: {str(result).strip()}')
+        return result
+
+    @actions._as_actionable
+    async def set_head_angle(self, angle, accel=10.0, max_speed=10.0, duration=0.0):
+        '''Tell Vector's head to turn to a given angle.
+        
+        Args:
+            angle: (:class:`cozmo.util.Angle`): Desired angle for
+                Vector's head. (:const:`MIN_HEAD_ANGLE` to
+                :const:`MAX_HEAD_ANGLE`).
+            max_speed (float): Maximum speed of Vector's head in radians per second.
+            accel (float): Acceleration of Vector's head in radians per second squared.
+            duration (float): Time for Vector's head to turn in seconds. A value
+                of zero will make Vector try to do it as quickly as possible.
+        
+        Returns:
+            A :class:`protocol.SetHeadAngleResponse` object which provides the result description.
+        '''
+        set_head_angle_request = protocol.SetHeadAngleRequest(angle_rad=angle.radians,
+                                                            max_speed_rad_per_sec=max_speed,
+                                                            accel_rad_per_sec2=accel,
+                                                            duration_sec=duration)
+        result = await self.connection.SetHeadAngle(set_head_angle_request)
+        self.logger.info(f'{type(result)}: {str(result).strip()}')
+        return result
+
+    @actions._as_actionable
+    async def set_lift_height(self, height, accel=10.0, max_speed=10.0, duration=0.0):
+        '''Tell Vector's lift to move to a given height
+        
+        Args:
+            height (float): desired height for Vector's lift 0.0 (bottom) to
+                1.0 (top) (we clamp it to this range internally).
+            max_speed (float): Maximum speed of Vector's lift in radians per second.
+            accel (float): Acceleration of Vector's lift in radians per
+                second squared.
+            duration (float): Time for Vector's lift to move in seconds. A value
+                of zero will make Vector try to do it as quickly as possible.
+        
+        Returns:
+            A :class:`protocol.SetLiftHeightResponse` object which provides the result description.
+        '''
+        set_lift_height_request = protocol.SetLiftHeightRequest(height_mm=height,
+                                                                max_speed_rad_per_sec=max_speed,
+                                                                accel_rad_per_sec2=accel,
+                                                                duration_sec=duration)
+        result = await self.connection.SetLiftHeight(set_lift_height_request)
+        self.logger.info(f'{type(result)}: {str(result).strip()}')
+        return result
+
     # Meet Victor
     @actions._as_actionable
     async def meet_victor(self, name):
@@ -467,17 +577,6 @@ class Robot:
         result = await self.connection.EnableVisionMode(enable_vision_mode_request)
         self.logger.info(f'{type(result)}: {str(result).strip()}')
         return result
-
-    async def set_lift_height(self, height_mm, max_speed_radps=0.0, accel_radps2=0.0, duration_sec=0.0):
-        message = _clad_message.SetLiftHeight(
-            height_mm=height_mm,
-            max_speed_rad_per_sec=max_speed_radps,
-            accel_rad_per_sec2=accel_radps2,
-            duration_sec=duration_sec)
-        innerWrappedMessage = _clad_message.MovementAction(SetLiftHeight=message)
-        outerWrappedMessage = _clad_message.ExternalComms(MovementAction=innerWrappedMessage)
-
-        await self.socket.send(outerWrappedMessage.pack())
 
     # Vector Display
     async def set_backpack_lights(self, light1, light2, light3, backpack_color_profile=lights.white_balanced_backpack_profile):
