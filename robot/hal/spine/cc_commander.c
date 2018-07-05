@@ -691,8 +691,8 @@ const void* get_a_frame(int32_t timeout_ms)
 
 
 int SetLeds(const uint8_t* leds, int nleds) {
-  assert(nleds < sizeof(gHeadData.ledColors));
-  memcpy(gHeadData.ledColors, leds, sizeof(gHeadData.ledColors));
+  assert(nleds <= sizeof(gHeadData.lightState.ledColors));
+  memcpy(&gHeadData.lightState.ledColors, leds, nleds);
   start_overrride(400); //2 secs
   return 0;
 }
@@ -834,9 +834,9 @@ void show_motor(int motor_id, const struct MotorState motor[]) {
   int32_t speed = (microsec!=0 && m->position != lastpos[motor_id]) ?
     (dist/microsec) : 0;
   ccc_debug_x("CCC motor pos/speed:  %d/ %d in %d -> %d", m->position, m->delta, m->time, speed);
-  print_response(":%d %d\n",
+  print_response(":%d %d %d\n",
                  m->position,
-                 speed);
+                 speed, m->delta);
   lastpos[motor_id] = m->position;
 
 }
@@ -892,7 +892,7 @@ void process_incoming_frame(struct BodyToHead* bodyData)
     }
     if (printmask & (1<<show_BAT)) {
       print_response(":%i %i\n",
-                     bodyData->battery.battery,
+                     bodyData->battery.main_voltage,
                      bodyData->battery.temperature);
     }
     if (printmask & (1<<show_PROX)) {

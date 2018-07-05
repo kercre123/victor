@@ -5,6 +5,7 @@
 #define EV_USE_EPOLL 0
 #define EV_MULTIPLICITY 1
 #define EV_IDLE_ENABLE 1
+#define EV_CHILD_ENABLE 0
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wundef"

@@ -365,6 +365,15 @@ void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineT
   bool forwardToRobot = false;
   switch (msg.tag)
   {
+    case RobotInterface::EngineToRobot::Tag_calmPowerMode:
+    {
+      // Remember the power mode specified by engine so that we can go back to 
+      // it when pairing/debug screens are exited.
+      // Only relay the power mode to robot process if not already in pairing/debug screen.
+      FaceInfoScreenManager::getInstance()->SetCalmPowerModeOnReturnToNone(msg.calmPowerMode);
+      forwardToRobot = FaceInfoScreenManager::getInstance()->GetCurrScreenName() == ScreenName::None;
+      break;
+    }
 
 #include "clad/robotInterface/messageEngineToRobot_switch_from_0x50_to_0xAF.def"
 

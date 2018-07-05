@@ -197,6 +197,12 @@ message SyncTime
   float_32 driveCenterOffset
 }
 
+message CalmPowerMode
+{
+  bool enable,
+  bool calibOnDisable,
+}
+
 // Tells syscon to pull the plug
 message Shutdown
 {
@@ -218,6 +224,11 @@ message RollActionParams
    float_32 driveAccel_mmps2,
    uint_32 driveDuration_ms,
    float_32 backupDist_mm,
+}
+
+message PlaypenStart 
+{
+
 }
 
 message SetMotionModelParams
@@ -497,12 +508,14 @@ union EngineToRobot
   GetManufacturingInfo          getMfgInfo                  = 0x01,
   SyncTime                      syncTime                    = 0x02,
   Shutdown                      shutdown                    = 0x03,
+  CalmPowerMode                 calmPowerMode               = 0x04,
 
   // Debug / Test
   StartControllerTestMode       startControllerTestMode     = 0x0A,
   ControllerGains               setControllerGains          = 0x0B,
   SetMotionModelParams          setMotionModelParams        = 0x0C,
   RollActionParams              rollActionParams            = 0x0D,
+  PlaypenStart                  playpenStart                = 0x0E,
 
   // Motor control
   DriveWheels                   drive                       = 0x10,

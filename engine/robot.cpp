@@ -870,6 +870,16 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // Set flag indicating that robot state messages have been received
   _lastMsgTimestamp = msg.timestamp;
   _newStateMsgAvailable = true;
+
+  if(_trackTouchSensorFilt)
+  {
+    // Keep track of the last 6000 (3 min) filtered touch sensor values
+    _touchSensorFiltDeque.push_back(msg.backpackTouchSensorFilt);
+    if(_touchSensorFiltDeque.size() > 6000)
+    {
+      _touchSensorFiltDeque.pop_front();
+    }
+  }
   
   // Update head angle
   SetHeadAngle(msg.headAngle);
@@ -1275,11 +1285,7 @@ Result Robot::Update()
   //////////// CameraService Update ////////////
   CameraService::getInstance()->Update();
 
-  const Result factoryRes = UpdateStartupChecks();
-  if(factoryRes != RESULT_OK)
-  {
-    return factoryRes;
-  }
+  UpdateStartupChecks();
   END_DONT_RUN_AFTER_PACKOUT
   
   if (!_gotStateMsgAfterTimeSync)
@@ -1307,44 +1313,6 @@ Result Robot::Update()
   */
 
   BEGIN_DONT_RUN_AFTER_PACKOUT
-
-#if FACTORY_TEST
-  // Once we have gotten a frame from the camera play a sound to indicate 
-  // a "successful" boot
-  static bool playedSound = false;
-  if(!playedSound &&
-     CameraService::getInstance()->HaveGottenFrame())
-  {
-    GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(1.f);
-    CompoundActionParallel* action = new CompoundActionParallel();
-    std::weak_ptr<IActionRunner> soundAction = action->AddAction(new PlayAnimationAction("soundTestAnim"));
-
-    // Start WaitForLambdaAction in parallel that will cancel the sound action after 200 milliseconds
-    WaitForLambdaAction* waitAction = new WaitForLambdaAction([soundAction](Robot& robot){
-      static TimeStamp_t start = 0;
-      if(start == 0)
-      {
-        start = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-      }
-
-      if(BaseStationTimer::getInstance()->GetCurrentTimeStamp() - start > 200)
-      {
-        start = 0;
-        auto sp = soundAction.lock();
-        if(sp != nullptr)
-        {
-          sp->Cancel();
-          return true;
-        }
-      }
-
-      return false;
-    });
-    action->AddAction(waitAction);
-    GetActionList().AddConcurrentAction(action);
-    playedSound = true;
-  }
-#endif
 
   //////////// VisionScheduleMediator ////////////
   // Applies the scheduling consequences of the last frame's subscriptions before ticking VisionComponent
@@ -2841,6 +2809,7 @@ RobotState Robot::GetDefaultRobotState()
                          0.f, //float rwheel_speed_mmps,
                          0.f, //float headAngle
                          0.f, //float liftAngle,
+                         0.f, //float touchSensorFilt
                          AccelData(), //const Anki::Cozmo::AccelData &accel,
                          GyroData(), //const Anki::Cozmo::GyroData &gyro,
                          5.f, //float batteryVoltage,
@@ -3034,11 +3003,57 @@ Result Robot::UpdateStartupChecks()
       else
       {
         state = State::PASSED;
+
+        #if FACTORY_TEST
+        // Manually init AnimationComponent
+        // Normally it would init when we receive syncTime from robot process
+        // but since there might not be a body (robot process won't init)
+        // we need to do it here
+        GetAnimationComponent().Init();
+        
+        // Once we have gotten a frame from the camera play a sound to indicate 
+        // a "successful" boot
+        static bool playedSound = false;
+        if(!playedSound)
+        {
+          GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(1.f);
+          GetAnimationComponent().PlayAnimByName("soundTestAnim", 1, true, nullptr, 0, 0.4f);
+          playedSound = true;
+        }
+        #endif
       }
     }
   }
   
   return (state == State::FAILED ? RESULT_FAIL : RESULT_OK);
+}
+
+void Robot::GetTouchSensorFiltResults(f32& min, f32& max, f32& stddev) const
+{
+  if(_touchSensorFiltDeque.empty())
+  {
+    PRINT_NAMED_WARNING("Robot.GetTouchSensorFiltResults.DequeEmpty","");
+    min = 0;
+    max = 0;
+    stddev = 0;
+    return;
+  }
+  
+  // Get the min and max filtered touch sensor values
+  auto minmax = std::minmax_element(_touchSensorFiltDeque.begin(),
+                                    _touchSensorFiltDeque.end());
+  min = *minmax.first;
+  max = *minmax.second;
+
+  // Calculate standard deviation
+  f32 sum = std::accumulate(_touchSensorFiltDeque.begin(), _touchSensorFiltDeque.end(), 0.0);
+  f32 mean = sum / _touchSensorFiltDeque.size();
+
+  std::vector<f32> diff(_touchSensorFiltDeque.size());
+  std::transform(_touchSensorFiltDeque.begin(), _touchSensorFiltDeque.end(), diff.begin(),
+                 [mean](float x) { return x - mean; });
+  f32 sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
+  stddev = std::sqrt(sq_sum / _touchSensorFiltDeque.size());
 }
 
 

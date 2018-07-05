@@ -17,6 +17,16 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/factory/faultCodes.h"
 
+#if FACTORY_TEST
+// HACK: It's pretty gross to include emrHelper.h in vic-robot
+//       but need it for EMR values.
+//       This forced define of RELEASE is to appease globalDefinitions.h
+#ifndef RELEASE
+#define RELEASE
+#endif
+#include "anki/cozmo/shared/factory/emrHelper.h"
+#endif
+
 #include "../spine/spine.h"
 #include "../spine/cc_commander.h"
 
@@ -48,7 +58,48 @@ namespace { // "Private members"
   // update every tick of the robot:
   // some touch values are 0xFFFF, which we want to ignore
   // so we cache the last non-0xFFFF value and return this as the latest touch sensor reading
-  u16 lastValidTouchIntensity_;
+  u16 lastValidTouchIntensity_ = 0;
+
+  // Whether or not an out-of-range value was observed
+  // on the touch sensor.
+  bool touchSensorRawOutsideValidRange_ = false;
+
+  // Time at which touchSensorRawOutsideValidRange_ should be updated
+  // Includes a delay to account for charger not being immediately detected.
+  // 2018-06-13: Charger is known to increase noisiness of touch sensor, but we're not fixing it now!
+  TimeStamp_t invalidateTouchSensorTime_ms_ = 0;
+  static const u32 TOUCH_SENSOR_VALIDITY_DELAY_MS = 250;
+
+  static const size_t TOUCH_BOX_FILTER_SIZE = 80;
+  u16 touchBoxFilter_[TOUCH_BOX_FILTER_SIZE] = {0};
+  size_t touchBoxFilterInd_ = 0;
+  u32 touchBoxFilterSum_ = 0;
+
+#if FACTORY_TEST
+  u16 kMinValidRawTouch = HAL::MIN_VALID_RAW_TOUCH;
+  u16 kMaxValidRawTouch = HAL::MAX_VALID_RAW_TOUCH;
+#endif
+
+  PowerState desiredPowerMode_;
+
+  // Flag to prevent spamming of unexepected power mode warning
+  bool reportUnexpectedPowerMode_ = false;
+
+  // Time since the desired power mode was last set
+  TimeStamp_t lastPowerSetModeTime_ms_ = 0;
+
+  // Last time a HeadToBody frame was sent
+  TimeStamp_t lastH2BSendTime_ms_ = 0;
+
+  // The maximum time expected to elapse before we're sure that
+  // syscon should have changed to the desired power mode,
+  // indexed by desired power mode.
+  static const TimeStamp_t MAX_POWER_MODE_SWITCH_TIME_MS[2] = {100,          // Calm->Active timeout
+                                                               1000 + 100};  // Active->Calm timeout
+
+  // Number of frames to skip sending to body when in calm power mode
+  static const int NUM_CALM_MODE_SKIP_FRAMES = 12;  // Every 60ms
+  int calmModeSkipFrameCount_ = 0;
 
   struct spine_ctx spine_;
   uint8_t frameBuffer_[SPINE_B2H_FRAME_LEN];
@@ -172,6 +223,17 @@ Result spine_wait_for_first_frame(spine_ctx_t spine)
       else if (hdr->payload_type == PAYLOAD_VERSION) {
         record_body_version( (VersionInfo*)(hdr+1) );
       }
+      else if (hdr->payload_type == PAYLOAD_BOOT_FRAME) {
+        initialized = true;
+        //extract button data from stub packet and put in fake full packet
+        uint8_t button_pressed = ((struct MicroBodyToHead*)(hdr+1))->buttonPressed;
+        BootBodyData_.touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
+        BootBodyData_.battery.flags = POWER_ON_CHARGER;
+
+        BootBodyData_.battery.main_voltage = (int16_t)(5.0/kBatteryScale);
+        BootBodyData_.battery.charger = (int16_t)(5.0/kBatteryScale);
+        bodyData_ = &BootBodyData_;
+      }
       else {
         LOGD("Unknown Frame Type %x\n", hdr->payload_type);
       }
@@ -198,6 +260,10 @@ Result HAL::Init()
   // Set ID
   robotID_ = Anki::Cozmo::DEFAULT_ROBOT_ID;
 
+#if FACTORY_TEST
+  UpdateTouchSensorValidRange(); 
+#endif
+
   InitIMU();
 
   if (InitRadio() != RESULT_OK) {
@@ -208,6 +274,8 @@ Result HAL::Init()
 #ifndef HAL_DUMMY_BODY
   {
     AnkiInfo("HAL.Init.StartingSpineHAL", "");
+
+    desiredPowerMode_ = POWER_MODE_ACTIVE;
 
     spine_init(&spine_);
     struct spine_params params = {
@@ -296,9 +364,10 @@ Result spine_get_frame() {
         BootBodyData_.touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
         BootBodyData_.battery.flags = POWER_ON_CHARGER;
 
-        BootBodyData_.battery.battery = (int16_t)(5.0/kBatteryScale);
+        BootBodyData_.battery.main_voltage = (int16_t)(5.0/kBatteryScale);
         BootBodyData_.battery.charger = (int16_t)(5.0/kBatteryScale);
         bodyData_ = &BootBodyData_;
+        result = RESULT_OK;
       }
       else {
         LOGD("Unknown Frame Type %x\n", hdr->payload_type);
@@ -349,8 +418,33 @@ Result HAL::Step(void)
     struct HeadToBody* h2bp = (commander_is_active) ? ccc_data_get_response() : &headData_;
 
     EventStart(EventType::WRITE_SPINE);
-    spine_write_h2b_frame(&spine_, h2bp);
+    const TimeStamp_t now_ms = GetTimeStamp();
+    if (desiredPowerMode_ == POWER_MODE_CALM && !commander_is_active) {
+      if (++calmModeSkipFrameCount_ > NUM_CALM_MODE_SKIP_FRAMES) {
+        spine_set_lights(&spine_, &(h2bp->lightState));
+        calmModeSkipFrameCount_ = 0;
+      }
+    } else {
+      spine_write_h2b_frame(&spine_, h2bp);
+      lastH2BSendTime_ms_ = now_ms;
+    }
     EventStop(EventType::WRITE_SPINE);
+
+    // Print warning if power mode is unexpected
+    const HAL::PowerState currPowerMode = PowerGetMode();
+    if (currPowerMode != desiredPowerMode_) {
+      if ( ((lastPowerSetModeTime_ms_ == 0) && reportUnexpectedPowerMode_) ||
+           ((lastPowerSetModeTime_ms_ > 0) && ((now_ms - lastPowerSetModeTime_ms_ > MAX_POWER_MODE_SWITCH_TIME_MS[desiredPowerMode_])))
+           ) {
+        AnkiWarn("HAL.Step.UnexpectedPowerMode",
+                 "Curr mode: %u, Desired mode: %u, now: %ums, lastSetModeTime: %ums, lastH2BSendTime: %ums",
+                 currPowerMode, desiredPowerMode_, now_ms, lastPowerSetModeTime_ms_, lastH2BSendTime_ms_);
+        lastPowerSetModeTime_ms_ = 0;  // Reset time to avoid spamming warning
+        reportUnexpectedPowerMode_ = false;
+      }
+    } else {
+      reportUnexpectedPowerMode_ = true;
+    }
 
     struct ContactData* ccc_response = ccc_text_response();
     if (ccc_response) {
@@ -400,8 +494,80 @@ void ProcessTouchLevel(void)
 {
   if(bodyData_->touchLevel[0] != 0xFFFF) {
     lastValidTouchIntensity_ = bodyData_->touchLevel[HAL::BUTTON_CAPACITIVE];
+
+    #if FACTORY_TEST
+    // Check if the raw touch sensor value is outside our valid ranges
+    // only when not on charger because values are known to be noisy
+    // when on charger.
+    if (!HAL::BatteryIsOnCharger()) {
+      if(lastValidTouchIntensity_ < kMinValidRawTouch || lastValidTouchIntensity_ > kMaxValidRawTouch)
+      {
+        AnkiInfo("ProcessTouchLevel.OutsideValidRange",
+                 "%u [%u:%u]", lastValidTouchIntensity_, kMinValidRawTouch, kMaxValidRawTouch);
+
+        // "Schedule" an invalidation of the touch sensor,
+        // which can be cancelled if a charger is detected very shortly after.
+        if (invalidateTouchSensorTime_ms_ == 0) {
+          invalidateTouchSensorTime_ms_ = HAL::GetTimeStamp() + TOUCH_SENSOR_VALIDITY_DELAY_MS;
+        }
+      }
+    } else {
+      invalidateTouchSensorTime_ms_ = 0;
+    }
+
+    // Check if time to invalidate touch sensor
+    if (invalidateTouchSensorTime_ms_ > 0 && HAL::GetTimeStamp() > invalidateTouchSensorTime_ms_) {
+      AnkiInfo("ProcessTouchLevel.OutsideValidRangeSet","");
+      invalidateTouchSensorTime_ms_ = 0;
+      touchSensorRawOutsideValidRange_ = true;
+    }
+
+    // Add reading to box filter array and sum
+    u16& valueToOverride = touchBoxFilter_[touchBoxFilterInd_++];
+    touchBoxFilterSum_ -= valueToOverride;
+    touchBoxFilterSum_ += lastValidTouchIntensity_;
+    valueToOverride = lastValidTouchIntensity_;
+
+    if(touchBoxFilterInd_ >= TOUCH_BOX_FILTER_SIZE)
+    {
+      touchBoxFilterInd_ = 0;
+    }
+    #endif
   }
 }
+
+#if FACTORY_TEST
+bool HAL::IsTouchSensorValid()
+{
+  return !touchSensorRawOutsideValidRange_;
+}
+
+f32 HAL::GetTouchSensorFilt()
+{
+  return touchBoxFilterSum_ / ((f32)TOUCH_BOX_FILTER_SIZE);
+}
+
+void HAL::UpdateTouchSensorValidRange()
+{
+  const u32 emrMinValidTouch = Factory::GetEMR()->fields.playpenTouchSensorMinValid;
+  const u32 emrMaxValidTouch = Factory::GetEMR()->fields.playpenTouchSensorMaxValid;
+  if (emrMinValidTouch > 0) {
+    AnkiInfo("HAL.UpdateTouchSensorValidRange.EMRMinValidTouch", "%u", emrMinValidTouch);
+    kMinValidRawTouch = emrMinValidTouch;
+  } else {
+    kMinValidRawTouch = HAL::MIN_VALID_RAW_TOUCH;
+  }
+  if (emrMaxValidTouch > 0) {
+    AnkiInfo("HAL.UpdateTouchSensorValidRange.EMRMaxValidTouch", "%u", emrMaxValidTouch);
+    kMaxValidRawTouch = emrMaxValidTouch;
+  } else {
+    kMaxValidRawTouch = HAL::MAX_VALID_RAW_TOUCH;
+  }
+
+  // Reset valid flag
+  touchSensorRawOutsideValidRange_ = false;
+}
+#endif
 
 // Get the number of microseconds since boot
 u32 HAL::GetMicroCounter(void)
@@ -440,9 +606,9 @@ void HAL::SetLED(LEDId led_id, u32 color)
   uint8_t r = (color >> LED_RED_SHIFT) & LED_CHANNEL_MASK;
   uint8_t g = (color >> LED_GRN_SHIFT) & LED_CHANNEL_MASK;
   uint8_t b = (color >> LED_BLU_SHIFT) & LED_CHANNEL_MASK;
-  headData_.ledColors[ledIdx * LED_CHANEL_CT + LED0_RED] = r;
-  headData_.ledColors[ledIdx * LED_CHANEL_CT + LED0_GREEN] = g;
-  headData_.ledColors[ledIdx * LED_CHANEL_CT + LED0_BLUE] = b;
+  headData_.lightState.ledColors[ledIdx * LED_CHANEL_CT + LED0_RED] = r;
+  headData_.lightState.ledColors[ledIdx * LED_CHANEL_CT + LED0_GREEN] = g;
+  headData_.lightState.ledColors[ledIdx * LED_CHANEL_CT + LED0_BLUE] = b;
 }
 
 void HAL::SetSystemLED(u32 color)
@@ -450,10 +616,10 @@ void HAL::SetSystemLED(u32 color)
   uint8_t r = (color >> LED_RED_SHIFT) & LED_CHANNEL_MASK;
   uint8_t g = (color >> LED_GRN_SHIFT) & LED_CHANNEL_MASK;
   uint8_t b = (color >> LED_BLU_SHIFT) & LED_CHANNEL_MASK;
-  headData_.ledColors[LED3_RED] = r;
+  headData_.lightState.ledColors[LED3_RED] = r;
   // Technically have no control over green, it is always on
-  headData_.ledColors[LED3_GREEN] = g;
-  headData_.ledColors[LED3_BLUE] = b;
+  headData_.lightState.ledColors[LED3_GREEN] = g;
+  headData_.lightState.ledColors[LED3_BLUE] = b;
 }
 
 u32 HAL::GetID()
@@ -512,7 +678,7 @@ bool HAL::HandleLatestMicData(SendDataFunction sendDataFunc)
 f32 HAL::BatteryGetVoltage()
 {
   // scale raw ADC counts to voltage (conversion factor from Vandiver)
-  return kBatteryScale * bodyData_->battery.battery;
+  return kBatteryScale * bodyData_->battery.main_voltage;
 }
 
 bool HAL::BatteryIsCharging()
@@ -549,6 +715,24 @@ void HAL::Shutdown()
   HAL::Stop();
   spine_shutdown(&spine_);
 }
+
+
+void HAL::PowerSetMode(const PowerState state)
+{
+  AnkiInfo("HAL.PowerSetMode", "%d", state);
+  desiredPowerMode_ = state;
+  lastPowerSetModeTime_ms_ = HAL::GetTimeStamp();
+}
+
+HAL::PowerState HAL::PowerGetMode()
+{
+  if(bodyData_ == nullptr)
+  {
+    return POWER_MODE_ACTIVE;
+  }
+  return (bodyData_->flags & RUNNING_FLAGS_SENSORS_VALID) ? POWER_MODE_ACTIVE : POWER_MODE_CALM;
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

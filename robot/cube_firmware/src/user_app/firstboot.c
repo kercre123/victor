@@ -12,20 +12,20 @@ typedef struct {
 } LED_Pin;
 
 static const LED_Pin LEDs[] = {
-  { GPIOPP(D0) },
-  { GPIOPP(D3) },
-  { GPIOPP(D6) },
-  { GPIOPP(D9) },
-
-  { GPIOPP(D1) },
+  { GPIOPP(D2) }, //RED
+  { GPIOPP(D5) },
+  { GPIOPP(D8) },
+  { GPIOPP(D11) },
+  
+  { GPIOPP(D1) }, //GRN
   { GPIOPP(D4) },
   { GPIOPP(D7) },
   { GPIOPP(D10) },
 
-  { GPIOPP(D2) },
-  { GPIOPP(D5) },
-  { GPIOPP(D8) },
-  { GPIOPP(D11) },
+  { GPIOPP(D0) }, //BLU
+  { GPIOPP(D3) },
+  { GPIOPP(D6) },
+  { GPIOPP(D9) },
 };
 
 //------------------------------------------------  
@@ -220,9 +220,15 @@ void FirstBoot(void) {
   bootmsg();
 
   // Blink pattern
-  for (int p = 0; p < 12; p++) {
-    GPIO_SetInactive(LEDs[p].port, LEDs[p].pin);
-    for (int i = 0; i < 200000; i++) __nop();
-    GPIO_SetActive(LEDs[p].port, LEDs[p].pin);
+  for( int color=0; color<12; color+=4 ) {
+    for( int frame=0; frame<160; frame++ ) {
+      for( int led=0; led<4; led++ ) {
+        GPIO_SetInactive(LEDs[color+led].port, LEDs[color+led].pin);
+        for (volatile int i=0; i < 1000; i++) __nop();
+        GPIO_SetActive(LEDs[color+led].port, LEDs[color+led].pin);
+      }
+    }
   }
+  
 }
+

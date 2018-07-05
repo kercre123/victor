@@ -121,6 +121,7 @@ protected:
   // Hides IBehavior's SubscribeToTags function so we can do some bookkeeping on what the subclass
   // is subscribing to
   void SubscribeToTags(std::set<EngineToGameTag>&& tags); // Hide base class function
+  void SubscribeToTags(std::set<GameToEngineTag>&& tags);
   
   // Hides some of ICozmoBehavior's various DelegateIfInControl functions so we can inject callbacks that
   // automatically print warnings/failures if actions fail

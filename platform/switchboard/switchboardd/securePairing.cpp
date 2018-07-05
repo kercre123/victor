@@ -654,8 +654,7 @@ void SecurePairing::HandleRtsLogRequest(const Victor::ExternalComms::RtsConnecti
     return;
   }
 
-  std::string output;
-  int exitCode = ExecCommand({"python", "/anki/bin/diagnostics-logger"}, output);
+  int exitCode = ExecCommand({"python", "/anki/bin/diagnostics-logger"});
 
   std::vector<uint8_t> logBytes;
 

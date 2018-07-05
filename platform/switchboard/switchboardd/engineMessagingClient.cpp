@@ -17,6 +17,7 @@
 #include <chrono>
 #include <thread>
 #include "anki-ble/log.h"
+#include "anki-wifi/wifi.h"
 #include "switchboardd/engineMessagingClient.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -36,12 +37,11 @@ EngineMessagingClient::EngineMessagingClient(struct ev_loop* evloop)
 {}
 
 bool EngineMessagingClient::Init() {
-  ev_timer_init(&_handleEngineMessageTimer.timer, 
-                &EngineMessagingClient::sEvEngineMessageHandler, 
+  ev_timer_init(&_handleEngineMessageTimer.timer,
+                &EngineMessagingClient::sEvEngineMessageHandler,
                 kEngineMessageFrequency_s, 
                 kEngineMessageFrequency_s);
-  _handleEngineMessageTimer.client = &_client;
-  _handleEngineMessageTimer.signal = &_pairingStatusSignal;
+  _handleEngineMessageTimer.client = this;
   return true;
 }
 
@@ -73,26 +73,53 @@ void EngineMessagingClient::sEvEngineMessageHandler(struct ev_loop* loop, struct
 
   int recvSize;
   
-  while((recvSize = wData->client->Recv((char*)sMessageData, sizeof(sMessageData))) > kMessageHeaderLength) {
+  while((recvSize = wData->client->_client.Recv((char*)sMessageData, sizeof(sMessageData))) > kMessageHeaderLength) {
     // Get message tag, and adjust for header size
     const uint8_t* msgPayload = (const uint8_t*)&sMessageData[kMessageHeaderLength];
 
     const EMessageTag messageTag = (EMessageTag)*msgPayload;
 
-    if (messageTag == EMessageTag::EnterPairing || messageTag == EMessageTag::ExitPairing) {
-      EMessage message;
-      uint16_t msgSize = *(uint16_t*)sMessageData;
-      size_t unpackedSize = message.Unpack(msgPayload, msgSize);
+    switch(messageTag) {
+      case EMessageTag::EnterPairing:
+      case EMessageTag::ExitPairing:
+      {
+        EMessage message;
+        uint16_t msgSize = *(uint16_t*)sMessageData;
+        size_t unpackedSize = message.Unpack(msgPayload, msgSize);
 
-      if(unpackedSize != (size_t)msgSize) {
-        Log::Error("Received message from engine but had mismatch size when unpacked.");
-        continue;
-      } 
+        if(unpackedSize != (size_t)msgSize) {
+          Log::Error("Received message from engine but had mismatch size when unpacked.");
+          continue;
+        } 
 
-      // Emit signal for message
-      wData->signal->emit(message);
+        // Emit signal for message
+        wData->client->_pairingStatusSignal.emit(message);
+      }
+        break;
+      case EMessageTag::WifiScanRequest:
+      {
+        // Handle request to Run WiFi scan
+        wData->client->HandleWifiScanRequest();
+      }
+        break;
+      default:
+        break;
     }
   }
+}
+
+void EngineMessagingClient::HandleWifiScanRequest() {
+  std::vector<Anki::WiFiScanResult> wifiResults;
+  WifiScanErrorCode code = Anki::ScanForWiFiAccessPoints(wifiResults);
+
+  const uint8_t statusCode = (uint8_t)code;
+
+  Anki::Cozmo::SwitchboardInterface::WifiScanResponse rsp;
+  rsp.status_code = statusCode;
+  rsp.ssid_count = wifiResults.size();
+
+  Log::Write("Sending wifi scan results.");
+  SendMessage(GMessage::CreateWifiScanResponse(std::move(rsp)));
 }
 
 void EngineMessagingClient::SendMessage(const GMessage& message) {

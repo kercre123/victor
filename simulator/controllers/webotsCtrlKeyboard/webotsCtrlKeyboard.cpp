@@ -1589,6 +1589,15 @@ namespace Cozmo {
     }
   }
   
+  void WebotsKeyboardController::TogglePowerMode()
+  {
+    static bool enableCalmPower = true;
+    LOG_INFO("WebotsKeyboardController.TogglePowerMode", "Calm: %d", enableCalmPower);
+    using namespace ExternalInterface;
+    SendMessage(MessageGameToEngine(RunDebugConsoleFuncMessage("EnableCalmPowerMode", 
+                                                               enableCalmPower ? "true" : "false")));
+    enableCalmPower = !enableCalmPower;
+  }
 
   void WebotsKeyboardController::SetCameraSettings()
   {
@@ -1974,7 +1983,7 @@ namespace Cozmo {
     REGISTER_SHIFTED_KEY_FCN('_', MOD_NONE, SetCameraSettings,                 "Set camera settings");
 //      REGISTER_SHIFTED_KEY_FCN('_', MOD_ALT, , "");
 //      REGISTER_SHIFTED_KEY_FCN('+', MOD_NONE,  , "");
-//      REGISTER_SHIFTED_KEY_FCN('+', MOD_ALT, , "");
+    REGISTER_SHIFTED_KEY_FCN('+', MOD_ALT,  TogglePowerMode,                   "Toggle (syscon) power mode");
 //      REGISTER_SHIFTED_KEY_FCN('{', MOD_NONE, , "");
 //      REGISTER_SHIFTED_KEY_FCN('{', MOD_ALT,  , "");
     REGISTER_SHIFTED_KEY_FCN('}', MOD_NONE, RunDebugConsoleFunc,               "Run debug console function with args in engine process");

@@ -252,7 +252,6 @@ void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
   if(_securePairing != nullptr) {
     _securePairing->StopPairing();
     Log::Write("BLE Central disconnected.");
-    UpdateAdvertisement(false);
     if(!_isOtaUpdating) {
       _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
     }
@@ -263,6 +262,8 @@ void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
     _completedPairingHandle = nullptr;
     _securePairing = nullptr;
   }
+
+  UpdateAdvertisement(false);
 }
 
 void Daemon::OnBleIpcDisconnected() {
@@ -295,6 +296,10 @@ void Daemon::OnCompletedPairing() {
   // Handle Successful Pairing Event
   // (for now, the handling may be no different than failed pairing)
   UpdateAdvertisement(false);
+  
+  if(_bleClient != nullptr) {
+    _bleClient->StopAdvertising();
+  }
 }
 
 void Daemon::HandlePairingTimeout() {
@@ -376,7 +381,7 @@ int Daemon::GetOtaProgress(uint64_t* progressVal, uint64_t* expectedVal) {
   return 0;
 }
 
-void Daemon::HandleOtaUpdateExit(int rc, const std::string& output) {
+void Daemon::HandleOtaUpdateExit(int rc) {
   _taskExecutor->Wake([rc, this] {
     if(rc == 0) {
       uint64_t progressVal = 0;
@@ -444,16 +449,15 @@ void Daemon::OnOtaUpdatedRequest(std::string url) {
 
   // remove progress files if exist
   Log::Write("Ota Update Initialized...");
-  std::string stdout = "";
-  int clearFilesStatus = ExecCommand({ kUpdateEngineExecPath + "/update-engine"}, stdout);
+  int clearFilesStatus = ExecCommand({ kUpdateEngineExecPath + "/update-engine"});
 
   if(clearFilesStatus != 0) {
     // we *shouldn't* let progress file errors keep us from trying to update
     Log::Write("Couldn't clear progress files. Continuing update anyway.");
   }
 
-  Log::Write("Cleared files? %s", stdout.c_str());
-  ExecCommandInBackground({ kUpdateEngineExecPath + "/update-engine", url}, std::bind(&Daemon::HandleOtaUpdateExit, this, std::placeholders::_1, std::placeholders::_2));
+  ExecCommandInBackground({ kUpdateEngineExecPath + "/update-engine", url},
+                          std::bind(&Daemon::HandleOtaUpdateExit, this, std::placeholders::_1));
 }
 
 void Daemon::OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame message) {
@@ -468,8 +472,11 @@ void Daemon::OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame
       
       UpdateAdvertisement(true);
       _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SHOW_PRE_PIN);
-      ev_timer_set(&_pairingTimer.timer, kPairingPreConnectionTimeout_s, 0);
+
+      ev_timer_stop(_loop, &_pairingTimer.timer);
+      ev_timer_set(&_pairingTimer.timer, kPairingPreConnectionTimeout_s, 0.);
       ev_timer_start(_loop, &_pairingTimer.timer);
+      
       Log::Write("[PT] Starting pairing timer... pairing will timeout in %d seconds.", kPairingPreConnectionTimeout_s);
       break;
     }

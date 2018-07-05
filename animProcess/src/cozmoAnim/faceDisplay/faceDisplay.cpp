@@ -256,11 +256,13 @@ void FaceDisplay::FaultCodeLoop()
       // or 0 which clears the fault code screen
       if(newFault > maxFault || newFault == 0)
       {
-	maxFault = newFault;
+        maxFault = newFault;
       }
     }
 
-    DrawFaultCode(maxFault);
+    if (_enableFaultCodeDisplay) {
+      DrawFaultCode(maxFault);
+    }
   }
 }  
 

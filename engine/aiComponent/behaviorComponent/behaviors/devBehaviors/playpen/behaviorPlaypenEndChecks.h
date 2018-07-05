@@ -37,10 +37,12 @@ protected:
   virtual void   OnBehaviorDeactivated()   override;
   
   virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
+  virtual void AlwaysHandleInScope(const GameToEngineEvent& event) override;
     
 private:
 
   bool _heardFromLightCube = false;
+  bool _wifiScanPassed = false;
 };
 
 }

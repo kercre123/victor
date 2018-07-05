@@ -173,30 +173,13 @@ StartApplication
 
 ; Dummy Exception Handlers (infinite loops which can be modified)
 
-NMI_Handler     PROC
-                EXPORT  NMI_Handler                    [WEAK]
-                B       .
-                ENDP
-HardFault_Handler\
-                PROC
-                EXPORT  HardFault_Handler              [WEAK]
-                B       .
-                ENDP
-SVC_Handler     PROC
-                EXPORT  SVC_Handler                    [WEAK]
-                B       .
-                ENDP
-PendSV_Handler  PROC
-                EXPORT  PendSV_Handler                 [WEAK]
-                B       .
-                ENDP
-SysTick_Handler PROC
-                EXPORT  SysTick_Handler                [WEAK]
-                B       .
-                ENDP
-
 Default_Handler PROC
 
+                EXPORT  NMI_Handler                    [WEAK]
+                EXPORT  HardFault_Handler              [WEAK]
+                EXPORT  SVC_Handler                    [WEAK]
+                EXPORT  PendSV_Handler                 [WEAK]
+                EXPORT  SysTick_Handler                [WEAK]
                 EXPORT  WWDG_IRQHandler                [WEAK]
                 EXPORT  RTC_IRQHandler                 [WEAK]
                 EXPORT  FLASH_IRQHandler               [WEAK]
@@ -222,6 +205,11 @@ Default_Handler PROC
                 EXPORT  USART1_IRQHandler              [WEAK]
 
 
+NMI_Handler
+HardFault_Handler
+SVC_Handler
+PendSV_Handler
+SysTick_Handler
 WWDG_IRQHandler
 RTC_IRQHandler
 FLASH_IRQHandler

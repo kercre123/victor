@@ -60,7 +60,12 @@ namespace Anki {
         PRINT_NAMED_INFO("PlayAnimationAction.Destructor.StillStreaming",
                          "Action destructing, but AnimationComponent is still playing: %s. Telling it to stop.",
                          _animName.c_str());
-        GetRobot().GetAnimationComponent().StopAnimByName(_animName);          
+        if (HasRobot()) {
+          GetRobot().GetAnimationComponent().StopAnimByName(_animName);          
+        } else {
+          // This shouldn't happen if HasStarted()...
+          PRINT_NAMED_WARNING("PlayAnimationAction.Dtor.NoRobot", "");
+        }
       }
     }
 

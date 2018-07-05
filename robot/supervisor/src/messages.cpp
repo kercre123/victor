@@ -1,4 +1,5 @@
 #include "messages.h"
+#include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/hal.h"
 #include <math.h>
 
@@ -44,6 +45,7 @@ namespace Anki {
         constexpr auto IS_PATHING = EnumToUnderlyingType(RobotStatusFlag::IS_PATHING);
         constexpr auto LIFT_IN_POS = EnumToUnderlyingType(RobotStatusFlag::LIFT_IN_POS);
         constexpr auto HEAD_IN_POS = EnumToUnderlyingType(RobotStatusFlag::HEAD_IN_POS);
+        constexpr auto CALM_POWER_MODE = EnumToUnderlyingType(RobotStatusFlag::CALM_POWER_MODE);
         constexpr auto IS_ON_CHARGER = EnumToUnderlyingType(RobotStatusFlag::IS_ON_CHARGER);
         constexpr auto IS_CHARGING = EnumToUnderlyingType(RobotStatusFlag::IS_CHARGING);
         constexpr auto CLIFF_DETECTED = EnumToUnderlyingType(RobotStatusFlag::CLIFF_DETECTED);
@@ -112,6 +114,7 @@ namespace Anki {
         robotState_.proxData = ProxSensors::GetProxData();
         
         robotState_.backpackTouchSensorRaw = HAL::GetButtonState(HAL::BUTTON_CAPACITIVE);
+        robotState_.backpackTouchSensorFilt = HAL::GetTouchSensorFilt();
         
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
 
@@ -129,6 +132,7 @@ namespace Anki {
         robotState_.status |= (PathFollower::IsTraversingPath() ? IS_PATHING : 0);
         robotState_.status |= (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
         robotState_.status |= (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
+        robotState_.status |= HAL::PowerGetMode() == HAL::POWER_MODE_CALM ? CALM_POWER_MODE : 0;
         robotState_.status |= HAL::BatteryIsOnCharger() ? IS_ON_CHARGER : 0;
         robotState_.status |= HAL::BatteryIsCharging() ? IS_CHARGING : 0;
         robotState_.status |= ProxSensors::IsAnyCliffDetected() ? CLIFF_DETECTED : 0;
@@ -177,6 +181,14 @@ namespace Anki {
       void Process_shutdown(const RobotInterface::Shutdown& msg)
       {
         HAL::Shutdown();
+      }
+
+      void Process_calmPowerMode(const RobotInterface::CalmPowerMode& msg)
+      {
+        AnkiInfo("Messages.Process_calmPowerMode.enable", "enable: %d, calib: %d", msg.enable, msg.calibOnDisable);
+        HAL::PowerState newPowerMode = msg.enable ? HAL::POWER_MODE_CALM : HAL::POWER_MODE_ACTIVE;
+        HAL::PowerSetMode(newPowerMode);
+        Robot::CalibrateMotorsOnNextCalmModeExit(msg.calibOnDisable);
       }
 
       void Process_absLocalizationUpdate(const RobotInterface::AbsoluteLocalizationUpdate& msg)
@@ -244,7 +256,6 @@ namespace Anki {
                       RAD_TO_DEG_F32(IMUFilter::GetGyroBias()[2]));
           }
         }
-
 
         // Process incoming messages
         u32 dataLen;
@@ -451,6 +462,12 @@ namespace Anki {
                                                     msg.driveAccel_mmps2,
                                                     msg.driveDuration_ms,
                                                     msg.backupDist_mm);
+      }
+
+      void Process_playpenStart(const RobotInterface::PlaypenStart& msg) {
+        #if FACTORY_TEST
+          HAL::UpdateTouchSensorValidRange(); 
+        #endif
       }
 
       void Process_setControllerGains(const RobotInterface::ControllerGains& msg) {

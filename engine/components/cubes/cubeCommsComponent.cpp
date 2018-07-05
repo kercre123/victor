@@ -467,12 +467,15 @@ void CubeCommsComponent::HandleScanForCubesFinished()
       objectsToConnectTo[type] = cube.factoryId;;
     }
   }
-  
-  // Connect to the selected cubes
-  for (const auto& entry : objectsToConnectTo) {
-    const auto& factoryId = entry.second;
-    if (!_cubeBleClient->ConnectToCube(factoryId)) {
-      PRINT_NAMED_WARNING("CubeCommsComponent.HandleScanForCubesFinished.FailedConnecting", "Failed connecting to cube with factory ID %s", factoryId.c_str());
+
+  if(!FACTORY_TEST)
+  {
+    // Connect to the selected cubes
+    for (const auto& entry : objectsToConnectTo) {
+      const auto& factoryId = entry.second;
+      if (!_cubeBleClient->ConnectToCube(factoryId)) {
+        PRINT_NAMED_WARNING("CubeCommsComponent.HandleScanForCubesFinished.FailedConnecting", "Failed connecting to cube with factory ID %s", factoryId.c_str());
+      }
     }
   }
 }

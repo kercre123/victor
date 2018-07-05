@@ -1,12 +1,16 @@
 #include "common.h"
 #include "hardware.h"
 
+#include "comms.h"
 #include "power.h"
+#include "analog.h"
 #include "vectors.h"
 #include "flash.h"
 #include "motors.h"
 #include "encoders.h"
 #include "opto.h"
+#include "mics.h"
+#include "lights.h"
 
 #include "contacts.h"
 
@@ -38,6 +42,19 @@ static PowerMode desiredState = POWER_CALM;
 void Power::init(void) {
   RCC->APB1ENR |= APB1_CLOCKS;
   RCC->APB2ENR |= APB2_CLOCKS;
+}
+
+static inline void enableHead(void) {
+  MAIN_EN::set();
+  Mics::start();
+  Lights::enable();
+}
+
+static inline void disableHead(void) {
+  MAIN_EN::reset();
+  Mics::stop();
+  Lights::disable();
+  Comms::reset();
 }
 
 static void markForErase(void) {
@@ -119,49 +136,55 @@ static void enterBootloader(void) {
   SoftReset(*(uint32_t*)0x08000004);
 }
 
+void Power::wakeUp() {
+  if (desiredState == POWER_CALM) {
+    desiredState = POWER_ACTIVE;
+  }
+}
+
 void Power::setMode(PowerMode set) {
   desiredState = set;
+
+  // Alter power to the head immediately
+  if (set == POWER_STOP) {
+    disableHead();
+  }
 }
 
 void Power::tick(void) {
   PowerMode desired = desiredState;
 
   if (currentState != desired) {
-    // Disable optical sensors
+    // Power reduction code
     if (currentState == POWER_ACTIVE) {
       Opto::stop();
       Encoders::stop();
+      Mics::reduce(true);
     } else if (desired == POWER_ACTIVE) {
       Encoders::init();
       Opto::start();
+      Mics::reduce(false);
+    } 
+    
+    if (currentState == POWER_STOP) {
+      enableHead();
+    }
+
+    if (desired == POWER_ERASE) {
+      markForErase();
+      enterBootloader();
+      return ;
     }
 
     currentState = desired;
   }
 
   switch (currentState) {
-    case POWER_ERASE:
-      markForErase();
-      enterBootloader();
-      break ;
     case POWER_STOP:
-      POWER_EN::pull(PULL_NONE);
-      POWER_EN::reset();
-      POWER_EN::mode(MODE_OUTPUT);
+      Analog::setPower(false);
       break ;
     default:
-      POWER_EN::pull(PULL_UP);
-      POWER_EN::mode(MODE_INPUT);
+      Analog::setPower(true);
       break ;
   }
-}
-
-void Power::disableHead(void) {
-  MAIN_EN::mode(MODE_OUTPUT);
-  MAIN_EN::reset();
-}
-
-void Power::enableHead(void) {
-  MAIN_EN::mode(MODE_OUTPUT);
-  MAIN_EN::set();
 }

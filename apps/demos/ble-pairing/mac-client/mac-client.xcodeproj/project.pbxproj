@@ -19,6 +19,9 @@
 		DA5470702047985E004FDA9F /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA54706F2047985E004FDA9F /* main.mm */; };
 		DA54707720479890004FDA9F /* BleCentral.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA54707620479890004FDA9F /* BleCentral.mm */; };
 		DA54707B20479928004FDA9F /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA54707A20479928004FDA9F /* CoreBluetooth.framework */; };
+		DA87208720A4B8C300343D43 /* Requests.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA87208620A4B8C300343D43 /* Requests.mm */; };
+		DA87208A20A4C65100343D43 /* SyncController.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA87208920A4C65100343D43 /* SyncController.mm */; };
+		DA87208D20AA07FC00343D43 /* CoreWLAN.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA87208C20AA07FC00343D43 /* CoreWLAN.framework */; };
 		DA945AFD2080167B0017AD00 /* libreadline.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DA945AFC2080167B0017AD00 /* libreadline.tbd */; };
 		DAE361D52049D4AE0053ED2F /* bleMessageProtocol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DAE361D32049D4AE0053ED2F /* bleMessageProtocol.cpp */; };
 /* End PBXBuildFile section */
@@ -63,6 +66,12 @@
 		DA54707620479890004FDA9F /* BleCentral.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = BleCentral.mm; sourceTree = "<group>"; };
 		DA5470782047989C004FDA9F /* BleCentral.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BleCentral.h; sourceTree = "<group>"; };
 		DA54707A20479928004FDA9F /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
+		DA87208520A4B8C300343D43 /* Requests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Requests.h; sourceTree = "<group>"; };
+		DA87208620A4B8C300343D43 /* Requests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Requests.mm; sourceTree = "<group>"; };
+		DA87208820A4C31600343D43 /* RequestsDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RequestsDelegate.h; sourceTree = "<group>"; };
+		DA87208920A4C65100343D43 /* SyncController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = SyncController.mm; sourceTree = "<group>"; };
+		DA87208B20A4C66400343D43 /* SyncController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SyncController.h; sourceTree = "<group>"; };
+		DA87208C20AA07FC00343D43 /* CoreWLAN.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreWLAN.framework; path = System/Library/Frameworks/CoreWLAN.framework; sourceTree = SDKROOT; };
 		DA945AFC2080167B0017AD00 /* libreadline.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libreadline.tbd; path = usr/lib/libreadline.tbd; sourceTree = SDKROOT; };
 		DAE361C52049D1500053ED2F /* libsodium.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libsodium.a; sourceTree = "<group>"; };
 		DAE361CE2049D27B0053ED2F /* libclad.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libclad.a; sourceTree = "<group>"; };
@@ -85,6 +94,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DA87208D20AA07FC00343D43 /* CoreWLAN.framework in Frameworks */,
 				DA945AFD2080167B0017AD00 /* libreadline.tbd in Frameworks */,
 				700A7152205A649800B518CD /* libclad.a in Frameworks */,
 				DA54707B20479928004FDA9F /* CoreBluetooth.framework in Frameworks */,
@@ -185,9 +195,14 @@
 				DAE361D42049D4AE0053ED2F /* bleMessageProtocol.h */,
 				DAE361C82049D1940053ED2F /* signals */,
 				DA54706F2047985E004FDA9F /* main.mm */,
+				DA87208920A4C65100343D43 /* SyncController.mm */,
+				DA87208B20A4C66400343D43 /* SyncController.h */,
 				DA5470782047989C004FDA9F /* BleCentral.h */,
 				DA54707620479890004FDA9F /* BleCentral.mm */,
 				DA27D3082063191900D4416A /* argparse.hpp */,
+				DA87208820A4C31600343D43 /* RequestsDelegate.h */,
+				DA87208520A4B8C300343D43 /* Requests.h */,
+				DA87208620A4B8C300343D43 /* Requests.mm */,
 			);
 			path = "mac-client";
 			sourceTree = "<group>";
@@ -195,6 +210,7 @@
 		DA54707920479928004FDA9F /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				DA87208C20AA07FC00343D43 /* CoreWLAN.framework */,
 				DA945AFC2080167B0017AD00 /* libreadline.tbd */,
 				DAE361CE2049D27B0053ED2F /* libclad.a */,
 				DAE361C52049D1500053ED2F /* libsodium.a */,
@@ -327,7 +343,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DA87208A20A4C65100343D43 /* SyncController.mm in Sources */,
 				DAE361D52049D4AE0053ED2F /* bleMessageProtocol.cpp in Sources */,
+				DA87208720A4B8C300343D43 /* Requests.mm in Sources */,
 				DA5470702047985E004FDA9F /* main.mm in Sources */,
 				DA54707720479890004FDA9F /* BleCentral.mm in Sources */,
 			);

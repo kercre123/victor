@@ -2,16 +2,16 @@
 from __future__ import print_function
 
 from elftools.elf.elffile import ELFFile
+from cert import loadCert
+
+from Crypto.Util.number import long_to_bytes
 from Crypto.Hash import SHA256
-from Crypto.PublicKey import RSA
 from Crypto import Random
 
 import argparse
 import random
 import time
 import math
-import os
-
 
 VICTOR_EPOCH = 1498237200 #2017-06-23 10:00a PST
 BUILD_TIME = int(time.time()-VICTOR_EPOCH)
@@ -105,12 +105,13 @@ def sign(data, key, digestType=SHA256):
     hash.update(b"\xFF" * (PROGRAM_SIZE - len(data)))
     digest = hash.digest()
 
-    # Fixed padding lets us know when that hash method we used was
-    fixed_padding = (b"\x00\x01\xFF\xFF" + hash.oid[::-1] + b"\xFF\xFF\x00")[::-1]
+    # Fixed padding lets us know when that hash method we used was (OID is now hard coded)
+    fixed_padding = (b"\x00\x01\xFF\xFF\x01\x02\x04\x03e\x01H\x86`\t\x06\xFF\xFF\x00")[::-1]
 
     # determine lengths of the our fields
-    pad_length = key.size() % 8
-    mod_length = key.size() // 8
+    key_size = key.size_in_bits() - 1
+    pad_length = key_size % 8
+    mod_length = key_size // 8
     db_length = mod_length - digestType.digest_size
     salt_length = db_length - len(fixed_padding)
 
@@ -125,12 +126,11 @@ def sign(data, key, digestType=SHA256):
     m_digest = m_digest.digest()
 
     # Generate our database (and encode it with RSA)
-    cert  = m_digest + MGF1(salt + fixed_padding, m_digest)
-    cert  = int.from_bytes(cert, byteorder='little', signed=False)
-    cert, = key.sign(cert << pad_length, 0)
+    cert = m_digest + MGF1(salt + fixed_padding, m_digest)
+    cert = int.from_bytes(cert, byteorder='little', signed=False)
+    cert = key._decrypt(cert << pad_length)
 
-    # Return our long as a byte array
-    return cert.to_bytes(math.ceil(key.size() / 8), byteorder='little')
+    return long_to_bytes(cert, math.ceil(key_size / 8))[::-1]
 
 # Sign the syscon image
 if __name__ == '__main__':
@@ -139,11 +139,8 @@ if __name__ == '__main__':
     commentBlock = None
 
     # Load our RSA key
-    cert_fn = args.key if args.key else os.environ['COZMO2_CERT'] if 'COZMO2_CERT' in os.environ else os.path.join(os.path.dirname(__file__), "development.pem")
-    print (cert_fn)
-    with open(cert_fn, "r") as cert_fo:
-        cert = RSA.importKey(cert_fo.read())
-        print ("Signing data with a %i-bit certificate" % cert.size())
+    cert = loadCert(args.key if args.key else None)
+    print ("Signing data with a %i-bit certificate" % cert.size_in_bits())
 
     axf_data, axf_address, magic_location = rom_info(args.image)
 

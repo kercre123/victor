@@ -32,6 +32,12 @@ message SetBLEPin
   uint_32 pin
 }
 
+message WifiScanResponse
+{
+  uint_32 ssid_count,
+  uint_8  status_code
+}
+
 }
 }
 }

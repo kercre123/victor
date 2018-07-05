@@ -44,6 +44,9 @@ public:
 private:
   void SendMessage(const Anki::Cozmo::ExternalInterface::MessageGameToEngine& message);
 
+  // Private handler for WifiScanRequest from Engine (for playpen test)
+  void HandleWifiScanRequest();
+
   LocalUdpClient _client;
   PairingStatusSignal _pairingStatusSignal;
   // anything that isn't pairing status should be attached to a different signal
@@ -51,8 +54,7 @@ private:
   struct ev_loop* loop_;
   struct ev_EngineMessageTimerStruct {
     ev_timer timer;
-    LocalUdpClient* client;
-    PairingStatusSignal* signal;
+    EngineMessagingClient* client;
   } _handleEngineMessageTimer;
 
   static uint8_t sMessageData[2048];

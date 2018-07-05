@@ -6,17 +6,18 @@
 #include "lights.h"
 
 static inline void kick_off();
-static void terminate(void);
 
-#define wait() __asm("nop\n");
+#define wait() __nop();
 
 #include "led_func.h" // Generated with LEDs.py
 
+static void darkness();
+
 static const void_funct function_table[4][8] = {
-  { led_0x2, led_1x2, led_2x2, led_3x2, led_4x2, led_5x2, led_6x2, led_7x2 },
-  { led_0x1, led_1x1, led_2x1, led_3x1, led_4x1, led_5x1, led_6x1, led_7x1 },
-  { led_0x0, led_1x0, led_2x0, led_3x0, led_4x0, led_5x0, led_6x0, led_7x0 },
-  { led_0x3, led_1x3, led_0x3, led_1x3, led_2x3, led_3x3, led_2x3, led_3x3 }  // Green channel is fixed
+  { darkness, led_1x2,  led_2x2, led_3x2, led_4x2, led_5x2, led_6x2, led_7x2 },
+  { darkness, led_1x1,  led_2x1, led_3x1, led_4x1, led_5x1, led_6x1, led_7x1 },
+  { darkness, led_1x0,  led_2x0, led_3x0, led_4x0, led_5x0, led_6x0, led_7x0 },
+  { darkness, led_1x3, darkness, led_1x3, led_2x3, led_3x3, led_2x3, led_3x3 }  // Green channel is fixed
 };
 
 struct LightChannel {
@@ -36,33 +37,34 @@ static const int LIGHT_COLORS     = 3;
 static const int LIGHT_SHIFT      = 17 + 2; // 2 is to account for prescalar
 static const uint8_t DARK_OFFSET  = 200; // 245 = 0% dark
 
-static uint8_t value[LIGHT_CHANNELS][LIGHT_COLORS] = {
+static const uint8_t default_value[LIGHT_CHANNELS][LIGHT_COLORS] = {
+  { 0xFF, 0xFF, 0xFF },
   { 0x00, 0x00, 0x00 },
   { 0x00, 0x00, 0x00 },
-  { 0x00, 0x00, 0x00 },
-  { 0x00, 0xFF, 0x00 }
+  { 0x00, 0x00, 0x00 }
 };
+static uint8_t value[LIGHT_CHANNELS][LIGHT_COLORS];
 
 static LightChannel light[LIGHT_CHANNELS * LIGHT_COLORS + 1];
 static LightChannel *current_light;
 static bool disabled;
 
 void Lights::init(void) {
-  LED_CLK::type(TYPE_OPENDRAIN);
-  LED_DAT::reset();
-  LED_CLK::reset();
-  LED_DAT::mode(MODE_OUTPUT);
-  LED_CLK::mode(MODE_OUTPUT);
-
-  disabled = false;
-  terminate();
+  receive((const uint8_t*)&default_value);
+  enable();
 }
 
 void Lights::receive(const uint8_t* data) {
   memcpy(value, data, sizeof(value));
 }
 
+void Lights::enable() {
+  disabled = false;
+  leds_off();
+}
+
 void Lights::disable(void) {
+  receive((const uint8_t*)default_value);
   disabled = true;
 }
 
@@ -71,14 +73,9 @@ static void kick_off(void) {
   Timer::LightHandler = (++current_light)->funct;
 }
 
-static void terminate(void) {
-  // Shifing by 5 is enough to disable LEDs
-  LED_DAT::reset();
-  wait(); LED_CLK::set(); wait(); LED_CLK::reset();
-  wait(); LED_CLK::set(); wait(); LED_CLK::reset();
-  wait(); LED_CLK::set(); wait(); LED_CLK::reset();
-  wait(); LED_CLK::set(); wait(); LED_CLK::reset();
-  wait(); LED_CLK::set(); wait(); LED_CLK::reset();
+static void darkness() {
+  leds_off();
+  kick_off();
 }
 
 void Lights::tick(void) {
@@ -123,12 +120,15 @@ void Lights::tick(void) {
 
       mask ^= sorted[x]->mask;
 
-      if (delta >= LIGHT_MINIMUM) target++;
+      if (delta >= LIGHT_MINIMUM) {
+        target++;
+        prev_time = sorted[x]->time;
+      }
     }
   }
 
   // Finalize the chain with our termination function
-  target->funct = terminate;
+  target->funct = leds_off;
 
   // Kick off our LED chain
   light[0].funct();
