@@ -217,7 +217,7 @@ std::vector<uint8_t> PackWiFiScanResults(const std::vector<WiFiScanResult>& resu
   return packed_results;
 }
 
-void HandleOutputCallback(int rc, const std::string& output) {
+void HandleOutputCallback(int rc) {
   // noop
 }
 
@@ -805,7 +805,7 @@ void SetWiFiConfig(const std::vector<WiFiConfig>& networks, ExecCommandCallback 
 
   if (rc) {
     std::string error = "Failed to write wifi config. rc = " + std::to_string(rc);
-    callback(rc, "Failed to write wifi config.");
+    callback(rc);
     return;
   }
 
