@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
+#include <errno.h>
+#include <limits.h>
 #include <sys/time.h>
 #include <sys/wait.h>
 
@@ -16,6 +18,7 @@
 #include "helpware/display.h"
 #include "helpware/logging.h"
 #include "helpware/pidopen.h"
+#include "helpware/kbhit.h"
 
 
 //#define FIXTURE_TTY "/dev/ttyHSL1"
@@ -128,8 +131,6 @@ int handle_logstop_command(const char* cmd, int len) {
   return 0;
 }
 
-//#define STATIC_ASSERT(COND,MSG) typedef char static_assertion_##MSG[(COND)?1:-1]
-//STATIC_ASSERT(LONG_MAX > 0xFFFFffff); //require >32-bit long for parsing u32 nums with strtol()
 
 int handle_dutprogram_command(const char* cmd, int len) {
   char *end;
@@ -152,13 +153,13 @@ int handle_dutprogram_command(const char* cmd, int len) {
   len--;
   if( len <= 0 ) //missing ESN param
     return 917; //ERROR_BAD_ARG
-  
+
   //ensure null terminated
   char argstr[128];
   if (sizeof(argstr) < len) { len = sizeof(argstr)-1; }
   memcpy(argstr, next, len);
   argstr[len]='\0';
-  
+
   int retval = shellcommand((int)timeout_sec, "./headprogram", argstr );
   if( retval >= 100 && retval <= 120 ) //limited range of script errors mapped to fixture error codes
     retval += 400; //shift to fixture 'headprogram' error range {500-520}
@@ -369,41 +370,6 @@ int fixture_serial(int serialFd) {
 
 
 
-void enable_kbhit(bool enable)
-{
-  static struct termios oldt, newt;
-  static bool active;
-
-  if ( enable && !active)
-  {
-    tcgetattr( STDIN_FILENO, &oldt);
-    newt = oldt;
-    newt.c_lflag &= ~( ICANON | ECHO );
-    tcsetattr( STDIN_FILENO, TCSANOW, &newt);
-    active = true;
-  }
-  else if (!enable && active) {
-    tcsetattr( STDIN_FILENO, TCSANOW, &oldt);
-    active = false;
-  }
-}
-
-int kbhit (void)
-{
-  struct timeval tv;
-  fd_set rdfs;
-
-  tv.tv_sec = 0;
-  tv.tv_usec = 0;
-
-  FD_ZERO(&rdfs);
-  FD_SET (STDIN_FILENO, &rdfs);
-
-  select(STDIN_FILENO+1, &rdfs, NULL, NULL, &tv);
-  return FD_ISSET(STDIN_FILENO, &rdfs);
-
-}
-
 int user_terminal(void) {
   static int linelen = 0;
   static char linebuf[LINEBUFSZ+1];
@@ -478,16 +444,31 @@ int main(int argc, const char* argv[])
   printf("serial_init(%s)\n", tty ? tty : FIXTURE_TTY);
   gSerialFd = serial_init( tty ? tty : FIXTURE_TTY, FIXTURE_BAUD);
 
-  serial_write(gSerialFd, (uint8_t*)"\x1b\x1b\n", 4);
-  serial_write(gSerialFd, (uint8_t*)"reset\n", 6);
+  //serial_write(gSerialFd, (uint8_t*)"\x1b\x1b\n", 4);
+  //serial_write(gSerialFd, (uint8_t*)"reset\n", 6);
 
   enable_kbhit(1);
 
   //process bootup
-  exit = fixture_serial(gSerialFd);
-  exit |= user_terminal();
+  //exit = fixture_serial(gSerialFd);
+  //exit |= user_terminal();
   printf("helper build " __DATE__ " " __TIME__ "\n");
   fflush(stdout);
+
+  //init display
+  const char center[] = "0 b booting...\n"; //set color and center text (if any)
+  const char* lines[] = {
+    "0 \n", //clear
+    "1 helper compile date:\n",
+    "2 " __DATE__ " " __TIME__ "\n",
+    "7 reset fixture       \n" };
+  helper_lcdshow_command_parse(center, strlen(center));
+  for(x=0; x<sizeof(lines)/sizeof(const char*); x++) {
+    helper_lcdset_command_parse( lines[x], strlen(lines[x]) );
+  }
+  
+  serial_write(gSerialFd, (uint8_t*)"\x1b\x1b\n", 4);
+  serial_write(gSerialFd, (uint8_t*)"reset\n", 6);
 
   while (!exit)
   {
