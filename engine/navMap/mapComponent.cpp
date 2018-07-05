@@ -159,6 +159,7 @@ MapComponent::MapComponent()
 , _vizMessageDirty(true)
 , _gameMessageDirty(true)
 , _webMessageDirty(false) // web must request it
+, _useProxObstaclesInPlanning(true)
 , _isRenderEnabled(true)
 , _broadcastRate_sec(-1.0f)
 {
