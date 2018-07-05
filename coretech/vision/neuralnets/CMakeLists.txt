@@ -97,21 +97,25 @@ if(BUILD_NEURAL_NET_PROCESS STREQUAL "TensorFlow")
 elseif(BUILD_NEURAL_NET_PROCESS STREQUAL "TFLite")
 
   # TODO: Hook this up to the right place
-  set(TENSORFLOW_LITE_PATH ${ANKI_EXTERNAL_DIR}/../../coretech-external-local/tensorflow-lite)
+  set(TENSORFLOW_LITE_PATH ${ANKI_EXTERNAL_DIR}/../../tensorflow)
 
   if (VICOS)
 
     set(TARGET_NAME vic-neuralnets)
+
+    set(TFLITE_DOWNLOADS_PATH ${TENSORFLOW_LITE_PATH}/tensorflow/contrib/lite/gen_VICOS/downloads)
     
     set(PLATFORM_LIBS
       victorCrashReports
-      ${TENSORFLOW_LITE_PATH}/lib/vicos/libtensorflow-lite.a
+      ${TENSORFLOW_LITE_PATH}/tensorflow/contrib/lite/gen_VICOS/lib/libtensorflow-lite.a
       dl
     )
 
   elseif (MACOSX)
 
     set(TARGET_NAME webotsCtrlNeuralNets)
+
+    set(TFLITE_DOWNLOADS_PATH ${TENSORFLOW_LITE_PATH}/tensorflow/contrib/lite/gen_OSX/downloads)
     
     include(webots)
     
@@ -120,16 +124,16 @@ elseif(BUILD_NEURAL_NET_PROCESS STREQUAL "TFLite")
     )
 
     set(PLATFORM_LIBS
-      ${TENSORFLOW_LITE_PATH}/lib/mac/libtensorflow-lite.a
+      ${TENSORFLOW_LITE_PATH}/tensorflow/contrib/lite/gen_OSX/lib/libtensorflow-lite.a
       ${WEBOTS_LIBS}
     )
 
   endif()
 
   set(PLATFORM_INCLUDES
-    ${TENSORFLOW_LITE_PATH}/include/tensorflow
-    ${TENSORFLOW_LITE_PATH}/include/tensorflow-lite
-    ${TENSORFLOW_LITE_PATH}/include/flatbuffers
+    ${TENSORFLOW_LITE_PATH}
+    ${TFLITE_DOWNLOADS_PATH}/flatbuffers/include
+    ${TFLITE_DOWNLOADS_PATH}
   )
 
   set(PLATFORM_DEFINITIONS 
