@@ -26,7 +26,7 @@ const bool g_isReleaseBuild = !NOT_FOR_FACTORY;
 
 #include "app_release_ver.h"
 u8 g_fixtureReleaseVersion = (NOT_FOR_FACTORY) ? 0 : (APP_RELEASE_VERSION);
-#define BUILD_INFO "Victor PVT"
+#define BUILD_INFO "Victor MP "
 
 #define USE_START_BTN 0
 #define APP_DEBUG 0
