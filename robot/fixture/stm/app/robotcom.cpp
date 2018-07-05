@@ -132,15 +132,12 @@ static struct { //result of most recent command
 
 //map robotcom's 'printlvl' to cmd option flags
 static inline int printlvl2cmdopts( int printlvl ) {
-  switch( printlvl) {
-    default:
-    case RCOM_PRINT_LEVEL_CMD_DAT_RSP:  return CCC_CMD_OPTS & ~(               0 |                0 |                  0 | CMD_OPTS_LOG_OTHER); //break;
-    case RCOM_PRINT_LEVEL_CMD_RSP:      return CCC_CMD_OPTS & ~(               0 |                0 | CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER); //break;
-    case RCOM_PRINT_LEVEL_CMD_DAT:      return CCC_CMD_OPTS & ~(               0 | CMD_OPTS_LOG_RSP |                  0 | CMD_OPTS_LOG_OTHER); //break;
-    case RCOM_PRINT_LEVEL_CMD:          return CCC_CMD_OPTS & ~(               0 | CMD_OPTS_LOG_RSP | CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER); //break;
-    case RCOM_PRINT_LEVEL_DAT:          return CCC_CMD_OPTS & ~(CMD_OPTS_LOG_CMD | CMD_OPTS_LOG_RSP |                  0 | CMD_OPTS_LOG_OTHER); //break;
-    case RCOM_PRINT_LEVEL_NONE:         return CCC_CMD_OPTS & ~(CMD_OPTS_LOG_CMD | CMD_OPTS_LOG_RSP | CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER); //break;
-  }
+  int cmdopts = CCC_CMD_OPTS & ~(CMD_OPTS_LOG_CMD | CMD_OPTS_LOG_RSP | CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER);
+  if( printlvl & RCOM_PRINT_LEVEL_CMD ) cmdopts |= CMD_OPTS_LOG_CMD;
+  if( printlvl & RCOM_PRINT_LEVEL_DAT ) cmdopts |= CMD_OPTS_LOG_ASYNC; //async==data
+  if( printlvl & RCOM_PRINT_LEVEL_RSP ) cmdopts |= CMD_OPTS_LOG_RSP;
+  if( printlvl & RCOM_PRINT_LEVEL_NFO ) cmdopts |= CMD_OPTS_LOG_OTHER; //info text
+  return cmdopts;
 }
 
 //common error check function
@@ -272,11 +269,11 @@ static robot_sr_t* ccc_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t
   cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"fcc %02x %02x 00 00 00 00", mode, cn), 500, CCC_CMD_OPTS);
 }*/
 
-int cccRlg(uint8_t idx, char *buf, int buf_max_size)
+int cccRlg(uint8_t idx, char *buf, int buf_max_size, int printlvl)
 {
   CCC_CMD_DELAY();
   char b[22]; const int bz = sizeof(b);
-  const int opts = CCC_CMD_OPTS | CMD_OPTS_ALLOW_STATUS_ERRS; // | CMD_OPTS_LOG_RAW_RX_DBG) & ~(CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER);
+  const int opts = printlvl2cmdopts(printlvl) | CMD_OPTS_ALLOW_STATUS_ERRS; // | CMD_OPTS_LOG_RAW_RX_DBG;
   cmd_dbuf_t dbuf = { buf, buf_max_size, 0 };
   cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"rlg %02x 00 00 00 00 00", idx), -1000, opts, 0, (dbuf.p && dbuf.size>0 ? &dbuf : 0) );
   if( cmdStatus() == 3 )
@@ -302,13 +299,12 @@ int cccRlg(uint8_t idx, char *buf, int buf_max_size)
   return dbuf.wlen;
 }
 
-int ccc_IdxVal32_(uint8_t idx, uint32_t val, const char* cmd, void(*handler)(char*), bool print_verbose = true, bool thow_status_errs = true ) {
+int ccc_IdxVal32_(uint8_t idx, uint32_t val, const char* cmd, void(*handler)(char*), int printlvl = RCOM_PRINT_LEVEL_DEFAULT, bool thow_status_errs = true ) {
   CCC_CMD_DELAY();
   memset( &m_ccc, 0, sizeof(m_ccc) );
   char b[22]; const int bz = sizeof(b);
   snformat(b,bz,"%s %02x %02x %02x %02x %02x 00", cmd, idx, (val>>0)&0xFF, (val>>8)&0xFF, (val>>16)&0xFF, (val>>24)&0xFF );
-  int opts = print_verbose ? CCC_CMD_OPTS : CCC_CMD_OPTS & ~(CMD_OPTS_LOG_CMD | CMD_OPTS_LOG_RSP);
-  
+  int opts = printlvl2cmdopts(printlvl);
   cmdSend(CMD_IO_CONTACTS, b, 500, opts|CMD_OPTS_ALLOW_STATUS_ERRS, handler );
   if( cmdStatus() != 0 && thow_status_errs )
     throw ERROR_TESTPORT_CMD_FAILED;
@@ -322,7 +318,7 @@ void gmr_handler_(char* s) {
 }
 
 uint32_t cccGmr(uint8_t idx) {
-  ccc_IdxVal32_(idx, 0, "gmr", gmr_handler_, false);
+  ccc_IdxVal32_(idx, 0, "gmr", gmr_handler_, RCOM_PRINT_LEVEL_DAT);
   //ConsolePrintf("emr[%u] = %08x\n", idx, m_ccc.rsp.emr_val);
   return !ccc_error_check_(1) ? m_ccc.rsp.emr_val : 0;
 }
@@ -608,16 +604,16 @@ spinePacket_t* halSpineReceive(int timeout_us, PayloadId type)
   throw ERROR_SPINE_PKT_TIMEOUT; //return NULL;
 }
 
-HeadToBody* halSpineH2BFrame(PowerState powerState, int16_t *p4motorPower, uint8_t *p12ledColors)
+HeadToBody* halSpineH2BFrame(PowerFlags powerFlags, int16_t *p4motorPower, uint8_t *p12ledColors)
 {
   static uint32_t m_framecounter = 0;
   static HeadToBody h2b;
   
   memset(&h2b, 0, sizeof(h2b));
   h2b.framecounter = ++m_framecounter;
-  h2b.powerState = powerState;
+  h2b.powerFlags = powerFlags;
   if( p4motorPower != NULL ) memcpy( (void*)h2b.motorPower, (void*)p4motorPower, 4*sizeof(int16_t) );
-  if( p12ledColors != NULL ) memcpy( h2b.ledColors, p12ledColors, 12 );
+  if( p12ledColors != NULL ) memcpy( h2b.lightState.ledColors, p12ledColors, 12 );
   
   return &h2b;
 }
@@ -641,7 +637,7 @@ robot_bsv_t* spineBsv(void)
   ConsolePrintf("spine idle PAYLOAD_DATA_FRAME\n");
   #endif
   for(int n=0; n<2; n++)
-    halSpineSend((uint8_t*)halSpineH2BFrame(POWER_STATE_ON,0,0), PAYLOAD_DATA_FRAME);
+    halSpineSend((uint8_t*)halSpineH2BFrame(0,0,0), PAYLOAD_DATA_FRAME);
   
   //Send version request packet (0-payload)
   ConsolePrintf("spine read body version info\n");
@@ -667,19 +663,25 @@ robot_bsv_t* spineBsv(void)
   throw ERROR_SPINE_CMD_TIMEOUT; //return NULL;
 }
 
-void spinePwr(rcom_pwr_st_e st) {
-  //XXX: implement me
-  ConsolePrintf("ERROR_EMPTY_COMMAND spinePwr()\n");
-  throw ERROR_EMPTY_COMMAND;
+void spinePwr(rcom_pwr_st_e st, int printlvl)
+{
+  int update_chgen = (int)st & 0x8000;
+  st = (rcom_pwr_st_e)(st & 0x7fff);
+  
+  uint32_t powerFlags = 0;
+  if( update_chgen && st == RCOM_PWR_ON ) powerFlags = POWER_CONNECT_CHARGER;
+  if( update_chgen && st == RCOM_PWR_OFF ) powerFlags = POWER_DISCONNECT_CHARGER;
+  
+  if( printlvl2cmdopts(printlvl) & CMD_OPTS_LOG_CMD )
+    ConsolePrintf(">spine pwr %x %s\n", (int)st | update_chgen, st==RCOM_PWR_ON?"on":"off");
+  
+  halSpineSend( (uint8_t*)halSpineH2BFrame(powerFlags,0,0), PAYLOAD_DATA_FRAME );
+  if( st != RCOM_PWR_ON )
+    halSpineSend((uint8_t*)0, PAYLOAD_SHUT_DOWN);
 }
 
 void spineLed(uint8_t *leds12, int printlvl)
 {
-  static uint32_t Tlast = 0;
-  while( Timer::elapsedUs(Tlast) < 5000 ) //throttle agressive callers
-    ;
-  Tlast = Timer::get();
-  
   if( printlvl2cmdopts(printlvl) & CMD_OPTS_LOG_CMD )
     ConsolePrintf(">spine leds %x%x%x %x%x%x %x%x%x %x%x%x\n",
       leds12[0]>>4, leds12[1]>>4, leds12[2]>>4,
@@ -688,7 +690,7 @@ void spineLed(uint8_t *leds12, int printlvl)
       leds12[9]>>4, leds12[10]>>4,leds12[11]>>4);
   
   halSpineRxFlush();
-  halSpineSend((uint8_t*)halSpineH2BFrame(POWER_STATE_ON, 0, leds12), PAYLOAD_DATA_FRAME);
+  halSpineSend((uint8_t*)halSpineH2BFrame(0, 0, leds12), PAYLOAD_DATA_FRAME);
   if( printlvl2cmdopts(printlvl) & CMD_OPTS_LOG_RSP )
     ConsolePrintf("<spine leds %i\n", 0);
 }
@@ -705,7 +707,7 @@ static inline void spine_get_sr_(robot_sr_t* out_sr, uint8_t sensor)
     switch(sensor)
     {
       case RCOM_SENSOR_BATTERY:
-        out_sr->bat.raw = b2h->battery.battery;
+        out_sr->bat.raw = b2h->battery.main_voltage;
         out_sr->bat.temp = b2h->battery.temperature;
         break;
       case RCOM_SENSOR_CLIFF:
@@ -787,15 +789,20 @@ static robot_sr_t* spine_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int8
   uint8_t *leds = 0;
   #endif
   
+  //force out of calm mode
+  for(int x=0; x<2; x++)
+    halSpineSend((uint8_t*)halSpineH2BFrame(0,0,0), PAYLOAD_DATA_FRAME);
+  Timer::delayMs(5); //post- packet throttle
+  
   halSpineRxFlush();
   for(int n=0; n<NN; n++)
   {
     //send H2B packets
     int16_t motPower[MOTOR_COUNT] = { treadL<<8, treadR<<8, lift<<8, head<<8 };
-    HeadToBody* frame = halSpineH2BFrame(POWER_STATE_ON, motPower, leds);
+    HeadToBody* frame = halSpineH2BFrame(0, motPower, leds);
     halSpineSend((uint8_t*)frame, PAYLOAD_DATA_FRAME, 0); //no tx throttle. let packet RX drive timing
     
-    //read B2H packest (sensor vals)
+    //read B2H packet (sensor vals)
     robot_sr_t *psr = &((robot_sr_t*)srbuf)[n];
     spine_get_sr_(psr, sensor); //parse out requested sensor data
     
@@ -808,7 +815,7 @@ static robot_sr_t* spine_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int8
   }
   
   #if SPINE_DEBUG_MOTORS > 0 //reset led states
-  halSpineSend((uint8_t*)halSpineH2BFrame(POWER_STATE_ON, 0, 0), PAYLOAD_DATA_FRAME);
+  halSpineSend((uint8_t*)halSpineH2BFrame(0, 0, 0), PAYLOAD_DATA_FRAME);
   #endif
   
   if( printlvl2cmdopts(printlvl) & CMD_OPTS_LOG_RSP )
@@ -843,11 +850,11 @@ robot_bsv_t* rcomBsv() {
     return spineBsv();
 }
 
-void rcomPwr(rcom_pwr_st_e st) { 
+void rcomPwr(rcom_pwr_st_e st, int printlvl) { 
   if( !rcom_target_spine_nCCC )
-    ccc_IdxVal32_((int)st,  0,   "pwr", 0);
+    ccc_IdxVal32_((int)st, 0, "pwr", 0, printlvl);
   else 
-    spinePwr(st);
+    spinePwr(st, printlvl);
 }
 
 void rcomLed(uint8_t *leds, int printlvl) {
@@ -873,11 +880,11 @@ robot_sr_t* rcomGet(uint8_t NN, uint8_t sensor, int printlvl)
     return spine_MotGet_(NN, sensor, 0, 0, 0, 0, printlvl);
 }
 
-int  rcomRlg(uint8_t idx, char *buf, int buf_max_size) { return !rcom_target_spine_nCCC ? cccRlg(idx,buf,buf_max_size) : 0; }
+int  rcomRlg(uint8_t idx, char *buf, int buf_max_size, int printlvl) { return !rcom_target_spine_nCCC ? cccRlg(idx,buf,buf_max_size,printlvl) : 0; }
 void rcomEng(uint8_t idx, uint8_t dat0, uint8_t dat1) { if( !rcom_target_spine_nCCC ) ccc_IdxVal32_(idx, ((dat1<<8)|dat0), "eng", 0); }
 void rcomSmr(uint8_t idx, uint32_t val) {
   if( !rcom_target_spine_nCCC ) {
-    int cmdStatus = ccc_IdxVal32_(idx, val, "smr", 0, false, false);
+    int cmdStatus = ccc_IdxVal32_(idx, val, "smr", 0, RCOM_PRINT_LEVEL_DAT, false);
     if( cmdStatus == 4 /*ERR_LOCKED*/ )
       throw ERROR_ROBOT_PACKED_OUT;
     else if( cmdStatus != 0 )

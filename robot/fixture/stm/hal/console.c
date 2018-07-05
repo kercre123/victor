@@ -322,16 +322,19 @@ static void BurnSerials_(void)
 extern int g_canary;
 static void GetSerialCmd(void)
 {
-  uint32_t sequence = fixtureReadSequence();
-  
   // Serial number, fixture type, build version
-  ConsolePrintf("serial,%i,%s,%i,%i,%08x\n", 
+  ConsolePrintf("serial,%i,%s,%i\n", 
     FIXTURE_SERIAL, 
     fixtureName(),
-    g_canary == 0xcab00d1e ? FIXTURE_VERSION : 0xbadc0de,    // This part is hard to explain
-    sequence,
-    (FIXTURE_SERIAL<<20) | sequence );
+    g_canary == 0xcab00d1e ? FIXTURE_VERSION : 0xbadc0de);    // This part is hard to explain
 }
+
+static void GetEsnCmd(void)
+{
+  uint32_t sequence = fixtureReadSequence();
+  ConsolePrintf("serial,%i,sequence,%i,esn,%08x\n", FIXTURE_SERIAL, sequence, (FIXTURE_SERIAL<<20) | sequence);
+}
+
 static void SetLotCode(void)
 {
   char* arg = GetArgument(1);
@@ -347,10 +350,47 @@ static void SetLotCode(void)
   SetFixtureText();
 }
 
+static void GetTime(void)
+{
+  time_t time = fixtureGetTime(); //rtc time
+  ConsolePrintf("%010u,%i,%s", time, fixtureTimeIsValid(), ctime(&time));
+  
+  int arg1 = 0;
+  try { sscanf(GetArgument(1), "%i", &arg1); } catch(...) { arg1=0; }
+  
+  if( arg1 == 1 ) {
+    time_t settime = fixtureGetSetTime();
+    ConsolePrintf("%010u,%i,%s", settime, settime>0, ctime(&settime));
+    
+    int timediff = time - settime;
+    int days  =   timediff/(24*3600);
+    int hours =  (timediff%(24*3600)) / 3600;
+    int min   = ((timediff%(24*3600)) % 3600) / 60;
+    int sec   = ((timediff%(24*3600)) % 3600) % 60;
+    ConsolePrintf("diff,days,%i,hms,%i,%i,%i\n", days, hours, min, sec);
+  }
+}
+
 static void SetTime(void)
 {
-  char* arg = GetArgument(1);  
-  sscanf(arg, "%i", &g_time);
+  time_t time = 0;
+  sscanf(GetArgument(1), "%u", (uint32_t*)&time);
+  
+  //ConsolePrintf("settime %010u          %s", time, ctime(&time)); //DEBUG
+  int e = fixtureSetTime(time);
+  if( e != 0 ) {
+    ConsolePrintf("failed. e=0x%04x\n", e);
+    throw ERROR_UNHANDLED_EXCEPTION;
+  }
+  
+  //readback & print formatted
+  time = fixtureGetTime(); //rtc time
+  ConsolePrintf("%010u,%i,%s", time, fixtureTimeIsValid(), ctime(&time));
+}
+
+extern void fixtureRtcTestbench(void);
+static void RtcTestbench(void) {
+  fixtureRtcTestbench(); //runs testbench, if enabled
 }
 
 static void SetDateCode(void)
@@ -498,8 +538,11 @@ static CommandFunction m_functions[] =
   {"SetLotCode", SetLotCode, FALSE},
   {"SetMode", SetMode, FALSE},
   {"GetModes", ConsolePrintModes_, FALSE},
+  {"GetEsn", GetEsnCmd, FALSE},
   {"SetSerial", SetSerial, FALSE},
   {"SetTime", SetTime, FALSE},
+  {"GetTime", GetTime, FALSE},
+  {"RtcTestbench", RtcTestbench, FALSE},
   {"Current", TestCurrent, FALSE},
   {"DumpFixtureSerials", DumpFixtureSerials, FALSE},
   {"Voltage", TestVoltage, FALSE},
@@ -575,6 +618,12 @@ static void ParseCommand(void)
     if (!commandFound && strcmp(buffer, ""))
     {
       ConsolePrintf("Unknown command: %s\n", buffer);
+      
+      /*/DEBUG inspect complete input
+      ConsolePrintf("'");
+      for(int i=0; i<m_numberOfArguments; i++) ConsolePrintf(" %s", GetArgument(i));
+      ConsolePrintf("'\n");
+      //-*/
     }
   }
 }
@@ -615,6 +664,13 @@ int ConsoleFlushLine(void) {
   int n = line_len; //report how many chars we're dumping
   line_len = 0;
   return n;
+}
+
+int ConsoleGetIndex_(bool clear) {
+  int val = m_index;
+  if( clear )
+    m_index = 0;
+  return val;
 }
 
 void ConsoleProcessChar_(char c)

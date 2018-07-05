@@ -14,9 +14,24 @@
 #include "timer.h"
 
 static headid_t headnfo;
+static const int CURRENT_HEAD_HW_REV = HEADID_HWREV_PVT;
+static const int CURRENT_HEAD_MODEL = 1;
 
-static uint32_t m_previous_esn = 0;
-uint32_t TestHeadGetPrevESN(void) {
+static uint32_t m_previous_esn = ~0;
+uint32_t TestHeadGetPrevESN(void)
+{
+  //initialize on first use (app display at boot)
+  if( m_previous_esn & 0x80000000 )
+  {
+    if( g_fixmode == FIXMODE_HEAD1 ) {
+      m_previous_esn = fixtureReadSerial(); //readSerial returns the next s/n to be allocated
+      if( fixtureReadSequence() > 0 ) //adjust to last used esn
+        m_previous_esn -= 1;
+    }
+    else //debug head mode (HEAD1_OL, HEAD2, HELPER1...)
+      m_previous_esn = 0x00100000;
+  }
+  
   return m_previous_esn;
 }
 
@@ -76,7 +91,7 @@ void TestHeadForceBoot(void)
   
   //DEBUG
   if( g_fixmode == FIXMODE_HEAD2 ) {
-    int timeout_s = 10;
+    int timeout_s = 5;
     ConsolePrintf("---DELAY %us FOR MANUAL FORCE_USB---\n", timeout_s);
     while( timeout_s-- > 0 ) {
       Timer::delayMs(1000);
@@ -89,19 +104,55 @@ void TestHeadForceBoot(void)
 void TestHeadDutProgram(void)
 {
   const int timeout_s = 90 + 60; //XXX: DVT4-RC clocked in at ~87s. Add some margin.
-  char b[40]; int bz = sizeof(b);
+  char b[50]; int bz = sizeof(b);
+  
+  //mode differences:
+  //  FIXMODE_HEAD1(rel): dutprogram timeout ESN-PROD HWREV-PROD MODEL-PROD
+  //  FIXMODE_HEAD1(dbg): dutprogram timeout ESN-PROD HWREV-DBG  MODEL-PROD
+  //  FIXMODE_HEAD1_OL  : dutprogram timeout ESN-DBG  HWREV-DBG  MODEL-DBG  nocert nos //inhibit cloud cert + os write (just test USB connectivity)
+  //  FIXMODE_HEAD2     : dutprogram timeout ESN-DBG  HWREV-DBG  MODEL-DBG  nocert
+  //  FIXMODE_HELPER1   : dutprogram timeout ESN-DBG  HWREV-DBG  MODEL-DBG  nocert helper
   
   //provision ESN
-  headnfo.esn = g_fixmode == FIXMODE_HELPER1 ? 0 : fixtureGetSerial();
+  headnfo.esn = g_fixmode == FIXMODE_HEAD1 ? fixtureGetSerial() : 0x00100000;
   m_previous_esn = headnfo.esn; //even if programming fails, report the (now unusable) ESN
+  int hwrev = g_isReleaseBuild && g_fixmode == FIXMODE_HEAD1 ? CURRENT_HEAD_HW_REV : HEADID_HWREV_DEBUG;
+  int model = g_fixmode == FIXMODE_HEAD1 ? CURRENT_HEAD_MODEL : 1 /*debug*/ ;
+  
+  //mode options
+  const char *suffix;
+  switch( g_fixmode ) {
+    case FIXMODE_HEAD1:     suffix = ""; break;
+    case FIXMODE_HEAD1_OL:  suffix = "nocert nos"; break;
+    case FIXMODE_HEAD2:     suffix = "nocert"; break;
+    case FIXMODE_HELPER1:   suffix = "nocert helper"; break;
+    default:                suffix = "nocert nos"; break;
+  }
   
   //helper head does the rest
-  snformat(b,bz,"dutprogram %u %08x %s", timeout_s, headnfo.esn, g_fixmode == FIXMODE_HELPER1 ? "helper" : "");
+  snformat(b,bz,"dutprogram %u %08x %04x %04x %s", timeout_s, headnfo.esn, hwrev, model, suffix);
   cmdSend(CMD_IO_HELPER, b, (timeout_s+10)*1000, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS );
   if( cmdStatus() >= ERROR_HEADPGM && cmdStatus() < ERROR_HEADPGM_RANGE_END ) //headprogram exit code range
     throw cmdStatus();
   else if( cmdStatus() != 0 )
     throw ERROR_HEADPGM; //default
+}
+
+static void TestHeadFuseLockdown(void)
+{
+  //Power cycle to blow the fuses (only if proper secdat was written)
+  Board::powerOff(PWR_VEXT);
+  Board::powerOff(PWR_VBAT);
+  Timer::delayMs(1000);
+  
+  ConsolePrintf("blow secdat fuses...");
+  Board::powerOn(PWR_VEXT);
+  Board::powerOn(PWR_VBAT);
+  Timer::delayMs(5000); //thar she blows!
+  ConsolePrintf("done\n");
+  
+  Board::powerOff(PWR_VEXT);
+  Board::powerOff(PWR_VBAT);
 }
 
 static void HeadFlexFlowReport(void)
@@ -114,6 +165,7 @@ TestFunction* TestHead1GetTests(void)
   static TestFunction m_tests[] = {
     TestHeadForceBoot,
     TestHeadDutProgram,
+    TestHeadFuseLockdown,
     HeadFlexFlowReport,
     NULL,
   };

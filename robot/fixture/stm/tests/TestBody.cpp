@@ -11,6 +11,7 @@
 #include "hwid.h"
 #include "meter.h"
 #include "portable.h"
+#include "robotcom.h"
 #include "swd.h"
 #include "systest.h"
 #include "testcommon.h"
@@ -35,7 +36,7 @@
 #define SYSCON_HEADER_SIZE        16
 #define SYSCON_EVIL               0x4F4D3243 /*first word of syscon header, indicates valid app*/
 
-static const int CURRENT_HW_REV = CUBEID_HWREV_DVT4;
+static const int CURRENT_BODY_HW_REV = BODYID_HWREV_PVT;
 
 //-----------------------------------------------------------------------------
 //                  STM Load
@@ -131,9 +132,12 @@ bool TestBodyDetect(void)
 void TestBodyCleanup(void)
 {
   mcu_power_down_();
+  Board::powerOff(PWR_VEXT);
+  Board::powerOff(PWR_VBAT);
+  rcomSetTarget(0); //reset rcom to charge contacts
 }
 
-static void ShortCircuitTest(void)
+static void BodyShortCircuitTest(void)
 {
   ConsolePrintf("short circuit tests\n");
   
@@ -197,6 +201,7 @@ static void BodyLoadTestFirmware(void)
   if( g_fixmode < FIXMODE_BODY3 )
     Board::powerOn(PWR_VBAT, 0);
   Timer::delayMs(150); //wait for systest to boot into main and enable battery power
+  Contacts::powerOff(); //forces discharge
   Contacts::setModeRx(); //switch to comms mode
   
   //DEBUG:
@@ -204,10 +209,34 @@ static void BodyLoadTestFirmware(void)
     TestCommon::consoleBridge(TO_CONTACTS,5000,0,BRIDGE_OPT_CHG_DISABLE);
   }
   
-  //Run some tests
+  //flush systest line buffer
+  Contacts::write("\n\n\n");
+  
+  //print version to test contact comms
   cmdSend(CMD_IO_CONTACTS, "getvers");
   
-  //XXX: --- add hardware tests here ---
+  //test tread encoders
+  cmdSend(CMD_IO_CONTACTS, "encoders", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS);
+  if( cmdStatus() >= ERROR_BODY && cmdStatus() < ERROR_BODY_RANGE_END )
+    throw cmdStatus();
+  else if( cmdStatus() != 0 )
+    throw ERROR_BODY;
+  
+  //XXX: TEST DROP SENSORS -----------------------------------
+  if( g_fixmode < FIXMODE_BODY1 ) {
+    robot_sr_t cliff = rcomGet(3, RCOM_SENSOR_CLIFF, RCOM_PRINT_LEVEL_ALL)[1];
+    ConsolePrintf("cliff = fL:%i fR:%i bR:%i bL:%i\n", cliff.cliff.fL, cliff.cliff.fR, cliff.cliff.bR, cliff.cliff.bL);
+  }
+  
+  //XXX: TEST BATTERY READ -----------------------------------
+  if( g_fixmode < FIXMODE_BODY1 ) {
+    robot_sr_t bat = rcomGet(3, RCOM_SENSOR_BATTERY, RCOM_PRINT_LEVEL_ALL)[1];
+    ConsolePrintf("battery = %i.%03iV\n", RCOM_BAT_RAW_TO_MV(bat.bat.raw)/1000, RCOM_BAT_RAW_TO_MV(bat.bat.raw)%1000);
+  }
+  
+  //XXX: TEST POWER SYSTEMS CONTROL -----------------------------------
+  
+  //XXX: TEST MOTOR FETS/SHORTS ---------------------------------------
   
   Board::powerOff(PWR_VEXT);
   Board::powerOff(PWR_VBAT);
@@ -227,11 +256,14 @@ static void BodyLoadProductionFirmware(void)
   
   //assign ESN & HW ids (preserve, if exist)
   bodyid.model = BODYID_MODEL_BLACK_STD;
-  bodyid.hwrev = (bodyid.hwrev == BODYID_HWREV_EMPTY) ? CURRENT_HW_REV : bodyid.hwrev;
+  if( bodyid.hwrev == BODYID_HWREV_EMPTY && g_fixmode == FIXMODE_BODY1 )
+    bodyid.hwrev = CURRENT_BODY_HW_REV; //only set valid hwrev in production mode
   if( !bodyid.esn || bodyid.esn == BODYID_ESN_EMPTY )
   {
-    //if( g_isReleaseBuild )
+    if( g_fixmode == FIXMODE_BODY1 )
       bodyid.esn = fixtureGetSerial(); //get next 12.20 esn in the sequence
+    else
+      bodyid.esn = BODYID_ESN_EMPTY;
   }
   
   //buffer the bootlaoder image and insert ESN/HW info
@@ -241,6 +273,14 @@ static void BodyLoadProductionFirmware(void)
   *((uint32_t*)(bodyboot+16)) = bodyid.hwrev;
   *((uint32_t*)(bodyboot+20)) = bodyid.model;
   *((uint32_t*)(bodyboot+24)) = bodyid.esn;
+  
+  //Offline mode don't write production firmware (but WILL print esn/hw info)
+  if( g_fixmode == FIXMODE_BODY1_OL ) {
+    bodyid.hwrev = BODYID_HWREV_EMPTY;
+    bodyid.model = BODYID_MODEL_EMPTY;
+    bodyid.esn = BODYID_ESN_EMPTY;
+    return;
+  }
   
   //Erase and flash boot/app
   ConsolePrintf("load: ESN %08x, hwrev %u, model %u\n", bodyid.esn, bodyid.hwrev, bodyid.model);
@@ -256,15 +296,57 @@ static void BodyLoadProductionFirmware(void)
   mcu_power_down_();
 }
 
-//Power cycle and listen for the "booted" message from sycon application
-static void BodyBootcheckProductionFirmware(void)
+//detect production firmware boot signature
+static void BodyVerifyProductionFirmware(void)
+{
+  mcu_power_down_();
+  
+  if( g_fixmode == FIXMODE_BODY1_OL ) //Offline mode doesn't write production firmware
+    return;
+  if( g_fixmode == FIXMODE_BODY3 ) //Body 3 can't verify; no VBAT connection
+    return;
+  
+  //Power up the mcu under battery
+  Board::powerOn(PWR_VEXT,0); //must provide VEXT to wake up the mcu
+  Board::powerOn(PWR_VBAT,0); //connect a battery
+  Timer::delayMs(150); //wait for mcu to boot into main and enable battery power
+  Board::powerOff(PWR_VEXT);
+  
+  bool allow_skip = g_fixmode < FIXMODE_BODY1; //DEBUG
+  ConsolePrintf("detect production power signature... %s\n", (allow_skip ? " press a key to skip" : "") );
+  
+  while( ConsoleReadChar() > -1 );
+  uint32_t Tstart = Timer::get();
+  while(1)
+  {
+    if( Timer::elapsedUs(Tstart) > 4*1000*1000 ) { //nominal app boot delay is ~2.6s
+      ConsolePrintf("\ntimeout waiting for syscon boot\n");
+      throw ERROR_BODY_NO_BOOT_MSG;
+    }
+    
+    //Debug: shortcut outta here
+    if( ConsoleReadChar() > -1 && allow_skip )
+      break;
+    
+    //wait for current to be in the range we expect
+    int ibat_ma = Meter::getCurrentMa(PWR_VBAT, 8); //large oversample for averaging
+    ConsolePrintf("%i,", ibat_ma);
+    if( Timer::elapsedUs(Tstart) > 500*1000 && ibat_ma > 10 && ibat_ma < 100 )
+      break; //OK!
+  }
+  ConsolePutChar('\n');
+}
+
+//OBSOLETE: "booted" msg removed from production firmware
+/*/Power cycle and listen for the "booted" message from sycon application
+void BodyBootcheckProductionFirmware_OBSOLETE(void)
 {
   mcu_power_down_();
   
   //DEBUG:
   if( g_fixmode < FIXMODE_BODY1 ) {
     //only works if body has a battery?
-    TestCommon::consoleBridge(TO_CONTACTS,3000,0,BRIDGE_OPT_CHG_DISABLE);
+    TestCommon::consoleBridge(TO_CONTACTS,1000,0,BRIDGE_OPT_CHG_DISABLE);
   }
   
   //Power up and test comms
@@ -281,8 +363,10 @@ static void BodyBootcheckProductionFirmware(void)
   uint32_t Tstart = Timer::get();
   while(1)
   {
-    if( Timer::elapsedUs(Tstart) > 5*1000*1000 ) { //nominal delay is ~2.5s
+    if( Timer::elapsedUs(Tstart) > 4*1000*1000 ) { //nominal delay is ~2.5s
       ConsolePrintf("timeout waiting for syscon boot\n");
+      if( g_fixmode == FIXMODE_BODY3 ) //XXX: debug, can't guarantee reset timing (battery installed)
+        break;
       throw ERROR_BODY_NO_BOOT_MSG;
     }
     
@@ -297,6 +381,35 @@ static void BodyBootcheckProductionFirmware(void)
         break;
     }
   }
+}//-*/
+
+//check if this board has been factory programmed (swd lockout)
+static void BodyCheckProgramLockout(void)
+{
+  ConsolePrintf("test swd connection\n");
+  error_t err = ERROR_OK;
+  
+  mcu_power_up_();
+  try {
+    mcu_swd_init_();
+    swd_read32(FLASH_ADDR_SYSBOOT+16); //dummy read
+  } catch(int e) { 
+    err = e;
+  }
+  
+  if( err == ERROR_SWD_CHIPINIT || err == ERROR_SWD_INIT_FAIL )
+  {
+    ConsolePrintf("swd [chip]init fail %i. boot checking...\n", err);
+    
+    //if we don't detect production firmware, assume unprogrammed and throw the original swd error
+    try { BodyVerifyProductionFirmware(); } catch(...) { throw err; }
+    
+    throw ERROR_BODY_PROGRAMMED; //detected boot msg. this board is programmed/locked
+  }
+  
+  mcu_power_down_();
+  if( err != ERROR_OK )
+    throw err;
 }
 
 static void BodyFlexFlowReport(void)
@@ -356,18 +469,21 @@ static void BodyChargeContactElectricalDebug(void)
 TestFunction* TestBody0GetTests(void)
 {
   static TestFunction m_tests_0a[] = {
-    ShortCircuitTest,
+    BodyShortCircuitTest,
+    BodyCheckProgramLockout,
     BodyTryReadSerial, //--skip serial read to force blank state
     //BodyLoadTestFirmware,
     BodyChargeContactElectricalDebug,
     NULL,
   };
   static TestFunction m_tests_0[] = {
-    ShortCircuitTest,
+    BodyShortCircuitTest,
+    BodyCheckProgramLockout,
     BodyTryReadSerial,
     BodyLoadTestFirmware,
     BodyLoadProductionFirmware,
-    BodyBootcheckProductionFirmware,
+    BodyVerifyProductionFirmware,
+    BodyFlexFlowReport,
     NULL,
   };
   return (g_fixmode == FIXMODE_BODY0A) ? m_tests_0a : m_tests_0;
@@ -376,11 +492,12 @@ TestFunction* TestBody0GetTests(void)
 TestFunction* TestBody1GetTests(void)
 {
   static TestFunction m_tests[] = {
-    ShortCircuitTest,
+    BodyShortCircuitTest,
+    BodyCheckProgramLockout,
     BodyTryReadSerial,
     BodyLoadTestFirmware,
     BodyLoadProductionFirmware,
-    BodyBootcheckProductionFirmware,
+    BodyVerifyProductionFirmware,
     BodyFlexFlowReport,
     NULL,
   };
@@ -390,11 +507,12 @@ TestFunction* TestBody1GetTests(void)
 TestFunction* TestBody2GetTests(void)
 {
   static TestFunction m_tests[] = {
-    ShortCircuitTest,
+    BodyShortCircuitTest,
+    BodyCheckProgramLockout,
     BodyTryReadSerial, //skip serial read to force blank state (generate new ESN)
     //BodyLoadTestFirmware,
     BodyLoadProductionFirmware,
-    BodyBootcheckProductionFirmware,
+    BodyVerifyProductionFirmware,
     BodyFlexFlowReport,
     NULL,
   };
@@ -404,10 +522,11 @@ TestFunction* TestBody2GetTests(void)
 TestFunction* TestBody3GetTests(void)
 {
   static TestFunction m_tests[] = {
-    ShortCircuitTest,
+    BodyShortCircuitTest,
+    BodyCheckProgramLockout,
     BodyTryReadSerial,
     BodyLoadProductionFirmware,
-    //BodyBootcheckProductionFirmware,
+    BodyVerifyProductionFirmware,
     BodyFlexFlowReport,
     NULL,
   };
