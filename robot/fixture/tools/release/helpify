@@ -47,6 +47,10 @@ echo updating boot script...
 chmod +x $tmpfile
 cp -f $tmpfile $bootscript
 chmod +x $bootscript
+
+#remove unused bins -- make space for cert files
+echo cleaning anki fs...
+find /anki ! -name 'certs.zip' -type f -exec rm -rfd {} +
 sync
 
 if [ $debug -gt 0 ]; then echo found $linecnt lines; fi

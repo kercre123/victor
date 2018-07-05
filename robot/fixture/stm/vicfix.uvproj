@@ -717,6 +717,11 @@
               <FilePath>.\stm32f2xx\stm32f2xx_rcc.c</FilePath>
             </File>
             <File>
+              <FileName>stm32f2xx_rtc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\stm32f2xx\stm32f2xx_rtc.c</FilePath>
+            </File>
+            <File>
               <FileName>stm32f2xx_tim.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\stm32f2xx\stm32f2xx_tim.c</FilePath>

@@ -1,8 +1,8 @@
 #!/bin/sh
 ESN=$(echo $1 | xargs)
-HW_VER=0004
-MODEL=0001
-echo headprogram esn $ESN hwvers $((HW_VER)) model $((MODEL))
+HW_VER=$(echo $2 | xargs)
+MODEL=$(echo $3 | xargs)
+echo headprogram esn $ESN hwvers $HW_VER model $MODEL
 
 USBVID=05c6
 USBPID=9008
@@ -16,12 +16,13 @@ ERROR_HEADPGM_FAC_IMG=$((503-$ERROR_OFFSET))
 ERROR_HEADPGM_USB_DEV_NOT_FOUND=$((504-$ERROR_OFFSET))
 ERROR_HEADPGM_USB_MODE_SWITCH=$((505-$ERROR_OFFSET))
 
-cloudcert=1; helper=0
+cloudcert=1; oswrite=1; helper=0; argCnt=0
 for arg in "$@"; do
   #argCnt=$((argCnt+1))
   #echo arg[$argCnt] raw:\""${arg}"\" trimmed:\""$(echo ${arg} | xargs)"\"
-  if [ "$(echo ${arg} | xargs)" == "helper" ]; then echo "making helper head"; helper=1; cloudcert=0; ESN=0; fi
-  if [ "$(echo ${arg} | xargs)" == "nocloud" ]; then echo "cloud cert disabled"; cloudcert=0; fi
+  if [ "$(echo ${arg} | xargs)" == "helper" ]; then echo "making helper head"; helper=1; cloudcert=0; fi
+  if [ "$(echo ${arg} | xargs)" == "nocert" ]; then echo "cloud cert disabled"; cloudcert=0; fi
+  if [ "$(echo ${arg} | xargs)" == "nos" ];    then echo "os write disabled"; oswrite=0; fi
 done
 
 # Enable USB
@@ -67,6 +68,8 @@ if [ $cloudcert -gt 0 ]; then
   mv /data/img/cloud/$ESN/* /data/img/cloud               || exit $ERROR_HEADPGM_FAC_IMG
   chmod 0440 /data/img/cloud /data/img/cloud/*            || exit $ERROR_HEADPGM_FAC_IMG
   chown 888:888 /data/img/cloud /data/img/cloud/*         || exit $ERROR_HEADPGM_FAC_IMG
+else
+  echo "CLOUD CERT DISABLED"
 fi
 umount /data/img                                        || exit $ERROR_HEADPGM_FAC_IMG
 
@@ -78,4 +81,10 @@ if ! lsusb | grep -q "ID $USBVID:$USBPID"; then
 fi
 
 # Flash the robot
-./emmcdl/emmcdl -p 0 -f emmcdl/prog_emmc_firehose_8909_ddr.mbn -x emmcdl/anki.xml -SetActivePartition 0
+if [ $oswrite -gt 0 ]; then
+  ./emmcdl/emmcdl -p 0 -f emmcdl/prog_emmc_firehose_8909_ddr.mbn -x emmcdl/anki.xml -SetActivePartition 0
+else
+  echo "OS WRITE DISABLED"
+  exit 0
+fi
+

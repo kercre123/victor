@@ -142,9 +142,9 @@ static void dbg_test_comm_loop_(int nloops, int rmin, int rmax)
     //else if( sensorSelect == 4 )
       rcomGet(rmin+rand()%rmod, RCOM_SENSOR_DEBUG_INC);
     //else { sensorSelect = -1; break; }    
-    rcomRlg(0, 0, 0);
-    rcomRlg(1, 0, 0);
-    try { for(int x=2; x<=8; x++) { rcomRlg(x, 0, 0); } } catch(int e) {}
+    //rcomRlg(0, 0, 0);
+    //rcomRlg(1, 0, 0);
+    try { for(int x=0; x<=8; x++) { rcomRlg(x, 0, 0); } } catch(int e) {}
   }
 }
 
@@ -253,6 +253,11 @@ const char* DBG_cmd_substitution(const char *line, int len)
 #define DETECT_CURRENT_MA   100
 #define SYSCON_CHG_PWR_DELAY_MS 250 /*delay from robot's on-charger detect until charging starts*/
 
+#define IS_FIXMODE_ROBOT1()   ( g_fixmode==FIXMODE_ROBOT1  || g_fixmode==FIXMODE_ROBOT1_OL )
+#define IS_FIXMODE_ROBOT3()   ( g_fixmode==FIXMODE_ROBOT3  || g_fixmode==FIXMODE_ROBOT3_OL )
+#define IS_FIXMODE_PACKOUT()  ( g_fixmode==FIXMODE_PACKOUT || g_fixmode==FIXMODE_PACKOUT_OL )
+#define IS_FIXMODE_OFFLINE()  ( g_fixmode==FIXMODE_ROBOT1_OL || g_fixmode==FIXMODE_ROBOT3_OL || g_fixmode==FIXMODE_PACKOUT_OL )
+
 int detect_ma = 0, detect_mv = 0;
 
 //test info reported to flexflow
@@ -288,13 +293,44 @@ bool TestRobotDetect(void)
 void TestRobotDetectSpine(void)
 {
   //ROBOT1 connected to stump via spine cable. Check for power input.
-  detect_mv = Meter::getVoltageMv(PWR_DUTVDD,6);
-  ConsolePrintf("spine voltage %imV\n", detect_mv);
-  
-  if( detect_mv < 3100 || detect_mv > 5100 )
-    throw ERROR_SPINE_POWER;
+  const int spine_voltage_low = 3100;
+  const int spine_voltage_high = 5100;
   
   rcomSetTarget(1); //rcom -> spine cable (init's DUT_UART)
+  
+  //wait for syscon to turn on head power
+  uint32_t Tstart = Timer::get();
+  while( Timer::elapsedUs(Tstart) < 2*1000*1000 )
+  {
+    //kick syscon out of bed
+    rcomPwr(RCOM_PWR_ON, RCOM_PRINT_LEVEL_NONE); //RCOM_PRINT_LEVEL_DEFAULT
+    
+    detect_mv = Meter::getVoltageMv(PWR_DUTVDD,4); //6);
+    if( detect_mv >= spine_voltage_low && detect_mv <= spine_voltage_high )
+      break;
+  }
+  
+  ConsolePrintf("spine voltage %imV\n", detect_mv);
+  if( detect_mv < spine_voltage_low || detect_mv > spine_voltage_high )
+    throw ERROR_SPINE_POWER;
+  
+  //check for packet response. give syscon app time to boot
+  Tstart = Timer::get();
+  bool working = 0;
+  while( !working )
+  {
+    if( Timer::elapsedUs(Tstart) > 3.5*1000*1000 )
+      throw ERROR_SPINE_CMD_TIMEOUT;
+    
+    rcomPwr(RCOM_PWR_ON, RCOM_PRINT_LEVEL_NONE); //kick syscon out of bed
+    try { 
+      rcomGet(1, RCOM_SENSOR_BTN_TOUCH, RCOM_PRINT_LEVEL_NONE);
+      working = 1;
+    } catch(...){
+    }
+  }
+  
+  ConsolePrintf("spine comms established\n");
 }
 
 void TestRobotCleanup(void)
@@ -315,7 +351,7 @@ void TestRobotCleanup(void)
 
 void read_robot_info_(void)
 {
-  if( g_fixmode == FIXMODE_ROBOT1 ) {
+  if( IS_FIXMODE_ROBOT1() ) {
     //memset( &flexnfo, 0, sizeof(flexnfo) );
     flexnfo.bsv = *rcomBsv();
     rcomPrintBsv(&flexnfo.bsv); //log
@@ -333,6 +369,15 @@ void read_robot_info_(void)
     uint32_t packedout    = rcomGmr( EMR_FIELD_OFS(PACKED_OUT_FLAG) );
     flexnfo.packoutdate   = rcomGmr( EMR_FIELD_OFS(PACKED_OUT_DATE) );
     
+    //read playpen calibration
+    uint32_t playpenTouchSensorMinValid     = rcomGmr( EMR_FIELD_OFS(playpenTouchSensorMinValid) );
+    uint32_t playpenTouchSensorMaxValid     = rcomGmr( EMR_FIELD_OFS(playpenTouchSensorMaxValid) );
+    uint32_t playpenTouchSensorRangeThresh  = rcomGmr( EMR_FIELD_OFS(playpenTouchSensorRangeThresh) );
+    uint32_t playpenTouchSensorStdDevThresh = rcomGmr( EMR_FIELD_OFS(playpenTouchSensorStdDevThresh) );
+    uint32_t playpenTestDisableMask         = rcomGmr( EMR_FIELD_OFS(playpenTestDisableMask) );
+    
+    #define U32FLOAT(u)     ( *((float*)&(u)) )
+    
     ConsolePrintf("EMR[%u] esn         :%08x [%08x]\n", EMR_FIELD_OFS(ESN), flexnfo.esn, esnCmd);
     ConsolePrintf("EMR[%u] hwver       :%u\n", EMR_FIELD_OFS(HW_VER), flexnfo.hwver);
     ConsolePrintf("EMR[%u] model       :%u\n", EMR_FIELD_OFS(MODEL), flexnfo.model);
@@ -341,17 +386,29 @@ void read_robot_info_(void)
     ConsolePrintf("EMR[%u] playpenpass :%u\n", EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), playpenpass);
     ConsolePrintf("EMR[%u] packedout   :%u\n", EMR_FIELD_OFS(PACKED_OUT_FLAG), packedout);
     ConsolePrintf("EMR[%u] packout-date:%u\n", EMR_FIELD_OFS(PACKED_OUT_DATE), flexnfo.packoutdate);
+    ConsolePrintf("EMR[%u] playpenTouchSensorMinValid:%u\n", EMR_FIELD_OFS(playpenTouchSensorMinValid), playpenTouchSensorMinValid);
+    ConsolePrintf("EMR[%u] playpenTouchSensorMaxValid:%u\n", EMR_FIELD_OFS(playpenTouchSensorMaxValid), playpenTouchSensorMaxValid);
+    ConsolePrintf("EMR[%u] playpenTouchSensorRangeThresh :%f\n", EMR_FIELD_OFS(playpenTouchSensorRangeThresh), U32FLOAT(playpenTouchSensorRangeThresh) );
+    ConsolePrintf("EMR[%u] playpenTouchSensorStdDevThresh:%f\n", EMR_FIELD_OFS(playpenTouchSensorStdDevThresh), U32FLOAT(playpenTouchSensorStdDevThresh) );
+    ConsolePrintf("EMR[%u] playpenTestDisableMask:%08x\n", EMR_FIELD_OFS(playpenTestDisableMask), playpenTestDisableMask);
   }
 }
 
-//read battery voltage
-static int robot_get_batt_mv(int *out_raw)
+const int bat_raw_min = RCOM_BAT_MV_TO_RAW(2500);
+const int bat_raw_max = RCOM_BAT_MV_TO_RAW(6000);
+
+static int robot_get_batt_mv(int *out_raw=0, bool sanity_check=true, int printlvl = RCOM_PRINT_LEVEL_DEFAULT);
+static int robot_get_batt_mv(int *out_raw, bool sanity_check, int printlvl)
 {
-  int bat_raw = rcomGet(1, RCOM_SENSOR_BATTERY)[0].bat.raw;
+  int bat_raw = rcomGet(1, RCOM_SENSOR_BATTERY, printlvl)[0].bat.raw;
   int bat_mv = RCOM_BAT_RAW_TO_MV(bat_raw);
   if( out_raw ) *out_raw = bat_raw;
-  
   ConsolePrintf("vbat = %imV (%i)\n", bat_mv, bat_raw);
+  
+  //detect body electrical + fw errors
+  if( sanity_check && (bat_raw < bat_raw_min || bat_raw > bat_raw_max) )
+    throw ERROR_SENSOR_VBAT;
+  
   return bat_mv;
 }
 
@@ -361,7 +418,7 @@ void TestRobotInfo(void)
   //Board::powerOn(PWR_VBAT); //XXX Debug: work on body pcba w/o battery
   ConsolePrintf("detect current avg %i mA\n", detect_ma);
   
-  if( g_fixmode > FIXMODE_ROBOT1 ) {
+  if( !IS_FIXMODE_ROBOT1() ) {
     ConsolePrintf("Resetting comms interface\n");
     Board::powerOff(PWR_VEXT, 500); //turn power off to disable charging
     Contacts::setModeRx();
@@ -373,25 +430,89 @@ void TestRobotInfo(void)
   //-*/
   
   read_robot_info_();
-  robot_get_batt_mv(0);
+  robot_get_batt_mv(0,false); //no error check
 }
 
-//robot_sr_t get(uint8_t NN, uint8_t sensor
 void TestRobotSensors(void)
 {
-  robot_sr_t bat    = rcomGet(3, RCOM_SENSOR_BATTERY   )[1];
-  robot_sr_t cliff  = rcomGet(3, RCOM_SENSOR_CLIFF     )[1];
-  robot_sr_t prox   = rcomGet(3, RCOM_SENSOR_PROX_TOF  )[1];
-  robot_sr_t btn    = rcomGet(3, RCOM_SENSOR_BTN_TOUCH )[1];
+  robot_sr_t *psr;
+  //robot_sr_t bat    = rcomGet(3, RCOM_SENSOR_BATTERY   )[1];
+  //robot_sr_t cliff  = rcomGet(3, RCOM_SENSOR_CLIFF     )[1];
+  //robot_sr_t prox   = rcomGet(3, RCOM_SENSOR_PROX_TOF  )[1];
+  //robot_sr_t btn    = rcomGet(3, RCOM_SENSOR_BTN_TOUCH )[1];
   
-  ConsolePrintf("Sensor Values:\n");
-  ConsolePrintf("  battery = %i.%03iV\n", bat.bat.raw/1000, bat.bat.raw%1000);
-  ConsolePrintf("  cliff = fL:%i fR:%i bR:%i bL:%i\n", cliff.cliff.fL, cliff.cliff.fR, cliff.cliff.bR, cliff.cliff.bL);
-  ConsolePrintf("  prox = %imm sigRate:%i spad:%i ambientRate:%i\n", prox.prox.rangeMM, prox.prox.signalRate, prox.prox.spadCnt, prox.prox.ambientRate);
-  ConsolePrintf("  btn = %i touch=%i\n", btn.btn.btn, btn.btn.touch);
+  ConsolePrintf("Sensor Testing...\n");
   
-  //XXX: what should "good" sensor values look like?
+  //BATTERY (ADC input)
+  {
+    const uint8_t NN_bat=3;
+    psr = rcomGet(NN_bat, RCOM_SENSOR_BATTERY);
+    for(int x=0; x<NN_bat; x++) {
+      if( psr[x].bat.raw < bat_raw_min || psr[x].bat.raw > bat_raw_max )
+        throw ERROR_SENSOR_VBAT;
+    }
+    robot_sr_t bat = psr[NN_bat>>1];
+    ConsolePrintf("bat,raw,%i,mv,%i\n", bat.bat.raw, RCOM_BAT_RAW_TO_MV(bat.bat.raw));
+  }
   
+  //CLIFF
+  {
+    //per software team, intermittent 0 values are common. Sensor is 12?-bit max
+    const uint8_t NN_cliff=15, NN_ok=10; //allow a few noise values
+    struct { int fL; int fR; int bL; int bR; } cnt = {0,0,0,0};
+    psr = rcomGet(NN_cliff, RCOM_SENSOR_CLIFF);
+    for(int x=0; x<NN_cliff; x++) 
+    {
+      const int cliff_min=1, cliff_max=1<<12;
+      if( psr[x].cliff.fL >= cliff_min && psr[x].cliff.fL <= cliff_max ) cnt.fL++;
+      if( psr[x].cliff.fR >= cliff_min && psr[x].cliff.fR <= cliff_max ) cnt.fR++;
+      if( psr[x].cliff.bL >= cliff_min && psr[x].cliff.bL <= cliff_max ) cnt.bL++;
+      if( psr[x].cliff.bR >= cliff_min && psr[x].cliff.bR <= cliff_max ) cnt.bR++;
+    }
+    robot_sr_t cliff = psr[NN_cliff>>1];
+    ConsolePrintf("cliff,fL,%i,fR,%i,bL,%i,bR,%i\n", cliff.cliff.fL, cliff.cliff.fR, cliff.cliff.bL, cliff.cliff.bR);
+    ConsolePrintf("..cnt,fL,%i,fR,%i,bL,%i,bR,%i\n", cnt.fL, cnt.fR, cnt.bL, cnt.bR);
+    
+    if( cnt.fL < NN_ok )  throw ERROR_SENSOR_CLIFF_FL;
+    if( cnt.fR < NN_ok )  throw ERROR_SENSOR_CLIFF_FR;
+    if( cnt.bL < NN_ok )  throw ERROR_SENSOR_CLIFF_BL;
+    if( cnt.bR < NN_ok )  throw ERROR_SENSOR_CLIFF_BR;
+  }
+  
+  //TOUCH btn
+  {
+    const uint8_t NN_touch=15, NN_ok=12; //filter some noise
+    int validCnt = 0;
+    psr = rcomGet(NN_touch, RCOM_SENSOR_BTN_TOUCH);
+    for(int x=0; x<NN_touch; x++) {
+      const int touch_min=100, touch_max=1200; //playpen uses range 500-700 (off charger). Ours will be noisier.
+      if( psr[x].btn.touch >= touch_min && psr[x].btn.touch <= touch_max )
+        validCnt++;
+    }
+    robot_sr_t btn = psr[NN_touch>>1];
+    ConsolePrintf("btn,touch,%i,btn,%i,cnt,%i\n", btn.btn.touch, btn.btn.btn, validCnt);
+    
+    if( validCnt < NN_ok )
+      throw ERROR_SENSOR_TOUCH;
+  }
+  
+  //TOF
+  {
+    const uint8_t NN_tof=5, emax=1;
+    int ecount=0;
+    psr = rcomGet(NN_tof, RCOM_SENSOR_PROX_TOF);
+    for(int x=0; x<NN_tof; x++) {
+      //XXX: no idea what valid TOF values look like...
+      //just make sure they are non-zero
+      if( psr[x].prox.rangeMM<1 || psr[x].prox.signalRate<1 || psr[x].prox.spadCnt<1 || psr[x].prox.ambientRate<1 )
+        ecount++;
+    }
+    robot_sr_t prox = psr[NN_tof>>1];
+    ConsolePrintf("prox,mm,%i,sigRate,%i,spad,%i,ambientRate,%i\n", prox.prox.rangeMM, prox.prox.signalRate, prox.prox.spadCnt, prox.prox.ambientRate);
+    
+    if( ecount > emax )
+      throw ERROR_SENSOR_TOF;
+  }
 }
 
 typedef struct { 
@@ -453,12 +574,17 @@ static robot_tread_dat_t* robot_tread_test_(uint8_t sensor, int8_t power)
   return &test;
 }
 
+#define TREAD_TEST_DATA_GATHERING 0
 static void TestRobotTreads_(int8_t power, int min_speed, int min_travel)
 {
   robot_tread_dat_t treadL = *robot_tread_test_(RCOM_SENSOR_MOT_LEFT, power);
   robot_tread_dat_t treadR = *robot_tread_test_(RCOM_SENSOR_MOT_RIGHT, -power);
   print_tread_dat(&treadL, "LEFT ");
   print_tread_dat(&treadR, "RIGHT");
+  
+  #if TREAD_TEST_DATA_GATHERING > 0
+  #warning "TREAD ERROR CHECKING DISABLED"
+  #else
   
   if( treadL.fwd_avg < min_speed || (-1)*treadL.rev_avg < min_speed ) {
     ConsolePrintf("insufficient LEFT tread speed %i,%i < %i\n", treadL.fwd_avg, treadL.rev_avg, min_speed);
@@ -476,16 +602,28 @@ static void TestRobotTreads_(int8_t power, int min_speed, int min_travel)
     ConsolePrintf("insufficient RIGHT tread travel %i,%i < %i\n", treadR.fwd_travel, treadR.rev_travel, min_travel);
     throw ERROR_MOTOR_RIGHT;
   }
+  #endif
 }
 
 void TestRobotTreads(void)
 {
-  //anecdotal norms @ full power: speed 1700-2000, travel 800+
+  #if TREAD_TEST_DATA_GATHERING > 0
+  #warning "TREAD TEST"
+  for(int pwr = 127; pwr >= 60; pwr -= 5) {
+    ConsolePrintf("TREAD TEST pwr = %i\n", pwr);
+    TestRobotTreads_(pwr, 9999, 9999);
+  }
+    
+  #else
+  
+  //full power: speed 1760-1980, travel 790-1160
   TestRobotTreads_(127, 1500, 600);
   
-  //anecdotal norms @ low power: (???)
-  if( g_fixmode <= FIXMODE_ROBOT3 )
-    TestRobotTreads_(75, 800, 400);
+  //low power (72): speed 870-1070, travel 400-550
+  if( !IS_FIXMODE_PACKOUT() )
+    TestRobotTreads_(75, 750, 300);
+  
+  #endif
 }
 
 typedef struct {
@@ -502,7 +640,7 @@ void print_range_dat(robot_range_dat_t* dat, const char* sensorname) {
 }
 
 //measure speed and range of motion
-static robot_range_dat_t* robot_range_test_(uint8_t sensor, int8_t power)
+static robot_range_dat_t* robot_range_test_(uint8_t sensor, uint8_t NNtest, int8_t power)
 {
   power = ABS(power);
   if( sensor != RCOM_SENSOR_MOT_LIFT && sensor != RCOM_SENSOR_MOT_HEAD ) {
@@ -525,19 +663,17 @@ static robot_range_dat_t* robot_range_test_(uint8_t sensor, int8_t power)
   
   ConsolePrintf("%s range test. power %i\n", lift?"LIFT":"HEAD", (lift ? liftPwr : headPwr));
   
-  //calibrated test params for lift vs head
-  uint8_t NNstart = lift ? 35 : 65;
-  uint8_t NNtest  = lift ? (power >= 75 ? 45 : 85) : (power >= 90 ? 65 : 125);
+  const uint8_t NNstart = lift ? 35 : 65;
   const uint8_t NNsettle = 50;
   
   //force to known starting position
-  if( g_fixmode != FIXMODE_ROBOT1 ) {
+  if( !IS_FIXMODE_ROBOT1() ) {
     if( DEBUG_PRINT ) ConsolePrintf("%s move to starting position [%i,%i]\n", lift ? "LIFT" : "HEAD", -liftPwrMax, -headPwrMax);
     test.start_active = rcomMot(NNstart, sensor, 0, 0, -liftPwrMax, -headPwrMax, printlvl)[NNstart-1].enc.pos;
   }
   if( DEBUG_PRINT ) ConsolePrintf("%s get passive start position\n", lift ? "LIFT" : "HEAD");
   test.start_passive = rcomGet(NNsettle, sensor, printlvl)[NNsettle-1].enc.pos; //allow time for mechanics to settle
-  if( g_fixmode == FIXMODE_ROBOT1 )
+  if( IS_FIXMODE_ROBOT1() )
     test.start_active = test.start_passive;
   
   //move up
@@ -573,14 +709,19 @@ static robot_range_dat_t* robot_range_test_(uint8_t sensor, int8_t power)
   return &test;
 }
 
-typedef struct { int8_t power; int travel_min; int travel_max; int speed_min; } robot_range_t;
+#define RANGE_TEST_DATA_GATHERING 0
+typedef struct { uint8_t NN; int8_t power; int travel_min; int travel_max; int speed_min; } robot_range_t;
 void TestRobotRange(robot_range_t *testlift, robot_range_t *testhead)
 {
-  robot_range_dat_t lift = *robot_range_test_(RCOM_SENSOR_MOT_LIFT, testlift->power);
-  robot_range_dat_t head = *robot_range_test_(RCOM_SENSOR_MOT_HEAD, testhead->power);
+  robot_range_dat_t lift = *robot_range_test_(RCOM_SENSOR_MOT_LIFT, testlift->NN, testlift->power);
+  robot_range_dat_t head = *robot_range_test_(RCOM_SENSOR_MOT_HEAD, testhead->NN, testhead->power);
   print_range_dat(&lift, "LIFT");
   print_range_dat(&head, "HEAD");
 
+  #if RANGE_TEST_DATA_GATHERING > 0
+  #warning "RANGE ERROR CHECKING DISABLED"
+  #else
+  
   const int lift_start_delta_max = 50;
   lift.dn_travel *= -1; lift.dn_avg *= -1; //positive comparisons
   if( lift.up_travel < -20 || lift.dn_travel < -20 )
@@ -610,86 +751,68 @@ void TestRobotRange(robot_range_t *testlift, robot_range_t *testhead)
     throw ERROR_MOTOR_HEAD_SPEED;
   else if( ABS(head.start_active-head.start_passive) > head_start_delta_max )
     throw ERROR_MOTOR_HEAD_RANGE; //range met only when force applied
+  
+  #endif
 }
 
 void TestRobotRange(void)
 {
+  #if RANGE_TEST_DATA_GATHERING > 0
+  #warning "RANGE TESTING"
+  for(int pwr=100; pwr >= 45; pwr -= 5) {
+    if( pwr >= 100 || (pwr < 71 && pwr > 39) ) { //DEBUG limited range of values
+      ConsolePrintf("RANGE TEST pwr = %i\n", pwr);
+      uint8_t NNlift = pwr<75 ? 85 : 55;
+      uint8_t NNhead = pwr<90 ? 125 : 70;
+      robot_range_t lift = { NNlift, /*power*/ pwr, /*travel_min*/ 0, /*travel_max*/ 99999, /*speed_min*/ 0 };
+      robot_range_t head = { NNhead, /*power*/ pwr, /*travel_min*/ 0, /*travel_max*/ 99999, /*speed_min*/ 0 };
+      TestRobotRange( &lift, &head );
+    }
+  }
+  #else
+  
   //High Power
-  if( g_fixmode == FIXMODE_ROBOT1 ) {
+  if( IS_FIXMODE_ROBOT1() ) {
     //NO HEAD/ARMS ATTACHED = NO STOP!
     //lift travel ~450-500 in each direction
     //head travel ~800-850 in each direction
-    robot_range_t lift = { /*power*/  75, /*travel_min*/ 400, /*travel_max*/ 9999, /*speed_min*/ 1800 };
-    robot_range_t head = { /*power*/ 100, /*travel_min*/ 700, /*travel_max*/ 9999, /*speed_min*/ 2300 };
+    robot_range_t lift = { /*NN*/  55, /*power*/  75, /*travel_min*/ 400, /*travel_max*/ 9999, /*speed_min*/ 1800 };
+    robot_range_t head = { /*NN*/  70, /*power*/ 100, /*travel_min*/ 700, /*travel_max*/ 9999, /*speed_min*/ 2300 };
     TestRobotRange( &lift, &head );
-  } else if( g_fixmode <= FIXMODE_ROBOT3 ) { //skip PACKOUT
-    //lift travel ~200-220 in each direction
-    //head travel ~540-560 in each direction
-    robot_range_t lift = { /*power*/  75, /*travel_min*/ 170, /*travel_max*/ 260, /*speed_min*/ 1300 };
-    robot_range_t head = { /*power*/ 100, /*travel_min*/ 480, /*travel_max*/ 600, /*speed_min*/ 2000 };
+  } else if( !IS_FIXMODE_PACKOUT() ) {
+    //lift: travel 195-200, speed 760-1600
+    //head: travel 550-560, speed 2130-2400
+    robot_range_t lift = { /*NN*/  55, /*power*/  75, /*travel_min*/ 170, /*travel_max*/ 230, /*speed_min*/  650 };
+    robot_range_t head = { /*NN*/  70, /*power*/ 100, /*travel_min*/ 520, /*travel_max*/ 590, /*speed_min*/ 1700 };
     TestRobotRange( &lift, &head );
   }
   
   //Low Power
-  if( g_fixmode == FIXMODE_ROBOT1 ) {
+  if( IS_FIXMODE_ROBOT1() ) {
     //NO HEAD/ARMS ATTACHED = NO STOP!
     //lift travel ~550-600 in each direction
     //head travel ~650-??? in each direction
-    robot_range_t lift = { /*power*/  45, /*travel_min*/ 450, /*travel_max*/ 9999, /*speed_min*/ 1000 };
-    robot_range_t head = { /*power*/  50, /*travel_min*/ 550, /*travel_max*/ 9999, /*speed_min*/ 800 };
+    robot_range_t lift = { /*NN*/  85, /*power*/  50, /*travel_min*/ 400, /*travel_max*/ 9999, /*speed_min*/ 800 };
+    robot_range_t head = { /*NN*/ 125, /*power*/  55, /*travel_min*/ 550, /*travel_max*/ 9999, /*speed_min*/ 700 };
     TestRobotRange( &lift, &head );
-  } else { //ROBOT3,PACKOUT
-    //lift travel ~200-220 in each direction
-    //head travel ~540-560 in each direction
-    robot_range_t lift = { /*power*/  45, /*travel_min*/ 170, /*travel_max*/  300, /*speed_min*/ 550 };
-    robot_range_t head = { /*power*/  50, /*travel_min*/ 480, /*travel_max*/  650, /*speed_min*/ 700 };
+  } else {
+    //lift: travel 190-200, speed 580-1520
+    //head: travel 545-555, speed 900-1230
+    robot_range_t lift = { /*NN*/  85, /*power*/  65, /*travel_min*/ 170, /*travel_max*/  230, /*speed_min*/ 400 };
+    robot_range_t head = { /*NN*/ 125, /*power*/  60, /*travel_min*/ 520, /*travel_max*/  590, /*speed_min*/ 700 };
     TestRobotRange( &lift, &head );
   }
   
-  /*/ROBOT1 sample log test results
-  LIFT range test. power 75
-  HEAD range test. power 100
-  LIFT POS start:-2024 passive:-2024 delta:0
-  LIFT UP  speed:+2557 avg:+2387 travel:+514
-  LIFT DN  speed:-2569 avg:-2454 travel:-448
-  HEAD POS start:-1738 passive:-1738 delta:0
-  HEAD UP  speed:+3063 avg:+2710 travel:+864
-  HEAD DN  speed:-2983 avg:-2807 travel:-798
-  LIFT range test. power 45
-  HEAD range test. power 50
-  LIFT POS start:-2180 passive:-2180 delta:0
-  LIFT UP  speed:+1489 avg:+1407 travel:+590
-  LIFT DN  speed:-1530 avg:-1451 travel:-576
-  HEAD POS start:-1838 passive:-1838 delta:0
-  HEAD UP  speed:+1098 avg:+1057 travel:+660
-  HEAD DN  speed:-1117 avg:-1091 travel:-652 */
-  
-  /*/ROBOT3 sample log test results
-  LIFT range test. power 75
-  HEAD range test. power 100
-  LIFT POS start:-26 passive:-2 delta:-24
-  LIFT UP  speed:+1869 avg:+1607 travel:+211
-  LIFT DN  speed:-1975 avg:-1819 travel:-214
-  HEAD POS start:-356 passive:-341 delta:-15
-  HEAD UP  speed:+2680 avg:+2393 travel:+545
-  HEAD DN  speed:-2865 avg:-2495 travel:-556
-  LIFT range test. power 45
-  HEAD range test. power 50
-  LIFT POS start:-27 passive:0 delta:-27
-  LIFT UP  speed:+794 avg:+774 travel:+200
-  LIFT DN  speed:-1187 avg:-1147 travel:-216
-  HEAD POS start:-358 passive:-340 delta:-18
-  HEAD UP  speed:+1001 avg:+857 travel:+522
-  HEAD DN  speed:-1095 avg:-1067 travel:-544 */
+  #endif
 }
 
 void EmrChecks(void)
 {
   //Make sure previous tests have passed
-  if( g_fixmode == FIXMODE_ROBOT3 ) {
+  if( IS_FIXMODE_ROBOT3() ) {
     //no previous. first fixture with head attached
   }
-  if( g_fixmode == FIXMODE_PACKOUT ) {
+  if( IS_FIXMODE_PACKOUT() && !IS_FIXMODE_OFFLINE() ) {
     uint32_t ppReady  = rcomGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
     uint32_t ppPassed = rcomGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
     if( ppReady != 1 || ppPassed != 1 ) {
@@ -697,24 +820,58 @@ void EmrChecks(void)
     }
   }
   
-  //requrie retest on all downstream fixtures after rework
-  if( g_fixmode == FIXMODE_ROBOT3 ) {
+  //require retest on all downstream fixtures after rework
+  if( IS_FIXMODE_ROBOT3() && !IS_FIXMODE_OFFLINE() ) {
     rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 0 );
     rcomSmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), 0 );
     rcomSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 0 );
   }
-  if( g_fixmode == FIXMODE_PACKOUT ) {
-    //will throw error if Robit has been packed out
+  if( IS_FIXMODE_PACKOUT() && !IS_FIXMODE_OFFLINE() ) {
+    //will throw error if Ribbit has been packed out
     rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 0 );
   }
 }
 
 void EmrUpdate(void)
 {
-  if( g_fixmode == FIXMODE_ROBOT3 ) {
+  if( IS_FIXMODE_ROBOT3() && !IS_FIXMODE_OFFLINE() )
+  {
+    #define FLOAT2U32(f)    ( *((uint32_t*)(&(f))) )
+    #define U32FLOAT(u)     ( *((float*)&(u)) )
+    
+    //manual adjustments for playpen touch sensor error thresholds
+    rcomSmr( EMR_FIELD_OFS(playpenTouchSensorMinValid), 500 ); //default 500
+    rcomSmr( EMR_FIELD_OFS(playpenTouchSensorMaxValid), 700 ); //default 700
+    float rangeThres = 12.1f; //default 11.0
+    rcomSmr( EMR_FIELD_OFS(playpenTouchSensorRangeThresh), FLOAT2U32(rangeThres) );
+    float stdDevThres = 3.1f; //default 1.8
+    rcomSmr( EMR_FIELD_OFS(playpenTouchSensorStdDevThresh), FLOAT2U32(stdDevThres) );
+    
+    //disable some playpen errors
+    const uint32_t PlaypenTestMask = 0 //from clad/src/clad/types/factoryTestTypes.clad
+      //| 0x00000001  //BackpackElectricalError
+      //| 0x00000002  //UnexpectedTouchDetectedError 
+      //| 0x00000004  //NoisyTouchSensorError
+      //| 0x00000008  //CubeRadioError
+      | 0x00000010  //WifiScanError
+    ;
+    rcomSmr( EMR_FIELD_OFS(playpenTestDisableMask), PlaypenTestMask );
     rcomSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 1 );
+    
+    //readback for log
+    uint32_t playpenTouchSensorMinValid     = rcomGmr( EMR_FIELD_OFS(playpenTouchSensorMinValid) );
+    uint32_t playpenTouchSensorMaxValid     = rcomGmr( EMR_FIELD_OFS(playpenTouchSensorMaxValid) );
+    uint32_t playpenTouchSensorRangeThresh  = rcomGmr( EMR_FIELD_OFS(playpenTouchSensorRangeThresh) );
+    uint32_t playpenTouchSensorStdDevThresh = rcomGmr( EMR_FIELD_OFS(playpenTouchSensorStdDevThresh) );
+    uint32_t playpenTestDisableMask         = rcomGmr( EMR_FIELD_OFS(playpenTestDisableMask) );
+    ConsolePrintf("EMR[%u] playpenTouchSensorMinValid:%u\n", EMR_FIELD_OFS(playpenTouchSensorMinValid), playpenTouchSensorMinValid);
+    ConsolePrintf("EMR[%u] playpenTouchSensorMaxValid:%u\n", EMR_FIELD_OFS(playpenTouchSensorMaxValid), playpenTouchSensorMaxValid);
+    ConsolePrintf("EMR[%u] playpenTouchSensorRangeThresh :%f\n", EMR_FIELD_OFS(playpenTouchSensorRangeThresh), U32FLOAT(playpenTouchSensorRangeThresh));
+    ConsolePrintf("EMR[%u] playpenTouchSensorStdDevThresh:%f\n", EMR_FIELD_OFS(playpenTouchSensorStdDevThresh), U32FLOAT(playpenTouchSensorStdDevThresh));
+    ConsolePrintf("EMR[%u] playpenTestDisableMask:%08x\n", EMR_FIELD_OFS(playpenTestDisableMask), playpenTestDisableMask);
   }
-  if( g_fixmode == FIXMODE_PACKOUT ) {
+  if( IS_FIXMODE_PACKOUT() && !IS_FIXMODE_OFFLINE() ) {
+    rcomSmr( EMR_FIELD_OFS(PACKED_OUT_DATE), flexnfo.packoutdate );
     rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 1 );
   }
 }
@@ -722,10 +879,48 @@ void EmrUpdate(void)
 void RobotPowerDown(void)
 {
   ConsolePrintf("robot power down\n");
-  rcomPwr(RCOM_PWR_OFF);
   
-  Contacts::powerOn(); //immdediately turn on power to prevent rebooting
-  cleanup_preserve_vext = 1; //leave power on for removal detection (no cleanup pwr cycle)
+  if( !IS_FIXMODE_ROBOT1() )
+  {
+    rcomPwr(RCOM_PWR_OFF);
+    Contacts::powerOn(); //immdediately turn on power to prevent rebooting
+    cleanup_preserve_vext = 1; //leave power on for removal detection (no cleanup pwr cycle)
+    
+    /*/DEBUG:
+    ConsolePrintf("delay for manual powerdown check. press a key to skip\n");
+    uint32_t Tstart = Timer::get();
+    while( ConsoleReadChar() > -1 );
+    while( Timer::elapsedUs(Tstart) < 10*1000*1000 ) { if( ConsoleReadChar() > -1 ) break; }
+    //-*/
+  }
+  else
+  {
+    Contacts::powerOn(); //turn on power to prevent rebooting
+    cleanup_preserve_vext = 1; //leave power on for removal detection (no cleanup pwr cycle)
+    Timer::delayMs(SYSCON_CHG_PWR_DELAY_MS+100); //wait for charger to kick in (known state)
+    
+    rcomPwr(RCOM_PWR_OFF);
+    
+    //wait for syscon to turn off head power
+    int spine_mv, cnt = 0;
+    uint32_t Tstart = Timer::get();
+    do {
+      rcomPwr(RCOM_PWR_OFF, RCOM_PRINT_LEVEL_NONE);
+      spine_mv = Meter::getVoltageMv(PWR_DUTVDD,5);
+      cnt = spine_mv < 250 ? cnt+1 : 0;
+    } while( cnt < 4 && Timer::elapsedUs(Tstart) < 2.5*1000*1000 );
+    
+    ConsolePrintf("spine off voltage %imV\n", spine_mv);
+    if( spine_mv > 250 )
+      throw ERROR_BODY_CANNOT_POWER_OFF;
+    
+    /*/DEBUG
+    ConsolePrintf("Power Off Debug:\n");
+    for(int wait=5; wait >0; wait--) {
+      ConsolePrintf("%is spine_mv=%i VEXT=%s\n", wait, Meter::getVoltageMv(PWR_DUTVDD,5), Contacts::powerIsOn()?"on":"off");
+      Timer::delayMs(1000);
+    }//-*/
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -760,8 +955,9 @@ static void led_manage_(int reset, int frame_period, int printlvl)
   static uint32_t Tframe=0, idx=0, last_idx=0;
   
   if( reset & 1 ) {
-    for(int x=0; x < (g_fixmode==FIXMODE_ROBOT1 ? 10 : 1); x++)
-      rcomLed( (uint8_t*)leds[0], printlvl );
+    int resetCnt = IS_FIXMODE_ROBOT1() ? 10 : 1;
+    for(int x=0; x < resetCnt; x++)
+      rcomLed( (uint8_t*)leds[0], !x ? printlvl : RCOM_PRINT_LEVEL_NONE );
     Tframe=0, idx=0, last_idx=0;
     return;
   }
@@ -773,7 +969,7 @@ static void led_manage_(int reset, int frame_period, int printlvl)
   
   if( idx != last_idx ) //new frame
     rcomLed( (uint8_t*)leds[idx], printlvl );
-  else if( g_fixmode == FIXMODE_ROBOT1 ) //spine requires packet spamming
+  else if( IS_FIXMODE_ROBOT1() ) //spine requires packet spamming
     rcomLed( (uint8_t*)leds[idx], RCOM_PRINT_LEVEL_NONE );
   
   last_idx = idx;
@@ -810,7 +1006,7 @@ static void btn_sample_(int *press_cnt, int *release_cnt)
 
 void TestRobotButton(void)
 {
-  led_manage_(1); //reset leds
+  led_manage_(1, 250*1000, RCOM_PRINT_LEVEL_CMD); //reset leds
   
   ConsolePrintf("Waiting for button...\n");
   
@@ -930,7 +1126,7 @@ int m_Recharge( uint16_t max_charge_time_s, uint16_t bat_limit_mv, uint16_t i_do
   
   Contacts::setModeRx();
   Timer::delayMs(500); //let battery voltage settle
-  int batt_mv = robot_get_batt_mv(0); //get initial battery level
+  int batt_mv = robot_get_batt_mv(); //get initial battery level
   
   uint32_t Tstart = Timer::get();
   while( bat_limit_mv == 0 || batt_mv < bat_limit_mv )
@@ -943,7 +1139,7 @@ int m_Recharge( uint16_t max_charge_time_s, uint16_t bat_limit_mv, uint16_t i_do
     ConsolePrintf("total charge time: %ds\n", Timer::elapsedUs(Tstart)/1000000 );
     Contacts::setModeRx();
     Timer::delayMs(500); //let battery voltage settle
-    batt_mv = robot_get_batt_mv(0);
+    batt_mv = robot_get_batt_mv();
     
     //charge loop detected robot removal or charge completion?
     if( chgStat != RECHARGE_STATUS_TIMEOUT )
@@ -982,14 +1178,10 @@ void Recharge(void)
 extern void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv );
 static void ChargeTest(void)
 {
-  RobotChargeTest( 425, 4100 ); //test charging circuit
-  
-  //check battery voltage
-  flexnfo.bat_mv = robot_get_batt_mv( &flexnfo.bat_raw );
-  if( flexnfo.bat_mv < 3000 )
-    throw ERROR_BAT_UNDERVOLT;
-  //if( flexnfo.bat_mv > 4100 )
-  //  throw ERROR_BAT_OVERVOLT;
+  if( IS_FIXMODE_ROBOT1() )
+    RobotChargeTest( 425, 4000 ); //test charging circuit
+  else
+    RobotChargeTest( 425, 4100 ); //test charging circuit
 }
 
 //Test charging circuit by verifying current draw
@@ -1002,7 +1194,7 @@ void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
   
   Contacts::setModeRx(); //switch to comm mode
   Timer::delayMs(500); //let battery voltage settle
-  int batt_mv = robot_get_batt_mv(0); //get initial battery level
+  int batt_mv = robot_get_batt_mv(); //get initial battery level
   
   //Turn on charging power
   Board::powerOn(PWR_VEXT,0);
@@ -1049,14 +1241,14 @@ void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
       break;
     
     //error out quickly if robot removed from charge base
-    if ((offContact = current_ma < PRESENT_CURRENT_MA ? offContact + 1 : 0) > 5) {
+    if ((offContact = current_ma < PRESENT_CURRENT_MA ? offContact + 1 : 0) > 20) {
       CHARGE_TEST_DEBUG( ConsolePrintf("\n"); );
       ConsolePrintf("robot off charger\n");
       throw ERROR_BAT_CHARGER;
     }
     
     //keep an eye on output voltage from crappy power supplies
-    const int undervolt = 4700, overvolt = 5300;
+    const int undervolt = 4750, overvolt = 5300;
     if( voltage_mv < undervolt || voltage_mv > overvolt ) {
       ConsolePrintf("bad voltage: %u\n", voltage_mv );
       throw voltage_mv < undervolt ? ERROR_OUTPUT_VOLTAGE_LOW : ERROR_OUTPUT_VOLTAGE_HIGH;
@@ -1065,7 +1257,7 @@ void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
   
   Contacts::setModeRx(); //switch to comm mode
   Timer::delayMs(500); //let battery voltage settle
-  batt_mv = robot_get_batt_mv(0); //get final battery level
+  batt_mv = robot_get_batt_mv(); //get final battery level
   
   ConsolePrintf("charge-current-ma,%d,sample-cnt,%d\r\n", avg, avgCnt);
   ConsolePrintf("charge-current-dbg,avgMax,%d,%d,iMax,%d,%d\r\n", avgMax, avgMaxTime, iMax, iMaxTime);
@@ -1082,6 +1274,25 @@ void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
 //                  Flex Flow
 //-----------------------------------------------------------------------------
 
+static time_t getRtc_(void)
+{
+  time_t now = fixtureGetTime();
+  bool valid = fixtureTimeIsValid();
+  ConsolePrintf("rtc,%i,%010u,%s\n", valid, now, fixtureTimeStr(now) );
+  
+  if( !valid ) {
+    ConsolePrintf("---- ERROR_INVALID_RTC ----\n");
+    if( g_isReleaseBuild && /*IS_FIXMODE_PACKOUT() &&*/ !IS_FIXMODE_OFFLINE() )
+      throw ERROR_INVALID_RTC;
+  }
+  
+  return now;
+}
+
+void TestRobotRtcValid(void) {
+  getRtc_(); //print and error check
+}
+
 char* const logbuf = (char*)app_global_buffer;
 const int logbufsize = APP_GLOBAL_BUF_SIZE;
 STATIC_ASSERT( APP_GLOBAL_BUF_SIZE >= (1024 + 4096) , log_buffer_size_check );
@@ -1091,8 +1302,28 @@ static void RobotLogCollect(void)
   int ofs = 0;
   for( int i=0; i<numlogs; i++ )
   {
+    int len = 0;
+    flexnfo.log[i] = NULL;
+    flexnfo.loglen[i] = 0;
+    
     //ConsolePrintf("reading robot log%u:\n", i);
-    int len = rcomRlg(i, &logbuf[ofs], logbufsize-1-ofs);
+    error_t e = ERROR_OK;
+    try { len = rcomRlg(i, &logbuf[ofs], logbufsize-1-ofs); } catch(int err) { e=err; len=0; }
+    
+    //DEBUG
+    if( e != ERROR_OK && !g_isReleaseBuild ) {
+      ConsolePrintf("LOG READ ERROR: %i -- press a key to approve\n", e);
+      if( e == ERROR_ROBOT_MISSING_LOGFILE )
+        ConsolePrintf("ERROR_ROBOT_MISSING_LOGFILE\n");
+      while( ConsoleReadChar() > -1 );
+      uint32_t Tstart = Timer::get();
+      while( Timer::elapsedUs(Tstart) < 3*1000*1000 ) {
+        if( ConsoleReadChar() > -1 ) { e=ERROR_OK; break; }
+      }
+    }//-*/
+    
+    if( e != ERROR_OK )
+      throw e;
     
     if( len > 0 ) {
       logbuf[ofs+len] = '\0'; //null terminate
@@ -1112,14 +1343,7 @@ static void RobotLogCollect(void)
 
 static void RobotFlexFlowPackoutReport(void)
 {
-  //XXX validate nfo
-  if( !flexnfo.esn || flexnfo.esn == 0xFFFFffff || !flexnfo.bsv.ein[0] || flexnfo.bsv.ein[0] == 0xFFFFffff ) //|| !flexnfo.bat_mv ) 
-  {
-    ConsolePrintf("BAD_ARG: PackoutReport() esn=%08x ein=%08x bat_mv=%i\n", flexnfo.esn, flexnfo.bsv.ein[0], flexnfo.bat_mv);
-    throw ERROR_BAD_ARG;
-  }
-  //if( !flexnfo.packoutdate )
-  //  throw ERROR_BAD_ARG;
+  flexnfo.packoutdate = getRtc_(); //get current clock (+error check)
   
   //dump collected robot logs
   for( int i=0; i<numlogs; i++ ) {
@@ -1134,7 +1358,7 @@ static void RobotFlexFlowPackoutReport(void)
     FLEXFLOW::printf("esn %08x\n", flexnfo.esn );
     FLEXFLOW::printf("hwver %u\n", flexnfo.hwver );
     FLEXFLOW::printf("model %u\n", flexnfo.model );
-    FLEXFLOW::printf("packout-date %08x\n", flexnfo.packoutdate );
+    FLEXFLOW::printf("packout-date %010u %s", flexnfo.packoutdate, ctime(&flexnfo.packoutdate) );
     
     robot_bsv_t* bsv = &flexnfo.bsv;
     FLEXFLOW::printf("body-ein %08x %08x %08x %08x\n", bsv->ein[0], bsv->ein[1], bsv->ein[2], bsv->ein[3] );
@@ -1150,16 +1374,177 @@ static void RobotFlexFlowPackoutReport(void)
     FLEXFLOW::printf("vbat %imV %i\n", flexnfo.bat_mv, flexnfo.bat_raw);
   }
   FLEXFLOW::printf("</flex>\n");
+  
+  //validate required stuffs
+  bool valid_head_esn = !( flexnfo.esn==0 || flexnfo.esn==0xFFFFffff || (flexnfo.esn&0xFFF00000)==0 );
+  if( !valid_head_esn )
+    throw ERROR_ROBOT_INVALID_ESN;
+  
+  bool valid_body_ein = !( flexnfo.bsv.ein[0]==0 || flexnfo.bsv.ein[0]==0xFFFFffff || (flexnfo.bsv.ein[0]&0xFFF00000)==0 );
+  if( !valid_body_ein ) {
+    ConsolePrintf("--- ERROR_ROBOT_INVALID_BODY_EIN ---\n");
+    if( g_isReleaseBuild )
+      throw ERROR_ROBOT_INVALID_BODY_EIN;
+  }
+  
+  //sanity check known logs
+  for( int i=0; i<numlogs; i++ ) {
+    int len_min = i==0 ? 750 : 250; //0=playpen (~1450 bytes), 1=cloud (~445 bytes)
+    if( !flexnfo.log[i] || flexnfo.loglen[i] < len_min ) {
+      ConsolePrintf("--- ERROR_ROBOT_BAD_LOGFILE[%i] len %i ---\n", i, flexnfo.loglen[i] );
+      if( g_isReleaseBuild )
+        throw ERROR_ROBOT_BAD_LOGFILE;
+    }
+  }
+  
+  //DEBUG check
+  if( !flexnfo.bat_mv && !g_isReleaseBuild ) {
+    ConsolePrintf("----------\nBAD_ARG: PackoutReport() esn=%08x ein=%08x bat_mv=%i\n----------\n", flexnfo.esn, flexnfo.bsv.ein[0], flexnfo.bat_mv);
+    throw ERROR_BAD_ARG;
+  }
 }
 
-void SadBeep(void) {
-  rcomEng(RCOM_ENG_IDX_SOUND, RCOM_ENG_SOUND_DAT0_TONE_BEEP, 200 /*volume*/);
-  Timer::delayMs(750); //wait for sound to finish
+//-----------------------------------------------------------------------------
+//                  Other
+//-----------------------------------------------------------------------------
+
+static void BatteryCheck(void)
+{
+  const int VBAT_MV_MINIMUM = 3700;
+  const int VBAT_MV_MAXIMUM = 4050;
+  
+  ConsolePrintf("battery check\n");
+  Contacts::setModeRx(); //disable charge power
+  Timer::delayMs(500);  //wait for battery voltage to settle
+  
+  flexnfo.bat_mv = robot_get_batt_mv( &flexnfo.bat_raw );
+  if( flexnfo.bat_mv < VBAT_MV_MINIMUM )
+    throw ERROR_BAT_UNDERVOLT;
+  
+  if( IS_FIXMODE_PACKOUT() ) {
+    if( flexnfo.bat_mv > VBAT_MV_MAXIMUM )
+      throw ERROR_BAT_OVERVOLT;
+  }
 }
 
-void TurkeysDone(void) {
-  rcomEng(RCOM_ENG_IDX_SOUND, RCOM_ENG_SOUND_DAT0_TONE_BELL, 127 /*volume*/);
-  Timer::delayMs(750); //wait for sound to finish
+void EngPlaySound(uint8_t select, uint8_t volume=255, int delayms=750);
+void EngPlaySound(uint8_t select, uint8_t volume, int delayms) {
+  rcomEng(RCOM_ENG_IDX_SOUND, select, volume);
+  Timer::delayMs(delayms); //wait for sound to finish
+}
+
+void SadBeep(void) { EngPlaySound(RCOM_ENG_SOUND_DAT0_TONE_BEEP); }
+void TurkeysDone(void) { EngPlaySound(RCOM_ENG_SOUND_DAT0_TONE_BELL); }
+
+void SoundLoop(void)
+{
+  int offContact = 0;
+  while( ConsoleReadChar() > -1 );
+  
+  while(1)
+  {
+    Contacts::setModeRx();
+    Timer::delayMs(10);
+    
+    //play sound
+    if( g_fixmode == FIXMODE_SOUND1 )
+      EngPlaySound(RCOM_ENG_SOUND_DAT0_TONE_BEEP, 255); //SadBeep();
+    else if( g_fixmode == FIXMODE_SOUND2 )
+      EngPlaySound(RCOM_ENG_SOUND_DAT0_TONE_BELL, 255); //TurkeysDone();
+    
+    //robot detect requires power draw
+    Contacts::powerOn();
+    uint32_t Twait = Timer::get();
+    while( Timer::elapsedUs(Twait) < (750+SYSCON_CHG_PWR_DELAY_MS)*1000 )
+    {
+      int current_ma = Meter::getCurrentMa(PWR_VEXT,6);
+      int voltage_mv = Meter::getVoltageMv(PWR_VEXT,4);
+      
+      //error out quickly if robot removed from charge base
+      if ((offContact = current_ma < PRESENT_CURRENT_MA ? offContact + 1 : 0) > 5) {
+        ConsolePrintf("robot off charger\n");
+        break;
+      }
+    }
+    
+    if( ConsoleReadChar() > -1 ) break;
+  }
+}
+
+void LogDownload(void)
+{
+  int nerrs=0;
+  
+  //download until robot runs out of logs...
+  for( int i=0; true ; i++ )
+  {
+    FLEXFLOW::printf("************************ log%i ************************\n", i);
+    
+    error_t e = ERROR_OK; int len=0;
+    int printlvl = RCOM_PRINT_LEVEL_ALL; //RCOM_PRINT_LEVEL_CMD | RCOM_PRINT_LEVEL_RSP;
+    try { len = rcomRlg(i, &logbuf[0], logbufsize-1, printlvl); } catch(int err) { e=err; len=0; }
+    
+    //DEBUG
+    if( e != ERROR_OK && e != ERROR_ROBOT_MISSING_LOGFILE ) {
+      ConsolePrintf("LOG READ ERROR: %i -- press a key to approve\n", e);
+      while( ConsoleReadChar() > -1 );
+      uint32_t Tstart = Timer::get();
+      while( Timer::elapsedUs(Tstart) < 3*1000*1000 ) {
+        if( ConsoleReadChar() > -1 ) { e=ERROR_OK; break; }
+      }
+      if( e != ERROR_OK )
+        throw e;
+    }//-*/
+    
+    if( len > 0 ) {
+      logbuf[len] = '\0'; //null terminate
+      FLEXFLOW::printf("<flex> log logdl_%08x_log%u.log\n", flexnfo.esn, i);
+      FLEXFLOW::write( e==ERROR_OK && len>0 ? logbuf : "not found");
+      FLEXFLOW::printf("\n</flex>\n");
+    }
+    
+    if( !(e==ERROR_OK && len>0) ) {
+      if( ++nerrs >= 1 && i>1 ) //always attempt log0+log1
+        break;
+    }
+  }
+}
+
+void SweatinToTheOldies(void)
+{
+  const int batt_mv_cutoff=3600;
+  int batt_mv=9999;
+  
+  while(1)
+  {
+    //feel the burn
+    try {
+      int8_t treadPwrL=100; int8_t treadPwrR=100; int8_t liftPwr=70; int8_t headPwr=70;
+      int printlvl = RCOM_PRINT_LEVEL_CMD; // | RCOM_PRINT_LEVEL_NFO; // RCOM_PRINT_LEVEL_DAT | RCOM_PRINT_LEVEL_RSP
+      rcomMot(120, RCOM_SENSOR_MOT_LEFT,   treadPwrL, -treadPwrR,  liftPwr, -headPwr, printlvl);
+      rcomMot(120, RCOM_SENSOR_MOT_RIGHT, -treadPwrL,  treadPwrR, -liftPwr,  headPwr, printlvl);
+    } catch(...) {
+    }
+    
+    //Check battery voltage
+    Contacts::setModeRx();
+    Timer::delayMs(50); //let battery voltage settle
+    batt_mv = robot_get_batt_mv(0, true, RCOM_PRINT_LEVEL_NONE);
+    if( batt_mv <= batt_mv_cutoff )
+      break;
+    //-*/
+    
+    //test for robot removal
+    Contacts::powerOn();
+    //Timer::delayMs(SYSCON_CHG_PWR_DELAY_MS); //wait for charger to kick in
+    int current_ma = Meter::getCurrentMa(PWR_VEXT,4);//6);
+    ConsolePrintf("current = %imA\n", current_ma);
+    //int voltage_mv = Meter::getVoltageMv(PWR_VEXT,4);
+    if( current_ma < PRESENT_CURRENT_MA )
+      break;
+    //-*/
+  }
+
 }
 
 //-----------------------------------------------------------------------------
@@ -1190,12 +1575,13 @@ TestFunction* TestRobot1GetTests(void) {
     TestRobotDetectSpine,
     TestRobotButton,
     TestRobotInfo,
+    BatteryCheck, //sensor/motors may act strange if battery is low
     TestRobotSensors,
     //DEBUG_TestRobotLeds,
     TestRobotTreads,
     TestRobotRange,
     ChargeTest,
-    //RobotPowerDown,
+    RobotPowerDown,
     NULL,
   };
   return m_tests;
@@ -1206,10 +1592,12 @@ TestFunction* TestRobot2GetTests(void) {
     //TestRobotButton,
     TestRobotInfo,
     //DBG_test_emr,
+    //BatteryCheck,
     //TestRobotSensors,
     //TestRobotTreads,
     TestRobotRange,
     //ChargeTest,
+    BatteryCheck,
     //TurkeysDone,
     NULL,
   };
@@ -1221,6 +1609,7 @@ TestFunction* TestRobot3GetTests(void) {
     TestRobotButton,
     TestRobotInfo,
     EmrChecks, //check previous test results and reset status flags
+    BatteryCheck, //sensor/motors may act strange if battery is low
     TestRobotSensors,
     TestRobotTreads,
     TestRobotRange,
@@ -1234,18 +1623,20 @@ TestFunction* TestRobot3GetTests(void) {
 
 TestFunction* TestRobotPackoutGetTests(void) { 
   static TestFunction m_tests[] = {
-    TestRobotButton,
     TestRobotInfo,
+    TestRobotRtcValid,
     EmrChecks, //check previous test results and reset status flags
+    BatteryCheck, //sensor/motors may act strange if battery is low
     TestRobotSensors,
     TestRobotTreads,
     TestRobotRange,
     ChargeTest,
+    BatteryCheck,
     RobotLogCollect,
     SadBeep, //eng sound cmd only works before packout flag set
+    RobotFlexFlowPackoutReport, //final report and error checks
     EmrUpdate, //set packout flag, timestamp
     RobotPowerDown,
-    RobotFlexFlowPackoutReport,
     NULL,
   };
   return m_tests;
@@ -1263,6 +1654,34 @@ TestFunction* TestRobotRechargeGetTests(void) {
   static TestFunction m_tests[] = {
     TestRobotInfo,
     Recharge,
+    NULL,
+  };
+  return m_tests;
+}
+
+TestFunction* TestRobotSoundGetTests(void) {
+  static TestFunction m_tests[] = {
+    //TestRobotInfo,
+    SoundLoop,
+    NULL,
+  };
+  return m_tests;
+}
+
+TestFunction* TestRobotLogDownloadTests(void) {
+  static TestFunction m_tests[] = {
+    TestRobotInfo,
+    LogDownload,
+    NULL,
+  };
+  return m_tests;
+}
+
+TestFunction* TestRobotGymGetTests(void)
+{
+  static TestFunction m_tests[] = {
+    TestRobotInfo,
+    SweatinToTheOldies,
     NULL,
   };
   return m_tests;
