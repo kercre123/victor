@@ -155,11 +155,13 @@ procloop:
 				var stream chipper.Stream
 				var chipperConn *chipper.Conn
 				var err error
+				sessionID := uuid.New().String()[:16]
 				ctxTime := util.TimeFuncMs(func() {
 					opts := platformOpts
 					if jwtToken != "" {
 						opts = append(opts, chipper.WithAccessToken(jwtToken))
 					}
+					opts = append(opts, chipper.WithSessionID(sessionID))
 					chipperConn, err = chipper.NewConn(ChipperURL, ChipperSecret, opts...)
 					if err != nil {
 						log.Println("Error getting chipper connection:", err)
@@ -172,7 +174,6 @@ procloop:
 							Bitrate:    66 * 1024,
 							Complexity: 0,
 							FrameSize:  60},
-						SessionID: uuid.New().String()[:16],
 						SaveAudio: p.opts.saveAudio,
 					}
 					if mode == cloud.StreamType_KnowledgeGraph {
@@ -214,8 +215,8 @@ procloop:
 				p.writeResponse(cloud.NewMessageWithStreamOpen(&cloud.Void{}))
 				ctx = p.newVoiceContext(chipperConn, stream, cloudChan)
 
-				logVerbose("Received hotword event", serverMode, "created context in", int(ctxTime),
-					"ms (token", int(tokenTime), "ms)")
+				logVerbose("Received hotword event", serverMode, "created session", sessionID, "in",
+					int(ctxTime), "ms (token", int(tokenTime), "ms)")
 
 			case cloud.MessageTag_DebugFile:
 				p.writeResponse(msg.msg)

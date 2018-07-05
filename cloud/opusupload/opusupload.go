@@ -17,7 +17,8 @@ func main() {
 	flag.Parse()
 
 	fmt.Println("Connecting")
-	conn, err := chipper.NewConn(cloudproc.ChipperURL, cloudproc.ChipperSecret)
+	conn, err := chipper.NewConn(cloudproc.ChipperURL, cloudproc.ChipperSecret,
+		chipper.WithSessionID(uuid.New().String()[:16]))
 	if err != nil {
 		fmt.Println("Error starting chipper:", err)
 		return
@@ -28,7 +29,7 @@ func main() {
 		StreamOpts: chipper.StreamOpts{
 			CompressOpts: chipper.CompressOpts{
 				PreEncoded: true},
-			SessionID: uuid.New().String()[:16]}}
+		}}
 	if *ms {
 		opts.Handler = pb.IntentService_BING_LUIS
 	}
