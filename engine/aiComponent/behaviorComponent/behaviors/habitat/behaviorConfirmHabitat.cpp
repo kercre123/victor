@@ -61,12 +61,12 @@ namespace
     BEHAVIOR_ID(ExploringVoiceCommand),
     BEHAVIOR_ID(Observing),
   };
-  
+
   static const char* kOnTreadsTimeCondition = "onTreadsTimeCondition";
-  
+
   // minimum time between playing react to white animations
   static const float kReactToWhiteAnimCooldown_sec = 10.0f;
-  
+
   // bit flag representation for each cliff sensor
   static const uint8_t kFL = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_FL));
   static const uint8_t kFR = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_FR));
@@ -88,12 +88,12 @@ BehaviorConfirmHabitat::BehaviorConfirmHabitat(const Json::Value& config)
     EngineToGameTag::RobotOffTreadsStateChanged,
     EngineToGameTag::UnexpectedMovement
   }});
-  
+
   BlockWorldFilter* chargerFilter = new BlockWorldFilter();
   chargerFilter->AddAllowedFamily(ObjectFamily::Charger);
   chargerFilter->AddAllowedType(ObjectType::Charger_Basic);
   _chargerFilter.reset(chargerFilter);
-  
+
   DEV_ASSERT(config.isMember(kOnTreadsTimeCondition), "ConfirmHabitat.Ctor.OnTreadsTimeConditionUndefined");
   _iConfig.onTreadsTimeCondition = BEIConditionFactory::CreateBEICondition(config[kOnTreadsTimeCondition], GetDebugLabel());
   ANKI_VERIFY(_iConfig.onTreadsTimeCondition != nullptr,
@@ -128,21 +128,21 @@ bool BehaviorConfirmHabitat::WantsToBeActivatedBehavior() const
   //
   // conditions defined in json:
   // + robot has been putdown at least 30 seconds ago
-  
+
   const bool onChargerPlatform = GetBEI().GetRobotInfo().IsOnChargerPlatform();
-  
+
   const auto& uic = GetBEI().GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
   auto activeUserIntentPtr = uic.GetActiveUserIntent();
   const bool intentsPendingOrActive = uic.IsAnyUserIntentPending() || (activeUserIntentPtr != nullptr);
 
   const auto& habitatDetector = GetBEI().GetHabitatDetectorComponent();
   HabitatBeliefState hbelief  = habitatDetector.GetHabitatBeliefState();
-  
+
   bool onTreadsTimeValid = false;
   if(_iConfig.onTreadsTimeCondition != nullptr) {
     onTreadsTimeValid = _iConfig.onTreadsTimeCondition->AreConditionsMet(GetBEI());
   }
-  
+
   if(!onChargerPlatform && !intentsPendingOrActive && hbelief == HabitatBeliefState::Unknown && onTreadsTimeValid) {
     // it is costly to iterate the behavior stack
     // therefore we check the interrupt condition last
@@ -182,7 +182,7 @@ void BehaviorConfirmHabitat::OnBehaviorActivated()
 {
   PRINT_NAMED_INFO("ConfirmHabitat.Activated","");
   GetBEI().GetCliffSensorComponent().EnableStopOnWhite(true);
-  
+
   // in a previous tick where we evaluated WantsToBeActivated
   // as true, the reason could either be:
   // - the robot has met all the conditions to enter ConfirmHabitat
@@ -220,15 +220,15 @@ void BehaviorConfirmHabitat::BehaviorUpdate()
   if(!IsActivated()) {
     return;
   }
-  
+
   if(IsControlDelegated()) {
     return;
   }
-  
+
   const auto& habitatDetector = GetBEI().GetHabitatDetectorComponent();
   std::unique_ptr<IActionRunner> actionToExecute;
   RobotCompletedActionCallback actionCallback = nullptr;
-  
+
   // play the reaction to discovering we are in the habitat, if we are in it
   if(habitatDetector.GetHabitatBeliefState() == HabitatBeliefState::InHabitat) {
     TransitionToReactToHabitat();
@@ -237,9 +237,9 @@ void BehaviorConfirmHabitat::BehaviorUpdate()
     CancelSelf();
     return;
   }
-  
-  
-  
+
+
+
   switch(_dVars._phase) {
     case ConfirmHabitatPhase::Initial:
     {
@@ -322,7 +322,7 @@ void BehaviorConfirmHabitat::BehaviorUpdate()
           TransitionToCliffAlignWhite();
           break;
         }
-        
+
         case HabitatLineRelPose::WhiteBL: // deliberate fallthrough
         case HabitatLineRelPose::WhiteBR:
         {
@@ -333,7 +333,7 @@ void BehaviorConfirmHabitat::BehaviorUpdate()
           TransitionToTurnBackupForward(angle, 0, 30);
           break;
         }
-          
+
         case HabitatLineRelPose::WhiteFLFR:
         {
           // desired state: do nothing
@@ -371,7 +371,7 @@ void BehaviorConfirmHabitat::DelegateActionHelper(IActionRunner* action, RobotCo
     slowProfile.speed_mmps = 40;
     slowProfile.pointTurnSpeed_rad_per_sec = 1.0;
     GetBEI().GetRobotInfo().GetPathComponent().SetCustomMotionProfileForAction(slowProfile, action);
-    
+
     // add an action callback to print the result if we didn't assign one
     if(callback == nullptr) {
       callback = [](const ExternalInterface::RobotCompletedAction& msg)->void {
@@ -403,7 +403,7 @@ void BehaviorConfirmHabitat::TransitionToReactToHabitat()
 void BehaviorConfirmHabitat::TransitionToLocalizeCharger()
 {
   PRINT_NAMED_INFO("ConfirmHabitat.TransitionToLocalizeCharger","");
-  
+
   IActionRunner* action = new CompoundActionSequential(std::list<IActionRunner*>{
     new PanAndTiltAction(0, DEG_TO_RAD(5), false, true),    // viewing angle for seeing the charger
     new TurnInPlaceAction(M_PI_4,false),                    // sweep some degrees to look
@@ -411,7 +411,7 @@ void BehaviorConfirmHabitat::TransitionToLocalizeCharger()
       return GetChargerIfObserved() != nullptr;
     }, 0.5f) // max time to wait for a charger marker
   });
-  
+
   // callback checks:
   // + if the charger was SEEN, then we can drive to a position based on the charger's pose
   // + if the charger was NOT seen, then we will keep looking, until we've swept 360 degrees
@@ -423,7 +423,7 @@ void BehaviorConfirmHabitat::TransitionToLocalizeCharger()
       PRINT_NAMED_WARNING("ConfirmHabitat.TransitionToLocalizeCharger.FailedTurnAndCheck","");
     }
   };
-  
+
   DelegateActionHelper(action, std::move(callback));
 }
 
@@ -437,7 +437,7 @@ void BehaviorConfirmHabitat::TransitionToCliffAlignWhite()
       case ActionResult::CLIFF_ALIGN_FAILED:
       {
         PRINT_NAMED_INFO("ConfirmHabitat.TransitionToCliffAlignWhite.Failed","");
-        
+
         const auto& habitatDetector = GetBEI().GetHabitatDetectorComponent();
         auto linePose = habitatDetector.GetHabitatLineRelPose();
         switch(linePose) {
@@ -481,30 +481,30 @@ void BehaviorConfirmHabitat::TransitionToReactToWhite(HabitatLineRelPose lineRel
     case HabitatLineRelPose::WhiteFR: { bitFlags = kFR; break; }
     case HabitatLineRelPose::WhiteBL: { bitFlags = kBL; break; }
     case HabitatLineRelPose::WhiteBR: { bitFlags = kBR; break; }
-    
+
     case HabitatLineRelPose::WhiteFLFR: { bitFlags = kFL | kFR; break; }
     case HabitatLineRelPose::WhiteFLBL: { bitFlags = kFL | kBL; break; }
     case HabitatLineRelPose::WhiteFRBR: { bitFlags = kFR | kBR; break; }
     case HabitatLineRelPose::WhiteBLBR: { bitFlags = kBL | kBR; break; }
-    
+
     default:
     {
       bitFlags = 0;
       break;
     }
   }
-  
+
   if(bitFlags == 0) {
     PRINT_NAMED_WARNING("ConfirmHabitat.TransitionReactToWhite.NoWhiteDetected","");
   }
-  
+
   TransitionToReactToWhite(bitFlags);
 }
 
 void BehaviorConfirmHabitat::TransitionToReactToWhite(uint8_t whiteDetectedFlags)
 {
   PRINT_NAMED_INFO("ConfirmHabitat.TransitionToWhiteReactionAnim", "%d", (int)whiteDetectedFlags);
-  
+
   const float currTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const bool doWhiteReactionAnim = currTime_sec > _dVars._nextWhiteReactionAnimTime_sec;
 
@@ -525,6 +525,7 @@ void BehaviorConfirmHabitat::TransitionToReactToWhite(uint8_t whiteDetectedFlags
         // of his head, reacting to back cliffs does not
         // read properly to the user. Do nothing here.
         PRINT_NAMED_INFO("ConfirmHabitat.TransitionToReactToWhite.BackCliffDetectingWhiteNoReact","");
+        delete action;
         return;
       }
       default:
@@ -536,10 +537,10 @@ void BehaviorConfirmHabitat::TransitionToReactToWhite(uint8_t whiteDetectedFlags
       }
     }
     action->AddAction(new TriggerLiftSafeAnimationAction(animToPlay, 1, true, (u8)AnimTrackFlag::BODY_TRACK));
-    
+
     _dVars._nextWhiteReactionAnimTime_sec = currTime_sec + kReactToWhiteAnimCooldown_sec;
   }
-  
+
   // insert a short wait to observe the line
   // when we receive a StopOnWhite message, there is a 1-2 tick lag for engine to register
   // that it is seeing a white line beneath it. This is used as a buffer for engine to
@@ -548,7 +549,7 @@ void BehaviorConfirmHabitat::TransitionToReactToWhite(uint8_t whiteDetectedFlags
                       return robot.GetHabitatDetectorComponent().GetHabitatLineRelPose() != HabitatLineRelPose::Invalid &&
                              robot.GetHabitatDetectorComponent().GetHabitatLineRelPose() != HabitatLineRelPose::AllGrey;
                     },0.1f));
-  
+
   DelegateActionHelper(action, nullptr);
 }
 
@@ -585,20 +586,20 @@ void BehaviorConfirmHabitat::TransitionToTurnBackupForward(f32 angle, int backDi
       return true;
     })
   });
-  
+
   if(!FLT_NEAR(angle, 0.0f)) {
     action->AddAction(new TurnInPlaceAction(angle, false));
   }
-  
+
   if(backDist_mm != 0) {
     action->AddAction(new DriveStraightAction(backDist_mm, 100));
   }
-  
+
   action->AddAction(new WaitForLambdaAction([](Robot& robot)->bool {
       robot.GetComponentPtr<CliffSensorComponent>()->EnableStopOnWhite(true);
       return true;
     }));
-  
+
   if(forwardDist_mm != 0) {
     action->AddAction(new DriveStraightAction(forwardDist_mm,  50));
   }
@@ -608,7 +609,7 @@ void BehaviorConfirmHabitat::TransitionToTurnBackupForward(f32 angle, int backDi
 void BehaviorConfirmHabitat::TransitionToRandomWalk()
 {
   int index = GetRNG().RandInt(3);
-  
+
   const Pose3d& robotPose = GetBEI().GetRobotInfo().GetPose();
   Pose3d desiredOffsetPose;
   if(index == 0) {
@@ -637,12 +638,12 @@ void BehaviorConfirmHabitat::TransitionToSeekLineFromCharger()
     _dVars._phase = ConfirmHabitatPhase::RandomWalk;
     return;
   }
-  
+
   // the origin of the charger located at the tip of the ramp
   // with the x-axis oriented towards the label
   const Pose3d& chargerPose = charger->GetPose();
   PRINT_NAMED_INFO("ConfirmHabitat.SeekLineFromCharger","");
-  
+
   // these poses are computed relative to the charger
   // the values selected define a position slightly beyond
   // the white line of the habitat, assuming the charger
@@ -664,13 +665,13 @@ void BehaviorConfirmHabitat::TransitionToSeekLineFromCharger()
 
     Pose3d(     M_PI_F, Z_AXIS_3D(), Vec3f(-325,    0, 0)),
   };
-  
+
   int index = GetRNG().RandInt((int)offsetList.size());
   Pose3d desiredOffsetPose = offsetList[index];
   desiredOffsetPose.SetParent(chargerPose);
   IActionRunner* action = new DriveToPoseAction(desiredOffsetPose, false);
   DelegateActionHelper(action, nullptr);
-  
+
 }
 
 const ObservableObject* BehaviorConfirmHabitat::GetChargerIfObserved() const
