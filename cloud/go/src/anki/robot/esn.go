@@ -4,6 +4,10 @@ import (
 	"encoding/binary"
 	"fmt"
 	"os"
+	"os/exec"
+	"strings"
+
+	"google.golang.org/grpc"
 )
 
 // ReadESN returns the ESN of a robot by reading it from
@@ -21,4 +25,37 @@ func ReadESN() (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("%08x", numEsn), nil
+}
+
+// OSVersion returns a string representation of the OS version, like:
+// v0.10.1252d_os0.10.1252d-79470cd-201806271633
+func OSVersion() string {
+	runCmd := func(cmd string, params ...string) string {
+		buf, err := exec.Command(cmd, params...).Output()
+		if err != nil {
+			return ""
+		}
+		return strings.TrimSpace(string(buf))
+	}
+
+	propArgs := []string{"ro.build.fingerprint", "ro.revision",
+		"ro.anki.os_build_comment", "ro.build.version.release"}
+
+	for _, arg := range propArgs {
+		if str := runCmd("getprop", arg); str != "" {
+			return str
+		}
+	}
+	return ""
+}
+
+// OSUserAgent returns a grpc.DialOption that will set a user agent with the
+// string: "Victor/<os_version>", if the OS version can be obtained. Otherwise,
+// nil is returned.
+func OSUserAgent() grpc.DialOption {
+	ver := OSVersion()
+	if ver == "" {
+		return nil
+	}
+	return grpc.WithUserAgent("Victor/" + ver)
 }
