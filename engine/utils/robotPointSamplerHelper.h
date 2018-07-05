@@ -4,7 +4,7 @@
  * Author: ross
  * Created: 2018 Jun 29
  *
- * Description: Helper class for rejection sampling 2D positions that abide by some constraints related to the robot
+ * Description: Helper class for rejection sampling 2D positions and polygons that abide by some constraints related to the robot
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -67,7 +67,34 @@ private:
   Util::RandomGenerator* _rng = nullptr;
   float _maxCliffDistSq = 0.0f;
 };
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+class RejectIfInRange : public Anki::Util::RejectionSamplingCondition<Point2f>
+{
+public:
+  RejectIfInRange( float minDist_mm, float maxDist_mm );
+
+  // Note: Calling either of these functions will overwrite any existing
+  // "other positions"
+  void SetOtherPosition(const Point2f& pos);
+  void SetOtherPositions(const std::vector<Point2f>& pos);
+
+  // Will reject the sampledPos (i.e. return false) if samplePos is in range
+  // of _any_ of the "other positions".
+  //
+  // For example, say you want to reject any sampled point that is near a cube.
+  // Call SetOtherPositions() with a vector of all the known cube positions. Then
+  // call operator() with your sample position, and it will return false if it
+  // is too close to any cube.
+  //
+  // Note: Requires SetOtherPosition(s) to be set before calling this.
+  virtual bool operator()( const Point2f& sampledPos ) override;
+private:
+  std::vector<Point2f> _otherPos;
+  const float _minDistSq;
+  const float _maxDistSq;
+};
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class RejectIfNotInRange : public Anki::Util::RejectionSamplingCondition<Point2f>
 {

@@ -113,4 +113,97 @@ TEST( TestRobotPosSampler, DistributionsCorrect )
   
 }
 
+TEST( TestRobotPosSampler, RejectIfInRange )
+{
+  using namespace Anki;
+  
+  Anki::Util::RandomGenerator rng(123);
+  const float minDist_mm = 0.5f;
+  const float maxDist_mm = 1.0f;
+  
+  std::vector<Point2f> otherPts;
+  otherPts.emplace_back(0.f, 0.f); // (0, 0)
+  otherPts.emplace_back(5.f, 0.f); // (5, 0)
+  otherPts.emplace_back(0.f, 5.f); // (0, 5)
+  
+  RobotPointSamplerHelper::RejectIfInRange rejectIfInRange(minDist_mm, maxDist_mm);
+  rejectIfInRange.SetOtherPositions(otherPts);
+  
+  // Generate some test samples which are definitely in range or out of range
+  const size_t nSamples = 100;
+  std::vector<Point2f> inRangeSamples;
+  std::vector<Point2f> notInRangeSamples;
+  for (const auto otherPt : otherPts) {
+    std::generate_n(std::back_inserter(inRangeSamples), nSamples,
+                    [&](){
+                      return otherPt + RobotPointSamplerHelper::SamplePointInAnnulus(rng, minDist_mm, maxDist_mm);
+                    });
+    std::generate_n(std::back_inserter(notInRangeSamples), nSamples,
+                    [&](){
+                      return otherPt + RobotPointSamplerHelper::SamplePointInAnnulus(rng, 0.f, 0.5f);
+                    });
+    std::generate_n(std::back_inserter(notInRangeSamples), nSamples,
+                    [&](){
+                      return otherPt + RobotPointSamplerHelper::SamplePointInAnnulus(rng, 1.f, 4.f);
+                    });
+  }
+  
+  // none of the "other points" themselves should not be in range since we specified a
+  // nonzero minDist_mm
+  notInRangeSamples.insert(notInRangeSamples.end(),
+                           otherPts.begin(),
+                           otherPts.end());
+  
+  for (const auto& pt : inRangeSamples) {
+    EXPECT_FALSE(rejectIfInRange(pt)) << "Sample point " << pt << "unexpectedly returned true for rejectIfInRange";
+  }
+  for (const auto& pt : notInRangeSamples) {
+    EXPECT_TRUE(rejectIfInRange(pt)) << "Sample point " << pt << "unexpectedly returned false for rejectIfInRange";
+  }
+}
+
+
+TEST( TestRobotPosSampler, RejectIfNotInRange )
+{
+  using namespace Anki;
+  
+  Anki::Util::RandomGenerator rng(123);
+  const float minDist_mm = 0.5f;
+  const float maxDist_mm = 1.0f;
+ 
+  RobotPointSamplerHelper::RejectIfNotInRange rejectIfNotInRange(minDist_mm, maxDist_mm);
+  
+  Point2f otherPt(5.f, 5.f);
+  rejectIfNotInRange.SetOtherPosition(otherPt);
+  
+  // Generate some test samples which are definitely in range or out of range
+  const size_t nSamples = 100;
+  std::vector<Point2f> inRangeSamples;
+  std::vector<Point2f> notInRangeSamples;
+  
+  std::generate_n(std::back_inserter(inRangeSamples), nSamples,
+                  [&](){
+                    return otherPt + RobotPointSamplerHelper::SamplePointInAnnulus(rng, minDist_mm, maxDist_mm);
+                  });
+  std::generate_n(std::back_inserter(notInRangeSamples), nSamples,
+                  [&](){
+                    return otherPt + RobotPointSamplerHelper::SamplePointInAnnulus(rng, 0.f, 0.5f);
+                  });
+  std::generate_n(std::back_inserter(notInRangeSamples), nSamples,
+                  [&](){
+                    return otherPt + RobotPointSamplerHelper::SamplePointInAnnulus(rng, 1.f, 10.f);
+                  });
+  
+  // the "other point" itself should not be in range since we specified a nonzero minDist_mm
+  notInRangeSamples.push_back(otherPt);
+  
+  for (const auto& pt : inRangeSamples) {
+    EXPECT_TRUE(rejectIfNotInRange(pt)) << "Sample point " << pt << "unexpectedly returned false for rejectIfNotInRange";
+  }
+  for (const auto& pt : notInRangeSamples) {
+    EXPECT_FALSE(rejectIfNotInRange(pt)) << "Sample point " << pt << "unexpectedly returned true for rejectIfNotInRange";
+  }
+  
+}
+
 // todo: more tests

@@ -140,6 +140,44 @@ bool RejectIfWouldCrossCliff::operator()( const Point2f& sampledPos )
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RejectIfInRange::RejectIfInRange( float minDist_mm, float maxDist_mm )
+: _minDistSq( minDist_mm * minDist_mm )
+, _maxDistSq( maxDist_mm * maxDist_mm )
+{
+  DEV_ASSERT(!std::signbit(minDist_mm) &&
+             !std::signbit(maxDist_mm) &&
+             (maxDist_mm > minDist_mm),
+             "RejectIfInRange.Constructor.InvalidArgs");
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RejectIfInRange::SetOtherPosition(const Point2f& pos)
+{
+  SetOtherPositions({{pos}});
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RejectIfInRange::SetOtherPositions(const std::vector<Point2f>& pos)
+{
+  _otherPos.clear();
+  _otherPos = pos;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool RejectIfInRange::operator()( const Point2f& sampledPos )
+{
+  DEV_ASSERT(!_otherPos.empty(), "RejectIfInRange.CallOperator.OtherPosUninitialized" );
+  auto inRangePred = [this, &sampledPos](const Point2f& otherPos) {
+    const float distSq = (otherPos - sampledPos).LengthSq();
+    return (distSq >= _minDistSq) && (distSq <= _maxDistSq);
+  };
+  const bool reject = std::any_of(_otherPos.begin(),
+                                  _otherPos.end(),
+                                  inRangePred);
+  return !reject;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RejectIfNotInRange::RejectIfNotInRange( float minDist_mm, float maxDist_mm )
   : _minDistSq( minDist_mm * minDist_mm )
   , _maxDistSq( maxDist_mm * maxDist_mm )
