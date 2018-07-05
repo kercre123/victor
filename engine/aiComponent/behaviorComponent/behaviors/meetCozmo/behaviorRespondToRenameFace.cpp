@@ -12,7 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorRespondToRenameFace.h"
 
-#include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/sayTextAction.h"
 #include "engine/events/ankiEvent.h"
@@ -34,7 +34,7 @@ BehaviorRespondToRenameFace::BehaviorRespondToRenameFace(const Json::Value& conf
 , _name("")
 , _faceID(Vision::UnknownFaceID)
 {
-  SubscribeToTags({GameToEngineTag::UpdateEnrolledFaceByID});
+  SubscribeToTags({EngineToGameTag::RobotRenamedEnrolledFace});
   
   const std::string& animTriggerString = config.get(JsonKeys::AnimationTriggerKey, "MeetCozmoRenameFaceSayName").asString();
   _animTrigger = AnimationTriggerFromString(animTriggerString.c_str());
@@ -51,11 +51,11 @@ void BehaviorRespondToRenameFace::GetBehaviorJsonKeys(std::set<const char*>& exp
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRespondToRenameFace::HandleWhileInScopeButNotActivated(const GameToEngineEvent& event)
+void BehaviorRespondToRenameFace::HandleWhileInScopeButNotActivated(const EngineToGameEvent& event)
 {
   
-  auto & msg = event.GetData().Get_UpdateEnrolledFaceByID();
-  _name   = msg.newName;
+  auto & msg = event.GetData().Get_RobotRenamedEnrolledFace();
+  _name   = msg.name;
   _faceID = msg.faceID;
 }
 
