@@ -32,6 +32,7 @@
 #include "tensorflow/core/util/memmapped_file_system.h"
 #include "tensorflow/core/util/stat_summarizer.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/quoteMacro.h"
 #include "util/logging/logging.h"
@@ -42,6 +43,10 @@
 namespace Anki {
 
 #define LOG_CHANNEL "NeuralNets"
+
+namespace {
+  CONSOLE_VAR(bool,   kNeuralNetTensorflow_SaveImages,  "Vision.NeuralNetTensorflow", true);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // TODO: Could use JsonTools:: instead of most of these...
@@ -671,7 +676,7 @@ Result NeuralNetModel::GetDetectedObjects(const std::vector<tensorflow::Tensor>&
 }
 
 Result NeuralNetModel::GetSalientPointsFromResponseMap(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp,
-                                                     std::list<Vision::SalientPoint>& salientPoints)
+                                                       std::list<Vision::SalientPoint>& salientPoints)
 {
   tensorflow::Tensor squoozenTensor(tensorflow::DT_FLOAT,
                                     tensorflow::TensorShape({_params.inputWidth, _params.inputHeight, 2}));
@@ -695,18 +700,92 @@ Result NeuralNetModel::GetSalientPointsFromResponseMap(const tensorflow::Tensor&
   split(responseMap, channels);
 
   double min(0), max(0);
+  const int objectnessIndex = 1;
   cv::Point2i minLoc(0, 0), maxLoc(0, 0);
-  cv::minMaxLoc(channels[0], &min, &max, &minLoc, &maxLoc);
+  // TODO make sure 1 is the correct objectness channel
+  cv::minMaxLoc(channels[objectnessIndex], &min, &max, &minLoc, &maxLoc);
   // TODO we can put in connected component based filtering later, right now
   // let's just return the max value location... that normally isn't filtered out anyway
+
+  if (kNeuralNetTensorflow_SaveImages)
+  {
+    const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath,
+      "objectnessResponseMap", std::to_string(timestamp) + ".png"});
+
+    cv::Mat imageToSave;
+    // TODO this is resulted in a bug and almost drove me insane
+    // fix this before it happens again
+    channels[objectnessIndex].copyTo(imageToSave);
+    // TODO make 25 a constant at least
+    // If max is negative (not sure why this is happening) invert the
+    // whole thing otherwise we don't care about elements less than zero
+    if (max < 0)
+    {
+      PRINT_NAMED_INFO("NeuralNetModel.GetSalientPointsFromResponseMap.FlippingSignOfImage", "");
+      imageToSave *= -1;
+      max *= -1;
+    }
+    float correction = 170.f / max;
+    PRINT_NAMED_INFO("NeuralNetModel.GetSalientPointsFromResponseMap.Scaling",
+                     "correction scale %.2f", correction);
+    imageToSave *= correction;
+    imageToSave.convertTo(imageToSave, CV_8UC1);
+    
+
+    // Write timestamp to file
+    const std::string salientPointFilename = Util::FileUtils::FullFilePath({_cachePath,
+      "objectnessResponseMap", std::to_string(timestamp) + ".txt"});
+    PRINT_NAMED_INFO("NeuralNetModel.GetSalientPointsFromResponseMap.WriteDebugOutput",
+                     "Response map filename: %s, salient point filename %s",
+                     saveFilename.c_str(), salientPointFilename.c_str());
+
+    cv::imwrite(saveFilename, imageToSave);
+
+    if (true)
+    {
+      cv::Mat oppositeImageToSave;
+      // save opposite response map as well
+      const std::string oppositeSaveFilename = Util::FileUtils::FullFilePath({_cachePath,
+        "objectnessResponseMap", std::to_string(timestamp) + "_opposite.png"});
+      
+      double oppositeMin(0), oppositeMax(0);
+      const int oppositeObjecntessIndex = objectnessIndex == 0 ? 1 : 0;
+      cv::Point2i oppositeMinLoc(0, 0), oppositeMaxLoc(0, 0);
+      cv::minMaxLoc(channels[oppositeObjecntessIndex], &oppositeMin, &oppositeMax,
+                    &oppositeMinLoc, &oppositeMaxLoc);
+      channels[oppositeObjecntessIndex].copyTo(oppositeImageToSave);
+      if (oppositeMax < 0)
+      {
+        PRINT_NAMED_INFO("NeuralNetModel.GetSalientPointsFromResponseMap.FlippingSignOfImageOpposite", "");
+        oppositeImageToSave *= -1;
+        oppositeMax *= -1;
+      }
+      float oppositeCorrection = 170.f / oppositeMax;
+      PRINT_NAMED_INFO("NeuralNetModel.GetSalientPointsFromResponseMap.ScalingOpposite",
+                       "correction scale %.2f", oppositeCorrection);
+      oppositeImageToSave *= oppositeCorrection;
+      oppositeImageToSave.convertTo(oppositeImageToSave, CV_8UC1);
+      cv::imwrite(oppositeSaveFilename, oppositeImageToSave);
+    }
+
+    const std::string outputX = std::to_string(maxLoc.x);
+    const std::string outputY = std::to_string(maxLoc.y);
+    std::ofstream salientPointFile(salientPointFilename);
+    salientPointFile << outputX + " " + outputY;
+    salientPointFile.close();
+  }
+
 
   // Create a SalientPoint to return for each connected component (skipping background component 0)
   const float widthScale  = 1.f / static_cast<float>(responseMap.cols);
   const float heightScale = 1.f / static_cast<float>(responseMap.rows);
 
-  // TODO better names?
+  // TODO better names? and correcting for column major format?
   float x = Util::Clamp(maxLoc.x * widthScale,  0.f, 1.f);
   float y = Util::Clamp(maxLoc.y * heightScale, 0.f, 1.f);
+  PRINT_NAMED_INFO("NeuralNetModel.GetLocalizedBinaryClassification.NormalizedPoint",
+                   "Objectness point x: %.2f y: %.2f with min %.2f max %.2f",
+                   x, y, min, max);
 
   // TODO actually fill in correct values here this is just a place holder
   const Poly2f shape( Rectangle<float>(0.f, 0.f, 1.f, 1.f) );
