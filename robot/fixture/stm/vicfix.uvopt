@@ -203,10 +203,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>2</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>78</TopLine>
-      <CurrentLine>79</CurrentLine>
+      <TopLine>11</TopLine>
+      <CurrentLine>22</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\app\app.cpp</PathWithFileName>
       <FilenameWithoutPath>app.cpp</FilenameWithoutPath>
@@ -253,7 +253,7 @@
       <Focus>0</Focus>
       <ColumnNumber>107</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>381</TopLine>
+      <TopLine>375</TopLine>
       <CurrentLine>382</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\app\fixture.cpp</PathWithFileName>
@@ -285,8 +285,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>871</TopLine>
-      <CurrentLine>875</CurrentLine>
+      <TopLine>855</TopLine>
+      <CurrentLine>874</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\app\robotcom.cpp</PathWithFileName>
       <FilenameWithoutPath>robotcom.cpp</FilenameWithoutPath>
@@ -373,7 +373,7 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>314</TopLine>
+      <TopLine>320</TopLine>
       <CurrentLine>342</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\tests\TestCube.cpp</PathWithFileName>
@@ -387,10 +387,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>1</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>1604</TopLine>
-      <CurrentLine>1605</CurrentLine>
+      <TopLine>722</TopLine>
+      <CurrentLine>756</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\tests\TestRobot.cpp</PathWithFileName>
       <FilenameWithoutPath>TestRobot.cpp</FilenameWithoutPath>
