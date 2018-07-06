@@ -831,7 +831,12 @@ int camera_frame_acquire(struct anki_camera_handle *camera, anki_camera_frame_t 
 
   // Get the most recent frame slot
   uint32_t slot = atomic_load(&header->locks.write_idx);
-
+  if(slot >= ANKI_CAMERA_MAX_FRAME_COUNT)
+  {
+    loge("%s: invalid write_idx %u", __func__, slot);
+    return -1;
+  }
+  
   // lock slot for reading
   uint32_t lock_status = 0;
   _Atomic uint32_t *slot_lock = &(header->locks.frame_locks[slot]);
@@ -851,6 +856,13 @@ int camera_frame_acquire(struct anki_camera_handle *camera, anki_camera_frame_t 
   const uint32_t frame_offset = header->frame_offsets[slot];
   anki_camera_frame_t *frame = (anki_camera_frame_t *)&data[frame_offset];
 
+  if(frame == NULL)
+  {
+    loge("%s: frame is null", __func__);
+    rc = -1;
+    goto UNLOCK;
+  }
+  
   if (frame->frame_id == CAMERA_HANDLE_P(camera)->current_frame_id) {
     //logw("%s: duplicate frame: %u\n", __func__, frame->frame_id);
     rc = -1;

@@ -204,12 +204,13 @@ void BehaviorTakeAPhotoCoordinator::CaptureCurrentImage()
     return robot.GetPhotographyManager().WasPhotoTaken(photoHandle);
   }, kTakingPhotoTimeout_sec);
   
-  DelegateIfInControl(waitAction, [photoHandle](ActionResult result) {
+  DelegateIfInControl(waitAction, [this, photoHandle](ActionResult result) {
     if(ActionResult::SUCCESS == result) {
       PRINT_CH_INFO("Behaviors", "BehaviorTakeAPhotoCoordinator.CaptureCurrentImage.PhotoWasTaken",
                     "Handle: %zu", photoHandle);
     }
     else {
+      GetBEI().GetPhotographyManager().CancelTakePhoto();
       PRINT_NAMED_ERROR("BehaviorTakeAPhotoCoordinator.CaptureCurrentImage.TakePhotoTimedOut",
                         "Handle: %zu Timeout: %.2fsec",
                         photoHandle, kTakingPhotoTimeout_sec);

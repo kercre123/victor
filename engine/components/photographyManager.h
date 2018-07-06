@@ -74,6 +74,7 @@ public:
   // If called when not ready to take photo (see above check), returns 0
   using PhotoHandle = size_t;
   PhotoHandle TakePhoto();
+  void CancelTakePhoto();
 
   // Returns true once the corresponding TakePhoto() call has completed
   bool WasPhotoTaken(const PhotoHandle handle) const;

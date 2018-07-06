@@ -278,6 +278,15 @@ PhotographyManager::PhotoHandle PhotographyManager::TakePhoto()
   return _lastRequestedPhotoHandle;
 }
 
+void PhotographyManager::CancelTakePhoto()
+{
+  if(_state == State::WaitingForTakePhoto)
+  {
+    LOG_INFO("PhotographyManager.CancelTakePhoto.SwitchingToIdle", "");
+    _state = State::Idle;
+  }
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void PhotographyManager::SetLastPhotoTimeStamp(TimeStamp_t timestamp)
