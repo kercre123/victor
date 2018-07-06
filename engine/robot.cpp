@@ -104,6 +104,7 @@
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/highgui/highgui.hpp" // For imwrite() in ProcessImage
 
+#include <algorithm>
 #include <fstream>
 #include <regex>
 #include <dirent.h>
@@ -208,6 +209,10 @@ void SayText(ConsoleFunctionContextRef context)
     LOG_ERROR("Robot.TtSCoordinator.NoText", "No text string");
     return;
   }
+  
+  // VIC-4364 Replace `_` with spaces. Hack to allows to use spaces
+  std::string textStr = text;
+  std::replace(textStr.begin(), textStr.end(), '_', ' ');
 
   // Handle processing state
   using TtsProcessingStyle = AudioMetaData::SwitchState::Robot_Vic_External_Processing;
@@ -226,10 +231,10 @@ void SayText(ConsoleFunctionContextRef context)
       break;
   }
 
-  LOG_INFO("Robot.TtSCoordinator", "text(%s) style(%s) duration(%f)",
-           Util::HidePersonallyIdentifiableInfo(text), EnumToString(style), kDurationScalar);
+ LOG_INFO("Robot.TtSCoordinator", "text(%s) style(%s) duration(%f)",
+          Util::HidePersonallyIdentifiableInfo(textStr.c_str()), EnumToString(style), kDurationScalar);
 
-  robot->GetTextToSpeechCoordinator().CreateUtterance(text, UtteranceTriggerType::Immediate, style);
+  robot->GetTextToSpeechCoordinator().CreateUtterance(textStr, UtteranceTriggerType::Immediate, style);
 }
 
 CONSOLE_FUNC(SayText, kTtsCoordinatorPath, const char* text);
