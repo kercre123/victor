@@ -254,6 +254,7 @@ const char* DBG_cmd_substitution(const char *line, int len)
 #define DETECT_CURRENT_MA   100
 #define SYSCON_CHG_PWR_DELAY_MS 250 /*delay from robot's on-charger detect until charging starts*/
 
+#define IS_FIXMODE_ROBOTNFO() ( g_fixmode==FIXMODE_INFO )
 #define IS_FIXMODE_ROBOT1()   ( g_fixmode==FIXMODE_ROBOT1  || g_fixmode==FIXMODE_ROBOT1_OL )
 #define IS_FIXMODE_ROBOT3()   ( g_fixmode==FIXMODE_ROBOT3  || g_fixmode==FIXMODE_ROBOT3_OL )
 #define IS_FIXMODE_PACKOUT()  ( g_fixmode==FIXMODE_PACKOUT || g_fixmode==FIXMODE_PACKOUT_OL )
@@ -398,6 +399,34 @@ void read_robot_info_(void)
     ConsolePrintf("EMR[%u] playpenTestDisableMask:%08x\n", EMR_FIELD_OFS(playpenTestDisableMask), playpenTestDisableMask);
     ConsolePrintf("EMR[%u] packoutCnt:%i\n", EMR_FIELD_OFS(fixture)+EMRF_PACKOUT_CNT, packoutCnt);
     ConsolePrintf("EMR[%u] packoutVbatMv:%i\n", EMR_FIELD_OFS(fixture)+EMRF_PACKOUT_VBAT_MV, packoutVbatMv);
+    
+    //inspect robot3 motor data
+    if( (!g_isReleaseBuild && IS_FIXMODE_ROBOT3() ) || IS_FIXMODE_ROBOTNFO() )
+    {
+      struct {
+        struct {
+          struct { emr_tread_dat_t L; emr_tread_dat_t R; } lo;
+          struct { emr_tread_dat_t L; emr_tread_dat_t R; } hi; 
+        }tread;
+        struct {
+          struct { emr_range_dat_t lift; emr_range_dat_t head; } lo;
+          struct { emr_range_dat_t lift; emr_range_dat_t head; } hi;
+        }range;
+      }dat;
+      
+      //read from emr
+      for(int i=0; i < sizeof(dat)/4; i++)
+        ((uint32_t*)&dat)[i] = rcomGmr( EMR_FIELD_OFS(fixture) + EMRF_ROBOT3_TREAD_L_LO + i );
+      
+      ConsolePrintf("tread LEFT  LO pwr:%i FWD speed:%+i travel:%+i REV speed:%+i travel:%+i\n", dat.tread.lo.L.power, dat.tread.lo.L.fwd.speed, dat.tread.lo.L.fwd.travel, dat.tread.lo.L.rev.speed, dat.tread.lo.L.rev.travel);
+      ConsolePrintf("tread RIGHT LO pwr:%i FWD speed:%+i travel:%+i REV speed:%+i travel:%+i\n", dat.tread.lo.R.power, dat.tread.lo.R.fwd.speed, dat.tread.lo.R.fwd.travel, dat.tread.lo.R.rev.speed, dat.tread.lo.R.rev.travel);
+      ConsolePrintf("tread LEFT  HI pwr:%i FWD speed:%+i travel:%+i REV speed:%+i travel:%+i\n", dat.tread.hi.L.power, dat.tread.hi.L.fwd.speed, dat.tread.hi.L.fwd.travel, dat.tread.hi.L.rev.speed, dat.tread.hi.L.rev.travel);
+      ConsolePrintf("tread RIGHT HI pwr:%i FWD speed:%+i travel:%+i REV speed:%+i travel:%+i\n", dat.tread.hi.R.power, dat.tread.hi.R.fwd.speed, dat.tread.hi.R.fwd.travel, dat.tread.hi.R.rev.speed, dat.tread.hi.R.rev.travel);
+      ConsolePrintf("range LIFT LO pwr:%i NN:%i UP speed:%+i travel:%+i DN speed:%+i travel:%+i\n", dat.range.lo.lift.power, dat.range.lo.lift.NN, dat.range.lo.lift.up.speed, dat.range.lo.lift.up.travel, dat.range.lo.lift.dn.speed, dat.range.lo.lift.dn.travel);
+      ConsolePrintf("range HEAD LO pwr:%i NN:%i UP speed:%+i travel:%+i DN speed:%+i travel:%+i\n", dat.range.lo.head.power, dat.range.lo.head.NN, dat.range.lo.head.up.speed, dat.range.lo.head.up.travel, dat.range.lo.head.dn.speed, dat.range.lo.head.dn.travel);
+      ConsolePrintf("range LIFT HI pwr:%i NN:%i UP speed:%+i travel:%+i DN speed:%+i travel:%+i\n", dat.range.hi.lift.power, dat.range.hi.lift.NN, dat.range.hi.lift.up.speed, dat.range.hi.lift.up.travel, dat.range.hi.lift.dn.speed, dat.range.hi.lift.dn.travel);
+      ConsolePrintf("range HEAD HI pwr:%i NN:%i UP speed:%+i travel:%+i DN speed:%+i travel:%+i\n", dat.range.hi.head.power, dat.range.hi.head.NN, dat.range.hi.head.up.speed, dat.range.hi.head.up.travel, dat.range.hi.head.dn.speed, dat.range.hi.head.dn.travel);
+    }
   }
 }
 
@@ -884,9 +913,13 @@ void EmrChecks(void)
     rcomSmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), 0 );
     rcomSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 0 );
     
-    ConsolePrintf("clear previous test data...\n");
-    for(int i=EMRF_ROBOT3_VBAT_MV; i < EMRF_ROBOT3_RANGE_HEAD_HI+((sizeof(emr_range_dat_t)/4)); i++ )
+    ConsolePrintf("clear previous test data...");
+    for(int i=EMRF_ROBOT3_VBAT_MV; i < EMRF_ROBOT3_RANGE_HEAD_HI+((sizeof(emr_range_dat_t)/4)); i++ ) {
+      if( !g_isReleaseBuild )
+        ConsolePrintf("%i,", EMR_FIELD_OFS(fixture)+i );
       rcomSmr( EMR_FIELD_OFS(fixture)+i, 0);
+    }
+    ConsolePutChar('\n');
   }
   
   if( IS_FIXMODE_PACKOUT() && !IS_FIXMODE_OFFLINE() ) {
