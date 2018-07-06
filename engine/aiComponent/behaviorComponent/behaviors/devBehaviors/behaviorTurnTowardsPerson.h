@@ -44,7 +44,6 @@ private:
   void TransitionToTurnTowardsPoint();
   void TransitionToFinishedTurning();
   void TransitionToCompleted();
-  void BlinkLight(bool on);
 
   enum class State : uint8_t {
     Starting=0,
@@ -65,7 +64,6 @@ private:
     State state;
 
     Vision::SalientPoint lastPersonDetected;
-    bool blinkOn;
     bool hasToStop;
   };
 

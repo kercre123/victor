@@ -34,7 +34,7 @@ protected:
   bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   void GetRequiredVisionModes(std::set<VisionModeRequest>& requiredVisionModes) const override;
 
-  Vision::SalientPointType _targetSalientPoint;
+  Vision::SalientPointType _targetSalientPointType;
 };
 
 } // namespace Anki

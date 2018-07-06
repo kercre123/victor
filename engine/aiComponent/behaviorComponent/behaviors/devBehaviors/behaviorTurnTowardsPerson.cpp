@@ -17,34 +17,12 @@
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionSalientPointDetected.h"
-#include "engine/aiComponent/salientPointsDetectorComponent.h"
-#include "engine/components/backpackLights/backpackLightComponent.h"
+#include "engine/aiComponent/salientPointsComponent.h"
 
 namespace Anki {
 namespace Cozmo {
 
-namespace {
-const BackpackLightAnimation::BackpackAnimation kLightsOn = {
-    .onColors               = {{NamedColors::YELLOW,NamedColors::RED,NamedColors::BLUE}},
-    .offColors              = {{NamedColors::YELLOW,NamedColors::RED,NamedColors::BLUE}},
-    .onPeriod_ms            = {{0,0,0}},
-    .offPeriod_ms           = {{0,0,0}},
-    .transitionOnPeriod_ms  = {{0,0,0}},
-    .transitionOffPeriod_ms = {{0,0,0}},
-    .offset                 = {{0,0,0}}
-};
-
-const BackpackLightAnimation::BackpackAnimation kLightsOff = {
-    .onColors               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
-    .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
-    .onPeriod_ms            = {{0,0,0}},
-    .offPeriod_ms           = {{0,0,0}},
-    .transitionOnPeriod_ms  = {{0,0,0}},
-    .transitionOffPeriod_ms = {{0,0,0}},
-    .offset                 = {{0,0,0}}
-};
-
-}
+#define LOG_CHANNEL "Behaviors"
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorTurnTowardsPerson::InstanceConfig::InstanceConfig(const Json::Value& config)
@@ -62,7 +40,6 @@ BehaviorTurnTowardsPerson::DynamicVariables::DynamicVariables()
 void BehaviorTurnTowardsPerson::DynamicVariables::Reset()
 {
   state = State::Starting;
-  blinkOn = false;
   lastPersonDetected = Vision::SalientPoint();
   hasToStop = false;
 }
@@ -108,29 +85,35 @@ void BehaviorTurnTowardsPerson::GetBehaviorJsonKeys(std::set<const char*>& expec
 void BehaviorTurnTowardsPerson::OnBehaviorActivated()
 {
 
-  // reset dynamic variables
-  _dVars = DynamicVariables();
+  LOG_DEBUG( "BehaviorReactToPersonDetected.OnBehaviorActivated", "I am active!");
 
-  PRINT_CH_DEBUG("Behaviors", "BehaviorReactToPersonDetected.OnBehaviorActivated", "I am active!");
-
-  auto& component = GetBEI().GetAIComponent().GetComponent<SalientPointsDetectorComponent>();
+  auto& component = GetBEI().GetAIComponent().GetComponent<SalientPointsComponent>();
   std::list<Vision::SalientPoint> latestPersons;
 
   //Get all the latest persons
-  component.GetLastPersonDetectedData(latestPersons);
+  component.GetSalientPointSinceTime(latestPersons, Vision::SalientPointType::Person,
+                                     _dVars.lastPersonDetected.timestamp);
 
   if (latestPersons.empty()) {
-    PRINT_NAMED_ERROR("BehaviorReactToPersonDetected.OnBehaviorActivated.NoPersonDetected", ""
-        "Activated but no person available? There's a bug somewhere!");
+    LOG_DEBUG( "BehaviorReactToPersonDetected.OnBehaviorActivated.NoPersonDetected", ""
+        "Activated but no person with a timestamp > %u", _dVars.lastPersonDetected.timestamp);
     _dVars.hasToStop = true;
     return;
   }
 
+  // reset dynamic variables
+  _dVars = DynamicVariables();
+
   // Select the best one
-  // TODO for the moment choose the biggest salient point
+  // Choose the latest one, or the biggest if tie
   auto maxElementIter = std::max_element(latestPersons.begin(), latestPersons.end(),
                                          [](const Vision::SalientPoint& p1, const Vision::SalientPoint& p2) {
-                                           return p1.area_fraction < p2.area_fraction;
+                                           if (p1.timestamp == p2.timestamp) {
+                                             return p1.area_fraction < p2.area_fraction;
+                                           }
+                                           else {
+                                             return  p1.timestamp < p2.timestamp;
+                                           }
                                          }
   );
   _dVars.lastPersonDetected = *maxElementIter;
@@ -148,7 +131,7 @@ void BehaviorTurnTowardsPerson::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTurnTowardsPerson::BehaviorUpdate()
 {
-  PRINT_CH_DEBUG("Behaviors", "BehaviorReactToPersonDetected.BehaviorUpdate", "I am being updated");
+  LOG_DEBUG( "BehaviorReactToPersonDetected.BehaviorUpdate", "I am being updated");
 
   if (_dVars.hasToStop) {
     TransitionToCompleted();
@@ -162,39 +145,34 @@ void BehaviorTurnTowardsPerson::BehaviorUpdate()
   if (motorsMoving) {
     if (_dVars.state != State::Turning) {
       // the robot is moving not because we told it to do so
-
+      LOG_DEBUG( "BehaviorReactToPersonDetected.BehaviorUpdate.Moving",
+                     "Robot is moving but it wasn't me!");
       TransitionToCompleted();
       return;
     }
   }
   if (pickedUp) {
     // definitively stop here
+    LOG_DEBUG( "BehaviorReactToPersonDetected.BehaviorUpdate.PickedUp",
+                   "Robot has been picked up");
     TransitionToCompleted();
     return;
   }
 
   if( ! IsActivated() ) {
-    PRINT_CH_DEBUG("Behaviors", "BehaviorReactToPersonDetected.BehaviorUpdate", "I am actually not active :(");
+    LOG_DEBUG( "BehaviorReactToPersonDetected.BehaviorUpdate", "I am actually not active :(");
     return;
   }
 
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTurnTowardsPerson::BlinkLight(bool on)
-{
-  _dVars.blinkOn = on;
-  GetBEI().GetBackpackLightComponent().SetBackpackAnimation( _dVars.blinkOn ? kLightsOn : kLightsOff );
 }
 
 void BehaviorTurnTowardsPerson::TransitionToTurnTowardsPoint()
 {
   DEBUG_SET_STATE(Turning);
 
-  BlinkLight(true);
   _dVars.state = State::Turning;
 
-  PRINT_CH_INFO("Behaviors", "BehaviorReactToPersonDetected.TransitionToTurnTowardsPoint.TurningInfo",
+  LOG_DEBUG( "BehaviorReactToPersonDetected.TransitionToTurnTowardsPoint.TurningInfo",
                 "Turning towards %f, %f at timestamp %d",
                 _dVars.lastPersonDetected.x_img,
                 _dVars.lastPersonDetected.y_img,
@@ -210,7 +188,7 @@ void BehaviorTurnTowardsPerson::TransitionToFinishedTurning() {
 
   DEBUG_SET_STATE(FinishedTurning);
 
-  PRINT_CH_INFO("Behaviors", "BehaviorReactToPersonDetected.TransitionToFinishedTurning", "Finished turning");
+  LOG_DEBUG( "BehaviorReactToPersonDetected.TransitionToFinishedTurning", "Finished turning");
   _dVars.state = State::FinishedTurning;
 
   // There might be some other actions here, but completing for the moment
@@ -220,11 +198,12 @@ void BehaviorTurnTowardsPerson::TransitionToFinishedTurning() {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTurnTowardsPerson::TransitionToCompleted()
 {
-  DEBUG_SET_STATE(Completed);
+  if (_dVars.state != State::Completed) { // avoid transitioning to complete over and over
+    DEBUG_SET_STATE(Completed);
 
-  BlinkLight(false);
-  // for the moment just stop doing stuff
-  _dVars.state = State::Completed;
+    // for the moment just stop doing stuff
+    _dVars.state = State::Completed;
+  }
 }
 
 } // namespace Cozmo

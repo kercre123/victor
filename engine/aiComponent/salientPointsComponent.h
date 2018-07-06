@@ -10,8 +10,8 @@
  *
  **/
 
-#ifndef __Cozmo_Basestation_BehaviorSystem_ObjectDetectorComponent_H__
-#define __Cozmo_Basestation_BehaviorSystem_ObjectDetectorComponent_H__
+#ifndef __Cozmo_Basestation_BehaviorSystem_SalientPointsComponent_H__
+#define __Cozmo_Basestation_BehaviorSystem_SalientPointsComponent_H__
 
 #include "clad/types/behaviorComponent/postBehaviorSuggestions.h"
 #include "clad/types/objectFamilies.h"
@@ -27,7 +27,8 @@
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 
-#include<list>
+#include <list>
+#include <map>
 
 
 namespace Anki {
@@ -38,9 +39,9 @@ class Robot;
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// SalientPointsDetectorComponent
+// SalientPointsComponent
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class SalientPointsDetectorComponent : public IDependencyManagedComponent<AIComponentID>,
+class SalientPointsComponent : public IDependencyManagedComponent<AIComponentID>,
                                        private Util::noncopyable
 {
 public:
@@ -58,42 +59,24 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // constructor
-  SalientPointsDetectorComponent();
+  SalientPointsComponent();
 
-  ~SalientPointsDetectorComponent() override ;
+  ~SalientPointsComponent() override ;
 
   // IDependencyManagedComponent<AIComponentID> functions
   void UpdateDependent(const AICompMap& dependentComps) override;
   // end IDependencyManagedComponent<AIComponentID> functions
 
-  bool PersonDetected() const;
+  // Get all the SalientPoints of a specific type since a specific timestamp
+  void GetSalientPointSinceTime(std::list<Vision::SalientPoint>& salientPoints,
+                                const Vision::SalientPointType& type, const uint32_t timestamp = 0) const;
 
-  // Remove all the Person salient points from the local container and move them to the new one
-  template <typename Container>
-  void GetLastPersonDetectedData(Container& salientPoints) const {
+  // Returns true wheter a SalientPoint of a spefic type has been seen since a specific timestamp
+  bool SalientPointDetected(const Vision::SalientPointType& type, const uint32_t timestamp = 0) const;
 
-    //Solution adapted from https://stackoverflow.com/a/32155973/1047543
-
-    // partition: all elements that should not be moved come before
-    // (note that the condition is false) all elements that should be moved.
-    // stable_partition maintains relative order in each group
-    auto p = std::stable_partition(_latestSalientPoints.begin(), _latestSalientPoints.end(),
-                                   [](const Vision::SalientPoint& p) {
-                                     return p.salientType != Vision::SalientPointType::Person;
-                                   }
-    );
-    salientPoints.insert(salientPoints.end(), std::make_move_iterator(p),
-                         std::make_move_iterator(_latestSalientPoints.end()));
-    _latestSalientPoints.erase(p, _latestSalientPoints.end());
-  }
-
-  template <typename Container>
-  void AddSalientPoints(const Container& c) {
-    // TODO need a circular buffer here, otherwise the list will keep growing until somebody fetches the data
-    // The Utils::CircularBuffer lacks all the sweet iterators I'm using here
-    _latestSalientPoints.insert(_latestSalientPoints.end(), std::begin(c), std::end(c));
-
-  }
+  // Adds a list of SalientPoint. All the points are stored according to their type. If a specific list of points is
+  // already stored for a type, it will be replaced.
+  void AddSalientPoints(const std::list<Vision::SalientPoint>& c);
 
 private:
 
@@ -101,8 +84,9 @@ private:
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // A list of latest received salient points. Will be overwritten if a new batch arrives
-  mutable std::list<Vision::SalientPoint> _latestSalientPoints; // TODO mutable is temporary for testing
+  // a list of the latest salient points organized per type. The points are replaced every time new ones of the
+  // same type arrive
+  std::map<Vision::SalientPointType, std::list<Vision::SalientPoint>> _salientPoints;
 
   mutable float _timeSinceLastObservation = 0; // TODO this is temporary for testing
 

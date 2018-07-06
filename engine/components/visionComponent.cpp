@@ -12,7 +12,7 @@
  **/
 
 
-#include "engine/aiComponent/salientPointsDetectorComponent.h"
+#include "engine/aiComponent/salientPointsComponent.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/actions/basicActions.h"
 #include "camera/cameraService.h"
@@ -1470,8 +1470,8 @@ namespace Cozmo {
         _salientPointsToDraw.clear();
       }
       
-      // Notify the SalientPointsDetectorComponent that we have a bunch of new detections
-      _robot->GetAIComponent().GetComponent<SalientPointsDetectorComponent>().AddSalientPoints(procResult.salientPoints);
+      // Notify the SalientPointsComponent that we have a bunch of new detections
+      _robot->GetAIComponent().GetComponent<SalientPointsComponent>().AddSalientPoints(procResult.salientPoints);
       for(auto const& salientPoint : procResult.salientPoints)
       {
         _salientPointsToDraw.emplace_back(currentTime_ms, salientPoint);
