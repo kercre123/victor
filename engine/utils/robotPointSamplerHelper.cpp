@@ -161,12 +161,13 @@ void RejectIfInRange::SetOtherPositions(const std::vector<Point2f>& pos)
 {
   _otherPos.clear();
   _otherPos = pos;
+  _setOtherPos = true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool RejectIfInRange::operator()( const Point2f& sampledPos )
 {
-  DEV_ASSERT(!_otherPos.empty(), "RejectIfInRange.CallOperator.OtherPosUninitialized" );
+  DEV_ASSERT(_setOtherPos, "RejectIfInRange.CallOperator.OtherPosUninitialized" );
   auto inRangePred = [this, &sampledPos](const Point2f& otherPos) {
     const float distSq = (otherPos - sampledPos).LengthSq();
     return (distSq >= _minDistSq) && (distSq <= _maxDistSq);

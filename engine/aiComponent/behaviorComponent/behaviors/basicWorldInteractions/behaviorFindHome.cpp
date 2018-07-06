@@ -21,9 +21,18 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/moodSystem/moodManager.h"
+#include "engine/navMap/mapComponent.h"
+#include "engine/navMap/memoryMap/memoryMapTypes.h"
+#include "engine/utils/robotPointSamplerHelper.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
+#include "util/random/randomGenerator.h"
+#include "util/random/randomIndexSampler.h"
+#include "util/random/rejectionSamplerHelper.h"
+
+#include "clad/externalInterface/messageEngineToGame.h"
 
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/utils/timer.h"
 
 #include "util/math/numericCast.h"
@@ -32,14 +41,40 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-const char* kSearchTurnAnimKey                 = "searchTurnAnimTrigger";
-const char* kSearchTurnWaitingForImagesAnimKey = "searchTurnWaitingForImagesAnimTrigger";
-const char* kSearchTurnEndAnimKey              = "searchTurnEndAnimTrigger";
-const char* kMinSearchAngleSweepKey            = "minSearchAngleSweep_deg";
-const char* kMaxSearchTurnsKey                 = "maxSearchTurns";
-const char* kNumSearchesKey                    = "numSearches";
-const char* kMinDrivingDistKey                 = "minDrivingDist_mm";
-const char* kMaxDrivingDistKey                 = "maxDrivingDist_mm";
+  const char* kSearchTurnAnimKey                 = "searchTurnAnimTrigger";
+  const char* kSearchTurnWaitingForImagesAnimKey = "searchTurnWaitingForImagesAnimTrigger";
+  const char* kSearchTurnEndAnimKey              = "searchTurnEndAnimTrigger";
+  const char* kMinSearchAngleSweepKey            = "minSearchAngleSweep_deg";
+  const char* kMaxSearchTurnsKey                 = "maxSearchTurns";
+  const char* kNumSearchesKey                    = "numSearches";
+  const char* kMinDrivingDistKey                 = "minDrivingDist_mm";
+  const char* kMaxDrivingDistKey                 = "maxDrivingDist_mm";
+
+  const float kMinCliffPenaltyDist_mm = 100.0f;
+  const float kMaxCliffPenaltyDist_mm = 600.0f;
+  
+  // When generating new locations from which to search for the charger, new
+  // locations should be at least this far from previously-searched locations.
+  const float kMinDistFromPreviousSearch_mm = 200.f;
+  
+  // After this amount of time since visiting a search location, do not check
+  // if we have previously visited it already.
+  const float kPreviousLocationSearchTimeout_sec = 4*60.f;
+  
+  constexpr MemoryMapTypes::FullContentArray kTypesToBlockSampling =
+  {
+    {MemoryMapTypes::EContentType::Unknown               , false},
+    {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
+    {MemoryMapTypes::EContentType::ClearOfCliff          , false},
+    {MemoryMapTypes::EContentType::ObstacleObservable    , true },
+    {MemoryMapTypes::EContentType::ObstacleCharger       , false },
+    {MemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
+    {MemoryMapTypes::EContentType::ObstacleProx          , true },
+    {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
+    {MemoryMapTypes::EContentType::Cliff                 , true },
+    {MemoryMapTypes::EContentType::InterestingEdge       , true },
+    {MemoryMapTypes::EContentType::NotInterestingEdge    , true }
+  };
 }
 
 
@@ -55,19 +90,28 @@ BehaviorFindHome::InstanceConfig::InstanceConfig(const Json::Value& config, cons
   minDrivingDist_mm       = JsonTools::ParseFloat(config, kMinDrivingDistKey, debugName);
   maxDrivingDist_mm       = JsonTools::ParseFloat(config, kMaxDrivingDistKey, debugName);
   homeFilter              = std::make_unique<BlockWorldFilter>();
+  searchSpacePointEvaluator = std::make_unique<Util::RejectionSamplerHelper<Point2f>>();
+  searchSpacePolyEvaluator  = std::make_unique<Util::RejectionSamplerHelper<Poly2f>>();
+  
+  // Set up block world filter for finding charger object
+  homeFilter->AddAllowedFamily(ObjectFamily::Charger);
+  homeFilter->AddAllowedType(ObjectType::Charger_Basic);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorFindHome::BehaviorFindHome(const Json::Value& config)
 : ICozmoBehavior(config)
+, _iConfig(config, "Behavior" + GetDebugLabel() + ".LoadConfig")
 {
-  const std::string& debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
-  _iConfig = InstanceConfig(config, debugName);
-  
-  // Set up block world filter for finding Home object
-  _iConfig.homeFilter->AddAllowedFamily(ObjectFamily::Charger);
-  _iConfig.homeFilter->AddAllowedType(ObjectType::Charger_Basic);
+  SubscribeToTags({
+    EngineToGameTag::RobotOffTreadsStateChanged,
+  });
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorFindHome::~BehaviorFindHome()
+{
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -86,6 +130,7 @@ void BehaviorFindHome::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) 
   expectedKeys.insert( std::begin(list), std::end(list) );
 } 
 
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorFindHome::WantsToBeActivatedBehavior() const
 {
@@ -95,31 +140,96 @@ bool BehaviorFindHome::WantsToBeActivatedBehavior() const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFindHome::InitBehavior()
+{
+  using namespace RobotPointSamplerHelper;
+  
+  // Set up "in range of previous searches" condition
+  _iConfig.condHandleNearPrevSearch = _iConfig.searchSpacePointEvaluator->AddCondition(
+    std::make_shared<RejectIfInRange>(0.f, kMinDistFromPreviousSearch_mm)
+  );
+  
+  // Set up "would cross cliff" condition
+  _iConfig.condHandleCliffs = _iConfig.searchSpacePointEvaluator->AddCondition(
+    std::make_shared<RejectIfWouldCrossCliff>(kMinCliffPenaltyDist_mm)
+  );
+  _iConfig.condHandleCliffs->SetAcceptanceInterpolant(kMaxCliffPenaltyDist_mm, GetRNG());
+  
+  // Set up nav map condition
+  _iConfig.condHandleCollisions = _iConfig.searchSpacePolyEvaluator->AddCondition(
+    std::make_shared<RejectIfCollidesWithMemoryMap>(kTypesToBlockSampling)
+  );
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFindHome::AlwaysHandleInScope(const EngineToGameEvent& event)
+{
+  switch(event.GetData().GetTag()) {
+    case EngineToGameTag::RobotOffTreadsStateChanged:
+    {
+      const auto currTreadState = event.GetData().Get_RobotOffTreadsStateChanged().treadsState;
+      if (currTreadState != OffTreadsState::OnTreads) {
+        // If we've gotten off of our treads, our "visited locations" will no longer be valid
+        _dVars.persistent.searchedLocations.clear();
+      }
+    }
+    break;
+    default:
+      break;
+  }
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindHome::OnBehaviorActivated()
 {
-  _dVars = DynamicVariables();
-  
+  {
+    const auto persistent = std::move(_dVars.persistent);
+    _dVars = DynamicVariables();
+    _dVars.persistent = std::move(persistent);
+  }
+    
   // If we're carrying a block, we must first put it down
   const auto& robotInfo = GetBEI().GetRobotInfo();
   if (robotInfo.GetCarryingComponent().IsCarryingObject()) {
     // Put down the block. Even if it fails, we still just want
     // to move along in the behavior.
     DelegateIfInControl(new PlaceObjectOnGroundAction(),
-                        &BehaviorFindHome::TransitionToSearchTurn);
+                        &BehaviorFindHome::TransitionToStartSearch);
   } else {
     TransitionToHeadStraight();
   }
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindHome::TransitionToHeadStraight()
 {
   // Move head to look straight ahead in case charger is right in
   // front of us.
   DelegateIfInControl(new MoveHeadToAngleAction(0.f),
                       [this]() {
-                        TransitionToSearchTurn();
+                        TransitionToStartSearch();
                       });
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFindHome::TransitionToStartSearch()
+{
+  // Make sure we haven't already searched this location recently
+  const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
+  const Point2f robotPosition{ robotPose.GetTranslation() };
+  _iConfig.condHandleNearPrevSearch->SetOtherPositions(GetRecentlySearchedLocations());
+  const bool nearPreviousSearch = !_iConfig.condHandleNearPrevSearch->operator()(robotPosition);
+  if (nearPreviousSearch) {
+    PRINT_NAMED_INFO("BehaviorFindHome.TransitionToStartSearch.TooCloseToPreviousSearch",
+                     "We are too close to a previously-searched location, so driving to a new search pose");
+    TransitionToRandomDrive();
+  } else {
+    TransitionToSearchTurn();
+  }
 }
 
 
@@ -139,6 +249,10 @@ void BehaviorFindHome::TransitionToSearchTurn()
                      _dVars.angleSwept_deg,
                      _iConfig.minSearchAngleSweep_deg);
     ++_dVars.numSearchesCompleted;
+    // Record this as a 'searched' location
+    const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
+    _dVars.persistent.searchedLocations[now_sec] = Point2f{robotPose.GetTranslation()};
     TransitionToRandomDrive();
   } else {
     // In high stimulation, just play the search turn animations, but not the
@@ -204,12 +318,12 @@ void BehaviorFindHome::TransitionToRandomDrive()
     return;
   }
   
-  Pose3d randomPose;
-  GetRandomDrivingPose(randomPose);
+  std::vector<Pose3d> potentialSearchPoses;
+  GenerateSearchPoses(potentialSearchPoses);
   
   const bool forceHeadDown = false;
   const Radians angleTol = M_PI_F;    // basically don't care about the angle of arrival
-  auto driveToAction = new DriveToPoseAction(randomPose,
+  auto driveToAction = new DriveToPoseAction(potentialSearchPoses,
                                              forceHeadDown,
                                              DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
                                              angleTol);
@@ -218,10 +332,110 @@ void BehaviorFindHome::TransitionToRandomDrive()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFindHome::GenerateSearchPoses(std::vector<Pose3d>& outPoses)
+{
+  outPoses.clear();
+  
+  const auto& robotInfo = GetBEI().GetRobotInfo();
+  const auto& robotPose = robotInfo.GetPose();
+  const Point2f robotPosition{ robotPose.GetTranslation() };
+  
+  // If we have a charger in the map, first try to drive to a position in front of it to
+  // begin a search. Only do this if we haven't recently visited the charger's location.
+  const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const auto* charger = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose, *_iConfig.homeFilter);
+  if ((charger != nullptr) &&
+      (now_sec > _dVars.persistent.lastVisitedOldChargerTime + kPreviousLocationSearchTimeout_sec)) {
+    Pose3d inFrontOfCharger(0.f, Z_AXIS_3D(), {-150.f,0.f,0.f});
+    inFrontOfCharger.SetParent(charger->GetPose());
+    outPoses.push_back(std::move(inFrontOfCharger));
+    _dVars.persistent.lastVisitedOldChargerTime = now_sec;
+    return;
+  }
+  
+  const int kNumPositionsForSearch = 4; // How many search positions to generate
+  const int kNumAnglesAtPose = 6;       // How many poses at each position to generate
+  outPoses.reserve(kNumPositionsForSearch * kNumAnglesAtPose);
+  
+  const auto* memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
+  DEV_ASSERT( nullptr != memoryMap, "BehaviorFindHome.GenerateSearchPoses.NeedMemoryMap" );
+  
+  // Update cliff positions
+  _iConfig.condHandleCliffs->SetRobotPosition(robotPosition);
+  _iConfig.condHandleCliffs->UpdateCliffs(memoryMap);
+  
+  _iConfig.condHandleNearPrevSearch->SetOtherPositions(GetRecentlySearchedLocations());
+  
+  // Update memory map
+  _iConfig.condHandleCollisions->SetMemoryMap(memoryMap);
+  
+  int numAcceptedPoses = 0;
+  
+  const unsigned int kMaxNumSampleSteps = 50;
+  for( unsigned int cnt=0; cnt<kMaxNumSampleSteps; ++cnt ) {
+    // Sample points centered around current robot position
+    const float r1 = _iConfig.minDrivingDist_mm;
+    const float r2 = _iConfig.maxDrivingDist_mm;
+    Point2f sampledPos = robotPosition;
+    {
+      const Point2f pt = RobotPointSamplerHelper::SamplePointInAnnulus(GetRNG(), r1, r2 );
+      sampledPos.x() += pt.x();
+      sampledPos.y() += pt.y();
+    }
+    
+    const bool acceptedPoint = _iConfig.searchSpacePointEvaluator->Evaluate(GetRNG(), sampledPos );
+    if( !acceptedPoint ) {
+      continue;
+    }
+    
+    // choose a random angle about the Z axis to create a full test pose
+    const float angle = M_TWO_PI_F * static_cast<float>( GetRNG().RandDbl() );
+    Pose2d testPose( Radians{angle}, sampledPos );
+    
+    // Get the robot's would-be bounding quad at the test pose
+    const auto& quad = robotInfo.GetBoundingQuadXY( Pose3d{testPose} );
+    Poly2f footprint;
+    footprint.ImportQuad2d(quad);
+    
+    const bool acceptedFootprint = _iConfig.searchSpacePolyEvaluator->Evaluate( GetRNG(), footprint );
+    if( !acceptedFootprint ) {
+      continue;
+    }
+    
+    // if we get here, accept!!
+    ++numAcceptedPoses;
+    
+    // Convert to full 3D pose in robot world origin:
+    Pose3d testPose3d{ testPose };
+    testPose3d.SetParent(robotInfo.GetWorldOrigin());
+    
+    // Generate poses with the same position but different orientations. This should
+    // be pretty cheap compared to a pose at a different location.
+    for (int i=0; i<kNumAnglesAtPose; ++i ) {
+      const float poseAngle = i * M_TWO_PI_F / kNumAnglesAtPose;
+      testPose3d.SetRotation( Radians{poseAngle}, Z_AXIS_3D() );
+      outPoses.push_back( testPose3d );
+    }
+    
+    if( numAcceptedPoses >= kNumPositionsForSearch ) {
+      PRINT_NAMED_INFO("BehaviorFindHome.GenerateSearchPoses.Completed",
+                       "Met required sampling of %d points, cnt=%d", numAcceptedPoses, cnt);
+      break;
+    }
+  }
+
+  if (outPoses.empty()) {
+    PRINT_NAMED_WARNING("BehaviorFindHome.GenerateSearchPoses.NoPosesFound",
+                        "No poses that satisfy the sampling requirements were found - using naive random sampling method.");
+    outPoses.emplace_back();
+    GetRandomDrivingPose(outPoses.back());
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindHome::GetRandomDrivingPose(Pose3d& outPose)
 {
-  // TODO: use memory map! avoid obstacles!!
-  
   const float turnAngle_rad = GetRNG().RandDblInRange(-M_PI, M_PI);
   const float distance_mm = GetRNG().RandDblInRange(_iConfig.minDrivingDist_mm, _iConfig.maxDrivingDist_mm);
   
@@ -234,6 +448,21 @@ void BehaviorFindHome::GetRandomDrivingPose(Pose3d& outPose)
   outPose.TranslateForward(distance_mm);
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::vector<Point2f> BehaviorFindHome::GetRecentlySearchedLocations()
+{
+  // Update previous search positions. Cull to recent window and transform into a vector.
+  const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  auto& prevSearchMap = _dVars.persistent.searchedLocations;
+  prevSearchMap.erase(prevSearchMap.begin(),
+                      prevSearchMap.lower_bound(now_sec - kPreviousLocationSearchTimeout_sec));
+  std::vector<Point2f> prevSearchPositions;
+  prevSearchPositions.reserve(prevSearchMap.size());
+  std::transform(prevSearchMap.begin(), prevSearchMap.end(), std::back_inserter(prevSearchPositions),
+                 [](const std::pair<float, Point2f>& mapEntry) { return mapEntry.second; });
+  return prevSearchPositions;
+}
 
 } // namespace Cozmo
 } // namespace Anki

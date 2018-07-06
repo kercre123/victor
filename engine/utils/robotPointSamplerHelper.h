@@ -93,6 +93,7 @@ private:
   std::vector<Point2f> _otherPos;
   const float _minDistSq;
   const float _maxDistSq;
+  bool _setOtherPos = false;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
