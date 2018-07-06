@@ -32,8 +32,10 @@ namespace Vision {
 #define LOG_CHANNEL "NeuralNets"
   
 // TODO: Make this a parameter in config?
-const int kNumThreads = 1;
+constexpr int kNumThreads = 1;
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
 // A TFLite error reporter that uses our error logging system
 struct TFLiteLogReporter : public tflite::ErrorReporter {
   int Report(const char* format, va_list args) override
@@ -51,7 +53,7 @@ NeuralNetModel::NeuralNetModel()
 
 }
   
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 NeuralNetModel::~NeuralNetModel()
 {
   LOG_INFO("NeuralNetModel.Destructor", "");
