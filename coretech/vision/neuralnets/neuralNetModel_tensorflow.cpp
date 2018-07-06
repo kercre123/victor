@@ -473,9 +473,11 @@ Result NeuralNetModel::GetLocalizedBinaryClassification(const tensorflow::Tensor
 {
   // Create a detection box for each grid cell that is above threshold
 
-  // This raw (Eigen) tensor data appears to be _column_ major (i.e. "not row major"). Ensure that remains true.
-  DEV_ASSERT( !(outputTensor.tensor<float, 2>().Options & Eigen::RowMajor), 
-             "NeuralNetModel.GetLocalizedBinaryClassification.OutputNotRowMajor");
+  // This has been removed because the outputTensor.tensor options are always
+  // 0000 regardless of acutally row or columns major and Eigen::RowMajor is
+  // 0001 and this check isn't really checking anything. VIC-4386
+  // DEV_ASSERT( !(outputTensor.tensor<float, 2>().Options & Eigen::RowMajor),
+  //           "NeuralNetModel.GetLocalizedBinaryClassification.OutputNotRowMajor");
 
   const float* outputData = outputTensor.tensor<float, 2>().data();
 
@@ -691,8 +693,13 @@ Result NeuralNetModel::GetSalientPointsFromResponseMap(const tensorflow::Tensor&
     return RESULT_FAIL;
   }
 
-  DEV_ASSERT( !(outputTensor.tensor<float, 4>().Options & Eigen::RowMajor),
-             "NeuralNetModel.GetLocalizedBinaryClassification.OutputNotRowMajor");
+  // Note: The Eigen tensor we get hear is row major, I have declined to add an assert
+  // here checking for row major. Specifically because the Egien tensor we get in
+  // GetLocalizedBinaryClassification is column major and fails that assert and
+  // I would prefer that we not rely on a paritally non-functional description of
+  // data. It's still very much unclear why one tensor is row-major while another
+  // is col-major and by default it seems we should verify this "by hand" until
+  // this descrepency is resolved VIC-4386
 
   // TODO make sure data is not in column major format
   cv::Mat responseMap(_params.inputHeight, _params.inputWidth, CV_32FC2,
@@ -848,6 +855,13 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
     return RESULT_FAIL;
   }
 
+  // Note: If your expected network output is a tensor that isn't
+  // a scalar i.e. dimensions (1,1,1,1) or something similar
+  // there is no programatic check whether the tensor is row or
+  // column major. Specifically DFP's network output
+  // GetLocalizedBinaryClassification is column major
+  // while objectness's output GetSalientPointsFromResponseMap
+  // is row major. VIC-4386
   Result result = RESULT_OK;
   switch(_params.outputType)
   {
