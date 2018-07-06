@@ -209,7 +209,7 @@ int main(int argc, char **argv)
 # endif
 
   // Initialize the detector
-  NeuralNetModel neuralNet;
+  NeuralNetModel neuralNet(cachePath);
   {
     auto ticToc = TicToc("LoadModel");
     result = neuralNet.LoadModel(modelPath, config);

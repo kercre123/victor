@@ -45,7 +45,7 @@ class NeuralNetModel
 {
 public:
 
-  NeuralNetModel();
+  NeuralNetModel(const std::string cachePath);
 
   ~NeuralNetModel();
 
@@ -128,6 +128,8 @@ private:
     // TODO: Not fully supported yet (VIC-3141)
     bool                      memoryMapGraph = false;
 
+    std::string               visualizationDirectory = "";
+
   } _params;
 
   // Populate _params struct from Json config
@@ -140,6 +142,8 @@ private:
   std::unique_ptr<tensorflow::Session>      _session;
   std::unique_ptr<tensorflow::MemmappedEnv> _memmappedEnv;
   std::vector<std::string>                  _labels;
+
+  std::string                               _cachePath;
   
   // For OutputType::BinaryLocalization
   cv::Mat_<uint8_t>                         _detectionGrid;

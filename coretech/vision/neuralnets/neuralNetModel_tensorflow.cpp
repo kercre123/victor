@@ -84,8 +84,8 @@ static inline void SetFromConfigHelper(const Json::Value& json, std::vector<std:
 // }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NeuralNetModel::NeuralNetModel()
-: _params{} 
+NeuralNetModel::NeuralNetModel(const std::string cachePath)
+: _params{}, _cachePath(cachePath)
 {
 
 }
@@ -275,6 +275,7 @@ Result NeuralNetModel::SetParamsFromConfig(const Json::Value& config)
   GetFromConfig(inputWidth);
   GetFromConfig(architecture);
   GetFromConfig(memoryMapGraph);
+  GetFromConfig(visualizationDirectory);
   GetFromConfig(benchmarkRuns);
 
   if("ssd_mobilenet" == _params.architecture)
@@ -714,7 +715,7 @@ Result NeuralNetModel::GetSalientPointsFromResponseMap(const tensorflow::Tensor&
       cv::Point2i channelMinLoc(0, 0), channelMaxLoc(0, 0);
       cv::minMaxLoc(channels[channel], &channelMin, &channelMax, &channelMinLoc, &channelMaxLoc);
       const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath,
-        "objectnessResponseMap", std::to_string(timestamp) + "_" +
+        _params.visualizationDirectory, std::to_string(timestamp) + "_" +
         std::to_string(channel) + ".png"});
       PRINT_NAMED_ERROR("NeuralNetModel.GetSalientPointsFromResponseMap.SavingImage",
                         "Saving image with filename %s", saveFilename.c_str());

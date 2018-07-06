@@ -81,10 +81,6 @@ Result NeuralNetRunner::Model::LoadModel(const std::string& modelPath, const std
   
   _cachePath = cachePath;
 
-  // Clear the cache of any stale images/results:
-  Util::FileUtils::RemoveDirectory(_cachePath);
-  Util::FileUtils::CreateDirectory(_cachePath);
-
   if (false == JsonTools::GetValueOptional(config, "pollPeriod_ms", _pollPeriod_ms))
   {
     PRINT_NAMED_ERROR("NeuralNetRunner.Model.LoadModel.MissingPollPeriod", "");
