@@ -700,81 +700,47 @@ Result NeuralNetModel::GetSalientPointsFromResponseMap(const tensorflow::Tensor&
   split(responseMap, channels);
 
   double min(0), max(0);
-  const int objectnessIndex = 1;
   cv::Point2i minLoc(0, 0), maxLoc(0, 0);
-  // TODO make sure 1 is the correct objectness channel
+  const int objectnessIndex = 1;
   cv::minMaxLoc(channels[objectnessIndex], &min, &max, &minLoc, &maxLoc);
   // TODO we can put in connected component based filtering later, right now
   // let's just return the max value location... that normally isn't filtered out anyway
 
   if (kNeuralNetTensorflow_SaveImages)
   {
-    const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath,
-      "objectnessResponseMap", std::to_string(timestamp) + ".png"});
-
-    cv::Mat imageToSave;
-    // TODO this is resulted in a bug and almost drove me insane
-    // fix this before it happens again
-    channels[objectnessIndex].copyTo(imageToSave);
-    // TODO make 25 a constant at least
-    // If max is negative (not sure why this is happening) invert the
-    // whole thing otherwise we don't care about elements less than zero
-    if (max < 0)
+    for (int channel = 0; channel < 2; ++channel)
     {
-      PRINT_NAMED_INFO("NeuralNetModel.GetSalientPointsFromResponseMap.FlippingSignOfImage", "");
-      imageToSave *= -1;
-      max *= -1;
-    }
-    float correction = 170.f / max;
-    PRINT_NAMED_INFO("NeuralNetModel.GetSalientPointsFromResponseMap.Scaling",
-                     "correction scale %.2f", correction);
-    imageToSave *= correction;
-    imageToSave.convertTo(imageToSave, CV_8UC1);
-    
+      double channelMin(0), channelMax(0);
+      cv::Point2i channelMinLoc(0, 0), channelMaxLoc(0, 0);
+      cv::minMaxLoc(channels[channel], &channelMin, &channelMax, &channelMinLoc, &channelMaxLoc);
+      const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath,
+        "objectnessResponseMap", std::to_string(timestamp) + "_" +
+        std::to_string(channel) + ".png"});
+      PRINT_NAMED_ERROR("NeuralNetModel.GetSalientPointsFromResponseMap.SavingImage",
+                        "Saving image with filename %s", saveFilename.c_str());
 
-    // Write timestamp to file
-    const std::string salientPointFilename = Util::FileUtils::FullFilePath({_cachePath,
-      "objectnessResponseMap", std::to_string(timestamp) + ".txt"});
-    PRINT_NAMED_INFO("NeuralNetModel.GetSalientPointsFromResponseMap.WriteDebugOutput",
-                     "Response map filename: %s, salient point filename %s",
-                     saveFilename.c_str(), salientPointFilename.c_str());
-
-    cv::imwrite(saveFilename, imageToSave);
-
-    if (true)
-    {
-      cv::Mat oppositeImageToSave;
-      // save opposite response map as well
-      const std::string oppositeSaveFilename = Util::FileUtils::FullFilePath({_cachePath,
-        "objectnessResponseMap", std::to_string(timestamp) + "_opposite.png"});
+      cv::Mat imageToSave;
+      channels[channel].copyTo(imageToSave);
+      imageToSave = 255 * (imageToSave - channelMin) / (channelMax - channelMin);
+      imageToSave.convertTo(imageToSave, CV_8UC1);
+      cv::imwrite(saveFilename, imageToSave);
       
-      double oppositeMin(0), oppositeMax(0);
-      const int oppositeObjecntessIndex = objectnessIndex == 0 ? 1 : 0;
-      cv::Point2i oppositeMinLoc(0, 0), oppositeMaxLoc(0, 0);
-      cv::minMaxLoc(channels[oppositeObjecntessIndex], &oppositeMin, &oppositeMax,
-                    &oppositeMinLoc, &oppositeMaxLoc);
-      channels[oppositeObjecntessIndex].copyTo(oppositeImageToSave);
-      if (oppositeMax < 0)
-      {
-        PRINT_NAMED_INFO("NeuralNetModel.GetSalientPointsFromResponseMap.FlippingSignOfImageOpposite", "");
-        oppositeImageToSave *= -1;
-        oppositeMax *= -1;
-      }
-      float oppositeCorrection = 170.f / oppositeMax;
-      PRINT_NAMED_INFO("NeuralNetModel.GetSalientPointsFromResponseMap.ScalingOpposite",
-                       "correction scale %.2f", oppositeCorrection);
-      oppositeImageToSave *= oppositeCorrection;
-      oppositeImageToSave.convertTo(oppositeImageToSave, CV_8UC1);
-      cv::imwrite(oppositeSaveFilename, oppositeImageToSave);
+      const std::string salientPointFilename = Util::FileUtils::FullFilePath({_cachePath,
+        "objectnessResponseMap", std::to_string(timestamp) + ".txt"});
+      // Max Value to Output
+      const std::string outputMaxX = std::to_string(channelMaxLoc.x);
+      const std::string outputMaxY = std::to_string(channelMaxLoc.y);
+      const std::string outputMaxValue = std::to_string(channelMax);
+      // Min Value to Output
+      const std::string outputMinX = std::to_string(channelMinLoc.x);
+      const std::string outputMinY = std::to_string(channelMinLoc.y);
+      const std::string outputMinValue = std::to_string(channelMin);
+      std::ofstream salientPointFile(salientPointFilename);
+      salientPointFile << outputMaxX + " " + outputMaxY + " " + outputMaxValue + " "
+        + outputMinX + " " + outputMinY + " " + outputMinValue;
+      salientPointFile.close();
     }
-
-    const std::string outputX = std::to_string(maxLoc.x);
-    const std::string outputY = std::to_string(maxLoc.y);
-    std::ofstream salientPointFile(salientPointFilename);
-    salientPointFile << outputX + " " + outputY;
-    salientPointFile.close();
   }
-
 
   // Create a SalientPoint to return for each connected component (skipping background component 0)
   const float widthScale  = 1.f / static_cast<float>(responseMap.cols);
