@@ -19,9 +19,9 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "util/entityComponent/entity.h"
+#include "coretech/common/engine/math/pose.h"
 
 namespace Anki {
-class Pose3d;
 namespace Cozmo {
 
 // Storage for processed prox sensor reading with useful metadata
@@ -129,6 +129,9 @@ private:
   
   ProxSensorDataRaw _latestDataRaw;
   ProxSensorData    _latestData;
+  Pose3d            _previousRobotPose;
+  float             _previousMeasurement;
+  u8                _measurementsAtPose;
 
   // The timestamp of the RobotState message with the
   // latest distance sensor data
