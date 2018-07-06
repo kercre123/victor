@@ -138,7 +138,7 @@
     //
     // Model definition:
     //
-    "graphFile"           : "person_localization_victor_6x6_92_accuracy.pb", 
+    "graphFile"           : "person_localization_victor_6x6_92_accuracy.tflite", 
     "memoryMapGraph"      : 0,
     "labelsFile"          : "person-labels.txt", 
     "architecture"        : "custom",
