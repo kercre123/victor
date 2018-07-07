@@ -39,6 +39,7 @@ namespace Anki {
       class MicDataInfo;
       class MicDataProcessor;
     }
+    class RobotDataLoader;
     namespace RobotInterface {
       struct MicData;
       struct RobotToEngine;
@@ -63,6 +64,8 @@ public:
   ~MicDataSystem();
   MicDataSystem(const MicDataSystem& other) = delete;
   MicDataSystem& operator=(const MicDataSystem& other) = delete;
+
+  void Init(const RobotDataLoader& dataLoader);
 
   void ProcessMicDataPayload(const RobotInterface::MicData& payload);
   void RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT);
