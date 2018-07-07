@@ -129,6 +129,9 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
   _iConfig.reactToObstacleBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToObstacle));
   _iConfig.meetVictorBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(MeetVictor));
   _iConfig.danceToTheBeatBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(DanceToTheBeat));
+  
+  _iConfig.behaviorsThatShouldntReactToUnexpectedMovement.AddBehavior(BC, BEHAVIOR_CLASS(BumpObject));
+  _iConfig.reactToUnexpectedMovementBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToUnexpectedMovement));
 }
 
 
@@ -196,6 +199,8 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
     _iConfig.wakeWordBehavior->SetDontActivateThisTick(GetDebugLabel());
   }
 
+  // todo: generalize "if X is running then suppress Y"
+  
   // suppress during meet victor
   {
     if( _iConfig.meetVictorBehavior->IsActivated() ) {
@@ -249,6 +254,13 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
         const auto ts = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
         _iConfig.reactToVoiceCommandBehavior->DisableTurnForTimestamp(ts);
       }
+    }
+  }
+  
+  // disable ReactToUnexpectedMovement when intentionally bumping things
+  {
+    if( _iConfig.behaviorsThatShouldntReactToUnexpectedMovement.AreBehaviorsActivated() ) {
+      _iConfig.reactToUnexpectedMovementBehavior->SetDontActivateThisTick(GetDebugLabel());
     }
   }
 }

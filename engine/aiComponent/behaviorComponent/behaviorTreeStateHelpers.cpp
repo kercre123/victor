@@ -18,18 +18,45 @@
 namespace Anki {
 namespace Cozmo {
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AreBehaviorsActivatedHelper::AreBehaviorsActivatedHelper(const BehaviorContainer& bc, const std::set<BehaviorID>& behaviors)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+AreBehaviorsActivatedHelper::AreBehaviorsActivatedHelper(const BehaviorContainer& bc, const std::set<BehaviorID>& behaviorIDs)
 {
-  for(const auto& id: behaviors){
-    _behaviorSet.push_back(bc.FindBehaviorByID(id));
+  for(const auto& id: behaviorIDs){
+    AddBehavior(bc, id);
   }
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+AreBehaviorsActivatedHelper::AreBehaviorsActivatedHelper(const BehaviorContainer& bc, const std::set<BehaviorClass>& classes)
+{
+  for(const auto& classID: classes){
+    AddBehavior(bc, classID);
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AreBehaviorsActivatedHelper::AddBehavior(const BehaviorContainer& bc, BehaviorID behaviorID)
+{
+  _behaviorSet.insert(bc.FindBehaviorByID(behaviorID));
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AreBehaviorsActivatedHelper::AddBehavior(const BehaviorContainer& bc, BehaviorClass behaviorClass)
+{
+  const std::set<ICozmoBehaviorPtr> classMatches = bc.FindBehaviorsByClass(behaviorClass);
+  _behaviorSet.insert(classMatches.begin(), classMatches.end());
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AreBehaviorsActivatedHelper::AddBehavior(ICozmoBehaviorPtr behavior)
+{
+  _behaviorSet.insert(behavior);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AreBehaviorsActivatedHelper::AreBehaviorsActivated() const
 {
+  DEV_ASSERT(!_behaviorSet.empty(), "AreBehaviorsActivatedHelper.AreBehaviorsActivated.NoBehaviors");
   for(const auto& ptr: _behaviorSet){
     if(ptr->IsActivated()){
       return true;

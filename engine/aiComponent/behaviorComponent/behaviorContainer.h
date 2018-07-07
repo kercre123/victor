@@ -59,6 +59,8 @@ public:
 
   ICozmoBehaviorPtr FindBehaviorByID(BehaviorID behaviorID) const;
   ICozmoBehaviorPtr FindBehaviorByExecutableType(ExecutableBehaviorType type) const;
+  
+  std::set<ICozmoBehaviorPtr> FindBehaviorsByClass(BehaviorClass behaviorClass) const;
 
   // Sometimes it's necessary to downcast to a behavior to a specific behavior pointer, e.g. so an Activity
   // can access its member functions. This function will help with that and provide a few assert checks along

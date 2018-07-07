@@ -121,6 +121,7 @@ enum uint_8 BehaviorID {
   ConfirmCharger,
   ConfirmCube,
   Exploring,
+  ExploringBumpObject,
   ExploringExamineObstacle,
   ExploringGetIn,
   ExploringVoiceCommand,

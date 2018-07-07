@@ -1,0 +1,9 @@
+{
+  "behaviorID": "ExploringBumpObject",
+  "behaviorClass": "BumpObject",
+
+  "minDist_mm": 0,
+  "maxDist_mm": 100,
+
+  "pEvil": 1.0
+}
