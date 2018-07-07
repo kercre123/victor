@@ -51,7 +51,7 @@ bool ConditionSalientPointDetected::AreConditionsMetInternal(BehaviorExternalInt
 
   switch (_targetSalientPoint) {
     case Vision::SalientPointType::Person:
-      return component.ObjectDetected();
+      return component.PersonDetected();
     case Vision::SalientPointType::Object:
       {
       bool objectDetected = component.ObjectDetected();
