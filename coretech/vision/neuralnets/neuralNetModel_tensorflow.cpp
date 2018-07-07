@@ -13,7 +13,6 @@
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/math/rect_impl.h"
 #include "coretech/vision/neuralnets/neuralNetModel_tensorflow.h"
-
 #include "tensorflow/core/framework/graph.pb.h"
 #include "tensorflow/core/framework/graph_def_util.h"
 #include "tensorflow/core/framework/tensor.h"
@@ -37,8 +36,10 @@
 #include "util/helpers/quoteMacro.h"
 #include "util/logging/logging.h"
 
+
 #include <cmath>
 #include <fstream>
+#include <bitset>
 
 namespace Anki {
 
@@ -87,7 +88,6 @@ static inline void SetFromConfigHelper(const Json::Value& json, std::vector<std:
 NeuralNetModel::NeuralNetModel(const std::string cachePath)
 : _params{}, _cachePath(cachePath)
 {
-
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -761,20 +761,15 @@ Result NeuralNetModel::GetSalientPointsFromResponseMap(const tensorflow::Tensor&
                    "Objectness point x: %.2f y: %.2f with min %.2f max %.2f",
                    x, y, min, max);
 
-  // TODO actually fill in correct values here this is just a place holder
-  const Poly2f shape( Rectangle<float>(0.f, 0.f, 1.f, 1.f) );
-
   Vision::SalientPointType type = Vision::SalientPointType::Object;
 
-  // TODO not sure what to do about score or average score
-  Vision::SalientPoint salientPoint(timestamp,
-                                    x,
-                                    y,
-                                    1.f,
-                                    1.f * (widthScale*heightScale), // convert to area fraction
-                                    type,
-                                    EnumToString(type),
-                                    shape.ToCladPoint2dVector());
+  // TODO right now objectness doesn't have an area associated with it,
+  // thus the shape part of the salient point is empty, and so is area
+  // fraction.
+  Vision::SalientPoint salientPoint(timestamp, x, y,
+                                    max, 1.f * (widthScale*heightScale),
+                                    type, EnumToString(type),
+                                    Poly2f{}.ToCladPoint2dVector());
 
   salientPoints.push_back(std::move(salientPoint));
   return RESULT_OK;
