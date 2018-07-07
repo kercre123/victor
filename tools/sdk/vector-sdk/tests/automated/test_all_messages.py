@@ -63,7 +63,7 @@ class TestResultMatches:
             # This does not perform a deep comparison, which is difficult to implement in a generic way
             for i in range(len(expected_fields)):
                 if target_fields[i] != expected_fields[i]:
-                    errors.append('ValueError: recieved output with incorrect response {0}, was expecting {1}, failure occurred with field "{2}"'.format(str(target_fields), str(expected_fields), str(target_fields[i])))
+                    errors.append('ValueError: received output with incorrect response {0}, was expecting {1}, failure occurred with field "{2}"'.format(str(target_fields), str(expected_fields), str(target_fields[i])))
         return errors
 
 class TestResultIsTypeWithStatusAndFieldNames:
@@ -86,19 +86,19 @@ class TestResultIsTypeWithStatusAndFieldNames:
 
         # Casting as string makes the equality check work
         if str(target_type) != str(self._expected_type):
-            errors.append('TypeError: recieved output of type {0} when expecting output of type {1}'.format(target_type, self._expected_type))
+            errors.append('TypeError: received output of type {0} when expecting output of type {1}'.format(target_type, self._expected_type))
 
         elif len(self._field_names) + 1 != len(target.ListFields()):
-            errors.append('TypeError: recieved output of type {0} that has {1} fields when {2} were expected'.format(target_type, len(target.ListFields()), len(self._field_names)+1))
+            errors.append('TypeError: received output of type {0} that has {1} fields when {2} were expected'.format(target_type, len(target.ListFields()), len(self._field_names)+1))
 
         elif target.status != self._status:
-            errors.append('TypeError: recieved output with status \'{0}\' when \'{1}\' was expected'.format(str(target.status), str(self._status)))
+            errors.append('TypeError: received output with status \'{0}\' when \'{1}\' was expected'.format(str(target.status), str(self._status)))
 
         else:
 
             for i in self._field_names:
                 if not i in target_field_names:
-                    errors.append('ValueError: recieved output with without the expected field "{0}"'.format(i))
+                    errors.append('ValueError: received output with without the expected field "{0}"'.format(i))
         return errors
 
 messages_to_test = [
@@ -125,8 +125,7 @@ messages_to_test = [
     # PlayAnimation message
     ( interface.PlayAnimation,
         protocol.PlayAnimationRequest(animation=protocol.Animation(name='anim_poked_giggle'), loops=1), 
-        TestResultMatches(protocol.PlayAnimationResult(status=protocol.ResultStatus(description="Animation completed"))) ),
-
+        TestResultMatches(protocol.PlayAnimationResult(status=protocol.ResultStatus(description="Message sent to engine"),result=1)) ),
 
     # ListAnimations message
     ( interface.ListAnimations,
@@ -200,32 +199,32 @@ messages_to_test = [
     # DriveOffCharger message. Assuming robot starts off charger, expected result is 2 or BehaviorResults.BEHAVIOR_WONT_ACTIVATE_STATE.
     ( interface.DriveOffCharger,
         protocol.DriveOffChargerRequest(),
-        TestResultMatches(protocol.DriveOffChargerResult(result=2)) ),
+        TestResultMatches(protocol.DriveOffChargerResult(status=protocol.ResultStatus(description="Message sent to engine"),result=2)) ),
 
     # DriveOnCharger message. Expected result is 1 or BehaviorResults.BEHAVIOR_COMPLETE_STATE.
     ( interface.DriveOnCharger,
         protocol.DriveOnChargerRequest(),
-        TestResultMatches(protocol.DriveOnChargerResult(result=1)) ),
+        TestResultMatches(protocol.DriveOnChargerResult(status=protocol.ResultStatus(description="Message sent to engine"),result=1)) ),
 
     # DriveStraight message
     ( client.ExternalInterfaceServicer.DriveStraight, 
         protocol.DriveStraightRequest(speed_mmps=0.0, dist_mm=0.0, should_play_animation=False), 
-        TestResultMatches(protocol.DriveStraightResponse(status=protocol.ResultStatus(description="Message sent to engine"))) ),
-    
+        TestResultMatches(protocol.DriveStraightResponse(status=protocol.ResultStatus(description="Message sent to engine"),result=1)) ),
+
     # TurnInPlace message
     ( client.ExternalInterfaceServicer.TurnInPlace, 
         protocol.TurnInPlaceRequest(angle_rad=0.0, speed_rad_per_sec=0.0, accel_rad_per_sec2=0.0, tol_rad=0.0, is_absolute=False), 
-        TestResultMatches(protocol.TurnInPlaceResponse(status=protocol.ResultStatus(description="Message sent to engine"))) ),
+        TestResultMatches(protocol.TurnInPlaceResponse(status=protocol.ResultStatus(description="Message sent to engine"),result=1)) ),
     
     # SetHeadAngle message
     ( client.ExternalInterfaceServicer.SetHeadAngle, 
         protocol.SetHeadAngleRequest(angle_rad=0.0, max_speed_rad_per_sec=0.0, accel_rad_per_sec2=0.0, duration_sec=0.0), 
-        TestResultMatches(protocol.SetHeadAngleResponse(status=protocol.ResultStatus(description="Message sent to engine"))) ),
+        TestResultMatches(protocol.SetHeadAngleResponse(status=protocol.ResultStatus(description="Message sent to engine"),result=1)) ),
     
     # SetLiftHeight message
     ( client.ExternalInterfaceServicer.SetLiftHeight, 
         protocol.SetLiftHeightRequest(height_mm=0.0, max_speed_rad_per_sec=0.0, accel_rad_per_sec2=0.0, duration_sec=0.0), 
-        TestResultMatches(protocol.SetLiftHeightResponse(status=protocol.ResultStatus(description="Message sent to engine"))) ),
+        TestResultMatches(protocol.SetLiftHeightResponse(status=protocol.ResultStatus(description="Message sent to engine"),result=1)) ),
 
     # NOTE: Add additional messages here
     ]

@@ -268,10 +268,20 @@ class Robot:
 
     @actions._as_actionable
     async def play_anim(self, animation_name, loop_count=1, ignore_body_track=True, ignore_head_track=True, ignore_lift_track=True):
+        '''Starts an animation playing on a robot.
+
+        Warning: Specific animations may be renamed or removed in future updates of the app.
+            If you want your program to work more reliably across all versions
+            we recommend using :meth:`play_anim_trigger` instead.
+
+        Args:
+            animation_name (str): The name of the animation to play.
+            loop_count (int): Number of times to play the animation.
+        '''
         anim = protocol.Animation(name=animation_name)
         req = protocol.PlayAnimationRequest(animation=anim, loops=loop_count) # TODO: add body tracks
         result = await self.connection.PlayAnimation(req)
-        self.logger.debug(result)
+        self.logger.info(f'{type(result)}: {str(result).strip()}')
         return result
 
     #TODO Refactor out of robot.py

@@ -58,6 +58,7 @@ message PlayAnimationRequest {
 
 message PlayAnimationResult {
   ResultStatus status = 1;
+  BehaviorResults result = 2;
 }
 
 message ListAnimationsRequest {}
@@ -365,14 +366,16 @@ message DriveOffChargerRequest {
 }
 
 message DriveOffChargerResult {
-  BehaviorResults result = 1;
+  ResultStatus status = 1;
+  BehaviorResults result = 2;
 }
 
 message DriveOnChargerRequest {
 }
 
 message DriveOnChargerResult {
-  BehaviorResults result = 1;
+  ResultStatus status = 1;
+  BehaviorResults result = 2;
 }
 
 // TODO: Remove this example code once more code is converted to protobuf
@@ -648,9 +651,9 @@ message DriveStraightRequest {
    bool should_play_animation = 3;
 }
 
-// TODO: Refactor once the engine sends the action's status
 message DriveStraightResponse {
   ResultStatus status = 1;
+  BehaviorResults result = 2;
 }
 
 // TurnInPlace
@@ -666,9 +669,9 @@ message TurnInPlaceRequest {
     uint32 is_absolute = 5; // 0: angle_rad is relative to current orientation, 1: angle_rad is absolute angle to turn to
 }
 
-// TODO: Refactor once the engine sends the action's status
 message TurnInPlaceResponse {
   ResultStatus status = 1;
+  BehaviorResults result = 2;
 }
 
 // SetHeadAngle
@@ -679,9 +682,9 @@ message SetHeadAngleRequest {
     float duration_sec = 4;
 }
 
-// TODO: Refactor once the engine sends the action's status
 message SetHeadAngleResponse {
   ResultStatus status = 1;
+  BehaviorResults result = 2;
 }
 
 // SetLiftHeight
@@ -692,8 +695,7 @@ message SetLiftHeightRequest {
     float duration_sec = 4;
 }
 
-// TODO: Refactor once the engine sends the action's status
 message SetLiftHeightResponse {
   ResultStatus status = 1;
+  BehaviorResults result = 2;
 }
-

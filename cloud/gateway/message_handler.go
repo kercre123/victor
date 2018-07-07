@@ -514,19 +514,20 @@ func (m *rpcService) DriveWheels(ctx context.Context, in *extint.DriveWheelsRequ
 
 func (m *rpcService) PlayAnimation(ctx context.Context, in *extint.PlayAnimationRequest) (*extint.PlayAnimationResult, error) {
 	log.Println("Received rpc request PlayAnimation(", in, ")")
-	animation_result := make(chan RobotToExternalCladResult)
-	engineChanMap[gw_clad.MessageRobotToExternalTag_RobotCompletedAction] = animation_result
-	defer ClearMapSetting(gw_clad.MessageRobotToExternalTag_RobotCompletedAction)
+	f, result := createChannel(&extint.GatewayWrapper_PlayAnimationResult{}, 1)
+	defer f()
+	
 	_, err := WriteToEngine(engineSock, ProtoPlayAnimationToClad(in))
 	if err != nil {
 		return nil, err
 	}
-	<-animation_result // TODO: Properly handle the result
-	return &extint.PlayAnimationResult{
-		Status: &extint.ResultStatus{
-			Description: "Animation completed",
-		},
-	}, nil
+
+	setPlayAnimationResult := <-result
+	response := setPlayAnimationResult.GetPlayAnimationResult()
+	response.Status = &extint.ResultStatus{
+		Description: "Message sent to engine",
+	}
+	return response, nil
 }
 
 func (m *rpcService) ListAnimations(ctx context.Context, in *extint.ListAnimationsRequest) (*extint.ListAnimationsResult, error) {
@@ -891,7 +892,11 @@ func (m *rpcService) DriveOffCharger(ctx context.Context, in *extint.DriveOffCha
 		return nil, err
 	}
 	driveOffChargerResult := <-result
-	return driveOffChargerResult.GetDriveOffChargerResult(), nil
+	response := driveOffChargerResult.GetDriveOffChargerResult()
+	response.Status = &extint.ResultStatus{
+		Description: "Message sent to engine",
+	}
+	return response, nil
 }
 
 func (m *rpcService) DriveOnCharger(ctx context.Context, in *extint.DriveOnChargerRequest) (*extint.DriveOnChargerResult, error) {
@@ -909,7 +914,11 @@ func (m *rpcService) DriveOnCharger(ctx context.Context, in *extint.DriveOnCharg
 		return nil, err
 	}
 	driveOnChargerResult := <-result
-	return driveOnChargerResult.GetDriveOnChargerResult(), nil
+	response := driveOnChargerResult.GetDriveOnChargerResult()
+	response.Status = &extint.ResultStatus{
+		Description: "Message sent to engine",
+	}
+	return response, nil
 }
 
 // Example sending an int to and receiving an int from the engine
@@ -1265,62 +1274,74 @@ func (m *rpcService) GoToPose(ctx context.Context, in *extint.GoToPoseRequest) (
 
 func (m *rpcService) DriveStraight(ctx context.Context, in *extint.DriveStraightRequest) (*extint.DriveStraightResponse, error) {
 	log.Println("Received rpc request DriveStraight(", in, ")")
+	f, result := createChannel(&extint.GatewayWrapper_DriveStraightResponse{}, 1)
+	defer f()
+	
 	_, err := WriteToEngine(engineSock, ProtoDriveStraightToClad(in))
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: Refactor once the engine sends the action's status
-	return &extint.DriveStraightResponse{
-		Status: &extint.ResultStatus{
-			Description: "Message sent to engine",
-		},
-	}, nil
+	driveStraightResponse := <-result
+	response := driveStraightResponse.GetDriveStraightResponse()
+	response.Status = &extint.ResultStatus{
+		Description: "Message sent to engine",
+	}
+	return response, nil
 }
 
 func (m *rpcService) TurnInPlace(ctx context.Context, in *extint.TurnInPlaceRequest) (*extint.TurnInPlaceResponse, error) {
 	log.Println("Received rpc request TurnInPlace(", in, ")")
+	f, result := createChannel(&extint.GatewayWrapper_TurnInPlaceResponse{}, 1)
+	defer f()
+	
 	_, err := WriteToEngine(engineSock, ProtoTurnInPlaceToClad(in))
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: Refactor once the engine sends the action's status
-	return &extint.TurnInPlaceResponse{
-		Status: &extint.ResultStatus{
-			Description: "Message sent to engine",
-		},
-	}, nil
+	turnInPlaceResponse := <-result
+	response := turnInPlaceResponse.GetTurnInPlaceResponse()
+	response.Status = &extint.ResultStatus{
+		Description: "Message sent to engine",
+	}
+	return response, nil
 }
 
 func (m *rpcService) SetHeadAngle(ctx context.Context, in *extint.SetHeadAngleRequest) (*extint.SetHeadAngleResponse, error) {
 	log.Println("Received rpc request SetHeadAngle(", in, ")")
+	f, result := createChannel(&extint.GatewayWrapper_SetHeadAngleResponse{}, 1)
+	defer f()
+	
 	_, err := WriteToEngine(engineSock, ProtoSetHeadAngleToClad(in))
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: Refactor once the engine sends the action's status
-	return &extint.SetHeadAngleResponse{
-		Status: &extint.ResultStatus{
-			Description: "Message sent to engine",
-		},
-	}, nil
+	setHeadAngleResponse := <-result
+	response := setHeadAngleResponse.GetSetHeadAngleResponse()
+	response.Status = &extint.ResultStatus{
+		Description: "Message sent to engine",
+	}
+	return response, nil
 }
 
 func (m *rpcService) SetLiftHeight(ctx context.Context, in *extint.SetLiftHeightRequest) (*extint.SetLiftHeightResponse, error) {
 	log.Println("Received rpc request SetLiftHeight(", in, ")")
+	f, result := createChannel(&extint.GatewayWrapper_SetLiftHeightResponse{}, 1)
+	defer f()
+	
 	_, err := WriteToEngine(engineSock, ProtoSetLiftHeightToClad(in))
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: Refactor once the engine sends the action's status
-	return &extint.SetLiftHeightResponse{
-		Status: &extint.ResultStatus{
-			Description: "Message sent to engine",
-		},
-	}, nil
+	setLiftHeightResponse := <-result
+	response := setLiftHeightResponse.GetSetLiftHeightResponse()
+	response.Status = &extint.ResultStatus{
+		Description: "Message sent to engine",
+	}
+	return response, nil
 }
 
 func newServer() *rpcService {

@@ -59,7 +59,6 @@ message GatewayWrapper {
     ThumbnailPathMessage          thumbnail_path_message = 45;
     DeletePhotoRequest            delete_photo_request = 46;
     DeletePhotoResponse           delete_photo_response = 47;
-    
     // ------------ settings pairs ---------------------------------------
     PushSettingsRequest    push_settings_request    = 60;
     PushSettingsResponse   push_settings_response   = 61;
@@ -67,11 +66,22 @@ message GatewayWrapper {
     PullSettingsResponse   pull_settings_response   = 63;
     UpdateSettingsRequest  update_settings_request  = 64;
     UpdateSettingsResponse update_settings_response = 65;
-    // ------------ sdk behavior request/response pairs --------------------
+    // ------------ sdk behavior request/response pairs ------------------
     DriveOffChargerRequest        drive_off_charger_request = 70;
     DriveOffChargerResult         drive_off_charger_result = 71;
     DriveOnChargerRequest         drive_on_charger_request = 72;
     DriveOnChargerResult          drive_on_charger_result = 73;
+    // ------------ movement request/response pairs ----------------------
+    TurnInPlaceRequest            turn_in_place_request = 90;
+    TurnInPlaceResponse           turn_in_place_response = 91;
+    DriveStraightRequest          drive_straight_request = 92;
+    DriveStraightResponse         drive_straight_response = 93;
+    SetHeadAngleRequest           set_head_angle_request = 94;
+    SetHeadAngleResponse          set_head_angle_response = 95;
+    SetLiftHeightRequest          set_lift_height_request = 96;
+    SetLiftHeightResponse         set_lift_height_response = 97;
+    PlayAnimationRequest          play_animation_response = 98;
+    PlayAnimationResult           play_animation_result = 99;
 
 
     // (when adding new categories, please create gaps between field numbers)

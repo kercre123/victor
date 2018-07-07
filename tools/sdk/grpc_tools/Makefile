@@ -169,9 +169,6 @@ test_user_authentication: .require_ip
 	@echo
 
 test_curl: .require_ip
-	$(curl_command)/v1/play_animation -d '{"animation":{"name":"anim_poked_giggle"},"loops":1}'
-	@echo
-
 	$(curl_command)/v1/sdk_activation -d '{"slot":0, "enable":true}'
 	@echo
 
