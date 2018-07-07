@@ -27,6 +27,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <functional>
 
 
 #define DEBUG_MIC_OBSERVING_VERBOSE 0 // add some verbose debugging if trying to track down issues
@@ -187,6 +188,14 @@ BehaviorReactToSound::BehaviorReactToSound( const Json::Value& config ) :
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToSound::InitBehavior()
+{
+  // note: not unregistering because our lifetime is the same as the MicCompoenet
+  MicDirectionHistory& micHistory = GetBEI().GetMicComponent().GetMicDirectionHistory();
+  micHistory.RegisterSoundReactor( std::bind( &BehaviorReactToSound::OnHeardValidSound, this, std::placeholders::_1 ) );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToSound::GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const
 {
   modifiers.wantsToBeActivatedWhenCarryingObject  = true;
@@ -233,20 +242,20 @@ void BehaviorReactToSound::BehaviorUpdate()
 {
   // if we're active, it means we're responding to sound
   // if we're not active, it means we're listing for sound in order to activate us
-  if ( !IsActivated() )
-  {
-    _triggeredDirection = kInvalidDirectionIndex;
-    // make sure we're not on cooldown, or other reason we shouldn't react
-    if ( CanReactToSound() )
-    {
-      MicDirectionIndex index = kInvalidDirectionIndex;
-      if ( HeardValidSound( index ) )
-      {
-        // setting _triggeredDirection will kick off a reaction via WantsToBeActivatedBehavior()
-        _triggeredDirection = index;
-      }
-    }
-  }
+//  if ( !IsActivated() )
+//  {
+//    _triggeredDirection = kInvalidDirectionIndex;
+//    // make sure we're not on cooldown, or other reason we shouldn't react
+//    if ( CanReactToSound() )
+//    {
+//      MicDirectionIndex index = kInvalidDirectionIndex;
+//      if ( HeardValidSound( index ) )
+//      {
+//        // setting _triggeredDirection will kick off a reaction via WantsToBeActivatedBehavior()
+//        _triggeredDirection = index;
+//      }
+//    }
+//  }
 
   #if REMOTE_CONSOLE_ENABLED
   {
@@ -266,7 +275,7 @@ MicDirectionNodeList BehaviorReactToSound::GetLatestMicDirectionData() const
     MicDirectionNode& node = nodeList.back(); // most recent node
 
     // allow us to fake some data for testing purposes
-    if ( kSoundReaction_FakeDirection != kMicDirectionUnknown )
+    if ( kSoundReaction_FakeDirection != kInvalidDirectionIndex )
     {
       node.directionIndex = kSoundReaction_FakeDirection;
       node.confidenceMax = kSoundReaction_FakeConfidence;
@@ -364,7 +373,7 @@ void BehaviorReactToSound::RespondToSound()
 void BehaviorReactToSound::OnResponseComplete()
 {
   // reset any response we may have been carrying out and start cooldowns
-  _triggeredDirection = kMicDirectionUnknown;
+  _triggeredDirection = kInvalidDirectionIndex;
   _reactionEndedTime = GetCurrentTimeMS();
 }
 
@@ -419,6 +428,19 @@ bool BehaviorReactToSound::HeardValidSound( MicDirectionIndex& outIndex ) const
   }
 
   return shouldReactToSound;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToSound::OnHeardValidSound( MicDirectionIndex index )
+{
+  if ( !IsActivated() && CanReactToSound() && ( kInvalidDirectionIndex != index ) )
+  {
+    if ( _triggeredDirection == kInvalidDirectionIndex )
+     {
+      _triggeredDirection = index;
+      PRINT_CH_INFO( "MicData", "BehaviorReactToSound", "Heard valid sound from direction [%d]", index );
+    }
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

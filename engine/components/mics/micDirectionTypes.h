@@ -32,16 +32,21 @@ namespace Cozmo {
   // Interface for requesting a copy of direction history
   struct MicDirectionNode
   {
-    TimeStamp_t             timestampEnd    = 0;
-    MicDirectionIndex       directionIndex  = kMicDirectionUnknown;
-    MicDirectionConfidence  confidenceAvg   = 0;
-    MicDirectionConfidence  confidenceMax   = 0;
-    TimeStamp_t             timestampAtMax  = 0;
-    uint32_t                count           = 0;
+    TimeStamp_t             timestampEnd      = 0;
+    MicDirectionIndex       directionIndex    = kMicDirectionUnknown;
+    MicDirectionConfidence  confidenceAvg     = 0;
+    MicDirectionConfidence  confidenceMax     = 0;
+    MicDirectionConfidence  latestConfidence  = 0;
+    TimeStamp_t             timestampAtMax    = 0;
+    uint32_t                count             = 0;
 
     bool IsValid() const { return count > 0; }
   };
   using MicDirectionNodeList = std::deque<MicDirectionNode>;
+
+  using SoundReactorId = uint32_t;
+  using SoundReactionCallback = std::function<void(MicDirectionIndex)>;
+  enum { kInvalidSoundReactorId = 0 };
 
 } // namespace Cozmo
 } // namespace Anki

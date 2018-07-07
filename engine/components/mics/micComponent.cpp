@@ -13,6 +13,7 @@
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/mics/micDirectionHistory.h"
 #include "engine/components/mics/voiceMessageSystem.h"
+#include "engine/cozmoContext.h"
 #include "engine/robot.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -52,6 +53,7 @@ void MicComponent::GetInitDependencies( RobotCompIDSet& dependencies ) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MicComponent::InitDependent( Cozmo::Robot* robot, const RobotCompMap& dependentComps )
 {
+  _micHistory->Initialize( robot->GetContext()->GetWebService() );
   _messageSystem->Initialize( robot );
   _robot = robot;
 }

@@ -48,6 +48,7 @@ public:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+  virtual void InitBehavior() override;
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const override;
   virtual void GetBehaviorJsonKeys( std::set<const char*>& expectedKeys ) const override;
@@ -72,6 +73,7 @@ private:
   DirectionTrigger GetTriggerData( MicDirectionIndex index ) const;
   DirectionResponse GetResponseData( MicDirectionIndex index ) const;
 
+  void OnHeardValidSound( MicDirectionIndex index );
   bool HeardValidSound( MicDirectionIndex& outIndex ) const;
 
   void RespondToSound();
