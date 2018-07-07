@@ -89,7 +89,7 @@ public:
 
   void Init(BehaviorExternalInterface& behaviorExternalInterface);
 protected:
-  friend class DevBehaviorComponentMessageHandler;
+  friend class BehaviorComponentMessageHandler;
   // Check to ensure that the factory only includes one behavior per executable
   // type
   void VerifyExecutableBehaviors() const;

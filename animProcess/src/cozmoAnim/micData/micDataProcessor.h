@@ -107,8 +107,8 @@ private:
   std::mutex _rawMicDataMutex;
   bool _processThreadStop = false;
   bool _robotWasMoving = false;
-  bool _shouldStreamAfterTrigger = true;
-  bool _triggerEnabled = true;
+  bool _shouldStreamAfterTrigger = true; // if you change the default, change engine's micComponent.h
+  bool _triggerEnabled = true; // if you change the default, change engine's micComponent.h
 
 
 #if ANKI_DEV_CHEATS

@@ -68,6 +68,7 @@ void MicComponent::SetShouldStreamAfterWakeWord( bool shouldStream )
 {
   RobotInterface::SetShouldStreamAfterWakeWord message{shouldStream};
   _robot->SendMessage(RobotInterface::EngineToRobot( std::move(message)) );
+  _streamAfterWakeWord = shouldStream;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -75,6 +76,7 @@ void MicComponent::SetTriggerWordDetectionEnabled( bool enabled )
 {
   RobotInterface::SetTriggerWordDetectionEnabled message{ enabled };
   _robot->SendMessage( RobotInterface::EngineToRobot( std::move(message) ) );
+  _triggerDetectionEnabled = enabled;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

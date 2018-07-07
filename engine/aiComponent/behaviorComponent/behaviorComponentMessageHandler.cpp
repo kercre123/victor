@@ -1,17 +1,17 @@
 /**
-* File: devBehaviorComponentMessageHandler.cpp
+* File: behaviorComponentMessageHandler.cpp
 *
 * Author: Kevin M. Karol
 * Created: 10/24/17
 *
-* Description: Component that receives dev messages and performs actions on
+* Description: Component that receives messages and performs actions on
 * the behaviorComponent in response
 *
 * Copyright: Anki, Inc. 2017
 *
 **/
 
-#include "engine/aiComponent/behaviorComponent/devBehaviorComponentMessageHandler.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponentMessageHandler.h"
 
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "engine/aiComponent/aiComponent.h"
@@ -25,6 +25,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
 #include "engine/components/animationComponent.h"
+#include "engine/components/mics/micComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
@@ -51,8 +52,8 @@ constexpr size_t kTicksBeforeEnableFaceKeepalive = 10;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-DevBehaviorComponentMessageHandler::DevBehaviorComponentMessageHandler(Robot& robot)
-: IDependencyManagedComponent<BCComponentID>(this, BCComponentID::DevBehaviorComponentMessageHandler)
+BehaviorComponentMessageHandler::BehaviorComponentMessageHandler(Robot& robot)
+: IDependencyManagedComponent<BCComponentID>(this, BCComponentID::BehaviorComponentMessageHandler)
 , _robot(robot)
 , _tickInfoScreenEnded(0)
 {
@@ -61,33 +62,32 @@ DevBehaviorComponentMessageHandler::DevBehaviorComponentMessageHandler(Robot& ro
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-DevBehaviorComponentMessageHandler::~DevBehaviorComponentMessageHandler()
+BehaviorComponentMessageHandler::~BehaviorComponentMessageHandler()
 {
   _eventHandles.clear();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DevBehaviorComponentMessageHandler::GetInitDependencies(BCCompIDSet& dependencies) const
+void BehaviorComponentMessageHandler::GetInitDependencies(BCCompIDSet& dependencies) const
 { 
   dependencies.insert(BCComponentID::BehaviorExternalInterface);
   dependencies.insert(BCComponentID::BehaviorSystemManager);
   dependencies.insert(BCComponentID::BehaviorContainer);
-}
   
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DevBehaviorComponentMessageHandler::AdditionalInitAccessibleComponents(BCCompIDSet& components) const
-{
-  components.insert(BCComponentID::BehaviorsBootLoader);
+  // These are not needed during init, but may be needed in an arbitrarily short time after it
+  // if the user opens the dev screen
+  dependencies.insert(BCComponentID::BehaviorsBootLoader);
+  dependencies.insert(BCComponentID::UserIntentComponent);
 }
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DevBehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCompMap& dependentComps) 
+void BehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCompMap& dependentComps)
 {
   auto& bContainer = dependentComps.GetComponent<BehaviorContainer>();
   auto& bsm = dependentComps.GetComponent<BehaviorSystemManager>();
   auto& bei = dependentComps.GetComponent<BehaviorExternalInterface>();
   auto& behaviorsBootLoader = dependentComps.GetComponent<BehaviorsBootLoader>();
+  auto& uic = dependentComps.GetComponent<UserIntentComponent>();
 
   if(_robot.HasExternalInterface()){
     
@@ -116,21 +116,10 @@ void DevBehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCom
 
     // Go to Wait behavior when SHOW_PRE_PIN received from switchboard so as 
     // not to interrupt while user is trying to look at something.
-    auto setConnectionStatusCallback = [&bContainer, &bsm, this](const GameToEngineEvent& event) {
+    auto setConnectionStatusCallback = [this, &bContainer, &bsm](const GameToEngineEvent& event) {
       const auto& msg = event.GetData().Get_SetConnectionStatus();
       if (msg.status == SwitchboardInterface::ConnectionStatus::SHOW_PRE_PIN) {
-        PRINT_CH_INFO("BehaviorSystem", "DevBehaviorComponentMessageHandler.EnterPairing", "");
-        ICozmoBehaviorPtr waitBehavior = bContainer.FindBehaviorByID(kWaitBehaviorID);
-        bsm.ResetBehaviorStack(waitBehavior.get());
-        
-        // Disable neutral eyes while in the dev screens, because symmetry with another call to
-        // enable it in this class
-        _robot.GetAnimationComponent().EnableKeepFaceAlive( false );
-        // Prevent the Update loop from sending an EnableKeepFaceAlive(true) in case the user is
-        // entering and exiting the pairing screen quickly. There's a potential race condition here if the
-        // update loop has just sent a re-enable message but the backpack was also double clicked, but
-        // since the anim process is also calling EnableKeepFaceAlive(false), it should be ok
-        _tickInfoScreenEnded = 0;
+        OnEnterInfoFace( bContainer, bsm );
       }
     };
 
@@ -144,31 +133,27 @@ void DevBehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCom
     // TODO: VIC-2416 - Rename this class since it is used in release.
     // Get base behavior to execute when exiting debug screens
     if(_robot.GetContext() == nullptr){
-      PRINT_NAMED_WARNING("DevBehaviorComponentMessageHandler.InitDependent.NoContext", "");
+      PRINT_NAMED_WARNING("BehaviorComponentMessageHandler.InitDependent.NoContext", "");
       return;
     }
     auto dataLoader = _robot.GetContext()->GetDataLoader();
     if(dataLoader == nullptr){
-      PRINT_NAMED_WARNING("DevBehaviorComponentMessageHandler.InitDependent.NoDataLoader", "");
+      PRINT_NAMED_WARNING("BehaviorComponentMessageHandler.InitDependent.NoDataLoader", "");
       return;
     }
     
     // Go to freeplayBehavior as defined in victor_behavior_config.json
     // when leaving debug screens.
-    auto debugScreenModeHandler = [&bsm, &behaviorsBootLoader, this](const RobotToEngineEvent& event) {
+    auto debugScreenModeHandler = [this, &bsm, &behaviorsBootLoader, &uic](const RobotToEngineEvent& event) {
       const auto& msg = event.GetData().Get_debugScreenMode();
-      PRINT_CH_INFO("BehaviorSystem", "DevBehaviorComponentMessageHandler.DebugScreenModeChange", "%d", msg.enabled);
+      PRINT_CH_INFO("BehaviorSystem", "BehaviorComponentMessageHandler.DebugScreenModeChange", "%d", msg.enabled);
       if (!msg.enabled) {
         // We only care if the debug screen is disabled.
         // We don't use this same message (with enabled == true) for going into the wait behavior
         // because of a race condition which could result in an animation being played from 
         // engine _after_ the anim process has already played a face animation for the 
         // pairing scren.
-        IBehavior* bootBehavior = behaviorsBootLoader.GetBootBehavior();
-        bsm.ResetBehaviorStack(bootBehavior);
-        
-        // Mark the time the info screen ended so the Update loop can handle re-enabling face keepalive
-        _tickInfoScreenEnded = BaseStationTimer::getInstance()->GetTickCount();
+        OnExitInfoFace(bsm, behaviorsBootLoader, uic);
       }
     };
     _eventHandles.push_back(
@@ -182,7 +167,7 @@ void DevBehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCom
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DevBehaviorComponentMessageHandler::UpdateDependent(const BCCompMap& dependentComps)
+void BehaviorComponentMessageHandler::UpdateDependent(const BCCompMap& dependentComps)
 {
   if( _tickInfoScreenEnded != 0 ) {
     size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
@@ -197,14 +182,72 @@ void DevBehaviorComponentMessageHandler::UpdateDependent(const BCCompMap& depend
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DevBehaviorComponentMessageHandler::SetupUserIntentEvents()
+void BehaviorComponentMessageHandler::OnEnterInfoFace( BehaviorContainer& bContainer, BehaviorSystemManager& bsm )
+{
+  PRINT_CH_INFO("BehaviorSystem", "BehaviorComponentMessageHandler.OnInfoFaceStarted.EnterPairing", "");
+  ICozmoBehaviorPtr waitBehavior = bContainer.FindBehaviorByID(kWaitBehaviorID);
+  ANKI_VERIFY(waitBehavior != nullptr, "BehaviorComponentMessageHandler.OnEnterInfoFace.NoWait", "Could not find wait behavior");
+  bsm.ResetBehaviorStack(waitBehavior.get());
+  
+  // Disable neutral eyes while in the dev screens, because symmetry with another call to
+  // enable it in this class
+  _robot.GetAnimationComponent().EnableKeepFaceAlive( false );
+  // Prevent the Update loop from sending an EnableKeepFaceAlive(true) in case the user is
+  // entering and exiting the pairing screen quickly. There's a potential race condition here if the
+  // update loop has just sent a re-enable message but the backpack was also double clicked, but
+  // since the anim process is also calling EnableKeepFaceAlive(false), it should be ok
+  _tickInfoScreenEnded = 0;
+  
+  _wasTriggerWordEnabled = _robot.GetMicComponent().GetTriggerWordDetectionEnabled();
+  _wasStreamingEnabled = _robot.GetMicComponent().GetShouldStreamAfterWakeWord();
+  if( _wasTriggerWordEnabled ) {
+    _robot.GetMicComponent().SetTriggerWordDetectionEnabled( false );
+  }
+  if( _wasStreamingEnabled ) {
+    _robot.GetMicComponent().SetShouldStreamAfterWakeWord( false );
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorComponentMessageHandler::OnExitInfoFace( BehaviorSystemManager& bsm,
+                                                      BehaviorsBootLoader& bbl,
+                                                      UserIntentComponent& uic )
+{
+  
+  PRINT_CH_INFO("BehaviorSystem", "BehaviorComponentMessageHandler.OnInfoFaceStarted.ExitPairing", "");
+  
+  // ignore any unclaimed trigger word or intent warnings, if a user said the wake word or a command
+  // just prior to accessing a dev screen
+  if( uic.IsTriggerWordPending() ) {
+    uic.ClearPendingTriggerWord();
+  }
+  uic.DropAnyUserIntent();
+  uic.ResetUserIntentUnclaimed();
+  
+  auto& micComp = _robot.GetMicComponent();
+  if( micComp.GetTriggerWordDetectionEnabled() != _wasTriggerWordEnabled ){
+    micComp.SetTriggerWordDetectionEnabled( _wasTriggerWordEnabled );
+  }
+  if( micComp.GetShouldStreamAfterWakeWord() != _wasStreamingEnabled ){
+    micComp.SetShouldStreamAfterWakeWord( _wasStreamingEnabled );
+  }
+  
+  IBehavior* bootBehavior = bbl.GetBootBehavior();
+  bsm.ResetBehaviorStack(bootBehavior);
+  
+  // Mark the time the info screen ended so the Update loop can handle re-enabling face keepalive
+  _tickInfoScreenEnded = BaseStationTimer::getInstance()->GetTickCount();
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorComponentMessageHandler::SetupUserIntentEvents()
 {
   
   auto EI = _robot.GetExternalInterface();
   
   // fake trigger word
   auto fakeTriggerWordCallback = [this]( const GameToEngineEvent& event ) {
-    PRINT_CH_INFO("BehaviorSystem","DevBehaviorComponentMessageHandler.ReceivedFakeTriggerWordDetected","");
+    PRINT_CH_INFO("BehaviorSystem","BehaviorComponentMessageHandler.ReceivedFakeTriggerWordDetected","");
     auto& uic = _robot.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
     uic.SetTriggerWordPending();
   };
@@ -212,7 +255,7 @@ void DevBehaviorComponentMessageHandler::SetupUserIntentEvents()
   
   // fake cloud intent
   auto fakeCloudIntentCallback = [this]( const GameToEngineEvent& event ) {
-    PRINT_CH_INFO("BehaviorSystem","DevBehaviorComponentMessageHandler.FakeCloudIntentReceived","");
+    PRINT_CH_INFO("BehaviorSystem","BehaviorComponentMessageHandler.FakeCloudIntentReceived","");
     auto& uic = _robot.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
     const auto& intent = event.GetData().Get_FakeCloudIntent().intent;
     if( (intent.find("{") != std::string::npos) // super awesome json detection
@@ -228,7 +271,7 @@ void DevBehaviorComponentMessageHandler::SetupUserIntentEvents()
   
   // fake user intent
   auto fakeUserIntentCallback = [this]( const GameToEngineEvent& event ) {
-    PRINT_CH_INFO("BehaviorSystem","DevBehaviorComponentMessageHandler.FakeUserIntentReceived","");
+    PRINT_CH_INFO("BehaviorSystem","BehaviorComponentMessageHandler.FakeUserIntentReceived","");
     auto& uic = _robot.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
     const auto& intent = event.GetData().Get_FakeUserIntent().intent;
     
@@ -237,7 +280,7 @@ void DevBehaviorComponentMessageHandler::SetupUserIntentEvents()
       uic.DevSetUserIntentPending(tag);
     } else {
       PRINT_CH_INFO("BehaviorSystem",
-                    "DevBehaviorComponentMessageHandler.FakeUserIntentReceived.Invalid",
+                    "BehaviorComponentMessageHandler.FakeUserIntentReceived.Invalid",
                     "Invalid intent '%s'",
                     intent.c_str());
     }
@@ -248,7 +291,7 @@ void DevBehaviorComponentMessageHandler::SetupUserIntentEvents()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehaviorPtr DevBehaviorComponentMessageHandler::WrapRequestedBehaviorInDispatcherRerun(BehaviorContainer& bContainer, 
+ICozmoBehaviorPtr BehaviorComponentMessageHandler::WrapRequestedBehaviorInDispatcherRerun(BehaviorContainer& bContainer,
                                                                                              BehaviorID requestedBehaviorID, 
                                                                                              const int numRuns)
 {
@@ -261,7 +304,7 @@ ICozmoBehaviorPtr DevBehaviorComponentMessageHandler::WrapRequestedBehaviorInDis
   Json::Value config = BehaviorDispatcherRerun::CreateConfig(kBehaviorIDForDevMessage, requestedBehaviorID, numRuns);
   const bool createdOK = bContainer.CreateAndStoreBehavior(config);
   if( ANKI_VERIFY(createdOK,
-                  "DevBehaviorComponentMessageHandler.CreateRerunWrapper.Fail",
+                  "BehaviorComponentMessageHandler.CreateRerunWrapper.Fail",
                   "Couldn't create behavior wrapper") ) {
     rerunDispatcher = bContainer.FindBehaviorByID( kBehaviorIDForDevMessage );
   }
@@ -270,7 +313,7 @@ ICozmoBehaviorPtr DevBehaviorComponentMessageHandler::WrapRequestedBehaviorInDis
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DevBehaviorComponentMessageHandler::SubscribeToWebViz(BehaviorExternalInterface& bei, const BehaviorSystemManager& bsm)
+void BehaviorComponentMessageHandler::SubscribeToWebViz(BehaviorExternalInterface& bei, const BehaviorSystemManager& bsm)
 {
   DEV_ASSERT( _eventHandles.empty(), "only call once" );
   
@@ -375,7 +418,7 @@ void DevBehaviorComponentMessageHandler::SubscribeToWebViz(BehaviorExternalInter
             uic.DevSetUserIntentPending(tag);
           } else {
             PRINT_CH_INFO("BehaviorSystem",
-                          "DevBehaviorComponentMessageHandler.WebVizUserIntentReceived.Invalid",
+                          "BehaviorComponentMessageHandler.WebVizUserIntentReceived.Invalid",
                           "Invalid intent '%s'",
                           request.c_str());
           }
