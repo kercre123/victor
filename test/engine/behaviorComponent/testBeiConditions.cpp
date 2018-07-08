@@ -36,6 +36,7 @@
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
+#include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/components/batteryComponent.h"
 #include "engine/robot.h"
@@ -1468,6 +1469,109 @@ TEST(BeiConditions, ObjectKnown)
   EXPECT_FALSE( condInitialTick->AreConditionsMet(bei) );
   EXPECT_FALSE( cond1000Ms->AreConditionsMet(bei) );
   
+}
+
+
+TEST(BeiConditions, FaceKnown)
+{
+  TestBehaviorFramework testBehaviorFramework;
+  testBehaviorFramework.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
+  auto& robot = testBehaviorFramework.GetRobot();
+  
+  const std::string jsonDefault = R"json(
+  {
+    "conditionType": "FaceKnown"
+  })json";
+  const std::string jsonMaxDist400mm = R"json(
+  {
+    "conditionType": "FaceKnown",
+    "maxFaceDist_mm" : 400
+  })json";
+  const std::string jsonMaxAge10sec = R"json(
+  {
+    "conditionType": "FaceKnown",
+    "maxFaceAge_s" : 10
+  })json";
+  const std::string jsonMustBeNamed = R"json(
+  {
+    "conditionType": "FaceKnown",
+    "mustBeNamed" : true
+  })json";
+  
+  // create conditions
+  IBEIConditionPtr condDefault;        CreateBEI(jsonDefault, condDefault);
+  IBEIConditionPtr condMaxDist400mm;   CreateBEI(jsonMaxDist400mm, condMaxDist400mm);
+  IBEIConditionPtr condMaxAge10sec;    CreateBEI(jsonMaxAge10sec, condMaxAge10sec);
+  IBEIConditionPtr condMustBeNamed;    CreateBEI(jsonMustBeNamed, condMustBeNamed);
+  
+  // init and activate
+  condDefault->Init(bei);       condDefault->SetActive(bei, true);
+  condMaxDist400mm->Init(bei);  condMaxDist400mm->SetActive(bei, true);
+  condMaxAge10sec->Init(bei);   condMaxAge10sec->SetActive(bei, true);
+  condMustBeNamed->Init(bei);   condMustBeNamed->SetActive(bei, true);
+  
+  EXPECT_FALSE(condDefault->AreConditionsMet(bei));
+  EXPECT_FALSE(condMaxDist400mm->AreConditionsMet(bei));
+  EXPECT_FALSE(condMaxAge10sec->AreConditionsMet(bei));
+  EXPECT_FALSE(condMustBeNamed->AreConditionsMet(bei));
+  
+  robot.GetVisionComponent()._lastProcessedImageTimeStamp_ms = 1000;
+  
+  // Fake an unnamed face observation at 1000 ms, 200 mm from robot.
+  Vision::TrackedFace face1;
+  face1.SetTimeStamp(1000);
+  face1.SetID(1);
+  Pose3d facePose;
+  facePose.SetParent(robot.GetComponent<FullRobotPose>()._pose);
+  facePose.SetTranslation(Vec3f(200, 0, 0));
+  face1.SetHeadPose(facePose);
+  FaceWorld::FaceEntry face1Entry(face1);
+  robot.GetFaceWorld()._faceEntries.insert({1, face1Entry});
+  
+  EXPECT_TRUE(condDefault->AreConditionsMet(bei));
+  EXPECT_TRUE(condMaxDist400mm->AreConditionsMet(bei));
+  EXPECT_TRUE(condMaxAge10sec->AreConditionsMet(bei));
+  EXPECT_FALSE(condMustBeNamed->AreConditionsMet(bei));
+  
+  // Update the robot's time to 5000 ms.
+  robot.GetVisionComponent()._lastProcessedImageTimeStamp_ms = 5000;
+  
+  // Move the face to 401 mm from robot.
+  facePose.SetTranslation(Vec3f(401, 0, 0));
+  face1.SetHeadPose(facePose);
+  face1Entry = FaceWorld::FaceEntry(face1);
+  robot.GetFaceWorld()._faceEntries.clear();
+  robot.GetFaceWorld()._faceEntries.insert({1, face1Entry});
+  
+  EXPECT_TRUE(condDefault->AreConditionsMet(bei));
+  EXPECT_FALSE(condMaxDist400mm->AreConditionsMet(bei));
+  EXPECT_TRUE(condMaxAge10sec->AreConditionsMet(bei));
+  EXPECT_FALSE(condMustBeNamed->AreConditionsMet(bei));
+  
+  // Update the robot's time to 11001 ms.
+  robot.GetVisionComponent()._lastProcessedImageTimeStamp_ms = 11001;
+  
+  EXPECT_TRUE(condDefault->AreConditionsMet(bei));
+  EXPECT_FALSE(condMaxDist400mm->AreConditionsMet(bei));
+  EXPECT_FALSE(condMaxAge10sec->AreConditionsMet(bei));
+  EXPECT_FALSE(condMustBeNamed->AreConditionsMet(bei));
+  
+  // Add a name to the existing face
+  robot.GetFaceWorld()._faceEntries.begin()->second.face.SetName("Bob");
+  
+  EXPECT_TRUE(condDefault->AreConditionsMet(bei));
+  EXPECT_FALSE(condMaxDist400mm->AreConditionsMet(bei));
+  EXPECT_FALSE(condMaxAge10sec->AreConditionsMet(bei));
+  EXPECT_TRUE(condMustBeNamed->AreConditionsMet(bei));
+  
+  // Remove the face
+  robot.GetFaceWorld()._faceEntries.clear();
+  
+  EXPECT_FALSE(condDefault->AreConditionsMet(bei));
+  EXPECT_FALSE(condMaxDist400mm->AreConditionsMet(bei));
+  EXPECT_FALSE(condMaxAge10sec->AreConditionsMet(bei));
+  EXPECT_FALSE(condMustBeNamed->AreConditionsMet(bei));
 }
 
 
