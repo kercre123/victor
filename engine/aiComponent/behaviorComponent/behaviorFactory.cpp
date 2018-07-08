@@ -108,6 +108,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingLookAtPhone.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/photoTaking/behaviorAestheticallyCenterFaces.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/photoTaking/behaviorTakeAPhotoCoordinator.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/prDemo/behaviorPRDemo.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/prDemo/behaviorPRDemoBase.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/proxBehaviors/behaviorProxGetToDistance.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeCubeMoved.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeFace.h"
@@ -760,6 +762,18 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::TakeAPhotoCoordinator:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorTakeAPhotoCoordinator(config));
+      break;
+    }
+    
+    case BehaviorClass::PRDemo:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPRDemo(config));
+      break;
+    }
+    
+    case BehaviorClass::PRDemoBase:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPRDemoBase(config));
       break;
     }
     

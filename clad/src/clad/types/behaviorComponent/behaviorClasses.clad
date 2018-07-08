@@ -162,6 +162,10 @@ enum uint_8 BehaviorClass {
   AestheticallyCenterFaces,
   TakeAPhotoCoordinator,
 
+  // prDemo
+  PRDemo,
+  PRDemoBase,
+
   // proxBehaviors
   ProxGetToDistance,
 

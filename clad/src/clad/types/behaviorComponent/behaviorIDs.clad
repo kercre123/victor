@@ -237,6 +237,7 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree
   InitNormalOperation,
+  InitPRDemo,
   IntentUnmatched,
   ModeSelector,
   NoCloud,
@@ -260,6 +261,12 @@ enum uint_8 BehaviorID {
   OnboardingWaitForComeHere,
   OnboardingWaitForTriggerWord,
   OnboardingWakeUp,
+
+  // victorBehaviorTree/prDemo
+  PRDemoExploring,
+  PRDemoObserving,
+  PRDemoSleeping,
+  PRDemoStateMachine,
 
   // victorBehaviorTree/quietMode
   BeQuietAnims,
