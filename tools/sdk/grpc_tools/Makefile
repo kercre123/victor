@@ -249,6 +249,10 @@ test_settings: .require_ip
 	curl --cacert trust.cert https://$(ANKI_ROBOT_HOST)/v1/update_settings -d '{"settings":{"clock_24_hour":true,"eye_color":"TEAL"}}'
 	@echo
 
+test_status_history: .require_ip
+	$(curl_command)/v1/status_history -d '{}'
+	@echo
+
 update_time: .require_ip
 	ssh root@$(ANKI_ROBOT_HOST) -t date --set='@$(shell date +%s)'
 

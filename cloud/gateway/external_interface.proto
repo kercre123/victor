@@ -232,6 +232,13 @@ service ExternalInterface {
     };
   }
 
+  rpc RobotStatusHistory(RobotHistoryRequest) returns (RobotHistoryResult) {
+    option (google.api.http) = {
+      post: "/v1/status_history",
+      body: "*"
+    };
+  }
+
   rpc UpdateSettings(UpdateSettingsRequest) returns (UpdateSettingsResponse) {
     option (google.api.http) = {
       post: "/v1/update_settings",

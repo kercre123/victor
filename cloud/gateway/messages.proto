@@ -96,6 +96,7 @@ message Status {
     FeatureStatus                   feature_status                   = 1;
     MeetVictorFaceScanStarted       meet_victor_face_scan_started    = 2;
     MeetVictorFaceScanComplete      meet_victor_face_scan_complete   = 3;
+    FaceEnrollmentCompleted         face_enrollment_completed        = 4;
   }
 }
 
@@ -281,7 +282,7 @@ message AppIntentResult {
 
 message FaceEnrollmentCompleted {
   FaceEnrollmentResult result = 1;
-  int32               face_id = 2;
+  int32                face_id = 2;
   string               name = 3;
 }
 

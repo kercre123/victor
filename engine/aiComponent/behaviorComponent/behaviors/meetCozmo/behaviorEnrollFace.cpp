@@ -34,8 +34,10 @@
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/events/ankiEvent.h"
+#include "engine/externalInterface/cladProtoTypeTranslator.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/externalInterface/externalMessageRouter.h"
+#include "engine/externalInterface/gatewayInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/viz/vizManager.h"
@@ -514,9 +516,9 @@ void BehaviorEnrollFace::BehaviorUpdate()
 
       if( finishedScanning ) {
         // tell the app we've finished scanning
-        if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
-          ExternalInterface::MeetVictorFaceScanComplete status;
-          GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(std::move(status)));
+        if( GetBEI().GetRobotInfo().HasGatewayInterface() ) {
+          auto* status = new external_interface::MeetVictorFaceScanComplete;
+          GetBEI().GetRobotInfo().GetGatewayInterface()->Broadcast( ExternalMessageRouter::Wrap( status ) );
         }
         // das msg
         {
@@ -717,7 +719,12 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
       const auto& msgRef = info;
       ExternalInterface::FaceEnrollmentCompleted msgCopy{msgRef};
       GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast( ExternalInterface::MessageEngineToGame{std::move(msgCopy)} );
-      GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast( ExternalMessageRouter::Wrap(std::move(info)) );
+    }
+    if( GetBEI().GetRobotInfo().HasGatewayInterface() ) {
+      auto* msg = new external_interface::FaceEnrollmentCompleted{ CladProtoTypeTranslator::ToProtoEnum(info.result),
+                                                                   info.faceID,
+                                                                   info.name };
+      GetBEI().GetRobotInfo().GetGatewayInterface()->Broadcast( ExternalMessageRouter::Wrap(msg) );
     }
 
     // Done (whether success or failure), so reset state for next run
@@ -932,10 +939,10 @@ void BehaviorEnrollFace::TransitionToLookingForFace()
                   }
 
                   // tell the app we're beginning enrollment
-                  if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
+                  if( GetBEI().GetRobotInfo().HasGatewayInterface() ) {
                     // todo: replace with generic status VIC-1423
-                    ExternalInterface::MeetVictorFaceScanStarted status;
-                    GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast( ExternalMessageRouter::Wrap(std::move(status)) );
+                    auto* status = new external_interface::MeetVictorFaceScanStarted;
+                    GetBEI().GetRobotInfo().GetGatewayInterface()->Broadcast( ExternalMessageRouter::Wrap(status) );
                   }
 
                   {

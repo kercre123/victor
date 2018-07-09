@@ -266,58 +266,6 @@ func ProtoSetLiftHeightToClad(msg *extint.SetLiftHeightRequest) *gw_clad.Message
 	})
 }
 
-func CladFeatureStatusToProto(msg *gw_clad.FeatureStatus) *extint.FeatureStatus {
-	return &extint.FeatureStatus{
-		FeatureName: msg.FeatureName,
-		Source:      msg.Source,
-	}
-}
-
-func CladMeetVictorFaceScanStartedToProto(msg *gw_clad.MeetVictorFaceScanStarted) *extint.MeetVictorFaceScanStarted {
-	return &extint.MeetVictorFaceScanStarted{}
-}
-
-func CladMeetVictorFaceScanCompleteToProto(msg *gw_clad.MeetVictorFaceScanComplete) *extint.MeetVictorFaceScanComplete {
-	return &extint.MeetVictorFaceScanComplete{}
-}
-
-func CladStatusToProto(msg *gw_clad.Status) *extint.Status {
-	var status *extint.Status
-	switch tag := msg.Tag(); tag {
-	case gw_clad.StatusTag_FeatureStatus:
-		status = &extint.Status{
-			StatusType: &extint.Status_FeatureStatus{
-				CladFeatureStatusToProto(msg.GetFeatureStatus()),
-			},
-		}
-	case gw_clad.StatusTag_MeetVictorFaceScanStarted:
-		status = &extint.Status{
-			StatusType: &extint.Status_MeetVictorFaceScanStarted{
-				CladMeetVictorFaceScanStartedToProto(msg.GetMeetVictorFaceScanStarted()),
-			},
-		}
-	case gw_clad.StatusTag_FaceEnrollmentCompleted:
-		status = &extint.Status{
-			StatusType: &extint.Status_MeetVictorFaceScanComplete{
-				CladMeetVictorFaceScanCompleteToProto(msg.GetMeetVictorFaceScanComplete()),
-			},
-		}
-	case gw_clad.StatusTag_MeetVictorFaceScanComplete:
-		status = &extint.Status{
-			StatusType: &extint.Status_MeetVictorFaceScanComplete{
-				CladMeetVictorFaceScanCompleteToProto(msg.GetMeetVictorFaceScanComplete()),
-			},
-		}
-	case gw_clad.StatusTag_INVALID:
-		log.Println(tag, "tag for status is invalid")
-		return nil
-	default:
-		log.Println(tag, "tag for status is not yet implemented")
-		return nil
-	}
-	return status
-}
-
 func CladCladRectToProto(msg *gw_clad.CladRect) *extint.CladRect {
 	return &extint.CladRect{
 		XTopLeft: msg.XTopLeft,
@@ -430,12 +378,14 @@ func CladRobotStateToProto(msg *gw_clad.RobotState) *extint.RobotStateResult {
 
 func CladEventToProto(msg *gw_clad.Event) *extint.Event {
 	switch tag := msg.Tag(); tag {
-	case gw_clad.EventTag_Status:
-		return &extint.Event{
-			EventType: &extint.Event_Status{
-				CladStatusToProto(msg.GetStatus()),
-			},
-		}
+	// Event is currently unused in CLAD, but if you start
+	// using it again, replace [MessageName] with your msg name
+	// case gw_clad.EventTag_[MessageName]:
+	// 	return &extint.Event{
+	// 		EventType: &extint.Event_[MessageName]{
+	// 			Clad[MessageName]ToProto(msg.Get[MessageName]()),
+	// 		},
+	// 	}
 	case gw_clad.EventTag_INVALID:
 		log.Println(tag, "tag is invalid")
 		return nil
@@ -1204,6 +1154,24 @@ func (m *rpcService) PushSettings(ctx context.Context, in *extint.PushSettingsRe
 	}
 	response := <-result
 	return response.GetPushSettingsResponse(), nil
+}
+
+func (m *rpcService) RobotStatusHistory(ctx context.Context, in *extint.RobotHistoryRequest) (*extint.RobotHistoryResult, error) {
+	log.Println("Received rpc request RobotStatusHistory(", in, ")")
+
+	f, result := createChannel(&extint.GatewayWrapper_RobotHistoryResult{}, 1)
+	defer f()
+
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_RobotHistoryRequest{
+			in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	response := <-result
+	return response.GetRobotHistoryResult(), nil
 }
 
 func (m *rpcService) PullSettings(ctx context.Context, in *extint.PullSettingsRequest) (*extint.PullSettingsResponse, error) {

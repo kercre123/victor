@@ -84,6 +84,9 @@ message GatewayWrapper {
     PlayAnimationRequest          play_animation_response = 98;
     PlayAnimationResult           play_animation_result = 99;
 
+    // ------------ status history --------------------
+    RobotHistoryRequest           robot_history_request = 80;
+    RobotHistoryResult            robot_history_result = 81;
 
     // (when adding new categories, please create gaps between field numbers)
     // ------------  -------------------------

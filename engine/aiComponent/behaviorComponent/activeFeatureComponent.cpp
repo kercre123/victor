@@ -12,7 +12,6 @@
 
 #include "engine/aiComponent/behaviorComponent/activeFeatureComponent.h"
 
-#include "clad/externalInterface/messageEngineToGame.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/activeBehaviorIterator.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -23,6 +22,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/cozmoContext.h"
+#include "proto/external_interface/messages.pb.h"
 #include "util/logging/logging.h"
 #include "util/logging/DAS.h"
 #include "util/string/stringUtils.h"
