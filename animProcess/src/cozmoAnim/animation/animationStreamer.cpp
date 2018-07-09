@@ -1765,6 +1765,7 @@ namespace Cozmo {
         _lastAnimationStreamTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
         // Send an end-of-animation keyframe when done
         if( !_streamingAnimation->HasFramesLeft() &&
+            _relativeStreamTime_ms >= _streamingAnimation->GetLastKeyFrameEndTime_ms() &&
             _startOfAnimationSent &&
             !_endOfAnimationSent)
         {
