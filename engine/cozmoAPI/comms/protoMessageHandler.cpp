@@ -69,6 +69,7 @@ Result ProtoMessageHandler::Init(CozmoContext* context, const Json::Value& confi
   // Subscribe to desired simple events
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kPing, commonCallback)); // TODO: remove this once more examples are written
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kBing, commonCallback)); // TODO: remove this once more examples are written
+  _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kRobotStatsRequest, commonCallback));
 
   return RESULT_OK;
 }
@@ -91,6 +92,13 @@ void ProtoMessageHandler::BingBong(const external_interface::Bing& bing) {
   DeliverToExternal(wrapper); // TODO: make this intelligent (using broadcast or something)
 }
 
+void ProtoMessageHandler::GetRobotStats(const external_interface::RobotStatsRequest& request) {
+  external_interface::RobotStatsResponse* response = new external_interface::RobotStatsResponse{ 1, 2 };
+  external_interface::GatewayWrapper wrapper;
+  wrapper.set_allocated_robot_stats_response(response);
+  DeliverToExternal(wrapper); // TODO: make this intelligent (using broadcast or something)
+}
+
 
 void ProtoMessageHandler::HandleEvents(const AnkiEvent<external_interface::GatewayWrapper>& event) {
   switch(event.GetData().GetTag())
@@ -100,6 +108,9 @@ void ProtoMessageHandler::HandleEvents(const AnkiEvent<external_interface::Gatew
       break;
     case external_interface::GatewayWrapperTag::kBing:
       BingBong(event.GetData().bing());
+      break;
+    case external_interface::GatewayWrapperTag::kRobotStatsRequest:
+      GetRobotStats(event.GetData().robot_stats_request());
       break;
     default:
       PRINT_STREAM_INFO("ProtoMessageHandler.HandleEvents",

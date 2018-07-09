@@ -723,3 +723,10 @@ message SetBackpackLEDsResponse {
   ResultStatus status = 1;
 }
 
+message RobotStatsRequest {}
+
+message RobotStatsResponse {
+  float current_voltage = 1;
+  float battery_level = 2;
+}
+

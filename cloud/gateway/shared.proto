@@ -96,6 +96,9 @@ message GatewayWrapper {
     RobotHistoryRequest           robot_history_request = 80;
     RobotHistoryResult            robot_history_result = 81;
 
+    // ------------ robot stats --------------------
+    RobotStatsRequest             robot_stats_request = 100;
+    RobotStatsResponse            robot_stats_response = 101;
     // (when adding new categories, please create gaps between field numbers)
     // ------------  -------------------------
   }

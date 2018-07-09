@@ -1348,6 +1348,24 @@ func (m *rpcService) SetLiftHeight(ctx context.Context, in *extint.SetLiftHeight
 	return response, nil
 }
 
+func (m *rpcService) RobotStats(ctx context.Context, in *extint.RobotStatsRequest) (*extint.RobotStatsResponse, error) {
+	log.Println("Received rpc request RobotStats(", in, ")")
+
+	f, result := createChannel(&extint.GatewayWrapper_RobotStatsResponse{}, 1)
+	defer f()
+
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_RobotStatsRequest{
+			in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	payload := <-result
+	return payload.GetRobotStatsResponse(), nil
+}
+
 func newServer() *rpcService {
 	return new(rpcService)
 }
