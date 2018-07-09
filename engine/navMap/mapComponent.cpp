@@ -159,9 +159,9 @@ MapComponent::MapComponent()
 , _vizMessageDirty(true)
 , _gameMessageDirty(true)
 , _webMessageDirty(false) // web must request it
-, _useProxObstaclesInPlanning(true)
 , _isRenderEnabled(true)
 , _broadcastRate_sec(-1.0f)
+, _enableProxCollisions(true)
 {
 }
 
@@ -1172,10 +1172,10 @@ bool MapComponent::CheckForCollisions(const BoundedConvexSet2f& region) const
   const INavMap* currentMap = GetCurrentMemoryMap();
   if (currentMap)
   {
-    return currentMap->AnyOf( region, [] (const auto& data) {
+    return currentMap->AnyOf( region, [this] (const auto& data) {
         const bool retv = (data->type == MemoryMapTypes::EContentType::ObstacleObservable)   ||
                           (data->type == MemoryMapTypes::EContentType::ObstacleCharger)      ||
-                          (data->type == MemoryMapTypes::EContentType::ObstacleProx)         ||
+                          ((data->type == MemoryMapTypes::EContentType::ObstacleProx) && _enableProxCollisions) ||
                           (data->type == MemoryMapTypes::EContentType::ObstacleUnrecognized) ||
                           (data->type == MemoryMapTypes::EContentType::Cliff);
         return retv;
@@ -1190,10 +1190,10 @@ float MapComponent::GetCollisionArea(const BoundedConvexSet2f& region) const
   const INavMap* currentMap = GetCurrentMemoryMap();
   if (currentMap)
   {
-    return currentMap->GetCollisionArea( region, [] (const auto& data) {
+    return currentMap->GetCollisionArea( region, [this] (const auto& data) {
         const bool retv = (data->type == MemoryMapTypes::EContentType::ObstacleObservable)   ||
                           (data->type == MemoryMapTypes::EContentType::ObstacleCharger)      ||
-                          (data->type == MemoryMapTypes::EContentType::ObstacleProx)         ||
+                          ((data->type == MemoryMapTypes::EContentType::ObstacleProx) && _enableProxCollisions )||
                           (data->type == MemoryMapTypes::EContentType::ObstacleUnrecognized) ||
                           (data->type == MemoryMapTypes::EContentType::Cliff);
         return retv;

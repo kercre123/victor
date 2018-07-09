@@ -135,8 +135,8 @@ public:
   // what you want??
   void RemoveAllProxObstacles();
   
-  void SetUseProxObstaclesInPlanning(bool enable) { _useProxObstaclesInPlanning = enable; }
-  bool GetUseProxObstaclesInPlanning() const { return _useProxObstaclesInPlanning; }
+  void SetUseProxObstaclesInPlanning(bool enable) { _enableProxCollisions = enable; }
+  bool GetUseProxObstaclesInPlanning() const { return _enableProxCollisions; }
   
   ////////////////////////////////////////////////////////////////////////////////
   // Accessors
@@ -208,11 +208,11 @@ private:
   bool                            _gameMessageDirty;
   bool                            _webMessageDirty;
   
-  // config variable for conditionally enabling/disabling prox obstacles in planning
-  bool                            _useProxObstaclesInPlanning;
-  
   bool                            _isRenderEnabled;
   float                           _broadcastRate_sec = -1.0f;      // (Negative means don't send)
+
+  // config variable for conditionally enabling/disabling prox obstacles in planning
+  bool                            _enableProxCollisions;
 };
 
 }
