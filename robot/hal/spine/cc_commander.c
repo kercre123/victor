@@ -301,12 +301,43 @@ int emr_get(uint8_t index, uint32_t* value);
 
 
 /******* EMR interface  **************************/
+const uint8_t index_PACKED_OUT_FLAG = 6;
+#define WIPE_PACKOUT_MAGIC 0x57495045
+#define UNPACKOUT_START_BYTE (sizeof(uint32_t)*4)//PLAYPEN_READY_FLAG
+#define UNPACKOUT_BYTE_RANGE (sizeof(uint32_t)*4)//words 4,5,6,7
+static const char* kEMRFile = "/dev/block/bootdevice/by-name/emr";
+static const uint8_t unpackout_zerobuf[UNPACKOUT_BYTE_RANGE] = {0};
+
+
+static int UnPackout(void) {
+  int fd = open(kEMRFile, O_WRONLY);
+  int retval = ERR_SYSTEM;
+#if FACTORY_TEST
+  if (fd < 0) {
+    LOGE("Factory.Unpackout.OpenFailed %d", errno);
+  }
+  else if (lseek(fd, UNPACKOUT_START_BYTE, SEEK_SET) != UNPACKOUT_START_BYTE) {
+    LOGE("Factory.Unpackout.SeekFailed %d", errno);
+  }
+  else if (write(fd, unpackout_zerobuf, sizeof(unpackout_zerobuf)) != UNPACKOUT_BYTE_RANGE) {
+    LOGE("Factory.Unpackout.WriteFailed %d", errno);
+  }
+  else {
+    retval = ERR_OK;
+  }
+  close(fd);
+ #endif
+  return retval;
+}
 
 int SetMedicalRecord(uint8_t index, uint32_t value)
 {
   print_response("EMR %d := %08x\n", index, value);
   if (index == 0) { return ERR_SYSTEM; }
   int retval = emr_set(index, value);
+  if (index == index_PACKED_OUT_FLAG && value == WIPE_PACKOUT_MAGIC) {
+    retval = UnPackout();
+  }
   sync();
   return retval;
 }
