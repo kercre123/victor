@@ -283,14 +283,14 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
     // Engine Memory
 #if defined(ANKI_PLATFORM_OSX)
     // Webots play room
-    config.defaultMemoryPoolSize      = ( 8 * 1024 * 1024 );  // 8 MB
-    config.defaultLEMemoryPoolSize    = ( 8 * 1024 * 1024 );  // 8 MB
-    config.ioMemorySize               = ( 4 * 1024 * 1024 );  // 4 MB
+    config.defaultMemoryPoolSize      = ( 8 * 1024 * 1024 );  //  8 MB
+    config.defaultLEMemoryPoolSize    = ( 16 * 1024 * 1024 ); // 16 MB
+    config.ioMemorySize               = ( 4 * 1024 * 1024 );  //  4 MB
 #else
     // Other Platforms
-    config.defaultMemoryPoolSize      = ( 3 * 1024 * 1024 );  // 3 MB
-    config.defaultLEMemoryPoolSize    = ( 2 * 1024 * 1024 );  // 2 MB
-    config.ioMemorySize               = ( 2 * 1024 * 1024 );  // 2 MB
+    config.defaultMemoryPoolSize      = ( 3 * 1024 * 1024 );  //  3 MB
+    config.defaultLEMemoryPoolSize    = ( 12 * 1024 * 1024 ); // 12 MB
+    config.ioMemorySize               = ( 2 * 1024 * 1024 );  //  2 MB
 #endif
     config.defaultMaxNumPools         = 30;
     config.enableGameSyncPreparation  = true;
