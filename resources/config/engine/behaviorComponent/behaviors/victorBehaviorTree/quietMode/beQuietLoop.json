@@ -26,7 +26,7 @@
       "animTriggers"     : ["ObservingIdleEyesOnly"],
       "num_loops"        : 0,
       "playOnChargerWithoutBody": true,
-      "tracksToLock"     : ["ALL_TRACKS"],
+      "tracksToLock"     : ["HEAD_TRACK", "LIFT_TRACK", "BODY_TRACK"],
       
       "wantsToCancelSelfCondition": {
         "conditionType": "TimerInRange",
@@ -37,7 +37,7 @@
       "behaviorName"     : "SleepingInternal",
       "behaviorClass"    : "AnimSequence",
       "playOnChargerWithoutBody": true,
-      "tracksToLock"     : ["ALL_TRACKS"],
+      "tracksToLock"     : ["HEAD_TRACK", "LIFT_TRACK", "BODY_TRACK"],
 
       "animTriggers": [
         "GoToSleepGetIn",
