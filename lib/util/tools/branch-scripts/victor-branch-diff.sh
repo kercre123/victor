@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 #
+# lib/util/tools/branch-scripts/victor-branch-diff.sh
+#
+# Helper script to list differences between master and release branch
+#
 # Exit for non-zero error
 set -e
 #
@@ -21,4 +25,3 @@ SCRIPTDIR=$TOPLEVEL/lib/util/tools/branch-scripts
 
 cd $TOPLEVEL
 $SCRIPTDIR/anki-branch-diff.py $srcbranch $dstbranch
-
