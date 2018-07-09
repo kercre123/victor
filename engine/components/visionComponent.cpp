@@ -109,7 +109,7 @@ namespace Cozmo {
   CONSOLE_VAR(bool, kDisplayUndistortedImages,      "Vision.General", false);
 
   CONSOLE_VAR(bool, kEnableMirrorMode,              "Vision.General", false);
-  CONSOLE_VAR(bool, kDisplayDetectionsInMirrorMode, "Vision.General", false); // objects, faces, markers
+  CONSOLE_VAR(bool, kDisplayDetectionsInMirrorMode, "Vision.General", true); // objects, faces, markers
   CONSOLE_VAR(bool, kDisplayEyeContactInMirrorMode, "Vision.General", false);
   CONSOLE_VAR(f32,  kMirrorModeGamma,               "Vision.General", 1.f);
 
