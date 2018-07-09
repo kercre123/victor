@@ -34,10 +34,11 @@ bool MemoryMapData::CanOverrideSelfWithContent(MemoryMapDataConstPtr newContent)
   else if ( newContentType == EContentType::ClearOfObstacle )
   {
     // ClearOfObstacle currently comes from vision or prox sensor having a direct line of sight
-    // to some object, so it can't clear negative space obstacles (IE cliffs). Additionally,
+    // to some object, so it can't clear obsstacles it cant see (cliffs and unrecognized). Additionally,
     // ClearOfCliff is currently a superset of Clear of Obstacle, so trust ClearOfCliff flags.
     const bool isTotalClear = ( dataType != EContentType::Cliff ) &&
-                              ( dataType != EContentType::ClearOfCliff );
+                              ( dataType != EContentType::ClearOfCliff ) &&
+                              ( dataType != EContentType::ObstacleUnrecognized );
     return isTotalClear;
   }
   else if ( newContentType == EContentType::InterestingEdge )

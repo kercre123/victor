@@ -85,7 +85,7 @@ CONSOLE_VAR(float, kRobotRotationChangeToReport_deg, "MapComponent", 20.0f);
 CONSOLE_VAR(float, kRobotPositionChangeToReport_mm, "MapComponent", 8.0f);
 
 CONSOLE_VAR(float, kVisionTimeout_ms, "MapComponent", 120.0f * 1000);
-CONSOLE_VAR(float, kCliffTimeout_ms, "MapComponent", 120.0f * 1000);
+CONSOLE_VAR(float, kObstacleTimeout_ms, "MapComponent", 120.0f * 1000);
 CONSOLE_VAR(float, kProxTimeout_ms, "MapComponent", 600.0f * 1000);
 CONSOLE_VAR(float, kTimeoutUpdatePeriod_ms, "MapComponent", 5.0f * 1000);
 
@@ -391,20 +391,21 @@ void MapComponent::TimeoutObjects()
     _nextTimeoutUpdate_ms = currentTime + kTimeoutUpdatePeriod_ms;
     
     // ternary to prevent uInt wrapping on subtract
-    const TimeStamp_t cliffTooOld  = (currentTime <= kCliffTimeout_ms)  ? 0 : currentTime - kCliffTimeout_ms;
-    const TimeStamp_t visionTooOld = (currentTime <= kVisionTimeout_ms) ? 0 : currentTime - kVisionTimeout_ms;
-    const TimeStamp_t proxTooOld   = (currentTime <= kProxTimeout_ms)   ? 0 : currentTime - kProxTimeout_ms;
+    const TimeStamp_t obstacleTooOld = (currentTime <= kObstacleTimeout_ms) ? 0 : currentTime - kObstacleTimeout_ms;
+    const TimeStamp_t visionTooOld   = (currentTime <= kVisionTimeout_ms)   ? 0 : currentTime - kVisionTimeout_ms;
+    const TimeStamp_t proxTooOld     = (currentTime <= kProxTimeout_ms)     ? 0 : currentTime - kProxTimeout_ms;
     
     NodeTransformFunction timeoutObjects =
-      [cliffTooOld, visionTooOld, proxTooOld] (MemoryMapDataPtr data) -> MemoryMapDataPtr
+      [obstacleTooOld, visionTooOld, proxTooOld] (MemoryMapDataPtr data) -> MemoryMapDataPtr
       {
         const EContentType nodeType = data->type;
         const TimeStamp_t lastObs = data->GetLastObservedTime();
 
-        if ((EContentType::Cliff              == nodeType && lastObs <= cliffTooOld)  ||
-            (EContentType::InterestingEdge    == nodeType && lastObs <= visionTooOld) ||
-            (EContentType::NotInterestingEdge == nodeType && lastObs <= visionTooOld) ||
-            (EContentType::ObstacleProx       == nodeType && lastObs <= proxTooOld))
+        if ((EContentType::Cliff                == nodeType && lastObs <= obstacleTooOld) ||
+            (EContentType::ObstacleUnrecognized == nodeType && lastObs <= obstacleTooOld) ||
+            (EContentType::InterestingEdge      == nodeType && lastObs <= visionTooOld)   ||
+            (EContentType::NotInterestingEdge   == nodeType && lastObs <= visionTooOld)   ||
+            (EContentType::ObstacleProx         == nodeType && lastObs <= proxTooOld))
         {
           return MemoryMapDataPtr();
         }
