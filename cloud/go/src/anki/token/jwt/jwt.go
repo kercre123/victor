@@ -13,10 +13,11 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
-// Token provides the methods that clients will care about for authenticating:
-// whether a token needs to be refreshed, and its string representation.
+// Token provides the methods that clients will care about for authenticating and
+// using tokens
 type Token interface {
-	ShouldRefresh() bool
+	IssuedAt() time.Time
+	RefreshTime() time.Time
 	String() string
 }
 
@@ -114,10 +115,14 @@ type tokWrapper struct {
 	tok *model.Token
 }
 
-func (t tokWrapper) ShouldRefresh() bool {
-	return time.Now().UTC().Add(3 * time.Hour).After(t.tok.ExpiresAt)
+func (t tokWrapper) RefreshTime() time.Time {
+	return t.tok.ExpiresAt.Add(-3 * time.Hour)
 }
 
 func (t tokWrapper) String() string {
 	return t.tok.Raw
+}
+
+func (t tokWrapper) IssuedAt() time.Time {
+	return t.tok.IssuedAt
 }

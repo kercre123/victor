@@ -11,13 +11,18 @@ import (
 
 // Run starts the token service for other processes to connect to and
 // request tokens
-func Run() {
+func Run(optionValues ...Option) {
+	var opts options
+	for _, o := range optionValues {
+		o(&opts)
+	}
+
 	if err := jwt.Init(); err != nil {
 		log.Println("Error initializing jwt store:", err)
 		return
 	}
 
-	if err := queueInit(); err != nil {
+	if err := queueInit(opts.stop); err != nil {
 		log.Println("Error initializing request queue:", err)
 		return
 	}
@@ -27,6 +32,17 @@ func Run() {
 		log.Println("Error creating token server:", err)
 		return
 	}
+
+	if opts.stop != nil {
+		go func() {
+			<-opts.stop
+			if err := serv.Close(); err != nil {
+				log.Println("error closing token server:", err)
+			}
+		}()
+	}
+
+	initRefresher(opts.stop)
 
 	for c := range serv.NewConns() {
 		go handleConn(c)
