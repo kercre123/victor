@@ -209,27 +209,27 @@
 
     textY += textHeight;
     context.fillText( "Scoring Level : ", labelX, textY );
-    context.fillText( parseFloat(data["powerScore"]).toFixed(2), valueX, textY );
+    context.fillText( parseFloat(data["powerScore"]).toFixed(3), valueX, textY );
 
     textY += textHeight;
     context.fillText( "Scoring Avg : ", labelX, textY );
-    context.fillText( parseFloat(data["powerScoreAvg"]).toFixed(2), valueX, textY );
+    context.fillText( parseFloat(data["powerScoreAvg"]).toFixed(3), valueX, textY );
 
     textY += textHeight;
     context.fillText( "Power Level : ", labelX, textY );
-    context.fillText( micPowerValue.toFixed(2), valueX, textY );
+    context.fillText( micPowerValue.toFixed(3), valueX, textY );
 
     textY += textHeight;
     context.fillText( "Noise Floor : ", labelX, textY );
-    context.fillText( micNoiseFloor.toFixed(2), valueX, textY );
+    context.fillText( micNoiseFloor.toFixed(3), valueX, textY );
 
     if ( data.isTriggered )
     {
-      valueX = 425;
+      valueX = 450;
 
       textY += textHeight*2;
       context.fillText( "Reaction Score : ", labelX, textY );
-      context.fillText( data.triggerScore.toFixed(2), valueX, textY );
+      context.fillText( data.triggerScore.toFixed(3), valueX, textY );
 
       textY += textHeight;
       context.fillText( "Reaction Confidence : ", labelX, textY );
