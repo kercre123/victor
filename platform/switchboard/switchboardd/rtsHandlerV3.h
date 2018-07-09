@@ -32,10 +32,10 @@ public:
 
   ~RtsHandlerV3();
 
-  bool StartRts();
-  void StopPairing();
-  void SendOtaProgress(int status, uint64_t progress, uint64_t expectedTotal);
-  void HandleTimeout();
+  bool StartRts() override;
+  void StopPairing() override;
+  void SendOtaProgress(int status, uint64_t progress, uint64_t expectedTotal) override;
+  void HandleTimeout() override;
 
   // Types
   using StringSignal = Signal::Signal<void (std::string)>;

@@ -148,6 +148,12 @@ void RtsComms::UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus st
 }
 
 void RtsComms::HandleReset(bool forced) {
+  // [see: VIC-4306]
+  // This "Wake" was added because deleting `IRtsHandler` object 
+  // in scope of its own execution was causing a memory corruption, 
+  // although the root cause was never discovered.
+  // VIC-4306 is a ticket to track the actual discovering and 
+  // fixing of the root cause.
   _taskExecutor->Wake([this, forced]() {    
     _state = RtsPairingPhase::Initial;
 
@@ -216,7 +222,7 @@ void RtsComms::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
                               _isPairing,
                               _isOtaUpdating);
 
-              RtsHandlerV3* _v3 = (RtsHandlerV3*)_rtsHandler;
+              RtsHandlerV3* _v3 = static_cast<RtsHandlerV3*>(_rtsHandler);
               _pinHandle = _v3->OnUpdatedPinEvent().ScopedSubscribe([this](std::string s){
                 _pin = s;
                 this->OnUpdatedPinEvent().emit(s);
@@ -242,7 +248,7 @@ void RtsComms::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
                               _isPairing,
                               _isOtaUpdating);
 
-              RtsHandlerV2* _v2 = (RtsHandlerV2*)_rtsHandler;
+              RtsHandlerV2* _v2 = static_cast<RtsHandlerV2*>(_rtsHandler);
               _pinHandle = _v2->OnUpdatedPinEvent().ScopedSubscribe([this](std::string s){
                 _pin = s;
                 this->OnUpdatedPinEvent().emit(s);
