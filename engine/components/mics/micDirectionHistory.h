@@ -59,7 +59,9 @@ public:
   MicDirectionNodeList GetRecentHistory(TimeStamp_t timeLength_ms) const;
   MicDirectionNodeList GetHistoryAtTime(TimeStamp_t timestampEnd, TimeStamp_t timeLength_ms) const;
 
-  SoundReactorId RegisterSoundReactor(SoundReactionCallback callback);
+  // currently we only allow the listerner to supply an OnSound "reaction", but could easily have them supply
+  // the "testing" function to determine themselves what is considered a valid sound reaction
+  SoundReactorId RegisterSoundReactor(OnSoundReactionCallback callback);
   void UnRegisterSoundReactor(SoundReactorId id);
 
 private:
@@ -91,8 +93,8 @@ private:
 
   struct SoundReactionListener
   {
-    SoundReactorId        id;
-    SoundReactionCallback callback;
+    SoundReactorId          id;
+    OnSoundReactionCallback callback;
   };
 
   // data we want to send to the webserver for debugging, but don't otherwise need to store
@@ -125,8 +127,7 @@ private:
   MicPowerLevelType AccumulatePeakPowerLevel( MicPowerLevelType latestPeakPowerLevel );
 
   // note: make these const when done prototyping
-  bool ShouldReactToSoundStatic( const SoundReactionData& data );
-  bool ShouldReactToSoundDynamic( const SoundReactionData& data );
+  bool ShouldReactToSound( const SoundReactionData& data );
 
   void SendMicDataToWebserver( const RobotInterface::MicDirection& micData );
 };

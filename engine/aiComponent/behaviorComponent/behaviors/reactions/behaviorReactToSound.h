@@ -73,7 +73,7 @@ private:
   DirectionTrigger GetTriggerData( MicDirectionIndex index ) const;
   DirectionResponse GetResponseData( MicDirectionIndex index ) const;
 
-  void OnHeardValidSound( MicDirectionIndex index );
+  void OnHeardValidSound( MicDirectionNode micDirectionNode );
   bool HeardValidSound( MicDirectionIndex& outIndex ) const;
 
   void RespondToSound();

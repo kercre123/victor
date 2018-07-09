@@ -342,7 +342,7 @@ MicDirectionNodeList MicDirectionHistory::GetHistoryAtIndex(uint32_t startIndex,
   return results;
 }
 
-SoundReactorId MicDirectionHistory::RegisterSoundReactor(SoundReactionCallback callback)
+SoundReactorId MicDirectionHistory::RegisterSoundReactor(OnSoundReactionCallback callback)
 {
   static SoundReactorId sNextId = kInvalidSoundReactorId;
 
@@ -403,10 +403,10 @@ void MicDirectionHistory::AddMicPowerSample(TimeStamp_t timestamp, float powerLe
           .micDirectionData   = _micDirectionBuffer[_micDirectionBufferIndex],
         };
 
-        if ( ShouldReactToSoundStatic( data ) ) {
+        if ( ShouldReactToSound( data ) ) {
           // let all of our listeners know that we've heard a valid reaction sound
           for (auto reactor : _soundReactors) {
-            reactor.callback(data.micDirectionData.directionIndex);
+            reactor.callback(data.micDirectionData);
           }
 
           // only used for debugging purposes
@@ -433,7 +433,7 @@ MicDirectionHistory::MicPowerLevelType MicDirectionHistory::AccumulatePeakPowerL
   return _soundTrackingData.averagePeakLevel;
 }
 
-bool MicDirectionHistory::ShouldReactToSoundStatic( const SoundReactionData& data )
+bool MicDirectionHistory::ShouldReactToSound( const SoundReactionData& data )
 {
   const MicPowerLevelType powerDelta = ( data.currentPowerLevel - data.averagePowerLevel );
 
@@ -441,11 +441,6 @@ bool MicDirectionHistory::ShouldReactToSoundStatic( const SoundReactionData& dat
   const bool exceedsConfidenceThreshold = ( data.micDirectionData.latestConfidence >= kReactionConfidenceThreshold );
 
   return ( exceedsPowerThreshold && exceedsConfidenceThreshold );
-}
-
-bool MicDirectionHistory::ShouldReactToSoundDynamic( const SoundReactionData& data )
-{
-  return ShouldReactToSoundStatic( data );
 }
 
 void MicDirectionHistory::SendMicDataToWebserver( const RobotInterface::MicDirection& micData )

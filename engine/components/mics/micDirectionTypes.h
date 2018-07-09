@@ -45,7 +45,7 @@ namespace Cozmo {
   using MicDirectionNodeList = std::deque<MicDirectionNode>;
 
   using SoundReactorId = uint32_t;
-  using SoundReactionCallback = std::function<void(MicDirectionIndex)>;
+  using OnSoundReactionCallback = std::function<void(MicDirectionNode)>;
   enum { kInvalidSoundReactorId = 0 };
 
 } // namespace Cozmo

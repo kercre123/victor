@@ -35,6 +35,8 @@
 namespace Anki {
 namespace Cozmo {
 
+CONSOLE_VAR( bool, kSoundReaction_UseMicPower,                        "MicData", true );
+
 CONSOLE_VAR( float, kSoundReaction_ReactiveWindowDuration,            "MicData",  5.00f ); // once we react to a sound, we continue to react for this many seconds
 CONSOLE_VAR( float, kSoundReaction_Cooldown,                          "MicData", 20.00f ); // cooldown between "reactive windows"
 CONSOLE_VAR( float, kSoundReaction_MaxReactionTime,                   "MicData",  1.00f ); // we have this much time to respond to a sound
@@ -242,20 +244,23 @@ void BehaviorReactToSound::BehaviorUpdate()
 {
   // if we're active, it means we're responding to sound
   // if we're not active, it means we're listing for sound in order to activate us
-//  if ( !IsActivated() )
-//  {
-//    _triggeredDirection = kInvalidDirectionIndex;
-//    // make sure we're not on cooldown, or other reason we shouldn't react
-//    if ( CanReactToSound() )
-//    {
-//      MicDirectionIndex index = kInvalidDirectionIndex;
-//      if ( HeardValidSound( index ) )
-//      {
-//        // setting _triggeredDirection will kick off a reaction via WantsToBeActivatedBehavior()
-//        _triggeredDirection = index;
-//      }
-//    }
-//  }
+  if ( !kSoundReaction_UseMicPower )
+  {
+    if ( !IsActivated() )
+    {
+      _triggeredDirection = kInvalidDirectionIndex;
+      // make sure we're not on cooldown, or other reason we shouldn't react
+      if ( CanReactToSound() )
+      {
+        MicDirectionIndex index = kInvalidDirectionIndex;
+        if ( HeardValidSound( index ) )
+        {
+          // setting _triggeredDirection will kick off a reaction via WantsToBeActivatedBehavior()
+          _triggeredDirection = index;
+        }
+      }
+    }
+  }
 
   #if REMOTE_CONSOLE_ENABLED
   {
@@ -431,14 +436,19 @@ bool BehaviorReactToSound::HeardValidSound( MicDirectionIndex& outIndex ) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToSound::OnHeardValidSound( MicDirectionIndex index )
+void BehaviorReactToSound::OnHeardValidSound( MicDirectionNode micDirectionNode )
 {
-  if ( !IsActivated() && CanReactToSound() && ( kInvalidDirectionIndex != index ) )
+  if ( kSoundReaction_UseMicPower )
   {
-    if ( _triggeredDirection == kInvalidDirectionIndex )
-     {
-      _triggeredDirection = index;
-      PRINT_CH_INFO( "MicData", "BehaviorReactToSound", "Heard valid sound from direction [%d]", index );
+    if ( !IsActivated() && CanReactToSound() && micDirectionNode.IsValid() )
+    {
+      const bool notAlreadyTriggered = ( kInvalidDirectionIndex == _triggeredDirection );
+      const bool hasValidDirection = ( kInvalidDirectionIndex != micDirectionNode.directionIndex );
+      if ( notAlreadyTriggered && hasValidDirection )
+      {
+        _triggeredDirection = micDirectionNode.directionIndex;
+        PRINT_CH_INFO( "MicData", "BehaviorReactToSound", "Heard valid sound from direction [%d]", micDirectionNode.directionIndex );
+      }
     }
   }
 }
