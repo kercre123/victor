@@ -27,7 +27,6 @@ enum RtsCommsType : uint8_t {
 class IRtsHandler {
 public:
   virtual ~IRtsHandler() {
-    Log::Write("@@@ Destroyed interface");
   }
   
   virtual bool StartRts() = 0;

@@ -9,10 +9,11 @@
 #include "switchboardd/christen.h"
 #include "switchboardd/bleMessageProtocol.h"
 #include "switchboardd/keyExchange.h"
-#include "switchboardd/securePairing.h"
+#include "switchboardd/rtsComms.h"
 #include "switchboardd/savedSessionManager.h"
 #include "ev++.h"
-#include "test_INetworkStream.h"
+#include "test_INetworkStreamV2.h"
+#include "test_INetworkStreamV3.h"
 
 struct TestData {
   bool(*method)();
@@ -260,7 +261,31 @@ bool Test_SecurePairing() {
   // Create objects for testing
   Test_INetworkStream* netStream = new Test_INetworkStream();
 
-  SecurePairing* securePairing = new SecurePairing(
+  RtsComms* securePairing = new RtsComms(
+    netStream,            // 
+    ev_default_loop(0),   // ev loop
+    nullptr,              // engineClient (don't need--only for updating face)
+    false,                // is pairing
+    false);               // is ota-ing
+
+  // Start Test loop
+  // Right now this tests will just be a simple runthrough of the
+  // messages to form a secure connection.
+  //
+  netStream->Test(securePairing);
+
+  // cleanup
+  delete netStream;
+  delete securePairing;
+
+  return true;
+}
+
+bool Test_SecurePairingV3() {
+  // Create objects for testing
+  Test_INetworkStreamV3* netStream = new Test_INetworkStreamV3();
+
+  RtsComms* securePairing = new RtsComms(
     netStream,            // 
     ev_default_loop(0),   // ev loop
     nullptr,              // engineClient (don't need--only for updating face)
@@ -287,7 +312,8 @@ int main() {
     { Test_KeyExchange,             "KeyExchange test failed." },
     { Test_RtsSavedSessions,        "SavedSessionManager encountered problem." },
     { Test_ChristenNameGeneration,  "Christening generated invalid name." },
-    { Test_SecurePairing,           "SecurePairing failed tests." }
+    { Test_SecurePairing,           "SecurePairing V2 failed tests." },
+    { Test_SecurePairingV3,         "SecurePairing V3 failed tests." }
   };
 
   for(int i = 0; i < sizeof(tests)/sizeof(*tests); i++) {

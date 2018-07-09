@@ -4,18 +4,12 @@
 #include "test_CladHandler.h"
 #include "switchboardd/pairingMessages.h"
 #include "switchboardd/keyExchange.h"
-#include "switchboardd/securePairing.h"
+#include "switchboardd/rtsComms.h"
 
 #include <queue>
 
 namespace Anki {
 namespace Switchboard {
-
-enum MessageState : uint8_t {
-  TestRaw,
-  TestClad,
-  TestSecure,
-};
 
 class Test_INetworkStream : public INetworkStream {
 public:
@@ -29,7 +23,7 @@ public:
     return _connected;
   }
 
-  void Test(SecurePairing* securePairing);
+  void Test(RtsComms* securePairing);
   void Update();
 
 private:
@@ -38,7 +32,7 @@ private:
   bool _handShake;
   bool _connected;
   std::queue<Anki::Cozmo::ExternalComms::RtsConnection_2> _queue;
-  SecurePairing* _securePairing;
+  RtsComms* _securePairing;
   KeyExchange* _keyExchange;
 
   //

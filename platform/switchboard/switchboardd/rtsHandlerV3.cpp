@@ -82,7 +82,6 @@ RtsHandlerV3::~RtsHandlerV3() {
   _onFailedDecryptionHandle = nullptr;
 
   ev_timer_stop(_loop, &_handleInternet.timer);
-  Log::Write("Destroyed handler");
 }
 
 bool RtsHandlerV3::StartRts() {

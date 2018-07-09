@@ -53,8 +53,6 @@ RtsComms::~RtsComms() {
   }
 
   ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
-
-  Log::Write("Destroying RtsComms object");
 }
 
 void RtsComms::BeginPairing() {  
@@ -220,6 +218,7 @@ void RtsComms::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
 
               RtsHandlerV3* _v3 = (RtsHandlerV3*)_rtsHandler;
               _pinHandle = _v3->OnUpdatedPinEvent().ScopedSubscribe([this](std::string s){
+                _pin = s;
                 this->OnUpdatedPinEvent().emit(s);
               });
               _otaHandle = _v3->OnOtaUpdateRequestEvent().ScopedSubscribe([this](std::string s){
@@ -245,6 +244,7 @@ void RtsComms::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
 
               RtsHandlerV2* _v2 = (RtsHandlerV2*)_rtsHandler;
               _pinHandle = _v2->OnUpdatedPinEvent().ScopedSubscribe([this](std::string s){
+                _pin = s;
                 this->OnUpdatedPinEvent().emit(s);
               });
               _otaHandle = _v2->OnOtaUpdateRequestEvent().ScopedSubscribe([this](std::string s){
