@@ -40,11 +40,7 @@ TEST_INTENT(UserIntentsTransitions, SetTimer, "set_timer")
   // Build a valid stack - this test breaks if this stack is no longer valid
   std::vector<IBehavior*> stack = tbf.GetNamedBehaviorStack("driveOffChargerIntoObserving_stack");
 
-  UserIntent_TimeInSeconds timeInSeconds(20);
-  UserIntent timerIntent;
-  timerIntent._tag = UserIntentTag::set_timer;
-  timerIntent._set_timer = timeInSeconds;
-
+  UserIntent timerIntent( UserIntent_TimeInSeconds(20) ); 
   TestIntentsFramework tif;
   auto res = tif.TestUserIntentTransition(tbf, stack, timerIntent, BehaviorID::SingletonTimerSet);
   EXPECT_TRUE(res);
@@ -64,11 +60,7 @@ bool IntentHelper( const UserIntent& intent, BehaviorID behavior, bool onlyCheck
   
 bool PlaySpecificHelper( std::string entityBehavior, BehaviorID behavior, bool onlyCheckInStack = false )
 {
-  UserIntent_PlaySpecific playSpecificIntent(entityBehavior);
-  UserIntent intent;
-  intent._tag = UserIntentTag::play_specific;
-  intent._play_specific = playSpecificIntent;
-  
+  UserIntent intent( UserIntent_PlaySpecific{entityBehavior} );  
   return IntentHelper( intent, behavior, onlyCheckInStack );
 }
 
@@ -92,49 +84,37 @@ TEST_INTENT(UserIntentsTransitions, RollCube, "roll_cube")
 
 TEST_INTENT(UserIntentsTransitions, ComeHere, "imperative_come")
 {
-  UserIntent intent;
-  intent._tag = UserIntentTag::imperative_come;
-  const bool res = IntentHelper( intent, BehaviorID::ComeHereVoiceCommand, true );
+  const bool res = IntentHelper( UserIntent::Createimperative_come({}), BehaviorID::ComeHereVoiceCommand, true );
   EXPECT_TRUE(res);
 }
   
 TEST_INTENT(UserIntentsTransitions, LookAtMe, "imperative_lookatme")
 {
-  UserIntent intent;
-  intent._tag = UserIntentTag::imperative_lookatme;
-  const bool res = IntentHelper( intent, BehaviorID::LookAtMeVoiceCommand, true );
+  const bool res = IntentHelper( UserIntent::Createimperative_lookatme({}), BehaviorID::LookAtMeVoiceCommand, true );
   EXPECT_TRUE(res);
 }
   
 TEST_INTENT(UserIntentsTransitions, WhatsMyName, "names_ask")
 {
-  UserIntent intent;
-  intent._tag = UserIntentTag::names_ask;
-  const bool res = IntentHelper( intent, BehaviorID::WhatsMyNameVoiceCommand, true );
+  const bool res = IntentHelper( UserIntent::Createnames_ask({}), BehaviorID::WhatsMyNameVoiceCommand, true );
   EXPECT_TRUE(res);
 }
   
 TEST_INTENT(UserIntentsTransitions, MeetVictor, "meet_victor")
 {
-  UserIntent intent;
-  intent.Set_meet_victor( UserIntent_MeetVictor("cozmo") );
-  const bool res = IntentHelper( intent, BehaviorID::MeetVictor, true );
+  const bool res = IntentHelper( UserIntent::Createmeet_victor( UserIntent_MeetVictor("cozmo") ), BehaviorID::MeetVictor, true );
   EXPECT_TRUE(res);
 }
   
 TEST_INTENT(UserIntentsTransitions, BeQuiet, "be_quiet")
 {
-  UserIntent intent;
-  intent.Set_imperative_quiet({});
-  const bool res = IntentHelper( intent, BehaviorID::BeQuietAnims, true );
+  const bool res = IntentHelper( UserIntent::Createimperative_quiet({}), BehaviorID::BeQuietAnims, true );
   EXPECT_TRUE(res);
 }
   
 TEST_INTENT(UserIntentsTransitions, ShutUp, "shut_up")
 {
-  UserIntent intent;
-  intent.Set_imperative_shutup({});
-  const bool res = IntentHelper( intent, BehaviorID::ShutUpAnims, true );
+  const bool res = IntentHelper( UserIntent::Createimperative_shutup({}), BehaviorID::ShutUpAnims, true );
   EXPECT_TRUE(res);
 }
 

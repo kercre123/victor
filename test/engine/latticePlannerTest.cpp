@@ -35,7 +35,7 @@ protected:
   virtual void SetUp() override {
     _robot = new Robot(1, cozmoContext);
 
-    _planner = dynamic_cast<LatticePlanner*>(_robot->GetPathComponent()._longPathPlanner.get());
+    _planner.reset(new LatticePlanner(_robot, cozmoContext->GetDataPlatform()) );
     ASSERT_TRUE(_planner != nullptr);
 
     // default planner to run in main thread
@@ -99,7 +99,7 @@ protected:
   }
 
   Robot* _robot = nullptr;
-  LatticePlanner* _planner = nullptr;
+  std::unique_ptr<LatticePlanner> _planner = nullptr;
 
 };
 

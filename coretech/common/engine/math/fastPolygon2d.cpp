@@ -195,10 +195,13 @@ void FastPolygon::ComputeCircles()
       }
 
       size_t pointIdx = _perpendicularEdgeVectors[i].second;
-
-      float distanceToEdgeSquared = std::pow(
-        Anki::DotProduct( _perpendicularEdgeVectors[i].first, _circleCenter - _points[pointIdx] ),
-        2);
+      float distanceToEdgeSquared = 0.f;
+      if (!IsNearlyEqual(_circleCenter - _points[pointIdx], {0.f, 0.f}) && 
+          !IsNearlyEqual(_perpendicularEdgeVectors[i].first, {0.f, 0.f}) ) {
+        distanceToEdgeSquared = std::pow(
+          Anki::DotProduct( _perpendicularEdgeVectors[i].first, _circleCenter - _points[pointIdx] ),
+          2);
+      }
       if(distanceToEdgeSquared < _inscribedRadiusSquared) {
         _inscribedRadiusSquared = distanceToEdgeSquared;
       }
@@ -232,7 +235,7 @@ void FastPolygon::CreateEdgeVectors()
   {
     for(size_t i = 0; i < numPts; ++i) {
       const Vec2f edgeVector( GetEdgeVector(i) );
-      float oneOverNorm = 1.0 / edgeVector.Length();
+      float oneOverNorm = IsNearlyEqual(edgeVector, {0.f, 0.f}) ? 0.f : 1.0 / edgeVector.Length();
       _edgeSegments.emplace_back( _points[i], _points[(i+1) % numPts] );
       _perpendicularEdgeVectors.emplace_back( std::make_pair(
                                                 Vec2f{ -edgeVector.y() * oneOverNorm, edgeVector.x() * oneOverNorm },
