@@ -299,5 +299,12 @@ service ExternalInterface {
       body: "*"
     };
   }
+
+  rpc RobotStats(RobotStatsRequest) returns (RobotStatsResponse) {
+    option (google.api.http) = {
+      post: "/v1/robot_stats",
+      body: "*"
+    };
+  }
 }
 

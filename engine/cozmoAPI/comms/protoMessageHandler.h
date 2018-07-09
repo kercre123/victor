@@ -71,6 +71,7 @@ private:
   void HandleEvents(const AnkiEvent<external_interface::GatewayWrapper>& event);
   void PingPong(const external_interface::Ping& ping); // TODO: remove these once enough example use cases exist
   void BingBong(const external_interface::Bing& bing);
+  void GetRobotStats(const external_interface::RobotStatsRequest& request);
 
   // As long as there are messages available from the comms object,
   // process them and pass them along.

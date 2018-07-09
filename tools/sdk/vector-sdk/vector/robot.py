@@ -275,6 +275,13 @@ class Robot:
         self.disconnect()
 
 
+    @actions._as_actionable
+    async def get_robot_stats(self):
+        get_robot_stats_request = protocol.RobotStatsRequest()
+        result = await self.connection.RobotStats(get_robot_stats_request)
+        self.logger.info(f'{type(result)}: {str(result).strip()}')
+        return result
+
 class AsyncRobot(Robot):
     def __init__(self, *args, **kwargs):
         super(AsyncRobot, self).__init__(*args, **kwargs)
