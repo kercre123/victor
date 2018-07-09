@@ -29,6 +29,7 @@ namespace Cozmo {
 
 class IOnboardingStage;
 enum class OnboardingStages : uint8_t;
+enum class OnboardingSteps  : uint8_t;
   
 class BehaviorOnboarding : public ICozmoBehavior
 {
@@ -173,6 +174,7 @@ private:
     IBehavior* lastBehavior;
     bool lastTriggerWordEnabled;
     UserIntentTag lastWhitelistedIntent;
+    OnboardingSteps lastExpectedStep;
     BehaviorID lastInterruption;
     
     

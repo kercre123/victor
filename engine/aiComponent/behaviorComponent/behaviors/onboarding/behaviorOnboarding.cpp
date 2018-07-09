@@ -342,6 +342,8 @@ void BehaviorOnboarding::BehaviorUpdate()
   
   UpdateBatteryInfo();
   
+  OnboardingSteps requestedStep = OnboardingSteps::Default;
+  
   IBehavior* stageBehavior = nullptr;
   if( !CheckAndDelegateInterruptions() ) {
     // no interruptions want to run or are running
@@ -392,8 +394,8 @@ void BehaviorOnboarding::BehaviorUpdate()
       for( const auto& pendingEvent : _dVars.pendingEvents ) {
         if( pendingEvent.second.type == PendingEvent::Continue ) {
           // todo: use app message for this
-          OnboardingContinueEnum continueNum = OnboardingContinueEnum::Default;
-          const bool allowedContinue = GetCurrentStage()->OnContinue( GetBEI(), continueNum );
+          OnboardingSteps stepNum = OnboardingSteps::Default;
+          const bool allowedContinue = GetCurrentStage()->OnContinue( GetBEI(), stepNum );
           if( gi != nullptr ) {
             auto* onboardingContinueResponse = new external_interface::OnboardingContinueResponse{ allowedContinue };
             gi->Broadcast( ExternalMessageRouter::WrapResponse(onboardingContinueResponse) );
@@ -429,6 +431,7 @@ void BehaviorOnboarding::BehaviorUpdate()
       _dVars.state = BehaviorState::StageRunning;
       
       // now get what behavior the stage requests
+      requestedStep = GetCurrentStage()->GetExpectedStep();
       stageBehavior = GetCurrentStage()->GetBehavior( GetBEI() );
       if( stageBehavior != nullptr ) {
         if( (stageBehavior != _dVars.lastBehavior) && !stageBehavior->WantsToBeActivated() ) {
@@ -462,6 +465,15 @@ void BehaviorOnboarding::BehaviorUpdate()
     }
   }
   
+  if( requestedStep != _dVars.lastExpectedStep ) {
+    _dVars.lastExpectedStep = requestedStep;
+    auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+    if( gi != nullptr ) {
+      auto* msg = new external_interface::OnboardingRobotExpectingStep{ CladProtoTypeTranslator::ToProtoEnum(requestedStep) };
+      gi->Broadcast( ExternalMessageRouter::Wrap(msg) );
+    }
+  }
+  
   if( (stageBehavior != nullptr) && (_dVars.lastBehavior != stageBehavior) ) {
     _dVars.lastBehavior = stageBehavior;
     _dVars.currentStageBehaviorFinished = false;
@@ -471,6 +483,7 @@ void BehaviorOnboarding::BehaviorUpdate()
     });
   } else if( stageBehavior == nullptr ) {
     _dVars.lastBehavior = nullptr;
+    _dVars.lastExpectedStep = OnboardingSteps::Default;
   }
 }
   
@@ -672,6 +685,7 @@ void BehaviorOnboarding::Interrupt( ICozmoBehaviorPtr interruption, BehaviorID i
   
   _dVars.lastInterruption = interruptionID;
   _dVars.lastBehavior = nullptr;
+  _dVars.lastExpectedStep = OnboardingSteps::Default;
   DelegateIfInControl( interruption.get() );
   
   // notify app of certain interruptions

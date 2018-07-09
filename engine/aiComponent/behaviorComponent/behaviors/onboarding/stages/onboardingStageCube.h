@@ -101,7 +101,7 @@ public:
     _timeStartedSearching_ms = 0;
   }
   
-  virtual bool OnContinue( BehaviorExternalInterface& bei, OnboardingContinueEnum continueNum ) override
+  virtual bool OnContinue( BehaviorExternalInterface& bei, OnboardingSteps stepNum ) override
   {
     if( _step == Step::LookingAtUser ) {
       TransitionToLookingForCube( bei );

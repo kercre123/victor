@@ -19,6 +19,7 @@
 #pragma once
 
 #include "util/helpers/noncopyable.h"
+#include "clad/types/onboardingStages.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -26,8 +27,6 @@
 
 namespace Anki {
 namespace Cozmo {
-  
-enum class OnboardingContinueEnum : uint8_t;
 
 class IOnboardingStage : private Anki::Util::noncopyable
 {
@@ -47,7 +46,7 @@ public:
   
   // App (or dev tools) says "Continue"
   // Should return whether this stage accepts/handles the continue
-  virtual bool OnContinue( BehaviorExternalInterface& bei, OnboardingContinueEnum continueNum ) = 0;
+  virtual bool OnContinue( BehaviorExternalInterface& bei, OnboardingSteps stepNum ) = 0;
   
   // App (or dev tools) says "Skip"
   virtual void OnSkip( BehaviorExternalInterface& bei ) {}
@@ -75,6 +74,8 @@ public:
   virtual void OnMessage( BehaviorExternalInterface& bei, const EngineToGameEvent& event ) {}
   virtual void OnMessage( BehaviorExternalInterface& bei, const GameToEngineEvent& event ) {}
   virtual void OnMessage( BehaviorExternalInterface& bei, const AppToEngineEvent& event ) {}
+  
+  virtual OnboardingSteps GetExpectedStep() const { return OnboardingSteps::Default; }
   
   // Called each tick, after any of the above On* methods, but before GetBehavior()
   virtual void Update( BehaviorExternalInterface& bei ) {}

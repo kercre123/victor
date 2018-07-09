@@ -67,7 +67,7 @@ public:
     DebugTransition("Waiting for OnboardingConnectionComplete to wake up");
   }
   
-  virtual bool OnContinue( BehaviorExternalInterface& bei, OnboardingContinueEnum continueNum ) override
+  virtual bool OnContinue( BehaviorExternalInterface& bei, OnboardingSteps stepNum ) override
   {
     if( _step == Step::Asleep ) {
       TransitionToWakingUp();
@@ -159,6 +159,15 @@ public:
         // successful intent ==> next step (come here)
         TransitionToComeHere();
       }
+    }
+  }
+  
+  virtual OnboardingSteps GetExpectedStep() const override
+  {
+    if( _step == Step::WaitingForTrigger ) {
+      return OnboardingSteps::FirstTriggerWord;
+    } else {
+      return OnboardingSteps::Default;
     }
   }
   

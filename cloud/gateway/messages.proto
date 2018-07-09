@@ -108,7 +108,7 @@ message Onboarding {
     OnboardingPickedUp                 onboarding_picked_up          = 4;
     OnboardingSeesCube                 onboarding_sees_cube          = 5;
     OnboardingCantFindCube             onboarding_cant_find_cube     = 6;
-    OnboardingRobotExpectingContinue   onboarding_expecting_continue = 7;
+    OnboardingRobotExpectingStep       onboarding_expecting_step     = 7;
   }
 }
 
@@ -441,12 +441,13 @@ message OnboardingStateResponse {
   OnboardingState onboarding_state = 2;
 }
 
-enum OnboardingContinueEnum {
-  Default = 0;
+enum OnboardingSteps {
+  DEFAULT = 0;
+  FIRST_TRIGGER_WORD = 1;
 }
 
 message OnboardingContinue {
-  OnboardingContinueEnum continue_number = 1;
+  OnboardingSteps step_number = 1;
 }
 
 message OnboardingContinueResponse {
@@ -482,8 +483,8 @@ message OnboardingInputResponse {
   }
 }
 
-message OnboardingRobotExpectingContinue {
-  OnboardingContinueEnum continue_number = 1;
+message OnboardingRobotExpectingStep {
+  OnboardingSteps step_number = 1;
 }
 
 message WakeWordBegin {
