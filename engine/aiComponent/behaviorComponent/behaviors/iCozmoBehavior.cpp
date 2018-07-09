@@ -848,7 +848,10 @@ void ICozmoBehavior::OnLeftActivatableScopeInternal()
     infoProcessor.RemoveEnableRequest(_requiredProcess, GetDebugLabel().c_str());
   }
 
-  GetBEI().GetVisionScheduleMediator().ReleaseAllVisionModeSubscriptions(this);
+  const bool hasActivatableScopeVisionModes = !_operationModifiers.visionModesForActivatableScope->empty();
+  if (hasActivatableScopeVisionModes) {
+    GetBEI().GetVisionScheduleMediator().ReleaseAllVisionModeSubscriptions(this);
+  }
 
   // Manage state for any IBEIConditions used by this Behavior
   // Conditions may not be evaluted when the behavior is outside the Activatable Scope
@@ -873,10 +876,18 @@ void ICozmoBehavior::OnDeactivatedInternal()
   // Clear callbacks
   _delegationCallback = nullptr;
 
-  // Set Mode Subscriptions back to ActivatableScope values. OnLeftActivatableScopeInternal handles final unsubscribe
-  if(!_operationModifiers.visionModesForActivatableScope->empty()){
-    GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this,
-      *_operationModifiers.visionModesForActivatableScope);
+  const bool hasActiveScopeVisionModes = !_operationModifiers.visionModesForActiveScope->empty();
+  if (hasActiveScopeVisionModes) {
+    // If there are any required visions modes for ActivatableScope, reset the mode subscriptions
+    // back to ActivatableScope values. OnLeftActivatableScopeInternal handles final unsubscribe.
+    // If there are no activatable scope requests, then we can unsubscribe from all vision modes now.
+    const bool hasActivatableScopeVisionModes = !_operationModifiers.visionModesForActivatableScope->empty();
+    if (hasActivatableScopeVisionModes) {
+      GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this,
+        *_operationModifiers.visionModesForActivatableScope);
+    } else {
+      GetBEI().GetVisionScheduleMediator().ReleaseAllVisionModeSubscriptions(this);
+    }
   }
 
   // Manage state for any WantsToBeActivated conditions used by this Behavior:
