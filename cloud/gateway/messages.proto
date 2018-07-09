@@ -461,6 +461,8 @@ message OnboardingRetryCharging {
 message OnboardingConnectionComplete {
 }
 
+message OnboardingSkipOnboarding {
+}
 
 message OnboardingInputRequest {
   oneof oneof_message_type {
@@ -468,6 +470,7 @@ message OnboardingInputRequest {
     OnboardingSkip onboarding_skip = 2;
     OnboardingRetryCharging onboarding_retry_charging = 3;
     OnboardingConnectionComplete onboarding_connection_complete = 4;
+    OnboardingSkipOnboarding onboarding_skip_onboarding = 5;
   }
 }
 

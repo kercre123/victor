@@ -720,6 +720,10 @@
     "AnimName": "ag_onboarding_drive_to_face"
   },
   {
+    "CladEvent": "OnboardingComeHereGetOut",
+    "AnimName": "ag_onboarding_drive_to_face_idle_getout"
+  },
+  {
     "CladEvent": "OnboardingCubeDriveGetIn",
     "AnimName": "ag_onboarding_cube_drive_getin"
   },
@@ -744,6 +748,18 @@
     "AnimName": "ag_onboarding_lookaround_loop"
   },
   {
+    "CladEvent": "OnboardingLookAtPhoneUp",
+    "AnimName": "ag_lookatphone_getin"
+  },
+  {
+    "CladEvent": "OnboardingLookAtPhoneLoop",
+    "AnimName": "ag_lookatphone_loop"
+  },
+  {
+    "CladEvent": "OnboardingLookAtPhoneDown",
+    "AnimName": "ag_lookatphone_getout"
+  },
+  {
     "CladEvent": "OnboardingLookDown",
     "AnimName": "ag_onboarding_lookdown_loop"
   },
@@ -754,6 +770,10 @@
   {
     "CladEvent": "OnboardingWakeUp",
     "AnimName": "ag_onboarding_wakeup"
+  },
+  {
+    "CladEvent": "OnboardingWakeWordGetIn",
+    "AnimName": "ag_onboarding_wakeword_getin_01"
   },
   {
     "CladEvent": "DEPRECATED_OnLearnedPlayerName",

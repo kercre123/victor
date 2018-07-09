@@ -89,6 +89,7 @@ private:
   void RequestContinue();
   void RequestSkip();
   void RequestRetryCharging();
+  void RequestSkipRobotOnboarding();
   
   // Put this behavior in a state where it waits for the BSM to switch behavior stacks
   void TerminateOnboarding();

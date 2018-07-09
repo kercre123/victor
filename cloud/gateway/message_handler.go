@@ -481,7 +481,22 @@ func SendOnboardingSkip(in *extint.GatewayWrapper_OnboardingSkip) (*extint.Onboa
 }
 
 func SendOnboardingConnectionComplete(in *extint.GatewayWrapper_OnboardingConnectionComplete) (*extint.OnboardingInputResponse, error) {
-	log.Println("Received rpc request OnbOnboardingConnectionCompleteoardingSkip(", in, ")")
+	log.Println("Received rpc request OnboardingConnectionComplete(", in, ")")
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: in,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &extint.OnboardingInputResponse{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
+func SendOnboardingSkipOnboarding(in *extint.GatewayWrapper_OnboardingSkipOnboarding) (*extint.OnboardingInputResponse, error) {
+	log.Println("Received rpc request OnboardingSkipOnboarding(", in, ")")
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: in,
 	})
@@ -999,6 +1014,10 @@ func (m *rpcService) SendOnboardingInput(ctx context.Context, in *extint.Onboard
 	case *extint.OnboardingInputRequest_OnboardingConnectionComplete:
 		return SendOnboardingConnectionComplete(&extint.GatewayWrapper_OnboardingConnectionComplete{
 			in.GetOnboardingConnectionComplete(),
+		})
+	case *extint.OnboardingInputRequest_OnboardingSkipOnboarding:
+		return SendOnboardingSkipOnboarding(&extint.GatewayWrapper_OnboardingSkipOnboarding{
+			in.GetOnboardingSkipOnboarding(),
 		})
 	default:
 		return nil, status.Errorf(0, "OnboardingInputRequest.OneofMessageType has unexpected type %T", x)

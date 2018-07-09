@@ -60,6 +60,8 @@ namespace {
   const char* kIntentBehaviorKey                = "behaviorOnIntent";
   const char* kProceduralBackpackLights         = "backpackLights";
   const char* kNotifyOnErrors                   = "notifyOnErrors";
+  const char* kAnimListeningGetIn               = "animListeningGetIn";
+  const char* kExitAfterGetInKey                = "exitAfterGetIn";
 
   constexpr float            kMaxRecordTime_s   = ( (float)MicData::kStreamingTimeout_ms / 1000.0f );
   constexpr float            kListeningBuffer_s = 2.0f;
@@ -79,7 +81,9 @@ BehaviorReactToVoiceCommand::InstanceConfig::InstanceConfig() :
   earConBegin( AudioMetaData::GameEvent::GenericEvent::Invalid ),
   earConSuccess( AudioMetaData::GameEvent::GenericEvent::Invalid ),
   earConFail( AudioMetaData::GameEvent::GenericEvent::Invalid ),
+  animListeningGetIn( AnimationTrigger::VC_ListeningGetIn ),
   backpackLights( true ),
+  exitAfterGetIn( false ),
   cloudErrorTracker( "VoiceCommandErrorTracker" )
 {
 
@@ -125,18 +129,31 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
 
   // get the behavior to play after an intent comes in
   JsonTools::GetValueOptional( config, kIntentBehaviorKey, _iVars.reactionBehaviorString );
+  
+  std::string animGetIn;
+  if( JsonTools::GetValueOptional( config, kAnimListeningGetIn, animGetIn ) && !animGetIn.empty() )
+  {
+    ANKI_VERIFY( AnimationTriggerFromString(animGetIn, _iVars.animListeningGetIn),
+                 "BehaviorReactToVoiceCommand.Ctor.InvalidGetIn",
+                 "Get-in %s is not a valid animation trigger",
+                 animGetIn.c_str() );
+  }
+  
+  JsonTools::GetValueOptional( config, kExitAfterGetInKey, _iVars.exitAfterGetIn );
 
-  int numErrorsToTriggerAnim;
-  float errorTrackingWindow_s;
-
-  ANKI_VERIFY( RecentOccurrenceTracker::ParseConfig(config[kNotifyOnErrors],
-                                                    numErrorsToTriggerAnim,
-                                                    errorTrackingWindow_s),
-               "BehaviorReactToVoiceCommand.Constructor.InvalidConfig",
-               "Behavior '%s' specified invalid recent occurrence config",
-               GetDebugLabel().c_str() );
-
-  _iVars.cloudErrorHandle = _iVars.cloudErrorTracker.GetHandle(numErrorsToTriggerAnim, errorTrackingWindow_s);
+  if( !config[kNotifyOnErrors].isNull() )
+  {
+    int numErrorsToTriggerAnim;
+    float errorTrackingWindow_s;
+    
+    ANKI_VERIFY( RecentOccurrenceTracker::ParseConfig(config[kNotifyOnErrors],
+                                                      numErrorsToTriggerAnim,
+                                                      errorTrackingWindow_s),
+                 "BehaviorReactToVoiceCommand.Constructor.InvalidConfig",
+                 "Behavior '%s' specified invalid recent occurrence config",
+                 GetDebugLabel().c_str() );
+    _iVars.cloudErrorHandle = _iVars.cloudErrorTracker.GetHandle(numErrorsToTriggerAnim, errorTrackingWindow_s);
+  }
 
   SetRespondToTriggerWord( true );
 }
@@ -151,7 +168,9 @@ void BehaviorReactToVoiceCommand::GetBehaviorJsonKeys(std::set<const char*>& exp
     kEarConFail,
     kProceduralBackpackLights,
     kIntentBehaviorKey,
-    kNotifyOnErrors
+    kNotifyOnErrors,
+    kAnimListeningGetIn,
+    kExitAfterGetInKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -449,10 +468,17 @@ void BehaviorReactToVoiceCommand::StartListening()
   // we could end up exiting too soon and looking like garbage
   auto callback = [this]()
   {
+    if( _iVars.exitAfterGetIn )
+    {
+      OnVictorListeningEnd();
+      return; // and the behavior ends
+    }
+    
     // if for some reason it doesn't look like streaming has begun yet (we didn't get a call from vic-cloud
     // saying the stream is open) consider the elapsed time to be 0
     float elapsed = 0.0f;
-    if( _dVars.streamingBeginTime > 0.0f ) {
+    if( _dVars.streamingBeginTime > 0.0f )
+    {
       elapsed = ( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()
                   - _dVars.streamingBeginTime );
     }
@@ -464,7 +490,7 @@ void BehaviorReactToVoiceCommand::StartListening()
                          &BehaviorReactToVoiceCommand::StopListening );
   };
 
-  DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::VC_ListeningGetIn ), callback );
+  DelegateIfInControl( new TriggerAnimationAction( _iVars.animListeningGetIn ), callback );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

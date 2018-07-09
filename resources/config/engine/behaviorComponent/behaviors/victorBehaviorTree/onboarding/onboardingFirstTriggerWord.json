@@ -1,0 +1,34 @@
+{
+  // this behavior only runs once!
+  
+  "behaviorID": "OnboardingFirstTriggerWord",
+  "behaviorClass": "DispatcherStrictPriorityWithCooldown",
+
+  "interruptActiveBehavior": false, // meaningless here
+
+  "linkScope": true,
+  
+  "behaviors": [
+    {
+      "behavior": "FirstTriggerWordInternal",
+      // -1.0 cooldown maps to FLT_MAX, meaning only run once. this helps separate the logic out of BehaviorOnboarding
+      "cooldown_s": -1.0
+    }
+  ],
+
+  "anonymousBehaviors": [
+    {
+      "behaviorClass": "ReactToVoiceCommand",
+      "behaviorName": "FirstTriggerWordInternal",
+
+      "behaviorStatToIncrement": "ReactedToTriggerWord",
+
+      "earConAudioEventBegin"   : "Play__Robot_Vic_Sfx__Wake_Word_On",
+      "backpackLights"          : false,
+      "exitAfterGetIn"          : true,
+      "animListeningGetIn"      : "OnboardingWakeWordGetIn"
+    }
+  ]
+
+  
+}
