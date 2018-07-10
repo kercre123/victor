@@ -681,13 +681,13 @@ Result NeuralNetModel::GetDetectedObjects(const std::vector<tensorflow::Tensor>&
 Result NeuralNetModel::GetSalientPointsFromResponseMap(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp,
                                                        std::list<Vision::SalientPoint>& salientPoints)
 {
-  tensorflow::Tensor squoozenTensor(tensorflow::DT_FLOAT,
+  tensorflow::Tensor squeezedTensor(tensorflow::DT_FLOAT,
                                     tensorflow::TensorShape({_params.inputWidth, _params.inputHeight, 2}));
 
   // Reshape tensor from [1, inputWidth, inputHeight, 2] to [inputWidth, inputHeight, 2]
-  if ( !squoozenTensor.CopyFrom(outputTensor, tensorflow::TensorShape({_params.inputWidth,
-                                                                              _params.inputHeight,
-                                                                              2})))
+  if ( !squeezedTensor.CopyFrom(outputTensor, tensorflow::TensorShape({_params.inputWidth,
+                                                                       _params.inputHeight,
+                                                                       2})))
   {
     PRINT_NAMED_ERROR("NeuralNetModel.GetSalientPointsFromResponseMap.CopyFromFailed", "");
     return RESULT_FAIL;
@@ -701,18 +701,15 @@ Result NeuralNetModel::GetSalientPointsFromResponseMap(const tensorflow::Tensor&
   // is col-major and by default it seems we should verify this "by hand" until
   // this descrepency is resolved VIC-4386
 
-  // TODO make sure data is not in column major format
   cv::Mat responseMap(_params.inputHeight, _params.inputWidth, CV_32FC2,
-                      squoozenTensor.tensor<float, 3>().data());
+                      squeezedTensor.tensor<float, 3>().data());
   std::vector<cv::Mat> channels;
   split(responseMap, channels);
 
+  const int objectnessIndex = 1;
   double min(0), max(0);
   cv::Point2i minLoc(0, 0), maxLoc(0, 0);
-  const int objectnessIndex = 1;
   cv::minMaxLoc(channels[objectnessIndex], &min, &max, &minLoc, &maxLoc);
-  // TODO we can put in connected component based filtering later, right now
-  // let's just return the max value location... that normally isn't filtered out anyway
 
   if (kNeuralNetTensorflow_SaveImages)
   {
