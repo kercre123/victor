@@ -17,11 +17,6 @@
 #include "engine/actions/basicActions.h"
 #include "util/console/consoleInterface.h"
 
-// includes needed for hack (see HoldFaceForTime and VIC-364)
-#include "engine/robot.h"
-#include "engine/actions/actionContainers.h"
-
-
 namespace Anki {
 namespace Cozmo {
 
@@ -33,12 +28,13 @@ CONSOLE_VAR_RANGED(f32, kSleepingStirSpacing_min_s, CONSOLE_GROUP, 20.0f, 0.0f, 
 CONSOLE_VAR_RANGED(f32, kSleepingStirSpacing_max_s, CONSOLE_GROUP, 40.0f, 0.0f, 7200.0f);
 
 CONSOLE_VAR_RANGED(f32, kSleepingBoutSpacing_min_s, CONSOLE_GROUP, 1.5f, 0.0f, 30.0f);
-CONSOLE_VAR_RANGED(f32, kSleepingBoutSpacing_max_s, CONSOLE_GROUP, 8.0f, 0.0f, 7200.0f);
+CONSOLE_VAR_RANGED(f32, kSleepingBoutSpacing_max_s, CONSOLE_GROUP, 5.0f, 0.0f, 7200.0f);
 
-CONSOLE_VAR_RANGED(u32, kSleepingBoutNumStirs_min, CONSOLE_GROUP, 2, 1, 10);
-CONSOLE_VAR_RANGED(u32, kSleepingBoutNumStirs_max, CONSOLE_GROUP, 5, 1, 10);
+// note: the anim group includes a very subtle animation and a more noticeable one, so these numbers should be
+// a bit higher than they might otherwise be
+CONSOLE_VAR_RANGED(u32, kSleepingBoutNumStirs_min, CONSOLE_GROUP, 5, 1, 10);
+CONSOLE_VAR_RANGED(u32, kSleepingBoutNumStirs_max, CONSOLE_GROUP, 10, 1, 10);
 
-constexpr const char* kSleepingFaceLoopAnimClip = "anim_face_sleeping";
 constexpr const char* kEnablePowerSaveKey = "enablePowerSave";
 
 }
@@ -67,8 +63,12 @@ void BehaviorSleeping::OnBehaviorActivated()
   if( _shouldEnterPowerSave ) {
     SmartRequestPowerSaveMode();
   }
-  
-  TransitionToSleeping();  
+
+  SmartDisableKeepFaceAlive();
+
+  // always start with one round of sleeping to make sure the face is in a good state
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::GoToSleepSleeping),
+                      &BehaviorSleeping::TransitionToSleeping);
 }
   
 void BehaviorSleeping::OnBehaviorDeactivated()
@@ -118,35 +118,8 @@ void BehaviorSleeping::HoldFaceForTime(
   const float waitTime_s,
   void(BehaviorSleeping::*callback)())
 {
-  // This implementation is a huge hack which should go away as soon as VIC-364 is implemented so we can have
-  // controls to directly turn off the procedural idles. In the meantime, we play an "engine-defined"
-  // animation which keeps the face still, and has a side-effect of disabling procedural idles (since an
-  // animation is playing). Then, after the given time, we cancel the animation. This hack was implemented
-  // this way to give the impression that this is a single action (rather than implementing the cut-off in the
-  // Update loop, which would require more code restructuring)
-
-  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  _stopHoldingFaceAtTime_s = currTime_s + waitTime_s;
-
-  LoopHoldFace(callback);
+  DelegateIfInControl(new WaitAction(waitTime_s), callback);
 }
-
-void BehaviorSleeping::LoopHoldFace(
-  void(BehaviorSleeping::*callback)())
-{
-
-  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if( currTime_s > _stopHoldingFaceAtTime_s ) {
-    (this->*callback)();
-  }
-  else {
-    // play one iteration of the animation, then check the time again
-    DelegateIfInControl(new PlayAnimationAction(kSleepingFaceLoopAnimClip),
-                        [this, callback](){
-                          BehaviorSleeping::LoopHoldFace(callback);});
-  }
-}
-
 
 }
 }

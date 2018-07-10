@@ -45,7 +45,9 @@ static const BehaviorID kBehaviorIDForDevMessage = BEHAVIOR_ID(DevExecuteBehavio
 static const BehaviorID kWaitBehaviorID = BEHAVIOR_ID(Wait);
 const std::string kWebVizModuleNameBehaviors = "behaviors";
 const std::string kWebVizModuleNameIntents = "intents";
-  
+
+static const char* kKeepFaceAliveLockName = "BehaviorMessageHandler";
+
 // This value is enough for things to settle down. This is many ticks, but it's a only pause after
 // exiting a screen, so doesn't look excessive. Testing shows we need a minimum of 6.
 constexpr size_t kTicksBeforeEnableFaceKeepalive = 10;
@@ -172,9 +174,8 @@ void BehaviorComponentMessageHandler::UpdateDependent(const BCCompMap& dependent
   if( _tickInfoScreenEnded != 0 ) {
     size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
     if( currTick - _tickInfoScreenEnded >= kTicksBeforeEnableFaceKeepalive ) {
-      // Re-enable face keepalive after the stack has a chance to send its first animation, if the
-      // resuming behavior actually has an animation
-      _robot.GetAnimationComponent().EnableKeepFaceAlive( true );
+      // remove the keepalive lock after the stack has a chance to send its first animation
+      _robot.GetAnimationComponent().RemoveKeepFaceAliveDisableLock(kKeepFaceAliveLockName);
       // reset
       _tickInfoScreenEnded = 0;
     }
@@ -191,7 +192,8 @@ void BehaviorComponentMessageHandler::OnEnterInfoFace( BehaviorContainer& bConta
   
   // Disable neutral eyes while in the dev screens, because symmetry with another call to
   // enable it in this class
-  _robot.GetAnimationComponent().EnableKeepFaceAlive( false );
+  _robot.GetAnimationComponent().AddKeepFaceAliveDisableLock(kKeepFaceAliveLockName);
+
   // Prevent the Update loop from sending an EnableKeepFaceAlive(true) in case the user is
   // entering and exiting the pairing screen quickly. There's a potential race condition here if the
   // update loop has just sent a re-enable message but the backpack was also double clicked, but
