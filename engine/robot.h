@@ -47,6 +47,8 @@
 #include "util/signals/simpleSignal.hpp"
 #include "util/stats/recentStatsAccumulator.h"
 
+#include "proto/external_interface/shared.pb.h"
+
 #include <queue>
 #include <time.h>
 #include <unordered_map>
@@ -165,6 +167,7 @@ public:
   void SetIgnoreExternalActions(bool ignore) { _ignoreExternalActions = ignore; }
   bool GetIgnoreExternalActions() { return _ignoreExternalActions;}
 
+  external_interface::RobotStatsResponse* GetRobotStats();
   // =========== Robot Update ===========
 
   Result Update();

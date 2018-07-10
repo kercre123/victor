@@ -26,7 +26,6 @@ def main():
     # Fetch robot stats
     with vector.Robot(args.ip, str(cert)) as robot:
         robot.get_robot_stats()
-        time.sleep(2.0) # Let enough time pass to fetch stats
         
 
     print("------ finished testing fetching robot stats ------")

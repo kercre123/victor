@@ -98,6 +98,10 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 #include "util/transport/reliableConnection.h"
+#include "util/transport/connectionStats.h"
+
+#include "proto/external_interface/shared.pb.h"
+#include "osState/osState.h"
 
 #include "anki/cozmo/shared/factory/emrHelper.h"
 #include "anki/cozmo/shared/factory/faultCodes.h"
@@ -419,6 +423,27 @@ Robot::~Robot()
   PRINT_NAMED_INFO("robot.destructor", "%d", GetID());
 }
 
+external_interface::RobotStatsResponse* Robot::GetRobotStats() {
+  Robot* robot =  GetContext()->GetRobotManager()->GetRobot();
+  const auto& batteryComponent = robot->GetBatteryComponent();
+  external_interface::NetworkStats* networkStats = new external_interface::NetworkStats{Util::gNetStat1NumConnections, \
+                                                                                        Util::gNetStat2LatencyAvg, \
+                                                                                        Util::gNetStat3LatencySD, \
+                                                                                        Util::gNetStat4LatencyMin, \
+                                                                                        Util::gNetStat5LatencyMax, \
+                                                                                        Util::gNetStat6PingArrivedPC, \
+                                                                                        Util::gNetStat7ExtQueuedAvg_ms, \
+                                                                                        Util::gNetStat8ExtQueuedMin_ms, \
+                                                                                        Util::gNetStat9ExtQueuedMax_ms, \
+                                                                                        Util::gNetStatAQueuedAvg_ms, \
+                                                                                        Util::gNetStatBQueuedMin_ms, \
+                                                                                        Util::gNetStatCQueuedMax_ms};
+  external_interface::RobotStatsResponse* response = new external_interface::RobotStatsResponse{batteryComponent.GetBatteryVolts(), \
+                                                                                                (external_interface::BatteryLevel)batteryComponent.GetBatteryLevel(), \
+                                                                                                OSState::getInstance()->GetOSBuildVersion(), \
+                                                                                                networkStats};
+  return response;
+}
 
 bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
 {
