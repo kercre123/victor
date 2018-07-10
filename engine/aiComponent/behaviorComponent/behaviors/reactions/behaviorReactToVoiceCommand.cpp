@@ -439,7 +439,7 @@ MicDirectionIndex BehaviorReactToVoiceCommand::GetReactionDirection() const
   return direction;
 }
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MicDirectionIndex BehaviorReactToVoiceCommand::GetDirectionFromMicHistory() const
 {
   const MicDirectionHistory& history = GetBEI().GetMicComponent().GetMicDirectionHistory();

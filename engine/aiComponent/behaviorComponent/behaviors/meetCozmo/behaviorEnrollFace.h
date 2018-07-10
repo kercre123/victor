@@ -200,11 +200,6 @@ private:
     
     f32              totalBackup_mm;
     
-    
-    
-    ActionResult     saveEnrollResult;
-    ActionResult     saveAlbumResult;
-    
     std::string      faceName;
     std::string      observedUnusableName;
     

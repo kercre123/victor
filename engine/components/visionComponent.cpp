@@ -20,6 +20,7 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/dockingComponent.h"
+#include "engine/components/nvStorageComponent.h"
 #include "engine/components/photographyManager.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
@@ -131,6 +132,7 @@ namespace Cozmo {
     const char * const ImageQualityAlertSpacing = "RepeatedErrorMessageInterval_ms";
     const char * const InitialExposureTime = "InitialExposureTime_ms";
     const char * const OpenCvThreadMode = "NumOpenCvThreads";
+    const char * const FaceAlbum = "FaceAlbum";
   }
 
   namespace
@@ -145,6 +147,8 @@ namespace Cozmo {
     TimeStamp_t kImageQualityAlertSpacing_ms = 5000;
 
     u16 kInitialExposureTime_ms = 16;
+    
+    const char* const kDefaultFaceAlbumName = "default";
   }
 
   VisionComponent::VisionComponent()
@@ -236,25 +240,15 @@ namespace Cozmo {
       return;
     }
 
-    // Request face album data from the robot
-    std::string faceAlbumName;
-    JsonTools::GetValueOptional(config, "FaceAlbum", faceAlbumName);
-    if(faceAlbumName.empty() || faceAlbumName == "robot") {
-      result = LoadFaceAlbumFromRobot();
-      if(RESULT_OK != result) {
-        PRINT_NAMED_WARNING("VisionComponent.Init.LoadFaceAlbumFromRobotFailed", "");
-      }
-    } else {
-      // Erase all faces on the robot
-      EraseAllFaces();
-
-      std::list<Vision::LoadedKnownFace> loadedFaces;
-      result = _visionSystem->LoadFaceAlbum(faceAlbumName, loadedFaces);
-      BroadcastLoadedNamesAndIDs(loadedFaces);
-
+    // Load face album and broadcast all known faces
+    {
+      _faceAlbumName = kDefaultFaceAlbumName;
+      JsonTools::GetValueOptional(config, JsonKey::FaceAlbum, _faceAlbumName);
+      result = LoadFaceAlbum(); // NOTE: Also broadcasts any loaded faces
+      
       if(RESULT_OK != result) {
         PRINT_NAMED_WARNING("VisionComponent.Init.LoadFaceAlbumFromFileFailed",
-                            "AlbumFile: %s", faceAlbumName.c_str());
+                            "AlbumFile: %s", _faceAlbumName.c_str());
       }
     }
 
@@ -2119,213 +2113,6 @@ namespace Cozmo {
     return RESULT_OK;
   } // FindFactoryTestDotCentroids()
 
-  inline static size_t GetPaddedNumBytes(size_t numBytes)
-  {
-    // Pad to a multiple of 4 for NVStorage
-    const size_t paddedNumBytes = (numBytes + 3) & ~0x03;
-    DEV_ASSERT(paddedNumBytes % 4 == 0, "EnrolledFaceEntry.Serialize.PaddedSizeNotMultipleOf4");
-
-    return paddedNumBytes;
-  }
-
-  Result VisionComponent::SaveFaceAlbumToRobot()
-  {
-    return SaveFaceAlbumToRobot(nullptr, nullptr);
-  }
-
-  Result VisionComponent::SaveFaceAlbumToRobot(std::function<void(NVStorage::NVResult)> albumCallback,
-                                               std::function<void(NVStorage::NVResult)> enrollCallback)
-  {
-    Result lastResult = RESULT_OK;
-
-    _albumData.clear();
-    _enrollData.clear();
-
-    // Get album data from vision system
-    this->Lock();
-    lastResult = _visionSystem->GetSerializedFaceData(_albumData, _enrollData);
-    this->Unlock();
-
-    if(lastResult != RESULT_OK)
-    {
-      PRINT_NAMED_WARNING("VisionComponent.SaveFaceAlbumToRobot.GetSerializedFaceDataFailed",
-                          "GetSerializedFaceData failed");
-      return lastResult;
-    }
-
-    const u32 maxAlbumSize = _robot->GetNVStorageComponent().GetMaxSizeForEntryTag(NVStorage::NVEntryTag::NVEntry_FaceAlbumData);
-    if(_albumData.size() >= maxAlbumSize)
-    {
-      PRINT_NAMED_ERROR("VisionComponent.SaveFaceAlbumToRobot.AlbumDataTooLarge",
-                        "Album data is %zu max size is %u",
-                        _albumData.size(),
-                        maxAlbumSize);
-      return RESULT_FAIL_INVALID_SIZE;
-    }
-
-    const u32 maxEnrollSize = _robot->GetNVStorageComponent().GetMaxSizeForEntryTag(NVStorage::NVEntryTag::NVEntry_FaceEnrollData);
-    if(_enrollData.size() >= maxEnrollSize)
-    {
-      PRINT_NAMED_ERROR("VisionComponent.SaveFaceAlbumToRobot.EnrollDataTooLarge",
-                        "Enroll data is %zu max size is %u",
-                        _enrollData.size(),
-                        maxEnrollSize);
-      return RESULT_FAIL_INVALID_SIZE;
-    }
-
-    // Callback to display result when NVStorage.Write finishes
-    NVStorageComponent::NVStorageWriteEraseCallback saveAlbumCallback = [this,albumCallback](NVStorage::NVResult result) {
-      if(result == NVStorage::NVResult::NV_OKAY) {
-        PRINT_NAMED_INFO("VisionComponent.SaveFaceAlbumToRobot.AlbumSuccess",
-                         "Successfully completed saving album data to robot");
-      } else {
-        PRINT_NAMED_WARNING("VisionComponent.SaveFaceAlbumToRobot.AlbumFailure",
-                            "Failed saving album data to robot: %s",
-                            EnumToString(result));
-        _robot->BroadcastEngineErrorCode(EngineErrorCode::WriteFacesToRobot);
-      }
-
-      if(nullptr != albumCallback) {
-        albumCallback(result);
-      }
-    };
-    // Callback to display result when NVStorage.Write finishes
-    NVStorageComponent::NVStorageWriteEraseCallback saveEnrollCallback = [this,enrollCallback](NVStorage::NVResult result) {
-      if(result == NVStorage::NVResult::NV_OKAY) {
-        PRINT_NAMED_INFO("VisionComponent.SaveFaceAlbumToRobot.EnrollSuccess",
-                         "Successfully completed saving enroll data to robot");
-      } else {
-        PRINT_NAMED_WARNING("VisionComponent.SaveFaceAlbumToRobot.EnrollFailure",
-                            "Failed saving enroll data to robot: %s",
-                            EnumToString(result));
-        _robot->BroadcastEngineErrorCode(EngineErrorCode::WriteFacesToRobot);
-      }
-
-      if(nullptr != enrollCallback) {
-        enrollCallback(result);
-      }
-    };
-
-
-    if(_albumData.empty() && _enrollData.empty()) {
-      PRINT_NAMED_INFO("VisionComponent.SaveFaceAlbumToRobot.EmptyAlbumData", "Will erase robot album data");
-      // Special case: no face data, so erase what's on the robot so it matches
-      bool sendSucceeded = _robot->GetNVStorageComponent().Erase(NVStorage::NVEntryTag::NVEntry_FaceAlbumData, saveAlbumCallback);
-      if(!sendSucceeded) {
-        PRINT_NAMED_WARNING("VisionComponent.SaveFaceAlbumToRobot.SendEraseAlbumDataFail", "");
-        lastResult = RESULT_FAIL;
-      } else {
-        sendSucceeded = _robot->GetNVStorageComponent().Erase(NVStorage::NVEntryTag::NVEntry_FaceEnrollData, saveEnrollCallback);
-        if(!sendSucceeded) {
-          PRINT_NAMED_WARNING("VisionComponent.SaveFaceAlbumToRobot.SendEraseEnrollDataFail", "");
-        }
-      }
-      return lastResult;
-    }
-
-    // Pad to a multiple of 4 for NVStorage
-    _albumData.resize(GetPaddedNumBytes(_albumData.size()));
-    _enrollData.resize(GetPaddedNumBytes(_enrollData.size()));
-
-    // If one of the data is not empty, neither should be (we can't have album data with
-    // no enroll data or vice versa)
-    DEV_ASSERT(!_albumData.empty() && !_enrollData.empty(), "VisionComponent.SaveFaceAlbumToRobot.BadAlbumOrEnrollData");
-
-    // Use NVStorage to save it
-    bool sendSucceeded = _robot->GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_FaceAlbumData,
-                                                              _albumData.data(), _albumData.size(), saveAlbumCallback);
-    if(!sendSucceeded) {
-      PRINT_NAMED_WARNING("VisionComponent.SaveFaceAlbumToRobot.SendWriteAlbumDataFail", "");
-      lastResult = RESULT_FAIL;
-    } else {
-      sendSucceeded = _robot->GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_FaceEnrollData,
-                                                         _enrollData.data(), _enrollData.size(), saveEnrollCallback);
-      if(!sendSucceeded) {
-        PRINT_NAMED_WARNING("VisionComponent.SaveFaceAlbumToRobot.SendWriteEnrollDataFail", "");
-        lastResult = RESULT_FAIL;
-      }
-    }
-
-    PRINT_NAMED_INFO("VisionComponent.SaveFaceAlbumToRobot.Initiated",
-                     "Initiated save of %zu-byte album data and %zu-byte enroll data to NVStorage",
-                     _albumData.size(), _enrollData.size());
-
-    PRINT_NAMED_INFO("robot.vision.save_face_album_data_size_bytes", "%zu", _albumData.size());
-    PRINT_NAMED_INFO("robot.vision.save_face_enroll_data_size_bytes", "%zu", _enrollData.size());
-
-    return lastResult;
-  } // SaveFaceAlbumToRobot()
-
-  Result VisionComponent::LoadFaceAlbumFromRobot()
-  {
-    Result lastResult = RESULT_OK;
-
-    DEV_ASSERT(_visionSystem != nullptr, "VisionComponent.LoadFaceAlbumFromRobot.VisionSystemNotReady");
-
-    NVStorageComponent::NVStorageReadCallback readCallback =
-    [this](u8* data, size_t size, NVStorage::NVResult result)
-    {
-      if(result == NVStorage::NVResult::NV_OKAY)
-      {
-        // Read completed: try to use the data to update the face album/enroll data
-        Lock();
-        std::list<Vision::LoadedKnownFace> loadedFaces;
-        Result setResult = _visionSystem->SetSerializedFaceData(_albumData, _enrollData, loadedFaces);
-        Unlock();
-
-        if(RESULT_OK == setResult) {
-          PRINT_NAMED_INFO("VisionComponent.LoadFaceAlbumFromRobot.Success",
-                           "Finished setting %zu-byte album data and %zu-byte enroll data",
-                           _albumData.size(), _enrollData.size());
-
-          PRINT_CH_INFO("VisionComponent", "VisionComponent.LoadFaceAlbumFromRobot.Success", "Number of Loaded Faces: %zu",
-                        loadedFaces.size());
-
-          BroadcastLoadedNamesAndIDs(loadedFaces);
-
-        } else {
-          PRINT_NAMED_WARNING("VisionComponent.LoadFaceAlbumFromRobot.Failure",
-                              "Failed setting %zu-byte album data and %zu-byte enroll data",
-                              _albumData.size(), _enrollData.size());
-        }
-      } else if (result == NVStorage::NVResult::NV_NOT_FOUND) {
-        PRINT_NAMED_INFO("VisionComponent.LoadFaceAlbumFromRobot.ReadFaceEnrollDataNotFound", "");
-      } else {
-        PRINT_NAMED_WARNING("VisionComponent.LoadFaceAlbumFromRobot.ReadFaceEnrollDataFail",
-                            "NVResult = %s", EnumToString(result));
-      }
-
-      _albumData.clear();
-      _enrollData.clear();
-
-    }; // ReadCallback
-
-    _albumData.clear();
-    _enrollData.clear();
-
-    // NOTE: We don't run the callback until both data items have been read
-    bool sendSucceeded = _robot->GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_FaceAlbumData,
-                                                             {}, &_albumData, false);
-
-    if(!sendSucceeded) {
-      PRINT_NAMED_WARNING("VisionComponent.LoadFaceAlbumFromRobot.ReadFaceAlbumDataFail", "");
-      lastResult = RESULT_FAIL;
-    } else {
-      sendSucceeded = _robot->GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_FaceEnrollData,
-                                                          readCallback, &_enrollData, false);
-      if(!sendSucceeded) {
-        PRINT_NAMED_WARNING("VisionComponent.LoadFaceAlbumFromRobot.ReadFaceEnrollDataFail", "");
-        lastResult = RESULT_FAIL;
-      }
-    }
-
-    PRINT_NAMED_INFO("VisionComponent.LoadFaceAlbumToRobot.Initiated",
-                     "Initiated load of album and enroll data from NVStorage");
-
-    return lastResult;
-  } // LoadFaceAlbumFromRobot()
-
-
   Result VisionComponent::SaveFaceAlbumToFile(const std::string& path)
   {
     Lock();
@@ -2339,6 +2126,18 @@ namespace Cozmo {
     return result;
   }
 
+  inline static std::string GetFullFaceAlbumPath(const CozmoContext* context, const std::string& pathIn)
+  {
+    const std::string fullPath = context->GetDataPlatform()->pathToResource(Util::Data::Scope::Persistent,
+                                                                            Util::FileUtils::FullFilePath({"faceAlbums", pathIn}));
+    return fullPath;
+  }
+  
+  Result VisionComponent::SaveFaceAlbum()
+  {
+    const std::string fullFaceAlbumPath = GetFullFaceAlbumPath(_context, _faceAlbumName);
+    return SaveFaceAlbumToFile(fullFaceAlbumPath);
+  }
 
   Result VisionComponent::LoadFaceAlbumFromFile(const std::string& path)
   {
@@ -2351,7 +2150,13 @@ namespace Cozmo {
 
     return loadResult;
   }
-
+  
+  Result VisionComponent::LoadFaceAlbum()
+  {
+    const std::string fullFaceAlbumPath = GetFullFaceAlbumPath(_context, _faceAlbumName);
+    return LoadFaceAlbumFromFile(fullFaceAlbumPath);
+  }
+  
   Result VisionComponent::LoadFaceAlbumFromFile(const std::string& path, std::list<Vision::LoadedKnownFace>& loadedFaces)
   {
     Result result = _visionSystem->LoadFaceAlbum(path, loadedFaces);
@@ -2359,8 +2164,6 @@ namespace Cozmo {
     if(RESULT_OK != result) {
       PRINT_NAMED_WARNING("VisionComponent.LoadFaceAlbum.LoadFromFileFailed",
                           "AlbumFile: %s", path.c_str());
-    } else {
-      result = SaveFaceAlbumToRobot();
     }
 
     return result;
@@ -2397,8 +2200,9 @@ namespace Cozmo {
     int numRemaining = static_cast<int>(_visionSystem->GetEnrolledNames().size());
     Unlock();
     if(RESULT_OK == result) {
-      // Update robot
-      SaveFaceAlbumToRobot();
+      // Update face album on disk
+      SaveFaceAlbum();
+
       // Send back confirmation
       ExternalInterface::RobotErasedEnrolledFace msg;
       msg.faceID  = faceID;
@@ -2421,7 +2225,7 @@ namespace Cozmo {
     Lock();
     _visionSystem->EraseAllFaces();
     Unlock();
-    SaveFaceAlbumToRobot();
+    SaveFaceAlbum();
     _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotErasedAllEnrolledFaces()));
   }
 
@@ -2435,8 +2239,6 @@ namespace Cozmo {
     _robot->Broadcast( ExternalInterface::MessageEngineToGame( std::move(response) ) );
   }
 
-
-
   Result VisionComponent::RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName)
   {
     Vision::RobotRenamedEnrolledFace renamedFace;
@@ -2447,9 +2249,8 @@ namespace Cozmo {
 
     if(RESULT_OK == result)
     {
-      SaveFaceAlbumToRobot();
+      SaveFaceAlbum();
       _robot->Broadcast(ExternalInterface::MessageEngineToGame( std::move(renamedFace) ));
-
       {
         DASMSG(vision_enrolled_names_modify, "vision.enrolled_names.modify", "An enrolled face/name was modified");
         DASMSG_SET(i1, faceID, "The face ID (int)");
@@ -2921,27 +2722,28 @@ namespace Cozmo {
     RequestEnrolledNames();
   }
 
-  // Helper function to get the full path to face albums if isRelative=true
-  inline static std::string GetFullFaceAlbumPath(const CozmoContext* context, const std::string& pathIn, bool isRelative)
-  {
-    if(isRelative) {
-      return context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
-                                                        Util::FileUtils::FullFilePath({"config", "basestation", "faceAlbums", pathIn}));
-    } else {
-      return pathIn;
-    }
-  }
-
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::SaveFaceAlbumToFile& msg)
   {
-    SaveFaceAlbumToFile(GetFullFaceAlbumPath(_context, msg.path, msg.isRelativePath));
+    // NOTE: Renames/deletes will propagate to the _faceAlbumName loaded from vision_config! (not msg.path)
+    if(msg.isRelativePath) {
+      SaveFaceAlbumToFile(GetFullFaceAlbumPath(_context, msg.path));
+    }
+    else {
+      SaveFaceAlbumToFile(msg.path);
+    }
   }
 
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::LoadFaceAlbumFromFile& msg)
   {
-    LoadFaceAlbumFromFile(GetFullFaceAlbumPath(_context, msg.path, msg.isRelativePath));
+    // NOTE: Renames/deletes will propagate to the _faceAlbumName loaded from vision_config! (not msg.path)
+    if(msg.isRelativePath) {
+      LoadFaceAlbumFromFile(GetFullFaceAlbumPath(_context, msg.path));
+    }
+    else {
+      LoadFaceAlbumFromFile(msg.path);
+    }
   }
 
   template<>

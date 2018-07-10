@@ -18,7 +18,6 @@
 #include "engine/activeObject.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/backpackLights/backpackLightComponent.h"
-#include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightAnimation.h"
 #include "engine/components/cubes/cubeLights/cubeLightAnimationHelpers.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
@@ -156,14 +155,12 @@ CubeSpinnerGame::GameSettingsConfig::GameSettingsConfig(const Json::Value& setti
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CubeSpinnerGame::CubeSpinnerGame(const Json::Value& gameConfig,
                                  const Json::Value& lightConfigs,
-                                 CubeCommsComponent& cubeCommsComponent,
                                  CubeLightComponent& cubeLightComponent,
                                  BackpackLightComponent& backpackLightComponent,
                                  BlockWorld& blockWorld,
                                  Util::RandomGenerator& rng)
 : _settingsConfig(gameConfig)
 , _lightsConfig(lightConfigs)
-, _cubeCommsComponent(cubeCommsComponent)
 , _cubeLightComponent(cubeLightComponent)
 , _backpackLightComponent(backpackLightComponent)
 , _blockWorld(blockWorld)
@@ -184,20 +181,8 @@ CubeSpinnerGame::~CubeSpinnerGame()
 void CubeSpinnerGame::PrepareForNewGame(GameReadyCallback callback)
 {
   _currentGame.targetObject.SetToUnknown();
-  if(_cubeCommsComponent.IsConnectedToCube()){
-    const bool res = ResetGame();
-    callback(res, _currentGame.targetObject);
-  }else{
-    auto internalCallback = [this, callback](bool success){
-      if(success){
-        success = ResetGame();
-      }
-      callback(success, _currentGame.targetObject);
-    };
-    if(!_cubeCommsComponent.RequestConnectToCube(internalCallback)){
-      callback(false, _currentGame.targetObject);
-    }
-  }
+  const bool res = ResetGame();
+  callback(res, _currentGame.targetObject);
 }
 
 
@@ -218,7 +203,6 @@ void CubeSpinnerGame::StopGame()
 {
   _backpackLightComponent.ClearAllBackpackLightConfigs();
   _cubeLightComponent.StopLightAnimAndResumePrevious(_currentGame.currentCubeHandle);
-  _cubeCommsComponent.RequestDisconnectFromCube(100);
 }
 
 

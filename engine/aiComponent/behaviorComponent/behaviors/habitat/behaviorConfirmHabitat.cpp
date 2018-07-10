@@ -153,11 +153,13 @@ bool BehaviorConfirmHabitat::WantsToBeActivatedBehavior() const
     //
     // important: this function is the place to insert any special case logic
     //  where a behavior should not be interrupted
-    const auto checkInterruptCallback = [&canInterrupt](const ICozmoBehavior& behavior)->void {
+    const auto checkInterruptCallback = [&canInterrupt](const ICozmoBehavior& behavior)->bool {
       auto got = kPassiveBehaviorsToInterrupt.find(behavior.GetID());
       if(got != kPassiveBehaviorsToInterrupt.end()) {
         canInterrupt = true;
+        return false; // canInterrupt will not change from here, stop iterating
       }
+      return true; // keep iterating
     };
     const auto& behaviorIterator = GetBehaviorComp<ActiveBehaviorIterator>();
     behaviorIterator.IterateActiveCozmoBehaviorsForward( checkInterruptCallback, nullptr );

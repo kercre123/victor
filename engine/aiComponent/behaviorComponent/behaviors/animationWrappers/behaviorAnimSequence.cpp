@@ -171,6 +171,8 @@ void BehaviorAnimSequence::StartSequenceLoop()
         CallToListeners();
         StartSequenceLoop();
       });
+    } else {
+      OnAnimationsComplete();
     }
 }
 

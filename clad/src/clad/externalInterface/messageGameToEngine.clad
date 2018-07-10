@@ -718,11 +718,6 @@ message RequestAvailableAnimationGroups{
   
 }
 
-message EnableKeepFaceAlive {
-  uint_32 disableTimeout_ms,  // If enable == false, the amount of time to wait before actually disabling
-  bool    enable
-}
-
 message SetKeepFaceAliveParameters {
   KeepFaceAliveParameter       paramNames[uint_8],
   float_32                     paramValues[uint_8], // must be same length as paramNames

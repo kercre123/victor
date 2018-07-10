@@ -38,7 +38,7 @@ namespace Vision {
 
   // Versioning so we can avoid badness if/when we change EnrolledFaceStorage CLAD
   // structure. This prefix will be at the beginning of the serialized enrollment
-  // data stored in NVStorage on the robot.
+  // data stored in persistent data.
   static const u16 VersionNumber = Util::numeric_cast<u16>(FaceRecognitionConstants::EnrolledFaceStorageVersionNumber);
   static const u16 VersionPrefix[2] = {0xFACE, VersionNumber};
 

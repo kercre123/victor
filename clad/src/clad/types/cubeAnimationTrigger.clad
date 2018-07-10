@@ -22,6 +22,7 @@ enum int_32 CubeAnimationTrigger
   Interacting,
   InteractingBehaviorLock,
   Onboarding,
+  ShutDown,
   Sleep,
   SleepNoFade,
   SpeedTapWin,

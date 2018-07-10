@@ -283,6 +283,10 @@ function(guess_license_for_file filename licenses_result)
       list(APPEND licenses "CC0")
     endif()
 
+    if(contents MATCHES "RSA Data Security")
+      list(APPEND licenses "RSA")
+    endif()
+
     if(contents MATCHES "gnu " AND
            contents MATCHES "license version 2")
       list(APPEND licenses "GPL-2.0")

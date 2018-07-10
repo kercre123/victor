@@ -13,6 +13,8 @@ type conn struct {
 	client pb.TokenClient
 }
 
+var platformOpts []grpc.DialOption
+
 func newConn(serverURL string) (*conn, error) {
 	var dialOpts []grpc.DialOption
 	certCreds, err := getTLSCert()
@@ -21,6 +23,9 @@ func newConn(serverURL string) (*conn, error) {
 		return nil, err
 	}
 	dialOpts = append(dialOpts, grpc.WithTransportCredentials(certCreds))
+	if platformOpts != nil && len(platformOpts) > 0 {
+		dialOpts = append(dialOpts, platformOpts...)
+	}
 	rpcConn, err := grpc.Dial(serverURL, dialOpts...)
 	if err != nil {
 		return nil, err

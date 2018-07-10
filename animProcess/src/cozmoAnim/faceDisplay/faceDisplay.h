@@ -35,7 +35,7 @@ namespace Cozmo {
 
 class FaceDisplayImpl;
 class FaceInfoScreenManager;
-  
+
 class FaceDisplay : public Util::DynamicSingleton<FaceDisplay>
 {
   ANKIUTIL_FRIEND_SINGLETON(FaceDisplay); // Allows base class singleton access
@@ -65,18 +65,23 @@ private:
   std::thread                           _faceDrawThread;
   std::mutex                            _faceDrawMutex;
   bool                                  _stopDrawFace = false;
-    
+
   void DrawFaceLoop();
   void UpdateNextImgPtr();
-  
+
   // Main loop of the fault code thread
   void FaultCodeLoop();
   void DrawFaultCode(uint16_t fault);
   void StopFaultCodeThread();
 
+  // Stuff for controlling fault code thread
   std::thread _faultCodeThread;
+  std::mutex _faultCodeMutex;
+  std::condition_variable _faultCodeCondition;
+  bool _faultCodeStop = false;
+
 }; // class FaceDisplay
-  
+
 } // namespace Cozmo
 } // namespace Anki
 

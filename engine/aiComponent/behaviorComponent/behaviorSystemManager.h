@@ -98,9 +98,16 @@ public:
   // behavior that it was delegated to. Otherwise, return nullptr (including if control was delegated to an
   // action or helper)
   const IBehavior* GetBehaviorDelegatedTo(const IBehavior* delegatingBehavior) const;
+  
+  // Return the pointer of the behavior which delegated to the passed in behavior. If at the base behavior,
+  // return nullptr
+  const IBehavior* GetBehaviorDelegatedFrom(const IBehavior* behavior) const;
 
   // Returns the behavior at the base of the stack
   const IBehavior* GetBaseBehavior() const;
+
+  // Returns the behavior at the top of the stack
+  const IBehavior* GetTopBehavior() const;
   
   // Returns string label of the behavior at the top of the stack
   const std::string& GetTopBehaviorDebugLabel() const;

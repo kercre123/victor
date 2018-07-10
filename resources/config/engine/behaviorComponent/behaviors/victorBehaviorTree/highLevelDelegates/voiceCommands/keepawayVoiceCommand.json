@@ -10,7 +10,7 @@
   ],
 
   "behaviors": [
-    "DriveOffCharger",
+    "DriveOffChargerCube",
     "Keepaway"
   ],
 

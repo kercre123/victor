@@ -12,7 +12,7 @@
   "timeUntilCancelFaceSearch_s": 10.0,
   "searchForFaceBehavior": "ObservingFindFaces",
   "shouldLeaveChargerFirst": true,
-  "driveOffChargerBehavior": "DriveOffChargerStraight",
+  "driveOffChargerBehavior": "DriveOffChargerFace",
 
   "behavior": "ComeHereInternal",
   

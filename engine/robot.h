@@ -79,6 +79,7 @@ class BlockWorld;
 class CozmoContext;
 class CubeAccelComponent;
 class CubeCommsComponent;
+class CubeConnectionCoordinator;
 class DrivingAnimationHandler;
 class DataAccessorComponent;
 enum class EngineErrorCode : uint8_t;
@@ -242,6 +243,9 @@ public:
 
   inline CubeCommsComponent& GetCubeCommsComponent() {return GetComponent<CubeCommsComponent>();}
   inline const CubeCommsComponent& GetCubeCommsComponent() const {return GetComponent<CubeCommsComponent>();}
+
+  inline CubeConnectionCoordinator& GetCubeConnectionCoordinator() {return GetComponent<CubeConnectionCoordinator>();}
+  inline const CubeConnectionCoordinator& GetCubeConnectionCoordinator() const {return GetComponent<CubeConnectionCoordinator>();}
 
   inline const MoodManager& GetMoodManager() const { return GetComponent<MoodManager>();}
   inline MoodManager&       GetMoodManager()       { return GetComponent<MoodManager>();}

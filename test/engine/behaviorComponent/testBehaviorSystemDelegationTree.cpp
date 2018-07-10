@@ -250,6 +250,7 @@ TEST(DelegationTree, CheckActiveFeatures)
             hasAnyFeature = true;
           }
         }
+        return true; // Iterate the whole stack
       };
 
       behaviorIterator.IterateActiveCozmoBehaviorsForward(checkFeatureCallback);

@@ -134,6 +134,9 @@ enum uint_8 BehaviorClass {
   PuzzleMaze,
   TrackLaser,
 
+  // gateBehaviors
+  ConnectToCube,
+
   // habitat
   ConfirmHabitat,
 

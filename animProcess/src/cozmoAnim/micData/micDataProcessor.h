@@ -115,8 +115,13 @@ private:
   std::mutex _rawMicDataMutex;
   bool _processThreadStop = false;
   bool _robotWasMoving = false;
+  bool _isSpeakerActive = false;
+  bool _wasSpeakerActive = false;
+  uint32_t _speakerCooldownCnt = 0;
   bool _shouldStreamAfterTrigger = true; // if you change the default, change engine's micComponent.h
   bool _triggerEnabled = true; // if you change the default, change engine's micComponent.h
+
+  bool _usingFallbackPolicy = false; // True if we are using the 'fallback' beamforming policy
 
 
 #if ANKI_DEV_CHEATS

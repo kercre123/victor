@@ -61,6 +61,7 @@ void ActiveFeatureComponent::UpdateDependent(const BCCompMap& dependentComps)
           feature != ActiveFeature::NoFeature ) {
         newFeature = feature;
       }
+      return true; // iterate the entire stack
     };
 
     behaviorIterator.IterateActiveCozmoBehaviorsForward(callback);

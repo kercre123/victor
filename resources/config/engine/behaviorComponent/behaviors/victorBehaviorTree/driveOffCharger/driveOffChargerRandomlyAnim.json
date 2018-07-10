@@ -1,5 +1,7 @@
+// DONT delegate to this one directly. Use DriveOffChargerRandomly, which has extra casing for 
+// off treads + on charger. This is not enforced anywhere for now
 {
-  "behaviorID": "DriveOffChargerAnim",
+  "behaviorID": "DriveOffChargerRandomlyAnim",
   "behaviorClass": "DispatcherRandom",
   
   "behaviors" : [

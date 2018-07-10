@@ -95,7 +95,6 @@ protected:
   void ToggleImageStreaming();
   void ToggleEyeRendering();
   
-  void ToggleKeepFaceAliveEnable();
   void SetDefaultKeepFaceAliveParams();
   void SetKeepFaceAliveParams();
   

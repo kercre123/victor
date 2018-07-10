@@ -15,6 +15,7 @@ enum class BEIComponentID{
   BackpackLightComponent,
   CubeAccel,
   CubeComms,
+  CubeConnectionCoordinator,
   CubeLight,
   CliffSensor,
   DataAccessor,

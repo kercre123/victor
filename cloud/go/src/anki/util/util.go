@@ -75,3 +75,21 @@ func (w asyncWriter) Write(p []byte) (int, error) {
 	}()
 	return len(p), nil
 }
+
+// SleepSelect is like calling time.Sleep() with an early exit if the given
+// channel ch is closed. It can be used for situations such as a goroutine
+// wanting to sleep while still responding quickly if it receives a signal
+// from a channel. Returns true if sleep was ended early due to selecting
+// from the channel, false if the sleep completed.
+func SleepSelect(dur time.Duration, ch <-chan struct{}) bool {
+	timer := time.NewTimer(dur)
+	select {
+	case <-timer.C:
+		return false
+	case <-ch:
+		if !timer.Stop() {
+			<-timer.C
+		}
+		return true
+	}
+}

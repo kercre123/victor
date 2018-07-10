@@ -182,6 +182,7 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
       // allow individual behaviors to suppress streaming
       // note: could pass in "highLevelRunning" to this function and have the sleeping behaviors suppress themselves
       shouldSuppressTriggerWord |= behavior.ShouldSuppressTriggerWordResponse();
+      return true; // Iterate over the entire stack
     };
 
     const auto& behaviorIterator = GetBehaviorComp<ActiveBehaviorIterator>();
@@ -239,21 +240,30 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
     _dVars.isSuppressingStreaming = shouldSuppressStreaming;
   }
 
-  // If we are responding to "take a photo", and the user is not requesting a selfie
-  // Disable the react to voice command turn so that Victor takes the photo in his current direction
-  // Exception: If storage is full we want to turn towards the user to let them know
   {
     auto& uic = GetBehaviorComp<UserIntentComponent>();
-    UserIntent intent;
-    const bool isPhotoPending = uic.IsUserIntentPending(USER_INTENT(take_a_photo), intent);
+    
+    // If we are responding to "take a photo", and the user is not requesting a selfie
+    // Disable the react to voice command turn so that Victor takes the photo in his current direction
+    // Exception: If storage is full we want to turn towards the user to let them know
+    UserIntent photoIntent;
+    const bool isPhotoPending = uic.IsUserIntentPending(USER_INTENT(take_a_photo), photoIntent);
     if(isPhotoPending){
-      const auto& takeAPhoto = intent.Get_take_a_photo();
+      const auto& takeAPhoto = photoIntent.Get_take_a_photo();
       const bool isNotASelfie = takeAPhoto.empty_or_selfie.empty();
       const bool isStorageFull = GetBEI().GetPhotographyManager().IsPhotoStorageFull();
       if(isNotASelfie && !isStorageFull){
         const auto ts = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
         _iConfig.reactToVoiceCommandBehavior->DisableTurnForTimestamp(ts);
       }
+    }
+    
+    // If we are responding to "go home", disable the voice command turn since we want
+    // him to just go directly into looking for the charger / going to the charger.
+    const bool isGoHomePending = uic.IsUserIntentPending(USER_INTENT(system_charger));
+    if (isGoHomePending) {
+      const auto ts = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      _iConfig.reactToVoiceCommandBehavior->DisableTurnForTimestamp(ts);
     }
   }
   
@@ -281,7 +291,9 @@ bool BehaviorCoordinateGlobalInterrupts::ShouldSuppressProxReaction()
     auto callback = [this](const ICozmoBehavior& behavior) {
       if( kBehaviorClassesToSuppressProx.find( behavior.GetClass() ) != kBehaviorClassesToSuppressProx.end() ) {
         _dVars.suppressProx = true;
+        return false; // A behavior satisfied the condition, stop iterating
       }
+      return true; // Haven't satisfied the condition yet, keep iterating
     };
     
     behaviorIterator.IterateActiveCozmoBehaviorsForward( callback, this );

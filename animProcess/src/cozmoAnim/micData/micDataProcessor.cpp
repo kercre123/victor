@@ -438,23 +438,40 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   // Note that currently we are only monitoring the moving flag. We _could_ also discard mic data when the robot
   // is picked up, but that is being evaluated with design before implementation, see VIC-1219
   const bool robotIsMoving = static_cast<bool>(robotStatus & (uint16_t)RobotStatusFlag::IS_MOVING);
-  const bool robotStartedMoving = robotIsMoving && !_robotWasMoving;
   const bool robotStoppedMoving = !robotIsMoving && _robotWasMoving;
   _robotWasMoving = robotIsMoving;
 
-  // When the robot is moving, we use the "fallback policy", meaning we essentially disable beamforming so that we aren't
-  // focusing on the gear noise (note we still run SE processing to combine the channels when using the fallback policy).
-  if (robotStartedMoving || robotStoppedMoving)
-  {
-    int32_t newSetting = robotStartedMoving ? 1 : 0;
+  // Check if we are playing audio through the speaker. Add a small delay after the speaker
+  // stops 'playing', since it's possible that the speaker is still actually playing stuff
+  // for a small time after this starts to return false.
+  const auto speakerCooldown_ms = _micDataSystem->GetSpeakerLatency_ms();
+  const auto speakerCooldownLimit = speakerCooldown_ms / kTimePerSEBlock_ms;
+  if (_micDataSystem->IsSpeakerPlayingAudio()) {
+    _isSpeakerActive = true;
+    _speakerCooldownCnt = speakerCooldownLimit;
+  } else if (_speakerCooldownCnt-- == 0) {
+    _isSpeakerActive = false;
+  }
+  
+  const bool speakerStoppedPlaying = !_isSpeakerActive && _wasSpeakerActive;
+  _wasSpeakerActive = _isSpeakerActive;
+  
+  // When the robot is moving or the speaker is playing, we use the "fallback policy", meaning we essentially disable
+  // beamforming so that we aren't focusing on the gear/speaker noise (note we still run SE processing to combine the
+  // channels when using the fallback policy).
+  const bool shouldUseFallbackPolicy = robotIsMoving || _isSpeakerActive;
+  if (shouldUseFallbackPolicy != _usingFallbackPolicy) {
+    const int32_t newSetting = shouldUseFallbackPolicy ? 1 : 0;
     SEDiagSetInt32(_policyFallbackFlag, newSetting);
-    PRINT_NAMED_DEBUG("MicDataProcessor.ProcessMicrophonesSE.SetUseFallbackBeam", "%s", robotStartedMoving ? "true" : "false");
+    PRINT_NAMED_DEBUG("MicDataProcessor.ProcessMicrophonesSE.SetUseFallbackBeam", "%s (robot moving %d, speaker playing %d)",
+                      newSetting > 0 ? "true" : "false", robotIsMoving, _isSpeakerActive);
+    _usingFallbackPolicy = shouldUseFallbackPolicy;
   }
 
-  if (robotStoppedMoving)
+  if (robotStoppedMoving || speakerStoppedPlaying)
   {
-    // When the robot has stopped moving (and the gears are no longer making noise) we reset the mic direciton
-    // confidence values to be based on non-noisy data
+    // When the robot has stopped moving (and the gears are no longer making noise) or the speaker has just
+    // stopped playing audio, we reset the mic direction confidence values to be based on non-noisy data
     MMIfResetLocationSearch();
   }
 
@@ -467,16 +484,16 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
     ANKI_CPU_PROFILE("ProcessVAD");
 
     // Note while we _can_ pass a confidence value here adjusted while the robot is moving, we'd rather err on the side
-    // of always thinking we hear a voice when the robot moves, so we maximize our chances of hearing any triggers
-    // over the noise. So when the robot is moving, don't even bother running the VAD, and instead just set activity
-    // to true.
+    // of always thinking we hear a voice when the robot moves or plays audio from the speaker, so we maximize our
+    // chances of hearing any triggers over the noise. So when the robot is moving, ignore the VAD, and instead just set
+    // activity to true.
     const float vadConfidence = 1.0f;
     activityFlag = DoSVad(_sVadObject.get(),           // object
                           vadConfidence,               // confidence it is okay to measure noise floor, i.e. no known activity like gear noise
                           (int16_t*)audioChunk);       // pointer to input data
     latestPowerValue = _sVadObject->AvePowerInBlock;
     latestNoiseFloor = _sVadObject->NoiseFloor;
-    if (robotIsMoving)
+    if (robotIsMoving || _isSpeakerActive)
     {
       activityFlag = 1;
     }
@@ -547,8 +564,9 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   result.latestPowerValue = latestPowerValue;
   result.latestNoiseFloor = latestNoiseFloor;
 
-  // When we know the robot is moving or there's no current activity (so we didn't do beamforming) clear direction data
-  if (robotIsMoving || (activityFlag != 1) || isLowPowerMode)
+  // When we know the robot is moving, or speaker is playing, or low power mode, or there's no
+  //  current activity (so we didn't do beamforming) clear direction data
+  if (robotIsMoving || _isSpeakerActive || (activityFlag != 1) || isLowPowerMode)
   {
     result.winningDirection = result.selectedDirection = kDirectionUnknown;
   }

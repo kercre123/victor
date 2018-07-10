@@ -18,6 +18,7 @@
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/batteryComponent.h"
 #include "engine/components/visionComponent.h"
+#include "engine/cozmoContext.h"
 #include "engine/components/habitatDetectorComponent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -31,6 +32,8 @@
 #include "util/bitFlags/bitFlags.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/console/consoleInterface.h"
+
+#include "webServerProcess/src/webService.h"
 
 #include <array>
 #include <vector>
@@ -53,6 +56,9 @@ namespace {
   const int kConfirmationConfigProxMaxReading = 36;
   
   const f32 kMinTravelDistanceWithoutSeeingWhite_mm = 260; // length of largest diagonal in habitat
+  
+  const std::string kWebVizHabitatModuleName = "habitat";
+  const f32 kSendWebVizDataPeriod_sec = 0.5f;
 }
     
 
@@ -76,6 +82,20 @@ void HabitatDetectorComponent::InitDependent(Robot* robot, const RobotCompMap& d
     auto helper = MakeAnkiEventUtil(*(robot->GetExternalInterface()), *this, _signalHandles);
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotOffTreadsStateChanged>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotStopped>();
+    
+    // webviz subscription to externally control the robot's belief state
+    if (ANKI_DEV_CHEATS) {
+      const auto* context = _robot->GetContext();
+      if (context != nullptr) {
+        auto* webService = context->GetWebService();
+        if (webService != nullptr) {
+          auto onData = [this](const Json::Value& data, const std::function<void(const Json::Value&)>& sendToClient) {
+            _habitatBelief = HabitatBeliefStateFromString(data["forceHabitatState"].asCString());
+          };
+          _signalHandles.emplace_back(webService->OnWebVizData(kWebVizHabitatModuleName).ScopedSubscribe(onData));
+        }
+      }
+    }
   } else {
     PRINT_NAMED_WARNING("HabitatDetectorComponent.InitDependent.MissingExternalIterface","");
   }
@@ -117,12 +137,8 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
 {
   auto& cliffSensor = dependentComps.GetComponent<CliffSensorComponent>();
   
-  if(_robot->GetBatteryComponent().IsOnChargerPlatform()) {
-    return;
-  }
-  
   // habitat confirmation (or disconfirmation) can occur if we are in the unknown state
-  if(_habitatBelief == HabitatBeliefState::Unknown) {
+  if(!_robot->GetBatteryComponent().IsOnChargerPlatform() && _habitatBelief == HabitatBeliefState::Unknown) {
     // determine if we have driven too far without detecting white from cliffs
     f32 distance = ComputeDistanceBetween(_robot->GetPose(), _robot->GetWorldOrigin());
     if(!_detectedWhiteFromCliffs && distance > kMinTravelDistanceWithoutSeeingWhite_mm) {
@@ -196,6 +212,30 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
       }
     }
   } // end(if Unknown)
+  
+  // Send info to web viz occasionally
+  const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if (now_sec > _nextSendWebVizDataTime_sec) {
+    SendDataToWebViz();
+    _nextSendWebVizDataTime_sec = now_sec + kSendWebVizDataPeriod_sec;
+  }
+}
+  
+void HabitatDetectorComponent::SendDataToWebViz() const
+{
+  if (!ANKI_DEV_CHEATS) {
+    return;
+  }
+  
+  const auto* context = _robot->GetContext();
+  if (context != nullptr) {
+    auto* webService = context->GetWebService();
+    if (webService!= nullptr) {
+      Json::Value toSend = Json::objectValue;
+      toSend["habitatState"] = EnumToString(_habitatBelief);
+      webService->SendToWebViz(kWebVizHabitatModuleName, toSend);
+    }
+  }
 }
 
 
