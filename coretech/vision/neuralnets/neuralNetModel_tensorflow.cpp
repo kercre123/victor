@@ -713,6 +713,31 @@ Result NeuralNetModel::GetSalientPointsFromResponseMap(const tensorflow::Tensor&
 
   if (kNeuralNetTensorflow_SaveImages)
   {
+    SaveObjectnessResponseMaps(channels, timestamp);
+  }
+
+  // Create a SalientPoint to return for each connected component (skipping background component 0)
+  const float widthScale  = 1.f / static_cast<float>(responseMap.cols);
+  const float heightScale = 1.f / static_cast<float>(responseMap.rows);
+  float x = Util::Clamp(maxLoc.x * widthScale,  0.f, 1.f);
+  float y = Util::Clamp(maxLoc.y * heightScale, 0.f, 1.f);
+  Vision::SalientPointType type = Vision::SalientPointType::Object;
+
+  // TODO right now objectness doesn't have an area associated with it,
+  // thus the shape part of the salient point is empty, and so is area
+  // fraction.
+  Vision::SalientPoint salientPoint(timestamp, x, y,
+                                    max, 1.f * (widthScale*heightScale),
+                                    type, EnumToString(type),
+                                    Poly2f{}.ToCladPoint2dVector());
+
+  salientPoints.push_back(std::move(salientPoint));
+  return RESULT_OK;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NeuralNetModel::SaveObjectnessResponseMaps(const std::vector<cv::Mat>& channels, const TimeStamp_t timestamp)
+{
     for (int channel = 0; channel < 2; ++channel)
     {
       double channelMin(0), channelMax(0);
@@ -745,31 +770,6 @@ Result NeuralNetModel::GetSalientPointsFromResponseMap(const tensorflow::Tensor&
         + outputMinX + " " + outputMinY + " " + outputMinValue;
       salientPointFile.close();
     }
-  }
-
-  // Create a SalientPoint to return for each connected component (skipping background component 0)
-  const float widthScale  = 1.f / static_cast<float>(responseMap.cols);
-  const float heightScale = 1.f / static_cast<float>(responseMap.rows);
-
-  // TODO better names? and correcting for column major format?
-  float x = Util::Clamp(maxLoc.x * widthScale,  0.f, 1.f);
-  float y = Util::Clamp(maxLoc.y * heightScale, 0.f, 1.f);
-  PRINT_NAMED_INFO("NeuralNetModel.GetLocalizedBinaryClassification.NormalizedPoint",
-                   "Objectness point x: %.2f y: %.2f with min %.2f max %.2f",
-                   x, y, min, max);
-
-  Vision::SalientPointType type = Vision::SalientPointType::Object;
-
-  // TODO right now objectness doesn't have an area associated with it,
-  // thus the shape part of the salient point is empty, and so is area
-  // fraction.
-  Vision::SalientPoint salientPoint(timestamp, x, y,
-                                    max, 1.f * (widthScale*heightScale),
-                                    type, EnumToString(type),
-                                    Poly2f{}.ToCladPoint2dVector());
-
-  salientPoints.push_back(std::move(salientPoint));
-  return RESULT_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
