@@ -167,6 +167,10 @@ void AnimationComponent::UpdateDependent(const RobotCompMap& dependentComps)
       ++it;
     }
   }
+
+  if( _desiredEnableKeepFaceAlive != _lastSentEnableKeepFaceAlive ) {
+    SendEnableKeepFaceAlive(_desiredEnableKeepFaceAlive);
+  }
 }
  
 
@@ -654,7 +658,7 @@ void AnimationComponent::AddKeepFaceAliveDisableLock(const std::string& lockName
 
   if( _numKeepFaceAliveDisableLocks == 1 ) {
     // this is the first lock
-    EnableKeepFaceAlive(false);
+    _desiredEnableKeepFaceAlive = false;
   }
 }
 
@@ -674,18 +678,24 @@ void AnimationComponent::RemoveKeepFaceAliveDisableLock(const std::string& lockN
 
     if( _numKeepFaceAliveDisableLocks == 0 ) {
       // was locked but not anymore, so enable
-      EnableKeepFaceAlive(true);
+      _desiredEnableKeepFaceAlive = true;
     }
   }
 }
 
-Result AnimationComponent::EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms) const
+Result AnimationComponent::SendEnableKeepFaceAlive(bool enable, u32 disableTimeout_ms)
 {
   PRINT_CH_INFO("AnimationComponent", "AnimationComponent.EnableKeepFaceAlive.SendMessage",
                 "Sending message to %s procedural keep face alive",
                 enable ? "ENABLE" : "DISABLE");
 
-  return _robot->SendRobotMessage<RobotInterface::EnableKeepFaceAlive>(disableTimeout_ms, enable);
+  const Result res = _robot->SendRobotMessage<RobotInterface::EnableKeepFaceAlive>(disableTimeout_ms, enable);
+
+  if( res == RESULT_OK ) {
+    _lastSentEnableKeepFaceAlive = enable;
+  }
+  
+  return res;
 }
 
 Result AnimationComponent::SetDefaultKeepFaceAliveParameters() const

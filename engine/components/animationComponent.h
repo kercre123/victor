@@ -271,7 +271,7 @@ private:
                             int numLoops,
                             float timeout_sec);
 
-  Result EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms = 0) const;
+  Result SendEnableKeepFaceAlive(bool enable, u32 disableTimeout_ms = 0);
   
   static constexpr float _kDefaultTimeout_sec = 60.f;
 
@@ -307,6 +307,11 @@ private:
   bool          _isAnimating;
   std::string   _currAnimName;
   Tag           _currAnimTag;
+
+
+  // NOTE: this must match the real default in the anim process or else things can get out of sync
+  bool _lastSentEnableKeepFaceAlive = true;
+  bool _desiredEnableKeepFaceAlive = true;
 
   // Latest state message received from anim process
   AnimationState _animState;
