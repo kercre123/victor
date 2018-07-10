@@ -13,12 +13,16 @@
 
 #include "coretech/messaging/shared/LocalUdpServer.h"
 
+#include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
+#include "cozmoAnim/audio/cozmoAudioController.h"
 #include "cozmoAnim/beatDetector/beatDetector.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/micData/micDataInfo.h"
 #include "cozmoAnim/micData/micDataProcessor.h"
 #include "cozmoAnim/micData/micDataSystem.h"
+
+#include "audioEngine/plugins/ankiPluginInterface.h"
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "osState/osState.h"
@@ -82,9 +86,11 @@ static_assert(
   "Expecting length of RobotInterface::MicDirection::confidenceList to match MicDirectionData::confidenceList");
 
 
-MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform)
+MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
+                             const AnimContext* context)
 : _udpServer(new LocalUdpServer())
 , _fftResultData(new FFTResultData())
+, _context(context)
 {
   const std::string& dataWriteLocation = dataPlatform->pathToResource(Util::Data::Scope::Cache, "micdata");
   const std::string& triggerDataDir = dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets");
@@ -453,6 +459,24 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         endTriggerDispTime_ns != 0 || _currentlyStreaming);
     }
   #endif
+  
+  // Try to retrieve the speaker latency from the AkAlsaSink plugin. We
+  // only need to actually call into the plugin once (or until we get a
+  // nonzero latency), since the latency does not change during runtime.
+  if (_speakerLatency_ms == 0) {
+    if (_context != nullptr) {
+      const auto* audioController = _context->GetAudioController();
+      if (audioController != nullptr) {
+        const auto* pluginInterface = audioController->GetPluginInterface();
+        if (pluginInterface != nullptr) {
+          _speakerLatency_ms = pluginInterface->AkAlsaSinkGetSpeakerLatency_ms();
+          PRINT_NAMED_INFO("MicDataSystem.Update.SpeakerLatency",
+                           "AkAlsaSink plugin reporting a max speaker latency of %u",
+                           (uint32_t) _speakerLatency_ms);
+        }
+      }
+    }
+  }
 }
 
 void MicDataSystem::ClearCurrentStreamingJob()
@@ -575,6 +599,22 @@ void MicDataSystem::UpdateLocale(const Util::Locale& newLocale)
 {
   _micDataProcessor->UpdateTriggerForLocale(newLocale);
 }
+  
+bool MicDataSystem::IsSpeakerPlayingAudio() const
+{
+  if (_context != nullptr) {
+    const auto* audioController = _context->GetAudioController();
+    if (audioController != nullptr) {
+      const auto* pluginInterface = audioController->GetPluginInterface();
+      if (pluginInterface != nullptr) {
+        return pluginInterface->AkAlsaSinkIsUsingSpeaker();
+      }
+    }
+  }
+  
+  return false;
+}
+
 
 } // namespace MicData
 } // namespace Cozmo

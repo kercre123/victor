@@ -311,6 +311,7 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
 
     InitializePluginInterface();
     GetPluginInterface()->SetupWavePortalPlugIn();
+    GetPluginInterface()->SetupAkAlsaSinkPlugIn();
 
     // Load audio sound bank metadata
     // NOTE: This will slightly change when we implement RAMS
