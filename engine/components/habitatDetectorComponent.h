@@ -86,6 +86,10 @@ public:
   HabitatBeliefState GetHabitatBeliefState() const { return _habitatBelief; }
   
   bool IsProxObservingHabitatWall() const;
+  
+protected:
+  
+  void SendDataToWebViz() const;
 
 private:
   
@@ -108,6 +112,8 @@ private:
   
   // whether we've seen any white cliff data since being putdown
   bool _detectedWhiteFromCliffs = false;
+  
+  f32 _nextSendWebVizDataTime_sec = 0.0f;
 };
 
 } // end Cozmo
