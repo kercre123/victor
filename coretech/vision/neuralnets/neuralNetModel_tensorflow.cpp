@@ -712,7 +712,7 @@ Result NeuralNetModel::GetSalientPointsFromResponseMap(const tensorflow::Tensor&
 
   if (kNeuralNetTensorflow_SaveImages)
   {
-    SaveObjectnessResponseMaps(channels, timestamp, numberOfChannels);
+    SaveObjectnessResponseMaps(channels, numberOfChannels, timestamp);
   }
 
   // Create a SalientPoint to return for each connected component (skipping background component 0)
