@@ -27,7 +27,6 @@ import time
 from time import strftime
 from datetime import datetime, timedelta
 from os import system
-import platform
 
 def parse_arguments(args):
   parser = argparse.ArgumentParser()
@@ -49,17 +48,11 @@ def calculate_duration(start_time, end_time):
     return end - start
 
 def cozmo_program(robot: cozmo.robot.Robot):
-    current_platform = platform.system().lower()
-    if current_platform == "windows":
-      system("title {} - Running on Cozmo serial: {}".format(
-              devices_util.DevicesInfo.get_device_name(serial), robot.serial))
-    elif current_platform == "darwin":
-      sys.stdout.write("\x1b]0;{} - Running on Cozmo serial: {} \x07".format(
-                       devices_util.DevicesInfo.get_device_name(serial), robot.serial))
-      
+    sys.stdout.write("\x1b]0;{} - Running on Cozmo serial: {} \x07".format(
+                      devices_util.DevicesInfo.get_device_name(serial), robot.serial))
+
     robot.set_robot_volume(1.0)
     i = 0
-    #robot.move_lift(-5)
     time.sleep(2)
     start_time = strftime("%Y-%m-%d %H:%M:%S")
     while True:
@@ -80,7 +73,6 @@ def cozmo_program(robot: cozmo.robot.Robot):
         end_time = strftime("%Y-%m-%d %H:%M:%S")
         duration = calculate_duration(start_time, end_time)
         print("duration : {}".format(str(duration)))
-        #break
 
 
 if __name__ == '__main__':
