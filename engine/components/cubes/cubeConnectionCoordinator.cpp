@@ -26,7 +26,7 @@
 
 // Local constants
 namespace{
-// How long should we wait without non-bakcground subscriptions before switching to a background connection 
+// How long should we wait without non-background subscriptions before switching to a background connection
 const float kStandbyTimeout_s = 15.0f;
 // How long after the cube fade finishes should we remain interactable
 const float kPostLightsGracePeriod_s = 0.5f;
