@@ -681,13 +681,15 @@ Result NeuralNetModel::GetDetectedObjects(const std::vector<tensorflow::Tensor>&
 Result NeuralNetModel::GetSalientPointsFromResponseMap(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp,
                                                        std::list<Vision::SalientPoint>& salientPoints)
 {
+  const int numberOfChannels = 2;
   tensorflow::Tensor squeezedTensor(tensorflow::DT_FLOAT,
-                                    tensorflow::TensorShape({_params.inputWidth, _params.inputHeight, 2}));
+                                    tensorflow::TensorShape({_params.inputWidth, _params.inputHeight, 
+                                                             numberOfChannels}));
 
   // Reshape tensor from [1, inputWidth, inputHeight, 2] to [inputWidth, inputHeight, 2]
   if ( !squeezedTensor.CopyFrom(outputTensor, tensorflow::TensorShape({_params.inputWidth,
                                                                        _params.inputHeight,
-                                                                       2})))
+                                                                       numberOfChannels})))
   {
     PRINT_NAMED_ERROR("NeuralNetModel.GetSalientPointsFromResponseMap.CopyFromFailed", "");
     return RESULT_FAIL;
@@ -713,7 +715,7 @@ Result NeuralNetModel::GetSalientPointsFromResponseMap(const tensorflow::Tensor&
 
   if (kNeuralNetTensorflow_SaveImages)
   {
-    SaveObjectnessResponseMaps(channels, timestamp);
+    SaveObjectnessResponseMaps(channels, timestamp, numberOfChannels);
   }
 
   // Create a SalientPoint to return for each connected component (skipping background component 0)
@@ -736,9 +738,10 @@ Result NeuralNetModel::GetSalientPointsFromResponseMap(const tensorflow::Tensor&
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NeuralNetModel::SaveObjectnessResponseMaps(const std::vector<cv::Mat>& channels, const TimeStamp_t timestamp)
+void NeuralNetModel::SaveObjectnessResponseMaps(const std::vector<cv::Mat>& channels, const int numberOfChannels,
+                                                const TimeStamp_t timestamp)
 {
-    for (int channel = 0; channel < 2; ++channel)
+    for (int channel = 0; channel < numberOfChannels; ++channel)
     {
       double channelMin(0), channelMax(0);
       cv::Point2i channelMinLoc(0, 0), channelMaxLoc(0, 0);
