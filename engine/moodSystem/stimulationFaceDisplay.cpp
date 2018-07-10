@@ -13,8 +13,12 @@
 
 #include "engine/moodSystem/stimulationFaceDisplay.h"
 
+#include "clad/types/featureGateTypes.h"
 #include "engine/components/animationComponent.h"
+#include "engine/contextWrapper.h"
+#include "engine/cozmoContext.h"
 #include "engine/moodSystem/moodManager.h"
+#include "engine/utils/cozmoFeatureGate.h"
 #include "lib/util/source/anki/util/entityComponent/dependencyManagedEntity.h"
 #include "lib/util/source/anki/util/graphEvaluator/graphEvaluator2d.h"
 #include "util/console/consoleInterface.h"
@@ -54,6 +58,13 @@ void StimulationFaceDisplay::InitDependent(Cozmo::Robot* robot, const RobotCompM
 void StimulationFaceDisplay::UpdateDependent(const RobotCompMap& dependentComps)
 {
   if( !kStimFace_enabled ) {
+    return;
+  }
+
+  // disable stimulation-dependent face level for PR demo
+  auto* context = dependentComps.GetComponent<ContextWrapper>().context;
+  const bool inPRDemo = context->GetFeatureGate()->IsFeatureEnabled( FeatureType::PRDemo );
+  if( inPRDemo ) {
     return;
   }
              

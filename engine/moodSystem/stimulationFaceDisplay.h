@@ -38,13 +38,13 @@ public:
   //////
   virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void AdditionalInitAccessibleComponents(RobotCompIDSet& components) const override {
-    components.insert(RobotComponentID::CozmoContextWrapper);
   };
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::MoodManager);
   }
   virtual void AdditionalUpdateAccessibleComponents(RobotCompIDSet& components) const override {
     components.insert(RobotComponentID::Animation);
+    components.insert(RobotComponentID::CozmoContextWrapper);
   }
 
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
