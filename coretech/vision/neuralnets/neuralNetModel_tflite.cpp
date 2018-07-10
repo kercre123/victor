@@ -35,7 +35,8 @@ namespace Vision {
 constexpr int kNumThreads = 1;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
+namespace {
+
 // A TFLite error reporter that uses our error logging system
 struct TFLiteLogReporter : public tflite::ErrorReporter {
   int Report(const char* format, va_list args) override
@@ -45,7 +46,9 @@ struct TFLiteLogReporter : public tflite::ErrorReporter {
   }
 };
 
-static TFLiteLogReporter sLogReporter;
+TFLiteLogReporter gLogReporter;
+
+} // anonymous namespace
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 NeuralNetModel::NeuralNetModel()
@@ -80,7 +83,7 @@ Result NeuralNetModel::LoadModel(const std::string& modelPath, const Json::Value
     return RESULT_FAIL;
   }
   
-  _model = tflite::FlatBufferModel::BuildFromFile(graphFileName.c_str(), &sLogReporter);
+  _model = tflite::FlatBufferModel::BuildFromFile(graphFileName.c_str(), &gLogReporter);
   
   if (!_model)
   {

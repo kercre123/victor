@@ -52,22 +52,24 @@ public:
 protected:
   
   // Base model not meant to be directly instantiated
-  INeuralNetModel() {}
+  INeuralNetModel() = default;
   
   // Helper to read simple text labels files (one label per line)
   static Result ReadLabelsFile(const std::string& fileName, std::vector<std::string>& labels_out);
   
-  // Helper to find the index of the a single output with the highest score, assumed to
-  // correspond to the matching label from the labels file
+  // Helper to find the index of the single output with the highest score (assumed to correspond to the matching
+  // label from the labels file) and add a single, centered, full-image SalientPoint to the given list
   // Implemented for float and uint8 types
   template<typename T>
-  void GetClassification(const T* outputData, TimeStamp_t timestamp, std::list<Vision::SalientPoint>& salientPoints);
+  void ClassificationOutputHelper(const T* outputData, TimeStamp_t timestamp,
+                                  std::list<Vision::SalientPoint>& salientPoints);
   
-  // Helper to return a set of localization boxes from a grid, assuming a binary classifcation
-  // (e.g. person / no-person in a 6x6 grid). Grid size is specified in JSON config
+  // Helper to return a SalientPoint for each connected component of a grid of binary classifiers
+  // (e.g. person / no-person in a 6x6 grid). Grid size is specified in JSON config.
+  // Implemented for float and uint8 types
   template<typename T>
-  void GetLocalizedBinaryClassification(const T* outputData, TimeStamp_t timestamp,
-                                        std::list<Vision::SalientPoint>& salientPoints);
+  void LocalizedBinaryOutputHelper(const T* outputData, TimeStamp_t timestamp,
+                                   std::list<Vision::SalientPoint>& salientPoints);
 
   NeuralNetParams                           _params;
   std::vector<std::string>                  _labels;

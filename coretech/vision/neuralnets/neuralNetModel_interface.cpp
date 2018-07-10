@@ -36,15 +36,15 @@ Result INeuralNetModel::ReadLabelsFile(const std::string& fileName, std::vector<
     labels_out.push_back(line);
   }
   
-  LOG_INFO("NeuralNetModel.ReadLabelsFile.Success", "Read %d labels", (int)labels_out.size());
+  LOG_DEBUG("NeuralNetModel.ReadLabelsFile.Success", "Read %d labels", (int)labels_out.size());
   
   return RESULT_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<typename T>
-void INeuralNetModel::GetClassification(const T* outputData, TimeStamp_t timestamp,
-                                        std::list<Vision::SalientPoint>& salientPoints)
+void INeuralNetModel::ClassificationOutputHelper(const T* outputData, TimeStamp_t timestamp,
+                                                 std::list<Vision::SalientPoint>& salientPoints)
 {
   T maxScore = _params.minScore;
   int labelIndex = -1;
@@ -69,25 +69,26 @@ void INeuralNetModel::GetClassification(const T* outputData, TimeStamp_t timesta
     
     if(_params.verbose)
     {
-      LOG_INFO("NeuralNetModel.GetClassification.ObjectFound", "Name: %s, Score: %f", salientPoint.description.c_str(), salientPoint.score);
+      LOG_INFO("INeuralNetModel.ClassificationOutputHelper.ObjectFound",
+               "Name: %s, Score: %f", salientPoint.description.c_str(), salientPoint.score);
     }
     
     salientPoints.push_back(std::move(salientPoint));
   }
   else if(_params.verbose)
   {
-    LOG_INFO("NeuralNetModel.GetClassification.NoObjects", "MinScore: %f", _params.minScore);
+    LOG_INFO("INeuralNetModel.ClassificationOutputHelper.NoObjects", "MinScore: %f", _params.minScore);
   }
 }
   
 // Explicitly instantiate for float and uint8
-template void INeuralNetModel::GetClassification(const float*,   TimeStamp_t, std::list<Vision::SalientPoint>&);
-template void INeuralNetModel::GetClassification(const uint8_t*, TimeStamp_t, std::list<Vision::SalientPoint>&);
+template void INeuralNetModel::ClassificationOutputHelper(const float*,   TimeStamp_t, std::list<Vision::SalientPoint>&);
+template void INeuralNetModel::ClassificationOutputHelper(const uint8_t*, TimeStamp_t, std::list<Vision::SalientPoint>&);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<typename T>
-void INeuralNetModel::GetLocalizedBinaryClassification(const T* outputData, TimeStamp_t timestamp,
-                                                      std::list<Vision::SalientPoint>& salientPoints)
+void INeuralNetModel::LocalizedBinaryOutputHelper(const T* outputData, TimeStamp_t timestamp,
+                                                  std::list<Vision::SalientPoint>& salientPoints)
 {
   // Create a detection box for each grid cell that is above threshold
   
@@ -122,11 +123,11 @@ void INeuralNetModel::GetLocalizedBinaryClassification(const T* outputData, Time
     // we'll do our own "stats" computation below instead of using connectedComponentsWithStats()
     const s32 count = cv::connectedComponents(_detectionGrid, _labelsGrid);
     DEV_ASSERT((_detectionGrid.rows == _labelsGrid.rows) && (_detectionGrid.cols == _labelsGrid.cols),
-               "NeuralNetModel.GetLocalizedBinaryClassification.MismatchedLabelsGridSize");
+               "INeuralNetModel.LocalizedBinaryOutputHelper.MismatchedLabelsGridSize");
     
     if(_params.verbose)
     {
-      LOG_INFO("NeuralNetModel.GetLocalizedBinaryClassification.FoundConnectedComponents",
+      LOG_INFO("INeuralNetModel.LocalizedBinaryOutputHelper.FoundConnectedComponents",
                "NumComponents: %d", count);
     }
     
@@ -148,7 +149,7 @@ void INeuralNetModel::GetLocalizedBinaryClassification(const T* outputData, Time
         const int32_t label = labelsGrid_i[j];
         if(label > 0) // zero is background (not part of any connected component)
         {
-          DEV_ASSERT(label < count, "NeuralNetModel.GetLocalizedBinaryClassification.BadLabel");
+          DEV_ASSERT(label < count, "INeuralNetModel.LocalizedBinaryOutputHelper.BadLabel");
           const int32_t score = detectionGrid_i[j];
           Stat& stat = stats[label];
           stat.scoreSum += score;
@@ -184,10 +185,10 @@ void INeuralNetModel::GetLocalizedBinaryClassification(const T* outputData, Time
       
       // Use the single label (this is supposed to be a binary classifier after all) and
       // convert it to a SalientPointType
-      DEV_ASSERT(_labels.size()==1, "ObjectDetector.GetLocalizedBinaryClassification.NotBinary");
+      DEV_ASSERT(_labels.size()==1, "INeuralNetModel.LocalizedBinaryOutputHelper.NotBinary");
       Vision::SalientPointType type = Vision::SalientPointType::Unknown;
       const bool success = SalientPointTypeFromString(_labels[0], type);
-      DEV_ASSERT(success, "ObjectDetector.GetLocalizedBinaryClassification.NoSalientPointTypeForLabel");
+      DEV_ASSERT(success, "INeuralNetModel.LocalizedBinaryOutputHelper.NoSalientPointTypeForLabel");
       
       // Use the bounding box as the shape (in normalized coordinates)
       // TODO: Create a more precise polygon that traces the shape of the connected component (cv::findContours?)
@@ -208,7 +209,7 @@ void INeuralNetModel::GetLocalizedBinaryClassification(const T* outputData, Time
       
       if(_params.verbose)
       {
-        LOG_INFO("NeuralNetModel.GetLocalizedBinaryClassification.SalientPoint",
+        LOG_INFO("INeuralNetModel.LocalizedBinaryOutputHelper.SalientPoint",
                  "%d: %s score:%.2f area:%.2f [%s %s %s %s]",
                  iComp, stat.centroid.ToString().c_str(), avgScore, area,
                  shape[0].ToString().c_str(),
@@ -223,10 +224,10 @@ void INeuralNetModel::GetLocalizedBinaryClassification(const T* outputData, Time
 }
   
   // Explicitly instantiate for float and uint8
-  template void INeuralNetModel::GetLocalizedBinaryClassification(const float* outputData,   TimeStamp_t timestamp,
-                                                                  std::list<Vision::SalientPoint>& salientPoints);
-  template void INeuralNetModel::GetLocalizedBinaryClassification(const uint8_t* outputData, TimeStamp_t timestamp,
-                                                                  std::list<Vision::SalientPoint>& salientPoints);
+  template void INeuralNetModel::LocalizedBinaryOutputHelper(const float* outputData,   TimeStamp_t timestamp,
+                                                             std::list<Vision::SalientPoint>& salientPoints);
+  template void INeuralNetModel::LocalizedBinaryOutputHelper(const uint8_t* outputData, TimeStamp_t timestamp,
+                                                             std::list<Vision::SalientPoint>& salientPoints);
 
   
 } // namespace Vision
