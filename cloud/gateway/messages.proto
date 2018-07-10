@@ -276,7 +276,8 @@ enum FaceEnrollmentResult
     INCOMPLETE = 5;
     CANCELLED = 6;
     NAME_IN_USE = 7;
-    UNKNOWN_FAILURE = 8;
+    NAMED_STORAGE_FULL = 8;
+    UNKNOWN_FAILURE = 9;
 }
 
 message AppIntentResult {

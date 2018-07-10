@@ -57,6 +57,7 @@ namespace Vision {
 
     void SetIsSynchronous(bool isSynchronous);
     
+    bool     CanAddNamedFace() const;
     Result   AssignNameToID(FaceID_t faceID, const std::string& name, FaceID_t mergeWithID);
     Result   EraseFace(FaceID_t faceID);
     void     EraseAllFaces();
@@ -139,7 +140,9 @@ namespace Vision {
                                  const RecognitionScore score);
     
 		bool   IsMergingAllowed(FaceID_t toFaceID) const;
-		
+    
+    s32    GetNumNamedFaces() const;
+    
     Result MergeFaces(FaceID_t keepID, FaceID_t mergeID);
   
     Result SelectiveMergeHelper(EnrollmentData::iterator keepIter, EnrollmentData::iterator mergeIter);
@@ -175,14 +178,15 @@ namespace Vision {
                       std::list<FaceRecognitionMatch>& newDebugInfo) const;
     
     // TODO: Using Util::numeric_cast here would be nice, but its not (always) constexpr...
-    static constexpr s32 kMaxFacesInAlbum            = (s32)FaceRecognitionConstants::MaxNumFacesInAlbum;
+    static constexpr s32 kMaxNamedFacesInAlbum       = (s32)FaceRecognitionConstants::MaxNumFacesInAlbum;
     static constexpr s32 kMaxAlbumEntriesPerFace     = (s32)FaceRecognitionConstants::MaxNumAlbumEntriesPerFace;
     static constexpr s32 kMaxEnrollDataPerAlbumEntry = (s32)FaceRecognitionConstants::MaxNumEnrollDataPerAlbumEntry;
     
     // Make sure we are within fixed limits of the OKAO library
     static constexpr s32 kMaxTotalAlbumEntries = 1000;
-    static_assert(kMaxFacesInAlbum*kMaxAlbumEntriesPerFace <= kMaxTotalAlbumEntries,
-                  "MaxTotalAlbumEntries too large for OKAO Library (Max is 1000).");
+    static constexpr s32 kMinSessionOnlyFaces = 10;
+    static_assert( (kMaxNamedFacesInAlbum+kMinSessionOnlyFaces)*kMaxAlbumEntriesPerFace <= kMaxTotalAlbumEntries,
+                  "Combination of min/max face parameters too large for OKAO Library (Max is 1000).");
     static_assert(kMaxEnrollDataPerAlbumEntry <= 10,
                   "MaxEnrollDataPerAlbumEntry too large for OKAO Library (Max is 10).");
     

@@ -250,11 +250,11 @@ Result BehaviorEnrollFace::InitEnrollmentSettings()
     TransitionToSayingIKnowThatName();
     return RESULT_FAIL;
   }
-
-  // If saveID is specified and we've already seen it (so it's in FaceWorld), make
-  // sure that it is the ID of a _named_ face
+  
   if(_dVars.saveID != Vision::UnknownFaceID)
   {
+    // If saveID is specified and we've already seen it (so it's in FaceWorld), make
+    // sure that it is the ID of a _named_ face
     const Face* face = GetBEI().GetFaceWorld().GetFace(_dVars.saveID);
     if(nullptr != face && !face->HasName())
     {
@@ -263,7 +263,15 @@ Result BehaviorEnrollFace::InitEnrollmentSettings()
       return RESULT_FAIL;
     }
   }
-
+  else if(!GetBEI().GetVisionComponent().CanAddNamedFace())
+  {
+    // If saveID is not specified, then we're trying to add a new face, so fail
+    // if there's no room for new named faces
+    PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitEnrollmentSettings.NoSpaceLeft", "");
+    TransitionToFailedState(State::Failed_NamedStorageFull, "Failed_NamedStorageFull");
+    return RESULT_FAIL;
+  }
+  
   return RESULT_OK;
 }
 
@@ -428,6 +436,7 @@ void BehaviorEnrollFace::BehaviorUpdate()
     case State::Failed_WrongFace:
     case State::Failed_UnknownReason:
     case State::Failed_NameInUse:
+    case State::Failed_NamedStorageFull:
     case State::SaveFailed:
     case State::Cancelled:
     {
@@ -647,11 +656,14 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
       case State::SayingName:
       case State::SayingIKnowThatName:
       case State::SavingToRobot:
-      case State::SaveFailed:
         // If we're stopping in any of these states without having timed out
         // then something else is keeping us from completing and the assumption
         // is that we'll resume and finish shortly
         info.result = FaceEnrollmentResult::Incomplete;
+        break;
+        
+      case State::SaveFailed:
+        info.result = FaceEnrollmentResult::SaveFailed;
         break;
 
       case State::Success:
@@ -660,6 +672,10 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
 
       case State::Failed_NameInUse:
         info.result = FaceEnrollmentResult::NameInUse;
+        break;
+        
+      case State::Failed_NamedStorageFull:
+        info.result = FaceEnrollmentResult::NamedStorageFull;
         break;
 
       case State::NotStarted:
@@ -743,7 +759,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
     DASMSG(behavior_meet_victor_end, "behavior.meet_victor.end", "Meet victor completed");
     DASMSG_SET(s1,
                FaceEnrollmentResultToString(info.result),
-               "Completion status (Success,SawWrongFace,SawMultipleFaces,TimedOut,SaveFailed,Incomplete,Cancelled,NameInUse,UnknownFailure)");
+               "Completion status (Success,SawWrongFace,SawMultipleFaces,TimedOut,SaveFailed,Incomplete,Cancelled,NameInUse,NamedStorageFull,UnknownFailure)");
     DASMSG_SET(i1, info.faceID, "faceID, if applicable");
     DASMSG_SET(i2, numInterruptions, "number of interruptions (so far [if Incomplete], or total otherwise])");
     DASMSG_SEND();

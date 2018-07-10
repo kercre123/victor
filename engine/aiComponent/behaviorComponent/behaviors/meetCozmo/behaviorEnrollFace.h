@@ -100,6 +100,7 @@ private:
     Failed_WrongFace,
     Failed_UnknownReason,
     Failed_NameInUse,
+    Failed_NamedStorageFull,
     Cancelled,
   };
   

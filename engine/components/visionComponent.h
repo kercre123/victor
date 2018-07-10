@@ -252,8 +252,12 @@ struct DockingErrorSignal;
     const ImuDataHistory& GetImuDataHistory() const { return _imuHistory; }
     ImuDataHistory& GetImuDataHistory() { return _imuHistory; }
 
+    // Return true if there is still room for a *new* named face.
+    // No need to check this if *merging* with an existing named face.
+    bool CanAddNamedFace();
+    
     // Links a name with a face ID and sets up the robot's ability to say that name.
-    // Then merges the newly-named ID into mergeWithID, if set to a valid existing ID.
+    // Then merges the newly-named ID into mergeWithID, if set to a valid existing ID (which should already be named!)
     void AssignNameToFace(Vision::FaceID_t faceID, const std::string& name,
                           Vision::FaceID_t mergeWithID = Vision::UnknownFaceID);
     

@@ -2169,6 +2169,13 @@ namespace Cozmo {
     return result;
   }
 
+  bool VisionComponent::CanAddNamedFace()
+  {
+    Lock();
+    const bool canAdd = _visionSystem->CanAddNamedFace();
+    Unlock();
+    return canAdd;
+  }
 
   void VisionComponent::AssignNameToFace(Vision::FaceID_t faceID, const std::string& name, Vision::FaceID_t mergeWithID)
   {

@@ -793,46 +793,48 @@ namespace Vision {
         }
       }
 
-      if(UnknownFaceID != oldestSessionOnlyID)
+      if(UnknownFaceID == oldestSessionOnlyID)
       {
-        PRINT_CH_INFO(LOG_CHANNEL, "GetNextAlbumEntryToUse.ReplacingOldestSessionOnlyUser",
-                      "Session-only face %d not updated since %s and will be replaced.",
-                      oldestSessionOnlyID, EnrolledFaceEntry::GetTimeString(oldestUpdateTime).c_str());
-
-        auto & albumEntries = _enrollmentData.at(oldestSessionOnlyID).GetAlbumEntries();
-
-        DEV_ASSERT(!albumEntries.empty(), "FaceRecognizer.GetNextAlbumEntryToUse.OldestFaceHasNoEntries");
-
-        _nextAlbumEntry = albumEntries.begin()->first;
-
-        Result removeResult = RemoveUser(oldestSessionOnlyID);
-
-        if(RESULT_OK != removeResult)
-        {
-          PRINT_NAMED_WARNING("FaceRecognizer.GetNextAlbumEntryToUse.RemoveOldestUserFailed",
-                              "Attempting to remove %d", oldestSessionOnlyID);
-        }
-
-        // That should have freed up some entries (at least the first one!)
-        BOOL isStillRegistered = false;
-        okaoResult = OKAO_FR_IsRegistered(_okaoFaceAlbum, _nextAlbumEntry, 0, &isStillRegistered);
-        if(OKAO_NORMAL != okaoResult) {
-          PRINT_NAMED_WARNING("FaceRecognizer.GetNextAlbumEntryToUse.CouldNotCheckIfStillRegistered",
-                              "Using anyway. Entry:%d FaceLib Result:%d", _nextAlbumEntry, okaoResult);
-        }
-
-        if(isStillRegistered)
-        {
-          PRINT_NAMED_WARNING("FaceRecognizer.GetNextAlbumEntryToUse.FirstFreedEntryStillRegistered",
-                              "Entry:%d", _nextAlbumEntry);
-          return failureEntry;
-        }
-
-      } else {
-        PRINT_NAMED_WARNING("FaceRecognizer.GetNextAlbumEntryToUse.TooManyUsers",
-                            "Already have %d users, could not add another", kMaxFacesInAlbum);
+        // No session-only faces (this really should not happen because MaxNamedFaces*MaxAlbumEntriesPerFace
+        // should generally be far less than kMaxTotalAlbumEntries -- which is static_asserted in the header)
+        PRINT_NAMED_ERROR("FaceRecognizer.GetNextAlbumEntryToUse.TooManyUsers",
+                          "Already have %zu users, could not add another", _enrollmentData.size());
         return failureEntry;
       }
+      
+      PRINT_CH_INFO(LOG_CHANNEL, "GetNextAlbumEntryToUse.ReplacingOldestSessionOnlyUser",
+                    "Session-only face %d not updated since %s and will be replaced.",
+                    oldestSessionOnlyID, EnrolledFaceEntry::GetTimeString(oldestUpdateTime).c_str());
+
+      auto & albumEntries = _enrollmentData.at(oldestSessionOnlyID).GetAlbumEntries();
+
+      DEV_ASSERT(!albumEntries.empty(), "FaceRecognizer.GetNextAlbumEntryToUse.OldestFaceHasNoEntries");
+
+      _nextAlbumEntry = albumEntries.begin()->first;
+
+      Result removeResult = RemoveUser(oldestSessionOnlyID);
+
+      if(RESULT_OK != removeResult)
+      {
+        PRINT_NAMED_WARNING("FaceRecognizer.GetNextAlbumEntryToUse.RemoveOldestUserFailed",
+                            "Attempting to remove %d", oldestSessionOnlyID);
+      }
+
+      // That should have freed up some entries (at least the first one!)
+      BOOL isStillRegistered = false;
+      okaoResult = OKAO_FR_IsRegistered(_okaoFaceAlbum, _nextAlbumEntry, 0, &isStillRegistered);
+      if(OKAO_NORMAL != okaoResult) {
+        PRINT_NAMED_WARNING("FaceRecognizer.GetNextAlbumEntryToUse.CouldNotCheckIfStillRegistered",
+                            "Using anyway. Entry:%d FaceLib Result:%d", _nextAlbumEntry, okaoResult);
+      }
+
+      if(isStillRegistered)
+      {
+        PRINT_NAMED_WARNING("FaceRecognizer.GetNextAlbumEntryToUse.FirstFreedEntryStillRegistered",
+                            "Entry:%d", _nextAlbumEntry);
+        return failureEntry;
+      }
+
     }
     else
     {
@@ -1489,24 +1491,25 @@ namespace Vision {
     // See if we recognize the person using the features we extracted on the
     // feature-extraction thread
     INT32 resultNum = 0;
-    std::vector<AlbumEntryID_t> matchingAlbumEntries(kMaxFacesInAlbum);
-    std::vector<RecognitionScore> scores(kMaxFacesInAlbum);
+    const INT32 kMaxIdentifyResults = 10;
+    std::vector<AlbumEntryID_t> matchingAlbumEntries(kMaxIdentifyResults);
+    std::vector<RecognitionScore> scores(kMaxIdentifyResults);
     Tic("OkaoIdentify");
-    okaoResult = OKAO_FR_Identify(_okaoRecognitionFeatureHandle, _okaoFaceAlbum, kMaxFacesInAlbum,
+    okaoResult = OKAO_FR_Identify(_okaoRecognitionFeatureHandle, _okaoFaceAlbum, kMaxIdentifyResults,
                                   matchingAlbumEntries.data(), scores.data(), &resultNum);
     Toc("OkaoIdentify");
 
-    if(resultNum > kMaxFacesInAlbum)
+    if(resultNum > kMaxIdentifyResults)
     {
       PRINT_NAMED_ERROR("FaceRecognizer.RecognizeFace.FaceLibReturnedBadResultNum",
-                        "%d > %d", resultNum, kMaxFacesInAlbum);
-      resultNum = kMaxFacesInAlbum;
+                        "%d > %d", resultNum, kMaxIdentifyResults);
+      resultNum = kMaxIdentifyResults;
     }
 
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_WARNING("FaceRecognizer.RecognizeFace.FaceLibFaceRecognitionIdentifyFailed",
                           "maxResults:%d, hFeature:%p, hAlbum:%p, FaceLib Result Code=%d",
-                          kMaxFacesInAlbum, _okaoRecognitionFeatureHandle, _okaoFaceAlbum, okaoResult);
+                          kMaxIdentifyResults, _okaoRecognitionFeatureHandle, _okaoFaceAlbum, okaoResult);
       // Sometimes this happens (bad features?), so just warn and return "OK"
       return RESULT_OK;
     }
@@ -1534,6 +1537,7 @@ namespace Vision {
         return RESULT_FAIL;
       }
 
+      if(kFaceRecognitionExtraDebug)
       {
         // Populate the debug info for the recognized face. Always put on the top match
         // Then add the first (top-scoring) album match for each face ID, until we've
@@ -1549,7 +1553,7 @@ namespace Vision {
           }
         };
         s32 iResult = matchIndex+1;
-        BOUNDED_WHILE(kMaxFacesInAlbum, iResult < resultNum && newDebugInfo.size() < kFaceRecMaxDebugResults)
+        BOUNDED_WHILE(kMaxIdentifyResults, iResult < resultNum && newDebugInfo.size() < kFaceRecMaxDebugResults)
         {
           // It's possible, due to using a non-top match above, that we have performed
           // a merge and entries in matchingAlbumEntries
@@ -1621,7 +1625,7 @@ namespace Vision {
               FaceID_t nextNextID = Vision::UnknownFaceID;
               bool nextNextScoreLowEnough = true;
               s32 nextNextIndex = nextIndex + 1;
-              BOUNDED_WHILE(kMaxFacesInAlbum, nextNextIndex < resultNum && scores[nextNextIndex] > lowThreshold)
+              BOUNDED_WHILE(kMaxIdentifyResults, nextNextIndex < resultNum && scores[nextNextIndex] > lowThreshold)
               {
                 nextNextID = GetFaceIDforAlbumEntry(matchingAlbumEntries[nextNextIndex]);
                 if(nextNextID != nextMatchingID)
@@ -1964,11 +1968,11 @@ namespace Vision {
     s32 permanentIdCount = 0;
     for(auto const& enrollData : _enrollmentData)
     {
-      if(permanentIdCount >= kMaxFacesInAlbum)
+      if(permanentIdCount >= kMaxNamedFacesInAlbum)
       {
         PRINT_NAMED_WARNING("FaceRecognizer.GetSerializedAlbum.MaxNumFacesReached",
                             "Can't save more than %d faces",
-                            kMaxFacesInAlbum);
+                            kMaxNamedFacesInAlbum);
         break;
       }
 
@@ -2095,7 +2099,27 @@ namespace Vision {
     return RESULT_OK;
   } // SetSerializedAlbum()
 
+  s32 FaceRecognizer::GetNumNamedFaces() const
+  {
+    s32 namedCount = 0;
+    for(auto const& enrollData : _enrollmentData)
+    {
+      const bool isNamed = !enrollData.second.IsForThisSessionOnly();
+      if(isNamed)
+      {
+        ++namedCount;
+      }
+    }
+    
+    return namedCount;
+  }
 
+  bool FaceRecognizer::CanAddNamedFace() const
+  {
+    const s32 numNamedFaces = GetNumNamedFaces();
+    return (numNamedFaces < kMaxNamedFacesInAlbum);
+  }
+  
   Result FaceRecognizer::AssignNameToID(FaceID_t faceID, const std::string& name, FaceID_t mergeWithID)
   {
     auto iterToRename = _enrollmentData.end();
@@ -2131,6 +2155,13 @@ namespace Vision {
     }
     else
     {
+      if(!CanAddNamedFace())
+      {
+        // Caller should have checked if there was room first!
+        PRINT_NAMED_ERROR("FaceRecognizer.AssignNameToID.TooManyNamedFaces",
+                          "Already have %d named faces", kMaxNamedFacesInAlbum);
+        return RESULT_FAIL;
+      }
       iterToRename = _enrollmentData.find(faceID);
     }
 
