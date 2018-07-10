@@ -90,6 +90,11 @@ Result NeuralNetRunner::Model::LoadModel(const std::string& modelPath, const std
   PRINT_CH_INFO(kLogChannelName, "NeuralNetRunner.Model.LoadModel.Success",
                 "Polling period: %dms, Cache: %s", _pollPeriod_ms, _cachePath.c_str());
 
+  // Overwrite timeout if it's in the neural net config. This is
+  // primarily motivated by longer running models
+  JsonTools::GetValueOptional(config, "timeoutDuration_sec",
+                              kNeuralNetRunner_TimeoutDuration_sec);
+
   return RESULT_OK;
 }
 
