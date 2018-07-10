@@ -744,11 +744,10 @@ void NeuralNetModel::SaveObjectnessResponseMaps(const std::vector<cv::Mat>& chan
       double channelMin(0), channelMax(0);
       cv::Point2i channelMinLoc(0, 0), channelMaxLoc(0, 0);
       cv::minMaxLoc(channels[channel], &channelMin, &channelMax, &channelMinLoc, &channelMaxLoc);
+
       const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath,
         _params.visualizationDirectory, std::to_string(timestamp) + "_" +
         std::to_string(channel) + ".png"});
-      PRINT_NAMED_ERROR("NeuralNetModel.GetSalientPointsFromResponseMap.SavingImage",
-                        "Saving image with filename %s", saveFilename.c_str());
 
       cv::Mat imageToSave;
       channels[channel].copyTo(imageToSave);
