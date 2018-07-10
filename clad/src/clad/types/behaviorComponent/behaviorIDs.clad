@@ -273,6 +273,7 @@ enum uint_8 BehaviorID {
   OnboardingWakeUp,
 
   // victorBehaviorTree/prDemo
+  PRDemoBigGreeting,
   PRDemoExploring,
   PRDemoObserving,
   PRDemoSleeping,

@@ -75,7 +75,8 @@ private:
     ICozmoBehaviorPtr driveOffChargerBehavior;
     
     std::string behaviorOnceFoundID;
-    std::shared_ptr<ISimpleFaceBehavior> behaviorOnceFound;
+    ICozmoBehaviorPtr behaviorOnceFound;
+    bool behaviorOnceFoundIsSimpleFace;
   };
 
   struct DynamicVariables {

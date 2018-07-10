@@ -40,6 +40,7 @@ const char* const kDriveOffChargerBehaviorKey    = "driveOffChargerBehavior";
 const char* const kSearchForFaceBehaviorKey      = "searchForFaceBehavior";
 const char* const kAlwaysDetectFacesKey          = "alwaysDetectFaces";
 const char* const kBehaviorOnceFoundKey          = "behavior";
+const char* const kBehaviorIsSimpleFaceKey       = "callSetFaceOnBehavior";
   
 const char* const kDebugName = "BehaviorFindFaceAndThen";
 }
@@ -85,6 +86,8 @@ BehaviorFindFaceAndThen::BehaviorFindFaceAndThen(const Json::Value& config)
   }
   
   _iConfig.behaviorOnceFoundID = JsonTools::ParseString( config, kBehaviorOnceFoundKey, kDebugName );
+
+  _iConfig.behaviorOnceFoundIsSimpleFace = config.get(kBehaviorIsSimpleFaceKey, true).asBool();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -113,6 +116,7 @@ void BehaviorFindFaceAndThen::GetBehaviorJsonKeys(std::set<const char*>& expecte
     kSearchForFaceBehaviorKey,
     kAlwaysDetectFacesKey,
     kBehaviorOnceFoundKey,
+    kBehaviorIsSimpleFaceKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -146,13 +150,8 @@ void BehaviorFindFaceAndThen::InitBehavior()
   if( !_iConfig.driveOffChargerBehaviorID.empty() ) {
     _iConfig.driveOffChargerBehavior = FindBehavior( _iConfig.driveOffChargerBehaviorID );
   }
-  
-  ICozmoBehaviorPtr followupBeh = FindBehavior( _iConfig.behaviorOnceFoundID );
-  _iConfig.behaviorOnceFound = std::dynamic_pointer_cast<ISimpleFaceBehavior>(followupBeh);
-  ANKI_VERIFY( _iConfig.behaviorOnceFound != nullptr,
-               "BehaviorFindFaceAndThen.InitBehavior.InvalidCast",
-               "Behavior '%s' not an ISimpleFaceBehavior",
-               _iConfig.behaviorOnceFoundID.c_str() );
+
+  _iConfig.behaviorOnceFound = FindBehavior( _iConfig.behaviorOnceFoundID );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -345,7 +344,20 @@ void BehaviorFindFaceAndThen::TransitionToFollowupBehavior()
   } else {
     _dVars.stateEndTime_s = -1.0f;
   }
-  _iConfig.behaviorOnceFound->SetTargetFace( _dVars.targetFace );
+
+  if( _iConfig.behaviorOnceFoundIsSimpleFace ) {
+    std::shared_ptr<ISimpleFaceBehavior> simpleFaceBehavior =
+      std::dynamic_pointer_cast<ISimpleFaceBehavior>(_iConfig.behaviorOnceFound);
+
+    if( ANKI_VERIFY( simpleFaceBehavior != nullptr,
+                     "BehaviorFindFaceAndThen.TransitionToFollowupBehavior.InvalidCast",
+                     "Behavior '%s' (raw ptr %p) not an ISimpleFaceBehavior",
+                     _iConfig.behaviorOnceFoundID.c_str(),
+                     _iConfig.behaviorOnceFound.get() ) ) {
+      simpleFaceBehavior->SetTargetFace( _dVars.targetFace );
+    }
+  }
+
   if( _iConfig.behaviorOnceFound->WantsToBeActivated() ) {
     DelegateIfInControl( _iConfig.behaviorOnceFound.get(), [this]() {
       CancelSelf();
