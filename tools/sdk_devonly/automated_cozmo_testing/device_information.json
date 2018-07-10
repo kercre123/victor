@@ -1,318 +1,303 @@
 {
-	"e3b03bc01de740e627b143b98ffcbee84cdcd92e" :
-	{
-		"device id" : "anki 1489",
-		"device name" : "iPad 5"
-	},
-	"f1aaeadf1eb4f177" :
-	{
-		"device id" : "anki 1741",
-		"device name" : "Samsung Galaxy Tab A8"
-	},
-	"0bdcfdddc3a9d9e82743dc967feecccf4f7210bd" :
-	{
-		"device id" : "anki 1528",
-		"device name" : "iPad mini 4"
-	},
-	"N/A" :
-	{
-		"device id" : "anki 126",
-		"device name" : "iPad 4"
-	},
-	"43008de8d2f1c04f" :
-	{
-		"device id" : "anki 663",
-		"device name" : "Samsung Note Tablet 10.1"
-	},
-	"G0W0N2027425F5Q9" :
-	{
-		"device id" : "anki 1711",
-		"device name" : "Kindle Fire 7 (Gen 7)"
-	},
-	"G090MG067464094M" :
-	{
-		"device id" : "anki 1710",
-		"device name" : "Kindle Fire 7 (Gen 7)"
-	},
-	"G000KV0463440RN0" :
-	{
-		"device id" : "anki 1414",
-		"device name" : "Kindle Fire HD 8 (Gen 6)"
-	},
-	"c0a2391ef89bd5acd479f4dc61a29e91838ae5d8" :
-	{
-		"device id" : "anki 1529",
-		"device name" : "iPad mini 4"
-	},
-	"17dc1d6a63f2cb93f7a6a5adf487745a81bd03a1" :
-	{
-		"device id" : "anki 519",
-		"device name" : "iPad Mini 2 (Retina)"
-	},
-	"G000HP0453760A2G" :
-	{
-		"device id" : "anki 1130",
-		"device name" : "Kindle Fire HD 10"
-	},
-	"1eb69a75a4f8fd0847beb625f3fe37af5704662c" :
-	{
-		"device id" : "anki 1728",
-		"device name" : "iPad 6th Gen"
-	},
-	"bf5097c0a631abd267031c6ce9d4d6bfba7370a2" :
-	{
-		"device id" : "anki 1764",
-		"device name" : "iPad Air 2"
-	},
-	"G090G80953530B6N" :
-	{
-		"device id" : "anki 1129",
-		"device name" : "Kindle Fire HD 8 (Gen 5)"
-	},
-	"HT4CKJT01333" :
-	{
-		"device id" : "anki 1037",
-		"device name" : "Nexus 9"
-	},
-	"0424215801986004b31f" :
-	{
-		"device id" : "anki 1151",
-		"device name" : "Nvidia Shield Tablet"
-	},
-	"e5e4427daa9bf340" :
-	{
-		"device id" : "anki 1560",
-		"device name" : "Samsung Galaxy Tab 3"
-	},
-	"6cf3eebbb27ccae33464729769cc9f36e2d5dfda" :
-	{
-		"device id" : "anki 301",
-		"device name" : "iPhone 5C"
-	},
-	"076b23ca0220247d" :
-	{
-		"device id" : "anki 929",
-		"device name" : "Google Nexus 5"
-	},
-	"540dcbf54397ed4992a7b149bf4164f73247f507" :
-	{
-		"device id" : "anki 213",
-		"device name" : "iPhone 5"
-	},
-	"4100faeae41bb137" :
-	{
-		"device id" : "anki 961",
-		"device name" : "Samsung Galaxy Note 4"
-	},
-	"N/A2" :
-	{
-		"device id" : "anki 279",
-		"device name" : "iPhone 5s"
-	},
-	"anki 1216" :
-	{
-		"device id" : "85b642544243374f",
-		"device name" : "Samsung Note 5"
-	},	
-	"e5758e9e828d7d901939e4aac1a97dd6be115f6a" :
-	{
-		"device id" : "anki 1696",
-		"device name" : "iPhone X"
-	},
-	"4d0095d14f3831fb" :
-	{
-		"device id" : "anki 530",
-		"device name" : "Samsung Galaxy S5"
-	},	
-	"0763abe04f7c08cbbc0fc611a705833e02ac69e7" :
-	{
-		"device id" : "anki 1240",
-		"device name" : "iPhone SE"
-	},
-	"ZY322KF5MQ" :
-	{
-		"device id" : "anki 1722",
-		"device name" : "Motorola G5"
-	},
-	"abe8c3eb5f85f2f40ab2cab7578437698103bb5a" :
-	{
-		"device id" : "anki 921",
-		"device name" : "iPhone 6"
-	},
-	"98867344434d594a42" :
-	{
-		"device id" : "anki 1218",
-		"device name" : "Samsung S7"
-	},
-	"5d922a675a5a2ade8dd1abfdd6c49f3be65bcd75" :
-	{
-		"device id" : "anki 1238",
-		"device name" : "Iphone SE"
-	},
-	"N/A3" :
-	{
-		"device id" : "anki 121",
-		"device name" : "iPhone 5"
-	},
-	"SH39FW900870" :
-	{
-		"device id" : "anki 369",
-		"device name" : "HTC One"
-	},
-	"7bd66d54e39ec07fb12a3c56b153e6f3bc83a5ae" :
-	{
-		"device id" : "anki 1384",
-		"device name" : "iPod Touch gen 6"
-	},
-	"4d008ff34f77311d" :
-	{
-		"device id" : "anki 652",
-		"device name" : "Samsung Galaxy S5"
-	},
-	"86fcea6afe4b4903f3fc0ecffbc66d4fc35e91a2" :
-	{
-		"device id" : "anki 249",
-		"device name" : "iPhone 5"
-	},
-	"N/A4" :
-	{
-		"device id" : "anki 963",
-		"device name" : "Google Nexus 6"
-	},
-	"ca4834e69cedfe664651837f6291e91c378d58da" :
-	{
-		"device id" : "anki 278",
-		"device name" : "iPhone 5S"
-	},
-	"7N2NEF145U016811" :
-	{
-		"device id" : "anki 1094",
-		"device name" : "Huawei P7"
-	},
-	"633438281a189b6282fe8b7ded5eb2318e187bf4" :
-	{
-		"device id" : "anki 1394",
-		"device name" : "iPod Touch gen 6"
-	},
-	"0ffbf20a9e071a233ba4e375fa4d6e0fd587022f" :
-	{
-		"device id" : "anki 306",
-		"device name" : "iPhone 5C"
-	},
-	"YT910GTTDT" :
-	{
-		"device id" : "anki 366",
-		"device name" : "Sony Xperia Z"
-	},
-	"c2b5f0ace62ec9c2fcd183c3c73cf9d7f7960c35" :
-	{
-		"device id" : "anki 280",
-		"device name" : "iPhone 5S"
-	},
-	"02028386d88ed541" :
-	{
-		"device id" : "anki 370",
-		"device name" : "LG G2"
-	},
-	"fe7817ce2cda20c197ab5929c6d8ab07c735049d" :
-	{
-		"device id" : "anki 241",
-		"device name" : "Iphone 5"
-	},
-	"c8e3b0c2e364d9f159558e1977469180190befed" :
-	{
-		"device id" : "anki 924",
-		"device name" : "iPhone 6+"
-	},
-	"TA0980YVE8" :
-	{
-		"device id" : "anki 1173",
-		"device name" : "N/A"
-	},
-	"c8e3b0c2e364d9f159558e1977469180190befed" :
-	{
-		"device id" : "anki 924",
-		"device name" : "iPhone 6+"
-	},
-	"TA0980YVE8" :
-	{
-		"device id" : "anki 1173",
-		"device name" : "N/A"
-	},
-	"bd1324d4a08d22a9384dc0120670e3fb03233236" :
-	{
-		"device id" : "anki 2017-dn453-1/1",
-		"device name" : "iPhone 8"
-	},
-	"4d00b90c4a7a6197" :
-	{
-		"device id" : "anki 677",
-		"device name" : "Samsung Galaxy S4"
-	},
-	"6f5e151e401f915f39f35aa52004a66d9d4a2057" :
-	{
-		"device id" : "anki 1172",
-		"device name" : "iPod"
-	},
-	"ZY223QZLRB" :
-	{
-		"device id" : "anki 1443",
-		"device name" : "Motorola Moto X Pure Edition"
-	},
-	"a9c2789cdddc5b7a7e75a194490867f407605ac5" :
-	{
-		"device id" : "anki 1361",
-		"device name" : "iPhone 7"
-	},
-	"4d00c913894850fd" :
-	{
-		"device id" : "anki 367",
-		"device name" : "Samsung Galaxy S4"
-	},
-	"LGH870DS3e622c25" :
-	{
-		"device id" : "anki 1511",
-		"device name" : "LG G6"
-	},
-	"FA45DWM11157" :
-	{
-		"device id" : "anki 944",
-		"device name" : "HTC One M8"
-	},
-	"00d317f542d4ab4d" :
-	{
-		"device id" : "anki 1108",
-		"device name" : "Nexus 5x"
-	},
-	"21f5e2062c027ece" :
-	{
-		"device id" : "anki 1742",
-		"device name" : "Samsung S9"
-	},
-	"RS98860712777" :
-	{
-		"device id" : "anki 1255",
-		"device name" : "LG G5"
-	},
-	"ce031713ecd1ec730d" :
-	{
-		"device id" : "anki 1506",
-		"device name" : "Samsung S8"
-	},
-	"FA6920315048" :
-	{
-		"device id" : "anki 1407",
-		"device name" : "Google Pixel"
-	},
-	"98892a324d4b395054" :
-	{
-		"device id" : "anki 1712",
-		"device name" : "Samsung S8"
-	},
-	"84B5T15A15000963" :
-	{
-		"device id" : "anki 1109",
-		"device name" : "Nexus 6P"
-	}
+    "e3b03bc01de740e627b143b98ffcbee84cdcd92e" :
+    {
+        "device id" : "anki 1489",
+        "device name" : "iPad 5"
+    },
+    "f1aaeadf1eb4f177" :
+    {
+        "device id" : "anki 1741",
+        "device name" : "Samsung Galaxy Tab A8"
+    },
+    "0bdcfdddc3a9d9e82743dc967feecccf4f7210bd" :
+    {
+        "device id" : "anki 1528",
+        "device name" : "iPad mini 4"
+    },
+    "DMPJPH0JF182" :
+    {
+        "device id" : "anki 126",
+        "device name" : "iPad 4"
+    },
+    "43008de8d2f1c04f" :
+    {
+        "device id" : "anki 663",
+        "device name" : "Samsung Note Tablet 10.1"
+    },
+    "G0W0N2027425F5Q9" :
+    {
+        "device id" : "anki 1711",
+        "device name" : "Kindle Fire 7 (Gen 7)"
+    },
+    "G090MG067464094M" :
+    {
+        "device id" : "anki 1710",
+        "device name" : "Kindle Fire 7 (Gen 7)"
+    },
+    "G000KV0463440RN0" :
+    {
+        "device id" : "anki 1414",
+        "device name" : "Kindle Fire HD 8 (Gen 6)"
+    },
+    "c0a2391ef89bd5acd479f4dc61a29e91838ae5d8" :
+    {
+        "device id" : "anki 1529",
+        "device name" : "iPad mini 4"
+    },
+    "17dc1d6a63f2cb93f7a6a5adf487745a81bd03a1" :
+    {
+        "device id" : "anki 519",
+        "device name" : "iPad Mini 2 (Retina)"
+    },
+    "G000HP0453760A2G" :
+    {
+        "device id" : "anki 1130",
+        "device name" : "Kindle Fire HD 10"
+    },
+    "1eb69a75a4f8fd0847beb625f3fe37af5704662c" :
+    {
+        "device id" : "anki 1728",
+        "device name" : "iPad 6th Gen"
+    },
+    "bf5097c0a631abd267031c6ce9d4d6bfba7370a2" :
+    {
+        "device id" : "anki 1764",
+        "device name" : "iPad Air 2"
+    },
+    "G090G80953530B6N" :
+    {
+        "device id" : "anki 1129",
+        "device name" : "Kindle Fire HD 8 (Gen 5)"
+    },
+    "HT4CKJT01333" :
+    {
+        "device id" : "anki 1037",
+        "device name" : "Nexus 9"
+    },
+    "0424215801986004b31f" :
+    {
+        "device id" : "anki 1151",
+        "device name" : "Nvidia Shield Tablet"
+    },
+    "e5e4427daa9bf340" :
+    {
+        "device id" : "anki 1560",
+        "device name" : "Samsung Galaxy Tab 3"
+    },
+    "6cf3eebbb27ccae33464729769cc9f36e2d5dfda" :
+    {
+        "device id" : "anki 301",
+        "device name" : "iPhone 5C"
+    },
+    "076b23ca0220247d" :
+    {
+        "device id" : "anki 929",
+        "device name" : "Google Nexus 5"
+    },
+    "540dcbf54397ed4992a7b149bf4164f73247f507" :
+    {
+        "device id" : "anki 213",
+        "device name" : "iPhone 5"
+    },
+    "4100faeae41bb137" :
+    {
+        "device id" : "anki 961",
+        "device name" : "Samsung Galaxy Note 4"
+    },
+    "C39LF8PVFFDP" :
+    {
+        "device id" : "anki 279",
+        "device name" : "iPhone 5s"
+    },
+    "85b642544243374f" :
+    {
+        "device id" : "anki 1216",
+        "device name" : "Samsung Note 5"
+    },    
+    "e5758e9e828d7d901939e4aac1a97dd6be115f6a" :
+    {
+        "device id" : "anki 1696",
+        "device name" : "iPhone X"
+    },
+    "4d0095d14f3831fb" :
+    {
+        "device id" : "anki 530",
+        "device name" : "Samsung Galaxy S5"
+    },    
+    "0763abe04f7c08cbbc0fc611a705833e02ac69e7" :
+    {
+        "device id" : "anki 1240",
+        "device name" : "iPhone SE"
+    },
+    "ZY322KF5MQ" :
+    {
+        "device id" : "anki 1722",
+        "device name" : "Motorola G5"
+    },
+    "abe8c3eb5f85f2f40ab2cab7578437698103bb5a" :
+    {
+        "device id" : "anki 921",
+        "device name" : "iPhone 6"
+    },
+    "98867344434d594a42" :
+    {
+        "device id" : "anki 1218",
+        "device name" : "Samsung S7"
+    },
+    "5d922a675a5a2ade8dd1abfdd6c49f3be65bcd75" :
+    {
+        "device id" : "anki 1238",
+        "device name" : "Iphone SE"
+    },
+    "SH39FW900870" :
+    {
+        "device id" : "anki 369",
+        "device name" : "HTC One"
+    },
+    "7bd66d54e39ec07fb12a3c56b153e6f3bc83a5ae" :
+    {
+        "device id" : "anki 1384",
+        "device name" : "iPod Touch gen 6"
+    },
+    "4d008ff34f77311d" :
+    {
+        "device id" : "anki 652",
+        "device name" : "Samsung Galaxy S5"
+    },
+    "86fcea6afe4b4903f3fc0ecffbc66d4fc35e91a2" :
+    {
+        "device id" : "anki 249",
+        "device name" : "iPhone 5"
+    },
+    "ca4834e69cedfe664651837f6291e91c378d58da" :
+    {
+        "device id" : "anki 278",
+        "device name" : "iPhone 5S"
+    },
+    "7N2NEF145U016811" :
+    {
+        "device id" : "anki 1094",
+        "device name" : "Huawei P7"
+    },
+    "633438281a189b6282fe8b7ded5eb2318e187bf4" :
+    {
+        "device id" : "anki 1394",
+        "device name" : "iPod Touch gen 6"
+    },
+    "0ffbf20a9e071a233ba4e375fa4d6e0fd587022f" :
+    {
+        "device id" : "anki 306",
+        "device name" : "iPhone 5C"
+    },
+    "YT910GTTDT" :
+    {
+        "device id" : "anki 366",
+        "device name" : "Sony Xperia Z"
+    },
+    "c2b5f0ace62ec9c2fcd183c3c73cf9d7f7960c35" :
+    {
+        "device id" : "anki 280",
+        "device name" : "iPhone 5S"
+    },
+    "02028386d88ed541" :
+    {
+        "device id" : "anki 370",
+        "device name" : "LG G2"
+    },
+    "fe7817ce2cda20c197ab5929c6d8ab07c735049d" :
+    {
+        "device id" : "anki 241",
+        "device name" : "Iphone 5"
+    },
+    "c8e3b0c2e364d9f159558e1977469180190befed" :
+    {
+        "device id" : "anki 924",
+        "device name" : "iPhone 6+"
+    },
+    "TA0980YVE8" :
+    {
+        "device id" : "anki 1173",
+        "device name" : "Motorola E"
+    },
+    "c8e3b0c2e364d9f159558e1977469180190befed" :
+    {
+        "device id" : "anki 924",
+        "device name" : "iPhone 6+"
+    },
+    "bd1324d4a08d22a9384dc0120670e3fb03233236" :
+    {
+        "device id" : "anki 2017-dn453-1/1",
+        "device name" : "iPhone 8"
+    },
+    "4d00b90c4a7a6197" :
+    {
+        "device id" : "anki 677",
+        "device name" : "Samsung Galaxy S4"
+    },
+    "6f5e151e401f915f39f35aa52004a66d9d4a2057" :
+    {
+        "device id" : "anki 1172",
+        "device name" : "iPod"
+    },
+    "ZY223QZLRB" :
+    {
+        "device id" : "anki 1443",
+        "device name" : "Motorola Moto X Pure Edition"
+    },
+    "a9c2789cdddc5b7a7e75a194490867f407605ac5" :
+    {
+        "device id" : "anki 1361",
+        "device name" : "iPhone 7"
+    },
+    "4d00c913894850fd" :
+    {
+        "device id" : "anki 367",
+        "device name" : "Samsung Galaxy S4"
+    },
+    "LGH870DS3e622c25" :
+    {
+        "device id" : "anki 1511",
+        "device name" : "LG G6"
+    },
+    "FA45DWM11157" :
+    {
+        "device id" : "anki 944",
+        "device name" : "HTC One M8"
+    },
+    "00d317f542d4ab4d" :
+    {
+        "device id" : "anki 1108",
+        "device name" : "Nexus 5x"
+    },
+    "21f5e2062c027ece" :
+    {
+        "device id" : "anki 1742",
+        "device name" : "Samsung S9"
+    },
+    "RS98860712777" :
+    {
+        "device id" : "anki 1255",
+        "device name" : "LG G5"
+    },
+    "ce031713ecd1ec730d" :
+    {
+        "device id" : "anki 1506",
+        "device name" : "Samsung S8"
+    },
+    "FA6920315048" :
+    {
+        "device id" : "anki 1407",
+        "device name" : "Google Pixel"
+    },
+    "98892a324d4b395054" :
+    {
+        "device id" : "anki 1712",
+        "device name" : "Samsung S8"
+    },
+    "84B5T15A15000963" :
+    {
+        "device id" : "anki 1109",
+        "device name" : "Nexus 6P"
+    }
 }
 
