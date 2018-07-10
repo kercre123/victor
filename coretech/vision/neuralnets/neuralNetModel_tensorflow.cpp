@@ -362,12 +362,16 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
   {
     case NeuralNetParams::OutputType::Classification:
     {
-      const float* outputData = outputTensor.tensor<float, 2>().data();
+      DEV_ASSERT(outputTensors.size() == 1, "NeuralNetModel.Detect.Classification.WrongNumOutputTensors");
+      const float* outputData = outputTensors[0].tensor<float, 2>().data();
       ClassificationOutputHelper(outputData, t, salientPoints);
       break;
     }
     case NeuralNetParams::OutputType::BinaryLocalization:
     {
+      DEV_ASSERT(outputTensors.size() == 1, "NeuralNetModel.Detect.BinaryLocalization.WrongNumOutputTensors");
+      auto const& outputTensor = outputTensors[0];
+      
       // This raw (Eigen) tensor data appears to be _column_ major (i.e. "not row major"). Ensure that remains true.
       DEV_ASSERT( !(outputTensor.tensor<float, 2>().Options & Eigen::RowMajor),
                  "NeuralNetModel.Detect.OutputNotRowMajor");
