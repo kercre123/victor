@@ -35,12 +35,14 @@ MANIFEST_FILE = os.path.join(STATUS_DIR, "manifest.ini")
 MANIFEST_SIG = os.path.join(STATUS_DIR, "manifest.sha256")
 BOOT_STAGING = os.path.join(STATUS_DIR, "boot.img")
 DELTA_STAGING = os.path.join(STATUS_DIR, "delta.bin")
+ABOOT_STAGING = os.path.join(STATUS_DIR, "aboot.img")
 OTA_PUB_KEY = "/anki/etc/ota.pub"
 OTA_ENC_PASSWORD = "/anki/etc/ota.pas"
 HTTP_BLOCK_SIZE = 1024*2  # Tuned to what seems to work best with DD_BLOCK_SIZE
 DD_BLOCK_SIZE = HTTP_BLOCK_SIZE*1024
-SUPPORTED_MANIFEST_VERSIONS = ["0.9.2", "0.9.3", "0.9.4", "0.9.5"]
+SUPPORTED_MANIFEST_VERSIONS = ["0.9.2", "0.9.3", "0.9.4", "0.9.5", "1.0.0"]
 TRUE_SYNONYMS = ["True", "true", "on", "1"]
+WIPE_DATA_COOKIE = "/run/wipe-data"
 DEBUG = False
 
 def make_blocking(pipe, blocking):
@@ -103,8 +105,6 @@ def get_slot_name(partition, slot):
 
 def open_slot(partition, slot, mode):
     "Opens a partition slot"
-    if slot == "f":
-        assert mode == "r"  # No writing to F slot
     return open(os.path.join(BOOT_DEVICE, get_slot_name(partition, slot)), mode + "b")
 
 
@@ -174,9 +174,14 @@ def get_slot(kernel_command_line):
         return 'f', 'a'
 
 
+def get_qsn():
+    "Retrieve the QSN of the robot"
+    return open("/sys/devices/soc0/serial_number", "r").read().strip()
+
+
 def get_manifest(fileobj):
     "Returns config parsed from INI file in filelike object"
-    config = ConfigParser.ConfigParser({'encryption': '0'})
+    config = ConfigParser.ConfigParser({'encryption': '0', 'qsn': None, 'ankidev': '0'})
     config.readfp(fileobj)
     return config
 
@@ -309,6 +314,23 @@ class ShaFile(object):
         return self.len
 
 
+def extract_ti(manifest, tar_stream, expected_name, section, dest_fh, progress_callback):
+    "Extract an image from a tar_info object"
+    tar_info = tar_stream.next()
+    if not tar_info.name.endswith(expected_name):
+        die(200, "Expected \"{0}\" to be next in tar but found \"{1}\"".format(expected_name, tar_info.name))
+    decompressor = StreamDecompressor(tar_stream.extractfile(tar_info),
+                                      manifest.getint(section, "encryption"),
+                                      manifest.get(section, "compression"),
+                                      manifest.getint(section, "bytes"),
+                                      True)
+    decompressor.read_to_file(dest_fh, DD_BLOCK_SIZE, progress_callback)
+    if decompressor.digest() != manifest.get(section, "sha256"):
+        return False
+    else:
+        return decompressor.tell()
+
+
 def handle_boot_system(target_slot, manifest, tar_stream):
     "Process 0.9.2 format manifest files"
     total_size = manifest.getint("BOOT", "bytes") + manifest.getint("SYSTEM", "bytes")
@@ -326,39 +348,23 @@ def handle_boot_system(target_slot, manifest, tar_stream):
     # Extract boot image
     if DEBUG:
         print("Boot")
-    boot_ti = tar_stream.next()
-    if not boot_ti.name.endswith("boot.img.gz"):
-        die(200, "Expected boot.img.gz to be next in tar but found \"{}\"".format(boot_ti.name))
-    with open(BOOT_STAGING, "wb") as boot_fh:
-        decompressor = StreamDecompressor(tar_stream.extractfile(boot_ti),
-                                          manifest.getint("BOOT", "encryption"),
-                                          manifest.get("BOOT", "compression"),
-                                          manifest.getint("BOOT", "bytes"),
-                                          True)
-        decompressor.read_to_file(boot_fh, DD_BLOCK_SIZE, progress_update)
-        # Verify boot hash
-        if decompressor.digest() != manifest.get("BOOT", "sha256"):
-            zero_slot(target_slot)
-            die(209, "Boot image hash doesn't match signed manifest")
-        written_size += decompressor.tell()
+    extract_result = extract_ti(manifest, tar_stream, "boot.img.gz", "BOOT", open(BOOT_STAGING, "wb"), progress_update)
+    if extract_result is False:
+        zero_slot(target_slot)
+        die(209, "Boot image hash doesn't match signed manifest")
+    written_size += extract_result
 
     # Extract system images
     if DEBUG:
         print("System")
-    system_ti = tar_stream.next()
-    if not system_ti.name.endswith("sysfs.img.gz"):
-        die(200, "Expected sysfs.img.gz to be next in tar but found \"{}\"".format(system_ti.name))
-    with open_slot("system", target_slot, "w") as system_slot:
-        decompressor = StreamDecompressor(tar_stream.extractfile(system_ti),
-                                          manifest.getint("SYSTEM", "encryption"),
-                                          manifest.get("SYSTEM", "compression"),
-                                          manifest.getint("SYSTEM", "bytes"),
-                                          True)
-        decompressor.read_to_file(system_slot, DD_BLOCK_SIZE, progress_update)
-        if decompressor.digest() != manifest.get("SYSTEM", "sha256"):
-            zero_slot(target_slot)
-            die(209, "System image hash doesn't match signed manifest")
-        written_size += decompressor.tell()
+    extract_result = extract_ti(manifest, tar_stream, "sysfs.img.gz", "SYSTEM",
+                                open_slot("system", target_slot, "w"),
+                                progress_update)
+    if extract_result is False:
+        zero_slot(target_slot)
+        die(209, "System image hash doesn't match signed manifest")
+    written_size += extract_result
+
     # Actually write the boot image now
     with open(BOOT_STAGING, "rb") as src:
         with open_slot("boot", target_slot, "w") as dst:
@@ -432,19 +438,10 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
     # Extract delta file
     if DEBUG:
         print("Delta")
-    delta_ti = tar_stream.next()
-    if not delta_ti.name.endswith("delta.bin.gz"):
-        die(200,
-            "Expected delta.bin.gz to be next in tar but found \"{}\""
-            .format(delta_ti.name))
-    decompressor = StreamDecompressor(tar_stream.extractfile(delta_ti),
-                                      manifest.getint("DELTA", "encryption"),
-                                      manifest.get("DELTA", "compression"),
-                                      manifest.getint("DELTA", "bytes"),
-                                      True)
-    decompressor.read_to_file(open(DELTA_STAGING, "wb"), DD_BLOCK_SIZE, progress_update)
-    # Verify delta hash
-    if decompressor.digest() != manifest.get("DELTA", "sha256"):
+    extract_result = extract_ti(manifest, tar_stream, "delta.bin.gz", "DELTA",
+                                open(DELTA_STAGING, "wb"),
+                                progress_update)
+    if extract_result is False:
         safe_delete(DELTA_STAGING)
         die(209, "delta.bin hash doesn't match manifest value")
     try:
@@ -523,6 +520,60 @@ def handle_anki(current_slot, target_slot, manifest, tar_stream):
     write_status(PROGRESS_FILE, 4)
 
 
+def handle_factory(manifest, tar_stream):
+    "Update factory partitions"
+    total_size = manifest.getint("ABOOT", "bytes") + \
+                 manifest.getint("RECOVERY", "bytes") + \
+                 manifest.getint("RECOVERYFS", "bytes")
+    write_status(EXPECTED_WRITE_SIZE_FILE, total_size)
+    written_size = 0
+    write_status(PROGRESS_FILE, written_size)
+    target_slot = 'f'
+
+    def progress_update(progress):
+        "Update progress while writing to slots"
+        write_status(PROGRESS_FILE, written_size + progress)
+        if DEBUG:
+            sys.stdout.write("{0:0.3f}\r".format(float(written_size+progress)/float(total_size)))
+            sys.stdout.flush()
+
+    # Install new aboot, recovery, recoverfs
+    if DEBUG:
+        print("ABoot")
+    extract_result = extract_ti(manifest, tar_stream, "emmc_appsboot.img.gz", "ABOOT",
+                                open(ABOOT_STAGING, "wb"),
+                                progress_update)
+    if extract_result is False:
+        die(209, "aboot hash doesn't match signed manifest")
+    else:
+        written_size += extract_result
+    if DEBUG:
+        print("recovery")
+    extract_result = extract_ti(manifest, tar_stream, "boot.img.gz", "RECOVERY",
+                                open(BOOT_STAGING, "wb"),
+                                progress_update)
+    if extract_result is False:
+        die(209, "Boot image hash doesn't match signed manifest")
+    written_size += extract_result
+    # Extract system images
+    if DEBUG:
+        print("recoveryfs")
+    extract_result = extract_ti(manifest, tar_stream, "sysfs.img.gz", "RECOVERYFS",
+                                open_slot("system", target_slot, "w"),
+                                progress_update)
+    if extract_result is False:
+        zero_slot(target_slot)
+        die(209, "System image hash doesn't match signed manifest")
+    written_size += extract_result
+    # Actually write the boot image now
+    with open(BOOT_STAGING, "rb") as src:
+        with open_slot("boot", target_slot, "w") as dst:
+            dst.write(src.read())
+    # And actually write the aboot image
+    with open(ABOOT_STAGING, "rb") as src:
+        with open(os.path.join(BOOT_DEVICE, "aboot"), "wb") as dst:
+            dst.write(src.read())
+
 def update_from_url(url):
     "Updates the inactive slot from the given URL"
     # Figure out slots
@@ -538,6 +589,7 @@ def update_from_url(url):
     content_length = stream.info().getheaders("Content-Length")[0]
     write_status(EXPECTED_DOWNLOAD_SIZE_FILE, content_length)
     next_boot_os_version = get_prop("ro.anki.version")
+    is_factory_update = False
     with make_tar_stream(stream) as tar_stream:
         # Get the manifest
         if DEBUG:
@@ -564,6 +616,11 @@ def update_from_url(url):
         next_boot_os_version = manifest.get("META", "update_version")
         if DEBUG:
             print("Updating to version {}".format(next_boot_os_version))
+        if "anki.dev" in cmdline:
+            if not manifest.getint("META", "ankidev"):
+                die(214, "Ankidev OS can't install non-ankidev OTA file")
+        elif manifest.getint("META", "ankidev"):
+            die(214, "Non-ankidev OS can't install ankidev OTA file")
         # Mark target unbootable
         if not call(['/bin/bootctl', current_slot, 'set_unbootable', target_slot]):
             die(202, "Could not mark target slot unbootable")
@@ -581,6 +638,15 @@ def update_from_url(url):
                 handle_anki(current_slot, target_slot, manifest, tar_stream)
             else:
                 die(201, "One image specified but not DELTA or ANKI")
+        elif num_images == 3:
+            if manifest.has_section("ABOOT") and manifest.has_section("RECOVERY") and manifest.has_section("RECOVERYFS"):
+                if manifest.get("META", "qsn") == get_qsn():
+                    handle_factory(manifest, tar_stream)
+                    is_factory_update = True
+                else:
+                    die(213, "QSN doesn't match manifest")
+            else:
+                die(201, "3 images specified but not factory update")
         else:
             die(201, "Unexpected manifest configuration")
     stream.close()
@@ -588,8 +654,15 @@ def update_from_url(url):
     if not call(["/bin/sync"]):
         die(208, "Couldn't sync OS images to disk")
     # Mark the slot bootable now
-    if not call(["/bin/bootctl", current_slot, "set_active", target_slot]):
-        die(202, "Could not set target slot as active")
+    if not is_factory_update:
+        if not call(["/bin/bootctl", current_slot, "set_active", target_slot]):
+            die(202, "Could not set target slot as active")
+    else: # Is a factory update, mark both update slots unbootable and erase user data
+        write_status(WIPE_DATA_COOKIE, 1)
+        if not call(["/bin/bootctl", current_slot, "set_unbootable", 'a']):
+            die(202, "Could not set a slot as unbootable")
+        if not call(["/bin/bootctl", current_slot, "set_unbootable", 'b']):
+            die(202, "Could not set b slot as unbootable")
     safe_delete(ERROR_FILE)
     write_status(DONE_FILE, 1)
     das_event("robot.ota_download_end", "success", next_boot_os_version)
