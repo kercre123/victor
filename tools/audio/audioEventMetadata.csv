@@ -433,6 +433,7 @@ Event,,Play__Robot_Vic_Sfx__Tread_Surprised_Long,3504133917,Robot_Vic_Sfx,Tread_
 Event,,Play__Robot_Vic_Sfx__Wake_Word_Fail,1241549428,Robot_Vic_Sfx,Wake_Word_Fail,
 Event,,Play__Robot_Vic_Sfx__Wake_Word_Off,76586799,Robot_Vic_Sfx,Wake_Word_Off,
 Event,,Play__Robot_Vic_Sfx__Wake_Word_On,1532745019,Robot_Vic_Sfx,Wake_Word_On,
+Event,,Play__Robot_Vic_Sfx__Wake_Word_On_No_Vo,1601827987,Robot_Vic_Sfx,Wake_Word_On_No_Vo,
 Event,,Play__Robot_Vic_Sfx__Wake_Word_Success,286038569,Robot_Vic_Sfx,Wake_Word_Success,
 Event,,Play__Robot_Vic_Sfx__Weather_Cloudy_Loop_Play,2534835295,Robot_Vic_Sfx,Weather_Cloudy_Loop_Play,
 Event,,Play__Robot_Vic_Sfx__Weather_Rain_Loop_Play,3280936841,Robot_Vic_Sfx,Weather_Rain_Loop_Play,
