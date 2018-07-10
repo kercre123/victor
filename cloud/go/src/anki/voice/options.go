@@ -1,4 +1,4 @@
-package cloudproc
+package voice
 
 import (
 	pb "github.com/anki/sai-chipper-voice/proto/anki/chipperpb"
