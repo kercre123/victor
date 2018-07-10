@@ -41,8 +41,8 @@
 
   "ColorImages" : true,        // Whether color images are enabled on startup (can still be toggled later)
 
-  "FaceAlbum" : "robot",       // Name of album on disk to load or "robot" to use the one from the robot
-
+  "FaceAlbum" : "default",     
+  
   "FaceDetection" :
   {
     "DetectionMode": "video"   // "video" or "singleImage"
