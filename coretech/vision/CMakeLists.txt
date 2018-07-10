@@ -106,7 +106,7 @@ endif()
 #
 # Standalone Neural Nets Process
 #
-option(BUILD_NEURAL_NET_PROCESS "Build standalone Neural Net processor" "TFLite") # OFF, "TensorFlow", or "TFLite"
+option(BUILD_NEURAL_NET_PROCESS "Build standalone Neural Net processor" "TensorFlow") # OFF, "TensorFlow", or "TFLite"
 if (BUILD_NEURAL_NET_PROCESS)
   add_subdirectory("neuralnets")
 endif()
