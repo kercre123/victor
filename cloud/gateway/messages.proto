@@ -6,6 +6,8 @@ package Anki.Cozmo.external_interface;
 
 option optimize_for = LITE_RUNTIME;
 
+import "extensions.proto";
+
 message ResultStatus {
   string description = 1;
 }
@@ -240,6 +242,7 @@ message RobotChangedObservedFaceID {
 message RobotStateRequest {}
 
 message RobotStateResult {
+  option (streamed) = true;
   ResultStatus status = 1;
   RobotState robot_state = 2;
 }

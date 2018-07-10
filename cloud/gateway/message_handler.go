@@ -350,8 +350,7 @@ func CladGyroDataToProto(msg *gw_clad.GyroData) *extint.GyroData {
 }
 
 func CladRobotStateToProto(msg *gw_clad.RobotState) *extint.RobotStateResult {
-	var robot_state *extint.RobotState
-	robot_state = &extint.RobotState{
+	robotState := &extint.RobotState{
 		Pose:                  CladPoseToProto(&msg.Pose),
 		PoseAngleRad:          msg.PoseAngleRad,
 		PosePitchRad:          msg.PosePitchRad,
@@ -372,7 +371,7 @@ func CladRobotStateToProto(msg *gw_clad.RobotState) *extint.RobotStateResult {
 	}
 
 	return &extint.RobotStateResult{
-		RobotState: robot_state,
+		RobotState: robotState,
 	}
 }
 
@@ -481,7 +480,7 @@ func (m *rpcService) PlayAnimation(ctx context.Context, in *extint.PlayAnimation
 	log.Println("Received rpc request PlayAnimation(", in, ")")
 	f, result := createChannel(&extint.GatewayWrapper_PlayAnimationResult{}, 1)
 	defer f()
-	
+
 	_, err := WriteToEngine(engineSock, ProtoPlayAnimationToClad(in))
 	if err != nil {
 		return nil, err
@@ -643,10 +642,10 @@ func (c *rpcService) RobotStateStream(in *extint.RobotStateRequest, stream extin
 	log.Println(engineChanMap[gw_clad.MessageRobotToExternalTag_RobotState])
 
 	for result := range stream_channel {
-		log.Println("Got result:", result)
-		robot_state := CladRobotStateToProto(result.Message.GetRobotState())
-		log.Println("Made RobotState:", robot_state)
-		if err := stream.Send(robot_state); err != nil {
+		log.Printf("Got result: %+v", result)
+		robotState := CladRobotStateToProto(result.Message.GetRobotState())
+		log.Printf("Made RobotState: %+v", robotState)
+		if err := stream.Send(robotState); err != nil {
 			return err
 		} else if err = stream.Context().Err(); err != nil {
 			// This is the case where the user disconnects the stream
@@ -776,11 +775,11 @@ func (c *rpcService) EventStream(in *extint.EventRequest, stream extint.External
 	defer f()
 
 	for result := range eventsChannel {
-		log.Println("Got result:", result)
+		log.Printf("Got result: %+v", result)
 		eventResult := &extint.EventResult{
 			Event: result.GetEvent(),
 		}
-		log.Println("Made event:", eventResult)
+		log.Printf("Made event: %+v", eventResult)
 		if err := stream.Send(eventResult); err != nil {
 			return err
 		} else if err = stream.Context().Err(); err != nil {
@@ -1263,7 +1262,7 @@ func (m *rpcService) DriveStraight(ctx context.Context, in *extint.DriveStraight
 	log.Println("Received rpc request DriveStraight(", in, ")")
 	f, result := createChannel(&extint.GatewayWrapper_DriveStraightResponse{}, 1)
 	defer f()
-	
+
 	_, err := WriteToEngine(engineSock, ProtoDriveStraightToClad(in))
 	if err != nil {
 		return nil, err
@@ -1281,7 +1280,7 @@ func (m *rpcService) TurnInPlace(ctx context.Context, in *extint.TurnInPlaceRequ
 	log.Println("Received rpc request TurnInPlace(", in, ")")
 	f, result := createChannel(&extint.GatewayWrapper_TurnInPlaceResponse{}, 1)
 	defer f()
-	
+
 	_, err := WriteToEngine(engineSock, ProtoTurnInPlaceToClad(in))
 	if err != nil {
 		return nil, err
@@ -1299,7 +1298,7 @@ func (m *rpcService) SetHeadAngle(ctx context.Context, in *extint.SetHeadAngleRe
 	log.Println("Received rpc request SetHeadAngle(", in, ")")
 	f, result := createChannel(&extint.GatewayWrapper_SetHeadAngleResponse{}, 1)
 	defer f()
-	
+
 	_, err := WriteToEngine(engineSock, ProtoSetHeadAngleToClad(in))
 	if err != nil {
 		return nil, err
@@ -1317,7 +1316,7 @@ func (m *rpcService) SetLiftHeight(ctx context.Context, in *extint.SetLiftHeight
 	log.Println("Received rpc request SetLiftHeight(", in, ")")
 	f, result := createChannel(&extint.GatewayWrapper_SetLiftHeightResponse{}, 1)
 	defer f()
-	
+
 	_, err := WriteToEngine(engineSock, ProtoSetLiftHeightToClad(in))
 	if err != nil {
 		return nil, err
