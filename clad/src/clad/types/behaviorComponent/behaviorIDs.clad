@@ -29,6 +29,7 @@ enum uint_8 BehaviorID {
   DevImageCapture,
   DevPlannerTest,
   DevTestBlackjackViz,
+  DevTestConnectToCube,
   DevTestPersonDetectorBehavior,
   DevTestPromptUser,
   DevTouchDataCollection,
@@ -186,7 +187,7 @@ enum uint_8 BehaviorID {
   PickupCube,
 
   // victorBehaviorTree/highLevelDelegates/playWithCube/activeCubeBehaviors
-  ActiveCubeDispatcher,
+  PlayWithCubeConnectionGate,
   VectorPlaysCubeSpinner,
 
   // victorBehaviorTree/highLevelDelegates/playWithCube

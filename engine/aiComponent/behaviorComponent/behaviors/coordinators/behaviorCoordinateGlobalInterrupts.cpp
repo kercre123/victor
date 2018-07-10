@@ -182,6 +182,7 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
       // allow individual behaviors to suppress streaming
       // note: could pass in "highLevelRunning" to this function and have the sleeping behaviors suppress themselves
       shouldSuppressTriggerWord |= behavior.ShouldSuppressTriggerWordResponse();
+      return true; // Iterate over the entire stack
     };
 
     const auto& behaviorIterator = GetBehaviorComp<ActiveBehaviorIterator>();
@@ -281,7 +282,9 @@ bool BehaviorCoordinateGlobalInterrupts::ShouldSuppressProxReaction()
     auto callback = [this](const ICozmoBehavior& behavior) {
       if( kBehaviorClassesToSuppressProx.find( behavior.GetClass() ) != kBehaviorClassesToSuppressProx.end() ) {
         _dVars.suppressProx = true;
+        return false; // A behavior satisfied the condition, stop iterating
       }
+      return true; // Haven't satisfied the condition yet, keep iterating
     };
     
     behaviorIterator.IterateActiveCozmoBehaviorsForward( callback, this );

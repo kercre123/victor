@@ -19,6 +19,7 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
+#include "engine/aiComponent/behaviorComponent/activeBehaviorIterator.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
@@ -34,6 +35,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
 #include "engine/aiComponent/continuityComponent.h"
 #include "engine/components/carryingComponent.h"
+#include "engine/components/cubes/cubeConnectionCoordinator.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
@@ -51,6 +53,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/behaviorComponent/activeFeatures.h"
+#include "clad/types/behaviorComponent/behaviorClasses.h"
 #include "clad/types/behaviorComponent/behaviorStats.h"
 #include "clad/types/behaviorComponent/userIntent.h"
 
@@ -812,6 +815,13 @@ void ICozmoBehavior::OnActivatedInternal()
   }
 
   GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::BehaviorActived);
+
+  {
+    using requirements = BehaviorOperationModifiers::CubeConnectionRequirements;
+    if(requirements::None != _operationModifiers.cubeConnectionRequirements){
+      ManageCubeConnectionSubscriptions(true);
+    }
+  }
   
   OnBehaviorActivated();
 }
@@ -929,6 +939,13 @@ void ICozmoBehavior::OnDeactivatedInternal()
     GetBehaviorComp<PowerStateManager>().RemovePowerSaveModeRequest(_powerSaveRequest);
     _powerSaveRequest.clear();
   }
+
+  {
+    using requirements = BehaviorOperationModifiers::CubeConnectionRequirements;
+    if(requirements::None != _operationModifiers.cubeConnectionRequirements){
+      ManageCubeConnectionSubscriptions(false);
+    }
+  }
 }
 
 
@@ -1041,6 +1058,10 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
     return false;
   }
 
+  if(!CubeConnectionRequirementsMet()){
+    return false;
+  }
+
   for(auto& condition: _wantsToBeActivatedConditions){
     if(!condition->AreConditionsMet(GetBEI())){
       return false;
@@ -1050,6 +1071,89 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
   return true;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ICozmoBehavior::CubeConnectionRequirementsMet() const
+{
+  using requirements = BehaviorOperationModifiers::CubeConnectionRequirements;
+  switch(_operationModifiers.cubeConnectionRequirements){
+    case requirements::None:
+    case requirements::OptionalLazy:
+    case requirements::OptionalActive:
+    {
+      return true;
+    }
+    case requirements::RequiredManaged:
+    {
+#if ANKI_DEV_CHEATS
+      // Runtime ancestor verification. TODO:(str) This should also be checked in unit tests
+      bool foundRequiredAncestor = false;
+      auto ancestorOperand = [&foundRequiredAncestor](const ICozmoBehavior& behavior){
+        BehaviorOperationModifiers modifiers;
+        behavior.GetBehaviorOperationModifiers(modifiers);
+        foundRequiredAncestor = modifiers.ensuresCubeConnectionAtDelegation;
+        return !foundRequiredAncestor;
+      };
+      ActiveBehaviorIterator& abi = GetBehaviorComp<ActiveBehaviorIterator>();
+      abi.IterateActiveCozmoBehaviorsBackward(ancestorOperand);
+      if(!ANKI_VERIFY(foundRequiredAncestor,
+                      "ICozmoBehavior.MissingRequiredAncestor",
+                      "Behavior %s is missing required ancestor %s, and cannot be activated",
+                      GetDebugLabel().c_str(),
+                      EnumToString(BehaviorClass::ConnectToCube))){
+        return false;
+      }
+#endif // ANKI_DEV_CHEATS
+      // NOTE: Fallthrough.
+      // Both Required and Opportunistic require a currently active connection
+    }
+    case requirements::RequiredLazy:
+    {
+      if(!GetBEI().GetCubeConnectionCoordinator().IsConnectedToCube()){
+        PRINT_NAMED_WARNING("ICozmoBehavior.MissingRequiredCubeConnection",
+                            "Behavior %s specifies that a cube connection is required, but there is none active",
+                            GetDebugLabel().c_str());
+        return false;
+      }
+      return true;
+      break;
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::ManageCubeConnectionSubscriptions(bool onActivated)
+{
+  using requirements = BehaviorOperationModifiers::CubeConnectionRequirements;
+  bool shouldSubscribe = false;
+  bool isConnected = GetBEI().GetCubeConnectionCoordinator().IsConnectedToCube();
+  switch(_operationModifiers.cubeConnectionRequirements){
+    case requirements::OptionalLazy:
+    {
+      shouldSubscribe = isConnected;
+      break;
+    }
+    case requirements::OptionalActive:
+    case requirements::RequiredLazy:
+    case requirements::RequiredManaged:
+    {
+      shouldSubscribe = true;
+      break;
+    }
+    default:
+    {
+      PRINT_NAMED_ERROR("ICozmoBehavior.ManageCubeConnectionSubscriptions.UnknownCubeConnectionRequirementType",
+                        "Received unknown requirement type or None");
+    }
+  }
+
+  if(shouldSubscribe){
+    if(onActivated){
+      GetBEI().GetCubeConnectionCoordinator().SubscribeToCubeConnection(this, _operationModifiers.connectToCubeInBackground);
+    } else {
+      GetBEI().GetCubeConnectionCoordinator().UnsubscribeFromCubeConnection(this);
+    }
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Util::RandomGenerator& ICozmoBehavior::GetRNG() const {

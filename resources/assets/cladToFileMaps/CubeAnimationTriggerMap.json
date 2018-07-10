@@ -44,6 +44,10 @@
         "AnimName": "flash"
     },
     {
+        "CladEvent": "ShutDown",
+        "AnimName": "shutDown"
+    },
+    {
         "CladEvent": "Sleep",
         "AnimName": "sleep"
     },

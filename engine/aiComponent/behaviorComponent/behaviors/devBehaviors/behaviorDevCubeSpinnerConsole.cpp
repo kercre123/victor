@@ -103,7 +103,6 @@ void BehaviorDevCubeSpinnerConsole::InitBehavior()
   const auto& lightConfig = GetBEI().GetDataAccessorComponent().GetCubeSpinnerConfig();
 
   _iConfig.cubeSpinnerGame = std::make_unique<CubeSpinnerGame>(_iConfig.gameConfig, lightConfig,
-                                                               GetBEI().GetCubeCommsComponent(),
                                                                GetBEI().GetCubeLightComponent(), 
                                                                GetBEI().GetBackpackLightComponent(), 
                                                                GetBEI().GetBlockWorld(),

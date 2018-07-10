@@ -35,6 +35,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorStack.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "engine/blockWorld/blockWorld.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
@@ -86,6 +87,7 @@ void InitBEIPartial( const BEIComponentMap& map, BehaviorExternalInterface& bei 
            GetFromMap<BackpackLightComponent>(map, BEIComponentID::BackpackLightComponent),
            GetFromMap<CubeAccelComponent>(map, BEIComponentID::CubeAccel),
            GetFromMap<CubeCommsComponent>(map, BEIComponentID::CubeComms),
+           GetFromMap<CubeConnectionCoordinator>(map, BEIComponentID::CubeConnectionCoordinator),
            GetFromMap<CubeLightComponent>(map, BEIComponentID::CubeLight),
            GetFromMap<CliffSensorComponent>(map, BEIComponentID::CliffSensor),
            GetFromMap<DelegationComponent>(map, BEIComponentID::Delegation),
@@ -371,6 +373,17 @@ void TestBehaviorFramework::ApplyAdditionalRequirementsBeforeDelegation(IBehavio
       UserIntent_PlaybackMessage intentData{"Bentley"};
       UserIntent intent = UserIntent::Createmessage_playback(std::move(intentData));
       uic.SetUserIntentPending(std::move(intent), UserIntentSource::Unknown);
+    }
+  }
+
+  // Cube connection required
+  {
+    ICozmoBehavior* delCozPtr = dynamic_cast<ICozmoBehavior*>(delegate);
+    const bool delegatingToBehavior = (delCozPtr != nullptr)
+                                   && (delCozPtr->GetClass() == BEHAVIOR_CLASS(VectorPlaysCubeSpinner));
+    if( delegatingToBehavior ) {
+      auto& blockWorld = GetBehaviorExternalInterface().GetBlockWorld();
+      blockWorld.AddConnectedActiveObject(0, "AA:AA:AA:AA:AA:AA", ObjectType::Block_LIGHTCUBE1);
     }
   }
 }

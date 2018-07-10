@@ -45,6 +45,7 @@ class BlockWorld;
 class BackpackLightComponent;
 class CubeAccelComponent;
 class CubeCommsComponent;
+class CubeConnectionCoordinator;
 class CubeLightComponent;
 class CliffSensorComponent;
 class DelegationComponent;
@@ -136,6 +137,7 @@ public:
             BackpackLightComponent*        backpackLightComponent,
             CubeAccelComponent*            cubeAccelComponent,
             CubeCommsComponent*            cubeCommsComponent,
+            CubeConnectionCoordinator*     CubeConnectionCoordinator,
             CubeLightComponent*            cubeLightComponent,
             CliffSensorComponent*          cliffSensorComponent,
             DelegationComponent*           delegationComponent,
@@ -223,6 +225,9 @@ public:
   inline bool HasCubeCommsComponent() const { return GetComponentWrapper(BEIComponentID::CubeComms).IsComponentValid();}
   CubeCommsComponent& GetCubeCommsComponent() const { return GetComponentWrapper(BEIComponentID::CubeComms).GetComponent<CubeCommsComponent>();}
 
+  inline bool HasCubeConnectionCoordinator() const { return GetComponentWrapper(BEIComponentID::CubeConnectionCoordinator).IsComponentValid();}
+  CubeConnectionCoordinator& GetCubeConnectionCoordinator() const { return GetComponentWrapper(BEIComponentID::CubeConnectionCoordinator).GetComponent<CubeConnectionCoordinator>();}
+
   inline bool HasObjectPoseConfirmer() const { return GetComponentWrapper(BEIComponentID::ObjectPoseConfirmer).IsComponentValid();}
   ObjectPoseConfirmer& GetObjectPoseConfirmer() const { return GetComponentWrapper(BEIComponentID::ObjectPoseConfirmer).GetComponent<ObjectPoseConfirmer>();}
 
@@ -276,6 +281,7 @@ private:
                        BackpackLightComponent*        backpackLightComponent,
                        CubeAccelComponent*            cubeAccelComponent,
                        CubeCommsComponent*            cubeCommsComponent,
+                       CubeConnectionCoordinator*     CubeConnectionCoordinator,
                        CubeLightComponent*            cubeLightComponent,
                        CliffSensorComponent*          cliffSensorComponent,
                        DelegationComponent*           delegationComponent,

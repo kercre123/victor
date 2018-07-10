@@ -70,6 +70,7 @@ public:
   // if the passed in behavior is in the stack, return a pointer to the behavior which is above it in the
   // stack, or null if it is at the top or not in the stack
   const IBehavior* GetBehaviorInStackAbove(const IBehavior* behavior) const;
+  const IBehavior* GetBehaviorInStackBelow(const IBehavior* behavior) const;
 
   void PushOntoStack(IBehavior* behavior);
   void PopStack();

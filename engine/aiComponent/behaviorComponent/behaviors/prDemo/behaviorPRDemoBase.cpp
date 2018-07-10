@@ -129,6 +129,7 @@ void BehaviorPRDemoBase::BehaviorUpdate()
           feature == ActiveFeature::TimerRinging ) {
         active = true;
       }
+      return true; // Iterate the whole stack
     };
 
     behaviorIterator.IterateActiveCozmoBehaviorsForward(callback);

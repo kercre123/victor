@@ -215,10 +215,27 @@ const IBehavior* BehaviorSystemManager::GetBehaviorDelegatedTo(const IBehavior* 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const IBehavior* BehaviorSystemManager::GetBehaviorDelegatedFrom(const IBehavior* behavior) const
+{
+  return _behaviorStack->GetBehaviorInStackBelow(behavior);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const IBehavior* BehaviorSystemManager::GetBaseBehavior() const
 {
   if( _behaviorStack != nullptr ) {
     return _behaviorStack->GetBottomOfStack();
+  }
+  else {
+    return nullptr;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const IBehavior* BehaviorSystemManager::GetTopBehavior() const
+{
+  if( _behaviorStack != nullptr ) {
+    return _behaviorStack->GetTopOfStack();
   }
   else {
     return nullptr;

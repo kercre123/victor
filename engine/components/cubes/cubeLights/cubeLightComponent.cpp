@@ -798,6 +798,34 @@ bool CubeLightComponent::StopAndPlayLightAnim(const ObjectID& objectID,
 
 }
 
+// =============Connction & Status Light Controls==================
+
+bool CubeLightComponent::PlayConnectionLights(const ObjectID& objectID, AnimCompletedCallback callback)
+{
+  // Connect lights take precedence over other anims
+  StopAllAnimsOnLayer(AnimLayerEnum::State);
+  return PlayLightAnimByTrigger(objectID, CubeAnimationTrigger::WakeUp, AnimLayerEnum::State, callback);
+}
+
+bool CubeLightComponent::PlayDisconnectionLights(const ObjectID& objectID, AnimCompletedCallback callback)
+{
+  // Disconnect lights take precedence over other anims
+  StopAllAnimsOnLayer(AnimLayerEnum::State);
+  return PlayLightAnimByTrigger(objectID, CubeAnimationTrigger::ShutDown, AnimLayerEnum::State, callback);
+}
+
+bool CubeLightComponent::EnableStatusAnims(const bool enable)
+{
+  bool stateChanged = (_enableStatusAnims != enable);
+  _enableStatusAnims = enable;
+
+  if(stateChanged){
+    StopAllAnimsOnLayer(AnimLayerEnum::State);
+  }
+
+  return stateChanged;
+}
+
 void CubeLightComponent::PickNextAnimForDefaultLayer(const ObjectID& objectID)
 {
   if(DEBUG_TEST_ALL_ANIM_TRIGGERS)
@@ -805,7 +833,14 @@ void CubeLightComponent::PickNextAnimForDefaultLayer(const ObjectID& objectID)
     CycleThroughAnimTriggers(objectID);
     return;
   }
-  
+
+  // If status anims are disabled for "background" cube connections, play a blank anim
+  if(!_enableStatusAnims){
+    // TODO:(str) remove the "cube sleep" infrastructure?
+    PlayLightAnimByTrigger(objectID, CubeAnimationTrigger::SleepNoFade, AnimLayerEnum::State);
+    return;
+  }
+
   // If CubeSleep is enabled then play the sleep animation
   if(_enableCubeSleep)
   {
@@ -839,6 +874,11 @@ void CubeLightComponent::OnActiveObjectPoseStateChanged(const ObjectID& objectID
                                                         const PoseState newPoseState)
 {
   if(oldPoseState == newPoseState)
+  {
+    return;
+  }
+
+  if(!_enableStatusAnims)
   {
     return;
   }
@@ -990,12 +1030,10 @@ void CubeLightComponent::HandleMessage(const ExternalInterface::ObjectConnection
 {
   if(msg.connected && IsValidLightCube(msg.object_type, false))
   {
-    // Add the objectID to the _objectInfo map and play the wake up animation
+    // Add the objectID to the _objectInfo map
     ObjectInfo info = {};
     info.isOnlyGameLayerEnabled = _onlyGameLayerEnabledForAll;
     _objectInfo.emplace(msg.objectID, info);
-    
-    PlayLightAnimByTrigger(msg.objectID, CubeAnimationTrigger::WakeUp, AnimLayerEnum::State);
   }
 }
 

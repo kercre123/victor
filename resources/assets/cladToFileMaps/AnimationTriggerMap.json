@@ -128,6 +128,26 @@
     "AnimName": "ag_blockreact"
   },
   {
+    "CladEvent": "ConnectToCubeFailure",
+    "AnimName":  "ag_majorfail" 
+  },
+  {
+    "CladEvent": "ConnectToCubeGetIn",
+    "AnimName":  "ag_texttospeech_getin_01"
+  },
+  {
+    "CladEvent": "ConnectToCubeLoop",
+    "AnimName":  "ag_texttospeech_loop_01"
+  },
+  {
+    "CladEvent": "ConnectToCubeLostConnection",
+    "AnimName":  "ag_majorfail"
+  },
+  {
+    "CladEvent": "ConnectToCubeSuccess",
+    "AnimName":  "ag_majorwin"
+  },
+  {
     "CladEvent": "DEPRECATED_PatternGuessNewIdea",
     "AnimName": "ag_patternguessnewidea"
   },

@@ -139,7 +139,14 @@ public:
   
   // Stops all animations on all objects
   void StopAllAnims();
-  
+
+  // Connection/Status light controls
+  // NOTE: objectID's throughout this system will likely be unnecessary on victor since he has only 
+  // got one cube (just let the cubeCommsComponent worry about it) but that's a thought for later...
+  bool PlayConnectionLights(const ObjectID& objectID, AnimCompletedCallback callback = {});
+  bool PlayDisconnectionLights(const ObjectID& objectID, AnimCompletedCallback callback = {});
+  bool EnableStatusAnims(const bool enable);
+
   template<typename T>
   void HandleMessage(const T& msg);
   
@@ -258,6 +265,10 @@ private:
   
   // Whether or not to play the fade out cube sleep animation
   bool _skipSleepAnim = false;
+
+  // Whether or not to play connection/status lights
+  // Default to false so that status lights are driven from the CubeConnectionCoordinator
+  bool _enableStatusAnims = false;
   
   // The last cube light gamma that was sent to the robot (global across all cubes)
   u32 _prevGamma = 0;

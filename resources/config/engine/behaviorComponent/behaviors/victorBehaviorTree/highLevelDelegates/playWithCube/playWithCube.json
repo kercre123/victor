@@ -17,7 +17,7 @@
     
       "behaviors" : [
         {
-          "behavior": "ActiveCubeDispatcher",
+          "behavior": "PlayWithCubeConnectionGate",
           "cooldown_s": 900.0,
           "cooldown_random_factor": 0.5,
           "weight": 1.0
