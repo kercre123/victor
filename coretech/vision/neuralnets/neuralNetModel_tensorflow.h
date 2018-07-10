@@ -65,19 +65,19 @@ private:
   // Helper to find the index of the a single output with the highest score, assumed to 
   // correspond to the matching label from the labels file
   Result GetClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp, 
-                         std::list<Vision::SalientPoint>& salientPoints);
+                           std::list<Vision::SalientPoint>& salientPoints);
 
   // Helper to return a set of localization boxes from a grid, assuming a binary classifcation 
   // (e.g. person / no-person in a 6x6 grid). Grid size is specified in JSON config
   Result GetLocalizedBinaryClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp, 
-                                        std::list<Vision::SalientPoint>& salientPoints);
+                                          std::list<Vision::SalientPoint>& salientPoints);
 
   // Helper to interpret four outputs as SSD boxes (num detections, scores, classes, and boxes)
   Result GetDetectedObjects(const std::vector<tensorflow::Tensor>& outputTensors, TimeStamp_t timestamp,
-                          std::list<Vision::SalientPoint>& salientPoints);
+                            std::list<Vision::SalientPoint>& salientPoints);
 
   Result GetSalientPointsFromResponseMap(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp,
-                                       std::list<Vision::SalientPoint>& salientPoints);
+                                         std::list<Vision::SalientPoint>& salientPoints);
 
   void SaveObjectnessResponseMaps(const std::vector<cv::Mat>& channels, const TimeStamp_t timestamp);
 
