@@ -13,6 +13,7 @@
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/math/rect_impl.h"
 #include "coretech/vision/neuralnets/neuralNetModel_tensorflow.h"
+
 #include "tensorflow/core/framework/graph.pb.h"
 #include "tensorflow/core/framework/graph_def_util.h"
 #include "tensorflow/core/framework/tensor.h"
@@ -36,17 +37,15 @@
 #include "util/helpers/quoteMacro.h"
 #include "util/logging/logging.h"
 
-
 #include <cmath>
 #include <fstream>
-#include <bitset>
 
 namespace Anki {
 
 #define LOG_CHANNEL "NeuralNets"
 
 namespace {
-  CONSOLE_VAR(bool,   kNeuralNetTensorflow_SaveImages,  "Vision.NeuralNetTensorflow", true);
+  CONSOLE_VAR(bool,   kNeuralNetTensorflow_SaveImages,  "Vision.NeuralNetTensorflow", false);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -88,6 +87,7 @@ static inline void SetFromConfigHelper(const Json::Value& json, std::vector<std:
 NeuralNetModel::NeuralNetModel(const std::string cachePath)
 : _params{}, _cachePath(cachePath)
 {
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
