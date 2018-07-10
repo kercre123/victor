@@ -1,11 +1,11 @@
 /**
- * File: conditionSalientPointDetected.h
+ * File: conditionSalientPointDetected.cpp
  *
  * Author: Lorenzo Riano
  * Created: 5/31/18
  *
- * Description: Condition which is true when a salient point is detected. Uses
- *              SalientPointDetectorComponent.
+ * Description: Condition which is true when a person is detected. Uses SalientPointDetectorComponent
+ *
  *
  * Copyright: Anki, Inc. 2018
  *

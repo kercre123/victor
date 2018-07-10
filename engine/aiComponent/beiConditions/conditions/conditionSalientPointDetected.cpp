@@ -1,10 +1,10 @@
 /**
- * File: conditionSalientPointDetected.cpp
+ * File: conditionPersonDetected.cpp
  *
  * Author: Lorenzo Riano
  * Created: 5/31/18
  *
- * Description: see header
+ * Description: Condition which is true when a person is detected. Uses SalientPointDetectorComponent
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -52,19 +52,14 @@ bool ConditionSalientPointDetected::AreConditionsMetInternal(BehaviorExternalInt
   switch (_targetSalientPoint) {
     case Vision::SalientPointType::Person:
       return component.PersonDetected();
-    case Vision::SalientPointType::Object:
-      {
-      bool objectDetected = component.ObjectDetected();
-      if (objectDetected) {
-        PRINT_NAMED_WARNING("ConditionSalientPointDetected.AreConditionsMetInternal.FoundObject", "");
-      }
-      return objectDetected;
-      }
     default:
       PRINT_NAMED_WARNING("ConditionSalientPointDetected.AreConditionsMetInternal.WrongSalientPointType",
                           "This should never have happened!");
       return false;
   }
+
+
+
 }
 
 void

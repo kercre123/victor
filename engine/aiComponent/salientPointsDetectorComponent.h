@@ -67,43 +67,19 @@ public:
   // end IDependencyManagedComponent<AIComponentID> functions
 
   bool PersonDetected() const;
-  bool ObjectDetected() const;
 
+  // Remove all the Person salient points from the local container and move them to the new one
   template <typename Container>
   void GetLastPersonDetectedData(Container& salientPoints) const {
-    GetLastPointDetectedData(salientPoints, Vision::SalientPointType::Person);
-  };
 
-  template <typename Container>
-  void GetLastObjectDetectedData(Container& salientPoints) const {
-    PRINT_CH_INFO("Behaviors", "SalientPointsDetectorComponent.GetLastObjectDetectedData", "");
-    GetLastPointDetectedData(salientPoints, Vision::SalientPointType::Object);
-  };
-
-
-  template <typename Container>
-  void AddSalientPoints(const Container& c) {
-    // TODO need a circular buffer here, otherwise the list will keep growing until somebody fetches the data
-    // The Utils::CircularBuffer lacks all the sweet iterators I'm using here
-    _latestSalientPoints.insert(_latestSalientPoints.end(), std::begin(c), std::end(c));
-    PRINT_NAMED_INFO("SalientPointsDetectorComponent.AddSalientPoints",
-                        "Number of salient points %d", _latestSalientPoints.size());
-  };
-
-private:
-
-  // Remove all the salient points of a certain type from the local container and move them to the new one
-  template <typename Container>
-  void GetLastPointDetectedData(Container& salientPoints, const Vision::SalientPointType type) const {
-
-    // Solution adapted from https://stackoverflow.com/a/32155973/1047543
+    //Solution adapted from https://stackoverflow.com/a/32155973/1047543
 
     // partition: all elements that should not be moved come before
     // (note that the condition is false) all elements that should be moved.
     // stable_partition maintains relative order in each group
     auto p = std::stable_partition(_latestSalientPoints.begin(), _latestSalientPoints.end(),
-                                   [type](const Vision::SalientPoint& p) {
-                                     return p.salientType != type;
+                                   [](const Vision::SalientPoint& p) {
+                                     return p.salientType != Vision::SalientPointType::Person;
                                    }
     );
     salientPoints.insert(salientPoints.end(), std::make_move_iterator(p),
@@ -111,7 +87,16 @@ private:
     _latestSalientPoints.erase(p, _latestSalientPoints.end());
   }
 
-  bool Detected(const Vision::SalientPointType type) const;
+  template <typename Container>
+  void AddSalientPoints(const Container& c) {
+    // TODO need a circular buffer here, otherwise the list will keep growing until somebody fetches the data
+    // The Utils::CircularBuffer lacks all the sweet iterators I'm using here
+    _latestSalientPoints.insert(_latestSalientPoints.end(), std::begin(c), std::end(c));
+
+  }
+
+private:
+
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes

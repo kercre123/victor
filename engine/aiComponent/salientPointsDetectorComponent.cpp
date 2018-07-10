@@ -63,7 +63,6 @@ bool SalientPointsDetectorComponent::PersonDetected() const
     float currentTickCount = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if ((currentTickCount - _timeSinceLastObservation) > 3) { // 3 seconds
 
-
       Vision::SalientPoint personDetected;
 
       personDetected.timestamp = _robot->GetLastImageTimeStamp();
@@ -82,54 +81,8 @@ bool SalientPointsDetectorComponent::PersonDetected() const
     }
   }
 
-  return Detected(Vision::SalientPointType::Person);
-}
-
-bool SalientPointsDetectorComponent::ObjectDetected() const
-{
-  PRINT_CH_INFO("Behaviors", "SalientPointsDetectorComponent.ObjectDetected.Check", "");
-  if (kRandomPersonDetection) {
-    // TODO Here I'm cheating: test if x seconds have passed and if so create a fake salient point with a person
-    _latestSalientPoints.clear();
-    DEV_ASSERT(_robot != nullptr, "SalientPointsDetectorComponent.ObjectDetected.RobotCantBeNull");
-    float currentTickCount = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    if ((currentTickCount - _timeSinceLastObservation) > 3)
-    {
-      Vision::SalientPoint objectDetected;
-
-      objectDetected.timestamp = _robot->GetLastImageTimeStamp();
-      objectDetected.salientType = Vision::SalientPointType::Object;
-
-      // Random image coordinates
-      objectDetected.y_img = float(_robot->GetContext()->GetRandom()->RandDbl());
-      objectDetected.x_img = float(_robot->GetContext()->GetRandom()->RandDbl());
-
-      _latestSalientPoints.push_back(std::move(objectDetected));
-
-      PRINT_CH_INFO("Behaviors", "SalientPointsDetectorComponent.SalientPointDetected.ConditionTrue", "");
-      _timeSinceLastObservation = currentTickCount;
-    } 
-    else
-    {
-      PRINT_CH_DEBUG("Behaviors", "SalientPointsDetectorComponent.SalientPointDetected.ConditionFalse", "");
-    }
-  }
-
-  return Detected(Vision::SalientPointType::Object);
-}
-
-bool SalientPointsDetectorComponent::Detected(const Vision::SalientPointType type) const
-{
-  if (type == Vision::SalientPointType::Object)
-  {
-    PRINT_CH_INFO("Behaviors", "SalientPointsDetectorComponent.Detected", "Trying see if an object was detected");
-  }
-  else
-  {
-    PRINT_CH_INFO("Behaviors", "SalientPointsDetectorComponent.Detected", "Trying see if a person was detected");
-  }
   return std::any_of(_latestSalientPoints.begin(), _latestSalientPoints.end(),
-                     [type](const Vision::SalientPoint& p) { return p.salientType == type; }
+                     [](const Vision::SalientPoint& p) { return p.salientType == Vision::SalientPointType::Person; }
   );
 }
 
