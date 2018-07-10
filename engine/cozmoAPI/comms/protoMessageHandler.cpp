@@ -15,6 +15,7 @@
 
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
+#include "engine/cozmoEngine.h"
 #include "engine/cozmoAPI/comms/localUdpSocketComms.h"
 #include "engine/cozmoAPI/comms/protoMessageHandler.h"
 
@@ -23,12 +24,17 @@
 #include "coretech/messaging/engine/IComms.h"
 
 #include "proto/external_interface/shared.pb.h"
+#include "proto/external_interface/messages.pb.h"
 
 #include "util/cpuProfiler/cpuProfiler.h"
 
-#ifdef SIMULATOR
+#include "engine/components/batteryComponent.h"
+#include "engine/robotManager.h"
+#include "util/transport/connectionStats.h"
+
+// #ifdef SIMULATOR
 #include "osState/osState.h"
-#endif
+// #endif
 
 namespace Anki {
 namespace Cozmo {
@@ -93,7 +99,24 @@ void ProtoMessageHandler::BingBong(const external_interface::Bing& bing) {
 }
 
 void ProtoMessageHandler::GetRobotStats(const external_interface::RobotStatsRequest& request) {
-  external_interface::RobotStatsResponse* response = new external_interface::RobotStatsResponse{ 1, 2 };
+  Robot* robot = _context->GetRobotManager()->GetRobot();
+  const auto& batteryComponent = robot->GetBatteryComponent();
+  external_interface::NetworkStats* networkStats = new external_interface::NetworkStats{Util::gNetStat1NumConnections, \
+                                                                                        Util::gNetStat2LatencyAvg, \
+                                                                                        Util::gNetStat3LatencySD, \
+                                                                                        Util::gNetStat4LatencyMin, \
+                                                                                        Util::gNetStat5LatencyMax, \
+                                                                                        Util::gNetStat6PingArrivedPC, \
+                                                                                        Util::gNetStat7ExtQueuedAvg_ms, \
+                                                                                        Util::gNetStat8ExtQueuedMin_ms, \
+                                                                                        Util::gNetStat9ExtQueuedMax_ms, \
+                                                                                        Util::gNetStatAQueuedAvg_ms, \
+                                                                                        Util::gNetStatBQueuedMin_ms, \
+                                                                                        Util::gNetStatCQueuedMax_ms};
+  external_interface::RobotStatsResponse* response = new external_interface::RobotStatsResponse{batteryComponent.GetBatteryVolts(), \
+                                                                                                (external_interface::BatteryLevel)batteryComponent.GetBatteryLevel(), \
+                                                                                                OSState::getInstance()->GetOSBuildVersion(), \
+                                                                                                networkStats};
   external_interface::GatewayWrapper wrapper;
   wrapper.set_allocated_robot_stats_response(response);
   DeliverToExternal(wrapper); // TODO: make this intelligent (using broadcast or something)
