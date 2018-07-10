@@ -758,17 +758,9 @@ void NeuralNetModel::SaveObjectnessResponseMaps(const std::vector<cv::Mat>& chan
       
       const std::string salientPointFilename = Util::FileUtils::FullFilePath({_cachePath,
         "objectnessResponseMap", std::to_string(timestamp) + ".txt"});
-      // Max Value to Output
-      const std::string outputMaxX = std::to_string(channelMaxLoc.x);
-      const std::string outputMaxY = std::to_string(channelMaxLoc.y);
-      const std::string outputMaxValue = std::to_string(channelMax);
-      // Min Value to Output
-      const std::string outputMinX = std::to_string(channelMinLoc.x);
-      const std::string outputMinY = std::to_string(channelMinLoc.y);
-      const std::string outputMinValue = std::to_string(channelMin);
       std::ofstream salientPointFile(salientPointFilename);
-      salientPointFile << outputMaxX + " " + outputMaxY + " " + outputMaxValue + " "
-        + outputMinX + " " + outputMinY + " " + outputMinValue;
+      salientPointFile << channelMaxLoc.x << " " << channelMaxLoc.y << " " << channelMax << + " "
+        << channelMinLoc.x << " " << channelMinLoc.y << " " << channelMin;
       salientPointFile.close();
     }
 }
