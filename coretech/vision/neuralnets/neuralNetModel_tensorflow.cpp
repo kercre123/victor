@@ -428,7 +428,7 @@ Result NeuralNetModel::ReadLabelsFile(const std::string& fileName, std::vector<s
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result NeuralNetModel::GetClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp,
-                                       std::list<Vision::SalientPoint>& salientPoints)
+                                         std::list<Vision::SalientPoint>& salientPoints)
 {
   const float* outputData = outputTensor.tensor<float, 2>().data();
         
@@ -469,7 +469,7 @@ Result NeuralNetModel::GetClassification(const tensorflow::Tensor& outputTensor,
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result NeuralNetModel::GetLocalizedBinaryClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp,
-                                                      std::list<Vision::SalientPoint>& salientPoints)
+                                                        std::list<Vision::SalientPoint>& salientPoints)
 {
   // Create a detection box for each grid cell that is above threshold
 
@@ -615,7 +615,7 @@ Result NeuralNetModel::GetLocalizedBinaryClassification(const tensorflow::Tensor
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result NeuralNetModel::GetDetectedObjects(const std::vector<tensorflow::Tensor>& outputRensors, TimeStamp_t timestamp,
-                                        std::list<Vision::SalientPoint>& salientPoints)
+                                          std::list<Vision::SalientPoint>& salientPoints)
 {
   DEV_ASSERT(outputRensors.size() == 4, "NeuralNetModel.GetDetectedObjects.WrongNumOutputs");
 
