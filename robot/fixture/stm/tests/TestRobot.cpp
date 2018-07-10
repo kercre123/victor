@@ -1037,6 +1037,7 @@ void RobotPowerDown(void)
     }
     Contacts::powerOn(); //immdediately turn on power to prevent rebooting
     cleanup_preserve_vext = 1; //leave power on for removal detection (no cleanup pwr cycle)
+    Timer::delayMs(1000); //power off command has a delayed reaction time
     
     /*/DEBUG:
     ConsolePrintf("delay for manual powerdown check. press a key to skip\n");
