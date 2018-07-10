@@ -444,6 +444,10 @@
     "AnimName": "ag_explorer_lookaround"
   },
   {
+    "CladEvent": "ExploringLookAtHuman",
+    "AnimName": "ag_generic_look_stright_01"
+  },
+  {
     "CladEvent": "ExploringScanToLeft",
     "AnimName": "ag_explorer_scan_left"
   },

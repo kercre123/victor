@@ -123,6 +123,8 @@ private:
     ICozmoBehaviorPtr confirmChargerBehavior;
     ICozmoBehaviorPtr confirmCubeBehavior;
     
+    ICozmoBehaviorPtr referenceHumanBehavior;
+    
     std::unique_ptr<PathMotionProfile> customMotionProfile;
     
     std::unique_ptr<Util::RejectionSamplerHelper<Point2f>> openSpacePointEvaluator;
