@@ -158,6 +158,7 @@
     "minScore"            : 0.5,
     "verbose"             : 0,
     "pollPeriod_ms"       : 10,
+    "timeoutDuration_sec" : 10.0,
     "benchmarkRuns"       : 0
 
 

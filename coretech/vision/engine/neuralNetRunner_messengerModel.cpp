@@ -32,14 +32,6 @@
 namespace Anki {
 namespace Vision {
 
-namespace {
-#define CONSOLE_GROUP "Vision.NeuralNetRunner"
-
-  CONSOLE_VAR_RANGED(f32, kNeuralNetRunner_TimeoutDuration_sec,  CONSOLE_GROUP, 10.f, 1., 15.f);
-
-#undef CONSOLE_GROUP
-}
-  
 static const char * const kLogChannelName = "VisionSystem";
   
 // Useful just for printing every frame, since detection is slow, even through the profiler
@@ -60,6 +52,7 @@ private:
   
   std::string _cachePath;
   int         _pollPeriod_ms;
+  float       _timeoutDuration_sec = 10.f;
   
   Profiler& _profiler;
   
@@ -92,8 +85,13 @@ Result NeuralNetRunner::Model::LoadModel(const std::string& modelPath, const std
 
   // Overwrite timeout if it's in the neural net config. This is
   // primarily motivated by longer running models
-  JsonTools::GetValueOptional(config, "timeoutDuration_sec",
-                              kNeuralNetRunner_TimeoutDuration_sec);
+  if (false == JsonTools::GetValueOptional(config, "timeoutDuration_sec",
+                                           _timeoutDuration_sec))
+  {
+    PRINT_NAMED_INFO("NeuralNetRunner.Model.LoadModel.MissingTimeoutDuraction",
+                     "Keeping timeout at default value, %.3f seconds",
+                     _timeoutDuration_sec);
+  }
 
   return RESULT_OK;
 }
@@ -142,7 +140,7 @@ Result NeuralNetRunner::Model::Run(const ImageRGB& img, std::list<SalientPoint>&
     startTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     currentTime_sec = startTime_sec;
     
-    while( !resultAvailable && (currentTime_sec - startTime_sec < kNeuralNetRunner_TimeoutDuration_sec) )
+    while( !resultAvailable && (currentTime_sec - startTime_sec < _timeoutDuration_sec) )
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(_pollPeriod_ms));
       resultAvailable = Util::FileUtils::FileExists(resultFilename);
@@ -197,7 +195,7 @@ Result NeuralNetRunner::Model::Run(const ImageRGB& img, std::list<SalientPoint>&
   {
     PRINT_NAMED_WARNING("NeuralNetRunner.Model.PollingForResultTimedOut",
                         "Start:%.1fsec Current:%.1f Timeout:%.1fsec",
-                        startTime_sec, currentTime_sec, kNeuralNetRunner_TimeoutDuration_sec);
+                        startTime_sec, currentTime_sec, _timeoutDuration_sec);
   }
   
   return RESULT_OK;
