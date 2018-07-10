@@ -639,7 +639,7 @@ bool BehaviorOnboarding::CheckAndDelegateInterruptions()
     
     // special logic for first stage
     if( _dVars.currentStage == OnboardingStages::NotStarted ) {
-      if( interruptionID == BEHAVIOR_ID(DriveOffCharger) ) {
+      if( interruptionID == BEHAVIOR_ID(DriveOffChargerStraight) ) {
         // first stage has a special drive off charger
         continue;
       } else if( !_dVars.receivedContinue ) {

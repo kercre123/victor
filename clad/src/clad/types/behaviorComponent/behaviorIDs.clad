@@ -112,9 +112,15 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree
   DefaultTextToSpeechLoop,
-  DriveOffCharger,
-  DriveOffChargerAnim,
+
+  // victorBehaviorTree/driveOffCharger
+  DriveOffChargerCube,
+  DriveOffChargerFace,
+  DriveOffChargerRandomly,
+  DriveOffChargerRandomlyAnim,
   DriveOffChargerStraight,
+
+  // victorBehaviorTree
   GlobalInterruptions,
   HighLevelAI,
 
