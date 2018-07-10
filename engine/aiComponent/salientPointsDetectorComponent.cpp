@@ -63,6 +63,7 @@ bool SalientPointsDetectorComponent::PersonDetected() const
     float currentTickCount = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if ((currentTickCount - _timeSinceLastObservation) > 3) { // 3 seconds
 
+
       Vision::SalientPoint personDetected;
 
       personDetected.timestamp = _robot->GetLastImageTimeStamp();
