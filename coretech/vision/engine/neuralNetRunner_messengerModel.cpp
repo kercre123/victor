@@ -22,7 +22,6 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 
-#include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/quoteMacro.h"
 
