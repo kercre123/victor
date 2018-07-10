@@ -137,16 +137,7 @@ namespace {
 static const char* kConsoleFeatureGroup = "FeatureGate";
 static const char* kFeatureEnumString =
   "Invalid,"
-  "AndroidConnectionFlow,"
-  "SpeedTap,"
-  "CodeLabGame,"
-  "PeekABoo,"
-  "SparksGatherCubes,"
-  "GuardDog,"
-  "Bouncer,"
   "Laser,"
-  "Singing,"
-  "LocalNotifications,"
   "Exploring,"
   "Messaging,"
   "ReactToIllumination,"
