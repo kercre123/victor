@@ -36,31 +36,33 @@ CONSOLE_VAR_RANGED(u32, kSleepingBoutNumStirs_min, CONSOLE_GROUP, 5, 1, 10);
 CONSOLE_VAR_RANGED(u32, kSleepingBoutNumStirs_max, CONSOLE_GROUP, 10, 1, 10);
 
 constexpr const char* kEnablePowerSaveKey = "enablePowerSave";
+constexpr const char* kPlayEmergencyGetOut = "shouldPlayEmergencyGetOut";
 
 }
 
 BehaviorSleeping::BehaviorSleeping(const Json::Value& config)
   : ICozmoBehavior(config)
 {
-  // defaults to true
-  _shouldEnterPowerSave = config.get(kEnablePowerSaveKey, true).asBool();
+  _iConfig.shouldEnterPowerSave = config.get(kEnablePowerSaveKey, true).asBool();
+  _iConfig.shouldPlayEmergencyGetOut = config.get(kPlayEmergencyGetOut, true).asBool();
 }
 
 void BehaviorSleeping::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   expectedKeys.insert(kEnablePowerSaveKey);
+  expectedKeys.insert(kPlayEmergencyGetOut);
 }
 
 bool BehaviorSleeping::CanBeGentlyInterruptedNow() const
 {
-  return !_animIsPlaying;
+  return !_dVars.animIsPlaying;
 }
 
 void BehaviorSleeping::OnBehaviorActivated()
 {
-  _animIsPlaying = false;
+  _dVars.animIsPlaying = false;
 
-  if( _shouldEnterPowerSave ) {
+  if( _iConfig.shouldEnterPowerSave ) {
     SmartRequestPowerSaveMode();
   }
 
@@ -73,14 +75,16 @@ void BehaviorSleeping::OnBehaviorActivated()
   
 void BehaviorSleeping::OnBehaviorDeactivated()
 {
-  PlayEmergencyGetOut(AnimationTrigger::WakeupGetout);
+  if( _iConfig.shouldPlayEmergencyGetOut ) {
+    PlayEmergencyGetOut(AnimationTrigger::WakeupGetout);
+  }
 }
 
 void BehaviorSleeping::TransitionToSleeping()
 {
   SetDebugStateName("sleeping");
   
-  _numRemainingInBout = GetRNG().RandIntInRange(kSleepingBoutNumStirs_min, kSleepingBoutNumStirs_max);
+  _dVars.numRemainingInBout = GetRNG().RandIntInRange(kSleepingBoutNumStirs_min, kSleepingBoutNumStirs_max);
   
   const float waitTime_s = GetRNG().RandDblInRange(kSleepingStirSpacing_min_s, kSleepingStirSpacing_max_s);
   HoldFaceForTime(waitTime_s, &BehaviorSleeping::TransitionToBoutOfStirring);
@@ -90,9 +94,9 @@ void BehaviorSleeping::TransitionToBoutOfStirring()
 {
   SetDebugStateName("inBout");
 
-  _animIsPlaying = false;
+  _dVars.animIsPlaying = false;
 
-  if( _numRemainingInBout-- >= 0 ) {
+  if( _dVars.numRemainingInBout-- >= 0 ) {
     // start bout (wait first, then animate)    
     const float waitTime_s = GetRNG().RandDblInRange(kSleepingBoutSpacing_min_s, kSleepingBoutSpacing_max_s);
     HoldFaceForTime(waitTime_s, &BehaviorSleeping::TransitionToPlayStirAnim);
@@ -107,7 +111,7 @@ void BehaviorSleeping::TransitionToBoutOfStirring()
 void BehaviorSleeping::TransitionToPlayStirAnim()
 {
   SetDebugStateName("stirring");
-  _animIsPlaying = true;
+  _dVars.animIsPlaying = true;
 
   DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::GoToSleepSleeping),
                       &BehaviorSleeping::TransitionToBoutOfStirring);  

@@ -3,6 +3,9 @@
   "behaviorClass": "Sleeping",
   "enablePowerSave": false,
 
+  // pr demo handles wake up
+  "shouldPlayEmergencyGetOut": false,
+
   "wantsToCancelSelfCondition": {
     "conditionType": "TriggerWordPending"
   }
