@@ -117,15 +117,13 @@ Result NeuralNetRunner::Init(const std::string& modelPath, const std::string& ca
   _profiler.SetDasLogFrequency(config.get("ProfilingEventLogFrequency_ms", 10000).asUInt());
 
 
-  // TODO is this the right location for this to happen
   // Clear the cache of any stale images/results:
   Util::FileUtils::RemoveDirectory(_cachePath);
   Util::FileUtils::CreateDirectory(_cachePath);
 
-  // TODO right now we should assume that we only will ever have
+  // Note: right now we should assume that we only will be running
   // one model. This is definitely going to change but unitl
-  // how we want to handle this solidifies a bit more let's
-  // not worry about it.
+  // we know how we want to handle a bit more let's not worry about it.
   _visualizationDirectory = config.get("visualizationDirectory", "").asString();
   if (_visualizationDirectory != "") {
     Util::FileUtils::CreateDirectory(Util::FileUtils::FullFilePath(
