@@ -363,7 +363,7 @@ namespace Cozmo {
           head[14] = FACE_DISPLAY_HEIGHT & 0xff;
           head[15] = (FACE_DISPLAY_HEIGHT >> 8) & 0xff;
           head[16] = 32;   /** 32 bits depth **/
-          head[17] = 0x08; /** top-down flag, 8 bits alpha **/
+          head[17] = 0x28; /** top-down flag, 8 bits alpha **/
           fwrite(head, sizeof(uint8_t), 18, s_tga);
 
           s_framesToCapture = 1;
