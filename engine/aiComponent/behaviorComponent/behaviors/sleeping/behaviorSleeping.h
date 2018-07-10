@@ -26,7 +26,7 @@ protected:
   BehaviorSleeping(const Json::Value& config);
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{}
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual bool CanBeGentlyInterruptedNow() const override;
 
@@ -47,6 +47,8 @@ private:
                        void(BehaviorSleeping::*callback)());
   void LoopHoldFace(void(BehaviorSleeping::*callback)());
 
+  bool _shouldEnterPowerSave = true;
+  
   bool _animIsPlaying = false;
 
   int _numRemainingInBout = 0;

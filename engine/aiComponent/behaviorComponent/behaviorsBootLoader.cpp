@@ -14,7 +14,6 @@
  *
  **/
 
-#include "engine/aiComponent/behaviorComponent/behaviorsBootLoader.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "coretech/common/engine/jsonTools.h"
@@ -24,16 +23,19 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboarding.h"
+#include "engine/aiComponent/behaviorComponent/behaviorsBootLoader.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
-#include "engine/externalInterface/externalInterface.h"
+#include "engine/cozmoContext.h"
 #include "engine/externalInterface/cladProtoTypeTranslator.h"
+#include "engine/externalInterface/externalInterface.h"
 #include "engine/externalInterface/externalMessageRouter.h"
 #include "engine/externalInterface/gatewayInterface.h"
 #include "engine/robot.h"
 #include "engine/unitTestKey.h"
+#include "engine/utils/cozmoFeatureGate.h"
+#include "util/console/consoleInterface.h"
 #include "util/entityComponent/dependencyManagedEntity.h"
 #include "util/fileUtils/fileUtils.h"
-#include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 
 
@@ -45,6 +47,7 @@ BehaviorsBootLoader::BehaviorsBootLoader(const Json::Value& config)
   : IDependencyManagedComponent( this, BCComponentID::BehaviorsBootLoader )
 {
   _behaviors.factoryBehavior = BEHAVIOR_ID(PlaypenTest);
+  _behaviors.prDemoBehavior = BEHAVIOR_ID(InitPRDemo);
   
   if( ANKI_VERIFY(!config.empty(), "BehaviorsBootLoader.Ctor.InvalidConfig", "Empty config") ) {
     
@@ -85,6 +88,8 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
   _gatewayInterface = robot->GetGatewayInterface();
   
   _behaviorContainer = dependentComps.GetComponentPtr<BehaviorContainer>();
+
+  const bool inPRDemo = robot->GetContext()->GetFeatureGate()->IsFeatureEnabled( FeatureType::PRDemo );
   
   // If this is the factory test forcibly set _bootBehavior as playpen as long as the robot has not been through packout
   bool startInPlaypen = false;
@@ -97,6 +102,8 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
     SetNewBehavior( _behaviors.factoryBehavior );
   } else if( _overrideBehavior != nullptr ) {
     _bootBehavior = _overrideBehavior;
+  } else if( inPRDemo ) {
+    SetNewBehavior( _behaviors.prDemoBehavior );
   } else {
     InitOnboarding();
   }

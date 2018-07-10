@@ -133,7 +133,20 @@ ICozmoBehaviorPtr BehaviorContainer::FindBehaviorByExecutableType(ExecutableBeha
   return nullptr;
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::set<ICozmoBehaviorPtr> BehaviorContainer::FindBehaviorsByClass(BehaviorClass behaviorClass) const
+{
+  std::set<ICozmoBehaviorPtr> behaviorList;
+  for (const auto & behavior : _idToBehaviorMap)
+  {
+    if( GetBehaviorClass(behavior.second) == behaviorClass )
+    {
+      behaviorList.insert(behavior.second);
+    }
+  }
+  return behaviorList;
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorContainer::VerifyExecutableBehaviors() const
 {

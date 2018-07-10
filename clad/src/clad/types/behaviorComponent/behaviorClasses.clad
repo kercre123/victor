@@ -32,6 +32,7 @@ enum uint_8 BehaviorClass {
   RollBlock,
 
   // basicWorldInteractions
+  BumpObject,
   ClearChargerArea,
   DriveOffCharger,
   FindFaces,
@@ -160,6 +161,10 @@ enum uint_8 BehaviorClass {
   // photoTaking
   AestheticallyCenterFaces,
   TakeAPhotoCoordinator,
+
+  // prDemo
+  PRDemo,
+  PRDemoBase,
 
   // proxBehaviors
   ProxGetToDistance,

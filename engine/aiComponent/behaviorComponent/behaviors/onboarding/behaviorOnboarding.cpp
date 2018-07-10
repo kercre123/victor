@@ -16,6 +16,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboarding.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -143,6 +144,7 @@ BehaviorOnboarding::BehaviorOnboarding(const Json::Value& config)
   SubscribeToAppTags({
     AppToEngineTag::kOnboardingContinue,
     AppToEngineTag::kOnboardingSkip,
+    AppToEngineTag::kOnboardingSkipOnboarding,
   });
 }
 
@@ -242,6 +244,11 @@ void BehaviorOnboarding::InitBehavior()
     };
     _iConfig.consoleFuncs.emplace_front( "Skip", std::move(skipFunc), "Onboarding", "" );
     
+    auto skipEverythingFunc = [this](ConsoleFunctionContextRef context) {
+      RequestSkipRobotOnboarding();
+    };
+    _iConfig.consoleFuncs.emplace_front( "SkipEverything", std::move(skipEverythingFunc), "Onboarding", "" );
+    
     auto retryChargingFunc = [this](ConsoleFunctionContextRef context) {
       RequestRetryCharging();
     };
@@ -335,6 +342,8 @@ void BehaviorOnboarding::BehaviorUpdate()
   
   UpdateBatteryInfo();
   
+  OnboardingSteps requestedStep = OnboardingSteps::Default;
+  
   IBehavior* stageBehavior = nullptr;
   if( !CheckAndDelegateInterruptions() ) {
     // no interruptions want to run or are running
@@ -385,8 +394,8 @@ void BehaviorOnboarding::BehaviorUpdate()
       for( const auto& pendingEvent : _dVars.pendingEvents ) {
         if( pendingEvent.second.type == PendingEvent::Continue ) {
           // todo: use app message for this
-          OnboardingContinueEnum continueNum = OnboardingContinueEnum::Default;
-          const bool allowedContinue = GetCurrentStage()->OnContinue( GetBEI(), continueNum );
+          OnboardingSteps stepNum = OnboardingSteps::Default;
+          const bool allowedContinue = GetCurrentStage()->OnContinue( GetBEI(), stepNum );
           if( gi != nullptr ) {
             auto* onboardingContinueResponse = new external_interface::OnboardingContinueResponse{ allowedContinue };
             gi->Broadcast( ExternalMessageRouter::WrapResponse(onboardingContinueResponse) );
@@ -422,6 +431,7 @@ void BehaviorOnboarding::BehaviorUpdate()
       _dVars.state = BehaviorState::StageRunning;
       
       // now get what behavior the stage requests
+      requestedStep = GetCurrentStage()->GetExpectedStep();
       stageBehavior = GetCurrentStage()->GetBehavior( GetBEI() );
       if( stageBehavior != nullptr ) {
         if( (stageBehavior != _dVars.lastBehavior) && !stageBehavior->WantsToBeActivated() ) {
@@ -455,6 +465,15 @@ void BehaviorOnboarding::BehaviorUpdate()
     }
   }
   
+  if( requestedStep != _dVars.lastExpectedStep ) {
+    _dVars.lastExpectedStep = requestedStep;
+    auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+    if( gi != nullptr ) {
+      auto* msg = new external_interface::OnboardingRobotExpectingStep{ CladProtoTypeTranslator::ToProtoEnum(requestedStep) };
+      gi->Broadcast( ExternalMessageRouter::Wrap(msg) );
+    }
+  }
+  
   if( (stageBehavior != nullptr) && (_dVars.lastBehavior != stageBehavior) ) {
     _dVars.lastBehavior = stageBehavior;
     _dVars.currentStageBehaviorFinished = false;
@@ -464,6 +483,7 @@ void BehaviorOnboarding::BehaviorUpdate()
     });
   } else if( stageBehavior == nullptr ) {
     _dVars.lastBehavior = nullptr;
+    _dVars.lastExpectedStep = OnboardingSteps::Default;
   }
 }
   
@@ -483,6 +503,8 @@ void BehaviorOnboarding::AlwaysHandleInScope(const AppToEngineEvent& event)
     RequestContinue();
   } else if( event.GetData().GetTag() == external_interface::GatewayWrapperTag::kOnboardingSkip ) {
     RequestSkip();
+  } else if( event.GetData().GetTag() == external_interface::GatewayWrapperTag::kOnboardingSkipOnboarding ) {
+    RequestSkipRobotOnboarding();
   }
 }
 
@@ -624,6 +646,12 @@ bool BehaviorOnboarding::CheckAndDelegateInterruptions()
         // dont run interruptions if we havent received the first Continue, which would drive the robot off charger
         continue;
       }
+    } else {
+      // OnboardingFirstTriggerWord json ensures it only runs once, but we never want it to run at all if
+      // the robot boots into a stage later than wake up
+      if( interruptionID == BEHAVIOR_ID(OnboardingFirstTriggerWord) ) {
+        continue;
+      }
     }
     
     if( interruption->IsActivated() ) {
@@ -657,14 +685,16 @@ void BehaviorOnboarding::Interrupt( ICozmoBehaviorPtr interruption, BehaviorID i
   
   _dVars.lastInterruption = interruptionID;
   _dVars.lastBehavior = nullptr;
+  _dVars.lastExpectedStep = OnboardingSteps::Default;
   DelegateIfInControl( interruption.get() );
   
   // notify app of certain interruptions
-  // MandatoryPhysicalReactions: no app update needed for now
-  // OnboardingLowBattery      : start charging countdown logic
-  // TriggerWordDetected       : will send normal messages
-  // OnboardingPickedUp        : sends messages here
-  // OnboardingPlacedOnCharger : only send if not low battery, since OnboardingLowBattery handles that
+  // MandatoryPhysicalReactions : no app update needed for now
+  // OnboardingLowBattery       : start charging countdown logic
+  // TriggerWordDetected        : will send normal messages (WakeWordBegin/End)
+  // OnboardingFirstTriggerWord : will send normal messages (WakeWordBegin/End)
+  // OnboardingPickedUp         : sends messages here
+  // OnboardingPlacedOnCharger  : only send if not low battery, since OnboardingLowBattery handles that
   if( interruptionID == BEHAVIOR_ID(OnboardingPlacedOnCharger) ) {
     auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
     if( !_dVars.batteryInfo.lowBattery && (gi != nullptr) ) {
@@ -761,6 +791,28 @@ void BehaviorOnboarding::RequestSkip()
     itInserted->second.time_s = time_s;
   }
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboarding::RequestSkipRobotOnboarding()
+{
+  MoveToStage( OnboardingStages::Complete );
+  _dVars.state = BehaviorState::WaitingForTermination;
+  GetBEI().GetAnimationComponent().EnableKeepFaceAlive( false ); // face should go to black when canceling animations
+  CancelDelegates(false);
+  
+  auto* headDownAction = new MoveHeadToAngleAction{ MIN_HEAD_ANGLE };
+  DelegateIfInControl( headDownAction, [this](const ActionResult& res){
+    TerminateOnboarding();
+    // this may cause a brief neutral eyes between now and when the new behavior stack sends its first
+    // animation. We deal with that same problem in the BehaviorComponentMessageHandler, and if the
+    // eye blip is obvious, that same logic could be re-used here. That would mean: removing this
+    // call to EnableKeepFaceAlive( true ) and having the behaviorsBootLoader send it a few ticks
+    // after switching stacks
+    GetBEI().GetAnimationComponent().EnableKeepFaceAlive( true );
+  });
+  
+};
+ 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboarding::RequestRetryCharging()

@@ -13,11 +13,15 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/photoTaking/behaviorTakeAPhotoCoordinator.h"
 
+#include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/components/photographyManager.h"
+#include "engine/faceWorld.h"
 #include "engine/robot.h"
 
 #include "util/console/consoleInterface.h"
@@ -146,8 +150,18 @@ void BehaviorTakeAPhotoCoordinator::TransitionToFrameFaces()
   ANKI_VERIFY(_iConfig.frameFacesBehavior->WantsToBeActivated(),
               "BehaviorTakeAPhotoCoordinator.TransitionToFrameFaces.DoesNotWantToBeActivated", 
               "");
-  DelegateIfInControl(_iConfig.frameFacesBehavior.get(), 
-                      &BehaviorTakeAPhotoCoordinator::TransitionToTakeAPhotoAnimations);
+  const auto imageTimestampWhenStarted = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
+  DelegateIfInControl(_iConfig.frameFacesBehavior.get(),
+                      [this, imageTimestampWhenStarted] () {
+                        const bool sawAnyFaces = GetBEI().GetFaceWorld().HasAnyFaces(imageTimestampWhenStarted);
+                        if (sawAnyFaces) {
+                          TransitionToTakeAPhotoAnimations();
+                        } else {
+                          PRINT_CH_INFO("Behaviors", "BehaviorTakeAPhotoCoordinator.TransitionToFrameFaces.NoFacesFound",
+                                        "Did not see any faces - playing \"I don't know\" animation");
+                          DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::VC_IntentNeutral));
+                        }
+                      });
 }
 
 
@@ -204,12 +218,13 @@ void BehaviorTakeAPhotoCoordinator::CaptureCurrentImage()
     return robot.GetPhotographyManager().WasPhotoTaken(photoHandle);
   }, kTakingPhotoTimeout_sec);
   
-  DelegateIfInControl(waitAction, [photoHandle](ActionResult result) {
+  DelegateIfInControl(waitAction, [this, photoHandle](ActionResult result) {
     if(ActionResult::SUCCESS == result) {
       PRINT_CH_INFO("Behaviors", "BehaviorTakeAPhotoCoordinator.CaptureCurrentImage.PhotoWasTaken",
                     "Handle: %zu", photoHandle);
     }
     else {
+      GetBEI().GetPhotographyManager().CancelTakePhoto();
       PRINT_NAMED_ERROR("BehaviorTakeAPhotoCoordinator.CaptureCurrentImage.TakePhotoTimedOut",
                         "Handle: %zu Timeout: %.2fsec",
                         photoHandle, kTakingPhotoTimeout_sec);

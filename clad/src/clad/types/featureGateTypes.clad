@@ -17,7 +17,8 @@ enum uint_8 FeatureType {
   Exploring,
   Messaging,
   ReactToIllumination,
-  KnowledgeGraph
+  KnowledgeGraph,
+  PRDemo
 }
 
 structure FeatureToggle {

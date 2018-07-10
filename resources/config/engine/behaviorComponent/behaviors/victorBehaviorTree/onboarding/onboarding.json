@@ -7,10 +7,11 @@
   "interruptions": [
     "MandatoryPhysicalReactions", // todo: get rid of robot on side? might interfere with low battery
     "OnboardingLowBattery",
-    "OnboardingPlacedOnCharger", // is suppressed during first stage
-    "OnboardingPickedUp",        // is suppressed during first stage
-    "DriveOffCharger",           // is suppressed during first stage
-    "TriggerWordDetected"        // may sometimes be suppressed
+    "OnboardingPlacedOnCharger",  // is suppressed during first stage
+    "OnboardingPickedUp",         // is suppressed during first stage
+    "DriveOffCharger",            // is suppressed during first stage
+    "OnboardingFirstTriggerWord", // only runs once, or never if booting after the first stage
+    "TriggerWordDetected"         // may sometimes be suppressed
   ],
 
   // for stages after the initial wakeup stage

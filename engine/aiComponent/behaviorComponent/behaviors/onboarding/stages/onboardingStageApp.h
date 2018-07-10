@@ -46,7 +46,7 @@ public:
     SetTriggerWordEnabled(false);
   }
   
-  virtual bool OnContinue( BehaviorExternalInterface& bei, OnboardingContinueEnum continueNum ) override
+  virtual bool OnContinue( BehaviorExternalInterface& bei, OnboardingSteps stepNum ) override
   {
     DebugTransition("Waiting on voice command");
     // enable trigger word

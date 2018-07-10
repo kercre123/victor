@@ -137,25 +137,6 @@ UserIntentMap::UserIntentMap(const Json::Value& config, const CozmoContext* ctx)
                      UserIntentTagToString( container.find(intentName)->second.userIntent ) );
 
         container.emplace(intentName, IntentInfo{intentTag, varSubstitutions});
-
-        // TODO:(bn) remove as part of VIC-3438
-        // Chipper is changing names of some intents to include _extend at the end. Until that change goes live,
-        // add a hack to duplicate keys which end with _extend_ to also support being sent without _extent. Once
-        // chipper is updated, we can remove this code, but this code is safe to go live before the chipper update
-        // and will future proof robots during that update
-        static const std::string kExtendEnding = "_extend";
-        // credit: https://stackoverflow.com/questions/874134/find-if-string-ends-with-another-string-in-c
-        auto endsWith = [](std::string const & value, std::string const & ending) {
-          if (ending.size() > value.size()) {
-            return false;
-          }
-          return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
-        };
-        
-        if( endsWith(intentName, kExtendEnding) ) {
-          std::string intentWithoutExtend = intentName.substr(0, intentName.length() - kExtendEnding.length());
-          container.emplace( intentWithoutExtend, IntentInfo{intentTag, varSubstitutions});
-        }
       }
     };
     

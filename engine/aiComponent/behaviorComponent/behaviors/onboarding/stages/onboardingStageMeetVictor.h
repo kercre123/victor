@@ -67,7 +67,7 @@ public:
     SetTriggerWordEnabled(false);
   }
   
-  virtual bool OnContinue( BehaviorExternalInterface& bei, OnboardingContinueEnum continueNum ) override
+  virtual bool OnContinue( BehaviorExternalInterface& bei, OnboardingSteps stepNum ) override
   {
     if( _step == Step::LookingAround ) {
       DebugTransition("Waiting on \"my name is\"");

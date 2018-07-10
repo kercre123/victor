@@ -498,6 +498,8 @@ void BehaviorExploring::TransitionToArrived()
   _dVars.distToGoal_mm = -1.0f;
   _dVars.numDriveAttemps = 0;
   
+  // todo (VIC-4230): sometimes reference a face, if one exists
+  
   auto* action = new CompoundActionSequential();
   const float r = GetRNG().RandDbl();
   bool animFirst = (r < 0.5f);

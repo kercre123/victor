@@ -18,6 +18,7 @@
 
 #include "micDataTypes.h"
 #include "coretech/common/shared/types.h"
+#include "cozmoAnim/micData/micTriggerConfig.h"
 #include "audioUtil/audioDataTypes.h"
 #include "util/container/fixedCircularBuffer.h"
 #include "util/global/globalDefinitions.h"
@@ -39,6 +40,7 @@ namespace Anki {
       class MicDataSystem;
       class MicImmediateDirection;
     }
+    class RobotDataLoader;
     namespace RobotInterface {
       struct MicData;
     }
@@ -60,6 +62,8 @@ public:
   MicDataProcessor(const MicDataProcessor& other) = delete;
   MicDataProcessor& operator=(const MicDataProcessor& other) = delete;
 
+  void Init(const RobotDataLoader& dataLoader);
+
   void ProcessMicDataPayload(const RobotInterface::MicData& payload);
   void RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT);
 
@@ -72,7 +76,10 @@ public:
 
   BeatDetector& GetBeatDetector() { assert(nullptr != _beatDetector); return *_beatDetector.get(); }
 
-  void UpdateTriggerForLocale(const Util::Locale& newLocale);
+  // Note 'Count' and '-1' values indicate to use default
+  void UpdateTriggerForLocale(Util::Locale newLocale,
+                              MicTriggerConfig::ModelType modelType = MicTriggerConfig::ModelType::Count,
+                              int searchFileIndex = -1);
   
 private:
   MicDataSystem* _micDataSystem = nullptr;
@@ -94,6 +101,7 @@ private:
   std::unique_ptr<SVadObject_t> _sVadObject;
   uint32_t _vadCountdown = 0;
   std::unique_ptr<MicImmediateDirection> _micImmediateDirection;
+  std::unique_ptr<MicTriggerConfig> _micTriggerConfig;
 
   static constexpr uint32_t kRawAudioBufferSize = kRawAudioPerBuffer_ms / kTimePerChunk_ms;
   float _rawAudioBufferFullness[2] = { 0.f, 0.f };
@@ -107,8 +115,8 @@ private:
   std::mutex _rawMicDataMutex;
   bool _processThreadStop = false;
   bool _robotWasMoving = false;
-  bool _shouldStreamAfterTrigger = true;
-  bool _triggerEnabled = true;
+  bool _shouldStreamAfterTrigger = true; // if you change the default, change engine's micComponent.h
+  bool _triggerEnabled = true; // if you change the default, change engine's micComponent.h
 
 
 #if ANKI_DEV_CHEATS
@@ -140,6 +148,11 @@ private:
 
   // Aubio beat detector
   std::unique_ptr<BeatDetector> _beatDetector;
+
+  // For tracking and altering the trigger model being used
+  MicTriggerConfig::TriggerDataPaths _currentTriggerPaths;
+  MicTriggerConfig::TriggerDataPaths _nextTriggerPaths;
+  std::mutex _triggerModelMutex;
   
   void InitVAD();
   void TriggerWordDetectCallback(const char* resultFound, float score);

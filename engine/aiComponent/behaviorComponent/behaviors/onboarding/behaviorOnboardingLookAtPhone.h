@@ -47,7 +47,8 @@ protected:
 
 private:
   
-  void MoveHeadWithAnimation( bool headUp );
+  void MoveHeadUp();
+  void MoveHeadDown();
   
   void SetupConsoleFuncs();
 

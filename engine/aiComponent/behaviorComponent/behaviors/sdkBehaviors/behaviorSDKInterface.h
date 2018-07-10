@@ -44,6 +44,7 @@ protected:
   virtual void OnBehaviorDeactivated() override;
   
   virtual void HandleWhileActivated(const AppToEngineEvent& event) override;
+  virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
 
 private:
   void DriveOffChargerRequest(const external_interface::DriveOffChargerRequest& driveOffChargerRequest);

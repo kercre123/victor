@@ -91,7 +91,7 @@ def addr2line(obj, addr, options):
 
 def show_line (line, options):
   # Does this look like a backtrace?
-  match = re.search('([#0-9]+)  ([0-9a-zA-Z\-\+\.]+) \+ (0x[0-9a-f]+)', line)
+  match = re.search('([#0-9]+)  ([0-9a-zA-Z\_\-\+\.]+) \+ (0x[0-9a-f]+)', line)
   if not match:
     print(line)
     return

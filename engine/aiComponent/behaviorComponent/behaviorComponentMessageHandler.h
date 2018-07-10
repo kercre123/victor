@@ -1,5 +1,5 @@
 /**
-* File: devBehaviorComponentMessageHandler.h
+* File: behaviorComponentMessageHandler.h
 *
 * Author: Kevin M. Karol
 * Created: 10/24/17
@@ -12,8 +12,8 @@
 **/
 
 
-#ifndef __Cozmo_Basestation_BehaviorSystem_DevBehaviorComponentMessageHandler_H__
-#define __Cozmo_Basestation_BehaviorSystem_DevBehaviorComponentMessageHandler_H__
+#ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorComponentMessageHandler_H__
+#define __Cozmo_Basestation_BehaviorSystem_BehaviorComponentMessageHandler_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
@@ -31,26 +31,35 @@ namespace Cozmo {
 class Robot;
 class BehaviorComponent;
 class BehaviorContainer;
+class BehaviorsBootLoader;
 class BehaviorSystemManager;
+class UserIntentComponent;
 
-class DevBehaviorComponentMessageHandler : public IDependencyManagedComponent<BCComponentID>, private Util::noncopyable
+class BehaviorComponentMessageHandler : public IDependencyManagedComponent<BCComponentID>, private Util::noncopyable
 {
 public:
   virtual void InitDependent(Robot* robot, const BCCompMap& dependentComps) override;
   virtual void UpdateDependent(const BCCompMap& dependentComps) override;
   virtual void GetInitDependencies(BCCompIDSet& dependencies) const override;
-  virtual void AdditionalInitAccessibleComponents(BCCompIDSet& components) const override;
   virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {};
 
 public:
-  DevBehaviorComponentMessageHandler(Robot& robot);
-  virtual ~DevBehaviorComponentMessageHandler();
+  BehaviorComponentMessageHandler(Robot& robot);
+  virtual ~BehaviorComponentMessageHandler();
   
 private:
   Robot& _robot;
   std::vector<::Signal::SmartHandle> _eventHandles;
   ICozmoBehaviorPtr _rerunBehavior;
   size_t _tickInfoScreenEnded; // ignored if 0
+  
+  // caches old values while info screens are up
+  bool _wasTriggerWordEnabled = true;
+  bool _wasStreamingEnabled = true;
+  
+  void OnEnterInfoFace( BehaviorContainer& bContainer, BehaviorSystemManager& bsm );
+  
+  void OnExitInfoFace( BehaviorSystemManager& bsm, BehaviorsBootLoader& bbl, UserIntentComponent& uic );
 
   void SetupUserIntentEvents();
   
@@ -66,4 +75,4 @@ private:
 } // namespace Anki
 
 
-#endif // __Cozmo_Basestation_BehaviorSystem_DevBehaviorComponentMessageHandler_H__
+#endif // __Cozmo_Basestation_BehaviorSystem_BehaviorComponentMessageHandler_H__

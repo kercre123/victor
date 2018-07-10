@@ -51,6 +51,10 @@ BehaviorSDKInterface::BehaviorSDKInterface(const Json::Value& config)
   _iConfig.driveOffChargerBehaviorStr = JsonTools::ParseString(config, kDriveOffChargerBehaviorKey, debugName);
   _iConfig.goHomeBehaviorStr = JsonTools::ParseString(config, kGoHomeBehaviorKey, debugName);
 
+  SubscribeToTags({
+    EngineToGameTag::RobotCompletedAction,
+  });
+
   SubscribeToAppTags({
     AppToEngineTag::kDriveOffChargerRequest,
     AppToEngineTag::kDriveOnChargerRequest,
@@ -175,6 +179,79 @@ void BehaviorSDKInterface::HandleDriveOnChargerComplete() {
     auto* driveOnChargerResult = new external_interface::DriveOnChargerResult;
     driveOnChargerResult->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
     gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOnChargerResult) );
+  }
+}
+
+// Reports back to gateway that requested actions have been completed.
+// E.g., the Python SDK ran play_anim and wants to know when the animation
+// action was completed.
+void BehaviorSDKInterface::HandleWhileActivated(const EngineToGameEvent& event)
+{
+  if (IsControlDelegated()) {
+    // The SDK behavior has deleted to another behavior, and that
+    // behavior requested an action. Don't inform gateway that the
+    // action has completed because it wasn't requested by the SDK.
+    //
+    // If necessary, can delegate to actions from the behavior instead
+    // of running them via CLAD request from gateway.
+    return;
+  }
+
+  if (event.GetData().GetTag() != EngineToGameTag::RobotCompletedAction) {
+    return;
+  }
+
+  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+  if (gi == nullptr) return;
+
+  ExternalInterface::RobotCompletedAction msg = event.GetData().Get_RobotCompletedAction();
+  switch((RobotActionType)msg.actionType)
+  {
+    case RobotActionType::TURN_IN_PLACE:
+    {
+      auto* response = new external_interface::TurnInPlaceResponse;
+      response->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
+    }
+    break;
+
+    case RobotActionType::DRIVE_STRAIGHT:
+    {
+      auto* response = new external_interface::DriveStraightResponse;
+      response->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
+    }
+    break;
+
+    case RobotActionType::MOVE_HEAD_TO_ANGLE:
+    {
+      auto* response = new external_interface::SetHeadAngleResponse;
+      response->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
+    }
+    break;
+
+    case RobotActionType::MOVE_LIFT_TO_HEIGHT:
+    {
+      auto* response = new external_interface::SetLiftHeightResponse;
+      response->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
+    }
+    break;
+
+    case RobotActionType::PLAY_ANIMATION:
+    {
+      auto* response = new external_interface::PlayAnimationResult;
+      response->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
+    }
+    break;
+
+    default:
+    {
+      PRINT_NAMED_WARNING("BehaviorSDKInterface.HandleWhileActivated.NoMatch", "No match for action tag so no response sent: [Tag=%d]", msg.idTag);
+      return;
+    }
   }
 }
 

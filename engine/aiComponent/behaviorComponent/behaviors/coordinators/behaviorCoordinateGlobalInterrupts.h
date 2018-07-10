@@ -16,6 +16,7 @@
 
 
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherPassThrough.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTreeStateHelpers.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -59,6 +60,9 @@ private:
     
     ICozmoBehaviorPtr danceToTheBeatBehavior;
     std::vector<ICozmoBehaviorPtr> toSuppressWhenDancingToTheBeat;
+    
+    AreBehaviorsActivatedHelper behaviorsThatShouldntReactToUnexpectedMovement;
+    ICozmoBehaviorPtr reactToUnexpectedMovementBehavior;
     
     std::unordered_map<ICozmoBehaviorPtr, bool> devActivatableOverrides;
   };

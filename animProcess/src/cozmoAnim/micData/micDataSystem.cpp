@@ -109,6 +109,11 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform)
               sockName.c_str());
 }
 
+void MicDataSystem::Init(const RobotDataLoader& dataLoader)
+{
+  _micDataProcessor->Init(dataLoader);
+}
+
 MicDataSystem::~MicDataSystem()
 {
   // Tear down the mic data processor explicitly first, because it uses functionality owned by MicDataSystem

@@ -846,7 +846,7 @@ namespace Cozmo {
       // Otherwise, clear the track and set the streaming animation to nullptr so that the new
       // procedural animation will be initialized below
       if(spriteSeqTrack.HasFramesLeft() &&
-         (spriteSeqTrack.GetCurrentKeyFrame().GetKeyframeDuration_ms() == 0)){
+         !spriteSeqTrack.GetCurrentKeyFrame().SequenceShouldAdvance()){
         spriteSeqTrack.Clear();
         SetStreamingAnimation(nullptr, 0);
       }
@@ -864,7 +864,7 @@ namespace Cozmo {
     }
 
     SpriteSequenceKeyFrame kf(spriteHandle, triggerTime_ms, shouldRenderInEyeHue);
-    kf.SetKeyFrameDuration_ms(duration_ms);
+    kf.SetKeyframeActiveDuration_ms(duration_ms);
     
     Result result = _proceduralAnimation->AddKeyFrameToBack(kf);
     if(!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetFaceImage.FailedToAddKeyFrame", "")))
@@ -907,7 +907,7 @@ namespace Cozmo {
     auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
     SpriteSequenceKeyFrame kf(spriteCache, compImg, frameInterval_ms,
                               shouldRenderInEyeHue);
-    kf.SetKeyFrameDuration_ms(duration_ms);
+    kf.SetKeyframeActiveDuration_ms(duration_ms);
     Result result = _proceduralAnimation->AddKeyFrameToBack(kf);
     if(!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetCompositeImage.FailedToAddKeyFrame", "")))
     {
@@ -1765,6 +1765,7 @@ namespace Cozmo {
         _lastAnimationStreamTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
         // Send an end-of-animation keyframe when done
         if( !_streamingAnimation->HasFramesLeft() &&
+            _relativeStreamTime_ms >= _streamingAnimation->GetLastKeyFrameEndTime_ms() &&
             _startOfAnimationSent &&
             !_endOfAnimationSent)
         {

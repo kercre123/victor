@@ -109,7 +109,7 @@ namespace Cozmo {
   CONSOLE_VAR(bool, kDisplayUndistortedImages,      "Vision.General", false);
 
   CONSOLE_VAR(bool, kEnableMirrorMode,              "Vision.General", false);
-  CONSOLE_VAR(bool, kDisplayDetectionsInMirrorMode, "Vision.General", false); // objects, faces, markers
+  CONSOLE_VAR(bool, kDisplayDetectionsInMirrorMode, "Vision.General", true); // objects, faces, markers
   CONSOLE_VAR(bool, kDisplayEyeContactInMirrorMode, "Vision.General", false);
   CONSOLE_VAR(f32,  kMirrorModeGamma,               "Vision.General", 1.f);
 
@@ -458,12 +458,7 @@ namespace Cozmo {
       return;
     }
 
-    // Don't bother updating while we are waiting for a capture format change to take effect
     UpdateCaptureFormatChange();
-    if(CaptureFormatState::WaitingForProcessingToStop == _captureFormatState)
-    {
-      return;
-    }
 
     if(_bufferedImg.IsEmpty())
     {
@@ -890,13 +885,8 @@ namespace Cozmo {
 
     while (_running) {
 
-      if(_paused) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(kVision_MinSleepTime_ms));
-        continue;
-      }
-
       ANKI_CPU_TICK("VisionComponent", 100.0, Util::CpuProfiler::CpuProfilerLoggingTime(kVisionComponent_Logging));
-
+      
       if (!_currentImg.IsEmpty())
       {
         ANKI_CPU_PROFILE("ProcessImage");
@@ -907,6 +897,13 @@ namespace Cozmo {
         // Clear it when done.
         ReleaseImage(_currentImg);
         Unlock();
+      }
+
+      // Checking this after !_currentImg.IsEmpty() to make sure we always process the
+      // current image after being paused so that it will eventually be empty
+      if(_paused) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(kVision_MinSleepTime_ms));
+        continue;
       }
 
       if(!_nextImg.IsEmpty())
@@ -2629,7 +2626,7 @@ namespace Cozmo {
   }
 
   bool VisionComponent::CaptureImage(Vision::ImageRGB& image_out)
-  {
+  {    
     // Wait until the current async conversion is finished before getting another
     // frame
     if(_cvtYUV2RGBFuture.valid())
@@ -2643,6 +2640,11 @@ namespace Cozmo {
       return false;
     }
 
+    if(_captureFormatState == CaptureFormatState::WaitingForProcessingToStop)
+    {
+      return false;
+    }
+    
     auto cameraService = CameraService::getInstance();
 
     const int numRows = cameraService->CameraGetHeight();
@@ -2786,7 +2788,7 @@ namespace Cozmo {
 
     _captureFormatState = CaptureFormatState::WaitingForProcessingToStop;
 
-    PRINT_CH_INFO("VisionComponent", "VisionComponent.SetCamerCaptureFormat.RequestingSwitch",
+    PRINT_CH_INFO("VisionComponent", "VisionComponent.SetCameraCaptureFormat.RequestingSwitch",
                   "From %s to %s",
                   ImageEncodingToString(_currentImageFormat), ImageEncodingToString(_desiredImageFormat));
     
@@ -2804,13 +2806,20 @@ namespace Cozmo {
 
       case CaptureFormatState::WaitingForProcessingToStop:
       {
-        PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateCaptureFormatChange.WaitingForProcessingToStop", "");
         Lock();
         const bool curImgEmpty = _currentImg.IsEmpty();
-
+        const bool cvtingImg = _cvtYUV2RGBFuture.valid();
+        
+        PRINT_CH_INFO("VisionComponent",
+                      "VisionComponent.UpdateCaptureFormatChange.WaitingForProcessingToStop",
+                      "ImgEmpty: %d CvtingYUV: %d",
+                      curImgEmpty,
+                      cvtingImg);
+        
         // If the current image is empty so
         // VisionSystem has finished processing it
-        if(curImgEmpty)
+        // and we are not actively converting an image
+        if(curImgEmpty && !cvtingImg)
         {
           // Make sure to also clear image cache
           _visionSystem->ClearImageCache();

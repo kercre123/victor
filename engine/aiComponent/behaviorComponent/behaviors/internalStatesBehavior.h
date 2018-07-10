@@ -56,7 +56,7 @@ protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override { }
   virtual bool WantsToBeActivatedBehavior() const override { return true; }
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  virtual void OverrideResumeState( StateID& resumeState ) const {}
+  virtual void OverrideResumeState( StateID& resumeState ) {}
   
   // helpers
   
@@ -64,6 +64,8 @@ protected:
   StateID GetStateID(const std::string& stateName) const;
   // get current state
   StateID GetCurrentStateID() const { return _currState; }
+  // return the associated state name (assert if invalid)
+  const std::string& GetStateName(const StateID state);
   // the the time the state started (in seconds)
   float GetLastTimeStarted(StateID state) const;
   // the the time the state started (in seconds)

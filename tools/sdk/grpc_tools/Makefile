@@ -169,9 +169,6 @@ test_user_authentication: .require_ip
 	@echo
 
 test_curl: .require_ip
-	$(curl_command)/v1/play_animation -d '{"animation":{"name":"anim_poked_giggle"},"loops":1}'
-	@echo
-
 	$(curl_command)/v1/sdk_activation -d '{"slot":0, "enable":true}'
 	@echo
 
@@ -250,6 +247,10 @@ test_settings: .require_ip
 	@echo
 
 	curl --cacert trust.cert https://$(ANKI_ROBOT_HOST)/v1/update_settings -d '{"settings":{"clock_24_hour":true,"eye_color":"TEAL"}}'
+	@echo
+
+test_status_history: .require_ip
+	$(curl_command)/v1/status_history -d '{}'
 	@echo
 
 update_time: .require_ip

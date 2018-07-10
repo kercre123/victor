@@ -87,16 +87,10 @@ public:
   using MessageEngineToGame = ExternalInterface::MessageEngineToGame;
   // which contains
   using CLADEvent = ExternalInterface::Event;
-  // which contains
-  using CLADStatus = ExternalInterface::Status;
   
   // Is an Event (not part of a request/response pair)
   template <typename T>
   using CanBeCLADEvent = Anki::Util::is_explicitly_constructible<CLADEvent, T>;
-  
-  // Is a status message (which is an Event)
-  template <typename T>
-  using CanBeCLADStatus = Anki::Util::is_explicitly_constructible<CLADStatus, T>;
   
   template <typename T>
   using CanBeEngineToGame = Anki::Util::is_explicitly_constructible<MessageEngineToGame, T>;
@@ -109,7 +103,7 @@ public:
   }
   
   template <typename T>
-  inline static ReturnIf<!CanBeCLADStatus<T>::value && !CanBeCLADEvent<T>::value && CanBeEngineToGame<T>::value, MessageEngineToGame>
+  inline static ReturnIf<!CanBeCLADEvent<T>::value && CanBeEngineToGame<T>::value, MessageEngineToGame>
   /* MessageEngineToGame */ Wrap(T&& message)
   {
     MessageEngineToGame engineToGame{ std::forward<T>(message) };
@@ -122,14 +116,6 @@ public:
   {
     CLADEvent event{ std::forward<T>(message) };
     return Wrap( std::move(event) );
-  }
-
-  template <typename T>
-  inline static ReturnIf<CanBeCLADStatus<T>::value, MessageEngineToGame>
-  /* MessageEngineToGame */ Wrap(T&& message)
-  {
-    CLADStatus status{ std::forward<T>(message) };
-    return Wrap( std::move(status) );
   }
 
 };

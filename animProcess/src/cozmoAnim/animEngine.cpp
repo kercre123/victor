@@ -113,6 +113,7 @@ Result AnimEngine::Init()
   dataLoader->LoadNonConfigData();
 
   _ttsComponent = std::make_unique<TextToSpeechComponent>(_context.get());
+  _context->GetMicDataSystem()->Init(*dataLoader);
 
   // animation streamer must be initialized after loading non config data (otherwise there are no animations loaded)
   _animationStreamer->Init();

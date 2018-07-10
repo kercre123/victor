@@ -17,7 +17,7 @@
 
 #include "engine/components/pathComponent.h"
 #include "engine/cozmoContext.h"
-#include "engine/latticePlanner.h"
+#include "engine/xyPlanner.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
@@ -46,11 +46,9 @@ protected:
     _robot.reset(new Robot(1, cozmoContext));
     _pathComponent = &(_robot->GetPathComponent());
 
-    LatticePlanner* planner = dynamic_cast<LatticePlanner*>(_pathComponent->_longPathPlanner.get());
+    _pathComponent->_longPathPlanner.reset(new XYPlanner(_robot.get(), true));
+    XYPlanner* planner = dynamic_cast<XYPlanner*>(_pathComponent->_longPathPlanner.get());
     ASSERT_TRUE(planner != nullptr);
-
-    // default planner to run in main thread
-    planner->SetIsSynchronous(true);
 
     _robot->FakeSyncRobotAck();
 

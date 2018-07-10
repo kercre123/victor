@@ -39,12 +39,20 @@ CONSOLE_VAR_RANGED(u32, kSleepingBoutNumStirs_min, CONSOLE_GROUP, 2, 1, 10);
 CONSOLE_VAR_RANGED(u32, kSleepingBoutNumStirs_max, CONSOLE_GROUP, 5, 1, 10);
 
 constexpr const char* kSleepingFaceLoopAnimClip = "anim_face_sleeping";
+constexpr const char* kEnablePowerSaveKey = "enablePowerSave";
 
 }
 
 BehaviorSleeping::BehaviorSleeping(const Json::Value& config)
   : ICozmoBehavior(config)
 {
+  // defaults to true
+  _shouldEnterPowerSave = config.get(kEnablePowerSaveKey, true).asBool();
+}
+
+void BehaviorSleeping::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  expectedKeys.insert(kEnablePowerSaveKey);
 }
 
 bool BehaviorSleeping::CanBeGentlyInterruptedNow() const
@@ -56,7 +64,9 @@ void BehaviorSleeping::OnBehaviorActivated()
 {
   _animIsPlaying = false;
 
-  SmartRequestPowerSaveMode();
+  if( _shouldEnterPowerSave ) {
+    SmartRequestPowerSaveMode();
+  }
   
   TransitionToSleeping();  
 }

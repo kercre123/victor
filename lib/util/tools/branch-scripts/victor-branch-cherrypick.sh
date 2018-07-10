@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 #
+# lib/util/tools/branch-scripts/victor-branch-cherrypick.sh
+#
+# Helper script to perform cherrypick from master to release branch
+#
 # Exit for non-zero error
 set -e
 #

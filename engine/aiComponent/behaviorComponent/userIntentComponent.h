@@ -119,6 +119,10 @@ public:
   // pending user intent and will make it no longer pending without ever making it active. This is generally
   // not what you want, but can be useful to explicitly ignore a command
   void DropUserIntent(UserIntentTag userIntent);
+  
+  // Drops any pending user intents without responding to them. This is generally not what you want
+  // for any behavior. Use the above if needed
+  void DropAnyUserIntent();
 
   // returns if an intent has recently gone unclaimed. or, reset the corresponding flag
   bool WasUserIntentUnclaimed() const { return _wasIntentUnclaimed; };
