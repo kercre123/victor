@@ -259,6 +259,7 @@ const char* DBG_cmd_substitution(const char *line, int len)
 #define IS_FIXMODE_ROBOT3()   ( g_fixmode==FIXMODE_ROBOT3  || g_fixmode==FIXMODE_ROBOT3_OL )
 #define IS_FIXMODE_PACKOUT()  ( g_fixmode==FIXMODE_PACKOUT || g_fixmode==FIXMODE_PACKOUT_OL )
 #define IS_FIXMODE_OFFLINE()  ( g_fixmode==FIXMODE_ROBOT1_OL || g_fixmode==FIXMODE_ROBOT3_OL || g_fixmode==FIXMODE_PACKOUT_OL )
+#define IS_FIXMODE_UNPACKOUT() ( g_fixmode==FIXMODE_UN_PACKOUT )
 
 int detect_ma = 0, detect_mv = 0;
 
@@ -978,19 +979,44 @@ void EmrUpdate(void)
 
 void EmrUnPackout(void)
 {
-  ConsolePrintf("clearing EMR data...\n");
-  //XXX: unlock sequence
-  rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 0 );
-  rcomSmr( EMR_FIELD_OFS(PACKED_OUT_DATE), 0 );
-  rcomSmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), 0 );
-  rcomSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 0 );
+  const uint32_t WIPE_PACKOUT_MAGIC = 0x57495045;
+  ConsolePrintf("Unpacking the ribbit...\n");
   
-  //clear test calibration
-  rcomSmr( EMR_FIELD_OFS(playpenTouchSensorMinValid), 0 );
-  rcomSmr( EMR_FIELD_OFS(playpenTouchSensorMaxValid), 0 );
-  rcomSmr( EMR_FIELD_OFS(playpenTouchSensorRangeThresh), 0 );
-  rcomSmr( EMR_FIELD_OFS(playpenTouchSensorStdDevThresh), 0 );
-  rcomSmr( EMR_FIELD_OFS(playpenTestDisableMask), 0 );
+  //writing magic value clears several emr registers:
+  //  PACKED_OUT_FLAG, PACKED_OUT_DATE, PLAYPEN_PASSED_FLAG, PLAYPEN_READY_FLAG
+  rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), WIPE_PACKOUT_MAGIC, RCOM_PRINT_LEVEL_CMD ); //RCOM_PRINT_LEVEL_ALL );
+  
+  //change packout flag causes delay while some internal processes react
+  ConsolePrintf("wait for system reconfig...\n");
+  uint32_t Tstart = Timer::get(); int reconfig=0;
+  while(reconfig < 5) {
+    if( Timer::elapsedUs(Tstart) > 5*1000*1000 ) 
+      throw ERROR_TIMEOUT; //ERROR_ROBOT_PACKED_OUT;
+    try {
+      rcomGmr( EMR_FIELD_OFS(ESN), RCOM_PRINT_LEVEL_NONE ); //read something and see if it succeeds
+      reconfig++;
+    } catch(...) { 
+      reconfig=0;
+    }
+  }
+  ConsolePrintf("done in %ims\n", Timer::elapsedUs(Tstart)/1000 );
+  
+  //readback verify
+  uint32_t playpenready = rcomGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
+  uint32_t playpenpass  = rcomGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
+  uint32_t packedout    = rcomGmr( EMR_FIELD_OFS(PACKED_OUT_FLAG) );
+  uint32_t packoutdate   = rcomGmr( EMR_FIELD_OFS(PACKED_OUT_DATE) );
+  uint32_t packoutCnt     = rcomGmr( EMR_FIELD_OFS(fixture)+EMRF_PACKOUT_CNT );
+  ConsolePrintf("EMR[%u] playpenready:%u\n", EMR_FIELD_OFS(PLAYPEN_READY_FLAG), playpenready);
+  ConsolePrintf("EMR[%u] playpenpass :%u\n", EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), playpenpass);
+  ConsolePrintf("EMR[%u] packedout   :%u\n", EMR_FIELD_OFS(PACKED_OUT_FLAG), packedout);
+  ConsolePrintf("EMR[%u] packout-date:%u\n", EMR_FIELD_OFS(PACKED_OUT_DATE), packoutdate);
+  ConsolePrintf("EMR[%u] packoutCnt:%i\n", EMR_FIELD_OFS(fixture)+EMRF_PACKOUT_CNT, packoutCnt);
+  
+  if( playpenready > 0 || playpenpass > 0 || packedout > 0 || packoutdate > 0 ) {
+    ConsolePrintf("---UNPACK FAILED---\n");
+    throw ERROR_ROBOT_PACKED_OUT;
+  }
 }
 
 void RobotPowerDown(void)
@@ -999,7 +1025,16 @@ void RobotPowerDown(void)
   
   if( !IS_FIXMODE_ROBOT1() )
   {
-    rcomPwr(RCOM_PWR_OFF);
+    if( IS_FIXMODE_UNPACKOUT() ) {
+      //un-packout hack is a little unstable. Add some reliability to power-down.
+      int retries=5;
+      while(1) { 
+        try{ rcomPwr(RCOM_PWR_OFF); break; }
+        catch(...) { if( --retries <= 0 ) throw; } 
+      }
+    } else {
+      rcomPwr(RCOM_PWR_OFF);
+    }
     Contacts::powerOn(); //immdediately turn on power to prevent rebooting
     cleanup_preserve_vext = 1; //leave power on for removal detection (no cleanup pwr cycle)
     
@@ -1771,7 +1806,6 @@ TestFunction* TestRobotUnPackoutGetTests(void) {
   static TestFunction m_tests[] = {
     TestRobotInfo,
     EmrUnPackout,
-    TurkeysDone,
     RobotPowerDown,
     NULL,
   };
