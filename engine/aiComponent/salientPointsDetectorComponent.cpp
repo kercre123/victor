@@ -87,5 +87,6 @@ bool SalientPointsDetectorComponent::PersonDetected() const
   );
 }
 
+
 } // namespace Cozmo
 } // namespace Anki
