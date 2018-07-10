@@ -723,10 +723,11 @@ Result NeuralNetModel::GetSalientPointsFromResponseMap(const tensorflow::Tensor&
   Vision::SalientPointType type = Vision::SalientPointType::Object;
 
   // TODO right now objectness doesn't have an area associated with it,
-  // thus the shape part of the salient point is empty, and so is area
-  // fraction.
-  Vision::SalientPoint salientPoint(timestamp, x, y,
-                                    max, 1.f * (widthScale*heightScale),
+  // thus the shape part of the salient point is empty, and the area
+  // fraction has a placeholder.
+  Vision::SalientPoint salientPoint(timestamp,
+                                    x, y, max,
+                                    1.f * (widthScale*heightScale),
                                     type, EnumToString(type),
                                     Poly2f{}.ToCladPoint2dVector());
 
