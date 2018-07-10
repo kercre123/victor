@@ -363,7 +363,7 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
     case NeuralNetParams::OutputType::Classification:
     {
       const float* outputData = outputTensor.tensor<float, 2>().data();
-      GetClassification(outputData, t, salientPoints);
+      ClassificationOutputHelper(outputData, t, salientPoints);
       break;
     }
     case NeuralNetParams::OutputType::BinaryLocalization:
@@ -374,7 +374,7 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
       
       const float* outputData = outputTensor.tensor<float, 2>().data();
       
-      GetLocalizedBinaryClassification(outputData, t, salientPoints);
+      LocalizedBinaryOutputHelper(outputData, t, salientPoints);
       break;
     }
     case NeuralNetParams::OutputType::AnchorBoxes:
