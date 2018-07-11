@@ -20,6 +20,14 @@
     "enabled": true
   },
   {
+    "feature": "Dancing",
+    "enabled": true
+  },
+  {
+    "feature": "CubeBehaviors",
+    "enabled": true
+  },
+  {
     "feature": "PRDemo",
     "enabled": false
   }

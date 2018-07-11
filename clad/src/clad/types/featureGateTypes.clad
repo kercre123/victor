@@ -9,6 +9,9 @@ enum uint_8 FeatureType {
   Messaging,
   ReactToIllumination,
   KnowledgeGraph,
+  Dancing,
+  CubeBehaviors,
+  
   PRDemo
 }
 

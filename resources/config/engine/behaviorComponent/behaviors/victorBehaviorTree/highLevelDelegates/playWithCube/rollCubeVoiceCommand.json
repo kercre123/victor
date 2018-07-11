@@ -11,6 +11,11 @@
     }
   ],
 
+  "wantsToBeActivatedCondition": {
+    "conditionType": "FeatureGate",
+    "feature": "CubeBehaviors"
+  },
+
   "behaviors" : [
     "DriveOffChargerCube",
     "LookForCubeInternal",

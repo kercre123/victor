@@ -19,20 +19,23 @@
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/retryWrapperAction.h"
-#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorPickUpCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorPickUpCube.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
+#include "engine/cozmoContext.h"
+#include "engine/utils/cozmoFeatureGate.h"
 
 #include "clad/types/actionResults.h"
+#include "clad/types/featureGateTypes.h"
 #include "coretech/vision/engine/observableObject.h"
 #include "util/console/consoleInterface.h"
 
@@ -119,6 +122,13 @@ void BehaviorStackBlocks::GetAllDelegates(std::set<IBehavior*>& delegates) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorStackBlocks::WantsToBeActivatedBehavior() const
 {
+  const auto* featureGate = GetBEI().GetRobotInfo().GetContext()->GetFeatureGate();
+  const bool featureEnabled = featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::CubeBehaviors);
+  if(!featureEnabled)
+  {
+    return false;
+  }
+
   ObjectID bottomBlock;
   ObjectID topBlock;
   CalculateTargetBlocks(bottomBlock, topBlock);

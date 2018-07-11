@@ -12,21 +12,24 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorPopAWheelie.h"
 
+#include "coretech/vision/engine/observableObject.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
-#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
+#include "engine/cozmoContext.h"
 #include "engine/robot.h"
-#include "coretech/vision/engine/observableObject.h"
+#include "engine/utils/cozmoFeatureGate.h"
 #include "util/console/consoleInterface.h"
 
+#include "clad/types/featureGateTypes.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -62,6 +65,13 @@ BehaviorPopAWheelie::BehaviorPopAWheelie(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorPopAWheelie::WantsToBeActivatedBehavior() const
 {
+  const auto* featureGate = GetBEI().GetRobotInfo().GetContext()->GetFeatureGate();
+  const bool featureEnabled = featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::CubeBehaviors);
+  if(!featureEnabled)
+  {
+    return false;
+  }
+
   UpdateTargetBlock();
   
   return _dVars.targetBlock.IsSet();
