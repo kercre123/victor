@@ -382,6 +382,7 @@ void read_robot_info_(void)
     //read factory test dataz
     uint32_t packoutCnt     = rcomGmr( EMR_FIELD_OFS(fixture)+EMRF_PACKOUT_CNT );
     uint32_t packoutVbatMv  = rcomGmr( EMR_FIELD_OFS(fixture)+EMRF_PACKOUT_VBAT_MV );
+    uint32_t robot3VbatMv   = rcomGmr( EMR_FIELD_OFS(fixture)+EMRF_ROBOT3_VBAT_MV );
     
     #define U32FLOAT(u)     ( *((float*)&(u)) )
     
@@ -400,6 +401,7 @@ void read_robot_info_(void)
     ConsolePrintf("EMR[%u] playpenTestDisableMask:%08x\n", EMR_FIELD_OFS(playpenTestDisableMask), playpenTestDisableMask);
     ConsolePrintf("EMR[%u] packoutCnt:%i\n", EMR_FIELD_OFS(fixture)+EMRF_PACKOUT_CNT, packoutCnt);
     ConsolePrintf("EMR[%u] packoutVbatMv:%i\n", EMR_FIELD_OFS(fixture)+EMRF_PACKOUT_VBAT_MV, packoutVbatMv);
+    ConsolePrintf("EMR[%u] robot3VbatMv:%i\n", EMR_FIELD_OFS(fixture)+EMRF_ROBOT3_VBAT_MV, robot3VbatMv);
     
     //inspect robot3 motor data
     if( (!g_isReleaseBuild && IS_FIXMODE_ROBOT3() ) || IS_FIXMODE_ROBOTNFO() )
@@ -1006,12 +1008,12 @@ void EmrUnPackout(void)
   uint32_t playpenpass  = rcomGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
   uint32_t packedout    = rcomGmr( EMR_FIELD_OFS(PACKED_OUT_FLAG) );
   uint32_t packoutdate   = rcomGmr( EMR_FIELD_OFS(PACKED_OUT_DATE) );
-  uint32_t packoutCnt     = rcomGmr( EMR_FIELD_OFS(fixture)+EMRF_PACKOUT_CNT );
+  //uint32_t packoutCnt     = rcomGmr( EMR_FIELD_OFS(fixture)+EMRF_PACKOUT_CNT );
   ConsolePrintf("EMR[%u] playpenready:%u\n", EMR_FIELD_OFS(PLAYPEN_READY_FLAG), playpenready);
   ConsolePrintf("EMR[%u] playpenpass :%u\n", EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), playpenpass);
   ConsolePrintf("EMR[%u] packedout   :%u\n", EMR_FIELD_OFS(PACKED_OUT_FLAG), packedout);
   ConsolePrintf("EMR[%u] packout-date:%u\n", EMR_FIELD_OFS(PACKED_OUT_DATE), packoutdate);
-  ConsolePrintf("EMR[%u] packoutCnt:%i\n", EMR_FIELD_OFS(fixture)+EMRF_PACKOUT_CNT, packoutCnt);
+  //ConsolePrintf("EMR[%u] packoutCnt:%i\n", EMR_FIELD_OFS(fixture)+EMRF_PACKOUT_CNT, packoutCnt);
   
   if( playpenready > 0 || playpenpass > 0 || packedout > 0 || packoutdate > 0 ) {
     ConsolePrintf("---UNPACK FAILED---\n");
