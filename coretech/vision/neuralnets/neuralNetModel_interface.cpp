@@ -108,6 +108,12 @@ void INeuralNetModel::LocalizedBinaryOutputHelper(const T* outputData, TimeStamp
                                                   std::list<Vision::SalientPoint>& salientPoints)
 {
   // Create a detection box for each grid cell that is above threshold
+
+  // This has been removed because the outputTensor.tensor options are always
+  // 0000 regardless of acutally row or column major and Eigen::RowMajor is
+  // 0001 and thus this check isn't really checking anything. VIC-4386
+  // DEV_ASSERT( !(outputTensor.tensor<float, 2>().Options & Eigen::RowMajor),
+  //           "NeuralNetModel.GetLocalizedBinaryClassification.OutputNotRowMajor");
   
   _detectionGrid.create(_params.numGridRows, _params.numGridCols);
   
