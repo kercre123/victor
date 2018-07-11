@@ -60,6 +60,11 @@ go_project(
     dir = 'opusenc'
 )
 
+go_project(
+    name = 'sessiondl',
+    dir = 'sessiondl'
+)
+
 cxx_project(
     name = 'gateway_grpc',
     srcs = ['gateway/external_interface.proto']
