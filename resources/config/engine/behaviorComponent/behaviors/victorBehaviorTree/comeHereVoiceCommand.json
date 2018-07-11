@@ -24,7 +24,15 @@
       "animTooClose": "AlreadyAtFace",
       
       "timeUntilCancelFaceTrack_s": 5.0,      
-      "minDriveToFaceDistanceKey_mm": 200
+      "minDriveToFaceDistanceKey_mm": 200,
+
+      "motionProfile": {
+        "speed_mmps": 130.0,
+        "accel_mmps2": 200.0,
+        "decel_mmps2": 100.0,
+        "isCustom": true
+      }
+
     }
   ],
 
