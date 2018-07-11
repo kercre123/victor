@@ -91,7 +91,10 @@ CONSOLE_VAR(f32,               kEnrollFace_MinBackup_mm,                        
 CONSOLE_VAR(f32,               kEnrollFace_MaxBackup_mm,                        CONSOLE_GROUP, 15.f);
 CONSOLE_VAR(f32,               kEnrollFace_MaxTotalBackup_mm,                   CONSOLE_GROUP, 50.f);
 
-CONSOLE_VAR(s32,               kEnrollFace_NumImagesToWait,                     CONSOLE_GROUP, 3);
+// Max angle to turn while looking for a face
+CONSOLE_VAR(f32,               kEnrollFace_MaxTurnTowardsFaceAngle_rad,         CONSOLE_GROUP, DEG_TO_RAD(180.f));
+  
+CONSOLE_VAR(s32,               kEnrollFace_NumImagesToWait,                     CONSOLE_GROUP, 5);
 
 // Number of faces to consider "too many" and forced timeout when seeing that many
 CONSOLE_VAR(s32,               kEnrollFace_DefaultMaxFacesVisible,              CONSOLE_GROUP, 1); // > this is "too many"
@@ -106,6 +109,7 @@ static const char * const kLogChannelName = "FaceRecognizer";
 static const char * const kMaxFacesVisibleKey = "maxFacesVisible";
 static const char * const kTooManyFacesTimeoutKey = "tooManyFacesTimeout_sec";
 static const char * const kTooManyFacesRecentTimeKey = "tooManyFacesRecentTime_sec";
+static const char * const kFaceSelectionPenaltiesKey = "faceSelectionPenalties";
 
 }
 
@@ -114,8 +118,10 @@ static const char * const kTooManyFacesRecentTimeKey = "tooManyFacesRecentTime_s
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorEnrollFace::InstanceConfig::InstanceConfig()
+: timeout_sec(kEnrollFace_Timeout_sec)
+, faceSelectionCriteria(FaceSelectionComponent::kDefaultSelectionCriteria)
 {
-  timeout_sec = kEnrollFace_Timeout_sec;
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -163,6 +169,14 @@ BehaviorEnrollFace::BehaviorEnrollFace(const Json::Value& config)
   _iConfig.maxFacesVisible = config.get(kMaxFacesVisibleKey, kEnrollFace_DefaultMaxFacesVisible).asInt();
   _iConfig.tooManyFacesTimeout_sec = config.get(kTooManyFacesTimeoutKey, kEnrollFace_DefaultTooManyFacesTimeout_sec).asFloat();
   _iConfig.tooManyFacesRecentTime_sec = config.get(kTooManyFacesRecentTimeKey, kEnrollFace_DefaultTooManyFacesRecentTime_sec).asFloat();
+  
+  if( config.isMember(kFaceSelectionPenaltiesKey) ) {
+    const bool parsedOK = FaceSelectionComponent::ParseFaceSelectionFactorMap(config[kFaceSelectionPenaltiesKey],
+                                                                              _iConfig.faceSelectionCriteria);
+    ANKI_VERIFY(parsedOK, "BehaviorEnrollFace.InvalidFaceSelectionConfig",
+                "behavior '%s' has invalid config",
+                GetDebugLabel().c_str());
+  }
 }
 
 
@@ -886,11 +900,15 @@ void BehaviorEnrollFace::TransitionToLookingForFace()
 
   SET_STATE(LookingForFace);
 
+  // Wait for faces to update what's in FaceWorld, in case we just moved (e.g. by turning towards sound)
+  // Then create an action to turn towards the "best" face in FaceWorld
+  // Then wait again to give the vision system a chance to see faces in that position before enrolling
+  //   or looking around to find faces if there were none
   IActionRunner* action = new CompoundActionSequential({
+    new WaitForImagesAction(kEnrollFace_NumImagesToWait, VisionMode::DetectingFaces),
     CreateTurnTowardsFaceAction(_dVars.faceID, _dVars.saveID, playScanningGetOut),
     new WaitForImagesAction(kEnrollFace_NumImagesToWait, VisionMode::DetectingFaces),
   });
-
 
   // Make sure we stop tracking/scanning if necessary (CreateTurnTowardsFaceAction can create
   // a tracking action)
@@ -1221,84 +1239,59 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(Vision::FaceID_t 
     return liftAndTurnTowardsAction;
   }
 
-  IActionRunner* turnAction = nullptr;
-
-  if(faceID != Vision::UnknownFaceID)
+  auto const& faceWorld = GetBEI().GetFaceWorld();
+  
+  SmartFaceID smartID;
+  if(GetBEI().GetFaceWorld().HasAnyFaces())
   {
-    // Try to look at the specified face
-    const Vision::TrackedFace* face = GetBEI().GetFaceWorld().GetFace(faceID);
-    if(nullptr != face) {
+    if( (faceID != Vision::UnknownFaceID) && (nullptr != faceWorld.GetFace(faceID)))
+    {
+      // Try to look at the specified face
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.CreateTurnTowardsFaceAction.TurningTowardsFaceID",
                     "Turning towards faceID=%d (saveID=%d)",
                     faceID, saveID);
-
-      SmartFaceID smartID = GetBEI().GetFaceWorld().GetSmartFaceID(faceID);
-      turnAction = new TurnTowardsFaceAction(smartID, DEG_TO_RAD(45.f));
+      
+      smartID = faceWorld.GetSmartFaceID(faceID);
     }
-  }
-  else
-  {
-    // We weren't given a specific FaceID, so grab the last observed *unnamed*
-    // face ID from FaceWorld and look at it (if there is one). If saveID was
-    // specified, check first to see it's present in FaceWorld and turn towards
-    // it (since that's who we are re-enrolling).
-    const Vision::TrackedFace* faceToTurnTowards = nullptr;
-    if(saveID != Vision::UnknownFaceID )
+    else if( (saveID != Vision::UnknownFaceID) && (nullptr != faceWorld.GetFace(saveID)) )
     {
-      faceToTurnTowards = GetBEI().GetFaceWorld().GetFace(saveID);
+      // If saveID was specified, check first to see if it's present in FaceWorld and turn towards
+      // it if so(since that's who we are re-enrolling)
+      smartID = faceWorld.GetSmartFaceID(saveID);
     }
-
-    if(faceToTurnTowards == nullptr)
+    else
     {
-      auto allFaceIDs = GetBEI().GetFaceWorld().GetFaceIDs();
-      for(auto& ID : allFaceIDs)
+      // Select the "best" face according to selection criteria
+      const auto& faceSelection = GetAIComp<FaceSelectionComponent>();
+      smartID = faceSelection.GetBestFaceToUse( _iConfig.faceSelectionCriteria );
+      
+      // If nothing better is available, the face selector could return a named face, which we don't want
+      auto face = faceWorld.GetFace(smartID);
+      if(!ANKI_VERIFY(nullptr != face, "BehaviorEnrollFace.CreateTurnTowardsFaceAction.NullBestFace",
+                      "SmartFaceID %s returned as best but not in FaceWorld", smartID.GetDebugStr().c_str())
+         || face->HasName())
       {
-        const Vision::TrackedFace* face = GetBEI().GetFaceWorld().GetFace(ID);
-        if(ANKI_VERIFY(face != nullptr, "BehaviorEnrollFace.CreateTurnTowardsFaceAction.NullFace", "ID:%d", ID))
-        {
-          if(!face->HasName())
-          {
-            // Use this face if:
-            // - faceToTurnTowards hasn't been set yet, OR
-            // - this face is newer than the curent face to turn towards, OR
-            // - this face was seen at the same time as the current face to
-            //    turn towards and we win coin toss (to randomly break ties)
-            if((faceToTurnTowards == nullptr) ||
-               (face->GetTimeStamp() > faceToTurnTowards->GetTimeStamp()) ||
-               (face->GetTimeStamp() == faceToTurnTowards->GetTimeStamp() &&
-                GetBEI().GetRNG().RandDbl() < 0.5))
-            {
-              faceToTurnTowards = face;
-            }
-          }
-        }
+        smartID.Reset();
       }
     }
-
-    if(nullptr != faceToTurnTowards)
-    {
-      // Couldn't find face in face world, try turning towards last face pose
-      PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.CreateTurnTowardsFaceAction.FoundFace",
-                    "Turning towards faceID=%d last seen at t=%d (saveID=%d)",
-                    faceToTurnTowards->GetID(), faceToTurnTowards->GetTimeStamp(), saveID);
-
-      SmartFaceID smartID = GetBEI().GetFaceWorld().GetSmartFaceID(faceToTurnTowards->GetID());
-      turnAction = new TurnTowardsFaceAction(smartID, DEG_TO_RAD(90.f));
-    }
   }
-
-  const bool wasMovedRecently = WasMovedRecently();
-  if( (turnAction == nullptr) && !wasMovedRecently )
+  
+  IActionRunner* turnAction = nullptr;
+  if(smartID.IsValid())
+  {
+    turnAction = new TurnTowardsFaceAction(smartID, kEnrollFace_MaxTurnTowardsFaceAngle_rad);
+  }
+  else if(!WasMovedRecently())
   {
     // Couldn't find face in face world, try turning towards last face pose
     PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.CreateTurnTowardsFaceAction.NullFace",
                   "No face found to turn towards. FaceID=%d. SaveID=%d. Turning towards last face pose.",
                   faceID, saveID);
-
+    
     // No face found to look towards: fallback on looking at last face pose
-    turnAction = new TurnTowardsLastFacePoseAction(DEG_TO_RAD(45.f));
+    turnAction = new TurnTowardsLastFacePoseAction(kEnrollFace_MaxTurnTowardsFaceAngle_rad);
   }
-
+  
   if( turnAction != nullptr ) {
     // Add whatever turn action we decided to create to the parallel action and return it
     liftAndTurnTowardsAction->AddAction(turnAction);

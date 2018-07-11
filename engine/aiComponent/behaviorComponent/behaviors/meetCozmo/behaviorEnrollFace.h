@@ -16,6 +16,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorEnrollFace_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/faceSelectionComponent.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "coretech/vision/engine/faceIdTypes.h"
 
@@ -158,6 +159,8 @@ private:
     ICozmoBehaviorPtr driveOffChargerBehavior;
     ICozmoBehaviorPtr putDownBlockBehavior;
     std::shared_ptr<BehaviorTextToSpeechLoop> ttsBehavior;
+    
+    FaceSelectionComponent::FaceSelectionFactorMap faceSelectionCriteria;
   };
   
   struct DynamicVariables {
