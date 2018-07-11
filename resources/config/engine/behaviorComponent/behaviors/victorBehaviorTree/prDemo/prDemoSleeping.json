@@ -3,6 +3,8 @@
   "behaviorClass": "Sleeping",
   "enablePowerSave": false,
 
+  "associatedActiveFeature": "Sleeping",
+
   // pr demo handles wake up
   "shouldPlayEmergencyGetOut": false,
 
