@@ -69,6 +69,7 @@ def upload_from_victor():
         distance = request.form['distance']
         gender = request.form['radio']
         victor_ip = request.form['vic_ip']
+        local_folder = request.form['local_dropbox_folder']
         prefix_name = "{}_{}_{}_{}".format(user_name, age, gender, distance)
         if (victor_ip.strip() != "" and user_name.strip() != ""):
             result = VictorHelper.pull_data_to_machine(victor_ip, DATADIR)
@@ -86,8 +87,7 @@ def upload_from_victor():
                 dynamo_db = DynamoDB(json_data)
                 dynamo_db.put_item_into_db()
                 CommonHelper().add_prefix_files_in_directory(DATADIR, prefix_name)
-                dropbox_uploader = DropboxFileUploader(DATADIR, dropbox_folder)
-                dropbox_uploader.upload_folder()
+                CommonHelper().copy_directory(DATADIR, local_folder)
                 # remove temp files
                 CommonHelper().delete_folder(DATADIR)
                 return render_template('success_message.html', message="File uploaded successfully")

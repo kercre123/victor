@@ -22,3 +22,10 @@ class CommonHelper() :
             for filename in files:
                 os.rename(os.path.join(root, filename),
                           os.path.join(root, "{}_{}".format(expected_prefix_name, filename)))
+
+    def copy_directory(self, root_directory, dest_directory):
+        if not os.path.exists(dest_directory):
+            os.makedirs(dest_directory)
+        for root, dirs, files in os.walk(root_directory):
+            for filename in files:
+                shutil.copy(os.path.join(root, filename), dest_directory)
