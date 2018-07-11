@@ -21,6 +21,7 @@ namespace Audio{
 class EngineRobotAudioClient;
 }
 
+class AppCubeConnectionSubscriber;
 class ContextWrapper;
 class BlockWorld;
 class FaceWorld;
@@ -74,6 +75,7 @@ class PowerStateManager;
 } // namespace Cozmo
 
 // Template specializations mapping enums from the _fwd.h file to the class forward declarations above
+LINK_COMPONENT_TYPE_TO_ENUM(AppCubeConnectionSubscriber,   RobotComponentID, AppCubeConnectionSubscriber)
 LINK_COMPONENT_TYPE_TO_ENUM(ContextWrapper,                RobotComponentID, CozmoContextWrapper)
 LINK_COMPONENT_TYPE_TO_ENUM(BlockWorld,                    RobotComponentID, BlockWorld)
 LINK_COMPONENT_TYPE_TO_ENUM(FaceWorld,                     RobotComponentID, FaceWorld)
@@ -136,6 +138,7 @@ std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotCompone
     case Cozmo::RobotComponentID::AIComponent:                { return "AIComponent";}
     case Cozmo::RobotComponentID::ActionList:                 { return "ActionList";}
     case Cozmo::RobotComponentID::Animation:                  { return "Animation";}
+    case Cozmo::RobotComponentID::AppCubeConnectionSubscriber:{ return "AppCubeConnectionSubscriber";}
     case Cozmo::RobotComponentID::Battery:                    { return "Battery";}
     case Cozmo::RobotComponentID::BeatDetector:               { return "BeatDetector";}
     case Cozmo::RobotComponentID::BlockTapFilter:             { return "BlockTapFilter";}

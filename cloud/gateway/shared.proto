@@ -95,6 +95,14 @@ message GatewayWrapper {
     // ------------ status history --------------------
     RobotHistoryRequest           robot_history_request = 80;
     RobotHistoryResult            robot_history_result = 81;
+    
+    // ------------ cube connections --------------------
+    RequestCubeConnection         request_cube_connection        = 100;
+    DoneWithCubeConnection        done_with_cube_connection      = 101;
+    FlashCubeLights               flash_cube_lights              = 102;
+    ForgetPreferredCube           forget_preferred_cube          = 103;
+    CubeConnectionAttemptResult   cube_connection_attempt_result = 104;
+    CubeConnectionLost            cube_connection_lost           = 105;
 
     // (when adding new categories, please create gaps between field numbers)
     // ------------  -------------------------

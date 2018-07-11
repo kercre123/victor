@@ -726,3 +726,24 @@ message SetBackpackLEDsResponse {
   ResultStatus status = 1;
 }
 
+// Cube connection messages
+
+message RequestCubeConnection {
+}
+
+message DoneWithCubeConnection {
+}
+
+message FlashCubeLights {
+}
+
+message ForgetPreferredCube {
+}
+
+message CubeConnectionAttemptResult {
+  bool success = 1;
+}
+
+message CubeConnectionLost {
+}
+

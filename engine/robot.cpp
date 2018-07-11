@@ -37,6 +37,7 @@
 #include "engine/components/blockTapFilterComponent.h"
 #include "engine/components/backpackLights/backpackLightComponent.h"
 #include "engine/components/carryingComponent.h"
+#include "engine/components/cubes/appCubeConnectionSubscriber.h"
 #include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/components/cubes/cubeConnectionCoordinator.h"
@@ -296,6 +297,7 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
   // create all components
   {
     _components = std::make_unique<EntityType>();
+    _components->AddDependentComponent(RobotComponentID::AppCubeConnectionSubscriber,new AppCubeConnectionSubscriber());
     _components->AddDependentComponent(RobotComponentID::CozmoContextWrapper,        new ContextWrapper(context));
     _components->AddDependentComponent(RobotComponentID::BlockWorld,                 new BlockWorld());
     _components->AddDependentComponent(RobotComponentID::FaceWorld,                  new FaceWorld());
