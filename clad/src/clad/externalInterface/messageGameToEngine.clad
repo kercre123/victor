@@ -1218,6 +1218,7 @@ autounion MessageGameToEngine
   TurnInPlace                    TurnInPlace                    = 0x14,
   SetHeadAngle                   SetHeadAngle                   = 0x15,
   SetLiftHeight                  SetLiftHeight                  = 0x16,
+  SetBackpackLEDs                SetBackpackLEDs                = 0x17,
 }
 
 

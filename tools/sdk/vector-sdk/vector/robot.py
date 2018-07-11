@@ -284,40 +284,6 @@ class Robot:
         self.logger.info(f'{type(result)}: {str(result).strip()}')
         return result
 
-    #TODO Refactor out of robot.py
-    async def __read_file_in_chunks(self, file_path, chunk_size):
-        if not os.path.isfile(file_path):
-            raise ValueError("File missing: %s" % file_path)
-        chunks = []
-        with open(file_path, 'rb') as fh:
-            chunk = fh.read(chunk_size)
-            while chunk:
-                chunks.append(chunk)
-                chunk = fh.read(chunk_size)
-        return chunks
-
-    #TODO Refactor out of robot.py
-    MAX_MSG_SIZE = 2048
-    TRANSFER_FILE_MSG_OVERHEAD = 6
-    CLAD_MSG_OVERHEAD = 15
-    async def transfer_file(self, file_type, anim_file_path, enable_diagnostics=False):
-        sys.exit("'{}' is not yet implemented in grpc".format(__name__))
-        file_chunk_size = self.MAX_MSG_SIZE - self.TRANSFER_FILE_MSG_OVERHEAD - len(os.path.basename(anim_file_path)) - self.CLAD_MSG_OVERHEAD
-        chunks = await self.__read_file_in_chunks(anim_file_path, file_chunk_size)
-        num_chunks = len(chunks)
-        if enable_diagnostics==True:
-            self.logger.debug("Transfering file %s" % (anim_file_path)),
-            self.logger.debug("Transfering %d chunks" % (num_chunks)),
-        for idx in range(num_chunks):
-            message = _clad_message.TransferFile(fileBytes=chunks[idx], filePart=idx,
-                      numFileParts=num_chunks, filename=os.path.basename(anim_file_path),
-                      fileType=file_type)
-            innerWrappedMessage = _clad_message.Animations(TransferFile=message)
-            outerWrappedMessage = _clad_message.ExternalComms(Animations=innerWrappedMessage)
-            await self.socket.send(outerWrappedMessage.pack())
-            if enable_diagnostics==True:
-                logger.debug("Transfered chunk %d" % idx),
-
     # Low level motor functions
     @actions._as_actionable
     async def set_wheel_motors(self, left_wheel_speed, right_wheel_speed, left_wheel_accel=0.0, right_wheel_accel=0.0):
@@ -589,34 +555,32 @@ class Robot:
         return result
 
     # Vector Display
+    @actions._as_actionable
     async def set_backpack_lights(self, light1, light2, light3, backpack_color_profile=lights.white_balanced_backpack_profile):
         '''Set the lights on Vector's backpack.
 
         The light descriptions below are all from Vector's perspective.
 
         Args:
-            light1 (:class:`cozmo.lights.Light`): The front backpack light
-            light2 (:class:`cozmo.lights.Light`): The center backpack light
-            light3 (:class:`cozmo.lights.Light`): The rear backpack light
+            light1 (:class:`vector.lights.Light`): The front backpack light
+            light2 (:class:`vector.lights.Light`): The center backpack light
+            light3 (:class:`vector.lights.Light`): The rear backpack light
         '''
-        message = _clad_message.SetBackpackLEDs()
-        for i, light in enumerate( (light1, light2, light3) ):
-            if light is not None:
-                lights._set_light(message, i, light, backpack_color_profile)
+        params = lights.package_request_params((light1, light2, light3), backpack_color_profile)
+        set_backpack_lights_request = protocol.SetBackpackLEDsRequest(**params)
 
-        innerWrappedMessage = _clad_message.VictorDisplay(SetBackpackLEDs=message)
-        outerWrappedMessage = _clad_message.ExternalComms(VictorDisplay=innerWrappedMessage)
+        result = await self.connection.SetBackpackLEDs(set_backpack_lights_request)
+        self.logger.info(f'{type(result)}: {str(result).strip()}')
+        return result
 
-        await self.socket.send(outerWrappedMessage.pack())
-
-    async def set_all_backpack_lights(self, light, color_profile=lights.white_balanced_backpack_profile):
+    def set_all_backpack_lights(self, light, color_profile=lights.white_balanced_backpack_profile):
         '''Set the lights on Vector's backpack to the same color.
 
         Args:
-            light (:class:`cozmo.lights.Light`): The lights for Vector's backpack.
+            light (:class:`vector.lights.Light`): The lights for Vector's backpack.
         '''
         light_arr = [ light ] * 3
-        await self.set_backpack_lights(*light_arr, color_profile)
+        return self.set_backpack_lights(*light_arr, color_profile)
 
     # TODO Refactor all cube code into class like cozmo.objects
     async def set_cube_light_corners( self, cube_id, light1, light2, light3, light4, color_profile=lights.white_balanced_cube_profile ):

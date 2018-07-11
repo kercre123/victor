@@ -226,6 +226,12 @@ messages_to_test = [
         protocol.SetLiftHeightRequest(height_mm=0.0, max_speed_rad_per_sec=0.0, accel_rad_per_sec2=0.0, duration_sec=0.0), 
         TestResultMatches(protocol.SetLiftHeightResponse(status=protocol.ResultStatus(description="Message sent to engine"),result=1)) ),
 
+    # SetBackpackLEDs message
+    ( client.ExternalInterfaceServicer.SetBackpackLEDs, 
+        protocol.SetBackpackLEDsRequest(on_color=[0, 0, 0], off_color=[0, 0, 0], on_period_ms=[250, 250, 250],
+                                        off_period_ms=[0, 0, 0], transition_on_period_ms=[0, 0, 0], transition_off_period_ms=[0, 0, 0]), 
+        TestResultMatches(protocol.SetBackpackLEDsResponse(status=protocol.ResultStatus(description="Message sent to engine"))) ),
+
     # NOTE: Add additional messages here
     ]
 

@@ -312,8 +312,8 @@ class ImageRect:
     @property
     def height(self):
         return self._height
-    
-    
+
+
 class Distance:
     '''Represents a distance.
     
@@ -437,5 +437,4 @@ class Speed:
 def speed_mmps(speed_mmps):
     '''Returns an :class:`vector.util.Speed` instance set to the specified millimeters per second speed'''
     return Speed(speed_mmps=speed_mmps)
-    
     

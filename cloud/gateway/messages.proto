@@ -708,3 +708,18 @@ message SetLiftHeightResponse {
   ResultStatus status = 1;
   BehaviorResults result = 2;
 }
+
+// SetBackpackLEDs
+message SetBackpackLEDsRequest {
+  repeated uint32  on_color = 1;
+  repeated uint32  off_color = 2;
+  repeated uint32  on_period_ms = 3;
+  repeated uint32  off_period_ms = 4;
+  repeated uint32  transition_on_period_ms = 5;
+  repeated uint32  transition_off_period_ms = 6;
+}
+
+message SetBackpackLEDsResponse {
+  ResultStatus status = 1;
+}
+

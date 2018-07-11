@@ -292,5 +292,12 @@ service ExternalInterface {
       body: "*"
     };
   }
+
+  rpc SetBackpackLEDs(SetBackpackLEDsRequest) returns (SetBackpackLEDsResponse) {
+    option (google.api.http) = {
+      post: "/v1/set_backpack_led",
+      body: "*"
+    };
+  }
 }
 

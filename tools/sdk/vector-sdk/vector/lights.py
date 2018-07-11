@@ -137,18 +137,18 @@ class Light:
         if not 0 < ms < 2**32:
             raise ValueError("Invalid value")
         self._transition_off_period_ms = ms
+    
 
-# @TODO: This paradigm is a holdover from Cozmo, we should investigate a better solution after GRPC lands
-def _set_light(msg, idx, light, profile):
-    # For use with clad light messages specifically.
-    if not isinstance(light, Light):
-        raise TypeError("Expected a lights.Light")
-    msg.onColor[idx] = profile.augment_color( light.on_color ).int_color
-    msg.offColor[idx] = profile.augment_color( light.off_color ).int_color
-    msg.onPeriod_ms[idx] = light.on_period_ms
-    msg.offPeriod_ms[idx] = light.off_period_ms
-    msg.transitionOnPeriod_ms[idx] = light.transition_on_period_ms
-    msg.transitionOffPeriod_ms[idx] = light.transition_off_period_ms
+def package_request_params(lights, color_profile):
+    merged_params = {}
+    for light in lights:
+        for attr_name in vars(light):
+            attr_name = attr_name[1:]
+            attr_val = getattr(light, attr_name)
+            if isinstance(attr_val, color.Color):
+                attr_val = color_profile.augment_color(attr_val).int_color
+            merged_params.setdefault(attr_name, []).append(attr_val)
+    return merged_params
 
 #: :class:`Light`: A steady green colored LED light.
 green_light = Light(on_color=color.green)

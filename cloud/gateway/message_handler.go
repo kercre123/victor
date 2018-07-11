@@ -266,6 +266,24 @@ func ProtoSetLiftHeightToClad(msg *extint.SetLiftHeightRequest) *gw_clad.Message
 	})
 }
 
+func SliceToArray(msg []uint32) [3]uint32 {
+	var arr [3]uint32
+	copy(arr[:], msg)
+	return arr
+}
+
+func ProtoSetBackpackLEDsToClad(msg *extint.SetBackpackLEDsRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithSetBackpackLEDs(&gw_clad.SetBackpackLEDs{
+		OnColor:               SliceToArray(msg.OnColor),
+		OffColor:              SliceToArray(msg.OffColor),
+		OnPeriodMs:            SliceToArray(msg.OnPeriodMs),
+		OffPeriodMs:           SliceToArray(msg.OffPeriodMs),
+		TransitionOnPeriodMs:  SliceToArray(msg.TransitionOnPeriodMs),
+		TransitionOffPeriodMs: SliceToArray(msg.TransitionOffPeriodMs),
+		Offset:                [3]int32{0, 0, 0},
+	})
+}
+
 func CladCladRectToProto(msg *gw_clad.CladRect) *extint.CladRect {
 	return &extint.CladRect{
 		XTopLeft: msg.XTopLeft,
@@ -1332,4 +1350,17 @@ func (m *rpcService) SetLiftHeight(ctx context.Context, in *extint.SetLiftHeight
 
 func newServer() *rpcService {
 	return new(rpcService)
+}
+
+func (m *rpcService) SetBackpackLEDs(ctx context.Context, in *extint.SetBackpackLEDsRequest) (*extint.SetBackpackLEDsResponse, error) {
+	log.Println("Received rpc request SetBackpackLEDs(", in, ")")
+	_, err := WriteToEngine(engineSock, ProtoSetBackpackLEDsToClad(in))
+	if err != nil {
+		return nil, err
+	}
+	return &extint.SetBackpackLEDsResponse{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
 }
