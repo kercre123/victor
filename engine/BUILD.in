@@ -5,7 +5,14 @@ cxx_project(
                             '**/vicos/*',
                             'tools/**/*',
                         ]),
-    data = glob(['../resources/**/*.json','../resources/webserver/**/*']),
+    data = glob([
+                  '../resources/**/*.json',
+                  '../resources/webserver/**/*',
+                  '**/CMakeLists.txt',
+                  '../cmake/*.cmake',
+                  # '**/BUILD.in', NOTE: dangerous!! Xcode likes to silently rename BUILD.in to Build.in on save!
+                  '../clad/**/*.clad'
+                ]),
     platform_srcs = [
         ('vicos', glob([
                             '**/*_vicos.cpp',
