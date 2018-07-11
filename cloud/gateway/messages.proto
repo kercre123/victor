@@ -755,5 +755,6 @@ message RobotStatsResponse {
   BatteryLevel battery_level = 2;
   string os_version = 3;
   NetworkStats network_stats = 4;
+  string engine_build_id = 5;
 }
 
