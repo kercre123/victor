@@ -439,7 +439,9 @@ external_interface::RobotStatsResponse* Robot::GetRobotStats() {
                                                                                         Util::gNetStatAQueuedAvg_ms, \
                                                                                         Util::gNetStatBQueuedMin_ms, \
                                                                                         Util::gNetStatCQueuedMax_ms};
-  external_interface::RobotStatsResponse* response = new external_interface::RobotStatsResponse{batteryComponent.GetBatteryVolts(), \
+  external_interface::ResultStatus* resultStatus = new external_interface::ResultStatus{"Message processed"};
+  external_interface::RobotStatsResponse* response = new external_interface::RobotStatsResponse{resultStatus, \
+                                                                                                batteryComponent.GetBatteryVolts(), \
                                                                                                 (external_interface::BatteryLevel)batteryComponent.GetBatteryLevel(), \
                                                                                                 OSState::getInstance()->GetOSBuildVersion(), \
                                                                                                 networkStats, \
