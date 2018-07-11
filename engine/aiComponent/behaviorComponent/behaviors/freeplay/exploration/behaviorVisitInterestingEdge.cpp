@@ -78,8 +78,6 @@ constexpr MemoryMapTypes::FullContentArray typesThatInvalidateGoals =
   {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
   {MemoryMapTypes::EContentType::ClearOfCliff          , false},
   {MemoryMapTypes::EContentType::ObstacleObservable    , false},
-  {MemoryMapTypes::EContentType::ObstacleCharger       , false}, // this could be ok, since we will walk around the charger
-  {MemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
   {MemoryMapTypes::EContentType::ObstacleProx          , false}, // this could be ok, since we will walk around
   {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
   {MemoryMapTypes::EContentType::Cliff                 , true },
@@ -97,8 +95,6 @@ constexpr MemoryMapTypes::FullContentArray typesThatInvalidateVantagePoints =
   {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
   {MemoryMapTypes::EContentType::ClearOfCliff          , false},
   {MemoryMapTypes::EContentType::ObstacleObservable    , true},
-  {MemoryMapTypes::EContentType::ObstacleCharger       , true},
-  {MemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
   {MemoryMapTypes::EContentType::ObstacleProx          , true},
   {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true},
   {MemoryMapTypes::EContentType::Cliff                 , true},

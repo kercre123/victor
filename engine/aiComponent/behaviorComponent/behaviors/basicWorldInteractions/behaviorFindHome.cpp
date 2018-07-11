@@ -67,8 +67,6 @@ namespace {
     {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
     {MemoryMapTypes::EContentType::ClearOfCliff          , false},
     {MemoryMapTypes::EContentType::ObstacleObservable    , true },
-    {MemoryMapTypes::EContentType::ObstacleCharger       , false },
-    {MemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
     {MemoryMapTypes::EContentType::ObstacleProx          , true },
     {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
     {MemoryMapTypes::EContentType::Cliff                 , true },

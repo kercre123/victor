@@ -54,8 +54,6 @@ constexpr MemoryMapTypes::FullContentArray typesWeWantToVisit =
   {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
   {MemoryMapTypes::EContentType::ClearOfCliff          , false},
   {MemoryMapTypes::EContentType::ObstacleObservable    , false},
-  {MemoryMapTypes::EContentType::ObstacleCharger       , false},
-  {MemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
   {MemoryMapTypes::EContentType::ObstacleProx          , false},
   {MemoryMapTypes::EContentType::ObstacleUnrecognized  , false},
   {MemoryMapTypes::EContentType::Cliff                 , false},

@@ -104,12 +104,9 @@ MemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily fam
   {
     case ObjectFamily::Block:
     case ObjectFamily::LightCube:
+    case ObjectFamily::Charger:
       // pick depending on addition or removal
       retType = isAdding ? ContentType::ObstacleObservable : ContentType::ClearOfObstacle;
-      break;
-    case ObjectFamily::Charger:
-      // this case should be merged into observable object types (COZMO-16117)
-      retType = isAdding ? ContentType::ObstacleCharger : ContentType::ObstacleChargerRemoved;
       break;
     case ObjectFamily::MarkerlessObject:
     {
@@ -1174,7 +1171,6 @@ bool MapComponent::CheckForCollisions(const BoundedConvexSet2f& region) const
   {
     return currentMap->AnyOf( region, [this] (const auto& data) {
         const bool retv = (data->type == MemoryMapTypes::EContentType::ObstacleObservable)   ||
-                          (data->type == MemoryMapTypes::EContentType::ObstacleCharger)      ||
                           ((data->type == MemoryMapTypes::EContentType::ObstacleProx) && _enableProxCollisions) ||
                           (data->type == MemoryMapTypes::EContentType::ObstacleUnrecognized) ||
                           (data->type == MemoryMapTypes::EContentType::Cliff);
@@ -1192,7 +1188,6 @@ float MapComponent::GetCollisionArea(const BoundedConvexSet2f& region) const
   {
     return currentMap->GetCollisionArea( region, [this] (const auto& data) {
         const bool retv = (data->type == MemoryMapTypes::EContentType::ObstacleObservable)   ||
-                          (data->type == MemoryMapTypes::EContentType::ObstacleCharger)      ||
                           ((data->type == MemoryMapTypes::EContentType::ObstacleProx) && _enableProxCollisions )||
                           (data->type == MemoryMapTypes::EContentType::ObstacleUnrecognized) ||
                           (data->type == MemoryMapTypes::EContentType::Cliff);
@@ -1260,8 +1255,6 @@ void MapComponent::ReviewInterestingEdges(const Quad2f& withinQuad, INavMap* map
       {EContentType::ClearOfObstacle       , false},
       {EContentType::ClearOfCliff          , false},
       {EContentType::ObstacleObservable    , true },
-      {EContentType::ObstacleCharger       , true },
-      {EContentType::ObstacleChargerRemoved, true },
       {EContentType::ObstacleProx          , true },
       {EContentType::ObstacleUnrecognized  , true },
       {EContentType::Cliff                 , false},
@@ -1466,8 +1459,6 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
             {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
             {MemoryMapTypes::EContentType::ClearOfCliff          , false},
             {MemoryMapTypes::EContentType::ObstacleObservable    , true },
-            {MemoryMapTypes::EContentType::ObstacleCharger       , true },
-            {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true },
             {MemoryMapTypes::EContentType::ObstacleProx          , true },
             {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
             {MemoryMapTypes::EContentType::Cliff                 , true },
@@ -1506,8 +1497,6 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
           {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
           {MemoryMapTypes::EContentType::ClearOfCliff          , false},
           {MemoryMapTypes::EContentType::ObstacleObservable    , true },
-          {MemoryMapTypes::EContentType::ObstacleCharger       , true },
-          {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true },
           {MemoryMapTypes::EContentType::ObstacleProx          , true },
           {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
           {MemoryMapTypes::EContentType::Cliff                 , false},
