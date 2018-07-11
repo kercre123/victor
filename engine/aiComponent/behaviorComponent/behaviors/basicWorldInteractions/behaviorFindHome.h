@@ -17,9 +17,21 @@
 
 #include "clad/types/animationTrigger.h"
 
+#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/polygon.h"
+#include "coretech/common/engine/math/pose.h"
+
+#include "util/random/rejectionSamplerHelper_fwd.h"
+
 namespace Anki {
 namespace Cozmo {
 
+namespace RobotPointSamplerHelper {
+  class RejectIfInRange;
+  class RejectIfWouldCrossCliff;
+  class RejectIfCollidesWithMemoryMap;
+}
+  
 class BlockWorldFilter;
   
 class BehaviorFindHome : public ICozmoBehavior
@@ -30,7 +42,7 @@ protected:
   BehaviorFindHome(const Json::Value& config);
   
 public:
-  virtual ~BehaviorFindHome() override {}
+  virtual ~BehaviorFindHome() override;
   virtual bool WantsToBeActivatedBehavior() const override;
   
 protected:
@@ -41,21 +53,30 @@ protected:
   }
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
+  virtual void InitBehavior() override;
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
   virtual void OnBehaviorActivated() override;
 
 private:
   struct InstanceConfig {
-    InstanceConfig() {}
     InstanceConfig(const Json::Value& config, const std::string& debugName);
     float       minSearchAngleSweep_deg = 0.f;
     int         maxSearchTurns = 0;
     int         numSearches = 0;
     float       minDrivingDist_mm = 0.f;
     float       maxDrivingDist_mm = 0.f;
-    TimeStamp_t maxObservedAge_ms = 0;
     
     AnimationTrigger searchTurnAnimTrigger = AnimationTrigger::Count;
+    AnimationTrigger searchTurnEndAnimTrigger = AnimationTrigger::Count;
+    AnimationTrigger waitForImagesAnimTrigger = AnimationTrigger::Count;
     std::unique_ptr<BlockWorldFilter> homeFilter;
+    
+    std::unique_ptr<Util::RejectionSamplerHelper<Point2f>> searchSpacePointEvaluator;
+    std::unique_ptr<Util::RejectionSamplerHelper<Poly2f>>  searchSpacePolyEvaluator;
+    
+    std::shared_ptr<RobotPointSamplerHelper::RejectIfInRange> condHandleNearPrevSearch;
+    std::shared_ptr<RobotPointSamplerHelper::RejectIfWouldCrossCliff> condHandleCliffs;
+    std::shared_ptr<RobotPointSamplerHelper::RejectIfCollidesWithMemoryMap> condHandleCollisions;
   };
 
   struct DynamicVariables {
@@ -72,16 +93,37 @@ private:
     // Cumulative angle swept while searching in place for
     // the charger
     float angleSwept_deg = 0.f;
+    
+    struct Persistent {
+      // Map of basestation time to locations at which we have executed
+      // a "search in place". Used to ensure we do not search at the same
+      // locations repeatedly within a specified timeframe.
+      std::map<float, Point2f> searchedLocations;
+      
+      // Keep track of the last time we visited the old charger's location
+      float lastVisitedOldChargerTime = std::numeric_limits<float>::lowest();
+    };
+    Persistent persistent;
   };
 
   InstanceConfig   _iConfig;
   DynamicVariables _dVars;
   
   void TransitionToHeadStraight();
+  void TransitionToStartSearch();
   void TransitionToSearchTurn();
   void TransitionToRandomDrive();
   
+  // Generate potential locations to drive to (to perform a search)
+  void GenerateSearchPoses(std::vector<Pose3d>& outPoses);
+  
+  // Fallback method for generating a naive randomly-selected pose in
+  // case the 'smarter' sampling method fails to generate any poses.
   void GetRandomDrivingPose(Pose3d& outPose);
+  
+  // Cull the list of searched locations to the recent window and return
+  // a vector of recently searched locations.
+  std::vector<Point2f> GetRecentlySearchedLocations();
   
 };
   

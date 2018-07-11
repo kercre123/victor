@@ -232,6 +232,8 @@ namespace Anki {
             // Send stopped message
             RobotInterface::RobotStopped msg;
             msg.reason = stoppingBecauseCliff ? StopReason::CLIFF : StopReason::WHITE;
+            msg.cliffDetectedFlags = ProxSensors::GetCliffDetectedFlags();
+            msg.whiteDetectedFlags = ProxSensors::GetWhiteDetectedFlags();
             RobotInterface::SendMessage(RobotInterface::RobotStopped(msg));
 
             // Queue cliff detected message

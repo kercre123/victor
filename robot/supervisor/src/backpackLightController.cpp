@@ -70,7 +70,12 @@ namespace BackpackLightController {
   void TurnOffAll()
   {
     memset(_ledParams, 0, sizeof(_ledParams));
+    memset(&_sysLedParams, 0, sizeof(_sysLedParams));
     ResetPhases();
+    // Note: this is not done in ResetPhases() otherwise
+    // the system light phase could be interrupted when setting
+    // the other backpack lights
+    _sysLedPhase = HAL::GetTimeStamp();
   }
 
   void EnableLayer(const BackpackLightLayer layer, bool forceUpdate)

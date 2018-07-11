@@ -66,20 +66,26 @@ namespace {
 
   static const int kNumTicksToShutdown = 5;
   int _countToShutdown = -1;
-  
+
   // For comms with engine
   constexpr int MAX_PACKET_BUFFER_SIZE = 2048;
   u8 pktBuffer_[MAX_PACKET_BUFFER_SIZE];
 
   Anki::Cozmo::AnimEngine*                   _animEngine = nullptr;
   Anki::Cozmo::AnimationStreamer*            _animStreamer = nullptr;
-  Anki::Cozmo::StreamingAnimationModifier* _streamingAnimationModifier = nullptr;
+  Anki::Cozmo::StreamingAnimationModifier*   _streamingAnimationModifier = nullptr;
   Anki::Cozmo::Audio::EngineRobotAudioInput* _engAudioInput = nullptr;
   Anki::Cozmo::Audio::ProceduralAudioClient* _proceduralAudioClient = nullptr;
   const Anki::Cozmo::AnimContext*            _context = nullptr;
 
   bool _connectionFlowInited = false;
-  
+
+  // The maximum amount of time that can elapse in between
+  // receipt of RobotState messages before the anim process
+  // considers the robot process to have disconnected
+  const float kNoRobotStateDisconnectTimeout_sec = 2.f;
+  float _pendingRobotDisconnectTime_sec = -1.f;
+
 #if REMOTE_CONSOLE_ENABLED
   static void ListAnimations(ConsoleFunctionContextRef context)
   {
@@ -178,8 +184,8 @@ void Process_playAnim(const Anki::Cozmo::RobotInterface::PlayAnim& msg)
 
 void Process_abortAnimation(const Anki::Cozmo::RobotInterface::AbortAnimation& msg)
 {
-  LOG_INFO("AnimProcessMessages.Process_abortAnimation", "Abort animation");
-  _animStreamer->Abort();
+  LOG_INFO("AnimProcessMessages.Process_abortAnimation", "Tag: %d", msg.tag);
+  _animStreamer->Abort(msg.tag);
 }
 
 void Process_displayProceduralFace(const Anki::Cozmo::RobotInterface::DisplayProceduralFace& msg)
@@ -227,7 +233,7 @@ void Process_updateCompositeImage(const Anki::Cozmo::RobotInterface::UpdateCompo
 void Process_playCompositeAnimation(const Anki::Cozmo::RobotInterface::PlayCompositeAnimation& msg)
 {
   const std::string animName(msg.animName, msg.animName_length);
-  
+
   _animStreamer->Process_playCompositeAnimation(animName, msg.tag);
 }
 
@@ -360,7 +366,7 @@ void Process_startWakeWordlessStreaming(const Anki::Cozmo::RobotInterface::Start
 
   micDataSystem->StartWakeWordlessStreaming(static_cast<CloudMic::StreamType>(msg.streamType));
 }
-  
+
 void Process_setShouldStreamAfterWakeWord(const Anki::Cozmo::RobotInterface::SetShouldStreamAfterWakeWord& msg)
 {
   auto* micDataSystem = _context->GetMicDataSystem();
@@ -370,7 +376,7 @@ void Process_setShouldStreamAfterWakeWord(const Anki::Cozmo::RobotInterface::Set
 
   micDataSystem->SetShouldStreamAfterWakeWord(msg.shouldStream);
 }
-  
+
 void Process_setTriggerWordDetectionEnabled(const Anki::Cozmo::RobotInterface::SetTriggerWordDetectionEnabled& msg)
 {
   auto* micDataSystem = _context->GetMicDataSystem();
@@ -387,6 +393,11 @@ void Process_resetBeatDetector(const Anki::Cozmo::RobotInterface::ResetBeatDetec
   if (micDataSystem != nullptr) {
     micDataSystem->ResetBeatDetector();
   }
+}
+
+void Process_setLCDBrightnessLevel(const Anki::Cozmo::RobotInterface::SetLCDBrightnessLevel& msg)
+{
+  FaceDisplay::getInstance()->SetFaceBrightness(msg.level);
 }
 
 void Process_playbackAudioStart(const Anki::Cozmo::RobotInterface::StartPlaybackAudio& msg)
@@ -462,9 +473,15 @@ void Process_setBLEPin(const Anki::Cozmo::SwitchboardInterface::SetBLEPin& msg)
   SetBLEPin(msg.pin);
 }
 
-void Process_alterStreamingAnimation(const RobotInterface::AlterStreamingAnimationAtTime& msg )
+void Process_alterStreamingAnimation(const RobotInterface::AlterStreamingAnimationAtTime& msg)
 {
   _streamingAnimationModifier->HandleMessage(msg);
+}
+
+void Process_setLocale(const RobotInterface::SetLocale& msg)
+{
+  DEV_ASSERT(_animEngine != nullptr, "AnimProcessMessages.SetLocale.InvalidEngine");
+  _animEngine->HandleMessage(msg);
 }
 
 void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg)
@@ -481,7 +498,7 @@ void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineT
     }
     case RobotInterface::EngineToRobot::Tag_calmPowerMode:
     {
-      // Remember the power mode specified by engine so that we can go back to 
+      // Remember the power mode specified by engine so that we can go back to
       // it when pairing/debug screens are exited.
       // Only relay the power mode to robot process if not already in pairing/debug screen.
       FaceInfoScreenManager::getInstance()->SetCalmPowerModeOnReturnToNone(msg.calmPowerMode);
@@ -523,6 +540,8 @@ static void ProcessMicDataMessage(const RobotInterface::MicData& payload)
 
 static void HandleRobotStateUpdate(const Anki::Cozmo::RobotState& robotState)
 {
+  _pendingRobotDisconnectTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + kNoRobotStateDisconnectTimeout_sec;
+
   FaceInfoScreenManager::getInstance()->Update(robotState);
 
 #if ANKI_DEV_CHEATS
@@ -621,28 +640,18 @@ Result AnimProcessMessages::Init(AnimEngine* animEngine,
 
 Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_nanosec)
 {
-  // If it has been more than 30 seconds and we still haven't connected to engine
-  // or robot process display a fault code
-  static BaseStationTime_t startTime_nanosec = currTime_nanosec;
-  static const BaseStationTime_t kTimeUntilNoProcessFaultCode_nanosec = Util::SecToNanoSec(30.f);
-  static bool faultCodeDisplayed = false;
-  if(!faultCodeDisplayed &&
-     currTime_nanosec - startTime_nanosec > kTimeUntilNoProcessFaultCode_nanosec)
-  {
-    if(!ANKI_VERIFY(AnimComms::IsConnectedToEngine(),
-                    "AnimProcessMessages.MonitorConnectionState.NotConnectedToEngine",
-                    "Not connected to engine process (currTime_nanosec %llu, startTime_nanosec %llu)",
-                    currTime_nanosec, startTime_nanosec))
-    {
-      faultCodeDisplayed = true;
-      FaultCode::DisplayFaultCode(FaultCode::NO_ENGINE_PROCESS);
-    }
-    // Connection to robot process fault code check is in Update()
-  }
+  // If nonzero, we are scheduled to display a NO_ENGINE_PROCESS fault code
+  static BaseStationTime_t displayFaultCodeTime_nanosec = 0;
   
-  // Send block connection state when engine connects
+  // Amount of time for which we must be disconnected from the engine in order
+  // to display the NO_ENGINE_PROCESS fault code
+  static const BaseStationTime_t kDisconnectedTimeout_nanosec = Util::SecToNanoSec(5.f);
+  
+  // Check for changes in connection state to engine and send RobotAvailable and
+  // FirmwareVersion messages when engine connects
   static bool wasConnected = false;
-  if (!wasConnected && AnimComms::IsConnectedToEngine()) {
+  const bool isConnected = AnimComms::IsConnectedToEngine();
+  if (!wasConnected && isConnected) {
     LOG_INFO("AnimProcessMessages.MonitorConnectionState", "Robot now available");
     RobotInterface::RobotAvailable idMsg;
     idMsg.hwRevision = 0;
@@ -663,14 +672,30 @@ Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_na
       RobotInterface::SendAnimToEngine(msg);
     }
 
+    // Clear any scheduled fault code display
+    displayFaultCodeTime_nanosec = 0;
+    
     wasConnected = true;
-  }
-  else if (wasConnected && !AnimComms::IsConnectedToEngine()) {
+  } else if (wasConnected && !isConnected) {
+    // We've just become unconnected. Start a timer to display the fault
+    // code on the face at the desired time.
+    displayFaultCodeTime_nanosec = currTime_nanosec + kDisconnectedTimeout_nanosec;
+    
+    PRINT_NAMED_WARNING("AnimProcessMessages.MonitorConnectionState.DisconnectedFromEngine",
+                        "We have become disconnected from engine process. Displaying a fault code in %.1f seconds.",
+                        Util::NanoSecToSec(kDisconnectedTimeout_nanosec));
+    
     wasConnected = false;
   }
-
+  
+  // Display fault code if necessary
+  if ((displayFaultCodeTime_nanosec > 0) &&
+      (currTime_nanosec > displayFaultCodeTime_nanosec)) {
+    displayFaultCodeTime_nanosec = 0;
+    FaultCode::DisplayFaultCode(FaultCode::NO_ENGINE_PROCESS);
+  }
+  
   return RESULT_OK;
-
 }
 
 Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
@@ -685,7 +710,7 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
       return RESULT_SHUTDOWN;
     }
   }
-    
+
   ANKI_CPU_PROFILE("AnimProcessMessages::Update");
 
   // Keep trying to init the connection flow until it works
@@ -694,14 +719,20 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
   {
     _connectionFlowInited = InitConnectionFlow(_animStreamer);
   }
-  
+
   if (!AnimComms::IsConnectedToRobot()) {
-    LOG_WARNING("AnimProcessMessages.Update", "No connection to robot");
-    FaultCode::DisplayFaultCode(FaultCode::NO_ROBOT_PROCESS);
-#if !FACTORY_TEST
-    // Only return failure if this is not the factory test
-    return RESULT_FAIL_IO_CONNECTION_CLOSED;
-#endif
+    static bool faultCodeDisplayed = false;
+    if (!faultCodeDisplayed) {
+      LOG_WARNING("AnimProcessMessages.Update.NoConnectionToRobot", "");
+      FaultCode::DisplayFaultCode(FaultCode::NO_ROBOT_PROCESS);
+      faultCodeDisplayed = true;
+    }
+  } else if ((_pendingRobotDisconnectTime_sec > 0.f) &&
+      (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _pendingRobotDisconnectTime_sec)) {
+    // Disconnect robot if it hasn't been heard from in a while
+    LOG_WARNING("AnimProcessMessages.Update.RobotStateTimeout", "Disconnecting robot");
+    AnimComms::DisconnectRobot();
+    _pendingRobotDisconnectTime_sec = -1.f;
   }
 
   MonitorConnectionState(currTime_nanosec);

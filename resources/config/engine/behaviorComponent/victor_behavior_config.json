@@ -2,6 +2,7 @@
   "onboardingBehavior": "Onboarding",
   "normalBaseBehavior": "InitNormalOperation",
   "devBaseBehavior"   : "DevBaseBehavior"
+  // PR demo is hardcoded
   // factory behavior is hardcoded
 }
 

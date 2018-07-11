@@ -18,6 +18,7 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/behaviorComponent/userIntent.h"
 
 #include "coretech/common/engine/utils/timer.h"

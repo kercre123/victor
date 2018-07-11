@@ -12,8 +12,11 @@
 #include "util/math/numericCast.h"
 #include "util/random/randomGenerator.h"
 
-// switch std::round() to macro for easier change, currently defers to cast
-#define ROUND(x) (x) // std::round(x)
+// switch std::round() to macro for easier change
+// switched from (x) to std::round(x) as it was noticed edges were jittering when
+// the roundness of corners was animated (VIC-3930). Keeping as a macro in-case
+// there's a faster way to round()/cast().
+#define ROUND(x) std::round(x)
 
 // switch Util::numeric_cast_clamped() to macro for easier change
 #define NUMERIC_CAST_CLAMPED(x) (u8)(x) // Util::numeric_cast_clamped<u8>(x)
@@ -29,13 +32,21 @@ namespace Cozmo {
     GaussianFilter = 2,
   };
 
+  enum class AntiAliasTarget {
+    None           = 0,
+    Eyes           = 1,
+    Face           = 2,
+  };
+
   CONSOLE_VAR_ENUM(u8,      kProcFace_LineType,                   CONSOLE_GROUP, 1, "Line_4,Line_8,Line_AA"); // Only affects OpenCV drawing, not post-smoothing
+  CONSOLE_VAR_ENUM(u8,      kProcFace_InterpolationType,          CONSOLE_GROUP, 1, "Nearest,Linear,Cubic,Area,Lanczos,LinearExact,Max,WarpFillOutliers");
   CONSOLE_VAR_RANGED(s32,   kProcFace_EllipseDelta,               CONSOLE_GROUP, 10, 1, 90);
   CONSOLE_VAR_RANGED(f32,   kProcFace_EyeLightnessMultiplier,     CONSOLE_GROUP, 1.f, 0.f, 2.f);
 
   CONSOLE_VAR(bool,         kProcFace_HotspotRender,              CONSOLE_GROUP, true); // Render glow
   CONSOLE_VAR_RANGED(f32,   kProcFace_HotspotFalloff,             CONSOLE_GROUP, 0.48f, 0.05f, 1.f);
 
+  CONSOLE_VAR_ENUM(uint8_t, kProcFace_AntiAliasing,               CONSOLE_GROUP, (uint8_t)AntiAliasTarget::Eyes, "None,Eyes,Face");
   CONSOLE_VAR_RANGED(s32,   kProcFace_AntiAliasingSize,           CONSOLE_GROUP, 3, 0, 15); // full image antialiasing (3 will use NEON)
   CONSOLE_VAR_ENUM(uint8_t, kProcFace_AntiAliasingFilter,         CONSOLE_GROUP, (uint8_t)Filter::BoxFilter, "None,Box,Gaussian");
   CONSOLE_VAR_RANGED(f32,   kProcFace_AntiAliasingSigmaFraction,  CONSOLE_GROUP, 0.5f, 0.0f, 1.0f);
@@ -196,6 +207,36 @@ namespace Cozmo {
     }
   }
 #endif // PROCEDURALFACE_NOISE_FEATURE
+
+  void ProceduralFaceDrawer::ApplyAntiAliasing(Vision::Image& shape, float minX, float minY, float maxX, float maxY)
+  {
+    if(kProcFace_AntiAliasingSize > 0) {
+      ANKI_CPU_PROFILE("AntiAliasing");
+
+      Rectangle<s32> boundingBoxS32(minX, minY, maxX - minX, maxY - minY);
+      Vision::Image shapeROI = shape.GetROI(boundingBoxS32);
+
+      switch(kProcFace_AntiAliasingFilter) {
+        case (uint8_t)Filter::BoxFilter:
+        {
+          static Vision::Image temp(shape.GetNumRows(), shape.GetNumCols());
+          temp.FillWith(0);
+          Vision::Image tempImage = temp.GetROI(boundingBoxS32);
+          shapeROI.BoxFilter(tempImage, kProcFace_AntiAliasingSize);
+          std::swap(shape, temp);
+          break;
+        }
+        case (uint8_t)Filter::GaussianFilter:
+        {
+          cv::GaussianBlur(shape.get_CvMat_(),
+                           shape.get_CvMat_(),
+                           cv::Size(kProcFace_AntiAliasingSize,kProcFace_AntiAliasingSize),
+                           (f32)kProcFace_AntiAliasingSize * kProcFace_AntiAliasingSigmaFraction);
+          break;
+        }
+      }
+    }
+  }
 
   void ProceduralFaceDrawer::DrawEye(const ProceduralFace& faceData, WhichEye whichEye,
                                      Vision::Image& faceImg, Rectangle<f32>& eyeBoundingBox)
@@ -524,33 +565,11 @@ namespace Cozmo {
       }
 #endif
 
-      // Antialiasing (AFTER glow because it changes eyeShape, which we use to compute the glow above)
-      if(kProcFace_AntiAliasingSize > 0) {
-        ANKI_CPU_PROFILE("AntiAliasing");
-#if REMOTE_CONSOLE_ENABLED
-        if(kProcFace_AntiAliasingSize % 2 == 0) {
-          ++kProcFace_AntiAliasingSize; // Antialiasing filter size should be odd
-        }
-#else
-        static_assert(kProcFace_AntiAliasingSize % 2 == 1, "kProcFace_AntiAliasingSize must be odd");
-#endif // REMOTE_CONSOLE_ENABLED
-        switch(kProcFace_AntiAliasingFilter) {
-          case (uint8_t)Filter::BoxFilter:
-          {
-            static Vision::Image temp(_eyeShape.GetNumRows(), _eyeShape.GetNumCols());
-            temp.FillWith(0);
-            Vision::Image tempImage = temp.GetROI(eyeBoundingBoxS32);
-            eyeShapeROI.BoxFilter(tempImage, kProcFace_AntiAliasingSize);
-            std::swap(_eyeShape, temp);
-            break;
-          }
-          case (uint8_t)Filter::GaussianFilter:
-            cv::GaussianBlur(eyeShapeROI.get_CvMat_(),
-                             eyeShapeROI.get_CvMat_(),
-                             cv::Size(kProcFace_AntiAliasingSize,kProcFace_AntiAliasingSize),
-                             (f32)kProcFace_AntiAliasingSize * kProcFace_AntiAliasingSigmaFraction);
-            break;
-        }
+      if(kProcFace_AntiAliasing == (uint8_t)AntiAliasTarget::Eyes) {
+        // Antialiasing (AFTER glow because it changes eyeShape, which we use to compute the glow above)
+
+        // Optimization: if we're applying interpolation and transforming the face, skip antialiasing?
+        ApplyAntiAliasing(_eyeShape, upperLeft.x(), upperLeft.y(), bottomRight.x(), bottomRight.y());
       }
 
       const f32 eyeLightness = faceData.GetParameter(whichEye, Parameter::Lightness);
@@ -694,6 +713,7 @@ namespace Cozmo {
       // Apply whole-face params
       const bool hasTransform = (_faceCache.faceData.GetFaceAngle() != 0) || !(_faceCache.faceData.GetFacePosition() == 0) || !(_faceCache.faceData.GetFaceScale() == 1.f);
       if(hasTransform) {
+
         // Assign a new element in the face cache to use as output from cv::warpAffine
         _faceCache.finalFace = _faceCache.transformedFace = _faceCache.eyes+1;
         DEV_ASSERT(_faceCache.finalFace < _faceCache.kSize, "ProceduralFaceDrawer, face cache too small.");
@@ -706,8 +726,11 @@ namespace Cozmo {
                                                              static_cast<f32>(ProceduralFace::WIDTH)*0.5f,
                                                              static_cast<f32>(ProceduralFace::HEIGHT)*0.5f);
 
+        static const cv::InterpolationFlags kInterpolationFlags[9] = { cv::INTER_NEAREST, cv::INTER_LINEAR, cv::INTER_CUBIC, cv::INTER_AREA, cv::INTER_LANCZOS4, cv::INTER_LINEAR_EXACT, cv::INTER_MAX, cv::WARP_FILL_OUTLIERS };
+        const cv::InterpolationFlags kInterpolationFlag = kInterpolationFlags[kProcFace_InterpolationType];
+
         cv::warpAffine(_faceCache.img8[_faceCache.eyes].get_CvMat_(), _faceCache.img8[_faceCache.transformedFace].get_CvMat_(), W.get_CvMatx_(),
-                       cv::Size(ProceduralFace::WIDTH, ProceduralFace::HEIGHT), cv::INTER_NEAREST);
+                       cv::Size(ProceduralFace::WIDTH, ProceduralFace::HEIGHT), kInterpolationFlag);
 
         std::array<Quad2f,2> leftRightQuads;
         _leftBBox.GetQuad(leftRightQuads[0]);
@@ -726,6 +749,10 @@ namespace Cozmo {
             _faceColMin = std::min(_faceColMin, (s32)std::floor(warpedPoint.x()));
             _faceColMax = std::max(_faceColMax, (s32)std::ceil(warpedPoint.x()));
           }
+        }
+
+        if(kProcFace_AntiAliasing == (uint8_t)AntiAliasTarget::Face) {
+          ApplyAntiAliasing(_faceCache.img8[_faceCache.transformedFace], _faceColMin, _faceRowMin, _faceColMax, _faceRowMax);
         }
       } else {
         // No transform, can pass on the output from eye rendering as our output

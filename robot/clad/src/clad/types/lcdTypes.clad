@@ -1,0 +1,17 @@
+/**
+ * Types for interacting with the LCD screen (low level)
+ */
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 LCDBrightness {
+  LCDLevelOff = 0,
+  LCDLevel_5mA = 5,
+  LCDLevel_10mA = 10,
+  LCDLevel_15mA = 15,
+  LCDLevel_20mA = 20,
+}
+
+}
+}

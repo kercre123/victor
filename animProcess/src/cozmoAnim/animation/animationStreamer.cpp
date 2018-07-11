@@ -57,6 +57,7 @@
 
 #include <stdio.h>
 #include <time.h>
+#include <vector>
 
 #define DEBUG_ANIMATION_STREAMING 0
 #define DEBUG_ANIMATION_STREAMING_AUDIO 0
@@ -362,7 +363,7 @@ namespace Cozmo {
           head[14] = FACE_DISPLAY_HEIGHT & 0xff;
           head[15] = (FACE_DISPLAY_HEIGHT >> 8) & 0xff;
           head[16] = 32;   /** 32 bits depth **/
-          head[17] = 0x08; /** top-down flag, 8 bits alpha **/
+          head[17] = 0x28; /** top-down flag, 8 bits alpha **/
           fwrite(head, sizeof(uint8_t), 18, s_tga);
 
           s_framesToCapture = 1;
@@ -396,7 +397,7 @@ namespace Cozmo {
   AnimationStreamer::AnimationStreamer(const AnimContext* context)
   : _context(context)
   , _proceduralTrackComponent(new TrackLayerComponent(context))
-  , _lockedTracks(0)
+  , _lockedTracks((u8)AnimTrackFlag::BACKPACK_LIGHTS_TRACK)
   , _tracksInUse(0)
   , _animAudioClient( new Audio::AnimationAudioClient(context->GetAudioController()) )
   , _proceduralAudioClient( new Audio::ProceduralAudioClient(context->GetAudioController()) )
@@ -407,6 +408,7 @@ namespace Cozmo {
 
   #if ANKI_DEV_CHEATS
     {
+      _lockedTracks = 0;
       sDevRelativeTimePtr = &_relativeStreamTime_ms;
       sDevBufferFacePtr = &_faceDrawBuf;
       sStreamingAnimationPtrPtr = &_streamingAnimation;
@@ -444,30 +446,20 @@ namespace Cozmo {
                         neutralFaceAnimName.c_str());
     }
     
-    const std::string sleepingFaceAnimName = "anim_face_sleeping";
-    _bootFaceAnimation = _context->GetDataLoader()->GetCannedAnimation(sleepingFaceAnimName);
-    if (_bootFaceAnimation == nullptr)
-    {
-      PRINT_NAMED_ERROR("AnimationStreamer.Constructor.SleepingDataNotFound",
-                        "Could not find expected sleeping face animation file called %s",
-                        sleepingFaceAnimName.c_str());
-    }
-    
-    
     // Do this after the ProceduralFace class has set to use the right neutral face
-    _proceduralTrackComponent->Init();
+    _proceduralTrackComponent->Init(*this);
     
     _faceDrawBuf.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
     _procFaceImg.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
     _faceImageRGB565.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
     _faceImageGrayscale.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
    
-    // Use the sleeping animation, fall back on neutral eyes
-    if( _bootFaceAnimation != nullptr ) {
-      SetStreamingAnimation(_bootFaceAnimation, kNotAnimatingTag);
-    } else {
-      SetStreamingAnimation(_neutralFaceAnimation, kNotAnimatingTag);
-    }
+    // Start with a blank face (face scale == 0) until the engine has initialized and sent an animation
+    ProceduralFace blankFace;
+    const f32 zeroScale = 0.0f;
+    const std::vector<f32> arbitraryEyes((int)ProceduralEyeParameter::NumParameters, 0.5f);
+    blankFace.SetFromValues(arbitraryEyes, arbitraryEyes, 0.0f, 0.0f, 0.0f, zeroScale, zeroScale, 0.0f);
+    SetProceduralFace(blankFace, std::numeric_limits<u32>::max());
 
     return RESULT_OK;
   }
@@ -514,7 +506,7 @@ namespace Cozmo {
                      anim != nullptr ? anim->GetName().c_str() : "NULL", tag, numLoops);
     }
     
-    const bool wasStreamingSomething = nullptr != _streamingAnimation;
+    const bool wasStreamingSomething = (nullptr != _streamingAnimation);
     
     if(wasStreamingSomething)
     {
@@ -532,7 +524,7 @@ namespace Cozmo {
                           anim != nullptr ? anim->GetName().c_str() : "NULL",
                           _streamingAnimation->GetName().c_str());
 
-      Abort(shouldClearProceduralAnim);
+      Abort(kNotAnimatingTag, shouldClearProceduralAnim);
     }
     
     _streamingAnimation = anim;
@@ -854,7 +846,7 @@ namespace Cozmo {
       // Otherwise, clear the track and set the streaming animation to nullptr so that the new
       // procedural animation will be initialized below
       if(spriteSeqTrack.HasFramesLeft() &&
-         (spriteSeqTrack.GetCurrentKeyFrame().GetKeyframeDuration_ms() == 0)){
+         !spriteSeqTrack.GetCurrentKeyFrame().SequenceShouldAdvance()){
         spriteSeqTrack.Clear();
         SetStreamingAnimation(nullptr, 0);
       }
@@ -872,7 +864,7 @@ namespace Cozmo {
     }
 
     SpriteSequenceKeyFrame kf(spriteHandle, triggerTime_ms, shouldRenderInEyeHue);
-    kf.SetKeyFrameDuration_ms(duration_ms);
+    kf.SetKeyframeActiveDuration_ms(duration_ms);
     
     Result result = _proceduralAnimation->AddKeyFrameToBack(kf);
     if(!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetFaceImage.FailedToAddKeyFrame", "")))
@@ -915,7 +907,7 @@ namespace Cozmo {
     auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
     SpriteSequenceKeyFrame kf(spriteCache, compImg, frameInterval_ms,
                               shouldRenderInEyeHue);
-    kf.SetKeyFrameDuration_ms(duration_ms);
+    kf.SetKeyframeActiveDuration_ms(duration_ms);
     Result result = _proceduralAnimation->AddKeyFrameToBack(kf);
     if(!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetCompositeImage.FailedToAddKeyFrame", "")))
     {
@@ -961,9 +953,12 @@ namespace Cozmo {
     return Result::RESULT_FAIL;
   }
   
-  void AnimationStreamer::Abort(bool shouldClearProceduralAnim)
+  void AnimationStreamer::Abort(Tag tag, bool shouldClearProceduralAnim)
   {
-    if (nullptr != _streamingAnimation)
+    // Only abort if the tag matches the currently playing animation or 
+    // the tag is kNotAnimatingTag
+    if (nullptr != _streamingAnimation && 
+        (tag == _tag || tag == kNotAnimatingTag) )
     {
       PRINT_CH_INFO(kLogChannelName,
                     "AnimationStreamer.Abort",
@@ -974,6 +969,8 @@ namespace Cozmo {
                     _startOfAnimationSent,
                     _endOfAnimationSent);
       
+      StopTracksInUse();
+
       if (_startOfAnimationSent) {
         SendEndOfAnimation(true);
       }
@@ -1768,6 +1765,7 @@ namespace Cozmo {
         _lastAnimationStreamTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
         // Send an end-of-animation keyframe when done
         if( !_streamingAnimation->HasFramesLeft() &&
+            _relativeStreamTime_ms >= _streamingAnimation->GetLastKeyFrameEndTime_ms() &&
             _startOfAnimationSent &&
             !_endOfAnimationSent)
         {
@@ -1809,23 +1807,30 @@ namespace Cozmo {
        haveStreamedAnything &&
        longEnoughSinceStream)
     {
-      // If we were interrupted from streaming an animation and we've met all the
-      // conditions to even be in this function, then we should make sure we've
-      // got neutral face back on the screen
-      if(_wasAnimationInterruptedWithNothing) {
-        SetStreamingAnimation(_neutralFaceAnimation, kNotAnimatingTag);
-        _wasAnimationInterruptedWithNothing = false;
-      }
-
       if(!FACTORY_TEST)
       {
         if(s_enableKeepFaceAlive)
         {
+          // If we were interrupted from streaming an animation and we've met all the
+          // conditions to even be in this function, then we should make sure we've
+          // got neutral face back on the screen
+          if(_wasAnimationInterruptedWithNothing) {
+            SetStreamingAnimation(_neutralFaceAnimation, kNotAnimatingTag);
+            _wasAnimationInterruptedWithNothing = false;
+          }
+          
           _proceduralTrackComponent->KeepFaceAlive(_keepFaceAliveParams, _relativeStreamTime_ms);
         }
         else
         {
           _proceduralTrackComponent->KeepFaceTheSame();
+        }
+      }
+      else
+      {
+        if(_wasAnimationInterruptedWithNothing) {
+          SetStreamingAnimation(_neutralFaceAnimation, kNotAnimatingTag);
+          _wasAnimationInterruptedWithNothing = false;
         }
       }
     }
@@ -1925,6 +1930,13 @@ namespace Cozmo {
   {
     if (s_enableKeepFaceAlive && !enable) {
       _proceduralTrackComponent->RemoveKeepFaceAlive(_relativeStreamTime_ms, disableTimeout_ms);
+    } else if (enable && !s_enableKeepFaceAlive) {
+      if (_wasAnimationInterruptedWithNothing) {
+        // The last animation ended without a replacement, but neutral eyes weren't inserted because
+        // keepalive was disabled. Now that they're re-enabled, set the neutral eyes.
+        SetStreamingAnimation(_neutralFaceAnimation, kNotAnimatingTag);
+        _wasAnimationInterruptedWithNothing = false;
+      }
     }
     s_enableKeepFaceAlive = enable;
   }

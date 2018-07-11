@@ -15,6 +15,8 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "engine/activeObject.h"
+#include "engine/blockWorld/blockWorld.h"
 #include "engine/components/backpackLights/backpackLightComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightAnimation.h"
 #include "engine/components/cubes/cubeLights/cubeLightAnimationHelpers.h"
@@ -26,6 +28,9 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
+
+CONSOLE_VAR(int, kDedupTimeAfterLock_ms, "CubeSpinner", 1000);
+CONSOLE_VAR(bool, kShouldLockPulseTargetColor, "CubeSpinner", true);
 ////////
 // Light Keys
 ////////
@@ -53,6 +58,8 @@ const char* kSelectTargetKey        = "selectTarget";
 ////////
 // Game Config Keys
 ////////
+const char* kMinWrongKey = "minWrongColorsBeetweenTargetPerRound";
+const char* kMaxWrongKey = "maxWrongColorsBeetweenTargetPerRound";
 const char* kSpeedMultipliersKey = "speedMultipliers";
 const char* kGetInLengthKey = "getInLength_ms";
 const char* kTimePerLEDKey = "timePerLED_ms";
@@ -104,6 +111,7 @@ CubeSpinnerGame::GameSettingsConfig::GameSettingsConfig(const Json::Value& setti
   const std::string debugName = "CubeSpinnerGame.GameSettingsConfig.KeyIssue.";
   getInLength_ms = JsonTools::ParseUInt32(settingsConfig, kGetInLengthKey, (debugName + "GetInLength").c_str());
   timePerLED_ms  = JsonTools::ParseUInt32(settingsConfig, kTimePerLEDKey, (debugName + "TimePerLED").c_str());
+  // Speed multipliers array
   if(settingsConfig[kSpeedMultipliersKey].isArray()){
     int i = 0;
     for(const auto& entry: settingsConfig[kSpeedMultipliersKey]){
@@ -115,6 +123,32 @@ CubeSpinnerGame::GameSettingsConfig::GameSettingsConfig(const Json::Value& setti
       i++;
     }
   }
+
+  // Min wrong array
+  if(settingsConfig[kMinWrongKey].isArray()){
+    int i = 0;
+    for(const auto& entry: settingsConfig[kMinWrongKey]){
+      if(i >= CubeLightAnimation::kNumCubeLEDs){
+        PRINT_NAMED_ERROR("CubeSpinnerGame.GameSettingsConfig.TooManyWrongColorsMin", "");
+        break;
+      }
+      minWrongColorsPerRound[i] = entry.asInt();
+      i++;
+    }
+  }
+
+  // Max wrong array
+  if(settingsConfig[kMaxWrongKey].isArray()){
+    int i = 0;
+    for(const auto& entry: settingsConfig[kMaxWrongKey]){
+      if(i >= CubeLightAnimation::kNumCubeLEDs){
+        PRINT_NAMED_ERROR("CubeSpinnerGame.GameSettingsConfig.TooManyWrongColorsMax", "");
+        break;
+      }
+      maxWrongColorsPerRound[i] = entry.asInt();
+      i++;
+    }
+  }
 }
 
 
@@ -123,11 +157,13 @@ CubeSpinnerGame::CubeSpinnerGame(const Json::Value& gameConfig,
                                  const Json::Value& lightConfigs,
                                  CubeLightComponent& cubeLightComponent,
                                  BackpackLightComponent& backpackLightComponent,
+                                 BlockWorld& blockWorld,
                                  Util::RandomGenerator& rng)
 : _settingsConfig(gameConfig)
 , _lightsConfig(lightConfigs)
 , _cubeLightComponent(cubeLightComponent)
 , _backpackLightComponent(backpackLightComponent)
+, _blockWorld(blockWorld)
 , _rng(rng)
 {
 
@@ -142,14 +178,23 @@ CubeSpinnerGame::~CubeSpinnerGame()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CubeSpinnerGame::StartNewGame(const ObjectID& targetObject)
+void CubeSpinnerGame::PrepareForNewGame(GameReadyCallback callback)
 {
-  _currentGame = CurrentGame();
-  _currentGame.targetObject = targetObject;
-  _currentGame.targetLightIdx = GetRandomLightIdx();
-  const size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
-  _currentGame.lastUpdateTick = currTick;
-  _currentGame.baseLightPattern = CubeLightAnimation::GetLightsOffPattern();
+  _currentGame.targetObject.SetToUnknown();
+  const bool res = ResetGame();
+  callback(res, _currentGame.targetObject);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CubeSpinnerGame::StartGame()
+{
+  if(CanGameStart()){
+    ResetGame();
+    _currentGame.hasStarted = true;
+    return true;
+  }
+  return false;
 }
 
 
@@ -157,12 +202,53 @@ void CubeSpinnerGame::StartNewGame(const ObjectID& targetObject)
 void CubeSpinnerGame::StopGame()
 {
   _backpackLightComponent.ClearAllBackpackLightConfigs();
+  _cubeLightComponent.StopLightAnimAndResumePrevious(_currentGame.currentCubeHandle);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CubeSpinnerGame::CanGameStart() const
+{
+  BlockWorldFilter filter;
+  filter.AddAllowedFamily(ObjectFamily::LightCube);
+  const ActiveObject* obj = _blockWorld.FindConnectedActiveMatchingObject(filter);
+  return obj != nullptr;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CubeSpinnerGame::ResetGame()
+{
+  _backpackLightComponent.ClearAllBackpackLightConfigs();
+  _cubeLightComponent.StopLightAnimAndResumePrevious(_currentGame.currentCubeHandle);
+
+  _currentGame = CurrentGame();
+  _currentGame.targetLightIdx = GetNewLightColorIdx(true);
+  const size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
+  _currentGame.lastUpdateTick = currTick;
+  _currentGame.baseLightPattern = CubeLightAnimation::GetLightsOffPattern();
+  _currentGame.baseLightPattern.canBeOverridden = false;
+  
+  BlockWorldFilter filter;
+  filter.AddAllowedFamily(ObjectFamily::LightCube);
+  const ActiveObject* obj = _blockWorld.FindConnectedActiveMatchingObject(filter);
+  if(obj != nullptr){
+    _currentGame.targetObject = obj->GetID();
+  }else{
+    return false;
+  }
+  
+  return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CubeSpinnerGame::Update()
 {
+  if(!_currentGame.hasStarted){
+    return;
+  }
+
   if(_currentGame.lastTimePhaseChanged_ms == kGameHasntStartedTick){
     TransitionToGamePhase(GamePhase::GameGetIn);
   }else if(ANKI_DEV_CHEATS){
@@ -191,7 +277,7 @@ void CubeSpinnerGame::CheckForNextLEDRotation()
       _currentGame.currentCycleLEDIdx++;
     }else{
       _currentGame.currentCycleLEDIdx = 0;
-      _currentGame.currentCycleLightIdx = GetRandomLightIdx();
+      _currentGame.currentCycleLightIdx = GetNewLightColorIdx();
     }
     ComposeAndSendLights();
     _currentGame.timeNextAdvanceToLED_ms = currTime_ms + MillisecondsBetweenLEDRotations();
@@ -221,6 +307,9 @@ void CubeSpinnerGame::ComposeAndSendLights()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CubeSpinnerGame::LockCurrentLightsIn()
 {
+  const auto currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  _currentGame.lastTimeLightLocked_ms = currTime_ms;
+  
   _currentGame.lightsLocked[GetCurrentCycleIdx()] = true;
   CubeLightAnimation::LightPattern currentCyclePattern = GetCurrentLockPattern();
 
@@ -230,8 +319,9 @@ void CubeSpinnerGame::LockCurrentLightsIn()
   
   _currentGame.lastLEDLockedIdx = _currentGame.currentCycleLEDIdx;
   // start one offset from the last light locked in
-  _currentGame.currentCycleLightIdx = GetRandomLightIdx();
-  _currentGame.currentCycleLEDIdx = _currentGame.lastLEDLockedIdx + 1;
+  _currentGame.currentCycleLightIdx = GetNewLightColorIdx();
+  _currentGame.currentCycleLEDIdx = 0;
+
 }
 
 
@@ -243,6 +333,11 @@ CubeLightAnimation::LightPattern CubeSpinnerGame::GetCurrentCyclePattern() const
   if(IsCurrentCycleIdxLocked()){
     anim = _cubeLightComponent.GetAnimation(_lightsConfig.lights[_currentGame.targetLightIdx].cubeLockedPulseTrigger);
   }else{
+    anim = _cubeLightComponent.GetAnimation(_lightsConfig.lights[_currentGame.currentCycleLightIdx].cubeCycleTrigger);
+  }
+
+
+  if(kShouldLockPulseTargetColor){
     anim = _cubeLightComponent.GetAnimation(_lightsConfig.lights[_currentGame.currentCycleLightIdx].cubeCycleTrigger);
   }
   
@@ -270,6 +365,13 @@ CubeLightAnimation::LightPattern CubeSpinnerGame::GetCurrentLockPattern() const
 uint8_t CubeSpinnerGame::GetCurrentCycleIdx() const
 {
   return (_currentGame.currentCycleLEDIdx + _currentGame.lastLEDLockedIdx) % CubeLightAnimation::kNumCubeLEDs;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CubeSpinnerGame::IsGameOver() const
+{
+  return GetRoundNumber() == CubeLightAnimation::kNumCubeLEDs;
 }
 
   
@@ -304,6 +406,19 @@ uint8_t CubeSpinnerGame::GetRoundNumber() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CubeSpinnerGame::LockNow()
 {
+  const auto currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+
+  if((_currentGame.lastTimeLightLocked_ms + kDedupTimeAfterLock_ms) > currTime_ms){
+    PRINT_NAMED_INFO("CubeSpinnerGame.LockNow.DuplicateLock", "Received duplicate lock call before timeout");
+    return;
+  }
+
+  // Don't log taps before the game starts or after the game's over
+  if(!_currentGame.hasStarted || IsGameOver() || 
+     (_currentGame.gamePhase < GamePhase::CycleColorsUntilTap)){
+    return;
+  }
+
   LockResult result = LockResult::Error;
 
   const bool colorsMatch = (_currentGame.targetLightIdx == _currentGame.currentCycleLightIdx);
@@ -311,7 +426,7 @@ void CubeSpinnerGame::LockNow()
 
   if(colorsMatch && notAlreadyLocked){
     LockCurrentLightsIn();
-    if(GetRoundNumber() == CubeLightAnimation::kNumCubeLEDs){
+    if(IsGameOver()){
       result = LockResult::Complete;
       TransitionToGamePhase(GamePhase::Celebration);
     }else{
@@ -382,6 +497,8 @@ void CubeSpinnerGame::TransitionToGamePhase(GamePhase phase)
     case GamePhase::Celebration:{
       const bool shouldLoop = false;
       _backpackLightComponent.SetBackpackAnimation(targetLightEntry.backpackCelebrationTrigger, shouldLoop);
+      auto* anim = _cubeLightComponent.GetAnimation(targetLightEntry.cubeCelebrationTrigger);
+      PlayCubeAnimation(*anim);
       break;
     }
   }
@@ -391,9 +508,29 @@ void CubeSpinnerGame::TransitionToGamePhase(GamePhase phase)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-uint8_t CubeSpinnerGame::GetRandomLightIdx() const
-{   
-  return _rng.RandInt(static_cast<int>(_lightsConfig.lights.size()));
+uint8_t CubeSpinnerGame::GetNewLightColorIdx(bool forTargetLight)
+{ 
+  if(forTargetLight){
+    return _rng.RandInt(static_cast<int>(_lightsConfig.lights.size()));
+  }else{
+    if(_currentGame.numberOfCyclesTillNextCorrectLight <= 0){
+      _currentGame.numberOfCyclesTillNextCorrectLight = _rng.RandIntInRange(_settingsConfig.minWrongColorsPerRound[GetRoundNumber()], 
+                                                                            _settingsConfig.maxWrongColorsPerRound[GetRoundNumber()]);
+      return _currentGame.targetLightIdx;
+    }else{
+      _currentGame.numberOfCyclesTillNextCorrectLight--;
+      uint8_t idx = _rng.RandInt(static_cast<int>(_lightsConfig.lights.size()));
+      int safety = 0;
+      while(idx == _currentGame.targetLightIdx){
+        idx = _rng.RandInt(static_cast<int>(_lightsConfig.lights.size()));
+        if(safety > 500000){
+          break;
+        }
+        safety++;
+      }
+      return idx;
+    }
+  }
 }
 
 
@@ -409,6 +546,19 @@ void CubeSpinnerGame::PlayCubeAnimation(CubeLightAnimation::Animation& animToPla
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CubeSpinnerGame::GetGameSnapshot(GameSnapshot& outSnapshot) const
+{
+  outSnapshot.areLightsCycling = (_currentGame.gamePhase == GamePhase::CycleColorsUntilTap);
+  outSnapshot.currentLitLEDIdx = GetCurrentCycleIdx();
+  outSnapshot.isCurrentLightTarget = (_currentGame.targetLightIdx == _currentGame.currentCycleLightIdx);
+  outSnapshot.lightsLocked = _currentGame.lightsLocked;
+  const auto currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const auto timeUntilNextRotation = (_currentGame.timeNextAdvanceToLED_ms > currTime_ms) ?
+                                      _currentGame.timeNextAdvanceToLED_ms - currTime_ms : 0;
+  outSnapshot.timeUntilNextRotation = timeUntilNextRotation;
+  outSnapshot.roundNumber = GetRoundNumber();
+}
 
 
 } // namespace Cozmo

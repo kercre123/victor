@@ -23,6 +23,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/robotStatusAndActions.h"
 

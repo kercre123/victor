@@ -5,6 +5,7 @@ cxx_project(
                             '**/vicos/*',
                             'tools/**/*',
                         ]),
+    data = glob(['../resources/**/*.json','../resources/webserver/**/*']),
     platform_srcs = [
         ('vicos', glob([
                             '**/*_vicos.cpp',

@@ -41,8 +41,13 @@ BehaviorCooldownInfo::BehaviorCooldownInfo(const Json::Value& config)
   
   _ignoreFastForward = config.get("ignoreFastForward", false).asBool();
 
-  _cooldown_s = cooldown;
-  _randomCooldownFactor = randomFactor;
+  if( Anki::Util::IsFltLTZero( cooldown ) ) { // a clearly negative cooldown ==> forever
+    _cooldown_s = std::numeric_limits<float>::max();
+    _randomCooldownFactor = 0.0f;
+  } else {
+    _cooldown_s = cooldown;
+    _randomCooldownFactor = randomFactor;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

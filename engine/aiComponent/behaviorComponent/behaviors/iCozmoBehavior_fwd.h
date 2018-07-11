@@ -14,14 +14,8 @@
 #define __Cozmo_Basestation_Behaviors_ICozmoBehavior_fwd_H__
 
 #include <functional>
-#include "engine/robotInterface/messageHandler.h"
+#include <memory>
 #include "clad/types/actionResults.h"
-#include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/externalInterface/messageEngineToGameTag.h"
-#include "clad/externalInterface/messageGameToEngine.h"
-#include "clad/externalInterface/messageGameToEngineTag.h"
-#include "clad/robotInterface/messageRobotToEngineTag.h"
-#include "proto/external_interface/messages.pb.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -33,7 +27,20 @@ enum class BehaviorClass: uint8_t;
 enum class ExecutableBehaviorType: uint8_t;
 
 namespace ExternalInterface {
-struct RobotCompletedAction;
+  class MessageEngineToGame;
+  class MessageGameToEngine;
+  enum class MessageEngineToGameTag : uint8_t;
+  enum class MessageGameToEngineTag : uint8_t;
+  struct RobotCompletedAction;
+}
+
+namespace external_interface {
+  class GatewayWrapper;
+  enum class GatewayWrapperTag : uint8_t;
+}
+  
+namespace RobotInterface {
+  class RobotToEngine;
 }
 
 template<typename TYPE> class AnkiEvent;
@@ -45,7 +52,7 @@ using AppToEngineEvent  = AnkiEvent<external_interface::GatewayWrapper>;
   
 using EngineToGameTag   = ExternalInterface::MessageEngineToGameTag;
 using GameToEngineTag   = ExternalInterface::MessageGameToEngineTag;
-using AppToEngineTag    = external_interface::GatewayWrapper::OneofMessageTypeCase;
+using AppToEngineTag    = external_interface::GatewayWrapperTag;
 
 class BehaviorExternalInterface;
 

@@ -55,6 +55,7 @@ constexpr const char* kEmotionEventKey = "emotionEvent";
 constexpr const char* kBehaviorKey = "behavior";
 constexpr const char* kGetInBehaviorKey = "getInBehavior";
 constexpr const char* kResetBehaviorTimerKey = "resetBehaviorTimer";
+constexpr const char* kCancelSelfKey = "cancelSelf";
 
 static const BackpackLightAnimation::BackpackAnimation kLightsOff = {
   .onColors               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
@@ -514,7 +515,14 @@ void InternalStatesBehavior::BehaviorUpdate()
                     GetDebugLabel().c_str(),
                     state._name.c_str());
       _isRunningGetIn = false;
-      if( state._behavior->WantsToBeActivated() ) {
+      if( nullptr == state._behavior ) {
+        PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.GetInBehavior.CancelSelf",
+                    "%s: in state '%s', finished get in behavior doesn't have normal behavior, canceling",
+                    GetDebugLabel().c_str(),
+                    state._name.c_str());
+        CancelSelf();
+      }
+      else if( state._behavior->WantsToBeActivated() ) {
         DelegateIfInControl(state._behavior.get() );
       }
     }
@@ -560,7 +568,14 @@ void InternalStatesBehavior::BehaviorUpdate()
     
     // TODO:(bn) can behaviors be null?
     if( !IsControlDelegated() ) {
-      if( state._behavior->WantsToBeActivated() ) {
+      if( nullptr == state._behavior ) {
+        PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.BehaviorUpdate.CancelSelf",
+                      "%s: in state '%s', behavior not specified, canceling self",
+                      GetDebugLabel().c_str(),
+                      state._name.c_str());
+        CancelSelf();
+      }
+      else if( state._behavior->WantsToBeActivated() ) {
         DelegateIfInControl( state._behavior.get() );
       } else if( _lastTransitionTick == BaseStationTimer::getInstance()->GetTickCount() - 1 ) {
         PRINT_NAMED_WARNING( "InternalStateBehavior.BehaviorUpdate.NoTransition",
@@ -640,14 +655,25 @@ void InternalStatesBehavior::TransitionToState(const StateID targetState)
       GetBEI().GetBehaviorTimerManager().GetTimer( state._behaviorTimer  ).Reset();
     }
 
-    if( !IsControlDelegated() && state._behavior->WantsToBeActivated() ) {
-      DelegateIfInControl(state._behavior.get() );
-    } else {
-      PRINT_NAMED_WARNING( "InternalStatesBehavior.TransitionToState.NoActivation",
-                           "Transitioning to state %s but behavior %s doesn't want to activate",
-                           state._name.c_str(),
-                           state._behaviorName.c_str() );
+    if( !IsControlDelegated() ) {
+      if( nullptr == state._behavior ) {
+        PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.TransitionToState.CancelSelf",
+                      "%s: in state '%s', finished get in behavior doesn't have normal behavior, canceling",
+                      GetDebugLabel().c_str(),
+                      state._name.c_str());
+        CancelSelf();
+      }
+      else if( state._behavior->WantsToBeActivated() ) {
+        DelegateIfInControl(state._behavior.get() );
+      }
+      else {
+        PRINT_NAMED_WARNING( "InternalStatesBehavior.TransitionToState.NoActivation",
+                             "Transitioning to state %s but behavior %s doesn't want to activate",
+                             state._name.c_str(),
+                             state._behaviorName.c_str() );
+      }
     }
+    
     _lastTransitionTick = BaseStationTimer::getInstance()->GetTickCount();
   }
 }
@@ -670,8 +696,15 @@ float InternalStatesBehavior::GetCurrentStateActiveTime_s() const
 InternalStatesBehavior::State::State(const Json::Value& config)
 {
   _name = JsonTools::ParseString(config, kStateNameConfgKey, "InternalStatesBehavior.StateConfig");
-  _behaviorName = JsonTools::ParseString(config, kBehaviorKey, "InternalStatesBehavior.StateConfig");
   _getInBehaviorName = config.get(kGetInBehaviorKey, "").asString();
+
+  _behaviorName = config.get(kBehaviorKey, "").asString();
+
+  const bool cancelSelf = config.get(kCancelSelfKey, false).asBool();
+  ANKI_VERIFY(cancelSelf != !_behaviorName.empty(),
+              "InternalStatesBehavior.StateConfig.MissingBehavior",
+              "State '%s' does not specify behavior or cancelSelf",
+              _name.c_str());
 
   if( config[kResetBehaviorTimerKey].isString() ) {    
     _behaviorTimer = BehaviorTimerManager::BehaviorTimerFromString( config[kResetBehaviorTimerKey].asString() );
@@ -692,11 +725,17 @@ InternalStatesBehavior::State::State(const Json::Value& config)
 void InternalStatesBehavior::State::Init(BehaviorExternalInterface& bei)
 {
   const auto& BC = bei.GetBehaviorContainer();
-  _behavior = BC.FindBehaviorByID( BehaviorTypesWrapper::BehaviorIDFromString( _behaviorName ) );
-  DEV_ASSERT_MSG(_behavior != nullptr, "HighLevelAI.State.NoBehavior",
-                 "State '%s' cannot find behavior '%s'",
-                 _name.c_str(),
-                 _behaviorName.c_str());
+  if( _behaviorName.empty() ) {
+    _behavior = nullptr;
+  }
+  else {
+    _behavior = BC.FindBehaviorByID( BehaviorTypesWrapper::BehaviorIDFromString( _behaviorName ) );
+    DEV_ASSERT_MSG(_behavior != nullptr, "HighLevelAI.State.NoBehavior",
+                   "State '%s' cannot find behavior '%s'",
+                   _name.c_str(),
+                   _behaviorName.c_str());
+  }
+  
   if( !_getInBehaviorName.empty() ) {
     _getInBehavior = BC.FindBehaviorByID( BehaviorTypesWrapper::BehaviorIDFromString( _getInBehaviorName ) );
     DEV_ASSERT_MSG(_getInBehavior != nullptr, "HighLevelAI.State.NoGetInBehavior",
@@ -782,7 +821,9 @@ void InternalStatesBehavior::State::OnDeactivated(BehaviorExternalInterface& bei
 
   if( _activateIntent != USER_INTENT(INVALID) ) {
     auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
-    uic.DeactivateUserIntent( _activateIntent );
+    if( uic.IsUserIntentActive( _activateIntent ) ) {
+      uic.DeactivateUserIntent( _activateIntent );
+    }
   }
 
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -874,7 +915,26 @@ InternalStatesBehavior::StateID InternalStatesBehavior::GetStateID(const std::st
   }
   return InvalidStateID;
 }
+
+const std::string& InternalStatesBehavior::GetStateName(const StateID state)
+{
+  if( state == InternalStatesBehavior::InvalidStateID ) {
+    static const std::string invalidStr = "<INVALID>";
+    return invalidStr;
+  }
   
+  const auto it = _states->find(state);
+  if( it == _states->end() ) {
+    PRINT_NAMED_ERROR("InternalStatesBehavior.GetStateName.InvalidState",
+                      "Invalid state %zu",
+                      state);
+    static const std::string empty;
+    return empty;
+  }
+
+  return it->second._name;
+}
+
 float InternalStatesBehavior::GetLastTimeStarted(StateID state) const
 {
   return _states->at(state)._lastTimeStarted_s;

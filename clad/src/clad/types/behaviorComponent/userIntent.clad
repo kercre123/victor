@@ -41,7 +41,7 @@ structure UserIntent_WeatherResponse
 
   string  condition,
 
-  int_8 temperature,
+  int_32 temperature,
   string  temperatureUnit,
 
 }
@@ -124,6 +124,7 @@ union dupes_allowed UserIntent
   UserIntent_Void             knowledge_question,
   UserIntent_KnowledgeResponse knowledge_response,
   UserIntent_Void             knowledge_unknown,
+  UserIntent_Void             silence,
 
 
   // for tests

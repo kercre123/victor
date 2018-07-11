@@ -50,7 +50,7 @@ static LightChannel *current_light;
 static bool disabled;
 
 void Lights::init(void) {
-  memcpy(value, default_value, sizeof(value));
+  receive((const uint8_t*)&default_value);
   enable();
 }
 
@@ -64,7 +64,7 @@ void Lights::enable() {
 }
 
 void Lights::disable(void) {
-  memcpy(value, default_value, sizeof(value));
+  receive((const uint8_t*)default_value);
   disabled = true;
 }
 
@@ -120,7 +120,10 @@ void Lights::tick(void) {
 
       mask ^= sorted[x]->mask;
 
-      if (delta >= LIGHT_MINIMUM) target++;
+      if (delta >= LIGHT_MINIMUM) {
+        target++;
+        prev_time = sorted[x]->time;
+      }
     }
   }
 

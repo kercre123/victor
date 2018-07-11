@@ -124,6 +124,7 @@ namespace Cozmo {
     static s32 _faceRowMin;
     static s32 _faceRowMax;
 
+    static void ApplyAntiAliasing(Vision::Image& shape, float minX, float minY, float maxX, float maxY);
     static bool DrawEyes(const ProceduralFace& faceData, bool dirty);
     static bool TransformFace(const ProceduralFace& faceData, bool dirty);
     static bool DistortScanlines(const ProceduralFace& faceData, bool dirty);

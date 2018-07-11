@@ -16,8 +16,6 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionOffTreadsState.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
-#include "engine/externalInterface/externalInterface.h"
-#include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
 namespace Cozmo {

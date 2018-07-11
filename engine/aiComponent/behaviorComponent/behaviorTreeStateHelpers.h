@@ -15,7 +15,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 
-#include <vector>
+#include <set>
+#include <unordered_set>
 
 namespace Anki {
 namespace Cozmo {
@@ -27,12 +28,20 @@ class BehaviorContainer;
 class AreBehaviorsActivatedHelper
 {
 public:
-  AreBehaviorsActivatedHelper(const BehaviorContainer& bc, const std::set<BehaviorID>& behaviors);
+  AreBehaviorsActivatedHelper() = default; // you must add something using AddBehavior()
+  
+  AreBehaviorsActivatedHelper(const BehaviorContainer& bc, const std::set<BehaviorID>& behaviorIDs);
+  
+  AreBehaviorsActivatedHelper(const BehaviorContainer& bc, const std::set<BehaviorClass>& classes);
+  
+  void AddBehavior(const BehaviorContainer& bc, BehaviorID behavior);
+  void AddBehavior(const BehaviorContainer& bc, BehaviorClass behavior);
+  void AddBehavior(ICozmoBehaviorPtr behavior);
 
   bool AreBehaviorsActivated() const;
 
 protected:
-  std::vector<ICozmoBehaviorPtr> _behaviorSet;
+  std::unordered_set<ICozmoBehaviorPtr> _behaviorSet;
 
 
 };

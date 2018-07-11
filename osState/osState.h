@@ -35,6 +35,13 @@ namespace Anki {
 namespace Anki {
 namespace Cozmo {
 
+enum class DesiredCPUFrequency : uint32_t {
+  Automatic = 0,
+  Manual200MHz = 200000,
+  Manual400Mhz = 400000,
+  Manual533Mhz = 533333,
+};
+
 class OSState : public Util::DynamicSingleton<OSState>
 {
   ANKIUTIL_FRIEND_SINGLETON(OSState);
@@ -71,6 +78,9 @@ public:
 
   // Returns temperature in Celsius
   uint32_t GetTemperature_C() const;
+
+  // set specific CPU frequency, or reset to automatic
+  void SetDesiredCPUFrequency(DesiredCPUFrequency freq);
 
   // Returns uptime (and idle time) in seconds
   float GetUptimeAndIdleTime(float &idleTime_s) const;
@@ -135,6 +145,12 @@ public:
   // True if timezone is set (and therefore we can get local time)
   bool HasTimezone() const;
 
+  // True if user space is secure
+  bool IsUserSpaceSecure();
+  
+  // For the engine to let the OS State know if we are on/off the charge contacts
+  void SetOnChargeContacts(const bool onChargeContacts) const;
+
 protected:
    // Return true if robot has a valid EMR.
    // This function is "off limits" to normal robot services
@@ -175,7 +191,8 @@ private:
   std::string _robotVersion    = "";
   std::string _buildSha        = "";
   std::string _bootID          = "";
-
+  bool        _isUserSpaceSecure = false;
+  
 }; // class OSState
 
 } // namespace Cozmo

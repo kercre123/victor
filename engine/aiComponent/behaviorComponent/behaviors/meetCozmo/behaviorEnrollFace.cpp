@@ -34,8 +34,10 @@
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/events/ankiEvent.h"
+#include "engine/externalInterface/cladProtoTypeTranslator.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/externalInterface/externalMessageRouter.h"
+#include "engine/externalInterface/gatewayInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/viz/vizManager.h"
@@ -45,6 +47,7 @@
 #include "coretech/vision/engine/faceTracker.h"
 #include "coretech/vision/engine/trackedFace.h"
 
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/behaviorComponent/behaviorStats.h"
 #include "clad/types/behaviorComponent/userIntent.h"
 #include "clad/types/enrolledFaceStorage.h"
@@ -134,9 +137,6 @@ BehaviorEnrollFace::DynamicVariables::DynamicVariables()
 
   lastRelBodyAngle    = 0.f;
   totalBackup_mm      = 0.f;
-
-  saveEnrollResult    = ActionResult::NOT_STARTED;
-  saveAlbumResult     = ActionResult::NOT_STARTED;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -270,7 +270,7 @@ Result BehaviorEnrollFace::InitEnrollmentSettings()
 void BehaviorEnrollFace::InitBehavior()
 {
   const auto& BC = GetBEI().GetBehaviorContainer();
-  _iConfig.driveOffChargerBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(DriveOffCharger) );
+  _iConfig.driveOffChargerBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(DriveOffChargerStraight) );
   _iConfig.putDownBlockBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(PutDownBlock) );
   
   BC.FindBehaviorByIDAndDowncast( BEHAVIOR_ID(DefaultTextToSpeechLoop),
@@ -513,9 +513,9 @@ void BehaviorEnrollFace::BehaviorUpdate()
 
       if( finishedScanning ) {
         // tell the app we've finished scanning
-        if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
-          ExternalInterface::MeetVictorFaceScanComplete status;
-          GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(std::move(status)));
+        if( GetBEI().GetRobotInfo().HasGatewayInterface() ) {
+          auto* status = new external_interface::MeetVictorFaceScanComplete;
+          GetBEI().GetRobotInfo().GetGatewayInterface()->Broadcast( ExternalMessageRouter::Wrap( status ) );
         }
         // das msg
         {
@@ -716,7 +716,12 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
       const auto& msgRef = info;
       ExternalInterface::FaceEnrollmentCompleted msgCopy{msgRef};
       GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast( ExternalInterface::MessageEngineToGame{std::move(msgCopy)} );
-      GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast( ExternalMessageRouter::Wrap(std::move(info)) );
+    }
+    if( GetBEI().GetRobotInfo().HasGatewayInterface() ) {
+      auto* msg = new external_interface::FaceEnrollmentCompleted{ CladProtoTypeTranslator::ToProtoEnum(info.result),
+                                                                   info.faceID,
+                                                                   info.name };
+      GetBEI().GetRobotInfo().GetGatewayInterface()->Broadcast( ExternalMessageRouter::Wrap(msg) );
     }
 
     // Done (whether success or failure), so reset state for next run
@@ -931,10 +936,10 @@ void BehaviorEnrollFace::TransitionToLookingForFace()
                   }
 
                   // tell the app we're beginning enrollment
-                  if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
+                  if( GetBEI().GetRobotInfo().HasGatewayInterface() ) {
                     // todo: replace with generic status VIC-1423
-                    ExternalInterface::MeetVictorFaceScanStarted status;
-                    GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast( ExternalMessageRouter::Wrap(std::move(status)) );
+                    auto* status = new external_interface::MeetVictorFaceScanStarted;
+                    GetBEI().GetRobotInfo().GetGatewayInterface()->Broadcast( ExternalMessageRouter::Wrap(status) );
                   }
 
                   {
@@ -1162,80 +1167,16 @@ void BehaviorEnrollFace::TransitionToSavingToRobot()
 {
   SET_STATE(SavingToRobot);
 
-  // Trigger a save. These callbacks set flags on save completion. The waitForSave
-  // lambda/action looks for these flags to be set.
-  std::function<void(NVStorage::NVResult)> saveEnrollCallback = [this](NVStorage::NVResult result)
+  // TODO: Does this need to be done asynchronously?
+  const Result saveResult = GetBEI().GetVisionComponent().SaveFaceAlbum();
+  if(RESULT_OK == saveResult)
   {
-    if(result == NVStorage::NVResult::NV_OKAY) {
-      _dVars.saveEnrollResult = ActionResult::SUCCESS;
-    } else {
-      _dVars.saveEnrollResult = ActionResult::ABORT;
-    }
-  };
-
-  std::function<void(NVStorage::NVResult)> saveAlbumCallback = [this](NVStorage::NVResult result)
+    SET_STATE(Success);
+  }
+  else
   {
-    if(result == NVStorage::NVResult::NV_OKAY) {
-      _dVars.saveAlbumResult = ActionResult::SUCCESS;
-    } else {
-      _dVars.saveAlbumResult = ActionResult::ABORT;
-    }
-  };
-
-  GetBEI().GetVisionComponent().SaveFaceAlbumToRobot(saveAlbumCallback, saveEnrollCallback);
-
-  std::function<bool(Robot& robot)> waitForSave = [this](Robot& robot) -> bool
-  {
-    // Wait for Save to complete (success or failure)
-    if(ActionResult::NOT_STARTED != _dVars.saveEnrollResult &&
-       ActionResult::NOT_STARTED != _dVars.saveAlbumResult)
-    {
-      if(ActionResult::SUCCESS == _dVars.saveEnrollResult &&
-         ActionResult::SUCCESS == _dVars.saveAlbumResult)
-      {
-        PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.TransitionToSavingToRobot.NVStorageSaveSucceeded", "");
-        return true;
-      }
-      else
-      {
-        PRINT_NAMED_WARNING("BehaviorEnrollFace.TransitionToSavingToRobot.NVStorageSaveFailed",
-                            "SaveEnroll:%s SaveAlbum:%s. Erasing face.",
-                            EnumToString(_dVars.saveEnrollResult),
-                            EnumToString(_dVars.saveAlbumResult));
-
-        if(Vision::UnknownFaceID == _dVars.saveID)
-        {
-          // if this was a new enrollment, then this person is not going to be
-          // known when we reconnect to the robot, so report failure so that we
-          // erase them from memory when the behavior stops. If this was a re-enrollment,
-          // then we'll just silently fail to remember this particular enrollment data,
-          // since that won't have a big effect on the user.
-          return false;
-        }
-        else
-        {
-          // Failure to save doesn't really matter if this was a re-enrollment. The
-          // only downside is that this most recent enrollment won't get reloaded
-          // from the robot next time we restart, but that's not a huge loss and
-          // it will still get used for the remainder of this session.
-          return true;
-        }
-      }
-    }
-    return false;
-  };
-
-  const f32 kMaxSaveTime_sec = 5.f; // Don't wait the default (long) time for save to complete
-  WaitForLambdaAction* action = new WaitForLambdaAction(waitForSave, kMaxSaveTime_sec);
-
-  DelegateIfInControl(action, [this](ActionResult actionResult) {
-    if (ActionResult::SUCCESS == actionResult) {
-      SET_STATE(Success);
-    } else {
-      SET_STATE(SaveFailed);
-    }
-  });
-
+    SET_STATE(SaveFailed);
+  }
 }
 
 #pragma mark -

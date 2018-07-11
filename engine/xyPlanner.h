@@ -20,11 +20,8 @@
 
 #include "util/helpers/noncopyable.h"
 
-#include <initializer_list>
-#include <algorithm>
-#include <utility>
-#include <unordered_set>
-#include <vector>
+#include <thread>
+#include <condition_variable>
 
 namespace Anki {
 
@@ -40,9 +37,9 @@ class MapComponent;
 class XYPlanner : public IPathPlanner, private Util::noncopyable
 {
 public:
-
-  explicit XYPlanner(Robot* robot);
-  virtual ~XYPlanner() override {};
+  // if runSync TRUE, run the planner in the main engine thread
+  explicit XYPlanner(Robot* robot, bool runSync = false);
+  virtual ~XYPlanner() override;
 
   // ComputePath functions start computation of a path.
   // Return value of Error indicates that there was a problem starting the plan and it isn't running. Running
@@ -55,7 +52,8 @@ public:
                                                     bool forceReplanFromScratch = false,
                                                     bool allowGoalChange = true) override;
 
-  virtual void StopPlanning() override {}
+  // exit the current planning routine
+  virtual void StopPlanning() override { _stopPlanner = true; }
 
   virtual EPlannerStatus CheckPlanningStatus() const override { return _status; }
   
@@ -67,22 +65,26 @@ public:
   virtual bool CheckIsPathSafe(const Planning::Path& path, float startAngle) const override;
   virtual bool CheckIsPathSafe(const Planning::Path& path, float startAngle, Planning::Path& validPath) const override;
 
-  
   // This class maintains a const reference to the NavMap, so there is no need to ever call this method since
   // the map will update itself with obstacles
   virtual bool PreloadObstacles() override { return true; }
 
   // return a test path
   virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path, const PathMotionProfile* motionProfile = nullptr) override {}
-  
-protected:
 
-  EComputePathStatus ComputePath(const Pose3d& startPose, const Pose3d& targetPose) override;
+protected:
+  virtual EComputePathStatus ComputePath(const Pose3d& startPose, const Pose3d& targetPose) override { return ComputePath(startPose, std::vector<Pose3d>({targetPose})); }
 
   bool GetCompletePath_Internal(const Pose3d& robotPose, Planning::Path &path) override;
   bool GetCompletePath_Internal(const Pose3d& robotPose, Planning::Path &path, Planning::GoalID& targetIndex) override;
 
 private:
+  // start the planner after thread has been checked and locked
+  void StartPlanner();
+
+  // initialize all control states and notify the planner thread to get a plan
+  EComputePathStatus InitializePlanner(const Pose2d& start, const std::vector<Pose2d>& targets, bool forceReplan, bool allowGoalChange);
+
   // convert a set of way points to a smooth path
   Planning::Path BuildPath(const std::vector<Point2f>& plan) const;
 
@@ -105,17 +107,34 @@ private:
   bool IsArcSafe(const Arc& a, float padding) const;
   bool IsLineSafe(const LineSegment& l, float padding) const;
   bool IsPointSafe(const Point2f& p, float padding) const;
-
+  
   // get area of any collision with supported types from the map 
   float GetArcPenalty(const Arc& a, float padding) const;
   float GetLinePenalty(const LineSegment& l, float padding) const;
   float GetPointPenalty(const Point2f& p, float padding) const;
 
+  // member vars
   const MapComponent&  _map;
   Pose2d               _start;
   std::vector<Pose2d>  _targets;
   EPlannerStatus       _status;
   float                _collisionPenalty;
+  bool                 _allowGoalChange;
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Thread Handling
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  void Worker();                                           // thread loop
+
+  std::thread*                _plannerThread;              // for safe spinup/shutdown
+  std::recursive_mutex        _contextMutex;               // mutex for locking
+  std::condition_variable_any _threadRequest;              // for syncing with other threads
+
+  const bool                  _isSynchronous  = false;     // if TRUE, do not start a thread on construction
+  volatile bool               _stopThread     = false;     // clean up and stop the thread entirely
+  volatile bool               _startPlanner   = false;     // start planning now if it isn't running
+  volatile bool               _stopPlanner    = false;     // if the planner is currently running, force it to stop
 };
     
     

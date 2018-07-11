@@ -636,6 +636,26 @@
     "SpriteName" : "face_lookatdevice"
   },
   {
+    "CladEvent" : "Face_Lookatdevice_End",
+    "SpriteName" : "face_lookatdevice_end"
+  },
+  {
+    "CladEvent" : "Face_Lookatdevice_Start",
+    "SpriteName" : "face_lookatdevice_start"
+  },
+  {
+    "CladEvent" : "Face_Lookatphone_Getin",
+    "SpriteName" : "face_lookatphone_getin"
+  },
+  {
+    "CladEvent" : "Face_Lookatphone_Getout",
+    "SpriteName" : "face_lookatphone_getout"
+  },
+  {
+    "CladEvent" : "Face_Lookatphone_Loop",
+    "SpriteName" : "face_lookatphone_loop"
+  },
+  {
     "CladEvent" : "Face_Messaging_Deleted_Long",
     "SpriteName" : "face_messaging_deleted_long"
   },
@@ -702,6 +722,10 @@
   {
     "CladEvent" : "Face_Thunderstorms_01",
     "SpriteName" : "face_thunderstorms_01"
+  },
+  {
+    "CladEvent" : "Face_Timer_Beep",
+    "SpriteName" : "face_timer_beep"
   },
   {
     "CladEvent" : "Face_Timercancel_01",

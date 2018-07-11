@@ -11,7 +11,7 @@ Supervisor {
   name IS name
   controller "webotsCtrlNeuralNets"
 
-  controllerArgs "resources/config/engine/vision_config.json resources/config/engine/vision/dnn_models resources/../../../playbackLogs/webotsCtrlGameEngine2/vision/object_detector/"
+  controllerArgs "resources/config/engine/vision_config.json resources/config/engine/vision/dnn_models resources/../../../playbackLogs/webotsCtrlGameEngine2/vision/neural_nets/"
 
   # Add a bogus Lua block to get Webots to quit complaining there's no `IS` field for
   # for the pollingPeriod_ms parameter :-/

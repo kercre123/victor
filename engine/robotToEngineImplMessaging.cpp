@@ -125,6 +125,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribe(RobotInterface::RobotToEngineTag::dockingStatus,                             &RobotToEngineImplMessaging::HandleDockingStatus);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::mfgId,                          &RobotToEngineImplMessaging::HandleRobotSetBodyID);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::micDirection,                   &RobotToEngineImplMessaging::HandleMicDirection);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::micDataState,                   &RobotToEngineImplMessaging::HandleMicDataState);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::streamCameraImages,             &RobotToEngineImplMessaging::HandleStreamCameraImages);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::displayedFaceImageRGBChunk,     &RobotToEngineImplMessaging::HandleDisplayedFaceImage);
 
@@ -488,7 +489,12 @@ void RobotToEngineImplMessaging::HandleRobotStopped(const AnkiEvent<RobotInterfa
   robot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::RobotStoppedAck()));
 
   // Forward on with EngineToGame event
-  robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotStopped(payload.reason)));
+  robot->Broadcast(
+    ExternalInterface::MessageEngineToGame(
+      ExternalInterface::RobotStopped(
+        payload.reason,
+        payload.cliffDetectedFlags,
+        payload.whiteDetectedFlags)));
 }
 
 void RobotToEngineImplMessaging::HandlePotentialCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
@@ -692,6 +698,12 @@ void RobotToEngineImplMessaging::HandleMicDirection(const AnkiEvent<RobotInterfa
   robot->GetMicComponent().GetMicDirectionHistory().AddDirectionSample(payload.timestamp,
                                                      payload.direction, payload.confidence,
                                                      payload.selectedDirection);
+}
+
+void RobotToEngineImplMessaging::HandleMicDataState(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+{
+  const auto & payload = message.GetData().Get_micDataState();
+  robot->GetMicComponent().SetBufferFullness(payload.rawBufferFullness);
 }
 
 void RobotToEngineImplMessaging::HandleDisplayedFaceImage(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

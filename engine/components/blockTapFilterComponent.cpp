@@ -14,6 +14,7 @@
 #include "engine/components/blockTapFilterComponent.h"
 
 #include "engine/activeObject.h"
+#include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -21,6 +22,7 @@
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"

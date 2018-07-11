@@ -18,7 +18,6 @@
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/compoundActions.h"
 #include "coretech/planning/shared/goalDefs.h"
-#include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/dockingSignals.h"

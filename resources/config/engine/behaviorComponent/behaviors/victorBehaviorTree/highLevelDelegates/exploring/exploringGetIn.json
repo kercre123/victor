@@ -5,7 +5,7 @@
   "associatedActiveFeature": "Exploring",
 
   "behaviors": [
-    "DriveOffCharger",
+    "DriveOffChargerRandomly",
     "GetInAnimsInternal"
   ],
 
@@ -13,7 +13,7 @@
     {
       "behaviorName": "GetInAnimsInternal",
       "behaviorClass": "AnimSequence",
-      "animTriggers": ["ExploringLookLeft", "ExploringLookRight"]
+      "animTriggers": ["ExploringLookAround"]
     }
   ]
 }

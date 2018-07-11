@@ -100,5 +100,10 @@ namespace { // "Private members"
     face_->drawText(std::string(line), 0, 0);
   }
 
+  void FaceDisplayImpl::SetFaceBrightness(int level)
+  {
+    // not supported for mac
+  }
+
 } // namespace Cozmo
 } // namespace Anki

@@ -17,6 +17,7 @@
 #include "engine/aiComponent/behaviorComponent/activeBehaviorIterator.h"
 #include "engine/aiComponent/behaviorComponent/activeFeatureComponent.h"
 #include "engine/aiComponent/behaviorComponent/attentionTransferComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponentMessageHandler.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorAudioComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
@@ -27,13 +28,16 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorsBootLoader.h"
-#include "engine/aiComponent/behaviorComponent/devBehaviorComponentMessageHandler.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/powerStateManager.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/faceWorld.h"
+
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -88,6 +92,11 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
   if(!entity->HasComponent<RobotStatsTracker>()) {
     entity->AddDependentComponent(BCComponentID::RobotStatsTracker,
       robot.GetComponentPtr<RobotStatsTracker>(), false);
+  }
+
+  if(!entity->HasComponent<PowerStateManager>()) {
+    entity->AddDependentComponent(BCComponentID::PowerStateManager,
+      robot.GetComponentPtr<PowerStateManager>(), false);
   }
 
   //////
@@ -164,9 +173,9 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
   }
 
   // Dev Behavior Component Message Handler
-  if(!entity->HasComponent<DevBehaviorComponentMessageHandler>()){
-    entity->AddDependentComponent(BCComponentID::DevBehaviorComponentMessageHandler,
-                                  new DevBehaviorComponentMessageHandler(robot));
+  if(!entity->HasComponent<BehaviorComponentMessageHandler>()){
+    entity->AddDependentComponent(BCComponentID::BehaviorComponentMessageHandler,
+                                  new BehaviorComponentMessageHandler(robot));
   }
 
   // Robot Info

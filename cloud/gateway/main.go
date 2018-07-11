@@ -38,7 +38,7 @@ var (
 
 	// protobuf equivalents for clad socket and chan map
 	protoEngineSock    ipc.Conn
-	engineProtoChanMap map[string](chan extint.GatewayWrapper)
+	engineProtoChanMap map[string](chan<- extint.GatewayWrapper)
 
 	// TODO: remove clad socket and map when there are no more clad messages being used
 	engineSock    ipc.Conn
@@ -206,7 +206,7 @@ func main() {
 
 	protoEngineSock = getSocketWithRetry(SocketPath, "_engine_gateway_proto_server_", "client")
 	defer protoEngineSock.Close()
-	engineProtoChanMap = make(map[string](chan extint.GatewayWrapper))
+	engineProtoChanMap = make(map[string](chan<- extint.GatewayWrapper))
 
 	log.Println("Sockets successfully created")
 

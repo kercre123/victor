@@ -17,6 +17,8 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+enum class EmotionType : uint8_t;
 
 class ConditionEmotion : public IBEICondition
 {

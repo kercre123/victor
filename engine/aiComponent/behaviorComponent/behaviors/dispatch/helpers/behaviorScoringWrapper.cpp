@@ -12,6 +12,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/helpers/behaviorScoringWrapper.h"
 
+#include "clad/externalInterface/messageEngineToGame.h"
+
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 
@@ -33,6 +35,7 @@ static const char* kCooldownOnObjectiveKey       = "considerThisHasRunForBehavio
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorScoringWrapper::BehaviorScoringWrapper(const Json::Value& config)
+  : _cooldownOnObjective(BehaviorObjective::Count)
 {
   ReadFromJson(config);  
 }

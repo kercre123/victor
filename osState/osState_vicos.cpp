@@ -13,10 +13,11 @@
  **/
 
 #include "osState/osState.h"
-#include "util/console/consoleInterface.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/console/consoleInterface.h"
+#include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 #include "util/string/stringUtils.h"
 #include "util/time/universalTime.h"
@@ -73,19 +74,26 @@ namespace {
   std::mutex _cpuTimeStatsMutex;
 
   const char* kNominalCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq";
-  const char* kCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq";
-  const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone3/temp";
-  const char* kMACAddressFile = "/sys/class/net/wlan0/address";
-  const char* kRecoveryModeFile = "/data/unbrick";
-  const char* kUptimeFile = "/proc/uptime";
-  const char* kMemInfoFile = "/proc/meminfo";
-  const char* kCPUTimeStatsFile = "/proc/stat";
-  const char* kWifiTxBytesFile = "/sys/class/net/wlan0/statistics/tx_bytes";
-  const char* kWifiRxBytesFile = "/sys/class/net/wlan0/statistics/rx_bytes";
-  const char* kBootIDFile = "/proc/sys/kernel/random/boot_id";
-  const char* kLocalTimeFile = "/data/etc/localtime";
+  const char* kCPUFreqFile        = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq";
+  const char* kCPUFreqSetFile     = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed";
+  const char* kCPUGovernorFile    = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor";
+  const char* kTemperatureFile    = "/sys/devices/virtual/thermal/thermal_zone3/temp";
+  const char* kMACAddressFile     = "/sys/class/net/wlan0/address";
+  const char* kRecoveryModeFile   = "/data/unbrick";
+  const char* kUptimeFile         = "/proc/uptime";
+  const char* kMemInfoFile        = "/proc/meminfo";
+  const char* kCPUTimeStatsFile   = "/proc/stat";
+  const char* kWifiTxBytesFile    = "/sys/class/net/wlan0/statistics/tx_bytes";
+  const char* kWifiRxBytesFile    = "/sys/class/net/wlan0/statistics/rx_bytes";
+  const char* kBootIDFile         = "/proc/sys/kernel/random/boot_id";
+  const char* kLocalTimeFile      = "/data/etc/localtime";
+  const char* kCmdLineFile        = "/proc/cmdline";
   constexpr const char* kUniversalTimeFile = "/usr/share/zoneinfo/Universal";
   constexpr const char* kRobotVersionFile = "/anki/etc/version";
+  constexpr const char* kOnChargeContactsPath = "/run/on-charge-contacts";
+
+  const char* kAutomaticGovernor = "interactive";
+  const char* kManualGovernor = "userspace";
 
   // System vars
   uint32_t _cpuFreq_kHz;      // CPU freq
@@ -110,7 +118,6 @@ namespace {
   {
     return *str ? 1 + GetConstStrLength(str + 1) : 0;
   }
-
 
 } // namespace
 
@@ -150,6 +157,9 @@ OSState::OSState()
   _cpuTemp_C = 0;
 
   _buildSha = ANKI_BUILD_SHA;
+
+  // set cpu frequency to default (in case we left it in a bad state last time)
+  SetDesiredCPUFrequency(DesiredCPUFrequency::Automatic);
 
   _lastWebvizUpdateTime_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
 }
@@ -226,6 +236,54 @@ void OSState::UpdateCPUFreq_kHz() const
     _cpuFile.close();
   }
 }
+
+void OSState::SetDesiredCPUFrequency(DesiredCPUFrequency freq)
+{
+  const std::string desiredGovernor = ( freq == DesiredCPUFrequency::Automatic ) ? kAutomaticGovernor : kManualGovernor;
+
+  // write governor mode
+  const bool ok1 = Util::FileUtils::WriteFile(kCPUGovernorFile, desiredGovernor);
+  if( !ok1 ) {
+    PRINT_NAMED_ERROR("OSState.SetDesiredCPUFrequency.SetGovernor.Failed",
+                      "Failed to write governor value '%s' to file '%s'",
+                      desiredGovernor.c_str(),
+                      kCPUGovernorFile);
+    return;
+  }
+
+  if( freq != DesiredCPUFrequency::Automatic ) {
+    // if Automatic, we're done once we set the governor. Otherwise we also need to write the desired freq
+
+    // write frequency
+    const unsigned int freqVal = Util::EnumToUnderlying(freq);
+    if( freqVal <= 0  ){
+      PRINT_NAMED_ERROR("OSState.SetDesiredCPUFrequency.InvalidFrequency",
+                        "Can't set frequency to %d",
+                        freqVal);
+      return;
+    }
+
+    const bool ok2 = Util::FileUtils::WriteFile(kCPUFreqSetFile, std::to_string(freqVal));
+    if( !ok2 ) {
+      PRINT_NAMED_ERROR("OSState.SetDesiredCPUFrequency.SetFrequency.Failed",
+                        "Failed to write frequency value '%d' to file '%s'",
+                        freqVal,
+                        kCPUFreqSetFile);
+      return;
+    }
+
+    PRINT_NAMED_INFO("OSState.SetDesiredCPUFrequency.Manual", "Set to manaul cpu frequency %u",
+                     freqVal);
+  }
+  else {
+    PRINT_NAMED_INFO("OSState.SetDesiredCPUFrequency.Automatic", "Set to automatic cpu frequency management");
+  }
+
+
+  // NOTE: not returning success / fail because all I know is that the file got written to. It's up to the OS
+  // to actually change the frequency, and that could take some time or be overruled by something else
+}
+
 
 void OSState::UpdateTemperature_C() const
 {
@@ -663,6 +721,39 @@ bool OSState::HasTimezone() const
 
   // since kUniversalTimeFile is being linked to, we don't have a timezone
   return false;
+}
+
+bool OSState::IsUserSpaceSecure()
+{
+  static bool read = false;
+  if(!read)
+  {
+    read = true;
+    std::ifstream infile(kCmdLineFile);	
+    std::string line;
+    while(std::getline(infile, line))	
+    {
+      static const char* kKey = "dm=";
+      size_t index = line.find(kKey);	
+      if(index != std::string::npos)	
+      {
+        _isUserSpaceSecure = true;
+        break;
+      }	
+    }	
+    infile.close();
+  }
+
+  return _isUserSpaceSecure;
+}
+
+void OSState::SetOnChargeContacts(const bool onChargeContacts) const
+{
+  if (onChargeContacts) {
+    (void) Util::FileUtils::TouchFile(kOnChargeContactsPath);
+  } else {
+    Util::FileUtils::DeleteFile(kOnChargeContactsPath);
+  }
 }
 
 } // namespace Cozmo

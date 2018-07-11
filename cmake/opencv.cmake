@@ -106,6 +106,17 @@ anki_build_target_license(libpng "libpng,${CMAKE_SOURCE_DIR}/licenses/libpng.lic
 anki_build_target_license(libtiff "ISC,${CMAKE_SOURCE_DIR}/licenses/libtiff.license")
 anki_build_target_license(libjpeg "BSD-3-like,${CMAKE_SOURCE_DIR}/licenses/libjpeg-turbo.license")
 
+if(VICOS)
+    anki_build_target_license(protobuf "BSD-3,${CMAKE_SOURCE_DIR}/licenses/protobuf.license")
+else()
+    anki_build_target_license(IlmImf "BSD-3,${CMAKE_SOURCE_DIR}/licenses/openexr.license")
+    anki_build_target_license(libjasper "BSD-2,${CMAKE_SOURCE_DIR}/licenses/libjasper.license")
+    anki_build_target_license(ippicv  "BSD-3,${CMAKE_SOURCE_DIR}/licenses/ipp.license")
+    anki_build_target_license(ippiw  "BSD-3,${CMAKE_SOURCE_DIR}/licenses/ipp.license")
+    anki_build_target_license(ittnotify  "BSD-3,${CMAKE_SOURCE_DIR}/licenses/ittnotify.license")
+    anki_build_target_license(protobuf "BSD-3,${CMAKE_SOURCE_DIR}/licenses/protobuf.license")
+endif()
+
 message(STATUS "including OpenCV-${OPENCV_VERSION}, [Modules: ${OPENCV_LIBS}], [3rdParty: ${OPENCV_EXTERNAL_LIBS}]")
 
 list(APPEND OPENCV_LIBS ${OPENCV_EXTERNAL_LIBS})

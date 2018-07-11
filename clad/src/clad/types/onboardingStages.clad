@@ -19,5 +19,11 @@ enum uint_8 OnboardingStages
   DevDoNothing,
 }
 
+enum uint_8 OnboardingSteps
+{
+  Default = 0,
+  FirstTriggerWord,
+}
+
 }
 }

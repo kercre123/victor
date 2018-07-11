@@ -1,4 +1,7 @@
 {
   "behaviorID" : "OnboardingAsleep",
-  "behaviorClass": "Wait"
+  "behaviorClass": "AnimSequence",
+  "animNames": ["anim_face_sleeping"],
+  "num_loops": 0,
+  "playOnChargerWithoutBody": true
 }

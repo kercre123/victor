@@ -12,6 +12,7 @@
 
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectKnown.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "coretech/common/engine/jsonTools.h"
@@ -96,7 +97,7 @@ bool ConditionObjectKnown::AreConditionsMetInternal(BehaviorExternalInterface& b
   
   std::vector<ObjectInfo> newInfo;
   
-  TimeStamp_t currTimeStamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const auto currTimeStamp = behaviorExternalInterface.GetRobotInfo().GetLastMsgTimestamp();
   const bool thisTickOnly = _setMaxAge && (_maxAge_ms == 0);
   for( const auto& match : matches ) {
     ObjectID matchID = match->GetID();
@@ -124,7 +125,7 @@ bool ConditionObjectKnown::AreConditionsMetInternal(BehaviorExternalInterface& b
     }
   }
   
-  _lastObjects = newInfo;
+  _lastObjects = std::move(newInfo);
   
   return ret;
 }

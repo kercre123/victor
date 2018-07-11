@@ -26,7 +26,7 @@ protected:
   BehaviorSleeping(const Json::Value& config);
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{}
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual bool CanBeGentlyInterruptedNow() const override;
 
@@ -45,8 +45,8 @@ private:
   // helper to "wait" without doing procedural face motions and then run a callback
   void HoldFaceForTime(const float waitTime_s,
                        void(BehaviorSleeping::*callback)());
-  void LoopHoldFace(void(BehaviorSleeping::*callback)());
-
+  bool _shouldEnterPowerSave = true;
+  
   bool _animIsPlaying = false;
 
   int _numRemainingInBout = 0;

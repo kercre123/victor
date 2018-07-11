@@ -18,6 +18,7 @@
 #define __Engine_AiComponent_BeiConditions_Conditions_ConditionTimedDedup_H__
 
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
+#include "coretech/common/shared/types.h"
 
 namespace Anki {
 namespace Cozmo {

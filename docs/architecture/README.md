@@ -26,6 +26,8 @@
 
 * [Emotion System](emotions.md): Track the robot's emotional state to drive behaviors and animation
 
+* [Cube Connection](cubeConnections.md): Connect to cubes to allow lights/sensor data collection
+
 * Testing 
    * Unit tests for engine
    * unit tests for coretech

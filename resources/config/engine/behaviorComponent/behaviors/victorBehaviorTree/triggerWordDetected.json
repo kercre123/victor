@@ -4,13 +4,17 @@
 
   "associatedActiveFeature": "NoFeature",
   "behaviorStatToIncrement": "ReactedToTriggerWord",
-  
-  "playListeningGetInAnim"  : true,
 
+  "notifyOnErrors": {
+    "recentOccurrence": {
+      "numberOfTimes": 2,
+      "amountOfSeconds": 300.0
+    }
+  },
+  
   "earConAudioEventBegin"   : "Play__Robot_Vic_Sfx__Wake_Word_On",
   "earConAudioEventSuccess" : "Play__Robot_Vic_Sfx__Wake_Word_Success",
-  "backpackLights"          : true,
+  "backpackLights"          : false,
 
-  "behaviorOnIntent"        : "ReactToTriggerDirectionAwake",
-  "stopListeningOnIntents"  : true
+  "behaviorOnIntent"        : "ReactToTriggerDirectionAwake"
 }

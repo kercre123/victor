@@ -41,7 +41,7 @@ enum class BCComponentID{
   BehaviorTimerManager,
   BlockWorld,
   DelegationComponent,
-  DevBehaviorComponentMessageHandler,
+  BehaviorComponentMessageHandler,
   FaceWorld,
   RobotInfo,
   UserIntentComponent,
@@ -50,6 +50,7 @@ enum class BCComponentID{
   BehaviorsBootLoader,
   RobotStatsTracker,
   AttentionTransferComponent,
+  PowerStateManager,
   Count
 };
 

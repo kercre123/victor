@@ -18,6 +18,7 @@
 #include "coretech/common/engine/math/point.h"
 #include "coretech/common/shared/types.h"
 #include "json/json-forwards.h"
+#include "util/helpers/templateHelpers.h"
 
 #include <array>
 #include <list>
@@ -26,7 +27,9 @@ namespace Anki {
 namespace Cozmo {
 namespace CubeLightAnimation {
 
-using ObjectLEDArray = std::array<u32, static_cast<int>(CubeConstants::NUM_CUBE_LEDS)>;
+static constexpr int kNumCubeLEDs = Util::EnumToUnderlying(CubeConstants::NUM_CUBE_LEDS);
+
+using ObjectLEDArray = std::array<u32, kNumCubeLEDs>;
 struct ObjectLights {
   ObjectLEDArray onColors{};
   ObjectLEDArray offColors{};
@@ -34,7 +37,7 @@ struct ObjectLights {
   ObjectLEDArray offPeriod_ms{};
   ObjectLEDArray transitionOnPeriod_ms{};
   ObjectLEDArray transitionOffPeriod_ms{};
-  std::array<s32, static_cast<int>(CubeConstants::NUM_CUBE_LEDS)> offset{};
+  std::array<s32, kNumCubeLEDs> offset{};
   bool rotate = false;
   MakeRelativeMode makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
   Point2f relativePoint;

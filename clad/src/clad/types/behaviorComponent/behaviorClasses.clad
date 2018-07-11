@@ -32,6 +32,7 @@ enum uint_8 BehaviorClass {
   RollBlock,
 
   // basicWorldInteractions
+  BumpObject,
   ClearChargerArea,
   DriveOffCharger,
   FindFaces,
@@ -57,6 +58,9 @@ enum uint_8 BehaviorClass {
   CoordinateWhileInAir,
   QuietModeCoordinator,
 
+  // cubeSpinner
+  VectorPlaysCubeSpinner,
+
   // danceToTheBeat
   DanceToTheBeat,
 
@@ -76,6 +80,7 @@ enum uint_8 BehaviorClass {
   FactoryCentroidExtractor,
   LiftLoadTest,
   PlannerTest,
+  PowerSaveTest,
   TurnTowardsPerson,
 
   // devBehaviors/playpen
@@ -129,6 +134,9 @@ enum uint_8 BehaviorClass {
   PuzzleMaze,
   TrackLaser,
 
+  // gateBehaviors
+  ConnectToCube,
+
   // habitat
   ConfirmHabitat,
 
@@ -149,11 +157,17 @@ enum uint_8 BehaviorClass {
 
   // onboarding
   Onboarding,
+  OnboardingActivateCube,
   OnboardingInterruptionHead,
+  OnboardingLookAtPhone,
 
   // photoTaking
   AestheticallyCenterFaces,
   TakeAPhotoCoordinator,
+
+  // prDemo
+  PRDemo,
+  PRDemoBase,
 
   // proxBehaviors
   ProxGetToDistance,

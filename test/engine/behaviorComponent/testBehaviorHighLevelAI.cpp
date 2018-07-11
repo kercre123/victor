@@ -141,8 +141,7 @@ TEST(BehaviorHighLevelAI, UserIntentsHandled)
                             "ObservingOnChargerRecentlyPlaced",
                             "Napping",
                             "NappingOnCharger",
-                            "WakingUp",
-                            "FailedToFindCharger"} },
+                            "WakingUp"} },
     { "explore_start",     {"Napping", "NappingOnCharger"} },
   };
   // OK YOUR JOB IS DONE

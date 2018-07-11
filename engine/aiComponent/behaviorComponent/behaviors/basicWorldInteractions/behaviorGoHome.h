@@ -22,6 +22,7 @@ namespace Cozmo {
 
 class BlockWorldFilter;
 class BehaviorClearChargerArea;
+class BehaviorRequestToGoHome;
 class BehaviorWiggleOntoChargerContacts;
   
 class BehaviorGoHome : public ICozmoBehavior
@@ -72,6 +73,7 @@ private:
     int turnToDockRetryCount = 0;
     int mountChargerRetryCount = 0;
     std::shared_ptr<BehaviorClearChargerArea> clearChargerAreaBehavior;
+    std::shared_ptr<BehaviorRequestToGoHome> requestHomeBehavior;
     std::shared_ptr<BehaviorWiggleOntoChargerContacts> wiggleOntoChargerBehavior;
   };
 
@@ -82,6 +84,11 @@ private:
     int      driveToRetryCount = 0;
     int      turnToDockRetryCount = 0;
     int      mountChargerRetryCount = 0;
+    
+    struct Persistent {
+      std::set<float> activatedTimes; // set of basestation times at which we've been activated
+    };
+    Persistent persistent;
   };
 
   InstanceConfig   _iConfig;
@@ -100,7 +107,7 @@ private:
   // we're out of retries for action failures.
   // Optionally remove the charger from BlockWorld if we failed in
   // such a way that we definitely don't know where the charger is
-  void ActionFailure(const bool removeChargerFromBlockWorld = false);
+  void ActionFailure(bool removeChargerFromBlockWorld = false);
   
   void PushDrivingAnims();
   void PopDrivingAnims();

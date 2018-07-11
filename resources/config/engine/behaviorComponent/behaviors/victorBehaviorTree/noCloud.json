@@ -1,0 +1,17 @@
+{
+  "behaviorClass": "AttentionTransferIfNeeded",
+  "behaviorID": "NoCloud",
+
+  "attentionTransferReason": "NoCloudConnection",
+  "recentOccurrence": {
+    "numberOfTimes": 2,
+    "amountOfSeconds": 300.0
+  },
+
+
+  "animsIfNotRecent": [
+    "NoCloudGetIn",
+    "NoCloudIcon"
+  ]
+  
+}

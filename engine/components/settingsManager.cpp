@@ -20,7 +20,6 @@
 #include "util/console/consoleInterface.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
-#include "clad/types/robotSettingsTypes.h"
 
 
 #define LOG_CHANNEL "SettingsManager"
@@ -36,7 +35,7 @@ namespace
 }
 
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SettingsManager::SettingsManager()
 : IDependencyManagedComponent(this, RobotComponentID::SettingsManager)
 {
@@ -49,14 +48,8 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
   _robot = robot;
   _audioClient = robot->GetAudioClient();
 
-  // Read the default settings config
-  const auto& config = robot->GetContext()->GetDataLoader()->GetSettingsConfig();
-  _defaultSettings.clear();
-  for (Json::ValueConstIterator it = config.begin(); it != config.end(); ++it)
-  {
-    const Json::Value& item = (*it);
-    _defaultSettings[it.name()] = Setting(item.asString());
-  }
+  // Get the default settings config
+  const auto& defaultSettings = robot->GetContext()->GetDataLoader()->GetSettingsConfig();
 
   _platform = robot->GetContextDataPlatform();
   DEV_ASSERT(_platform != nullptr, "SettingsManager.InitDependent.DataPlatformIsNull");
@@ -88,32 +81,33 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
 
   // Ensure current settings has each of the default settings;
   // if not, initialize each missing setting to default value
-  for (const auto& item : _defaultSettings)
+  for (Json::ValueConstIterator it = defaultSettings.begin(); it != defaultSettings.end(); ++it)
   {
-    if (_currentSettings.find(item.first) == _currentSettings.end())
+    if (!_currentSettings.isMember(it.name()))
     {
-      _currentSettings[item.first] = Setting(item.second);
+      const Json::Value& item = (*it);
+      _currentSettings[it.name()] = item;
       settingsDirty = true;
       LOG_INFO("SettingsManager.InitDependent.AddDefaultItem", "Adding setting with key %s and default value %s",
-               item.first.c_str(), item.second._settingValue.c_str());
+               it.name().c_str(), item.asString().c_str());
     }
   }
 
   // Now look through current settings, and remove any item
   // that is no longer defined in the config
   std::vector<std::string> keysToRemove;
-  for (const auto& item : _currentSettings)
+  for (Json::ValueConstIterator it = _currentSettings.begin(); it != _currentSettings.end(); ++it)
   {
-    if (_defaultSettings.find(item.first) == _defaultSettings.end())
+    if (!defaultSettings.isMember(it.name()))
     {
-      keysToRemove.push_back(item.first);
+      keysToRemove.push_back(it.name());
     }
   }
   for (const auto& key : keysToRemove)
   {
     LOG_INFO("SettingsManager.InitDependent.RemoveItem",
              "Removing setting with key %s", key.c_str());
-    _currentSettings.erase(key);
+    _currentSettings.removeMember(key);
     settingsDirty = true;
   }
 
@@ -123,10 +117,10 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
   }
 
   // Register the actual setting application methods, for those settings that want to execute code when changed:
-  _currentSettings["Robot.MasterVolume"]._settingSetter = &SettingsManager::ApplySettingMasterVolume;
-  _currentSettings["Robot.EyeColor"]._settingSetter = &SettingsManager::ApplySettingEyeColor;
-  _currentSettings["Robot.Locale"]._settingSetter = &SettingsManager::ApplySettingLocale;
-  
+  _settingSetters[RobotSetting::master_volume] = &SettingsManager::ApplySettingMasterVolume;
+  _settingSetters[RobotSetting::eye_color]     = &SettingsManager::ApplySettingEyeColor;
+  _settingSetters[RobotSetting::locale]        = &SettingsManager::ApplySettingLocale;
+
   // Finally, set a flag so we will apply all of the settings
   // we just loaded and/or set, in the first update
   _applySettingsNextTick = true;
@@ -148,28 +142,26 @@ void SettingsManager::UpdateDependent(const RobotCompMap& dependentComps)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SettingsManager::SetRobotSetting(const std::string& key, const std::string& value,
+bool SettingsManager::SetRobotSetting(const RobotSetting robotSetting,
+                                      const Json::Value& valueJson,
                                       const bool saveSettingsFile)
 {
-  if (_currentSettings.find(key) == _currentSettings.end())
+  const std::string key = RobotSettingToString(robotSetting);
+  if (!_currentSettings.isMember(key))
   {
     LOG_ERROR("SettingsManager.SetRobotSetting.InvalidKey", "Invalid key %s; ignoring", key.c_str());
     return false;
   }
 
-  // Actually apply the setting
-  const auto& setterFunc = _currentSettings[key]._settingSetter;
-  if (setterFunc != nullptr)
-  {
-    const bool success = (this->*setterFunc)(value);
-    if (!success)
-    {
-      LOG_ERROR("SettingsManager.SetRobotSetting", "Error setting %s to %s", key.c_str(), value.c_str());
-      return false;
-    }
-  }
+  const Json::Value prevValue = _currentSettings[key];
+  _currentSettings[key] = valueJson;
 
-  _currentSettings[key]._settingValue = value;
+  const bool success = ApplyRobotSetting(robotSetting);
+  if (!success)
+  {
+    _currentSettings[key] = prevValue;  // Restore previous good value
+    return false;
+  }
 
   if (saveSettingsFile)
   {
@@ -181,50 +173,41 @@ bool SettingsManager::SetRobotSetting(const std::string& key, const std::string&
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::string SettingsManager::GetRobotSettingAsString(const std::string& key) const
+std::string SettingsManager::GetRobotSettingAsString(const RobotSetting key) const
 {
-  const auto& it = _currentSettings.find(key);
-  if (it == _currentSettings.end())
+  const std::string& keyString = EnumToString(key);
+  if (!_currentSettings.isMember(keyString))
   {
-    LOG_ERROR("SettingsManager.GetRobotSetting.InvalidKey", "Invalid key %s", key.c_str());
+    LOG_ERROR("SettingsManager.GetRobotSetting.InvalidKey", "Invalid key %s", keyString.c_str());
     return "Invalid";
   }
 
-  return it->second._settingValue;
+  return _currentSettings[keyString].asString();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SettingsManager::GetRobotSettingAsBool(const std::string& key) const
+bool SettingsManager::GetRobotSettingAsBool(const RobotSetting key) const
 {
-  const auto& it = _currentSettings.find(key);
-  if (it == _currentSettings.end())
+  const std::string& keyString = EnumToString(key);
+  if (!_currentSettings.isMember(keyString))
   {
-    LOG_ERROR("SettingsManager.GetRobotSetting.InvalidKey", "Invalid key %s", key.c_str());
+    LOG_ERROR("SettingsManager.GetRobotSetting.InvalidKey", "Invalid key %s", keyString.c_str());
     return false;
   }
 
-  return (it->second._settingValue == "true");
+  return _currentSettings[keyString].asBool();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SettingsManager::LoadSettingsFile()
 {
-  Json::Value data;
-  if (!_platform->readAsJson(_fullPathSettingsFile, data))
+  if (!_platform->readAsJson(_fullPathSettingsFile, _currentSettings))
   {
     LOG_ERROR("SettingsManager.LoadSettingsFile.Failed", "Failed to read %s", _fullPathSettingsFile.c_str());
     return false;
   }
-
-  _currentSettings.clear();
-  for (Json::ValueConstIterator it = data.begin(); it != data.end(); ++it)
-  {
-    const Json::Value& item = (*it);
-    _currentSettings[it.name()] = Setting(item.asString());
-  }
-
   return true;
 }
 
@@ -232,44 +215,57 @@ bool SettingsManager::LoadSettingsFile()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SettingsManager::SaveSettingsFile() const
 {
-  Json::Value data;
-  for (const auto& setting : _currentSettings)
-  {
-    data[setting.first] = setting.second._settingValue;
-  }
-
-  if (!_platform->writeAsJson(_fullPathSettingsFile, data))
+  if (!_platform->writeAsJson(_fullPathSettingsFile, _currentSettings))
   {
     LOG_ERROR("SettingsManager.SaveSettingsFile.Failed", "Failed to write settings file");
   }
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SettingsManager::ApplyAllCurrentSettings()
 {
-  static const bool saveSettingsFile = false;
-  for (const auto& setting : _currentSettings)
+  for (Json::ValueConstIterator it = _currentSettings.begin(); it != _currentSettings.end(); ++it)
   {
-    SetRobotSetting(setting.first, setting.second._settingValue, saveSettingsFile);
+    ApplyRobotSetting(RobotSettingFromString(it.name()));
   }
-
-  SaveSettingsFile();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SettingsManager::ApplySettingMasterVolume(const std::string& newValue)
+bool SettingsManager::ApplyRobotSetting(const RobotSetting robotSetting)
 {
+  // Actually apply the setting; note that some things don't need to be "applied"
+  bool success = true;
+  const auto it = _settingSetters.find(robotSetting);
+  if (it != _settingSetters.end())
+  {
+    success = (this->*(it->second))();
+
+    if (!success)
+    {
+      LOG_ERROR("SettingsManager.ApplyRobotSetting", "Error setting %s to %s",
+                RobotSettingToString(robotSetting), _currentSettings[RobotSettingToString(robotSetting)].asString().c_str());
+    }
+  }
+  return success;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool SettingsManager::ApplySettingMasterVolume()
+{
+  static const std::string key = RobotSettingToString(RobotSetting::master_volume);
+  const std::string value = _currentSettings[key].asString();
   MasterVolume masterVolume;
-  const bool valueIsValid = EnumFromString(newValue, masterVolume);
+  const bool valueIsValid = EnumFromString(value, masterVolume);
   if (!valueIsValid)
   {
-    LOG_ERROR("SettingsManager.ApplySettingMasterVolume", "Invalid master volume value %s", newValue.c_str());
+    LOG_ERROR("SettingsManager.ApplySettingMasterVolume", "Invalid master volume value %s", value.c_str());
     return false;
   }
 
-  LOG_INFO("ApplySettingMasterVolume.Apply", "Setting robot master volume to %s", newValue.c_str());
+  LOG_INFO("ApplySettingMasterVolume.Apply", "Setting robot master volume to %s", value.c_str());
   _robot->GetAudioClient()->SetRobotMasterVolume(masterVolume);
 
   return true;
@@ -277,19 +273,21 @@ bool SettingsManager::ApplySettingMasterVolume(const std::string& newValue)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SettingsManager::ApplySettingEyeColor(const std::string& newValue)
+bool SettingsManager::ApplySettingEyeColor()
 {
-  EyeColor eyeColor;
-  const bool valueIsValid = EnumFromString(newValue, eyeColor);
+  static const std::string key = RobotSettingToString(RobotSetting::eye_color);
+  const std::string value = _currentSettings[key].asString();
+  EyeColor eyeColorUnused;
+  const bool valueIsValid = EnumFromString(value, eyeColorUnused);
   if (!valueIsValid)
   {
-    LOG_ERROR("SettingsManager.ApplySettingEyeColor", "Invalid eye color value %s", newValue.c_str());
+    LOG_ERROR("SettingsManager.ApplySettingEyeColor", "Invalid eye color value %s", value.c_str());
     return false;
   }
 
-  LOG_INFO("ApplySettingEyeColor.Apply", "Setting robot eye color to %s", newValue.c_str());
+  LOG_INFO("ApplySettingEyeColor.Apply", "Setting robot eye color to %s", value.c_str());
   const auto& config = _robot->GetContext()->GetDataLoader()->GetEyeColorConfig();
-  const auto& eyeColorData = config[newValue];
+  const auto& eyeColorData = config[value];
   const float hue = eyeColorData["Hue"].asFloat();
   const float saturation = eyeColorData["Saturation"].asFloat();
 
@@ -301,15 +299,13 @@ bool SettingsManager::ApplySettingEyeColor(const std::string& newValue)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SettingsManager::ApplySettingLocale(const std::string& newValue)
+bool SettingsManager::ApplySettingLocale()
 {
-  LOG_INFO("ApplySettingLocale.Apply", "Setting locale to %s", newValue.c_str());
-  // Note: Since Locale utility has no error returns, we can't detect error;
-  // an invalid locale results in setting to the default en-US
-  _robot->GetContext()->SetLocale(newValue);
-  return true;
+  static const std::string key = RobotSettingToString(RobotSetting::locale);
+  const std::string value = _currentSettings[key].asString();
+  DEV_ASSERT(_robot != nullptr, "SettingsManager.ApplySettingLocale.InvalidRobot");
+  return _robot->SetLocale(value);
 }
-
 
 } // namespace Cozmo
 } // namespace Anki

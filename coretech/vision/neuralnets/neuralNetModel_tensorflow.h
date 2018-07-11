@@ -14,18 +14,18 @@
  * Copyright: Anki, Inc. 2018
  **/
 
+// NOTE: this wrapper completely compiles out if we're using a different model (e.g. TFLite)
+#ifdef VIC_NEURALNETS_USE_TENSORFLOW
+
 #ifndef __Anki_Vision_NeuralNetModel_TensorFlow_H__
 #define __Anki_Vision_NeuralNetModel_TensorFlow_H__
 
 #include "coretech/common/shared/types.h"
-
-#include "clad/types/salientPointTypes.h"
+#include "coretech/vision/neuralnets/neuralNetModel_interface.h"
 
 #include "json/json.h"
 
 #include "opencv2/core/core.hpp"
-#include "opencv2/imgcodecs/imgcodecs.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
 
 #include <list>
 #include <memory>
@@ -40,8 +40,9 @@ namespace tensorflow {
 }
 
 namespace Anki {
-
-class NeuralNetModel
+namespace Vision {
+  
+class NeuralNetModel : public INeuralNetModel
 {
 public:
 
@@ -55,29 +56,11 @@ public:
   // Run forward inference on the given image/timestamp and return any SalientPoints found
   Result Detect(cv::Mat& img, const TimeStamp_t t, std::list<Vision::SalientPoint>& salientPoints);
 
-  bool IsVerbose() const { return _params.verbose; }
-
 private:
 
-  // Helper to read simple text labels files (one label per line)
-  static Result ReadLabelsFile(const std::string& fileName, std::vector<std::string>& labels_out);
-
-  // Helper to find the index of the a single output with the highest score, assumed to 
-  // correspond to the matching label from the labels file
-  Result GetClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp, 
-                           std::list<Vision::SalientPoint>& salientPoints);
-
-  // Helper to return a set of localization boxes from a grid, assuming a binary classifcation 
-  // (e.g. person / no-person in a 6x6 grid). Grid size is specified in JSON config
-  Result GetLocalizedBinaryClassification(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp, 
-                                          std::list<Vision::SalientPoint>& salientPoints);
-
   // Helper to interpret four outputs as SSD boxes (num detections, scores, classes, and boxes)
-  Result GetDetectedObjects(const std::vector<tensorflow::Tensor>& outputTensors, TimeStamp_t timestamp,
-                            std::list<Vision::SalientPoint>& salientPoints);
-
-  Result GetSalientPointsFromResponseMap(const tensorflow::Tensor& outputTensor, TimeStamp_t timestamp,
-                                         std::list<Vision::SalientPoint>& salientPoints);
+  void GetDetectedObjects(const std::vector<tensorflow::Tensor>& outputTensors, TimeStamp_t timestamp,
+                          std::list<Vision::SalientPoint>& salientPoints);
 
   void SaveObjectnessResponseMaps(const std::vector<cv::Mat>& channels, const int numberOfChannels,
                                   const TimeStamp_t timestamp);
@@ -85,75 +68,14 @@ private:
   // Thin wrapper to tensorflow run to allow us to turn on benchmarking to logs
   Result Run(tensorflow::Tensor image_tensor, std::vector<tensorflow::Tensor>& outputTensors);
 
-  // Specified in config, used to determine how to interpret the output of the network, and
-  // thus which helper above to call (string to use in JSON config shown for each)
-  enum class OutputType {
-    Classification,     // "classification"
-    BinaryLocalization, // "binary_localization"
-    AnchorBoxes,        // "anchor_boxes"
-    Segmentation,       // "segmentation"
-  };
-
-  struct 
-  {
-    std::string               graphFile; 
-    std::string               labelsFile;
-    std::string               architecture;
-    
-    int32_t                   inputWidth = 128;
-    int32_t                   inputHeight = 128;
-    
-    // When input to graph is float, data is first divided by scale and then shifted
-    // I.e.:  float_input = data / scale + shift
-    float                     inputShift = 0.f;
-    float                     inputScale = 255.f;
-    
-    float                     minScore = 0.5f; // in [0,1]
-    
-    // Used by "custom" architectures
-    std::string               inputLayerName;
-    std::vector<std::string>  outputLayerNames;
-    OutputType                outputType;
-    bool                      useFloatInput = false;
-    bool                      useGrayscale = false;
-
-    // For "binary_localization" output_type, the localization grid resolution
-    // (ignored otherwise)
-    int32_t                   numGridRows = 6;
-    int32_t                   numGridCols = 6;
-
-    bool                      verbose = false;
-
-    // Number of times to run benchmarking and report to logs, if this value
-    // is zero benchmarking will not be run
-    int32_t                   benchmarkRuns = 0;
-
-    // TODO: Not fully supported yet (VIC-3141)
-    bool                      memoryMapGraph = false;
-
-    std::string               visualizationDirectory = "";
-
-  } _params;
-
-  // Populate _params struct from Json config
-  Result SetParamsFromConfig(const Json::Value& config);
-
-  // Helper to set _params.output_type enum
-  // Must be called after input/output_layer_names have been set
-  Result SetOutputTypeFromConfig(const Json::Value& config);
-
   std::unique_ptr<tensorflow::Session>      _session;
   std::unique_ptr<tensorflow::MemmappedEnv> _memmappedEnv;
-  std::vector<std::string>                  _labels;
-
-  std::string                               _cachePath;
-  
-  // For OutputType::BinaryLocalization
-  cv::Mat_<uint8_t>                         _detectionGrid;
-  cv::Mat_<int32_t>                         _labelsGrid;
   
 }; // class NeuralNetModel
 
+} // namespace Vision
 } // namespace Anki
 
 #endif /* __Anki_Vision_NeuralNetModel_TensorFlow_H__ */
+
+#endif /* VIC_NEURALNETS_USE_TENSORFLOW */

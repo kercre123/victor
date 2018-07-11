@@ -37,7 +37,7 @@ endif()
 include(anki_build_cxx)
 
 anki_build_cxx_library(cameraService ${ANKI_SRCLIST_DIR})
-anki_build_target_license(cameraService "ANKI" "GPL-2.0")
+anki_build_target_license(cameraService "ANKI")
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")

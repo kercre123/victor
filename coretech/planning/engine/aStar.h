@@ -31,7 +31,7 @@ public:
   decltype(auto) GetSuccessors(const T& p) const { return static_cast<Impl const&>(*this).GetSuccessors(p); }
   float          Heuristic(const T& p)     const { return static_cast<Impl const&>(*this).Heuristic(p); }
   bool           IsGoal(const T& p)        const { return static_cast<Impl const&>(*this).IsGoal(p); }
-  size_t         GetMaxExpansions()        const { return static_cast<Impl const&>(*this).GetMaxExpansions(); }
+  bool           StopPlanning()                  { return static_cast<Impl&>(*this).StopPlanning(); }
 
 private:
   // use private constructor and friend class to prevent accidentally templating on wrong derived class
@@ -44,7 +44,7 @@ class AStar {
 public:
 
   // Construct A* planner
-  AStar(const ConfigT& config) : _config(config), _open(1024), _closed(1024, StateHasher, StateEqual) {}
+  AStar(ConfigT& config) : _config(config), _open(1024), _closed(1024, StateHasher, StateEqual) {}
 
   // initialization, search loop, and plan construction of classical A* implementation
   std::vector<T> Search(const std::vector<T>& start);
@@ -104,9 +104,9 @@ private:
   // Data Members
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  const IAStarConfig<T, ConfigT>& _config;
-  OpenList                        _open;
-  ClosedList                      _closed;
+  IAStarConfig<T, ConfigT>& _config;
+  OpenList                  _open;
+  ClosedList                _closed;
 };
 
 
@@ -127,8 +127,7 @@ inline std::vector<T> AStar<T, ConfigT>::Search(const std::vector<T>& start)
   typename ClosedList::iterator current = _closed.begin();
 
   // search loop
-  size_t numExpansions = 0;
-  while( (++numExpansions < _config.GetMaxExpansions()) && !foundGoal && !_open.empty() )  {
+  while( !_config.StopPlanning() && !foundGoal && !_open.empty() )  {
     const auto& closedRecord = _closed.emplace( std::move(_open.pop()) );
 
     // if the insert was successful, expand

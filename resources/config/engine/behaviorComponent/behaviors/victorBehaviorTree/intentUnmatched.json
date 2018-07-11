@@ -10,6 +10,6 @@
 
   // if the recent occurance requirements above are met, the "look at device" behavior will trigger, otherwise
   // this animation will play, otherwise the behavior will use the "look at device" animations
-  "animIfNotRecent": "VC_IntentNeutral"
+  "animsIfNotRecent": ["VC_IntentNeutral"]
   
 }

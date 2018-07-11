@@ -49,15 +49,21 @@ Soon™, these curl tests will be replaced by the chewie app.
 vic-gateway builds on mac and can be used with webots, but isn't automatically launched. To use it with a
 simulated robot in webots (on mac), do the following:
 
-1. Do a normal mac build
+1. Do a normal mac build (` ./project/victor/build-victor.sh -p mac -c Debug -f`)
 2. `> make create_certs_mac`
-3. Launch a webots sim world
-4. From the project root directory, in another terminal, run `_build/mac/Debug/bin/vic-gateway`
+3. Launch a webots sim world (like `victor/simulator/worlds/victorObservingDemo.wbt`)
+4. From the victor root directory, in another terminal, run `_build/mac/Debug/bin/vic-gateway`
 
 You may have to click "allow" on an OS popup to allow listening. After this is done, you can run direct curl commands similar to those found in the `Makefile`, e.g.:
 
 ``` bash
 > curl --cacert trust.cert -X POST https://localhost:8443/v1/event_stream -d '{}'
+```
+
+All the curl tests should work as well using the WEBOTS=1 flag in make
+
+```bash
+> make test_ping_pong WEBOTS=1
 ```
 
 Note that you need to use localhost as the ip and 8443 as the port (OS X gets angry if you try to listen on 443)

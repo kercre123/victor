@@ -20,6 +20,7 @@
 
 #include <vector>
 #include <list>
+#include <unordered_map>
 
 namespace Anki {
 namespace Cozmo {

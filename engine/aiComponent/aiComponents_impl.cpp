@@ -26,7 +26,7 @@ class ObjectInteractionInfoCache;
 class PuzzleComponent;
 class TimerUtility;
 class AIWhiteboard;
-class SalientPointsDetectorComponent;
+class SalientPointsComponent;
 
 } // namespace Cozmo
 
@@ -40,7 +40,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(ObjectInteractionInfoCache,        AIComponentID, Ob
 LINK_COMPONENT_TYPE_TO_ENUM(PuzzleComponent,                   AIComponentID, Puzzle)
 LINK_COMPONENT_TYPE_TO_ENUM(TimerUtility,                      AIComponentID, TimerUtility)
 LINK_COMPONENT_TYPE_TO_ENUM(AIWhiteboard,                      AIComponentID, Whiteboard)
-LINK_COMPONENT_TYPE_TO_ENUM(SalientPointsDetectorComponent,    AIComponentID, SalientPointsDetectorComponent)
+LINK_COMPONENT_TYPE_TO_ENUM(SalientPointsComponent,            AIComponentID, SalientPointsDetectorComponent)
 
 // Translate entity into string
 template<>
@@ -57,7 +57,7 @@ std::string GetComponentStringForID<Cozmo::AIComponentID>(Cozmo::AIComponentID e
     case Cozmo::AIComponentID::InformationAnalyzer:               { return "InformationAnalyzer";}
     case Cozmo::AIComponentID::ObjectInteractionInfoCache:        { return "ObjectInteractionInfoCache";}
     case Cozmo::AIComponentID::Puzzle:                            { return "Puzzle";}
-    case Cozmo::AIComponentID::SalientPointsDetectorComponent:    { return "SalientPointsDetectorComponent";}
+    case Cozmo::AIComponentID::SalientPointsDetectorComponent:    { return "SalientPointsComponent";}
     case Cozmo::AIComponentID::TimerUtility:                      { return "TimerUtility";}
     case Cozmo::AIComponentID::Whiteboard:                        { return "Whiteboard";}
     case Cozmo::AIComponentID::Count:                             { return "Count";}

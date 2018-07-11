@@ -69,10 +69,8 @@ s32 CST_ChargerDocking::UpdateSimInternal()
     }
     case TestState::TestDone:
     {
-      IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(60.f,
-                                            !IsRobotStatus(RobotStatusFlag::IS_MOVING),
-                                            IsRobotStatus(RobotStatusFlag::IS_ON_CHARGER))
-      {
+      const bool onCharger = IsRobotStatus(RobotStatusFlag::IS_ON_CHARGER);
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(onCharger, 60.f) {
         StopMovie();
         CST_EXIT();
         break;

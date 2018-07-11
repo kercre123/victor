@@ -12,7 +12,7 @@
     "branch": "master"
   },
   "github.com/anki/sai-chipper-voice": {
-    "commit": "b47c61ff6c36bb61a16f1311db29eecee2b7baa1",
+    "commit": "cb7bf642feeb1c819c8a66beb5799005e3c7b96f",
     "branch": "active"
   },
   "github.com/golang/protobuf": {
@@ -57,5 +57,13 @@
   },
   "github.com/grpc-ecosystem/grpc-gateway": {
     "commit": "07f5e79768022f9a3265235f0db4ac8c3f675fec"
+  },
+  "github.com/anki/sai-token-service": {
+    "commit": "384cd54763558fa7e7fda4a77e8887d49021dfa9",
+    "branch": "develop"
+  },
+  "github.com/dgrijalva/jwt-go": {
+    "commit": "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e",
+    "branch": "master"
   }
 }

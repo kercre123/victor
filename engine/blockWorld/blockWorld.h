@@ -18,7 +18,6 @@
 #include <vector>
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
-#include "engine/ankiEventUtil.h"
 #include "engine/block.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
@@ -47,6 +46,11 @@ namespace Anki
     class IExternalInterface;
     class INavMap;
     class MapComponent;
+    
+    namespace ExternalInterface {
+      struct RobotDeletedLocatedObject;
+      struct RobotObservedObject;
+    }
     
     // BlockWorld is updated at the robot component level, same as BehaviorComponent
     // Therefore BCComponents (which are managed by BehaviorComponent) can't declare dependencies on BlockWorld 

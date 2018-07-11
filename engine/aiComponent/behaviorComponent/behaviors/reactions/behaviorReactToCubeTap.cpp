@@ -23,6 +23,7 @@
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/blockWorld/blockWorld.h"
 
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationTrigger.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"

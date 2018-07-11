@@ -144,9 +144,15 @@ namespace Anki {
       CompoundActionParallel();
       CompoundActionParallel(const std::list<IActionRunner*>& actions);
       
+      // By default, CompoundActionParallel continues as long as its longest sub-action. Setting this
+      // to false will end the CompoundActionParallel the moment any of its sub-actions end
+      void SetShouldEndWhenFirstActionCompletes(bool shouldEnd) { _endWhenFirstActionCompletes = shouldEnd; }
+      
     protected:
       
       virtual ActionResult UpdateInternal() override final;
+    private:
+      bool _endWhenFirstActionCompletes = false;
       
     }; // class CompoundActionParallel
     

@@ -128,6 +128,26 @@
     "AnimName": "ag_blockreact"
   },
   {
+    "CladEvent": "ConnectToCubeFailure",
+    "AnimName":  "ag_majorfail" 
+  },
+  {
+    "CladEvent": "ConnectToCubeGetIn",
+    "AnimName":  "ag_texttospeech_getin_01"
+  },
+  {
+    "CladEvent": "ConnectToCubeLoop",
+    "AnimName":  "ag_texttospeech_loop_01"
+  },
+  {
+    "CladEvent": "ConnectToCubeLostConnection",
+    "AnimName":  "ag_majorfail"
+  },
+  {
+    "CladEvent": "ConnectToCubeSuccess",
+    "AnimName":  "ag_majorwin"
+  },
+  {
     "CladEvent": "DEPRECATED_PatternGuessNewIdea",
     "AnimName": "ag_patternguessnewidea"
   },
@@ -176,12 +196,16 @@
     "AnimName": "ag_chargerdocking_rightturn"
   },
   {
-    "CladEvent": "ChargerDockingSearch",
-    "AnimName": "ag_chargerdocking_searchforcharger"
-  },
-  {
     "CladEvent": "ChargerDockingSearchSingleTurn",
     "AnimName": "ag_chargerdocking_searchforchargerturns"
+  },
+  {
+    "CladEvent": "ChargerDockingSearchSingleTurnEnd",
+    "AnimName": "ag_chargerdocking_searchforchargerturns_default_getout"
+  },
+  {
+    "CladEvent": "ChargerDockingSearchWaitForImages",
+    "AnimName": "ag_chargerdocking_searchforchargerturns_default_loop"
   },
   {
     "CladEvent": "ChargerDockingSettle",
@@ -408,12 +432,36 @@
     "AnimName": "ag_driving01_startdriving"
   },
   {
-    "CladEvent": "ExploringLookLeft",
-    "AnimName": "ag_vc_wakeword_turnleft_45degrees"
+    "CladEvent": "ExploringHuhClose",
+    "AnimName": "ag_explorer_huh_close"
   },
   {
-    "CladEvent": "ExploringLookRight",
-    "AnimName": "ag_vc_wakeword_turnright_45degrees"
+    "CladEvent": "ExploringHuhFar",
+    "AnimName": "ag_explorer_huh_far"
+  },
+  {
+    "CladEvent": "ExploringLookAround",
+    "AnimName": "ag_explorer_lookaround"
+  },
+  {
+    "CladEvent": "ExploringLookAtHuman",
+    "AnimName": "ag_generic_look_stright_01"
+  },
+  {
+    "CladEvent": "ExploringScanToLeft",
+    "AnimName": "ag_explorer_scan_left"
+  },
+  {
+    "CladEvent": "ExploringScanToRight",
+    "AnimName": "ag_explorer_scan_right"
+  },
+  {
+    "CladEvent": "ExploringScanCenterFromLeft",
+    "AnimName": "ag_explorer_center_right"
+  },
+  {
+    "CladEvent": "ExploringScanCenterFromRight",
+    "AnimName": "ag_explorer_center_left"
   },
   {
     "CladEvent": "DEPRECATED_FacePlantRoll",
@@ -561,7 +609,7 @@
   },
   {
     "CladEvent": "ICantDoThat",
-    "AnimName": "ag_timer_emote"
+    "AnimName": "ag_generic_cantdothat"
   },
   {
     "CladEvent": "DEPRECATED_IdleOnCharger",
@@ -692,8 +740,52 @@
     "AnimName": "ag_bored_getout"
   },
   {
+    "CladEvent": "OnboardingComeHere",
+    "AnimName": "ag_onboarding_drive_to_face"
+  },
+  {
+    "CladEvent": "OnboardingComeHereGetOut",
+    "AnimName": "ag_onboarding_drive_to_face_idle_getout"
+  },
+  {
+    "CladEvent": "OnboardingCubeDriveGetIn",
+    "AnimName": "ag_onboarding_cube_drive_getin"
+  },
+  {
+    "CladEvent": "OnboardingCubeDriveGetOut",
+    "AnimName": "ag_onboarding_cube_drive_getout"
+  },
+  {
+    "CladEvent": "OnboardingCubeDriveLoop",
+    "AnimName": "ag_onboarding_cube_drive_loop"
+  },
+  {
+    "CladEvent": "OnboardingCubeHuh",
+    "AnimName": "ag_explorer_huh_far"
+  },
+  {
     "CladEvent": "OnboardingDriveOffCharger",
     "AnimName": "ag_onboarding_drive_straight"
+  },
+  {
+    "CladEvent": "OnboardingLookAround",
+    "AnimName": "ag_onboarding_lookaround_loop"
+  },
+  {
+    "CladEvent": "OnboardingLookAtPhoneUp",
+    "AnimName": "ag_lookatphone_getin"
+  },
+  {
+    "CladEvent": "OnboardingLookAtPhoneLoop",
+    "AnimName": "ag_lookatphone_loop"
+  },
+  {
+    "CladEvent": "OnboardingLookAtPhoneDown",
+    "AnimName": "ag_lookatphone_getout"
+  },
+  {
+    "CladEvent": "OnboardingLookDown",
+    "AnimName": "ag_onboarding_lookdown_loop"
   },
   {
     "CladEvent": "OnboardingLookForCube",
@@ -702,6 +794,10 @@
   {
     "CladEvent": "OnboardingWakeUp",
     "AnimName": "ag_onboarding_wakeup"
+  },
+  {
+    "CladEvent": "OnboardingWakeWordGetIn",
+    "AnimName": "ag_onboarding_wakeword_getin_01"
   },
   {
     "CladEvent": "DEPRECATED_OnLearnedPlayerName",
@@ -1446,15 +1542,15 @@
   },
   {
     "CladEvent": "ReactToGoodMorning",
-    "AnimName": "ag_vc_goodmorning"
+    "AnimName": "ag_greeting_goodmorning"
   },
   {
     "CladEvent": "ReactToGoodNight",
-    "AnimName": "ag_gotosleep_getin"
+    "AnimName": "ag_greeting_goodnight"
   },
   {
     "CladEvent": "ReactToGreeting",
-    "AnimName": "ag_vc_greeting"
+    "AnimName": "ag_greeting_hello"
   },
   {
     "CladEvent": "ReactToHabitat",
@@ -1590,7 +1686,7 @@
   },
   {
     "CladEvent": "KnowledgeGraphSearchingGetIn",
-    "AnimName": "ag_knowledgegraph_searching_01"
+    "AnimName": "ag_knowledgegraph_searching_getin_01"
   },
   {
     "CladEvent": "KnowledgeGraphSearching",
@@ -1598,11 +1694,15 @@
   },
   {
     "CladEvent": "KnowledgeGraphSearchingGetOutSuccess",
-    "AnimName": "ag_knowledgegraph_searching_01"
+    "AnimName": "ag_knowledgegraph_searching_getout_01"
   },
   {
-    "CladEvent": "KnowledgeGraphSearchingGetOutFail",
-    "AnimName": "ag_knowledgegraph_searching_01"
+    "CladEvent": "KnowledgeGraphSearchingFail",
+    "AnimName": "ag_knowledgegraph_fail_01"
+  },
+  {
+    "CladEvent": "KnowledgeGraphSearchingFailGetOut",
+    "AnimName": "ag_knowledgegraph_fail_getout_01"
   },
   {
     "CladEvent": "KnowledgeGraphAnswer",
@@ -1615,5 +1715,26 @@
   {
     "CladEvent": "ShutUp",
     "AnimName": "ag_vc_shutup"
+  },
+  {
+    "CladEvent": "NoCloudGetIn",
+    "AnimName": "ag_nocloud_getin"
+  },
+  {
+    "CladEvent": "NoCloudIcon",
+    "AnimName": "ag_nocloud_icon"
+  },
+  {
+    "CladEvent": "NoWifiGetIn",
+    "AnimName": "ag_nowifi_getin"
+  },
+  {
+    "CladEvent": "NoWifiSearching",
+    "AnimName": "ag_nowifi_signal"
+  },
+  {
+    "CladEvent": "NoWifiIcon",
+    "AnimName": "ag_nowifi_icon"
   }
+
 ]

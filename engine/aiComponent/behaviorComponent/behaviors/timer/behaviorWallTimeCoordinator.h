@@ -20,6 +20,7 @@ namespace Anki {
 namespace Cozmo {
 
 // Fwd Declarations
+class BehaviorDisplayWallTime;
 enum class UtteranceState;
 
 class BehaviorWallTimeCoordinator : public ICozmoBehavior
@@ -47,9 +48,9 @@ private:
   struct InstanceConfig {
     InstanceConfig();
 
-    ICozmoBehaviorPtr              iCantDoThatBehavior;
-    ICozmoBehaviorPtr              lookAtFaceInFront;
-    ICozmoBehaviorPtr              showWallTime;
+    ICozmoBehaviorPtr                        iCantDoThatBehavior;
+    ICozmoBehaviorPtr                        lookAtFaceInFront;
+    std::shared_ptr<BehaviorDisplayWallTime> showWallTime;
   };
 
   struct DynamicVariables {

@@ -129,6 +129,12 @@ void CubeBleClient::SetScanDuration(const float duration_sec)
 }
 
 
+void CubeBleClient::SetCubeFirmwareFilepath(const std::string& path)
+{
+  // not implemented for mac
+}
+
+
 void CubeBleClient::StartScanInternal()
 {
   _cubeConnectionState = CubeConnectionState::ScanningForCubes;

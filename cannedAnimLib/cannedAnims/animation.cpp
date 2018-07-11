@@ -135,6 +135,13 @@ Result Animation::DefineFromFlatBuf(const std::string& name, const CozmoAnim::An
 
   auto backpackData = keyframes->BackpackLightsKeyFrame();
   if (backpackData != nullptr) {
+
+    #if !ANKI_DEV_CHEATS
+    PRINT_NAMED_ERROR("Animation.DefineFromFlatBuf.AddBackpackLightKeyFrame.NotAllowed",
+                      "%s still has backpacklight keyframes",
+                      name.c_str());
+    #endif
+
     for (int bpIdx=0; bpIdx < backpackData->size(); bpIdx++) {
 
       // TODO: Update the processing of these keyframes to NOT use an intermediate
@@ -248,7 +255,6 @@ Result Animation::DefineFromFlatBuf(const std::string& name, const CozmoAnim::An
     }
   }
 
-  SetKeyFrameDuration_ms();
   return RESULT_OK;
 }
 
@@ -338,7 +344,6 @@ Result Animation::DefineFromJson(const std::string& name, const Json::Value &jso
     
   } // for each frame
   
-  SetKeyFrameDuration_ms();
   return RESULT_OK;
 }
 
@@ -496,7 +501,6 @@ void Animation::AppendAnimation(const Animation& appendAnim)
   _turnToRecordedHeadingTrack.AppendTrack(appendAnim.GetTrack<TurnToRecordedHeadingKeyFrame>(), animOffest_ms);
   _robotAudioTrack.AppendTrack(appendAnim.GetTrack<RobotAudioKeyFrame>(), animOffest_ms);
 
-  SetKeyFrameDuration_ms();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -542,13 +546,6 @@ uint32_t Animation::GetLastKeyFrameEndTime_ms() const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Animation::SetKeyFrameDuration_ms()
-{
-  ALL_TRACKS(SetKeyFrameDuration_ms, ;);
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<class KeyFrameType>
 TimeStamp_t Animation::CompareLastFrameTime(const TimeStamp_t lastFrameTime_ms) const
 {
@@ -569,7 +566,7 @@ TimeStamp_t Animation::CompareLastFrameEndTime(const TimeStamp_t lastFrameTime_m
   const auto& track = GetTrack<KeyFrameType>();
   if (!track.IsEmpty()) {
     // Compare track's last key frame time and lastFrameTime_ms
-    return std::max(lastFrameTime_ms, track.GetLastKeyFrame()->GetKeyFrameFinalTimestamp_ms());
+    return std::max(lastFrameTime_ms, track.GetLastKeyFrame()->GetTimestampActionComplete_ms());
   }
   // No key frames in track
   return lastFrameTime_ms;

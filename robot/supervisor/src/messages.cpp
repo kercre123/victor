@@ -503,11 +503,6 @@ namespace Anki {
         DockingController::StopDocking();
       }
 
-      void Process_abortAnimation(const RobotInterface::AbortAnimation& msg)
-      {
-
-      }
-
       void Process_checkLiftLoad(const RobotInterface::CheckLiftLoad& msg)
       {
         LiftController::CheckForLoad();

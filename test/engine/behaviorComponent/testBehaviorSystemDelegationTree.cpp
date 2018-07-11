@@ -22,6 +22,7 @@
 #include "engine/aiComponent/behaviorComponent/activeBehaviorIterator.h"
 #include "engine/aiComponent/behaviorComponent/activeFeatureComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorStack.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -249,6 +250,7 @@ TEST(DelegationTree, CheckActiveFeatures)
             hasAnyFeature = true;
           }
         }
+        return true; // Iterate the whole stack
       };
 
       behaviorIterator.IterateActiveCozmoBehaviorsForward(checkFeatureCallback);

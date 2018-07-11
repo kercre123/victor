@@ -15,6 +15,8 @@
 #include "engine/navMap/iNavMap.h"
 #include "engine/navMap/quadTree/quadTree.h"
 
+#include <shared_mutex>
+
 namespace Anki {
 namespace Cozmo {
   
@@ -113,7 +115,8 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // underlaying data container
-  QuadTree _quadTree;
+  QuadTree          _quadTree;
+  mutable std::shared_timed_mutex _writeAccess;
   
 }; // class
   

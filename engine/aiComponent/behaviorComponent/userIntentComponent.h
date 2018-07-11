@@ -119,10 +119,21 @@ public:
   // pending user intent and will make it no longer pending without ever making it active. This is generally
   // not what you want, but can be useful to explicitly ignore a command
   void DropUserIntent(UserIntentTag userIntent);
+  
+  // Drops any pending user intents without responding to them. This is generally not what you want
+  // for any behavior. Use the above if needed
+  void DropAnyUserIntent();
 
   // returns if an intent has recently gone unclaimed. or, reset the corresponding flag
   bool WasUserIntentUnclaimed() const { return _wasIntentUnclaimed; };
   void ResetUserIntentUnclaimed() { _wasIntentUnclaimed = false; };
+
+  // returns true if there has been an error receiving data from the cloud (e.g. no internet, couldn't reach
+  // chipper). Must be manually reset with the reset call below
+  bool WasUserIntentError() const { return _wasIntentError; };
+  void ResetUserIntentError() { _wasIntentError = false; };
+
+  bool IsCloudStreamOpen() const { return _isStreamOpen; }
 
   // replace the current pending user intent (if any) with this one. This will assert in dev if the user
   // intent data type is not void. These should only be used for test and dev purposes (e.g. webviz), not
@@ -195,6 +206,8 @@ private:
   std::unique_ptr<BehaviorComponentCloudServer> _server;
   
   bool _wasIntentUnclaimed = false;
+  bool _wasIntentError = false;
+  bool _isStreamOpen = false;
   
   // if non-empty, only these cloud/app intents will match a user intent
   std::set<UserIntentTag> _whitelistedIntents;

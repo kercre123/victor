@@ -118,10 +118,9 @@ void BehaviorLookAtFaceInFront::TransitionToLookUp()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLookAtFaceInFront::TransitionToLookAtFace(const SmartFaceID& smartID)
 {
-  const Vision::TrackedFace* trackedFace =  GetBEI().GetFaceWorld().GetFace(smartID);
-  if(trackedFace != nullptr){
-    DelegateIfInControl(new TurnTowardsPoseAction(trackedFace->GetHeadPose()));
-  }
+  auto* action = new TurnTowardsFaceAction(smartID);
+  action->SetRequireFaceConfirmation(true);
+  DelegateIfInControl(action);
 }
 
 

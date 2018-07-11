@@ -30,13 +30,19 @@
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include "coretech/common/engine/objectIDs.h"
 #include "coretech/vision/engine/visionMarker.h"
-#include "clad/externalInterface/messageEngineToGame.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/rollingFileLogger.h"
 #include <fstream>
 
 namespace Anki {
 namespace Cozmo {
+  
+namespace ExternalInterface {
+  struct RobotObservedObject;
+  struct RobotStopped;
+  struct RobotCompletedAction;
+  struct RobotToEngine;
+}
 
 class BehaviorDockingTestSimple : public ICozmoBehavior
 {

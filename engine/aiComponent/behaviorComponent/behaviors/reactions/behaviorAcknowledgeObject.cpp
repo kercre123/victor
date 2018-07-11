@@ -28,8 +28,6 @@
 #include "engine/components/visionComponent.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "engine/cozmoContext.h"
-#include "engine/externalInterface/externalInterface.h"
-#include "clad/externalInterface/messageEngineToGame.h"
 #include "util/console/consoleInterface.h"
 
 

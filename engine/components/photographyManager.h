@@ -15,9 +15,11 @@
 
 #include "engine/cozmoContext.h"
 #include "engine/robotComponents_fwd.h"
+#include "engine/externalInterface/gatewayInterface.h"
 
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 #include "coretech/common/engine/utils/timer.h"
 
@@ -26,9 +28,17 @@
 namespace Anki {
 namespace Cozmo {
 
-// Forward declaration
 class VisionComponent;
-  
+class IGatewayInterface;
+namespace external_interface {
+  class Photo;
+  class PhotosInfoRequest;
+  class PhotoRequest;
+  class ThumbnailRequest;
+  class DeletePhotoRequest;
+}
+
+
 class PhotographyManager : public IDependencyManagedComponent<RobotComponentID>, 
                            private Anki::Util::noncopyable
 {
@@ -64,6 +74,7 @@ public:
   // If called when not ready to take photo (see above check), returns 0
   using PhotoHandle = size_t;
   PhotoHandle TakePhoto();
+  void CancelTakePhoto();
 
   // Returns true once the corresponding TakePhoto() call has completed
   bool WasPhotoTaken(const PhotoHandle handle) const;
@@ -85,15 +96,18 @@ private:
 
   bool DeletePhotoByID(const int id, const bool savePhotosFile = true);
 
-  void SendPhotosInfo() const;
-  bool SendPhotoByID(const int id);
-  bool SendThumbnailByID(const int id);
-  bool SendImageHelper(const int id, const bool isThumbnail);
+  bool ImageHelper(const int id, const bool isThumbnail, std::string& fullpath);
 
   std::string GetSavePath() const;
   std::string GetBasename(int photoID) const;
   const std::string& GetStateString() const;
   int PhotoIndexFromID(const int id) const; // Returns photo info index, or -1 if not found
+  
+  void HandleEvents(const AnkiEvent<external_interface::GatewayWrapper>& event);
+  void OnRequestPhotosInfo (const external_interface::PhotosInfoRequest&  photosInfoRequest);
+  void OnRequestPhoto      (const external_interface::PhotoRequest&       photoRequest);
+  void OnRequestThumbnail  (const external_interface::ThumbnailRequest&   thumbnailRequest);
+  void OnRequestDeletePhoto(const external_interface::DeletePhotoRequest& deletePhotoRequest);
 
   enum class State {
     Idle,
@@ -112,15 +126,19 @@ private:
   std::string       _savePath = "";
   std::string       _fullPathPhotoInfoFile = "";
   bool              _disableWhenPossible = false;
+  IGatewayInterface* _gatewayInterface = nullptr;
+  std::vector<Signal::SmartHandle> _signalHandles;
 
   struct PhotoInfo
   {
     PhotoInfo() {}
-    PhotoInfo(int id, TimeStamp_t dt, bool copied) : _id(id), _dateTimeTaken(dt), _copiedToApp(copied) {}
+    PhotoInfo(int id, TimeStamp_t dt, bool photoCopied, bool thumbCopied)
+      : _id(id), _dateTimeTaken(dt), _photoCopiedToApp(photoCopied), _thumbCopiedToApp(thumbCopied) {}
 
     int         _id;
     TimeStamp_t _dateTimeTaken;
-    bool        _copiedToApp;
+    bool        _photoCopiedToApp;
+    bool        _thumbCopiedToApp;
   };
 
   std::vector<PhotoInfo> _photoInfos;

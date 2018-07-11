@@ -54,11 +54,11 @@ public:
   Vision::SpriteCache* GetSpriteCache() const { assert(_spriteCache != nullptr); return _spriteCache;  }
   Vision::SpriteSequenceContainer* GetSpriteSequenceContainer() const { assert(_spriteSequenceContainer != nullptr); return _spriteSequenceContainer;}
 
-  const RobotDataLoader::CompImageMap* GetCompImgMap() { assert(_compImgMap); return _compImgMap; }
-  const RobotDataLoader::CompLayoutMap* GetCompLayoutMap() { assert(_compLayoutMap); return _compLayoutMap; }
-  const CannedAnimationContainer* GetCannedAnimationContainer() { assert(_cannedAnimationContainer); return _cannedAnimationContainer; }
+  const RobotDataLoader::CompImageMap* GetCompImgMap() const { assert(_compImgMap); return _compImgMap; }
+  const RobotDataLoader::CompLayoutMap* GetCompLayoutMap() const { assert(_compLayoutMap); return _compLayoutMap; }
+  const CannedAnimationContainer* GetCannedAnimationContainer() const { assert(_cannedAnimationContainer); return _cannedAnimationContainer; }
   const RobotDataLoader::WeatherResponseMap* GetWeatherResponseMap() const { assert(_weatherResponseMap); return _weatherResponseMap; }
-  RobotDataLoader::VariableSnapshotJsonMap* GetVariableSnapshotJsonMap() { assert(nullptr != _variableSnapshotJsonMap); return _variableSnapshotJsonMap; }
+  RobotDataLoader::VariableSnapshotJsonMap* GetVariableSnapshotJsonMap() const { assert(nullptr != _variableSnapshotJsonMap); return _variableSnapshotJsonMap; }
 
   const Json::Value& GetCubeSpinnerConfig() const { return _cupeSpinnerConfig; }
 

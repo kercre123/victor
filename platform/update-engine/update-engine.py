@@ -40,9 +40,8 @@ OTA_ENC_PASSWORD = "/anki/etc/ota.pas"
 HTTP_BLOCK_SIZE = 1024*2  # Tuned to what seems to work best with DD_BLOCK_SIZE
 DD_BLOCK_SIZE = HTTP_BLOCK_SIZE*1024
 SUPPORTED_MANIFEST_VERSIONS = ["0.9.2", "0.9.3", "0.9.4", "0.9.5"]
-
+TRUE_SYNONYMS = ["True", "true", "on", "1"]
 DEBUG = False
-
 
 def make_blocking(pipe, blocking):
     "Set a filehandle to blocking or not"
@@ -59,7 +58,6 @@ def safe_delete(name):
         os.remove(name)
     elif os.path.isdir(name):
         shutil.rmtree(name)
-
 
 def clear_status():
     "Clear everything out of the status directory"
@@ -585,25 +583,63 @@ def update_from_url(url):
     # Mark the slot bootable now
     if not call(["/bin/bootctl", current_slot, "set_active", target_slot]):
         die(202, "Could not set target slot as active")
+    safe_delete(ERROR_FILE)
     write_status(DONE_FILE, 1)
 
+def logv(msg):
+    if DEBUG:
+        print(msg)
+        sys.stdout.flush()
+
+def loge(msg):
+    print(msg, file=sys.stderr)
+    sys.stderr.flush()
+
+def generate_shard_id():
+    override_shard = os.getenv("UPDATE_ENGINE_SHARD", None)
+    if override_shard:
+        return override_shard
+    esn = get_prop("ro.serialno")
+    b = int(sha256(esn).hexdigest(), 16) % 100
+    return "{:02d}".format(b)
+
+def construct_update_url(os_version):
+    base_url = os.getenv("UPDATE_ENGINE_BASE_URL", None)
+    if not base_url:
+        return None
+    ota_type = os.getenv("UPDATE_ENGINE_OTA_TYPE", "diff")
+    shard_part = ""
+    use_sharding = os.getenv("UPDATE_ENGINE_USE_SHARDING", "False") in TRUE_SYNONYMS
+    if use_sharding:
+        shard_part = generate_shard_id() + "/"
+    url = "{0}{1}{2}/{3}.ota".format(base_url, shard_part, ota_type, os_version.rstrip("d"))
+    return url
 
 if __name__ == '__main__':
-    if len(sys.argv) == 1:  # Clear the output directory
-        clear_status()
-        exit(0)
-    elif len(sys.argv) == 3 and sys.argv[2] == '-v':
+    clear_status()
+    DEBUG = os.getenv("UPDATE_ENGINE_DEBUG", "False") in TRUE_SYNONYMS
+    url = os.getenv("UPDATE_ENGINE_URL", "auto")
+    if len(sys.argv) > 1:
+        url = sys.argv[1]
+    if len(sys.argv) > 2 and sys.argv[2] == '-v':
         DEBUG = True
+    if url == "auto":
+        logv("Automatic update running.....")
+        url = construct_update_url(get_prop("ro.anki.version"))
+        if not url:
+            loge("Unable to construct automatic update url")
+            die(203, "Unable to construct automatic update url")
+        logv("Automatic URL = {}".format(url))
 
     if DEBUG:
-        update_from_url(sys.argv[1])
+        update_from_url(url)
     else:
         try:
-            update_from_url(sys.argv[1])
+            update_from_url(url)
         except zlib.error as decompressor_error:
             die(205, "Decompression error: " + str(decompressor_error))
         except IOError as io_error:
             die(208, "IO Error: " + str(io_error))
         except Exception as e:
             die(219, e)
-        exit(0)
+    exit(0)

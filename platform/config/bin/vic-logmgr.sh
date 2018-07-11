@@ -18,20 +18,13 @@
 # When run from vic-logmgr.service, environment values may
 # be set in /anki/etc/vic-logmgr.env.
 #
-# Note that Android log levels are not the same as Anki log levels!
-#   Android ERROR = Anki ERROR
-#   Android WARNING = Anki WARNING
-#   Android INFO = Anki EVENT
-#   Android DEBUG = Anki INFO
-#   Android VERBOSE = Anki DEBUG
-#
 
 : ${VIC_LOGMGR_DIRECTORY:="/data/data/com.anki.victor/cache/vic-logmgr"}
 : ${VIC_LOGMGR_FILENAME:="vic-logmgr"}
 : ${VIC_LOGMGR_ROTATION_KB:="1024"}
 : ${VIC_LOGMGR_ROTATION_COUNT:="64"}
 : ${VIC_LOGMGR_FORMAT:="printable"}
-: ${VIC_LOGMGR_FILTERSPECS:="vic-anim:V vic-cloud:V vic-engine:V vic-robot:V vic-switchboard:V vic-watchdog:V vic-webserver:V *:E"}
+: ${VIC_LOGMGR_FILTERSPECS:="vic-anim:V vic-cloud:V vic-dasmgr:V vic-engine:V vic-gateway:V vic-neuralnets:V vic-robot:V vic-switchboard:V vic-watchdog:V vic-webserver:V *:E"}
 
 /bin/mkdir -p ${VIC_LOGMGR_DIRECTORY}
 

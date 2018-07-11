@@ -80,7 +80,7 @@ AnimEngine::AnimEngine(Util::Data::DataPlatform* dataPlatform)
   if (Anki::Util::gTickTimeProvider == nullptr) {
     Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();
   }
-  
+
   _microphoneAudioClient.reset(new Audio::MicrophoneAudioClient(_context->GetAudioController()));
 }
 
@@ -113,6 +113,7 @@ Result AnimEngine::Init()
   dataLoader->LoadNonConfigData();
 
   _ttsComponent = std::make_unique<TextToSpeechComponent>(_context.get());
+  _context->GetMicDataSystem()->Init(*dataLoader);
 
   // animation streamer must be initialized after loading non config data (otherwise there are no animations loaded)
   _animationStreamer->Init();
@@ -201,7 +202,7 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
 
   // Clear out sprites that have passed their cache time
   _context->GetDataLoader()->GetSpriteCache()->Update(currTime_nanosec);
-  
+
   if(_streamingAnimationModifier != nullptr){
     _streamingAnimationModifier->ApplyAlterationsBeforeUpdate(_animationStreamer.get());
   }
@@ -209,7 +210,7 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
   if(_streamingAnimationModifier != nullptr){
     _streamingAnimationModifier->ApplyAlterationsAfterUpdate(_animationStreamer.get());
   }
-  
+
   if (_audioControllerPtr != nullptr) {
     // Update mic info in Audio Engine
     const auto& micDirectionMsg = _context->GetMicDataSystem()->GetLatestMicDirectionMsg();
@@ -259,6 +260,20 @@ void AnimEngine::HandleMessage(const RobotInterface::TextToSpeechCancel & msg)
   _ttsComponent->HandleMessage(msg);
 }
 
+void AnimEngine::HandleMessage(const RobotInterface::SetLocale & msg)
+{
+  const std::string locale(msg.locale, msg.locale_length);
 
+  LOG_INFO("AnimEngine.SetLocale", "Set locale to %s", locale.c_str());
+
+  if (_context != nullptr) {
+    _context->SetLocale(locale);
+  }
+
+  if (_ttsComponent != nullptr) {
+    _ttsComponent->SetLocale(locale);
+  }
+
+}
 } // namespace Cozmo
 } // namespace Anki

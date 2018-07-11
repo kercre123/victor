@@ -15,7 +15,6 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorEnrollFace_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorEnrollFace_H__
 
-#include "engine/ankiEventUtil.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "coretech/vision/engine/faceIdTypes.h"
@@ -29,16 +28,16 @@ namespace Anki {
 namespace Vision {
 class TrackedFace;
 }
-  
-namespace ExternalInterface {
-  struct SetFaceToEnroll;
-}
 
 namespace Cozmo {
 
 // Forward declaration
 class BehaviorTextToSpeechLoop;
 class FaceWorld;
+  
+namespace ExternalInterface {
+  struct SetFaceToEnroll;
+}
 
   
 class BehaviorEnrollFace : public ICozmoBehavior
@@ -200,11 +199,6 @@ private:
     f32              startTime_sec;
     
     f32              totalBackup_mm;
-    
-    
-    
-    ActionResult     saveEnrollResult;
-    ActionResult     saveAlbumResult;
     
     std::string      faceName;
     std::string      observedUnusableName;

@@ -15,6 +15,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToTouchPetting.h"
 
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/engine/jsonTools.h"
 

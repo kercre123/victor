@@ -25,6 +25,7 @@
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
+#include "engine/components/cubes/iCubeConnectionSubscriber.h"
 #include "engine/components/visionScheduleMediator/iVisionModeSubscriber.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator_fwd.h"
 #include "engine/robotInterface/messageHandler.h"
@@ -33,6 +34,7 @@
 #include "clad/types/actionResults.h"
 #include "clad/types/behaviorComponent/behaviorObjectives.h"
 #include "clad/types/behaviorComponent/postBehaviorSuggestions.h"
+#include "clad/types/robotCompletedAction.h"
 #include "clad/types/unlockTypes.h"
 #include "util/console/consoleVariable.h"
 #include "util/logging/logging.h"
@@ -97,6 +99,29 @@ struct BehaviorOperationModifiers{
   // Override to false if the behavior will always cancel itself when it's done
   bool behaviorAlwaysDelegates = true;
 
+  // Behaviors which require cube connections with varying degrees of flexibility should specify their type of requirement
+  // here. Subscription to cube connections will then be managed directly by iCozmoBehavior on Activation/Deactivation,
+  // and WantsToBeActivatedBase will confirm that connection requirements are met.
+  enum class CubeConnectionRequirements{
+    None,
+    OptionalLazy, // Always wantsToBeActivated; Subscribe only if already connected
+    OptionalActive, // Always wantsToBeActivated; Always subscribe
+    RequiredLazy, // Run only if already connected. Always subscribe if activated.
+    RequiredManaged // Run only if already connected. Always subscribe if activated. Requires Ancestor to manage connection.
+  } cubeConnectionRequirements = CubeConnectionRequirements::None;
+
+  // Background connections will open and hold a cube connection open, but will not trigger connection/status lights.
+  // If a non-background subscription is made, the connection will convert to foreground until all foreground 
+  // subscriptions are gone, whereupon we will indicate disconnection to the user and convert back to a background
+  // connection until ALL subscriptions are released which will trigger disconnection. 
+  // NOTE: THIS ONLY SUPPRESSES STATUS LIGHTS! Light anims may still be invoked via the CubeLightComponent while in a
+  // background connection
+  bool connectToCubeInBackground = false;
+
+  // If set to true, this behavior will satisfy the Ancestry requirements for behaviors with 
+  // CubeConnectionRequirements::RequiredManaged. 
+  bool ensuresCubeConnectionAtDelegation = false;
+
   // Behaviors which require vision processing can add requests to these vectors to have the base class
   // manage subscriptions to those VisionModes. Default is none.
   std::unique_ptr<std::set<VisionModeRequest>> visionModesForActivatableScope;
@@ -104,7 +129,7 @@ struct BehaviorOperationModifiers{
 };
 
 // Base Behavior Interface specification
-class ICozmoBehavior : public IBehavior, public IVisionModeSubscriber
+class ICozmoBehavior : public IBehavior, public IVisionModeSubscriber, public ICubeConnectionSubscriber
 {
 protected:  
   friend class BehaviorFactory;
@@ -119,7 +144,15 @@ protected:
   ICozmoBehavior(const Json::Value& config, const CustomBEIConditionHandleList& customConditionHandles);
     
   virtual ~ICozmoBehavior();
-    
+  
+  // ICubeConnectionSubscriber methods - - - - -
+  virtual std::string GetCubeConnectionDebugName() const override {return GetDebugLabel();};
+  virtual void ConnectedInteractableCallback() override {}
+  virtual void ConnectedBackgroundCallback() override {}
+  virtual void ConnectionFailedCallback() override {}
+  virtual void ConnectionLostCallback() override {}
+  // ICubeConnectionSubscriber methods - - - - -
+
 public:  
   static Json::Value CreateDefaultBehaviorConfig(BehaviorClass behaviorClass, BehaviorID behaviorID);
   static void InjectBehaviorClassAndIDIntoConfig(BehaviorClass behaviorClass, BehaviorID behaviorID, Json::Value& config);  
@@ -454,6 +487,12 @@ protected:
   // returned. This pointer will be null if the intent couldn't be activated (i.e. it wasn't pending)
   UserIntentPtr SmartActivateUserIntent(UserIntentTag tag);
 
+  // Request that the robot enter power save mode
+  void SmartRequestPowerSaveMode();
+
+  // disable the procedural "keep face alive" in the animation system
+  void SmartDisableKeepFaceAlive();
+
   // Helper function to play an emergency get out through the continuity component
   void PlayEmergencyGetOut(AnimationTrigger anim);
 
@@ -500,6 +539,12 @@ private:
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
   bool WantsToBeActivatedBase() const;
+
+  // Helper function for WantsToBeActivatedBase, returns true if the cubeConnectionRequirements for
+  // this behavior are satisfied
+  bool CubeConnectionRequirementsMet() const;
+
+  void ManageCubeConnectionSubscriptions(bool onActivated);
   
   bool ReadFromJson(const Json::Value& config);
   
@@ -563,18 +608,14 @@ private:
   // than 1 second ago'. This allows some behaviors to run only first time that their parent is activated (specially for activities)
   // TODO rsam: differentiate between (de)activation and interruption
   float _requiredRecentSwitchToParent_sec;
-  
+
   int _startCount = 0;
 
   // for when delegation finishes - if invalid, no action
   RobotCompletedActionCallback _delegationCallback;
   
   bool _isActivated;
-  
-  // A set of the locks that a behavior has used to disable reactions
-  // these will be automatically re-enabled on behavior stop
-  std::set<std::string> _smartLockIDs;
-  
+    
   // An int that holds tracks disabled using SmartLockTrack
   std::map<std::string, u8> _lockingNameToTracksMap;
   // Loaded in from data - these tracks will be locked/unlocked automatically when activated/deactivated 
@@ -589,7 +630,11 @@ private:
   bool _alwaysStreamline = false;
   
   bool _initHasBeenCalled = false;
-  
+
+  // for automatically removing a power save request when de-activated
+  std::string _powerSaveRequest;
+
+  bool _keepAliveDisabled = false;
   
   ///////
   // Tracking subscribe tags for initialization

@@ -11,8 +11,12 @@
 #include "util/math/numericCast.h"
 #include <fstream>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <utime.h>
 #include <cstdio>
 #include <dirent.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 namespace Anki {
 namespace Util {
@@ -184,6 +188,23 @@ std::vector<std::string> FileUtils::FilesInDirectory(const std::string& path,
   }
   
   return files;
+}
+
+bool FileUtils::TouchFile(const std::string& fileName, mode_t mode)
+{
+  int result = utime(fileName.c_str(), NULL);
+  if (result == 0) {
+    return true;
+  }
+  if (errno != ENOENT) {
+    return false;
+  }
+  int fd = open(fileName.c_str(), O_RDWR | O_CREAT, mode);
+  if (fd >= 0) {
+    (void) close(fd);
+    return true;
+  }
+  return false;
 }
 
 bool FileUtils::FileExists(const std::string& fileName)

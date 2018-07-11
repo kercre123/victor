@@ -1,0 +1,9 @@
+{
+  "behaviorID": "PRDemoSleeping",
+  "behaviorClass": "Sleeping",
+  "enablePowerSave": false,
+
+  "wantsToCancelSelfCondition": {
+    "conditionType": "TriggerWordPending"
+  }
+}

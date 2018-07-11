@@ -1,5 +1,6 @@
 [
   {
+    "canBeOverridden" : false,
     "duration_ms" : 0,
     "pattern" : 
     {

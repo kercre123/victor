@@ -162,7 +162,8 @@ static int GetEngineStatsWebServerImpl(WebService::WebService::Request* request)
   ss << robotState.carryingObjectOnTopID << '\n';
   ss << robotState.headTrackingObjectID << '\n';
   ss << robotState.localizedToObjectID << '\n';
-  ss << robotState.status << '\n';
+  ss << "0x" << std::uppercase << std::setfill('0') << std::setw(8) << std::hex << robotState.status << '\n';
+  ss << std::dec;
 
   const auto& micDirectionHistory = robot->GetMicComponent().GetMicDirectionHistory();
   ss << micDirectionHistory.GetRecentDirection() << '\n';

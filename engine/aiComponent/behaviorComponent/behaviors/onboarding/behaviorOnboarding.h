@@ -29,6 +29,7 @@ namespace Cozmo {
 
 class IOnboardingStage;
 enum class OnboardingStages : uint8_t;
+enum class OnboardingSteps  : uint8_t;
   
 class BehaviorOnboarding : public ICozmoBehavior
 {
@@ -76,6 +77,8 @@ private:
   // Moves to the next IOnboardingStage
   void MoveToStage( const OnboardingStages& state );
   
+  void SaveToDisk( const OnboardingStages& stage ) const;
+  
   void UpdateBatteryInfo();
   void StartLowBatteryCountdown();
   
@@ -87,6 +90,7 @@ private:
   void RequestContinue();
   void RequestSkip();
   void RequestRetryCharging();
+  void RequestSkipRobotOnboarding();
   
   // Put this behavior in a state where it waits for the BSM to switch behavior stacks
   void TerminateOnboarding();
@@ -116,6 +120,7 @@ private:
   struct PendingEvent {
     explicit PendingEvent(const EngineToGameEvent& event);
     explicit PendingEvent(const GameToEngineEvent& event);
+    explicit PendingEvent(const AppToEngineEvent& event);
     PendingEvent(){} // only for Continue and Skip
     ~PendingEvent();
     enum {
@@ -123,12 +128,14 @@ private:
       Skip,
       GameToEngine,
       EngineToGame,
+      AppToEngine,
     } type;
     double time_s;
     union {
       // continue and skip have no params
       GameToEngineEvent gameToEngineEvent;
       EngineToGameEvent engineToGameEvent;
+      AppToEngineEvent  appToEngineEvent;
     };
   };
   
@@ -167,6 +174,7 @@ private:
     IBehavior* lastBehavior;
     bool lastTriggerWordEnabled;
     UserIntentTag lastWhitelistedIntent;
+    OnboardingSteps lastExpectedStep;
     BehaviorID lastInterruption;
     
     

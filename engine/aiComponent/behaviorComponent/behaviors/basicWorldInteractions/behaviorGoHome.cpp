@@ -21,6 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorClearChargerArea.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorRequestToGoHome.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorWiggleOntoChargerContacts.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
@@ -33,6 +34,7 @@
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "clad/types/behaviorComponent/behaviorStats.h"
 
@@ -56,6 +58,12 @@ namespace {
   // can be a bit looser than the default, since the robot can successfully
   // dock with the charger even if he's not precisely at the pre-action pose.
   const float kDriveToChargerPreActionPoseAngleTol_rad = DEG_TO_RAD(15.f);
+  
+  // If we have been activated too many times within a short window of time,
+  // then just delegate to the RequestToGoHome behavior instead of continuing
+  // with the GoHome behavior, since we may be stuck in a loop.
+  const float kRepeatedActivationCheckWindow_sec = 60.f;
+  const size_t kNumRepeatedActivationsAllowed = 3;
 }
 
 
@@ -114,6 +122,7 @@ void BehaviorGoHome::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) co
 void BehaviorGoHome::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
   delegates.insert(_iConfig.clearChargerAreaBehavior.get());
+  delegates.insert(_iConfig.requestHomeBehavior.get());
   delegates.insert(_iConfig.wiggleOntoChargerBehavior.get());
 }
 
@@ -127,6 +136,11 @@ void BehaviorGoHome::InitBehavior()
                                                            _iConfig.clearChargerAreaBehavior);
   DEV_ASSERT(_iConfig.clearChargerAreaBehavior != nullptr,
              "BehaviorGoHome.InitBehavior.NullClearChargerAreaBehavior");
+  BC.FindBehaviorByIDAndDowncast<BehaviorRequestToGoHome>(BEHAVIOR_ID(RequestHomeBecauseStuck),
+                                                          BEHAVIOR_CLASS(RequestToGoHome),
+                                                          _iConfig.requestHomeBehavior);
+  DEV_ASSERT(_iConfig.requestHomeBehavior != nullptr,
+             "BehaviorGoHome.InitBehavior.NullRequestHomeBehavior");
   BC.FindBehaviorByIDAndDowncast<BehaviorWiggleOntoChargerContacts>(BEHAVIOR_ID(WiggleBackOntoChargerFromPlatform),
                                                                     BEHAVIOR_CLASS(WiggleOntoChargerContacts),
                                                                     _iConfig.wiggleOntoChargerBehavior);
@@ -156,7 +170,28 @@ bool BehaviorGoHome::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorGoHome::OnBehaviorActivated()
 {
+  const auto persistent = _dVars.persistent;
   _dVars = DynamicVariables();
+  _dVars.persistent = persistent;
+  
+  // Have we been activated a lot recently?
+  const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  auto& times = _dVars.persistent.activatedTimes;
+  times.insert(now_sec);
+  times.erase(times.begin(),
+              times.lower_bound(now_sec - kRepeatedActivationCheckWindow_sec));
+  if (times.size() > kNumRepeatedActivationsAllowed) {
+    PRINT_NAMED_WARNING("BehaviorGoHome.OnBehaviorActivated.RepeatedlyActivated",
+                        "We have been activated %zu times in the past %.1f seconds, so instead of continuing "
+                        "with this behavior, we are delegating to the RequestToGoHomeBehavior.",
+                        times.size(), kRepeatedActivationCheckWindow_sec);
+    const bool requestWantsToRun = _iConfig.requestHomeBehavior->WantsToBeActivated();
+    ANKI_VERIFY(requestWantsToRun, "BehaviorGoHome.OnBehaviorActivated.RequestDoesNotWantToRun", "");
+    if (requestWantsToRun) {
+      DelegateIfInControl(_iConfig.requestHomeBehavior.get());
+    }
+    return;
+  }
   
   const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
   const auto* object = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose, *_iConfig.homeFilter);
@@ -457,16 +492,34 @@ void BehaviorGoHome::TransitionToOnChargerCheck()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorGoHome::ActionFailure(const bool removeChargerFromBlockWorld)
+void BehaviorGoHome::ActionFailure(bool removeChargerFromBlockWorld)
 {
+  // If we are ending due to an action failure, now is a good time to check
+  // how recently we have seen the charger. If we haven't seen the charger
+  // in a while, just remove it from the world since it's possible that we
+  // really don't know where it is. 
+  const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID, ObjectFamily::Charger);
+  const auto nowTimestamp = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
+  const TimeStamp_t kMaxObservedAge_ms = Util::SecToMilliSec(120.f);
+  if ((charger != nullptr) &&
+      (nowTimestamp > charger->GetLastObservedTime() + kMaxObservedAge_ms)) {
+    removeChargerFromBlockWorld = true;
+  }
+  
   PRINT_NAMED_WARNING("BehaviorGoHome.ActionFailure",
-                      "BehaviorGoHome ending due to an action failure. %s",
+                      "BehaviorGoHome had an action failure. Delegating to the request to go home. %s",
                       removeChargerFromBlockWorld ? "Removing charger from block world." : "");
   
   if (removeChargerFromBlockWorld) {
     BlockWorldFilter deleteFilter;
     deleteFilter.AddAllowedID(_dVars.chargerID);
     GetBEI().GetBlockWorld().DeleteLocatedObjects(deleteFilter);
+  }
+  
+  // Delegate to the "request to go home" behavior
+  const bool requestWantsToRun = _iConfig.requestHomeBehavior->WantsToBeActivated();
+  if (requestWantsToRun) {
+    DelegateIfInControl(_iConfig.requestHomeBehavior.get());
   }
 }
 

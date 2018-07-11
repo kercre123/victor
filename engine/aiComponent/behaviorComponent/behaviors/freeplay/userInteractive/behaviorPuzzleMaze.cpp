@@ -6,15 +6,12 @@
  *
  **/
 
-#include "clad/externalInterface/messageGameToEngine.h"
-
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPuzzleMaze.h"
 
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/puzzleComponent.h"
 #include "engine/cozmoContext.h"
-#include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 
 #include "coretech/common/engine/math/rect_impl.h"

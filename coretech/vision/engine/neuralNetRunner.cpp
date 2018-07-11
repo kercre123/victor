@@ -46,7 +46,7 @@
 namespace Anki {
 namespace Vision {
  
-// Log channel name currently expected to be defined by one of the objectDetectorModel cpp files...
+// Log channel name currently expected to be defined by one of the model cpp files...
 // static const char * const kLogChannelName = "VisionSystem";
  
 namespace {
@@ -221,9 +221,12 @@ bool NeuralNetRunner::StartProcessingIfIdle(ImageCache& imageCache)
     _heightScale = (f32)imgOrig.GetNumRows();
     _widthScale  = (f32)imgOrig.GetNumCols();
     
-    PRINT_CH_INFO(kLogChannelName, "NeuralNetRunner.StartProcessingIfIdle.ProcessingImage",
-                  "Detecting salient points in %dx%d image t=%u",
-                  _imgBeingProcessed.GetNumCols(), _imgBeingProcessed.GetNumRows(), _imgBeingProcessed.GetTimestamp());
+    if(_model->IsVerbose())
+    {
+      PRINT_CH_INFO(kLogChannelName, "NeuralNetRunner.StartProcessingIfIdle.ProcessingImage",
+                    "Detecting salient points in %dx%d image t=%u",
+                    _imgBeingProcessed.GetNumCols(), _imgBeingProcessed.GetNumRows(), _imgBeingProcessed.GetTimestamp());
+    }
     
     _future = std::async(std::launch::async, [this]() {
       std::list<SalientPoint> salientPoints;
@@ -265,7 +268,7 @@ bool NeuralNetRunner::GetDetections(std::list<SalientPoint>& salientPoints)
       salientPoints = _future.get();
       DEV_ASSERT(!_future.valid(), "NeuralNetRunner.GetDetections.FutureStillValid");
       
-      if(ANKI_DEV_CHEATS)
+      if(ANKI_DEV_CHEATS && _model->IsVerbose())
       {
         if(salientPoints.empty())
         {

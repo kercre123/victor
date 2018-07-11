@@ -18,7 +18,7 @@ if(VISION_PROFILER)
 endif()
 
 anki_build_cxx_library(cti_vision ${ANKI_SRCLIST_DIR} STATIC)
-anki_build_target_license(cti_vision "ANKI" "BSD-2" "BSD-3")
+anki_build_target_license(cti_vision "ANKI" "BSD-3,${CMAKE_CURRENT_SOURCE_DIR}/engine/perspectivePoseEstimation.cpp")
 
 set_target_properties(cti_vision
   PROPERTIES
@@ -106,7 +106,19 @@ endif()
 #
 # Standalone Neural Nets Process
 #
-option(BUILD_NEURAL_NET_PROCESS "Build standalone Neural Net processor" OFF)
-if (BUILD_NEURAL_NET_PROCESS)
+
+# Set this variable to the type of neural net platform to use
+set(NEURAL_NET_PLATFORM TensorFlow)
+
+# List of neural net options to validate the above with
+set(VALID_NEURAL_NET_PLATFORMS None TensorFlow TFLite)
+
+# Validate the setting
+list(FIND VALID_NEURAL_NET_PLATFORMS ${NEURAL_NET_PLATFORM} index)
+if(index EQUAL -1)
+  message(FATAL_ERROR "NEURAL_NET_PLATFORM must be one of ${VALID_NEURAL_NET_PLATFORMS}")
+endif()
+
+if (NOT NEURAL_NET_PLATFORM STREQUAL "None")
   add_subdirectory("neuralnets")
 endif()

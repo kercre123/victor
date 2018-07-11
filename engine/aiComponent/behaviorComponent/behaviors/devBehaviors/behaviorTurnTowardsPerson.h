@@ -14,6 +14,7 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorTurnTowardsPerson__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "clad/types/salientPointTypes.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -43,7 +44,6 @@ private:
   void TransitionToTurnTowardsPoint();
   void TransitionToFinishedTurning();
   void TransitionToCompleted();
-  void BlinkLight(bool on);
 
   enum class State : uint8_t {
     Starting=0,
@@ -64,7 +64,6 @@ private:
     State state;
 
     Vision::SalientPoint lastPersonDetected;
-    bool blinkOn;
     bool hasToStop;
   };
 

@@ -24,9 +24,33 @@
 namespace Anki {
 namespace Cozmo {
 
+#if ANKI_DEV_CHEATS
+
+CannedAnimationContainer* s_cubeAnimContainer = nullptr;
+const char* kCubeSpinnerAnimationName = "anim_spinner_tap_01";
+CONSOLE_VAR(int, kAdjustHeightOfSpinnerLift, "CubeSpinner", 81);
+
+void SetNewTapHeight(ConsoleFunctionContextRef context)
+{
+  if(s_cubeAnimContainer != nullptr){
+    Animation* anim = s_cubeAnimContainer->GetAnimation(kCubeSpinnerAnimationName);
+    auto& track = anim->GetTrack<LiftHeightKeyFrame>();
+    std::list<LiftHeightKeyFrame>& frames = track.GetAllKeyframes();
+    auto iter = frames.begin();
+    iter++;
+    iter->OverrideHeight(kAdjustHeightOfSpinnerLift);
+  }
+}
+
+CONSOLE_FUNC(SetNewTapHeight, "CubeSpinner");
+#endif
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CannedAnimationContainer::CannedAnimationContainer()
 {
+  #if ANKI_DEV_CHEATS
+  s_cubeAnimContainer = this;
+  #endif
 }
 
 

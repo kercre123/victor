@@ -12,6 +12,7 @@
 
 #include "engine/aiComponent/beiConditions/conditions/conditionEmotion.h"
 
+#include "clad/types/emotionTypes.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/cozmoContext.h"
 #include "engine/moodSystem/moodManager.h"

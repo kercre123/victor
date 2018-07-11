@@ -14,6 +14,8 @@ enum class BEIComponentID{
   BlockWorld,
   BackpackLightComponent,
   CubeAccel,
+  CubeComms,
+  CubeConnectionCoordinator,
   CubeLight,
   CliffSensor,
   DataAccessor,

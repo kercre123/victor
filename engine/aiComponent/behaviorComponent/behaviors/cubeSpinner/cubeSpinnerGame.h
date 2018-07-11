@@ -26,11 +26,14 @@ namespace Cozmo{
 
 // forward declarations
 class BackpackLightComponent;
+class BlockWorld;
 class CubeLightComponent;
 
 class CubeSpinnerGame
 {
 public:
+  using LightsLocked = std::array<bool,CubeLightAnimation::kNumCubeLEDs>;
+
   enum class LockResult{
     Locked,   // the light successfully locked into a slot
     Error,    // the light was the wrong color or the slot was full 
@@ -44,7 +47,18 @@ public:
     GameSettingsConfig(const Json::Value& settingsConfig);
     uint32_t getInLength_ms = 0;
     uint32_t timePerLED_ms = 0;
-    std::array<float,static_cast<int>(CubeConstants::NUM_CUBE_LEDS)> speedMultipliers;
+    std::array<float,CubeLightAnimation::kNumCubeLEDs> speedMultipliers;
+    std::array<float,CubeLightAnimation::kNumCubeLEDs> minWrongColorsPerRound;
+    std::array<float,CubeLightAnimation::kNumCubeLEDs> maxWrongColorsPerRound;
+  };
+  
+  struct GameSnapshot{
+    bool areLightsCycling = false;
+    uint8_t currentLitLEDIdx = 0;
+    uint8_t roundNumber = 0;
+    bool isCurrentLightTarget = false;
+    CubeSpinnerGame::LightsLocked lightsLocked;
+    TimeStamp_t timeUntilNextRotation = 0;
   };
 
 
@@ -52,11 +66,16 @@ public:
                   const Json::Value& lightConfigs, 
                   CubeLightComponent& cubeLightComponent,
                   BackpackLightComponent& backpackLightComponent,
+                  BlockWorld& blockWorld,
                   Util::RandomGenerator& rng);
   virtual ~CubeSpinnerGame();
   
+  using GameReadyCallback = std::function<void(bool gameStartupSuccess, const ObjectID& id)>;
+
   // Control game phase
-  void StartNewGame(const ObjectID& targetObject);
+  void PrepareForNewGame(GameReadyCallback callback);
+  // Will fail if game is not prepared 
+  bool StartGame();
   void StopGame();
   // Update must be regularly called every tick once the game starts
   void Update();
@@ -74,8 +93,8 @@ public:
     _settingsConfig = std::move(gameSettings);
   }
 
-
-
+  // Function which allows Vector to "cheat" by gaining insight into what's happening on the cube
+  void GetGameSnapshot(GameSnapshot& outSnapshot) const;
 
 private:
   enum class GamePhase{
@@ -111,6 +130,8 @@ private:
 
   static const size_t kGameHasntStartedTick = 0;
   struct CurrentGame{
+    bool hasStarted = false;
+
     ObjectID targetObject;
     GamePhase gamePhase = GamePhase::GameGetIn;
     // Idxs correspond to light list in GameLightConfig
@@ -120,8 +141,11 @@ private:
     // tracking locked/rotation light state
     uint8_t lastLEDLockedIdx = 0;
     uint8_t currentCycleLEDIdx = 0;
-    std::array<bool,static_cast<int>(CubeConstants::NUM_CUBE_LEDS)> lightsLocked;
+    LightsLocked lightsLocked;
+    TimeStamp_t lastTimeLightLocked_ms = kGameHasntStartedTick;
 
+    uint32_t numberOfCyclesTillNextCorrectLight = 0;
+    
     TimeStamp_t lastTimePhaseChanged_ms = kGameHasntStartedTick;
     // Cube light playback
     CubeLightAnimation::LightPattern baseLightPattern;
@@ -140,11 +164,17 @@ private:
   // Components used by the game
   CubeLightComponent& _cubeLightComponent;
   BackpackLightComponent& _backpackLightComponent;
+  BlockWorld& _blockWorld;
   Util::RandomGenerator& _rng;
+
+  // Checks to ensure we have a connected object
+  bool CanGameStart() const;
+
+  bool ResetGame();
 
   void CheckForGamePhaseTransitions();
   void TransitionToGamePhase(GamePhase phase);
-  uint8_t GetRandomLightIdx() const;
+  uint8_t GetNewLightColorIdx(bool forTargetLight = false);
   
   void CheckForNextLEDRotation();
   void ComposeAndSendLights();
@@ -153,7 +183,8 @@ private:
   CubeLightAnimation::LightPattern GetCurrentLockPattern() const;
   uint8_t GetCurrentCycleIdx() const;
   bool IsCurrentCycleIdxLocked() const;
-  
+  bool IsGameOver() const;
+
   // Use this function to start lights so that tracking variables are set
   void PlayCubeAnimation(CubeLightAnimation::Animation& animToPlay);
   uint32_t MillisecondsBetweenLEDRotations() const;

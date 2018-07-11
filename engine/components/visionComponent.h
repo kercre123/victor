@@ -19,7 +19,6 @@
 #include "coretech/vision/engine/imageCache.h"
 #include "coretech/vision/engine/visionMarker.h"
 #include "coretech/vision/engine/faceTracker.h"
-#include "engine/components/nvStorageComponent.h"
 #include "util/entityComponent/entity.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robotStateHistory.h"
@@ -27,8 +26,8 @@
 #include "engine/vision/visionModeSchedule.h"
 #include "engine/vision/visionPoseData.h"
 
-#include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/cameraParams.h"
+#include "clad/types/imageTypes.h"
 #include "clad/types/loadedKnownFace.h"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/salientPointTypes.h"
@@ -64,6 +63,10 @@ class CozmoContext;
 struct VisionProcessingResult;
 class VisionSystem;
 class VizManager;
+  
+namespace ExternalInterface {
+struct RobotCompletedFactoryDotTest;
+}
   
 struct DockingErrorSignal;
 
@@ -116,6 +119,10 @@ struct DockingErrorSignal;
     Result SetNextImage(Vision::ImageRGB& image);
 
     void Pause(bool isPaused);
+
+    // If the vision thread isn't busy, grab the lock and release all internally held images and return
+    // true. Otherwise, return false
+    bool TryReleaseInternalImages();
     
     // Enable/disable different types of processing
     Result EnableMode(VisionMode mode, bool enable);
@@ -274,17 +281,12 @@ struct DockingErrorSignal;
     // Returns true if the provided name has been enrolled
     bool IsNameTaken(const std::string& name);
     
-    // Load/Save face album data to/from robot's NVStorage
-    Result SaveFaceAlbumToRobot();
-    Result SaveFaceAlbumToRobot(std::function<void(NVStorage::NVResult)> albumCallback,
-                                std::function<void(NVStorage::NVResult)> enrollCallback);
-    Result LoadFaceAlbumFromRobot(); // Broadcasts any loaded names and IDs
-    
     // Load/Save face album data to/from file.
-    // NOTE: Load replaces whatever is in the robot's NVStorage!
     Result SaveFaceAlbumToFile(const std::string& path);
     Result LoadFaceAlbumFromFile(const std::string& path); // Broadcasts any loaded names and IDs
     Result LoadFaceAlbumFromFile(const std::string& path, std::list<Vision::LoadedKnownFace>& loadedFaces); // Populates list, does not broadcast
+    Result SaveFaceAlbum(); // use album path specified in vision_config.json
+    Result LoadFaceAlbum(); // use album path specified in vision_config.json, broadcast loaded names and IDs
     
     // See VisionSystem::SetSaveParameters for details on the arguments
     // NOTE: if path is empty, it will default to <cachePath>/camera/images (where cachePath comes from DataPlatform)
@@ -418,7 +420,7 @@ struct DockingErrorSignal;
     // Future used for async YUV to RGB conversion
     std::future<Vision::ImageRGB> _cvtYUV2RGBFuture;
     
-    std::vector<u8> _albumData, _enrollData; // for loading / saving face data
+    std::string _faceAlbumName;
     
     std::thread _processingThread;
     
@@ -459,7 +461,6 @@ struct DockingErrorSignal;
     // message. This runs on the main thread and should only be used for factory tests.
     // Is run automatically when _doFactoryDotTest=true and sets it back to false when done.
     bool _doFactoryDotTest = false;
-    
     bool _enableAutoExposure = true;
     bool _enableWhiteBalance = true;
     

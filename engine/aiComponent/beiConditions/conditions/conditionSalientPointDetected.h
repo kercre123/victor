@@ -13,6 +13,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_ConditionPersonDetected_H__
 #define __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_ConditionPersonDetected_H__
 
+#include "clad/types/salientPointTypes.h"
 #include "engine/aiComponent/beiConditions/beiConditionMessageHelper.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/aiComponent/beiConditions/iBEIConditionEventHandler.h"
@@ -33,7 +34,7 @@ protected:
   bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   void GetRequiredVisionModes(std::set<VisionModeRequest>& requiredVisionModes) const override;
 
-  Vision::SalientPointType _targetSalientPoint;
+  Vision::SalientPointType _targetSalientPointType;
 };
 
 } // namespace Anki

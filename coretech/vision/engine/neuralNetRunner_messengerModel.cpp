@@ -31,7 +31,7 @@
 namespace Anki {
 namespace Vision {
 
-static const char * const kLogChannelName = "VisionSystem";
+static const char * const kLogChannelName = "NeuralNets";
   
 // Useful just for printing every frame, since detection is slow, even through the profiler
 // already has settings for printing based on time. Set to 0 to disable.
@@ -47,10 +47,13 @@ public:
 
   Result Run(const ImageRGB& img, std::list<SalientPoint>& salientPoints);
   
+  bool IsVerbose() const { return _isVerbose; }
+  
 private:
   
   std::string _cachePath;
   int         _pollPeriod_ms;
+  bool        _isVerbose = false;
   float       _timeoutDuration_sec = 10.f;
   
   Profiler& _profiler;
@@ -81,6 +84,8 @@ Result NeuralNetRunner::Model::LoadModel(const std::string& modelPath, const std
 
   PRINT_CH_INFO(kLogChannelName, "NeuralNetRunner.Model.LoadModel.Success",
                 "Polling period: %dms, Cache: %s", _pollPeriod_ms, _cachePath.c_str());
+  
+  JsonTools::GetValueOptional(config, "verbose", _isVerbose);
 
   // Overwrite timeout if it's in the neural net config. This is
   // primarily motivated by longer running models

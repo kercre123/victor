@@ -16,6 +16,7 @@
 #include "engine/cozmoAPI/comms/iSocketComms.h"
 #include "engine/events/ankiEventMgr.h"
 #include "engine/externalInterface/gatewayInterface.h"
+#include "proto/external_interface/shared.pb.h"
 #include "util/signals/simpleSignal_fwd.h"
 
 #include <memory>
@@ -37,6 +38,10 @@ class CozmoContext;
 class Robot;
 class RobotManager;
 class GameMessagePort;
+namespace external_interface {
+  class Ping;
+  class Bing;
+}
 
 class ProtoMessageHandler : public IGatewayInterface
 {
@@ -50,7 +55,7 @@ public:
   virtual void Broadcast(const external_interface::GatewayWrapper& message) override;
   virtual void Broadcast(external_interface::GatewayWrapper&& message) override;
 
-  virtual Signal::SmartHandle Subscribe(const external_interface::GatewayWrapper::OneofMessageTypeCase& tagType, std::function<void(const AnkiEvent<external_interface::GatewayWrapper>&)> messageHandler) override;
+  virtual Signal::SmartHandle Subscribe(const external_interface::GatewayWrapperTag& tagType, std::function<void(const AnkiEvent<external_interface::GatewayWrapper>&)> messageHandler) override;
 
   AnkiEventMgr<external_interface::GatewayWrapper>& GetEventMgr() { return _eventMgr; }
 

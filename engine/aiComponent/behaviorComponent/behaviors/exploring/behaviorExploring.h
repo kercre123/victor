@@ -14,7 +14,10 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorExploring__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/math/pose.h"
+#include "util/random/rejectionSamplerHelper_fwd.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -22,6 +25,11 @@ namespace Cozmo {
 class BehaviorExploringExamineObstacle;
 class INavMap;
 struct PathMotionProfile;
+namespace RobotPointSamplerHelper {
+  class RejectIfNotInRange;
+  class RejectIfWouldCrossCliff;
+  class RejectIfCollidesWithMemoryMap;
+}
 
 class BehaviorExploring : public ICozmoBehavior
 {
@@ -115,7 +123,16 @@ private:
     ICozmoBehaviorPtr confirmChargerBehavior;
     ICozmoBehaviorPtr confirmCubeBehavior;
     
+    ICozmoBehaviorPtr referenceHumanBehavior;
+    
     std::unique_ptr<PathMotionProfile> customMotionProfile;
+    
+    std::unique_ptr<Util::RejectionSamplerHelper<Point2f>> openSpacePointEvaluator;
+    std::unique_ptr<Util::RejectionSamplerHelper<Poly2f>> openSpacePolyEvaluator;
+    std::shared_ptr<RobotPointSamplerHelper::RejectIfNotInRange> condHandleNearCharger;
+    std::shared_ptr<RobotPointSamplerHelper::RejectIfWouldCrossCliff> condHandleCliffs;
+    std::shared_ptr<RobotPointSamplerHelper::RejectIfCollidesWithMemoryMap> condHandleCollisions;
+    std::shared_ptr<RobotPointSamplerHelper::RejectIfCollidesWithMemoryMap> condHandleUnknowns;
   };
 
   struct DynamicVariables {

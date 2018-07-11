@@ -112,7 +112,7 @@ BehaviorProceduralClock::GetDigitsFunction BehaviorDisplayWallTime::BuildTimerFu
 bool BehaviorDisplayWallTime::ShouldDisplayAsMilitaryTime() const
 {
   const auto& settingsManager = GetBEI().GetSettingsManager();
-  const bool clockIs24Hour = settingsManager.GetRobotSettingAsBool("Robot.24HourClock");
+  const bool clockIs24Hour = settingsManager.GetRobotSettingAsBool(RobotSetting::clock_24_hour);
   return clockIs24Hour;
 }
 

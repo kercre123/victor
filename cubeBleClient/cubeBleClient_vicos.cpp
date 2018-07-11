@@ -37,9 +37,6 @@ namespace Cozmo {
 
 namespace {
   
-  // Flag indicating whether we've already flashed one cube on connection
-  bool _checkedCubeFirmwareVersion = false;
-  
   struct ev_loop* _loop = nullptr;
   
   std::unique_ptr<BleClient> _bleClient = nullptr;
@@ -64,9 +61,6 @@ namespace {
 
   // Flag indicating when scanning for cubes has completed
   std::atomic<bool> _scanningFinished{false};
-
-  // Flag indicating whether the connected cube's firmware version is correct
-  std::atomic<bool> _cubeFirmwareVersionMatch{true};
   
   // Time after which we consider a connection attempt to have failed.
   // Always less than 0 if there is no pending connection attempt.
@@ -96,15 +90,6 @@ CubeBleClient::CubeBleClient()
     _scanningFinished = true;
   });
 
-  _bleClient->RegisterReceiveFirmwareVersionCallback([this](const std::string& addr, const std::string& connectedCubeFirmwareVersion) {
-    std::string versionOnDisk = "";
-    std::vector<uint8_t> firmware = Util::FileUtils::ReadFileAsBinary(_cubeFirmwarePath);
-    size_t offset = 0x10; // The first 16 bytes of the firmware data are the version string
-    if(firmware.size() > offset) {
-      versionOnDisk = std::string(firmware.begin(), firmware.begin() + offset);
-    }
-    _cubeFirmwareVersionMatch = connectedCubeFirmwareVersion.compare(versionOnDisk)==0;
-  });
 }
 
 
@@ -229,15 +214,6 @@ bool CubeBleClient::UpdateInternal()
     }
     swapCubeAdvertisementBuffer.pop();
   }
-
-  // check firmware versions -- if no match, prepare to flash the cube
-  // note: only do this once after connecting to a cube
-  if(!_cubeFirmwareVersionMatch && !_checkedCubeFirmwareVersion) {
-    std::vector<uint8_t> firmware = Util::FileUtils::ReadFileAsBinary(_cubeFirmwarePath);
-    _bleClient->FlashCube(std::move(firmware));
-    _checkedCubeFirmwareVersion = true;
-    _cubeFirmwareVersionMatch = true;
-  }
   
   // Pull cube messages from queue into a temp queue,
   // to avoid holding onto the mutex for too long.
@@ -279,6 +255,12 @@ bool CubeBleClient::UpdateInternal()
 void CubeBleClient::SetScanDuration(const float duration_sec)
 {
   _bleClient->SetScanDuration(duration_sec);
+}
+
+
+void CubeBleClient::SetCubeFirmwareFilepath(const std::string& path)
+{
+  _bleClient->SetCubeFirmwareFilepath(path);
 }
 
 

@@ -2,7 +2,7 @@
 
 syntax = "proto3";
 
-package external_interface;
+package Anki.Cozmo.external_interface;
 
 option optimize_for = LITE_RUNTIME;
 
@@ -58,6 +58,7 @@ message PlayAnimationRequest {
 
 message PlayAnimationResult {
   ResultStatus status = 1;
+  BehaviorResults result = 2;
 }
 
 message ListAnimationsRequest {}
@@ -92,9 +93,10 @@ message MeetVictorFaceScanComplete
 
 message Status {
   oneof status_type {
-     FeatureStatus                   featureStatus                    = 1;
-     MeetVictorFaceScanStarted       meet_victor_face_scan_started    = 2;
-     MeetVictorFaceScanComplete      meet_victor_face_scan_complete   = 3;
+    FeatureStatus                   feature_status                   = 1;
+    MeetVictorFaceScanStarted       meet_victor_face_scan_started    = 2;
+    MeetVictorFaceScanComplete      meet_victor_face_scan_complete   = 3;
+    FaceEnrollmentCompleted         face_enrollment_completed        = 4;
   }
 }
 
@@ -106,7 +108,7 @@ message Onboarding {
     OnboardingPickedUp                 onboarding_picked_up          = 4;
     OnboardingSeesCube                 onboarding_sees_cube          = 5;
     OnboardingCantFindCube             onboarding_cant_find_cube     = 6;
-    OnboardingRobotExpectingContinue   onboarding_expecting_continue = 7;
+    OnboardingRobotExpectingStep       onboarding_expecting_step     = 7;
   }
 }
 
@@ -130,18 +132,18 @@ message RobotHistoryResult {
 }
 
 message PoseStruct {
-    // Translation
-    float x = 1;
-    float y = 2;
-    float z = 3;
-    
-    // Rotation quaternion
-    float q0 = 4;
-    float q1 = 5;
-    float q2 = 6;
-    float q3 = 7;
+  // Translation
+  float x = 1;
+  float y = 2;
+  float z = 3;
+  
+  // Rotation quaternion
+  float q0 = 4;
+  float q1 = 5;
+  float q2 = 6;
+  float q3 = 7;
 
-    uint32 origin_id = 8; // Which coordinate frame this pose is in (0 for none or unknown)
+  uint32 origin_id = 8; // Which coordinate frame this pose is in (0 for none or unknown)
 }
 
 message AccelData {
@@ -157,23 +159,23 @@ message GyroData {
 }
 
 message RobotState {
-    PoseStruct pose = 1;
-    float pose_angle_rad = 2;
-    float pose_pitch_rad = 3;
-    float left_wheel_speed_mmps = 4;
-    float right_wheel_speed_mmps = 5;
-    float head_angle_rad = 6;
-    float lift_height_mm = 7;
-    float battery_voltage = 8;
-    AccelData accel = 9;
-    GyroData gyro = 10;
-    int32 carrying_object_id = 11;
-    int32 carrying_object_on_top_id = 12;
-    int32 head_tracking_object_id = 13;
-    int32 localized_to_object_id = 14;
-    uint32 last_image_time_stamp = 15;
-    uint32 status = 16;
-    uint32 game_status = 17;
+  PoseStruct pose = 1;
+  float pose_angle_rad = 2;
+  float pose_pitch_rad = 3;
+  float left_wheel_speed_mmps = 4;
+  float right_wheel_speed_mmps = 5;
+  float head_angle_rad = 6;
+  float lift_height_mm = 7;
+  float battery_voltage = 8;
+  AccelData accel = 9;
+  GyroData gyro = 10;
+  int32 carrying_object_id = 11;
+  int32 carrying_object_on_top_id = 12;
+  int32 head_tracking_object_id = 13;
+  int32 localized_to_object_id = 14;
+  uint32 last_image_time_stamp = 15;
+  uint32 status = 16;
+  uint32 game_status = 17;
 }
 
 message CladPoint
@@ -234,24 +236,6 @@ message RobotChangedObservedFaceID {
     int32   new_id = 2;
 }
 
-message Event {
-  oneof event_type {
-    Status                           status                              = 1;
-    Onboarding                       onboarding                          = 2;
-    WakeWord                         wake_word                           = 3;
-    AttentionTransfer                attention_transfer                  = 4;
-    RobotObservedFace                robot_observed_face                 = 5;
-    RobotChangedObservedFaceID       robot_changed_observed_face_id      = 6;
-  }
-}
-
-message EventRequest {}
-
-message EventResult {
-  ResultStatus status = 1;
-  Event event = 2;
-}
-
 // TODO: Remove this request/response once RobotState is made an event
 message RobotStateRequest {}
 
@@ -298,7 +282,7 @@ message AppIntentResult {
 
 message FaceEnrollmentCompleted {
   FaceEnrollmentResult result = 1;
-  int32               face_id = 2;
+  int32                face_id = 2;
   string               name = 3;
 }
 
@@ -372,6 +356,29 @@ message SetFaceToEnrollResult {
   ResultStatus status = 1;
 }
 
+enum BehaviorResults
+{
+  BEHAVIOR_INVALID_STATE = 0;
+  BEHAVIOR_COMPLETE_STATE = 1;
+  BEHAVIOR_WONT_ACTIVATE_STATE = 2;
+}
+
+message DriveOffChargerRequest {
+}
+
+message DriveOffChargerResult {
+  ResultStatus status = 1;
+  BehaviorResults result = 2;
+}
+
+message DriveOnChargerRequest {
+}
+
+message DriveOnChargerResult {
+  ResultStatus status = 1;
+  BehaviorResults result = 2;
+}
+
 // TODO: Remove this example code once more code is converted to protobuf
 message Ping {
   uint64 ping = 1;
@@ -434,12 +441,13 @@ message OnboardingStateResponse {
   OnboardingState onboarding_state = 2;
 }
 
-enum OnboardingContinueEnum {
-  Default = 0;
+enum OnboardingSteps {
+  DEFAULT = 0;
+  FIRST_TRIGGER_WORD = 1;
 }
 
 message OnboardingContinue {
-  OnboardingContinueEnum continue_number = 1;
+  OnboardingSteps step_number = 1;
 }
 
 message OnboardingContinueResponse {
@@ -452,12 +460,19 @@ message OnboardingSkip {
 message OnboardingRetryCharging {
 }
 
+message OnboardingConnectionComplete {
+}
+
+message OnboardingSkipOnboarding {
+}
 
 message OnboardingInputRequest {
   oneof oneof_message_type {
     OnboardingContinue onboarding_continue = 1;
     OnboardingSkip onboarding_skip = 2;
     OnboardingRetryCharging onboarding_retry_charging = 3;
+    OnboardingConnectionComplete onboarding_connection_complete = 4;
+    OnboardingSkipOnboarding onboarding_skip_onboarding = 5;
   }
 }
 
@@ -468,8 +483,8 @@ message OnboardingInputResponse {
   }
 }
 
-message OnboardingRobotExpectingContinue {
-  OnboardingContinueEnum continue_number = 1;
+message OnboardingRobotExpectingStep {
+  OnboardingSteps step_number = 1;
 }
 
 message WakeWordBegin {
@@ -480,14 +495,69 @@ message WakeWordEnd {
   string intent_json = 2; // todo: we send json as a string for now since the engine handling of intents is tightly coupled with clad
 }
 
+// Photos
+
+message PhotoInfo {
+  uint32 photo_id = 1;
+  uint32 timestamp_utc = 2;
+  bool photo_copied_to_app = 3;
+  bool thumb_copied_to_app = 4;
+}
+
+message PhotosInfoRequest {
+}
+
+message PhotosInfoResponse {
+  ResultStatus status = 1;
+  repeated PhotoInfo photo_infos = 2;
+}
+
+message PhotoRequest {
+  uint32 photo_id = 1;
+}
+
+message PhotoPathMessage {
+  bool success = 1;
+  string full_path = 2;
+}
+
+message PhotoResponse {
+  ResultStatus status = 1;
+  bool success = 2;
+  bytes image = 3;
+}
+
+message ThumbnailRequest {
+  uint32 photo_id = 1;
+}
+
+message ThumbnailPathMessage {
+  bool success = 1;
+  string full_path = 2;
+}
+
+message ThumbnailResponse {
+  ResultStatus status = 1;
+  bool success = 2;
+  bytes image = 3;
+}
+
+message DeletePhotoRequest {
+  uint32 photo_id = 1;
+}
+
+message DeletePhotoResponse {
+  ResultStatus status = 1;
+  bool success = 2;
+}
+
 // NOTE: must match attentionTransferTypes.clad
 enum AttentionTransferReason {
   Invalid = 0;
 
   NoCloudConnection = 1;
-  PhotoStorageFull = 2;
-  CantFindCharger = 3;
-  UnmatchedIntent = 4;
+  NoWifi = 2;
+  UnmatchedIntent = 3;
 }
 
 message AttentionTransfer {
@@ -507,28 +577,6 @@ message LatestAttentionTransfer {
 message LatestAttentionTransferResponse {
   ResultStatus status = 1;
   LatestAttentionTransfer latest_attention_transfer = 2;
-}
-
-message GatewayWrapper {
-  oneof oneof_message_type {
-    // ------------ messages sent from robot to app ----------------------
-    Event event = 1;
-    // ------------ onboarding requests and responses --------------------
-    OnboardingStateRequest        onboarding_state_request = 2;
-    OnboardingState               onboarding_state = 3;
-    OnboardingContinue            onboarding_continue = 4;
-    OnboardingContinueResponse    onboarding_continue_response = 5;
-    OnboardingSkip                onboarding_skip = 6;
-    // ------------ test response/response pairs -------------------------
-    // TODO: remove these once we have more examples
-    Ping ping = 7;
-    Pong pong = 8;
-    Bing bing = 9;
-    Bong bong = 10;
-    // ------------ Attention transfer --------------------
-    LatestAttentionTransferRequest latest_attention_transfer_request = 11;
-    LatestAttentionTransfer        latest_attention_transfer = 12;
-  }
 }
 
 // Proto field names are prefixed with "VISION_MODE_"
@@ -565,4 +613,94 @@ message EnableVisionModeRequest {
 
 message EnableVisionModeResult {
   ResultStatus status = 1;
+}
+
+// Struct containing all the information relevant to how a 
+// path should be modified or traversed.
+// TODO: Include path wonkification parameters
+message PathMotionProfile {
+    float speed_mmps = 1;
+    float accel_mmps2 = 2;
+    float decel_mmps2 = 3;
+    float point_turn_speed_rad_per_sec = 4;
+    float point_turn_accel_rad_per_sec2 = 5;
+    float point_turn_decel_rad_per_sec2 = 6;
+    float dock_speed_mmps = 7;
+    float dock_accel_mmps2 = 8;
+    float dock_decel_mmps2 = 9;
+    float reverse_speed_mmps = 10;
+    bool  is_custom = 11;
+}
+
+enum ActionResult {
+  ACTION_RESULT_SUCCESS                 = 0;
+  ACTION_RESULT_RUNNING                 = 16777216;
+  ACTION_RESULT_CANCELLED_WHILE_RUNNING = 33554432;
+}
+
+// GotoPose
+message GoToPoseRequest {
+  float x_mm = 1;
+  float y_mm = 2;
+  float rad = 3; 
+  PathMotionProfile motion_prof = 4;
+}
+
+message GoToPoseResponse {
+  ActionResult result = 1;
+}
+
+message DriveStraightRequest {
+   float speed_mmps = 1;  // Speed should be positive
+   float dist_mm = 2;     // Use +ve for forward, -ve for backward
+   bool should_play_animation = 3;
+}
+
+message DriveStraightResponse {
+  ResultStatus status = 1;
+  BehaviorResults result = 2;
+}
+
+// TurnInPlace
+// If isAbsolute == 0, turns the specified number of radians, *relative to the robot's current heading*
+// If isAbsolute != 0, turns to the specified absolute orientation.
+message TurnInPlaceRequest {
+    float angle_rad = 1; // relative mode: postive turns left negative turns right
+    float speed_rad_per_sec = 2;
+    float accel_rad_per_sec2 = 3;
+    float tol_rad = 4; // This should be no smaller than POINT_TURN_ANGLE_TOL from cozmoEngineConfig.h.
+                            // Smaller values are ignored except 0 which is interpreted to mean
+                            // default tolerance of POINT_TURN_ANGLE_TOL.
+    uint32 is_absolute = 5; // 0: angle_rad is relative to current orientation, 1: angle_rad is absolute angle to turn to
+}
+
+message TurnInPlaceResponse {
+  ResultStatus status = 1;
+  BehaviorResults result = 2;
+}
+
+// SetHeadAngle
+message SetHeadAngleRequest {
+    float angle_rad = 1;
+    float max_speed_rad_per_sec = 2;
+    float accel_rad_per_sec2 = 3;
+    float duration_sec = 4;
+}
+
+message SetHeadAngleResponse {
+  ResultStatus status = 1;
+  BehaviorResults result = 2;
+}
+
+// SetLiftHeight
+message SetLiftHeightRequest {
+    float height_mm = 1;
+    float max_speed_rad_per_sec = 2;
+    float accel_rad_per_sec2 = 3;
+    float duration_sec = 4;
+}
+
+message SetLiftHeightResponse {
+  ResultStatus status = 1;
+  BehaviorResults result = 2;
 }

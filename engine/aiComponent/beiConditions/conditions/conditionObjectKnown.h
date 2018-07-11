@@ -15,6 +15,7 @@
 
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "coretech/common/engine/objectIDs.h"
+#include "coretech/common/shared/types.h"
 
 namespace Anki {
 namespace Cozmo {

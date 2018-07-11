@@ -1,0 +1,123 @@
+// Settings definition
+
+syntax = "proto3";
+
+package Anki.Cozmo.external_interface;
+
+option optimize_for = LITE_RUNTIME;
+
+import "messages.proto";
+
+enum ApiVersion {
+  INVALID = 0;
+  LATEST  = 1;
+}
+
+enum Volume {
+  MUTE        = 0;
+  LOW         = 1;
+  MEDIUM_LOW  = 2;
+  MEDIUM      = 3;
+  MEDIUM_HIGH = 4;
+  HIGH        = 5;
+}
+
+enum EyeColor {
+  TEAL         = 0;
+  ORANGE       = 1;
+  YELLOW       = 2;
+  LIME_GREEN   = 3;
+  AZURE_BLUE   = 4;
+  PURPLE       = 5;
+  MATRIX_GREEN = 6;
+}
+
+message RobotSettingsConfig {
+  oneof oneof_clock_24_hour { bool clock_24_hour = 1; }
+  oneof oneof_eye_color { EyeColor eye_color = 2; }
+  oneof oneof_default_location { string default_location = 3; }
+  oneof oneof_dist_is_metric { bool dist_is_metric = 4; }
+  oneof oneof_locale { string locale = 5; }
+  oneof oneof_master_volume { Volume master_volume = 6; }
+  oneof oneof_temp_is_fahrenheit { bool temp_is_fahrenheit = 7; }
+  oneof oneof_time_zone { string time_zone = 8; }
+}
+
+message UserSettingsConfig {
+  oneof oneof_das_opt_in { bool das_opt_in = 1; }
+}
+
+// Event containing an updated document
+message SettingsUpdate {
+  Jdoc doc = 1;
+}
+
+enum ResultCode {
+  SETTINGS_ACCEPTED        = 0;
+  ERROR_UPDATE_IN_PROGRESS = 1; // Temporary error while gateway cannot handle multiple requests
+}
+
+message Jdoc {
+  uint64 doc_version = 1;
+  uint64 fmt_version = 2;
+  string fingerprint = 3;
+  string json_doc = 4;
+}
+
+message PullSettingsRequest {}
+
+message PullSettingsResponse {
+  ResultStatus status = 1;
+  repeated Jdoc doc = 2;
+}
+
+message PushSettingsRequest {
+  Jdoc doc = 1; // Must be robot settings doc
+}
+
+message PushSettingsResponse {
+  ResultStatus status = 1;
+  ResultCode code = 2;
+}
+
+message UpdateSettingsRequest {
+  RobotSettingsConfig settings = 1;
+}
+
+message UpdateSettingsResponse {
+  ResultStatus status = 1;
+  ResultCode code = 2;
+  Jdoc doc = 3;
+}
+
+message WifiScanRequest {
+  
+}
+
+message WifiScanResponse {
+  ResultStatus status = 1;
+}
+
+message WifiConnectRequest {
+  
+}
+
+message WifiConnectResponse {
+  ResultStatus status = 1;
+}
+
+message WifiRemoveRequest {
+  
+}
+
+message WifiRemoveResponse {
+  ResultStatus status = 1;
+}
+
+message WifiRemoveAllRequest {
+  
+}
+
+message WifiRemoveAllResponse {
+  ResultStatus status = 1;
+}

@@ -100,7 +100,9 @@ endmacro()
 # are set appropriately for the current toolchain.
 #
 # The symbol file depends on the object file, so it will be rebuilt
-# after any change to the object file.
+# after any change to the object file. We follow the strip operation
+# with a touch operation to ensure that the symbol file is newer
+# than the stripped executable.
 #
 # These commands duplicate logic in android_strip.cmake, but they are
 # repackaged to work with custom go targets.
@@ -113,6 +115,7 @@ macro(anki_build_go_vicos_strip output output_full)
     COMMAND ${CMAKE_COMMAND} -E copy ${output} ${output_full}
     COMMAND ${CMAKE_STRIP} --strip-unneeded ${output}
     COMMAND ${CMAKE_OBJCOPY} --add-gnu-debuglink ${output_full} ${output}
+    COMMAND ${CMAKE_COMMAND} -E touch_nocreate ${output_full}
     COMMENT strip ${output} to create ${output_full}
     VERBATIM
   )

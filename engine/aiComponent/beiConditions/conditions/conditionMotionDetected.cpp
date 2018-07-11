@@ -12,6 +12,7 @@
 
 
 #include "engine/aiComponent/beiConditions/conditions/conditionMotionDetected.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/beiConditions/beiConditionMessageHelper.h"

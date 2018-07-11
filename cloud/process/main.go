@@ -4,15 +4,18 @@ import (
 	"anki/cloudproc"
 	"anki/ipc"
 	"anki/log"
+	"anki/token"
 	"bytes"
 	"clad/cloud"
 	"flag"
+	"sync"
 	"time"
 )
 
 var verbose bool
 var checkDataFunc func() error // overwritten by cert_verify_linux.go
 var certErrorFunc func() bool  // overwritten by cert_error_shipping.go, determines if error should cause exit
+var platformOpts []cloudproc.Option
 
 func getSocketWithRetry(name string, client string) ipc.Conn {
 	for {
@@ -110,11 +113,32 @@ func main() {
 	}
 	process.AddIntentWriter(&cloudproc.IPCMsgSender{Conn: aiSock})
 	options := []cloudproc.Option{cloudproc.WithChunkMs(120), cloudproc.WithSaveAudio(true)}
+	if platformOpts != nil && len(platformOpts) > 0 {
+		options = append(options, platformOpts...)
+	}
 	//options = append(options, WithCompression(true))
 	if *ms {
 		options = append(options, cloudproc.WithHandler(cloudproc.HandlerMicrosoft))
 	} else if *lex {
 		options = append(options, cloudproc.WithHandler(cloudproc.HandlerAmazon))
 	}
-	process.Run(options...)
+
+	launchProcess(func() {
+		process.Run(options...)
+	})
+	launchProcess(func() {
+		token.Run()
+	})
+	wg.Wait()
+	log.Println("All processes exited, shutting down")
+}
+
+var wg sync.WaitGroup
+
+func launchProcess(launcher func()) {
+	wg.Add(1)
+	go func() {
+		launcher()
+		wg.Done()
+	}()
 }

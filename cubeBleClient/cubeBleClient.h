@@ -98,8 +98,6 @@ public:
   
   BleFactoryId GetCurrentCube() const { return _currentCube; }
   
-  void SetCubeFirmwareFilepath(const std::string& path) { _cubeFirmwarePath = path; }
-  
 private:
   
 #ifdef SIMULATOR
@@ -131,9 +129,6 @@ private:
   // connected to, or pending connection or disconnection to.
   // It is an empty string if there is no current cube.
   BleFactoryId _currentCube;
-  
-  // Path to the cube dfu binary file (really only needed for vicos)
-  std::string _cubeFirmwarePath;
 
 ////////////////////////////////////////////////////////////////////////////
 // ---------- Implementation-specific (mac vs. vicos) methods. ---------- //
@@ -143,6 +138,8 @@ private:
 public:
   
   void SetScanDuration(const float duration_sec);
+  
+  void SetCubeFirmwareFilepath(const std::string& path);
   
 private:
   

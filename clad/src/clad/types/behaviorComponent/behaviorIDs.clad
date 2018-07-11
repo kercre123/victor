@@ -28,8 +28,9 @@ enum uint_8 BehaviorID {
   DevEventSequenceCapture,
   DevImageCapture,
   DevPlannerTest,
-  DevTestPersonDetectorBehavior,
   DevTestBlackjackViz,
+  DevTestConnectToCube,
+  DevTestPersonDetectorBehavior,
   DevTestPromptUser,
   DevTouchDataCollection,
   DevTurnInPlaceTest,
@@ -54,6 +55,8 @@ enum uint_8 BehaviorID {
   PlaypenWaitToStart,
 
   // devBehaviors
+  PowerSaveTest,
+  TestStackMonitors,
   TurnTowardsPerson,
 
   // examples
@@ -109,9 +112,15 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree
   DefaultTextToSpeechLoop,
-  DriveOffCharger,
-  DriveOffChargerAnim,
+
+  // victorBehaviorTree/driveOffCharger
+  DriveOffChargerCube,
+  DriveOffChargerFace,
+  DriveOffChargerRandomly,
+  DriveOffChargerRandomlyAnim,
   DriveOffChargerStraight,
+
+  // victorBehaviorTree
   GlobalInterruptions,
   HighLevelAI,
 
@@ -119,8 +128,10 @@ enum uint_8 BehaviorID {
   ConfirmCharger,
   ConfirmCube,
   Exploring,
+  ExploringBumpObject,
   ExploringExamineObstacle,
   ExploringGetIn,
+  ExploringReferenceHuman,
   ExploringVoiceCommand,
 
   // victorBehaviorTree/highLevelDelegates
@@ -182,6 +193,10 @@ enum uint_8 BehaviorID {
   // victorBehaviorTree/highLevelDelegates
   PickupCube,
 
+  // victorBehaviorTree/highLevelDelegates/playWithCube/activeCubeBehaviors
+  PlayWithCubeConnectionGate,
+  VectorPlaysCubeSpinner,
+
   // victorBehaviorTree/highLevelDelegates/playWithCube
   PlayRollBlock,
   PlayWithCube,
@@ -230,24 +245,38 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree
   InitNormalOperation,
+  InitPRDemo,
   IntentUnmatched,
   ModeSelector,
+  NoCloud,
+  NoWifi,
   NormalWakeUp,
 
   // victorBehaviorTree/onboarding
   Onboarding,
+  OnboardingActivateCube,
   OnboardingAsleep,
   OnboardingComeHere,
-  OnboardingCubeTrick,
-  OnboardingFinishedComeHere,
+  OnboardingComeHereGetOut,
+  OnboardingComeHereResume,
+  OnboardingFirstTriggerWord,
+  OnboardingLookAtPhone,
   OnboardingLookAtUser,
   OnboardingLookForCube,
   OnboardingLowBattery,
+  OnboardingPickUpCube,
   OnboardingPickedUp,
   OnboardingPlacedOnCharger,
   OnboardingSluggishDriveOffCharger,
   OnboardingWaitForComeHere,
+  OnboardingWaitForTriggerWord,
   OnboardingWakeUp,
+
+  // victorBehaviorTree/prDemo
+  PRDemoExploring,
+  PRDemoObserving,
+  PRDemoSleeping,
+  PRDemoStateMachine,
 
   // victorBehaviorTree/quietMode
   BeQuietAnims,
@@ -267,7 +296,6 @@ enum uint_8 BehaviorID {
   ProceduralTurnToMicDirection,
   ReactToAffirmative,
   ReactToCliff,
-  ReactToCubeTap,
   ReactToDarkness,
   ReactToFrustrationMajor,
   ReactToGoodBye,
@@ -286,6 +314,7 @@ enum uint_8 BehaviorID {
   ReactToTriggerDirectionAwake,
   ReactToUnexpectedMovement,
   StuckOnEdge,
+  TriggerWordWithoutIntent,
 
   // victorBehaviorTree/sdkBehaviors
   SDK0,

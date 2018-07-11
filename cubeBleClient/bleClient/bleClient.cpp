@@ -17,6 +17,7 @@
 #include "anki-ble/common/anki_ble_uuids.h"
 #include "anki-ble/common/gatt_constants.h"
 #include "util/logging/logging.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/string/stringUtils.h"
 
 #include <cmath>
@@ -32,7 +33,10 @@ namespace {
   const ev_tstamp kDisconnectionCheckTime_sec = 5.f;
 
   // bytes per packet when performing OTA flash of the cubes
-  const int kMaxBytesPerPacket = 20;
+  const size_t kMaxBytesPerPacket = 20;
+  
+  // Length of the cube firmware version string
+  const size_t kFirmwareVersionStrLen = 16;
 }
 
 
@@ -43,20 +47,28 @@ BleClient::BleClient(struct ev_loop* loop)
   , _asyncStartScanSignal(loop)
   , _connectionCheckTimer(loop)
   , _scanningTimer(loop)
-  , _asyncFlashCubeSignal(loop)
-  , _cubeFirmware()
 {
   // Set up watcher callbacks
   _asyncBreakSignal.set<BleClient, &BleClient::AsyncBreakCallback>(this);
   _asyncStartScanSignal.set<BleClient, &BleClient::AsyncStartScanCallback>(this);
   _connectionCheckTimer.set<BleClient, &BleClient::ServerConnectionCheckTimerCallback>(this);
   _scanningTimer.set<BleClient, &BleClient::ScanningTimerCallback>(this);
-  _asyncFlashCubeSignal.set<BleClient, &BleClient::AsyncFlashCubeCallback>(this);
 }
 
   
 void BleClient::Start()
 {
+  // Read the on-disk firmware file to ensure it exists.
+  // This will also retrieve its version string.
+  {
+    std::vector<uint8_t> unused;
+    if (!GetCubeFirmwareFromDisk(unused)) {
+      PRINT_NAMED_ERROR("BleClient.Start.FailedGettingFirmwareFromDisk",
+                        "Unable to read cube firmware from disk - aborting.");
+      return;
+    }
+  }
+  
   // Create a thread which will run the ev_loop for server comms
   auto threadFunc = [this](){
     if (!Connect()) {
@@ -71,7 +83,6 @@ void BleClient::Start()
     // Start async watchers
     _asyncBreakSignal.start();
     _asyncStartScanSignal.start();
-    _asyncFlashCubeSignal.start();
     
     // Start the loop (runs 'forever')
     ev_loop(_loop, 0);
@@ -103,7 +114,7 @@ bool BleClient::Send(const std::vector<uint8_t>& msg)
     return false;
   }
   
-  if(_connectionId < 0) {
+  if (_connectionId < 0) {
     PRINT_NAMED_WARNING("BleClient.Send.NotConnectedToCube",
                         "Cannot send - not connected to any cube");
     return false;
@@ -180,15 +191,37 @@ void BleClient::StopScanForCubes()
 }
 
 
-void BleClient::FlashCube(std::vector<uint8_t> cubeFirmware)
+void BleClient::FlashCube()
 {
-  if (!IsConnectedToServer()) {
-    PRINT_NAMED_WARNING("BleClient.FlashCube.NotConnectedToServer",
-                        "Cannot flash the cube - not connected to the server");
+  const bool canFlashCube = IsConnectedToServer() &&
+                            (_connectionId >= 0) &&
+                            _pendingFirmwareCheck;
+  if (!canFlashCube) {
+    PRINT_NAMED_WARNING("BleClient.FlashCube.CannotFlashCube",
+                        "Cannot flash the cube - invalid BleClient state. ConnectedToServer %d, ConnectedToCube %d, PendingFirmwareCheck %d",
+                        IsConnectedToServer(), _connectionId >= 0, (int) _pendingFirmwareCheck);
     return;
   }
-  _cubeFirmware = std::move(cubeFirmware);
-  _asyncFlashCubeSignal.send();
+  
+  // grab firmware from file
+  std::vector<uint8_t> firmware;
+  if (!GetCubeFirmwareFromDisk(firmware)) {
+    PRINT_NAMED_ERROR("BleClient.FlashCube.FailedGettingFirmware",
+                      "Failed retrieving cube firmware from disk");
+    return;
+  }
+  
+  size_t offset = kFirmwareVersionStrLen; // skip the first few bytes, which is the firmware version
+  size_t nBytesRemaining = firmware.size() - offset;
+  
+  while (nBytesRemaining > 0) {
+    size_t chunkLength = std::min(kMaxBytesPerPacket, nBytesRemaining);
+    std::vector<uint8_t> packet(firmware.begin() + offset,
+                                firmware.begin() + offset + chunkLength);
+    SendMessage(_connectionId, Anki::kCubeOTATarget_128_BIT_UUID, true, packet);
+    offset += chunkLength;
+    nBytesRemaining -= chunkLength;
+  }
 }
 
 
@@ -218,15 +251,24 @@ void BleClient::OnOutboundConnectionChange(const std::string& address,
                    address.c_str(), connected, connection_id);
   
   if (address != _cubeAddress) {
+    PRINT_NAMED_WARNING("BleClient.OnOutboundConnectionChange.IgnoringUnexpected",
+                        "Ignoring unexpected %s from address %s (connection_id %d). Expected address: %s",
+                        connected ? "connection" : "disconnection",
+                        address.c_str(),
+                        connection_id,
+                        _cubeAddress.c_str());
     return;
   }
   
   if (connected) {
     _connectionId = connection_id;
+    // Immediately read the cube firmware version
+    _pendingFirmwareCheck = true;
     ReadCharacteristic(_connectionId, Anki::kCubeAppVersion_128_BIT_UUID);
   } else if (_connectionId == connection_id) {
     _connectionId = -1;
     _cubeAddress.clear();
+    _pendingFirmwareCheck = false;
   }
 }
 
@@ -236,25 +278,40 @@ void BleClient::OnCharacteristicReadResult(const int connection_id,
                                            const std::string& characteristic_uuid,
                                            const std::vector<uint8_t>& data) 
 {
-  if (connection_id == -1 || connection_id != _connectionId) {
+  if ((connection_id < 0) ||
+      (connection_id != _connectionId)) {
     return;
   }
 
-  if(error) {
+  if (error) {
+    PRINT_NAMED_WARNING("BleClient.OnCharacteristicReadResult.Error",
+                        "error %d", error);
     return;
   }
 
-  if (Util::StringCaseInsensitiveEquals(characteristic_uuid, Anki::kCubeAppVersion_128_BIT_UUID)) {
-    auto connectedFirmwareVersion = std::string(data.begin(), data.end());
+  const bool isAppVersion = Util::StringCaseInsensitiveEquals(characteristic_uuid,
+                                                              Anki::kCubeAppVersion_128_BIT_UUID);
+
+  if (isAppVersion && _pendingFirmwareCheck) {
+    const auto& cubeFirmwareVersion = std::string(data.begin(), data.end());
 
     RequestConnectionParameterUpdate(_cubeAddress,
         kGattConnectionIntervalHighPriorityMinimum,
         kGattConnectionIntervalHighPriorityMaximum,
         kGattConnectionLatencyDefault,
         kGattConnectionTimeoutDefault);
-
-    if(_receiveFirmwareVersionCallback) {
-      _receiveFirmwareVersionCallback(_cubeAddress, connectedFirmwareVersion);
+    
+    // Check the cube's firmware version against the on-disk version
+    DEV_ASSERT(!_cubeFirmwareVersionOnDisk.empty(), "BleClient.OnCharacteristicReadResult.NoOnDiskFirmwareVersion");
+    if (cubeFirmwareVersion == _cubeFirmwareVersionOnDisk) {
+      // Firmware versions match! Yay.
+      _pendingFirmwareCheck = false;
+    } else {
+      // Flash the cube with the firmware we have on disk
+      PRINT_NAMED_INFO("BleClient.OnCharacteristicReadResult.FirmwareVersionMismatch",
+                       "Flashing cube since its firmware version (%s) does not match that on disk (%s)",
+                       cubeFirmwareVersion.c_str(), _cubeFirmwareVersionOnDisk.c_str());
+      FlashCube();
     }
   }
 }
@@ -267,17 +324,16 @@ void BleClient::OnReceiveMessage(const int connection_id,
     return;
   }
   
-  if(Util::StringCaseInsensitiveEquals(characteristic_uuid, Anki::kCubeAppVersion_128_BIT_UUID)) {
-    // this characteristic is returned after flashing a cube finishes
-    std::string versionOnCube(value.begin(), value.end());
-    size_t offset = 0x10; // the first 16 bytes of firmware are the version #
-    std::string versionOnDisk(_cubeFirmware.begin(), _cubeFirmware.begin() + offset);
-    if(versionOnCube.compare(versionOnDisk)==0) {
-      PRINT_NAMED_INFO("BleClient.OnReceiveMessage.FlashingSuccess","%s",versionOnCube.c_str());
+  if (Util::StringCaseInsensitiveEquals(characteristic_uuid, Anki::kCubeAppVersion_128_BIT_UUID)) {
+    const auto& cubeFirmwareVersion = std::string(value.begin(), value.end());
+    if (cubeFirmwareVersion == _cubeFirmwareVersionOnDisk) {
+      PRINT_NAMED_INFO("BleClient.OnReceiveMessage.FlashingSuccess","%s",cubeFirmwareVersion.c_str());
     } else {
-      PRINT_NAMED_WARNING("BleClient.OnReceiveMessage.FlashingFailure","got = %s exp = %s",versionOnCube.c_str(), versionOnDisk.c_str());
+      PRINT_NAMED_WARNING("BleClient.OnReceiveMessage.FlashingFailure","got = %s exp = %s",cubeFirmwareVersion.c_str(), _cubeFirmwareVersionOnDisk.c_str());
     }
-    _cubeFirmware.clear();
+    
+    // consider the firmware check complete now.
+    _pendingFirmwareCheck = false;
   } else if (Util::StringCaseInsensitiveEquals(characteristic_uuid, Anki::kCubeAppRead_128_BIT_UUID)) {
     if (_receiveDataCallback) {
       _receiveDataCallback(_cubeAddress, value);
@@ -300,24 +356,6 @@ void BleClient::AsyncStartScanCallback(ev::async& w, int revents)
   _scanningTimer.start(_scanDuration_sec);
 }
 
-void BleClient::AsyncFlashCubeCallback(ev::async& w, int revents)
-{
-  if(_cubeFirmware.empty()) {
-    return;
-  }
-  size_t offset = 0x10; // first 16 bytes is firmware version
-
-
-  while (offset < _cubeFirmware.size()) {
-    std::vector<uint8_t> packet;
-    size_t chunkLength = std::min(kMaxBytesPerPacket, (int) (_cubeFirmware.size() - offset));
-    std::copy(_cubeFirmware.begin() + offset, 
-              _cubeFirmware.begin() + offset + chunkLength, 
-              std::back_inserter(packet));
-    SendMessage(_connectionId, Anki::kCubeOTATarget_128_BIT_UUID, true, packet);
-    offset += chunkLength;
-  }
-}
 
 void BleClient::ServerConnectionCheckTimerCallback(ev::timer& timer, int revents)
 {
@@ -332,6 +370,7 @@ void BleClient::ServerConnectionCheckTimerCallback(ev::timer& timer, int revents
       // so reset connectionId and cube address
       _connectionId = -1;
       _cubeAddress.clear();
+      _pendingFirmwareCheck = false;
       // Stop scanning for cubes timer
       _scanningTimer.stop();
     }
@@ -359,6 +398,37 @@ void BleClient::ScanningTimerCallback(ev::timer& w, int revents)
   StopScanForCubes();
 }
 
+
+bool BleClient::GetCubeFirmwareFromDisk(std::vector<uint8_t>& firmware)
+{
+  if (!Util::FileUtils::FileExists(_cubeFirmwarePath)) {
+    PRINT_NAMED_ERROR("BleClient.GetCubeFirmwareFromDisk.MissingCubeFirmwareFile",
+                      "Cube firmware file does not exist (should be at %s)",
+                      _cubeFirmwarePath.c_str());
+    return false;
+  }
+  
+  // Read from file
+  firmware = Util::FileUtils::ReadFileAsBinary(_cubeFirmwarePath);
+  
+  if (firmware.size() < kFirmwareVersionStrLen) {
+    PRINT_NAMED_ERROR("BleClient.GetCubeFirmwareFromDisk.CubeFirmwareFileTooSmall",
+                      "Cube firmware file is %zu bytes long! Should be at least %zu.",
+                      firmware.size(), kFirmwareVersionStrLen);
+    firmware.clear();
+    return false;
+  }
+  
+  _cubeFirmwareVersionOnDisk = std::string(firmware.begin(),
+                                           firmware.begin() + kFirmwareVersionStrLen);
+  
+  PRINT_NAMED_INFO("BleClient.GetCubeFirmwareFromDisk.ReadCubeFirmwareFileVersion",
+                   "Read cube firmware file from disk. Version: %s",
+                   _cubeFirmwareVersionOnDisk.c_str());
+  
+  return true;
+}
+  
 
 } // Cozmo
 } // Anki

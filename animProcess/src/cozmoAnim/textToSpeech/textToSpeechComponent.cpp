@@ -109,13 +109,13 @@ Result TextToSpeechComponent::CreateSpeech(const TTSID_t ttsID,
       LOG_ERROR("TextToSpeechComponent.CreateSpeech.DispatchAsync", "ttsID %d already in cache", ttsID);
       return RESULT_FAIL_INVALID_PARAMETER;
     }
-    
+
     // Set initial state
     TtsBundle & ttsBundle = it.first->second;
     ttsBundle.state = AudioCreationState::Preparing;
     ttsBundle.style = style;
   }
-  
+
   // Dispatch work onto another thread
   Util::Dispatch::Async(_dispatchQueue, [this, ttsID, text, durationScalar]
   {
@@ -161,7 +161,7 @@ TextToSpeechComponent::AudioCreationState TextToSpeechComponent::GetOperationSta
 
   return ttsBundle->state;
 } // GetOperationState()
-  
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
@@ -416,7 +416,7 @@ void TextToSpeechComponent::OnUtteranceCompleted(uint8_t ttsID)
 {
   _activeTTSID = kInvalidTTSID;
 
-  LOG_DEBUG("TextToSpeechCOmponent.UtteranceCompleted", "Completion callback recieved for ttsID %hhu", ttsID);
+  LOG_DEBUG("TextToSpeechComponent.UtteranceCompleted", "Completion callback received for ttsID %hhu", ttsID);
   SendAnimToEngine(ttsID, TextToSpeechState::Finished);
 }
 
@@ -602,6 +602,28 @@ void TextToSpeechComponent::Update()
         break;
     }
   }
+}
+
+void TextToSpeechComponent::SetLocale(const std::string & locale)
+{
+  //
+  // Perform callback on worker thread so locale is changed in sync with TTS processing.
+  // Any TTS operations queued before SetLocale() will be processed with old locale.
+  // Any TTS operations queued after SetLocale() will be processed with new locale.
+  //
+  LOG_DEBUG("TextToSpeechComponent.SetLocale", "Set locale to %s", locale.c_str());
+
+  const auto & task = [this, locale = std::string(locale)] {
+    DEV_ASSERT(_pvdr != nullptr, "TextToSpeechComponent.SetLocale.InvalidProvider");
+    LOG_DEBUG("TextToSpeechComponent.SetLocale", "Setting locale to %s", locale.c_str());
+    const Result result = _pvdr->SetLocale(locale);
+    if (result != RESULT_OK) {
+      LOG_ERROR("TextToSpeechComponent.SetLocale", "Unable to set locale to %s (error %d)", locale.c_str(), result);
+    }
+  };
+
+  Util::Dispatch::Async(_dispatchQueue, task);
+
 }
 } // end namespace Cozmo
 } // end namespace Anki

@@ -117,6 +117,12 @@ void UserIntentComponent::SetTriggerWordPending()
 
   _pendingTrigger = true;
   _pendingTriggerTick = BaseStationTimer::getInstance()->GetTickCount();
+
+  if( _wasIntentError ) {
+    PRINT_NAMED_WARNING("UserIntentComponent.SetTriggerWordPending.ClearingError",
+                        "Previous intent gave us an error, but a new trigger word came in. Clearing the old error");
+    _wasIntentError = false;
+  }
 }
 
 bool UserIntentComponent::IsAnyUserIntentPending() const
@@ -209,6 +215,15 @@ void UserIntentComponent::DropUserIntent(UserIntentTag userIntent)
                         UserIntentTagToString(userIntent),
                         _pendingIntent ? UserIntentTagToString(_pendingIntent->intent.GetTag()) : "nothing");
   }
+}
+  
+void UserIntentComponent::DropAnyUserIntent()
+{
+  if( !IsAnyUserIntentPending() ) {
+    PRINT_NAMED_WARNING("UserIntentComponent.DropAnyUserIntent.IntentNotSet",
+                        "Trying to clear a pending intent but the intent isn't set. This is likely a bug");
+  }
+  _pendingIntent.reset();
 }
 
 bool UserIntentComponent::IsUserIntentPending(UserIntentTag userIntent, UserIntent& extraData) const
@@ -427,11 +442,40 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
           if ( ok ) {
             SetCloudIntentPendingFromJSONValue( std::move( json ) );
           }
+          _isStreamOpen = false;
+
+          if( _wasIntentError ) {
+            PRINT_NAMED_WARNING("UserIntentComponent.GotCloudIntent.ClearingError",
+                                "Previous intent gave us an error, but a new intent word came in. Clearing the error");
+            _wasIntentError = false;
+          }
+
           break;
         }
+
+        case CloudMic::MessageTag::streamTimeout:
+        case CloudMic::MessageTag::error:
+        {
+          PRINT_NAMED_INFO("UserIntentComponent.UpdatePendingIntent.GotError",
+                           "Got cloud error message type %s",
+                           CloudMic::MessageTagToString( _pendingCloudIntent.GetTag() ));
+
+          _wasIntentError = true;
+          _isStreamOpen = false;
+          break;
+        }
+
+        case CloudMic::MessageTag::streamOpen:
+        {
+          PRINT_NAMED_INFO("UserIntentComponent.UpdatePendingIntent.StreamOpen",
+                           "Now streaming to cloud");
+          _isStreamOpen = true;
+          break;
+        }
+        
         default:
-          PRINT_NAMED_WARNING("UserIntentComponent.UpdatePendingIntent.SkipError",
-                        "Skipping non-intent result cloud message: '%s'",
+          PRINT_NAMED_WARNING("UserIntentComponent.UpdatePendingIntent.SkipOther",
+                        "Skipping non-intent (and non-error) result cloud message: '%s'",
                         CloudMic::MessageTagToString( _pendingCloudIntent.GetTag() ) );
       }
       _pendingCloudIntent = {};

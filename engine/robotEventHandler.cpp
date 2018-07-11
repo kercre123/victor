@@ -23,6 +23,7 @@
 #include "engine/components/carryingComponent.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/movementComponent.h"
+#include "engine/components/nvStorageComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/cozmoContext.h"
@@ -1683,6 +1684,15 @@ void RobotEventHandler::HandleMessage(const SwitchboardInterface::SetConnectionS
     PRINT_NAMED_WARNING("RobotEventHandler.SwitchboardSetConnectionStatus.InvalidRobotID",
                         "Failed to find robot");
   } else {
+    using namespace SwitchboardInterface;
+
+    // Update the pairing light
+    // Turn it on if we are on the START_PAIRING, SHOW_PRE_PIN, or SHOW_PIN screen
+    // Otherwise turn it off
+    robot->GetBackpackLightComponent().SetPairingLight((msg.status == ConnectionStatus::START_PAIRING ||
+                                                        msg.status == ConnectionStatus::SHOW_PRE_PIN ||
+                                                        msg.status == ConnectionStatus::SHOW_PIN));
+    
     // Forward to robot
     robot->SendRobotMessage<SwitchboardInterface::SetConnectionStatus>(msg.status);
   }

@@ -491,6 +491,8 @@ namespace Anki {
       
       SetStatus(GetName());
       
+      bool subActionCompleted = false;
+      
       for(auto currentAction = _actions.begin(); currentAction != _actions.end();)
       {
         assert((*currentAction) != nullptr); // should not have been allowed in by constructor
@@ -509,6 +511,10 @@ namespace Anki {
           {
             // Just finished this action, delete it
             StoreUnionAndDelete(currentAction);
+            if(_endWhenFirstActionCompletes) {
+              result = subResult;
+            }
+            subActionCompleted = true;
             break;
           }
           case ActionResultCategory::RUNNING:
@@ -538,6 +544,11 @@ namespace Anki {
               RunCallbacks(subResult);
             }
             
+            if(_endWhenFirstActionCompletes) {
+              result = subResult;
+            }
+            subActionCompleted = true;
+            
             if(ShouldIgnoreFailure(subResult, *currentAction))
             {
               // Ignore the fact that this action failed and just delete it
@@ -551,6 +562,10 @@ namespace Anki {
             break;
           }
         } // switch(subResultCategory)
+        
+        if(_endWhenFirstActionCompletes && subActionCompleted) {
+          break;
+        }
       } // for each action in the group
       
       if(USE_ACTION_CALLBACKS) {

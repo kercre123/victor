@@ -2,6 +2,7 @@ package cloudproc
 
 import (
 	"anki/log"
+	"anki/token"
 	"anki/util"
 	"clad/cloud"
 	"context"
@@ -142,11 +143,26 @@ procloop:
 					continue
 				}
 
+				var jwtToken string
+				tokenTime := util.TimeFuncMs(func() {
+					jwtToken, _ = p.getToken()
+				})
+				if jwtToken == "" && p.opts.requireToken {
+					log.Println("Canceling, didn't get token")
+					continue
+				}
+
 				var stream chipper.Stream
 				var chipperConn *chipper.Conn
 				var err error
+				sessionID := uuid.New().String()[:16]
 				ctxTime := util.TimeFuncMs(func() {
-					chipperConn, err = chipper.NewConn(ChipperURL, ChipperSecret, platformOpts...)
+					opts := platformOpts
+					if jwtToken != "" {
+						opts = append(opts, chipper.WithAccessToken(jwtToken))
+					}
+					opts = append(opts, chipper.WithSessionID(sessionID))
+					chipperConn, err = chipper.NewConn(ChipperURL, ChipperSecret, opts...)
 					if err != nil {
 						log.Println("Error getting chipper connection:", err)
 						p.writeError("connecting", err.Error())
@@ -158,7 +174,6 @@ procloop:
 							Bitrate:    66 * 1024,
 							Complexity: 0,
 							FrameSize:  60},
-						SessionID: uuid.New().String()[:16],
 						SaveAudio: p.opts.saveAudio,
 					}
 					if mode == cloud.StreamType_KnowledgeGraph {
@@ -200,7 +215,8 @@ procloop:
 				p.writeResponse(cloud.NewMessageWithStreamOpen(&cloud.Void{}))
 				ctx = p.newVoiceContext(chipperConn, stream, cloudChan)
 
-				logVerbose("Received hotword event", serverMode, "created context in", int(ctxTime), "ms")
+				logVerbose("Received hotword event", serverMode, "created session", sessionID, "in",
+					int(ctxTime), "ms (token", int(tokenTime), "ms)")
 
 			case cloud.MessageTag_DebugFile:
 				p.writeResponse(msg.msg)
@@ -261,6 +277,40 @@ func (p *Process) StreamSize() int {
 // SetVerbose enables or disables verbose logging
 func SetVerbose(value bool) {
 	verbose = value
+}
+
+func (p *Process) getToken() (string, error) {
+	req := cloud.NewTokenRequestWithJwt(&cloud.JwtRequest{})
+	resp, err := token.HandleRequest(req)
+	if err != nil {
+		log.Println("Error getting jwt token:", err)
+		if p.opts.requireToken {
+			p.writeError("token", err.Error())
+		}
+		return "", err
+	}
+	jwt := resp.GetJwt()
+	if jwt.Error == cloud.TokenError_NullToken {
+		// null token = have to authenticate
+		// this is temporary - eventually authentication will be part of a flow from the app
+		req = cloud.NewTokenRequestWithAuth(&cloud.AuthRequest{SessionToken: "asdf"})
+		resp, err = token.HandleRequest(req)
+		if resp.GetAuth().Error != cloud.TokenError_NoError {
+			log.Println("Error code getting auth token:", jwt.Error)
+			if p.opts.requireToken {
+				p.writeError("token", fmt.Sprint(jwt.Error))
+			}
+			return "", err
+		}
+		return resp.GetAuth().JwtToken, nil
+	} else if jwt.Error != cloud.TokenError_NoError {
+		log.Println("Error code getting jwt token:", jwt.Error)
+		if p.opts.requireToken {
+			p.writeError("token", fmt.Sprint(jwt.Error))
+		}
+		return "", err
+	}
+	return resp.GetJwt().JwtToken, nil
 }
 
 func (p *Process) writeError(reason string, extra string) {

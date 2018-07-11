@@ -87,6 +87,11 @@ private:
   };
 
   std::map<std::string, Layer> _layers;
+  
+  // Ensures that expected playback parameters are met - this is not a long term
+  // fix, it's a hack to try and catch animation streamer issues more quickly
+  // while the system's in flux
+  void ValidateTrack(const Animations::Track<FRAME_TYPE>& track);
 };
 
 }

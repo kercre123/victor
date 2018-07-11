@@ -38,6 +38,8 @@ namespace Anki
       // Method to fetch singleton instance.
       static CameraService* getInstance();
 
+      static bool hasInstance() { return nullptr != _instance; }
+
       // Removes instance
       static void removeInstance();
 
@@ -68,6 +70,7 @@ namespace Anki
       //
 
       Result InitCamera();
+      void DeleteCamera();
 
       void RegisterOnCameraRestartCallback(std::function<void()> callback);
 
@@ -96,8 +99,6 @@ namespace Anki
 
       CameraService();
       static CameraService* _instance;
-
-      void DeleteCamera();
 
 #ifdef SIMULATOR
       CameraCalibration headCamInfo_;

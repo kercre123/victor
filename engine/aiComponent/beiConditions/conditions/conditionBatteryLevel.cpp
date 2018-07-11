@@ -12,6 +12,7 @@
 
 #include "engine/aiComponent/beiConditions/conditions/conditionBatteryLevel.h"
 
+#include "clad/types/batteryTypes.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"

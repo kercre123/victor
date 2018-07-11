@@ -22,6 +22,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/cozmoContext.h"
+#include "proto/external_interface/messages.pb.h"
 #include "util/logging/logging.h"
 #include "util/logging/DAS.h"
 #include "util/string/stringUtils.h"
@@ -60,6 +61,7 @@ void ActiveFeatureComponent::UpdateDependent(const BCCompMap& dependentComps)
           feature != ActiveFeature::NoFeature ) {
         newFeature = feature;
       }
+      return true; // iterate the entire stack
     };
 
     behaviorIterator.IterateActiveCozmoBehaviorsForward(callback);
@@ -132,7 +134,7 @@ void ActiveFeatureComponent::OnFeatureChanged(const ActiveFeature& newFeature, c
   if( oldFeature != ActiveFeature::NoFeature ) {
     const float timeActive = currTime_s - _lastFeatureActivatedTime_s;
 
-    DASMSG(behavior_feature_start, "behavior.feature.end",
+    DASMSG(behavior_feature_end, "behavior.feature.end",
            "This feature is no longer active, but there may not be a new feature yet");
     DASMSG_SET(s1, ActiveFeatureToString(_activeFeature), "The feature");
     DASMSG_SET(i1, std::round(timeActive), "Time the feature was active in seconds");

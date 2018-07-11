@@ -19,6 +19,7 @@
 //#include "anki/cozmo/basestation/components/desiredFaceDistortionComponent.h"
 #include "cozmoAnim/animContext.h"
 #include "util/console/consoleInterface.h"
+#include "util/helpers/ankiDefines.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -32,6 +33,14 @@ const std::string kEyeNoiseLayerName  = "KeepAliveEyeNoise";
 // TODO: Restore audio glitch
 //CONSOLE_VAR(bool, kGenerateGlitchAudio, "ProceduralAnims", false);
 bool kGenerateGlitchAudio = false;
+
+// Audio latency offset
+#if defined(ANKI_PLATFORM_VICOS)
+// MATH: (BufferSize / SampleRate) * NumberOfBuffers ==> 1024/48000*8 = 0.1706667 sec => 170 ms
+CONSOLE_VAR_RANGED(u32, kAudioAnimationOffset_ms, "Audio.AnimationStreamer", 170, 0, 300);
+#else
+#define kAudioAnimationOffset_ms 0
+#endif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -49,11 +58,14 @@ TrackLayerComponent::~TrackLayerComponent()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TrackLayerComponent::Init()
+void TrackLayerComponent::Init(AnimationStreamer& animStreamer)
 {
   _lastProceduralFace->Reset();
   // Setup Keep Alive Activities
   SetupKeepFaceAliveActivities();
+  // Setup Audio latency callback to reset keyframe idx
+  const auto callback = [this] () { _validAudioKeyframeIt = false; };
+  animStreamer.AddNewAnimationCallback(callback);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -298,12 +310,25 @@ void TrackLayerComponent::ApplyAudioLayersToAnim(Animation* anim,
                                                  const TimeStamp_t timeSinceAnimStart_ms,
                                                  LayeredKeyFrames& layeredKeyFrames) const
 {
+  // VIC-4224: Due to audio engine playback latency the animation audio keyframes are not in sync with the rest of the
+  // animation tracks while playing. Therefore we have introduced a variable to offset that latency by playing audio
+  // keyframes earlier so they better sync with the animation.
+  const TimeStamp_t audioOffsetTime_ms = timeSinceAnimStart_ms + kAudioAnimationOffset_ms;
+
   if (anim != nullptr) {
     auto& track = anim->GetTrack<RobotAudioKeyFrame>();
-    if (track.CurrentFrameIsValid(timeSinceAnimStart_ms)) {
-      auto& frame = track.GetCurrentKeyFrame();
-      layeredKeyFrames.audioKeyFrame = frame;
+    auto& frameList = track.GetAllKeyframes();
+
+    if (!_validAudioKeyframeIt) {
+      _audioKeyframeIt = frameList.begin();
+      _validAudioKeyframeIt = true;
+    }
+
+    if ((_audioKeyframeIt != frameList.end()) &&
+        _audioKeyframeIt->IsTimeToPlay(audioOffsetTime_ms)) {
+      layeredKeyFrames.audioKeyFrame = *_audioKeyframeIt;
       layeredKeyFrames.haveAudioKeyFrame = true;
+      ++_audioKeyframeIt;
     }
   }
   
