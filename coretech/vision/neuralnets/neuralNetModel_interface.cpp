@@ -12,16 +12,23 @@
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/math/rect_impl.h"
 #include "coretech/vision/neuralnets/neuralNetModel_interface.h"
+
+#include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
-#include <fstream>
 
 #include "opencv2/imgcodecs/imgcodecs.hpp"
+
+#include <fstream>
 
 namespace Anki {
 namespace Vision {
   
 #define LOG_CHANNEL "NeuralNets"
+
+namespace {
+  CONSOLE_VAR(bool,   kINeuralNetModel_SaveImages,  "Vision.INeuralNetModel", false);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 INeuralNetModel::INeuralNetModel(const std::string cachePath)
@@ -260,7 +267,7 @@ void INeuralNetModel::ResponseMapOutputHelper(const T* outputData, TimeStamp_t t
   cv::Point2i minLoc(0, 0), maxLoc(0, 0);
   cv::minMaxLoc(channels[objectnessIndex], &min, &max, &minLoc, &maxLoc);
 
-  if (true)
+  if (kNeuralNetTensorflow_SaveImages)
   {
     SaveObjectnessResponseMaps(channels, numberOfChannels, timestamp);
   }

@@ -35,7 +35,6 @@
 #include "tensorflow/core/util/memmapped_file_system.h"
 #include "tensorflow/core/util/stat_summarizer.h"
 
-#include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/quoteMacro.h"
 #include "util/logging/logging.h"
@@ -50,10 +49,6 @@ namespace Anki {
 namespace Vision {
 
 #define LOG_CHANNEL "NeuralNets"
-
-namespace {
-  CONSOLE_VAR(bool,   kNeuralNetTensorflow_SaveImages,  "Vision.NeuralNetTensorflow", false);
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 NeuralNetModel::NeuralNetModel(const std::string cachePath)
