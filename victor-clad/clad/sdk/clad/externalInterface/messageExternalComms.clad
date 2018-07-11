@@ -45,6 +45,14 @@ message RtsWifiScanResult_2 {
     bool        hidden,
 }
 
+message RtsWifiScanResult_3 {
+    uint_8      authType,
+    uint_8      signalStrength,
+    string      wifiSsidHex,
+    bool        hidden,
+    bool        provisioned,
+}
+
 message RtsConnRequest {
     uint_8      publicKey[32]
 }
@@ -71,6 +79,16 @@ message RtsChallengeSuccessMessage {
     //
 }
 
+message RtsWifiForgetRequest {
+    bool        deleteAll,
+    string      wifiSsidHex,
+}
+
+message RtsWifiForgetResponse {
+    bool        didDelete,
+    string      wifiSsidHex,
+}
+
 message RtsWifiConnectRequest {
     string      wifiSsidHex,
     string      password,
@@ -82,6 +100,12 @@ message RtsWifiConnectRequest {
 message RtsWifiConnectResponse {
     string      wifiSsidHex,
     uint_8      wifiState,
+}
+
+message RtsWifiConnectResponse_3 {
+    string      wifiSsidHex,
+    uint_8      wifiState,
+    uint_8      connectResult,
 }
 
 message RtsWifiIpRequest {
@@ -117,6 +141,17 @@ message RtsStatusResponse_2 {
     bool        otaInProgress,
 }
 
+message RtsStatusResponse_3 {
+    string      wifiSsidHex,
+    uint_8      wifiState,
+    bool        accessPoint,
+    uint_8      bleState,
+    uint_8      batteryState,
+    string      version,
+    bool        otaInProgress,
+    bool        hasOwner,
+}
+
 message RtsWifiScanRequest {
     //
 }
@@ -129,6 +164,11 @@ message RtsWifiScanResponse {
 message RtsWifiScanResponse_2 {
     uint_8                  statusCode,
     RtsWifiScanResult_2     scanResult[uint_8],
+}
+
+message RtsWifiScanResponse_3 {
+    uint_8                  statusCode,
+    RtsWifiScanResult_3     scanResult[uint_8],
 }
 
 message RtsOtaUpdateRequest {
@@ -189,6 +229,16 @@ message RtsFileDownload {
     uint_8      fileChunk[uint_16],
 }
 
+message RtsCloudSessionRequest {
+    string      sessionToken[uint_8],
+}
+
+message RtsCloudSessionResponse {
+    bool        success,
+    uint_8      statusCode,
+    string      clientTokenGuid[uint_8],
+}
+
 message Error {
     //
 }
@@ -229,12 +279,48 @@ union RtsConnection_2 {
     RtsFileDownload                 RtsFileDownload             = 0x1A,     // * new in v2
 }
 
+// Rts Version 3
+union RtsConnection_3 {
+    Error                           Error                       = 0x00,
+    RtsConnRequest                  RtsConnRequest              = 0x01,
+    RtsConnResponse                 RtsConnResponse             = 0x02,
+    RtsNonceMessage                 RtsNonceMessage             = 0x03,
+    RtsChallengeMessage             RtsChallengeMessage         = 0x04,
+    RtsChallengeSuccessMessage      RtsChallengeSuccessMessage  = 0x05,
+    RtsWifiConnectRequest           RtsWifiConnectRequest       = 0x06,
+    RtsWifiConnectResponse_3        RtsWifiConnectResponse_3    = 0x07,
+    RtsWifiIpRequest                RtsWifiIpRequest            = 0x08,
+    RtsWifiIpResponse               RtsWifiIpResponse           = 0x09,
+    RtsStatusRequest                RtsStatusRequest            = 0x0A,
+    RtsStatusResponse_3             RtsStatusResponse_3         = 0x0B,  // includes hasOwner field   
+    RtsWifiScanRequest              RtsWifiScanRequest          = 0x0C,
+    RtsWifiScanResponse_3           RtsWifiScanResponse_3       = 0x0D,  // includes provisioned flag
+    RtsOtaUpdateRequest             RtsOtaUpdateRequest         = 0x0E,
+    RtsOtaUpdateResponse            RtsOtaUpdateResponse        = 0x0F,
+    RtsCancelPairing                RtsCancelPairing            = 0x10,
+    RtsForceDisconnect              RtsForceDisconnect          = 0x11,
+    RtsAck                          RtsAck                      = 0x12,
+    RtsWifiAccessPointRequest       RtsWifiAccessPointRequest   = 0x13,
+    RtsWifiAccessPointResponse      RtsWifiAccessPointResponse  = 0x14,
+    RtsSshRequest                   RtsSshRequest               = 0x15,
+    RtsSshResponse                  RtsSshResponse              = 0x16,
+    RtsOtaCancelRequest             RtsOtaCancelRequest         = 0x17,     
+    RtsLogRequest                   RtsLogRequest               = 0x18,     
+    RtsLogResponse                  RtsLogResponse              = 0x19,     
+    RtsFileDownload                 RtsFileDownload             = 0x1A,
+    RtsWifiForgetRequest            RtsWifiForgetRequest        = 0x1B,  // * new in V3
+    RtsWifiForgetResponse           RtsWifiForgetResponse       = 0x1C,  // * new in V3
+    RtsCloudSessionRequest          RtsCloudSessionRequest      = 0x1D,  // * new in V3
+    RtsCloudSessionResponse         RtsCloudSessionResponse     = 0x1E,  // * new in V3
+}
+
 // The post-factory set of versions
 union RtsConnection {
     Error                           Error                       = 0x00,
     // Skipping 0x01 so that enum vals match the RTS protocol version
     //                              Reserved                    = 0x01, 
     RtsConnection_2                 RtsConnection_2             = 0x02,
+    RtsConnection_3                 RtsConnection_3             = 0x03,
 }
 
 // The factory set of supported messages

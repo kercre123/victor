@@ -13,7 +13,6 @@
 
 #pragma once
 
-#include "exec_command.h"
 #include "connmanbus.h"
 
 #include <map>
@@ -78,6 +77,7 @@ class WiFiScanResult {
   uint8_t     signal_level;
   std::string ssid;
   bool        hidden;
+  bool        provisioned;
 };
 
 class WiFiConfig {
@@ -124,23 +124,19 @@ struct WPAConnectInfo {
 
 std::string GetObjectPathForService(GVariant* service);
 ConnectWifiResult ConnectToWifiService(ConnManBusService* service);
+bool RemoveWifiService(std::string ssid);
 bool DisconnectFromWifiService(ConnManBusService* service);
 ConnManBusService* GetServiceForPath(std::string objectPath);
-void SetWiFiConfig(std::string ssid, std::string password, WiFiAuth auth, bool isHidden);
 std::string GetHexSsidFromServicePath(const std::string& servicePath);
 
 ConnectWifiResult ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidden, GAsyncReadyCallback cb, gpointer userData);
 WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results);
 std::vector<uint8_t> PackWiFiScanResults(const std::vector<WiFiScanResult>& results);
-void EnableWiFiInterface(const bool enable, ExecCommandCallback callback);
-std::map<std::string, std::string> UnPackWiFiConfig(const std::vector<uint8_t>& packed);
-void SetWiFiConfig(const std::vector<WiFiConfig>& networks, ExecCommandCallback);
 void HandleOutputCallback(int rc, const std::string& output);
 bool GetIpFromHostName(char* hostname, char* ip);
 bool IsAccessPointMode();
 bool EnableAccessPointMode(std::string ssid, std::string pw);
 bool DisableAccessPointMode();
-std::string GetConfigField(std::string& field, std::string& outSsid);
 WiFiIpFlags GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits);
 WiFiState GetWiFiState();
 

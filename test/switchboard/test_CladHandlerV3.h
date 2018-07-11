@@ -18,9 +18,9 @@
 
 namespace Anki {
 namespace Switchboard {
-  class CladHandler {
+  class CladHandlerV3 {
     public:
-    using RtsConnectionSignal = Signal::Signal<void (const Anki::Cozmo::ExternalComms::RtsConnection_2& msg)>;
+    using RtsConnectionSignal = Signal::Signal<void (const Anki::Cozmo::ExternalComms::RtsConnection_3& msg)>;
     
     RtsConnectionSignal& OnReceiveRtsMessage() {
       return _receiveRtsMessage;
@@ -37,7 +37,7 @@ namespace Switchboard {
       
       if(extComms.GetTag() == Anki::Cozmo::ExternalComms::ExternalCommsTag::RtsConnection) {
         Anki::Cozmo::ExternalComms::RtsConnection rstContainer = extComms.Get_RtsConnection();
-        Anki::Cozmo::ExternalComms::RtsConnection_2 rtsMsg = rstContainer.Get_RtsConnection_2();
+        Anki::Cozmo::ExternalComms::RtsConnection_3 rtsMsg = rstContainer.Get_RtsConnection_3();
         
         _receiveRtsMessage.emit(rtsMsg);          
       }

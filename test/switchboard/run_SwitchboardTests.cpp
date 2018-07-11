@@ -9,32 +9,34 @@
 #include "switchboardd/christen.h"
 #include "switchboardd/bleMessageProtocol.h"
 #include "switchboardd/keyExchange.h"
-#include "switchboardd/securePairing.h"
+#include "switchboardd/rtsComms.h"
 #include "switchboardd/savedSessionManager.h"
 #include "ev++.h"
-#include "test_INetworkStream.h"
+#include "test_INetworkStreamV2.h"
+#include "test_INetworkStreamV3.h"
 
 struct TestData {
   bool(*method)();
   const char* errorMessage;
 };
 
-void TEST(bool(*f)(), std::string msg, int num) {
+bool TEST(bool(*f)(), std::string msg, int num) {
   sTestPassed = true;
   f();
   if(!sTestPassed) {
     printf("Test (%d) failed: %s\n", num, msg.c_str());
   }
+
+  return sTestPassed;
 }
 
 using namespace Anki::Switchboard;
 
 bool Test_ExecCommand() {
-  std::string output;
   // some non-existant folder, ExecCommand should return 1
-  bool testInvalidPath = Anki::ExecCommand({ "ls", "dflkjalsdkfjlsd/asdkf" }, output) == 1;
+  bool testInvalidPath = Anki::ExecCommand({ "ls", "dflkjalsdkfjlsd/asdkf" }) == 1;
   // ExecCommand should return 0
-  bool testValidPath = Anki::ExecCommand({ "ls" }, output) == 0;
+  bool testValidPath = Anki::ExecCommand({ "ls" }) == 0;
 
   ASSERT(testInvalidPath && testValidPath, "Unable to Exec ls command.");
 
@@ -260,7 +262,31 @@ bool Test_SecurePairing() {
   // Create objects for testing
   Test_INetworkStream* netStream = new Test_INetworkStream();
 
-  SecurePairing* securePairing = new SecurePairing(
+  RtsComms* securePairing = new RtsComms(
+    netStream,            // 
+    ev_default_loop(0),   // ev loop
+    nullptr,              // engineClient (don't need--only for updating face)
+    false,                // is pairing
+    false);               // is ota-ing
+
+  // Start Test loop
+  // Right now this tests will just be a simple runthrough of the
+  // messages to form a secure connection.
+  //
+  netStream->Test(securePairing);
+
+  // cleanup
+  delete netStream;
+  delete securePairing;
+
+  return true;
+}
+
+bool Test_SecurePairingV3() {
+  // Create objects for testing
+  Test_INetworkStreamV3* netStream = new Test_INetworkStreamV3();
+
+  RtsComms* securePairing = new RtsComms(
     netStream,            // 
     ev_default_loop(0),   // ev loop
     nullptr,              // engineClient (don't need--only for updating face)
@@ -287,12 +313,21 @@ int main() {
     { Test_KeyExchange,             "KeyExchange test failed." },
     { Test_RtsSavedSessions,        "SavedSessionManager encountered problem." },
     { Test_ChristenNameGeneration,  "Christening generated invalid name." },
-    { Test_SecurePairing,           "SecurePairing failed tests." }
+    { Test_SecurePairing,           "SecurePairing V2 failed tests." },
+    { Test_SecurePairingV3,         "SecurePairing V3 failed tests." }
   };
 
-  for(int i = 0; i < sizeof(tests)/sizeof(*tests); i++) {
-    TEST(tests[i].method, tests[i].errorMessage, i);
+  int totalPassed = 0;
+  int totalTests = sizeof(tests)/sizeof(*tests);
+  for(int i = 0; i < totalTests; i++) {
+    bool passed = TEST(tests[i].method, tests[i].errorMessage, i);
+
+    if(passed) {
+      totalPassed++;
+    }
   }
+
+  printf("[%d/%d Tests Passed]\n", totalPassed, totalTests);
 
   return 0;
 }

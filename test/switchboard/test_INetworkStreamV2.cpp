@@ -1,6 +1,6 @@
 #include "test.h"
 #include "ev++.h"
-#include "test_INetworkStream.h"
+#include "test_INetworkStreamV2.h"
 
 namespace Anki {
 namespace Switchboard {
@@ -73,7 +73,7 @@ void Test_INetworkStream::Update() {
     // send handshake
     uint8_t bytes[5] = {0};
     bytes[0] = SetupMessage::MSG_HANDSHAKE;
-    *(uint32_t*)(bytes + 1) = SB_PAIRING_PROTOCOL_VERSION;
+    *(uint32_t*)(bytes + 1) = V2;
 
     // Receive Handshake Message
     ReceivePlainText(bytes, sizeof(bytes));
@@ -197,7 +197,7 @@ void Timeout(struct ev_loop* loop, struct ev_timer* w, int revents) {
   ev_break(ev_default_loop(0), EVBREAK_ONE);
 }
 
-void Test_INetworkStream::Test(SecurePairing* securePairing) {
+void Test_INetworkStream::Test(RtsComms* securePairing) {
   ev_timer t;
   t.data = this;
   ev_timer_init(&t, Tick, 0.1f, 0.1f);

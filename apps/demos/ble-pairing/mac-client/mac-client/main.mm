@@ -27,6 +27,7 @@ int main(int argc, const char * argv[]) {
     parser.addArgument("-u", "--ota-update", 1, true);
     parser.addArgument("-m", "--ota-update-ap", 1, true);
     parser.addArgument("-l", "--local", 0, true);
+    parser.addArgument("-p", "--protocol", 1, true);
     
     try {
       parser.parse(argc, argv);
@@ -44,10 +45,15 @@ int main(int argc, const char * argv[]) {
     [central setVerbose:parser.exists("--verbose")];
     [central setDownload:parser.exists("--download")];
     
+    if(parser.exists("--protocol")) {
+      [central setHasVersion:true version:std::stoi(parser.retrieve<std::string>("protocol"))];
+    }
+    
     bool sync = parser.exists("--sync");
     bool otaupdate = parser.exists("--ota-update");
     bool otaupdateap = parser.exists("--ota-update-ap");
     bool useLocal = parser.exists("--local");
+    bool hasVersion = parser.exists("--protocol");
     bool noninteractive = otaupdate || otaupdateap || sync;
     
     if(noninteractive) {
