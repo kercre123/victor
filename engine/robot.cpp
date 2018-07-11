@@ -83,6 +83,7 @@
 #include "engine/robotStateHistory.h"
 #include "engine/robotToEngineImplMessaging.h"
 #include "engine/viz/vizManager.h"
+#include "engine/buildVersion.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
@@ -441,7 +442,8 @@ external_interface::RobotStatsResponse* Robot::GetRobotStats() {
   external_interface::RobotStatsResponse* response = new external_interface::RobotStatsResponse{batteryComponent.GetBatteryVolts(), \
                                                                                                 (external_interface::BatteryLevel)batteryComponent.GetBatteryLevel(), \
                                                                                                 OSState::getInstance()->GetOSBuildVersion(), \
-                                                                                                networkStats};
+                                                                                                networkStats, \
+                                                                                                kBuildVersion};
   return response;
 }
 
