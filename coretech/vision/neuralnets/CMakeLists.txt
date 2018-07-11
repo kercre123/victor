@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 3.6)
 
-message(STATUS "Building NeuralNets process using ${BUILD_NEURAL_NET_PROCESS}")
+message(STATUS "Building NeuralNets process using ${NEURAL_NET_PLATFORM}")
 
 include(anki_build_cxx)
 include(anki_build_strip)
@@ -16,7 +16,7 @@ set(PLATFORM_DEFINITIONS "")
 
 set(TENSORFLOW_PATH ${ANKI_EXTERNAL_DIR}/tensorflow)
 
-if(BUILD_NEURAL_NET_PROCESS STREQUAL "TensorFlow")
+if(NEURAL_NET_PLATFORM STREQUAL "TensorFlow")
 
   if (VICOS)
 
@@ -94,7 +94,7 @@ if(BUILD_NEURAL_NET_PROCESS STREQUAL "TensorFlow")
     VIC_NEURALNETS_USE_TENSORFLOW
   )
 
-elseif(BUILD_NEURAL_NET_PROCESS STREQUAL "TFLite")
+elseif(NEURAL_NET_PLATFORM STREQUAL "TFLite")
 
   if (VICOS)
 
@@ -139,7 +139,7 @@ elseif(BUILD_NEURAL_NET_PROCESS STREQUAL "TFLite")
   
 else()
 
-  message(FATAL_ERROR "BUILD_NEURAL_NET_PROCESS should be either 'TensorFlow' or 'TFLite'")
+  message(FATAL_ERROR "NEURAL_NET_PLATFORM should be either 'TensorFlow' or 'TFLite'")
 
 endif()
 

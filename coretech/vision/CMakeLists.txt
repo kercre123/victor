@@ -106,7 +106,19 @@ endif()
 #
 # Standalone Neural Nets Process
 #
-option(BUILD_NEURAL_NET_PROCESS "Build standalone Neural Net processor" "TensorFlow") # OFF, "TensorFlow", or "TFLite"
-if (BUILD_NEURAL_NET_PROCESS)
+
+# Set this variable to the type of neural net platform to use
+set(NEURAL_NET_PLATFORM TensorFlow)
+
+# List of neural net options to validate the above with
+set(VALID_NEURAL_NET_PLATFORMS None TensorFlow TFLite)
+
+# Validate the setting
+list(FIND VALID_NEURAL_NET_PLATFORMS ${NEURAL_NET_PLATFORM} index)
+if(index EQUAL -1)
+  message(FATAL_ERROR "NEURAL_NET_PLATFORM must be one of ${VALID_NEURAL_NET_PLATFORMS}")
+endif()
+
+if (NOT NEURAL_NET_PLATFORM STREQUAL "None")
   add_subdirectory("neuralnets")
 endif()
