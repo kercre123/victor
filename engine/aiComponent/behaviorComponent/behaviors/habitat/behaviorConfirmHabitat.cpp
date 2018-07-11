@@ -200,6 +200,7 @@ void BehaviorConfirmHabitat::OnBehaviorActivated()
 void BehaviorConfirmHabitat::OnBehaviorDeactivated()
 {
   PRINT_NAMED_INFO("ConfirmHabitat.Deactivated","");
+  GetBEI().GetCliffSensorComponent().EnableStopOnWhite(false);
   _dVars = DynamicVariables();
 }
 

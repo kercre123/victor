@@ -37,6 +37,7 @@
     // The engine has sent a new json blob.
     habitatInfoDiv.empty();
     habitatInfoDiv.append('<div class="detectionTitle">' + "Detection state: " + data["habitatState"] + '</div>');
+    habitatInfoDiv.append('<div class="stopOnWhiteEnabled">' + "Stop-On-White enabled: " + data["stopOnWhiteEnabled"] + '</div>');
   };
 
   myMethods.update = function(dt, elem) { };

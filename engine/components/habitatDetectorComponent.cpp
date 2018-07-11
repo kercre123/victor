@@ -107,7 +107,6 @@ void HabitatDetectorComponent::HandleMessage(const ExternalInterface::RobotOffTr
   if(msg.treadsState==OffTreadsState::OnTreads) {
     _habitatBelief = HabitatBeliefState::Unknown;
     _detectedWhiteFromCliffs = false;
-    _robot->GetCliffSensorComponent().EnableStopOnWhite(true);
   }
 }
 
@@ -171,7 +170,6 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
       // impossible configurations when not on the charger platform
       _habitatBelief = HabitatBeliefState::NotInHabitat;
       _habitatLineRelPose = HabitatLineRelPose::Invalid;
-      _robot->GetCliffSensorComponent().EnableStopOnWhite(false);
     } else {
       // note: we take specific actions based on the line-pose determined here
       // inside the behavior ConfirmHabitat
@@ -202,11 +200,9 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
       if(_habitatLineRelPose == HabitatLineRelPose::WhiteFLFR) {
         if(IsProxObservingHabitatWall()) {
           _habitatBelief = HabitatBeliefState::InHabitat;
-          _robot->GetCliffSensorComponent().EnableStopOnWhite(true);
           PRINT_NAMED_INFO("HabitatDetectorComponent.UpdateDependent.InHabitat","");
         } else {
           _habitatBelief = HabitatBeliefState::NotInHabitat;
-          _robot->GetCliffSensorComponent().EnableStopOnWhite(false);
           PRINT_NAMED_INFO("HabitatDetectorComponent.UpdateDependent.NotInHabitat","");
         }
       }
@@ -233,6 +229,7 @@ void HabitatDetectorComponent::SendDataToWebViz() const
     if (webService!= nullptr) {
       Json::Value toSend = Json::objectValue;
       toSend["habitatState"] = EnumToString(_habitatBelief);
+      toSend["stopOnWhiteEnabled"] = _robot->GetCliffSensorComponent().IsStopOnWhiteEnabled() ? "yes" : "no";
       webService->SendToWebViz(kWebVizHabitatModuleName, toSend);
     }
   }
