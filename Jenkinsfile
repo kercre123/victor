@@ -1,5 +1,13 @@
+#!/usr/bin/env groovy
+
 node('victor-slaves') {
-    checkout scm 
+    checkout([
+         $class: 'GitSCM',
+         branches: scm.branches,
+         doGenerateSubmoduleConfigurations: scm.doGenerateSubmoduleConfigurations,
+         extensions: scm.extensions,
+         userRemoteConfigs: scm.userRemoteConfigs
+    ])
     stage('json lint') {
         sh './lib/util/tools/build/jsonLint/jsonLint.sh resources'    
     }
