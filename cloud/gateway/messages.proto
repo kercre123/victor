@@ -751,10 +751,11 @@ message NetworkStats {
 message RobotStatsRequest {}
 
 message RobotStatsResponse {
-  float current_voltage = 1;
-  BatteryLevel battery_level = 2;
-  string os_version = 3;
-  NetworkStats network_stats = 4;
-  string engine_build_id = 5;
+  ResultStatus status = 1;
+  float current_voltage = 2;
+  BatteryLevel battery_level = 3;
+  string os_version = 4;
+  NetworkStats network_stats = 5;
+  string engine_build_id = 6;
 }
 
