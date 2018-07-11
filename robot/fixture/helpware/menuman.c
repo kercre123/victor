@@ -242,7 +242,7 @@ void command_motors(struct HeadToBody* data)
     data->motorPower[MOTOR_RIGHT] = -gWheelTestPower;
     data->motorPower[MOTOR_LIFT] = gLiftTestPower;
     data->motorPower[MOTOR_HEAD] = gHeadTestPower;
-    
+
     if (lift_drop_count)
     {
       lift_drop_count--;
@@ -430,7 +430,7 @@ void handle_LifeTestSquareWave(void* param)
 {
   printf("Square Wave Test Selected\n");
   gLifeTesting.square_wave_proc.proc_fd = pidopen("./testsquarewav.sh", "", &gLifeTesting.square_wave_proc.wait_pid);
-  gLifeTesting.square_wave = true;
+//  gLifeTesting.square_wave = true;  //monitoring this pid makes it crash for some reason.
 }
 
 void handle_LifeTestMotorsScreenSpeaker(void* param) {
@@ -494,7 +494,7 @@ MENU_ITEMS(TX11) = {
   MENU_SHELL("TX 11b  @ 2462MHz", "11B_LONG_11_MBPS 11"),
   MENU_SHELL("Carrier @ 2462MHz", "CW 11"),
   MENU_SHELL("TX BLE  @ 2480MHz", "BLE 0x27"),  // 39
-  MENU_SHELL("RX      @ 2480MHz", "RX 0x27"),  
+  MENU_SHELL("RX      @ 2480MHz", "RX 0x27"),
 };
 MENU_CREATE(TX11);
 
@@ -524,7 +524,7 @@ MENU_ITEMS(Main) = {
   MENU_SUBMENU("RF Lo", TX1),
   MENU_SUBMENU("RF Mid", TX6),
   MENU_SUBMENU("RF Hi", TX11),
-  MENU_SUBMENU("RF 13", TX13),  
+  MENU_SUBMENU("RF 13", TX13),
   MENU_ACTION("Burn CPU", MainBurn ),
   MENU_ACTION("Cube Test", MainCubeTest ),
   MENU_ACTION("Motor Test", MainMotorTest ),
