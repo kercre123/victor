@@ -12,6 +12,7 @@
     "SingletonWallTimeCoordinator",
     "TimerUtilityCoordinator",
     "WeatherResponses",
+    "GreetAfterLongTime",
     "TakeAPhotoCoordinator",
     "ReactToTouchPetting",
     "InterruptingVoiceReactions",

@@ -1735,6 +1735,10 @@
   {
     "CladEvent": "NoWifiIcon",
     "AnimName": "ag_nowifi_icon"
+  },
+  {
+    "CladEvent": "GreetAfterLongTime",
+    "AnimName" : "ag_greeting_happy"
   }
 
 ]

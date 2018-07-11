@@ -122,6 +122,7 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree
   GlobalInterruptions,
+  GreetAfterLongTime,
   HighLevelAI,
 
   // victorBehaviorTree/highLevelDelegates/exploring

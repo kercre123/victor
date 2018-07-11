@@ -330,6 +330,7 @@ enum int_32 AnimationTrigger
   WakeupGetout,
 
   // Animation triggers not currently used in Victor, but which we'll probably need eventually
+  GreetAfterLongTime,
   ANTICIPATED_ReactToSoundOffChargerAsleepAmbient,
   ANTICIPATED_ReactToSoundOffChargerObserveAmbient,
   ANTICIPATED_ReactToSoundOnChargerAsleepAmbient,

@@ -8,6 +8,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorFactory.h"
 
+#include "engine/aiComponent/behaviorComponent/behaviors/behaviorGreetAfterLongTime.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorHighLevelAI.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorWait.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimGetInLoop.h"
@@ -166,6 +167,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
 
   switch (behaviorType)
   {
+    case BehaviorClass::GreetAfterLongTime:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorGreetAfterLongTime(config));
+      break;
+    }
+    
     case BehaviorClass::HighLevelAI:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorHighLevelAI(config));
