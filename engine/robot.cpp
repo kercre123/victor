@@ -31,6 +31,7 @@
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/buildVersion.h"
 #include "engine/charger.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/batteryComponent.h"
@@ -83,7 +84,6 @@
 #include "engine/robotStateHistory.h"
 #include "engine/robotToEngineImplMessaging.h"
 #include "engine/viz/vizManager.h"
-#include "engine/buildVersion.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
@@ -98,8 +98,8 @@
 #include "util/helpers/ankiDefines.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
-#include "util/transport/reliableConnection.h"
 #include "util/transport/connectionStats.h"
+#include "util/transport/reliableConnection.h"
 
 #include "proto/external_interface/shared.pb.h"
 #include "osState/osState.h"
