@@ -54,7 +54,8 @@ struct NeuralNetParams
   // TODO: Not fully supported yet (VIC-3141)
   bool                      memoryMapGraph = false;
   
-  
+  std::string               visualizationDirectory = ""; 
+
   // Populate from Json config
   Result SetFromConfig(const Json::Value& config);
   

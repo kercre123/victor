@@ -65,6 +65,7 @@ Result NeuralNetParams::SetFromConfig(const Json::Value& config)
   GetFromConfig(inputWidth);
   GetFromConfig(architecture);
   GetFromConfig(memoryMapGraph);
+  GetFromConfig(visualizationDirectory);
   GetFromConfig(benchmarkRuns);
   
   if("ssd_mobilenet" == architecture)

@@ -29,7 +29,9 @@ namespace Vision {
 class INeuralNetModel
 {
 public:
-  
+
+  INeuralNetModel(const std::string cachePath);
+
   ~INeuralNetModel()
   {
     
@@ -71,13 +73,22 @@ protected:
   void LocalizedBinaryOutputHelper(const T* outputData, TimeStamp_t timestamp,
                                    std::list<Vision::SalientPoint>& salientPoints);
 
+  template<typename T>
+  void ResponseMapOutputHelper(const T* outputData, TimeStamp_t timestamp,
+                                 const int numberOfChannels,
+                                 std::list<Vision::SalientPoint>& salientPoints);
+  void SaveObjectnessResponseMaps(const std::vector<cv::Mat>& channels, const int numberOfChannels,
+                                  const TimeStamp_t timestamp);
+
   NeuralNetParams                           _params;
   std::vector<std::string>                  _labels;
   
   // For OutputType::BinaryLocalization
   cv::Mat_<uint8_t>                         _detectionGrid;
   cv::Mat_<int32_t>                         _labelsGrid;
-  
+
+private:
+  std::string _cachePath;
 };
 
 } // namespace Vision

@@ -22,7 +22,6 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 
-#include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/quoteMacro.h"
 
@@ -32,14 +31,6 @@
 namespace Anki {
 namespace Vision {
 
-namespace {
-#define CONSOLE_GROUP "Vision.NeuralNetRunner"
-
-  CONSOLE_VAR_RANGED(f32, kNeuralNetRunner_TimeoutDuration_sec,  CONSOLE_GROUP, 10.f, 1., 15.f);
-
-#undef CONSOLE_GROUP
-}
-  
 static const char * const kLogChannelName = "NeuralNets";
   
 // Useful just for printing every frame, since detection is slow, even through the profiler
@@ -63,6 +54,7 @@ private:
   std::string _cachePath;
   int         _pollPeriod_ms;
   bool        _isVerbose = false;
+  float       _timeoutDuration_sec = 10.f;
   
   Profiler& _profiler;
   
@@ -84,10 +76,6 @@ Result NeuralNetRunner::Model::LoadModel(const std::string& modelPath, const std
   
   _cachePath = cachePath;
 
-  // Clear the cache of any stale images/results:
-  Util::FileUtils::RemoveDirectory(_cachePath);
-  Util::FileUtils::CreateDirectory(_cachePath);
-
   if (false == JsonTools::GetValueOptional(config, "pollPeriod_ms", _pollPeriod_ms))
   {
     PRINT_NAMED_ERROR("NeuralNetRunner.Model.LoadModel.MissingPollPeriod", "");
@@ -98,6 +86,16 @@ Result NeuralNetRunner::Model::LoadModel(const std::string& modelPath, const std
                 "Polling period: %dms, Cache: %s", _pollPeriod_ms, _cachePath.c_str());
   
   JsonTools::GetValueOptional(config, "verbose", _isVerbose);
+
+  // Overwrite timeout if it's in the neural net config. This is
+  // primarily motivated by longer running models
+  if (false == JsonTools::GetValueOptional(config, "timeoutDuration_sec",
+                                           _timeoutDuration_sec))
+  {
+    PRINT_NAMED_INFO("NeuralNetRunner.Model.LoadModel.MissingTimeoutDuraction",
+                     "Keeping timeout at default value, %.3f seconds",
+                     _timeoutDuration_sec);
+  }
 
   return RESULT_OK;
 }
@@ -146,7 +144,7 @@ Result NeuralNetRunner::Model::Run(const ImageRGB& img, std::list<SalientPoint>&
     startTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     currentTime_sec = startTime_sec;
     
-    while( !resultAvailable && (currentTime_sec - startTime_sec < kNeuralNetRunner_TimeoutDuration_sec) )
+    while( !resultAvailable && (currentTime_sec - startTime_sec < _timeoutDuration_sec) )
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(_pollPeriod_ms));
       resultAvailable = Util::FileUtils::FileExists(resultFilename);
@@ -201,7 +199,7 @@ Result NeuralNetRunner::Model::Run(const ImageRGB& img, std::list<SalientPoint>&
   {
     PRINT_NAMED_WARNING("NeuralNetRunner.Model.PollingForResultTimedOut",
                         "Start:%.1fsec Current:%.1f Timeout:%.1fsec",
-                        startTime_sec, currentTime_sec, kNeuralNetRunner_TimeoutDuration_sec);
+                        startTime_sec, currentTime_sec, _timeoutDuration_sec);
   }
   
   return RESULT_OK;
