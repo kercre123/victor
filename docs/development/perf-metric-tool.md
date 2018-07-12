@@ -7,7 +7,7 @@ Some uses:
 * See that certain behaviors or activities use more or less engine CPU
 * Measure before-and-after average tick rates, for optimization attempts
 * Compare Debug vs. Release performance
-* For automated peformance testing
+* For automated performance testing
 
 What is recorded for each tick:
 * Engine duration: The time the engine tick took to execute, in ms
@@ -26,10 +26,46 @@ What is recorded for each tick:
 
 When results are dumped, a summary section shows extra information, including the mininum, maximum, average, and standard deviation for each of the appropriate stats.  This allows you to see, for example, the average engine tick rate, or the longest engine tick.
 
-### Prerequisites
-PerfMetric is optionally compiled into the engine.  Currently it is enabled by default for Debug builds, but disabled for Release builds.  To include it, use
+### Sample output
 
-```-DANKI_PERF_METRIC_ENABLED```
+```
+         Engine   Engine    Sleep    Sleep     Over      RtE   EtR   GtE   EtG   Viz  Battery
+       Duration     Freq Intended   Actual    Sleep    Count Count Count Count Count  Voltage  Active Feature/Behavior
+     0   25.839   59.744   33.591   33.904    0.313       24     0     0     7     0    3.970  Observing  LookInPlaceHeadUp
+     1   10.074   59.930   49.611   49.855    0.244       13     0     0     5     0    3.970  Observing  LookInPlaceHeadUp
+     2   13.431   59.941   46.324   46.509    0.185       25     0     0     4     0    3.970  Observing  LookInPlaceHeadUp
+     3   39.082   60.016   20.732   20.933    0.201       26     1     0     8     0    3.970  Observing  LookInPlaceHeadUp
+     4   12.754   59.972   47.044   47.217    0.173       24     1     0     6     0    3.970  Observing  LookInPlaceHeadUp
+     5   14.375   60.007   45.451   45.632    0.181       22     0     0     5     0    3.970  Observing  LookInPlaceHeadUp
+     6   17.166   59.973   42.652   42.806    0.154       28     1     0     4     0    3.970  Observing  LookInPlaceHeadUp
+     7   16.485   60.175   43.360   43.689    0.329       14     0     0     4     0    3.970  Observing  LookInPlaceHeadUp
+     8   30.402   59.971   29.268   29.569    0.301       23     0     0    10     0    3.970  Observing  LookInPlaceHeadUp
+     9   16.012   60.048   43.686   44.036    0.350       26     0     0     5     0    3.970  Observing  LookInPlaceHeadUp
+    10   18.250   59.882   41.399   41.631    0.232       24     0     0     7     0    3.970  Observing  LookInPlaceHeadUp
+    11   34.827   64.321   24.939   29.493    4.554       23     0     0     5     0    3.970  Observing  LookInPlaceHeadUp
+    12   14.444   55.636   41.001   41.191    0.190       24     0     0     7     0    3.970  Observing  LookInPlaceHeadUp
+    13   18.323   60.091   41.486   41.768    0.282       14     0     0     5     0    3.970  Observing  LookInPlaceHeadUp
+    14   24.480   59.900   35.238   35.420    0.182       27     0     0     9     0    3.970  Observing  LookInPlaceHeadUp
+    15   27.245   59.978   32.572   32.733    0.161       24     1     0     4     0    3.970  Observing  LookInPlaceHeadUp
+    16   11.492   60.740   48.347   49.247    0.900       24     0     0     4     0    3.969  Observing  LookInPlaceHeadUp
+    17   17.585   59.299   41.514   41.713    0.199       25     0     0     6     0    3.969  Observing  LookInPlaceHeadUp
+    18   11.974   59.962   47.825   47.987    0.162       13     0     0     7     0    3.969  Observing  LookInPlaceHeadUp
+    19   29.614   64.440   30.223   34.825    4.602       24     0     0     4     0    3.969  Observing  LookInPlaceHeadUp
+ Summary:  (RELEASE build; VICOS; 20 engine ticks; 1.204 seconds total)
+         Engine   Engine    Sleep    Sleep     Over      RtE   EtR   GtE   EtG   Viz  Battery
+       Duration     Freq Intended   Actual    Sleep    Count Count Count Count Count  Voltage
+  Min:   10.074   55.636   20.732   20.933    0.154     13.0   0.0   0.0   4.0   0.0    3.969
+  Max:   39.082   64.440   49.611   49.855    4.602     28.0   1.0   0.0  10.0   0.0    3.970
+ Mean:   20.193   60.201   39.313   40.008    0.695     22.4   0.2   0.0   5.8   0.0    3.970
+  Std:    8.161    1.700    8.063    7.553    1.304      4.6   0.4   0.0   1.7   0.0    0.000
+```
+
+### Prerequisites
+PerfMetric is compiled into the engine by default for Debug and Release builds, but not for Shipping builds.  To override the default, use
+
+```-DANKI_PERF_METRIC_ENABLED=1```
+
+(or 0 to disable)
 
 ### Use from command line
 Currently, the only interface to PerfMetric is through Victor's embedded web server.  From the command line, this will start a recording session, assuming a robot IP of 192.168.42.82:
@@ -48,7 +84,7 @@ Here is the complete list of commands and what they do:
 * "start" starts recording; if a recording was in progress, the buffer is reset before re-starting
 * "stop" stops recording
 * "dumplog" dumps the summary of results to the log
-* "dumpallall" dumps the entire recorded tick buffer, along with the summary, to the log
+* "dumplogall" dumps the entire recorded tick buffer, along with the summary, to the log
 * "dumpresponse" returns summary as HTTP response
 * "dumpresponseall" returns all info as HTTP response
 * "dumpfiles" writes all info to two files on the robot:  One is a formatted txt file, and the other a csv file.  These go in cache/perfMetricLogs
@@ -68,4 +104,3 @@ When using with webots pure simulator, use 'localhost' as your IP.  Also note th
 * Record visual schedule mediator info
 * HTML interface (start/stop buttons, and an area to see output)
 * Automated performance testing
-
