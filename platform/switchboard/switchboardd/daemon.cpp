@@ -93,7 +93,8 @@ void Daemon::Christen() {
   RtsKeys savedSession = SavedSessionManager::LoadRtsKeys();
   bool hasName = false;
 
-  if(savedSession.keys.version == SB_PAIRING_PROTOCOL_VERSION) {
+  if((savedSession.keys.version == SB_PAIRING_PROTOCOL_VERSION) || 
+    (savedSession.keys.version == V2)) {
     // if saved session file is valid, retrieve saved hasName field
     hasName = savedSession.keys.id.hasName;
     Log::Write("[Chr] Valid version.");
