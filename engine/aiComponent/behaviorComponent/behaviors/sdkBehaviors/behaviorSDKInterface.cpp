@@ -165,6 +165,7 @@ void BehaviorSDKInterface::BehaviorUpdate()
 }
 
 void BehaviorSDKInterface::HandleDriveOffChargerComplete() {
+  SetAllowedToRunActions(true);
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
     auto* driveOffChargerResult = new external_interface::DriveOffChargerResult;
@@ -174,6 +175,7 @@ void BehaviorSDKInterface::HandleDriveOffChargerComplete() {
 }  
 
 void BehaviorSDKInterface::HandleDriveOnChargerComplete() {
+  SetAllowedToRunActions(true);
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
     auto* driveOnChargerResult = new external_interface::DriveOnChargerResult;
@@ -255,8 +257,19 @@ void BehaviorSDKInterface::HandleWhileActivated(const EngineToGameEvent& event)
   }
 }
 
+// Use this to prevent (or allow) motor controls and actions from running in
+// robotEventHandler and movementComponent. We only want to allow these when
+// the SDK behavior is activated, or for testing.
+//
+// One time that we want to disable these in BehaviorSDKInterface is when the
+// SDK behavior is delegating to another behavior.
+void BehaviorSDKInterface::SetAllowedToRunActions(bool allowedtoRunActions) {
+  auto& robotInfo = GetBEI().GetRobotInfo();
+  robotInfo.GetMoveComponent().SetAllowedToHandleActions(allowedtoRunActions);
+  robotInfo.GetRobotEventHandler().SetAllowedToHandleActions(allowedtoRunActions);
+}
+
 void BehaviorSDKInterface::HandleWhileActivated(const AppToEngineEvent& event) {
-  // TODO  bools _isAllowedToHandleActions in both movementComponent and robotEventHandler will need to be set to false when a behavior is running.
   if( event.GetData().GetTag() == external_interface::GatewayWrapperTag::kDriveOffChargerRequest ) {
      DriveOffChargerRequest(event.GetData().drive_off_charger_request());
   } else if( event.GetData().GetTag() == external_interface::GatewayWrapperTag::kDriveOnChargerRequest ) {
@@ -268,6 +281,7 @@ void BehaviorSDKInterface::HandleWhileActivated(const AppToEngineEvent& event) {
 void BehaviorSDKInterface::DriveOffChargerRequest(const external_interface::DriveOffChargerRequest& driveOffChargerRequest) {
   if (_iConfig.driveOffChargerBehavior->WantsToBeActivated()) {
     if (DelegateIfInControl(_iConfig.driveOffChargerBehavior.get(), &BehaviorSDKInterface::HandleDriveOffChargerComplete)) {
+      SetAllowedToRunActions(false);
       return;
     }
   }
@@ -285,6 +299,7 @@ void BehaviorSDKInterface::DriveOffChargerRequest(const external_interface::Driv
 void BehaviorSDKInterface::DriveOnChargerRequest(const external_interface::DriveOnChargerRequest& driveOnChargerRequest) {
   if (_iConfig.goHomeBehavior->WantsToBeActivated()) {
     if (DelegateIfInControl(_iConfig.goHomeBehavior.get(), &BehaviorSDKInterface::HandleDriveOnChargerComplete)) {
+      SetAllowedToRunActions(false);
       return;
     }
   }

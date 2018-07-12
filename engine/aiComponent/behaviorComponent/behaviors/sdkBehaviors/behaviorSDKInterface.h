@@ -53,6 +53,8 @@ private:
   void HandleDriveOffChargerComplete();
   void HandleDriveOnChargerComplete();
 
+  void SetAllowedToRunActions(bool allowedtoRunActions);
+
   struct InstanceConfig {
     InstanceConfig();
 
