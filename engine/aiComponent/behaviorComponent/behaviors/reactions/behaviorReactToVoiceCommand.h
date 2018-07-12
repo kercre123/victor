@@ -67,6 +67,7 @@ protected:
   {
     IntentHeard,
     IntentUnknown,
+    SilenceTimeout,
     NoIntentHeard,
     Error
   };
@@ -135,6 +136,7 @@ private:
 
     // behaviors to handle specific failure cases
     ICozmoBehaviorPtr unmatchedIntentBehavior;
+    ICozmoBehaviorPtr silenceIntentBehavior;
     ICozmoBehaviorPtr noCloudBehavior;
     ICozmoBehaviorPtr noWifiBehavior;
 

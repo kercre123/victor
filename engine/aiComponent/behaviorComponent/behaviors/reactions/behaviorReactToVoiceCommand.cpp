@@ -64,7 +64,7 @@ namespace {
   const char* kExitAfterGetInKey                = "exitAfterGetIn";
 
   constexpr float            kMaxRecordTime_s   = ( (float)MicData::kStreamingTimeout_ms / 1000.0f );
-  constexpr float            kListeningBuffer_s = 2.0f;
+  constexpr float            kDirectionalityListeningBuffer_s = 2.0f;
 
 #define CONSOLE_GROUP "BehaviorReactToVoiceCommand"
 
@@ -74,6 +74,11 @@ namespace {
   // an error sooner than this. Note that the behavior will also consider the intent to be an error if the
   // stream doesn't open within this amount of time, so don't lower this number too much
   CONSOLE_VAR_RANGED( float, kMinListeningTimeout_s, CONSOLE_GROUP, 5.0f, 0.0f, 30.0f);
+
+  // In addition to the max time the mic process will record, we want to allow some buffer room for chipper to
+  // get and process it's response, so we don't timeout too early. This variable controls that extra amount of
+  // time
+  CONSOLE_VAR_RANGED( float, kCloudTimeoutBuffer_s, CONSOLE_GROUP, 7.0f, 0.0f, 20.0f);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -193,6 +198,10 @@ void BehaviorReactToVoiceCommand::InitBehavior()
   DEV_ASSERT( _iVars.unmatchedIntentBehavior != nullptr,
               "BehaviorReactToVoiceCommand.Init.UnmatchedIntentBehaviorMissing");
 
+  _iVars.silenceIntentBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(TriggerWordWithoutIntent));
+  DEV_ASSERT( _iVars.silenceIntentBehavior != nullptr,
+              "BehaviorReactToVoiceCommand.Init.silenceIntentBehavior");
+
   _iVars.noCloudBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID( BEHAVIOR_ID(NoCloud) );
   DEV_ASSERT( _iVars.noCloudBehavior != nullptr,
               "BehaviorReactToVoiceCommand.Init.NoCloudBehaviorMissing");
@@ -216,6 +225,7 @@ void BehaviorReactToVoiceCommand::GetAllDelegates( std::set<IBehavior*>& delegat
   }
 
   delegates.insert( _iVars.unmatchedIntentBehavior.get() );
+  delegates.insert( _iVars.silenceIntentBehavior.get() );
   delegates.insert( _iVars.noCloudBehavior.get() );
   delegates.insert( _iVars.noWifiBehavior.get() );
 }
@@ -344,7 +354,7 @@ void BehaviorReactToVoiceCommand::BehaviorUpdate()
     // error between the two, let's add a bit of buffer to make sure we don't compute
     // the reaction direction AFTER the anim process has "unlocked" the selected direction
     const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    if ( currentTime < ( _dVars.streamingBeginTime + kMaxRecordTime_s - kListeningBuffer_s ) )
+    if ( currentTime < ( _dVars.streamingBeginTime + kMaxRecordTime_s - kDirectionalityListeningBuffer_s ) )
     {
       // we need to constantly update our reaction direction in case the robot
       // is rotating ... there appears to be a bit of lag in the update from SE
@@ -483,7 +493,7 @@ void BehaviorReactToVoiceCommand::StartListening()
                   - _dVars.streamingBeginTime );
     }
 
-    const float timeout = ( kMaxRecordTime_s - elapsed );
+    const float timeout = ( (kMaxRecordTime_s + kCloudTimeoutBuffer_s) - elapsed );
     DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::VC_ListeningLoop,
                                                      0, true, (uint8_t)AnimTrackFlag::NO_TRACKS,
                                                      std::max( timeout, 1.0f ) ),
@@ -586,6 +596,16 @@ void BehaviorReactToVoiceCommand::UpdateUserIntentStatus()
       PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.UpdateUserIntentStatus.Unknown",
                      "Heard an intent, but it was unknown");
     }
+
+    static const UserIntentTag silence = USER_INTENT(silence);
+    if ( uic.IsUserIntentPending( silence ) )
+    {
+      SmartActivateUserIntent( silence );
+      _dVars.intentStatus = EIntentStatus::SilenceTimeout;
+      PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.UpdateUserIntentStatus.Silence",
+                     "Got response declaring silence timeout occurred");
+    }
+
   }
   else if( uic.WasUserIntentError() ) {
     uic.ResetUserIntentError();
@@ -630,7 +650,7 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
         }
         else
         {
-          PRINT_CH_DEBUG("BehaviorReactToVoiceCommand.Thinking.ReactionDoesntWantToActivate",
+          PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.Thinking.ReactionDoesntWantToActivate",
                          "%s: intent reaction behavior '%s' doesn't want to activate",
                          GetDebugLabel().c_str(),
                          _iVars.reactionBehavior->GetDebugLabel().c_str());
@@ -683,6 +703,21 @@ void BehaviorReactToVoiceCommand::TransitionToIntentReceived()
       }
 
       // even an unknown intent means we got something back from the cloud, so reset those transfer counters
+      GetBehaviorComp<AttentionTransferComponent>().ResetAttentionTransfer(AttentionTransferReason::NoWifi);
+      GetBehaviorComp<AttentionTransferComponent>().ResetAttentionTransfer(AttentionTransferReason::NoCloudConnection);
+      break;
+    }
+
+    case EIntentStatus::SilenceTimeout: {
+      PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent.Silence",
+                      "Heard silence from the user");
+      GetBEI().GetMoodManager().TriggerEmotionEvent( "NoValidVoiceIntent" );
+      if( _iVars.silenceIntentBehavior->WantsToBeActivated() ) {
+        DelegateIfInControl(_iVars.silenceIntentBehavior.get());
+      }
+
+      // even a silent intent means we got something back from the cloud, so reset those transfer
+      // counters. This does not reset unmatched intent because the user may have difficulty speaking
       GetBehaviorComp<AttentionTransferComponent>().ResetAttentionTransfer(AttentionTransferReason::NoWifi);
       GetBehaviorComp<AttentionTransferComponent>().ResetAttentionTransfer(AttentionTransferReason::NoCloudConnection);
       break;
