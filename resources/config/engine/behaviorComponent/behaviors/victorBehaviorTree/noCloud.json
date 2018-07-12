@@ -1,16 +1,30 @@
 {
-  "behaviorClass": "AttentionTransferIfNeeded",
   "behaviorID": "NoCloud",
+  "behaviorClass": "DispatcherQueue",
 
-  "attentionTransferReason": "NoCloudConnection",
-  "recentOccurrence": {
-    "numberOfTimes": 2,
-    "amountOfSeconds": 300.0
-  },
+  "behaviors": [
+    "NoCloudAnim",
+    "NoCloudAttention"
+  ],
 
+  "anonymousBehaviors": [
+    {
+      "behaviorName": "NoCloudAnim",
+      "behaviorClass": "AnimSequence",
+      "playOnChargerWithoutBody": true,
+      "animTriggers": [
+        "NoCloudIcon"
+      ]
+    },
+    {
+      "behaviorName": "NoCloudAttention",
+      "behaviorClass": "AttentionTransferIfNeeded",
 
-  "animsIfNotRecent": [
-    "NoCloudIcon"
-  ]
-  
+      "attentionTransferReason": "NoCloudConnection",
+      "recentOccurrence": {
+        "numberOfTimes": 2,
+        "amountOfSeconds": 300.0
+      }
+    }
+  ]  
 }
