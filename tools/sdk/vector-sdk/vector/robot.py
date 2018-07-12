@@ -10,8 +10,9 @@ import asyncio
 import logging
 
 from . import (animation, backpack, behavior, connection,
-               events, exceptions, faces, motors,
+               events, exceptions, faces, motors, sync,
                oled_face, photos, util, world)
+from .messaging import protocol
 
 MODULE_LOGGER = logging.getLogger(__name__)
 
@@ -274,13 +275,11 @@ class Robot:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.disconnect()
 
-
-    @actions._as_actionable
+    @sync.Synchronizer.wrap
     async def get_robot_stats(self):
         get_robot_stats_request = protocol.RobotStatsRequest()
-        result = await self.connection.RobotStats(get_robot_stats_request)
-        self.logger.info(f'{type(result)}: {str(result).strip()}')
-        return result
+        return await self.conn.interface.RobotStats(get_robot_stats_request)
+
 
 class AsyncRobot(Robot):
     def __init__(self, *args, **kwargs):

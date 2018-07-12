@@ -271,15 +271,15 @@ MESSAGES_TO_TEST = [
      TestResultMatches(protocol.SetBackpackLEDsResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
 
     # RobotStats message
-    ( client.ExternalInterfaceServicer.RobotStats, 
-        protocol.RobotStatsRequest(), 
-        TestResultIsTypeWithStatusAndFieldNames(protocol.RobotStatsResponse, 
-                                                protocol.ResultStatus(description="Message processed"), 
-                                                ["current_voltage",
-                                                "battery_level",
-                                                "os_version",
-                                                "network_stats",
-                                                "engine_build_id"]) ),
+    (client.ExternalInterfaceServicer.RobotStats,
+     protocol.RobotStatsRequest(),
+     TestResultIsTypeWithStatusAndFieldNames(protocol.RobotStatsResponse,
+                                             protocol.ResultStatus(description="Message processed"),
+                                             ["current_voltage",
+                                              "battery_level",
+                                              "os_version",
+                                              "network_stats",
+                                              "engine_build_id"])),
 
     # NOTE: Add additional messages here
 ]
