@@ -143,6 +143,7 @@ enum int_32 AnimationTrigger
   KnowledgeGraphSearchingFailGetOut,
   KnowledgeGraphAnswer,
   KnowledgeGraphGetOut,
+  KnowledgeGraphSuccessReaction,
 
   LookAtDevice,
   LookAtDeviceGetIn,

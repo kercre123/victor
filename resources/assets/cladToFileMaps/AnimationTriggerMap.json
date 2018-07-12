@@ -1749,6 +1749,10 @@
     "AnimName": "ag_knowledgegraph_getout_01"
   },
   {
+    "CladEvent": "KnowledgeGraphSuccessReaction",
+    "AnimName": "ag_knowledgegraph_success_01"
+  },
+  {
     "CladEvent": "ShutUp",
     "AnimName": "ag_vc_shutup"
   },
