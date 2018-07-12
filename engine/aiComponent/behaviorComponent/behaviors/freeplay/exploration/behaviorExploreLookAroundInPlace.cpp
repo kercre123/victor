@@ -14,6 +14,7 @@
  **/
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorExploreLookAroundInPlace.h"
 
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "engine/actions/animActions.h"

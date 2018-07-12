@@ -135,16 +135,21 @@ bool IBEICondition::AreConditionsMet(BehaviorExternalInterface& behaviorExternal
   
   if( ANKI_DEV_CHEATS ) {
     if( checkDebugFactors ) {
-      const bool valueChanged = (_lastMetValue != met);
-      _lastMetValue = met;
-      auto& factors = *_debugFactors.get();
-      BuildDebugFactors( factors );
-      // check valueChanged too in case the sole debug factor is _lastMetValue == false.
-      if( valueChanged || factors.HaveChanged() ) {
-        SendConditionsToWebViz( behaviorExternalInterface );
+
+      // only build factors if webviz is connected
+      const auto* webService = behaviorExternalInterface.GetRobotInfo().GetContext()->GetWebService();
+      if( webService != nullptr && webService->IsWebVizClientSubscribed(kWebVizModuleName) ) {
+        const bool valueChanged = (_lastMetValue != met);
+        _lastMetValue = met;
+        auto& factors = *_debugFactors.get();
+        BuildDebugFactors( factors );
+        // check valueChanged too in case the sole debug factor is _lastMetValue == false.
+        if( valueChanged || factors.HaveChanged() ) {
+          SendConditionsToWebViz( behaviorExternalInterface );
+        }
+        factors.Reset();
+        _checkDebugFactors = true; // other root-level conditions will be evaluated again
       }
-      factors.Reset();
-      _checkDebugFactors = true; // other root-level conditions will be evaluated again
     }
   }
   _lastMetValue = met;
@@ -181,7 +186,7 @@ BEIConditionDebugFactors& IBEICondition::GetDebugFactors()
 void IBEICondition::SendConditionsToWebViz( BehaviorExternalInterface& bei ) const
 {
   const auto* webService = bei.GetRobotInfo().GetContext()->GetWebService();
-  if( !webService->IsWebVizClientSubscribed(kWebVizModuleName) ) {
+  if( nullptr == webService || !webService->IsWebVizClientSubscribed(kWebVizModuleName) ) {
     return;
   }
 

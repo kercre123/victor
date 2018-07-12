@@ -1,25 +1,34 @@
 #!/usr/bin/env python3
 
-import math
-import asyncio
+'''
+test_drive
+'''
+import os
+import sys
+import time
 
-import os, sys
+import utilities
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import vector
+import vector  # pylint: disable=wrong-import-position
+from vector.util import degrees, distance_mm, speed_mmps  # pylint: disable=wrong-import-position
 
-async def main(robot):
-    # @TODO: Commenting this out because drive_off_contacts seems to disable all motor control until victor restarts.  Will uncomment if there is progress on that.
-    #await robot.drive_off_contacts()
-    # @TODO: Remove the manual sleeps when we can block properly on these calls
-    #await asyncio.sleep(1.0)
 
-    await robot.drive_straight(100.0)
-    # @TODO: Remove the manual sleeps when we can block properly on these calls
-    await asyncio.sleep(2.0)
+def main():
+    '''main execution'''
+    args = utilities.parse_args()
 
-    await robot.turn_in_place(math.pi)
-    # @TODO: Remove the manual sleeps when we can block properly on these calls
-    await asyncio.sleep(2.0)
+    print("------ begin testing driving along a straight path and turning in place ------")
+
+    # The robot shall drive straight, stop and then turn around
+    with vector.Robot(args.ip, str(args.cert), port=args.port) as robot:
+        robot.behavior.drive_straight(distance_mm(200), speed_mmps(50))
+        time.sleep(2.0)  # Let enough time pass to drive straight
+
+        robot.behavior.turn_in_place(degrees(180))
+        time.sleep(2.0)  # Let enough time pass before SDK mode is de-activated
+
+    print("------ finished testing driving along a straight path and turning in place ------")
+
 
 if __name__ == "__main__":
-    vector.robot.run_program(main, sys.argv[1] if len(sys.argv) > 1 else None)
+    main()

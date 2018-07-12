@@ -14,6 +14,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/behaviorComponent/behaviorTypes.h"
 
 #include "coretech/common/engine/jsonTools.h"
@@ -132,7 +133,20 @@ ICozmoBehaviorPtr BehaviorContainer::FindBehaviorByExecutableType(ExecutableBeha
   return nullptr;
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::set<ICozmoBehaviorPtr> BehaviorContainer::FindBehaviorsByClass(BehaviorClass behaviorClass) const
+{
+  std::set<ICozmoBehaviorPtr> behaviorList;
+  for (const auto & behavior : _idToBehaviorMap)
+  {
+    if( GetBehaviorClass(behavior.second) == behaviorClass )
+    {
+      behaviorList.insert(behavior.second);
+    }
+  }
+  return behaviorList;
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorContainer::VerifyExecutableBehaviors() const
 {

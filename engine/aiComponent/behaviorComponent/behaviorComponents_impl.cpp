@@ -23,6 +23,7 @@ class BehaviorAudioComponent;
 
 class AIComponent;
 class AsyncMessageGateComponent;
+class BehaviorComponentMessageHandler;
 class BehaviorContainer;
 class BehaviorEventAnimResponseDirector;
 class BehaviorEventComponent;
@@ -32,7 +33,6 @@ class BehaviorSystemManager;
 class BehaviorTimerManager;
 class BlockWorld;
 class DelegationComponent;
-class DevBehaviorComponentMessageHandler;
 class FaceWorld;
 class BEIRobotInfo;
 class UserIntentComponent;
@@ -41,6 +41,7 @@ class ActiveBehaviorIterator;
 class BehaviorsBootLoader;
 class RobotStatsTracker;
 class AttentionTransferComponent;
+class PowerStateManager;
 
 } // namespace Cozmo
 
@@ -48,6 +49,7 @@ class AttentionTransferComponent;
 LINK_COMPONENT_TYPE_TO_ENUM(AIComponent,                        BCComponentID, AIComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(AsyncMessageGateComponent,          BCComponentID, AsyncMessageComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(Audio::BehaviorAudioComponent,      BCComponentID, BehaviorAudioComponent)
+LINK_COMPONENT_TYPE_TO_ENUM(BehaviorComponentMessageHandler,    BCComponentID, BehaviorComponentMessageHandler)
 LINK_COMPONENT_TYPE_TO_ENUM(BehaviorContainer,                  BCComponentID, BehaviorContainer)
 LINK_COMPONENT_TYPE_TO_ENUM(BehaviorEventAnimResponseDirector,  BCComponentID, BehaviorEventAnimResponseDirector)
 LINK_COMPONENT_TYPE_TO_ENUM(BehaviorEventComponent,             BCComponentID, BehaviorEventComponent)
@@ -57,7 +59,6 @@ LINK_COMPONENT_TYPE_TO_ENUM(BehaviorSystemManager,              BCComponentID, B
 LINK_COMPONENT_TYPE_TO_ENUM(BehaviorTimerManager,               BCComponentID, BehaviorTimerManager)
 LINK_COMPONENT_TYPE_TO_ENUM(BlockWorld,                         BCComponentID, BlockWorld)
 LINK_COMPONENT_TYPE_TO_ENUM(DelegationComponent,                BCComponentID, DelegationComponent)
-LINK_COMPONENT_TYPE_TO_ENUM(DevBehaviorComponentMessageHandler, BCComponentID, DevBehaviorComponentMessageHandler)
 LINK_COMPONENT_TYPE_TO_ENUM(FaceWorld,                          BCComponentID, FaceWorld)
 LINK_COMPONENT_TYPE_TO_ENUM(BEIRobotInfo,                       BCComponentID, RobotInfo)
 LINK_COMPONENT_TYPE_TO_ENUM(UserIntentComponent,                BCComponentID, UserIntentComponent)
@@ -66,6 +67,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(ActiveBehaviorIterator,             BCComponentID, A
 LINK_COMPONENT_TYPE_TO_ENUM(BehaviorsBootLoader,                BCComponentID, BehaviorsBootLoader)
 LINK_COMPONENT_TYPE_TO_ENUM(RobotStatsTracker,                  BCComponentID, RobotStatsTracker)
 LINK_COMPONENT_TYPE_TO_ENUM(AttentionTransferComponent,         BCComponentID, AttentionTransferComponent)
+LINK_COMPONENT_TYPE_TO_ENUM(PowerStateManager,                  BCComponentID, PowerStateManager)
 
 // Translate entity into string
 template<>
@@ -78,6 +80,7 @@ std::string GetComponentStringForID<Cozmo::BCComponentID>(Cozmo::BCComponentID e
     case Cozmo::BCComponentID::AIComponent:                        { return "AIComponent";}
     case Cozmo::BCComponentID::AsyncMessageComponent:              { return "AsyncMessageComponent";}
     case Cozmo::BCComponentID::BehaviorAudioComponent:             { return "BehaviorAudioComponent";}
+    case Cozmo::BCComponentID::BehaviorComponentMessageHandler:    { return "BehaviorComponentMessageHandler";}
     case Cozmo::BCComponentID::BehaviorContainer:                  { return "BehaviorContainer";}
     case Cozmo::BCComponentID::BehaviorEventAnimResponseDirector:  { return "BehaviorEventAnimResponseDirector";}
     case Cozmo::BCComponentID::BehaviorEventComponent:             { return "BehaviorEventComponent";}
@@ -86,7 +89,6 @@ std::string GetComponentStringForID<Cozmo::BCComponentID>(Cozmo::BCComponentID e
     case Cozmo::BCComponentID::BehaviorSystemManager:              { return "BehaviorSystemManager";}
     case Cozmo::BCComponentID::BlockWorld:                         { return "BlockWorld";}
     case Cozmo::BCComponentID::DelegationComponent:                { return "DelegationComponent";}
-    case Cozmo::BCComponentID::DevBehaviorComponentMessageHandler: { return "DevBehaviorComponentMessageHandler";}
     case Cozmo::BCComponentID::FaceWorld:                          { return "FaceWorld";}
     case Cozmo::BCComponentID::RobotInfo:                          { return "RobotInfo";}
     case Cozmo::BCComponentID::UserIntentComponent:                { return "UserIntentComponent";}
@@ -96,6 +98,7 @@ std::string GetComponentStringForID<Cozmo::BCComponentID>(Cozmo::BCComponentID e
     case Cozmo::BCComponentID::BehaviorsBootLoader:                { return "BehaviorsBootLoader";}
     case Cozmo::BCComponentID::RobotStatsTracker:                  { return "RobotStatsTracker";}
     case Cozmo::BCComponentID::AttentionTransferComponent:         { return "AttentionTransferComponent";}
+    case Cozmo::BCComponentID::PowerStateManager:                  { return "PowerStateManager";}
     case Cozmo::BCComponentID::Count:                              { return "Count";}
   }
 }

@@ -12,6 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeCubeMoved.h"
 
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"

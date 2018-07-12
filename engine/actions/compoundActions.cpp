@@ -324,9 +324,11 @@ namespace Anki {
       
       // if that was the last action, we're done
       if(_currentAction == _actions.end()) {
-        if(USE_ACTION_CALLBACKS) {
+        # if USE_ACTION_CALLBACKS
+        {
           RunCallbacks(ActionResult::SUCCESS);
         }
+        # endif
         return ActionResult::SUCCESS;
       } else if(currentTime_secs >= _waitUntilTime) {
         PRINT_NAMED_INFO("CompoundActionSequential.Update.NextAction",
@@ -350,9 +352,11 @@ namespace Anki {
           
           if(_currentAction == _actions.end()) {
             // no more actions, safe to return success for the compound action
-            if(USE_ACTION_CALLBACKS) {
+            # if USE_ACTION_CALLBACKS
+            {
               RunCallbacks(subResult);
             }
+            # endif
             return subResult;
           // more actions, just say we're still running
           } else if(subResult == ActionResult::SUCCESS) {
@@ -427,10 +431,11 @@ namespace Anki {
             case ActionResultCategory::ABORT:
             case ActionResultCategory::CANCELLED:
             {
-              if(USE_ACTION_CALLBACKS)
+              # if USE_ACTION_CALLBACKS
               {
                 RunCallbacks(subResult);
               }
+              # endif
               
               if(ShouldIgnoreFailure(subResult, *_currentAction))
               {
@@ -539,10 +544,11 @@ namespace Anki {
           case ActionResultCategory::ABORT:
           {
             // Return failure, aborting updating remaining actions the group
-            if(USE_ACTION_CALLBACKS)
+            # if USE_ACTION_CALLBACKS
             {
               RunCallbacks(subResult);
             }
+            # endif
             
             if(_endWhenFirstActionCompletes) {
               result = subResult;
@@ -568,11 +574,13 @@ namespace Anki {
         }
       } // for each action in the group
       
-      if(USE_ACTION_CALLBACKS) {
+      # if USE_ACTION_CALLBACKS
+      {
         if(result != ActionResult::RUNNING) {
           RunCallbacks(result);
         }
       }
+      # endif
       
       return result;
     } // CompoundActionParallel::Update()

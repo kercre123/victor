@@ -34,10 +34,11 @@ bool MemoryMapData::CanOverrideSelfWithContent(MemoryMapDataConstPtr newContent)
   else if ( newContentType == EContentType::ClearOfObstacle )
   {
     // ClearOfObstacle currently comes from vision or prox sensor having a direct line of sight
-    // to some object, so it can't clear negative space obstacles (IE cliffs). Additionally,
+    // to some object, so it can't clear obsstacles it cant see (cliffs and unrecognized). Additionally,
     // ClearOfCliff is currently a superset of Clear of Obstacle, so trust ClearOfCliff flags.
     const bool isTotalClear = ( dataType != EContentType::Cliff ) &&
-                              ( dataType != EContentType::ClearOfCliff );
+                              ( dataType != EContentType::ClearOfCliff ) &&
+                              ( dataType != EContentType::ObstacleUnrecognized );
     return isTotalClear;
   }
   else if ( newContentType == EContentType::InterestingEdge )
@@ -45,7 +46,6 @@ bool MemoryMapData::CanOverrideSelfWithContent(MemoryMapDataConstPtr newContent)
     // InterestingEdge can only override basic node types, because it would cause data loss otherwise. For example,
     // we don't want to override a recognized marked cube or a cliff with their own border
     if ( ( dataType == EContentType::ObstacleObservable   ) ||
-         ( dataType == EContentType::ObstacleCharger      ) ||
          ( dataType == EContentType::ObstacleUnrecognized ) ||
          ( dataType == EContentType::Cliff                ) ||
          ( dataType == EContentType::NotInterestingEdge   ) )
@@ -56,7 +56,6 @@ bool MemoryMapData::CanOverrideSelfWithContent(MemoryMapDataConstPtr newContent)
   else if ( newContentType == EContentType::ObstacleProx )
   {
     if ( ( dataType == EContentType::ObstacleObservable   ) ||
-         ( dataType == EContentType::ObstacleCharger      ) ||
          ( dataType == EContentType::Cliff                ) )
     {
       return false;
@@ -75,13 +74,6 @@ bool MemoryMapData::CanOverrideSelfWithContent(MemoryMapDataConstPtr newContent)
       return false;
     }
   }
-  else if ( newContentType == EContentType::ObstacleChargerRemoved )
-  {
-    // ObstacleChargerRemoved can only remove ObstacleCharger
-    if ( dataType != EContentType::ObstacleCharger ) {
-      return false;
-    }
-  }
   
   return true;
 }
@@ -97,8 +89,6 @@ ExternalInterface::ENodeContentTypeEnum MemoryMapData::GetExternalContentType() 
     case EContentType::Unknown:               { externalContentType = ENodeContentTypeEnum::Unknown;              break; }
     case EContentType::ClearOfObstacle:       { externalContentType = ENodeContentTypeEnum::ClearOfObstacle;      break; }
     case EContentType::ClearOfCliff:          { externalContentType = ENodeContentTypeEnum::ClearOfCliff;         break; }
-    case EContentType::ObstacleCharger:       { externalContentType = ENodeContentTypeEnum::ObstacleCharger;      break; }
-    case EContentType::ObstacleChargerRemoved:{ DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType");      break; } // Should never get this
     case EContentType::ObstacleUnrecognized:  { externalContentType = ENodeContentTypeEnum::ObstacleUnrecognized; break; }
     case EContentType::InterestingEdge:       { externalContentType = ENodeContentTypeEnum::InterestingEdge;      break; }
     case EContentType::NotInterestingEdge:    { externalContentType = ENodeContentTypeEnum::NotInterestingEdge;   break; }

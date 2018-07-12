@@ -19,6 +19,10 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+namespace ExternalInterface {
+struct RobotObservedMotion;
+}
 
 class BEIConditionMessageHelper;
 

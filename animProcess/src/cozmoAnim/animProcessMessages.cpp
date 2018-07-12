@@ -73,7 +73,7 @@ namespace {
 
   Anki::Cozmo::AnimEngine*                   _animEngine = nullptr;
   Anki::Cozmo::AnimationStreamer*            _animStreamer = nullptr;
-  Anki::Cozmo::StreamingAnimationModifier* _streamingAnimationModifier = nullptr;
+  Anki::Cozmo::StreamingAnimationModifier*   _streamingAnimationModifier = nullptr;
   Anki::Cozmo::Audio::EngineRobotAudioInput* _engAudioInput = nullptr;
   Anki::Cozmo::Audio::ProceduralAudioClient* _proceduralAudioClient = nullptr;
   const Anki::Cozmo::AnimContext*            _context = nullptr;
@@ -395,6 +395,11 @@ void Process_resetBeatDetector(const Anki::Cozmo::RobotInterface::ResetBeatDetec
   }
 }
 
+void Process_setLCDBrightnessLevel(const Anki::Cozmo::RobotInterface::SetLCDBrightnessLevel& msg)
+{
+  FaceDisplay::getInstance()->SetFaceBrightness(msg.level);
+}
+
 void Process_playbackAudioStart(const Anki::Cozmo::RobotInterface::StartPlaybackAudio& msg)
 {
   using namespace Audio;
@@ -635,28 +640,18 @@ Result AnimProcessMessages::Init(AnimEngine* animEngine,
 
 Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_nanosec)
 {
-  // If it has been more than 30 seconds and we still haven't connected to engine
-  // or robot process display a fault code
-  static BaseStationTime_t startTime_nanosec = currTime_nanosec;
-  static const BaseStationTime_t kTimeUntilNoProcessFaultCode_nanosec = Util::SecToNanoSec(30.f);
-  static bool faultCodeDisplayed = false;
-  if(!faultCodeDisplayed &&
-     currTime_nanosec - startTime_nanosec > kTimeUntilNoProcessFaultCode_nanosec)
-  {
-    if(!ANKI_VERIFY(AnimComms::IsConnectedToEngine(),
-                    "AnimProcessMessages.MonitorConnectionState.NotConnectedToEngine",
-                    "Not connected to engine process (currTime_nanosec %llu, startTime_nanosec %llu)",
-                    currTime_nanosec, startTime_nanosec))
-    {
-      faultCodeDisplayed = true;
-      FaultCode::DisplayFaultCode(FaultCode::NO_ENGINE_PROCESS);
-    }
-    // Connection to robot process fault code check is in Update()
-  }
-
-  // Send block connection state when engine connects
+  // If nonzero, we are scheduled to display a NO_ENGINE_PROCESS fault code
+  static BaseStationTime_t displayFaultCodeTime_nanosec = 0;
+  
+  // Amount of time for which we must be disconnected from the engine in order
+  // to display the NO_ENGINE_PROCESS fault code
+  static const BaseStationTime_t kDisconnectedTimeout_nanosec = Util::SecToNanoSec(5.f);
+  
+  // Check for changes in connection state to engine and send RobotAvailable and
+  // FirmwareVersion messages when engine connects
   static bool wasConnected = false;
-  if (!wasConnected && AnimComms::IsConnectedToEngine()) {
+  const bool isConnected = AnimComms::IsConnectedToEngine();
+  if (!wasConnected && isConnected) {
     LOG_INFO("AnimProcessMessages.MonitorConnectionState", "Robot now available");
     RobotInterface::RobotAvailable idMsg;
     idMsg.hwRevision = 0;
@@ -677,14 +672,30 @@ Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_na
       RobotInterface::SendAnimToEngine(msg);
     }
 
+    // Clear any scheduled fault code display
+    displayFaultCodeTime_nanosec = 0;
+    
     wasConnected = true;
-  }
-  else if (wasConnected && !AnimComms::IsConnectedToEngine()) {
+  } else if (wasConnected && !isConnected) {
+    // We've just become unconnected. Start a timer to display the fault
+    // code on the face at the desired time.
+    displayFaultCodeTime_nanosec = currTime_nanosec + kDisconnectedTimeout_nanosec;
+    
+    PRINT_NAMED_WARNING("AnimProcessMessages.MonitorConnectionState.DisconnectedFromEngine",
+                        "We have become disconnected from engine process. Displaying a fault code in %.1f seconds.",
+                        Util::NanoSecToSec(kDisconnectedTimeout_nanosec));
+    
     wasConnected = false;
   }
-
+  
+  // Display fault code if necessary
+  if ((displayFaultCodeTime_nanosec > 0) &&
+      (currTime_nanosec > displayFaultCodeTime_nanosec)) {
+    displayFaultCodeTime_nanosec = 0;
+    FaultCode::DisplayFaultCode(FaultCode::NO_ENGINE_PROCESS);
+  }
+  
   return RESULT_OK;
-
 }
 
 Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)

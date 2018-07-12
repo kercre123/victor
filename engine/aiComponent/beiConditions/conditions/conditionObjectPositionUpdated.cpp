@@ -14,6 +14,8 @@
 
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectPositionUpdated.h"
 
+#include "clad/externalInterface/messageEngineToGame.h"
+
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"

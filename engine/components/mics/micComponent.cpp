@@ -70,6 +70,7 @@ void MicComponent::SetShouldStreamAfterWakeWord( bool shouldStream )
 {
   RobotInterface::SetShouldStreamAfterWakeWord message{shouldStream};
   _robot->SendMessage(RobotInterface::EngineToRobot( std::move(message)) );
+  _streamAfterWakeWord = shouldStream;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -77,6 +78,20 @@ void MicComponent::SetTriggerWordDetectionEnabled( bool enabled )
 {
   RobotInterface::SetTriggerWordDetectionEnabled message{ enabled };
   _robot->SendMessage( RobotInterface::EngineToRobot( std::move(message) ) );
+  _triggerDetectionEnabled = enabled;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MicComponent::SetBufferFullness(float val)
+{
+  if( !Util::InRange( val, 0.0f, 1.0f ) ) {
+    PRINT_NAMED_WARNING("MicComponent.SetBufferFullness.InvalidValue", "Fullness value %f invalid, must be [0, 1]",
+                        val);
+    _fullness = 0.0f;
+  }
+  else {
+    _fullness = val;
+  }
 }
 
 } // namespace Cozmo

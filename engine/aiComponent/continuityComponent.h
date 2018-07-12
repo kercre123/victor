@@ -20,6 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -33,7 +34,9 @@ public:
   ContinuityComponent(Robot& robot);
   ~ContinuityComponent();
 
+  
   // IDependencyManagedComponent<AIComponentID> functions
+  virtual void InitDependent(Robot *robot, const AICompMap& dependentComps) override;
   virtual void UpdateDependent(const AICompMap& dependentComps) override;
   // end IDependencyManagedComponent<AIComponentID> functions
 
@@ -51,7 +54,9 @@ public:
 private:
   Robot& _robot;
   bool _playingGetOut = false;
+  uint32_t _animTag;
   IActionRunner* _nextActionToQueue = nullptr;
+  std::vector<Signal::SmartHandle> _signalHandles;
 
   bool QueueAction(IActionRunner* action);
 

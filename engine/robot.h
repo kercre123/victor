@@ -23,6 +23,7 @@
 #include "anki/cozmo/shared/animationTag.h"
 
 #include "engine/actionableObject.h"
+#include "engine/contextWrapper.h"
 #include "engine/encodedImage.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/fullRobotPose.h"
@@ -35,7 +36,6 @@
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/visionMarker.h"
 
-#include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationTypes.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/ledTypes.h"
@@ -79,8 +79,10 @@ class BlockWorld;
 class CozmoContext;
 class CubeAccelComponent;
 class CubeCommsComponent;
+class CubeConnectionCoordinator;
 class DrivingAnimationHandler;
 class DataAccessorComponent;
+enum class EngineErrorCode : uint8_t;
 class FaceWorld;
 class IExternalInterface;
 class IGatewayInterface;
@@ -90,6 +92,7 @@ class MoodManager;
 class MovementComponent;
 class NVStorageComponent;
 class ObjectPoseConfirmer;
+enum class OffTreadsState : int8_t;
 class PetWorld;
 class PhotographyManager;
 class ProgressionUnlockComponent;
@@ -135,22 +138,10 @@ enum class EngineToRobotTag : uint8_t;
 enum class RobotToEngineTag : uint8_t;
 } // end namespace RobotInterface
 
-
-// CozmoContext is a coretech class - this wrapper allows the context to work
-// with the dependency managed component interface
-class ContextWrapper:  public IDependencyManagedComponent<RobotComponentID> {
-public:
-  ContextWrapper(const CozmoContext* context)
-  : IDependencyManagedComponent(this, RobotComponentID::CozmoContextWrapper)
-  , context(context){}
-  const CozmoContext* context;
-
-  virtual ~ContextWrapper(){}
-
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override {};
-  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
-  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
-};
+namespace ExternalInterface {
+class MessageEngineToGame;
+struct RobotState;
+}
 
 // indent 2 spaces << that way !!!! coding standards !!!!
 class Robot : private Util::noncopyable
@@ -252,6 +243,9 @@ public:
 
   inline CubeCommsComponent& GetCubeCommsComponent() {return GetComponent<CubeCommsComponent>();}
   inline const CubeCommsComponent& GetCubeCommsComponent() const {return GetComponent<CubeCommsComponent>();}
+
+  inline CubeConnectionCoordinator& GetCubeConnectionCoordinator() {return GetComponent<CubeConnectionCoordinator>();}
+  inline const CubeConnectionCoordinator& GetCubeConnectionCoordinator() const {return GetComponent<CubeConnectionCoordinator>();}
 
   inline const MoodManager& GetMoodManager() const { return GetComponent<MoodManager>();}
   inline MoodManager&       GetMoodManager()       { return GetComponent<MoodManager>();}
@@ -719,8 +713,8 @@ protected:
   bool             _gotStateMsgAfterRobotSync = false;
   u32              _lastStatusFlags          = 0;
 
-  OffTreadsState   _offTreadsState                 = OffTreadsState::OnTreads;
-  OffTreadsState   _awaitingConfirmationTreadState = OffTreadsState::OnTreads;
+  OffTreadsState   _offTreadsState;
+  OffTreadsState   _awaitingConfirmationTreadState;
   TimeStamp_t      _timeOffTreadStateChanged_ms    = 0;
   TimeStamp_t      _fallingStartedTime_ms          = 0;
 

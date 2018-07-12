@@ -23,7 +23,7 @@
 #include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/aiComponent/puzzleComponent.h"
-#include "engine/aiComponent/salientPointsDetectorComponent.h"
+#include "engine/aiComponent/salientPointsComponent.h"
 #include "engine/aiComponent/timerUtility.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
@@ -90,7 +90,7 @@ void AIComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& depende
       _aiComponents->AddDependentComponent(AIComponentID::InformationAnalyzer,               new AIInformationAnalyzer());
       _aiComponents->AddDependentComponent(AIComponentID::ObjectInteractionInfoCache,        new ObjectInteractionInfoCache(*robot));
       _aiComponents->AddDependentComponent(AIComponentID::Puzzle,                            new PuzzleComponent(*robot));
-      _aiComponents->AddDependentComponent(AIComponentID::SalientPointsDetectorComponent,    new SalientPointsDetectorComponent());
+      _aiComponents->AddDependentComponent(AIComponentID::SalientPointsDetectorComponent,    new SalientPointsComponent());
       _aiComponents->AddDependentComponent(AIComponentID::TimerUtility,                      new TimerUtility());
       _aiComponents->AddDependentComponent(AIComponentID::Whiteboard,                        new AIWhiteboard(*robot));
     }

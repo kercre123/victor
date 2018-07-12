@@ -16,6 +16,14 @@
       "AnimName": "off"
   },
   {
+      "CladEvent": "Offline",
+      "AnimName": "offline"
+  },
+  {
+      "CladEvent": "Offline_Off",
+      "AnimName": "offline_off"
+  },
+  {
       "CladEvent": "SpinnerBlueCelebration",
       "AnimName": "spinner_blue_celebration"
   },
@@ -74,6 +82,10 @@
   {
       "CladEvent": "SpinnerYellowSelectTarget",
       "AnimName": "spinner_yellow_select_target"
+  },
+  {
+      "CladEvent": "Streaming",
+      "AnimName": "streaming"
   }
 ]
 

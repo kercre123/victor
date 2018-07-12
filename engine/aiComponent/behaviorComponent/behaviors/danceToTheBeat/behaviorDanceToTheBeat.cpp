@@ -20,6 +20,7 @@
 #include "engine/components/mics/beatDetectorComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robotDataLoader.h"
+#include "engine/utils/cozmoFeatureGate.h"
 
 #include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
 
@@ -168,6 +169,13 @@ void BehaviorDanceToTheBeat::GetBehaviorJsonKeys(std::set<const char*>& expected
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDanceToTheBeat::WantsToBeActivatedBehavior() const
 {
+  const auto* featureGate = GetBEI().GetRobotInfo().GetContext()->GetFeatureGate();
+  const bool featureEnabled = featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::Dancing);
+  if(!featureEnabled)
+  {
+    return false;
+  }
+
   // Check cooldown using BaseStation timer
   const auto nowBasestationTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const bool canRun = (_lastRunningBasestationTime_sec <= 0.f) ||

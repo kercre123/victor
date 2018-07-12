@@ -12,6 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorStack.h"
 
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/asyncMessageGateComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
@@ -190,6 +191,19 @@ const IBehavior* BehaviorStack::GetBehaviorInStackAbove(const IBehavior* behavio
   return nullptr;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const IBehavior* BehaviorStack::GetBehaviorInStackBelow(const IBehavior* behavior) const
+{
+  const auto it = _stackMetadataMap.find(behavior);
+  if( it != _stackMetadataMap.end() ) {
+    const int idxBelow = it->second.indexInStack - 1;
+    if( 0 <= idxBelow ) {
+      return _behaviorStack[idxBelow];
+    }
+  }
+
+  return nullptr;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStack::PushOntoStack(IBehavior* behavior)

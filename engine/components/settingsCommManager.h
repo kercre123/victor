@@ -18,13 +18,23 @@
 
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
+#include "util/signals/simpleSignal_fwd.h"
+
+#include "clad/types/robotSettingsTypes.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class SettingsManager;
+template <typename T>
+class AnkiEvent;
 class IGatewayInterface;
-
+class SettingsManager;
+namespace external_interface {
+  class GatewayWrapper;
+  class PullSettingsRequest;
+  class PushSettingsRequest;
+  class UpdateSettingsRequest;
+}
 
 class SettingsCommManager : public IDependencyManagedComponent<RobotComponentID>,
                             private Anki::Util::noncopyable
@@ -47,15 +57,23 @@ public:
   // end IDependencyManagedComponent functions
   //////
 
-  bool HandleRobotSettingChangeRequest(const std::string& settingKey, const std::string& settingValue);
-  bool HandleRobotSettingToggleRequest(const std::string& settingKey);
-  
+  bool HandleRobotSettingChangeRequest(const RobotSetting robotSetting,
+                                       const Json::Value& settingJson);
+  bool HandleRobotSettingToggleRequest(const RobotSetting robotSetting);
+
   void RefreshConsoleVars();
 
 private:
 
+  void HandleEvents(const AnkiEvent<external_interface::GatewayWrapper>& event);
+  void OnRequestPullSettings  (const external_interface::PullSettingsRequest&    pullSettingsRequest);
+  void OnRequestPushSettings  (const external_interface::PushSettingsRequest&    pushSettingsRequest);
+  void OnRequestUpdateSettings(const external_interface::UpdateSettingsRequest&  updateSettingsRequest);
+
   SettingsManager*    _settingsManager = nullptr;
   IGatewayInterface*  _gatewayInterface = nullptr;
+
+  std::vector<Signal::SmartHandle> _signalHandles;
 };
 
 

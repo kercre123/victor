@@ -113,6 +113,7 @@ Result AnimEngine::Init()
   dataLoader->LoadNonConfigData();
 
   _ttsComponent = std::make_unique<TextToSpeechComponent>(_context.get());
+  _context->GetMicDataSystem()->Init(*dataLoader);
 
   // animation streamer must be initialized after loading non config data (otherwise there are no animations loaded)
   _animationStreamer->Init();
@@ -269,7 +270,9 @@ void AnimEngine::HandleMessage(const RobotInterface::SetLocale & msg)
     _context->SetLocale(locale);
   }
 
-  // TO DO: _ttsComponent->SetLocale(locale)
+  if (_ttsComponent != nullptr) {
+    _ttsComponent->SetLocale(locale);
+  }
 
 }
 } // namespace Cozmo

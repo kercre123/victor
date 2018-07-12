@@ -21,7 +21,8 @@
 #include <stdlib.h>
 #include "ev++.h"
 #include "bleClient/bleClient.h"
-#include "switchboardd/securePairing.h"
+#include "switchboardd/rtsComms.h"
+#include "switchboardd/savedSessionManager.h"
 #include "switchboardd/taskExecutor.h"
 #include "switchboardd/engineMessagingClient.h"
 
@@ -45,16 +46,23 @@ namespace Switchboard {
         _taskExecutor(nullptr),
         _bleClient(nullptr),
         _securePairing(nullptr),
-        _engineMessagingClient(nullptr)
+        _engineMessagingClient(nullptr),
+        _isUpdateEngineServiceRunning(false)
       {}
 
       void Start();
       void Stop();
     
     private:
+      const std::string kSwitchboardRunPath = "/run/vic-switchboard";
+      const std::string kUpdateEngineEnvPath = "/run/vic-switchboard/update-engine.env";
+      const std::string kUpdateEngineDisablePath = "/run/vic-switchboard/disable-update-engine";
       const std::string kUpdateEngineDataPath = "/run/update-engine";
-      const std::string kUpdateEngineExecPath = "/anki/bin";
-  
+      const std::string kUpdateEngineDonePath = "/run/update-engine/done";
+      const std::string kUpdateEngineErrorPath = "/run/update-engine/error";
+      const std::string kUpdateEngineExecPath = "/anki/bin/update-engine";
+      const std::string kUpdateEngineServicePath = "/lib/systemd/system/update-engine.service";
+
       static void HandleEngineTimer(struct ev_loop* loop, struct ev_timer* w, int revents);
       static void HandleAnkibtdTimer(struct ev_loop* loop, struct ev_timer* w, int revents);
       static void sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents);
@@ -120,8 +128,9 @@ namespace Switchboard {
 
       std::unique_ptr<TaskExecutor> _taskExecutor;
       std::unique_ptr<BleClient> _bleClient;
-      std::unique_ptr<SecurePairing> _securePairing;
+      std::unique_ptr<RtsComms> _securePairing;
       std::shared_ptr<EngineMessagingClient> _engineMessagingClient;
+      bool _isUpdateEngineServiceRunning;
   };
 }
 }

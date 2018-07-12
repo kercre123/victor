@@ -38,7 +38,7 @@
 
 // To enable PerfMetric in a build, define ANKI_PERF_METRIC_ENABLED as 1
 #if !defined(ANKI_PERF_METRIC_ENABLED)
-  #if !defined(NDEBUG)
+  #if ANKI_DEV_CHEATS
     #define ANKI_PERF_METRIC_ENABLED 1
   #else
     #define ANKI_PERF_METRIC_ENABLED 0

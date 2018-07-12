@@ -14,6 +14,7 @@
 #define __Engine_Components_TextToSpeechCoordinator_H__
 
 #include "engine/robotComponents_fwd.h"
+#include "components/textToSpeech/textToSpeechTypes.h"
 #include "coretech/common/shared/types.h"
 #include "clad/audio/audioSwitchTypes.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
@@ -29,28 +30,10 @@ namespace Anki{
 namespace Cozmo{
 
 
-const static uint8_t kInvalidUtteranceID = 0;
-// Utterances should not take longer than this to generate
-const static float kGenerationTimeout_s = 10.0f; // making this high until we figure out accurate generation times
-
 // Forward declarations
 class Robot;
 enum class TextToSpeechState : uint8_t;
 struct TextToSpeechEvent;
-
-enum class UtteranceState {
-  Invalid,
-  Generating,
-  Ready,
-  Playing,
-  Finished
-};
-
-enum class UtteranceTriggerType {
-  Immediate,
-  Manual,
-  KeyFrame
-};
 
 class TextToSpeechCoordinator : public IDependencyManagedComponent<RobotComponentID>, public Util::noncopyable
 {

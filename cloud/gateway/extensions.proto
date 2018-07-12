@@ -1,0 +1,11 @@
+// Add a decorator for streamed message handling in app
+
+syntax = "proto3";
+
+package Anki.Cozmo.external_interface;
+
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.MessageOptions {
+  bool streamed = 60000;
+}

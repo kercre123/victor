@@ -18,14 +18,23 @@ include(anki_build_cxx)
 #
 
 # Generate c++ protobuf files
+set(PROTOBUF_CPP_PLUGIN "protocCppPlugin")
+if (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Darwin")
+    set(HOST_PLATFORM "mac")
+elseif (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Linux")
+    set(HOST_PLATFORM "linux")
+endif()
+set(PROTOBUF_CPP_PLUGIN_PATH "${CMAKE_SOURCE_DIR}/EXTERNALS/External_Dependencies/${HOST_PLATFORM}/${PROTOBUF_CPP_PLUGIN}")
 add_custom_command(
   OUTPUT ${GATEWAY_PROTO_CPP_GEN_HEADERS} ${GATEWAY_PROTO_CPP_GEN_SRCS}
   COMMAND mkdir -p ${PROTOBUF_OUTPUT_DIR}
   COMMAND ${PROTOBUF_HOME}/bin/protoc -I"${CMAKE_SOURCE_DIR}/cloud/gateway"
     -I"${PROTOBUF_HOME}/include"
+    "--plugin=protoc-gen-${PROTOBUF_CPP_PLUGIN}=${PROTOBUF_CPP_PLUGIN_PATH}"
     "--cpp_out=${PROTOBUF_OUTPUT_DIR}"
+    "--${PROTOBUF_CPP_PLUGIN}_out=${PROTOBUF_OUTPUT_DIR}"
     ${GATEWAY_PROTO_SRCS}
-  DEPENDS "${GATEWAY_PROTO_SRCS}"
+  DEPENDS "${GATEWAY_PROTO_SRCS}" "${PROTOBUF_CPP_PLUGIN_PATH}"
 )
 # NOTE: protobuf generated files must be linked directly to cozmo_engine
 #       Otherwise, there is a problem comparing the default string, and it

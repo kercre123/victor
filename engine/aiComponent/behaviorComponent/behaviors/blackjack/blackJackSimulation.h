@@ -35,12 +35,12 @@ class Card
 public:
   Card(int cardID, bool faceUp = true);
 
-  const int GetID() const {return _cardID;}
-  const int GetRank() const;
-  const std::string GetString() const;
+  int GetID() const {return _cardID;}
+  int GetRank() const;
+  std::string GetString() const;
 
-  const bool IsAnAce() const {return kAceRank == GetRank();}
-  const bool IsFaceUp() const {return _faceUp;}
+  bool IsAnAce() const {return kAceRank == GetRank();}
+  bool IsFaceUp() const {return _faceUp;}
   void SetFaceUp(bool faceUp) {_faceUp = faceUp;}
 
 private:
@@ -72,47 +72,55 @@ private:
 class BlackJackGame
 {
 public:
+  static const int kVegasRulesLimit = 17;
   static const int kBlackJackValue = 21;
 
   BlackJackGame();
 
   void Init(Anki::Util::RandomGenerator* rng = nullptr);
 
-  const bool DealToPlayer(const bool faceUp = true);
-  const bool DealToDealer(const bool faceUp = true);
+  bool DealToPlayer(const bool faceUp = true);
+  bool DealToDealer(const bool faceUp = true);
 
   // Show the dealers face down card
   void Flop() {_dealerHand[0].SetFaceUp(true); _hasFlopped = true;}
 
   const Card& LastCard();
 
-  const bool PlayerBusted() const {return ScoreHand(_playerHand) > kBlackJackValue;}
-  const bool PlayerHasBlackJack() const {return ScoreHand(_playerHand) == kBlackJackValue;}
-  const bool PlayerHasCharlie() const {return (_playerHand.size() >= kHandSizeLimit) && (!PlayerBusted());}
-
-  const bool DealerHasFlopped() const {return _hasFlopped;}
-  const bool DealerBusted() const {return ScoreHand(_dealerHand) > kBlackJackValue;}
-  const bool DealerHasBlackJack() const {return ScoreHand(_dealerHand) == kBlackJackValue;}
-  const bool DealerHasLead() const {return ScoreHand(_dealerHand) > ScoreHand(_playerHand);}
-
   const std::vector<Card>& GetPlayerHand() const {return _playerHand;}
   const std::vector<Card>& GetDealerHand() const {return _dealerHand;}
 
-  const int GetPlayerScore(){return ScoreHand(_playerHand);}
-  const int GetDealerScore(){return ScoreHand(_dealerHand);}
+  int GetPlayerScore() const {return _playerScore;}
+  int GetDealerScore() const {return _dealerScore;}
 
-  static int ScoreCard(const Card& card);
-  static int ScoreHand(const std::vector<Card>& hand);
+  bool PlayerBusted() const {return _playerScore > kBlackJackValue;}
+  bool PlayerHasBlackJack() const {return _playerScore == kBlackJackValue;}
+  bool PlayerHasCharlie() const {return (_playerHand.size() >= kHandSizeLimit) && (!PlayerBusted());}
+
+  bool DealerHasFlopped() const {return _hasFlopped;}
+  bool DealerBusted() const {return _dealerScore > kBlackJackValue;}
+  bool DealerHasBlackJack() const {return _dealerScore == kBlackJackValue;}
+  bool DealerHasTooManyCards() const {return _dealerHand.size() >= kHandSizeLimit;}
+  bool DealerShouldStandPerVegasRules() const {return _dealerScore >= kVegasRulesLimit;}
+  bool DealerTied() const {return DealerShouldStandPerVegasRules() && (_dealerScore == _playerScore);}
+  bool DealerHasWon() const {return DealerShouldStandPerVegasRules() && (_dealerScore > _playerScore);}
 
   // Debug/Test
   static void StackDeck(const std::vector<int>& stackedDeckOrder);
   static void StopStackingDeck();
 
 private:
+  int ScoreCard(const Card& card) const;
+  // Returns true if an Ace was found during scoring
+  bool ScoreHandAndReportAces(const std::vector<Card>& hand, int& outScore);
+  void ScorePlayerHand();
+  void ScoreDealerHand();
 
   Deck _deck;
   std::vector<Card> _playerHand;
   std::vector<Card> _dealerHand;
+  int               _playerScore;
+  int               _dealerScore;
   Card*             _lastCard;
   Card              _invalidCard;
   bool              _hasFlopped;

@@ -166,20 +166,6 @@ function(check_licenses)
     list(REMOVE_DUPLICATES all_dependencies)
   endif()
 
-  # temporarily remove audio targets until this is in master as audio shares cmake files
-  list(REMOVE_ITEM all_dependencies zipreader hijack_audio wave_portal ak_alsa_sink
-                                    audio_engine audio_multiplexer_engine audio_multiplexer_robot
-                                    AkStreamMgr AkMusicEngine AkSoundEngine AkMemoryMgr AkCompressorFX
-                                    AkDelayFX AkMatrixReverbFX AkMeterFX AkExpanderFX AkParametricEQFX 
-                                    AkGainFX AkPeakLimiterFX AkSoundSeedImpactFX AkRoomVerbFX 
-                                    AkGuitarDistortionFX AkStereoDelayFX AkPitchShifterFX AkTimeStretchFX 
-                                    AkFlangerFX AkConvolutionReverbFX AkTremoloFX AkHarmonizerFX 
-                                    AkRecorderFX McDSPLimiterFX McDSPFutzBoxFX AkSilenceSource 
-                                    AkSineSource AkToneSource AkAudioInputSource AkMotionGeneratorSource 
-                                    AkSoundSeedWooshSource AkSoundSeedWindSource AkSynthOneSource 
-                                    AkVorbisDecoder AkAACDecoder
-                                    CommunicationCentral)
-
   # check all dependencies have license set
   foreach(target ${all_dependencies})
     if(TARGET ${target})
@@ -231,6 +217,7 @@ function(check_licenses)
           set(found TRUE)
         endif()
       endforeach()
+
       foreach(lib libcutils libglib libgio libgobject libffi libdl libz libresolv libgmodule libpcre
                   AudioToolbox AudioUnit CoreAudio CoreFoundation Foundation)
         if(target MATCHES ${lib})
@@ -294,6 +281,10 @@ function(guess_license_for_file filename licenses_result)
 
     if(contents MATCHES "cc0 public domain")
       list(APPEND licenses "CC0")
+    endif()
+
+    if(contents MATCHES "RSA Data Security")
+      list(APPEND licenses "RSA")
     endif()
 
     if(contents MATCHES "gnu " AND

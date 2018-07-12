@@ -91,6 +91,8 @@ enum WiFiAuth : uint8_t {
   NSString* _downloadFilePath;
 
   bool _isPairing;
+  bool _hasVersion;
+  int _inputVersion;
 }
 
 @property (strong, nonatomic) id delegate;
@@ -100,13 +102,17 @@ enum WiFiAuth : uint8_t {
 - (std::string)asciiStr:(char*)data length:(int)size;
 - (uint8_t)nibbleToNumber:(uint8_t)nibble;
 
+// Versioned handlers
+- (void) handleSecureVersion3: (Anki::Cozmo::ExternalComms::ExternalComms)extComms;
+- (void) handleRequest_3:(Anki::Cozmo::ExternalComms::RtsConnection_3)msg;
+
 - (void) devDownloadOta;
 - (void) handleSend:(const void*)bytes length:(int)n;
 - (void) handleReceive:(const void*)bytes length:(int)n;
 - (void) handleReceiveSecure:(const void*)bytes length:(int)n;
 - (void) printHelp;
 - (void) showProgress: (float)current expected:(float)expected;
-- (void) handleRequest:(Anki::Victor::ExternalComms::RtsConnection_2)msg;
+- (void) handleRequest:(Anki::Cozmo::ExternalComms::RtsConnection_2)msg;
 
 - (void) SendSshPublicKey:(std::string)filename;
 
@@ -120,13 +126,14 @@ enum WiFiAuth : uint8_t {
 - (void) async_otaProgress;
 
 - (void) HandleReceiveHandshake:(const void*)bytes length:(int)n;
-- (void) HandleReceivePublicKey:(const Anki::Victor::ExternalComms::RtsConnRequest&)msg;
-- (void) HandleReceiveNonce:(const Anki::Victor::ExternalComms::RtsNonceMessage&)msg;
-- (void) HandleChallengeMessage:(const Anki::Victor::ExternalComms::RtsChallengeMessage&)msg;
-- (void) HandleChallengeSuccessMessage:(const Anki::Victor::ExternalComms::RtsChallengeSuccessMessage&)msg;
-- (void) HandleWifiScanResponse:(const Anki::Victor::ExternalComms::RtsWifiScanResponse&)msg;
-- (void) HandleWifiScanResponse_2:(const Anki::Victor::ExternalComms::RtsWifiScanResponse_2&)msg;
-- (void) HandleReceiveAccessPointResponse:(const Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&)msg;
+- (void) HandleReceivePublicKey:(const Anki::Cozmo::ExternalComms::RtsConnRequest&)msg;
+- (void) HandleReceiveNonce:(const Anki::Cozmo::ExternalComms::RtsNonceMessage&)msg;
+- (void) HandleChallengeMessage:(const Anki::Cozmo::ExternalComms::RtsChallengeMessage&)msg;
+- (void) HandleChallengeSuccessMessage:(const Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage&)msg;
+- (void) HandleWifiScanResponse:(const Anki::Cozmo::ExternalComms::RtsWifiScanResponse&)msg;
+- (void) HandleWifiScanResponse_2:(const Anki::Cozmo::ExternalComms::RtsWifiScanResponse_2&)msg;
+- (void) HandleWifiScanResponse_3:(const Anki::Cozmo::ExternalComms::RtsWifiScanResponse_3&)msg;
+- (void) HandleReceiveAccessPointResponse:(const Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse&)msg;
 
 - (void) send:(const void*)bytes length:(int)n;
 - (void) sendSecure:(const void*)bytes length:(int)n;
@@ -148,6 +155,7 @@ enum WiFiAuth : uint8_t {
 - (void)resetDefaults;
 - (void)setVerbose:(bool)enabled;
 - (void)setDownload:(bool)enabled;
+- (void)setHasVersion:(bool)has version:(int)v;
 
 @end
 
@@ -155,14 +163,17 @@ class Clad {
 public:
   template<typename T, typename... Args>
   static void SendRtsMessage(BleCentral* central, int commVersion, Args&&... args) {
-    Anki::Victor::ExternalComms::ExternalComms msg;
+    Anki::Cozmo::ExternalComms::ExternalComms msg;
     
     switch(commVersion) {
       case 1:
-        msg = Anki::Victor::ExternalComms::ExternalComms(Anki::Victor::ExternalComms::RtsConnection_1(T(std::forward<Args>(args)...)));
+        msg = Anki::Cozmo::ExternalComms::ExternalComms(Anki::Cozmo::ExternalComms::RtsConnection_1(T(std::forward<Args>(args)...)));
         break;
       case 2:
-        msg = Anki::Victor::ExternalComms::ExternalComms(Anki::Victor::ExternalComms::RtsConnection(Anki::Victor::ExternalComms::RtsConnection_2(T(std::forward<Args>(args)...))));
+        msg = Anki::Cozmo::ExternalComms::ExternalComms(Anki::Cozmo::ExternalComms::RtsConnection(Anki::Cozmo::ExternalComms::RtsConnection_2(T(std::forward<Args>(args)...))));
+        break;
+      case 3:
+        msg = Anki::Cozmo::ExternalComms::ExternalComms(Anki::Cozmo::ExternalComms::RtsConnection(Anki::Cozmo::ExternalComms::RtsConnection_3(T(std::forward<Args>(args)...))));
         break;
       default:
         NSLog(@"The mac client is trying to speak a version we do not know about.");
@@ -175,8 +186,17 @@ public:
   
   template<typename T, typename... Args>
   static void SendRtsMessage_2(BleCentral* central, int commVersion, Args&&... args) {
-    Anki::Victor::ExternalComms::ExternalComms msg = Anki::Victor::ExternalComms::ExternalComms(Anki::Victor::ExternalComms::RtsConnection(Anki::Victor::ExternalComms::RtsConnection_2(T(std::forward<Args>(args)...))));
+    Anki::Cozmo::ExternalComms::ExternalComms msg = Anki::Cozmo::ExternalComms::ExternalComms(Anki::Cozmo::ExternalComms::RtsConnection(Anki::Cozmo::ExternalComms::RtsConnection_2(T(std::forward<Args>(args)...))));
 
+    std::vector<uint8_t> messageData(msg.Size());
+    const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
+    [central send:messageData.data() length:(int)packedSize];
+  }
+  
+  template<typename T, typename... Args>
+  static void SendRtsMessage_3(BleCentral* central, int commVersion, Args&&... args) {
+    Anki::Cozmo::ExternalComms::ExternalComms msg = Anki::Cozmo::ExternalComms::ExternalComms(Anki::Cozmo::ExternalComms::RtsConnection(Anki::Cozmo::ExternalComms::RtsConnection_3(T(std::forward<Args>(args)...))));
+    
     std::vector<uint8_t> messageData(msg.Size());
     const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
     [central send:messageData.data() length:(int)packedSize];

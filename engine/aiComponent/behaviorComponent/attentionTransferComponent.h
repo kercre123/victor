@@ -19,6 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
 namespace Cozmo {

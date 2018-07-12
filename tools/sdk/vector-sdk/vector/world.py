@@ -15,7 +15,7 @@ class World:
     '''Represents the state of the world, as known to Vector.'''
 
     #: callable: The factory function that returns a
-    #: :class:`faces.Face` class or subclass instance.
+    #: :class:`faces.Face` class or subclass instance
     face_factory = faces.Face
 
     def __init__(self):
@@ -24,13 +24,13 @@ class World:
     @property
     def visible_faces(self):
         '''generator: yields each face that Vector can currently see.
-        
+
         Returns:
             A generator yielding :class:`vector.faces.Face` instances
         '''
         for face in self._faces.values():
             yield face
-    
+
     def get_face(self, face_id):
         '''vector.faces.Face: Fetch a Face instance with the given id'''
         return self._faces.get(face_id)
@@ -42,8 +42,8 @@ class World:
         self._faces[face.face_id] = face
 
     def update_face_id(self, _, msg):
-        '''Updates the face id when a tracked face (negative ID) is recognized and 
+        '''Updates the face id when a tracked face (negative ID) is recognized and
         receives a positive ID or when face records get merged'''
         face = self.get_face(msg.old_id)
         if face:
-            face._updated_face_id = msg.new_id
+            face.updated_face_id = msg.new_id

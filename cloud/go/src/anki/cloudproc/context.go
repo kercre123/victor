@@ -17,11 +17,11 @@ type voiceContext struct {
 	conn        *chipper.Conn
 	stream      chipper.Stream
 	process     *Process
-	bytes       []byte
+	byteChan    chan []byte
 	audioStream chan []byte
-	initOnce    sync.Once
 	respOnce    sync.Once
 	closed      bool
+	done        chan struct{}
 }
 
 type cloudChans struct {
@@ -36,20 +36,12 @@ func (ctx *voiceContext) addSamples(samples []int16) {
 }
 
 func (ctx *voiceContext) addBytes(bytes []byte) {
-	ctx.bytes = append(ctx.bytes, bytes...)
-	streamSize := ctx.process.StreamSize()
-	if len(ctx.bytes) >= streamSize {
-		// we have enough samples to stream - slice them off and pass them to another
-		// thread for sending to server
-		data := ctx.bytes[:streamSize]
-		ctx.bytes = ctx.bytes[streamSize:]
-		ctx.audioStream <- data
-	}
+	ctx.byteChan <- bytes
 }
 
 func (ctx *voiceContext) close() error {
 	ctx.closed = true
-	close(ctx.audioStream)
+	close(ctx.done)
 	var err util.Errors
 	err.Append(ctx.stream.Close())
 	err.Append(ctx.conn.Close())
@@ -57,24 +49,34 @@ func (ctx *voiceContext) close() error {
 }
 
 func (p *Process) newVoiceContext(conn *chipper.Conn, stream chipper.Stream, cloudChan cloudChans) *voiceContext {
-	audioStream := make(chan []byte, 10)
 	ctx := &voiceContext{
 		conn:        conn,
 		stream:      stream,
 		process:     p,
-		bytes:       make([]byte, 0, p.StreamSize()*2),
-		audioStream: audioStream}
+		byteChan:    make(chan []byte),
+		audioStream: make(chan []byte, 10),
+		done:        make(chan struct{})}
 
+	// start routine to buffer communication between main routine and upload routine
+	go ctx.bufferRoutine(p.StreamSize())
+	// start routine to upload audio via GRPC until response or error
 	go func() {
+		responseInited := false
 		for data := range ctx.audioStream {
-			ctx.sendAudio(data, cloudChan)
+			if err := ctx.sendAudio(data, cloudChan); err != nil {
+				return
+			}
+			if !responseInited {
+				go ctx.responseRoutine(cloudChan)
+				responseInited = true
+			}
 		}
 	}()
 
 	return ctx
 }
 
-func (ctx *voiceContext) sendAudio(samples []byte, cloudChan cloudChans) {
+func (ctx *voiceContext) sendAudio(samples []byte, cloudChan cloudChans) error {
 	var err error
 	sendTime := util.TimeFuncMs(func() {
 		err = ctx.stream.SendAudio(samples)
@@ -84,37 +86,67 @@ func (ctx *voiceContext) sendAudio(samples []byte, cloudChan cloudChans) {
 		ctx.respOnce.Do(func() {
 			cloudChan.err <- err.Error()
 		})
-		return
+		return err
 	}
 	logVerbose("Sent", len(samples), "bytes to Chipper (call took", int(sendTime), "ms)")
+	return nil
+}
 
-	// set up response routine if this is the first stream
-	ctx.initOnce.Do(func() {
-		go func() {
-			resp, err := ctx.stream.WaitForResponse()
-			ctx.respOnce.Do(func() {
-				if ctx.closed {
-					if err != nil {
-						log.Println("Ignoring error on closed context")
-					} else {
-						log.Println("Ignoring response on closed context")
-					}
-					return
-				}
-				if err != nil {
-					log.Println("CCE error:", err)
-					cloudChan.err <- err.Error()
-					return
-				}
-				log.Println("Intent response ->", resp)
-				switch r := resp.(type) {
-				case *chipper.IntentResult:
-					sendIntentResponse(r, cloudChan)
-				case *chipper.KnowledgeGraphResponse:
-					sendKGResponse(r, cloudChan)
-				}
-			})
-		}()
+// bufferRoutine uses channels to ensure that the main routine can always add bytes to
+// the current buffer without stalling if the GRPC streaming routine is blocked on
+// something and not ready for more audio yet
+func (ctx *voiceContext) bufferRoutine(streamSize int) {
+	defer close(ctx.byteChan)
+	defer close(ctx.audioStream)
+	audioBuf := make([]byte, 0, streamSize*2)
+	// function to enable/disable streaming case depending on whether we have enough bytes
+	// to send audio
+	streamData := func() (chan<- []byte, []byte) {
+		if len(audioBuf) >= streamSize {
+			return ctx.audioStream, audioBuf[:streamSize]
+		}
+		return nil, nil
+	}
+	for {
+		// depending on who's ready, either add more bytes to our buffer from main routine
+		// or send audio to upload routine (assuming our validation functions allow it)
+		streamChan, streamBuf := streamData()
+		select {
+		case streamChan <- streamBuf:
+			audioBuf = audioBuf[streamSize:]
+		case buf := <-ctx.byteChan:
+			audioBuf = append(audioBuf, buf...)
+		case <-ctx.done:
+			return
+		}
+	}
+}
+
+// responseRoutine should be started after streaming begins, and will wait for a response
+// to send back to the main routine on the given channels
+func (ctx *voiceContext) responseRoutine(cloudChan cloudChans) {
+	resp, err := ctx.stream.WaitForResponse()
+	ctx.respOnce.Do(func() {
+		if ctx.closed {
+			if err != nil {
+				log.Println("Ignoring error on closed context")
+			} else {
+				log.Println("Ignoring response on closed context")
+			}
+			return
+		}
+		if err != nil {
+			log.Println("CCE error:", err)
+			cloudChan.err <- err.Error()
+			return
+		}
+		log.Println("Intent response ->", resp)
+		switch r := resp.(type) {
+		case *chipper.IntentResult:
+			sendIntentResponse(r, cloudChan)
+		case *chipper.KnowledgeGraphResponse:
+			sendKGResponse(r, cloudChan)
+		}
 	})
 }
 

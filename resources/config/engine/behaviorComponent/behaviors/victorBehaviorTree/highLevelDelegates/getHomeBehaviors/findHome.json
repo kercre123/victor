@@ -2,11 +2,37 @@
   "behaviorClass": "FindHome",
   "behaviorID": "FindHome",
   
+  // Cannot be activated if we already know where a charger is and have seen it recently enough
+  "wantsToBeActivatedCondition": {
+    "conditionType": "Compound",
+    "not": {
+      "conditionType": "ObjectKnown",
+      "objectTypes": [ "Charger_Basic" ],
+      "maxAge_ms" : 300000 // cannot be activated if we've seen it in the past 5 minutes
+    }
+  },
+  
+  // Behavior should cancel itself if we see a charger while running
+  "wantsToCancelSelfCondition" : {
+    "conditionType" : "ObjectKnown",
+    "objectTypes" : [ "Charger_Basic" ],
+    "maxAge_ms" : 5000
+  },
+  
+  // Animation trigger for a single ~60 degree "search turn"
   "searchTurnAnimTrigger" : "ChargerDockingSearchSingleTurn",
+  
+  // Animation that is played after the search turn while the robot is capturing images
+  // Note: This is only played if the mood is not "high stim"
+  "searchTurnWaitingForImagesAnimTrigger" : "ChargerDockingSearchWaitForImages",
+  
+  // Anim that is played after capturing images and prior to the next search turn
+  // Note: This is only played if the mood is not "high stim"
+  "searchTurnEndAnimTrigger" : "ChargerDockingSearchSingleTurnEnd",
   
   // Robot must sweep at least this angle while searching in place
   // before moving to a new search location.
-  "minSearchAngleSweep_deg" : 360.0,
+  "minSearchAngleSweep_deg" : 300.0,
   
   // Maximum number of turn animations to play before moving
   // to another location to search.
@@ -17,7 +43,5 @@
   "numSearches" : 3,
   
   "minDrivingDist_mm" : 150,
-  "maxDrivingDist_mm" : 400,
-  
-  "maxLastObservedAge_sec" : 60
+  "maxDrivingDist_mm" : 400
 }

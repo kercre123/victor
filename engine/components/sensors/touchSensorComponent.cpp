@@ -11,12 +11,14 @@
  **/
 
 #include "engine/components/sensors/touchSensorComponent.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
+#include "osState/osState.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -36,30 +38,9 @@ namespace {
   
   const float kBaselineInitial = 500.0f;
   
-  const int kBoxFilterSize = 8;
-  
-  // constant size difference between detect and undetect levels
-  const int kDynamicThreshGap = 9;
-  
-  // the offset from the input reading that detect level is set to
-  const int kDynamicThreshDetectFollowOffset = 7;
-  
-  // the offset from the input reading that the undetect level is set to
-  const int kDynamicThreshUndetectFollowOffset = 7;
-  
-  // the highest reachable detect level offset from baseline
-  const int kDynamicThreshMininumUndetectOffset = 13;
-  
-  // the lowest reachable undetect level offset from baseline
-  const int kDynamicThreshMaximumDetectOffset = 50;
-  
-  // minimum number of consecutive readings that are below/above detect level
-  // before we update the thresholds dynamically
-  // note: this counters the impact of noise on the dynamic thresholds
-  const int kMinConsecCountToUpdateThresholds = 8;
-  
   bool devSendTouchSensor = false;
   bool devTouchSensorPressed = false;
+  bool devEnableTouchSensor = true;
   #if ANKI_DEV_CHEATS
   void SetTouchSensor(ConsoleFunctionContextRef context)
   {
@@ -67,6 +48,12 @@ namespace {
     devSendTouchSensor = true;
   }
   CONSOLE_FUNC(SetTouchSensor, "Touch", bool pressed);
+  
+  void EnableTouchSensing(ConsoleFunctionContextRef context)
+  {
+    devEnableTouchSensor = ConsoleArg_Get_Bool(context, "enable");
+  }
+  CONSOLE_FUNC(EnableTouchSensing, "Touch", bool enable);
   #endif
   
   const int kMaxPreTouchSamples = 100; // 100 ticks * 30ms = 3 seconds
@@ -76,16 +63,40 @@ namespace {
   const int kMaxDevLogBufferSize = 2000;// 60 seconds / 30ms = 2000 samples
   
 } // end anonymous namespace
+  
+const TouchSensorComponent::FilterParameters TouchSensorComponent::_kFilterParamsForDVT =
+{
+    .boxFilterSize = 8,
+    .dynamicThreshGap = 9,
+    .dynamicThreshDetectFollowOffset = 7,
+    .dynamicThreshUndetectFollowOffset = 7,
+    .dynamicThreshMaximumDetectOffset = 50,
+    .dynamicThreshMininumUndetectOffset = 13,
+    .minConsecCountToUpdateThresholds = 8,
+};
+  
+const TouchSensorComponent::FilterParameters TouchSensorComponent::_kFilterParamsForProd =
+{
+  .boxFilterSize = 55,
+  .dynamicThreshGap = 1,
+  .dynamicThreshDetectFollowOffset = 2,
+  .dynamicThreshUndetectFollowOffset = 2,
+  .dynamicThreshMaximumDetectOffset = 20,
+  .dynamicThreshMininumUndetectOffset = 8,
+  .minConsecCountToUpdateThresholds = 6,
+};
 
 TouchSensorComponent::TouchSensorComponent() 
 : ISensorComponent(kLogDirectory)
 , IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::TouchSensor)
+, _filterParams(_kFilterParamsForProd)
 , _lastRawTouchValue(0)
 , _noContactCounter(kMinCountNoTouchForAccumulation)
 , _baselineTouch(kBaselineInitial)
-, _boxFilterTouch(kBoxFilterSize)
-, _detectOffsetFromBase(kDynamicThreshMininumUndetectOffset+kDynamicThreshGap)
-, _undetectOffsetFromBase(kDynamicThreshMininumUndetectOffset)
+, _boxFilterTouch(_filterParams.boxFilterSize)
+, _detectOffsetFromBase(_filterParams.dynamicThreshMininumUndetectOffset+
+                        _filterParams.dynamicThreshGap)
+, _undetectOffsetFromBase(_filterParams.dynamicThreshMininumUndetectOffset)
 , _isPressed(false)
 , _numConsecCalibReadings(0)
 , _countAboveDetectLevel(0)
@@ -97,6 +108,16 @@ TouchSensorComponent::TouchSensorComponent()
 , _devLogBufferSaved()
 , _devLogSampleCount(0)
 {
+  // backwards compatibility check for robot hardware versions
+  auto* osstate = OSState::getInstance();
+  u32 esn = osstate->GetSerialNumber();
+  const bool isDVTrobot = (esn >= 0x00e00000 && esn <= 0x00e10000);
+  if(isDVTrobot) {
+    _filterParams = _kFilterParamsForDVT;
+  } else {
+    _filterParams = _kFilterParamsForProd;
+  }
+  _useFilterLogicForDVT = isDVTrobot;
 }
   
 TouchSensorComponent::~TouchSensorComponent()
@@ -130,21 +151,44 @@ void TouchSensorComponent::DevLogTouchSensorData() const
 
 void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
 {
+  if(!devEnableTouchSensor) {
+    return;
+  }
+  
   if(FACTORY_TEST &&_dataToRecord != nullptr)
   {
-    _dataToRecord->data.push_back(msg.backpackTouchSensorRaw);
+    for(int i=0; i<STATE_MESSAGE_FREQUENCY; ++i) {
+      _dataToRecord->data.push_back(msg.backpackTouchSensorRaw[i]);
+    }
   }
 
   // sometimes spurious values that are absurdly high come through the sensor
-  if(msg.backpackTouchSensorRaw > kMaxTouchIntensityInvalid) {
+  const bool valuesAreValid = std::all_of(msg.backpackTouchSensorRaw.begin(),
+                                          msg.backpackTouchSensorRaw.end(),
+                                          [](const uint16_t& value)->bool {
+                                            return value <= kMaxTouchIntensityInvalid;
+                                          });
+  if(!valuesAreValid) {
     return;
   }
   
   const auto now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
-  _lastRawTouchValue = msg.backpackTouchSensorRaw;
+  _lastRawTouchValue = msg.backpackTouchSensorRaw.back();
   
-  int boxFiltVal = _boxFilterTouch.ApplyFilter(_lastRawTouchValue);
+  // boxfilter on touch sensor values from the robot is treated differently
+  // between DVT and production robots because of a change to the design of
+  // the sensor that necessitates using more values from robot
+  // thus we check the ESN of the robot to use the correct logic based on
+  // the hardware for backwards compatibility
+  int boxFiltVal = 0;
+  if(_useFilterLogicForDVT) {
+    boxFiltVal = _boxFilterTouch.ApplyFilter(msg.backpackTouchSensorRaw.back());
+  } else {
+    for(int i=0; i<STATE_MESSAGE_FREQUENCY; ++i) {
+      boxFiltVal = _boxFilterTouch.ApplyFilter(msg.backpackTouchSensorRaw[i]);
+    }
+  }
   
   const bool isPickedUp = (msg.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP) != 0;
 
@@ -287,19 +331,19 @@ bool TouchSensorComponent::ProcessWithDynamicThreshold(const int baseline, const
   const int detectLevel = baseline + _detectOffsetFromBase;
   const int undetectLevel = baseline + _undetectOffsetFromBase;
   
-  DEV_ASSERT( detectLevel > undetectLevel, "DetectLevelLowerThanUndetectLevel");
+  DEV_ASSERT( detectLevel >= undetectLevel, "DetectLevelLowerThanUndetectLevel");
   
   if (input > detectLevel) {
     _isPressed = true;
     // monotonically increasing
-    if ((input-detectLevel) > kDynamicThreshDetectFollowOffset) {
+    if ((input-detectLevel) > _filterParams.dynamicThreshDetectFollowOffset) {
       _countAboveDetectLevel++;
       _countBelowUndetectLevel = 0;
-      if(_countAboveDetectLevel > kMinConsecCountToUpdateThresholds) {
-        const auto candidateDetectOffset = input - kDynamicThreshDetectFollowOffset - baseline;
-        _detectOffsetFromBase = MIN(kDynamicThreshMaximumDetectOffset, candidateDetectOffset);
+      if(_countAboveDetectLevel > _filterParams.minConsecCountToUpdateThresholds) {
+        const auto candidateDetectOffset = input - _filterParams.dynamicThreshDetectFollowOffset - baseline;
+        _detectOffsetFromBase = MIN(_filterParams.dynamicThreshMaximumDetectOffset, candidateDetectOffset);
         // detect and undetect levels move in lockstep
-        _undetectOffsetFromBase = _detectOffsetFromBase - kDynamicThreshGap;
+        _undetectOffsetFromBase = _detectOffsetFromBase - _filterParams.dynamicThreshGap;
         _countAboveDetectLevel = 0;
       }
     } else {
@@ -311,14 +355,14 @@ bool TouchSensorComponent::ProcessWithDynamicThreshold(const int baseline, const
   } else if (input < undetectLevel) {
     _isPressed = false;
     // monotonically decreasing
-    if ((undetectLevel-input) > kDynamicThreshUndetectFollowOffset) {
+    if ((undetectLevel-input) > _filterParams.dynamicThreshUndetectFollowOffset) {
       _countBelowUndetectLevel++;
       _countAboveDetectLevel = 0;
-      if(_countBelowUndetectLevel > kDynamicThreshDetectFollowOffset) {
-        auto candidateUndetectOffset = input + kDynamicThreshUndetectFollowOffset - baseline;
-        _undetectOffsetFromBase = MAX(kDynamicThreshMininumUndetectOffset, candidateUndetectOffset);
+      if(_countBelowUndetectLevel > _filterParams.minConsecCountToUpdateThresholds) {
+        auto candidateUndetectOffset = input + _filterParams.dynamicThreshUndetectFollowOffset - baseline;
+        _undetectOffsetFromBase = MAX(_filterParams.dynamicThreshMininumUndetectOffset, candidateUndetectOffset);
         // detect and undetect levels move in lockstep
-        _detectOffsetFromBase = _undetectOffsetFromBase + kDynamicThreshGap;
+        _detectOffsetFromBase = _undetectOffsetFromBase + _filterParams.dynamicThreshGap;
         _countBelowUndetectLevel = 0;
       }
     } else {

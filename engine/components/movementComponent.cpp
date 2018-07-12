@@ -14,10 +14,13 @@
 
 #include "coretech/common/robot/utilities.h"
 #include "coretech/common/shared/types.h"
+#include "coretech/common/engine/math/fastPolygon2d.h"
+#include "coretech/common/engine/math/polygon_impl.h"
+
 #include "engine/ankiEventUtil.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/blockWorld/blockWorld.h"
+#include "engine/navMap/memoryMap/data/memoryMapData.h"
+#include "engine/navMap/mapComponent.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/animTrackHelpers.h"
 #include "engine/components/batteryComponent.h"
@@ -68,6 +71,7 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
   auto helper = MakeAnkiEventUtil(interface, *this, _eventHandles);
   
   // Game to engine (in alphabetical order)
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::AllowedToHandleActions>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::DriveArc>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::DriveWheels>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::MoveHead>();
@@ -386,7 +390,20 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
                  "Adding obstacle %s robot",
                  debugStr);
         
-        _robot->GetBlockWorld().AddCollisionObstacle(obstaclePose);
+        //        p1-p4
+        //        |   |         NOTE: add depth after the the detected pose otherwise the
+        //      pose  |               robot footprint will override part of the obstacle
+        //        |   |               with `ClearOfCliff`
+        //        p2-p3
+
+        const Rotation3d id = Rotation3d(0.f, Z_AXIS_3D());
+        const Point2f p1 = (obstaclePose.GetTransform() * Transform3d(id, {  0.f, -15.f, 0.f })).GetTranslation();
+        const Point2f p2 = (obstaclePose.GetTransform() * Transform3d(id, {  0.f,  15.f, 0.f })).GetTranslation(); 
+        const Point2f p3 = (obstaclePose.GetTransform() * Transform3d(id, { 10.f,  15.f, 0.f })).GetTranslation();
+        const Point2f p4 = (obstaclePose.GetTransform() * Transform3d(id, { 10.f, -15.f, 0.f })).GetTranslation();
+
+        MemoryMapData data(MemoryMapTypes::EContentType::ObstacleUnrecognized, robotState.timestamp);
+        _robot->GetMapComponent().InsertData( FastPolygon({p1, p2, p3, p4}), data);
       }
       
     } // if(kCreateUnexpectedMovementObstacles && isValidTypeOfUnexpectedMovement)
@@ -409,6 +426,12 @@ void MovementComponent::RemoveEyeShiftWhenHeadMoves(const std::string& name, Tim
 }
 
   
+template<>
+void MovementComponent::HandleMessage(const ExternalInterface::AllowedToHandleActions& msg)
+{
+  _isAllowedToHandleActions = msg.allowedToHandleActions;
+}
+
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
 {

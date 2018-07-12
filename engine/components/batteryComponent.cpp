@@ -23,6 +23,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/robotStatusAndActions.h"
 
 #include "osState/osState.h"
@@ -285,6 +286,7 @@ void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
     using namespace ExternalInterface;
     _robot->Broadcast(MessageEngineToGame(ChargerEvent(onChargeContacts)));
   }
+  OSState::getInstance()->SetOnChargeContacts(onChargeContacts);
 }
 
 

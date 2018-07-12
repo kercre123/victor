@@ -44,7 +44,10 @@
   {
     "en":
     {
-      "voice": "co-USEnglish-Bendnn-22khz/enu/enu_bendnn_22k_co.fl.ini"
+      "voice": "co-USEnglish-Bendnn-22khz/enu/enu_bendnn_22k_co.fl.ini",
+      "speed": 90,
+      "pitch": 100,
+      "shaping": 115
     },
     "fr":
     {

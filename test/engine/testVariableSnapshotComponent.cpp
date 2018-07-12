@@ -153,41 +153,6 @@ TEST(VariableSnapshotComponent, BasicFunctionalityTest)
   RemoveTestDataAfter();
 };
 
-// confirm that multiple initializations fail (for now - this behavior should be added later)
-TEST(VariableSnapshotComponent, MultipleInitsFail)
-{
-
-  using namespace Anki::Cozmo;
-
-  {
-    int initInt0 = 20;
-    auto errGState = Anki::Util::_errG;
-
-    // make a robot
-    auto robot0 = std::make_unique<Robot>(kRobotId, cozmoContext);
-    RemoveTestDataPrior(robot0);    
-
-    // get and load data
-    auto& variableSnapshotComp = robot0->GetVariableSnapshotComponent();
-
-    // identify data to be stored
-    std::shared_ptr<int> testIntPtr0 = std::make_shared<int>(initInt0);
-    std::shared_ptr<int> testIntPtr1 = std::make_shared<int>(initInt0-1);
-
-    variableSnapshotComp.InitVariable<int>(VariableSnapshotId::UnitTestInt0, testIntPtr0);
-    Anki::Util::_errG = false;
-    variableSnapshotComp.InitVariable<int>(VariableSnapshotId::UnitTestInt0, testIntPtr1);
-
-    // should error here
-    EXPECT_TRUE( Anki::Util::_errG );
-
-    // set _errG back to its initial value
-    Anki::Util::_errG = errGState;
-  }
-
-  RemoveTestDataAfter();
-};
-
 // changing version info leads to data reset
 TEST(VariableSnapshotComponent, VersioningInfoDataResetOSBuildVersion)
 {

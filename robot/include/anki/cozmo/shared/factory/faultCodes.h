@@ -69,6 +69,8 @@ enum : uint16_t {
   MIC_FR                = 870,
 
   //Cloud Errors
+  CLOUD_READ_ESN        = 852,
+  CLOUD_TOKEN_STORE     = 851,
   CLOUD_CERT            = 850,
 
   //Camera config errors

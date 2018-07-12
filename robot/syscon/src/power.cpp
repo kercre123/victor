@@ -45,6 +45,7 @@ void Power::init(void) {
 }
 
 static inline void enableHead(void) {
+  BODY_TX::mode(MODE_OUTPUT);
   MAIN_EN::set();
   Mics::start();
   Lights::enable();

@@ -109,7 +109,7 @@ EComputePathStatus XYPlanner::InitializePlanner(const Pose2d& start, const std::
   if (!forceReplan && _startPlanner) { return EComputePathStatus::Running; }
   
   // if the planner is running, flag an abort on the current instance so we can restart ASAP
-  if ( forceReplan && !_contextMutex.try_lock() ) {
+  if ( !_contextMutex.try_lock() && forceReplan ) {
     _stopPlanner = true; 
     _contextMutex.lock();
   }

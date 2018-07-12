@@ -228,12 +228,23 @@ def pretty_ticket(ticket):
   link = '=HYPERLINK("{}", "{}")'.format(url, ticket)
   return link
 
+# List of key:pattern pairs used to match JIRA project names
+PATTERNS = {
+  'COZMO': '^[Cc][Oo][Zz][Mm][Oo][- ]?(\d+)[\w:-]*(.+)',
+  'OD': '^[Od][Dd][- ]?(\d+)[\w:-]*(.+)',
+  'BI': '^[Bb][Ii][- ]?(\d+)[\w:-]*(.+)',
+  'VIC': '^[Vv][Ii][Cc][- ]?(\d+)[\w:-]*(.+)',
+  'CLAI': '^[Cc][Ll][Aa][Ii][- ]?(\d+)[\w:-]*(.+)',
+  'SAI': '^[Ss][Aa][Ii][- ]?(\d+)[\w:-]*(.+)'
+}
+
 def append_sheet_commits(options, commits):
   newrows = []
   for commit in commits:
     commit = commit.strip()
     if not commit:
       continue
+
     # Split 'id text' into fields
     match = re.search('([0-9a-f]+)(.+)', commit)
     if not match:
@@ -243,21 +254,13 @@ def append_sheet_commits(options, commits):
     text = match.group(2).strip()
     ticket = ''
 
-    # Split 'COZMO-xxxxx: description' into fields
-    match = re.search('^[Cc][Oo][Zz][Mm][Oo][- ]?(\d+)[\w:-]*(.+)', text)
-    if match:
-      ticket = 'COZMO-' + match.group(1).strip()
-      text = match.group(2).strip()
-
-    match = re.search('^[Od][Dd][- ]?(\d+)[\w:-]*(.+)', text)
-    if match:
-      ticket = 'OD-' + match.group(1).strip()
-      text = match.group(2).strip()
-
-    match = re.search('^[Bb][Ii][- ]?(\d+)[\w:-]*(.+)', text)
-    if match:
-      ticket = 'BI-' + match.group(1).strip()
-      text = match.group(2).strip()
+    # Attempt to match on each project name
+    for key in PATTERNS:
+      match = re.search(PATTERNS[key], text)
+      if match:
+        ticket = key + '-' + match.group(1).strip()
+        text = match.group(2).strip()
+        break
 
     # Format ticket
     if ticket:

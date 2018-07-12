@@ -11,6 +11,7 @@
  *
  **/
 
+#include "engine/ankiEventUtil.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/memoryMapToPlanner.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_ObservableObject.h"
@@ -372,8 +373,6 @@ void LatticePlannerInternal::ImportBlockworldObstaclesIfNeeded(const bool isRepl
       {MemoryMapTypes::EContentType::ClearOfObstacle       , true},
       {MemoryMapTypes::EContentType::ClearOfCliff          , true},
       {MemoryMapTypes::EContentType::ObstacleObservable    , true},
-      {MemoryMapTypes::EContentType::ObstacleCharger       , true},
-      {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
       {MemoryMapTypes::EContentType::ObstacleProx          , true},
       {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true},
       {MemoryMapTypes::EContentType::Cliff                 , true},
@@ -390,8 +389,6 @@ void LatticePlannerInternal::ImportBlockworldObstaclesIfNeeded(const bool isRepl
       {MemoryMapTypes::EContentType::ClearOfObstacle       , true},
       {MemoryMapTypes::EContentType::ClearOfCliff          , true},
       {MemoryMapTypes::EContentType::ObstacleObservable    , true},
-      {MemoryMapTypes::EContentType::ObstacleCharger       , true},
-      {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
       {MemoryMapTypes::EContentType::ObstacleProx          , true},
       {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true},
       {MemoryMapTypes::EContentType::Cliff                 , true},
@@ -407,8 +404,6 @@ void LatticePlannerInternal::ImportBlockworldObstaclesIfNeeded(const bool isRepl
       {MemoryMapTypes::EContentType::ClearOfObstacle       , true},
       {MemoryMapTypes::EContentType::ClearOfCliff          , true},
       {MemoryMapTypes::EContentType::ObstacleObservable    , true },
-      {MemoryMapTypes::EContentType::ObstacleCharger       , true},
-      {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
       {MemoryMapTypes::EContentType::ObstacleProx          , false},
       {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true},
       {MemoryMapTypes::EContentType::Cliff                 , true},
@@ -424,8 +419,6 @@ void LatticePlannerInternal::ImportBlockworldObstaclesIfNeeded(const bool isRepl
       {MemoryMapTypes::EContentType::ClearOfObstacle       , true},
       {MemoryMapTypes::EContentType::ClearOfCliff          , true},
       {MemoryMapTypes::EContentType::ObstacleObservable    , true },
-      {MemoryMapTypes::EContentType::ObstacleCharger       , true},
-      {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
       {MemoryMapTypes::EContentType::ObstacleProx          , true},
       {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true},
       {MemoryMapTypes::EContentType::Cliff                 , false},
@@ -441,8 +434,6 @@ void LatticePlannerInternal::ImportBlockworldObstaclesIfNeeded(const bool isRepl
       {MemoryMapTypes::EContentType::ClearOfObstacle       , true},
       {MemoryMapTypes::EContentType::ClearOfCliff          , true},
       {MemoryMapTypes::EContentType::ObstacleObservable    , true},
-      {MemoryMapTypes::EContentType::ObstacleCharger       , false},
-      {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
       {MemoryMapTypes::EContentType::ObstacleProx          , true},
       {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true},
       {MemoryMapTypes::EContentType::Cliff                 , true},
@@ -468,9 +459,6 @@ void LatticePlannerInternal::ImportBlockworldObstaclesIfNeeded(const bool isRepl
       GetConvexHullsByType(memoryMap, typesToCalculateBordersWithProx, MemoryMapTypes::EContentType::ObstacleProx, convexHulls);
     }
     
-    // todo (VIC-2323): make the charger a ObservableObject and use its boundingPoly as done below
-    GetConvexHullsByType(memoryMap, typesToCalculateBordersWithCharger, MemoryMapTypes::EContentType::ObstacleCharger, convexHulls);
-
     MemoryMapTypes::MemoryMapDataConstList observableObjectData;
     MemoryMapTypes::NodePredicate pred =
       [](MemoryMapTypes::MemoryMapDataConstPtr d) -> bool

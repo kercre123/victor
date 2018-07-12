@@ -13,6 +13,7 @@
 #ifndef AI_COMPONENT_BEHAVIOR_COMPONENT_BEHAVIOR_STACK
 #define AI_COMPONENT_BEHAVIOR_COMPONENT_BEHAVIOR_STACK
 
+#include "clad/types/robotCompletedAction.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 
@@ -69,6 +70,7 @@ public:
   // if the passed in behavior is in the stack, return a pointer to the behavior which is above it in the
   // stack, or null if it is at the top or not in the stack
   const IBehavior* GetBehaviorInStackAbove(const IBehavior* behavior) const;
+  const IBehavior* GetBehaviorInStackBelow(const IBehavior* behavior) const;
 
   void PushOntoStack(IBehavior* behavior);
   void PopStack();

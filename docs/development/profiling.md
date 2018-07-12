@@ -23,8 +23,17 @@ If your robot does not allow ADB over tcp, you can enable it by running a comman
 
 ```sh
 setprop service.adb.tcp.port 5555
-pkill -SIGHUP adbd
+systemctl restart adbd
 ```
+
+You can make this change persistent by running a command like this ON THE ROBOT:
+
+```sh
+setprop persist.adb.tcp.port 5555
+systemctl restart adbd
+```
+
+The persistent setting is stored in /data/persist.  It will be lost if you reformat /data.
 
 If you have not already connected to ADB on the robot, you can connect by running a command like this
 ON YOUR DEVELOPMENT HOST:
@@ -78,9 +87,14 @@ ANKI_PROFILE_PROCNAME=vic-anim bash HOW-inferno.sh
 Current Victor processes are:
 
 * vic-anim
-* vic-engine
 * vic-cloud
+* vic-dasmgr
+* vic-engine
+* vic-gateway
+* vic-neuralnets
 * vic-robot
+* vic-switchboard
+* vic-webserver
 
 Additional arguments can be passed to the report generation:
 

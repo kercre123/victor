@@ -20,8 +20,6 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "engine/actions/actionInterface.h"
-#include "engine/events/ankiEvent.h"
-#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/types/keepFaceAliveParameters.h"
 #include "coretech/vision/shared/compositeImage/compositeImageLayer.h"
@@ -50,6 +48,8 @@ class Robot;
 namespace RobotInterface{
 class EngineToRobot;
 }
+template <typename T>
+class AnkiEvent;
   
 class AnimationComponent : public IDependencyManagedComponent<RobotComponentID>, 
                            private Anki::Util::noncopyable, 
@@ -172,13 +172,15 @@ public:
   // Helper function that clears composite image layer - can be accomplished through UpdateCompositeImage
   // as well by specifying count values for sprite boxes/sprites if more nuance is required
   void ClearCompositeImageLayer(Vision::LayerName layerName, u32 applyAt_ms = 0);
-  
-  // Enable/Disable KeepFaceAlive
-  // If enable == false, disableTimeout_ms is the duration over which the face should 
-  // return to no adjustments
-  Result EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms = 0) const;
 
-  // Restore all KeepFaceAlive parameters to defaults
+  // KeepFaceAlive is a procedural way to add small eye movements and blinks to the eyes. It defaults to on to
+  // make sure the robot always feels "alive", but it can be locked out by adding (or removing) a "disable
+  // lock". If any disable locks are present, the keep alive will be disabled
+  void AddKeepFaceAliveDisableLock(const std::string& lockName);
+  void RemoveKeepFaceAliveDisableLock(const std::string& lockName);
+
+  // Restore all KeepFaceAlive parameters to defaults. Note that this does not enable or disable the keep
+  // alive
   Result SetDefaultKeepFaceAliveParameters() const;
   
   // Set KeepFaceAliveParameterToDefault
@@ -268,6 +270,8 @@ private:
                             const u32 actionTag,
                             int numLoops,
                             float timeout_sec);
+
+  Result SendEnableKeepFaceAlive(bool enable, u32 disableTimeout_ms = 0);
   
   static constexpr float _kDefaultTimeout_sec = 60.f;
 
@@ -304,8 +308,16 @@ private:
   std::string   _currAnimName;
   Tag           _currAnimTag;
 
+
+  // NOTE: this must match the real default in the anim process or else things can get out of sync
+  bool _lastSentEnableKeepFaceAlive = true;
+  bool _desiredEnableKeepFaceAlive = true;
+
   // Latest state message received from anim process
   AnimationState _animState;
+
+  // keep face alive enable / disable tracking
+  int _numKeepFaceAliveDisableLocks = 0;
 
   std::unique_ptr<Vision::RGB565ImageBuilder> _oledImageBuilder;
 

@@ -19,6 +19,7 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
+#include "engine/aiComponent/behaviorComponent/activeBehaviorIterator.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
@@ -34,9 +35,11 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
 #include "engine/aiComponent/continuityComponent.h"
 #include "engine/components/carryingComponent.h"
+#include "engine/components/cubes/cubeConnectionCoordinator.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
+#include "engine/components/powerStateManager.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
@@ -50,8 +53,11 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/behaviorComponent/activeFeatures.h"
+#include "clad/types/behaviorComponent/behaviorClasses.h"
 #include "clad/types/behaviorComponent/behaviorStats.h"
 #include "clad/types/behaviorComponent/userIntent.h"
+
+#include "proto/external_interface/shared.pb.h"
 
 #include "util/enums/stringToEnumMapper.hpp"
 #include "util/fileUtils/fileUtils.h"
@@ -809,6 +815,13 @@ void ICozmoBehavior::OnActivatedInternal()
   }
 
   GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::BehaviorActived);
+
+  {
+    using requirements = BehaviorOperationModifiers::CubeConnectionRequirements;
+    if(requirements::None != _operationModifiers.cubeConnectionRequirements){
+      ManageCubeConnectionSubscriptions(true);
+    }
+  }
   
   OnBehaviorActivated();
 }
@@ -845,7 +858,10 @@ void ICozmoBehavior::OnLeftActivatableScopeInternal()
     infoProcessor.RemoveEnableRequest(_requiredProcess, GetDebugLabel().c_str());
   }
 
-  GetBEI().GetVisionScheduleMediator().ReleaseAllVisionModeSubscriptions(this);
+  const bool hasActivatableScopeVisionModes = !_operationModifiers.visionModesForActivatableScope->empty();
+  if (hasActivatableScopeVisionModes) {
+    GetBEI().GetVisionScheduleMediator().ReleaseAllVisionModeSubscriptions(this);
+  }
 
   // Manage state for any IBEIConditions used by this Behavior
   // Conditions may not be evaluted when the behavior is outside the Activatable Scope
@@ -870,10 +886,18 @@ void ICozmoBehavior::OnDeactivatedInternal()
   // Clear callbacks
   _delegationCallback = nullptr;
 
-  // Set Mode Subscriptions back to ActivatableScope values. OnLeftActivatableScopeInternal handles final unsubscribe
-  if(!_operationModifiers.visionModesForActivatableScope->empty()){
-    GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this,
-      *_operationModifiers.visionModesForActivatableScope);
+  const bool hasActiveScopeVisionModes = !_operationModifiers.visionModesForActiveScope->empty();
+  if (hasActiveScopeVisionModes) {
+    // If there are any required visions modes for ActivatableScope, reset the mode subscriptions
+    // back to ActivatableScope values. OnLeftActivatableScopeInternal handles final unsubscribe.
+    // If there are no activatable scope requests, then we can unsubscribe from all vision modes now.
+    const bool hasActivatableScopeVisionModes = !_operationModifiers.visionModesForActivatableScope->empty();
+    if (hasActivatableScopeVisionModes) {
+      GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this,
+        *_operationModifiers.visionModesForActivatableScope);
+    } else {
+      GetBEI().GetVisionScheduleMediator().ReleaseAllVisionModeSubscriptions(this);
+    }
   }
 
   // Manage state for any WantsToBeActivated conditions used by this Behavior:
@@ -909,11 +933,25 @@ void ICozmoBehavior::OnDeactivatedInternal()
     auto& uic = GetBehaviorComp<UserIntentComponent>();
     uic.DeactivateUserIntent( _intentToDeactivate );
     _intentToDeactivate = UserIntentTag::INVALID;
-  }                                         
-  
-  DEV_ASSERT(_smartLockIDs.empty(), "ICozmoBehavior.Stop.DisabledReactionsNotEmpty");
-}
+  }
 
+  if( !_powerSaveRequest.empty() ) {
+    GetBehaviorComp<PowerStateManager>().RemovePowerSaveModeRequest(_powerSaveRequest);
+    _powerSaveRequest.clear();
+  }
+
+  {
+    using requirements = BehaviorOperationModifiers::CubeConnectionRequirements;
+    if(requirements::None != _operationModifiers.cubeConnectionRequirements){
+      ManageCubeConnectionSubscriptions(false);
+    }
+  }
+
+  if( _keepAliveDisabled ) {
+    GetBEI().GetAnimationComponent().RemoveKeepFaceAliveDisableLock(GetDebugLabel());
+    _keepAliveDisabled = false;
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ICozmoBehavior::WantsToBeActivatedInternal() const
@@ -1024,6 +1062,10 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
     return false;
   }
 
+  if(!CubeConnectionRequirementsMet()){
+    return false;
+  }
+
   for(auto& condition: _wantsToBeActivatedConditions){
     if(!condition->AreConditionsMet(GetBEI())){
       return false;
@@ -1033,6 +1075,89 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
   return true;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ICozmoBehavior::CubeConnectionRequirementsMet() const
+{
+  using requirements = BehaviorOperationModifiers::CubeConnectionRequirements;
+  switch(_operationModifiers.cubeConnectionRequirements){
+    case requirements::None:
+    case requirements::OptionalLazy:
+    case requirements::OptionalActive:
+    {
+      return true;
+    }
+    case requirements::RequiredManaged:
+    {
+#if ANKI_DEV_CHEATS
+      // Runtime ancestor verification. TODO:(str) This should also be checked in unit tests
+      bool foundRequiredAncestor = false;
+      auto ancestorOperand = [&foundRequiredAncestor](const ICozmoBehavior& behavior){
+        BehaviorOperationModifiers modifiers;
+        behavior.GetBehaviorOperationModifiers(modifiers);
+        foundRequiredAncestor = modifiers.ensuresCubeConnectionAtDelegation;
+        return !foundRequiredAncestor;
+      };
+      ActiveBehaviorIterator& abi = GetBehaviorComp<ActiveBehaviorIterator>();
+      abi.IterateActiveCozmoBehaviorsBackward(ancestorOperand);
+      if(!ANKI_VERIFY(foundRequiredAncestor,
+                      "ICozmoBehavior.MissingRequiredAncestor",
+                      "Behavior %s is missing required ancestor %s, and cannot be activated",
+                      GetDebugLabel().c_str(),
+                      EnumToString(BehaviorClass::ConnectToCube))){
+        return false;
+      }
+#endif // ANKI_DEV_CHEATS
+      // NOTE: Fallthrough.
+      // Both Required and Opportunistic require a currently active connection
+    }
+    case requirements::RequiredLazy:
+    {
+      if(!GetBEI().GetCubeConnectionCoordinator().IsConnectedToCube()){
+        PRINT_NAMED_WARNING("ICozmoBehavior.MissingRequiredCubeConnection",
+                            "Behavior %s specifies that a cube connection is required, but there is none active",
+                            GetDebugLabel().c_str());
+        return false;
+      }
+      return true;
+      break;
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::ManageCubeConnectionSubscriptions(bool onActivated)
+{
+  using requirements = BehaviorOperationModifiers::CubeConnectionRequirements;
+  bool shouldSubscribe = false;
+  bool isConnected = GetBEI().GetCubeConnectionCoordinator().IsConnectedToCube();
+  switch(_operationModifiers.cubeConnectionRequirements){
+    case requirements::OptionalLazy:
+    {
+      shouldSubscribe = isConnected;
+      break;
+    }
+    case requirements::OptionalActive:
+    case requirements::RequiredLazy:
+    case requirements::RequiredManaged:
+    {
+      shouldSubscribe = true;
+      break;
+    }
+    default:
+    {
+      PRINT_NAMED_ERROR("ICozmoBehavior.ManageCubeConnectionSubscriptions.UnknownCubeConnectionRequirementType",
+                        "Received unknown requirement type or None");
+    }
+  }
+
+  if(shouldSubscribe){
+    if(onActivated){
+      GetBEI().GetCubeConnectionCoordinator().SubscribeToCubeConnection(this, _operationModifiers.connectToCubeInBackground);
+    } else {
+      GetBEI().GetCubeConnectionCoordinator().UnsubscribeFromCubeConnection(this);
+    }
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Util::RandomGenerator& ICozmoBehavior::GetRNG() const {
@@ -1129,7 +1254,7 @@ void ICozmoBehavior::UpdateMessageHandlingHelpers()
   
   for(const auto& event: stateChangeComp.GetAppToEngineEvents()){
     // Handle specific callbacks
-    auto iter = _appToEngineTags.find(event.GetData().oneof_message_type_case());
+    auto iter = _appToEngineTags.find(event.GetData().GetTag());
     if(iter != _appToEngineTags.end()){
       AlwaysHandleInScope(event);
       if(IsActivated()){
@@ -1484,6 +1609,36 @@ UserIntentPtr ICozmoBehavior::SmartActivateUserIntent(UserIntentTag tag)
   return uic.ActivateUserIntent(tag, GetDebugLabel());
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SmartRequestPowerSaveMode()
+{
+  auto& powerSaveManager = GetBehaviorComp<PowerStateManager>();
+  
+  if( !_powerSaveRequest.empty() ) {
+    PRINT_NAMED_WARNING("ICozmoBehavior.SmartRequestPowerSaveMode.DuplicateRequest",
+                        "%s: Power save mode already requested (with string '%s')",
+                        GetDebugLabel().c_str(),
+                        _powerSaveRequest.c_str());
+    // remove the duplicate request to be safe
+    powerSaveManager.RemovePowerSaveModeRequest(_powerSaveRequest);
+    _powerSaveRequest.clear();
+  }
+
+  _powerSaveRequest = GetDebugLabel();
+  powerSaveManager.RequestPowerSaveMode(_powerSaveRequest);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SmartDisableKeepFaceAlive()
+{
+  if( ANKI_VERIFY( !_keepAliveDisabled,
+                   "ICozmoBehavior.SmartDisableKeepFaceAlive.AlreadyDisabled",
+                   "Behavior '%s' wants to disable face keep alive but it already has done so",
+                   GetDebugLabel().c_str() ) ) {
+    GetBEI().GetAnimationComponent().AddKeepFaceAliveDisableLock(GetDebugLabel());
+    _keepAliveDisabled = true;
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::PlayEmergencyGetOut(AnimationTrigger anim)

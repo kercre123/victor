@@ -37,7 +37,8 @@ public:
     delegates.insert( BEHAVIOR_ID(OnboardingWaitForTriggerWord) );
     delegates.insert( BEHAVIOR_ID(OnboardingWaitForComeHere) );
     delegates.insert( BEHAVIOR_ID(OnboardingComeHere) );
-    delegates.insert( BEHAVIOR_ID(OnboardingFinishedComeHere) );
+    delegates.insert( BEHAVIOR_ID(OnboardingComeHereResume) );
+    delegates.insert( BEHAVIOR_ID(OnboardingComeHereGetOut) );
   }
   
   IBehavior* GetBehavior( BehaviorExternalInterface& bei ) override
@@ -57,7 +58,8 @@ public:
     _behaviors[Step::WaitingForTrigger]        = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingWaitForTriggerWord) );
     _behaviors[Step::WaitingForComeHere]       = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingWaitForComeHere) );
     _behaviors[Step::ComeHere]                 = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingComeHere) );
-    _behaviors[Step::ComeHereResumeOrComplete] = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingFinishedComeHere) );
+    _behaviors[Step::ComeHereGetOut]           = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingComeHereGetOut) );
+    _behaviors[Step::ComeHereResume]           = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingComeHereResume) );
     
     _step = Step::LookAtPhone;
     _stepAfterResumeFromCharger = Step::LookAtPhone; // this is state is ignored since it could never happen outside initialization
@@ -65,7 +67,7 @@ public:
     DebugTransition("Waiting for OnboardingConnectionComplete to wake up");
   }
   
-  virtual bool OnContinue( BehaviorExternalInterface& bei, OnboardingContinueEnum continueNum ) override
+  virtual bool OnContinue( BehaviorExternalInterface& bei, OnboardingSteps stepNum ) override
   {
     if( _step == Step::Asleep ) {
       TransitionToWakingUp();
@@ -86,13 +88,12 @@ public:
   virtual bool OnInterrupted( BehaviorExternalInterface& bei, BehaviorID interruptingBehavior ) override
   {
     // stage is complete upon interruption if come here finished
-    // todo: cliff reaction for Step::ComeHere should not be done, but should resume as ComeHereResumeOrComplete
-    return (_step == Step::ComeHereResumeOrComplete);
+    return (_step == Step::ComeHereResume) || (_step == Step::ComeHereGetOut);
   }
   
   virtual void OnResume( BehaviorExternalInterface& bei, BehaviorID interruptingBehavior ) override
   {
-    const bool justGotTrigger = (_step == Step::WaitingForTrigger) && (interruptingBehavior == BEHAVIOR_ID(TriggerWordDetected));
+    const bool justGotTrigger = (_step == Step::WaitingForTrigger) && (interruptingBehavior == BEHAVIOR_ID(OnboardingFirstTriggerWord));
     auto* driveOffCharger = _behaviors[Step::DriveOffCharger];
     if( driveOffCharger->WantsToBeActivated() ) {
       DebugTransition("Driving off charger");
@@ -106,6 +107,9 @@ public:
     } else if( justGotTrigger ) {
       // successful trigger ==> resume from next step
       TransitionToWaitingForComeHere();
+    } else if( (interruptingBehavior == BEHAVIOR_ID(ReactToCliff)) && (_step == Step::ComeHere) ) {
+      // hit a cliff during come here, so something easier this time
+      TransitionToComeHereResume();
     }
   }
   
@@ -128,8 +132,8 @@ public:
     } else if( _step == Step::DriveOffCharger ) {
       OnFinishedDrivingOffCharger();
     } else if( _step == Step::ComeHere ) {
-      TransitionToComeHereReaction();
-    } else if( _step == Step::ComeHereResumeOrComplete ) {
+      TransitionToComeHereGetOut();
+    } else if( (_step == Step::ComeHereGetOut) || (_step == Step::ComeHereResume) ) {
       // done
       DebugTransition("Stage complete");
       _step = Step::Complete;
@@ -155,6 +159,15 @@ public:
         // successful intent ==> next step (come here)
         TransitionToComeHere();
       }
+    }
+  }
+  
+  virtual OnboardingSteps GetExpectedStep() const override
+  {
+    if( _step == Step::WaitingForTrigger ) {
+      return OnboardingSteps::FirstTriggerWord;
+    } else {
+      return OnboardingSteps::Default;
     }
   }
   
@@ -201,10 +214,17 @@ private:
     // keep the trigger word the same, so that "hey vector come here" still works if the user tries to steer the robot
   }
   
-  void TransitionToComeHereReaction()
+  void TransitionToComeHereGetOut()
+  {
+    DebugTransition("Running come here getout");
+    _step = Step::ComeHereGetOut;
+    _currentBehavior = _behaviors[_step];
+  }
+  
+  void TransitionToComeHereResume()
   {
     DebugTransition("Playing come here reaction");
-    _step = Step::ComeHereResumeOrComplete;
+    _step = Step::ComeHereResume;
     _currentBehavior = _behaviors[_step];
     SetTriggerWordEnabled(false);
   }
@@ -228,7 +248,8 @@ private:
         break;
       case Step::Asleep:
       case Step::Complete:
-      case Step::ComeHereResumeOrComplete:
+      case Step::ComeHereGetOut:
+      case Step::ComeHereResume:
         DEV_ASSERT(false, "OnboardingStageWakeUpComeHere.UnexpectedDriveOffCharger");
         break;
     }
@@ -248,7 +269,8 @@ private:
     WaitingForTrigger,
     WaitingForComeHere,
     ComeHere,
-    ComeHereResumeOrComplete, // what happens after ComeHere, or, if the robot hits a cliff during ComeHere, the after behavior
+    ComeHereGetOut, // reaction after coming here
+    ComeHereResume, // if the robot hits a cliff during ComeHere, the resume behavior
     Complete, // waiting for cleaning
   };
   

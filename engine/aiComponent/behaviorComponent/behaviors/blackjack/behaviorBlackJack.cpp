@@ -52,7 +52,6 @@ BehaviorBlackJack::DynamicVariables::DynamicVariables()
 : state(EState::TurnToFace)
 , dealingState(EDealingState::PlayerFirstCard)
 , outcome(EOutcome::Tie)
-, hasWishedGoodLuck(false)
 {
 }
 
@@ -163,7 +162,6 @@ void BehaviorBlackJack::TransitionToDealing()
           _dVars.dealingState = EDealingState::DealerFirstCard;
           // keep an eye out for Aces
           if(_game.LastCard().IsAnAce()){
-            _dVars.hasWishedGoodLuck = true;
             DelegateIfInControl(SetUpSpeakingBehavior("Good luck!"),
                                 &BehaviorBlackJack::TransitionToDealing);
           } else {
@@ -188,10 +186,12 @@ void BehaviorBlackJack::TransitionToDealing()
       _visualizer.DealToPlayer(GetBEI(), [this]()
         {
           _dVars.dealingState = EDealingState::DealerSecondCard;
-          // keep an eye out for Aces
-          if(_game.LastCard().IsAnAce() && !_dVars.hasWishedGoodLuck){
-            DelegateIfInControl(SetUpSpeakingBehavior("Good luck!"),
-                                &BehaviorBlackJack::TransitionToDealing);
+          // Keep an eye out for natural BlackJack
+          if(_game.PlayerHasBlackJack()){
+            _dVars.outcome = EOutcome::VictorLosesBlackJack;
+            DelegateIfInControl(SetUpSpeakingBehavior("BlackJack!"),
+                                &BehaviorBlackJack::TransitionToEndGame);
+
           } else {
             TransitionToDealing();
           }
@@ -316,27 +316,26 @@ void BehaviorBlackJack::TransitionToVictorsTurn()
 void BehaviorBlackJack::TransitionToReactToDealerCard()
 {
   SET_STATE(ReactToDealerCard);
-  if(_game.DealerHasBlackJack()){
-    if(_game.PlayerHasBlackJack()){
-      _dVars.outcome = EOutcome::Tie;
-      DelegateIfInControl(SetUpSpeakingBehavior("Dealer has 21. Push."),
-                          &BehaviorBlackJack::TransitionToEndGame);
-    } else {
-      _dVars.outcome = EOutcome::VictorWinsBlackJack;
-      DelegateIfInControl(SetUpSpeakingBehavior("Dealer has 21!"),
-                          &BehaviorBlackJack::TransitionToEndGame);
-    }
-  } else if(_game.DealerBusted()){
+
+  if(_game.DealerBusted()){
     // Announce score and bust
     _dVars.outcome = EOutcome::VictorLoses;
     std::string dealerScoreString("Dealer has " + std::to_string(_game.GetDealerScore()) + ". Dealer Busted.");
     DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString), &BehaviorBlackJack::TransitionToEndGame);
-  } else if(_game.DealerHasLead()){
-    // Announce score and lead
+  } else if(_game.DealerTied()){
+    _dVars.outcome = EOutcome::Tie;
+    std::string tieString("Dealer has " + std::to_string(_game.GetDealerScore()) + ". We tied." );
+    DelegateIfInControl(SetUpSpeakingBehavior(tieString),
+                        &BehaviorBlackJack::TransitionToEndGame);
+  } else if(_game.DealerHasBlackJack()){
+    _dVars.outcome = EOutcome::VictorWinsBlackJack;
+    DelegateIfInControl(SetUpSpeakingBehavior("Dealer has 21!"),
+                        &BehaviorBlackJack::TransitionToEndGame);
+  } else if(_game.DealerHasWon()){
     _dVars.outcome = EOutcome::VictorWins;
-    std::string dealerScoreString("Dealer has " + std::to_string(_game.GetDealerScore()) );
+    std::string dealerScoreString("Dealer has " + std::to_string(_game.GetDealerScore()) + ". Dealer Wins!");
     DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString), &BehaviorBlackJack::TransitionToEndGame);
-  } else if(_game.GetDealerHand().size() >= kHandSizeLimit) {
+  } else if(_game.DealerHasTooManyCards() || _game.DealerShouldStandPerVegasRules()) {
     std::string dealerScoreString("Dealer has " + std::to_string(_game.GetDealerScore()) + ". You win!" );
     _dVars.outcome = EOutcome::VictorLoses;
     DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString),

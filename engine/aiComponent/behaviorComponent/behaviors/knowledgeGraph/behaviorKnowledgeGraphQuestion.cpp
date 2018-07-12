@@ -12,6 +12,7 @@
 
 // #include "engine/aiComponent/behaviorComponent/behaviors/knowledgeGraph/behaviorKnowledgeGraphQuestion.h"
 #include "behaviorKnowledgeGraphQuestion.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
@@ -21,6 +22,8 @@
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
+#include "engine/audio/engineRobotAudioClient.h"
+#include "engine/components/backpackLights/backpackLightComponent.h"
 #include "engine/components/mics/micComponent.h"
 
 #include "coretech/common/engine/jsonTools.h"
@@ -48,19 +51,28 @@ namespace Cozmo {
 namespace
 {
   const char* kKey_Duration                       = "streamingTimeout";
-  const float kDefaultDuration                    = 10.0f;
+  const char* kKey_ReadyString                    = "readyPromptText";
+  const char* kKey_EarConBegin                    = "earConAudioEventBegin";
+  const char* kKey_EarConEnd                      = "earConAudioEventEnd";
+
+  const double kDefaultDuration                   = 10.0;
+  const double kAudioCueDuration                  = 1.0;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorKnowledgeGraphQuestion::InstanceConfig::InstanceConfig() :
-  streamingDuration( kDefaultDuration )
+  streamingDuration( kDefaultDuration ),
+  earConBegin( AudioMetaData::GameEvent::GenericEvent::Invalid ),
+  earConEnd( AudioMetaData::GameEvent::GenericEvent::Invalid )
 {
 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorKnowledgeGraphQuestion::DynamicVariables::DynamicVariables() :
-  state( EState::TransitionToListening ),
+  state( EState::GettingIn ),
+  audioCueBeginTime( 0.0 ),
+  streamingBeginTime( 0.0 ),
   ttsGenerationStatus( EGenerationStatus::None )
 {
 
@@ -68,9 +80,22 @@ BehaviorKnowledgeGraphQuestion::DynamicVariables::DynamicVariables() :
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorKnowledgeGraphQuestion::BehaviorKnowledgeGraphQuestion( const Json::Value& config ) :
-  ICozmoBehavior( config )
+  ICozmoBehavior( config ),
+  _readyTTSWrapper( UtteranceTriggerType::Immediate )
 {
   JsonTools::GetValueOptional( config, kKey_Duration, _iVars.streamingDuration );
+  _iVars.readyText = JsonTools::ParseString( config, kKey_ReadyString, "BehaviorKnowledgeGraphQuestion" );
+
+  std::string earConString;
+  if ( JsonTools::GetValueOptional( config, kKey_EarConBegin, earConString ) )
+  {
+    _iVars.earConBegin = AudioMetaData::GameEvent::GenericEventFromString( earConString );
+  }
+
+  if ( JsonTools::GetValueOptional( config, kKey_EarConEnd, earConString ) )
+  {
+    _iVars.earConEnd = AudioMetaData::GameEvent::GenericEventFromString( earConString );
+  }
 
   SubscribeToTags({{
     ExternalInterface::MessageEngineToGameTag::TouchButtonEvent,
@@ -83,6 +108,9 @@ BehaviorKnowledgeGraphQuestion::BehaviorKnowledgeGraphQuestion( const Json::Valu
 void BehaviorKnowledgeGraphQuestion::GetBehaviorJsonKeys( std::set<const char*>& expectedKeys ) const
 {
   expectedKeys.insert( kKey_Duration );
+  expectedKeys.insert( kKey_ReadyString );
+  expectedKeys.insert( kKey_EarConBegin );
+  expectedKeys.insert( kKey_EarConEnd );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -92,6 +120,8 @@ void BehaviorKnowledgeGraphQuestion::InitBehavior()
   container.FindBehaviorByIDAndDowncast<BehaviorTextToSpeechLoop>( BEHAVIOR_ID(KnowledgeGraphTTS),
                                                                    BEHAVIOR_CLASS(TextToSpeechLoop),
                                                                    _iVars.ttsBehavior );
+
+  _readyTTSWrapper.Initialize( GetBEI().GetTextToSpeechCoordinator() );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -120,15 +150,41 @@ void BehaviorKnowledgeGraphQuestion::OnBehaviorActivated()
 {
   _dVars = DynamicVariables();
 
-  // open up streaming after we play our get-in to avoid motor noise
-  DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphGetIn ),
-                       &BehaviorKnowledgeGraphQuestion::BeginStreamingQuestion );
+  // after the tts is complete, trigger the streaming cues
+  auto ttsCompleteCallback = [this]( bool success )
+  {
+    if ( success )
+    {
+      PlayStreamingCues( true );
+    }
+  };
+
+  // start generating our ready text; if we fail, then we'll simply exit the behavior, and cry :(
+  if ( _readyTTSWrapper.SetUtteranceText( _iVars.readyText, {}, ttsCompleteCallback ) )
+  {
+    auto callback = [this]()
+    {
+      // after our getin animation, we can prompt the user to speak
+      _dVars.state = EState::WaitingToStream;
+
+      // Need to loop this forever and we'll just cancel it on our own after a timeout
+      DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphListening, 0 ) );
+    };
+
+    // open up streaming after we play our get-in to avoid motor noise
+    DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphGetIn ), callback );
+  }
+  else
+  {
+    PRINT_NAMED_WARNING( "BehaviorKnowledgeGraphQuestion", "Failed to generate Ready TTS (%s)", _iVars.readyText.c_str() );
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnowledgeGraphQuestion::OnBehaviorDeactivated()
 {
-
+  // make sure we cancel the ready utterance if we bail during it playing
+  _readyTTSWrapper.CancelUtterance();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -168,11 +224,31 @@ void BehaviorKnowledgeGraphQuestion::BehaviorUpdate()
       uic.ClearPendingTriggerWord();
     }
 
+    // at this point our get in animation is complete, so as soon as the audio is finished playing we can transition in
+    if ( EState::WaitingToStream == _dVars.state )
+    {
+      // once we've finished speaking our ready text, we can start streaming
+      // hopefully the ready text is already finished by the time we even get into this state
+      if ( IsReadyToStream() )
+      {
+        BeginStreamingQuestion();
+      }
+      else if ( !_readyTTSWrapper.IsValid() )
+      {
+        PRINT_NAMED_WARNING( "BehaviorKnowledgeGraphQuestion", "Ready prompt TTS failed to play, not cool man" );
+
+        // we need to bail, luckily TransitionToNoResponse() handles this exact transition for us
+        CancelDelegates( false );
+        TransitionToNoResponse();
+      }
+    }
     // if we're recording the user's question, we need to be listening for a response
-    if ( EState::Listening == _dVars.state )
+    else if ( EState::Listening == _dVars.state )
     {
       // if we've gotten a response from knowledge graph, transition into the response state
-      if ( IsResponsePending() )
+      const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
+      const bool timeIsUp = ( currentTime >= ( _dVars.streamingBeginTime + _iVars.streamingDuration ) );
+      if ( IsResponsePending() || timeIsUp )
       {
         CancelDelegates( false );
         OnStreamingComplete();
@@ -191,29 +267,33 @@ void BehaviorKnowledgeGraphQuestion::BehaviorUpdate()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorKnowledgeGraphQuestion::IsReadyToStream()
+{
+  // need to add some buffer time so the mics don't
+  const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
+  const bool shouldBeQuietNow = ( currentTime >= _dVars.audioCueBeginTime + kAudioCueDuration );
+
+  return ( _readyTTSWrapper.IsFinished() && shouldBeQuietNow );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnowledgeGraphQuestion::BeginStreamingQuestion()
 {
   PRINT_DEBUG( "Knowledge Graph streaming begun ..." );
 
-  GetBEI().GetMicComponent().StartWakeWordlessStreaming( CloudMic::StreamType::KnowledgeGraph );
   _dVars.state = EState::Listening;
+  _dVars.streamingBeginTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
 
-  // loop the listening animation for the duration of our stream
-  TriggerAnimationAction* listeningAnimationAction =
-    new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphListening,
-                                0, // loop forever
-                                true,
-                                static_cast<uint8_t>(AnimTrackFlag::NO_TRACKS),
-                                _iVars.streamingDuration ); // timeout after this duration
-
-  DelegateIfInControl( listeningAnimationAction, &BehaviorKnowledgeGraphQuestion::OnStreamingComplete );
+  GetBEI().GetMicComponent().StartWakeWordlessStreaming( CloudMic::StreamType::KnowledgeGraph );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnowledgeGraphQuestion::OnStreamingComplete()
 {
-  // go into responding state first, then figure out how to reponde
+  // go into searching state until we can generate our response
   _dVars.state = EState::Searching;
+
+  PlayStreamingCues( false );
 
   // see if we got a response from knowledge graph
   if ( IsResponsePending() )
@@ -247,8 +327,8 @@ void BehaviorKnowledgeGraphQuestion::OnStreamingComplete()
     // let's transition into our "searching" loop
     // since we always want to loop at least once, play the get in + loop anim before we do any logic for the tts
     CompoundActionSequential* messageAnimation = new CompoundActionSequential();
-    messageAnimation->AddAction( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphSearchingGetIn ), true );
-    messageAnimation->AddAction( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphSearching ), true );
+    messageAnimation->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphSearchingGetIn ), true );
+    messageAnimation->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphSearching ), true );
 
     DelegateIfInControl( messageAnimation,
                          &BehaviorKnowledgeGraphQuestion::TransitionToSearchingLoop );
@@ -337,20 +417,25 @@ void BehaviorKnowledgeGraphQuestion::TransitionToSearchingLoop()
   {
     if ( EGenerationStatus::Success == _dVars.ttsGenerationStatus )
     {
-      // TTS generation is done, so let's speak it!
-      TransitionToBeginResponse();
+      // TTS generation is done, so let's transition out of the searching animation and into the hearts all over the world!!!
+      DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphSearchingGetOutSuccess ),
+                           &BehaviorKnowledgeGraphQuestion::TransitionToBeginResponse );
     }
     else
     {
       // we failed to generate the tts, but since we've already looped our searching anim, we just need to get out now
-      DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphSearchingGetOutFail ) );
+      CompoundActionSequential* messageAnimation = new CompoundActionSequential();
+      messageAnimation->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphSearchingFail ), true );
+      messageAnimation->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphSearchingFailGetOut ), true );
+
+      DelegateIfInControl( messageAnimation );
 
       // ... annnnnd we're done
     }
   }
   else
   {
-    DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphSearching ),
+    DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphSearching ),
                          &BehaviorKnowledgeGraphQuestion::TransitionToSearchingLoop );
   }
 }
@@ -373,9 +458,10 @@ void BehaviorKnowledgeGraphQuestion::TransitionToNoResponse()
 
   // our get-out from listening is simply a series of animations
   CompoundActionSequential* messageAnimation = new CompoundActionSequential();
-  messageAnimation->AddAction( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphSearchingGetIn ), true );
-  messageAnimation->AddAction( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphSearching ), true );
-  messageAnimation->AddAction( new TriggerAnimationAction( AnimationTrigger::KnowledgeGraphSearchingGetOutFail ), true );
+  messageAnimation->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphSearchingGetIn ), true );
+  messageAnimation->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphSearching ), true );
+  messageAnimation->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphSearchingFail ), true );
+  messageAnimation->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphSearchingFailGetOut ), true );
 
   DelegateIfInControl( messageAnimation );
 
@@ -406,8 +492,51 @@ void BehaviorKnowledgeGraphQuestion::OnResponseInterrupted()
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorKnowledgeGraphQuestion::PlayStreamingCues( bool onBegin )
+{
+  using namespace AudioMetaData::GameEvent;
+
+  static const BackpackLightAnimation::BackpackAnimation kStreamingLights =
+  {
+    .onColors               = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
+    .offColors              = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
+    .onPeriod_ms            = {{0,0,0}},
+    .offPeriod_ms           = {{0,0,0}},
+    .transitionOnPeriod_ms  = {{0,0,0}},
+    .transitionOffPeriod_ms = {{0,0,0}},
+    .offset                 = {{0,0,0}}
+  };
+
+  BehaviorExternalInterface& bei = GetBEI();
+
+  if ( onBegin )
+  {
+    BackpackLightComponent& blc = bei.GetBackpackLightComponent();
+    blc.StartLoopingBackpackAnimation( kStreamingLights, BackpackLightSource::Behavior, _dVars.lightsHandle );
+
+    if ( GenericEvent::Invalid != _iVars.earConBegin )
+    {
+      // Play earcon begin audio
+      bei.GetRobotAudioClient().PostEvent( _iVars.earConBegin, AudioMetaData::GameObjectType::Behavior );
+      _dVars.audioCueBeginTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
+    }
+  }
+  else
+  {
+    if ( _dVars.lightsHandle.IsValid() )
+    {
+      BackpackLightComponent& blc = bei.GetBackpackLightComponent();
+      blc.StopLoopingBackpackAnimation( _dVars.lightsHandle );
+    }
+
+    if ( GenericEvent::Invalid != _iVars.earConEnd )
+    {
+      // Play earcon end audio
+      bei.GetRobotAudioClient().PostEvent( _iVars.earConEnd, AudioMetaData::GameObjectType::Behavior );
+    }
+  }
+}
+
 } // namespace Cozmo
 } // namespace Anki
-
-#undef PRINT_DEBUG
-

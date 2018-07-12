@@ -22,7 +22,6 @@ enum uint_8 ENodeContentTypeEnum
   ClearOfObstacle,
   ClearOfCliff,
   ObstacleCube,
-  ObstacleCharger,
   ObstacleProx,
   ObstacleProxExplored,
   ObstacleUnrecognized,

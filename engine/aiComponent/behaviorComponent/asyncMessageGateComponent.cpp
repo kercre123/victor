@@ -11,8 +11,13 @@
 **/
 
 #include "engine/aiComponent/behaviorComponent/asyncMessageGateComponent.h"
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/externalInterface/gatewayInterface.h"
+#include "engine/robotInterface/messageHandler.h"
+#include "proto/external_interface/shared.pb.h"
 
 #include "util/logging/logging.h"
 
@@ -125,7 +130,7 @@ void AsyncMessageGateComponent::PrepareCache()
   }
   
   for(int idx = 0; idx < _cachedTracker->_appToEngineEvents.size(); idx++){
-    auto eventTag = _cachedTracker->_appToEngineEvents[idx].GetData().oneof_message_type_case();
+    auto eventTag = _cachedTracker->_appToEngineEvents[idx].GetData().GetTag();
     auto subscriberIter = _appToEngineSubscribers.find(eventTag);
     if(subscriberIter != _appToEngineSubscribers.end()){
       for(auto& behavior : subscriberIter->second){

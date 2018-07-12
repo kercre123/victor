@@ -254,7 +254,7 @@ CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
   return handles;
 }
   
-void BehaviorHighLevelAI::OverrideResumeState( StateID& resumeState ) const
+void BehaviorHighLevelAI::OverrideResumeState( StateID& resumeState )
 {
   // get the most recent post-behavior suggestion that we care about
   size_t maxTick = 0;

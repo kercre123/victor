@@ -21,8 +21,10 @@
 #endif
 
 #include "cozmoAnim/animContext.h"
-
 #include "json/json.h"
+#include "util/logging/logging.h"
+
+#define LOG_CHANNEL "TextToSpeechProvider"
 
 namespace Anki {
 namespace Cozmo {
@@ -40,7 +42,7 @@ TextToSpeechProvider::TextToSpeechProvider(const AnimContext * ctx, const Json::
 #endif
 
   // Instantiate provider for this platform
-  _impl.reset(new TextToSpeechProviderImpl(ctx, tts_platform_config));
+  _impl = std::make_unique<TextToSpeechProviderImpl>(ctx, tts_platform_config);
 }
 
 TextToSpeechProvider::~TextToSpeechProvider()
@@ -48,11 +50,18 @@ TextToSpeechProvider::~TextToSpeechProvider()
   // Nothing to do here
 }
 
+Result TextToSpeechProvider::SetLocale(const std::string & locale)
+{
+  DEV_ASSERT(_impl != nullptr, "TextToSpeechProvider.SetLocale.InvalidImplementation");
+  return _impl->SetLocale(locale);
+}
+
 Result TextToSpeechProvider::CreateAudioData(const std::string& text,
                                              float durationScalar,
                                              TextToSpeechProviderData& data)
 {
   // Forward call to implementation
+  DEV_ASSERT(_impl != nullptr, "TextToSpeechProvider.CreateAudioData.InvalidImplementation");
   return _impl->CreateAudioData(text, durationScalar, data);
 }
 

@@ -14,6 +14,8 @@
 
 #include "engine/robot.h"
 
+#include "clad/externalInterface/messageEngineToGame.h"
+
 namespace Anki {
 namespace Cozmo {
 

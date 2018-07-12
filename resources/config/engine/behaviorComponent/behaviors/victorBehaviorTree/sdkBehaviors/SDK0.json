@@ -2,5 +2,8 @@
   "behaviorClass": "SDKInterface",
   "behaviorID": "SDK0",
 
-  "associatedActiveFeature": "SDK"
+  "associatedActiveFeature": "SDK",
+
+  "driveOffChargerBehavior": "DriveOffChargerStraight",
+  "goHomeBehavior": "GoHome" 
 }

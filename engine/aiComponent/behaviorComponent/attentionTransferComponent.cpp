@@ -90,8 +90,8 @@ void AttentionTransferComponent::ResetAttentionTransfer(AttentionTransferReason 
 
 void AttentionTransferComponent::HandleAppRequest(const AppToEngineEvent& event)
 {
-  DEV_ASSERT( event.GetData().oneof_message_type_case() ==
-              external_interface::GatewayWrapper::OneofMessageTypeCase::kLatestAttentionTransferRequest,
+  DEV_ASSERT( event.GetData().GetTag() ==
+              external_interface::GatewayWrapperTag::kLatestAttentionTransferRequest,
               "AttentionTransferComponent.HandleAppRequest.InvalidEvent" );
 
   if( _gi != nullptr ) {

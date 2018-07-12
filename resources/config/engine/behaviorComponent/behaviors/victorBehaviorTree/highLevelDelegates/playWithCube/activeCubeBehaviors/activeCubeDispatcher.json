@@ -1,9 +1,0 @@
-{
-  "behaviorID" : "ActiveCubeDispatcher",
-  "behaviorClass" : "DispatcherQueue",
-
-  "behaviors" : [
-    // TODO: Add connect to cube behavior here
-    "VectorPlaysCubeSpinner"
-  ]
-}

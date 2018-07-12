@@ -17,7 +17,6 @@
 #include "coretech/common/shared/types.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
-#include "engine/ankiEventUtil.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/overheadEdge.h"
 #include "engine/navMap/iNavMap.h"
@@ -26,6 +25,7 @@
 #include "coretech/vision/engine/observableObjectLibrary.h"
 
 #include "util/helpers/noncopyable.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 #include <assert.h>
 #include <string>
@@ -135,8 +135,8 @@ public:
   // what you want??
   void RemoveAllProxObstacles();
   
-  void SetUseProxObstaclesInPlanning(bool enable) { _useProxObstaclesInPlanning = enable; }
-  bool GetUseProxObstaclesInPlanning() const { return _useProxObstaclesInPlanning; }
+  void SetUseProxObstaclesInPlanning(bool enable) { _enableProxCollisions = enable; }
+  bool GetUseProxObstaclesInPlanning() const { return _enableProxCollisions; }
   
   ////////////////////////////////////////////////////////////////////////////////
   // Accessors
@@ -208,11 +208,11 @@ private:
   bool                            _gameMessageDirty;
   bool                            _webMessageDirty;
   
-  // config variable for conditionally enabling/disabling prox obstacles in planning
-  bool                            _useProxObstaclesInPlanning;
-  
   bool                            _isRenderEnabled;
   float                           _broadcastRate_sec = -1.0f;      // (Negative means don't send)
+
+  // config variable for conditionally enabling/disabling prox obstacles in planning
+  bool                            _enableProxCollisions;
 };
 
 }

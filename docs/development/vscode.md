@@ -138,3 +138,22 @@ settings use a simple JSON syntax and can be changed with
 
 If you don't like the default settings, change them!
 
+VS Code has a feature called "Preview Mode". Files with italicized tab titles are "preview" tabs and will go away when opening a new file. If you have a preview tab open and you want to keep it open, the shortcut is cmd+K followed by enter.  You can also double-click on the title of that tab and it will stay. Or you can modify Settings to prevent preview mode from being used at all:
+
+```
+{
+  // Controls if opened editors show as preview. Preview editors are reused until they are kept (e.g. via double click or editing) and show up with an italic font style.
+  "workbench.editor.enablePreview": false,
+
+  // Controls if opened editors from Quick Open show as preview. Preview editors are reused until they are kept (e.g. via double click or editing).
+  "workbench.editor.enablePreviewFromQuickOpen": false,
+}
+```
+
+Also useful for Settings:
+```
+{
+  "files.autoSave": "onFocusChange",
+  "files.insertFinalNewline": true,
+}
+```

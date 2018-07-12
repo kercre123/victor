@@ -318,7 +318,10 @@ namespace Cozmo {
   // How frequently to send robot state messages (in number of main execution
   // loop increments).  So, 6 --> every 30ms, since our loop timestep is 5ms.
   const s32 STATE_MESSAGE_FREQUENCY = 6;
-  
+
+  // How frequently to send state messages in calm mode
+  const s32 STATE_MESSAGE_FREQUENCY_CALM = 50;
+
   // UI device server port which listens for basestation/game clients
   const u32 UI_MESSAGE_SERVER_LISTEN_PORT = 5200;
 

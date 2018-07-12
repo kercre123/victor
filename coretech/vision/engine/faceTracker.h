@@ -69,6 +69,11 @@ namespace Vision {
     // returns the minimum distance between eyes a face has to have in order to be enrollable
     static float GetMinEyeDistanceForEnrollment();
     
+    // returns true if there is room for another named face
+    // call before trying to use AssignNameToID (and not merging into existing ID)
+    bool   CanAddNamedFace() const;
+    
+    // if mergeWithID=UnknownFaceID, will fail if there is not enough room for a new named face
     Result AssignNameToID(FaceID_t faceID, const std::string& name, FaceID_t mergeWithID);
     
     Result EraseFace(FaceID_t faceID);

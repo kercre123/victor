@@ -12,6 +12,7 @@
  **/
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/putDownDispatch/behaviorLookForFaceAndCube.h"
 
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"

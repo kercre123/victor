@@ -118,6 +118,15 @@
       "high"         : 1,
       "standard"     : 1,
       "relativeCost" : 1
+    },
+    {
+      "mode"         : "RunningNeuralNet",
+      "low"          : 4,
+      "med"          : 2,
+      "high"         : 1,
+      "standard"     : 1,
+      "relativeCost" : 4 // right now people detection is not too high, change when things are different
     }
+
   ]
 }

@@ -27,6 +27,26 @@ VICOS_WHICH = os.path.join(SCRIPTS, 'vicos_which.sh')
 # Path to vicos addr2line
 ADDR2LINE = exec([VICOS_WHICH, 'addr2line'])
 
+#
+# Global cache of symfn lookup results
+#
+symfn_cache = {}
+
+#
+# Helper function to locate symbol file for a given object file.
+# If objfn.full exists, use it, else use objfn itself.
+# Maintain a cache of results so we don't have to hit the filesystem each time.
+#
+def get_symfn(objfn):
+  if objfn in symfn_cache:
+    return symfn_cache[objfn]
+  symfn = objfn + ".full"
+  if os.path.exists(symfn):
+    symfn_cache[objfn] = symfn
+    return symfn
+  symfn_cache[objfn] = objfn
+  return objfn
+
 def addr2line(obj, addr, options):
   # Does this look an anki object file?
   match = re.search('/anki/(\S+)', obj)
@@ -36,8 +56,11 @@ def addr2line(obj, addr, options):
   # Construct path to object file
   objfn = os.path.join(TOPLEVEL, "_build", "vicos", options.configuration, match.group(1))
 
-  # Call addr2line to get symbol info from object file
-  cmd = [ADDR2LINE, '-sfCe', objfn, addr]
+  # Look up corresponding symbol file, if any
+  symfn = get_symfn(objfn)
+
+  # Call addr2line to get info from symbol file
+  cmd = [ADDR2LINE, '-sfCe', symfn, addr]
   output = exec(cmd).replace('\n', ' ')
 
   return output

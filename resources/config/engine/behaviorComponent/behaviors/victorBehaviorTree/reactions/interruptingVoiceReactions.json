@@ -18,7 +18,7 @@
     "LeaveAMessage",
     "PlaybackMessage",
     "KnowledgeGraphQuestion",
-    "MeetVictor",
-    "TriggerWordWithoutIntent"
+    "RespondToRenameFace", // not actually a voice command, but is paired with MeetVictor so I'm putting it here
+    "MeetVictor"
   ]
 }

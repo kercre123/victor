@@ -13,18 +13,13 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingLookAtPhone.h"
 
-#include "anki/cozmo/shared/cozmoConfig.h"
 #include "engine/actions/animActions.h"
-#include "engine/actions/basicActions.h"
+#include "proto/external_interface/shared.pb.h"
 #include "util/console/consoleFunction.h"
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
 namespace Cozmo {
-  
-namespace {
-  const float kHeadDownSpeed_rps = 3.0f;
-}
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -69,33 +64,31 @@ void BehaviorOnboardingLookAtPhone::GetBehaviorOperationModifiers(BehaviorOperat
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingLookAtPhone::OnBehaviorActivated() 
 {
-  const bool up = true;
-  MoveHeadWithAnimation( up );
+  MoveHeadUp();
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingLookAtPhone::HandleWhileActivated(const AppToEngineEvent& event)
 {
-  if( event.GetData().oneof_message_type_case() == AppToEngineTag::kOnboardingConnectionComplete ) {
-    const bool headUp = false;
-    MoveHeadWithAnimation( headUp );
+  if( event.GetData().GetTag() == AppToEngineTag::kOnboardingConnectionComplete ) {
+    MoveHeadDown();
   }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingLookAtPhone::MoveHeadWithAnimation( bool headUp )
+void BehaviorOnboardingLookAtPhone::MoveHeadUp()
 {
-  // TODO (VIC-4158) use actual animation group for at least the anim_, and possibly even two animations to mimic the two
-  // uses of this method
-  auto* moveHead = new MoveHeadToAngleAction( headUp ? MAX_HEAD_ANGLE : MIN_HEAD_ANGLE );
-  auto* animAction = new PlayAnimationAction( "anim_pairing_icon_awaitingapp", 0 );
-  if( !headUp ) {
-    moveHead->SetMaxSpeed( kHeadDownSpeed_rps );
-  }
-  auto* compound = new CompoundActionParallel({ moveHead, animAction });
-  // this behavior should end once the head goes back down
-  compound->SetShouldEndWhenFirstActionCompletes( !headUp );
-  DelegateNow( compound, [](){} );
+  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::OnboardingLookAtPhoneUp };
+  DelegateIfInControl(action, [this](const ActionResult& res){
+    auto* loopAction = new TriggerLiftSafeAnimationAction{ AnimationTrigger::OnboardingLookAtPhoneLoop, 0 };
+    DelegateIfInControl( loopAction ); // loop forever, waiting for a message
+  });
+}
+  
+void BehaviorOnboardingLookAtPhone::MoveHeadDown()
+{
+  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::OnboardingLookAtPhoneDown };
+  DelegateNow( action ); // and then the behavior ends
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -105,8 +98,7 @@ void BehaviorOnboardingLookAtPhone::SetupConsoleFuncs()
     if( _iConfig.consoleFuncs.empty() ) {
       // console func to mimic the app sending OnboardingConnectionComplete
       auto func = [this](ConsoleFunctionContextRef context) {
-        const bool headUp = false;
-        MoveHeadWithAnimation( headUp );
+        MoveHeadDown();
       };
       _iConfig.consoleFuncs.emplace_front( "EndPhoneIcon", std::move(func), "Onboarding", "" );
     }

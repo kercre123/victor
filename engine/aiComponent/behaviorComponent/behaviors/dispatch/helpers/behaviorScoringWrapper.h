@@ -18,9 +18,16 @@
 #include "engine/moodSystem/moodScorer.h"
 #include "json/json.h"
 #include "util/logging/logging.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
 namespace Cozmo {
+  
+enum class BehaviorObjective : int32_t;
+  
+namespace ExternalInterface {
+struct BehaviorObjectiveAchieved;
+}
 
 class BehaviorScoringWrapper
 {
@@ -65,7 +72,7 @@ private:
   
   // if this behavior objective gets sent (by any behavior), then consider this behavior to have been activated
   // (for purposes of repetition penalty, aka cooldown)
-  BehaviorObjective _cooldownOnObjective = BehaviorObjective::Count;
+  BehaviorObjective _cooldownOnObjective;
   
   
   bool _enableRepetitionPenalty = true;

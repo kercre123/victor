@@ -84,13 +84,13 @@ Card::Card(int cardID, bool faceUp)
 } 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const int Card::GetRank() const
+int Card::GetRank() const
 {
   return (_cardID % kNumCardsPerSuit);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const std::string Card::GetString() const
+std::string Card::GetString() const
 {
   std::string nameString(ranks[GetRank()] + std::string(" of ") + suits[_cardID / kNumCardsPerSuit]);
   return nameString;
@@ -149,7 +149,9 @@ std::unique_ptr<std::vector<int>> BlackJackGame::_stackedDeck = nullptr;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BlackJackGame::BlackJackGame()
-: _lastCard(nullptr)
+: _playerScore(0)
+, _dealerScore(0)
+, _lastCard(nullptr)
 , _invalidCard(kInvalidCardID)
 , _hasFlopped(false)
 {
@@ -174,11 +176,13 @@ void BlackJackGame::Init(Anki::Util::RandomGenerator* rng)
 
   _playerHand.clear();
   _dealerHand.clear();
+  _playerScore = 0;
+  _dealerScore = 0;
   _hasFlopped = false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const bool BlackJackGame::DealToPlayer(const bool faceUp)
+bool BlackJackGame::DealToPlayer(const bool faceUp)
 {
   if(_playerHand.size() > kHandSizeLimit){
     PRINT_NAMED_ERROR("BlackJackGame.DealToPlayer.HandSizeLimitExceeded",
@@ -196,6 +200,8 @@ const bool BlackJackGame::DealToPlayer(const bool faceUp)
                       _playerHand.back().GetString().c_str(),
                       topCardID);   
     _lastCard = &_playerHand.back();
+    // Cache the resultant score
+    ScorePlayerHand();
     return true;
   }
 
@@ -203,7 +209,7 @@ const bool BlackJackGame::DealToPlayer(const bool faceUp)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const bool BlackJackGame::DealToDealer(const bool faceUp)
+bool BlackJackGame::DealToDealer(const bool faceUp)
 {
   if(_dealerHand.size() > kHandSizeLimit){
     PRINT_NAMED_ERROR("BlackJackGame.DealToDealer.HandSizeLimitExceeded",
@@ -224,6 +230,8 @@ const bool BlackJackGame::DealToDealer(const bool faceUp)
                       topCardID,
                       faceUpString.c_str());
     _lastCard = &_dealerHand.back();
+    // Cache the resultant score
+    ScoreDealerHand();
     return true;
   }
 
@@ -240,39 +248,6 @@ const Card& BlackJackGame::LastCard()
   } else {
     return *_lastCard; 
   }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-int BlackJackGame::ScoreCard(const Card& card)
-{
-  int val = card.GetRank() + 1;
-  return (val > 10) ? 10 : val; 
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-int BlackJackGame::ScoreHand(const std::vector<Card>& hand)
-{
-  int score = 0;
-  bool handHasAce = false;
-  for(const Card& card : hand){
-    int cardValue = ScoreCard(card);
-    // Watch for aces, account for them after scoring is finished.
-    if(cardValue == kAceLowValue){
-      handHasAce = true;
-    }
-    score += cardValue;
-  }
-
-  if(handHasAce && (score <= kAceHighValue)){
-    // Swap one Ace to its high value. 
-    // Doesn't matter if there's more than one ace, only one can ever be converted without busting.
-    score += kAceHighValue - kAceLowValue;
-  }
-
-  PRINT_NAMED_INFO("BlackJackSimulation.ScoreHand",
-                   "Hand has score of %d",
-                   score);
-  return score;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -307,6 +282,68 @@ void BlackJackGame::StackDeck(const std::vector<int>& stackedDeckOrder)
 void BlackJackGame::StopStackingDeck()
 {
   _stackedDeck = nullptr;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Private Methods
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+int BlackJackGame::ScoreCard(const Card& card) const
+{
+  int val = card.GetRank() + 1;
+  return (val > 10) ? 10 : val; 
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BlackJackGame::ScoreHandAndReportAces(const std::vector<Card>& hand, int& outScore) 
+{
+  int score = 0;
+  bool handHasAce = false;
+  for(const Card& card : hand){
+    int cardValue = ScoreCard(card);
+    // Watch for aces, account for them after scoring is finished.
+    if(cardValue == kAceLowValue){
+      handHasAce = true;
+    }
+    score += cardValue;
+  }
+
+  if(handHasAce && (score <= kAceHighValue)){
+    // Swap one Ace to its high value. 
+    // Doesn't matter if there's more than one ace, only one can ever be converted without busting.
+    score += kAceHighValue - kAceLowValue;
+  }
+
+  outScore = score;
+  return handHasAce;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BlackJackGame::ScorePlayerHand()
+{
+  ScoreHandAndReportAces(_playerHand, _playerScore);
+  PRINT_NAMED_INFO("BlackJackSimulation.ScorePlayerHand",
+                   "Player has score of %d",
+                   _playerScore);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BlackJackGame::ScoreDealerHand()
+{
+  // If the dealers hand has an ace, think a bit more about the score
+  if(ScoreHandAndReportAces(_dealerHand, _dealerScore)){
+    // Check for "soft 17"
+    if( (_dealerScore == 17) && 
+        // Don't play the soft 17 if vector is at his card limit, he should just max out his score
+        (_dealerHand.size() < kHandSizeLimit) ){
+      // Treat Ace as low as low so he'll hit on soft 17
+      _dealerScore += kAceLowValue - kAceHighValue;
+      PRINT_NAMED_INFO("BlackJackSimulation.ScoreDealerHand.SoftSeventeen",
+                       "Dealer had a soft 17 and scored it as 7");
+    }
+  }
+  PRINT_NAMED_INFO("BlackJackSimulation.ScoreDealerHand",
+                   "Dealer has score of %d",
+                   _dealerScore);
 }
 
 } // namespace Cozmo

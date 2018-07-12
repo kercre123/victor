@@ -1,14 +1,11 @@
 /**
 * File: textToSpeechComponent.h
 *
-* Author: Molly Jameson
-* Created: 03/21/16
-*
-* Overhaul: Andrew Stein / Jordan Rivas, 08/18/16
+* Author: Various Artists
 *
 * Description: Component wrapper to generate, cache and use wave data from a given string and style.
 *
-* Copyright: Anki, Inc. 2016
+* Copyright: Anki, Inc. 2016-2018
 *
 */
 
@@ -75,6 +72,11 @@ public:
   // posted by worker thread and performs tasks in synchronization with the rest of the animation engine.
   //
   void Update();
+
+  //
+  // Called on main thread to set a new locale
+  //
+  void SetLocale(const std::string & locale);
 
 private:
   // -------------------------------------------------------------------------------------------------------------------

@@ -20,6 +20,8 @@
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
+#include "clad/types/robotSettingsTypes.h"
+
 #include <map>
 
 namespace Anki {
@@ -46,44 +48,38 @@ public:
   //////
 
   // Returns true if successful
-  bool SetRobotSetting(const std::string& key, const std::string& value,
+  bool SetRobotSetting(const RobotSetting robotSetting,
+                       const Json::Value& valueJson,
                        const bool saveSettingsFile = true);
 
   // Return the setting value (currently only strings or bools supported)
-  std::string GetRobotSettingAsString(const std::string& key) const;
-  bool        GetRobotSettingAsBool(const std::string& key) const;
+  std::string GetRobotSettingAsString(const RobotSetting key) const;
+  bool        GetRobotSettingAsBool  (const RobotSetting key) const;
 
 private:
 
-  struct Setting
-  {
-    std::string _settingValue = "";
-    bool (SettingsManager::*_settingSetter)(const std::string& newValue) = nullptr;
+  // Load/save settings file from/to persistent robot storage
+  bool LoadSettingsFile();
+  void SaveSettingsFile() const;
+  
+  void ApplyAllCurrentSettings();
+  bool ApplyRobotSetting(const RobotSetting robotSetting);
+  bool ApplySettingMasterVolume();
+  bool ApplySettingEyeColor();
+  bool ApplySettingLocale();
 
-    Setting() { _settingValue = ""; _settingSetter = nullptr; }
-    Setting(const std::string& value) { _settingValue = value; _settingSetter = nullptr; }
-  };
-  using SettingsContainer = std::map<std::string, Setting>;
-  SettingsContainer         _currentSettings;
-  SettingsContainer         _defaultSettings;
-
+  Json::Value               _currentSettings;
   Robot*                    _robot = nullptr;
   Util::Data::DataPlatform* _platform = nullptr;
   std::string               _savePath = "";
   std::string               _fullPathSettingsFile = "";
   bool                      _applySettingsNextTick = false;
+  using SettingSetter = bool (SettingsManager::*)();
+  using SettingSetters = std::map<RobotSetting, SettingSetter>;
+  //  bool (SettingsManager::*_settingSetter)(const std::string& newValue) = nullptr;
+  SettingSetters            _settingSetters;
 
   Audio::EngineRobotAudioClient* _audioClient = nullptr;
-
-  // Load/save settings file from/to persistent robot storage
-  bool LoadSettingsFile();
-  void SaveSettingsFile() const;
-
-  void ApplyAllCurrentSettings();
-
-  bool ApplySettingMasterVolume(const std::string& newValue);
-  bool ApplySettingEyeColor(const std::string& newValue);
-  bool ApplySettingLocale(const std::string& newValue);
 };
 
 

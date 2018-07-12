@@ -13,7 +13,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/behaviorDriveToFace.h"
 
 #include "engine/actions/animActions.h"
-#include "engine/actions/basicActions.h"
+#include "engine/actions/driveToActions.h"
 #include "engine/actions/trackFaceAction.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/faceWorld.h"
@@ -28,16 +28,13 @@ namespace Anki {
 namespace Cozmo {
   
 namespace{
-// We want cozmo to slow down as he approaches the face since there's probably
-// an edge.  The decel factor relative to the default profile is arbitrary but
-// tuned based off some testing to attempt the right feeling of "approaching" the face
-const float kArbitraryDecelFactor = 3.0f;
   
 const char* const kTimeUntilCancelFaceTrackKey   = "timeUntilCancelFaceTrack_s";
 const char* const kMinDriveToFaceDistanceKey     = "minDriveToFaceDistanceKey_mm";
 const char* const kTrackFaceOnceKnownKey         = "trackFaceOnceKnown";
 const char* const kAnimTooCloseKey               = "animTooClose";
 const char* const kAnimDriveOverrideKey          = "animDriveOverride";
+const char* const kMotionProfileKey              = "motionProfile";
 const char* const kDebugName = "BehaviorDriveToFace";
 }
 
@@ -72,6 +69,11 @@ BehaviorDriveToFace::BehaviorDriveToFace(const Json::Value& config)
   _iConfig.animDriveOverride = AnimationTrigger::Count;
   JsonTools::GetCladEnumFromJSON(config, kAnimDriveOverrideKey, _iConfig.animDriveOverride, kDebugName, false);
   
+  if( !config[kMotionProfileKey].isNull() ) {
+    _iConfig.customMotionProfile = std::make_unique<PathMotionProfile>();
+    _iConfig.customMotionProfile->SetFromJSON( config[kMotionProfileKey] );
+  }
+  
   MakeMemberTunable( _iConfig.timeUntilCancelTracking_s, kTimeUntilCancelFaceTrackKey, kDebugName );
   MakeMemberTunable( _iConfig.minDriveToFaceDistance_mm, kMinDriveToFaceDistanceKey, kDebugName );
 }
@@ -92,6 +94,7 @@ void BehaviorDriveToFace::GetBehaviorJsonKeys(std::set<const char*>& expectedKey
     kTimeUntilCancelFaceTrackKey,
     kAnimTooCloseKey,
     kAnimDriveOverrideKey,
+    kMotionProfileKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -117,6 +120,10 @@ void BehaviorDriveToFace::OnBehaviorActivated()
     }
   } else {
     TransitionToAlreadyCloseEnough();
+  }
+  
+  if( _iConfig.customMotionProfile != nullptr ) {
+    SmartSetMotionProfile( *_iConfig.customMotionProfile );
   }
 }
 
@@ -157,9 +164,9 @@ void BehaviorDriveToFace::TransitionToDrivingToFace()
      CalculateDistanceToFace(facePtr->GetID(), distToHead) &&
      _iConfig.animDriveOverride == AnimationTrigger::Count )
   {
-    DriveStraightAction* driveAction = new DriveStraightAction(distToHead - _iConfig.minDriveToFaceDistance_mm,
-                                                               0.5*MAX_SAFE_WHEEL_SPEED_MMPS);
-    driveAction->SetDecel(DEFAULT_PATH_MOTION_PROFILE.decel_mmps2/kArbitraryDecelFactor);
+    Pose3d pose = GetBEI().GetRobotInfo().GetPose();
+    pose.TranslateForward( distToHead - _iConfig.minDriveToFaceDistance_mm );
+    auto* driveAction = new DriveToPoseAction( pose, true );
     CancelDelegates(false);
     DelegateIfInControl(driveAction, [this]() {
       if( _iConfig.trackFaceOnceKnown ) {

@@ -2,9 +2,11 @@
 
 syntax = "proto3";
 
-package external_interface;
+package Anki.Cozmo.external_interface;
 
 option optimize_for = LITE_RUNTIME;
+
+import "extensions.proto";
 
 message ResultStatus {
   string description = 1;
@@ -51,13 +53,18 @@ message DriveArcResult {
   ResultStatus status = 1;
 }
 
+// TODO: hook up ignore tracks and test that they work in the new world
 message PlayAnimationRequest {
   Animation animation = 1;
   uint32 loops = 2;
+  bool ignore_body_track = 3;
+  bool ignore_head_track = 4;
+  bool ignore_lift_track = 5;
 }
 
 message PlayAnimationResult {
   ResultStatus status = 1;
+  BehaviorResults result = 2;
 }
 
 message ListAnimationsRequest {}
@@ -92,9 +99,10 @@ message MeetVictorFaceScanComplete
 
 message Status {
   oneof status_type {
-     FeatureStatus                   featureStatus                    = 1;
-     MeetVictorFaceScanStarted       meet_victor_face_scan_started    = 2;
-     MeetVictorFaceScanComplete      meet_victor_face_scan_complete   = 3;
+    FeatureStatus                   feature_status                   = 1;
+    MeetVictorFaceScanStarted       meet_victor_face_scan_started    = 2;
+    MeetVictorFaceScanComplete      meet_victor_face_scan_complete   = 3;
+    FaceEnrollmentCompleted         face_enrollment_completed        = 4;
   }
 }
 
@@ -106,7 +114,7 @@ message Onboarding {
     OnboardingPickedUp                 onboarding_picked_up          = 4;
     OnboardingSeesCube                 onboarding_sees_cube          = 5;
     OnboardingCantFindCube             onboarding_cant_find_cube     = 6;
-    OnboardingRobotExpectingContinue   onboarding_expecting_continue = 7;
+    OnboardingRobotExpectingStep       onboarding_expecting_step     = 7;
   }
 }
 
@@ -130,18 +138,18 @@ message RobotHistoryResult {
 }
 
 message PoseStruct {
-    // Translation
-    float x = 1;
-    float y = 2;
-    float z = 3;
-    
-    // Rotation quaternion
-    float q0 = 4;
-    float q1 = 5;
-    float q2 = 6;
-    float q3 = 7;
+  // Translation
+  float x = 1;
+  float y = 2;
+  float z = 3;
+  
+  // Rotation quaternion
+  float q0 = 4;
+  float q1 = 5;
+  float q2 = 6;
+  float q3 = 7;
 
-    uint32 origin_id = 8; // Which coordinate frame this pose is in (0 for none or unknown)
+  uint32 origin_id = 8; // Which coordinate frame this pose is in (0 for none or unknown)
 }
 
 message AccelData {
@@ -157,23 +165,23 @@ message GyroData {
 }
 
 message RobotState {
-    PoseStruct pose = 1;
-    float pose_angle_rad = 2;
-    float pose_pitch_rad = 3;
-    float left_wheel_speed_mmps = 4;
-    float right_wheel_speed_mmps = 5;
-    float head_angle_rad = 6;
-    float lift_height_mm = 7;
-    float battery_voltage = 8;
-    AccelData accel = 9;
-    GyroData gyro = 10;
-    int32 carrying_object_id = 11;
-    int32 carrying_object_on_top_id = 12;
-    int32 head_tracking_object_id = 13;
-    int32 localized_to_object_id = 14;
-    uint32 last_image_time_stamp = 15;
-    uint32 status = 16;
-    uint32 game_status = 17;
+  PoseStruct pose = 1;
+  float pose_angle_rad = 2;
+  float pose_pitch_rad = 3;
+  float left_wheel_speed_mmps = 4;
+  float right_wheel_speed_mmps = 5;
+  float head_angle_rad = 6;
+  float lift_height_mm = 7;
+  float battery_voltage = 8;
+  AccelData accel = 9;
+  GyroData gyro = 10;
+  int32 carrying_object_id = 11;
+  int32 carrying_object_on_top_id = 12;
+  int32 head_tracking_object_id = 13;
+  int32 localized_to_object_id = 14;
+  uint32 last_image_time_stamp = 15;
+  uint32 status = 16;
+  uint32 game_status = 17;
 }
 
 message CladPoint
@@ -208,54 +216,37 @@ enum FacialExpression
 }
 
 message RobotObservedFace {
-    int32 face_id = 1;         // negative: tracked but not recognized; positive: recognized face
-    uint32 timestamp = 2;
-    PoseStruct pose = 3;
-    CladRect img_rect = 4;       // position in image coords
-    string name = 5;           // Empty if none assigned yet
+  int32 face_id = 1;         // negative: tracked but not recognized; positive: recognized face
+  uint32 timestamp = 2;
+  PoseStruct pose = 3;
+  CladRect img_rect = 4;       // position in image coords
+  string name = 5;           // Empty if none assigned yet
 
-    FacialExpression expression = 6;
+  FacialExpression expression = 6;
 
-    // Individual expression values histogram, sums to 100 (Exception: all zero if expression=Unknown)
-    repeated uint32 expression_values = 7; // This is a uint32 on the clad side
+  // Individual expression values histogram, sums to 100 (Exception: all zero if expression=Unknown)
+  repeated uint32 expression_values = 7; // This is a uint32 on the clad side
 
-    // Face landmarks
-    repeated CladPoint left_eye = 8;
-    repeated CladPoint right_eye = 9;
-    repeated CladPoint nose = 10;
-    repeated CladPoint mouth = 11;
+  // Face landmarks
+  repeated CladPoint left_eye = 8;
+  repeated CladPoint right_eye = 9;
+  repeated CladPoint nose = 10;
+  repeated CladPoint mouth = 11;
 }
 
 // RobotChangedObservedFaceID
 //  This generally happens when a tracked face (negative ID) is recognized and
 //  receives a positive ID or when face records get merged
 message RobotChangedObservedFaceID {
-    int32   old_id = 1;
-    int32   new_id = 2;
-}
-
-message Event {
-  oneof event_type {
-    Status                           status                              = 1;
-    Onboarding                       onboarding                          = 2;
-    WakeWord                         wake_word                           = 3;
-    AttentionTransfer                attention_transfer                  = 4;
-    RobotObservedFace                robot_observed_face                 = 5;
-    RobotChangedObservedFaceID       robot_changed_observed_face_id      = 6;
-  }
-}
-
-message EventRequest {}
-
-message EventResult {
-  ResultStatus status = 1;
-  Event event = 2;
+  int32   old_id = 1;
+  int32   new_id = 2;
 }
 
 // TODO: Remove this request/response once RobotState is made an event
 message RobotStateRequest {}
 
 message RobotStateResult {
+  option (streamed) = true;
   ResultStatus status = 1;
   RobotState robot_state = 2;
 }
@@ -279,17 +270,18 @@ message AppIntentRequest {
 
 enum FaceEnrollmentResult
 {
-    SUCCESS = 0;
+  SUCCESS = 0;
 
-    // Failures:
-    SAW_WRONG_FACE = 1;
-    SAW_MULTIPLE_FACES = 2;
-    TIMED_OUT = 3;
-    SAVE_FAILED = 4;
-    INCOMPLETE = 5;
-    CANCELLED = 6;
-    NAME_IN_USE = 7;
-    UNKNOWN_FAILURE = 8;
+  // Failures:
+  SAW_WRONG_FACE = 1;
+  SAW_MULTIPLE_FACES = 2;
+  TIMED_OUT = 3;
+  SAVE_FAILED = 4;
+  INCOMPLETE = 5;
+  CANCELLED = 6;
+  NAME_IN_USE = 7;
+  NAMED_STORAGE_FULL = 8;
+  UNKNOWN_FAILURE = 9;
 }
 
 message AppIntentResult {
@@ -298,7 +290,7 @@ message AppIntentResult {
 
 message FaceEnrollmentCompleted {
   FaceEnrollmentResult result = 1;
-  int32               face_id = 2;
+  int32                face_id = 2;
   string               name = 3;
 }
 
@@ -313,12 +305,12 @@ message RequestEnrolledNamesRequest {
 }
 
 message LoadedKnownFace {
-    int64   seconds_since_first_enrolled = 1;
-    int64   seconds_since_last_updated = 2;
-    int64   seconds_since_last_seen = 3;
-    int64   last_seen_seconds_since_epoch = 4;
-    int32   face_id = 5;
-    string  name = 6;
+  int64  seconds_since_first_enrolled = 1;
+  int64  seconds_since_last_updated = 2;
+  int64  seconds_since_last_seen = 3;
+  int64  last_seen_seconds_since_epoch = 4;
+  int32  face_id = 5;
+  string name = 6;
 }
 
 message RobotRenamedEnrolledFace {
@@ -357,19 +349,41 @@ message EraseAllEnrolledFacesResult {
 }
 
 message SetFaceToEnrollRequest {
-    string  name = 1;
+  string  name = 1;
 
-    int32   observed_id = 2;  // The ID of a specific observed face to enroll (0 for next one we see)
-    int32   save_id = 3;      // The ID of an existing face to merge final enrollment into (0 for none,
-                          // i.e. use observedID)
+  int32   observed_id = 2;  // The ID of a specific observed face to enroll (0 for next one we see)
+  int32   save_id = 3;      // The ID of an existing face to merge final enrollment into (0 for none,
+                        // i.e. use observedID)
 
-    bool    save_to_robot = 4;   // Save to robot's NVStorage when done (NOTE: will (re)save everyone enrolled!)
-    bool    say_name = 5;       // Play say-name/celebration animations on success before completing
-    bool    use_music = 6;       // Starts special music during say-name animations (will leave music playing!)
-  
+  bool    save_to_robot = 4;   // Save to robot's NVStorage when done (NOTE: will (re)save everyone enrolled!)
+  bool    say_name = 5;       // Play say-name/celebration animations on success before completing
+  bool    use_music = 6;       // Starts special music during say-name animations (will leave music playing!)
 }
 message SetFaceToEnrollResult {
   ResultStatus status = 1;
+}
+
+enum BehaviorResults
+{
+  BEHAVIOR_INVALID_STATE = 0;
+  BEHAVIOR_COMPLETE_STATE = 1;
+  BEHAVIOR_WONT_ACTIVATE_STATE = 2;
+}
+
+message DriveOffChargerRequest {
+}
+
+message DriveOffChargerResult {
+  ResultStatus status = 1;
+  BehaviorResults result = 2;
+}
+
+message DriveOnChargerRequest {
+}
+
+message DriveOnChargerResult {
+  ResultStatus status = 1;
+  BehaviorResults result = 2;
 }
 
 // TODO: Remove this example code once more code is converted to protobuf
@@ -434,12 +448,13 @@ message OnboardingStateResponse {
   OnboardingState onboarding_state = 2;
 }
 
-enum OnboardingContinueEnum {
-  Default = 0;
+enum OnboardingSteps {
+  DEFAULT = 0;
+  FIRST_TRIGGER_WORD = 1;
 }
 
 message OnboardingContinue {
-  OnboardingContinueEnum continue_number = 1;
+  OnboardingSteps step_number = 1;
 }
 
 message OnboardingContinueResponse {
@@ -455,6 +470,8 @@ message OnboardingRetryCharging {
 message OnboardingConnectionComplete {
 }
 
+message OnboardingSkipOnboarding {
+}
 
 message OnboardingInputRequest {
   oneof oneof_message_type {
@@ -462,6 +479,7 @@ message OnboardingInputRequest {
     OnboardingSkip onboarding_skip = 2;
     OnboardingRetryCharging onboarding_retry_charging = 3;
     OnboardingConnectionComplete onboarding_connection_complete = 4;
+    OnboardingSkipOnboarding onboarding_skip_onboarding = 5;
   }
 }
 
@@ -472,8 +490,8 @@ message OnboardingInputResponse {
   }
 }
 
-message OnboardingRobotExpectingContinue {
-  OnboardingContinueEnum continue_number = 1;
+message OnboardingRobotExpectingStep {
+  OnboardingSteps step_number = 1;
 }
 
 message WakeWordBegin {
@@ -489,7 +507,8 @@ message WakeWordEnd {
 message PhotoInfo {
   uint32 photo_id = 1;
   uint32 timestamp_utc = 2;
-  bool copied_to_app = 3;
+  bool photo_copied_to_app = 3;
+  bool thumb_copied_to_app = 4;
 }
 
 message PhotosInfoRequest {
@@ -504,24 +523,30 @@ message PhotoRequest {
   uint32 photo_id = 1;
 }
 
-message Photo {
-  bytes image_data = 1;
+message PhotoPathMessage {
+  bool success = 1;
+  string full_path = 2;
 }
 
 message PhotoResponse {
   ResultStatus status = 1;
   bool success = 2;
-  Photo photo = 3;
+  bytes image = 3;
 }
 
 message ThumbnailRequest {
   uint32 photo_id = 1;
 }
 
+message ThumbnailPathMessage {
+  bool success = 1;
+  string full_path = 2;
+}
+
 message ThumbnailResponse {
   ResultStatus status = 1;
   bool success = 2;
-  Photo photo = 3;
+  bytes image = 3;
 }
 
 message DeletePhotoRequest {
@@ -561,40 +586,6 @@ message LatestAttentionTransferResponse {
   LatestAttentionTransfer latest_attention_transfer = 2;
 }
 
-message GatewayWrapper {
-  oneof oneof_message_type {
-    // ------------ messages sent from robot to app ----------------------
-    Event event = 1;
-    // ------------ onboarding requests and responses --------------------
-    OnboardingStateRequest        onboarding_state_request = 2;
-    OnboardingState               onboarding_state = 3;
-    OnboardingContinue            onboarding_continue = 4;
-    OnboardingContinueResponse    onboarding_continue_response = 5;
-    OnboardingSkip                onboarding_skip = 6;
-    OnboardingConnectionComplete  onboarding_connection_complete = 7;
-    // ------------ test request/response pairs --------------------------
-    // TODO: remove these once we have more examples
-    Ping ping = 20;
-    Pong pong = 21;
-    Bing bing = 22;
-    Bong bong = 23;
-    // ------------ Attention transfer -----------------------------------
-    LatestAttentionTransferRequest latest_attention_transfer_request = 30;
-    LatestAttentionTransfer        latest_attention_transfer = 31;
-    // ------------ photos request/response pairs ------------------------
-    PhotosInfoRequest             photos_info_request = 40;
-    PhotosInfoResponse            photos_info_response = 41;
-    PhotoRequest                  photo_request = 42;
-    PhotoResponse                 photo_response = 43;
-    ThumbnailRequest              thumbnail_request = 44;
-    ThumbnailResponse             thumbnail_response = 45;
-    DeletePhotoRequest            delete_photo_request = 46;
-    DeletePhotoResponse           delete_photo_response = 47;
-    
-    // (when adding new categories, please create gaps between field numbers)
-  }
-}
-
 // Proto field names are prefixed with "VISION_MODE_"
 enum VisionMode {
   VISION_MODE_IDLE = 0;
@@ -623,10 +614,115 @@ enum VisionMode {
 }
 
 message EnableVisionModeRequest {
-   VisionMode mode = 1;
-   bool       enable = 2;
+  VisionMode mode = 1;
+  bool       enable = 2;
 }
 
 message EnableVisionModeResult {
   ResultStatus status = 1;
 }
+
+// Struct containing all the information relevant to how a 
+// path should be modified or traversed.
+// TODO: Include path wonkification parameters
+message PathMotionProfile {
+  float speed_mmps = 1;
+  float accel_mmps2 = 2;
+  float decel_mmps2 = 3;
+  float point_turn_speed_rad_per_sec = 4;
+  float point_turn_accel_rad_per_sec2 = 5;
+  float point_turn_decel_rad_per_sec2 = 6;
+  float dock_speed_mmps = 7;
+  float dock_accel_mmps2 = 8;
+  float dock_decel_mmps2 = 9;
+  float reverse_speed_mmps = 10;
+  bool  is_custom = 11;
+}
+
+enum ActionResult {
+  ACTION_RESULT_SUCCESS                 = 0;
+  ACTION_RESULT_RUNNING                 = 16777216;
+  ACTION_RESULT_CANCELLED_WHILE_RUNNING = 33554432;
+}
+
+// GotoPose
+message GoToPoseRequest {
+  float x_mm = 1;
+  float y_mm = 2;
+  float rad = 3; 
+  PathMotionProfile motion_prof = 4;
+}
+
+message GoToPoseResponse {
+  ActionResult result = 1;
+}
+
+message DriveStraightRequest {
+   float speed_mmps = 1;  // Speed should be positive
+   float dist_mm = 2;     // Use +ve for forward, -ve for backward
+   bool should_play_animation = 3;
+}
+
+message DriveStraightResponse {
+  ResultStatus status = 1;
+  BehaviorResults result = 2;
+}
+
+// TurnInPlace
+// If isAbsolute == 0, turns the specified number of radians, *relative to the robot's current heading*
+// If isAbsolute != 0, turns to the specified absolute orientation.
+message TurnInPlaceRequest {
+    float angle_rad = 1; // relative mode: postive turns left negative turns right
+    float speed_rad_per_sec = 2;
+    float accel_rad_per_sec2 = 3;
+    float tol_rad = 4; // This should be no smaller than POINT_TURN_ANGLE_TOL from cozmoEngineConfig.h.
+                            // Smaller values are ignored except 0 which is interpreted to mean
+                            // default tolerance of POINT_TURN_ANGLE_TOL.
+    uint32 is_absolute = 5; // 0: angle_rad is relative to current orientation, 1: angle_rad is absolute angle to turn to
+}
+
+message TurnInPlaceResponse {
+  ResultStatus status = 1;
+  BehaviorResults result = 2;
+}
+
+// SetHeadAngle
+message SetHeadAngleRequest {
+    float angle_rad = 1;
+    float max_speed_rad_per_sec = 2;
+    float accel_rad_per_sec2 = 3;
+    float duration_sec = 4;
+}
+
+message SetHeadAngleResponse {
+  ResultStatus status = 1;
+  BehaviorResults result = 2;
+}
+
+// SetLiftHeight
+message SetLiftHeightRequest {
+    float height_mm = 1;
+    float max_speed_rad_per_sec = 2;
+    float accel_rad_per_sec2 = 3;
+    float duration_sec = 4;
+}
+
+message SetLiftHeightResponse {
+  ResultStatus status = 1;
+  BehaviorResults result = 2;
+}
+
+// SetBackpackLEDs
+message SetBackpackLEDsRequest {
+  repeated uint32  on_color = 1;
+  repeated uint32  off_color = 2;
+  repeated uint32  on_period_ms = 3;
+  repeated uint32  off_period_ms = 4;
+  repeated uint32  transition_on_period_ms = 5;
+  repeated uint32  transition_off_period_ms = 6;
+}
+
+message SetBackpackLEDsResponse {
+  ResultStatus status = 1;
+}
+

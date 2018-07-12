@@ -40,6 +40,7 @@
 #include "engine/robotManager.h"
 #include "engine/robotToEngineImplMessaging.h"
 #include "clad/types/dockingSignals.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/pathMotionProfile.h"
 #include "util/console/consoleInterface.h"
 #include <ctime>

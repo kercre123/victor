@@ -19,12 +19,12 @@
   
   dispatch_async(_syncQueue, ^() {
     if(_command == "ota-update") {
-      Anki::Victor::ExternalComms::RtsStatusResponse_2 status = [_requests getStatus];
+      Anki::Cozmo::ExternalComms::RtsStatusResponse_2 status = [_requests getStatus];
       bool online = status.wifiState == 1 || status.wifiState == 2;
       
       if(!online) {
-        Anki::Victor::ExternalComms::RtsWifiScanResponse_2 scan = [_requests getWifiScan];
-        Anki::Victor::ExternalComms::RtsWifiConnectResponse connect = [_requests doWifiConnect:"AnkiRobits" password:"KlaatuBaradaNikto!" hidden:false auth:6];
+        Anki::Cozmo::ExternalComms::RtsWifiScanResponse_2 scan = [_requests getWifiScan];
+        Anki::Cozmo::ExternalComms::RtsWifiConnectResponse connect = [_requests doWifiConnect:"AnkiRobits" password:"KlaatuBaradaNikto!" hidden:false auth:6];
       }
       
       if(_requests.success == kSuccess) {
@@ -191,20 +191,20 @@
     }
     
     if(cmd == "status") {
-      Anki::Victor::ExternalComms::RtsStatusResponse_2 status = [_requests getStatus];
+      Anki::Cozmo::ExternalComms::RtsStatusResponse_2 status = [_requests getStatus];
       printf("Got status: %s\n", status.version.c_str());
     } else if(cmd == "wifi-scan") {
-      Anki::Victor::ExternalComms::RtsWifiScanResponse_2 scan = [_requests getWifiScan];
+      Anki::Cozmo::ExternalComms::RtsWifiScanResponse_2 scan = [_requests getWifiScan];
       printf("Got scan: %lu\n", scan.scanResult.size());
     } else if(cmd == "wifi-ip") {
-      Anki::Victor::ExternalComms::RtsWifiIpResponse ip = [_requests getWifiIp];
+      Anki::Cozmo::ExternalComms::RtsWifiIpResponse ip = [_requests getWifiIp];
       if(ip.hasIpV4) {
         char ipv4String[INET_ADDRSTRLEN] = {0};
         inet_ntop(AF_INET, ip.ipV4.data(), ipv4String, INET_ADDRSTRLEN);
         printf("IPv4: %s\n", ipv4String);
       }
     } else if(cmd == "@robits") {
-      Anki::Victor::ExternalComms::RtsWifiConnectResponse connect = [_requests doWifiConnect:"AnkiRobits" password:"KlaatuBaradaNikto!" hidden:false auth:6];
+      Anki::Cozmo::ExternalComms::RtsWifiConnectResponse connect = [_requests doWifiConnect:"AnkiRobits" password:"KlaatuBaradaNikto!" hidden:false auth:6];
       printf("Got connect: %s %d\n", connect.wifiSsidHex.c_str(), connect.wifiState);
     }  else if(cmd == "wifi-connect") {
       if(cmdline.size() < 2) {
@@ -230,7 +230,7 @@
         hid = [self trim:args[3]] == "hidden" || [self trim:args[3]] == "true";
       }
       
-      Anki::Victor::ExternalComms::RtsWifiConnectResponse connect = [_requests doWifiConnect:ssid password:pw hidden:hid auth:auth];
+      Anki::Cozmo::ExternalComms::RtsWifiConnectResponse connect = [_requests doWifiConnect:ssid password:pw hidden:hid auth:auth];
       printf("Got connect: %s %d\n", connect.wifiSsidHex.c_str(), connect.wifiState);
     } else if(cmd == "wifi-ap") {
       if(cmdline.size() < 2) {
@@ -244,12 +244,12 @@
       }
       
       if(args[0] == "true") {
-        Anki::Victor::ExternalComms::RtsWifiAccessPointResponse ap = [_requests doWifiAp:true];
+        Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse ap = [_requests doWifiAp:true];
         printf("Access point enabled: %d\n", ap.enabled);
         _lastSSID = ap.ssid;
         _lastPW = ap.password;
       } else if(args[0] == "false") {
-        Anki::Victor::ExternalComms::RtsWifiAccessPointResponse ap = [_requests doWifiAp:false];
+        Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse ap = [_requests doWifiAp:false];
         printf("Access point enabled: %d\n", ap.enabled);
       }
     } else if(cmd == "ota-start") {
@@ -263,21 +263,21 @@
         continue;
       }
       
-      Anki::Victor::ExternalComms::RtsOtaUpdateResponse ota = [_requests otaStart:[self trim:args[0]]];
+      Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse ota = [_requests otaStart:[self trim:args[0]]];
       printf("Started ota-update with code: %d\n", ota.status);
     } else if(cmd == "ota-cancel") {
       if(cmdline.size() > 1) {
         continue;
       }
       
-      Anki::Victor::ExternalComms::RtsOtaUpdateResponse ota = [_requests otaCancel];
+      Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse ota = [_requests otaCancel];
       printf("Cancelled ota with code: %d\n", ota.status);
     } else if(cmd == "ota-progress") {
       if(cmdline.size() > 1) {
         continue;
       }
       
-      Anki::Victor::ExternalComms::RtsOtaUpdateResponse ota = [_requests otaProgress];
+      Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse ota = [_requests otaProgress];
       printf("Finished ota with code: %d\n", ota.status);
     } else if(cmd == "mac-vec-wifi") {
       [self macConnectVictorWifi];

@@ -36,12 +36,19 @@ public:
   
   virtual void InitDependent( Robot* robot, const BCCompMap& dependentComps ) override;
 
-  using CozmoBehaviorCallback = std::function<void(const ICozmoBehavior& behavior)>;
+  // Operand function to be called on every iteration of the Iterate function below. Boolean return value
+  // indicates to the iterator whether to continue iterating to the next behavior in the stack.
+  using CozmoBehaviorCallback = std::function<bool(const ICozmoBehavior& behavior)>;
 
   // call the operand function on every ICozmoBehavior that is currently active, starting at the specified
   // behavior (defaults to the base behavior) and moving towards behaviors that were delegated to by that
-  // behavior, ending with the behavior currently in control
+  // behavior, ending with the behavior currently in control, or when the callback returns false.
   void IterateActiveCozmoBehaviorsForward(CozmoBehaviorCallback operand, const IBehavior* startingBehavior = nullptr) const;
+
+  // call the operand function on every ICozmoBehavior that is currently active, starting at the specified
+  // behavior (defaults to the top behavior) and moving towards behaviors that delegated to that behavior,
+  // ending with the base behavior, or when the callback returns false.
+  void IterateActiveCozmoBehaviorsBackward(CozmoBehaviorCallback operand, const IBehavior* startingBehavior = nullptr) const;
   
   // Return the last tick when the behavior stack was updated (i.e. new behavior delegated to or one was
   // canceled)

@@ -56,6 +56,11 @@ namespace Anki {
         u8 pktBuffer_[2048];
 
         static RobotState robotState_;
+        
+        // collect all readings from the touch sensor between messaging ticks
+        // and message them up as a group to engine (for touch detection)
+        u16 touchBufferValues_[STATE_MESSAGE_FREQUENCY];
+        u8 touchBufferIdx_ = 0;
 
         // Flag for receipt of sync message
         bool syncRobotReceived_ = false;
@@ -83,6 +88,12 @@ namespace Anki {
             AnkiWarn( "Messages.ProcessBadTag_EngineToRobot.Recvd", "Received message with bad tag %x", msg.tag);
         }
       } // ProcessMessage()
+      
+      void UpdateTouchBufferValues()
+      {
+        touchBufferValues_[touchBufferIdx_] = HAL::GetButtonState(HAL::BUTTON_CAPACITIVE);
+        touchBufferIdx_ = (touchBufferIdx_+1) % STATE_MESSAGE_FREQUENCY;
+      }
 
       void UpdateRobotStateMsg()
       {
@@ -113,7 +124,11 @@ namespace Anki {
         }
         robotState_.proxData = ProxSensors::GetProxData();
 
-        robotState_.backpackTouchSensorRaw = HAL::GetButtonState(HAL::BUTTON_CAPACITIVE);
+        UpdateTouchBufferValues();
+        for(u8 i = 0; i < STATE_MESSAGE_FREQUENCY; ++i) {
+          u8 index = (touchBufferIdx_ + i) % STATE_MESSAGE_FREQUENCY;
+          robotState_.backpackTouchSensorRaw[i] = touchBufferValues_[index];
+        }
 
         robotState_.cliffDetectedFlags = ProxSensors::GetCliffDetectedFlags();
         

@@ -31,6 +31,10 @@ type RobotToExternalCladResult struct {
 	Error   error
 }
 
+// Enable logs about the messages coming and going from the engine.
+// Most useful for debugging the json output being sent to the app.
+const logVerbose = false
+
 var (
 	demoKeyPair  *tls.Certificate
 	demoCertPool *x509.CertPool
@@ -38,17 +42,17 @@ var (
 
 	// protobuf equivalents for clad socket and chan map
 	protoEngineSock    ipc.Conn
-	engineProtoChanMap map[string](chan extint.GatewayWrapper)
+	engineProtoChanMap map[string](chan<- extint.GatewayWrapper)
 
 	// TODO: remove clad socket and map when there are no more clad messages being used
 	engineSock    ipc.Conn
 	engineChanMap map[gw_clad.MessageRobotToExternalTag](chan RobotToExternalCladResult)
 )
 
-func getSocketWithRetry(socket_dir string, server string, name string) ipc.Conn {
-	server_path := path.Join(socket_dir, server)
+func getSocketWithRetry(socketDir string, server string, name string) ipc.Conn {
+	serverPath := path.Join(socketDir, server)
 	for {
-		sock, err := ipc.NewUnixgramClient(server_path, name)
+		sock, err := ipc.NewUnixgramClient(serverPath, name)
 		if err != nil {
 			log.Println("Couldn't create sockets for", server, "- retrying:", err)
 			time.Sleep(time.Second)
@@ -56,6 +60,57 @@ func getSocketWithRetry(socket_dir string, server string, name string) ipc.Conn 
 			return sock
 		}
 	}
+}
+
+type wrappedResponseWriter struct {
+	http.ResponseWriter
+	tag string
+}
+
+func (wrap *wrappedResponseWriter) WriteHeader(code int) {
+	log.Printf("%s.WriteHeader(): %d", wrap.tag, code)
+	wrap.ResponseWriter.WriteHeader(code)
+}
+
+func (wrap *wrappedResponseWriter) Write(b []byte) (int, error) {
+	if wrap.tag == "json" && len(b) > 1 {
+		log.Printf("%s.Write(): %s", wrap.tag, string(b))
+	} else if wrap.tag == "grpc" && len(b) > 1 {
+		log.Printf("%s.Write(): [% x]", wrap.tag, b)
+	}
+	return wrap.ResponseWriter.Write(b)
+}
+
+func (wrap *wrappedResponseWriter) Header() http.Header {
+	h := wrap.ResponseWriter.Header()
+	log.Printf("%s.Header(): %+v", wrap.tag, h)
+	return h
+}
+
+func (wrap *wrappedResponseWriter) Flush() {
+	wrap.ResponseWriter.(http.Flusher).Flush()
+}
+
+func (wrap *wrappedResponseWriter) CloseNotify() <-chan bool {
+	return wrap.ResponseWriter.(http.CloseNotifier).CloseNotify()
+}
+
+func printRequest(r *http.Request, tag string) {
+	log.Printf("%s.Request: %+v", tag, r)
+}
+
+func verboseHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
+			printRequest(r, "grpc")
+			wrap := wrappedResponseWriter{w, "grpc"}
+			grpcServer.ServeHTTP(&wrap, r)
+		} else {
+			printRequest(r, "json")
+			wrap := wrappedResponseWriter{w, "json"}
+			otherHandler.ServeHTTP(&wrap, r)
+		}
+	})
 }
 
 func grpcHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Handler {
@@ -74,7 +129,7 @@ func sendEventToChannel(event *extint.Event) {
 	protoMsg = extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_Event{
 			// TODO: Convert all events into proto events
-			event,
+			Event: event,
 		},
 	}
 	if c, ok := engineProtoChanMap[msgType]; ok {
@@ -119,14 +174,14 @@ func processCladEngineMessages() {
 		case gw_clad.MessageRobotToExternalTag_RobotObservedFace:
 			event := &extint.Event{
 				EventType: &extint.Event_RobotObservedFace{
-					CladRobotObservedFaceToProto(msg.GetRobotObservedFace()),
+					RobotObservedFace: CladRobotObservedFaceToProto(msg.GetRobotObservedFace()),
 				},
 			}
 			sendEventToChannel(event)
 		case gw_clad.MessageRobotToExternalTag_RobotChangedObservedFaceID:
 			event := &extint.Event{
 				EventType: &extint.Event_RobotChangedObservedFaceId{
-					CladRobotChangedObservedFaceIDToProto(msg.GetRobotChangedObservedFaceID()),
+					RobotChangedObservedFaceId: CladRobotChangedObservedFaceIDToProto(msg.GetRobotChangedObservedFaceID()),
 				},
 			}
 			sendEventToChannel(event)
@@ -206,7 +261,7 @@ func main() {
 
 	protoEngineSock = getSocketWithRetry(SocketPath, "_engine_gateway_proto_server_", "client")
 	defer protoEngineSock.Close()
-	engineProtoChanMap = make(map[string](chan extint.GatewayWrapper))
+	engineProtoChanMap = make(map[string](chan<- extint.GatewayWrapper))
 
 	log.Println("Sockets successfully created")
 
@@ -235,9 +290,14 @@ func main() {
 		panic(err)
 	}
 
+	handlerFunc := grpcHandlerFunc(grpcServer, gwmux)
+	if logVerbose {
+		handlerFunc = verboseHandlerFunc(grpcServer, gwmux)
+	}
+
 	srv := &http.Server{
 		Addr:    demoAddr,
-		Handler: grpcHandlerFunc(grpcServer, gwmux),
+		Handler: handlerFunc,
 		TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{*demoKeyPair},
 			NextProtos:   []string{"h2"},

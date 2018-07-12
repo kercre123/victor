@@ -25,6 +25,7 @@
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/global/globalDefinitions.h"
+#include "util/logging/logging.h"
 
 #include "clad/types/variableSnapshotIds.h"
 
@@ -117,13 +118,13 @@ bool VariableSnapshotComponent::InitVariable(VariableSnapshotId variableSnapshot
   // TODO: if a variable is reinitialized within one boot cycle, get its info from the data map
   //       for when reinitialization is added as a feature
 
-  // if the key exists, then throw an error - reinitialization not currently supported
+  // if the key exists, then print a warning - reinitialization not currently supported
   auto variableSnapshotIter = _variableSnapshotDataMap.find(variableSnapshotId);
-  const bool keyNotInDataMap = ANKI_VERIFY(variableSnapshotIter == _variableSnapshotDataMap.end(), 
-                                        "VariableSnapshotComponent", 
-                                        "%s was reinitialized, which is not currently supported.", 
-                                        VariableSnapshotIdToString(variableSnapshotId));
-  if(!keyNotInDataMap) {
+
+  const bool keyInDataMap = variableSnapshotIter != _variableSnapshotDataMap.end();
+  if(keyInDataMap) {
+    PRINT_STREAM_WARNING("VariableSnapshotComponent_REPEATED_INITIALIZATION", 
+                         VariableSnapshotIdToString(variableSnapshotId) << "%s was reinitialized, which is not currently supported.");
     return false;
   }
 

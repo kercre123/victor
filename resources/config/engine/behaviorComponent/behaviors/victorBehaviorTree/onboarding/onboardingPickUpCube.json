@@ -1,0 +1,6 @@
+{
+  "behaviorID": "OnboardingPickUpCube",
+  "behaviorClass": "PickUpCube",
+
+  "retryCount": 1 // retries handled by logic stage
+}

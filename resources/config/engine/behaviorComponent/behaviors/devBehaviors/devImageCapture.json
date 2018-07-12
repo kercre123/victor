@@ -23,5 +23,11 @@
 
   // When in single shot saving, alongside the images save a json file (with the same name, .json extension)
   // with sensor data like cliff, prox and head angle
-  "save_sensor_data" : false
+  "save_sensor_data" : false,
+
+  // list of strings specifying vision modes to enable while running, 
+  // other than "SavingImages" (which is always enabled)
+  // see visionModes.clad/h for the names of available vision modes
+  // NOTE: modes will be scheduled with "Standard" frequency
+  "vision_modes": []  // e.g. ["RunningNeuralNet", "DetectingMarkers", "DetectingFaces"]
 }

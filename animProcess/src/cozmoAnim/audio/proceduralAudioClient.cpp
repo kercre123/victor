@@ -54,9 +54,9 @@ namespace Audio {
 
 namespace {
   #define CONSOLE_PATH "Audio.Procedural"
-  CONSOLE_VAR(uint32_t, kTreadCoolDown_ms, CONSOLE_PATH, 65);
-  CONSOLE_VAR(uint32_t, kHeadCoolDown_ms, CONSOLE_PATH, 65);
-  CONSOLE_VAR(uint32_t, kLiftCoolDown_ms, CONSOLE_PATH, 65);
+  CONSOLE_VAR_RANGED(uint32_t, kTreadCoolDown_ms, CONSOLE_PATH, 65, 0, 250);
+  CONSOLE_VAR_RANGED(uint32_t, kHeadCoolDown_ms, CONSOLE_PATH, 65, 0, 250);
+  CONSOLE_VAR_RANGED(uint32_t, kLiftCoolDown_ms, CONSOLE_PATH, 65, 0, 250);
   
   static const AudioEngine::AudioGameObject kProceduralGameObj =
     AudioEngine::ToAudioGameObject(AudioMetaData::GameObjectType::Procedural);

@@ -29,8 +29,6 @@ bool ExpectsAdditionalData(EContentType type)
     case EContentType::Unknown:
     case EContentType::ClearOfObstacle:
     case EContentType::ClearOfCliff:
-    case EContentType::ObstacleCharger:
-    case EContentType::ObstacleChargerRemoved:
     case EContentType::ObstacleUnrecognized:
     case EContentType::InterestingEdge:
     case EContentType::NotInterestingEdge:
@@ -59,8 +57,6 @@ const char* EContentTypeToString(EContentType contentType)
     case EContentType::ClearOfObstacle: return "ClearOfObstacle";
     case EContentType::ClearOfCliff: return "ClearOfCliff";
     case EContentType::ObstacleObservable: return "ObstacleObservable";
-    case EContentType::ObstacleCharger: return "ObstacleCharger";
-    case EContentType::ObstacleChargerRemoved: return "ObstacleChargerRemoved";
     case EContentType::ObstacleProx: return "ObstacleProx";
     case EContentType::ObstacleUnrecognized: return "ObstacleUnrecognized";
     case EContentType::Cliff: return "Cliff";
@@ -86,32 +82,6 @@ bool IsInEContentTypePackedType(EContentType contentType, EContentTypePackedType
   const EContentTypePackedType packedType = EContentTypeToFlag(contentType);
   const bool isIn = (packedType & contentPackedTypes) != 0;
   return isIn;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IsRemovalType(EContentType type)
-{
-  using FullNodeContentToBoolArray = Util::FullEnumToValueArrayChecker::FullEnumToValueArray<EContentType, bool>;
-  constexpr FullNodeContentToBoolArray removalTypes =
-  {
-    {EContentType::Unknown               , false},
-    {EContentType::ClearOfObstacle       , false},
-    {EContentType::ClearOfCliff          , false},
-    {EContentType::ObstacleObservable    , false},
-    {EContentType::ObstacleCharger       , false},
-    {EContentType::ObstacleChargerRemoved, true},
-    {EContentType::ObstacleProx          , false},
-    {EContentType::ObstacleUnrecognized  , false},
-    {EContentType::Cliff                 , false},
-    {EContentType::InterestingEdge       , false},
-    {EContentType::NotInterestingEdge    , false}
-  };
-  static_assert(Util::FullEnumToValueArrayChecker::IsSequentialArray(removalTypes),
-    "This array does not define all types once and only once.");
-
-  // value of entry in array tells if it's a removal type
-  const bool isRemoval = removalTypes[ Util::EnumToUnderlying(type) ].Value();
-  return isRemoval;
 }
 
 

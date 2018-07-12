@@ -19,9 +19,9 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "util/entityComponent/entity.h"
+#include "coretech/common/engine/math/pose.h"
 
 namespace Anki {
-class Pose3d;
 namespace Cozmo {
 
 // Storage for processed prox sensor reading with useful metadata
@@ -106,6 +106,9 @@ public:
   // returns false if sensor reading isn't valid
   bool CalculateSensedObjectPose(Pose3d& sensedObjectPose) const;
 
+  // enable or disable this entire component's ability to update the nav map
+  void SetEnabled(bool enabled) { _enabled = enabled; }
+
 private:
 
   void UpdateNavMap();
@@ -126,12 +129,17 @@ private:
   
   ProxSensorDataRaw _latestDataRaw;
   ProxSensorData    _latestData;
+  Pose3d            _previousRobotPose;
+  float             _previousMeasurement;
+  u8                _measurementsAtPose;
 
   // The timestamp of the RobotState message with the
   // latest distance sensor data
   uint32_t _lastMsgTimestamp = 0;
 
   uint32_t _numTicsLiftOutOfFOV = 0;
+
+  bool _enabled = true;
   
 };
 

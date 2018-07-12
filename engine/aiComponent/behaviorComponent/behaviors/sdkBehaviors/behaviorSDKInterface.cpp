@@ -11,15 +11,27 @@
  **/
 
 
+#include "coretech/common/engine/utils/timer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/sdkBehaviors/behaviorSDKInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorDriveOffCharger.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorGoHome.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/blockWorld/blockWorld.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/sdkComponent.h"
+#include "engine/cozmoContext.h"
+#include "engine/externalInterface/externalMessageRouter.h"
+#include "engine/externalInterface/gatewayInterface.h"
 #include "engine/robotEventHandler.h"
 
 namespace Anki {
 namespace Cozmo {
-  
+
+namespace {
+const char* const kDriveOffChargerBehaviorKey = "driveOffChargerBehavior";
+const char* const kGoHomeBehaviorKey = "goHomeBehavior";
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorSDKInterface::InstanceConfig::InstanceConfig()
@@ -35,12 +47,23 @@ BehaviorSDKInterface::DynamicVariables::DynamicVariables()
 BehaviorSDKInterface::BehaviorSDKInterface(const Json::Value& config)
  : ICozmoBehavior(config)
 {
-  // TODO: read config into _iConfig
+  const std::string& debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
+  _iConfig.driveOffChargerBehaviorStr = JsonTools::ParseString(config, kDriveOffChargerBehaviorKey, debugName);
+  _iConfig.goHomeBehaviorStr = JsonTools::ParseString(config, kGoHomeBehaviorKey, debugName);
+
+  SubscribeToTags({
+    EngineToGameTag::RobotCompletedAction,
+  });
+
+  SubscribeToAppTags({
+    AppToEngineTag::kDriveOffChargerRequest,
+    AppToEngineTag::kDriveOnChargerRequest,
+  });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorSDKInterface::WantsToBeActivatedBehavior() const
-{  
+{
   // TODO Check whether the SDK wants the behavior slot that this behavior instance is for. Currently just using SDK0.
   auto& robotInfo = GetBEI().GetRobotInfo();
   auto& sdkComponent = robotInfo.GetSDKComponent();
@@ -59,18 +82,31 @@ void BehaviorSDKInterface::GetBehaviorOperationModifiers(BehaviorOperationModifi
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSDKInterface::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
-  // TODO: insert any behaviors this will delegate to into delegates.
-  // TODO: delete this function if you don't need it
+  delegates.insert(_iConfig.driveOffChargerBehavior.get());
+  delegates.insert(_iConfig.goHomeBehavior.get());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorSDKInterface::InitBehavior()
+{
+  const auto& BC = GetBEI().GetBehaviorContainer();
+  _iConfig.driveOffChargerBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.driveOffChargerBehaviorStr));
+  DEV_ASSERT(_iConfig.driveOffChargerBehavior != nullptr,
+             "BehaviorFindFaces.InitBehavior.NullDriveOffChargerBehavior");
+
+  _iConfig.goHomeBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.goHomeBehaviorStr));
+  DEV_ASSERT(_iConfig.goHomeBehavior != nullptr,
+             "BehaviorFindFaces.InitBehavior.NullGoHomeBehavior");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSDKInterface::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
-  //const char* list[] = {
-    // TODO: insert any possible root-level json keys that this class is expecting.
-    // TODO: replace this method with a simple {} in the header if this class doesn't use the ctor's "config" argument.
-  //};
-  // expectedKeys.insert( std::begin(list), std::end(list) );
+  const char* list[] = {
+    kDriveOffChargerBehaviorKey,
+    kGoHomeBehaviorKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -106,25 +142,175 @@ void BehaviorSDKInterface::OnBehaviorDeactivated()
 
   auto& movementComponent = robotInfo.GetMoveComponent();
   movementComponent.SetAllowedToHandleActions(false);
-}    
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSDKInterface::BehaviorUpdate() 
 {
-  if( IsActivated() ) {
-    // TODO Consider which slot should be deactivated once SDK occupies multiple slots.
+  if (!IsActivated()) {
+    return;
+  }
+
+  // TODO Consider which slot should be deactivated once SDK occupies multiple slots.
+  //
+  // TODO If the external SDK code (e.g., Python) crashes or otherwise does not release
+  // control, then currently behavior will be activated indefinitely until a higher
+  // priority behavior takes over.
+  auto& robotInfo = GetBEI().GetRobotInfo();
+  auto& sdkComponent = robotInfo.GetSDKComponent();
+  if (!sdkComponent.SDKWantsControl())
+  {
+    CancelSelf();
+  }
+}
+
+void BehaviorSDKInterface::HandleDriveOffChargerComplete() {
+  SetAllowedToRunActions(true);
+  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+  if( gi != nullptr ) {
+    auto* driveOffChargerResult = new external_interface::DriveOffChargerResult;
+    driveOffChargerResult->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOffChargerResult) );
+  }
+}  
+
+void BehaviorSDKInterface::HandleDriveOnChargerComplete() {
+  SetAllowedToRunActions(true);
+  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+  if( gi != nullptr ) {
+    auto* driveOnChargerResult = new external_interface::DriveOnChargerResult;
+    driveOnChargerResult->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOnChargerResult) );
+  }
+}
+
+// Reports back to gateway that requested actions have been completed.
+// E.g., the Python SDK ran play_anim and wants to know when the animation
+// action was completed.
+void BehaviorSDKInterface::HandleWhileActivated(const EngineToGameEvent& event)
+{
+  if (IsControlDelegated()) {
+    // The SDK behavior has deleted to another behavior, and that
+    // behavior requested an action. Don't inform gateway that the
+    // action has completed because it wasn't requested by the SDK.
     //
-    // TODO If the external SDK code (e.g., Python) crashes or otherwise does not release
-    // control, then currently behavior will be activated indefinitely until a higher
-    // priority behavior takes over.
-    auto& robotInfo = GetBEI().GetRobotInfo();
-    auto& sdkComponent = robotInfo.GetSDKComponent();
-    if (!sdkComponent.SDKWantsControl())
+    // If necessary, can delegate to actions from the behavior instead
+    // of running them via CLAD request from gateway.
+    return;
+  }
+
+  if (event.GetData().GetTag() != EngineToGameTag::RobotCompletedAction) {
+    return;
+  }
+
+  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+  if (gi == nullptr) return;
+
+  ExternalInterface::RobotCompletedAction msg = event.GetData().Get_RobotCompletedAction();
+  switch((RobotActionType)msg.actionType)
+  {
+    case RobotActionType::TURN_IN_PLACE:
     {
-      CancelSelf();
+      auto* response = new external_interface::TurnInPlaceResponse;
+      response->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
+    }
+    break;
+
+    case RobotActionType::DRIVE_STRAIGHT:
+    {
+      auto* response = new external_interface::DriveStraightResponse;
+      response->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
+    }
+    break;
+
+    case RobotActionType::MOVE_HEAD_TO_ANGLE:
+    {
+      auto* response = new external_interface::SetHeadAngleResponse;
+      response->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
+    }
+    break;
+
+    case RobotActionType::MOVE_LIFT_TO_HEIGHT:
+    {
+      auto* response = new external_interface::SetLiftHeightResponse;
+      response->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
+    }
+    break;
+
+    case RobotActionType::PLAY_ANIMATION:
+    {
+      auto* response = new external_interface::PlayAnimationResult;
+      response->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
+    }
+    break;
+
+    default:
+    {
+      PRINT_NAMED_WARNING("BehaviorSDKInterface.HandleWhileActivated.NoMatch", "No match for action tag so no response sent: [Tag=%d]", msg.idTag);
+      return;
     }
   }
 }
 
+// Use this to prevent (or allow) motor controls and actions from running in
+// robotEventHandler and movementComponent. We only want to allow these when
+// the SDK behavior is activated, or for testing.
+//
+// One time that we want to disable these in BehaviorSDKInterface is when the
+// SDK behavior is delegating to another behavior.
+void BehaviorSDKInterface::SetAllowedToRunActions(bool allowedtoRunActions) {
+  auto& robotInfo = GetBEI().GetRobotInfo();
+  robotInfo.GetMoveComponent().SetAllowedToHandleActions(allowedtoRunActions);
+  robotInfo.GetRobotEventHandler().SetAllowedToHandleActions(allowedtoRunActions);
 }
+
+void BehaviorSDKInterface::HandleWhileActivated(const AppToEngineEvent& event) {
+  if( event.GetData().GetTag() == external_interface::GatewayWrapperTag::kDriveOffChargerRequest ) {
+     DriveOffChargerRequest(event.GetData().drive_off_charger_request());
+  } else if( event.GetData().GetTag() == external_interface::GatewayWrapperTag::kDriveOnChargerRequest ) {
+     DriveOnChargerRequest(event.GetData().drive_on_charger_request());
+  }  
 }
+
+// Delegate to the DriveOffCharger behavior
+void BehaviorSDKInterface::DriveOffChargerRequest(const external_interface::DriveOffChargerRequest& driveOffChargerRequest) {
+  if (_iConfig.driveOffChargerBehavior->WantsToBeActivated()) {
+    if (DelegateIfInControl(_iConfig.driveOffChargerBehavior.get(), &BehaviorSDKInterface::HandleDriveOffChargerComplete)) {
+      SetAllowedToRunActions(false);
+      return;
+    }
+  }
+
+  // If we got this far, we failed to activate the requested behavior.
+  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+  if( gi != nullptr ) {
+    auto* driveOffChargerResult = new external_interface::DriveOffChargerResult;
+    driveOffChargerResult->set_result(external_interface::BehaviorResults::BEHAVIOR_WONT_ACTIVATE_STATE);
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOffChargerResult) );
+  }
+}
+
+// Delegate to GoHome
+void BehaviorSDKInterface::DriveOnChargerRequest(const external_interface::DriveOnChargerRequest& driveOnChargerRequest) {
+  if (_iConfig.goHomeBehavior->WantsToBeActivated()) {
+    if (DelegateIfInControl(_iConfig.goHomeBehavior.get(), &BehaviorSDKInterface::HandleDriveOnChargerComplete)) {
+      SetAllowedToRunActions(false);
+      return;
+    }
+  }
+
+  // If we got this far, we failed to activate the requested behavior.
+  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+  if( gi != nullptr ) {
+    auto* driveOnChargerResult = new external_interface::DriveOnChargerResult;
+    driveOnChargerResult->set_result(external_interface::BehaviorResults::BEHAVIOR_WONT_ACTIVATE_STATE);
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOnChargerResult) );
+  }
+}
+} // namespace Cozmo
+} // namespace Anki

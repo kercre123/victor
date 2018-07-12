@@ -1,5 +1,5 @@
 /**
-* File: conditionFaceKnown.h
+* File: conditionFaceKnown.cpp
 *
 * Author:  ross
 * Created: May 15 2018
@@ -42,8 +42,9 @@ bool ConditionFaceKnown::AreConditionsMetInternal(BehaviorExternalInterface& beh
   
   std::set<Vision::FaceID_t> faces;
   if( _maxFaceAge_s >= 0 ) {
-    TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-    TimeStamp_t minAge = (currTime > 1000*_maxFaceAge_s) ? (currTime - 1000*_maxFaceAge_s) : 0;
+    const auto latestImageTimestamp = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
+    const auto maxFaceAge_ms = 1000*_maxFaceAge_s;
+    TimeStamp_t minAge = (latestImageTimestamp > maxFaceAge_ms) ? (latestImageTimestamp - maxFaceAge_ms) : 0;
     faces = faceWorld.GetFaceIDs( minAge );
   } else {
     faces = faceWorld.GetFaceIDs();

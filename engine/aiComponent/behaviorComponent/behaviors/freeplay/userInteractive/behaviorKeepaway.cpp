@@ -12,7 +12,9 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorKeepaway.h"
 
 #include "clad/types/behaviorComponent/behaviorStats.h"
+#include "clad/types/featureGateTypes.h"
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/activeObject.h"
@@ -22,9 +24,9 @@
 #include "engine/components/robotStatsTracker.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/visionComponent.h"
+#include "engine/cozmoContext.h"
 #include "engine/moodSystem/moodManager.h"
-
-#include "coretech/common/engine/utils/timer.h"
+#include "engine/utils/cozmoFeatureGate.h"
 #include "util/math/math.h"
 
 #define SET_STATE(s) SetState_internal(s, #s)
@@ -152,6 +154,13 @@ void BehaviorKeepaway::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) 
 
 bool BehaviorKeepaway::WantsToBeActivatedBehavior() const 
 {
+  const auto* featureGate = GetBEI().GetRobotInfo().GetContext()->GetFeatureGate();
+  const bool featureEnabled = featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::CubeBehaviors);
+  if(!featureEnabled)
+  {
+    return false;
+  }
+
   return true;
 }
 

@@ -12,14 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-''' Vector's OLED screen that displays his face - related functions and values.
+'''
+Vector's OLED screen that displays his face - related functions and values.
+
+Copyright (c) 2018 Anki, Inc.
 '''
 
-from . import color
+from . import sync, color, util
+from .messaging import protocol
 
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ['dimensions', 'convert_pixels_to_screen_data',
-           'convert_image_to_screen_data']
+           'convert_image_to_screen_data', 'OledComponent']
 
 
 SCREEN_WIDTH = 184
@@ -53,8 +57,11 @@ def convert_pixels_to_screen_data(pixel_data, image_width, image_height):
     '''
 
     if len(pixel_data) != (image_width * image_height):
-        raise ValueError('Invalid Dimensions: len(pixel_data) {0} != image_width={1} * image_height={2} (== {3})'.
-            format(len(pixel_data), image_width, image_height, image_width * image_height))
+        raise ValueError('Invalid Dimensions: len(pixel_data) {0} != image_width={1} * image_height={2} (== {3})'. format(len(pixel_data),
+                                                                                                                          image_width,
+                                                                                                                          image_height,
+                                                                                                                          image_width *
+                                                                                                                          image_height))
 
     # @TODO: We should decide on a resampling approach and have this function automatically rescale images
     #  We should either enforce the aspect ratio, or have options to:
@@ -62,18 +69,15 @@ def convert_pixels_to_screen_data(pixel_data, image_width, image_height):
     #  - stretch to fit
     #  - shrink to fit with margins some default color
     if image_width != SCREEN_WIDTH:
-        raise ValueError('Bad image_width: image_width {0} must be the resolution width: {1}'.
-                         format(image_width, SCREEN_WIDTH))
+        raise ValueError('Bad image_width: image_width {0} must be the resolution width: {1}'. format(image_width, SCREEN_WIDTH))
 
     if image_height != SCREEN_HEIGHT:
-        raise ValueError('Bad image_height: image_height {0} must be the resolution height: {1}'.
-                         format(image_width, SCREEN_HEIGHT))
-
+        raise ValueError('Bad image_height: image_height {0} must be the resolution height: {1}'. format(image_width, SCREEN_HEIGHT))
 
     color_565_data = []
     for color_tuple in pixel_data:
         color_object = color.Color(rgb=color_tuple)
-        color_565_data.extend( color_object.rgb565_bytepair )
+        color_565_data.extend(color_object.rgb565_bytepair)
 
     return bytes(color_565_data)
 
@@ -90,3 +94,25 @@ def convert_image_to_screen_data(image):
     image_data = image.getdata()
 
     return convert_pixels_to_screen_data(image_data, image.width, image.height)
+
+
+class OledComponent(util.Component):
+    @sync.Synchronizer.wrap
+    async def set_oled_with_screen_data(self, image_data, duration_sec, interrupt_running=True):
+        if not isinstance(image_data, bytes):
+            raise ValueError("set_oled_with_screen_data expected bytes")
+        if len(image_data) != 35328:
+            raise ValueError("set_oled_with_screen_data expected 35328 bytes - (2 bytes each for 17664 pixels)")
+
+        # Generate the message
+        message = protocol.DisplayFaceImageRGBRequest()
+        # Create byte array at the oled resolution
+        message.face_data = image_data
+        message.duration_ms = int(1000 * duration_sec)
+        message.interrupt_running = interrupt_running
+
+        return await self.interface.DisplayFaceImageRGB(message)
+
+    def set_oled_to_color(self, solid_color, duration_sec, interrupt_running=True):
+        image_data = bytes(solid_color.rgb565_bytepair * 17664)
+        return self.set_oled_with_screen_data(image_data, duration_sec, interrupt_running)

@@ -18,7 +18,23 @@
 : ${VIC_CRASH_SCRAPE_PERIOD_SEC:=30}
 
 UPLOADED_EXT=uploaded
+LOCAL_EXT=local
 mkdir -p $VIC_CRASH_FOLDER
+
+# We don't want to upload crash dumps for a local build
+# (since symbols aren't uploaded unless you do so manually)
+: ${VIC_UPLOAD_CRASHES:=1}
+# Determine if we're on a local build:
+# Read /anki/etc/version file, parse "0.10.NNNNd", where NNNN is a build version, or 0 for local build
+versionLine=$(head -n 1 /anki/etc/version)
+lastField=${versionLine##*.}
+buildNumber=${lastField//[!0-9]/}
+if [ "$buildNumber" = "0" ]; then
+  echo "Running LOCAL build; crashes will not be uploaded"
+  VIC_UPLOAD_CRASHES=0
+else
+  echo "Running build number "$buildNumber
+fi
 
 while :
 do
@@ -33,16 +49,22 @@ do
         PROCESSES_HOLDING=$(fuser ${i})
         if [[ -z $PROCESSES_HOLDING ]]; then
             if [[ -s ${i} ]]; then
-                # If file size is greater than zero, attempt to upload it
-                echo "Uploading crash dump file ${i}"
-                # todo:  Remove -k after we get this to route through anki.com instead of directly to the crash reporting service
-                if curl -k --data-binary @$i ${VIC_CRASH_UPLOAD_URL} ; then
-                    echo "Successfully uploaded "$i
+                if [ $VIC_UPLOAD_CRASHES -gt 0 ]; then
+                    # If file size is greater than zero, attempt to upload it
+                    echo "Uploading crash dump file ${i}"
+                    # todo:  Remove -k after we get this to route through anki.com instead of directly to the crash reporting service
+                    if curl -k --data-binary @$i ${VIC_CRASH_UPLOAD_URL} ; then
+                        echo "Successfully uploaded "$i
 
-                    # Rename the file so that we can keep it around for a while before deletion
-                    mv ${i} ${i}.$UPLOADED_EXT
+                        # Rename the file so that we can keep it around for a while before deletion
+                        mv ${i} ${i}.$UPLOADED_EXT
+                    else
+                        echo "Failed to upload "$i
+                    fi
                 else
-                    echo "Failed to upload "$i
+                    # Don't upload, but rename
+                    echo "Renaming local build crash dump file {$i}"
+                    mv ${i} ${i}.$LOCAL_EXT
                 fi
             else
                 # If file size is zero, at this point it has been abandoned
@@ -52,12 +74,12 @@ do
         fi
     done
 
-    # Now delete all but the oldest N crash files that have already been uploaded
-    uploaded_files_total=$(ls -1 *.$UPLOADED_EXT 2>/dev/null | wc -l)
-    if (( $uploaded_files_total > $VIC_CRASH_UPLOADER_KEEP_LATEST )); then
-        num_files_to_delete=$(( $uploaded_files_total - $VIC_CRASH_UPLOADER_KEEP_LATEST ))
+    # Now delete all but the oldest N crash files that have already been uploaded and/or renamed
+    processed_files_total=$(ls -1 *.$UPLOADED_EXT *.$LOCAL_EXT 2>/dev/null | wc -l)
+    if (( $processed_files_total > $VIC_CRASH_UPLOADER_KEEP_LATEST )); then
+        num_files_to_delete=$(( $processed_files_total - $VIC_CRASH_UPLOADER_KEEP_LATEST ))
         echo "Deleting "$num_files_to_delete" crash dump file(s), but keeping the newest "$VIC_CRASH_UPLOADER_KEEP_LATEST" crash dump files"
-        ls -1tr *.$UPLOADED_EXT | head -n$num_files_to_delete | xargs rm -f --
+        ls -1tr *.$UPLOADED_EXT *.$LOCAL_EXT| head -n$num_files_to_delete | xargs rm -f --
     fi
 
     sleep ${VIC_CRASH_SCRAPE_PERIOD_SEC}

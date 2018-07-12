@@ -125,7 +125,7 @@ namespace Cozmo {
     void SetParam(KeepFaceAliveParameter whichParam, float newValue);
 
     // Functions passed in here will be called each time a new animation is set to streaming
-    void AddNewAnimationCallback(NewAnimationCallback callback){
+    void AddNewAnimationCallback(NewAnimationCallback callback) {
       _newAnimationCallbacks.push_back(callback);
     }
 
@@ -144,12 +144,46 @@ namespace Cozmo {
     const TrackLayerComponent* GetProceduralTrackComponent() const { return _proceduralTrackComponent.get(); }
 
     // Sets all tracks that should be locked
-    void SetLockedTracks(u8 whichTracks)   { _lockedTracks = whichTracks; }
+    void SetLockedTracks(u8 whichTracks)
+    {
+      if(whichTracks & (u8)AnimTrackFlag::BACKPACK_LIGHTS_TRACK)
+      {
+        PRINT_NAMED_ERROR("AnimationStreamer.SetLockedTracks.BackpackLightTrack",
+                          "Backpack light track is always locked, why are you trying to lock it");
+      }
+      // Always keep the backpack light track locked in shipping
+      #if !ANKI_DEV_CHEATS
+      whichTracks |= (u8)AnimTrackFlag::BACKPACK_LIGHTS_TRACK;
+      #endif
+      _lockedTracks = whichTracks;
+    }
 
 
     // Lock or unlock an individual track
-    void LockTrack(AnimTrackFlag track) { _lockedTracks |= (u8)track; }
-    void UnlockTrack(AnimTrackFlag track) { _lockedTracks &= ~(u8)track; }
+    void LockTrack(AnimTrackFlag track)
+    {
+      if(track == AnimTrackFlag::BACKPACK_LIGHTS_TRACK)
+      {
+        PRINT_NAMED_ERROR("AnimationStreamer.LockTrack.BackpackLightTrack",
+                          "Backpack light track is always locked why are you trying to unlock it");
+      }
+      
+      _lockedTracks |= (u8)track;
+    }
+    void UnlockTrack(AnimTrackFlag track)
+    {
+      if(track == AnimTrackFlag::BACKPACK_LIGHTS_TRACK)
+      {
+        PRINT_NAMED_ERROR("AnimationStreamer.UnlockTrack.BackpackLightTrack",
+                          "Backpack light track is always locked why are you trying to unlock it");
+      }
+      
+      _lockedTracks &= ~(u8)track;
+      // Always keep the backpack light track locked in shipping
+      #if !ANKI_DEV_CHEATS
+      _lockedTracks |= (u8)AnimTrackFlag::BACKPACK_LIGHTS_TRACK;
+      #endif
+    }
 
     void DrawToFace(const Vision::ImageRGB& img, Array2d<u16>& img565_out);
     

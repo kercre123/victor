@@ -14,9 +14,14 @@
 
 #include "messageExternalCommsTag.h"
 
+#include "animationTrigger.h"
+#include "faceEnrollmentResult.h"
+#include "loadedKnownFace.h"
+#include "sayTextStylesSDK.h"
+
 namespace Anki {
 
-namespace Victor {
+namespace Cozmo {
 
 namespace ExternalComms {
 
@@ -150,6 +155,60 @@ struct RtsWifiScanResult_2
 extern const char* RtsWifiScanResult_2VersionHashStr;
 extern const uint8_t RtsWifiScanResult_2VersionHash[16];
 
+// MESSAGE RtsWifiScanResult_3
+struct RtsWifiScanResult_3
+{
+  uint8_t authType;
+  uint8_t signalStrength;
+  std::string wifiSsidHex;
+  bool hidden;
+  bool provisioned;
+  
+  /**** Constructors ****/
+  RtsWifiScanResult_3() = default;
+  RtsWifiScanResult_3(const RtsWifiScanResult_3& other) = default;
+  RtsWifiScanResult_3(RtsWifiScanResult_3& other) = default;
+  RtsWifiScanResult_3(RtsWifiScanResult_3&& other) noexcept = default;
+  RtsWifiScanResult_3& operator=(const RtsWifiScanResult_3& other) = default;
+  RtsWifiScanResult_3& operator=(RtsWifiScanResult_3&& other) = default;
+  
+  explicit RtsWifiScanResult_3(uint8_t authType,
+    uint8_t signalStrength,
+    const std::string& wifiSsidHex,
+    bool hidden,
+    bool provisioned)
+  : authType(authType)
+  , signalStrength(signalStrength)
+  , wifiSsidHex(wifiSsidHex)
+  , hidden(hidden)
+  , provisioned(provisioned)
+  {}
+  
+  explicit RtsWifiScanResult_3(const uint8_t* buff, size_t len);
+  explicit RtsWifiScanResult_3(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsWifiScanResult_3& other) const;
+  bool operator!=(const RtsWifiScanResult_3& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(authType, signalStrength, wifiSsidHex, hidden, provisioned);
+  }
+};
+
+extern const char* RtsWifiScanResult_3VersionHashStr;
+extern const uint8_t RtsWifiScanResult_3VersionHash[16];
+
 // MESSAGE RtsConnRequest
 struct RtsConnRequest
 {
@@ -195,7 +254,7 @@ extern const uint8_t RtsConnRequestVersionHash[16];
 // MESSAGE RtsConnResponse
 struct RtsConnResponse
 {
-  Anki::Victor::ExternalComms::RtsConnType connectionType;
+  Anki::Cozmo::ExternalComms::RtsConnType connectionType;
   std::array<uint8_t, 32> publicKey;
   
   /**** Constructors ****/
@@ -206,7 +265,7 @@ struct RtsConnResponse
   RtsConnResponse& operator=(const RtsConnResponse& other) = default;
   RtsConnResponse& operator=(RtsConnResponse&& other) = default;
   
-  explicit RtsConnResponse(Anki::Victor::ExternalComms::RtsConnType connectionType,
+  explicit RtsConnResponse(Anki::Cozmo::ExternalComms::RtsConnType connectionType,
     const std::array<uint8_t, 32>& publicKey)
   : connectionType(connectionType)
   , publicKey(publicKey)
@@ -403,6 +462,96 @@ struct RtsChallengeSuccessMessage
 extern const char* RtsChallengeSuccessMessageVersionHashStr;
 extern const uint8_t RtsChallengeSuccessMessageVersionHash[16];
 
+// MESSAGE RtsWifiForgetRequest
+struct RtsWifiForgetRequest
+{
+  bool deleteAll;
+  std::string wifiSsidHex;
+  
+  /**** Constructors ****/
+  RtsWifiForgetRequest() = default;
+  RtsWifiForgetRequest(const RtsWifiForgetRequest& other) = default;
+  RtsWifiForgetRequest(RtsWifiForgetRequest& other) = default;
+  RtsWifiForgetRequest(RtsWifiForgetRequest&& other) noexcept = default;
+  RtsWifiForgetRequest& operator=(const RtsWifiForgetRequest& other) = default;
+  RtsWifiForgetRequest& operator=(RtsWifiForgetRequest&& other) = default;
+  
+  explicit RtsWifiForgetRequest(bool deleteAll,
+    const std::string& wifiSsidHex)
+  : deleteAll(deleteAll)
+  , wifiSsidHex(wifiSsidHex)
+  {}
+  
+  explicit RtsWifiForgetRequest(const uint8_t* buff, size_t len);
+  explicit RtsWifiForgetRequest(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsWifiForgetRequest& other) const;
+  bool operator!=(const RtsWifiForgetRequest& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(deleteAll, wifiSsidHex);
+  }
+};
+
+extern const char* RtsWifiForgetRequestVersionHashStr;
+extern const uint8_t RtsWifiForgetRequestVersionHash[16];
+
+// MESSAGE RtsWifiForgetResponse
+struct RtsWifiForgetResponse
+{
+  bool didDelete;
+  std::string wifiSsidHex;
+  
+  /**** Constructors ****/
+  RtsWifiForgetResponse() = default;
+  RtsWifiForgetResponse(const RtsWifiForgetResponse& other) = default;
+  RtsWifiForgetResponse(RtsWifiForgetResponse& other) = default;
+  RtsWifiForgetResponse(RtsWifiForgetResponse&& other) noexcept = default;
+  RtsWifiForgetResponse& operator=(const RtsWifiForgetResponse& other) = default;
+  RtsWifiForgetResponse& operator=(RtsWifiForgetResponse&& other) = default;
+  
+  explicit RtsWifiForgetResponse(bool didDelete,
+    const std::string& wifiSsidHex)
+  : didDelete(didDelete)
+  , wifiSsidHex(wifiSsidHex)
+  {}
+  
+  explicit RtsWifiForgetResponse(const uint8_t* buff, size_t len);
+  explicit RtsWifiForgetResponse(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsWifiForgetResponse& other) const;
+  bool operator!=(const RtsWifiForgetResponse& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(didDelete, wifiSsidHex);
+  }
+};
+
+extern const char* RtsWifiForgetResponseVersionHashStr;
+extern const uint8_t RtsWifiForgetResponseVersionHash[16];
+
 // MESSAGE RtsWifiConnectRequest
 struct RtsWifiConnectRequest
 {
@@ -501,6 +650,54 @@ struct RtsWifiConnectResponse
 
 extern const char* RtsWifiConnectResponseVersionHashStr;
 extern const uint8_t RtsWifiConnectResponseVersionHash[16];
+
+// MESSAGE RtsWifiConnectResponse_3
+struct RtsWifiConnectResponse_3
+{
+  std::string wifiSsidHex;
+  uint8_t wifiState;
+  uint8_t connectResult;
+  
+  /**** Constructors ****/
+  RtsWifiConnectResponse_3() = default;
+  RtsWifiConnectResponse_3(const RtsWifiConnectResponse_3& other) = default;
+  RtsWifiConnectResponse_3(RtsWifiConnectResponse_3& other) = default;
+  RtsWifiConnectResponse_3(RtsWifiConnectResponse_3&& other) noexcept = default;
+  RtsWifiConnectResponse_3& operator=(const RtsWifiConnectResponse_3& other) = default;
+  RtsWifiConnectResponse_3& operator=(RtsWifiConnectResponse_3&& other) = default;
+  
+  explicit RtsWifiConnectResponse_3(const std::string& wifiSsidHex,
+    uint8_t wifiState,
+    uint8_t connectResult)
+  : wifiSsidHex(wifiSsidHex)
+  , wifiState(wifiState)
+  , connectResult(connectResult)
+  {}
+  
+  explicit RtsWifiConnectResponse_3(const uint8_t* buff, size_t len);
+  explicit RtsWifiConnectResponse_3(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsWifiConnectResponse_3& other) const;
+  bool operator!=(const RtsWifiConnectResponse_3& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(wifiSsidHex, wifiState, connectResult);
+  }
+};
+
+extern const char* RtsWifiConnectResponse_3VersionHashStr;
+extern const uint8_t RtsWifiConnectResponse_3VersionHash[16];
 
 // MESSAGE RtsWifiIpRequest
 struct RtsWifiIpRequest
@@ -741,6 +938,69 @@ struct RtsStatusResponse_2
 extern const char* RtsStatusResponse_2VersionHashStr;
 extern const uint8_t RtsStatusResponse_2VersionHash[16];
 
+// MESSAGE RtsStatusResponse_3
+struct RtsStatusResponse_3
+{
+  std::string wifiSsidHex;
+  uint8_t wifiState;
+  bool accessPoint;
+  uint8_t bleState;
+  uint8_t batteryState;
+  std::string version;
+  bool otaInProgress;
+  bool hasOwner;
+  
+  /**** Constructors ****/
+  RtsStatusResponse_3() = default;
+  RtsStatusResponse_3(const RtsStatusResponse_3& other) = default;
+  RtsStatusResponse_3(RtsStatusResponse_3& other) = default;
+  RtsStatusResponse_3(RtsStatusResponse_3&& other) noexcept = default;
+  RtsStatusResponse_3& operator=(const RtsStatusResponse_3& other) = default;
+  RtsStatusResponse_3& operator=(RtsStatusResponse_3&& other) = default;
+  
+  explicit RtsStatusResponse_3(const std::string& wifiSsidHex,
+    uint8_t wifiState,
+    bool accessPoint,
+    uint8_t bleState,
+    uint8_t batteryState,
+    const std::string& version,
+    bool otaInProgress,
+    bool hasOwner)
+  : wifiSsidHex(wifiSsidHex)
+  , wifiState(wifiState)
+  , accessPoint(accessPoint)
+  , bleState(bleState)
+  , batteryState(batteryState)
+  , version(version)
+  , otaInProgress(otaInProgress)
+  , hasOwner(hasOwner)
+  {}
+  
+  explicit RtsStatusResponse_3(const uint8_t* buff, size_t len);
+  explicit RtsStatusResponse_3(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsStatusResponse_3& other) const;
+  bool operator!=(const RtsStatusResponse_3& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(wifiSsidHex, wifiState, accessPoint, bleState, batteryState, version, otaInProgress, hasOwner);
+  }
+};
+
+extern const char* RtsStatusResponse_3VersionHashStr;
+extern const uint8_t RtsStatusResponse_3VersionHash[16];
+
 // MESSAGE RtsWifiScanRequest
 struct RtsWifiScanRequest
 {
@@ -782,7 +1042,7 @@ extern const uint8_t RtsWifiScanRequestVersionHash[16];
 struct RtsWifiScanResponse
 {
   uint8_t statusCode;
-  std::vector<Anki::Victor::ExternalComms::RtsWifiScanResult> scanResult;
+  std::vector<Anki::Cozmo::ExternalComms::RtsWifiScanResult> scanResult;
   
   /**** Constructors ****/
   RtsWifiScanResponse() = default;
@@ -793,7 +1053,7 @@ struct RtsWifiScanResponse
   RtsWifiScanResponse& operator=(RtsWifiScanResponse&& other) = default;
   
   explicit RtsWifiScanResponse(uint8_t statusCode,
-    const std::vector<Anki::Victor::ExternalComms::RtsWifiScanResult>& scanResult)
+    const std::vector<Anki::Cozmo::ExternalComms::RtsWifiScanResult>& scanResult)
   : statusCode(statusCode)
   , scanResult(scanResult)
   {}
@@ -827,7 +1087,7 @@ extern const uint8_t RtsWifiScanResponseVersionHash[16];
 struct RtsWifiScanResponse_2
 {
   uint8_t statusCode;
-  std::vector<Anki::Victor::ExternalComms::RtsWifiScanResult_2> scanResult;
+  std::vector<Anki::Cozmo::ExternalComms::RtsWifiScanResult_2> scanResult;
   
   /**** Constructors ****/
   RtsWifiScanResponse_2() = default;
@@ -838,7 +1098,7 @@ struct RtsWifiScanResponse_2
   RtsWifiScanResponse_2& operator=(RtsWifiScanResponse_2&& other) = default;
   
   explicit RtsWifiScanResponse_2(uint8_t statusCode,
-    const std::vector<Anki::Victor::ExternalComms::RtsWifiScanResult_2>& scanResult)
+    const std::vector<Anki::Cozmo::ExternalComms::RtsWifiScanResult_2>& scanResult)
   : statusCode(statusCode)
   , scanResult(scanResult)
   {}
@@ -867,6 +1127,51 @@ struct RtsWifiScanResponse_2
 
 extern const char* RtsWifiScanResponse_2VersionHashStr;
 extern const uint8_t RtsWifiScanResponse_2VersionHash[16];
+
+// MESSAGE RtsWifiScanResponse_3
+struct RtsWifiScanResponse_3
+{
+  uint8_t statusCode;
+  std::vector<Anki::Cozmo::ExternalComms::RtsWifiScanResult_3> scanResult;
+  
+  /**** Constructors ****/
+  RtsWifiScanResponse_3() = default;
+  RtsWifiScanResponse_3(const RtsWifiScanResponse_3& other) = default;
+  RtsWifiScanResponse_3(RtsWifiScanResponse_3& other) = default;
+  RtsWifiScanResponse_3(RtsWifiScanResponse_3&& other) noexcept = default;
+  RtsWifiScanResponse_3& operator=(const RtsWifiScanResponse_3& other) = default;
+  RtsWifiScanResponse_3& operator=(RtsWifiScanResponse_3&& other) = default;
+  
+  explicit RtsWifiScanResponse_3(uint8_t statusCode,
+    const std::vector<Anki::Cozmo::ExternalComms::RtsWifiScanResult_3>& scanResult)
+  : statusCode(statusCode)
+  , scanResult(scanResult)
+  {}
+  
+  explicit RtsWifiScanResponse_3(const uint8_t* buff, size_t len);
+  explicit RtsWifiScanResponse_3(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsWifiScanResponse_3& other) const;
+  bool operator!=(const RtsWifiScanResponse_3& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(statusCode, scanResult);
+  }
+};
+
+extern const char* RtsWifiScanResponse_3VersionHashStr;
+extern const uint8_t RtsWifiScanResponse_3VersionHash[16];
 
 // MESSAGE RtsOtaUpdateRequest
 struct RtsOtaUpdateRequest
@@ -1382,6 +1687,96 @@ struct RtsFileDownload
 extern const char* RtsFileDownloadVersionHashStr;
 extern const uint8_t RtsFileDownloadVersionHash[16];
 
+// MESSAGE RtsCloudSessionRequest
+struct RtsCloudSessionRequest
+{
+  std::vector<std::string> sessionToken;
+  
+  /**** Constructors ****/
+  RtsCloudSessionRequest() = default;
+  RtsCloudSessionRequest(const RtsCloudSessionRequest& other) = default;
+  RtsCloudSessionRequest(RtsCloudSessionRequest& other) = default;
+  RtsCloudSessionRequest(RtsCloudSessionRequest&& other) noexcept = default;
+  RtsCloudSessionRequest& operator=(const RtsCloudSessionRequest& other) = default;
+  RtsCloudSessionRequest& operator=(RtsCloudSessionRequest&& other) = default;
+  
+  explicit RtsCloudSessionRequest(const std::vector<std::string>& sessionToken)
+  : sessionToken(sessionToken)
+  {}
+  
+  explicit RtsCloudSessionRequest(const uint8_t* buff, size_t len);
+  explicit RtsCloudSessionRequest(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsCloudSessionRequest& other) const;
+  bool operator!=(const RtsCloudSessionRequest& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(sessionToken);
+  }
+};
+
+extern const char* RtsCloudSessionRequestVersionHashStr;
+extern const uint8_t RtsCloudSessionRequestVersionHash[16];
+
+// MESSAGE RtsCloudSessionResponse
+struct RtsCloudSessionResponse
+{
+  bool success;
+  uint8_t statusCode;
+  std::vector<std::string> clientTokenGuid;
+  
+  /**** Constructors ****/
+  RtsCloudSessionResponse() = default;
+  RtsCloudSessionResponse(const RtsCloudSessionResponse& other) = default;
+  RtsCloudSessionResponse(RtsCloudSessionResponse& other) = default;
+  RtsCloudSessionResponse(RtsCloudSessionResponse&& other) noexcept = default;
+  RtsCloudSessionResponse& operator=(const RtsCloudSessionResponse& other) = default;
+  RtsCloudSessionResponse& operator=(RtsCloudSessionResponse&& other) = default;
+  
+  explicit RtsCloudSessionResponse(bool success,
+    uint8_t statusCode,
+    const std::vector<std::string>& clientTokenGuid)
+  : success(success)
+  , statusCode(statusCode)
+  , clientTokenGuid(clientTokenGuid)
+  {}
+  
+  explicit RtsCloudSessionResponse(const uint8_t* buff, size_t len);
+  explicit RtsCloudSessionResponse(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsCloudSessionResponse& other) const;
+  bool operator!=(const RtsCloudSessionResponse& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(success, statusCode, clientTokenGuid);
+  }
+};
+
+extern const char* RtsCloudSessionResponseVersionHashStr;
+extern const uint8_t RtsCloudSessionResponseVersionHash[16];
+
 // MESSAGE Error
 struct Error
 {
@@ -1425,111 +1820,111 @@ struct RtsConnection_2_TagToType;
 
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::Error> {
-  using type = Anki::Victor::ExternalComms::Error;
+  using type = Anki::Cozmo::ExternalComms::Error;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsConnRequest> {
-  using type = Anki::Victor::ExternalComms::RtsConnRequest;
+  using type = Anki::Cozmo::ExternalComms::RtsConnRequest;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsConnResponse> {
-  using type = Anki::Victor::ExternalComms::RtsConnResponse;
+  using type = Anki::Cozmo::ExternalComms::RtsConnResponse;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsNonceMessage> {
-  using type = Anki::Victor::ExternalComms::RtsNonceMessage;
+  using type = Anki::Cozmo::ExternalComms::RtsNonceMessage;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsChallengeMessage> {
-  using type = Anki::Victor::ExternalComms::RtsChallengeMessage;
+  using type = Anki::Cozmo::ExternalComms::RtsChallengeMessage;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsChallengeSuccessMessage> {
-  using type = Anki::Victor::ExternalComms::RtsChallengeSuccessMessage;
+  using type = Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsWifiConnectRequest> {
-  using type = Anki::Victor::ExternalComms::RtsWifiConnectRequest;
+  using type = Anki::Cozmo::ExternalComms::RtsWifiConnectRequest;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsWifiConnectResponse> {
-  using type = Anki::Victor::ExternalComms::RtsWifiConnectResponse;
+  using type = Anki::Cozmo::ExternalComms::RtsWifiConnectResponse;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsWifiIpRequest> {
-  using type = Anki::Victor::ExternalComms::RtsWifiIpRequest;
+  using type = Anki::Cozmo::ExternalComms::RtsWifiIpRequest;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsWifiIpResponse> {
-  using type = Anki::Victor::ExternalComms::RtsWifiIpResponse;
+  using type = Anki::Cozmo::ExternalComms::RtsWifiIpResponse;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsStatusRequest> {
-  using type = Anki::Victor::ExternalComms::RtsStatusRequest;
+  using type = Anki::Cozmo::ExternalComms::RtsStatusRequest;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsStatusResponse_2> {
-  using type = Anki::Victor::ExternalComms::RtsStatusResponse_2;
+  using type = Anki::Cozmo::ExternalComms::RtsStatusResponse_2;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsWifiScanRequest> {
-  using type = Anki::Victor::ExternalComms::RtsWifiScanRequest;
+  using type = Anki::Cozmo::ExternalComms::RtsWifiScanRequest;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsWifiScanResponse_2> {
-  using type = Anki::Victor::ExternalComms::RtsWifiScanResponse_2;
+  using type = Anki::Cozmo::ExternalComms::RtsWifiScanResponse_2;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsOtaUpdateRequest> {
-  using type = Anki::Victor::ExternalComms::RtsOtaUpdateRequest;
+  using type = Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsOtaUpdateResponse> {
-  using type = Anki::Victor::ExternalComms::RtsOtaUpdateResponse;
+  using type = Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsCancelPairing> {
-  using type = Anki::Victor::ExternalComms::RtsCancelPairing;
+  using type = Anki::Cozmo::ExternalComms::RtsCancelPairing;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsForceDisconnect> {
-  using type = Anki::Victor::ExternalComms::RtsForceDisconnect;
+  using type = Anki::Cozmo::ExternalComms::RtsForceDisconnect;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsAck> {
-  using type = Anki::Victor::ExternalComms::RtsAck;
+  using type = Anki::Cozmo::ExternalComms::RtsAck;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsWifiAccessPointRequest> {
-  using type = Anki::Victor::ExternalComms::RtsWifiAccessPointRequest;
+  using type = Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsWifiAccessPointResponse> {
-  using type = Anki::Victor::ExternalComms::RtsWifiAccessPointResponse;
+  using type = Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsSshRequest> {
-  using type = Anki::Victor::ExternalComms::RtsSshRequest;
+  using type = Anki::Cozmo::ExternalComms::RtsSshRequest;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsSshResponse> {
-  using type = Anki::Victor::ExternalComms::RtsSshResponse;
+  using type = Anki::Cozmo::ExternalComms::RtsSshResponse;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsOtaCancelRequest> {
-  using type = Anki::Victor::ExternalComms::RtsOtaCancelRequest;
+  using type = Anki::Cozmo::ExternalComms::RtsOtaCancelRequest;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsLogRequest> {
-  using type = Anki::Victor::ExternalComms::RtsLogRequest;
+  using type = Anki::Cozmo::ExternalComms::RtsLogRequest;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsLogResponse> {
-  using type = Anki::Victor::ExternalComms::RtsLogResponse;
+  using type = Anki::Cozmo::ExternalComms::RtsLogResponse;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsFileDownload> {
-  using type = Anki::Victor::ExternalComms::RtsFileDownload;
+  using type = Anki::Cozmo::ExternalComms::RtsFileDownload;
 };
 
 // UNION RtsConnection_2
@@ -1559,193 +1954,193 @@ public:
   static RtsConnection_2 Create_(typename RtsConnection_2_TagToType<tag>::type member);
   
   /** Error **/
-  static RtsConnection_2 CreateError(Anki::Victor::ExternalComms::Error&& new_Error);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::Error&& new_Error);
-  const Anki::Victor::ExternalComms::Error& Get_Error() const;
-  void Set_Error(const Anki::Victor::ExternalComms::Error& new_Error);
-  void Set_Error(Anki::Victor::ExternalComms::Error&& new_Error);
+  static RtsConnection_2 CreateError(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  const Anki::Cozmo::ExternalComms::Error& Get_Error() const;
+  void Set_Error(const Anki::Cozmo::ExternalComms::Error& new_Error);
+  void Set_Error(Anki::Cozmo::ExternalComms::Error&& new_Error);
   
   /** RtsConnRequest **/
-  static RtsConnection_2 CreateRtsConnRequest(Anki::Victor::ExternalComms::RtsConnRequest&& new_RtsConnRequest);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsConnRequest&& new_RtsConnRequest);
-  const Anki::Victor::ExternalComms::RtsConnRequest& Get_RtsConnRequest() const;
-  void Set_RtsConnRequest(const Anki::Victor::ExternalComms::RtsConnRequest& new_RtsConnRequest);
-  void Set_RtsConnRequest(Anki::Victor::ExternalComms::RtsConnRequest&& new_RtsConnRequest);
+  static RtsConnection_2 CreateRtsConnRequest(Anki::Cozmo::ExternalComms::RtsConnRequest&& new_RtsConnRequest);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsConnRequest&& new_RtsConnRequest);
+  const Anki::Cozmo::ExternalComms::RtsConnRequest& Get_RtsConnRequest() const;
+  void Set_RtsConnRequest(const Anki::Cozmo::ExternalComms::RtsConnRequest& new_RtsConnRequest);
+  void Set_RtsConnRequest(Anki::Cozmo::ExternalComms::RtsConnRequest&& new_RtsConnRequest);
   
   /** RtsConnResponse **/
-  static RtsConnection_2 CreateRtsConnResponse(Anki::Victor::ExternalComms::RtsConnResponse&& new_RtsConnResponse);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsConnResponse&& new_RtsConnResponse);
-  const Anki::Victor::ExternalComms::RtsConnResponse& Get_RtsConnResponse() const;
-  void Set_RtsConnResponse(const Anki::Victor::ExternalComms::RtsConnResponse& new_RtsConnResponse);
-  void Set_RtsConnResponse(Anki::Victor::ExternalComms::RtsConnResponse&& new_RtsConnResponse);
+  static RtsConnection_2 CreateRtsConnResponse(Anki::Cozmo::ExternalComms::RtsConnResponse&& new_RtsConnResponse);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsConnResponse&& new_RtsConnResponse);
+  const Anki::Cozmo::ExternalComms::RtsConnResponse& Get_RtsConnResponse() const;
+  void Set_RtsConnResponse(const Anki::Cozmo::ExternalComms::RtsConnResponse& new_RtsConnResponse);
+  void Set_RtsConnResponse(Anki::Cozmo::ExternalComms::RtsConnResponse&& new_RtsConnResponse);
   
   /** RtsNonceMessage **/
-  static RtsConnection_2 CreateRtsNonceMessage(Anki::Victor::ExternalComms::RtsNonceMessage&& new_RtsNonceMessage);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsNonceMessage&& new_RtsNonceMessage);
-  const Anki::Victor::ExternalComms::RtsNonceMessage& Get_RtsNonceMessage() const;
-  void Set_RtsNonceMessage(const Anki::Victor::ExternalComms::RtsNonceMessage& new_RtsNonceMessage);
-  void Set_RtsNonceMessage(Anki::Victor::ExternalComms::RtsNonceMessage&& new_RtsNonceMessage);
+  static RtsConnection_2 CreateRtsNonceMessage(Anki::Cozmo::ExternalComms::RtsNonceMessage&& new_RtsNonceMessage);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsNonceMessage&& new_RtsNonceMessage);
+  const Anki::Cozmo::ExternalComms::RtsNonceMessage& Get_RtsNonceMessage() const;
+  void Set_RtsNonceMessage(const Anki::Cozmo::ExternalComms::RtsNonceMessage& new_RtsNonceMessage);
+  void Set_RtsNonceMessage(Anki::Cozmo::ExternalComms::RtsNonceMessage&& new_RtsNonceMessage);
   
   /** RtsChallengeMessage **/
-  static RtsConnection_2 CreateRtsChallengeMessage(Anki::Victor::ExternalComms::RtsChallengeMessage&& new_RtsChallengeMessage);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsChallengeMessage&& new_RtsChallengeMessage);
-  const Anki::Victor::ExternalComms::RtsChallengeMessage& Get_RtsChallengeMessage() const;
-  void Set_RtsChallengeMessage(const Anki::Victor::ExternalComms::RtsChallengeMessage& new_RtsChallengeMessage);
-  void Set_RtsChallengeMessage(Anki::Victor::ExternalComms::RtsChallengeMessage&& new_RtsChallengeMessage);
+  static RtsConnection_2 CreateRtsChallengeMessage(Anki::Cozmo::ExternalComms::RtsChallengeMessage&& new_RtsChallengeMessage);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsChallengeMessage&& new_RtsChallengeMessage);
+  const Anki::Cozmo::ExternalComms::RtsChallengeMessage& Get_RtsChallengeMessage() const;
+  void Set_RtsChallengeMessage(const Anki::Cozmo::ExternalComms::RtsChallengeMessage& new_RtsChallengeMessage);
+  void Set_RtsChallengeMessage(Anki::Cozmo::ExternalComms::RtsChallengeMessage&& new_RtsChallengeMessage);
   
   /** RtsChallengeSuccessMessage **/
-  static RtsConnection_2 CreateRtsChallengeSuccessMessage(Anki::Victor::ExternalComms::RtsChallengeSuccessMessage&& new_RtsChallengeSuccessMessage);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsChallengeSuccessMessage&& new_RtsChallengeSuccessMessage);
-  const Anki::Victor::ExternalComms::RtsChallengeSuccessMessage& Get_RtsChallengeSuccessMessage() const;
-  void Set_RtsChallengeSuccessMessage(const Anki::Victor::ExternalComms::RtsChallengeSuccessMessage& new_RtsChallengeSuccessMessage);
-  void Set_RtsChallengeSuccessMessage(Anki::Victor::ExternalComms::RtsChallengeSuccessMessage&& new_RtsChallengeSuccessMessage);
+  static RtsConnection_2 CreateRtsChallengeSuccessMessage(Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage&& new_RtsChallengeSuccessMessage);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage&& new_RtsChallengeSuccessMessage);
+  const Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage& Get_RtsChallengeSuccessMessage() const;
+  void Set_RtsChallengeSuccessMessage(const Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage& new_RtsChallengeSuccessMessage);
+  void Set_RtsChallengeSuccessMessage(Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage&& new_RtsChallengeSuccessMessage);
   
   /** RtsWifiConnectRequest **/
-  static RtsConnection_2 CreateRtsWifiConnectRequest(Anki::Victor::ExternalComms::RtsWifiConnectRequest&& new_RtsWifiConnectRequest);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsWifiConnectRequest&& new_RtsWifiConnectRequest);
-  const Anki::Victor::ExternalComms::RtsWifiConnectRequest& Get_RtsWifiConnectRequest() const;
-  void Set_RtsWifiConnectRequest(const Anki::Victor::ExternalComms::RtsWifiConnectRequest& new_RtsWifiConnectRequest);
-  void Set_RtsWifiConnectRequest(Anki::Victor::ExternalComms::RtsWifiConnectRequest&& new_RtsWifiConnectRequest);
+  static RtsConnection_2 CreateRtsWifiConnectRequest(Anki::Cozmo::ExternalComms::RtsWifiConnectRequest&& new_RtsWifiConnectRequest);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsWifiConnectRequest&& new_RtsWifiConnectRequest);
+  const Anki::Cozmo::ExternalComms::RtsWifiConnectRequest& Get_RtsWifiConnectRequest() const;
+  void Set_RtsWifiConnectRequest(const Anki::Cozmo::ExternalComms::RtsWifiConnectRequest& new_RtsWifiConnectRequest);
+  void Set_RtsWifiConnectRequest(Anki::Cozmo::ExternalComms::RtsWifiConnectRequest&& new_RtsWifiConnectRequest);
   
   /** RtsWifiConnectResponse **/
-  static RtsConnection_2 CreateRtsWifiConnectResponse(Anki::Victor::ExternalComms::RtsWifiConnectResponse&& new_RtsWifiConnectResponse);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsWifiConnectResponse&& new_RtsWifiConnectResponse);
-  const Anki::Victor::ExternalComms::RtsWifiConnectResponse& Get_RtsWifiConnectResponse() const;
-  void Set_RtsWifiConnectResponse(const Anki::Victor::ExternalComms::RtsWifiConnectResponse& new_RtsWifiConnectResponse);
-  void Set_RtsWifiConnectResponse(Anki::Victor::ExternalComms::RtsWifiConnectResponse&& new_RtsWifiConnectResponse);
+  static RtsConnection_2 CreateRtsWifiConnectResponse(Anki::Cozmo::ExternalComms::RtsWifiConnectResponse&& new_RtsWifiConnectResponse);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsWifiConnectResponse&& new_RtsWifiConnectResponse);
+  const Anki::Cozmo::ExternalComms::RtsWifiConnectResponse& Get_RtsWifiConnectResponse() const;
+  void Set_RtsWifiConnectResponse(const Anki::Cozmo::ExternalComms::RtsWifiConnectResponse& new_RtsWifiConnectResponse);
+  void Set_RtsWifiConnectResponse(Anki::Cozmo::ExternalComms::RtsWifiConnectResponse&& new_RtsWifiConnectResponse);
   
   /** RtsWifiIpRequest **/
-  static RtsConnection_2 CreateRtsWifiIpRequest(Anki::Victor::ExternalComms::RtsWifiIpRequest&& new_RtsWifiIpRequest);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsWifiIpRequest&& new_RtsWifiIpRequest);
-  const Anki::Victor::ExternalComms::RtsWifiIpRequest& Get_RtsWifiIpRequest() const;
-  void Set_RtsWifiIpRequest(const Anki::Victor::ExternalComms::RtsWifiIpRequest& new_RtsWifiIpRequest);
-  void Set_RtsWifiIpRequest(Anki::Victor::ExternalComms::RtsWifiIpRequest&& new_RtsWifiIpRequest);
+  static RtsConnection_2 CreateRtsWifiIpRequest(Anki::Cozmo::ExternalComms::RtsWifiIpRequest&& new_RtsWifiIpRequest);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsWifiIpRequest&& new_RtsWifiIpRequest);
+  const Anki::Cozmo::ExternalComms::RtsWifiIpRequest& Get_RtsWifiIpRequest() const;
+  void Set_RtsWifiIpRequest(const Anki::Cozmo::ExternalComms::RtsWifiIpRequest& new_RtsWifiIpRequest);
+  void Set_RtsWifiIpRequest(Anki::Cozmo::ExternalComms::RtsWifiIpRequest&& new_RtsWifiIpRequest);
   
   /** RtsWifiIpResponse **/
-  static RtsConnection_2 CreateRtsWifiIpResponse(Anki::Victor::ExternalComms::RtsWifiIpResponse&& new_RtsWifiIpResponse);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsWifiIpResponse&& new_RtsWifiIpResponse);
-  const Anki::Victor::ExternalComms::RtsWifiIpResponse& Get_RtsWifiIpResponse() const;
-  void Set_RtsWifiIpResponse(const Anki::Victor::ExternalComms::RtsWifiIpResponse& new_RtsWifiIpResponse);
-  void Set_RtsWifiIpResponse(Anki::Victor::ExternalComms::RtsWifiIpResponse&& new_RtsWifiIpResponse);
+  static RtsConnection_2 CreateRtsWifiIpResponse(Anki::Cozmo::ExternalComms::RtsWifiIpResponse&& new_RtsWifiIpResponse);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsWifiIpResponse&& new_RtsWifiIpResponse);
+  const Anki::Cozmo::ExternalComms::RtsWifiIpResponse& Get_RtsWifiIpResponse() const;
+  void Set_RtsWifiIpResponse(const Anki::Cozmo::ExternalComms::RtsWifiIpResponse& new_RtsWifiIpResponse);
+  void Set_RtsWifiIpResponse(Anki::Cozmo::ExternalComms::RtsWifiIpResponse&& new_RtsWifiIpResponse);
   
   /** RtsStatusRequest **/
-  static RtsConnection_2 CreateRtsStatusRequest(Anki::Victor::ExternalComms::RtsStatusRequest&& new_RtsStatusRequest);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsStatusRequest&& new_RtsStatusRequest);
-  const Anki::Victor::ExternalComms::RtsStatusRequest& Get_RtsStatusRequest() const;
-  void Set_RtsStatusRequest(const Anki::Victor::ExternalComms::RtsStatusRequest& new_RtsStatusRequest);
-  void Set_RtsStatusRequest(Anki::Victor::ExternalComms::RtsStatusRequest&& new_RtsStatusRequest);
+  static RtsConnection_2 CreateRtsStatusRequest(Anki::Cozmo::ExternalComms::RtsStatusRequest&& new_RtsStatusRequest);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsStatusRequest&& new_RtsStatusRequest);
+  const Anki::Cozmo::ExternalComms::RtsStatusRequest& Get_RtsStatusRequest() const;
+  void Set_RtsStatusRequest(const Anki::Cozmo::ExternalComms::RtsStatusRequest& new_RtsStatusRequest);
+  void Set_RtsStatusRequest(Anki::Cozmo::ExternalComms::RtsStatusRequest&& new_RtsStatusRequest);
   
   /** RtsStatusResponse_2 **/
-  static RtsConnection_2 CreateRtsStatusResponse_2(Anki::Victor::ExternalComms::RtsStatusResponse_2&& new_RtsStatusResponse_2);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsStatusResponse_2&& new_RtsStatusResponse_2);
-  const Anki::Victor::ExternalComms::RtsStatusResponse_2& Get_RtsStatusResponse_2() const;
-  void Set_RtsStatusResponse_2(const Anki::Victor::ExternalComms::RtsStatusResponse_2& new_RtsStatusResponse_2);
-  void Set_RtsStatusResponse_2(Anki::Victor::ExternalComms::RtsStatusResponse_2&& new_RtsStatusResponse_2);
+  static RtsConnection_2 CreateRtsStatusResponse_2(Anki::Cozmo::ExternalComms::RtsStatusResponse_2&& new_RtsStatusResponse_2);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsStatusResponse_2&& new_RtsStatusResponse_2);
+  const Anki::Cozmo::ExternalComms::RtsStatusResponse_2& Get_RtsStatusResponse_2() const;
+  void Set_RtsStatusResponse_2(const Anki::Cozmo::ExternalComms::RtsStatusResponse_2& new_RtsStatusResponse_2);
+  void Set_RtsStatusResponse_2(Anki::Cozmo::ExternalComms::RtsStatusResponse_2&& new_RtsStatusResponse_2);
   
   /** RtsWifiScanRequest **/
-  static RtsConnection_2 CreateRtsWifiScanRequest(Anki::Victor::ExternalComms::RtsWifiScanRequest&& new_RtsWifiScanRequest);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsWifiScanRequest&& new_RtsWifiScanRequest);
-  const Anki::Victor::ExternalComms::RtsWifiScanRequest& Get_RtsWifiScanRequest() const;
-  void Set_RtsWifiScanRequest(const Anki::Victor::ExternalComms::RtsWifiScanRequest& new_RtsWifiScanRequest);
-  void Set_RtsWifiScanRequest(Anki::Victor::ExternalComms::RtsWifiScanRequest&& new_RtsWifiScanRequest);
+  static RtsConnection_2 CreateRtsWifiScanRequest(Anki::Cozmo::ExternalComms::RtsWifiScanRequest&& new_RtsWifiScanRequest);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsWifiScanRequest&& new_RtsWifiScanRequest);
+  const Anki::Cozmo::ExternalComms::RtsWifiScanRequest& Get_RtsWifiScanRequest() const;
+  void Set_RtsWifiScanRequest(const Anki::Cozmo::ExternalComms::RtsWifiScanRequest& new_RtsWifiScanRequest);
+  void Set_RtsWifiScanRequest(Anki::Cozmo::ExternalComms::RtsWifiScanRequest&& new_RtsWifiScanRequest);
   
   /** RtsWifiScanResponse_2 **/
-  static RtsConnection_2 CreateRtsWifiScanResponse_2(Anki::Victor::ExternalComms::RtsWifiScanResponse_2&& new_RtsWifiScanResponse_2);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsWifiScanResponse_2&& new_RtsWifiScanResponse_2);
-  const Anki::Victor::ExternalComms::RtsWifiScanResponse_2& Get_RtsWifiScanResponse_2() const;
-  void Set_RtsWifiScanResponse_2(const Anki::Victor::ExternalComms::RtsWifiScanResponse_2& new_RtsWifiScanResponse_2);
-  void Set_RtsWifiScanResponse_2(Anki::Victor::ExternalComms::RtsWifiScanResponse_2&& new_RtsWifiScanResponse_2);
+  static RtsConnection_2 CreateRtsWifiScanResponse_2(Anki::Cozmo::ExternalComms::RtsWifiScanResponse_2&& new_RtsWifiScanResponse_2);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsWifiScanResponse_2&& new_RtsWifiScanResponse_2);
+  const Anki::Cozmo::ExternalComms::RtsWifiScanResponse_2& Get_RtsWifiScanResponse_2() const;
+  void Set_RtsWifiScanResponse_2(const Anki::Cozmo::ExternalComms::RtsWifiScanResponse_2& new_RtsWifiScanResponse_2);
+  void Set_RtsWifiScanResponse_2(Anki::Cozmo::ExternalComms::RtsWifiScanResponse_2&& new_RtsWifiScanResponse_2);
   
   /** RtsOtaUpdateRequest **/
-  static RtsConnection_2 CreateRtsOtaUpdateRequest(Anki::Victor::ExternalComms::RtsOtaUpdateRequest&& new_RtsOtaUpdateRequest);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsOtaUpdateRequest&& new_RtsOtaUpdateRequest);
-  const Anki::Victor::ExternalComms::RtsOtaUpdateRequest& Get_RtsOtaUpdateRequest() const;
-  void Set_RtsOtaUpdateRequest(const Anki::Victor::ExternalComms::RtsOtaUpdateRequest& new_RtsOtaUpdateRequest);
-  void Set_RtsOtaUpdateRequest(Anki::Victor::ExternalComms::RtsOtaUpdateRequest&& new_RtsOtaUpdateRequest);
+  static RtsConnection_2 CreateRtsOtaUpdateRequest(Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest&& new_RtsOtaUpdateRequest);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest&& new_RtsOtaUpdateRequest);
+  const Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest& Get_RtsOtaUpdateRequest() const;
+  void Set_RtsOtaUpdateRequest(const Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest& new_RtsOtaUpdateRequest);
+  void Set_RtsOtaUpdateRequest(Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest&& new_RtsOtaUpdateRequest);
   
   /** RtsOtaUpdateResponse **/
-  static RtsConnection_2 CreateRtsOtaUpdateResponse(Anki::Victor::ExternalComms::RtsOtaUpdateResponse&& new_RtsOtaUpdateResponse);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsOtaUpdateResponse&& new_RtsOtaUpdateResponse);
-  const Anki::Victor::ExternalComms::RtsOtaUpdateResponse& Get_RtsOtaUpdateResponse() const;
-  void Set_RtsOtaUpdateResponse(const Anki::Victor::ExternalComms::RtsOtaUpdateResponse& new_RtsOtaUpdateResponse);
-  void Set_RtsOtaUpdateResponse(Anki::Victor::ExternalComms::RtsOtaUpdateResponse&& new_RtsOtaUpdateResponse);
+  static RtsConnection_2 CreateRtsOtaUpdateResponse(Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse&& new_RtsOtaUpdateResponse);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse&& new_RtsOtaUpdateResponse);
+  const Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse& Get_RtsOtaUpdateResponse() const;
+  void Set_RtsOtaUpdateResponse(const Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse& new_RtsOtaUpdateResponse);
+  void Set_RtsOtaUpdateResponse(Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse&& new_RtsOtaUpdateResponse);
   
   /** RtsCancelPairing **/
-  static RtsConnection_2 CreateRtsCancelPairing(Anki::Victor::ExternalComms::RtsCancelPairing&& new_RtsCancelPairing);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsCancelPairing&& new_RtsCancelPairing);
-  const Anki::Victor::ExternalComms::RtsCancelPairing& Get_RtsCancelPairing() const;
-  void Set_RtsCancelPairing(const Anki::Victor::ExternalComms::RtsCancelPairing& new_RtsCancelPairing);
-  void Set_RtsCancelPairing(Anki::Victor::ExternalComms::RtsCancelPairing&& new_RtsCancelPairing);
+  static RtsConnection_2 CreateRtsCancelPairing(Anki::Cozmo::ExternalComms::RtsCancelPairing&& new_RtsCancelPairing);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsCancelPairing&& new_RtsCancelPairing);
+  const Anki::Cozmo::ExternalComms::RtsCancelPairing& Get_RtsCancelPairing() const;
+  void Set_RtsCancelPairing(const Anki::Cozmo::ExternalComms::RtsCancelPairing& new_RtsCancelPairing);
+  void Set_RtsCancelPairing(Anki::Cozmo::ExternalComms::RtsCancelPairing&& new_RtsCancelPairing);
   
   /** RtsForceDisconnect **/
-  static RtsConnection_2 CreateRtsForceDisconnect(Anki::Victor::ExternalComms::RtsForceDisconnect&& new_RtsForceDisconnect);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsForceDisconnect&& new_RtsForceDisconnect);
-  const Anki::Victor::ExternalComms::RtsForceDisconnect& Get_RtsForceDisconnect() const;
-  void Set_RtsForceDisconnect(const Anki::Victor::ExternalComms::RtsForceDisconnect& new_RtsForceDisconnect);
-  void Set_RtsForceDisconnect(Anki::Victor::ExternalComms::RtsForceDisconnect&& new_RtsForceDisconnect);
+  static RtsConnection_2 CreateRtsForceDisconnect(Anki::Cozmo::ExternalComms::RtsForceDisconnect&& new_RtsForceDisconnect);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsForceDisconnect&& new_RtsForceDisconnect);
+  const Anki::Cozmo::ExternalComms::RtsForceDisconnect& Get_RtsForceDisconnect() const;
+  void Set_RtsForceDisconnect(const Anki::Cozmo::ExternalComms::RtsForceDisconnect& new_RtsForceDisconnect);
+  void Set_RtsForceDisconnect(Anki::Cozmo::ExternalComms::RtsForceDisconnect&& new_RtsForceDisconnect);
   
   /** RtsAck **/
-  static RtsConnection_2 CreateRtsAck(Anki::Victor::ExternalComms::RtsAck&& new_RtsAck);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsAck&& new_RtsAck);
-  const Anki::Victor::ExternalComms::RtsAck& Get_RtsAck() const;
-  void Set_RtsAck(const Anki::Victor::ExternalComms::RtsAck& new_RtsAck);
-  void Set_RtsAck(Anki::Victor::ExternalComms::RtsAck&& new_RtsAck);
+  static RtsConnection_2 CreateRtsAck(Anki::Cozmo::ExternalComms::RtsAck&& new_RtsAck);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsAck&& new_RtsAck);
+  const Anki::Cozmo::ExternalComms::RtsAck& Get_RtsAck() const;
+  void Set_RtsAck(const Anki::Cozmo::ExternalComms::RtsAck& new_RtsAck);
+  void Set_RtsAck(Anki::Cozmo::ExternalComms::RtsAck&& new_RtsAck);
   
   /** RtsWifiAccessPointRequest **/
-  static RtsConnection_2 CreateRtsWifiAccessPointRequest(Anki::Victor::ExternalComms::RtsWifiAccessPointRequest&& new_RtsWifiAccessPointRequest);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsWifiAccessPointRequest&& new_RtsWifiAccessPointRequest);
-  const Anki::Victor::ExternalComms::RtsWifiAccessPointRequest& Get_RtsWifiAccessPointRequest() const;
-  void Set_RtsWifiAccessPointRequest(const Anki::Victor::ExternalComms::RtsWifiAccessPointRequest& new_RtsWifiAccessPointRequest);
-  void Set_RtsWifiAccessPointRequest(Anki::Victor::ExternalComms::RtsWifiAccessPointRequest&& new_RtsWifiAccessPointRequest);
+  static RtsConnection_2 CreateRtsWifiAccessPointRequest(Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest&& new_RtsWifiAccessPointRequest);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest&& new_RtsWifiAccessPointRequest);
+  const Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest& Get_RtsWifiAccessPointRequest() const;
+  void Set_RtsWifiAccessPointRequest(const Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest& new_RtsWifiAccessPointRequest);
+  void Set_RtsWifiAccessPointRequest(Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest&& new_RtsWifiAccessPointRequest);
   
   /** RtsWifiAccessPointResponse **/
-  static RtsConnection_2 CreateRtsWifiAccessPointResponse(Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse);
-  const Anki::Victor::ExternalComms::RtsWifiAccessPointResponse& Get_RtsWifiAccessPointResponse() const;
-  void Set_RtsWifiAccessPointResponse(const Anki::Victor::ExternalComms::RtsWifiAccessPointResponse& new_RtsWifiAccessPointResponse);
-  void Set_RtsWifiAccessPointResponse(Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse);
+  static RtsConnection_2 CreateRtsWifiAccessPointResponse(Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse);
+  const Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse& Get_RtsWifiAccessPointResponse() const;
+  void Set_RtsWifiAccessPointResponse(const Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse& new_RtsWifiAccessPointResponse);
+  void Set_RtsWifiAccessPointResponse(Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse);
   
   /** RtsSshRequest **/
-  static RtsConnection_2 CreateRtsSshRequest(Anki::Victor::ExternalComms::RtsSshRequest&& new_RtsSshRequest);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsSshRequest&& new_RtsSshRequest);
-  const Anki::Victor::ExternalComms::RtsSshRequest& Get_RtsSshRequest() const;
-  void Set_RtsSshRequest(const Anki::Victor::ExternalComms::RtsSshRequest& new_RtsSshRequest);
-  void Set_RtsSshRequest(Anki::Victor::ExternalComms::RtsSshRequest&& new_RtsSshRequest);
+  static RtsConnection_2 CreateRtsSshRequest(Anki::Cozmo::ExternalComms::RtsSshRequest&& new_RtsSshRequest);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsSshRequest&& new_RtsSshRequest);
+  const Anki::Cozmo::ExternalComms::RtsSshRequest& Get_RtsSshRequest() const;
+  void Set_RtsSshRequest(const Anki::Cozmo::ExternalComms::RtsSshRequest& new_RtsSshRequest);
+  void Set_RtsSshRequest(Anki::Cozmo::ExternalComms::RtsSshRequest&& new_RtsSshRequest);
   
   /** RtsSshResponse **/
-  static RtsConnection_2 CreateRtsSshResponse(Anki::Victor::ExternalComms::RtsSshResponse&& new_RtsSshResponse);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsSshResponse&& new_RtsSshResponse);
-  const Anki::Victor::ExternalComms::RtsSshResponse& Get_RtsSshResponse() const;
-  void Set_RtsSshResponse(const Anki::Victor::ExternalComms::RtsSshResponse& new_RtsSshResponse);
-  void Set_RtsSshResponse(Anki::Victor::ExternalComms::RtsSshResponse&& new_RtsSshResponse);
+  static RtsConnection_2 CreateRtsSshResponse(Anki::Cozmo::ExternalComms::RtsSshResponse&& new_RtsSshResponse);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsSshResponse&& new_RtsSshResponse);
+  const Anki::Cozmo::ExternalComms::RtsSshResponse& Get_RtsSshResponse() const;
+  void Set_RtsSshResponse(const Anki::Cozmo::ExternalComms::RtsSshResponse& new_RtsSshResponse);
+  void Set_RtsSshResponse(Anki::Cozmo::ExternalComms::RtsSshResponse&& new_RtsSshResponse);
   
   /** RtsOtaCancelRequest **/
-  static RtsConnection_2 CreateRtsOtaCancelRequest(Anki::Victor::ExternalComms::RtsOtaCancelRequest&& new_RtsOtaCancelRequest);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsOtaCancelRequest&& new_RtsOtaCancelRequest);
-  const Anki::Victor::ExternalComms::RtsOtaCancelRequest& Get_RtsOtaCancelRequest() const;
-  void Set_RtsOtaCancelRequest(const Anki::Victor::ExternalComms::RtsOtaCancelRequest& new_RtsOtaCancelRequest);
-  void Set_RtsOtaCancelRequest(Anki::Victor::ExternalComms::RtsOtaCancelRequest&& new_RtsOtaCancelRequest);
+  static RtsConnection_2 CreateRtsOtaCancelRequest(Anki::Cozmo::ExternalComms::RtsOtaCancelRequest&& new_RtsOtaCancelRequest);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsOtaCancelRequest&& new_RtsOtaCancelRequest);
+  const Anki::Cozmo::ExternalComms::RtsOtaCancelRequest& Get_RtsOtaCancelRequest() const;
+  void Set_RtsOtaCancelRequest(const Anki::Cozmo::ExternalComms::RtsOtaCancelRequest& new_RtsOtaCancelRequest);
+  void Set_RtsOtaCancelRequest(Anki::Cozmo::ExternalComms::RtsOtaCancelRequest&& new_RtsOtaCancelRequest);
   
   /** RtsLogRequest **/
-  static RtsConnection_2 CreateRtsLogRequest(Anki::Victor::ExternalComms::RtsLogRequest&& new_RtsLogRequest);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsLogRequest&& new_RtsLogRequest);
-  const Anki::Victor::ExternalComms::RtsLogRequest& Get_RtsLogRequest() const;
-  void Set_RtsLogRequest(const Anki::Victor::ExternalComms::RtsLogRequest& new_RtsLogRequest);
-  void Set_RtsLogRequest(Anki::Victor::ExternalComms::RtsLogRequest&& new_RtsLogRequest);
+  static RtsConnection_2 CreateRtsLogRequest(Anki::Cozmo::ExternalComms::RtsLogRequest&& new_RtsLogRequest);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsLogRequest&& new_RtsLogRequest);
+  const Anki::Cozmo::ExternalComms::RtsLogRequest& Get_RtsLogRequest() const;
+  void Set_RtsLogRequest(const Anki::Cozmo::ExternalComms::RtsLogRequest& new_RtsLogRequest);
+  void Set_RtsLogRequest(Anki::Cozmo::ExternalComms::RtsLogRequest&& new_RtsLogRequest);
   
   /** RtsLogResponse **/
-  static RtsConnection_2 CreateRtsLogResponse(Anki::Victor::ExternalComms::RtsLogResponse&& new_RtsLogResponse);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsLogResponse&& new_RtsLogResponse);
-  const Anki::Victor::ExternalComms::RtsLogResponse& Get_RtsLogResponse() const;
-  void Set_RtsLogResponse(const Anki::Victor::ExternalComms::RtsLogResponse& new_RtsLogResponse);
-  void Set_RtsLogResponse(Anki::Victor::ExternalComms::RtsLogResponse&& new_RtsLogResponse);
+  static RtsConnection_2 CreateRtsLogResponse(Anki::Cozmo::ExternalComms::RtsLogResponse&& new_RtsLogResponse);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsLogResponse&& new_RtsLogResponse);
+  const Anki::Cozmo::ExternalComms::RtsLogResponse& Get_RtsLogResponse() const;
+  void Set_RtsLogResponse(const Anki::Cozmo::ExternalComms::RtsLogResponse& new_RtsLogResponse);
+  void Set_RtsLogResponse(Anki::Cozmo::ExternalComms::RtsLogResponse&& new_RtsLogResponse);
   
   /** RtsFileDownload **/
-  static RtsConnection_2 CreateRtsFileDownload(Anki::Victor::ExternalComms::RtsFileDownload&& new_RtsFileDownload);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsFileDownload&& new_RtsFileDownload);
-  const Anki::Victor::ExternalComms::RtsFileDownload& Get_RtsFileDownload() const;
-  void Set_RtsFileDownload(const Anki::Victor::ExternalComms::RtsFileDownload& new_RtsFileDownload);
-  void Set_RtsFileDownload(Anki::Victor::ExternalComms::RtsFileDownload&& new_RtsFileDownload);
+  static RtsConnection_2 CreateRtsFileDownload(Anki::Cozmo::ExternalComms::RtsFileDownload&& new_RtsFileDownload);
+  explicit RtsConnection_2(Anki::Cozmo::ExternalComms::RtsFileDownload&& new_RtsFileDownload);
+  const Anki::Cozmo::ExternalComms::RtsFileDownload& Get_RtsFileDownload() const;
+  void Set_RtsFileDownload(const Anki::Cozmo::ExternalComms::RtsFileDownload& new_RtsFileDownload);
+  void Set_RtsFileDownload(Anki::Cozmo::ExternalComms::RtsFileDownload&& new_RtsFileDownload);
   
   size_t Unpack(const uint8_t* buff, const size_t len);
   size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
@@ -1762,37 +2157,460 @@ private:
   Tag _tag;
   
   union {
-    Anki::Victor::ExternalComms::Error _Error;
-    Anki::Victor::ExternalComms::RtsConnRequest _RtsConnRequest;
-    Anki::Victor::ExternalComms::RtsConnResponse _RtsConnResponse;
-    Anki::Victor::ExternalComms::RtsNonceMessage _RtsNonceMessage;
-    Anki::Victor::ExternalComms::RtsChallengeMessage _RtsChallengeMessage;
-    Anki::Victor::ExternalComms::RtsChallengeSuccessMessage _RtsChallengeSuccessMessage;
-    Anki::Victor::ExternalComms::RtsWifiConnectRequest _RtsWifiConnectRequest;
-    Anki::Victor::ExternalComms::RtsWifiConnectResponse _RtsWifiConnectResponse;
-    Anki::Victor::ExternalComms::RtsWifiIpRequest _RtsWifiIpRequest;
-    Anki::Victor::ExternalComms::RtsWifiIpResponse _RtsWifiIpResponse;
-    Anki::Victor::ExternalComms::RtsStatusRequest _RtsStatusRequest;
-    Anki::Victor::ExternalComms::RtsStatusResponse_2 _RtsStatusResponse_2;
-    Anki::Victor::ExternalComms::RtsWifiScanRequest _RtsWifiScanRequest;
-    Anki::Victor::ExternalComms::RtsWifiScanResponse_2 _RtsWifiScanResponse_2;
-    Anki::Victor::ExternalComms::RtsOtaUpdateRequest _RtsOtaUpdateRequest;
-    Anki::Victor::ExternalComms::RtsOtaUpdateResponse _RtsOtaUpdateResponse;
-    Anki::Victor::ExternalComms::RtsCancelPairing _RtsCancelPairing;
-    Anki::Victor::ExternalComms::RtsForceDisconnect _RtsForceDisconnect;
-    Anki::Victor::ExternalComms::RtsAck _RtsAck;
-    Anki::Victor::ExternalComms::RtsWifiAccessPointRequest _RtsWifiAccessPointRequest;
-    Anki::Victor::ExternalComms::RtsWifiAccessPointResponse _RtsWifiAccessPointResponse;
-    Anki::Victor::ExternalComms::RtsSshRequest _RtsSshRequest;
-    Anki::Victor::ExternalComms::RtsSshResponse _RtsSshResponse;
-    Anki::Victor::ExternalComms::RtsOtaCancelRequest _RtsOtaCancelRequest;
-    Anki::Victor::ExternalComms::RtsLogRequest _RtsLogRequest;
-    Anki::Victor::ExternalComms::RtsLogResponse _RtsLogResponse;
-    Anki::Victor::ExternalComms::RtsFileDownload _RtsFileDownload;
+    Anki::Cozmo::ExternalComms::Error _Error;
+    Anki::Cozmo::ExternalComms::RtsConnRequest _RtsConnRequest;
+    Anki::Cozmo::ExternalComms::RtsConnResponse _RtsConnResponse;
+    Anki::Cozmo::ExternalComms::RtsNonceMessage _RtsNonceMessage;
+    Anki::Cozmo::ExternalComms::RtsChallengeMessage _RtsChallengeMessage;
+    Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage _RtsChallengeSuccessMessage;
+    Anki::Cozmo::ExternalComms::RtsWifiConnectRequest _RtsWifiConnectRequest;
+    Anki::Cozmo::ExternalComms::RtsWifiConnectResponse _RtsWifiConnectResponse;
+    Anki::Cozmo::ExternalComms::RtsWifiIpRequest _RtsWifiIpRequest;
+    Anki::Cozmo::ExternalComms::RtsWifiIpResponse _RtsWifiIpResponse;
+    Anki::Cozmo::ExternalComms::RtsStatusRequest _RtsStatusRequest;
+    Anki::Cozmo::ExternalComms::RtsStatusResponse_2 _RtsStatusResponse_2;
+    Anki::Cozmo::ExternalComms::RtsWifiScanRequest _RtsWifiScanRequest;
+    Anki::Cozmo::ExternalComms::RtsWifiScanResponse_2 _RtsWifiScanResponse_2;
+    Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest _RtsOtaUpdateRequest;
+    Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse _RtsOtaUpdateResponse;
+    Anki::Cozmo::ExternalComms::RtsCancelPairing _RtsCancelPairing;
+    Anki::Cozmo::ExternalComms::RtsForceDisconnect _RtsForceDisconnect;
+    Anki::Cozmo::ExternalComms::RtsAck _RtsAck;
+    Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest _RtsWifiAccessPointRequest;
+    Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse _RtsWifiAccessPointResponse;
+    Anki::Cozmo::ExternalComms::RtsSshRequest _RtsSshRequest;
+    Anki::Cozmo::ExternalComms::RtsSshResponse _RtsSshResponse;
+    Anki::Cozmo::ExternalComms::RtsOtaCancelRequest _RtsOtaCancelRequest;
+    Anki::Cozmo::ExternalComms::RtsLogRequest _RtsLogRequest;
+    Anki::Cozmo::ExternalComms::RtsLogResponse _RtsLogResponse;
+    Anki::Cozmo::ExternalComms::RtsFileDownload _RtsFileDownload;
   };
 };
 extern const char* RtsConnection_2VersionHashStr;
 extern const uint8_t RtsConnection_2VersionHash[16];
+
+// "Lookup Tables" for getting type by tag using template specializations
+template<RtsConnection_3Tag tag>
+struct RtsConnection_3_TagToType;
+
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::Error> {
+  using type = Anki::Cozmo::ExternalComms::Error;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsConnRequest> {
+  using type = Anki::Cozmo::ExternalComms::RtsConnRequest;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsConnResponse> {
+  using type = Anki::Cozmo::ExternalComms::RtsConnResponse;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsNonceMessage> {
+  using type = Anki::Cozmo::ExternalComms::RtsNonceMessage;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsChallengeMessage> {
+  using type = Anki::Cozmo::ExternalComms::RtsChallengeMessage;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsChallengeSuccessMessage> {
+  using type = Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsWifiConnectRequest> {
+  using type = Anki::Cozmo::ExternalComms::RtsWifiConnectRequest;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsWifiConnectResponse_3> {
+  using type = Anki::Cozmo::ExternalComms::RtsWifiConnectResponse_3;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsWifiIpRequest> {
+  using type = Anki::Cozmo::ExternalComms::RtsWifiIpRequest;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsWifiIpResponse> {
+  using type = Anki::Cozmo::ExternalComms::RtsWifiIpResponse;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsStatusRequest> {
+  using type = Anki::Cozmo::ExternalComms::RtsStatusRequest;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsStatusResponse_3> {
+  using type = Anki::Cozmo::ExternalComms::RtsStatusResponse_3;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsWifiScanRequest> {
+  using type = Anki::Cozmo::ExternalComms::RtsWifiScanRequest;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsWifiScanResponse_3> {
+  using type = Anki::Cozmo::ExternalComms::RtsWifiScanResponse_3;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsOtaUpdateRequest> {
+  using type = Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsOtaUpdateResponse> {
+  using type = Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsCancelPairing> {
+  using type = Anki::Cozmo::ExternalComms::RtsCancelPairing;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsForceDisconnect> {
+  using type = Anki::Cozmo::ExternalComms::RtsForceDisconnect;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsAck> {
+  using type = Anki::Cozmo::ExternalComms::RtsAck;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsWifiAccessPointRequest> {
+  using type = Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsWifiAccessPointResponse> {
+  using type = Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsSshRequest> {
+  using type = Anki::Cozmo::ExternalComms::RtsSshRequest;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsSshResponse> {
+  using type = Anki::Cozmo::ExternalComms::RtsSshResponse;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsOtaCancelRequest> {
+  using type = Anki::Cozmo::ExternalComms::RtsOtaCancelRequest;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsLogRequest> {
+  using type = Anki::Cozmo::ExternalComms::RtsLogRequest;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsLogResponse> {
+  using type = Anki::Cozmo::ExternalComms::RtsLogResponse;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsFileDownload> {
+  using type = Anki::Cozmo::ExternalComms::RtsFileDownload;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsWifiForgetRequest> {
+  using type = Anki::Cozmo::ExternalComms::RtsWifiForgetRequest;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsWifiForgetResponse> {
+  using type = Anki::Cozmo::ExternalComms::RtsWifiForgetResponse;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsCloudSessionRequest> {
+  using type = Anki::Cozmo::ExternalComms::RtsCloudSessionRequest;
+};
+template<>
+struct RtsConnection_3_TagToType<RtsConnection_3Tag::RtsCloudSessionResponse> {
+  using type = Anki::Cozmo::ExternalComms::RtsCloudSessionResponse;
+};
+
+// UNION RtsConnection_3
+class RtsConnection_3
+{
+public:
+  using Tag = RtsConnection_3Tag;
+  /**** Constructors ****/
+  RtsConnection_3() :_tag(Tag::INVALID) { }
+  explicit RtsConnection_3(const CLAD::SafeMessageBuffer& buff);
+  explicit RtsConnection_3(const uint8_t* buffer, size_t length);
+  RtsConnection_3(const RtsConnection_3& other);
+  RtsConnection_3(RtsConnection_3&& other) noexcept;
+  RtsConnection_3& operator=(const RtsConnection_3& other);
+  RtsConnection_3& operator=(RtsConnection_3&& other) noexcept;
+  
+  ~RtsConnection_3() { ClearCurrent(); }
+  Tag GetTag() const { return _tag; }
+  
+  // Templated getter for union members by type
+  // NOTE: Always returns a reference, even for trivial types, unlike untemplated version
+  template<Tag tag>
+  const typename RtsConnection_3_TagToType<tag>::type & Get_() const;
+  
+  // Templated creator for making a union object out of one if its members
+  template <Tag tag>
+  static RtsConnection_3 Create_(typename RtsConnection_3_TagToType<tag>::type member);
+  
+  /** Error **/
+  static RtsConnection_3 CreateError(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  const Anki::Cozmo::ExternalComms::Error& Get_Error() const;
+  void Set_Error(const Anki::Cozmo::ExternalComms::Error& new_Error);
+  void Set_Error(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  
+  /** RtsConnRequest **/
+  static RtsConnection_3 CreateRtsConnRequest(Anki::Cozmo::ExternalComms::RtsConnRequest&& new_RtsConnRequest);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsConnRequest&& new_RtsConnRequest);
+  const Anki::Cozmo::ExternalComms::RtsConnRequest& Get_RtsConnRequest() const;
+  void Set_RtsConnRequest(const Anki::Cozmo::ExternalComms::RtsConnRequest& new_RtsConnRequest);
+  void Set_RtsConnRequest(Anki::Cozmo::ExternalComms::RtsConnRequest&& new_RtsConnRequest);
+  
+  /** RtsConnResponse **/
+  static RtsConnection_3 CreateRtsConnResponse(Anki::Cozmo::ExternalComms::RtsConnResponse&& new_RtsConnResponse);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsConnResponse&& new_RtsConnResponse);
+  const Anki::Cozmo::ExternalComms::RtsConnResponse& Get_RtsConnResponse() const;
+  void Set_RtsConnResponse(const Anki::Cozmo::ExternalComms::RtsConnResponse& new_RtsConnResponse);
+  void Set_RtsConnResponse(Anki::Cozmo::ExternalComms::RtsConnResponse&& new_RtsConnResponse);
+  
+  /** RtsNonceMessage **/
+  static RtsConnection_3 CreateRtsNonceMessage(Anki::Cozmo::ExternalComms::RtsNonceMessage&& new_RtsNonceMessage);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsNonceMessage&& new_RtsNonceMessage);
+  const Anki::Cozmo::ExternalComms::RtsNonceMessage& Get_RtsNonceMessage() const;
+  void Set_RtsNonceMessage(const Anki::Cozmo::ExternalComms::RtsNonceMessage& new_RtsNonceMessage);
+  void Set_RtsNonceMessage(Anki::Cozmo::ExternalComms::RtsNonceMessage&& new_RtsNonceMessage);
+  
+  /** RtsChallengeMessage **/
+  static RtsConnection_3 CreateRtsChallengeMessage(Anki::Cozmo::ExternalComms::RtsChallengeMessage&& new_RtsChallengeMessage);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsChallengeMessage&& new_RtsChallengeMessage);
+  const Anki::Cozmo::ExternalComms::RtsChallengeMessage& Get_RtsChallengeMessage() const;
+  void Set_RtsChallengeMessage(const Anki::Cozmo::ExternalComms::RtsChallengeMessage& new_RtsChallengeMessage);
+  void Set_RtsChallengeMessage(Anki::Cozmo::ExternalComms::RtsChallengeMessage&& new_RtsChallengeMessage);
+  
+  /** RtsChallengeSuccessMessage **/
+  static RtsConnection_3 CreateRtsChallengeSuccessMessage(Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage&& new_RtsChallengeSuccessMessage);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage&& new_RtsChallengeSuccessMessage);
+  const Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage& Get_RtsChallengeSuccessMessage() const;
+  void Set_RtsChallengeSuccessMessage(const Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage& new_RtsChallengeSuccessMessage);
+  void Set_RtsChallengeSuccessMessage(Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage&& new_RtsChallengeSuccessMessage);
+  
+  /** RtsWifiConnectRequest **/
+  static RtsConnection_3 CreateRtsWifiConnectRequest(Anki::Cozmo::ExternalComms::RtsWifiConnectRequest&& new_RtsWifiConnectRequest);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsWifiConnectRequest&& new_RtsWifiConnectRequest);
+  const Anki::Cozmo::ExternalComms::RtsWifiConnectRequest& Get_RtsWifiConnectRequest() const;
+  void Set_RtsWifiConnectRequest(const Anki::Cozmo::ExternalComms::RtsWifiConnectRequest& new_RtsWifiConnectRequest);
+  void Set_RtsWifiConnectRequest(Anki::Cozmo::ExternalComms::RtsWifiConnectRequest&& new_RtsWifiConnectRequest);
+  
+  /** RtsWifiConnectResponse_3 **/
+  static RtsConnection_3 CreateRtsWifiConnectResponse_3(Anki::Cozmo::ExternalComms::RtsWifiConnectResponse_3&& new_RtsWifiConnectResponse_3);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsWifiConnectResponse_3&& new_RtsWifiConnectResponse_3);
+  const Anki::Cozmo::ExternalComms::RtsWifiConnectResponse_3& Get_RtsWifiConnectResponse_3() const;
+  void Set_RtsWifiConnectResponse_3(const Anki::Cozmo::ExternalComms::RtsWifiConnectResponse_3& new_RtsWifiConnectResponse_3);
+  void Set_RtsWifiConnectResponse_3(Anki::Cozmo::ExternalComms::RtsWifiConnectResponse_3&& new_RtsWifiConnectResponse_3);
+  
+  /** RtsWifiIpRequest **/
+  static RtsConnection_3 CreateRtsWifiIpRequest(Anki::Cozmo::ExternalComms::RtsWifiIpRequest&& new_RtsWifiIpRequest);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsWifiIpRequest&& new_RtsWifiIpRequest);
+  const Anki::Cozmo::ExternalComms::RtsWifiIpRequest& Get_RtsWifiIpRequest() const;
+  void Set_RtsWifiIpRequest(const Anki::Cozmo::ExternalComms::RtsWifiIpRequest& new_RtsWifiIpRequest);
+  void Set_RtsWifiIpRequest(Anki::Cozmo::ExternalComms::RtsWifiIpRequest&& new_RtsWifiIpRequest);
+  
+  /** RtsWifiIpResponse **/
+  static RtsConnection_3 CreateRtsWifiIpResponse(Anki::Cozmo::ExternalComms::RtsWifiIpResponse&& new_RtsWifiIpResponse);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsWifiIpResponse&& new_RtsWifiIpResponse);
+  const Anki::Cozmo::ExternalComms::RtsWifiIpResponse& Get_RtsWifiIpResponse() const;
+  void Set_RtsWifiIpResponse(const Anki::Cozmo::ExternalComms::RtsWifiIpResponse& new_RtsWifiIpResponse);
+  void Set_RtsWifiIpResponse(Anki::Cozmo::ExternalComms::RtsWifiIpResponse&& new_RtsWifiIpResponse);
+  
+  /** RtsStatusRequest **/
+  static RtsConnection_3 CreateRtsStatusRequest(Anki::Cozmo::ExternalComms::RtsStatusRequest&& new_RtsStatusRequest);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsStatusRequest&& new_RtsStatusRequest);
+  const Anki::Cozmo::ExternalComms::RtsStatusRequest& Get_RtsStatusRequest() const;
+  void Set_RtsStatusRequest(const Anki::Cozmo::ExternalComms::RtsStatusRequest& new_RtsStatusRequest);
+  void Set_RtsStatusRequest(Anki::Cozmo::ExternalComms::RtsStatusRequest&& new_RtsStatusRequest);
+  
+  /** RtsStatusResponse_3 **/
+  static RtsConnection_3 CreateRtsStatusResponse_3(Anki::Cozmo::ExternalComms::RtsStatusResponse_3&& new_RtsStatusResponse_3);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsStatusResponse_3&& new_RtsStatusResponse_3);
+  const Anki::Cozmo::ExternalComms::RtsStatusResponse_3& Get_RtsStatusResponse_3() const;
+  void Set_RtsStatusResponse_3(const Anki::Cozmo::ExternalComms::RtsStatusResponse_3& new_RtsStatusResponse_3);
+  void Set_RtsStatusResponse_3(Anki::Cozmo::ExternalComms::RtsStatusResponse_3&& new_RtsStatusResponse_3);
+  
+  /** RtsWifiScanRequest **/
+  static RtsConnection_3 CreateRtsWifiScanRequest(Anki::Cozmo::ExternalComms::RtsWifiScanRequest&& new_RtsWifiScanRequest);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsWifiScanRequest&& new_RtsWifiScanRequest);
+  const Anki::Cozmo::ExternalComms::RtsWifiScanRequest& Get_RtsWifiScanRequest() const;
+  void Set_RtsWifiScanRequest(const Anki::Cozmo::ExternalComms::RtsWifiScanRequest& new_RtsWifiScanRequest);
+  void Set_RtsWifiScanRequest(Anki::Cozmo::ExternalComms::RtsWifiScanRequest&& new_RtsWifiScanRequest);
+  
+  /** RtsWifiScanResponse_3 **/
+  static RtsConnection_3 CreateRtsWifiScanResponse_3(Anki::Cozmo::ExternalComms::RtsWifiScanResponse_3&& new_RtsWifiScanResponse_3);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsWifiScanResponse_3&& new_RtsWifiScanResponse_3);
+  const Anki::Cozmo::ExternalComms::RtsWifiScanResponse_3& Get_RtsWifiScanResponse_3() const;
+  void Set_RtsWifiScanResponse_3(const Anki::Cozmo::ExternalComms::RtsWifiScanResponse_3& new_RtsWifiScanResponse_3);
+  void Set_RtsWifiScanResponse_3(Anki::Cozmo::ExternalComms::RtsWifiScanResponse_3&& new_RtsWifiScanResponse_3);
+  
+  /** RtsOtaUpdateRequest **/
+  static RtsConnection_3 CreateRtsOtaUpdateRequest(Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest&& new_RtsOtaUpdateRequest);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest&& new_RtsOtaUpdateRequest);
+  const Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest& Get_RtsOtaUpdateRequest() const;
+  void Set_RtsOtaUpdateRequest(const Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest& new_RtsOtaUpdateRequest);
+  void Set_RtsOtaUpdateRequest(Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest&& new_RtsOtaUpdateRequest);
+  
+  /** RtsOtaUpdateResponse **/
+  static RtsConnection_3 CreateRtsOtaUpdateResponse(Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse&& new_RtsOtaUpdateResponse);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse&& new_RtsOtaUpdateResponse);
+  const Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse& Get_RtsOtaUpdateResponse() const;
+  void Set_RtsOtaUpdateResponse(const Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse& new_RtsOtaUpdateResponse);
+  void Set_RtsOtaUpdateResponse(Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse&& new_RtsOtaUpdateResponse);
+  
+  /** RtsCancelPairing **/
+  static RtsConnection_3 CreateRtsCancelPairing(Anki::Cozmo::ExternalComms::RtsCancelPairing&& new_RtsCancelPairing);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsCancelPairing&& new_RtsCancelPairing);
+  const Anki::Cozmo::ExternalComms::RtsCancelPairing& Get_RtsCancelPairing() const;
+  void Set_RtsCancelPairing(const Anki::Cozmo::ExternalComms::RtsCancelPairing& new_RtsCancelPairing);
+  void Set_RtsCancelPairing(Anki::Cozmo::ExternalComms::RtsCancelPairing&& new_RtsCancelPairing);
+  
+  /** RtsForceDisconnect **/
+  static RtsConnection_3 CreateRtsForceDisconnect(Anki::Cozmo::ExternalComms::RtsForceDisconnect&& new_RtsForceDisconnect);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsForceDisconnect&& new_RtsForceDisconnect);
+  const Anki::Cozmo::ExternalComms::RtsForceDisconnect& Get_RtsForceDisconnect() const;
+  void Set_RtsForceDisconnect(const Anki::Cozmo::ExternalComms::RtsForceDisconnect& new_RtsForceDisconnect);
+  void Set_RtsForceDisconnect(Anki::Cozmo::ExternalComms::RtsForceDisconnect&& new_RtsForceDisconnect);
+  
+  /** RtsAck **/
+  static RtsConnection_3 CreateRtsAck(Anki::Cozmo::ExternalComms::RtsAck&& new_RtsAck);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsAck&& new_RtsAck);
+  const Anki::Cozmo::ExternalComms::RtsAck& Get_RtsAck() const;
+  void Set_RtsAck(const Anki::Cozmo::ExternalComms::RtsAck& new_RtsAck);
+  void Set_RtsAck(Anki::Cozmo::ExternalComms::RtsAck&& new_RtsAck);
+  
+  /** RtsWifiAccessPointRequest **/
+  static RtsConnection_3 CreateRtsWifiAccessPointRequest(Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest&& new_RtsWifiAccessPointRequest);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest&& new_RtsWifiAccessPointRequest);
+  const Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest& Get_RtsWifiAccessPointRequest() const;
+  void Set_RtsWifiAccessPointRequest(const Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest& new_RtsWifiAccessPointRequest);
+  void Set_RtsWifiAccessPointRequest(Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest&& new_RtsWifiAccessPointRequest);
+  
+  /** RtsWifiAccessPointResponse **/
+  static RtsConnection_3 CreateRtsWifiAccessPointResponse(Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse);
+  const Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse& Get_RtsWifiAccessPointResponse() const;
+  void Set_RtsWifiAccessPointResponse(const Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse& new_RtsWifiAccessPointResponse);
+  void Set_RtsWifiAccessPointResponse(Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse);
+  
+  /** RtsSshRequest **/
+  static RtsConnection_3 CreateRtsSshRequest(Anki::Cozmo::ExternalComms::RtsSshRequest&& new_RtsSshRequest);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsSshRequest&& new_RtsSshRequest);
+  const Anki::Cozmo::ExternalComms::RtsSshRequest& Get_RtsSshRequest() const;
+  void Set_RtsSshRequest(const Anki::Cozmo::ExternalComms::RtsSshRequest& new_RtsSshRequest);
+  void Set_RtsSshRequest(Anki::Cozmo::ExternalComms::RtsSshRequest&& new_RtsSshRequest);
+  
+  /** RtsSshResponse **/
+  static RtsConnection_3 CreateRtsSshResponse(Anki::Cozmo::ExternalComms::RtsSshResponse&& new_RtsSshResponse);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsSshResponse&& new_RtsSshResponse);
+  const Anki::Cozmo::ExternalComms::RtsSshResponse& Get_RtsSshResponse() const;
+  void Set_RtsSshResponse(const Anki::Cozmo::ExternalComms::RtsSshResponse& new_RtsSshResponse);
+  void Set_RtsSshResponse(Anki::Cozmo::ExternalComms::RtsSshResponse&& new_RtsSshResponse);
+  
+  /** RtsOtaCancelRequest **/
+  static RtsConnection_3 CreateRtsOtaCancelRequest(Anki::Cozmo::ExternalComms::RtsOtaCancelRequest&& new_RtsOtaCancelRequest);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsOtaCancelRequest&& new_RtsOtaCancelRequest);
+  const Anki::Cozmo::ExternalComms::RtsOtaCancelRequest& Get_RtsOtaCancelRequest() const;
+  void Set_RtsOtaCancelRequest(const Anki::Cozmo::ExternalComms::RtsOtaCancelRequest& new_RtsOtaCancelRequest);
+  void Set_RtsOtaCancelRequest(Anki::Cozmo::ExternalComms::RtsOtaCancelRequest&& new_RtsOtaCancelRequest);
+  
+  /** RtsLogRequest **/
+  static RtsConnection_3 CreateRtsLogRequest(Anki::Cozmo::ExternalComms::RtsLogRequest&& new_RtsLogRequest);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsLogRequest&& new_RtsLogRequest);
+  const Anki::Cozmo::ExternalComms::RtsLogRequest& Get_RtsLogRequest() const;
+  void Set_RtsLogRequest(const Anki::Cozmo::ExternalComms::RtsLogRequest& new_RtsLogRequest);
+  void Set_RtsLogRequest(Anki::Cozmo::ExternalComms::RtsLogRequest&& new_RtsLogRequest);
+  
+  /** RtsLogResponse **/
+  static RtsConnection_3 CreateRtsLogResponse(Anki::Cozmo::ExternalComms::RtsLogResponse&& new_RtsLogResponse);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsLogResponse&& new_RtsLogResponse);
+  const Anki::Cozmo::ExternalComms::RtsLogResponse& Get_RtsLogResponse() const;
+  void Set_RtsLogResponse(const Anki::Cozmo::ExternalComms::RtsLogResponse& new_RtsLogResponse);
+  void Set_RtsLogResponse(Anki::Cozmo::ExternalComms::RtsLogResponse&& new_RtsLogResponse);
+  
+  /** RtsFileDownload **/
+  static RtsConnection_3 CreateRtsFileDownload(Anki::Cozmo::ExternalComms::RtsFileDownload&& new_RtsFileDownload);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsFileDownload&& new_RtsFileDownload);
+  const Anki::Cozmo::ExternalComms::RtsFileDownload& Get_RtsFileDownload() const;
+  void Set_RtsFileDownload(const Anki::Cozmo::ExternalComms::RtsFileDownload& new_RtsFileDownload);
+  void Set_RtsFileDownload(Anki::Cozmo::ExternalComms::RtsFileDownload&& new_RtsFileDownload);
+  
+  /** RtsWifiForgetRequest **/
+  static RtsConnection_3 CreateRtsWifiForgetRequest(Anki::Cozmo::ExternalComms::RtsWifiForgetRequest&& new_RtsWifiForgetRequest);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsWifiForgetRequest&& new_RtsWifiForgetRequest);
+  const Anki::Cozmo::ExternalComms::RtsWifiForgetRequest& Get_RtsWifiForgetRequest() const;
+  void Set_RtsWifiForgetRequest(const Anki::Cozmo::ExternalComms::RtsWifiForgetRequest& new_RtsWifiForgetRequest);
+  void Set_RtsWifiForgetRequest(Anki::Cozmo::ExternalComms::RtsWifiForgetRequest&& new_RtsWifiForgetRequest);
+  
+  /** RtsWifiForgetResponse **/
+  static RtsConnection_3 CreateRtsWifiForgetResponse(Anki::Cozmo::ExternalComms::RtsWifiForgetResponse&& new_RtsWifiForgetResponse);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsWifiForgetResponse&& new_RtsWifiForgetResponse);
+  const Anki::Cozmo::ExternalComms::RtsWifiForgetResponse& Get_RtsWifiForgetResponse() const;
+  void Set_RtsWifiForgetResponse(const Anki::Cozmo::ExternalComms::RtsWifiForgetResponse& new_RtsWifiForgetResponse);
+  void Set_RtsWifiForgetResponse(Anki::Cozmo::ExternalComms::RtsWifiForgetResponse&& new_RtsWifiForgetResponse);
+  
+  /** RtsCloudSessionRequest **/
+  static RtsConnection_3 CreateRtsCloudSessionRequest(Anki::Cozmo::ExternalComms::RtsCloudSessionRequest&& new_RtsCloudSessionRequest);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsCloudSessionRequest&& new_RtsCloudSessionRequest);
+  const Anki::Cozmo::ExternalComms::RtsCloudSessionRequest& Get_RtsCloudSessionRequest() const;
+  void Set_RtsCloudSessionRequest(const Anki::Cozmo::ExternalComms::RtsCloudSessionRequest& new_RtsCloudSessionRequest);
+  void Set_RtsCloudSessionRequest(Anki::Cozmo::ExternalComms::RtsCloudSessionRequest&& new_RtsCloudSessionRequest);
+  
+  /** RtsCloudSessionResponse **/
+  static RtsConnection_3 CreateRtsCloudSessionResponse(Anki::Cozmo::ExternalComms::RtsCloudSessionResponse&& new_RtsCloudSessionResponse);
+  explicit RtsConnection_3(Anki::Cozmo::ExternalComms::RtsCloudSessionResponse&& new_RtsCloudSessionResponse);
+  const Anki::Cozmo::ExternalComms::RtsCloudSessionResponse& Get_RtsCloudSessionResponse() const;
+  void Set_RtsCloudSessionResponse(const Anki::Cozmo::ExternalComms::RtsCloudSessionResponse& new_RtsCloudSessionResponse);
+  void Set_RtsCloudSessionResponse(Anki::Cozmo::ExternalComms::RtsCloudSessionResponse&& new_RtsCloudSessionResponse);
+  
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsConnection_3& other) const;
+  bool operator!=(const RtsConnection_3& other) const;
+private:
+  void ClearCurrent();
+  Tag _tag;
+  
+  union {
+    Anki::Cozmo::ExternalComms::Error _Error;
+    Anki::Cozmo::ExternalComms::RtsConnRequest _RtsConnRequest;
+    Anki::Cozmo::ExternalComms::RtsConnResponse _RtsConnResponse;
+    Anki::Cozmo::ExternalComms::RtsNonceMessage _RtsNonceMessage;
+    Anki::Cozmo::ExternalComms::RtsChallengeMessage _RtsChallengeMessage;
+    Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage _RtsChallengeSuccessMessage;
+    Anki::Cozmo::ExternalComms::RtsWifiConnectRequest _RtsWifiConnectRequest;
+    Anki::Cozmo::ExternalComms::RtsWifiConnectResponse_3 _RtsWifiConnectResponse_3;
+    Anki::Cozmo::ExternalComms::RtsWifiIpRequest _RtsWifiIpRequest;
+    Anki::Cozmo::ExternalComms::RtsWifiIpResponse _RtsWifiIpResponse;
+    Anki::Cozmo::ExternalComms::RtsStatusRequest _RtsStatusRequest;
+    Anki::Cozmo::ExternalComms::RtsStatusResponse_3 _RtsStatusResponse_3;
+    Anki::Cozmo::ExternalComms::RtsWifiScanRequest _RtsWifiScanRequest;
+    Anki::Cozmo::ExternalComms::RtsWifiScanResponse_3 _RtsWifiScanResponse_3;
+    Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest _RtsOtaUpdateRequest;
+    Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse _RtsOtaUpdateResponse;
+    Anki::Cozmo::ExternalComms::RtsCancelPairing _RtsCancelPairing;
+    Anki::Cozmo::ExternalComms::RtsForceDisconnect _RtsForceDisconnect;
+    Anki::Cozmo::ExternalComms::RtsAck _RtsAck;
+    Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest _RtsWifiAccessPointRequest;
+    Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse _RtsWifiAccessPointResponse;
+    Anki::Cozmo::ExternalComms::RtsSshRequest _RtsSshRequest;
+    Anki::Cozmo::ExternalComms::RtsSshResponse _RtsSshResponse;
+    Anki::Cozmo::ExternalComms::RtsOtaCancelRequest _RtsOtaCancelRequest;
+    Anki::Cozmo::ExternalComms::RtsLogRequest _RtsLogRequest;
+    Anki::Cozmo::ExternalComms::RtsLogResponse _RtsLogResponse;
+    Anki::Cozmo::ExternalComms::RtsFileDownload _RtsFileDownload;
+    Anki::Cozmo::ExternalComms::RtsWifiForgetRequest _RtsWifiForgetRequest;
+    Anki::Cozmo::ExternalComms::RtsWifiForgetResponse _RtsWifiForgetResponse;
+    Anki::Cozmo::ExternalComms::RtsCloudSessionRequest _RtsCloudSessionRequest;
+    Anki::Cozmo::ExternalComms::RtsCloudSessionResponse _RtsCloudSessionResponse;
+  };
+};
+extern const char* RtsConnection_3VersionHashStr;
+extern const uint8_t RtsConnection_3VersionHash[16];
 
 // "Lookup Tables" for getting type by tag using template specializations
 template<RtsConnectionTag tag>
@@ -1800,11 +2618,15 @@ struct RtsConnection_TagToType;
 
 template<>
 struct RtsConnection_TagToType<RtsConnectionTag::Error> {
-  using type = Anki::Victor::ExternalComms::Error;
+  using type = Anki::Cozmo::ExternalComms::Error;
 };
 template<>
 struct RtsConnection_TagToType<RtsConnectionTag::RtsConnection_2> {
-  using type = Anki::Victor::ExternalComms::RtsConnection_2;
+  using type = Anki::Cozmo::ExternalComms::RtsConnection_2;
+};
+template<>
+struct RtsConnection_TagToType<RtsConnectionTag::RtsConnection_3> {
+  using type = Anki::Cozmo::ExternalComms::RtsConnection_3;
 };
 
 // UNION RtsConnection
@@ -1834,18 +2656,25 @@ public:
   static RtsConnection Create_(typename RtsConnection_TagToType<tag>::type member);
   
   /** Error **/
-  static RtsConnection CreateError(Anki::Victor::ExternalComms::Error&& new_Error);
-  explicit RtsConnection(Anki::Victor::ExternalComms::Error&& new_Error);
-  const Anki::Victor::ExternalComms::Error& Get_Error() const;
-  void Set_Error(const Anki::Victor::ExternalComms::Error& new_Error);
-  void Set_Error(Anki::Victor::ExternalComms::Error&& new_Error);
+  static RtsConnection CreateError(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  explicit RtsConnection(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  const Anki::Cozmo::ExternalComms::Error& Get_Error() const;
+  void Set_Error(const Anki::Cozmo::ExternalComms::Error& new_Error);
+  void Set_Error(Anki::Cozmo::ExternalComms::Error&& new_Error);
   
   /** RtsConnection_2 **/
-  static RtsConnection CreateRtsConnection_2(Anki::Victor::ExternalComms::RtsConnection_2&& new_RtsConnection_2);
-  explicit RtsConnection(Anki::Victor::ExternalComms::RtsConnection_2&& new_RtsConnection_2);
-  const Anki::Victor::ExternalComms::RtsConnection_2& Get_RtsConnection_2() const;
-  void Set_RtsConnection_2(const Anki::Victor::ExternalComms::RtsConnection_2& new_RtsConnection_2);
-  void Set_RtsConnection_2(Anki::Victor::ExternalComms::RtsConnection_2&& new_RtsConnection_2);
+  static RtsConnection CreateRtsConnection_2(Anki::Cozmo::ExternalComms::RtsConnection_2&& new_RtsConnection_2);
+  explicit RtsConnection(Anki::Cozmo::ExternalComms::RtsConnection_2&& new_RtsConnection_2);
+  const Anki::Cozmo::ExternalComms::RtsConnection_2& Get_RtsConnection_2() const;
+  void Set_RtsConnection_2(const Anki::Cozmo::ExternalComms::RtsConnection_2& new_RtsConnection_2);
+  void Set_RtsConnection_2(Anki::Cozmo::ExternalComms::RtsConnection_2&& new_RtsConnection_2);
+  
+  /** RtsConnection_3 **/
+  static RtsConnection CreateRtsConnection_3(Anki::Cozmo::ExternalComms::RtsConnection_3&& new_RtsConnection_3);
+  explicit RtsConnection(Anki::Cozmo::ExternalComms::RtsConnection_3&& new_RtsConnection_3);
+  const Anki::Cozmo::ExternalComms::RtsConnection_3& Get_RtsConnection_3() const;
+  void Set_RtsConnection_3(const Anki::Cozmo::ExternalComms::RtsConnection_3& new_RtsConnection_3);
+  void Set_RtsConnection_3(Anki::Cozmo::ExternalComms::RtsConnection_3&& new_RtsConnection_3);
   
   size_t Unpack(const uint8_t* buff, const size_t len);
   size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
@@ -1862,8 +2691,9 @@ private:
   Tag _tag;
   
   union {
-    Anki::Victor::ExternalComms::Error _Error;
-    Anki::Victor::ExternalComms::RtsConnection_2 _RtsConnection_2;
+    Anki::Cozmo::ExternalComms::Error _Error;
+    Anki::Cozmo::ExternalComms::RtsConnection_2 _RtsConnection_2;
+    Anki::Cozmo::ExternalComms::RtsConnection_3 _RtsConnection_3;
   };
 };
 extern const char* RtsConnectionVersionHashStr;
@@ -1875,95 +2705,95 @@ struct RtsConnection_1_TagToType;
 
 template<>
 struct RtsConnection_1_TagToType<RtsConnection_1Tag::Error> {
-  using type = Anki::Victor::ExternalComms::Error;
+  using type = Anki::Cozmo::ExternalComms::Error;
 };
 template<>
 struct RtsConnection_1_TagToType<RtsConnection_1Tag::RtsConnRequest> {
-  using type = Anki::Victor::ExternalComms::RtsConnRequest;
+  using type = Anki::Cozmo::ExternalComms::RtsConnRequest;
 };
 template<>
 struct RtsConnection_1_TagToType<RtsConnection_1Tag::RtsConnResponse> {
-  using type = Anki::Victor::ExternalComms::RtsConnResponse;
+  using type = Anki::Cozmo::ExternalComms::RtsConnResponse;
 };
 template<>
 struct RtsConnection_1_TagToType<RtsConnection_1Tag::RtsNonceMessage> {
-  using type = Anki::Victor::ExternalComms::RtsNonceMessage;
+  using type = Anki::Cozmo::ExternalComms::RtsNonceMessage;
 };
 template<>
 struct RtsConnection_1_TagToType<RtsConnection_1Tag::RtsChallengeMessage> {
-  using type = Anki::Victor::ExternalComms::RtsChallengeMessage;
+  using type = Anki::Cozmo::ExternalComms::RtsChallengeMessage;
 };
 template<>
 struct RtsConnection_1_TagToType<RtsConnection_1Tag::RtsChallengeSuccessMessage> {
-  using type = Anki::Victor::ExternalComms::RtsChallengeSuccessMessage;
+  using type = Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage;
 };
 template<>
 struct RtsConnection_1_TagToType<RtsConnection_1Tag::RtsWifiConnectRequest> {
-  using type = Anki::Victor::ExternalComms::RtsWifiConnectRequest;
+  using type = Anki::Cozmo::ExternalComms::RtsWifiConnectRequest;
 };
 template<>
 struct RtsConnection_1_TagToType<RtsConnection_1Tag::RtsWifiConnectResponse> {
-  using type = Anki::Victor::ExternalComms::RtsWifiConnectResponse;
+  using type = Anki::Cozmo::ExternalComms::RtsWifiConnectResponse;
 };
 template<>
 struct RtsConnection_1_TagToType<RtsConnection_1Tag::RtsWifiIpRequest> {
-  using type = Anki::Victor::ExternalComms::RtsWifiIpRequest;
+  using type = Anki::Cozmo::ExternalComms::RtsWifiIpRequest;
 };
 template<>
 struct RtsConnection_1_TagToType<RtsConnection_1Tag::RtsWifiIpResponse> {
-  using type = Anki::Victor::ExternalComms::RtsWifiIpResponse;
+  using type = Anki::Cozmo::ExternalComms::RtsWifiIpResponse;
 };
 template<>
 struct RtsConnection_1_TagToType<RtsConnection_1Tag::RtsStatusRequest> {
-  using type = Anki::Victor::ExternalComms::RtsStatusRequest;
+  using type = Anki::Cozmo::ExternalComms::RtsStatusRequest;
 };
 template<>
 struct RtsConnection_1_TagToType<RtsConnection_1Tag::RtsStatusResponse> {
-  using type = Anki::Victor::ExternalComms::RtsStatusResponse;
+  using type = Anki::Cozmo::ExternalComms::RtsStatusResponse;
 };
 template<>
 struct RtsConnection_1_TagToType<RtsConnection_1Tag::RtsWifiScanRequest> {
-  using type = Anki::Victor::ExternalComms::RtsWifiScanRequest;
+  using type = Anki::Cozmo::ExternalComms::RtsWifiScanRequest;
 };
 template<>
 struct RtsConnection_1_TagToType<RtsConnection_1Tag::RtsWifiScanResponse> {
-  using type = Anki::Victor::ExternalComms::RtsWifiScanResponse;
+  using type = Anki::Cozmo::ExternalComms::RtsWifiScanResponse;
 };
 template<>
 struct RtsConnection_1_TagToType<RtsConnection_1Tag::RtsOtaUpdateRequest> {
-  using type = Anki::Victor::ExternalComms::RtsOtaUpdateRequest;
+  using type = Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest;
 };
 template<>
 struct RtsConnection_1_TagToType<RtsConnection_1Tag::RtsOtaUpdateResponse> {
-  using type = Anki::Victor::ExternalComms::RtsOtaUpdateResponse;
+  using type = Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse;
 };
 template<>
 struct RtsConnection_1_TagToType<RtsConnection_1Tag::RtsCancelPairing> {
-  using type = Anki::Victor::ExternalComms::RtsCancelPairing;
+  using type = Anki::Cozmo::ExternalComms::RtsCancelPairing;
 };
 template<>
 struct RtsConnection_1_TagToType<RtsConnection_1Tag::RtsForceDisconnect> {
-  using type = Anki::Victor::ExternalComms::RtsForceDisconnect;
+  using type = Anki::Cozmo::ExternalComms::RtsForceDisconnect;
 };
 template<>
 struct RtsConnection_1_TagToType<RtsConnection_1Tag::RtsAck> {
-  using type = Anki::Victor::ExternalComms::RtsAck;
+  using type = Anki::Cozmo::ExternalComms::RtsAck;
 };
 template<>
 struct RtsConnection_1_TagToType<RtsConnection_1Tag::RtsWifiAccessPointRequest> {
-  using type = Anki::Victor::ExternalComms::RtsWifiAccessPointRequest;
+  using type = Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest;
 };
 template<>
 struct RtsConnection_1_TagToType<RtsConnection_1Tag::RtsWifiAccessPointResponse> {
-  using type = Anki::Victor::ExternalComms::RtsWifiAccessPointResponse;
+  using type = Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse;
 };
 template<>
 struct RtsConnection_1_TagToType<RtsConnection_1Tag::RtsSshRequest> {
-  using type = Anki::Victor::ExternalComms::RtsSshRequest;
+  using type = Anki::Cozmo::ExternalComms::RtsSshRequest;
 };
 template<>
 struct RtsConnection_1_TagToType<RtsConnection_1Tag::RtsSshResponse> {
-  using type = Anki::Victor::ExternalComms::RtsSshResponse;
+  using type = Anki::Cozmo::ExternalComms::RtsSshResponse;
 };
 
 // UNION RtsConnection_1
@@ -1993,165 +2823,165 @@ public:
   static RtsConnection_1 Create_(typename RtsConnection_1_TagToType<tag>::type member);
   
   /** Error **/
-  static RtsConnection_1 CreateError(Anki::Victor::ExternalComms::Error&& new_Error);
-  explicit RtsConnection_1(Anki::Victor::ExternalComms::Error&& new_Error);
-  const Anki::Victor::ExternalComms::Error& Get_Error() const;
-  void Set_Error(const Anki::Victor::ExternalComms::Error& new_Error);
-  void Set_Error(Anki::Victor::ExternalComms::Error&& new_Error);
+  static RtsConnection_1 CreateError(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  explicit RtsConnection_1(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  const Anki::Cozmo::ExternalComms::Error& Get_Error() const;
+  void Set_Error(const Anki::Cozmo::ExternalComms::Error& new_Error);
+  void Set_Error(Anki::Cozmo::ExternalComms::Error&& new_Error);
   
   /** RtsConnRequest **/
-  static RtsConnection_1 CreateRtsConnRequest(Anki::Victor::ExternalComms::RtsConnRequest&& new_RtsConnRequest);
-  explicit RtsConnection_1(Anki::Victor::ExternalComms::RtsConnRequest&& new_RtsConnRequest);
-  const Anki::Victor::ExternalComms::RtsConnRequest& Get_RtsConnRequest() const;
-  void Set_RtsConnRequest(const Anki::Victor::ExternalComms::RtsConnRequest& new_RtsConnRequest);
-  void Set_RtsConnRequest(Anki::Victor::ExternalComms::RtsConnRequest&& new_RtsConnRequest);
+  static RtsConnection_1 CreateRtsConnRequest(Anki::Cozmo::ExternalComms::RtsConnRequest&& new_RtsConnRequest);
+  explicit RtsConnection_1(Anki::Cozmo::ExternalComms::RtsConnRequest&& new_RtsConnRequest);
+  const Anki::Cozmo::ExternalComms::RtsConnRequest& Get_RtsConnRequest() const;
+  void Set_RtsConnRequest(const Anki::Cozmo::ExternalComms::RtsConnRequest& new_RtsConnRequest);
+  void Set_RtsConnRequest(Anki::Cozmo::ExternalComms::RtsConnRequest&& new_RtsConnRequest);
   
   /** RtsConnResponse **/
-  static RtsConnection_1 CreateRtsConnResponse(Anki::Victor::ExternalComms::RtsConnResponse&& new_RtsConnResponse);
-  explicit RtsConnection_1(Anki::Victor::ExternalComms::RtsConnResponse&& new_RtsConnResponse);
-  const Anki::Victor::ExternalComms::RtsConnResponse& Get_RtsConnResponse() const;
-  void Set_RtsConnResponse(const Anki::Victor::ExternalComms::RtsConnResponse& new_RtsConnResponse);
-  void Set_RtsConnResponse(Anki::Victor::ExternalComms::RtsConnResponse&& new_RtsConnResponse);
+  static RtsConnection_1 CreateRtsConnResponse(Anki::Cozmo::ExternalComms::RtsConnResponse&& new_RtsConnResponse);
+  explicit RtsConnection_1(Anki::Cozmo::ExternalComms::RtsConnResponse&& new_RtsConnResponse);
+  const Anki::Cozmo::ExternalComms::RtsConnResponse& Get_RtsConnResponse() const;
+  void Set_RtsConnResponse(const Anki::Cozmo::ExternalComms::RtsConnResponse& new_RtsConnResponse);
+  void Set_RtsConnResponse(Anki::Cozmo::ExternalComms::RtsConnResponse&& new_RtsConnResponse);
   
   /** RtsNonceMessage **/
-  static RtsConnection_1 CreateRtsNonceMessage(Anki::Victor::ExternalComms::RtsNonceMessage&& new_RtsNonceMessage);
-  explicit RtsConnection_1(Anki::Victor::ExternalComms::RtsNonceMessage&& new_RtsNonceMessage);
-  const Anki::Victor::ExternalComms::RtsNonceMessage& Get_RtsNonceMessage() const;
-  void Set_RtsNonceMessage(const Anki::Victor::ExternalComms::RtsNonceMessage& new_RtsNonceMessage);
-  void Set_RtsNonceMessage(Anki::Victor::ExternalComms::RtsNonceMessage&& new_RtsNonceMessage);
+  static RtsConnection_1 CreateRtsNonceMessage(Anki::Cozmo::ExternalComms::RtsNonceMessage&& new_RtsNonceMessage);
+  explicit RtsConnection_1(Anki::Cozmo::ExternalComms::RtsNonceMessage&& new_RtsNonceMessage);
+  const Anki::Cozmo::ExternalComms::RtsNonceMessage& Get_RtsNonceMessage() const;
+  void Set_RtsNonceMessage(const Anki::Cozmo::ExternalComms::RtsNonceMessage& new_RtsNonceMessage);
+  void Set_RtsNonceMessage(Anki::Cozmo::ExternalComms::RtsNonceMessage&& new_RtsNonceMessage);
   
   /** RtsChallengeMessage **/
-  static RtsConnection_1 CreateRtsChallengeMessage(Anki::Victor::ExternalComms::RtsChallengeMessage&& new_RtsChallengeMessage);
-  explicit RtsConnection_1(Anki::Victor::ExternalComms::RtsChallengeMessage&& new_RtsChallengeMessage);
-  const Anki::Victor::ExternalComms::RtsChallengeMessage& Get_RtsChallengeMessage() const;
-  void Set_RtsChallengeMessage(const Anki::Victor::ExternalComms::RtsChallengeMessage& new_RtsChallengeMessage);
-  void Set_RtsChallengeMessage(Anki::Victor::ExternalComms::RtsChallengeMessage&& new_RtsChallengeMessage);
+  static RtsConnection_1 CreateRtsChallengeMessage(Anki::Cozmo::ExternalComms::RtsChallengeMessage&& new_RtsChallengeMessage);
+  explicit RtsConnection_1(Anki::Cozmo::ExternalComms::RtsChallengeMessage&& new_RtsChallengeMessage);
+  const Anki::Cozmo::ExternalComms::RtsChallengeMessage& Get_RtsChallengeMessage() const;
+  void Set_RtsChallengeMessage(const Anki::Cozmo::ExternalComms::RtsChallengeMessage& new_RtsChallengeMessage);
+  void Set_RtsChallengeMessage(Anki::Cozmo::ExternalComms::RtsChallengeMessage&& new_RtsChallengeMessage);
   
   /** RtsChallengeSuccessMessage **/
-  static RtsConnection_1 CreateRtsChallengeSuccessMessage(Anki::Victor::ExternalComms::RtsChallengeSuccessMessage&& new_RtsChallengeSuccessMessage);
-  explicit RtsConnection_1(Anki::Victor::ExternalComms::RtsChallengeSuccessMessage&& new_RtsChallengeSuccessMessage);
-  const Anki::Victor::ExternalComms::RtsChallengeSuccessMessage& Get_RtsChallengeSuccessMessage() const;
-  void Set_RtsChallengeSuccessMessage(const Anki::Victor::ExternalComms::RtsChallengeSuccessMessage& new_RtsChallengeSuccessMessage);
-  void Set_RtsChallengeSuccessMessage(Anki::Victor::ExternalComms::RtsChallengeSuccessMessage&& new_RtsChallengeSuccessMessage);
+  static RtsConnection_1 CreateRtsChallengeSuccessMessage(Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage&& new_RtsChallengeSuccessMessage);
+  explicit RtsConnection_1(Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage&& new_RtsChallengeSuccessMessage);
+  const Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage& Get_RtsChallengeSuccessMessage() const;
+  void Set_RtsChallengeSuccessMessage(const Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage& new_RtsChallengeSuccessMessage);
+  void Set_RtsChallengeSuccessMessage(Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage&& new_RtsChallengeSuccessMessage);
   
   /** RtsWifiConnectRequest **/
-  static RtsConnection_1 CreateRtsWifiConnectRequest(Anki::Victor::ExternalComms::RtsWifiConnectRequest&& new_RtsWifiConnectRequest);
-  explicit RtsConnection_1(Anki::Victor::ExternalComms::RtsWifiConnectRequest&& new_RtsWifiConnectRequest);
-  const Anki::Victor::ExternalComms::RtsWifiConnectRequest& Get_RtsWifiConnectRequest() const;
-  void Set_RtsWifiConnectRequest(const Anki::Victor::ExternalComms::RtsWifiConnectRequest& new_RtsWifiConnectRequest);
-  void Set_RtsWifiConnectRequest(Anki::Victor::ExternalComms::RtsWifiConnectRequest&& new_RtsWifiConnectRequest);
+  static RtsConnection_1 CreateRtsWifiConnectRequest(Anki::Cozmo::ExternalComms::RtsWifiConnectRequest&& new_RtsWifiConnectRequest);
+  explicit RtsConnection_1(Anki::Cozmo::ExternalComms::RtsWifiConnectRequest&& new_RtsWifiConnectRequest);
+  const Anki::Cozmo::ExternalComms::RtsWifiConnectRequest& Get_RtsWifiConnectRequest() const;
+  void Set_RtsWifiConnectRequest(const Anki::Cozmo::ExternalComms::RtsWifiConnectRequest& new_RtsWifiConnectRequest);
+  void Set_RtsWifiConnectRequest(Anki::Cozmo::ExternalComms::RtsWifiConnectRequest&& new_RtsWifiConnectRequest);
   
   /** RtsWifiConnectResponse **/
-  static RtsConnection_1 CreateRtsWifiConnectResponse(Anki::Victor::ExternalComms::RtsWifiConnectResponse&& new_RtsWifiConnectResponse);
-  explicit RtsConnection_1(Anki::Victor::ExternalComms::RtsWifiConnectResponse&& new_RtsWifiConnectResponse);
-  const Anki::Victor::ExternalComms::RtsWifiConnectResponse& Get_RtsWifiConnectResponse() const;
-  void Set_RtsWifiConnectResponse(const Anki::Victor::ExternalComms::RtsWifiConnectResponse& new_RtsWifiConnectResponse);
-  void Set_RtsWifiConnectResponse(Anki::Victor::ExternalComms::RtsWifiConnectResponse&& new_RtsWifiConnectResponse);
+  static RtsConnection_1 CreateRtsWifiConnectResponse(Anki::Cozmo::ExternalComms::RtsWifiConnectResponse&& new_RtsWifiConnectResponse);
+  explicit RtsConnection_1(Anki::Cozmo::ExternalComms::RtsWifiConnectResponse&& new_RtsWifiConnectResponse);
+  const Anki::Cozmo::ExternalComms::RtsWifiConnectResponse& Get_RtsWifiConnectResponse() const;
+  void Set_RtsWifiConnectResponse(const Anki::Cozmo::ExternalComms::RtsWifiConnectResponse& new_RtsWifiConnectResponse);
+  void Set_RtsWifiConnectResponse(Anki::Cozmo::ExternalComms::RtsWifiConnectResponse&& new_RtsWifiConnectResponse);
   
   /** RtsWifiIpRequest **/
-  static RtsConnection_1 CreateRtsWifiIpRequest(Anki::Victor::ExternalComms::RtsWifiIpRequest&& new_RtsWifiIpRequest);
-  explicit RtsConnection_1(Anki::Victor::ExternalComms::RtsWifiIpRequest&& new_RtsWifiIpRequest);
-  const Anki::Victor::ExternalComms::RtsWifiIpRequest& Get_RtsWifiIpRequest() const;
-  void Set_RtsWifiIpRequest(const Anki::Victor::ExternalComms::RtsWifiIpRequest& new_RtsWifiIpRequest);
-  void Set_RtsWifiIpRequest(Anki::Victor::ExternalComms::RtsWifiIpRequest&& new_RtsWifiIpRequest);
+  static RtsConnection_1 CreateRtsWifiIpRequest(Anki::Cozmo::ExternalComms::RtsWifiIpRequest&& new_RtsWifiIpRequest);
+  explicit RtsConnection_1(Anki::Cozmo::ExternalComms::RtsWifiIpRequest&& new_RtsWifiIpRequest);
+  const Anki::Cozmo::ExternalComms::RtsWifiIpRequest& Get_RtsWifiIpRequest() const;
+  void Set_RtsWifiIpRequest(const Anki::Cozmo::ExternalComms::RtsWifiIpRequest& new_RtsWifiIpRequest);
+  void Set_RtsWifiIpRequest(Anki::Cozmo::ExternalComms::RtsWifiIpRequest&& new_RtsWifiIpRequest);
   
   /** RtsWifiIpResponse **/
-  static RtsConnection_1 CreateRtsWifiIpResponse(Anki::Victor::ExternalComms::RtsWifiIpResponse&& new_RtsWifiIpResponse);
-  explicit RtsConnection_1(Anki::Victor::ExternalComms::RtsWifiIpResponse&& new_RtsWifiIpResponse);
-  const Anki::Victor::ExternalComms::RtsWifiIpResponse& Get_RtsWifiIpResponse() const;
-  void Set_RtsWifiIpResponse(const Anki::Victor::ExternalComms::RtsWifiIpResponse& new_RtsWifiIpResponse);
-  void Set_RtsWifiIpResponse(Anki::Victor::ExternalComms::RtsWifiIpResponse&& new_RtsWifiIpResponse);
+  static RtsConnection_1 CreateRtsWifiIpResponse(Anki::Cozmo::ExternalComms::RtsWifiIpResponse&& new_RtsWifiIpResponse);
+  explicit RtsConnection_1(Anki::Cozmo::ExternalComms::RtsWifiIpResponse&& new_RtsWifiIpResponse);
+  const Anki::Cozmo::ExternalComms::RtsWifiIpResponse& Get_RtsWifiIpResponse() const;
+  void Set_RtsWifiIpResponse(const Anki::Cozmo::ExternalComms::RtsWifiIpResponse& new_RtsWifiIpResponse);
+  void Set_RtsWifiIpResponse(Anki::Cozmo::ExternalComms::RtsWifiIpResponse&& new_RtsWifiIpResponse);
   
   /** RtsStatusRequest **/
-  static RtsConnection_1 CreateRtsStatusRequest(Anki::Victor::ExternalComms::RtsStatusRequest&& new_RtsStatusRequest);
-  explicit RtsConnection_1(Anki::Victor::ExternalComms::RtsStatusRequest&& new_RtsStatusRequest);
-  const Anki::Victor::ExternalComms::RtsStatusRequest& Get_RtsStatusRequest() const;
-  void Set_RtsStatusRequest(const Anki::Victor::ExternalComms::RtsStatusRequest& new_RtsStatusRequest);
-  void Set_RtsStatusRequest(Anki::Victor::ExternalComms::RtsStatusRequest&& new_RtsStatusRequest);
+  static RtsConnection_1 CreateRtsStatusRequest(Anki::Cozmo::ExternalComms::RtsStatusRequest&& new_RtsStatusRequest);
+  explicit RtsConnection_1(Anki::Cozmo::ExternalComms::RtsStatusRequest&& new_RtsStatusRequest);
+  const Anki::Cozmo::ExternalComms::RtsStatusRequest& Get_RtsStatusRequest() const;
+  void Set_RtsStatusRequest(const Anki::Cozmo::ExternalComms::RtsStatusRequest& new_RtsStatusRequest);
+  void Set_RtsStatusRequest(Anki::Cozmo::ExternalComms::RtsStatusRequest&& new_RtsStatusRequest);
   
   /** RtsStatusResponse **/
-  static RtsConnection_1 CreateRtsStatusResponse(Anki::Victor::ExternalComms::RtsStatusResponse&& new_RtsStatusResponse);
-  explicit RtsConnection_1(Anki::Victor::ExternalComms::RtsStatusResponse&& new_RtsStatusResponse);
-  const Anki::Victor::ExternalComms::RtsStatusResponse& Get_RtsStatusResponse() const;
-  void Set_RtsStatusResponse(const Anki::Victor::ExternalComms::RtsStatusResponse& new_RtsStatusResponse);
-  void Set_RtsStatusResponse(Anki::Victor::ExternalComms::RtsStatusResponse&& new_RtsStatusResponse);
+  static RtsConnection_1 CreateRtsStatusResponse(Anki::Cozmo::ExternalComms::RtsStatusResponse&& new_RtsStatusResponse);
+  explicit RtsConnection_1(Anki::Cozmo::ExternalComms::RtsStatusResponse&& new_RtsStatusResponse);
+  const Anki::Cozmo::ExternalComms::RtsStatusResponse& Get_RtsStatusResponse() const;
+  void Set_RtsStatusResponse(const Anki::Cozmo::ExternalComms::RtsStatusResponse& new_RtsStatusResponse);
+  void Set_RtsStatusResponse(Anki::Cozmo::ExternalComms::RtsStatusResponse&& new_RtsStatusResponse);
   
   /** RtsWifiScanRequest **/
-  static RtsConnection_1 CreateRtsWifiScanRequest(Anki::Victor::ExternalComms::RtsWifiScanRequest&& new_RtsWifiScanRequest);
-  explicit RtsConnection_1(Anki::Victor::ExternalComms::RtsWifiScanRequest&& new_RtsWifiScanRequest);
-  const Anki::Victor::ExternalComms::RtsWifiScanRequest& Get_RtsWifiScanRequest() const;
-  void Set_RtsWifiScanRequest(const Anki::Victor::ExternalComms::RtsWifiScanRequest& new_RtsWifiScanRequest);
-  void Set_RtsWifiScanRequest(Anki::Victor::ExternalComms::RtsWifiScanRequest&& new_RtsWifiScanRequest);
+  static RtsConnection_1 CreateRtsWifiScanRequest(Anki::Cozmo::ExternalComms::RtsWifiScanRequest&& new_RtsWifiScanRequest);
+  explicit RtsConnection_1(Anki::Cozmo::ExternalComms::RtsWifiScanRequest&& new_RtsWifiScanRequest);
+  const Anki::Cozmo::ExternalComms::RtsWifiScanRequest& Get_RtsWifiScanRequest() const;
+  void Set_RtsWifiScanRequest(const Anki::Cozmo::ExternalComms::RtsWifiScanRequest& new_RtsWifiScanRequest);
+  void Set_RtsWifiScanRequest(Anki::Cozmo::ExternalComms::RtsWifiScanRequest&& new_RtsWifiScanRequest);
   
   /** RtsWifiScanResponse **/
-  static RtsConnection_1 CreateRtsWifiScanResponse(Anki::Victor::ExternalComms::RtsWifiScanResponse&& new_RtsWifiScanResponse);
-  explicit RtsConnection_1(Anki::Victor::ExternalComms::RtsWifiScanResponse&& new_RtsWifiScanResponse);
-  const Anki::Victor::ExternalComms::RtsWifiScanResponse& Get_RtsWifiScanResponse() const;
-  void Set_RtsWifiScanResponse(const Anki::Victor::ExternalComms::RtsWifiScanResponse& new_RtsWifiScanResponse);
-  void Set_RtsWifiScanResponse(Anki::Victor::ExternalComms::RtsWifiScanResponse&& new_RtsWifiScanResponse);
+  static RtsConnection_1 CreateRtsWifiScanResponse(Anki::Cozmo::ExternalComms::RtsWifiScanResponse&& new_RtsWifiScanResponse);
+  explicit RtsConnection_1(Anki::Cozmo::ExternalComms::RtsWifiScanResponse&& new_RtsWifiScanResponse);
+  const Anki::Cozmo::ExternalComms::RtsWifiScanResponse& Get_RtsWifiScanResponse() const;
+  void Set_RtsWifiScanResponse(const Anki::Cozmo::ExternalComms::RtsWifiScanResponse& new_RtsWifiScanResponse);
+  void Set_RtsWifiScanResponse(Anki::Cozmo::ExternalComms::RtsWifiScanResponse&& new_RtsWifiScanResponse);
   
   /** RtsOtaUpdateRequest **/
-  static RtsConnection_1 CreateRtsOtaUpdateRequest(Anki::Victor::ExternalComms::RtsOtaUpdateRequest&& new_RtsOtaUpdateRequest);
-  explicit RtsConnection_1(Anki::Victor::ExternalComms::RtsOtaUpdateRequest&& new_RtsOtaUpdateRequest);
-  const Anki::Victor::ExternalComms::RtsOtaUpdateRequest& Get_RtsOtaUpdateRequest() const;
-  void Set_RtsOtaUpdateRequest(const Anki::Victor::ExternalComms::RtsOtaUpdateRequest& new_RtsOtaUpdateRequest);
-  void Set_RtsOtaUpdateRequest(Anki::Victor::ExternalComms::RtsOtaUpdateRequest&& new_RtsOtaUpdateRequest);
+  static RtsConnection_1 CreateRtsOtaUpdateRequest(Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest&& new_RtsOtaUpdateRequest);
+  explicit RtsConnection_1(Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest&& new_RtsOtaUpdateRequest);
+  const Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest& Get_RtsOtaUpdateRequest() const;
+  void Set_RtsOtaUpdateRequest(const Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest& new_RtsOtaUpdateRequest);
+  void Set_RtsOtaUpdateRequest(Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest&& new_RtsOtaUpdateRequest);
   
   /** RtsOtaUpdateResponse **/
-  static RtsConnection_1 CreateRtsOtaUpdateResponse(Anki::Victor::ExternalComms::RtsOtaUpdateResponse&& new_RtsOtaUpdateResponse);
-  explicit RtsConnection_1(Anki::Victor::ExternalComms::RtsOtaUpdateResponse&& new_RtsOtaUpdateResponse);
-  const Anki::Victor::ExternalComms::RtsOtaUpdateResponse& Get_RtsOtaUpdateResponse() const;
-  void Set_RtsOtaUpdateResponse(const Anki::Victor::ExternalComms::RtsOtaUpdateResponse& new_RtsOtaUpdateResponse);
-  void Set_RtsOtaUpdateResponse(Anki::Victor::ExternalComms::RtsOtaUpdateResponse&& new_RtsOtaUpdateResponse);
+  static RtsConnection_1 CreateRtsOtaUpdateResponse(Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse&& new_RtsOtaUpdateResponse);
+  explicit RtsConnection_1(Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse&& new_RtsOtaUpdateResponse);
+  const Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse& Get_RtsOtaUpdateResponse() const;
+  void Set_RtsOtaUpdateResponse(const Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse& new_RtsOtaUpdateResponse);
+  void Set_RtsOtaUpdateResponse(Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse&& new_RtsOtaUpdateResponse);
   
   /** RtsCancelPairing **/
-  static RtsConnection_1 CreateRtsCancelPairing(Anki::Victor::ExternalComms::RtsCancelPairing&& new_RtsCancelPairing);
-  explicit RtsConnection_1(Anki::Victor::ExternalComms::RtsCancelPairing&& new_RtsCancelPairing);
-  const Anki::Victor::ExternalComms::RtsCancelPairing& Get_RtsCancelPairing() const;
-  void Set_RtsCancelPairing(const Anki::Victor::ExternalComms::RtsCancelPairing& new_RtsCancelPairing);
-  void Set_RtsCancelPairing(Anki::Victor::ExternalComms::RtsCancelPairing&& new_RtsCancelPairing);
+  static RtsConnection_1 CreateRtsCancelPairing(Anki::Cozmo::ExternalComms::RtsCancelPairing&& new_RtsCancelPairing);
+  explicit RtsConnection_1(Anki::Cozmo::ExternalComms::RtsCancelPairing&& new_RtsCancelPairing);
+  const Anki::Cozmo::ExternalComms::RtsCancelPairing& Get_RtsCancelPairing() const;
+  void Set_RtsCancelPairing(const Anki::Cozmo::ExternalComms::RtsCancelPairing& new_RtsCancelPairing);
+  void Set_RtsCancelPairing(Anki::Cozmo::ExternalComms::RtsCancelPairing&& new_RtsCancelPairing);
   
   /** RtsForceDisconnect **/
-  static RtsConnection_1 CreateRtsForceDisconnect(Anki::Victor::ExternalComms::RtsForceDisconnect&& new_RtsForceDisconnect);
-  explicit RtsConnection_1(Anki::Victor::ExternalComms::RtsForceDisconnect&& new_RtsForceDisconnect);
-  const Anki::Victor::ExternalComms::RtsForceDisconnect& Get_RtsForceDisconnect() const;
-  void Set_RtsForceDisconnect(const Anki::Victor::ExternalComms::RtsForceDisconnect& new_RtsForceDisconnect);
-  void Set_RtsForceDisconnect(Anki::Victor::ExternalComms::RtsForceDisconnect&& new_RtsForceDisconnect);
+  static RtsConnection_1 CreateRtsForceDisconnect(Anki::Cozmo::ExternalComms::RtsForceDisconnect&& new_RtsForceDisconnect);
+  explicit RtsConnection_1(Anki::Cozmo::ExternalComms::RtsForceDisconnect&& new_RtsForceDisconnect);
+  const Anki::Cozmo::ExternalComms::RtsForceDisconnect& Get_RtsForceDisconnect() const;
+  void Set_RtsForceDisconnect(const Anki::Cozmo::ExternalComms::RtsForceDisconnect& new_RtsForceDisconnect);
+  void Set_RtsForceDisconnect(Anki::Cozmo::ExternalComms::RtsForceDisconnect&& new_RtsForceDisconnect);
   
   /** RtsAck **/
-  static RtsConnection_1 CreateRtsAck(Anki::Victor::ExternalComms::RtsAck&& new_RtsAck);
-  explicit RtsConnection_1(Anki::Victor::ExternalComms::RtsAck&& new_RtsAck);
-  const Anki::Victor::ExternalComms::RtsAck& Get_RtsAck() const;
-  void Set_RtsAck(const Anki::Victor::ExternalComms::RtsAck& new_RtsAck);
-  void Set_RtsAck(Anki::Victor::ExternalComms::RtsAck&& new_RtsAck);
+  static RtsConnection_1 CreateRtsAck(Anki::Cozmo::ExternalComms::RtsAck&& new_RtsAck);
+  explicit RtsConnection_1(Anki::Cozmo::ExternalComms::RtsAck&& new_RtsAck);
+  const Anki::Cozmo::ExternalComms::RtsAck& Get_RtsAck() const;
+  void Set_RtsAck(const Anki::Cozmo::ExternalComms::RtsAck& new_RtsAck);
+  void Set_RtsAck(Anki::Cozmo::ExternalComms::RtsAck&& new_RtsAck);
   
   /** RtsWifiAccessPointRequest **/
-  static RtsConnection_1 CreateRtsWifiAccessPointRequest(Anki::Victor::ExternalComms::RtsWifiAccessPointRequest&& new_RtsWifiAccessPointRequest);
-  explicit RtsConnection_1(Anki::Victor::ExternalComms::RtsWifiAccessPointRequest&& new_RtsWifiAccessPointRequest);
-  const Anki::Victor::ExternalComms::RtsWifiAccessPointRequest& Get_RtsWifiAccessPointRequest() const;
-  void Set_RtsWifiAccessPointRequest(const Anki::Victor::ExternalComms::RtsWifiAccessPointRequest& new_RtsWifiAccessPointRequest);
-  void Set_RtsWifiAccessPointRequest(Anki::Victor::ExternalComms::RtsWifiAccessPointRequest&& new_RtsWifiAccessPointRequest);
+  static RtsConnection_1 CreateRtsWifiAccessPointRequest(Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest&& new_RtsWifiAccessPointRequest);
+  explicit RtsConnection_1(Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest&& new_RtsWifiAccessPointRequest);
+  const Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest& Get_RtsWifiAccessPointRequest() const;
+  void Set_RtsWifiAccessPointRequest(const Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest& new_RtsWifiAccessPointRequest);
+  void Set_RtsWifiAccessPointRequest(Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest&& new_RtsWifiAccessPointRequest);
   
   /** RtsWifiAccessPointResponse **/
-  static RtsConnection_1 CreateRtsWifiAccessPointResponse(Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse);
-  explicit RtsConnection_1(Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse);
-  const Anki::Victor::ExternalComms::RtsWifiAccessPointResponse& Get_RtsWifiAccessPointResponse() const;
-  void Set_RtsWifiAccessPointResponse(const Anki::Victor::ExternalComms::RtsWifiAccessPointResponse& new_RtsWifiAccessPointResponse);
-  void Set_RtsWifiAccessPointResponse(Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse);
+  static RtsConnection_1 CreateRtsWifiAccessPointResponse(Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse);
+  explicit RtsConnection_1(Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse);
+  const Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse& Get_RtsWifiAccessPointResponse() const;
+  void Set_RtsWifiAccessPointResponse(const Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse& new_RtsWifiAccessPointResponse);
+  void Set_RtsWifiAccessPointResponse(Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse);
   
   /** RtsSshRequest **/
-  static RtsConnection_1 CreateRtsSshRequest(Anki::Victor::ExternalComms::RtsSshRequest&& new_RtsSshRequest);
-  explicit RtsConnection_1(Anki::Victor::ExternalComms::RtsSshRequest&& new_RtsSshRequest);
-  const Anki::Victor::ExternalComms::RtsSshRequest& Get_RtsSshRequest() const;
-  void Set_RtsSshRequest(const Anki::Victor::ExternalComms::RtsSshRequest& new_RtsSshRequest);
-  void Set_RtsSshRequest(Anki::Victor::ExternalComms::RtsSshRequest&& new_RtsSshRequest);
+  static RtsConnection_1 CreateRtsSshRequest(Anki::Cozmo::ExternalComms::RtsSshRequest&& new_RtsSshRequest);
+  explicit RtsConnection_1(Anki::Cozmo::ExternalComms::RtsSshRequest&& new_RtsSshRequest);
+  const Anki::Cozmo::ExternalComms::RtsSshRequest& Get_RtsSshRequest() const;
+  void Set_RtsSshRequest(const Anki::Cozmo::ExternalComms::RtsSshRequest& new_RtsSshRequest);
+  void Set_RtsSshRequest(Anki::Cozmo::ExternalComms::RtsSshRequest&& new_RtsSshRequest);
   
   /** RtsSshResponse **/
-  static RtsConnection_1 CreateRtsSshResponse(Anki::Victor::ExternalComms::RtsSshResponse&& new_RtsSshResponse);
-  explicit RtsConnection_1(Anki::Victor::ExternalComms::RtsSshResponse&& new_RtsSshResponse);
-  const Anki::Victor::ExternalComms::RtsSshResponse& Get_RtsSshResponse() const;
-  void Set_RtsSshResponse(const Anki::Victor::ExternalComms::RtsSshResponse& new_RtsSshResponse);
-  void Set_RtsSshResponse(Anki::Victor::ExternalComms::RtsSshResponse&& new_RtsSshResponse);
+  static RtsConnection_1 CreateRtsSshResponse(Anki::Cozmo::ExternalComms::RtsSshResponse&& new_RtsSshResponse);
+  explicit RtsConnection_1(Anki::Cozmo::ExternalComms::RtsSshResponse&& new_RtsSshResponse);
+  const Anki::Cozmo::ExternalComms::RtsSshResponse& Get_RtsSshResponse() const;
+  void Set_RtsSshResponse(const Anki::Cozmo::ExternalComms::RtsSshResponse& new_RtsSshResponse);
+  void Set_RtsSshResponse(Anki::Cozmo::ExternalComms::RtsSshResponse&& new_RtsSshResponse);
   
   size_t Unpack(const uint8_t* buff, const size_t len);
   size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
@@ -2168,29 +2998,29 @@ private:
   Tag _tag;
   
   union {
-    Anki::Victor::ExternalComms::Error _Error;
-    Anki::Victor::ExternalComms::RtsConnRequest _RtsConnRequest;
-    Anki::Victor::ExternalComms::RtsConnResponse _RtsConnResponse;
-    Anki::Victor::ExternalComms::RtsNonceMessage _RtsNonceMessage;
-    Anki::Victor::ExternalComms::RtsChallengeMessage _RtsChallengeMessage;
-    Anki::Victor::ExternalComms::RtsChallengeSuccessMessage _RtsChallengeSuccessMessage;
-    Anki::Victor::ExternalComms::RtsWifiConnectRequest _RtsWifiConnectRequest;
-    Anki::Victor::ExternalComms::RtsWifiConnectResponse _RtsWifiConnectResponse;
-    Anki::Victor::ExternalComms::RtsWifiIpRequest _RtsWifiIpRequest;
-    Anki::Victor::ExternalComms::RtsWifiIpResponse _RtsWifiIpResponse;
-    Anki::Victor::ExternalComms::RtsStatusRequest _RtsStatusRequest;
-    Anki::Victor::ExternalComms::RtsStatusResponse _RtsStatusResponse;
-    Anki::Victor::ExternalComms::RtsWifiScanRequest _RtsWifiScanRequest;
-    Anki::Victor::ExternalComms::RtsWifiScanResponse _RtsWifiScanResponse;
-    Anki::Victor::ExternalComms::RtsOtaUpdateRequest _RtsOtaUpdateRequest;
-    Anki::Victor::ExternalComms::RtsOtaUpdateResponse _RtsOtaUpdateResponse;
-    Anki::Victor::ExternalComms::RtsCancelPairing _RtsCancelPairing;
-    Anki::Victor::ExternalComms::RtsForceDisconnect _RtsForceDisconnect;
-    Anki::Victor::ExternalComms::RtsAck _RtsAck;
-    Anki::Victor::ExternalComms::RtsWifiAccessPointRequest _RtsWifiAccessPointRequest;
-    Anki::Victor::ExternalComms::RtsWifiAccessPointResponse _RtsWifiAccessPointResponse;
-    Anki::Victor::ExternalComms::RtsSshRequest _RtsSshRequest;
-    Anki::Victor::ExternalComms::RtsSshResponse _RtsSshResponse;
+    Anki::Cozmo::ExternalComms::Error _Error;
+    Anki::Cozmo::ExternalComms::RtsConnRequest _RtsConnRequest;
+    Anki::Cozmo::ExternalComms::RtsConnResponse _RtsConnResponse;
+    Anki::Cozmo::ExternalComms::RtsNonceMessage _RtsNonceMessage;
+    Anki::Cozmo::ExternalComms::RtsChallengeMessage _RtsChallengeMessage;
+    Anki::Cozmo::ExternalComms::RtsChallengeSuccessMessage _RtsChallengeSuccessMessage;
+    Anki::Cozmo::ExternalComms::RtsWifiConnectRequest _RtsWifiConnectRequest;
+    Anki::Cozmo::ExternalComms::RtsWifiConnectResponse _RtsWifiConnectResponse;
+    Anki::Cozmo::ExternalComms::RtsWifiIpRequest _RtsWifiIpRequest;
+    Anki::Cozmo::ExternalComms::RtsWifiIpResponse _RtsWifiIpResponse;
+    Anki::Cozmo::ExternalComms::RtsStatusRequest _RtsStatusRequest;
+    Anki::Cozmo::ExternalComms::RtsStatusResponse _RtsStatusResponse;
+    Anki::Cozmo::ExternalComms::RtsWifiScanRequest _RtsWifiScanRequest;
+    Anki::Cozmo::ExternalComms::RtsWifiScanResponse _RtsWifiScanResponse;
+    Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest _RtsOtaUpdateRequest;
+    Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse _RtsOtaUpdateResponse;
+    Anki::Cozmo::ExternalComms::RtsCancelPairing _RtsCancelPairing;
+    Anki::Cozmo::ExternalComms::RtsForceDisconnect _RtsForceDisconnect;
+    Anki::Cozmo::ExternalComms::RtsAck _RtsAck;
+    Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest _RtsWifiAccessPointRequest;
+    Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse _RtsWifiAccessPointResponse;
+    Anki::Cozmo::ExternalComms::RtsSshRequest _RtsSshRequest;
+    Anki::Cozmo::ExternalComms::RtsSshResponse _RtsSshResponse;
   };
 };
 extern const char* RtsConnection_1VersionHashStr;
@@ -2250,7 +3080,7 @@ extern const uint8_t RobotStatusRequestVersionHash[16];
 // MESSAGE RobotStatusResponse
 struct RobotStatusResponse
 {
-  Anki::Victor::ExternalComms::RobotStatus response;
+  Anki::Cozmo::ExternalComms::RobotStatus response;
   
   /**** Constructors ****/
   RobotStatusResponse() = default;
@@ -2260,7 +3090,7 @@ struct RobotStatusResponse
   RobotStatusResponse& operator=(const RobotStatusResponse& other) = default;
   RobotStatusResponse& operator=(RobotStatusResponse&& other) = default;
   
-  explicit RobotStatusResponse(Anki::Victor::ExternalComms::RobotStatus response)
+  explicit RobotStatusResponse(Anki::Cozmo::ExternalComms::RobotStatus response)
   : response(response)
   {}
   
@@ -2295,15 +3125,15 @@ struct AppGeneral_TagToType;
 
 template<>
 struct AppGeneral_TagToType<AppGeneralTag::Error> {
-  using type = Anki::Victor::ExternalComms::Error;
+  using type = Anki::Cozmo::ExternalComms::Error;
 };
 template<>
 struct AppGeneral_TagToType<AppGeneralTag::RobotStatusRequest> {
-  using type = Anki::Victor::ExternalComms::RobotStatusRequest;
+  using type = Anki::Cozmo::ExternalComms::RobotStatusRequest;
 };
 template<>
 struct AppGeneral_TagToType<AppGeneralTag::RobotStatusResponse> {
-  using type = Anki::Victor::ExternalComms::RobotStatusResponse;
+  using type = Anki::Cozmo::ExternalComms::RobotStatusResponse;
 };
 
 // UNION AppGeneral
@@ -2333,25 +3163,25 @@ public:
   static AppGeneral Create_(typename AppGeneral_TagToType<tag>::type member);
   
   /** Error **/
-  static AppGeneral CreateError(Anki::Victor::ExternalComms::Error&& new_Error);
-  explicit AppGeneral(Anki::Victor::ExternalComms::Error&& new_Error);
-  const Anki::Victor::ExternalComms::Error& Get_Error() const;
-  void Set_Error(const Anki::Victor::ExternalComms::Error& new_Error);
-  void Set_Error(Anki::Victor::ExternalComms::Error&& new_Error);
+  static AppGeneral CreateError(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  explicit AppGeneral(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  const Anki::Cozmo::ExternalComms::Error& Get_Error() const;
+  void Set_Error(const Anki::Cozmo::ExternalComms::Error& new_Error);
+  void Set_Error(Anki::Cozmo::ExternalComms::Error&& new_Error);
   
   /** RobotStatusRequest **/
-  static AppGeneral CreateRobotStatusRequest(Anki::Victor::ExternalComms::RobotStatusRequest&& new_RobotStatusRequest);
-  explicit AppGeneral(Anki::Victor::ExternalComms::RobotStatusRequest&& new_RobotStatusRequest);
-  const Anki::Victor::ExternalComms::RobotStatusRequest& Get_RobotStatusRequest() const;
-  void Set_RobotStatusRequest(const Anki::Victor::ExternalComms::RobotStatusRequest& new_RobotStatusRequest);
-  void Set_RobotStatusRequest(Anki::Victor::ExternalComms::RobotStatusRequest&& new_RobotStatusRequest);
+  static AppGeneral CreateRobotStatusRequest(Anki::Cozmo::ExternalComms::RobotStatusRequest&& new_RobotStatusRequest);
+  explicit AppGeneral(Anki::Cozmo::ExternalComms::RobotStatusRequest&& new_RobotStatusRequest);
+  const Anki::Cozmo::ExternalComms::RobotStatusRequest& Get_RobotStatusRequest() const;
+  void Set_RobotStatusRequest(const Anki::Cozmo::ExternalComms::RobotStatusRequest& new_RobotStatusRequest);
+  void Set_RobotStatusRequest(Anki::Cozmo::ExternalComms::RobotStatusRequest&& new_RobotStatusRequest);
   
   /** RobotStatusResponse **/
-  static AppGeneral CreateRobotStatusResponse(Anki::Victor::ExternalComms::RobotStatusResponse&& new_RobotStatusResponse);
-  explicit AppGeneral(Anki::Victor::ExternalComms::RobotStatusResponse&& new_RobotStatusResponse);
-  const Anki::Victor::ExternalComms::RobotStatusResponse& Get_RobotStatusResponse() const;
-  void Set_RobotStatusResponse(const Anki::Victor::ExternalComms::RobotStatusResponse& new_RobotStatusResponse);
-  void Set_RobotStatusResponse(Anki::Victor::ExternalComms::RobotStatusResponse&& new_RobotStatusResponse);
+  static AppGeneral CreateRobotStatusResponse(Anki::Cozmo::ExternalComms::RobotStatusResponse&& new_RobotStatusResponse);
+  explicit AppGeneral(Anki::Cozmo::ExternalComms::RobotStatusResponse&& new_RobotStatusResponse);
+  const Anki::Cozmo::ExternalComms::RobotStatusResponse& Get_RobotStatusResponse() const;
+  void Set_RobotStatusResponse(const Anki::Cozmo::ExternalComms::RobotStatusResponse& new_RobotStatusResponse);
+  void Set_RobotStatusResponse(Anki::Cozmo::ExternalComms::RobotStatusResponse&& new_RobotStatusResponse);
   
   size_t Unpack(const uint8_t* buff, const size_t len);
   size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
@@ -2368,70 +3198,36 @@ private:
   Tag _tag;
   
   union {
-    Anki::Victor::ExternalComms::Error _Error;
-    Anki::Victor::ExternalComms::RobotStatusRequest _RobotStatusRequest;
-    Anki::Victor::ExternalComms::RobotStatusResponse _RobotStatusResponse;
+    Anki::Cozmo::ExternalComms::Error _Error;
+    Anki::Cozmo::ExternalComms::RobotStatusRequest _RobotStatusRequest;
+    Anki::Cozmo::ExternalComms::RobotStatusResponse _RobotStatusResponse;
   };
 };
 extern const char* AppGeneralVersionHashStr;
 extern const uint8_t AppGeneralVersionHash[16];
 
-// MESSAGE MeetVictorRequest
-struct MeetVictorRequest
+// MESSAGE AppIntent
+struct AppIntent
 {
+  std::string intent;
+  std::string param;
   
   /**** Constructors ****/
-  MeetVictorRequest() = default;
-  MeetVictorRequest(const MeetVictorRequest& other) = default;
-  MeetVictorRequest(MeetVictorRequest& other) = default;
-  MeetVictorRequest(MeetVictorRequest&& other) noexcept = default;
-  MeetVictorRequest& operator=(const MeetVictorRequest& other) = default;
-  MeetVictorRequest& operator=(MeetVictorRequest&& other) = default;
+  AppIntent() = default;
+  AppIntent(const AppIntent& other) = default;
+  AppIntent(AppIntent& other) = default;
+  AppIntent(AppIntent&& other) noexcept = default;
+  AppIntent& operator=(const AppIntent& other) = default;
+  AppIntent& operator=(AppIntent&& other) = default;
   
-  explicit MeetVictorRequest(const uint8_t* buff, size_t len);
-  explicit MeetVictorRequest(const CLAD::SafeMessageBuffer& buffer);
-  
-  /**** Pack ****/
-  size_t Pack(uint8_t* buff, size_t len) const;
-  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
-  
-  /**** Unpack ****/
-  size_t Unpack(const uint8_t* buff, const size_t len);
-  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
-  
-  size_t Size() const;
-  
-  bool operator==(const MeetVictorRequest& other) const;
-  bool operator!=(const MeetVictorRequest& other) const;
-  
-  template <typename Callable>
-  void Invoke(Callable&& func) const {
-     func();
-  }
-};
-
-extern const char* MeetVictorRequestVersionHashStr;
-extern const uint8_t MeetVictorRequestVersionHash[16];
-
-// MESSAGE MeetVictorReadyResponse
-struct MeetVictorReadyResponse
-{
-  std::string faceID;
-  
-  /**** Constructors ****/
-  MeetVictorReadyResponse() = default;
-  MeetVictorReadyResponse(const MeetVictorReadyResponse& other) = default;
-  MeetVictorReadyResponse(MeetVictorReadyResponse& other) = default;
-  MeetVictorReadyResponse(MeetVictorReadyResponse&& other) noexcept = default;
-  MeetVictorReadyResponse& operator=(const MeetVictorReadyResponse& other) = default;
-  MeetVictorReadyResponse& operator=(MeetVictorReadyResponse&& other) = default;
-  
-  explicit MeetVictorReadyResponse(const std::string& faceID)
-  : faceID(faceID)
+  explicit AppIntent(const std::string& intent,
+    const std::string& param)
+  : intent(intent)
+  , param(param)
   {}
   
-  explicit MeetVictorReadyResponse(const uint8_t* buff, size_t len);
-  explicit MeetVictorReadyResponse(const CLAD::SafeMessageBuffer& buffer);
+  explicit AppIntent(const uint8_t* buff, size_t len);
+  explicit AppIntent(const CLAD::SafeMessageBuffer& buffer);
   
   /**** Pack ****/
   size_t Pack(uint8_t* buff, size_t len) const;
@@ -2443,17 +3239,59 @@ struct MeetVictorReadyResponse
   
   size_t Size() const;
   
-  bool operator==(const MeetVictorReadyResponse& other) const;
-  bool operator!=(const MeetVictorReadyResponse& other) const;
+  bool operator==(const AppIntent& other) const;
+  bool operator!=(const AppIntent& other) const;
   
   template <typename Callable>
   void Invoke(Callable&& func) const {
-     func(faceID);
+     func(intent, param);
   }
 };
 
-extern const char* MeetVictorReadyResponseVersionHashStr;
-extern const uint8_t MeetVictorReadyResponseVersionHash[16];
+extern const char* AppIntentVersionHashStr;
+extern const uint8_t AppIntentVersionHash[16];
+
+// MESSAGE MeetVictorStarted
+struct MeetVictorStarted
+{
+  std::string name;
+  
+  /**** Constructors ****/
+  MeetVictorStarted() = default;
+  MeetVictorStarted(const MeetVictorStarted& other) = default;
+  MeetVictorStarted(MeetVictorStarted& other) = default;
+  MeetVictorStarted(MeetVictorStarted&& other) noexcept = default;
+  MeetVictorStarted& operator=(const MeetVictorStarted& other) = default;
+  MeetVictorStarted& operator=(MeetVictorStarted&& other) = default;
+  
+  explicit MeetVictorStarted(const std::string& name)
+  : name(name)
+  {}
+  
+  explicit MeetVictorStarted(const uint8_t* buff, size_t len);
+  explicit MeetVictorStarted(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const MeetVictorStarted& other) const;
+  bool operator!=(const MeetVictorStarted& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(name);
+  }
+};
+
+extern const char* MeetVictorStartedVersionHashStr;
+extern const uint8_t MeetVictorStartedVersionHash[16];
 
 // MESSAGE MeetVictorFaceScanStarted
 struct MeetVictorFaceScanStarted
@@ -2529,28 +3367,31 @@ struct MeetVictorFaceScanComplete
 extern const char* MeetVictorFaceScanCompleteVersionHashStr;
 extern const uint8_t MeetVictorFaceScanCompleteVersionHash[16];
 
-// MESSAGE MeetVictorSetUserName
-struct MeetVictorSetUserName
+// MESSAGE FaceEnrollmentCompleted
+struct FaceEnrollmentCompleted
 {
-  std::string faceID;
+  Anki::Cozmo::FaceEnrollmentResult result;
+  int32_t faceID;
   std::string name;
   
   /**** Constructors ****/
-  MeetVictorSetUserName() = default;
-  MeetVictorSetUserName(const MeetVictorSetUserName& other) = default;
-  MeetVictorSetUserName(MeetVictorSetUserName& other) = default;
-  MeetVictorSetUserName(MeetVictorSetUserName&& other) noexcept = default;
-  MeetVictorSetUserName& operator=(const MeetVictorSetUserName& other) = default;
-  MeetVictorSetUserName& operator=(MeetVictorSetUserName&& other) = default;
+  FaceEnrollmentCompleted() = default;
+  FaceEnrollmentCompleted(const FaceEnrollmentCompleted& other) = default;
+  FaceEnrollmentCompleted(FaceEnrollmentCompleted& other) = default;
+  FaceEnrollmentCompleted(FaceEnrollmentCompleted&& other) noexcept = default;
+  FaceEnrollmentCompleted& operator=(const FaceEnrollmentCompleted& other) = default;
+  FaceEnrollmentCompleted& operator=(FaceEnrollmentCompleted&& other) = default;
   
-  explicit MeetVictorSetUserName(const std::string& faceID,
+  explicit FaceEnrollmentCompleted(Anki::Cozmo::FaceEnrollmentResult result,
+    int32_t faceID,
     const std::string& name)
-  : faceID(faceID)
+  : result(result)
+  , faceID(faceID)
   , name(name)
   {}
   
-  explicit MeetVictorSetUserName(const uint8_t* buff, size_t len);
-  explicit MeetVictorSetUserName(const CLAD::SafeMessageBuffer& buffer);
+  explicit FaceEnrollmentCompleted(const uint8_t* buff, size_t len);
+  explicit FaceEnrollmentCompleted(const CLAD::SafeMessageBuffer& buffer);
   
   /**** Pack ****/
   size_t Pack(uint8_t* buff, size_t len) const;
@@ -2562,37 +3403,32 @@ struct MeetVictorSetUserName
   
   size_t Size() const;
   
-  bool operator==(const MeetVictorSetUserName& other) const;
-  bool operator!=(const MeetVictorSetUserName& other) const;
+  bool operator==(const FaceEnrollmentCompleted& other) const;
+  bool operator!=(const FaceEnrollmentCompleted& other) const;
   
   template <typename Callable>
   void Invoke(Callable&& func) const {
-     func(faceID, name);
+     func(result, faceID, name);
   }
 };
 
-extern const char* MeetVictorSetUserNameVersionHashStr;
-extern const uint8_t MeetVictorSetUserNameVersionHash[16];
+extern const char* FaceEnrollmentCompletedVersionHashStr;
+extern const uint8_t FaceEnrollmentCompletedVersionHash[16];
 
-// MESSAGE MeetVictorComplete
-struct MeetVictorComplete
+// MESSAGE CancelFaceEnrollment
+struct CancelFaceEnrollment
 {
-  bool success;
   
   /**** Constructors ****/
-  MeetVictorComplete() = default;
-  MeetVictorComplete(const MeetVictorComplete& other) = default;
-  MeetVictorComplete(MeetVictorComplete& other) = default;
-  MeetVictorComplete(MeetVictorComplete&& other) noexcept = default;
-  MeetVictorComplete& operator=(const MeetVictorComplete& other) = default;
-  MeetVictorComplete& operator=(MeetVictorComplete&& other) = default;
+  CancelFaceEnrollment() = default;
+  CancelFaceEnrollment(const CancelFaceEnrollment& other) = default;
+  CancelFaceEnrollment(CancelFaceEnrollment& other) = default;
+  CancelFaceEnrollment(CancelFaceEnrollment&& other) noexcept = default;
+  CancelFaceEnrollment& operator=(const CancelFaceEnrollment& other) = default;
+  CancelFaceEnrollment& operator=(CancelFaceEnrollment&& other) = default;
   
-  explicit MeetVictorComplete(bool success)
-  : success(success)
-  {}
-  
-  explicit MeetVictorComplete(const uint8_t* buff, size_t len);
-  explicit MeetVictorComplete(const CLAD::SafeMessageBuffer& buffer);
+  explicit CancelFaceEnrollment(const uint8_t* buff, size_t len);
+  explicit CancelFaceEnrollment(const CLAD::SafeMessageBuffer& buffer);
   
   /**** Pack ****/
   size_t Pack(uint8_t* buff, size_t len) const;
@@ -2604,37 +3440,32 @@ struct MeetVictorComplete
   
   size_t Size() const;
   
-  bool operator==(const MeetVictorComplete& other) const;
-  bool operator!=(const MeetVictorComplete& other) const;
+  bool operator==(const CancelFaceEnrollment& other) const;
+  bool operator!=(const CancelFaceEnrollment& other) const;
   
   template <typename Callable>
   void Invoke(Callable&& func) const {
-     func(success);
+     func();
   }
 };
 
-extern const char* MeetVictorCompleteVersionHashStr;
-extern const uint8_t MeetVictorCompleteVersionHash[16];
+extern const char* CancelFaceEnrollmentVersionHashStr;
+extern const uint8_t CancelFaceEnrollmentVersionHash[16];
 
-// MESSAGE MeetVictorError
-struct MeetVictorError
+// MESSAGE RequestEnrolledNames
+struct RequestEnrolledNames
 {
-  std::string errorString;
   
   /**** Constructors ****/
-  MeetVictorError() = default;
-  MeetVictorError(const MeetVictorError& other) = default;
-  MeetVictorError(MeetVictorError& other) = default;
-  MeetVictorError(MeetVictorError&& other) noexcept = default;
-  MeetVictorError& operator=(const MeetVictorError& other) = default;
-  MeetVictorError& operator=(MeetVictorError&& other) = default;
+  RequestEnrolledNames() = default;
+  RequestEnrolledNames(const RequestEnrolledNames& other) = default;
+  RequestEnrolledNames(RequestEnrolledNames& other) = default;
+  RequestEnrolledNames(RequestEnrolledNames&& other) noexcept = default;
+  RequestEnrolledNames& operator=(const RequestEnrolledNames& other) = default;
+  RequestEnrolledNames& operator=(RequestEnrolledNames&& other) = default;
   
-  explicit MeetVictorError(const std::string& errorString)
-  : errorString(errorString)
-  {}
-  
-  explicit MeetVictorError(const uint8_t* buff, size_t len);
-  explicit MeetVictorError(const CLAD::SafeMessageBuffer& buffer);
+  explicit RequestEnrolledNames(const uint8_t* buff, size_t len);
+  explicit RequestEnrolledNames(const CLAD::SafeMessageBuffer& buffer);
   
   /**** Pack ****/
   size_t Pack(uint8_t* buff, size_t len) const;
@@ -2646,17 +3477,243 @@ struct MeetVictorError
   
   size_t Size() const;
   
-  bool operator==(const MeetVictorError& other) const;
-  bool operator!=(const MeetVictorError& other) const;
+  bool operator==(const RequestEnrolledNames& other) const;
+  bool operator!=(const RequestEnrolledNames& other) const;
   
   template <typename Callable>
   void Invoke(Callable&& func) const {
-     func(errorString);
+     func();
   }
 };
 
-extern const char* MeetVictorErrorVersionHashStr;
-extern const uint8_t MeetVictorErrorVersionHash[16];
+extern const char* RequestEnrolledNamesVersionHashStr;
+extern const uint8_t RequestEnrolledNamesVersionHash[16];
+
+// MESSAGE EnrolledNamesResponse
+struct EnrolledNamesResponse
+{
+  std::vector<Anki::Vision::LoadedKnownFace> faces;
+  
+  /**** Constructors ****/
+  EnrolledNamesResponse() = default;
+  EnrolledNamesResponse(const EnrolledNamesResponse& other) = default;
+  EnrolledNamesResponse(EnrolledNamesResponse& other) = default;
+  EnrolledNamesResponse(EnrolledNamesResponse&& other) noexcept = default;
+  EnrolledNamesResponse& operator=(const EnrolledNamesResponse& other) = default;
+  EnrolledNamesResponse& operator=(EnrolledNamesResponse&& other) = default;
+  
+  explicit EnrolledNamesResponse(const std::vector<Anki::Vision::LoadedKnownFace>& faces)
+  : faces(faces)
+  {}
+  
+  explicit EnrolledNamesResponse(const uint8_t* buff, size_t len);
+  explicit EnrolledNamesResponse(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const EnrolledNamesResponse& other) const;
+  bool operator!=(const EnrolledNamesResponse& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(faces);
+  }
+};
+
+extern const char* EnrolledNamesResponseVersionHashStr;
+extern const uint8_t EnrolledNamesResponseVersionHash[16];
+
+// MESSAGE UpdateEnrolledFaceByID
+struct UpdateEnrolledFaceByID
+{
+  int32_t faceID;
+  std::string oldName;
+  std::string newName;
+  
+  /**** Constructors ****/
+  UpdateEnrolledFaceByID() = default;
+  UpdateEnrolledFaceByID(const UpdateEnrolledFaceByID& other) = default;
+  UpdateEnrolledFaceByID(UpdateEnrolledFaceByID& other) = default;
+  UpdateEnrolledFaceByID(UpdateEnrolledFaceByID&& other) noexcept = default;
+  UpdateEnrolledFaceByID& operator=(const UpdateEnrolledFaceByID& other) = default;
+  UpdateEnrolledFaceByID& operator=(UpdateEnrolledFaceByID&& other) = default;
+  
+  explicit UpdateEnrolledFaceByID(int32_t faceID,
+    const std::string& oldName,
+    const std::string& newName)
+  : faceID(faceID)
+  , oldName(oldName)
+  , newName(newName)
+  {}
+  
+  explicit UpdateEnrolledFaceByID(const uint8_t* buff, size_t len);
+  explicit UpdateEnrolledFaceByID(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const UpdateEnrolledFaceByID& other) const;
+  bool operator!=(const UpdateEnrolledFaceByID& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(faceID, oldName, newName);
+  }
+};
+
+extern const char* UpdateEnrolledFaceByIDVersionHashStr;
+extern const uint8_t UpdateEnrolledFaceByIDVersionHash[16];
+
+// MESSAGE EraseEnrolledFaceByID
+struct EraseEnrolledFaceByID
+{
+  int32_t faceID;
+  
+  /**** Constructors ****/
+  EraseEnrolledFaceByID() = default;
+  EraseEnrolledFaceByID(const EraseEnrolledFaceByID& other) = default;
+  EraseEnrolledFaceByID(EraseEnrolledFaceByID& other) = default;
+  EraseEnrolledFaceByID(EraseEnrolledFaceByID&& other) noexcept = default;
+  EraseEnrolledFaceByID& operator=(const EraseEnrolledFaceByID& other) = default;
+  EraseEnrolledFaceByID& operator=(EraseEnrolledFaceByID&& other) = default;
+  
+  explicit EraseEnrolledFaceByID(int32_t faceID)
+  : faceID(faceID)
+  {}
+  
+  explicit EraseEnrolledFaceByID(const uint8_t* buff, size_t len);
+  explicit EraseEnrolledFaceByID(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const EraseEnrolledFaceByID& other) const;
+  bool operator!=(const EraseEnrolledFaceByID& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(faceID);
+  }
+};
+
+extern const char* EraseEnrolledFaceByIDVersionHashStr;
+extern const uint8_t EraseEnrolledFaceByIDVersionHash[16];
+
+// MESSAGE EraseAllEnrolledFaces
+struct EraseAllEnrolledFaces
+{
+  
+  /**** Constructors ****/
+  EraseAllEnrolledFaces() = default;
+  EraseAllEnrolledFaces(const EraseAllEnrolledFaces& other) = default;
+  EraseAllEnrolledFaces(EraseAllEnrolledFaces& other) = default;
+  EraseAllEnrolledFaces(EraseAllEnrolledFaces&& other) noexcept = default;
+  EraseAllEnrolledFaces& operator=(const EraseAllEnrolledFaces& other) = default;
+  EraseAllEnrolledFaces& operator=(EraseAllEnrolledFaces&& other) = default;
+  
+  explicit EraseAllEnrolledFaces(const uint8_t* buff, size_t len);
+  explicit EraseAllEnrolledFaces(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const EraseAllEnrolledFaces& other) const;
+  bool operator!=(const EraseAllEnrolledFaces& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func();
+  }
+};
+
+extern const char* EraseAllEnrolledFacesVersionHashStr;
+extern const uint8_t EraseAllEnrolledFacesVersionHash[16];
+
+// MESSAGE SetFaceToEnroll
+struct SetFaceToEnroll
+{
+  std::string name;
+  int32_t observedID = 0;
+  int32_t saveID = 0;
+  bool saveToRobot = 1;
+  bool sayName = 0;
+  bool useMusic = 0;
+  
+  /**** Constructors ****/
+  SetFaceToEnroll() = default;
+  SetFaceToEnroll(const SetFaceToEnroll& other) = default;
+  SetFaceToEnroll(SetFaceToEnroll& other) = default;
+  SetFaceToEnroll(SetFaceToEnroll&& other) noexcept = default;
+  SetFaceToEnroll& operator=(const SetFaceToEnroll& other) = default;
+  SetFaceToEnroll& operator=(SetFaceToEnroll&& other) = default;
+  
+  explicit SetFaceToEnroll(const std::string& name,
+    int32_t observedID,
+    int32_t saveID,
+    bool saveToRobot,
+    bool sayName,
+    bool useMusic)
+  : name(name)
+  , observedID(observedID)
+  , saveID(saveID)
+  , saveToRobot(saveToRobot)
+  , sayName(sayName)
+  , useMusic(useMusic)
+  {}
+  
+  explicit SetFaceToEnroll(const uint8_t* buff, size_t len);
+  explicit SetFaceToEnroll(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const SetFaceToEnroll& other) const;
+  bool operator!=(const SetFaceToEnroll& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(name, observedID, saveID, saveToRobot, sayName, useMusic);
+  }
+};
+
+extern const char* SetFaceToEnrollVersionHashStr;
+extern const uint8_t SetFaceToEnrollVersionHash[16];
 
 // "Lookup Tables" for getting type by tag using template specializations
 template<MeetVictorTag tag>
@@ -2664,35 +3721,55 @@ struct MeetVictor_TagToType;
 
 template<>
 struct MeetVictor_TagToType<MeetVictorTag::Error> {
-  using type = Anki::Victor::ExternalComms::Error;
+  using type = Anki::Cozmo::ExternalComms::Error;
 };
 template<>
-struct MeetVictor_TagToType<MeetVictorTag::MeetVictorRequest> {
-  using type = Anki::Victor::ExternalComms::MeetVictorRequest;
+struct MeetVictor_TagToType<MeetVictorTag::AppIntent> {
+  using type = Anki::Cozmo::ExternalComms::AppIntent;
 };
 template<>
-struct MeetVictor_TagToType<MeetVictorTag::MeetVictorReadyResponse> {
-  using type = Anki::Victor::ExternalComms::MeetVictorReadyResponse;
+struct MeetVictor_TagToType<MeetVictorTag::MeetVictorStarted> {
+  using type = Anki::Cozmo::ExternalComms::MeetVictorStarted;
 };
 template<>
 struct MeetVictor_TagToType<MeetVictorTag::MeetVictorFaceScanStarted> {
-  using type = Anki::Victor::ExternalComms::MeetVictorFaceScanStarted;
+  using type = Anki::Cozmo::ExternalComms::MeetVictorFaceScanStarted;
 };
 template<>
 struct MeetVictor_TagToType<MeetVictorTag::MeetVictorFaceScanComplete> {
-  using type = Anki::Victor::ExternalComms::MeetVictorFaceScanComplete;
+  using type = Anki::Cozmo::ExternalComms::MeetVictorFaceScanComplete;
 };
 template<>
-struct MeetVictor_TagToType<MeetVictorTag::MeetVictorSetUserName> {
-  using type = Anki::Victor::ExternalComms::MeetVictorSetUserName;
+struct MeetVictor_TagToType<MeetVictorTag::FaceEnrollmentCompleted> {
+  using type = Anki::Cozmo::ExternalComms::FaceEnrollmentCompleted;
 };
 template<>
-struct MeetVictor_TagToType<MeetVictorTag::MeetVictorComplete> {
-  using type = Anki::Victor::ExternalComms::MeetVictorComplete;
+struct MeetVictor_TagToType<MeetVictorTag::CancelFaceEnrollment> {
+  using type = Anki::Cozmo::ExternalComms::CancelFaceEnrollment;
 };
 template<>
-struct MeetVictor_TagToType<MeetVictorTag::MeetVictorError> {
-  using type = Anki::Victor::ExternalComms::MeetVictorError;
+struct MeetVictor_TagToType<MeetVictorTag::RequestEnrolledNames> {
+  using type = Anki::Cozmo::ExternalComms::RequestEnrolledNames;
+};
+template<>
+struct MeetVictor_TagToType<MeetVictorTag::EnrolledNamesResponse> {
+  using type = Anki::Cozmo::ExternalComms::EnrolledNamesResponse;
+};
+template<>
+struct MeetVictor_TagToType<MeetVictorTag::UpdateEnrolledFaceByID> {
+  using type = Anki::Cozmo::ExternalComms::UpdateEnrolledFaceByID;
+};
+template<>
+struct MeetVictor_TagToType<MeetVictorTag::EraseEnrolledFaceByID> {
+  using type = Anki::Cozmo::ExternalComms::EraseEnrolledFaceByID;
+};
+template<>
+struct MeetVictor_TagToType<MeetVictorTag::EraseAllEnrolledFaces> {
+  using type = Anki::Cozmo::ExternalComms::EraseAllEnrolledFaces;
+};
+template<>
+struct MeetVictor_TagToType<MeetVictorTag::SetFaceToEnroll> {
+  using type = Anki::Cozmo::ExternalComms::SetFaceToEnroll;
 };
 
 // UNION MeetVictor
@@ -2722,60 +3799,95 @@ public:
   static MeetVictor Create_(typename MeetVictor_TagToType<tag>::type member);
   
   /** Error **/
-  static MeetVictor CreateError(Anki::Victor::ExternalComms::Error&& new_Error);
-  explicit MeetVictor(Anki::Victor::ExternalComms::Error&& new_Error);
-  const Anki::Victor::ExternalComms::Error& Get_Error() const;
-  void Set_Error(const Anki::Victor::ExternalComms::Error& new_Error);
-  void Set_Error(Anki::Victor::ExternalComms::Error&& new_Error);
+  static MeetVictor CreateError(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  explicit MeetVictor(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  const Anki::Cozmo::ExternalComms::Error& Get_Error() const;
+  void Set_Error(const Anki::Cozmo::ExternalComms::Error& new_Error);
+  void Set_Error(Anki::Cozmo::ExternalComms::Error&& new_Error);
   
-  /** MeetVictorRequest **/
-  static MeetVictor CreateMeetVictorRequest(Anki::Victor::ExternalComms::MeetVictorRequest&& new_MeetVictorRequest);
-  explicit MeetVictor(Anki::Victor::ExternalComms::MeetVictorRequest&& new_MeetVictorRequest);
-  const Anki::Victor::ExternalComms::MeetVictorRequest& Get_MeetVictorRequest() const;
-  void Set_MeetVictorRequest(const Anki::Victor::ExternalComms::MeetVictorRequest& new_MeetVictorRequest);
-  void Set_MeetVictorRequest(Anki::Victor::ExternalComms::MeetVictorRequest&& new_MeetVictorRequest);
+  /** AppIntent **/
+  static MeetVictor CreateAppIntent(Anki::Cozmo::ExternalComms::AppIntent&& new_AppIntent);
+  explicit MeetVictor(Anki::Cozmo::ExternalComms::AppIntent&& new_AppIntent);
+  const Anki::Cozmo::ExternalComms::AppIntent& Get_AppIntent() const;
+  void Set_AppIntent(const Anki::Cozmo::ExternalComms::AppIntent& new_AppIntent);
+  void Set_AppIntent(Anki::Cozmo::ExternalComms::AppIntent&& new_AppIntent);
   
-  /** MeetVictorReadyResponse **/
-  static MeetVictor CreateMeetVictorReadyResponse(Anki::Victor::ExternalComms::MeetVictorReadyResponse&& new_MeetVictorReadyResponse);
-  explicit MeetVictor(Anki::Victor::ExternalComms::MeetVictorReadyResponse&& new_MeetVictorReadyResponse);
-  const Anki::Victor::ExternalComms::MeetVictorReadyResponse& Get_MeetVictorReadyResponse() const;
-  void Set_MeetVictorReadyResponse(const Anki::Victor::ExternalComms::MeetVictorReadyResponse& new_MeetVictorReadyResponse);
-  void Set_MeetVictorReadyResponse(Anki::Victor::ExternalComms::MeetVictorReadyResponse&& new_MeetVictorReadyResponse);
+  /** MeetVictorStarted **/
+  static MeetVictor CreateMeetVictorStarted(Anki::Cozmo::ExternalComms::MeetVictorStarted&& new_MeetVictorStarted);
+  explicit MeetVictor(Anki::Cozmo::ExternalComms::MeetVictorStarted&& new_MeetVictorStarted);
+  const Anki::Cozmo::ExternalComms::MeetVictorStarted& Get_MeetVictorStarted() const;
+  void Set_MeetVictorStarted(const Anki::Cozmo::ExternalComms::MeetVictorStarted& new_MeetVictorStarted);
+  void Set_MeetVictorStarted(Anki::Cozmo::ExternalComms::MeetVictorStarted&& new_MeetVictorStarted);
   
   /** MeetVictorFaceScanStarted **/
-  static MeetVictor CreateMeetVictorFaceScanStarted(Anki::Victor::ExternalComms::MeetVictorFaceScanStarted&& new_MeetVictorFaceScanStarted);
-  explicit MeetVictor(Anki::Victor::ExternalComms::MeetVictorFaceScanStarted&& new_MeetVictorFaceScanStarted);
-  const Anki::Victor::ExternalComms::MeetVictorFaceScanStarted& Get_MeetVictorFaceScanStarted() const;
-  void Set_MeetVictorFaceScanStarted(const Anki::Victor::ExternalComms::MeetVictorFaceScanStarted& new_MeetVictorFaceScanStarted);
-  void Set_MeetVictorFaceScanStarted(Anki::Victor::ExternalComms::MeetVictorFaceScanStarted&& new_MeetVictorFaceScanStarted);
+  static MeetVictor CreateMeetVictorFaceScanStarted(Anki::Cozmo::ExternalComms::MeetVictorFaceScanStarted&& new_MeetVictorFaceScanStarted);
+  explicit MeetVictor(Anki::Cozmo::ExternalComms::MeetVictorFaceScanStarted&& new_MeetVictorFaceScanStarted);
+  const Anki::Cozmo::ExternalComms::MeetVictorFaceScanStarted& Get_MeetVictorFaceScanStarted() const;
+  void Set_MeetVictorFaceScanStarted(const Anki::Cozmo::ExternalComms::MeetVictorFaceScanStarted& new_MeetVictorFaceScanStarted);
+  void Set_MeetVictorFaceScanStarted(Anki::Cozmo::ExternalComms::MeetVictorFaceScanStarted&& new_MeetVictorFaceScanStarted);
   
   /** MeetVictorFaceScanComplete **/
-  static MeetVictor CreateMeetVictorFaceScanComplete(Anki::Victor::ExternalComms::MeetVictorFaceScanComplete&& new_MeetVictorFaceScanComplete);
-  explicit MeetVictor(Anki::Victor::ExternalComms::MeetVictorFaceScanComplete&& new_MeetVictorFaceScanComplete);
-  const Anki::Victor::ExternalComms::MeetVictorFaceScanComplete& Get_MeetVictorFaceScanComplete() const;
-  void Set_MeetVictorFaceScanComplete(const Anki::Victor::ExternalComms::MeetVictorFaceScanComplete& new_MeetVictorFaceScanComplete);
-  void Set_MeetVictorFaceScanComplete(Anki::Victor::ExternalComms::MeetVictorFaceScanComplete&& new_MeetVictorFaceScanComplete);
+  static MeetVictor CreateMeetVictorFaceScanComplete(Anki::Cozmo::ExternalComms::MeetVictorFaceScanComplete&& new_MeetVictorFaceScanComplete);
+  explicit MeetVictor(Anki::Cozmo::ExternalComms::MeetVictorFaceScanComplete&& new_MeetVictorFaceScanComplete);
+  const Anki::Cozmo::ExternalComms::MeetVictorFaceScanComplete& Get_MeetVictorFaceScanComplete() const;
+  void Set_MeetVictorFaceScanComplete(const Anki::Cozmo::ExternalComms::MeetVictorFaceScanComplete& new_MeetVictorFaceScanComplete);
+  void Set_MeetVictorFaceScanComplete(Anki::Cozmo::ExternalComms::MeetVictorFaceScanComplete&& new_MeetVictorFaceScanComplete);
   
-  /** MeetVictorSetUserName **/
-  static MeetVictor CreateMeetVictorSetUserName(Anki::Victor::ExternalComms::MeetVictorSetUserName&& new_MeetVictorSetUserName);
-  explicit MeetVictor(Anki::Victor::ExternalComms::MeetVictorSetUserName&& new_MeetVictorSetUserName);
-  const Anki::Victor::ExternalComms::MeetVictorSetUserName& Get_MeetVictorSetUserName() const;
-  void Set_MeetVictorSetUserName(const Anki::Victor::ExternalComms::MeetVictorSetUserName& new_MeetVictorSetUserName);
-  void Set_MeetVictorSetUserName(Anki::Victor::ExternalComms::MeetVictorSetUserName&& new_MeetVictorSetUserName);
+  /** FaceEnrollmentCompleted **/
+  static MeetVictor CreateFaceEnrollmentCompleted(Anki::Cozmo::ExternalComms::FaceEnrollmentCompleted&& new_FaceEnrollmentCompleted);
+  explicit MeetVictor(Anki::Cozmo::ExternalComms::FaceEnrollmentCompleted&& new_FaceEnrollmentCompleted);
+  const Anki::Cozmo::ExternalComms::FaceEnrollmentCompleted& Get_FaceEnrollmentCompleted() const;
+  void Set_FaceEnrollmentCompleted(const Anki::Cozmo::ExternalComms::FaceEnrollmentCompleted& new_FaceEnrollmentCompleted);
+  void Set_FaceEnrollmentCompleted(Anki::Cozmo::ExternalComms::FaceEnrollmentCompleted&& new_FaceEnrollmentCompleted);
   
-  /** MeetVictorComplete **/
-  static MeetVictor CreateMeetVictorComplete(Anki::Victor::ExternalComms::MeetVictorComplete&& new_MeetVictorComplete);
-  explicit MeetVictor(Anki::Victor::ExternalComms::MeetVictorComplete&& new_MeetVictorComplete);
-  const Anki::Victor::ExternalComms::MeetVictorComplete& Get_MeetVictorComplete() const;
-  void Set_MeetVictorComplete(const Anki::Victor::ExternalComms::MeetVictorComplete& new_MeetVictorComplete);
-  void Set_MeetVictorComplete(Anki::Victor::ExternalComms::MeetVictorComplete&& new_MeetVictorComplete);
+  /** CancelFaceEnrollment **/
+  static MeetVictor CreateCancelFaceEnrollment(Anki::Cozmo::ExternalComms::CancelFaceEnrollment&& new_CancelFaceEnrollment);
+  explicit MeetVictor(Anki::Cozmo::ExternalComms::CancelFaceEnrollment&& new_CancelFaceEnrollment);
+  const Anki::Cozmo::ExternalComms::CancelFaceEnrollment& Get_CancelFaceEnrollment() const;
+  void Set_CancelFaceEnrollment(const Anki::Cozmo::ExternalComms::CancelFaceEnrollment& new_CancelFaceEnrollment);
+  void Set_CancelFaceEnrollment(Anki::Cozmo::ExternalComms::CancelFaceEnrollment&& new_CancelFaceEnrollment);
   
-  /** MeetVictorError **/
-  static MeetVictor CreateMeetVictorError(Anki::Victor::ExternalComms::MeetVictorError&& new_MeetVictorError);
-  explicit MeetVictor(Anki::Victor::ExternalComms::MeetVictorError&& new_MeetVictorError);
-  const Anki::Victor::ExternalComms::MeetVictorError& Get_MeetVictorError() const;
-  void Set_MeetVictorError(const Anki::Victor::ExternalComms::MeetVictorError& new_MeetVictorError);
-  void Set_MeetVictorError(Anki::Victor::ExternalComms::MeetVictorError&& new_MeetVictorError);
+  /** RequestEnrolledNames **/
+  static MeetVictor CreateRequestEnrolledNames(Anki::Cozmo::ExternalComms::RequestEnrolledNames&& new_RequestEnrolledNames);
+  explicit MeetVictor(Anki::Cozmo::ExternalComms::RequestEnrolledNames&& new_RequestEnrolledNames);
+  const Anki::Cozmo::ExternalComms::RequestEnrolledNames& Get_RequestEnrolledNames() const;
+  void Set_RequestEnrolledNames(const Anki::Cozmo::ExternalComms::RequestEnrolledNames& new_RequestEnrolledNames);
+  void Set_RequestEnrolledNames(Anki::Cozmo::ExternalComms::RequestEnrolledNames&& new_RequestEnrolledNames);
+  
+  /** EnrolledNamesResponse **/
+  static MeetVictor CreateEnrolledNamesResponse(Anki::Cozmo::ExternalComms::EnrolledNamesResponse&& new_EnrolledNamesResponse);
+  explicit MeetVictor(Anki::Cozmo::ExternalComms::EnrolledNamesResponse&& new_EnrolledNamesResponse);
+  const Anki::Cozmo::ExternalComms::EnrolledNamesResponse& Get_EnrolledNamesResponse() const;
+  void Set_EnrolledNamesResponse(const Anki::Cozmo::ExternalComms::EnrolledNamesResponse& new_EnrolledNamesResponse);
+  void Set_EnrolledNamesResponse(Anki::Cozmo::ExternalComms::EnrolledNamesResponse&& new_EnrolledNamesResponse);
+  
+  /** UpdateEnrolledFaceByID **/
+  static MeetVictor CreateUpdateEnrolledFaceByID(Anki::Cozmo::ExternalComms::UpdateEnrolledFaceByID&& new_UpdateEnrolledFaceByID);
+  explicit MeetVictor(Anki::Cozmo::ExternalComms::UpdateEnrolledFaceByID&& new_UpdateEnrolledFaceByID);
+  const Anki::Cozmo::ExternalComms::UpdateEnrolledFaceByID& Get_UpdateEnrolledFaceByID() const;
+  void Set_UpdateEnrolledFaceByID(const Anki::Cozmo::ExternalComms::UpdateEnrolledFaceByID& new_UpdateEnrolledFaceByID);
+  void Set_UpdateEnrolledFaceByID(Anki::Cozmo::ExternalComms::UpdateEnrolledFaceByID&& new_UpdateEnrolledFaceByID);
+  
+  /** EraseEnrolledFaceByID **/
+  static MeetVictor CreateEraseEnrolledFaceByID(Anki::Cozmo::ExternalComms::EraseEnrolledFaceByID&& new_EraseEnrolledFaceByID);
+  explicit MeetVictor(Anki::Cozmo::ExternalComms::EraseEnrolledFaceByID&& new_EraseEnrolledFaceByID);
+  const Anki::Cozmo::ExternalComms::EraseEnrolledFaceByID& Get_EraseEnrolledFaceByID() const;
+  void Set_EraseEnrolledFaceByID(const Anki::Cozmo::ExternalComms::EraseEnrolledFaceByID& new_EraseEnrolledFaceByID);
+  void Set_EraseEnrolledFaceByID(Anki::Cozmo::ExternalComms::EraseEnrolledFaceByID&& new_EraseEnrolledFaceByID);
+  
+  /** EraseAllEnrolledFaces **/
+  static MeetVictor CreateEraseAllEnrolledFaces(Anki::Cozmo::ExternalComms::EraseAllEnrolledFaces&& new_EraseAllEnrolledFaces);
+  explicit MeetVictor(Anki::Cozmo::ExternalComms::EraseAllEnrolledFaces&& new_EraseAllEnrolledFaces);
+  const Anki::Cozmo::ExternalComms::EraseAllEnrolledFaces& Get_EraseAllEnrolledFaces() const;
+  void Set_EraseAllEnrolledFaces(const Anki::Cozmo::ExternalComms::EraseAllEnrolledFaces& new_EraseAllEnrolledFaces);
+  void Set_EraseAllEnrolledFaces(Anki::Cozmo::ExternalComms::EraseAllEnrolledFaces&& new_EraseAllEnrolledFaces);
+  
+  /** SetFaceToEnroll **/
+  static MeetVictor CreateSetFaceToEnroll(Anki::Cozmo::ExternalComms::SetFaceToEnroll&& new_SetFaceToEnroll);
+  explicit MeetVictor(Anki::Cozmo::ExternalComms::SetFaceToEnroll&& new_SetFaceToEnroll);
+  const Anki::Cozmo::ExternalComms::SetFaceToEnroll& Get_SetFaceToEnroll() const;
+  void Set_SetFaceToEnroll(const Anki::Cozmo::ExternalComms::SetFaceToEnroll& new_SetFaceToEnroll);
+  void Set_SetFaceToEnroll(Anki::Cozmo::ExternalComms::SetFaceToEnroll&& new_SetFaceToEnroll);
   
   size_t Unpack(const uint8_t* buff, const size_t len);
   size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
@@ -2792,18 +3904,1384 @@ private:
   Tag _tag;
   
   union {
-    Anki::Victor::ExternalComms::Error _Error;
-    Anki::Victor::ExternalComms::MeetVictorRequest _MeetVictorRequest;
-    Anki::Victor::ExternalComms::MeetVictorReadyResponse _MeetVictorReadyResponse;
-    Anki::Victor::ExternalComms::MeetVictorFaceScanStarted _MeetVictorFaceScanStarted;
-    Anki::Victor::ExternalComms::MeetVictorFaceScanComplete _MeetVictorFaceScanComplete;
-    Anki::Victor::ExternalComms::MeetVictorSetUserName _MeetVictorSetUserName;
-    Anki::Victor::ExternalComms::MeetVictorComplete _MeetVictorComplete;
-    Anki::Victor::ExternalComms::MeetVictorError _MeetVictorError;
+    Anki::Cozmo::ExternalComms::Error _Error;
+    Anki::Cozmo::ExternalComms::AppIntent _AppIntent;
+    Anki::Cozmo::ExternalComms::MeetVictorStarted _MeetVictorStarted;
+    Anki::Cozmo::ExternalComms::MeetVictorFaceScanStarted _MeetVictorFaceScanStarted;
+    Anki::Cozmo::ExternalComms::MeetVictorFaceScanComplete _MeetVictorFaceScanComplete;
+    Anki::Cozmo::ExternalComms::FaceEnrollmentCompleted _FaceEnrollmentCompleted;
+    Anki::Cozmo::ExternalComms::CancelFaceEnrollment _CancelFaceEnrollment;
+    Anki::Cozmo::ExternalComms::RequestEnrolledNames _RequestEnrolledNames;
+    Anki::Cozmo::ExternalComms::EnrolledNamesResponse _EnrolledNamesResponse;
+    Anki::Cozmo::ExternalComms::UpdateEnrolledFaceByID _UpdateEnrolledFaceByID;
+    Anki::Cozmo::ExternalComms::EraseEnrolledFaceByID _EraseEnrolledFaceByID;
+    Anki::Cozmo::ExternalComms::EraseAllEnrolledFaces _EraseAllEnrolledFaces;
+    Anki::Cozmo::ExternalComms::SetFaceToEnroll _SetFaceToEnroll;
   };
 };
 extern const char* MeetVictorVersionHashStr;
 extern const uint8_t MeetVictorVersionHash[16];
+
+// MESSAGE DriveWheels
+struct DriveWheels
+{
+  float lwheel_speed_mmps;
+  float rwheel_speed_mmps;
+  float lwheel_accel_mmps2 = 0.0;
+  float rwheel_accel_mmps2 = 0.0;
+  
+  /**** Constructors ****/
+  DriveWheels() = default;
+  DriveWheels(const DriveWheels& other) = default;
+  DriveWheels(DriveWheels& other) = default;
+  DriveWheels(DriveWheels&& other) noexcept = default;
+  DriveWheels& operator=(const DriveWheels& other) = default;
+  DriveWheels& operator=(DriveWheels&& other) = default;
+  
+  explicit DriveWheels(float lwheel_speed_mmps,
+    float rwheel_speed_mmps,
+    float lwheel_accel_mmps2,
+    float rwheel_accel_mmps2)
+  : lwheel_speed_mmps(lwheel_speed_mmps)
+  , rwheel_speed_mmps(rwheel_speed_mmps)
+  , lwheel_accel_mmps2(lwheel_accel_mmps2)
+  , rwheel_accel_mmps2(rwheel_accel_mmps2)
+  {}
+  
+  explicit DriveWheels(const uint8_t* buff, size_t len);
+  explicit DriveWheels(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const DriveWheels& other) const;
+  bool operator!=(const DriveWheels& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(lwheel_speed_mmps, rwheel_speed_mmps, lwheel_accel_mmps2, rwheel_accel_mmps2);
+  }
+};
+
+extern const char* DriveWheelsVersionHashStr;
+extern const uint8_t DriveWheelsVersionHash[16];
+
+// MESSAGE DriveArc
+struct DriveArc
+{
+  float speed;
+  float accel;
+  int16_t curvatureRadius_mm;
+  
+  /**** Constructors ****/
+  DriveArc() = default;
+  DriveArc(const DriveArc& other) = default;
+  DriveArc(DriveArc& other) = default;
+  DriveArc(DriveArc&& other) noexcept = default;
+  DriveArc& operator=(const DriveArc& other) = default;
+  DriveArc& operator=(DriveArc&& other) = default;
+  
+  explicit DriveArc(float speed,
+    float accel,
+    int16_t curvatureRadius_mm)
+  : speed(speed)
+  , accel(accel)
+  , curvatureRadius_mm(curvatureRadius_mm)
+  {}
+  
+  explicit DriveArc(const uint8_t* buff, size_t len);
+  explicit DriveArc(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const DriveArc& other) const;
+  bool operator!=(const DriveArc& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(speed, accel, curvatureRadius_mm);
+  }
+};
+
+extern const char* DriveArcVersionHashStr;
+extern const uint8_t DriveArcVersionHash[16];
+
+// MESSAGE MoveHead
+struct MoveHead
+{
+  float speed_rad_per_sec;
+  
+  /**** Constructors ****/
+  MoveHead() = default;
+  MoveHead(const MoveHead& other) = default;
+  MoveHead(MoveHead& other) = default;
+  MoveHead(MoveHead&& other) noexcept = default;
+  MoveHead& operator=(const MoveHead& other) = default;
+  MoveHead& operator=(MoveHead&& other) = default;
+  
+  explicit MoveHead(float speed_rad_per_sec)
+  : speed_rad_per_sec(speed_rad_per_sec)
+  {}
+  
+  explicit MoveHead(const uint8_t* buff, size_t len);
+  explicit MoveHead(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const MoveHead& other) const;
+  bool operator!=(const MoveHead& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(speed_rad_per_sec);
+  }
+};
+
+extern const char* MoveHeadVersionHashStr;
+extern const uint8_t MoveHeadVersionHash[16];
+
+// MESSAGE MoveLift
+struct MoveLift
+{
+  float speed_rad_per_sec;
+  
+  /**** Constructors ****/
+  MoveLift() = default;
+  MoveLift(const MoveLift& other) = default;
+  MoveLift(MoveLift& other) = default;
+  MoveLift(MoveLift&& other) noexcept = default;
+  MoveLift& operator=(const MoveLift& other) = default;
+  MoveLift& operator=(MoveLift&& other) = default;
+  
+  explicit MoveLift(float speed_rad_per_sec)
+  : speed_rad_per_sec(speed_rad_per_sec)
+  {}
+  
+  explicit MoveLift(const uint8_t* buff, size_t len);
+  explicit MoveLift(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const MoveLift& other) const;
+  bool operator!=(const MoveLift& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(speed_rad_per_sec);
+  }
+};
+
+extern const char* MoveLiftVersionHashStr;
+extern const uint8_t MoveLiftVersionHash[16];
+
+// "Lookup Tables" for getting type by tag using template specializations
+template<MotorControlTag tag>
+struct MotorControl_TagToType;
+
+template<>
+struct MotorControl_TagToType<MotorControlTag::Error> {
+  using type = Anki::Cozmo::ExternalComms::Error;
+};
+template<>
+struct MotorControl_TagToType<MotorControlTag::DriveWheels> {
+  using type = Anki::Cozmo::ExternalComms::DriveWheels;
+};
+template<>
+struct MotorControl_TagToType<MotorControlTag::DriveArc> {
+  using type = Anki::Cozmo::ExternalComms::DriveArc;
+};
+template<>
+struct MotorControl_TagToType<MotorControlTag::MoveHead> {
+  using type = Anki::Cozmo::ExternalComms::MoveHead;
+};
+template<>
+struct MotorControl_TagToType<MotorControlTag::MoveLift> {
+  using type = Anki::Cozmo::ExternalComms::MoveLift;
+};
+
+// UNION MotorControl
+class MotorControl
+{
+public:
+  using Tag = MotorControlTag;
+  /**** Constructors ****/
+  MotorControl() :_tag(Tag::INVALID) { }
+  explicit MotorControl(const CLAD::SafeMessageBuffer& buff);
+  explicit MotorControl(const uint8_t* buffer, size_t length);
+  MotorControl(const MotorControl& other);
+  MotorControl(MotorControl&& other) noexcept;
+  MotorControl& operator=(const MotorControl& other);
+  MotorControl& operator=(MotorControl&& other) noexcept;
+  
+  ~MotorControl() { ClearCurrent(); }
+  Tag GetTag() const { return _tag; }
+  
+  // Templated getter for union members by type
+  // NOTE: Always returns a reference, even for trivial types, unlike untemplated version
+  template<Tag tag>
+  const typename MotorControl_TagToType<tag>::type & Get_() const;
+  
+  // Templated creator for making a union object out of one if its members
+  template <Tag tag>
+  static MotorControl Create_(typename MotorControl_TagToType<tag>::type member);
+  
+  /** Error **/
+  static MotorControl CreateError(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  explicit MotorControl(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  const Anki::Cozmo::ExternalComms::Error& Get_Error() const;
+  void Set_Error(const Anki::Cozmo::ExternalComms::Error& new_Error);
+  void Set_Error(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  
+  /** DriveWheels **/
+  static MotorControl CreateDriveWheels(Anki::Cozmo::ExternalComms::DriveWheels&& new_DriveWheels);
+  explicit MotorControl(Anki::Cozmo::ExternalComms::DriveWheels&& new_DriveWheels);
+  const Anki::Cozmo::ExternalComms::DriveWheels& Get_DriveWheels() const;
+  void Set_DriveWheels(const Anki::Cozmo::ExternalComms::DriveWheels& new_DriveWheels);
+  void Set_DriveWheels(Anki::Cozmo::ExternalComms::DriveWheels&& new_DriveWheels);
+  
+  /** DriveArc **/
+  static MotorControl CreateDriveArc(Anki::Cozmo::ExternalComms::DriveArc&& new_DriveArc);
+  explicit MotorControl(Anki::Cozmo::ExternalComms::DriveArc&& new_DriveArc);
+  const Anki::Cozmo::ExternalComms::DriveArc& Get_DriveArc() const;
+  void Set_DriveArc(const Anki::Cozmo::ExternalComms::DriveArc& new_DriveArc);
+  void Set_DriveArc(Anki::Cozmo::ExternalComms::DriveArc&& new_DriveArc);
+  
+  /** MoveHead **/
+  static MotorControl CreateMoveHead(Anki::Cozmo::ExternalComms::MoveHead&& new_MoveHead);
+  explicit MotorControl(Anki::Cozmo::ExternalComms::MoveHead&& new_MoveHead);
+  const Anki::Cozmo::ExternalComms::MoveHead& Get_MoveHead() const;
+  void Set_MoveHead(const Anki::Cozmo::ExternalComms::MoveHead& new_MoveHead);
+  void Set_MoveHead(Anki::Cozmo::ExternalComms::MoveHead&& new_MoveHead);
+  
+  /** MoveLift **/
+  static MotorControl CreateMoveLift(Anki::Cozmo::ExternalComms::MoveLift&& new_MoveLift);
+  explicit MotorControl(Anki::Cozmo::ExternalComms::MoveLift&& new_MoveLift);
+  const Anki::Cozmo::ExternalComms::MoveLift& Get_MoveLift() const;
+  void Set_MoveLift(const Anki::Cozmo::ExternalComms::MoveLift& new_MoveLift);
+  void Set_MoveLift(Anki::Cozmo::ExternalComms::MoveLift&& new_MoveLift);
+  
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  size_t Size() const;
+  
+  bool operator==(const MotorControl& other) const;
+  bool operator!=(const MotorControl& other) const;
+private:
+  void ClearCurrent();
+  Tag _tag;
+  
+  union {
+    Anki::Cozmo::ExternalComms::Error _Error;
+    Anki::Cozmo::ExternalComms::DriveWheels _DriveWheels;
+    Anki::Cozmo::ExternalComms::DriveArc _DriveArc;
+    Anki::Cozmo::ExternalComms::MoveHead _MoveHead;
+    Anki::Cozmo::ExternalComms::MoveLift _MoveLift;
+  };
+};
+extern const char* MotorControlVersionHashStr;
+extern const uint8_t MotorControlVersionHash[16];
+
+// MESSAGE PlayAnimation
+struct PlayAnimation
+{
+  uint32_t numLoops;
+  std::string animationName;
+  bool ignoreBodyTrack = 0;
+  bool ignoreHeadTrack = 0;
+  bool ignoreLiftTrack = 0;
+  
+  /**** Constructors ****/
+  PlayAnimation() = default;
+  PlayAnimation(const PlayAnimation& other) = default;
+  PlayAnimation(PlayAnimation& other) = default;
+  PlayAnimation(PlayAnimation&& other) noexcept = default;
+  PlayAnimation& operator=(const PlayAnimation& other) = default;
+  PlayAnimation& operator=(PlayAnimation&& other) = default;
+  
+  explicit PlayAnimation(uint32_t numLoops,
+    const std::string& animationName,
+    bool ignoreBodyTrack,
+    bool ignoreHeadTrack,
+    bool ignoreLiftTrack)
+  : numLoops(numLoops)
+  , animationName(animationName)
+  , ignoreBodyTrack(ignoreBodyTrack)
+  , ignoreHeadTrack(ignoreHeadTrack)
+  , ignoreLiftTrack(ignoreLiftTrack)
+  {}
+  
+  explicit PlayAnimation(const uint8_t* buff, size_t len);
+  explicit PlayAnimation(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const PlayAnimation& other) const;
+  bool operator!=(const PlayAnimation& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(numLoops, animationName, ignoreBodyTrack, ignoreHeadTrack, ignoreLiftTrack);
+  }
+};
+
+extern const char* PlayAnimationVersionHashStr;
+extern const uint8_t PlayAnimationVersionHash[16];
+
+// MESSAGE RequestAvailableAnimations
+struct RequestAvailableAnimations
+{
+  
+  /**** Constructors ****/
+  RequestAvailableAnimations() = default;
+  RequestAvailableAnimations(const RequestAvailableAnimations& other) = default;
+  RequestAvailableAnimations(RequestAvailableAnimations& other) = default;
+  RequestAvailableAnimations(RequestAvailableAnimations&& other) noexcept = default;
+  RequestAvailableAnimations& operator=(const RequestAvailableAnimations& other) = default;
+  RequestAvailableAnimations& operator=(RequestAvailableAnimations&& other) = default;
+  
+  explicit RequestAvailableAnimations(const uint8_t* buff, size_t len);
+  explicit RequestAvailableAnimations(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RequestAvailableAnimations& other) const;
+  bool operator!=(const RequestAvailableAnimations& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func();
+  }
+};
+
+extern const char* RequestAvailableAnimationsVersionHashStr;
+extern const uint8_t RequestAvailableAnimationsVersionHash[16];
+
+// MESSAGE AnimationAvailable
+struct AnimationAvailable
+{
+  std::string animName;
+  
+  /**** Constructors ****/
+  AnimationAvailable() = default;
+  AnimationAvailable(const AnimationAvailable& other) = default;
+  AnimationAvailable(AnimationAvailable& other) = default;
+  AnimationAvailable(AnimationAvailable&& other) noexcept = default;
+  AnimationAvailable& operator=(const AnimationAvailable& other) = default;
+  AnimationAvailable& operator=(AnimationAvailable&& other) = default;
+  
+  explicit AnimationAvailable(const std::string& animName)
+  : animName(animName)
+  {}
+  
+  explicit AnimationAvailable(const uint8_t* buff, size_t len);
+  explicit AnimationAvailable(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const AnimationAvailable& other) const;
+  bool operator!=(const AnimationAvailable& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(animName);
+  }
+};
+
+extern const char* AnimationAvailableVersionHashStr;
+extern const uint8_t AnimationAvailableVersionHash[16];
+
+// MESSAGE SayText
+struct SayText
+{
+  std::string text;
+  Anki::Cozmo::AnimationTrigger playEvent;
+  Anki::Cozmo::SayTextVoiceStyleSDK voiceStyle;
+  float durationScalar = 1.0;
+  float voicePitch = 0.0;
+  bool fitToDuration;
+  
+  /**** Constructors ****/
+  SayText() = default;
+  SayText(const SayText& other) = default;
+  SayText(SayText& other) = default;
+  SayText(SayText&& other) noexcept = default;
+  SayText& operator=(const SayText& other) = default;
+  SayText& operator=(SayText&& other) = default;
+  
+  explicit SayText(const std::string& text,
+    Anki::Cozmo::AnimationTrigger playEvent,
+    Anki::Cozmo::SayTextVoiceStyleSDK voiceStyle,
+    float durationScalar,
+    float voicePitch,
+    bool fitToDuration)
+  : text(text)
+  , playEvent(playEvent)
+  , voiceStyle(voiceStyle)
+  , durationScalar(durationScalar)
+  , voicePitch(voicePitch)
+  , fitToDuration(fitToDuration)
+  {}
+  
+  explicit SayText(const uint8_t* buff, size_t len);
+  explicit SayText(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const SayText& other) const;
+  bool operator!=(const SayText& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(text, playEvent, voiceStyle, durationScalar, voicePitch, fitToDuration);
+  }
+};
+
+extern const char* SayTextVersionHashStr;
+extern const uint8_t SayTextVersionHash[16];
+
+// ENUM FileType
+enum class FileType : uint8_t {
+  Animation = 0,
+  FaceImg   = 1,
+};
+
+const char* EnumToString(const FileType m);
+inline const char* FileTypeToString(const FileType m) { return EnumToString(m); }
+
+
+extern const char* FileTypeVersionHashStr;
+extern const uint8_t FileTypeVersionHash[16];
+
+constexpr uint8_t FileTypeNumEntries = 2;
+
+// MESSAGE TransferFile
+struct TransferFile
+{
+  std::vector<uint8_t> fileBytes;
+  uint16_t filePart;
+  uint16_t numFileParts;
+  std::string filename;
+  Anki::Cozmo::ExternalComms::FileType fileType;
+  
+  /**** Constructors ****/
+  TransferFile() = default;
+  TransferFile(const TransferFile& other) = default;
+  TransferFile(TransferFile& other) = default;
+  TransferFile(TransferFile&& other) noexcept = default;
+  TransferFile& operator=(const TransferFile& other) = default;
+  TransferFile& operator=(TransferFile&& other) = default;
+  
+  explicit TransferFile(const std::vector<uint8_t>& fileBytes,
+    uint16_t filePart,
+    uint16_t numFileParts,
+    const std::string& filename,
+    Anki::Cozmo::ExternalComms::FileType fileType)
+  : fileBytes(fileBytes)
+  , filePart(filePart)
+  , numFileParts(numFileParts)
+  , filename(filename)
+  , fileType(fileType)
+  {}
+  
+  explicit TransferFile(const uint8_t* buff, size_t len);
+  explicit TransferFile(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const TransferFile& other) const;
+  bool operator!=(const TransferFile& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(fileBytes, filePart, numFileParts, filename, fileType);
+  }
+};
+
+extern const char* TransferFileVersionHashStr;
+extern const uint8_t TransferFileVersionHash[16];
+
+// "Lookup Tables" for getting type by tag using template specializations
+template<AnimationsTag tag>
+struct Animations_TagToType;
+
+template<>
+struct Animations_TagToType<AnimationsTag::PlayAnimation> {
+  using type = Anki::Cozmo::ExternalComms::PlayAnimation;
+};
+template<>
+struct Animations_TagToType<AnimationsTag::RequestAvailableAnimations> {
+  using type = Anki::Cozmo::ExternalComms::RequestAvailableAnimations;
+};
+template<>
+struct Animations_TagToType<AnimationsTag::SayText> {
+  using type = Anki::Cozmo::ExternalComms::SayText;
+};
+template<>
+struct Animations_TagToType<AnimationsTag::AnimationAvailable> {
+  using type = Anki::Cozmo::ExternalComms::AnimationAvailable;
+};
+template<>
+struct Animations_TagToType<AnimationsTag::TransferFile> {
+  using type = Anki::Cozmo::ExternalComms::TransferFile;
+};
+
+// UNION Animations
+class Animations
+{
+public:
+  using Tag = AnimationsTag;
+  /**** Constructors ****/
+  Animations() :_tag(Tag::INVALID) { }
+  explicit Animations(const CLAD::SafeMessageBuffer& buff);
+  explicit Animations(const uint8_t* buffer, size_t length);
+  Animations(const Animations& other);
+  Animations(Animations&& other) noexcept;
+  Animations& operator=(const Animations& other);
+  Animations& operator=(Animations&& other) noexcept;
+  
+  ~Animations() { ClearCurrent(); }
+  Tag GetTag() const { return _tag; }
+  
+  // Templated getter for union members by type
+  // NOTE: Always returns a reference, even for trivial types, unlike untemplated version
+  template<Tag tag>
+  const typename Animations_TagToType<tag>::type & Get_() const;
+  
+  // Templated creator for making a union object out of one if its members
+  template <Tag tag>
+  static Animations Create_(typename Animations_TagToType<tag>::type member);
+  
+  /** PlayAnimation **/
+  static Animations CreatePlayAnimation(Anki::Cozmo::ExternalComms::PlayAnimation&& new_PlayAnimation);
+  explicit Animations(Anki::Cozmo::ExternalComms::PlayAnimation&& new_PlayAnimation);
+  const Anki::Cozmo::ExternalComms::PlayAnimation& Get_PlayAnimation() const;
+  void Set_PlayAnimation(const Anki::Cozmo::ExternalComms::PlayAnimation& new_PlayAnimation);
+  void Set_PlayAnimation(Anki::Cozmo::ExternalComms::PlayAnimation&& new_PlayAnimation);
+  
+  /** RequestAvailableAnimations **/
+  static Animations CreateRequestAvailableAnimations(Anki::Cozmo::ExternalComms::RequestAvailableAnimations&& new_RequestAvailableAnimations);
+  explicit Animations(Anki::Cozmo::ExternalComms::RequestAvailableAnimations&& new_RequestAvailableAnimations);
+  const Anki::Cozmo::ExternalComms::RequestAvailableAnimations& Get_RequestAvailableAnimations() const;
+  void Set_RequestAvailableAnimations(const Anki::Cozmo::ExternalComms::RequestAvailableAnimations& new_RequestAvailableAnimations);
+  void Set_RequestAvailableAnimations(Anki::Cozmo::ExternalComms::RequestAvailableAnimations&& new_RequestAvailableAnimations);
+  
+  /** SayText **/
+  static Animations CreateSayText(Anki::Cozmo::ExternalComms::SayText&& new_SayText);
+  explicit Animations(Anki::Cozmo::ExternalComms::SayText&& new_SayText);
+  const Anki::Cozmo::ExternalComms::SayText& Get_SayText() const;
+  void Set_SayText(const Anki::Cozmo::ExternalComms::SayText& new_SayText);
+  void Set_SayText(Anki::Cozmo::ExternalComms::SayText&& new_SayText);
+  
+  /** AnimationAvailable **/
+  static Animations CreateAnimationAvailable(Anki::Cozmo::ExternalComms::AnimationAvailable&& new_AnimationAvailable);
+  explicit Animations(Anki::Cozmo::ExternalComms::AnimationAvailable&& new_AnimationAvailable);
+  const Anki::Cozmo::ExternalComms::AnimationAvailable& Get_AnimationAvailable() const;
+  void Set_AnimationAvailable(const Anki::Cozmo::ExternalComms::AnimationAvailable& new_AnimationAvailable);
+  void Set_AnimationAvailable(Anki::Cozmo::ExternalComms::AnimationAvailable&& new_AnimationAvailable);
+  
+  /** TransferFile **/
+  static Animations CreateTransferFile(Anki::Cozmo::ExternalComms::TransferFile&& new_TransferFile);
+  explicit Animations(Anki::Cozmo::ExternalComms::TransferFile&& new_TransferFile);
+  const Anki::Cozmo::ExternalComms::TransferFile& Get_TransferFile() const;
+  void Set_TransferFile(const Anki::Cozmo::ExternalComms::TransferFile& new_TransferFile);
+  void Set_TransferFile(Anki::Cozmo::ExternalComms::TransferFile&& new_TransferFile);
+  
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  size_t Size() const;
+  
+  bool operator==(const Animations& other) const;
+  bool operator!=(const Animations& other) const;
+private:
+  void ClearCurrent();
+  Tag _tag;
+  
+  union {
+    Anki::Cozmo::ExternalComms::PlayAnimation _PlayAnimation;
+    Anki::Cozmo::ExternalComms::RequestAvailableAnimations _RequestAvailableAnimations;
+    Anki::Cozmo::ExternalComms::SayText _SayText;
+    Anki::Cozmo::ExternalComms::AnimationAvailable _AnimationAvailable;
+    Anki::Cozmo::ExternalComms::TransferFile _TransferFile;
+  };
+};
+extern const char* AnimationsVersionHashStr;
+extern const uint8_t AnimationsVersionHash[16];
+
+// MESSAGE DriveOffChargerContacts
+struct DriveOffChargerContacts
+{
+  
+  /**** Constructors ****/
+  DriveOffChargerContacts() = default;
+  DriveOffChargerContacts(const DriveOffChargerContacts& other) = default;
+  DriveOffChargerContacts(DriveOffChargerContacts& other) = default;
+  DriveOffChargerContacts(DriveOffChargerContacts&& other) noexcept = default;
+  DriveOffChargerContacts& operator=(const DriveOffChargerContacts& other) = default;
+  DriveOffChargerContacts& operator=(DriveOffChargerContacts&& other) = default;
+  
+  explicit DriveOffChargerContacts(const uint8_t* buff, size_t len);
+  explicit DriveOffChargerContacts(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const DriveOffChargerContacts& other) const;
+  bool operator!=(const DriveOffChargerContacts& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func();
+  }
+};
+
+extern const char* DriveOffChargerContactsVersionHashStr;
+extern const uint8_t DriveOffChargerContactsVersionHash[16];
+
+// MESSAGE DriveStraight
+struct DriveStraight
+{
+  float speed_mmps;
+  float dist_mm;
+  bool shouldPlayAnimation = 1;
+  
+  /**** Constructors ****/
+  DriveStraight() = default;
+  DriveStraight(const DriveStraight& other) = default;
+  DriveStraight(DriveStraight& other) = default;
+  DriveStraight(DriveStraight&& other) noexcept = default;
+  DriveStraight& operator=(const DriveStraight& other) = default;
+  DriveStraight& operator=(DriveStraight&& other) = default;
+  
+  explicit DriveStraight(float speed_mmps,
+    float dist_mm,
+    bool shouldPlayAnimation)
+  : speed_mmps(speed_mmps)
+  , dist_mm(dist_mm)
+  , shouldPlayAnimation(shouldPlayAnimation)
+  {}
+  
+  explicit DriveStraight(const uint8_t* buff, size_t len);
+  explicit DriveStraight(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const DriveStraight& other) const;
+  bool operator!=(const DriveStraight& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(speed_mmps, dist_mm, shouldPlayAnimation);
+  }
+};
+
+extern const char* DriveStraightVersionHashStr;
+extern const uint8_t DriveStraightVersionHash[16];
+
+// MESSAGE TurnInPlace
+struct TurnInPlace
+{
+  float angle_rad;
+  float speed_rad_per_sec = 0.0;
+  float accel_rad_per_sec2 = 0.0;
+  float tol_rad = 0.0;
+  uint8_t isAbsolute;
+  
+  /**** Constructors ****/
+  TurnInPlace() = default;
+  TurnInPlace(const TurnInPlace& other) = default;
+  TurnInPlace(TurnInPlace& other) = default;
+  TurnInPlace(TurnInPlace&& other) noexcept = default;
+  TurnInPlace& operator=(const TurnInPlace& other) = default;
+  TurnInPlace& operator=(TurnInPlace&& other) = default;
+  
+  explicit TurnInPlace(float angle_rad,
+    float speed_rad_per_sec,
+    float accel_rad_per_sec2,
+    float tol_rad,
+    uint8_t isAbsolute)
+  : angle_rad(angle_rad)
+  , speed_rad_per_sec(speed_rad_per_sec)
+  , accel_rad_per_sec2(accel_rad_per_sec2)
+  , tol_rad(tol_rad)
+  , isAbsolute(isAbsolute)
+  {}
+  
+  explicit TurnInPlace(const uint8_t* buff, size_t len);
+  explicit TurnInPlace(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const TurnInPlace& other) const;
+  bool operator!=(const TurnInPlace& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(angle_rad, speed_rad_per_sec, accel_rad_per_sec2, tol_rad, isAbsolute);
+  }
+};
+
+extern const char* TurnInPlaceVersionHashStr;
+extern const uint8_t TurnInPlaceVersionHash[16];
+
+// MESSAGE SetHeadAngle
+struct SetHeadAngle
+{
+  float angle_rad;
+  float max_speed_rad_per_sec;
+  float accel_rad_per_sec2;
+  float duration_sec;
+  
+  /**** Constructors ****/
+  SetHeadAngle() = default;
+  SetHeadAngle(const SetHeadAngle& other) = default;
+  SetHeadAngle(SetHeadAngle& other) = default;
+  SetHeadAngle(SetHeadAngle&& other) noexcept = default;
+  SetHeadAngle& operator=(const SetHeadAngle& other) = default;
+  SetHeadAngle& operator=(SetHeadAngle&& other) = default;
+  
+  explicit SetHeadAngle(float angle_rad,
+    float max_speed_rad_per_sec,
+    float accel_rad_per_sec2,
+    float duration_sec)
+  : angle_rad(angle_rad)
+  , max_speed_rad_per_sec(max_speed_rad_per_sec)
+  , accel_rad_per_sec2(accel_rad_per_sec2)
+  , duration_sec(duration_sec)
+  {}
+  
+  explicit SetHeadAngle(const uint8_t* buff, size_t len);
+  explicit SetHeadAngle(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const SetHeadAngle& other) const;
+  bool operator!=(const SetHeadAngle& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(angle_rad, max_speed_rad_per_sec, accel_rad_per_sec2, duration_sec);
+  }
+};
+
+extern const char* SetHeadAngleVersionHashStr;
+extern const uint8_t SetHeadAngleVersionHash[16];
+
+// MESSAGE SetLiftHeight
+struct SetLiftHeight
+{
+  float height_mm;
+  float max_speed_rad_per_sec;
+  float accel_rad_per_sec2;
+  float duration_sec;
+  
+  /**** Constructors ****/
+  SetLiftHeight() = default;
+  SetLiftHeight(const SetLiftHeight& other) = default;
+  SetLiftHeight(SetLiftHeight& other) = default;
+  SetLiftHeight(SetLiftHeight&& other) noexcept = default;
+  SetLiftHeight& operator=(const SetLiftHeight& other) = default;
+  SetLiftHeight& operator=(SetLiftHeight&& other) = default;
+  
+  explicit SetLiftHeight(float height_mm,
+    float max_speed_rad_per_sec,
+    float accel_rad_per_sec2,
+    float duration_sec)
+  : height_mm(height_mm)
+  , max_speed_rad_per_sec(max_speed_rad_per_sec)
+  , accel_rad_per_sec2(accel_rad_per_sec2)
+  , duration_sec(duration_sec)
+  {}
+  
+  explicit SetLiftHeight(const uint8_t* buff, size_t len);
+  explicit SetLiftHeight(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const SetLiftHeight& other) const;
+  bool operator!=(const SetLiftHeight& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(height_mm, max_speed_rad_per_sec, accel_rad_per_sec2, duration_sec);
+  }
+};
+
+extern const char* SetLiftHeightVersionHashStr;
+extern const uint8_t SetLiftHeightVersionHash[16];
+
+// "Lookup Tables" for getting type by tag using template specializations
+template<MovementActionTag tag>
+struct MovementAction_TagToType;
+
+template<>
+struct MovementAction_TagToType<MovementActionTag::Error> {
+  using type = Anki::Cozmo::ExternalComms::Error;
+};
+template<>
+struct MovementAction_TagToType<MovementActionTag::DriveOffChargerContacts> {
+  using type = Anki::Cozmo::ExternalComms::DriveOffChargerContacts;
+};
+template<>
+struct MovementAction_TagToType<MovementActionTag::DriveStraight> {
+  using type = Anki::Cozmo::ExternalComms::DriveStraight;
+};
+template<>
+struct MovementAction_TagToType<MovementActionTag::TurnInPlace> {
+  using type = Anki::Cozmo::ExternalComms::TurnInPlace;
+};
+template<>
+struct MovementAction_TagToType<MovementActionTag::SetHeadAngle> {
+  using type = Anki::Cozmo::ExternalComms::SetHeadAngle;
+};
+template<>
+struct MovementAction_TagToType<MovementActionTag::SetLiftHeight> {
+  using type = Anki::Cozmo::ExternalComms::SetLiftHeight;
+};
+
+// UNION MovementAction
+class MovementAction
+{
+public:
+  using Tag = MovementActionTag;
+  /**** Constructors ****/
+  MovementAction() :_tag(Tag::INVALID) { }
+  explicit MovementAction(const CLAD::SafeMessageBuffer& buff);
+  explicit MovementAction(const uint8_t* buffer, size_t length);
+  MovementAction(const MovementAction& other);
+  MovementAction(MovementAction&& other) noexcept;
+  MovementAction& operator=(const MovementAction& other);
+  MovementAction& operator=(MovementAction&& other) noexcept;
+  
+  ~MovementAction() { ClearCurrent(); }
+  Tag GetTag() const { return _tag; }
+  
+  // Templated getter for union members by type
+  // NOTE: Always returns a reference, even for trivial types, unlike untemplated version
+  template<Tag tag>
+  const typename MovementAction_TagToType<tag>::type & Get_() const;
+  
+  // Templated creator for making a union object out of one if its members
+  template <Tag tag>
+  static MovementAction Create_(typename MovementAction_TagToType<tag>::type member);
+  
+  /** Error **/
+  static MovementAction CreateError(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  explicit MovementAction(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  const Anki::Cozmo::ExternalComms::Error& Get_Error() const;
+  void Set_Error(const Anki::Cozmo::ExternalComms::Error& new_Error);
+  void Set_Error(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  
+  /** DriveOffChargerContacts **/
+  static MovementAction CreateDriveOffChargerContacts(Anki::Cozmo::ExternalComms::DriveOffChargerContacts&& new_DriveOffChargerContacts);
+  explicit MovementAction(Anki::Cozmo::ExternalComms::DriveOffChargerContacts&& new_DriveOffChargerContacts);
+  const Anki::Cozmo::ExternalComms::DriveOffChargerContacts& Get_DriveOffChargerContacts() const;
+  void Set_DriveOffChargerContacts(const Anki::Cozmo::ExternalComms::DriveOffChargerContacts& new_DriveOffChargerContacts);
+  void Set_DriveOffChargerContacts(Anki::Cozmo::ExternalComms::DriveOffChargerContacts&& new_DriveOffChargerContacts);
+  
+  /** DriveStraight **/
+  static MovementAction CreateDriveStraight(Anki::Cozmo::ExternalComms::DriveStraight&& new_DriveStraight);
+  explicit MovementAction(Anki::Cozmo::ExternalComms::DriveStraight&& new_DriveStraight);
+  const Anki::Cozmo::ExternalComms::DriveStraight& Get_DriveStraight() const;
+  void Set_DriveStraight(const Anki::Cozmo::ExternalComms::DriveStraight& new_DriveStraight);
+  void Set_DriveStraight(Anki::Cozmo::ExternalComms::DriveStraight&& new_DriveStraight);
+  
+  /** TurnInPlace **/
+  static MovementAction CreateTurnInPlace(Anki::Cozmo::ExternalComms::TurnInPlace&& new_TurnInPlace);
+  explicit MovementAction(Anki::Cozmo::ExternalComms::TurnInPlace&& new_TurnInPlace);
+  const Anki::Cozmo::ExternalComms::TurnInPlace& Get_TurnInPlace() const;
+  void Set_TurnInPlace(const Anki::Cozmo::ExternalComms::TurnInPlace& new_TurnInPlace);
+  void Set_TurnInPlace(Anki::Cozmo::ExternalComms::TurnInPlace&& new_TurnInPlace);
+  
+  /** SetHeadAngle **/
+  static MovementAction CreateSetHeadAngle(Anki::Cozmo::ExternalComms::SetHeadAngle&& new_SetHeadAngle);
+  explicit MovementAction(Anki::Cozmo::ExternalComms::SetHeadAngle&& new_SetHeadAngle);
+  const Anki::Cozmo::ExternalComms::SetHeadAngle& Get_SetHeadAngle() const;
+  void Set_SetHeadAngle(const Anki::Cozmo::ExternalComms::SetHeadAngle& new_SetHeadAngle);
+  void Set_SetHeadAngle(Anki::Cozmo::ExternalComms::SetHeadAngle&& new_SetHeadAngle);
+  
+  /** SetLiftHeight **/
+  static MovementAction CreateSetLiftHeight(Anki::Cozmo::ExternalComms::SetLiftHeight&& new_SetLiftHeight);
+  explicit MovementAction(Anki::Cozmo::ExternalComms::SetLiftHeight&& new_SetLiftHeight);
+  const Anki::Cozmo::ExternalComms::SetLiftHeight& Get_SetLiftHeight() const;
+  void Set_SetLiftHeight(const Anki::Cozmo::ExternalComms::SetLiftHeight& new_SetLiftHeight);
+  void Set_SetLiftHeight(Anki::Cozmo::ExternalComms::SetLiftHeight&& new_SetLiftHeight);
+  
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  size_t Size() const;
+  
+  bool operator==(const MovementAction& other) const;
+  bool operator!=(const MovementAction& other) const;
+private:
+  void ClearCurrent();
+  Tag _tag;
+  
+  union {
+    Anki::Cozmo::ExternalComms::Error _Error;
+    Anki::Cozmo::ExternalComms::DriveOffChargerContacts _DriveOffChargerContacts;
+    Anki::Cozmo::ExternalComms::DriveStraight _DriveStraight;
+    Anki::Cozmo::ExternalComms::TurnInPlace _TurnInPlace;
+    Anki::Cozmo::ExternalComms::SetHeadAngle _SetHeadAngle;
+    Anki::Cozmo::ExternalComms::SetLiftHeight _SetLiftHeight;
+  };
+};
+extern const char* MovementActionVersionHashStr;
+extern const uint8_t MovementActionVersionHash[16];
+
+// MESSAGE SetBackpackLEDs
+struct SetBackpackLEDs
+{
+  std::array<uint32_t, 3> onColor;
+  std::array<uint32_t, 3> offColor;
+  std::array<uint32_t, 3> onPeriod_ms;
+  std::array<uint32_t, 3> offPeriod_ms;
+  std::array<uint32_t, 3> transitionOnPeriod_ms;
+  std::array<uint32_t, 3> transitionOffPeriod_ms;
+  std::array<int32_t, 3> offset;
+  
+  /**** Constructors ****/
+  SetBackpackLEDs() = default;
+  SetBackpackLEDs(const SetBackpackLEDs& other) = default;
+  SetBackpackLEDs(SetBackpackLEDs& other) = default;
+  SetBackpackLEDs(SetBackpackLEDs&& other) noexcept = default;
+  SetBackpackLEDs& operator=(const SetBackpackLEDs& other) = default;
+  SetBackpackLEDs& operator=(SetBackpackLEDs&& other) = default;
+  
+  explicit SetBackpackLEDs(const std::array<uint32_t, 3>& onColor,
+    const std::array<uint32_t, 3>& offColor,
+    const std::array<uint32_t, 3>& onPeriod_ms,
+    const std::array<uint32_t, 3>& offPeriod_ms,
+    const std::array<uint32_t, 3>& transitionOnPeriod_ms,
+    const std::array<uint32_t, 3>& transitionOffPeriod_ms,
+    const std::array<int32_t, 3>& offset)
+  : onColor(onColor)
+  , offColor(offColor)
+  , onPeriod_ms(onPeriod_ms)
+  , offPeriod_ms(offPeriod_ms)
+  , transitionOnPeriod_ms(transitionOnPeriod_ms)
+  , transitionOffPeriod_ms(transitionOffPeriod_ms)
+  , offset(offset)
+  {}
+  
+  explicit SetBackpackLEDs(const uint8_t* buff, size_t len);
+  explicit SetBackpackLEDs(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const SetBackpackLEDs& other) const;
+  bool operator!=(const SetBackpackLEDs& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(onColor, offColor, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms, offset);
+  }
+};
+
+extern const char* SetBackpackLEDsVersionHashStr;
+extern const uint8_t SetBackpackLEDsVersionHash[16];
+
+// MESSAGE DisplayFaceImageRGB
+struct DisplayFaceImageRGB
+{
+  uint32_t duration_ms;
+  std::vector<uint16_t> faceData;
+  bool interruptRunning;
+  
+  /**** Constructors ****/
+  DisplayFaceImageRGB() = default;
+  DisplayFaceImageRGB(const DisplayFaceImageRGB& other) = default;
+  DisplayFaceImageRGB(DisplayFaceImageRGB& other) = default;
+  DisplayFaceImageRGB(DisplayFaceImageRGB&& other) noexcept = default;
+  DisplayFaceImageRGB& operator=(const DisplayFaceImageRGB& other) = default;
+  DisplayFaceImageRGB& operator=(DisplayFaceImageRGB&& other) = default;
+  
+  explicit DisplayFaceImageRGB(uint32_t duration_ms,
+    const std::vector<uint16_t>& faceData,
+    bool interruptRunning)
+  : duration_ms(duration_ms)
+  , faceData(faceData)
+  , interruptRunning(interruptRunning)
+  {}
+  
+  explicit DisplayFaceImageRGB(const uint8_t* buff, size_t len);
+  explicit DisplayFaceImageRGB(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const DisplayFaceImageRGB& other) const;
+  bool operator!=(const DisplayFaceImageRGB& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(duration_ms, faceData, interruptRunning);
+  }
+};
+
+extern const char* DisplayFaceImageRGBVersionHashStr;
+extern const uint8_t DisplayFaceImageRGBVersionHash[16];
+
+// "Lookup Tables" for getting type by tag using template specializations
+template<VictorDisplayTag tag>
+struct VictorDisplay_TagToType;
+
+template<>
+struct VictorDisplay_TagToType<VictorDisplayTag::Error> {
+  using type = Anki::Cozmo::ExternalComms::Error;
+};
+template<>
+struct VictorDisplay_TagToType<VictorDisplayTag::SetBackpackLEDs> {
+  using type = Anki::Cozmo::ExternalComms::SetBackpackLEDs;
+};
+template<>
+struct VictorDisplay_TagToType<VictorDisplayTag::DisplayFaceImageRGB> {
+  using type = Anki::Cozmo::ExternalComms::DisplayFaceImageRGB;
+};
+
+// UNION VictorDisplay
+class VictorDisplay
+{
+public:
+  using Tag = VictorDisplayTag;
+  /**** Constructors ****/
+  VictorDisplay() :_tag(Tag::INVALID) { }
+  explicit VictorDisplay(const CLAD::SafeMessageBuffer& buff);
+  explicit VictorDisplay(const uint8_t* buffer, size_t length);
+  VictorDisplay(const VictorDisplay& other);
+  VictorDisplay(VictorDisplay&& other) noexcept;
+  VictorDisplay& operator=(const VictorDisplay& other);
+  VictorDisplay& operator=(VictorDisplay&& other) noexcept;
+  
+  ~VictorDisplay() { ClearCurrent(); }
+  Tag GetTag() const { return _tag; }
+  
+  // Templated getter for union members by type
+  // NOTE: Always returns a reference, even for trivial types, unlike untemplated version
+  template<Tag tag>
+  const typename VictorDisplay_TagToType<tag>::type & Get_() const;
+  
+  // Templated creator for making a union object out of one if its members
+  template <Tag tag>
+  static VictorDisplay Create_(typename VictorDisplay_TagToType<tag>::type member);
+  
+  /** Error **/
+  static VictorDisplay CreateError(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  explicit VictorDisplay(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  const Anki::Cozmo::ExternalComms::Error& Get_Error() const;
+  void Set_Error(const Anki::Cozmo::ExternalComms::Error& new_Error);
+  void Set_Error(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  
+  /** SetBackpackLEDs **/
+  static VictorDisplay CreateSetBackpackLEDs(Anki::Cozmo::ExternalComms::SetBackpackLEDs&& new_SetBackpackLEDs);
+  explicit VictorDisplay(Anki::Cozmo::ExternalComms::SetBackpackLEDs&& new_SetBackpackLEDs);
+  const Anki::Cozmo::ExternalComms::SetBackpackLEDs& Get_SetBackpackLEDs() const;
+  void Set_SetBackpackLEDs(const Anki::Cozmo::ExternalComms::SetBackpackLEDs& new_SetBackpackLEDs);
+  void Set_SetBackpackLEDs(Anki::Cozmo::ExternalComms::SetBackpackLEDs&& new_SetBackpackLEDs);
+  
+  /** DisplayFaceImageRGB **/
+  static VictorDisplay CreateDisplayFaceImageRGB(Anki::Cozmo::ExternalComms::DisplayFaceImageRGB&& new_DisplayFaceImageRGB);
+  explicit VictorDisplay(Anki::Cozmo::ExternalComms::DisplayFaceImageRGB&& new_DisplayFaceImageRGB);
+  const Anki::Cozmo::ExternalComms::DisplayFaceImageRGB& Get_DisplayFaceImageRGB() const;
+  void Set_DisplayFaceImageRGB(const Anki::Cozmo::ExternalComms::DisplayFaceImageRGB& new_DisplayFaceImageRGB);
+  void Set_DisplayFaceImageRGB(Anki::Cozmo::ExternalComms::DisplayFaceImageRGB&& new_DisplayFaceImageRGB);
+  
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  size_t Size() const;
+  
+  bool operator==(const VictorDisplay& other) const;
+  bool operator!=(const VictorDisplay& other) const;
+private:
+  void ClearCurrent();
+  Tag _tag;
+  
+  union {
+    Anki::Cozmo::ExternalComms::Error _Error;
+    Anki::Cozmo::ExternalComms::SetBackpackLEDs _SetBackpackLEDs;
+    Anki::Cozmo::ExternalComms::DisplayFaceImageRGB _DisplayFaceImageRGB;
+  };
+};
+extern const char* VictorDisplayVersionHashStr;
+extern const uint8_t VictorDisplayVersionHash[16];
+
+// MESSAGE SetAllActiveObjectLEDs
+struct SetAllActiveObjectLEDs
+{
+  uint32_t objectID;
+  std::array<uint32_t, 4> onColor;
+  std::array<uint32_t, 4> offColor;
+  std::array<uint32_t, 4> onPeriod_ms;
+  std::array<uint32_t, 4> offPeriod_ms;
+  std::array<uint32_t, 4> transitionOnPeriod_ms;
+  std::array<uint32_t, 4> transitionOffPeriod_ms;
+  std::array<int32_t, 4> offset;
+  
+  /**** Constructors ****/
+  SetAllActiveObjectLEDs() = default;
+  SetAllActiveObjectLEDs(const SetAllActiveObjectLEDs& other) = default;
+  SetAllActiveObjectLEDs(SetAllActiveObjectLEDs& other) = default;
+  SetAllActiveObjectLEDs(SetAllActiveObjectLEDs&& other) noexcept = default;
+  SetAllActiveObjectLEDs& operator=(const SetAllActiveObjectLEDs& other) = default;
+  SetAllActiveObjectLEDs& operator=(SetAllActiveObjectLEDs&& other) = default;
+  
+  explicit SetAllActiveObjectLEDs(uint32_t objectID,
+    const std::array<uint32_t, 4>& onColor,
+    const std::array<uint32_t, 4>& offColor,
+    const std::array<uint32_t, 4>& onPeriod_ms,
+    const std::array<uint32_t, 4>& offPeriod_ms,
+    const std::array<uint32_t, 4>& transitionOnPeriod_ms,
+    const std::array<uint32_t, 4>& transitionOffPeriod_ms,
+    const std::array<int32_t, 4>& offset)
+  : objectID(objectID)
+  , onColor(onColor)
+  , offColor(offColor)
+  , onPeriod_ms(onPeriod_ms)
+  , offPeriod_ms(offPeriod_ms)
+  , transitionOnPeriod_ms(transitionOnPeriod_ms)
+  , transitionOffPeriod_ms(transitionOffPeriod_ms)
+  , offset(offset)
+  {}
+  
+  explicit SetAllActiveObjectLEDs(const uint8_t* buff, size_t len);
+  explicit SetAllActiveObjectLEDs(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const SetAllActiveObjectLEDs& other) const;
+  bool operator!=(const SetAllActiveObjectLEDs& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(objectID, onColor, offColor, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms, offset);
+  }
+};
+
+extern const char* SetAllActiveObjectLEDsVersionHashStr;
+extern const uint8_t SetAllActiveObjectLEDsVersionHash[16];
+
+// "Lookup Tables" for getting type by tag using template specializations
+template<CubesTag tag>
+struct Cubes_TagToType;
+
+template<>
+struct Cubes_TagToType<CubesTag::Error> {
+  using type = Anki::Cozmo::ExternalComms::Error;
+};
+template<>
+struct Cubes_TagToType<CubesTag::SetAllActiveObjectLEDs> {
+  using type = Anki::Cozmo::ExternalComms::SetAllActiveObjectLEDs;
+};
+
+// UNION Cubes
+class Cubes
+{
+public:
+  using Tag = CubesTag;
+  /**** Constructors ****/
+  Cubes() :_tag(Tag::INVALID) { }
+  explicit Cubes(const CLAD::SafeMessageBuffer& buff);
+  explicit Cubes(const uint8_t* buffer, size_t length);
+  Cubes(const Cubes& other);
+  Cubes(Cubes&& other) noexcept;
+  Cubes& operator=(const Cubes& other);
+  Cubes& operator=(Cubes&& other) noexcept;
+  
+  ~Cubes() { ClearCurrent(); }
+  Tag GetTag() const { return _tag; }
+  
+  // Templated getter for union members by type
+  // NOTE: Always returns a reference, even for trivial types, unlike untemplated version
+  template<Tag tag>
+  const typename Cubes_TagToType<tag>::type & Get_() const;
+  
+  // Templated creator for making a union object out of one if its members
+  template <Tag tag>
+  static Cubes Create_(typename Cubes_TagToType<tag>::type member);
+  
+  /** Error **/
+  static Cubes CreateError(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  explicit Cubes(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  const Anki::Cozmo::ExternalComms::Error& Get_Error() const;
+  void Set_Error(const Anki::Cozmo::ExternalComms::Error& new_Error);
+  void Set_Error(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  
+  /** SetAllActiveObjectLEDs **/
+  static Cubes CreateSetAllActiveObjectLEDs(Anki::Cozmo::ExternalComms::SetAllActiveObjectLEDs&& new_SetAllActiveObjectLEDs);
+  explicit Cubes(Anki::Cozmo::ExternalComms::SetAllActiveObjectLEDs&& new_SetAllActiveObjectLEDs);
+  const Anki::Cozmo::ExternalComms::SetAllActiveObjectLEDs& Get_SetAllActiveObjectLEDs() const;
+  void Set_SetAllActiveObjectLEDs(const Anki::Cozmo::ExternalComms::SetAllActiveObjectLEDs& new_SetAllActiveObjectLEDs);
+  void Set_SetAllActiveObjectLEDs(Anki::Cozmo::ExternalComms::SetAllActiveObjectLEDs&& new_SetAllActiveObjectLEDs);
+  
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  size_t Size() const;
+  
+  bool operator==(const Cubes& other) const;
+  bool operator!=(const Cubes& other) const;
+private:
+  void ClearCurrent();
+  Tag _tag;
+  
+  union {
+    Anki::Cozmo::ExternalComms::Error _Error;
+    Anki::Cozmo::ExternalComms::SetAllActiveObjectLEDs _SetAllActiveObjectLEDs;
+  };
+};
+extern const char* CubesVersionHashStr;
+extern const uint8_t CubesVersionHash[16];
 
 // "Lookup Tables" for getting type by tag using template specializations
 template<ExternalCommsTag tag>
@@ -2811,23 +5289,43 @@ struct ExternalComms_TagToType;
 
 template<>
 struct ExternalComms_TagToType<ExternalCommsTag::Error> {
-  using type = Anki::Victor::ExternalComms::Error;
+  using type = Anki::Cozmo::ExternalComms::Error;
 };
 template<>
 struct ExternalComms_TagToType<ExternalCommsTag::RtsConnection_1> {
-  using type = Anki::Victor::ExternalComms::RtsConnection_1;
+  using type = Anki::Cozmo::ExternalComms::RtsConnection_1;
 };
 template<>
 struct ExternalComms_TagToType<ExternalCommsTag::RtsConnection> {
-  using type = Anki::Victor::ExternalComms::RtsConnection;
+  using type = Anki::Cozmo::ExternalComms::RtsConnection;
 };
 template<>
 struct ExternalComms_TagToType<ExternalCommsTag::AppGeneral> {
-  using type = Anki::Victor::ExternalComms::AppGeneral;
+  using type = Anki::Cozmo::ExternalComms::AppGeneral;
 };
 template<>
 struct ExternalComms_TagToType<ExternalCommsTag::MeetVictor> {
-  using type = Anki::Victor::ExternalComms::MeetVictor;
+  using type = Anki::Cozmo::ExternalComms::MeetVictor;
+};
+template<>
+struct ExternalComms_TagToType<ExternalCommsTag::MotorControl> {
+  using type = Anki::Cozmo::ExternalComms::MotorControl;
+};
+template<>
+struct ExternalComms_TagToType<ExternalCommsTag::MovementAction> {
+  using type = Anki::Cozmo::ExternalComms::MovementAction;
+};
+template<>
+struct ExternalComms_TagToType<ExternalCommsTag::Animations> {
+  using type = Anki::Cozmo::ExternalComms::Animations;
+};
+template<>
+struct ExternalComms_TagToType<ExternalCommsTag::VictorDisplay> {
+  using type = Anki::Cozmo::ExternalComms::VictorDisplay;
+};
+template<>
+struct ExternalComms_TagToType<ExternalCommsTag::Cubes> {
+  using type = Anki::Cozmo::ExternalComms::Cubes;
 };
 
 // UNION ExternalComms
@@ -2857,39 +5355,74 @@ public:
   static ExternalComms Create_(typename ExternalComms_TagToType<tag>::type member);
   
   /** Error **/
-  static ExternalComms CreateError(Anki::Victor::ExternalComms::Error&& new_Error);
-  explicit ExternalComms(Anki::Victor::ExternalComms::Error&& new_Error);
-  const Anki::Victor::ExternalComms::Error& Get_Error() const;
-  void Set_Error(const Anki::Victor::ExternalComms::Error& new_Error);
-  void Set_Error(Anki::Victor::ExternalComms::Error&& new_Error);
+  static ExternalComms CreateError(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  explicit ExternalComms(Anki::Cozmo::ExternalComms::Error&& new_Error);
+  const Anki::Cozmo::ExternalComms::Error& Get_Error() const;
+  void Set_Error(const Anki::Cozmo::ExternalComms::Error& new_Error);
+  void Set_Error(Anki::Cozmo::ExternalComms::Error&& new_Error);
   
   /** RtsConnection_1 **/
-  static ExternalComms CreateRtsConnection_1(Anki::Victor::ExternalComms::RtsConnection_1&& new_RtsConnection_1);
-  explicit ExternalComms(Anki::Victor::ExternalComms::RtsConnection_1&& new_RtsConnection_1);
-  const Anki::Victor::ExternalComms::RtsConnection_1& Get_RtsConnection_1() const;
-  void Set_RtsConnection_1(const Anki::Victor::ExternalComms::RtsConnection_1& new_RtsConnection_1);
-  void Set_RtsConnection_1(Anki::Victor::ExternalComms::RtsConnection_1&& new_RtsConnection_1);
+  static ExternalComms CreateRtsConnection_1(Anki::Cozmo::ExternalComms::RtsConnection_1&& new_RtsConnection_1);
+  explicit ExternalComms(Anki::Cozmo::ExternalComms::RtsConnection_1&& new_RtsConnection_1);
+  const Anki::Cozmo::ExternalComms::RtsConnection_1& Get_RtsConnection_1() const;
+  void Set_RtsConnection_1(const Anki::Cozmo::ExternalComms::RtsConnection_1& new_RtsConnection_1);
+  void Set_RtsConnection_1(Anki::Cozmo::ExternalComms::RtsConnection_1&& new_RtsConnection_1);
   
   /** RtsConnection **/
-  static ExternalComms CreateRtsConnection(Anki::Victor::ExternalComms::RtsConnection&& new_RtsConnection);
-  explicit ExternalComms(Anki::Victor::ExternalComms::RtsConnection&& new_RtsConnection);
-  const Anki::Victor::ExternalComms::RtsConnection& Get_RtsConnection() const;
-  void Set_RtsConnection(const Anki::Victor::ExternalComms::RtsConnection& new_RtsConnection);
-  void Set_RtsConnection(Anki::Victor::ExternalComms::RtsConnection&& new_RtsConnection);
+  static ExternalComms CreateRtsConnection(Anki::Cozmo::ExternalComms::RtsConnection&& new_RtsConnection);
+  explicit ExternalComms(Anki::Cozmo::ExternalComms::RtsConnection&& new_RtsConnection);
+  const Anki::Cozmo::ExternalComms::RtsConnection& Get_RtsConnection() const;
+  void Set_RtsConnection(const Anki::Cozmo::ExternalComms::RtsConnection& new_RtsConnection);
+  void Set_RtsConnection(Anki::Cozmo::ExternalComms::RtsConnection&& new_RtsConnection);
   
   /** AppGeneral **/
-  static ExternalComms CreateAppGeneral(Anki::Victor::ExternalComms::AppGeneral&& new_AppGeneral);
-  explicit ExternalComms(Anki::Victor::ExternalComms::AppGeneral&& new_AppGeneral);
-  const Anki::Victor::ExternalComms::AppGeneral& Get_AppGeneral() const;
-  void Set_AppGeneral(const Anki::Victor::ExternalComms::AppGeneral& new_AppGeneral);
-  void Set_AppGeneral(Anki::Victor::ExternalComms::AppGeneral&& new_AppGeneral);
+  static ExternalComms CreateAppGeneral(Anki::Cozmo::ExternalComms::AppGeneral&& new_AppGeneral);
+  explicit ExternalComms(Anki::Cozmo::ExternalComms::AppGeneral&& new_AppGeneral);
+  const Anki::Cozmo::ExternalComms::AppGeneral& Get_AppGeneral() const;
+  void Set_AppGeneral(const Anki::Cozmo::ExternalComms::AppGeneral& new_AppGeneral);
+  void Set_AppGeneral(Anki::Cozmo::ExternalComms::AppGeneral&& new_AppGeneral);
   
   /** MeetVictor **/
-  static ExternalComms CreateMeetVictor(Anki::Victor::ExternalComms::MeetVictor&& new_MeetVictor);
-  explicit ExternalComms(Anki::Victor::ExternalComms::MeetVictor&& new_MeetVictor);
-  const Anki::Victor::ExternalComms::MeetVictor& Get_MeetVictor() const;
-  void Set_MeetVictor(const Anki::Victor::ExternalComms::MeetVictor& new_MeetVictor);
-  void Set_MeetVictor(Anki::Victor::ExternalComms::MeetVictor&& new_MeetVictor);
+  static ExternalComms CreateMeetVictor(Anki::Cozmo::ExternalComms::MeetVictor&& new_MeetVictor);
+  explicit ExternalComms(Anki::Cozmo::ExternalComms::MeetVictor&& new_MeetVictor);
+  const Anki::Cozmo::ExternalComms::MeetVictor& Get_MeetVictor() const;
+  void Set_MeetVictor(const Anki::Cozmo::ExternalComms::MeetVictor& new_MeetVictor);
+  void Set_MeetVictor(Anki::Cozmo::ExternalComms::MeetVictor&& new_MeetVictor);
+  
+  /** MotorControl **/
+  static ExternalComms CreateMotorControl(Anki::Cozmo::ExternalComms::MotorControl&& new_MotorControl);
+  explicit ExternalComms(Anki::Cozmo::ExternalComms::MotorControl&& new_MotorControl);
+  const Anki::Cozmo::ExternalComms::MotorControl& Get_MotorControl() const;
+  void Set_MotorControl(const Anki::Cozmo::ExternalComms::MotorControl& new_MotorControl);
+  void Set_MotorControl(Anki::Cozmo::ExternalComms::MotorControl&& new_MotorControl);
+  
+  /** MovementAction **/
+  static ExternalComms CreateMovementAction(Anki::Cozmo::ExternalComms::MovementAction&& new_MovementAction);
+  explicit ExternalComms(Anki::Cozmo::ExternalComms::MovementAction&& new_MovementAction);
+  const Anki::Cozmo::ExternalComms::MovementAction& Get_MovementAction() const;
+  void Set_MovementAction(const Anki::Cozmo::ExternalComms::MovementAction& new_MovementAction);
+  void Set_MovementAction(Anki::Cozmo::ExternalComms::MovementAction&& new_MovementAction);
+  
+  /** Animations **/
+  static ExternalComms CreateAnimations(Anki::Cozmo::ExternalComms::Animations&& new_Animations);
+  explicit ExternalComms(Anki::Cozmo::ExternalComms::Animations&& new_Animations);
+  const Anki::Cozmo::ExternalComms::Animations& Get_Animations() const;
+  void Set_Animations(const Anki::Cozmo::ExternalComms::Animations& new_Animations);
+  void Set_Animations(Anki::Cozmo::ExternalComms::Animations&& new_Animations);
+  
+  /** VictorDisplay **/
+  static ExternalComms CreateVictorDisplay(Anki::Cozmo::ExternalComms::VictorDisplay&& new_VictorDisplay);
+  explicit ExternalComms(Anki::Cozmo::ExternalComms::VictorDisplay&& new_VictorDisplay);
+  const Anki::Cozmo::ExternalComms::VictorDisplay& Get_VictorDisplay() const;
+  void Set_VictorDisplay(const Anki::Cozmo::ExternalComms::VictorDisplay& new_VictorDisplay);
+  void Set_VictorDisplay(Anki::Cozmo::ExternalComms::VictorDisplay&& new_VictorDisplay);
+  
+  /** Cubes **/
+  static ExternalComms CreateCubes(Anki::Cozmo::ExternalComms::Cubes&& new_Cubes);
+  explicit ExternalComms(Anki::Cozmo::ExternalComms::Cubes&& new_Cubes);
+  const Anki::Cozmo::ExternalComms::Cubes& Get_Cubes() const;
+  void Set_Cubes(const Anki::Cozmo::ExternalComms::Cubes& new_Cubes);
+  void Set_Cubes(Anki::Cozmo::ExternalComms::Cubes&& new_Cubes);
   
   size_t Unpack(const uint8_t* buff, const size_t len);
   size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
@@ -2906,11 +5439,16 @@ private:
   Tag _tag;
   
   union {
-    Anki::Victor::ExternalComms::Error _Error;
-    Anki::Victor::ExternalComms::RtsConnection_1 _RtsConnection_1;
-    Anki::Victor::ExternalComms::RtsConnection _RtsConnection;
-    Anki::Victor::ExternalComms::AppGeneral _AppGeneral;
-    Anki::Victor::ExternalComms::MeetVictor _MeetVictor;
+    Anki::Cozmo::ExternalComms::Error _Error;
+    Anki::Cozmo::ExternalComms::RtsConnection_1 _RtsConnection_1;
+    Anki::Cozmo::ExternalComms::RtsConnection _RtsConnection;
+    Anki::Cozmo::ExternalComms::AppGeneral _AppGeneral;
+    Anki::Cozmo::ExternalComms::MeetVictor _MeetVictor;
+    Anki::Cozmo::ExternalComms::MotorControl _MotorControl;
+    Anki::Cozmo::ExternalComms::MovementAction _MovementAction;
+    Anki::Cozmo::ExternalComms::Animations _Animations;
+    Anki::Cozmo::ExternalComms::VictorDisplay _VictorDisplay;
+    Anki::Cozmo::ExternalComms::Cubes _Cubes;
   };
 };
 extern const char* ExternalCommsVersionHashStr;
@@ -2918,7 +5456,7 @@ extern const uint8_t ExternalCommsVersionHash[16];
 
 } // namespace ExternalComms
 
-} // namespace Victor
+} // namespace Cozmo
 
 } // namespace Anki
 

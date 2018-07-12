@@ -10,10 +10,11 @@
  * 
  **/
 
+#include "engine/aiComponent/beiConditions/conditions/conditionIlluminationDetected.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/beiConditions/beiConditionMessageHelper.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionIlluminationDetected.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 

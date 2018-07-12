@@ -22,11 +22,6 @@
 #include "util/entityComponent/dependencyManagedEntity.h"
 #include "util/entityComponent/iManageableComponent.h"
 
-#include "clad/externalInterface/messageEngineToGameTag.h"
-#include "clad/externalInterface/messageGameToEngineTag.h"
-#include "clad/robotInterface/messageRobotToEngineTag.h"
-
-
 #include "util/helpers/noncopyable.h"
 
 #include <assert.h>
@@ -41,6 +36,7 @@ class AIComponent;
 class AsyncMessageGateComponent;
 class BEIRobotInfo;
 class BehaviorComponent;
+class BehaviorComponentMessageHandler;
 class BehaviorContainer;
 class BehaviorEventAnimResponseDirector;
 class BehaviorExternalInterface;
@@ -50,7 +46,6 @@ class BehaviorTimers;
 class BlockWorld;
 class DelegationComponent;
 class DevBaseBehavior;
-class DevBehaviorComponentMessageHandler;
 class FaceWorld;
 class IBehavior;
 class Robot;
@@ -108,7 +103,7 @@ protected:
   // Support legacy cozmo code
   friend class Robot;
   friend class AIComponent;
-  friend class DevBehaviorComponentMessageHandler;
+  friend class BehaviorComponentMessageHandler;
   friend class TestBehaviorFramework; // for testing access to internals
 
   // For test only

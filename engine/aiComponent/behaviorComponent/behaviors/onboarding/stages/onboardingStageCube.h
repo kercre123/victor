@@ -4,7 +4,7 @@
  * Author: ross
  * Created: 2018-06-07
  *
- * Description: Onboarding logic unit for cube, which finds a cube, sees it, and does a trick
+ * Description: Onboarding logic unit for cube, which finds a cube, sees it, "activates" it, and picks it up
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -15,10 +15,11 @@
 #pragma once
 
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/iOnboardingStage.h"
-#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorPickUpCube.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingActivateCube.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectKnown.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/drivingAnimationHandler.h"
 #include "engine/externalInterface/externalMessageRouter.h"
 #include "engine/externalInterface/gatewayInterface.h"
 #include "proto/external_interface/messages.pb.h"
@@ -29,9 +30,12 @@ namespace Anki {
 namespace Cozmo {
   
 namespace {
-  const unsigned int kMaxAttempts = 3;
+  const unsigned int kMaxActivationAttempts = 2;
+  const unsigned int kMaxPickUpAttempts = 3;
   const float kMaxSearchDuration_s = 60.0f;
   const int kMaxAgeForRedoSearch_ms = 5000;
+  
+  const std::string& kLockName = "onboardingCubeStage";
 }
 
 class OnboardingStageCube : public IOnboardingStage
@@ -53,9 +57,8 @@ public:
   {
     delegates.insert( BEHAVIOR_ID(OnboardingLookAtUser) );
     delegates.insert( BEHAVIOR_ID(OnboardingLookForCube) );
-    // todo: there's no "seeing the cube" animation on the robot or cube lights, since I want to see what that looks
-    // like before adding stage for it
-    delegates.insert( BEHAVIOR_ID(OnboardingCubeTrick) );
+    delegates.insert( BEHAVIOR_ID(OnboardingActivateCube) );
+    delegates.insert( BEHAVIOR_ID(OnboardingPickUpCube) );
     // todo: different celebration than what PickUp does
     // design says "super stoked then calms down"
     delegates.insert( BEHAVIOR_ID(PutDownBlock) );
@@ -73,12 +76,16 @@ public:
     
     _behaviors[Step::LookingAtUser]    = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingLookAtUser) );
     _behaviors[Step::LookingForCube]   = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingLookForCube) );
-    _behaviors[Step::DoingATrick]      = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingCubeTrick) );
+    _behaviors[Step::ActivatingCube]   = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingActivateCube) );
+    _behaviors[Step::PickingUpCube]    = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingPickUpCube) );
     _behaviors[Step::PuttingCubeDown]  = GetBehaviorByID( bei, BEHAVIOR_ID(PutDownBlock) );
     
-    bei.GetBehaviorContainer().FindBehaviorByIDAndDowncast( BEHAVIOR_ID(OnboardingCubeTrick),
+    bei.GetBehaviorContainer().FindBehaviorByIDAndDowncast( BEHAVIOR_ID(OnboardingPickUpCube),
                                                             BEHAVIOR_CLASS(PickUpCube),
                                                             _pickUpBehavior );
+    bei.GetBehaviorContainer().FindBehaviorByIDAndDowncast( BEHAVIOR_ID(OnboardingActivateCube),
+                                                            BEHAVIOR_CLASS(OnboardingActivateCube),
+                                                            _activationBehavior );
     _putDownBehavior = bei.GetBehaviorContainer().FindBehaviorByID( BEHAVIOR_ID(PutDownBlock) );
     
     // initial behavior
@@ -89,11 +96,12 @@ public:
     
     _cubeKnownCondition->Init( bei );
     
-    _attemptCount = 0;
+    _activationAttemptCount = 0;
+    _pickUpAttemptCount = 0;
     _timeStartedSearching_ms = 0;
   }
   
-  virtual bool OnContinue( BehaviorExternalInterface& bei, OnboardingContinueEnum continueNum ) override
+  virtual bool OnContinue( BehaviorExternalInterface& bei, OnboardingSteps stepNum ) override
   {
     if( _step == Step::LookingAtUser ) {
       TransitionToLookingForCube( bei );
@@ -105,68 +113,84 @@ public:
   
   virtual void OnSkip( BehaviorExternalInterface& bei ) override
   {
-    DebugTransition( "Skipped. Complete." );
-    // all skips move to the next stage.
-    _selectedBehavior = nullptr;
-    _step = Step::Complete;
+    DebugTransition( "Skipped." );
+    TransitionToComplete( bei );
   }
   
   virtual void OnBehaviorDeactivated( BehaviorExternalInterface& bei ) override
   {
-    if( _step == Step::DoingATrick ) {
-      const auto& whiteboard = bei.GetAIComponent().GetComponent<AIWhiteboard>();
-      const float kTimeSinceFailure = 1.0f;
-      const bool recentFail = whiteboard.DidFailToUse(_objectID,
-                                                      AIWhiteboard::ObjectActionFailure::PickUpObject,
-                                                      kTimeSinceFailure);
-      if( recentFail && (_attemptCount < kMaxAttempts) ) {
-        // check if the cube has been seen recently. todo: this may need to be ConnectedActive object
-        // or something based on cube connection logic
-        const auto* cubeObject = bei.GetBlockWorld().GetLocatedObjectByID(_objectID);
-        if( cubeObject != nullptr ) {
-          TimeStamp_t lastObservedTime_ms = cubeObject->GetLastObservedTime();
-          TimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-          if( currTime_ms <= kMaxAgeForRedoSearch_ms + lastObservedTime_ms ) {
-            // use this cube
-            TransitionToCubeTrick( bei );
-          } else {
-            TransitionToLookingForCube( bei );
-          }
+    if( _step == Step::ActivatingCube ) {
+      ++_activationAttemptCount;
+      if( _activationBehavior->WasSuccessful() ) {
+        TransitionToPickingUpCube( bei );
+      } else {
+        if( _activationAttemptCount <= kMaxActivationAttempts ) {
+          TransitionToLookingForCube( bei );
+        } else {
+          // couldn't see the marker enough to "activate" it after a couple attempts.
+          // this shouldn't happen since we remove the requirement for the behavior to
+          // visually verify the cube, but just in case, move on
+          PRINT_NAMED_WARNING( "OnboardingStageCube.OnBehaviorDeactivated.NoActivation",
+                               "Cube activation repeatedly failed" );
+          TransitionToPickingUpCube( bei );
+          
+        }
+      }
+    } else if( _step == Step::PickingUpCube ) {
+      ++_pickUpAttemptCount;
+      const bool isCarrying = bei.GetRobotInfo().IsCarryingObject();
+      if( !isCarrying && (_pickUpAttemptCount <= kMaxPickUpAttempts) ) {
+        if( HasCubeBeenSeenRecently( bei ) ) {
+          // try using this cube again
+          TransitionToPickingUpCube( bei );
         } else {
           TransitionToLookingForCube( bei );
         }
       } else {
         // success! or silent (to the app) failure!
-        if( recentFail ) {
-          DebugTransition( "Trick Failed too many times. Complete." );
+        if( !isCarrying ) {
+          DebugTransition( "Pickup failed too many times. Complete." );
         } else {
-          DebugTransition( "Trick Success." );
+          DebugTransition( "Pickup Success." );
         }
-        if( (_putDownBehavior != nullptr) && _putDownBehavior->WantsToBeActivated() ) {
-          DebugTransition("Putting down cube");
-          _step = Step::PuttingCubeDown;
-          _selectedBehavior = _behaviors[_step];
-        } else {
-          DebugTransition("Complete");
-          _step = Step::Complete;
-          _selectedBehavior = nullptr;
-        }
+        TransitionToPuttingDownCube( bei );
       }
     } else if( _step == Step::PuttingCubeDown ) {
-      DebugTransition("Complete");
-      _step = Step::Complete;
-      _selectedBehavior = nullptr;
+      TransitionToComplete( bei );
     }
     
     
   }
-  // don't bother with handling interruptions. The only one that would return true (stage complete)
-  // is if the robot is placed on the charger or hits low battery after the trick but before the
-  // success animation finishes. Ignoeing that for now
+  
+  virtual bool OnInterrupted( BehaviorExternalInterface& bei, BehaviorID interruptingBehavior ) override
+  {
+    auto& drivingAnimHandler = bei.GetRobotInfo().GetDrivingAnimationHandler();
+    drivingAnimHandler.RemoveDrivingAnimations( kLockName );
+    
+    // interruptions at any step do not end this stage
+    return false;
+  }
+  
   
   virtual void OnResume( BehaviorExternalInterface& bei, BehaviorID interruptingBehavior ) override
   {
-    _selectedBehavior = _behaviors[_step];
+    // these steps may need to do something upon resuming. other steps are already saved in _selectedBehavior
+    if( _step == Step::ActivatingCube ) {
+      if( !HasCubeBeenSeenRecently( bei ) ) {
+        TransitionToLookingForCube( bei );
+      } else {
+        TransitionToActivatingCube( bei );
+      }
+    } else if( _step == Step::PickingUpCube ) {
+      if( !HasCubeBeenSeenRecently( bei ) ) {
+        TransitionToLookingForCube( bei );
+      } else {
+        TransitionToPickingUpCube( bei );
+      }
+    } else if( _step == Step::PuttingCubeDown ) {
+      TransitionToPuttingDownCube( bei );
+    }
+    
   }
   
   virtual void Update( BehaviorExternalInterface& bei ) override
@@ -186,7 +210,7 @@ public:
           // pick one for now. it will probably be a seen cube + connected cube, or just a seen cube if we can't connect
           const auto* cube = cubes.front();
           _objectID = cube->GetID();
-          TransitionToCubeTrick( bei );
+          TransitionToActivatingCube( bei );
         }
       } else if( currTime_ms >= _timeStartedSearching_ms + 1000*kMaxSearchDuration_s ) {
         auto* gi = bei.GetRobotInfo().GetGatewayInterface();
@@ -219,28 +243,83 @@ private:
     
     auto* gi = bei.GetRobotInfo().GetGatewayInterface();
     if( gi != nullptr ){
-      auto* seesCubeMessage = new external_interface::OnboardingSeesCube;
-      seesCubeMessage->set_sees_cube( false );
+      auto* seesCubeMessage = new external_interface::OnboardingSeesCube{ false };
       gi->Broadcast( ExternalMessageRouter::Wrap(seesCubeMessage) );
     }
   }
   
-  void TransitionToCubeTrick( BehaviorExternalInterface& bei )
+  void TransitionToActivatingCube( BehaviorExternalInterface& bei )
   {
-    DebugTransition("Doing a trick");
     auto* gi = bei.GetRobotInfo().GetGatewayInterface();
     if( gi != nullptr ){
-      auto* seesCubeMessage = new external_interface::OnboardingSeesCube;
-      seesCubeMessage->set_sees_cube( true );
+      auto* seesCubeMessage = new external_interface::OnboardingSeesCube{ true };
       gi->Broadcast( ExternalMessageRouter::Wrap(seesCubeMessage) );
     }
     
-    // todo: cube lights animation here, or more likely in a new previous step
+    
+    _activationBehavior->SetTargetID( _objectID );
+    _step = Step::ActivatingCube;
+    _selectedBehavior = _behaviors[_step];
+    if( !_selectedBehavior->WantsToBeActivated() ) {
+      // this can happen if it already ran to completion
+      TransitionToPickingUpCube( bei );
+    } else {
+      DebugTransition("Activating cube");
+      // only require confirmation on first attempt
+      _activationBehavior->SetRequireConfirmation( _activationAttemptCount == 0 );
+    }
+  }
+  
+  void TransitionToPickingUpCube( BehaviorExternalInterface& bei )
+  {
+    DebugTransition("Picking up cube");
+    
+    auto& drivingAnimHandler = bei.GetRobotInfo().GetDrivingAnimationHandler();
+    drivingAnimHandler.PushDrivingAnimations({
+      AnimationTrigger::OnboardingCubeDriveGetIn,
+      AnimationTrigger::OnboardingCubeDriveLoop,
+      AnimationTrigger::OnboardingCubeDriveGetOut
+    }, kLockName);
     
     _pickUpBehavior->SetTargetID( _objectID );
-    _step = Step::DoingATrick;
+    _step = Step::PickingUpCube;
     _selectedBehavior = _behaviors[_step];
-    ++_attemptCount;
+  }
+  
+  void TransitionToPuttingDownCube( BehaviorExternalInterface& bei )
+  {
+    if( (_putDownBehavior != nullptr) && _putDownBehavior->WantsToBeActivated() ) {
+      DebugTransition("Putting down cube");
+      _step = Step::PuttingCubeDown;
+      _selectedBehavior = _behaviors[_step];
+    } else {
+      TransitionToComplete( bei );
+    }
+  }
+  
+  void TransitionToComplete( BehaviorExternalInterface& bei )
+  {
+    auto& drivingAnimHandler = bei.GetRobotInfo().GetDrivingAnimationHandler();
+    drivingAnimHandler.RemoveDrivingAnimations( kLockName );
+    
+    DebugTransition("Complete");
+    _step = Step::Complete;
+    _selectedBehavior = nullptr;
+  }
+  
+  bool HasCubeBeenSeenRecently( BehaviorExternalInterface& bei ) const
+  {
+    // check if the cube has been seen recently. todo: this may need to be ConnectedActive object
+    // or something based on cube connection logic
+    const auto* cubeObject = bei.GetBlockWorld().GetLocatedObjectByID(_objectID);
+    if( cubeObject != nullptr ) {
+      TimeStamp_t lastObservedTime_ms = cubeObject->GetLastObservedTime();
+      TimeStamp_t currTime_ms = bei.GetRobotInfo().GetLastMsgTimestamp();
+      if( currTime_ms <= kMaxAgeForRedoSearch_ms + lastObservedTime_ms ) {
+        return true;
+      }
+    }
+    return false;
   }
   
   void DebugTransition(const std::string& debugInfo)
@@ -252,7 +331,8 @@ private:
     Invalid=0,
     LookingAtUser,
     LookingForCube,
-    DoingATrick,
+    ActivatingCube,
+    PickingUpCube,
     PuttingCubeDown,
     Complete,
   };
@@ -262,12 +342,14 @@ private:
   
   ObjectID _objectID;
   
-  unsigned int _attemptCount;
+  unsigned int _activationAttemptCount;
+  unsigned int _pickUpAttemptCount;
   TimeStamp_t _timeStartedSearching_ms;
   
   
   std::unordered_map<Step, IBehavior*> _behaviors;
   std::shared_ptr<BehaviorPickUpCube> _pickUpBehavior;
+  std::shared_ptr<BehaviorOnboardingActivateCube> _activationBehavior;
   ICozmoBehaviorPtr _putDownBehavior;
   
   std::unique_ptr<ConditionObjectKnown> _cubeKnownCondition;

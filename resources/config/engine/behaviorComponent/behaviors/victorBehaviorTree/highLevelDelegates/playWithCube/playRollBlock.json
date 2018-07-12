@@ -4,5 +4,10 @@
 
   "associatedActiveFeature": "RollBlock",
 
+  "wantsToBeActivatedCondition": {
+    "conditionType": "FeatureGate",
+    "feature": "CubeBehaviors"
+  },
+
   "isBlockRotationImportant" : false
 }

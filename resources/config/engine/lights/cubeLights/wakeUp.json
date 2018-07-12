@@ -17,14 +17,14 @@
     "pattern" : {
         "onColors"                 : [[0, 255, 0, 255], [0, 255, 0, 255], [0, 255, 0, 255], [0, 255, 0, 255]],
         "offColors"                : [[0, 0, 0, 255],   [0, 0, 0, 255],   [0, 0, 0, 255],   [0, 0, 0, 255]],
-        "onPeriod_ms"              : [1000,1000,1000,1000],
-        "offPeriod_ms"             : [3000,3000,3000,3000],
+        "onPeriod_ms"              : [900,900,900,900],
+        "offPeriod_ms"             : [0,0,0,0],
         "transitionOnPeriod_ms"    : [100,100,100,100],
         "transitionOffPeriod_ms"   : [1000,1000,1000,1000],
         "offset"                   : [0,0,0,0],
         "rotate"                   : false
     },
-    "duration_ms" : 5100,
+    "duration_ms" : 2000,
     "canBeOverridden" : false,
     "patternDebugName" : "wakeUp_fadeOut"
   }

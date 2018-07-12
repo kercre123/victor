@@ -24,6 +24,13 @@ namespace Cozmo {
 
 class BEIConditionMessageHelper;
 
+namespace ExternalInterface {
+struct ObjectMoved;
+struct ObjectStoppedMoving;
+struct ObjectUpAxisChanged;
+struct RobotObservedObject;
+}
+
 
 //Forward declarations
 class ReactionObjectData;

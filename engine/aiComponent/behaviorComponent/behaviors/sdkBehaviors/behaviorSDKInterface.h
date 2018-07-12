@@ -18,10 +18,17 @@
 namespace Anki {
 namespace Cozmo {
 
+class BehaviorDriveOffCharger;
+class BehaviorGoHome;
+class IGatewayInterface;
+namespace external_interface {
+  class DriveOffChargerRequest;
+  class DriveOnChargerRequest;
+}
+  
 class BehaviorSDKInterface : public ICozmoBehavior
 {
 protected:
-
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   explicit BehaviorSDKInterface(const Json::Value& config);  
@@ -30,16 +37,32 @@ protected:
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   
+  virtual void InitBehavior() override;
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
   virtual void OnBehaviorDeactivated() override;
+  
+  virtual void HandleWhileActivated(const AppToEngineEvent& event) override;
+  virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
 
 private:
+  void DriveOffChargerRequest(const external_interface::DriveOffChargerRequest& driveOffChargerRequest);
+  void DriveOnChargerRequest(const external_interface::DriveOnChargerRequest& driveOnChargerRequest);
+
+  void HandleDriveOffChargerComplete();
+  void HandleDriveOnChargerComplete();
+
+  void SetAllowedToRunActions(bool allowedtoRunActions);
 
   struct InstanceConfig {
     InstanceConfig();
-    // TODO: put configuration variables here
+
+    std::string driveOffChargerBehaviorStr;
+    ICozmoBehaviorPtr driveOffChargerBehavior;
+
+    std::string goHomeBehaviorStr;
+    ICozmoBehaviorPtr goHomeBehavior;
   };
 
   struct DynamicVariables {
@@ -50,8 +73,9 @@ private:
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
   
+  std::vector<Signal::SmartHandle> _signalHandles;
+  AnkiEventMgr<external_interface::GatewayWrapper> _eventMgr;
 };
-
 } // namespace Cozmo
 } // namespace Anki
 

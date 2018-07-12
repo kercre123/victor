@@ -12,7 +12,7 @@
 
 // #include "engine/aiComponent/beiConditions/conditions/conditionCubeTapped.h"
 #include "conditionCubeTapped.h"
-
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/beiConditions/beiConditionMessageHelper.h"
 #include "util/logging/logging.h"

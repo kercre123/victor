@@ -39,15 +39,15 @@ def path_component_contains_dot(relative_path):
     return False
 
 
-def glob_internal(includes, excludes, project_root_relative_excludes, include_dotfiles,
+def glob_internal(includes, excludes, project_root_relative_excludes, include_dotfiles, include_dotdotfiles,
                   search_base_path, project_root):
     search_base = Path(search_base_path)
-    if path_contains_dotdot(search_base):
+    if not include_dotdotfiles and path_contains_dotdot(search_base):
         raise ValueError('Search path may not contain ..')
     def includes_iterator():
         for pattern in includes:
             for path in search_base.glob(pattern):
-                if path_contains_dotdot(path):
+                if not include_dotdotfiles and path_contains_dotdot(path):
                     raise ValueError('Include path may not contain ..')
                 # TODO(beng): Handle hidden files on Windows.
                 if path.is_file() and \
@@ -111,6 +111,7 @@ def single_subdir_glob(dirpath, glob_pattern, excludes=None, prefix=None, build_
                  excludes=excludes,
                  project_root_relative_excludes=excludes,
                  include_dotfiles=False,
+                 include_dotdotfiles=False,
                  search_base_path=search_base,
                  project_root=search_base)
     #print("pattern {}".format(os.path.join(dirpath, glob_pattern)))
@@ -206,6 +207,7 @@ class FindSrc(object):
                                exclude_globs,
                                project_root_relative_excludes=exclude_globs,
                                include_dotfiles=False,
+                               include_dotdotfiles=False,
                                search_base_path=search_base_path,
                                project_root=project_root)
 
@@ -259,11 +261,13 @@ def cxx_project(name,
                 srcs,
                 platform_srcs=[],
                 headers=[],
-                platform_headers=[]):
+                platform_headers=[],
+                data=[]):
     """Returns a map of key names to source file lists"""
     file_map = {
         name + ".srcs.lst" : srcs,
         name + ".headers.lst" : headers,
+        name + ".data.lst" : data
     }
 
     for entry in platform_srcs:
@@ -286,11 +290,17 @@ def cxx_project(name,
 
     return file_map
 
+# Note: it is useful for the generic glob(), as used by the data member of a project, to allow
+#       access outside of the source tree. Source files, by their nature, are in child folders
+#       however the data that they access not necessarily so, therefore data will frequently
+#       reference ../resources
+
 def glob(search_base, includes, excludes=[]):
     result = glob_internal(includes,
                            excludes,
                            project_root_relative_excludes=excludes,
-                           include_dotfiles=False,
+                           include_dotfiles=True,
+                           include_dotdotfiles=True,
                            search_base_path=search_base,
                            project_root=search_base)
     return result
@@ -395,9 +405,10 @@ class BuildProcessor(object):
                 srcs,
                 platform_srcs=[],
                 headers=[],
-                platform_headers=[]):
+                platform_headers=[],
+                data=[]):
         path = os.path.dirname(__file__)
-        filemap = cxx_project(name, path, srcs, platform_srcs, headers, platform_headers)
+        filemap = cxx_project(name, path, srcs, platform_srcs, headers, platform_headers, data)
         self.projects[name] = filemap
 
     def _go_project(self, name,
@@ -461,14 +472,12 @@ class BuildProcessor(object):
             contents = f.read()
 
         self.build_env.dirname = os.path.dirname(path)
-
         module = imp.new_module(path)
         module.__file__ = path
         module.__dict__.update(default_globals)
 
         future_features = absolute_import.compiler_flag
         code = compile(contents, path, 'exec', future_features, 1)
-
         exec(code, module.__dict__)
 
         return module

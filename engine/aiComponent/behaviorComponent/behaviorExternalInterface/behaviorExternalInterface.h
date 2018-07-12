@@ -16,9 +16,10 @@
 
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiComponents_fwd.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "util/entityComponent/componentWrapper.h"
 #include "util/entityComponent/entity.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 
 #include "clad/types/offTreadsStates.h"
 
@@ -44,6 +45,7 @@ class BlockWorld;
 class BackpackLightComponent;
 class CubeAccelComponent;
 class CubeCommsComponent;
+class CubeConnectionCoordinator;
 class CubeLightComponent;
 class CliffSensorComponent;
 class DelegationComponent;
@@ -135,6 +137,7 @@ public:
             BackpackLightComponent*        backpackLightComponent,
             CubeAccelComponent*            cubeAccelComponent,
             CubeCommsComponent*            cubeCommsComponent,
+            CubeConnectionCoordinator*     CubeConnectionCoordinator,
             CubeLightComponent*            cubeLightComponent,
             CliffSensorComponent*          cliffSensorComponent,
             DelegationComponent*           delegationComponent,
@@ -156,7 +159,7 @@ public:
             DataAccessorComponent*         dataAccessor,
             TextToSpeechCoordinator*       TextToSpeechCoordinator,
             TouchSensorComponent*          touchSensorComponent,
-            VariableSnapshotComponent*      variableSnapshotComponent,
+            VariableSnapshotComponent*     variableSnapshotComponent,
             VisionComponent*               visionComponent,
             VisionScheduleMediator*        visionScheduleMediator,
             SettingsManager*               settingsManager);
@@ -222,6 +225,9 @@ public:
   inline bool HasCubeCommsComponent() const { return GetComponentWrapper(BEIComponentID::CubeComms).IsComponentValid();}
   CubeCommsComponent& GetCubeCommsComponent() const { return GetComponentWrapper(BEIComponentID::CubeComms).GetComponent<CubeCommsComponent>();}
 
+  inline bool HasCubeConnectionCoordinator() const { return GetComponentWrapper(BEIComponentID::CubeConnectionCoordinator).IsComponentValid();}
+  CubeConnectionCoordinator& GetCubeConnectionCoordinator() const { return GetComponentWrapper(BEIComponentID::CubeConnectionCoordinator).GetComponent<CubeConnectionCoordinator>();}
+
   inline bool HasObjectPoseConfirmer() const { return GetComponentWrapper(BEIComponentID::ObjectPoseConfirmer).IsComponentValid();}
   ObjectPoseConfirmer& GetObjectPoseConfirmer() const { return GetComponentWrapper(BEIComponentID::ObjectPoseConfirmer).GetComponent<ObjectPoseConfirmer>();}
 
@@ -257,6 +263,9 @@ public:
 
   inline bool HasSettingsManager() const { return GetComponentWrapper(BEIComponentID::SettingsManager).IsComponentValid();}
   SettingsManager& GetSettingsManager() const {return GetComponentWrapper(BEIComponentID::SettingsManager).GetComponent<SettingsManager>();}
+
+  inline bool HasVariableSnapshotComponent() const { return GetComponentWrapper(BEIComponentID::VariableSnapshotComponent).IsComponentValid();}
+  VariableSnapshotComponent& GetVariableSnapshotComponent() const {return GetComponentWrapper(BEIComponentID::VariableSnapshotComponent).GetComponent<VariableSnapshotComponent>();}
   
   // Util functions
   OffTreadsState GetOffTreadsState() const;
@@ -275,6 +284,7 @@ private:
                        BackpackLightComponent*        backpackLightComponent,
                        CubeAccelComponent*            cubeAccelComponent,
                        CubeCommsComponent*            cubeCommsComponent,
+                       CubeConnectionCoordinator*     CubeConnectionCoordinator,
                        CubeLightComponent*            cubeLightComponent,
                        CliffSensorComponent*          cliffSensorComponent,
                        DelegationComponent*           delegationComponent,

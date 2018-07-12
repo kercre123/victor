@@ -12,18 +12,19 @@
     "SingletonWallTimeCoordinator",
     "TimerUtilityCoordinator",
     "WeatherResponses",
+    "GreetAfterLongTime",
     "TakeAPhotoCoordinator",
     "ReactToTouchPetting",
+    "ReactToObstacle",
     "InterruptingVoiceReactions",
-    "ReactToCubeTap",
     "ReactToSoundAwake",
     "ReactToUnclaimedIntent",
     "WhileInAirDispatcher",
-    "ReactToObstacle",
     "ReactToPutDown",
     "ReactToDarkness",
     "DanceToTheBeat",
     "ConfirmHabitat",
+    "PRDemoStateMachine",
     "HighLevelAI"
   ]
 }

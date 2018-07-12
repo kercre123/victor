@@ -136,8 +136,9 @@ void VisionScheduleMediator::SetVisionModeSubscriptions(IVisionModeSubscriber* c
 
   // Remove any existing subscriptions from this subscriber
   for(auto& modeDataPair : _modeDataMap){
-    if(modeDataPair.second.requestMap.erase(subscriber)){
+    if(modeDataPair.second.requestMap.erase(subscriber) > 0){
       modeDataPair.second.dirty = true;
+      _subscriptionRecordIsDirty = true;
     }
   }
 
@@ -154,10 +155,9 @@ void VisionScheduleMediator::SetVisionModeSubscriptions(IVisionModeSubscriber* c
       VisionModeData& modeData = modeDataIterator->second;
       modeData.requestMap.emplace( subscriber, updatePeriod_images );
       modeData.dirty = true;
+      _subscriptionRecordIsDirty = true;
     }
   }
-
-  _subscriptionRecordIsDirty = true;
 }
 
   
@@ -174,9 +174,9 @@ void VisionScheduleMediator::DevOnly_SelfUnsubscribeVisionMode(const std::set<Vi
     if(got!=_modeDataMap.end()) {
       got->second.requestMap.erase(this);
       got->second.dirty = true;
+      _subscriptionRecordIsDirty = true;
     }
   }
-  _subscriptionRecordIsDirty = true;
 }
 
 void VisionScheduleMediator::ReleaseAllVisionModeSubscriptions(IVisionModeSubscriber* subscriber)
@@ -188,12 +188,11 @@ void VisionScheduleMediator::ReleaseAllVisionModeSubscriptions(IVisionModeSubscr
   }
 
   for(auto& modeDataPair : _modeDataMap){
-    if(modeDataPair.second.requestMap.erase(subscriber)){
+    if(modeDataPair.second.requestMap.erase(subscriber) > 0){
       modeDataPair.second.dirty = true;
+      _subscriptionRecordIsDirty = true;
     }
   }
-
-  _subscriptionRecordIsDirty = true;
 }
 
 void VisionScheduleMediator::UpdateVisionSchedule(VisionComponent& visionComponent, const CozmoContext* context)

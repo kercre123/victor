@@ -219,7 +219,9 @@ void BehaviorAnimGetInLoop::TransitionToLoop()
 void BehaviorAnimGetInLoop::TransitionToGetOut()
 {
   _dVars.stage = BehaviorStage::GetOut;
-  DelegateIfInControl(new TriggerAnimationAction(_iConfig.getOutTrigger, 1, true, _iConfig.tracksToLock));
+  DelegateIfInControl(new TriggerAnimationAction(_iConfig.getOutTrigger, 1, true, _iConfig.tracksToLock), [this](){
+                        CancelSelf();
+                      });
 }
 
 

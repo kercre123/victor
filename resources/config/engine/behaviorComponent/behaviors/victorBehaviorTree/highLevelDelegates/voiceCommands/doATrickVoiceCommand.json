@@ -9,7 +9,8 @@
   ],
 
   "behaviors" : [
-    "DriveOffCharger",
+    // todo: the DriveOffCharger behavior should be paired with the below behaviors so it faces a face for fistbump
+    "DriveOffChargerCube",
     "DoATrickInternal",
     "PutDownBlock"
   ],

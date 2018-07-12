@@ -88,6 +88,7 @@ private:
     BehaviorID onboardingBehavior; // onboarding
     BehaviorID normalBaseBehavior; // normal use behavior tree
     BehaviorID devBaseBehavior; // for people who want it to turn on, eyes too, but not go anywhere
+    BehaviorID prDemoBehavior; // for the pr demo
   };
   
   Behaviors _behaviors;

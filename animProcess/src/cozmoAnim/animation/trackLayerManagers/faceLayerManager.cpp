@@ -151,7 +151,9 @@ void FaceLayerManager::GenerateEyeShift(const std::map<KeepFaceAliveParameter,f3
                   GetParam<f32>(params, Param::EyeDartDownMinScale),
                   GetParam<f32>(params, Param::EyeDartOuterEyeScaleIncrease));
   
-  ProceduralFaceKeyFrame keyframe(procFace, duration);
+  // Will be replaced when added to track
+  const TimeStamp_t triggerTime_temp = 0;
+  ProceduralFaceKeyFrame keyframe(procFace, triggerTime_temp, duration);
   frame = std::move(keyframe);
 }
 
@@ -229,7 +231,6 @@ Result FaceLayerManager::AddEyeDartToFaceTrack(const std::string& layerName,
       if(!hasDartLayer) {
         FaceTrack faceTrack;
         // Generate eye shift generates frames with a relative offset for its trigger time
-        frame.SetKeyFrameDuration_ms(frame.GetTriggerTime_ms());
         frame.SetTriggerTime_ms(frame.GetTriggerTime_ms() + timeSinceKeepAliveStart_ms);
         faceTrack.AddKeyFrameToBack(frame);
         AddPersistentLayer(layerName, faceTrack);

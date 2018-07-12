@@ -20,7 +20,7 @@ set -eu
 
 : ${VIC_LOGMGR_DIRECTORY:="/data/data/com.anki.victor/cache/vic-logmgr"}
 : ${VIC_LOGMGR_FORMAT:="printable"}
-: ${VIC_LOGMGR_FILTERSPECS:="vic-anim:V vic-cloud:V vic-crashuploader:V vic-dasmgr:V vic-engine:V vic-gateway:V vic-init:V vic-robot:V vic-switchboard:V vic-watchdog:V vic-webserver:V *:E"}
+: ${VIC_LOGMGR_FILTERSPECS:="vic-anim:V vic-cloud:V vic-crashuploader:V vic-dasmgr:V vic-engine:V vic-gateway:V vic-init:V vic-neuralnets:V vic-robot:V vic-switchboard:V vic-watchdog:V vic-webserver:V *:E"}
 
 #
 # Callers must provide APP_URL, APP_KEY and APP_USER on command line.
@@ -47,50 +47,62 @@ osversion="`/bin/cat /etc/os-version`"
 osrevision="`/bin/cat /etc/os-version-rev`"
 pid="$$"
 
+#
+# Helper function to perform upload
+# VIC-3912: Need certificate chain for https validation
+#
+function upload {
+  url=${1}
+  path=${2}
+  name=${3}
+  /usr/bin/curl -s -f -k -X PUT \
+    -H "Anki-App-Key: ${APP_KEY}" \
+    -H "Usr-Username: ${APP_USER}" \
+    -H "Usr-RobotESN: ${esn}" \
+    -H "Usr-RobotTimestamp: ${timestamp}" \
+    -H "Usr-RobotVersion: ${version}" \
+    -H "Usr-RobotRevision: ${revision}" \
+    -H "Usr-RobotOSVersion: ${osversion}" \
+    -H "Usr-RobotOSRevision: ${osrevision}" \
+    --data-binary @${path} \
+    ${url}
+  status=$?
+  /bin/rm -f ${path}
+  if [ ${status} == 0 ]; then
+    echo "Uploaded ${name}"
+  else
+    echo "Failed to upload ${name}"
+    exit 1
+  fi
+}
+
+#
+# Set up scratch directory
+#
 blobdir=${VIC_LOGMGR_DIRECTORY}
+/bin/mkdir -p ${blobdir}
+
+#
+# Prepare log messages for upload
+#
 blobname="victor-${esn}-${timestamp}-${pid}.log.gz"
 blobpath="${blobdir}/${blobname}"
 bloburl="${APP_URL}/${blobname}"
 
-#
-# Prepare the file for upload
-#
+/usr/bin/logcat -d -v ${VIC_LOGMGR_FORMAT} ${VIC_LOGMGR_FILTERSPECS} | /bin/gzip > ${blobpath}
 
-/bin/mkdir -p ${blobdir}
-
-/usr/bin/logcat \
-   -d \
-   -v ${VIC_LOGMGR_FORMAT} \
-   ${VIC_LOGMGR_FILTERSPECS} | gzip > ${blobpath}
+upload ${bloburl} ${blobpath} ${blobname}
 
 #
-# Use curl to perform upload
-# VIC-3912: Need certificate chain for https validation
+# Repeat for dmesg
+# Note that we screen out a few patterns of known spam
 #
-curl -s -f -k -X PUT \
-  -H "Anki-App-Key: ${APP_KEY}" \
-  -H "Usr-Username: ${APP_USER}" \
-  -H "Usr-RobotESN: ${esn}" \
-  -H "Usr-RobotTimestamp: ${timestamp}" \
-  -H "Usr-RobotVersion: ${version}" \
-  -H "Usr-RobotRevision: ${revision}" \
-  -H "Usr-RobotOSVersion: ${osversion}" \
-  -H "Usr-RobotOSRevision: ${osrevision}" \
-  --data-binary @${blobpath} \
-  ${bloburl}
+blobname="dmesg-${esn}-${timestamp}-${pid}.log.gz"
+blobpath="${blobdir}/${blobname}"
+bloburl="${APP_URL}/${blobname}"
 
-status=$?
+/bin/dmesg | /bin/grep -v send_filled_buffers_to_user | /bin/grep -v dxeTXCompFrame | /bin/gzip > ${blobpath}
 
-/bin/rm -f ${blobpath}
+upload ${bloburl} ${blobpath} ${blobname}
 
-#
-# Note that exit status isn't reliable here.  If blobstore responds with
-# an API error but http status 200, curl still considers it success.
-#
-if [ ${status} -ne 0 ]; then
-  echo "Failed to upload to ${bloburl}"
-  exit 1
-fi
-
-echo "Uploaded ${blobname}"
 exit 0

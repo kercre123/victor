@@ -172,6 +172,11 @@ void OSState::UpdateCPUFreq_kHz() const
   }
 }
 
+void OSState::SetDesiredCPUFrequency(DesiredCPUFrequency freq)
+{
+  // not supported on mac
+}
+
 void OSState::UpdateTemperature_C() const
 {
   // Update temperature reading
@@ -398,6 +403,16 @@ bool OSState::HasTimezone() const
 {
   // assume mac always has locale set
   return true;
+}
+
+bool OSState::IsUserSpaceSecure()
+{
+  return true;
+}
+
+void OSState::SetOnChargeContacts(const bool onChargeContacts) const
+{
+  // Do nothing
 }
 
 } // namespace Cozmo

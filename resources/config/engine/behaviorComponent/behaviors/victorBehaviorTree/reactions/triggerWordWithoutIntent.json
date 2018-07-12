@@ -2,13 +2,7 @@
   "behaviorClass": "AnimSequence",
   "behaviorID": "TriggerWordWithoutIntent",
 
-  "respondToUserIntents": [
-    {
-      "type": "silence"
-    }
-  ],
-  
-  "associatedActiveFeature": "NoFeature",
+  "playOnChargerWithoutBody": true,
 
   "animTriggers": ["VC_IntentNeutral"]
 }

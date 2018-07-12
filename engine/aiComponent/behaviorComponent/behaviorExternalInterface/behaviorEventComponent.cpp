@@ -16,6 +16,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/robot.h"
 #include "util/logging/logging.h"
+#include "proto/external_interface/shared.pb.h"
 
 namespace Anki {
 namespace Cozmo {

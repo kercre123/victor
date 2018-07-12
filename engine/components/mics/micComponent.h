@@ -56,15 +56,27 @@ public:
   void SetShouldStreamAfterWakeWord( bool shouldStream );
   
   void SetTriggerWordDetectionEnabled( bool enabled );
+  
+  // getters for the above, based on local info, not from the anim process
+  bool GetShouldStreamAfterWakeWord() const { return _streamAfterWakeWord; }
+  bool GetTriggerWordDetectionEnabled() const { return _triggerDetectionEnabled; }
+
+  // set / get the fullness of the audio processing buffer on the robot (float from 0 to 1)
+  void  SetBufferFullness(float val);
+  float GetBufferFullness() const { return _fullness; }
 
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Member Data
+  
+  bool _streamAfterWakeWord = true; // default based on micDataProcessor.h
+  bool _triggerDetectionEnabled = true; // default based on micDataProcessor.h
 
   MicDirectionHistory*      _micHistory;
   VoiceMessageSystem*       _messageSystem;
   Robot*                    _robot;
+  float                     _fullness;
 };
 
 } // namespace Cozmo

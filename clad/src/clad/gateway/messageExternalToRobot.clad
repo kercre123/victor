@@ -7,10 +7,10 @@ message UiDeviceConnectionWrongVersion {
 }
 
 message DriveWheels {
-  float_32 lwheel_speed_mmps,
-  float_32 rwheel_speed_mmps,
-  float_32 lwheel_accel_mmps2 = 0.0,
-  float_32 rwheel_accel_mmps2 = 0.0,
+  float_32 left_wheel_mmps,
+  float_32 right_wheel_mmps,
+  float_32 left_wheel_mmps2 = 0.0,
+  float_32 right_wheel_mmps2 = 0.0,
 }
 
 message PlayAnimation {
@@ -130,8 +130,7 @@ message SetFaceToEnroll {
     bool useMusic=0       // Starts special music during say-name animations (will leave music playing!)
 }
 
-enum uint_32 VisionMode
-  {
+enum uint_32 VisionMode {
     Idle                   = 0x00,
     DetectingMarkers,
     DetectingFaces,
@@ -155,11 +154,85 @@ enum uint_32 VisionMode
     RunningNeuralNet, 
     DetectingIllumination,
     Count
-  }
+}
 
 message EnableVisionMode {
    VisionMode mode,
    bool       enable
+}
+
+// Struct containing all the information relevant to how a 
+// path should be modified or traversed.
+// TODO: Include path wonkification parameters
+structure PathMotionProfile {
+    float_32     speed_mmps = 100.0,
+    float_32     accel_mmps2 = 200.0,
+    float_32     decel_mmps2 = 500.0,
+    float_32     pointTurnSpeed_rad_per_sec = 2.0,
+    float_32     pointTurnAccel_rad_per_sec2 = 10.0,
+    float_32     pointTurnDecel_rad_per_sec2 = 10.0,
+    float_32     dockSpeed_mmps = 60.0,
+    float_32     dockAccel_mmps2 = 200.0,
+    float_32     dockDecel_mmps2 = 500.0,
+    float_32     reverseSpeed_mmps = 80.0,
+    bool         isCustom = 0
+}
+
+// GotoPose
+message GotoPose {
+  float_32 x_mm,
+  float_32 y_mm,
+  float_32 rad,
+  PathMotionProfile motionProf,
+  uint_8 level,
+}
+
+// DriveStraight
+//  Drives a straight line forward or backward without using the planner.
+message DriveStraight {
+   float_32 speed_mmps,  // Speed should be positive
+   float_32 dist_mm,     // Use +ve for forward, -ve for backward
+   bool shouldPlayAnimation = 1
+}
+
+// TurnInPlace
+// If isAbsolute == 0, turns the specified number of radians, *relative to the robot's current heading*
+// If isAbsolute != 0, turns to the specified absolute orientation.
+message TurnInPlace {
+    float_32 angle_rad, // relative mode: postive turns left negative turns right
+    float_32 speed_rad_per_sec = 0.0,
+    float_32 accel_rad_per_sec2 = 0.0,
+    float_32 tol_rad = 0.0, // This should be no smaller than POINT_TURN_ANGLE_TOL from cozmoEngineConfig.h.
+                            // Smaller values are ignored except 0 which is interpreted to mean
+                            // default tolerance of POINT_TURN_ANGLE_TOL.
+    uint_8 isAbsolute       // 0: angle_rad is relative to current orientation, 1: angle_rad is absolute angle to turn to
+}
+
+// SetHeadAngle
+message SetHeadAngle {
+    float_32 angle_rad,
+    float_32 max_speed_rad_per_sec,
+    float_32 accel_rad_per_sec2,
+    float_32 duration_sec
+}
+
+// SetLiftHeight
+message SetLiftHeight {
+    float_32 height_mm,
+    float_32 max_speed_rad_per_sec,
+    float_32 accel_rad_per_sec2,
+    float_32 duration_sec
+}
+
+// SetBackpackLEDs
+message SetBackpackLEDs {
+  uint_32  onColor[3],
+  uint_32  offColor[3],
+  uint_32  onPeriod_ms[3],
+  uint_32  offPeriod_ms[3],
+  uint_32  transitionOnPeriod_ms[3],
+  uint_32  transitionOffPeriod_ms[3],
+  int_32   offset[3]
 }
 
 // Note: these values and messages must match the values that get added to MessageGameToEngine
@@ -182,6 +255,12 @@ union MessageExternalToRobot {
   SetFaceToEnroll                SetFaceToEnroll                = 0x0F,
   EnableVisionMode               EnableVisionMode               = 0x10,
   RequestAvailableAnimations     RequestAvailableAnimations     = 0x11,
+  GotoPose                       GotoPose                       = 0x12,
+  DriveStraight                  DriveStraight                  = 0x13,
+  TurnInPlace                    TurnInPlace                    = 0x14,
+  SetHeadAngle                   SetHeadAngle                   = 0x15,
+  SetLiftHeight                  SetLiftHeight                  = 0x16,
+  SetBackpackLEDs                SetBackpackLEDs                = 0x17,
 }
 
 } // Gateway

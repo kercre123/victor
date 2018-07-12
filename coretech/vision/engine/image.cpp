@@ -478,7 +478,14 @@ namespace Vision {
   template<typename T>
   void ImageBase<T>::BoxFilter(ImageBase<T>& filtered, u32 size) const
   {
-    cv::boxFilter(this->get_CvMat_(), filtered.get_CvMat_(), -1, cv::Size(size, size));
+    try {
+      cv::boxFilter(this->get_CvMat_(), filtered.get_CvMat_(), -1, cv::Size(size, size));
+    }
+    catch (cv::Exception& e) {
+      PRINT_NAMED_ERROR("ImageBase.BoxFilter.OpenCvBoxFilterFailed",
+                        "%s", e.what());
+      this->CopyTo(filtered); // Just put the unfiltered source into the destination
+    }
   }
   
   template<typename T>
@@ -629,7 +636,7 @@ namespace Vision {
 
   void Image::BoxFilter(ImageBase<u8>& filtered, u32 size) const
   {
-    #if defined(MAC)
+    #if defined(__APPLE__)
     #define IS_MAC 1
     #else
     #define IS_MAC 0

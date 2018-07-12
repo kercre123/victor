@@ -13,6 +13,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/cubeSpinner/behaviorVectorPlaysCubeSpinner.h"
 
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationTrigger.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
@@ -152,6 +153,7 @@ bool BehaviorVectorPlaysCubeSpinner::WantsToBeActivatedBehavior() const
 void BehaviorVectorPlaysCubeSpinner::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
   modifiers.behaviorAlwaysDelegates = false;
+  modifiers.cubeConnectionRequirements = BehaviorOperationModifiers::CubeConnectionRequirements::RequiredManaged;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -181,7 +183,6 @@ void BehaviorVectorPlaysCubeSpinner::InitBehavior()
 
   const auto& lightConfig = GetBEI().GetDataAccessorComponent().GetCubeSpinnerConfig();
   _iConfig.cubeSpinnerGame = std::make_unique<CubeSpinnerGame>(_iConfig.gameConfig, lightConfig,
-                                                               GetBEI().GetCubeCommsComponent(),
                                                                GetBEI().GetCubeLightComponent(), 
                                                                GetBEI().GetBackpackLightComponent(),
                                                                GetBEI().GetBlockWorld(),

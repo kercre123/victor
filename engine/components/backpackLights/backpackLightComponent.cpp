@@ -14,8 +14,11 @@
 #include "engine/components/backpackLights/backpackLightComponent.h"
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/components/backpackLights/backpackLightAnimationContainer.h"
-#include "engine/ankiEventUtil.h"
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/components/batteryComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
@@ -23,17 +26,29 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
+#include "engine/robotInterface/messageHandler.h"
+#include "engine/robotManager.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/internetUtils/internetUtils.h"
+
+#include "osState/osState.h"
 
 #define DEBUG_LIGHTS 0
 
 namespace Anki {
 namespace Cozmo {
+
+CONSOLE_VAR(u32, kOfflineTimeBeforeLights_ms, "Backpacklights", (1000*60*5));
+CONSOLE_VAR(u32, kOfflinePulse_ms,            "Backpacklights", 3000);
+CONSOLE_VAR(u32, kOfflinePulseOff_ms,         "Backpacklights", 10000);
+CONSOLE_VAR(u32, kOfflineCheckFreq_ms,        "Backpacklights", 10000);
   
 enum class BackpackLightSourcePrivate : BackpackLightSourceType
 {
   Shared = Util::EnumToUnderlying(BackpackLightSource::Count),
+  Critical,
   
   Count
 };
@@ -46,6 +61,7 @@ struct BackpackLightData
 
 BackpackLightComponent::BackpackLightComponent()
 : IDependencyManagedComponent(this, RobotComponentID::BackpackLights)
+, _offlineAtTime_ms(0)
 {  
   static_assert((int)LEDId::NUM_BACKPACK_LEDS == 3, "BackpackLightComponent.WrongNumBackpackLights");
 }
@@ -68,52 +84,108 @@ void BackpackLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompM
 }
 
 
-void BackpackLightComponent::UpdateChargingLightConfig()
+void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStreamOpen)
 {
-  // Display off lights if 
-  // (1) off charger, or
-  // (2) on charger but not charging or battery is full.
-  BackpackAnimationTrigger chargeTrigger = BackpackAnimationTrigger::Off;
-  if(_robot->GetBatteryComponent().IsOnChargerContacts() &&
-     _robot->GetBatteryComponent().IsCharging() && 
-     !_robot->GetBatteryComponent().IsBatteryFull())
+  const TimeStamp_t curTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+ 
+  // Check which, if any, backpack lights should be displayed
+  // Low Battery, Offline, Streaming, Charging, or Nothing
+  BackpackAnimationTrigger trigger = BackpackAnimationTrigger::Off;
+
+  if(_offlineAtTime_ms == 0)
   {
-    chargeTrigger = BackpackAnimationTrigger::Charging;
+    _offlinePulseTime_ms = 0;
+    _offlineIsPulsing = true;
   }
-  else if(_robot->GetBatteryComponent().IsBatteryLow())
+  // If pulsing offline lights have been off for long enough
+  else if(curTime_ms - _offlinePulseTime_ms > kOfflinePulseOff_ms)
+  {
+    _offlinePulseTime_ms = curTime_ms;
+    _offlineIsPulsing = true;
+  }
+
+  
+  if(_robot->GetBatteryComponent().IsBatteryLow())
   {
     // Both charger out of spec and low battery backpack lights are the same
     // so instead of duplicating a lightPattern in json just use what we've already got
-    chargeTrigger = BackpackAnimationTrigger::BadCharger;
+    trigger = BackpackAnimationTrigger::BadCharger;
   }
+  // If we have been offline for long enough
+  else if(_offlineAtTime_ms > 0 &&
+          (curTime_ms - _offlineAtTime_ms > kOfflineTimeBeforeLights_ms) &&
+          _offlineIsPulsing)
+  {
+    // The offline backpack lights alternate between pulsing and off every so often
+    // If lights have been pulsing for long enough
+    if(curTime_ms - _offlinePulseTime_ms > kOfflinePulse_ms)
+    {
+      _offlinePulseTime_ms = curTime_ms;
+      _offlineIsPulsing = false;
+    }
+      
+    trigger = BackpackAnimationTrigger::Offline; 
+  }
+  // If we are currently streaming to the cloud
+  else if(isCloudStreamOpen)
+  {
+    trigger = BackpackAnimationTrigger::Streaming;
+  }
+  // If we are on the charger and charging
+  else if(_robot->GetBatteryComponent().IsOnChargerContacts() &&
+          _robot->GetBatteryComponent().IsCharging() && 
+          !_robot->GetBatteryComponent().IsBatteryFull())
+  {
+    trigger = BackpackAnimationTrigger::Charging;
+  }
+  // If we have low batter
 #if FACTORY_TEST
   else
   {
-    chargeTrigger = BackpackAnimationTrigger::Idle_09;
+    trigger = BackpackAnimationTrigger::Idle_09;
   }
 #endif
-  
-  if(chargeTrigger != _internalChargeLightsTrigger)
+
+  if(trigger != _internalChargeLightsTrigger)
   {
-    _internalChargeLightsTrigger = chargeTrigger;
-    auto animName = _backpackTriggerToNameMap->GetValue(chargeTrigger);
+    _internalChargeLightsTrigger = trigger;
+    auto animName = _backpackTriggerToNameMap->GetValue(trigger);
     const auto* anim = _backpackLightContainer->GetAnimation(animName);
     if(anim == nullptr)
     {
       PRINT_NAMED_WARNING("BackpackLightComponent.UpdateChargingLightConfig.NullAnim",
-                          "Got null anim for chargeTrigger %s",
-                          EnumToString(chargeTrigger));
+                          "Got null anim for trigger %s",
+                          EnumToString(trigger));
       return;
     }
-    
-    SetBackpackAnimation(*anim);
+
+    // All of the backpack lights set by the above checks (except for Off)
+    // take precedence over all other backpack lights so play them
+    // under the "critical" backpack light source
+    if(trigger != BackpackAnimationTrigger::Off)
+    {
+      StartLoopingBackpackAnimationInternal(*anim,
+                                            Util::EnumToUnderlying(BackpackLightSourcePrivate::Critical),
+                                            _sharedLightConfig);
+    }
+    else
+    {
+      SetBackpackAnimation(*anim);
+    }
   }
 }
 
 
 void BackpackLightComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
-  UpdateChargingLightConfig();
+  UpdateOfflineCheck();
+
+  auto& bc = _robot->GetAIComponent().GetComponent<BehaviorComponent>();
+  const bool isCloudStreamOpen = bc.GetComponent<UserIntentComponent>().IsCloudStreamOpen();
+  
+  UpdateCriticalBackpackLightConfig(isCloudStreamOpen);
+
+  UpdateSystemLightState(isCloudStreamOpen);
   
   BackpackLightDataRefWeak bestNewConfig = GetBestLightConfig();
   
@@ -152,6 +224,14 @@ void BackpackLightComponent::SetBackpackAnimation(const BackpackAnimationTrigger
   auto animName = _backpackTriggerToNameMap->GetValue(trigger);
   auto anim = _backpackLightContainer->GetAnimation(animName);
 
+  if(anim == nullptr)
+  {
+    PRINT_NAMED_ERROR("BackpackLightComponent.SetBackpackAnimation.NoAnimForTrigger",
+                      "Could not find animation for trigger %s name %s",
+                      EnumToString(trigger), animName.c_str());
+    return;
+  }
+  
   if(shouldLoop){
     StartLoopingBackpackAnimationInternal(*anim, Util::EnumToUnderlying(BackpackLightSourcePrivate::Shared), _sharedLightConfig);
   }else{
@@ -260,6 +340,7 @@ std::vector<BackpackLightSourceType> BackpackLightComponent::GetLightSourcePrior
 {
   constexpr BackpackLightSourceType priorityOrder[] =
   {
+    Util::EnumToUnderlying(BackpackLightSourcePrivate::Critical),
     Util::EnumToUnderlying(BackpackLightSource::Voice),
     Util::EnumToUnderlying(BackpackLightSource::Behavior),
     Util::EnumToUnderlying(BackpackLightSourcePrivate::Shared)
@@ -294,6 +375,131 @@ BackpackLightDataRefWeak BackpackLightComponent::GetBestLightConfig()
   }
   
   return BackpackLightDataRef{};
+}
+
+void BackpackLightComponent::SetPairingLight(bool isOn)
+{
+  _systemLightState = (isOn ? SystemLightState::Pairing : SystemLightState::Off);
+}
+
+void BackpackLightComponent::UpdateSystemLightState(bool isCloudStreamOpen)
+{
+  // Check if cloud streaming has changed
+  // Only show streaming system light if we are not showing anything else
+  // We don't want to accidentally override the pairing light. We will still
+  // indicate we are streaming with the other backpack lights.
+  if(_systemLightState == SystemLightState::Off &&
+     isCloudStreamOpen)
+  {
+    _systemLightState = SystemLightState::Streaming; 
+  }
+  else if(_systemLightState == SystemLightState::Streaming &&
+          !isCloudStreamOpen)
+  {
+    _systemLightState = SystemLightState::Off; 
+  }
+  
+  static SystemLightState prevState = SystemLightState::Invalid;
+  if(prevState != _systemLightState)
+  {
+    prevState = _systemLightState;
+
+    LightState light;
+    switch(_systemLightState)
+    {
+      case SystemLightState::Invalid:
+      {
+        DEV_ASSERT(false, "BackpackLightComponent.UpdateSystemLightState.Invalid");
+        return;
+      }
+      break;
+      case SystemLightState::Off:
+      {
+        light.onColor = 0x00FF0000;
+        light.offColor = 0x00FF0000;
+        light.onFrames = 1;
+        light.offFrames = 1;
+        light.transitionOnFrames = 0;
+        light.transitionOffFrames = 0;
+        light.offset = 0;
+      }
+      break;
+
+      case SystemLightState::Pairing:
+      {
+        // Pulsing yellow
+        light.onColor = 0xFFFF0000;
+        light.offColor = 0x00FF0000;
+        light.onFrames = 16;
+        light.offFrames = 16;
+        light.transitionOnFrames = 16;
+        light.transitionOffFrames = 16;
+        light.offset = 0;
+      }
+      break;
+
+      case SystemLightState::Streaming:
+      {
+        // Pulsing cyan
+        light.onColor = 0x00FFFF00;
+        light.offColor = 0x00FF0000;
+        light.onFrames = 16;
+        light.offFrames = 16;
+        light.transitionOnFrames = 16;
+        light.transitionOffFrames = 16;
+        light.offset = 0;
+      }
+      break;
+    }
+
+    // If user space is unsecure then mix white in
+    // to the system light as the off color (normally green)
+    if(!OSState::getInstance()->IsUserSpaceSecure())
+    {
+      light.offColor = 0xFFFFFF00;
+      light.onFrames = 16;
+      light.offFrames = 16;
+      light.transitionOnFrames = 16;
+      light.transitionOffFrames = 16;
+      light.offset = 0;
+    }
+
+    _robot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::SetSystemLight({light})));
+  }
+}
+
+// TODO: Connectivity checks should be moved to a central location as multiple
+// parts of the system are starting to do them (faceInfoScreenManager.cpp)
+// VIC-4094 VIC-4099
+void BackpackLightComponent::UpdateOfflineCheck()
+{
+  static TimeStamp_t lastCheck_ms = 0;
+  const TimeStamp_t curTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+
+  auto offlineCheck = [this, curTime_ms]() {
+    const bool hasVoiceAccess = Anki::Util::InternetUtils::CanConnectToHostName("chipper-dev.api.anki.com", 443);
+    if(_offlineAtTime_ms == 0 && !hasVoiceAccess)
+    {
+      _offlineAtTime_ms = curTime_ms;
+    }
+    else if(_offlineAtTime_ms > 0 && hasVoiceAccess)
+    {
+      _offlineAtTime_ms = 0;
+    }
+  };
+
+  const bool valid = _offlineCheckFuture.valid();
+  std::future_status status = std::future_status::ready;
+  if(valid)
+  {
+    status = _offlineCheckFuture.wait_for(std::chrono::milliseconds(0));
+  }
+  if(status == std::future_status::ready &&
+     curTime_ms - lastCheck_ms > kOfflineCheckFreq_ms)
+  {
+    lastCheck_ms = curTime_ms;
+    _offlineCheckFuture = std::async(std::launch::async, offlineCheck);  
+  }
 }
 
 }

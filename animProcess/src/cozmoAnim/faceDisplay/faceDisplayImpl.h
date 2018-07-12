@@ -43,6 +43,9 @@ public:
 
   // Print text to face display
   void FacePrintf(const char *format, ...);
+
+  // set face display brightness (int 0..20)
+  void SetFaceBrightness(int level);
   
 private:
   

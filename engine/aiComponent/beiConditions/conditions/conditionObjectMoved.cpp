@@ -13,6 +13,7 @@
 
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectMoved.h"
 
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/beiConditions/beiConditionMessageHelper.h"

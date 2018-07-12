@@ -35,6 +35,10 @@ class IBehavior;
 class IExternalInterface;
 class IGatewayInterface;
   
+namespace RobotInterface {
+class MessageHandler;
+}
+  
 class AsyncMessageGateComponent : public IDependencyManagedComponent<BCComponentID>, private Util::noncopyable
 {
 public:

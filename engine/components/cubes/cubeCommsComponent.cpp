@@ -19,6 +19,7 @@
 #include "engine/activeObject.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
+#include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 #include "engine/robotToEngineImplMessaging.h"
 

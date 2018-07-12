@@ -20,8 +20,6 @@
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionOffTreadsState.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
-#include "engine/externalInterface/externalInterface.h"
-#include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
 namespace Cozmo {

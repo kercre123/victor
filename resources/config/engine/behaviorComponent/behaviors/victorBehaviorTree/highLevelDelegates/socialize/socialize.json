@@ -5,7 +5,7 @@
   "resetTimers": ["Socializing"],
 
   "behaviors" : [
-    "DriveOffCharger",
+    "DriveOffChargerFace",
     "ShortLookAroundForFaceAndCube",
     "InteractWithFaces",
     "SocializeGame"

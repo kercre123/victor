@@ -55,7 +55,6 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* ctx,
   using Locale = Anki::Util::Locale;
   using DataPlatform = Anki::Util::Data::DataPlatform;
 
-
   // Check for valid data platform before we do any work
   const DataPlatform * dataPlatform = ctx->GetDataPlatform();
   if (nullptr == dataPlatform) {
@@ -74,10 +73,48 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* ctx,
     return;
   }
 
-  // Set up default parameters for requested language
-  _tts_config = std::make_unique<TextToSpeechProviderConfig>(locale->GetLanguageString(), tts_platform_config);
+  _tts_resource_path = dataPlatform->GetResourcePath("tts");
+  _tts_platform_config = tts_platform_config;
+  _rng = ctx->GetRandom();
 
-  const auto & language = _tts_config->GetLanguage();
+  // Initialize with current locale
+  const std::string & localeString = locale->GetLocaleString();
+  const Result result = Initialize(localeString);
+  if (result != RESULT_OK) {
+    LOG_WARNING("TextToSpeechProvider.Initialize",
+                "Unable to initialize locale %s (error %d)",
+                localeString.c_str(), result);
+    return;
+  }
+
+}
+
+TextToSpeechProviderImpl::~TextToSpeechProviderImpl()
+{
+  Cleanup();
+}
+
+Result TextToSpeechProviderImpl::Initialize(const std::string & locale)
+{
+  LOG_DEBUG("TextToSpeechProvider.Initialize", "Initializing locale %s", locale.c_str());
+
+  if (locale == _locale) {
+    LOG_DEBUG("TextToSpeechProvider.Initialize", "Already using locale %s", locale.c_str());
+    return RESULT_OK;
+  }
+
+  // Release resources, if any
+  Cleanup();
+
+  std::string language = Anki::Util::Locale::LocaleFromString(locale).GetLanguageString();
+  if (language.empty()) {
+    LOG_ERROR("TextToSpeechProvider.Initialize", "Unable to get language from locale %s", locale.c_str());
+    language = "en";
+  }
+
+  // Set up default parameters for requested language
+  _tts_config = std::make_unique<TextToSpeechProviderConfig>(language, _tts_platform_config);
+
   const auto & voice = _tts_config->GetVoice();
   const auto speed = _tts_config->GetSpeed();
   const auto shaping = _tts_config->GetShaping();
@@ -90,39 +127,26 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* ctx,
            language.c_str(), voice.c_str(), speed, shaping, pitch);
 
   // Initialize Acapela DLL
-  std::string resources = dataPlatform->GetResourcePath("tts");
-  HMODULE h = BabTtsInitDllEx(resources.c_str());
+  HMODULE h = BabTtsInitDllEx(_tts_resource_path.c_str());
   if (nullptr == h) {
     LOG_WARNING("TextToSpeechProvider.Initialize.InitDll",
-              "Unable to initialize TTS provider DLL in '%s'",resources.c_str());
-    return;
+              "Unable to initialize TTS provider DLL in '%s'",
+              _tts_resource_path.c_str());
+    return RESULT_FAIL_INVALID_PARAMETER;
   }
 
   bool ok = BabTTS_Init();
   if (!ok) {
     LOG_ERROR("TextToSpeechProvider.Initialize.Init",
               "Unable to initialize TTS provider");
-    return;
-  }
-
-  const long numVoices = BabTTS_GetNumVoices();
-
-  LOG_DEBUG("TextToSpeechProvider.Initialize.NumVoices",
-            "TTS provider has %ld voices", numVoices);
-
-  for (int i = 0; i < numVoices; ++i) {
-    char voice[ACAPELA_VOICE_BUFSIZ];
-    BabTtsError err = BabTTS_EnumVoices(i, voice);
-    DEV_ASSERT(err == E_BABTTS_NOERROR, "TextToSpeechProvider.Initialize.EnumVoices");
-    LOG_DEBUG("TextToSpeechProvider.Initialize.EnumVoices",
-              "TTS provider has voice %s", voice);
+    return RESULT_FAIL_INVALID_OBJECT;
   }
 
   _lpBabTTS = BabTTS_Create();
   if (nullptr == _lpBabTTS) {
     LOG_ERROR("TextToSpeechProvider.Initialize.Create",
               "Unable to create TTS provider handle");
-    return;
+    return RESULT_FAIL_INVALID_OBJECT;
   }
 
   BabTtsError err = BabTTS_Open(_lpBabTTS, voice.c_str(), BABTTS_USEDEFDICT);
@@ -134,13 +158,13 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* ctx,
     LOG_WARNING("TextToSpeechProvider.Initialize.Open",
                 "Unable to open TTS voice (%s)",
                 BabTTS_GetErrorName(err));
-    return;
+    return RESULT_FAIL_INVALID_PARAMETER;
   } else {
     /* some other error */
     LOG_ERROR("TextToSpeechProvider.Initialize.Open",
               "Unable to open TTS voice (%s)",
               BabTTS_GetErrorName(err));
-    return;
+    return RESULT_FAIL_INVALID_PARAMETER;
   }
 
   err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_SPEED, speed);
@@ -178,16 +202,29 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* ctx,
               trailingSilence_ms, BabTTS_GetErrorName(err));
   }
 
-  _rng = ctx->GetRandom();
+  _locale = locale;
+  _language = language;
+
+  LOG_DEBUG("TextToSpeechProvider.Initialize", "Now using locale %s language %s", _locale.c_str(), _language.c_str());
+
+  return RESULT_OK;
 }
 
-TextToSpeechProviderImpl::~TextToSpeechProviderImpl()
+void TextToSpeechProviderImpl::Cleanup()
 {
   if (nullptr != _lpBabTTS) {
     BabTTS_Close(_lpBabTTS);
     BabTTS_Uninit();
     BabTtsUninitDll();
+    _lpBabTTS = nullptr;
   }
+  _locale.clear();
+  _language.clear();
+}
+
+Result TextToSpeechProviderImpl::SetLocale(const std::string & locale)
+{
+  return Initialize(locale);
 }
 
 Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,

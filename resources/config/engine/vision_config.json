@@ -34,15 +34,15 @@
     "CheckingWhiteBalance"   : [false, false, false, true, false, false, false, false],
     "DetectingLaserPoints"   : 2,
     "ComputingStatistics"    : false,  // NOTE: enabled but not scheduled!
-    "DetectingGeneralObjects": 1,
+    "RunningNeuralNet"       : 1, // Won't actually run every frame, but as frequently as possible (is asynchronous)
     "SavingImages"           : 5,
     "DetectingIllumination"  : 1
   },
 
   "ColorImages" : true,        // Whether color images are enabled on startup (can still be toggled later)
 
-  "FaceAlbum" : "robot",       // Name of album on disk to load or "robot" to use the one from the robot
-
+  "FaceAlbum" : "default",     
+  
   "FaceDetection" :
   {
     "DetectionMode": "video"   // "video" or "singleImage"
@@ -138,9 +138,7 @@
     //
     // Model definition:
     //
-
-    // Standalone TF model
-    "graphFile"           : "person_localization_victor_6x6_92_accuracy.pb", 
+    "graphFile"           : "person_localization_victor_6x6_92_accuracy.tflite", 
     "memoryMapGraph"      : 0,
     "labelsFile"          : "person-labels.txt", 
     "architecture"        : "custom",
@@ -153,90 +151,11 @@
     "useGrayscale"        : 0,
     "inputWidth"          : 128, 
     "inputHeight"         : 128, 
-    "inputScale"          : 127.5, 
-    "inputShift"          : -1, 
+    "inputScale"          : 127.5, // When input is float, data is first divided by scale and then shifted
+    "inputShift"          : -1,    // I.e.:  float_input = data / inputScale + inputShift
     "minScore"            : 0.5,
     "verbose"             : 0,
     "pollPeriod_ms"       : 10,
     "benchmarkRuns"       : 0
-
-
-    // // OpenCV DNN w/ MobileNet SSD Model
-    // // NOTE: Currently assumes model is symlinked in resources/config/engine/vision/dnn_models to:
-    // //       ~/DropBox/DeepLearningVisionModels, shared by andrew (until VIC-1071)
-    // "graph"  : "ssd_mobilenet_v1_coco_11_06_2017_frozen.pb",
-    // "labels" : "cocostuff-labels.txt",
-    // "mode"   : "detection",
-    // "input_width" : 224,
-    // "input_height": 224,
-    // "input_mean_R": 0,
-    // "input_mean_G": 0,
-    // "input_mean_B": 0,
-    // "input_std": 255,
-    // "top_K": 1,
-    // "min_score": 0.5
-
-    // // SqueezeNet on ImageNet with Caffe
-    // // See also: https://github.com/DeepScale/SqueezeNet
-    // "graph" : "squeezenet_v1.1",
-    // "labels" : "squeezenet_labels.txt",
-    // "mode"   : "classification",
-    // "input_width" : 227,
-    // "input_height" : 227,
-    // "input_mean_R" : 104,
-    // "input_mean_G" : 117,
-    // "input_mean_B" : 123,
-    // "input_std"    : 1,
-    // "top_K" : 1,
-    // "min_score" : 0.5
-
-    // // OpencCV DNN w/ MobileNets classification model
-    // //"graph"  : "mobilenet_0.50_128_RockPaperScissors_opencvdnn.pb",
-    // "graph"  : "mobilenet_0.75_128_RockPaperScissors_combinedData_opencvdnn.pb",
-    // "labels" : "RockPaperScissors_labels.txt",
-    // "mode"   : "classification",
-    // "input_width"  : 128,
-    // "input_height" : 128,
-    // "do_crop" : false,
-    // "input_mean_R" : 127.5,
-    // "input_mean_G" : 127.5,
-    // "input_mean_B" : 127.5,
-    // "input_std"    : 127.5,
-    // "input_layer"  : "input",
-    // "output_scores_layer" : "final_result",
-    // "top_K" : 1,
-    // "min_score" : 0.1
-
-    // "graph"                       : "ssd_mobilenet_v1_coco_11_06_2017_quantized.pb",
-    // //config["graph"] = "ssd_inception_v2_coco_11_06_2017_frozen.pb";
-    // //config["graph"] = "rfcn_resnet101_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "Round"
-    // //config["graph"] = "faster_rcnn_inception_resnet_v2_atrous_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "FloorMod"
-    // //config["graph"] = "faster_rcnn_resnet101_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "Round"
-    // "labels"                      : "cocostuff-labels-no-numbers.txt",
-    // "mode"                        : "detection",
-    // "input_layer"                 :  "image_tensor",
-    // "input_width"                 : 0,
-    // "input_height"                : 0,
-    // "do_crop"                     : true,
-    // "output_scores_layer"         : "detection_scores",
-    // "output_classes_layer"        : "detection_classes",
-    // "output_boxes_layer"          : "detection_boxes",
-    // "output_num_detections_layer" :  "num_detections",
-    // "top_K"                       : 5,
-    // "min_score"                   : 0.5
-
-    //"graph"         : "inception_v3_2016_08_28_frozen.pb",
-    //"labels"        : "imagenet_slim_labels.txt",
-    //"input_width"   : 299,
-    //"input_height"  : 299,
-    //"do_crop"       : true,
-    //"input_mean_R"  : 0,
-    //"input_mean_G"  : 0,
-    //"input_mean_B"  : 0,
-    //"input_std"     : 255,
-    //"input_layer"   : "input",
-    //"output_layer"  : "InceptionV3/Predictions/Reshape_1",
-    //"top_K"         : 1  // Only 1 supported for now
-
   }
 }

@@ -11,7 +11,6 @@
  *
  **/
 
-
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceDisplayImpl.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
@@ -26,6 +25,8 @@
 #include <chrono>
 #include <errno.h>
 
+#define LOG_CHANNEL "FaceDisplay"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -39,8 +40,31 @@ namespace {
   uint16_t _fault = FaultCode::NONE;
 
   static const std::string kFaultURL = "support.anki.com";
+
+#if REMOTE_CONSOLE_ENABLED
+  FaceDisplayImpl* sDisplayImpl = nullptr;
+
+  void SetFaceBrightness(ConsoleFunctionContextRef context) {
+    if( nullptr == sDisplayImpl ) {
+      return;
+    }
+
+    const int val = ConsoleArg_GetOptional_Int(context, "val", 1);
+
+    if( val >= 0 && val <= 20 ) {
+      sDisplayImpl->SetFaceBrightness(val);
+    }
+    else {
+      LOG_WARNING("FaceDisplay.SetFaceBrightness.Invalid",
+                  "Brightness value %d is invalid, refusing to set",
+                  val);
+    }
+  }
+
+  CONSOLE_FUNC(SetFaceBrightness, "FaceDisplay", int val);
+#endif
 }
-  
+
 FaceDisplay::FaceDisplay()
   : _displayImpl(new FaceDisplayImpl())
 {
@@ -52,11 +76,19 @@ FaceDisplay::FaceDisplay()
   _faceDrawThread = std::thread(&FaceDisplay::DrawFaceLoop, this);
 
   _faultCodeThread = std::thread(&FaceDisplay::FaultCodeLoop, this);
-  _faultCodeThread.detach();
+
+#if REMOTE_CONSOLE_ENABLED
+  sDisplayImpl = _displayImpl.get();
+#endif
+
 }
 
 FaceDisplay::~FaceDisplay()
 {
+#if REMOTE_CONSOLE_ENABLED
+  sDisplayImpl = nullptr;
+#endif
+
   _stopDrawFace = true;
   _faceDrawThread.join();
 
@@ -85,6 +117,11 @@ void FaceDisplay::DrawToFaceDebug(const Vision::ImageRGB565& img)
   }
 
   DrawToFaceInternal(img);
+}
+
+void FaceDisplay::SetFaceBrightness(LCDBrightness level)
+{
+  _displayImpl->SetFaceBrightness(EnumToUnderlyingType(level));
 }
 
 void FaceDisplay::DrawToFace(const Vision::ImageRGB565& img)
@@ -121,7 +158,7 @@ void FaceDisplay::DrawFaultCode(uint16_t fault)
   // Save the current image being displayed if we did not have a fault code
   // but do now and there has been an image drawn
   const bool saveCurImg = (_fault == 0 && fault != 0);
-  
+
   // If fault code 0, then show the saved image
   // as long as there has been one. Otherwise
   // imgBeforeFault will be empty
@@ -142,7 +179,7 @@ void FaceDisplay::DrawFaultCode(uint16_t fault)
   }
 
   _fault = fault;
-  
+
   img.FillWith(0);
 
   // Draw the fault code centered horizontally
@@ -168,7 +205,7 @@ void FaceDisplay::DrawFaultCode(uint16_t fault)
 				   false);
 
   UpdateNextImgPtr();
-  _faceDrawNextImg->SetFromImageRGB(img);  
+  _faceDrawNextImg->SetFromImageRGB(img);
 }
 
 void FaceDisplay::DrawFaceLoop()
@@ -211,7 +248,7 @@ void FaceDisplay::DrawFaceLoop()
     else
     {
       _faceDrawMutex.unlock();
-      
+
       // Sleep before checking again whether we've got an image to draw
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
@@ -230,29 +267,37 @@ void FaceDisplay::FaultCodeLoop()
       return;
     }
   }
-  
-  _faultCodeFifo = open(FaultCode::kFaultCodeFifoName, O_RDONLY);
+
+  // Open fifo for read+write to avoid blocking on open.
+  _faultCodeFifo = open(FaultCode::kFaultCodeFifoName, O_RDWR);
   if(_faultCodeFifo < 0)
   {
-    PRINT_NAMED_WARNING("FaceDisplay.FaultCodeLoop.OpenFifoFailed", "%d", errno);
+    LOG_WARNING("FaceDisplay.FaultCodeLoop.OpenFifoFailed", "%d", errno);
     return;
   }
 
   // Wait 10 seconds before trying to read and draw fault codes
-  // in order to let things stabilize and have time to do startup fault checks
-  using namespace std::chrono_literals;
-  std::this_thread::sleep_for(10s);
+  // in order to let things stabilize and have time to do startup fault checks.
+  // If condition variable is signalled for shutdown, the wait returns immediately.
 
-  ssize_t rc = 0;
+  {
+    using namespace std::chrono_literals;
+    std::unique_lock<std::mutex> lock(_faultCodeMutex);
+    if (!_faultCodeStop) {
+      _faultCodeCondition.wait_for(lock, 10s);
+    }
+  }
+
   const ssize_t kFaultSize = sizeof(uint16_t);
   u8 buf[128];
-  while(true)
+
+  while (!_faultCodeStop)
   {
     // Blocks until there is data available
-    rc = read(_faultCodeFifo, buf, sizeof(buf));
-    if(rc < 0)
+    const ssize_t rc = read(_faultCodeFifo, buf, sizeof(buf));
+    if (rc < 0)
     {
-      PRINT_NAMED_WARNING("FaceDisplay.FaultCodeLoop.ReadFailed","%d", errno);
+      LOG_WARNING("FaceDisplay.FaultCodeLoop.ReadFailed", "rc %zd errno %d", rc, errno);
       close(_faultCodeFifo);
       _faultCodeFifo = -1;
       return;
@@ -265,7 +310,7 @@ void FaceDisplay::FaultCodeLoop()
     // left
     uint16_t maxFault = _fault;
     while(numBytes >= kFaultSize)
-    {      
+    {
       uint16_t newFault;
       memcpy(&newFault, buf, kFaultSize);
       memmove(buf, buf + kFaultSize, numBytes - kFaultSize);
@@ -278,18 +323,36 @@ void FaceDisplay::FaultCodeLoop()
 	maxFault = newFault;
       }
     }
-
     DrawFaultCode(maxFault);
   }
-}  
+}
 
 void FaceDisplay::StopFaultCodeThread()
 {
-  // Close and unlink the socket if it exists
-  if(_faultCodeFifo > 0)
+  //
+  // Set stop flag and notify any waiters on condition.
+  // If worker thread is waiting on condition, wait will return immediately.
+  //
   {
+    std::lock_guard<std::mutex> lock(_faultCodeMutex);
+    _faultCodeStop = true;
+    _faultCodeCondition.notify_all();
+  }
+
+  //
+  // If fifo is open, write a no-op value and then close it.
+  // If worker thread is blocked in read, it will wake up immediately
+  // to process the no-op.
+  if (_faultCodeFifo > 0)
+  {
+    (void) write(_faultCodeFifo, &_fault, sizeof(_fault));
     close(_faultCodeFifo);
     _faultCodeFifo = -1;
+  }
+
+  // Wait for worker thread to exit.
+  if (_faultCodeThread.joinable()) {
+    _faultCodeThread.join();
   }
 }
 

@@ -1,0 +1,9 @@
+{
+  "behaviorClass" : "GreetAfterLongTime",
+  "behaviorID"    : "GreetAfterLongTime",
+
+  "associatedActiveFeature": "NoFeature",
+
+  // 8 hours
+  "cooldown_s": 28800
+}

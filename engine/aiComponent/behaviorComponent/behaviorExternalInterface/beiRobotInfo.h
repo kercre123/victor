@@ -133,6 +133,8 @@ public:
   bool IsPhysical() const;
   bool IsPickedUp() const;
   bool IsPoseInWorldOrigin(const Pose3d& pose) const;
+  
+  bool IsCarryingObject() const;
 
   void EnableStopOnCliff(const bool enable);
   

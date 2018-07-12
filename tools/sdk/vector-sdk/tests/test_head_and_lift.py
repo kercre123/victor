@@ -1,31 +1,44 @@
 #!/usr/bin/env python3
 
-import asyncio
+'''
+Test the setting angle and height for the head and lift respectively
+'''
 
-import os, sys
+import os
+import sys
+import time
+
+import utilities
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import vector
+import vector  # pylint: disable=wrong-import-position
+from vector.util import degrees  # pylint: disable=wrong-import-position
 
-async def main(robot):
-    await robot.set_head_angle(-50.0)
-    # @TODO: Remove the manual sleeps when we can block properly on these calls
-    await asyncio.sleep(1.0)
 
-    await robot.set_head_angle(50.0)
-    # @TODO: Remove the manual sleeps when we can block properly on these calls
-    await asyncio.sleep(1.0)
+def main():
+    '''main execution'''
+    args = utilities.parse_args()
 
-    await robot.set_head_angle(0.0)
-    # @TODO: Remove the manual sleeps when we can block properly on these calls
-    await asyncio.sleep(1.0)
+    print("------ begin testing head and lift actions ------")
 
-    await robot.set_lift_height(100.0)
-    # @TODO: Remove the manual sleeps when we can block properly on these calls
-    await asyncio.sleep(1.0)
+    # The robot shall lower and raise his head and lift
+    with vector.Robot(args.ip, str(args.cert), port=args.port) as robot:
+        robot.behavior.set_head_angle(degrees(-50.0))
+        time.sleep(2)
 
-    await robot.set_lift_height(0.0)
-    # @TODO: Remove the manual sleeps when we can block properly on these calls
-    await asyncio.sleep(1.0)
+        robot.behavior.set_head_angle(degrees(50.0))
+        time.sleep(2)
+
+        robot.behavior.set_head_angle(degrees(0.0))
+        time.sleep(2)
+
+        robot.behavior.set_lift_height(100.0)
+        time.sleep(2)
+
+        robot.behavior.set_lift_height(0.0)
+        time.sleep(2)
+
+    print("------ finished testing head and lift actions ------")
+
 
 if __name__ == "__main__":
-    vector.robot.run_program(main, sys.argv[1] if len(sys.argv) > 1 else None)
+    main()

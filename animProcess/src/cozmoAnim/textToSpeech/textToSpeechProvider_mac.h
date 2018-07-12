@@ -17,6 +17,7 @@
 
 #include "textToSpeechProvider.h"
 #include "textToSpeechProviderConfig.h"
+#include "json/json.h"
 
 #include <string>
 
@@ -45,10 +46,25 @@ public:
   TextToSpeechProviderImpl(const Cozmo::AnimContext* ctx, const Json::Value& tts_platform_config);
   ~TextToSpeechProviderImpl();
 
+  Result SetLocale(const std::string & locale);
+
   Result CreateAudioData(const std::string& text, float durationScalar, TextToSpeechProviderData& data);
 
 private:
-  // Configurable parameters
+  // Pointer to RNG provided by context
+  Anki::Util::RandomGenerator * _rng = nullptr;
+
+  // Path to TTS resources
+  std::string _tts_resource_path;
+
+  // Platform configuration options
+  Json::Value _tts_platform_config;
+
+  // Current locale, current language
+  std::string _locale;
+  std::string _language;
+
+  // Current configuration
   std::unique_ptr<TextToSpeechProviderConfig> _tts_config;
 
   // License state
@@ -57,8 +73,10 @@ private:
   // Opaque handle to Acapela TTS SDK
   void* _lpBabTTS = nullptr;
 
-  // Pointer to RNG provided by context
-  Anki::Util::RandomGenerator * _rng = nullptr;
+
+  // Private methods
+  Result Initialize(const std::string & locale);
+  void Cleanup();
 
 }; // class TextToSpeechProviderImpl
 

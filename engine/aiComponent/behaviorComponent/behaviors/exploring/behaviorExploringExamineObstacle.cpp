@@ -20,20 +20,20 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/movementComponent.h"
+#include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_ProxObstacle.h"
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
+#include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/random/randomGenerator.h"
-
-// todo: remove when lights are removed
-#include "engine/components/backpackLights/backpackLightComponent.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -47,55 +47,26 @@ namespace {
   const float kDistanceForStartApproach_mm = 80.0f;
   const float kDistanceForStopApproach_mm = 50.0f;
   
-  const float kMaxTurnAngle_deg = 135.0f; // 90 + 45 looks good for coming at a wall at an acute angle
+  // For bumping an object. The robot is usually around 5-8cm from the object at this point, but may
+  // not be facing it perfectly, so only bump if the object seems to have an appropriate width. The
+  // delegated behavior decides if it is close enough
+  CONSOLE_VAR_RANGED( float, kMinObjectWidthToBump_rad, "BehaviorExploring", DEG_TO_RAD(10.0f), 0.0f, M_PI_F);
+  CONSOLE_VAR_RANGED( float, kMaxObjectWidthToBump_rad, "BehaviorExploring", DEG_TO_RAD(80.0f), 0.0f, M_TWO_PI_F);
+  const float kProbBumpNominalObject = 0.8f;
+  
+  const float kMinDistForFarReaction_mm = 80.0f;
   
   // [1-100]:JPEG quality, -1: use PNG
   int8_t kImageQuality = 100;
   const bool kTakePhoto = false;
   
   float kReturnToCenterSpeed_deg_s = 300.0f;
-  float kTurnSpeed_deg_s = 45.0f;
   
   const unsigned int kNumFloodFillSteps = 10;
   
   
   // if discovered an obstacle within this long, and an unrelated path brings you nearby turn toward it
   int kTimeForTurnToPassingObstacles_ms = 5000;
-  
-  const bool kUseDebugLights = false;
-  
-  // backpack lights so I know when this behavior is active
-  static const BackpackLightAnimation::BackpackAnimation kLightsOff =
-  {
-    .onColors               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
-    .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
-    .onPeriod_ms            = {{100,0,0}},
-    .offPeriod_ms           = {{100,0,0}},
-    .transitionOnPeriod_ms  = {{0,0,0}},
-    .transitionOffPeriod_ms = {{0,0,0}},
-    .offset                 = {{0,0,0}}
-  };
-  
-  static const BackpackLightAnimation::BackpackAnimation kLightsActiveFront =
-  {
-    .onColors               = {{NamedColors::RED,NamedColors::BLACK,NamedColors::BLACK}},
-    .offColors              = {{NamedColors::RED,NamedColors::BLACK,NamedColors::BLACK}},
-    .onPeriod_ms            = {{100,0,0}},
-    .offPeriod_ms           = {{100,0,0}},
-    .transitionOnPeriod_ms  = {{0,0,0}},
-    .transitionOffPeriod_ms = {{0,0,0}},
-    .offset                 = {{0,0,0}}
-  };
-  static const BackpackLightAnimation::BackpackAnimation kLightsActiveSide =
-  {
-    .onColors               = {{NamedColors::BLUE,NamedColors::BLACK,NamedColors::BLACK}},
-    .offColors              = {{NamedColors::BLUE,NamedColors::BLACK,NamedColors::BLACK}},
-    .onPeriod_ms            = {{100,0,0}},
-    .offPeriod_ms           = {{100,0,0}},
-    .transitionOnPeriod_ms  = {{0,0,0}},
-    .transitionOffPeriod_ms = {{0,0,0}},
-    .offset                 = {{0,0,0}}
-  };
 }
   
 #define SET_STATE(s) do{ _dVars.state = State::s; PRINT_NAMED_INFO("BehaviorExploringExamineObstacle.State", "State = %s", #s); } while(0);
@@ -117,6 +88,7 @@ BehaviorExploringExamineObstacle::DynamicVariables::DynamicVariables()
   persistent.seesSideObstacle = false;
   firstTurnDirectionIsLeft = false;
   initialPoseAngle_rad = 0.0f;
+  totalObjectAngle_rad = 0.0f;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -148,13 +120,16 @@ void BehaviorExploringExamineObstacle::GetBehaviorOperationModifiers( BehaviorOp
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploringExamineObstacle::GetBehaviorJsonKeys( std::set<const char*>& expectedKeys ) const
+void BehaviorExploringExamineObstacle::InitBehavior()
 {
-//  const char* list[] = {
-//    // TODO: insert any possible root-level json keys that this class is expecting.
-//    // TODO: replace this method with a simple {} in the header if this class doesn't use the ctor's "config" argument.
-//  };
-  //expectedKeys.insert( std::begin(list), std::end(list) );
+  const auto& BC = GetBEI().GetBehaviorContainer();
+  _iConfig.bumpBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(ExploringBumpObject) );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExploringExamineObstacle::GetAllDelegates(std::set<IBehavior*>& delegates) const
+{
+  delegates.insert( _iConfig.bumpBehavior.get() );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -170,16 +145,15 @@ void BehaviorExploringExamineObstacle::OnBehaviorActivated()
   if( _dVars.persistent.seesSideObstacle ) {
     DEV_ASSERT( !_dVars.persistent.seesFrontObstacle, "Should not be facing an obstacle now" );
     
-    if( kUseDebugLights ) {
-      GetBEI().GetBackpackLightComponent().SetBackpackAnimation(kLightsActiveSide);
-    }
-    
     // turn first
     Pose2d pose(0.0f, _dVars.persistent.sideObstaclePosition );
     Pose3d pose3{ pose };
     pose3.SetParent( GetBEI().GetRobotInfo().GetWorldOrigin() );
     pose3.GetWithRespectTo( GetBEI().GetRobotInfo().GetPose(), pose3 );
-    DelegateIfInControl(new TurnTowardsPoseAction( pose3 ), [this](ActionResult res){
+    auto* turnAction = new TurnTowardsPoseAction( pose3 );
+    auto* huhAction = new TriggerLiftSafeAnimationAction{ AnimationTrigger::ExploringHuhFar };
+    auto* turnAndHuh = new CompoundActionSequential({ turnAction, huhAction });
+    DelegateIfInControl( turnAndHuh, [this](ActionResult res){
       TransitionToNextAction();
     });
     
@@ -190,13 +164,15 @@ void BehaviorExploringExamineObstacle::OnBehaviorActivated()
                            "Should be facing an obstacle now" );
     }
     
-    if( kUseDebugLights ) {
-      GetBEI().GetBackpackLightComponent().SetBackpackAnimation(kLightsActiveFront);
-    }
+    auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
+    u16 distance_mm = 0;
+    // ignore return value (sensor validity). this is only used to select an animation so isnt vital
+    proxSensor.GetLatestDistance_mm( distance_mm );
     
-    // todo: should probably back up if this behavior activates and it's too close. for now, the reaction
-    // animation moves it back a little bit
-    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ReactToObstacle), [this](ActionResult res){
+    const bool obstacleIsFar = (distance_mm >= kMinDistForFarReaction_mm);
+    const AnimationTrigger huhAnim = obstacleIsFar ? AnimationTrigger::ExploringHuhFar : AnimationTrigger::ExploringHuhClose;
+    auto* huhAction = new TriggerLiftSafeAnimationAction{ huhAnim };
+    DelegateIfInControl(huhAction, [this](ActionResult res){
       TransitionToNextAction();
     });
   }
@@ -238,55 +214,84 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
   if( (_dVars.state == State::Initial) || (_dVars.state == State::DriveToObstacle) ) {
     
     SET_STATE( FirstTurn );
-    // these head motions will probably be animations or something
-    action->AddAction( new MoveHeadToAngleAction( DEG_TO_RAD(15.0f) ) );
-    action->AddAction( new WaitAction( 0.5f ) );
-    action->AddAction( new MoveHeadToAngleAction( DEG_TO_RAD(0.0f) ) );
-    const float angle = _dVars.firstTurnDirectionIsLeft ? -DEG_TO_RAD(kMaxTurnAngle_deg) : DEG_TO_RAD(kMaxTurnAngle_deg);
-    const bool isAbsAngle = false;
-    auto* turnAction = new TurnInPlaceAction(angle, isAbsAngle);
-    turnAction->SetMaxSpeed(DEG_TO_RAD(kTurnSpeed_deg_s));
-    action->AddAction( turnAction );
+    
+    AnimationTrigger turnAnim = _dVars.firstTurnDirectionIsLeft
+                                ? AnimationTrigger::ExploringScanToLeft
+                                : AnimationTrigger::ExploringScanToRight;
+    action->AddAction( new TriggerLiftSafeAnimationAction{ turnAnim } );
     
   } else if( (_dVars.state == State::FirstTurn) || (_dVars.state == State::SecondTurn) ) {
     
     _dVars.state = (_dVars.state == State::SecondTurn) ? State::ReturnToCenterEnd : State::ReturnToCenter;
     
+    const Radians dAngle = GetBEI().GetRobotInfo().GetPose().GetRotationAngle<'Z'>() - _dVars.initialPoseAngle_rad;
+    _dVars.totalObjectAngle_rad += fabsf( dAngle.ToFloat() );
+    
     if( _dVars.state == State::ReturnToCenterEnd ) {
-      if( kUseDebugLights ) {
-        GetBEI().GetBackpackLightComponent().SetBackpackAnimation(kLightsOff);
+      // decide whether to bump or not
+      bool shouldBump = false;
+      if( (_dVars.totalObjectAngle_rad >= kMinObjectWidthToBump_rad)
+          && (_dVars.totalObjectAngle_rad <= kMaxObjectWidthToBump_rad) )
+      {
+        // object is of a size that we should bump
+        if( GetRNG().RandDbl() <= kProbBumpNominalObject ) {
+          shouldBump = true;
+        }
       }
-      CancelSelf();
-      return;
+      
+      if( !shouldBump ) {
+        // object is too thin or wide, exit the behavior instead of re-centering. If it re-centered,
+        // it would immediately have to turn again to start driving, so it looks better to leave from this pose
+        CancelSelf();
+        return;
+      }
+      // otherwise, return to center, and bump in the next stage
     }
     
-    // these head motions will probably be animations or something
-    action->AddAction( new MoveHeadToAngleAction( DEG_TO_RAD(15.0f) ) );
-    action->AddAction( new WaitAction( 0.5f ) );
-    action->AddAction( new MoveHeadToAngleAction( DEG_TO_RAD(0.0f) ) );
+    
+    auto* parallelAction = new CompoundActionParallel();
+    
+    AnimationTrigger turnAnim;
+    if( _dVars.firstTurnDirectionIsLeft ) {
+      turnAnim = (_dVars.state == State::ReturnToCenter) ? AnimationTrigger::ExploringScanCenterFromLeft : AnimationTrigger::ExploringScanCenterFromRight;
+    } else {
+      turnAnim = (_dVars.state == State::ReturnToCenter) ? AnimationTrigger::ExploringScanCenterFromRight : AnimationTrigger::ExploringScanCenterFromLeft;
+    }
+    auto* animAction = new TriggerLiftSafeAnimationAction{ turnAnim };
+    
     const float angle = _dVars.initialPoseAngle_rad;
     const bool isAbsAngle = true;
     auto* turnToCenterAction = new TurnInPlaceAction(angle, isAbsAngle);
     turnToCenterAction->SetMaxSpeed( DEG_TO_RAD(kReturnToCenterSpeed_deg_s) );
-    action->AddAction( turnToCenterAction );
+    
+    // keep a weakptr to the turn action, so that the whole parallel action can be aborted the moment this one
+    // ends
+    _dVars.scanCenterAction = parallelAction->AddAction( turnToCenterAction );
+    parallelAction->AddAction( animAction );
+    
+    action->AddAction( parallelAction );
    
   } else if( _dVars.state == State::ReturnToCenter ) {
     
     SET_STATE( SecondTurn );
     
     // now turn the other way
-    const float angle = _dVars.firstTurnDirectionIsLeft ? DEG_TO_RAD(kMaxTurnAngle_deg) : -DEG_TO_RAD(kMaxTurnAngle_deg);
-    const bool isAbsAngle = false;
-    auto* turnAction = new TurnInPlaceAction(angle, isAbsAngle);
-    turnAction->SetMaxSpeed(DEG_TO_RAD(kTurnSpeed_deg_s));
-    action->AddAction( turnAction );
+    AnimationTrigger turnAnim = _dVars.firstTurnDirectionIsLeft
+                                ? AnimationTrigger::ExploringScanToRight
+                                : AnimationTrigger::ExploringScanToLeft;
+    action->AddAction( new TriggerLiftSafeAnimationAction{ turnAnim } );
     
   } else if( _dVars.state == State::ReturnToCenterEnd ) {
-    if( kUseDebugLights ) {
-      GetBEI().GetBackpackLightComponent().SetBackpackAnimation(kLightsOff);
+    SET_STATE( Bumping );
+    if( _iConfig.bumpBehavior->WantsToBeActivated() ) {
+      DelegateIfInControl( _iConfig.bumpBehavior.get(), [this](){
+        CancelSelf();
+      });
+      return;
+    } else {
+      CancelSelf();
+      return;
     }
-    CancelSelf();
-    return;
   }
   
   DelegateNow(action.release(), [&](ActionResult res) {
@@ -344,6 +349,12 @@ void BehaviorExploringExamineObstacle::BehaviorUpdate()
     const bool seenObstacle = RobotSeesObstacleInFront( kDistanceForStopTurn_mm, forActivation );
     if( !seenObstacle ) {
       CancelDelegates( false );
+      TransitionToNextAction();
+    }
+  } else if( (_dVars.state == State::ReturnToCenter) || (_dVars.state == State::ReturnToCenterEnd) ) {
+    if( !_dVars.scanCenterAction.lock() && IsControlDelegated() ) {
+      // finished returning to center but the parallel action hasnt finished. cancel it and begin the next action
+      CancelDelegates(false);
       TransitionToNextAction();
     }
   }

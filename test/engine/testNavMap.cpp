@@ -116,8 +116,6 @@ TEST( TestNavMap, FillBorder)
     {EContentType::ClearOfObstacle       , true},
     {EContentType::ClearOfCliff          , false},
     {EContentType::ObstacleObservable    , false },
-    {EContentType::ObstacleCharger       , false },
-    {EContentType::ObstacleChargerRemoved, false },
     {EContentType::ObstacleProx          , false },
     {EContentType::ObstacleUnrecognized  , false },
     {EContentType::Cliff                 , false},

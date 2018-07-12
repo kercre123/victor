@@ -18,8 +18,6 @@
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionOffTreadsState.h"
-#include "engine/externalInterface/externalInterface.h"
-#include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
 namespace Cozmo {

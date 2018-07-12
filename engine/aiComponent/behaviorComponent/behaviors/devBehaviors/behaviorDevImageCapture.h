@@ -36,12 +36,7 @@ public:
   }
 
 protected:
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
-    modifiers.wantsToBeActivatedWhenOffTreads = true;
-    modifiers.wantsToBeActivatedWhenOnCharger = true;
-    modifiers.behaviorAlwaysDelegates = false;
-    modifiers.visionModesForActiveScope->insert({VisionMode::SavingImages, EVisionUpdateFrequency::High});
-  }
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void OnBehaviorActivated() override;
@@ -59,6 +54,7 @@ private:
     bool                      saveSensorData;
 
     std::list<std::string> classNames;
+    std::list<VisionMode>  visionModesBesidesSaving;
   };
 
   struct DynamicVariables {
