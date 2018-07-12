@@ -99,12 +99,6 @@ protected:
     // make the robot take a different maneuver to unblock it
     bool _randomWalkTooCloseObstacle = false;
     
-    // internal tracker for angle swept by the robot
-    // while searching for the charger
-    // TODO(agm) remove this when we can delegate to
-    // another behavior
-    f32 _lookForChargerAngleSwept_rad = 0.0;
-    
     // if we are in the unknown habitat state, then a stop-on-white
     // message is indicative of possibly being inside the habitat
     // so use this control flag to activate the behavior
@@ -119,6 +113,9 @@ protected:
   struct InstanceConfig
   {
     IBEIConditionPtr onTreadsTimeCondition;
+    
+    std::string searchForChargerBehaviorIDStr;
+    ICozmoBehaviorPtr searchForChargerBehavior;
     
     explicit InstanceConfig();
   };
