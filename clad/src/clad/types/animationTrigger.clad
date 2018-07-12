@@ -39,6 +39,13 @@ enum int_32 AnimationTrigger
   BlackJack_VictorPush,
   BlackJack_VictorWin,
 
+  BumpObjectSlowGetIn,
+  BumpObjectSlowLoop,
+  BumpObjectSlowGetOut,
+  BumpObjectFastGetIn,
+  BumpObjectFastLoop,
+  BumpObjectFastGetOut,
+
   ChargerDockingBackupDriveEnd,
   ChargerDockingBackupDriveLoop,
   ChargerDockingBackupDriveStart,
@@ -210,6 +217,9 @@ enum int_32 AnimationTrigger
   PettingBlissLoop,
   PettingBlissGetout,
   PickupCubePreperation,
+  PokeObjectGetIn,
+  PokeObjectDriveLoop,
+  PokeObjectGetOut,
   PopAWheelieInitial,
   PopAWheeliePreActionNamedFace,
   PopAWheeliePreActionUnnamedFace,
