@@ -1,4 +1,4 @@
-option(DEPLOY_WITH_CMAKE "Use cmake instead of python3 for deploying assets" ON)
+option(DEPLOY_WITH_CMAKE "Use cmake instead of python3 for deploying assets" OFF)
 
 if(DEPLOY_WITH_CMAKE)
     function(anki_build_copy_assets)
