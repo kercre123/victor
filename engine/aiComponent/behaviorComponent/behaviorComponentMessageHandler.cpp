@@ -109,6 +109,10 @@ void BehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCompMa
         bsm.ResetBehaviorStack(newRerunBaseBehavior.get());
         _rerunBehavior = newRerunBaseBehavior;
       }
+      else {
+        PRINT_NAMED_WARNING("DevBehaviorComponentMessageHandler.InitDependent.ExecuteBehaviorNotFound",
+                            "The behavior %s can't be found!", msg.behaviorID.c_str());
+      }
     };
 
     _eventHandles.push_back(

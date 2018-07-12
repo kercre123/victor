@@ -206,6 +206,7 @@ enum uint_8 BehaviorClass {
   FindFaceAndThen,
   LookAtMe,
   SayName,
+  SearchWithinBoundingBox,
 
   // sleeping
   Sleeping,
