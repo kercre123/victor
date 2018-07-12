@@ -1643,6 +1643,9 @@ namespace Cozmo {
   
   void WebotsKeyboardController::QuitKeyboardController()
   {
+    SendMessage(ExternalInterface::MessageGameToEngine(
+      ExternalInterface::AllowedToHandleActions(false)));
+
     _shouldQuit = true;
   }
   
@@ -2564,6 +2567,8 @@ namespace Cozmo {
   void WebotsKeyboardController::HandleRobotConnected(const ExternalInterface::RobotConnectionResponse& msg)
   {
     // Things to do on robot connect
+    SendMessage(ExternalInterface::MessageGameToEngine(
+      ExternalInterface::AllowedToHandleActions(true)));
     SendSetRobotVolume(0);
   }
 
