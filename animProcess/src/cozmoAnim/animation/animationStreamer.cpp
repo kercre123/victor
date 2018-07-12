@@ -824,6 +824,8 @@ namespace Cozmo {
     CopyIntoProceduralAnimation(_context->GetDataLoader()->GetCannedAnimation(name));
     SetStreamingAnimation(_proceduralAnimation, tag, numLoops, interruptRunning,
                           shouldOverrideEyeHue, shouldRenderInEyeHue, isInternalAnim);
+    
+    _expectingCompositeImage = true;
   }
 
   Result AnimationStreamer::SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms)
@@ -881,6 +883,7 @@ namespace Cozmo {
   Result AnimationStreamer::SetCompositeImage(Vision::CompositeImage* compImg, u32 frameInterval_ms,
                                               u32 duration_ms)
   {
+    _expectingCompositeImage = false;
     DEV_ASSERT(nullptr != _proceduralAnimation, "AnimationStreamer.SetCompositeImage.NullProceduralAnimation");
     // If procedural animation is streaming set the streaming animation to nullptr 
     // without clearing it out so that the animation can be restarted with the composite image data
@@ -990,6 +993,7 @@ namespace Cozmo {
       // If we get to KeepFaceAlive with this flag set, we'll stream neutral face for safety.
       _wasAnimationInterruptedWithNothing = true;
     }
+    _expectingCompositeImage = false;
   } // Abort()
 
   
@@ -1581,6 +1585,12 @@ namespace Cozmo {
     {
       return RESULT_OK;
     }
+
+    // TEMP (Kevin K.): We're waiting on messages that have been delayed - don't start
+    // the animation yet
+    if(_expectingCompositeImage){
+      return RESULT_OK;
+    }    
 
     if(!_startOfAnimationSent) {
       SendStartOfAnimation();
