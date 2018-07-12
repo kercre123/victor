@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+
 class Color:
     '''A Color to be used with a Light or OLED.
 
@@ -38,11 +39,11 @@ class Color:
         green6 = ((self._int_color >> 16) & 0xff) >> 2
         blue5 = ((self._int_color >> 8) & 0xff) >> 3
 
-        green3Hi = green6 >> 3
-        green3Low = green6 & 0x07
+        green3_hi = green6 >> 3
+        green3_low = green6 & 0x07
 
-        int_565_color_lowbyte = (green3Low << 5) | blue5
-        int_565_color_highbyte = (red5 << 3) | green3Hi
+        int_565_color_lowbyte = (green3_low << 5) | blue5
+        int_565_color_highbyte = (red5 << 3) | green3_hi
 
         return [int_565_color_highbyte, int_565_color_lowbyte]
 

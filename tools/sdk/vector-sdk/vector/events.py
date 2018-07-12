@@ -8,27 +8,28 @@ __all__ = ['EventHandler']
 
 import asyncio
 from concurrent.futures import CancelledError
-from grpc._channel import _Rendezvous
 import logging
 
+from .connection import Connection
 from . import util
 from .messaging import protocol
-from .messaging import client
 
 MODULE_LOGGER = logging.getLogger(__name__)
 
+
 class EventHandler:
-    def __init__(self, loop):
+    def __init__(self):
         self.logger = util.get_class_logger(__name__, self)
-        self._loop = loop
-        self._connection = None
+        self._loop = None
+        self._conn = None
         self.listening_for_events = False
         self.event_task = None
         self.robot_state_task = None
         self.subscribers = {}
 
-    def start(self, connection):
-        self._connection = connection
+    def start(self, connection: Connection, loop: asyncio.BaseEventLoop):
+        self._loop = loop
+        self._conn = connection
         self.listening_for_events = True
         self.event_task = self._loop.create_task(self._handle_events())
         self.robot_state_task = self._loop.create_task(self._handle_robot_state_stream())
@@ -43,13 +44,13 @@ class EventHandler:
     async def _handle_events(self):
         try:
             req = protocol.EventRequest()
-            async for e in self._connection.EventStream(req):
+            async for evt in self._conn.interface.EventStream(req):
                 if not self.listening_for_events:
                     break
-                event_type = e.event.WhichOneof("event_type")
+                event_type = evt.event.WhichOneof("event_type")
                 if event_type in self.subscribers.keys():
                     for func in self.subscribers[event_type]:
-                        func(event_type, getattr(e.event, event_type))
+                        func(event_type, getattr(evt.event, event_type))
         except CancelledError:
             self.logger.debug('Event handler task was cancelled. This is expected during disconnection.')
 
@@ -58,14 +59,14 @@ class EventHandler:
         stream_type = "robot_state"
         try:
             req = protocol.RobotStateRequest()
-            async for res in self._connection.RobotStateStream(req):
+            async for res in self._conn.interface.RobotStateStream(req):
                 if not self.listening_for_events:
                     break
                 if stream_type in self.subscribers:
                     for func in self.subscribers[stream_type]:
                         func(stream_type, getattr(res, stream_type))
         except CancelledError:
-            self.logger.debug('Event handler task was cancelled. This is expected during disconnection.')
+            self.logger.debug('Robot state handler task was cancelled. This is expected during disconnection.')
 
     def subscribe(self, event_type, func):
         if event_type not in self.subscribers.keys():
@@ -80,7 +81,7 @@ class EventHandler:
                 if not event_subscribers:
                     del self.subscribers[event_type]
             else:
-                self.logger.error("The function '{}' is not subscribed to '{}'".format(func.__name__, event_type))
+                self.logger.error(f"The function '{func.__name__}' is not subscribed to '{event_type}'")
         else:
-            self.logger.error("Cannot unsubscribe from event_type '{}'. "
-                              "It has no subscribers.".format(event_type))
+            self.logger.error(f"Cannot unsubscribe from event_type '{event_type}'. "
+                              "It has no subscribers.")

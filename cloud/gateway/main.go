@@ -129,7 +129,7 @@ func sendEventToChannel(event *extint.Event) {
 	protoMsg = extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_Event{
 			// TODO: Convert all events into proto events
-			event,
+			Event: event,
 		},
 	}
 	if c, ok := engineProtoChanMap[msgType]; ok {
@@ -174,14 +174,14 @@ func processCladEngineMessages() {
 		case gw_clad.MessageRobotToExternalTag_RobotObservedFace:
 			event := &extint.Event{
 				EventType: &extint.Event_RobotObservedFace{
-					CladRobotObservedFaceToProto(msg.GetRobotObservedFace()),
+					RobotObservedFace: CladRobotObservedFaceToProto(msg.GetRobotObservedFace()),
 				},
 			}
 			sendEventToChannel(event)
 		case gw_clad.MessageRobotToExternalTag_RobotChangedObservedFaceID:
 			event := &extint.Event{
 				EventType: &extint.Event_RobotChangedObservedFaceId{
-					CladRobotChangedObservedFaceIDToProto(msg.GetRobotChangedObservedFaceID()),
+					RobotChangedObservedFaceId: CladRobotChangedObservedFaceIDToProto(msg.GetRobotChangedObservedFaceID()),
 				},
 			}
 			sendEventToChannel(event)

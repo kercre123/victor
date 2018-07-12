@@ -427,7 +427,7 @@ func SendOnboardingContinue(in *extint.GatewayWrapper_OnboardingContinue) (*exti
 			Description: "Message sent to engine",
 		},
 		OneofMessageType: &extint.OnboardingInputResponse_OnboardingContinueResponse{
-			continue_result.GetOnboardingContinueResponse(),
+			OnboardingContinueResponse: continue_result.GetOnboardingContinueResponse(),
 		},
 	}, nil
 }
@@ -867,7 +867,7 @@ func (m *rpcService) DriveOffCharger(ctx context.Context, in *extint.DriveOffCha
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_DriveOffChargerRequest{
-			in,
+			DriveOffChargerRequest: in,
 		},
 	})
 	if err != nil {
@@ -889,7 +889,7 @@ func (m *rpcService) DriveOnCharger(ctx context.Context, in *extint.DriveOnCharg
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_DriveOnChargerRequest{
-			in,
+			DriveOnChargerRequest: in,
 		},
 	})
 	if err != nil {
@@ -913,7 +913,7 @@ func (m *rpcService) Pang(ctx context.Context, in *extint.Ping) (*extint.Pong, e
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_Ping{
-			in,
+			Ping: in,
 		},
 	})
 	if err != nil {
@@ -933,7 +933,7 @@ func (m *rpcService) Bang(ctx context.Context, in *extint.Bing) (*extint.Bong, e
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_Bing{
-			in,
+			Bing: in,
 		},
 	})
 	if err != nil {
@@ -950,7 +950,7 @@ func (m *rpcService) GetOnboardingState(ctx context.Context, in *extint.Onboardi
 	defer f()
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_OnboardingStateRequest{
-			in,
+			OnboardingStateRequest: in,
 		},
 	})
 	if err != nil {
@@ -972,19 +972,19 @@ func (m *rpcService) SendOnboardingInput(ctx context.Context, in *extint.Onboard
 	switch x := in.OneofMessageType.(type) {
 	case *extint.OnboardingInputRequest_OnboardingContinue:
 		return SendOnboardingContinue(&extint.GatewayWrapper_OnboardingContinue{
-			in.GetOnboardingContinue(),
+			OnboardingContinue: in.GetOnboardingContinue(),
 		})
 	case *extint.OnboardingInputRequest_OnboardingSkip:
 		return SendOnboardingSkip(&extint.GatewayWrapper_OnboardingSkip{
-			in.GetOnboardingSkip(),
+			OnboardingSkip: in.GetOnboardingSkip(),
 		})
 	case *extint.OnboardingInputRequest_OnboardingConnectionComplete:
 		return SendOnboardingConnectionComplete(&extint.GatewayWrapper_OnboardingConnectionComplete{
-			in.GetOnboardingConnectionComplete(),
+			OnboardingConnectionComplete: in.GetOnboardingConnectionComplete(),
 		})
 	case *extint.OnboardingInputRequest_OnboardingSkipOnboarding:
 		return SendOnboardingSkipOnboarding(&extint.GatewayWrapper_OnboardingSkipOnboarding{
-			in.GetOnboardingSkipOnboarding(),
+			OnboardingSkipOnboarding: in.GetOnboardingSkipOnboarding(),
 		})
 	default:
 		return nil, status.Errorf(0, "OnboardingInputRequest.OneofMessageType has unexpected type %T", x)
@@ -999,7 +999,7 @@ func (m *rpcService) PhotosInfo(ctx context.Context, in *extint.PhotosInfoReques
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_PhotosInfoRequest{
-			in,
+			PhotosInfoRequest: in,
 		},
 	})
 	if err != nil {
@@ -1027,7 +1027,7 @@ func (m *rpcService) Photo(ctx context.Context, in *extint.PhotoRequest) (*extin
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_PhotoRequest{
-			in,
+			PhotoRequest: in,
 		},
 	})
 	if err != nil {
@@ -1069,7 +1069,7 @@ func (m *rpcService) Thumbnail(ctx context.Context, in *extint.ThumbnailRequest)
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_ThumbnailRequest{
-			in,
+			ThumbnailRequest: in,
 		},
 	})
 	if err != nil {
@@ -1111,7 +1111,7 @@ func (m *rpcService) DeletePhoto(ctx context.Context, in *extint.DeletePhotoRequ
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_DeletePhotoRequest{
-			in,
+			DeletePhotoRequest: in,
 		},
 	})
 	if err != nil {
@@ -1127,7 +1127,7 @@ func (m *rpcService) GetLatestAttentionTransfer(ctx context.Context, in *extint.
 	defer f()
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_LatestAttentionTransferRequest{
-			in,
+			LatestAttentionTransferRequest: in,
 		},
 	})
 	if err != nil {
@@ -1163,7 +1163,7 @@ func (m *rpcService) PushSettings(ctx context.Context, in *extint.PushSettingsRe
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_PushSettingsRequest{
-			in,
+			PushSettingsRequest: in,
 		},
 	})
 	if err != nil {
@@ -1181,7 +1181,7 @@ func (m *rpcService) RobotStatusHistory(ctx context.Context, in *extint.RobotHis
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_RobotHistoryRequest{
-			in,
+			RobotHistoryRequest: in,
 		},
 	})
 	if err != nil {
@@ -1199,7 +1199,7 @@ func (m *rpcService) PullSettings(ctx context.Context, in *extint.PullSettingsRe
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_PullSettingsRequest{
-			in,
+			PullSettingsRequest: in,
 		},
 	})
 	if err != nil {
@@ -1223,7 +1223,7 @@ func (m *rpcService) UpdateSettings(ctx context.Context, in *extint.UpdateSettin
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_UpdateSettingsRequest{
-			in,
+			UpdateSettingsRequest: in,
 		},
 	})
 	if err != nil {
