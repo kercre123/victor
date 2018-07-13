@@ -35,7 +35,12 @@
 #include "cutils/properties.h"
 #include "switchboardd/christen.h"
 #include "platform/victorCrashReports/victorCrashReporter.h"
+#include "util/logging/DAS.h"
+#include "util/logging/logging.h"
+#include "util/logging/victorLogger.h"
 #include "switchboardd/daemon.h"
+
+#define LOG_PROCNAME "vic-switchboard"
 
 // --------------------------------------------------------------------------------------------------------------------
 // Switchboard Daemon
@@ -617,7 +622,12 @@ std::unique_ptr<Anki::Switchboard::Daemon> _daemon;
 
 static void ExitHandler(int status = 0) {
   // todo: smoothly handle termination
+
+  Anki::Util::gLoggerProvider = nullptr;
+  Anki::Util::gEventProvider = nullptr;
+
   Anki::Victor::UninstallCrashReporter();
+
   _exit(status);
 }
 
@@ -639,8 +649,17 @@ static void Tick(struct ev_loop* loop, struct ev_timer* w, int revents) {
 }
 
 int SwitchboardMain() {
-  static char const* filenamePrefix = "switchboard";
-  Anki::Victor::InstallCrashReporter(filenamePrefix);
+
+  Anki::Victor::InstallCrashReporter(LOG_PROCNAME);
+
+  Anki::Util::VictorLogger logger(LOG_PROCNAME);
+  Anki::Util::gLoggerProvider = &logger;
+  Anki::Util::gEventProvider = &logger;
+
+  DASMSG(switchboard_hello, "switchboard.hello", "Switchboard service start");
+  DASMSG_SET(s1, "hello", "Test string");
+  DASMSG_SET(i1, getpid(), "Test value");
+  DASMSG_SEND();
 
   sLoop = ev_default_loop(0);
 
