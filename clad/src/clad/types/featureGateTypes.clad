@@ -12,6 +12,7 @@ enum uint_8 FeatureType {
   Dancing,
   CubeBehaviors,
   GreetAfterLongTime,
+  AttentionTransfer,
   
   PRDemo
 }
