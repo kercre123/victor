@@ -20,6 +20,13 @@
 
 #include "clad/robotInterface/messageRobotToEngine.h"
 
+
+#if defined(ANKI_NO_WEBSERVER_ENABLED)
+  #define SEND_MICENGINE_DATA !ANKI_NO_WEBSERVER_ENABLED
+#else
+  #define SEND_MICENGINE_DATA 1
+#endif
+
 namespace Anki {
 namespace Cozmo {
 
@@ -354,17 +361,13 @@ SoundReactorId MicDirectionHistory::RegisterSoundReactor(OnSoundReactionCallback
 
 void MicDirectionHistory::UnRegisterSoundReactor(SoundReactorId id)
 {
-  auto it = _soundReactors.rbegin();
-  auto itEnd = _soundReactors.rend();
-
-  while (it != itEnd)
+  for (size_t index = _soundReactors.size(); index > 0;)
   {
-    if (id == it->id) {
-      _soundReactors.back() = *it;
+    --index;
+    if (id == _soundReactors[index].id) {
+      _soundReactors[index] = _soundReactors.back();
       _soundReactors.pop_back();
     }
-
-    it++;
   }
 }
 
@@ -373,10 +376,14 @@ void MicDirectionHistory::AddMicPowerSample(TimeStamp_t timestamp, float powerLe
   const MicPowerLevelType previousPowerLevel = _soundTrackingData.latestPowerLevel;
   const MicPowerLevelType previousNoiseFloor = _soundTrackingData.latestNoiseFloor;
 
-  // since we reaction a "frame" after our peak levels, let's record the previous values so we can debug our
+  // since we react a "frame" after our peak levels, let's record the previous values so we can debug our
   // reactions via the webserver
-  _webServerData.powerLevel = previousPowerLevel;
-  _webServerData.noiseFloor = previousNoiseFloor;
+  #if SEND_MICENGINE_DATA
+  {
+    _webServerData.powerLevel = previousPowerLevel;
+    _webServerData.noiseFloor = previousNoiseFloor;
+  }
+  #endif
   
   _soundTrackingData.latestPowerLevel = log10(static_cast<MicPowerLevelType>(powerLevel));
   _soundTrackingData.latestNoiseFloor = log10(static_cast<MicPowerLevelType>(noiseFloor));
@@ -410,10 +417,14 @@ void MicDirectionHistory::AddMicPowerSample(TimeStamp_t timestamp, float powerLe
           }
 
           // only used for debugging purposes
-          _webServerData.forceUpdate = true;
+          #if SEND_MICENGINE_DATA
+          {
+            _webServerData.forceUpdate = true;
 
-          _webServerData.timeOfReaction = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-          _webServerData.reactionData = data;
+            _webServerData.timeOfReaction = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+            _webServerData.reactionData = data;
+          }
+          #endif
         }
       }
     }
@@ -445,47 +456,51 @@ bool MicDirectionHistory::ShouldReactToSound( const SoundReactionData& data )
 
 void MicDirectionHistory::SendMicDataToWebserver( const RobotInterface::MicDirection& micData )
 {
-  if ( nullptr != _webService )
+  #if SEND_MICENGINE_DATA
   {
-    static double sNextUpdateTime = 0.0;
-    const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    if ( ( currentTime >= sNextUpdateTime ) || _webServerData.forceUpdate )
+    if ( nullptr != _webService )
     {
-      sNextUpdateTime += 0.20; // update every Xms
-      _webServerData.forceUpdate = false;
-
-      Json::Value webData;
-      webData["time"] = currentTime;
-      webData["confidence"] = micData.confidence;
-      // 'selectedDirection' is what's being used (locked-in), whereas 'dominant' is just the strongest direction
-      webData["dominant"] = micData.direction;
-      webData["selectedDirection"] = micData.selectedDirection;
-      webData["maxConfidence"] = 20000;
-
-      webData["latestPowerValue"] = _webServerData.powerLevel;
-      webData["latestNoiseFloor"] = _webServerData.noiseFloor;
-
-      webData["powerScore"] = _soundTrackingData.latestPeakLevel;
-      webData["powerScoreAvg"] = _soundTrackingData.averagePeakLevel;
-
-      webData["displayPowerScore"] = _webServerData.noiseFloor + _soundTrackingData.latestPeakLevel;
-      webData["displayPowerAvg"] = _webServerData.noiseFloor + _soundTrackingData.averagePeakLevel;
-      webData["displayPowerThreshold"] = _webServerData.noiseFloor + _soundTrackingData.averagePeakLevel + kReactionPowerThreshold;
-
-      webData["isTriggered"] = ( currentTime <= ( _webServerData.timeOfReaction + 1.0f ) );
-      webData["triggerScore"] = _webServerData.reactionData.currentPowerLevel - _webServerData.reactionData.averagePowerLevel;
-      webData["triggerConfidence"] = _webServerData.reactionData.micDirectionData.latestConfidence;
-
-      Json::Value& directionValues = webData["directions"];
-      for ( float confidence : micData.confidenceList )
+      static double sNextUpdateTime = 0.0;
+      const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      if ( ( currentTime >= sNextUpdateTime ) || _webServerData.forceUpdate )
       {
-        directionValues.append(confidence);
-      }
+        sNextUpdateTime += 0.20; // update every Xms
+        _webServerData.forceUpdate = false;
 
-      static const std::string moduleName = "soundreactions";
-      _webService->SendToWebViz( moduleName, webData );
+        Json::Value webData;
+        webData["time"] = currentTime;
+        webData["confidence"] = micData.confidence;
+        // 'selectedDirection' is what's being used (locked-in), whereas 'dominant' is just the strongest direction
+        webData["dominant"] = micData.direction;
+        webData["selectedDirection"] = micData.selectedDirection;
+        webData["maxConfidence"] = 20000;
+
+        webData["latestPowerValue"] = _webServerData.powerLevel;
+        webData["latestNoiseFloor"] = _webServerData.noiseFloor;
+
+        webData["powerScore"] = _soundTrackingData.latestPeakLevel;
+        webData["powerScoreAvg"] = _soundTrackingData.averagePeakLevel;
+
+        webData["displayPowerScore"] = _webServerData.noiseFloor + _soundTrackingData.latestPeakLevel;
+        webData["displayPowerAvg"] = _webServerData.noiseFloor + _soundTrackingData.averagePeakLevel;
+        webData["displayPowerThreshold"] = _webServerData.noiseFloor + _soundTrackingData.averagePeakLevel + kReactionPowerThreshold;
+
+        webData["isTriggered"] = ( currentTime <= ( _webServerData.timeOfReaction + 1.0f ) );
+        webData["triggerScore"] = _webServerData.reactionData.currentPowerLevel - _webServerData.reactionData.averagePowerLevel;
+        webData["triggerConfidence"] = _webServerData.reactionData.micDirectionData.latestConfidence;
+
+        Json::Value& directionValues = webData["directions"];
+        for ( float confidence : micData.confidenceList )
+        {
+          directionValues.append(confidence);
+        }
+
+        static const std::string moduleName = "soundreactions";
+        _webService->SendToWebViz( moduleName, webData );
+      }
     }
   }
+  #endif
 }
 
 } // namespace Cozmo
