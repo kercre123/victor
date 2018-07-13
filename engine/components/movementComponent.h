@@ -19,6 +19,7 @@
 #include "engine/components/animationComponent.h"
 #include "util/entityComponent/entity.h"
 #include "util/helpers/noncopyable.h"
+#include "util/signals/signalHolder.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <list>
 #include <map>
@@ -32,7 +33,8 @@ struct RobotState;
 class IExternalInterface;
 enum class AnimTrackFlag : uint8_t;
   
-class MovementComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
+class MovementComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable,
+                          private Util::SignalHolder
 {
 public:
   using MotorActionID = u8;
@@ -46,6 +48,9 @@ public:
   virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
+  };
+  virtual void AdditionalInitAccessibleComponents(std::set<RobotComponentID>& components) const override{
+    components.insert(RobotComponentID::Animation);
   };
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override{};
   //////
@@ -91,6 +96,7 @@ public:
   bool   WasCameraMoving(TimeStamp_t atTime); // Slightly more efficient than calling WasHeadMoving _and_ WereWheelsMoving
 
   uint8_t GetTracksLockedBy(const std::string& who) const;
+  uint8_t GetLockedTracks() const;
 
   // Returns true if any of the tracks are locked
   bool AreAnyTracksLocked(u8 tracks) const;
@@ -108,10 +114,23 @@ public:
   // Converts int who to a string (used to easily allow actions to lock tracks with their tag)
   void LockTracks(u8 tracks, const int who, const std::string& debugName) { LockTracks(tracks, std::to_string(who), debugName); }
   bool UnlockTracks(u8 tracks, const int who) { return UnlockTracks(tracks, std::to_string(who)); }
+
+  // Notify the movement component that updates should be applied up to and including the specified relative stream time
+  // If shouldClearUnusedLocks is true any locks not applied on this function call will be dropped
+  void ApplyUpdatesForStreamTime(const TimeStamp_t relativeStreamTime_ms, const bool shouldClearUnusedLocks = true);
+
+  // Occassionally we want to lock/unlock a track partway through an animation - calling this function
+  // will cause the locking/unlocking operation to happen at the timestamp specified in the currently
+  // streaming animation
+  // NOTE: While the lock/unlock will be appropriately applied in the animation streamer, there may be delays between
+  // when the face is locked as visible to the user and when the functions that return locked tracks above are updated
+  // to reflect the true robot state
+  void LockTracksAtStreamTime(const u8 tracks, const TimeStamp_t relativeStreamTime_ms, const bool applyBeforeTick, 
+                              const std::string& who, const std::string& debugName);
+  void UnlockTracksAtStreamTime(const u8 tracks, const TimeStamp_t relativeStreamTime_ms, const bool applyBeforeTick,
+                                const std::string& who);
   
-  // Completely unlocks all tracks to have an lock count of 0 as opposed to UnlockTracks(ALL_TRACKS)
-  // which will only decrement each track lock count by 1
-  void CompletelyUnlockAllTracks();
+  void UnlockAllTracks();
   
   // Sends calibrate command to robot
   Result CalibrateMotors(bool head, bool lift);
@@ -225,6 +244,11 @@ private:
   // Return an actionID for the next motor command to be sent to robot.
   // Also writes same actionID to actionID_out if it's non-null.
   MotorActionID GetNextMotorActionID(MotorActionID* actionID_out = nullptr);
+
+  // Processes all currently locked tracks in addition to all delayed locks/unlocks
+  // in order to get the full enumeration of tracks that will be locked at a given point
+  // in time
+  u8 GetTracksLockedAtRelativeStreamTime(const TimeStamp_t relativeStreamTime_ms) const;
   
   Robot* _robot = nullptr;
   
@@ -245,24 +269,6 @@ private:
   ObjectID _trackToObjectID;
   
   //bool _trackWithHeadOnly = false;
-  
-  struct LockInfo
-  {
-    std::string who;
-    std::string debugName;
-    
-    inline const bool operator<(const LockInfo& other) const
-    {
-      return who < other.who;
-    }
-    
-    inline const bool operator==(const LockInfo& other) const
-    {
-      return who == other.who;
-    }
-  };
-  
-  std::array<std::multiset<LockInfo>, (size_t)AnimConstants::NUM_TRACKS> _trackLockCount;
   
   struct EyeShiftToRemove {
     TimeStamp_t duration_ms;
@@ -323,7 +329,39 @@ private:
   double _body_odom_mm   = 0.0;
   double _lWheel_odom_mm = 0.0;
   double _rWheel_odom_mm = 0.0;
-  
+
+
+  struct LockInfo
+  {
+    std::string who;
+    std::string debugName;
+    
+    inline const bool operator<(const LockInfo& other) const
+    {
+      return who < other.who;
+    }
+    
+    inline const bool operator==(const LockInfo& other) const
+    {
+      return who == other.who;
+    }
+  };
+
+  struct DelayedTrackLockInfo{
+    DelayedTrackLockInfo(u8 tracksToLock, const std::string& who)
+    : tracksToLock(tracksToLock)
+    , who(who){}
+    u8 tracksToLock;
+    std::string who;
+  };
+
+  std::array<std::multiset<LockInfo>, (size_t)AnimConstants::NUM_TRACKS> _trackLockCount;
+
+  // maps relative stream timestamps to information about how to lock tracks when that timestamp is reached
+  std::multimap<uint32_t, DelayedTrackLockInfo> _delayedTracksToLock;
+  std::multimap<uint32_t, DelayedTrackLockInfo> _delayedTracksToUnlock;
+  AnimationComponent* _animComponent;
+
 }; // class MovementComponent
   
   

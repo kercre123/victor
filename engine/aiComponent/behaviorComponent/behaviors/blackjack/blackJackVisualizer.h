@@ -51,6 +51,10 @@ public:
   void DisplayCharlieFrame(BehaviorExternalInterface& bei, std::function<void()> callback = nullptr);
   void ClearCards(BehaviorExternalInterface& bei);
 
+  // If the visualizer has control of parts of the robot (face track etc) this function
+  // will release that control (probably becasue the behavior is ending)
+  void ReleaseControl(BehaviorExternalInterface& bei);
+
 
 private:
   // No copy, no default construction

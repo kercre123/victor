@@ -25,6 +25,7 @@
 #include "engine/clad/types/animationTypes.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/dataAccessorComponent.h"
+#include "engine/components/movementComponent.h"
 
 namespace Anki{
 namespace Cozmo{
@@ -180,6 +181,7 @@ const std::vector<Vision::SpriteName> kDealerCardAssets = {
 };
 
 const char* kDealAnimationName = "anim_blackjack_deal_01";
+const char* kTrackLockingKey = "BlackJackVisualizer_track_lock";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -357,7 +359,7 @@ void BlackJackVisualizer::Flop(BehaviorExternalInterface& bei, std::function<voi
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BlackJackVisualizer::DisplayCharlieFrame(BehaviorExternalInterface& bei, std::function<void()> callback)
 {
-  bei.GetAnimationComponent().UnlockTracks((u8)AnimTrackFlag::FACE_TRACK);
+  bei.GetMovementComponent().UnlockTracks((u8)AnimTrackFlag::FACE_TRACK, kTrackLockingKey);
   _animCompletedCallback = callback;
 
   PlayCompositeCardAnimationAndLock(bei, kDealAnimationName, Vision::LayerName::PlayerCardOverlay,
@@ -375,7 +377,7 @@ void BlackJackVisualizer::PlayCompositeCardAnimationAndLock(const BehaviorExtern
                                                             const Vision::SpriteName&        itemAnimSeqName,
                                                             const uint                       showAnimSeqAt_ms)
 {
-  bei.GetAnimationComponent().UnlockTracks((u8)AnimTrackFlag::FACE_TRACK);
+  bei.GetMovementComponent().UnlockTracks((u8)AnimTrackFlag::FACE_TRACK, kTrackLockingKey);
 
   auto& dataAccessorComp = bei.GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();
   auto* spriteCache = dataAccessorComp.GetSpriteCache();
@@ -413,16 +415,14 @@ void BlackJackVisualizer::PlayCompositeCardAnimationAndLock(const BehaviorExtern
   layer->AddToImageMap(spriteCache, seqContainer, spriteBoxName, finalItemImageName);
   bei.GetAnimationComponent().UpdateCompositeImage(*(_compImg.get()), showFinalImageAt_ms); 
 
-  // Lock Tracks at the end of the animation
-  RobotInterface::LockAnimTracks msg((u8)AnimTrackFlag::FACE_TRACK);
-  RobotInterface::EngineToRobot wrapper(std::move(msg));
-  bei.GetAnimationComponent().AlterStreamingAnimationAtTime(std::move(wrapper), showFinalImageAt_ms, false);
+  // Lock Tracks at the end of the animation 
+  bei.GetMovementComponent().LockTracksAtStreamTime((u8)AnimTrackFlag::FACE_TRACK, showFinalImageAt_ms, false, kTrackLockingKey, kTrackLockingKey);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BlackJackVisualizer::ClearCards(BehaviorExternalInterface& bei)
 {
-  bei.GetAnimationComponent().UnlockTracks((u8)AnimTrackFlag::FACE_TRACK);
+  bei.GetMovementComponent().UnlockTracks((u8)AnimTrackFlag::FACE_TRACK, kTrackLockingKey);
 
   for(auto layerName : kPlayerCardLayers){
     bei.GetAnimationComponent().ClearCompositeImageLayer( layerName, 0);
@@ -436,6 +436,14 @@ void BlackJackVisualizer::ClearCards(BehaviorExternalInterface& bei)
 
   Init(bei);
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BlackJackVisualizer::ReleaseControl(BehaviorExternalInterface& bei)
+{
+  bei.GetMovementComponent().UnlockTracks((u8)AnimTrackFlag::FACE_TRACK, kTrackLockingKey);
+}
+
 
 } // namespace Cozmo
 } // namespace Anki
