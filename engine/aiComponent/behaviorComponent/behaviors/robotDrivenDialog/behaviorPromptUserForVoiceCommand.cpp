@@ -40,6 +40,7 @@ namespace {
   const char* kEarConBegin                        = "earConAudioEventBegin";
   const char* kEarConSuccess                      = "earConAudioEventSuccess";
   const char* kEarConFail                         = "earConAudioEventNeutral";
+  // TODO:(str) Currently not in use. Rework this to use a smarter TurnToFace structure, perhaps LookAtFaceInFront
   const char* kShouldTurnToFaceKey                = "shouldTurnToFaceBeforePrompting";
   const char* kTextToSpeechBehaviorKey            = "textToSpeechBehaviorID";
   const char* kVocalPromptKey                     = "vocalPromptString";
@@ -74,7 +75,7 @@ BehaviorPromptUserForVoiceCommand::InstanceConfig::InstanceConfig()
 , listenAnimOverrideTrigger(AnimationTrigger::Count)
 , listenGetOutOverrideTrigger(AnimationTrigger::Count)
 , maxNumReprompts(0)
-, shouldTurnToFace(true)
+, shouldTurnToFace(false)
 , stopListeningOnIntents(true)
 , backpackLights(true)
 , playListeningGetIn(true)

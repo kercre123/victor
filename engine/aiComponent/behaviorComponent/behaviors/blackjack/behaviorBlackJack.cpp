@@ -14,9 +14,9 @@
 
 #include "clad/types/behaviorComponent/behaviorStats.h"
 #include "engine/actions/animActions.h"
-#include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorLookAtFaceInFront.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/robotDrivenDialog/behaviorPromptUserForVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
@@ -82,6 +82,7 @@ void BehaviorBlackJack::GetAllDelegates(std::set<IBehavior*>& delegates) const
   delegates.insert(_iConfig.hitOrStandPromptBehavior.get());
   delegates.insert(_iConfig.playAgainPromptBehavior.get());
   delegates.insert(_iConfig.ttsBehavior.get());
+  delegates.insert(_iConfig.lookAtFaceInFrontBehavior.get());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -105,6 +106,10 @@ void BehaviorBlackJack::InitBehavior()
   BC.FindBehaviorByIDAndDowncast( BEHAVIOR_ID(BlackJackTextToSpeech),
                                   BEHAVIOR_CLASS(TextToSpeechLoop),
                                   _iConfig.ttsBehavior );
+
+  BC.FindBehaviorByIDAndDowncast( BEHAVIOR_ID(BlackJackLookAtFaceInFront),
+                                  BEHAVIOR_CLASS(LookAtFaceInFront),
+                                  _iConfig.lookAtFaceInFrontBehavior );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -138,7 +143,11 @@ void BehaviorBlackJack::BehaviorUpdate()
 void BehaviorBlackJack::TransitionToTurnToFace()
 {
   SET_STATE(TurnToFace);
-  DelegateIfInControl(new TurnTowardsLastFacePoseAction(), &BehaviorBlackJack::TransitionToGetIn);
+  if(_iConfig.lookAtFaceInFrontBehavior->WantsToBeActivated()){
+    DelegateIfInControl(_iConfig.lookAtFaceInFrontBehavior.get(), &BehaviorBlackJack::TransitionToGetIn);
+  } else {
+    TransitionToGetIn();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

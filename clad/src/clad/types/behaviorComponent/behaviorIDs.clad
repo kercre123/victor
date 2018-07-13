@@ -92,6 +92,7 @@ enum uint_8 BehaviorID {
   BlackJack,
   BlackJackHandleRTPResponses,
   BlackJackHitOrStandPrompt,
+  BlackJackLookAtFaceInFront,
   BlackJackRequestToPlay,
   BlackJackRequestToPlayAgain,
   BlackJackTextToSpeech,
