@@ -11,6 +11,7 @@
     "TriggerWordDetected",
     "SingletonWallTimeCoordinator",
     "TimerUtilityCoordinator",
+    "DemoTimerUtilityCoordinator",
     "WeatherResponses",
     "GreetAfterLongTime",
     "TakeAPhotoCoordinator",

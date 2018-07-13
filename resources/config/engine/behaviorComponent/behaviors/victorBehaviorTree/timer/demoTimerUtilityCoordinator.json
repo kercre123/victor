@@ -1,21 +1,16 @@
 {
   "behaviorClass" : "TimerUtilityCoordinator",
-  "behaviorID"    : "TimerUtilityCoordinator",
+  "behaviorID"    : "DemoTimerUtilityCoordinator",
 
   "wantsToBeActivatedCondition": {
     "conditionType" : "FeatureGate",
     "feature" : "PRDemo",
-    "expected" : false
+    "expected" : true
   },
 
   "minValidTimer_s" : 1,
   "maxValidTimer_s" : 3600, // 1 hour
   "anticConfig" : [
-    {
-      "recurIntervalMin_s" : 180,
-      "recurIntervalMax_s" : 300,
-      "ruleMin_s"          : 60
-    }
   ]
   
 }

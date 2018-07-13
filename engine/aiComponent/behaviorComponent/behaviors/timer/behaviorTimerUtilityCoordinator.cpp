@@ -609,8 +609,8 @@ BehaviorProceduralClock::GetDigitsFunction BehaviorTimerUtilityCoordinator::Buil
   return [&timerUtility](const int offset){
     std::map<Vision::SpriteBoxName, int> outMap;
     if(auto timerHandle = timerUtility.GetTimerHandle()){
-      const bool displayingHoursOnScreen = timerHandle->GetDisplayHoursRemaining() > 0;
       const int timeRemaining_s = timerHandle->GetTimeRemaining_s() - offset;
+      const bool displayingHoursOnScreen = timerHandle->SecondsToDisplayHours(timeRemaining_s) > 0;
       
       const int hoursRemaining = TimerHandle::SecondsToDisplayHours(timeRemaining_s);
       const int minsRemaining = TimerHandle::SecondsToDisplayMinutes(timeRemaining_s);
@@ -620,7 +620,8 @@ BehaviorProceduralClock::GetDigitsFunction BehaviorTimerUtilityCoordinator::Buil
       {
         int tensDigit = 0;
         if(displayingHoursOnScreen){
-          tensDigit =  hoursRemaining/10;
+          // display as minutes
+          tensDigit = (hoursRemaining * 60)/10;
         }else{
           tensDigit = minsRemaining/10;
         }
@@ -631,7 +632,8 @@ BehaviorProceduralClock::GetDigitsFunction BehaviorTimerUtilityCoordinator::Buil
       {
         int onesDigit = 0;
         if(displayingHoursOnScreen){
-          onesDigit = hoursRemaining % 10;
+          // display as minutes
+          onesDigit = (hoursRemaining * 60) % 10;
         }else{
           onesDigit = minsRemaining % 10;
         }

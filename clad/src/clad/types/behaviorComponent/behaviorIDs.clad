@@ -335,6 +335,7 @@ enum uint_8 BehaviorID {
   TakingPhotoAnimation,
 
   // victorBehaviorTree/timer
+  DemoTimerUtilityCoordinator,
   SingletonCancelTimer,
   SingletonTimerAlreadySet,
   SingletonTimerAntic,
