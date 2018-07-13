@@ -15,6 +15,8 @@
 #include "engine/components/cubes/cubeConnectionCoordinator.h"
 
 #include "coretech/common/engine/utils/timer.h"
+#include "engine/activeObject.h"
+#include "engine/blockWorld/blockWorld.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/robot.h"
@@ -132,6 +134,7 @@ CubeConnectionCoordinator::~CubeConnectionCoordinator()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CubeConnectionCoordinator::GetUpdateDependencies(RobotCompIDSet& dependencies) const
 {
+  dependencies.insert(RobotComponentID::BlockWorld);
   dependencies.insert(RobotComponentID::CubeComms);
   dependencies.insert(RobotComponentID::CubeLights);
 }
@@ -322,11 +325,17 @@ void CubeConnectionCoordinator::TransitionToConnectedInteractable(const RobotCom
   SetState(ECoordinatorState::ConnectedInteractable);
 
   // Play connection light animation
-  ObjectID connectedCube = dependentComps.GetComponent<CubeCommsComponent>().GetConnectedCubeActiveId(); 
+  ActiveID activeID = dependentComps.GetComponent<CubeCommsComponent>().GetConnectedCubeActiveId(); 
+  ActiveObject* object = dependentComps.GetComponent<BlockWorld>().GetConnectedActiveObjectByActiveID(activeID);
 
   auto& cubeLights = dependentComps.GetComponent<CubeLightComponent>();
   cubeLights.EnableStatusAnims(true);
-  cubeLights.PlayConnectionLights(connectedCube);
+
+  if(ANKI_VERIFY(nullptr != object,
+                 "CubeConnectionCoordinator.NoObjectFoundForActiveID",
+                 "Block world did not have a connected active object for CubeComms connected cube activeID")){
+    cubeLights.PlayConnectionLights(object->GetID());
+  }
 
   // Notify subscribers
   for(auto& subscriberRecord : _subscriptionRecords){
@@ -341,7 +350,6 @@ void CubeConnectionCoordinator::TransitionToSwitchingToBackground(const RobotCom
   _timeToSwitchToBackground_s = 0;
 
   // Play disconnect light animation
-  ObjectID connectedCube = dependentComps.GetComponent<CubeCommsComponent>().GetConnectedCubeActiveId();
   auto& cubeLights = dependentComps.GetComponent<CubeLightComponent>();
   auto animCompletedCallback = [this, &cubeLights]()
   { 
@@ -356,7 +364,20 @@ void CubeConnectionCoordinator::TransitionToSwitchingToBackground(const RobotCom
       cubeLights.EnableStatusAnims(false);
     }
   };
-  cubeLights.PlayDisconnectionLights(connectedCube, animCompletedCallback);
+
+  ActiveID activeID = dependentComps.GetComponent<CubeCommsComponent>().GetConnectedCubeActiveId(); 
+  ActiveObject* object = dependentComps.GetComponent<BlockWorld>().GetConnectedActiveObjectByActiveID(activeID);
+  if(ANKI_VERIFY(nullptr != object,
+                 "CubeConnectionCoordinator.NoObjectFoundForActiveID",
+                 "Block world did not have a connected active object for CubeComms connected cube activeID")){
+    // If the lights didn't play, the callback will never come from the light component. Invoke it now.
+    if(!cubeLights.PlayDisconnectionLights(object->GetID(), animCompletedCallback)){
+      animCompletedCallback();
+    }
+  } else {
+    // We don't have a valid object to play lights on, the callback will never come, invoke it now
+    animCompletedCallback();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
