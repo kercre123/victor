@@ -346,6 +346,8 @@ void DASManager::ProcessEvent(DASEvent && event)
   // Preconditions
   DEV_ASSERT(_eventQueue != nullptr, "DASManager.ProcessEvent.InvalidQueue");
 
+  LOG_DEBUG("DASManager.ProcessEvent", "Enqueue %s", event.name.c_str());
+
   _eventQueue->push_back(std::move(event));
   ++_eventCount;
 
