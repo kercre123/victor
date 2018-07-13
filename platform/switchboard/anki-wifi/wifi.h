@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include "exec_command.h"
 #include "connmanbus.h"
 
 #include <map>
@@ -134,7 +135,6 @@ WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results);
 std::vector<uint8_t> PackWiFiScanResults(const std::vector<WiFiScanResult>& results);
 void EnableWiFiInterface(const bool enable, ExecCommandCallback callback);
 std::map<std::string, std::string> UnPackWiFiConfig(const std::vector<uint8_t>& packed);
-void SetWiFiConfig(const std::vector<WiFiConfig>& networks, ExecCommandCallback);
 void HandleOutputCallback(int rc, const std::string& output);
 bool GetIpFromHostName(char* hostname, char* ip);
 bool IsAccessPointMode();

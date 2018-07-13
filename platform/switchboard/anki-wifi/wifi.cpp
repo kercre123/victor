@@ -836,11 +836,6 @@ std::string GetObjectPathForService(GVariant* service) {
   return std::string(objectPath);
 }
 
-static std::string GetPathToWiFiConfigFile()
-{
-  return "/data/lib/connman/wifi.config";
-}
-
 std::map<std::string, std::string> UnPackWiFiConfig(const std::vector<uint8_t>& packed) {
   std::map<std::string, std::string> networks;
   // The payload is (<SSID>\0<PSK>\0)*
@@ -860,86 +855,6 @@ std::map<std::string, std::string> UnPackWiFiConfig(const std::vector<uint8_t>& 
     it = terminator + 1;
   }
   return networks;
-}
-
-void SetWiFiConfig(std::string ssid, std::string password, WiFiAuth auth, bool isHidden) {
-  std::vector<WiFiConfig> networks;
-  WiFiConfig config;
-  config.auth = auth;
-  config.hidden = isHidden;
-  config.ssid = ssid;
-  config.passphrase = password;
-
-  networks.push_back(config);
-  SetWiFiConfig(networks, HandleOutputCallback);
-}
-
-void SetWiFiConfig(const std::vector<WiFiConfig>& networks, ExecCommandCallback callback) {
-  std::ostringstream wifiConfigStream;
-
-  int count = 0;
-  for (auto const& config : networks) {
-    if (count > 0) {
-      wifiConfigStream << std::endl;
-    }
-    // Exclude networks with ssids that are not in hex format
-    if (!IsHexString(config.ssid)) {
-      loge("SetWiFiConfig. '%s' is NOT a hexadecimal string.", config.ssid.c_str());
-      continue;
-    }
-    // Exclude networks with unsupported auth types
-    if ((config.auth != WiFiAuth::AUTH_NONE_OPEN)
-        && (config.auth != WiFiAuth::AUTH_NONE_WEP)
-        && (config.auth != WiFiAuth::AUTH_NONE_WEP_SHARED)
-        && (config.auth != WiFiAuth::AUTH_WPA_PSK)
-        && (config.auth != WiFiAuth::AUTH_WPA2_PSK)) {
-      loge("SetWiFiConfig. Unsupported auth type : %d for '%s'",
-           config.auth,
-           hexStringToAsciiString(config.ssid).c_str());
-      continue;
-    }
-
-    std::string security;
-    switch (config.auth) {
-      case WiFiAuth::AUTH_NONE_WEP:
-        /* fall through */
-      case WiFiAuth::AUTH_NONE_WEP_SHARED:
-        security = "wep";
-        break;
-      case WiFiAuth::AUTH_WPA_PSK:
-        /* fall through */
-      case WiFiAuth::AUTH_WPA2_PSK:
-        security = "psk";
-        break;
-      case WiFiAuth::AUTH_NONE_OPEN:
-        /* fall through */
-      default:
-        security = "none";
-        break;
-    }
-
-    std::string hidden(config.hidden ? "true" : "false");
-    wifiConfigStream << "[service_wifi_" << count++ << "]" << std::endl
-                     << "Type = wifi" << std::endl
-                     << "IPv4 = dhcp" << std::endl
-                     << "IPv6 = auto" << std::endl
-                     << "SSID=" << config.ssid << std::endl
-                     << "Security=" << security << std::endl
-                     << "Hidden=" << hidden << std::endl;
-    if (!config.passphrase.empty()) {
-      wifiConfigStream << "Passphrase=" << config.passphrase << std::endl;
-    }
-  }
-
-  int rc = WriteFileAtomically(GetPathToWiFiConfigFile(), wifiConfigStream.str());
-
-  if (rc) {
-    std::string error = "Failed to write wifi config. rc = " + std::to_string(rc);
-    callback(rc);
-    return;
-  }
-
-  ExecCommandInBackground({"connmanctl", "enable", "wifi"}, callback);
 }
 
 WiFiState GetWiFiState() {
