@@ -54,6 +54,7 @@ namespace Audio {
 
 namespace {
   #define CONSOLE_PATH "Audio.Procedural"
+  CONSOLE_VAR(bool, kEnableProceduralMovement, CONSOLE_PATH, false);
   CONSOLE_VAR_RANGED(uint32_t, kTreadCoolDown_ms, CONSOLE_PATH, 65, 0, 250);
   CONSOLE_VAR_RANGED(uint32_t, kHeadCoolDown_ms, CONSOLE_PATH, 65, 0, 250);
   CONSOLE_VAR_RANGED(uint32_t, kLiftCoolDown_ms, CONSOLE_PATH, 65, 0, 250);
@@ -147,6 +148,11 @@ void ProceduralAudioClient::ProcessMessage(const RobotInterface::RobotToEngine &
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ProceduralAudioClient::HandleStateMessage(const RobotInterface::RobotToEngine& msg)
 {
+  // Updating Audio Engine 
+  if ( !kEnableProceduralMovement ) {
+    return;
+  }
+
   // NOTE: First couple frames are unreliable because of init state.
   //       isActive is set to false while the first frames are collected.
   const AudioProceduralFrame& previousFrame = _frames[_currentFrameIdx];
