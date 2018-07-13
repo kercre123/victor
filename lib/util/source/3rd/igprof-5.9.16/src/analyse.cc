@@ -4374,8 +4374,8 @@ IgProfAnalyzerApplication::generateFlatReport(ProfileInfo & /* prof */,
       else
         puts(",");
 
-      printf("[%d, %d, %d, %"PRId64", %"PRId64", %"PRId64", %"PRId64", "
-              "%"PRId64", %"PRId64", %"PRId64", ",
+      printf("[%d, %d, %d, %ld, %ld, %ld, %ld, "
+              "%ld, %ld, %ld, ",
                 mainRow.rank(), symbolIndex, fileIndex,
                 mainRow.SELF, mainRow.CUM, mainRow.KIDS,
                 mainRow.SELF_ALL[1], mainRow.CUM_ALL[1],
@@ -4445,7 +4445,7 @@ IgProfAnalyzerApplication::generateFlatReport(ProfileInfo & /* prof */,
           first = false;
         else
           puts(",");
-        printf("[%d, %d, %"PRId64", %"PRId64", %"PRId64", ",
+        printf("[%d, %d, %ld, %ld, %ld, ",
                mainRow.rank(), row.rank(),
                row.SELF_COUNTS, row.SELF_CALLS, row.SELF_PATHS);
 
@@ -4472,7 +4472,7 @@ IgProfAnalyzerApplication::generateFlatReport(ProfileInfo & /* prof */,
           first = false;
         else
           puts(",");
-        printf("[%d, %d, %"PRId64", %"PRId64", %"PRId64", ",
+        printf("[%d, %d, %ld, %ld, %ld, ",
                mainRow.rank(), row.rank(),
                row.SELF_COUNTS, row.SELF_CALLS, row.SELF_PATHS);
 

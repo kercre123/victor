@@ -54,7 +54,7 @@ IF(PAPI_FOUND)
   SET(IGPROF_LIBS ${IGPROF_LIBS} ${PAPI_LIBRARY})
 ENDIF(PAPI_FOUND)
 
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/config.h.cmake
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/src/config.h)
 
 # Options.
@@ -148,6 +148,10 @@ IF(PCRE_FOUND)
 ELSE()
   TARGET_LINK_LIBRARIES(igprof-analyse ${CMAKE_DL_LIBS})
 ENDIF()
+
+ADD_EXECUTABLE(vvvi-build-and-copy vvvi-build-and-copy.cc)
+TARGET_LINK_LIBRARIES(vvvi-build-and-copy -ldl -lpthread)
+
 INSTALL(TARGETS igprof igprof-analyse
 	RUNTIME DESTINATION bin
 	LIBRARY DESTINATION lib

@@ -53,6 +53,10 @@ if (NOT TARGET libev)
   add_subdirectory("source/3rd/libev")
 endif()
 
+if (NOT TARGET igprof)
+  add_subdirectory("source/3rd/igprof-5.9.16")
+endif()
+
 if (NOT TARGET audio_util)
   add_subdirectory("source/anki/audioUtil")
 endif()
