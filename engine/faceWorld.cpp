@@ -21,6 +21,8 @@
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/poseOriginList.h"
 #include "coretech/common/shared/radians.h"
+
+#include "engine/actions/animActions.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
@@ -655,6 +657,19 @@ namespace Cozmo {
       {
         ++faceIter;
       }
+    }
+
+    // Update anim focus (for keep face alive) with eye contact
+    static const std::string kKeepFaceAliveEyeContactName = "EyeContact";
+    if (IsMakingEyeContact(0))
+    {
+      PRINT_NAMED_INFO("FaceWorld.Update.IsMakingEyeContact.AddFocus", "");
+      _robot->GetAnimationComponent().AddKeepFaceAliveFocus(kKeepFaceAliveEyeContactName);
+    }
+    else
+    {
+      PRINT_NAMED_INFO("FaceWorld.Update.IsMakingEyeContact.RemoveFocus", "");
+      _robot->GetAnimationComponent().RemoveKeepFaceAliveFocus(kKeepFaceAliveEyeContactName);
     }
 
     return RESULT_OK;

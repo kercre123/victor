@@ -253,6 +253,10 @@ public:
   void HandleAnimationEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleAnimState(const AnkiEvent<RobotInterface::RobotToEngine>& message);  
 
+  // Set eye focus
+  void AddKeepFaceAliveFocus(const std::string& name);
+  void RemoveKeepFaceAliveFocus(const std::string& name);
+
 private:
   
   // Returns Tag if animation is playing.
@@ -353,6 +357,8 @@ private:
   std::unordered_map<Tag, AnimCallbackInfo> _callbackMap;
 
   int _compositeImageID;
+
+  std::set<std::string> _focusRequests;
   
 };
 

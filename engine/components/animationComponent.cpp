@@ -45,6 +45,7 @@ namespace {
   static const u32 kNumHalfImagePixels = kNumImagePixels / 2;
 }
   
+CONSOLE_VAR(f32, kEyeDartFocusValue_pix, "Animation", 1.0f);
   
 AnimationComponent::AnimationComponent()
 : IDependencyManagedComponent(this, RobotComponentID::Animation)
@@ -970,6 +971,25 @@ void AnimationComponent::HandleAnimationEvent(const AnkiEvent<RobotInterface::Ro
 void AnimationComponent::HandleAnimState(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   _animState = message.GetData().Get_animState();
+}
+
+void AnimationComponent::AddKeepFaceAliveFocus(const std::string& name)
+{
+  if (_focusRequests.empty())
+  {
+    SetKeepFaceAliveParameter(KeepFaceAliveParameter::EyeDartMaxDistance_pix,
+                              kEyeDartFocusValue_pix);
+  }
+  _focusRequests.insert(name);
+}
+
+void AnimationComponent::RemoveKeepFaceAliveFocus(const std::string& name)
+{
+  _focusRequests.erase(name);
+  if (_focusRequests.empty())
+  {
+    SetKeepFaceAliveParameterToDefault(KeepFaceAliveParameter::EyeDartMaxDistance_pix); 
+  }
 }
   
   
