@@ -1107,7 +1107,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     (u8)MIN(((u8)imageFrameRate), std::numeric_limits<u8>::max()),
     (u8)MIN(((u8)imageProcRate), std::numeric_limits<u8>::max()),
     GetAnimationComponent().GetAnimState_NumProcAnimFaceKeyframes(),
-    GetAnimationComponent().GetAnimState_LockedTracks(),
+    GetMoveComponent().GetLockedTracks(),
     GetAnimationComponent().GetAnimState_TracksInUse(),
     _robotImuTemperature_degC,
     GetCliffSensorComponent().GetCliffDetectThresholds(),

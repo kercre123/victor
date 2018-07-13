@@ -44,6 +44,7 @@ class Animation;
 class AnimationGroupContainer;
 class CozmoContext;
 class DataAccessorComponent;
+class MovementComponent;
 class Robot;
 namespace RobotInterface{
 class EngineToRobot;
@@ -76,6 +77,7 @@ public:
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
     dependencies.insert(RobotComponentID::DataAccessor);
+    dependencies.insert(RobotComponentID::Movement);
   };
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::AIComponent);
@@ -134,7 +136,9 @@ public:
   // When applyBeforeTick is true the alteration is displayed to the user that tick (e.g. display a new image)
   // When false, the alteration is applied after the keyframe's processed (e.g. lock face track on frame 6 after drawing 
   //   an image, but the animation is only 6 frames long so locking can't be applied at the start of the next tick) 
-  void AlterStreamingAnimationAtTime(RobotInterface::EngineToRobot&& msg, TimeStamp_t relativeStreamTime_ms, bool applyBeforeTick = true);
+  void AlterStreamingAnimationAtTime(RobotInterface::EngineToRobot&& msg, 
+                                     TimeStamp_t relativeStreamTime_ms, bool applyBeforeTick = true,
+                                     MovementComponent* devSafetyCheck = nullptr);
 
 
   // If you want to play multiple frames in sequence, duration_ms should be a multiple of ANIM_TIME_STEP_MS.
@@ -221,17 +225,6 @@ public:
 
   // set saturation to a given level (default 1.0);
   Result SetFaceSaturation(float level);
-
-  // Enables only the specified tracks. 
-  // Status of other tracks remain unchanged.
-  void UnlockTracks(u8 tracks);
-  void UnlockAllTracks();
-
-  // Disables only the specified tracks. 
-  // Status of other tracks remain unchanged.
-  void LockTracks(u8 tracks);
-
-  u8   GetLockedTracks() const {return _lockedTracks; }
   
   bool                IsAnimating()        const { return _isAnimating;  }
   const std::string&  GetPlayingAnimName() const { return _currAnimName; }
@@ -239,7 +232,6 @@ public:
 
   // Accessors for latest animState values
   u32 GetAnimState_NumProcAnimFaceKeyframes() const { return _animState.numProcAnimFaceKeyframes; }   
-  u8  GetAnimState_LockedTracks()             const { return _animState.lockedTracks;             }
   u8  GetAnimState_TracksInUse()              const { return _animState.tracksInUse;              }
 
   // Event/Message handling
@@ -284,6 +276,7 @@ private:
   
   Robot* _robot = nullptr;
   DataAccessorComponent* _dataAccessor = nullptr;
+  MovementComponent* _movementComponent = nullptr;
 
   struct AnimationGroupWrapper{
     AnimationGroupWrapper(AnimationGroupContainer&  container)
@@ -303,8 +296,6 @@ private:
   std::unordered_set<std::string> _activeEyeShiftLayers;
   std::unordered_set<std::string> _activeEyeSquintLayers;  
   
-  u8 _lockedTracks;
-  std::map<uint32_t, u8> _delayedTracksToLock;
 
   // For tracking whether or not an animation is playing based on
   // AnimStarted and AnimEnded messages

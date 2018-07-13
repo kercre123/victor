@@ -88,9 +88,9 @@ void StreamingAnimationModifier::HandleMessage(const RobotInterface::AlterStream
 
   RobotInterface::EngineToRobot alterationMessage;
   switch(static_cast<RobotInterface::EngineToRobotTag>(msg.internalTag)){
-    case RobotInterface::EngineToRobotTag::lockAnimTracks:
+    case RobotInterface::EngineToRobotTag::setFullAnimTrackLockState:
     {
-      RobotInterface::EngineToRobot alterationMessage(std::move(msg.lockAnimTracks));
+      RobotInterface::EngineToRobot alterationMessage(std::move(msg.setFullAnimTrackLockState));
       AddToMapStreamMap(relativeStreamTime_ms, std::move(alterationMessage));
       break;
     }
@@ -123,9 +123,9 @@ void StreamingAnimationModifier::ApplyMessageToStreamer(AnimationStreamer* strea
                                                         const RobotInterface::EngineToRobot& msg)
 {
   switch(msg.tag){
-    case (uint32_t)RobotInterface::EngineToRobotTag::lockAnimTracks:
+    case (uint32_t)RobotInterface::EngineToRobotTag::setFullAnimTrackLockState:
     {
-      streamer->SetLockedTracks(msg.lockAnimTracks.whichTracks);
+      streamer->SetLockedTracks(msg.setFullAnimTrackLockState.trackLockState);
       break;
     }
     case (uint32_t)RobotInterface::EngineToRobotTag::postAudioEvent:

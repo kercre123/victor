@@ -19,6 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/components/animationComponent.h"
+#include "engine/components/movementComponent.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -113,7 +114,7 @@ void BehaviorCoordinateWhileInAir::PassThroughUpdate()
     SuppressInitialPickupReactionIfAppropriate();
   }else{
     if(_areTreadsLocked){
-      GetBEI().GetAnimationComponent().UnlockTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK));
+      GetBEI().GetMovementComponent().UnlockTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK), GetDebugLabel());
       _areTreadsLocked = false;
     }
   }
@@ -128,7 +129,7 @@ void BehaviorCoordinateWhileInAir::PassThroughUpdate()
 void BehaviorCoordinateWhileInAir::LockTracksIfAppropriate()
 {
   if(!_areTreadsLocked){
-    GetBEI().GetAnimationComponent().LockTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK));
+    GetBEI().GetMovementComponent().LockTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK), GetDebugLabel(), GetDebugLabel());
     _areTreadsLocked = true;
   }
 }

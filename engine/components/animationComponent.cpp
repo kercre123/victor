@@ -15,6 +15,7 @@
 #include "engine/animations/animationGroup/animationGroupContainer.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/dataAccessorComponent.h"
+#include "engine/components/movementComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
@@ -54,7 +55,6 @@ AnimationComponent::AnimationComponent()
 , _isDolingAnims(false)
 , _nextAnimToDole("")
 , _currPlayingAnim("")
-, _lockedTracks(0)
 , _isAnimating(false)
 , _currAnimName("")
 , _currAnimTag(0)
@@ -68,6 +68,7 @@ void AnimationComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
 {
   _robot = robot;
   _dataAccessor = dependentComps.GetComponentPtr<DataAccessorComponent>();
+  _movementComponent = dependentComps.GetComponentPtr<MovementComponent>();
   const CozmoContext* context = _robot->GetContext();
   _animationGroups = std::make_unique<AnimationGroupWrapper>(*(context->GetDataLoader()->GetAnimationGroups()));
   if (context) {
@@ -362,17 +363,19 @@ Result AnimationComponent::StopAnimByName(const std::string& animName)
 
 void AnimationComponent::AlterStreamingAnimationAtTime(RobotInterface::EngineToRobot&& msg, 
                                                        TimeStamp_t relativeStreamTime_ms,  
-                                                       bool applyBeforeTick)
+                                                       bool applyBeforeTick,
+                                                       MovementComponent* devSafetyCheck)
 {
   RobotInterface::AlterStreamingAnimationAtTime alterMsg;
   alterMsg.relativeStreamTime_ms = relativeStreamTime_ms;
   alterMsg.applyBeforeTick = applyBeforeTick;
   alterMsg.internalTag = static_cast<uint8_t>(msg.GetTag());
   switch(msg.GetTag()){
-    case RobotInterface::EngineToRobotTag::lockAnimTracks:
+    case RobotInterface::EngineToRobotTag::setFullAnimTrackLockState:
     {
-      alterMsg.lockAnimTracks = std::move(msg.Get_lockAnimTracks());
-      _delayedTracksToLock.emplace(relativeStreamTime_ms, alterMsg.lockAnimTracks.whichTracks);
+      DEV_ASSERT(devSafetyCheck == _movementComponent, 
+        "AnimationComponent.AlterStreamingAnimationAtTime.DirectlyQueueingMessageThatMustGoThroughMovementComponent");
+      alterMsg.setFullAnimTrackLockState = std::move(msg.Get_setFullAnimTrackLockState());
       break;
     }
     case RobotInterface::EngineToRobotTag::postAudioEvent:
@@ -391,47 +394,6 @@ void AnimationComponent::AlterStreamingAnimationAtTime(RobotInterface::EngineToR
   
   RobotInterface::EngineToRobot wrapper(std::move(alterMsg));
   _robot->SendMessage(wrapper);
-}
-
-
-  
-// Enables only the specified tracks. 
-// Status of other tracks remain unchanged.
-void AnimationComponent::UnlockTracks(u8 tracks)
-{
-  if(!_delayedTracksToLock.empty()){
-    PRINT_NAMED_ERROR("AnimationComponent.UnlockTracks.DelayedTrackLocksPending",
-                      "Unlocking tracks while delayed tracks to lock results in undefined behavior");
-  }
-
-  _lockedTracks &= ~tracks;
-  _robot->SendRobotMessage<RobotInterface::LockAnimTracks>(_lockedTracks);
-}
-
-void AnimationComponent::UnlockAllTracks()
-{
-  if(!_delayedTracksToLock.empty()){
-    PRINT_NAMED_ERROR("AnimationComponent.UnlockAllTracks.DelayedTrackLocksPending",
-                      "Unlocking tracks while delayed tracks to lock results in undefined behavior");
-  }
-
-  if (_lockedTracks != 0) {
-    _lockedTracks = 0;
-    _robot->SendRobotMessage<RobotInterface::LockAnimTracks>(_lockedTracks);
-  }
-}
-
-// Disables only the specified tracks. 
-// Status of other tracks remain unchanged.
-void AnimationComponent::LockTracks(u8 tracks)
-{
-  if(!_delayedTracksToLock.empty()){
-    PRINT_NAMED_ERROR("AnimationComponent.LockTracks.DelayedTrackLocksPending",
-                      "Locking tracks while delayed tracks to lock results in undefined behavior");
-  }
-
-  _lockedTracks |= tracks;
-  _robot->SendRobotMessage<RobotInterface::LockAnimTracks>(_lockedTracks);
 }
 
 
@@ -922,17 +884,7 @@ void AnimationComponent::HandleAnimEnded(const AnkiEvent<RobotInterface::RobotTo
 {
   const auto & payload = message.GetData().Get_animEnded();
 
-  if(!_delayedTracksToLock.empty()){
-    const auto& endTime = payload.streamTimeAnimEnded;
-    for(const auto& pair: _delayedTracksToLock){
-      if(pair.first < endTime){
-        _lockedTracks |= pair.second;
-      }else{
-        break;
-      }
-    }
-    _delayedTracksToLock.clear();
-  }
+  _movementComponent->ApplyUpdatesForStreamTime(payload.streamTimeAnimEnded);
   
   // Verify that expected animation completed and execute callback
   auto it = _callbackMap.find(payload.tag);

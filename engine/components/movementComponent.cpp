@@ -31,11 +31,14 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/markerlessObject.h"
 #include "engine/robot.h"
+#include "engine/robotManager.h"
 #include "engine/robotStateHistory.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/console/consoleInterface.h"
+#include "util/helpers/boundedWhile.h"
+
 
 #define LOG_CHANNEL    "Movement"
 
@@ -59,6 +62,7 @@ MovementComponent::MovementComponent()
 void MovementComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
+  _animComponent = dependentComps.GetComponentPtr<AnimationComponent>();
   if (_robot->HasExternalInterface())
   {
     InitEventHandlers(*(_robot->GetExternalInterface()));
@@ -113,13 +117,13 @@ void MovementComponent::NotifyOfRobotState(const Cozmo::RobotState& robotState)
   if (kDebugTrackLocking)
   {
     // Flip logic from enabled to locked here, since robot stores bits as enabled and 1 means locked here.
-    u8 robotLockedTracks = _robot->GetAnimationComponent().GetLockedTracks();
+    u8 robotLockedTracks = GetLockedTracks();
     const bool isRobotHeadTrackLocked = (robotLockedTracks & (u8)AnimTrackFlag::HEAD_TRACK) != 0;
     if (isRobotHeadTrackLocked != AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK))
     {
       LOG_WARNING("MovementComponent.Update.HeadLockUnmatched",
                   "TrackRobot:%d, TrackEngineCount:%zu",
-                  ~_robot->GetAnimationComponent().GetLockedTracks(),
+                  ~GetLockedTracks(),
                   _trackLockCount[GetFlagIndex((u8)AnimTrackFlag::HEAD_TRACK)].size());
     }
     const bool isRobotLiftTrackLocked = (robotLockedTracks & (u8)AnimTrackFlag::LIFT_TRACK) != 0;
@@ -127,7 +131,7 @@ void MovementComponent::NotifyOfRobotState(const Cozmo::RobotState& robotState)
     {
       LOG_WARNING("MovementComponent.Update.LiftLockUnmatched",
                   "TrackRobot:%d, TrackEngineCount:%zu",
-                  ~_robot->GetAnimationComponent().GetLockedTracks(),
+                  ~GetLockedTracks(),
                   _trackLockCount[GetFlagIndex((u8)AnimTrackFlag::LIFT_TRACK)].size());
     }
     const bool isRobotBodyTrackLocked = (robotLockedTracks & (u8)AnimTrackFlag::BODY_TRACK) != 0;
@@ -135,7 +139,7 @@ void MovementComponent::NotifyOfRobotState(const Cozmo::RobotState& robotState)
     {
       LOG_WARNING("MovementComponent.Update.BodyLockUnmatched",
                   "TrackRobot:%d, TrackEngineCount:%zu",
-                  ~_robot->GetAnimationComponent().GetLockedTracks(),
+                  ~GetLockedTracks(),
                   _trackLockCount[GetFlagIndex((u8)AnimTrackFlag::BODY_TRACK)].size());
     }
   }
@@ -611,7 +615,53 @@ MovementComponent::MotorActionID MovementComponent::GetNextMotorActionID(MotorAc
   }
   return _lastMotorActionID;
 }
-  
+
+u8 MovementComponent::GetTracksLockedAtRelativeStreamTime(const TimeStamp_t relativeStreamTime_ms) const
+{
+  // NOTE: This implementation assumes that no tracks are locked during the time that there is a delayed track message
+  // to lock as well. If this assumption is violated delayed messages may be sent that override track locking already sent
+  // To handle this properly would require a large number of contract re-writes between the animation process and movement
+  // component API, so for now just don't lock tracks after queueing delayed track locks
+  u8 trackState = GetLockedTracks();
+  std::multimap<std::string, int> lockCountMap;
+
+  // Lock tracks
+  for(const auto& entry: _delayedTracksToLock){
+    if(entry.first <= relativeStreamTime_ms){
+      trackState |= entry.second.tracksToLock;
+      auto iter = lockCountMap.find(entry.second.who);
+      if(iter == lockCountMap.end()){
+        lockCountMap.emplace(entry.second.who, 1);
+      }else{
+        iter->second++;
+      }
+    }else{
+      break;
+    }
+  }
+
+  // unlock, checking count
+  for(const auto& entry: _delayedTracksToUnlock){
+    if(entry.first <= relativeStreamTime_ms){
+      auto iter = lockCountMap.find(entry.second.who);
+      if(iter == lockCountMap.end()){
+        PRINT_NAMED_ERROR("MovementComponent.GetTracksLockedAtRelativeStreamTime.IllegalUnlock",
+                          "%s is attempting to unlock a track that is not locked",
+                          entry.second.who.c_str());
+      }else{
+        iter->second--;
+        if(iter->second == 0){
+          trackState &= ~entry.second.tracksToLock;
+        }
+      }
+    }else{
+      break;
+    }
+  }
+
+  return trackState;
+}
+
 // Sends a message to the robot to move the lift to the specified height
 Result MovementComponent::MoveLiftToHeight(const f32 height_mm,
                                            const f32 max_speed_rad_per_sec,
@@ -747,6 +797,20 @@ uint8_t MovementComponent::GetTracksLockedBy(const std::string& who) const
   return lockedTracks;
 }
 
+uint8_t MovementComponent::GetLockedTracks() const 
+{
+  uint8_t lockedTracks = 0;
+  for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
+  {
+    if (!_trackLockCount[i].empty())
+    {
+      lockedTracks |= (1 << i);
+    }
+  }
+  return lockedTracks;
+}
+
+
 bool MovementComponent::AreAnyTracksLocked(u8 tracks) const
 {
   for (int i = 0; i < (int)AnimConstants::NUM_TRACKS; i++)
@@ -797,7 +861,7 @@ bool MovementComponent::AreAllTracksLockedBy(u8 tracks, const std::string& who) 
   return true;
 }
 
-void MovementComponent::CompletelyUnlockAllTracks()
+void MovementComponent::UnlockAllTracks()
 {
   for (int i = 0; i < (int)AnimConstants::NUM_TRACKS; i++)
   {
@@ -809,7 +873,8 @@ void MovementComponent::CompletelyUnlockAllTracks()
       _trackLockCount[i].clear();
     }
   }
-  _robot->GetAnimationComponent().UnlockAllTracks();
+
+  _robot->SendRobotMessage<RobotInterface::SetFullAnimTrackLockState>(GetLockedTracks());
 }
 
 void MovementComponent::LockTracks(uint8_t tracks, const std::string& who, const std::string& debugName)
@@ -832,7 +897,7 @@ void MovementComponent::LockTracks(uint8_t tracks, const std::string& who, const
   
   if (tracksToDisable > 0)
   {
-    _robot->GetAnimationComponent().LockTracks(tracksToDisable);
+    _robot->SendRobotMessage<RobotInterface::SetFullAnimTrackLockState>(GetLockedTracks());
   }
   
   if (DEBUG_ANIMATION_LOCKING) {
@@ -879,7 +944,7 @@ bool MovementComponent::UnlockTracks(uint8_t tracks, const std::string& who)
   
   if (tracksToEnable > 0)
   {
-    _robot->GetAnimationComponent().UnlockTracks(tracksToEnable);
+    _robot->SendRobotMessage<RobotInterface::SetFullAnimTrackLockState>(GetLockedTracks());
   }
   
   if (DEBUG_ANIMATION_LOCKING) {
@@ -890,6 +955,78 @@ bool MovementComponent::UnlockTracks(uint8_t tracks, const std::string& who)
     PrintLockState();
   }
   return locksLeft;
+}
+
+
+void MovementComponent::ApplyUpdatesForStreamTime(const TimeStamp_t relativeStreamTime_ms, const bool shouldClearUnusedLocks)
+{
+  if(!_delayedTracksToLock.empty()){
+    const auto upperBound = _delayedTracksToLock.size() + 1;
+    auto delayedIter = _delayedTracksToLock.begin();
+    BOUNDED_WHILE(upperBound, delayedIter != _delayedTracksToLock.end()){
+      if(delayedIter->first <= relativeStreamTime_ms){
+        LockTracks(delayedIter->second.tracksToLock, delayedIter->second.who, delayedIter->second.who);
+        delayedIter = _delayedTracksToLock.erase(delayedIter);
+      }else{
+        break;
+      }
+    }
+  }
+
+
+  if(!_delayedTracksToUnlock.empty()){
+    const auto upperBound = _delayedTracksToUnlock.size() + 1;
+    auto delayedIter = _delayedTracksToUnlock.begin();
+    BOUNDED_WHILE(upperBound, delayedIter != _delayedTracksToUnlock.end()){
+      if(delayedIter->first <= relativeStreamTime_ms){
+        UnlockTracks(delayedIter->second.tracksToLock, delayedIter->second.who);
+        delayedIter = _delayedTracksToUnlock.erase(delayedIter);
+      }else{
+        break;
+      }
+    }
+  }
+
+  if(shouldClearUnusedLocks){
+    _delayedTracksToLock.clear();
+    _delayedTracksToUnlock.clear();
+  }
+
+}
+
+
+void MovementComponent::LockTracksAtStreamTime(const u8 tracks, const TimeStamp_t relativeStreamTime_ms, 
+                                               const bool applyBeforeTick, 
+                                               const std::string& who, const std::string& debugName)
+{
+  // Figure out what the track state will be at the given time so that the full anim track lock set is correct
+  _delayedTracksToLock.emplace(relativeStreamTime_ms, DelayedTrackLockInfo(tracks, who));
+  u8 lockedAtStreamTime = GetTracksLockedAtRelativeStreamTime(relativeStreamTime_ms);
+  lockedAtStreamTime |= tracks;
+
+  RobotInterface::SetFullAnimTrackLockState msg(lockedAtStreamTime);
+  RobotInterface::EngineToRobot wrapper(std::move(msg));
+  _animComponent->AlterStreamingAnimationAtTime(std::move(wrapper), 
+                                                relativeStreamTime_ms,
+                                                applyBeforeTick,
+                                                this);
+}
+
+
+void MovementComponent::UnlockTracksAtStreamTime(const u8 tracks, const TimeStamp_t relativeStreamTime_ms, 
+                                                 const bool applyBeforeTick, const std::string& who)
+{
+  // Figure out what the track state will be at the given time so that the full anim track lock set is correct
+  _delayedTracksToUnlock.emplace(relativeStreamTime_ms, DelayedTrackLockInfo(tracks, who));
+  u8 lockedAtStreamTime = GetTracksLockedAtRelativeStreamTime(relativeStreamTime_ms);
+  lockedAtStreamTime &= ~tracks;
+
+  RobotInterface::SetFullAnimTrackLockState msg(lockedAtStreamTime);
+  RobotInterface::EngineToRobot wrapper(std::move(msg));
+  _animComponent->AlterStreamingAnimationAtTime(std::move(wrapper), 
+                                                relativeStreamTime_ms,
+                                                applyBeforeTick,
+                                                this);
 }
 
 void MovementComponent::PrintLockState() const

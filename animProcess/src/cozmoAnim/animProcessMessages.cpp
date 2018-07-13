@@ -155,10 +155,10 @@ namespace Cozmo {
 // ========== START OF PROCESSING MESSAGES FROM ENGINE ==========
 // #pragma mark "EngineToRobot Handlers"
 
-void Process_lockAnimTracks(const Anki::Cozmo::RobotInterface::LockAnimTracks& msg)
+void Process_setFullAnimTrackLockState(const Anki::Cozmo::RobotInterface::SetFullAnimTrackLockState& msg)
 {
-  //LOG_DEBUG("AnimProcessMessages.Process_lockAnimTracks", "0x%x", msg.whichTracks);
-  _animStreamer->SetLockedTracks(msg.whichTracks);
+  //LOG_DEBUG("AnimProcessMessages.Process_setFullAnimTrackLockState", "0x%x", msg.whichTracks);
+  _animStreamer->SetLockedTracks(msg.trackLockState);
 }
 
 void Process_addAnim(const Anki::Cozmo::RobotInterface::AddAnim& msg)

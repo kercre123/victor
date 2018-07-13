@@ -358,9 +358,9 @@ message RemoveSquint
 }
 
 
-message LockAnimTracks
+message SetFullAnimTrackLockState
 {
-  uint_8 whichTracks    // See AnimTrackFlags
+  uint_8 trackLockState    // See AnimTrackFlags
 }
 
 message AddAnim
@@ -589,7 +589,7 @@ message AlterStreamingAnimationAtTime {
   uint_32 relativeStreamTime_ms,
   bool    applyBeforeTick = 1,
   uint_8  internalTag, // Indicates which message below is set
-  LockAnimTracks lockAnimTracks,
+  SetFullAnimTrackLockState setFullAnimTrackLockState,
   uint_8 padding[1],
   AudioEngine::Multiplexer::PostAudioEvent postAudioEvent
 }
@@ -705,7 +705,7 @@ union EngineToRobot
 
   // 0x50 to 0xAF: To Anim Process
   PlayAnim                      playAnim                    = 0x50,
-  LockAnimTracks                lockAnimTracks              = 0x51,
+  SetFullAnimTrackLockState     setFullAnimTrackLockState   = 0x51,
   AddAnim                       addAnim                     = 0x52,
   AbortAnimation                abortAnimation              = 0x53,
   SetLocale                     setLocale                   = 0x54,

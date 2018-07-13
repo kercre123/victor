@@ -121,7 +121,7 @@ void BehaviorBlackJack::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBlackJack::OnBehaviorDeactivated()
 {
-  GetBEI().GetAnimationComponent().UnlockTracks((u8)AnimTrackFlag::FACE_TRACK);
+  _visualizer.ReleaseControl(GetBEI());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
