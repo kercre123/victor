@@ -1,0 +1,6 @@
+{
+  "behaviorID": "OnboardingComeHereGetOut",
+  "behaviorClass": "AnimSequence",
+  "animTriggers": ["OnboardingComeHereGetOut"],
+  "playOnChargerWithBody": true // shouldnt happen
+}

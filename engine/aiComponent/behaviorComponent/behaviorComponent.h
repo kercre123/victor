@@ -36,6 +36,7 @@ class AIComponent;
 class AsyncMessageGateComponent;
 class BEIRobotInfo;
 class BehaviorComponent;
+class BehaviorComponentMessageHandler;
 class BehaviorContainer;
 class BehaviorEventAnimResponseDirector;
 class BehaviorExternalInterface;
@@ -45,7 +46,6 @@ class BehaviorTimers;
 class BlockWorld;
 class DelegationComponent;
 class DevBaseBehavior;
-class DevBehaviorComponentMessageHandler;
 class FaceWorld;
 class IBehavior;
 class Robot;
@@ -103,7 +103,7 @@ protected:
   // Support legacy cozmo code
   friend class Robot;
   friend class AIComponent;
-  friend class DevBehaviorComponentMessageHandler;
+  friend class BehaviorComponentMessageHandler;
   friend class TestBehaviorFramework; // for testing access to internals
 
   // For test only

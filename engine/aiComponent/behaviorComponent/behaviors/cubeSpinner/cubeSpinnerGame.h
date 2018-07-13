@@ -27,7 +27,6 @@ namespace Cozmo{
 // forward declarations
 class BackpackLightComponent;
 class BlockWorld;
-class CubeCommsComponent;
 class CubeLightComponent;
 
 class CubeSpinnerGame
@@ -65,7 +64,6 @@ public:
 
   CubeSpinnerGame(const Json::Value& gameConfig,
                   const Json::Value& lightConfigs, 
-                  CubeCommsComponent& cubeCommsComponent,
                   CubeLightComponent& cubeLightComponent,
                   BackpackLightComponent& backpackLightComponent,
                   BlockWorld& blockWorld,
@@ -164,7 +162,6 @@ private:
   std::vector<GameEventCallback> _lightLockedCallbacks;
 
   // Components used by the game
-  CubeCommsComponent& _cubeCommsComponent;
   CubeLightComponent& _cubeLightComponent;
   BackpackLightComponent& _backpackLightComponent;
   BlockWorld& _blockWorld;

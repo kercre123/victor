@@ -85,7 +85,7 @@ CONSOLE_VAR(float, kRobotRotationChangeToReport_deg, "MapComponent", 20.0f);
 CONSOLE_VAR(float, kRobotPositionChangeToReport_mm, "MapComponent", 8.0f);
 
 CONSOLE_VAR(float, kVisionTimeout_ms, "MapComponent", 120.0f * 1000);
-CONSOLE_VAR(float, kCliffTimeout_ms, "MapComponent", 120.0f * 1000);
+CONSOLE_VAR(float, kObstacleTimeout_ms, "MapComponent", 120.0f * 1000);
 CONSOLE_VAR(float, kProxTimeout_ms, "MapComponent", 600.0f * 1000);
 CONSOLE_VAR(float, kTimeoutUpdatePeriod_ms, "MapComponent", 5.0f * 1000);
 
@@ -104,12 +104,9 @@ MemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily fam
   {
     case ObjectFamily::Block:
     case ObjectFamily::LightCube:
+    case ObjectFamily::Charger:
       // pick depending on addition or removal
       retType = isAdding ? ContentType::ObstacleObservable : ContentType::ClearOfObstacle;
-      break;
-    case ObjectFamily::Charger:
-      // this case should be merged into observable object types (COZMO-16117)
-      retType = isAdding ? ContentType::ObstacleCharger : ContentType::ObstacleChargerRemoved;
       break;
     case ObjectFamily::MarkerlessObject:
     {
@@ -159,9 +156,9 @@ MapComponent::MapComponent()
 , _vizMessageDirty(true)
 , _gameMessageDirty(true)
 , _webMessageDirty(false) // web must request it
-, _useProxObstaclesInPlanning(true)
 , _isRenderEnabled(true)
 , _broadcastRate_sec(-1.0f)
+, _enableProxCollisions(true)
 {
 }
 
@@ -391,20 +388,21 @@ void MapComponent::TimeoutObjects()
     _nextTimeoutUpdate_ms = currentTime + kTimeoutUpdatePeriod_ms;
     
     // ternary to prevent uInt wrapping on subtract
-    const TimeStamp_t cliffTooOld  = (currentTime <= kCliffTimeout_ms)  ? 0 : currentTime - kCliffTimeout_ms;
-    const TimeStamp_t visionTooOld = (currentTime <= kVisionTimeout_ms) ? 0 : currentTime - kVisionTimeout_ms;
-    const TimeStamp_t proxTooOld   = (currentTime <= kProxTimeout_ms)   ? 0 : currentTime - kProxTimeout_ms;
+    const TimeStamp_t obstacleTooOld = (currentTime <= kObstacleTimeout_ms) ? 0 : currentTime - kObstacleTimeout_ms;
+    const TimeStamp_t visionTooOld   = (currentTime <= kVisionTimeout_ms)   ? 0 : currentTime - kVisionTimeout_ms;
+    const TimeStamp_t proxTooOld     = (currentTime <= kProxTimeout_ms)     ? 0 : currentTime - kProxTimeout_ms;
     
     NodeTransformFunction timeoutObjects =
-      [cliffTooOld, visionTooOld, proxTooOld] (MemoryMapDataPtr data) -> MemoryMapDataPtr
+      [obstacleTooOld, visionTooOld, proxTooOld] (MemoryMapDataPtr data) -> MemoryMapDataPtr
       {
         const EContentType nodeType = data->type;
         const TimeStamp_t lastObs = data->GetLastObservedTime();
 
-        if ((EContentType::Cliff              == nodeType && lastObs <= cliffTooOld)  ||
-            (EContentType::InterestingEdge    == nodeType && lastObs <= visionTooOld) ||
-            (EContentType::NotInterestingEdge == nodeType && lastObs <= visionTooOld) ||
-            (EContentType::ObstacleProx       == nodeType && lastObs <= proxTooOld))
+        if ((EContentType::Cliff                == nodeType && lastObs <= obstacleTooOld) ||
+            (EContentType::ObstacleUnrecognized == nodeType && lastObs <= obstacleTooOld) ||
+            (EContentType::InterestingEdge      == nodeType && lastObs <= visionTooOld)   ||
+            (EContentType::NotInterestingEdge   == nodeType && lastObs <= visionTooOld)   ||
+            (EContentType::ObstacleProx         == nodeType && lastObs <= proxTooOld))
         {
           return MemoryMapDataPtr();
         }
@@ -1171,10 +1169,9 @@ bool MapComponent::CheckForCollisions(const BoundedConvexSet2f& region) const
   const INavMap* currentMap = GetCurrentMemoryMap();
   if (currentMap)
   {
-    return currentMap->AnyOf( region, [] (const auto& data) {
+    return currentMap->AnyOf( region, [this] (const auto& data) {
         const bool retv = (data->type == MemoryMapTypes::EContentType::ObstacleObservable)   ||
-                          (data->type == MemoryMapTypes::EContentType::ObstacleCharger)      ||
-                          (data->type == MemoryMapTypes::EContentType::ObstacleProx)         ||
+                          ((data->type == MemoryMapTypes::EContentType::ObstacleProx) && _enableProxCollisions) ||
                           (data->type == MemoryMapTypes::EContentType::ObstacleUnrecognized) ||
                           (data->type == MemoryMapTypes::EContentType::Cliff);
         return retv;
@@ -1189,10 +1186,9 @@ float MapComponent::GetCollisionArea(const BoundedConvexSet2f& region) const
   const INavMap* currentMap = GetCurrentMemoryMap();
   if (currentMap)
   {
-    return currentMap->GetCollisionArea( region, [] (const auto& data) {
+    return currentMap->GetCollisionArea( region, [this] (const auto& data) {
         const bool retv = (data->type == MemoryMapTypes::EContentType::ObstacleObservable)   ||
-                          (data->type == MemoryMapTypes::EContentType::ObstacleCharger)      ||
-                          (data->type == MemoryMapTypes::EContentType::ObstacleProx)         ||
+                          ((data->type == MemoryMapTypes::EContentType::ObstacleProx) && _enableProxCollisions )||
                           (data->type == MemoryMapTypes::EContentType::ObstacleUnrecognized) ||
                           (data->type == MemoryMapTypes::EContentType::Cliff);
         return retv;
@@ -1259,8 +1255,6 @@ void MapComponent::ReviewInterestingEdges(const Quad2f& withinQuad, INavMap* map
       {EContentType::ClearOfObstacle       , false},
       {EContentType::ClearOfCliff          , false},
       {EContentType::ObstacleObservable    , true },
-      {EContentType::ObstacleCharger       , true },
-      {EContentType::ObstacleChargerRemoved, true },
       {EContentType::ObstacleProx          , true },
       {EContentType::ObstacleUnrecognized  , true },
       {EContentType::Cliff                 , false},
@@ -1465,8 +1459,6 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
             {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
             {MemoryMapTypes::EContentType::ClearOfCliff          , false},
             {MemoryMapTypes::EContentType::ObstacleObservable    , true },
-            {MemoryMapTypes::EContentType::ObstacleCharger       , true },
-            {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true },
             {MemoryMapTypes::EContentType::ObstacleProx          , true },
             {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
             {MemoryMapTypes::EContentType::Cliff                 , true },
@@ -1505,8 +1497,6 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
           {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
           {MemoryMapTypes::EContentType::ClearOfCliff          , false},
           {MemoryMapTypes::EContentType::ObstacleObservable    , true },
-          {MemoryMapTypes::EContentType::ObstacleCharger       , true },
-          {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true },
           {MemoryMapTypes::EContentType::ObstacleProx          , true },
           {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
           {MemoryMapTypes::EContentType::Cliff                 , false},

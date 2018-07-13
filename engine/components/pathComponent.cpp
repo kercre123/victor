@@ -32,8 +32,6 @@
 #include "util/logging/logging.h"
 #include <limits>
 
-#define USE_NEW_PLANNER 0
-
 namespace Anki {
 namespace Cozmo {
 
@@ -118,11 +116,7 @@ void PathComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& depen
     _pdo.reset(new PathDolerOuter(context->GetRobotManager()->GetMsgHandler()));
 
     if (nullptr != context->GetDataPlatform()) {      
-      if (USE_NEW_PLANNER) {
-        _longPathPlanner.reset(new XYPlanner(_robot));
-      } else {
-        _longPathPlanner.reset(new LatticePlanner(_robot, context->GetDataPlatform()));
-      }
+      _longPathPlanner.reset(new XYPlanner(_robot));
     }
     else {
       // For unit tests, or cases where we don't have data, use the short planner in it's place

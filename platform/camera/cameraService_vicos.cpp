@@ -41,6 +41,9 @@ namespace Anki {
       bool     _isRestartingCamera = false;
       std::mutex _lock;
       std::function<void()> _onCameraRestart;
+      
+      bool _waitingForFormatChange = false;
+      ImageEncoding _curFormat = ImageEncoding::NoneImageEncoding;
     } // "private" namespace
 
 
@@ -141,6 +144,8 @@ namespace Anki {
       if (_isRestartingCamera && (status == ANKI_CAMERA_STATUS_RUNNING)) {
         LOG_INFO("CameraService.Update.RestartedCameraClient", "");
         _isRestartingCamera = false;
+        _waitingForFormatChange = false;
+        _curFormat = ImageEncoding::NoneImageEncoding;
 
         if(_onCameraRestart != nullptr)
         {
@@ -174,6 +179,13 @@ namespace Anki {
         return;
       }
 
+      if(_waitingForFormatChange)
+      {
+        PRINT_NAMED_INFO("CameraService.CameraSetParameters.FormatChanging",
+                         "Not setting exposure and gain while format is changing");
+        return;
+      }
+
       camera_set_exposure(_camera, exposure_ms, gain);
     }
 
@@ -182,7 +194,15 @@ namespace Anki {
       if( nullptr == _camera ) {
         return;
       }
+      
+      if(_waitingForFormatChange)
+      {
+        PRINT_NAMED_INFO("CameraService.CameraSetWhiteBalanceParameters.FormatChanging",
+                         "Not setting white balance while format is changing");
+        return;
+      }
 
+      
       camera_set_awb(_camera, r_gain, g_gain, b_gain);
     }
 
@@ -209,6 +229,7 @@ namespace Anki {
                               "%s", EnumToString(format));
           return;
       }
+      _waitingForFormatChange = true;
       PRINT_NAMED_INFO("CameraService.CameraSetCaptureFormat.SetFormat","%s", EnumToString(format));
       camera_set_capture_format(_camera, cameraFormat);
     }
@@ -256,6 +277,12 @@ namespace Anki {
         case ANKI_CAM_FORMAT_YUV:
           format = ImageEncoding::YUV420sp;
           break;
+      }
+
+      if(_curFormat != format)
+      {
+        _waitingForFormatChange = false;
+        _curFormat = format;
       }
       
       return true;

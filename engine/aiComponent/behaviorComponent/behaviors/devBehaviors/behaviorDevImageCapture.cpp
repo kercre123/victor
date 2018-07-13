@@ -64,6 +64,7 @@ const char* const kImageResizeMethodKey = "resize_method";
 const char* const kUseCapacitiveTouchKey = "use_capacitive_touch";
 const char* const kSaveSensorDataKey = "save_sensor_data";
 const char* const kClassNamesKey = "class_names";
+const char* const kVisionModesKey = "vision_modes";
 
 }
 
@@ -126,12 +127,59 @@ BehaviorDevImageCapture::BehaviorDevImageCapture(const Json::Value& config)
     }
   }
   _dVars.currentClassIter = _iConfig.classNames.begin();
+  
+  if(config.isMember(kVisionModesKey))
+  {
+    auto const & visionModes = config[kVisionModesKey];
+
+    auto setVisionModeHelper = [this](const Json::Value& jsonVisionMode)
+    {
+      const std::string& visionModeStr = jsonVisionMode.asString();
+      VisionMode visionMode;
+      const bool success = VisionModeFromString(visionModeStr, visionMode);
+      if(success)
+      {
+        _iConfig.visionModesBesidesSaving.push_back(visionMode);
+      }
+      else
+      {
+        PRINT_NAMED_WARNING("BehaviorDevImageCapture.Constructor.InvalidVisionMode", "%s", visionModeStr.c_str());
+      }
+    };
+    
+    if(visionModes.isArray())
+    {
+      std::for_each(visionModes.begin(), visionModes.end(), setVisionModeHelper);
+    }
+    else if(visionModes.isString())
+    {
+      setVisionModeHelper(visionModes);
+    }
+    else
+    {
+      PRINT_NAMED_WARNING("BehaviorDevImageCapture.Constructor.InvalidVisionModeEntry", "");
+    }
+  }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDevImageCapture::~BehaviorDevImageCapture()
 {
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDevImageCapture::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
+{
+  modifiers.wantsToBeActivatedWhenOffTreads = true;
+  modifiers.wantsToBeActivatedWhenOnCharger = true;
+  modifiers.behaviorAlwaysDelegates = false;
+  modifiers.visionModesForActiveScope->insert({VisionMode::SavingImages, EVisionUpdateFrequency::High});
+  for(auto const& mode : _iConfig.visionModesBesidesSaving)
+  {
+    // TODO: support non-"Standard" frequency specification?
+    modifiers.visionModesForActiveScope->insert({mode, EVisionUpdateFrequency::Standard});
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -145,6 +193,7 @@ void BehaviorDevImageCapture::GetBehaviorJsonKeys(std::set<const char*>& expecte
     kUseCapacitiveTouchKey,
     kSaveSensorDataKey,
     kClassNamesKey,
+    kVisionModesKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }

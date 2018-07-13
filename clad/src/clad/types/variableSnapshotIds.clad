@@ -20,7 +20,9 @@ enum uint_32 VariableSnapshotId {
   UnitTestBool0,
 
   // other snapshot variables
-
+  BehaviorGreetAfterLongTime_LastSeenTimes,
+  
+  Count
 }
 
 } // namespace Cozmo

@@ -158,6 +158,9 @@ OSState::OSState()
 
   _buildSha = ANKI_BUILD_SHA;
 
+  // set cpu frequency to default (in case we left it in a bad state last time)
+  SetDesiredCPUFrequency(DesiredCPUFrequency::Automatic);
+
   _lastWebvizUpdateTime_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
 }
 

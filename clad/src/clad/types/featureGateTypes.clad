@@ -4,20 +4,16 @@ namespace Cozmo {
 // when updating this enum, please update the console enum kFeatureEnumString in cozmoFeatureGate.cpp
 enum uint_8 FeatureType {
   Invalid,
-  AndroidConnectionFlow,
-  SpeedTapMultiPlayer,
-  CodeLabGame,
-  PeekABoo,
-  SparksGatherCubes,
-  GuardDog,
-  Bouncer,
   Laser,
-  Singing,
-  LocalNotifications,
   Exploring,
   Messaging,
   ReactToIllumination,
-  KnowledgeGraph
+  KnowledgeGraph,
+  Dancing,
+  CubeBehaviors,
+  GreetAfterLongTime,
+  
+  PRDemo
 }
 
 structure FeatureToggle {

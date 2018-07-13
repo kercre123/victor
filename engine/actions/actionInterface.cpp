@@ -183,7 +183,7 @@ namespace Anki {
         }
         else {
           PRINT_CH_INFO(kLogChannelName, "IActionRunner.Destructor.NotPreppedForCompletionAndNotStarted",
-                        "[%d]", GetTag());
+                        "[%d] type [%s]", GetTag(), RobotActionTypeToString(_type));
         }
       }
 
@@ -197,7 +197,7 @@ namespace Anki {
         }
         else {
           PRINT_CH_INFO(kLogChannelName, "IActionRunner.Destructor.RobotNotSetAndNotStarted",
-                        "[%d] robot not set, but action also not started so this is OK", GetTag());
+                        "[%d] robot not set, but action [%s] also not started so this is OK", GetTag(), RobotActionTypeToString(_type));
         }
         return;
       }
@@ -532,6 +532,11 @@ namespace Anki {
                       _name.c_str(), GetTag());
         _state = ActionResult::CANCELLED_WHILE_RUNNING;
       }
+#     if USE_ACTION_CALLBACKS
+      {
+        RunCallbacks(_state);
+      }
+#     endif
     }
 
     void IActionRunner::GetRobotCompletedActionMessage(ExternalInterface::RobotCompletedAction& msg)

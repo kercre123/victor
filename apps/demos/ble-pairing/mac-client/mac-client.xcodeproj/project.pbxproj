@@ -23,6 +23,14 @@
 		DA87208A20A4C65100343D43 /* SyncController.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA87208920A4C65100343D43 /* SyncController.mm */; };
 		DA87208D20AA07FC00343D43 /* CoreWLAN.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA87208C20AA07FC00343D43 /* CoreWLAN.framework */; };
 		DA945AFD2080167B0017AD00 /* libreadline.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DA945AFC2080167B0017AD00 /* libreadline.tbd */; };
+		DA9C04E220E19C230046578A /* sayTextStylesSDK.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DA9C04D220E19C230046578A /* sayTextStylesSDK.cpp */; };
+		DA9C04E320E19C230046578A /* loadedKnownFace.h in Headers */ = {isa = PBXBuildFile; fileRef = DA9C04D320E19C230046578A /* loadedKnownFace.h */; };
+		DA9C04E420E19C230046578A /* animationTrigger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DA9C04D520E19C230046578A /* animationTrigger.cpp */; };
+		DA9C04E520E19C230046578A /* faceEnrollmentResult.h in Headers */ = {isa = PBXBuildFile; fileRef = DA9C04D820E19C230046578A /* faceEnrollmentResult.h */; };
+		DA9C04E620E19C230046578A /* loadedKnownFace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DA9C04D920E19C230046578A /* loadedKnownFace.cpp */; };
+		DA9C04E720E19C230046578A /* sayTextStylesSDK.h in Headers */ = {isa = PBXBuildFile; fileRef = DA9C04DA20E19C230046578A /* sayTextStylesSDK.h */; };
+		DA9C04E820E19C230046578A /* animationTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = DA9C04DE20E19C230046578A /* animationTrigger.h */; };
+		DA9C04E920E19C230046578A /* faceEnrollmentResult.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DA9C04E020E19C230046578A /* faceEnrollmentResult.cpp */; };
 		DAE361D52049D4AE0053ED2F /* bleMessageProtocol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DAE361D32049D4AE0053ED2F /* bleMessageProtocol.cpp */; };
 /* End PBXBuildFile section */
 
@@ -74,6 +82,22 @@
 		DA87208B20A4C66400343D43 /* SyncController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SyncController.h; sourceTree = "<group>"; };
 		DA87208C20AA07FC00343D43 /* CoreWLAN.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreWLAN.framework; path = System/Library/Frameworks/CoreWLAN.framework; sourceTree = SDKROOT; };
 		DA945AFC2080167B0017AD00 /* libreadline.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libreadline.tbd; path = usr/lib/libreadline.tbd; sourceTree = SDKROOT; };
+		DA9C04D220E19C230046578A /* sayTextStylesSDK.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sayTextStylesSDK.cpp; sourceTree = "<group>"; };
+		DA9C04D320E19C230046578A /* loadedKnownFace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = loadedKnownFace.h; sourceTree = "<group>"; };
+		DA9C04D420E19C230046578A /* animationTrigger_declarations.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = animationTrigger_declarations.def; sourceTree = "<group>"; };
+		DA9C04D520E19C230046578A /* animationTrigger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = animationTrigger.cpp; sourceTree = "<group>"; };
+		DA9C04D620E19C230046578A /* faceEnrollmentResult_switch.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = faceEnrollmentResult_switch.def; sourceTree = "<group>"; };
+		DA9C04D720E19C230046578A /* faceEnrollmentResult_declarations.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = faceEnrollmentResult_declarations.def; sourceTree = "<group>"; };
+		DA9C04D820E19C230046578A /* faceEnrollmentResult.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = faceEnrollmentResult.h; sourceTree = "<group>"; };
+		DA9C04D920E19C230046578A /* loadedKnownFace.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = loadedKnownFace.cpp; sourceTree = "<group>"; };
+		DA9C04DA20E19C230046578A /* sayTextStylesSDK.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sayTextStylesSDK.h; sourceTree = "<group>"; };
+		DA9C04DB20E19C230046578A /* sayTextStylesSDK_declarations.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sayTextStylesSDK_declarations.def; sourceTree = "<group>"; };
+		DA9C04DC20E19C230046578A /* animationTrigger_switch.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = animationTrigger_switch.def; sourceTree = "<group>"; };
+		DA9C04DD20E19C230046578A /* loadedKnownFace_declarations.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = loadedKnownFace_declarations.def; sourceTree = "<group>"; };
+		DA9C04DE20E19C230046578A /* animationTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = animationTrigger.h; sourceTree = "<group>"; };
+		DA9C04DF20E19C230046578A /* loadedKnownFace_switch.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = loadedKnownFace_switch.def; sourceTree = "<group>"; };
+		DA9C04E020E19C230046578A /* faceEnrollmentResult.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = faceEnrollmentResult.cpp; sourceTree = "<group>"; };
+		DA9C04E120E19C230046578A /* sayTextStylesSDK_switch.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sayTextStylesSDK_switch.def; sourceTree = "<group>"; };
 		DAE361C52049D1500053ED2F /* libsodium.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libsodium.a; sourceTree = "<group>"; };
 		DAE361CE2049D27B0053ED2F /* libclad.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libclad.a; sourceTree = "<group>"; };
 		DAE361D32049D4AE0053ED2F /* bleMessageProtocol.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = bleMessageProtocol.cpp; sourceTree = "<group>"; };
@@ -221,6 +245,29 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		DA9C04D120E19C040046578A /* types */ = {
+			isa = PBXGroup;
+			children = (
+				DA9C04D420E19C230046578A /* animationTrigger_declarations.def */,
+				DA9C04DC20E19C230046578A /* animationTrigger_switch.def */,
+				DA9C04D520E19C230046578A /* animationTrigger.cpp */,
+				DA9C04DE20E19C230046578A /* animationTrigger.h */,
+				DA9C04D720E19C230046578A /* faceEnrollmentResult_declarations.def */,
+				DA9C04D620E19C230046578A /* faceEnrollmentResult_switch.def */,
+				DA9C04E020E19C230046578A /* faceEnrollmentResult.cpp */,
+				DA9C04D820E19C230046578A /* faceEnrollmentResult.h */,
+				DA9C04DD20E19C230046578A /* loadedKnownFace_declarations.def */,
+				DA9C04DF20E19C230046578A /* loadedKnownFace_switch.def */,
+				DA9C04D920E19C230046578A /* loadedKnownFace.cpp */,
+				DA9C04D320E19C230046578A /* loadedKnownFace.h */,
+				DA9C04DB20E19C230046578A /* sayTextStylesSDK_declarations.def */,
+				DA9C04E120E19C230046578A /* sayTextStylesSDK_switch.def */,
+				DA9C04D220E19C230046578A /* sayTextStylesSDK.cpp */,
+				DA9C04DA20E19C230046578A /* sayTextStylesSDK.h */,
+			);
+			path = types;
+			sourceTree = "<group>";
+		};
 		DAE361C82049D1940053ED2F /* signals */ = {
 			isa = PBXGroup;
 			children = (
@@ -234,6 +281,7 @@
 		DAE361D92049DE4D0053ED2F /* clad */ = {
 			isa = PBXGroup;
 			children = (
+				DA9C04D120E19C040046578A /* types */,
 				DA27D314206C385400D4416A /* externalInterface */,
 				700A713C205A63BF00B518CD /* support */,
 			);
@@ -247,11 +295,15 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DA9C04E720E19C230046578A /* sayTextStylesSDK.h in Headers */,
 				79E261D320D18E6300AA9573 /* json-forwards.h in Headers */,
 				DA27D31C206C386E00D4416A /* messageExternalCommsTag.h in Headers */,
 				700A714B205A647F00B518CD /* SafeMessageBuffer.h in Headers */,
+				DA9C04E820E19C230046578A /* animationTrigger.h in Headers */,
 				79E261D120D18E6300AA9573 /* json.h in Headers */,
+				DA9C04E320E19C230046578A /* loadedKnownFace.h in Headers */,
 				DA27D31B206C386E00D4416A /* messageExternalComms.h in Headers */,
+				DA9C04E520E19C230046578A /* faceEnrollmentResult.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -336,8 +388,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				700A714E205A647F00B518CD /* SafeMessageBuffer.cpp in Sources */,
+				DA9C04E220E19C230046578A /* sayTextStylesSDK.cpp in Sources */,
+				DA9C04E420E19C230046578A /* animationTrigger.cpp in Sources */,
 				79E261D220D18E6300AA9573 /* jsoncpp.cpp in Sources */,
 				DA27D31A206C386E00D4416A /* messageExternalComms.cpp in Sources */,
+				DA9C04E920E19C230046578A /* faceEnrollmentResult.cpp in Sources */,
+				DA9C04E620E19C230046578A /* loadedKnownFace.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

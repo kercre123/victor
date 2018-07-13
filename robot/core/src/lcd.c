@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <linux/spi/spidev.h>
+#include <linux/fb.h>
 
 #include "core/common.h"
 #include "core/clock.h"
@@ -17,6 +18,8 @@
 
 
 static const int MAX_TRANSFER = 0x1000;
+
+static int lcd_use_fb; // use /dev/fb0?
 
 #define GPIO_LCD_WRX   110
 #define GPIO_LCD_RESET 55
@@ -67,21 +70,21 @@ static const INIT_SCRIPT display_on_scr[] = {
 /************* LCD SPI Interface ***************/
 
 
-static int spi_fd;
+static int lcd_fd;
 
 static int lcd_spi_init()
 {
   // SPI setup
   static const uint8_t    MODE = 0;
-  int spi_fd = open("/dev/spidev1.0", O_RDWR);
-  if (!spi_fd) {
+  int lcd_fd = open("/dev/spidev1.0", O_RDWR);
+  if (!lcd_fd) {
     error_exit(app_DEVICE_OPEN_ERROR, "Can't open LCD SPI interface\n");
   }
-  ioctl(spi_fd, SPI_IOC_RD_MODE, &MODE);
+  ioctl(lcd_fd, SPI_IOC_RD_MODE, &MODE);
   /* if (err<0) { */
   /*   error_exit(app_IO_ERROR, "Can't configure LCD SPI. (%d)\n", errno); */
   /* } */
-  return spi_fd;
+  return lcd_fd;
 }
 
 static void lcd_spi_transfer(int cmd, int bytes, const void* data) {
@@ -92,7 +95,7 @@ static void lcd_spi_transfer(int cmd, int bytes, const void* data) {
   while (bytes > 0) {
     const size_t count = bytes > MAX_TRANSFER ? MAX_TRANSFER : bytes;
 
-    (void)write(spi_fd, tx_buf, count);
+    (void)write(lcd_fd, tx_buf, count);
 
     bytes -= count;
     tx_buf += count;
@@ -109,6 +112,20 @@ static void lcd_run_script(const INIT_SCRIPT* script)
   }
 }
 
+/************ LCD Framebuffer device *************/
+static int lcd_fb_init(void)
+{
+  struct fb_fix_screeninfo fixed_info;
+  int _fd = open("/dev/fb0", O_RDWR | O_NONBLOCK);
+  if (_fd <= 0)
+    return -1;
+
+  if (ioctl(_fd, FBIOGET_FSCREENINFO, &fixed_info) < 0)
+    return -1;
+
+  return _fd;
+}
+
 /************ LCD Device Interface *************/
 
 static void lcd_device_init()
@@ -120,7 +137,6 @@ static void lcd_device_init()
   // as the contents of memory are set randomly on
   // power on
   lcd_clear_screen();
-
   // Turn display on
   lcd_run_script(display_on_scr);
 }
@@ -131,16 +147,27 @@ void lcd_clear_screen(void) {
 }
 
 void lcd_draw_frame(const LcdFrame* frame) {
-   static const uint8_t WRITE_RAM = 0x2C;
-   lcd_spi_transfer(TRUE, 1, &WRITE_RAM);
-   lcd_spi_transfer(FALSE, sizeof(frame->data), frame->data);
+   if (lcd_use_fb) {
+      lseek(lcd_fd, 0, SEEK_SET);
+      (void)write(lcd_fd, frame->data, sizeof(frame->data));
+   } else {
+      static const uint8_t WRITE_RAM = 0x2C;
+      lcd_spi_transfer(TRUE, 1, &WRITE_RAM);
+      lcd_spi_transfer(FALSE, sizeof(frame->data), frame->data);
+   }
 }
 
 void lcd_draw_frame2(const uint16_t* frame, size_t size) {
-   static const uint8_t WRITE_RAM = 0x2C;
-   lcd_spi_transfer(TRUE, 1, &WRITE_RAM);
-   lcd_spi_transfer(FALSE, size, frame);
+   if (lcd_use_fb) {
+      lseek(lcd_fd, 0, SEEK_SET);
+      (void)write(lcd_fd, frame, size);
+   } else {
+      static const uint8_t WRITE_RAM = 0x2C;
+      lcd_spi_transfer(TRUE, 1, &WRITE_RAM);
+      lcd_spi_transfer(FALSE, size, frame);
+   }
 }
+
 
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define MIN(a,b) (((a)<(b))?(a):(b))
@@ -175,6 +202,12 @@ int lcd_init(void) {
 
   lcd_set_brightness(10);
 
+  lcd_fd = lcd_fb_init();
+  if (lcd_fd > 0) {
+    lcd_use_fb = TRUE;
+    return 0; // use framebuffer device
+  }
+
   // IO Setup
   DnC_PIN = gpio_create(GPIO_LCD_WRX, gpio_DIR_OUTPUT, gpio_HIGH);
 
@@ -182,7 +215,7 @@ int lcd_init(void) {
 
   // SPI setup
 
-  spi_fd = lcd_spi_init();
+  lcd_fd = lcd_spi_init();
 
   // Send reset signal
   microwait(50);
@@ -200,10 +233,15 @@ int lcd_init(void) {
 void lcd_shutdown(void) {
   //todo: turn off screen?
 
-  if (spi_fd) {
+  if (lcd_use_fb) {
+    close(lcd_fd);
+    return;
+  }
+
+  if (lcd_fd) {
     static const uint8_t SLEEP = 0x10;
     lcd_spi_transfer(TRUE, 1, &SLEEP);
-    close(spi_fd);
+    close(lcd_fd);
   }
   if (DnC_PIN) {
     gpio_close(DnC_PIN);

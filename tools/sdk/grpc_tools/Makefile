@@ -7,7 +7,7 @@ WEBOTS ?= 0
 FORCE ?= 0
 
 current_dir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-GIT_ROOT := "../../.."
+GIT_ROOT := $(abspath $(current_dir)/../../..)
 PYTHON_STRUCTURE := vector/messaging
 PYTHON_SDK_ROOT := $(abspath $(current_dir)/../vector-sdk)
 PYTHON_OUT := $(abspath $(PYTHON_SDK_ROOT)/$(PYTHON_STRUCTURE))
@@ -27,6 +27,7 @@ gen_py_proto: .PHONY
 	mkdir -p $(PYTHON_OUT)
 	cp $(GIT_ROOT)/cloud/gateway/*.proto $(PYTHON_OUT)
 	sed -i -e 's/import "\([^\/]*\).proto"/import "vector\/messaging\/\1.proto"/g' $(PYTHON_OUT)/*.proto
+	rm $(PYTHON_OUT)/*.proto-e
 
 python: pip gen_py_proto
 	python3 -m grpc_tools.protoc \
@@ -34,6 +35,26 @@ python: pip gen_py_proto
 	-I $(GIT_ROOT)/cloud/go/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
 	--python_out=$(PYTHON_SDK_ROOT) --grpc_python_out=$(PYTHON_SDK_ROOT) \
 	$(PYTHON_OUT)/*.proto
+
+# Extra verbose linting for go.
+# This shouldn't be added to PR or anything, but is good to have available while developing go code.
+go_vet: .PHONY
+	@echo "> Running go vet"
+	@GOPATH=$(GIT_ROOT)/cloud/go/:$(GIT_ROOT)/generated/go/:$(GIT_ROOT)/generated/cladgo/:$(GIT_ROOT)/tools/message-buffers/support/go go vet $(GIT_ROOT)/cloud/gateway/main.go $(GIT_ROOT)/cloud/gateway/message_handler.go $(GIT_ROOT)/cloud/gateway/config_mac.go
+
+pylint: pylint_tests pylint_main
+
+autopep: .PHONY
+	python3 -m pip install autopep8
+	python3 -m autopep8 --ignore E501,E402 --in-place ../vector-sdk/tests/*.py ../vector-sdk/tests/automated/*.py ../vector-sdk/vector/*.py
+
+pylint_main: autopep
+	@echo "> Running pylint on vector module"
+	@python3 -m pylint --rcfile=.pylint $(shell find ../vector-sdk/vector -type f -d 1) || exit 0
+
+pylint_tests: autopep
+	@echo "> Running pylint on test files"
+	@python3 -m pylint --rcfile=.pylint $(shell find ../vector-sdk/tests ../vector-sdk/tests/automated -type f -d 1) || exit 0
 
 # Unused flatbuffers target. Keeping this for posterity
 flat: .PHONY
@@ -55,6 +76,13 @@ ifeq ("$(FORCE)","1")
 	ssh root@$(ANKI_ROBOT_HOST) -t LD_LIBRARY_PATH=/anki/lib/ /anki/bin/vic-gateway
 endif
 
+certs_show: .PHONY
+	@echo "> Robot certificates"
+	@openssl x509 -in trust.cert -text -noout || echo "\n\nFailed to output certs. Make sure they exist!\n\n" && exit 1
+	@echo
+	@echo "> Mac certificates"
+	@openssl x509 -in trust_mac.cert -text -noout || echo "\n\nFailed to output certs. Make sure they exist!\n\n" && exit 1
+
 create_certs: .require_ip
 	cp trust.conf temp_trust.conf
 	echo "IP.2 = $(ANKI_ROBOT_HOST)" >> temp_trust.conf
@@ -64,8 +92,9 @@ create_certs: .require_ip
 	rm temp_trust.conf
 	scp trust.cert root@$(ANKI_ROBOT_HOST):/data/trust.cert
 	scp trust.key root@$(ANKI_ROBOT_HOST):/data/trust.key
+certs: create_certs
 
-create_certs_mac:
+create_certs_mac: .PHONY
 	cp trust.conf temp_trust.conf
 	echo "DNS.2       = localhost:8443" >> temp_trust.conf
 	openssl req -config temp_trust.conf \
@@ -75,7 +104,7 @@ create_certs_mac:
 	mkdir -p /tmp/anki/gateway
 	cp trust_mac.key /tmp/anki/gateway/trust.key
 	cp trust_mac.cert /tmp/anki/gateway/trust.cert
-
+certs_mac: create_certs_mac
 
 test_curl_events: .require_ip
 	$(curl_command)/v1/event_stream -d '{}'
@@ -169,9 +198,6 @@ test_user_authentication: .require_ip
 	@echo
 
 test_curl: .require_ip
-	$(curl_command)/v1/play_animation -d '{"animation":{"name":"anim_poked_giggle"},"loops":1}'
-	@echo
-
 	$(curl_command)/v1/sdk_activation -d '{"slot":0, "enable":true}'
 	@echo
 
@@ -252,8 +278,26 @@ test_settings: .require_ip
 	curl --cacert trust.cert https://$(ANKI_ROBOT_HOST)/v1/update_settings -d '{"settings":{"clock_24_hour":true,"eye_color":"TEAL"}}'
 	@echo
 
+test_status_history: .require_ip
+	$(curl_command)/v1/status_history -d '{}'
+	@echo
+
 update_time: .require_ip
 	ssh root@$(ANKI_ROBOT_HOST) -t date --set='@$(shell date +%s)'
 
 help: .PHONY
 	@env -i make -rnpq --no-print-directory .DEFAULT 2>/dev/null | grep "^[^%[:space:]]*:" | grep -v Makefile | awk '{ print substr($$1, 1, length($$1)-1) }' | sort | uniq | column
+
+IGNORE_FILES := test_backpack_light_profiles.py test_backpack_lights.py test_cube_lights.py test_say_text.py
+TEST_FILES := $(shell find ../vector-sdk/tests ../vector-sdk/tests/automated -type f -d 1 $(foreach file,$(IGNORE_FILES),| grep -v $(file)))
+
+$(addprefix run_,$(TEST_FILES)): run_%: % .require_ip
+	@mkdir -p logs
+	@echo "> Running $(shell tput setaf 6)$(notdir $<)$(shell tput sgr0)"
+ifeq ("$(WEBOTS)","1")
+	@$< localhost trust_mac.cert --port 8443 &> logs/$(notdir $<).log || ( tput setaf 1 ; cat logs/$(notdir $<).log ; tput sgr0 ; exit 1 )
+else
+	@$< $(ANKI_ROBOT_HOST) trust.cert &> logs/$(notdir $<).log || ( tput setaf 1 ; cat logs/$(notdir $<).log ; tput sgr0 ; exit 1 )
+endif
+
+run_python_tests: $(addprefix run_,$(TEST_FILES))

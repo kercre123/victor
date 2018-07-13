@@ -11,18 +11,21 @@
     "TriggerWordDetected",
     "SingletonWallTimeCoordinator",
     "TimerUtilityCoordinator",
+    "DemoTimerUtilityCoordinator",
     "WeatherResponses",
+    "GreetAfterLongTime",
     "TakeAPhotoCoordinator",
     "ReactToTouchPetting",
+    "ReactToObstacle",
     "InterruptingVoiceReactions",
     "ReactToSoundAwake",
     "ReactToUnclaimedIntent",
     "WhileInAirDispatcher",
-    "ReactToObstacle",
     "ReactToPutDown",
     "ReactToDarkness",
     "DanceToTheBeat",
     "ConfirmHabitat",
+    "PRDemoStateMachine",
     "HighLevelAI"
   ]
 }

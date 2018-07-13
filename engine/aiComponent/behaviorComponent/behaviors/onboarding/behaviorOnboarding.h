@@ -29,6 +29,7 @@ namespace Cozmo {
 
 class IOnboardingStage;
 enum class OnboardingStages : uint8_t;
+enum class OnboardingSteps  : uint8_t;
   
 class BehaviorOnboarding : public ICozmoBehavior
 {
@@ -89,6 +90,7 @@ private:
   void RequestContinue();
   void RequestSkip();
   void RequestRetryCharging();
+  void RequestSkipRobotOnboarding();
   
   // Put this behavior in a state where it waits for the BSM to switch behavior stacks
   void TerminateOnboarding();
@@ -172,6 +174,7 @@ private:
     IBehavior* lastBehavior;
     bool lastTriggerWordEnabled;
     UserIntentTag lastWhitelistedIntent;
+    OnboardingSteps lastExpectedStep;
     BehaviorID lastInterruption;
     
     

@@ -6,6 +6,8 @@ package Anki.Cozmo.external_interface;
 
 option optimize_for = LITE_RUNTIME;
 
+import "extensions.proto";
+
 message ResultStatus {
   string description = 1;
 }
@@ -51,13 +53,18 @@ message DriveArcResult {
   ResultStatus status = 1;
 }
 
+// TODO: hook up ignore tracks and test that they work in the new world
 message PlayAnimationRequest {
   Animation animation = 1;
   uint32 loops = 2;
+  bool ignore_body_track = 3;
+  bool ignore_head_track = 4;
+  bool ignore_lift_track = 5;
 }
 
 message PlayAnimationResult {
   ResultStatus status = 1;
+  BehaviorResults result = 2;
 }
 
 message ListAnimationsRequest {}
@@ -95,6 +102,7 @@ message Status {
     FeatureStatus                   feature_status                   = 1;
     MeetVictorFaceScanStarted       meet_victor_face_scan_started    = 2;
     MeetVictorFaceScanComplete      meet_victor_face_scan_complete   = 3;
+    FaceEnrollmentCompleted         face_enrollment_completed        = 4;
   }
 }
 
@@ -106,7 +114,7 @@ message Onboarding {
     OnboardingPickedUp                 onboarding_picked_up          = 4;
     OnboardingSeesCube                 onboarding_sees_cube          = 5;
     OnboardingCantFindCube             onboarding_cant_find_cube     = 6;
-    OnboardingRobotExpectingContinue   onboarding_expecting_continue = 7;
+    OnboardingRobotExpectingStep       onboarding_expecting_step     = 7;
   }
 }
 
@@ -208,36 +216,37 @@ enum FacialExpression
 }
 
 message RobotObservedFace {
-    int32 face_id = 1;         // negative: tracked but not recognized; positive: recognized face
-    uint32 timestamp = 2;
-    PoseStruct pose = 3;
-    CladRect img_rect = 4;       // position in image coords
-    string name = 5;           // Empty if none assigned yet
+  int32 face_id = 1;         // negative: tracked but not recognized; positive: recognized face
+  uint32 timestamp = 2;
+  PoseStruct pose = 3;
+  CladRect img_rect = 4;       // position in image coords
+  string name = 5;           // Empty if none assigned yet
 
-    FacialExpression expression = 6;
+  FacialExpression expression = 6;
 
-    // Individual expression values histogram, sums to 100 (Exception: all zero if expression=Unknown)
-    repeated uint32 expression_values = 7; // This is a uint32 on the clad side
+  // Individual expression values histogram, sums to 100 (Exception: all zero if expression=Unknown)
+  repeated uint32 expression_values = 7; // This is a uint32 on the clad side
 
-    // Face landmarks
-    repeated CladPoint left_eye = 8;
-    repeated CladPoint right_eye = 9;
-    repeated CladPoint nose = 10;
-    repeated CladPoint mouth = 11;
+  // Face landmarks
+  repeated CladPoint left_eye = 8;
+  repeated CladPoint right_eye = 9;
+  repeated CladPoint nose = 10;
+  repeated CladPoint mouth = 11;
 }
 
 // RobotChangedObservedFaceID
 //  This generally happens when a tracked face (negative ID) is recognized and
 //  receives a positive ID or when face records get merged
 message RobotChangedObservedFaceID {
-    int32   old_id = 1;
-    int32   new_id = 2;
+  int32   old_id = 1;
+  int32   new_id = 2;
 }
 
 // TODO: Remove this request/response once RobotState is made an event
 message RobotStateRequest {}
 
 message RobotStateResult {
+  option (streamed) = true;
   ResultStatus status = 1;
   RobotState robot_state = 2;
 }
@@ -261,17 +270,18 @@ message AppIntentRequest {
 
 enum FaceEnrollmentResult
 {
-    SUCCESS = 0;
+  SUCCESS = 0;
 
-    // Failures:
-    SAW_WRONG_FACE = 1;
-    SAW_MULTIPLE_FACES = 2;
-    TIMED_OUT = 3;
-    SAVE_FAILED = 4;
-    INCOMPLETE = 5;
-    CANCELLED = 6;
-    NAME_IN_USE = 7;
-    UNKNOWN_FAILURE = 8;
+  // Failures:
+  SAW_WRONG_FACE = 1;
+  SAW_MULTIPLE_FACES = 2;
+  TIMED_OUT = 3;
+  SAVE_FAILED = 4;
+  INCOMPLETE = 5;
+  CANCELLED = 6;
+  NAME_IN_USE = 7;
+  NAMED_STORAGE_FULL = 8;
+  UNKNOWN_FAILURE = 9;
 }
 
 message AppIntentResult {
@@ -280,7 +290,7 @@ message AppIntentResult {
 
 message FaceEnrollmentCompleted {
   FaceEnrollmentResult result = 1;
-  int32               face_id = 2;
+  int32                face_id = 2;
   string               name = 3;
 }
 
@@ -295,12 +305,12 @@ message RequestEnrolledNamesRequest {
 }
 
 message LoadedKnownFace {
-    int64   seconds_since_first_enrolled = 1;
-    int64   seconds_since_last_updated = 2;
-    int64   seconds_since_last_seen = 3;
-    int64   last_seen_seconds_since_epoch = 4;
-    int32   face_id = 5;
-    string  name = 6;
+  int64  seconds_since_first_enrolled = 1;
+  int64  seconds_since_last_updated = 2;
+  int64  seconds_since_last_seen = 3;
+  int64  last_seen_seconds_since_epoch = 4;
+  int32  face_id = 5;
+  string name = 6;
 }
 
 message RobotRenamedEnrolledFace {
@@ -339,16 +349,15 @@ message EraseAllEnrolledFacesResult {
 }
 
 message SetFaceToEnrollRequest {
-    string  name = 1;
+  string  name = 1;
 
-    int32   observed_id = 2;  // The ID of a specific observed face to enroll (0 for next one we see)
-    int32   save_id = 3;      // The ID of an existing face to merge final enrollment into (0 for none,
-                          // i.e. use observedID)
+  int32   observed_id = 2;  // The ID of a specific observed face to enroll (0 for next one we see)
+  int32   save_id = 3;      // The ID of an existing face to merge final enrollment into (0 for none,
+                        // i.e. use observedID)
 
-    bool    save_to_robot = 4;   // Save to robot's NVStorage when done (NOTE: will (re)save everyone enrolled!)
-    bool    say_name = 5;       // Play say-name/celebration animations on success before completing
-    bool    use_music = 6;       // Starts special music during say-name animations (will leave music playing!)
-  
+  bool    save_to_robot = 4;   // Save to robot's NVStorage when done (NOTE: will (re)save everyone enrolled!)
+  bool    say_name = 5;       // Play say-name/celebration animations on success before completing
+  bool    use_music = 6;       // Starts special music during say-name animations (will leave music playing!)
 }
 message SetFaceToEnrollResult {
   ResultStatus status = 1;
@@ -365,14 +374,16 @@ message DriveOffChargerRequest {
 }
 
 message DriveOffChargerResult {
-  BehaviorResults result = 1;
+  ResultStatus status = 1;
+  BehaviorResults result = 2;
 }
 
 message DriveOnChargerRequest {
 }
 
 message DriveOnChargerResult {
-  BehaviorResults result = 1;
+  ResultStatus status = 1;
+  BehaviorResults result = 2;
 }
 
 // TODO: Remove this example code once more code is converted to protobuf
@@ -437,12 +448,13 @@ message OnboardingStateResponse {
   OnboardingState onboarding_state = 2;
 }
 
-enum OnboardingContinueEnum {
-  Default = 0;
+enum OnboardingSteps {
+  DEFAULT = 0;
+  FIRST_TRIGGER_WORD = 1;
 }
 
 message OnboardingContinue {
-  OnboardingContinueEnum continue_number = 1;
+  OnboardingSteps step_number = 1;
 }
 
 message OnboardingContinueResponse {
@@ -458,6 +470,8 @@ message OnboardingRetryCharging {
 message OnboardingConnectionComplete {
 }
 
+message OnboardingSkipOnboarding {
+}
 
 message OnboardingInputRequest {
   oneof oneof_message_type {
@@ -465,6 +479,7 @@ message OnboardingInputRequest {
     OnboardingSkip onboarding_skip = 2;
     OnboardingRetryCharging onboarding_retry_charging = 3;
     OnboardingConnectionComplete onboarding_connection_complete = 4;
+    OnboardingSkipOnboarding onboarding_skip_onboarding = 5;
   }
 }
 
@@ -475,8 +490,8 @@ message OnboardingInputResponse {
   }
 }
 
-message OnboardingRobotExpectingContinue {
-  OnboardingContinueEnum continue_number = 1;
+message OnboardingRobotExpectingStep {
+  OnboardingSteps step_number = 1;
 }
 
 message WakeWordBegin {
@@ -599,8 +614,8 @@ enum VisionMode {
 }
 
 message EnableVisionModeRequest {
-   VisionMode mode = 1;
-   bool       enable = 2;
+  VisionMode mode = 1;
+  bool       enable = 2;
 }
 
 message EnableVisionModeResult {
@@ -611,17 +626,17 @@ message EnableVisionModeResult {
 // path should be modified or traversed.
 // TODO: Include path wonkification parameters
 message PathMotionProfile {
-    float speed_mmps = 1;
-    float accel_mmps2 = 2;
-    float decel_mmps2 = 3;
-    float point_turn_speed_rad_per_sec = 4;
-    float point_turn_accel_rad_per_sec2 = 5;
-    float point_turn_decel_rad_per_sec2 = 6;
-    float dock_speed_mmps = 7;
-    float dock_accel_mmps2 = 8;
-    float dock_decel_mmps2 = 9;
-    float reverse_speed_mmps = 10;
-    bool  is_custom = 11;
+  float speed_mmps = 1;
+  float accel_mmps2 = 2;
+  float decel_mmps2 = 3;
+  float point_turn_speed_rad_per_sec = 4;
+  float point_turn_accel_rad_per_sec2 = 5;
+  float point_turn_decel_rad_per_sec2 = 6;
+  float dock_speed_mmps = 7;
+  float dock_accel_mmps2 = 8;
+  float dock_decel_mmps2 = 9;
+  float reverse_speed_mmps = 10;
+  bool  is_custom = 11;
 }
 
 enum ActionResult {
@@ -648,9 +663,9 @@ message DriveStraightRequest {
    bool should_play_animation = 3;
 }
 
-// TODO: Refactor once the engine sends the action's status
 message DriveStraightResponse {
   ResultStatus status = 1;
+  BehaviorResults result = 2;
 }
 
 // TurnInPlace
@@ -666,9 +681,9 @@ message TurnInPlaceRequest {
     uint32 is_absolute = 5; // 0: angle_rad is relative to current orientation, 1: angle_rad is absolute angle to turn to
 }
 
-// TODO: Refactor once the engine sends the action's status
 message TurnInPlaceResponse {
   ResultStatus status = 1;
+  BehaviorResults result = 2;
 }
 
 // SetHeadAngle
@@ -679,9 +694,9 @@ message SetHeadAngleRequest {
     float duration_sec = 4;
 }
 
-// TODO: Refactor once the engine sends the action's status
 message SetHeadAngleResponse {
   ResultStatus status = 1;
+  BehaviorResults result = 2;
 }
 
 // SetLiftHeight
@@ -692,8 +707,22 @@ message SetLiftHeightRequest {
     float duration_sec = 4;
 }
 
-// TODO: Refactor once the engine sends the action's status
 message SetLiftHeightResponse {
+  ResultStatus status = 1;
+  BehaviorResults result = 2;
+}
+
+// SetBackpackLEDs
+message SetBackpackLEDsRequest {
+  repeated uint32  on_color = 1;
+  repeated uint32  off_color = 2;
+  repeated uint32  on_period_ms = 3;
+  repeated uint32  off_period_ms = 4;
+  repeated uint32  transition_on_period_ms = 5;
+  repeated uint32  transition_off_period_ms = 6;
+}
+
+message SetBackpackLEDsResponse {
   ResultStatus status = 1;
 }
 

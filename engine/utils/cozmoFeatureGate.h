@@ -30,7 +30,7 @@ enum class FeatureType : uint8_t;
 class CozmoFeatureGate : public Util::FeatureGate
 {
 public:
-  CozmoFeatureGate();
+  CozmoFeatureGate( Util::Data::DataPlatform* platform );
 
   bool IsFeatureEnabled(FeatureType feature) const;
   void SetFeatureEnabled(FeatureType feature, bool enabled);

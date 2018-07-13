@@ -2,6 +2,11 @@
   "behaviorID" : "KeepawayVoiceCommand",
   "behaviorClass" : "DispatcherQueue",
 
+  "wantsToBeActivatedCondition": {
+    "conditionType": "FeatureGate",
+    "feature": "CubeBehaviors"
+  },
+  
   "respondToUserIntents" : [
     {
       "type": "play_specific",
@@ -10,7 +15,7 @@
   ],
 
   "behaviors": [
-    "DriveOffCharger",
+    "DriveOffChargerCube",
     "Keepaway"
   ],
 

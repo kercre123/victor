@@ -9,7 +9,7 @@
 
 namespace Anki {
 
-namespace Victor {
+namespace Cozmo {
 
 namespace ExternalComms {
 
@@ -46,9 +46,47 @@ enum class RtsConnection_2Tag : uint8_t {
 
 const char* RtsConnection_2TagToString(const RtsConnection_2Tag tag);
 
+enum class RtsConnection_3Tag : uint8_t {
+  Error                      = 0x0,  // 0
+  RtsConnRequest             = 0x1,  // 1
+  RtsConnResponse            = 0x2,  // 2
+  RtsNonceMessage            = 0x3,  // 3
+  RtsChallengeMessage        = 0x4,  // 4
+  RtsChallengeSuccessMessage = 0x5,  // 5
+  RtsWifiConnectRequest      = 0x6,  // 6
+  RtsWifiConnectResponse_3   = 0x7,  // 7
+  RtsWifiIpRequest           = 0x8,  // 8
+  RtsWifiIpResponse          = 0x9,  // 9
+  RtsStatusRequest           = 0xa,  // 10
+  RtsStatusResponse_3        = 0xb,  // 11
+  RtsWifiScanRequest         = 0xc,  // 12
+  RtsWifiScanResponse_3      = 0xd,  // 13
+  RtsOtaUpdateRequest        = 0xe,  // 14
+  RtsOtaUpdateResponse       = 0xf,  // 15
+  RtsCancelPairing           = 0x10, // 16
+  RtsForceDisconnect         = 0x11, // 17
+  RtsAck                     = 0x12, // 18
+  RtsWifiAccessPointRequest  = 0x13, // 19
+  RtsWifiAccessPointResponse = 0x14, // 20
+  RtsSshRequest              = 0x15, // 21
+  RtsSshResponse             = 0x16, // 22
+  RtsOtaCancelRequest        = 0x17, // 23
+  RtsLogRequest              = 0x18, // 24
+  RtsLogResponse             = 0x19, // 25
+  RtsFileDownload            = 0x1a, // 26
+  RtsWifiForgetRequest       = 0x1b, // 27
+  RtsWifiForgetResponse      = 0x1c, // 28
+  RtsCloudSessionRequest     = 0x1d, // 29
+  RtsCloudSessionResponse    = 0x1e, // 30
+  INVALID                    = 255
+};
+
+const char* RtsConnection_3TagToString(const RtsConnection_3Tag tag);
+
 enum class RtsConnectionTag : uint8_t {
   Error           = 0x0, // 0
   RtsConnection_2 = 0x2, // 2
+  RtsConnection_3 = 0x3, // 3
   INVALID         = 255
 };
 
@@ -94,17 +132,73 @@ const char* AppGeneralTagToString(const AppGeneralTag tag);
 
 enum class MeetVictorTag : uint8_t {
   Error                      = 0x0, // 0
-  MeetVictorRequest          = 0x1, // 1
-  MeetVictorReadyResponse    = 0x2, // 2
+  AppIntent                  = 0x1, // 1
+  MeetVictorStarted          = 0x2, // 2
   MeetVictorFaceScanStarted  = 0x3, // 3
   MeetVictorFaceScanComplete = 0x4, // 4
-  MeetVictorSetUserName      = 0x5, // 5
-  MeetVictorComplete         = 0x6, // 6
-  MeetVictorError            = 0x7, // 7
+  FaceEnrollmentCompleted    = 0x5, // 5
+  CancelFaceEnrollment       = 0x6, // 6
+  RequestEnrolledNames       = 0x7, // 7
+  EnrolledNamesResponse      = 0x8, // 8
+  UpdateEnrolledFaceByID     = 0x9, // 9
+  EraseEnrolledFaceByID      = 0xa, // 10
+  EraseAllEnrolledFaces      = 0xb, // 11
+  SetFaceToEnroll            = 0xc, // 12
   INVALID                    = 255
 };
 
 const char* MeetVictorTagToString(const MeetVictorTag tag);
+
+enum class MotorControlTag : uint8_t {
+  Error       = 0x0, // 0
+  DriveWheels = 0x1, // 1
+  DriveArc    = 0x2, // 2
+  MoveHead    = 0x3, // 3
+  MoveLift    = 0x4, // 4
+  INVALID     = 255
+};
+
+const char* MotorControlTagToString(const MotorControlTag tag);
+
+enum class AnimationsTag : uint8_t {
+  PlayAnimation              = 0x0, // 0
+  RequestAvailableAnimations = 0x1, // 1
+  SayText                    = 0x2, // 2
+  AnimationAvailable         = 0x3, // 3
+  TransferFile               = 0x4, // 4
+  INVALID                    = 255
+};
+
+const char* AnimationsTagToString(const AnimationsTag tag);
+
+enum class MovementActionTag : uint8_t {
+  Error                   = 0x0, // 0
+  DriveOffChargerContacts = 0x1, // 1
+  DriveStraight           = 0x2, // 2
+  TurnInPlace             = 0x3, // 3
+  SetHeadAngle            = 0x4, // 4
+  SetLiftHeight           = 0x5, // 5
+  INVALID                 = 255
+};
+
+const char* MovementActionTagToString(const MovementActionTag tag);
+
+enum class VictorDisplayTag : uint8_t {
+  Error               = 0x0, // 0
+  SetBackpackLEDs     = 0x1, // 1
+  DisplayFaceImageRGB = 0x2, // 2
+  INVALID             = 255
+};
+
+const char* VictorDisplayTagToString(const VictorDisplayTag tag);
+
+enum class CubesTag : uint8_t {
+  Error                  = 0x0, // 0
+  SetAllActiveObjectLEDs = 0x1, // 1
+  INVALID                = 255
+};
+
+const char* CubesTagToString(const CubesTag tag);
 
 enum class ExternalCommsTag : uint8_t {
   Error           = 0x0, // 0
@@ -112,6 +206,11 @@ enum class ExternalCommsTag : uint8_t {
   RtsConnection   = 0x4, // 4
   AppGeneral      = 0x2, // 2
   MeetVictor      = 0x3, // 3
+  MotorControl    = 0x5, // 5
+  MovementAction  = 0x6, // 6
+  Animations      = 0x7, // 7
+  VictorDisplay   = 0x8, // 8
+  Cubes           = 0x9, // 9
   INVALID         = 255
 };
 
@@ -119,61 +218,115 @@ const char* ExternalCommsTagToString(const ExternalCommsTag tag);
 
 } // namespace ExternalComms
 
-} // namespace Victor
+} // namespace Cozmo
 
 } // namespace Anki
 
 template<>
-struct std::hash<Anki::Victor::ExternalComms::RtsConnection_2Tag>
+struct std::hash<Anki::Cozmo::ExternalComms::RtsConnection_2Tag>
 {
-  size_t operator()(Anki::Victor::ExternalComms::RtsConnection_2Tag t) const
+  size_t operator()(Anki::Cozmo::ExternalComms::RtsConnection_2Tag t) const
   {
-    return static_cast<std::underlying_type<Anki::Victor::ExternalComms::RtsConnection_2Tag>::type>(t);
+    return static_cast<std::underlying_type<Anki::Cozmo::ExternalComms::RtsConnection_2Tag>::type>(t);
   }
 };
 
 template<>
-struct std::hash<Anki::Victor::ExternalComms::RtsConnectionTag>
+struct std::hash<Anki::Cozmo::ExternalComms::RtsConnection_3Tag>
 {
-  size_t operator()(Anki::Victor::ExternalComms::RtsConnectionTag t) const
+  size_t operator()(Anki::Cozmo::ExternalComms::RtsConnection_3Tag t) const
   {
-    return static_cast<std::underlying_type<Anki::Victor::ExternalComms::RtsConnectionTag>::type>(t);
+    return static_cast<std::underlying_type<Anki::Cozmo::ExternalComms::RtsConnection_3Tag>::type>(t);
   }
 };
 
 template<>
-struct std::hash<Anki::Victor::ExternalComms::RtsConnection_1Tag>
+struct std::hash<Anki::Cozmo::ExternalComms::RtsConnectionTag>
 {
-  size_t operator()(Anki::Victor::ExternalComms::RtsConnection_1Tag t) const
+  size_t operator()(Anki::Cozmo::ExternalComms::RtsConnectionTag t) const
   {
-    return static_cast<std::underlying_type<Anki::Victor::ExternalComms::RtsConnection_1Tag>::type>(t);
+    return static_cast<std::underlying_type<Anki::Cozmo::ExternalComms::RtsConnectionTag>::type>(t);
   }
 };
 
 template<>
-struct std::hash<Anki::Victor::ExternalComms::AppGeneralTag>
+struct std::hash<Anki::Cozmo::ExternalComms::RtsConnection_1Tag>
 {
-  size_t operator()(Anki::Victor::ExternalComms::AppGeneralTag t) const
+  size_t operator()(Anki::Cozmo::ExternalComms::RtsConnection_1Tag t) const
   {
-    return static_cast<std::underlying_type<Anki::Victor::ExternalComms::AppGeneralTag>::type>(t);
+    return static_cast<std::underlying_type<Anki::Cozmo::ExternalComms::RtsConnection_1Tag>::type>(t);
   }
 };
 
 template<>
-struct std::hash<Anki::Victor::ExternalComms::MeetVictorTag>
+struct std::hash<Anki::Cozmo::ExternalComms::AppGeneralTag>
 {
-  size_t operator()(Anki::Victor::ExternalComms::MeetVictorTag t) const
+  size_t operator()(Anki::Cozmo::ExternalComms::AppGeneralTag t) const
   {
-    return static_cast<std::underlying_type<Anki::Victor::ExternalComms::MeetVictorTag>::type>(t);
+    return static_cast<std::underlying_type<Anki::Cozmo::ExternalComms::AppGeneralTag>::type>(t);
   }
 };
 
 template<>
-struct std::hash<Anki::Victor::ExternalComms::ExternalCommsTag>
+struct std::hash<Anki::Cozmo::ExternalComms::MeetVictorTag>
 {
-  size_t operator()(Anki::Victor::ExternalComms::ExternalCommsTag t) const
+  size_t operator()(Anki::Cozmo::ExternalComms::MeetVictorTag t) const
   {
-    return static_cast<std::underlying_type<Anki::Victor::ExternalComms::ExternalCommsTag>::type>(t);
+    return static_cast<std::underlying_type<Anki::Cozmo::ExternalComms::MeetVictorTag>::type>(t);
+  }
+};
+
+template<>
+struct std::hash<Anki::Cozmo::ExternalComms::MotorControlTag>
+{
+  size_t operator()(Anki::Cozmo::ExternalComms::MotorControlTag t) const
+  {
+    return static_cast<std::underlying_type<Anki::Cozmo::ExternalComms::MotorControlTag>::type>(t);
+  }
+};
+
+template<>
+struct std::hash<Anki::Cozmo::ExternalComms::AnimationsTag>
+{
+  size_t operator()(Anki::Cozmo::ExternalComms::AnimationsTag t) const
+  {
+    return static_cast<std::underlying_type<Anki::Cozmo::ExternalComms::AnimationsTag>::type>(t);
+  }
+};
+
+template<>
+struct std::hash<Anki::Cozmo::ExternalComms::MovementActionTag>
+{
+  size_t operator()(Anki::Cozmo::ExternalComms::MovementActionTag t) const
+  {
+    return static_cast<std::underlying_type<Anki::Cozmo::ExternalComms::MovementActionTag>::type>(t);
+  }
+};
+
+template<>
+struct std::hash<Anki::Cozmo::ExternalComms::VictorDisplayTag>
+{
+  size_t operator()(Anki::Cozmo::ExternalComms::VictorDisplayTag t) const
+  {
+    return static_cast<std::underlying_type<Anki::Cozmo::ExternalComms::VictorDisplayTag>::type>(t);
+  }
+};
+
+template<>
+struct std::hash<Anki::Cozmo::ExternalComms::CubesTag>
+{
+  size_t operator()(Anki::Cozmo::ExternalComms::CubesTag t) const
+  {
+    return static_cast<std::underlying_type<Anki::Cozmo::ExternalComms::CubesTag>::type>(t);
+  }
+};
+
+template<>
+struct std::hash<Anki::Cozmo::ExternalComms::ExternalCommsTag>
+{
+  size_t operator()(Anki::Cozmo::ExternalComms::ExternalCommsTag t) const
+  {
+    return static_cast<std::underlying_type<Anki::Cozmo::ExternalComms::ExternalCommsTag>::type>(t);
   }
 };
 

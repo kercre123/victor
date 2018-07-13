@@ -9,5 +9,6 @@
   "behaviorClass": "DriveOffCharger",
   "behaviorID": "Hiking_DriveOffCharger",
 
+  "driveDirectionCues": ["straight"],
   "extraDistanceToDrive_mm": 45.0
 }

@@ -54,11 +54,12 @@
       { "channel": "VoiceCommands",        "enabled": false },
       { "channel": "InventoryComponent",   "enabled": false },
       { "channel": "TextToSpeech",         "enabled": false },
-      { "channel": "MicData",              "enabled": true },
-      { "channel": "FaceInfoScreenManager", "enabled": true },
-      { "channel": "RobotStats",            "enabled": true },
-      { "channel": "KnowledgeGraph",       "enabled": true },
-      { "channel": "PowerStates",          "enabled": true}
+      { "channel": "MicData",              "enabled": false },
+      { "channel": "FaceInfoScreenManager", "enabled": false },
+      { "channel": "RobotStats",            "enabled": false },
+      { "channel": "KnowledgeGraph",       "enabled": false },
+      { "channel": "PowerStates",          "enabled": false },
+      { "channel": "Demo",                 "enabled": true }
     ],
     "levels":
     [

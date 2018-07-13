@@ -24,6 +24,7 @@ namespace Anki {
 namespace Cozmo {
 
 class BehaviorReactToMicDirection;
+enum class AnimationTrigger : int32_t;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class BehaviorReactToVoiceCommand : public ICozmoBehavior
@@ -66,6 +67,7 @@ protected:
   {
     IntentHeard,
     IntentUnknown,
+    SilenceTimeout,
     NoIntentHeard,
     Error
   };
@@ -121,8 +123,12 @@ private:
     AudioMetaData::GameEvent::GenericEvent earConBegin;
     AudioMetaData::GameEvent::GenericEvent earConSuccess;
     AudioMetaData::GameEvent::GenericEvent earConFail;
+    
+    AnimationTrigger animListeningGetIn;
 
     bool backpackLights;
+    
+    bool exitAfterGetIn;
 
     // response behavior to hearing the trigger word (or intent)
     std::string reactionBehaviorString;
@@ -130,6 +136,7 @@ private:
 
     // behaviors to handle specific failure cases
     ICozmoBehaviorPtr unmatchedIntentBehavior;
+    ICozmoBehaviorPtr silenceIntentBehavior;
     ICozmoBehaviorPtr noCloudBehavior;
     ICozmoBehaviorPtr noWifiBehavior;
 

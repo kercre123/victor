@@ -1,16 +1,31 @@
 {
-  "behaviorClass": "AttentionTransferIfNeeded",
   "behaviorID": "NoWifi",
+  "behaviorClass": "DispatcherQueue",
 
-  "attentionTransferReason": "NoWifi",
-  "recentOccurrence": {
-    "numberOfTimes": 2,
-    "amountOfSeconds": 300.0
-  },
+  "behaviors": [
+    "NoWifiAnim",
+    "NoWifiAttention"
+  ],
 
-  "animsIfNotRecent": [
-    "NoWifiGetIn",
-    "NoWifiSearching",
-    "NoWifiIcon"
-  ]
+  "anonymousBehaviors": [
+    {
+      "behaviorName": "NoWifiAnim",
+      "behaviorClass": "AnimSequence",
+      "playOnChargerWithoutBody": true,
+      "animTriggers": [
+        "NoWifiSearching",
+        "NoWifiIcon"
+      ]
+    },
+    {
+      "behaviorName": "NoWifiAttention",
+      "behaviorClass": "AttentionTransferIfNeeded",
+
+      "attentionTransferReason": "NoWifi",
+      "recentOccurrence": {
+        "numberOfTimes": 2,
+        "amountOfSeconds": 300.0
+      }
+    }
+  ]  
 }

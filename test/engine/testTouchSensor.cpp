@@ -216,7 +216,7 @@ public:
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-TEST_F(TouchSensorTest, CalibrateAndClassifyMultirobotTests)
+TEST_F(TouchSensorTest, DISABLED_CalibrateAndClassifyMultirobotTests)
 {
   using namespace Anki::Cozmo::ExternalInterface;
 
@@ -258,7 +258,7 @@ TEST_F(TouchSensorTest, CalibrateAndClassifyMultirobotTests)
       for(size_t j=begIdx; j<endIdx; ++j) {
         uint16_t touch = rawTouchSensorReadings[j];
         Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
-        msg.backpackTouchSensorRaw = touch;
+        msg.backpackTouchSensorRaw.fill(touch);
         testTouchSensorComponent.NotifyOfRobotState(msg);
       }
       testBody();
@@ -274,7 +274,7 @@ TEST_F(TouchSensorTest, CalibrateAndClassifyMultirobotTests)
       for(size_t j=begIdx; j<endIdx; ++j) {
         uint16_t touch = rawTouchSensorReadings[j];
         Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
-        msg.backpackTouchSensorRaw = touch;
+        msg.backpackTouchSensorRaw.fill(touch);
         testTouchSensorComponent.NotifyOfRobotState(msg);
 
         if(testTouchSensorComponent.IsCalibrated()) {
@@ -515,8 +515,8 @@ TEST_F(TouchSensorTest, DISABLED_AnalyzePlayPenTestsDec17)
       for(int i=0; i<kMinNumReadingsToCalibrate; ++i) {
         const auto reading = readings[i];
         Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
-        msg.backpackTouchSensorRaw = reading;
-        tscomp.Update(msg);
+        msg.backpackTouchSensorRaw.fill(reading);
+        tscomp.NotifyOfRobotStateInternal(msg);
       }
       
       resultStream << (int)i << ", ";
@@ -579,12 +579,12 @@ TEST_F(TouchSensorTest, DISABLED_AnalyzePlayPenTestsDec17)
       tscomp.InitDependent(_robot,dummyCompMap);
       
       // (1) calibrate
-      DEV_ASSERT(readings.size()>=kMinNumReadingsToCalibrate, "NotEnoughReadingsToCalibrate");
+      DEV_ASSERT(calibrationReadings.size()>=kMinNumReadingsToCalibrate, "NotEnoughReadingsToCalibrate");
       for(int i=0; i<kMinNumReadingsToCalibrate; ++i) {
         const auto reading = calibrationReadings[i];
         Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
-        msg.backpackTouchSensorRaw = reading;
-        tscomp.Update(msg);
+        msg.backpackTouchSensorRaw.fill(reading);
+        tscomp.NotifyOfRobotStateInternal(msg);
       }
       
       if( tscomp.IsCalibrated() ) {
@@ -596,8 +596,8 @@ TEST_F(TouchSensorTest, DISABLED_AnalyzePlayPenTestsDec17)
       for(int i=0; i<testingReadings.size(); ++i) {
         const auto reading = testingReadings[i];
         Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
-        msg.backpackTouchSensorRaw = reading;
-        tscomp.Update(msg);
+        msg.backpackTouchSensorRaw.fill(reading);
+        tscomp.NotifyOfRobotStateInternal(msg);
       }
       
       numFalsePositives += _msgMonitor->GetCountTouchButtonEvent()>0;
@@ -777,8 +777,8 @@ TEST_F(TouchSensorTest, DISABLED_AnalyzeManualDataCollection)
     for(int i=0; i<kMinNumReadingsToCalibrate; ++i) {
       const auto reading = calib[i];
       Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
-      msg.backpackTouchSensorRaw = reading;
-      tscomp.Update(msg);
+      msg.backpackTouchSensorRaw.fill(reading);
+      tscomp.NotifyOfRobotStateInternal(msg);
     }
     
     result.total++;
@@ -792,8 +792,8 @@ TEST_F(TouchSensorTest, DISABLED_AnalyzeManualDataCollection)
       for(int i=0; i<test.size(); ++i) {
         const auto reading = test[i];
         Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
-        msg.backpackTouchSensorRaw = reading;
-        tscomp.Update(msg);
+        msg.backpackTouchSensorRaw.fill(reading);
+        tscomp.NotifyOfRobotStateInternal(msg);
       }
       
       result.numTouchDetected = (int)_msgMonitor->GetCountTouchButtonEvent();
@@ -930,6 +930,243 @@ TEST_F(TouchSensorTest, DISABLED_AnalyzeManualDataCollection)
   }
   
   std::cout << output.str();
+}
+
+// this test harness uses data collected from real robots
+// and sweeps through the parameter space of the touch
+// detection algorithm and ouputs a table whose rows consist
+// of the following:
+//
+// * params used in the algorithm (referred to as a skew)
+// * whether calibration succeeded (boolean)
+// * accuracy on real touches detected
+// * num false positive touches detected
+// * num extra detections in the true positive scenario
+//
+// since there are multiple robots tested in this sweep
+// the above settings:
+// * MULTIPLIED across all robots, for calibration and accuracy
+// * SUMMED across all robots, for falsePositives and extraDetects
+//
+// the data files are collected using BehaviorDevTouchDataCollection
+// and the harness assumes you touch the robot EXACTLY 20 TIMES
+// this is how the accuracy is computed
+TEST_F(TouchSensorTest, DISABLED_TouchSensorTuningPVT)
+{
+  // IMPORTANT:
+  // in order to save effort in writing complex code to score
+  // the performance of any one parameter skew, we assume that
+  // across all robots, all touch session where there was
+  // a real contact consist of exactly 20 true touches.
+  const int numTrueTouchesPerInstance = 20;
+  
+  // helper lambda
+  const auto LoadReadingsFromFile = [](const std::string& filename)->std::vector<uint16_t> {
+    std::string contents{ Anki::Util::FileUtils::ReadFile(filename) };
+    std::vector<std::string> items = Anki::Util::StringSplit(contents,'\n');
+    std::vector<uint16_t> ret;
+    std::for_each(items.begin(), items.end(), [&ret](const std::string& s)->void { ret.push_back((uint16_t)std::stoi(s)); });
+    return ret;
+  };
+  
+  // - create parameter skews (minus box)
+  // - for each skew:
+  //   - for each box filter size:
+  //     - for each robot:
+  //       - create the filtered signals
+  //       - compute the result metrics
+  //       - sum the skew+box across robots = total
+  //       - create result entry
+  // - output the results to disk
+  // - check the results, itemized per skew => select best
+  //
+  // TODO:
+  //  + add file disk caching
+  
+  std::string workspace = "/Users/arjun/Code/data/touch_sensor/pvt_dvt4p5/workspace";
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  struct TestResultScore
+  {
+    bool didCalib = false;
+    
+    int numTouchesGot = -1;
+    int numFalsePos = -1;
+  };
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  std::vector<TouchSensorComponent::FilterParameters> skewTable;
+  skewTable.reserve(7560);
+  for(int box=35; box<=60; box+=5) {
+    for(int gap=1; gap<=6; ++gap) {
+      for(int fod=0; fod<=5; ++fod) {
+        for(int fou=0; fou<=5; ++fou) {
+          for(int mfou=6; mfou<=10; ++mfou) {
+            for(int mfod=20; mfod<=20; mfod+=5) { // manual testing reveals this is irrelevant
+              for(int mccu=6; mccu<=6; ++mccu) { // manual testing reveals this is irrelevant
+                skewTable.push_back(
+                  TouchSensorComponent::FilterParameters{
+                    box,
+                    gap,
+                    fod,
+                    fou,
+                    mfod,
+                    mfou,
+                    mccu
+                  });
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  PRINT_NAMED_INFO("TouchSensorTuningPVT","%zd skews created", skewTable.size());
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  std::vector<std::string> robots =
+  {
+    "e1005b",
+    "e20077",
+    "e2014d",
+    "e200d4",
+    "e20155"
+  };
+  
+  struct SensorReadings
+  {
+    std::vector<uint16_t> idleOff_noTouch;
+    std::vector<uint16_t> idleOn_noTouch;
+    std::vector<uint16_t> idleOff_pettingSoft;
+    std::vector<uint16_t> idleOn_pettingSoft;
+  };
+  
+  std::vector<SensorReadings> readingSet;
+  
+  for(auto& robot : robots) {
+    SensorReadings sr;
+    sr.idleOff_noTouch = LoadReadingsFromFile(workspace + "/" + robot + "_Idle_OffCharger_No_Touch");
+    sr.idleOn_noTouch = LoadReadingsFromFile(workspace + "/" + robot + "_Idle_OnCharger_No_Touch");
+    sr.idleOff_pettingSoft = LoadReadingsFromFile(workspace + "/" + robot + "_Idle_OffCharger_Petting_Soft");
+    sr.idleOn_pettingSoft = LoadReadingsFromFile(workspace + "/" + robot + "_Idle_OnCharger_Petting_Soft");
+    readingSet.push_back(sr);
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  RobotCompMap dummyCompMap;
+  
+  typedef std::function<TestResultScore(const SensorReadings&,
+    const TouchSensorComponent::FilterParameters& skew)> TestFuncType;
+  
+  TestFuncType TestMain = [this,&dummyCompMap]
+  (const SensorReadings& sensorReadings,
+   const TouchSensorComponent::FilterParameters& skew)
+  -> TestResultScore
+  {
+    _msgMonitor->ResetCountTouchButtonEvent();
+    TouchSensorComponent tscomp;
+    tscomp.InitDependent(_robot,dummyCompMap);
+    tscomp.UnitTestOnly_SetFilterParameters(skew);
+    
+    TestResultScore result;
+    
+    const auto applyReadings = [&](const std::vector<uint16_t>& readings) {
+      size_t last = readings.size();
+      last -= (readings.size()%6);
+      for(int i=240; i<last; i+=6) {
+        Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
+        msg.backpackTouchSensorRaw = {
+          {readings[i],
+            readings[i+1],
+            readings[i+2],
+            readings[i+3],
+            readings[i+4],
+            readings[i+5]},
+        };
+        tscomp.NotifyOfRobotStateInternal(msg);
+      }
+    };
+    
+    applyReadings(sensorReadings.idleOff_noTouch);
+    
+    result.didCalib = tscomp.IsCalibrated();
+    if(tscomp.IsCalibrated()) {
+      result.numFalsePos = (int)_msgMonitor->GetCountTouchButtonEvent();
+      
+      _msgMonitor->ResetCountTouchButtonEvent();
+      applyReadings(sensorReadings.idleOff_pettingSoft);
+      applyReadings(sensorReadings.idleOn_pettingSoft);
+      result.numTouchesGot = (int)_msgMonitor->GetCountTouchButtonEvent();
+      
+      _msgMonitor->ResetCountTouchButtonEvent();
+      applyReadings(sensorReadings.idleOn_noTouch);
+      result.numFalsePos += (int)_msgMonitor->GetCountTouchButtonEvent();
+    }
+    
+    return result;
+  };
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // meta computation variables to track progress
+  // in sweeping through all the parameter skews
+  clock_t last_progress_update_time = clock();
+  clock_t per_comp_time;
+  float sum_time = 0.0f;
+  int iteration_num = 0;
+  
+  std::stringstream resultStream;
+  
+  for(auto& skew : skewTable) {
+    
+    resultStream << skew.boxFilterSize << ",";
+    resultStream << skew.dynamicThreshGap << ",";
+    resultStream << skew.dynamicThreshDetectFollowOffset << ",";
+    resultStream << skew.dynamicThreshUndetectFollowOffset << ",";
+    resultStream << skew.dynamicThreshMaximumDetectOffset << ",";
+    resultStream << skew.dynamicThreshMininumUndetectOffset << ",";
+    resultStream << skew.minConsecCountToUpdateThresholds << ",";
+    
+    clock_t t = clock();
+    
+    bool allCalib = true;
+    float aggPctCorrect = 100.0f;
+    int aggNumFalsePos = 0;
+    int aggExtraDetects = 0;
+    for(auto& readings : readingSet) {
+      TestResultScore ret = TestMain(readings, skew);
+      
+      allCalib &= ret.didCalib;
+      aggNumFalsePos += ret.numFalsePos;
+      if(ret.numTouchesGot >= numTrueTouchesPerInstance) {
+        aggExtraDetects += ret.numTouchesGot - numTrueTouchesPerInstance;
+      } else {
+        aggPctCorrect *= float(ret.numTouchesGot)/numTrueTouchesPerInstance;
+      }
+    }
+    
+    per_comp_time = clock() - t;
+    sum_time += per_comp_time;
+    iteration_num++;
+    
+    resultStream << allCalib << ",";
+    resultStream << aggPctCorrect << ",";
+    resultStream << aggNumFalsePos << ",";
+    resultStream << aggExtraDetects << std::endl;
+    
+    // periodically output remaining time estimate
+    auto durSinceProgressUpdate = float( clock()-last_progress_update_time )/CLOCKS_PER_SEC;
+    if( durSinceProgressUpdate > 3.0 ) {
+      float average_time_per_comp = sum_time / iteration_num;
+      float estimated_time_remain = average_time_per_comp *
+      float(skewTable.size()-iteration_num) /
+      iteration_num;
+      printf("%6.2f minutes remaining\n", estimated_time_remain/60.0f );
+      last_progress_update_time = clock();
+    }
+  }
+  
+  std::string contents = resultStream.str();
+  Util::FileUtils::WriteFile(workspace+"/results.csv", contents);
 }
 
 #endif // ifdef ENABLE_PROTOTYPING_ANALYSIS_TESTS

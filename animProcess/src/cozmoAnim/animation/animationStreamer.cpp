@@ -363,7 +363,7 @@ namespace Cozmo {
           head[14] = FACE_DISPLAY_HEIGHT & 0xff;
           head[15] = (FACE_DISPLAY_HEIGHT >> 8) & 0xff;
           head[16] = 32;   /** 32 bits depth **/
-          head[17] = 0x08; /** top-down flag, 8 bits alpha **/
+          head[17] = 0x28; /** top-down flag, 8 bits alpha **/
           fwrite(head, sizeof(uint8_t), 18, s_tga);
 
           s_framesToCapture = 1;
@@ -824,6 +824,8 @@ namespace Cozmo {
     CopyIntoProceduralAnimation(_context->GetDataLoader()->GetCannedAnimation(name));
     SetStreamingAnimation(_proceduralAnimation, tag, numLoops, interruptRunning,
                           shouldOverrideEyeHue, shouldRenderInEyeHue, isInternalAnim);
+    
+    _expectingCompositeImage = true;
   }
 
   Result AnimationStreamer::SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms)
@@ -846,7 +848,7 @@ namespace Cozmo {
       // Otherwise, clear the track and set the streaming animation to nullptr so that the new
       // procedural animation will be initialized below
       if(spriteSeqTrack.HasFramesLeft() &&
-         (spriteSeqTrack.GetCurrentKeyFrame().GetKeyframeDuration_ms() == 0)){
+         !spriteSeqTrack.GetCurrentKeyFrame().SequenceShouldAdvance()){
         spriteSeqTrack.Clear();
         SetStreamingAnimation(nullptr, 0);
       }
@@ -864,7 +866,7 @@ namespace Cozmo {
     }
 
     SpriteSequenceKeyFrame kf(spriteHandle, triggerTime_ms, shouldRenderInEyeHue);
-    kf.SetKeyFrameDuration_ms(duration_ms);
+    kf.SetKeyframeActiveDuration_ms(duration_ms);
     
     Result result = _proceduralAnimation->AddKeyFrameToBack(kf);
     if(!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetFaceImage.FailedToAddKeyFrame", "")))
@@ -881,6 +883,7 @@ namespace Cozmo {
   Result AnimationStreamer::SetCompositeImage(Vision::CompositeImage* compImg, u32 frameInterval_ms,
                                               u32 duration_ms)
   {
+    _expectingCompositeImage = false;
     DEV_ASSERT(nullptr != _proceduralAnimation, "AnimationStreamer.SetCompositeImage.NullProceduralAnimation");
     // If procedural animation is streaming set the streaming animation to nullptr 
     // without clearing it out so that the animation can be restarted with the composite image data
@@ -907,7 +910,7 @@ namespace Cozmo {
     auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
     SpriteSequenceKeyFrame kf(spriteCache, compImg, frameInterval_ms,
                               shouldRenderInEyeHue);
-    kf.SetKeyFrameDuration_ms(duration_ms);
+    kf.SetKeyframeActiveDuration_ms(duration_ms);
     Result result = _proceduralAnimation->AddKeyFrameToBack(kf);
     if(!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetCompositeImage.FailedToAddKeyFrame", "")))
     {
@@ -990,6 +993,7 @@ namespace Cozmo {
       // If we get to KeepFaceAlive with this flag set, we'll stream neutral face for safety.
       _wasAnimationInterruptedWithNothing = true;
     }
+    _expectingCompositeImage = false;
   } // Abort()
 
   
@@ -1582,6 +1586,12 @@ namespace Cozmo {
       return RESULT_OK;
     }
 
+    // TEMP (Kevin K.): We're waiting on messages that have been delayed - don't start
+    // the animation yet
+    if(_expectingCompositeImage){
+      return RESULT_OK;
+    }    
+
     if(!_startOfAnimationSent) {
       SendStartOfAnimation();
       _animAudioClient->InitAnimation();
@@ -1765,6 +1775,7 @@ namespace Cozmo {
         _lastAnimationStreamTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
         // Send an end-of-animation keyframe when done
         if( !_streamingAnimation->HasFramesLeft() &&
+            _relativeStreamTime_ms >= _streamingAnimation->GetLastKeyFrameEndTime_ms() &&
             _startOfAnimationSent &&
             !_endOfAnimationSent)
         {

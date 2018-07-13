@@ -721,8 +721,14 @@ void RobotDataLoader::LoadVariableSnapshotJsonMap()
   if (success && !outLoadedJson.empty() && outLoadedJson.isArray()) {
     for(const auto& loadedInfo : outLoadedJson) {
       // store the json object in the map
-      VariableSnapshotId variableSnapshotId = VariableSnapshotIdFromString(loadedInfo[VariableSnapshotEncoder::kVariableSnapshotIdKey].asString());
-      _variableSnapshotJsonMap->emplace(variableSnapshotId, loadedInfo);
+      const auto key = loadedInfo[VariableSnapshotEncoder::kVariableSnapshotIdKey].asString();
+      VariableSnapshotId variableSnapshotId = VariableSnapshotId::Count;
+      if(VariableSnapshotIdFromString(key, variableSnapshotId)){
+        _variableSnapshotJsonMap->emplace(variableSnapshotId, loadedInfo);
+      }else{
+        PRINT_NAMED_WARNING("RobotDataLoader.LoadVariableSnapshotJsonMap.UnknownStringinJson",
+                            "Key %s was not recognized as a valid snapshot value, will be dropped", key.c_str());
+      }
     }
   }
 }

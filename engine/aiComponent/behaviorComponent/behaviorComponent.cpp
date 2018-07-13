@@ -17,6 +17,7 @@
 #include "engine/aiComponent/behaviorComponent/activeBehaviorIterator.h"
 #include "engine/aiComponent/behaviorComponent/activeFeatureComponent.h"
 #include "engine/aiComponent/behaviorComponent/attentionTransferComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponentMessageHandler.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorAudioComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
@@ -27,7 +28,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorsBootLoader.h"
-#include "engine/aiComponent/behaviorComponent/devBehaviorComponentMessageHandler.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
 #include "engine/audio/engineRobotAudioClient.h"
@@ -173,9 +173,9 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
   }
 
   // Dev Behavior Component Message Handler
-  if(!entity->HasComponent<DevBehaviorComponentMessageHandler>()){
-    entity->AddDependentComponent(BCComponentID::DevBehaviorComponentMessageHandler,
-                                  new DevBehaviorComponentMessageHandler(robot));
+  if(!entity->HasComponent<BehaviorComponentMessageHandler>()){
+    entity->AddDependentComponent(BCComponentID::BehaviorComponentMessageHandler,
+                                  new BehaviorComponentMessageHandler(robot));
   }
 
   // Robot Info

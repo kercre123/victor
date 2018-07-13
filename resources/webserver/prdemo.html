@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+
+<!-- page preamble -->
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vector PR demo</title>
+  <link rel="stylesheet" href="jquery-ui.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="jquery-1.12.4.js"></script>
+  <script src="jquery-ui.js"></script>
+
+  <script>
+    var hostname = "";  // (Effectively, the robot IP)
+    var host = "";      // hostname and port (e.g. "192.168.42.82:8888"
+    var STANDALONE_PORT = "8887";
+    var ENGINE_PORT = "8888";
+    var ANIM_PORT = "8889";
+
+
+    $(document).ready(function() {
+        $('#btn_vector_stop').click(ButtonHandler_StopVector);
+        $('#btn_vector_restart').click(ButtonHandler_RestartVector);
+        
+        $('#disp_stop_message').hide();
+        // Pull out hostname (robot IP) so we can use it in here to call into ANY of the webservers
+        var urlObject = new URL(document.URL);
+        host = urlObject.host;
+        hostname = urlObject.hostname;
+        console.log('host is: ' + host);
+        console.log('hostname is: ' + hostname);
+
+        // To attempt to force a re-load of the cache of these two iframes, we add a random number to the URL
+        var rand = Math.floor((Math.random()*1000000)+1);
+        var extra = '?uid=' + rand;
+        $('#iViewEngine').prop('src', 'http://' + hostname + ':' + ENGINE_PORT + '/prdemoEngine.html' + extra);
+        $('#iViewAnim')  .prop('src', 'http://' + hostname + ':' + ANIM_PORT +   '/prdemoAnim.html'   + extra);
+    });
+    $(function() {
+        $("button").click(function(event) {
+            var name = event.target.name;
+            if (name.startsWith('page_')) {
+                SetPage(name);
+                event.preventDefault();
+                return;
+            }
+            event.preventDefault();
+        });
+        $("input[type='submit']").click(function(event) {
+            $.post("/"+event.target.value, function(data) {
+                $("#content").html(data);
+                $("#content").show();
+                InitConfirmDialog();
+            });
+            event.preventDefault();
+        });
+    });
+
+    function ButtonHandler_StopVector() {
+      var msg = 'Shutting Vector down; this webpage will no longer be active. You must physicallly restart Vector, then refresh this page after a few seconds.';
+      $('#disp_stop_message').html(msg);
+      $('#disp_stop_message').show();
+      $.post('/systemctl?proc=anki-robot.target&stop', function(data) {});
+    }
+
+    function ButtonHandler_RestartVector() {
+      var msg = 'Restarting Vector.  After a few seconds, refresh this page.';
+      $('#disp_stop_message').html(msg);
+      $('#disp_stop_message').show();
+      $.post('/systemctl?proc=anki-robot.target&restart', function(data) {});
+    }
+
+  </script>
+</head>
+
+<!-- page content -->
+
+<body class="ui-widget-content" style="border:0;">
+    <div>
+      <body><div id="id_title0" style="color:blue; font-size:18pt; display:inline">Vector PR Demo</div></body>
+      &nbsp;&nbsp;&nbsp;&nbsp;
+      <body><div id="id_title1" style="display:inline">CONFIDENTIAL</div></body>
+      <hr>
+      <div id='main_section'>
+        <iframe src="" id="iViewEngine" style="width:100%;height:280px;border:none" frameborder="0"></iframe>
+        <iframe src="" id="iViewAnim"   style="width:100%;height:100%;border:none" frameborder="0"></iframe>
+
+        <hr><br>
+        <button id='btn_vector_stop' style='color:red;'>Stop Vector</button>
+        <button id='btn_vector_restart' style='color:red;'>Restart Vector</button>
+        <br><br>
+        <div id='disp_stop_message' style='color:red;'></div>
+        <hr>
+      </div>
+    </div>
+</body>
+
+</html>

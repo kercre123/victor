@@ -4,44 +4,8 @@
     "enabled": false
   },
   {
-    "feature": "AndroidConnectionFlow",
-    "enabled": true
-  },
-  {
-    "feature": "SpeedTapMultiPlayer",
-    "enabled": true
-  },
-  {
-    "feature": "CodeLabGame",
-    "enabled": true
-  },
-  {
-    "feature": "PeekABoo",
-    "enabled": true
-  },
-  {
-    "feature": "SparksGatherCubes",
-    "enabled": false
-  },
-  {
-    "feature": "Hiccups",
-    "enabled": true
-  },
-  {
-    "feature": "GuardDog",
-    "enabled": true
-  },
-  {
-    "feature": "Bouncer",
-    "enabled": false
-  },
-  {
     "feature": "Laser",
-    "enabled": true
-  },
-  {
-    "feature": "Singing",
-    "enabled": true
+    "enabled": false
   },
   {
     "feature": "Exploring",
@@ -54,6 +18,22 @@
   {
     "feature": "KnowledgeGraph",
     "enabled": true
+  },
+  {
+    "feature": "Dancing",
+    "enabled": true
+  },
+  {
+    "feature": "CubeBehaviors",
+    "enabled": true
+  },
+  {
+    "feature": "GreetAfterLongTime",
+    "enabled": true
+  },
+  {
+    "feature": "PRDemo",
+    "enabled": false
   }
 ]
 

@@ -11,8 +11,13 @@
     }
   ],
 
+  "wantsToBeActivatedCondition": {
+    "conditionType": "FeatureGate",
+    "feature": "CubeBehaviors"
+  },
+
   "behaviors" : [
-    "DriveOffCharger",
+    "DriveOffChargerCube",
     "LookForCubeInternal",
     "PlayRollBlock",
     "PutDownBlock"

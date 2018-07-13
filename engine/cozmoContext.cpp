@@ -34,7 +34,7 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   : _externalInterface(externalInterface)
   , _gatewayInterface(gatewayInterface)
   , _dataPlatform(dataPlatform)
-  , _featureGate(new CozmoFeatureGate())
+  , _featureGate(new CozmoFeatureGate(dataPlatform))
   , _random(new Anki::Util::RandomGenerator())
   , _locale(new Util::Locale(Util::Locale::GetNativeLocale()))
   , _dataLoader(new RobotDataLoader(this))

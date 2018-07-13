@@ -158,6 +158,7 @@ Licenses may be:
 |RPL-1.1      |          |Reciprocal Public License, Version 1.1                      |https://opensource.org/licenses/RPL-1.1                                  |
 |RPL-1.5      |          |Reciprocal Public License, Version 1.5                      |https://opensource.org/licenses/RPL-1.5                                  |
 |RPSL-1.0     |          |RealNetworks Public Source License, Version 1.0             |https://opensource.org/licenses/RPSL-1.0                                 |
+|RSA          |Go        |RSA Data Security, Inc.                                     |                                                                         |
 |RSCPL        |          |The Ricoh Source Code Public License                        |https://opensource.org/licenses/RSCPL                                    |
 |SAAS         |Stop      |                                                            |                                                                         |
 |Simple-2.0   |          |Simple Public License (SimPL-2.0)                           |https://opensource.org/licenses/Simple-2.0                               |

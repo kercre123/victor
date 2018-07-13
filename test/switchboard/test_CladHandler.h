@@ -12,6 +12,7 @@
  *
  **/
 
+#pragma once
 #include "signals/simpleSignal.hpp"
 #include "clad/externalInterface/messageExternalComms.h"
 

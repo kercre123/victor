@@ -3,5 +3,5 @@
   "behaviorID": "DriveOffChargerIntoSocializing",
   "associatedActiveFeature": "NoFeature",
   "resetTimers": ["Socializing"],
-  "delegateID": "DriveOffCharger"
+  "delegateID": "DriveOffChargerFace"
 }

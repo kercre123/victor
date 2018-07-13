@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-from . import color
+from .color import Color, green, red, blue, cyan, magenta, yellow, white, off
+
 
 class ColorProfile:
     '''A Color profile send to be used with messages involving LEDs.
@@ -20,14 +21,14 @@ class ColorProfile:
             (original_color.int_color >> 24) & 0xff,
             (original_color.int_color >> 16) & 0xff,
             (original_color.int_color >> 8) & 0xff
-            ]
+        ]
 
         rgb[0] = int(self._red_multiplier * rgb[0])
         rgb[1] = int(self._green_multiplier * rgb[1])
         rgb[2] = int(self._blue_multiplier * rgb[2])
 
         result_int_code = (rgb[0] << 24) | (rgb[1] << 16) | (rgb[2] << 8) | 0xff
-        return color.Color(result_int_code)
+        return Color(result_int_code)
 
     @property
     def red_multiplier(self):
@@ -46,15 +47,24 @@ class ColorProfile:
 
 
 #: :class:`ColorProfile`:  Color profile to get the maximum possible brightness out of each LED.
-max_color_profile = ColorProfile(red_multiplier=1.0, green_multiplier=1.0, blue_multiplier=1.0)
+MAX_COLOR_PROFILE = ColorProfile(red_multiplier=1.0,
+                                 green_multiplier=1.0,
+                                 blue_multiplier=1.0)
 
 #: :class:`ColorProfile`:  Color profile balanced so that a max color value more closely resembles pure white.
-#TODO: Balance this more carefully once robots with proper color pipe hardware becomes available
-white_balanced_backpack_profile = ColorProfile(red_multiplier=1.0, green_multiplier=0.825, blue_multiplier=0.81)
+# TODO: Balance this more carefully once robots with proper color pipe
+# hardware becomes available
+WHITE_BALANCED_BACKPACK_PROFILE = ColorProfile(red_multiplier=1.0,
+                                               green_multiplier=0.825,
+                                               blue_multiplier=0.81)
 
 #: :class:`ColorProfile`:  Color profile balanced so that a max color value more closely resembles pure white.
-#TODO: Balance this more carefully once robots with proper color pipe hardware becomes available
-white_balanced_cube_profile = ColorProfile(red_multiplier=1.0, green_multiplier=0.95, blue_multiplier=0.7)
+# TODO: Balance this more carefully once robots with proper color pipe
+# hardware becomes available
+WHITE_BALANCED_CUBE_PROFILE = ColorProfile(red_multiplier=1.0,
+                                           green_multiplier=0.95,
+                                           blue_multiplier=0.7)
+
 
 class Light:
     '''Lights are used with LightCubes and Vector's backpack.
@@ -63,8 +73,13 @@ class Light:
     assigned to either state (including no color/light).
     '''
 
-    def __init__(self, on_color=color.off, off_color=color.off, on_period_ms=250,
-            off_period_ms=0, transition_on_period_ms=0, transition_off_period_ms=0):
+    def __init__(self,
+                 on_color=off,
+                 off_color=off,
+                 on_period_ms=250,
+                 off_period_ms=0,
+                 transition_on_period_ms=0,
+                 transition_off_period_ms=0):
         self._on_color = on_color
         self._off_color = off_color
         self._on_period_ms = on_period_ms
@@ -79,7 +94,7 @@ class Light:
 
     @on_color.setter
     def on_color(self, color):
-        if not isinstance(color, color.Color):
+        if not isinstance(color, Color):
             raise TypeError("Must specify a Color")
         self._on_color = color
 
@@ -90,7 +105,7 @@ class Light:
 
     @off_color.setter
     def off_color(self, color):
-        if not isinstance(color, color.Color):
+        if not isinstance(color, Color):
             raise TypeError("Must specify a Color")
         self._off_color = color
 
@@ -138,38 +153,39 @@ class Light:
             raise ValueError("Invalid value")
         self._transition_off_period_ms = ms
 
-# @TODO: This paradigm is a holdover from Cozmo, we should investigate a better solution after GRPC lands
-def _set_light(msg, idx, light, profile):
-    # For use with clad light messages specifically.
-    if not isinstance(light, Light):
-        raise TypeError("Expected a lights.Light")
-    msg.onColor[idx] = profile.augment_color( light.on_color ).int_color
-    msg.offColor[idx] = profile.augment_color( light.off_color ).int_color
-    msg.onPeriod_ms[idx] = light.on_period_ms
-    msg.offPeriod_ms[idx] = light.off_period_ms
-    msg.transitionOnPeriod_ms[idx] = light.transition_on_period_ms
-    msg.transitionOffPeriod_ms[idx] = light.transition_off_period_ms
+
+def package_request_params(lights, color_profile):
+    merged_params = {}
+    for light in lights:
+        for attr_name in vars(light):
+            attr_name = attr_name[1:]
+            attr_val = getattr(light, attr_name)
+            if isinstance(attr_val, Color):
+                attr_val = color_profile.augment_color(attr_val).int_color
+            merged_params.setdefault(attr_name, []).append(attr_val)
+    return merged_params
+
 
 #: :class:`Light`: A steady green colored LED light.
-green_light = Light(on_color=color.green)
+green_light = Light(on_color=green)
 
 #: :class:`Light`: A steady red colored LED light.
-red_light = Light(on_color=color.red)
+red_light = Light(on_color=red)
 
 #: :class:`Light`: A steady blue colored LED light.
-blue_light = Light(on_color=color.blue)
+blue_light = Light(on_color=blue)
 
 #: :class:`Light`: A steady cyan colored LED light.
-cyan_light = Light(on_color=color.cyan)
+cyan_light = Light(on_color=cyan)
 
 #: :class:`Light`: A steady magenta colored LED light.
-magenta_light = Light(on_color=color.magenta)
+magenta_light = Light(on_color=magenta)
 
 #: :class:`Light`: A steady yellow colored LED light.
-yellow_light = Light(on_color=color.yellow)
+yellow_light = Light(on_color=yellow)
 
 #: :class:`Light`: A steady white colored LED light.
-white_light = Light(on_color=color.white)
+white_light = Light(on_color=white)
 
 #: :class:`Light`: A steady off (non-illuminated LED light).
-off_light = Light(on_color=color.off)
+off_light = Light(on_color=off)

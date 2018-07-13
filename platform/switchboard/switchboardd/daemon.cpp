@@ -31,6 +31,7 @@
 #include "anki-ble/common/ble_advertise_settings.h"
 #include "anki-wifi/fileutils.h"
 #include "anki-wifi/wifi.h"
+#include "anki-wifi/exec_command.h"
 #include "cutils/properties.h"
 #include "switchboardd/christen.h"
 #include "platform/victorCrashReports/victorCrashReporter.h"
@@ -48,6 +49,7 @@ namespace Switchboard {
 void Daemon::Start() {
   Log::Write("Loading up Switchboard Daemon");
   _loop = ev_default_loop(0);
+
   _taskExecutor = std::make_unique<Anki::TaskExecutor>(_loop);
 
   // Christen
@@ -91,7 +93,8 @@ void Daemon::Christen() {
   RtsKeys savedSession = SavedSessionManager::LoadRtsKeys();
   bool hasName = false;
 
-  if(savedSession.keys.version == SB_PAIRING_PROTOCOL_VERSION) {
+  if((savedSession.keys.version == SB_PAIRING_PROTOCOL_VERSION) || 
+    (savedSession.keys.version == V2)) {
     // if saved session file is valid, retrieve saved hasName field
     hasName = savedSession.keys.id.hasName;
     Log::Write("[Chr] Valid version.");
@@ -235,7 +238,7 @@ void Daemon::OnConnected(int connId, INetworkStream* stream) {
     _connectionId = connId;
 
     if(_securePairing == nullptr) {
-      _securePairing = std::make_unique<Anki::Switchboard::SecurePairing>(stream, _loop, _engineMessagingClient, _isPairing, _isOtaUpdating);
+      _securePairing = std::make_unique<Anki::Switchboard::RtsComms>(stream, _loop, _engineMessagingClient, _isPairing, _isOtaUpdating);
       _pinHandle = _securePairing->OnUpdatedPinEvent().ScopedSubscribe(std::bind(&Daemon::OnPinUpdated, this, std::placeholders::_1));
       _otaHandle = _securePairing->OnOtaUpdateRequestEvent().ScopedSubscribe(std::bind(&Daemon::OnOtaUpdatedRequest, this, std::placeholders::_1));
       _endHandle = _securePairing->OnStopPairingEvent().ScopedSubscribe(std::bind(&Daemon::OnEndPairing, this));

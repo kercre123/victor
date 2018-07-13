@@ -13,19 +13,19 @@ When a crash occurs you'll see something like this in the log:
 
 The crash report file is found on the robot at `/data/data/com.anki.victor/cache/crashDumps/` and has a name like `engine-1970-01-01T00-00-14-595.dmp` where the prefix is the name of the process that crashed, and the date/time stamp is when the process *started*.  The file is in standard "minidump" format.
 
-When Victor is running you may see these files with a size of zero.  That's because we open the file when the process starts.  When Victor shuts down normally those files should disappear.
+When Victor is running you may see some of these files with a size of zero.  That's because we open the file when the process starts.  When Victor shuts down normally those files should disappear.
 
 ## Automatic uploading/deletion
 
-Every 60 seconds a process called vic-crashuploader runs.  It looks for files ending in ".dmp" in the crash folder that have a non-zero size and are not held by any process, and attempts to upload them to Backtrace IO, our third-party crash reporting service.  If the upload succeeds the file is renamed to append ".uploaded", and we keep the newest 50 ".uploaded" files on the robot so we can get a chance to examine them, without filling up robot storage.
+When victor is running on the robot, every 60 seconds a process called vic-crashuploader runs.  It looks for files ending in ".dmp" in the crash folder that have a non-zero size and are not held by any process.  If running a local victor build, the file is simply renamed to append ".local" to the filename.  If not (e.g. running a build that came from TeamCity), it first attempts to upload the crash dump file to Backtrace IO, our third-party crash reporting service.  If the upload succeeds the file is then renamed to append ".uploaded" to the filename. vic-crashuploader also deletes all but the newest 50 ".uploaded" and/or ".local" files on the robot to give developers a chance to examine them, without filling up robot storage.
 
 ## Backtrace IO and symbolication of call stacks (WIP)
 
 The URL for our Backtrace IO account is https://anki.sp.backtrace.io/dashboard/anki and the project name is 'victor'.  See Jane Fraser for an account if you need one.
 
-The build team is currently working on adding a build step that will automatically generate the symbols for a build in the proper format, and upload them to Backtrace IO.  Once this work is completed we'll be able to see symbolicated call stacks on Backtrace IO for any crash that occurs on a build for which the symbols have been generated.
+On the TeamCity build server for victor builds, a build step automatically generates the symbols for each build in the proper format, and uploads them to Backtrace IO.  You can then see symbolicated call stacks on Backtrace IO for any crash that occurs on a build for which the symbols have been generated.
 
-In the meantime, you must manually do this...
+Instructions below are for generating symbolicated call stacks for local builds.
 
 ## Manually create symbols and a call stack
 

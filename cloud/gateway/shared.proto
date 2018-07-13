@@ -8,6 +8,7 @@ option optimize_for = LITE_RUNTIME;
 
 import "messages.proto";
 import "settings.proto";
+import "extensions.proto";
 
 // Messages originating from the engine
 message Event {
@@ -25,6 +26,7 @@ message Event {
 message EventRequest {}
 
 message EventResult {
+  option (streamed) = true;
   ResultStatus status = 1;
   Event event = 2;
 }
@@ -34,6 +36,7 @@ message GatewayWrapper {
   oneof oneof_message_type {
     // ------------ messages sent from robot to app ----------------------
     Event event = 1;
+
     // ------------ onboarding requests and responses --------------------
     OnboardingStateRequest        onboarding_state_request = 2;
     OnboardingState               onboarding_state = 3;
@@ -41,15 +44,19 @@ message GatewayWrapper {
     OnboardingContinueResponse    onboarding_continue_response = 5;
     OnboardingSkip                onboarding_skip = 6;
     OnboardingConnectionComplete  onboarding_connection_complete = 7;
+    OnboardingSkipOnboarding      onboarding_skip_onboarding = 8;
+
     // ------------ test request/response pairs --------------------------
     // TODO: remove these once we have more examples
     Ping ping = 20;
     Pong pong = 21;
     Bing bing = 22;
     Bong bong = 23;
+
     // ------------ Attention transfer -----------------------------------
     LatestAttentionTransferRequest latest_attention_transfer_request = 30;
     LatestAttentionTransfer        latest_attention_transfer = 31;
+
     // ------------ photos request/response pairs ------------------------
     PhotosInfoRequest             photos_info_request = 40;
     PhotosInfoResponse            photos_info_response = 41;
@@ -59,7 +66,6 @@ message GatewayWrapper {
     ThumbnailPathMessage          thumbnail_path_message = 45;
     DeletePhotoRequest            delete_photo_request = 46;
     DeletePhotoResponse           delete_photo_response = 47;
-    
     // ------------ settings pairs ---------------------------------------
     PushSettingsRequest    push_settings_request    = 60;
     PushSettingsResponse   push_settings_response   = 61;
@@ -67,12 +73,28 @@ message GatewayWrapper {
     PullSettingsResponse   pull_settings_response   = 63;
     UpdateSettingsRequest  update_settings_request  = 64;
     UpdateSettingsResponse update_settings_response = 65;
+
     // ------------ sdk behavior request/response pairs --------------------
     DriveOffChargerRequest        drive_off_charger_request = 70;
     DriveOffChargerResult         drive_off_charger_result = 71;
     DriveOnChargerRequest         drive_on_charger_request = 72;
     DriveOnChargerResult          drive_on_charger_result = 73;
 
+    // ------------ movement request/response pairs ----------------------
+    TurnInPlaceRequest            turn_in_place_request = 90;
+    TurnInPlaceResponse           turn_in_place_response = 91;
+    DriveStraightRequest          drive_straight_request = 92;
+    DriveStraightResponse         drive_straight_response = 93;
+    SetHeadAngleRequest           set_head_angle_request = 94;
+    SetHeadAngleResponse          set_head_angle_response = 95;
+    SetLiftHeightRequest          set_lift_height_request = 96;
+    SetLiftHeightResponse         set_lift_height_response = 97;
+    PlayAnimationRequest          play_animation_response = 98;
+    PlayAnimationResult           play_animation_result = 99;
+
+    // ------------ status history --------------------
+    RobotHistoryRequest           robot_history_request = 80;
+    RobotHistoryResult            robot_history_result = 81;
 
     // (when adding new categories, please create gaps between field numbers)
     // ------------  -------------------------

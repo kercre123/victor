@@ -9,7 +9,7 @@
 
 #if defined(NDEBUG)
 #define ANKI_DEBUG_LEVEL  ANKI_DEBUG_ERRORS_AND_WARNS
-#define ANKI_DEBUG_INFO   0
+#define ANKI_DEBUG_INFO   1
 #elif defined(SIMULATOR)
 #define ANKI_DEBUG_LEVEL  ANKI_DEBUG_ALL
 #define ANKI_DEBUG_INFO   1

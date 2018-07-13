@@ -57,6 +57,7 @@ private:
     DynamicVariables();
     BehaviorState state;
     TimeStamp_t timeFaceSearchShouldEnd;
+    TimeStamp_t imageTimestampWhenActivated = 0;
   };
 
   InstanceConfig _iConfig;

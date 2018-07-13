@@ -28,9 +28,7 @@ namespace Animations {
       // a stop message for the previous keyframe because the body motion
       // command for this new keyframe will handle it. This avoids delays
       // introduced by "extra" stop messages being inserted unnecessarily.
-      const TimeStamp_t prevKeyFrameEndTime = (prevKeyFrame->GetTriggerTime_ms() +
-                                               prevKeyFrame->GetKeyframeDuration_ms());
-      if(prevKeyFrameEndTime >= addedKeyFrame.GetTriggerTime_ms() - ANIM_TIME_STEP_MS) {
+      if(prevKeyFrame->GetTimestampActionComplete_ms() > addedKeyFrame.GetTriggerTime_ms() - ANIM_TIME_STEP_MS) {
         //PRINT_NAMED_DEBUG("Animations.EnableStopMessageHelper",
         //                  "Disabling stop message for body motion keyframe at t=%d "
         //                  "with duration=%d because of next keyframe at t=%d",
@@ -92,10 +90,6 @@ namespace Animations {
   {
     BackpackLightsKeyFrame* prevKeyFrame = nullptr;
     Result result = AddKeyFrameToBackHelper(keyFrame, prevKeyFrame);
-    if(RESULT_OK == result && nullptr != prevKeyFrame)
-    {
-      prevKeyFrame->SetKeyFrameDuration_ms(0);
-    }
     
     return result;
   }
@@ -105,50 +99,46 @@ namespace Animations {
   {
     BackpackLightsKeyFrame* prevKeyFrame = nullptr;
     Result result = AddKeyFrameByTimeHelper(keyFrame, prevKeyFrame);
-    if(RESULT_OK == result && nullptr != prevKeyFrame)
-    {
-      prevKeyFrame->SetKeyFrameDuration_ms(0);
-    }
     
     return result;
   }
   
   template<>
-  void Track<BodyMotionKeyFrame>::SetKeyFrameDuration_ms()
+  Result Track<ProceduralFaceKeyFrame>::AddKeyFrameToBack(const ProceduralFaceKeyFrame& keyFrame)
   {
-    SetKeyFrameDurationHelper();
-  }
-  
-  template<>
-  void Track<ProceduralFaceKeyFrame>::SetKeyFrameDuration_ms()
-  {
-    SetKeyFrameDurationHelper();
-  }
-  
-  template<>
-  void Track<SpriteSequenceKeyFrame>::SetKeyFrameDuration_ms()
-  {
-    SetKeyFrameDurationHelper();
-  }
-  
-  template<class FRAME_TYPE>
-  void Track<FRAME_TYPE>::SetKeyFrameDurationHelper()
-  {
-    if(_frames.size() < 2){
-      return;
+    ProceduralFaceKeyFrame* dummy = nullptr;
+    const auto res = AddKeyFrameToBackHelper(keyFrame, dummy);
+    auto& allKeyframes = GetAllKeyframes();
+    if(allKeyframes.size() >= 2){
+      auto backIter = allKeyframes.rbegin();
+      auto oldBackIter = allKeyframes.rbegin();
+      oldBackIter++;
+      oldBackIter->SetKeyframeActiveDuration_ms(backIter->GetTriggerTime_ms() - oldBackIter->GetTriggerTime_ms());
     }
-    auto prevIter = _frames.begin();
-    auto nextIter = _frames.begin();
-    nextIter++;
-    const auto upperBound = _frames.size() + 1;
-    BOUNDED_WHILE(upperBound, nextIter != _frames.end()) {
-      // Only override durations which haven't been set
-      if(prevIter->GetKeyframeDuration_ms() == 0){
-        prevIter->SetKeyFrameDuration_ms(nextIter->GetTriggerTime_ms() - prevIter->GetTriggerTime_ms());
+    return res;
+  }
+  
+  template<>
+  void Track<ProceduralFaceKeyFrame>::AdvanceTrack(const TimeStamp_t toTime_ms)
+  {
+    if(ANKI_DEV_CHEATS){
+      auto allKeyframes = GetCopyOfKeyframes();
+      auto safetyCheckIter = allKeyframes.begin();
+      const auto upperBound = allKeyframes.size() + 1;
+      BOUNDED_WHILE(upperBound, safetyCheckIter != allKeyframes.end()) {
+        auto nextIter = safetyCheckIter;
+        nextIter++;
+        // Ensure tracks don't overlap
+        if(nextIter != allKeyframes.end()){
+          ANKI_VERIFY(safetyCheckIter->GetTimestampActionComplete_ms() == nextIter->GetTriggerTime_ms(),
+                      "ITrackLayerManager.ValidateTrack.ProceduralKeyframeTimeMismatch",
+                      "Previous keyframe ends at %u, but next frame does not trigger until %u, interpolation will break",
+                      safetyCheckIter->GetTimestampActionComplete_ms(), nextIter->GetTriggerTime_ms());
+        }
+        safetyCheckIter++;
       }
-      prevIter++;
-      nextIter++;
     }
+    AdvanceTrackHelper(toTime_ms);
   }
   
 } // end namespace Animations

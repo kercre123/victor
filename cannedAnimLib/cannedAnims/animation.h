@@ -128,9 +128,6 @@ private:
   // Return the greater time
   template<class KeyFrameType>
   TimeStamp_t CompareLastFrameEndTime(const TimeStamp_t lastFrameTime_ms) const;
-
-  // Iterate through all tracks and set keyframe durations
-  void SetKeyFrameDuration_ms();
   
 }; // class Animation
 
@@ -150,12 +147,9 @@ Result Animation::AddKeyFrameToBack(const KeyFrameType& kf)
 
   if((oldKF != nullptr) &&
      (newKF->GetTriggerTime_ms() == 0)){
-    const auto lastTriggerTime = oldKF->GetTriggerTime_ms();
-    const auto lastDuration = oldKF->GetKeyframeDuration_ms();
-    newKF->SetTriggerTime_ms(lastTriggerTime + lastDuration);
+    newKF->SetTriggerTime_ms(oldKF->GetTimestampActionComplete_ms());
   }
 
-  SetKeyFrameDuration_ms();
   return addResult;
 }
 
@@ -169,7 +163,6 @@ Result Animation::AddKeyFrameByTime(const KeyFrameType& kf)
                       GetName().c_str());
   }
 
-  SetKeyFrameDuration_ms();
   return addResult;
 }
     

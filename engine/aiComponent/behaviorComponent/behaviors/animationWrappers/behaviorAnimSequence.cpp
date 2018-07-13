@@ -57,11 +57,17 @@ BehaviorAnimSequence::BehaviorAnimSequence(const Json::Value& config, bool trigg
   for (const auto& trigger : config[kAnimTriggerKey])
   {
     // make sure each trigger is valid
-    const AnimationTrigger animTrigger = AnimationTriggerFromString(trigger.asString().c_str());
-    DEV_ASSERT_MSG(animTrigger != AnimationTrigger::Count, "BehaviorAnimSequence.InvalidTriggerString",
-                  "'%s'", trigger.asString().c_str());
-    if (animTrigger != AnimationTrigger::Count) {
+    AnimationTrigger animTrigger;
+    if( AnimationTriggerFromString( trigger.asString(), animTrigger ) ) 
+    {
       _iConfig.animTriggers.emplace_back( animTrigger );
+    }
+    else 
+    {
+      PRINT_NAMED_ERROR("BehaviorAnimSequence.InvalidTriggerString",
+                        "Behavior '%s' config specified an invalid animation trigger: '%s'",
+                        GetDebugLabel().c_str(),
+                        trigger.asCString() );
     }
   }
 
@@ -171,6 +177,8 @@ void BehaviorAnimSequence::StartSequenceLoop()
         CallToListeners();
         StartSequenceLoop();
       });
+    } else {
+      OnAnimationsComplete();
     }
 }
 

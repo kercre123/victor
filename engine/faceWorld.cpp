@@ -21,6 +21,8 @@
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/poseOriginList.h"
 #include "coretech/common/shared/radians.h"
+
+#include "engine/actions/animActions.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
@@ -38,7 +40,9 @@ namespace Cozmo {
 
   // How long before deleting an unnamed, unobserved face.
   // NOTE: we never delete _named_ faces.
-  CONSOLE_VAR(u32, kDeletionTimeout_ms, "Vision.FaceWorld", 15000);
+  // This used to be smaller, but we're starting it on the order of minutes. This might need to be
+  // settable by whatever behaviors are running
+  CONSOLE_VAR(u32, kDeletionTimeout_ms, "Vision.FaceWorld", 10*60*1000);
 
   // The distance threshold inside of which to head positions are considered to be the same face
   CONSOLE_VAR(float, kHeadCenterPointThreshold_mm, "Vision.FaceWorld", 220.f);
@@ -653,6 +657,19 @@ namespace Cozmo {
       {
         ++faceIter;
       }
+    }
+
+    // Update anim focus (for keep face alive) with eye contact
+    static const std::string kKeepFaceAliveEyeContactName = "EyeContact";
+    if (IsMakingEyeContact(0))
+    {
+      PRINT_NAMED_INFO("FaceWorld.Update.IsMakingEyeContact.AddFocus", "");
+      _robot->GetAnimationComponent().AddKeepFaceAliveFocus(kKeepFaceAliveEyeContactName);
+    }
+    else
+    {
+      PRINT_NAMED_INFO("FaceWorld.Update.IsMakingEyeContact.RemoveFocus", "");
+      _robot->GetAnimationComponent().RemoveKeepFaceAliveFocus(kKeepFaceAliveEyeContactName);
     }
 
     return RESULT_OK;

@@ -216,6 +216,13 @@ namespace Cozmo {
     bool _startOfAnimationSent = false;
     bool _endOfAnimationSent   = false;
     
+    // TEMP (Kevin K.): To minimize changes to the animation streamer legacy messages/functions
+    // were used when introducing composite image functionality. Unfortunately if these messages
+    // don't come in on the same tick it can create lots of strange issues. This temp hack
+    // may cause the animation not to play for a few additional ticks, but it's the safest change
+    // to make that solves synchronization issues
+    bool _expectingCompositeImage = false;
+    
     bool _wasAnimationInterruptedWithNothing = false;
     
     bool _backpackAnimationLayerEnabled = false;

@@ -83,6 +83,10 @@ void ITrackLayerManager<FRAME_TYPE>::AddPersistentLayer(const std::string& name,
     PRINT_NAMED_WARNING("TrackLayerManager.AddPersistentLayer.LayerAlreadyExists", "");
   }
   
+  if(ANKI_DEV_CHEATS){
+    ValidateTrack(track);
+  }
+  
   Layer newLayer;
   newLayer.track = track;
   newLayer.track.MoveToStart();
@@ -104,13 +108,13 @@ void ITrackLayerManager<FRAME_TYPE>::AddToPersistentLayer(const std::string& lay
     
     // Make keyframe trigger one sample length (plus any internal delay) past
     // the last keyframe's trigger time
-    keyframe.SetTriggerTime_ms(lastKeyframe->GetTriggerTime_ms() +
-                            ANIM_TIME_STEP_MS +
-                            keyframe.GetTriggerTime_ms());
-    
-    lastKeyframe->SetKeyFrameDuration_ms(keyframe.GetTriggerTime_ms() - lastKeyframe->GetTriggerTime_ms());
+    keyframe.SetTriggerTime_ms(lastKeyframe->GetTimestampActionComplete_ms());
     track.AddKeyFrameToBack(keyframe);
     layerIter->second.sentOnce = false;
+    
+    if(ANKI_DEV_CHEATS){
+      ValidateTrack(track);
+    }
   }
 }
 
@@ -135,7 +139,6 @@ void ITrackLayerManager<FRAME_TYPE>::RemovePersistentLayer(const std::string& la
     {
       FRAME_TYPE firstFrame(layerIter->second.track.GetCurrentKeyFrame());
       firstFrame.SetTriggerTime_ms(streamTime_ms);
-      firstFrame.SetKeyFrameDuration_ms(duration_ms);
       track.AddKeyFrameToBack(std::move(firstFrame));
     }
     FRAME_TYPE lastFrame;
@@ -248,6 +251,45 @@ void ITrackLayerManager<FRAME_TYPE>::AdvanceTracks(const TimeStamp_t toTime_ms)
   }
 
 }
+
+  
+template<class FRAME_TYPE>
+void ITrackLayerManager<FRAME_TYPE>::ValidateTrack(const Animations::Track<FRAME_TYPE>& track)
+{
+  if(ANKI_DEV_CHEATS){
+    // Ensure tracks don't overlap
+    for(const auto& keyframe: track.GetCopyOfKeyframes()){
+      ANKI_VERIFY(keyframe.GetTriggerTime_ms() != keyframe.GetTimestampActionComplete_ms(),
+                  "ITrackLayerManager.ValidateTrack.KeyframeWithNoLength",
+                  "All keyframes must have a duration");
+    }
+  }
+}
+  
+template<>
+void ITrackLayerManager<ProceduralFaceKeyFrame>::ValidateTrack(const Animations::Track<ProceduralFaceKeyFrame>& track)
+{
+  if(ANKI_DEV_CHEATS){
+    // Ensure tracks don't overlap
+    auto keyframes = track.GetCopyOfKeyframes();
+    for(auto keyframeIter = keyframes.begin(); keyframeIter != keyframes.end(); keyframeIter++){
+      ANKI_VERIFY(keyframeIter->GetTriggerTime_ms() != keyframeIter->GetTimestampActionComplete_ms(),
+                  "ITrackLayerManager.ValidateTrack.KeyframeWithNoLength",
+                  "All keyframes must have a duration");
+      auto nextIter = keyframeIter;
+      nextIter++;
+      if(nextIter != keyframes.end()){
+        ANKI_VERIFY(keyframeIter->GetTimestampActionComplete_ms() == nextIter->GetTriggerTime_ms(),
+                    "ITrackLayerManager.ValidateTrack.ProceduralKeyframeTimeMismatch",
+                    "Previous keyframe ends at %u, but next frame does not trigger until %u, interpolation will break",
+                    keyframeIter->GetTimestampActionComplete_ms(), nextIter->GetTriggerTime_ms());
+      }
+    }
+  }
+}
+
+  
+
 
 
 // Explicit instantiation of allowed templated classes

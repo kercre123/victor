@@ -42,6 +42,7 @@ enum class RobotComponentID{
   CozmoContextWrapper,
   CubeAccel,
   CubeComms,
+  CubeConnectionCoordinator,
   CubeLights,
   DataAccessor,
   Docking,

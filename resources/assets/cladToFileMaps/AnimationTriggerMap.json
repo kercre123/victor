@@ -128,6 +128,26 @@
     "AnimName": "ag_blockreact"
   },
   {
+    "CladEvent": "ConnectToCubeFailure",
+    "AnimName":  "ag_majorfail" 
+  },
+  {
+    "CladEvent": "ConnectToCubeGetIn",
+    "AnimName":  "ag_texttospeech_getin_01"
+  },
+  {
+    "CladEvent": "ConnectToCubeLoop",
+    "AnimName":  "ag_texttospeech_loop_01"
+  },
+  {
+    "CladEvent": "ConnectToCubeLostConnection",
+    "AnimName":  "ag_majorfail"
+  },
+  {
+    "CladEvent": "ConnectToCubeSuccess",
+    "AnimName":  "ag_majorwin"
+  },
+  {
     "CladEvent": "DEPRECATED_PatternGuessNewIdea",
     "AnimName": "ag_patternguessnewidea"
   },
@@ -422,6 +442,10 @@
   {
     "CladEvent": "ExploringLookAround",
     "AnimName": "ag_explorer_lookaround"
+  },
+  {
+    "CladEvent": "ExploringLookAtHuman",
+    "AnimName": "ag_generic_look_stright_01"
   },
   {
     "CladEvent": "ExploringScanToLeft",
@@ -720,6 +744,10 @@
     "AnimName": "ag_onboarding_drive_to_face"
   },
   {
+    "CladEvent": "OnboardingComeHereGetOut",
+    "AnimName": "ag_onboarding_drive_to_face_idle_getout"
+  },
+  {
     "CladEvent": "OnboardingCubeDriveGetIn",
     "AnimName": "ag_onboarding_cube_drive_getin"
   },
@@ -744,6 +772,18 @@
     "AnimName": "ag_onboarding_lookaround_loop"
   },
   {
+    "CladEvent": "OnboardingLookAtPhoneUp",
+    "AnimName": "ag_lookatphone_getin"
+  },
+  {
+    "CladEvent": "OnboardingLookAtPhoneLoop",
+    "AnimName": "ag_lookatphone_loop"
+  },
+  {
+    "CladEvent": "OnboardingLookAtPhoneDown",
+    "AnimName": "ag_lookatphone_getout"
+  },
+  {
     "CladEvent": "OnboardingLookDown",
     "AnimName": "ag_onboarding_lookdown_loop"
   },
@@ -754,6 +794,10 @@
   {
     "CladEvent": "OnboardingWakeUp",
     "AnimName": "ag_onboarding_wakeup"
+  },
+  {
+    "CladEvent": "OnboardingWakeWordGetIn",
+    "AnimName": "ag_onboarding_wakeword_getin_01"
   },
   {
     "CladEvent": "DEPRECATED_OnLearnedPlayerName",
@@ -1148,6 +1192,30 @@
     "AnimName": "ag_sleeping"
   },
   {
+    "CladEvent": "BumpObjectSlowGetIn",
+    "AnimName": "ag_slowbump_getin"
+  },
+  {
+    "CladEvent": "BumpObjectSlowLoop",
+    "AnimName": "ag_slowbump_loop"
+  },
+  {
+    "CladEvent": "BumpObjectSlowGetOut",
+    "AnimName": "ag_slowbump_getout"
+  },
+  {
+    "CladEvent": "BumpObjectFastGetIn",
+    "AnimName": "ag_fastbump_getin"
+  },
+  {
+    "CladEvent": "BumpObjectFastLoop",
+    "AnimName": "ag_fastbump_loop"
+  },
+  {
+    "CladEvent": "BumpObjectFastGetOut",
+    "AnimName": "ag_fastbump_getout"
+  },
+  {
     "CladEvent": "SoundOnlyLiftEffortPickup",
     "AnimName": "ag_lifteffortpickup"
   },
@@ -1307,6 +1375,18 @@
   {	
     "CladEvent": "DEPRECATED_VC_NoFollowupCommand_WithFace",	
     "AnimName": "ag_vc_reaction_yesfaceheardyou"	
+  },
+  {
+    "CladEvent": "PokeObjectGetIn",
+    "AnimName": "ag_slowpoke_getin"
+  },
+  {
+    "CladEvent": "PokeObjectDriveLoop",
+    "AnimName": "ag_slowpoke_loop"
+  },
+  {
+    "CladEvent": "PokeObjectGetOut",
+    "AnimName": "ag_slowpoke_getout"
   },
   {
     "CladEvent": "WaitOnSideLoop",
@@ -1669,6 +1749,10 @@
     "AnimName": "ag_knowledgegraph_getout_01"
   },
   {
+    "CladEvent": "KnowledgeGraphSuccessReaction",
+    "AnimName": "ag_knowledgegraph_success_01"
+  },
+  {
     "CladEvent": "ShutUp",
     "AnimName": "ag_vc_shutup"
   },
@@ -1691,6 +1775,10 @@
   {
     "CladEvent": "NoWifiIcon",
     "AnimName": "ag_nowifi_icon"
+  },
+  {
+    "CladEvent": "GreetAfterLongTime",
+    "AnimName" : "ag_greeting_happy"
   }
 
 ]

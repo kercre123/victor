@@ -50,6 +50,12 @@ namespace {
   const f32 kMaxPitch = DEG_TO_RAD(8);
 
   const Vec3f kProxSensorPositionVec_mm{kProxSensorPosition_mm[0], kProxSensorPosition_mm[1], kProxSensorPosition_mm[2]};
+
+  // for checking if the state has changed since the last measurement
+  const Point3f kRobotTranslationTolerance_mm{0.1f, 0.1f, 0.1f};
+  const float   kMeasurementTolerance_mm = 2.f;
+  const Radians kRobotRotationTolerance_rad = 0.01f;
+  const u8      kNumMeasurementsAtPose = 32;
 } // end anonymous namespace
 
 // enable/disable prox sensor data
@@ -237,6 +243,17 @@ void ProxSensorComponent::UpdateNavMap()
 
   if ((objectDetected || noObject) && !tiltedForward)
   {  
+    // check if the robot has moved or the sensor reading has changed significantly
+    const Pose3d  robotPose = _robot->GetPose(); 
+    if (!robotPose.IsSameAs(_previousRobotPose, kRobotTranslationTolerance_mm, kRobotRotationTolerance_rad ) ||
+        !NEAR(_latestData.distance_mm, _previousMeasurement, kMeasurementTolerance_mm)) { 
+      _measurementsAtPose = 0; 
+      _previousRobotPose = robotPose; 
+      _previousMeasurement = _latestData.distance_mm;
+    }
+ 
+    if (++_measurementsAtPose >= kNumMeasurementsAtPose) { return; }
+
     // Clear out any obstacles between the robot and ray if we have good signal strength 
     TimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
 
@@ -245,7 +262,6 @@ void ProxSensorComponent::UpdateNavMap()
                                        : fmin(_latestData.distance_mm, kMaxObsThreshold_mm), 0, 0);   
 
     // just assume robot center rather the actual sensor pose
-    const Pose3d  robotPose = _robot->GetPose();   
     const Pose3d  objectPos = robotPose * Pose3d(0, Z_AXIS_3D(), offsetx_mm);    
     const Rotation3d id = Rotation3d(0.f, Z_AXIS_3D());
 

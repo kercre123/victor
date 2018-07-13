@@ -29,6 +29,7 @@ enum uint_8 BehaviorID {
   DevImageCapture,
   DevPlannerTest,
   DevTestBlackjackViz,
+  DevTestConnectToCube,
   DevTestPersonDetectorBehavior,
   DevTestPromptUser,
   DevTouchDataCollection,
@@ -111,18 +112,30 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree
   DefaultTextToSpeechLoop,
-  DriveOffCharger,
-  DriveOffChargerAnim,
+
+  // victorBehaviorTree/driveOffCharger
+  DriveOffChargerCube,
+  DriveOffChargerFace,
+  DriveOffChargerRandomly,
+  DriveOffChargerRandomlyAnim,
   DriveOffChargerStraight,
+
+  // victorBehaviorTree
   GlobalInterruptions,
+  GreetAfterLongTime,
   HighLevelAI,
+
+  // victorBehaviorTree/highLevelDelegates
+  SearchWithinBoundingBox,
 
   // victorBehaviorTree/highLevelDelegates/exploring
   ConfirmCharger,
   ConfirmCube,
   Exploring,
+  ExploringBumpObject,
   ExploringExamineObstacle,
   ExploringGetIn,
+  ExploringReferenceHuman,
   ExploringVoiceCommand,
 
   // victorBehaviorTree/highLevelDelegates
@@ -134,6 +147,7 @@ enum uint_8 BehaviorID {
   FindAndGoToHome,
   FindAndRequestHome,
   FindHome,
+  FindHomeInHabitat,
   GoHome,
   LowBatteryFindAndGoToHome,
   RequestHomeBecauseStuck,
@@ -185,7 +199,7 @@ enum uint_8 BehaviorID {
   PickupCube,
 
   // victorBehaviorTree/highLevelDelegates/playWithCube/activeCubeBehaviors
-  ActiveCubeDispatcher,
+  PlayWithCubeConnectionGate,
   VectorPlaysCubeSpinner,
 
   // victorBehaviorTree/highLevelDelegates/playWithCube
@@ -236,6 +250,7 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree
   InitNormalOperation,
+  InitPRDemo,
   IntentUnmatched,
   ModeSelector,
   NoCloud,
@@ -247,7 +262,9 @@ enum uint_8 BehaviorID {
   OnboardingActivateCube,
   OnboardingAsleep,
   OnboardingComeHere,
+  OnboardingComeHereGetOut,
   OnboardingComeHereResume,
+  OnboardingFirstTriggerWord,
   OnboardingLookAtPhone,
   OnboardingLookAtUser,
   OnboardingLookForCube,
@@ -259,6 +276,13 @@ enum uint_8 BehaviorID {
   OnboardingWaitForComeHere,
   OnboardingWaitForTriggerWord,
   OnboardingWakeUp,
+
+  // victorBehaviorTree/prDemo
+  PRDemoBigGreeting,
+  PRDemoExploring,
+  PRDemoObserving,
+  PRDemoSleeping,
+  PRDemoStateMachine,
 
   // victorBehaviorTree/quietMode
   BeQuietAnims,
@@ -311,6 +335,7 @@ enum uint_8 BehaviorID {
   TakingPhotoAnimation,
 
   // victorBehaviorTree/timer
+  DemoTimerUtilityCoordinator,
   SingletonCancelTimer,
   SingletonTimerAlreadySet,
   SingletonTimerAntic,

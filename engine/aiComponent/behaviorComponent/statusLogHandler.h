@@ -22,7 +22,7 @@ namespace Anki {
 namespace Cozmo {
 
 class CozmoContext;
-namespace ExternalInterface {
+namespace external_interface {
   class Status;
 }
 
@@ -35,13 +35,13 @@ public:
   
 private:
   
-  void SaveStatusHistory( const ExternalInterface::Status& status );
+  void SaveStatusHistory( const external_interface::Status& status );
 
   void SendStatusHistory();
   
   const CozmoContext* _context = nullptr;
   
-  using StatusHistory = Util::CircularBuffer<std::pair<uint32_t,ExternalInterface::Status>>;
+  using StatusHistory = Util::CircularBuffer<std::pair<uint32_t,external_interface::Status>>;
   std::unique_ptr<StatusHistory> _statusHistory;
 
   std::vector<Signal::SmartHandle> _signalHandles;

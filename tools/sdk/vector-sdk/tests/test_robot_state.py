@@ -1,27 +1,26 @@
 #!/usr/bin/env python3
-import asyncio
-from pathlib import Path
-import argparse
-import time
 
-import vector
+'''
+Test the robot state
+'''
+
+import os
+import sys
+
+import utilities
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+import vector  # pylint: disable=wrong-import-position
+
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("ip")
-    parser.add_argument("cert_file")
-    args = parser.parse_args()
-
-    cert = Path(args.cert_file)
-    cert.resolve()
+    '''main execution'''
+    args = utilities.parse_args()
 
     print("------ Fetch robot state from robot's properties ------")
-    with vector.Robot(args.ip, str(cert)) as robot:
-        '''
-        Add some operation before testing properties to permit enough time
-        for the stream to be setup
-        '''
-        robot.play_anim("anim_poked_giggle")
+    with vector.Robot(args.ip, str(args.cert), port=args.port) as robot:
+        # Add some operation before testing properties to permit enough time
+        # for the stream to be setup
+        robot.anim.play_animation("anim_poked_giggle")
         print(robot.pose)
         print(robot.pose_angle_rad)
         print(robot.pose_pitch_rad)

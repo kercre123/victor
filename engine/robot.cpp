@@ -39,6 +39,7 @@
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
+#include "engine/components/cubes/cubeConnectionCoordinator.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/dataAccessorComponent.h"
 #include "engine/components/dockingComponent.h"
@@ -104,6 +105,7 @@
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/highgui/highgui.hpp" // For imwrite() in ProcessImage
 
+#include <algorithm>
 #include <fstream>
 #include <regex>
 #include <dirent.h>
@@ -128,13 +130,7 @@ CONSOLE_VAR(bool, kEnableTestFaceImageRGBDrawing,  "Robot", false);
 
 // TEMP support for 'old' chargers with black stripe and white body (VIC-2755)
 // Set to true to allow the robot to dock with older white chargers (that have a light-on-dark marker sticker)
-CONSOLE_VAR(bool, kChargerStripeIsBlack, "Robot",
-#ifdef SIMULATOR
-            false  // Simulated chargers are gray with white stripe
-#else
-            true   // *Most* real chargers are white with a sticker, and thus have a black stripe
-#endif
-            );
+CONSOLE_VAR(bool, kChargerStripeIsBlack, "Robot", false);
 
 #if REMOTE_CONSOLE_ENABLED
 
@@ -208,6 +204,10 @@ void SayText(ConsoleFunctionContextRef context)
     LOG_ERROR("Robot.TtSCoordinator.NoText", "No text string");
     return;
   }
+  
+  // VIC-4364 Replace `_` with spaces. Hack to allows to use spaces
+  std::string textStr = text;
+  std::replace(textStr.begin(), textStr.end(), '_', ' ');
 
   // Handle processing state
   using TtsProcessingStyle = AudioMetaData::SwitchState::Robot_Vic_External_Processing;
@@ -226,10 +226,10 @@ void SayText(ConsoleFunctionContextRef context)
       break;
   }
 
-  LOG_INFO("Robot.TtSCoordinator", "text(%s) style(%s) duration(%f)",
-           Util::HidePersonallyIdentifiableInfo(text), EnumToString(style), kDurationScalar);
+ LOG_INFO("Robot.TtSCoordinator", "text(%s) style(%s) duration(%f)",
+          Util::HidePersonallyIdentifiableInfo(textStr.c_str()), EnumToString(style), kDurationScalar);
 
-  robot->GetTextToSpeechCoordinator().CreateUtterance(text, UtteranceTriggerType::Immediate, style);
+  robot->GetTextToSpeechCoordinator().CreateUtterance(textStr, UtteranceTriggerType::Immediate, style);
 }
 
 CONSOLE_FUNC(SayText, kTtsCoordinatorPath, const char* text);
@@ -316,6 +316,7 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::BackpackLights,             new BackpackLightComponent());
     _components->AddDependentComponent(RobotComponentID::CubeAccel,                  new CubeAccelComponent());
     _components->AddDependentComponent(RobotComponentID::CubeComms,                  new CubeCommsComponent());
+    _components->AddDependentComponent(RobotComponentID::CubeConnectionCoordinator,  new CubeConnectionCoordinator());
     _components->AddDependentComponent(RobotComponentID::GyroDriftDetector,          new RobotGyroDriftDetector());
     _components->AddDependentComponent(RobotComponentID::HabitatDetector,            new HabitatDetectorComponent());
     _components->AddDependentComponent(RobotComponentID::Docking,                    new DockingComponent());
@@ -2516,6 +2517,9 @@ RobotState Robot::GetDefaultRobotState()
 
   std::array<uint16_t, Util::EnumToUnderlying(CliffSensor::CLIFF_COUNT)> defaultCliffRawVals;
   defaultCliffRawVals.fill(std::numeric_limits<uint16_t>::max());
+  
+  std::array<uint16_t, STATE_MESSAGE_FREQUENCY> defaultTouchRawVals;
+  defaultTouchRawVals.fill(0);
 
   const RobotState state(1, //uint32_t timestamp, (Robot does not report at t=0
                          0, //uint32_t pose_frame_id,
@@ -2532,7 +2536,7 @@ RobotState Robot::GetDefaultRobotState()
                          kDefaultStatus, //uint32_t status,
                          std::move(defaultCliffRawVals), //std::array<uint16_t, 4> cliffDataRaw,
                          ProxSensorDataRaw(), //const Anki::Cozmo::ProxSensorDataRaw &proxData,
-                         0, // touch intensity value when not touched (from capacitive touch sensor)
+                         std::move(defaultTouchRawVals), // touch intensity value 
                          0, // uint8_t cliffDetectedFlags,
                          0, // uint8_t whiteDetectedFlags
                          -1); //int8_t currPathSegment

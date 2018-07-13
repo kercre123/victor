@@ -1246,7 +1246,7 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
 
   sprintf(temp,
           "TOUCH: %u",
-          state.backpackTouchSensorRaw);
+          state.backpackTouchSensorRaw[STATE_MESSAGE_FREQUENCY-1]);
   const std::string touch = temp;
 
   sprintf(temp,

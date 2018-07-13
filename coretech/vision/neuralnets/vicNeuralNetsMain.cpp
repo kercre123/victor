@@ -22,9 +22,9 @@
 #elif defined(VIC_NEURALNETS_USE_OPENCV_DNN)
 #  include "objectDetector_opencvdnn.h"
 #elif defined(VIC_NEURALNETS_USE_TFLITE)
-#  include "objectDetector_tflite.h"
+#  include "neuralNetModel_tflite.h"
 #else 
-#  error TENSORFLOW or CAFFE2 or OPENCVDNN or TFLITE must be defined
+#  error One of VIC_NEURALNETS_USE_{TENSORFLOW | CAFFE2 | OPENCVDNN | TFLITE} must be defined
 #endif
 
 #include "coretech/common/shared/types.h"
@@ -42,6 +42,9 @@
 #ifdef SIMULATOR
 #  include <webots/Supervisor.hpp>
 #endif
+
+#include "opencv2/imgcodecs/imgcodecs.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -231,20 +234,8 @@ int main(int argc, char **argv)
 
   const std::string jsonFilename = Util::FileUtils::FullFilePath({cachePath, "neuralNetResults.json"});
 
-  LOG_INFO("VicNeuralNets.Main.ImageLoadMode", "%s: %s",
-           (imageFileProvided ? "Loading given image" : "Polling for images at"),
-           imageFilename.c_str());
-
-  
-# ifdef SIMULATOR
-  webots::Supervisor webotsSupervisor;
-  const int kPollPeriod_ms  = webotsSupervisor.getSelf()->getField("pollingPeriod_ms")->getSFInt32();
-# else 
-  const int kPollPeriod_ms = config["pollPeriod_ms"].asInt();
-# endif
-
   // Initialize the detector
-  NeuralNetModel neuralNet;
+  Vision::NeuralNetModel neuralNet;
   {
     auto ticToc = TicToc("LoadModel");
     result = neuralNet.LoadModel(modelPath, config);
@@ -257,6 +248,19 @@ int main(int argc, char **argv)
     
     TicToc::Enable(neuralNet.IsVerbose());
   }
+  
+  LOG_INFO("VicNeuralNets.Main.ImageLoadMode", "%s: %s",
+           (imageFileProvided ? "Loading given image" : "Polling for images at"),
+           imageFilename.c_str());
+  
+  
+# ifdef SIMULATOR
+  webots::Supervisor webotsSupervisor;
+  const int kPollPeriod_ms  = webotsSupervisor.getSelf()->getField("pollingPeriod_ms")->getSFInt32();
+# else
+  const int kPollPeriod_ms = config["pollPeriod_ms"].asInt();
+# endif
+
   
   LOG_INFO("VicNeuralNets.Main.DetectorInitialized", "Waiting for images");
 

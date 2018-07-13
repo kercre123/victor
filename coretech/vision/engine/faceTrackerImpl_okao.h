@@ -79,7 +79,7 @@ namespace Vision {
     bool IsGazeDetectionEnabled()    const   { return _detectGaze;     }
     bool IsBlinkDetectionEnabled()   const   { return _detectBlinks;   }
     
-    
+    bool     CanAddNamedFace() const;
     Result   AssignNameToID(FaceID_t faceID, const std::string& name, FaceID_t mergeWithID);
     Result   EraseFace(FaceID_t faceID);
     void     EraseAllFaces();
@@ -132,11 +132,6 @@ namespace Vision {
     Json::Value _config;
 
     const Camera& _camera;
-    
-    static const s32   MaxFaces = 10; // detectable at once
-    
-    //u8* _workingMemory = nullptr;
-    //u8* _backupMemory  = nullptr;
     
     // Okao Vision Library "Handles"
     // Note that we have two actual handles for part detection so that we can

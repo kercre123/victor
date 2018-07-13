@@ -124,6 +124,9 @@ if (MACOSX)
   _build_cloud_executable(opusupload)
   _add_chipper_flags(opusupload)
 
+  _build_cloud_executable(sessiondl)
+  anki_disable_default_build(sessiondl)
+
 endif()
 
 # ipctest - for testing interop capability of C++ and Go socket code

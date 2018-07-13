@@ -75,7 +75,7 @@ ITrackAction::~ITrackAction()
     //       exposing the parameters to the engine just for this.
     //       Currently, the only way it wouldn't have previously been at default
     //       is if it was changed via G2E::SetKeepFaceAliveParameter message.
-    GetRobot().GetAnimationComponent().SetKeepFaceAliveParameterToDefault(KeepFaceAliveParameter::EyeDartMaxDistance_pix);
+    GetRobot().GetAnimationComponent().RemoveKeepFaceAliveFocus(_kKeepFaceAliveITrackActionName);
     
     // Make sure we abort any sound actions we triggered
     GetRobot().GetActionList().Cancel(_soundAnimTag);
@@ -330,7 +330,7 @@ ActionResult ITrackAction::Init()
   //       So if the default value is not what it used to be, and we care, we would need
   //       some way of getting the current parameter value from animation process
   //       but for now it seems unnecessary since nobody else changes this parameter.
-  GetRobot().GetAnimationComponent().SetKeepFaceAliveParameter(KeepFaceAliveParameter::EyeDartMaxDistance_pix, 1.f);
+  GetRobot().GetAnimationComponent().AddKeepFaceAliveFocus(_kKeepFaceAliveITrackActionName);
 
   if( _stopOnOtherActionTag != ActionConstants::INVALID_TAG &&
       ! IsTagInUse( _stopOnOtherActionTag ) ) {

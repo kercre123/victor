@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 3.6)
 
 project(animProcess)
 
-# Build options
-option(USE_DAS "Enable DAS reporting" OFF)
-
 include(anki_build_cxx)
 include(aubio)
 include(flatbuffers)
@@ -70,7 +67,6 @@ anki_build_strip(TARGET victor_anim)
 
 target_compile_definitions(victor_anim
   PRIVATE
-  USE_DAS=$<BOOL:${USE_DAS}>
   ${PLATFORM_COMPILE_DEFS}
 )
 

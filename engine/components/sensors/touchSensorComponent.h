@@ -18,6 +18,7 @@
 #include "util/entityComponent/entity.h"
 #include "clad/types/factoryTestTypes.h"
 
+#include "util/signals/simpleSignal_fwd.h"
 #include "util/math/math.h"
 
 #include <deque>
@@ -26,7 +27,7 @@ namespace Anki {
 namespace Cozmo {
 
 class IBehaviorPlaypen;
-  
+struct FilterParameters;
 
 class BoxFilter
 {
@@ -58,7 +59,38 @@ private:
 class TouchSensorComponent : public ISensorComponent, public IDependencyManagedComponent<RobotComponentID>
 {
 public:
-
+  
+  // struct to organize the filter-specific parameters
+  // used in the dynamic thresholding algorithm for
+  // touch detection.
+  // Note: the default values are determined using the
+  // test harness `TouchSensorTuningPVT` in file
+  // testTouchSensor.cpp
+  struct FilterParameters
+  {
+    int boxFilterSize = 55;
+    
+    // constant size difference between detect and undetect levels
+    int dynamicThreshGap = 1;
+    
+    // the offset from the input reading that detect level is set to
+    int dynamicThreshDetectFollowOffset = 2;
+    
+    // the offset from the input reading that the undetect level is set to
+    int dynamicThreshUndetectFollowOffset = 2;
+    
+    // the lowest reachable undetect level offset from baseline
+    int dynamicThreshMaximumDetectOffset = 20;
+    
+    // the highest reachable detect level offset from baseline
+    int dynamicThreshMininumUndetectOffset = 8;
+    
+    // minimum number of consecutive readings that are below/above detect level
+    // before we update the thresholds dynamically
+    // note: this counters the impact of noise on the dynamic thresholds
+    int minConsecCountToUpdateThresholds = 6;
+  };
+  
 public:
   TouchSensorComponent();
 
@@ -68,9 +100,7 @@ public:
   // IDependencyManagedComponent functions
   //////
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
-  virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComps) override {
-    InitBase(robot);
-  };
+  virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComps) override;
   //////
   // end IDependencyManagedComponent functions
   //////
@@ -81,6 +111,21 @@ public:
   
   // dev-only feature for logging values around the last received touch
   void DevLogTouchSensorData() const;
+  
+  // helper method to set the filter parameter values external
+  // note: this is to be used in the test harness to perform a
+  //    parameter sweep to find optimal setting
+  void UnitTestOnly_SetFilterParameters(FilterParameters params)
+  {
+    _filterParams = params;
+    
+    _boxFilterTouch = BoxFilter(params.boxFilterSize);
+    
+    _detectOffsetFromBase = params.dynamicThreshMininumUndetectOffset +
+                            params.dynamicThreshGap;
+    
+    _undetectOffsetFromBase = params.dynamicThreshMininumUndetectOffset;
+  }
   
 protected:
   virtual void NotifyOfRobotStateInternal(const RobotState& msg) override;
@@ -107,13 +152,23 @@ public:
   bool IsCalibrated() const;
   
 private:
-
   // Let Playpen behaviors have access to Start/Stop recording touch sensor data
   // TODO(Al): Could probably move the recording logic to IBehaviorPlaypen by handling
   // state messages
   friend class IBehaviorPlaypen;
   void StartRecordingData(TouchSensorValues* data);
-  void StopRecordingData() { _dataToRecord = nullptr; } 
+  void StopRecordingData() { _dataToRecord = nullptr; }
+  
+  std::vector<Signal::SmartHandle> _signalHandles;
+  
+  FilterParameters _filterParams;
+  
+  static const FilterParameters _kFilterParamsForDVT;
+  static const FilterParameters _kFilterParamsForProd;
+  
+  // backwards-compatibility flag that uses a different scheme for touch sensor filtering
+  // based on the version of hardware the robot has
+  bool _useFilterLogicForDVT;
 
   // Pointer to a struct that should be populated with touch sensor data when recording
   TouchSensorValues* _dataToRecord = nullptr;

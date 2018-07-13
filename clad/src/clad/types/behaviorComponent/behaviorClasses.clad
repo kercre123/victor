@@ -13,6 +13,7 @@ namespace Cozmo {
 enum uint_8 BehaviorClass {
 
   // <root>
+  GreetAfterLongTime,
   HighLevelAI,
   Wait,
 
@@ -32,6 +33,7 @@ enum uint_8 BehaviorClass {
   RollBlock,
 
   // basicWorldInteractions
+  BumpObject,
   ClearChargerArea,
   DriveOffCharger,
   FindFaces,
@@ -133,6 +135,9 @@ enum uint_8 BehaviorClass {
   PuzzleMaze,
   TrackLaser,
 
+  // gateBehaviors
+  ConnectToCube,
+
   // habitat
   ConfirmHabitat,
 
@@ -160,6 +165,10 @@ enum uint_8 BehaviorClass {
   // photoTaking
   AestheticallyCenterFaces,
   TakeAPhotoCoordinator,
+
+  // prDemo
+  PRDemo,
+  PRDemoBase,
 
   // proxBehaviors
   ProxGetToDistance,
@@ -197,6 +206,7 @@ enum uint_8 BehaviorClass {
   FindFaceAndThen,
   LookAtMe,
   SayName,
+  SearchWithinBoundingBox,
 
   // sleeping
   Sleeping,

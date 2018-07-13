@@ -35,8 +35,6 @@ constexpr MemoryMapTypes::FullContentArray typesToExploreInterestingBordersFrom 
   {MemoryMapTypes::EContentType::ClearOfObstacle       , true },
   {MemoryMapTypes::EContentType::ClearOfCliff          , true },
   {MemoryMapTypes::EContentType::ObstacleObservable    , false},
-  {MemoryMapTypes::EContentType::ObstacleCharger       , false},
-  {MemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
   {MemoryMapTypes::EContentType::ObstacleProx          , false},
   {MemoryMapTypes::EContentType::ObstacleUnrecognized  , false},
   {MemoryMapTypes::EContentType::Cliff                 , false},

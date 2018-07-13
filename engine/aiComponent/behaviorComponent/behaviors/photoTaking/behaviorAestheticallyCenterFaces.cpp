@@ -16,6 +16,8 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/faceWorld.h"
 #include "util/console/consoleInterface.h"
 
@@ -85,7 +87,8 @@ void BehaviorAestheticallyCenterFaces::OnBehaviorActivated()
 {
   // reset dynamic variables
   _dVars = DynamicVariables();
-
+  
+  _dVars.imageTimestampWhenActivated = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
 
   if(GetBestFaceToCenter() != nullptr){
     TransitionToCenterFace();
@@ -129,7 +132,10 @@ void BehaviorAestheticallyCenterFaces::TransitionToSearchForFaces()
   ANKI_VERIFY(_iConfig.findFacesBehavior->WantsToBeActivated(),
               "BehaviorAestheticallyCenterFaces.TransitionToSearchForFaces.DoesNotWantToBeActivated",
               "");
-  DelegateIfInControl(_iConfig.findFacesBehavior.get());
+  // Delegate to the find faces behavior. It will exit if a face is seen, so in that case skip
+  // directly to TransitionToCenterFace.
+  DelegateIfInControl(_iConfig.findFacesBehavior.get(),
+                      &BehaviorAestheticallyCenterFaces::TransitionToCenterFace);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -138,7 +144,8 @@ void BehaviorAestheticallyCenterFaces::TransitionToCenterFace()
   _dVars.state = BehaviorState::CenterFace;
   auto* face = GetBestFaceToCenter();
   if(face != nullptr){
-    DelegateIfInControl(new TurnTowardsPoseAction(face->GetHeadPose()), [this, face](){
+    const auto& smartFaceId = GetBEI().GetFaceWorld().GetSmartFaceID(face->GetID());
+    DelegateIfInControl(new TurnTowardsFaceAction(smartFaceId), [this, face](){
       if(GetBestFaceToCenter() == nullptr){
         TransitionToSearchForFaces();
       }else if(GetBestFaceToCenter() != face){
@@ -152,6 +159,17 @@ void BehaviorAestheticallyCenterFaces::TransitionToCenterFace()
 const Vision::TrackedFace* BehaviorAestheticallyCenterFaces::GetBestFaceToCenter()
 {
   auto smartFaces = GetBEI().GetFaceWorld().GetSmartFaceIDs();
+  
+  // Only allow faces that have been observed since the behavior started
+  auto haveNotSeenSinceStarted = [this](const SmartFaceID& smartId) {
+    const auto* face = GetBEI().GetFaceWorld().GetFace(smartId);
+    return (face == nullptr) || (face->GetTimeStamp() < _dVars.imageTimestampWhenActivated);
+  };
+  smartFaces.erase(std::remove_if(smartFaces.begin(),
+                                  smartFaces.end(),
+                                  haveNotSeenSinceStarted),
+                   smartFaces.end());
+  
   const auto& faceSelection = GetAIComp<FaceSelectionComponent>();
   auto smartFaceID = faceSelection.GetBestFaceToUse(_iConfig.criteriaMap, smartFaces);
   const Vision::TrackedFace* trackedFace = GetBEI().GetFaceWorld().GetFace(smartFaceID);

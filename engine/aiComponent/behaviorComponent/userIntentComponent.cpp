@@ -216,6 +216,15 @@ void UserIntentComponent::DropUserIntent(UserIntentTag userIntent)
                         _pendingIntent ? UserIntentTagToString(_pendingIntent->intent.GetTag()) : "nothing");
   }
 }
+  
+void UserIntentComponent::DropAnyUserIntent()
+{
+  if( !IsAnyUserIntentPending() ) {
+    PRINT_NAMED_WARNING("UserIntentComponent.DropAnyUserIntent.IntentNotSet",
+                        "Trying to clear a pending intent but the intent isn't set. This is likely a bug");
+  }
+  _pendingIntent.reset();
+}
 
 bool UserIntentComponent::IsUserIntentPending(UserIntentTag userIntent, UserIntent& extraData) const
 {
