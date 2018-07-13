@@ -240,10 +240,6 @@ Result HAL::Init(const int * shutdownSignal)
   // Set ID
   robotID_ = Anki::Cozmo::DEFAULT_ROBOT_ID;
 
-#if FACTORY_TEST
-  UpdateTouchSensorValidRange(); 
-#endif
-
   InitIMU();
 
   if (InitRadio() != RESULT_OK) {
