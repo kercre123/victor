@@ -18,6 +18,7 @@
 #include "util/entityComponent/entity.h"
 #include "clad/types/factoryTestTypes.h"
 
+#include "util/signals/simpleSignal_fwd.h"
 #include "util/math/math.h"
 
 #include <deque>
@@ -99,9 +100,7 @@ public:
   // IDependencyManagedComponent functions
   //////
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
-  virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComps) override {
-    InitBase(robot);
-  };
+  virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComps) override;
   //////
   // end IDependencyManagedComponent functions
   //////
@@ -159,6 +158,8 @@ private:
   friend class IBehaviorPlaypen;
   void StartRecordingData(TouchSensorValues* data);
   void StopRecordingData() { _dataToRecord = nullptr; }
+  
+  std::vector<Signal::SmartHandle> _signalHandles;
   
   FilterParameters _filterParams;
   
