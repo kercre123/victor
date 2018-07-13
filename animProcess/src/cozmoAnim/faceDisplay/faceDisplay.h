@@ -46,7 +46,12 @@ public:
   // For drawing to face in various debug modes
   void DrawToFaceDebug(const Vision::ImageRGB565& img);
 
+
   void SetFaceBrightness(LCDBrightness level);
+
+  // Enable/Disable fault code display (Default: Enabled)
+  // NB: This should probably only be used by FaceInfoScreenManager::Reboot()
+  void EnableFaultCodeDisplay(bool enable) { _enableFaultCodeDisplay = enable; }
 
 protected:
   FaceDisplay();
@@ -75,6 +80,7 @@ private:
   void StopFaultCodeThread();
 
   std::thread _faultCodeThread;
+  bool _enableFaultCodeDisplay = true;
 }; // class FaceDisplay
   
 } // namespace Cozmo

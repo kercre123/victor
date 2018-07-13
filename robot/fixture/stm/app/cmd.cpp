@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <assert.h>
 #include <errno.h>
 #include <stdarg.h>
@@ -25,6 +26,11 @@ uint32_t cmdTimeMs() {
   return m_time_ms;
 }
 
+static int syscon_tx_ovf_cnt;
+int cmdSysconOvfCnt() {
+  return syscon_tx_ovf_cnt;
+}
+
 //-----------------------------------------------------------------------------
 //          Master/Send
 //-----------------------------------------------------------------------------
@@ -37,81 +43,50 @@ static void get_errs_(cmd_io io, io_err_t *ioe) {
   ioe->rxFramingErrors  = io==CMD_IO_DUT_UART ? DUT_UART::getRxFramingErrors()  : (io==CMD_IO_CONTACTS ? Contacts::getRxFramingErrors()  : 0);
 }
 
-static char rsp_buf[100];
-static int rsp_len = 0;
+const int line_maxlen = 126;
+static char m_line[line_maxlen+1];
+static int m_line_len = 0, linelen_ = 0;
+static char* getline_(int c)
+{
+  if( c == '\r' || c == '\n' ) {
+    linelen_ = m_line_len; //save length
+    m_line[m_line_len] = '\0';
+    m_line_len = 0;
+    return m_line;
+  } else if( c > 0 && c < 128 && m_line_len < line_maxlen ) //ascii (ignore null)
+    m_line[m_line_len++] = c;
+  
+  return NULL;
+}
+
+static int getchar_(cmd_io io) {
+  switch(io) {
+    case CMD_IO_DUT_UART: return DUT_UART::getchar(); //break;
+    case CMD_IO_CONSOLE:  return ConsoleGetCharNoWait(); //break;
+    case CMD_IO_CONTACTS: {
+      int c = Contacts::getchar();
+      if( c == 0x88 ) { //syscon DEBUG_TX_OVF_DETECT=1 inserts overflow indicator in the stream
+        c = '@'; //printable char is easier to see...
+        syscon_tx_ovf_cnt++;
+      }
+      return c; //break;
+    }
+    case CMD_IO_SIMULATOR:
+    default: return -1; //break;
+  }
+}
+
 static void flush_(cmd_io io)
 {
-  rsp_len = 0;
-  switch(io)
-  {
-    case CMD_IO_DUT_UART:
-      while( DUT_UART::getchar() > -1 );
-      break;
-    case CMD_IO_CONSOLE:
-      ConsoleFlushLine(); //flush old data in the line buffer
-      while( ConsoleGetCharNoWait() > -1 ); //flush unread dma buf
-      break;
-    case CMD_IO_CONTACTS:
-      while( Contacts::getchar() > -1 );
-      break;
-    default:
-    case CMD_IO_SIMULATOR:
-      break;
-  }
+  m_line[0] = '\0';
+  m_line_len = 0;
+  linelen_ = 0;
   
-  //read errors to clear
+  while( getchar_(io) > -1 );
+  syscon_tx_ovf_cnt = 0;
+  
   io_err_t ioerrs;
-  get_errs_(io, &ioerrs);
-}
-
-static char* getline_(cmd_io io, int timeout_us)
-{
-  char* rsp;
-  int out_len;
-  
-  switch(io)
-  {
-    case CMD_IO_DUT_UART:
-      rsp = DUT_UART::getline( &rsp_buf[rsp_len], sizeof(rsp_buf)-rsp_len, timeout_us, &out_len );
-      rsp_len += out_len;
-      if( rsp ) {
-        rsp = rsp_buf; //point to start of buffer (rx in multiple chunks)
-        rsp_len = 0;
-      }
-      break;
-    case CMD_IO_CONSOLE:
-      rsp = ConsoleGetLine(timeout_us);
-      break;
-    case CMD_IO_CONTACTS:
-      rsp = Contacts::getline(timeout_us);
-      break;
-    default:
-    case CMD_IO_SIMULATOR:
-      rsp = NULL;
-      break;
-  }
-  
-  return rsp;
-}
-
-static char* getline_raw_(cmd_io io, int *out_len) //buffer scraps for debug when cmd times out
-{
-  switch(io)
-  {
-    case CMD_IO_DUT_UART:
-      if( out_len )
-        *out_len = rsp_len;
-      return rsp_buf;
-    case CMD_IO_CONTACTS:
-      return Contacts::getlinebuffer(out_len);
-    default:
-    case CMD_IO_SIMULATOR:
-    case CMD_IO_CONSOLE: //XXX: dummy buffer for console (too lazy to update API)
-      if( out_len )
-        *out_len = 0;
-      rsp_buf[0] = '\0';
-      return rsp_buf;
-  }
+  get_errs_(io, &ioerrs); //read errors to clear
 }
 
 static void write__(cmd_io io, const char* s)
@@ -149,17 +124,7 @@ static void write_(cmd_io io, const char* s1, const char* s2, const char* s3) {
     throw (err_num);                                    \
   }
 
-//double-buffered tick handling
-static uint32_t next_tick_interval_ms = 0, active_tick_interval_ms = 0;
-static void(*next_tick_handler)(void) = NULL;
-static void(*active_tick_handler)(void) = NULL;
-
-void cmdTickCallback(uint32_t interval_ms, void(*tick_handler)(void) ) {
-  next_tick_interval_ms = interval_ms && tick_handler ? interval_ms  : 0;
-  next_tick_handler     = interval_ms && tick_handler ? tick_handler : NULL;
-}
-
-char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async_handler)(char*) )
+char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async_handler)(char*), cmd_dbuf_t *dbuf )
 {
   char b[80]; const int bz = sizeof(b); //str buffer
   
@@ -169,15 +134,25 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
   if( opts & CMD_OPTS_DBG_PRINT_ENTRY )
     ConsolePrintf("cmdSend(%u, \"%s\"%s, ms=%i)\n", io, scmd, (newline ? "\\n" : ""), timeout_ms);
   
-  //double buffer the tick handler
-  active_tick_interval_ms = next_tick_interval_ms;
-  active_tick_handler = next_tick_handler;
-  next_tick_interval_ms = 0, next_tick_handler = NULL; //single-use
-  
   //contact handoff power -> uart
   if( io == CMD_IO_CONTACTS && Contacts::powerIsOn() ) {
     Contacts::powerOff(); //forces discharge
     Contacts::setModeRx(); //explicit mode change
+  }
+  
+  if( dbuf ) {
+    dbuf->wlen = 0;
+    if( !dbuf->p || dbuf->size < 1 ) {
+      ConsolePrintf("BAD_ARG: cmdSend() dbuf.p=%08x dbuf.size=%i\n", (uint32_t)dbuf->p, dbuf->size);
+      throw ERROR_BAD_ARG; //dbuf = NULL;
+    }
+  }
+  
+  //negative timeout: renew on activity
+  bool renew_timer_on_activity = 0;
+  if( timeout_ms < 0 ) {
+    timeout_ms = (-1)*timeout_ms;
+    renew_timer_on_activity = 1;
   }
   
   //send command out the selected io channel (append prefix)
@@ -189,20 +164,59 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
   //Get response
   memset( &m_ioerr, 0, sizeof(m_ioerr) ); //clear io errs
   m_status = INT_MIN;
-  uint32_t Tstart = Timer::get(), Ttick = Timer::get();
-  while( Timer::elapsedUs(Tstart) < timeout_ms*1000 )
+  uint32_t Tstart = Timer::get(), Twait = Timer::get();
+  while( Timer::elapsedUs(Twait) < timeout_ms*1000 )
   {
-    char *rsp = getline_(io, 1000); //timeout_ms*1000 - Timer::elapsedUs(Tstart) );
+    int c = getchar_(io);
+    if( c > -1 && renew_timer_on_activity )
+      Twait = Timer::get(); //reset timeout
+    
+    char *rsp = getline_(c);
+    
+    //DEBUG inspect raw rx
+    if( (opts & CMD_OPTS_LOG_RAW_RX_DBG) && c > 0 && c < 0xff ) {
+      if( c == '\n' )         { ConsoleWrite((char*)"\\n"); ConsolePutChar(c); }
+      else if( c == '\r' )    { ConsoleWrite((char*)"\\r"); ConsolePutChar(c); }
+      else if( !isprint(c) )  { ConsolePrintf("\\%02x",c); }
+      else                    { ConsolePutChar(c); }
+    }
+    
+    //copy char stream to data buffer
+    if( dbuf && c > 0 && c < 128 ) {
+      //if( io != CMD_IO_CONSOLE && opts & CMD_OPTS_LOG_OTHER ) ConsolePutChar(c); //DEBUG inspect
+      if( dbuf->wlen < dbuf->size )
+        dbuf->p[ dbuf->wlen++ ] = c;
+      else {
+        if( opts & CMD_OPTS_LOG_ERRORS && dbuf->wlen == dbuf->size ) //one-shot report
+          write_(CMD_IO_CONSOLE, LOG_RSP_PREFIX, "DBUF_OVERFLOW\n");
+        if( opts & CMD_OPTS_EXCEPTION_EN )
+          throw ERROR_BUFFER_TOO_SMALL;
+      }
+    }
+    
     if( rsp != NULL )
     {
-      int rspLen = strlen(rsp);
+      int rspLen = linelen_; //strlen(rsp);
       
       //find and validate the response
       if( rspLen > sizeof(RSP_PREFIX)-1 && !strncmp(rsp,RSP_PREFIX,sizeof(RSP_PREFIX)-1) ) //response prefix detected
       {
         m_time_ms = Timer::elapsedUs(Tstart)/1000; //time to response rx
-        
         rsp += sizeof(RSP_PREFIX)-1; //'strip' prefix
+        
+        Timer::wait(1000); //bus turnaround
+        
+        //remove the final response line from dbuf datastream
+        if( dbuf ) {
+          if( dbuf->wlen < (rspLen+1) ) { //sanity check
+            dbuf->p[ MAX(dbuf->wlen,0) ] = '\0';
+            ConsolePrintf("INVALID_STATE: cmdSend() dbuf.wlen=%i rspLen=%i\n", dbuf->wlen, rspLen);
+            ConsolePrintf("  rsp :[%s]'%s'\n", RSP_PREFIX, rsp);
+            ConsolePrintf("  dbuf:'%s'\n", dbuf->p );
+            throw ERROR_INVALID_STATE;
+          }
+          dbuf->wlen -= (rspLen+1); //line + raw \n char
+        }
         
         //echo to log (optionally append debug stats)
         if( opts & CMD_OPTS_LOG_RSP ) {
@@ -219,6 +233,13 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
             write_(CMD_IO_CONSOLE, snformat(b,bz,"IO ERROR ovfl=%i dropRx=%i frame=%i", m_ioerr.rxOverflowErrors, m_ioerr.rxDroppedChars, m_ioerr.rxFramingErrors));
           ERROR_HANDLE("IO_ERROR\n", ERROR_TESTPORT_RX_ERROR);
           //return NULL; //if no exception, allow cmd validation to continue
+        }
+        if( syscon_tx_ovf_cnt > 0 ) {
+          if( opts & CMD_OPTS_LOG_ERRORS )
+            write_(CMD_IO_CONSOLE, snformat(b,bz,"SYSCON ERROR: TX OVERFLOW CNT = %i\n", syscon_tx_ovf_cnt));
+          if( opts & CMD_OPTS_DBG_SYSCON_OVF_ERR ) {
+            ERROR_HANDLE("IO_ERROR\n", ERROR_TESTPORT_RX_ERROR);
+          }
         }
         
         //make sure response matches our command word
@@ -266,24 +287,17 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
         if( io != CMD_IO_CONSOLE && opts & CMD_OPTS_LOG_OTHER ) //echo to log, unchanged
           write_(CMD_IO_CONSOLE, rsp, "\n");
       }
-    }
-    
-    //tick callback
-    if( active_tick_interval_ms > 0 && Timer::elapsedUs(Ttick) >= 1000*active_tick_interval_ms ) {
-      Ttick = Timer::get();
-      if( active_tick_handler != NULL )
-        active_tick_handler();
-    }
-  }
+      
+    }//rsp != NULL
+  }//while( Timer::elapsedUs(Twait)...
   
   if( opts & CMD_OPTS_DBG_PRINT_RX_PARTIAL ) //see what's leftover in the rx buffer
   {
-    int rlen; char* rawline = getline_raw_(io, &rlen);
-    if( rlen > 0 ) {
+    if( m_line_len > 0 ) {
       write_(CMD_IO_CONSOLE, ".DBG RX PARTIAL '");
-      for(int x=0; x<rlen; x++)
-        write_(CMD_IO_CONSOLE, snformat(b,bz,"%c", rawline[x] >= ' ' && rawline[x] < '~' ? rawline[x] : '*'));
-      write_(CMD_IO_CONSOLE, snformat(b,bz,"' (%i)\n", rlen));
+      for(int x=0; x<m_line_len; x++)
+        write_(CMD_IO_CONSOLE, snformat(b,bz,"%c", m_line[x] >= ' ' && m_line[x] < '~' ? m_line[x] : '*'));
+      write_(CMD_IO_CONSOLE, snformat(b,bz,"' (%i)\n", m_line_len));
     }
   }
   

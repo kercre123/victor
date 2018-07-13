@@ -3,7 +3,7 @@
 /* #include <stdbool.h> */
 /* #include <stdlib.h> */
 /* #include <assert.h> */
-/* #include <string.h> */
+#include <string.h>
 #include <ctype.h>
 /* #include <fcntl.h> */
 #include <unistd.h>
@@ -90,7 +90,7 @@ int display_parse(const char* command, int linelen)
     display_clear_layer(layer, bgcolor, fgcolor);
   }
   display_draw_text(layer, line, fgcolor, bgcolor,
-                    cp, endp-cp, (layer==3));
+                    cp, endp-cp, (layer>=3));  //layer>=3 is hack, should be able to query `is_layer_centered(layer)`
 
   display_render(layermask);
   return 0;

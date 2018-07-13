@@ -28,7 +28,7 @@ bool TestBackpackDetect(void)
 void TestBackpackCleanup(void)
 {
   //LED
-  BPLED::disable(); //turns off VBAT
+  BPLED::disable(); //turns off VBAT [Board::powerOff(PWR_VBAT)]
   
   //Mics
   BP_MICMOSI1::mode(MODE_INPUT);

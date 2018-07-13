@@ -2525,6 +2525,7 @@ RobotState Robot::GetDefaultRobotState()
                          0.f, //float rwheel_speed_mmps,
                          0.f, //float headAngle
                          0.f, //float liftAngle,
+                         0.f, //float touchSensorFilt
                          AccelData(), //const Anki::Cozmo::AccelData &accel,
                          GyroData(), //const Anki::Cozmo::GyroData &gyro,
                          0.f, // float batteryVoltage
@@ -2748,6 +2749,24 @@ Result Robot::UpdateStartupChecks()
       else
       {
         state = State::PASSED;
+
+        #if FACTORY_TEST
+        // Manually init AnimationComponent
+        // Normally it would init when we receive syncTime from robot process
+        // but since there might not be a body (robot process won't init)
+        // we need to do it here
+        GetAnimationComponent().Init();
+        
+        // Once we have gotten a frame from the camera play a sound to indicate 
+        // a "successful" boot
+        static bool playedSound = false;
+        if(!playedSound)
+        {
+          GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(1.f);
+          GetAnimationComponent().PlayAnimByName("soundTestAnim", 1, true, nullptr, 0, 0.4f);
+          playedSound = true;
+        }
+        #endif
       }
     }
   }

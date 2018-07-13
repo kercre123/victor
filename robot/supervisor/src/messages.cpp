@@ -458,6 +458,9 @@ namespace Anki {
                                                     msg.backupDist_mm);
       }
 
+      void Process_playpenStart(const RobotInterface::PlaypenStart& msg) {
+      }
+
       void Process_setControllerGains(const RobotInterface::ControllerGains& msg) {
         switch (msg.controller)
         {

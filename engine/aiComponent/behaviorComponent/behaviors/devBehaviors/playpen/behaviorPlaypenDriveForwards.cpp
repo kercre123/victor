@@ -65,7 +65,7 @@ Result BehaviorPlaypenDriveForwards::OnBehaviorActivatedInternal()
   
   _waitingForCliffsState = WAITING_FOR_FRONT_CLIFFS;
   
-  DelegateIfInControl(action, [this](ActionResult result) {
+  DelegateIfInControl(action, [this](ActionResult result) {      
     // Seeing the cliff will cause the drive straight action to be cancelled
     // Action should only complete with CANCELLED_WHILE_RUNNING, if it completes in any other manner then
     // fail

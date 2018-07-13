@@ -18,6 +18,7 @@
 #include <sstream>
 #include <chrono>
 #include <iomanip>
+#include <unistd.h>
 
 #define ARCHIVE_OLD_LOGS 1
 
@@ -187,6 +188,9 @@ namespace Cozmo {
       const std::string newFileName = _kPathToCopyLogTo + "/log0";
       int rc = std::rename(oldFileName.c_str(), 
                            newFileName.c_str());
+
+      // Make sure files are written to disk
+      sync();
 
       if(rc != 0)
       {
@@ -587,6 +591,33 @@ namespace Cozmo {
     return AppendToFile(ss.str());
   }
 
+  bool FactoryTestLogger::Append(const std::string& name, const TouchSensorFilt& data)
+  {
+    std::stringstream ss;
+    
+    if(_exportJson)
+    {
+      Json::Value& node = _json[name];
+      Json::Value newNode;
+      newNode["min"] = data.min;
+      newNode["max"] = data.max;
+      newNode["stddev"] = data.stddev;
+      node.append(newNode);
+      ss << "[" << name << "]\n" << newNode;
+    }
+    else
+    {
+      ss << "\n[" << name << "]" << std::fixed
+      << "\nMin: " << data.min
+      << "\nMax: " << data.max
+      << "\nStdDev: " << data.stddev;
+    }
+
+    PRINT_NAMED_INFO("FactoryTestLogger.Append.TouchSensorValues", "%s", ss.str().c_str());
+    return AppendToFile(ss.str());
+  }
+
+  
   bool FactoryTestLogger::AppendToFile(const std::string& data) {
     
     // If log name was not actually defined yet, do nothing.

@@ -223,6 +223,11 @@ message RollActionParams
    float_32 backupDist_mm,
 }
 
+message PlaypenStart 
+{
+
+}
+
 message SetMotionModelParams
 {
   float_32 slipFactor,
@@ -644,6 +649,7 @@ union EngineToRobot
   ControllerGains               setControllerGains          = 0x0B,
   SetMotionModelParams          setMotionModelParams        = 0x0C,
   RollActionParams              rollActionParams            = 0x0D,
+  PlaypenStart                  playpenStart                = 0x0E,
 
   // Motor control
   DriveWheels                   drive                       = 0x10,

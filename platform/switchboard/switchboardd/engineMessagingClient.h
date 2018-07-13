@@ -38,6 +38,7 @@ public:
   void SendMessage(const Anki::Cozmo::ExternalInterface::MessageGameToEngine& message);
   void SetPairingPin(std::string pin);
   void ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus status);
+  void HandleWifiScanRequest();
   EngineMessageSignal& OnReceivePairingStatus() {
     return _pairingStatusSignal;
   }
@@ -46,7 +47,9 @@ public:
   }
   static void sEvEngineMessageHandler(struct ev_loop* loop, struct ev_timer* w, int revents);
 
+
 private:
+
   LocalUdpClient _client;
   EngineMessageSignal _pairingStatusSignal;
   EngineMessageSignal _engineMessageSignal;

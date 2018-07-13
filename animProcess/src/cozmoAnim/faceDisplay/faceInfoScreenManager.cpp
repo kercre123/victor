@@ -42,6 +42,7 @@
 #include "osState/osState.h"
 
 #include "anki/cozmo/shared/factory/emrHelper.h"
+#include "anki/cozmo/shared/factory/faultCodes.h"
 
 #include <chrono>
 #include <fstream>
@@ -238,12 +239,37 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   SET_ENTER_ACTION(None, noneEnterFcn);
   SET_EXIT_ACTION(None, noneExitFcn);
 
+  // None screen 
+  FaceInfoScreen::ScreenAction drawInitConnectionScreen = [animStreamer, this]() {
+  #if FACTORY_TEST
+    InitConnectionFlow(animStreamer);
+  #else
+    (void)animStreamer;
+  #endif
 
+    // Restore power mode as specified by engine
+    SendAnimToRobot(_calmModeMsgOnNone);
+  };
+    
   // === FAC screen ===
   auto facEnterFcn = [this]() {
     DrawFAC();
   };
+
   SET_ENTER_ACTION(FAC, facEnterFcn);
+
+  GetScreen(ScreenName::None)->SetEnterScreenAction(drawInitConnectionScreen);
+  
+  FaceInfoScreen::ScreenAction exitNoneAction = []() {
+    // Disable calm mode
+    RobotInterface::CalmPowerMode msg;
+    msg.enable = false;
+    msg.calibOnDisable = false;
+    SendAnimToRobot(std::move(msg));
+  };
+  GetScreen(ScreenName::None)->SetExitScreenAction(exitNoneAction);
+  
+  // FAC screen
   DISABLE_TIMEOUT(FAC);
 
 
@@ -1413,6 +1439,13 @@ void FaceInfoScreenManager::EnablePairingScreen(bool enable)
 {
   if (enable && GetCurrScreenName() != ScreenName::Pairing) {
     LOG_INFO("FaceInfoScreenManager.EnablePairingScreen.Enable", "");
+    // Clear any fault code so we can draw to the face and
+    // actually pair. If the fault code is from a process crashing
+    // this will not execute when the button is double pressed since
+    // we need robot, anim, engine, and switchboard all communicating
+    // for pairing to start. If the fault code is something besides a
+    // process crash, this will clear it.
+    FaultCode::DisplayFaultCode(0);
     SetScreen(ScreenName::Pairing);
   } else if (!enable && GetCurrScreenName() == ScreenName::Pairing) {
     LOG_INFO("FaceInfoScreenManager.EnablePairingScreen.Disable", "");
@@ -1440,12 +1473,17 @@ void FaceInfoScreenManager::Reboot()
 {
 #ifdef SIMULATOR
   LOG_WARNING("FaceInfoScreenManager.Reboot.NotSupportInSimulator", "");
+  return;
 #else
+
+  // Suppress any error codes that might appear 
+  // as a result of the following reboot
+  FaceDisplay::getInstance()->EnableFaultCodeDisplay(false);
 
   // Need to call reboot in forked process for some reason.
   // Otherwise, reboot doesn't actually happen.
   // Also useful for transitioning to "REBOOTING..." screen anyway.
-  sync(); sync(); sync(); // Linux voodoo
+  sync();
   pid_t pid = fork();
   if (pid == 0)
   {

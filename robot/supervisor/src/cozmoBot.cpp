@@ -25,6 +25,8 @@
 #include "timeProfiler.h"
 #include "wheelController.h"
 
+#include "anki/cozmo/shared/factory/emrHelper.h"
+
 #ifndef SIMULATOR
 #include <unistd.h>
 #endif
@@ -162,12 +164,21 @@ namespace Anki {
               // If button has been held down for more than SHUTDOWN_TIME_MS
               else if(curTime_ms - timeMark_ms > SHUTDOWN_TIME_MS)
               {
+#if FACTORY_TEST
+                // In factory, don't send PrepForShutdown because processes don't shutdown cleanly
+                // and we get a fault code (i.e. 915 - NO_ENGINE) appear right before the power is pulled.
+                // Instead just call sync and let syscon pull power.
+                AnkiWarn("CozmoBot.CheckForButtonHeld.PossiblyShuttingDown", "Syncing");
+                timeMark_ms = curTime_ms;
+                sync();
+#else
                 timeMark_ms = curTime_ms;
                 state = START;
                 // Send a shutdown message to anim/engine
                 AnkiWarn("CozmoBot.CheckForButtonHeld.Shutdown", "Sending PrepForShutdown");
                 RobotInterface::PrepForShutdown msg;
                 RobotInterface::SendMessage(msg);
+#endif                
               }
             }
             else
@@ -360,6 +371,31 @@ namespace Anki {
         }
         lastCycleStartTime_ = cycleStartTime;
 
+
+#if FACTORY_TEST
+        {
+          // Periodically check if the touch sensor has ever
+          // gotten an invalid reading
+          // If is has print an error and send an overloaded
+          // RunFactoryTest message with a test type
+          // of TOUCH_SENSOR_INVALID
+          static TimeStamp_t then = HAL::GetTimeStamp();
+          const TimeStamp_t now = HAL::GetTimeStamp();
+          if((now - then > 1000) &&
+             !HAL::IsTouchSensorValid())
+          {
+            then = now;
+            
+            AnkiError("CozmoBot.TouchSensorIsInvalid", "");
+          
+            using namespace RobotInterface;
+            RunFactoryTest msg;
+            msg.test = FactoryTest::TOUCH_SENSOR_INVALID;
+            SendMessage(msg);
+          }
+        }
+#endif
+          
 
         // Report main cycle time error
         if ((mainTooLateCnt_ > 0 || mainTooLongCnt_ > 0) &&

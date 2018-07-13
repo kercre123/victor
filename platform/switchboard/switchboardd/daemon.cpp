@@ -551,6 +551,10 @@ void Daemon::OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame
       _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
       break;
     }
+    case Anki::Cozmo::ExternalInterface::MessageEngineToGameTag::WifiScanRequest: {
+      _engineMessagingClient->HandleWifiScanRequest();
+      break;
+    }
     default: {
       printf("Unknown Tag: %hhu\n", tag);
       break;

@@ -18,7 +18,7 @@ function check_dep()
 {
     CHECK_CMD="$*"
     eval $CHECK_CMD && return 0
-    
+
     echo "Depdendency check failed: $CHECK_CMD"
     echo "If you have apt-get, you should make sure you have the following deps"
     echo ""

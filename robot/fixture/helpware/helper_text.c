@@ -9,34 +9,31 @@
 #include "core/lcd.h"
 #include "helpware/display.h"
 
-
-
-
-#define LAYER_SMALL 1
-#define LAYER_LARGE 3
+#define DISPLAY_LAYER_LARGE_MAX_CHARS 7
 
 #define SMALL_LINE_COUNT 8
 
 #define HELPER_SMALL_TEXT_COLOR_FG lcd_BLUE
 #define HELPER_SMALL_TEXT_COLOR_BG lcd_BLACK
 
-static inline int min(int a, int b){  return a<b?a:b;}
-
 
 void helper_text_small(int line, const char *text, int len) {
   display_draw_text(DISPLAY_LAYER_SMALL, line-1, HELPER_SMALL_TEXT_COLOR_FG, HELPER_SMALL_TEXT_COLOR_BG,  text, len, 0);
 }
 
+static int large_layer = DISPLAY_LAYER_LARGE;
 void helper_text_large(uint16_t fg, uint16_t bg, const char *text, int len) {
-  display_clear_layer(DISPLAY_LAYER_LARGE, fg, bg);
-  display_draw_text(DISPLAY_LAYER_LARGE, 1, fg, bg, text, len, 1);
+  display_clear_layer(large_layer, fg, bg); //clear last-used center-text
+  large_layer = len <= DISPLAY_LAYER_LARGE_MAX_CHARS ? DISPLAY_LAYER_LARGE : DISPLAY_LAYER_LARGE_SKINNY;
+  display_clear_layer(large_layer, fg, bg); //clear last-used center-text
+  display_draw_text(large_layer, 1, fg, bg, text, len, 1);
 }
 
 void helper_text_show(int largeSolo)
 {
   uint8_t rendermask = 0xFF;
   if (largeSolo) {
-    rendermask = 1<<DISPLAY_LAYER_LARGE;
+    rendermask = 1<<large_layer;
   }
   display_render(rendermask);
 }
@@ -156,7 +153,7 @@ void helper_lcd_busy_spinner(void) {
 //#define SELF_TEST
 #ifdef SELF_TEST
 
-
+extern int fixture_serial(int);
 
 
 

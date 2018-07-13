@@ -53,6 +53,7 @@ enum uint_8 FactoryTestResultCode {
   CALIB_POSE_WRITE_FAILED,
   TOO_MANY_CALIB_IMAGES,
   CALIB_POSE_GET_FAILED,
+
   READ_TOOL_CODE_FAILED,
   TOOL_CODE_POSITIONS_OOR,
   TOOL_CODE_WRITE_FAILED,
@@ -73,11 +74,15 @@ enum uint_8 FactoryTestResultCode {
   TEST_CANCELLED,
   ROBOT_PICKUP,
   TOOL_CODE_IMAGES_WRITE_FAILED,
-  FIRST_CALIB_IMAGE_NOT_TAKEN,
+
+  NOISY_TOUCH_SENSOR,
+
   CUBE_POSE_WRITE_FAILED,
   LIFT_MOTOR_CALIB_UNEXPECTED,
   HEAD_MOTOR_CALIB_UNEXPECTED,
-  WIPED_ALL,
+
+  BACKPACK_ELECTRICAL_ERROR,
+
   ROBOT_FAILED_PREPLAYPEN_TESTS,
   ROBOT_NOT_TESTED,
   MOTORS_UNCALIBRATED,
@@ -88,7 +93,9 @@ enum uint_8 FactoryTestResultCode {
   CALIB_META_INFO_WRITE_FAILED,
   IMU_INFO_WRITE_FAILED,
   NO_ACTIVE_OBJECTS_DISCOVERED,
-  NO_PREPLAYPEN_CENTROIDS,
+
+  UNEXPECTED_TOUCH_DETECTED,
+
   COMPUTE_CAM_POSE_FAILED,
   CAM_POSE_OOR,
   PLAY_SOUND_FAILED,
@@ -104,7 +111,7 @@ enum uint_8 FactoryTestResultCode {
   NO_BODY_VERSION_MESSAGE,
   NVSTORAGE_ERASE_FAILED,
   PARSE_HEADER_FAILED,
-  ONE_POINT_ZERO_FIRMWARE,
+  NO_WIFI_APS_DISCOVERED,
   UNKNOWN_BODY_COLOR,
 
   // Victor specific error codes
@@ -135,8 +142,11 @@ enum uint_8 FactoryTestResultCode {
   TOUCH_VALUES_OOR,
   DISTANCE_SENSOR_OOR,
   CERT_CHECK_FAILED,
+  // NO_WIFI_APS_DISCOVERED // 2018-06-20: 0.9 was accidentally cut with this code at 100, 
+                            //             but that's invalid for playpen so it's been moved
 
-  // ==== New result codes should be added at the end ========
+  // ==== NO MORE SPACE !!!! =================================
+  // ==== New result codes should replace unused ones ========
   // ==== Never delete codes, even if they are deprecated! ===
   // ==== NB: Factory expects codes to be 0-99 so if you exceed 100 errors codes let them know! ===
 }
@@ -194,6 +204,21 @@ structure TouchSensorValues {
   uint_16 data[uint_16]
 }
 
+structure TouchSensorFilt {
+  float_32 min,
+  float_32 max,
+  float_32 stddev
+}
+
+// Bit masks to enable/disable various playpen checks
+// via a word in the emr
+enum no_cpp_class uint_32 PlaypenTestMask {
+  BackpackElectricalError      = 0x00000001,
+  UnexpectedTouchDetectedError = 0x00000002,
+  NoisyTouchSensorError        = 0x00000004,
+  CubeRadioError               = 0x00000008,
+  WifiScanError                = 0x00000010,
+}
 
 } // namespace Cozmo
 } // namespace Anki

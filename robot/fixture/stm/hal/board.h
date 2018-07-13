@@ -21,7 +21,8 @@ typedef enum {
   BOARD_REV_INVALID   = -1,
   BOARD_REV_1_0       = 0,  //Victor Fixture v1.0 11/10/2017
   BOARD_REV_2_0       = 1,  //Victor Fixture v2.0 1/5/2018
-  BOARD_REV_FUTURE,         //detected rev is newer than this firmware recognizes
+  BOARD_REV_A         = 2,  //VTF (victor test fixture) revA 5/1/2018
+  BOARD_REV_FUTURE    = 99, //detected rev is newer than this firmware recognizes
 } board_rev_t;
 
 #ifdef __cplusplus

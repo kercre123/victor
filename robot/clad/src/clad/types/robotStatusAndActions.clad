@@ -85,6 +85,7 @@ structure RobotState
   float_32 rwheel_speed_mmps,
   float_32 headAngle,
   float_32 liftAngle,
+  float_32 backpackTouchSensorFilt, // DONT MERGE TO MASTER
   AccelData accel,  // in head-frame (mm/s^2)
   GyroData gyro,    // in head-frame (rad/s)
   float_32 batteryVoltage,

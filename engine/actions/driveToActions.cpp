@@ -1225,7 +1225,12 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.UnsetInteracting", "%s[%d] Unsetting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _objectID.GetValue());
-        GetRobot().GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DrivingTo, _objectID);
+        if (HasRobot()) {
+          GetRobot().GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DrivingTo, _objectID);
+        } else {
+          // This shouldn't be possible if _lightsSet == true...
+          PRINT_NAMED_WARNING("IDriveToInteractWithObject.Dtor.NoRobot", "");
+        }
         _lightsSet = false;
       }
     }
