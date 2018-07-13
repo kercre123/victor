@@ -1,0 +1,91 @@
+---
+title: IgProf text output description
+layout: default
+related:
+ - { name: Top, link: . }
+ - { name: Downloads, link: https://github.com/ktf/igprof/tags }
+ - { name: Bugs, link: https://github.com/ktf/igprof/issues }
+ - { name: Project, link: https://github.com/ktf/igprof/ }
+---
+IgProf output resembles that of gprof so its output conventions documentation
+may be helpful to read first.
+
+The following explanation assumes memory leak checking. If you are measuring
+something else, adjust the explanation correspondingly for CPU time or memory
+allocated. The output format is the same, just the meaning of the numbers is
+different.
+
+The result file is made of sections like this :
+
+     ------------------------------------------------------------
+                 53553180        50642044    5/5       PersistentJetFinder::reconstruct()   (/afs/cern.ch/cms/Releases/ORCA/prerelease2/ORCA_8_0_1_pre1/lib/.
+     [0]         50642044        50226044    5       JetFinderEcalPlusHcalTowerInput::prepareInput(RecEvent const*) (/afs/cern.ch/cms/Releases/ORCA/prerele
+                  5863168               0    5/62      BaseRecItr::BaseRecItr[not-in-charge](RecoQuery const&) (writeDST) [952]
+                229962815               0    5/49      LazyObserver<RecEvent const*, int>::check() const (writeDST) [732]
+                    36864               0    5/14      std::vector<VJetableObject*, std::allocator<VJetableObject*> >::_M_insert_aux(__gnu_cxx::__normal_it
+                        0               0    5/5       JetableObject<EcalPlusHcalTower>::JetableObject[in-charge](EcalPlusHcalTower const&) (/afs/cern.ch/c
+                 62299760          416000    5/547     RecQuery::operator RecConfig const&() const (/afs/cern.ch/cms/Releases/COBRA/prerelease/COBRA_7_7_1_
+     ------------------------------------------------------------
+
+
+Each section describes the statistics for one function, the primary function,
+surrounded by secondary functions. Above the primary function are the callers:
+the functions that called the primary function. Below the primary function are
+the callees: the functions the primary function called. The line that begins
+with a bracketed number, here `[0]`, indicates the primary function; the number
+in the brackets indicates the function's index in the statistics. The smaller
+the index is, the higher the function was in cpu time usage, memory usage or
+leakage. The next columns are the statistics explained in more detail below.
+The first text column tells the name of the function, here
+`JetFinderEcalPlusHcalTowerInput::prepareInput(RecEvent const*)`, followed by
+the name of the module where it was found, here `writeDST`. The callers and
+callees give the index of the function after the module name, such as the
+`[952]` and `[732]` in the first two callees here, to help in navigating in the
+output.
+
+For the primary function line the first statistic is the sum of the memory
+leaked by the function and all its callees, here `50642044`. The second
+statistic is the amount of memory leaked directly by the function itself, here
+`50226044`. So in this case we can already see that most of the memory was
+leaked by the function itself. The third statistic is the number of unique call
+paths that resulted in a leak, here `5`. Note that this is not the number of
+calls that resulted in a leak, but the number of unique call paths: there were
+five different calls stacks with this function in the stack. There could have
+been thousands of such calls. (FIXME: allocations or leaks, can't be leaks if
+child entries are zero?)
+
+For the secondary functions the statistics are slightly different. The first
+statistic is the total amount of memory the function leaked in any call path.
+The second statistic is the amount leaked when the primary function was also in
+the call stack. For callers this is the amount of memory the caller leaked
+through the primary function. For callees it is the amount the primary function
+leaked through that callee. So the second number is always less than the first
+one. The third number pair is first the number of calls paths including the
+primary function, and then total number of calls to the function.
+
+In our example output, `PersistentJetFinder::reconstruct()` leaked a total of
+53553180 bytes, of which most, i.e. 50642044 bytes, was due to our example main
+function. All the memory leaked by the children of our example main function
+went through `RecQuery::operator RecConfig const&() const`, a total of 416000
+bytes (= 50642044 - 50226044). However, that function leaked a total of
+62299760 in 547 different call paths; five of those call paths were due to this
+primary function.
+
+For another example below, `TStreamerInfo::Compile()` leaked 514848 bytes, of
+which 513248 directly. This was from 228 different call paths. Of those, 2912
+bytes were result of 81 call paths from `TStreamerInfo::Build()` (of 228 call
+paths resulting in 515316 bytes of leaks in the latter). 1640 bytes were leaked
+for calls from `TStreamInfo::BuildOld()` in 8 call paths. 510296 bytes, the
+majority, was from calls to `CINT::Type::patchStreamers()`. Majority of the
+memory was leaked directly. However `TObjArray::AddAtAndExpand()` leaked 1600
+bytes in two call paths (out of four call paths and 3200 bytes leaked in total
+to that function). Memory was allocated but not leaked via
+`TStreamerInfo::ComputeSize()`; there were 162 call paths to the latter but
+they all came from this function.
+
+IgProf always reports complete call stacks.  This means very rich analysis of
+the profile data is possible, in particular if filters are applied, the results
+remain accurate.  Only the very last stage of generating reports collapses all
+callers and callees together.  In contrast, callgrind for example collapses the
+call tree data already at collection time, limiting many later analyses of that
+profile data.

@@ -1,0 +1,70 @@
+---
+title: IgProf, The Ignominous Profiler
+layout: default
+related:
+ - { name: Top, link: . }
+ - { name: Downloads, link: https://github.com/ktf/igprof/tags }
+ - { name: Bugs, link: https://github.com/ktf/igprof/issues }
+ - { name: Project, link: https://github.com/ktf/igprof }
+---
+Welcome to IgProf, the Ignominous Profiler.  IgProf is a simple nice tool for
+measuring and analysing application memory and performance characteristics.
+IgProf requires no changes to the application or the build process.  It
+currently works on Linux (`ia32`, `x86_64`).  Eons ago it worked also on Mac OS X
+(`PPC`).
+
+IgProf is fast, light weight and correctly handles dynamically loaded shared 
+libraries, threads and sub-processes started by the application. We have
+used it routinely with large C++ applications consisting of many hundreds of
+shared libraries and thousands of symbols from millions of source lines of 
+code. It requires no special privileges to run.  The performance reports 
+provide full navigable call stacks and can be customised by applying 
+filters.  Results from any number of profiling runs can be included. This 
+means you can both dig into the details and see the big picture from combined 
+workloads.
+
+IgProf can be run in one of three modes: as a performance profiler, as a
+memory profiler, or in instrumentation mode. When used as a performance
+profiler it provides statistical sampling based performance profiles of the
+application. When used as a memory profiler information about both memory leaks
+and the total dynamic memory allocations are available. It can also be used to
+obtain a profile the live memory allocations in the heap at any given instant
+during the application run, although this requires a small code modification to
+signal from within your application the appropriate time to obtain the profile.
+For both profiling modes, one can produce either simple ASCII flat file or
+web-navigable reports.  A complete performance and memory use picture can be
+obtained by running your application twice, once in each profiling mode.
+When run in instrumentation mode igprof can be used to precisely measure the
+time spent in a given function with the precision of a few ns.
+
+The performance profiling adds negligibly to application run time and 
+typically adds less than 50MB to the memory usage.  The memory profiling 
+overhead depends heavily on the application's memory allocation patterns: the 
+smaller allocations and the 
+higher the rate, the more overhead.  A fairly typical example from
+our own applications, running on 64-bit Scientific Linux 5, loading some 
+600 shared libraries, using 1 GB memory and allocating at roughly
+a million allocations per second rate (averaged over an hour or so), the run 
+time overhead is ~250% and the memory use increased by ~1 GB. On 32-bit Linux 
+the overhead is much less, about ~50% increase in run time, in some cases as 
+little as 15%. Usually IgProf is considerably faster than valgrind or 
+callgrind for the job.
+
+### Other profilers
+
+Profiling is a craft art, and profilers are just tools. The best undestanding
+of your application is usually achieved by correlating a number of profiling
+result coming from different profilers and QA tools.
+If developing on a Mac OS X is an option, even if you otherwise develop on
+Linux, consider using [Instruments][].  For very precise but much more expensive
+profiling you can use [callgrind and valgrind][]. If you want to get more 
+down-to-the-metal information [OProfile][], Linux [perfctr][], [PAPI][] or
+[perfmon2][] are other statistical profilers that use CPU performance counters;
+they however require system privileges and kernel instrumentation.
+
+[Instruments]: https://developer.apple.com/technologies/tools/
+[callgrind and valgrind]: http://www.valgrind.org
+[oprofile]: http://oprofile.sourceforge.net
+[perfctr]: http://user.it.uu.se/~mikpe/linux/perfctr/
+[perfmon2]: http://perfmon2.sourceforge.net
+[PAPI]: http://icl.cs.utk.edu/PAPI/

@@ -1,0 +1,39 @@
+---
+title: IgProf in CMSSW
+layout: default
+related:
+ - { name: Top, link: . }
+ - { name: Downloads, link: https://github.com/ktf/igprof/tags }
+ - { name: Bugs, link: https://github.com/ktf/igprof/issues }
+ - { name: Project, link: https://github.com/ktf/igprof/ }
+---
+### How to use IgProf in CMSSW
+
+You can use IgProf on all platforms currently supported by CMS.
+IgProf is part of the CMSSW builds, so it is automatically
+in your environment after a "eval `scram runtime -[c]sh`".
+
+### Building your own IgProf
+
+If for some reason you need to build an IgProf other than the one
+in the default CMSSW configuration, do as follows:
+
+1. Create a CMSSW project project area if you don't already have one:
+
+       scram project CMSSW CMSSW_3_7_0
+       cd CMSSW_3_7_0/src
+
+2. Check out the desired version of the tools:
+
+       addpkg IgTools/Ig{Hook,Prof,Trace} Vxx-yy-zz
+
+3. Build:
+
+       scram b -j 10
+
+4. Make it available in your environment:
+
+       eval `scram runtime -sh`  # bourne shell
+       eval `scram runtime -csh` # tcsh
+
+And you are done!

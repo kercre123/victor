@@ -1,0 +1,49 @@
+#!/usr/bin/env python
+#
+# A script which merges all the relevant resources of a igprof-book into one
+# single file.
+
+from optparse import OptionParser
+import re
+from os.path import exists, join
+from sys import stdout, stderr
+
+if __name__ == "__main__":
+  parser = OptionParser()
+  parser.add_option("--js-path", dest="jsPath",
+                    default="", help="Javascript search path")
+  parser.add_option("--driver", dest="driver",
+                    default=None,
+                    help="Python driver file. Will be prepended to the unified html.")
+  opts, args = parser.parse_args()
+  f = open(args[0])
+  paths = ["."] + opts.jsPath.split(":")
+  out = stdout
+  if opts.driver:
+    try:
+      d = open(opts.driver)
+    except Exception, e:
+      print e
+      parser.error("Python driver not found.")
+    out.write("#!/usr/bin/env python2.6\n__DATA__ = \"\"\"\n")
+  for l in f.readlines():
+    m = re.search("""<script[^>]*src=["']([^"']+)["'][^>]*></script>""", l)
+    if not m:
+      out.write(l)
+      continue
+    include = None
+    for path in paths:
+      fullname = join(path, m.groups()[0])
+      if not exists(fullname):
+        continue
+      include = open(fullname)
+    if not include:
+      parser.error("Cannot find %s in path." % m.groups()[0])
+    out.write(l[:m.start()])
+    out.write("""<script type="text/javascript"><!--\n""")
+    out.write(include.read().replace("\\", "\\\\"))
+    out.write("""\n--></script>""")
+    out.write(l[m.end():])
+  if opts.driver:
+    out.write("\n\"\"\"\n")
+    out.write(d.read())

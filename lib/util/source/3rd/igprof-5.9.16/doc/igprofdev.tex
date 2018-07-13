@@ -1,0 +1,933 @@
+\documentclass[notitlepage,letter,12pt]{article}
+\usepackage{url}
+%\usepackage{abstract}
+\usepackage{hyperref}
+\pagestyle{empty}
+
+\textwidth      6.5 in
+\textheight     9.0 in
+\topmargin      0.5 in
+\oddsidemargin  0.0 in
+\evensidemargin 0.0 in
+\headheight =  -1.0 in  
+
+
+%\setlength{\absleftindent}{0pt}
+%\setlength{\absrightindent}{0pt}
+
+\newcommand\myurl[2]{\url{#1}}
+\newcommand\email[1]{\href{mailto:#1}{\nolinkurl{#1}}}
+
+\title{Future development of the IgProf application performance profiler and analysis tool}
+
+\author{Peter Elmer\\
+Princeton University\\
+\email{Peter.Elmer@cern.ch} \and
+Giulio Eulisse\\
+FNAL\\
+\email{Giulio.Eulisse@cern.ch} \and
+Robert Lupton\\
+Princeton University\\
+\email{rhl@astro.princeton.edu}}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Overview}
+
+We propose a variety of enhancements to an advanced software
+application performance profiler and analysis tool, IgProf \cite{IGPROF}.
+These enhancements have two flavours: increasing its usefulness to
+a broader audience; and supporting newer computing architectures
+such as Intel's Xeon Phi (Intel MIC) and low power ARM processors.
+We also propose creating two new related tools, IgExpert and IgMatch,
+which will extend the capabilities of IgProf through interaction
+with a static code analyzer and other profilers.
+
+Studies with tools such as IgProf, and experiments with newer computing 
+architectures,
+are imperative to support the software evolution required for the
+scientific programs of many fields including, for example, our own
+fields of experimental
+High Energy Physics (HEP) and Astronomy.  The scale of the software codes involved,
+along with the evolving computing challenges implied by the scientific goals 
+of the projects, requires high quality performance profiling tools.
+The typical scientific programmer is also usually a scientist 
+first and a (less experienced) programmer second, and in large, modern
+projects probably works in a large geographically distributed collaboration. 
+Thus software performance tools that are not only low overhead and easy
+to use in any environment, but also facilitate collaboration at a distance
+(perhaps with experts), are extremely valuable. The longevity of the
+projects, and their software, also implies a critical need for tools both
+to create new software appropriate for the newer architectures and to
+evolve large existing ``legacy'' code bases over time. 
+
+The IgProf performance profiler was originally developed 
+with funding from the US National Science Foundation (NSF) and Department 
+of Energy (DOE) in the context of the Compact Muon Solenoid (CMS) \cite{CMSDET} 
+experiment at the Large Hadron Collider (LHC), but is now used by a number of other experiments and 
+projects. It is intended as a fast, 
+lightweight tool that can be very easily integrated into the code
+development workflow of scientific code developers who are not expert 
+programmers, while at the same time it can also be used in large scale 
+code integration and testing systems. It can be used as a statistical 
+sampling performance profiler, as a memory profiler or in instrumentation 
+mode.  When used as a memory profiler it provides information about 
+memory leaks, the total number of dynamic memory allocations and heap memory
+profiles. Most of the work in this proposal focuses on enhancements
+to this tool. IgProf is meant to be used as a general purpose tool
+that can be used anywhere with minimal overhead.
+
+In addition we propose the creation of two new tools. The first,
+IgExpert, will combine profile information from IgProf (and in principle other
+profiling tools) with information obtained from a static code analyzer
+to identify basic problems and opportunities for performance improvements
+and to provide additional code-context information for profile reports.
+The second, IgMatch, is the most ``experimental'' and expert tool in
+this proposal.  It will combine information from the IgProf memory 
+profiler with hardware event counter information that will become available
+in processors later this year to explore how data structures are accessed
+and the resulting affect on the memory caches of processors.
+
+More specifically we propose to:
+
+\begin{itemize}
+\item Make IgProf work efficiently on ARM (32bit and 64bit) and on the Xeon Phi coprocessor
+\item Improve the IgProf profile reports for threaded applications
+\item Extend IgProf to support profiling of codes that are written in a combination of combining Python and Fortran/C/C++
+\item Make IgProf work on the current generation of MacOSX machines
+\item Improve the functionality and usability of the IgProf profile visualization 
+\item Add a new tool, IgExpert, which will combine information from the profiles and a static code analyzer 
+\item Add a new tool, IgMatch, a memory address analysis tool for data structure analysis
+\item Provide User Manuals for IgProf, IgExpert and IgMatch
+\end{itemize}
+
+After completion of the work described in this proposal the IgProf and
+IgExpert tools will provide a complete and unique set of profiling
+and performance monitoring capabilities. The more specialized IgMatch tool 
+will facilitate the kind of investigations which will be required in
+particular to maximize newer hardware architectures. 
+
+\section{Computing context of this work}
+
+\subsection{Scientific Software Development}
+
+Large scientific projects usually consist of a small core team with
+significant software as well as scientific expertise and a much larger 
+community of
+students, postdocs, staff and faculty whose knowledge and experience
+with software programming can vary greatly. Many have not had any
+specific training in basic software engineering or at most have had
+introductory classes in particular programming languages (Python,
+C++) or particular programming paradigms/techniques. Real software
+engineering experience, and in particular experience with design
+for performance is fairly rare. In general the relevant skills are
+learned ``on the job'' while working in these projects. The longevity
+of these large projects implies that individuals often move on their
+careers or to other projects and new individuals arrive.  Code
+usually outlives its original author and, especially in the analysis
+domain, new code is continually being written to tackle more
+sophisticated problems.
+
+The result is a software development environment in which a lot of
+very basic performance problems can appear in addition to the more
+sophisticated ones.  It is also natural that individual researchers
+are primarily motivated by the scientific problems they are trying
+to solve and only secondarily by technical software engineering
+issues such as software performance.  Many will only spend time
+using performance analysis tools when immediate resource limitations
+require it. If the tools are difficult or time consuming to use,
+present information in an opaque manner or require use of machines
+different from those where code is normally developed it is unlikely
+that most scientific developers will use them regularly or even at
+all. It is not uncommon to find individual cases where large resource
+use or wait times for results could have been avoided had performance
+profiling been available and used.
+
+In addition to these requirements for individual developers, large
+projects also have automated central build and test environments
+to monitor that performance is not compromised by improvements.
+Tools should be runnable in that environment and provide navigable
+reports that can be disseminated via the web, for example. Ideally
+the same tool used by individual developers will be run, but these
+environments also provide the opportunity to run more costly
+or specialized tools, and these should also have reports that can
+be explored via a web browser.
+
+We believe that the IgProf tool today already satisfies many of these
+general use requirements. The program of work described in this
+proposal, as well as the addition of the IgExpert tool, are meant
+to further broaden its range of applicability, functionality and 
+usability and to provide a high quality, state-of-the-art open source
+tool for use in scientific programming environments. We naturally expect
+to provide training and mentoring, but a very good and reasonably
+user-friendly toolset is essential.  
+
+\subsection{Future Hardware Evolution}
+
+Recent years have seen a significant change in the direction of
+evolution of processor design relative to the previous decades.
+Previously one could expect to take a given code, and often the
+same binary executable, and run it with greater computational
+performance on newer generations of processors with roughly exponential
+gains over time as described by Moore's Law.  A combination of increased
+instruction level parallelism and (in particular) processor clock frequency 
+increases insured that expectations of such gains could be met in generation 
+after generation of processors. In the past 10 years, however, 
+processors have begun to hit scaling limits, largely driven by overall 
+power consumption.
+
+The first large change in commercial processor products as a
+result of these limits was the introduction of ``multicore'' CPU's,
+with more than one functional processor on a chip. At the same time
+clock frequencies ceased to increase with each processor generation and 
+indeed were often reduced relative to the peak. The result of this was
+one could no longer expect that single, sequential applications would
+run faster on newer processors. However in the first approximation,
+the individual cores in the multicore CPU's appeared more or less
+like the single standalone processors used previously. Most large
+scientific applications (HPC/parallel or high throughput) run in
+any case on clusters and the additional cores are often simply
+scheduled as if they were additional nodes in the cluster. This
+allows overall throughput to continue to scale even if that of a
+single application does not. It has several disadvantages, though,
+in that a number of things that would have been roughly constant
+over subsequent purchasing generations in a given cluster (with
+more or less fixed number of rack slots, say) now grow with each
+generation of machines in the computer center. This includes the
+total memory required in each box, the number of open files and/or
+database connections, the number of jobs handled by batch schedulers,
+etc.  The specifics vary from application to application, but
+potential difficulties in continually scaling these system parameters
+puts some pressure on applications to make code changes in response,
+for example by introducing thread-level parallelism where it did
+not previously exist.
+
+There is moreover a more general expectation that the limit of power
+consumption on future Moore's Law scaling will lead to more profound
+changes going forward. In particular, the power hungry x86-64 ``large''
+cores of today will likely be replaced wholly or in part by simpler
+and less power hungry ``small'' cores. These smaller cores effectively
+dial back some of the complexity added for performance, at the
+expense of increased power, in the period when industry was still
+making single core performance scale with Moore's Law.  The result
+is expected to be ever greater numbers of these smaller cores,
+perhaps with specialized functionalities like large vector units,
+and typically with smaller memory caches than the ``large'' cores.
+Exploiting these devices fully will also push applications to make
+larger structural code changes to introduce significantly more fine
+grained parallelism.
+
+Although it is very hard to predict where the market will wind up
+in the long run, it is generally expected that software will have
+to provide much greater parallelism and data locality to remain
+both scalable and efficient, tracking Moore's promise of an exponential
+growth in transistor density. We already see several concrete
+examples which give indications as to the kinds of things that we
+will see going forward:
+
+\begin{itemize}
+\item Intel's Many Integrated Core (MIC) architecture, combining many smaller cores with very-wide SIMD units. The first commercial products (Xeon Phi) are in the form of a coprocessor and aimed at the HPC market.
+\item Systems implementing the forthcoming ARMv8 64bit architecture.  Here the significant use of the ARM processor in low-power or embedded systems (e.g. mobile devices) positions it well to enter a server market dominated by the power limitations described above, even if the route it followed to get there differs from
+that of Intel.
+\item General Purpose Graphics Processing Unit (GPGPU or GPU), such as the Tesla accelerators from NVIDIA
+\end{itemize}
+
+Although GPGPU's are quite interesting for certain applications, they
+imply larger changes in software algorithms and in practice profiling
+on GPGPU's is quite different. The work described in this proposal will 
+thus focus on the general purpose processors, namely x86-64, the Intel MIC 
+architecture and ARM. We note also that these same issues with future
+processor evolution appear also for Exascale computing. 
+
+The work described in this proposal will permit investigations of these
+new architectures in two ways. First, by making the IgProf profiler
+work on the new architectures and by expanding its visualization 
+capabilities for threaded applications we insure that a common and
+easy to use profiling capability is universally available.
+Second, the IgMatch application we describe below will permit specific
+studies important to the adoption of code to newer architectures.
+
+\subsection{Other Profiling Tools}
+
+Any large project can benefit from the use of multiple profiling tools
+and our own projects (CMS at the LHC and the Large
+Synoptic Survey Telescope) are not atypical in this regard. In practice 
+different tools provide different types of information and due to compromises 
+and choices made in the implementation may be more or less appropriate in 
+different situations. In this section we describe other similar tools and 
+their strengths and weaknesses and describe where we believe the development 
+in this proposal will make new contributions.
+
+gprof is the classic Unix performance profiler and an
+early standard for what such tools should provide. Its primary
+disadvantage these days is the requirement for a specialized compilation
+in order to make profiles.  Modern tools provide profiles for
+uninstrumented binaries. This simplifies greatly the workflow for
+the typical code developer. gprof is also unable to handle symbols
+dynamically loaded via $\texttt{dlopen}$, which renders it incapable
+of profiling hybrid python/compiled language systems, for example.  
+
+Valgrind \cite{VALGRIND,VALGRINDPAPER} is a dynamic binary
+instrumentation framework for building analysis tools for checking
+application behavior and performance profiling. It provides a number
+of interesting tools.  The most relevant in this context are Massif,
+which does heap profiling, and Callgrind (based on Cachegrind),
+which provides information about performance including
+caches misses and branch misprediction.  It is open source and
+supports multiple architectures, including ia32/x86-64 and, as of
+recently, ARM Cortex A8 and A9. The primary difficulty with Valgrind
+is that running with the tools typically results in a factor of
+5-100 slowdown and a significant increase in memory usage, sometimes
+a factor of two.
+
+google-perftools \cite{GPERFTOOLS} is the tool closest to IgProf in
+functionality, providing both performance and memory profiling capabilities.
+Originally maintained by Google, it is now ``community supported'' and
+renamed as ``gperftools''.
+Although there has been some small amount of recent activity on its
+source code repository, we have the impression that it is not very well
+maintained at this point and does not appear to have a strong developer
+community or development plan associated with it.
+
+VTune \cite{VTUNE} is the general performance profiling tool provided by
+Intel, with a fairly rich set of features for both sequential and
+threaded programs. In the context of scientific software development it
+suffers from several problems, however. It is closed source and requires a
+license to run. This limits its usability in large collaborations with
+many participating institutions, as it may not be available in the
+environment where people do their development. It is also another
+GUI-centric tool, lacking web publication capabilities, which limits
+distributed collaboration on code development.  Finally it is also
+not so useful for profiling non-Intel processors such as ARM and,
+to some extent, AMD.
+
+HPCToolkit \cite{HPCTOOLKIT} is a profiling analysis tools whose main 
+feature is access to hardware performance counters. It is a relatively 
+sophisticated tool for its environment, and provides in particular 
+support for HPC parallel applications. The primary difficulty with the 
+use of the hardware counters is the need for kernel patches. As we will 
+describe in the section on hardware counter analysis below, these are 
+also definitely expert tools.
+
+GOODA \cite{GOODA} analyzer is another profiling analysis tool based on
+the hardware performance counters, written by a Google employee (David 
+Levinthal) with whom we have collaborated in the past. The novel
+aspect of GOODA is its attempt to provide a microarchitecture independent
+cycle decomposition \cite{GOODACYCLEACCT}. It suffers from the same
+need for kernel patches as other such tools, however. 
+
+DynamoRIO \cite{DYNAMORIO} is a dynamic binary
+instrumentation framework. It has similarity to the instrumentation 
+functionality
+within IgProf, rather than a full fledged tool itself. It instead
+permits the construction of tools using the dynamic instrumentation
+functionality. At the moment it supports only ia32/x86-64. Although we do
+not propose this as a deliverable in this proposal, we might consider
+at some point introducing compatibility with DynamoRIO within IgProf.
+
+PIN \cite{PIN}, like DynamoRIO, is a dynamic binary instrumentation tool,
+with some of the same interesting capabilities. It is provided by Intel,
+however, and suffers from the same problems as VTune: its license is
+proprietary rather than open source, limiting what can be done with it, and
+it is limited to Intel architectures (ia32/x86-64). It supported ARM
+in the past, but support appears to have been dropped when Intel sold 
+its XScale-business (this illustrates one of the difficulties with 
+software with closed source, proprietary licenses).
+
+MacOSX comes with a range of tools (not including gprof). Older
+versions of (10.5; 10.6) supported Saturn for PC sampling and also
+a tool called Shark, but they disappeared with the release of version 10.7,
+once again emphasizing the difficulties with proprietary
+tools. Modern versions of MacOSX expect one to use a GUI tool
+(Instruments), and although it is possible to run Instruments from
+the command line, it only appears to work after running the GUI
+version first.
+
+In summary, all tools evolve over time and, especially for open source 
+software, good ideas tend to diffuse through the whole ecosystem, leading 
+overall to a greater level of tool sophistication. We believe the work
+described in this proposal, and the specific tools, will provide
+new capabilities and contribute to this ecosystem.
+
+
+
+\section{Program of Work}
+
+We now describe the program of work we propose for enhancing IgProf
+and for the new IgExpert and IgMatch tools.
+
+\subsection{IgProf}
+
+IgProf is a lightweight performance profiling and analysis tool. It can be
+run in one of three modes: as a performance profiler, as a memory profiler, or 
+in instrumentation mode. When used as a performance profiler it provides 
+statistical sampling based performance profiles of the application. In the
+memory profiling mode it can be used to obtain information about the total
+number of dynamic memory allocations, profiles of the ``live'' memory 
+allocations in the heap at any given time and information about memory 
+leaks. The memory profiling is particularly important for C/C++ programs, 
+where large amounts of dynamic memory allocation can affect performance and
+where very complex memory footprints need to be understood.
+In nearly all cases no code changes are needed to obtain profiles.
+For the specific case of heap profiles a small code modification will
+be necessary to select the point(s) during the application run where
+a profile should be saved. 
+
+IgProf currently supports Linux and x86/x86-64 architectures. It correctly 
+handles dynamically loaded shared libraries, threaded applications
+and subprocesses. It can be run entirely in user space without special 
+privileges and produces full navigable call stacks.
+
+It has been used routinely with large applications involving many hundreds
+of dynamically loaded shared libraries and thousands of code symbols
+derived from millions of lines of code. The performance profiling mode in 
+general adds very little to the run time and typically increases the memory 
+footprint by no more than 50MB. The overhead of the memory profiling depends 
+on the number and rate of memory allocations in the program. In an extreme 
+application with $\sim$ 5-7M ``live'' allocations in the heap and 1MHz of 
+allocations
+a factor of $\sim$ 3 is seen in runtime and $\sim$ 1 GB of additional
+memory is required for 64bit applications. In 32bit mode the overhead
+is less, typically 50\% for runtime and somewhat lower in additional 
+memory use.
+
+The profile reports can be visualized in one of several ways. A simple text
+report can be produced from the raw data saved during the profiling run.
+Alternatively a web-browsable profile report can be produced which allows
+easy navigation of the call stack. Both allow one to see profile data 
+ordered by symbol in terms of ``cumulative'' cost (function plus children)
+and ``self'' cost (time in the function itself) as well as a
+full call graph view showing the functions which called, and which were
+called by, any given function. An important feature of the web-navigable
+reports is the ability to point via URL at particular places in the
+call graph. This facilitates collaboration between individuals at
+different locations.
+
+IgProf is the primary software profiling tool of the CMS experiment. 
+IgProf was first written in 2003 and has been improved over time,
+usually driven by the immediate needs of CMS. It has also been adopted by
+the Geant4 \cite{GEANT4} collaboration for routine performance testing and
+is a standard test in their automated test infrastructure. It is included in 
+the software distributions provided by the CERN central software group 
+(CERN PH-SFT) to the Atlas and LHCb experiments, where it has seen some 
+amount of use. The CERN PH-SFT group also uses it as part of their
+automated build and test infrastructure.
+
+For x86-64 IgProf uses an external library, libunwind \cite{LIBUNWIND}, to
+do the call stack unwinding, and one of the original IgProf developers
+(Lassi Tuura) made contributions to libunwind specifically to provide
+a ``fast path'' for the stack walk on x86-64. This significantly reduced
+the performance overhead when doing memory profiling on x86-64, for example.
+
+\subsubsection{IgProf and Intel MIC}
+
+The Intel Xeon Phi coprocessor, the first product based on the new Intel Many 
+Integrated Core (MIC) architecture is becoming available at the beginning
+of 2013. It is by design much closer to a normal Xeon. This is true
+both from the architectural point of view, as the cores are based on the 
+well proven x86 architecture, as well as from the programming model point 
+of view, as the POSIX pthread API is available. In practice this simplifies
+significantly both the porting of normal application code and quasi-system 
+tools like IgProf.
+
+The main issues we see are minor changes of the instrumentation code to
+handle new vector instructions, and some small issues adapting build
+procedures and build unit tests to the cross-compiling environment
+required for the Xeon Phi. We expect this to go reasonably quickly
+and then it will become the test bed for enhancements to how IgProf
+manages profiles from multi-threaded applications. 
+
+\subsubsection{IgProf and threaded applications}
+
+Two kinds of issues appear when profiling multi-threaded programs. The 
+first issue is the basic question of adapting the profiler to handle, 
+and properly account for, data coming from multiple threads. IgProf can 
+currently be used to profile multi-threaded programs without
+problems, and in fact it has been used quite extensively within CMS
+for profiling specialized server daemons with many threads. What 
+it doesn't do at the moment is allow for separate bookkeeping of the
+data from the different threads. Everything is simply merged.
+
+The second issue is to reconstruct properly the asynchronous behavior of 
+multi-threaded frameworks, which typically employ a work-queue to dispatch the
+computational payloads. In this kind of design the actual work appears
+to happen all from one single place (the scheduler) rather than from
+the actual location where the work was requested. Therefore being able to 
+reconstruct a synchronous view can simplify understanding where the
+performance is spent.
+
+Given that a number of projects in HEP have recently adopted the use of 
+Intel's Thread Building Blocks (TBB) as the toolkit on top of which to build
+their parallel frameworks, we plan to give IgProf the ability to
+instrument the TBB task queueing - scheduling API in order to represent
+correctly where the computationally heavy tasks have been requested. 
+Moreover, we plan to harvest interesting profile information from this API
+instrumentation such as the number of tasks being queued and
+scheduled, the amount of task stealing which happens to balance
+work among threads and other similar quantities that affect the
+scalability of parallel frameworks. This feature will be implemented
+in such a way that it will allow for the similar features to be added
+for the API's of other toolkits.
+
+
+\subsubsection{IgProf and ARM}
+
+In terms of use in computer centers, it is 64bit ARM micro-servers that
+are likely to be of interest. However as of early 2013, only ARMv7 (32bit) 
+processors are available, such as the Cortex-A8, A9 and A15. Commercial
+products with ARMv8 (64bit) are expected in late 2013 or early 2014. There will surely
+be an initial period where various tools and the OS distributions catch up 
+to the new hardware. We will thus initially focus on ARMv7 processors as
+a stepping stone, and then after that has been accomplished we will proceed
+to 64bit ARM.
+
+We see two main tasks at the moment for full, and efficient, ARM support
+in IgProf. First, we will need to write the assembly decoder and associated
+code to allow for function instrumentation, e.g. $\texttt{malloc/calloc}$ for
+memory profiling, others for more general instrumentation. To keep things
+simple, we will focus on the fixed-length instructions and ignore the
+Thumb instructions. They in any case are not relevant for the eventual
+64bit ARM support. Thus as a concrete reference platform we will probably
+use the Fedora distribution with fixed length instructions, hard float and 
+little endian.
+
+Second, we expect it may be necessary to make some changes to libunwind.
+Basic support for ARM is already there, but much as was done for x86-64, we
+will need to make some changes to allow a ``fast path'' for obtaining the
+call stack. We believe that the changes should be very similar to those for
+x86-64, but they are currently not available for ARM.
+
+{\it Aug. 2014 - ARMv8 support is currently being added and tested by 
+a GSoC-supported MSc student at Aalto University, Filip Nyback.}
+
+\subsubsection{IgProf and MacOSX}
+
+In the past IgProf was supported on MacOSX for PowerPC, but given
+the resources available and priorities within CMS this functionality has not 
+been maintained since Apple transitioned from PowerPC to Intel processors. 
+Even if all of the production computer center resources we use today
+run Linux, individual developers do use MacOSX machines for their
+personal development. In order to facilitate commonality of development
+environment between Linux and MacOSX environments, and permit sharing
+of code profiles (via the web-based IgProf reports), we will make IgProf
+function once again on MacOSX for Intel processors.
+
+The first step here is some code cleanup to deal with the fact that
+we will have MacOSX and x86-64, whereas previously we had a clear
+separation of MacOSX and PowerPC from Linux and ia32/x86-64.
+
+Second, just as for ARM support above, we will need to do some work
+on libunwind. It supports BSD, but is currently lacking support for
+Mach-O binaries and libraries (it supports only ELF). In practice,
+we only need a small portion of the libunwind functionality (e.g.
+$\texttt{unw\_backtrace}$) so it should be relatively straightforward
+to get the minimum functionality working. Support should however
+eventually integrated into and maintained in libunwind itself, so
+the full functionality will be needed. Apple does itself provide its
+own version of libunwind, which might be an alternative possibility.
+
+Third, some changes will need to be made to the tool that processes
+the raw data from the profiler into the reports so that it also
+understands Mach-O binaries.
+
+
+\subsubsection{Combined C++ and Python Profiling}
+
+A common pattern in scientific software frameworks is to use a
+high-level language (typically Python) as the user application and
+algorithm building framework and implement the computationally-intensive
+portions of the problems in underlying Fortran/C/C++ libraries. The
+two are then typically connected via bindings generated from tools
+like SWIG~\cite{SWIG} or PyROOT~\cite{PYROOT}. One of the features of these 
+hybrid analysis codes is that it is tempting to either write too much code
+in Python, or to write
+algorithms that continually switch between the two layers.  Such
+systems are sometimes hard to debug, and are often hard to optimise
+as the current profilers support either Python or C++, but we need
+to look at both simultaneously.  Even in cases where all the time
+is being spent in C++, the lack of visibility into the structure
+of the Python leads to ambiguity as to where the expensive code is
+being called from.
+
+We believe that it should be possible to do something similar to what 
+\texttt{gdb} does for Python support in recent versions, namely to mimic the
+way that \texttt{gdb} hooks into the Python interpreter internals using the 
+generic instrumentation capabilities of IgProf. This should provide
+sufficient information to allow for construction of a complete and
+seamless source-level profile of combined Python and C++ applications.
+
+\subsubsection{Profiling heterogeneous architectures}
+
+A use case which we expect will become more important over time for
+HEP is profiling applications which run on heterogeneous architectures,
+e.g.\ both general purpose cores and accelerator technologies.
+We would like to allow for a complete profiling of applications running both 
+on CPU cores and accelerator 
+technologies within a single job.  This can be done using the binary
+instrumentation capabilities of IgProf. There are hooks in common
+parallel programming frameworks like CUDA~\cite{PROFCUDA},
+OpenCL~\cite{PROFOPENCL} and Intel's TBB~\cite{PROFTBB} which can be used
+to obtain profiling information. The results from both the standard
+IgProf profiling and the parallel programming frameworks can be combined 
+into a single visualization of the profile.
+
+\subsubsection{Application specific profile extensions}
+
+Most profilers, including IgProf, are stacktrace-oriented. While mapping
+computing time to specific functions is a very useful and direct way
+to understand the performance, there are also application specific
+quantities that can be of interest. For example in the Geant4~\cite{GEANT4} 
+simulation,
+understanding where computing time is being spent relative to location
+in the geometry, particle type, physics list, etc. Today this is
+understood in a rather ad-hoc fashion. Rather than develop and extend
+Geant4-specific profiling tools, we propose to create ``application
+specific profiling extensions'' in IgProf (using its binary
+instrumentation capabilities) to allow for direct collection of both
+stacktrace-oriented profiles and simultaneous specific information
+about geometry, particle types, etc. 
+While an initial (useful) example deliverable would be based on Geant4, the 
+extensions in IgProf can be done in a general fashion that permits other such 
+application specific profile extensions, e.g. tracking reconstruction, etc.
+
+\subsubsection{Additional usability features}
+
+Based on experience with people of many different levels of experience
+using IgProf, we also have a few usability features we believe are
+important.
+
+For example, the C++ standard library often appears in the memory
+profiles for both the heap and the total dynamic memory use. Similarly
+math functions from the math library often appear in the performance
+profiles. Unfortunately the call traces for these include also some
+of the internals of the two libraries. This has the unfortunate
+effect of obscuring what has actually happened, with the result
+that it is more difficult for an inexperienced person to interpret
+the profiles. For example, it is much more obvious if one sees
+$\texttt{std::vector<obj>::push\_back(obj)}$ rather than $\texttt{std::vector<obj>::\_M\_insert\_aux(...)}$.
+
+We will make changes within IgProf to allow some pieces of a call 
+trace to be relabeled and/or collapsed in the presented profile such that 
+such library internals are not shown. The user of the tool will instead see
+the time or memory allocations attributed at the level of the API they
+actually used. We will provide functionality to allow the collapsing of
+call trace for common cases from the C++ standard library and the math library,
+and we will create small unit tests to verify the correctness with
+new versions of the libraries. We will also do it in such a way that 
+it is extensible to allow for the functionality to be used for any 
+API or library. 
+
+Similarly, the C++ standard library is implemented with some number
+of optional template parameters. In particular the containers typically
+have an extra default argument for an allocator. These currently appear
+in the call traces, with the result that demangled symbol names are
+both quite long and somewhat obscured. We will provide functionality
+to allow the extra default parameters to be suppressed at the level
+of the profile visualization.
+
+We will also reinstate an option to export the profile information for
+use in KCachegrind \cite{CACHEGRIND,KCACHEGRIND}, a popular open-source
+profile visualization tool. We had a contributed implementation of this 
+functionality in the past, but it depended on additional custom libraries, 
+now unsupported. We will thus add within IgProf a means of exporting to
+support viewing IgProf profiles with KCachegrind and other compatible GUI's.
+
+\subsection{IgExpert}
+
+  We propose also a new software tool, called IgExpert, which will combine 
+information from the different profiling and analysis tools (IgProf performance
+and memory profiling, and perhaps eventually others) and use a static
+analyzer (from Clang/LLVM \cite{CLANGLLVMSTAT}) to:
+
+\begin{itemize}
+\item identify some basic problems and opportunities for performance improvements 
+\item provide some additional code-context information for profile reports 
+\end{itemize}
+
+A general approach to that topic of course begins to encroach on the domain of
+optimizing compiler research and profile guided optimization. That is well
+behind the scope of this proposal. Here we aim for a somewhat more modest
+target. Based on some previous (separate) experience we have had implementing
+some small static analyses with Clang/LLVM to look for thread unsafe
+constructs as part of a code quality system, we believe it is
+possible to do recognize a number of simple, but common, problems which 
+appear in C++ programs written by scientific programmers. 
+
+Since IgExpert will be driven by information from the profiler, emphasis
+can be placed on such problems in code hotspots. This will have the
+advantage of reducing the number of false positives and will avoid
+putting too much attention on code not directly relevant for the performance.
+The time required to run the static analysis can also be greatly
+reduced since it can be directed at only the relevant source files.
+
+  In addition we also believe that it should be possible to provide
+some code-context information. The vast majority of open source tools
+present some number of profiling metrics, but then leave the user of the tool
+to figure out what to look at it and how.
+
+There are however some number of relatively simple problems, fairly common 
+with scientific programmers, that can be roughly identified via 
+hotspots in a profile with and then confirmed from the source-code context 
+from the static analyzer. Some very common examples are:
+
+\begin{itemize}
+\item Excessive memory allocations resulting from elements inserted into 
+      $\texttt{std::vector<obj>}$, without reserving an initial capacity, 
+      in loops of known size can be eliminated, improving performance.
+\item Significant time and/or dynamic memory allocations spent in any sort of
+string manipulation can be flagged for improvement. These are typically 
+leftover from debugging attempts.
+\item In heap profiles, if the dynamic memory portion of a given $\texttt{std::vector}$ has been created by resizing, it often indicates excess capacity 
+which may bloat the memory footprint.
+\item In heap profiles and in dynamic memory profiles, it should be
+possible to add code-context information as to which structures have
+been created dynamically and their sizes. 
+\item A significant number of $\texttt{CYCLES\_DIV\_BUSY}$ (which counts
+      both divides
+      and square-roots) in a function may indicate an opportunity to 
+      optimize by hand in cases where the compiler is constrained to
+      IEEE754 compatibility, e.g. by recoding to use $1/x$ or factoring
+      divides out of loops. (This simple example would come from profiles 
+      obtained from tools which use the hardware event counters rather than 
+      IgProf, of course.)
+\end{itemize}
+
+We expect that once the IgExpert framework is available and in use, we 
+will find and add other similar analyses. Such a tool would be used both 
+as part of the workflow of a single developer and as part of centralized 
+integration/nightly build, code quality and performance monitoring systems.
+
+The concrete IgExpert deliverable here will be a small framework, 
+based on the Clang/LLVM static analyzer toolkit, capable of
+reading both types of profiles (performance, memory) from IgProf and 
+structured to permit reading also the output of other profiling tools.
+It will be configurable to run one or more static analyses corresponding
+to the examples in the list above. Two types of information will be
+output: code performance suggestions and code context information. These 
+will be stored, along with the relevant symbol and source code info, in a
+structured way into an output file with a documented format to permit
+importation into multiple profile visualizing tools. The code used
+to read the different types of profiles and organize them into data
+structures will be a standalone library with a well defined API to
+allow it to be used elsewhere and to be extended to read and use profiles 
+from other types of tools. To insure this is the case, we will add the
+ability to read profiles from Valgrind Callgrind.
+
+Just as important is a mechanism to selectively turn off such false 
+positives once they have been investigated.
+For this we will also add some suppression mechanism similar to that
+used in Valgrind \cite{VALGRINDSUPP}, which will allow the tool to be
+used in large code integration environments (i.e. nightly builds).
+
+\subsection{Hardware Counter Analysis}
+
+In this section, we describe the possibilities and limitations of 
+performance analysis based on hardware performance counters of the 
+CPU's Performance Monitoring Unit (PMU). While these hardware counters 
+can in principle provide extremely detailed information about what 
+is happening in a modern processor, there have been several obstacles which
+have limited their use. First, their use typically requires the use of Linux 
+and patching the Linux kernel. This limits their widespread use.
+Second, the use of these counters is quite complex. The number of
+possible counters from which to choose is very large. How to select
+a set that is relevant is usually not clear to the non-expert. The
+meaning of the counters can vary from one microarchitecture to
+another. At times the meaning of some events differs from one naively
+expects. For example, $\texttt{data\_cache\_miss:l2\_cache\_miss}$
+events counts both loads and stores. Latency from loads can stall
+the pipeline, whereas latency for stores rarely will. The raw event
+quantities do not say anything about the actual costs. That has to
+be derived from knowledge of the penalties, in units of cycles.
+In practice, the cycle decomposition analysis strategy of GOODA, mentioned
+above, seems like the right one to simplify their interpretation. But
+they still remain very oriented towards expert use and in the new
+architectures a more limited set of counters are available.
+
+The sampling performance profiling in IgProf could be updated to use 
+these counters, just as some other tools do (HPCToolkit, for example) 
+and perhaps even combined with the GOODA analysis tool, however
+we do not however propose doing that for the moment. We instead propose
+a more innovative contribution called IgMatch, where we can exploit
+the unique feature of IgProf that it also provides memory profiling.
+
+\subsubsection{IgMatch - Address analysis of Data Structures}
+
+The last software deliverable we propose here uses a combination
+of the IgProf memory profiling functionality with a new feature of the 
+hardware event counters of forthcoming Intel processors. This particular
+tool, which we will call IgMatch, is much more ``experimental'' than the 
+others described above, and will be somewhat challenging, but has great
+potential to help understand data structure-related memory cache problems.
+
+Optimizing data layout and efficient use of allocatable memory is
+a major issue for application performance optimization. Understanding
+which components of structures are heavily accessed both where and
+in temporal locality is extremely difficult. Tools like GOODA can
+be used to identify functions which have large load latency stalls,
+however that is not enough.  Think for example of the usual example
+of accessing a two dimensional array with the wrong loop-order/stride.
+The discussion usually jumps from the observation of cache misses
+with some tool to code inspection and then to the solution. In that
+case the structure is actually trivial and code inspection of some
+loops is relatively trivial. The situation with object-oriented C++
+code is more complex,  the data structures are less transparent and
+the required code inspection more tedious.
+
+To understand in realistic cases what changes  might improve the
+performance, one ideally needs to understand three additional things:
+the detailed access pattern of loads, the actual data structure(s) being
+accessed and where and how the structures were created.
+This is roughly what most manual code inspection is trying to
+determine. We believe that we will soon have the relevant elements
+to simplify this process significantly. Starting with the Haswell
+generation of Intel processors the Precise Event Based Sampling
+(PEBS) supported by the hardware Performance Monitoring Unit (PMU)
+will capture not only the exact instruction and data source of the
+cacheline but also the virtual address of the memory operation.
+This new capability will enable correctly normalized access frequencies
+per virtual address.
+
+In a program relying on allocatable memory knowing the virtual
+addresses of the memory operations is not sufficient. As buffers
+for structures are allocated and deallocated via $\texttt{malloc}$ and 
+$\texttt{free}$ the memory map changes in a
+continuous way. Consequently to make sensible aggregations of the
+accesses/address, or better accesses/structure element, one needs
+to be able to reconstruct the memory map as a function of time to
+identify the origin of a particular data structure. This is precisely
+what IgProf does for heap memory allocations when used in memory
+profiling mode.
+
+Once one has the pattern of memory accesses relative to structure
+elements created at a given code origin, it should be possible to
+map this to actual data structures (perhaps with the aid of a static
+code analyzer) and perhaps even visualize it. At that point it
+should be much easier to understand better what is happening, without
+requiring lots of tedious and error-prone code inspection. Various
+techniques to change the data layout including hot-cold separation,
+reorganization as arrays of structures or structures of arrays or
+perhaps even simple coalescing of small structures might improve
+performance. This type of understanding will be critical to achieving
+performance on smaller cores with more limited memory caches.
+
+Note that this work will mostly involve IgProf and the Linux 
+$\texttt{perf\_events}$ subsystem for accessing hardware counter 
+information. GOODA is primarily used just to identify possibly 
+interesting functions with large load latency, other tools could also be 
+used.
+
+
+
+\section{Summary}
+
+We have described in this proposal a plan of work to provide three
+advanced software application performance profiling tools (IgProf,
+IgExpert, IgMatch) with unique functionalities which will significantly 
+enhance the capabilities of individual researchers and scientific 
+application developers. Such tools have had a fundamental role in enabling
+the success to date of projects like CMS at the LHC, and we expect
+that they will 
+be critical in the coming years to achieving the computing performance 
+needed for the goals of many other projects.
+The availability of easy-to-use, open-source, multi-platform 
+tools with the kind of unique functionalities proposed here will be
+an important contribution to the worldwide software cyberinfrastructure.
+
+
+\newpage
+
+%\section*{References}
+
+\begin{thebibliography}{0}
+
+%\bibitem{CMSCTDR} Bayatyan G L et al,  CMS Computing Technical Design Report, CERN Report CERN-LHCC-2005-023 (2005).
+
+%\bibitem{CERN} \url{http://home.web.cern.ch/about}
+
+%\bibitem{PUGRAD} \url{http://www.princeton.edu/researchcomputing/education/graduate-certificate-CIS}
+
+\bibitem{IGPROF} \url{http://igprof.org}
+
+\bibitem{GOODA} \url{https://code.google.com/p/gooda/}
+
+\bibitem{GOODAVIS} \url{https://code.google.com/p/gooda-visualizer/}
+
+\bibitem{PTUVIEW} \url{http://mkortela.web.cern.ch/mkortela/ptuview/}
+
+\bibitem{GOODACYCLEACCT} \url{https://gooda.googlecode.com/git/gooda-analyzer/docs/CycleAccountingandPerformanceAnalysis.pdf}
+
+\bibitem{GOODACHEP} Calafiura P, Eranian S, Levinthal D, Kama S and Vitillo R A  2012 GOoDA: The generic optimization data analyzer {\it J.Phys.Conf.Ser.} {\bf 396} 052072.
+
+\bibitem{ROOT} \url{http://root.cern.ch}
+
+\bibitem{KCACHEGRIND} \url{http://kcachegrind.sourceforge.net/html/Home.html}
+
+\bibitem{CACHEGRIND} \url{http://valgrind.org/docs/manual/cg-manual.html\#cg-manual.impl-details.file-format}
+
+\bibitem{PYROOT} \url{http://root.cern.ch/drupal/category/package-context/pyroot}
+
+\bibitem{PROFCUDA} \url{http://docs.nvidia.com/cuda/cupti/index.html}
+
+\bibitem{PROFOPENCL} \url{http://www.khronos.org/registry/cl/sdk/1.0/docs/man/xhtml/clGetEventProfilingInfo.html}
+
+\bibitem{PROFTBB} \url{https://www.threadingbuildingblocks.org/}
+
+\bibitem{GEANT4} \url{http://geant4.cern.ch}
+
+\bibitem{SWIG} \url{http://www.swig.org}
+
+\bibitem{CFORUM} \url{http://concurrency.web.cern.ch}
+
+\bibitem{BABAR} \url{http://www-public.slac.stanford.edu/babar/}
+
+\bibitem{CM2CHEP04} Elmer P 2004 BaBar Computing - From Collisions to Physics Results, at Computing in High Energy and Physics (CHEP04) (Interlaken)
+
+\bibitem{CHEP04BABAR} Brown D et. al. 2004 The new BaBar Analysis Model, {\it Proceedings of Computing in High Energy Physics (CHEP 2004)}, Interlaken
+
+\bibitem{CMSDET} Chatrchyan S et al (CMS Collaboration),  The CMS experiment at the CERN LHC {\it JINST} {\bf 3} S08004 (2008).
+
+\bibitem{LHCPAPER} Evans L and Bryant P,  LHC Machine {\it JINST} {\bf 3} S08001 (2008).
+
+%\bibitem{WLCG} \url{http://wlcg.web.cern.ch}
+
+%\bibitem{SLOCCOUNT} \url{http://www.dwheeler.com/sloccount/}
+
+%\bibitem{CMSHIGGS} Chatrchyan S et al (CMS Collaboration) 2012 Observation of a new boson at a mass of 125 GeV with the CMS experiment at the LHC {\it Phys.Lett.} {\bf B716} 30-61
+
+%\bibitem{ATLASHIGGS} Aad G et al (Atlas Collaboration) 2012 Observation of a new particle in the search for the Standard Model Higgs boson with the ATLAS detector at the LHC {\it Phys.Lett.} {\bf B716} 1-29
+
+%\bibitem{LSST} LSST Science Collaboration: \url{http://adsabs.harvard.edu/abs/2009arXiv0912.0201L}
+
+%\bibitem{SDSS} York D G et al (SDSS Collaboration) 2000 The Sloan Digital Sky Survey: Technical Summary {\it Astron.J.} {\bf 120} 1579-1587.
+
+\bibitem{VALGRIND} \url{http://valgrind.org}
+
+\bibitem{VALGRINDSUPP} \url{http://valgrind.org/docs/manual/manual-core.html\#manual-core.suppress}
+
+\bibitem{VALGRINDPAPER} Nethercote N and Seward J 2007 Valgrind: a framework for heavyweight dynamic binary instrumentation, {\it SIGPLAN Not.} {\bf 42 6} 89-100
+
+\bibitem{HPCTOOLKIT} \url{http://hpctoolkit.org}
+
+\bibitem{TAU} \url{http://hpctoolkit.org}
+
+\bibitem{DYNAMORIO} \url{http://www.dynamorio.org}
+
+\bibitem{PIN} \url{http://software.intel.com/en-us/articles/pin-a-dynamic-binary-instrumentation-tool}
+
+\bibitem{VTUNE} \url{http://software.intel.com/en-us/intel-vtune-amplifier-xe}
+
+\bibitem{GPERFTOOLS} \url{http://code.google.com/p/gperftools/}
+
+\bibitem{CLANGLLVMSTAT} \url{http://clang-analyzer.llvm.org}
+
+%\bibitem{ESC12} \url{http://web2.infn.it/esc12/}
+
+\bibitem{LIBUNWIND} \url{http://www.nongnu.org/libunwind/}
+
+\end{thebibliography}
+
+\end{document}
+

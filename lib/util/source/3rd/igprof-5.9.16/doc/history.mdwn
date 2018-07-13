@@ -1,0 +1,73 @@
+---
+title: IgProf history
+layout: default
+related:
+ - { name: Top, link: . }
+ - { name: Downloads, link: https://github.com/ktf/igprof/tags }
+ - { name: Bugs, link: https://github.com/ktf/igprof/issues }
+ - { name: Project, link: https://github.com/ktf/igprof/ }
+---
+While the current version of IgProf is entirely the work of Lassi Tuura and
+Giulio Eulisse, it borrows most of the ideas from several other projects.  Our
+main contribution has been to provide the existing concepts in a package that
+actually works out of the box and is fast and reliable enough to made
+significant use of.
+
+Like everyone else, we started with [gprof][].  It's terribly limited by modern
+standards, and having to recompile all the source is just not going to happen
+-- but we still like it, and a lot of the IgProf output borrows from `gprof`.
+We then hoped `$LD_PROFILE` to be an improvement, but that quickly turned out
+not to go anywhere.
+
+At some point we learnt about the [Mozilla jprof][jprof] tool and got very
+excited.  It actually worked for programs using dynamically loaded shared
+libraries!  We were delighted to have in our hands finally a profiler capable
+of sampling IGUANA and other CMS software at near-interactive rates -- a
+profiler that actually worked.  We noticed we could easily fix in the source
+any problems jprof had with CMS software.  As time went on, patches piled up
+and we had implemented a memory profiling jprof look-a-like, `MemProfLib`.
+IgProf was born when we eventually took it unto ourselves to rewrite the whole
+lot from ground up.  Giulio made sure we handled threads correctly, and made
+some very significant performance optimisations.
+
+Anyone well versed with [GLIBC][] internals and shared library symbol
+versioning knows the terror it is to try to provide binary-compatible
+substitute across several operating system generations.  We started thinking
+that installing hooks into the code by dynamically modifying the machine code
+couldn't be harder than what we were experiencing already.  In concept it's
+similar to other dynamic instrumentation tools such as Jeffrey Richter's INJLIB
+(see [MSJ May 1994 - Vol 9, Issue 5][injlib]), Jonathan Rentzsch's
+[mach_override][] (now [mach_star][]), Secure Reality's [injectso][], or
+[Dyninst][], and of the most recent renown, Sun's [DTrace][].  Of course it
+would be silly to claim both Giulio and Lassi weren't excited about dynamically
+rewriting the machine the code to vector our stuff into it, so it's also fair
+to say we did it because we could and thought it an interesting learning
+exercise!  At any rate the dynamic tapping functionality, now provided in
+separate library in `IgHook`, has been a great deal more robust than depending
+on the `$LD_PRELOAD` symbol override ever was.  It also works when symbol
+overriding can't work, for example if for one reason or the other symbols
+cannot easily be re-defined or simply are not going to be looked up in the
+`$LD_PRELOAD` library by the dynamic linker.
+
+Since the switch to the dynamic instrumentation architecture the profiler has
+been rewritten in its entirety at least twice.  One of the big changes was to
+completely separate all the profiling modules and to make it easier to write
+arbitrary new modules that "tap" into functions of interest.  We've also worked
+hard to provide an infrastructure for multiple profiling backends to coexist
+peacefully.  This is a lot more complex than it sounds what with multi-threaded
+applications receiving asynchronous `SIGPROF` signals and the memory profiler
+trapping calls from all manner of operating system bowels while all kinds of
+interesting pthread mutexes are being held!
+
+Lately, initial support for generic instrumentation and precise profiling of
+applications has been introduced, thanks to the work done by Mikko Kurkela.
+
+[gprof]: http://sourceware.org/binutils/docs/gprof/index.html
+[jprof]: http://www.mozilla.org/performance/jprof.html
+[glibc]: http://www.gnu.org/software/libc/
+[injlib]: http://www.microsoft.com/msj/backissues86.aspx
+[mach_override]: http://rentzsch.com/mach_override
+[mach_star]: http://rentzsch.com/mach_star
+[injectso]: http://www.securiteam.com/tools/5EP0P157PG.html
+[Dyninst]: http://www.dyninst.org/
+[DTrace]: http://www.sun.com/bigadmin/content/dtrace/

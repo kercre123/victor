@@ -1,0 +1,113 @@
+---
+title: Running IgProf
+layout: default
+related:
+ - { name: Top, link: . }
+ - { name: Downloads, link: https://github.com/ktf/igprof/tags }
+ - { name: Bugs, link: https://github.com/ktf/igprof/issues }
+ - { name: Project, link: https://github.com/ktf/igprof/ }
+---
+
+### Obtaining a profile
+
+To profile you just prefix the command line with `igprof` and options of your
+choice.  The profile outputs from long runs can be large so it's advisable to
+compress the data.  You would run the performance profiler with compressed
+output like this:
+
+    igprof -d -pp -z -o igprof.pp.gz myApp [arg1 arg2 ...] >& igtest.pp.log &
+
+If you'd like to run the memory profiler instead:
+
+    igprof -d -mp -z -o igprof.mp.gz myApp [arg1 arg2 ...] >& igtest.mp.log &
+
+The above commands send the job output and the final profile to files in the
+current directory.  The `-pp` option enables the performance profiler and the
+`-mp` option the memory profiler.  The `-d` option adds a little more
+information about the workings of the profiler itself, mainly to the very
+beginning and end of the job.  It helps to see the profiler is active and
+working correctly.
+
+The `-o` option sets the name for the profile statistics output file.  If you
+don't give a name, then a file `igprof.NNNNN` will be created, where `NNNNN` is the process
+id.  The `-z` option tells igprof to compress the profile statistics file using
+gzip. The igtest.\*.log files in the examples above will contain your normal
+application stdout/stderr plus the igprof -d output described above.
+
+  Note also that the `-t` option can be used to constrain which processes can
+be profiled, which is useful in case the process launches subprocesses or
+when a wrapper script is used around the actual binary to be profiled. For
+example, to profile only the process named myApp when launching via a
+script myAppWrapper.sh:
+
+    igprof -d -t myApp -pp -z -o igprof.pp.gz myAppWrapper.sh [arg1 arg2 ...] >& igtest.pp.log &
+
+If the "-t" option was not used here, igprof would by default profile all
+subprocesses which are spawned by myAppWrapper.sh.
+
+### Heap profiling
+
+The standard performance and memory profiling described above does not
+require any changes to your application, however if you would like to
+obtain a heap profile is a special case which does require a change. By heap
+profile we mean a snapshot of the active (not yet deleted) memory allocations
+in the heap at some instant in time during the run of your application. In
+order to obtain the heap profile you need to make some small code changes
+such that your application triggers igprof to write the current heap profile
+at the appropriate point in time.
+
+To do this you need to add the following (an execute it one time) somewhere
+in your application:
+
+    #include <dlfcn.h>
+
+    void (*dump_)(const char *);
+
+    if (void *sym = dlsym(0, "igprof_dump_now")) {
+      dump_ = __extension__ (void(*)(const char *)) sym;
+    } else {
+      dump_=0;
+      std::cout << "Heap profile requested but application is not"
+                << " currently being profiled with igprof" << std::endl;
+    }
+
+and then later when you like to trigger igprof to write the current heap
+profile, you should do:
+
+    if (dump_) {
+      std::string heapfile;
+      // the heap profile statistics will be written to a file with name
+      // specified by the string "heapfile", so here you should construct the
+      // filename you would like. If you intend to dump multiple profile
+      // statistics files over the course of the application run, you
+      // might for example need to construct the filename to include also
+      // a integer counter, etc.
+      dump_(heapfile.c_str());
+    }
+
+With these simple code changes you can tell igprof precisely when to dump heap
+profile statistics files.
+
+A more elaborate example ([IgProfService.cc][], [IgProfService.h][]) of a
+wrapper from our own application might be illustrative of the more
+complex possibilities, even if our example code won't be directly usable for
+you. In it a series of standardized callbacks from our application framework
+allow for heap profiles to be enabled and triggered from various places, all
+with configurable filenames. (A example configuration to dump every 50
+"events" in our application would set reportFirstEvent=0, reportEventInterval=50, and reportToFileAtPostEvent
+set to "igtest.%I.out", for example. Another useful trick that is possible
+is to use a filename like "| gzip -c > igtest.%I.gz", i.e. piping to
+an external gzip application to make sure that the large dump files are
+compressed during the application run.)
+
+[IgProfService.cc]: http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/CMSSW/IgTools/IgProf/plugins/IgProfService.cc?revision=1.5&view=markup
+[IgProfService.h]: http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/CMSSW/IgTools/IgProf/plugins/IgProfService.h?revision=1.1&view=markup
+
+### Next step
+
+The profile statistics output files written by igprof during the application
+run are actually [simple text files](dump-format.html), however they are
+effectively just the raw data you need to produce useful profiling reports.
+The next step is to process these raw igprof dumps and [produce reports](analysis.html).
+
+Enjoy!

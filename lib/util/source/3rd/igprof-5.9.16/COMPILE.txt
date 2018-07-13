@@ -1,0 +1,128 @@
+IgProf, the ignominious performance and memory profiler.
+Copyright (C) 2003-2010
+ Lassi Tuura <lat@iki.fi> and
+ Giulio Eulisse <giulio.eulisse@gmail.com>.
+Please refer to COPYING.txt for licensing information.
+
+IgProf is non-intrusive profiling application for GNU/Linux systems,
+complementary to other tools such as valgrind's callgrind, oprofile,
+and compiler built-in profiling support.
+
+The code is regularly tested and used on RedHat Enterprise Linux
+systems, mainly RHEL5 and in particular a rebuild distribution Scientific 
+Linux 5, but we do try to make sure the code works on other systems as well. 
+The profiler has been used extensively on ia32. x86_64 support is still
+a bit experimental at the moment. Some support for Mac OS X PPC remains in the
+code but it is unknown if it still works.
+
+In order to build the package, please do something like this:
+
+    # Set up one environment variable to simplify the build recipe
+    export INSTAREA=/x/y/z   # Wherever you want to install the software
+    
+    # Get the source tarballs for libatomic_ops, libunwind and igprof
+    wget http://www.hpl.hp.com/research/linux/atomic_ops/download/libatomic_ops-7.2alpha4.tar.gz
+    wget -O libunwind.tar.gz "http://git.savannah.gnu.org/gitweb/?p=libunwind.git;a=snapshot;h=982d590ddb778f0d301fe2e5647abd9135a2f9bc;sf=tgz"
+    wget http://downloads.sourceforge.net/igprof/igprof-5.7.0.tar.gz
+    
+    # Get two patches for libunwind
+    wget http://downloads.sourceforge.net/igprof/libunwind-mincore.patch
+    wget http://downloads.sourceforge.net/igprof/libunwind-trace.patch
+    
+    # Get a recent version of cmake
+    wget http://www.cmake.org/files/v2.8/cmake-2.8.1.tar.gz
+    
+    # Build libatomic
+    gtar xzvf libatomic_ops-7.2alpha4.tar.gz
+    cd libatomic_ops-7.2alpha4
+    ./configure --prefix=$INSTAREA
+    make install
+    cd ../
+    
+    # Build libunwind
+    gtar xzf libunwind.tar.gz
+    cd libunwind-982d590
+    patch -p1 < ../libunwind-mincore.patch
+    patch -p1 < ../libunwind-trace.patch
+    autoreconf -i
+    ./configure CPPFLAGS="-I$INSTAREA/include" --prefix=$INSTAREA --disable-block-signals
+    make install
+    cd ../
+    
+    # Build cmake
+    gtar xzf cmake-2.8.1.tar.gz
+    cd cmake-2.8.1
+    mkdir -p $INSTAREA/tmpcmake
+    ./configure --prefix=$INSTAREA/tmpcmake
+    make
+    make install
+    cd ../
+    export PATH=$INSTAREA/tmpcmake/bin:$PATH
+    
+    # Build igprof
+    gtar xzf igprof-5.7.0.tar.gz
+    cd igprof-5.7.0
+    cmake -DCMAKE_INSTALL_PREFIX=$INSTAREA .
+    make
+    make install
+    cd ../
+    
+    # Clean up the temporary cmake build
+    rm -fR $INSTAREA/tmpcmake
+
+At this point should be able to set up PATH and LD_LIBRARY_PATH to point to the $INSTAREA and begin to use igprof. Here is a simple example (used as a tutorial to demonstrate problems) which you can use quickly to verify that igprof is set up:
+
+// Store in a file vvvi-build-and-copy.cc
+// Compile: c++ -o vvvi-build-and-copy vvvi-build-and-copy.cc -ldl -lpthread
+#include <vector>
+#include <string>
+#include <dlfcn.h>
+
+int main (int, char **)
+{
+  union { void *ptr; void (*dump)(const char *tofile); } u;
+  u.ptr = dlsym(0, "igprof_dump_now");
+
+  typedef std::vector<int> VI;
+  typedef std::vector<VI> VVI;
+  std::vector<VVI> vvvi, vvvi2;
+  for (int i = 0, j, k; i < 10; ++i)
+    for (vvvi.push_back(VVI()), j = 0; j < 10; ++j)
+      for (vvvi.back().push_back(VI()), k = 0; k < 10; ++k)
+        vvvi.back().back().push_back(k);
+
+  if (u.dump) u.dump("|gzip -9c > ig-vvvi-build.gz");
+
+  vvvi2 = vvvi;
+  if (u.dump) u.dump("|gzip -9c > ig-vvvi-copy.gz");
+  return vvvi2.size();
+}
+If you run:
+
+igprof -mp -z -o ig-vvvi-build-and-copy.gz ./vvvi-build-and-copy
+You should see that three profile statistics files have been written:
+
+ig-vvvi-build.gz - statistics dumped while job is running (after build)
+ig-vvvi-copy.gz - statistics dumped while job is running (after copy) o ig-vvvi-build-and-copy.gz - statistics from the end of the job
+You can produce a report (for example) from the end-of-job profile statistics with:
+
+igprof-analyse -d -v -g -r MEM_TOTAL ig-vvvi-build-and-copy.gz > vvvibc.res
+If you then look at vvvibc.res, you should see something like:
+
+----------------------------------------------------------------------
+Flat profile (cumulative >= 1%)
+
+% total     Total     Calls  Function
+  100.0    42'934     1'091  <spontaneous> [1]
+  100.0    42'934     1'091  _start [2]
+  100.0    42'934     1'091  __libc_start_main [3]
+  100.0    42'934     1'091  main [4]
+<... and so on ...>
+
+If you have gotten to this point, your igprof installation should be set up 
+correctly.
+
+
+
+Please report problems to the sourceforge tracker at
+  http://sourceforge.net/projects/igprof/

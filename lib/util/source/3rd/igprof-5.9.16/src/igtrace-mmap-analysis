@@ -1,0 +1,47 @@
+#!/usr/bin/env perl
+
+$last = undef;
+while (<>)
+{
+  chomp;
+  /^... MMAP.* len=(\d+) prot=(\S+) .* => (\S+)/ && do {
+    $nmaps++; $start = hex($3); $end = $start + $1; $prot = hex($2);
+    $last = $map = [ $start, $end, $nmaps, $prot, $., 0, "" ];
+    for ($i = $start; $i < $end; $i += 4096)
+    {
+      if (exists $mappings{$i})
+      {
+         $mappings{$i}[5] += 4096;
+      }
+      $mappings{$i} = $map;
+    }
+  };
+
+  /^... MUNMAP.*address=(\S+) len=(\d+)/ && do {
+    $last = undef;
+    $start = hex($1); $end = $start + $2;
+    for ($i = $start; $i < $end; $i += 4096)
+    {
+      print "No mapping at $start!\n" if ! exists $mappings{$i};
+      delete $mappings{$i};
+    }
+  };
+
+  /^\s+\d+: 0x[\da-f]+\s+([_A-Za-z0-9]+|\@\?0x[\da-f]+) \+ \d+/ && do {
+    $$last[6] .= "$_\n" if $last;
+  };
+}
+
+$total = 0;
+$ntotal = 0;
+foreach (sort { $a <=> $b } keys %mappings)
+{
+  $m = $mappings{$_};
+  $n = ($$m[1] - $$m[0]) - $$m[5];
+  print "$n bytes left in mapping $$m[2] [$$m[0], $$m[1]], removed $$m[5], prot $$m[3], line $$m[4]\n$$m[6]" if $n;
+  $total += $n;
+  $ntotal++ if $n;
+  $$m[5] = $$m[1] - $$m[0];
+}
+
+print "\n$total bytes left in $ntotal mappings\n";

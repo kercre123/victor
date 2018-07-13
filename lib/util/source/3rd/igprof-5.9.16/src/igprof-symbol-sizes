@@ -1,0 +1,162 @@
+#!/usr/bin/env python
+#
+# This script generates an igprof compatible
+# output file which contains information
+# about symbols and their size.
+#
+# Symbols and their size are obtained using the usual
+#
+#     nm -t d -S <library-name>
+#
+# The symbols are splitted separating the
+# various components (i.e. namespace, class, template arguments,
+# eventual arguments) and each component
+# is child on the component on the left.
+#
+# For example if you have
+#
+#
+#     _ZN3edm3foo
+#
+# You will have the following hierarchy:
+#
+#     _ZN
+#       |->_ZN3edm
+#                |->_ZN3edm3foo
+#
+# Count will only be added to the leaf.
+# This way igprof-analyse will be able to
+# merge counts coming from the same namespace
+# and / or class.
+import re
+import sys
+from glob import glob
+from os.path import join, abspath
+from optparse import OptionParser
+from commands import getstatusoutput
+
+splitter = re.compile("([^0-9]*)([0-9]+)(.*)")
+# Different kind of symbol components inside the tree.
+components = {}
+# Different files inside the tree.
+files = {}
+# Actual unique nodes inside the tree
+nodes = {}
+
+def splitSymbols(name, cost):
+  count = 0
+  current = ""
+  while name:
+    match = splitter.match(name)
+    if not match:
+      current += name
+      yield current, count, cost
+      name = ""
+      break
+    p, s, rest = match.groups()
+    size = int(s)
+    if p:
+      current += p
+      if name:
+        c = 0
+      else:
+        c = cost
+      yield current, count, c #, olds, p
+      name = s+rest
+    else:
+      current += s + rest[:size]
+      name = rest[size:]
+      if name:
+        c = 0
+      else:
+        c = cost
+      yield current, count, c #,olds, p
+    count += 1
+
+testSymbol = "_ZZN125_GLOBAL__N_tmp_slc4_ia32_gcc345_src_DataFormats_RecoCandidate_src_DataFormatsRecoCandidate_classes_rflx.cpp_DFF67DD7_B72D0B3014operator_34995EPvRKSt6vectorIS0_SaIS0_EES0_E3ret"
+#print testSymbol
+#for x in splitSymbols(testSymbol, 100):
+#  print x
+#sys.exit(1)
+
+def symbols(f):
+  error, output = getstatusoutput ("nm -S -t d %s | sort -k 4" % f)
+  reSymbols = re.compile("([0-9]+) ([0-9]+) ([tTwW]) (.*)")
+  if error:
+    print "Error while reading file"
+    sys.exit(1)
+  lines = [l for l in output.split("\n")]
+  matches = (reSymbols.match(line) for line in lines)
+  for symbolData in (match.groups() for match in matches if match):
+    yield symbolData
+
+if __name__ == "__main__":
+  parser = OptionParser(usage="path to libraries")
+  opts, args = parser.parse_args()
+  if not len(args) == 1:
+    print "Please provide a path to the libraries you want to analyse"
+    sys.exit(1)
+  componentsCount = 0
+  fileCount = 0
+  nodesCount = 0
+  firstTime = True
+  path=abspath(args[0])
+  previousStack = []
+  currentStack = []
+
+  filenames = glob(join(path, "*.so"))
+  print "P=(ID=1 N=(%s) T=1)" % path
+  if len (filenames) > 2048:
+    print "Too many files!!! Please select a directory with less than 2048."
+    sys.exit(1)
+  for f in filenames:
+    sys.stderr.write("Processing %s\n" % f)
+    for address, size, type, name in symbols(f):
+      componentsList = splitSymbols(name, size)
+      # Since once symbol correspond to a branch in the tree
+      # we need to walk back in the node stack only for the
+      # first symbol.
+      previousStack = currentStack
+      currentStack = []
+      for component, index, cost in splitSymbols(name, size):
+        if f not in files:
+          files[f] = fileCount
+          fi = fileCount
+          fileString = "F%s=(%s)+0" % (fi, f)
+          fileCount += 1
+        else:
+          fi = files[f]
+          fileString = "F%s+0" % fi
+        if not component in components:
+          components[component] = componentsCount
+          ci = componentsCount
+          componentsCount += 1
+          functionString = "N=(%s)" % (component)
+        else:
+          ci = components[component]
+          functionString = "N=(%s)" % (component)
+
+        # Do no repeat the beginning of the stacktrace
+        # if its the same as the previous one.
+        currentStack.append(ci)
+        if index < len(previousStack) and previousStack[index] == ci:
+          continue
+
+        stackString = "C%s" % (int(index)+1)
+
+        if cost and firstTime:
+          firstTime = False
+          counterString = "V0=(MEM_TOTAL):(1,%s,0)" % int(cost)
+        elif cost:
+          counterString = "V0:(1,%s,0)" % int(cost)
+        else:
+          counterString = ""
+
+        nodeIndex = fi + ci*2048
+        if not nodeIndex in nodes:
+          nodes[nodeIndex] = nodesCount
+          print "%s FN%s=(%s %s)+0 %s" % (stackString, nodesCount, fileString, functionString, counterString)
+          nodesCount += 1
+        else:
+          ni = nodes[nodeIndex]
+          print "%s FN%s+0 %s" % (stackString, ni, counterString)

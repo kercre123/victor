@@ -1,0 +1,27 @@
+---
+title: Release Notes
+layout: default
+related:
+ - { name: Top, link: . }
+ - { name: Downloads, link: https://github.com/ktf/igprof/tags }
+ - { name: Bugs, link: https://github.com/ktf/igprof/issues }
+ - { name: Project, link: https://github.com/ktf/igprof/ }
+---
+## v5.9.7
+
+Minor relases with various cleanups and a few new features.
+
+In particular:
+
+- New "Empty memory mode", which can be used to identify large chuncks of
+  allocated but unused memory. This can be enabled by passing `-ep`, `-eu`,
+  `-ei` when running igprof (kudos to Jakob Blomer).
+- If [pcre](http://www.pcre.org) is available at compilation time, you can
+  collapse report nodes via the `-mr` option followed by perl like regular
+  expressions (kudos to Mikko Kurkela).
+- Cleanups of igprof-navigator to have less CMS-ism (kudos to Robert Lupton).
+- Bug fix for a debug mode issue which could have resulted in corrupted output
+  files.
+
+For details about the new options please look at the [advaced options
+page](advancedoptions.html).

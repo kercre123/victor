@@ -1,0 +1,101 @@
+#!/bin/sh
+# Collect up args for igtrace.
+
+usage() {
+  echo "igtrace [options] program [options]"
+  echo
+  echo "Options to igtrace:"
+  echo -e "-t, --target STR   \tonly trace programs with STR in their names"
+  echo -e "-d, --debug        \tenable more details from tracer"
+  echo -e "-D, --demangle     \tdemangle symbol names"
+  echo -e "-h, --help         \tthis help message"
+  echo -e "-tt, --throw       \ttrace exceptions thrown"
+  echo -e "-tm, --memory      \ttrace memory allocations"
+  echo -e "-tmm, --mappings   \ttrace memory mappings"
+  echo -e "-r, --reject SPEC  \treject all exceptions matching spec"
+  echo -e "[--] cmd [args...] \tcommand arguments to execute"
+  echo
+  echo "Where each reject SPEC is of the form [TYPE][:FUNCTION[:LIBRARY]]".
+  echo "TYPE, if non-empty, will be matched against exception's type info name."
+  echo "FUNCTION, if non-empty, will be matched against the names of functions"
+  echo "in the call stack at the time the exceptions is thrown."
+  echo "LIBRARY, if non-empty, will similarly be matched against the library"
+  echo "names of all the functions in the call stack at exception throw point."
+  echo
+  echo "For example:"
+  echo "  igtrace -r foo"
+  echo "     Does not report any exception thrown if the type of the"
+  echo "     exception contains 'foo'"
+  echo "  igtrace -r :Geometry:"
+  echo "     Does not report any exception thrown if there is a function"
+  echo "     in the call stack whose name contains 'Geometry'"
+  echo "  igtrace -r ::Geometry"
+  echo "     Does not report any exception thrown if there is a function"
+  echo "     in the call stack from a library whose name contains 'Geometry'"
+  echo "  igtrace -r foo::bar"
+  echo "     Does not report any exception thrown if the type of the"
+  echo "     exception contains 'foo' and there is a function in the"
+  echo "     call stack whose library contains 'bar'"
+  echo
+  echo "By default all exceptions are traced."
+}
+
+append() { eval "if [ -z \"\$$1\" ]; then $1=\"\$2\"; else $1=\"\$$1 \$2\"; fi"; }
+
+THROW= MEM= MMAP= OPTS=
+while [ "$#" != 0 ]; do
+  case "$1" in
+    -h | --help )
+      usage; exit 1;;
+
+    -t | --target )
+      export IGPROF_TARGET="$2"; shift; shift ;;
+
+    -d | --debug )
+      export IGPROF_DEBUGGING=1; shift ;;
+
+    -D | --demangle )
+      OPTS=${OPTS+"$OPTS "}"demangle"; shift ;;
+
+    -tt | --throw )
+      [ -z "$THROW" ] && THROW=throw; shift;;
+
+    -tm | --memory )
+      [ -z "$MEM" ] && MEM=mem; shift;;
+
+    -tmm | --mappings )
+      [ -z "$MMAP" ] && MMAP=mmap; shift;;
+
+    -r | --reject)
+      OPTS=${OPTS+"$OPTS "}"igtrace:reject='$2'"; shift ; shift;;
+
+    -- )
+      shift; break ;;
+
+    -* )
+      echo "$0: unrecognised option $1"
+      usage
+      exit 1 ;;
+
+    * )
+      break ;;
+  esac
+done
+
+[ X"$MEM" = X -a X"$MMAP" = X -a X"$THROW" = X ] && THROW=throw
+[ X"$OPTS" = X ]  || append IGTRACE "$OPTS"
+[ X"$MEM" = X ]   || append IGTRACE "$MEM"
+[ X"$MMAP" = X ]  || append IGTRACE "$MMAP"
+[ X"$THROW" = X ] || append IGTRACE "$THROW"
+
+case $(uname) in
+  Darwin )
+    # DYLD_INSERT_LIBRARIES=$LOCALRT/lib/`scramv1 arch`/libigprof.dylib
+    DYLD_INSERT_LIBRARIES=./libigprof.dylib
+    export DYLD_INSERT_LIBRARIES ;;
+  * )
+    LD_PRELOAD=${LD_PRELOAD:+${LD_PRELOAD}:}libigprof.so;
+    export LD_PRELOAD ;;
+esac
+export IGTRACE
+exec "$@"

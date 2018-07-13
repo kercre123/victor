@@ -1,0 +1,142 @@
+#!/usr/bin/env python
+#
+# Helper scripts to create a summary database from all
+# the igprof database found in the passed path.
+#
+from optparse import OptionParser
+from commands import getstatusoutput
+from sys import exit
+import sys
+import locale
+from locale import format
+import os
+from os.path import join, normpath, exists, basename, isdir, dirname, getsize, abspath
+import glob
+
+def die(output):
+  print "Internal Error!"
+  print output
+  exit(1)
+
+# Emulate rsplit in python 2.3
+def rsplit24 (string, splitter, *amounts):
+    return string.rsplit (splitter, *amounts)
+
+def rsplit23 (string, splitter, *amounts):
+    if not splitter in string:
+        return [string]
+    splitResults = string.split (splitter)
+    if amounts:
+        res = splitter.join (splitResults[:-amounts[0]])
+        resultList = []
+        resultList.append (res)
+        for t in splitResults[-amounts[0]:]:
+            resultList.append (t)
+        return resultList
+rsplit = rsplit24
+
+if not hasattr (str, "rsplit"):
+    rsplit = rsplit23
+
+
+# Helper method which acutually does the sqlite query.
+# Notice that on slc4 (i.e. lxplus), there is no sqlite available, so we rely
+# on my personal copy of it.
+def doQuery(query, database):
+  if os.path.exists("/usr/bin/sqlite3"):
+    sqlite="/usr/bin/sqlite3"
+  else:
+    sqlite="/afs/cern.ch/user/e/eulisse/www/bin/sqlite"
+  command = "echo '%s' | %s -separator @@@ %s" % (query, sqlite, database)
+  return getstatusoutput("echo '%s' | %s -separator @@@ %s" % (query, sqlite, database))
+
+# Creates the schema for the summary database.
+# For the moment this is extremely pedestrian and simply keeps one
+# big table to with all the properties. We are talking about
+# 1 week worth of release validations, more or less, so is not
+# likely this will be an issue for the moment.
+# Notice that the schema is dropped and rebuild on every execution
+# since it's not worth trying to update old information.
+# This db is effectively just an index of what is there on
+# afs. It's not an historical database with all the results.
+def createDatabase(output):
+  schema = """DROP TABLE reports;
+              CREATE TABLE reports (
+              id INTEGER PRIMARY KEY,
+              filename STRING,
+              architecture STRING,
+              rel STRING,
+              candle STRING,
+              sequence STRING,
+              pileup  STRING,
+              conditions STRING,
+              process STRING,
+              counterType STRING,
+              events STRING,
+              cumCounts INT,
+              cumCalls INT
+              );
+           """
+  doQuery(schema, output)
+
+# Helper to get the high level summary information for the profile data.
+def getSummaryInfo(database):
+  summary_query="""SELECT counter, total_count, total_freq, tick_period
+                   FROM summary;"""
+  error, output = doQuery(summary_query, database)
+  if error or not output or output.count("\n") > 1:
+    return None
+  counter, total_count, total_freq, tick_period = output.split("@@@")
+  if counter == "PERF_TICKS":
+    return float(tick_period) * float(total_count), int(total_freq)
+  else:
+    return int(total_count), int(total_freq)
+
+# Populate the database with the information extracted from the filename
+# and from the contents itself.
+# We skip databases which don't have the summary table.
+def populateDatabase(path, output):
+  globbed = glob.glob(join(path, "*/*/*.sql3"))
+  insertStatement = """INSERT INTO reports (filename, architecture, rel, candle, sequence, pileup, conditions, process, counterType, events, cumCounts, cumCalls)
+                                    VALUES ("%s",     "%s",         "%s", "%s", "%s"    , "%s"  , "%s"      , "%s"   , "%s"       , "%s" , %s, %s);\n"""
+  print output
+  for f in globbed:
+    print f
+    profileInfo = getSummaryInfo(f)
+    if not profileInfo:
+      continue
+    cumCounts, cumCalls = profileInfo
+    dump, architecture, release, rest = rsplit(f, "/", 3)
+    candle, sequence, pileup, conditions, process, counterType, events = rest.split("___")
+    events = events.replace(".sql3", "")
+    doQuery(insertStatement % (f, architecture, release, candle, sequence, pileup, conditions, process, counterType, events, cumCounts, cumCalls), output)
+
+if __name__ == "__main__":
+  if "LC_ALL" in os.environ:
+    locale.setlocale(locale.LC_NUMERIC, os.environ["LC_ALL"])
+  else:
+    locale.setlocale(locale.LC_NUMERIC, "en_US.UTF-8")
+
+  parser = OptionParser(usage="igprof-navigator-summary [-o / --output <db>] <path> ")
+
+  parser.add_option("-o", "--output", dest="output", default="igprof-index.db",
+                    help="write output database to FILE", metavar="FILE")
+
+  opts, args = parser.parse_args()
+
+  if not args:
+    parser.error("You need to specify at least a db file.")
+    exit(1)
+
+  path = args[0]
+  dbPath = dirname(abspath(opts.output))
+  if not exists(path):
+    parser.error("%s does not exists" % path)
+    exit(1)
+  print dirname(normpath(opts.output))
+  if not isdir(dbPath):
+    parser.error("Cannot create %s in %s. Path not found." % (basename(opts.output), dbPath))
+
+  createDatabase(opts.output)
+  populateDatabase(path, opts.output)
+

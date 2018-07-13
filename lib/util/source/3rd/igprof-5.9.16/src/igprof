@@ -1,0 +1,183 @@
+#!/bin/sh
+# Collect up args for igprof.
+
+usage() {
+  echo "igprof [options] program [options]"
+  echo
+  echo "Options to igprof:"
+  echo -e "-h, --help                  \tthis help message"
+  echo -e "-o, --output FILE           \toutput to FILE, or pipe if starts with '|'"
+  echo -e "-z, --compress              \tcompress output file"
+  echo -e "-d, --debug                 \tenable more details from profiler"
+  echo -e "-t, --target STR            \tonly profile programs with STR in their names"
+  echo -e "-D, --dump-flag FILE        \tuse FILE as a hint to dump the profile data"
+  echo -e "-T, --tmpdir DIR            \tuse DIR for temporary profile data files"
+  echo -e "-mp, --memory-profiler      \tstart the memory profiler"
+  echo -e "-mo, --memory-overhead X    \treport memory overhead ('none', 'include', 'delta')"
+  echo -e "-ep, --empty-memory-profiler\tmeasure potentially unused memory by tracking zero-filled pages"
+  echo -e "-ei, --empty-init-memory    \tmeasure initialize malloc'd areas with a checker board pattern (0xAA)"
+  echo -e "-eu, --empty-track-unused   \tmeasure memory in unused pages (implies -ei)"
+  echo -e "-pp, --performance-profiler \tstart the performance profile (default)"
+  echo -e "-pr, --real-time            \tmeasure real time in performance profiler"
+  echo -e "-pu, --user-time            \tmeasure user time in performance profiler"
+  echo -e "-pk, --keep-on-fork         \tdo not reset performance profile in fork child"
+  echo -e "-pd, --disable-on-start     \tdo not enable during startup"
+  echo -e "-fd, --file-descriptor      \tstart the file descriptor profile"
+  echo -e "-fp:malloc:LIB	       \tprofile cpu cycles spent in malloc like functions"
+  echo -e "-fpi:FUNC:LIB	       \tprofile cpu cycles spent in function X which returns integer or pointer"
+  echo -e "-fpf:FUNC:LIB	       \tprofile cpu cycles spent in function X which returns floating point number"
+  echo -e "-j, --jemalloc	       \tuse libjemalloc.so library instead of libc.so.6"
+  echo -e "-np, --energy-profiler      \tstart the energy profiler"
+  echo -e "[--] cmd [args...]          \tcommand arguments to execute"
+}
+
+append() { eval "if [ -z \"\$$1\" ]; then $1=\"\$2\"; else $1=\"\$$1 \$2\"; fi"; }
+
+SORT= MEM= EMPTY= FD= PERF= FUNC= NRG= ALL= OUT= OUTZ=false OPTS= IGPROF_MALLOC_LIB='libc.so.6'
+FINST=
+
+while [ "$#" != 0 ]; do
+  case "$1" in
+    -h | --help )
+      usage; exit 1;;
+
+    -o | --output )
+      OUT="$2"; shift; shift ;;
+
+    -z | --compress )
+      OUTZ=true; shift ;;
+
+    -t | --target )
+      IGPROF_TARGET="$2"; shift; shift;
+      export IGPROF_TARGET ;;
+
+    -T | --tmpdir )
+      IGPROF_TMPDIR="$2"; shift; shift;
+      export IGPROF_TMPDIR ;;
+
+    -D | --dump-flag )
+      OPTS="$OPTS igprof:dump='$2'"; shift; shift;;
+
+    -d | --debug )
+      export IGPROF_DEBUGGING=1; shift ;;
+
+    -mp | --memory-profiler )
+      [ -z "$MEM" ] && MEM=mem; shift ;;
+
+    -mo | --memory-overhead )
+      [ -z "$MEM" ] && MEM=mem
+      case "$2" in
+        none | include | delta )
+          MEM="$MEM:overhead=$2"; shift; shift;;
+        * )
+	  echo "$0: unrecognised -mo value '$2', expected 'none', 'include' or 'delta'"
+	  exit 1 ;;
+      esac ;;
+
+    -ep | --empty-memory-profiler )
+      [ -z "$EMPTY" ] && EMPTY=empty; shift ;;
+
+    -ei | --empty-init-memory )
+      [ -z "$EMPTY" ] && EMPTY="empty"; EMPTY="$EMPTY:initmem"; shift ;;
+
+    -eu | --empty-track-unused )
+      [ -z "$EMPTY" ] && EMPTY="empty"; EMPTY="$EMPTY:trackunused"; shift ;;
+
+    -fd | --file-descriptor )
+      [ -z "$FD" ] && FD=fd; shift ;;
+
+    -pp | --performance-profiler )
+      PERF="perf"; shift ;;
+    -pr | --real-time )
+      [ -z "$PERF" ] && PERF="perf"; PERF="$PERF:real"; shift ;;
+    -pu | --user-time )
+      [ -z "$PERF" ] && PERF="perf"; PERF="$PERF:user"; shift ;;
+    -pk | --keep-on-fork )
+      [ -z "$PERF" ] && PERF="perf"; PERF="$PERF:keep"; shift ;;
+    -pd | --disable-on-start )
+      [ -z "$PERF" ] && PERF="perf"; PERF="$PERF:nostart"; shift ;;
+
+    -fp* )
+      FP_MODE=$(echo $1 | cut -f1 -d: -s);
+      FP_FUNC=$(echo $1 | cut -f2 -d: -s);
+      if [ -z "$FP_FUNC" ]; then
+        echo "No function to profile, quitting";
+        exit 1;
+      fi
+      FP_LIB=$(echo $1 | cut -f3 -d: -s)
+      [ -z "$FUNC" ] && FUNC="func";
+      if [ x"$FP_MODE" = x"-fpi" ]; then
+        FUNC="$FUNC:name=other";
+      elif [ x"$FP_MODE" = x"-fpf" ]; then
+        FUNC="$FUNC:name=otherf";
+      elif [ x"$FP_MODE" = x"-fp" ] && [ x"$FP_FUNC" == x"malloc" ]; then
+        FUNC="$FUNC:name=malloc";
+      else
+        echo "$1 bad option, expected -fp:malloc:LIB or -fpi:FUNC:LIB or -fpf:FUNC:LIB";
+        exit 1;
+      fi
+      export IGPROF_FP_FUNC=$FP_FUNC;
+      export IGPROF_FP_LIB=$FP_LIB;
+      shift ;;
+
+    -finst )
+      [ -z "$FINST" ] && FINST="finst"; shift ;;
+
+    -j | --jemalloc )
+       IGPROF_MALLOC_LIB='libjemalloc.so.1'; shift ;;
+
+    -np | --energy-profiler )
+      [ -z "$NRG" ] && NRG="nrg"; shift ;;
+
+    -- )
+      shift; break ;;
+
+    -* )
+      echo "$0: unrecognised option $1"
+      usage
+      exit 1 ;;
+
+    * )
+      break ;;
+  esac
+done
+
+export IGPROF_MALLOC_LIB
+
+[ X"$MEM" = X -a X"$EMPTY" = X -a X"$FD" = X -a X"$PERF" = X -a X"$FUNC" = X -a X"$FINST" = X -a X"$NRG" = X ] && PERF=perf
+
+if $OUTZ; then
+  [ X"$OUT" = X ] && OUT="igprof.$$.gz"
+  OUT="|gzip -c>$OUT"
+fi
+
+if [ -z "$ALL" ]; then :; else
+  [ -z "$MEM"   ] || MEM="$MEM$ALL"
+  [ -z "$EMPTY" ] || EMPTY="$EMPTY$ALL"
+  [ -z "$FD"    ] || FD="$FD$ALL"
+  [ -z "$PERF"  ] || PERF="$PERF$ALL"
+fi
+
+[ X"$OUT" = X ]   || append IGPROF "igprof:out='$OUT'"
+[ X"$OPTS" = X ]  || append IGPROF "$OPTS"
+[ X"$MEM" = X ]   || append IGPROF "$MEM"
+[ X"$EMPTY" = X ] || append IGPROF "$EMPTY"
+[ X"$FD" = X ]    || append IGPROF "$FD"
+[ X"$PERF" = X ]  || append IGPROF "$PERF"
+[ X"$FUNC" = X ]  || append IGPROF "$FUNC"
+[ X"$FINST" = X ] || append IGPROF "$FINST"
+[ X"$NRG" = X ]   || append IGPROF "$NRG"
+
+export UNW_ARM_UNWIND_METHOD=4
+
+case $(uname) in
+  Darwin )
+    # DYLD_INSERT_LIBRARIES=$LOCALRT/lib/`scramv1 arch`/libIgProf.dylib
+    DYLD_INSERT_LIBRARIES=./libigprof.dylib
+    export DYLD_INSERT_LIBRARIES ;;
+  * )
+    LD_PRELOAD=${LD_PRELOAD:+${LD_PRELOAD}:}libigprof.so;
+    export LD_PRELOAD ;;
+esac
+export IGPROF
+exec "$@"

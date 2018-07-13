@@ -1,0 +1,16 @@
+#!/usr/bin/env perl
+
+sub addstack { $s = $stacks{$stack} ||= { AMOUNT => 0, MMAPS => [] }; $$s{AMOUNT} += $amount; push(@{$$s{MMAPS}}, $line); $stack = ""; $new = 0; }
+while (<>)
+{
+  if (/^(\d+) bytes left in mapping/) { addstack() if $stack; $new = 15; $line = $_; $amount = $1; }
+  elsif ($new > 0 && (m!/lib/tls/! || m!/external/gcc/!)) { }
+  elsif ($new > 0) { s!\s+\d+: 0x[\da-f]+\s+!!; s!\s.*!!; s!^!    !; $stack .= $_; --$new }
+  elsif ($stack) { addstack(); }
+}
+
+foreach $s (sort { $stacks{$b}{AMOUNT} <=> $stacks{$a}{AMOUNT} } keys %stacks)
+{
+  print "$stacks{$s}{AMOUNT} bytes left from @{[scalar @{$stacks{$s}{MMAPS}}]} mappings from\n$s\n",
+        (map { ("  ", $_) } @{$stacks{$s}{MMAPS}}), "\n";
+}

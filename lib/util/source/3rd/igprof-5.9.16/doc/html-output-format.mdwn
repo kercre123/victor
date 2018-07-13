@@ -1,0 +1,69 @@
+---
+title: IgProf html output description
+layout: default
+related:
+ - { name: Top, link: . }
+ - { name: Downloads, link: https://github.com/ktf/igprof/tags }
+ - { name: Bugs, link: https://github.com/ktf/igprof/issues }
+ - { name: Project, link: https://github.com/ktf/igprof/ }
+---
+If you have access to some web area with CGI support, the easiest way to
+navigate igprof reports is to use the `igprof-navigator` script. Have a look
+[here][setup-igprof-navigator] to see how to set it up.
+
+Depending on whether we are doing performance profiling or memory profiling,
+the numbers reported represent seconds or the bytes of memory being allocated.
+
+The entry page for the report is a flat list with the cumulative cost of 
+the listed functions and methods. See [here][cumulative-example] for an example.
+
+By clicking of the "Sort by self cost" link you'll be able to sort the same profile
+having the most costy functions and methods on top, without considering their
+children. This is called the [*"Self cost view"*][self-example].
+
+All the entries in those two lists are links to their detailed view. For
+example have a look at the detailed view for
+[fastjet::ClusterSequence::_minheap_faster_tiled_N2_cluster()][detail-example].
+
+Each detailed view describes the statistics for one function, the primary
+function (in light orange-ish), surrounded by secondary functions. 
+Above the primary function are the callers (in dark green):
+the functions that called the primary function. Below the primary function are
+the callees (in light green): the functions the primary function called. 
+
+In the first column the number in the brackets indicates the function's index
+in the cumulative view.  The smaller the index is, the higher the function was
+in cpu time usage, memory usage or leakage.
+
+The other columns have slightly different meaning depending if you are looking
+at the callers, the callees or the primary function.
+
+For the primary function the "% total" column is the percentage of the total
+time spent in the given function and its callees. For the callers and the
+callees it is the percentage of total time spent calling (or being called by)
+the primary function. The "Counts" column contains the time spent in the function
+itself (first sub-column) and the time spent in its children. The "Paths" column is
+contains the number of different callstack the primary function is found.
+
+For the callers the "% total" column is the percentage of the total time a
+caller spends in calling the primary function. The "Counts" column shows the
+number of seconds spent in the function when calling the primary function
+(first sub-column) and the total cumulative number of seconds spent in the
+caller or any of its children (second column).  The "Paths" column contains similarly
+the number of callpaths which result in calling the primary function, and the
+total number of paths a caller function appears on.
+
+For the callees the "% total" column is the percentage of the total time a
+callee uses when being called by the primary function. The "Counts" column
+shows the number of seconds spent in the callee when being called by the
+primary function (first sub-column) and the number of seconds spent in the
+callee (or its children) in total. The "Paths" column contains similarly the
+number of callpaths in which the primary function ends up calling the given
+callee and the number of paths in general a callee appears on.
+
+Symbol name is obviously the mnemonic name associated with a given function.
+
+[setup-igprof-navigator]: analysis.html
+[cumulative-example]: http://eulisse.web.cern.ch/eulisse/performance/navigator/performance-report
+[self-example]: http://eulisse.web.cern.ch/eulisse/performance/navigator/performance-report/self
+[detail-example]: http://eulisse.web.cern.ch/eulisse/performance/navigator/performance-report/69 

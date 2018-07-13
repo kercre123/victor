@@ -1,0 +1,26 @@
+---
+title: IgProf papers, presentations and documents
+layout: default
+related:
+ - { name: Top, link: . }
+ - { name: Downloads, link: https://github.com/ktf/igprof/tags }
+ - { name: Bugs, link: https://github.com/ktf/igprof/issues }
+ - { name: Project, link: https://github.com/ktf/igprof/ }
+---
+L. Tuura: _Efficient memory management,_ First INFN International School on architectures, tools and methodologies for developing efficient large scale scientific computing applications ([ESC09](http://web.infn.it/esc09/)), Bertinoro, Italy, 2009 ([slides](http://agenda.infn.it/getFile.py/access?contribId=20&amp;sessionId=2&amp;resId=0&amp;materialId=slides&amp;confId=1387)).
+
+P. Elmer, G. Eulisse, L. Tuura, V. Innocente: _CMS software performance strategies,_ Proc. Computing In High Energy And Nuclear Physics ([CHEP09](http://www.particle.cz/conferences/chep2009/)), Prague, Czech Republic, 2009 ([slides](http://indico.cern.ch/getFile.py/access?contribId=482&sessionId=59&resId=0&materialId=slides&confId=35523)).
+
+G. Benelli: _The CMS software performance at the start of data taking_, Nuclear Science Symposium Conference Record ([NSS '08](http://www.nss-mic.org/2008/)), 2008, [doi:10.1109/NSSMIC.2008.4774926](http://dx.doi.org/10.1109/NSSMIC.2008.4774926) ([paper](http://ieeexplore.ieee.org/iel5/4747668/4774073/04774926.pdf?arnumber=4774926), [slides](http://www-zeuthen.desy.de/technisches_seminar/texte/cms_software_performance_2008.pdf)).
+
+L. Tuura, V. Innocente, G. Eulisse: _Analysing CMS software performance using IgProf, OProfile and callgrind,_ Proc. Computing In High Energy And Nuclear Physics ([CHEP07](http://www.chep2007.com/)), Victoria, Canada, 2007, [doi:10.1088/1742-6596/119/4/042030](http://dx.doi.org/10.1088/1742-6596/119/4/042030) ([paper](http://www.iop.org/EJ/article/1742-6596/119/4/042030/jpconf8_119_042030.pdf), [slides](http://indico.cern.ch/getFile.py/access?contribId=259&sessionId=28&resId=0&materialId=slides&confId=3580)).
+
+G. Eulisse, L. Tuura: _IgProf profiling tool,_ Proc. Computing In High Energy And Nuclear Physics ([CHEP 2004](http://www.chep2004.org/)), Interlaken, Switzerland, 2004 ([paper](http://indico.cern.ch/getFile.py/access?contribId=63&sessionId=6&resId=0&materialId=paper&confId=0), [slides](http://indico.cern.ch/getFile.py/access?contribId=63&sessionId=6&resId=0&materialId=slides&confId=0), [abstract](http://indico.cern.ch/contributionDisplay.py?contribId=63&sessionId=6&confId=0)).
+
+G. Eulisse: Core software session [presentation](http://indico.cern.ch/getFile.py/access?resId=0&amp;materialId=0&amp;contribId=s21t2&amp;sessionId=s21&amp;subContId=1&amp;confId=a035751) at November 2003 [CMS CPT week](http://indico.cern.ch/conferenceDisplay.py?confId=a035751#s21).
+
+G. Eulisse: [OProfile](http://indico.cern.ch/getFile.py/access?contribId=s1t2&resId=1&materialId=0&confId=a031779) and [MemProfLib](http://indico.cern.ch/getFile.py/access?contribId=s1t2&resId=0&materialId=0&confId=a031779) presentations at July 2003 [LCG applications area meeting](http://indico.cern.ch/conferenceDisplay.py?confId=a031779).
+
+G. Eulisse: _Profiling OSCAR_ [presentation](http://indico.cern.ch/getFile.py/access?contribId=s1t6&amp;resId=0&amp;materialId=0&amp;confId=a03580) in the March 2003 [SPROM meeting](http://indico.cern.ch/conferenceDisplay.py?confId=a03580).
+
+G. Eulisse: _OProfile Introduction_ [presentation](http://indico.cern.ch/getFile.py/access?contribId=s3t7&sessionId=s3&resId=1&materialId=0&confId=a021337) in September 2002 [CMS AFT meeting in CMS week](http://indico.cern.ch/conferenceDisplay.py?confId=a021337#s3).

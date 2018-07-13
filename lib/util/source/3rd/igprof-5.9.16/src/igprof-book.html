@@ -1,0 +1,252 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <title>igprof-book</title>
+  <style>
+
+  #selected_dumps_list {
+    float: left;
+  }
+
+  #toggle_show_hide {
+   font-size: 60%;
+   color: blue;
+   text-decoration: underline;
+   cursor: pointer;
+   clear: both;
+   float: left;
+  }
+
+  #filters_selector {
+    width: 100%;
+    float: top;
+  }
+
+  #filters_selector > div {
+    margin: 5px;
+  }
+
+  #filters_selector div span {
+    font-size: 90%;
+    font-weight: bold;
+  }
+
+  .filter_is_title {
+    font-size:110%;
+    color: black;
+  }
+
+  body {
+    font-family: sans-serif;
+  }
+
+  .filters_hidden {
+    display: none;
+  }
+
+  div.filter_selector {
+    float: left;
+  }
+
+  div.filter_selector div a {
+    text-decoration: none;
+    font-size: 80%;
+  }
+
+  div.filter_selector div a:hover  {
+    text-decoration: underline;
+    color: orange;
+    font-size: 80%;
+  }
+
+  .selected_filter {
+    font-weight: bold;
+    color: red;
+  }
+
+  .unavailable_choice {
+    color: gray;
+  }
+
+  .flatlist_container {
+    float: left;
+  }
+
+  .dumps_selector {
+    float: none;
+  }
+
+  tr.moreinfo {
+    font-size: 70%;
+    cursor: pointer;
+  }
+
+  .loading_symbol {
+    color: #AAAAAA;
+    text-decoration: none;
+  }
+
+  td {
+    font-size: 12px;
+    padding: 3px 3px;
+    font-family: menlo, monospace;
+    text-align: right;
+    margin: 0px;
+    border-width: 0px;
+    white-space: nowrap;
+  }
+
+
+  th.sn {
+    padding: 3px 10px;
+    text-align: left;
+  }
+
+  tbody.parents {
+    background-color: #E9F1F2;
+  }
+
+  tbody.parents tr:hover {
+    background-color: #CFE5E8;
+  }
+
+  tbody.parents tr:hover td.s a {
+    color: blue;
+    text-decoration: underline;
+  }
+
+
+  tbody.children {
+    background-color: #ECF7E6;
+  }
+
+  tbody.children tr td.s {
+    padding-left: 20px;
+  }
+
+  tbody.parents tr td.s {
+    padding-left: 20px;
+  }
+
+  tbody.children tr:hover {
+    background-color: #D5EDC7;
+  }
+
+  tbody.children tr:hover td.s a {
+    color: blue;
+    text-decoration: underline;
+  }
+
+
+  tbody.mainrow {
+    font-weight: bold;
+    background-color: #FCF3EB;
+  }
+
+  tbody.mainrow tr:hover {
+    background-color: #fde8d7;
+  }
+
+  tbody.mainrow tr:hover td.s a {
+    color: blue;
+    text-decoration: underline;
+  }
+
+
+  a {
+    color: #000000;
+  }
+
+  .action_label {
+    color: black;
+    text-decoration: none;
+    font-size: 80%;
+    padding: 0px;
+    margin: 0px;
+
+  }
+
+  a.action_link {
+    color: blue;
+    text-decoration: underline;
+    font-size: 80%;
+    padding: 3px;
+    cursor: pointer;
+  }
+
+  a.action_link_selected {
+    font-weight: bold;
+    cursor: arrow;
+  }
+
+
+  li.selected_dump {
+    font-size: 90%;
+  }
+
+  .dump_header div span {
+    font-weight: bold;
+    right-margin: 5px;
+  }
+
+  .dump_table_header {
+    font-size: 90%;
+    margin: 7px 5px;
+    min-width: 250px;
+  }
+
+  .sortable_column {
+    cursor: pointer;
+  }
+
+  .sortable_column:hover {
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  .selected_column_header {
+    color: red;
+  }
+
+  #symbols tbody tr:hover {
+    background-color: #f5f5f5;
+    margin: 0px;
+    padding: 4px;
+  }
+
+  #symbols {
+    border-collapse: collapse;
+  }
+
+  #symbols tbody tr:hover td.s a {
+    color: blue;
+    background-color: #f5f5f5;
+    text-decoration: underline;
+  }
+
+  td.s {
+    font-family: menlo, monospace;
+    text-align: left;
+    white-space:nowrap;
+  }
+
+  td.s a {
+    text-align: left;
+    white-space:nowrap;
+    text-decoration: none;
+  }
+
+  .nextSelection {
+    color: orange;
+  }
+
+  </style>
+  <script type="text/javascript" src="jquery-1.4.4.min.js"></script>
+  <script type="text/javascript" src="jquery.ba-hashchange.min.js"></script>
+  <script type="text/javascript" src="protovis-r3.2.js"></script>
+  <script type="text/javascript" src="src/igprof-book.js"></script>
+</head>
+<body>
+<div id="main"></div>
+</body>
+</html>

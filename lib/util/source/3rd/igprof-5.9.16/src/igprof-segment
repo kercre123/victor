@@ -1,0 +1,35 @@
+#!/usr/bin/env perl
+BEGIN { use strict; use warnings; $^W=1; }
+
+my $func = $ARGV[0];
+
+my $insect = 0;
+my $incall = 0;
+my $wanted = 0;
+my $saved;
+while (<STDIN>)
+{
+  chomp;
+  if (/^- - /)
+  {
+    print $saved if $wanted;
+    $insect = 1;
+    $incall = 0;
+    $saved = "$_\n";
+    $wanted = 0;
+  }
+  elsif ($insect)
+  {
+    $saved .= "$_\n";
+    if (/^\[/)
+    {
+      my $p = $_;
+      $p =~ s/'\d+$//g;
+      $p =~ s!.*/ ['0-9.\s]*!!;
+      $p =~ s/\s\[\d+\]$//;
+      $wanted = ($p =~ /^($func)/o) ? 1 : 0;
+    }
+  }
+}
+
+print $saved if $wanted;

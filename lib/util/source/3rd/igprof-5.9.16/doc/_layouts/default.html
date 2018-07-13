@@ -1,0 +1,106 @@
+<html>
+<head>
+<title>{{ page.title }}</title>
+<style>
+html {
+ font-family: sans-serif;
+}
+
+#nav 
+{
+ padding:5px 10px;
+ text-align: center;
+}
+
+#main {
+ padding:10px;
+}
+
+h2 {
+ margin:0 0 1em;
+}
+
+
+#wrap 
+{
+ max-width:1000px;
+ margin:0 auto;
+}
+
+#footer {
+ clear: both;
+ padding: 5px 10px;
+ text-align: center;
+ font-size: 50%;
+}
+
+#header {
+ text-align: center;
+ font-size: 190%;
+ font-weight: bold;
+}
+
+
+#sidebar {
+ float:right;
+ width:230px;
+ padding:0 20px;
+ margin:0 20px 20px;
+ background:#f8f8f8;
+ border:thin solid #eee;
+ text-size: 80%;
+}
+
+#sidebar ul {margin-left: 0; padding-left: 0;}
+#sidebar ul li {margin-left: 1.2em; padding-left: 0;}
+
+#footer p {
+ margin:0;
+}
+
+pre {
+ overflow: auto;
+}
+
+</style>
+</head>
+<body>
+<div id="wrap">
+  <h1 id="header">{{ page.title }}</h1>
+  <div id="nav">
+    {% for r in page.related %}
+     <a href="{{ r.link }}">{{ r.name }}</a>
+     {% if forloop.last == false %} | {% endif %}
+    {% endfor %}
+  </div>
+  <div id="sidebar">
+    <h3 id='quick_start'>Quick start</h3>
+    <ul>
+      <li><a href='index.html'>Introduction</a></li>
+      <li><a href='install.html'>Building and Installing IgProf</a></li>
+      <li><a href='running.html'>Running igprof</a></li>
+      <li><a href='analysis.html'>Producing profile reports</a></li>
+      <li><a href='advancedoptions.html'>Advanced options</a></li>
+      <li><a href='releasenotes.html'>Release notes</a></li>
+    </ul>
+
+    <h3 id='details'>Details and more</h3>
+    <ul>
+      <li><a href='html-output-format.html'>HTML profile reports</a></li>
+      <li><a href='text-output-format.html'>ASCII profile reports</a></li>
+      <li><a href='dump-format.html'>Profile statistics output file format</a></li>
+      <li><a href='ighook.html'>The IgHook tapping library</a></li>
+      <li><a href='documents.html'>Papers and documents</a></li>
+      <li><a href='authors.html'>Authors</a></li>
+      <li><a href='users.html'>Famous users</a></li>
+      <li><a href='history.html'>History</a></li>
+      <li><a href='license.txt'>License</a></li>
+    </ul>
+  </div>
+  <div id="main">
+    {{ content }}
+  </div>
+  <div id="footer">Copyright 2002-2013 Giulio Eulisse &amp; Lassi Tuura</div>
+</div>
+</body>
+</html>

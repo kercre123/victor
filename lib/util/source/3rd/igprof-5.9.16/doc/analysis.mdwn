@@ -1,0 +1,188 @@
+---
+title: Producing IgProf profile reports
+layout: default
+related:
+ - { name: Top, link: . }
+ - { name: Downloads, link: https://github.com/ktf/igprof/tags }
+ - { name: Bugs, link: https://github.com/ktf/igprof/issues }
+ - { name: Project, link: https://github.com/ktf/igprof/ }
+---
+Assuming you obtained some profile statistics files [as shown on the running
+page](running.html), the next step is to process these to obtain useful
+(and readable) profile reports. The profile statistics files themselves just
+contain the raw data needed to produce the reports. An additional
+tool, igprof-analyse, is used to process the raw profile statistics into
+the report.
+
+### Output report formats
+
+Before we describe how to actually produce the reports, we note that igprof
+supports two types of reports:
+
+ - simple ASCII text (flat file) reports
+ - sqlite database files that can be inspected using a web browser (using
+   the igprof-navigator cgi script)
+
+To create and use the ASCII text reports, no additional tools are required
+except your favorite editor or pager (less, more, etc.). To create and use the
+web-navigable version, however, two additional things are needed:
+
+ - sqlite and in particular the command line 'sqlite3' application
+ - access to a web visible-area where you are able to place a cgi script
+   (and some sqlite data files) 
+
+The web-navigable version has the advantage of making it easy, for example,
+to navigate from one part of a call stack to another, and also allows one
+to share with your colleagues URL's pointing to specific issues within the
+profile. 
+
+### Performance profiling reports
+
+  If you have run igprof in performance profiling (-pp) mode, you can 
+produce the ASCII text version of the report with:
+
+    igprof-analyse -d -v -g igprof.pp.gz >& igreport_perf.res
+
+Here "igprof.pp.gz" is the name of the profile statistics file produced
+by igprof and igreport_perf.res file is the output report itself. 
+  The `-g` and `-d` options are given for more accurate and appealing
+presentation of function names.  The `-v` option just gives you more
+information of the analysis itself, it's mostly useful when the profile
+statistics are huge and take a while to process.  
+
+Once you have this ASCII text report, you can proceed to
+the [documentation about the text report](text-output-format.html).
+
+  To produce the sqlite file for the web-navigable version of the report,
+you need to do:
+
+    igprof-analyse --sqlite -d -v -g igprof.pp.gz | sqlite3 igreport_perf.sql3
+
+The output file here is igreport_perf.sql3. You can use any file name you
+like, but the file extension should be ".sql3".
+
+  Once you have the sqlite report file, you should proceed to the section
+below on setting up the web navigation via the cgi script.
+
+### Memory profiling reports
+
+  If you have run igprof in memory profiling (-mp) mode, producing reports 
+is analogous to that described for the performance profiling above. The
+one difference is that several types of reports can be produced from 
+the profile statistics produced from memory profiling:
+
+* `MEM_LIVE` records the "live" memory -- memory that hasn't
+  been freed. If the profile statistics file you are processing came from
+  the end of the application's run, this will be the memory leaked by the
+  job. If the profile statistics file was triggered during the running
+  of the job, it is a snapshot of the heap, i.e. a heap profile. The statistic 
+  is accurate (not
+  statistical) and records the number of bytes allocated and the number of calls
+  involved.
+* `MEM_TOTAL` records the total amount of memory allocated by any function.
+  You can use it to locate functions that allocate excessive amounts of memory
+  even if they don't leak it.  It can also be used to hint at pieces of code
+  that may cause poor memory locality, which is could easily cause performance
+  degradation throughout the programme with no one place being particularly
+  slow.
+* `MEM_LIVE_PEAK` is similar to `MEM_LIVE`, but records the peak amount of
+  memory allocated by any one function at any one time.  It indicates how much
+  memory the application would use if all of its parts held to all of their
+  live allocations simultaneously.  Note that it does _not_ tell you how much
+  the whole application allocate at its largest; that will be less than
+  `MEM_LIVE_PEAK`, but the latter will give a useful worst-case upper bound.
+* `MEM_MAX` records the largest single allocation by any function.
+
+To produce the ASCII text report for MEM_TOTAL from a memory profiling
+statistics file, you do:
+
+    igprof-analyse -d -h -v -g -r MEM_TOTAL igprof.mp.gz > igreport_total.res
+
+The `-d`, `-v` and `g` options are the same as described above for the
+performance profiling. The `-r` option selects the statistic to report. The 
+possible statistics for the memory profiler are `MEM_LIVE`, `MEM_TOTAL` `MEM_LIVE_PEAK`, and `MEM_MAX`, as described above. You can proceed to the [documentation about the text report](text-output-format.html). 
+
+  Similarly, the sqlite version of the report can be produced with:
+
+    igprof-analyse --sqlite -d -v -g -r MEM_TOTAL igprof.mp.gz | sqlite3 igreport_total.sql3
+
+  Once you have the sqlite report file, you should proceed to the section
+below on setting up the web navigation via the cgi script.
+
+### Processing profile statistics from multiple runs
+
+It is also possible to combine the statistics from multiple runs into
+a single report, simply by specifying more than one statistics file
+on the command line:
+
+    igprof-analyse -d -v -g igrun1.pp.gz igrun2.pp.gz igrun3.pp.gz > igrunall_perf.res
+
+This is possible for both the performance and memory reports and for both
+types of outputs (ASCII text and sqlite/web).
+
+### Setting up the web-navigable reports
+
+  As noted above, access to a "cgi-bin" area which is visible via some
+web server is needed in order to use the sqlite/web-visible version
+of the report. If you have such an area, you can do the following:
+
+    cp $IGSRC/igprof-navigator $PATHTOCGIAREA/
+    mkdir -p $PATHTOCGIAREA/data
+    cp igreport_perf.sql3 $PATHTOCGIAREA/data
+
+where $IGSRC is wherever you have the igprof sources. Then you can access
+the report via some url like:
+
+    http://yoursite/x/y/z/cgi-bin/igprof-navigator/igreport_perf/
+
+can be used to open and view the report. The sqlite data file always
+needs to be in a subdirectory "data" of the place where the igprof-navigator 
+script is located. The filename extension should be ".sql3", even if the URL
+will specify the sqlite filename without the extension. The $PATHTOCGIAREA
+and "http://yoursite/x/y/z/cgi-bin/" will of course depend on the
+precise details of the site where you are working.
+
+  To be clear, here is a concrete example for people with unix user accounts
+at [CERN][]. Normal unix accounts have a user web-visible 
+area under their home directory called:
+
+    $HOME/public/www/
+
+Any files placed in that directory are web-visible. To run CGI scripts, one 
+can create a "cgi-bin" directory within that area:
+
+    mkdir -p $HOME/public/www/cgi-bin
+
+One can copy in the igprof-navigator script from wherever one has
+downloaded the igprof sources:
+
+    cp $SOMEWHERE/igprof-navigator $HOME/public/www/cgi-bin/
+
+and copy in the sqlite file:
+
+    mkdir -p $HOME/public/www/cgi-bin/data/
+    cp $WORKAREA/foo_perf.sql3 $HOME/public/www/cgi-bin/data/
+
+The URL to the report will then be:
+
+    http://cern.ch/<username>/cgi-bin/igprof-navigator/foo_perf/
+
+Note that it is also possible (in any site, not just CERN) to create
+subdirectories under the "data" directory
+
+    mkdir -p $HOME/public/www/cgi-bin/data/orig/
+    cp $WORKAREA_ORIG/foo_perf.sql3 $HOME/public/www/cgi-bin/data/orig/
+
+    mkdir -p $HOME/public/www/cgi-bin/data/new/
+    cp $WORKAREA_NEW/foo_perf.sql3 $HOME/public/www/cgi-bin/data/new/
+
+and use URL's like:
+
+    http://cern.ch/<username>/cgi-bin/igprof-navigator/orig/foo_perf/
+    http://cern.ch/<username>/cgi-bin/igprof-navigator/new/foo_perf/
+
+This allows one to organize the data files a bit better than just by
+filename. An example profile can be found [here][example-profile].
+
+[CERN]: http://www.cern.ch/
+[example-profile]: http://eulisse.web.cern.ch/eulisse/performance/navigator/performance-report

@@ -1,0 +1,27 @@
+---
+title: We did it!
+layout: default
+related:
+ - { name: Top, link: . }
+ - { name: Downloads, link: https://github.com/ktf/igprof/tags }
+ - { name: Bugs, link: https://github.com/ktf/igprof/issues }
+ - { name: Project, link: https://github.com/ktf/igprof/ }
+---
+IgProf was developed by Lassi Tuura, Giulio Eulisse and Mikko Kurkela in order
+to assist software development projects for the [CMS experiment][cms] at
+[CERN][].
+
+A number of people have contributed valuable feedback and help with the project
+planning over the years, in particular Vincenzo Innocente, Lucas Taylor, Peter
+Elmer.
+
+The authors can be reached at [igprof-developers@googlegroups.com][igprof-developers].
+
+The development was funded by the United States [National Science
+Foundation][nsf] and [Department of Energy][doe].
+
+[cms]: http://cms.cern.ch
+[CERN]: http://www.cern.ch
+[nsf]: http://nsf.gov
+[doe]: http://www.energy.gov
+[igprof-developers]: mailto:igprof-developers@googlegroups.com

@@ -1,0 +1,419 @@
+#!/usr/bin/env python2.6
+#
+# Web GUI for igprof-populator created profile storages. This GUI exploits the
+# single database to allow the user to correlate / diff various profile dumps.
+#
+# The GUI has to modes, either standalone or as a CGI script, in both cases
+# you'll need to have the python kyotocabinet module available in your
+# PYTHONPATH.
+#
+# Installation
+# ============
+#
+# If you are installing on you own, you'll need to build and install kyotocabinet.
+# and it's python API. Both can be found at:
+#
+# http://1978th.net/kyotocabinet/
+#
+# I suggest to build the kyotocabinet library as a static file (via
+# --enable-static --disable-shared combination) and build the python module
+# using it, so that it can be simply dropped in the same directory as the
+# igprof-book file and used.
+#
+# Standalone mode
+# ===============
+#
+# Simply start with script passing the kyotocabinet database as commandline
+# input pointing then the browser to the url reported. Notice you'll need
+# the kyotocabinet python module installed in your system.
+#
+# CGI mode
+# ========
+#
+# Copy the script in your web area, making sure that your web server is
+# configured to execute cgi scripts in that directory. For personal CERN web
+# sites, please have a look at
+#
+# http://webservices.web.cern.ch/webservices/Help/?kbid=210100&mode=print
+#
+# Move your personal storage file, the kyotocabinet.so module and igprof.kct
+# in the same directory as the script.
+from optparse import OptionParser
+from commands import getstatusoutput
+from sys import exit
+import sys
+from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+import re
+import locale
+from locale import format
+import os
+import cgi
+import socket
+import thread
+from urlparse import urlparse
+from os.path import join, normpath, exists, basename, isdir, dirname, getsize
+import traceback
+import string
+from kyotocabinet import *
+import json
+import StringIO
+
+debug=True
+profile=False
+
+# For debugging purposes only.
+# Uncomment in case of debugging needs
+if debug:
+  import cgitb
+import glob
+
+def die(output):
+  print "Internal Error!"
+  if debug:
+    print output
+  exit(1)
+
+# We do not need to have a web safe alphabet, however, we do need to convert
+# it to be web-safe when we return it to the web. We only keep out the field
+# separator character.
+# FIXME: We only use a subset of characters because using non printable ones
+# seems to create problems to kyotocabinet which lead to duplicate hashes (maybe
+# some issue with backspace / delete ??).
+alphabet = string.digits + string.letters
+alphabetSize = len(alphabet)
+alphabetEnum = dict((letter, i) for (i, letter) in enumerate(alphabet))
+
+# decode a web encoded number as stored in the db. This is suboptimal and we
+# should probably decide to simply use it for keys, not for objects.
+def decodeNum(s):
+  ls = len(s)
+  return sum((alphabetEnum[j] * (alphabetSize ** (ls - i - 1)))
+             for (i, j) in enumerate(s))
+
+# This methods is the main logic for constructing the web page.
+# rank can either be the rank of a method
+#
+# * if rank is greater than 0 we show the flat profile for the associated
+#   method. Only exception being rank "1", which is always is always
+#   "<spontaneous>" and since that one is not saved in the database for the
+#   moment we simply show the cumulative summary. rank "0" does not exists and
+#   again shows the cumulative summary.
+# * favicon.ico is simply now handled.
+# * If rank is "self", we show the "by self" summary
+# * If the rank is "cumulative" or it is not set, we show the "cumulative"
+#   summary.
+# * All other values for rank trigger an error.
+def buildReply(command, db, out):
+  # Whatever comes after the ! is to be considered client side information, so
+  # we strip it.
+  command = re.sub("[!].*", "", command)
+  parts = command.strip("/").split("/")
+  if len(parts) == 1 and parts[0] == "dumps":
+    c = db.cursor()
+    out.write("[")
+    start = ""
+    c.jump("d")
+    while c.get_key(False).startswith("d"):
+      out.write(start + "[\"")
+      out.write(c.get_key(False))
+      out.write("\",")
+      out.write(c.get_value(True))
+      out.write("]")
+      start = ","
+    out.write("]")
+  elif len(parts) == 2 and parts[0] == "dumps":
+    dumpIds = parts[1].split(",");
+    out.write(json.dumps([[did, eval(db[did])] for did in dumpIds]))
+  elif len(parts) == 1 and parts[0].startswith("n"):
+    nodeIds = parts[0].split(",")
+    out.write("[")
+    start = ""
+    for n in nodeIds:
+      s, f = json.loads(db[n])
+      out.write(start)
+      out.write("[\"")
+      out.write(db[f])
+      out.write("\",\"")
+      out.write(db[s])
+      out.write("\"]")
+      start = ","
+    out.write("]")
+  elif parts[0].startswith("d"):
+    dumpIds = parts[0].split(",")
+    out.write("[[")
+    out.write(",".join(db[d] for d in dumpIds))
+    out.write("],[")
+    start = ""
+    for d in dumpIds:
+      out.write(start)
+      out.write("[")
+      ids = db.match_prefix("p" + d[1:] + "-")
+      data = db.get_bulk(ids)
+      out.write("[\"")
+      out.write("\",\"".join(k.split("-")[1] for k in ids))
+      out.write("\"],[")
+      out.write(",".join(data[k] for k in ids))
+      out.write("]]")
+      start = ","
+    out.write("]]")
+  elif parts[0].startswith("p"):
+    out.write("[")
+    payloadIds = parts[0].split(",")
+    dumpIds = ["d" + p.split("-")[0][1:] for p in payloadIds]
+    dumpInfos = [{"id": dumpId, "info": eval(db[dumpId])} for dumpId in dumpIds]
+    out.write(json.dumps(dumpInfos))
+    out.write(", \n{\"main\": [")
+    start = ""
+    for payloadId in payloadIds:
+      out.write(start)
+      nodeId = payloadId.split("-")[1]
+      out.write("[[\"" + nodeId + "\"], [" + (db[payloadId] or "[0,0,0,0,0,0]") +  "]]")
+      start = ","
+    out.write("], \n\t\"children\": [")
+    start = ""
+    for payloadId in payloadIds:
+      out.write(start)
+      edgeId = "z" + payloadId[1:]
+      nodeId = "n" + payloadId.split("-")[1]
+      edgesPayload = json.loads(db[edgeId] or "[[], []]")
+      children = []
+      for child in edgesPayload[0]:
+        dump, node, count, calls, paths = child.split("-")
+        nodeTotals = json.loads(db["p" + dump[1:] + "-" + node])
+        children.append([node,
+                         decodeNum(count), nodeTotals[1],
+                         decodeNum(calls), nodeTotals[3],
+                         decodeNum(paths), nodeTotals[5]])
+      children.sort()
+      out.write(json.dumps([[x[0] for x in children],
+                            [x[1:] for x in children]]))
+      start = ","
+    out.write("], \n\t\"parents\": [")
+    start = ""
+    for payloadId in payloadIds:
+      out.write(start)
+      edgeId = "z" + payloadId[1:]
+      nodeId = "n" + payloadId[1:].split("-")[1]
+      edgesPayload = json.loads(db[edgeId] or "[[], []]")
+      parents = []
+      for parent in edgesPayload[1]:
+        parentRef = "n" + parent[0].split("-")[1]
+        caller = eval(db[parent[0]])
+        callerInfo = caller[0][parent[1]]
+        dump, node, count, calls, paths = callerInfo.split("-")
+        nodeTotals = json.loads(db["p" + dump[1:] + "-" + parentRef[1:]])
+        edgeInfo = [parentRef[1:],
+                    decodeNum(count), nodeTotals[1],
+                    decodeNum(calls), nodeTotals[3],
+                    decodeNum(paths), nodeTotals[5]]
+        parents.append(edgeInfo)
+      parents.sort()
+      out.write(json.dumps([[x[0] for x in parents],
+                            [x[1:] for x in parents]]))
+      start = ","
+    out.write("]}]")
+  else:
+    out.write("{error: 'Error'}\n")
+
+# Simple handler for the standalone server.
+#
+# For both standalone mode and cgi the url can be any of the following (stuff
+# in <> is meant as a variable):
+#
+# /dumps[/d<dump id 1>[,d<dump id 2>[, ...]]]
+#       => information about the specified dumps (all if no dump ids
+#          specified), in the form:
+#              [{<dictionary for dump 1>}, {<dictionary for dump 2>}, ...]
+#
+# /d<dump id 1>,[d<dump id 2>[,...]]
+#       => flat information about the requested dump ids, in the form:
+#          [[{<dictionary for dump 1>}, {<dictionary for dump 2>}, ... ],
+#           [[<payload id 1>, <symbol id 1>, <self counts>, <total counts>
+#                                            <self calls>, <total calls>,
+#                                            <self paths>, <total paths>], ...]
+# /s<symbol id> => information about a given symbol.
+# /n<node id 1>[,n<node id 2>]
+#       => information about requested node in the form.
+#          [[<library name>,<symbol name>], ...]
+#
+# /p<payload id> {info: <information about the associated dump>,
+#                  main: <profile information about the main row>,
+#                  children: <profile information about the children>,
+#                  parents: <profile information about the parents>
+#                }
+# The database is defined by the commandline argument.
+class SimpleServerHandler(BaseHTTPRequestHandler):
+  def do_GET(self):
+    try:
+      parts = urlparse(self.path)
+      what = parts[2].strip("/")
+      if not what:
+        self.send_response(200)
+        self.send_header('Content-type', "text/html")
+        self.end_headers()
+        self.wfile.write(__DATA__)
+        return
+      buf = StringIO.StringIO()
+      error = buildReply(parts[2], self.__class__.database, buf)
+      if error:
+        self.send_error(*error)
+        return
+      self.send_response(200)
+      self.send_header('Content-type', 'text/html')
+      self.end_headers()
+      self.wfile.write(buf.getvalue())
+    except Exception, e:
+      if debug:
+        self.wfile.write("<pre>")
+        self.wfile.write(traceback.format_exc())
+        self.wfile.write("</pre>")
+      else:
+        self.send_error(500, 'Internal server error')
+
+# Standalone server class which has a timeout on the socket and makes the
+# whole application to die by raising the equivalent of a <Ctrl-C>
+# if such a time out expires.
+class TimeOutHTTPServer(HTTPServer):
+  def __init__(self, opts, handler, t):
+    self.__timeout = t
+    HTTPServer.__init__(self, opts, handler)
+
+  def server_bind(self):
+    HTTPServer.server_bind(self)
+    self.socket.settimeout(self.__timeout)
+
+  def get_request(self):
+    try:
+      sock, addr = self.socket.accept()
+      sock.settimeout(None)
+      return (sock, addr)
+    except socket.timeout:
+      print "Inactive for too long. Quitting..."
+      thread.interrupt_main()
+
+# Runs the server in standalone mode, printing out information of where to
+# find it and exiting successfully on "<ctrl-c>", which can either be raised
+# by the user or by a timeout in the server itself (see TimeOutHTTPServer doc).
+def runServer(database, opts):
+  try:
+    db = DB()
+    db.open(database, DB.OREADER)
+
+    SimpleServerHandler.database = db
+    server = TimeOutHTTPServer(('', opts.port),
+                               SimpleServerHandler,
+                               opts.timeout)
+    from socket import gethostname
+    print 'igprof-navigator standalone HTTP server started on port %s\n' % opts.port
+    print 'Point your browser to: http://%s:%s' % (gethostname(), opts.port)
+    server.serve_forever()
+  except KeyboardInterrupt:
+    print '^C received, shutting down server'
+    server.socket.close()
+  exit(0)
+
+# Main logic to generate CGI pages.
+# We first make sure we can build a valid path to a database. We construct all
+# the possible options of paths, if any of those actually points to a valid
+# database, we build the page as requested, if not we simply print out a list
+# of the available databases.
+def cgiReply():
+  dataPath = join(os.getcwd(), "data")
+  if not "PATH_INFO" in os.environ or not "SCRIPT_FILENAME" in os.environ:
+    relPath=""
+  else:
+    relPath = os.environ["PATH_INFO"].replace(os.environ["SCRIPT_FILENAME"], "").lstrip("/")
+  if relPath.startswith("index"):
+    relPath = relPath[5:]
+  # Use the second argument as a query and print the result on command-line.
+  db = DB()
+  from commands import getstatusoutput
+  # If an igprofsafe.kct database is found prefer that, so that we can handle
+  # the transition when a new, updated database is copied in place of the old
+  # one.
+  dbroot = os.getenv("IGPROF_DATABASE_ROOT", "./")
+  ok = db.open(join(dbroot, "igprofsafe.kct"), DB.OREADER)
+  if not ok:
+    ok = db.open(join(dbroot, "igprof.kct"), DB.OREADER)
+  if not ok:
+    sys.stdout.write("Content-Type: text/html\n\n")
+    sys.stdout.write("Error while opening database.")
+    sys.exit(0)
+  if not relPath:
+    sys.stdout.write("Content-type: text/html\n\n")
+    sys.stdout.write(__DATA__)
+    exit(0)
+
+  sys.stdout.write("Content-Type: text/html\n\n")
+  buildReply(relPath, db, sys.stdout)
+  sys.stdout.write("\n")
+  exit(0)
+
+# The script can work in two modes, as a standalone server and as a CGI
+# script. The standalone script expects an sql file to be passed as argument
+# while the CGI version will pick up all its arguments (including the
+# database) from the environment set by the web server.
+#
+# Notice also that standalone version will die after a certain period of
+# time (configurable, between 1m and 1h). This is done to avoid hanging
+# processes on lxplus.
+def doRun():
+  # Uncomment in case of debugging needs
+  if "LC_ALL" in os.environ:
+    locale.setlocale(locale.LC_NUMERIC, os.environ["LC_ALL"])
+  else:
+    locale.setlocale(locale.LC_NUMERIC, "en_US.UTF-8")
+
+  parser = OptionParser(usage="igprof-book [file [options]] [query]")
+  parser.add_option("--port", "-p", dest="port", default=8080, type="int")
+  parser.add_option("--timeout", "-t", dest="timeout", default=60*15, type="int")
+  opts, args = parser.parse_args()
+
+  if not args and "SCRIPT_NAME" in os.environ:
+    if debug:
+      cgitb.enable()
+    cgiReply()
+  elif not args:
+    parser.error("You need to specify at least a db file.")
+
+  if opts.timeout > 60*60:
+    print "Maximum timeout period is 1h."
+    exit(1)
+
+  if opts.timeout < 60:
+    print "Minimum timeout period is 1m."
+    exit(1)
+
+  if opts.port < 1024 or opts.port > 65535:
+    print "Please specify a valid user port (1024-65535)."
+    exit(1)
+
+  if len(args) > 3:
+    parser.error("Too many arguments")
+
+  database = args[0]
+  if not exists(database):
+    parser.error("File %s does not exists." % database)
+    exit(1)
+  if len(args) == 1:
+    if debug:
+      cgitb.enable()
+    runServer(database, opts)
+
+  # Use the second argument as a query and print the result on command-line.
+  db = DB()
+  ok = db.open(database)
+  if not ok:
+    parser.error("Error while opening database")
+  buildReply(args[1], db, sys.stdout)
+  sys.stdout.write("\n")
+
+if __name__ == "__main__":
+  if not profile:
+    doRun()
+  else:
+    import cProfile
+    import pstats
+    cProfile.run("doRun()", "profile")
+    p = pstats.Stats('profile')
+    p.sort_stats('cumulative').print_stats()

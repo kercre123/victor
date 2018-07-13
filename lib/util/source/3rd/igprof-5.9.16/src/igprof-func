@@ -1,0 +1,44 @@
+#!/usr/bin/env perl
+BEGIN { use strict; use warnings; $^W=1; }
+
+my $func = $ARGV[0];
+my $exclude = $ARGV[1] || $func;
+
+my (%t, %seen);
+my $insect = 0;
+my $incall = 0;
+my $p;
+while (<STDIN>)
+{
+  chomp;
+  if (/^- - /)
+  {
+    $insect = 1;
+    $incall = 0
+  }
+  elsif ($insect)
+  {
+    if (! $incall)
+    {
+      $incall = 1 if /^\[/;
+      s/'\d+$//g;
+      s!.*/ ['0-9.\s]*!!;
+      s/\s\[\d+\]$//;
+      $p = $_
+    }
+    else
+    {
+      if (m!^ .* / [\d'.]+\s+($func)! && $p !~ /^($exclude)/)
+      {
+	s/(?<=\d)'(?=\d\d\d)//g;
+        my @c = split(/\s+/);
+        $tot += $c[5] if ! $seen{$c[$#c]};
+        $seen{$c[$#c]} = 1;
+        $t{$p} += $c[3];
+      }
+    }
+  }
+}
+
+print(sprintf(" %5.2f%% of %5.2f %s\n", $t{$_}/$tot * 100, $tot, $_))
+  for sort { $t{$b} <=> $t{$a} } keys %t;

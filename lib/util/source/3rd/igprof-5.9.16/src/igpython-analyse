@@ -1,0 +1,143 @@
+#!/usr/bin/env python
+
+from pstats import Stats
+from optparse import OptionParser
+from pprint import pprint
+import re
+
+def schema():
+  print """
+    PRAGMA journal_mode=OFF;
+    PRAGMA count_changes=OFF;
+    DROP TABLE IF EXISTS files;
+    DROP TABLE IF EXISTS symbols;
+    DROP TABLE IF EXISTS mainrows;
+    DROP TABLE IF EXISTS children;
+    DROP TABLE IF EXISTS parents;
+    DROP TABLE IF EXISTS summary;
+
+    CREATE TABLE children (
+        self_id INTEGER CONSTRAINT self_exists REFERENCES mainrows(id),
+        parent_id INTEGER CONSTRAINT parent_exists REFERENCES mainrows(id),
+        from_parent_count INTEGER,
+        from_parent_calls INTEGER,
+        from_parent_paths INTEGER,
+        pct REAL
+    );
+    CREATE TABLE files (
+        id,
+        name TEXT
+    );
+    CREATE TABLE mainrows (
+        id INTEGER PRIMARY KEY,
+        symbol_id INTEGER CONSTRAINT symbol_id_exists REFERENCES symbols(id),
+        self_count INTEGER,
+        cumulative_count INTEGER,
+        kids INTEGER,
+        self_calls INTEGER,
+        total_calls INTEGER,
+        self_paths INTEGER,
+        total_paths INTEGER,
+        pct REAL
+    );
+    CREATE TABLE parents (
+        self_id INTEGER CONSTRAINT self_exists REFERENCES mainrows(id),
+        child_id INTEGER CONSTRAINT child_exists REFERENCES mainrows(id),
+        to_child_count INTEGER,
+        to_child_calls INTEGER,
+        to_child_paths INTEGER,
+        pct REAL
+    );
+    CREATE TABLE summary (
+        counter TEXT,
+        total_count INTEGER,
+        total_freq INTEGER,
+        tick_period REAL
+    );
+    CREATE TABLE symbols (
+        id,
+        name TEXT,
+        filename_id INTEGER CONSTRAINT file_id_exists REFERENCES files(id)
+    );
+    CREATE UNIQUE INDEX fileIndex ON files (id);
+    CREATE INDEX selfCountIndex ON mainrows(self_count);
+    CREATE UNIQUE INDEX symbolsIndex ON symbols (id);
+    CREATE INDEX totalCountIndex ON mainrows(cumulative_count);
+"""
+
+INSERT_MAINROWS_QUERY="""INSERT INTO mainrows(id, symbol_id, self_count,
+                         cumulative_count, kids,
+                         self_calls, total_calls, self_paths, total_paths, pct)
+                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"""
+INSERT_CHILDREN_QUERY="""INSERT INTO children(self_id, parent_id,
+                         from_parent_count, from_parent_calls, from_parent_paths, pct)
+                         VALUES(%s, %s, %s, %s, %s, 0);"""
+INSERT_PARENTS_QUERY="""INSERT INTO parents(self_id, child_id,
+                                            to_child_count, to_child_calls,
+                                            to_child_paths, pct)
+                         VALUES(%s, %s, %s, %s, %s, 0);"""
+INSERT_FILES_QUERY="""INSERT INTO files(id, name)
+                      VALUES(%s, "%s");"""
+INSERT_SYMBOLS_QUERY="""INSERT INTO symbols(id, name, filename_id)
+                        VALUES(%s, "%s", %s);"""
+INSERT_SUMMARY_TABLE = """INSERT INTO summary (counter, total_count,
+                                               total_freq, tick_period)
+                          VALUES("PERF_TICKS", %s, %s, %s);"""
+
+TICK_PERIOD = 10000
+
+def node_symbol(node):
+  return node[2] + " (" + re.sub(".*/", "", node[0]) + ":" + str(node[1]) + ")"
+
+if __name__ == "__main__":
+  parser = OptionParser()
+  opts, args = parser.parse_args()
+  if len(args) > 1:
+    parser.error("Too many dumps")
+  filename = args[0]
+  s = Stats(filename)
+  symbols = []
+  mainrows = []
+  symbol_id = 0
+  files = [x for x in enumerate(set([n[0] for n in s.stats]))]
+  files_index = dict((y, x) for (x,y) in files)
+
+  cumulative_counts = 0
+  for node, info in s.stats.iteritems():
+    filename_id = files_index[node[0]]
+    symbols.append([symbol_id, node_symbol(node), filename_id])
+    self_counts = int(info[2]*TICK_PERIOD)
+    total_counts = int(info[3]*TICK_PERIOD)
+    self_calls = int(info[0])
+    total_calls = int(info[1])
+    mainrow_info = [self_counts, total_counts, total_counts-self_counts,
+                    self_calls, total_calls, 0, 0, 0]
+    mainrows.append([symbol_id, symbol_id] + mainrow_info)
+    symbol_id += 1
+    cumulative_counts += total_counts
+  symbols_index = dict([(x[1], x[0]) for x in symbols])
+  parents = []
+  children = []
+  for node, info in s.stats.iteritems():
+    node_id = symbols_index[node_symbol(node)]
+    parent_nodes = info[4]
+    for parent_node, edge_info in parent_nodes.iteritems():
+      parent_id = symbols_index[node_symbol(parent_node)]
+      edge_counts = int(edge_info[3]*float(TICK_PERIOD))
+      edge_calls = edge_info[0]
+      edge_data = [edge_counts, edge_calls, 0]
+      parents.append([parent_id, node_id] + edge_data)
+      children.append([node_id, parent_id] + edge_data)
+
+  schema()
+  for x in files:
+    print re.sub("\n[ ]*", "", INSERT_FILES_QUERY % x)
+  for x in symbols:
+    print re.sub("\n[ ]*", "", INSERT_SYMBOLS_QUERY % tuple(x))
+  for x in mainrows:
+    print re.sub("\n[ ]*", "", INSERT_MAINROWS_QUERY % tuple(x))
+  for x in parents:
+    print re.sub("\n[ ]*", "", INSERT_PARENTS_QUERY % tuple(x))
+  for x in children:
+    print re.sub("\n[ ]*", "", INSERT_CHILDREN_QUERY % tuple(x))
+  print re.sub("\n[ ]*", "", INSERT_SUMMARY_TABLE % (cumulative_counts, 1, 1.0/TICK_PERIOD))

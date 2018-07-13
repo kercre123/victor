@@ -1,0 +1,7 @@
+
+The LaTex document igprofdev.tex can be compiled into a pdf document
+with a command like:
+
+pdflatex igprofdev.tex
+
+on a Linux/OSX/Unix machine with LaTex installed.

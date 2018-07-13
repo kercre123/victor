@@ -1,0 +1,859 @@
+#!/usr/bin/env python2.6
+# Aggregates multiple igprof-anaylise sqlite dumps into one single
+# key value storage. The advantage of this approach is that it enables the
+# client GUI to quickly do correlations between different dumps and it stores
+# symbol information only once.
+#
+# Dependencies
+# ============
+#
+# In order to use this script you will need both the kyoto cabinet runtime and
+# its associated python API module. You can find both at:
+#
+# http://1978th.net/kyotocabinet/
+#
+from optparse import OptionParser
+from kyotocabinet import *
+import os, re
+from os.path import splitext, exists, basename, abspath, getsize
+from os.path import getctime, dirname, isdir
+import sys
+from hashlib import sha1
+from commands import getstatusoutput
+import string
+from time import clock, ctime
+import sqlite3
+import json
+import time
+from time import gmtime, strftime, strptime
+from datetime import datetime, timedelta
+
+def doPrint(s, *x):
+  print x and s % x or s
+
+def noPrint(*x):
+  pass
+
+debug = noPrint
+warning = doPrint
+error = doPrint
+msg = doPrint
+
+from base64 import b64encode
+
+# We do not need to have a web safe alphabet, however, we do need to convert
+# it to be web-safe when we return it to the web. We only keep out the field
+# separator character.
+# FIXME: We only use a subset of characters because using non printable ones
+# seems to create problems to kyotocabinet which lead to duplicate hashes (maybe
+# some issue with backspace / delete ??).
+alphabet = string.digits + string.letters
+alphabetSize = len(alphabet)
+
+# Create a SHA1 hash of @a x and encode it using the above defined alphabet so
+# that it occupies less space while still web safe.
+def encodeBig(x):
+  return b64encode(sha1(x).digest(), "*_")
+
+# Encodes a number using the alphabet specified above. Notice that we use ":"
+# for negative numbers because we use "-" already as a separator elsewhere.
+def encodeNum(n):
+  e = ""
+  first = True
+  x = abs(n)
+  while x or first:
+    x, c = divmod(x, alphabetSize)
+    e += alphabet[c]
+    first = False
+  return n >= 0 and e[::-1] or ":" + e[::-1]
+
+# Helper function which creates a unique identifier for a given dump based
+# on its md5 sum.
+def uniqueDumpKey(d):
+  return d["hash"]
+
+# Helper to build an object out of a dictionary.
+def obj(d):
+  o = lambda x : None
+  o.__dict__ = d
+  return o
+
+class SQLException(Exception):
+  pass
+
+def doQuery(query, connection):
+  cursor = connection.cursor()
+  return cursor.execute(query)
+
+# Returns the index of the first character that differs between two strings.
+def mcs(a, b):
+  minLen = min(len(a), len(b))
+  for i in xrange(0, minLen):
+    if a[i] != b[i]:
+      return i
+  return minLen
+
+def debugEncoder(x):
+  # debug("%s, %s" % (type(x), x))
+  #print type(x), x
+  return x
+
+class TreeEncoder(object):
+  """ This class can be used to encode (key, value) pairs so that the key is
+      transformed in the shortest possible hash which avoids clashes with
+      those already in the store.
+      @a encoder is the helper that is responsible for creating the hash for a
+      given key.
+      @a keyExtractor is an helper which is used to extract the key from the
+       value.
+      @a prefix is a string which is always prepended to the hash, effectively
+       grouping hashes which are somehow related.
+      @a value_encoder which is used to serialize values so that they can be
+       stored.
+      @a value_decoder which is used to obtain a python object from a stored
+       item.
+      @a compact is true if the hash does not store the payload itself, but
+       an index in a compact array.
+  """
+  def __init__(self, db, encoder,
+               keyExtractor = lambda x : x,
+               prefix="",
+               value_decoder=json.loads,
+               value_encoder=json.dumps,
+               compact=True):
+    self.__db = db
+    #debug("Restoring cache for %s" % prefix)
+    keys = [k for k in db.match_prefix(prefix.upper()) or []]
+
+    if compact:
+      indexes = [k for k in db.match_prefix(prefix.lower()) or []]
+      self.__keysCache = set([k for k in keys] + [i for i in indexes])
+      self.__indexesCache = db.get_bulk(keys)
+    else:
+      self.__keysCache = set([k for k in keys])
+
+    #debug("Done restoring cache")
+    self.__prefix = prefix.upper()
+    self.__encoder = encoder
+    self.__keyExtractor = keyExtractor
+    self.__valueEncoder = value_encoder
+    self.__valueDecoder = value_decoder
+    self.__conflictCache = {}
+    self.__mappingCache = {}
+    self.__useMappingCache = True
+    self.__compact = compact
+    if self.__compact:
+      self.__indexPrefix = prefix.lower()
+      self.__lastIndex = len(self.__db.match_prefix(self.__indexPrefix) or [])
+
+  def put(self, value, replace=True, unencoded=""):
+    """This encodes @a txt to be the shortest non currently conflicting hash
+       found in the db and uses it to store value in the db. Notice that
+       the prefix specified in the constructor is always prepended to the hash
+       to allow grouping.
+    """
+    key = self.__keyExtractor(value)
+    s = self.__prefix + self.__encoder(key, unencoded)
+    skip = 0
+    # Check if the shortening already happened and return the cached value for
+    # it.
+    sparseCacheRef = self.__mappingCache.get(s, None)
+    cacheRef = sparseCacheRef
+    debug("Putting %s (%s) cached (%s) ", key, s, cacheRef)
+    if cacheRef:
+      if self.__compact:
+        cacheRef = self.__indexesCache[cacheRef]
+      if replace:
+        self.__db[cacheRef] = self.__valueEncoder(value)
+        debug("Replacing old key.")
+      else:
+        debug("Returning shortened hash.")
+        pass
+      debug("%s (%s) (%s) was already found to be %s", key, s, sparseCacheRef, cacheRef)
+      return cacheRef
+    for l in xrange(len(self.__prefix) + 1, len(s)):
+      debug("Attempt %s for key %s", s[0:l], key)
+      if skip:
+        skip -= 1
+        continue
+      debug("Attempt %s hash for key %s.", s[0:l], key)
+      if not s[0:l] in self.__keysCache:
+        # The reduced key is not found in the store, which means we can use it
+        # as entry point to store @a value.
+        # If compact, we actually map the compact hash to the compact index
+        # and store the payload in an array.
+        self.__keysCache.update([s[0:l]])
+        # If requested, keep track of the hash shortening so that we can
+        # immediately return it.
+        if self.__useMappingCache:
+          debug("Storing mapping for %s: %s => %s", key, s, s[0:l])
+          self.__mappingCache[s] = s[0:l]
+        debug("Store %s compact? %s", key, self.__compact)
+        if self.__compact:
+          indexId = self.__indexPrefix + encodeNum(self.__lastIndex)
+          debug("Store compact: %s %s (%s) = %s", key, indexId, s[0:l], value)
+          self.__indexesCache[s[0:l]] = indexId
+          try:
+            self.__db[s[0:l]] = indexId
+          except:
+            error("Error while setting %s to %s. Aborting import immediately.", s[0:l], indexId)
+            error(self.__db.error())
+            exit(1)
+          # Do we need to cache this? Not really I guess since we always look
+          # up keysCache using s[0:l]
+          #self.__keysCache.update([indexId])
+          self.__db[indexId] = self.__valueEncoder(value)
+          self.__lastIndex += 1
+          return self.__indexPrefix + encodeNum(self.__lastIndex - 1)
+        else:
+          debug("Store non-compact: %s %s => %s" , key, s[0:l], value)
+          self.__db[s[0:l]] = self.__valueEncoder(value)
+          return s[0:l]
+      else:
+        # The stored key is actually exactly the same as the one we are trying
+        # to put. If @a replace is true, we replace the content and return
+        # the key, otherwise we simply return the key.
+        cacheRef = s[0:l]
+        if self.__compact:
+          cacheRef = self.__indexesCache[cacheRef]
+        debug("Key %s hash attempt %s (%s) was already found.", key, s[0:l], cacheRef)
+
+        # We use a conflict cache because the cost of decoding an object
+        # out of the DB is very high.
+        if cacheRef in self.__conflictCache:
+          oldKey = self.__conflictCache[cacheRef]
+        else:
+          oldKey = self.__keyExtractor(self.__valueDecoder(self.__db[cacheRef]))
+          self.__conflictCache[cacheRef] = oldKey
+        debug("oldKey: %s", oldKey)
+        oldHash = self.__prefix + self.__encoder(oldKey, unencoded)
+        debug("Hash %s was already found for key %s.", cacheRef, oldKey)
+        if oldKey == key:
+          if replace:
+            self.__db[cacheRef] = self.__valueEncoder(value)
+            debug("Replacing old key.")
+          else:
+            debug("Returning shortened hash.")
+            pass
+          if self.__useMappingCache:
+            self.__mappingCache[s] = s[0:l]
+
+          return cacheRef
+        # If the oldKey and the current key are not the same and we get here it
+        # means we have a conflict (i.e. to keys have the same reduced hash).
+        # We try find the smallest possible different hash and we try again
+        # (since even in that case there might be a conflict with some other
+        # key).
+        t = mcs(oldHash, s)
+        skip = t - l
+        #debug("Conflict between %s and %s. First %s bytes equal, skipping %s." % (oldHash, s, t, skip))
+        continue
+    # If we get here it means we are in trouble.
+    assert("Unresolvable hash conflict!!!" and False)
+
+  def getStoredHash(self, key, unencoded=""):
+    """ Looks up for the longest match for the hash associated to @a key and
+        returns its value. Notice that key is supposed to be already in
+        the database, and therefore it could return a valid result
+        for an hash that is not actually there.
+        @returns the hash to be used to pick-up the value associated to key.
+    """
+    k = self.__prefix + self.__encoder(key, unencoded)
+    # Binary search for candidates by reducing the size of the key
+    # at each step.
+    candidates = []
+    keyLen = len(k)
+    while keyLen >= 0:
+      candidates = self.__db.match_prefix(k[0:keyLen])
+      debug("Looking up for short-key: %s. Found %s" % (k[0:keyLen], candidates))
+      keyLen = keyLen - 1
+      if not candidates:
+        continue
+      candidates.reverse()
+      debug("candidates : %s" % ",".join(candidates))
+      for x in candidates:
+        debug("checking : %s vs %s" % (x, k))
+        if k.startswith(x):
+          if self.__compact:
+            debug("Using %s (%s) in place of %s" % (self.__indexesCache[x], x, k))
+            return self.__indexesCache[x]
+          else:
+            debug("Using %s in place of %s" % (x, k))
+            return x
+    return None
+
+  def isPresent(self, key, unencoded=""):
+    """ Checks whether or not a given key
+    """
+    oldhash = self.getStoredHash(key, unencoded)
+    debug("old hash was %s", oldhash)
+    if not oldhash:
+      return False
+    oldkey = self.__keyExtractor(self.__valueDecoder(self.__db[oldhash]))
+    debug("old key was: %s", oldkey)
+    debug("new key is : %s", key)
+    return oldkey == key
+
+# Helper to get dump owner name. Notice that by default we prefer the
+# users list passed on command-line.
+import pwd
+useridMapping = {}
+def fileowner(f):
+  try:
+    uid = os.stat(f).st_uid
+    return useridMapping.get(uid, pwd.getpwuid(uid)[0])
+  except KeyError:
+    return "unknown"
+
+# A huge list of sample names roughly obtained with:
+#
+# runTheMatrix.py -n | grep -e "^[0-9]" | cut -f3 -d\  | sed -e 's|[-_+].*||g' | sed -e 's|[Pp]t.*||g' | sed -e "s|[0-9]\+|[0-9]+|g" | sort -u | sed -e 's|^|"|g;s|$|",|'
+#
+# Notice I had to reorder them so that longer matches come first (FIXME: reverse sort them?).
+possibleCandleRegex = ["DYToLL"
+  "DYToMuMu",
+  "GluGluTo[0-9]+Jets",
+  "H[0-9]+WW[0-9]+L",
+  "H[0-9]+ZZ[0-9]+L",
+  "InclusiveppMuX",
+  "JpsiMM",
+  "LM[0-9]+p",
+  "MinBiasHcalNZS",
+  "MinBias",
+  "MinimumBiasBS",
+  "QCD[0-9]+Jets",
+  "QCD",
+  "QQH[0-9]+Inv",
+  "RSGrav",
+  "SingleElectronE[0-9]+EHCAL",
+  "SingleElectronFlat",
+  "SingleGammaFlat",
+  "SingleMu",
+  "SinglePiE[0-9]+HCAL",
+  "SinglePi[0-9]+E[0-9]+",
+  "SinglePi",
+  "SingleTau",
+  "TTJets",
+  "TT[0-9]+Jets",
+  "TTbar",
+  "TT",
+  "UpsMM",
+  "WJetsLNu",
+  "WToLNu",
+  "W[0-9]+Jets",
+  "WminusToENu",
+  "WminusToMuNu",
+  "WplusToENu",
+  "WplusToMuNu",
+  "ZJetsLNu",
+  "ZPrime[0-9]+Dijet",
+  "ZTT",
+  "Z[0-9]+Jets",
+  "bJpsiX"]
+
+# Helper function to extract date of a dump given the IB relase name.
+#
+# @a release the IB in form CMSSW_[0]_0_X_YEAR-MONTH-DAY-HOUR from which to
+# extact the date.
+# @return the date associated to @a release.
+def extractDate(release):
+  m = re.match("CMSSW_[0-9]+_[0-9]+_X_([0-9]{4})-([0-9]+)-([0-9]{2})-([0-9]{2})([0-9]{2})", release)
+  if not m:
+    return None
+  d = m.groups()
+  return time.strftime("%Y-%m-%d-%H:%M", [int(x) for x in d] + [0,0,0,0])
+
+# Helper function which extracts all the relevant information from the filename
+# of the dump
+#
+# @a dump the filename being extracted.
+#
+# @return dumpInfo a dictionary with all the extracted dump information which will
+#         be passed to the web client.
+def extractDumpInfo(dump, uniqueHash, old=None):
+  dumpInfo = old or {"sequence": "unknown",
+                     "pileup": "unknown",
+                     "conditions": "unknown",
+                     "tier": "unknown",
+                     "counter": "unknown",
+                     "events": "unknown",
+                     "architecture": "unknown",
+                     "series": "unknown",
+                     "release": "unknown",
+                     "label": "",
+                     "candle": "unknown",
+                     "date": "",
+                     "name": dump,
+                     "hash": uniqueHash,
+                     "total_count": 0,
+                     "total_freq": 0,
+                     "tick_period": 0}
+  cmsType = ["candle", "sequence", "pileup", "conditions", "tier", "counter", "events"]
+  label = dump
+  possibleArchs = re.findall("((slc[0-9]+(onl|))_(amd64|ia32)_(gcc|icc)[0-9][0-9][0-9])", label)
+  if possibleArchs:
+    dumpInfo["architecture"] = possibleArchs[0][0]
+    label = label.replace(possibleArchs[0][0], "")
+
+  possibleReleases = re.findall("(CMSSW_[0-9]+_[0-9]+_[0-9X]+(_pre[0-9]|_[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]|))", label)
+  if possibleReleases:
+    dumpInfo["series"] = ".".join(possibleReleases[0][0].split("_")[1:3])
+    dumpInfo["release"] = possibleReleases[0][0]
+    label = label.replace(possibleReleases[0][0], "")
+
+  possibleTiers = re.findall("(RECOSIM|RAWSIM)", label)
+  if possibleTiers:
+    dumpInfo["tier"] = possibleTiers[0]
+    label = label.replace(possibleTiers[0], "");
+
+  possibleConditions = re.findall("((MC_|START)[0-9XY]+_V[0-9]+)", label)
+  if possibleConditions:
+    dumpInfo["conditions"] = possibleConditions[0][0]
+    label = label.replace(possibleConditions[0][0], "")
+
+  possibleCounters = re.findall("(PERF_TICKS|MEM_TOTAL|MEM_MAX|MEM_LIVE)", label)
+  if possibleCounters:
+    dumpInfo["counter"] = possibleCounters[0]
+    label = label.replace(possibleCounters[0], "")
+
+  possibleCandles = re.findall("(" + "|".join(possibleCandleRegex) + ")", label)
+  if possibleCandles:
+    dumpInfo["candle"] = possibleCandles[0]
+    label = label.replace(possibleCandles[0], "")
+
+  possiblePileups = re.findall("(LowLumiPileUp|NOPILEUP)", label)
+  if possiblePileups:
+    dumpInfo["pileup"] = possiblePileups[0]
+    label = label.replace(possiblePileups[0], "")
+
+  sequenceRE = "[^A-Za-z0-9](FASTSIM|SIM|RECO|DQM|DIGI2RAW|RAW2DIGI|L1Reco|L1|VALIDATION:[a-zA-Z0-9+]+|VALIDATION|ALCAHARVEST:[a-zA-Z0-9+]+|ALCAHARVEST|ALCA:[a-zA-Z0-9+]+|ALCA|HLT:[a-zA-Z0-9+]+|HLT|HARVESTING:[a-zA-Z0-9+]+|HARVESTING|GEN|DIGI)"
+  sequenceSteps = re.findall(sequenceRE, label)
+  if sequenceSteps:
+    dumpInfo["sequence"] = ",".join([x for x in sequenceSteps])
+    for s in sequenceSteps:
+      label = label.replace(s, "", 1).replace(",,", ",")
+  label = re.sub("([^a-zA-Z0-9])[,]", "\\1", label)
+
+  # CMSSW integration builds specific way of specifing number of events.
+  # FIXME: add some additional way, like "1000Events"
+  possibleEvents = re.findall("___([0-9]+(|_EndOfJob))[.]sql3", label)
+  if possibleEvents:
+    dumpInfo["events"] = possibleEvents[0][0]
+    label = label.replace(possibleEvents[0][0], "")
+
+  # When we remove known bits from a label, we leave behind a bunch of
+  # separators. Clean them up. Also clean the file extension and forget about
+  # the directory name (which is used only to extract additional information).
+  label = re.sub("[_]+", "_", label).strip("_")
+  label = re.sub("[-]+", "-", label).strip("-")
+  label = label.replace(".sql3", "")
+  label = basename(label)
+
+  # If label is now only punctuation, we consider it as empty.
+  if not re.findall("[^%s]" % string.punctuation, label):
+    label = ""
+
+  if exists(dump):
+    dumpInfo["creationDate"] = strftime("%Y%m%d%H%M%S", gmtime(getctime(dump)))
+
+  # We extract a date either from the release name or from the dump creation
+  # creation time.
+  releaseDate = extractDate(dumpInfo["release"])
+  if releaseDate:
+    dumpInfo["date"] = releaseDate
+  elif exists(dump):
+    dumpInfo["date"] = dumpInfo["creationDate"]
+  else:
+    dumpInfo["data"] = "unknown"
+
+  # We combine the date and the actual label to obtain the label we store.
+  # This way "official" builds (which have an empty label) should
+  dumpInfo["label"] = "-".join([x for x in [dumpInfo["date"], label] if x])
+
+  try:
+    if exists(dump):
+      # We also extract the stats from the summary table in the sqlite file.
+      connection = sqlite3.connect(dump)
+      connection.text_factory = str
+      dumpSummaryKeys = ["counter", "total_count", "total_freq", "tick_period"]
+      dumpSummaryQuery = """select %s from summary;""" % ",".join(dumpSummaryKeys)
+      dumpInfo.update(dict(zip(dumpSummaryKeys, [x for x in doQuery(dumpSummaryQuery, connection)][0])))
+  except sqlite3.DatabaseError:
+    error("Error while querying file: %s", dump)
+  except IndexError:
+    error("Index error while querying file: %s", dump)
+
+  if exists(dump):
+    dumpInfo["owner"] = fileowner(dump)
+  elif not "owner" in dumpInfo:
+    dumpInfo["owner"] = "unknown"
+  else:
+    pass
+  # We also put the current time as creation time and we keep track of the
+  # owner.
+  dumpInfo["recordedTime"] = datetime.now().isoformat()
+  return dumpInfo
+
+class Populator(object):
+  # If not there add the dummy top-level node for every dump.
+  # Initialise the populator with the last unique id found for every kind
+  # of payloads.
+  def __init__(self, db):
+    self.db = db
+    self.__dumpEncoder = TreeEncoder(db, lambda x, y : encodeBig(x),
+                                         lambda x : uniqueDumpKey(x), "D")
+    self.__fileEncoder = TreeEncoder(db, lambda x, y : encodeBig(x),
+                                         lambda x : x, "F",
+                                         value_encoder=lambda x : x,
+                                         value_decoder=lambda x : x)
+    self.__symbolNameEncoder = TreeEncoder(db, lambda x, y : b64encode(sha1(x).digest(), "*_"),
+                                           lambda x : x, "S",
+                                           value_encoder=lambda x : x,
+                                           value_decoder=lambda x : x)
+    self.__nodeEncoder = TreeEncoder(db, lambda x, y : b64encode(sha1(x).digest(), "*_"),
+                                         lambda x : x[0] + x[1],
+                                         "N")
+
+
+  # Return true if a given dump was already added, false otherwise (and
+  # create a unique id for its filename).
+  # @a dumpInfo the information about the dump, extracted from its filename,
+  #             this is what gets passed to the client.
+  # @a extraInfo the information about the dump which is not passed to the web
+  #             client but that we still want to book-keep. Most notably the
+  #             original filename.
+  def populateDump(self, dumpInfo, connection, force):
+    # Check if the dump is already there. If it is, we only replace it if
+    # the `--force` option is specified.
+    present = self.__dumpEncoder.isPresent(uniqueDumpKey(dumpInfo))
+    if present and not force:
+      return None
+    debug(dumpInfo)
+    uniqueDumpId = self.__dumpEncoder.put(dumpInfo)
+    # Add extra information about the dump (not passed to the client)
+    return uniqueDumpId
+
+  # Populate the storage with all the filenames and symbol names which are not
+  # already there. We also generate two temporary maps that help us to do the
+  # translation from local ids (the ones found in the sqlite file) to global
+  # ids.
+  #
+  # We store two maps for the filenames:
+  #
+  # * {hash of filename => unique id}
+  # * { filename symbol id => actual filename}
+  #
+  # and similarly for the symbols:
+  #
+  # * { hash of symbol name => unique symbol name id }
+  # * { unique symbol name id => symbol name }
+  # * { hash of unique filename id and symbol name => unique symbol id},
+  # * { unique symbol id => (unique symbol name id, unique file id)}
+  #
+  # The reason we differentiate between the hash of (symbol name, filename id)
+  # and just symbol name, is due to the fact we want to be able to track a given
+  # symbol that moves from one file to another.
+  # As a matter of fact the couple (symbol name, filename) is really the unique
+  # identifier for the contents of a given node in the tree.
+  def populateSymbols(self, dump):
+    db = self.db
+    self.FILES_INDEX = {}
+    self.SYMBOL_NAME_INDEX = {}
+    self.NODES_INDEX = {}
+
+    filenames = doQuery("select id, name from files order by name;", dump);
+
+    for filename_local_id, filename in filenames:
+      filename = basename(filename)
+      fh = self.__fileEncoder.put(filename)
+      self.FILES_INDEX[filename_local_id] = fh
+
+    count = int([x for x in doQuery("select count(id) from symbols;", dump)][0][0])
+    symbols = doQuery("select id, name, filename_id from symbols order by name;", dump)
+    for symbol_local_id, symbol_name, filename_local_id in symbols:
+      count -= 1
+      filename_id = self.FILES_INDEX[filename_local_id]
+      snh = self.__symbolNameEncoder.put(symbol_name.strip("'"), False)
+      self.SYMBOL_NAME_INDEX[symbol_local_id] = snh
+      nh = self.__nodeEncoder.put((filename_id, snh), False)
+      debug("symbolo info: %s %s %s %s", symbol_local_id, symbol_name, filename_id, nh)
+      self.NODES_INDEX[symbol_local_id] = nh
+
+  # Create the payload information for node payloads and edges.
+  #
+  # Payloads keys are in the format
+  #
+  # p<dump incremental id (without leading d)>-<node incremental id (widthout leading n)>
+  #
+  # Edge information is stored separately, using z in place of p as a key prefix.
+  def populateNodes(self, dumpInfo, connection):
+    db = self.db
+    dumpUniqueId = self.__dumpEncoder.getStoredHash(uniqueDumpKey(dumpInfo))
+    if not dumpUniqueId:
+      error("Could not find key for %s" % uniqueDumpKey(dumpInfo)) ; sys.exit(1)
+
+    columns = ["symbol_id", "self_count",
+               "cumulative_count", "kids",
+               "self_calls", "total_calls",
+               "self_paths", "total_paths"]
+    db["types/-P"] = columns
+    payload = lambda x : None;
+    payloads = doQuery("SELECT %s FROM mainrows;" % ",".join(columns), connection)
+    for p in payloads:
+      payload.__dict__ = dict(zip(columns, p))
+      payloadUniqueId = "p" + dumpUniqueId[1:] + "-" + self.NODES_INDEX[payload.symbol_id][1:]
+      db[payloadUniqueId] = [int(payload.self_count),
+                             int(payload.cumulative_count),
+                             int(payload.self_calls),
+                             int(payload.total_calls),
+                             int(payload.self_paths),
+                             int(payload.total_paths)]
+
+    # Populate the children information.
+    columns = ["from_parent_count", "from_parent_calls",
+               "from_parent_paths", "parent_id", "self_id"]
+
+    childrenQuery = """SELECT c.from_parent_count, c.from_parent_calls,
+                              c.from_parent_paths, pr.symbol_id, sr.symbol_id
+                       FROM children c
+                       INNER JOIN mainrows pr ON c.parent_id = pr.id
+                       INNER JOIN mainrows sr ON c.self_id = sr.id;
+    """
+    edges = [obj(dict(zip(columns, c))) for c in doQuery(childrenQuery, connection)]
+    edgesCache = {}
+
+    for payload in edges:
+      uniqueParentId = self.NODES_INDEX[payload.parent_id]
+      uniqueChildId = self.NODES_INDEX[payload.self_id]
+      payloadId = "z" + dumpUniqueId[1:] + "-" + uniqueParentId[1:]
+      calleeId = "z" + dumpUniqueId[1:] + "-" + uniqueChildId[1:]
+      if not payloadId in edgesCache:
+        edgesCache[payloadId] = [[],[]]
+      if not calleeId in edgesCache:
+        edgesCache[calleeId] = [[],[]]
+      calleeIndexInParent = len(edgesCache[payloadId][0])
+      edgesCache[payloadId][0].append("%s-%s-%s-%s" % (calleeId,
+                                                      encodeNum(int(payload.from_parent_count)),
+                                                      encodeNum(int(payload.from_parent_calls)),
+                                                      encodeNum(int(payload.from_parent_paths))))
+      edgesCache[calleeId][1].append((payloadId, calleeIndexInParent))
+
+    try:
+      for k,v in edgesCache.iteritems():
+        db[k] = json.dumps(v)
+    except:
+      error("Error while setting %s to %s...", k, v[0:10])
+      error(db.error())
+      sys.exit(1)
+
+  # Populate the "/stats/" prefix with information about DB size, and stats
+  # for different kind on objects (node, edges, symbols) which are found in
+  # it.
+  # FIXME: Very inefficient as it reads the whole db each time.
+  #        Think of something smarter.
+  def populateStats(self, dump, timingStats, dumpId):
+    db = self.db
+    dumps = db.match_prefix("d")
+    if not dumps:
+      error("FATAL ERROR: could not find dumps in the database after populating it.")
+      sys.exit(0)
+    dumpCount = len(dumps)
+    statsStr = db["/stats/%s" % dumpCount]
+    lastStats = statsStr and json.loads(statsStr) or {"original_size": 0,
+                                                      "payload_keys_size": 0,
+                                                      "payloads_size": 0}
+    nodes = db.match_prefix("n") or []
+    symbols = db.match_prefix("s") or []
+    filenames = db.match_prefix("f") or []
+    payloads = db.match_prefix("p" + dumpId[1:]) or []
+    aggregateSqlSize = int(lastStats["original_size"] or 0)
+    stats = { "dump": dump,
+              "dumpId": dumpId,
+              "records": db.count(),
+              "size": db.size(),
+              "original_size": getsize(dump) + aggregateSqlSize,
+              "nodes": len(nodes),
+              "symbols": len(symbols),
+              "filenames": len(filenames),
+              "payloads": len(payloads),
+              "nodes_size": sum(len(db[x]) for x in nodes),
+              "symbols_size": sum(len(db[x]) for x in symbols),
+              "filenames_size": sum(len(db[x]) for x in filenames),
+              "payloads_size": sum(len(db[x]) for x in payloads),
+              "node_keys_size": sum(len(x) for x in nodes),
+              "symbol_keys_size": sum(len(x) for x in symbols),
+              "filename_keys_size": sum(len(x) for x in filenames),
+              "payload_keys_size": sum(len(x) for x in payloads),
+              "symbols_time": timingStats[dump + "/symbols"],
+              "nodes_time": timingStats[dump + "/nodes"]
+            }
+    db["/stats/%s" % dumpCount] = stats
+    debug("/stats/%s: %s" % (dumpCount, json.dumps(stats)))
+
+# Pruning action for the database.
+# We First of all do a migration which moves the name from the dump info to
+# the dump extras (optionally reconstructing it).
+def prune(db):
+  dumps = db.match_prefix("d")
+  earliest = datetime.today() - timedelta(7)
+  for k in dumps:
+    info = json.loads(db[k])
+    info = extractDumpInfo(info["name"], info["hash"], info)
+    try:
+      t = strptime(info["creationDate"])
+      debug("Old creation date" + info["creationDate"])
+      info["creationDate"] = strftime("%Y%m%d%H%M%S", t)
+      debug("New creation date" + info["creationDate"])
+    except ValueError:
+      pass
+    # Delete tree information for dumps older than 1 week.
+    creationDate = datetime.strptime(info["creationDate"], "%Y%m%d%H%M%S")
+    if creationDate < earliest:
+      edges = db.match_prefix("z" + k[1:])
+      for edge in edges:
+        db.remove(edge)
+    db[k] = json.dumps(info)
+
+# Do simple checks given that we cannot trust the produced files to be correct.
+# In particular:
+#
+# * On 1 Apr 2011 some of the files started to have empty tables.
+def validate(conn):
+  try:
+    c = conn.execute("select * from symbols limit 1;")
+    if not [x for x in c]:
+      return False
+  except sqlite3.DatabaseError:
+    return False
+  return True
+
+if __name__ == "__main__":
+  parser = OptionParser()
+  parser.add_option("-o", "--output", help="output storage", dest="output", default="igprof.kct")
+  parser.add_option("-d", "--debug", help="print debug statements",
+                    dest="debug", action="store_true", default=False)
+  parser.add_option("-s", "--silent", help="only show errors (overrides --debug)",
+                    dest="silent", action="store_true", default=False)
+
+  parser.add_option("-f", "--force", help="Force add a dump, even if it is already found in the storage.",
+                    dest="force", action="store_true", default=False)
+  parser.add_option("-m", "--max-dumps", help="Maximum number of dumps to import.",
+                    dest="maxDumps", type="int", default=100000)
+  parser.add_option("-u", "--users-list", help="Space separated userid username list.",
+                    dest="usersList", default=None)
+  parser.add_option("-v", "--verbose", help="Show verbose information.",
+                    dest="verbose", action="store_true", default=False)
+
+  opts, args = parser.parse_args()
+
+  if opts.debug:
+    debug = doPrint
+  if opts.silent:
+    msg = noPrint
+    debug = noPrint
+
+  debug("Running with debug enabled.")
+
+  if opts.usersList:
+    try:
+      ulf = open(opts.usersList, "r")
+    except:
+      parser.error("%s not found.\nPlease specify an existing file as users list." % opts.usersList)
+    try:
+      useridMapping = dict([x.strip().split(" ", 1) for x in ulf.readlines()])
+    except:
+      parser.error("User list is in wrong file format.")
+
+  if not args and not opts.force:
+    parser.error("Please specify at least one igprof sqlite report file (use --force to run migrations only).")
+
+  # For some funny reason B+tree databases must have .kct extension.
+  filename, extension = splitext(opts.output)
+  if not extension == ".kct":
+    parser.error("Output filename must have .kct extension")
+
+  db = DB()
+  # opts=c is for compression (zip deflate by default) tune_page=32768 is for
+  # page size of the B+tree, default is 8192, but larger ones should help with
+  # compression (especially for symbols).
+  if not db.open(opts.output + "#opts=c#bnum=1m#psiz=512k#capsiz=1m", DB.OWRITER | DB.OCREATE):
+    parser.error("open error: " + str(db.error()))
+
+  # For each of the profile dumps to be injected in the store:
+  # * First populate the files / symbols / node information which hopefully
+  # grows slowly when adding profile dumps of a given set of applications,
+  # i.e. we assume the code layout in general does not change that much.
+  # * Then populate the payload / edge information, which grows as new dumps
+  # get added.
+  # * Gather timing information while populating the database and track the
+  # size of various objects stored.
+  if args:
+    populator = Populator(db)
+  timingStats = {}
+  n = 0
+
+  dumps = []
+  # Handles the case in which arguments are directories by finding all the
+  # sql3 files in it.
+  for d in [abspath(x) for x in args]:
+    if not isdir(d):
+      dumps.append(d)
+      continue
+    notok, result = getstatusoutput("find " + d + " ! -size 0 -a ! -name '*_diff_*' | sort -r")
+    if notok:
+      warning("No such file or directory %s. Ignoring.", d)
+      continue
+    for f in result.split("\n"):
+      if f.endswith(".sql3"):
+        dumps.append(f)
+    sortable = [(os.path.getctime(dump), dump) for dump in dumps]
+    sortable.sort()
+    sortable.reverse()
+    dumps = [f for (t,f) in sortable]
+
+  couldUseForce = False
+  for d in [abspath(x) for x in dumps]:
+    if n >= opts.maxDumps:
+      msg("Maximum number of dumps (%s) imported. Done.", opts.maxDumps)
+      exit(0)
+    if opts.verbose:
+      msg("Updating symbol information using dump %s.", d)
+    if not exists(d):
+      parser.error("No such file or directory %s." % d)
+    connection = sqlite3.connect(d)
+    connection.text_factory = str
+
+    if not validate(connection):
+      warning("Dump %s skipped because it's invalid.", d)
+      continue
+
+    timeStart = clock()
+    dumpInfo = extractDumpInfo(d, sha1(open(d).read()).hexdigest())
+    newDumpId = populator.populateDump(dumpInfo, connection, opts.force)
+    if not newDumpId:
+      if opts.verbose:
+        msg("Dump %s was already there. Use --force to overwrite.", d)
+      else:
+        couldUseForce = True
+      debug(dumpInfo)
+      continue
+    try:
+      populator.populateSymbols(connection)
+    except sqlite3.DatabaseError:
+      warning("Dump %s seems to be malformed. Skipping.", d)
+      continue
+    timeSymbolsStop = clock()
+    timingStats[d+"/symbols"] = timeSymbolsStop - timeStart
+    if opts.verbose:
+      msg("Populating profile information for dump %s (%s).", d, newDumpId)
+    populator.populateNodes(dumpInfo, connection)
+    db.synchronize()
+    timeStop = clock()
+    timingStats[d+"/nodes"] = timeStop - timeSymbolsStop
+    populator.populateStats(d, timingStats, newDumpId)
+    n += 1
+  if couldUseForce:
+    msg("Some dumps where already found in the DB and therefore skipped. Use --verbose to have more details. Use --force to reimport.")
+  # After we are done populating the database, we execute any information
+  # pruning action which we might want to have at a given point.
+  prune(db)

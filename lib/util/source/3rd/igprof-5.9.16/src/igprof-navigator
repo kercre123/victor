@@ -1,0 +1,855 @@
+#!/usr/bin/env python
+#
+# Web GUI for igprof-analyse sqlite databases.
+#
+# The GUI has to modes, either standalone or as a CGI script.
+#
+# Standalone mode
+# ===============
+#
+# Simply start with script passing the sqlite database as commandline input
+# pointing then the browser to the url reported. Use --help to see available
+# options.
+#
+# CGI mode
+# ========
+#
+# Copy the script in your web area, making sure that your web server is
+# configured to execute cgi scripts in that directory. For personal CERN web
+# sites, please have a look at
+#
+# http://webservices.web.cern.ch/webservices/Help/?kbid=210100&mode=print
+#
+# Create a "data" directory in the same directory where your script is (or
+# symlink a directory which is readable by the web server), make sure "data"
+# cannot contain any cgi script (again have a look at the url above if you are
+# using CERN infrastructure).
+#
+# Only databases matching the following expressions:
+#
+# data/*.sql3
+# data/*/*/*.sql3
+#
+# Will be made available by the GUI.
+#
+from optparse import OptionParser
+from commands import getstatusoutput
+from sys import exit
+import sys
+from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+import re
+import locale
+from locale import format
+import os
+import cgi
+import socket
+import shutil
+import thread
+from urlparse import urlparse
+from os.path import join, normpath, exists, basename, isdir, dirname, getsize
+import traceback
+debug=True
+# For debugging purposes only.
+# Uncomment in case of debugging needs
+if debug:
+  import cgitb
+import glob
+
+def die(output):
+  print "Internal Error!"
+  if debug:
+    print output
+  exit(1)
+
+# Emulate rsplit in python 2.3
+def rsplit24 (string, splitter, *amounts):
+    return string.rsplit (splitter, *amounts)
+
+def rsplit23 (string, splitter, *amounts):
+    if not splitter in string:
+        return [string]
+    splitResults = string.split (splitter)
+    if amounts:
+        res = splitter.join (splitResults[:-amounts[0]])
+        resultList = []
+        resultList.append (res)
+        for t in splitResults[-amounts[0]:]:
+            resultList.append (t)
+        return resultList
+rsplit = rsplit24
+
+if not hasattr (str, "rsplit"):
+    rsplit = rsplit23
+
+
+# Helper method which acutually does the sqlite query.
+# Notice that on slc4 (i.e. lxplus), there is no sqlite available, so we rely
+# on my personal copy of it.
+def doQuery(query, database):
+  if os.path.exists("/usr/bin/sqlite3"):
+    sqlite="/usr/bin/sqlite3"
+  else:
+    sqlite="/afs/cern.ch/user/e/eulisse/www/bin/sqlite"
+  return getstatusoutput("echo '%s' | %s -separator @@@ %s" % (query, sqlite, database))
+
+# Helper to get the high level summary information for the profile.
+def getSummaryInfo(database):
+  summary_query="""SELECT counter, total_count, total_freq, tick_period
+                   FROM summary;"""
+  error, output = doQuery(summary_query, database)
+  if error or not output or output.count("\n") > 1:
+    die(output)
+    exit(1)
+  return output.split("@@@")
+
+CSS="""
+<style>
+body {
+  font-family: sans-serif;
+}
+
+tr.moreinfo {
+  font-size: 70%;
+}
+
+td {
+  font-size: 12px;
+  padding: 3px 10px;
+  font-family: monospace;
+  text-align: right;
+  margin: 0px;
+  border-width: 0px;
+  white-space: nowrap;
+}
+
+td.s {
+  text-align: left;
+  white-space:nowrap;
+}
+
+th.sn {
+  padding: 3px 10px;
+  text-align: left;
+}
+
+tbody.parents {
+  background-color: #9cc089;
+}
+
+tbody.children {
+  background-color: #d8f3c9;
+}
+
+tbody.mainrow {
+  font-weight: bold;
+  background-color: #fde8d7;
+}
+
+a {
+  color: #000000;
+}
+</style>
+"""
+
+def summaryColumnNames(cumulative):
+  yield cumulative and ("cumulative_count", "total_calls") or ("self_count", "self_calls")
+# This method is responsible for writing to "out" the summary tables for the
+# profile to be found in database.
+# In CGI mode it determines the actual path to use from the PATH_INFO /
+# SCRIPT_NAME variables which should protect the html against various
+# combinations of trailing slashes.
+#
+# @a database
+#
+# path to the database to actually use for the query.
+#
+# @a out
+#
+# the output stream to which the output is written (so that we can use this
+# method unchanged in the standalone server mode).
+#
+# @a cumulative
+#
+# True if the summary has to show / sort items by their cumulative counts,
+# false otherwise.
+def summary(database, out, cumulative):
+  count, freq = cumulative and ("cumulative_count", "total_calls") or ("self_count", "self_calls")
+  self_query="""SELECT mr.id, sym.name, mr.%s, mr.%s
+                FROM mainrows mr
+                INNER JOIN symbols sym ON sym.id in (mr.symbol_id)
+                ORDER BY mr.%s DESC
+                LIMIT 1000;""" % (count, freq, count)
+  counter, total_count, total_freq, tick_period = getSummaryInfo(database)
+
+  if "PATH_INFO" in os.environ and "SCRIPT_NAME" in os.environ:
+    absPath = join(os.environ["SCRIPT_NAME"],
+                   os.environ["PATH_INFO"].lstrip("/")).rstrip("/")
+    absPath = absPath.replace("/cumulative", "").replace("/self", "").replace("/1", "")
+  else:
+    absPath = "."
+
+  if counter == "PERF_TICKS":
+    multiplier = float(tick_period)
+    countFormat = "%.2f"
+    isPerfTicks = True
+  else:
+    multiplier = 1
+    countFormat = "%d"
+    isPerfTicks = False
+
+  out.write("""<html>
+  <meta name="keywords" content="CMSSW, profiling, igprof" />""")
+  out.write(CSS)
+  if absPath != ".":
+    dummy, arch, ib, f = rsplit(absPath, "/", 3)
+    out.write("""<body>
+                 <h1>%s - %s, %s</h1><a href="../">
+                  Back to profiles index</a>
+                 <h2>Counter: %s, first 1000 entries</h2>\n""" % (f.split("__")[0], ib, arch, counter))
+  if cumulative:
+    summaryType = "Cumulative"
+    out.write("""<h2>Sorted by cumulative cost</h2><br/>
+                 <a href='%s/self'>(Sort by self cost)</a><br/>""" % absPath)
+  else:
+    summaryType = "Self"
+    out.write("""<h2>Sorted by self cost</h2><br/>
+                 <a href='%s/cumulative'>Sort by cumulative cost</a><br/>""" % absPath)
+
+  out.write("""<table><tr>
+               <th>Rank</th>
+               <th>Total %% </th>
+               <th>%s </th>
+            """ % summaryType)
+  if not isPerfTicks:
+    out.write("""<th>Calls</th>""")
+  out.write("""<th class='sn'>Symbol name</th>
+               </tr>""")
+
+  error, output = doQuery(self_query, database)
+  if error:
+    die(output)
+
+  for l in output.split("\n"):
+    if not l:
+      continue
+    rank, name, count, calls = l.split("@@@")
+    name = cgi.escape(name)
+    path = join(absPath, str(rank))
+    if float(total_count):
+      percent = 100*(float(count) / float(total_count))
+      pct = locale.format("%.2f", percent, 2)
+    else:
+      pct = "-.--"
+    count = locale.format(countFormat, int(count) * multiplier, True)
+    calls = locale.format("%d", int(calls), True)
+    out.write("""<tr>
+                  <td><a href="%s">%s</a></td>
+                  <td>%s</td>
+                  <td>%s</td>""" % (path, rank, pct, count) )
+    if not isPerfTicks:
+      out.write("""<td>%s</td>""" % calls)
+    out.write("""<td class="s"><a href="%s">%s</a></td>
+                 </tr>\n""" % (path, name))
+
+  out.write("</table></body></html>")
+
+def column(value, isInt):
+  if isInt:
+    return "<td>%s</td>" % format("%d", int(value), True)
+  return "<td>%s</td>" % format("%.2f", float(value), True)
+
+# Helper method which formats a number of numeric columns with thousands
+# separator and so on.
+def prepareColumns(*args):
+  return "".join([column(x, t) for (x, t, e) in args if e])
+
+
+# Produces the web page which contains callers / callee information for
+# the method of rank "rank".
+#
+# @a database
+#
+# path to the database to actually use for the query.
+#
+# @a out
+#
+# the output stream to which the output is written (so that we can use this
+# method unchanged in the standalone server mode).
+#
+# @the rank
+#
+# the rank of the method when sorted by cumulative counts.
+def flatProfile(database, out, rank):
+  parent_query="""SELECT p.self_id, sym.name,
+                         p.to_child_count, myself.cumulative_count,
+                         p.to_child_calls, myself.total_calls,
+                         p.to_child_paths, myself.total_paths,
+                         mr.cumulative_count,
+                         p.pct
+                  FROM parents p
+                  INNER JOIN mainrows mr ON mr.id IN (p.child_id)
+                  INNER JOIN mainrows myself ON myself.id IN (p.self_id)
+                  INNER JOIN symbols sym ON sym.id IN (myself.symbol_id)
+                  WHERE p.child_id = %s
+                  ORDER BY p.to_child_count;
+                  """ % rank
+
+  main_query="""SELECT mr.id, sym.name,
+                       mr.self_count, mr.cumulative_count,
+                       mr.kids,
+                       mr.self_calls, mr.total_calls,
+                       mr.self_paths, mr.total_paths,
+                       mr.pct
+                FROM mainrows mr
+                INNER JOIN symbols sym ON sym.id IN (mr.symbol_id)
+                WHERE mr.id = %s;
+                """ % rank
+
+  child_query="""SELECT c.self_id, sym.name,
+                        c.from_parent_count, myself.cumulative_count,
+                        c.from_parent_calls, myself.total_calls,
+                        c.from_parent_paths, myself.total_paths,
+                        mr.cumulative_count,
+                        c.pct
+                 FROM children c
+                 INNER JOIN mainrows mr ON mr.id IN (c.parent_id)
+                 INNER JOIN mainrows myself ON myself.id IN (c.self_id)
+                 INNER JOIN symbols sym ON sym.id IN (myself.symbol_id)
+                 WHERE c.parent_id = %s
+                 ORDER BY c.from_parent_count DESC;
+                 """ % rank
+
+  counter, total_count, total_freq, tick_period = getSummaryInfo(database)
+  error, output = doQuery(parent_query, database)
+  if error:
+    die(output)
+  if counter == "PERF_TICKS":
+    isPerfTicks = True
+    total_count = int(total_count) * float(tick_period)
+  else:
+    isPerfTicks = False
+
+  out.write("<html>")
+  out.write(CSS)
+  out.write("""<body><h1>Counter: %s</h1>
+               <table cellspacing='0' rules='groups'>""" % counter)
+  out.write("""<colgroup/>
+               <colgroup/>
+               <colgroup class="counts" span="2">
+               <colgroup class="freq" span="2">
+               <colgroup class="paths" span="2">
+               <colgroup class="symbol">
+               <tr>
+               <th rowspan="2">Rank</th>
+               <th rowspan="2">% total</th>
+               <th colspan="2">Counts</th>""")
+  if not isPerfTicks:
+    out.write("""<th colspan="2">Calls</th>""")
+  out.write("""<th colspan="2">Paths</th>
+               <th rowspan="2" class="sn">Symbol name</th>
+               </tr>
+               <tr class="moreinfo">""")
+  if not isPerfTicks:
+    out.write("""<th>to / from<br/>this</th>
+                 <th>Total</th>""")
+  out.write("""<th>to / from<br/>this</th>
+               <th>Total</th>
+               <th>Including<br/>child / parent</th>
+               <th>Total</th>
+               </tr>
+               """)
+  out.write("<tbody class='parents'>")
+
+  tick_period = float(tick_period)
+
+  for l in output.split("\n"):
+    if not l:
+      continue
+    (rank, name, to_child_counts, cumulative_counts,
+     to_child_calls, total_calls,
+     to_child_paths, total_paths,
+     cumulative_count, percent) = l.split("@@@")
+
+    if isPerfTicks:
+      to_child_counts = int(to_child_counts) * tick_period
+      cumulative_counts = int(cumulative_counts) * tick_period
+
+    percent = format("%.2f", float(percent), True)
+    if percent == "-101.00":
+      percent = "new"
+    name = cgi.escape(name)
+
+    out.write("""<tr class="parentrow">
+                 <td></td>
+                 <td class="num">%s</td>
+                 %s
+                 <td class="s"><a href="./%s">%s</a></td>
+                 </tr>\n""" % (percent,
+                               prepareColumns((to_child_counts, not isPerfTicks, True),
+                                              (cumulative_counts, not isPerfTicks, True),
+                                              (to_child_calls, True, not isPerfTicks),
+                                              (total_calls, True, not isPerfTicks),
+                                              (to_child_paths, True, True),
+                                              (total_paths, True, True)),
+                               rank, name))
+
+  out.write("</tbody>")
+
+  error, output = doQuery(main_query, database)
+  if error or not output or output.count("\n") > 1:
+    die(output)
+
+  (rank, name, self_count, cumulative_count, kids, self_calls, total_calls,
+   self_paths, total_paths, percent) = output.split("@@@")
+
+  name = cgi.escape(name)
+
+  if isPerfTicks:
+    self_count = int(self_count) * tick_period
+    kids = int(kids) * tick_period
+    cumulative_count = int(cumulative_count) * tick_period
+
+  percent = format("%.2f", float(percent), True)
+  if percent == "-101.00":
+    percent = "new"
+  out.write("<tbody class='mainrow'>")
+  out.write("""<tr class="mainrow">
+               <td class="s">[%s]</td>
+               <td>%s</td>
+               %s
+               <td class="s">%s</td>
+               </tr>""" % (rank, percent,
+                           prepareColumns((self_count, not isPerfTicks, True),
+                                          (kids, not isPerfTicks, True),
+                                          (self_calls, True, not isPerfTicks),
+                                          (total_calls, True, not isPerfTicks),
+                                          (self_paths, True, True),
+                                          (total_paths, True, True)), name))
+  out.write("</tbody>")
+
+  error, output = doQuery(child_query, database)
+  if error:
+    die(output)
+
+  out.write("<tbody class='children'>")
+  for l in output.split("\n"):
+    if not l:
+      continue
+    (rank, name,
+     from_parent_counts, cumulative_counts,
+     from_parent_calls, total_calls,
+     from_parent_paths, total_paths,
+     cumulative_count, percent) = l.split("@@@")
+    name = cgi.escape(name)
+    if isPerfTicks:
+      from_parent_counts = int(from_parent_counts) * tick_period
+      cumulative_counts = int(cumulative_counts) * tick_period
+    percent = format("%.2f", float(percent), True)
+    if percent == "-101.00":
+      percent = "new"
+    out.write("""<tr class="childrow"><td></td><td>%s</td>
+                 %s
+                 <td class="s"><a href="./%s">%s</a></td>
+                 </tr>""" % (percent,
+                             prepareColumns((from_parent_counts, not isPerfTicks, True),
+                                            (cumulative_counts, not isPerfTicks, True),
+                                            (from_parent_calls, True, not isPerfTicks),
+                                            (total_calls, True, not isPerfTicks),
+                                            (from_parent_paths, True, True),
+                                            (total_paths, True, True)),
+                             rank, name))
+  out.write("</tbody>")
+  out.write("""</table><a href="./cumulative">Back to summary</a>
+               <body></html>""")
+
+# This methods is the main logic for constructing the web page.
+# rank can either be the rank of a method
+#
+# * if rank is greater than 0 we show the flat profile for the associated
+#   method. Only exception being rank "1", which is always is always
+#   "<spontaneous>" and since that one is not saved in the database for the
+#   moment we simply show the cumulative summary. rank "0" does not exists and
+#   again shows the cumulative summary.
+# * favicon.ico is simply now handled.
+# * If rank is "self", we show the "by self" summary
+# * If the rank is "cumulative" or it is not set, we show the "cumulative"
+#   summary.
+# * All other values for rank trigger an error.
+def buildReply(rank, database, out):
+  if rank.isdigit():
+    if int(rank) < 2:
+      summary(database, out, True)
+    else:
+      flatProfile(database, out, int(rank))
+  elif rank in ["", "cumulative"]:
+    summary(database, out, True)
+  elif rank == "favicon.ico":
+    return (404,'File not found: %s.' % rank)
+  elif rank == "self":
+    summary(database, out, False)
+  else:
+    assert(not rank.isdigit())
+    return (500, "Malformed url.")
+
+# Simple handler for the standalone server.
+#
+# In standalone mode the url can be any of the following:
+#
+# / => same as "cumulative"
+# /<method rank>
+# /cumulative
+# /self
+#
+# The database is defined by the commandline option.
+class SimpleServerHandler(BaseHTTPRequestHandler):
+  def do_GET(self):
+    try:
+      self.send_response(200)
+      self.send_header('Content-type', 'text/html')
+      self.end_headers()
+      parts = urlparse(self.path)
+
+      rank = basename(parts[2])
+      error = buildReply(rank, self.__class__.database, self.wfile)
+      if error:
+        self.send_error(*error)
+        return
+    except Exception, e:
+      if debug:
+        self.wfile.write("<pre>")
+        self.wfile.write(traceback.format_exc())
+        self.wfile.write("</pre>")
+      else:
+        self.send_error(500, 'Internal server error')
+
+# Standalone server class which has a timeout on the socket and makes the
+# whole application to die by raising the equivalent of a <Ctrl-C>
+# if such a time out expires.
+class TimeOutHTTPServer(HTTPServer):
+  def __init__(self, opts, handler, t):
+    self.__timeout = t
+    HTTPServer.__init__(self, opts, handler)
+
+  def server_bind(self):
+    HTTPServer.server_bind(self)
+    self.socket.settimeout(self.__timeout)
+
+  def get_request(self):
+    try:
+      sock, addr = self.socket.accept()
+      sock.settimeout(None)
+      return (sock, addr)
+    except socket.timeout:
+      print "Inactive for too long. Quitting..."
+      thread.interrupt_main()
+
+# Runs the server in standalone mode, printing out information of where to
+# find it and exiting successfully on "<ctrl-c>", which can either be raised
+# by the user or by a timeout in the server itself (see TimeOutHTTPServer doc).
+def runServer(database, opts):
+  try:
+    SimpleServerHandler.database = database
+    server = TimeOutHTTPServer(('', opts.port),
+                               SimpleServerHandler,
+                               opts.timeout)
+    from socket import gethostname
+    print 'igprof-navigator standalone HTTP server started on port %s\n' % opts.port
+    print 'Point your browser to: http://%s:%s' % (gethostname(), opts.port)
+    server.serve_forever()
+  except KeyboardInterrupt:
+    print '^C received, shutting down server'
+    server.socket.close()
+  exit(0)
+
+# Helper to generates the list of database files which are available for
+# browsing. It yields values as expected by printGlobbedListing.
+def profileFilesGenerator(p):
+  scriptPath = os.environ["SCRIPT_NAME"]
+  globbed = [glob.glob(join(p, pattern))
+             for pattern in ["*.sql3", "*/*/*.sql3"]]
+  for g in globbed:
+    for f in [h for h in g if getsize(h)]:
+      relPath = f.replace(p, "").lstrip("/").replace(".sql3", "")
+      yield (scriptPath, relPath, relPath)
+
+# Sort the table of globbed files with the following order:
+# * by date (reverse)
+# * by release
+# * by architecture
+# * by dataset
+# * by step
+# * by pileup
+# * by global tag
+# * by counter
+# * by number of events
+def tableSorter(a, b):
+  for comp in ["date", "release", "arch", "dataset", "step", "pileup", "gtag", "counter", "events"]:
+    if cmp(a[comp], b[comp]):
+      if comp == "date":
+        return cmp(b[comp], a[comp])
+      else:
+        try:
+          x = int(a[comp])
+        except:
+          x = a[comp]
+        try:
+          y = int(b[comp])
+        except:
+          y = b[comp]
+        return cmp(x, y)
+  return 0
+
+
+# This is only available for the CGI version and provides an html list
+# containing all the files that can be browsed.
+def printGlobbedListing(path):
+  counterId = {"PERF_TICKS": 3,
+               "MEM_TOTAL": 2,
+               "MEM_MAX": 1,
+               "MEM_LIVE": 0}
+
+  standaloneFiles = []
+  managedFiles = []
+
+  IBMatcher = re.compile("(.*)_(20[0-9][0-9]-[0-9][0-9]-[0-9][0-9])")
+
+  for ref, p, f in profileFilesGenerator(path):
+    fileInfo = dict()
+    if not "/" in f:
+      standaloneFiles += (ref, p, f)
+      continue
+
+    # Skip files that do not match the agreed structure where each field
+    # is separated by ___
+    try:
+      arch, release, DB = f.split("/", 2)
+      fileInfo["name"], fileInfo["arch"]  = p, arch
+      fileInfo["href"] = "%s/%s" % (ref, p)
+      match = IBMatcher.match(release)
+      if match:
+        fileInfo["release"], fileInfo["date"] = match.groups()
+      else:
+        fileInfo["release"] = release; fileInfo["date"] = "0000-Misc"
+      dataset, step, pileup, gtag, t, counter, events = DB.split("___")
+      if not counter in counterId.iterkeys():
+        continue
+      fileInfo["dataset"] = dataset
+      fileInfo["step"] = step
+      fileInfo["pileup"] = pileup
+      fileInfo["gtag"] = gtag
+      fileInfo["type"] = t
+      fileInfo["counter"] = counter
+      fileInfo["events"] = events
+    except ValueError, e:
+      print "Warning: Failed to split DB name \"%s\"<p>" % (DB)
+      continue
+
+    if "_merged" in fileInfo["events"]:
+      fileInfo["events"] = fileInfo["events"].split("_merged")[0]
+      fileInfo["reportType"] = "(Merged By Library)"
+    elif "_diff_" in fileInfo["events"]:
+      fileInfo["events"], diffBaseline = fileInfo["events"].split("_diff_", 2)
+      fileInfo["reportType"] = "(Diff to %s)" % diffBaseline
+    elif "_EndOfJob" in fileInfo["events"]:
+      fileInfo["events"] = fileInfo["events"].split("_EndOfJob")[0]
+      fileInfo["reportType"] = "(End of Run)"
+    else:
+      fileInfo["reportType"] = ""
+
+    managedFiles.append(fileInfo)
+
+  managedFiles.sort(tableSorter)
+  if not managedFiles:
+    print "<h1>Unable to find any acceptable sqlite files</h1>"
+    print "File names are expected to be of the form <em>%s.sql3</em>" % \
+        ("___".join(["dataset", "step", "pileup", "gtag", "t",
+                     ("(%s)" % "|".join(list(sorted(counterId.keys())))), "events"]))
+    exit(1)
+
+  c = managedFiles[0]
+
+  def dateHeader(d):
+    print """<h2>%s</h2>""" % d
+
+  def tableHeader(*titles):
+    title = " ".join(titles)
+    display = ""
+    if titles[0] == "Unknown":
+      display="style='display: none;'"
+    print """<table cellspacing="0px" %s>
+             <tr>
+             <th colspan="5">%s</th>
+             </tr>
+             <tr>
+             <th>Step</th>
+             <th>MEM_LIVE</th>
+             <th>MEM_MAX</th>
+             <th>MEM_TOTAL</th>
+             <th>PERF_TICKS</th>
+             </tr>
+          """ % (display, title)
+
+  def stepHeader(s, pileup, gtag):
+    string = "%s<br/>(%s, %s)" % (s.replace(",", ", "), pileup, gtag)
+    print "<tr><td style='border:0px;white-space:nowrap;'>%s</td><td>" % string
+
+  print """<html>
+  <meta name="keywords" content="CMS, CMSSW, profiling, igprof, software performance, high energy physics" />
+  <style>
+body {
+font-family: sans-serif;
+}
+table {
+  border: 1px;
+  border-style: solid;
+  margin-bottom: 30px;
+  color: #c6d1e2;
+}
+th {
+  background-color: #f0f3fc;
+  font-family: sans-serif;
+}
+td, th {
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 4px;
+  padding-top: 4px;
+  color: black;
+}
+
+td {
+border-left: 1px;
+border-color: #c6d1e2;
+border-style: dashed;
+}
+
+  </style>
+  <body>
+  <h1>CMSSW Integration Build - IgProf results</h1>
+  <a href="http://igprof.org">More information about igprof.</a>
+  """
+  dateHeader(c["date"])
+  tableHeader(c["release"], c["arch"], c["dataset"])
+  stepHeader(c["step"],c["pileup"], c["gtag"])
+  previousCounter = 0
+  for i in managedFiles:
+    if c["step"] != i["step"]:
+      previousCounter = 0
+      print """</td></tr>"""
+
+    if c["release"] != i["release"] or c["arch"] != i["arch"] or c["dataset"] != i["dataset"] or c["date"] != i["date"]:
+      print """</table>"""
+    if c["date"] != i["date"]:
+      dateHeader(i["date"])
+    if c["release"] != i["release"] or c["arch"] != i["arch"] or c["dataset"] != i["dataset"] or c["date"] != i["date"]:
+      tableHeader(i["release"], i["arch"], i["dataset"])
+    if c["step"] != i["step"] or c["pileup"] != i["pileup"] or c["gtag"] != i["gtag"]:
+      stepHeader(i["step"], i["pileup"], i["gtag"])
+    counterDiff = counterId[i["counter"]] - previousCounter
+    previousCounter = counterId[i["counter"]]
+
+    for x in xrange(0, counterDiff):
+      print "</td><td>"
+    print """<a href="%(href)s/">%(events)s %(reportType)s</a><br/>""" % i
+    c = i
+
+  print """</tr></table>
+           For more information about this pages, please ask Giulio Eulisse or Lassi Tuura (both at CERN).
+           </body><html>"""
+
+# Produces a list of possible database paths.
+# The only two possibilities for a url are "<script>/<database-path>"
+# or "<script>/<database-path>/<rank>" and the database can only be in
+# <database-path> + ".sql3"
+def possibleDBAndRanks(p):
+  yield ("", p.rstrip("/") + ".sql3")
+  yield (basename(p), dirname(p).rstrip("/") + ".sql3")
+
+# Main logic to generate CGI pages.
+# We first make sure we can build a valid path to a database. We construct all
+# the possible options of paths, if any of those actually points to a valid
+# database, we build the page as requested, if not we simply print out a list
+# of the available databases.
+def cgiReply():
+  print "Content-Type: text/html"
+  print
+  dataPath = join(os.getcwd(), "data")
+  if not "PATH_INFO" in os.environ or not "SCRIPT_FILENAME" in os.environ:
+    printGlobbedListing(dataPath)
+    exit(0)
+
+  relPath = os.environ["PATH_INFO"].replace(os.environ["SCRIPT_FILENAME"], "").lstrip("/")
+  path = normpath(join(dataPath, relPath))
+
+  if os.path.isdir(re.sub(r"/(cumulative|self)/?$", "", path)):
+    #
+    # Look for an index file in this directory; if it's there, print it and exit
+    #
+    indexes = [os.path.join(path, index) for index in ["index.html", "index.htm"]]
+    for indexFile in indexes:
+      try:
+        shutil.copyfileobj(open(indexFile), sys.stdout)
+        exit(0)
+      except IOError, e:
+        pass
+
+  if not path.startswith(dataPath):
+    printGlobbedListing(dataPath)
+    exit(0)
+
+  for rank, database in possibleDBAndRanks(path):
+    if exists(database):
+      buildReply(rank, database, sys.stdout)
+      exit(0)
+
+  printGlobbedListing(dataPath)
+  exit(0)
+
+# The script can work in two modes, as a standalone server and as a CGI
+# script. The standalone script expects an sql file to be passed as argument
+# while the CGI version will pick up all its arguments (including the
+# database) from the environment set by the web server.
+#
+# Notice also that standalone version will die after a certain period of
+# time (configurable, between 1m and 1h). This is done to avoid hanging
+# processes on lxplus.
+if __name__ == "__main__":
+  # Uncomment in case of debugging needs
+  if debug:
+    cgitb.enable()
+  if "LC_ALL" in os.environ:
+    locale.setlocale(locale.LC_NUMERIC, os.environ["LC_ALL"])
+  else:
+    locale.setlocale(locale.LC_NUMERIC, "en_US.UTF-8")
+
+  parser = OptionParser(usage="igprof-navigator [file [options]] ")
+  parser.add_option("--port", "-p", dest="port", default=8080, type="int")
+  parser.add_option("--timeout", "-t", dest="timeout", default=60*15, type="int")
+  opts, args = parser.parse_args()
+
+  if not args and "SCRIPT_NAME" in os.environ:
+    cgiReply()
+  elif not args:
+    parser.error("You need to specify at least a db file.")
+
+
+  if opts.timeout > 60*60:
+    print "Maximum timeout period is 1h."
+    exit(1)
+
+  if opts.timeout < 60:
+    print "Minimum timeout period is 1m."
+    exit(1)
+
+  if opts.port < 1024 or opts.port > 65535:
+    print "Please specify a valid user port (1024-65535)."
+    exit(1)
+
+  if len(args) > 2:
+    parser.error("Too many arguments")
+
+  database = args[0]
+  if not exists(database):
+    parser.error("File %s does not exists" % database)
+    exit(1)
+  runServer(database, opts)
