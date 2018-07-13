@@ -51,6 +51,10 @@ def make_blocking(pipe, blocking):
     else:
         fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~os.O_NONBLOCK)  # clear it
 
+def das_event(name, s1 = "", s2 = "", s3 = "", s4 = "", i1 = "", i2 = "", i3 = "", i4 = ""):
+    fmt = "\n@{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\n"
+    sys.stdout.write(fmt.format(name, s1, s2, s3, s4, i1, i2, i3, i4))
+
 
 def safe_delete(name):
     "Delete a filesystem path name without error"
@@ -76,6 +80,7 @@ def write_status(file_name, status):
 def die(code, text):
     "Write out an error string and exit with given status code"
     write_status(ERROR_FILE, text)
+    das_event("robot.ota_download_end", "fail", get_prop("ro.anki.version"), str(text), "", code)
     if DEBUG:
         sys.stderr.write(str(text))
         sys.stderr.write(os.linesep)
@@ -532,6 +537,7 @@ def update_from_url(url):
     stream = open_url_stream(url)
     content_length = stream.info().getheaders("Content-Length")[0]
     write_status(EXPECTED_DOWNLOAD_SIZE_FILE, content_length)
+    next_boot_os_version = get_prop("ro.anki.version")
     with make_tar_stream(stream) as tar_stream:
         # Get the manifest
         if DEBUG:
@@ -555,8 +561,9 @@ def update_from_url(url):
         # Inspect the manifest
         if manifest.get("META", "manifest_version") not in SUPPORTED_MANIFEST_VERSIONS:
             die(201, "Unexpected manifest version")
+        next_boot_os_version = manifest.get("META", "update_version")
         if DEBUG:
-            print("Updating to version {}".format(manifest.get("META", "update_version")))
+            print("Updating to version {}".format(next_boot_os_version))
         # Mark target unbootable
         if not call(['/bin/bootctl', current_slot, 'set_unbootable', target_slot]):
             die(202, "Could not mark target slot unbootable")
@@ -585,6 +592,7 @@ def update_from_url(url):
         die(202, "Could not set target slot as active")
     safe_delete(ERROR_FILE)
     write_status(DONE_FILE, 1)
+    das_event("robot.ota_download_end", "success", next_boot_os_version)
 
 def logv(msg):
     if DEBUG:
@@ -616,6 +624,7 @@ def construct_update_url(os_version):
     return url
 
 if __name__ == '__main__':
+    das_event("robot.ota_download_start")
     clear_status()
     DEBUG = os.getenv("UPDATE_ENGINE_DEBUG", "False") in TRUE_SYNONYMS
     url = os.getenv("UPDATE_ENGINE_URL", "auto")
