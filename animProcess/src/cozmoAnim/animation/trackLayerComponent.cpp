@@ -36,8 +36,9 @@ bool kGenerateGlitchAudio = false;
 
 // Audio latency offset
 #if defined(ANKI_PLATFORM_VICOS)
-// MATH: (BufferSize / SampleRate) * NumberOfBuffers ==> 1024/48000*8 = 0.1706667 sec => 170 ms
-CONSOLE_VAR_RANGED(u32, kAudioAnimationOffset_ms, "Audio.AnimationStreamer", 170, 0, 300);
+// MATH: (BufferSize / SampleRate) * NumberOfBuffers ==> 1024/48000*4 = 0.0853333 sec => 85 ms
+// After doing slow motion recordings we found that there was an additional 115 ms of latency ==> total latency = 200 ms
+CONSOLE_VAR_RANGED(u32, kAudioAnimationOffset_ms, "Audio.AnimationStreamer", 200, 0, 300);
 #else
 #define kAudioAnimationOffset_ms 0
 #endif
