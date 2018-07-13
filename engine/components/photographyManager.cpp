@@ -19,6 +19,7 @@
 #include "engine/externalInterface/gatewayInterface.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
+#include "webServerProcess/src/webService.h"
 
 #include "proto/external_interface/shared.pb.h"
 
@@ -38,6 +39,28 @@ CONSOLE_VAR(bool, kDevIsStorageFull, "Photography", false);
 // If true, requires OS version that supports camera format change
 CONSOLE_VAR(bool, kTakePhoto_UseSensorResolution, "Photography", true);
     
+
+static int DeleteAllPhotosWebServerImpl(WebService::WebService::Request* request)
+{
+  auto* photographyManager = static_cast<PhotographyManager*>(request->_cbdata);
+  photographyManager->DeleteAllPhotos();
+  
+  return 1;
+}
+
+
+// Note that this can be called at any arbitrary time, from a webservice thread
+static int DeleteAllPhotosWebServerHandler(struct mg_connection *conn, void *cbdata)
+{
+  auto* photographyManager = static_cast<PhotographyManager*>(cbdata);
+  
+  auto ws = photographyManager->GetRobot()->GetContext()->GetWebService();
+  const int returnCode = ws->ProcessRequestExternal(conn, cbdata, DeleteAllPhotosWebServerImpl);
+  
+  return returnCode;
+}
+
+
 namespace
 {
   const std::string kPhotoManagerFolder = "photos";
@@ -70,6 +93,7 @@ PhotographyManager::PhotographyManager()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void PhotographyManager::InitDependent(Robot* robot, const RobotCompMap& dependentComps)
 {
+  _robot = robot;
   _visionComponent = robot->GetComponentPtr<VisionComponent>();
   _gatewayInterface = robot->GetGatewayInterface();
 
@@ -114,6 +138,9 @@ void PhotographyManager::InitDependent(Robot* robot, const RobotCompMap& depende
     LOG_WARNING("PhotographyManager.InitDependent.NoPhotosFile", "Photos file not found; creating new one");
     SavePhotosFile();
   }
+
+  const auto& webService = robot->GetContext()->GetWebService();
+  webService->RegisterRequestHandler("/deleteallphotos", DeleteAllPhotosWebServerHandler, this);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -394,6 +421,24 @@ void PhotographyManager::SavePhotosFile() const
   if (!_platform->writeAsJson(_fullPathPhotoInfoFile, data))
   {
     LOG_ERROR("PhotographyManager.SavePhotosFile.Failed", "Failed to write photos info file");
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void PhotographyManager::DeleteAllPhotos()
+{
+  LOG_INFO("PhotographyManager.DeleteAllPhotos", "Deleting all photos");
+  bool dirty = false;
+  static const bool kSavePhotosFile = false;
+  while (!_photoInfos.empty())
+  {
+    DeletePhotoByID(_photoInfos[0]._id, kSavePhotosFile);
+  }
+
+  if (dirty)
+  {
+    SavePhotosFile();
   }
 }
 

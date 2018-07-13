@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+
+<!-- page preamble -->
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vector PR demo Engine iFrame</title>
+  <link rel="stylesheet" href="jquery-ui.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="jquery-1.12.4.js"></script>
+  <script src="jquery-ui.js"></script>
+
+  <script>
+    var hostname = "";  // (Effectively, the robot IP)
+    var host = "";      // hostname and port (e.g. "192.168.42.82:8888"
+
+    $(document).ready(function() {
+        $('#btn_erase_all_faces').click(ButtonHandler_EraseAllFaces);
+        $('#btn_show_photos').click(ButtonHandler_ShowPhotos);
+        $('#btn_erase_all_photos').click(ButtonHandler_EraseAllPhotos);
+
+        // Pull out hostname (robot IP) so we can use it in here to call into ANY of the webservers
+        var urlObject = new URL(document.URL);
+        host = urlObject.host;
+        hostname = urlObject.hostname;
+        console.log('host is: ' + host);
+        console.log('hostname is: ' + hostname);
+        
+        // failed attempt at pre-setting the selector to be correct for the current value.
+        // Let's call this a WIP eh
+//        $.post("consolevarget?key=EyeColor", function(result) {
+//          console.log('retrieved eye color: ' + result);
+//          $('#EyeColor').val('Yellow');
+//          $('#EyeColor').selectmenu('refresh');
+//        });
+    });
+    $(function() {
+        $("button").click(function(event) {
+            event.preventDefault();
+        });
+        $("input[type='submit']").click(function(event) {
+            $.post("/"+event.target.value, function(data) {
+                $("#content").html(data);
+                $("#content").show();
+                InitConfirmDialog();
+            });
+            event.preventDefault();
+        });
+        $('#EyeColor').selectmenu({
+            change: function(event, data) {
+              $.post("consolevarset", {key: "EyeColor", value: data.item.index}, function(result){
+                $.post("consolefunccall", {func: "DebugSetEyeColor", args: ""}, function(result) {});
+              });
+            }
+        });
+        $('#MasterVolumeLevel').selectmenu({
+          change: function(event, data) {
+            console.log('blah');
+            $.post("consolevarset", {key: "MasterVolumeLevel", value: data.item.index}, function(result){
+              $.post("consolefunccall", {func: "DebugSetMasterVolume", args: ""}, function(result) {});
+            });
+          }
+        });
+//        $(".listbox").each(function() {
+//          var selector = $("#" + this.id);
+//          $(this).selectmenu({
+//            change: function(event, data) {
+//              console.log('listbox changed: ' + data.item.index);
+//              $.post("consolevarset", {key: selector.attr("id"), value: data.item.index}, function(result){});
+//              console.log('and calling...');
+//            }
+//          });
+//        })
+    });
+
+    function ButtonHandler_EraseAllFaces() {
+      var url = "/consolefunccall?func=DebugEraseAllEnrolledFaces";
+      console.log("calling: " + url);
+      $.post(url, function(data) {});
+    }
+
+    function ButtonHandler_ShowPhotos() {
+      var url = 'http://' + host + '/persistent/photos/';
+      var win = window.open(url, '_blank');
+      if (win) {
+        win.focus();
+      } else {
+        alert('Please allow popups for this website');
+      }
+    }
+
+    function ButtonHandler_EraseAllPhotos() {
+      $.post('/deleteallphotos', function(data) {});
+    }
+
+  </script>
+</head>
+
+<!-- page content -->
+
+<body class="ui-widget-content" style="border:0;">
+    <div>
+      <div id='main_section'>
+        <button id='btn_erase_all_faces' style='color:red;'>Erase all enrolled faces</button>
+        <br>
+        <br>
+        <div>
+          <label for="EyeColor-button">Eye Color</label>
+          <select name="EyeColor" id='EyeColor' class='listbox'>
+            <option>Teal</option>
+            <option>Orange</option>
+            <option>Yellow</option>
+            <option>Lime Green</option>
+            <option>Azure Blue</option>
+            <option>Purple</option>
+            <option>Matrix Green</option>
+          </select>
+        </div>
+        <br>
+        <div>
+          <label for="MasterVolumeLevel-button">Master Volume</label>
+          <select name="MasterVolumeLevel" id='MasterVolumeLevel' class='listbox'>
+            <option>Mute</option>
+            <option>Low</option>
+            <option>Medium Low</option>
+            <option>Medium</option>
+            <option>Medium High</option>
+            <option>High</option>
+          </select>
+        </div>
+        <br>
+        <button id='btn_show_photos'>Show photos</button>
+        <button id='btn_erase_all_photos' style='color:red;'>Erase all photos</button>
+        <br>
+      </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+
+<!-- page preamble -->
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vector PR demo Anim iFrame</title>
+  <link rel="stylesheet" href="jquery-ui.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="jquery-1.12.4.js"></script>
+  <script src="jquery-ui.js"></script>
+
+  <script>
+    var hostname = "";  // (Effectively, the robot IP)
+    var host = "";      // hostname and port (e.g. "192.168.42.82:8888"
+
+    $(document).ready(function() {
+        // Pull out hostname (robot IP) so we can use it in here to call into ANY of the webservers
+        var urlObject = new URL(document.URL);
+        host = urlObject.host;
+        hostname = urlObject.hostname;
+        console.log('host is: ' + host);
+        console.log('hostname is: ' + hostname);
+    });
+    $(function() {
+        $("button").click(function(event) {
+            var name = event.target.name;
+            if (name.startsWith('page_')) {
+                SetPage(name);
+                event.preventDefault();
+                return;
+            }
+            event.preventDefault();
+        });
+        $("input[type='submit']").click(function(event) {
+            $.post("/"+event.target.value, function(data) {
+                $("#content").html(data);
+                $("#content").show();
+                InitConfirmDialog();
+            });
+            event.preventDefault();
+        });
+    });
+
+  </script>
+</head>
+
+<!-- page content -->
+
+<body class="ui-widget-content" style="border:0;">
+    <div>
+      <div id='main_section'>
+      </div>
+    </div>
+</body>
+
+</html>

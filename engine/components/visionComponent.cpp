@@ -77,6 +77,8 @@
 namespace Anki {
 namespace Cozmo {
 
+  VisionComponent* s_VisionComponent = nullptr;
+
 #if ANKI_CPU_PROFILER_ENABLED
   CONSOLE_VAR_ENUM(u8, kVisionComponent_Logging,   ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
 #endif
@@ -122,6 +124,13 @@ namespace Cozmo {
   // Prints warning if haven't captured valid frame in this amount of time.
   // Frame rate is expected to be 8fps at minimum, so check 125ms plus some buffer.
   CONSOLE_VAR(u32, kMaxExpectedTimeBetweenCapturedFrames_ms, "Vision.General", 150);
+  
+  void DebugEraseAllEnrolledFaces(ConsoleFunctionContextRef context)
+  {
+    PRINT_NAMED_INFO("VisionComponent.ConsoleFunc","DebugEraseAllEnrolledFaces function called");
+    s_VisionComponent->EraseAllFaces();
+  }
+  CONSOLE_FUNC(DebugEraseAllEnrolledFaces, "Vision.General");
 
   namespace JsonKey
   {
@@ -159,6 +168,7 @@ namespace Cozmo {
 
   void VisionComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
   {
+    s_VisionComponent = this;
     _robot = robot;
     _context = _robot->GetContext();
     _vizManager = _context->GetVizManager();

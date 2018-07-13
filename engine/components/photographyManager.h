@@ -87,6 +87,10 @@ public:
 
   static const char * GetPhotoExtension() { return "jpg"; }
   static const char * GetThumbExtension() { return "thm.jpg"; }
+  
+  Robot* GetRobot() const { return _robot; }
+  
+  void DeleteAllPhotos();
 
 private:
 
@@ -117,6 +121,7 @@ private:
     WaitingForPhotoModeDisable,
   };
 
+  Robot*                    _robot = nullptr;
   Util::Data::DataPlatform* _platform = nullptr;
   State             _state = State::Idle;
   VisionComponent*  _visionComponent = nullptr;
