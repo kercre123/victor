@@ -9,7 +9,7 @@ import (
 	"fmt"
 )
 
-// Run starts the token service for other processes to connect to and
+// Run starts the token service for other code/processes to connect to and
 // request tokens
 func Run(optionValues ...Option) {
 	var opts options
@@ -27,26 +27,21 @@ func Run(optionValues ...Option) {
 		return
 	}
 
-	serv, err := ipc.NewUnixgramServer(ipc.GetSocketPath("token_server"))
-	if err != nil {
-		log.Println("Error creating token server:", err)
-		return
-	}
-
-	if opts.stop != nil {
-		go func() {
-			<-opts.stop
-			if err := serv.Close(); err != nil {
-				log.Println("error closing token server:", err)
-			}
-		}()
-	}
-
 	initRefresher(opts.stop)
 
-	for c := range serv.NewConns() {
-		go handleConn(c)
+	if opts.server {
+		serv, err := initServer(opts.stop)
+		if err != nil {
+			log.Println("Error creating token server:", err)
+			return
+		}
+
+		for c := range serv.NewConns() {
+			go handleConn(c)
+		}
 	}
+	// if server isn't requested, our background routines will handle requests
+	// and there's no need for this function to block
 }
 
 // HandleRequest will process the given request and return a response. It may block,
@@ -88,4 +83,21 @@ func handleRequest(m *cloud.TokenRequest) (*cloud.TokenResponse, error) {
 	queue <- req
 	resp := <-req.ch
 	return resp.resp, resp.err
+}
+
+func initServer(stop <-chan struct{}) (ipc.Server, error) {
+	serv, err := ipc.NewUnixgramServer(ipc.GetSocketPath("token_server"))
+	if err != nil {
+		return nil, err
+	}
+
+	if stop != nil {
+		go func() {
+			<-stop
+			if err := serv.Close(); err != nil {
+				log.Println("error closing token server:", err)
+			}
+		}()
+	}
+	return serv, nil
 }

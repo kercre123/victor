@@ -47,7 +47,7 @@ endif()
 
 set(chipper_flags "")
 file(READ "${ANKI_EXTERNAL_DIR}/chipper_key" chipper_flags)
-set(chipper_flags "-X \\\\\'anki/cloudproc.ChipperSecret=${chipper_flags}\\\\\'")
+set(chipper_flags "-X \\\\\'anki/voice.ChipperSecret=${chipper_flags}\\\\\'")
 
 if(VICOS)
   set(__opus_build_dir ${CORETECH_EXTERNAL_DIR}/build/opus-vicos)

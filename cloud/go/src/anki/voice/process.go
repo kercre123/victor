@@ -1,4 +1,4 @@
-package cloudproc
+package voice
 
 import (
 	"anki/log"

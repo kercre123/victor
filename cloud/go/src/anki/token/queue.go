@@ -19,6 +19,8 @@ type response struct {
 	err  error
 }
 
+var defaultESN func() string
+
 var queue = make(chan request)
 var url = "token-dev.api.anki.com:443"
 var robotESN string
@@ -26,10 +28,14 @@ var robotESN string
 func queueInit(done <-chan struct{}) error {
 	esn, err := robot.ReadESN()
 	if err != nil {
-		if err := robot.WriteFaceErrorCode(852); err != nil {
-			log.Println("Couldn't print face error:", err)
+		if defaultESN == nil {
+			if err := robot.WriteFaceErrorCode(852); err != nil {
+				log.Println("Couldn't print face error:", err)
+			}
+			return fmt.Errorf("error reading ESN: %s", err.Error())
+		} else {
+			esn = defaultESN()
 		}
-		return fmt.Errorf("error reading ESN: %s", err.Error())
 	}
 	robotESN = esn
 	go queueRoutine(done)
