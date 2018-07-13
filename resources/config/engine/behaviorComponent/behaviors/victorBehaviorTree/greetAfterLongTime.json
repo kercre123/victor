@@ -5,5 +5,11 @@
   "associatedActiveFeature": "NoFeature",
 
   // 8 hours
-  "cooldown_s": 28800
+  "cooldown_s": 28800,
+
+  "wantsToBeActivatedCondition": {
+    "conditionType" : "FeatureGate",
+    "feature" : "GreetAfterLongTime"
+  }
+
 }

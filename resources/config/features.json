@@ -28,6 +28,10 @@
     "enabled": true
   },
   {
+    "feature": "GreetAfterLongTime",
+    "enabled": true
+  },
+  {
     "feature": "PRDemo",
     "enabled": false
   }
