@@ -13,6 +13,8 @@
 //#include "hal_timer.h"
 #define OTP_SIMULATE_WRITE  0
 
+extern void printInt_(int val);
+
 //------------------------------------------------  
 //    OTP
 //------------------------------------------------
@@ -82,8 +84,14 @@ int otp_write(uint32_t *dest, uint32_t *src, int size)
     
     otpc_clock_disable();
     if (res != 0) {
-      char b[10];
-      console_write( snformat(b,sizeof(b),"[%i,%i]\n", res, i) );
+      //char b[10];
+      //console_write( snformat(b,sizeof(b),"[%i,%i]\n", res, i) );
+      hal_uart_putchar('[');
+      printInt_(res);
+      hal_uart_putchar(',');
+      printInt_(i);
+      hal_uart_putchar(']');
+      hal_uart_putchar('\n');
       break;
     }
   }

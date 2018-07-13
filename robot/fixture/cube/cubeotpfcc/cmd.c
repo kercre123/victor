@@ -13,13 +13,53 @@
 //        Output
 //-----------------------------------------------------------
 
+void printInt_(int val)
+{
+  bool printing = 0;
+  int place = 1000000000;
+  
+  if( val < 0 ) {
+    val *= -1;
+    hal_uart_putchar('-');
+  }
+  
+  while( place ) {
+    int digit = val/place;
+    val -= digit*place;
+    if( digit > 0 || printing || place==1 ) {
+      hal_uart_putchar( 0x30 + digit );
+      printing = 1; //print all following digits
+    }
+    place /= 10;
+  }
+}
+
+static void printX08_(uint8_t val) {
+  for(int x=0; x<2; x++) {
+    int nibble = (val & 0xf0) >> 4;
+    char ascii = nibble >= 10 ? nibble - 10 + 0x61 : nibble + 0x30; //map to ascii char
+    hal_uart_putchar( ascii );
+    val <<= 4;
+  }
+}
+
+static void printX32_(uint32_t val) {
+  for(int x=0; x<4; x++) {
+    printX08_( val >> 24 );
+    val <<= 8;
+  }
+}
+
 static inline void writes_(const char *s) { 
   if(s) console_write((char*)s); 
 }
 
 static inline int respond_(int status) {
-  static char b[20]; int bz = sizeof(b);
-  writes_( snformat(b,bz,"<<otp %i\n", status) );
+  //static char b[20]; int bz = sizeof(b);
+  //writes_( snformat(b,bz,"<<otp %i\n", status) );
+  writes_("<<otp ");
+  printInt_(status);
+  hal_uart_putchar('\n');
   return status;
 }
 
@@ -37,7 +77,7 @@ static inline int compare(uint8_t* dat1, uint8_t* dat2, int len) {
 
 int cmd_process(char* s)
 {
-  static char b[80]; int bz = sizeof(b);
+  //static char b[80]; int bz = sizeof(b);
   
   if( !strcmp(s, ">>otp write fcc") )
   {
@@ -45,7 +85,14 @@ int cmd_process(char* s)
     static uint8_t otp_buf[ blocksize ]; //MAX( blocksize, 2*sizeof(da14580_otp_header_t) ) ];
     memset( &otp_buf, 0, sizeof(otp_buf) );
     
-    writes_( snformat(b,bz,"cubefcc: 0x%08x-0x%08x (%u)\n", g_CubeBoot, g_CubeBootEnd-1, g_CubeBootSize) );
+    //writes_( snformat(b,bz,"cubefcc: 0x%08x-0x%08x (%u)\n", g_CubeBoot, g_CubeBootEnd-1, g_CubeBootSize) );
+    writes_("cubefcc: 0x");
+    printX32_((uint32_t)g_CubeBoot);
+    writes_("-0x");
+    printX32_((uint32_t)g_CubeBootEnd-1);
+    writes_(" (");
+    printInt_(g_CubeBootSize);
+    writes_(")\n");
     
     //read current OTP header
     //writes_("reading otp header\n");
@@ -67,13 +114,21 @@ int cmd_process(char* s)
     for(int addr=0; addr < g_CubeBootSize; addr += blocksize)
     {
       int oplen = MIN(blocksize, g_CubeBootSize - addr);
-      writes_( snformat(b,bz,"  writing %05x-%05x...", addr, addr+oplen-1 ) );
+      //writes_( snformat(b,bz,"  writing %05x-%05x...", addr, addr+oplen-1 ) );
+      writes_("  writing "); 
+      printX32_(addr); 
+      hal_uart_putchar('-'); 
+      printX32_(addr+oplen-1); 
+      writes_("...");
       
       int wstat = otp_write((uint32_t*)(OTP_ADDR_BASE+addr), (uint32_t*)&g_CubeBoot[addr], oplen);
       if( wstat == OTP_WRITE_OK )
         writes_("done\n");
       else {
-        writes_( snformat(b,bz,"failed e=%i\n", wstat) );
+        //writes_( snformat(b,bz,"failed e=%i\n", wstat) );
+        writes_( "failed e=" ); 
+        printInt_(wstat); 
+        hal_uart_putchar('\n');
         return respond_(STATUS_WRITE_ERROR); //bail!
       }
     }
@@ -88,7 +143,12 @@ int cmd_process(char* s)
       if( *src > 0 && *dest != *src ) { //ignore empty fields && data match
         int res = otp_write(dest, src, sizeof(uint32_t));
         if( res != OTP_WRITE_OK ) {
-          writes_( snformat(b,bz,"failed @ 0x%x otp_write().err=%i\n", dest, res) );
+          //writes_( snformat(b,bz,"failed @ 0x%x otp_write().err=%i\n", dest, res) );
+          writes_("failed @ 0x"); 
+          printX32_((uint32_t)dest); 
+          writes_(" otp_write().err="); 
+          printInt_(res); 
+          hal_uart_putchar('\n');
           return respond_(STATUS_WRITE_ERROR);
         }
       }
@@ -103,7 +163,10 @@ int cmd_process(char* s)
       otp_read(OTP_ADDR_BASE+addr, oplen, otp_buf); //read otp into our buffer
       
       if( compare((uint8_t*)otp_buf, (uint8_t*)&g_CubeBoot[addr], oplen) ) {
-        writes_( snformat(b,bz,"[mismatch @ 0x%x]\n", addr) );
+        //writes_( snformat(b,bz,"[mismatch @ 0x%x]\n", addr) );
+        writes_("[mismatch @ 0x"); 
+        printX32_((uint32_t)addr); 
+        writes_("]\n");
         return respond_(STATUS_FAILED_VERIFY);
       }
       writes_(".");
