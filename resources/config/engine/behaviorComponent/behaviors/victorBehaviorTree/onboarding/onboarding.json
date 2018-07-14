@@ -9,7 +9,7 @@
     "OnboardingLowBattery",
     "OnboardingPlacedOnCharger",  // is suppressed during first stage
     "OnboardingPickedUp",         // is suppressed during first stage
-    "DriveOffCharger",            // is suppressed during first stage
+    "DriveOffChargerStraight",    // is suppressed during first stage
     "OnboardingFirstTriggerWord", // only runs once, or never if booting after the first stage
     "TriggerWordDetected"         // may sometimes be suppressed
   ],

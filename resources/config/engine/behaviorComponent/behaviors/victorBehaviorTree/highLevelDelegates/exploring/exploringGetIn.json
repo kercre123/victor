@@ -5,7 +5,7 @@
   "associatedActiveFeature": "Exploring",
 
   "behaviors": [
-    "DriveOffCharger",
+    "DriveOffChargerRandomly",
     "GetInAnimsInternal"
   ],
 

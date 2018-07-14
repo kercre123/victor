@@ -418,17 +418,18 @@ void Analog::tick(void) {
 
   if (button_pressed) {
     if (++hold_count >= POWER_WIPE_TIME) {
+      // We will be signaling a recovery
+      BODY_TX::reset();
+
       if (on_charger) {
-        // Reenable power to the head
+        // Re-enable power to the head
         Power::setMode(POWER_ACTIVE);
       }
+    } else if (hold_count >= POWER_DOWN_TIME) {
+      // Do not signal recovery
+      BODY_TX::set();
+      BODY_TX::mode(MODE_INPUT);
 
-      // We will be signaling a recovery
-      if (hold_count == POWER_WIPE_TIME) {
-        BODY_TX::reset();
-        BODY_TX::mode(MODE_OUTPUT);
-      }
-    } else if (hold_count >= POWER_DOWN_TIME) { // Increment is here to prevent overflow in recovery condition
       Analog::setPower(false);
       Power::setMode(POWER_STOP);
     } else {

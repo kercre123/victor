@@ -71,6 +71,7 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
   auto helper = MakeAnkiEventUtil(interface, *this, _eventHandles);
   
   // Game to engine (in alphabetical order)
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::AllowedToHandleActions>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::DriveArc>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::DriveWheels>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::MoveHead>();
@@ -425,6 +426,12 @@ void MovementComponent::RemoveEyeShiftWhenHeadMoves(const std::string& name, Tim
 }
 
   
+template<>
+void MovementComponent::HandleMessage(const ExternalInterface::AllowedToHandleActions& msg)
+{
+  _isAllowedToHandleActions = msg.allowedToHandleActions;
+}
+
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
 {

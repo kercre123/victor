@@ -864,22 +864,7 @@ namespace Cozmo {
       printf("No WebotsKeyboardController was found in world\n");
     }
   }
-  
-  void WebotsKeyboardController::ToggleKeepFaceAliveEnable()
-  {
-    static bool enable = false;
-    PRINT_NAMED_INFO("WebotsKeyboardController.ToggleKeepFaceAliveEnable", "Enable: %d", enable);
     
-    ExternalInterface::EnableKeepFaceAlive msg;
-    msg.enable = enable;
-    msg.disableTimeout_ms = 3*ANIM_TIME_STEP_MS;
-    enable = !enable;
-    
-    ExternalInterface::MessageGameToEngine msgWrapper;
-    msgWrapper.Set_EnableKeepFaceAlive(msg);
-    SendMessage(msgWrapper);
-  }
-  
   void WebotsKeyboardController::SetDefaultKeepFaceAliveParams()
   {
     PRINT_NAMED_INFO("WebotsKeyboardController.SetDefaultKeepFaceAliveParams", "");
@@ -1658,6 +1643,9 @@ namespace Cozmo {
   
   void WebotsKeyboardController::QuitKeyboardController()
   {
+    SendMessage(ExternalInterface::MessageGameToEngine(
+      ExternalInterface::AllowedToHandleActions(false)));
+
     _shouldQuit = true;
   }
   
@@ -2138,7 +2126,7 @@ namespace Cozmo {
 //      REGISTER_KEY_FCN('X', MOD_ALT,       , "");
     REGISTER_KEY_FCN('X', MOD_ALT_SHIFT, QuitKeyboardController, "Quit keyboard controller");
     
-    REGISTER_KEY_FCN('Y', MOD_NONE,      ToggleKeepFaceAliveEnable,     "Toggle keep face alive enable");
+    // REGISTER_KEY_FCN('Y', MOD_NONE,      ToggleKeepFaceAliveEnable,     "Toggle keep face alive enable"); // TODO:(bn) new way to do this
     REGISTER_KEY_FCN('Y', MOD_SHIFT,     SetDefaultKeepFaceAliveParams, "Sets default KeepFaceAlive parameters");
     REGISTER_KEY_FCN('Y', MOD_ALT,       SetKeepFaceAliveParams,        "Sets KeepFaceAlive parameters from keyboard node's params (starting at 'BlinkSpacingMinTime_ms')");
 //    REGISTER_KEY_FCN('Y', MOD_ALT_SHIFT, , "");
@@ -2579,6 +2567,8 @@ namespace Cozmo {
   void WebotsKeyboardController::HandleRobotConnected(const ExternalInterface::RobotConnectionResponse& msg)
   {
     // Things to do on robot connect
+    SendMessage(ExternalInterface::MessageGameToEngine(
+      ExternalInterface::AllowedToHandleActions(true)));
     SendSetRobotVolume(0);
   }
 

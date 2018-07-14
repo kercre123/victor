@@ -38,6 +38,8 @@
 
 #include "clad/types/behaviorComponent/behaviorStats.h"
 
+#define LOG_FUNCTION_NAME() PRINT_CH_INFO("Behaviors", "BehaviorGoHome", "BehaviorGoHome.%s", __func__);
+
 namespace Anki {
 namespace Cozmo {
 
@@ -170,6 +172,8 @@ bool BehaviorGoHome::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorGoHome::OnBehaviorActivated()
 {
+  LOG_FUNCTION_NAME();
+  
   const auto persistent = _dVars.persistent;
   _dVars = DynamicVariables();
   _dVars.persistent = persistent;
@@ -239,6 +243,8 @@ void BehaviorGoHome::OnBehaviorDeactivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorGoHome::TransitionToCheckDockingArea()
 {
+  LOG_FUNCTION_NAME();
+  
   const bool clearChargerWantsToRun = _iConfig.clearChargerAreaBehavior->WantsToBeActivated();
   if (clearChargerWantsToRun) {
     DelegateIfInControl(_iConfig.clearChargerAreaBehavior.get(),
@@ -254,6 +260,8 @@ void BehaviorGoHome::TransitionToCheckDockingArea()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorGoHome::TransitionToPlacingCubeOnGround()
 {
+  LOG_FUNCTION_NAME();
+  
   const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID, ObjectFamily::Charger);
   if (charger == nullptr) {
     PRINT_NAMED_ERROR("BehaviorGoHome.TransitionToPlacingCubeOnGround", "Null charger!");
@@ -293,6 +301,8 @@ void BehaviorGoHome::TransitionToPlacingCubeOnGround()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorGoHome::TransitionToDriveToCharger()
 {
+  LOG_FUNCTION_NAME();
+  
   const auto* charger = dynamic_cast<const Charger*>(GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID, ObjectFamily::Charger));
   if (charger == nullptr) {
     PRINT_NAMED_ERROR("BehaviorGoHome.TransitionToDriveToCharger.NullCharger", "Null charger!");
@@ -344,6 +354,8 @@ void BehaviorGoHome::TransitionToDriveToCharger()
   
 void BehaviorGoHome::TransitionToCheckPreTurnPosition()
 {
+  LOG_FUNCTION_NAME();
+  
   // Check to make sure we are in a safe position to begin the 180
   // degree turn. We could have been bumped, or the charger could
   // have moved. This is the last chance to verify that we're in a
@@ -414,6 +426,8 @@ void BehaviorGoHome::TransitionToCheckPreTurnPosition()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorGoHome::TransitionToTurn()
 {
+  LOG_FUNCTION_NAME();
+  
   // Turn to align with the charger
   DelegateIfInControl(new TurnToAlignWithChargerAction(_dVars.chargerID,
                                                        _iConfig.leftTurnAnimTrigger,
@@ -438,6 +452,8 @@ void BehaviorGoHome::TransitionToTurn()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorGoHome::TransitionToMountCharger()
 {
+  LOG_FUNCTION_NAME();
+  
   // Play the animations to raise lift, then mount the charger
   auto* action = new CompoundActionSequential();
   action->AddAction(new TriggerAnimationAction(_iConfig.raiseLiftAnimTrigger));
@@ -470,6 +486,8 @@ void BehaviorGoHome::TransitionToMountCharger()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorGoHome::TransitionToPlayingNuzzleAnim()
 {
+  LOG_FUNCTION_NAME();
+  
   // Remove driving animations
   PopDrivingAnims();
   
@@ -481,6 +499,8 @@ void BehaviorGoHome::TransitionToPlayingNuzzleAnim()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorGoHome::TransitionToOnChargerCheck()
 {
+  LOG_FUNCTION_NAME();
+  
   // If we've somehow wiggled off the charge contacts, try the 'wiggle'
   // behavior to get us back onto the contacts
   const bool wiggleWantsToRun = _iConfig.wiggleOntoChargerBehavior->WantsToBeActivated();

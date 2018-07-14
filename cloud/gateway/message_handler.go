@@ -266,6 +266,24 @@ func ProtoSetLiftHeightToClad(msg *extint.SetLiftHeightRequest) *gw_clad.Message
 	})
 }
 
+func SliceToArray(msg []uint32) [3]uint32 {
+	var arr [3]uint32
+	copy(arr[:], msg)
+	return arr
+}
+
+func ProtoSetBackpackLEDsToClad(msg *extint.SetBackpackLEDsRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithSetBackpackLEDs(&gw_clad.SetBackpackLEDs{
+		OnColor:               SliceToArray(msg.OnColor),
+		OffColor:              SliceToArray(msg.OffColor),
+		OnPeriodMs:            SliceToArray(msg.OnPeriodMs),
+		OffPeriodMs:           SliceToArray(msg.OffPeriodMs),
+		TransitionOnPeriodMs:  SliceToArray(msg.TransitionOnPeriodMs),
+		TransitionOffPeriodMs: SliceToArray(msg.TransitionOffPeriodMs),
+		Offset:                [3]int32{0, 0, 0},
+	})
+}
+
 func CladCladRectToProto(msg *gw_clad.CladRect) *extint.CladRect {
 	return &extint.CladRect{
 		XTopLeft: msg.XTopLeft,
@@ -350,8 +368,7 @@ func CladGyroDataToProto(msg *gw_clad.GyroData) *extint.GyroData {
 }
 
 func CladRobotStateToProto(msg *gw_clad.RobotState) *extint.RobotStateResult {
-	var robot_state *extint.RobotState
-	robot_state = &extint.RobotState{
+	robotState := &extint.RobotState{
 		Pose:                  CladPoseToProto(&msg.Pose),
 		PoseAngleRad:          msg.PoseAngleRad,
 		PosePitchRad:          msg.PosePitchRad,
@@ -372,7 +389,7 @@ func CladRobotStateToProto(msg *gw_clad.RobotState) *extint.RobotStateResult {
 	}
 
 	return &extint.RobotStateResult{
-		RobotState: robot_state,
+		RobotState: robotState,
 	}
 }
 
@@ -410,7 +427,7 @@ func SendOnboardingContinue(in *extint.GatewayWrapper_OnboardingContinue) (*exti
 			Description: "Message sent to engine",
 		},
 		OneofMessageType: &extint.OnboardingInputResponse_OnboardingContinueResponse{
-			continue_result.GetOnboardingContinueResponse(),
+			OnboardingContinueResponse: continue_result.GetOnboardingContinueResponse(),
 		},
 	}, nil
 }
@@ -481,7 +498,7 @@ func (m *rpcService) PlayAnimation(ctx context.Context, in *extint.PlayAnimation
 	log.Println("Received rpc request PlayAnimation(", in, ")")
 	f, result := createChannel(&extint.GatewayWrapper_PlayAnimationResult{}, 1)
 	defer f()
-	
+
 	_, err := WriteToEngine(engineSock, ProtoPlayAnimationToClad(in))
 	if err != nil {
 		return nil, err
@@ -643,10 +660,10 @@ func (c *rpcService) RobotStateStream(in *extint.RobotStateRequest, stream extin
 	log.Println(engineChanMap[gw_clad.MessageRobotToExternalTag_RobotState])
 
 	for result := range stream_channel {
-		log.Println("Got result:", result)
-		robot_state := CladRobotStateToProto(result.Message.GetRobotState())
-		log.Println("Made RobotState:", robot_state)
-		if err := stream.Send(robot_state); err != nil {
+		log.Printf("Got result: %+v", result)
+		robotState := CladRobotStateToProto(result.Message.GetRobotState())
+		log.Printf("Made RobotState: %+v", robotState)
+		if err := stream.Send(robotState); err != nil {
 			return err
 		} else if err = stream.Context().Err(); err != nil {
 			// This is the case where the user disconnects the stream
@@ -776,11 +793,11 @@ func (c *rpcService) EventStream(in *extint.EventRequest, stream extint.External
 	defer f()
 
 	for result := range eventsChannel {
-		log.Println("Got result:", result)
+		log.Printf("Got result: %+v", result)
 		eventResult := &extint.EventResult{
 			Event: result.GetEvent(),
 		}
-		log.Println("Made event:", eventResult)
+		log.Printf("Made event: %+v", eventResult)
 		if err := stream.Send(eventResult); err != nil {
 			return err
 		} else if err = stream.Context().Err(); err != nil {
@@ -850,7 +867,7 @@ func (m *rpcService) DriveOffCharger(ctx context.Context, in *extint.DriveOffCha
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_DriveOffChargerRequest{
-			in,
+			DriveOffChargerRequest: in,
 		},
 	})
 	if err != nil {
@@ -872,7 +889,7 @@ func (m *rpcService) DriveOnCharger(ctx context.Context, in *extint.DriveOnCharg
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_DriveOnChargerRequest{
-			in,
+			DriveOnChargerRequest: in,
 		},
 	})
 	if err != nil {
@@ -896,7 +913,7 @@ func (m *rpcService) Pang(ctx context.Context, in *extint.Ping) (*extint.Pong, e
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_Ping{
-			in,
+			Ping: in,
 		},
 	})
 	if err != nil {
@@ -916,7 +933,7 @@ func (m *rpcService) Bang(ctx context.Context, in *extint.Bing) (*extint.Bong, e
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_Bing{
-			in,
+			Bing: in,
 		},
 	})
 	if err != nil {
@@ -933,7 +950,7 @@ func (m *rpcService) GetOnboardingState(ctx context.Context, in *extint.Onboardi
 	defer f()
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_OnboardingStateRequest{
-			in,
+			OnboardingStateRequest: in,
 		},
 	})
 	if err != nil {
@@ -955,19 +972,19 @@ func (m *rpcService) SendOnboardingInput(ctx context.Context, in *extint.Onboard
 	switch x := in.OneofMessageType.(type) {
 	case *extint.OnboardingInputRequest_OnboardingContinue:
 		return SendOnboardingContinue(&extint.GatewayWrapper_OnboardingContinue{
-			in.GetOnboardingContinue(),
+			OnboardingContinue: in.GetOnboardingContinue(),
 		})
 	case *extint.OnboardingInputRequest_OnboardingSkip:
 		return SendOnboardingSkip(&extint.GatewayWrapper_OnboardingSkip{
-			in.GetOnboardingSkip(),
+			OnboardingSkip: in.GetOnboardingSkip(),
 		})
 	case *extint.OnboardingInputRequest_OnboardingConnectionComplete:
 		return SendOnboardingConnectionComplete(&extint.GatewayWrapper_OnboardingConnectionComplete{
-			in.GetOnboardingConnectionComplete(),
+			OnboardingConnectionComplete: in.GetOnboardingConnectionComplete(),
 		})
 	case *extint.OnboardingInputRequest_OnboardingSkipOnboarding:
 		return SendOnboardingSkipOnboarding(&extint.GatewayWrapper_OnboardingSkipOnboarding{
-			in.GetOnboardingSkipOnboarding(),
+			OnboardingSkipOnboarding: in.GetOnboardingSkipOnboarding(),
 		})
 	default:
 		return nil, status.Errorf(0, "OnboardingInputRequest.OneofMessageType has unexpected type %T", x)
@@ -982,7 +999,7 @@ func (m *rpcService) PhotosInfo(ctx context.Context, in *extint.PhotosInfoReques
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_PhotosInfoRequest{
-			in,
+			PhotosInfoRequest: in,
 		},
 	})
 	if err != nil {
@@ -1010,7 +1027,7 @@ func (m *rpcService) Photo(ctx context.Context, in *extint.PhotoRequest) (*extin
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_PhotoRequest{
-			in,
+			PhotoRequest: in,
 		},
 	})
 	if err != nil {
@@ -1052,7 +1069,7 @@ func (m *rpcService) Thumbnail(ctx context.Context, in *extint.ThumbnailRequest)
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_ThumbnailRequest{
-			in,
+			ThumbnailRequest: in,
 		},
 	})
 	if err != nil {
@@ -1094,7 +1111,7 @@ func (m *rpcService) DeletePhoto(ctx context.Context, in *extint.DeletePhotoRequ
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_DeletePhotoRequest{
-			in,
+			DeletePhotoRequest: in,
 		},
 	})
 	if err != nil {
@@ -1110,7 +1127,7 @@ func (m *rpcService) GetLatestAttentionTransfer(ctx context.Context, in *extint.
 	defer f()
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_LatestAttentionTransferRequest{
-			in,
+			LatestAttentionTransferRequest: in,
 		},
 	})
 	if err != nil {
@@ -1146,7 +1163,7 @@ func (m *rpcService) PushSettings(ctx context.Context, in *extint.PushSettingsRe
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_PushSettingsRequest{
-			in,
+			PushSettingsRequest: in,
 		},
 	})
 	if err != nil {
@@ -1164,7 +1181,7 @@ func (m *rpcService) RobotStatusHistory(ctx context.Context, in *extint.RobotHis
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_RobotHistoryRequest{
-			in,
+			RobotHistoryRequest: in,
 		},
 	})
 	if err != nil {
@@ -1182,7 +1199,7 @@ func (m *rpcService) PullSettings(ctx context.Context, in *extint.PullSettingsRe
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_PullSettingsRequest{
-			in,
+			PullSettingsRequest: in,
 		},
 	})
 	if err != nil {
@@ -1206,7 +1223,7 @@ func (m *rpcService) UpdateSettings(ctx context.Context, in *extint.UpdateSettin
 
 	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_UpdateSettingsRequest{
-			in,
+			UpdateSettingsRequest: in,
 		},
 	})
 	if err != nil {
@@ -1263,7 +1280,7 @@ func (m *rpcService) DriveStraight(ctx context.Context, in *extint.DriveStraight
 	log.Println("Received rpc request DriveStraight(", in, ")")
 	f, result := createChannel(&extint.GatewayWrapper_DriveStraightResponse{}, 1)
 	defer f()
-	
+
 	_, err := WriteToEngine(engineSock, ProtoDriveStraightToClad(in))
 	if err != nil {
 		return nil, err
@@ -1281,7 +1298,7 @@ func (m *rpcService) TurnInPlace(ctx context.Context, in *extint.TurnInPlaceRequ
 	log.Println("Received rpc request TurnInPlace(", in, ")")
 	f, result := createChannel(&extint.GatewayWrapper_TurnInPlaceResponse{}, 1)
 	defer f()
-	
+
 	_, err := WriteToEngine(engineSock, ProtoTurnInPlaceToClad(in))
 	if err != nil {
 		return nil, err
@@ -1299,7 +1316,7 @@ func (m *rpcService) SetHeadAngle(ctx context.Context, in *extint.SetHeadAngleRe
 	log.Println("Received rpc request SetHeadAngle(", in, ")")
 	f, result := createChannel(&extint.GatewayWrapper_SetHeadAngleResponse{}, 1)
 	defer f()
-	
+
 	_, err := WriteToEngine(engineSock, ProtoSetHeadAngleToClad(in))
 	if err != nil {
 		return nil, err
@@ -1317,7 +1334,7 @@ func (m *rpcService) SetLiftHeight(ctx context.Context, in *extint.SetLiftHeight
 	log.Println("Received rpc request SetLiftHeight(", in, ")")
 	f, result := createChannel(&extint.GatewayWrapper_SetLiftHeightResponse{}, 1)
 	defer f()
-	
+
 	_, err := WriteToEngine(engineSock, ProtoSetLiftHeightToClad(in))
 	if err != nil {
 		return nil, err
@@ -1333,4 +1350,17 @@ func (m *rpcService) SetLiftHeight(ctx context.Context, in *extint.SetLiftHeight
 
 func newServer() *rpcService {
 	return new(rpcService)
+}
+
+func (m *rpcService) SetBackpackLEDs(ctx context.Context, in *extint.SetBackpackLEDsRequest) (*extint.SetBackpackLEDsResponse, error) {
+	log.Println("Received rpc request SetBackpackLEDs(", in, ")")
+	_, err := WriteToEngine(engineSock, ProtoSetBackpackLEDsToClad(in))
+	if err != nil {
+		return nil, err
+	}
+	return &extint.SetBackpackLEDsResponse{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
 }

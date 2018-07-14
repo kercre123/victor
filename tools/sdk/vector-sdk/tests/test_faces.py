@@ -1,30 +1,27 @@
 #!/usr/bin/env python3
 
-import argparse
-import asyncio
-import os
-from pathlib import Path
-import sys
-import time
-import functools
+'''
+Test subscribing to seen faces
+'''
 
+import functools
+import os
+import sys
+
+import utilities
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import vector
+import vector  # pylint: disable=wrong-import-position
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("ip")
-    parser.add_argument("cert_file")
-    args = parser.parse_args()
-
-    cert = Path(args.cert_file)
-    cert.resolve()
+    '''main execution'''
+    args = utilities.parse_args()
 
     print("------ begin testing face events ------")
     # Should see a stream of face events when the robot observes a face
 
     def test_subscriber(robot, event_type, event):
+        '''output when a face is seen'''
         # Print the stream data received
         print(f"Subscriber called for: {event_type} = {event}")
 
@@ -44,19 +41,18 @@ def main():
             print(f"Nose: {face.nose}")
             print(f"Mouth: {face.mouth}")
 
-    
-    with vector.Robot(args.ip, str(cert)) as robot:
+    with vector.Robot(args.ip, str(args.cert), port=args.port) as robot:
         test_subscriber = functools.partial(test_subscriber, robot)
         robot.events.subscribe('robot_changed_observed_face_id', test_subscriber)
         robot.events.subscribe('robot_observed_face', test_subscriber)
-        
-        print("------ waiting for face events, press ctrl+c to exit ------")
+
+        print("------ waiting for face events, press ctrl+c to exit early ------")
         try:
-            robot.loop.run_forever()
+            robot.loop.run_until_complete(utilities.delay_close())
         except KeyboardInterrupt:
             print("------ finished testing face events ------")
             robot.disconnect()
 
 
 if __name__ == '__main__':
-	main()
+    main()

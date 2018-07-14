@@ -112,10 +112,17 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree
   DefaultTextToSpeechLoop,
-  DriveOffCharger,
-  DriveOffChargerAnim,
+
+  // victorBehaviorTree/driveOffCharger
+  DriveOffChargerCube,
+  DriveOffChargerFace,
+  DriveOffChargerRandomly,
+  DriveOffChargerRandomlyAnim,
   DriveOffChargerStraight,
+
+  // victorBehaviorTree
   GlobalInterruptions,
+  GreetAfterLongTime,
   HighLevelAI,
 
   // victorBehaviorTree/highLevelDelegates/exploring
@@ -125,6 +132,7 @@ enum uint_8 BehaviorID {
   ExploringBumpObject,
   ExploringExamineObstacle,
   ExploringGetIn,
+  ExploringReferenceHuman,
   ExploringVoiceCommand,
 
   // victorBehaviorTree/highLevelDelegates
@@ -136,6 +144,7 @@ enum uint_8 BehaviorID {
   FindAndGoToHome,
   FindAndRequestHome,
   FindHome,
+  FindHomeInHabitat,
   GoHome,
   LowBatteryFindAndGoToHome,
   RequestHomeBecauseStuck,
@@ -266,6 +275,7 @@ enum uint_8 BehaviorID {
   OnboardingWakeUp,
 
   // victorBehaviorTree/prDemo
+  PRDemoBigGreeting,
   PRDemoExploring,
   PRDemoObserving,
   PRDemoSleeping,

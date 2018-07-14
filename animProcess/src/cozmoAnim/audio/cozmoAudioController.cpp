@@ -289,7 +289,7 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
 #else
     // Other Platforms
     config.defaultMemoryPoolSize      = ( 3 * 1024 * 1024 );  //  3 MB
-    config.defaultLEMemoryPoolSize    = ( 12 * 1024 * 1024 ); // 12 MB
+    config.defaultLEMemoryPoolSize    = ( 6 * 1024 * 1024 );  //  6 MB
     config.ioMemorySize               = ( 2 * 1024 * 1024 );  //  2 MB
 #endif
     config.defaultMaxNumPools         = 30;
@@ -311,6 +311,7 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
 
     InitializePluginInterface();
     GetPluginInterface()->SetupWavePortalPlugIn();
+    GetPluginInterface()->SetupAkAlsaSinkPlugIn();
 
     // Load audio sound bank metadata
     // NOTE: This will slightly change when we implement RAMS

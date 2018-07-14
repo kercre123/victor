@@ -23,6 +23,7 @@
 #include "engine/components/carryingComponent.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/movementComponent.h"
+#include "engine/components/nvStorageComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/cozmoContext.h"
@@ -888,8 +889,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
 : _context(context)
 {
   // If false, low level motion commands only run when an instance of BehaviorSDKInterface is activated.
-  // TODO Set this to be false
-  _isAllowedToHandleActions = true;
+  _isAllowedToHandleActions = false;
   
   auto externalInterface = _context->GetExternalInterface();
 
@@ -1000,6 +1000,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     // GameToEngine: (in alphabetical order)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::AbortAll>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::AbortPath>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::AllowedToHandleActions>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::CameraCalibration>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::CancelAction>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::CancelActionByIdTag>();
@@ -1247,6 +1248,13 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::EnableStopOnCliff
     PRINT_NAMED_INFO("RobotEventHandler.HandleMessage.EnableStopOnCliff","Setting to %s", msg.enable ? "true" : "false");
     robot->SendRobotMessage<RobotInterface::EnableStopOnCliff>(msg.enable);
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::AllowedToHandleActions& msg)
+{
+  _isAllowedToHandleActions = msg.allowedToHandleActions;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

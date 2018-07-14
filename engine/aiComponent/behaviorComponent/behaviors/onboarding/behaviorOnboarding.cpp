@@ -45,6 +45,7 @@ const std::string BehaviorOnboarding::kOnboardingStageKey = "onboardingStage";
 namespace {
   const char* const kInterruptionsKey = "interruptions";
   const char* const kWakeUpKey = "wakeUpBehavior";
+  const char* const kKeepFaceAliveLockName = "onboardingBehavior";
   
   const float kRequiredChargeTime_s = 5*60.0f;
   const float kExtraChargingTimePerDischargePeriod_s = 1.0f; // if off the charger for 1 min, must charge an additional 1*X mins
@@ -639,7 +640,7 @@ bool BehaviorOnboarding::CheckAndDelegateInterruptions()
     
     // special logic for first stage
     if( _dVars.currentStage == OnboardingStages::NotStarted ) {
-      if( interruptionID == BEHAVIOR_ID(DriveOffCharger) ) {
+      if( interruptionID == BEHAVIOR_ID(DriveOffChargerStraight) ) {
         // first stage has a special drive off charger
         continue;
       } else if( !_dVars.receivedContinue ) {
@@ -797,18 +798,13 @@ void BehaviorOnboarding::RequestSkipRobotOnboarding()
 {
   MoveToStage( OnboardingStages::Complete );
   _dVars.state = BehaviorState::WaitingForTermination;
-  GetBEI().GetAnimationComponent().EnableKeepFaceAlive( false ); // face should go to black when canceling animations
+  GetBEI().GetAnimationComponent().AddKeepFaceAliveDisableLock(kKeepFaceAliveLockName);
   CancelDelegates(false);
   
   auto* headDownAction = new MoveHeadToAngleAction{ MIN_HEAD_ANGLE };
   DelegateIfInControl( headDownAction, [this](const ActionResult& res){
     TerminateOnboarding();
-    // this may cause a brief neutral eyes between now and when the new behavior stack sends its first
-    // animation. We deal with that same problem in the BehaviorComponentMessageHandler, and if the
-    // eye blip is obvious, that same logic could be re-used here. That would mean: removing this
-    // call to EnableKeepFaceAlive( true ) and having the behaviorsBootLoader send it a few ticks
-    // after switching stacks
-    GetBEI().GetAnimationComponent().EnableKeepFaceAlive( true );
+    GetBEI().GetAnimationComponent().RemoveKeepFaceAliveDisableLock(kKeepFaceAliveLockName);
   });
   
 };

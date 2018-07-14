@@ -13,10 +13,12 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorBumpObject.h"
 
+#include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
+#include "engine/drivingAnimationHandler.h"
 #include "engine/utils/robotPointSamplerHelper.h"
 
 
@@ -28,20 +30,30 @@ namespace {
   const char* const kMaxDistKey = "maxDist_mm";
   const char* const kProbabilityEvilKey = "pEvil";
   
-  const float kFirstBumpBuffer_mm = 10.0f; // dist after making contact
-  const float kFirstBumpSpeed_mmps = 80.0f;
+  const float kFirstBumpBuffer_mm = 8.0f; // dist after making contact
+  const float kFirstBumpSpeed_mmps = 140.0f;
   
-  const float kFirstRetreatDist_mm = 10.0f;
-  const float kRetreatSpeed_mmps = 30.0f;
+  const bool kExploringPushObject = false;
   
   const float kSecondBumpBuffer_mm = 60.0f; // let the treads spin a bit longer. No worries, unexpected movement is disabled
   const float kSecondBumpEvilBuffer_mm = 150.0f;
-  const float kSecondRetreatDist_mm = 20.0f;
   
   const float kPauseDuration_s = 0.6f;
   
   const float kPaddingPushedObject_mm = 30.0f; // distance extending from drive center where an object would fall off a cliff
   const float kCliffWidth_mm = 100.0f;
+  
+  static const DrivingAnimationHandler::DrivingAnimations kSlowDrivingAnimations {
+    AnimationTrigger::Count,
+    AnimationTrigger::PokeObjectDriveLoop,
+    AnimationTrigger::Count
+  };
+  static const DrivingAnimationHandler::DrivingAnimations kFastDrivingAnimations {
+    AnimationTrigger::Count,
+    AnimationTrigger::BumpObjectFastLoop,
+    AnimationTrigger::Count
+  };
+
 }
   
 
@@ -101,6 +113,8 @@ void BehaviorBumpObject::OnBehaviorActivated()
   // reset dynamic variables
   _dVars = DynamicVariables();
   
+  GetBEI().GetRobotInfo().GetDrivingAnimationHandler().PushDrivingAnimations( kSlowDrivingAnimations, GetDebugLabel() );
+  
   DoFirstBump(); // not to be confused with "fist bump"
 }
 
@@ -116,21 +130,25 @@ void BehaviorBumpObject::DoFirstBump()
     return; // which ends the behavior
   }
   
-  // todo: push driving animations
   auto* action = new CompoundActionSequential();
+  
+  // animation
+  action->AddAction( new TriggerLiftSafeAnimationAction{ AnimationTrigger::PokeObjectGetIn } );
+  
   
   // bump
   const float distForward_mm = kFirstBumpBuffer_mm + static_cast<float>(proxDist_mm);
   const float speedForward_mmps = kFirstBumpSpeed_mmps;
-  action->AddAction( new DriveStraightAction( distForward_mm, speedForward_mmps, false) );
+  action->AddAction( new DriveStraightAction( distForward_mm, speedForward_mmps, true) );
   
-  // retreat
-  const float distBackward_mm = -kFirstRetreatDist_mm;
-  const float speedBackward_mmps = kRetreatSpeed_mmps;
-  action->AddAction( new DriveStraightAction( distBackward_mm, speedBackward_mmps, false) );
+  // retreat animation
+  action->AddAction( new TriggerLiftSafeAnimationAction{ AnimationTrigger::PokeObjectGetOut } );
   
   DelegateIfInControl( action, [this](const ActionResult& res){
-    // todo: pop driving animations
+    
+    GetBEI().GetRobotInfo().GetDrivingAnimationHandler().RemoveDrivingAnimations( GetDebugLabel() );
+    GetBEI().GetRobotInfo().GetDrivingAnimationHandler().PushDrivingAnimations( kFastDrivingAnimations, GetDebugLabel() );
+    
     DoSecondBumpIfDesired();
   });
 }
@@ -138,8 +156,8 @@ void BehaviorBumpObject::DoFirstBump()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBumpObject::DoSecondBumpIfDesired()
 {
-  // don't do the second bump if it probably wasnt centered well the first time
-  if( _dVars.unexpectedMovement ) {
+  // don't do the second bump if it probably wasnt centered well the first time, or not desired
+  if( _dVars.unexpectedMovement || !kExploringPushObject ) {
     return; // which ends the behavior
   }
   
@@ -174,9 +192,10 @@ void BehaviorBumpObject::DoSecondBumpIfDesired()
     distForward_mm = niceDistForward_mm;
   }
   
-  // todo: push driving animations
-  
   auto* action = new CompoundActionSequential();
+  
+  // animation
+  action->AddAction( new TriggerLiftSafeAnimationAction{ AnimationTrigger::BumpObjectFastGetIn } );
   
   // pause a bit
   // todo (VIC-4230) would be a good time to reference a human pose, with a mischievous expression
@@ -184,18 +203,12 @@ void BehaviorBumpObject::DoSecondBumpIfDesired()
   
   // bump again. HARD this time! like you MEAN IT!
   float speedForward_mmps = MAX_SAFE_WHEEL_SPEED_MMPS;
-  action->AddAction( new DriveStraightAction( distForward_mm, speedForward_mmps, false) );
+  action->AddAction( new DriveStraightAction( distForward_mm, speedForward_mmps, true) );
   
-  // retreat again
-  const float distBackward_mm = -kSecondRetreatDist_mm;
-  float speedBackward_mmps = kRetreatSpeed_mmps;
-  action->AddAction( new DriveStraightAction( distBackward_mm, speedBackward_mmps, false) );
-  
-  // no animations yet, but this would be a good spot for a "proud" one
+  // retreat animation
+  action->AddAction( new TriggerLiftSafeAnimationAction{ AnimationTrigger::BumpObjectFastGetOut } );
   
   DelegateIfInControl( action, [](const ActionResult& res){
-    // todo: pop driving animations
-    
     // and then the behavior ends
   });
 }
@@ -207,6 +220,12 @@ void BehaviorBumpObject::BehaviorUpdate()
     _dVars.unexpectedMovement |= GetBEI().GetMovementComponent().IsUnexpectedMovementDetected();
     // todo: we might consider canceling if this is true often
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorBumpObject::OnBehaviorDeactivated()
+{
+  GetBEI().GetRobotInfo().GetDrivingAnimationHandler().RemoveDrivingAnimations( GetDebugLabel() );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

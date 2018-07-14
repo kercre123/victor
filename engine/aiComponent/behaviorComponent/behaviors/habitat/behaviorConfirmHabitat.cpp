@@ -63,6 +63,7 @@ namespace
   };
 
   static const char* kOnTreadsTimeCondition = "onTreadsTimeCondition";
+  static const char* kSearchForChargerBehaviorKey = "searchForChargerBehavior";
 
   // minimum time between playing react to white animations
   static const float kReactToWhiteAnimCooldown_sec = 10.0f;
@@ -99,6 +100,8 @@ BehaviorConfirmHabitat::BehaviorConfirmHabitat(const Json::Value& config)
   ANKI_VERIFY(_iConfig.onTreadsTimeCondition != nullptr,
               "ConfirmHabitat.Ctor.OnTreadsTimeConditionNotConstructed",
               "OnTreadsTimeCondition specified, but did not build properly");
+  
+  _iConfig.searchForChargerBehaviorIDStr = JsonTools::ParseString(config, kSearchForChargerBehaviorKey, GetDebugLabel());
 }
 
 BehaviorConfirmHabitat::~BehaviorConfirmHabitat()
@@ -111,10 +114,15 @@ void BehaviorConfirmHabitat::InitBehavior()
   if(_iConfig.onTreadsTimeCondition != nullptr){
     _iConfig.onTreadsTimeCondition->Init(GetBEI());
   }
+  
+  auto behaviorID = BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.searchForChargerBehaviorIDStr);
+  _iConfig.searchForChargerBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID(behaviorID);
+  DEV_ASSERT(_iConfig.searchForChargerBehavior != nullptr, "ConfimHabitat.InitBehavior.NullSearchForChargerBehavior");
 }
 
 void BehaviorConfirmHabitat::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
+  delegates.insert(_iConfig.searchForChargerBehavior.get());
 }
 
 bool BehaviorConfirmHabitat::WantsToBeActivatedBehavior() const
@@ -178,6 +186,7 @@ bool BehaviorConfirmHabitat::WantsToBeActivatedBehavior() const
 void BehaviorConfirmHabitat::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   expectedKeys.insert(kOnTreadsTimeCondition);
+  expectedKeys.insert(kSearchForChargerBehaviorKey);
 }
 
 void BehaviorConfirmHabitat::OnBehaviorActivated()
@@ -200,6 +209,7 @@ void BehaviorConfirmHabitat::OnBehaviorActivated()
 void BehaviorConfirmHabitat::OnBehaviorDeactivated()
 {
   PRINT_NAMED_INFO("ConfirmHabitat.Deactivated","");
+  GetBEI().GetCliffSensorComponent().EnableStopOnWhite(false);
   _dVars = DynamicVariables();
 }
 
@@ -269,10 +279,6 @@ void BehaviorConfirmHabitat::BehaviorUpdate()
         PRINT_NAMED_INFO("ConfirmHabitat.BehaviorUpdate.LocalizeCharger.FoundCharger", "");
         _dVars._phase = ConfirmHabitatPhase::SeekLineFromCharger;
         TransitionToSeekLineFromCharger();
-      } else if(abs(_dVars._lookForChargerAngleSwept_rad) > (M_PI*2)) {
-        PRINT_NAMED_INFO("ConfirmHabitat.BehaviorUpdate.LocalizeCharger.ExceededAngle", "");
-        _dVars._phase = ConfirmHabitatPhase::RandomWalk;
-        TransitionToRandomWalk();
       } else {
         TransitionToLocalizeCharger();
       }
@@ -405,28 +411,21 @@ void BehaviorConfirmHabitat::TransitionToReactToHabitat()
 void BehaviorConfirmHabitat::TransitionToLocalizeCharger()
 {
   PRINT_NAMED_INFO("ConfirmHabitat.TransitionToLocalizeCharger","");
-
-  IActionRunner* action = new CompoundActionSequential(std::list<IActionRunner*>{
-    new PanAndTiltAction(0, DEG_TO_RAD(5), false, true),    // viewing angle for seeing the charger
-    new TurnInPlaceAction(M_PI_4,false),                    // sweep some degrees to look
-    new WaitForLambdaAction([this](Robot& robot)->bool {        // wait to observe charger
-      return GetChargerIfObserved() != nullptr;
-    }, 0.5f) // max time to wait for a charger marker
-  });
-
-  // callback checks:
-  // + if the charger was SEEN, then we can drive to a position based on the charger's pose
-  // + if the charger was NOT seen, then we will keep looking, until we've swept 360 degrees
-  // + if we have not seen the charger, and we swept 360 degrees => RandomWalk
-  RobotCompletedActionCallback callback = [this](const ExternalInterface::RobotCompletedAction& msg)->void {
-    if(msg.result == ActionResult::SUCCESS || msg.result == ActionResult::TIMEOUT) {
-      _dVars._lookForChargerAngleSwept_rad += M_PI_4;
+  
+  BehaviorSimpleCallback callback = [this](void)->void {
+    if(GetChargerIfObserved() != nullptr) {
+      PRINT_NAMED_INFO("ConfirmHabitat.TransitionToLocalizeCharger.ChargerFound","");
+      _dVars._phase = ConfirmHabitatPhase::SeekLineFromCharger;
     } else {
-      PRINT_NAMED_WARNING("ConfirmHabitat.TransitionToLocalizeCharger.FailedTurnAndCheck","");
+      PRINT_NAMED_INFO("ConfirmHabitat.TransitionToLocalizeCharger.ChargerNotFound","");
+      _dVars._phase = ConfirmHabitatPhase::RandomWalk;
     }
   };
-
-  DelegateActionHelper(action, std::move(callback));
+  
+  // tick the wants to be activated condition once before delegating
+  _iConfig.searchForChargerBehavior->WantsToBeActivated();
+  
+  DelegateNow(_iConfig.searchForChargerBehavior.get(), std::move(callback));
 }
 
 void BehaviorConfirmHabitat::TransitionToCliffAlignWhite()

@@ -93,8 +93,6 @@ namespace {
     {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
     {MemoryMapTypes::EContentType::ClearOfCliff          , false},
     {MemoryMapTypes::EContentType::ObstacleObservable    , true },
-    {MemoryMapTypes::EContentType::ObstacleCharger       , true },
-    {MemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
     {MemoryMapTypes::EContentType::ObstacleProx          , true },
     {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
     {MemoryMapTypes::EContentType::Cliff                 , true },
@@ -108,8 +106,6 @@ namespace {
     {MemoryMapTypes::EContentType::ClearOfObstacle       , true},
     {MemoryMapTypes::EContentType::ClearOfCliff          , true},
     {MemoryMapTypes::EContentType::ObstacleObservable    , true},
-    {MemoryMapTypes::EContentType::ObstacleCharger       , true},
-    {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
     {MemoryMapTypes::EContentType::ObstacleProx          , true},
     {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true},
     {MemoryMapTypes::EContentType::Cliff                 , true},
@@ -186,6 +182,8 @@ void BehaviorExploring::InitBehavior()
                                   BEHAVIOR_CLASS(ExploringExamineObstacle),
                                   _iConfig.examineBehavior );
   
+  _iConfig.referenceHumanBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(ExploringReferenceHuman) );
+  
   _iConfig.confirmChargerBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(ConfirmCharger) );
   _iConfig.confirmCubeBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(ConfirmCube) );
   
@@ -225,7 +223,10 @@ void BehaviorExploring::GetBehaviorOperationModifiers(BehaviorOperationModifiers
   modifiers.behaviorAlwaysDelegates = false; // take control of CancelSelf()
   // always look for the charger so we know how to get back
   modifiers.visionModesForActivatableScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low });
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low });
+  modifiers.visionModesForActiveScope->insert({
+    {VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low},
+    {VisionMode::DetectingFaces, EVisionUpdateFrequency::Med} // so it is able to occasionally look back at faces
+  });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -234,6 +235,7 @@ void BehaviorExploring::GetAllDelegates(std::set<IBehavior*>& delegates) const
   delegates.insert( _iConfig.examineBehavior.get() );
   delegates.insert( _iConfig.confirmChargerBehavior.get() );
   delegates.insert( _iConfig.confirmCubeBehavior.get() );
+  delegates.insert( _iConfig.referenceHumanBehavior.get() );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -498,31 +500,39 @@ void BehaviorExploring::TransitionToArrived()
   _dVars.distToGoal_mm = -1.0f;
   _dVars.numDriveAttemps = 0;
   
-  // todo (VIC-4230): sometimes reference a face, if one exists
+  auto callback = [this]() {
+    auto* action = new CompoundActionSequential();
+    const float r = GetRNG().RandDbl();
+    bool animFirst = (r < 0.5f);
+    
+    // anim either goes before or after a random turn
+    if( animFirst ) {
+      action->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::ExploringLookAround ) );
+    }
+    
+    const float angleChange = GetRNG().RandDblInRange( kMinScanAngle, kMaxScanAngle );
+    const bool isAbsAngle = false;
+    auto* turnAction = new TurnInPlaceAction( angleChange, isAbsAngle );
+    turnAction->SetMaxSpeed(M_PI_2);
+    action->AddAction( turnAction );
+    
+    if( !animFirst ) {
+      action->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::ExploringLookAround ) );
+    }
+    
+    DelegateNow( action, [this](const ActionResult& res) {
+      // this could get canceled if an obstacle is seen
+      SampleAndDrive();
+    });
+  };
   
-  auto* action = new CompoundActionSequential();
-  const float r = GetRNG().RandDbl();
-  bool animFirst = (r < 0.5f);
-  
-  // anim either goes before or after a random turn
-  if( animFirst ) {
-    action->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::ExploringLookAround ) );
+  if( _iConfig.referenceHumanBehavior->WantsToBeActivated() ) {
+    DelegateIfInControl( _iConfig.referenceHumanBehavior.get(), callback );
+  } else {
+    callback();
   }
   
-  const float angleChange = GetRNG().RandDblInRange( kMinScanAngle, kMaxScanAngle );
-  const bool isAbsAngle = false;
-  auto* turnAction = new TurnInPlaceAction( angleChange, isAbsAngle );
-  turnAction->SetMaxSpeed(M_PI_2);
-  action->AddAction( turnAction );
   
-  if( !animFirst ) {
-    action->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::ExploringLookAround ) );
-  }
-
-  DelegateNow( action, [this](const ActionResult& res) {
-    // this could get canceled if an obstacle is seen
-    SampleAndDrive();
-  });
   
 }
   

@@ -13,6 +13,7 @@ namespace Cozmo {
 enum uint_8 BehaviorClass {
 
   // <root>
+  GreetAfterLongTime,
   HighLevelAI,
   Wait,
 

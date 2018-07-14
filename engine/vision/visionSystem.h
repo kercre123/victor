@@ -158,6 +158,7 @@ namespace Cozmo {
     std::string GetCurrentModeName() const;
     VisionMode  GetModeFromString(const std::string& str) const;
     
+    bool CanAddNamedFace() const;
     Result AssignNameToFace(Vision::FaceID_t faceID, const std::string& name, Vision::FaceID_t mergeWithID);
     
     // Enable face enrollment mode and optionally specify the ID for which 

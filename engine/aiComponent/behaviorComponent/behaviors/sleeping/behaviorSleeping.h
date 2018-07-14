@@ -45,15 +45,25 @@ private:
   // helper to "wait" without doing procedural face motions and then run a callback
   void HoldFaceForTime(const float waitTime_s,
                        void(BehaviorSleeping::*callback)());
-  void LoopHoldFace(void(BehaviorSleeping::*callback)());
 
-  bool _shouldEnterPowerSave = true;
-  
-  bool _animIsPlaying = false;
 
-  int _numRemainingInBout = 0;
+  struct InstanceConfig {
+    bool shouldEnterPowerSave = true;
+    bool shouldPlayEmergencyGetOut = true;
+  };
 
-  float _stopHoldingFaceAtTime_s = 0.0f;
+  struct DynamicVariables {
+    DynamicVariables() = default;
+    
+    bool animIsPlaying = false;
+    int numRemainingInBout = 0;
+    float stopHoldingFaceAtTime_s = 0.0f;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
+
+
 };
 
 }

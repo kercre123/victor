@@ -60,7 +60,8 @@ namespace MicData {
 
 class MicDataSystem {
 public:
-  MicDataSystem(Util::Data::DataPlatform* dataPlatform);
+  MicDataSystem(Util::Data::DataPlatform* dataPlatform,
+                const AnimContext* context);
   ~MicDataSystem();
   MicDataSystem(const MicDataSystem& other) = delete;
   MicDataSystem& operator=(const MicDataSystem& other) = delete;
@@ -96,6 +97,12 @@ public:
 
   void UpdateLocale(const Util::Locale& newLocale);
   
+  bool IsSpeakerPlayingAudio() const;
+  
+  // Get the maximum speaker 'latency', which is the max delay between when we
+  // command audio to be played and it actually gets played on the speaker
+  uint32_t GetSpeakerLatency_ms() const { return _speakerLatency_ms; }
+  
 private:
   void RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT);
 
@@ -117,6 +124,8 @@ private:
   bool _forceRecordClip = false;
 #endif
   
+  std::atomic<uint32_t> _speakerLatency_ms{0};
+  
   RobotInterface::MicDirection _latestMicDirectionMsg;
   
   // Members for managing the results of async FFT processing
@@ -133,6 +142,8 @@ private:
   void ClearCurrentStreamingJob();
   float GetIncomingMicDataPercentUsed();
   void SendUdpMessage(const CloudMic::Message& msg);
+  
+  const AnimContext* _context;
 };
 
 } // namespace MicData

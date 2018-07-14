@@ -104,7 +104,6 @@ private:
     EState              state;
     EDealingState       dealingState;
     EOutcome            outcome;
-    bool                hasWishedGoodLuck;
   };
 
   InstanceConfig _iConfig;

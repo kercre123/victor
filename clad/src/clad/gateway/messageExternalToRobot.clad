@@ -224,6 +224,17 @@ message SetLiftHeight {
     float_32 duration_sec
 }
 
+// SetBackpackLEDs
+message SetBackpackLEDs {
+  uint_32  onColor[3],
+  uint_32  offColor[3],
+  uint_32  onPeriod_ms[3],
+  uint_32  offPeriod_ms[3],
+  uint_32  transitionOnPeriod_ms[3],
+  uint_32  transitionOffPeriod_ms[3],
+  int_32   offset[3]
+}
+
 // Note: these values and messages must match the values that get added to MessageGameToEngine
 union MessageExternalToRobot {
   UiDeviceConnectionWrongVersion UiDeviceConnectionWrongVersion = 0x00, // DO NOT CHANGE THIS VALUE
@@ -249,6 +260,7 @@ union MessageExternalToRobot {
   TurnInPlace                    TurnInPlace                    = 0x14,
   SetHeadAngle                   SetHeadAngle                   = 0x15,
   SetLiftHeight                  SetLiftHeight                  = 0x16,
+  SetBackpackLEDs                SetBackpackLEDs                = 0x17,
 }
 
 } // Gateway

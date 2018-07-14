@@ -12,7 +12,7 @@
   ],
 
   "behaviors": [
-    "DriveOffCharger",
+    "DriveOffChargerFace",
     "FistBumpInternal"
   ],
 

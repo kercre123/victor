@@ -17,6 +17,8 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+struct PathMotionProfile;
 
 class BehaviorDriveToFace : public ISimpleFaceBehavior
 {
@@ -53,6 +55,8 @@ private:
     
     AnimationTrigger animTooClose;
     AnimationTrigger animDriveOverride;
+    
+    std::unique_ptr<PathMotionProfile> customMotionProfile;
   };
 
   struct DynamicVariables {

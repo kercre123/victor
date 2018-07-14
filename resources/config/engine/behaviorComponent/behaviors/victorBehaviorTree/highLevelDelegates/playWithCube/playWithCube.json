@@ -3,7 +3,7 @@
   "behaviorClass" : "DispatcherQueue",
 
   "behaviors" : [
-    "DriveOffCharger",
+    "DriveOffChargerCube",
     "PlayWithCubeInternal",
     "PutDownBlock"
   ],

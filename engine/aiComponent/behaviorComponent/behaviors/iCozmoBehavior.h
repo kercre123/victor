@@ -488,7 +488,10 @@ protected:
   UserIntentPtr SmartActivateUserIntent(UserIntentTag tag);
 
   // Request that the robot enter power save mode
-  void SmartRequestPowerSaveMode();  
+  void SmartRequestPowerSaveMode();
+
+  // disable the procedural "keep face alive" in the animation system
+  void SmartDisableKeepFaceAlive();
 
   // Helper function to play an emergency get out through the continuity component
   void PlayEmergencyGetOut(AnimationTrigger anim);
@@ -629,7 +632,9 @@ private:
   bool _initHasBeenCalled = false;
 
   // for automatically removing a power save request when de-activated
-  std::string _powerSaveRequest;  
+  std::string _powerSaveRequest;
+
+  bool _keepAliveDisabled = false;
   
   ///////
   // Tracking subscribe tags for initialization

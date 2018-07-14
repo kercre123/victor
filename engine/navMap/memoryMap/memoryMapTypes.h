@@ -39,9 +39,6 @@ enum class EContentType : uint8_t {
   ClearOfObstacle,       // an area without obstacles
   ClearOfCliff,          // an area without obstacles or cliffs
   ObstacleObservable,    // an area with obstacles we recognize as observable
-  // we should roll charger types into ObstacleObservable class now that it can fully support it (COZMO-16117)
-  ObstacleCharger,       // an area with obstacles we recognize as a charger
-  ObstacleChargerRemoved,// an area that used to have a charger and now the charger has moved somewhere else
   ObstacleProx,          // an area with an obstacle found with the prox sensor
   ObstacleUnrecognized,  // an area with obstacles we do not recognize
   Cliff,                 // an area with cliffs or holes
@@ -131,10 +128,6 @@ const char* EContentTypeToString(EContentType contentType);
 // convert between our internal node content type and an external content type
 ExternalInterface::ENodeContentTypeEnum ConvertContentType(EContentType contentType);
 
-// returns true if type is a removal type, false otherwise. Removal types are not expected to be stored in the memory
-// map, but rather reset other types to defaults.
-bool IsRemovalType(EContentType type);
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Array of content that provides an API with compilation checks for algorithms that require combinations
 // of content types. It's for example used to make sure that you define a value for all content types, rather
@@ -162,8 +155,6 @@ static const MemoryMapTypes::FullContentArray kTypesThatAreObstacles =
   {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
   {MemoryMapTypes::EContentType::ClearOfCliff          , false},
   {MemoryMapTypes::EContentType::ObstacleObservable    , true },
-  {MemoryMapTypes::EContentType::ObstacleCharger       , true },
-  {MemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
   {MemoryMapTypes::EContentType::ObstacleProx          , true },
   {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
   {MemoryMapTypes::EContentType::Cliff                 , true },

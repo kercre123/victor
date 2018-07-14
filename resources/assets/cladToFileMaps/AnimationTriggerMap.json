@@ -444,6 +444,10 @@
     "AnimName": "ag_explorer_lookaround"
   },
   {
+    "CladEvent": "ExploringLookAtHuman",
+    "AnimName": "ag_generic_look_stright_01"
+  },
+  {
     "CladEvent": "ExploringScanToLeft",
     "AnimName": "ag_explorer_scan_left"
   },
@@ -1188,6 +1192,30 @@
     "AnimName": "ag_sleeping"
   },
   {
+    "CladEvent": "BumpObjectSlowGetIn",
+    "AnimName": "ag_slowbump_getin"
+  },
+  {
+    "CladEvent": "BumpObjectSlowLoop",
+    "AnimName": "ag_slowbump_loop"
+  },
+  {
+    "CladEvent": "BumpObjectSlowGetOut",
+    "AnimName": "ag_slowbump_getout"
+  },
+  {
+    "CladEvent": "BumpObjectFastGetIn",
+    "AnimName": "ag_fastbump_getin"
+  },
+  {
+    "CladEvent": "BumpObjectFastLoop",
+    "AnimName": "ag_fastbump_loop"
+  },
+  {
+    "CladEvent": "BumpObjectFastGetOut",
+    "AnimName": "ag_fastbump_getout"
+  },
+  {
     "CladEvent": "SoundOnlyLiftEffortPickup",
     "AnimName": "ag_lifteffortpickup"
   },
@@ -1347,6 +1375,18 @@
   {	
     "CladEvent": "DEPRECATED_VC_NoFollowupCommand_WithFace",	
     "AnimName": "ag_vc_reaction_yesfaceheardyou"	
+  },
+  {
+    "CladEvent": "PokeObjectGetIn",
+    "AnimName": "ag_slowpoke_getin"
+  },
+  {
+    "CladEvent": "PokeObjectDriveLoop",
+    "AnimName": "ag_slowpoke_loop"
+  },
+  {
+    "CladEvent": "PokeObjectGetOut",
+    "AnimName": "ag_slowpoke_getout"
   },
   {
     "CladEvent": "WaitOnSideLoop",
@@ -1731,6 +1771,10 @@
   {
     "CladEvent": "NoWifiIcon",
     "AnimName": "ag_nowifi_icon"
+  },
+  {
+    "CladEvent": "GreetAfterLongTime",
+    "AnimName" : "ag_greeting_happy"
   }
 
 ]

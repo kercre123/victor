@@ -65,5 +65,49 @@
   "github.com/dgrijalva/jwt-go": {
     "commit": "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e",
     "branch": "master"
+  },
+  "github.com/aalpern/go-metrics": {
+    "commit": "e181e095bae94582363434144c61a9653aff6e50",
+    "branch": "master"
+  },
+  "github.com/anki/sai-blobstore": {
+    "commit": "1e10631e7656008245a206dd8508509d5f3b3aac",
+    "branch": "master"
+  },
+  "github.com/anki/sai-go-cli": {
+    "commit": "8e00b1c021a1b505b45aa05a1f4f5305dfc61b9d",
+    "branch": "master"
+  },
+  "github.com/anki/sai-go-util": {
+    "commit": "4805ed0a6ab591d12876eea942602123f4ae3f9c",
+    "branch": "master"
+  },
+  "github.com/aws/aws-sdk-go": {
+    "commit": "8e8d35cc1b96ffe8271a24ec9b4699a982b1fe6f",
+    "branch": "master"
+  },
+  "github.com/cenkalti/backoff": {
+    "commit": "f756bc9a37f808627c8c1b26d2d6ea40c468440b",
+    "branch": "master"
+  },
+  "github.com/google/martian": {
+    "commit": "412d6c62968910b965c4d374abc8f3de72986a06",
+    "branch": "master"
+  },
+  "github.com/gorilla/context": {
+    "commit": "08b5f424b9271eedf6f9f0ce86cb9396ed337a42",
+    "branch": "master"
+  },
+  "github.com/gwatts/iniconf": {
+    "commit": "50b0c5b25403ecd9c215e9b946db587c70929b78",
+    "branch": "master"
+  },
+  "github.com/jawher/mow.cli": {
+    "commit": "123c8a60ff2f69b8c55b3e19b1383233321b316f",
+    "branch": "master"
+  },
+  "github.com/anki/sai-go-accounts": {
+    "commit": "d3dfb40cd1259ac834e9c926ea9dc6f823f38b0d",
+    "branch": "master"
   }
 }

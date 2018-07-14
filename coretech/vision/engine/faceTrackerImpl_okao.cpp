@@ -60,6 +60,7 @@ namespace Vision {
 
   namespace DetectParams {
     // Parameters common to all face detection modes
+    CONSOLE_VAR_RANGED(s32,                  kMaxDetectedFaces,     "Vision.FaceDetectorCommon", 10, 1, 1023);
     CONSOLE_VAR_RANGED(s32,                  kMinFaceSize,          "Vision.FaceDetectorCommon", 48, 20, 8192);
     CONSOLE_VAR_RANGED(s32,                  kMaxFaceSize,          "Vision.FaceDetectorCommon", 640, 20, 8192);
     CONSOLE_VAR_ENUM(s32,                    kPoseAngle,            "Vision.FaceDetectorCommon", Okao::GetIndex(Okao::PoseAngle::Front), Okao::GetConsoleString<Okao::PoseAngle>().c_str());
@@ -147,7 +148,7 @@ namespace Vision {
     {
       case Okao::DetectionMode::Movie:
       {
-        _okaoDetectorHandle = OKAO_DT_CreateHandle(_okaoCommonHandle, DETECTION_MODE_MOVIE, MaxFaces);
+        _okaoDetectorHandle = OKAO_DT_CreateHandle(_okaoCommonHandle, DETECTION_MODE_MOVIE, DetectParams::kMaxDetectedFaces);
         if(NULL == _okaoDetectorHandle) {
           PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibDetectionHandleAllocFail.VideoMode", "");
           return RESULT_FAIL_MEMORY;
@@ -220,7 +221,7 @@ namespace Vision {
       }
       case Okao::DetectionMode::Still:
       {
-        _okaoDetectorHandle = OKAO_DT_CreateHandle(_okaoCommonHandle, DETECTION_MODE_STILL, MaxFaces);
+        _okaoDetectorHandle = OKAO_DT_CreateHandle(_okaoCommonHandle, DETECTION_MODE_STILL, DetectParams::kMaxDetectedFaces);
         if(NULL == _okaoDetectorHandle) {
           PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibDetectionHandleAllocFail.StillMode", "");
           return RESULT_FAIL_MEMORY;
@@ -993,6 +994,11 @@ namespace Vision {
     return RESULT_OK;
   } // Update()
 
+  bool FaceTracker::Impl::CanAddNamedFace() const
+  {
+    return _recognizer.CanAddNamedFace();
+  }
+  
   Result FaceTracker::Impl::AssignNameToID(FaceID_t faceID, const std::string& name, FaceID_t mergeWithID)
   {
     return _recognizer.AssignNameToID(faceID, name, mergeWithID);

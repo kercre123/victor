@@ -78,8 +78,6 @@ constexpr MemoryMapTypes::FullContentArray typesToBlockDriving =
   {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
   {MemoryMapTypes::EContentType::ClearOfCliff          , false},
   {MemoryMapTypes::EContentType::ObstacleObservable    , true },
-  {MemoryMapTypes::EContentType::ObstacleCharger       , true },
-  {MemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
   {MemoryMapTypes::EContentType::ObstacleProx          , true },
   {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
   {MemoryMapTypes::EContentType::Cliff                 , true },

@@ -6,5 +6,6 @@
     "conditionType": "OffTreadsState",
     "targetState": "OnTreads",
     "minTimeSinceChange_ms": 30000
-  }
+  },
+  "searchForChargerBehavior": "FindHomeInHabitat"
 }

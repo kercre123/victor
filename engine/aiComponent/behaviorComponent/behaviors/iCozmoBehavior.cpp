@@ -946,8 +946,12 @@ void ICozmoBehavior::OnDeactivatedInternal()
       ManageCubeConnectionSubscriptions(false);
     }
   }
-}
 
+  if( _keepAliveDisabled ) {
+    GetBEI().GetAnimationComponent().RemoveKeepFaceAliveDisableLock(GetDebugLabel());
+    _keepAliveDisabled = false;
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ICozmoBehavior::WantsToBeActivatedInternal() const
@@ -1622,6 +1626,18 @@ void ICozmoBehavior::SmartRequestPowerSaveMode()
 
   _powerSaveRequest = GetDebugLabel();
   powerSaveManager.RequestPowerSaveMode(_powerSaveRequest);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SmartDisableKeepFaceAlive()
+{
+  if( ANKI_VERIFY( !_keepAliveDisabled,
+                   "ICozmoBehavior.SmartDisableKeepFaceAlive.AlreadyDisabled",
+                   "Behavior '%s' wants to disable face keep alive but it already has done so",
+                   GetDebugLabel().c_str() ) ) {
+    GetBEI().GetAnimationComponent().AddKeepFaceAliveDisableLock(GetDebugLabel());
+    _keepAliveDisabled = true;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

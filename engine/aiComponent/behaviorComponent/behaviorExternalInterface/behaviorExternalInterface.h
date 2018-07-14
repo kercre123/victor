@@ -159,7 +159,7 @@ public:
             DataAccessorComponent*         dataAccessor,
             TextToSpeechCoordinator*       TextToSpeechCoordinator,
             TouchSensorComponent*          touchSensorComponent,
-            VariableSnapshotComponent*      variableSnapshotComponent,
+            VariableSnapshotComponent*     variableSnapshotComponent,
             VisionComponent*               visionComponent,
             VisionScheduleMediator*        visionScheduleMediator,
             SettingsManager*               settingsManager);
@@ -263,6 +263,9 @@ public:
 
   inline bool HasSettingsManager() const { return GetComponentWrapper(BEIComponentID::SettingsManager).IsComponentValid();}
   SettingsManager& GetSettingsManager() const {return GetComponentWrapper(BEIComponentID::SettingsManager).GetComponent<SettingsManager>();}
+
+  inline bool HasVariableSnapshotComponent() const { return GetComponentWrapper(BEIComponentID::VariableSnapshotComponent).IsComponentValid();}
+  VariableSnapshotComponent& GetVariableSnapshotComponent() const {return GetComponentWrapper(BEIComponentID::VariableSnapshotComponent).GetComponent<VariableSnapshotComponent>();}
   
   // Util functions
   OffTreadsState GetOffTreadsState() const;

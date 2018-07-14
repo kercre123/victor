@@ -63,6 +63,7 @@ namespace CladProtoTypeTranslator {
   CLAD_PROTO_COMPARE_ASSERT2(FaceEnrollmentResult, Incomplete, INCOMPLETE);
   CLAD_PROTO_COMPARE_ASSERT2(FaceEnrollmentResult, Cancelled, CANCELLED);
   CLAD_PROTO_COMPARE_ASSERT2(FaceEnrollmentResult, NameInUse, NAME_IN_USE);
+  CLAD_PROTO_COMPARE_ASSERT2(FaceEnrollmentResult, NamedStorageFull, NAMED_STORAGE_FULL);
   CLAD_PROTO_COMPARE_ASSERT2(FaceEnrollmentResult, UnknownFailure, UNKNOWN_FAILURE);
   
   CLAD_PROTO_COMPARE_ASSERT2(OnboardingSteps, Default, DEFAULT);

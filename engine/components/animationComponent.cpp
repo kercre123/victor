@@ -83,7 +83,6 @@ void AnimationComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SetFaceHue>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayFaceImageBinaryChunk>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayFaceImageRGBChunk>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableKeepFaceAlive>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SetKeepFaceAliveParameters>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadAnimationFile>();
 
@@ -167,6 +166,10 @@ void AnimationComponent::UpdateDependent(const RobotCompMap& dependentComps)
     else {
       ++it;
     }
+  }
+
+  if( _desiredEnableKeepFaceAlive != _lastSentEnableKeepFaceAlive ) {
+    SendEnableKeepFaceAlive(_desiredEnableKeepFaceAlive);
   }
 }
  
@@ -644,9 +647,55 @@ void AnimationComponent::ClearCompositeImageLayer(Vision::LayerName layerName, u
                                                                  entry.GetSpriteName());
 }
 
-Result AnimationComponent::EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms) const
+void AnimationComponent::AddKeepFaceAliveDisableLock(const std::string& lockName)
 {
-  return _robot->SendRobotMessage<RobotInterface::EnableKeepFaceAlive>(disableTimeout_ms, enable);
+  _numKeepFaceAliveDisableLocks++;
+
+  PRINT_CH_INFO("AnimationComponent", "AnimationComponent.KeepFaceAlive.DisableLock.Locked",
+                "Adding disable lock for '%s', count is %d locks",
+                lockName.c_str(),
+                _numKeepFaceAliveDisableLocks);
+
+  if( _numKeepFaceAliveDisableLocks == 1 ) {
+    // this is the first lock
+    _desiredEnableKeepFaceAlive = false;
+  }
+}
+
+void AnimationComponent::RemoveKeepFaceAliveDisableLock(const std::string& lockName)
+{
+  if( ANKI_VERIFY( _numKeepFaceAliveDisableLocks > 0,
+                   "AnimationComponent.RemoveKeepFaceAliveDisableLock.NotLocked",
+                   "Removing lock '%s', but no locks present",
+                   lockName.c_str() ) ) {
+
+    _numKeepFaceAliveDisableLocks--;
+
+    PRINT_CH_INFO("AnimationComponent", "AnimationComponent.KeepFaceAlive.DisableLock.Removed",
+                  "Removed disable lock for '%s', count is %d locks",
+                  lockName.c_str(),
+                  _numKeepFaceAliveDisableLocks);
+
+    if( _numKeepFaceAliveDisableLocks == 0 ) {
+      // was locked but not anymore, so enable
+      _desiredEnableKeepFaceAlive = true;
+    }
+  }
+}
+
+Result AnimationComponent::SendEnableKeepFaceAlive(bool enable, u32 disableTimeout_ms)
+{
+  PRINT_CH_INFO("AnimationComponent", "AnimationComponent.EnableKeepFaceAlive.SendMessage",
+                "Sending message to %s procedural keep face alive",
+                enable ? "ENABLE" : "DISABLE");
+
+  const Result res = _robot->SendRobotMessage<RobotInterface::EnableKeepFaceAlive>(disableTimeout_ms, enable);
+
+  if( res == RESULT_OK ) {
+    _lastSentEnableKeepFaceAlive = enable;
+  }
+  
+  return res;
 }
 
 Result AnimationComponent::SetDefaultKeepFaceAliveParameters() const
@@ -818,12 +867,6 @@ void AnimationComponent::HandleMessage(const ExternalInterface::DisplayFaceImage
 
     _oledImageBuilder->Clear();
   }
-}
-
-template<>
-void AnimationComponent::HandleMessage(const ExternalInterface::EnableKeepFaceAlive& msg)
-{
-  EnableKeepFaceAlive(msg.enable, msg.disableTimeout_ms);
 }
 
 template<>

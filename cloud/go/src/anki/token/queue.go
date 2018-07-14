@@ -6,6 +6,7 @@ import (
 	"anki/token/jwt"
 	"clad/cloud"
 	"fmt"
+	"time"
 )
 
 type request struct {
@@ -22,7 +23,7 @@ var queue = make(chan request)
 var url = "token-dev.api.anki.com:443"
 var robotESN string
 
-func queueInit() error {
+func queueInit(done <-chan struct{}) error {
 	esn, err := robot.ReadESN()
 	if err != nil {
 		if err := robot.WriteFaceErrorCode(852); err != nil {
@@ -31,7 +32,7 @@ func queueInit() error {
 		return fmt.Errorf("error reading ESN: %s", err.Error())
 	}
 	robotESN = esn
-	go queueRoutine()
+	go queueRoutine(done)
 	return nil
 }
 
@@ -72,7 +73,7 @@ func handleJwtRequest(c *conn) (*cloud.TokenResponse, *conn, error) {
 		return cloud.NewTokenResponseWithJwt(&cloud.JwtResponse{JwtToken: token})
 	}
 	if existing != nil {
-		if existing.ShouldRefresh() {
+		if time.Now().After(existing.RefreshTime()) {
 			c, err := getConnection(c)
 			if err != nil {
 				return errorResp(cloud.TokenError_Connection), nil, err
@@ -116,9 +117,15 @@ func handleAuthRequest(c *conn, session string) (*cloud.TokenResponse, *conn, er
 		JwtToken: bundle.Token}), c, nil
 }
 
-func queueRoutine() {
+func queueRoutine(done <-chan struct{}) {
 	for {
-		req := <-queue
+		var req request
+		select {
+		case <-done:
+			return
+		case req = <-queue:
+			break
+		}
 		c, err := handleQueueRequest(&req, nil)
 		// re-use the existing connection we just created
 		// as long as queue still has stuff in it

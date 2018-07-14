@@ -130,13 +130,7 @@ CONSOLE_VAR(bool, kEnableTestFaceImageRGBDrawing,  "Robot", false);
 
 // TEMP support for 'old' chargers with black stripe and white body (VIC-2755)
 // Set to true to allow the robot to dock with older white chargers (that have a light-on-dark marker sticker)
-CONSOLE_VAR(bool, kChargerStripeIsBlack, "Robot",
-#ifdef SIMULATOR
-            false  // Simulated chargers are gray with white stripe
-#else
-            true   // *Most* real chargers are white with a sticker, and thus have a black stripe
-#endif
-            );
+CONSOLE_VAR(bool, kChargerStripeIsBlack, "Robot", false);
 
 #if REMOTE_CONSOLE_ENABLED
 
@@ -2523,6 +2517,9 @@ RobotState Robot::GetDefaultRobotState()
 
   std::array<uint16_t, Util::EnumToUnderlying(CliffSensor::CLIFF_COUNT)> defaultCliffRawVals;
   defaultCliffRawVals.fill(std::numeric_limits<uint16_t>::max());
+  
+  std::array<uint16_t, STATE_MESSAGE_FREQUENCY> defaultTouchRawVals;
+  defaultTouchRawVals.fill(0);
 
   const RobotState state(1, //uint32_t timestamp, (Robot does not report at t=0
                          0, //uint32_t pose_frame_id,
@@ -2539,7 +2536,7 @@ RobotState Robot::GetDefaultRobotState()
                          kDefaultStatus, //uint32_t status,
                          std::move(defaultCliffRawVals), //std::array<uint16_t, 4> cliffDataRaw,
                          ProxSensorDataRaw(), //const Anki::Cozmo::ProxSensorDataRaw &proxData,
-                         0, // touch intensity value when not touched (from capacitive touch sensor)
+                         std::move(defaultTouchRawVals), // touch intensity value 
                          0, // uint8_t cliffDetectedFlags,
                          0, // uint8_t whiteDetectedFlags
                          -1); //int8_t currPathSegment

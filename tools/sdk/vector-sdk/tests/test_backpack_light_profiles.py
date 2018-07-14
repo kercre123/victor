@@ -1,30 +1,42 @@
 #!/usr/bin/env python3
 
-import asyncio
+import os
+import sys
+import time
 
-import os, sys
+import utilities
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import vector
+import vector  # pylint: disable=wrong-import-position
 
-async def main(robot):
 
-    # Set backpack to White Lights using the max brightness profile for 4 seconds
-    await robot.set_all_backpack_lights( vector.lights.white_light, vector.lights.max_color_profile )
-    await asyncio.sleep(2.5)
+def main():
+    '''main execution'''
+    args = utilities.parse_args()
 
-    # Set backpack to White Lights using the white balanced profile for 4 seconds
-    await robot.set_all_backpack_lights( vector.lights.white_light, vector.lights.white_balanced_backpack_profile )
-    await asyncio.sleep(2.5)
+    print("------ begin testing backpack light profiles ------")
 
-    # Set backpack to Magenta Lights using the max brightness profile for 4 seconds
-    await robot.set_all_backpack_lights( vector.lights.magenta_light, vector.lights.max_color_profile )
-    await asyncio.sleep(2.5)
+    with vector.Robot(args.ip, str(args.cert), port=args.port) as robot:
 
-    # Set backpack to Magenta Lights using the white balanced profile for 4 seconds
-    await robot.set_all_backpack_lights( vector.lights.magenta_light, vector.lights.white_balanced_backpack_profile )
-    await asyncio.sleep(2.5)
+        # Set backpack to White Lights using the max brightness profile for 4 seconds
+        robot.backpack.set_all_backpack_lights(vector.lights.white_light, vector.lights.MAX_COLOR_PROFILE)
+        time.sleep(4)
 
-    await robot.set_all_backpack_lights( vector.lights.off_light )
+        # Set backpack to White Lights using the white balanced profile for 4 seconds
+        robot.backpack.set_all_backpack_lights(vector.lights.white_light, vector.lights.WHITE_BALANCED_BACKPACK_PROFILE)
+        time.sleep(4)
+
+        # Set backpack to Magenta Lights using the max brightness profile for 4 seconds
+        robot.backpack.set_all_backpack_lights(vector.lights.magenta_light, vector.lights.MAX_COLOR_PROFILE)
+        time.sleep(4)
+
+        # Set backpack to Magenta Lights using the white balanced profile for 4 seconds
+        robot.backpack.set_all_backpack_lights(vector.lights.magenta_light, vector.lights.WHITE_BALANCED_BACKPACK_PROFILE)
+        time.sleep(4)
+
+        robot.backpack.set_all_backpack_lights(vector.lights.off_light)
+
+    print("------ end testing backpack light profiles ------")
+
 
 if __name__ == "__main__":
-    vector.robot.run_program(main, sys.argv[1] if len(sys.argv) > 1 else None)
+    main()

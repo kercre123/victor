@@ -35,7 +35,7 @@
 
 // Not sure if we want to support callbacks yet, but this switch enables some
 // preliminary callback code for functions to be run when an action completes.
-#define USE_ACTION_CALLBACKS 1
+#define USE_ACTION_CALLBACKS 0
 
 // Enable/disable procedural eye leading
 #define PROCEDURAL_EYE_LEADING 0

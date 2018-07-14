@@ -39,6 +39,13 @@ enum int_32 AnimationTrigger
   BlackJack_VictorPush,
   BlackJack_VictorWin,
 
+  BumpObjectSlowGetIn,
+  BumpObjectSlowLoop,
+  BumpObjectSlowGetOut,
+  BumpObjectFastGetIn,
+  BumpObjectFastLoop,
+  BumpObjectFastGetOut,
+
   ChargerDockingBackupDriveEnd,
   ChargerDockingBackupDriveLoop,
   ChargerDockingBackupDriveStart,
@@ -103,6 +110,7 @@ enum int_32 AnimationTrigger
   ExploringHuhClose,
   ExploringHuhFar,
   ExploringLookAround,
+  ExploringLookAtHuman,
   ExploringScanToLeft,
   ExploringScanToRight,
   ExploringScanCenterFromLeft,
@@ -209,6 +217,9 @@ enum int_32 AnimationTrigger
   PettingBlissLoop,
   PettingBlissGetout,
   PickupCubePreperation,
+  PokeObjectGetIn,
+  PokeObjectDriveLoop,
+  PokeObjectGetOut,
   PopAWheelieInitial,
   PopAWheeliePreActionNamedFace,
   PopAWheeliePreActionUnnamedFace,
@@ -329,6 +340,7 @@ enum int_32 AnimationTrigger
   WakeupGetout,
 
   // Animation triggers not currently used in Victor, but which we'll probably need eventually
+  GreetAfterLongTime,
   ANTICIPATED_ReactToSoundOffChargerAsleepAmbient,
   ANTICIPATED_ReactToSoundOffChargerObserveAmbient,
   ANTICIPATED_ReactToSoundOnChargerAsleepAmbient,

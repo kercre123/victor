@@ -11,7 +11,7 @@ from . import messaging
 from .robot import Robot, AsyncRobot
 from . import oled_face
 
-logger = logging.getLogger('victor')
+logger = logging.getLogger('victor')  # pylint: disable=invalid-name
 
 if sys.version_info < (3, 5, 1):
     sys.exit('victor requires Python 3.5.1 or later')

@@ -1,15 +1,6 @@
 {
     "artifactory": {
         "builds": {
-            "tensorflow": {
-                "build_type_id": "anki",
-                "checksums": {
-                    "sha256": "8f4c537b1411d457d7d7cf5928999119554464f4ac98e697ad87d40ab6e04da1"
-                },
-                "extension": "tar.gz",
-                "package_name": "tensorflow",
-                "version": "1"
-            },
             "External_Dependencies": {
                 "build_type_id": "protocCppPlugin",
                 "checksums": {
@@ -17,6 +8,15 @@
                 },
                 "extension": "tar.gz",
                 "package_name": "protocCppPlugin",
+                "version": "1"
+            },
+            "tensorflow": {
+                "build_type_id": "anki",
+                "checksums": {
+                    "sha256": "8f4c537b1411d457d7d7cf5928999119554464f4ac98e697ad87d40ab6e04da1"
+                },
+                "extension": "tar.gz",
+                "package_name": "tensorflow",
                 "version": "1"
             }
         },
@@ -53,11 +53,11 @@
                     "animationGroups",
                     "sprites/spriteSequences"
                 ],
-                "version": "3457"
+                "version": "3487"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
-                "version": "70"
+                "version": "74"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"

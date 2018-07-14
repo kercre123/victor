@@ -835,6 +835,12 @@ Result VisionSystem::CheckWhiteBalance(Vision::ImageCache& imageCache)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool VisionSystem::CanAddNamedFace() const
+{
+  return _faceTracker->CanAddNamedFace();
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result VisionSystem::AssignNameToFace(Vision::FaceID_t faceID, const std::string& name, Vision::FaceID_t mergeWithID)
 {
   if(!_isInitialized) {

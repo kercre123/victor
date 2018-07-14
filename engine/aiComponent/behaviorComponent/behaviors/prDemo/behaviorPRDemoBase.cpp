@@ -19,11 +19,18 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/prDemo/behaviorPRDemo.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
+#include "engine/components/animationComponent.h"
 #include "engine/components/mics/micComponent.h"
 
 namespace Anki {
 namespace Cozmo {
-  
+
+namespace {
+
+static constexpr const char* kPRDemoDisableLockName = "PRDemoBaseBeahvior";
+
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPRDemoBase::InstanceConfig::InstanceConfig()
@@ -90,10 +97,14 @@ void BehaviorPRDemoBase::OnBehaviorActivated()
 
   // for now we want to disable streaming until we're awake
   GetBEI().GetMicComponent().SetShouldStreamAfterWakeWord( false );
+
+  // also disable face keep-alive
+  GetBEI().GetAnimationComponent().AddKeepFaceAliveDisableLock(kPRDemoDisableLockName);
   
   if( _iConfig.sleepingBehavior->WantsToBeActivated() ) {
     DelegateIfInControl(_iConfig.sleepingBehavior.get(), [this]() {
         GetBEI().GetMicComponent().SetShouldStreamAfterWakeWord( true );
+        GetBEI().GetAnimationComponent().RemoveKeepFaceAliveDisableLock(kPRDemoDisableLockName);
         if( _iConfig.wakeUpBehavior->WantsToBeActivated() ) {
           DelegateIfInControl(_iConfig.wakeUpBehavior.get());
         }

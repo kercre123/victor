@@ -25,7 +25,7 @@ typedef NS_ENUM(uint8_t, RequestStatus) {
   BleCentral* _central;
   RequestId _currentRequest;
   dispatch_semaphore_t _responseSemaphore;
-  Anki::Victor::ExternalComms::RtsConnection_2 _currentMessage;
+  Anki::Cozmo::ExternalComms::RtsConnection_2 _currentMessage;
 }
 
 @property (nonatomic) RequestStatus success;
@@ -34,14 +34,14 @@ typedef NS_ENUM(uint8_t, RequestStatus) {
 
 - (void)showProgress: (float)current expected:(float)expected;
 -(dispatch_time_t) getTimeout;
--(Anki::Victor::ExternalComms::RtsStatusResponse_2) getStatus;
--(Anki::Victor::ExternalComms::RtsWifiScanResponse_2) getWifiScan;
--(Anki::Victor::ExternalComms::RtsWifiConnectResponse) doWifiConnect:(std::string)ssid password:(std::string)pw hidden:(bool)hidden auth:(uint8_t)auth;
--(Anki::Victor::ExternalComms::RtsWifiIpResponse) getWifiIp;
--(Anki::Victor::ExternalComms::RtsWifiAccessPointResponse) doWifiAp:(bool)enabled;
--(Anki::Victor::ExternalComms::RtsOtaUpdateResponse) otaStart:(std::string)url;
--(Anki::Victor::ExternalComms::RtsOtaUpdateResponse) otaCancel;
--(Anki::Victor::ExternalComms::RtsOtaUpdateResponse) otaProgress;
+-(Anki::Cozmo::ExternalComms::RtsStatusResponse_2) getStatus;
+-(Anki::Cozmo::ExternalComms::RtsWifiScanResponse_2) getWifiScan;
+-(Anki::Cozmo::ExternalComms::RtsWifiConnectResponse) doWifiConnect:(std::string)ssid password:(std::string)pw hidden:(bool)hidden auth:(uint8_t)auth;
+-(Anki::Cozmo::ExternalComms::RtsWifiIpResponse) getWifiIp;
+-(Anki::Cozmo::ExternalComms::RtsWifiAccessPointResponse) doWifiAp:(bool)enabled;
+-(Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse) otaStart:(std::string)url;
+-(Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse) otaCancel;
+-(Anki::Cozmo::ExternalComms::RtsOtaUpdateResponse) otaProgress;
 
 @end
 

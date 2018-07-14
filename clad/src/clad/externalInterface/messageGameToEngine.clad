@@ -225,6 +225,11 @@ message SetRobotAudioOutputSource
 message ForceDelocalizeRobot {
 }
 
+// Controls whether low level motor commands and actions are allowed to run
+message AllowedToHandleActions {
+  bool allowedToHandleActions
+}
+
 // Will restore the currently connected robot with either an automatically determined
 // backup file or from the specified one
 message RestoreRobotFromBackup {
@@ -716,11 +721,6 @@ message RequestAvailableAnimations{
 // RequestAvailableAnimationGroups
 message RequestAvailableAnimationGroups{
   
-}
-
-message EnableKeepFaceAlive {
-  uint_32 disableTimeout_ms,  // If enable == false, the amount of time to wait before actually disabling
-  bool    enable
 }
 
 message SetKeepFaceAliveParameters {
@@ -1223,6 +1223,7 @@ autounion MessageGameToEngine
   TurnInPlace                    TurnInPlace                    = 0x14,
   SetHeadAngle                   SetHeadAngle                   = 0x15,
   SetLiftHeight                  SetLiftHeight                  = 0x16,
+  SetBackpackLEDs                SetBackpackLEDs                = 0x17,
 }
 
 

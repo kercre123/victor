@@ -100,6 +100,7 @@ private:
     Failed_WrongFace,
     Failed_UnknownReason,
     Failed_NameInUse,
+    Failed_NamedStorageFull,
     Cancelled,
   };
   
@@ -199,11 +200,6 @@ private:
     f32              startTime_sec;
     
     f32              totalBackup_mm;
-    
-    
-    
-    ActionResult     saveEnrollResult;
-    ActionResult     saveAlbumResult;
     
     std::string      faceName;
     std::string      observedUnusableName;

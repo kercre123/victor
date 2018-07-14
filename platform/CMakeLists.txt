@@ -10,6 +10,4 @@ add_subdirectory(update-engine)
 
 add_subdirectory(diagnostics-logger)
 
-add_subdirectory(victorDAS)
-
 add_subdirectory(victorCrashReports)
