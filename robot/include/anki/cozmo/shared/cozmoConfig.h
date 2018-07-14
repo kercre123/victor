@@ -108,7 +108,7 @@ namespace Cozmo {
   const f32 NECK_JOINT_POSITION[3] = {-13.f, 0.f, 34.5f + WHEEL_RAD_TO_MM};
   
   // camera relative to neck joint
-  const f32 HEAD_CAM_POSITION[3]   = {17.52f, 0.f, -8.f};
+  const f32 HEAD_CAM_POSITION[3]   = {18.84f, 0.f, -7.96f};
   
   // Upper shoulder joint relative to robot origin
   const f32 LIFT_BASE_POSITION[3]  = {-41.0f, 0.f, 30.5f + WHEEL_RAD_TO_MM}; // relative to robot origin
