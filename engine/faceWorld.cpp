@@ -663,12 +663,10 @@ namespace Cozmo {
     static const std::string kKeepFaceAliveEyeContactName = "EyeContact";
     if (IsMakingEyeContact(0))
     {
-      PRINT_NAMED_INFO("FaceWorld.Update.IsMakingEyeContact.AddFocus", "");
       _robot->GetAnimationComponent().AddKeepFaceAliveFocus(kKeepFaceAliveEyeContactName);
     }
     else
     {
-      PRINT_NAMED_INFO("FaceWorld.Update.IsMakingEyeContact.RemoveFocus", "");
       _robot->GetAnimationComponent().RemoveKeepFaceAliveFocus(kKeepFaceAliveEyeContactName);
     }
 
