@@ -4,7 +4,5 @@
 
   "associatedActiveFeature": "NoFeature",
 
-  "playOnChargerWithoutBody": true,
-
   "animTriggers": ["ConnectWakeUp"]
 }

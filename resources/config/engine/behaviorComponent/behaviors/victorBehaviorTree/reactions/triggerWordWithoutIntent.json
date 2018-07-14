@@ -2,7 +2,5 @@
   "behaviorClass": "AnimSequence",
   "behaviorID": "TriggerWordWithoutIntent",
 
-  "playOnChargerWithoutBody": true,
-
   "animTriggers": ["VC_IntentNeutral"]
 }

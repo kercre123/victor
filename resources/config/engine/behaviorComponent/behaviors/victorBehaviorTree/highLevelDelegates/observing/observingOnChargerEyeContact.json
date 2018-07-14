@@ -3,7 +3,6 @@
   "behaviorID": "ObservingOnChargerEyeContact",
 
   "animTriggers" : ["EyeContactLookLoop"],
-  "playOnChargerWithoutBody": true,
 
   "emotionEventOnActivated": "EyeContactReaction",
   "behaviorStatToIncrement": "ReactedToEyeContact",
