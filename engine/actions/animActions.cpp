@@ -90,7 +90,7 @@ namespace Anki {
         return ActionResult::ANIM_ABORTED;
       }
 
-      GetRobot().GetComponent<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::BehaviorActived);
+      GetRobot().GetComponent<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::AnimationPlayed);
 
       return ActionResult::SUCCESS;
     }
