@@ -63,6 +63,7 @@ TEST(BehaviorDirectoryStructure, Run)
   Anki::Util::_errG = false;
   const std::vector<std::string> directories = {
     "config/engine/behaviorComponent/behaviors/victorBehaviorTree",
+    "config/engine/behaviorComponent/behaviors/inProgress",
     "config/engine/behaviorComponent/behaviors/devBehaviors"
   };
   // this test serves three functions, related to ensuring all classes are contained within a single

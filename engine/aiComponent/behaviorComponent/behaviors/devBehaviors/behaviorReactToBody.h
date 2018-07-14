@@ -1,10 +1,10 @@
 /**
- * File: BehaviorReactToPersonDetected.h
+ * File: behaviorReactToBody.h
  *
  * Author: Lorenzo Riano
  * Created: 2018-05-30
  *
- * Description: Reacts when a person is detected
+ * Description: Reacts when a body is detected
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -20,17 +20,18 @@ namespace Anki {
 namespace Cozmo {
 
 class ConditionSalientPointDetected;
+class BehaviorSearchWithinBoundingBox;
 
-class BehaviorTurnTowardsPerson : public ICozmoBehavior
+class BehaviorReactToBody : public ICozmoBehavior
 {
 public: 
-  virtual ~BehaviorTurnTowardsPerson() = default;
+  virtual ~BehaviorReactToBody() = default;
 
 protected:
 
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorTurnTowardsPerson(const Json::Value& config);
+  explicit BehaviorReactToBody(const Json::Value& config);
 
   void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
@@ -39,32 +40,35 @@ protected:
   void OnBehaviorActivated() override;
   void BehaviorUpdate() override;
 
+  void InitBehavior() override;
+
 private:
 
-  void TransitionToTurnTowardsPoint();
-  void TransitionToFinishedTurning();
+  void TransitionToStart();
+  void TransitionToCheckIfGoStraight();
+  void TransitionToGoStraight();
+  void TransitionToLookForFace();
+  void TransitionToFaceFound();
   void TransitionToCompleted();
 
-  enum class State : uint8_t {
-    Starting=0,
-    Turning,
-    FinishedTurning,
-    Completed
-  };
 
   struct InstanceConfig {
     InstanceConfig(const Json::Value& config);
-    // after seeing a person, wait for this amount of seconds before reacting again
-    float coolDownTime = 2.0;
+
+    std::string moveOffChargerBehaviorStr;
+    bool shouldDriveStraightWhenBodyDetected;
+    ICozmoBehaviorPtr moveOffChargerBehavior;
+    float drivingForwardDistance;
+    std::shared_ptr<BehaviorSearchWithinBoundingBox> searchBehavior;
   };
 
   struct DynamicVariables {
     DynamicVariables();
     void Reset();
-    State state;
 
     Vision::SalientPoint lastPersonDetected;
-    bool hasToStop;
+    bool searchingForFaces;
+    TimeStamp_t imageTimestampWhenActivated;
   };
 
 

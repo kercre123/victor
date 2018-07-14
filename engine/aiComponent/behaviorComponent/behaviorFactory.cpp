@@ -59,7 +59,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorLiftLoadTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorPlannerTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorPowerSaveTest.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorTurnTowardsPerson.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorReactToBody.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenCameraCalibration.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenDistanceSensor.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenDriftCheck.h"
@@ -474,9 +474,9 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
-    case BehaviorClass::TurnTowardsPerson:
+    case BehaviorClass::ReactToBody:
     {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorTurnTowardsPerson(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToBody(config));
       break;
     }
     
