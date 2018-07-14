@@ -661,14 +661,19 @@ namespace Cozmo {
 
     // Update anim focus (for keep face alive) with eye contact
     static const std::string kKeepFaceAliveEyeContactName = "EyeContact";
-    if (IsMakingEyeContact(0))
+    bool currentEyeContact = IsMakingEyeContact(0);
+    if (_previousEyeContact != currentEyeContact)
     {
-      _robot->GetAnimationComponent().AddKeepFaceAliveFocus(kKeepFaceAliveEyeContactName);
+      if (currentEyeContact)
+      {
+        _robot->GetAnimationComponent().AddKeepFaceAliveFocus(kKeepFaceAliveEyeContactName);
+      }
+      else
+      {
+        _robot->GetAnimationComponent().RemoveKeepFaceAliveFocus(kKeepFaceAliveEyeContactName);
+      }
     }
-    else
-    {
-      _robot->GetAnimationComponent().RemoveKeepFaceAliveFocus(kKeepFaceAliveEyeContactName);
-    }
+    _previousEyeContact = currentEyeContact;
 
     return RESULT_OK;
   } // Update()

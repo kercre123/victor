@@ -209,6 +209,8 @@ namespace Cozmo {
     
     Pose3d      _lastObservedFacePose;
     TimeStamp_t _lastObservedFaceTimeStamp = 0;
+
+    bool _previousEyeContact = false;
     
     bool _lastEnrollmentCompleted = false;
     
