@@ -144,6 +144,19 @@ void AnimationComponent::Init()
   }
   PRINT_CH_INFO(kLogChannelName, "AnimationComponent.Init.ManifestRead", "%zu animations loaded", _availableAnims.size());
 
+  if( ANKI_DEVELOPER_CODE ) {
+    // now that we loaded the animations, go check the animation whitelist and make sure everything in there is
+    // a valid animation
+    const auto& whitelist = _robot->GetContext()->GetDataLoader()->GetAllWhitelistedChargerAnimationClips();
+    for( const auto& anim : whitelist ) {
+      if( _availableAnims.find(anim) == _availableAnims.end() ) {
+        PRINT_NAMED_WARNING("AnimationComponent.AnimWhitelistInvalid",
+                            "Anim whitelist in RobotDataLoader contains animation '%s' which isn't a valid clip name",
+                            anim.c_str());
+      }
+    }
+  }
+
   _isInitialized = true;
   
 }

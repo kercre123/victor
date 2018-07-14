@@ -53,16 +53,24 @@ namespace Anki {
       
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
-      
+
+      virtual void OnRobotSet() override final;
+      virtual void OnRobotSetInternalAnim() {};
+
       std::string               _animName;
       u32                       _numLoopsRemaining;
       bool                      _stoppedPlaying;
       bool                      _wasAborted;
       bool                      _interruptRunning;
       float                     _timeout_sec = _kDefaultTimeout_sec;
+      bool                      _bodyTrackManuallyLocked = false;
       
       static constexpr float _kDefaultTimeout_sec = 60.f;
       static constexpr float _kDefaultTimeoutForInfiniteLoops_sec = std::numeric_limits<f32>::max();
+
+    private:
+
+      void InitTrackLockingForCharger();
 
     }; // class PlayAnimationAction
 
@@ -85,7 +93,7 @@ namespace Anki {
       void SetAnimGroupFromTrigger(AnimationTrigger animTrigger);
 
       bool HasAnimTrigger() const { return _animTrigger != AnimationTrigger::Count; }
-      virtual void OnRobotSet() override final;
+      virtual void OnRobotSetInternalAnim() override final;
       virtual void OnRobotSetInternalTrigger() {};
 
 

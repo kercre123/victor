@@ -17,6 +17,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/audio/engineRobotAudioClient.h"
+#include "engine/components/batteryComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/robotStatsTracker.h"
@@ -35,6 +36,10 @@
 namespace Anki {
 
   namespace Cozmo {
+
+    namespace {
+      static constexpr const char* kManualBodyTrackLockName = "PlayAnimationOnChargerSpecialLock";
+    }
 
     #pragma mark ---- PlayAnimationAction ----
 
@@ -68,10 +73,51 @@ namespace Anki {
                          _animName.c_str());
         GetRobot().GetAnimationComponent().StopAnimByName(_animName);
       }
+
+      if (HasStarted() && _bodyTrackManuallyLocked ) {
+        GetRobot().GetMoveComponent().UnlockTracks( (u8) AnimTrackFlag::BODY_TRACK, kManualBodyTrackLockName );
+        _bodyTrackManuallyLocked = false;
+      }
     }
 
+    void PlayAnimationAction::OnRobotSet()
+    {
+      OnRobotSetInternalAnim();
+    }
+
+    void PlayAnimationAction::InitTrackLockingForCharger()
+    {
+      if( _bodyTrackManuallyLocked ) {
+        // already locked, nothing to do
+        return;
+      }
+
+      if( GetRobot().GetBatteryComponent().IsOnChargerPlatform() ) {
+        // default here is now to LOCK the body track, but first check the whitelist
+
+        auto* dataLoader = GetRobot().GetContext()->GetDataLoader();
+        const auto& whitelist = dataLoader->GetAllWhitelistedChargerAnimationClips();
+        if( whitelist.find(_animName) == whitelist.end() ) {
+
+          // time to lock the body track. Unfortunately, the action has already been Init'd, so it's tracks
+          // are already locked. Therefore we have to manually lock the body to make this work
+          GetRobot().GetMoveComponent().LockTracks( (u8) AnimTrackFlag::BODY_TRACK,
+                                                        kManualBodyTrackLockName,
+                                                        "PlayAnimationAction.LockBodyOnCharger" );
+          _bodyTrackManuallyLocked = true;
+
+          PRINT_CH_DEBUG("Animations", "PlayAnimationAction.LockingBodyOnCharger",
+                         "anim '%s' is not in the whitelist, locking the body track",
+                         _animName.c_str());
+        }
+      }
+    }
+  
     ActionResult PlayAnimationAction::Init()
     {
+
+      InitTrackLockingForCharger();
+
       _stoppedPlaying = false;
       _wasAborted = false;
 
@@ -130,7 +176,7 @@ namespace Anki {
       // will FAILURE_ABORT on Init if not an event
     }
 
-    void TriggerAnimationAction::OnRobotSet()
+    void TriggerAnimationAction::OnRobotSetInternalAnim()
     {
       SetAnimGroupFromTrigger(_animTrigger);
       OnRobotSetInternalTrigger();

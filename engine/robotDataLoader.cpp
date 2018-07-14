@@ -216,6 +216,12 @@ void RobotDataLoader::LoadNonConfigData()
       ANKI_CPU_PROFILE("RobotDataLoader::LoadCompositeImageMaps");
       LoadCompositeImageMaps();
     }
+
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationWhitelist");
+      LoadAnimationWhitelist();
+    }
+
   }
   
   {
@@ -648,6 +654,47 @@ void RobotDataLoader::LoadCompositeImageMaps()
   }
 }
 
+void RobotDataLoader::LoadAnimationWhitelist()
+{
+  static const std::string jsonFilename = "config/engine/animation_whitelist.json";
+  Json::Value whitelistConfig;
+  const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, whitelistConfig);
+  if(!success)
+  {
+    LOG_ERROR("RobotDataLoader.AnimationWhitelistConfig",
+              "Animation whitelist json config file %s not found or failed to parse",
+              jsonFilename.c_str());
+  }
+  else {
+    static constexpr const char* kChargerSafeAnimsKey = "safeChargerAnims";
+    static constexpr const char* kDriveOffChargerAnimsKey = "driveOffChargerAnims";
+
+    for( const auto& clipName : whitelistConfig[kChargerSafeAnimsKey] ) {
+      if( ANKI_VERIFY( clipName.isString(),
+                       "RobotDataLoader.LoadAnimationWhitelist.SafeAnims.NonString",
+                       "List values must be strings" ) ) {
+        
+        _whitelistedChargerSafeAnimationClips.insert(clipName.asString());
+        _allWhitelistedChargerAnimationClips.insert(clipName.asString());
+      }
+    }
+    
+    for( const auto& clipName : whitelistConfig[kDriveOffChargerAnimsKey] ) {
+      if( ANKI_VERIFY( clipName.isString(),
+                       "RobotDataLoader.LoadAnimationWhitelist.DriveOffAnims.NonString",
+                       "List values must be strings" ) ) {
+        _allWhitelistedChargerAnimationClips.insert(clipName.asString());
+      }
+    }
+
+    PRINT_CH_INFO("Animations", "RobotDataLoader.AnimationWhitelist.LoadedConfig",
+                  "Loaded %zu charger whitelisted animations (%zu safe anims)",
+                  _allWhitelistedChargerAnimationClips.size(),
+                  _whitelistedChargerSafeAnimationClips.size());
+
+
+  }
+}
 
 void RobotDataLoader::LoadWeatherResponseMaps()
 {
