@@ -237,6 +237,8 @@ namespace Cozmo {
     // faces saved album data for the initial entry so it can work across boots
     using ObservationHistoryMap = std::map<Vision::FaceID_t, ObservationTimeHistory>;
     ObservationHistoryMap _wallTimesObserved;
+
+    bool _previousEyeContact;
     
   }; // class FaceWorld
   
