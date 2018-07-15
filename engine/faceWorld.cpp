@@ -661,6 +661,7 @@ namespace Cozmo {
 
     // Update anim focus (for keep face alive) with eye contact
     static const std::string kKeepFaceAliveEyeContactName = "EyeContact";
+    // Fake change to get build going
     if (IsMakingEyeContact(0))
     {
       PRINT_NAMED_INFO("FaceWorld.Update.IsMakingEyeContact.AddFocus", "");
