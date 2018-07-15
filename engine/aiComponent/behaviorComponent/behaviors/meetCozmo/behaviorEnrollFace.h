@@ -51,6 +51,7 @@ protected:
 public:  
   // Is activatable when FaceWorld has enrollment settings set
   virtual bool WantsToBeActivatedBehavior() const override;
+  virtual ~BehaviorEnrollFace();
   
 protected:
 
@@ -68,7 +69,6 @@ protected:
 
   virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
   virtual void HandleWhileActivated(const GameToEngineEvent& event) override;
-  virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
   virtual void HandleWhileInScopeButNotActivated(const GameToEngineEvent& event) override;
   
 private:
@@ -87,11 +87,13 @@ private:
     // contains both states and failure cases
     DriveOffCharger,
     PutDownBlock,
+    WaitingInPlaceForFace,
     LookingForFace,
     Enrolling,
     SayingName,
     Success,
     SayingIKnowThatName,
+    SayingWrongName,
     EmotingConfusion,
     SavingToRobot,
     TimedOut,
@@ -112,13 +114,16 @@ private:
   
   void TransitionToPutDownBlock();
   void TransitionToDriveOffCharger();
+  void TransitionToWaitInPlaceForFace();
   void TransitionToLookingForFace();
   void TransitionToEnrolling();
   void TransitionToScanningInterrupted();
   void TransitionToSayingName();
   void TransitionToSayingIKnowThatName();
   void TransitionToSavingToRobot();
-  void TransitionToWrongFace( const std::string& faceName );
+  // depending on settings, either fail or animate/speak to indicate recognition of
+  // a face with a different name than the one being enrolled
+  void TransitionToWrongFace(FaceID_t faceID, const std::string& faceName );
   // catch all for "confusion" animations that should play before transitioning to the given state
   void TransitionToFailedState( State state, const std::string& stateName);
   
@@ -130,92 +135,27 @@ private:
 
   bool HasTimedOut() const;
   bool IsSeeingTooManyFaces(FaceWorld& faceWorld, const TimeStamp_t lastImgTime);
+  bool IsSeeingWrongFace(FaceID_t& wrongFaceID, std::string& wrongName) const;
   
   // Helper which returns false if the robot is not on its treads or a cliff is being detected
   bool CanMoveTreads() const;
   
   bool IsEnrollmentRequested() const;
-  void DisableEnrollment();
+  void DisableEnrollment(); // Completely disable, before stopping the behavior
+  void ResetEnrollment();   // Reset to try enrollment again, e.g. before returning to LookingForFace
   
   // helper to see if a user intent was left in the user intent component for us by a parent behavior
   void CheckForIntentData() const;
-  
-  // true if the robot was physically turned or picked up by the user recently (persistent)
-  bool WasMovedRecently() const;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Members
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  struct InstanceConfig {
-    InstanceConfig();
-    
-    s32              maxFacesVisible;
-    f32              tooManyFacesRecentTime_sec;
-    f32              tooManyFacesTimeout_sec;
-    f32              timeout_sec;
-    
-    ICozmoBehaviorPtr driveOffChargerBehavior;
-    ICozmoBehaviorPtr putDownBlockBehavior;
-    std::shared_ptr<BehaviorTextToSpeechLoop> ttsBehavior;
-  };
+  struct InstanceConfig;
+  struct DynamicVariables;
   
-  struct DynamicVariables {
-    DynamicVariables();
-    
-    struct Persistent {
-      State          state = State::NotStarted;
-      bool           didEverLeaveCharger = false;
-      TimeStamp_t    lastTimeUserMovedRobot = 0;
-      TimeStamp_t    lastDeactivationTime_ms = 0;
-      
-      bool           requestedRescan = false;
-      
-      using EnrollmentSettings = ExternalInterface::SetFaceToEnroll;
-      std::unique_ptr<EnrollmentSettings> settings;
-      
-      int numInterruptions = 0;
-    };
-    Persistent       persistent;
-    
-    bool             sayName;
-    bool             useMusic;
-    bool             saveToRobot;
-    bool             saveSucceeded;
-    bool             enrollingSpecificID;
-    FaceID_t         faceID;
-    FaceID_t         saveID;
-    FaceID_t         observedUnusableID;
-    
-    TimeStamp_t      lastFaceSeenTime_ms;
-    
-    TimeStamp_t      timeScanningStarted_ms;
-    TimeStamp_t      timeStartedLookingForFace_ms;
-    
-    f32 timeout_sec;
-    
-    bool wasUnexpectedRotationWithoutMotorsEnabled;
-    
-    f32              startedSeeingMultipleFaces_sec;
-    f32              startTime_sec;
-    
-    f32              totalBackup_mm;
-    
-    std::string      faceName;
-    std::string      observedUnusableName;
-    
-    Radians          lastRelBodyAngle;
-    
-    std::vector<std::pair<std::string, unsigned int>> knownFaceCounts;
-    
-    std::set<Vision::FaceID_t> facesSeen;
-    std::unordered_map<Vision::FaceID_t, bool> isFaceNamed;
-    
-    State            failedState;
-  };
-  
-  InstanceConfig _iConfig;
-  DynamicVariables _dVars;
+  std::unique_ptr<InstanceConfig>   _iConfig;
+  std::unique_ptr<DynamicVariables> _dVars;
   
 }; // class BehaviorEnrollFace
   

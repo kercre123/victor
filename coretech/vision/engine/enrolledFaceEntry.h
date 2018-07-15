@@ -123,6 +123,9 @@ public:
   
   void SetScore(RecognitionScore newScore) { _score = newScore; }
   
+  // Includes session-only entry
+  size_t GetNumAlbumEntries() const { return _albumEntrySeenTimes.size(); }
+  
   // Returns a map of album entries fo last seen times
   const std::map<AlbumEntryID_t, Time>& GetAlbumEntries() const { return _albumEntrySeenTimes; }
   
@@ -134,7 +137,7 @@ public:
   
   void SetAlbumEntryLastSeenTime(AlbumEntryID_t entry, Time time);
   
-  AlbumEntryID_t  GetSessionOnlyAlbumEntry() const { return _sessionOnlyAlbumEntry; }
+  AlbumEntryID_t GetSessionOnlyAlbumEntry() const { return _sessionOnlyAlbumEntry; }
   
   // Get when this enrolled face was added to our album
   Time GetEnrollmentTime() const { return _enrollmentTime; }

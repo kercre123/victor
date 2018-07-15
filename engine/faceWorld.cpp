@@ -967,6 +967,8 @@ namespace Cozmo {
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void FaceWorld::Enroll(Vision::FaceID_t faceID)
   {
+    SetFaceEnrollmentComplete(false);
+    
     // If starting session enrollment, then set the num enrollments to -1 to get "ongoing"
     // enrollment. Otherwise, use the max we can store.
     const bool sessionOnly = (Vision::UnknownFaceID == faceID);

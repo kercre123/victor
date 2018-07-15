@@ -177,6 +177,9 @@ namespace Vision {
     void AddDebugInfo(FaceID_t matchedID, RecognitionScore score,
                       std::list<FaceRecognitionMatch>& newDebugInfo) const;
     
+    // Cancel existing and remove partial album entries
+    void CancelExistingEnrollment();
+    
     // TODO: Using Util::numeric_cast here would be nice, but its not (always) constexpr...
     static constexpr s32 kMaxNamedFacesInAlbum       = (s32)FaceRecognitionConstants::MaxNumFacesInAlbum;
     static constexpr s32 kMaxAlbumEntriesPerFace     = (s32)FaceRecognitionConstants::MaxNumAlbumEntriesPerFace;

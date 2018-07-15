@@ -56,9 +56,9 @@
       }
       faceElem.append('<p>id: ' + data["faceID"] + '</p>')
               .append('<p>t: ' + data["timestamp"] + '</p>')
-              .append('<p>o: ' + data["originID"] + '</p>')
+              .append('<p>origin: ' + data["originID"] + '</p>')
       if( typeof data.name !== 'undefined' ) {
-        faceElem.append('<p>t: ' + data["name"] + '</p>');
+        faceElem.append('<p>name: ' + data["name"] + '</p>');
       }
       if( shouldSort ) {
         sortListById( faceList );

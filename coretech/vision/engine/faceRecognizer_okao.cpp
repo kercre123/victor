@@ -940,17 +940,57 @@ namespace Vision {
     return RESULT_OK;
   } // RegisterNewUser()
 
-  void FaceRecognizer::SetAllowedEnrollments(s32 N, FaceID_t forFaceID)
+  void FaceRecognizer::CancelExistingEnrollment()
   {
     // If we were enrolling a specific face and now we're being told not to
     // then mark the last enrollment as cancelled
-    if(forFaceID == UnknownFaceID && _enrollmentID != UnknownFaceID && _enrollmentCount > 0)
+    if(_enrollmentID != UnknownFaceID && _enrollmentCount > 0)
     {
-      PRINT_CH_INFO(LOG_CHANNEL, "FaceRecognizer.SetAllowedEnrollments.Cancel",
+      PRINT_CH_INFO(LOG_CHANNEL, "FaceRecognizer.CancelExistingEnrollment",
                     "Cancelling enrollment of ID %d", _enrollmentID);
       _isEnrollmentCancelled = true;
+      
+      // Remove the (partial) album entry we were in the process of enrolling
+      auto enrollDataIter = _enrollmentData.find(_enrollmentID);
+      if(enrollDataIter == _enrollmentData.end())
+      {
+        PRINT_NAMED_WARNING("FaceRecognizer.CancelExistingEnrollment.NoEnrollmentDataToErase",
+                            "enrollmentID=%d", _enrollmentID);
+      }
+      else
+      {
+        if(enrollDataIter->second.GetNumAlbumEntries() == 1)
+        {
+          PRINT_CH_INFO(LOG_CHANNEL, "FaceRecognizer.CancelExistingEnrollment.ErasingFace",
+                        "Removing entire Face %d, which had only one album entry remaining",
+                        _enrollmentID);
+          EraseFace(_enrollmentID);
+        }
+        else if(ANKI_VERIFY(enrollDataIter->second.GetAlbumEntries().find(_nextAlbumEntry)
+                            != enrollDataIter->second.GetAlbumEntries().end(),
+                            "FaceRecognizer.CancelExistingEnrollment.BadNextAlbumEntry",
+                            "AlbumEntry:%d",
+                            _nextAlbumEntry))
+        {
+          // Just remove the album entry we were enrolling into
+          enrollDataIter->second.RemoveAlbumEntry(_nextAlbumEntry);
+          _albumEntryToFaceID.erase(_nextAlbumEntry);
+          
+          PRINT_CH_INFO(LOG_CHANNEL, "FaceRecognizer.CancelExistingEnrollment.RemoveAlbumEntry",
+                        "Removed AlbumEntry %d from Face %d, %zu entries remain",
+                        _nextAlbumEntry, _enrollmentID, enrollDataIter->second.GetNumAlbumEntries());
+        }
+      }
     }
-
+  } // CancelExistingEnrollment()
+  
+  void FaceRecognizer::SetAllowedEnrollments(s32 N, FaceID_t forFaceID)
+  {
+    if(forFaceID == UnknownFaceID)
+    {
+      CancelExistingEnrollment();
+    }
+    
     _enrollmentCount = N;
     _origEnrollmentCount = N;
     _enrollmentID = forFaceID;
@@ -1088,7 +1128,7 @@ namespace Vision {
         }
 
         if(kFaceRecognitionExtraDebug) {
-          PRINT_CH_INFO(LOG_CHANNEL, "UpdateExistinguser",
+          PRINT_CH_INFO(LOG_CHANNEL, "UpdateExistingUser",
                         "Adding Data %d to AlbumEntry %d of %zu for FaceID %d",
                         entryToReplace, albumEntry, enrollData.GetAlbumEntries().size(), faceID);
         }

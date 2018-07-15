@@ -28,6 +28,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
+#include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/robotStatsTracker.h"
@@ -91,7 +92,10 @@ CONSOLE_VAR(f32,               kEnrollFace_MinBackup_mm,                        
 CONSOLE_VAR(f32,               kEnrollFace_MaxBackup_mm,                        CONSOLE_GROUP, 15.f);
 CONSOLE_VAR(f32,               kEnrollFace_MaxTotalBackup_mm,                   CONSOLE_GROUP, 50.f);
 
-CONSOLE_VAR(s32,               kEnrollFace_NumImagesToWait,                     CONSOLE_GROUP, 3);
+// Max angle to turn while looking for a face
+CONSOLE_VAR(f32,               kEnrollFace_MaxTurnTowardsFaceAngle_rad,         CONSOLE_GROUP, DEG_TO_RAD(180.f));
+  
+CONSOLE_VAR(s32,               kEnrollFace_NumImagesToWait,                     CONSOLE_GROUP, 5);
 
 // Number of faces to consider "too many" and forced timeout when seeing that many
 CONSOLE_VAR(s32,               kEnrollFace_DefaultMaxFacesVisible,              CONSOLE_GROUP, 1); // > this is "too many"
@@ -99,23 +103,126 @@ CONSOLE_VAR(f32,               kEnrollFace_DefaultTooManyFacesTimeout_sec,      
 CONSOLE_VAR(f32,               kEnrollFace_DefaultTooManyFacesRecentTime_sec,   CONSOLE_GROUP, 0.5f);
 
 CONSOLE_VAR(u32,               kEnrollFace_TicksForKnownNameBeforeFail,         CONSOLE_GROUP, 35);
-CONSOLE_VAR(TimeStamp_t,       kEnrollFace_TimeStopMovingAfterManualTurn_ms,    CONSOLE_GROUP, 8000);
 CONSOLE_VAR(TimeStamp_t,       kEnrollFace_MaxInterruptionBeforeReset_ms,       CONSOLE_GROUP, 10000);
 
+// Whether seeing a named, wrong face causes the behavior to end. If not, will instead just go back
+// to looking for a face
+CONSOLE_VAR(bool,              kEnrollFace_FailOnWrongFace,                     CONSOLE_GROUP, false);
+  
+enum class SayWrongNameMode : u8
+{
+  Off   = 0,  // Don't say name at all, just go back to looking for faces
+  Short = 1,  // Just say the name
+  Long  = 2,  // "You are "X" not "Y"
+};
+
+// This only matters if kEnrollFace_FailOnWrongFace==false
+CONSOLE_VAR(u8, kEnrollFace_SayWrongNameMode,  CONSOLE_GROUP, Util::EnumToUnderlying(SayWrongNameMode::Long));
+  
+  
 static const char * const kLogChannelName = "FaceRecognizer";
 static const char * const kMaxFacesVisibleKey = "maxFacesVisible";
 static const char * const kTooManyFacesTimeoutKey = "tooManyFacesTimeout_sec";
 static const char * const kTooManyFacesRecentTimeKey = "tooManyFacesRecentTime_sec";
+static const char * const kFaceSelectionPenaltiesKey = "faceSelectionPenalties";
 
 }
 
 // Transition to a new state and update the debug name for logging/debugging
-#define SET_STATE(s) do{ _dVars.persistent.state = State::s; DEBUG_SET_STATE(s); } while(0)
+#define SET_STATE(s) do{ _dVars->persistent.state = State::s; DEBUG_SET_STATE(s); } while(0)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorEnrollFace::InstanceConfig::InstanceConfig()
+struct BehaviorEnrollFace::InstanceConfig
 {
-  timeout_sec = kEnrollFace_Timeout_sec;
+  InstanceConfig();
+  
+  s32              maxFacesVisible;
+  f32              tooManyFacesRecentTime_sec;
+  f32              tooManyFacesTimeout_sec;
+  f32              timeout_sec;
+  
+  ICozmoBehaviorPtr driveOffChargerBehavior;
+  ICozmoBehaviorPtr putDownBlockBehavior;
+  std::shared_ptr<BehaviorTextToSpeechLoop> ttsBehavior;
+  
+  FaceSelectionComponent::FaceSelectionFactorMap faceSelectionCriteria;
+};
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+struct BehaviorEnrollFace::DynamicVariables
+{
+  DynamicVariables();
+  
+  struct WrongFaceInfo {
+    FaceID_t    faceID;
+    u32         count;
+    bool        idChanged;
+    bool        nameSaid;
+    
+    explicit WrongFaceInfo(FaceID_t id, bool idJustChanged = false)
+    : faceID(id)
+    , count(1)
+    , idChanged(idJustChanged)
+    , nameSaid(false)
+    { }
+  };
+  
+  struct Persistent {
+    State          state = State::NotStarted;
+    bool           didEverLeaveCharger = false;
+    TimeStamp_t    lastDeactivationTime_ms = 0;
+    
+    bool           requestedRescan = false;
+    
+    using EnrollmentSettings = ExternalInterface::SetFaceToEnroll;
+    std::unique_ptr<EnrollmentSettings> settings;
+    
+    std::map<std::string, WrongFaceInfo> wrongFaceStats;
+    
+    int numInterruptions = 0;
+  };
+  Persistent       persistent;
+  
+  bool             sayName;
+  bool             useMusic;
+  bool             saveToRobot;
+  bool             saveSucceeded;
+  bool             enrollingSpecificID;
+  FaceID_t         faceID;
+  FaceID_t         saveID;
+  FaceID_t         observedUnusableID;
+  
+  TimeStamp_t      lastFaceSeenTime_ms;
+  
+  TimeStamp_t      timeScanningStarted_ms;
+  TimeStamp_t      timeStartedLookingForFace_ms;
+  
+  f32 timeout_sec;
+  
+  bool wasUnexpectedRotationWithoutMotorsEnabled;
+  
+  f32              startedSeeingMultipleFaces_sec;
+  f32              startTime_sec;
+  
+  f32              totalBackup_mm;
+  
+  std::string      faceName;
+  std::string      observedUnusableName;
+  
+  Radians          lastRelBodyAngle;
+  
+  std::set<Vision::FaceID_t> facesSeen;
+  std::unordered_map<Vision::FaceID_t, bool> isFaceNamed;
+  
+  State            failedState;
+};
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorEnrollFace::InstanceConfig::InstanceConfig()
+: timeout_sec(kEnrollFace_Timeout_sec)
+, faceSelectionCriteria(FaceSelectionComponent::kDefaultSelectionCriteria)
+{
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -142,15 +249,12 @@ BehaviorEnrollFace::DynamicVariables::DynamicVariables()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorEnrollFace::BehaviorEnrollFace(const Json::Value& config)
 : ICozmoBehavior(config)
+, _iConfig(new InstanceConfig)
+, _dVars(new DynamicVariables)
 {
-  _dVars.persistent.settings.reset( new ExternalInterface::SetFaceToEnroll() );
+  _dVars->persistent.settings.reset( new ExternalInterface::SetFaceToEnroll() );
 
-  SubscribeToTags({{
-    EngineToGameTag::UnexpectedMovement,
-    EngineToGameTag::RobotChangedObservedFaceID,
-    EngineToGameTag::RobotOffTreadsStateChanged,
-    EngineToGameTag::CliffEvent
-  }});
+  SubscribeToTags({EngineToGameTag::RobotChangedObservedFaceID});
 
   SubscribeToTags({{
     GameToEngineTag::SetFaceToEnroll,
@@ -160,31 +264,45 @@ BehaviorEnrollFace::BehaviorEnrollFace(const Json::Value& config)
   // If Cozmo sees more than maxFacesVisible for longer than tooManyFacesTimeout seconds while looking for a face or
   // enrolling a face, then the behavior transitions to the TimedOut state and then returns the SawMultipleFaces
   // FaceEnrollmentResult.
-  _iConfig.maxFacesVisible = config.get(kMaxFacesVisibleKey, kEnrollFace_DefaultMaxFacesVisible).asInt();
-  _iConfig.tooManyFacesTimeout_sec = config.get(kTooManyFacesTimeoutKey, kEnrollFace_DefaultTooManyFacesTimeout_sec).asFloat();
-  _iConfig.tooManyFacesRecentTime_sec = config.get(kTooManyFacesRecentTimeKey, kEnrollFace_DefaultTooManyFacesRecentTime_sec).asFloat();
+  _iConfig->maxFacesVisible = config.get(kMaxFacesVisibleKey, kEnrollFace_DefaultMaxFacesVisible).asInt();
+  _iConfig->tooManyFacesTimeout_sec = config.get(kTooManyFacesTimeoutKey, kEnrollFace_DefaultTooManyFacesTimeout_sec).asFloat();
+  _iConfig->tooManyFacesRecentTime_sec = config.get(kTooManyFacesRecentTimeKey, kEnrollFace_DefaultTooManyFacesRecentTime_sec).asFloat();
+  
+  if( config.isMember(kFaceSelectionPenaltiesKey) ) {
+    const bool parsedOK = FaceSelectionComponent::ParseFaceSelectionFactorMap(config[kFaceSelectionPenaltiesKey],
+                                                                              _iConfig->faceSelectionCriteria);
+    ANKI_VERIFY(parsedOK, "BehaviorEnrollFace.InvalidFaceSelectionConfig",
+                "behavior '%s' has invalid config",
+                GetDebugLabel().c_str());
+  }
 }
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Needed b/c of forward declaration of iConfig and dVars
+BehaviorEnrollFace::~BehaviorEnrollFace()
+{
+  
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
-  delegates.insert( _iConfig.driveOffChargerBehavior.get() );
-  delegates.insert( _iConfig.putDownBlockBehavior.get() );
-  delegates.insert( _iConfig.ttsBehavior.get() );
+  delegates.insert( _iConfig->driveOffChargerBehavior.get() );
+  delegates.insert( _iConfig->putDownBlockBehavior.get() );
+  delegates.insert( _iConfig->ttsBehavior.get() );
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   const char* list[] = {
     kMaxFacesVisibleKey,
     kTooManyFacesTimeoutKey,
     kTooManyFacesRecentTimeKey,
+    kFaceSelectionPenaltiesKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::CheckForIntentData() const
@@ -198,12 +316,12 @@ void BehaviorEnrollFace::CheckForIntentData() const
   UserIntentPtr intentData = uic.GetUserIntentIfActive(USER_INTENT(meet_victor));
   if( intentData != nullptr ) {
     const auto& meetVictor = intentData->intent.Get_meet_victor();
-    _dVars.persistent.settings->name = meetVictor.username;
-    _dVars.persistent.settings->observedID = Vision::UnknownFaceID;
-    _dVars.persistent.settings->saveID = 0;
-    _dVars.persistent.settings->saveToRobot = true;
-    _dVars.persistent.settings->sayName = true;
-    _dVars.persistent.settings->useMusic = false;
+    _dVars->persistent.settings->name = meetVictor.username;
+    _dVars->persistent.settings->observedID = Vision::UnknownFaceID;
+    _dVars->persistent.settings->saveID = 0;
+    _dVars->persistent.settings->saveToRobot = true;
+    _dVars->persistent.settings->sayName = true;
+    _dVars->persistent.settings->useMusic = false;
   }
 }
 
@@ -212,8 +330,8 @@ bool BehaviorEnrollFace::WantsToBeActivatedBehavior() const
 {
   auto& uic = GetBehaviorComp<UserIntentComponent>();
   const bool pendingIntent = uic.IsUserIntentPending(USER_INTENT(meet_victor) );
-  const bool isWaitingResume = (_dVars.persistent.state != State::NotStarted);
-  const bool requestedRescan = _dVars.persistent.requestedRescan;
+  const bool isWaitingResume = (_dVars->persistent.state != State::NotStarted);
+  const bool requestedRescan = _dVars->persistent.requestedRescan;
 
   const bool wantsToBeActivated = pendingIntent || isWaitingResume || requestedRescan;
   return wantsToBeActivated;
@@ -228,48 +346,55 @@ Result BehaviorEnrollFace::InitEnrollmentSettings()
                         "BehaviorEnrollFace started without an enrollment request");
   }
 
-  _dVars.faceID        = _dVars.persistent.settings->observedID;
-  _dVars.saveID        = _dVars.persistent.settings->saveID;
-  _dVars.faceName      = _dVars.persistent.settings->name;
-  _dVars.saveToRobot   = _dVars.persistent.settings->saveToRobot;
-  _dVars.useMusic      = _dVars.persistent.settings->useMusic;
-  _dVars.sayName       = _dVars.persistent.settings->sayName;
+  _dVars->faceID        = _dVars->persistent.settings->observedID;
+  _dVars->saveID        = _dVars->persistent.settings->saveID;
+  _dVars->faceName      = _dVars->persistent.settings->name;
+  _dVars->saveToRobot   = _dVars->persistent.settings->saveToRobot;
+  _dVars->useMusic      = _dVars->persistent.settings->useMusic;
+  _dVars->sayName       = _dVars->persistent.settings->sayName;
 
-  _dVars.enrollingSpecificID = (_dVars.faceID != Vision::UnknownFaceID);
+  _dVars->enrollingSpecificID = (_dVars->faceID != Vision::UnknownFaceID);
 
-  if(_dVars.faceName.empty())
+  if(_dVars->faceName.empty())
   {
     PRINT_NAMED_ERROR("BehaviorEnrollFace.InitEnrollmentSettings.EmptyName", "");
     return RESULT_FAIL;
   }
 
-  if( GetBEI().GetVisionComponent().IsNameTaken( _dVars.faceName )
-      && !_dVars.enrollingSpecificID
-      && (_dVars.persistent.state == State::NotStarted) )  // if previously interrupted after enrollment completed, this name is ok
-  {
-    TransitionToSayingIKnowThatName();
-    return RESULT_FAIL;
-  }
-  
-  if(_dVars.saveID != Vision::UnknownFaceID)
+  if(_dVars->saveID != Vision::UnknownFaceID)
   {
     // If saveID is specified and we've already seen it (so it's in FaceWorld), make
     // sure that it is the ID of a _named_ face
-    const Face* face = GetBEI().GetFaceWorld().GetFace(_dVars.saveID);
+    const Face* face = GetBEI().GetFaceWorld().GetFace(_dVars->saveID);
     if(nullptr != face && !face->HasName())
     {
       PRINT_NAMED_WARNING("BehaviorEnrollFace.InitEnrollmentSettings.UnnamedSaveID",
-                          "Face with SaveID:%d has no name", _dVars.saveID);
+                          "Face with SaveID:%d has no name", _dVars->saveID);
       return RESULT_FAIL;
     }
   }
-  else if(!GetBEI().GetVisionComponent().CanAddNamedFace())
+  else
   {
-    // If saveID is not specified, then we're trying to add a new face, so fail
-    // if there's no room for new named faces
-    PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitEnrollmentSettings.NoSpaceLeft", "");
-    TransitionToFailedState(State::Failed_NamedStorageFull, "Failed_NamedStorageFull");
-    return RESULT_FAIL;
+    // We're enrolling a new face. Make sure:
+    // 1. The name is available
+    // 2. We have room for a new face
+    
+    if(GetBEI().GetVisionComponent().IsNameTaken( _dVars->faceName )
+       && !_dVars->enrollingSpecificID
+       && (_dVars->persistent.state == State::NotStarted) )  // if previously interrupted after enrollment completed, this name is ok
+    {
+      TransitionToSayingIKnowThatName();
+      return RESULT_FAIL;
+    }
+    
+    if(!GetBEI().GetVisionComponent().CanAddNamedFace())
+    {
+      // If saveID is not specified, then we're trying to add a new face, so fail
+      // if there's no room for new named faces
+      PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitEnrollmentSettings.NoSpaceLeft", "");
+      TransitionToFailedState(State::Failed_NamedStorageFull, "Failed_NamedStorageFull");
+      return RESULT_FAIL;
+    }
   }
   
   return RESULT_OK;
@@ -278,12 +403,12 @@ Result BehaviorEnrollFace::InitEnrollmentSettings()
 void BehaviorEnrollFace::InitBehavior()
 {
   const auto& BC = GetBEI().GetBehaviorContainer();
-  _iConfig.driveOffChargerBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(DriveOffChargerStraight) );
-  _iConfig.putDownBlockBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(PutDownBlock) );
+  _iConfig->driveOffChargerBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(DriveOffChargerStraight) );
+  _iConfig->putDownBlockBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(PutDownBlock) );
   
   BC.FindBehaviorByIDAndDowncast( BEHAVIOR_ID(DefaultTextToSpeechLoop),
                                   BEHAVIOR_CLASS(TextToSpeechLoop),
-                                  _iConfig.ttsBehavior );
+                                  _iConfig->ttsBehavior );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -293,13 +418,17 @@ void BehaviorEnrollFace::OnBehaviorActivated()
 
   // reset dynamic variables
   {
-    auto persistent = std::move(_dVars.persistent);
-    _dVars = DynamicVariables();
-    _dVars.persistent = std::move(persistent);
-    _dVars.timeout_sec = _iConfig.timeout_sec;
+    auto persistent = std::move(_dVars->persistent);
+    _dVars.reset(new DynamicVariables());
+    _dVars->persistent = std::move(persistent);
+    _dVars->timeout_sec = _iConfig->timeout_sec;
 
-    const auto& moveComp = GetBEI().GetMovementComponent();
-    _dVars.wasUnexpectedRotationWithoutMotorsEnabled = moveComp.IsUnexpectedRotationWithoutMotorsEnabled();
+    // This behavior uses a special form of unexpected movement detection. Store
+    // current state of that mode (so we can put it back on deactivation) and then
+    // enable for the duration of this behavior
+    auto& moveComp = GetBEI().GetMovementComponent();
+    _dVars->wasUnexpectedRotationWithoutMotorsEnabled = moveComp.IsUnexpectedRotationWithoutMotorsEnabled();
+    moveComp.EnableUnexpectedRotationWithoutMotors( true );
   }
 
   const Result settingsResult = InitEnrollmentSettings();
@@ -307,16 +436,16 @@ void BehaviorEnrollFace::OnBehaviorActivated()
   {
     PRINT_NAMED_WARNING("BehaviorEnrollFace.InitInternal.BadSettings",
                         "Disabling enrollment");
-    if( _dVars.persistent.state != State::SayingIKnowThatName ) {
+    if( _dVars->persistent.state != State::SayingIKnowThatName ) {
       CancelSelf();
     }
     return;
   }
   
-  _dVars.persistent.requestedRescan = false;
+  _dVars->persistent.requestedRescan = false;
 
   // Check if we were interrupted and need to fast forward:
-  switch(_dVars.persistent.state)
+  switch(_dVars->persistent.state)
   {
     case State::SayingName:
     {
@@ -365,7 +494,7 @@ void BehaviorEnrollFace::OnBehaviorActivated()
 
   PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal",
                 "Initialize with ID=%d and name '%s', to be saved to ID=%d",
-                _dVars.faceID, Util::HidePersonallyIdentifiableInfo(_dVars.faceName.c_str()), _dVars.saveID);
+                _dVars->faceID, Util::HidePersonallyIdentifiableInfo(_dVars->faceName.c_str()), _dVars->saveID);
 
   if( GetBEI().GetRobotInfo().IsOnChargerPlatform() ) {
     TransitionToDriveOffCharger();
@@ -381,7 +510,7 @@ void BehaviorEnrollFace::OnBehaviorActivated()
 void BehaviorEnrollFace::BehaviorUpdate()
 {
   // conditions that would end enrollment, even if the behavior has been interrupted
-  if( (_dVars.persistent.settings != nullptr) && IsEnrollmentRequested() ) {
+  if( (_dVars->persistent.settings != nullptr) && IsEnrollmentRequested() ) {
     const bool lowBattery = GetBEI().GetRobotInfo().GetBatteryLevel() == BatteryLevel::Low;
     const auto& uic = GetBehaviorComp<UserIntentComponent>();
     const bool triggerWordPending = uic.IsTriggerWordPending();
@@ -393,11 +522,11 @@ void BehaviorEnrollFace::BehaviorUpdate()
   }
 
   if( !IsActivated() ) {
-    if( _dVars.persistent.state != State::NotStarted ) {
+    if( _dVars->persistent.state != State::NotStarted ) {
       // interrupted
-      if( _dVars.persistent.lastDeactivationTime_ms > 0 ) {
+      if( _dVars->persistent.lastDeactivationTime_ms > 0 ) {
         TimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-        if( currTime_ms - _dVars.persistent.lastDeactivationTime_ms > kEnrollFace_MaxInterruptionBeforeReset_ms ) {
+        if( currTime_ms - _dVars->persistent.lastDeactivationTime_ms > kEnrollFace_MaxInterruptionBeforeReset_ms ) {
           DisableEnrollment();
           SET_STATE( NotStarted );
         }
@@ -408,27 +537,26 @@ void BehaviorEnrollFace::BehaviorUpdate()
 
   // See if we were in the midst of finding or enrolling a face but the enrollment is
   // no longer requested, then we've been cancelled
-  if((State::LookingForFace == _dVars.persistent.state || State::Enrolling == _dVars.persistent.state) && !IsEnrollmentRequested())
+  if((State::LookingForFace == _dVars->persistent.state || State::Enrolling == _dVars->persistent.state) && !IsEnrollmentRequested())
   {
     PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.UpdateInternal_Legacy.EnrollmentCancelled", "In state: %s",
-                  _dVars.persistent.state == State::LookingForFace ? "LookingForFace" : "Enrolling");
+                  _dVars->persistent.state == State::LookingForFace ? "LookingForFace" : "Enrolling");
     CancelSelf();
     return;
   }
 
-
   if( !GetBEI().GetRobotInfo().IsOnChargerPlatform() ) {
-    _dVars.persistent.didEverLeaveCharger = true;
+    _dVars->persistent.didEverLeaveCharger = true;
   }
 
-  const bool justPlacedOnCharger = _dVars.persistent.didEverLeaveCharger && GetBEI().GetRobotInfo().IsOnChargerPlatform();
-  if( justPlacedOnCharger && (_dVars.persistent.state != State::Enrolling) ) {
+  const bool justPlacedOnCharger = _dVars->persistent.didEverLeaveCharger && GetBEI().GetRobotInfo().IsOnChargerPlatform();
+  if( justPlacedOnCharger && (_dVars->persistent.state != State::Enrolling) ) {
     // user placed the robot on the charger. cancel. Don't cancel for Enrolling since that needs
     // a getout and is handled below
     SET_STATE(Cancelled);
   }
 
-  switch(_dVars.persistent.state)
+  switch(_dVars->persistent.state)
   {
     case State::Success:
     case State::NotStarted:
@@ -444,16 +572,27 @@ void BehaviorEnrollFace::BehaviorUpdate()
       return;
     }
 
+    case State::WaitingInPlaceForFace:
     case State::LookingForFace:
     {
       // Check to see if the face we've been enrolling has changed based on what was
       // observed since the last tick
       UpdateFaceToEnroll();
+      
+      // See if wrongFace info was updated via a changedID message or call to UpdateFaceToEnroll()
+      std::string wrongName;
+      FaceID_t wrongID = Vision::UnknownFaceID;
+      if(IsSeeingWrongFace(wrongID, wrongName))
+      {
+        TransitionToWrongFace(wrongID, wrongName);
+      }
+      
       break;
     }
-
+    
     case State::SayingName:
     case State::SayingIKnowThatName:
+    case State::SayingWrongName:
     case State::SavingToRobot:
     case State::EmotingConfusion:
     case State::ScanningInterrupted:
@@ -470,14 +609,14 @@ void BehaviorEnrollFace::BehaviorUpdate()
       // Check to see if we're done
       if(GetBEI().GetFaceWorld().IsFaceEnrollmentComplete())
       {
-        PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.CheckIfDone.ReachedEnrollmentCount", "");
+        PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.BehaviorUpdate.ReachedEnrollmentCount", "");
 
         finishedScanning = true;
 
         // If we complete successfully, unset the observed ID/name
-        _dVars.observedUnusableID = Vision::UnknownFaceID;
-        _dVars.observedUnusableName.clear();
-        GetBEI().GetVisionComponent().AssignNameToFace(_dVars.faceID, _dVars.faceName, _dVars.saveID);
+        _dVars->observedUnusableID = Vision::UnknownFaceID;
+        _dVars->observedUnusableName.clear();
+        GetBEI().GetVisionComponent().AssignNameToFace(_dVars->faceID, _dVars->faceName, _dVars->saveID);
 
         // Note that we will wait to disable face enrollment until the very end of
         // the behavior so that we remain resume-able from reactions, in case we
@@ -493,34 +632,37 @@ void BehaviorEnrollFace::BehaviorUpdate()
       }
       else
       {
-        // Check to see if the face we've been enrolling has changed based on what was
-        // observed since the last tick
-        UpdateFaceToEnroll();
-
-        const auto& robotInfo = GetBEI().GetRobotInfo();
-        // If we haven't seen the person (and only the one person) in too long, go back to looking for them
-        if(robotInfo.GetLastImageTimeStamp() - _dVars.lastFaceSeenTime_ms > kEnrollFace_TimeoutForReLookForFace_ms)
+        const bool lostEnrollee = ((GetBEI().GetRobotInfo().GetLastImageTimeStamp()
+                                    - _dVars->lastFaceSeenTime_ms) > kEnrollFace_TimeoutForReLookForFace_ms);
+        
+        // If we haven't seen the person (and only the one person) in too long, or got picked up
+        // or reoriented, go back to looking for them
+        if(lostEnrollee)
         {
-          _dVars.lastFaceSeenTime_ms = 0;
-
-          // Go back to looking for face
-          PRINT_NAMED_INFO("BehaviorEnrollFace.CheckIfDone.NoLongerSeeingFace",
-                           "Have not seen face %d in %dms, going back to LookForFace state for %s",
-                           _dVars.faceID, kEnrollFace_TimeoutForReLookForFace_ms,
-                           _dVars.enrollingSpecificID ? ("face " + std::to_string(_dVars.faceID)).c_str() : "any face");
-
-          // If we are not enrolling a specific face ID, we are allowed to try again
-          // with a new face, so don't hang waiting to see the one we previously picked
-          if(!_dVars.enrollingSpecificID)
-          {
-            _dVars.faceID = Vision::UnknownFaceID;
-          }
-
+          PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.BehaviorUpdate.LostEnrollee", "");
+          finishedScanning = true;
+          ResetEnrollment();
           TransitionToLookingForFace();
+        }
+        else
+        {
+          // Check to see if the face we've been enrolling has changed based on what was
+          // observed since the last tick
+          UpdateFaceToEnroll();
+          
+          // See if wrongFace info was updated via a changedID message or call to UpdateFaceToEnroll()
+          std::string wrongName;
+          FaceID_t wrongID = Vision::UnknownFaceID;
+          if(IsSeeingWrongFace(wrongID, wrongName))
+          {
+            ResetEnrollment();
+            TransitionToWrongFace(wrongID, wrongName);
+          }
         }
       }
 
-      if( finishedScanning ) {
+      if( finishedScanning )
+      {
         // tell the app we've finished scanning
         if( GetBEI().GetRobotInfo().HasGatewayInterface() ) {
           auto* status = new external_interface::MeetVictorFaceScanComplete;
@@ -529,14 +671,14 @@ void BehaviorEnrollFace::BehaviorUpdate()
         // das msg
         {
           const TimeStamp_t currentTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-          const TimeStamp_t timeSpentScanning_ms = currentTime_ms - _dVars.timeScanningStarted_ms;
-          const TimeStamp_t timeBeforeFirstFace_ms = _dVars.timeScanningStarted_ms - _dVars.timeStartedLookingForFace_ms;
+          const TimeStamp_t timeSpentScanning_ms = currentTime_ms - _dVars->timeScanningStarted_ms;
+          const TimeStamp_t timeBeforeFirstFace_ms = _dVars->timeScanningStarted_ms - _dVars->timeStartedLookingForFace_ms;
           int numPartialFacesSeen = 0;
           int numFullFacesSeen = 0;
           int numNamedFacesSeen = 0;
-          for( const auto& faceID : _dVars.facesSeen ) {
-            const auto it = _dVars.isFaceNamed.find(faceID);
-            if( it != _dVars.isFaceNamed.end() && it->second ) {
+          for( const auto& faceID : _dVars->facesSeen ) {
+            const auto it = _dVars->isFaceNamed.find(faceID);
+            if( it != _dVars->isFaceNamed.end() && it->second ) {
               ++numNamedFacesSeen;
             }
             if( faceID > 0 ) {
@@ -564,16 +706,17 @@ void BehaviorEnrollFace::BehaviorUpdate()
 
   } // switch(_state)
 }
-
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::OnBehaviorDeactivated()
 {
   // Leave general-purpose / session-only enrollment enabled (i.e. not for a specific face)
   GetBEI().GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
-  _dVars.persistent.lastDeactivationTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  _dVars->persistent.lastDeactivationTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
+  // Reset the unexpected movement mode back to what it was when this behavior activated
   auto& moveComp = GetBEI().GetMovementComponent();
-  moveComp.EnableUnexpectedRotationWithoutMotors( _dVars.wasUnexpectedRotationWithoutMotorsEnabled );
+  moveComp.EnableUnexpectedRotationWithoutMotors( _dVars->wasUnexpectedRotationWithoutMotorsEnabled );
 
   const auto& robotInfo = GetBEI().GetRobotInfo();
   // if on the charger, we're exiting to the on charger reaction, unity is going to try to cancel but too late.
@@ -585,51 +728,51 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
 
   ExternalInterface::FaceEnrollmentCompleted info;
 
-  if( _dVars.persistent.state == State::EmotingConfusion ) {
+  if( _dVars->persistent.state == State::EmotingConfusion ) {
     // interrupted while in a transient animation state. Replace with the reason for being
     // in this state
-    _dVars.persistent.state = _dVars.failedState;
+    _dVars->persistent.state = _dVars->failedState;
   }
 
   if( ANKI_DEVELOPER_CODE ) {
     // in unit tests, this behavior will always want to re-activate when Cancel via the delegation component,
     // unless we disable enrollment. Use a special name (one that would almost certainly never be spoken)
-    if( _dVars.faceName == "Special name for unit tests to end enrollment" ) {
+    if( _dVars->faceName == "Special name for unit tests to end enrollment" ) {
       SET_STATE(Success);
       DisableEnrollment();
     }
   }
 
-  const bool wasSeeingMultipleFaces = _dVars.startedSeeingMultipleFaces_sec > 0.f;
-  const bool observedUnusableFace = _dVars.observedUnusableID != Vision::UnknownFaceID && !_dVars.observedUnusableName.empty();
+  const bool wasSeeingMultipleFaces = _dVars->startedSeeingMultipleFaces_sec > 0.f;
+  const bool observedUnusableFace = _dVars->observedUnusableID != Vision::UnknownFaceID && !_dVars->observedUnusableName.empty();
 
   // If observed ID/face are set, then it means we never found a valid, unnamed face to use
   // for enrollment, so return those in the completion message and indicate this in the result.
   // NOTE: Seeing multiple faces effectively takes precedence here.
-  if(_dVars.persistent.state == State::Failed_WrongFace || (_dVars.persistent.state == State::TimedOut &&
-                                           !wasSeeingMultipleFaces &&
-                                           observedUnusableFace))
+  if(_dVars->persistent.state == State::Failed_WrongFace || (_dVars->persistent.state == State::TimedOut &&
+                                                             !wasSeeingMultipleFaces &&
+                                                             observedUnusableFace))
   {
-    info.faceID = _dVars.observedUnusableID;
-    info.name   = _dVars.observedUnusableName;
+    info.faceID = _dVars->observedUnusableID;
+    info.name   = _dVars->observedUnusableName;
     info.result = FaceEnrollmentResult::SawWrongFace;
   }
   else
   {
-    if(_dVars.saveID != Vision::UnknownFaceID)
+    if(_dVars->saveID != Vision::UnknownFaceID)
     {
       // We just merged the enrolled ID (faceID) into saveID, so report saveID as
       // "who" was enrolled
-      info.faceID = _dVars.saveID;
+      info.faceID = _dVars->saveID;
     }
     else
     {
-      info.faceID = _dVars.faceID;
+      info.faceID = _dVars->faceID;
     }
 
-    info.name   = _dVars.faceName;
+    info.name   = _dVars->faceName;
 
-    switch(_dVars.persistent.state)
+    switch(_dVars->persistent.state)
     {
       case State::TimedOut:
       {
@@ -648,13 +791,21 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
         info.result = FaceEnrollmentResult::Cancelled;
         break;
 
+      case State::Enrolling:
+        // If deactivating while enrolling, make sure we play the interruption animation so
+        // we don't leave the face with "scanning" eyes
+        PlayEmergencyGetOut(AnimationTrigger::MeetVictorLookFaceInterrupt);
+        info.result = FaceEnrollmentResult::Incomplete;
+        break;
+        
       case State::DriveOffCharger:
       case State::PutDownBlock:
+      case State::WaitingInPlaceForFace:
       case State::LookingForFace:
-      case State::Enrolling:
       case State::ScanningInterrupted:
       case State::SayingName:
       case State::SayingIKnowThatName:
+      case State::SayingWrongName:
       case State::SavingToRobot:
         // If we're stopping in any of these states without having timed out
         // then something else is keeping us from completing and the assumption
@@ -693,7 +844,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
     } // switch(_state)
   }
 
-  int numInterruptions = _dVars.persistent.numInterruptions;
+  int numInterruptions = _dVars->persistent.numInterruptions;
 
   // If incomplete, we are being interrupted by something. Don't broadcast completion
   // and don't disable face enrollment.
@@ -706,13 +857,13 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
     // want to erase any *new* face (not a face that was being re-enrolled) since it will not be communicated out in the
     // enrollment result as successfully enrolled, and thus would mean the engine's known faces would be out of sync
     // with the external world. This is largely precautionary.
-    const bool isNewEnrollment = Vision::UnknownFaceID != _dVars.faceID && Vision::UnknownFaceID == _dVars.saveID;
+    const bool isNewEnrollment = Vision::UnknownFaceID != _dVars->faceID && Vision::UnknownFaceID == _dVars->saveID;
     if(info.result != FaceEnrollmentResult::Success && isNewEnrollment)
     {
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.StopInternal.ErasingNewlyEnrolledFace",
                     "Erasing new face %d as a precaution because we are about to report failure result: %s",
-                    _dVars.faceID, EnumToString(info.result));
-      GetBEI().GetVisionComponent().EraseFace(_dVars.faceID);
+                    _dVars->faceID, EnumToString(info.result));
+      GetBEI().GetVisionComponent().EraseFace(_dVars->faceID);
     }
 
     if(info.result == FaceEnrollmentResult::Success)
@@ -726,7 +877,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
 
     PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.StopInternal.BroadcastCompletion",
                   "In state:%hhu, FaceEnrollmentResult=%s",
-                  _dVars.persistent.state, EnumToString(info.result));
+                  _dVars->persistent.state, EnumToString(info.result));
 
     if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
       const auto& msgRef = info;
@@ -743,7 +894,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
     // Done (whether success or failure), so reset state for next run
     SET_STATE(NotStarted);
   } else {
-    numInterruptions = ++_dVars.persistent.numInterruptions;
+    numInterruptions = ++_dVars->persistent.numInterruptions;
   }
 
   auto& uic = GetBehaviorComp<UserIntentComponent>();
@@ -775,42 +926,60 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorEnrollFace::IsEnrollmentRequested() const
 {
-  const bool hasName = !_dVars.persistent.settings->name.empty();
+  const bool hasName = !_dVars->persistent.settings->name.empty();
   return hasName;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::DisableEnrollment()
 {
-  _dVars.persistent.settings->name.clear();
-  _dVars.persistent.didEverLeaveCharger = false;
-  _dVars.persistent.lastTimeUserMovedRobot = 0;
-  _dVars.persistent.lastDeactivationTime_ms = 0;
-  _dVars.persistent.numInterruptions = 0;
+  _dVars->persistent.settings->name.clear();
+  _dVars->persistent.didEverLeaveCharger = false;
+  _dVars->persistent.lastDeactivationTime_ms = 0;
+  _dVars->persistent.numInterruptions = 0;
+  _dVars->persistent.wrongFaceStats.clear();
+  
   // Leave "session-only" face enrollment enabled when we finish
   GetBEI().GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEnrollFace::ResetEnrollment()
+{
+  // Disable enrollment of the faceID we were enrolling
+  // This also clears any partial enrollment that was in progress, which will avoid creating
+  // an album entry with two people in it
+  GetBEI().GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
+  _dVars->lastFaceSeenTime_ms = 0;
+  
+  // If we are not enrolling a specific face ID, we are allowed to try again
+  // with a new face, so don't hang waiting to see the one we previously picked
+  if(!_dVars->enrollingSpecificID)
+  {
+    _dVars->faceID = Vision::UnknownFaceID;
+  }
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorEnrollFace::HasTimedOut() const
 {
   const f32 currTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  const bool hasTimedOut = (currTime_sec > _dVars.startTime_sec + _dVars.timeout_sec);
-  const bool hasSeenTooManyFacesTooLong = (_dVars.startedSeeingMultipleFaces_sec > 0.f &&
-                                           (currTime_sec > _dVars.startedSeeingMultipleFaces_sec + _iConfig.tooManyFacesTimeout_sec));
+  const bool hasTimedOut = (currTime_sec > _dVars->startTime_sec + _dVars->timeout_sec);
+  const bool hasSeenTooManyFacesTooLong = (_dVars->startedSeeingMultipleFaces_sec > 0.f &&
+                                           (currTime_sec > _dVars->startedSeeingMultipleFaces_sec + _iConfig->tooManyFacesTimeout_sec));
 
   if(hasTimedOut)
   {
     PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.HasTimedOut.BehaviorTimedOut",
                   "TimedOut after %.1fsec in State:%s",
-                  _dVars.timeout_sec, GetDebugStateName().c_str());
+                  _dVars->timeout_sec, GetDebugStateName().c_str());
   }
 
   if(hasSeenTooManyFacesTooLong)
   {
     PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.HasTimedOut.TooManyFacesTooLong",
                   "Saw > %d faces for longer than %.1fsec in State:%s",
-                  _iConfig.maxFacesVisible, _iConfig.tooManyFacesTimeout_sec, GetDebugStateName().c_str());
+                  _iConfig->maxFacesVisible, _iConfig->tooManyFacesTimeout_sec, GetDebugStateName().c_str());
   }
 
   return hasTimedOut || hasSeenTooManyFacesTooLong;
@@ -846,8 +1015,8 @@ void BehaviorEnrollFace::TransitionToDriveOffCharger()
     }
   };
 
-  if( _iConfig.driveOffChargerBehavior->WantsToBeActivated() ) {
-    DelegateNow( _iConfig.driveOffChargerBehavior.get(), next);
+  if( _iConfig->driveOffChargerBehavior->WantsToBeActivated() ) {
+    DelegateNow( _iConfig->driveOffChargerBehavior.get(), next);
   } else {
     next();
   }
@@ -862,43 +1031,66 @@ void BehaviorEnrollFace::TransitionToPutDownBlock()
     TransitionToLookingForFace();
   };
 
-  if( _iConfig.putDownBlockBehavior->WantsToBeActivated() ) {
-    DelegateNow( _iConfig.putDownBlockBehavior.get(), next);
+  if( _iConfig->putDownBlockBehavior->WantsToBeActivated() ) {
+    DelegateNow( _iConfig->putDownBlockBehavior.get(), next);
   } else {
     next();
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEnrollFace::TransitionToWaitInPlaceForFace()
+{
+  SET_STATE(WaitingInPlaceForFace);
+  
+  // Look up and wait for a few images in place before proceeding. If we were just moved or this was triggered by
+  // a voice command (which turned the robot toward the sound), this gives the vision system a chance to see
+  // a face from where the robot is and update FaceWorld with it, rather than immediately turning to some
+  // previously-seen face in FaceWorld.
+  CancelDelegates(false); // Make sure we stop tracking/scanning if necessary
+  IActionRunner* action = new CompoundActionSequential({
+    new MoveHeadToAngleAction(MAX_HEAD_ANGLE),
+    new WaitForImagesAction(kEnrollFace_NumImagesToWait, VisionMode::DetectingFaces),
+  });
+  DelegateIfInControl(action, [this](){
+    TransitionToLookingForFace();
+  });
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::TransitionToLookingForFace()
 {
-  const bool playScanningGetOut = (State::Enrolling == _dVars.persistent.state);
+  const bool playScanningGetOut = (State::Enrolling == _dVars->persistent.state);
 
-  if( _dVars.timeStartedLookingForFace_ms == 0 ) {
-    _dVars.timeStartedLookingForFace_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  if( _dVars->timeStartedLookingForFace_ms == 0 ) {
+    _dVars->timeStartedLookingForFace_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   }
-
-  // enable detection of unexpected rotation for the remainder of the behavior. This is reset
-  // to its original value upon behavior deactivation. Note that ReactToUnexpectedMotion is suppressed
-  // during this behavior
-  auto& moveComp = GetBEI().GetMovementComponent();
-  moveComp.EnableUnexpectedRotationWithoutMotors( true );
-
+  
+  // First time here, always wait in place for a face for a few frames before then getting into
+  // a loop of looking for faces. Exception: SayingWrongName, since obviously a face
+  // was just being observed so we can immediately turn to a new one.
+  if(_dVars->persistent.state != State::WaitingInPlaceForFace
+     && _dVars->persistent.state != State::LookingForFace
+     && _dVars->persistent.state != State::SayingWrongName)
+  {
+    TransitionToWaitInPlaceForFace();
+    return;
+  }
+  
   SET_STATE(LookingForFace);
-
+  
+  // Create an action to turn towards the "best" face in FaceWorld
+  // Then wait to give the vision system a chance to see faces in that position before enrolling
+  //   or looking around to find faces if there were none
+  CancelDelegates(false); // Make sure we stop tracking/scanning if necessary
   IActionRunner* action = new CompoundActionSequential({
-    CreateTurnTowardsFaceAction(_dVars.faceID, _dVars.saveID, playScanningGetOut),
+    CreateTurnTowardsFaceAction(_dVars->faceID, _dVars->saveID, playScanningGetOut),
     new WaitForImagesAction(kEnrollFace_NumImagesToWait, VisionMode::DetectingFaces),
   });
 
-
-  // Make sure we stop tracking/scanning if necessary (CreateTurnTowardsFaceAction can create
-  // a tracking action)
-  CancelDelegates(false);
-
   DelegateIfInControl(action, [this]()
               {
-                if(_dVars.lastFaceSeenTime_ms == 0)
+                if(_dVars->lastFaceSeenTime_ms == 0)
                 {
                   // Still no face seen: either time out or try again
                   if(HasTimedOut())
@@ -910,7 +1102,7 @@ void BehaviorEnrollFace::TransitionToLookingForFace()
                   {
                     PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.LookingForFace.NoFaceSeen",
                                   "Trying again. FaceID:%d",
-                                  _dVars.faceID);
+                                  _dVars->faceID);
 
                     DelegateIfInControl(CreateLookAroundAction(),
                                         &BehaviorEnrollFace::TransitionToLookingForFace);
@@ -922,18 +1114,18 @@ void BehaviorEnrollFace::TransitionToLookingForFace()
 
                   // Give ourselves a little more time to finish now that we've seen a face, but
                   // don't go over the max timeout
-                  _dVars.timeout_sec = std::min(kEnrollFace_TimeoutMax_sec, _dVars.timeout_sec + kEnrollFace_TimeoutExtraTime_sec);
+                  _dVars->timeout_sec = std::min(kEnrollFace_TimeoutMax_sec, _dVars->timeout_sec + kEnrollFace_TimeoutExtraTime_sec);
 
                   PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.LookingForFace.FaceSeen",
                                 "Found face %d to enroll. Timeout set to %.1fsec",
-                                _dVars.faceID, _dVars.timeout_sec);
+                                _dVars->faceID, _dVars->timeout_sec);
 
                   auto getInAnimAction = new TriggerAnimationAction(AnimationTrigger::MeetVictorGetIn);
 
                   IActionRunner* action = nullptr;
                   if(CanMoveTreads())
                   {
-                    SmartFaceID smartID = GetBEI().GetFaceWorld().GetSmartFaceID(_dVars.faceID);
+                    SmartFaceID smartID = GetBEI().GetFaceWorld().GetSmartFaceID(_dVars->faceID);
                     // Turn towards the person we've chosen to enroll, play the "get in" animation
                     // to start "scanning" and move towards the person a bit to show intentionality
                     action = new CompoundActionSequential({
@@ -974,12 +1166,12 @@ void BehaviorEnrollFace::TransitionToEnrolling()
 {
   SET_STATE(Enrolling);
 
-  _dVars.timeScanningStarted_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  _dVars->timeScanningStarted_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
   // Actually enable directed enrollment of the selected face in the vision system
-  GetBEI().GetFaceWorldMutable().Enroll(_dVars.faceID);
+  GetBEI().GetFaceWorldMutable().Enroll(_dVars->faceID);
 
-  TrackFaceAction* trackAction = new TrackFaceAction(_dVars.faceID);
+  TrackFaceAction* trackAction = new TrackFaceAction(_dVars->faceID);
 
   if(!CanMoveTreads())
   {
@@ -1030,15 +1222,15 @@ void BehaviorEnrollFace::TransitionToSayingName()
 
   CompoundActionSequential* finalAnimation = new CompoundActionSequential();
 
-  if(_dVars.sayName)
+  if(_dVars->sayName)
   {
-    if(_dVars.saveID == Vision::UnknownFaceID)
+    if(_dVars->saveID == Vision::UnknownFaceID)
     {
       // If we're not being told which ID to save to, then assume this is a
       // first-time enrollment and play the bigger sequence of animations,
       // along with special music state
       // TODO: PostMusicState should take in a GameState::Music, making the cast unnecessary...
-      if(_dVars.useMusic)
+      if(_dVars->useMusic)
       {
         // NOTE: it will be up to the caller to stop this music
 //        robot.GetRobotAudioClient()->PostMusicState((AudioMetaData::GameState::GenericState)AudioMetaData::GameState::Music::Minigame__Meet_Cozmo_Say_Name, false, 0);
@@ -1046,7 +1238,7 @@ void BehaviorEnrollFace::TransitionToSayingName()
 
       {
         // 1. Say name once
-        const auto nameQuestionStr = _dVars.faceName + "?";
+        const auto nameQuestionStr = _dVars->faceName + "?";
         SayTextAction* sayNameAction1 = new SayTextAction(nameQuestionStr);
         sayNameAction1->SetAnimationTrigger(AnimationTrigger::MeetVictorSayName);
         finalAnimation->AddAction(sayNameAction1);
@@ -1054,7 +1246,7 @@ void BehaviorEnrollFace::TransitionToSayingName()
 
       {
         // 2. Repeat name
-        SayTextAction* sayNameAction2 = new SayTextAction(_dVars.faceName);
+        SayTextAction* sayNameAction2 = new SayTextAction(_dVars->faceName);
         sayNameAction2->SetAnimationTrigger(AnimationTrigger::MeetVictorSayNameAgain);
         finalAnimation->AddAction(sayNameAction2);
       }
@@ -1063,7 +1255,7 @@ void BehaviorEnrollFace::TransitionToSayingName()
     else
     {
       // This is a re-enrollment
-      SayTextAction* sayNameAction = new SayTextAction(_dVars.faceName);
+      SayTextAction* sayNameAction = new SayTextAction(_dVars->faceName);
       sayNameAction->SetAnimationTrigger(AnimationTrigger::MeetVictorSayName);
       finalAnimation->AddAction(sayNameAction);
     }
@@ -1071,7 +1263,7 @@ void BehaviorEnrollFace::TransitionToSayingName()
     // This is kinda hacky, but we could have used up a lot of our timeout time
     // during enrollment and don't want to cutoff the final animation action (which could be
     // pretty long if it's a first time enrollment), so increase our timeout at this point.
-    _dVars.timeout_sec += 30.f;
+    _dVars->timeout_sec += 30.f;
   }
 
   // Note: even if the animation fails for some reason, we will still continue with the behavior
@@ -1086,7 +1278,7 @@ void BehaviorEnrollFace::TransitionToSayingName()
       const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       GetBEI().GetMoodManager().TriggerEmotionEvent("EnrolledNewFace", currTime_s);
 
-      if(_dVars.saveToRobot)
+      if(_dVars->saveToRobot)
       {
         TransitionToSavingToRobot();
       }
@@ -1106,16 +1298,16 @@ void BehaviorEnrollFace::TransitionToSayingIKnowThatName()
 
   CancelDelegates(false);
 
-  if(_dVars.sayName) {
+  if(_dVars->sayName) {
 
     auto* actConfusedAnim = new TriggerLiftSafeAnimationAction(AnimationTrigger::MeetVictorDuplicateName);
     DelegateIfInControl(actConfusedAnim, [this](ActionResult result) {
       
       // todo: locale
-      const std::string sentence = "eye know " + _dVars.faceName;
-      _iConfig.ttsBehavior->SetTextToSay( sentence );
-      ANKI_VERIFY( _iConfig.ttsBehavior->WantsToBeActivated(), "BehaviorEnrollFace.TransitionToSayingIKnowThatName.NoTTS","");
-      DelegateIfInControl(_iConfig.ttsBehavior.get(), [this]() {
+      const std::string sentence = "eye know " + _dVars->faceName;
+      _iConfig->ttsBehavior->SetTextToSay( sentence );
+      ANKI_VERIFY( _iConfig->ttsBehavior->WantsToBeActivated(), "BehaviorEnrollFace.TransitionToSayingIKnowThatName.NoTTS","");
+      DelegateIfInControl(_iConfig->ttsBehavior.get(), [this]() {
         SET_STATE(Failed_NameInUse);
       });
     });
@@ -1126,30 +1318,105 @@ void BehaviorEnrollFace::TransitionToSayingIKnowThatName()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::TransitionToWrongFace( const std::string& faceName )
+void BehaviorEnrollFace::TransitionToWrongFace( FaceID_t faceID, const std::string& faceName )
 {
-  SET_STATE(EmotingConfusion);
+  const bool playScanningGetOut = (State::Enrolling == _dVars->persistent.state);
+  
+  SET_STATE(SayingWrongName);
 
-  _dVars.failedState = State::Failed_WrongFace;
-
+  if(kEnrollFace_FailOnWrongFace)
+  {
+    _dVars->failedState = State::Failed_WrongFace;
+    _dVars->observedUnusableID   = faceID;
+    _dVars->observedUnusableName = faceName;
+  }
+  
   CancelDelegates(false);
   
-  auto* scanThenConfused = new CompoundActionSequential();
-  u32 numLoops = 1;
-  scanThenConfused->AddAction( new TriggerLiftSafeAnimationAction(AnimationTrigger::MeetVictorGetIn) );
-  scanThenConfused->AddAction( new TriggerLiftSafeAnimationAction(AnimationTrigger::MeetVictorLookFace, numLoops) );
-  scanThenConfused->AddAction( new TriggerLiftSafeAnimationAction(AnimationTrigger::MeetVictorSawWrongFace) );
-  std::string text = faceName + "!";
+  SmartFaceID smartID = GetBEI().GetFaceWorld().GetSmartFaceID(faceID);
+  CompoundActionParallel* action = new CompoundActionParallel({
+    new TurnTowardsFaceAction(smartID, DEG_TO_RAD(30)), // Small max angle because should still be facing it
+  });
   
-  DelegateIfInControl(scanThenConfused, [this,text=std::move(text)](ActionResult result) {
-    // todo: locale
+  if(playScanningGetOut)
+  {
+    const u32  kNumLoops = 1;
+    const bool kInterruptRunning = true;
+    action->AddAction(new TriggerAnimationAction(AnimationTrigger::MeetVictorLookFaceInterrupt,
+                                                 kNumLoops, kInterruptRunning,
+                                                 static_cast<u8>(AnimTrackFlag::HEAD_TRACK)));
+  }
+  
+  // Old animation sequence (too much?)
+  //  const u32 kNumLoops = 1;
+  //  action->AddAction(TriggerLiftSafeAnimationAction(AnimationTrigger::MeetVictorGetIn));
+  //  action->AddAction(TriggerLiftSafeAnimationAction(AnimationTrigger::MeetVictorLookFace, kNumLoops));
+  //  action->AddAction(TriggerLiftSafeAnimationAction(AnimationTrigger::MeetVictorSawWrongFace));
+  
+  std::string text;
+  
+  switch(static_cast<SayWrongNameMode>(kEnrollFace_SayWrongNameMode))
+  {
+    case SayWrongNameMode::Off:
+    {
+      // Leave text empty
+      break;
+    }
+      
+    case SayWrongNameMode::Short:
+      text = faceName + "!";
+      break;
+      
+    case SayWrongNameMode::Long:
+      if((faceName == _dVars->faceName)               // "wrong" name matches enrolling name
+         && (_dVars->saveID == Vision::UnknownFaceID) // this is a re-enrollment
+         && ANKI_VERIFY( faceID != _dVars->saveID,    // saveID should not also match "wrong" ID
+                        "BehaviorEnrollFace.TransitionToWrongFace.NotWrongFace",
+                        "'Wrong' face matches enrolling name ('%s') and saveID (%d): not possible?",
+                        faceName.c_str(), _dVars->saveID))
+      {
+        // Weird special case if we ever support enrolling multiple people with the same name.
+        // Avoid saying something confusing like "You're Bob, not Bob" if we are re-enrolloing
+        // a different "Bob" with a different saveID
+        text = "already know you!";
+      } else {
+        text = /* you're */ "your " + faceName + ", not " + _dVars->faceName + "!";
+      }
+      break;
+  }
+
+  DelegateIfInControl(action, [this,text=std::move(text),faceName,faceID](ActionResult result) {
     
-    _iConfig.ttsBehavior->SetTextToSay( text );
-    ANKI_VERIFY( _iConfig.ttsBehavior->WantsToBeActivated(), "BehaviorEnrollFace.TransitionToWrongFace.NoTTS","");
-    DelegateIfInControl(_iConfig.ttsBehavior.get(), [this]() {
-      _dVars.persistent.state = State::Failed_WrongFace;
-      SetDebugStateName("Failed_WrongFace");
-    });
+    // Mark that we've said this name, so we don't do it again
+    auto it = _dVars->persistent.wrongFaceStats.find(faceName);
+    if(ANKI_VERIFY(it != _dVars->persistent.wrongFaceStats.end(), "BehaviorEnrollFace.TransitionToWrongFace.MissingStats",
+                   "ID:%d Name:%s", faceID, Util::HidePersonallyIdentifiableInfo(faceName.c_str())))
+    {
+      it->second.nameSaid = true;
+    }
+    
+    if(text.empty())
+    {
+      TransitionToLookingForFace();
+    }
+    else
+    {
+      // todo: locale
+      _iConfig->ttsBehavior->SetTextToSay( text );
+      ANKI_VERIFY( _iConfig->ttsBehavior->WantsToBeActivated(), "BehaviorEnrollFace.TransitionToWrongFace.NoTTS","");
+      DelegateIfInControl(_iConfig->ttsBehavior.get(), [this]() {
+        if(kEnrollFace_FailOnWrongFace)
+        {
+          _dVars->persistent.state = State::Failed_WrongFace;
+          SetDebugStateName("Failed_WrongFace");
+        }
+        else
+        {
+          // Continue looking for faces
+          TransitionToLookingForFace();
+        }
+      });
+    }
   });
 }
 
@@ -1157,7 +1424,7 @@ void BehaviorEnrollFace::TransitionToWrongFace( const std::string& faceName )
 void BehaviorEnrollFace::TransitionToFailedState( State state, const std::string& stateName )
 {
   SET_STATE(EmotingConfusion);
-  _dVars.failedState = state;
+  _dVars->failedState = state;
 
   CancelDelegates(false);
 
@@ -1167,7 +1434,7 @@ void BehaviorEnrollFace::TransitionToFailedState( State state, const std::string
     if( ActionResult::SUCCESS != result ) {
       PRINT_NAMED_WARNING("BehaviorEnrollFace.TransitionToFailedState.FinalAnimationFailed", "");
     }
-    _dVars.persistent.state = state;
+    _dVars->persistent.state = state;
     SetDebugStateName(stateName);
   });
 }
@@ -1211,7 +1478,12 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(Vision::FaceID_t 
   {
     // If we we are enrolling, we need to get out of the "scanning face" animation while
     // doing this
-    liftAndTurnTowardsAction->AddAction(new TriggerAnimationAction(AnimationTrigger::MeetVictorLookFaceInterrupt));
+    const s32 kNumLoops = 1;
+    const bool kInterruptRunning = true;
+    liftAndTurnTowardsAction->AddAction(new TriggerAnimationAction(AnimationTrigger::MeetVictorLookFaceInterrupt,
+                                                                   kNumLoops, kInterruptRunning,
+                                                                   static_cast<u8>(AnimTrackFlag::HEAD_TRACK)));
+    
   }
 
   if(!CanMoveTreads())
@@ -1221,84 +1493,59 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(Vision::FaceID_t 
     return liftAndTurnTowardsAction;
   }
 
-  IActionRunner* turnAction = nullptr;
-
-  if(faceID != Vision::UnknownFaceID)
+  auto const& faceWorld = GetBEI().GetFaceWorld();
+  
+  SmartFaceID smartID;
+  if(GetBEI().GetFaceWorld().HasAnyFaces())
   {
-    // Try to look at the specified face
-    const Vision::TrackedFace* face = GetBEI().GetFaceWorld().GetFace(faceID);
-    if(nullptr != face) {
+    if( (faceID != Vision::UnknownFaceID) && (nullptr != faceWorld.GetFace(faceID)))
+    {
+      // Try to look at the specified face
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.CreateTurnTowardsFaceAction.TurningTowardsFaceID",
                     "Turning towards faceID=%d (saveID=%d)",
                     faceID, saveID);
-
-      SmartFaceID smartID = GetBEI().GetFaceWorld().GetSmartFaceID(faceID);
-      turnAction = new TurnTowardsFaceAction(smartID, DEG_TO_RAD(45.f));
+      
+      smartID = faceWorld.GetSmartFaceID(faceID);
     }
-  }
-  else
-  {
-    // We weren't given a specific FaceID, so grab the last observed *unnamed*
-    // face ID from FaceWorld and look at it (if there is one). If saveID was
-    // specified, check first to see it's present in FaceWorld and turn towards
-    // it (since that's who we are re-enrolling).
-    const Vision::TrackedFace* faceToTurnTowards = nullptr;
-    if(saveID != Vision::UnknownFaceID )
+    else if( (saveID != Vision::UnknownFaceID) && (nullptr != faceWorld.GetFace(saveID)) )
     {
-      faceToTurnTowards = GetBEI().GetFaceWorld().GetFace(saveID);
+      // If saveID was specified, check first to see if it's present in FaceWorld and turn towards
+      // it if so(since that's who we are re-enrolling)
+      smartID = faceWorld.GetSmartFaceID(saveID);
     }
-
-    if(faceToTurnTowards == nullptr)
+    else
     {
-      auto allFaceIDs = GetBEI().GetFaceWorld().GetFaceIDs();
-      for(auto& ID : allFaceIDs)
+      // Select the "best" face according to selection criteria
+      const auto& faceSelection = GetAIComp<FaceSelectionComponent>();
+      smartID = faceSelection.GetBestFaceToUse( _iConfig->faceSelectionCriteria );
+      
+      // If nothing better is available, the face selector could return a named face, which we don't want
+      auto face = faceWorld.GetFace(smartID);
+      if(!ANKI_VERIFY(nullptr != face, "BehaviorEnrollFace.CreateTurnTowardsFaceAction.NullBestFace",
+                      "SmartFaceID %s returned as best but not in FaceWorld", smartID.GetDebugStr().c_str())
+         || face->HasName())
       {
-        const Vision::TrackedFace* face = GetBEI().GetFaceWorld().GetFace(ID);
-        if(ANKI_VERIFY(face != nullptr, "BehaviorEnrollFace.CreateTurnTowardsFaceAction.NullFace", "ID:%d", ID))
-        {
-          if(!face->HasName())
-          {
-            // Use this face if:
-            // - faceToTurnTowards hasn't been set yet, OR
-            // - this face is newer than the curent face to turn towards, OR
-            // - this face was seen at the same time as the current face to
-            //    turn towards and we win coin toss (to randomly break ties)
-            if((faceToTurnTowards == nullptr) ||
-               (face->GetTimeStamp() > faceToTurnTowards->GetTimeStamp()) ||
-               (face->GetTimeStamp() == faceToTurnTowards->GetTimeStamp() &&
-                GetBEI().GetRNG().RandDbl() < 0.5))
-            {
-              faceToTurnTowards = face;
-            }
-          }
-        }
+        smartID.Reset();
       }
     }
-
-    if(nullptr != faceToTurnTowards)
-    {
-      // Couldn't find face in face world, try turning towards last face pose
-      PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.CreateTurnTowardsFaceAction.FoundFace",
-                    "Turning towards faceID=%d last seen at t=%d (saveID=%d)",
-                    faceToTurnTowards->GetID(), faceToTurnTowards->GetTimeStamp(), saveID);
-
-      SmartFaceID smartID = GetBEI().GetFaceWorld().GetSmartFaceID(faceToTurnTowards->GetID());
-      turnAction = new TurnTowardsFaceAction(smartID, DEG_TO_RAD(90.f));
-    }
   }
-
-  const bool wasMovedRecently = WasMovedRecently();
-  if( (turnAction == nullptr) && !wasMovedRecently )
+  
+  IActionRunner* turnAction = nullptr;
+  if(smartID.IsValid())
+  {
+    turnAction = new TurnTowardsFaceAction(smartID, kEnrollFace_MaxTurnTowardsFaceAngle_rad);
+  }
+  else
   {
     // Couldn't find face in face world, try turning towards last face pose
     PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.CreateTurnTowardsFaceAction.NullFace",
                   "No face found to turn towards. FaceID=%d. SaveID=%d. Turning towards last face pose.",
                   faceID, saveID);
-
+    
     // No face found to look towards: fallback on looking at last face pose
-    turnAction = new TurnTowardsLastFacePoseAction(DEG_TO_RAD(45.f));
+    turnAction = new TurnTowardsLastFacePoseAction(kEnrollFace_MaxTurnTowardsFaceAngle_rad);
   }
-
+  
   if( turnAction != nullptr ) {
     // Add whatever turn action we decided to create to the parallel action and return it
     liftAndTurnTowardsAction->AddAction(turnAction);
@@ -1319,23 +1566,22 @@ IActionRunner* BehaviorEnrollFace::CreateLookAroundAction()
 
   // Rotate in the opposite direction enough to undo the last rotation plus a little more
   const double newAngle = std::copysign(GetRNG().RandDblInRange(0, DEG_TO_RAD(10)),
-                                        -_dVars.lastRelBodyAngle.ToDouble());
-  const Radians relBodyAngle = newAngle -_dVars.lastRelBodyAngle;
-  _dVars.lastRelBodyAngle = newAngle;
+                                        -_dVars->lastRelBodyAngle.ToDouble());
+  const Radians relBodyAngle = newAngle -_dVars->lastRelBodyAngle;
+  _dVars->lastRelBodyAngle = newAngle;
 
   CompoundActionSequential* compoundAction = new CompoundActionSequential();
 
-  const bool wasMovedRecently = WasMovedRecently();
-  if(CanMoveTreads() && !wasMovedRecently)
+  if(CanMoveTreads())
   {
     compoundAction->AddAction(new PanAndTiltAction(relBodyAngle, absHeadAngle, false, true));
 
     // Also back up a little if we haven't gone too far back already
-    if(_dVars.totalBackup_mm <= kEnrollFace_MaxTotalBackup_mm)
+    if(_dVars->totalBackup_mm <= kEnrollFace_MaxTotalBackup_mm)
     {
       const f32 backupSpeed_mmps = 100.f;
       const f32 backupDist_mm = GetRNG().RandDblInRange(kEnrollFace_MinBackup_mm, kEnrollFace_MaxBackup_mm);
-      _dVars.totalBackup_mm += backupDist_mm;
+      _dVars->totalBackup_mm += backupDist_mm;
       const bool shouldPlayAnimation = false; // don't want head to move down!
       DriveStraightAction* backUpAction = new DriveStraightAction(-backupDist_mm, backupSpeed_mmps, shouldPlayAnimation);
       compoundAction->AddAction(backUpAction);
@@ -1356,18 +1602,18 @@ IActionRunner* BehaviorEnrollFace::CreateLookAroundAction()
 void BehaviorEnrollFace::UpdateFaceIDandTime(const Face* newFace)
 {
   DEV_ASSERT(nullptr != newFace, "BehaviorEnrollFace.UpdateFaceToEnroll.NullNewFace");
-  _dVars.faceID = newFace->GetID();
-  _dVars.lastFaceSeenTime_ms = newFace->GetTimeStamp();
+  _dVars->faceID = newFace->GetID();
+  _dVars->lastFaceSeenTime_ms = newFace->GetTimeStamp();
 
-  _dVars.observedUnusableName.clear();
-  _dVars.observedUnusableID = Vision::UnknownFaceID;
+  _dVars->observedUnusableName.clear();
+  _dVars->observedUnusableID = Vision::UnknownFaceID;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorEnrollFace::IsSeeingTooManyFaces(FaceWorld& faceWorld, const TimeStamp_t lastImgTime)
 {
   // Check if we've also seen too many within a recent time window
-  const TimeStamp_t multipleFaceTimeWindow_ms = Util::SecToMilliSec(_iConfig.tooManyFacesRecentTime_sec);
+  const TimeStamp_t multipleFaceTimeWindow_ms = Util::SecToMilliSec(_iConfig->tooManyFacesRecentTime_sec);
   const TimeStamp_t recentTime = (lastImgTime > multipleFaceTimeWindow_ms ?
                                   lastImgTime - multipleFaceTimeWindow_ms :
                                   0); // Avoid unsigned math rollover
@@ -1378,45 +1624,45 @@ bool BehaviorEnrollFace::IsSeeingTooManyFaces(FaceWorld& faceWorld, const TimeSt
     const Vision::TrackedFace* face = faceWorld.GetFace(faceID);
     // only save info on the face if it is known this tick, but don't remove saved faces
     if( nullptr != face ) {
-      _dVars.facesSeen.insert( faceID );
-      _dVars.isFaceNamed[faceID] = (faceID > 0) && face->HasName();
+      _dVars->facesSeen.insert( faceID );
+      _dVars->isFaceNamed[faceID] = (faceID > 0) && face->HasName();
     }
   }
 
 
-  const bool hasRecentlySeenTooManyFaces = recentlySeenFaceIDs.size() > _iConfig.maxFacesVisible;
+  const bool hasRecentlySeenTooManyFaces = recentlySeenFaceIDs.size() > _iConfig->maxFacesVisible;
   if(hasRecentlySeenTooManyFaces)
   {
-    if(_dVars.startedSeeingMultipleFaces_sec == 0.f)
+    if(_dVars->startedSeeingMultipleFaces_sec == 0.f)
     {
       // We just started seeing too many faces
-      _dVars.startedSeeingMultipleFaces_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      _dVars->startedSeeingMultipleFaces_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
       // Disable enrollment while seeing too many faces
       faceWorld.Enroll(Vision::UnknownFaceID);
 
       PRINT_CH_DEBUG(kLogChannelName, "BehaviorEnrollFace.IsSeeingTooManyFaces.StartedSeeingTooMany",
-                     "Disabling enrollment (if enabled) at t=%.1f", _dVars.startedSeeingMultipleFaces_sec);
+                     "Disabling enrollment (if enabled) at t=%.1f", _dVars->startedSeeingMultipleFaces_sec);
     }
     return true;
   }
   else
   {
-    if(_dVars.startedSeeingMultipleFaces_sec > 0.f)
+    if(_dVars->startedSeeingMultipleFaces_sec > 0.f)
     {
       PRINT_CH_DEBUG(kLogChannelName, "BehaviorEnrollFace.IsSeeingTooManyFaces.StoppedSeeingTooMany",
-                     "Stopped seeing too many at t=%.1f", _dVars.startedSeeingMultipleFaces_sec);
+                     "Stopped seeing too many at t=%.1f", _dVars->startedSeeingMultipleFaces_sec);
 
       // We are not seeing too many faces any more (and haven't recently), so reset this to zero
-      _dVars.startedSeeingMultipleFaces_sec = 0.f;
+      _dVars->startedSeeingMultipleFaces_sec = 0.f;
 
-      if(_dVars.faceID != Vision::UnknownFaceID)
+      if(_dVars->faceID != Vision::UnknownFaceID)
       {
         // Re-enable enrollment of whatever we were enrolling before we started seeing too many faces
-        faceWorld.Enroll(_dVars.faceID);
+        faceWorld.Enroll(_dVars->faceID);
 
         PRINT_CH_DEBUG(kLogChannelName, "BehaviorEnrollFace.IsSeeingTooManyFaces.RestartEnrollment",
-                       "Re-enabling enrollment of FaceID:%d", _dVars.faceID);
+                       "Re-enabling enrollment of FaceID:%d", _dVars->faceID);
 
       }
     }
@@ -1425,16 +1671,33 @@ bool BehaviorEnrollFace::IsSeeingTooManyFaces(FaceWorld& faceWorld, const TimeSt
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorEnrollFace::IsSeeingWrongFace(FaceID_t& wrongFaceID, std::string& wrongName) const
+{
+  // Find any entry whose name we haven't already said and either whose ID changed or it's been
+  // seen while looking for faces too many times
+  auto it = std::find_if( _dVars->persistent.wrongFaceStats.begin(), _dVars->persistent.wrongFaceStats.end(),
+                         [](const auto& mapEntry) {
+                           const DynamicVariables::WrongFaceInfo& info = mapEntry.second;
+                           const bool countTooHigh = (info.count >= kEnrollFace_TicksForKnownNameBeforeFail);
+                           return !info.nameSaid && (info.idChanged || countTooHigh);
+                         });
+  
+  if(it != _dVars->persistent.wrongFaceStats.end())
+  {
+    // Return the ID and name
+    wrongFaceID = it->second.faceID;
+    wrongName   = it->first;
+    return true;
+  }
+  
+  return false;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::UpdateFaceToEnroll()
 {
   const FaceWorld& faceWorld = GetBEI().GetFaceWorld();
   auto& robotInfo = GetBEI().GetRobotInfo();
-
-  const bool unexpectedMovement = GetBEI().GetMovementComponent().IsUnexpectedMovementDetected();
-  const bool pickedUp = robotInfo.IsPickedUp();
-  if( unexpectedMovement || pickedUp ) {
-    _dVars.persistent.lastTimeUserMovedRobot = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  }
 
   const TimeStamp_t lastImgTime = robotInfo.GetLastImageTimeStamp();
 
@@ -1451,14 +1714,14 @@ void BehaviorEnrollFace::UpdateFaceToEnroll()
   // Get faces observed just in the last image
   auto observedFaceIDs = faceWorld.GetFaceIDs(lastImgTime);
 
-  const bool enrollmentIDisSet    = (_dVars.faceID != Vision::UnknownFaceID);
-  const bool sawCurrentEnrollFace = (enrollmentIDisSet && observedFaceIDs.count(_dVars.faceID));
+  const bool enrollmentIDisSet    = (_dVars->faceID != Vision::UnknownFaceID);
+  const bool sawCurrentEnrollFace = (enrollmentIDisSet && observedFaceIDs.count(_dVars->faceID));
 
   if(sawCurrentEnrollFace)
   {
     // If we saw the face we're currently enrolling, there's nothing to do other than
     // update it's last seen time
-    const Face* enrollFace = GetBEI().GetFaceWorld().GetFace(_dVars.faceID);
+    const Face* enrollFace = GetBEI().GetFaceWorld().GetFace(_dVars->faceID);
     UpdateFaceIDandTime(enrollFace);
   }
   else
@@ -1468,7 +1731,7 @@ void BehaviorEnrollFace::UpdateFaceToEnroll()
     for(auto faceID : observedFaceIDs)
     {
       // We just checked that _faceID *wasn't* seen!
-      DEV_ASSERT(faceID != _dVars.faceID, "BehaviorEnrollFace.UpdateFaceToEnroll.UnexpectedFaceID");
+      DEV_ASSERT(faceID != _dVars->faceID, "BehaviorEnrollFace.UpdateFaceToEnroll.UnexpectedFaceID");
 
       // We only care about this observed face if it is not for a "tracked" face
       // (one with negative ID, which we never want to try to enroll)
@@ -1483,7 +1746,7 @@ void BehaviorEnrollFace::UpdateFaceToEnroll()
       if(nullptr == newFace)
       {
         PRINT_NAMED_WARNING("BehaviorEnrollFace.UpdateFaceToEnroll.NullFace",
-                            "FaceID %d cam back null", faceID);
+                            "FaceID %d came back null", faceID);
         continue;
       }
 
@@ -1491,8 +1754,8 @@ void BehaviorEnrollFace::UpdateFaceToEnroll()
       // case we fail and need to message that the reason why was that we we were
       // seeing this named face. These get cleared if we end up using this observed
       // face for enrollment.
-      _dVars.observedUnusableID   = faceID;
-      _dVars.observedUnusableName = newFace->GetName();
+      _dVars->observedUnusableID   = faceID;
+      _dVars->observedUnusableName = newFace->GetName();
 
       // We can only switch to this observed faceID if it is unnamed, _unless_
       // it matches the saveID.
@@ -1500,7 +1763,7 @@ void BehaviorEnrollFace::UpdateFaceToEnroll()
       // - for re-enrollment, a face with a name must be the one we are re-enrolling
       // - if the name matches the face ID, then the faceID matches too and we wouldn't even
       //   be considering this observation because there's no ID change
-      const bool canUseObservedFace = !newFace->HasName() || (faceID == _dVars.saveID);
+      const bool canUseObservedFace = !newFace->HasName() || (faceID == _dVars->saveID);
 
       if(canUseObservedFace)
       {
@@ -1509,7 +1772,7 @@ void BehaviorEnrollFace::UpdateFaceToEnroll()
           // Face ID is already set but we didn't see it and instead we're seeing a face
           // with a different ID. See if it matches the pose of the one we were already enrolling.
 
-          auto currentFace = GetBEI().GetFaceWorld().GetFace(_dVars.faceID);
+          auto currentFace = GetBEI().GetFaceWorld().GetFace(_dVars->faceID);
 
           if(nullptr != currentFace && nullptr != newFace &&
              newFace->GetHeadPose().IsSameAs(currentFace->GetHeadPose(),
@@ -1518,7 +1781,7 @@ void BehaviorEnrollFace::UpdateFaceToEnroll()
           {
             PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.UpdateFaceToEnroll.UpdatingFaceIDbyPose",
                           "Was enrolling ID=%d, changing to unnamed ID=%d based on pose (saveID=%d)",
-                          _dVars.faceID, faceID, _dVars.saveID);
+                          _dVars->faceID, faceID, _dVars->saveID);
 
             UpdateFaceIDandTime(newFace);
           }
@@ -1529,7 +1792,7 @@ void BehaviorEnrollFace::UpdateFaceToEnroll()
           // We don't have a face ID set yet. Use this one, since it passed all the earlier checks
           PRINT_CH_INFO(kLogChannelName,
                         "BehaviorEnrollFace.UpdateFaceToEnroll.SettingInitialFaceID",
-                        "Set face ID to unnamed face %d (saveID=%d)", faceID, _dVars.saveID);
+                        "Set face ID to unnamed face %d (saveID=%d)", faceID, _dVars->saveID);
 
           UpdateFaceIDandTime(newFace);
         }
@@ -1540,21 +1803,21 @@ void BehaviorEnrollFace::UpdateFaceToEnroll()
                       "BehaviorEnrollFace.UpdateFaceToEnroll.IgnoringObservedFace",
                       "Refusing to enroll '%s' face %d, with current faceID=%d and saveID=%d",
                       !newFace->HasName() ? "<unnamed>" : Util::HidePersonallyIdentifiableInfo(newFace->GetName().c_str()),
-                      faceID, _dVars.faceID, _dVars.saveID);
-        auto it = std::find_if( _dVars.knownFaceCounts.begin(), _dVars.knownFaceCounts.end(), [&](const auto& p) {
-          return p.first == newFace->GetName();
-        });
-        if( it == _dVars.knownFaceCounts.end() ) {
-          _dVars.knownFaceCounts.emplace_back( newFace->GetName(), 1 );
-          it = _dVars.knownFaceCounts.end();
-          --it;
-        } else {
-          ++it->second;
+                      faceID, _dVars->faceID, _dVars->saveID);
+        
+        if(newFace->HasName())
+        {
+          // Update the number of times we've seen this named face
+          auto it = _dVars->persistent.wrongFaceStats.find(newFace->GetName());
+          if( it == _dVars->persistent.wrongFaceStats.end() ) {
+            // New entry
+            _dVars->persistent.wrongFaceStats.emplace(newFace->GetName(), DynamicVariables::WrongFaceInfo(faceID));
+          } else {
+            // Increment existing
+            ++it->second.count;
+          }
         }
-        if( it->second >= kEnrollFace_TicksForKnownNameBeforeFail ) {
-          TransitionToWrongFace( it->first );
-          return;
-        }
+        
       }
 
     } // for each face ID
@@ -1578,10 +1841,10 @@ void BehaviorEnrollFace::AlwaysHandleInScope(const EngineToGameEvent& event)
 
       // Listen for changed ID messages in case the FaceRecognizer changes the ID we
       // were enrolling
-      if(msg.oldID == _dVars.faceID)
+      if(msg.oldID == _dVars->faceID)
       {
         const Vision::TrackedFace* newFace = GetBEI().GetFaceWorld().GetFace(msg.newID);
-        if(msg.newID != _dVars.saveID &&
+        if(msg.newID != _dVars->saveID &&
            newFace != nullptr &&
            newFace->HasName())
         {
@@ -1592,38 +1855,39 @@ void BehaviorEnrollFace::AlwaysHandleInScope(const EngineToGameEvent& event)
                         "BehaviorEnrollFace.HandleRobotChangedObservedFaceID.CannotUpdateToNamedFace",
                         "OldID:%d. NewID:%d is named '%s' and != SaveID:%d, so cannot be used",
                         msg.oldID, msg.newID,
-                        Util::HidePersonallyIdentifiableInfo(newFace->GetName().c_str()), _dVars.saveID);
+                        Util::HidePersonallyIdentifiableInfo(newFace->GetName().c_str()), _dVars->saveID);
 
-          TransitionToWrongFace( newFace->GetName() );
-
-          _dVars.observedUnusableID   = msg.newID;
-          _dVars.observedUnusableName = newFace->GetName();
+          // Mark any existing entry for this face as having had its ID updated, or create new entry if needed
+          auto it = _dVars->persistent.wrongFaceStats.find(newFace->GetName());
+          if(it != _dVars->persistent.wrongFaceStats.end())
+          {
+            ++it->second.count;
+            it->second.idChanged = true;
+          }
+          else
+          {
+            _dVars->persistent.wrongFaceStats.emplace(newFace->GetName(),
+                                                      DynamicVariables::WrongFaceInfo(msg.newID, true));
+          }
         }
         else
         {
           PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.HandleRobotChangedObservedFaceID.UpdatingFaceID",
                         "Was enrolling ID=%d, changing to ID=%d",
-                        _dVars.faceID, msg.newID);
-          _dVars.faceID = msg.newID;
+                        _dVars->faceID, msg.newID);
+          _dVars->faceID = msg.newID;
         }
       }
 
-      if(msg.oldID == _dVars.saveID)
+      if(msg.oldID == _dVars->saveID)
       {
         // I don't think this should happen: we should never update a saveID because it
         // should be named, meaning we should never merge into it
         PRINT_NAMED_ERROR("BehaviorEnrollFace.HandleRobotChangedObservedFaceID.SaveIDChanged",
                           "Was saving to ID=%d, which apparently changed to %d. Should not happen. Will abort.",
-                          _dVars.saveID, msg.newID);
+                          _dVars->saveID, msg.newID);
         TransitionToFailedState(State::Failed_UnknownReason,"Failed_UnknownReason");
       }
-      break;
-    }
-    case EngineToGameTag::UnexpectedMovement:
-    case EngineToGameTag::RobotOffTreadsStateChanged:
-    case EngineToGameTag::CliffEvent:
-    {
-      // Handled while running
       break;
     }
     default:
@@ -1632,54 +1896,6 @@ void BehaviorEnrollFace::AlwaysHandleInScope(const EngineToGameEvent& event)
                         MessageEngineToGameTagToString(event.GetData().GetTag()));
   }
 
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::HandleWhileActivated(const EngineToGameEvent& event)
-{
-  switch (event.GetData().GetTag())
-  {
-    case EngineToGameTag::RobotChangedObservedFaceID:
-    {
-      // Always handled
-      break;
-    }
-    case EngineToGameTag::UnexpectedMovement:
-    case EngineToGameTag::RobotOffTreadsStateChanged:
-    case EngineToGameTag::CliffEvent:
-    {
-      _dVars.persistent.lastTimeUserMovedRobot = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-      if(IsControlDelegated())
-      {
-        if(State::LookingForFace == _dVars.persistent.state)
-        {
-          // Cancel and replace the existing look-around action so we don't fight a
-          // person trying to re-orient Cozmo towards themselves, nor do we leave
-          // the treads moving if a look around action had already started (but not
-          // completed) before a pickup/cliff
-          PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.HandleWhileRunning.LookForFaceInterrupted",
-                        "Restarting look-for-face due to %s event",
-                        MessageEngineToGameTagToString(event.GetData().GetTag()));
-          TransitionToLookingForFace();
-        }
-        else if(State::Enrolling == _dVars.persistent.state)
-        {
-          // Stop tracking the face and start over (to create a new tracking action, e.g. in case the robot is now
-          // picked up and its treads should stop moving)
-          PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.HandleWhileRunning.EnrollmentInterrupted",
-                        "Restarting enrollment due to %s event",
-                        MessageEngineToGameTagToString(event.GetData().GetTag()));
-          CancelDelegates(false);
-          TransitionToEnrolling();
-        }
-      }
-      break;
-    }
-    default:
-      PRINT_NAMED_ERROR("BehaviorEnrollFace.HandleWhileRunning.UnexpectedEngineToGameTag",
-                        "Received unexpected EngineToGame tag %s",
-                        MessageEngineToGameTagToString(event.GetData().GetTag()));
-  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1701,8 +1917,8 @@ void BehaviorEnrollFace::HandleWhileInScopeButNotActivated(const GameToEngineEve
                     "SaveID:%d ObsID:%d Name:%s",
                     msg.saveID, msg.observedID, Util::HidePersonallyIdentifiableInfo(msg.name.c_str()));
 
-      *_dVars.persistent.settings = msg;
-      _dVars.persistent.requestedRescan = true;
+      *(_dVars->persistent.settings) = msg;
+      _dVars->persistent.requestedRescan = true;
       break;
     }
 
@@ -1748,14 +1964,6 @@ void BehaviorEnrollFace::HandleWhileActivated(const GameToEngineEvent& event)
                         "Received unexpected GameToEngine tag %s",
                         MessageGameToEngineTagToString(event.GetData().GetTag()));
   }
-}
-
-bool BehaviorEnrollFace::WasMovedRecently() const
-{
-  const TimeStamp_t currentTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  const TimeStamp_t timeSinceMoved_ms = currentTime_ms - _dVars.persistent.lastTimeUserMovedRobot;
-  const bool movedRobotRecently = (timeSinceMoved_ms < kEnrollFace_TimeStopMovingAfterManualTurn_ms);
-  return movedRobotRecently;
 }
 
 } // namespace Cozmo
