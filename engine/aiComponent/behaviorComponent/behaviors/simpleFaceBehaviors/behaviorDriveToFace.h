@@ -40,6 +40,7 @@ private:
   enum class State {
     Invalid=0,
     DriveToFace,
+    FinalAnim,
     AlreadyCloseEnough,
     TrackFace
   };
@@ -55,6 +56,8 @@ private:
     
     AnimationTrigger animTooClose;
     AnimationTrigger animDriveOverride;
+    AnimationTrigger initialAnim;
+    AnimationTrigger successAnim;
     
     std::unique_ptr<PathMotionProfile> customMotionProfile;
   };
@@ -68,9 +71,11 @@ private:
 
   InstanceConfig   _iConfig;
   DynamicVariables _dVars;
+
+  void TransitionToAlreadyCloseEnough();
   
   void TransitionToDrivingToFace();
-  void TransitionToAlreadyCloseEnough();
+  void TransitionToPlayingFinalAnim();
   void TransitionToTrackingFace();
   
   // Returns true if able to calculate distance to face - false otherwise
