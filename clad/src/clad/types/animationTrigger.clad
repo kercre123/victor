@@ -65,6 +65,8 @@ enum int_32 AnimationTrigger
   ChargerReaction,
   ClockGetIn,
   ClockGetOut,
+  ComeHereStart,
+  ComeHereSuccess,
   ConnectWakeUp,
   ConnectToCubeFailure,
   ConnectToCubeGetIn,

@@ -1783,6 +1783,15 @@
   {
     "CladEvent": "GreetAfterLongTime",
     "AnimName" : "ag_greeting_happy"
+  },
+  {
+    "CladEvent": "ComeHereStart",
+    "AnimName": "ag_vc_comehere_first_reaction"
+  },
+  {
+    "CladEvent": "ComeHereSuccess",
+    "AnimName": "ag_comehere_greeting"
   }
+ 
 
 ]
