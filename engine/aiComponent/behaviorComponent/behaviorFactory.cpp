@@ -1045,6 +1045,10 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     }
     
   }
+
+  if( ANKI_DEVELOPER_CODE ) {
+    newBehavior->CheckJson(config);
+  }
     
   return newBehavior;
 }

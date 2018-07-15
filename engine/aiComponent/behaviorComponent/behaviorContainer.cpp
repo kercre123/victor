@@ -192,25 +192,6 @@ bool BehaviorContainer::CreateAndStoreBehavior(const Json::Value& behaviorConfig
     const auto newEntry = _idToBehaviorMap.emplace( behaviorID, newBehavior );
     const bool addedNewEntry = newEntry.second;
 
-    // check for any extraneous json keys
-    if( ANKI_DEVELOPER_CODE ) {
-      const std::vector<const char*> expectedKeys = newBehavior->GetAllJsonKeys();
-      std::vector<std::string> badKeys;
-      const bool hasBadKeys = JsonTools::HasUnexpectedKeys( behaviorConfig, expectedKeys, badKeys );
-      if( hasBadKeys ) {
-        std::string keys;
-        for( const auto& key : badKeys ) {
-          keys += key;
-          keys += ",";
-        }
-        DEV_ASSERT_MSG( false,
-                        "BehaviorContainer.CreateAndStoreBehavior.UnexpectedKey",
-                        "Behavior '%s' has unexpected keys '%s'",
-                        BehaviorIDToString(behaviorID),
-                        keys.c_str() );
-      }
-    }
-
     if (addedNewEntry) {
       // PRINT_CH_DEBUG(LOG_CHANNEL, "BehaviorContainer::AddToContainer",
       //                "Added new behavior '%s' %p",

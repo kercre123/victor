@@ -159,6 +159,10 @@ public:
   static BehaviorID ExtractBehaviorIDFromConfig(const Json::Value& config, const std::string& fileName = "");
   static BehaviorClass ExtractBehaviorClassFromConfig(const Json::Value& config);
 
+  // check if the given json is a valid config for this behavior. Note that the behavior must already be
+  // constructed in order for this to work.
+  void CheckJson(const Json::Value& config);
+
   // After Init is called, this function should be called on every behavior to set the operation modifiers. It
   // will internally call GetBehaviorOperationModifiers() as needed
   void InitBehaviorOperationModifiers();

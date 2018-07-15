@@ -353,6 +353,26 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
   return true;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::CheckJson(const Json::Value& config)
+{
+  const std::vector<const char*> expectedKeys = GetAllJsonKeys();
+  std::vector<std::string> badKeys;
+  const bool hasBadKeys = JsonTools::HasUnexpectedKeys( config, expectedKeys, badKeys );
+  if( hasBadKeys ) {
+    std::string keys;
+    for( const auto& key : badKeys ) {
+      keys += key;
+      keys += ",";
+    }
+    ANKI_VERIFY( false,
+                 "BehaviorContainer.CreateAndStoreBehavior.UnexpectedKey",
+                 "Behavior '%s' has unexpected keys '%s'",
+                 GetDebugLabel().c_str(),
+                 keys.c_str() );
+  }
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehavior::~ICozmoBehavior()
@@ -386,6 +406,15 @@ std::vector<const char*> ICozmoBehavior::GetAllJsonKeys() const
     kTracksToLockWhileActivatedKey
   };
   expectedKeys.insert( expectedKeys.end(), std::begin(baseKeys), std::end(baseKeys) );
+
+  if( _id == BEHAVIOR_ID(Anonymous) ) {
+    // keys only for anonymous behavior
+    static const char* anonKeys[] = {
+      kAnonymousBehaviorName,
+      kBehaviorDebugLabel,
+    };
+    expectedKeys.insert( expectedKeys.end(), std::begin(anonKeys), std::end(anonKeys) );
+  }
 
   std::set<const char*> behaviorKeys;
   GetBehaviorJsonKeys( behaviorKeys );
