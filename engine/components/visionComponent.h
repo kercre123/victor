@@ -362,9 +362,10 @@ struct DockingErrorSignal;
     std::unique_ptr<Vision::Camera> _camera;
     bool                      _enabled = false;
     
-    bool   _isSynchronous = false;
-    bool   _running = false;
-    bool   _paused  = false;
+    bool    _isSynchronous = false;
+    volatile bool _running = false;
+    volatile bool _paused  = false;
+
     bool   _drawImagesToScreen = false;
 
     std::list<std::function<void(Vision::ImageRGB&)>> _screenImageModFuncs;
