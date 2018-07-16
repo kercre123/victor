@@ -363,6 +363,9 @@ struct DockingErrorSignal;
     bool                      _enabled = false;
     
     bool    _isSynchronous = false;
+    
+    // variables which are updated in the main (engine) thread but checked on the worker thread
+    // must be volatile to avoid potential caching issues
     volatile bool _running = false;
     volatile bool _paused  = false;
 
