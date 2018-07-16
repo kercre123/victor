@@ -463,6 +463,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
   // Try to retrieve the speaker latency from the AkAlsaSink plugin. We
   // only need to actually call into the plugin once (or until we get a
   // nonzero latency), since the latency does not change during runtime.
+#ifndef SIMULATOR
   if (_speakerLatency_ms == 0) {
     if (_context != nullptr) {
       const auto* audioController = _context->GetAudioController();
@@ -477,6 +478,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       }
     }
   }
+#endif
 }
 
 void MicDataSystem::ClearCurrentStreamingJob()
