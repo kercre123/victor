@@ -6,6 +6,7 @@ package Anki.Cozmo.external_interface;
 
 option optimize_for = LITE_RUNTIME;
 
+import "cube.proto";
 import "messages.proto";
 import "settings.proto";
 import "extensions.proto";
@@ -20,6 +21,14 @@ message Event {
     RobotObservedFace                robot_observed_face                 = 5;
     RobotChangedObservedFaceID       robot_changed_observed_face_id      = 6;
     SettingsUpdate                   settings_update                     = 7;
+    // @TODO: Create an ObjectEvents wrapper for all the object proto events VIC-4644
+    ObjectConnectionState            object_connection_state             = 8;
+    ObjectMoved                      object_moved                        = 9;
+    ObjectStoppedMoving              object_stopped_moving               = 10;
+    ObjectUpAxisChanged              object_up_axis_changed              = 11;
+    ObjectTapped                     object_tapped                       = 12;
+    RobotObservedObject              robot_observed_object               = 13;
+    CubeConnectionLost               cube_connection_lost                = 14;
   }
 }
 
@@ -95,6 +104,14 @@ message GatewayWrapper {
     // ------------ status history --------------------
     RobotHistoryRequest           robot_history_request = 80;
     RobotHistoryResult            robot_history_result = 81;
+
+    // ------------ cube connections --------------------
+    ConnectCubeRequest            connect_cube_request           = 100;
+    ConnectCubeResponse           connect_cube_response          = 101;
+    DisconnectCubeRequest         disconnect_cube_request        = 102;
+    FlashCubeLightsRequest        flash_cube_lights_request      = 103;
+    ForgetPreferredCubeRequest    forget_preferred_cube_request  = 104;
+    SetPreferredCubeRequest       set_preferred_cube_request     = 105;
 
     // (when adding new categories, please create gaps between field numbers)
     // ------------  -------------------------

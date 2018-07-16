@@ -32,6 +32,7 @@ enum class RobotComponentID{
   AIComponent,
   ActionList,
   Animation,
+  AppCubeConnectionSubscriber,
   Battery,
   BeatDetector,
   BlockTapFilter,

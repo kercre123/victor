@@ -24,6 +24,157 @@ enum uint_32 ActionResult {
   CANCELLED_WHILE_RUNNING = 33554432,
 }
 
+
+enum int_32 ObjectType {
+  InvalidObject = -1,
+  UnknownObject = 0,
+
+  //////////////////////////////////////////////////////////////////////////
+  // Light Cubes (a.k.a. Active Blocks)
+  //
+
+  Block_LIGHTCUBE1,
+  Block_LIGHTCUBE2,
+  Block_LIGHTCUBE3,
+
+  Block_LIGHTCUBE_GHOST,
+
+  //////////////////////////////////////////////////////////////////////////
+  // Mat Pieces
+  //
+
+  // Flat mats:
+  FlatMat_GEARS_4x4,
+  FlatMat_LETTERS_4x4,
+  FlatMat_ANKI_LOGO_8BIT,
+  FlatMat_LAVA_PLAYTEST,
+
+  // Platform piece:
+  Platform_LARGE,
+
+  //////////////////////////////////////////////////////////////////////////
+  // Charger
+  //
+  Charger_Basic,
+
+
+  //////////////////////////////////////////////////////////////////////////
+  // Markerless Objects (e.g. obstacles)
+  //
+  ProxObstacle,
+  CliffDetection,
+  CollisionObstacle,
+
+  //////////////////////////////////////////////////////////////////////////
+  // Custom Objects defined via DefineCustomObject
+  CustomType00,
+  CustomType01,
+  CustomType02,
+  CustomType03,
+  CustomType04,
+  CustomType05,
+  CustomType06,
+  CustomType07,
+  CustomType08,
+  CustomType09,
+  CustomType10,
+  CustomType11,
+  CustomType12,
+  CustomType13,
+  CustomType14,
+  CustomType15,
+  CustomType16,
+  CustomType17,
+  CustomType18,
+  CustomType19,
+
+  // INSERT ADDITIONAL CustomTypes here
+
+  // DO NOT ADD anything other than new CustomTypes before CustomFixedObstacle!
+
+  // Custom "fixed" object (i.e. obstacle)
+  CustomFixedObstacle,
+
+  Block_STAR5,
+  Block_ARROW,
+  Block_BULLSEYE2,
+
+} // enum class ObjectType
+
+enum int_32 ObjectFamily {
+  Invalid = -1,
+  Unknown = 0,
+  Block,
+  LightCube,
+  Charger,
+  Mat,
+  MarkerlessObject,
+  CustomObject,
+} // enum class ObjectFamily
+
+structure ActiveAccel
+{
+  float_32 x,
+  float_32 y,
+  float_32 z
+}
+
+enum uint_8 UpAxis {
+  XNegative,
+  XPositive,
+  YNegative,
+  YPositive,
+  ZNegative,
+  ZPositive,
+  NumAxes,
+  UnknownAxis
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////  CUBES  ////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// Indicates that a cube has connected or disconnected
+message ObjectConnectionState
+{
+  uint_32 objectID,
+  string factoryID,
+  ObjectType  object_type,
+  bool connected
+}
+
+message ObjectMoved
+{
+  uint_32     timestamp,
+  uint_32     objectID,
+}
+
+message ObjectStoppedMoving
+{
+  uint_32 timestamp,
+  uint_32 objectID,
+}
+
+message ObjectUpAxisChanged
+{
+  uint_32 timestamp,
+  uint_32 objectID,
+  UpAxis  upAxis,
+}
+
+message ObjectTapped
+{
+  uint_32 timestamp,
+  uint_32 objectID,
+}
+
+message ObjectAccel
+{
+  uint_32 timestamp,
+  uint_32 objectID,
+  ActiveAccel accel,
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////  META  /////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -167,6 +318,26 @@ structure BlinkAmount {
   float_32  blinkAmountRight  // Left/right are as seen in the image, *not* the face's left and right
 }
 
+// RobotObservedObject for signaling that an object
+//  with specified ID/Type/Family was seen at a particular location in the image
+//  and the world
+message RobotObservedObject {
+    uint_32       timestamp,
+    ObjectFamily  objectFamily,
+    ObjectType    objectType,
+    int_32        objectID,      // signed to match U2G::PickAndPlaceObject which has the option to have objectID<0
+    CladRect      img_rect,      // position in image coords
+    PoseStruct3d  pose,
+    float_32      topFaceOrientation_rad, // absolute orienation of top face, iff isActive==true
+    uint_8        isActive
+}
+
+// Message for the robot observing a possible object (existence hasn't been confirmed yet)
+message RobotObservedPossibleObject {
+    // objectID will always be -1
+    RobotObservedObject possibleObject
+}
+
 // RobotObservedFace
 message RobotObservedFace {
     int_32        faceID,         // negative: tracked but not recognized; positive: recognized face
@@ -219,6 +390,13 @@ union MessageRobotToExternal {
   RobotChangedObservedFaceID        RobotChangedObservedFaceID         = 0x08, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   AnimationAvailable                AnimationAvailable                 = 0x09,
   EndOfMessage                      EndOfMessage                       = 0x0A,
+  ObjectConnectionState             ObjectConnectionState              = 0x0B, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  ObjectMoved                       ObjectMoved                        = 0x0C, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  ObjectStoppedMoving               ObjectStoppedMoving                = 0x0D, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  ObjectUpAxisChanged               ObjectUpAxisChanged                = 0x0E, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  ObjectTapped                      ObjectTapped                       = 0x0F, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  ObjectAccel                       ObjectAccel                        = 0x10, // TODO: The engine is not yet sending this message, holding this tag id near the other object events for when it's implemented
+  RobotObservedObject               RobotObservedObject                = 0x11, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
 }
 
 } // Gateway

@@ -65,9 +65,11 @@ class TestResultMatches:
 
         elif len(expected_fields) != len(target_fields):
             errors.append(
-                'TypeError: received output that appears to be a different type or contains different contents {0} than the expected output type {1}'.format(
+                'TypeError: received output that appears to be a different type or contains different contents {0} than the expected output type {1}.  Recieved contents [{2}] while [{3}] expected.'.format(
                     target_type,
-                    expected_type))
+                    expected_type,
+                    target_fields,
+                    expected_fields))
 
         else:
             # This does not perform a deep comparison, which is difficult to
@@ -269,6 +271,31 @@ MESSAGES_TO_TEST = [
      protocol.SetBackpackLEDsRequest(on_color=[0, 0, 0], off_color=[0, 0, 0], on_period_ms=[250, 250, 250],
                                      off_period_ms=[0, 0, 0], transition_on_period_ms=[0, 0, 0], transition_off_period_ms=[0, 0, 0]),
      TestResultMatches(protocol.SetBackpackLEDsResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
+
+    # ConnectCube message
+    (client.ExternalInterfaceServicer.ConnectCube,
+     protocol.ConnectCubeRequest(),
+     TestResultMatches(protocol.ConnectCubeResponse(status=protocol.ResultStatus(description="Response recieved from engine"), success=True))),
+
+    # DisconnectCube message
+    (client.ExternalInterfaceServicer.DisconnectCube,
+     protocol.DisconnectCubeRequest(grace_period_sec=0.0),
+     TestResultMatches(protocol.DisconnectCubeResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
+
+    # FlashCubeLights message
+    (client.ExternalInterfaceServicer.FlashCubeLights,
+     protocol.FlashCubeLightsRequest(),
+     TestResultMatches(protocol.FlashCubeLightsResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
+
+    # SetPreferredCube message
+    (client.ExternalInterfaceServicer.SetPreferredCube,
+     protocol.SetPreferredCubeRequest(factory_id="11:11:11:11:11:11"),
+     TestResultMatches(protocol.SetPreferredCubeResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
+
+    # ForgetPreferredCube message
+    (client.ExternalInterfaceServicer.ForgetPreferredCube,
+     protocol.ForgetPreferredCubeRequest(),
+     TestResultMatches(protocol.ForgetPreferredCubeResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
 
     # NOTE: Add additional messages here
 ]

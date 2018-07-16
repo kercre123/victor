@@ -725,4 +725,3 @@ message SetBackpackLEDsRequest {
 message SetBackpackLEDsResponse {
   ResultStatus status = 1;
 }
-

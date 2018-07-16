@@ -585,7 +585,7 @@ message ObjectAvailable
 
 // Indicates that a cube has connected or disconnected
 message ObjectConnectionState
-{  
+{
   uint_32 objectID,
   string factoryID,
   ObjectType  object_type,
@@ -1009,6 +1009,13 @@ autounion MessageEngineToGame
   RobotChangedObservedFaceID        RobotChangedObservedFaceID         = 0x08, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   AnimationAvailable                AnimationAvailable                 = 0x09,
   EndOfMessage                      EndOfMessage                       = 0x0A,
+  ObjectConnectionState             ObjectConnectionState              = 0x0B, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  ObjectMoved                       ObjectMoved                        = 0x0C, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  ObjectStoppedMoving               ObjectStoppedMoving                = 0x0D, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  ObjectUpAxisChanged               ObjectUpAxisChanged                = 0x0E, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  ObjectTapped                      ObjectTapped                       = 0x0F, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  ObjectAccel                       ObjectAccel                        = 0x10, // TODO: The engine is not yet sending this message, holding this tag id near the other object events for when it's implemented
+  RobotObservedObject               RobotObservedObject                = 0x11, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
 }
 
 } // namespace ExternalInterface

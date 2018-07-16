@@ -11,7 +11,7 @@ import logging
 
 from . import (animation, backpack, behavior, connection,
                events, exceptions, faces, motors,
-               oled_face, photos, util, world)
+               objects, oled_face, photos, util, world)
 
 MODULE_LOGGER = logging.getLogger(__name__)
 
@@ -46,7 +46,6 @@ class Robot:
         self._photos = None
 
         self.behavior_timeout = behavior_timeout
-        self._world = world.World()
         # Robot state/sensor data
         self._pose: util.Pose = None
         self._pose_angle_rad: float = None
@@ -113,6 +112,8 @@ class Robot:
 
     @property
     def world(self):
+        if self._world is None:
+            raise exceptions.VectorNotReadyException("WorldComponent is not yet initialized")
         return self._world
 
     @property
@@ -240,9 +241,11 @@ class Robot:
         self._motors = motors.MotorComponent(self)
         self._oled = oled_face.OledComponent(self)
         self._photos = photos.PhotographComponent(self)
+        self._world = world.World(self)
 
         # Enable face detection, to allow Vector to add faces to its world view
-        self.faces.enable_vision_mode(enable=True)
+        self._faces.enable_vision_mode(enable=True)
+
         # Subscribe to a callback that updates the robot's local properties
         self.events.subscribe("robot_state", self._unpack_robot_state)
         # Subscribe to a callback that updates the world view
@@ -251,6 +254,27 @@ class Robot:
         # Subscribe to a callback that updates a face's id
         self.events.subscribe("robot_changed_observed_face_id",
                               self.world.update_face_id)
+
+        # @TODO: these events subscriptions should be moved to objects.py rather than living on the robot
+
+        # Subscribe to callbacks that is triggered when an object connects or disconnects
+        self.events.subscribe("object_connection_state",
+                              self.world.object_connection_state)
+        # Subscribe to callbacks that is triggered when an object is in motion
+        self.events.subscribe("object_moved",
+                              self.world.object_moved)
+        # Subscribe to callbacks that is triggered when an object stops moving
+        self.events.subscribe("object_stopped_moving",
+                              self.world.object_stopped_moving)
+        # Subscribe to callbacks that is triggered when an object is rotated toward a new up axis
+        self.events.subscribe("object_up_axis_changed",
+                              self.world.object_up_axis_changed)
+        # Subscribe to callbacks that is triggered when an object is tapped
+        self.events.subscribe("object_tapped",
+                              self.world.object_tapped)
+        # Subscribe to callbacks that is triggered when the robot observes an object
+        self.events.subscribe("robot_observed_object",
+                              self.world.robot_observed_object)
 
     def disconnect(self, wait_for_tasks=True):
         if self.is_async and wait_for_tasks:

@@ -56,7 +56,7 @@ void SDKComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& depend
   // Subscribe to messages
   if( _robot->HasExternalInterface() ) {
     auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this,  _signalHandles);
-  
+
     using namespace ExternalInterface;
     helper.SubscribeGameToEngine<ExternalInterface::MessageGameToEngineTag::SDKActivationRequest>();
   }

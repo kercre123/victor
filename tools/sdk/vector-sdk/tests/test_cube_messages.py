@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+
+'''
+Test cube connection interactions
+'''
+
+import argparse
+import asyncio
+import os
+from pathlib import Path
+import sys
+import time
+import utilities
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+import vector  # pylint: disable=wrong-import-position
+
+
+async def wait_async(t):
+    return await asyncio.sleep(t)
+
+
+def main():
+    '''main execution'''
+    args = utilities.parse_args()
+
+    print("------ begin cube interactions ------")
+
+    # The robot shall drive straight, stop and then turn around
+    with vector.Robot(args.ip, str(args.cert), port=args.port) as robot:
+        print("disconnecting from any connected cubes...")
+        robot.world.disconnect_cube()
+
+        loop = robot.loop
+        loop.run_until_complete(wait_async(2.0))
+
+        print("connect to a cube...")
+        connectionResult = robot.world.connect_cube()
+        print(connectionResult)
+
+        connected_cubes = robot.world.connected_light_cubes
+        print("should be connected now, we are connected to {0} objects.".format(len(connected_cubes)))
+        for i in connected_cubes:
+            print("connected to cube {0}, clearing preferred cube for 1 second...".format(i._factory_id))
+            robot.world.forget_preferred_cube()
+            loop.run_until_complete(wait_async(1.0))
+
+            print("resetting preferred cube to the one we connected to...")
+            robot.world.set_preferred_cube(i._factory_id)
+            loop.run_until_complete(wait_async(1.0))
+
+            robot.world.flash_cube_lights()
+
+        print("for the next 8 second, please tap, move, or allow victor to observe the cube, events will be logged to console.")
+        for _ in range(16):
+            for i in connected_cubes:
+                print(i)
+                print("last observed timestamp: " + str(i.last_observed_time) + ", robot timestamp: " + str(i.last_observed_robot_timestamp))
+            loop.run_until_complete(wait_async(0.5))
+
+        print("disconnecting...")
+        robot.world.disconnect_cube()
+        loop.run_until_complete(wait_async(1.0))
+
+    print("------ finish cube interactions ------")
+
+
+if __name__ == "__main__":
+    main()

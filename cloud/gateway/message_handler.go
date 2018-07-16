@@ -412,6 +412,60 @@ func CladEventToProto(msg *gw_clad.Event) *extint.Event {
 	}
 }
 
+func CladObjectConnectionStateToProto(msg *gw_clad.ObjectConnectionState) *extint.ObjectConnectionState {
+	return &extint.ObjectConnectionState{
+		ObjectId:   msg.ObjectID,
+		FactoryId:  msg.FactoryID,
+		ObjectType: extint.ObjectType(msg.ObjectType + 1),
+		Connected:  msg.Connected,
+	}
+}
+func CladObjectMovedToProto(msg *gw_clad.ObjectMoved) *extint.ObjectMoved {
+	return &extint.ObjectMoved{
+		Timestamp: msg.Timestamp,
+		ObjectId:  msg.ObjectID,
+	}
+}
+func CladObjectStoppedMovingToProto(msg *gw_clad.ObjectStoppedMoving) *extint.ObjectStoppedMoving {
+	return &extint.ObjectStoppedMoving{
+		Timestamp: msg.Timestamp,
+		ObjectId:  msg.ObjectID,
+	}
+}
+func CladObjectUpAxisChangedToProto(msg *gw_clad.ObjectUpAxisChanged) *extint.ObjectUpAxisChanged {
+	// In clad, unknown is the final value
+	// In proto, the convention is that 0 is unknown
+	upAxis := extint.UpAxis_INVALID_AXIS
+	if msg.UpAxis != gw_clad.UpAxis_UnknownAxis {
+		upAxis = extint.UpAxis(msg.UpAxis + 1)
+	}
+
+	return &extint.ObjectUpAxisChanged{
+		Timestamp: msg.Timestamp,
+		ObjectId:  msg.ObjectID,
+		UpAxis:    upAxis,
+	}
+}
+func CladObjectTappedToProto(msg *gw_clad.ObjectTapped) *extint.ObjectTapped {
+	return &extint.ObjectTapped{
+		Timestamp: msg.Timestamp,
+		ObjectId:  msg.ObjectID,
+	}
+}
+
+func CladRobotObservedObjectToProto(msg *gw_clad.RobotObservedObject) *extint.RobotObservedObject {
+	return &extint.RobotObservedObject{
+		Timestamp:             msg.Timestamp,
+		ObjectFamily:          extint.ObjectFamily(msg.ObjectFamily + 1),
+		ObjectType:            extint.ObjectType(msg.ObjectType + 1),
+		ObjectId:              msg.ObjectID,
+		ImgRect:               CladCladRectToProto(&msg.ImgRect),
+		Pose:                  CladPoseToProto(&msg.Pose),
+		IsActive:              uint32(msg.IsActive),
+		TopFaceOrientationRad: msg.TopFaceOrientationRad,
+	}
+}
+
 func SendOnboardingContinue(in *extint.GatewayWrapper_OnboardingContinue) (*extint.OnboardingInputResponse, error) {
 	f, result := createChannel(&extint.GatewayWrapper_OnboardingContinueResponse{}, 1)
 	defer f()
@@ -1149,6 +1203,97 @@ func (m *rpcService) EnableVisionMode(ctx context.Context, in *extint.EnableVisi
 		return nil, err
 	}
 	return &extint.EnableVisionModeResult{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
+func (m *rpcService) ConnectCube(ctx context.Context, in *extint.ConnectCubeRequest) (*extint.ConnectCubeResponse, error) {
+	log.Println("Received rpc request ConnectCube(", in, ")")
+
+	f, result := createChannel(&extint.GatewayWrapper_ConnectCubeResponse{}, 1)
+	defer f()
+
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_ConnectCubeRequest{
+			ConnectCubeRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	gatewayWrapper := <-result
+	response := gatewayWrapper.GetConnectCubeResponse()
+	response.Status = &extint.ResultStatus{
+		Description: "Response recieved from engine",
+	}
+	return response, nil
+}
+
+func (m *rpcService) DisconnectCube(ctx context.Context, in *extint.DisconnectCubeRequest) (*extint.DisconnectCubeResponse, error) {
+	log.Println("Received rpc request DisconnectCube(", in, ")")
+
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_DisconnectCubeRequest{
+			DisconnectCubeRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &extint.DisconnectCubeResponse{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
+func (m *rpcService) FlashCubeLights(ctx context.Context, in *extint.FlashCubeLightsRequest) (*extint.FlashCubeLightsResponse, error) {
+	log.Println("Received rpc request FlashCubeLights(", in, ")")
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_FlashCubeLightsRequest{
+			FlashCubeLightsRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &extint.FlashCubeLightsResponse{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
+func (m *rpcService) ForgetPreferredCube(ctx context.Context, in *extint.ForgetPreferredCubeRequest) (*extint.ForgetPreferredCubeResponse, error) {
+	log.Println("Received rpc request ForgetPreferredCube(", in, ")")
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_ForgetPreferredCubeRequest{
+			ForgetPreferredCubeRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &extint.ForgetPreferredCubeResponse{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
+func (m *rpcService) SetPreferredCube(ctx context.Context, in *extint.SetPreferredCubeRequest) (*extint.SetPreferredCubeResponse, error) {
+	log.Println("Received rpc request SetPreferredCube(", in, ")")
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_SetPreferredCubeRequest{
+			SetPreferredCubeRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &extint.SetPreferredCubeResponse{
 		Status: &extint.ResultStatus{
 			Description: "Message sent to engine",
 		},

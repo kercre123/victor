@@ -225,6 +225,22 @@ test_curl: .require_ip
 				"is_custom": false}}'
 	@echo
 
+	$(curl_command)/v1/set_preferred_cube -d '{"factory_id":"11:11:11:11:11:11"}'
+	@echo
+
+	$(curl_command)/v1/forget_preferred_cube -d '{}'
+	@echo
+
+	$(curl_command)/v1/connect_cube -d '{}'
+	@echo
+
+	$(curl_command)/v1/flash_cube_lights -d '{}'
+	@echo
+
+	sleep 2
+	$(curl_command)/v1/disconnect_cube -d '{}'
+	@echo
+
 test_meet_victor: .require_ip
 	# First, turn on behaviors (by shaking), then say "Hey Vector, my name is Bobert"
 

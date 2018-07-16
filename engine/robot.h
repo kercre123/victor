@@ -69,6 +69,7 @@ class DataPlatform;
 namespace Cozmo {
 
 // Forward declarations:
+class AppCubeConnectionSubscriber;
 class AIComponent;
 class ActionList;
 class BehaviorFactory;
@@ -206,7 +207,8 @@ public:
   template<typename T>
   T* GetComponentPtr() {return _components->GetComponentPtr<T>();}
 
-
+  inline AppCubeConnectionSubscriber& GetAppCubeConnectionSubscriber() {return GetComponent<AppCubeConnectionSubscriber>();}
+  inline const AppCubeConnectionSubscriber& GetAppCubeConnectionSubscriber() const {return GetComponent<AppCubeConnectionSubscriber>();}
 
   inline BlockWorld&       GetBlockWorld()       {return GetComponent<BlockWorld>();}
   inline const BlockWorld& GetBlockWorld() const {return GetComponent<BlockWorld>();}

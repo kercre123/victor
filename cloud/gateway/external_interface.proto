@@ -10,6 +10,7 @@ package Anki.Cozmo.external_interface;
 option optimize_for = LITE_RUNTIME;
 
 import "google/api/annotations.proto";
+import "cube.proto";
 import "messages.proto";
 import "settings.proto";
 import "shared.proto";
@@ -299,5 +300,57 @@ service ExternalInterface {
       body: "*"
     };
   }
-}
 
+  // Attempt to connect to a cube. If a cube is currently connected,
+  // this will do nothing.
+  rpc ConnectCube(ConnectCubeRequest) returns (ConnectCubeResponse) {
+    option (google.api.http) = {
+      post: "/v1/connect_cube",
+      body: "*"
+    };
+  }
+
+  // Requests a disconnection from the currently connected cube.
+  // The connection will be held for gracePeriod_sec before actually
+  // disconnecting. Any attempt to connect during this "grace period"
+  // will succeed instantaneously, so this is useful if you are
+  // frequently disconnecting/connecting to the cube. A grace period
+  // of 0 will immediately disconnect the cube.
+  rpc DisconnectCube(DisconnectCubeRequest) returns (DisconnectCubeResponse) {
+    option (google.api.http) = {
+      post: "/v1/disconnect_cube",
+      body: "*"
+    };
+  }
+
+  // Signal a connected cube to flash its lights using the default cube
+  // flash animation.
+  rpc FlashCubeLights(FlashCubeLightsRequest) returns (FlashCubeLightsResponse) {
+    option (google.api.http) = {
+      post: "/v1/flash_cube_lights",
+      body: "*"
+    };
+  }
+
+  // 'Forget' the robot's preferred cube. This will cause the robot to
+  // connect to the cube with the highest RSSI (signal strength) next
+  // time a connection is requested. Saves this preference to disk.
+  // The next cube that the robot connects to will become its
+  // preferred cube.
+  rpc ForgetPreferredCube(ForgetPreferredCubeRequest) returns (ForgetPreferredCubeResponse) {
+    option (google.api.http) = {
+      post: "/v1/forget_preferred_cube",
+      body: "*"
+    };
+  }
+
+  // Set the robot's preferred cube and save it to disk. The robot
+  // will always attempt to connect to this cube if it is available.
+  // This is only used in simulation (for now).
+  rpc SetPreferredCube(SetPreferredCubeRequest) returns (SetPreferredCubeResponse) {
+    option (google.api.http) = {
+      post: "/v1/set_preferred_cube",
+      body: "*"
+    };
+  }
+}

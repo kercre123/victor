@@ -955,4 +955,4 @@ class CLADParser(PLYParser):
             self._parse_error("before '{0}'".format(p.value),
                               self.lineno_to_coord(p.lineno, self.lexer.find_tok_column(p.lexpos)))
         else:
-            self._parse_error('At end of input.', _lines_to_coords[-1])
+            self._parse_error('At end of input.', self._lines_to_coords[-1])

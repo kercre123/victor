@@ -4,6 +4,7 @@
 Protobuf messages exposed to the Vector Python SDK
 '''
 
+from .cube_pb2 import *
 from .messages_pb2 import *
 from .settings_pb2 import *
 from .shared_pb2 import *
