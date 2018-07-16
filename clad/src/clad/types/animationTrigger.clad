@@ -107,6 +107,7 @@ enum int_32 AnimationTrigger
   DriveStartHappy,
   DriveStartLaunch,
 
+  EyeContactLookLoop,
   ExploringHuhClose,
   ExploringHuhFar,
   ExploringLookAround,

@@ -2,7 +2,7 @@
   "behaviorClass": "AnimSequence",
   "behaviorID": "ObservingOnChargerEyeContact",
 
-  "animTriggers" : ["HikingSquintStart"],
+  "animTriggers" : ["EyeContactLookLoop"],
   "playOnChargerWithoutBody": true,
 
   "emotionEventOnActivated": "EyeContactReaction",

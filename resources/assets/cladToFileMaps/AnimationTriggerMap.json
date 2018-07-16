@@ -432,6 +432,10 @@
     "AnimName": "ag_driving01_startdriving"
   },
   {
+    "CladEvent": "EyeContactLookLoop",
+    "AnimName": "ag_eyecontact_lookloop"
+  },
+  {
     "CladEvent": "ExploringHuhClose",
     "AnimName": "ag_explorer_huh_close"
   },
