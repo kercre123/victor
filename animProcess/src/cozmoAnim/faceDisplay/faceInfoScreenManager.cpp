@@ -239,35 +239,12 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   SET_ENTER_ACTION(None, noneEnterFcn);
   SET_EXIT_ACTION(None, noneExitFcn);
 
-  // None screen 
-  FaceInfoScreen::ScreenAction drawInitConnectionScreen = [animStreamer, this]() {
-  #if FACTORY_TEST
-    InitConnectionFlow(animStreamer);
-  #else
-    (void)animStreamer;
-  #endif
-
-    // Restore power mode as specified by engine
-    SendAnimToRobot(_calmModeMsgOnNone);
-  };
-    
   // === FAC screen ===
   auto facEnterFcn = [this]() {
     DrawFAC();
   };
 
   SET_ENTER_ACTION(FAC, facEnterFcn);
-
-  GetScreen(ScreenName::None)->SetEnterScreenAction(drawInitConnectionScreen);
-  
-  FaceInfoScreen::ScreenAction exitNoneAction = []() {
-    // Disable calm mode
-    RobotInterface::CalmPowerMode msg;
-    msg.enable = false;
-    msg.calibOnDisable = false;
-    SendAnimToRobot(std::move(msg));
-  };
-  GetScreen(ScreenName::None)->SetExitScreenAction(exitNoneAction);
   
   // FAC screen
   DISABLE_TIMEOUT(FAC);

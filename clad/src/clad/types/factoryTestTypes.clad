@@ -142,8 +142,6 @@ enum uint_8 FactoryTestResultCode {
   TOUCH_VALUES_OOR,
   DISTANCE_SENSOR_OOR,
   CERT_CHECK_FAILED,
-  // NO_WIFI_APS_DISCOVERED // 2018-06-20: 0.9 was accidentally cut with this code at 100, 
-                            //             but that's invalid for playpen so it's been moved
 
   // ==== NO MORE SPACE !!!! =================================
   // ==== New result codes should replace unused ones ========

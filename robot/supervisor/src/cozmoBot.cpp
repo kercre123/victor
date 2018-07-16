@@ -25,8 +25,6 @@
 #include "timeProfiler.h"
 #include "wheelController.h"
 
-#include "anki/cozmo/shared/factory/emrHelper.h"
-
 #ifndef SIMULATOR
 #include <unistd.h>
 #endif
@@ -369,33 +367,7 @@ namespace Anki {
             maxMainTooLongTime_ = cycleTime;
           }
         }
-        lastCycleStartTime_ = cycleStartTime;
-
-
-#if FACTORY_TEST
-        {
-          // Periodically check if the touch sensor has ever
-          // gotten an invalid reading
-          // If is has print an error and send an overloaded
-          // RunFactoryTest message with a test type
-          // of TOUCH_SENSOR_INVALID
-          static TimeStamp_t then = HAL::GetTimeStamp();
-          const TimeStamp_t now = HAL::GetTimeStamp();
-          if((now - then > 1000) &&
-             !HAL::IsTouchSensorValid())
-          {
-            then = now;
-            
-            AnkiError("CozmoBot.TouchSensorIsInvalid", "");
-          
-            using namespace RobotInterface;
-            RunFactoryTest msg;
-            msg.test = FactoryTest::TOUCH_SENSOR_INVALID;
-            SendMessage(msg);
-          }
-        }
-#endif
-          
+        lastCycleStartTime_ = cycleStartTime;          
 
         // Report main cycle time error
         if ((mainTooLateCnt_ > 0 || mainTooLongCnt_ > 0) &&

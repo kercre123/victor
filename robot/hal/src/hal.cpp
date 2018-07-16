@@ -17,16 +17,6 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/factory/faultCodes.h"
 
-#if FACTORY_TEST
-// HACK: It's pretty gross to include emrHelper.h in vic-robot
-//       but need it for EMR values.
-//       This forced define of RELEASE is to appease globalDefinitions.h
-#ifndef RELEASE
-#define RELEASE
-#endif
-#include "anki/cozmo/shared/factory/emrHelper.h"
-#endif
-
 #include "../spine/spine.h"
 #include "../spine/cc_commander.h"
 
