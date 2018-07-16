@@ -233,6 +233,9 @@ enum int_32 AnimationTrigger
   PounceFail,
   PounceSuccess,
   PounceWProxForward,
+
+  PRDemoGreeting,
+
   ProceduralLive,
   PutDownBlockKeepAlive,
   PutDownBlockPutDown,

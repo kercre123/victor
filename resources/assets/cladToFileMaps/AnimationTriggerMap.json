@@ -1791,6 +1791,10 @@
   {
     "CladEvent": "ComeHereSuccess",
     "AnimName": "ag_comehere_greeting"
+  },
+  {
+    "CladEvent": "PRDemoGreeting",
+    "AnimName": "ag_greeting_big_hello"
   }
  
 
