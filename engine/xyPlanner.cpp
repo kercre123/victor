@@ -172,9 +172,18 @@ void XYPlanner::StartPlanner()
   }
 
   // expand out of collision state if necessary
-  // NOTE: if no safe point exists, the A* search will timeout, but we probably have bigger problems to deal with.
-  //       Why can we not find a single safe point anywhere within the searchable range of EscapeObstaclePlanner?
-  const Point2f plannerGoal = FindNearestSafePoint(_start.GetTranslation());
+  // NOTE:  if no safe point exists, the A* search will timeout, but we probably have bigger problems to deal with.
+  //        Why can we not find a single safe point anywhere within the searchable range of EscapeObstaclePlanner?
+  //
+  // NOTE2: there seems to be a bug in the planner where using Point::IsNear is not a sufficient check for determining
+  //        that the goal is safe, even if we use a known safe point for the goal. The work around, for now, is
+  //        to find the nearest safe -grid- point, and then insert the true goal state after a plan has been made.
+  const Point2f plannerGoal = FindNearestSafePoint( GetNearestGridPoint(_start.GetTranslation()) );
+  
+  for (const auto& s : plannerStart) {
+    PRINT_NAMED_INFO("XYPlanner.StartPlanner", "Plan from %s to %s (%.1f mm)", 
+      plannerGoal.ToString().c_str(), s.ToString().c_str(), (plannerGoal - s).Length() );
+  }
 
   // profile time it takes to find a plan
   using namespace std::chrono;
@@ -382,6 +391,8 @@ Point2f XYPlanner::FindNearestSafePoint(const Point2f& p) const
 
   if (plan.empty()) {
     PRINT_NAMED_WARNING("XYPlanner.FindNearestSafePoint", "Could not find any collision free point near %s", p.ToString().c_str());
+  } else if (plan.size() > 1) {
+    PRINT_NAMED_INFO("XYPlanner.FindNearestSafePoint", "had to move start state to %s", plan.back().ToString().c_str());
   }
 
   return plan.empty() ? p : plan.back();
