@@ -309,6 +309,9 @@ namespace Vision {
         
       case ResizeMethod::AverageArea:
         return CV_INTER_AREA;
+        
+      case ResizeMethod::Lanczos:
+        return CV_INTER_LANCZOS4;
     }
   }
   

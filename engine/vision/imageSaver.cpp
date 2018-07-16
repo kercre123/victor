@@ -60,6 +60,13 @@ Result ImageSaver::SetParams(Params&& params)
     return RESULT_FAIL;
   }
   
+  if(!Util::IsFltGTZero(params.saveScale))
+  {
+    PRINT_NAMED_ERROR("ImageSensor.SetParams.InvalidSaveScale",
+                      "Save scale should be > 0");
+    return RESULT_FAIL;
+  }
+  
   // Use 'em:
   std::swap(params, _params);
   return RESULT_OK;
@@ -99,6 +106,11 @@ Result ImageSaver::Save(Vision::ImageCache& imageCache, const s32 frameNumber)
     {
       return RESULT_FAIL;
     }
+  }
+  
+  if(!Util::IsFltNear(_params.saveScale, 1.f))
+  {
+    sizedImage.Resize(_params.saveScale, Vision::ResizeMethod::Lanczos);
   }
   
   const Result saveResult = sizedImage.Save(fullFilename, _params.quality);

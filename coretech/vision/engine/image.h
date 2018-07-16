@@ -36,7 +36,8 @@ namespace Vision {
     NearestNeighbor = 0,
     Linear,
     Cubic,
-    AverageArea
+    AverageArea,
+    Lanczos
   };
 
   template<typename T>

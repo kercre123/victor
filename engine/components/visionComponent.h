@@ -300,7 +300,8 @@ struct DockingErrorSignal;
                                 const int8_t onRobotQuality,
                                 const Vision::ImageCache::Size& saveSize = Vision::ImageCache::Size::Full,
                                 const bool removeRadialDistortion = false,
-                                const f32 thumbnailScaleFraction = 0.f);
+                                const f32 thumbnailScaleFraction = 0.f,
+                                const f32 saveScaleFraction = 1.f);
 
     // This is for faking images being processed for unit tests
     void FakeImageProcessed(TimeStamp_t t);

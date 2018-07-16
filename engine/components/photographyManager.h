@@ -106,6 +106,7 @@ private:
   std::string GetBasename(int photoID) const;
   const std::string& GetStateString() const;
   int PhotoIndexFromID(const int id) const; // Returns photo info index, or -1 if not found
+  bool UseSensorResolution() const;
   
   void HandleEvents(const AnkiEvent<external_interface::GatewayWrapper>& event);
   void OnRequestPhotosInfo (const external_interface::PhotosInfoRequest&  photosInfoRequest);

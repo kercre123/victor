@@ -15,10 +15,12 @@
 #include "engine/components/photographyManager.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoAPI/comms/protoMessageHandler.h"
+#include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalMessageRouter.h"
 #include "engine/externalInterface/gatewayInterface.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
+#include "engine/utils/cozmoFeatureGate.h"
 #include "webServerProcess/src/webService.h"
 
 #include "proto/external_interface/shared.pb.h"
@@ -197,7 +199,7 @@ void PhotographyManager::UpdateDependent(const RobotCompMap& dependentComps)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result PhotographyManager::EnablePhotoMode(bool enable)
 {
-  if(!kTakePhoto_UseSensorResolution)
+  if(!UseSensorResolution())
   {
     // No format change: immediately in photo mode
     _state = State::InPhotoMode;
@@ -270,7 +272,14 @@ std::string PhotographyManager::GetBasename(int photoID) const
   return "photo_" + ss.str();
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool PhotographyManager::UseSensorResolution() const
+{
+  // NOTE: using half-res (aka "Full") for PRDemo until VIC-4077 is fixed
+  return (kTakePhoto_UseSensorResolution
+          && !_robot->GetContext()->GetFeatureGate()->IsFeatureEnabled(FeatureType::PRDemo));
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 PhotographyManager::PhotoHandle PhotographyManager::TakePhoto()
 {
@@ -282,9 +291,13 @@ PhotographyManager::PhotoHandle PhotographyManager::TakePhoto()
     return 0;
   }
 
-  const auto photoSize = (kTakePhoto_UseSensorResolution ?
+  const bool useSensorRes = UseSensorResolution();
+  const auto photoSize = (useSensorRes ?
                           Vision::ImageCache::Size::Sensor :
                           Vision::ImageCache::Size::Full);
+  
+  // Upsampling half-res to full scale for PRDemo until VIC-4077 is fixed
+  const float saveScale = (_robot->GetContext()->GetFeatureGate()->IsFeatureEnabled(FeatureType::PRDemo) ? 2.f : 1.f);
     
   _visionComponent->SetSaveImageParameters(ImageSendMode::SingleShot,
                                            GetSavePath(),
@@ -292,14 +305,15 @@ PhotographyManager::PhotoHandle PhotographyManager::TakePhoto()
                                            kSaveQuality,
                                            photoSize,
                                            kRemoveDistortion,
-                                           kThumbnailScale);
+                                           kThumbnailScale,
+                                           saveScale);
 
   _lastRequestedPhotoHandle = _visionComponent->GetLastProcessedImageTimeStamp();
   _state = State::WaitingForTakePhoto;
   
   LOG_INFO("PhotographyManager.TakePhoto.SetSaveParams",
            "Resolution: %s, RequestedHandle: %zu",
-           (kTakePhoto_UseSensorResolution ? "Sensor" : "Full"),
+           (useSensorRes ? "Sensor" : "Full"),
            _lastRequestedPhotoHandle);
   
   return _lastRequestedPhotoHandle;

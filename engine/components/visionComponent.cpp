@@ -2796,7 +2796,8 @@ namespace Cozmo {
                                                const int8_t onRobotQuality,
                                                const Vision::ImageCache::Size& saveSize,
                                                const bool removeRadialDistortion,
-                                               const f32 thumbnailScaleFraction)
+                                               const f32 thumbnailScaleFraction,
+                                               const f32 saveScaleFraction)
   {
     if(nullptr != _visionSystem)
     {
@@ -2814,7 +2815,8 @@ namespace Cozmo {
                                        onRobotQuality,
                                        saveSize,
                                        removeRadialDistortion,
-                                       thumbnailScaleFraction);
+                                       thumbnailScaleFraction,
+                                       saveScaleFraction);
 
       if(saveMode != ImageSendMode::Off)
       {

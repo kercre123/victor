@@ -222,7 +222,8 @@ namespace Cozmo {
                            const int8_t quality,
                            const Vision::ImageCache::Size& saveSize,
                            const bool removeRadialDistortion,
-                           const f32 thumbnailScaleFraction);
+                           const f32 thumbnailScaleFraction,
+                           const f32 saveScaleFraction);
 
     CameraParams GetCurrentCameraParams() const;
   
