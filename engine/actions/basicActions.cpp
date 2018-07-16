@@ -43,6 +43,9 @@ namespace Anki {
     
     // Whether or not to insert WaitActions before and after TurnTowardsObject's VisuallyVerifyAction
     CONSOLE_VAR(bool, kInsertWaitsInTurnTowardsObjectVerify,"TurnTowardsObject", false);
+
+    CONSOLE_VAR(u32, kDefaultNumFramesToWait, "WaitForImages", 3);
+
     
     TurnInPlaceAction::TurnInPlaceAction(const float angle_rad, const bool isAbsolute)
     : IAction("TurnInPlace",
@@ -2248,7 +2251,7 @@ namespace Anki {
     }
     
 #pragma mark ---- WaitForImagesAction ----
-    
+  
     WaitForImagesAction::WaitForImagesAction(u32 numFrames, VisionMode visionMode, TimeStamp_t afterTimeStamp)
     : IAction("WaitFor" + std::to_string(numFrames) + "Images",
               RobotActionType::WAIT_FOR_IMAGES,
@@ -2259,7 +2262,12 @@ namespace Anki {
     {
     
     }
-    
+
+    WaitForImagesAction::WaitForImagesAction(WaitForImagesAction::UseDefaultNumImages_t, VisionMode visionMode)
+    : WaitForImagesAction( kDefaultNumFramesToWait, visionMode )
+    {
+    }
+
     void WaitForImagesAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const 
     {
       // If the user has subscribed to VisionMode::Count, they are asking to be notified after N

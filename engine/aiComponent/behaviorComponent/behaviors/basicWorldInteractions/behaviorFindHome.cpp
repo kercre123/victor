@@ -258,21 +258,21 @@ void BehaviorFindHome::TransitionToSearchTurn()
     const auto currMood = GetBEI().GetMoodManager().GetSimpleMood();
     const bool isHighStim = (currMood == SimpleMoodType::HighStim);
 
-    const u32 numImagesToWaitFor = 3;
-    
     auto* action = new CompoundActionSequential();
     
     // Always do the "search turn"
     action->AddAction(new TriggerAnimationAction(_iConfig.searchTurnAnimTrigger));
     
     if (isHighStim) {
-      action->AddAction(new WaitForImagesAction(numImagesToWaitFor, VisionMode::DetectingMarkers));
+      action->AddAction(new WaitForImagesAction(WaitForImagesAction::UseDefaultNumImages,
+                                                VisionMode::DetectingMarkers));
     } else {
       // In non-high-stim, play a "waiting for images" animation in parallel with the wait for
       // images action, and play a "search turn end" animation after the "wait for images" anim.
       auto* loopAndWaitForImagesAction = new CompoundActionParallel();
       loopAndWaitForImagesAction->AddAction(new TriggerAnimationAction(_iConfig.waitForImagesAnimTrigger));
-      loopAndWaitForImagesAction->AddAction(new WaitForImagesAction(numImagesToWaitFor, VisionMode::DetectingMarkers));
+      loopAndWaitForImagesAction->AddAction(new WaitForImagesAction(WaitForImagesAction::UseDefaultNumImages,
+                                                                    VisionMode::DetectingMarkers));
       action->AddAction(loopAndWaitForImagesAction);
       action->AddAction(new TriggerAnimationAction(_iConfig.searchTurnEndAnimTrigger));
     }

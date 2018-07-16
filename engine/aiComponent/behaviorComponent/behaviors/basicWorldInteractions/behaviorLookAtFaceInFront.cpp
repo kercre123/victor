@@ -13,9 +13,10 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorLookAtFaceInFront.h"
 
-#include "engine/aiComponent/faceSelectionComponent.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/basicActions.h"
+#include "engine/actions/compoundActions.h"
+#include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/faceWorld.h"
 
 namespace Anki {
@@ -104,9 +105,13 @@ bool BehaviorLookAtFaceInFront::GetFaceIDToLookAt(SmartFaceID& smartID) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLookAtFaceInFront::TransitionToLookUp()
 {
-  const bool isPanAbsolute = false;
-  const bool isTiltAbsolute = true;
-  DelegateIfInControl(new PanAndTiltAction(0, DEG_TO_RAD(50), isPanAbsolute, isTiltAbsolute), [this](){
+  // wait for a few frames after turning to give the robot a chance to see the face
+  auto* action = new CompoundActionSequential;
+  action->AddAction(new MoveHeadToAngleAction(MAX_HEAD_ANGLE));
+  action->AddAction(new WaitForImagesAction(WaitForImagesAction::UseDefaultNumImages,
+                                            VisionMode::DetectingFaces));
+  
+  DelegateIfInControl(action, [this](){
     SmartFaceID smartID;
     if(GetFaceIDToLookAt(smartID)){
       TransitionToLookAtFace(smartID);
