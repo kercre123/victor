@@ -836,27 +836,6 @@ std::string GetObjectPathForService(GVariant* service) {
   return std::string(objectPath);
 }
 
-std::map<std::string, std::string> UnPackWiFiConfig(const std::vector<uint8_t>& packed) {
-  std::map<std::string, std::string> networks;
-  // The payload is (<SSID>\0<PSK>\0)*
-  for (auto it = packed.begin(); it != packed.end(); ) {
-    auto terminator = std::find(it, packed.end(), 0);
-    if (terminator == packed.end()) {
-      break;
-    }
-    std::string ssid(it, terminator);
-    it = terminator + 1;
-    terminator = std::find(it, packed.end(), 0);
-    if (terminator == packed.end()) {
-      break;
-    }
-    std::string psk(it, terminator);
-    networks.emplace(ssid, psk);
-    it = terminator + 1;
-  }
-  return networks;
-}
-
 WiFiState GetWiFiState() {
   // Return WiFiState object
   WiFiState wifiState;

@@ -13,7 +13,6 @@
 
 #pragma once
 
-#include "exec_command.h"
 #include "connmanbus.h"
 
 #include <map>
@@ -133,8 +132,6 @@ std::string GetHexSsidFromServicePath(const std::string& servicePath);
 ConnectWifiResult ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidden, GAsyncReadyCallback cb, gpointer userData);
 WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results);
 std::vector<uint8_t> PackWiFiScanResults(const std::vector<WiFiScanResult>& results);
-void EnableWiFiInterface(const bool enable, ExecCommandCallback callback);
-std::map<std::string, std::string> UnPackWiFiConfig(const std::vector<uint8_t>& packed);
 void HandleOutputCallback(int rc, const std::string& output);
 bool GetIpFromHostName(char* hostname, char* ip);
 bool IsAccessPointMode();
