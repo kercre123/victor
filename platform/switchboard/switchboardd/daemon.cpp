@@ -594,10 +594,12 @@ void Daemon::HandleReboot() {
 
   // trigger reboot
   sync(); sync(); sync();
-  int status = reboot(LINUX_REBOOT_CMD_RESTART);
+  int status = ExecCommand({"/sbin/reboot"});
 
-  if(status == -1) {
+
+  if (!status) {
     Log::Write("Error while restarting: [%d]", status);
+    (void) reboot(LINUX_REBOOT_CMD_RESTART);
   }
 }
 
