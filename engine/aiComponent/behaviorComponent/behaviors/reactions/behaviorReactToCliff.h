@@ -55,18 +55,11 @@ private:
   using base = ICozmoBehavior;
   
   void TransitionToStuckOnEdge();
-  void TransitionToPlayingStopReaction();
   void TransitionToPlayingCliffReaction();
   void TransitionToBackingUp();
   
   // Based on which cliff sensor(s) was tripped, create the appropriate reaction
   CompoundActionSequential* GetCliffReactAction(uint8_t cliffDetectedFlags);
-  
-  enum class State {
-    PlayingStopReaction,
-    PlayingCliffReaction,
-    BackingUp
-  };
   
   struct InstanceConfig {
     InstanceConfig();
@@ -80,9 +73,8 @@ private:
   struct DynamicVariables {
     DynamicVariables();
     bool quitReaction;
-    State state;
-    bool gotCliff;
     bool gotStop;
+    bool putdownOnCliff;
     bool shouldStopDueToCharger;
     bool wantsToBeActivated;
     struct Persistent {

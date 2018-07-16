@@ -97,7 +97,8 @@ namespace Anki {
         bool pickedUp_                  = false;
 
         const f32 PICKUP_WHILE_MOVING_ACC_THRESH[3]  = {5000, 5000, 12000};  // mm/s^2
-        const f32 PICKUP_WHILE_WHEELS_NOT_MOVING_GYRO_THRESH[3] = {0.5f, 0.5f, 0.5f};   // rad/s
+        const f32 PICKUP_WHILE_WHEELS_NOT_MOVING_GYRO_THRESH = DEG_TO_RAD_F32(10.f);  // rad/s
+        const f32 REMAIN_PICKEDUP_GYRO_THRESH        = DEG_TO_RAD_F32(0.5f); // rad/s
         const f32 UNEXPECTED_ROTATION_SPEED_THRESH   = DEG_TO_RAD_F32(20.f); //rad/s
         const u8 PICKUP_COUNT_WHILE_MOVING           = 40;
         const u8 PICKUP_COUNT_WHILE_MOTIONLESS       = 20;
@@ -294,7 +295,6 @@ namespace Anki {
       }
 
       void ResetPickupVars() {
-        pickedUp_ = 0;
         potentialPickupCnt_ = 0;
         putdownCnt_ = 0;
         external_accel_disturbance_cnt[0] = external_accel_disturbance_cnt[1] = external_accel_disturbance_cnt[2] = 0;
@@ -310,7 +310,9 @@ namespace Anki {
 
       void EnablePickupDetect(bool enable)
       {
-        SetPickupDetect(false);
+        if (!enable) {
+          SetPickupDetect(false);
+        }
         pickupDetectEnabled_ = enable;
       }
 
@@ -501,30 +503,32 @@ namespace Anki {
                 || LiftController::IsMoving() || !LiftController::IsInPosition();
       }
 
-      // Robot pickup detector
-      //
-      // Pickup detection occurs when the z-axis accelerometer reading is detected to be trending
-      // up or down. When the robot moves under it's own power the accelerometer readings tend to be
-      // much more noisy than when it is held by a person. The trend must satisfy one of two cases to
-      // be considered a pickup detection:
-      //
-      // 1) Be trending for at least PD_MIN_TREND_LENGTH tics without any head motion.
-      //    (Head motion is sometimes smooth enough to look like a pickup.)
-      //
-      // 2) Be trending for at least PD_MIN_TREND_LENGTH and have spanned a delta of
-      //    PD_SUFFICIENT_TREND_DIFF mm/s^2. In this case head motion is allowed.
-      //    This is so we can at least have a less sensitive detector if the robot
-      //    is engaged is some never-ending head motions.
+      // Checks for conditions to enter/exit picked up state
       void DetectPickup()
       {
         if (!pickupDetectEnabled_)
           return;
 
+        // If enough of the cliff sensors detect cliffs, this is indicative of pickup.
+        u8 numCliffSensorsDetectingChange = 0;
+        for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
+          if (ProxSensors::IsCliffDetected(i)) {
+            ++numCliffSensorsDetectingChange;
+          }
+        }
+        bool cliffBasedPickupDetect = numCliffSensorsDetectingChange >= NUM_CLIFF_SENSORS_FOR_CHANGE_DETECT_PICKUP;
+
+
         if (IsPickedUp()) {
+          // Sensitive check for motion to determine if it's still being held by a person
+          bool gyroBasedRemainPickedUp = (ABS(gyro_robot_frame_filt[0]) > REMAIN_PICKEDUP_GYRO_THRESH) ||
+                                         (ABS(gyro_robot_frame_filt[1]) > REMAIN_PICKEDUP_GYRO_THRESH) ||
+                                         (ABS(gyro_robot_frame_filt[2]) > REMAIN_PICKEDUP_GYRO_THRESH);
 
           // Picked up flag is reset only when the robot has
           // stopped moving, detects no cliffs, and has been set upright.
-          if (!ProxSensors::IsAnyCliffDetected() &&
+          if (!cliffBasedPickupDetect &&
+              !gyroBasedRemainPickedUp &&
               CheckPutdown() &&
               (accel_robot_frame_filt[2] > NSIDE_DOWN_THRESH_MMPS2)) {
             if (++putdownCnt_ > PUTDOWN_COUNT) {
@@ -536,22 +540,13 @@ namespace Anki {
 
         } else {
 
-          // If enough of the cliff sensors detect cliffs, this is indicative of pickup.
-          u8 numCliffSensorsDetectingChange = 0;
-          for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
-            if (ProxSensors::IsCliffDetected(i)) {
-              ++numCliffSensorsDetectingChange;
-            }
-          }
-          bool cliffBasedPickupDetect = numCliffSensorsDetectingChange >= NUM_CLIFF_SENSORS_FOR_CHANGE_DETECT_PICKUP;
-        
           // Gyro activity can also indicate pickup.
           // Different detection thresholds are used depending on whether or not the wheels are moving.
           bool gyroZBasedMotionDetect = false;
-          if (!WheelController::AreWheelsMoving() && !WheelController::AreWheelsPowered()) {
+          if (!AreMotorsMoving()) {
 
             // As long as wheels aren't moving, we can also check for Z-axis gyro motion
-            gyroZBasedMotionDetect = ABS(gyro_robot_frame_filt[2]) > PICKUP_WHILE_WHEELS_NOT_MOVING_GYRO_THRESH[2];
+            gyroZBasedMotionDetect = ABS(gyro_robot_frame_filt[2]) > PICKUP_WHILE_WHEELS_NOT_MOVING_GYRO_THRESH;
 
           } else {
 
@@ -573,9 +568,9 @@ namespace Anki {
           if (!AreMotorsMoving()) {
 
             // Sufficient gyro motion is evidence of pickup
-            bool gyroBasedMotionDetected = (ABS(gyro_robot_frame_filt[0]) > PICKUP_WHILE_WHEELS_NOT_MOVING_GYRO_THRESH[0]) ||
-                                           (ABS(gyro_robot_frame_filt[1]) > PICKUP_WHILE_WHEELS_NOT_MOVING_GYRO_THRESH[1]) ||
-                                           (ABS(gyro_robot_frame_filt[2]) > PICKUP_WHILE_WHEELS_NOT_MOVING_GYRO_THRESH[2]);
+            bool gyroBasedMotionDetected = (ABS(gyro_robot_frame_filt[0]) > PICKUP_WHILE_WHEELS_NOT_MOVING_GYRO_THRESH) ||
+                                           (ABS(gyro_robot_frame_filt[1]) > PICKUP_WHILE_WHEELS_NOT_MOVING_GYRO_THRESH) ||
+                                           (ABS(gyro_robot_frame_filt[2]) > PICKUP_WHILE_WHEELS_NOT_MOVING_GYRO_THRESH);
 
             if (cliffBasedPickupDetect || gyroBasedMotionDetected)
             {

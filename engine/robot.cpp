@@ -96,6 +96,7 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/ankiDefines.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "util/transport/reliableConnection.h"
 
@@ -278,6 +279,15 @@ static const float kPitchAngleOnFacePlantMax_rads = DEG_TO_RAD(-80.f);
 static const float kPitchAngleOnFacePlantMin_sim_rads = DEG_TO_RAD(110.f); //This has not been tested
 static const float kPitchAngleOnFacePlantMax_sim_rads = DEG_TO_RAD(-80.f); //This has not been tested
 
+// Too long in-air condition
+static const TimeStamp_t kInAirTooLongTimeReportTime_ms = 60000;
+
+// As long as robot's orientation doesn't change by more than
+// this amount, we assume it's not being held by a person.
+// Note that if he's placed on a platform that's vibrating so
+// much that his orientation changes by more than this amount, 
+// we would not be able to differentiate this from being held.
+static const float kRobotAngleChangedThresh_rad = DEG_TO_RAD(1);
 
 Robot::Robot(const RobotID_t robotID, CozmoContext* context)
 : _context(context)
@@ -580,6 +590,44 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
 
     offTreadsStateChanged = true;
   }
+
+  //////////////////////////////////
+  // Too long InAir DAS message
+  //////////////////////////////////
+  // Check if robot is stuck in-air for a long time, but is likely not being held.
+  // Might be indicative of a vibrating surface or overly sensitive conditions 
+  // for staying in the picked up state.
+  static bool        reportedInAirTooLong      = false;
+  static TimeStamp_t inAirTooLongReportTime_ms = 0;
+  static Radians     lastStableRobotAngle_rad  = msg.pose.angle;
+
+  if (!reportedInAirTooLong) {
+
+    // Schedule reporting of DAS message when InAir, but reset
+    // timer if robot orientation changes indicating that it's probably
+    // still being held.
+    const bool robotAngleChanged = (lastStableRobotAngle_rad - msg.pose.angle).getAbsoluteVal().ToFloat() > kRobotAngleChangedThresh_rad;
+    if ((_offTreadsState == OffTreadsState::InAir) && robotAngleChanged) {
+      inAirTooLongReportTime_ms = currentTimestamp + kInAirTooLongTimeReportTime_ms;
+      lastStableRobotAngle_rad = msg.pose.angle;
+    }    
+
+    if ((inAirTooLongReportTime_ms > 0) && 
+        (inAirTooLongReportTime_ms < currentTimestamp)) {
+      DASMSG(robot_too_long_in_air, "robot.too_long_in_air",
+            "Robot has been in InAir picked up state for too long. Vibrating surface?");
+      DASMSG_SEND();
+      reportedInAirTooLong = true;
+    }
+  }
+
+  // Reset reporting flag when no longer picked up
+  const bool cliffDetected = GetCliffSensorComponent().IsCliffDetected();
+  if (_offTreadsState == OffTreadsState::OnTreads || cliffDetected) {
+    reportedInAirTooLong = false;
+    inAirTooLongReportTime_ms = 0;
+  }
+
 
   // Send viz message with current treads states
   const bool awaitingNewTreadsState = (_offTreadsState != _awaitingConfirmationTreadState);
