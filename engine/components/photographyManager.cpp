@@ -434,6 +434,7 @@ void PhotographyManager::DeleteAllPhotos()
   while (!_photoInfos.empty())
   {
     DeletePhotoByID(_photoInfos[0]._id, kSavePhotosFile);
+    dirty = true;
   }
 
   if (dirty)
