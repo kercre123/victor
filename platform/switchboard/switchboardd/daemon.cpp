@@ -61,6 +61,7 @@ void Daemon::Start() {
   Christen();
 
   InitializeEngineComms();
+  InitializeCloudComms();
   Log::Write("Finished Starting");
 
   // Initialize Ble Ipc Timer
@@ -153,6 +154,15 @@ void Daemon::InitializeEngineComms() {
   ev_timer_start(_loop, &_engineTimer);
 }
 
+void Daemon::InitializeCloudComms() {
+  _tokenClient = std::make_unique<TokenClient>(_loop);
+  _tokenClient->Init();
+
+  _tokenTimer.data = this;
+  ev_timer_init(&_tokenTimer, HandleTokenTimer, kRetryInterval_s, kRetryInterval_s);
+  ev_timer_start(_loop, &_tokenTimer);
+}
+
 bool Daemon::TryConnectToEngineServer() {
   bool connected = _engineMessagingClient->Connect();
 
@@ -186,6 +196,28 @@ bool Daemon::TryConnectToAnkiBluetoothDaemon() {
   }
 
   return _bleClient->IsConnected();
+}
+
+bool Daemon::TryConnectToTokenServer() {
+  bool connected = _tokenClient->Connect();
+
+  if (connected) {
+    Log::Write("Initialize TokenClient");
+    _tokenConnectionFailureCounter = kFailureCountToLog;
+
+    _tokenClient->SendAuthRequest("DSFLSDKFJLSDKFLDSKJFDLS");
+    _tokenClient->SendAuthRequest("DSFLSDKFJLSDKFLDSKJFDLS");
+    _tokenClient->SendAuthRequest("DSFLSDKFJLSDKFLDSKJFDLS");
+    _tokenClient->SendAuthRequest("DSFLSDKFJLSDKFLDSKJFDLS");
+    _tokenClient->SendAuthRequest("DSFLSDKFJLSDKFLDSKJFDLS");
+  } else {
+    if(++_tokenConnectionFailureCounter >= kFailureCountToLog) {
+      Log::Write("Failed to Initialize EngineMessagingClient ... trying again.");
+      _tokenConnectionFailureCounter = 0;
+    }
+  }
+
+  return connected;
 }
 
 void Daemon::InitializeBleComms() {
@@ -583,6 +615,15 @@ void Daemon::HandleAnkibtdTimer(struct ev_loop* loop, struct ev_timer* w, int re
   if(connected) {
     ev_timer_stop(loop, w);
     Log::Write("Initialization complete.");
+  }
+}
+
+void Daemon::HandleTokenTimer(struct ev_loop* loop, struct ev_timer* w, int revents) {
+  Daemon* daemon = (Daemon*)w->data;
+  bool connected = daemon->TryConnectToTokenServer();
+
+  if(connected) {
+    ev_timer_stop(loop, w);
   }
 }
 

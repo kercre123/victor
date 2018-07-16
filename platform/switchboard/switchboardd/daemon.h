@@ -24,6 +24,7 @@
 #include "switchboardd/rtsComms.h"
 #include "switchboardd/savedSessionManager.h"
 #include "switchboardd/taskExecutor.h"
+#include "switchboardd/tokenClient.h"
 #include "switchboardd/engineMessagingClient.h"
 
 namespace Anki {
@@ -43,6 +44,7 @@ namespace Switchboard {
         _isPairing(false),
         _isOtaUpdating(false),
         _connectionFailureCounter(kFailureCountToLog),
+        _tokenConnectionFailureCounter(kFailureCountToLog),
         _taskExecutor(nullptr),
         _bleClient(nullptr),
         _securePairing(nullptr),
@@ -64,6 +66,7 @@ namespace Switchboard {
       const std::string kUpdateEngineServicePath = "/lib/systemd/system/update-engine.service";
 
       static void HandleEngineTimer(struct ev_loop* loop, struct ev_timer* w, int revents);
+      static void HandleTokenTimer(struct ev_loop* loop, struct ev_timer* w, int revents);
       static void HandleAnkibtdTimer(struct ev_loop* loop, struct ev_timer* w, int revents);
       static void sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents);
       void HandleReboot();
@@ -72,6 +75,7 @@ namespace Switchboard {
 
       void Christen();
       void InitializeEngineComms();
+      void InitializeCloudComms();
       void InitializeBleComms();
       void OnConnected(int connId, INetworkStream* stream);
       void OnDisconnected(int connId, INetworkStream* stream);
@@ -82,6 +86,7 @@ namespace Switchboard {
       void OnCompletedPairing();
       void OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame message);
       bool TryConnectToEngineServer();
+      bool TryConnectToTokenServer();
       bool TryConnectToAnkiBluetoothDaemon();
       void HandleOtaUpdateExit(int rc);
       void HandleOtaUpdateProgress();
@@ -115,9 +120,11 @@ namespace Switchboard {
       bool _isPairing;
       bool _isOtaUpdating;
       uint32_t _connectionFailureCounter;
+      uint32_t _tokenConnectionFailureCounter;
 
       ev_timer _engineTimer;
       ev_timer _ankibtdTimer;
+      ev_timer _tokenTimer;
 
       struct ev_TimerStruct {
         ev_timer timer;
@@ -130,6 +137,7 @@ namespace Switchboard {
       std::unique_ptr<BleClient> _bleClient;
       std::unique_ptr<RtsComms> _securePairing;
       std::shared_ptr<EngineMessagingClient> _engineMessagingClient;
+      std::unique_ptr<TokenClient> _tokenClient;
       bool _isUpdateEngineServiceRunning;
   };
 }
