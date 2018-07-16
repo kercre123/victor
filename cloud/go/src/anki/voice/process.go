@@ -5,10 +5,8 @@ import (
 	"anki/token"
 	"anki/util"
 	"clad/cloud"
-	"context"
 	"fmt"
-	"net"
-	"strings"
+	"time"
 
 	"github.com/anki/sai-chipper-voice/client/chipper"
 	pb "github.com/anki/sai-chipper-voice/proto/anki/chipperpb"
@@ -37,6 +35,8 @@ const (
 	SampleBits = 16
 	// HotwordMessage is the sequence of bytes that defines a hotword signal over IPC
 	HotwordMessage = "hotword"
+	// DefaultTimeout is the length of time before the process will cancel a voice request
+	DefaultTimeout = 9 * time.Second
 )
 
 // Process contains the data associated with an instance of the cloud process,
@@ -112,9 +112,9 @@ func (p *Process) Run(options ...Option) {
 		opt(&p.opts)
 	}
 
-	cloudIntent := make(chan *cloud.IntentResult)
-	cloudError := make(chan string)
-	cloudChan := cloudChans{intent: cloudIntent, err: cloudError}
+	intentChan := make(chan *cloud.IntentResult)
+	errChan := make(chan cloudError)
+	cloudChan := cloudChans{intent: intentChan, err: errChan}
 
 	var ctx *voiceContext
 procloop:
@@ -139,7 +139,7 @@ procloop:
 				mode := msg.msg.GetHotword().Mode
 				serverMode, ok := modeMap[mode]
 				if !ok && mode != cloud.StreamType_KnowledgeGraph {
-					p.writeError("mode", fmt.Sprint("unknown mode:", mode))
+					p.writeError(cloud.ErrorType_InvalidMode, fmt.Errorf("unknown mode %d", mode))
 					continue
 				}
 
@@ -165,7 +165,7 @@ procloop:
 					chipperConn, err = chipper.NewConn(ChipperURL, ChipperSecret, opts...)
 					if err != nil {
 						log.Println("Error getting chipper connection:", err)
-						p.writeError("connecting", err.Error())
+						p.writeError(cloud.ErrorType_Connecting, err)
 						return
 					}
 					streamOpts := chipper.StreamOpts{
@@ -175,6 +175,7 @@ procloop:
 							Complexity: 0,
 							FrameSize:  60},
 						SaveAudio: p.opts.saveAudio,
+						Timeout:   DefaultTimeout,
 					}
 					if mode == cloud.StreamType_KnowledgeGraph {
 						stream, err = chipperConn.NewKGStream(streamOpts)
@@ -186,23 +187,7 @@ procloop:
 						})
 					}
 					if err != nil {
-						p.writeError("newstream", err.Error())
-						// debug cause of lookup failure
-						var debug string
-						addrs, err := net.DefaultResolver.LookupHost(context.Background(), "chipper-dev.api.anki.com")
-						if err != nil {
-							debug += "lookup_err: " + err.Error()
-						} else {
-							debug += "lookup_ips: " + strings.Join(addrs, "/")
-						}
-						debug += "   "
-						_, err = net.Dial("tcp", "chipper-dev.api.anki.com:443")
-						if err != nil {
-							debug += "dial_err: " + err.Error()
-						} else {
-							debug += "dial_success"
-						}
-						p.writeError("newstream_debug", debug)
+						p.writeError(cloud.ErrorType_NewStream, err)
 					}
 				})
 				if err != nil {
@@ -231,7 +216,7 @@ procloop:
 				}
 			}
 
-		case intent := <-cloudIntent:
+		case intent := <-intentChan:
 			logVerbose("Received intent from cloud:", intent)
 			// we got an answer from the cloud, tell mic to stop...
 			p.signalMicStop()
@@ -245,10 +230,10 @@ procloop:
 			}
 			ctx = nil
 
-		case err := <-cloudError:
+		case err := <-errChan:
 			logVerbose("Received error from cloud:", err)
 			p.signalMicStop()
-			p.writeError("server", err)
+			p.writeError(err.kind, err.err)
 			if err := ctx.close(); err != nil {
 				log.Println("Error closing context:")
 			}
@@ -285,36 +270,23 @@ func (p *Process) getToken() (string, error) {
 	if err != nil {
 		log.Println("Error getting jwt token:", err)
 		if p.opts.requireToken {
-			p.writeError("token", err.Error())
+			p.writeError(cloud.ErrorType_Token, err)
 		}
 		return "", err
 	}
 	jwt := resp.GetJwt()
-	if jwt.Error == cloud.TokenError_NullToken {
-		// null token = have to authenticate
-		// this is temporary - eventually authentication will be part of a flow from the app
-		req = cloud.NewTokenRequestWithAuth(&cloud.AuthRequest{SessionToken: "asdf"})
-		resp, err = token.HandleRequest(req)
-		if resp.GetAuth().Error != cloud.TokenError_NoError {
-			log.Println("Error code getting auth token:", jwt.Error)
-			if p.opts.requireToken {
-				p.writeError("token", fmt.Sprint(jwt.Error))
-			}
-			return "", err
-		}
-		return resp.GetAuth().JwtToken, nil
-	} else if jwt.Error != cloud.TokenError_NoError {
+	if jwt.Error != cloud.TokenError_NoError {
 		log.Println("Error code getting jwt token:", jwt.Error)
 		if p.opts.requireToken {
-			p.writeError("token", fmt.Sprint(jwt.Error))
+			p.writeError(cloud.ErrorType_Token, fmt.Errorf("jwt error code %d", jwt.Error))
 		}
 		return "", err
 	}
 	return resp.GetJwt().JwtToken, nil
 }
 
-func (p *Process) writeError(reason string, extra string) {
-	p.writeResponse(cloud.NewMessageWithError(&cloud.IntentError{Error: reason, Extra: extra}))
+func (p *Process) writeError(reason cloud.ErrorType, err error) {
+	p.writeResponse(cloud.NewMessageWithError(&cloud.IntentError{Error: reason, Extra: err.Error()}))
 }
 
 func (p *Process) writeResponse(response *cloud.Message) {
@@ -349,4 +321,9 @@ func logVerbose(a ...interface{}) {
 var modeMap = map[cloud.StreamType]pb.RobotMode{
 	cloud.StreamType_Normal:    pb.RobotMode_VOICE_COMMAND,
 	cloud.StreamType_Blackjack: pb.RobotMode_GAME,
+}
+
+type cloudError struct {
+	kind cloud.ErrorType
+	err  error
 }

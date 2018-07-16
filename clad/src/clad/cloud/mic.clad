@@ -8,6 +8,16 @@ enum uint_8 StreamType {
 	KnowledgeGraph
 }
 
+enum uint_8 ErrorType {
+	Server,
+	Timeout,
+	Json,
+	InvalidMode,
+	Connecting,
+	NewStream,
+	Token
+}
+
 structure Void {
 }
 
@@ -30,7 +40,7 @@ structure IntentResult {
 }
 
 structure IntentError {
-	string error,
+	ErrorType error,
 	string extra
 }
 

@@ -5,6 +5,7 @@ import (
 	"anki/util"
 	"bytes"
 	"clad/cloud"
+	"context"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -26,7 +27,7 @@ type voiceContext struct {
 
 type cloudChans struct {
 	intent chan<- *cloud.IntentResult
-	err    chan<- string
+	err    chan<- cloudError
 }
 
 func (ctx *voiceContext) addSamples(samples []int16) {
@@ -84,7 +85,7 @@ func (ctx *voiceContext) sendAudio(samples []byte, cloudChan cloudChans) error {
 	if err != nil {
 		log.Println("Cloud error:", err)
 		ctx.respOnce.Do(func() {
-			cloudChan.err <- err.Error()
+			cloudChan.err <- cloudError{errorReason(err), err}
 		})
 		return err
 	}
@@ -137,7 +138,7 @@ func (ctx *voiceContext) responseRoutine(cloudChan cloudChans) {
 		}
 		if err != nil {
 			log.Println("CCE error:", err)
-			cloudChan.err <- err.Error()
+			cloudChan.err <- cloudError{errorReason(err), err}
 			return
 		}
 		log.Println("Intent response ->", resp)
@@ -158,7 +159,7 @@ func sendIntentResponse(resp *chipper.IntentResult, cloudChan cloudChans) {
 		encoder := json.NewEncoder(&buf)
 		if err := encoder.Encode(resp.Parameters); err != nil {
 			log.Println("JSON encode error:", err)
-			cloudChan.err <- "json"
+			cloudChan.err <- cloudError{cloud.ErrorType_Json, err}
 			return
 		}
 	}
@@ -179,7 +180,7 @@ func sendKGResponse(resp *chipper.KnowledgeGraphResponse, cloudChan cloudChans) 
 	encoder := json.NewEncoder(&buf)
 	if err := encoder.Encode(params); err != nil {
 		log.Println("JSON encode error:", err)
-		cloudChan.err <- "json"
+		cloudChan.err <- cloudError{cloud.ErrorType_Json, err}
 		return
 	}
 	cloudChan.intent <- &cloud.IntentResult{
@@ -187,4 +188,11 @@ func sendKGResponse(resp *chipper.KnowledgeGraphResponse, cloudChan cloudChans) 
 		Parameters: buf.String(),
 		Metadata:   "",
 	}
+}
+
+func errorReason(err error) cloud.ErrorType {
+	if err == context.DeadlineExceeded {
+		return cloud.ErrorType_Timeout
+	}
+	return cloud.ErrorType_Server
 }
