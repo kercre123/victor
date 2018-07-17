@@ -46,7 +46,7 @@ class NeuralNetModel : public INeuralNetModel
 {
 public:
 
-  NeuralNetModel(const std::string cachePath);
+  explicit NeuralNetModel(const std::string& cachePath);
 
   ~NeuralNetModel();
 

@@ -51,7 +51,7 @@ namespace Vision {
 #define LOG_CHANNEL "NeuralNets"
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NeuralNetModel::NeuralNetModel(const std::string cachePath)
+NeuralNetModel::NeuralNetModel(const std::string& cachePath)
 : INeuralNetModel(cachePath)
 {
 
@@ -407,8 +407,8 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
 
       // Reshape tensor from [1, inputWidth, inputHeight, 2] to [inputWidth, inputHeight, 2]
       if (!squeezedTensor.CopyFrom(outputTensors[0], tensorflow::TensorShape({_params.inputWidth,
-                                                                           _params.inputHeight,
-                                                                           numberOfChannels})))
+                                                                             _params.inputHeight,
+                                                                             numberOfChannels})))
       {
         PRINT_NAMED_ERROR("NeuralNetModel.GetSalientPointsFromResponseMap.CopyFromFailed", "");
         return RESULT_FAIL;

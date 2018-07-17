@@ -30,7 +30,7 @@ class INeuralNetModel
 {
 public:
 
-  INeuralNetModel(const std::string cachePath);
+  explicit INeuralNetModel(const std::string& cachePath);
 
   ~INeuralNetModel()
   {
@@ -75,10 +75,8 @@ protected:
 
   template<typename T>
   void ResponseMapOutputHelper(const T* outputData, TimeStamp_t timestamp,
-                                 const int numberOfChannels,
-                                 std::list<Vision::SalientPoint>& salientPoints);
-  void SaveObjectnessResponseMaps(const std::vector<cv::Mat>& channels, const int numberOfChannels,
-                                  const TimeStamp_t timestamp);
+                               const int numberOfChannels,
+                               std::list<Vision::SalientPoint>& salientPoints);
 
   NeuralNetParams                           _params;
   std::vector<std::string>                  _labels;
@@ -88,6 +86,9 @@ protected:
   cv::Mat_<int32_t>                         _labelsGrid;
 
 private:
+
+  void SaveResponseMaps(const std::vector<cv::Mat>& channels, const int numberOfChannels,
+                        const TimeStamp_t timestamp);
   std::string _cachePath;
 };
 

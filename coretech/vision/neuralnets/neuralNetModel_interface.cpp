@@ -26,12 +26,21 @@ namespace Vision {
   
 #define LOG_CHANNEL "NeuralNets"
 
-namespace {
-  CONSOLE_VAR(bool,   kINeuralNetModel_SaveImages,  "Vision.INeuralNetModel", false);
+static const bool kINeuralNetModel_SaveImages = false;
+
+template<typename T>
+int GetCVTypeHelper(const T* inputType);
+int GetCVTypeHelper(const uint8_t* intputType)
+{
+  return CV_8UC2;
+}
+int GetCVTypeHelper(const float* intputType)
+{
+  return CV_32FC2;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-INeuralNetModel::INeuralNetModel(const std::string cachePath)
+INeuralNetModel::INeuralNetModel(const std::string& cachePath)
 : _cachePath(cachePath)
 {
 
@@ -264,25 +273,26 @@ void INeuralNetModel::ResponseMapOutputHelper(const T* outputData, TimeStamp_t t
   // always reports it is in column major when in fact it is not. VIC-4386
 
   // TODO is this really what I want to do, with the raw pointer
-  cv::Mat responseMap(_params.inputHeight, _params.inputWidth, CV_32FC2, (void*) outputData);
+  cv::Mat responseMap(_params.inputHeight, _params.inputWidth, GetCVTypeHelper(outputData),
+                      const_cast<T*>(reinterpret_cast<const T*>(outputData)));
   std::vector<cv::Mat> channels;
   split(responseMap, channels);
 
-  const int objectnessIndex = 1;
+  const int kObjectnessIndex = 1;
   double min(0), max(0);
   cv::Point2i minLoc(0, 0), maxLoc(0, 0);
-  cv::minMaxLoc(channels[objectnessIndex], &min, &max, &minLoc, &maxLoc);
+  cv::minMaxLoc(channels[kObjectnessIndex], &min, &max, &minLoc, &maxLoc);
 
   if (kINeuralNetModel_SaveImages)
   {
-    SaveObjectnessResponseMaps(channels, numberOfChannels, timestamp);
+    SaveResponseMaps(channels, numberOfChannels, timestamp);
   }
 
-  // Create a SalientPoint to return for each connected component (skipping background component 0)
-  const float widthScale  = 1.f / static_cast<float>(responseMap.cols);
-  const float heightScale = 1.f / static_cast<float>(responseMap.rows);
-  float x = Util::Clamp(maxLoc.x * widthScale,  0.f, 1.f);
-  float y = Util::Clamp(maxLoc.y * heightScale, 0.f, 1.f);
+  // Create a SalientPoint to return
+  const float kWidthScale  = 1.f / static_cast<float>(responseMap.cols);
+  const float kHeightScale = 1.f / static_cast<float>(responseMap.rows);
+  float x = Util::Clamp(maxLoc.x * kWidthScale,  0.f, 1.f);
+  float y = Util::Clamp(maxLoc.y * kHeightScale, 0.f, 1.f);
   Vision::SalientPointType type = Vision::SalientPointType::Object;
 
   // TODO right now objectness doesn't have an area associated with it,
@@ -290,7 +300,7 @@ void INeuralNetModel::ResponseMapOutputHelper(const T* outputData, TimeStamp_t t
   // fraction has a placeholder.
   Vision::SalientPoint salientPoint(timestamp,
                                     x, y, max,
-                                    1.f * (widthScale*heightScale),
+                                    1.f * (kWidthScale*kHeightScale),
                                     type, EnumToString(type),
                                     Poly2f{}.ToCladPoint2dVector());
 
@@ -298,8 +308,8 @@ void INeuralNetModel::ResponseMapOutputHelper(const T* outputData, TimeStamp_t t
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void INeuralNetModel::SaveObjectnessResponseMaps(const std::vector<cv::Mat>& channels, const int numberOfChannels,
-                                                 const TimeStamp_t timestamp)
+void INeuralNetModel::SaveResponseMaps(const std::vector<cv::Mat>& channels, const int numberOfChannels,
+                                       const TimeStamp_t timestamp)
 {
     for (int channel = 0; channel < numberOfChannels; ++channel)
     {
@@ -307,19 +317,19 @@ void INeuralNetModel::SaveObjectnessResponseMaps(const std::vector<cv::Mat>& cha
       cv::Point2i channelMinLoc(0, 0), channelMaxLoc(0, 0);
       cv::minMaxLoc(channels[channel], &channelMin, &channelMax, &channelMinLoc, &channelMaxLoc);
 
-      const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath,
+      const std::string kSaveFilename = Util::FileUtils::FullFilePath({_cachePath,
         _params.visualizationDirectory, std::to_string(timestamp) + "_" +
         std::to_string(channel) + ".png"});
 
       cv::Mat imageToSave;
       channels[channel].copyTo(imageToSave);
       imageToSave = 255 * (imageToSave - channelMin) / (channelMax - channelMin);
-      imageToSave.convertTo(imageToSave, CV_8UC1);
-      cv::imwrite(saveFilename, imageToSave);
+      imageToSave.convertTo(imageToSave, CV_8UC1, 1.f/(channelMax - channelMin),  -channelMin / (channelMax - channelMin));
+      cv::imwrite(kSaveFilename, imageToSave);
 
-      const std::string salientPointFilename = Util::FileUtils::FullFilePath({_cachePath,
+      const std::string kSalientPointFilename = Util::FileUtils::FullFilePath({_cachePath,
         "objectnessResponseMap", std::to_string(timestamp) + ".txt"});
-      std::ofstream salientPointFile(salientPointFilename);
+      std::ofstream salientPointFile(kSalientPointFilename);
       salientPointFile << channelMaxLoc.x << " " << channelMaxLoc.y << " " << channelMax << + " "
         << channelMinLoc.x << " " << channelMinLoc.y << " " << channelMin;
       salientPointFile.close();
