@@ -306,7 +306,7 @@ void RtsHandlerV2::HandleRtsOtaCancelRequest(const Cozmo::ExternalComms::RtsConn
   }
 
   if(_state == RtsPairingPhase::ConfirmedSharedSecret && _isOtaUpdating) {
-    Anki::CancelBackgroundCommands();
+    (void) ExecCommand({"/bin/systemctl", "stop", "update-engine.service"});
     _isOtaUpdating = false;
     Log::Write("Terminating OTA Update Engine");
   } else {
