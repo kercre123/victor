@@ -1,6 +1,6 @@
 {
 
-  "behaviorID": "ComeHereVoiceCommand",
+  "behaviorID": "PRDemoComeHere",
   "behaviorClass": "FindFaceAndThen",
 
   "associatedActiveFeature": "ComeHere",
@@ -12,7 +12,7 @@
   "wantsToBeActivatedCondition": {
     "conditionType" : "FeatureGate",
     "feature" : "PRDemo",
-    "expected" : false
+    "expected" : true
   },
 
   "timeUntilCancelFaceLooking_s": 2.0,
@@ -32,7 +32,8 @@
       "animTooClose": "AlreadyAtFace",      
       "timeUntilCancelFaceTrack_s": 5.0,
       "minDriveToFaceDistanceKey_mm": 200,
-      "animationAfterDrive": "ComeHereSuccess",
+      "initialAnimation": "ComeHereStart",
+      // "animationAfterDrive": "ComeHereSuccess",
 
       "motionProfile": {
         "speed_mmps": 130.0,
