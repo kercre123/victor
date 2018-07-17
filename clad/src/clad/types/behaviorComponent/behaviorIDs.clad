@@ -336,7 +336,6 @@ enum uint_8 BehaviorID {
   FindFacesPhoto,
   FrameFaces,
   TakeAPhotoCoordinator,
-  TakingPhotoAnimation,
 
   // victorBehaviorTree/timer
   DemoTimerUtilityCoordinator,

@@ -1,6 +1,0 @@
-{
-  "behaviorClass": "AnimSequence",
-  "behaviorID": "TakingPhotoAnimation",
-
-  "animTriggers": ["TakeAPictureFocusing","TakeAPictureCapture"]
-}
