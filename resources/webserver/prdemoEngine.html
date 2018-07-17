@@ -20,6 +20,7 @@
         $('#btn_erase_all_faces').click(ButtonHandler_EraseAllFaces);
         $('#btn_show_photos').click(ButtonHandler_ShowPhotos);
         $('#btn_erase_all_photos').click(ButtonHandler_EraseAllPhotos);
+        InitConfirmDialog();
 
         // Pull out hostname (robot IP) so we can use it in here to call into ANY of the webservers
         var urlObject = new URL(document.URL);
@@ -27,38 +28,43 @@
         hostname = urlObject.hostname;
         console.log('host is: ' + host);
         console.log('hostname is: ' + hostname);
-        
-        // failed attempt at pre-setting the selector to be correct for the current value.
-        // Let's call this a WIP eh
-//        $.post("consolevarget?key=EyeColor", function(result) {
-//          console.log('retrieved eye color: ' + result);
-//          $('#EyeColor').val('Yellow');
-//          $('#EyeColor').selectmenu('refresh');
-//        });
     });
     $(function() {
         $("button").click(function(event) {
             event.preventDefault();
         });
         $("input[type='submit']").click(function(event) {
-            $.post("/"+event.target.value, function(data) {
-                $("#content").html(data);
-                $("#content").show();
-                InitConfirmDialog();
-            });
-            event.preventDefault();
+          $.post("/"+event.target.value, function(data) {
+            $("#content").html(data);
+            $("#content").show();
+            InitConfirmDialog();
+          });
+          event.preventDefault();
         });
         $('#EyeColor').selectmenu({
-            change: function(event, data) {
-              $.post("consolevarset", {key: "EyeColor", value: data.item.index}, function(result){
-                $.post("consolefunccall", {func: "DebugSetEyeColor", args: ""}, function(result) {});
-              });
-            }
+          create: function(event, ui) {
+            $.post('consolevarget?key=EyeColor', function(result) {
+              var value = parseInt(result);
+              console.log('start value of eye color is: ' + value);
+              $('#EyeColor').prop("selectedIndex", value).selectmenu('refresh');
+            });
+          },
+          change: function(event, data) {
+            $.post("consolevarset", {key: "EyeColor", value: data.item.index}, function(result) {
+              $.post("consolefunccall", {func: "DebugSetEyeColor", args: ""}, function(result) {});
+            });
+          }
         });
         $('#MasterVolumeLevel').selectmenu({
+          create: function(event, ui) {
+            $.post('consolevarget?key=MasterVolumeLevel', function(result) {
+              var value = parseInt(result);
+              console.log('start value of master volume level is: ' + value);
+              $('#MasterVolumeLevel').prop("selectedIndex", value).selectmenu('refresh');
+            });
+          },
           change: function(event, data) {
-            console.log('blah');
-            $.post("consolevarset", {key: "MasterVolumeLevel", value: data.item.index}, function(result){
+            $.post("consolevarset", {key: "MasterVolumeLevel", value: data.item.index}, function(result) {
               $.post("consolefunccall", {func: "DebugSetMasterVolume", args: ""}, function(result) {});
             });
           }
@@ -75,10 +81,39 @@
 //        })
     });
 
+    function InitConfirmDialog() {
+      $("#confirm_dialog").dialog({ autoOpen: false, modal: true, resizable: false,
+        draggable: true,
+        width: 'auto',
+        buttons: {
+          "OK": function() {
+            $("#confirm_dialog").dialog("close");
+            if (dialogOKFunction !== undefined) {
+              dialogOKFunction();
+              dialogOKFunction = undefined;
+            }
+          },
+          "Cancel": function () {
+            $("#confirm_dialog").dialog("close");
+            dialogOKFunction = undefined;
+          }
+        } });
+    }
+
+    function StartConfirmDialog(title, body, okfunction) {
+      dialogOKFunction = okfunction;
+      $("#confirm_dialog_body").html(body);
+      var d = $("#confirm_dialog");
+      d.dialog("option", "title", title);
+      d.dialog("open");
+    }
+
     function ButtonHandler_EraseAllFaces() {
-      var url = "/consolefunccall?func=DebugEraseAllEnrolledFaces";
-      console.log("calling: " + url);
-      $.post(url, function(data) {});
+      StartConfirmDialog("", "Erase all faces:", function() {
+        var url = "/consolefunccall?func=DebugEraseAllEnrolledFaces";
+        console.log("calling: " + url);
+        $.post(url, function(data) {});
+      });
     }
 
     function ButtonHandler_ShowPhotos() {
@@ -92,7 +127,9 @@
     }
 
     function ButtonHandler_EraseAllPhotos() {
-      $.post('/deleteallphotos', function(data) {});
+      StartConfirmDialog("", "Erase all photos:", function() {
+        $.post('/deleteallphotos', function(data) {});
+      });
     }
 
   </script>
@@ -101,41 +138,43 @@
 <!-- page content -->
 
 <body class="ui-widget-content" style="border:0;">
+  <div>
+    <button id='btn_erase_all_faces' style='color:red;'>Erase all enrolled faces</button>
+    <br>
+    <br>
     <div>
-      <div id='main_section'>
-        <button id='btn_erase_all_faces' style='color:red;'>Erase all enrolled faces</button>
-        <br>
-        <br>
-        <div>
-          <label for="EyeColor-button">Eye Color</label>
-          <select name="EyeColor" id='EyeColor' class='listbox'>
-            <option>Teal</option>
-            <option>Orange</option>
-            <option>Yellow</option>
-            <option>Lime Green</option>
-            <option>Azure Blue</option>
-            <option>Purple</option>
-            <option>Matrix Green</option>
-          </select>
-        </div>
-        <br>
-        <div>
-          <label for="MasterVolumeLevel-button">Master Volume</label>
-          <select name="MasterVolumeLevel" id='MasterVolumeLevel' class='listbox'>
-            <option>Mute</option>
-            <option>Low</option>
-            <option>Medium Low</option>
-            <option>Medium</option>
-            <option>Medium High</option>
-            <option>High</option>
-          </select>
-        </div>
-        <br>
-        <button id='btn_show_photos'>Show photos</button>
-        <button id='btn_erase_all_photos' style='color:red;'>Erase all photos</button>
-        <br>
-      </div>
+      <label for="EyeColor-button">Eye Color</label>
+      <select name="EyeColor" id='EyeColor' class='listbox'>
+        <option>Teal</option>
+        <option>Orange</option>
+        <option>Yellow</option>
+        <option>Lime Green</option>
+        <option>Azure Blue</option>
+        <option>Purple</option>
+        <option>Matrix Green</option>
+      </select>
     </div>
+    <br>
+    <div>
+      <label for="MasterVolumeLevel-button">Master Volume</label>
+      <select name="MasterVolumeLevel" id='MasterVolumeLevel' class='listbox'>
+        <option>Mute</option>
+        <option>Low</option>
+        <option>Medium Low</option>
+        <option>Medium</option>
+        <option>Medium High</option>
+        <option>High</option>
+      </select>
+    </div>
+    <br>
+    <button id='btn_show_photos'>Show photos</button>
+    <button id='btn_erase_all_photos' style='color:red;'>Erase all photos</button>
+    <br>
+  </div>
+  <div id="confirm_dialog" title="">
+    <p id='confirm_dialog_body'></p>
+    <p>Are you sure?</p>
+  </div>
 </body>
 
 </html>

@@ -6,7 +6,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Vector PR demo</title>
+  <title>Vector Demo</title>
   <link rel="stylesheet" href="jquery-ui.css">
   <link rel="stylesheet" href="style.css">
   <script src="jquery-1.12.4.js"></script>
@@ -23,8 +23,9 @@
     $(document).ready(function() {
         $('#btn_vector_stop').click(ButtonHandler_StopVector);
         $('#btn_vector_restart').click(ButtonHandler_RestartVector);
-        
         $('#disp_stop_message').hide();
+        InitConfirmDialog();
+
         // Pull out hostname (robot IP) so we can use it in here to call into ANY of the webservers
         var urlObject = new URL(document.URL);
         host = urlObject.host;
@@ -58,18 +59,58 @@
         });
     });
 
+    function InitConfirmDialog() {
+      $("#confirm_dialog").dialog({ autoOpen: false, modal: true, resizable: false,
+        draggable: true,
+        width: 'auto',
+        buttons: {
+          "OK": function() {
+            $("#confirm_dialog").dialog("close");
+            if (dialogOKFunction !== undefined) {
+              dialogOKFunction();
+              dialogOKFunction = undefined;
+            }
+          },
+          "Cancel": function () {
+            $("#confirm_dialog").dialog("close");
+            dialogOKFunction = undefined;
+          }
+        } });
+    }
+
+    function StartConfirmDialog(title, body, okfunction) {
+      dialogOKFunction = okfunction;
+      $("#confirm_dialog_body").html(body);
+      var d = $("#confirm_dialog");
+      d.dialog("option", "title", title);
+      d.dialog("open");
+    }
+
+    function GoingAwayNow() {
+      $('#iViewEngine').remove();
+      $('#iViewAnim').remove();
+      $('#btn_vector_stop').hide();
+      $('#btn_vector_restart').hide();
+    }
+
     function ButtonHandler_StopVector() {
-      var msg = 'Shutting Vector down; this webpage will no longer be active. You must physicallly restart Vector, then refresh this page after a few seconds.';
-      $('#disp_stop_message').html(msg);
-      $('#disp_stop_message').show();
-      $.post('/systemctl?proc=anki-robot.target&stop', function(data) {});
+      StartConfirmDialog("", "Stop Vector:", function() {
+        var msg = 'Shutting Vector down; this webpage will no longer be active. You must physicallly restart Vector, then refresh this page after a few seconds.';
+        $('#disp_stop_message').html(msg);
+        $('#disp_stop_message').show();
+        GoingAwayNow();
+        $.post('/systemctl?proc=anki-robot.target&stop', function(data) {});
+      });
     }
 
     function ButtonHandler_RestartVector() {
-      var msg = 'Restarting Vector.  After a few seconds, refresh this page.';
-      $('#disp_stop_message').html(msg);
-      $('#disp_stop_message').show();
-      $.post('/systemctl?proc=anki-robot.target&restart', function(data) {});
+      StartConfirmDialog("", "Restart Vector:", function() {
+        var msg = 'Restarting Vector.  After a few seconds, refresh this page.';
+        $('#disp_stop_message').html(msg);
+        $('#disp_stop_message').show();
+        GoingAwayNow();
+        $.post('/systemctl?proc=anki-robot.target&restart', function(data) {});
+      });
     }
 
   </script>
@@ -78,23 +119,29 @@
 <!-- page content -->
 
 <body class="ui-widget-content" style="border:0;">
-    <div>
-      <body><div id="id_title0" style="color:blue; font-size:18pt; display:inline">Vector PR Demo</div></body>
-      &nbsp;&nbsp;&nbsp;&nbsp;
-      <body><div id="id_title1" style="display:inline">CONFIDENTIAL</div></body>
-      <hr>
-      <div id='main_section'>
-        <iframe src="" id="iViewEngine" style="width:100%;height:280px;border:none" frameborder="0"></iframe>
-        <iframe src="" id="iViewAnim"   style="width:100%;height:100%;border:none" frameborder="0"></iframe>
+  <div>
+    <body><div id="id_title0" style="color:blue; font-size:18pt; display:inline">Vector Demo</div></body>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <body><div id="id_title1" style="display:inline">CONFIDENTIAL</div></body>
+    <hr>
+    <div id='main_section'>
+      <iframe src="" id="iViewEngine" style="width:100%;height:280px;border:none" frameborder="0"></iframe>
+      <iframe src="" id="iViewAnim"   style="width:100%;height:100%;border:none" frameborder="0"></iframe>
 
-        <hr><br>
-        <button id='btn_vector_stop' style='color:red;'>Stop Vector</button>
-        <button id='btn_vector_restart' style='color:red;'>Restart Vector</button>
-        <br><br>
-        <div id='disp_stop_message' style='color:red;'></div>
-        <hr>
-      </div>
+      <hr><br>
+      <button id='btn_vector_stop' style='color:red;'>Stop Vector</button>
+      <button id='btn_vector_restart' style='color:red;'>Restart Vector</button>
+      <br><br>
+      <div id='disp_stop_message' style='color:red;'></div>
+      <hr>
     </div>
+
+    <div id="confirm_dialog" title="">
+      <p id='confirm_dialog_body'></p>
+      <p>Are you sure?</p>
+    </div>
+
+  </div>
 </body>
 
 </html>

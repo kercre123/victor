@@ -922,6 +922,8 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
     "4",
     "url_rewrite_patterns",
     rewrite.c_str(),
+    "static_file_max_age",
+    "0",
 //https://ankiinc.atlassian.net/browse/VIC-1554
 //    "put_delete_auth_file",
 //    passwordFile.c_str(),
