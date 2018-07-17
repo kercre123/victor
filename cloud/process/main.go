@@ -4,7 +4,6 @@ import (
 	"anki/cloudproc"
 	"anki/ipc"
 	"anki/log"
-	"anki/token"
 	"anki/voice"
 	"bytes"
 	"clad/cloud"
@@ -124,8 +123,6 @@ func main() {
 
 	options = append(options, cloudproc.WithVoice(process))
 	options = append(options, cloudproc.WithVoiceOptions(voiceOpts...))
-	tokenOpts := []token.Option{token.WithServer()}
-	options = append(options, cloudproc.WithTokenOptions(tokenOpts...))
 
 	cloudproc.Run(options...)
 

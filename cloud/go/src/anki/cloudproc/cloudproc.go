@@ -1,7 +1,6 @@
 package cloudproc
 
 import (
-	"anki/token"
 	"sync"
 )
 
@@ -12,9 +11,6 @@ func Run(procOptions ...Option) {
 	}
 
 	var wg sync.WaitGroup
-	launchProcess(&wg, func() {
-		token.Run(opts.tokenOpts...)
-	})
 	if opts.voice != nil {
 		launchProcess(&wg, func() {
 			opts.voice.Run(opts.voiceOpts...)

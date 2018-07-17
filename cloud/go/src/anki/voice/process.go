@@ -2,7 +2,6 @@ package voice
 
 import (
 	"anki/log"
-	"anki/token"
 	"anki/util"
 	"clad/cloud"
 	"fmt"
@@ -143,24 +142,12 @@ procloop:
 					continue
 				}
 
-				var jwtToken string
-				tokenTime := util.TimeFuncMs(func() {
-					jwtToken, _ = p.getToken()
-				})
-				if jwtToken == "" && p.opts.requireToken {
-					log.Println("Canceling, didn't get token")
-					continue
-				}
-
 				var stream chipper.Stream
 				var chipperConn *chipper.Conn
 				var err error
 				sessionID := uuid.New().String()[:16]
 				ctxTime := util.TimeFuncMs(func() {
 					opts := platformOpts
-					if jwtToken != "" {
-						opts = append(opts, chipper.WithAccessToken(jwtToken))
-					}
 					opts = append(opts, chipper.WithSessionID(sessionID))
 					chipperConn, err = chipper.NewConn(ChipperURL, ChipperSecret, opts...)
 					if err != nil {
@@ -201,7 +188,7 @@ procloop:
 				ctx = p.newVoiceContext(chipperConn, stream, cloudChan)
 
 				logVerbose("Received hotword event", serverMode, "created session", sessionID, "in",
-					int(ctxTime), "ms (token", int(tokenTime), "ms)")
+					int(ctxTime), "ms)")
 
 			case cloud.MessageTag_DebugFile:
 				p.writeResponse(msg.msg)
@@ -262,27 +249,6 @@ func (p *Process) StreamSize() int {
 // SetVerbose enables or disables verbose logging
 func SetVerbose(value bool) {
 	verbose = value
-}
-
-func (p *Process) getToken() (string, error) {
-	req := cloud.NewTokenRequestWithJwt(&cloud.JwtRequest{})
-	resp, err := token.HandleRequest(req)
-	if err != nil {
-		log.Println("Error getting jwt token:", err)
-		if p.opts.requireToken {
-			p.writeError(cloud.ErrorType_Token, err)
-		}
-		return "", err
-	}
-	jwt := resp.GetJwt()
-	if jwt.Error != cloud.TokenError_NoError {
-		log.Println("Error code getting jwt token:", jwt.Error)
-		if p.opts.requireToken {
-			p.writeError(cloud.ErrorType_Token, fmt.Errorf("jwt error code %d", jwt.Error))
-		}
-		return "", err
-	}
-	return resp.GetJwt().JwtToken, nil
 }
 
 func (p *Process) writeError(reason cloud.ErrorType, err error) {
