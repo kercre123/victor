@@ -67,12 +67,14 @@ private:
     ReturnToCenter,
     SecondTurn,
     ReturnToCenterEnd,
+    ReferenceHuman,
     Bumping,
   };
 
   struct InstanceConfig {
     InstanceConfig();
     ICozmoBehaviorPtr bumpBehavior;
+    ICozmoBehaviorPtr referenceHumanBehavior;
   };
 
   struct DynamicVariables {

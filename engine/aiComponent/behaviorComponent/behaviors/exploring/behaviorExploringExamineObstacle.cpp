@@ -53,6 +53,7 @@ namespace {
   CONSOLE_VAR_RANGED( float, kMinObjectWidthToBump_rad, "BehaviorExploring", DEG_TO_RAD(10.0f), 0.0f, M_PI_F);
   CONSOLE_VAR_RANGED( float, kMaxObjectWidthToBump_rad, "BehaviorExploring", DEG_TO_RAD(80.0f), 0.0f, M_TWO_PI_F);
   const float kProbBumpNominalObject = 0.8f;
+  const float kProbReferenceBeforeBump = 0.5f;
   
   const float kMinDistForFarReaction_mm = 80.0f;
   
@@ -124,12 +125,14 @@ void BehaviorExploringExamineObstacle::InitBehavior()
 {
   const auto& BC = GetBEI().GetBehaviorContainer();
   _iConfig.bumpBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(ExploringBumpObject) );
+  _iConfig.referenceHumanBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(ExploringReferenceHuman) );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploringExamineObstacle::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
   delegates.insert( _iConfig.bumpBehavior.get() );
+  delegates.insert( _iConfig.referenceHumanBehavior.get() );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -220,14 +223,18 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
                                 : AnimationTrigger::ExploringScanToRight;
     action->AddAction( new TriggerLiftSafeAnimationAction{ turnAnim } );
     
-  } else if( (_dVars.state == State::FirstTurn) || (_dVars.state == State::SecondTurn) ) {
+  } else if( (_dVars.state == State::FirstTurn)
+             || (_dVars.state == State::SecondTurn)
+             || (_dVars.state == State::ReferenceHuman) )
+  {
     
-    _dVars.state = (_dVars.state == State::SecondTurn) ? State::ReturnToCenterEnd : State::ReturnToCenter;
+    // todo: clean this up. too many cases here, not enough time to separate them
+    // logic is: after the first turn it should return to center. after the second turn it should either
+    // exit, or return to center and bump the object, or reference a human then return to center then
+    // bump the object
     
-    const Radians dAngle = GetBEI().GetRobotInfo().GetPose().GetRotationAngle<'Z'>() - _dVars.initialPoseAngle_rad;
-    _dVars.totalObjectAngle_rad += fabsf( dAngle.ToFloat() );
-    
-    if( _dVars.state == State::ReturnToCenterEnd ) {
+    if( _dVars.state == State::SecondTurn ) {
+      
       // decide whether to bump or not
       bool shouldBump = false;
       if( (_dVars.totalObjectAngle_rad >= kMinObjectWidthToBump_rad)
@@ -245,31 +252,56 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
         CancelSelf();
         return;
       }
-      // otherwise, return to center, and bump in the next stage
+      
+      const Radians dAngle = GetBEI().GetRobotInfo().GetPose().GetRotationAngle<'Z'>() - _dVars.initialPoseAngle_rad;
+      _dVars.totalObjectAngle_rad += fabsf( dAngle.ToFloat() );
+      
+      const bool refBehaviorWantsToBeActivated = _iConfig.referenceHumanBehavior->WantsToBeActivated();
+      if( refBehaviorWantsToBeActivated && (GetRNG().RandDbl() < kProbReferenceBeforeBump) ) {
+        _dVars.state = State::ReferenceHuman;
+      } else {
+        _dVars.state = State::ReturnToCenterEnd;
+      }
+    } else if( _dVars.state == State::FirstTurn ) {
+      
+      const Radians dAngle = GetBEI().GetRobotInfo().GetPose().GetRotationAngle<'Z'>() - _dVars.initialPoseAngle_rad;
+      _dVars.totalObjectAngle_rad += fabsf( dAngle.ToFloat() );
+      
+      _dVars.state = State::ReturnToCenter;
+      
+    } else if( _dVars.state == State::ReferenceHuman ) {
+      _dVars.state = State::ReturnToCenterEnd;
     }
     
-    
-    auto* parallelAction = new CompoundActionParallel();
-    
-    AnimationTrigger turnAnim;
-    if( _dVars.firstTurnDirectionIsLeft ) {
-      turnAnim = (_dVars.state == State::ReturnToCenter) ? AnimationTrigger::ExploringScanCenterFromLeft : AnimationTrigger::ExploringScanCenterFromRight;
+      
+    if( _dVars.state != State::ReferenceHuman ) {
+      auto* parallelAction = new CompoundActionParallel();
+      
+      AnimationTrigger turnAnim;
+      if( _dVars.firstTurnDirectionIsLeft ) {
+        turnAnim = (_dVars.state == State::ReturnToCenter) ? AnimationTrigger::ExploringScanCenterFromLeft : AnimationTrigger::ExploringScanCenterFromRight;
+      } else {
+        turnAnim = (_dVars.state == State::ReturnToCenter) ? AnimationTrigger::ExploringScanCenterFromRight : AnimationTrigger::ExploringScanCenterFromLeft;
+      }
+      auto* animAction = new TriggerLiftSafeAnimationAction{ turnAnim };
+      
+      const float angle = _dVars.initialPoseAngle_rad;
+      const bool isAbsAngle = true;
+      auto* turnToCenterAction = new TurnInPlaceAction(angle, isAbsAngle);
+      turnToCenterAction->SetMaxSpeed( DEG_TO_RAD(kReturnToCenterSpeed_deg_s) );
+      
+      // keep a weakptr to the turn action, so that the whole parallel action can be aborted the moment this one
+      // ends
+      _dVars.scanCenterAction = parallelAction->AddAction( turnToCenterAction );
+      parallelAction->AddAction( animAction );
+      
+      action->AddAction( parallelAction );
     } else {
-      turnAnim = (_dVars.state == State::ReturnToCenter) ? AnimationTrigger::ExploringScanCenterFromRight : AnimationTrigger::ExploringScanCenterFromLeft;
+      DelegateIfInControl( _iConfig.referenceHumanBehavior.get(), [this](){
+        TransitionToNextAction();
+      });
+      return;
     }
-    auto* animAction = new TriggerLiftSafeAnimationAction{ turnAnim };
-    
-    const float angle = _dVars.initialPoseAngle_rad;
-    const bool isAbsAngle = true;
-    auto* turnToCenterAction = new TurnInPlaceAction(angle, isAbsAngle);
-    turnToCenterAction->SetMaxSpeed( DEG_TO_RAD(kReturnToCenterSpeed_deg_s) );
-    
-    // keep a weakptr to the turn action, so that the whole parallel action can be aborted the moment this one
-    // ends
-    _dVars.scanCenterAction = parallelAction->AddAction( turnToCenterAction );
-    parallelAction->AddAction( animAction );
-    
-    action->AddAction( parallelAction );
    
   } else if( _dVars.state == State::ReturnToCenter ) {
     
