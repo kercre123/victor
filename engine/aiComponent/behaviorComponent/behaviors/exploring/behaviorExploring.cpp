@@ -57,6 +57,7 @@ namespace {
   const float kMaxDistToProxPose_mm = 750.0f;
   const float kMinDistToProxPose_mm = 100.0f;
   const float kMaxCubeFromChargerDist_mm = 2000.0f;
+  const float kProbReferenceHuman = 0.5f;
 
   static_assert( kMinCliffPenaltyDist_mm < kMaxCliffPenaltyDist_mm, "Max must be > min" );
   
@@ -537,7 +538,7 @@ void BehaviorExploring::TransitionToArrived()
     });
   };
   
-  if( _iConfig.referenceHumanBehavior->WantsToBeActivated() ) {
+  if( _iConfig.referenceHumanBehavior->WantsToBeActivated() && (GetRNG().RandDbl() < kProbReferenceHuman) ) {
     DelegateIfInControl( _iConfig.referenceHumanBehavior.get(), callback );
   } else {
     callback();
