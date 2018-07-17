@@ -49,11 +49,11 @@ public:
   void SetIsPairing(bool pairing) { _isPairing = pairing; }
   void SetOtaUpdating(bool updating) { _isOtaUpdating = updating; }
 
-private:
-  bool _isPairing = false;
-  bool _isOtaUpdating = false;
-
 protected:
+  IRtsHandler(const bool pairing, const bool updating)
+  : _isPairing(pairing)
+  , _isOtaUpdating(updating) {}
+
   inline bool AssertState(RtsCommsType state) {
     return state == _type;
   }
@@ -69,6 +69,8 @@ protected:
   RtsPairingPhase _state = RtsPairingPhase::AwaitingHandshake;
   RtsCommsType _type = RtsCommsType::Unencrypted;
   RtsKeys _rtsKeys;
+  bool _isPairing;
+  bool _isOtaUpdating;
 };
 
 } // Switchboard

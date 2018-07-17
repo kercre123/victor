@@ -87,8 +87,6 @@ private:
   std::shared_ptr<EngineMessagingClient> _engineClient;
   std::unique_ptr<TaskExecutor> _taskExecutor;
   std::unique_ptr<ExternalCommsCladHandlerV3> _cladHandler;
-  bool _isPairing;
-  bool _isOtaUpdating;
 
   const uint8_t kMaxMatchAttempts = 5;
   const uint8_t kMaxPairingAttempts = 3;
