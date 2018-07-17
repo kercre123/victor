@@ -120,7 +120,7 @@ func main() {
 	voiceOpts := []voice.Option{voice.WithChunkMs(120), voice.WithSaveAudio(true)}
 	var options []cloudproc.Option
 	options = append(options, platformOpts...)
-	//voiceOpts = append(voiceOpts, voice.WithCompression(true))
+	voiceOpts = append(voiceOpts, voice.WithCompression(true))
 	if *ms {
 		voiceOpts = append(voiceOpts, voice.WithHandler(voice.HandlerMicrosoft))
 	} else if *lex {
