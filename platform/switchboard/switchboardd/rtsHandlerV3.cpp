@@ -28,11 +28,10 @@ RtsHandlerV3::RtsHandlerV3(INetworkStream* stream,
     std::shared_ptr<EngineMessagingClient> engineClient,
     bool isPairing,
     bool isOtaUpdating) :
+IRtsHandler(isPairing, isOtaUpdating),
 _stream(stream),
 _loop(evloop),
 _engineClient(engineClient),
-_isPairing(isPairing),
-_isOtaUpdating(isOtaUpdating),
 _pin(""),
 _challengeAttempts(0),
 _numPinDigits(0),
@@ -337,7 +336,7 @@ void RtsHandlerV3::HandleRtsOtaCancelRequest(const Cozmo::ExternalComms::RtsConn
   }
 
   if(_state == RtsPairingPhase::ConfirmedSharedSecret && _isOtaUpdating) {
-    Anki::CancelBackgroundCommands();
+    (void) ExecCommand({"/bin/systemctl", "stop", "update-engine.service"});
     _isOtaUpdating = false;
     Log::Write("Terminating OTA Update Engine");
   } else {

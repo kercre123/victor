@@ -35,6 +35,7 @@
 #include "cutils/properties.h"
 #include "switchboardd/christen.h"
 #include "platform/victorCrashReports/victorCrashReporter.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "util/logging/victorLogger.h"
@@ -346,6 +347,13 @@ void Daemon::HandleOtaUpdateProgress() {
       }
       if (access(kUpdateEngineErrorPath.c_str(), F_OK) != -1) {
         rc = -1;
+        std::string exitCodeString = Anki::Util::FileUtils::ReadFile(kUpdateEngineExitCodePath);
+        if (!exitCodeString.empty()) {
+          int exitCode = std::atoi(exitCodeString.c_str());
+          if (exitCode) {
+            rc = exitCode;
+          }
+        }
       }
       HandleOtaUpdateExit(rc);
     }
@@ -594,10 +602,12 @@ void Daemon::HandleReboot() {
 
   // trigger reboot
   sync(); sync(); sync();
-  int status = reboot(LINUX_REBOOT_CMD_RESTART);
+  int status = ExecCommand({"/sbin/reboot"});
 
-  if(status == -1) {
+
+  if (!status) {
     Log::Write("Error while restarting: [%d]", status);
+    (void) reboot(LINUX_REBOOT_CMD_RESTART);
   }
 }
 
