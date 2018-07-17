@@ -29,7 +29,7 @@ fi
 if [ $1 == RX ]; then
   echo BLE RX on BLE channel $2 - hex 0x0..0x27
   rmmod wlan # Must stop WLAN before BLE test can take over
-  /anki/menuman/btconfig --soc smd /dev/smd3 rawcmd 0x08 0x001D $2 0x23 0x00  # See KBA-170629211501
+  nice -n -20 /anki/menuman/btconfig --soc smd /dev/smd3 blerx 0x08 0x1d $2 0x08 0x1f | grep "RX:" | /anki/menuman/display
   exit 0
 fi
 
