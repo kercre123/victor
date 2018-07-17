@@ -147,8 +147,7 @@ protected:
   
   // ICubeConnectionSubscriber methods - - - - -
   virtual std::string GetCubeConnectionDebugName() const override {return GetDebugLabel();};
-  virtual void ConnectedInteractableCallback() override {}
-  virtual void ConnectedBackgroundCallback() override {}
+  virtual void ConnectedCallback(ECubeConnectionType connectionType) override {}
   virtual void ConnectionFailedCallback() override {}
   virtual void ConnectionLostCallback() override {}
   // ICubeConnectionSubscriber methods - - - - -

@@ -76,23 +76,28 @@ std::string AppCubeConnectionSubscriber::GetCubeConnectionDebugName() const {
   return debugName;
 }
 
-
-void AppCubeConnectionSubscriber::ConnectedInteractableCallback()
+void AppCubeConnectionSubscriber::ConnectedCallback(ECubeConnectionType connectionType)
 {
-  PRINT_NAMED_INFO("AppCubeConnectionSubscriber.ConnectedInteractableCallback.ConnectionAttemptSuccess",
-                   "Connection attempt succeeded. Sending message to gateway");
+  switch(connectionType){
+    case ECubeConnectionType::Interactable:
+    {
+      PRINT_NAMED_INFO("AppCubeConnectionSubscriber.ConnectedCallback.ConnectionAttemptSuccess",
+                      "Connection attempt succeeded. Sending message to gateway");
 
-  auto* connectResultMsg = new external_interface::ConnectCubeResponse;
-  connectResultMsg->set_success(true);
-  _gi->Broadcast(ExternalMessageRouter::WrapResponse(connectResultMsg));
+      auto* connectResultMsg = new external_interface::ConnectCubeResponse;
+      connectResultMsg->set_success(true);
+      _gi->Broadcast(ExternalMessageRouter::WrapResponse(connectResultMsg));
+
+      break;
+    }
+    case ECubeConnectionType::Background: 
+    {
+      PRINT_NAMED_INFO("AppCubeConnectionSubscriber.ConnectedCallback.ConnectedBackground",
+                       "Cube was already connected in background. Waiting for transition to Interactable connection.");
+      break;
+    }
+  }
 }
-
-
-void AppCubeConnectionSubscriber::ConnectedBackgroundCallback()
-{
-  DEV_ASSERT(false, "AppCubeConnectionSubscriber.ConnectedBackgroundCallback.UnexpectedBackgroundConnection");
-}
-
 
 void AppCubeConnectionSubscriber::ConnectionFailedCallback()
 {

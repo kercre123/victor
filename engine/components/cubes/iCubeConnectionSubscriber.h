@@ -22,6 +22,11 @@
 namespace Anki{
 namespace Cozmo{
 
+enum class ECubeConnectionType{
+  Background,
+  Interactable
+};
+
 class ICubeConnectionSubscriber
 {
 public:
@@ -31,14 +36,10 @@ public:
   virtual std::string GetCubeConnectionDebugName() const = 0;
 
   // Called when:
-  // 1. A new INTERACTABLE connection is made successfully when there are non-background subscribers
-  // 2. An existing BACKGROUND connection finishes converting to INTERACTABLE
-  virtual void ConnectedInteractableCallback() {}
-
-  // Called when:
-  // 1. A new BACKGROUND connection is made successfully when there are only BACKGROUND subscribers
-  // 2. An existing INTERACTABLE connection finishes converting to BACKGROUND
-  virtual void ConnectedBackgroundCallback() {}
+  // 1. A new connection is made successfully
+  // 2. An existing connection finishes converting either direction BACKGROUND<->INTERACTABLE 
+  // 3. Immediately upon subscription if already connected 
+  virtual void ConnectedCallback(ECubeConnectionType type) {}
 
   // Called when a connection attempt, either BACKGROUND -or- INTERACTABLE fails
   virtual void ConnectionFailedCallback() {}
@@ -61,10 +62,13 @@ public:
   TestCubeConnectionSubscriber(int id) : _id(id) {}
 
   virtual std::string GetCubeConnectionDebugName() const override {return ("TestSubscriber" + std::to_string(_id));};
-  virtual void ConnectedInteractableCallback() override {PRINT_NAMED_INFO("CubeConnectionCoordinatorTest.ConnectedInteractable",
-                                                                          "Connection succeeded callback received");}
-  virtual void ConnectedBackgroundCallback() override {PRINT_NAMED_INFO("CubeConnectionCoordinatorTest.ConnectedBackground",
-                                                                        "Connection succeeded callback received");}
+  virtual void ConnectedCallback(ECubeConnectionType connectionType) override {
+    if(ECubeConnectionType::Background == connectionType){
+      PRINT_NAMED_INFO("CubeConnectionCoordinatorTest.ConnectedBackground","");
+    } else {
+      PRINT_NAMED_INFO("CubeConnectionCoordinatorTest.ConnectedInteractable","");
+    }
+  }
   virtual void ConnectionFailedCallback() override {PRINT_NAMED_INFO("CubeConnectionCoordinatorTest.ConnectionFailed",
                                                                      "Connection failed callback received");}
   virtual void ConnectionLostCallback() override {PRINT_NAMED_INFO("CubeConnectionCoordinatorTest.ConnectionLost",

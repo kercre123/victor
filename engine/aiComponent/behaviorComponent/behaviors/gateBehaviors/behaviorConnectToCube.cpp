@@ -177,9 +177,11 @@ void BehaviorConnectToCube::TransitionToConnectionLost()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorConnectToCube::ConnectedInteractableCallback()
+void BehaviorConnectToCube::ConnectedCallback(ECubeConnectionType connectionType)
 {
-  _dVars.connectedOnLastUpdate = true;
+  if(ECubeConnectionType::Interactable == connectionType){
+    _dVars.connectedOnLastUpdate = true;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

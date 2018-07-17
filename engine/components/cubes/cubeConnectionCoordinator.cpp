@@ -235,6 +235,13 @@ void CubeConnectionCoordinator::SubscribeToCubeConnection(ICubeConnectionSubscri
     ++_nonBackgroundSubscriberCount;
     _timeToEndStandby_s = 0;
   }
+
+  // If we're already connected, invoke appropriate callbacks now since they won't be invoked by state transitions
+  if(ECoordinatorState::ConnectedBackground == _coordinatorState){
+    subscriber->ConnectedCallback(ECubeConnectionType::Background);
+  } else if(ECoordinatorState::ConnectedInteractable == _coordinatorState){
+    subscriber->ConnectedCallback(ECubeConnectionType::Interactable);
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -339,7 +346,7 @@ void CubeConnectionCoordinator::TransitionToConnectedInteractable(const RobotCom
 
   // Notify subscribers
   for(auto& subscriberRecord : _subscriptionRecords){
-    subscriberRecord.subscriber->ConnectedInteractableCallback();
+    subscriberRecord.subscriber->ConnectedCallback(ECubeConnectionType::Interactable);
   }
 }
 
@@ -402,7 +409,7 @@ void CubeConnectionCoordinator::TransitionToConnectedBackground(const RobotCompM
 
   // Notify subscribers
   for(auto& subscriberRecord : _subscriptionRecords){
-    subscriberRecord.subscriber->ConnectedBackgroundCallback();
+    subscriberRecord.subscriber->ConnectedCallback(ECubeConnectionType::Background);
   }
 }
 

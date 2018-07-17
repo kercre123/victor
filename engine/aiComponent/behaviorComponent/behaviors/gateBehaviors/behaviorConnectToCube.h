@@ -45,7 +45,7 @@ protected:
   virtual void BehaviorUpdate() override;
 
   // ICubeConnectionSubscriber - - - - -
-  virtual void ConnectedInteractableCallback() override;
+  virtual void ConnectedCallback(ECubeConnectionType connectionType) override;
   virtual void ConnectionFailedCallback() override;
   virtual void ConnectionLostCallback() override;
 
