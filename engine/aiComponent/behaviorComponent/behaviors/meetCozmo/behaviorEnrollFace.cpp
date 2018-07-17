@@ -400,6 +400,7 @@ Result BehaviorEnrollFace::InitEnrollmentSettings()
   return RESULT_OK;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::InitBehavior()
 {
   const auto& BC = GetBEI().GetBehaviorContainer();
@@ -431,6 +432,23 @@ void BehaviorEnrollFace::OnBehaviorActivated()
     moveComp.EnableUnexpectedRotationWithoutMotors( true );
   }
 
+  // Check for special case interruption
+  {
+    const bool prevNameSet = !_dVars->persistent.settings->name.empty();
+    const bool nameChanged = (_dVars->faceName != _dVars->persistent.settings->name);
+    const bool interrupted = (_dVars->persistent.state != State::NotStarted);
+    if(interrupted && prevNameSet && nameChanged)
+    {
+      // We were interrupted by a new enrollment. Just start the new enrollment from scratch
+      PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal.InterruptedByNewEnrollment",
+                    "WasEnrolling %s, interrupted to enroll %s. Starting over.",
+                    Util::HidePersonallyIdentifiableInfo(_dVars->persistent.settings->name.c_str()),
+                    Util::HidePersonallyIdentifiableInfo(_dVars->faceName.c_str()));
+      
+      _dVars->persistent.state = State::NotStarted;
+    }
+  }
+  
   const Result settingsResult = InitEnrollmentSettings();
   if(RESULT_OK != settingsResult)
   {
@@ -481,7 +499,6 @@ void BehaviorEnrollFace::OnBehaviorActivated()
       // Not fast forwarding: just start at the beginning
       SET_STATE(NotStarted);
   }
-
 
   // Reset flag in FaceWorld because we're starting a new enrollment and will
   // be waiting for this new enrollment to be "complete" after this
@@ -1273,19 +1290,16 @@ void BehaviorEnrollFace::TransitionToSayingName()
     {
       PRINT_NAMED_WARNING("BehaviorEnrollFace.TransitionToSayingName.FinalAnimationFailed", "");
     }
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    GetBEI().GetMoodManager().TriggerEmotionEvent("EnrolledNewFace", currTime_s);
+    
+    if(_dVars->saveToRobot)
+    {
+      TransitionToSavingToRobot();
+    }
     else
     {
-      const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      GetBEI().GetMoodManager().TriggerEmotionEvent("EnrolledNewFace", currTime_s);
-
-      if(_dVars->saveToRobot)
-      {
-        TransitionToSavingToRobot();
-      }
-      else
-      {
-        SET_STATE(Success);
-      }
+      SET_STATE(Success);
     }
   });
 
