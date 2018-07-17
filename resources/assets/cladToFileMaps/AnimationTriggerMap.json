@@ -1326,7 +1326,7 @@
   },
   {
     "CladEvent": "TimerRingGetIn",
-    "AnimName": "ag_timer_is_up_getin"
+    "AnimName": "ag_timer_big_beep"
   },
   {
     "CladEvent": "TimerRing",
