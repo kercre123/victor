@@ -1123,7 +1123,11 @@ Result PathComponent::ExecuteCustomPath(const Planning::Path& path)
   if(_plannerActive) {
     _selectedPathPlanner->StopPlanning();
   }
+  // reset state
   _plannerActive = false;
+  _isReplanning = false;
+  _waitingToMatchReplanOrigin = false;
+  _hasStoppedBeforeExecuting = false;
   _selectedPathPlanner.reset();
 
   return ExecutePath(path);
