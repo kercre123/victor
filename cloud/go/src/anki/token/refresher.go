@@ -66,11 +66,15 @@ func refreshRoutine(done <-chan struct{}) {
 		if refreshDuration <= 0 {
 			log.Println("token refresh: refreshing")
 			ch := make(chan *response)
-			defer close(ch)
 			queue <- request{m: cloud.NewTokenRequestWithJwt(&cloud.JwtRequest{}), ch: ch}
 			msg := <-ch
+			close(ch)
 			if msg.err != nil {
 				log.Println("Refresh routine error:", msg.err)
+			}
+			log.Println("token refresh: refresh done, sleeping", tokSleep)
+			if util.SleepSelect(tokSleep, done) {
+				return
 			}
 		} else {
 			log.Println("token refresh: waiting for", refreshDuration)

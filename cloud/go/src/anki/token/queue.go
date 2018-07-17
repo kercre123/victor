@@ -42,23 +42,20 @@ func queueInit(done <-chan struct{}) error {
 	return nil
 }
 
-func handleQueueRequest(req *request, c *conn) (*conn, error) {
+func handleQueueRequest(req *request) error {
 	var err error
 	var resp *cloud.TokenResponse
 	switch req.m.Tag() {
 	case cloud.TokenRequestTag_Auth:
-		resp, c, err = handleAuthRequest(c, req.m.GetAuth().SessionToken)
+		resp, err = handleAuthRequest(req.m.GetAuth().SessionToken)
 	case cloud.TokenRequestTag_Jwt:
-		resp, c, err = handleJwtRequest(c)
+		resp, err = handleJwtRequest()
 	}
 	req.ch <- &response{resp, err}
-	return c, err
+	return err
 }
 
-func getConnection(c *conn) (*conn, error) {
-	if c != nil {
-		return c, nil
-	}
+func getConnection() (*conn, error) {
 	c, err := newConn(url)
 	if err != nil {
 		return nil, err
@@ -70,7 +67,7 @@ func getConnection(c *conn) (*conn, error) {
 // by a request should be returned for logging by processing code, but we need to
 // generate a CLAD response for token requests no matter what, and those responses
 // should indicate the stage of the request where an error occurred
-func handleJwtRequest(c *conn) (*cloud.TokenResponse, *conn, error) {
+func handleJwtRequest() (*cloud.TokenResponse, error) {
 	existing := jwt.GetToken()
 	errorResp := func(code cloud.TokenError) *cloud.TokenResponse {
 		return cloud.NewTokenResponseWithJwt(&cloud.JwtResponse{Error: code})
@@ -80,47 +77,51 @@ func handleJwtRequest(c *conn) (*cloud.TokenResponse, *conn, error) {
 	}
 	if existing != nil {
 		if time.Now().After(existing.RefreshTime()) {
-			c, err := getConnection(c)
+			c, err := getConnection()
 			if err != nil {
-				return errorResp(cloud.TokenError_Connection), nil, err
+				return errorResp(cloud.TokenError_Connection), err
 			}
+			defer c.Close()
 			bundle, err := c.refreshToken(existing.String())
 			if err != nil {
-				return errorResp(cloud.TokenError_Connection), nil, err
+				return errorResp(cloud.TokenError_Connection), err
 			}
 			tok, err := jwt.ParseToken(bundle.Token)
 			if err != nil {
-				return errorResp(cloud.TokenError_InvalidToken), nil, err
+				return errorResp(cloud.TokenError_InvalidToken), err
 			}
-			return tokenResp(tok.String()), c, nil
+			return tokenResp(tok.String()), nil
 		}
-		return tokenResp(existing.String()), c, nil
+		return tokenResp(existing.String()), nil
 	}
 	// no token: this is an error for whoever we're sending the CLAD response to,
 	// because they asked for a token and we can't give them one, but it's not
 	// technically an error for our own queue-processing functionality
-	return errorResp(cloud.TokenError_NullToken), c, nil
+	return errorResp(cloud.TokenError_NullToken), nil
 }
 
-func handleAuthRequest(c *conn, session string) (*cloud.TokenResponse, *conn, error) {
-	c, err := getConnection(c)
+func handleAuthRequest(session string) (*cloud.TokenResponse, error) {
 	errorResp := func(code cloud.TokenError) *cloud.TokenResponse {
 		return cloud.NewTokenResponseWithAuth(&cloud.AuthResponse{Error: code})
 	}
+
+	c, err := getConnection()
 	if err != nil {
-		return errorResp(cloud.TokenError_Connection), nil, err
+		return errorResp(cloud.TokenError_Connection), err
 	}
+	defer c.Close()
+
 	bundle, err := c.associatePrimary(session, robotESN)
 	if err != nil {
-		return errorResp(cloud.TokenError_Connection), nil, err
+		return errorResp(cloud.TokenError_Connection), err
 	}
 	_, err = jwt.ParseToken(bundle.Token)
 	if err != nil {
-		return errorResp(cloud.TokenError_InvalidToken), nil, err
+		return errorResp(cloud.TokenError_InvalidToken), err
 	}
 	return cloud.NewTokenResponseWithAuth(&cloud.AuthResponse{
 		AppToken: bundle.ClientToken,
-		JwtToken: bundle.Token}), c, nil
+		JwtToken: bundle.Token}), nil
 }
 
 func queueRoutine(done <-chan struct{}) {
@@ -132,20 +133,8 @@ func queueRoutine(done <-chan struct{}) {
 		case req = <-queue:
 			break
 		}
-		c, err := handleQueueRequest(&req, nil)
-		// re-use the existing connection we just created
-		// as long as queue still has stuff in it
-	reuse:
-		for c != nil && err == nil {
-			select {
-			case req = <-queue:
-				c, err = handleQueueRequest(&req, c)
-			default:
-				if err = c.Close(); err != nil {
-					log.Println("Error closing token connection:", err)
-				}
-				break reuse
-			}
+		if err := handleQueueRequest(&req); err != nil {
+			log.Println("Token queue error:", err)
 		}
 	}
 }
