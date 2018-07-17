@@ -233,7 +233,7 @@
   },
   {
     "CladEvent": "ConnectWakeUp",
-    "AnimName": "ag_connectwakeup"
+    "AnimName": "ag_gotosleep_wakeup"
   },
   {	
     "CladEvent": "DEPRECATED_ComeHere_SearchForFace",	
