@@ -48,7 +48,11 @@ namespace Anki {
     { }
     
   void CozmoSimTestController::HandleRobotConnected(ExternalInterface::RobotConnectionResponse const &msg)
-  {    
+  {
+    // we don't want behaviors to do anything, so go to Wait
+    SendMessage(ExternalInterface::MessageGameToEngine(
+                  ExternalInterface::ExecuteBehaviorByID("Wait", 1)));
+
     SendMessage(ExternalInterface::MessageGameToEngine(
       ExternalInterface::AllowedToHandleActions(true)));
   }

@@ -13,10 +13,12 @@
 #include "test/engine/behaviorComponent/testIntentsFramework.h"
 
 #include "clad/types/behaviorComponent/userIntent.h"
+#include "clad/types/featureGateTypes.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/cozmoContext.h"
+#include "engine/utils/cozmoFeatureGate.h"
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 #include "util/logging/logging.h"
 
@@ -33,6 +35,9 @@ std::unordered_map<std::string, TestIntentsFramework::IntentInfo> TestIntentsFra
   
 TestIntentsFramework::TestIntentsFramework()
 {
+  // ensure intent-related features are enabled
+  cozmoContext->GetFeatureGate()->SetFeatureEnabled(FeatureType::CubeBehaviors, true);
+
   // only load once
   if( _completedUserIntents.empty() ) {
     LoadCompletedIntents();

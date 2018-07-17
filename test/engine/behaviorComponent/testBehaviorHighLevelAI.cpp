@@ -11,23 +11,26 @@
  **/
 
 #include "clad/types/behaviorComponent/userIntent.h"
+#include "clad/types/featureGateTypes.h"
 #include "coretech/common/engine/utils/timer.h"
-#include "engine/cozmoContext.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorHighLevelAI.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/internalStatesBehavior.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
-#include "engine/aiComponent/behaviorComponent/userIntents.h"
 #include "engine/aiComponent/behaviorComponent/userIntentMap.h"
+#include "engine/aiComponent/behaviorComponent/userIntents.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCompound.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
+#include "engine/cozmoContext.h"
 #include "engine/unitTestKey.h"
+#include "engine/utils/cozmoFeatureGate.h"
 #include "gtest/gtest.h"
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 #include "test/engine/behaviorComponent/testIntentsFramework.h"
+
 
 using namespace Anki;
 using namespace Anki::Cozmo;
@@ -227,6 +230,9 @@ TEST(BehaviorHighLevelAI, PostBehaviorSuggestionsConsidered)
     { "meet_victor",     BEHAVIOR_ID(MeetVictor),             "Socializing" },
   //{ "imperative_come", BEHAVIOR_ID(ComeHereVoiceCommand),   "Socializing" }, // todo: come here needs a look for face in order to activate
   };
+
+  // ensure demo is disabled
+  cozmoContext->GetFeatureGate()->SetFeatureEnabled(FeatureType::PRDemo, false);
   
   TestBehaviorFramework tbf;
   tbf.InitializeStandardBehaviorComponent();
