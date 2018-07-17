@@ -55,28 +55,27 @@ static void DebuggerHook(int signum, siginfo_t * info, void * ctx)
   // will return without waiting for dump to complete.
   victor_dump_tombstone_timeout(tid, nullptr, 0, -1);
 
-  /* remove our handler so we fault for real when we return */
+  /* restore default signal handler so we fault for real when we return */
   signal(signum, SIG_DFL);
 
-  /*
-   * These signals are not re-thrown when we resume.  This means that
-   * crashing due to (say) SIGPIPE doesn't work the way you'd expect it
-   * to.  We work around this by throwing them manually.  We don't want
-   * to do this for *all* signals because it'll screw up the address for
-   * faults like SIGSEGV.
-   */
-  switch (signum) {
-    case SIGABRT:
-    case SIGFPE:
-    case SIGPIPE:
-#ifdef SIGSTKFLT
-    case SIGSTKFLT:
-#endif
-      (void) tgkill(pid, tid, signum);
-      break;
-    default:    // SIGILL, SIGBUS, SIGSEGV
-      break;
-  }
+  /* set SA_RESTART so signal will be rethrown */
+  struct sigaction action;
+  sigaction(signum, nullptr, &action);
+  action.sa_flags |= SA_RESTART;
+  sigemptyset(&action.sa_mask);
+  sigaction(signum, &action, nullptr);
+
+  //
+  // <anki>
+  // SA_RESTART doesn't seem to work reliably for all signals on vicos.
+  // Workaround is to signal ourselves again, even if it screws up
+  // the return address for gdb or whatever.  This is a change from
+  // the handler used in bionic:
+  // https://github.com/01org/android-bluez-bionic/blob/master/linker/debugger.cpp
+  // </anki>
+  //
+  (void) tgkill(pid, tid, signum);
+
 }
 
 //
