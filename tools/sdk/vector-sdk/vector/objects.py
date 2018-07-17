@@ -44,7 +44,6 @@ __all__ = ['LightCube1Type',
 import math
 import time
 
-from . import events
 from . import util
 
 from .messaging import protocol
@@ -126,7 +125,11 @@ class LightCube(util.Component):
         #: :class:`~vector.util.ImageRect`: The ImageRect defining where the
         #: object was last visible within Victor's camera view.
         #: ``None`` if the element has not yet been observed.
-        self.last_observed_image_rect = None
+        self._last_observed_image_rect = None
+
+        #: float: angular distance from the current reported up axis
+        #: ``None`` if the element has not yet been observed.
+        self._top_face_orientation_rad = None
 
         self._is_visible = False
         self._observed_timeout_handler = None
@@ -138,7 +141,7 @@ class LightCube(util.Component):
 
     def __repr__(self):
         extra = self._repr_values()
-        if len(extra) > 0:
+        if extra:
             extra = ' ' + extra
         if self.pose:
             extra += ' pose=%s' % self.pose
@@ -149,7 +152,7 @@ class LightCube(util.Component):
     #### Private Methods ####
 
     def _repr_values(self):
-        return ''
+        return 'object_id=%s' % self.object_id
 
     def _reset_observed_timeout_handler(self):
         if self._observed_timeout_handler is not None:
@@ -186,7 +189,7 @@ class LightCube(util.Component):
         self.last_observed_time = now
         self.last_observed_robot_timestamp = timestamp
         self.last_event_time = now
-        self.last_observed_image_box = image_rect
+        self._last_observed_image_rect = image_rect
         self._reset_observed_timeout_handler()
         self._dispatch_observed_event(image_rect)
 
@@ -194,6 +197,15 @@ class LightCube(util.Component):
             self._dispatch_appeared_event(image_rect)
 
     #### Properties ####
+
+    @property
+    def factory_id(self):
+        '''str: The unique hardware id of the physical cube.'''
+        return self._factory_id
+
+    @factory_id.setter
+    def factory_id(self, factory_id):
+        self.factory_id = factory_id
 
     @property
     def descriptive_name(self):
@@ -265,7 +277,7 @@ class LightCube(util.Component):
         self.last_tapped_robot_timestamp = msg.timestamp
         self.logger.debug('Object Tapped (object_id: {0} at {1})'.format(self.object_id, msg.timestamp))
 
-    def on_moved(self, msg):
+    def on_moved(self, msg):  # pylint: disable=unused-argument
         now = time.time()
         started_moving = not self.is_moving
         self.is_moving = True
@@ -278,7 +290,7 @@ class LightCube(util.Component):
             self.last_moved_start_robot_timestamp = msg.timestamp
             self.logger.debug('Object Moved (object_id: {0})'.format(self.object_id))
 
-    def on_stopped_moving(self, msg):
+    def on_stopped_moving(self, msg):  # pylint: disable=unused-argument
         now = time.time()
         self.last_event_time = now
         if self.is_moving:
@@ -310,7 +322,7 @@ class LightCube(util.Component):
                                     msg.img_rect.width,
                                     msg.img_rect.height)
         self._on_observed(image_rect, msg.timestamp)
-        self.top_face_orientation_rad = msg.top_face_orientation_rad
+        self._top_face_orientation_rad = msg.top_face_orientation_rad
 
     def on_connection_state(self, msg):
         if self._factory_id != msg.factory_id:

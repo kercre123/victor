@@ -11,7 +11,7 @@ import logging
 
 from . import (animation, backpack, behavior, connection,
                events, exceptions, faces, motors,
-               objects, oled_face, photos, util, world)
+               oled_face, photos, util, world)
 
 MODULE_LOGGER = logging.getLogger(__name__)
 
@@ -44,6 +44,7 @@ class Robot:
         self._motors = None
         self._oled = None
         self._photos = None
+        self._world = None
 
         self.behavior_timeout = behavior_timeout
         # Robot state/sensor data

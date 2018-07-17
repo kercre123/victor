@@ -8,8 +8,6 @@ It keeps track of all the faces Vector has observed.
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ['World']
 
-import time
-
 from . import faces
 from . import objects
 from . import sync
@@ -68,29 +66,23 @@ class World(util.Component):
         cube = self.light_cube.get(msg.object_type)
         if not cube:
             self.robot.logger.error('Received invalid cube object_type=%s msg=%s', msg.object_type, msg)
-            return
+            return None
         cube.object_id = msg.object_id
         self._objects[cube.object_id] = cube
-        cube._factory_id = msg.factory_id
+        cube.factory_id = msg.factory_id
         self.robot.logger.debug('Allocated object_id=%d to light cube %s', msg.object_id, cube)
         return cube
 
-    def get_light_cube(self, cube_id):
-        '''Returns the light cube with the given cube ID
+    def get_light_cube(self):
+        '''Returns the connected light cube
 
-        Args:
-            cube_id (int): The light cube ID - should be one of
-                :attr:`~vector.objects.LightCube1Type`, Note: the cube_id is not
-                the same thing as the object_id.
         Returns:
             :class:`vector.objects.LightCube`: The LightCube object with that cube_id
 
         Raises:
             :class:`ValueError` if the cube_id is invalid.
         '''
-        if cube_id not in objects.LightCubeIDs:
-            raise ValueError("Invalid cube_id %s" % cube_id)
-        cube = self.light_cube.get(cube_id)
+        cube = self.light_cube.get(objects.LightCube1Type)
         # Only return the cube if it has an object_id
         if cube.object_id is not None:
             return cube

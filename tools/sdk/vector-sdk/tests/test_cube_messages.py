@@ -4,12 +4,9 @@
 Test cube connection interactions
 '''
 
-import argparse
 import asyncio
 import os
-from pathlib import Path
 import sys
-import time
 import utilities
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -41,12 +38,12 @@ def main():
         connected_cubes = robot.world.connected_light_cubes
         print("should be connected now, we are connected to {0} objects.".format(len(connected_cubes)))
         for i in connected_cubes:
-            print("connected to cube {0}, clearing preferred cube for 1 second...".format(i._factory_id))
+            print("connected to cube {0}, clearing preferred cube for 1 second...".format(i.factory_id))
             robot.world.forget_preferred_cube()
             loop.run_until_complete(wait_async(1.0))
 
             print("resetting preferred cube to the one we connected to...")
-            robot.world.set_preferred_cube(i._factory_id)
+            robot.world.set_preferred_cube(i.factory_id)
             loop.run_until_complete(wait_async(1.0))
 
             robot.world.flash_cube_lights()

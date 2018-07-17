@@ -51,6 +51,7 @@ class AnimationComponent(util.Component):
         result = await self.interface.ListAnimations(req)
         self.logger.debug(f"status: {result.status}, number_of_animations:{len(result.animation_names)}")
         self._anim_dict = {a.name: a for a in result.animation_names}
+        return result
 
     @sync.Synchronizer.wrap
     async def play_animation(self, anim, loop_count=1, ignore_body_track=True, ignore_head_track=True, ignore_lift_track=True):
