@@ -88,7 +88,7 @@
   var noteDiv;
   var autoUpdate = false;
   var waitingOnData = false;
-  var is3D = true;
+  var is3D = false;
 
   function callUpdate() {
     waitingOnData = true;
@@ -193,9 +193,9 @@
   // viz vars and methods
   var myp5;
   var vizDirty = false;
-  var shouldDrawRobot = true;
+  var shouldDrawRobot = false;
   var shouldDrawCubes = true;
-  var shouldDrawFaces = true;
+  var shouldDrawFaces = false;
   var kKnownTypes = ['Unknown','ClearOfObstacle','ClearOfCliff','ObstacleCube','ObstacleCharger','ObstacleProx','ObstacleProxExplored','ObstacleUnrecognized','Cliff','InterestingEdge','NotInterestingEdge'];
   
   var sketch = function( p ) {
@@ -642,13 +642,13 @@
 
     var chkAuto = $('<input />', { type: 'checkbox', id: 'chkAuto'}).appendTo( elem );
     $('<label />', { for: 'chkAuto', text: 'Auto-update' }).appendTo( elem );
-    var chk3D = $('<input />', { type: 'checkbox', id: 'chk3D'}).appendTo(elem).prop('checked', true);
+    var chk3D = $('<input />', { type: 'checkbox', id: 'chk3D'}).appendTo(elem).prop('checked', is3D);
     $('<label />', { for: 'chk3D', text: '3D' }).appendTo( elem );
-    var chkRobot = $('<input />', { type: 'checkbox', id: 'chkRobot'}).appendTo(elem).prop('checked', true);
+    var chkRobot = $('<input />', { type: 'checkbox', id: 'chkRobot'}).appendTo(elem).prop('checked', shouldDrawRobot);
     $('<label />', { for: 'chkRobot', text: 'Show robot' }).appendTo( elem );
-    var chkCubes = $('<input />', { type: 'checkbox', id: 'chkCubes'}).appendTo(elem).prop('checked', true);
+    var chkCubes = $('<input />', { type: 'checkbox', id: 'chkCubes'}).appendTo(elem).prop('checked', shouldDrawCubes);
     $('<label />', { for: 'chkCubes', text: 'Show cubes' }).appendTo( elem );
-    var chkFaces = $('<input />', { type: 'checkbox', id: 'chkFaces'}).appendTo(elem).prop('checked', true);
+    var chkFaces = $('<input />', { type: 'checkbox', id: 'chkFaces'}).appendTo(elem).prop('checked', shouldDrawFaces);
     $('<label />', { for: 'chkFaces', text: 'Show faces' }).appendTo( elem );
     chkAuto.change( function() {
       autoUpdate = $(this).is(':checked');
