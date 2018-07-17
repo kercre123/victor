@@ -14,7 +14,7 @@ import (
 
 const (
 	// ChipperURL is the location of the Chipper service
-	ChipperURL = "chipper-dev.api.anki.com:443"
+	ChipperURL = "chipper-dev-pr-201807.api.anki.com:443"
 )
 
 var (
