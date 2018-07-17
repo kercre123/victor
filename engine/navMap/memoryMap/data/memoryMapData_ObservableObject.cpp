@@ -24,6 +24,7 @@ MemoryMapData_ObservableObject::MemoryMapData_ObservableObject(const ObservableO
 : MemoryMapData(MemoryMapTypes::EContentType::ObstacleObservable, t, true)
 , id(o.GetID())
 , boundingPoly(p)
+, _poseIsVerified(true)
 {
 
 }

@@ -23,6 +23,7 @@ MemoryMapData_ProxObstacle::MemoryMapData_ProxObstacle(ExploredType explored, co
 , _pose(pose)
 , _explored(explored)
 , _belief(40)
+, _collidable(true)
 {
 
 }

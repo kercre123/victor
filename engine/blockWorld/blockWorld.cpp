@@ -1599,8 +1599,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
           const TimeStamp_t lastVisuallyMatchedTime = _robot->GetObjectPoseConfirmer().GetLastVisuallyMatchedTime(object->GetID());
           const bool isUnobserved = ( (lastVisuallyMatchedTime < atTimestamp) &&
                                       (_robot->GetCarryingComponent().GetCarryingObject() != object->GetID()) &&
-                                      (_robot->GetDockingComponent().GetDockObject() != object->GetID()) &&
-                                      (object->GetFamily() != ObjectFamily::Charger) );
+                                      (_robot->GetDockingComponent().GetDockObject() != object->GetID()) );
           if ( isUnobserved )
           {
             unobservedObjectIDs.push_back(object->GetID());
@@ -1670,13 +1669,50 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
       // location, but which must not be there because we saw something behind
       // that location:
       bool hasNothingBehind = false;
-      const bool shouldBeVisible = unobservedObject->IsVisibleFrom(camera,
+
+      using NotVisibleReason = Vision::KnownMarker::NotVisibleReason;
+      NotVisibleReason reason = unobservedObject->IsVisibleFromWithReason(camera,
                                                                    MAX_MARKER_NORMAL_ANGLE_FOR_SHOULD_BE_VISIBLE_CHECK_RAD,
                                                                    MIN_MARKER_SIZE_FOR_SHOULD_BE_VISIBLE_CHECK_PIX,
                                                                    xBorderPad, yBorderPad,
                                                                    hasNothingBehind);
 
       const bool isDirtyPoseState = (PoseState::Dirty == unobservedObject->GetPoseState());
+
+      // ignore the occluded reason because it seems broken (VIC-2699). that reason is only returned if
+      // the object is otherwise visible, so treat it as visible for all intensive porpoises
+      bool shouldBeVisible = true;
+      bool occluded        = false;
+      bool objectAligned   = true;
+
+      switch (reason) {
+        case NotVisibleReason::IS_VISIBLE:
+        { 
+          break; 
+        }
+        case NotVisibleReason::OCCLUDED: 
+        { 
+          occluded = true;
+          shouldBeVisible = false;
+          break; 
+        }
+        case NotVisibleReason::NOTHING_BEHIND: 
+        { 
+          shouldBeVisible = false;
+          break; 
+        }
+        case NotVisibleReason::NORMAL_NOT_ALIGNED:
+        case NotVisibleReason::BEHIND_CAMERA:
+        case NotVisibleReason::OUTSIDE_FOV:
+        case NotVisibleReason::TOO_SMALL:
+        case NotVisibleReason::CAMERA_NOT_CALIBRATED:
+        case NotVisibleReason::POSE_PROBLEM:
+        {
+          objectAligned = false;
+          shouldBeVisible = false;
+          break;
+        }
+      }
 
       // If the object should _not_ be visible, but the reason was only that
       // it has nothing behind it to confirm that, _and_ the object has already
@@ -1688,17 +1724,23 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
       }
       else if(shouldBeVisible)
       {
-        // We "should" have seen the object! Clear it.
-        PRINT_CH_INFO("BlockWorld", "BlockWorld.CheckForUnobservedObjects.MarkingUnobservedObject",
-                      "Marking object %d unobserved, which should have been seen, but wasn't. "
-                      "(shouldBeVisible:%d hasNothingBehind:%d isDirty:%d",
-                      unobservedObject->GetID().GetValue(),
-                      shouldBeVisible, hasNothingBehind, isDirtyPoseState);
-
-        Result markResult = _robot->GetObjectPoseConfirmer().MarkObjectUnobserved(unobservedObject);
-        if(RESULT_OK != markResult)
+        // if the marker should be visible by the camera and it is not occluded
+        if( !occluded && objectAligned ) 
         {
-          PRINT_NAMED_WARNING("BlockWorldCheckForUnobservedObjects.MarkObjectUnobservedFailed", "");
+          _robot->GetMapComponent().MarkObjectUnobserved(*unobservedObject);
+        } else {
+          // We "should" have seen the object! Clear it.
+          PRINT_CH_INFO("BlockWorld", "BlockWorld.CheckForUnobservedObjects.MarkingUnobservedObject",
+                        "Marking object %d unobserved, which should have been seen, but wasn't. "
+                        "(shouldBeVisible:%d hasNothingBehind:%d isDirty:%d, occluded:%d, objectAligned:%d)",
+                        unobservedObject->GetID().GetValue(),
+                        shouldBeVisible, hasNothingBehind, isDirtyPoseState, occluded, objectAligned);
+
+          Result markResult = _robot->GetObjectPoseConfirmer().MarkObjectUnobserved(unobservedObject);
+          if(RESULT_OK != markResult)
+          {
+            PRINT_NAMED_WARNING("BlockWorldCheckForUnobservedObjects.MarkObjectUnobservedFailed", "");
+          }
         }
       }
 

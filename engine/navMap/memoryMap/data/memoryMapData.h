@@ -42,6 +42,9 @@ public:
   
   virtual ExternalInterface::ENodeContentTypeEnum GetExternalContentType() const;
   
+  // return true if this type collides with the robot
+  virtual bool IsCollisionType() const { return ((type == EContentType::ObstacleUnrecognized) || (type == EContentType::Cliff)); }
+  
   // compare to MemoryMapData and return bool if the data stored is the same
   virtual bool Equals(const MemoryMapData* other) const { return (type == other->type); }
   
