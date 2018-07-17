@@ -400,6 +400,7 @@ Result BehaviorEnrollFace::InitEnrollmentSettings()
   return RESULT_OK;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::InitBehavior()
 {
   const auto& BC = GetBEI().GetBehaviorContainer();
@@ -431,6 +432,23 @@ void BehaviorEnrollFace::OnBehaviorActivated()
     moveComp.EnableUnexpectedRotationWithoutMotors( true );
   }
 
+  // Check for special case interruption
+  {
+    const bool prevNameSet = !_dVars->persistent.settings->name.empty();
+    const bool nameChanged = (_dVars->faceName != _dVars->persistent.settings->name);
+    const bool interrupted = (_dVars->persistent.state != State::NotStarted);
+    if(interrupted && prevNameSet && nameChanged)
+    {
+      // We were interrupted by a new enrollment. Just start the new enrollment from scratch
+      PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal.InterruptedByNewEnrollment",
+                    "WasEnrolling %s, interrupted to enroll %s. Starting over.",
+                    Util::HidePersonallyIdentifiableInfo(_dVars->persistent.settings->name.c_str()),
+                    Util::HidePersonallyIdentifiableInfo(_dVars->faceName.c_str()));
+      
+      _dVars->persistent.state = State::NotStarted;
+    }
+  }
+  
   const Result settingsResult = InitEnrollmentSettings();
   if(RESULT_OK != settingsResult)
   {
@@ -462,7 +480,6 @@ void BehaviorEnrollFace::OnBehaviorActivated()
     }
 
     case State::SavingToRobot:
-    case State::SaveFailed:
     {
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal.FastForwardToSavingToRobot", "");
       TransitionToSavingToRobot();
@@ -481,7 +498,6 @@ void BehaviorEnrollFace::OnBehaviorActivated()
       // Not fast forwarding: just start at the beginning
       SET_STATE(NotStarted);
   }
-
 
   // Reset flag in FaceWorld because we're starting a new enrollment and will
   // be waiting for this new enrollment to be "complete" after this
@@ -620,9 +636,9 @@ void BehaviorEnrollFace::BehaviorUpdate()
 
         // Note that we will wait to disable face enrollment until the very end of
         // the behavior so that we remain resume-able from reactions, in case we
-        // are interrupted after this point (e.g. while playing the sayname animations).
-
-        TransitionToSayingName();
+        // are interrupted after this point (e.g. while saving or playing the sayname animations).
+        
+        TransitionToSavingToRobot(); // will say name after saving
       }
       else if(HasTimedOut() || justPlacedOnCharger)
       {
@@ -1273,20 +1289,9 @@ void BehaviorEnrollFace::TransitionToSayingName()
     {
       PRINT_NAMED_WARNING("BehaviorEnrollFace.TransitionToSayingName.FinalAnimationFailed", "");
     }
-    else
-    {
-      const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      GetBEI().GetMoodManager().TriggerEmotionEvent("EnrolledNewFace", currTime_s);
-
-      if(_dVars->saveToRobot)
-      {
-        TransitionToSavingToRobot();
-      }
-      else
-      {
-        SET_STATE(Success);
-      }
-    }
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    GetBEI().GetMoodManager().TriggerEmotionEvent("EnrolledNewFace", currTime_s);
+    SET_STATE(Success);
   });
 
 }
@@ -1454,10 +1459,11 @@ void BehaviorEnrollFace::TransitionToSavingToRobot()
   const Result saveResult = GetBEI().GetVisionComponent().SaveFaceAlbum();
   if(RESULT_OK == saveResult)
   {
-    SET_STATE(Success);
+    TransitionToSayingName();
   }
   else
   {
+    // If save failed, robot will not remember the name on a restart, so this is a failed enrollment
     SET_STATE(SaveFailed);
   }
 }
