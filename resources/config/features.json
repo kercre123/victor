@@ -21,11 +21,11 @@
   },
   {
     "feature": "Dancing",
-    "enabled": true
+    "enabled": false
   },
   {
     "feature": "CubeBehaviors",
-    "enabled": true
+    "enabled": false
   },
   {
     "feature": "GreetAfterLongTime",
@@ -33,11 +33,11 @@
   },
   {
     "feature": "AttentionTransfer",
-    "enabled": true
+    "enabled": false
   },
   {
     "feature": "PRDemo",
-    "enabled": false
+    "enabled": true
   }
 ]
 
