@@ -69,8 +69,9 @@ func handleConn(c ipc.Conn) {
 		}
 		if resp != nil {
 			var buf bytes.Buffer
-			resp.Pack(&buf)
-			if n, err := c.Write(buf.Bytes()); n != buf.Len() || err != nil {
+			if err := resp.Pack(&buf); err != nil {
+				log.Println("Error packing token response:", err)
+			} else if n, err := c.Write(buf.Bytes()); n != buf.Len() || err != nil {
 				log.Println("Error sending token response:", fmt.Sprintf("%d/%d,", n, buf.Len()), err)
 			}
 		}
