@@ -32,27 +32,36 @@ node('victor-slaves') {
         }
         def macBuildAgentsList = getListOfOnlineNodesForLabel('mac-slaves')
         if (!macBuildAgentsList.isEmpty()) {
-            echo "Running MacOS specific build steps..."
-            withEnv(['PLATFORM=mac']) {
-                stage("Build MacOS ${CONFIGURATION}") {
-                    sh "./project/victor/scripts/victor_build_${CONFIGURATION}.sh -p ${PLATFORM}"
-                    stash includes: '_build/macos/*', name: 'builtMacOSTargets'
+            node('mac-slaves') {
+                echo "Running MacOS specific build steps..."
+                withEnv(['PLATFORM=mac']) {
+                    stage("Build MacOS ${CONFIGURATION}") {
+                        checkout scm
+                        sh 'git submodule update --init --recursive'
+                        sh 'git submodule update --recursive'
+                        sh "./project/victor/scripts/victor_build_${CONFIGURATION}.sh -p ${PLATFORM}"
+                    }
+                    stage('Collect MacOS artifacts') {
+                        archiveArtifacts artifacts: '_build/mac/**', onlyIfSuccessful: true, caseSensitive: true
+                    }
                 }
-            }
-            stage('Webots') {
-                sh './project/build-scripts/webots/webotsTest.py'
-            }
-            stage('Unit Tests') {
-                sh './project/buildServer/steps/unittestsUtil.sh'
-                sh './project/buildServer/steps/unittestsCoretech.sh'
-                sh './project/buildServer/steps/unittestsEngine.sh'
+                stage('Webots') {
+                    sh './project/build-scripts/webots/webotsTest.py'
+                }
+                stage('Unit Tests') {
+                    sh './project/buildServer/steps/unittestsUtil.sh'
+                    sh './project/buildServer/steps/unittestsCoretech.sh'
+                    sh './project/buildServer/steps/unittestsEngine.sh'
+                }
             }
         }
         withEnv(['PLATFORM=vicos']) {
             stage("Build Vicos ${CONFIGURATION}") {
-                unstash 'builtMacOSTargets'
                 sh "./project/victor/scripts/victor_build_${CONFIGURATION}.sh -p ${PLATFORM}"
             }
+        }
+        stage('Collecting artifacts') {
+            archiveArtifacts artifacts: '_build/**', onlyIfSuccessful: true, caseSensitive: true
         }
     }
 }
