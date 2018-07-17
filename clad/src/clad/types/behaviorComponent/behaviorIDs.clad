@@ -282,6 +282,7 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree/prDemo
   PRDemoBigGreeting,
+  PRDemoComeHere,
   PRDemoExploring,
   PRDemoObserving,
   PRDemoSleeping,
