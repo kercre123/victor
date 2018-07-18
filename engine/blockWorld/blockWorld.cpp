@@ -3477,7 +3477,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     FindLocatedObjectHelper(filter, visualizeHelper, false);
 
     const auto* webService = _robot->GetContext()->GetWebService();
-    if( webService != nullptr ) {
+    if( (webService != nullptr) && !toSendToWebViz.empty() ) {
       toSendToWebViz["type"] = "MemoryMapCubes";
       const std::string moduleName = "navmap";
       webService->SendToWebViz( moduleName, toSendToWebViz );
