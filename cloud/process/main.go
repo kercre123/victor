@@ -9,6 +9,10 @@ import (
 	"bytes"
 	"clad/cloud"
 	"flag"
+	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -64,6 +68,8 @@ func main() {
 			log.Println("Cloud data verified")
 		}
 	}
+
+	signalHandler()
 
 	// don't yet have control over process startup on DVT2, set these as default
 	verbose = true
@@ -130,4 +136,14 @@ func main() {
 	cloudproc.Run(options...)
 
 	log.Println("All processes exited, shutting down")
+}
+
+func signalHandler() {
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-ch
+		fmt.Println("Received SIGTERM, shutting down immediately")
+		os.Exit(0)
+	}()
 }
