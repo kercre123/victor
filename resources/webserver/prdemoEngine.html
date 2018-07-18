@@ -7,7 +7,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Vector PR demo Engine iFrame</title>
-  <link rel="stylesheet" href="jquery-ui.css">
+  <link rel="stylesheet" href="jquery-ui-1.12.1.custom/jquery-ui.css">
   <link rel="stylesheet" href="style.css">
   <script src="jquery-1.12.4.js"></script>
   <script src="jquery-ui.js"></script>
@@ -139,11 +139,7 @@
 
 <body class="ui-widget-content" style="border:0;">
   <div>
-    <button id='btn_erase_all_faces' style='color:red;'>Erase all enrolled faces</button>
-    <br>
-    <br>
     <div>
-      <label for="EyeColor-button">Eye Color</label>
       <select name="EyeColor" id='EyeColor' class='listbox'>
         <option>Teal</option>
         <option>Orange</option>
@@ -153,10 +149,10 @@
         <option>Purple</option>
         <option>Matrix Green</option>
       </select>
+      <label for="EyeColor-button">Eye Color</label>
     </div>
     <br>
     <div>
-      <label for="MasterVolumeLevel-button">Master Volume</label>
       <select name="MasterVolumeLevel" id='MasterVolumeLevel' class='listbox'>
         <option>Mute</option>
         <option>Low</option>
@@ -165,10 +161,14 @@
         <option>Medium High</option>
         <option>High</option>
       </select>
+      <label for="MasterVolumeLevel-button">Master Volume</label>
     </div>
     <br>
-    <button id='btn_show_photos'>Show photos</button>
-    <button id='btn_erase_all_photos' style='color:red;'>Erase all photos</button>
+    <button id='btn_erase_all_faces' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Erase all enrolled faces</button>
+    <br>
+    <br>
+    <button id='btn_show_photos' class='ui-button ui-corner-all ui-widget'>Show photos</button>
+    <button id='btn_erase_all_photos' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Erase all photos</button>
     <br>
   </div>
   <div id="confirm_dialog" title="">
