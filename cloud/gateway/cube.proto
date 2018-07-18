@@ -13,18 +13,14 @@ import "messages.proto";
 message ConnectCubeRequest {
 }
 message ConnectCubeResponse {
-  ResultStatus status = 1;
-  bool success = 2;
+  ResultStatus status     = 1;
+  bool         success    = 2;
+  uint32       object_id  = 3;
+  string       factory_id = 4;
 }
 
 // Requests a disconnection from the currently connected cube.
-// The connection will be held for grace_period_sec before actually
-// disconnecting. Any attempt to connect during this "grace period"
-// will succeed instantaneously, so this is useful if you are
-// frequently disconnecting/connecting to the cube. A grace period
-// of 0 will immediately disconnect the cube.
 message DisconnectCubeRequest {
-  float grace_period_sec = 1;
 }
 message DisconnectCubeResponse {
   ResultStatus status = 1;

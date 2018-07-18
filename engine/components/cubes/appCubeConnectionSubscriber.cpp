@@ -86,6 +86,11 @@ void AppCubeConnectionSubscriber::ConnectedCallback(ECubeConnectionType connecti
 
       auto* connectResultMsg = new external_interface::ConnectCubeResponse;
       connectResultMsg->set_success(true);
+
+      const auto& activeId = _robot->GetCubeCommsComponent().GetConnectedCubeActiveId();
+      const auto* object = _robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeId);
+      connectResultMsg->set_object_id(object->GetID());
+      connectResultMsg->set_factory_id(object->GetFactoryID().c_str());
       _gi->Broadcast(ExternalMessageRouter::WrapResponse(connectResultMsg));
 
       break;

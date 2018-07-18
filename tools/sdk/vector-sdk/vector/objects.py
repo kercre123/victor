@@ -205,7 +205,7 @@ class LightCube(util.Component):
 
     @factory_id.setter
     def factory_id(self, factory_id):
-        self.factory_id = factory_id
+        self._factory_id = factory_id
 
     @property
     def descriptive_name(self):
@@ -324,14 +324,14 @@ class LightCube(util.Component):
         self._on_observed(image_rect, msg.timestamp)
         self._top_face_orientation_rad = msg.top_face_orientation_rad
 
-    def on_connection_state(self, msg):
-        if self._factory_id != msg.factory_id:
-            self._robot.logger.info("Factory id changed from {0} to {1}".format(self._factory_id, msg.factory_id))
-        if self.is_connected != msg.connected:
-            if msg.connected:
-                self._robot.logger.info("Object connected: %s", self)
+    def on_connection_state_changed(self, connected, factory_id):
+        if self._factory_id != factory_id:
+            self.logger.debug('Factory id changed from {0} to {1}'.format(self._factory_id, factory_id))
+        if self.is_connected != connected:
+            if connected:
+                self.logger.debug('Object connected: %s', self)
             else:
-                self._robot.logger.info("Object disconnected: %s", self)
-            self.is_connected = msg.connected
+                self.logger.debug('Object disconnected: %s', self)
+            self.is_connected = connected
             # @TODO: Figure out events
-            self.logger.debug('Object Connection State Changed (object_id: {0} now has connection state {1})'.format(self.object_id, msg.connected))
+            self.logger.debug('Object Connection State Changed (object_id: {0} now has connection state {1})'.format(self.object_id, connected))

@@ -62,15 +62,15 @@ class World(util.Component):
         if face:
             face.updated_face_id = msg.new_id
 
-    def _allocate_object_from_msg(self, msg):
-        cube = self.light_cube.get(msg.object_type)
+    def _allocate_light_cube(self, object_type, object_id, factory_id):
+        cube = self.light_cube.get(object_type)
         if not cube:
-            self.robot.logger.error('Received invalid cube object_type=%s msg=%s', msg.object_type, msg)
+            self.robot.logger.error('Received invalid cube object_type=%s', object_type)
             return None
-        cube.object_id = msg.object_id
+        cube.object_id = object_id
         self._objects[cube.object_id] = cube
-        cube.factory_id = msg.factory_id
-        self.robot.logger.debug('Allocated object_id=%d to light cube %s', msg.object_id, cube)
+        cube.factory_id = factory_id
+        self.robot.logger.debug('Allocated object_id=%d to light cube %s', object_id, cube)
         return cube
 
     def get_light_cube(self):
@@ -111,11 +111,17 @@ class World(util.Component):
     @sync.Synchronizer.wrap
     async def connect_cube(self):
         req = protocol.ConnectCubeRequest()
-        return await self.interface.ConnectCube(req)
+        result = await self.interface.ConnectCube(req)
+
+        if not result.object_id in self._objects:
+            self.light_cube[objects.LightCube1Type] = self._allocate_light_cube(objects.LightCube1Type, result.object_id, result.factory_id)
+        self._objects[result.object_id].on_connection_state_changed(result.success, result.factory_id)
+
+        return result
 
     @sync.Synchronizer.wrap
-    async def disconnect_cube(self, grace_period_sec=0.0):
-        req = protocol.DisconnectCubeRequest(grace_period_sec=grace_period_sec)
+    async def disconnect_cube(self):
+        req = protocol.DisconnectCubeRequest()
         return await self.interface.DisconnectCube(req)
 
     @sync.Synchronizer.wrap
@@ -138,9 +144,9 @@ class World(util.Component):
         # Currently only one lightcube id is supported
         if msg.object_type == objects.LightCube1Type:
             if not msg.object_id in self._objects:
-                self.light_cube[objects.LightCube1Type] = self._allocate_object_from_msg(msg)
+                self.light_cube[objects.LightCube1Type] = self._allocate_light_cube(msg.object_type, msg.object_id, msg.factory_id)
 
-            self._objects[msg.object_id].on_connection_state(msg)
+            self._objects[msg.object_id].on_connection_state_changed(msg.connected, msg.factory_id)
         else:
             self.logger.warning('An object without the expected LightCube type is sending a connection state update, object_id:{0}, factory_id:{1}'.format(msg.object_id, msg.factory_id))
 
