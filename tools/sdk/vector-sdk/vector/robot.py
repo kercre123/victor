@@ -11,7 +11,8 @@ import logging
 
 from . import (animation, backpack, behavior, connection,
                events, exceptions, faces, motors,
-               oled_face, photos, util, world)
+               oled_face, photos, sync, util, world)
+from .messaging import protocol
 
 MODULE_LOGGER = logging.getLogger(__name__)
 
@@ -298,6 +299,21 @@ class Robot:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.disconnect()
+
+    @sync.Synchronizer.wrap
+    async def get_battery_state(self):
+        get_battery_state_request = protocol.BatteryStateRequest()
+        return await self.conn.interface.BatteryState(get_battery_state_request)
+
+    @sync.Synchronizer.wrap
+    async def get_version_state(self):
+        get_version_state_request = protocol.VersionStateRequest()
+        return await self.conn.interface.VersionState(get_version_state_request)
+
+    @sync.Synchronizer.wrap
+    async def get_network_state(self):
+        get_network_state_request = protocol.NetworkStateRequest()
+        return await self.conn.interface.NetworkState(get_network_state_request)
 
 
 class AsyncRobot(Robot):

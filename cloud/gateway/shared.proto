@@ -113,6 +113,13 @@ message GatewayWrapper {
     ForgetPreferredCubeRequest    forget_preferred_cube_request  = 104;
     SetPreferredCubeRequest       set_preferred_cube_request     = 105;
 
+    // ------------ robot stats --------------------
+    BatteryStateRequest             battery_state_request = 110;
+    BatteryStateResponse            battery_state_response = 111;
+    VersionStateRequest             version_state_request = 112;
+    VersionStateResponse            version_state_response = 113;
+    NetworkStateRequest             network_state_request = 114;
+    NetworkStateResponse            network_state_response = 115;
     // (when adding new categories, please create gaps between field numbers)
     // ------------  -------------------------
   }

@@ -21,6 +21,8 @@
 #include "coretech/common/shared/radians.h"
 #include "coretech/common/shared/types.h"
 
+#include "proto/external_interface/shared.pb.h"
+
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
@@ -108,6 +110,8 @@ public:
   // Returns how long the "low battery" state has been active. Returns 0
   // if not currently in a low battery state.
   float GetLowBatteryTimeSec() const;
+
+  external_interface::GatewayWrapper GetBatteryState(const external_interface::BatteryStateRequest& request);
   
 private:
   

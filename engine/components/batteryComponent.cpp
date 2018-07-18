@@ -27,6 +27,7 @@
 #include "clad/types/robotStatusAndActions.h"
 
 #include "osState/osState.h"
+#include "proto/external_interface/shared.pb.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/filters/lowPassFilterSimple.h"
@@ -360,6 +361,17 @@ void BatteryComponent::UpdateOnChargerPlatform()
       _lastOnChargerContactsPitchAngle = kInvalidPitchAngle;
     }
   }
+}
+
+external_interface::GatewayWrapper BatteryComponent::GetBatteryState(const external_interface::BatteryStateRequest& request) {
+  external_interface::BatteryStateResponse* response = new external_interface::BatteryStateResponse{NULL, 
+                                                                                                    (external_interface::BatteryLevel)GetBatteryLevel(),
+                                                                                                    GetBatteryVolts(),
+                                                                                                    IsCharging(),
+                                                                                                    IsOnChargerPlatform()};
+  external_interface::GatewayWrapper wrapper;
+  wrapper.set_allocated_battery_state_response(response);
+  return wrapper;
 }
 
 

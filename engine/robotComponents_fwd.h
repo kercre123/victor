@@ -80,6 +80,7 @@ enum class RobotComponentID{
   VariableSnapshotComponent,
   Vision,
   VisionScheduleMediator,
+  RobotExternalRequestComponent,
   Count
 };
 

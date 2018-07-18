@@ -1509,3 +1509,60 @@ func (m *rpcService) SetBackpackLEDs(ctx context.Context, in *extint.SetBackpack
 		},
 	}, nil
 }
+
+func (m *rpcService) BatteryState(ctx context.Context, in *extint.BatteryStateRequest) (*extint.BatteryStateResponse, error) {
+	log.Println("Received rpc request BatteryState(", in, ")")
+
+	f, result := createChannel(&extint.GatewayWrapper_BatteryStateResponse{}, 1)
+	defer f()
+
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_BatteryStateRequest{
+			in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	payload := <-result
+	payload.GetBatteryStateResponse().Status = &extint.ResultStatus{Description: "Message sent to engine"}
+	return payload.GetBatteryStateResponse(), nil
+}
+
+func (m *rpcService) VersionState(ctx context.Context, in *extint.VersionStateRequest) (*extint.VersionStateResponse, error) {
+	log.Println("Received rpc request VersionState(", in, ")")
+
+	f, result := createChannel(&extint.GatewayWrapper_VersionStateResponse{}, 1)
+	defer f()
+
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_VersionStateRequest{
+			in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	payload := <-result
+	payload.GetVersionStateResponse().Status = &extint.ResultStatus{Description: "Message sent to engine"}
+	return payload.GetVersionStateResponse(), nil
+}
+
+func (m *rpcService) NetworkState(ctx context.Context, in *extint.NetworkStateRequest) (*extint.NetworkStateResponse, error) {
+	log.Println("Received rpc request NetworkState(", in, ")")
+
+	f, result := createChannel(&extint.GatewayWrapper_NetworkStateResponse{}, 1)
+	defer f()
+
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_NetworkStateRequest{
+			in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	payload := <-result
+	payload.GetNetworkStateResponse().Status = &extint.ResultStatus{Description: "Message sent to engine"}
+	return payload.GetNetworkStateResponse(), nil
+}

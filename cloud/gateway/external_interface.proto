@@ -301,6 +301,27 @@ service ExternalInterface {
     };
   }
 
+  rpc BatteryState(BatteryStateRequest) returns (BatteryStateResponse) {
+    option (google.api.http) = {
+      post: "/v1/battery_state",
+      body: "*"
+    };
+  }
+
+  rpc VersionState(VersionStateRequest) returns (VersionStateResponse) {
+    option (google.api.http) = {
+      post: "/v1/version_state",
+      body: "*"
+    };
+  }
+
+  rpc NetworkState(NetworkStateRequest) returns (NetworkStateResponse) {
+    option (google.api.http) = {
+      post: "/v1/network_state",
+      body: "*"
+    };
+  }
+
   // Attempt to connect to a cube. If a cube is currently connected,
   // this will do nothing.
   rpc ConnectCube(ConnectCubeRequest) returns (ConnectCubeResponse) {

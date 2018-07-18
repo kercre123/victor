@@ -297,6 +297,30 @@ MESSAGES_TO_TEST = [
      protocol.ForgetPreferredCubeRequest(),
      TestResultMatches(protocol.ForgetPreferredCubeResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
 
+    # TODO: Enable testcase once issue described below is resolved
+    # This test currently fails since the BatteryStateResponse message may contain default values, and the assertion to 
+    # to check the number of fields retrieved does not account for default fields and thus causes a mismatch.
+    # # BatteryState message
+    # (client.ExternalInterfaceServicer.BatteryState,
+    #  protocol.BatteryStateRequest(),
+    #  TestResultIsTypeWithStatusAndFieldNames(protocol.BatteryStateResponse,
+    #                                          protocol.ResultStatus(description="Message sent to engine"),
+    #                                          ["battery_level", "battery_volts", "is_charging", "is_on_charger_platform"])),
+
+    # VersionState message
+    (client.ExternalInterfaceServicer.VersionState,
+     protocol.VersionStateRequest(),
+     TestResultIsTypeWithStatusAndFieldNames(protocol.VersionStateResponse,
+                                             protocol.ResultStatus(description="Message sent to engine"),
+                                             ["os_version", "engine_build_id"])),
+
+    # NetworkState message
+    (client.ExternalInterfaceServicer.NetworkState,
+     protocol.NetworkStateRequest(),
+     TestResultIsTypeWithStatusAndFieldNames(protocol.NetworkStateResponse,
+                                             protocol.ResultStatus(description="Message sent to engine"),
+                                             ["network_stats"])),
+
     # NOTE: Add additional messages here
 ]
 
