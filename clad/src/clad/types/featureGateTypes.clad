@@ -13,6 +13,7 @@ enum uint_8 FeatureType {
   CubeBehaviors,
   GreetAfterLongTime,
   AttentionTransfer,
+  UserDefinedBehaviorTree,
   
   PRDemo
 }

@@ -218,6 +218,9 @@ enum uint_8 BehaviorClass {
   TimerUtilityCoordinator,
   WallTimeCoordinator,
 
+  // userDefinedBehaviorTree
+  UserDefinedBehaviorTreeRouter,
+
   // victor
   ComeHere,
   ConfirmObject,

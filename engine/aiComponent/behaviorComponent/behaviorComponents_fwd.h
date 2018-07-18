@@ -44,6 +44,7 @@ enum class BCComponentID{
   BehaviorComponentMessageHandler,
   FaceWorld,
   RobotInfo,
+  UserDefinedBehaviorTreeComponent,
   UserIntentComponent,
   ActiveFeature,
   ActiveBehaviorIterator,

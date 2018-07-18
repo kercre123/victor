@@ -36,6 +36,7 @@ class DelegationComponent;
 class FaceWorld;
 class BEIRobotInfo;
 class UserIntentComponent;
+class UserDefinedBehaviorTreeComponent;
 class ActiveFeatureComponent;
 class ActiveBehaviorIterator;
 class BehaviorsBootLoader;
@@ -61,6 +62,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(BlockWorld,                         BCComponentID, B
 LINK_COMPONENT_TYPE_TO_ENUM(DelegationComponent,                BCComponentID, DelegationComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(FaceWorld,                          BCComponentID, FaceWorld)
 LINK_COMPONENT_TYPE_TO_ENUM(BEIRobotInfo,                       BCComponentID, RobotInfo)
+LINK_COMPONENT_TYPE_TO_ENUM(UserDefinedBehaviorTreeComponent,   BCComponentID, UserDefinedBehaviorTreeComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(UserIntentComponent,                BCComponentID, UserIntentComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(ActiveFeatureComponent,             BCComponentID, ActiveFeature)
 LINK_COMPONENT_TYPE_TO_ENUM(ActiveBehaviorIterator,             BCComponentID, ActiveBehaviorIterator)
@@ -91,6 +93,7 @@ std::string GetComponentStringForID<Cozmo::BCComponentID>(Cozmo::BCComponentID e
     case Cozmo::BCComponentID::DelegationComponent:                { return "DelegationComponent";}
     case Cozmo::BCComponentID::FaceWorld:                          { return "FaceWorld";}
     case Cozmo::BCComponentID::RobotInfo:                          { return "RobotInfo";}
+    case Cozmo::BCComponentID::UserDefinedBehaviorTreeComponent:   { return "UserDefinedBehaviorTreeComponent";}
     case Cozmo::BCComponentID::UserIntentComponent:                { return "UserIntentComponent";}
     case Cozmo::BCComponentID::BehaviorTimerManager:               { return "BehaviorTimerManager";}
     case Cozmo::BCComponentID::ActiveFeature:                      { return "ActiveFeature";}

@@ -306,7 +306,7 @@ private:
                        DataAccessorComponent*         dataAccessor,
                        TextToSpeechCoordinator*       textToSpeechCoordinator,
                        TouchSensorComponent*          touchSensorComponent,
-                       VariableSnapshotComponent*      variableSnapshotComponent,
+                       VariableSnapshotComponent*     variableSnapshotComponent,
                        VisionComponent*               visionComponent,
                        VisionScheduleMediator*        visionSchedulMediator,
                        SettingsManager*               settingsManager);
