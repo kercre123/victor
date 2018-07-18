@@ -29,8 +29,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_C_STANDARD 99)
 
+#
+# Special settings for xcode.
+# Set DEPLOY_WITH_CMAKE OFF to prevent anki_build_copy_assets from generating giant dependency lists.
+# Ninja manages these lists efficiently but xcode build takes forever.
+#
 if (CMAKE_GENERATOR MATCHES "Xcode")
-  set(CMAKE_XCODE_GENERATE_SCHEME ON)
+  option(CMAKE_XCODE_GENERATE_SCHEME "Generate xcode schema files" ON)
+  option(DEPLOY_WITH_CMAKE "Use cmake instead of python3 for deploying assets" OFF)
 endif()
 
 # Set up custom property for file locations for custom targets
