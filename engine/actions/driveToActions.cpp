@@ -677,6 +677,8 @@ namespace Anki {
       
       _timeToAbortPlanning = -1.0f;
       
+      // todo: we might consider dynamically turning off _precompute if GetCollisionArea() of the map is negligible
+      
       if(!_isGoalSet) {
         PRINT_NAMED_ERROR("DriveToPoseAction.Init.NoGoalSet",
                           "Goal must be set before running this action.");
@@ -699,9 +701,18 @@ namespace Anki {
         *_selectedGoalIndex = 0;
         
         pathComponent.SetCanReplanningChangeGoal( !_mustUseOriginalGoal );
+                
+        if( _precompute ) {
+          planningResult = pathComponent.PrecomputePath(_goalPoses,
+                                                        _selectedGoalIndex);
+        }
         
-        planningResult = pathComponent.StartDrivingToPose(_goalPoses,
-                                                          _selectedGoalIndex);
+        if( pathComponent.IsPlanReady() || !_precompute ) {
+          // if _precompute, then a planner is speedy and already found a plan.
+          // if !_precompute, start planning and drive when ready.
+          planningResult = pathComponent.StartDrivingToPose(_goalPoses,
+                                                            _selectedGoalIndex);
+        }
         
         if(planningResult != RESULT_OK) {
           PRINT_CH_INFO("Actions", "DriveToPoseAction.Init.FailedToFindPath",
@@ -739,57 +750,23 @@ namespace Anki {
       
       switch( GetRobot().GetPathComponent().GetDriveToPoseStatus() ) {
         case ERobotDriveToPoseStatus::Failed:
-        {
           PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Failure", "Robot driving to pose failed");
           _timeToAbortPlanning = -1.0f;
           result = ActionResult::PATH_PLANNING_FAILED_ABORT;
-        }
-          break;
-        
-        case ERobotDriveToPoseStatus::ComputingPath:
-        {
-          const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-
-          // handle aborting the plan. If we don't have a timeout set, set one now
-          if( _timeToAbortPlanning < 0.0f ) {
-            _timeToAbortPlanning = currTime + _maxPlanningTime;
-          }
-          else if( currTime >= _timeToAbortPlanning ) {
-            PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.ComputingPathTimeout",
-                             "Robot has been planning for more than %f seconds, aborting",
-                             _maxPlanningTime);
-            GetRobot().GetPathComponent().Abort();
-            result = ActionResult::PATH_PLANNING_FAILED_ABORT;
-            _timeToAbortPlanning = -1.0f;
-          }
-        }
           break;
           
+        case ERobotDriveToPoseStatus::ComputingPath:
+        {
+          result = HandleComputingPath();
+        }
+          break;
         case ERobotDriveToPoseStatus::FollowingPath:
         {
-
-          // If we are following a path start playing driving animations
-          // Won't do anything if DrivingAnimationHandler has already been inited
-          GetRobot().GetDrivingAnimationHandler().StartDrivingAnim();
-
-          // clear abort timing, since we got a path
-          _timeToAbortPlanning = -1.0f;
-
-          if(_debugPrintCtr++ % 10 == 0) {
-            PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.WaitingForPathCompletion",
-                             "[%d] Waiting for robot to complete its path traversal (%d), "
-                             "_currPathSegment=%d, _lastSentPathID=%d, _lastRecvdPathID=%d.",
-                             GetTag(),
-                             _debugPrintCtr,
-                             GetRobot().GetPathComponent().GetCurrentPathSegment(),
-                             GetRobot().GetPathComponent().GetLastSentPathID(),
-                             GetRobot().GetPathComponent().GetLastRecvdPathID());
-          }
+          result = HandleFollowingPath();
         }
           break;
          
-        case ERobotDriveToPoseStatus::Ready:
-        {
+        case ERobotDriveToPoseStatus::Ready: {
           // clear abort timing, since we had a path
           _timeToAbortPlanning = -1.0f;
           
@@ -859,8 +836,8 @@ namespace Anki {
                               "Robot is not at the goal and did not receive the last path");
             result = ActionResult::FOLLOWING_PATH_BUT_NOT_TRAVERSING;
           }
-        }
           break;
+        }
 
         case ERobotDriveToPoseStatus::WaitingToBeginPath:         
         case ERobotDriveToPoseStatus::WaitingToCancelPath:
@@ -882,6 +859,138 @@ namespace Anki {
 
       return result;
     } // CheckIfDone()
+    
+    ActionResult DriveToPoseAction::HandleComputingPath()
+    {
+      ActionResult result = ActionResult::RUNNING;
+      
+      const ERobotDriveToPoseStatus status = GetRobot().GetPathComponent().GetDriveToPoseStatus();
+      DEV_ASSERT( status == ERobotDriveToPoseStatus::ComputingPath,
+                  "DriveToPoseAction.HandleComputingPath.InvalidStatus" );
+      
+      auto& pathComponent = GetRobot().GetPathComponent();
+      auto& animHandler   = GetRobot().GetDrivingAnimationHandler();
+      
+      // handle aborting the plan.
+      const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      const bool checkPlanningTime = (!_precompute || !pathComponent.IsPlanReady());
+      // If we don't have a timeout set, set one now
+      if( _timeToAbortPlanning < 0.0f ) {
+        _timeToAbortPlanning = currTime + _maxPlanningTime;
+      }
+      else if( checkPlanningTime && (currTime >= _timeToAbortPlanning) ) {
+        PRINT_NAMED_INFO("DriveToPoseAction.HandleComputingAndFollowingPath.ComputingPathTimeout",
+                         "Robot has been planning for more than %f seconds, aborting",
+                         _maxPlanningTime);
+        GetRobot().GetPathComponent().Abort();
+        _timeToAbortPlanning = -1.0f;
+        return ActionResult::PATH_PLANNING_FAILED_ABORT;
+      }
+    
+      if( _precompute ) {
+        
+        if( pathComponent.IsReplanning() ) {
+          const bool finishedDriving = pathComponent.HasStoppedBeforeExecuting();
+          if( finishedDriving && animHandler.InDrivingAnimsState() && !animHandler.HasFinishedDrivingEndAnim() ) {
+            animHandler.EndDrivingAnim();
+          }
+        }
+      
+        if( pathComponent.IsPlanReady() ) {
+          // the precomputed plan is ready to be followed
+          if( animHandler.InPlanningAnimsState() && !animHandler.HasFinishedPlanningEndAnim() ) {
+            // Has no effect if it already called
+            animHandler.EndPlanningAnim();
+          } else {
+            // Start following the plan. If the drive center pose doesn't match where the plan originates
+            // from, it will start a new plan from scratch
+            auto planningResult = pathComponent.StartDrivingToPose(_goalPoses,
+                                                                   _selectedGoalIndex);
+            if( planningResult != RESULT_OK ) {
+              PRINT_CH_INFO("Actions", "DriveToPoseAction.HandleComputingPath.FailedToFindPath",
+                            "[%d] Failed to get path to goal pose.",
+                            GetTag());
+              result = ActionResult::PATH_PLANNING_FAILED_ABORT;
+            }
+          }
+        } else if( animHandler.InDrivingAnimsState() && !animHandler.HasFinishedDrivingEndAnim() ) {
+          animHandler.EndDrivingAnim();
+        } else {
+          // If the planner is computing without driving, play a planning animation.
+          // This won't do anything if the animation already started
+          // todo: maybe only play this if there are known obstacles between the robot and closest goal?
+          animHandler.StartPlanningAnim();
+        }
+      }
+      
+      return result;
+    } // HandleComputingPath()
+    
+    ActionResult DriveToPoseAction::HandleFollowingPath()
+    {
+      ActionResult result = ActionResult::RUNNING;
+      
+      const ERobotDriveToPoseStatus status = GetRobot().GetPathComponent().GetDriveToPoseStatus();
+      DEV_ASSERT( status == ERobotDriveToPoseStatus::FollowingPath,
+                  "DriveToPoseAction.HandleFollowingPath.InvalidStatus" );
+      
+      auto& pathComponent = GetRobot().GetPathComponent();
+      auto& animHandler   = GetRobot().GetDrivingAnimationHandler();
+    
+      if( _precompute && pathComponent.IsReplanning() ) {
+        
+        const bool planReady = pathComponent.IsPlanReady();
+        if( !planReady ) {
+          // this will force the robot to go to the end of the safe subpath
+          pathComponent.SetStartPath( false );
+        }
+        
+        const bool finishedDriving = pathComponent.HasStoppedBeforeExecuting();
+        if( finishedDriving && animHandler.InDrivingAnimsState() && !animHandler.HasFinishedDrivingEndAnim() ) {
+          animHandler.EndDrivingAnim();
+        } else if( finishedDriving ) {
+          // The robot just stopped driving
+          if( !planReady ) {
+            // Plan still isnt ready so start animations, which are then terminated in the next two elseif blocks
+            animHandler.StartPlanningAnim();
+          } else {
+            // Plan is ready now so start driving it
+            pathComponent.SetStartPath( true );
+          }
+        } else if( animHandler.InPlanningAnimsState() && !animHandler.HasFinishedPlanningEndAnim() ) {
+          // The planning animation was started. If the plan is ready, stop it
+          if( planReady ) {
+            animHandler.EndPlanningAnim();
+          }
+        } else if( animHandler.InPlanningAnimsState() && animHandler.HasFinishedPlanningEndAnim() ) {
+          // The planning animation was started but finished, meaning the plan is ready to
+          // start driving it
+          if( planReady ) {
+            pathComponent.SetStartPath( true );
+          }
+        }
+      } else {
+        // Following path while not precomputing, or the precomputing finished (along with its planning animations)
+        
+        // If we are following a path, start playing driving animations.
+        // Won't do anything if DrivingAnimationHandler has already been inited
+        animHandler.StartDrivingAnim();
+        
+        // clear abort timing, since we got a path
+        _timeToAbortPlanning = -1.0f;
+        
+        PRINT_PERIODIC_CH_INFO(10, "Actions",
+                               "DriveToPoseAction.HandleFollowingPath.WaitingForPathCompletion",
+                               "[%d] Waiting for robot to complete its path traversal, "
+                               "_currPathSegment=%d, _lastSentPathID=%d, _lastRecvdPathID=%d.",
+                               GetTag(),
+                               GetRobot().GetPathComponent().GetCurrentPathSegment(),
+                               GetRobot().GetPathComponent().GetLastSentPathID(),
+                               GetRobot().GetPathComponent().GetLastRecvdPathID());
+      }
+      
+      return result;
+    } // HandleFollowingPath()
     
 #pragma mark ---- IDriveToInteractWithObjectAction ----
     

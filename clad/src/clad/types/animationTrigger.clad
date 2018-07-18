@@ -224,6 +224,11 @@ enum int_32 AnimationTrigger
   PokeObjectGetIn,
   PokeObjectDriveLoop,
   PokeObjectGetOut,
+  
+  PlanningGetIn,
+  PlanningLoop,
+  PlanningGetOut,
+
   PopAWheelieInitial,
   PopAWheeliePreActionNamedFace,
   PopAWheeliePreActionUnnamedFace,

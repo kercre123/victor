@@ -968,6 +968,18 @@
     "AnimName": "ag_reacttocharger"
   },
   {
+    "CladEvent": "PlanningGetIn",
+    "AnimName" : "ag_planning_getin"
+  },
+  {
+    "CladEvent": "PlanningLoop",
+    "AnimName" : "ag_planning"
+  },
+  {
+    "CladEvent": "PlanningGetOut",
+    "AnimName" : "ag_planning_getout"
+  },
+  {
     "CladEvent": "PopAWheelieInitial",
     "AnimName": "ag_rollcube_initial"
   },

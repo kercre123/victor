@@ -18,6 +18,7 @@
 
 #include "coretech/planning/engine/geometryHelpers.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/threading/threadPriority.h"
 
 #include <chrono>
@@ -33,6 +34,8 @@ namespace {
   // minimum precision for joining path segments
   const float kPathPrecisionTolerance = .1f;
 }
+
+CONSOLE_VAR_EXTERN( int, kArtificialPlanningDelay_ms);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //  XYPlanner
@@ -192,6 +195,16 @@ void XYPlanner::StartPlanner()
   PlannerConfig config(_map, _stopPlanner, plannerGoal);
   AStar<Point2f, PlannerConfig> planner( config );
   std::vector<Point2f> plan = planner.Search(plannerStart);
+  
+  if(kArtificialPlanningDelay_ms>0) {
+    const int kMaxNumToBlock_ms = 10;
+    int msBlocked = 0;
+    while((msBlocked < kArtificialPlanningDelay_ms) && !_stopPlanner) {
+      const int thisBlock_ms = std::min( kMaxNumToBlock_ms, kArtificialPlanningDelay_ms - msBlocked );
+      std::this_thread::sleep_for( std::chrono::milliseconds(thisBlock_ms) );
+      msBlocked += thisBlock_ms;
+    }
+  }
 
   high_resolution_clock::time_point planTime = high_resolution_clock::now();
 
@@ -346,7 +359,7 @@ bool XYPlanner::CheckIsPathSafe(const Planning::Path& path, float startAngle) co
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool XYPlanner::CheckIsPathSafe(const Planning::Path& path, float startAngle, Planning::Path& validPath) const 
+bool XYPlanner::CheckIsPathSafe(const Planning::Path& path, float startAngle, Planning::Path& validPath) const
 {
   const auto isSafe = [this] (const Planning::PathSegment& seg ) -> bool {
     switch (seg.GetType()) {
@@ -357,8 +370,20 @@ bool XYPlanner::CheckIsPathSafe(const Planning::Path& path, float startAngle, Pl
     }
   };
 
-  for (int i = 0; i < path.GetNumSegments(); ++i) { 
-    if ( !isSafe(path.GetSegmentConstRef(i)) ) { return false; }
+  bool foundNonPointTurn = false;
+  validPath.Clear();
+  for (int i = 0; i < path.GetNumSegments(); ++i) {
+    const auto& segment = path.GetSegmentConstRef(i);
+    if ( !isSafe(segment) ) {
+      return false;
+    }
+    if ( !foundNonPointTurn ) {
+      // The input path isn't smoothed, so for now, only consider up to the first non-point turn segment "safe."
+      // TODO (VIC-4315) return the actual safe subpath. It might need splitting into smaller components if the
+      // current segment is long and only part of it is unsafe.
+      validPath.AppendSegment(segment);
+      foundNonPointTurn = (segment.GetType() != Planning::PST_POINT_TURN);
+    }
   } 
   return true;
 }
