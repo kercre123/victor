@@ -181,9 +181,6 @@ message RobotState {
 message RobotDelocalized {
 }
 
-message RobotPoked {
-}
-
 message RobotStopped {
   StopReason reason,
   uint_8 cliffDetectedFlags,

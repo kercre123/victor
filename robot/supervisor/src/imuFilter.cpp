@@ -353,73 +353,6 @@ namespace Anki {
         output[2] = coeff * (output[2] + input[2] - prev_input[2]);
       }
 
-      // Simple poke detect
-      // If wheels aren't moving but a sudden rotation about z-axis was detected
-      void DetectPoke()
-      {
-        static TimeStamp_t peakGyroStartTime = 0;
-        static TimeStamp_t peakGyroMaxTime = 0;
-        static TimeStamp_t peakAccelStartTime = 0;
-        static TimeStamp_t peakAccelMaxTime = 0;
-        static TimeStamp_t lastPokeDetectTime = 0;
-        const u32 pokeDetectRefractoryPeriod_ms = 1000;
-
-        // Do nothing during refractory period
-        TimeStamp_t currTime = HAL::GetTimeStamp();
-        if (currTime - lastPokeDetectTime < pokeDetectRefractoryPeriod_ms) {
-          peakGyroStartTime = currTime;
-          peakAccelStartTime = currTime;
-          return;
-        }
-        // Only check for poke when wheels are not being driven
-        if (!WheelController::AreWheelsMoving()) {
-
-          // Check for a gyro rotation spike
-          const f32 peakGyroThresh = 4.f;
-          const u32 maxGyroPeakDuration_ms = 75;
-          if (fabsf(gyro_robot_frame_filt[2]) > peakGyroThresh) {
-            peakGyroMaxTime = currTime;
-          } else if (fabsf(gyro_robot_frame_filt[2]) < peakGyroThresh) {
-            if ((peakGyroMaxTime > peakGyroStartTime) && (peakGyroMaxTime - peakGyroStartTime < maxGyroPeakDuration_ms)) {
-              AnkiInfo( "IMUFilter.PokeDetected.Gyro", "");
-              peakGyroStartTime = currTime;
-              lastPokeDetectTime = currTime;
-
-              RobotInterface::RobotPoked m;
-              RobotInterface::SendMessage(m);
-            } else {
-              peakGyroStartTime = currTime;
-            }
-          }
-
-          // Check for accel spike
-          if (!HeadController::IsMoving() && !LiftController::IsMoving()) {
-            const f32 peakAccelThresh = 4000.f;
-            const u32 maxAccelPeakDuration_ms = 75;
-            if (fabsf(accel_robot_frame_filt[0]) > peakAccelThresh) {
-              peakAccelMaxTime = currTime;
-            } else if (fabsf(accel_robot_frame_filt[0]) < peakAccelThresh) {
-              if ((peakAccelMaxTime > peakAccelStartTime) && (peakAccelMaxTime - peakAccelStartTime < maxAccelPeakDuration_ms)) {
-                AnkiInfo( "IMUFilter.PokeDetected.Accel", "");
-                peakAccelStartTime = currTime;
-                lastPokeDetectTime = currTime;
-
-                RobotInterface::RobotPoked m;
-                RobotInterface::SendMessage(m);
-              } else {
-                peakAccelStartTime = currTime;
-              }
-            }
-          } else {
-            peakAccelStartTime = currTime;
-          }
-
-        } else {
-          peakGyroStartTime = currTime;
-          peakAccelStartTime = currTime;
-        }
-      }
-
       void DetectFalling()
       {
         // Fall detection accelerometer thresholds:
@@ -933,8 +866,7 @@ namespace Anki {
         //      when the robot drives up ramp (or the side of a platform) and
         //      clearing pose history.
         DetectPickup();
-
-        DetectPoke();
+        
         DetectFalling();
 
         // Send ImageImuData to engine
