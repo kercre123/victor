@@ -283,6 +283,10 @@ Supervisor {
                   filterLogs IS filterLogs
                   colorizeStderrOutput IS colorizeStderrOutput
                 }
+                
+                # Vic-gateway process:
+                Gateway {
+                }
 
                 %{ if fields.runNeuralNets.value then }%
                 # NeuralNet process:

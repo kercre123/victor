@@ -261,7 +261,7 @@ def sign_webot_executables(generator, build_type, password):
 
   build_name = get_build_name(generator, build_type)
   executables_folder = get_subpath(os.path.join("_build","mac"), build_name, "bin")
-  executables = glob.glob(os.path.join(executables_folder, 'webotsCtrl*'))
+  executables = glob.glob(os.path.join(executables_folder, 'webotsCtrl*')) + glob.glob(os.path.join(executables_folder, 'vic-gateway'))
 
   codesign_command = [
     'codesign',
@@ -415,7 +415,7 @@ def stop_webots():
 
   # kill all webots processes
   ps   = subprocess.Popen(('ps', 'Auxc'), stdout=subprocess.PIPE)
-  grep = subprocess.Popen(('grep', '[w]ebots'), stdin=ps.stdout, stdout=subprocess.PIPE)
+  grep = subprocess.Popen(('grep', '-e', '[w]ebots', '-e', 'vic-gateway'), stdin=ps.stdout, stdout=subprocess.PIPE)
   grep_minus_this_process = subprocess.Popen(('grep', '-v', currFile), stdin=grep.stdout, stdout=subprocess.PIPE)
   awk  = subprocess.Popen(('awk', '{print $2}'), stdin=grep_minus_this_process.stdout, stdout=subprocess.PIPE)
   kill = subprocess.Popen(('xargs', 'kill', '-9'), stdin=awk.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

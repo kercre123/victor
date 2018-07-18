@@ -124,3 +124,14 @@ cxx_project(
     platform_headers = [
     ]
 )
+
+cxx_project(
+    name = 'webotsCtrlGateway',
+    srcs = cxx_src_glob(['controllers/webotsCtrlGateway'],
+                        ),
+    platform_srcs = [],
+    headers = cxx_header_glob(['controllers/webotsCtrlGateway'],
+                              ),
+    platform_headers = [
+    ]
+)
