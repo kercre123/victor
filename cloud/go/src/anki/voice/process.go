@@ -5,6 +5,7 @@ import (
 	"anki/util"
 	"clad/cloud"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/anki/sai-chipper-voice/client/chipper"
@@ -138,13 +139,18 @@ procloop:
 				mode := msg.msg.GetHotword().Mode
 				serverMode, ok := modeMap[mode]
 				if !ok && mode != cloud.StreamType_KnowledgeGraph {
-					p.writeError(cloud.ErrorType_InvalidMode, fmt.Errorf("unknown mode %d", mode))
+					p.writeError(cloud.ErrorType_InvalidConfig, fmt.Errorf("unknown mode %d", mode))
+					continue
+				}
+
+				language, err := getLanguage(msg.msg.GetHotword().Locale)
+				if err != nil {
+					p.writeError(cloud.ErrorType_InvalidConfig, err)
 					continue
 				}
 
 				var stream chipper.Stream
 				var chipperConn *chipper.Conn
-				var err error
 				sessionID := uuid.New().String()[:16]
 				ctxTime := util.TimeFuncMs(func() {
 					opts := platformOpts
@@ -163,6 +169,7 @@ procloop:
 							FrameSize:  60},
 						SaveAudio: p.opts.saveAudio,
 						Timeout:   DefaultTimeout,
+						Language:  language,
 					}
 					if mode == cloud.StreamType_KnowledgeGraph {
 						stream, err = chipperConn.NewKGStream(streamOpts)
@@ -282,6 +289,40 @@ func logVerbose(a ...interface{}) {
 		return
 	}
 	log.Println(a...)
+}
+
+func getLanguage(locale string) (pb.LanguageCode, error) {
+	// split on _ and -
+	strs := strings.Split(locale, "-")
+	if len(strs) != 2 {
+		strs = strings.Split(locale, "_")
+	}
+	if len(strs) != 2 {
+		return 0, fmt.Errorf("invalid locale string %s", locale)
+	}
+
+	lang := strings.ToLower(strs[0])
+	country := strings.ToLower(strs[1])
+
+	switch lang {
+	case "fr":
+		return pb.LanguageCode_FRENCH, nil
+	case "de":
+		return pb.LanguageCode_GERMAN, nil
+	case "en":
+		break
+	default:
+		// unknown == default to en_US
+		return pb.LanguageCode_ENGLISH_US, nil
+	}
+
+	switch country {
+	case "gb": // ISO2 code for UK is 'GB'
+		return pb.LanguageCode_ENGLISH_UK, nil
+	case "au":
+		return pb.LanguageCode_ENGLISH_AU, nil
+	}
+	return pb.LanguageCode_ENGLISH_US, nil
 }
 
 var modeMap = map[cloud.StreamType]pb.RobotMode{

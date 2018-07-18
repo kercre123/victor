@@ -12,7 +12,7 @@ enum uint_8 ErrorType {
 	Server,
 	Timeout,
 	Json,
-	InvalidMode,
+	InvalidConfig,
 	Connecting,
 	NewStream,
 	Token
@@ -22,7 +22,8 @@ structure Void {
 }
 
 structure Hotword {
-	StreamType mode
+	StreamType mode,
+	string locale
 }
 
 structure Filename {
