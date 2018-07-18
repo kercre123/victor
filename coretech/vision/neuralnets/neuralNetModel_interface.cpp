@@ -28,8 +28,6 @@ namespace Vision {
 
 static const bool kINeuralNetModel_SaveImages = false;
 
-template<typename T>
-int GetCVTypeHelper(const T* inputType);
 int GetCVTypeHelper(const uint8_t* intputType)
 {
   return CV_8UC2;
