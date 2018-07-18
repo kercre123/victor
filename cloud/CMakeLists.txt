@@ -196,3 +196,23 @@ add_custom_command(
 
 _build_cloud_executable(vic-gateway)
 _add_chipper_flags(vic-gateway)
+
+# Install certs for mac build of vic-gateway
+if (MACOSX)
+  set(GATEWAY_MAC_CERTS
+    "/tmp/anki/gateway/trust.cert"
+    "/tmp/anki/gateway/trust.key"
+  )
+  
+  add_custom_target(
+    GenerateGatewayMacCerts ALL
+    DEPENDS ${GATEWAY_MAC_CERTS}
+  )
+
+  add_custom_command(
+    OUTPUT ${GATEWAY_MAC_CERTS}
+    COMMAND make create_certs_mac
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../tools/sdk/grpc_tools"
+    COMMENT "Creating mac certs for vic-gateway"
+  )
+endif()
