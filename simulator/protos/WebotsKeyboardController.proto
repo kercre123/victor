@@ -9,9 +9,10 @@ PROTO WebotsKeyboardController [
   field SFInt32  animationNumLoops 1
   field SFString idleAnimationName "ProceduralLive"
   field SFFloat  faceHue 0.566  # should be 0-1 
-
-  # Test Animations to send
-  field SFString DEV_AnimationName "ANIM_NAME"
+  
+  # Should we enter 'freeplay' mode immediately upon startup?
+  # Note: This is for simulated robots only
+  field SFBool startFreeplayModeImmediately FALSE
   
   # Behavior to send
   #  Use default "Wait" to put robot into standby
@@ -40,9 +41,6 @@ PROTO WebotsKeyboardController [
   
   # String to say when using SayText
   field SFString sayString "Hello"
-
-  # Unlock ID to unlock / lock
-  field SFString unlockName "BuildPyramid"
   
   # Console name/value pair
   field SFString consoleVarName ""
@@ -221,10 +219,6 @@ PROTO WebotsKeyboardController [
 
   # Cozmo engine locale
   field SFString locale "en-US"
-
-  # UI device ID 
-  # TODO: Get rid of this. The UI should not be assigning it's own ID.
-  field SFInt32  deviceID 1
 
   # if false, wait until the user pressed Shift+Enter to connect and start the engine
   # (this gives another thing, e.g. Unity, a chance to connect first)

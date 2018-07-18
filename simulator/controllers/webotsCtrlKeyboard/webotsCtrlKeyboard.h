@@ -88,10 +88,6 @@ protected:
   void EraseLastObservedFace();
   void ToggleFaceDetection();
   
-  void DenyGameStart();
-  void FillNeedsMeters();
-  void SetUnlock();
-  
   void ToggleImageStreaming();
   void ToggleEyeRendering();
   
@@ -123,6 +119,8 @@ protected:
   
   void RunDebugConsoleFunc();
   void SetDebugConsoleVar();
+  
+  void StartFreeplayMode();
 
   void SetRollActionParams();
   void SetCameraSettings();
