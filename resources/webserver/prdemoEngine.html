@@ -45,7 +45,7 @@
           create: function(event, ui) {
             $.post('consolevarget?key=EyeColor', function(result) {
               var value = parseInt(result);
-              console.log('start value of eye color is: ' + value);
+              //console.log('start value of eye color is: ' + value);
               $('#EyeColor').prop("selectedIndex", value).selectmenu('refresh');
             });
           },
@@ -59,7 +59,7 @@
           create: function(event, ui) {
             $.post('consolevarget?key=MasterVolumeLevel', function(result) {
               var value = parseInt(result);
-              console.log('start value of master volume level is: ' + value);
+              //console.log('start value of master volume level is: ' + value);
               $('#MasterVolumeLevel').prop("selectedIndex", value).selectmenu('refresh');
             });
           },
