@@ -7,7 +7,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Vector Demo</title>
-  <link rel="stylesheet" href="jquery-ui.css">
+  <link rel="stylesheet" href="jquery-ui-1.12.1.custom/jquery-ui.css">
   <link rel="stylesheet" href="style.css">
   <script src="jquery-1.12.4.js"></script>
   <script src="jquery-ui.js"></script>
@@ -28,6 +28,7 @@
         $('#btn_webviz_nav_map').click(ButtonHandler_WebVizNavMap);
         $('#btn_webviz_stim_level').click(ButtonHandler_WebVizStimLevel);
         $('#btn_webviz_behavior').click(ButtonHandler_WebVizBehavior);
+        $('#btn_clear_webviz').click(ButtonHandler_ClearWebViz);
         InitConfirmDialog();
 
         // Pull out hostname (robot IP) so we can use it in here to call into ANY of the webservers
@@ -98,8 +99,14 @@
     function GoingAwayNow() {
       $('#iViewEngine').remove();
       //$('#iViewAnim').remove();
+      ButtonHandler_ClearWebViz();
       $('#btn_vector_stop').hide();
       $('#btn_vector_restart').hide();
+      $('#btn_webviz_mic_data').hide();
+      $('#btn_webviz_nav_map').hide();
+      $('#btn_webviz_stim_level').hide();
+      $('#btn_webviz_behavior').hide();
+      $('#btn_clear_webviz').hide();
     }
 
     function ButtonHandler_StopVector() {
@@ -142,7 +149,10 @@
 
     function ButtonHandler_WebVizBehavior() {
       ActivateWebVizIFrame("?tab=behaviors", ENGINE_PORT);
-      //$('#iViewWebViz').prop('src', 'about:blank'); // To clear the iframe
+    }
+
+    function ButtonHandler_ClearWebViz() {
+      $('#iViewWebViz').prop('src', 'about:blank'); // To clear the iframe
     }
 
   </script>
@@ -152,26 +162,27 @@
 
 <body class="ui-widget-content" style="border:0;">
   <div>
-    <body><div id="id_title0" style="color:blue; font-size:18pt; display:inline">Vector Demo</div></body>
-    &nbsp;&nbsp;&nbsp;&nbsp;
-    <body><div id="id_title1" style="display:inline">CONFIDENTIAL</div></body>
+    <img src='images/logo_vectortitle.png' style='display:block;margin-left:auto;margin-right:auto;width:25%;height:25%'>
+    <br>
+    <div id="id_title0" style="color:blue; font-size:18pt; text-align:center;">DEMO  -  CONFIDENTIAL</div>
     <hr>
     <div id='main_section'>
-      <iframe src="" id="iViewEngine" style="width:100%;height:280px;border:none" frameborder="0"></iframe>
+    <iframe src="" id="iViewEngine" style="width:100%;height:280px;border:none" frameborder="0"></iframe>
 <!--       <iframe src="" id="iViewAnim"   style="width:100%;height:100%;border:none" frameborder="0"></iframe>
  -->
-      <button id='btn_webviz_mic_data'>Mic data viz</button>
-      <button id='btn_webviz_nav_map'>Navigation map viz</button>
-      <button id='btn_webviz_stim_level'>Stimulation level viz</button>
-      <button id='btn_webviz_behavior'>Behavior viz</button>
+      <button id='btn_webviz_mic_data' class='ui-button ui-corner-all ui-widget'>Mic data viz</button>
+      <button id='btn_webviz_nav_map' class='ui-button ui-corner-all ui-widget'>Navigation map viz</button>
+      <button id='btn_webviz_stim_level' class='ui-button ui-corner-all ui-widget'>Stimulation level viz</button>
+      <button id='btn_webviz_behavior' class='ui-button ui-corner-all ui-widget'>Behavior viz</button>
+      <button id='btn_clear_webviz' class='ui-button ui-corner-all ui-widget'>Clear webviz panel</button>
       <br>
       <iframe src="" id="iViewWebViz" style="width:100%;height:800px;border:none" frameborder="0"></iframe>
       <hr>
       <br>
-      <button id='btn_vector_stop' style='color:red;'>Stop Vector</button>
-      <button id='btn_vector_restart' style='color:red;'>Restart Vector</button>
+      <button id='btn_vector_stop' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Stop Vector</button>
+      <button id='btn_vector_restart' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Restart Vector</button>
       <br><br>
-      <div id='disp_stop_message' style='color:red;'></div>
+      <div id='disp_stop_message' style='color:darksalmon;'></div>
     </div>
 
     <div id="confirm_dialog" title="">

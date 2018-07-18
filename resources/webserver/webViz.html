@@ -442,7 +442,7 @@
       socket = new WebSocket(uri);
       socket.onopen = function(){
         // notify that we've connected
-        $('#status').text('Connected').css('color','black');
+        $('#status').text('Connected').css('color','limegreen');
         if (autoOpenTabRef !== "") {
           console.log('auto navigating to ' + autoOpenTabRef);
           $('.tab-link[data-tab=' + autoOpenTabRef + ']').trigger('click');
