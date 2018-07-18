@@ -90,6 +90,7 @@ BehaviorExploringExamineObstacle::DynamicVariables::DynamicVariables()
   firstTurnDirectionIsLeft = false;
   initialPoseAngle_rad = 0.0f;
   totalObjectAngle_rad = 0.0f;
+  playingScanSound = false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -185,7 +186,17 @@ void BehaviorExploringExamineObstacle::OnBehaviorActivated()
   
 }
   
-//
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExploringExamineObstacle::OnBehaviorDeactivated()
+{
+  if( _dVars.playingScanSound ) {
+    // behavior was likely interrupted. make sure the scan sound stops
+    const auto event = AudioMetaData::GameEvent::GenericEvent::Stop__Robot_Vic_Sfx__Planning_Loop_Stop;
+    GetBEI().GetRobotAudioClient().PostEvent( event, AudioMetaData::GameObjectType::Behavior );
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploringExamineObstacle::TransitionToNextAction()
 {
   if( _dVars.state == State::Initial ) {
@@ -194,6 +205,9 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
       DevTakePhoto();
     }
   }
+  
+  using GE = AudioMetaData::GameEvent::GenericEvent;
+  using GO = AudioMetaData::GameObjectType;
   
   const bool canVisitObstacle = (_dVars.state == State::Initial);
   if( canVisitObstacle ) {
@@ -223,10 +237,20 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
                                 : AnimationTrigger::ExploringScanToRight;
     action->AddAction( new TriggerLiftSafeAnimationAction{ turnAnim } );
     
+    // we manually trigger the audio since the looping scan animation doesn't always precede a
+    // followup animation that could be used to stop the audio
+    const auto event = GE::Play__Robot_Vic_Sfx__Planning_Loop_Play;
+    GetBEI().GetRobotAudioClient().PostEvent( event, GO::Behavior );
+    _dVars.playingScanSound = true;
+    
   } else if( (_dVars.state == State::FirstTurn)
              || (_dVars.state == State::SecondTurn)
              || (_dVars.state == State::ReferenceHuman) )
   {
+    
+    const auto event = GE::Stop__Robot_Vic_Sfx__Planning_Loop_Stop;
+    GetBEI().GetRobotAudioClient().PostEvent( event, GO::Behavior );
+    _dVars.playingScanSound = false;
     
     // todo: clean this up. too many cases here, not enough time to separate them
     // logic is: after the first turn it should return to center. after the second turn it should either
@@ -312,6 +336,10 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
                                 ? AnimationTrigger::ExploringScanToRight
                                 : AnimationTrigger::ExploringScanToLeft;
     action->AddAction( new TriggerLiftSafeAnimationAction{ turnAnim } );
+    
+    const auto event = GE::Play__Robot_Vic_Sfx__Planning_Loop_Play;
+    GetBEI().GetRobotAudioClient().PostEvent( event, GO::Behavior );
+    _dVars.playingScanSound = true;
     
   } else if( _dVars.state == State::ReturnToCenterEnd ) {
     SET_STATE( Bumping );

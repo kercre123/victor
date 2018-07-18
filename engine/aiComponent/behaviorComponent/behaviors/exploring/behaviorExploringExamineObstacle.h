@@ -42,6 +42,7 @@ protected:
   virtual void InitBehavior() override;
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 
 private:
@@ -86,6 +87,7 @@ private:
     float initialPoseAngle_rad;
     float totalObjectAngle_rad; // sum of abs of left and right turns
     std::weak_ptr<IActionRunner> scanCenterAction;
+    bool playingScanSound;
     
     struct Persistent {
       bool canSeeSideObstacle;
