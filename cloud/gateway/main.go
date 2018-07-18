@@ -9,9 +9,11 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"path"
 	"reflect"
 	"strings"
+	"syscall"
 	"time"
 
 	"anki/ipc"
@@ -36,9 +38,10 @@ type RobotToExternalCladResult struct {
 const logVerbose = false
 
 var (
-	demoKeyPair  *tls.Certificate
-	demoCertPool *x509.CertPool
-	demoAddr     string
+	signalHandler chan os.Signal
+	demoKeyPair   *tls.Certificate
+	demoCertPool  *x509.CertPool
+	demoAddr      string
 
 	// protobuf equivalents for clad socket and chan map
 	protoEngineSock    ipc.Conn
@@ -280,6 +283,14 @@ func processEngineMessages() {
 func main() {
 	log.Tag = "vic-gateway"
 	log.Println("Launching vic-gateway")
+
+	signalHandler = make(chan os.Signal, 1)
+	signal.Notify(signalHandler, syscall.SIGTERM)
+	go func() {
+		sig := <-signalHandler
+		log.Println("Received signal:", sig)
+		os.Exit(0)
+	}()
 
 	pair, err := tls.LoadX509KeyPair(Cert, Key)
 	if err != nil {
