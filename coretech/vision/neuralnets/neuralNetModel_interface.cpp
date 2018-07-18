@@ -289,9 +289,9 @@ void INeuralNetModel::ResponseMapOutputHelper(const T* outputData, TimeStamp_t t
   // Create a SalientPoint to return
   const float kWidthScale  = 1.f / static_cast<float>(responseMap.cols);
   const float kHeightScale = 1.f / static_cast<float>(responseMap.rows);
-  float x = Util::Clamp(maxLoc.x * kWidthScale,  0.f, 1.f);
-  float y = Util::Clamp(maxLoc.y * kHeightScale, 0.f, 1.f);
-  Vision::SalientPointType type = Vision::SalientPointType::Object;
+  const float x = Util::Clamp(maxLoc.x * kWidthScale,  0.f, 1.f);
+  const float y = Util::Clamp(maxLoc.y * kHeightScale, 0.f, 1.f);
+  const Vision::SalientPointType type = Vision::SalientPointType::Object;
 
   // TODO right now objectness doesn't have an area associated with it,
   // thus the shape part of the salient point is empty, and the area
