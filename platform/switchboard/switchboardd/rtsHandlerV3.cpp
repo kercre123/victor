@@ -458,7 +458,15 @@ void RtsHandlerV3::HandleInitialPair(uint8_t* publicKey, uint32_t publicKeyLengt
   memcpy(&client.sessionRx, _keyExchange->GetDecryptKey(), sizeof(client.sessionRx));
   memcpy(&client.sessionTx, _keyExchange->GetEncryptKey(), sizeof(client.sessionTx));
 
-  _rtsKeys.clients.clear();
+  // we already have session keys for client with same public key,
+  // so delete old keys
+  _rtsKeys.clients.erase(
+    std::remove_if(_rtsKeys.clients.begin(), _rtsKeys.clients.end(), 
+      [client](RtsClientData c) {
+      return memcmp(&c.publicKey, &client.publicKey, sizeof(client.publicKey)) == 0;
+    }),
+    _rtsKeys.clients.end());
+
   _rtsKeys.clients.push_back(client);
 
   SaveKeys();
