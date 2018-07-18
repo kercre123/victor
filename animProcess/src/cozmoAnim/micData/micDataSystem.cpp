@@ -117,7 +117,7 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
 
 void MicDataSystem::Init(const RobotDataLoader& dataLoader)
 {
-  _micDataProcessor->Init(dataLoader);
+  _micDataProcessor->Init(dataLoader, _locale);
 }
 
 MicDataSystem::~MicDataSystem()
@@ -357,7 +357,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         _streamingAudioIndex = 0;
   
         // Send out the message announcing the trigger word has been detected
-        auto hw = CloudMic::Hotword{CloudMic::StreamType::Normal};
+        auto hw = CloudMic::Hotword{CloudMic::StreamType::Normal, _locale.ToString()};
         if (_currentStreamingJob != nullptr) {
           hw.mode = _currentStreamingJob->_type;
         }
@@ -599,6 +599,7 @@ void MicDataSystem::SendUdpMessage(const CloudMic::Message& msg)
 
 void MicDataSystem::UpdateLocale(const Util::Locale& newLocale)
 {
+  _locale = newLocale;
   _micDataProcessor->UpdateTriggerForLocale(newLocale);
 }
   
