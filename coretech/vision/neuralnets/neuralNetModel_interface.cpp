@@ -315,7 +315,7 @@ void INeuralNetModel::SaveResponseMaps(const std::vector<cv::Mat>& channels, con
       cv::Point2i channelMinLoc(0, 0), channelMaxLoc(0, 0);
       cv::minMaxLoc(channels[channel], &channelMin, &channelMax, &channelMinLoc, &channelMaxLoc);
 
-      const std::string kSaveFilename = Util::FileUtils::FullFilePath({_cachePath,
+      const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath,
         _params.visualizationDirectory, std::to_string(timestamp) + "_" +
         std::to_string(channel) + ".png"});
 
@@ -323,11 +323,11 @@ void INeuralNetModel::SaveResponseMaps(const std::vector<cv::Mat>& channels, con
       channels[channel].copyTo(imageToSave);
       imageToSave = 255 * (imageToSave - channelMin) / (channelMax - channelMin);
       imageToSave.convertTo(imageToSave, CV_8UC1, 1.f/(channelMax - channelMin),  -channelMin / (channelMax - channelMin));
-      cv::imwrite(kSaveFilename, imageToSave);
+      cv::imwrite(saveFilename, imageToSave);
 
-      const std::string kSalientPointFilename = Util::FileUtils::FullFilePath({_cachePath,
+      const std::string salientPointFilename = Util::FileUtils::FullFilePath({_cachePath,
         "objectnessResponseMap", std::to_string(timestamp) + ".txt"});
-      std::ofstream salientPointFile(kSalientPointFilename);
+      std::ofstream salientPointFile(salientPointFilename);
       salientPointFile << channelMaxLoc.x << " " << channelMaxLoc.y << " " << channelMax << + " "
         << channelMinLoc.x << " " << channelMinLoc.y << " " << channelMin;
       salientPointFile.close();
