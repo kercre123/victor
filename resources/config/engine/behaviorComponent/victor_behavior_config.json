@@ -1,7 +1,8 @@
 {
-  "onboardingBehavior": "Onboarding",
-  "normalBaseBehavior": "InitNormalOperation",
-  "devBaseBehavior"   : "DevBaseBehavior"
+  "onboardingBehavior"     : "Onboarding",
+  "normalBaseBehavior"     : "InitNormalOperation",
+  "devBaseBehavior"        : "DevBaseBehavior",
+  "postOnboardingBehavior" : "ModeSelector"
   // PR demo is hardcoded
   // factory behavior is hardcoded
 }
