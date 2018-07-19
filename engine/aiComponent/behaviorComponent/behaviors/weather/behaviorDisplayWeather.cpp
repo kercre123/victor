@@ -14,12 +14,15 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/weather/behaviorDisplayWeather.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/aiComponent/behaviorComponent/weatherIntentParser.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/dataAccessorComponent.h"
+#include "engine/components/settingsManager.h"
+#include "engine/utils/cozmoFeatureGate.h"
 
 #include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
 #include "cannedAnimLib/proceduralFace/proceduralFace.h"
@@ -27,6 +30,8 @@
 #include "coretech/vision/shared/compositeImage/compositeImage.h"
 
 #include "clad/types/behaviorComponent/userIntent.h"
+#include "clad/types/featureGateTypes.h"
+
 
 namespace Anki {
 namespace Cozmo {
@@ -296,6 +301,27 @@ bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenhei
                       _iConfig->temperatureLayouts.size());
     return false;
   }
+
+  ///////
+  /// PR DEMO HACK - Cloud should be source of truth for farenheit/celsius, but check
+  /// settings here for PR demo since cloud is still implementing their end
+  ///////
+  const auto* featureGate = GetBEI().GetRobotInfo().GetContext()->GetFeatureGate();
+  const bool featureEnabled = (featureGate != nullptr) ? 
+                                featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::PRDemo) :
+                                false;
+  if(featureEnabled){
+    auto& settings = GetBEI().GetSettingsManager();
+    const bool shouldBeFarenheit = settings.GetRobotSettingAsBool(RobotSetting::temp_is_fahrenheit);
+    if(!shouldBeFarenheit && isFahrenheit){
+      temp = static_cast<int>((temp - 32) * (5.0/9.0));
+      isFahrenheit = false;
+    }
+  }
+  ///////
+  /// END PR DEMO HACK
+  ///////
+
   
   // Grab the image from temperature layouts - indexed least -> greatest pos followed by least -> greatest neg
   if(temp > 0){
