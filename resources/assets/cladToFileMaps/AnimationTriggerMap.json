@@ -404,6 +404,14 @@
     "AnimName": "ag_driving01_drivingloop"
   },
   {
+    "CladEvent": "DriveOffChargerFarLeft",
+    "AnimName": "ag_chargerdocking_comeoff_left_02"
+  },
+  {
+    "CladEvent": "DriveOffChargerFarRight",
+    "AnimName": "ag_chargerdocking_comeoff_right_02"
+  },
+  {
     "CladEvent": "DriveOffChargerLeft",
     "AnimName": "ag_chargerdocking_comeoff_left"
   },

@@ -101,6 +101,8 @@ enum int_32 AnimationTrigger
   DriveLoopDefault,
   DriveLoopHappy,
   DriveLoopLaunch,
+  DriveOffChargerFarLeft,
+  DriveOffChargerFarRight,
   DriveOffChargerLeft,
   DriveOffChargerRight,
   DriveOffChargerStraight,
