@@ -25,7 +25,6 @@
 #include "clad/types/firmwareTypes.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/imu.clad"
-#include "clad/types/inventoryTypes.clad"
 #include "clad/types/loadedKnownFace.clad"
 #include "clad/types/logLevels.clad"
 #include "clad/types/motorTypes.clad"
@@ -44,7 +43,6 @@
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/sdkStatusTypes.clad"
 #include "clad/types/uiConnectionTypes.clad"
-#include "clad/types/unlockTypes.clad"
 #include "clad/types/visionModes.clad"
 #include "clad/types/ledTypes.clad"
 #include "clad/types/memoryMap.clad"
@@ -648,35 +646,6 @@ message MoodState {
   float_32 emotionValues[uint_8]
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// Progression Unlocks
-///////////////////////////////////////////////////////////////////////////////
-
-message RequestSetUnlockResult {
-  UnlockId unlockID,
-  bool unlocked
-}
-
-message UnlockStatus {
-  UnlockId unlocks[uint_8],
-  bool fromBackup = 0
-}
-
-// Only called the first time so UI can show correct "new" badges on default unlocks
-message UnlockedDefaults {
-  UnlockId defaultUnlocks[uint_8]
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Inventory
-///////////////////////////////////////////////////////////////////////////////
-
-message InventoryStatus {
-  InventoryList allInventory
-}
-
-message RequestDefaultSparks {
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Debug / Console
@@ -817,22 +786,6 @@ message FirmwareUpdateComplete {
 ///////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////  GAME  /////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-
-// The behavior wants the UI to pop up a game request
-message RequestGameStart {
-  UnlockId gameRequested
-}
-
-// Game asked for a random trick; respond with which trick started
-// to update UI
-message HardSparkStartedByEngine {
-  UnlockId sparkStarted
-}
-
-// Spark was ended by Engine (due to success or timeout)
-message HardSparkEndedByEngine {
-  bool success
-}
 
 message SdkConnectionStatus
 {

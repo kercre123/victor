@@ -30,7 +30,6 @@
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/dockingComponent.h"
-#include "engine/components/progressionUnlockComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/utils/cozmoFeatureGate.h"
 
@@ -155,15 +154,7 @@ void BehaviorStackBlocks::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorStackBlocks::CanUseNonUprightBlocks() const
 {
-  const bool forFreeplay = true;
-  bool isRollingUnlocked = true;
-  
-  if(GetBEI().HasProgressionUnlockComponent()){
-    auto& progressionUnlockComp = GetBEI().GetProgressionUnlockComponent();
-    isRollingUnlocked = progressionUnlockComp.IsUnlocked(UnlockId::RollCube, forFreeplay);
-  }
-  
-  return isRollingUnlocked || _iConfig.stackInAnyOrientation;
+  return _iConfig.stackInAnyOrientation;
 }
 
 

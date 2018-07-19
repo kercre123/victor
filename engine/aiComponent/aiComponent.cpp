@@ -28,7 +28,6 @@
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
-#include "engine/components/progressionUnlockComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/moodSystem/moodManager.h"

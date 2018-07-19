@@ -51,7 +51,6 @@ class MovementComponent;
 class NVStorageComponent;
 class ObjectPoseConfirmer;
 class PathComponent;
-class ProgressionUnlockComponent;
 class PublicStateBroadcaster;
 class Robot;
 class RobotEventHandler;

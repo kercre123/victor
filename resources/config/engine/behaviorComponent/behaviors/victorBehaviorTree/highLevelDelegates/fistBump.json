@@ -2,7 +2,6 @@
   "behaviorClass": "FistBump",
   "behaviorID": "FistBump",
   "executableBehaviorType": "FistBump",
-  "requiredUnlockId": "FistBump",
   "associatedActiveFeature": "FistBump",
 
   "maxTimeToLookForFace_s": 3.0,

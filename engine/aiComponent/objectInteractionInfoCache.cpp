@@ -19,7 +19,6 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/dockingComponent.h"
-#include "engine/components/progressionUnlockComponent.h"
 #include "engine/robot.h"
 
 #include "coretech/common/engine/utils/timer.h"
@@ -326,10 +325,7 @@ bool ObjectInteractionInfoCache::CanPickupAxisCheck(const ObservableObject* obje
   }
   
   // check the up axis
-  const bool forFreeplay = true;
-  const bool isRollingUnlocked = _robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::RollCube,forFreeplay);
-  const bool upAxisOk = ! isRollingUnlocked ||
-  object->GetPose().GetWithRespectToRoot().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
+  const bool upAxisOk = object->GetPose().GetWithRespectToRoot().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
   
   return upAxisOk;
 }

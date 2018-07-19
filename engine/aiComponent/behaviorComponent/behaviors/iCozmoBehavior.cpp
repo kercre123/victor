@@ -40,7 +40,6 @@
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/powerStateManager.h"
-#include "engine/components/progressionUnlockComponent.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/cozmoContext.h"
@@ -74,7 +73,6 @@ namespace {
 static const char* kBehaviorClassKey                 = "behaviorClass";
 static const char* kBehaviorIDConfigKey              = "behaviorID";
 
-static const char* kRequiredUnlockKey                = "requiredUnlockId";
 static const char* kRequiredDriveOffChargerKey       = "requiredRecentDriveOffCharger_sec";
 static const char* kRequiredParentSwitchKey          = "requiredRecentSwitchToParent_sec";
 static const char* kExecutableBehaviorTypeKey        = "executableBehaviorType";
@@ -206,7 +204,6 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config, const CustomBEIConditi
 , _intentToDeactivate( UserIntentTag::INVALID )
 , _respondToTriggerWord( false )
 , _emotionEventOnActivated("")
-, _requiredUnlockId( UnlockId::Count )
 , _requiredRecentDriveOffCharger_sec(-1.0f)
 , _requiredRecentSwitchToParent_sec(-1.0f)
 , _isActivated(false)
@@ -220,27 +217,6 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config, const CustomBEIConditi
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
 {
-  // - - - - - - - - - -
-  // Required unlock
-  // - - - - - - - - - -
-  const Json::Value& requiredUnlockJson = config[kRequiredUnlockKey];
-  if ( !requiredUnlockJson.isNull() )
-  {
-    DEV_ASSERT(requiredUnlockJson.isString(), "ICozmoBehavior.ReadFromJson.NonStringUnlockId");
-
-    // this is probably the only place where we need this, otherwise please refactor to proper header
-    const UnlockId requiredUnlock = UnlockIdFromString(requiredUnlockJson.asString());
-    if (requiredUnlock != UnlockId::Count) {
-      PRINT_CH_DEBUG(LOG_CHANNEL, "ICozmoBehavior.ReadFromJson.RequiredUnlock",
-                     "Behavior '%s' requires unlock '%s'",
-                     GetDebugLabel().c_str(), requiredUnlockJson.asString().c_str());
-      _requiredUnlockId = requiredUnlock;
-    } else {
-      PRINT_NAMED_ERROR("ICozmoBehavior.ReadFromJson.InvalidUnlockId", "Could not convert string to unlock id '%s'",
-        requiredUnlockJson.asString().c_str());
-    }
-  }
-
   // - - - - - - - - - -
   // Got off charger timer
   const Json::Value& requiredDriveOffChargerJson = config[kRequiredDriveOffChargerKey];
@@ -388,7 +364,6 @@ std::vector<const char*> ICozmoBehavior::GetAllJsonKeys() const
   static const char* baseKeys[] = {
     kBehaviorClassKey,
     kBehaviorIDConfigKey,
-    kRequiredUnlockKey,
     kRequiredDriveOffChargerKey,
     kRequiredParentSwitchKey,
     kExecutableBehaviorTypeKey,
@@ -1029,20 +1004,6 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
   }
 
   const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  // first check the unlock
-  if ( _requiredUnlockId != UnlockId::Count )
-  {
-    if(GetBEI().HasProgressionUnlockComponent()){
-      // ask progression component if the unlockId is currently unlocked
-      auto& progressionUnlockComp = GetBEI().GetProgressionUnlockComponent();
-      const bool forFreeplay = true;
-      const bool isUnlocked = progressionUnlockComp.IsUnlocked(_requiredUnlockId,
-                                                                forFreeplay );
-      if ( !isUnlocked ) {
-        return false;
-      }
-    }
-  }
 
   // if there's a timer requiring a recent drive off the charger, check with whiteboard
   const bool requiresRecentDriveOff = FLT_GE(_requiredRecentDriveOffCharger_sec, 0.0f);

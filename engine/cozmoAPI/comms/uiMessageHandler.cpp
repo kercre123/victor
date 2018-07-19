@@ -477,14 +477,12 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case GameToEngineTag::RestoreRobotFromBackup:           return true;
         case GameToEngineTag::RequestRobotRestoreData:          return true;
         case GameToEngineTag::WipeRobotGameData:                return true;
-        case GameToEngineTag::RequestUnlockDataFromBackup:      return true;
         case GameToEngineTag::SetRobotImageSendMode:            return true;
         case GameToEngineTag::SaveImages:                       return true;
         case GameToEngineTag::SaveRobotState:                   return true;
         case GameToEngineTag::ExecuteTestPlan:                  return true;
         case GameToEngineTag::PlannerRunMode:                   return true;
         case GameToEngineTag::StartTestMode:                    return true;
-        case GameToEngineTag::RequestSetUnlock:                 return true;
         case GameToEngineTag::GetJsonDasLogsMessage:            return true;
         case GameToEngineTag::SaveCalibrationImage:             return true;
         case GameToEngineTag::ClearCalibrationImages:           return true;

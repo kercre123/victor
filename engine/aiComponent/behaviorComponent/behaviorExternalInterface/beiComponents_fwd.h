@@ -29,7 +29,6 @@ enum class BEIComponentID{
   ObjectPoseConfirmer,
   PetWorld,
   PhotographyManager,
-  ProgressionUnlock,
   ProxSensor,
   PublicStateBroadcaster,
   SDK,

@@ -1,5 +1,4 @@
 {
   "behaviorClass": "RollBlock",
-  "behaviorID": "Hiking_RollCube",
-  "requiredUnlockId": "RollCube"
+  "behaviorID": "Hiking_RollCube"
 }

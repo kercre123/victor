@@ -86,12 +86,6 @@ s32 CST_PickupFromStack::UpdateSimInternal()
       DisableRandomPathSpeeds();
       StartMovieConditional("StackBlockBehavior_AttemptCube");
       // TakeScreenshotsAtInterval("StackBlockBehavior", 1.f);
-      
-      // make sure stacking is unlocked
-      UnlockId unlock = UnlockIdFromString("StackTwoCubes");
-      CST_ASSERT(unlock != UnlockId::Count, "couldn't get valid unlock id");
-      SendMessage( ExternalInterface::MessageGameToEngine(
-                     ExternalInterface::RequestSetUnlock(unlock, true)));
           
       SendMoveHeadToAngle(0, 100, 100);
       

@@ -15,7 +15,6 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/components/nvStorageComponent.h"
-#include "engine/components/progressionUnlockComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotDataBackupManager.h"
@@ -521,73 +520,6 @@ void RobotDataBackupManager::HandleMessage(const ExternalInterface::RequestRobot
   _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(restoreOptions)));
 }
 
-void RobotDataBackupManager::HandleRequestUnlockDataFromBackup(const ExternalInterface::RequestUnlockDataFromBackup& msg,
-                                                               const CozmoContext* context)
-{
-  if(context == nullptr ||
-     context->GetExternalInterface() == nullptr ||
-     context->GetDataPlatform() == nullptr)
-  {
-    PRINT_NAMED_ERROR("RobotDataBackupManager.HandleRequestUnlockDataFromBackup.NullContext", "");
-    return;
-  }
-
-  TagDataMap dataInBackup;
-  std::string file;
-  const std::string pathToFile = context->GetDataPlatform()->pathToResource(Util::Data::Scope::Persistent, GetBackupFolder());
-
-  if(GetFileToUseForBackup(file, pathToFile, context->GetDataPlatform()))
-  {
-    if(ParseBackupFile(file, pathToFile, dataInBackup))
-    {
-      // Check to see if there is unlock data in the backup if not we will just send back the default unlocks
-      auto unlocks = dataInBackup.find(static_cast<u32>(NVStorage::NVEntryTag::NVEntry_GameUnlocks));
-      if(unlocks != dataInBackup.end())
-      {
-        UnlockedIdsList unlockList;
-        unlockList.Unpack(unlocks->second.data(), unlocks->second.size());
-        
-        std::vector<UnlockId> vec;
-        for(const UnlockId& unlock : unlockList.unlockedIds)
-        {
-          if(unlock == UnlockId::Invalid)
-          {
-            break;
-          }
-          vec.push_back(unlock);
-        }
-        
-        PRINT_NAMED_INFO("RobotDataBackupManager.HandleRequestUnlockDataFromBackup.UnlockData",
-                         "Found unlock data in backup file %s",
-                         file.c_str());
-        
-        // Send to game telling them this unlock data is from the backup not the actual robot
-        context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UnlockStatus(std::vector<UnlockId>(vec.begin(), vec.end()), true)));
-        return;
-      }
-      else
-      {
-        PRINT_NAMED_INFO("RobotDataBackupManager.HandleRequestUnlockDataFromBackup.NoUnlockData",
-                         "No unlock data in backup, sending default unlock data");
-      }
-    }
-    else
-    {
-      PRINT_NAMED_INFO("RobotDataBackupManager.HandleRequestUnlockDataFromBackup.FailedToParseBackup",
-                       "Failed to parse backup, sending default unlock data");
-    }
-  }
-  else
-  {
-    PRINT_NAMED_INFO("RobotDataBackupManager.HandleRequestUnlockDataFromBackup.NoBackup",
-                     "No backup, sending default unlock data");
-  }
-  
-  const auto& defaultUnlocks = ProgressionUnlockComponent::GetDefaultUnlocks(context);
-  
-  // Send to game telling them this unlock data is from the backup not the actual robot
-  context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UnlockStatus(std::vector<UnlockId>(defaultUnlocks.begin(), defaultUnlocks.end()), true)));
-}
 
 bool RobotDataBackupManager::ParseBackupFile(const std::string& fileName,
                                              const std::string& pathToFile,

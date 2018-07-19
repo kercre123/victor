@@ -52,8 +52,6 @@ class AnimationComponent;
 class RobotStateHistory;
 class MoodManager;
 class StimulationFaceDisplay;
-class InventoryComponent;
-class ProgressionUnlockComponent;
 class BlockTapFilterComponent;
 class RobotToEngineImplMessaging;
 class RobotIdleTimeoutComponent;
@@ -109,8 +107,6 @@ LINK_COMPONENT_TYPE_TO_ENUM(AnimationComponent,            RobotComponentID, Ani
 LINK_COMPONENT_TYPE_TO_ENUM(RobotStateHistory,             RobotComponentID, StateHistory)
 LINK_COMPONENT_TYPE_TO_ENUM(MoodManager,                   RobotComponentID, MoodManager)
 LINK_COMPONENT_TYPE_TO_ENUM(StimulationFaceDisplay,        RobotComponentID, StimulationFaceDisplay)
-LINK_COMPONENT_TYPE_TO_ENUM(InventoryComponent,            RobotComponentID, Inventory)
-LINK_COMPONENT_TYPE_TO_ENUM(ProgressionUnlockComponent,    RobotComponentID, ProgressionUnlock)
 LINK_COMPONENT_TYPE_TO_ENUM(BlockTapFilterComponent,       RobotComponentID, BlockTapFilter)
 LINK_COMPONENT_TYPE_TO_ENUM(RobotToEngineImplMessaging,    RobotComponentID, RobotToEngineImplMessaging)
 LINK_COMPONENT_TYPE_TO_ENUM(RobotIdleTimeoutComponent,     RobotComponentID, RobotIdleTimeout)
@@ -160,7 +156,6 @@ std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotCompone
     case Cozmo::RobotComponentID::FaceWorld:                    { return "FaceWorld";}
     case Cozmo::RobotComponentID::GyroDriftDetector:            { return "GyroDriftDetector";}
     case Cozmo::RobotComponentID::HabitatDetector:              { return "HabitatDetector";}
-    case Cozmo::RobotComponentID::Inventory:                    { return "Inventory";}
     case Cozmo::RobotComponentID::Map:                          { return "Map";}
     case Cozmo::RobotComponentID::MicComponent:                 { return "MicComponent"; }
     case Cozmo::RobotComponentID::MoodManager:                  { return "MoodManager";}
@@ -171,7 +166,6 @@ std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotCompone
     case Cozmo::RobotComponentID::PathPlanning:                 { return "PathPlanning";}
     case Cozmo::RobotComponentID::PetWorld:                     { return "PetWorld";}
     case Cozmo::RobotComponentID::PhotographyManager:           { return "PhotographyManager";}
-    case Cozmo::RobotComponentID::ProgressionUnlock:            { return "ProgressionUnlock";}
     case Cozmo::RobotComponentID::ProxSensor:                   { return "ProxSensor";}
     case Cozmo::RobotComponentID::PublicStateBroadcaster:       { return "PublicStateBroadcaster";}
     case Cozmo::RobotComponentID::SDK:                          { return "SDK";}

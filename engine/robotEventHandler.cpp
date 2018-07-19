@@ -1018,7 +1018,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::LogRawProxData>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::QueueSingleAction>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::QueueCompoundAction>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestUnlockDataFromBackup>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RollActionParams>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveCalibrationImage>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetMotionModelParams>();
@@ -1672,13 +1671,6 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::AbortAll& msg)
   {
     robot->AbortAll();
   }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-void RobotEventHandler::HandleMessage(const ExternalInterface::RequestUnlockDataFromBackup& msg)
-{
-  PRINT_NAMED_WARNING("RobotEventHandler.HandleRequestUnlockDataFromBackup.UnsupportedForCozmo2", "Restoring from backup belongs in Unity in Cozmo 2.0");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

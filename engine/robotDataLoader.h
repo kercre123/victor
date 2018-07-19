@@ -124,7 +124,6 @@ public:
   const Json::Value& GetVictorFreeplayBehaviorConfig() const { return _victorFreeplayBehaviorConfig; }
   const Json::Value& GetRobotVisionConfig() const            { return _robotVisionConfig; }
   const Json::Value& GetVisionScheduleMediatorConfig() const { return _visionScheduleMediatorConfig; }
-  const Json::Value& GetInventoryConfig() const              { return _inventoryConfig; }
   const Json::Value& GetWebServerEngineConfig() const        { return _webServerEngineConfig; }
   const Json::Value& GetDasEventConfig() const               { return _dasEventConfig; }
   const Json::Value& GetUserIntentConfig() const             { return _userIntentsConfig; }
@@ -242,7 +241,6 @@ private:
   Json::Value _victorFreeplayBehaviorConfig;
   Json::Value _robotVisionConfig;
   Json::Value _visionScheduleMediatorConfig;
-  Json::Value _inventoryConfig;
   Json::Value _webServerEngineConfig;
   Json::Value _dasEventConfig;
   Json::Value _userIntentsConfig;

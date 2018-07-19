@@ -19,7 +19,6 @@
 #include "clad/types/globalVizOrigin.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/imu.clad"
-#include "clad/types/inventoryTypes.clad"
 #include "clad/types/ledTypes.clad"
 #include "clad/types/keepFaceAliveParameters.clad"
 #include "clad/types/objectTypes.clad"
@@ -30,7 +29,6 @@
 #include "clad/types/proceduralFaceTypes.clad"
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/uiConnectionTypes.clad"
-#include "clad/types/unlockTypes.clad"
 #include "clad/types/visionModes.clad"
 #include "clad/types/switchboardToRobot.clad"
 #include "util/ankiLab/ankiLabDef.clad"
@@ -244,10 +242,6 @@ message RequestRobotRestoreData {
 
 // Wipes all game data on the robot
 message WipeRobotGameData {
-
-}
-
-message RequestUnlockDataFromBackup {
 
 }
 
@@ -573,21 +567,6 @@ message ExecuteBehaviorByID {
 message SetLiftLoadTestAsActivatable {
 }
 
-
-// Enable/Disable Cozmo's ability to request a game
-message CanCozmoRequestGame {
-  bool canRequest
-}
-
-message SetOverrideGameRequestWeights {
-  bool useDefaults,
-  UnlockId unlockIDs[uint_8],
-  int_32 weights[uint_8],
-  bool resetDefaultsOnNextRequest = 0 // Allow the GameRequestSelector to reset defaults without
-                                      // waiting for another override message
-}
-
-
 // AbortPath
 message AbortPath {
 }
@@ -906,34 +885,6 @@ union MoodMessageUnion {
 message MoodMessage {
   MoodMessageUnion  MoodMessageUnion
 }
-
-///////////////////////////////////////////////////////////////////////////////
-//
-///////////////////////////////////////////////////////////////////////////////
-
-// Progression unlocks
-message RequestSetUnlock {
-  UnlockId unlockID,
-  bool unlocked
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Inventory
-///////////////////////////////////////////////////////////////////////////////
-
-message InventoryRequestAdd {
-  InventoryType inventoryType,
-  int_32 delta
-}
-
-message InventoryRequestSet {
-  InventoryType inventoryType,
-  int_32 total
-}
-
-message InventoryRequestGet {
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////
 

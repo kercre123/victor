@@ -63,7 +63,6 @@ public:
     dependencies.insert(RobotComponentID::BlockWorld);
     dependencies.insert(RobotComponentID::CliffSensor);
     dependencies.insert(RobotComponentID::FaceWorld);
-    dependencies.insert(RobotComponentID::Inventory);
     dependencies.insert(RobotComponentID::Map);
     dependencies.insert(RobotComponentID::Movement);
     dependencies.insert(RobotComponentID::MoodManager);

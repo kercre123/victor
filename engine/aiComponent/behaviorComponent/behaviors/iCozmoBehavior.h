@@ -35,7 +35,6 @@
 #include "clad/types/behaviorComponent/behaviorObjectives.h"
 #include "clad/types/behaviorComponent/postBehaviorSuggestions.h"
 #include "clad/types/robotCompletedAction.h"
-#include "clad/types/unlockTypes.h"
 #include "util/console/consoleVariable.h"
 #include "util/logging/logging.h"
 #include "util/string/stringUtils.h"
@@ -215,10 +214,6 @@ public:
 
   // returns required process
   AIInformationAnalysis::EProcess GetRequiredProcess() const { return _requiredProcess; }
-  
-  // returns the required unlockID for the behavior
-  const UnlockId GetRequiredUnlockID() const {  return _requiredUnlockId;}
-  
   
   // Add Listeners to a behavior which will notify them of milestones/events in the behavior's lifecycle
   virtual void AddListener(ISubtaskListener* listener)
@@ -598,9 +593,6 @@ private:
 
   // If non-empty, trigger this emotion event when this behavior activated
   std::string _emotionEventOnActivated;
-
-  // if an unlockId is set, the behavior won't be activatable unless the unlockId is unlocked in the progression component
-  UnlockId _requiredUnlockId;
   
   // if _requiredRecentDriveOffCharger_sec is greater than 0, this behavior is only activatable if last time the robot got off the charger by
   // itself was less than this time ago. Eg, a value of 1 means if we got off the charger less than 1 second ago

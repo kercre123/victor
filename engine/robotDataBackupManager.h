@@ -56,11 +56,6 @@ public:
   template<typename T>
   void HandleMessage(const T& msg);
 
-  // Reads the unlock data from the backup file and sends it to game
-  // This is a static method so it can be called before connecting to a robot (This class is a memeber of robot)
-  static void HandleRequestUnlockDataFromBackup(const ExternalInterface::RequestUnlockDataFromBackup& msg,
-                                                const CozmoContext* context);
-  
   static inline const std::string GetBackupFolder() { return "robotBackups/"; }
   
 private:

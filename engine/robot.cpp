@@ -45,7 +45,6 @@
 #include "engine/components/dataAccessorComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/habitatDetectorComponent.h"
-#include "engine/components/inventoryComponent.h"
 #include "engine/components/mics/beatDetectorComponent.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/movementComponent.h"
@@ -53,7 +52,6 @@
 #include "engine/components/pathComponent.h"
 #include "engine/components/photographyManager.h"
 #include "engine/components/powerStateManager.h"
-#include "engine/components/progressionUnlockComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/components/sdkComponent.h"
@@ -340,8 +338,6 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::StateHistory,               new RobotStateHistory());
     _components->AddDependentComponent(RobotComponentID::MoodManager,                new MoodManager());
     _components->AddDependentComponent(RobotComponentID::StimulationFaceDisplay,     new StimulationFaceDisplay());
-    _components->AddDependentComponent(RobotComponentID::Inventory,                  new InventoryComponent());
-    _components->AddDependentComponent(RobotComponentID::ProgressionUnlock,          new ProgressionUnlockComponent());
     _components->AddDependentComponent(RobotComponentID::BlockTapFilter,             new BlockTapFilterComponent());
     _components->AddDependentComponent(RobotComponentID::RobotToEngineImplMessaging, new RobotToEngineImplMessaging());
     _components->AddDependentComponent(RobotComponentID::RobotIdleTimeout,           new RobotIdleTimeoutComponent());

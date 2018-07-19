@@ -87,7 +87,6 @@ enum class EngineErrorCode : uint8_t;
 class FaceWorld;
 class IExternalInterface;
 class IGatewayInterface;
-class InventoryComponent;
 class MatPiece;
 class MoodManager;
 class MovementComponent;
@@ -96,7 +95,6 @@ class ObjectPoseConfirmer;
 enum class OffTreadsState : int8_t;
 class PetWorld;
 class PhotographyManager;
-class ProgressionUnlockComponent;
 class RobotEventHandler;
 class RobotGyroDriftDetector;
 class RobotIdleTimeoutComponent;
@@ -254,12 +252,6 @@ public:
 
   inline const DataAccessorComponent& GetDataAccessorComponent() const { return GetComponent<DataAccessorComponent>(); }
   inline       DataAccessorComponent& GetDataAccessorComponent()       { return GetComponent<DataAccessorComponent>(); }
-
-  inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const {return GetComponent<ProgressionUnlockComponent>();}
-  inline ProgressionUnlockComponent& GetProgressionUnlockComponent() {return GetComponent<ProgressionUnlockComponent>();}
-
-  inline const InventoryComponent& GetInventoryComponent() const {return GetComponent<InventoryComponent>();}
-  inline InventoryComponent& GetInventoryComponent() {return GetComponent<InventoryComponent>();}
 
   inline const NVStorageComponent& GetNVStorageComponent() const {return GetComponent<NVStorageComponent>();}
   inline NVStorageComponent& GetNVStorageComponent() {return GetComponent<NVStorageComponent>();}

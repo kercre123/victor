@@ -937,18 +937,6 @@ void RobotDataLoader::LoadRobotConfigs()
     _context->GetExperiments()->GetAnkiLab().Load(fileContents);
   }
 
-  // Inventory config
-  {
-    static const std::string jsonFilename = "config/engine/inventory_config.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _inventoryConfig);
-    if (!success)
-    {
-      LOG_ERROR("RobotDataLoader.InventoryConfigNotFound",
-                "Inventory Config file %s not found or failed to parse",
-                jsonFilename.c_str());
-    }
-  }
-
   // Web server config
   {
     static const std::string jsonFilename = "webserver/webServerConfig_engine.json";
