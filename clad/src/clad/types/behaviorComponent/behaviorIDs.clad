@@ -331,6 +331,7 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree
   SingletonICantDoThat,
+  SingletonPoweringRobotOff,
 
   // victorBehaviorTree/takeAPhoto
   FindFacesPhoto,

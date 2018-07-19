@@ -101,7 +101,7 @@ public:
   // Returns true when the list of available animations has been received from animation process
   bool IsInitialized() { return _isInitialized; }
 
-  using AnimationCompleteCallback = std::function<void(const AnimResult res)>;
+  using AnimationCompleteCallback = std::function<void(const AnimResult res, u32 streamTimeAnimEnded)>;
   
   // Set strictCooldown = true when we do NOT want to simply choose the animation closest
   // to being off cooldown when all animations in the group are on cooldown
@@ -114,7 +114,8 @@ public:
                         bool interruptRunning = true,
                         AnimationCompleteCallback callback = nullptr,
                         const u32 actionTag = 0,
-                        float timeout_sec = _kDefaultTimeout_sec);
+                        float timeout_sec = _kDefaultTimeout_sec,
+                        u32 startAt_ms = 0);
 
   // Tell animation process to render the specified animation
   // to the Procedural_Eyes layer of the specified composite image
@@ -248,6 +249,13 @@ public:
   // Set eye focus
   void AddKeepFaceAliveFocus(const std::string& name);
   void RemoveKeepFaceAliveFocus(const std::string& name);
+  
+  // Should only be called if a callback was passed into the component by an action
+  // and therefore there should already be a callback in the callback map that matches this
+  // animation name
+  void AddAdditionalAnimationCallback(const std::string& name,
+                                      AnimationComponent::AnimationCompleteCallback callback,
+                                      bool callEvenIfAnimCanceled = false);
 
 private:
   
@@ -265,7 +273,8 @@ private:
                             const u32 currTag,
                             const u32 actionTag,
                             int numLoops,
-                            float timeout_sec);
+                            float timeout_sec,
+                            bool callbackStillValidEvenIfTagIsNot = false);
 
   Result SendEnableKeepFaceAlive(bool enable, u32 disableTimeout_ms = 0);
   
@@ -320,21 +329,23 @@ private:
     AnimCallbackInfo(const std::string animName,
                      const AnimationCompleteCallback& callback,
                      const u32 actionTag,
-                     const float abortTime_sec)
+                     const float abortTime_sec,
+                     const bool callbackStillValidEvenIfTagIsNot = false)
     : animName(animName)
     , callback(callback)
     , actionTag(actionTag)
     , abortTime_sec(abortTime_sec)
+    , callbackStillValidEvenIfTagIsNot(callbackStillValidEvenIfTagIsNot)
     {}
     
-    void ExecuteCallback(AnimResult res)
+    void ExecuteCallback(AnimResult res, u32 streamTimeAnimEnded)
     {
       // Execute callback as long as it's non-null and
       // 1) No actionTag (i.e. actionTag == 0) was associated with it
       // 2) Or the valid calling action is still active
       if ((callback != nullptr) &&
-          ((actionTag == 0) || IActionRunner::IsTagInUse(actionTag))) {
-        callback(res);
+          ((actionTag == 0) || callbackStillValidEvenIfTagIsNot || IActionRunner::IsTagInUse(actionTag))) {
+        callback(res, streamTimeAnimEnded);
       }
     }
     
@@ -342,10 +353,11 @@ private:
     const AnimationCompleteCallback callback;
     const u32 actionTag;
     const float abortTime_sec;
+    const bool callbackStillValidEvenIfTagIsNot;
   };
 
   // Map of animation tags to info needed for handling callbacks when the animation completes
-  std::unordered_map<Tag, AnimCallbackInfo> _callbackMap;
+  std::unordered_multimap<Tag, AnimCallbackInfo> _callbackMap;
 
   int _compositeImageID;
 

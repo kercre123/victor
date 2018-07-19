@@ -547,6 +547,7 @@ public:
   // ======== Power button ========
 
   bool IsPowerButtonPressed() const { return _powerButtonPressed; }
+  TimeStamp_t GetTimeSincePowerButtonPressed_ms() const;
 
   // Abort everything the robot is doing, including path following, actions,
   // animations, and docking. This is like the big red E-stop button.
@@ -699,13 +700,14 @@ protected:
   ObjectID         _chargerID;
 
   // State
-  ImageSendMode    _imageSendMode            = ImageSendMode::Off;
-  u32              _lastSentImageID          = 0;
-  bool             _powerButtonPressed       = false;
-  bool             _isPickedUp               = false;
-  bool             _isCliffReactionDisabled  = false;
+  ImageSendMode    _imageSendMode             = ImageSendMode::Off;
+  u32              _lastSentImageID           = 0;
+  bool             _powerButtonPressed        = false;
+  TimeStamp_t      _timePowerButtonPressed_ms = 0;
+  bool             _isPickedUp                = false;
+  bool             _isCliffReactionDisabled   = false;
   bool             _gotStateMsgAfterRobotSync = false;
-  u32              _lastStatusFlags          = 0;
+  u32              _lastStatusFlags           = 0;
 
   OffTreadsState   _offTreadsState;
   OffTreadsState   _awaitingConfirmationTreadState;

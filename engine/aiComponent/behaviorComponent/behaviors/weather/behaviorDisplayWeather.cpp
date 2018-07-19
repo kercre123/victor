@@ -252,7 +252,7 @@ void BehaviorDisplayWeather::DisplayWeatherResponse()
 
   const auto& weatherResponse = intentData->intent.Get_weather_response();
 
-  auto animationCallback = [this](const AnimationComponent::AnimResult res){
+  auto animationCallback = [this](const AnimationComponent::AnimResult res, u32 streamTimeAnimEnded){
     CancelSelf();
   };
 

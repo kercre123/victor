@@ -224,6 +224,7 @@ enum uint_8 BehaviorClass {
   // victor
   ComeHere,
   ConfirmObject,
+  PoweringRobotOff,
   ReactToTouchPetting,
   ReactToUnclaimedIntent,
   TrackCube,

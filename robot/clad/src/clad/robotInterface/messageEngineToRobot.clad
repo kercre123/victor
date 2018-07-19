@@ -295,6 +295,7 @@ message ChargerDockingStripeColor
 message PlayAnim
 {
   uint_32 numLoops = 1,
+  uint_32 startAt_ms = 0, // time to start the animation playback at
   uint_8  tag,
   string animName,
 }

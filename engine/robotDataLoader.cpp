@@ -85,6 +85,11 @@ const std::vector<std::string> kPathsToEngineAccessibleAnimations = {
   
   // Onboarding
   "assets/animations/anim_cube_reacttocube.bin",
+  
+  // Robot power on/off
+  "assets/animations/anim_power_offon_01.bin",
+  "assets/animations/anim_power_onoff_01.bin",
+
 };
 }
 

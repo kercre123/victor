@@ -179,7 +179,7 @@ void Process_playAnim(const Anki::Cozmo::RobotInterface::PlayAnim& msg)
            "Anim: %s, Tag: %d",
            animName.c_str(), msg.tag);
 
-  _animStreamer->SetStreamingAnimation(animName, msg.tag, msg.numLoops);
+  _animStreamer->SetStreamingAnimation(animName, msg.tag, msg.numLoops, msg.startAt_ms);
 }
 
 void Process_abortAnimation(const Anki::Cozmo::RobotInterface::AbortAnimation& msg)

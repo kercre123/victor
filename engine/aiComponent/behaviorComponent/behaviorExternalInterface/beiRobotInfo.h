@@ -115,6 +115,8 @@ public:
   u32 GetHeadSerialNumber() const;
   Util::Data::DataPlatform* GetDataPlatform() const;
   bool IsPowerButtonPressed() const;
+  TimeStamp_t GetTimeSincePowerButtonPressed_ms() const;
+
 
   bool HasExternalInterface() const;
   IExternalInterface* GetExternalInterface();

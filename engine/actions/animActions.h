@@ -39,7 +39,10 @@ namespace Anki {
                           u32 numLoops = 1,
                           bool interruptRunning = true,
                           u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS,
-                          float timeout_sec = _kDefaultTimeout_sec);
+                          float timeout_sec = _kDefaultTimeout_sec,
+                          TimeStamp_t startAtTime_ms = 0,
+                          // this callback will contain the time the animation ended
+                          AnimationComponent::AnimationCompleteCallback callback = {});
       
       virtual ~PlayAnimationAction();
       
@@ -64,6 +67,8 @@ namespace Anki {
       bool                      _interruptRunning;
       float                     _timeout_sec = _kDefaultTimeout_sec;
       bool                      _bodyTrackManuallyLocked = false;
+      TimeStamp_t               _startAtTime_ms = 0;
+      AnimationComponent::AnimationCompleteCallback _passedInCallback = nullptr;
       
       static constexpr float _kDefaultTimeout_sec = 60.f;
       static constexpr float _kDefaultTimeoutForInfiniteLoops_sec = std::numeric_limits<f32>::max();

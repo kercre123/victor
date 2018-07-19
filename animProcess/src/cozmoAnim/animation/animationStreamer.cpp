@@ -476,8 +476,8 @@ namespace Cozmo {
     FaceDisplay::removeInstance();
   }
   
-  Result AnimationStreamer::SetStreamingAnimation(const std::string& name, Tag tag, u32 numLoops, bool interruptRunning,
-                                                  bool shouldOverrideEyeHue, bool shouldRenderInEyeHue)
+  Result AnimationStreamer::SetStreamingAnimation(const std::string& name, Tag tag, u32 numLoops, u32 startAt_ms, 
+                                                  bool interruptRunning, bool shouldOverrideEyeHue, bool shouldRenderInEyeHue)
   {
     // Special case: stop streaming the current animation
     if(name.empty()) {
@@ -491,11 +491,12 @@ namespace Cozmo {
       return RESULT_OK;
     }
     auto* anim = _context->GetDataLoader()->GetCannedAnimation(name);
-    return SetStreamingAnimation(anim, tag, numLoops, interruptRunning,
+    return SetStreamingAnimation(anim, tag, numLoops, startAt_ms, interruptRunning,
                                  shouldOverrideEyeHue, shouldRenderInEyeHue, false);
   }
   
-  Result AnimationStreamer::SetStreamingAnimation(Animation* anim, Tag tag, u32 numLoops, bool interruptRunning,
+  Result AnimationStreamer::SetStreamingAnimation(Animation* anim, Tag tag, u32 numLoops, u32 startAt_ms, 
+                                                  bool interruptRunning,
                                                   bool shouldOverrideEyeHue, bool shouldRenderInEyeHue,
                                                   bool isInternalAnim, bool shouldClearProceduralAnim)
   {
@@ -541,8 +542,7 @@ namespace Cozmo {
     _loopCtr = 0;
     _numLoops = numLoops;
     // Get the animation ready to play
-    InitStreamingAnimation(tag, shouldOverrideEyeHue, shouldRenderInEyeHue);
-    
+    InitStreamingAnimation(tag, startAt_ms, shouldOverrideEyeHue, shouldRenderInEyeHue);
 
     _playingInternalAnim = isInternalAnim;
     
@@ -812,6 +812,7 @@ namespace Cozmo {
   void AnimationStreamer::Process_playCompositeAnimation(const std::string& name, Tag tag)
   {
     const u32 numLoops = 1;
+    const u32 startAtTime_ms = 0;
     const bool interruptRunning = true;
     const bool shouldOverrideEyeHue = true;
     const bool shouldRenderInEyeHue = false;
@@ -822,7 +823,7 @@ namespace Cozmo {
     // undefined behavior
     _streamingAnimation = _neutralFaceAnimation;
     CopyIntoProceduralAnimation(_context->GetDataLoader()->GetCannedAnimation(name));
-    SetStreamingAnimation(_proceduralAnimation, tag, numLoops, interruptRunning,
+    SetStreamingAnimation(_proceduralAnimation, tag, numLoops, startAtTime_ms, interruptRunning,
                           shouldOverrideEyeHue, shouldRenderInEyeHue, isInternalAnim);
     
     _expectingCompositeImage = true;
@@ -891,12 +892,13 @@ namespace Cozmo {
     if(_streamingAnimation == _proceduralAnimation){
       preserveTag = _tag;
       const u32 numLoops = 1;
+      const u32 startTime_ms = 0;
       const bool interruptRunning = true;
       const bool shouldOverrideEyeHue = false;
       const bool shouldRenderInEyeHue = false;
       const bool isInternalAnim = true;
       const bool shouldClearProceduralAnim = false;
-      SetStreamingAnimation(nullptr, 0, numLoops, interruptRunning,
+      SetStreamingAnimation(nullptr, 0, numLoops, startTime_ms, interruptRunning,
                             shouldOverrideEyeHue, shouldRenderInEyeHue,
                             isInternalAnim, shouldClearProceduralAnim);
     }
@@ -918,10 +920,11 @@ namespace Cozmo {
     }
     
     const u32 numLoops = 1;
+    const u32 startTime_ms = 0;
     const bool interruptRunning = true;
     const bool shouldOverrideEyeHue = false;
     const bool isInternalAnim = false;
-    return SetStreamingAnimation(_proceduralAnimation, preserveTag, numLoops, interruptRunning,
+    return SetStreamingAnimation(_proceduralAnimation, preserveTag, numLoops, startTime_ms, interruptRunning,
                                  shouldOverrideEyeHue, shouldRenderInEyeHue, isInternalAnim);
   }
 
@@ -998,7 +1001,8 @@ namespace Cozmo {
 
   
   
-  Result AnimationStreamer::InitStreamingAnimation(Tag withTag, bool shouldOverrideEyeHue, bool shouldRenderInEyeHue)
+  Result AnimationStreamer::InitStreamingAnimation(Tag withTag, u32 startAt_ms, 
+                                                   bool shouldOverrideEyeHue, bool shouldRenderInEyeHue)
   {
     kCurrentManualFrameNumber = 0;
     auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
@@ -1017,7 +1021,7 @@ namespace Cozmo {
       _tag = withTag;
       
       _startTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-      _relativeStreamTime_ms = 0;
+      _relativeStreamTime_ms = startAt_ms;
 
       _endOfAnimationSent = false;
       _startOfAnimationSent = false;

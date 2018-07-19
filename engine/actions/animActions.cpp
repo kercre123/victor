@@ -47,7 +47,9 @@ namespace Anki {
                                              u32 numLoops,
                                              bool interruptRunning,
                                              u8 tracksToLock,
-                                             float timeout_sec)
+                                             float timeout_sec,
+                                             TimeStamp_t startAtTime_ms,
+                                             AnimationComponent::AnimationCompleteCallback callback)
     : IAction("PlayAnimation" + animName,
               RobotActionType::PLAY_ANIMATION,
               tracksToLock)
@@ -55,6 +57,8 @@ namespace Anki {
     , _numLoopsRemaining(numLoops)
     , _interruptRunning(interruptRunning)
     , _timeout_sec(timeout_sec)
+    , _startAtTime_ms(startAtTime_ms)
+    , _passedInCallback(callback)
     {
       // If an animation is supposed to loop infinitely, it should have a
       // much longer default timeout
@@ -121,19 +125,24 @@ namespace Anki {
       _stoppedPlaying = false;
       _wasAborted = false;
 
-      auto callback = [this](const AnimationComponent::AnimResult res) {
+      auto callback = [this](const AnimationComponent::AnimResult res, u32 streamTimeAnimEnded) {
         _stoppedPlaying = true;
         if (res != AnimationComponent::AnimResult::Completed) {
           _wasAborted = true;
         }
       };
 
-      Result res = GetRobot().GetAnimationComponent().PlayAnimByName(_animName, _numLoopsRemaining, _interruptRunning, callback, GetTag(), _timeout_sec);
+      Result res = GetRobot().GetAnimationComponent().PlayAnimByName(_animName, _numLoopsRemaining, 
+                                                                     _interruptRunning, callback, GetTag(), 
+                                                                     _timeout_sec, _startAtTime_ms);
 
       if(res != RESULT_OK) {
         _stoppedPlaying = true;
         _wasAborted = true;
         return ActionResult::ANIM_ABORTED;
+      }else if(_passedInCallback != nullptr){
+        const bool callEvenIfAnimCanceled = true;
+        GetRobot().GetAnimationComponent().AddAdditionalAnimationCallback(_animName, _passedInCallback, callEvenIfAnimCanceled);
       }
 
       GetRobot().GetComponent<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::AnimationPlayed);

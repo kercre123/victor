@@ -1291,6 +1291,14 @@ Result Robot::Update()
     SendMessage(RobotInterface::EngineToRobot(RobotInterface::ChargerDockingStripeColor(kChargerStripeIsBlack)));
     wasChargerStripeIsBlack = kChargerStripeIsBlack;
   }
+ 
+  const bool trackingPowerButtonPress = (_timePowerButtonPressed_ms != 0);
+  // Keep track of how long the power button has been pressed
+  if(!trackingPowerButtonPress && _powerButtonPressed){
+    _timePowerButtonPressed_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  }else if(trackingPowerButtonPress && !_powerButtonPressed){
+    _timePowerButtonPressed_ms = 0;
+  }
 
 #if(0)
   ActiveBlockLightTest(1);
@@ -1555,6 +1563,10 @@ bool Robot::WasObjectTappedRecently(const ObjectID& objectID) const
   return GetComponent<BlockTapFilterComponent>().ShouldIgnoreMovementDueToDoubleTap(objectID);
 }
 
+TimeStamp_t Robot::GetTimeSincePowerButtonPressed_ms() const { 
+  return _timePowerButtonPressed_ms == 0 ? 0 : 
+          BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _timePowerButtonPressed_ms; 
+}
 
 Result Robot::SyncRobot()
 {

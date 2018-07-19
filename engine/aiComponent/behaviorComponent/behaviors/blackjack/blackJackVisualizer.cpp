@@ -384,7 +384,7 @@ void BlackJackVisualizer::PlayCompositeCardAnimationAndLock(const BehaviorExtern
   auto* seqContainer = dataAccessorComp.GetSpriteSequenceContainer();
 
   // Set up the final state of the static image in the callback
-  auto animationCallback = [this](const AnimationComponent::AnimResult res)
+  auto animationCallback = [this](const AnimationComponent::AnimResult res, u32 streamTimeAnimEnded)
   {
     // Note that the anim has completed to exercise callbacks
     _animCompletedLastFrame = true;

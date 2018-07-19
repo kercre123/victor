@@ -5,6 +5,7 @@
   "interruptActiveBehavior": true,
 
   "behaviors": [
+    "SingletonPoweringRobotOff",
     "ShutUpMode",
     "QuietMode",
     "CoordinateGlobalInterrupts"

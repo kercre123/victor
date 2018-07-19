@@ -175,7 +175,7 @@ void AnimationComponent::UpdateDependent(const RobotCompMap& dependentComps)
     if (it->second.abortTime_sec != 0 && currTime_sec >= it->second.abortTime_sec) {
       PRINT_NAMED_WARNING("AnimationComponent.Update.AnimTimedOut", "Anim: %s", it->second.animName.c_str());
       _robot->SendRobotMessage<RobotInterface::AbortAnimation>(it->first);
-      it->second.ExecuteCallback(AnimResult::Timedout);
+      it->second.ExecuteCallback(AnimResult::Timedout, static_cast<u32>(it->second.abortTime_sec));
       it = _callbackMap.erase(it);
     }
     else {
@@ -244,7 +244,8 @@ Result AnimationComponent::PlayAnimByName(const std::string& animName,
                                           bool interruptRunning,
                                           AnimationCompleteCallback callback,
                                           const u32 actionTag,
-                                          float timeout_sec)
+                                          float timeout_sec,
+                                          u32 startAt_ms)
 {
   if (!_isInitialized) {
     PRINT_NAMED_WARNING("AnimationComponent.PlayAnimByName.Uninitialized", "");
@@ -274,7 +275,7 @@ Result AnimationComponent::PlayAnimByName(const std::string& animName,
   }
 
   const Tag currTag = GetNextTag();
-  if (_robot->SendRobotMessage<RobotInterface::PlayAnim>(numLoops, currTag, animName) == RESULT_OK) {
+  if (_robot->SendRobotMessage<RobotInterface::PlayAnim>(numLoops, startAt_ms, currTag, animName) == RESULT_OK) {
     SetAnimationCallback(animName, callback, currTag, actionTag, numLoops, timeout_sec);
   }
   
@@ -544,22 +545,13 @@ void AnimationComponent::SetAnimationCallback(const std::string& animName,
                                               const u32 currTag,
                                               const u32 actionTag,
                                               int numLoops,
-                                              float timeout_sec)
+                                              float timeout_sec,
+                                              bool callbackStillValidEvenIfTagIsNot)
 {
-  // Check if tag already exists in callback map.
-  // If so, trigger callback with Stale
-  {
-    auto it = _callbackMap.find(currTag);
-    if (it != _callbackMap.end()) {
-      PRINT_NAMED_WARNING("AnimationComponent.SetAnimationCallback.StaleTag", "%d", currTag);
-      it->second.ExecuteCallback(AnimResult::Stale);
-      _callbackMap.erase(it);
-    }
-  }
   const float abortTime_sec = (numLoops > 0 ? BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + timeout_sec : 0);
   _callbackMap.emplace(std::piecewise_construct,
                         std::forward_as_tuple(currTag),
-                        std::forward_as_tuple(animName, callback, actionTag, abortTime_sec));
+                        std::forward_as_tuple(animName, callback, actionTag, abortTime_sec, callbackStillValidEvenIfTagIsNot));
 }
 
 
@@ -900,12 +892,21 @@ void AnimationComponent::HandleAnimEnded(const AnkiEvent<RobotInterface::RobotTo
   _movementComponent->ApplyUpdatesForStreamTime(payload.streamTimeAnimEnded);
   
   // Verify that expected animation completed and execute callback
-  auto it = _callbackMap.find(payload.tag);
-  if (it != _callbackMap.end()) {
-    PRINT_CH_INFO("AnimationComponent", "AnimEnded.Tag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
-    it->second.ExecuteCallback(payload.wasAborted ? AnimResult::Aborted : AnimResult::Completed);
-    _callbackMap.erase(it);
-  } else if (payload.animName != EnumToString(AnimConstants::PROCEDURAL_ANIM) ) {
+  bool atLeastOneCallback = false;
+  const auto upperBound = _callbackMap.size() + 1;
+  BOUNDED_WHILE(upperBound, _callbackMap.find(payload.tag) != _callbackMap.end()){
+    auto it = _callbackMap.find(payload.tag);
+    if (it != _callbackMap.end()) {
+      atLeastOneCallback = true;
+      PRINT_CH_INFO("AnimationComponent", "AnimEnded.Tag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
+      it->second.ExecuteCallback(payload.wasAborted ? AnimResult::Aborted : AnimResult::Completed,
+                                 payload.streamTimeAnimEnded);
+      _callbackMap.erase(it);
+    }
+  }
+    
+  if (!atLeastOneCallback &&
+      (payload.animName != EnumToString(AnimConstants::PROCEDURAL_ANIM))) {
     PRINT_NAMED_WARNING("AnimationComponent.AnimEnded.UnexpectedTag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
     return;
   }
@@ -956,7 +957,36 @@ void AnimationComponent::RemoveKeepFaceAliveFocus(const std::string& name)
     SetKeepFaceAliveParameterToDefault(KeepFaceAliveParameter::EyeDartMaxDistance_pix); 
   }
 }
+
+void AnimationComponent::AddAdditionalAnimationCallback(const std::string& name,
+                                                        AnimationComponent::AnimationCompleteCallback callback,
+                                                        bool callEvenIfAnimCanceled)
+{
+  // If we should only call the callback while the anim is active we need to look
+  // up the action tag, otherwise just leave it as zero
+  u32 actionTag = 0;
+  u32 currTag = 0;
+  for(const auto& entry: _callbackMap){
+    if(entry.second.animName == name){
+      currTag = entry.first;
+      actionTag = entry.second.actionTag;
+      break;
+    }
+  }
   
-  
+  if(actionTag == 0){
+    PRINT_NAMED_ERROR("AnimationComponent.AddAdditionalAnimationCallback.NoActionTagFound", 
+                      "Attempting to add an additional callback to animation %s, but it was not found in the callback map",
+                      name.c_str());
+    return;
+  }
+
+  // Timeouts will be handled by the existing callback
+  const u32 numLoops = 0;
+  const float timeout_sec = 0;
+  SetAnimationCallback(name, callback, currTag, actionTag, numLoops, timeout_sec, callEvenIfAnimCanceled);
+}
+
+
 } // namespace Cozmo
 } // namespace Anki

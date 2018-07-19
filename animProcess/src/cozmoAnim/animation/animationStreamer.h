@@ -85,6 +85,7 @@ namespace Cozmo {
     Result SetStreamingAnimation(const std::string& name,
                                  Tag tag,
                                  u32 numLoops = 1,
+                                 u32 startAt_ms = 0,
                                  bool interruptRunning = true,
                                  bool shouldOverrideEyeHue = false,
                                  bool shouldRenderInEyeHue = true);
@@ -321,6 +322,7 @@ namespace Cozmo {
     Result SetStreamingAnimation(Animation* anim,
                                  Tag tag,
                                  u32 numLoops = 1,
+                                 u32 startAt_ms = 0,
                                  bool interruptRunning = true,
                                  bool shouldOverrideEyeHue = false,
                                  bool shouldRenderInEyeHue = true,
@@ -331,7 +333,7 @@ namespace Cozmo {
     // (This will call anim->Init())
     // if shouldOverrideEyeHue is set to true the value of shouldRenderInEyeHue will be applied
     // to all sprites in the animation's SpriteSequenceTrack
-    Result InitStreamingAnimation(Tag withTag, bool shouldOverrideEyeHue = false, bool shouldRenderInEyeHue = true);
+    Result InitStreamingAnimation(Tag withTag, u32 startAt_ms = 0, bool shouldOverrideEyeHue = false, bool shouldRenderInEyeHue = true);
     
     // Update Stream of either the streaming animation or procedural tracks
     Result ExtractAnimationMessages(AnimationMessageWrapper& stateToSend);
