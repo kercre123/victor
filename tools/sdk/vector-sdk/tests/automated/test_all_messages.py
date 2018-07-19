@@ -275,11 +275,13 @@ MESSAGES_TO_TEST = [
     # ConnectCube message
     (client.ExternalInterfaceServicer.ConnectCube,
      protocol.ConnectCubeRequest(),
-     TestResultMatches(protocol.ConnectCubeResponse(status=protocol.ResultStatus(description="Response recieved from engine"), success=True))),
+     TestResultIsTypeWithStatusAndFieldNames(protocol.ConnectCubeResponse,
+                                             protocol.ResultStatus(description="Response recieved from engine"),
+                                             ["success", "object_id", "factory_id"])),
 
     # DisconnectCube message
     (client.ExternalInterfaceServicer.DisconnectCube,
-     protocol.DisconnectCubeRequest(grace_period_sec=0.0),
+     protocol.DisconnectCubeRequest(),
      TestResultMatches(protocol.DisconnectCubeResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
 
     # FlashCubeLights message
