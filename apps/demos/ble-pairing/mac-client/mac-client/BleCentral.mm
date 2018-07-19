@@ -140,6 +140,12 @@ BleCentral* centralContext;
     _otaExpected = 0;
     
     _isPairing = false;
+    
+    // migration helper
+    if([self HasSavedPublicKey] && ([self GetPrivateKey] == nil)) {
+      // old mac-client, so clear defaults
+      [self resetDefaults];
+    }
   }
   
   return self;
