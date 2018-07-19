@@ -54,7 +54,9 @@ namespace Audio {
 
 namespace {
   #define CONSOLE_PATH "Audio.Procedural"
-  CONSOLE_VAR(bool, kEnableProceduralMovement, CONSOLE_PATH, false);
+  CONSOLE_VAR(bool, kEnableHeadProceduralMovement, CONSOLE_PATH, false);
+  CONSOLE_VAR(bool, kEnableLiftProceduralMovement, CONSOLE_PATH, false);
+  CONSOLE_VAR(bool, kEnableTreadProceduralMovement, CONSOLE_PATH, false);
   CONSOLE_VAR_RANGED(uint32_t, kTreadCoolDown_ms, CONSOLE_PATH, 65, 0, 250);
   CONSOLE_VAR_RANGED(uint32_t, kHeadCoolDown_ms, CONSOLE_PATH, 65, 0, 250);
   CONSOLE_VAR_RANGED(uint32_t, kLiftCoolDown_ms, CONSOLE_PATH, 65, 0, 250);
@@ -148,11 +150,6 @@ void ProceduralAudioClient::ProcessMessage(const RobotInterface::RobotToEngine &
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ProceduralAudioClient::HandleStateMessage(const RobotInterface::RobotToEngine& msg)
 {
-  // Updating Audio Engine 
-  if ( !kEnableProceduralMovement ) {
-    return;
-  }
-
   // NOTE: First couple frames are unreliable because of init state.
   //       isActive is set to false while the first frames are collected.
   const AudioProceduralFrame& previousFrame = _frames[_currentFrameIdx];
@@ -167,9 +164,9 @@ void ProceduralAudioClient::HandleStateMessage(const RobotInterface::RobotToEngi
   
   // Update Audio Engine when active
   if (_isActive) {
-    UpdateTreadState(previousFrame, currentFrame);
     UpdateHeadState(previousFrame, currentFrame);
     UpdateLiftState(previousFrame, currentFrame);
+    UpdateTreadState(previousFrame, currentFrame);
   }
   
   LOG_CVS_FRAME(currentFrame);
@@ -179,6 +176,8 @@ void ProceduralAudioClient::HandleStateMessage(const RobotInterface::RobotToEngi
 void ProceduralAudioClient::UpdateTreadState(const AudioProceduralFrame& previousFrame,
                                              const AudioProceduralFrame& currentFrame)
 {
+  if (!kEnableTreadProceduralMovement) { return; }
+  
   using namespace AudioEngine;
   using GE = AudioMetaData::GameEvent::GenericEvent;
   using GP = AudioMetaData::GameParameter::ParameterType;
@@ -259,6 +258,8 @@ void ProceduralAudioClient::UpdateTreadState(const AudioProceduralFrame& previou
 void ProceduralAudioClient::UpdateHeadState(const AudioProceduralFrame& previousFrame,
                                             const AudioProceduralFrame& currentFrame)
 {
+  if (!kEnableHeadProceduralMovement) { return; }
+  
   using namespace AudioEngine;
   using GE = AudioMetaData::GameEvent::GenericEvent;
   using GP = AudioMetaData::GameParameter::ParameterType;
@@ -321,6 +322,8 @@ void ProceduralAudioClient::UpdateHeadState(const AudioProceduralFrame& previous
 void ProceduralAudioClient::UpdateLiftState(const AudioProceduralFrame& previousFrame,
                                             const AudioProceduralFrame& currentFrame)
 {
+  if (!kEnableLiftProceduralMovement) { return; }
+  
   using namespace AudioEngine;
   using GE = AudioMetaData::GameEvent::GenericEvent;
   using GP = AudioMetaData::GameParameter::ParameterType;
