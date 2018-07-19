@@ -212,7 +212,7 @@ if (MACOSX)
   add_custom_command(
     OUTPUT ${GATEWAY_MAC_CERTS}
     COMMAND make create_certs_mac
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../tools/sdk/grpc_tools"
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/tools/sdk/grpc_tools"
     COMMENT "Creating mac certs for vic-gateway"
   )
 endif()
