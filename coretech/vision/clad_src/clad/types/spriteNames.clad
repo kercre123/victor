@@ -198,6 +198,7 @@ enum uint_8 SpriteName
   Face_Timerset_Getin_02,
   Face_Timerset_Getout_01,
   Face_Timersup_Getin_02,
+  Face_Windy01,
   FlashingZeros,
   Count
 }
@@ -395,6 +396,7 @@ enum_concept bool IsSpriteSequence[SpriteName] {
   Face_Timerset_Getin_02 = 1,
   Face_Timerset_Getout_01 = 1,
   Face_Timersup_Getin_02 = 1,
+  Face_Windy01 = 1,
   FlashingZeros = 1,
   Count = 0
 }
