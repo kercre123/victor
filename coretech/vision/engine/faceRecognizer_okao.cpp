@@ -2638,53 +2638,53 @@ namespace Vision {
     }
 
     if(serializedAlbum.empty()) {
-      PRINT_NAMED_WARNING("FaceRecognizer.SaveAlbum.EmptyAlbum",
-                          "No serialized data returned from private implementation");
+      PRINT_NAMED_INFO("FaceRecognizer.SaveAlbum.EmptyAlbum",
+                       "No serialized data returned from private implementation; removing folder");
+      Util::FileUtils::RemoveDirectory(albumName);
+      return result;
+    }
+
+    if(false == Util::FileUtils::CreateDirectory(albumName, false, true)) {
+      PRINT_NAMED_WARNING("FaceRecognizer.SaveAlbum.DirCreationFail",
+                          "Tried to create: %s", albumName.c_str());
       result = RESULT_FAIL;
     } else {
 
-      if(false == Util::FileUtils::CreateDirectory(albumName, false, true)) {
-        PRINT_NAMED_WARNING("FaceRecognizer.SaveAlbum.DirCreationFail",
-                            "Tried to create: %s", albumName.c_str());
+      const std::string dataFilename(albumName + "/data.bin");
+      std::fstream fs;
+      fs.open(dataFilename, std::ios::binary | std::ios::out);
+      if(!fs.is_open()) {
+        PRINT_NAMED_WARNING("FaceRecognizer.SaveAlbum.FileOpenFail", "Filename: %s", dataFilename.c_str());
         result = RESULT_FAIL;
       } else {
 
-        const std::string dataFilename(albumName + "/data.bin");
-        std::fstream fs;
-        fs.open(dataFilename, std::ios::binary | std::ios::out);
-        if(!fs.is_open()) {
-          PRINT_NAMED_WARNING("FaceRecognizer.SaveAlbum.FileOpenFail", "Filename: %s", dataFilename.c_str());
+        fs.write((const char*)&(serializedAlbum[0]), serializedAlbum.size());
+        fs.close();
+
+        if((fs.rdstate() & std::ios::badbit) || (fs.rdstate() & std::ios::failbit)) {
+          PRINT_NAMED_WARNING("FaceRecognizer.SaveAlbum.FileWriteFail", "Filename: %s", dataFilename.c_str());
           result = RESULT_FAIL;
         } else {
+          Json::Value json;
+          for(auto & enrollData : _enrollmentData)
+          {
+            if(false == enrollData.second.IsForThisSessionOnly())
+            {
+              Json::Value entry;
+              enrollData.second.FillJson(entry);
+              json[std::to_string(enrollData.first)] = std::move(entry);
+            }
+          }
 
-          fs.write((const char*)&(serializedAlbum[0]), serializedAlbum.size());
-          fs.close();
-
-          if((fs.rdstate() & std::ios::badbit) || (fs.rdstate() & std::ios::failbit)) {
-            PRINT_NAMED_WARNING("FaceRecognizer.SaveAlbum.FileWriteFail", "Filename: %s", dataFilename.c_str());
+          const std::string enrollDataFilename(albumName + "/enrollData.json");
+          Json::FastWriter writer;
+          fs.open(enrollDataFilename, std::ios::out);
+          if (!fs.is_open()) {
+            PRINT_NAMED_WARNING("FaceRecognizer.SaveAlbum.EnrollDataFileOpenFail", "");
             result = RESULT_FAIL;
           } else {
-            Json::Value json;
-            for(auto & enrollData : _enrollmentData)
-            {
-              if(false == enrollData.second.IsForThisSessionOnly())
-              {
-                Json::Value entry;
-                enrollData.second.FillJson(entry);
-                json[std::to_string(enrollData.first)] = std::move(entry);
-              }
-            }
-
-            const std::string enrollDataFilename(albumName + "/enrollData.json");
-            Json::FastWriter writer;
-            fs.open(enrollDataFilename, std::ios::out);
-            if (!fs.is_open()) {
-              PRINT_NAMED_WARNING("FaceRecognizer.SaveAlbum.EnrollDataFileOpenFail", "");
-              result = RESULT_FAIL;
-            } else {
-              fs << writer.write(json);
-              fs.close();
-            }
+            fs << writer.write(json);
+            fs.close();
           }
         }
       }
