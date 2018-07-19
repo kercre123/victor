@@ -26,7 +26,7 @@ Codes in this document must not change after release, they are add only.
 | 212  | Subprocess exception                  |
 | 213  | Wrong serial number                   |
 | 214  | Dev / Prod mismatch                   |
-| 215  |                                       |
+| 215  | Socket Timeout (network stall)        |
 | 216  |                                       |
 | 217  |                                       |
 | 218  |                                       |

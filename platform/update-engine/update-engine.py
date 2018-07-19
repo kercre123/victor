@@ -13,6 +13,7 @@ import tarfile
 import zlib
 import shutil
 import ConfigParser
+import socket
 from select import select
 from hashlib import sha256
 from collections import OrderedDict
@@ -721,6 +722,9 @@ if __name__ == '__main__':
             update_from_url(url)
         except zlib.error as decompressor_error:
             die(205, "Decompression error: " + str(decompressor_error))
+        except socket.timeout as timeout_error:
+            das_event("robot.ota_download_stalled")
+            die(215, "Socket Timeout: " + str(timeout_error))
         except IOError as io_error:
             die(208, "IO Error: " + str(io_error))
         except Exception as e:
