@@ -1,27 +1,30 @@
 {
   "behaviorID": "OnboardingComeHere",
-  "behaviorClass": "FindFaceAndThen",
+  "behaviorClass" : "DriveToFace",
 
+  "animTooClose": "AlreadyAtFace",
+  "animDriveOverride": "OnboardingComeHere",
+  
+  "trackFaceOnceKnown": false,     
+  "minDriveToFaceDistanceKey_mm": 200,
 
-  "alwaysDetectFaces": true,
-  "timeUntilCancelFaceLooking_s": 2.0,
-  "timeUntilCancelFaceSearch_s": 10.0,
-  "searchForFaceBehavior": "ObservingFindFaces",
-  "shouldLeaveChargerFirst": true, // should already been off the charger at this point
-  "driveOffChargerBehavior": "DriveOffChargerStraight",
+  "findFaceBehavior": "FindFaceInternal",
 
-  "behavior": "ComeHereInternal",
+  
   
   "anonymousBehaviors": [
     {
-      "behaviorName" : "ComeHereInternal",
-      "behaviorClass" : "DriveToFace",
+      "behaviorName": "FindFaceInternal",
+      "behaviorClass": "FindFaceAndThen",
 
-      "animTooClose": "AlreadyAtFace",
-      "animDriveOverride": "OnboardingComeHere",
-      
-      "trackFaceOnceKnown": false,     
-      "minDriveToFaceDistanceKey_mm": 200
+      "alwaysDetectFaces": true,
+      "timeUntilCancelFaceLooking_s": 2.0,
+      "timeUntilCancelFaceSearch_s": 10.0,
+      "searchForFaceBehavior": "ObservingFindFaces",
+      "shouldLeaveChargerFirst": true, // should already been off the charger at this point
+      "driveOffChargerBehavior": "DriveOffChargerStraight",
+
+      "exitOnceFound": true
     }
   ]
 }

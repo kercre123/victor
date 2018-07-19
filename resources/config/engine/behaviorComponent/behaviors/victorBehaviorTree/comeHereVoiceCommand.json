@@ -1,13 +1,9 @@
 {
 
   "behaviorID": "ComeHereVoiceCommand",
-  "behaviorClass": "FindFaceAndThen",
+  "behaviorClass" : "DriveToFace",
 
   "associatedActiveFeature": "ComeHere",
-
-  "respondToUserIntents" : [
-    { "type": "imperative_come" }
-  ],
 
   "wantsToBeActivatedCondition": {
     "conditionType" : "FeatureGate",
@@ -15,32 +11,30 @@
     "expected" : false
   },
 
-  "timeUntilCancelFaceLooking_s": 2.0,
-  "timeUntilCancelFaceSearch_s": 10.0,
-  "searchForFaceBehavior": "ObservingFindFaces",
-  "shouldLeaveChargerFirst": true,
-  "driveOffChargerBehavior": "DriveOffChargerFace",
-  
-  "behavior": "ComeHereInternal",
+  "animTooClose": "AlreadyAtFace",      
+  "timeUntilCancelFaceTrack_s": 5.0,
+  "minDriveToFaceDistanceKey_mm": 200,
+  "animationAfterDrive": "ComeHereSuccess",
 
+  "motionProfile": {
+    "speed_mmps": 130.0,
+    "accel_mmps2": 200.0,
+    "decel_mmps2": 100.0,
+    "isCustom": true
+  },
+
+  "findFaceBehavior": "FindFaceInternal",
   
   "anonymousBehaviors": [
     {
-      "behaviorName" : "ComeHereInternal",
-      "behaviorClass" : "DriveToFace",
-
-      "animTooClose": "AlreadyAtFace",      
-      "timeUntilCancelFaceTrack_s": 5.0,
-      "minDriveToFaceDistanceKey_mm": 200,
-      "animationAfterDrive": "ComeHereSuccess",
-
-      "motionProfile": {
-        "speed_mmps": 130.0,
-        "accel_mmps2": 200.0,
-        "decel_mmps2": 100.0,
-        "isCustom": true
-      }
-
+      "behaviorName": "FindFaceInternal",
+      "behaviorClass": "FindFaceAndThen",
+      "timeUntilCancelFaceLooking_s": 2.0,
+      "timeUntilCancelFaceSearch_s": 10.0,
+      "searchForFaceBehavior": "ObservingFindFaces",
+      "shouldLeaveChargerFirst": true,
+      "driveOffChargerBehavior": "DriveOffChargerFace",    
+      "exitOnceFound": true
     }
   ],
 

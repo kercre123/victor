@@ -5,7 +5,7 @@
  * Created: 2018-06-22
  *
  * Description: Finds a face either in the activation direction, or wherever one was last seen,
- *              and if it finds one, delegates to a followup behavior
+ *              and if it finds one, either delegates to a followup behavior or exits
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -41,6 +41,7 @@ const char* const kSearchForFaceBehaviorKey      = "searchForFaceBehavior";
 const char* const kAlwaysDetectFacesKey          = "alwaysDetectFaces";
 const char* const kBehaviorOnceFoundKey          = "behavior";
 const char* const kBehaviorIsSimpleFaceKey       = "callSetFaceOnBehavior";
+const char* const kExitOnceFoundKey              = "exitOnceFound";
   
 const char* const kDebugName = "BehaviorFindFaceAndThen";
 }
@@ -85,9 +86,15 @@ BehaviorFindFaceAndThen::BehaviorFindFaceAndThen(const Json::Value& config)
     _iConfig.timeUntilCancelSearching_s = JsonTools::ParseFloat( config, kTimeUntilCancelFaceSearchKey, kDebugName );
   }
   
-  _iConfig.behaviorOnceFoundID = JsonTools::ParseString( config, kBehaviorOnceFoundKey, kDebugName );
+  
+  _iConfig.behaviorOnceFoundID = config.get( kBehaviorOnceFoundKey, "" ).asString();
 
   _iConfig.behaviorOnceFoundIsSimpleFace = config.get(kBehaviorIsSimpleFaceKey, true).asBool();
+  _iConfig.exitOnceFound = config.get(kExitOnceFoundKey, false).asBool();
+  
+  ANKI_VERIFY( _iConfig.exitOnceFound == _iConfig.behaviorOnceFoundID.empty(),
+               "BehaviorFindFaceAndThen.Ctor.InvalidBehavior",
+               "A 'behavior' must be provided, or set 'exitOnceFound' to false" );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -116,7 +123,8 @@ void BehaviorFindFaceAndThen::GetBehaviorJsonKeys(std::set<const char*>& expecte
     kSearchForFaceBehaviorKey,
     kAlwaysDetectFacesKey,
     kBehaviorOnceFoundKey,
-    kBehaviorIsSimpleFaceKey
+    kBehaviorIsSimpleFaceKey,
+    kExitOnceFoundKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -151,7 +159,9 @@ void BehaviorFindFaceAndThen::InitBehavior()
     _iConfig.driveOffChargerBehavior = FindBehavior( _iConfig.driveOffChargerBehaviorID );
   }
 
-  _iConfig.behaviorOnceFound = FindBehavior( _iConfig.behaviorOnceFoundID );
+  if( !_iConfig.behaviorOnceFoundID.empty() ) {
+    _iConfig.behaviorOnceFound = FindBehavior( _iConfig.behaviorOnceFoundID );
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -258,7 +268,9 @@ void BehaviorFindFaceAndThen::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindFaceAndThen::OnBehaviorDeactivated()
 {
-  _dVars.targetFace.Reset();
+  if( !_iConfig.exitOnceFound ) {
+    _dVars.targetFace.Reset();
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -338,6 +350,12 @@ void BehaviorFindFaceAndThen::TransitionToSearchingForFace()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindFaceAndThen::TransitionToFollowupBehavior()
 {
+  if( _iConfig.behaviorOnceFound == nullptr ) {
+    // config requests no action
+    CancelSelf();
+    return;
+  }
+  
   SET_STATE(FollowupBehavior);
   if( _iConfig.timeUntilCancelFollowup_s >= 0.0f ) {
     _dVars.stateEndTime_s = _iConfig.timeUntilCancelFollowup_s + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
