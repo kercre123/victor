@@ -39,6 +39,7 @@ ABOOT_STAGING = os.path.join(STATUS_DIR, "aboot.img")
 OTA_PUB_KEY = "/anki/etc/ota.pub"
 OTA_ENC_PASSWORD = "/anki/etc/ota.pas"
 HTTP_BLOCK_SIZE = 1024*2  # Tuned to what seems to work best with DD_BLOCK_SIZE
+HTTP_TIMEOUT = 90 # Give up after 90 seconds on blocking operations
 DD_BLOCK_SIZE = HTTP_BLOCK_SIZE*1024
 SUPPORTED_MANIFEST_VERSIONS = ["0.9.2", "0.9.3", "0.9.4", "0.9.5", "1.0.0"]
 TRUE_SYNONYMS = ["True", "true", "on", "1"]
@@ -276,7 +277,7 @@ def open_url_stream(url):
         request = urllib2.Request(url)
         opener = urllib2.build_opener()
         opener.addheaders = opener.addheaders = [('User-Agent', 'Victor/{0:s}'.format(os_version))]
-        return opener.open(request)
+        return opener.open(request, timeout=HTTP_TIMEOUT)
     except Exception as e:
         die(203, "Failed to open URL: " + str(e))
 
