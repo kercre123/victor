@@ -46,6 +46,7 @@ enum uint_8 BEIConditionType {
   RobotTouched,
   SalientPointDetected,
   SimpleMood,
+  Stare,
   StuckOnEdge,
   TimedDedup,
   TimerInRange,

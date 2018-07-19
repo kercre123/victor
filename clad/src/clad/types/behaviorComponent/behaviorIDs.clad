@@ -186,6 +186,7 @@ enum uint_8 BehaviorID {
   Observing,
   ObservingDriveOffCharger,
   ObservingEyeContact,
+  ObservingStare,
   ObservingFailedToFindCharger,
   ObservingFindFaces,
   ObservingLookAtFaces,

@@ -156,6 +156,7 @@ namespace Cozmo {
     // IsMakingEyeContact with only return true if it finds a face that is making
     // eye contact and has a time stamp greater than seenSinceTime_ms
     bool IsMakingEyeContact(const u32 withinLast_ms) const;
+    bool IsStaring(const u32 withinLast_ms) const;
 
 
     // Get the wall times that the given face ID has been observed. This implementation returns at most 2
@@ -211,6 +212,8 @@ namespace Cozmo {
     TimeStamp_t _lastObservedFaceTimeStamp = 0;
 
     bool _previousEyeContact = false;
+    TimeStamp_t _previousTime = 0;
+    TimeStamp_t _eyeContactDuration = 0; 
     
     bool _lastEnrollmentCompleted = false;
     

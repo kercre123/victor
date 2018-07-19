@@ -61,6 +61,9 @@ namespace Cozmo {
   CONSOLE_VAR(f32, kBodyTurnSpeedThreshFace_degs,  "WasRotatingTooFast.Face.Body_deg/s",    30.f);
   CONSOLE_VAR(u8,  kNumImuDataToLookBackFace,      "WasRotatingTooFast.Face.NumToLookBack", 5);
 
+  // Time for sustained eye contact before it is marked a "stare"
+  CONSOLE_VAR(u32, kTimeToSustainEyeContactForStare_ms, "Vision.FaceWorld", 10000);
+
   static const char * const kLoggingChannelName = "FaceRecognizer";
   static const char * const kIsNamedStringDAS = "1";
   static const char * const kIsSessionOnlyStringDAS = "0";
@@ -672,8 +675,21 @@ namespace Cozmo {
       {
         _robot->GetAnimationComponent().RemoveKeepFaceAliveFocus(kKeepFaceAliveEyeContactName);
       }
+
+      if (false == currentEyeContact)
+      {
+        _eyeContactDuration = 0;
+      }
       _previousEyeContact = currentEyeContact;
     }
+    else if (true == currentEyeContact)
+    {
+      if (0 != _previousTime)
+      {
+        _eyeContactDuration += lastProcImageTime - _previousTime;
+      }
+    }
+    _previousTime = lastProcImageTime;
 
     return RESULT_OK;
   } // Update()
@@ -1069,6 +1085,20 @@ namespace Cozmo {
           return true;
         }
       }
+    }
+    return false;
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  bool FaceWorld::IsStaring(const u32 withinLast_ms) const
+  {
+    if (IsMakingEyeContact(withinLast_ms))
+    {
+      // TODO make this a constant
+      if (_eyeContactDuration > kTimeToSustainEyeContactForStare_ms)
+      {
+        return true;
+      } 
     }
     return false;
   }

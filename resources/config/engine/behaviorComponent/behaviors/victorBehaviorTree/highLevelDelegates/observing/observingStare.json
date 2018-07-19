@@ -1,0 +1,10 @@
+{
+  "behaviorClass": "AnimSequenceWithFace",
+  "behaviorID": "ObservingStare",
+
+  "wantsToBeActivatedCondition": {
+    "conditionType" : "Stare"
+  },
+
+  "animTriggers" : ["ReactToUnexpectedMovement"]
+}

@@ -45,6 +45,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotTouched.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionSimpleMood.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionStuckOnEdge.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionStare.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimedDedup.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimerInRange.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTriggerWordPending.h"
@@ -320,6 +321,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::SimpleMood:
     {
       condition = std::make_shared<ConditionSimpleMood>(config);
+      break;
+    }
+    case BEIConditionType::Stare:
+    {
+      condition = std::make_shared<ConditionStare>(config);
       break;
     }
     case BEIConditionType::TimerInRange:
