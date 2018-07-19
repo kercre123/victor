@@ -1,0 +1,61 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Vector photos</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <style>
+    body {
+      background:black;
+    }
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      margin: 20px auto 0px auto;
+      max-width: 2000px;
+    }
+
+    .tiles {
+      border: 1px solid gray;
+      margin: 0 15px 30px 15px;
+      /* flex-grow: 1; */
+      flex: 0 0 391px;
+      padding: 0;
+      height: 220px;
+    }
+  </style>
+
+
+  <!--[if lt IE 9]>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js"></script>
+  <![endif]-->
+</head>
+
+<body>
+  <div class="container">
+  </div>
+
+  <script>
+    var dir = "/persistent/photos";
+    var fileextension = ".jpg";
+    $.ajax({
+      url: dir,
+      success: function (data) {
+        for( var i=0; i<=6; ++i ) {
+          $('.container').append('<div class="tiles" style="background: url(/prdemo_stock_images/photo' + i + '.jpg); background-repeat: no-repeat; background-size: 391px 220px;"></div>');
+        }
+        $(data).find("a:contains(" + fileextension + ")").each(function () {
+          var filename = this.href.replace(window.location.host, "").replace("http://", "");
+          if( filename.indexOf('.thm') < 0 ) {
+            $('.container').append('<div class="tiles" style="background: url(' + filename + '); background-repeat: no-repeat; background-size: 391px 220px;"></div>');
+          }
+        });
+      }
+    });
+  </script>
+
+</body>
+</html>
