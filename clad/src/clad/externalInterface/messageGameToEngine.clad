@@ -223,11 +223,6 @@ message SetRobotAudioOutputSource
 message ForceDelocalizeRobot {
 }
 
-// Controls whether low level motor commands and actions are allowed to run
-message AllowedToHandleActions {
-  bool allowedToHandleActions
-}
-
 // Will restore the currently connected robot with either an automatically determined
 // backup file or from the specified one
 message RestoreRobotFromBackup {

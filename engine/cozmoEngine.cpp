@@ -16,6 +16,7 @@
 #include "engine/components/batteryComponent.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/mics/micDirectionHistory.h"
+#include "engine/components/movementComponent.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
@@ -477,12 +478,25 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::EngineLoadingDataStatus>(1.f);
     }
 
+    _updateMoveComponent = true;
     _uiWasConnected = true;
   } else if (_uiWasConnected && !_uiMsgHandler->HasDesiredNumUiDevices()) {
     LOG_INFO("CozmoEngine.Update.UIDisconnected", "UI has disconnected");
+    _updateMoveComponent = true;
     _uiWasConnected = false;
   }
 
+  // Enable/disable external motor commands depending on whether we have an external UI connection (i.e.
+  // Webots). If we are connected via webots, then we want to allow external motion commands. Else do not
+  // allow motor commands. Note: this cannot be done in the state change logic above, since robot is
+  // sometimes null when the UI connection is established.
+  Robot* robot = GetRobot();
+  if (robot != nullptr && _updateMoveComponent) {
+    const bool hasUiConnection = _uiMsgHandler->HasDesiredNumUiDevices();
+    robot->GetMoveComponent().AllowExternalMovementCommands(hasUiConnection, "ui");
+    _updateMoveComponent = false;
+  }
+  
   Result lastResult = _uiMsgHandler->Update();
   if (RESULT_OK != lastResult)
   {

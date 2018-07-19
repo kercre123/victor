@@ -75,7 +75,6 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
   auto helper = MakeAnkiEventUtil(interface, *this, _eventHandles);
   
   // Game to engine (in alphabetical order)
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::AllowedToHandleActions>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::DriveArc>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::DriveWheels>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::MoveHead>();
@@ -84,9 +83,31 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
   helper.SubscribeGameToEngine<MessageGameToEngineTag::TurnInPlaceAtSpeed>();
 }
 
-void MovementComponent::SetAllowedToHandleActions(bool allowedToHandleActions)
+  
+void MovementComponent::AllowExternalMovementCommands(const bool enable, const std::string& requester)
 {
-  _isAllowedToHandleActions = allowedToHandleActions;
+  auto& requesters = _allowExternalMovementCommandNames;
+  if (enable) {
+    requesters.insert(requester);
+    SetAllowExternalMovementCommands(true);
+  } else {
+    requesters.erase(requester);
+    if (requesters.empty()) {
+      SetAllowExternalMovementCommands(false);
+    }
+  }
+}
+
+
+void MovementComponent::SetAllowExternalMovementCommands(const bool enable)
+{
+  if (enable != _allowExternalMovementCommands) {
+    LOG_INFO("MovementComponent.SetAllowExternalMovementCommands.AllowedToHandleActions",
+             "Setting _allowExternalMovementCommands to %s",
+             enable ? "true" : "false");
+    
+    _allowExternalMovementCommands = enable;
+  }
 }
 
 void MovementComponent::OnRobotDelocalized()
@@ -429,18 +450,13 @@ void MovementComponent::RemoveEyeShiftWhenHeadMoves(const std::string& name, Tim
   _eyeShiftToRemove[name].headWasMoving = _isHeadMoving;
 }
 
-  
-template<>
-void MovementComponent::HandleMessage(const ExternalInterface::AllowedToHandleActions& msg)
-{
-  _isAllowedToHandleActions = msg.allowedToHandleActions;
-}
 
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
 {
-  if (!_isAllowedToHandleActions) {
-    LOG_ERROR("MovementComponent.EventHandler.DriveWheels.SDKBehaviorNotActive", "Ignoring ExternalInterface::DriveWheels while SDK behavior is not active.");
+  if (!_allowExternalMovementCommands) {
+    LOG_WARNING("MovementComponent.EventHandler.DriveWheels.ExternalMovementCommandsNotAllowed",
+              "Ignoring ExternalInterface::DriveWheels since external motor commands are not allowed.");
   }
   else if (!_drivingWheels && AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK)) {
     LOG_INFO("MovementComponent.EventHandler.DriveWheels.WheelsLocked",
@@ -459,8 +475,9 @@ void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::TurnInPlaceAtSpeed& msg)
 {
-  if (!_isAllowedToHandleActions) {
-    LOG_ERROR("MovementComponent.EventHandler.DriveWheels.SDKBehaviorNotActive", "Ignoring ExternalInterface::TurnInPlaceAtSpeed while SDK behavior is not active.");
+  if (!_allowExternalMovementCommands) {
+    LOG_WARNING("MovementComponent.EventHandler.TurnInPlaceAtSpeed.ExternalMovementCommandsNotAllowed",
+              "Ignoring ExternalInterface::TurnInPlaceAtSpeed since external motor commands are not allowed.");
   }
   else if (!_drivingWheels && AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK)) {
     LOG_INFO("MovementComponent.EventHandler.TurnInPlaceAtSpeed.WheelsLocked",
@@ -485,8 +502,9 @@ void MovementComponent::HandleMessage(const ExternalInterface::TurnInPlaceAtSpee
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::MoveHead& msg)
 {
-  if (!_isAllowedToHandleActions) {
-    LOG_ERROR("MovementComponent.EventHandler.DriveWheels.SDKBehaviorNotActive", "Ignoring ExternalInterface::MoveHead while SDK behavior is not active.");
+  if (!_allowExternalMovementCommands) {
+    LOG_WARNING("MovementComponent.EventHandler.MoveHead.ExternalMovementCommandsNotAllowed",
+              "Ignoring ExternalInterface::MoveHead since external motor commands are not allowed.");
   }
   else if (!_drivingHead && AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK)) {
     LOG_INFO("MovementComponent.EventHandler.MoveHead.HeadLocked",
@@ -504,8 +522,9 @@ void MovementComponent::HandleMessage(const ExternalInterface::MoveHead& msg)
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::MoveLift& msg)
 {
-  if (!_isAllowedToHandleActions) {
-    LOG_ERROR("MovementComponent.EventHandler.DriveWheels.SDKBehaviorNotActive", "Ignoring ExternalInterface::MoveLift while SDK behavior is not active.");
+  if (!_allowExternalMovementCommands) {
+    LOG_WARNING("MovementComponent.EventHandler.MoveLift.ExternalMovementCommandsNotAllowed",
+              "Ignoring ExternalInterface::MoveLift since external motor commands are not allowed.");
   }
   else if (!_drivingLift && AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK)) {
     LOG_INFO("MovementComponent.EventHandler.MoveLift.LiftLocked",
@@ -523,8 +542,9 @@ void MovementComponent::HandleMessage(const ExternalInterface::MoveLift& msg)
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::DriveArc& msg)
 {
-  if (!_isAllowedToHandleActions) {
-    LOG_ERROR("MovementComponent.EventHandler.DriveWheels.SDKBehaviorNotActive", "Ignoring ExternalInterface::DriveArc while SDK behavior is not active.");
+  if (!_allowExternalMovementCommands) {
+    LOG_WARNING("MovementComponent.EventHandler.DriveArc.ExternalMovementCommandsNotAllowed",
+              "Ignoring ExternalInterface::DriveArc since external motor commands are not allowed.");
   }
   else if (!_drivingWheels && AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK)) {
     LOG_INFO("MovementComponent.EventHandler.DriveArc.WheelsLocked",
@@ -544,8 +564,9 @@ void MovementComponent::HandleMessage(const ExternalInterface::DriveArc& msg)
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::StopAllMotors& msg)
 {
-  if (!_isAllowedToHandleActions) {
-    LOG_ERROR("MovementComponent.EventHandler.DriveWheels.SDKBehaviorNotActive", "Ignoring ExternalInterface::StopAllMotors while SDK behavior is not active.");
+  if (!_allowExternalMovementCommands) {
+    LOG_WARNING("MovementComponent.EventHandler.StopAllMotors.ExternalMovementCommandsNotAllowed",
+              "Ignoring ExternalInterface::StopAllMotors since external motor commands are not allowed.");
     return;
   }
 

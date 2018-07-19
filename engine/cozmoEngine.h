@@ -129,6 +129,7 @@ protected:
   bool                                                      _isGamePaused = false;
   bool                                                      _hasRunFirstUpdate = false;
   bool                                                      _uiWasConnected = false;
+  bool                                                      _updateMoveComponent = false;
 
   virtual Result InitInternal();
 

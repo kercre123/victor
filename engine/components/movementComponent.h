@@ -215,7 +215,10 @@ public:
   
   u8 GetMaxUnexpectedMovementCount() const { return UnexpectedMovement::kMaxUnexpectedMovementCount; }
 
-  void SetAllowedToHandleActions(bool allowedToHandleActions);
+  // Call this if you would like to allow 'external' movement commands (e.g. raw DriveWheels command). These should
+  // really only be allowed for things like SDK and Webots. The requester name is used to track where the request came
+  // from so that commands can be dis-allowed when no one needs them anymore.
+  void AllowExternalMovementCommands(const bool enable, const std::string& requester);
   
   // Enable/disable detection of rotation without motors. This must be explicitly enabled since it
   // differs from the most common use case of this component.
@@ -250,6 +253,8 @@ private:
   // in time
   u8 GetTracksLockedAtRelativeStreamTime(const TimeStamp_t relativeStreamTime_ms) const;
   
+  void SetAllowExternalMovementCommands(const bool enable);
+  
   Robot* _robot = nullptr;
   
   MotorActionID _lastMotorActionID = 0;
@@ -260,9 +265,13 @@ private:
   bool _areWheelsMoving = false;
   bool _enableRotatedWithoutMotors = false;
 
-  // If false, actions only run when an instance of BehaviorSDKInterface is activated.
-  bool _isAllowedToHandleActions = false;
+  // True if we are currently allowed to handle raw motion commands from the outside world
+  // (e.g. while SDK or Webots is active)
+  bool _allowExternalMovementCommands = false;
   
+  // Keep track of who requested to allow external movement commands (e.g. "sdk" or "ui")
+  std::set<std::string> _allowExternalMovementCommandNames;
+ 
   std::list<Signal::SmartHandle> _eventHandles;
   
   // Object being tracked

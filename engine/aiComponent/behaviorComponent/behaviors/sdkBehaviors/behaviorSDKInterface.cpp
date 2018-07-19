@@ -23,7 +23,6 @@
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalMessageRouter.h"
 #include "engine/externalInterface/gatewayInterface.h"
-#include "engine/robotEventHandler.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -115,13 +114,10 @@ void BehaviorSDKInterface::OnBehaviorActivated()
   // reset dynamic variables
   _dVars = DynamicVariables();
 
-  // Permit actions and low level motor control to run since SDK behavior is now active.
   auto& robotInfo = GetBEI().GetRobotInfo();
-  auto& robotEventHandler = robotInfo.GetRobotEventHandler();  
-  robotEventHandler.SetAllowedToHandleActions(true);
-
-  auto& movementComponent = robotInfo.GetMoveComponent();
-  movementComponent.SetAllowedToHandleActions(true);
+  
+  // Permit low level movement commands/actions to run since SDK behavior is now active.
+  SetAllowExternalMovementCommands(true);
 
   // Tell the robot component that the SDK has been activated
   auto& sdkComponent = robotInfo.GetSDKComponent();
@@ -136,12 +132,8 @@ void BehaviorSDKInterface::OnBehaviorDeactivated()
   auto& sdkComponent = robotInfo.GetSDKComponent();
   sdkComponent.SDKBehaviorActivation(false);
 
-  // Do not permit actions and low level motor control to run since SDK behavior is no longer active.
-  auto& robotEventHandler = robotInfo.GetRobotEventHandler();
-  robotEventHandler.SetAllowedToHandleActions(false);
-
-  auto& movementComponent = robotInfo.GetMoveComponent();
-  movementComponent.SetAllowedToHandleActions(false);
+  // Do not permit low level movement commands/actions to run since SDK behavior is no longer active.
+  SetAllowExternalMovementCommands(false);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -165,7 +157,7 @@ void BehaviorSDKInterface::BehaviorUpdate()
 }
 
 void BehaviorSDKInterface::HandleDriveOffChargerComplete() {
-  SetAllowedToRunActions(true);
+  SetAllowExternalMovementCommands(true);
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
     auto* driveOffChargerResult = new external_interface::DriveOffChargerResult;
@@ -175,7 +167,7 @@ void BehaviorSDKInterface::HandleDriveOffChargerComplete() {
 }  
 
 void BehaviorSDKInterface::HandleDriveOnChargerComplete() {
-  SetAllowedToRunActions(true);
+  SetAllowExternalMovementCommands(true);
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
     auto* driveOnChargerResult = new external_interface::DriveOnChargerResult;
@@ -257,16 +249,9 @@ void BehaviorSDKInterface::HandleWhileActivated(const EngineToGameEvent& event)
   }
 }
 
-// Use this to prevent (or allow) motor controls and actions from running in
-// robotEventHandler and movementComponent. We only want to allow these when
-// the SDK behavior is activated, or for testing.
-//
-// One time that we want to disable these in BehaviorSDKInterface is when the
-// SDK behavior is delegating to another behavior.
-void BehaviorSDKInterface::SetAllowedToRunActions(bool allowedtoRunActions) {
+void BehaviorSDKInterface::SetAllowExternalMovementCommands(const bool allow) {
   auto& robotInfo = GetBEI().GetRobotInfo();
-  robotInfo.GetMoveComponent().SetAllowedToHandleActions(allowedtoRunActions);
-  robotInfo.GetRobotEventHandler().SetAllowedToHandleActions(allowedtoRunActions);
+  robotInfo.GetMoveComponent().AllowExternalMovementCommands(allow, GetDebugLabel());
 }
 
 void BehaviorSDKInterface::HandleWhileActivated(const AppToEngineEvent& event) {
@@ -281,7 +266,7 @@ void BehaviorSDKInterface::HandleWhileActivated(const AppToEngineEvent& event) {
 void BehaviorSDKInterface::DriveOffChargerRequest(const external_interface::DriveOffChargerRequest& driveOffChargerRequest) {
   if (_iConfig.driveOffChargerBehavior->WantsToBeActivated()) {
     if (DelegateIfInControl(_iConfig.driveOffChargerBehavior.get(), &BehaviorSDKInterface::HandleDriveOffChargerComplete)) {
-      SetAllowedToRunActions(false);
+      SetAllowExternalMovementCommands(false);
       return;
     }
   }
@@ -299,7 +284,7 @@ void BehaviorSDKInterface::DriveOffChargerRequest(const external_interface::Driv
 void BehaviorSDKInterface::DriveOnChargerRequest(const external_interface::DriveOnChargerRequest& driveOnChargerRequest) {
   if (_iConfig.goHomeBehavior->WantsToBeActivated()) {
     if (DelegateIfInControl(_iConfig.goHomeBehavior.get(), &BehaviorSDKInterface::HandleDriveOnChargerComplete)) {
-      SetAllowedToRunActions(false);
+      SetAllowExternalMovementCommands(false);
       return;
     }
   }

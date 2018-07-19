@@ -1622,9 +1622,6 @@ namespace Cozmo {
   
   void WebotsKeyboardController::QuitKeyboardController()
   {
-    SendMessage(ExternalInterface::MessageGameToEngine(
-      ExternalInterface::AllowedToHandleActions(false)));
-
     _shouldQuit = true;
   }
   
@@ -2550,8 +2547,6 @@ namespace Cozmo {
       StartFreeplayMode();
     }
     
-    SendMessage(ExternalInterface::MessageGameToEngine(
-      ExternalInterface::AllowedToHandleActions(true)));
     SendSetRobotVolume(0);
   }
 
