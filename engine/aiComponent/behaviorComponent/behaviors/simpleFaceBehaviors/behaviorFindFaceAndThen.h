@@ -5,7 +5,7 @@
  * Created: 2018-06-22
  *
  * Description: Finds a face either in the activation direction, or wherever one was last seen,
- *              and if it finds one, delegates to a followup behavior
+ *              and if it finds one, either delegates to a followup behavior or exits
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -24,6 +24,10 @@ class ISimpleFaceBehavior;
 
 class BehaviorFindFaceAndThen : public ICozmoBehavior
 {
+public:
+  // Returns the face found while running this behavior. It is reset upon activation, and persists after deactivation.
+  SmartFaceID GetFoundFace() const { return _dVars.targetFace; }
+  
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
@@ -77,6 +81,7 @@ private:
     std::string behaviorOnceFoundID;
     ICozmoBehaviorPtr behaviorOnceFound;
     bool behaviorOnceFoundIsSimpleFace;
+    bool exitOnceFound;
   };
 
   struct DynamicVariables {
