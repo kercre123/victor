@@ -277,7 +277,7 @@ def open_url_stream(url):
                 victor_version)
         request = urllib2.Request(url)
         opener = urllib2.build_opener()
-        opener.addheaders = opener.addheaders = [('User-Agent', 'Victor/{0:s}'.format(os_version))]
+        opener.addheaders = [('User-Agent', 'Victor-OTA/{0:s}'.format(os_version))]
         return opener.open(request, timeout=HTTP_TIMEOUT)
     except Exception as e:
         die(203, "Failed to open URL: " + str(e))
