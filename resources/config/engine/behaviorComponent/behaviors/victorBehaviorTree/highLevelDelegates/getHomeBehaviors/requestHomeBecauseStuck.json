@@ -2,6 +2,10 @@
   "behaviorClass": "RequestToGoHome",
   "behaviorID": "RequestHomeBecauseStuck",
   
+  "wantsToCancelSelfCondition": {
+    "conditionType": "OnCharger"
+  },
+  
   "normal" : {
     "numRequests"         : 0,
     "requestAnimTrigger"  : "ChargerDockingRequest",
