@@ -99,6 +99,8 @@ void Daemon::Christen() {
   RtsKeys savedSession = SavedSessionManager::LoadRtsKeys();
   bool hasName = false;
 
+  // Check to see if an error occured when 
+  // loading RtsKeys (err if version = -1)
   if(savedSession.keys.version != -1) {
     // if saved session file is valid, retrieve saved hasName field
     hasName = savedSession.keys.id.hasName;

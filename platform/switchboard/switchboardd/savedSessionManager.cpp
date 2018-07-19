@@ -104,8 +104,9 @@ void SavedSessionManager::SaveRtsKeys(RtsKeys& saveData) {
   fout.write((char*)&(saveData.keys), sizeof(saveData.keys));
 
   // If somehow we hit max clients, start removing from the beginning
-  while(saveData.clients.size() > kMaxNumberClients) {
-    saveData.clients.erase(saveData.clients.begin());
+  if(saveData.clients.size() > kMaxNumberClients) {
+    saveData.clients.erase(saveData.clients.begin(), 
+      saveData.clients.begin() + (saveData.clients.size() - kMaxNumberClients));
   }
 
   for(int i = 0; i < saveData.clients.size(); i++) {
