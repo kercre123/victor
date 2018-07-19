@@ -63,6 +63,11 @@ static void mcu_swd_init_(void) {
   int e, attempts=0;
   do {
     try{ e=swd_stm32_init(); } catch(int err) { e=err; }
+    //if( e != ERROR_OK ) { //power cycle and reset swd driver
+    //  mcu_power_down_();
+    //  Timer::delayMs(attempts<2 ? 10 : 250); //extra time for discharge
+    //  mcu_power_up_();
+    //}
   } while( e != ERROR_OK && ++attempts < 5 );
   
   ConsolePrintf("swd init e=%i, %i attempts\n", e, attempts);
