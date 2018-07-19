@@ -35,6 +35,28 @@ cd src/victor
 git clone --recursive git@github.com:anki/victor.git
 ```
 
+Note: If while cloning and you get the following error:
+
+```
+Error downloading object: lib/crash-reporting-vicos/Breakpad/bin/armeabi-v7a/minidump_stackwalk (9254671): Smudge error: Error downloading lib/crash-reporting-vicos/Breakpad/bin/armeabi-v7a/minidump_stackwalk (92546712976a7f51bfe8b0c850e27b80c142893ffb9d3c57390d63101bacd4e7): batch response: Resource protected by organization SAML enforcement. Use a personal token that has been granted access to this organization.
+```
+Follow these steps to add a Personal Access Token to fix this error:
+1. Go to Github.
+
+1. Go to Settings -> Developer settings -> Personal access tokens.
+
+1. Generate a Personal access token.
+
+1. Give yourself repo permissions and click on the Generate Token button at the bottom.
+
+1. Copy and store the newly generated Personal Access Token in a local file because the string won't ever appear again.
+
+1. Click the grey SSO button on the left of the Delete button. This will take you through the Anki login portal. If successful, the SSO button will turn green.
+
+1. In the terminal, enter in the command `git remote set-url origin https://<Github Username>:<Personal Access Token>@github.com/anki/victor.git` 
+
+1. Try cloning again.
+
 ### Submodules
 Update the submodules:
 
