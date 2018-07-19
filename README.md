@@ -35,7 +35,7 @@ cd src/victor
 git clone --recursive git@github.com:anki/victor.git
 ```
 
-Note: If while cloning and you get the following error:
+Note: If you see an error that "resource protected by organization SAML enforcement" or something similar while cloning, for example
 
 ```
 Error downloading object: lib/crash-reporting-vicos/Breakpad/bin/armeabi-v7a/minidump_stackwalk (9254671): Smudge error: Error downloading lib/crash-reporting-vicos/Breakpad/bin/armeabi-v7a/minidump_stackwalk (92546712976a7f51bfe8b0c850e27b80c142893ffb9d3c57390d63101bacd4e7): batch response: Resource protected by organization SAML enforcement. Use a personal token that has been granted access to this organization.
