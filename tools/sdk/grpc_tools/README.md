@@ -8,32 +8,21 @@ For first time setup you will need to do the following:
 1. Set `ANKI_ROBOT_HOST` to point at the ip of your robot
 2. Generate python files from the `.proto` file
 
-```bash
-> make
-```
+   ```bash
+   > make
+   ```
 3. Make and install keys on your robot for your ip
 
-```bash
-> make create_certs
-```
+   ```bash
+   > make create_certs
+   ```
 
-## Building `vic-gateway`
+## Testing `vic-gateway`
 
-This is already built into the cmake files, and will build when you run the cmake build.
-
-## Running `vic-gateway`
-
-In a free terminal, run
-```bash
-> make gateway
-```
-And, in another terminal, capture the logs with
+You can capture logs with 
 ```bash
 > victor_log | grep vic-gateway
 ```
-Use Ctrl+C to exit
-
-## Testing `vic-gateway`
 
 To test python, run the scripts inside `tools/sdk/vector-sdk/tests`.
 Note: They will require an ip and the path to the trust.cert file for your robot.
@@ -46,24 +35,20 @@ Soon™, these curl tests will be replaced by the chewie app.
 
 ## Running `vic-gateway` on mac (with webots)
 
-vic-gateway builds on mac and can be used with webots, but isn't automatically launched. To use it with a
-simulated robot in webots (on mac), do the following:
+`vic-gateway` is built for mac as part of the usual victor build, and launches automatically when a webots sim is started.
 
 1. Do a normal mac build (` ./project/victor/build-victor.sh -p mac -c Debug -f`)
-2. `> make create_certs_mac`
-3. Launch a webots sim world (like `victor/simulator/worlds/victorObservingDemo.wbt`)
-4. From the victor root directory, in another terminal, run `_build/mac/Debug/bin/vic-gateway`
+1. Launch a webots sim world (like `victor/simulator/worlds/victorObservingDemo.wbt`)
+1. You can run direct curl commands similar to those found in the `Makefile`, e.g.:
 
-You may have to click "allow" on an OS popup to allow listening. After this is done, you can run direct curl commands similar to those found in the `Makefile`, e.g.:
+   ``` bash
+   > curl --cacert trust.cert -X POST https://localhost:8443/v1/event_stream -d '{}'
+   ```
 
-``` bash
-> curl --cacert trust.cert -X POST https://localhost:8443/v1/event_stream -d '{}'
-```
+   All the curl tests should work as well using the WEBOTS=1 flag in make
 
-All the curl tests should work as well using the WEBOTS=1 flag in make
+   ```bash
+   > make test_ping_pong WEBOTS=1
+   ```
 
-```bash
-> make test_ping_pong WEBOTS=1
-```
-
-Note that you need to use localhost as the ip and 8443 as the port (OS X gets angry if you try to listen on 443)
+   Note that you need to use localhost as the ip and 8443 as the port (OS X gets angry if you try to listen on 443)
