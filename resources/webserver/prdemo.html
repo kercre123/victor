@@ -23,6 +23,7 @@
     $(document).ready(function() {
         $('#btn_vector_stop').click(ButtonHandler_StopVector);
         $('#btn_vector_restart').click(ButtonHandler_RestartVector);
+        $('#btn_vector_restart_robot').click(ButtonHandler_RestartRobot);
         $('#disp_stop_message').hide();
         $('#btn_webviz_mic_data').click(ButtonHandler_WebVizMicData);
         $('#btn_webviz_nav_map').click(ButtonHandler_WebVizNavMap);
@@ -102,6 +103,7 @@
       ButtonHandler_ClearWebViz();
       $('#btn_vector_stop').hide();
       $('#btn_vector_restart').hide();
+      $('#btn_vector_restart_robot').hide();
       $('#btn_webviz_mic_data').hide();
       $('#btn_webviz_nav_map').hide();
       $('#btn_webviz_stim_level').hide();
@@ -111,7 +113,7 @@
 
     function ButtonHandler_StopVector() {
       StartConfirmDialog("", "Stop Vector:", function() {
-        var msg = 'Shutting Vector down; this webpage will no longer be active. You must physicallly restart Vector, then refresh this page after a few seconds.';
+        var msg = 'Shutting Vector down; this webpage will no longer be active. You must physically restart Vector, then refresh this page after a few seconds.';
         $('#disp_stop_message').html(msg);
         $('#disp_stop_message').show();
         GoingAwayNow();
@@ -121,11 +123,21 @@
 
     function ButtonHandler_RestartVector() {
       StartConfirmDialog("", "Restart Vector:", function() {
-        var msg = 'Restarting Vector.  After a few seconds, refresh this page.';
+        var msg = 'Restarting Vector processes.  After a few seconds, refresh this page.';
         $('#disp_stop_message').html(msg);
         $('#disp_stop_message').show();
         GoingAwayNow();
         $.post('/systemctl?proc=anki-robot.target&restart', function(data) {});
+      });
+    }
+
+    function ButtonHandler_RestartRobot() {
+      StartConfirmDialog("", "Restart Robot:", function() {
+        var msg = 'Restarting robot.  After several seconds, place robot on charger, and after several more seconds, refresh this page.';
+        $('#disp_stop_message').html(msg);
+        $('#disp_stop_message').show();
+        GoingAwayNow();
+        $.post('/systemctl?proc=&reboot', function(data) {});
       });
     }
 
@@ -180,7 +192,8 @@
       <hr>
       <br>
       <button id='btn_vector_stop' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Stop Vector</button>
-      <button id='btn_vector_restart' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Restart Vector</button>
+      <button id='btn_vector_restart' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Restart Vector Processes</button>
+      <button id='btn_vector_restart_robot' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Restart Robot</button>
       <br><br>
       <div id='disp_stop_message' style='color:darksalmon;'></div>
     </div>
