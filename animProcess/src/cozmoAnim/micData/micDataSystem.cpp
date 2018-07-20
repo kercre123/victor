@@ -11,6 +11,8 @@
 *
 */
 
+#include "coretech/messaging/shared/LocalStreamingClient.h"
+#include "coretech/messaging/shared/LocalStreamingServer.h"
 #include "coretech/messaging/shared/LocalUdpServer.h"
 
 #include "cozmoAnim/animContext.h"
@@ -113,6 +115,33 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
               "MicDataSystem.Constructor.UdpStartListening",
               "Failed to start listening on socket %s",
               sockName.c_str());
+
+  auto streamingServer = LocalStreamingServer();
+  const std::string& testingSocketFile = "testStreamingFile";
+  const bool streamingServerSuccess = streamingServer.StartListening(testingSocketFile);
+  ANKI_VERIFY(streamingServerSuccess,
+              "MicDataSystem.Constructor.CloudIPCFailure",
+              "Failed to start listening on socket %s",
+              sockName.c_str());
+
+
+
+  auto streamingClient = LocalStreamingClient();
+  streamingClient.Connect(testingSocketFile);
+
+  char buffer[100];
+  auto numReceived = streamingServer.Recv(buffer, 100);
+  PRINT_NAMED_WARNING("MicDataSystem.ReceivedOnEmptyStreamingSocket",
+                      "%zd bytes", numReceived);
+
+  streamingClient.Send("hello world", 12);
+  
+  numReceived = streamingServer.Recv(buffer, 100);
+  PRINT_NAMED_WARNING("MicDataSystem.ReceivedOnEmptyStreamingSocket",
+                      "%zd bytes", numReceived);
+
+  streamingClient.Disconnect();
+  streamingServer.StopListening();
 }
 
 void MicDataSystem::Init(const RobotDataLoader& dataLoader)
