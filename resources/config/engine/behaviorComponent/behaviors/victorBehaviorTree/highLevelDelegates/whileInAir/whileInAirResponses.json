@@ -2,6 +2,12 @@
   "behaviorID" : "WhileInAirResponses",
   "behaviorClass" : "DispatcherStrictPriority",
 
+  "wantsToBeActivatedCondition":  {
+    "conditionType": "FeatureGate",
+    "feature": "PRDemo",
+    "expected": false
+  },
+
   "interruptActiveBehavior": false,
 
   "behaviors": [

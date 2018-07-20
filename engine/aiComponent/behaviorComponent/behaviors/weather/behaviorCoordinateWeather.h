@@ -21,7 +21,7 @@ namespace Anki {
 namespace Cozmo {
 
 // forward declaration
-enum class BehaviorID : uint8_t;
+enum class BehaviorID : uint16_t;
 
 class BehaviorCoordinateWeather : public ICozmoBehavior
 {

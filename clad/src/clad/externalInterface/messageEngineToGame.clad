@@ -822,7 +822,7 @@ message BehaviorTransition{
 }
 
 message RespondAllBehaviorsList{
-  //BehaviorID behaviors[uint_8]
+  //BehaviorID behaviors[uint_16]
 }
 
 
@@ -904,7 +904,7 @@ enum uint_8 BehaviorStackState {
 } 
 message AudioBehaviorStackUpdate {
   BehaviorStackState state,
-  BehaviorID branchPath[uint_8],
+  BehaviorID branchPath[uint_16],
 }
 
 message ResponseLocale {
