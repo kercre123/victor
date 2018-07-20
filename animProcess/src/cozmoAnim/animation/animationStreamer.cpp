@@ -999,6 +999,7 @@ namespace Cozmo {
       // If we get to KeepFaceAlive with this flag set, we'll stream neutral face for safety.
       _wasAnimationInterruptedWithNothing = true;
     }
+    _relativeStreamTime_ms = 0;
     _expectingCompositeImage = false;
   } // Abort()
 
