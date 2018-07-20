@@ -389,6 +389,9 @@ namespace Cozmo {
 #endif // ANKI_DEV_CHEATS
 
   CONSOLE_VAR(bool, kShouldDisplayPlaybackTime, "AnimationStreamer", false);
+    
+  // Disable streaming of backpack lights keyframes by default
+  CONSOLE_VAR(bool, kEnableBackpackLightsTrack, "AnimationStreamer", false);
 
   } // namespace
 
@@ -1058,10 +1061,15 @@ namespace Cozmo {
     if(msg != nullptr) {
       if (!IsTrackLocked(_lockedTracks, (u8)track)) {
         switch(track) {
+          case AnimTrackFlag::BACKPACK_LIGHTS_TRACK:
+          {
+            if (!kEnableBackpackLightsTrack) {
+              break;
+            } // else fall through
+          }
           case AnimTrackFlag::HEAD_TRACK:
           case AnimTrackFlag::LIFT_TRACK:
           case AnimTrackFlag::BODY_TRACK:
-          case AnimTrackFlag::BACKPACK_LIGHTS_TRACK:
             res = AnimProcessMessages::SendAnimToRobot(*msg);
             _tracksInUse |= (u8)track;
             break;
