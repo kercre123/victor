@@ -73,6 +73,7 @@ Result ProtoMessageHandler::Init(CozmoContext* context, const Json::Value& confi
   auto versionStateRequestCallback = std::bind(&RobotExternalRequestComponent::GetVersionState, externalRequestComponent, std::placeholders::_1);
   auto networkStateRequestCallback = std::bind(&RobotExternalRequestComponent::GetNetworkState, externalRequestComponent, std::placeholders::_1);
   auto batteryStateRequestCallback = std::bind(&RobotExternalRequestComponent::GetBatteryState, externalRequestComponent, std::placeholders::_1);
+  auto sayTextCallback = std::bind(&RobotExternalRequestComponent::SayText, externalRequestComponent, std::placeholders::_1);
 
   // Subscribe to desired simple events
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kPing, commonCallback)); // TODO: remove this once more examples are written
@@ -81,6 +82,8 @@ Result ProtoMessageHandler::Init(CozmoContext* context, const Json::Value& confi
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kVersionStateRequest, versionStateRequestCallback));
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kNetworkStateRequest, networkStateRequestCallback));
 
+  _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kSayTextRequest, sayTextCallback));
+  
   return RESULT_OK;
 }
 

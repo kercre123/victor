@@ -323,6 +323,13 @@ MESSAGES_TO_TEST = [
                                              protocol.ResultStatus(description="Message sent to engine"),
                                              ["network_stats"])),
 
+    # SayText message
+    (client.ExternalInterfaceServicer.SayText,
+     protocol.SayTextRequest(text="hello", use_vector_voice=True),
+     TestResultIsTypeWithStatusAndFieldNames(protocol.SayTextResponse,
+                                             protocol.ResultStatus(description="Message sent to engine"),
+                                             ["state"])),
+
     # NOTE: Add additional messages here
 ]
 

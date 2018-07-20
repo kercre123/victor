@@ -120,6 +120,11 @@ message GatewayWrapper {
     VersionStateResponse            version_state_response = 113;
     NetworkStateRequest             network_state_request = 114;
     NetworkStateResponse            network_state_response = 115;
+
+    // ------------ text-to-speech pairs ------------
+    SayTextRequest                say_text_request = 120;
+    SayTextResponse               say_text_response = 121;
+
     // (when adding new categories, please create gaps between field numbers)
     // ------------  -------------------------
   }

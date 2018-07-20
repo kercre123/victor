@@ -11,15 +11,11 @@
  **/
 
 #include "engine/buildVersion.h"
-#include "engine/cozmoContext.h"
 #include "engine/components/robotExternalRequestComponent.h"
-#include "engine/cozmoAPI/comms/protoMessageHandler.h"
 #include "engine/components/batteryComponent.h"
-#include "engine/robot.h"
 #include "engine/robotManager.h"
 
 #include "osState/osState.h"
-#include "proto/external_interface/shared.pb.h"
 #include "util/transport/connectionStats.h"
 
 namespace Anki {
@@ -36,7 +32,7 @@ namespace Cozmo {
 	}
 
 	void RobotExternalRequestComponent::GetVersionState(const AnkiEvent<external_interface::GatewayWrapper>& event) {
-		external_interface::VersionStateResponse* response = new external_interface::VersionStateResponse{NULL, OSState::getInstance()->GetOSBuildVersion(),
+		external_interface::VersionStateResponse* response = new external_interface::VersionStateResponse{nullptr, OSState::getInstance()->GetOSBuildVersion(),
 	                                                                                                    	kBuildVersion};
 	  	external_interface::GatewayWrapper wrapper;
   		wrapper.set_allocated_version_state_response(response);
@@ -58,7 +54,7 @@ namespace Cozmo {
 		                                                                                    Util::gNetStatAQueuedAvg_ms,
 		                                                                                    Util::gNetStatBQueuedMin_ms,
 		                                                                                    Util::gNetStatCQueuedMax_ms};
-		external_interface::NetworkStateResponse* response = new external_interface::NetworkStateResponse{NULL, networkStats};
+		external_interface::NetworkStateResponse* response = new external_interface::NetworkStateResponse{nullptr, networkStats};
 		external_interface::GatewayWrapper wrapper;
   		wrapper.set_allocated_network_state_response(response);
   		
@@ -71,6 +67,33 @@ namespace Cozmo {
 		auto& batteryComponent = robot->GetBatteryComponent();
 		external_interface::GatewayWrapper wrapper = batteryComponent.GetBatteryState(event.GetData().battery_state_request());
   		robot->GetGatewayInterface()->Broadcast(wrapper);
+	}
+
+	void RobotExternalRequestComponent::SayText(const AnkiEvent<external_interface::GatewayWrapper>& event) {
+	  Robot* robot = _context->GetRobotManager()->GetRobot();
+	  external_interface::SayTextRequest request = event.GetData().say_text_request();
+	  AudioMetaData::SwitchState::Robot_Vic_External_Processing processingStyle;
+	  uint8_t utteranceID;
+	  UtteranceState utteranceState;
+
+	  if (request.use_vector_voice()) {
+	  	processingStyle = AudioMetaData::SwitchState::Robot_Vic_External_Processing::Default_Processed;
+	  }
+	  else {
+	  	processingStyle = AudioMetaData::SwitchState::Robot_Vic_External_Processing::Unprocessed;
+	  }
+	  
+	  utteranceID = robot->GetTextToSpeechCoordinator().CreateUtterance(request.text(), 
+	                													UtteranceTriggerType::Immediate, 
+	                													processingStyle,
+	                													request.duration_scalar());
+	  
+	  utteranceState = robot->GetTextToSpeechCoordinator().GetUtteranceState(utteranceID);
+	  external_interface::SayTextResponse* response = new external_interface::SayTextResponse{nullptr,
+	  																						(external_interface::SayTextResponse::UtteranceState)utteranceState};
+	  external_interface::GatewayWrapper wrapper;
+	  wrapper.set_allocated_say_text_response(response);
+	  robot->GetGatewayInterface()->Broadcast(wrapper);
 	}
 
 } // Cozmo namespace

@@ -773,3 +773,22 @@ message NetworkStateResponse {
   NetworkStats network_stats = 2;
 }
 
+message SayTextRequest {
+  string text = 1;
+  bool use_vector_voice = 2;
+  float duration_scalar = 3;
+}
+
+message SayTextResponse {
+  enum UtteranceState
+  {
+    INVALID = 0;
+    GENERATING = 1;
+    READY = 2;
+    PLAYING = 3;
+    FINISHED = 4;
+  }
+  ResultStatus status = 1;
+  UtteranceState state = 2;
+}
+

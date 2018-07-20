@@ -1566,3 +1566,23 @@ func (m *rpcService) NetworkState(ctx context.Context, in *extint.NetworkStateRe
 	payload.GetNetworkStateResponse().Status = &extint.ResultStatus{Description: "Message sent to engine"}
 	return payload.GetNetworkStateResponse(), nil
 }
+
+func (m *rpcService) SayText(ctx context.Context, in *extint.SayTextRequest) (*extint.SayTextResponse, error) {
+	log.Println("Received rpc request SayText(", in, ")")
+
+	f, result := createChannel(&extint.GatewayWrapper_SayTextResponse{}, 1)
+	defer f()
+
+	_, err := WriteProtoToEngine(protoEngineSock, &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_SayTextRequest{
+			in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	payload := <-result
+	sayTextResponse := payload.GetSayTextResponse()
+	sayTextResponse.Status = &extint.ResultStatus{Description: "Message sent to engine"}
+	return sayTextResponse, nil
+}

@@ -315,6 +315,26 @@ class Robot:
         get_network_state_request = protocol.NetworkStateRequest()
         return await self.conn.interface.NetworkState(get_network_state_request)
 
+    @sync.Synchronizer.wrap
+    async def say_text(self, text, use_vector_voice=True, duration_scalar=1.0):
+        '''Have Vector say text!
+        
+        Args:
+            text (string): The words for Vector to say.
+            use_vector_voice (bool): Whether to use Vector's robot voice
+                (otherwise, he uses a generic human male voice).
+            duration_scalar (float): Adjust the relative duration of the
+                generated text to speech audio.
+        
+        Returns:
+            A :class:`vector.messaging.messages_pb2.SayTextResponse` object that
+            provides the status and utterance state
+        '''
+        say_text_request = protocol.SayTextRequest(text=text, 
+                                                use_vector_voice=use_vector_voice, 
+                                                duration_scalar=duration_scalar)
+        return await self.conn.interface.SayText(say_text_request)
+
 
 class AsyncRobot(Robot):
     def __init__(self, *args, **kwargs):

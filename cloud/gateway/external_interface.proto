@@ -322,6 +322,13 @@ service ExternalInterface {
     };
   }
 
+  rpc SayText(SayTextRequest) returns (SayTextResponse) {
+    option (google.api.http) = {
+      post: "/v1/say_text",
+      body: "*"
+    };
+  }
+
   // Attempt to connect to a cube. If a cube is currently connected,
   // this will do nothing.
   rpc ConnectCube(ConnectCubeRequest) returns (ConnectCubeResponse) {
