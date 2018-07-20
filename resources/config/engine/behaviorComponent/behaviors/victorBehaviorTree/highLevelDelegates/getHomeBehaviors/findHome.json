@@ -40,7 +40,7 @@
   
   // How many 'searches' to complete before giving up. One 'search'
   // means spinning around in place and looking for the charger.
-  "numSearches" : 3,
+  "numSearches" : 6,
   
   "minDrivingDist_mm" : 150,
   "maxDrivingDist_mm" : 400

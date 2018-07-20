@@ -19,6 +19,12 @@
         "not": {
           "conditionType": "CarryingCube"
         }
+      },
+      {
+        "conditionType": "Compound",
+        "not": {
+          "conditionType": "OnChargerPlatform"
+        }
       }
     ]
   }

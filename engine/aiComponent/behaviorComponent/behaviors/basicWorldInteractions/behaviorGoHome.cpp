@@ -309,14 +309,13 @@ void BehaviorGoHome::TransitionToDriveToCharger()
     return;
   }
 
-  // We always just clear the area in front of the charger of
-  // obstacles. If there is still an obstacle there, we will
-  // encounter it when we drive up to it.
+  // We always just clear the area in front of the charger of obstacles and cliffs. If there is still an obstacle or
+  // cliff there, we will encounter it when we drive up to it.
   const auto lastTimestamp = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
   Poly2f chargerDockingPoly;
   chargerDockingPoly.ImportQuad2d(charger->GetDockingAreaQuad());
   GetBEI().GetMapComponent().InsertData(chargerDockingPoly,
-                                        MemoryMapData(MemoryMapTypes::EContentType::ClearOfObstacle, lastTimestamp));
+                                        MemoryMapData(MemoryMapTypes::EContentType::ClearOfCliff, lastTimestamp));
   
   auto* driveToAction = new DriveToObjectAction(_dVars.chargerID, PreActionPose::ActionType::DOCKING);
   driveToAction->SetPreActionPoseAngleTolerance(kDriveToChargerPreActionPoseAngleTol_rad);
@@ -471,13 +470,23 @@ void BehaviorGoHome::TransitionToMountCharger()
                           // verification to happen again, etc.
                           TransitionToDriveToCharger();
                         } else {
-                          // Either out of retries or we got another failure type.
-                          // If the robot did not end the action on the charger, then clear
-                          // the charger from the world since we clearly do not know where it is
-                          // Note: Here is where we could capture CHARGER_UNPLUGGED for
-                          //       potential messaging up to the app.
-                          const bool removeChargerFromBlockworld = (result == ActionResult::NOT_ON_CHARGER_ABORT);
-                          ActionFailure(removeChargerFromBlockworld);
+                          // Either out of retries or we got another failure type. If the charger is unplugged, drive
+                          // forward off of it before ending the behavior.
+                          if (result == ActionResult::CHARGER_UNPLUGGED_ABORT) {
+                            // Note: Here is where we could capture CHARGER_UNPLUGGED for
+                            //       potential messaging up to the app.
+                            DelegateIfInControl(new DriveStraightAction(100.f,
+                                                                        DEFAULT_PATH_MOTION_PROFILE.speed_mmps,
+                                                                        false),
+                                                [this]() {
+                                                  ActionFailure(false);
+                                                });
+                          } else {
+                            // If the robot did not end the action on the charger, then clear the charger from the
+                            // world since we clearly do not know where it is.
+                            const bool removeChargerFromBlockworld = (result == ActionResult::NOT_ON_CHARGER_ABORT);
+                            ActionFailure(removeChargerFromBlockworld);
+                          }
                         }
                       });
 }
