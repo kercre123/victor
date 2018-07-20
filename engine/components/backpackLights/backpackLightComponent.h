@@ -56,6 +56,7 @@ public:
   };
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::AIComponent);
+    dependencies.insert(RobotComponentID::Battery);
   };
     
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;

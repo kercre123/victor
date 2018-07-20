@@ -56,6 +56,12 @@ namespace {
   // Voltage below which battery is considered in a low charge state
   // At 3.6V, there is about 7 minutes of battery life left (if stationary, minimal processing, no wifi transmission, no sound)
   const float kLowBatteryThresholdVolts = 3.6f;
+  
+  // Voltage below which battery is considered in a low charge state _when on charger_. When the robot is placed on the
+  // charger, the voltage immediately increases by a step amount, so a different threshold is required. The value of
+  // 4.0V was chosen because it takes about 5 minutes for the battery to reach 4.0V when placed on the charger at 3.6V
+  // (the 'off-charger' low battery threshold).
+  const float kOnChargerLowBatteryThresholdVolts = 4.0f;
 
   // Approaching syscon cutoff voltage.
   // Shutdown will occur in ~30 seconds.
@@ -200,11 +206,12 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
 
   // Update battery charge level
   BatteryLevel level = BatteryLevel::Nominal;
+  const auto lowBattThreshold = _isCharging ? kOnChargerLowBatteryThresholdVolts : kLowBatteryThresholdVolts;
   if (isFullyCharged) {
     // NOTE: Given the dependence on isFullyCharged, this means BatteryLevel::Full is a state
     //       that can only be achieved while on charger
     level = BatteryLevel::Full;
-  } else if (_batteryVoltsFilt < kLowBatteryThresholdVolts) {
+  } else if (_batteryVoltsFilt < lowBattThreshold) {
     level = BatteryLevel::Low;
 
     // Battery is critical
@@ -296,6 +303,10 @@ void BatteryComponent::SetIsCharging(const bool isCharging)
   if (isCharging != _isCharging) {
     _lastChargingChange_ms = _lastMsgTimestamp;
     _isCharging = isCharging;
+    // The voltage usually steps up or down by a few hundred millivolts when we start/stop charging, so reset the low
+    // pass filter here to more closely track the actual battery voltage.
+    _batteryVoltsFilter->Reset();
+    _batteryVoltsFilt = _batteryVoltsFilter->AddSample(_batteryVoltsRaw);
   }
 }
 
