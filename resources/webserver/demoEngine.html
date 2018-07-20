@@ -45,7 +45,6 @@
           create: function(event, ui) {
             $.post('consolevarget?key=EyeColor', function(result) {
               var value = parseInt(result);
-              //console.log('start value of eye color is: ' + value);
               $('#EyeColor').prop("selectedIndex", value).selectmenu('refresh');
             });
           },
@@ -59,7 +58,6 @@
           create: function(event, ui) {
             $.post('consolevarget?key=MasterVolumeLevel', function(result) {
               var value = parseInt(result);
-              //console.log('start value of master volume level is: ' + value);
               $('#MasterVolumeLevel').prop("selectedIndex", value).selectmenu('refresh');
             });
           },
@@ -69,16 +67,17 @@
             });
           }
         });
-//        $(".listbox").each(function() {
-//          var selector = $("#" + this.id);
-//          $(this).selectmenu({
-//            change: function(event, data) {
-//              console.log('listbox changed: ' + data.item.index);
-//              $.post("consolevarset", {key: selector.attr("id"), value: data.item.index}, function(result){});
-//              console.log('and calling...');
-//            }
-//          });
-//        })
+        $('#Locale').selectmenu({
+          create: function(event, ui) {
+            // todo: get current 'setting' somehow...see above in eyecolor selectmenu create...
+          },
+          change: function(event, data) {
+            var index = data.item.index;
+            console.log('Setting locale index to: ' + index);
+            $.post("consolefunccall", {func: "DebugDemoSetLocaleIndex", args: index}, function(result) {
+            });
+          }
+        });
     });
 
     function InitConfirmDialog() {
@@ -162,6 +161,16 @@
         <option>High</option>
       </select>
       <label for="MasterVolumeLevel-button">Master Volume</label>
+    </div>
+    <br>
+    <div>
+      <select name="Locale" id='Locale' class='listbox'>
+        <option>US</option>
+        <option>UK</option>
+        <option>AUS</option>
+        <option>CAN</option>
+      </select>
+      <label for="Locale-button">Locale</label>
     </div>
     <br>
     <button id='btn_erase_all_faces' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Erase all enrolled faces</button>
