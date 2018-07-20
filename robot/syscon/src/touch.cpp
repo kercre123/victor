@@ -6,6 +6,8 @@
 #include "touch.h"
 
 static volatile uint32_t sumandcount;   // Eternally accumulating SUM and COUNT
+const int SAMPLE_INTERVAL = 18481;      // ~13x oversample, prime to 245600 cyc/tick
+
 const int BOXCAR_WIDTH = 39;  // 50&60Hz integer divisor: 15625/80/39 = 5.008Hz (good enough)
 const int COUNT_BITS = 10;    // 2^x max number of readings in boxcar (in bits)
 const int GAIN_BITS = 3;      // 2^x gain (in bits)
@@ -15,7 +17,7 @@ void Touch::init(void) {
   CAPI::reset();
   
   TIM16->PSC = 0;
-  TIM16->ARR = 18481-1; // ~13x oversample, prime to 245600 cyc/tick
+  TIM16->ARR = SAMPLE_INTERVAL-1; 
   
   TIM16->CCMR1 = 0
     | (TIM_CCMR1_IC1F_0 * 4)    // Four sample debounce
@@ -71,7 +73,4 @@ void Touch::transmit(uint16_t* data) {
   if (count) sum /= count;    // Average
   data[0] = sum >> GAIN_BITS; // Low-res/compatibility slot
   data[4] = sum;              // Hi-res slot
-}
-
-void Touch::tick(void) {
 }
