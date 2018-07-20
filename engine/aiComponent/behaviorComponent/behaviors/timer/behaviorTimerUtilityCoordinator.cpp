@@ -38,6 +38,7 @@ namespace{
 const char* kAnticConfigKey   = "anticConfig";
 const char* kMinValidTimerKey = "minValidTimer_s";
 const char* kMaxValidTimerKey = "maxValidTimer_s";
+const char* kTimerRingingBehaviorKey = "timerRingingBehaviorID";
 
 // antic keys
 const char* kRecurIntervalMinKey = "recurIntervalMin_s";
@@ -258,6 +259,10 @@ BehaviorTimerUtilityCoordinator::BehaviorTimerUtilityCoordinator(const Json::Val
     Json::Value empty;
     _iParams.anticTracker = std::make_unique<AnticTracker>(empty);
   }
+
+  if(config.isMember(kTimerRingingBehaviorKey)){
+    _iParams.timerRingingBehaviorStr = config[kTimerRingingBehaviorKey].asString();
+  }
   
   std::string debugStr = "BehaviorTimerUtilityCoordinator.Constructor.MissingConfig.";
   _iParams.minValidTimer_s = JsonTools::ParseUInt32(config, kMinValidTimerKey, debugStr + "MinTimer");
@@ -285,6 +290,7 @@ void BehaviorTimerUtilityCoordinator::GetBehaviorJsonKeys(std::set<const char*>&
     kAnticConfigKey,
     kMinValidTimerKey,
     kMaxValidTimerKey,
+    kTimerRingingBehaviorKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -306,13 +312,19 @@ void BehaviorTimerUtilityCoordinator::InitBehavior()
                                  BEHAVIOR_CLASS(ProceduralClock),
                                  _iParams.timerCheckTimeBehavior);
 
-  BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(SingletonTimerRinging),
-                                 BEHAVIOR_CLASS(AnimGetInLoop),
-                                 _iParams.timerRingingBehavior);
-
   BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(SingletonCancelTimer),
                                  BEHAVIOR_CLASS(AdvanceClock),
                                  _iParams.cancelTimerBehavior);
+
+  auto ringingID = BEHAVIOR_ID(SingletonTimerRinging);
+  if(!_iParams.timerRingingBehaviorStr.empty()){
+    ringingID = BehaviorTypesWrapper::BehaviorIDFromString(_iParams.timerRingingBehaviorStr);
+  }
+  _iParams.timerRingingBehavior = BC.FindBehaviorByID(ringingID);
+  DEV_ASSERT_MSG(_iParams.timerRingingBehavior != nullptr, 
+                 "BehaviorTimerUtilityCoordinator.InitBehavior.InvalidRingingBehavior", 
+                 "Unable to find behavior %s for timerRinging",
+                 BehaviorTypesWrapper::BehaviorIDToString(ringingID));
 
   _iParams.timerAlreadySetBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(SingletonTimerAlreadySet));
   _iParams.iCantDoThatBehavior     = BC.FindBehaviorByID(BEHAVIOR_ID(SingletonICantDoThat));

@@ -347,6 +347,7 @@ enum uint_16 BehaviorID {
   SingletonTimerCheckTime,
   SingletonTimerRinging,
   SingletonTimerSet,
+  TimerRingingPRDemo,
   TimerUtilityCoordinator,
 
   // victorBehaviorTree

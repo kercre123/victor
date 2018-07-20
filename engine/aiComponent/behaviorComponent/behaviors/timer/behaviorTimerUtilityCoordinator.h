@@ -61,10 +61,11 @@ protected:
 
 private:
   struct InstanceParams{
+    std::string timerRingingBehaviorStr;
     std::shared_ptr<BehaviorProceduralClock> setTimerBehavior;
     std::shared_ptr<BehaviorProceduralClock> timerAnticBehavior;
     std::shared_ptr<BehaviorProceduralClock> timerCheckTimeBehavior;
-    std::shared_ptr<BehaviorAnimGetInLoop>   timerRingingBehavior;
+    ICozmoBehaviorPtr                        timerRingingBehavior;
     ICozmoBehaviorPtr                        timerAlreadySetBehavior;
     ICozmoBehaviorPtr                        iCantDoThatBehavior;
     std::shared_ptr<BehaviorAdvanceClock>    cancelTimerBehavior;
