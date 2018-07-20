@@ -770,9 +770,5 @@
   {
     "CladEvent" : "Face_Windy01",
     "SpriteName" : "face_windy01"
-  },
-  {
-    "CladEvent" : "FlashingZeros",
-    "SpriteName" : "FlashingZeros"
   }
 ]
