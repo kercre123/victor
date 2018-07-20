@@ -24,7 +24,8 @@
 
   "behaviors": [
     "InitialPickupAnimation",
-    "WhileInAirResponses"
+    "WhileInAirResponses",
+    "WhileInAirResponsesPRDemo"
   ]
 
 }

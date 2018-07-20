@@ -19,7 +19,7 @@
 namespace Anki {
 namespace Cozmo {
 
-enum class BehaviorID : uint8_t;
+enum class BehaviorID : uint16_t;
 class IBehavior;
 class TestBehaviorFramework;
 class UserIntent;

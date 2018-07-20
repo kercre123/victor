@@ -385,12 +385,14 @@ void BehaviorBlackJack::TransitionToEndGame(){
     }
     case EOutcome::VictorLosesBlackJack:
     {
-      endGameAction = new TriggerAnimationAction(AnimationTrigger::BlackJack_VictorBlackJackLose);
+      // TEMP for demo. used to be BlackJack_VictorBlackJackLose
+      endGameAction = new TriggerAnimationAction(AnimationTrigger::BlackJack_VictorBust);
       break;
     }
     case EOutcome::VictorLoses:
     {
-      endGameAction = new TriggerAnimationAction(AnimationTrigger::BlackJack_VictorLose);
+      // TEMP for demo. used to be BlackJack_VictorLose
+      endGameAction = new TriggerAnimationAction(AnimationTrigger::BlackJack_VictorBust);
       break;
     }
   }

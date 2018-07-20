@@ -336,7 +336,7 @@ void BehaviorComponentMessageHandler::SubscribeToWebViz(BehaviorExternalInterfac
         // also send them the list of behaviorIDs that can be created
         Json::Value allBehaviors;
         auto& list = allBehaviors["list"];
-        for( uint8_t i=0; i<BehaviorTypesWrapper::GetBehaviorIDNumEntries(); ++i ) {
+        for( uint16_t i=0; i<BehaviorTypesWrapper::GetBehaviorIDNumEntries(); ++i ) {
           list.append( EnumToString( static_cast<BehaviorID>(i) ) );
         }
         sendToClient( list );

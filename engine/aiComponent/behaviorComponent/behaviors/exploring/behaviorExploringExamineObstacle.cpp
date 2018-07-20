@@ -35,6 +35,11 @@
 #include "util/logging/logging.h"
 #include "util/random/randomGenerator.h"
 
+// todo: remove
+#include "clad/types/featureGateTypes.h"
+#include "engine/cozmoContext.h"
+#include "engine/utils/cozmoFeatureGate.h"
+
 namespace Anki {
 namespace Cozmo {
   
@@ -259,13 +264,25 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
     
     if( _dVars.state == State::SecondTurn ) {
       
+      float minObjectWidth_rad = kMinObjectWidthToBump_rad;
+      float maxObjectWidth_rad = kMaxObjectWidthToBump_rad;
+      float probBumpNomination = kProbBumpNominalObject;
+      
+      const auto* featureGate = GetBEI().GetRobotInfo().GetContext()->GetFeatureGate();
+      const bool prDemo = (featureGate != nullptr) && featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::PRDemo);
+      if( prDemo ) {
+        // boris asked for it to bump everything regardless of size
+        maxObjectWidth_rad = 1000;
+        probBumpNomination = 0.5f;
+      }
+      
       // decide whether to bump or not
       bool shouldBump = false;
-      if( (_dVars.totalObjectAngle_rad >= kMinObjectWidthToBump_rad)
-          && (_dVars.totalObjectAngle_rad <= kMaxObjectWidthToBump_rad) )
+      if( (_dVars.totalObjectAngle_rad >= minObjectWidth_rad)
+          && (_dVars.totalObjectAngle_rad <= maxObjectWidth_rad) )
       {
         // object is of a size that we should bump
-        if( GetRNG().RandDbl() <= kProbBumpNominalObject ) {
+        if( GetRNG().RandDbl() <= probBumpNomination ) {
           shouldBump = true;
         }
       }
