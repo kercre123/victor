@@ -96,6 +96,7 @@ CONSOLE_VAR(f32,               kEnrollFace_MaxTotalBackup_mm,                   
 CONSOLE_VAR(f32,               kEnrollFace_MaxTurnTowardsFaceAngle_rad,         CONSOLE_GROUP, DEG_TO_RAD(180.f));
   
 CONSOLE_VAR(s32,               kEnrollFace_NumImagesToWait,                     CONSOLE_GROUP, 5);
+CONSOLE_VAR(s32,               kEnrollFace_NumImagesToWaitInPlace,              CONSOLE_GROUP, 25);
 
 // Number of faces to consider "too many" and forced timeout when seeing that many
 CONSOLE_VAR(s32,               kEnrollFace_DefaultMaxFacesVisible,              CONSOLE_GROUP, 1); // > this is "too many"
@@ -595,6 +596,15 @@ void BehaviorEnrollFace::BehaviorUpdate()
       // observed since the last tick
       UpdateFaceToEnroll();
       
+      if( (_dVars->persistent.state == State::WaitingInPlaceForFace)
+          && (_dVars->faceID != Vision::UnknownFaceID) )
+      {
+        CancelDelegates(false);
+        // since the faceID is set, this next state should turn toward the face, then begin enrollment
+        TransitionToLookingForFace();
+        break;
+      }
+      
       // See if wrongFace info was updated via a changedID message or call to UpdateFaceToEnroll()
       std::string wrongName;
       FaceID_t wrongID = Vision::UnknownFaceID;
@@ -1066,7 +1076,7 @@ void BehaviorEnrollFace::TransitionToWaitInPlaceForFace()
   CancelDelegates(false); // Make sure we stop tracking/scanning if necessary
   IActionRunner* action = new CompoundActionSequential({
     new MoveHeadToAngleAction(MAX_HEAD_ANGLE),
-    new WaitForImagesAction(kEnrollFace_NumImagesToWait, VisionMode::DetectingFaces),
+    new WaitForImagesAction(kEnrollFace_NumImagesToWaitInPlace, VisionMode::DetectingFaces),
   });
   DelegateIfInControl(action, [this](){
     TransitionToLookingForFace();

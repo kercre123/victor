@@ -20,6 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/iSimpleFaceBehavior.h"
 #include "engine/faceWorld.h"
+#include "util/console/consoleInterface.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
@@ -44,6 +45,8 @@ const char* const kBehaviorIsSimpleFaceKey       = "callSetFaceOnBehavior";
 const char* const kExitOnceFoundKey              = "exitOnceFound";
   
 const char* const kDebugName = "BehaviorFindFaceAndThen";
+  
+CONSOLE_VAR_RANGED(float, kMinTimeLookInMicDirection_s, "Behaviors.FindFaceAndThen", 0.5f, 0.0f, 2.0f);
 }
 
 
@@ -57,7 +60,8 @@ BehaviorFindFaceAndThen::InstanceConfig::InstanceConfig()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorFindFaceAndThen::DynamicVariables::DynamicVariables()
 {
-  stateEndTime_s         = 0;
+  stateEndTime_s         = 0.0f;
+  stateMinTime_s         = 0.0f;
   currentState           = State::Invalid;
   lastFaceTimeStamp_ms   = 0;
   activationTimeStamp_ms = 0;
@@ -205,7 +209,7 @@ void BehaviorFindFaceAndThen::BehaviorUpdate()
         TimeStamp_t timeStamp_ms = 0;
         const bool hasFace = GetRecentFaceSince( _dVars.activationTimeStamp_ms, newFace, timeStamp_ms );
         const bool differentOrNew = (newFace != _dVars.targetFace) || (timeStamp_ms > _dVars.lastFaceTimeStamp_ms);
-        if( hasFace && differentOrNew ) {
+        if( hasFace && differentOrNew && (currentTime_s >= _dVars.stateMinTime_s) ) {
           // a new face was spotted in the direction it's facing, or the same face was spotted in that direction again
           _dVars.targetFace = newFace;
           _dVars.lastFaceTimeStamp_ms = timeStamp_ms;
@@ -297,7 +301,9 @@ void BehaviorFindFaceAndThen::TransitionToLookingInMicDirection()
 {
   // not doing anything here, just waiting for a face or timeout
   SET_STATE(LookForFaceInMicDirection);
-  _dVars.stateEndTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _iConfig.timeUntilCancelFaceLooking_s;
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _dVars.stateEndTime_s = currTime_s + _iConfig.timeUntilCancelFaceLooking_s;
+  _dVars.stateMinTime_s = currTime_s + kMinTimeLookInMicDirection_s;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -327,6 +333,7 @@ void BehaviorFindFaceAndThen::TransitionToFindingFaceInCurrentDirection()
   // not doing anything here, just waiting for a face or timeout
   SET_STATE( FindFaceInCurrentDirection );
   _dVars.stateEndTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _iConfig.timeUntilCancelFaceLooking_s;
+  _dVars.stateMinTime_s = 0.0f;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -336,6 +343,7 @@ void BehaviorFindFaceAndThen::TransitionToSearchingForFace()
   _dVars.stateEndTime_s = 0;
   if( _iConfig.searchFaceBehavior != nullptr ) {
     _dVars.stateEndTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _iConfig.timeUntilCancelSearching_s;
+    _dVars.stateMinTime_s = 0.0f;
     
     CancelDelegates(false);
     if( _iConfig.searchFaceBehavior->WantsToBeActivated() ) {
@@ -362,6 +370,7 @@ void BehaviorFindFaceAndThen::TransitionToFollowupBehavior()
   } else {
     _dVars.stateEndTime_s = -1.0f;
   }
+  _dVars.stateMinTime_s = 0.0f;
 
   if( _iConfig.behaviorOnceFoundIsSimpleFace ) {
     std::shared_ptr<ISimpleFaceBehavior> simpleFaceBehavior =

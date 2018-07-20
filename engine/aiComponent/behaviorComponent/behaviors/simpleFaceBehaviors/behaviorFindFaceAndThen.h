@@ -89,6 +89,7 @@ private:
     State currentState;
     
     float stateEndTime_s;
+    float stateMinTime_s;
     
     SmartFaceID targetFace;
     TimeStamp_t lastFaceTimeStamp_ms;
