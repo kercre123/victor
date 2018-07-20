@@ -31,7 +31,8 @@ public:
                             std::string& textToSay);
   static bool IsFahrenheit(const UserIntent_WeatherResponse& weatherIntent);
   static WeatherConditionType GetCondition(const RobotDataLoader::WeatherResponseMap* weatherResponseMap,
-                                           const UserIntent_WeatherResponse& weatherIntent);
+                                           const UserIntent_WeatherResponse& weatherIntent,
+                                           bool isForPRDemo = false);
 
 }; // class WeatherIntentParser
 
