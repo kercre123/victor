@@ -102,6 +102,8 @@ void Board::pwr_vdds(bool en)
     nVDDs_EN::reset();
     nVDDs_EN::mode(MODE_OUTPUT);
   } else {
+    nVDDs_EN::set();
+    for(volatile int x=0; x<100; x++);
     nVDDs_EN::mode(MODE_INPUT);
   }
 }

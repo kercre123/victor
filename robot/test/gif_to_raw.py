@@ -3,6 +3,7 @@ import os,sys
 #import struct
 import array
 from PIL import Image
+#import Image
 
 SCREEN_WIDTH,SCREEN_HEIGHT = 184,96 #240,240 #180,240
 SIZE = (SCREEN_WIDTH,SCREEN_HEIGHT)
@@ -21,7 +22,8 @@ def pack16bitRGB(pixel):
     word = ( (int(r>>3)<<11) |
              (int(g>>2)<< 5) |
              (int(b>>3)<< 0) )
-    return ((word>>8)&0xFF) | ((word&0xFF)<<8)
+    return word
+    # return ((word>>8)&0xFF) | ((word&0xFF)<<8)
 
 
 def convert_to_raw(img):
@@ -31,7 +33,7 @@ def convert_to_raw(img):
             pixel = pack16bitRGB(img.getpixel((x,y)))
             bitmap[(y)*SCREEN_WIDTH + (x)] = pixel
     return bitmap
-    
+
 
 RAW = 1
 
@@ -53,6 +55,6 @@ def extractFrames(inGif):
             except EOFError:
                 break;
     return True
-    
+
 
 extractFrames(sys.argv[1])

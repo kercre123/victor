@@ -3,11 +3,13 @@
 import subprocess
 import os
 
-cmd_ps = [ "ps", "ps | grep vic-\\|anki" ]
-cmd_logcat = [ "logcat", "logcat -d | grep -m 1000 vic-switchboard" ]
+cmd_ps = [ "ps", "ps | grep anki" ]
+cmd_logcat = [ "logcat", "logcat -dt2000" ]
+cmd_logcat_sb = [ "logcat_sb", "logcat -dt 2000 vic-switchboard:V *:S" ]
 cmd_wifi = [ "wifi-config", "cat /data/lib/connman/wifi.config | grep -v Passphrase" ]
 cmd_ifconfig = [ "ifconfig", "ifconfig wlan0" ]
 cmd_iwconfig = [ "iwconfig", "iwconfig wlan0" ]
+cmd_netstat = ["netstat-ptlnu", "netstat -ptlnu"]
 cmd_dmesg = [ "dmesg", "dmesg" ]
 cmd_top = [ "top", "top -n 1" ]
 cmd_pinggateway = [ "ping-gateway", "gateway=$(route | grep default | awk '{ print $2 }') && ping -c 4 $gateway" ]
@@ -28,11 +30,13 @@ def run_commands():
         os.makedirs(output_path + "logs/", 0755)
         os.umask(oldmask)
 
-    cmds = [ cmd_ps, 
+    cmds = [ cmd_ps,
              cmd_logcat,
+             cmd_logcat_sb,
              cmd_wifi,
              cmd_ifconfig,
              cmd_iwconfig,
+             cmd_netstat,
              cmd_dmesg,
              cmd_top,
              cmd_pinggateway,
@@ -48,9 +52,14 @@ def run_commands():
 
 def compress_output():
     if os.path.isfile("/data/boot.log"):
-        cmd_tar[1] += "/data/boot.log"
+        cmd_tar[1] += "/data/boot.log "
+    if os.path.isfile("/factory/log0"):
+        cmd_tar[1] += "/factory/log0 "
+    if os.path.isfile("/factory/log1"):
+        cmd_tar[1] += "/factory/log1 "
 
     subprocess.check_output(cmd_tar[1].split())
+
 
 def delete_output():
     if not os.path.exists(output_path + "logs/"):

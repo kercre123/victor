@@ -54,7 +54,7 @@ namespace POWER_B     GPIO_DEFINE(A, 6);
 namespace CHG_PWR     GPIO_DEFINE(B, 9);
 namespace nVDDs_EN    GPIO_DEFINE(C, 13); //a.k.a. #VENC_EN
 namespace VEXT_SENSE  GPIO_DEFINE(A, 2);
-namespace VBAT_SENSE  GPIO_DEFINE(A, 4);
+namespace VIN_SENSE   GPIO_DEFINE(A, 4);
 namespace MAIN_EN     GPIO_DEFINE(A, 3);
 //namespace CHG_EN      GPIO_DEFINE(A, 15); //removed in DVT3 (logic'd from another signal)
 

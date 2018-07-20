@@ -6,7 +6,6 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include "tests.h"
 
 //-----------------------------------------------------------------------------
 //                  Fixture Modes
@@ -18,29 +17,39 @@ extern "C" {
 #define FIXMODE_BODY0A         4
 #define FIXMODE_BODY0          5
 #define FIXMODE_BODY1          6
-#define FIXMODE_BODY2          7
-#define FIXMODE_BODY3          8
+#define FIXMODE_BODY1_OL       7
+#define FIXMODE_BODY2          8
+#define FIXMODE_BODY3          9
 
 #define FIXMODE_HEAD1          11
-#define FIXMODE_HEAD2          12
-#define FIXMODE_HELPER1        13
+#define FIXMODE_HEAD1_OL       12
+#define FIXMODE_HEAD2          13
+#define FIXMODE_HELPER1        14
 
 #define FIXMODE_BACKPACK1      16
 
+#define FIXMODE_CUBE_OL        18 /*DEBUG*/
 #define FIXMODE_CUBEFCC        19
 #define FIXMODE_CUBE0          20 /*DEBUG*/
 #define FIXMODE_CUBE1          21
 #define FIXMODE_CUBE2          22
 
-#define FIXMODE_ROBOT0         25
+#define FIXMODE_ROBOT0         24
+#define FIXMODE_ROBOT1_OL      25
 #define FIXMODE_ROBOT1         26
 #define FIXMODE_ROBOT2         27
 #define FIXMODE_ROBOT3         28
+#define FIXMODE_ROBOT3_OL      29
+#define FIXMODE_ROBOT_GYM      30
 
 #define FIXMODE_INFO           31
 #define FIXMODE_PACKOUT        33
+#define FIXMODE_PACKOUT_OL     34
 #define FIXMODE_RECHARGE0      37
 #define FIXMODE_RECHARGE1      38
+#define FIXMODE_SOUND1         40
+#define FIXMODE_SOUND2         41
+#define FIXMODE_LOG_DL         43
 
 #define FIXMODE_MOTOR1         46
 #define FIXMODE_MOTOR2         47
@@ -52,6 +61,10 @@ extern "C" {
 //-----------------------------------------------------------------------------
 //                  Fixture Mode extended info
 //-----------------------------------------------------------------------------
+
+#ifndef FIXTURE_EXTERNAL
+#include "tests.h"
+#include "time.h"
 
 typedef struct {
   const char       *name;
@@ -77,6 +90,13 @@ TestFunction* fixtureGetTests(void); //gets tests for the current fixmode
 int           fixtureGetTestCount(void); //gets the # of test functions for the current fixmode
 bool          fixtureValidateFixmodeInfo(bool print=0); //dev tool - validate const info array. print=1 -> print the array to console
 uint32_t      fixtureGetSerial(void); // Get a serial number for a device in the normal 12.20 fixture.sequence format
+uint32_t      fixtureReadSerial(void); // Read-only (NO MODIFY) current serial number position 12.20 format
+int           fixtureReadSequence(void); //read the current sequence #. DOES NOT make any sequence changes. reporting API only.
+int           fixtureSetTime(time_t time); //return 0=success
+time_t        fixtureGetTime(void);
+time_t        fixtureGetSetTime(void); //returns last successful fixtureSetTime() value, 0 if unknown
+bool          fixtureTimeIsValid(void);
+const char*   fixtureTimeStr(time_t time); //short (20char) string representation of the timestamp
 #endif
 
 //Init data for g_fixmode_info[] - keep all mode info organized in one file!
@@ -89,43 +109,43 @@ uint32_t      fixtureGetSerial(void); // Get a serial number for a device in the
   { "BODY0A"      , TestBodyDetect      , TestBody0GetTests           , TestBodyCleanup             , FIXMODE_BODY0A      },  /*4*/   \
   { "BODY0"       , TestBodyDetect      , TestBody0GetTests           , TestBodyCleanup             , FIXMODE_BODY0       },  /*5*/   \
   { "BODY1"       , TestBodyDetect      , TestBody1GetTests           , TestBodyCleanup             , FIXMODE_BODY1       },  /*6*/   \
-  { "BODY2"       , TestBodyDetect      , TestBody2GetTests           , TestBodyCleanup             , FIXMODE_BODY2       },  /*7*/   \
-  { "BODY3"       , TestBodyDetect      , TestBody3GetTests           , TestBodyCleanup             , FIXMODE_BODY3       },  /*8*/   \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
+  { "BODY1-OL"    , TestBodyDetect      , TestBody1GetTests           , TestBodyCleanup             , FIXMODE_BODY1_OL    },  /*7*/   \
+  { "BODY2"       , TestBodyDetect      , TestBody2GetTests           , TestBodyCleanup             , FIXMODE_BODY2       },  /*8*/   \
+  { "BODY3"       , TestBodyDetect      , TestBody3GetTests           , TestBodyCleanup             , FIXMODE_BODY3       },  /*9*/   \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { "HEAD1"       , TestHeadDetect      , TestHead1GetTests           , TestHeadCleanup             , FIXMODE_HEAD1       },  /*11*/  \
-  { "HEAD2"       , TestHeadDetect      , TestHead2GetTests           , TestHeadCleanup             , FIXMODE_HEAD2       },  /*12*/  \
-  { "HELPER1"     , TestHeadDetect      , TestHelper1GetTests         , TestHeadCleanup             , FIXMODE_HELPER1     },  /*13*/  \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
+  { "HEAD1-OL"    , TestHeadDetect      , TestHead1GetTests           , TestHeadCleanup             , FIXMODE_HEAD1_OL    },  /*12*/  \
+  { "HEAD2"       , TestHeadDetect      , TestHead2GetTests           , TestHeadCleanup             , FIXMODE_HEAD2       },  /*13*/  \
+  { "HELPER1"     , TestHeadDetect      , TestHelper1GetTests         , TestHeadCleanup             , FIXMODE_HELPER1     },  /*14*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { "BACKPACK1"   , TestBackpackDetect  , TestBackpack1GetTests       , TestBackpackCleanup         , FIXMODE_BACKPACK1   },  /*16*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
+  { "CUBE-OL"     , TestCubeDetect      , TestCubeOLGetTests          , TestCubeCleanup             , FIXMODE_CUBE_OL     },  /*18*/  \
   { "CUBEFCC"     , TestCubeDetect      , TestCubeFccGetTests         , TestCubeCleanup             , FIXMODE_CUBEFCC     },  /*19*/  \
   { "CUBE0"       , TestCubeDetect      , TestCube0GetTests           , TestCubeCleanup             , FIXMODE_CUBE0       },  /*20*/  \
   { "CUBE1"       , TestCubeDetect      , TestCube1GetTests           , TestCubeCleanup             , FIXMODE_CUBE1       },  /*21*/  \
   { "CUBE2"       , TestCubeDetect      , TestCube2GetTests           , TestCubeCleanup             , FIXMODE_CUBE2       },  /*22*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
-  { "ROBOT0"      , TestRobotDetect     , TestRobot0GetTests          , TestRobotCleanup            , FIXMODE_ROBOT0      },  /*25*/  \
+  { "ROBOT0"      , TestRobotDetect     , TestRobot0GetTests          , TestRobotCleanup            , FIXMODE_ROBOT0      },  /*24*/  \
+  { "ROBOT1-OL"   , TestRobotDetect     , TestRobot1GetTests          , TestRobotCleanup            , FIXMODE_ROBOT1_OL   },  /*25*/  \
   { "ROBOT1"      , TestRobotDetect     , TestRobot1GetTests          , TestRobotCleanup            , FIXMODE_ROBOT1      },  /*26*/  \
   { "ROBOT2"      , TestRobotDetect     , TestRobot2GetTests          , TestRobotCleanup            , FIXMODE_ROBOT2      },  /*27*/  \
   { "ROBOT3"      , TestRobotDetect     , TestRobot3GetTests          , TestRobotCleanup            , FIXMODE_ROBOT3      },  /*28*/  \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
+  { "ROBOT3-OL"   , TestRobotDetect     , TestRobot3GetTests          , TestRobotCleanup            , FIXMODE_ROBOT3_OL   },  /*29*/  \
+  { "ROBOT-GYM"   , TestRobotDetect     , TestRobotGymGetTests        , TestRobotCleanup            , FIXMODE_ROBOT_GYM   },  /*30*/  \
   { "ROBOTINFO"   , TestRobotDetect     , TestRobotInfoGetTests       , TestRobotCleanup            , FIXMODE_INFO        },  /*31*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { "PACKOUT"     , TestRobotDetect     , TestRobotPackoutGetTests    , TestRobotCleanup            , FIXMODE_PACKOUT     },  /*33*/  \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
+  { "PACKOUT-OL"  , TestRobotDetect     , TestRobotPackoutGetTests    , TestRobotCleanup            , FIXMODE_PACKOUT_OL  },  /*34*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { "RECHARGE0"   , TestRobotDetect     , TestRobotRechargeGetTests   , TestRobotCleanup            , FIXMODE_RECHARGE0   },  /*37*/  \
   { "RECHARGE1"   , TestRobotDetect     , TestRobotRechargeGetTests   , TestRobotCleanup            , FIXMODE_RECHARGE1   },  /*38*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
+  { "SOUND1"      , TestRobotDetect     , TestRobotSoundGetTests      , TestRobotCleanup            , FIXMODE_SOUND1      },  /*40*/  \
+  { "SOUND2"      , TestRobotDetect     , TestRobotSoundGetTests      , TestRobotCleanup            , FIXMODE_SOUND2      },  /*41*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
+  { "LOG-DL"      , TestRobotDetect     , TestRobotLogDownloadTests   , TestRobotCleanup            , FIXMODE_LOG_DL      },  /*43*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { "MOTOR1"      , TestMotorDetect     , TestMotor1GetTests          , TestMotorCleanup            , FIXMODE_MOTOR1      },  /*46*/  \
@@ -146,6 +166,8 @@ uint32_t      fixtureGetSerial(void); // Get a serial number for a device in the
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
 /*FIXMODE_INFO_ARRAY_INIT*/
+
+#endif //ifndef SYSTEST
 
 //-----------------------------------------------------------------------------
 //                  Fixture Errors
@@ -181,17 +203,33 @@ typedef int error_t;
 #define ERROR_MOTOR_LIFT_RANGE            331 // Lift can't reach full range (bad encoder/mechanical blockage)
 #define ERROR_MOTOR_LIFT_BACKWARD         332 // Lift is wired backward
 #define ERROR_MOTOR_LIFT_NOSTOP           333 // Lift does not hit stop (bad encoder/missing lift arm)
+#define ERROR_MOTOR_LIFT_SPEED            334 // Lift moving too slowly (sticky). check obstructions & gearbox
 //#define ERROR_MOTOR_LIFT_JAM            334 // Jamming test failed on lift motor
 
 #define ERROR_MOTOR_HEAD                  340 // Problem driving head motor
 #define ERROR_MOTOR_HEAD_RANGE            341 // Head can't reach full range (bad encoder/mechanical blockage)
 #define ERROR_MOTOR_HEAD_BACKWARD         342 // Head is wired backward
 #define ERROR_MOTOR_HEAD_NOSTOP           343 // Head does not hit stop (bad encoder/missing head arm)
+#define ERROR_MOTOR_HEAD_SPEED            344 // Head moving too slowly (sticky). check obstructions & gearbox
 //#define ERROR_MOTOR_HEAD_SLOW_RANGE     345 // Head can't reach full range when run at low voltage
 //#define ERROR_MOTOR_HEAD_JAM            346 // Jamming test failed on head motor
 
+//<export heading> Sensor Errors
+#define ERROR_SENSOR_VBAT                 350 // unable to read battery voltage. check body firmware. possible SMT problem
+#define ERROR_SENSOR_CLIFF_FL             351 // cliff sensor malfunction (front left)
+#define ERROR_SENSOR_CLIFF_FR             352 // cliff sensor malfunction (front right)
+#define ERROR_SENSOR_CLIFF_BL             353 // cliff sensor malfunction (back left)
+#define ERROR_SENSOR_CLIFF_BR             354 // cliff sensor malfunction (back right)
+#define ERROR_SENSOR_TOF                  355 // distance sensor malfunction
+#define ERROR_SENSOR_TOUCH                356 // touch sensor malfunction
+
 //<export heading> Robot Errors
 #define ERROR_ROBOT_TEST_SEQUENCE         370 // This test cannot run until all previous tests have passed
+#define ERROR_ROBOT_PACKED_OUT            371 // test or function is locked because the robot is packed out
+#define ERROR_ROBOT_MISSING_LOGFILE       372 // expected logfile not found on this robot
+#define ERROR_ROBOT_INVALID_ESN           373 // invalid ESN read from the robot
+#define ERROR_ROBOT_INVALID_BODY_EIN      374 // invalid EIN read from robot body pcba
+#define ERROR_ROBOT_BAD_LOGFILE           375 // missing, bad or corrupt logfile
 
 //<export heading> Testport Errors - charge contact communications (BODY ROBOT PACKOUT)
 #define ERROR_TESTPORT_CMD_TIMEOUT        400 //timeout waiting for response to a command
@@ -225,21 +263,21 @@ typedef int error_t;
 #define ERROR_HEADPGM_BAD_CERT            502 // detect bad,corrupt cloud certificate file
 #define ERROR_HEADPGM_FAC_IMG             503 // error provisioning factory partition image
 #define ERROR_HEADPGM_USB_DEV_NOT_FOUND   504 // no valid DUT detected on USB - check power and wiring
-//#define ERROR_HEAD_RADIO_SYNC           510 // Can't sync with radio
-//#define ERROR_HEAD_SPEAKER              520 // Speaker not connected/damaged
+#define ERROR_HEADPGM_USB_MODE_SWITCH     505 // fixture usb driver error - failed to enter otg host mode - POWER CYCLE FIXTURE
 #define ERROR_HEADPGM_RANGE_END           520 // RANGE CHECK FOR HEADPGM ERRORS, do not throw this!
 
 //<export heading> Body Errors
 #define ERROR_BODY                        550 // body error (general)
 //#define ERROR_BODY_BOOTLOADER           551 // Can't load bootloader onto body
 //#define ERROR_BODY_OUTOFDATE            552 // Body board is running out of date firmware
-//#define ERROR_BODY_TREAD_ENC_LEFT       553 // left tread encoder failed self test
-//#define ERROR_BODY_TREAD_ENC_RIGHT      554 // right tread encoder failed self test
+#define ERROR_BODY_TREAD_ENC_LEFT         553 // left tread encoder failed self test
+#define ERROR_BODY_TREAD_ENC_RIGHT        554 // right tread encoder failed self test
 //#define ERROR_BODY_BACKPACK_PULL        555 // backpack pull-up incorrect
 //#define ERROR_BODYCOLOR_INVALID         556 // an invalid color code was detected
-//#define ERROR_BODYCOLOR_FULL            557 // no space to write new bodycolor. requires full erase/re-program.
-//#define ERROR_BODY_FLASHLIGHT           558 // forward IR LED (flashlight) failure
+#define ERROR_BODY_CANNOT_POWER_OFF       557 // robot can't turn off. check test connection and button not held. Possible damage on Body PCBA
+#define ERROR_BODY_PROGRAMMED             558 // already has production fw (jtag lock prevents reprogram)
 #define ERROR_BODY_NO_BOOT_MSG            559 // Could not detect production fw boot msg
+#define ERROR_BODY_RANGE_END              560 // RANGE CHECK FOR BODY ERRORS, do not throw this!
 
 //<export heading> Drop Sensor Errors
 //#define ERROR_DROP_LEAKAGE              570 // Drop leakage detected
@@ -257,16 +295,9 @@ typedef int error_t;
 
 //<export heading> Backpack Errors
 #define ERROR_BACKP_LED                   650 // Backpack LED miswired or bad LED
-//#define ERROR_ENCODER_FAULT             651 // Encoder wire/solder broken
-//#define ERROR_MOTOR_BACKWARD            652 // Motor or encoder is wired backward
-//#define ERROR_MOTOR_SLOW                653 // Motor cannot turn easily (too tight or debris inside)
-//#define ERROR_BACKP_BTN_THRESH          654 // Button voltage detected outside digital thresholds
-//#define ERROR_BACKP_BTN_PRESS_TIMEOUT   655 // Timeout waiting for backpack button to be pressed
-//#define ERROR_BACKP_BTN_RELEASE_TIMEOUT 656 // Timeout waiting for backpack button to be released
-//#define ERROR_MOTOR_FAST                664 // Encoder does not meet Anki spec (can't count every tick at speed)
-//#define ERROR_ENCODER_UNDERVOLT         665 // Encoder does not meet Anki spec (can't meet minimum voltage)
-//#define ERROR_ENCODER_SPEED_FAULT       666 // Encoder does not meet Anki spec (rise/fall threshold)
-//#define ERROR_ENCODER_RISE_TIME         667 // Encoder does not meet Anki spec (A vs B rise time)
+#define ERROR_BACKP_BTN_PRESS_TIMEOUT     651 // Timeout waiting for backpack button to be pressed
+#define ERROR_BACKP_BTN_RELEASE_TIMEOUT   652 // Timeout waiting for backpack button to be released
+//#define ERROR_BACKP_BTN_THRESH          653 // Button voltage detected outside digital thresholds
 
 //<export heading> Cube Errors
 #define ERROR_CUBE_CANNOT_WRITE           700 // MCU is locked
@@ -311,6 +342,8 @@ typedef int error_t;
 #define ERROR_BAD_ARG                     763 // Argument errror
 #define ERROR_THROW_0                     764 // Test threw exception with ERROR_OK?
 #define ERROR_UNHANDLED_EXCEPTION         765 // 'safe' operation threw an uncategorized error
+#define ERROR_BUFFER_TOO_SMALL            766 // provided buffer was too small
+#define ERROR_INVALID_RTC                 767 // RTC clock needs to be set. Replace backup battery, if requried
 
 //<export end>
 

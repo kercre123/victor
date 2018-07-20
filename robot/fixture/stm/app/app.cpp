@@ -26,9 +26,14 @@ const bool g_isReleaseBuild = !NOT_FOR_FACTORY;
 
 #include "app_release_ver.h"
 u8 g_fixtureReleaseVersion = (NOT_FOR_FACTORY) ? 0 : (APP_RELEASE_VERSION);
-#define BUILD_INFO "Victor DVT3"
+#define BUILD_INFO "Victor PVT"
 
 #define USE_START_BTN 0
+#define APP_DEBUG 0
+
+#if APP_DEBUG > 0
+#warning APP_DEBUG
+#endif
 
 //other global dat
 app_reset_dat_t g_app_reset;
@@ -59,6 +64,7 @@ char* snformat(char *s, size_t n, const char *format, ...) {
 
 // Show the name of the fixture and version information
 extern int HelperTempC;
+extern time_t RtcDisplayTime;
 void SetFixtureText(bool reinit=0);
 void SetFixtureText(bool reinit)
 {
@@ -71,14 +77,23 @@ void SetFixtureText(bool reinit)
   if( !inited )
     helperLcdClear();
   
+  //current mode
+  bool is_fixmode_head = g_fixmode==FIXMODE_HEAD1 || g_fixmode==FIXMODE_HEAD1_OL || g_fixmode==FIXMODE_HEAD2 || g_fixmode==FIXMODE_HELPER1;
+  bool is_fixmode_packout = g_fixmode==FIXMODE_PACKOUT || g_fixmode==FIXMODE_PACKOUT_OL;
+  
   //different colors for debug builds
   char color = 'b';
   if( !g_isReleaseBuild )
     color = m_last_error == ERROR_OK ? 'g' : 'r';
+  if( g_isReleaseBuild && is_fixmode_packout && !fixtureTimeIsValid() ) //packout (release build) indicate if RTC is invalid
+    color = 'r';
   
   //for head programming fixtures, show last written ESN on the display
-  if( g_fixmode >= FIXMODE_HEAD1 && g_fixmode <= FIXMODE_HELPER1 )
+  //for packout fixtures, show current RTC time on the display
+  if( is_fixmode_head )
     helperLcdSetLine(1, snformat(b,bz,"prev esn: 0x%08x", TestHeadGetPrevESN()) );
+  else if( is_fixmode_packout )
+    helperLcdSetLine(1, fixtureTimeStr(RtcDisplayTime) ); //e.g. "Sun Sep16 01:03 1973"
   else if( !inited && !g_isReleaseBuild )
     helperLcdSetLine(1, "DEV-NOT FOR FACTORY!");
   
@@ -100,11 +115,11 @@ void SetFixtureText(bool reinit)
     helperLcdSetLine(4, snformat(b,bz,"                   %u", tempC/10) );
     helperLcdSetLine(5, snformat(b,bz,"                   %u", tempC%10) );
   }//-*/
-  int temp_line = (g_fixmode >= FIXMODE_HEAD1 && g_fixmode <= FIXMODE_HELPER1) ? 6 : 7; //shift up for head modes (make space for os version info)
+  int temp_line = is_fixmode_head ? 6 : 7; //shift up for head modes (make space for os version info)
   helperLcdSetLine(temp_line, snformat(b,bz,"%iC", tempC) );
   
   //mode-specific info
-  if( !inited && (g_fixmode == FIXMODE_HEAD1 || g_fixmode == FIXMODE_HELPER1) )
+  if( !inited && is_fixmode_head )
     helperLcdSetLine(7, snformat(b,bz,"os-ver %s", helperGetEmmcdlVersion()) );
   
   //show build info and version
@@ -140,12 +155,9 @@ void SetOKText(void)
 void WaitForDeviceOff(bool error, int debounce_ms = 500);
 void WaitForDeviceOff(bool error, int debounce_ms)
 {
-  Board::powerOff(PWR_VEXT);
-  Board::powerOff(PWR_VBAT);
-  Board::powerOff(PWR_CUBEBAT,100);
-  Board::powerOff(PWR_DUTPROG);
-  Board::powerOff(PWR_DUTVDD);
-  Board::powerOff(PWR_UAMP);
+  #if APP_DEBUG > 0
+  ConsolePrintf("waiting for device off (%ims)\n", debounce_ms);
+  #endif
   
   u32 debounce = 0;
   u8 buz = 0, annoy = 0;
@@ -177,6 +189,10 @@ void WaitForDeviceOff(bool error, int debounce_ms)
     }
   }
   
+  #if APP_DEBUG > 0
+  ConsolePrintf("device removed\n");
+  #endif
+  
   Board::ledOff(Board::LED_RED);
   Board::buzzerOff();
   
@@ -185,9 +201,11 @@ void WaitForDeviceOff(bool error, int debounce_ms)
 }
 
 static void printFixtureInfo() {
-  ConsolePrintf("fixture,hw,%i,%s,serial,%i,%04x\n", Board::revision(), Board::revString(), FIXTURE_SERIAL, FIXTURE_SERIAL);
+  ConsolePrintf("fixture,hw,%i,%s,serial,%i,%03x,seq,%05x\n", Board::revision(), Board::revString(), FIXTURE_SERIAL, FIXTURE_SERIAL, fixtureReadSequence());
   ConsolePrintf("fixture,build,%s,%s %s\n", BUILD_INFO, __DATE__, __TIME__);
   ConsolePrintf("fixture,fw,%03d,%s,mode,%i,%s\n", g_fixtureReleaseVersion, (NOT_FOR_FACTORY > 0 ? "debug" : "release"), g_fixmode, fixtureName() );
+  time_t time = fixtureGetTime();
+  ConsolePrintf("fixture,rtc,%i,%010u,%s\n", fixtureTimeIsValid(), time, fixtureTimeStr(time) );
 }
 
 // Walk through tests one by one - logging to the PC and to the Device flash
@@ -197,7 +215,7 @@ static void RunTests()
   Board::ledOn(Board::LED_YLW); //test in-progress
   
   //char b[10]; int bz = sizeof(b);
-  cmdSend(CMD_IO_HELPER, "logstart", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN );
+  cmdSend(CMD_IO_HELPER, "logstart", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~(CMD_OPTS_EXCEPTION_EN | CMD_OPTS_LOG_ALL) );
   
   ConsolePrintf("[TEST:START]\n");
   printFixtureInfo();
@@ -308,19 +326,37 @@ inline void dbgBtnHandler(void)
 
 static uint32_t TtempUpdate = 0;
 int HelperTempC = INT_MIN;
-void helper_temp_manage(bool force_update)
+time_t RtcDisplayTime = 0;
+void helper_temp_rtc_manage(bool force_update)
 {
   static bool last_update_successful = 1;
   int update_interval = last_update_successful ? 10*1000*1000 : 60*1000*1000; //throttle down for debug if not connected to helper head
   bool update = force_update || Timer::elapsedUs(TtempUpdate) > update_interval;
   bool changed = 0;
   
-  if( update ) {
-    int tempC = helperGetTempC(); //read new temp
-    last_update_successful = tempC >= 0;
-    changed = tempC != HelperTempC;
-    HelperTempC = tempC; //still process failures to display error code
-    TtempUpdate = Timer::get();
+  if( ConsoleGetIndex_() > 0 && !force_update ) {
+    //play nice with console mode - don't interrupt
+    if( Timer::elapsedUs(TtempUpdate) > 180*1000*1000 ) { //something got stuck
+      ConsoleGetIndex_(true);
+      while( ConsoleReadChar() > -1 );
+      ConsolePrintf("...\nconsole input cleared\n");
+    }
+  } else {
+    if( update ) {
+      int tempC = helperGetTempC(); //read new temp
+      last_update_successful = tempC >= 0;
+      changed = tempC != HelperTempC;
+      HelperTempC = tempC; //still process failures to display error code
+      TtempUpdate = Timer::get();
+    }
+    
+    //rtc update check
+    time_t now = fixtureGetTime();
+    now -= now%60; //mask seconds
+    if( now != RtcDisplayTime || force_update ) {
+      RtcDisplayTime = now;
+      changed = 1; //SetFixtureText();
+    }
   }
   
   if( changed )
@@ -374,8 +410,13 @@ static void MainExecution()
   
   #else
     //legacy DUT connect starts the test
-    if( isPresent || g_forceStart )
+    if( isPresent || g_forceStart ) {
+      #if APP_DEBUG > 0
+      if( isPresent ) ConsolePrintf("device detected\n");
+      if( g_forceStart) ConsolePrintf("force start\n");
+      #endif
       g_forceStart = 0, start = 1;
+    }
   
   #endif
   
@@ -386,7 +427,7 @@ static void MainExecution()
     Board::ledOff(Board::LED_GREEN);
     Board::ledOff(Board::LED_YLW);
   }
-  helper_temp_manage(start); //force immediate temp read after test completion
+  helper_temp_rtc_manage(start); //force immediate temp read +clock update after test completion
   
   //DEBUG
   dbgBtnHandler();
@@ -435,16 +476,6 @@ int main(void)
   InitConsole();
   InitRandom();
   Board::init();
-  
-  //Try to restore saved mode
-  g_fixmode = FIXMODE_NONE;
-  if ( g_flashParams.fixtureTypeOverride > FIXMODE_NONE && g_flashParams.fixtureTypeOverride < g_num_fixmodes ) {
-    if( g_fixmode_info[g_fixmode].name != NULL ) { //Prevent invalid modes
-      g_fixmode = g_flashParams.fixtureTypeOverride;
-    }
-  }
-  
-  //TODO: ^^move board init/rev stuff into fixture init
   fixtureInit();
   Meter::init();
 
@@ -452,7 +483,7 @@ int main(void)
   
   ConsolePrintf("\n----- Victor Test Fixture: -----\n");
   printFixtureInfo();
-  helper_temp_manage(1);
+  helper_temp_rtc_manage(1);
   SetFixtureText();
   
   //DEBUG: runtime validation of the fixmode array
@@ -489,6 +520,8 @@ int main(void)
   Board::ledOff(Board::LED_RED);
   Board::ledOff(Board::LED_GREEN);
   Board::ledOff(Board::LED_YLW);
+  
+  try { fixtureCleanup(); } catch(error_t e) {}
   
   while (1)
   {  

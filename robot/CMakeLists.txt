@@ -36,6 +36,7 @@ target_link_libraries(robot_hal
   robot_interface
   robot_clad_cpplite
   hdr_histogram
+  log
 )
 
 target_include_directories(robot_hal

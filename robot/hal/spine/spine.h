@@ -47,7 +47,10 @@ enum RobotMode { //todo: mode is a dummy value. If ever needed, this should be i
 
 #define SPINE_BUFFER_MAX_LEN 8192
 
-static const size_t SPINE_B2H_FRAME_LEN = 
+static const size_t SPINE_B2H_FRAME_LEN =
+    sizeof(struct SpineMessageHeader) + sizeof(struct BodyToHead) + sizeof(struct SpineMessageFooter);
+
+static const size_t SPINE_CCC_FRAME_LEN =
     sizeof(struct SpineMessageHeader) + sizeof(struct BodyToHead) + sizeof(struct SpineMessageFooter);
 
 struct spine_ctx {
@@ -70,7 +73,7 @@ int spine_close(spine_ctx_t spine);
 // get file descriptor associated with spine I/O
 int spine_get_fd(spine_ctx_t spine);
 
-// read all available data from spine 
+// read all available data from spine
 ssize_t spine_read(spine_ctx_t spine);
 
 // send data into spine for processing

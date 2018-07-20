@@ -17,6 +17,7 @@
 #include "anki-ble/common/stringutils.h"
 #include "log.h"
 #include "wifi.h"
+#include "platform/switchboard/anki-wifi/fileutils.h"
 
 #include <algorithm>
 #include <fstream>
@@ -234,7 +235,7 @@ std::vector<uint8_t> PackWiFiScanResults(const std::vector<WiFiScanResult>& resu
   return packed_results;
 }
 
-void HandleOutputCallback(int rc, const std::string& output) {
+void HandleOutputCallback(int rc) {
   // noop
 }
 

@@ -113,6 +113,12 @@ void AnimationComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
 
 void AnimationComponent::Init()
 {
+  if(_isInitialized)
+  {
+    PRINT_NAMED_INFO("AnimationComponent.Init.AlreadyInited","");
+    return;
+  }
+  
   // Open manifest file
   static const std::string manifestFile = "assets/anim_manifest.json";
   Json::Value jsonManifest;

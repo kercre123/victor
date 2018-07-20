@@ -22,7 +22,6 @@ echo load updated helper files...
 adb shell -x "mkdir -p /data/local/fixture"
 adb push helper /data/local/fixture/
 adb push helpify /data/local/fixture/
-adb push display /data/local/fixture/
 adb shell -x "cd /data/local/fixture && chmod +x * && dos2unix helpify"
 
 echo enable helper auto-boot...

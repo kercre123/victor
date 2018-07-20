@@ -2,12 +2,12 @@
   "playpenFailAnim": [
     {
       "audioName": [
-        "Play__Robot_Sfx__Srv_Sad"
+        "Play__Robot_Vo__Gp_Explorer_Backup_Beep"
       ],
       "Name": "RobotAudioKeyFrame",
       "volume": 1.0,
       "audioEventId": [
-        3613386685
+        1939604322
       ],
       "probability": 1.0,
       "hasAlts": false,
