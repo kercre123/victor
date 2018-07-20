@@ -129,23 +129,23 @@
   },
   {
     "CladEvent": "ConnectToCubeFailure",
-    "AnimName":  "ag_majorfail" 
+    "AnimName":  "ag_cubeconnection_connectionfailure" 
   },
   {
     "CladEvent": "ConnectToCubeGetIn",
-    "AnimName":  "ag_texttospeech_getin_01"
+    "AnimName":  "ag_cubeconnection_getin"
   },
   {
     "CladEvent": "ConnectToCubeLoop",
-    "AnimName":  "ag_texttospeech_loop_01"
+    "AnimName":  "ag_cubeconnection_loop"
   },
   {
     "CladEvent": "ConnectToCubeLostConnection",
-    "AnimName":  "ag_majorfail"
+    "AnimName":  "ag_cubeconnection_connectionlost"
   },
   {
     "CladEvent": "ConnectToCubeSuccess",
-    "AnimName":  "ag_majorwin"
+    "AnimName":  "ag_cubeconnection_connectionsuccess"
   },
   {
     "CladEvent": "DEPRECATED_PatternGuessNewIdea",

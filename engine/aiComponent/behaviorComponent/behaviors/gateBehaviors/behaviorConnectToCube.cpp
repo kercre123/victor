@@ -187,9 +187,7 @@ void BehaviorConnectToCube::ConnectedCallback(ECubeConnectionType connectionType
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorConnectToCube::ConnectionFailedCallback()
 {
-  if(EState::Connecting == _dVars.state){
-    TransitionToConnectionFailed();
-  }
+  _dVars.connectionFailedOnLastUpdate = true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
