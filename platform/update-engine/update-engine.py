@@ -39,8 +39,8 @@ OTA_PUB_KEY = "/anki/etc/ota.pub"
 OTA_ENC_PASSWORD = "/anki/etc/ota.pas"
 HTTP_BLOCK_SIZE = 1024*2  # Tuned to what seems to work best with DD_BLOCK_SIZE
 DD_BLOCK_SIZE = HTTP_BLOCK_SIZE*1024
-SUPPORTED_MANIFEST_VERSIONS = ["0.9.2", "0.9.3", "0.9.4", "0.9.5"]
-
+SUPPORTED_MANIFEST_VERSIONS = ["0.9.2", "0.9.3", "0.9.4", "0.9.5", "1.0.0"]
+WIPE_DATA_COOKIE = "/run/wipe-data"
 DEBUG = False
 
 
@@ -171,9 +171,14 @@ def get_slot(kernel_command_line):
         return 'f', 'a'
 
 
+def get_qsn():
+    "Retrieve the QSN of the robot"
+    return open("/sys/devices/soc0/serial_number", "r").read().strip()
+
+
 def get_manifest(fileobj):
     "Returns config parsed from INI file in filelike object"
-    config = ConfigParser.ConfigParser({'encryption': '0'})
+    config = ConfigParser.ConfigParser({'encryption': '0', 'qsn': None, 'ankidev': '0'})
     config.readfp(fileobj)
     return config
 
@@ -559,6 +564,11 @@ def update_from_url(url):
             die(201, "Unexpected manifest version")
         if DEBUG:
             print("Updating to version {}".format(manifest.get("META", "update_version")))
+        if "anki.dev" in cmdline:
+            if not manifest.getint("META", "ankidev"):
+                die(214, "Ankidev OS can't install non-ankidev OTA file")
+        elif manifest.getint("META", "ankidev"):
+            die(214, "Non-ankidev OS can't install ankidev OTA file")
         # Mark target unbootable
         if not call(['/bin/bootctl', current_slot, 'set_unbootable', target_slot]):
             die(202, "Could not mark target slot unbootable")
