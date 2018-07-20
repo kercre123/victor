@@ -16,11 +16,15 @@
  *
  */
 
+#include "util/container/fixedCircularBuffer.h"
+
 #include <string>
 #include <vector>
 #include <sys/socket.h>
 #include <sys/un.h>
 
+// Don't make capacity size 0. That's undefined behavior for the implementation of Util::FixedCircularBuffer
+template <size_t kCapacity = 1>
 class LocalStreamingServer {
 public:
   LocalStreamingServer();
@@ -39,14 +43,27 @@ public:
   ssize_t Send(const char* data, int size);
   ssize_t Recv(char* data, int maxSize);
 
-private:
+  // E.g. ssize_t CheckMessageCompleteCallback(const Util::FixedCircularBuffer<char, kCapacity>& buffer);
+  // Returns -1 for error, 0 for not yet complete, or positive number for number of bytes in the next complete message.
+  // Logically, this means the second param passed in (size of bytes to check) will always be greater than or equal to the return value.
+  typedef ssize_t (*CheckMessageCompleteCallback)(const Util::FixedCircularBuffer<char, kCapacity>&);
 
+  // If our callback decides on a message that's too big to fit into the buffer provided by the call to Recv(), we error and disconnect
+  // If the callback keeps saying the message isn't complete and we end up filling the buffer we have internally, we error and disconnect
+
+  // (optional) Set a place where incomplete messages can be stored
+  void SetupMessageCompletenessCheck(CheckMessageCompleteCallback callback);
+
+private:
   // Listening socket descriptor
   int _socketfd;
   int _clientfd;
 
   // Socket names
   std::string _sockname;
+
+  CheckMessageCompleteCallback _messageCallback;
+  Util::FixedCircularBuffer<char, kCapacity> _messageBuffer;
 
   // sockaddr_un _client;
 

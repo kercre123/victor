@@ -45,6 +45,11 @@ LocalStreamingServer::LocalStreamingServer()
 {
   _socketfd = -1;
   _clientfd = -1;
+
+  _messageCallback = nullptr;
+  _messageBuffer = nullptr;
+  _messageBufferSizeMax = 0;
+  _messageBufferSizeCurrent = 0;
 }
 
 LocalStreamingServer::~LocalStreamingServer()
@@ -198,6 +203,42 @@ ssize_t LocalStreamingServer::Recv(char* data, int maxSize)
     _clientfd = newClient;
   }
 
+  if (nullptr != _messageCallback)
+  {
+    auto spaceAvailable = _messageBuffer.capacity() - _messageBuffer.size();
+    constexpr int flags = 0;
+    const ssize_t bytes_received = recv(_clientfd, data, maxSize, flags);
+    if (bytes_received <= 0) {
+      if (errno == EWOULDBLOCK || errno == EAGAIN) {
+        //LOG_DEBUG("LocalStreamingServer.Recv", "No data available");
+        return 0;
+      } else {
+        LOG_ERROR("LocalStreamingServer.Recv", "Receive error (%s)", strerror(errno));
+        return -1;
+      }
+    }
+
+    if (bytes_received > spaceAvailable)
+    {
+      LOG_ERROR("LocalStreamingServer.Recv",
+                "Buffer size %zu too small for %zu bytes received",
+                spaceAvailable,
+                bytes_received);
+      Disconnect();
+      return -1;
+    }
+
+    // Returns -1 for error, 0 for not yet complete, or positive number for number of bytes in the next complete message.
+    // Logically, this means the second param passed in (size of bytes to check) will always be greater than or equal to the return value.
+    // typedef ssize_t (*CheckMessageCompleteCallback)(const char*, size_t);
+    auto bytesComplete = _messageCallback()
+
+  }
+  _messageBufferSizeCurrent = 0;
+  _messageCallback = callback;
+  _messageBuffer = buffer;
+  _messageBufferSizeMax = bufferSize;
+
   constexpr int flags = 0;
   const ssize_t bytes_received = recv(_clientfd, data, maxSize, flags);
   if (bytes_received <= 0) {
@@ -227,6 +268,12 @@ void LocalStreamingServer::Disconnect()
     LOG_ERROR("LocalStreamingServer.Disconnect", "Disconnect error (%s)", strerror(errno));
   }
 
+  _messageBuffer.clear();
   _clientfd = -1;
 }
 
+void LocalStreamingServer::SetupMessageCompletenessCheck(LocalStreamingServer::CheckMessageCompleteCallback callback)
+{
+  Disconnect();
+  _messageCallback = callback;
+}
