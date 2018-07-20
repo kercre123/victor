@@ -212,17 +212,17 @@ void RtsHandlerV3::HandleRtsWifiConnectRequest(const Cozmo::ExternalComms::RtsCo
 
     UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SETTING_WIFI);
 
-    ConnectWifiResult connected = Anki::ConnectWiFiBySsid(wifiConnectMessage.wifiSsidHex,
+    Wifi::ConnectWifiResult connected = Wifi::ConnectWiFiBySsid(wifiConnectMessage.wifiSsidHex,
       wifiConnectMessage.password,
       wifiConnectMessage.authType,
       (bool)wifiConnectMessage.hidden,
       nullptr,
       nullptr);
 
-    WiFiState state = Anki::GetWiFiState();
-    bool online = state.connState == WiFiConnState::ONLINE;
+    Wifi::WiFiState state = Wifi::GetWiFiState();
+    bool online = state.connState == Wifi::WiFiConnState::ONLINE;
 
-    if(online || (connected == ConnectWifiResult::CONNECT_INVALIDKEY)) {
+    if(online || (connected == Wifi::ConnectWifiResult::CONNECT_INVALIDKEY)) {
       ev_timer_stop(_loop, &_handleInternet.timer);
       _inetTimerCount = 0;
       SendWifiConnectResult(connected);
@@ -230,9 +230,9 @@ void RtsHandlerV3::HandleRtsWifiConnectRequest(const Cozmo::ExternalComms::RtsCo
       ev_timer_again(_loop, &_handleInternet.timer);
     }
 
-    if(connected == ConnectWifiResult::CONNECT_SUCCESS) {
+    if(connected == Wifi::ConnectWifiResult::CONNECT_SUCCESS) {
       Log::Write("Connected to wifi.");
-    } else if(connected == ConnectWifiResult::CONNECT_INVALIDKEY) {
+    } else if(connected == Wifi::ConnectWifiResult::CONNECT_INVALIDKEY) {
       Log::Write("Failure to connect: invalid wifi password.");
     } else {
       Log::Write("Failure to connect.");
@@ -251,9 +251,9 @@ void RtsHandlerV3::HandleRtsWifiIpRequest(const Cozmo::ExternalComms::RtsConnect
     std::array<uint8_t, 4> ipV4;
     std::array<uint8_t, 16> ipV6;
 
-    WiFiIpFlags flags = Anki::GetIpAddress(ipV4.data(), ipV6.data());
-    bool hasIpV4 = (flags & WiFiIpFlags::HAS_IPV4) != 0;
-    bool hasIpV6 = (flags & WiFiIpFlags::HAS_IPV6) != 0;
+    Wifi::WiFiIpFlags flags = Wifi::GetIpAddress(ipV4.data(), ipV6.data());
+    bool hasIpV4 = (flags & Wifi::WiFiIpFlags::HAS_IPV4) != 0;
+    bool hasIpV6 = (flags & Wifi::WiFiIpFlags::HAS_IPV6) != 0;
 
     SendRtsMessage<RtsWifiIpResponse>(hasIpV4, hasIpV6, ipV4, ipV6);
   }
@@ -308,7 +308,7 @@ void RtsHandlerV3::HandleRtsWifiForgetRequest(const Cozmo::ExternalComms::RtsCon
       SendRtsMessage<RtsWifiForgetResponse>(true, forgetMsg.wifiSsidHex);
     } else {
       // remove by SSID -- mark as favorite
-      bool success = Anki::RemoveWifiService(forgetMsg.wifiSsidHex);
+      bool success = Wifi::RemoveWifiService(forgetMsg.wifiSsidHex);
       SendRtsMessage<RtsWifiForgetResponse>(success, forgetMsg.wifiSsidHex);
     }
   } else {
@@ -364,14 +364,14 @@ void RtsHandlerV3::HandleRtsWifiAccessPointRequest(const Cozmo::ExternalComms::R
 
       UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SETTING_WIFI);
 
-      bool success = Anki::EnableAccessPointMode(ssid, password);
+      bool success = Wifi::EnableAccessPointMode(ssid, password);
 
       SendWifiAccessPointResponse(success, ssid, password);
 
       Log::Write("Received request to enter wifi access point mode.");
     } else {
       // disable access point mode on Victor
-      bool success = Anki::DisableAccessPointMode();
+      bool success = Wifi::DisableAccessPointMode();
 
       SendWifiAccessPointResponse(success, "", "");
 
@@ -604,10 +604,10 @@ void RtsHandlerV3::SendStatusResponse() {
     return;
   }
 
-  WiFiState state = Anki::GetWiFiState();
+  Wifi::WiFiState state = Wifi::GetWiFiState();
   uint8_t bleState = 1; // for now, if we are sending this message, we are connected
   uint8_t batteryState = 0; // for now, ignore this field until we have a way to get that info
-  bool isApMode = Anki::IsAccessPointMode();
+  bool isApMode = Wifi::IsAccessPointMode();
 
   // Send challenge and update state
   char buildNo[PROPERTY_VALUE_MAX] = {0};
@@ -638,8 +638,8 @@ void RtsHandlerV3::SendWifiScanResult() {
     return;
   }
 
-  std::vector<Anki::WiFiScanResult> wifiResults;
-  WifiScanErrorCode code = Anki::ScanForWiFiAccessPoints(wifiResults);
+  std::vector<Wifi::WiFiScanResult> wifiResults;
+  Wifi::WifiScanErrorCode code = Wifi::ScanForWiFiAccessPoints(wifiResults);
 
   const uint8_t statusCode = (uint8_t)code;
 
@@ -659,13 +659,13 @@ void RtsHandlerV3::SendWifiScanResult() {
   SendRtsMessage<RtsWifiScanResponse_3>(statusCode, wifiScanResults);
 }
 
-void RtsHandlerV3::SendWifiConnectResult(ConnectWifiResult result) {
+void RtsHandlerV3::SendWifiConnectResult(Wifi::ConnectWifiResult result) {
   if(!AssertState(RtsCommsType::Encrypted)) {
     return;
   }
 
   // Send challenge and update state
-  WiFiState wifiState = Anki::GetWiFiState();
+  Wifi::WiFiState wifiState = Wifi::GetWiFiState();
   SendRtsMessage<RtsWifiConnectResponse_3>(wifiState.ssid, wifiState.connState, (uint8_t)result);
 }
 
@@ -757,13 +757,13 @@ void RtsHandlerV3::IncrementAbnormalityCount() {
 void RtsHandlerV3::HandleInternetTimerTick() {
   _inetTimerCount++;
 
-  WiFiState state = Anki::GetWiFiState();
-  bool online = state.connState == WiFiConnState::ONLINE;
+  Wifi::WiFiState state = Wifi::GetWiFiState();
+  bool online = state.connState == Wifi::WiFiConnState::ONLINE;
 
   if(online || _inetTimerCount > _wifiConnectTimeout_s) {
     ev_timer_stop(_loop, &_handleInternet.timer);
     _inetTimerCount = 0;
-    SendWifiConnectResult(ConnectWifiResult::CONNECT_NONE);
+    SendWifiConnectResult(Wifi::ConnectWifiResult::CONNECT_NONE);
   }
 }
 

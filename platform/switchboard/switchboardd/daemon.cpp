@@ -76,6 +76,9 @@ void Daemon::Start() {
   _pairingTimer.signal = &_pairingPreConnectionSignal;
   _pairingPreConnectionSignal.SubscribeForever(std::bind(&Daemon::HandlePairingTimeout, this));
   ev_timer_init(&_pairingTimer.timer, &Daemon::sEvTimerHandler, kPairingPreConnectionTimeout_s, 0);
+
+  // Initialize wifi listeners
+  Anki::Wifi::Initialize();
 }
 
 void Daemon::Stop() {
@@ -257,6 +260,11 @@ void Daemon::OnConnected(int connId, INetworkStream* stream) {
     Log::Write("Done task");
   });
   Log::Write("Done OnConnected");
+
+  DASMSG(ble_connection_status, "ble.connection",
+          "BLE connection status has changed.");
+  DASMSG_SET(s1, "connected", "Connection status");
+  DASMSG_SEND();
 }
 
 void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
@@ -276,6 +284,11 @@ void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
   }
 
   UpdateAdvertisement(false);
+
+  DASMSG(ble_connection_status, "ble.connection",
+          "BLE connection status has changed.");
+  DASMSG_SET(s1, "disconnected", "Connection status");
+  DASMSG_SEND();
 }
 
 void Daemon::OnBleIpcDisconnected() {

@@ -13,6 +13,8 @@
 #include <netdb.h> //hostent
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <linux/wireless.h>
 #include <ifaddrs.h>
 #include "anki-ble/common/stringutils.h"
 #include "log.h"
@@ -22,11 +24,17 @@
 #include <algorithm>
 #include <fstream>
 #include <sstream>
+#include <iomanip>
+#include "util/logging/logging.h"
+#include "util/logging/DAS.h"
 
 namespace Anki {
+namespace Wifi {
 
 static GMutex connectMutex;
 static const char* const agentPath = "/tmp/vic_switchboard/connman_agent";
+static const char* WIFI_DEVICE = "wlan0";
+static gpointer ConnectionThread(gpointer data);
 
 static void AgentCallback(GDBusConnection *connection,
                       const gchar *sender,
@@ -56,6 +64,77 @@ static const gchar introspection_xml[] =
   "    </method>"
   "  </interface>"
   "</node>";
+
+void OnTechnologyChanged (GDBusConnection *connection,
+                        const gchar *sender_name,
+                        const gchar *object_path,
+                        const gchar *interface_name,
+                        const gchar *signal_name,
+                        GVariant *parameters,
+                        gpointer user_data) {
+  const char* propertyName = g_variant_get_string(g_variant_get_child_value(parameters, 0), nullptr);
+  bool propertyValue = g_variant_get_boolean(g_variant_get_variant(g_variant_get_child_value(parameters, 1)));
+  const char MAC_BYTES = 6;
+  const char MAC_MANUFAC_BYTES = 3;
+
+  if(!g_str_equal(propertyName, "Connected")) {
+    // Not the property we care about.
+    return;
+  }
+
+  std::string connectionStatus = propertyValue?"Connected.":"Disconnected.";
+
+  uint8_t apMac[MAC_BYTES];
+  bool hasMac = GetApMacAddress(apMac);
+
+  std::string apMacManufacturerBytes = "";
+
+  if(hasMac) {
+    // Strip ap MAC of last three bytes
+    for(int i = 0; i < MAC_MANUFAC_BYTES; i++) {
+      std::stringstream ss;
+      ss << std::setfill('0') << std::setw(2) << std::hex << (int)apMac[i];
+      apMacManufacturerBytes += ss.str();
+    }
+  }
+
+  Log::Write("WiFi connection status changed: [connected=%s / mac=%s]", 
+    propertyValue?"true":"false", apMacManufacturerBytes.c_str());
+
+  DASMSG(wifi_connection_status, "wifi.status",
+          "WiFi connection status has changed.");
+  DASMSG_SET(s1, connectionStatus, "Connection status");
+  DASMSG_SET(s2, apMacManufacturerBytes, "AP MAC manufacturer bytes");
+  DASMSG_SEND();
+}
+
+void Initialize() {
+  GError* error = nullptr;
+
+  static GThread *thread2 = g_thread_new("init_thread", ConnectionThread, nullptr);
+
+  if (thread2 == nullptr) {
+    Log::Write("couldn't spawn init thread");
+    return;
+  }
+
+  GDBusConnection* gdbusConn = g_bus_get_sync(G_BUS_TYPE_SYSTEM,
+                              nullptr,
+                              &error);
+
+  guint handle = g_dbus_connection_signal_subscribe (gdbusConn,
+    "net.connman",
+    "net.connman.Technology",
+    "PropertyChanged",          //member
+    nullptr,                    //obj path
+    nullptr,                    //arg0
+    G_DBUS_SIGNAL_FLAGS_NONE,   //flags
+    OnTechnologyChanged,        //callback
+    nullptr,                    //user_data
+    nullptr);                   //DestroyNotify
+
+  (void)handle;
+}
 
 WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) {
   results.clear();
@@ -162,7 +241,7 @@ WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) 
           GVariant* ethernet_val = g_variant_get_variant(ethernet_val_v);
           const char* ethernet_key = g_variant_get_string(ethernet_key_v, nullptr);
           if (g_str_equal(ethernet_key, "Interface")) {
-            if (g_str_equal(g_variant_get_string(ethernet_val, nullptr), "wlan0")) {
+            if (g_str_equal(g_variant_get_string(ethernet_val, nullptr), WIFI_DEVICE)) {
               iface_is_wlan0 = true;
             } else {
               iface_is_wlan0 = false;
@@ -327,6 +406,7 @@ static void AgentCallback(GDBusConnection *connection,
     }
 
     if(++wpaConnectInfo->retryCount < MAX_NUM_ATTEMPTS) {
+      Log::Write("Connection Error: Retrying");
       g_dbus_method_invocation_return_dbus_error(invocation, "net.connman.Agent.Error.Retry", "");
     }
   }
@@ -515,7 +595,7 @@ bool RemoveWifiService(std::string ssid) {
           GVariant* ethernet_val = g_variant_get_variant(ethernet_val_v);
           const char* ethernet_key = g_variant_get_string(ethernet_key_v, nullptr);
           if (g_str_equal(ethernet_key, "Interface")) {
-            if (g_str_equal(g_variant_get_string(ethernet_val, nullptr), "wlan0")) {
+            if (g_str_equal(g_variant_get_string(ethernet_val, nullptr), WIFI_DEVICE)) {
               matchedInterface = true;
             } else {
               matchedInterface = false;
@@ -567,13 +647,6 @@ ConnectWifiResult ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t au
   ConnManBusTechnology* tech_proxy;
   GError* error;
   bool success;
-
-  static GThread *thread = g_thread_new("connect", ConnectionThread, nullptr);
-
-  if (thread == nullptr) {
-    loge("couldn't spawn connection thread");
-    return ConnectWifiResult::CONNECT_FAILURE;
-  }
 
   std::string nameFromHex = hexStringToAsciiString(ssid);
 
@@ -752,6 +825,29 @@ ConnectWifiResult ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t au
     connectStatus = connectInfo.status;
   }
 
+  std::string statusString = "failure";
+  std::string errorString = "None";
+
+  switch(connectStatus) {
+    case ConnectWifiResult::CONNECT_SUCCESS:
+      statusString = "success";
+      break;
+    case ConnectWifiResult::CONNECT_INVALIDKEY:
+      errorString = "invalid password";
+      break;
+    default:
+      statusString = "failure";
+      errorString = "unknown";
+      break;
+  }
+
+  DASMSG(wifi_connection_status, "wifi.connection",
+          "WiFi connection attempt.");
+  DASMSG_SET(s1, statusString, "Connection attempt result");
+  DASMSG_SET(s2, errorString, "Error");
+  DASMSG_SET(s3, hidden?"hidden":"visible", "SSID broadcast");
+  DASMSG_SEND();
+
   if (agent_registered) {
     Log::Write("unregistering agent");
     UnregisterAgent(&connectInfo);
@@ -903,7 +999,7 @@ WiFiState GetWiFiState() {
           GVariant* ethernet_val = g_variant_get_variant(ethernet_val_v);
           const char* ethernet_key = g_variant_get_string(ethernet_key_v, nullptr);
           if (g_str_equal(ethernet_key, "Interface")) {
-            if (!g_str_equal(g_variant_get_string(ethernet_val, nullptr), "wlan0")) {
+            if (!g_str_equal(g_variant_get_string(ethernet_val, nullptr), WIFI_DEVICE)) {
               isAssociated = false;
               break;
             }
@@ -1175,7 +1271,7 @@ WiFiIpFlags GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits) {
   memset(ipv4_32bits, 0, 4);
   memset(ipv6_128bits, 0, 16);
 
-  const char* interface = IsAccessPointMode()? "tether" : "wlan0";
+  const char* interface = IsAccessPointMode()? "tether" : WIFI_DEVICE;
 
   while(current != nullptr) {
     int family = current->ifa_addr->sa_family;
@@ -1203,4 +1299,38 @@ WiFiIpFlags GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits) {
   return wifiFlags;
 }
 
-} // namespace Anki
+bool GetApMacAddress(uint8_t* mac_48bits) {
+  // Get IPv4 driver socket fd
+  int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+  const int MAC_SIZE = 6;
+
+  if(sockfd == -1) {
+    Log::Write("Can't connect to socket");
+    return false;
+  }
+
+  // iwreq struct comes from linux/wireless.h
+  struct iwreq data;
+
+  // the iwreq struct must be populated with
+  // the device name before making ioctl request  
+  strncpy(data.ifr_name, WIFI_DEVICE, IFNAMSIZ);
+
+  // make ioctl request for AP mac address
+  int req = ioctl(sockfd, SIOCGIWAP, &data);
+
+  if(req == -1) {
+    Log::Write("ioctl request for AP MAC addr failed: %d", errno);
+    close(sockfd);
+    return false;
+  }
+
+  // Copy mac address to given pointer
+  memcpy(mac_48bits, &(data.u.ap_addr.sa_data), MAC_SIZE);
+
+  close(sockfd);
+  return true;
+}
+
+} // Wifi
+} // Anki

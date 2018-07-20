@@ -105,8 +105,8 @@ void EngineMessagingClient::sEvEngineMessageHandler(struct ev_loop* loop, struct
 }
 
 void EngineMessagingClient::HandleWifiScanRequest() {
-  std::vector<Anki::WiFiScanResult> wifiResults;
-  WifiScanErrorCode code = Anki::ScanForWiFiAccessPoints(wifiResults);
+  std::vector<Wifi::WiFiScanResult> wifiResults;
+  Wifi::WifiScanErrorCode code = Wifi::ScanForWiFiAccessPoints(wifiResults);
 
   const uint8_t statusCode = (uint8_t)code;
 

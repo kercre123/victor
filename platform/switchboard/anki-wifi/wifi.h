@@ -23,6 +23,7 @@
 #include <gio/gio.h>
 
 namespace Anki {
+namespace Wifi {
 
 enum WiFiIpFlags : uint8_t {
   NONE     = 0,
@@ -138,6 +139,10 @@ bool IsAccessPointMode();
 bool EnableAccessPointMode(std::string ssid, std::string pw);
 bool DisableAccessPointMode();
 WiFiIpFlags GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits);
+bool GetApMacAddress(uint8_t* mac_48bits);
 WiFiState GetWiFiState();
+void Initialize();
+void Deinitialize();
 
+} // namespace Wifi
 } // namespace Anki
