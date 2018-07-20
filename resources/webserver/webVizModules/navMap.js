@@ -399,8 +399,8 @@
       var x = scaleFactor2D*(0.001*robotPosition.x - xOffset2D);
       var y = scaleFactor2D*(0.001*robotPosition.y - yOffset2D);
       var euler = calcEuler( robotPosition.qW, robotPosition.qX, robotPosition.qY, robotPosition.qZ );
-      var robotLength = 80.0;
-      var robotWidth = 45.0;
+      var robotLength = 50.0*scaleFactor2D0/780;
+      var robotWidth = 26.0*scaleFactor2D0/780;
       p.translate( x, y );
       p.imageMode( p.CENTER ); // todo: this should be on drive center
       p.rotate( -euler.z );
@@ -821,7 +821,7 @@
     }
   };
 
-  var kAutoUpdatePeriod_s = 2.0; 
+  var kAutoUpdatePeriod_s = 1.0; 
   var timeTilAutoUpdate = kAutoUpdatePeriod_s;
   myMethods.update = function( dt, elem ) {
     timeTilAutoUpdate -= dt;
