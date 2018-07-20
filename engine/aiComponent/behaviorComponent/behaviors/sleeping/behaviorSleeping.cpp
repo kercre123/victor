@@ -37,6 +37,8 @@ CONSOLE_VAR_RANGED(u32, kSleepingBoutNumStirs_max, CONSOLE_GROUP, 10, 1, 10);
 
 constexpr const char* kEnablePowerSaveKey = "enablePowerSave";
 constexpr const char* kPlayEmergencyGetOut = "shouldPlayEmergencyGetOut";
+  
+const char* const kCanActivateOffTreads = "canActivateOffTreads";
 
 }
 
@@ -45,12 +47,19 @@ BehaviorSleeping::BehaviorSleeping(const Json::Value& config)
 {
   _iConfig.shouldEnterPowerSave = config.get(kEnablePowerSaveKey, true).asBool();
   _iConfig.shouldPlayEmergencyGetOut = config.get(kPlayEmergencyGetOut, true).asBool();
+  _iConfig.canActivateOffTreads = config.get(kCanActivateOffTreads, false).asBool();
+}
+
+void BehaviorSleeping::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
+{
+  modifiers.wantsToBeActivatedWhenOffTreads = _iConfig.canActivateOffTreads;
 }
 
 void BehaviorSleeping::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   expectedKeys.insert(kEnablePowerSaveKey);
   expectedKeys.insert(kPlayEmergencyGetOut);
+  expectedKeys.insert(kCanActivateOffTreads);
 }
 
 bool BehaviorSleeping::CanBeGentlyInterruptedNow() const
