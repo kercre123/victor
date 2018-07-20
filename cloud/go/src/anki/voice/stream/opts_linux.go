@@ -1,4 +1,4 @@
-package voice
+package stream
 
 import (
 	"anki/log"

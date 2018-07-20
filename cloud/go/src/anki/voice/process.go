@@ -3,7 +3,7 @@ package voice
 import (
 	"anki/log"
 	"anki/token"
-	"anki/util"
+	"anki/voice/stream"
 	"clad/cloud"
 	"fmt"
 	"strings"
@@ -11,7 +11,6 @@ import (
 
 	"github.com/anki/sai-chipper-voice/client/chipper"
 	pb "github.com/anki/sai-chipper-voice/proto/anki/chipperpb"
-	"github.com/google/uuid"
 )
 
 const (
@@ -24,7 +23,6 @@ var (
 	// key for Chipper use
 	ChipperSecret string
 	verbose       bool
-	platformOpts  []chipper.ConnOpt
 )
 
 const (
@@ -102,6 +100,24 @@ func (p *Process) AddIntentWriter(s MsgSender) {
 	p.intents = append(p.intents, s)
 }
 
+type ctxReceiver struct {
+	intent chan *cloud.IntentResult
+	err    chan cloudError
+	open   chan struct{}
+}
+
+func (c *ctxReceiver) OnIntent(r *cloud.IntentResult) {
+	c.intent <- r
+}
+
+func (c *ctxReceiver) OnError(kind cloud.ErrorType, err error) {
+	c.err <- cloudError{kind, err}
+}
+
+func (c *ctxReceiver) OnStreamOpen() {
+	c.open <- struct{}{}
+}
+
 // Run starts the cloud process, which will run until stopped on the given channel
 func (p *Process) Run(options ...Option) {
 	if verbose {
@@ -113,13 +129,17 @@ func (p *Process) Run(options ...Option) {
 		opt(&p.opts)
 	}
 
-	intentChan := make(chan *cloud.IntentResult)
-	errChan := make(chan cloudError)
-	cloudChan := cloudChans{intent: intentChan, err: errChan}
+	cloudChans := &ctxReceiver{
+		intent: make(chan *cloud.IntentResult),
+		err:    make(chan cloudError),
+		open:   make(chan struct{}),
+	}
 
-	var ctx *voiceContext
+	var ctx *stream.Streamer
 procloop:
 	for {
+		// the cases in this select should NOT block! if messages that others send us
+		// are not promptly read, socket buffers can fill up and break voice processing
 		select {
 		case msg := <-p.msg:
 			switch msg.msg.Tag() {
@@ -127,7 +147,7 @@ procloop:
 				// hotword = get ready to stream data
 				if ctx != nil {
 					log.Println("Got hotword event while already streaming, weird...")
-					if err := ctx.close(); err != nil {
+					if err := ctx.Close(); err != nil {
 						log.Println("Error closing context:")
 					}
 				}
@@ -150,65 +170,32 @@ procloop:
 					continue
 				}
 
-				var jwtToken string
-				tokenTime := util.TimeFuncMs(func() {
-					jwtToken, _ = p.getToken()
-				})
-				if jwtToken == "" && p.opts.requireToken {
-					log.Println("Canceling, didn't get token")
-					continue
+				var ctxopts []stream.Option
+				ctxopts = append(ctxopts, stream.WithTokener(p.getToken, p.opts.requireToken),
+					stream.WithChipperURL(ChipperURL),
+					stream.WithChipperSecret(ChipperSecret))
+
+				streamOpts := chipper.StreamOpts{
+					CompressOpts: chipper.CompressOpts{
+						Compress:   p.opts.compress,
+						Bitrate:    66 * 1024,
+						Complexity: 0,
+						FrameSize:  60},
+					SaveAudio: p.opts.saveAudio,
+					Timeout:   DefaultTimeout,
+					Language:  language,
 				}
-
-				var stream chipper.Stream
-				var chipperConn *chipper.Conn
-				sessionID := uuid.New().String()[:16]
-				ctxTime := util.TimeFuncMs(func() {
-					opts := platformOpts
-					if jwtToken != "" {
-						opts = append(opts, chipper.WithAccessToken(jwtToken))
-					}
-					opts = append(opts, chipper.WithSessionID(sessionID))
-					chipperConn, err = chipper.NewConn(ChipperURL, ChipperSecret, opts...)
-					if err != nil {
-						log.Println("Error getting chipper connection:", err)
-						p.writeError(cloud.ErrorType_Connecting, err)
-						return
-					}
-					streamOpts := chipper.StreamOpts{
-						CompressOpts: chipper.CompressOpts{
-							Compress:   p.opts.compress,
-							Bitrate:    66 * 1024,
-							Complexity: 0,
-							FrameSize:  60},
-						SaveAudio: p.opts.saveAudio,
-						Timeout:   DefaultTimeout,
-						Language:  language,
-					}
-					if mode == cloud.StreamType_KnowledgeGraph {
-						stream, err = chipperConn.NewKGStream(streamOpts)
-					} else {
-						stream, err = chipperConn.NewIntentStream(chipper.IntentOpts{
-							StreamOpts: streamOpts,
-							Handler:    p.opts.handler,
-							Mode:       serverMode,
-						})
-					}
-					if err != nil {
-						p.writeError(cloud.ErrorType_NewStream, err)
-					}
-				})
-				if err != nil {
-					log.Println("Error creating Chipper:", err)
-					continue
+				if mode == cloud.StreamType_KnowledgeGraph {
+					ctxopts = append(ctxopts, stream.WithKnowledgeGraphOptions(streamOpts))
+				} else {
+					ctxopts = append(ctxopts, stream.WithIntentOptions(chipper.IntentOpts{
+						StreamOpts: streamOpts,
+						Handler:    p.opts.handler,
+						Mode:       serverMode,
+					}, mode))
 				}
-
-				// signal to engine that we got a connection; the _absence_ of this will
-				// be used to detect server timeout errors
-				p.writeResponse(cloud.NewMessageWithStreamOpen(&cloud.Void{}))
-				ctx = p.newVoiceContext(chipperConn, stream, cloudChan)
-
-				logVerbose("Received hotword event", serverMode, "created session", sessionID, "in",
-					int(ctxTime), "ms (token", int(tokenTime), "ms)")
+				logVerbose("Got hotword event", serverMode)
+				ctx = stream.NewStreamer(cloudChans, p.StreamSize(), ctxopts...)
 
 			case cloud.MessageTag_DebugFile:
 				p.writeResponse(msg.msg)
@@ -217,13 +204,13 @@ procloop:
 				// add samples to our buffer
 				buf := msg.msg.GetAudio().Data
 				if ctx != nil {
-					ctx.addSamples(buf)
+					ctx.AddSamples(buf)
 				} else {
 					logVerbose("No active context, discarding", len(buf), "samples")
 				}
 			}
 
-		case intent := <-intentChan:
+		case intent := <-cloudChans.intent:
 			logVerbose("Received intent from cloud:", intent)
 			// we got an answer from the cloud, tell mic to stop...
 			p.signalMicStop()
@@ -232,19 +219,22 @@ procloop:
 			p.writeResponse(cloud.NewMessageWithResult(intent))
 
 			// stop streaming until we get another hotword event
-			if err := ctx.close(); err != nil {
+			if err := ctx.Close(); err != nil {
 				log.Println("Error closing context:")
 			}
 			ctx = nil
 
-		case err := <-errChan:
+		case err := <-cloudChans.err:
 			logVerbose("Received error from cloud:", err)
 			p.signalMicStop()
 			p.writeError(err.kind, err.err)
-			if err := ctx.close(); err != nil {
+			if err := ctx.Close(); err != nil {
 				log.Println("Error closing context:")
 			}
 			ctx = nil
+
+		case <-cloudChans.open:
+			p.writeResponse(cloud.NewMessageWithStreamOpen(&cloud.Void{}))
 
 		case <-p.opts.stop:
 			logVerbose("Received stop notification")
@@ -269,6 +259,7 @@ func (p *Process) StreamSize() int {
 // SetVerbose enables or disables verbose logging
 func SetVerbose(value bool) {
 	verbose = value
+	stream.SetVerbose(value)
 }
 
 func (p *Process) getToken() (string, error) {
@@ -276,18 +267,12 @@ func (p *Process) getToken() (string, error) {
 	resp, err := token.HandleRequest(req)
 	if err != nil {
 		log.Println("Error getting jwt token:", err)
-		if p.opts.requireToken {
-			p.writeError(cloud.ErrorType_Token, err)
-		}
 		return "", err
 	}
 	jwt := resp.GetJwt()
 	if jwt.Error != cloud.TokenError_NoError {
 		log.Println("Error code getting jwt token:", jwt.Error)
-		if p.opts.requireToken {
-			p.writeError(cloud.ErrorType_Token, fmt.Errorf("jwt error code %d", jwt.Error))
-		}
-		return "", err
+		return "", fmt.Errorf("jwt error code %d", jwt.Error)
 	}
 	return resp.GetJwt().JwtToken, nil
 }
