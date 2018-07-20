@@ -46,7 +46,7 @@ class NeuralNetModel : public INeuralNetModel
 {
 public:
 
-  NeuralNetModel();
+  explicit NeuralNetModel(const std::string& cachePath);
 
   ~NeuralNetModel();
 
@@ -61,6 +61,10 @@ private:
   // Helper to interpret four outputs as SSD boxes (num detections, scores, classes, and boxes)
   void GetDetectedObjects(const std::vector<tensorflow::Tensor>& outputTensors, TimeStamp_t timestamp,
                           std::list<Vision::SalientPoint>& salientPoints);
+
+  void SaveObjectnessResponseMaps(const std::vector<cv::Mat>& channels, const int numberOfChannels,
+                                  const TimeStamp_t timestamp);
+
 
   // Thin wrapper to tensorflow run to allow us to turn on benchmarking to logs
   Result Run(tensorflow::Tensor image_tensor, std::vector<tensorflow::Tensor>& outputTensors);

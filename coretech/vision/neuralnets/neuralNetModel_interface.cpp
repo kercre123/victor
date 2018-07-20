@@ -12,13 +12,37 @@
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/math/rect_impl.h"
 #include "coretech/vision/neuralnets/neuralNetModel_interface.h"
+
+#include "util/console/consoleInterface.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
+
+#include "opencv2/imgcodecs/imgcodecs.hpp"
+
 #include <fstream>
 
 namespace Anki {
 namespace Vision {
   
 #define LOG_CHANNEL "NeuralNets"
+
+static const bool kINeuralNetModel_SaveImages = false;
+
+int GetCVTypeHelper(const uint8_t* intputType)
+{
+  return CV_8UC2;
+}
+int GetCVTypeHelper(const float* intputType)
+{
+  return CV_32FC2;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+INeuralNetModel::INeuralNetModel(const std::string& cachePath)
+: _cachePath(cachePath)
+{
+
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result INeuralNetModel::ReadLabelsFile(const std::string& fileName, std::vector<std::string>& labels_out)
@@ -91,6 +115,12 @@ void INeuralNetModel::LocalizedBinaryOutputHelper(const T* outputData, TimeStamp
                                                   std::list<Vision::SalientPoint>& salientPoints)
 {
   // Create a detection box for each grid cell that is above threshold
+
+  // This has been removed because the outputTensor.tensor options are always
+  // 0000 regardless of acutally row or column major and Eigen::RowMajor is
+  // 0001 and thus this check isn't really checking anything. VIC-4386
+  // DEV_ASSERT( !(outputTensor.tensor<float, 2>().Options & Eigen::RowMajor),
+  //           "NeuralNetModel.GetLocalizedBinaryClassification.OutputNotRowMajor");
   
   _detectionGrid.create(_params.numGridRows, _params.numGridCols);
   
@@ -229,6 +259,86 @@ void INeuralNetModel::LocalizedBinaryOutputHelper(const T* outputData, TimeStamp
   template void INeuralNetModel::LocalizedBinaryOutputHelper(const uint8_t* outputData, TimeStamp_t timestamp,
                                                              std::list<Vision::SalientPoint>& salientPoints);
 
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<typename T>
+void INeuralNetModel::ResponseMapOutputHelper(const T* outputData, TimeStamp_t timestamp,
+                                              const int numberOfChannels,
+                                              std::list<Vision::SalientPoint>& salientPoints)
+{
+
+  // Note: The Eigen tensor we get here is row major. An assert checking for
+  // row major here doesn't really make sense because the Eigen tensor we get
+  // always reports it is in column major when in fact it is not. VIC-4386
+
+  // TODO is this really what I want to do, with the raw pointer
+  cv::Mat responseMap(_params.inputHeight, _params.inputWidth, GetCVTypeHelper(outputData),
+                      const_cast<T*>(reinterpret_cast<const T*>(outputData)));
+  std::vector<cv::Mat> channels;
+  split(responseMap, channels);
+
+  const int kObjectnessIndex = 1;
+  double min(0), max(0);
+  cv::Point2i minLoc(0, 0), maxLoc(0, 0);
+  cv::minMaxLoc(channels[kObjectnessIndex], &min, &max, &minLoc, &maxLoc);
+
+  if (kINeuralNetModel_SaveImages)
+  {
+    SaveResponseMaps(channels, numberOfChannels, timestamp);
+  }
+
+  // Create a SalientPoint to return
+  const float kWidthScale  = 1.f / static_cast<float>(responseMap.cols);
+  const float kHeightScale = 1.f / static_cast<float>(responseMap.rows);
+  const float x = Util::Clamp(maxLoc.x * kWidthScale,  0.f, 1.f);
+  const float y = Util::Clamp(maxLoc.y * kHeightScale, 0.f, 1.f);
+  const Vision::SalientPointType type = Vision::SalientPointType::Object;
+
+  // TODO right now objectness doesn't have an area associated with it,
+  // thus the shape part of the salient point is empty, and the area
+  // fraction has a placeholder.
+  Vision::SalientPoint salientPoint(timestamp,
+                                    x, y, max,
+                                    1.f * (kWidthScale*kHeightScale),
+                                    type, EnumToString(type),
+                                    Poly2f{}.ToCladPoint2dVector());
+
+  salientPoints.push_back(std::move(salientPoint));
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void INeuralNetModel::SaveResponseMaps(const std::vector<cv::Mat>& channels, const int numberOfChannels,
+                                       const TimeStamp_t timestamp)
+{
+    for (int channel = 0; channel < numberOfChannels; ++channel)
+    {
+      double channelMin(0), channelMax(0);
+      cv::Point2i channelMinLoc(0, 0), channelMaxLoc(0, 0);
+      cv::minMaxLoc(channels[channel], &channelMin, &channelMax, &channelMinLoc, &channelMaxLoc);
+
+      const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath,
+        _params.visualizationDirectory, std::to_string(timestamp) + "_" +
+        std::to_string(channel) + ".png"});
+
+      cv::Mat imageToSave;
+      channels[channel].copyTo(imageToSave);
+      imageToSave = 255 * (imageToSave - channelMin) / (channelMax - channelMin);
+      imageToSave.convertTo(imageToSave, CV_8UC1, 1.f/(channelMax - channelMin),  -channelMin / (channelMax - channelMin));
+      cv::imwrite(saveFilename, imageToSave);
+
+      const std::string salientPointFilename = Util::FileUtils::FullFilePath({_cachePath,
+        "objectnessResponseMap", std::to_string(timestamp) + ".txt"});
+      std::ofstream salientPointFile(salientPointFilename);
+      salientPointFile << channelMaxLoc.x << " " << channelMaxLoc.y << " " << channelMax << + " "
+        << channelMinLoc.x << " " << channelMinLoc.y << " " << channelMin;
+      salientPointFile.close();
+    }
+}
+  // Explicitly instantiate for float and uint8
+  template void INeuralNetModel::ResponseMapOutputHelper(const float* outputData,   TimeStamp_t timestamp,
+                                                         const int numberOfChannels,
+                                                         std::list<Vision::SalientPoint>& salientPoints);
+  template void INeuralNetModel::ResponseMapOutputHelper(const uint8_t* outputData, TimeStamp_t timestamp,
+                                                         const int numberOfChannels,
+                                                         std::list<Vision::SalientPoint>& salientPoints); 
 } // namespace Vision
 } // namespace Anki

@@ -51,7 +51,8 @@ namespace Vision {
 #define LOG_CHANNEL "NeuralNets"
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NeuralNetModel::NeuralNetModel()
+NeuralNetModel::NeuralNetModel(const std::string& cachePath)
+: INeuralNetModel(cachePath)
 {
 
 }
@@ -358,6 +359,14 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
     return RESULT_FAIL;
   }
 
+  // Note: If your expected network output is a tensor where
+  // column/row major matter there is no programatic check
+  // whether the tensor is row or column major. Specifically
+  // DFP's network output GetLocalizedBinaryClassification
+  // is column major while objectness's output
+  // GetSalientPointsFromResponseMap is row major 
+  // however they both report the same format. VIC-4386
+  Result result = RESULT_OK;
   switch(_params.outputType)
   {
     case NeuralNetParams::OutputType::Classification:
@@ -388,10 +397,28 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
     }
     case NeuralNetParams::OutputType::Segmentation:
     {
-      // TODO (robert) need to convert the segmenation response map
-      // into salient points
+      // If there are more than two segmentation classes the responses will
+      // be in the channels not in a list
+      DEV_ASSERT(outputTensors.size() == 1, "NeuralNetModel.Detect.Segmentation.WrongNumOutputTensors");
+      const int numberOfChannels = 2;
+      tensorflow::Tensor squeezedTensor(tensorflow::DT_FLOAT,
+                                        tensorflow::TensorShape({_params.inputWidth, _params.inputHeight, 
+                                                                 numberOfChannels}));
+
+      // Reshape tensor from [1, inputWidth, inputHeight, 2] to [inputWidth, inputHeight, 2]
+      if (!squeezedTensor.CopyFrom(outputTensors[0], tensorflow::TensorShape({_params.inputWidth,
+                                                                             _params.inputHeight,
+                                                                             numberOfChannels})))
+      {
+        PRINT_NAMED_ERROR("NeuralNetModel.GetSalientPointsFromResponseMap.CopyFromFailed", "");
+        return RESULT_FAIL;
+      }
+      const float* outputData = squeezedTensor.tensor<float, 3>().data();
+      ResponseMapOutputHelper(outputData, t, numberOfChannels, salientPoints);
       break;
     }
+    default:
+      LOG_ERROR("NeuralNetModel.Detect.UnknownOutputType", "");
   }
 
   if(_params.verbose)
@@ -399,7 +426,7 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
     LOG_INFO("NeuralNetModel.Detect.SessionComplete", "");
   }
 
-  return RESULT_OK;
+  return result;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

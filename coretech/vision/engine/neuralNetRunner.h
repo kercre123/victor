@@ -83,6 +83,7 @@ private:
   ImageRGB              _imgBeingProcessed;
   
   std::string           _cachePath;
+  std::string           _visualizationDirectory;
   bool                  _isInitialized = false;
   s32                   _processingWidth;
   s32                   _processingHeight;
