@@ -14,6 +14,7 @@
 #define __Engine_MicDirectionTypes_H_
 
 #include <deque>
+#include <limits>
 
 namespace Anki {
 namespace Cozmo {
@@ -28,6 +29,7 @@ namespace Cozmo {
     kMicDirectionUnknown      = kNumMicDirections,
     kLastMicDirectionIndex    = kMicDirectionUnknown,
   };
+  enum { kInvalidMicDirectionIndex = std::numeric_limits<MicDirectionIndex>::max() };
 
   // Interface for requesting a copy of direction history
   struct MicDirectionNode
@@ -45,8 +47,14 @@ namespace Cozmo {
   using MicDirectionNodeList = std::deque<MicDirectionNode>;
 
   using SoundReactorId = uint32_t;
-  using OnSoundReactionCallback = std::function<void(MicDirectionNode)>;
   enum { kInvalidSoundReactorId = 0 };
+
+  using ShouldReactToSoundFunction = std::function<bool(MicDirectionIndex,double,MicDirectionConfidence)>;
+  using OnSoundReactionCallback = std::function<void(MicDirectionNode)>;
+
+  // a Sound Reactor needs to register this callback function which is called each time we record a valid mic power sample
+  // arguments = ( micPowerLevel, micConfidenceValue, micDirection )
+  using OnMicPowerSampledCallback = std::function<bool(double,MicDirectionConfidence,MicDirectionIndex)>;
 
 } // namespace Cozmo
 } // namespace Anki

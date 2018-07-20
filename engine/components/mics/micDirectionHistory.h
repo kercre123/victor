@@ -61,8 +61,10 @@ public:
 
   // currently we only allow the listerner to supply an OnSound "reaction", but could easily have them supply
   // the "testing" function to determine themselves what is considered a valid sound reaction
-  SoundReactorId RegisterSoundReactor(OnSoundReactionCallback callback);
+  SoundReactorId RegisterSoundReactor(OnMicPowerSampledCallback callback);
   void UnRegisterSoundReactor(SoundReactorId id);
+
+  void SendWebvizDebugString( const std::string& debugString );
 
 private:
   WebService::WebService* _webService;
@@ -75,6 +77,9 @@ private:
 
   struct SoundTrackingData
   {
+    MicDirectionIndex         latestMicDirection = kMicDirectionUnknown;
+    MicDirectionConfidence    latestMicConfidence = 0;
+
     MicPowerLevelType         latestPowerLevel = 0.0;
     MicPowerLevelType         latestNoiseFloor = 0.0;
     bool                      increasing = false;
@@ -83,18 +88,10 @@ private:
     MicPowerLevelType         averagePeakLevel = 0.0;
   };
 
-  struct SoundReactionData
-  {
-    double currentPowerLevel;
-    double averagePowerLevel;
-
-    MicDirectionNode micDirectionData;
-  };
-
   struct SoundReactionListener
   {
-    SoundReactorId          id;
-    OnSoundReactionCallback callback;
+    SoundReactorId              id;
+    OnMicPowerSampledCallback   callback;
   };
 
   // data we want to send to the webserver for debugging, but don't otherwise need to store
@@ -102,12 +99,13 @@ private:
   {
     bool                    forceUpdate = false;
 
-    MicPowerLevelType       powerLevel = 0.0;
-    MicPowerLevelType       noiseFloor = 0.0;
-    MicPowerLevelType       latestPeakPower = 0.0;
+    double                  timeOfReaction = 0.0;
+    double                  powerLevel = 0.0;
+    MicDirectionConfidence  confidence = 0;
+    MicDirectionIndex       direction = kMicDirectionUnknown;
 
-    float                   timeOfReaction = 0.0f;
-    SoundReactionData       reactionData;
+    double                  timeOfDebugString = 0.0;
+    std::string             debugString;
   };
 
   SoundTrackingData         _soundTrackingData;
@@ -125,11 +123,8 @@ private:
   static MicDirectionIndex GetBestDirection(const DirectionHistoryCount& directionCount);
 
   MicPowerLevelType AccumulatePeakPowerLevel( MicPowerLevelType latestPeakPowerLevel );
-
-  // note: make these const when done prototyping
-  bool ShouldReactToSound( const SoundReactionData& data );
-
-  void SendMicDataToWebserver( const RobotInterface::MicDirection& micData );
+  void ProcessSoundReactors();
+  void SendMicDataToWebserver();
 };
 
 } // namespace Cozmo

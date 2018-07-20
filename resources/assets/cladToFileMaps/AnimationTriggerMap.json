@@ -1425,115 +1425,211 @@
     "AnimName": "ag_generic_look_up_idle"
   },
   {
-    "CladEvent": "ANTICIPATED_ReactToSoundOffChargerAsleepAmbient",
+    "CladEvent": "RTS_OffCharger_Sleep_Ambient",
     "AnimName": "ag_rtsound_offcharger_asleep_ambient"
   },
   {
-    "CladEvent": "ReactToSoundOffChargerAsleepFront",
+    "CladEvent": "RTS_OffCharger_Sleep_Front",
     "AnimName": "ag_rtsound_offcharger_asleep_front"
   },
   {
-    "CladEvent": "ReactToSoundOffChargerAsleepFrontLeft",
-    "AnimName": "ag_rtsound_offcharger_asleep_45left"
+    "CladEvent": "RTS_OffCharger_Sleep_30Left",
+    "AnimName": "ag_rtsound_offcharger_asleep_30left"
   },
   {
-    "CladEvent": "ReactToSoundOffChargerAsleepFrontRight",
-    "AnimName": "ag_rtsound_offcharger_asleep_45right"
+    "CladEvent": "RTS_OffCharger_Sleep_30Right",
+    "AnimName": "ag_rtsound_offcharger_asleep_30right"
   },
   {
-    "CladEvent": "ReactToSoundOffChargerAsleepLeft",
+    "CladEvent": "RTS_OffCharger_Sleep_60Left",
+    "AnimName": "ag_rtsound_offcharger_asleep_60left"
+  },
+  {
+    "CladEvent": "RTS_OffCharger_Sleep_60Right",
+    "AnimName": "ag_rtsound_offcharger_asleep_60right"
+  },
+  {
+    "CladEvent": "RTS_OffCharger_Sleep_Left",
     "AnimName": "ag_rtsound_offcharger_asleep_left"
   },
   {
-    "CladEvent": "ReactToSoundOffChargerAsleepRight",
+    "CladEvent": "RTS_OffCharger_Sleep_Right",
     "AnimName": "ag_rtsound_offcharger_asleep_right"
   },
   {
-    "CladEvent": "ReactToSoundOffChargerAsleepBehind",
+    "CladEvent": "RTS_OffCharger_Sleep_120Left",
+    "AnimName": "ag_rtsound_offcharger_asleep_120left"
+  },
+  {
+    "CladEvent": "RTS_OffCharger_Sleep_120Right",
+    "AnimName": "ag_rtsound_offcharger_asleep_120right"
+  },
+  {
+    "CladEvent": "RTS_OffCharger_Sleep_150Left",
+    "AnimName": "ag_rtsound_offcharger_asleep_150left"
+  },
+  {
+    "CladEvent": "RTS_OffCharger_Sleep_150Right",
+    "AnimName": "ag_rtsound_offcharger_asleep_150right"
+  },
+  {
+    "CladEvent": "RTS_OffCharger_Sleep_Back",
     "AnimName": "ag_rtsound_offcharger_asleep_behind"
   },
   {
-    "CladEvent": "ReactToSoundOffChargerAsleepBehindLeft",
-    "AnimName": "ag_rtsound_offcharger_asleep_135left"
-  },
-  {
-    "CladEvent": "ReactToSoundOffChargerAsleepBehindRight",
-    "AnimName": "ag_rtsound_offcharger_asleep_135right"
-  },
-  {
-    "CladEvent": "ANTICIPATED_ReactToSoundOffChargerObserveAmbient",
+    "CladEvent": "RTS_OffCharger_Awake_Ambient",
     "AnimName": "ag_rtsound_offcharger_observe_ambient"
   },
   {
-    "CladEvent": "ReactToSoundOffChargerObserveFront",
+    "CladEvent": "RTS_OffCharger_Awake_Front",
     "AnimName": "ag_rtsound_offcharger_observe_front"
   },
   {
-    "CladEvent": "ReactToSoundOffChargerObserveFrontLeft",
-    "AnimName": "ag_rtsound_offcharger_observe_45left"
+    "CladEvent": "RTS_OffCharger_Awake_30Left",
+    "AnimName": "ag_rtsound_offcharger_observe_30left"
   },
   {
-    "CladEvent": "ReactToSoundOffChargerObserveFrontRight",
-    "AnimName": "ag_rtsound_offcharger_observe_45right"
+    "CladEvent": "RTS_OffCharger_Awake_30Right",
+    "AnimName": "ag_rtsound_offcharger_observe_30right"
   },
   {
-    "CladEvent": "ReactToSoundOffChargerObserveLeft",
+    "CladEvent": "RTS_OffCharger_Awake_60Left",
+    "AnimName": "ag_rtsound_offcharger_observe_60left"
+  },
+  {
+    "CladEvent": "RTS_OffCharger_Awake_60Right",
+    "AnimName": "ag_rtsound_offcharger_observe_60right"
+  },
+  {
+    "CladEvent": "RTS_OffCharger_Awake_Left",
     "AnimName": "ag_rtsound_offcharger_observe_left"
   },
   {
-    "CladEvent": "ReactToSoundOffChargerObserveRight",
+    "CladEvent": "RTS_OffCharger_Awake_Right",
     "AnimName": "ag_rtsound_offcharger_observe_right"
   },
   {
-    "CladEvent": "ReactToSoundOffChargerObserveBehind",
+    "CladEvent": "RTS_OffCharger_Awake_120Left",
+    "AnimName": "ag_rtsound_offcharger_observe_120left"
+  },
+  {
+    "CladEvent": "RTS_OffCharger_Awake_120Right",
+    "AnimName": "ag_rtsound_offcharger_observe_120right"
+  },
+  {
+    "CladEvent": "RTS_OffCharger_Awake_150Left",
+    "AnimName": "ag_rtsound_offcharger_observe_150left"
+  },
+  {
+    "CladEvent": "RTS_OffCharger_Awake_150Right",
+    "AnimName": "ag_rtsound_offcharger_observe_150right"
+  },
+  {
+    "CladEvent": "RTS_OffCharger_Awake_Back",
     "AnimName": "ag_rtsound_offcharger_observe_behind"
   },
   {
-    "CladEvent": "ReactToSoundOffChargerObserveBehindLeft",
-    "AnimName": "ag_rtsound_offcharger_observe_135left"
-  },
-  {
-    "CladEvent": "ReactToSoundOffChargerObserveBehindRight",
-    "AnimName": "ag_rtsound_offcharger_observe_135right"
-  },
-  {
-    "CladEvent": "ANTICIPATED_ReactToSoundOnChargerAsleepAmbient",
+    "CladEvent": "RTS_OnCharger_Sleep_Ambient",
     "AnimName": "ag_rtsound_oncharger_asleep_ambient"
   },
   {
-    "CladEvent": "ReactToSoundOnChargerAsleepFront",
+    "CladEvent": "RTS_OnCharger_Sleep_Front",
     "AnimName": "ag_rtsound_oncharger_asleep_front"
   },
   {
-    "CladEvent": "ReactToSoundOnChargerAsleepLeft",
+    "CladEvent": "RTS_OnCharger_Sleep_30Left",
+    "AnimName": "ag_rtsound_oncharger_asleep_30left"
+  },
+  {
+    "CladEvent": "RTS_OnCharger_Sleep_30Right",
+    "AnimName": "ag_rtsound_oncharger_asleep_30right"
+  },
+  {
+    "CladEvent": "RTS_OnCharger_Sleep_60Left",
+    "AnimName": "ag_rtsound_oncharger_asleep_60left"
+  },
+  {
+    "CladEvent": "RTS_OnCharger_Sleep_60Right",
+    "AnimName": "ag_rtsound_oncharger_asleep_60right"
+  },
+  {
+    "CladEvent": "RTS_OnCharger_Sleep_Left",
     "AnimName": "ag_rtsound_oncharger_asleep_left"
   },
   {
-    "CladEvent": "ReactToSoundOnChargerAsleepRight",
+    "CladEvent": "RTS_OnCharger_Sleep_Right",
     "AnimName": "ag_rtsound_oncharger_asleep_right"
   },
   {
-    "CladEvent": "ReactToSoundOnChargerAsleepBehind",
+    "CladEvent": "RTS_OnCharger_Sleep_120Left",
+    "AnimName": "ag_rtsound_oncharger_asleep_120left"
+  },
+  {
+    "CladEvent": "RTS_OnCharger_Sleep_120Right",
+    "AnimName": "ag_rtsound_oncharger_asleep_120right"
+  },
+  {
+    "CladEvent": "RTS_OnCharger_Sleep_150Left",
+    "AnimName": "ag_rtsound_oncharger_asleep_150left"
+  },
+  {
+    "CladEvent": "RTS_OnCharger_Sleep_150Right",
+    "AnimName": "ag_rtsound_oncharger_asleep_150right"
+  },
+  {
+    "CladEvent": "RTS_OnCharger_Sleep_Back",
     "AnimName": "ag_rtsound_oncharger_asleep_behind"
   },
   {
-    "CladEvent": "ANTICIPATED_ReactToSoundOnChargerObserveAmbient",
+    "CladEvent": "RTS_OnCharger_Awake_Ambient",
     "AnimName": "ag_rtsound_oncharger_observe_ambient"
   },
   {
-    "CladEvent": "ReactToSoundOnChargerObserveFront",
+    "CladEvent": "RTS_OnCharger_Awake_Front",
     "AnimName": "ag_rtsound_oncharger_observe_front"
   },
   {
-    "CladEvent": "ReactToSoundOnChargerObserveLeft",
+    "CladEvent": "RTS_OnCharger_Awake_30Left",
+    "AnimName": "ag_rtsound_oncharger_observe_30left"
+  },
+  {
+    "CladEvent": "RTS_OnCharger_Awake_30Right",
+    "AnimName": "ag_rtsound_oncharger_observe_30right"
+  },
+  {
+    "CladEvent": "RTS_OnCharger_Awake_60Left",
+    "AnimName": "ag_rtsound_oncharger_observe_60left"
+  },
+  {
+    "CladEvent": "RTS_OnCharger_Awake_60Right",
+    "AnimName": "ag_rtsound_oncharger_observe_60right"
+  },
+  {
+    "CladEvent": "RTS_OnCharger_Awake_Left",
     "AnimName": "ag_rtsound_oncharger_observe_left"
   },
   {
-    "CladEvent": "ReactToSoundOnChargerObserveRight",
+    "CladEvent": "RTS_OnCharger_Awake_Right",
     "AnimName": "ag_rtsound_oncharger_observe_right"
   },
   {
-    "CladEvent": "ReactToSoundOnChargerObserveBehind",
+    "CladEvent": "RTS_OnCharger_Awake_120Left",
+    "AnimName": "ag_rtsound_oncharger_observe_120left"
+  },
+  {
+    "CladEvent": "RTS_OnCharger_Awake_120Right",
+    "AnimName": "ag_rtsound_oncharger_observe_120right"
+  },
+  {
+    "CladEvent": "RTS_OnCharger_Awake_150Left",
+    "AnimName": "ag_rtsound_oncharger_observe_150left"
+  },
+  {
+    "CladEvent": "RTS_OnCharger_Awake_150Right",
+    "AnimName": "ag_rtsound_oncharger_observe_150right"
+  },
+  {
+    "CladEvent": "RTS_OnCharger_Awake_Back",
     "AnimName": "ag_rtsound_oncharger_observe_behind"
   },
   {

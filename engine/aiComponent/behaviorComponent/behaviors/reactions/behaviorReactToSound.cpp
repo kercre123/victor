@@ -15,39 +15,47 @@
 #include "behaviorReactToSound.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMicDirection.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/mics/micDirectionHistory.h"
 #include "clad/types/animationTrigger.h"
 
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 
 #include <algorithm>
-#include <chrono>
 #include <functional>
 
 
-#define DEBUG_MIC_OBSERVING_VERBOSE 0 // add some verbose debugging if trying to track down issues
+#define DEBUG_MIC_OBSERVING_VERBOSE 1 // add some verbose debugging if trying to track down issues
+
+#if DEBUG_MIC_OBSERVING_VERBOSE
+  #define PRINT_DEBUG( format, ... ) \
+    PRINT_NAMED_WARNING( "BehaviorReactToSound", format, ##__VA_ARGS__ )
+#else
+  #define PRINT_DEBUG( format, ... ) \
+    PRINT_CH_DEBUG( "MicData", "BehaviorReactToSound", format, ##__VA_ARGS__ )
+#endif
+
 
 namespace Anki {
 namespace Cozmo {
 
-CONSOLE_VAR( bool, kSoundReaction_UseMicPower,                        "MicData", true );
+CONSOLE_VAR( double, kSoundReaction_ReactiveWindowDuration,            "MicData",  5.00 ); // once we react to a sound, we continue to react for this many seconds
+CONSOLE_VAR( double, kSoundReaction_Cooldown,                          "MicData",  0.0 ); // cooldown between "reactive windows"
+CONSOLE_VAR( double, kSoundReaction_MaxReactionTime,                   "MicData",  1.00 ); // we have this much time to respond to a sound
 
-CONSOLE_VAR( float, kSoundReaction_ReactiveWindowDuration,            "MicData",  5.00f ); // once we react to a sound, we continue to react for this many seconds
-CONSOLE_VAR( float, kSoundReaction_Cooldown,                          "MicData", 20.00f ); // cooldown between "reactive windows"
-CONSOLE_VAR( float, kSoundReaction_MaxReactionTime,                   "MicData",  1.00f ); // we have this much time to respond to a sound
-
-CONSOLE_VAR( bool, kSoundReaction_TuningMode,                         "MicData", false );
-CONSOLE_VAR( MicDirectionConfidence, kSoundReaction_TuningThreshold,  "MicData", 15000 );
-
-CONSOLE_VAR( MicDirectionIndex, kSoundReaction_FakeDirection,         "MicData", kMicDirectionUnknown );
-CONSOLE_VAR( MicDirectionIndex, kSoundReaction_FakeConfidence,        "MicData", kSoundReaction_TuningThreshold );
-
-const MicDirectionIndex BehaviorReactToSound::kInvalidDirectionIndex = { kMicDirectionUnknown };
+// a mic power above this will always be considered a valid reaction sound
+CONSOLE_VAR( MicDirectionHistory::MicPowerLevelType,  kRTS_AbsolutePowerThreshold,          "MicData", 2.90 );
+// a mic power above this will require a confidence of at least kRTS_ConfidenceThresholdAtMinPower to be considered a valid reaction sound
+CONSOLE_VAR( MicDirectionHistory::MicPowerLevelType,  kRTS_MinPowerThreshold,               "MicData", 1.90 );
+CONSOLE_VAR( MicDirectionConfidence,                  kRTS_ConfidenceThresholdAtMinPower,   "MicData", 5000 );
 
 namespace {
 
@@ -92,91 +100,21 @@ namespace {
 
   static_assert( sizeof(kTriggerThreshold_Awake)/sizeof(BehaviorReactToSound::DirectionTrigger) == kNumMicDirections,
                 "The array [kTriggerThreshold_Awake] is missing data for all mic directions (in behaviorReactToSound.cpp)" );
-
-
-  // temp until we get anims ...
-  const Radians kFacingAhead  = Radians( 0 );
-  const Radians kFacingRight  = Radians( -M_PI_F / 2.0f );
-  const Radians kFacingBehind = Radians( M_PI_F );
-  const Radians kFacingLeft   = Radians( M_PI_F / 2.0f );
-
-  const BehaviorReactToSound::DirectionResponse kSoundResponses_AsleepOnCharger[] =
-  {
-    /*  0 */ { AnimationTrigger::ReactToSoundOnChargerAsleepFront,          kFacingAhead },
-    /*  1 */ { AnimationTrigger::ReactToSoundOnChargerAsleepFront,          kFacingAhead },
-    /*  2 */ { AnimationTrigger::ReactToSoundOnChargerAsleepRight,          kFacingRight },
-    /*  3 */ { AnimationTrigger::ReactToSoundOnChargerAsleepRight,          kFacingRight },
-    /*  4 */ { AnimationTrigger::ReactToSoundOnChargerAsleepRight,          kFacingRight },
-    /*  5 */ { AnimationTrigger::ReactToSoundOnChargerAsleepBehind,         kFacingBehind },
-    /*  6 */ { AnimationTrigger::ReactToSoundOnChargerAsleepBehind,         kFacingBehind },
-    /*  7 */ { AnimationTrigger::ReactToSoundOnChargerAsleepBehind,         kFacingBehind },
-    /*  8 */ { AnimationTrigger::ReactToSoundOnChargerAsleepLeft,           kFacingLeft },
-    /*  9 */ { AnimationTrigger::ReactToSoundOnChargerAsleepLeft,           kFacingLeft },
-    /* 10 */ { AnimationTrigger::ReactToSoundOnChargerAsleepLeft,           kFacingLeft },
-    /* 11 */ { AnimationTrigger::ReactToSoundOnChargerAsleepFront,          kFacingAhead },
-  };
-
-  static_assert( sizeof(kSoundResponses_AsleepOnCharger)/sizeof(BehaviorReactToSound::DirectionResponse) == kNumMicDirections,
-                "The array [kSoundResponses_AsleepOnCharger] is missing data for all mic directions (in behaviorReactToSound.cpp)" );
-
-  const BehaviorReactToSound::DirectionResponse kSoundResponses_AwakeOnCharger[] =
-  {
-    /*  0 */ { AnimationTrigger::ReactToSoundOnChargerObserveFront,         kFacingAhead },
-    /*  1 */ { AnimationTrigger::ReactToSoundOnChargerObserveFront,         kFacingAhead },
-    /*  2 */ { AnimationTrigger::ReactToSoundOnChargerObserveRight,         kFacingRight },
-    /*  3 */ { AnimationTrigger::ReactToSoundOnChargerObserveRight,         kFacingRight },
-    /*  4 */ { AnimationTrigger::ReactToSoundOnChargerObserveRight,         kFacingRight },
-    /*  5 */ { AnimationTrigger::ReactToSoundOnChargerObserveBehind,        kFacingBehind },
-    /*  6 */ { AnimationTrigger::ReactToSoundOnChargerObserveBehind,        kFacingBehind },
-    /*  7 */ { AnimationTrigger::ReactToSoundOnChargerObserveBehind,        kFacingBehind },
-    /*  8 */ { AnimationTrigger::ReactToSoundOnChargerObserveLeft,          kFacingLeft },
-    /*  9 */ { AnimationTrigger::ReactToSoundOnChargerObserveLeft,          kFacingLeft },
-    /* 10 */ { AnimationTrigger::ReactToSoundOnChargerObserveLeft,          kFacingLeft },
-    /* 11 */ { AnimationTrigger::ReactToSoundOnChargerObserveFront,         kFacingAhead },
-  };
-
-  static_assert( sizeof(kSoundResponses_AwakeOnCharger)/sizeof(BehaviorReactToSound::DirectionResponse) == kNumMicDirections,
-                "The array [kSoundResponses_AwakeOnCharger] is missing data for all mic directions (in behaviorReactToSound.cpp)" );
-
-  const BehaviorReactToSound::DirectionResponse kSoundResponses_AsleepOffCharger[] =
-  {
-    /*  0 */ { AnimationTrigger::ReactToSoundOffChargerAsleepFront,         kFacingAhead },
-    /*  1 */ { AnimationTrigger::ReactToSoundOffChargerAsleepFront,         kFacingAhead },
-    /*  2 */ { AnimationTrigger::ReactToSoundOffChargerAsleepFrontRight,    kFacingRight },
-    /*  3 */ { AnimationTrigger::ReactToSoundOffChargerAsleepRight,         kFacingRight },
-    /*  4 */ { AnimationTrigger::ReactToSoundOffChargerAsleepRight,         kFacingRight },
-    /*  5 */ { AnimationTrigger::ReactToSoundOffChargerAsleepBehindRight,   kFacingBehind },
-    /*  6 */ { AnimationTrigger::ReactToSoundOffChargerAsleepBehind,        kFacingBehind },
-    /*  7 */ { AnimationTrigger::ReactToSoundOffChargerAsleepBehindLeft,    kFacingBehind },
-    /*  8 */ { AnimationTrigger::ReactToSoundOffChargerAsleepLeft,          kFacingLeft },
-    /*  9 */ { AnimationTrigger::ReactToSoundOffChargerAsleepLeft,          kFacingLeft },
-    /* 10 */ { AnimationTrigger::ReactToSoundOffChargerAsleepFrontLeft,     kFacingLeft },
-    /* 11 */ { AnimationTrigger::ReactToSoundOffChargerAsleepFront,         kFacingAhead },
-  };
-
-  static_assert( sizeof(kSoundResponses_AsleepOffCharger)/sizeof(BehaviorReactToSound::DirectionResponse) == kNumMicDirections,
-                "The array [kSoundResponses_AsleepOffCharger] is missing data for all mic directions (in ehaviorReactToSound.cpp)" );
-
-  const BehaviorReactToSound::DirectionResponse kSoundResponses_AwakeOffCharger[] =
-  {
-    /*  0 */ { AnimationTrigger::ReactToSoundOffChargerObserveFront,        kFacingAhead },
-    /*  1 */ { AnimationTrigger::ReactToSoundOffChargerObserveFront,        kFacingAhead },
-    /*  2 */ { AnimationTrigger::ReactToSoundOffChargerObserveFrontRight,   kFacingRight },
-    /*  3 */ { AnimationTrigger::ReactToSoundOffChargerObserveRight,        kFacingRight },
-    /*  4 */ { AnimationTrigger::ReactToSoundOffChargerObserveRight,        kFacingRight },
-    /*  5 */ { AnimationTrigger::ReactToSoundOffChargerObserveBehindRight,  kFacingBehind },
-    /*  6 */ { AnimationTrigger::ReactToSoundOffChargerObserveBehind,       kFacingBehind },
-    /*  7 */ { AnimationTrigger::ReactToSoundOffChargerObserveBehindLeft,   kFacingBehind },
-    /*  8 */ { AnimationTrigger::ReactToSoundOffChargerObserveLeft,         kFacingLeft },
-    /*  9 */ { AnimationTrigger::ReactToSoundOffChargerObserveLeft,         kFacingLeft },
-    /* 10 */ { AnimationTrigger::ReactToSoundOffChargerObserveFrontLeft,    kFacingLeft },
-    /* 11 */ { AnimationTrigger::ReactToSoundOffChargerObserveFront,        kFacingAhead },
-  };
-
-  static_assert( sizeof(kSoundResponses_AwakeOffCharger)/sizeof(BehaviorReactToSound::DirectionResponse) == kNumMicDirections,
-                "The array [kSoundResponses_AwakeOffCharger] is missing data for all mic directions (in behaviorReactToSound.cpp)" );
   
   const char* const kFromSleepKey = "FromSleep";
+  const char* const kMicDirectionReactionBehavior = "micDirectionReactionBebavior";
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorReactToSound::InstanceConfig::InstanceConfig() :
+  reactorId( kInvalidSoundReactorId )
+{
+
+}
+
+BehaviorReactToSound::DynamicVariables::DynamicVariables()
+{
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -187,14 +125,26 @@ BehaviorReactToSound::BehaviorReactToSound( const Json::Value& config ) :
   // this allows us to have different state "tree/graphs" for when victor is in the sleep or awake behavior state.
   const bool isSleeping = JsonTools::ParseBool( config, kFromSleepKey, "BehaviorReactToSound.Params.ObservationStatus" );
   _observationStatus = ( isSleeping ? EObservationStatus::EObservationStatus_Asleep : EObservationStatus::EObservationStatus_Awake );
+
+  // get the behavior to play after an intent comes in
+  _iVars.reactionBehaviorString = JsonTools::ParseString( config, kMicDirectionReactionBehavior, "BehaviorReactToSound" );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToSound::InitBehavior()
 {
-  // note: not unregistering because our lifetime is the same as the MicCompoenet
-  MicDirectionHistory& micHistory = GetBEI().GetMicComponent().GetMicDirectionHistory();
-  micHistory.RegisterSoundReactor( std::bind( &BehaviorReactToSound::OnHeardValidSound, this, std::placeholders::_1 ) );
+  BehaviorID reactionId;
+  if ( BehaviorTypesWrapper::BehaviorIDFromString( _iVars.reactionBehaviorString, reactionId ) )
+  {
+    GetBEI().GetBehaviorContainer().FindBehaviorByIDAndDowncast( reactionId,
+                                                                 BEHAVIOR_CLASS(ReactToMicDirection),
+                                                                 _iVars.reactionBehavior );
+  }
+  else
+  {
+    DEV_ASSERT_MSG( false, "BehaviorReactToSound.InitBehavior",
+                    "Invalid behavior id string (%s)", _iVars.reactionBehaviorString.c_str() );
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -210,8 +160,15 @@ void BehaviorReactToSound::GetBehaviorJsonKeys(std::set<const char*>& expectedKe
 {
   const char* list[] = {
     kFromSleepKey,
+    kMicDirectionReactionBehavior
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToSound::GetAllDelegates( std::set<IBehavior*>& delegates ) const
+{
+  delegates.insert( _iVars.reactionBehavior.get() );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -219,17 +176,13 @@ bool BehaviorReactToSound::WantsToBeActivatedBehavior() const
 {
   // we heard a sound that we want to focus on, so let's activate our behavior so that we can respond to this
   // setting _triggeredDirection will cause us to activate
-  if ( kInvalidDirectionIndex != _triggeredDirection )
-  {
-    return true;
-  }
-
-  return false;
+  return _iVars.reactionBehavior->WantsToBeActivatedBehavior();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToSound::OnBehaviorActivated()
 {
+  _dVars = DynamicVariables();
   RespondToSound();
 }
 
@@ -240,55 +193,61 @@ void BehaviorReactToSound::OnBehaviorDeactivated()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToSound::BehaviorUpdate()
+void BehaviorReactToSound::OnBehaviorEnteredActivatableScope()
 {
-  // if we're active, it means we're responding to sound
-  // if we're not active, it means we're listing for sound in order to activate us
-  if ( !kSoundReaction_UseMicPower )
-  {
-    if ( !IsActivated() )
-    {
-      _triggeredDirection = kInvalidDirectionIndex;
-      // make sure we're not on cooldown, or other reason we shouldn't react
-      if ( CanReactToSound() )
-      {
-        MicDirectionIndex index = kInvalidDirectionIndex;
-        if ( HeardValidSound( index ) )
-        {
-          // setting _triggeredDirection will kick off a reaction via WantsToBeActivatedBehavior()
-          _triggeredDirection = index;
-        }
-      }
-    }
-  }
-
-  #if REMOTE_CONSOLE_ENABLED
-  {
-    // this is const when console vars are disabled
-    kSoundReaction_FakeDirection = kInvalidDirectionIndex;
-  }
-  #endif
+  MicDirectionHistory& micHistory = GetBEI().GetMicComponent().GetMicDirectionHistory();
+  _iVars.reactorId = micHistory.RegisterSoundReactor( std::bind( &BehaviorReactToSound::OnMicPowerSampleRecorded, this,
+                                                          std::placeholders::_1,
+                                                          std::placeholders::_2,
+                                                          std::placeholders::_3 ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-MicDirectionNodeList BehaviorReactToSound::GetLatestMicDirectionData() const
+void BehaviorReactToSound::OnBehaviorLeftActivatableScope()
 {
-  const MicDirectionHistory& micHistory = GetBEI().GetMicComponent().GetMicDirectionHistory();
-  MicDirectionNodeList nodeList = micHistory.GetRecentHistory( kSoundReaction_MaxReactionTime );
-  if ( !nodeList.empty() )
+  if ( kInvalidSoundReactorId != _iVars.reactorId )
   {
-    MicDirectionNode& node = nodeList.back(); // most recent node
+    MicDirectionHistory& micHistory = GetBEI().GetMicComponent().GetMicDirectionHistory();
+    micHistory.UnRegisterSoundReactor( _iVars.reactorId );
 
-    // allow us to fake some data for testing purposes
-    if ( kSoundReaction_FakeDirection != kInvalidDirectionIndex )
+    _iVars.reactorId = kInvalidSoundReactorId;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToSound::BehaviorUpdate()
+{
+  if ( !IsActivated())
+  {
+    if ( kInvalidMicDirectionIndex != _triggeredDirection )
     {
-      node.directionIndex = kSoundReaction_FakeDirection;
-      node.confidenceMax = kSoundReaction_FakeConfidence;
-      node.timestampAtMax = GetCurrentTimeMS();
+      const TimeStamp_t currentTime = GetCurrentTimeMS();
+      const TimeStamp_t reactionTime = static_cast<TimeStamp_t>( kSoundReaction_MaxReactionTime * 1000.0 );
+      if ( currentTime >= ( _triggerDetectedTime + reactionTime ) )
+      {
+        PRINT_DEBUG( "Clearing triggered direction" );
+        ClearTriggerDirection();
+      }
     }
   }
+}
 
-  return nodeList;
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToSound::SetTriggerDirection( MicDirectionIndex direction )
+{
+  if ( kInvalidMicDirectionIndex != direction )
+  {
+    _triggeredDirection = direction;
+    _triggerDetectedTime = GetCurrentTimeMS();
+    _iVars.reactionBehavior->SetReactDirection( _triggeredDirection );
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToSound::ClearTriggerDirection()
+{
+  _triggeredDirection = kInvalidMicDirectionIndex;
+  _iVars.reactionBehavior->ClearReactDirection();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -303,39 +262,7 @@ BehaviorReactToSound::DirectionTrigger BehaviorReactToSound::GetTriggerData( Mic
   const DirectionTriggerList triggerList = ( isAwake ? kTriggerThreshold_Awake : kTriggerThreshold_Asleep );
 
   DirectionTrigger trigger = triggerList[index];
-
-  // special tuning mode to override any static data thresholds
-  if ( kSoundReaction_TuningMode )
-  {
-    trigger.threshold = kSoundReaction_TuningThreshold;
-  }
-
   return trigger;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorReactToSound::DirectionResponse BehaviorReactToSound::GetResponseData( MicDirectionIndex index ) const
-{
-  using DirectionResponseList = const DirectionResponse*;
-
-  ASSERT_NAMED_EVENT( index >= 0, "BehaviorReactToSound.GetResponseData", "Invalid index [%d]", index );
-  ASSERT_NAMED_EVENT( index < kNumMicDirections, "BehaviorReactToSound.GetResponseData", "Invalid index [%d]", index );
-
-  static const DirectionResponseList kAllSoundResponses[EChargerStatus_Num][EObservationStatus_Num] =
-  {
-    /*  OnCharger */ { kSoundResponses_AsleepOnCharger, kSoundResponses_AwakeOnCharger },
-    /* OffCharger */ { kSoundResponses_AsleepOffCharger, kSoundResponses_AwakeOffCharger }
-  };
-  
-  const BEIRobotInfo& robotInfo = GetBEI().GetRobotInfo();
-
-  // we need to update what set of "sound response data" to use depending on Victor's status.
-  // victor can resond differently depeding on his current state (which is on/off charger and awake/asleep)
-  const EChargerStatus chargerStatus = ( robotInfo.IsOnChargerPlatform() ? EChargerStatus::EChargerStatus_OnCharger : EChargerStatus::EChargerStatus_OffCharger );
-  const DirectionResponse* possibleResponses = kAllSoundResponses[chargerStatus][_observationStatus];
-
-  const DirectionResponse response = possibleResponses[index];
-  return response;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -347,19 +274,16 @@ bool BehaviorReactToSound::CanReactToSound() const
   const TimeStamp_t cooldownEndTime = GetCooldownEndTime();
 
   const bool notOnCooldown = ( ( currentTime < cooldownBeginTime ) || ( currentTime >= cooldownEndTime ) );
-  const bool enoughTimeHasPassed = ( currentTime > kSoundReaction_MaxReactionTime ); // avoids "underflow" in case reaction happens at bootup
-
-  return ( notOnCooldown && enoughTimeHasPassed );
+  return notOnCooldown;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToSound::RespondToSound()
 {
-  // normally we would play an animation, but currently we don't have animation ready, so for now we'll just turn to sound
-  if ( kInvalidDirectionIndex != _triggeredDirection )
-  {
-    PRINT_CH_DEBUG( "MicData", "BehaviorReactToSound", "Responding to sound from direction [%d]", _triggeredDirection );
+  PRINT_DEBUG( "Responding to sound from direction [%d]", _triggeredDirection );
 
+  if ( _iVars.reactionBehavior->WantsToBeActivated() )
+  {
     // We want to preserve the time of the first reaction to occur after the cooldown is over
     const TimeStamp_t currentTime = GetCurrentTimeMS();
     const TimeStamp_t reTriggerTime = GetCooldownEndTime();
@@ -368,9 +292,7 @@ void BehaviorReactToSound::RespondToSound()
       _reactionTriggeredTime = GetCurrentTimeMS();
     }
 
-    const DirectionResponse& response = GetResponseData( _triggeredDirection );
-    const AnimationTrigger anim = response.animation;
-    DelegateIfInControl( new TriggerAnimationAction( anim ) );
+    DelegateIfInControl( _iVars.reactionBehavior.get() );
   }
 }
 
@@ -378,113 +300,71 @@ void BehaviorReactToSound::RespondToSound()
 void BehaviorReactToSound::OnResponseComplete()
 {
   // reset any response we may have been carrying out and start cooldowns
-  _triggeredDirection = kInvalidDirectionIndex;
-  _reactionEndedTime = GetCurrentTimeMS();
+  ClearTriggerDirection();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToSound::HeardValidSound( MicDirectionIndex& outIndex ) const
+bool BehaviorReactToSound::OnMicPowerSampleRecorded( double power, MicDirectionConfidence confidence, MicDirectionIndex direction )
 {
-  bool shouldReactToSound = false;
-
-  // grab all of the directions we've heard sound from recently
-  const MicDirectionNodeList nodeList = GetLatestMicDirectionData();
-  for ( auto rit = nodeList.rbegin(); rit != nodeList.rend(); ++rit )
+  if ( !IsActivated() )
   {
-    const MicDirectionNode& currentDirectionNode = *rit;
-    if ( kInvalidDirectionIndex != currentDirectionNode.directionIndex )
+    const bool powerThresholdReached = ( power >= kRTS_AbsolutePowerThreshold );
+    const bool powerConfidenceThresholdReached = ( power >= kRTS_MinPowerThreshold );
+    const bool confidenceThresholdReached = ( confidence >= kRTS_ConfidenceThresholdAtMinPower );
+    if ( powerThresholdReached || ( powerConfidenceThresholdReached && confidenceThresholdReached ) )
     {
-      const DirectionTrigger triggerData = GetTriggerData( currentDirectionNode.directionIndex );
-      const TimeStamp_t reactionWindowTime = GetReactionWindowBeginTime();
+      const bool isDirectionSame = ( direction == _triggeredDirection );
+      const bool hasValidDirection = ( kInvalidMicDirectionIndex != direction );
 
-      #if DEBUG_MIC_OBSERVING_VERBOSE
+      if ( !isDirectionSame && hasValidDirection && CanReactToSound() )
       {
-        PRINT_CH_DEBUG( "MicData", "BehaviorReactToSound", "Heard sound ... direction [%d], confidence [%d >= %d], time [%d >= %d]",
-                        currentDirectionNode.directionIndex,
-                        currentDirectionNode.confidenceMax,
-                        triggerData.threshold,
-                        currentDirectionNode.timestampAtMax,
-                        reactionWindowTime );
-      }
-      #endif
+        SetTriggerDirection( direction );
+        PRINT_DEBUG( "Heard valid sound from direction [%d]", direction );
 
-      // + we've seen a spike in confidence above a certain threshold
-      if ( currentDirectionNode.timestampAtMax >= reactionWindowTime )
+        return true;
+      }
+#if ANKI_DEV_CHEATS
+      else
       {
-        shouldReactToSound |= ( currentDirectionNode.confidenceMax >= triggerData.threshold );
+        if ( !isDirectionSame ) {
+          std::string debug = "Reached";
+          if ( !hasValidDirection ) { debug +=    " | invalid dir"; }
+          if ( !CanReactToSound() ) { debug +=    " | on cooldown"; }
+          GetBEI().GetMicComponent().GetMicDirectionHistory().SendWebvizDebugString( debug );
+        }
       }
-
-  //      // + we have an average confidence above a certain threshold
-  //      if ( currentDirectionNode.timestampEnd >= reactionWindowTime )
-  //      {
-  //        chooseDirection |= ( currentDirectionNode.confidenceAvg >= kMinimumConfidenceAverage );
-  //      }
-
-      if ( shouldReactToSound )
-      {
-        outIndex = currentDirectionNode.directionIndex;
-
-        PRINT_CH_DEBUG( "MicData", "BehaviorReactToSound", "Heard valid sound from direction [%d] with max conf (%d)",
-                      currentDirectionNode.directionIndex, currentDirectionNode.confidenceMax );
-
-        break;
-      }
+#endif
     }
+#if ANKI_DEV_CHEATS
+    else if ( powerConfidenceThresholdReached )
+    {
+      GetBEI().GetMicComponent().GetMicDirectionHistory().SendWebvizDebugString( "Reached | conf too low" );
+    }
+#endif
   }
 
-  return shouldReactToSound;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToSound::OnHeardValidSound( MicDirectionNode micDirectionNode )
-{
-  if ( kSoundReaction_UseMicPower )
-  {
-    if ( !IsActivated() && CanReactToSound() && micDirectionNode.IsValid() )
-    {
-      const bool notAlreadyTriggered = ( kInvalidDirectionIndex == _triggeredDirection );
-      const bool hasValidDirection = ( kInvalidDirectionIndex != micDirectionNode.directionIndex );
-      if ( notAlreadyTriggered && hasValidDirection )
-      {
-        _triggeredDirection = micDirectionNode.directionIndex;
-        PRINT_CH_INFO( "MicData", "BehaviorReactToSound", "Heard valid sound from direction [%d]", micDirectionNode.directionIndex );
-      }
-    }
-  }
+  return false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TimeStamp_t BehaviorReactToSound::GetCurrentTimeMS() const
 {
-  using namespace std::chrono;
-
-  const auto currentTime = time_point_cast<milliseconds>(steady_clock::now());
-  return static_cast<TimeStamp_t>(currentTime.time_since_epoch().count());
+  return static_cast<TimeStamp_t>( BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble() * 1000.0 );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TimeStamp_t BehaviorReactToSound::GetCooldownBeginTime() const
 {
-  const TimeStamp_t reactiveWindowDuration = static_cast<TimeStamp_t>(Util::SecToMilliSec(kSoundReaction_ReactiveWindowDuration));
-  return ( _reactionTriggeredTime + reactiveWindowDuration );
+  const TimeStamp_t reactiveWindowDuration = static_cast<TimeStamp_t>( kSoundReaction_ReactiveWindowDuration * 1000.0 );
+  return static_cast<TimeStamp_t>( _reactionTriggeredTime + reactiveWindowDuration );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TimeStamp_t BehaviorReactToSound::GetCooldownEndTime() const
 {
   const TimeStamp_t reactiveWindowEndTime = GetCooldownBeginTime();
-  const TimeStamp_t cooldownDuration = static_cast<TimeStamp_t>(Util::SecToMilliSec(kSoundReaction_Cooldown));
+  const TimeStamp_t cooldownDuration = static_cast<TimeStamp_t>( kSoundReaction_Cooldown * 1000.0 );
   return ( reactiveWindowEndTime + cooldownDuration );
-}
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TimeStamp_t BehaviorReactToSound::GetReactionWindowBeginTime() const
-{
-  const TimeStamp_t currentTime = GetCurrentTimeMS();
-  const TimeStamp_t reactionWindowDuration = static_cast<TimeStamp_t>(Util::SecToMilliSec(kSoundReaction_MaxReactionTime));
-  const TimeStamp_t reactionWindowTime = ( currentTime - reactionWindowDuration );
-
-  return Anki::Util::Max( reactionWindowTime, _reactionEndedTime );
 }
 
 }

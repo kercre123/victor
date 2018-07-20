@@ -40,9 +40,9 @@
   var first = true;
   var plotData = [];
   var micDataPower = [];
-  var micDataPeak = [];
   var micDataPeakAverage = [];
-  var micDataThreshold = [];
+  var micDataPeakThreshold = [];
+  var micDataPeakMinThreshold = [];
   var chart;
 
   function GetLegendLabel(label, series) {
@@ -116,7 +116,7 @@
     // set our canvas size to fit all of our stuff
     var canvas = $('#myCanvas')[0];
     canvas.height = 250;
-    canvas.width = 500;
+    canvas.width = 700;
 
     // default to an empty clock face
     drawClockFace();
@@ -158,27 +158,9 @@
     // need to redraw this each time
     drawClockFace();
 
-    // draw our direction line values ...
-    for ( i = 0; i < 12; i++ )
-    {
-      if ( data.directions[i] > 0 )
-      {
-        var barFactor = ( data.directions[i] / data.maxConfidence );
-        context.beginPath();
-        context.moveTo( ClockData.center[0], ClockData.center[1] );
-        var lineX = ClockData.center[0] + ( ClockData.offsets[i][0] * barFactor * ClockData.radius );
-        var lineY = ClockData.center[1] + ( ClockData.offsets[i][1] * barFactor * ClockData.radius );
-        context.lineWidth = 2;
-        context.lineTo( lineX, lineY );
-        context.stroke();
-      }
-    }
-
-    // We draw the selected direction, as opposed to dominant, to most clearly reflect the actual listening behavior
-    // 'selectedDirection' is what's being used (locked-in), whereas 'dominant' is just the strongest direction
     var dotRadius = 7;
-    var dotX = ClockData.center[0] + ( ClockData.offsets[data.selectedDirection][0] * ClockData.radius );
-    var dotY = ClockData.center[1] + ( ClockData.offsets[data.selectedDirection][1] * ClockData.radius );
+    var dotX = ClockData.center[0] + ( ClockData.offsets[data.dominant][0] * ClockData.radius );
+    var dotY = ClockData.center[1] + ( ClockData.offsets[data.dominant][1] * ClockData.radius );
 
     context.beginPath();
     context.arc( dotX, dotY, dotRadius, 0, 2*Math.PI );
@@ -187,12 +169,16 @@
 
     // Update data used in the chart
     var micPowerValue = parseFloat(data["latestPowerValue"]);
-    var micNoiseFloor = parseFloat(data["latestNoiseFloor"])
+    var micNoiseFloor = parseFloat(data["latestNoiseFloor"]);
+    var micPeakValue = parseFloat(data["powerScore"]);
+    var micPeakAverage = parseFloat(data["powerScoreAvg"]);
+    var micPeakThreshold = parseFloat(data["powerScoreThreshold"]);
+    var micPeakMinThreshold = parseFloat(data["powerScoreMinThreshold"])
 
     micDataPower.push( [data["time"], micPowerValue] );
-    micDataPeak.push( [data["time"], parseFloat(data["displayPowerScore"])] );
-    micDataPeakAverage.push( [data["time"], parseFloat(data["displayPowerAvg"])] );
-    micDataThreshold.push( [data["time"], parseFloat(data["displayPowerThreshold"])] );
+    micDataPeakAverage.push( [data["time"], micNoiseFloor+micPeakAverage] );
+    micDataPeakThreshold.push( [data["time"], micNoiseFloor+micPeakAverage+micPeakThreshold] );
+    micDataPeakMinThreshold.push( [data["time"], micNoiseFloor+micPeakAverage+micPeakMinThreshold] );
 
 
     // add in our confidence values ...
@@ -209,24 +195,15 @@
 
     textY += textHeight;
     context.fillText( "Scoring Level : ", labelX, textY );
-    context.fillText( parseFloat(data["powerScore"]).toFixed(3), valueX, textY );
+    context.fillText( micPeakValue.toFixed(3), valueX, textY );
 
     textY += textHeight;
     context.fillText( "Scoring Avg : ", labelX, textY );
-    context.fillText( parseFloat(data["powerScoreAvg"]).toFixed(3), valueX, textY );
+    context.fillText( micPeakAverage.toFixed(3), valueX, textY );
 
-    textY += textHeight;
-    context.fillText( "Power Level : ", labelX, textY );
-    context.fillText( micPowerValue.toFixed(3), valueX, textY );
-
-    textY += textHeight;
-    context.fillText( "Noise Floor : ", labelX, textY );
-    context.fillText( micNoiseFloor.toFixed(3), valueX, textY );
-
+    valueX = 450;
     if ( data.isTriggered )
     {
-      valueX = 450;
-
       textY += textHeight*2;
       context.fillText( "Reaction Score : ", labelX, textY );
       context.fillText( data.triggerScore.toFixed(3), valueX, textY );
@@ -234,6 +211,15 @@
       textY += textHeight;
       context.fillText( "Reaction Confidence : ", labelX, textY );
       context.fillText( data.triggerConfidence, valueX, textY );
+
+      textY += textHeight;
+      context.fillText( "Reaction Direction : ", labelX, textY );
+      context.fillText( data.triggerDirection, valueX, textY );
+    }
+    else if ( data.shouldDrawText )
+    {
+      textY += textHeight*2;
+      context.fillText( data.debugText, labelX, textY );
     }
 
 
@@ -249,13 +235,13 @@
                       lines: {show: true} };
       plotData.push( newData );
 
-      newData = { label: "Mic Peak Threshold",
-                      data: micDataThreshold,
+      newData = { label: "Mic Power Trigger",
+                      data: micDataPeakThreshold,
                       lines: {show: true} };
       plotData.push( newData );
 
-      newData = { label: "Mic Peak",
-                      data: micDataPeak,
+      newData = { label: "Mic Conf Trigger",
+                      data: micDataPeakMinThreshold,
                       lines: {show: true} };
       plotData.push( newData );
 
@@ -269,20 +255,23 @@
       micDataPower.shift();
       dt = data["time"] - micDataPower[0][0];
     }
-    dt = data["time"] - micDataThreshold[0][0];
-    while( dt > maxWidth_s && micDataThreshold.length > 0 ) {
-      micDataThreshold.shift();
-      dt = data["time"] - micDataThreshold[0][0];
-    }
-    dt = data["time"] - micDataPeak[0][0];
-    while( dt > maxWidth_s && micDataPeak.length > 0 ) {
-      micDataPeak.shift();
-      dt = data["time"] - micDataPeak[0][0];
-    }
+
     dt = data["time"] - micDataPeakAverage[0][0];
     while( dt > maxWidth_s && micDataPeakAverage.length > 0 ) {
       micDataPeakAverage.shift();
       dt = data["time"] - micDataPeakAverage[0][0];
+    }
+
+    dt = data["time"] - micDataPeakThreshold[0][0];
+    while( dt > maxWidth_s && micDataPeakThreshold.length > 0 ) {
+      micDataPeakThreshold.shift();
+      dt = data["time"] - micDataPeakThreshold[0][0];
+    }
+
+    dt = data["time"] - micDataPeakMinThreshold[0][0];
+    while( dt > maxWidth_s && micDataPeakMinThreshold.length > 0 ) {
+      micDataPeakMinThreshold.shift();
+      dt = data["time"] - micDataPeakMinThreshold[0][0];
     }
 
     // fixed width data

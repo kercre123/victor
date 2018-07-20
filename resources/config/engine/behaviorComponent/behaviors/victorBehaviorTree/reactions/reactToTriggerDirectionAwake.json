@@ -17,7 +17,8 @@
       "EightOClock"   : { "anim": "ReactToTriggerWordOffChargerBehindLeft" },
       "NineOClock"    : { "anim": "ReactToTriggerWordOffChargerLeft" },
       "TenOClock"     : { "anim": "ReactToTriggerWordOffChargerFrontLeft" },
-      "ElevenOClock"  : { "enabled" : false }
+      "ElevenOClock"  : { "enabled" : false },
+      "Ambient"       : { "enabled" : false }
     },
 
     "OnCharger" :

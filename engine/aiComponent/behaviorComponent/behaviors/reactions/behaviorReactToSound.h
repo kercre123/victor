@@ -22,6 +22,8 @@
 namespace Anki {
 namespace Cozmo {
 
+class BehaviorReactToMicDirection;
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class BehaviorReactToSound : public ICozmoBehavior
 {
@@ -52,15 +54,17 @@ public:
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const override;
   virtual void GetBehaviorJsonKeys( std::set<const char*>& expectedKeys ) const override;
+  virtual void GetAllDelegates( std::set<IBehavior*>& delegates ) const override;
 
 protected:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Behavior Related Functions
 
-  virtual void GetAllDelegates( std::set<IBehavior*>& delegates ) const override { }
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
+  virtual void OnBehaviorEnteredActivatableScope() override;
+  virtual void OnBehaviorLeftActivatableScope() override;
   virtual void BehaviorUpdate() override;
 
 
@@ -69,12 +73,11 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Helper Functions
 
-  MicDirectionNodeList GetLatestMicDirectionData() const;
+  void SetTriggerDirection( MicDirectionIndex direction );
+  void ClearTriggerDirection();
   DirectionTrigger GetTriggerData( MicDirectionIndex index ) const;
-  DirectionResponse GetResponseData( MicDirectionIndex index ) const;
 
-  void OnHeardValidSound( MicDirectionNode micDirectionNode );
-  bool HeardValidSound( MicDirectionIndex& outIndex ) const;
+  bool OnMicPowerSampleRecorded( double power, MicDirectionConfidence confidence, MicDirectionIndex direction );
 
   void RespondToSound();
   void OnResponseComplete();
@@ -84,8 +87,6 @@ private:
   TimeStamp_t GetCurrentTimeMS() const;
   TimeStamp_t GetCooldownBeginTime() const;
   TimeStamp_t GetCooldownEndTime() const;
-  // the earliest timestamp that we'll respond to a sound
-  TimeStamp_t GetReactionWindowBeginTime() const;
   
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -110,13 +111,28 @@ private:
   // Member Data
 
 
-  static const MicDirectionIndex kInvalidDirectionIndex;
+  struct InstanceConfig
+  {
+    InstanceConfig();
+
+    std::string reactionBehaviorString;
+    std::shared_ptr<BehaviorReactToMicDirection> reactionBehavior;
+
+    SoundReactorId  reactorId;
+
+  } _iVars;
+
+  struct DynamicVariables
+  {
+    DynamicVariables();
+
+  } _dVars;
+
 
   EObservationStatus                    _observationStatus        = EObservationStatus::EObservationStatus_Awake;
-  MicDirectionIndex                     _triggeredDirection       = kInvalidDirectionIndex;
-
+  MicDirectionIndex                     _triggeredDirection       = kInvalidMicDirectionIndex;
+  TimeStamp_t                           _triggerDetectedTime      = 0;
   TimeStamp_t                           _reactionTriggeredTime    = 0;
-  TimeStamp_t                           _reactionEndedTime        = 0;
 };
 
 }

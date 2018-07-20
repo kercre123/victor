@@ -317,6 +317,8 @@ enum uint_8 BehaviorID {
   ReactToRobotOnSide,
   ReactToSoundAsleep,
   ReactToSoundAwake,
+  ReactToSoundDirectionAsleep,
+  ReactToSoundDirectionAwake,
   ReactToTriggerDirectionAwake,
   ReactToUnexpectedMovement,
   StuckOnEdge,
