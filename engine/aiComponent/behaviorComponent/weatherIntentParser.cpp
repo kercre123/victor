@@ -12,6 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/weatherIntentParser.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include "util/string/stringUtils.h"
 
@@ -22,6 +23,14 @@ namespace Cozmo {
 
 namespace{
 const std::string kWeatherLocationPrepend = "Right now in ";
+std::string kCityWhereItAlwaysRainsMutable = "Seattle";
+
+static void SetRainyCity(ConsoleFunctionContextRef context)
+{
+  kCityWhereItAlwaysRainsMutable = ConsoleArg_Get_String(context, "rainyCity");
+}
+
+CONSOLE_FUNC(SetRainyCity, "WeatherHack", const char* rainyCity);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -51,8 +60,12 @@ bool WeatherIntentParser::IsFahrenheit(const UserIntent_WeatherResponse& weather
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 WeatherConditionType WeatherIntentParser::GetCondition(const RobotDataLoader::WeatherResponseMap* weatherResponseMap,
-                                                       const UserIntent_WeatherResponse& weatherIntent) 
+                                                       const UserIntent_WeatherResponse& weatherIntent,
+                                                       bool isForPRDemo) 
 {
+  if(isForPRDemo && (weatherIntent.speakableLocationString == kCityWhereItAlwaysRainsMutable)){
+    return WeatherConditionType::Rain;
+  }
 
   std::string str;
   std::transform(weatherIntent.condition.begin(), weatherIntent.condition.end(), 
