@@ -109,7 +109,6 @@ BleCentral* centralContext;
     _writeSecureUuid =
       [CBUUID UUIDWithString:@"28C35E4C-B218-43CB-9718-3D7EDE9B5316"];
     
-    _localName = @"Vector B4H3";
     _connecting = false;
     _rtsState = Raw;
     
@@ -141,6 +140,12 @@ BleCentral* centralContext;
     _otaExpected = 0;
     
     _isPairing = false;
+    
+    // migration helper
+    if([self HasSavedPublicKey] && ([self GetPrivateKey] == nil)) {
+      // old mac-client, so clear defaults
+      [self resetDefaults];
+    }
   }
   
   return self;
@@ -1156,6 +1161,25 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   NSData* publicKey =  [[NSUserDefaults standardUserDefaults] dataForKey:@"publicKey"];
   return publicKey;
 }
+- (NSData*) GetPrivateKey {
+  NSData* privateKey =  [[NSUserDefaults standardUserDefaults] dataForKey:@"privateKey"];
+  return privateKey;
+}
+- (bool) HasSessionForName: (NSString*)key {
+  NSDictionary* session = [[NSUserDefaults standardUserDefaults] dictionaryForKey:@"victorNamesDict"];
+  bool hasSession = [session valueForKey:key] != nil;
+  
+  return hasSession;
+}
+- (void) SaveName: (NSString*)key {
+  NSDictionary* sessionFixed = [[NSUserDefaults standardUserDefaults] dictionaryForKey:@"victorNamesDict"];
+  
+  NSMutableDictionary* session = [NSMutableDictionary dictionaryWithDictionary:sessionFixed];
+  [session setValue:[NSNumber numberWithInt:1] forKey:key];
+  [[NSUserDefaults standardUserDefaults] setValue:session forKey:@"victorNamesDict"];
+  
+  return;
+}
 - (NSArray*) GetSession: (NSString*)key {
   NSArray* session = [[NSUserDefaults standardUserDefaults] arrayForKey:key];
   return session;
@@ -1235,7 +1259,12 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     Clad::SendRtsMessage<Anki::Cozmo::ExternalComms::RtsConnResponse>(self, _commVersion, Anki::Cozmo::ExternalComms::RtsConnType::Reconnection,
                                                                        publicKeyArray);
   } else {
-    crypto_kx_keypair(_publicKey, _secretKey);
+    if(![self HasSavedPublicKey]) {
+      crypto_kx_keypair(_publicKey, _secretKey);
+    } else {
+      memcpy(std::begin(_publicKey), [[self GetPublicKey] bytes], crypto_kx_PUBLICKEYBYTES);
+      memcpy(std::begin(_secretKey), [[self GetPrivateKey] bytes], crypto_kx_SECRETKEYBYTES);
+    }
     
     memcpy(_remotePublicKey, msg.publicKey.data(), sizeof(_remotePublicKey));
   
@@ -1274,10 +1303,13 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     
     // save settings
     NSData* publicKeyData = [NSData dataWithBytes:_publicKey length:sizeof(_publicKey)];
+    NSData* privateKeyData = [NSData dataWithBytes:_secretKey length:sizeof(_secretKey)];
     NSData* encData = [NSData dataWithBytes:_encryptKey length:sizeof(_encryptKey)];
     NSData* decData = [NSData dataWithBytes:_decryptKey length:sizeof(_decryptKey)];
     
+    [self SaveName:_peripheral.name];
     [[NSUserDefaults standardUserDefaults] setValue:publicKeyData forKey:@"publicKey"];
+    [[NSUserDefaults standardUserDefaults] setValue:privateKeyData forKey:@"privateKey"];
     NSMutableArray* arr = [[NSMutableArray alloc] initWithObjects:encData, decData, nil];
     [[NSUserDefaults standardUserDefaults] setValue:arr forKey:remoteKey];
     [[NSUserDefaults standardUserDefaults] synchronize];
@@ -1779,12 +1811,10 @@ didUpdateNotificationStateForCharacteristic:(CBCharacteristic *)characteristic
   // set global bool
   [_victorsDiscovered setValue:[NSNumber numberWithBool:isPairing] forKey:peripheral.name];
   
-  NSString* savedName = [[NSUserDefaults standardUserDefaults] stringForKey:@"victorName"];
-  knownName = [savedName isEqualToString:peripheral.name];
+  knownName = [self HasSessionForName:peripheral.name];
   
   _isPairing = isPairing;
   
-  //NSLog(@"[%@] isPairing:%d knownName:%d isAnki:%d", peripheral.name, isPairing, knownName, isAnki);
   
   if(![_filter isEqualToString:@""] && ![peripheral.name containsString:_filter]) {
     return;
@@ -1793,7 +1823,6 @@ didUpdateNotificationStateForCharacteristic:(CBCharacteristic *)characteristic
   if((isAnki && isVictor && (isPairing || knownName)) && !_connecting) {
     printf("* Connecting to %s\n", peripheral.name.UTF8String);
     [_centralManager stopScan];
-    [[NSUserDefaults standardUserDefaults] setValue:peripheral.name forKey:@"victorName"];
     _peripheral = peripheral;
     peripheral.delegate = self;
     [_centralManager connectPeripheral:peripheral options:nullptr];

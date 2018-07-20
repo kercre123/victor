@@ -21,18 +21,14 @@ bool IRtsHandler::LoadKeys() {
 
   bool validKeys = _keyExchange->ValidateKeys((uint8_t*)&(_rtsKeys.keys.id.publicKey), (uint8_t*)&(_rtsKeys.keys.id.privateKey));
 
-  if(!validKeys) {
-    Log::Write("Keys loaded from file are corrupt.");
-  } else {
+  if(validKeys) {
     Log::Write("Stored keys are good to go.");
-  }
-
-  if(validKeys && (_rtsKeys.keys.version == SB_PAIRING_PROTOCOL_VERSION)) {
     _keyExchange->SetKeys((uint8_t*)&(_rtsKeys.keys.id.publicKey), (uint8_t*)&(_rtsKeys.keys.id.privateKey));
 
     Log::Write("Loading key pair from file.");
     return true;
   } else {
+    Log::Write("Keys loaded from file are corrupt or don't exist.");
     // If loading keys but no keys have previously 
     // been saved, generate new ones and save them
     uint8_t* publicKey = (uint8_t*)_keyExchange->GenerateKeys();
