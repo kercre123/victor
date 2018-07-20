@@ -224,8 +224,9 @@ void FirstBoot(void) {
     for( int frame=0; frame<160; frame++ ) {
       for( int led=0; led<4; led++ ) {
         GPIO_SetInactive(LEDs[color+led].port, LEDs[color+led].pin);
-        for (volatile int i=0; i < 1000; i++) __nop();
+        for (volatile int i=0; i < 500; i++) __nop();
         GPIO_SetActive(LEDs[color+led].port, LEDs[color+led].pin);
+        for (volatile int j=0; j < 500; j++) __nop();
       }
     }
   }
