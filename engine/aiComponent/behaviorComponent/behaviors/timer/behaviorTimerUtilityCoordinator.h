@@ -36,6 +36,8 @@ public:
 
   bool IsTimerRinging();
 
+  void SuppressAnticThisTick(unsigned long tickCount);
+
   #if ANKI_DEV_CHEATS
   void DevSetForceAntic() { _lParams.shouldForceAntic = true; };
 
@@ -77,6 +79,7 @@ private:
   struct LifetimeParams{
     LifetimeParams();
     bool shouldForceAntic;
+    unsigned long tickToSuppressAnticFor;
   };
 
   InstanceParams _iParams;

@@ -128,6 +128,7 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
   _iConfig.triggerWordPendingCond->Init(GetBEI());
   
   _iConfig.reactToObstacleBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToObstacle));
+  _iConfig.weatherCoordinatorBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(WeatherResponses));
   _iConfig.meetVictorBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(MeetVictor));
   _iConfig.danceToTheBeatBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(DanceToTheBeat));
   
@@ -241,6 +242,12 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
         behPair.first->SetDontActivateThisTick( "CV:" + GetDebugLabel() );
       }
     }
+  }
+
+  // Suppress timer antics if weather is running
+  if(_iConfig.weatherCoordinatorBehavior->IsActivated()){
+    const auto tickCount = BaseStationTimer::getInstance()->GetTickCount();
+    _iConfig.timerCoordBehavior->SuppressAnticThisTick(tickCount);
   }
 
   // this will suppress the streaming POST-wakeword pending

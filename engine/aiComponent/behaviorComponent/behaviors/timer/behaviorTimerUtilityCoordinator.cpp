@@ -16,6 +16,7 @@
 
 #include "clad/types/behaviorComponent/userIntent.h"
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
@@ -246,6 +247,7 @@ void BehaviorTimerUtilityCoordinator::DevAdvanceAnticBySeconds(int seconds)
 BehaviorTimerUtilityCoordinator::LifetimeParams::LifetimeParams()
 {
   shouldForceAntic = false;
+  tickToSuppressAnticFor = 0;
 }
 
 
@@ -361,6 +363,12 @@ bool BehaviorTimerUtilityCoordinator::WantsToBeActivatedBehavior() const
     int maxTimeTillAntic_s = INT_MAX;
     timeToRunAntic = _iParams.anticTracker->GetMaxTimeTillNextAntic(GetBEI(), handle, maxTimeTillAntic_s);
     timeToRunAntic &= (maxTimeTillAntic_s == 0);
+  }
+  
+  // Override all antics if it's been suppressed
+  const auto tickCount = BaseStationTimer::getInstance()->GetTickCount();
+  if(_lParams.tickToSuppressAnticFor == tickCount){
+    timeToRunAntic = false;
   }
 
 
@@ -579,6 +587,13 @@ void BehaviorTimerUtilityCoordinator::TransitionToInvalidTimerRequest()
 bool BehaviorTimerUtilityCoordinator::IsTimerRinging()
 { 
   return _iParams.timerRingingBehavior->IsActivated();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorTimerUtilityCoordinator::SuppressAnticThisTick(unsigned long tickCount)
+{
+  _lParams.tickToSuppressAnticFor = tickCount;
 }
 
 
