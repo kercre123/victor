@@ -99,6 +99,28 @@ namespace
   }
   CONSOLE_FUNC(DebugToggleDistIsMetric, kConsoleGroup);
 
+  // This is really a convenience function for the PR demo; also, otherwise we'd have to
+  // implement bool console vars for the bool settings and then poll them for changes
+  void DebugDemoSetLocaleIndex(ConsoleFunctionContextRef context)
+  {
+    const int localeIndex = ConsoleArg_Get_Int(context, "localeIndex");
+    LOG_INFO("SettingsCommManager.DebugDemoSetLocaleIndex", "Demo Locale index set to %i", localeIndex);
+
+    static const size_t kNumLocales = 4;
+    // Note below: the last item is for Canada but we use en-US for locale
+    static const std::string locales[kNumLocales] = {"en-US", "en-GB", "en-AU", "en-US"};
+    const std::string localeValue = locales[localeIndex];
+    LOG_INFO("SettingsCommManager.DebugDemoSetLocaleIndex", "Demo Locale set to %s", localeValue.c_str());
+    s_SettingsCommManager->HandleRobotSettingChangeRequest(RobotSetting::locale,
+                                                           Json::Value(localeValue));
+
+    static const bool isFahrenheitFlags[kNumLocales] = {true, false, false, false};
+    const bool isFahrenheit = isFahrenheitFlags[localeIndex];
+    s_SettingsCommManager->HandleRobotSettingChangeRequest(RobotSetting::temp_is_fahrenheit,
+                                                           Json::Value(isFahrenheit));
+  }
+  CONSOLE_FUNC(DebugDemoSetLocaleIndex, kConsoleGroup, int localeIndex);
+
 #endif
 }
 
