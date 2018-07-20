@@ -41,8 +41,7 @@ BehaviorPoweringRobotOff::InstanceConfig::InstanceConfig(const Json::Value& conf
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPoweringRobotOff::DynamicVariables::DynamicVariables()
-: behaviorStage(BehaviorStage::PoweringOff)
-, timeLastPowerAnimStopped_ms(0)
+: timeLastPowerAnimStopped_ms(0)
 {
 }
 
@@ -116,49 +115,39 @@ void BehaviorPoweringRobotOff::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPoweringRobotOff::BehaviorUpdate() 
 {
-  if( !IsActivated() ) {
+  if( !IsActivated() || _dVars.waitingForAnimationCallback ) {
     return;
   }
 
-  const auto isPowerButtonPressed = GetBEI().GetRobotInfo().IsPowerButtonPressed();
 
-  // Switch back and forth between power on/power off
-  if(!isPowerButtonPressed &&
-     ((_dVars.behaviorStage == BehaviorStage::PoweringOff) ||
-      (_dVars.behaviorStage == BehaviorStage::AnimationComplete))){
+  const auto shouldBePoweringOff = _iConfig.powerButtonHeldCondition->AreConditionsMet(GetBEI());
+  const bool wasPowerOffLastAnimPlayed = _dVars.lastAnimPlayedName == _iConfig.powerOffAnimName;
+  const bool wasPowerOnLastAnimPlayed = _dVars.lastAnimPlayedName == _iConfig.powerOnAnimName;
+
+  if(shouldBePoweringOff && wasPowerOnLastAnimPlayed){
     if(IsControlDelegated()){
       CancelDelegates(false);
-      _dVars.behaviorStage = BehaviorStage::WaitingForAnimationCallback;
+      _dVars.waitingForAnimationCallback = true;
+    }else{
+      TransitionToPoweringOff();
+    }
+  }else if(!shouldBePoweringOff && wasPowerOffLastAnimPlayed){
+    if(IsControlDelegated()){
+      CancelDelegates(false);
+      _dVars.waitingForAnimationCallback = true;
     }else{
       TransitionToPoweringOn();
     }
   }
   
-  // The behavior wants to "re-start" and turn the power off again
-  if(_dVars.behaviorStage == BehaviorStage::PoweringOn &&
-     _iConfig.powerButtonHeldCondition->AreConditionsMet(GetBEI())){
-    if(IsControlDelegated()){
-      CancelDelegates(false);
-      _dVars.behaviorStage = BehaviorStage::WaitingForAnimationCallback;
-    }else{
-      TransitionToPoweringOff();
-    }
+  // If user released power button see if eyes are restored and normal behavior should continue
+  if(!IsControlDelegated() &&
+     !shouldBePoweringOff &&
+     wasPowerOnLastAnimPlayed){
+    CancelSelf();
   }
-
-  if(!IsControlDelegated()){
-    // We've restored the robot to nuetral eyes,  done
-    if(_dVars.behaviorStage == BehaviorStage::PoweringOn){
-      CancelSelf();
-    }
-    
-    if(_dVars.behaviorStage == BehaviorStage::AnimationInterruptionRecieved){
-       if(_iConfig.powerButtonHeldCondition->AreConditionsMet(GetBEI())){
-         TransitionToPoweringOff();
-       }else{
-         TransitionToPoweringOn();
-       }
-    }
-  }
+  
+  
 }
 
 
@@ -172,7 +161,6 @@ void BehaviorPoweringRobotOff::OnBehaviorLeftActivatableScope()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPoweringRobotOff::TransitionToPoweringOff()
 {
-  _dVars.behaviorStage = BehaviorStage::PoweringOff;
   const bool havePlayedAnyAnim = _dVars.timeLastPowerAnimStopped_ms > 0;
   const auto startTime_ms = havePlayedAnyAnim ? GetLengthOfAnimation_ms(_iConfig.powerOffAnimName) - _dVars.timeLastPowerAnimStopped_ms : 0;
   
@@ -183,7 +171,6 @@ void BehaviorPoweringRobotOff::TransitionToPoweringOff()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPoweringRobotOff::TransitionToPoweringOn()
 {
-  _dVars.behaviorStage = BehaviorStage::PoweringOn;
   const bool havePlayedAnyAnim = _dVars.timeLastPowerAnimStopped_ms > 0;
   const auto startTime_ms = havePlayedAnyAnim ? GetLengthOfAnimation_ms(_iConfig.powerOnAnimName) - _dVars.timeLastPowerAnimStopped_ms : 0;
   
@@ -194,18 +181,18 @@ void BehaviorPoweringRobotOff::TransitionToPoweringOn()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPoweringRobotOff::StartAnimation(const std::string& animName, const TimeStamp_t startTime_ms)
 {
+  _dVars.lastAnimPlayedName = animName;
   const u32 numLoops = 1;
   const bool interruptRunning = true;
   const u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS;
   const float timeout_sec = PlayAnimationAction::GetDefaultTimeoutInSeconds();
   
   auto callback = [this](const AnimationComponent::AnimResult res, u32 streamTimeAnimEnded) {
-    if(res != AnimationComponent::AnimResult::Completed){
-      _dVars.timeLastPowerAnimStopped_ms = streamTimeAnimEnded;
-      _dVars.behaviorStage = BehaviorStage::AnimationInterruptionRecieved;
-    }else{
-      _dVars.behaviorStage = BehaviorStage::AnimationComplete;
+    _dVars.waitingForAnimationCallback = false;
+    if(res == AnimationComponent::AnimResult::Completed){
       _dVars.timeLastPowerAnimStopped_ms = 0;
+    }else{
+      _dVars.timeLastPowerAnimStopped_ms = streamTimeAnimEnded;
     }
   };
   DelegateIfInControl(new PlayAnimationAction(animName, numLoops, interruptRunning, 

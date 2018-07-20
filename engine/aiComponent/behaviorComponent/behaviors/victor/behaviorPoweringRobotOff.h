@@ -46,14 +46,6 @@ protected:
 
 
 private:
-  enum class BehaviorStage{
-    PoweringOff,
-    PoweringOn,
-    WaitingForAnimationCallback,
-    AnimationInterruptionRecieved,
-    AnimationComplete
-  };
-
   struct InstanceConfig {
     InstanceConfig(const Json::Value& config);
     std::shared_ptr<IBEICondition> powerButtonHeldCondition;
@@ -63,8 +55,9 @@ private:
 
   struct DynamicVariables {
     DynamicVariables();
-    BehaviorStage behaviorStage;
+    bool waitingForAnimationCallback;
     TimeStamp_t timeLastPowerAnimStopped_ms;
+    std::string lastAnimPlayedName;
   };
 
   InstanceConfig _iConfig;
