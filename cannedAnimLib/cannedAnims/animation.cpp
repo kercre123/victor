@@ -133,8 +133,12 @@ Result Animation::DefineFromFlatBuf(const std::string& name, const CozmoAnim::An
     }
   }
 
+  // PR Demo only, do NOT merge to master
+  // Don't load backpack light keyframes from animations
+  const bool kLoadBackpackData = false;
+
   auto backpackData = keyframes->BackpackLightsKeyFrame();
-  if (backpackData != nullptr) {
+  if (kLoadBackpackData && backpackData != nullptr) {
 
     #if !ANKI_DEV_CHEATS
     PRINT_NAMED_ERROR("Animation.DefineFromFlatBuf.AddBackpackLightKeyFrame.NotAllowed",
