@@ -54,7 +54,7 @@
                     "animationGroups",
                     "sprites/spriteSequences"
                 ],
-                "version": "3596"
+                "version": "3630"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
