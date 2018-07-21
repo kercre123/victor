@@ -15,6 +15,7 @@
 #pragma once
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "coretech/common/shared/types.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -36,6 +37,7 @@ protected:
   
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
 
 private:
 
@@ -45,6 +47,8 @@ private:
 
   struct DynamicVariables {
     DynamicVariables();
+    bool waitingForFaces; // in lieu of a state
+    TimeStamp_t activationTime_ms;
   };
 
   InstanceConfig _iConfig;
