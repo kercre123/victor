@@ -690,9 +690,12 @@ namespace Cozmo {
         if(isFaceValid &&
            (relativeRobotAngleTolerence_rad != kDontCheckRelativeAngle)){
           const Pose3d& robotPose = _robot->GetPose();
-          auto poseDiff = robotPose.GetRotationAngle() - faceEntry.face.GetHeadPose().GetRotationAngle();
-          if(!poseDiff.IsNear(angleRelativeRobot_rad, relativeRobotAngleTolerence_rad)){
-            isFaceValid = false;
+          Pose3d relPose;
+          if( faceEntry.face.GetHeadPose().GetWithRespectTo( robotPose, relPose ) ) {
+            Radians angle{ atan2f(relPose.GetTranslation().y(), relPose.GetTranslation().x()) };
+            if(!angle.IsNear(angleRelativeRobot_rad, relativeRobotAngleTolerence_rad)){
+              isFaceValid = false;
+            }
           }
         }
         return isFaceValid;
@@ -827,7 +830,11 @@ namespace Cozmo {
                      "Entry keyed with ID:%d but face has ID:%d",
                      faceEntryIter->first, faceEntryIter->second.face.GetID());
 
-      if(ShouldReturnFace(faceEntryIter->second, seenSinceTime_ms, includeRecognizableOnly))
+      if(ShouldReturnFace(faceEntryIter->second,
+                          seenSinceTime_ms,
+                          includeRecognizableOnly,
+                          relativeRobotAngleTolerence_rad,
+                          angleRelativeRobot_rad))
       {
         faceIDs.insert(faceEntryIter->first);
       }

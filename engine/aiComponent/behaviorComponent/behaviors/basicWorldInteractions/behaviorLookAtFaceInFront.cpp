@@ -24,6 +24,7 @@ namespace Cozmo {
 
 namespace{
 const TimeStamp_t kSeenFaceWindow_ms = 5000;
+const int kNumFramesToWait = 25;
 }  
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -34,6 +35,8 @@ BehaviorLookAtFaceInFront::InstanceConfig::InstanceConfig()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorLookAtFaceInFront::DynamicVariables::DynamicVariables()
 {
+  waitingForFaces = false;
+  activationTime_ms = 0;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -68,12 +71,28 @@ void BehaviorLookAtFaceInFront::GetAllDelegates(std::set<IBehavior*>& delegates)
 void BehaviorLookAtFaceInFront::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorLookAtFaceInFront::BehaviorUpdate()
+{
+  if( _dVars.waitingForFaces ) {
+    
+    SmartFaceID smartID;
+    if(GetFaceIDToLookAt(smartID)){
+      CancelDelegates(false);
+      _dVars.waitingForFaces = false;
+      TransitionToLookAtFace(smartID);
+    }
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLookAtFaceInFront::OnBehaviorActivated() 
 {
   // reset dynamic variables
   _dVars = DynamicVariables();
+  
+  _dVars.activationTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   
   SmartFaceID smartID;
   if(GetFaceIDToLookAt(smartID)){
@@ -90,9 +109,10 @@ bool BehaviorLookAtFaceInFront::GetFaceIDToLookAt(SmartFaceID& smartID) const
   auto& selectionComp = GetAIComp<FaceSelectionComponent>();
 
   const TimeStamp_t currentTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const TimeStamp_t earliestTime = std::max( currentTime_ms - kSeenFaceWindow_ms, _dVars.activationTime_ms );
   const bool includeRecognizableOnly = false;
   std::vector<SmartFaceID> ids;
-  const bool res = selectionComp.AreFacesInFrontOfRobot(ids, currentTime_ms - kSeenFaceWindow_ms, includeRecognizableOnly);
+  const bool res = selectionComp.AreFacesInFrontOfRobot(ids, earliestTime, includeRecognizableOnly);
 
   if(res){
     smartID = ids[0];
@@ -108,15 +128,12 @@ void BehaviorLookAtFaceInFront::TransitionToLookUp()
   // wait for a few frames after turning to give the robot a chance to see the face
   auto* action = new CompoundActionSequential;
   action->AddAction(new MoveHeadToAngleAction(MAX_HEAD_ANGLE));
-  action->AddAction(new WaitForImagesAction(WaitForImagesAction::UseDefaultNumImages,
+  // todo: use WaitToSeeFaceAction (VIC-4789)
+  action->AddAction(new WaitForImagesAction(kNumFramesToWait,
                                             VisionMode::DetectingFaces));
   
-  DelegateIfInControl(action, [this](){
-    SmartFaceID smartID;
-    if(GetFaceIDToLookAt(smartID)){
-      TransitionToLookAtFace(smartID);
-    }
-  });
+  _dVars.waitingForFaces = true;
+  DelegateIfInControl(action); // either BehaviorUpdate will break out of this, or the behavior ends
 }
 
 
