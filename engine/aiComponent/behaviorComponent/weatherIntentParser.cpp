@@ -21,39 +21,42 @@
 namespace Anki {
 namespace Cozmo {
 
-namespace{
+namespace {
 const std::string kWeatherLocationPrepend = "Right now in ";
 std::string kCityWhereItAlwaysRainsMutable = "Seattle";
 
-static void SetRainyCity(ConsoleFunctionContextRef context)
+#if REMOTE_CONSOLE_ENABLED
+void SetRainyCity(ConsoleFunctionContextRef context)
 {
   kCityWhereItAlwaysRainsMutable = ConsoleArg_Get_String(context, "rainyCity");
 }
 
 CONSOLE_FUNC(SetRainyCity, "WeatherHack", const char* rainyCity);
+#endif
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool WeatherIntentParser::IsForecast(const UserIntent_WeatherResponse& weatherIntent) 
-{ 
-  return (weatherIntent.isForecast == "true") || 
+bool WeatherIntentParser::IsForecast(const UserIntent_WeatherResponse& weatherIntent)
+{
+  return (weatherIntent.isForecast == "true") ||
          (weatherIntent.isForecast == "True");
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool WeatherIntentParser::ShouldSayText(const UserIntent_WeatherResponse& weatherIntent, 
-                                        std::string& textToSay) 
-{ 
+bool WeatherIntentParser::ShouldSayText(const UserIntent_WeatherResponse& weatherIntent,
+                                        std::string& textToSay)
+{
   textToSay = kWeatherLocationPrepend + weatherIntent.speakableLocationString;
   return !weatherIntent.speakableLocationString.empty();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool WeatherIntentParser::IsFahrenheit(const UserIntent_WeatherResponse& weatherIntent) 
-{ 
-  return weatherIntent.temperatureUnit == "F" || 
+bool WeatherIntentParser::IsFahrenheit(const UserIntent_WeatherResponse& weatherIntent)
+{
+  return weatherIntent.temperatureUnit == "F" ||
          weatherIntent.temperatureUnit == "f";
 }
 
@@ -61,14 +64,14 @@ bool WeatherIntentParser::IsFahrenheit(const UserIntent_WeatherResponse& weather
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 WeatherConditionType WeatherIntentParser::GetCondition(const RobotDataLoader::WeatherResponseMap* weatherResponseMap,
                                                        const UserIntent_WeatherResponse& weatherIntent,
-                                                       bool isForPRDemo) 
+                                                       bool isForPRDemo)
 {
   if(isForPRDemo && (weatherIntent.speakableLocationString == kCityWhereItAlwaysRainsMutable)){
     return WeatherConditionType::Rain;
   }
 
   std::string str;
-  std::transform(weatherIntent.condition.begin(), weatherIntent.condition.end(), 
+  std::transform(weatherIntent.condition.begin(), weatherIntent.condition.end(),
                  std::back_inserter(str), [](const char c) { return std::tolower(c); });
 
   auto iter = weatherResponseMap->find(str);
