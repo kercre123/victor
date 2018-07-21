@@ -69,7 +69,10 @@
         });
         $('#Locale').selectmenu({
           create: function(event, ui) {
-            // todo: get current 'setting' somehow...see above in eyecolor selectmenu create...
+            $.post('consolevarget?key=DebugDemoLocaleIndex', function(result) {
+              var value = parseInt(result);
+              $('#Locale').prop("selectedIndex", value).selectmenu('refresh');
+            });
           },
           change: function(event, data) {
             var index = data.item.index;
