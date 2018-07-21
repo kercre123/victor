@@ -99,6 +99,10 @@ namespace
   }
   CONSOLE_FUNC(DebugToggleDistIsMetric, kConsoleGroup);
 
+  // For PR demo, this extra console var is used to initialize the 'locale' menu,
+  // which is not one-to-one with locale...
+  CONSOLE_VAR(s32, kDebugDemoLocaleIndex, kConsoleGroup, 0);
+
   // This is really a convenience function for the PR demo; also, otherwise we'd have to
   // implement bool console vars for the bool settings and then poll them for changes
   void DebugDemoSetLocaleIndex(ConsoleFunctionContextRef context)
@@ -118,6 +122,7 @@ namespace
     const bool isFahrenheit = isFahrenheitFlags[localeIndex];
     s_SettingsCommManager->HandleRobotSettingChangeRequest(RobotSetting::temp_is_fahrenheit,
                                                            Json::Value(isFahrenheit));
+    kDebugDemoLocaleIndex = localeIndex;
   }
   CONSOLE_FUNC(DebugDemoSetLocaleIndex, kConsoleGroup, int localeIndex);
 
@@ -146,6 +151,28 @@ void SettingsCommManager::InitDependent(Robot* robot, const RobotCompMap& depend
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPullSettingsRequest,   commonCallback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPushSettingsRequest,   commonCallback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kUpdateSettingsRequest, commonCallback));
+  }
+
+  // HACK:  Fill in a special debug console var used in the PR demo (related to locale and temperature units)
+  const auto& localeSetting = _settingsManager->GetRobotSettingAsString(RobotSetting::locale);
+  const auto& isFahrenheitSetting = _settingsManager->GetRobotSettingAsBool(RobotSetting::temp_is_fahrenheit);
+  if (localeSetting == "en-US")
+  {
+    // Set US or Canada based on fahrenheit setting
+    kDebugDemoLocaleIndex = isFahrenheitSetting ? 0 : 3;
+  }
+  else if (localeSetting == "en-GB")
+  {
+    kDebugDemoLocaleIndex = 1;
+  }
+  else if (localeSetting == "en-AU")
+  {
+    kDebugDemoLocaleIndex = 2;
+  }
+  else
+  {
+    LOG_WARNING("SettingsCommManager.InitDependent.SetSpecialLocaleIndexForDemo",
+                "Unsupported locale setting %s", localeSetting.c_str());
   }
 }
 
