@@ -545,10 +545,14 @@ void BehaviorGoHome::ActionFailure(bool removeChargerFromBlockWorld)
     GetBEI().GetBlockWorld().DeleteLocatedObjects(deleteFilter);
   }
   
-  // Delegate to the "request to go home" behavior
-  const bool requestWantsToRun = _iConfig.requestHomeBehavior->WantsToBeActivated();
-  if (requestWantsToRun) {
-    DelegateIfInControl(_iConfig.requestHomeBehavior.get());
+  // Delegate to the "request to go home" behavior, but only if we are _not_ removing the charger from the world. If we
+  // _are_ removing the charger from the world, we should just exit this behavior so that the "find charger" behavior
+  // can get a chance to run again.
+  if (!removeChargerFromBlockWorld) {
+    const bool requestWantsToRun = _iConfig.requestHomeBehavior->WantsToBeActivated();
+    if (requestWantsToRun) {
+      DelegateIfInControl(_iConfig.requestHomeBehavior.get());
+    }
   }
 }
 
