@@ -45,7 +45,7 @@ namespace
                                                            Json::Value(volumeSettingValue));
   }
   CONSOLE_FUNC(DebugSetMasterVolume, kConsoleGroup);
-  
+
   // NOTE: Need to keep kEyeColors in sync with EyeColor in robotSettings.clad
   constexpr const char* kEyeColors = "Teal,Orange,Yellow,LimeGreen,AzureBlue,Purple,MatrixGreen";
   CONSOLE_VAR_ENUM(u8, kEyeColor, kConsoleGroup, 0, kEyeColors);
@@ -130,7 +130,7 @@ namespace
 }
 
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SettingsCommManager::SettingsCommManager()
 : IDependencyManagedComponent(this, RobotComponentID::SettingsCommManager)
 {
@@ -153,6 +153,7 @@ void SettingsCommManager::InitDependent(Robot* robot, const RobotCompMap& depend
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kUpdateSettingsRequest, commonCallback));
   }
 
+#if REMOTE_CONSOLE_ENABLED
   // HACK:  Fill in a special debug console var used in the PR demo (related to locale and temperature units)
   const auto& localeSetting = _settingsManager->GetRobotSettingAsString(RobotSetting::locale);
   const auto& isFahrenheitSetting = _settingsManager->GetRobotSettingAsBool(RobotSetting::temp_is_fahrenheit);
@@ -174,6 +175,8 @@ void SettingsCommManager::InitDependent(Robot* robot, const RobotCompMap& depend
     LOG_WARNING("SettingsCommManager.InitDependent.SetSpecialLocaleIndexForDemo",
                 "Unsupported locale setting %s", localeSetting.c_str());
   }
+#endif
+
 }
 
 
@@ -266,9 +269,9 @@ void SettingsCommManager::OnRequestPushSettings(const external_interface::PushSe
 {
   // TODO
   LOG_INFO("SettingsCommManager.OnRequestPushSettings", "Push settings request");
-  
+
   auto* pushSettingsResp = new external_interface::PushSettingsResponse();
-  
+
   _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(pushSettingsResp));
 }
 
@@ -278,7 +281,7 @@ void SettingsCommManager::OnRequestUpdateSettings(const external_interface::Upda
 {
   LOG_INFO("SettingsCommManager.OnRequestUpdateSettings", "Update settings request");
   const auto& settings = updateSettingsRequest.settings();
-  
+
   if (settings.oneof_clock_24_hour_case() == external_interface::RobotSettingsConfig::OneofClock24HourCase::kClock24Hour)
   {
     HandleRobotSettingChangeRequest(RobotSetting::clock_24_hour,
