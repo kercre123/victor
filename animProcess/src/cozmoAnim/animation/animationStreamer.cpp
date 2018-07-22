@@ -1664,7 +1664,8 @@ namespace Cozmo {
                                  layeredKeyFrames,
                                  storeFace);
     
-    if(layeredKeyFrames.haveBackpackKeyFrame && 
+    const bool kSendBackpackLights = false; // for PR demo
+    if(kSendBackpackLights && layeredKeyFrames.haveBackpackKeyFrame && 
        !IsTrackLocked(tracksCurrentlyLocked, (u8)AnimTrackFlag::BACKPACK_LIGHTS_TRACK))
     {
       stateToSend.backpackLightsMessage = layeredKeyFrames.backpackKeyFrame.GetStreamMessage(timeSinceAnimStart_ms);
