@@ -219,7 +219,7 @@ void FirstBoot(void) {
   //print boot info
   bootmsg();
 
-  // Blink pattern
+  /*/ Blink pattern
   for( int color=0; color<12; color+=4 ) {
     for( int frame=0; frame<160; frame++ ) {
       for( int led=0; led<4; led++ ) {
@@ -229,7 +229,33 @@ void FirstBoot(void) {
         for (volatile int j=0; j < 500; j++) __nop();
       }
     }
-  }
+  }//-*/
   
+  //============DEBUG============================
+  wdg_freeze();
+
+  bool select = 0;
+  const int wait1[] = { 1000, 500 };
+  const int wait2[] = { 0,    500 };
+  const int delay[] = { 1e6, 3e6 };
+  while(1)
+  {
+    for( int color=0; color<12; color+=4 ) {
+      for( int frame=0; frame<160; frame++ ) {
+        for( int led=0; led<4; led++ ) {
+          GPIO_SetInactive(LEDs[color+led].port, LEDs[color+led].pin);
+          for (volatile int i=0; i < wait1[select]; i++) __nop();
+          GPIO_SetActive(LEDs[color+led].port, LEDs[color+led].pin);
+          for (volatile int j=0; j < wait2[select]; j++) __nop();
+        }
+      }
+    }
+    for (volatile int k=0; k < delay[select]; k++) __nop();
+    select = !select;
+    
+    if( !select )
+      bootmsg();
+  }
+  //==========================================
 }
 
