@@ -1320,26 +1320,6 @@ func (m *rpcService) UpdateSettings(ctx context.Context, in *extint.UpdateSettin
 	return response.GetUpdateSettingsResponse(), nil
 }
 
-func (m *rpcService) WifiScan(ctx context.Context, in *extint.WifiScanRequest) (*extint.WifiScanResponse, error) {
-	log.Println("Received rpc request WifiScan(", in, ")")
-	return nil, status.Errorf(codes.Unimplemented, "WifiScan not yet implemented")
-}
-
-func (m *rpcService) WifiConnect(ctx context.Context, in *extint.WifiConnectRequest) (*extint.WifiConnectResponse, error) {
-	log.Println("Received rpc request WifiConnect(", in, ")")
-	return nil, status.Errorf(codes.Unimplemented, "WifiConnect not yet implemented")
-}
-
-func (m *rpcService) WifiRemove(ctx context.Context, in *extint.WifiRemoveRequest) (*extint.WifiRemoveResponse, error) {
-	log.Println("Received rpc request WifiRemove(", in, ")")
-	return nil, status.Errorf(codes.Unimplemented, "WifiRemove not yet implemented")
-}
-
-func (m *rpcService) WifiRemoveAll(ctx context.Context, in *extint.WifiRemoveAllRequest) (*extint.WifiRemoveAllResponse, error) {
-	log.Println("Received rpc request WifiRemoveAll(", in, ")")
-	return nil, status.Errorf(codes.Unimplemented, "WifiRemoveAll not yet implemented")
-}
-
 // NOTE: this is the only function that won't need to check the client_token_guid header
 func (m *rpcService) UserAuthentication(ctx context.Context, in *extint.UserAuthenticationRequest) (*extint.UserAuthenticationResponse, error) {
 	log.Println("Received rpc request UserAuthentication(", in, ")")

@@ -262,34 +262,6 @@ service ExternalInterface {
 
   rpc SetLiftHeight(SetLiftHeightRequest) returns (SetLiftHeightResponse) {
   }
-  
-  rpc WifiScan(WifiScanRequest) returns (WifiScanResponse) {
-    option (google.api.http) = {
-      post: "/v1/wifi_scan",
-      body: "*"
-    };
-  }
-
-  rpc WifiConnect(WifiConnectRequest) returns (WifiConnectResponse) {
-    option (google.api.http) = {
-      post: "/v1/wifi_connect",
-      body: "*"
-    };
-  }
-
-  rpc WifiRemove(WifiRemoveRequest) returns (WifiRemoveResponse) {
-    option (google.api.http) = {
-      post: "/v1/wifi_remove",
-      body: "*"
-    };
-  }
-
-  rpc WifiRemoveAll(WifiRemoveAllRequest) returns (WifiRemoveAllResponse) {
-    option (google.api.http) = {
-      post: "/v1/wifi_remove_all",
-      body: "*"
-    };
-  }
 
   rpc UserAuthentication(UserAuthenticationRequest) returns (UserAuthenticationResponse) {
     option (google.api.http) = {

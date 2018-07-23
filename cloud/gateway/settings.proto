@@ -89,35 +89,3 @@ message UpdateSettingsResponse {
   ResultCode code = 2;
   Jdoc doc = 3;
 }
-
-message WifiScanRequest {
-  
-}
-
-message WifiScanResponse {
-  ResultStatus status = 1;
-}
-
-message WifiConnectRequest {
-  
-}
-
-message WifiConnectResponse {
-  ResultStatus status = 1;
-}
-
-message WifiRemoveRequest {
-  
-}
-
-message WifiRemoveResponse {
-  ResultStatus status = 1;
-}
-
-message WifiRemoveAllRequest {
-  
-}
-
-message WifiRemoveAllResponse {
-  ResultStatus status = 1;
-}
