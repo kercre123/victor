@@ -35,6 +35,10 @@ namespace { // "Private members"
 
   s32 robotID_ = -1;
 
+  // Whether or not there is a valid syscon application
+  // Assume we do until we get a PAYLOAD_BOOT_FRAME
+  bool haveValidSyscon_ = true;
+  
 #ifdef HAL_DUMMY_BODY
   BodyToHead dummyBodyData_ = {
     .cliffSense = {800, 800, 800, 800}
@@ -192,6 +196,12 @@ Result spine_wait_for_first_frame(spine_ctx_t spine, const int * shutdownSignal)
         record_body_version( (VersionInfo*)(hdr+1) );
       }
       else if (hdr->payload_type == PAYLOAD_BOOT_FRAME) {
+
+        // If the first frame we receive is a boot frame then
+        // it means there is no valid syscon application
+        haveValidSyscon_ = false;
+        AnkiWarn("HAL.SpineWaitForFirstFrame.InvalidSyscon","");
+
         initialized = true;
         //extract button data from stub packet and put in fake full packet
         uint8_t button_pressed = ((struct MicroBodyToHead*)(hdr+1))->buttonPressed;
@@ -317,12 +327,12 @@ Result spine_get_frame() {
         result = RESULT_OK;
       }
       else if (hdr->payload_type == PAYLOAD_CONT_DATA) {
-         LOGD("Handling CD payload type %x\n", hdr->payload_type);
+        LOGD("Handling CD payload type %x\n", hdr->payload_type);
         ccc_data_process( (ContactData*)(hdr+1) );
         result = RESULT_OK;
       }
       else if (hdr->payload_type == PAYLOAD_VERSION) {
-         LOGD("Handling VR payload type %x\n", hdr->payload_type);
+        LOGD("Handling VR payload type %x\n", hdr->payload_type);
         record_body_version( (VersionInfo*)(hdr+1) );
       }
       else if (hdr->payload_type == PAYLOAD_BOOT_FRAME) {
@@ -385,19 +395,25 @@ Result HAL::Step(void)
     // struct HeadToBody* h2bp = (commander_is_active) ? ccc_data_get_response() : &headData_;
     struct HeadToBody* h2bp =  &headData_;
 
-    EventStart(EventType::WRITE_SPINE);
     const TimeStamp_t now_ms = GetTimeStamp();
-    if (desiredPowerMode_ == POWER_MODE_CALM && !commander_is_active) {
-      if (++calmModeSkipFrameCount_ > NUM_CALM_MODE_SKIP_FRAMES) {
-        spine_set_lights(&spine_, &(h2bp->lightState));
-        calmModeSkipFrameCount_ = 0;
-      }
-    } else {
-      spine_write_h2b_frame(&spine_, h2bp);
-      lastH2BSendTime_ms_ = now_ms;
-    }
-    EventStop(EventType::WRITE_SPINE);
 
+    // Only send H2B message if there is actually a valid syscon application
+    // otherwise bootloader will ack these messages and we don't handle those
+    if(haveValidSyscon_)
+    {
+      EventStart(EventType::WRITE_SPINE);
+      if (desiredPowerMode_ == POWER_MODE_CALM && !commander_is_active) {
+        if (++calmModeSkipFrameCount_ > NUM_CALM_MODE_SKIP_FRAMES) {
+          spine_set_lights(&spine_, &(h2bp->lightState));
+          calmModeSkipFrameCount_ = 0;
+        }
+      } else {
+        spine_write_h2b_frame(&spine_, h2bp);
+        lastH2BSendTime_ms_ = now_ms;
+      }
+      EventStop(EventType::WRITE_SPINE);
+    }
+    
     // Print warning if power mode is unexpected
     const HAL::PowerState currPowerMode = PowerGetMode();
     if (currPowerMode != desiredPowerMode_) {
