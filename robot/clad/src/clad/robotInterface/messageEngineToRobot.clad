@@ -551,7 +551,7 @@ message TextToSpeechPrepare {
   AudioMetaData::SwitchState::Robot_Vic_External_Processing style, // Audio processing style
   float_32 durationScalar, // Duration adjustment
   uint_8 ttsID,            // ID of utterance
-  string text              // Text to be pronounced
+  int_8 text[1024]         // Test to be pronounced
 }
 
 //
