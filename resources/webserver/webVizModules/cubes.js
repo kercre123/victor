@@ -25,6 +25,26 @@
     sendData( payload );
   }
 
+  function setInteractableSubscription(subscribe) {
+    var payload = { 'subscribeInteractable' : subscribe };
+    sendData( payload );
+  }
+
+  function setTempInteractableSubscription() {
+    var payload = { 'subscribeTempInteractable' : true };
+    sendData( payload );
+  }
+
+  function setBackgroundSubscription(subscribe) {
+    var payload = { 'subscribeBackground' : subscribe };
+    sendData( payload );
+  }
+
+  function setTempBackgroundSubscription() {
+    var payload = { 'subscribeTempBackground' : true };
+    sendData( payload );
+  }
+
   myMethods.init = function(elem) {
     // Called once when the module is loaded.
     $(elem).append('<div id="cubes-title">Cube connection info</div>');
@@ -58,28 +78,92 @@
     forgetPreferredCubeButton.appendTo( elem );
 
     cubeInfoDiv = $('<h3 id="cubeInfo"></h3>').appendTo( elem );
-   
+
+    $(elem).append('<div id="ccc-title">CubeConnectionCoordinator</div>');
+
+    var subInterButton = $('<input class="cccInteractableButton" type="button" value="Subscribe Interactable"/>');
+    subInterButton.click( function(){
+      setInteractableSubscription( true );
+    });
+    subInterButton.appendTo( elem );
+
+    var unSubInterButton = $('<input class="cccInteractableButton" type="button" value="Unsubscribe Interactable"/>');
+    unSubInterButton.click( function(){
+      setInteractableSubscription( false );
+    });
+    unSubInterButton.appendTo( elem );
+
+    var tempSubInterButton = $('<input class="cccInteractableButton" type="button" value="Temp Subscribe Interactable"/>');
+    tempSubInterButton.click( function(){
+      setTempInteractableSubscription();
+    });
+    tempSubInterButton.appendTo( elem );
+
+    $(elem).append('<div id="cccButtonBreak"></div>');
+
+     var subBackButton = $('<input class="cccBackgroundButton" type="button" value="Subscribe Background"/>');
+    subBackButton.click( function(){
+      setBackgroundSubscription( true );
+    });
+    subBackButton.appendTo( elem );
+
+    var unSubBackButton = $('<input class="cccBackgroundButton" type="button" value="Unsubscribe Background"/>');
+    unSubBackButton.click( function(){
+      setBackgroundSubscription( false );
+    });
+    unSubBackButton.appendTo( elem );
+
+    var tempSubBackButton = $('<input class="cccBackgroundButton" type="button" value="Temp Subscribe Background"/>');
+    tempSubBackButton.click( function(){
+      setTempBackgroundSubscription();
+    });
+    tempSubBackButton.appendTo( elem );
+
+    cccInfoDiv = $('<h3 id="cccInfo"></h3>').appendTo( elem );
   };
 
   myMethods.onData = function(data, elem) {
     // The engine has sent a new json blob.
     
-    cubeInfoDiv.empty(); // remove old
-    cubeInfoDiv.append('<div class="cubeTypeTitle">' + "Connection state: " + data["connectionState"] + '</div>');
-    cubeInfoDiv.append('<div class="cubeTypeTitle">' + "Connected cube: " + data["connectedCube"] + '</div>');
-    cubeInfoDiv.append('<div class="cubeTypeTitle">' + "Preferred cube: " + data["preferredCube"] + '</div>');
-    cubeInfoDiv.append('<div class="cubeTypeTitle">' + "Latest scan results (sorted by signal strength): " + '</div>');
-    function compareRssi(a,b) {
-      return (a.lastRssi < b.lastRssi ? 1 : -1)
+    if(data.hasOwnProperty('commInfo')){
+      commInfo = data["commInfo"];
+      cubeInfoDiv.empty(); // remove old
+      cubeInfoDiv.append('<div class="cubeTypeTitle">' + "Connection state: " + commInfo["connectionState"] + '</div>');
+      cubeInfoDiv.append('<div class="cubeTypeTitle">' + "Connected cube: " + commInfo["connectedCube"] + '</div>');
+      cubeInfoDiv.append('<div class="cubeTypeTitle">' + "Preferred cube: " + commInfo["preferredCube"] + '</div>');
+      cubeInfoDiv.append('<div class="cubeTypeTitle">' + "Latest scan results (sorted by signal strength): " + '</div>');
+      function compareRssi(a,b) {
+        return (a.lastRssi < b.lastRssi ? 1 : -1)
+      }
+      cubeData = commInfo["cubeData"];
+      cubeData.sort(compareRssi);
+      cubeData.forEach(function(entry) {
+        Object.keys(entry).forEach(function(key) {
+          cubeInfoDiv.append( '<div class="cubeEntry">' + key + ': ' + entry[key] + '</div>');
+        })
+        cubeInfoDiv.append('<div class="cubeTypeTitle"></div>')
+      });
+    } else if (data.hasOwnProperty("cccInfo")){
+      cccInfo = data["cccInfo"];
+      cccInfoDiv.empty(); // clear out old data
+      cccInfoDiv.append('<div class="cccTypeTitle">' + "Connection state: " + cccInfo["connectionState"] + '</div>');
+      stateCountdown = cccInfo["stateCountdown"];
+      stateCountdown.forEach(function(entry){
+        Object.keys(entry).forEach(function(key){
+          cccInfoDiv.append('<div class="cccTypeTitle">' + key + ': ' + entry[key] + '</div>');
+        });
+        cccInfoDiv.append('<div class="cccTypeTitle"></div>');
+      });
+      // loop over subs
+      cccInfoDiv.append('<div class="cccTypeTitle">' + "Subscribers: " );
+      subscriberData = cccInfo["subscriberData"];
+      subscriberData.forEach(function(entry) {
+        Object.keys(entry).forEach(function(key){
+          cccInfoDiv.append('<div class="subscriberEntry">' + key + ': ' + entry[key] + '</div>');
+        })
+        cccInfoDiv.append('<div class="cccTypeTitle"></div>');
+      });
     }
-    cubeData = data["cubeData"];
-    cubeData.sort(compareRssi);
-    cubeData.forEach(function(entry) {
-      Object.keys(entry).forEach(function(key) {
-        cubeInfoDiv.append( '<div class="cubeEntry">' + key + ': ' + entry[key] + '</div>');
-      })
-      cubeInfoDiv.append('<div class="cubeTypeTitle"></div>')
-    });
   };
 
   myMethods.update = function(dt, elem) { };
@@ -101,6 +185,33 @@
       }
       
       .cubeEntry { 
+        margin-left:10px;
+      }
+
+      #ccc-title {
+        font-size:16px;
+        margin-top:20px;
+        margin-bottom:20px;
+      }
+
+      .cccTypeTitle {
+        margin-bottom:10px;
+      }
+
+      .cccButtonBreak {
+      }
+
+      .cccInteractableButton {
+        margin-bottom:20px;
+        margin-right:10px;
+      }
+
+      .cccBackgroundButton {
+        margin-bottom:20px;
+        margin-right:10px;
+      }
+      
+      .subscriberEntry{
         margin-left:10px;
       }
     `;

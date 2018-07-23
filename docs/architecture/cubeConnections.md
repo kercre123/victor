@@ -8,8 +8,7 @@
 
 ## CubeConnectionCoordinator
   * Takes subscriptions for cube connections and manages the resultant connection state as appropriate
-  * Can be accessed via the Engine->ConsoleVars->CubeConnectionCoordinator tab where a single subscription may be made to generate cube connections as needed for debug and development
-  * Coming soon... some of the Coordinator state is visible on the Engine->WebViz->Cubes tab
+  * Coordinator state is visible on the Engine->WebViz->Cubes tab along with some exposed test subscription functions
 
 ### Connection Types:
 Background: Connection/Status lights are NOT shown upon connect/disconnect. Localization status lights are DISABLED

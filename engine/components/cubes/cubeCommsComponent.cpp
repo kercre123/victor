@@ -811,9 +811,10 @@ void CubeCommsComponent::SendDataToWebViz()
     auto* webService = context->GetWebService();
     if (webService!= nullptr) {
       Json::Value toSend = Json::objectValue;
-      toSend["connectionState"] = CubeConnectionStateToString(GetCubeConnectionState());
-      toSend["connectedCube"] = IsConnectedToCube() ? GetCurrentCube() : "(none)";
-      toSend["preferredCube"] = _preferredCubeFactoryId.empty() ? "(none)" : _preferredCubeFactoryId;
+      Json::Value commInfo = Json::objectValue;
+      commInfo["connectionState"] = CubeConnectionStateToString(GetCubeConnectionState());
+      commInfo["connectedCube"] = IsConnectedToCube() ? GetCurrentCube() : "(none)";
+      commInfo["preferredCube"] = _preferredCubeFactoryId.empty() ? "(none)" : _preferredCubeFactoryId;
       
       Json::Value cubeData = Json::arrayValue;
       for (const auto& mapEntry : _cubeScanResults) {
@@ -824,7 +825,8 @@ void CubeCommsComponent::SendDataToWebViz()
         blob["lastRssi"]  = rssi;
         cubeData.append(blob);
       }
-      toSend["cubeData"] = cubeData;
+      commInfo["cubeData"] = cubeData;
+      toSend["commInfo"] = commInfo;
       webService->SendToWebViz(kWebVizModuleNameCubes, toSend);
     }
   }
