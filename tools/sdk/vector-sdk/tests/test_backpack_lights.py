@@ -15,7 +15,7 @@ def main():
 
     print("------ begin testing backpack lights ------")
 
-    with vector.Robot(args.ip, str(args.cert), port=args.port) as robot:
+    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         # Set backpack to RGB Lights for 4 seconds
         robot.backpack.set_backpack_lights(vector.lights.blue_light, vector.lights.green_light, vector.lights.red_light)
         time.sleep(4.0)

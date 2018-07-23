@@ -23,10 +23,11 @@ class SDK_PRIORITY_LEVEL(Enum):
 
 
 class Connection:
-    def __init__(self, robot, host, cert_file):
+    def __init__(self, robot, name, host, cert_file):
         if cert_file is None:
             raise Exception("Must provide a cert file")
         self._priority = None
+        self.name = name
         self.host = host
         self.cert_file = cert_file
         self._robot = robot
@@ -51,8 +52,9 @@ class Connection:
         with open(self.cert_file, 'rb') as cert:
             trusted_certs = cert.read()
         credentials = aiogrpc.ssl_channel_credentials(root_certificates=trusted_certs)
-        self.logger.info(f"Connecting to {self.host}")
-        self.channel = aiogrpc.secure_channel(self.host, credentials)
+        self.logger.info(f"Connecting to {self.host} for {self.name} using {self.cert_file}")
+        self.channel = aiogrpc.secure_channel(self.host, credentials,
+                                              options=(("grpc.ssl_target_name_override", self.name,),))
         self._interface = client.ExternalInterfaceStub(self.channel)
 
         control = self.request_control(timeout=timeout)

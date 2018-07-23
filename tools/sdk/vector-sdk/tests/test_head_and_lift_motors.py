@@ -18,7 +18,7 @@ def main():
     args = utilities.parse_args()
 
     print("------ begin testing head and lift motors ------")
-    with vector.Robot(args.ip, str(args.cert), port=args.port) as robot:
+    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         # move head upward for a second at an arbitrarily selected speed
         robot.motors.set_head_motor(5.0)
         time.sleep(1.0)

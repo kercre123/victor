@@ -300,7 +300,7 @@ MESSAGES_TO_TEST = [
      TestResultMatches(protocol.ForgetPreferredCubeResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
 
     # TODO: Enable testcase once issue described below is resolved
-    # This test currently fails since the BatteryStateResponse message may contain default values, and the assertion to 
+    # This test currently fails since the BatteryStateResponse message may contain default values, and the assertion to
     # to check the number of fields retrieved does not account for default fields and thus causes a mismatch.
     # # BatteryState message
     # (client.ExternalInterfaceServicer.BatteryState,
@@ -426,7 +426,7 @@ def main():
     '''main execution'''
     args = utilities.parse_args()
 
-    with vector.Robot(args.ip, str(args.cert), port=args.port) as robot:
+    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         print("------ beginning tests ------")
 
         future = asyncio.Future()

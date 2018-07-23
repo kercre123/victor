@@ -15,7 +15,7 @@ def main():
     print("------ begin testing fetching robot stats ------")
 
     # Fetch robot stats
-    with vector.Robot(args.ip, str(args.cert), port=args.port) as robot:
+    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         robot.get_battery_state()  # Fetch the battery level
         robot.get_version_state()  # Fetch the os version and engine build version
         robot.get_network_state()  # Fetch the network stats

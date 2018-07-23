@@ -41,7 +41,7 @@ def main():
             print(f"Nose: {face.nose}")
             print(f"Mouth: {face.mouth}")
 
-    with vector.Robot(args.ip, str(args.cert), port=args.port) as robot:
+    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         test_subscriber = functools.partial(test_subscriber, robot)
         robot.events.subscribe('robot_changed_observed_face_id', test_subscriber)
         robot.events.subscribe('robot_observed_face', test_subscriber)

@@ -20,7 +20,7 @@ def main():
     print("------ begin testing driving along a straight path and turning in place ------")
 
     # The robot shall drive straight, stop and then turn around
-    with vector.Robot(args.ip, str(args.cert), port=args.port) as robot:
+    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         robot.behavior.drive_straight(distance_mm(200), speed_mmps(50))
         time.sleep(2.0)  # Let enough time pass to drive straight
 

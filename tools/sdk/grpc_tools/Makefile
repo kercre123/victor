@@ -11,11 +11,14 @@ GIT_ROOT := $(abspath $(current_dir)/../../..)
 PYTHON_STRUCTURE := vector/messaging
 PYTHON_SDK_ROOT := $(abspath $(current_dir)/../vector-sdk)
 PYTHON_OUT := $(abspath $(PYTHON_SDK_ROOT)/$(PYTHON_STRUCTURE))
+GATEWAY_GO_FILES := $(filter-out $(GIT_ROOT)/cloud/gateway/config_mac.go,$(wildcard $(GIT_ROOT)/cloud/gateway/*.go))
+ROBOT_HOSTNAME := $(shell ssh root@$(ANKI_ROBOT_HOST) -t echo "\$$HOSTNAME" 2>/dev/null)
+MAC_VECTOR_HOSTNAME := Vector-Local
 
 ifeq ("$(WEBOTS)","1")
-curl_command := curl --cacert trust_mac.cert https://localhost:8443
+curl_command := curl --resolve $(MAC_VECTOR_HOSTNAME):8443:127.0.0.1 ---cacert trust_mac.cert --header "Authorization: Bearer 8675309" https://$(MAC_VECTOR_HOSTNAME):8443
 else
-curl_command := curl --cacert trust.cert https://$(ANKI_ROBOT_HOST)
+curl_command := curl --resolve $(ROBOT_HOSTNAME):443:$(ANKI_ROBOT_HOST) --cacert trust.cert --header "Authorization: Bearer 8675309" https://$(ROBOT_HOSTNAME)
 endif
 
 all: python
@@ -40,7 +43,7 @@ python: pip gen_py_proto
 # This shouldn't be added to PR or anything, but is good to have available while developing go code.
 go_vet: .PHONY
 	@echo "> Running go vet"
-	@GOPATH=$(GIT_ROOT)/cloud/go/:$(GIT_ROOT)/generated/go/:$(GIT_ROOT)/generated/cladgo/:$(GIT_ROOT)/tools/message-buffers/support/go go vet $(GIT_ROOT)/cloud/gateway/main.go $(GIT_ROOT)/cloud/gateway/message_handler.go $(GIT_ROOT)/cloud/gateway/config_mac.go
+	@GOPATH=$(GIT_ROOT)/cloud/go/:$(GIT_ROOT)/generated/go/:$(GIT_ROOT)/generated/cladgo/:$(GIT_ROOT)/tools/message-buffers/support/go go vet $(GATEWAY_GO_FILES)
 
 pylint: pylint_tests pylint_main
 
@@ -70,12 +73,6 @@ ifeq ("$(ANKI_ROBOT_HOST)","")
 	$(error Could not find ANKI_ROBOT_HOST environment variable)
 endif
 
-gateway: .require_ip
-	$(warning "the gateway target is no longer necessary. To force this to run, use 'make gateway FORCE=1'")
-ifeq ("$(FORCE)","1")
-	ssh root@$(ANKI_ROBOT_HOST) -t LD_LIBRARY_PATH=/anki/lib/ /anki/bin/vic-gateway
-endif
-
 certs_show: .PHONY
 	@echo "> Robot certificates"
 	@openssl x509 -in trust.cert -text -noout || echo "\n\nFailed to output certs. Make sure they exist!\n\n" && exit 1
@@ -84,21 +81,17 @@ certs_show: .PHONY
 	@openssl x509 -in trust_mac.cert -text -noout || echo "\n\nFailed to output certs. Make sure they exist!\n\n" && exit 1
 
 create_certs: .require_ip
-	cp trust.conf temp_trust.conf
-	echo "IP.2 = $(ANKI_ROBOT_HOST)" >> temp_trust.conf
-	openssl req -config temp_trust.conf \
-	-subj "/C=US/ST=California/L=SF/O=Anki/CN=localhost" \
-	-new -x509 -days 1000 -newkey rsa:2048 -nodes -keyout trust.key -out trust.cert
-	rm temp_trust.conf
-	scp trust.cert root@$(ANKI_ROBOT_HOST):/data/trust.cert
-	scp trust.key root@$(ANKI_ROBOT_HOST):/data/trust.key
+	@echo "> Certs are now on the robot to start with. This will pull gateway.cert to your mac"
+	@echo scp root@$(ANKI_ROBOT_HOST):/data/vic-gateway/gateway.cert trust.cert
+	@scp root@$(ANKI_ROBOT_HOST):/data/vic-gateway/gateway.cert trust.cert || (echo "You may need to remove trust.cert manually" && exit 1)
+	chmod 660 trust.cert
 certs: create_certs
 
 create_certs_mac: .PHONY
 	cp trust.conf temp_trust.conf
-	echo "DNS.2       = localhost:8443" >> temp_trust.conf
+	echo "DNS.1 = $(MAC_VECTOR_HOSTNAME)" >> temp_trust.conf
 	openssl req -config temp_trust.conf \
-	-subj "/C=US/ST=California/L=SF/O=Anki/CN=localhost" \
+	-subj "/C=US/ST=California/L=SF/O=Anki/CN=$(MAC_VECTOR_HOSTNAME)" \
 	-new -x509 -days 1000 -newkey rsa:2048 -nodes -keyout trust_mac.key -out trust_mac.cert
 	rm temp_trust.conf
 	mkdir -p /tmp/anki/gateway
@@ -106,12 +99,15 @@ create_certs_mac: .PHONY
 	cp trust_mac.cert /tmp/anki/gateway/trust.cert
 certs_mac: create_certs_mac
 
+example_curl: .require_ip
+	@echo $(curl_command)/v1/event_stream -d '{}'
+
 test_curl_events: .require_ip
 	$(curl_command)/v1/event_stream -d '{}'
 	@echo
 
 test_get_events: .require_ip
-	curl --cacert trust.cert https://$(ANKI_ROBOT_HOST)/v1/event_stream
+	$(curl_command)/v1/event_stream
 	@echo
 
 test_robot_state_stream: .require_ip
@@ -172,29 +168,33 @@ test_onboarding: .require_ip
 	@echo
 
 test_wifi: .require_ip
-	curl --cacert trust.cert https://$(ANKI_ROBOT_HOST)/v1/wifi_scan -d '{}'
+	$(curl_command)/v1/wifi_scan -d '{}'
 	@echo
-	curl --cacert trust.cert https://$(ANKI_ROBOT_HOST)/v1/wifi_connect -d '{}'
+	$(curl_command)/v1/wifi_connect -d '{}'
 	@echo
-	curl --cacert trust.cert https://$(ANKI_ROBOT_HOST)/v1/wifi_scan -d '{}'
+	$(curl_command)/v1/wifi_scan -d '{}'
 	@echo
-	curl --cacert trust.cert https://$(ANKI_ROBOT_HOST)/v1/wifi_remove -d '{}'
+	$(curl_command)/v1/wifi_remove -d '{}'
 	@echo
-	curl --cacert trust.cert https://$(ANKI_ROBOT_HOST)/v1/wifi_scan -d '{}'
+	$(curl_command)/v1/wifi_scan -d '{}'
 	@echo
-	curl --cacert trust.cert https://$(ANKI_ROBOT_HOST)/v1/wifi_connect -d '{}'
+	$(curl_command)/v1/wifi_connect -d '{}'
 	@echo
-	curl --cacert trust.cert https://$(ANKI_ROBOT_HOST)/v1/wifi_connect -d '{}'
+	$(curl_command)/v1/wifi_connect -d '{}'
 	@echo
-	curl --cacert trust.cert https://$(ANKI_ROBOT_HOST)/v1/wifi_scan -d '{}'
+	$(curl_command)/v1/wifi_scan -d '{}'
 	@echo
-	curl --cacert trust.cert https://$(ANKI_ROBOT_HOST)/v1/wifi_remove_all -d '{}'
+	$(curl_command)/v1/wifi_remove_all -d '{}'
 	@echo
-	curl --cacert trust.cert https://$(ANKI_ROBOT_HOST)/v1/wifi_scan -d '{}'
+	$(curl_command)/v1/wifi_scan -d '{}'
 	@echo
 
 test_user_authentication: .require_ip
-	curl --cacert trust.cert https://$(ANKI_ROBOT_HOST)/v1/user_authentication -d '{}'
+	$(curl_command)/v1/user_authentication -d '{}'
+	@echo
+
+test_list_animations: .require_ip
+	$(curl_command)/v1/list_animations -d '{}'
 	@echo
 
 test_curl: .require_ip
@@ -207,7 +207,7 @@ test_curl: .require_ip
 	$(curl_command)/v1/display_face_image_rgb -d @test_assets/oled_color.json
 	@echo
 
-	curl --cacert trust.cert https://$(ANKI_ROBOT_HOST)/v1/list_animations -d '{}'
+	$(curl_command)/v1/list_animations -d '{}'
 	@echo
 
 	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/go_to_pose \
@@ -285,13 +285,13 @@ test_attention_transfer: .require_ip
 	@echo
 
 test_settings: .require_ip
-	curl --cacert trust.cert https://$(ANKI_ROBOT_HOST)/v1/push_settings -d '{}'
+	$(curl_command)/v1/push_settings -d '{}'
 	@echo
 
-	curl --cacert trust.cert https://$(ANKI_ROBOT_HOST)/v1/pull_settings -d '{}'
+	$(curl_command)/v1/pull_settings -d '{}'
 	@echo
 
-	curl --cacert trust.cert https://$(ANKI_ROBOT_HOST)/v1/update_settings -d '{"settings":{"clock_24_hour":true,"eye_color":"TEAL"}}'
+	$(curl_command)/v1/update_settings -d '{"settings":{"clock_24_hour":true,"eye_color":"TEAL"}}'
 	@echo
 
 test_status_history: .require_ip
@@ -311,9 +311,9 @@ $(addprefix run_,$(TEST_FILES)): run_%: % .require_ip
 	@mkdir -p logs
 	@echo "> Running $(shell tput setaf 6)$(notdir $<)$(shell tput sgr0)"
 ifeq ("$(WEBOTS)","1")
-	@$< localhost trust_mac.cert --port 8443 &> logs/$(notdir $<).log || ( tput setaf 1 ; cat logs/$(notdir $<).log ; tput sgr0 ; exit 1 )
+	@$< --port 8443 &> logs/$(notdir $<).log || ( tput setaf 1 ; cat logs/$(notdir $<).log ; tput sgr0 ; exit 1 )
 else
-	@$< $(ANKI_ROBOT_HOST) trust.cert &> logs/$(notdir $<).log || ( tput setaf 1 ; cat logs/$(notdir $<).log ; tput sgr0 ; exit 1 )
+	@$< &> logs/$(notdir $<).log || ( tput setaf 1 ; cat logs/$(notdir $<).log ; tput sgr0 ; exit 1 )
 endif
 
 run_python_tests: $(addprefix run_,$(TEST_FILES))

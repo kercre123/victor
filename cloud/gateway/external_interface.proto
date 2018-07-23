@@ -2,6 +2,9 @@
 //
 // IMPORTANT: After changing this file, you will need to regenerate the
 // Python files by running make in victor/tools/sdk/grpc_tools.
+//
+// TODO: Improve the comments in these files because they are exposed as
+//       part of the SDK.
 
 syntax = "proto3";
 
@@ -15,11 +18,12 @@ import "messages.proto";
 import "settings.proto";
 import "shared.proto";
 
+// The grpc-defined connection between the SDK and Anki's Vector Robot
 service ExternalInterface {
-  // Drives the wheel motors
+  // Sets the speed and acceleration for Vector's wheel motors
   rpc DriveWheels(DriveWheelsRequest) returns (DriveWheelsResult) {}
 
-  // Plays an animation by name
+  // Requests that Vector play an animation
   rpc PlayAnimation(PlayAnimationRequest) returns (PlayAnimationResult) {}
 
   // Constructs and returns a list of animations

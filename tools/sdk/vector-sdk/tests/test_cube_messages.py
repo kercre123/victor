@@ -24,7 +24,7 @@ def main():
     print("------ begin cube interactions ------")
 
     # The robot shall drive straight, stop and then turn around
-    with vector.Robot(args.ip, str(args.cert), port=args.port) as robot:
+    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         print("disconnecting from any connected cubes...")
         robot.world.disconnect_cube()
 
