@@ -133,9 +133,28 @@ namespace {
     }
   }
 
+  static void ShowCurrentAnimation(ConsoleFunctionContextRef context)
+  {
+    const std::string currentAnimation = _animStreamer->GetStreamingAnimationName();
+    context->channel->WriteLog("<html>\n");
+    context->channel->WriteLog(currentAnimation.c_str());
+    context->channel->WriteLog("</html>\n");
+  }
+
+  static void AbortCurrentAnimation(ConsoleFunctionContextRef context)
+  {
+    const std::string currentAnimation = _animStreamer->GetStreamingAnimationName();
+    _animStreamer -> Abort();
+    context->channel->WriteLog("<html>\n");
+    context->channel->WriteLog(currentAnimation.c_str());
+    context->channel->WriteLog("</html>\n");
+  }
+
   CONSOLE_FUNC(ListAnimations, "Animations");
   CONSOLE_FUNC(PlayAnimation, "Animations", const char* name, optional int numLoops);
   CONSOLE_FUNC(AddAnimation, "Animations", const char* path);
+  CONSOLE_FUNC(ShowCurrentAnimation, "Animations");
+  CONSOLE_FUNC(AbortCurrentAnimation, "Animations");
 
   void RecordMicDataClip(ConsoleFunctionContextRef context)
   {
