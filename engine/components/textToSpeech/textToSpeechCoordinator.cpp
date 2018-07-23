@@ -47,7 +47,7 @@ namespace {
   constexpr float kPlayTimeoutScalar = 2.0f;
 
   // Utterances should not take longer than this to generate
-  constexpr float kGenerationTimeout_s = 10.0f; // making this high until we figure out accurate generation times
+  constexpr float kGenerationTimeout_s = 20.0f; // making this high until we figure out accurate generation times
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
