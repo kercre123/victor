@@ -159,7 +159,11 @@ bool MoodDecayEvaulator::Empty() const
   return emptyGraph;
 }
 
-float MoodDecayEvaulator::EvaluateDecay(float currentValue, float currentTimeSinceEvent_s, float deltaTime_s) const
+float MoodDecayEvaulator::EvaluateDecay(float currentValue,
+                                        float currentTimeSinceEvent_s,
+                                        float deltaTime_s,
+                                        float& velocity,
+                                        float& accel) const
 {
   if( Empty() ) {
     PRINT_NAMED_ERROR("MoodDecayEvaulator.EvaluateDecay.Empty",
@@ -184,23 +188,30 @@ float MoodDecayEvaulator::EvaluateDecay(float currentValue, float currentTimeSin
 
       const float deltaScalar = Util::IsFltGT(prevDecayScalar, 0.0f) ? (newDecayScalar / prevDecayScalar) : newDecayScalar;
       const float newValue = currentValue * deltaScalar;
+      
+      const float originalValue = Util::IsFltGT(prevDecayScalar, 0.0f) ? (currentValue / prevDecayScalar) : currentValue;
+      velocity = originalValue * _decayGraph->GetSlopeAt( newTime );
+      accel = 0.0f;
       return newValue;
     }
 
     case DecayGraphType::ValueSlope: {
       const float ratePerMinute = _decayGraph->EvaluateY( currentValue );
     
+      const float deltaThisUpdate = -ratePerMinute * ( deltaTime_s / 60.0f );
+      const float newValue = currentValue + deltaThisUpdate;
+      accel = -_decayGraph->GetSlopeAt( newValue ) / 60.0f;
+      
       if( Util::IsNearZero(ratePerMinute) ) {
         // no decay
+        velocity = 0.0f;
         return currentValue;
       }
       else {        
         DEV_ASSERT_MSG(ratePerMinute > 0.0f, "Emotion.Update.NegativeRate",
                        "Additional decay rate is %f, but should be nonnegative",
                        ratePerMinute);
-
-        const float deltaThisUpdate = -ratePerMinute * ( deltaTime_s / 60.0f );
-        const float newValue = currentValue + deltaThisUpdate;
+        velocity = -_decayGraph->EvaluateY( newValue ) / 60.0f;
         if( std::signbit(newValue) == std::signbit(currentValue) ) {
           // apply delta
           return newValue;

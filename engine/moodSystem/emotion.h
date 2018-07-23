@@ -41,7 +41,7 @@ public:
   
   void Reset();
   
-  void Update(const MoodDecayEvaulator& evaluator, float timeDelta);            
+  void Update(const MoodDecayEvaulator& evaluator, float timeDelta, float& velocity, float& accel);            
   
   void  Add(float penalizedDeltaValue);
   void  SetValue(float newValue);
@@ -51,6 +51,9 @@ public:
   float GetHistoryValueSecondsAgo(float secondsBackwards) const;
   float GetDeltaRecentTicks(uint32_t numTicksBackwards) const { return _value - GetHistoryValueTicksAgo(numTicksBackwards); }
   float GetDeltaRecentSeconds(float secondsBackwards)   const { return _value - GetHistoryValueSecondsAgo(secondsBackwards); }
+  
+  float GetMin() const { return _minValue; }
+  float GetMax() const { return _maxValue; }
 
   // range defaults to values specified in cpp, but can get set manually here
   void SetEmotionValueRange(float min, float max);

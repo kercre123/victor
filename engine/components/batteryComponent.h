@@ -21,8 +21,6 @@
 #include "coretech/common/shared/radians.h"
 #include "coretech/common/shared/types.h"
 
-#include "proto/external_interface/shared.pb.h"
-
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
@@ -35,6 +33,11 @@ namespace Cozmo {
 class BlockWorldFilter;
 class Robot;
 struct RobotState;
+  
+namespace external_interface {
+  class BatteryStateRequest;
+  class GatewayWrapper;
+}
 
 class BatteryComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {

@@ -922,37 +922,39 @@ TEST(MoodManager, StaticMoodDataRoundTripJson)
   }
 
   auto moodTestHelper = [](const StaticMoodData& smd) {
+    float wasteRate = 0.0f;
+    float wasteAccel = 0.0f;
     {
       const auto& eval = smd.GetDecayEvaluator(kTestEmoType0);
       ASSERT_FALSE(eval.Empty());
-      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.0f, 0.1f), 1.0f);
-      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.4f, 0.1f), 1.0f);
-      EXPECT_FLOAT_EQ(eval.EvaluateDecay(0.9f, 1.0f, 0.5f), 0.8f);
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.0f, 0.1f, wasteRate, wasteAccel), 1.0f);
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.4f, 0.1f, wasteRate, wasteAccel), 1.0f);
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(0.9f, 1.0f, 0.5f, wasteRate, wasteAccel), 0.8f);
     }
 
     {
       const auto& eval = smd.GetDecayEvaluator(kTestEmoType1);
       ASSERT_FALSE(eval.Empty());
-      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.0f, 0.1f), 1.0f);
-      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.4f, 0.1f), 1.0f);
-      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 100.0f, 0.5f), 1.0f);
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.0f, 0.1f, wasteRate, wasteAccel), 1.0f);
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.4f, 0.1f, wasteRate, wasteAccel), 1.0f);
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 100.0f, 0.5f, wasteRate, wasteAccel), 1.0f);
     }
 
     {
       const auto& eval = smd.GetDecayEvaluator(kTestEmoType2);
       ASSERT_FALSE(eval.Empty());
-      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.0f, 0.1f), 1.0f);
-      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 10.0f, 0.1f), 1.0f);
-      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 15.0f, 45.0f), 0.9f);
-      EXPECT_FLOAT_EQ(eval.EvaluateDecay(0.9f, 60.0f, 90.0f), 0.6f);
-      EXPECT_FLOAT_EQ(eval.EvaluateDecay(0.6f, 150.0f, 150.0f), 0.0f);
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.0f, 0.1f, wasteRate, wasteAccel), 1.0f);
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 10.0f, 0.1f, wasteRate, wasteAccel), 1.0f);
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 15.0f, 45.0f, wasteRate, wasteAccel), 0.9f);
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(0.9f, 60.0f, 90.0f, wasteRate, wasteAccel), 0.6f);
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(0.6f, 150.0f, 150.0f, wasteRate, wasteAccel), 0.0f);
     }
 
     {
       const auto& eval = smd.GetDecayEvaluator(kTestEmoType3);
       ASSERT_FALSE(eval.Empty());
-      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.0f, 15.0f), 0.75);
-      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 1000.0f, 15.0f), 0.75);
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.0f, 15.0f, wasteRate, wasteAccel), 0.75);
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 1000.0f, 15.0f, wasteRate, wasteAccel), 0.75);
     }
   };
 
@@ -1164,37 +1166,51 @@ TEST(MoodManager, StaticMoodDataReadJson)
   EXPECT_TRUE(readRes);
 
   static const float kNearTolerance = 0.001f;
-
+  
+  // only check Social and Stimulated rate and accel values (to hit distinct decay evaluators), and the rest are dummy params
+  float wasteRate = 0.0f;
+  float wasteAccel = 0.0f;
+  
+  auto compare = [](const MoodDecayEvaulator& eval, float currentVal, float timeSinceEvent, float deltaTime_s,
+                    float expectedValue, float expectedRate, float expectedAccel)
+  {
+    float rate;
+    float accel;
+    EXPECT_FLOAT_EQ(eval.EvaluateDecay(currentVal, timeSinceEvent, deltaTime_s, rate, accel), expectedValue);
+    EXPECT_FLOAT_EQ(expectedRate, rate);
+    EXPECT_FLOAT_EQ(expectedAccel, accel);
+  };
+  
   {
     const auto& eval = testStaticMoodData.GetDecayEvaluator(EmotionType::Social);
     ASSERT_FALSE(eval.Empty());
-    EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.0f, 0.1f), 1.0f);
-    EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 1.9f, 0.1f), 1.0f);
-    EXPECT_NEAR(eval.EvaluateDecay(0.9f, 4.0f, 1.0f), 0.85f, kNearTolerance);
-    EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 30.0f, 0.1f), 0.0f);
-    EXPECT_FLOAT_EQ(eval.EvaluateDecay(0.0f, 30.0f, 0.1f), 0.0f);
+    compare(eval, 1.0f,  0.0f, 0.1f,   1.0f , 0.0f, 0.0f);
+    compare(eval, 1.0f,  1.9f, 0.1f,   1.0f , 0.0f, 0.0f);
+    compare(eval, 0.9f,  4.0f, 1.0f,   0.85f, -0.05*1.0f, 0.0f);
+    compare(eval, 1.0f, 30.0f, 0.1f,   0.0f , 0.0f, 0.0f);
+    compare(eval, 0.0f, 30.0f, 0.1f,   0.0f , 0.0f, 0.0f);
   }
 
   {
     const auto& eval = testStaticMoodData.GetDecayEvaluator(EmotionType::Happy);
     ASSERT_FALSE(eval.Empty());
-    EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.0f, 0.1f), 1.0f);
-    EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 9.0f, 0.1f), 1.0f);
-    EXPECT_NEAR(eval.EvaluateDecay(0.9f, 30.0f, 10.0f), 0.8f, kNearTolerance);
-    EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 140.0f, 0.1f), 0.0f);
-    EXPECT_FLOAT_EQ(eval.EvaluateDecay(0.0f, 30.0f, 0.1f), 0.0f);
+    EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.0f, 0.1f, wasteRate, wasteAccel), 1.0f);
+    EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 9.0f, 0.1f, wasteRate, wasteAccel), 1.0f);
+    EXPECT_NEAR(eval.EvaluateDecay(0.9f, 30.0f, 10.0f, wasteRate, wasteAccel), 0.8f, kNearTolerance);
+    EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 140.0f, 0.1f, wasteRate, wasteAccel), 0.0f);
+    EXPECT_FLOAT_EQ(eval.EvaluateDecay(0.0f, 30.0f, 0.1f, wasteRate, wasteAccel), 0.0f);
   }
 
   {
     const auto& eval = testStaticMoodData.GetDecayEvaluator(EmotionType::Stimulated);
     ASSERT_FALSE(eval.Empty());
-    EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.0f, 60.0f), 1.0f);
-    EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 9.0f, 60.0f), 1.0f);
-    EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 30.0f, 60.0f), 1.0f);
+    compare(eval, 1.0f,  0.0f, 60.0f,   1.0f, 0.0f, 0.0f);
+    compare(eval, 1.0f,  9.0f, 60.0f,   1.0f, 0.0f, 0.0f);
+    compare(eval, 1.0f, 30.0f, 60.0f,   1.0f, 0.0f, 0.0f);
 
-    EXPECT_NEAR(eval.EvaluateDecay(0.9f, 0.0f, 1.0f), 0.88f, kNearTolerance);
-    EXPECT_NEAR(eval.EvaluateDecay(0.5f, 0.0f, 60.0f), 0.44f, kNearTolerance);
-    EXPECT_FLOAT_EQ(eval.EvaluateDecay(0.0f, 0.0f, 60.0f), 0.0);
+    compare(eval, 0.9f, 0.0f,  1.0f,   0.88f, -0.02f,  0.0f);
+    compare(eval, 0.5f, 0.0f, 60.0f,   0.44f, -0.001f, 0.0f);
+    compare(eval, 0.0f, 0.0f, 60.0f,    0.0f, -0.01f,  0.0f);
   }
 
 

@@ -16,6 +16,7 @@
 #include "engine/robotManager.h"
 
 #include "osState/osState.h"
+#include "proto/external_interface/shared.pb.h"
 #include "util/transport/connectionStats.h"
 
 namespace Anki {

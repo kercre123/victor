@@ -17,12 +17,15 @@
 #include "engine/cozmoContext.h"
 #include "engine/cozmoAPI/comms/protoMessageHandler.h"
 #include "engine/components/textToSpeech/textToSpeechCoordinator.h"
-#include "proto/external_interface/shared.pb.h"
 
 namespace Anki {
 namespace Cozmo {
 
 class Robot;
+template<typename T> class AnkiEvent;
+namespace external_interface {
+  class GatewayWrapper;
+}
 
 class RobotExternalRequestComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {

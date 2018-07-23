@@ -38,6 +38,9 @@ TEST(GraphEvaluator2d, OneNode)
   EXPECT_EQ( testGraph.FindFirstX(kNodeValY, xFound), true  );
   EXPECT_FLOAT_EQ(xFound, 0.5f);
   EXPECT_EQ( testGraph.FindFirstX(  2000.0f, xFound), false );
+  
+  // For one point, the slope is defined as 0
+  EXPECT_EQ( testGraph.GetSlopeAt(kNodeValX), 0.0f );
 }
 
 
@@ -70,6 +73,12 @@ TEST(GraphEvaluator2d, TwoNodesUp)
   EXPECT_EQ( testGraph.FindFirstX(    60.3f, xFound), true  );
   EXPECT_FLOAT_EQ(xFound, 100.5f);
   EXPECT_EQ( testGraph.FindFirstX(    60.4f, xFound), false );
+  
+  const float expectedSlope = (kNodeValY2 - kNodeValY1) / (kNodeValX2 - kNodeValX1);
+  EXPECT_FLOAT_EQ( testGraph.GetSlopeAt(kNodeValX1 - 1.0f), 0.0f );
+  EXPECT_FLOAT_EQ( testGraph.GetSlopeAt(kNodeValX1), expectedSlope );
+  EXPECT_FLOAT_EQ( testGraph.GetSlopeAt(kNodeValX2), expectedSlope );
+  EXPECT_FLOAT_EQ( testGraph.GetSlopeAt(kNodeValX2 + 1.0f), 0.0f );
 }
 
 
@@ -102,6 +111,12 @@ TEST(GraphEvaluator2d, TwoNodesDown)
   EXPECT_EQ( testGraph.FindFirstX(    60.3f, xFound), true  );
   EXPECT_FLOAT_EQ(xFound,   0.5f);
   EXPECT_EQ( testGraph.FindFirstX(    60.4f, xFound), false );
+  
+  const float expectedSlope = (kNodeValY2 - kNodeValY1) / (kNodeValX2 - kNodeValX1);
+  EXPECT_FLOAT_EQ( testGraph.GetSlopeAt(kNodeValX1 - 1.0f), 0.0f );
+  EXPECT_FLOAT_EQ( testGraph.GetSlopeAt(kNodeValX1), expectedSlope );
+  EXPECT_FLOAT_EQ( testGraph.GetSlopeAt(kNodeValX2), expectedSlope );
+  EXPECT_FLOAT_EQ( testGraph.GetSlopeAt(kNodeValX2 + 1.0f), 0.0f );
 }
 
 
@@ -133,6 +148,8 @@ TEST(GraphEvaluator2d, TwoNodesSameX)
   EXPECT_EQ( testGraph.FindFirstX(    60.3f, xFound), true  );
   EXPECT_FLOAT_EQ(xFound,   0.5f);
   EXPECT_EQ( testGraph.FindFirstX(    60.4f, xFound), false );
+  
+  EXPECT_FLOAT_EQ( testGraph.GetSlopeAt(kNodeValX), std::numeric_limits<float>::max() );
 }
 
 
@@ -198,6 +215,23 @@ TEST(GraphEvaluator2d, EightNodes)
   EXPECT_EQ( testGraph.FindFirstX(   -100.0f, xFound), true  );
   EXPECT_FLOAT_EQ(xFound,   1.0f);
   EXPECT_EQ( testGraph.FindFirstX(   -100.5f, xFound), false );
+  
+  EXPECT_FLOAT_EQ(testGraph.GetSlopeAt(-6.0f), 0.0f);
+  EXPECT_FLOAT_EQ(testGraph.GetSlopeAt(-5.0f), (  -2.f - -10.f)/(-3.f - -5.f));
+  EXPECT_FLOAT_EQ(testGraph.GetSlopeAt(-4.0f), (  -2.f - -10.f)/(-3.f - -5.f));
+  EXPECT_FLOAT_EQ(testGraph.GetSlopeAt(-1.0f), (   0.f -  -2.f)/(-1.f - -3.f));
+  EXPECT_FLOAT_EQ(testGraph.GetSlopeAt(-0.9f), (-100.f - 100.f)/( 1.f - -1.f));
+  EXPECT_FLOAT_EQ(testGraph.GetSlopeAt(7.f),   ( -91.f - -90.f)/( 7.f -  5.f));
+  EXPECT_FLOAT_EQ(testGraph.GetSlopeAt(7.1f),  0.0f);
+}
+
+TEST(GraphEvaluator2d, SlopeEdgeCase)
+{
+  Anki::Util::GraphEvaluator2d testGraph( {{0.0f, 0.0f}, {1.0f, 1.0f}, {1.0f, 100.0f}} );
+  
+  EXPECT_FLOAT_EQ(testGraph.GetSlopeAt(0.5f), 1.0f);
+  EXPECT_FLOAT_EQ(testGraph.GetSlopeAt(1.0f), 1.0f); // slope should not be infinite
+  EXPECT_FLOAT_EQ(testGraph.GetSlopeAt(2.0f), 0.0f);
 }
 
 

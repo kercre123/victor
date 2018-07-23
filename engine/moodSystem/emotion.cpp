@@ -100,13 +100,22 @@ float Emotion::GetHistoryValueSecondsAgo(float secondsBackwards) const
 }
   
   
-void Emotion::Update(const MoodDecayEvaulator& evaluator, float timeDelta_s)
+void Emotion::Update(const MoodDecayEvaulator& evaluator, float timeDelta_s, float& velocity, float& accel)
 {
-  _value = evaluator.EvaluateDecay(_value, _timeDecaying, timeDelta_s);
+  _value = evaluator.EvaluateDecay(_value, _timeDecaying, timeDelta_s, velocity, accel);
 
   _timeDecaying += timeDelta_s;
   
   _history.push_back( HistorySample(_value, timeDelta_s) );
+  
+  // clamp rate and accel based on emotion value range
+  if( (_value <= _minValue) && (velocity < 0.0f) ) {
+    velocity = 0.0f;
+    accel = Anki::Util::Max(0.0f, accel);
+  } else if( (_value >= _maxValue) && (velocity > 0.0f) ) {
+    velocity = 0.0f;
+    accel = Anki::Util::Min(0.0f, accel);
+  }
 }
 
 

@@ -792,3 +792,13 @@ message SayTextResponse {
   UtteranceState state = 2;
 }
 
+message StimulationInfo {
+  repeated string emotion_events  = 1; // may be empty
+  float  value                    = 2;
+  float  velocity                 = 3; // value per second
+  float  accel                    = 4; // value per sec per sec
+  float  value_before_event       = 5; // matches value if there were no emotion events
+  float  min_value                = 6;
+  float  max_value                = 7;
+}
+

@@ -25,11 +25,14 @@
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "engine/externalInterface/externalMessageRouter.h"
+#include "engine/externalInterface/gatewayInterface.h"
 #include "engine/moodSystem/emotionEvent.h"
 #include "engine/moodSystem/staticMoodData.h"
 #include "engine/robot.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "engine/viz/vizManager.h"
+#include "proto/external_interface/messages.pb.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
@@ -58,6 +61,7 @@ static const char* kSimpleMoodAudioKey = "simpleMoodAudioParameters";
 
 CONSOLE_VAR(float, kMoodManager_AudioSendPeriod_s, "MoodManager", 0.5f);
 CONSOLE_VAR(float, kMoodManager_WebVizPeriod_s, "MoodManager", 1.0f);
+CONSOLE_VAR(float, kMoodManager_AppPeriod_s, "MoodManager", 1.0f);
 }
 
 
@@ -80,6 +84,7 @@ MoodManager::MoodManager()
 , _fixedEmotions{}
 , _simpleMoodAudioParameter(AudioParameterType::Invalid)
 {
+  _pendingAppEvents.reserve(3); // ~max expected events in a single Update() tick
 }
 
 MoodManager::~MoodManager()
@@ -314,15 +319,29 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
 
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( VizInterface::RobotMood robotMood );
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( robotMood.emotion.reserve((size_t)EmotionType::Count) );
+  
+  float stimulatedValue = 0.0f;
+  float stimulatedRate = 0.0f;
+  float stimulatedAccel = 0.0f;
+  bool foundStim = false;
 
   for (size_t i = 0; i < (size_t)EmotionType::Count; ++i)
   {
     const EmotionType emotionType = (EmotionType)i;
     Emotion& emotion = GetEmotionByIndex(i);
 
-    emotion.Update(GetStaticMoodData().GetDecayEvaluator(emotionType), timeDelta);
-
+    float rate = 0.0f;
+    float accel = 0.0f;
+    emotion.Update(GetStaticMoodData().GetDecayEvaluator(emotionType), timeDelta, rate, accel);
+    
     SEND_MOOD_TO_VIZ_DEBUG_ONLY( robotMood.emotion.push_back(emotion.GetValue()) );
+    
+    if( emotionType == EmotionType::Stimulated ) {
+      stimulatedValue = emotion.GetValue();
+      stimulatedRate = rate;
+      stimulatedAccel = accel;
+      foundStim = true;
+    }
   }
 
   const bool hasAudioComp = dependentComps.HasComponent<Audio::EngineRobotAudioClient>();
@@ -352,6 +371,15 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
   }
   
   SendEmotionsToGame();
+  
+  if( !_pendingAppEvents.empty() || (currentTime - _lastAppSentStimTime_s >= kMoodManager_AppPeriod_s) ) {
+    // this won't send a new stim rate/accel the moment it changes, but since this is currently the only
+    // user-facing viz of stim, that's ok. It _will_ send a new stim/rate accel when an event affects it,
+    // and periodically
+    DEV_ASSERT( foundStim, "MoodManager.UpdateDependent.NoStim" );
+    SendStimToApp( stimulatedRate, stimulatedAccel );
+  }
+  _lastStimValue = stimulatedValue;
 
   #if SEND_MOOD_TO_VIZ_DEBUG
   robotMood.recentEvents = std::move(_eventNames);
@@ -517,6 +545,30 @@ void MoodManager::SendEmotionsToAudio(Audio::EngineRobotAudioClient& audioClient
     }
   }  
 }
+  
+void MoodManager::SendStimToApp(float velocity, float accel)
+{
+  const auto& emotion = GetEmotion( EmotionType::Stimulated );
+  const float value = emotion.GetValue();
+  if( (_robot != nullptr) && _robot->HasGatewayInterface() ) {
+    auto* gi = _robot->GetGatewayInterface();
+  
+    external_interface::StimulationInfo* msg = new external_interface::StimulationInfo;
+    // todo: extend proto plugin to take repeated types so this can be done in the ctor, to ensure we fill out all params
+    *msg->mutable_emotion_events() = {_pendingAppEvents.begin(), _pendingAppEvents.end()};
+    msg->set_value( value );
+    msg->set_velocity( velocity );
+    msg->set_accel( accel );
+    msg->set_value_before_event( _pendingAppEvents.empty() ? value : _lastStimValue );
+    msg->set_min_value( emotion.GetMin() );
+    msg->set_max_value( emotion.GetMax() );
+    
+    gi->Broadcast( ExternalMessageRouter::Wrap( msg ) );
+  }
+  
+  _lastAppSentStimTime_s = GetCurrentTimeInSeconds();
+  _pendingAppEvents.clear();
+}
 
 // updates the most recent time this event was triggered, and returns how long it's been since the event was last seen
 // returns FLT_MAX if this is the first time the event has been seen
@@ -605,16 +657,18 @@ void MoodManager::TriggerEmotionEvent(const std::string& eventName, float curren
       if( !IsEmotionFixed( emotionAffector.GetType() ) ) {
         modified = true;
         GetEmotion(emotionAffector.GetType()).Add(penalizedDeltaValue);
+        
+        if( emotionAffector.GetType() == EmotionType::Stimulated ) {
+          // for stats tracking in the update loop
+          _cumlPosStimDeltaToAdd += penalizedDeltaValue;
+          // will get sent to the app the next Update() tick
+          _pendingAppEvents.push_back( eventName );
+        }
       } else {
         PRINT_CH_INFO("Mood", "MoodManager.TriggerFixedEmotion",
                       "Skipping TriggerEmotionEvent for emotion '%s' since it's fixed",
                       EmotionTypeToString(emotionAffector.GetType()));
-      }
-
-      // for stats tracking in the update loop
-      if( emotionAffector.GetType() == EmotionType::Stimulated ) {
-        _cumlPosStimDeltaToAdd += penalizedDeltaValue;
-      }
+      }      
     }
 
     if( modified ) {

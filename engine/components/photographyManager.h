@@ -15,7 +15,6 @@
 
 #include "engine/cozmoContext.h"
 #include "engine/robotComponents_fwd.h"
-#include "engine/externalInterface/gatewayInterface.h"
 
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
@@ -30,12 +29,14 @@ namespace Cozmo {
 
 class VisionComponent;
 class IGatewayInterface;
+template <typename T> class AnkiEvent;
 namespace external_interface {
+  class DeletePhotoRequest;
+  class GatewayWrapper;
   class Photo;
   class PhotosInfoRequest;
   class PhotoRequest;
   class ThumbnailRequest;
-  class DeletePhotoRequest;
 }
 
 

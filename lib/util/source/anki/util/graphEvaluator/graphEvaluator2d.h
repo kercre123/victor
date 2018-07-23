@@ -60,6 +60,11 @@ public:
   
   float EvaluateY(float x) const;
   
+  // Get slope at x. If x is within the range of data, the return value is the slope at x- (from the left)
+  // to match the implementation of EvaluateY. If x is outside of the range, slope is defined to be 0.
+  // (If there are only two nodes with the same x value, this returns FLT_MAX.)
+  float GetSlopeAt(float x) const;
+  
   // Reverse lookup to try and find an X value that would produce Y, returns success (on success outX has the x result)
   bool  FindFirstX(float y, float& outX) const;
   

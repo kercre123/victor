@@ -214,6 +214,8 @@ private:
   void PrintActionCompletedEventMap() const;
 
   void SendEmotionsToAudio(Audio::EngineRobotAudioClient& audioClient);
+  
+  void SendStimToApp(float velocity, float accel);
 
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( void AddEvent(const char* eventName) );
 
@@ -250,6 +252,10 @@ private:
 
   float _lastAudioSendTime_s = 0.0f;
   float _lastWebVizSendTime_s = 0.0f;
+  
+  float _lastAppSentStimTime_s = 0.0f;
+  float _lastStimValue = 0.0f;
+  std::vector<std::string> _pendingAppEvents;
 
   double _cumlPosStimDeltaToAdd = 0.0;
 };

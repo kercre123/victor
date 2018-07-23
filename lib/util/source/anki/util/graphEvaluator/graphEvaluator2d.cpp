@@ -70,13 +70,32 @@ bool GraphEvaluator2d::AddNodes(const std::vector<Node>& inNodes, bool errorOnFa
     }
   }
   
-  const bool addedAllNodesOK = (postNumNodesExpected == _nodes.size());
+  bool addedAllNodesOK = (postNumNodesExpected == _nodes.size());
   
   if (errorOnFailure && !addedAllNodesOK)
   {
     PRINT_NAMED_ERROR("GraphEvaluator2d.AddNodes.ErrorAdding",
                       "Expected to have %zu nodes after adding %zu, but has %zu nodes instead!",
                       postNumNodesExpected, numNodesToAdd, _nodes.size());
+  }
+  
+  if (ANKI_DEVELOPER_CODE && errorOnFailure && (_nodes.size() >= 3))
+  {
+    // allow up to two nodes with the same x value
+    float previous2 = _nodes[0]._x;
+    float previous  = _nodes[1]._x;
+    for (size_t i = 2; i < _nodes.size(); ++i)
+    {
+      if ((previous == previous2) && (previous == _nodes[i]._x))
+      {
+        PRINT_NAMED_ERROR("GraphEvaluator2d.AddNodes.TooManyDuplicates",
+                          "Three or more overlapping x values (x = %f)",
+                          previous);
+        addedAllNodesOK = false;
+      }
+      previous2 = previous;
+      previous = _nodes[i]._x;
+    }
   }
 
   return addedAllNodesOK;
@@ -94,7 +113,7 @@ bool GraphEvaluator2d::AddNode(float x, float y, bool errorOnFailure)
       if (errorOnFailure)
       {
         PRINT_NAMED_ERROR("GraphEvaluator2d.AddNode.OORange",
-                          "new node (%f, %f) has x <= than last node %zu = (%f, %f)",
+                          "new node (%f, %f) has x < than last node %zu = (%f, %f)",
                           x, y, lastNodeIdx, _nodes[lastNodeIdx]._x, _nodes[lastNodeIdx]._y);
       }
       return false;
@@ -154,6 +173,58 @@ float GraphEvaluator2d::EvaluateY(float x) const
   // x is > than all nodes - clamp to last node
   
   return prevNode->_y;
+}
+  
+float GraphEvaluator2d::GetSlopeAt(float x) const
+{
+  const size_t numNodes = _nodes.size();
+  assert(numNodes > 0);
+  
+  if (numNodes == 1)
+  {
+    // only one node. define slope to be 0
+    return 0.0f;
+  }
+  if (FLT_LT(x, _nodes[0]._x) || FLT_GT(x, _nodes.back()._x))
+  {
+    // define slope to be 0 outside range
+    return 0.0f;
+  }
+  
+  const Node* prevNode = &_nodes[0];
+  
+  // calc and cache the second to last slope, in case the last segment is vertical.
+  // If there are only two nodes sharing the same x value, this returns FLT_MAX.
+  float secondToLastSlope = std::numeric_limits<float>::max();
+  
+  for (size_t i = 1; i < numNodes; ++i)
+  {
+    const Node* nextNode = &_nodes[i];
+    const float xRange = (nextNode->_x - prevNode->_x);
+    const bool notVertical = FLT_GT(xRange, 0.0f);
+    const bool lastSegment = (i == numNodes - 1);
+    const bool secondToLastSegment = (i == numNodes - 2);
+    
+    if (notVertical && ((x <= nextNode->_x) || lastSegment))
+    {
+      const float yRange = (nextNode->_y - prevNode->_y);
+      return (yRange / xRange);
+    }
+    else if (secondToLastSegment)
+    {
+      const float yRange = (nextNode->_y - prevNode->_y);
+      secondToLastSlope = notVertical ? (yRange / xRange) : 0.0f;
+      // this slope will not get returned unless the last segment is vertical, which means that the
+      // second to last segment should not be vertical (because 3 nodes with the same x value is prohibited)
+    }
+    
+    // keep looking
+    prevNode = nextNode;
+  }
+  
+  // the last segment was vertical, so either there's only one vertical segment and this returns FLT_MAX, or
+  // there are multiple segments and this returns the second to last segment's slope.
+  return secondToLastSlope;
 }
 
 
