@@ -241,6 +241,11 @@ namespace Anki {
       return;
     }
 
+    void CameraService::CameraSetCaptureSnapshot(bool start)
+    {
+      return;
+    }
+
     Result CameraService::InitCamera()
     {
       return RESULT_OK;

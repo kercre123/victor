@@ -189,7 +189,7 @@ void PhotographyManager::UpdateDependent(const RobotCompMap& dependentComps)
   {
     LOG_INFO("PhotographyManager.UpdateDependent.DisablingPhotoMode",
              "Disable was queued. Doing now.");
-    _visionComponent->SetCameraCaptureFormat(ImageEncoding::RawRGB);
+    _visionComponent->EnableSensorRes(false);
     _state = State::WaitingForPhotoModeDisable;
     _disableWhenPossible = false;
   }
@@ -226,12 +226,11 @@ Result PhotographyManager::EnablePhotoMode(bool enable)
     return RESULT_FAIL;
   }
 
-  const ImageEncoding format = (enable ? ImageEncoding::YUV420sp : ImageEncoding::RawRGB);
-  _visionComponent->SetCameraCaptureFormat(format);
+  _visionComponent->EnableSensorRes(enable);
   _state = (enable ? State::WaitingForPhotoModeEnable : State::WaitingForPhotoModeDisable);
   
   LOG_INFO("PhotographyManager.EnablePhotoMode.FormatChange",
-           "Requesting format: %s, New State: %s", EnumToString(format), GetStateString().c_str());
+           "%s full resolution", (enable ? "Enabling" : "Disabling"));
 
   return RESULT_OK;
 }

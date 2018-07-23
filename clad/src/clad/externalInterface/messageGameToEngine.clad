@@ -516,7 +516,8 @@ message LoadFaceAlbumFromFile {
 }
 
 message SetCameraCaptureFormat {
-  ImageEncoding format
+  ImageEncoding format,
+  bool enableSensorRes=0
 }
 
 message SetMemoryMapRenderEnabled {

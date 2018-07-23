@@ -14,6 +14,7 @@
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/vision/engine/cameraCalibration.h"
 #include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/debayer.h"
 
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/ankiDefines.h"
@@ -1998,5 +1999,17 @@ namespace Vision {
       y2Ptr += cols;
     }
   }  
+
+  void DownsampleBGGR10ToRGB(const u8* bayer_in, u32 bayer_sx, u32 bayer_sy,
+                             ImageRGB& rgb)
+  {
+    // Output image is half the resolution of the bayer image
+    rgb.Allocate(bayer_sy / 2, bayer_sx / 2);
+
+    // Multiply bayer_sx by (10/8) as bayer_sx is the resolution of the bayer image
+    // but this functions expects the width and height in bytes
+    bayer_mipi_bggr10_downsample(bayer_in, reinterpret_cast<u8*>(rgb.GetRow(0)),
+                                 (bayer_sx*10)/8, bayer_sy, 10);
+  }
 } // namespace Vision
 } // namespace Anki

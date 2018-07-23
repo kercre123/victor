@@ -234,6 +234,14 @@ namespace Anki {
       camera_set_capture_format(_camera, cameraFormat);
     }
 
+    void CameraService::CameraSetCaptureSnapshot(bool start)
+    {
+      PRINT_NAMED_INFO("CameraService.CameraSetCaptureSnapshot",
+                       "%s snapshot mode",
+                       (start ? "Starting" : "Stopping"));
+      camera_set_capture_snapshot(_camera, start);
+    }
+    
     bool CameraService::CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms, ImageEncoding& format)
     {
       if( nullptr == _camera ) {
@@ -271,6 +279,8 @@ namespace Anki {
       switch(capture_frame->format)
       {
         case ANKI_CAM_FORMAT_BAYER_MIPI_BGGR10:
+          format = ImageEncoding::BAYER;
+          break;
         case ANKI_CAM_FORMAT_RGB888:
           format = ImageEncoding::RawRGB;
           break;

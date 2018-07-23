@@ -158,6 +158,7 @@ protected:
   void CycleConnectionFlowState();
 
   void ToggleCameraCaptureFormat();
+  void ToggleBayerImageResFormat();
   
   // ==== End of key press functions ====
   

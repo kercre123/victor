@@ -337,6 +337,8 @@ struct DockingErrorSignal;
     bool LookupGroundPlaneHomography(f32 atHeadAngle, Matrix_3x3f& H) const;
 
     bool HasStartedCapturingImages() const { return _hasStartedCapturingImages; }
+
+    void EnableSensorRes(bool sensorRes);
     
     // Non-rotated points representing the lift cross bar
     std::vector<Point3f> _liftCrossBarSource;
@@ -410,7 +412,9 @@ struct DockingErrorSignal;
     bool             _visionWhileMovingFastEnabled = false;
 
     ImageEncoding _desiredImageFormat = ImageEncoding::NoneImageEncoding;
-    ImageEncoding _currentImageFormat = ImageEncoding::RawRGB;
+    ImageEncoding _currentImageFormat = ImageEncoding::NoneImageEncoding;
+
+    bool _shouldDownsampleBayer = true;
     
     // State machine to make sure nothing is using the shared memory from the camera system
     // before we request a different camera capture format as well as to wait
@@ -426,8 +430,8 @@ struct DockingErrorSignal;
 
     TimeStamp_t _lastImageCaptureTime_ms = 0;
 
-    // Future used for async YUV to RGB conversion
-    std::future<Vision::ImageRGB> _cvtYUV2RGBFuture;
+    // Future used for async image conversions
+    std::future<Vision::ImageRGB> _cvtFuture;
     
     std::string _faceAlbumName;
     
@@ -472,6 +476,9 @@ struct DockingErrorSignal;
     bool _doFactoryDotTest = false;
     bool _enableAutoExposure = true;
     bool _enableWhiteBalance = true;
+
+    bool _formatChangeAutoExposure = false;
+    bool _formatChangeWhiteBalance = false;
     
     // Threading for OpenCV
     int _openCvNumThreads = 1;

@@ -372,6 +372,8 @@ namespace Cozmo {
     Stop();
 
     Util::SafeDelete(_visionSystem);
+
+    CameraService::removeInstance();
   } // ~VisionSystem()
 
   TimeStamp_t VisionComponent::GetLastProcessedImageTimeStamp() const
@@ -848,17 +850,15 @@ namespace Cozmo {
   {
     ANKI_CPU_PROFILE("VC::UpdateVisionSystem");
     
-    DEV_ASSERT((ImageEncoding::RawRGB == _currentImageFormat) || (ImageEncoding::YUV420sp == _currentImageFormat),
+    DEV_ASSERT((ImageEncoding::RawRGB == _currentImageFormat) ||
+               (ImageEncoding::YUV420sp == _currentImageFormat) ||
+               (ImageEncoding::BAYER == _currentImageFormat),
                "VisionComponent.UpdateVisionSystem.UnsupportedFormat");
     
-    ANKI_VERIFY((_currentImageFormat == ImageEncoding::RawRGB && image.GetNumRows()==DEFAULT_CAMERA_RESOLUTION_HEIGHT) ||
-                (_currentImageFormat == ImageEncoding::YUV420sp && image.GetNumRows()==CAMERA_SENSOR_RESOLUTION_HEIGHT),
-                "VisionComponent.UpdateVisionSystem.FormatSizeMismatch",
-                "Format: %s, NumRows:%d", ImageEncodingToString(_currentImageFormat), image.GetNumRows());
-    
-    const f32 sensorToFullDownsampleFactor = (_currentImageFormat == ImageEncoding::RawRGB ?
+    const f32 sensorToFullDownsampleFactor = (image.GetNumRows() == DEFAULT_CAMERA_RESOLUTION_HEIGHT ?
                                               1.f : // Sensor and Full are the same
                                               (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT / (f32)CAMERA_SENSOR_RESOLUTION_HEIGHT);
+    
     const Vision::ResizeMethod resizeMethod = Vision::ResizeMethod::Linear;
     Result result = _visionSystem->Update(poseData, image, sensorToFullDownsampleFactor, resizeMethod);
     if(RESULT_OK != result) {
@@ -2447,11 +2447,11 @@ namespace Cozmo {
   {    
     // Wait until the current async conversion is finished before getting another
     // frame
-    if(_cvtYUV2RGBFuture.valid())
+    if(_cvtFuture.valid())
     {
-      if(_cvtYUV2RGBFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+      if(_cvtFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
       {
-        image_out = _cvtYUV2RGBFuture.get();
+        image_out = _cvtFuture.get();
         return true;
       }
 
@@ -2490,14 +2490,22 @@ namespace Cozmo {
     const bool gotImage = cameraService->CameraGetFrame(buffer, imageId, imageCaptureSystemTimestamp_ms, format);
     if(gotImage)
     {
+      if(_currentImageFormat == ImageEncoding::NoneImageEncoding)
+      {
+        PRINT_CH_INFO("VisionComponent",
+                      "VisionComponent.CaptureImage.InitialFormat",
+                      "%s",
+                      EnumToString(format));
+        _currentImageFormat = format;
+      }
+      
       if(format == ImageEncoding::YUV420sp)
       {
         // Create async future to do the YUV to RGB conversion since it is slow
-        _cvtYUV2RGBFuture = std::async(std::launch::async,
+        _cvtFuture = std::async(std::launch::async,
           [image_out, buffer, imageCaptureSystemTimestamp_ms, imageId]() mutable -> Vision::ImageRGB
           {
             image_out.Allocate(CAMERA_SENSOR_RESOLUTION_HEIGHT, CAMERA_SENSOR_RESOLUTION_WIDTH);
-
             Vision::ConvertYUV420spToRGB(buffer,
                                          CAMERA_SENSOR_RESOLUTION_HEIGHT,
                                          CAMERA_SENSOR_RESOLUTION_WIDTH,
@@ -2516,6 +2524,75 @@ namespace Cozmo {
       {
         // Create ImageRGB object from image buffer
         image_out = Vision::ImageRGB(numRows, numCols, buffer);
+      }
+      else if(format == ImageEncoding::BAYER)
+      {
+        // Create async future to do the Bayer to RGB conversion since it is slow-ish
+        _cvtFuture = std::async(std::launch::async,
+          [image_out, buffer, imageCaptureSystemTimestamp_ms,
+           imageId, shouldDownsample = _shouldDownsampleBayer]() mutable -> Vision::ImageRGB
+          {
+            if(shouldDownsample)
+            {
+              image_out.Allocate(DEFAULT_CAMERA_RESOLUTION_HEIGHT, DEFAULT_CAMERA_RESOLUTION_WIDTH);
+
+              Vision::DownsampleBGGR10ToRGB(buffer,
+                                            CAMERA_SENSOR_RESOLUTION_WIDTH,
+                                            CAMERA_SENSOR_RESOLUTION_HEIGHT,
+                                            image_out);
+            }
+            else
+            {
+              image_out.Allocate(CAMERA_SENSOR_RESOLUTION_HEIGHT, CAMERA_SENSOR_RESOLUTION_WIDTH);
+#ifdef __ARM_NEON__
+              // Create a mat to hold the bayer image
+              cv::Mat bayer(CAMERA_SENSOR_RESOLUTION_HEIGHT,
+                            CAMERA_SENSOR_RESOLUTION_WIDTH,
+                            CV_8UC1);
+
+              // Raw Bayer format from camera is 4 10 bit pixels packed into 5 bytes
+              // The fifth byte is the 2 lsb from each of the 4 pixels
+              // This loop strips the fifth byte and does a saturating shift on
+              // the other 4 bytes as if the fifth byte was all 0
+              // Adopted from code in DownsampleBGGR10ToRGB
+              u8* bayerPtr = static_cast<u8*>(bayer.ptr());
+              for(int i = 0; i < (CAMERA_SENSOR_RESOLUTION_WIDTH*CAMERA_SENSOR_RESOLUTION_HEIGHT); i+=8)
+              {
+                uint8x8_t data = vld1_u8(buffer);
+                buffer += 5;
+                uint8x8_t data2 = vld1_u8(buffer);
+                buffer += 5;
+                data = vreinterpret_u8_u64(vshl_n_u64(vreinterpret_u64_u8(data), 32));
+                data = vext_u8(data, data2, 4);
+                data = vqshl_n_u8(data, 2);
+                vst1_u8(bayerPtr, data);
+                bayerPtr += 8;
+              }
+
+              // Use opencv to convert bayer BGGR to RGB
+              // The RG in BayerRG come from the second row, second and third columns
+              // of the bayer image
+              // B  G   B  G
+              // G [R] [G] R
+              // And as usual opencv has bugs in their image conversions which
+              // result in swapped R and B channels in the output image compared to
+              // what the conversion enum says
+              cv::cvtColor(bayer, image_out.get_CvMat_(), cv::COLOR_BayerRG2BGR);
+#else
+              PRINT_NAMED_ERROR("VisionComponent.DemosaicBayer2RGB.NotSupported",
+                                "Not supported on mac");
+#endif
+            }
+            
+            // Create image with proper imageID and timestamp
+            image_out.SetTimestamp(imageCaptureSystemTimestamp_ms);
+            image_out.SetImageId(imageId);
+
+            return image_out;
+          });
+
+        return false;
+
       }
       else
       {
@@ -2593,10 +2670,26 @@ namespace Cozmo {
       return false;
     }
 
+    // Don't do anything if already in requested format
+    if(format == _currentImageFormat)
+    {
+      return true;
+    }
+    
     // Pause and wait for VisionSystem to finish processing the current image
     // before changing formats since that will release all shared camera memory
     Pause(true);
-    
+
+    // Disable auto exposure and white balance while switching formats
+    // Even though the vision system is paused, it is possible that we
+    // are just finishing processing an image and don't want to send
+    // auto exposure and white balance messages
+    _formatChangeAutoExposure = _enableAutoExposure;
+    EnableAutoExposure(false);
+
+    _formatChangeWhiteBalance = _enableWhiteBalance;
+    EnableWhiteBalance(false);
+ 
     // Clear the next image so that it doesn't get swapped in to current immediately
     Lock();
     ReleaseImage(_nextImg);
@@ -2626,7 +2719,7 @@ namespace Cozmo {
       {
         Lock();
         const bool curImgEmpty = _currentImg.IsEmpty();
-        const bool cvtingImg = _cvtYUV2RGBFuture.valid();
+        const bool cvtingImg = _cvtFuture.valid();
         
         PRINT_CH_INFO("VisionComponent",
                       "VisionComponent.UpdateCaptureFormatChange.WaitingForProcessingToStop",
@@ -2672,6 +2765,10 @@ namespace Cozmo {
           case ImageEncoding::YUV420sp:
             expectedNumRows = CAMERA_SENSOR_RESOLUTION_HEIGHT;
             break;
+
+          case ImageEncoding::BAYER:
+            expectedNumRows = (_shouldDownsampleBayer ? DEFAULT_CAMERA_RESOLUTION_HEIGHT : CAMERA_SENSOR_RESOLUTION_HEIGHT);
+            break;
             
           default:
             PRINT_NAMED_ERROR("VisionComponent.UpdateCaptureFormatChange.BadDesiredFormat", "%s",
@@ -2686,6 +2783,12 @@ namespace Cozmo {
           _currentImageFormat = _desiredImageFormat;
           _desiredImageFormat = ImageEncoding::NoneImageEncoding;
           Pause(false); // now that state/format are updated, un-pause the vision system
+          
+          EnableAutoExposure(_formatChangeAutoExposure);
+          EnableWhiteBalance(_formatChangeWhiteBalance);
+          _formatChangeAutoExposure = false;
+          _formatChangeWhiteBalance = false;
+          
           PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateCaptureFormatChange.FormatChangeComplete",
                         "New format: %s, NumRows=%d", ImageEncodingToString(_currentImageFormat), gotNumRows);
         }
@@ -2698,6 +2801,17 @@ namespace Cozmo {
   bool VisionComponent::IsWaitingForCaptureFormatChange() const
   {
     return (CaptureFormatState::None != _captureFormatState);
+  }
+
+  void VisionComponent::EnableSensorRes(bool sensorRes)
+  {
+    PRINT_CH_INFO("VisionComponent", "VisionComponent.EnableSensorRes", "%d", sensorRes);
+    _shouldDownsampleBayer = !sensorRes;
+
+    if(_currentImageFormat != ImageEncoding::BAYER)
+    {
+      SetCameraCaptureFormat(ImageEncoding::BAYER);
+    }
   }
   
 #pragma mark -
@@ -2853,6 +2967,11 @@ namespace Cozmo {
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::SetCameraCaptureFormat& msg)
   {
+    if(msg.format == ImageEncoding::BAYER)
+    {
+      EnableSensorRes(msg.enableSensorRes);
+    }
+    
     SetCameraCaptureFormat(msg.format);
   }
 

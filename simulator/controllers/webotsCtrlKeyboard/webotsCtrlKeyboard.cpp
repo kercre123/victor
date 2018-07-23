@@ -1996,7 +1996,7 @@ namespace Cozmo {
     REGISTER_KEY_FCN('C', MOD_NONE,      LogCliffSensorData,    "Request cliff sensor log");
     REGISTER_KEY_FCN('C', MOD_SHIFT,     ExecuteBehavior,       "Execute behavior in 'behaviorName'");
     REGISTER_KEY_FCN('C', MOD_ALT,       ToggleCameraCaptureFormat, "Toggle camera capture format between RGB and YUV");
-//      REGISTER_KEY_FCN('C', MOD_ALT_SHIFT, , "");
+    REGISTER_KEY_FCN('C', MOD_ALT_SHIFT, ToggleBayerImageResFormat, "Toggle bayer image resolution (640x360 / 1280x720)");
     
     REGISTER_KEY_FCN('D', MOD_NONE,      ToggleVizDisplay,      "Toggle viz display");
     REGISTER_KEY_FCN('D', MOD_SHIFT,     LogRawProxData,        "Request prox sensor log");
@@ -2510,6 +2510,24 @@ namespace Cozmo {
              yuv ? "YUV" : "RGB");
     msg.format = (yuv ? ImageEncoding::YUV420sp : ImageEncoding::RawRGB);
     yuv = !yuv;
+    
+    ExternalInterface::MessageGameToEngine msgWrapper;
+    msgWrapper.Set_SetCameraCaptureFormat(msg);
+    SendMessage(msgWrapper);
+  }
+
+  void WebotsKeyboardController::ToggleBayerImageResFormat()
+  {
+    ExternalInterface::SetCameraCaptureFormat msg;
+    msg.format = ImageEncoding::BAYER;
+
+    static bool enableSensorRes = true;
+    msg.enableSensorRes = enableSensorRes;
+    enableSensorRes = !enableSensorRes;
+
+    LOG_INFO("ToggleBayerImageResFormat",
+             "%s sensor res",
+             (msg.enableSensorRes ? "Enabling" : "Disabling"));
     
     ExternalInterface::MessageGameToEngine msgWrapper;
     msgWrapper.Set_SetCameraCaptureFormat(msg);
