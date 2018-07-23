@@ -371,6 +371,11 @@ bool BehaviorTimerUtilityCoordinator::WantsToBeActivatedBehavior() const
     timeToRunAntic = false;
   }
 
+  // Antic should not play if a user intent is pending
+  if(uic.IsAnyUserIntentPending()){
+    timeToRunAntic = false;
+  }
+
 
   return cancelTimerPending || setTimerWantsToRun || 
          timeToRunAntic || timerShouldRing || 
