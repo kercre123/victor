@@ -1,4 +1,227 @@
-# Observations
+## 6/16/2018 notes richard@anki.com
+
+# MP - MicData performance
+
+  - When idle, trigger processing is 36%, dropping to 24% when active, raw processing remains about the same
+
+## Idle, on charger
+
+#### THREAD: vic-anim
+```
+24.4%      vic-anim
+  66.9%      vic-anim
+    48.0%      ProceduralFaceDrawer
+  16.4%      libc
+   8.9%      libopencv
+   7.8%      libc++
+```
+
+#### THREAD: MicProcTrigger
+```
+36.9%      MicProcTrigger
+  98.2%      vic-anim
+    80.2%      u139y
+    10.0%      b383i
+     4.0%      eb41l
+   1.8%      libpthread
+```
+
+#### THREAD: MicProcRaw
+```
+30.4%      MicProcRaw
+  85.0%      vic-anim
+    10.3%      DoSpatialFilter
+     8.6%      .loop_8_taps
+     7.8%      .i_loop_no_load
+     6.9%      VGenComplextone_i16_ansi
+     6.4%      VAdd_i16_ani
+     5.8%      DoBeamDecision
+     4.2%      rftfsub
+     4.1%      rad4_ps
+     3.6%      MapRatioToFuzzy
+  10.3%      libc
+    82.2%      memcpy
+    17.8%      libc
+   4.7%      libm
+    52.5%      __pow_finite
+    47.8%      __atan2f_finite
+```
+
+#### THREAD: WWISE
+```
+ 6.9%      vic-anim
+```
+
+## Active
+
+#### THREAD: MicProcRaw
+```
+32.9%      MicProcRaw (>30.4%)
+  85.0%      vic-anim
+    13.4%      .i_loop_no_load (>7.8%)
+     8.1%      .loop_8 (+)
+     6.4%      VGenComplextone_i16_ansi (=6.9%)
+     0.4%      MapRatioToFuzzy (<3.6%)
+     3.6%      DoSpatialFilter (<10.3%)
+     3.0%      .loop_8_taps (<8.6%)
+     2.8%      rad4_ps (<4.1%)
+     0.8%      VAdd_i16_ansi (<6.4%)
+     0.7%      DoBeamDecision (<5.8%)
+     0.2%      rftfsub (<4.2%)
+  11.4%      libc (=10.3%)
+    82.2%      memcpy
+    17.8%      libc
+   4.2%      libm (4.7%)
+    30.8%      atanf
+    19.3%      __log_finite
+    16.0%      __atan2f_finite (<47.8%)
+    10.8%      __pow_finite (<52.5%)
+```
+
+#### THREAD: MicProcTrigger
+```
+24.4%      MicProcTrigger (<36.9%)
+  98.3%      vic-anim (=98.2%)
+    87.7%      u139y (>80.2%)
+     3.7%      w3e8m
+     3.5%      b383i (<10.0%)
+     1.4%      g597v.constprop.1
+     1.0%      eb41l (<4.0%)
+   1.8%      libpthread
+```
+
+#### THREAD: Animation Streamer
+```
+24.4%      vic-anim (<28.0%)
+  66.9%      vic-anim
+    48.0%      ProceduralFaceDrawer
+  16.4%      libc
+   8.9%      libopencv
+   7.8%      libc++
+```
+
+#### THREAD: WWISE
+```
+ 6.9%      vic-anim (>12.8%)
+```
+
+## 6/12/2018 notes richard@anki.com
+
+# DVT3 - MicData performance
+
+  - No degradation in performance since 5/8/2018
+  - Little difference in process between the default voice and smaller-sized voice when idle.
+  - When idle, trigger processing is <7% jumping to 27% when active then raw processing jumps from 18% to 56%
+
+## Idle, on charger
+
+```
+DEFAULT VOICE                           LITTLE VOICE
+```
+
+#### THREAD: vic-anim
+```
+61%        vic-anim                      59%        vic-anim
+```
+
+#### THREAD: MicProcRaw
+```
+18.7%      MicProcRaw                    21%        MicProcRaw
+  61.2%      vic-anim                      66%        vic-anim
+                                             7.4%       .i_loop_no_load
+
+    5.7%       aubio_fft_get_norm            4.4%       aubio_fft_get_norm
+    5.6%       ProcessRawAudio               4.3%       ProcessRawAudio
+    4.1%       cfdmdl                        3.7%       cfdmdl
+    3.6%       DcRemovalFilter_f32           3.0%       DcRemovalFilter_f32
+    3.6%       fvec_weight                   2.7%       fvec_weight
+    3.3%       AddSamples                    3.8%       AddSamples
+    3.2%       plt                           2.7%       plt
+    3.2%       cft1st                        3.2%       cft1st
+    3.2%       _loop8                        1.3%       _loop8
+    2.3%       ProcessMicrophonesSE          2.1%       ProcessMicrophonesSE
+    2.3%       AnkiStatsAccumulator          2.1%       AnkiStatsAccumulator
+    1.6%       ProcessRawLoop                1.7%       ProcessRawLoop
+
+  17%        libm                          13.92%     libm
+    61%        atanf                         51.6%      atanf
+    23%        _atan2f_finite                27.7%      _atan2f_finite
+    13%        atan2f                        14%        atan2f
+                                              3.1%      __log_finite
+  14%        libc                          12.5%      libc
+    36%        memcpy                        50.14%     memcpy
+    11.9%      __clock_gettime               15.5%      __clock_gettime
+```
+
+#### THREAD: wwise
+```
+ 9.6%      vic-anim (wwise)                10%       vic-anim (wwise)
+```
+
+#### THREAD: MicProcTrigger
+```
+ 7.5%      MicProcTrigger                 6.4%      MicProcTrigger
+  82%        vic-anim                       78%       vic-anim
+    78.8%      u139y                          63%       u139y
+                                               6.7%     w3e8m
+     7.1%      ProcessTriggerLoop              5.9%     ProcessTriggerLoop
+     2.9%      b383i                           3.3%     b383i
+
+   5.8%      libpthread                      7.8%     libpthread
+   5.1%      libc                            4.5%     libc
+     32.2%     memcpy                          
+   4%        libc++                          4.2%     libc++
+```
+
+#### THREAD: wwise
+```
+ 1.3%      vic-anim (wwise)               1.2%      vic-anim (wwise)
+```
+
+## Active
+
+```
+DEFAULT VOICE TALKING
+```
+
+#### THREAD: vic-anim
+```
+25%      vic-anim
+```
+
+#### THREAD: MicProcRaw
+```
+46%      MicProcRaw
+  81%      vic-anim
+    19%      .i_loop_no_load
+     9.3%    ConvertFloatToInt16
+     1.7%    ProcessRawAudio
+     5.6%    .qmask_add_pc
+     5.5%    .vcmul_quad_loop_start
+     1.6%    DcRemovalFilter_f32
+     5.9%    AddSamples
+     3.4%    AnkiStatsAccumulator
+
+  6.2%     libm
+    66.6%    atanf
+    33.4%    __log_finite
+
+  10.3%    libc
+```
+
+#### THREAD: wwise
+```
+      vic-anim (wwise)
+```
+
+#### THREAD: MicProcTrigger
+```
+27%      MicProcTrigger
+  100%     vic-anim
+    89.6%    u139y
+     7%      b383i
+     3.5%    w3e8m
+```
 
 ## 5/8/2018 notes richard@anki.com
 

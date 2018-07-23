@@ -19,10 +19,21 @@ source usefulALiases.sh
 
 Simpleperf relies on ADB to transfer data and execute commands on the robot.
 
-If your robot does not allow ADB over tcp, you can enable it by running a command like this ON THE ROBOT:
+Android development tools are not installed by the Anki environment, to install adb:
+```
+brew cask install android-platform-tools
+```
 
-```sh
+If your robot does not allow ADB over tcp, you can enable it by running a command like [this](https://ankiinc.atlassian.net/wiki/spaces/VD/pages/148638114/Victor+Developer+Tips) ON THE ROBOT:
+
+```bash
 setprop service.adb.tcp.port 5555
+systemctl restart adbd
+```
+
+And to make it permanent:
+```bash
+setprop persist.adb.tcp.port 5555
 systemctl restart adbd
 ```
 
