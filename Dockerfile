@@ -1,4 +1,4 @@
-FROM node:8-stretch
+FROM ubuntu:xenial
 
 RUN apt-get update && apt-get install -y \
     android-tools-fsutils \
@@ -25,7 +25,6 @@ RUN apt-get update && apt-get install -y \
     libx11-dev \
     libxml-simple-perl \
     libxml2-utils \
-    nodejs \
     p7zip-full \
     python-markdown \
     ruby \
@@ -37,6 +36,9 @@ RUN apt-get update && apt-get install -y \
     xsltproc \
     zip \
     zlib1g-dev
+
+RUN curl -sL https://deb.nodesource.com/setup_8.x | bash -
+RUN apt-get update && apt-get install -y nodejs
 
 RUN chmod 0755 /usr/local/bin
 RUN wget https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip

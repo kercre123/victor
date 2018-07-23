@@ -13,22 +13,27 @@ def getListOfOnlineNodesForLabel(label) {
 
 node('victor-slaves') {
     withEnv(['CONFIGURATION=release']) {
-        checkout([
-            $class: 'GitSCM',
-            branches: scm.branches,
-            doGenerateSubmoduleConfigurations: scm.doGenerateSubmoduleConfigurations,
-            extensions: scm.extensions,
-            userRemoteConfigs: scm.userRemoteConfigs
-        ])
-        stage('Update submodules') {
-            sh 'git submodule update --init --recursive'
-            sh 'git submodule update --recursive'
-        }
-        stage('json lint') {
-            sh './lib/util/tools/build/jsonLint/jsonLint.sh resources'
-        }
-        stage('Build') {
-            sh './project/victor/build-victor.sh -c Release'
+        def victorBuildImage = docker.image('victor-build-img:99')
+        victorBuildImage.inside {
+            checkout([
+                $class: 'GitSCM',
+                branches: scm.branches,
+                doGenerateSubmoduleConfigurations: scm.doGenerateSubmoduleConfigurations,
+                extensions: scm.extensions,
+                userRemoteConfigs: scm.userRemoteConfigs
+            ])
+            stage('Update submodules') {
+                sh 'git submodule update --init --recursive'
+                sh 'git submodule update --recursive'
+            }
+            stage('json lint') {
+                sh './lib/util/tools/build/jsonLint/jsonLint.sh resources'
+            }
+            withEnv(["HOME=${env.WORKSPACE}"]) {
+                stage('Build') {
+                    sh './project/victor/build-victor.sh -c Release'
+                }
+            }
         }
         def macBuildAgentsList = getListOfOnlineNodesForLabel('mac-slaves')
         if (!macBuildAgentsList.isEmpty()) {
@@ -59,6 +64,9 @@ node('victor-slaves') {
             stage("Build Vicos ${CONFIGURATION}") {
                 sh "./project/victor/scripts/victor_build_${CONFIGURATION}.sh -p ${PLATFORM}"
             }
+        }
+        stage('Zip Deployables') {
+            sh './project/buildServer/steps/zipDeployables.sh'
         }
         stage('Collecting artifacts') {
             archiveArtifacts artifacts: '_build/**', onlyIfSuccessful: true, caseSensitive: true
