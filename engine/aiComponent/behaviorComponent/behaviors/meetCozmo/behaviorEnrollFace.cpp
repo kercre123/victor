@@ -1395,7 +1395,7 @@ void BehaviorEnrollFace::TransitionToWrongFace( FaceID_t faceID, const std::stri
         // a different "Bob" with a different saveID
         text = "already know you!";
       } else {
-        text = "you look like " + faceName + ", not " + _dVars->faceName + "!";
+        text = /* you're */ "your " + faceName + ", not " + _dVars->faceName + "!";
       }
       break;
   }
