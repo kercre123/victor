@@ -667,10 +667,14 @@ void BehaviorConfirmHabitat::TransitionToSeekLineFromCharger()
     Pose3d(     M_PI_F, Z_AXIS_3D(), Vec3f(-325,    0, 0)),
   };
 
-  int index = GetRNG().RandInt((int)offsetList.size());
-  Pose3d desiredOffsetPose = offsetList[index];
-  desiredOffsetPose.SetParent(chargerPose);
-  IActionRunner* action = new DriveToPoseAction(desiredOffsetPose, false);
+  std::vector<Pose3d> poses;
+  poses.reserve(offsetList.size());
+  for(int i=0; i<offsetList.size(); ++i) {
+    Pose3d desiredOffsetPose = offsetList[i];
+    desiredOffsetPose.SetParent(chargerPose);
+    poses.push_back(desiredOffsetPose);
+  }
+  IActionRunner* action = new DriveToPoseAction(poses, false);
   DelegateActionHelper(action, nullptr);
 
 }
