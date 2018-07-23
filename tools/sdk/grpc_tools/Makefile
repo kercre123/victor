@@ -12,7 +12,11 @@ PYTHON_STRUCTURE := vector/messaging
 PYTHON_SDK_ROOT := $(abspath $(current_dir)/../vector-sdk)
 PYTHON_OUT := $(abspath $(PYTHON_SDK_ROOT)/$(PYTHON_STRUCTURE))
 GATEWAY_GO_FILES := $(filter-out $(GIT_ROOT)/cloud/gateway/config_mac.go,$(wildcard $(GIT_ROOT)/cloud/gateway/*.go))
+
+ifneq ("$(ANKI_ROBOT_HOST)","")
 ROBOT_HOSTNAME := $(shell ssh root@$(ANKI_ROBOT_HOST) -t echo "\$$HOSTNAME" 2>/dev/null)
+endif
+
 MAC_VECTOR_HOSTNAME := Vector-Local
 
 ifeq ("$(WEBOTS)","1")
