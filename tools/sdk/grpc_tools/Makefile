@@ -53,11 +53,11 @@ autopep: .PHONY
 
 pylint_main: autopep
 	@echo "> Running pylint on vector module"
-	@python3 -m pylint --rcfile=.pylint $(shell find ../vector-sdk/vector -type f -d 1) || exit 0
+	@python3 -m pylint --rcfile=.pylint $(shell find ../vector-sdk/vector -type f -d 1 | grep .py) || exit 0
 
 pylint_tests: autopep
 	@echo "> Running pylint on test files"
-	@python3 -m pylint --rcfile=.pylint $(shell find ../vector-sdk/tests ../vector-sdk/tests/automated -type f -d 1) || exit 0
+	@python3 -m pylint --rcfile=.pylint $(shell find ../vector-sdk/tests ../vector-sdk/tests/automated -type f -d 1 | grep .py) || exit 0
 
 # Unused flatbuffers target. Keeping this for posterity
 flat: .PHONY

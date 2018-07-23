@@ -7,6 +7,7 @@ Calls specific messages on the robot, with expected results and verifies that th
 '''
 
 import asyncio
+import logging
 import os
 import sys
 
@@ -426,7 +427,15 @@ def main():
     '''main execution'''
     args = utilities.parse_args()
 
-    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+    logger = logging.getLogger('vector')
+    logger.setLevel(logging.DEBUG)
+    fh = logging.FileHandler('robot_messages_debug.log')
+    fh.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+
+    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port, default_logging=False) as robot:
         print("------ beginning tests ------")
 
         future = asyncio.Future()
