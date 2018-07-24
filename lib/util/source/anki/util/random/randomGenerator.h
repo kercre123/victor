@@ -50,6 +50,9 @@ public:
   // Generate a random integer in range [minVal, maxVal]
   int RandIntInRange(int minVal, int maxVal) const;
 
+  // Returns a random boolean
+  bool RandBool() const;
+  
 private:
 
   // Returns the next double in [0,1)

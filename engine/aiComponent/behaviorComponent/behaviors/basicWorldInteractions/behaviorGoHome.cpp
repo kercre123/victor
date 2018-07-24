@@ -337,10 +337,18 @@ void BehaviorGoHome::TransitionToDriveToCharger()
                                     (result == ActionResult::PATH_PLANNING_FAILED_ABORT))) {
                           if (result == ActionResult::PATH_PLANNING_FAILED_ABORT) {
                             PRINT_NAMED_WARNING("BehaviorGoHome.TransitionToDriveToCharger.PathPlanningTimedOut",
-                                                "Path planning timed out probably due to prox obstacles - clearing "
-                                                "an area of the nav map and trying again. NOTE: This should be removed "
-                                                "once path planning is improved and times out less.");
+                                                "Path planning timed out possibly due to prox obstacles or there is no "
+                                                "valid path from our location. Clearing an area of the nav map, turning in "
+                                                "place a bit, then trying again.");
                             ClearNavMapUpToCharger();
+                            // Do a small point turn to give the planner a new starting point, so that hopefully it does
+                            // not time out again.
+                            const float direction = GetRNG().RandBool() ? 1.f : -1.f;
+                            const float angle = direction * GetRNG().RandDblInRange(M_PI_4_F, M_PI_2_F);
+                            const bool isAbsolute = false;
+                            DelegateIfInControl(new TurnInPlaceAction(angle, isAbsolute), [this](ActionResult res) {
+                              TransitionToDriveToCharger();
+                            });
                           }
                           TransitionToDriveToCharger();
                         } else {
