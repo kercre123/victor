@@ -57,6 +57,8 @@ def compress_output():
         cmd_tar[1] += "/factory/log0 "
     if os.path.isfile("/factory/log1"):
         cmd_tar[1] += "/factory/log1 "
+    if os.path.isfile("/run/update-engine/error"):
+        cmd_tar[1] += "/run/update-engine/error "
 
     subprocess.check_output(cmd_tar[1].split())
 
