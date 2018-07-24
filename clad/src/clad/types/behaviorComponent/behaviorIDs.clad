@@ -341,6 +341,7 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/timer
   DemoTimerUtilityCoordinator,
+  SingletonAnticShowClock,
   SingletonCancelTimer,
   SingletonTimerAlreadySet,
   SingletonTimerAntic,

@@ -33,7 +33,7 @@ static const std::set<BehaviorID> kBehaviorStatesToSuppressInAirReaction = {{ BE
                                                                               BEHAVIOR_ID(ShowWallTime),
                                                                               BEHAVIOR_ID(SingletonCancelTimer),
                                                                               BEHAVIOR_ID(SingletonTimerAlreadySet),
-                                                                              BEHAVIOR_ID(SingletonTimerAntic),
+                                                                              BEHAVIOR_ID(SingletonAnticShowClock),
                                                                               BEHAVIOR_ID(SingletonTimerCheckTime),
                                                                               BEHAVIOR_ID(SingletonTimerSet)  }};
 

@@ -306,9 +306,9 @@ void BehaviorTimerUtilityCoordinator::InitBehavior()
                                  BEHAVIOR_CLASS(ProceduralClock),
                                  _iParams.setTimerBehavior);
 
-  BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(SingletonTimerAntic),
+  BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(SingletonAnticShowClock),
                                  BEHAVIOR_CLASS(ProceduralClock),
-                                 _iParams.timerAnticBehavior);
+                                 _iParams.anticDisplayClock);
                                 
   BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(SingletonTimerCheckTime),
                                  BEHAVIOR_CLASS(ProceduralClock),
@@ -328,6 +328,7 @@ void BehaviorTimerUtilityCoordinator::InitBehavior()
                  "Unable to find behavior %s for timerRinging",
                  BehaviorTypesWrapper::BehaviorIDToString(ringingID));
 
+  _iParams.anticBaseBehavior       = BC.FindBehaviorByID(BEHAVIOR_ID(SingletonTimerAntic));
   _iParams.timerAlreadySetBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(SingletonTimerAlreadySet));
   _iParams.iCantDoThatBehavior     = BC.FindBehaviorByID(BEHAVIOR_ID(SingletonICantDoThat));
   SetupTimerBehaviorFunctions();
@@ -338,7 +339,7 @@ void BehaviorTimerUtilityCoordinator::InitBehavior()
 void BehaviorTimerUtilityCoordinator::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
   delegates.insert(_iParams.setTimerBehavior.get());
-  delegates.insert(_iParams.timerAnticBehavior.get());
+  delegates.insert(_iParams.anticBaseBehavior.get());
   delegates.insert(_iParams.timerRingingBehavior.get());
   delegates.insert(_iParams.timerAlreadySetBehavior.get());
   delegates.insert(_iParams.iCantDoThatBehavior.get());
@@ -534,8 +535,8 @@ void BehaviorTimerUtilityCoordinator::TransitionToSetTimer()
 void BehaviorTimerUtilityCoordinator::TransitionToPlayAntic()
 {
   _iParams.anticTracker->PlayingAntic(GetBEI());
-  _iParams.timerAnticBehavior->WantsToBeActivated();
-  DelegateNow(_iParams.timerAnticBehavior.get());
+  _iParams.anticBaseBehavior->WantsToBeActivated();
+  DelegateNow(_iParams.anticBaseBehavior.get());
 }
 
 
@@ -629,7 +630,7 @@ void BehaviorTimerUtilityCoordinator::SetupTimerBehaviorFunctions()
   _iParams.setTimerBehavior->SetShowClockCallback(startTimerCallback);
 
   _iParams.setTimerBehavior->SetGetDigitFunction(BuildTimerFunction());
-  _iParams.timerAnticBehavior->SetGetDigitFunction(BuildTimerFunction());
+  _iParams.anticDisplayClock->SetGetDigitFunction(BuildTimerFunction());
   _iParams.timerCheckTimeBehavior->SetGetDigitFunction(BuildTimerFunction());
 }
 

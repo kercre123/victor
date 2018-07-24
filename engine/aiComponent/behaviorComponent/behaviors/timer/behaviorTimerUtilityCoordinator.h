@@ -65,8 +65,9 @@ private:
   struct InstanceParams{
     std::string timerRingingBehaviorStr;
     std::shared_ptr<BehaviorProceduralClock> setTimerBehavior;
-    std::shared_ptr<BehaviorProceduralClock> timerAnticBehavior;
+    std::shared_ptr<BehaviorProceduralClock> anticDisplayClock;
     std::shared_ptr<BehaviorProceduralClock> timerCheckTimeBehavior;
+    ICozmoBehaviorPtr                        anticBaseBehavior;
     ICozmoBehaviorPtr                        timerRingingBehavior;
     ICozmoBehaviorPtr                        timerAlreadySetBehavior;
     ICozmoBehaviorPtr                        iCantDoThatBehavior;
