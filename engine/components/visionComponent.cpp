@@ -22,6 +22,7 @@
 #include "engine/components/dockingComponent.h"
 #include "engine/components/nvStorageComponent.h"
 #include "engine/components/photographyManager.h"
+#include "engine/components/powerStateManager.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/navMap/mapComponent.h"
@@ -2618,10 +2619,13 @@ namespace Cozmo {
 
       _lastImageCaptureTime_ms = currTime_ms;
     } else {
-      // No image captured
+      // No image captured, and we're not currently waiting for a format change, nor are we in power save mode
+      auto const& powerStateMgr = _robot->GetComponent<PowerStateManager>();
       if (!IsWaitingForCaptureFormatChange() &&
+          !powerStateMgr.InPowerSaveMode() &&
           (_lastImageCaptureTime_ms > 0) && 
-          (currTime_ms > _lastImageCaptureTime_ms + kMaxExpectedTimeBetweenCapturedFrames_ms)) {
+          (currTime_ms > _lastImageCaptureTime_ms + kMaxExpectedTimeBetweenCapturedFrames_ms))
+      {
         PRINT_NAMED_WARNING("VisionComponent.CaptureImage.TooLongSinceFrameWasCaptured", 
                             "last: %dms, now: %dms", 
                             _lastImageCaptureTime_ms, currTime_ms);

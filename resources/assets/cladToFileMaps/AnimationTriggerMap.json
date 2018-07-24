@@ -235,6 +235,10 @@
     "CladEvent": "ConnectWakeUp",
     "AnimName": "ag_gotosleep_wakeup"
   },
+  {
+    "CladEvent": "ConnectWakeUpLights",
+    "AnimName": "ag_rtillumination_lightonwakeup"
+  },
   {	
     "CladEvent": "DEPRECATED_ComeHere_SearchForFace",	
     "AnimName": "ag_vc_reaction_nofaceheardyou"	
@@ -1098,6 +1102,10 @@
   {
     "CladEvent": "ReactToCliffBackRight",
     "AnimName": "ag_reacttocliff_reaction_rear_right"
+  },
+  {
+    "CladEvent": "ReactToDarkness",
+    "AnimName": "ag_rtillumination_lighttodark"
   },
   {
     "CladEvent": "ReactToObstacle",

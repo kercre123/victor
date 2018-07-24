@@ -227,6 +227,7 @@ enum uint_16 BehaviorID {
   GoToSleep,
   Sleeping,
   SleepingWakeUp,
+  SleepingWakeUpLights,
 
   // victorBehaviorTree/highLevelDelegates/socialize
   DriveOffChargerIntoSocializing,

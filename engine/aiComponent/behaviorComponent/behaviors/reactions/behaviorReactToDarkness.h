@@ -79,7 +79,8 @@ protected:
     Waiting,          // Waiting to start
     Turning,          // Turning to look
     TurnedAndWaiting, // Waiting for condition
-    Responding        // Running delegates
+    Responding,       // Animating and adjusting emotion/timers
+    GoingHome,        // Delegating to FindAndGoHome
   };
 
   struct DynamicVariables
@@ -96,9 +97,11 @@ protected:
 
   void TransitionToTurning();
   void TransitionToTurnedAndWaiting();
+  void TransitionToResponding();
+  void TransitionToGoingHome();
   bool LookedEnoughTimes() const;
-  void RunTriggers();
 };
+  
 
 }
 }

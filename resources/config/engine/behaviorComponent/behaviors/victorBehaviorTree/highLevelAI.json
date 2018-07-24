@@ -83,6 +83,10 @@
       "behavior": "SleepingWakeUp"
     },
     {
+      "name": "WakingUpLights",
+      "behavior": "SleepingWakeUpLights"
+    },
+    {
       "name": "ReturningToCharger",
       "behavior": "FindAndGoToHome",
       "activateIntent": "system_charger"
@@ -471,13 +475,6 @@
                 "customCondition": "WakeUpFromNap"
               },
               {
-                "conditionType": "IlluminationDetected",
-                "triggerStates": ["Illuminated"],
-                "confirmationTime": 1.0,
-                "confirmationMinNum": 3,
-                "ignoreUnknown": false
-              },
-              {
                 "conditionType": "Compound",
                 "and": [
                   {
@@ -513,6 +510,16 @@
                 ]
               }
             ]
+          }
+        },
+        {
+          "to": "WakingUpLights",
+          "condition": {
+            "conditionType": "IlluminationDetected",
+            "triggerStates": ["Illuminated"],
+            "confirmationTime": 1.0,
+            "confirmationMinNum": 3,
+            "ignoreUnknown": false
           }
         }
       ],
@@ -576,13 +583,6 @@
                 "customCondition": "WakeUpFromNap"
               },
               {
-                "conditionType": "IlluminationDetected",
-                "triggerStates": ["Illuminated"],
-                "confirmationTime": 1.0,
-                "confirmationMinNum": 3,
-                "ignoreUnknown": false
-              },
-              {
                 "conditionType": "Compound",
                 "and": [
                   {
@@ -618,6 +618,16 @@
                 ]
               }
             ]
+          }
+        },
+        {
+          "to": "WakingUpLights",
+          "condition": {
+            "conditionType": "IlluminationDetected",
+            "triggerStates": ["Illuminated"],
+            "confirmationTime": 1.0,
+            "confirmationMinNum": 3,
+            "ignoreUnknown": false
           }
         }
       ],
@@ -670,6 +680,22 @@
           "to": "ObservingOnCharger",
           "condition": {
             "conditionType": "TrueCondition" 
+          }
+        }
+      ]
+    },
+    
+    // Sad to need all this duplication for WakingUp and WakingUpLights, but current design
+    // is such that Sleeping doesn't know _why_ it ended (only High Level AI does), so we
+    // need two different high level behaviors to transition to/from in order to get a
+    // different animation when interrupted by the lights coming on.
+    {
+      "from": "WakingUpLights",
+      "exitTransitions": [
+        {
+          "to": "ObservingOnCharger",
+          "condition": {
+            "conditionType": "TrueCondition"
           }
         }
       ]
@@ -786,6 +812,7 @@
         "ObservingOnChargerRecentlyPlaced",
         "Socializing",
         "WakingUp",
+        "WakingUpLights",
         "ReturningToCharger",
         "FailedToFindCharger",
         "PlayingWithCube",
@@ -859,6 +886,7 @@
         "ObservingOnChargerRecentlyPlaced",
         "Socializing",
         "WakingUp",
+        "WakingUpLights",
         "ReturningToCharger",
         "FailedToFindCharger",
         "PlayingWithCube",

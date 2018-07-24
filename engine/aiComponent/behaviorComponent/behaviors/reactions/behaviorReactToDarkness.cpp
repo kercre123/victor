@@ -12,6 +12,7 @@
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
@@ -23,6 +24,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/moodSystem/moodManager.h"
 
+#include "clad/types/animationTrigger.h"
 #include "clad/types/behaviorComponent/behaviorTimerTypes.h"
 
 #include <iterator>
@@ -41,9 +43,6 @@ static const char* kNumOffChargerLooksKey = "numOffChargerLooks";
 static const char* kNumOnChargerLooksKey  = "numOnChargerLooks";
 static const char* kEmotionKey            = "reactionEmotion";
 static const char* kSleepInPlaceKey       = "sleepInPlace";
-
-static const char* kDarkenedState       = "Darkened";
-static const char* kIlluminatedState    = "Illuminated";
 }
 
 BehaviorReactToDarkness::BehaviorReactToDarkness( const Json::Value& config )
@@ -72,13 +71,13 @@ BehaviorReactToDarkness::BehaviorReactToDarkness( const Json::Value& config )
                                                     "BehaviorReactToDarkness.Constructor" );
   // NOTE These are hard-coded so they don't have to be in the config JSON
   _iConfig.positiveConfig = IBEICondition::GenerateBaseConditionConfig( BEIConditionType::IlluminationDetected );
-  _iConfig.positiveConfig["triggerStates"].append(kDarkenedState);
+  _iConfig.positiveConfig["triggerStates"].append(EnumToString(IlluminationState::Darkened));
   _iConfig.positiveConfig["confirmationTime"] = _iConfig.lookWaitTime_s;
   _iConfig.positiveConfig["confirmationMinNum"] = lookMinImages;
   _iConfig.positiveConfig["ignoreUnknown"] = false;
 
   _iConfig.negativeConfig = IBEICondition::GenerateBaseConditionConfig( BEIConditionType::IlluminationDetected );
-  _iConfig.negativeConfig["triggerStates"].append(kIlluminatedState);
+  _iConfig.negativeConfig["triggerStates"].append(EnumToString(IlluminationState::Illuminated));
   _iConfig.negativeConfig["confirmationTime"] = _iConfig.lookWaitTime_s;
   _iConfig.negativeConfig["confirmationMinNum"] = lookMinImages;
   _iConfig.negativeConfig["ignoreUnknown"] = false;
@@ -200,7 +199,7 @@ void BehaviorReactToDarkness::BehaviorUpdate()
       if( LookedEnoughTimes() )
       {
         PRINT_CH_INFO("Behaviors", "BehaviorReactToDarkness.BehaviorUpdate.RunningTriggers", "" );
-        RunTriggers();
+        TransitionToResponding();
       }
       else
       {
@@ -209,6 +208,11 @@ void BehaviorReactToDarkness::BehaviorUpdate()
       break;
     }
     case State::Responding:
+    {
+      // Waiting for animation to finish
+      break;
+    }
+    case State::GoingHome:
     {
       if( !IsControlDelegated() )
       {
@@ -231,33 +235,32 @@ void BehaviorReactToDarkness::TransitionToTurning()
 
   // Sample a new head angle angle
   Util::RandomGenerator& rng = GetRNG();
-  const double headAngle = rng.RandDblInRange( _iConfig.lookHeadAngleMin_deg, _iConfig.lookHeadAngleMax_deg );
-  MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction( DEG_TO_RAD( headAngle ) );
+  const double headAngle_deg = rng.RandDblInRange( _iConfig.lookHeadAngleMin_deg, _iConfig.lookHeadAngleMax_deg );
   
-  IActionRunner* lookAction;
+  // Create a compound action, to which we'll add a turn if appropriate
+  CompoundActionParallel* action = new CompoundActionParallel({
+    new MoveHeadToAngleAction( DEG_TO_RAD( headAngle_deg ) )
+  });
+  
   // NOTE If we're on platform, don't turn in place, but still go home if triggering
   if( !GetBEI().GetRobotInfo().IsOnChargerPlatform() )
   {
     // If not on the charger, also rotate the body
-    const double turnSign = rng.RandInt(2) == 0 ? -1.0 : 1.0;
+    const double turnSign = (rng.RandInt(2) == 0 ? -1.0 : 1.0);
     const double turnMagnitude = rng.RandDblInRange( _iConfig.lookTurnAngleMin_deg, _iConfig.lookTurnAngleMax_deg );
-    const double turnAngle = turnSign * turnMagnitude;
-    PRINT_CH_INFO("Behaviors", "BehaviorReactToDarkness.TransitionToTurning", 
-                  "Setting head to %f and turning %f", headAngle, turnAngle );
+    const double turnAngle_deg = turnSign * turnMagnitude;
+    PRINT_CH_INFO("Behaviors", "BehaviorReactToDarkness.TransitionToTurning.SetHeadAndTurn",
+                  "Setting head to %.1fdeg and turning %f", headAngle_deg, turnAngle_deg );
 
-    CompoundActionParallel* action = new CompoundActionParallel();
-    action->AddAction( headAction );
-    action->AddAction( new TurnInPlaceAction( DEG_TO_RAD( turnAngle ), false ) );
-    lookAction = static_cast<IActionRunner*>( action );
+    action->AddAction( new TurnInPlaceAction( DEG_TO_RAD( turnAngle_deg ), false ) );
   }
   else
   {
-    PRINT_CH_INFO("Behaviors", "BehaviorReactToDarkness.TransitionToTurning", 
-                  "Setting head to %f", headAngle );
-    lookAction = static_cast<IActionRunner*>( headAction );
+    PRINT_CH_INFO("Behaviors", "BehaviorReactToDarkness.TransitionToTurning.SetHead",
+                  "Setting head to %.1fdeg and not turning because on charger", headAngle_deg );
   }
-
-  DelegateIfInControl( lookAction, &BehaviorReactToDarkness::TransitionToTurnedAndWaiting );
+  
+  DelegateIfInControl( action, &BehaviorReactToDarkness::TransitionToTurnedAndWaiting );
 }
 
 void BehaviorReactToDarkness::TransitionToTurnedAndWaiting()
@@ -265,7 +268,6 @@ void BehaviorReactToDarkness::TransitionToTurnedAndWaiting()
   _dVars.state = State::TurnedAndWaiting;
   _dVars.waitStartTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
-
 
 bool BehaviorReactToDarkness::LookedEnoughTimes() const
 {
@@ -275,18 +277,24 @@ bool BehaviorReactToDarkness::LookedEnoughTimes() const
   return ( _dVars.numChecksSucceeded >= numLooks );
 }
 
-void BehaviorReactToDarkness::RunTriggers()
+void BehaviorReactToDarkness::TransitionToResponding()
 {
-  // TODO Play animations?
-  // See VIC-3638: Animations for reacting to illumination
-
+  _dVars.state = State::Responding;
+  
   // Trigger emotion
   const f32 currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   GetBEI().GetMoodManager().TriggerEmotionEvent( _iConfig.reactionEmotion, currTime );
-
+  
   // Reset cooldown
   GetBEI().GetBehaviorTimerManager().GetTimer( BehaviorTimerTypes::ReactToIllumination ).Reset();
 
+  // Trigger animation reaction
+  auto animAction = new TriggerAnimationAction(AnimationTrigger::ReactToDarkness);
+  DelegateIfInControl(animAction, &BehaviorReactToDarkness::TransitionToGoingHome);
+}
+  
+void BehaviorReactToDarkness::TransitionToGoingHome()
+{
   std::vector<const ObservableObject*> locatedHomes;
   GetBEI().GetBlockWorld().FindLocatedMatchingObjects(*_iConfig.homeFilter, locatedHomes);
   const bool hasAHome = !locatedHomes.empty();
@@ -296,14 +304,14 @@ void BehaviorReactToDarkness::RunTriggers()
   // NOTE "Suggesting" actually is more of "telling" the high-level AI to nap
   if( GetBEI().GetRobotInfo().IsOnChargerContacts() )
   {
-    PRINT_CH_INFO("Behaviors", "BehaviorReactToDarkness.RunTriggers",
+    PRINT_CH_INFO("Behaviors", "BehaviorReactToDarkness.TransitionToGoingHome.SuggestSleepOnCharger",
                   "Already on charger, suggesting SleepOnCharger" );
     GetAIComp<AIWhiteboard>().OfferPostBehaviorSuggestion( PostBehaviorSuggestions::SleepOnCharger );
     CancelSelf();
   }
   else if( !hasAHome || _iConfig.sleepInPlace )
   {
-    PRINT_CH_INFO("Behaviors", "BehaviorReactToDarkness.RunTriggers",
+    PRINT_CH_INFO("Behaviors", "BehaviorReactToDarkness.TransitionToGoingHome.SuggestSleep",
                   "Sleeping in place (may not know where home is), suggesting Sleep" );
     GetAIComp<AIWhiteboard>().OfferPostBehaviorSuggestion( PostBehaviorSuggestions::Sleep );
     CancelSelf();
@@ -311,9 +319,9 @@ void BehaviorReactToDarkness::RunTriggers()
   // Else delegate to the FindAndGoHome behavior and wait for it to return
   else
   {
-    PRINT_CH_INFO("Behaviors", "BehaviorReactToDarkness.RunTriggesr",
+    PRINT_CH_INFO("Behaviors", "BehaviorReactToDarkness.TransitionToGoingHome.FindAndGoHome",
                   "Attempting to go home, delegating to FindAndGoHome" );
-    _dVars.state = State::Responding;
+    _dVars.state = State::GoingHome;
     DelegateIfInControl( _iConfig.goHomeBehavior.get() );
   }
 }

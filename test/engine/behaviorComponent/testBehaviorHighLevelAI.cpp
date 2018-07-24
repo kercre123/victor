@@ -141,7 +141,9 @@ TEST(BehaviorHighLevelAI, UserIntentsHandled)
                             "ObservingOnChargerRecentlyPlaced",
                             "Napping",
                             "NappingOnCharger",
-                            "WakingUp"} },
+                            "WakingUp",
+                            "WakingUpLights",
+    } },
     { "explore_start",     {"Napping", "NappingOnCharger"} },
   };
   // OK YOUR JOB IS DONE
