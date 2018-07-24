@@ -51,6 +51,8 @@ class MovementComponent;
 class NVStorageComponent;
 class ObjectPoseConfirmer;
 class PathComponent;
+class ProgressionUnlockComponent;
+class ProxSensorComponent;
 class PublicStateBroadcaster;
 class Robot;
 class RobotEventHandler;
@@ -83,6 +85,7 @@ public:
   Quad2f GetBoundingQuadXY(const Pose3d& atPose) const;
   CarryingComponent& GetCarryingComponent() const;
   const CliffSensorComponent& GetCliffSensorComponent() const;
+  const ProxSensorComponent& GetProxSensorComponent() const;
   const CozmoContext* GetContext() const;
   u32 GetDisplayWidthInPixels() const;
   u32 GetDisplayHeightInPixels() const;

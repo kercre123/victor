@@ -15,11 +15,14 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+#include "engine/actions/trackFaceAction.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/behaviorSearchWithinBoundingBox.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionSalientPointDetected.h"
 #include "engine/aiComponent/salientPointsComponent.h"
+#include "engine/components/sensors/cliffSensorComponent.h"
+#include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/faceWorld.h"
 
 
@@ -30,6 +33,9 @@ namespace {
   const char* const kDriveOffChargerBehaviorKey        = "driveOffChargerBehavior";
   const char* const kShouldDriveStraightIfNotOnCharger = "shouldDriveStraightIfNotOnCharger";
   const char* const kDrivingForwadDistance             = "drivingForwadDistance_mm";
+  const char* const kUpperPortionLookUpPercent         = "upperPortionLookUpPercent";
+  const char* const kTrackingTimeout                   = "trackingTimeout_sec";
+  const char* const kFaceSelectionPenaltiesKey         = "faceSelectionPenalties";
 }
 
 #define LOG_CHANNEL "Behaviors"
@@ -40,26 +46,42 @@ BehaviorReactToBody::InstanceConfig::InstanceConfig(const Json::Value& config)
 
   const std::string& debugName = "BehaviorReactToBody.InstanceConfig.LoadConfig";
   moveOffChargerBehaviorStr = JsonTools::ParseString(config, kDriveOffChargerBehaviorKey,
-                                                              debugName);
+                                                     debugName);
   shouldDriveStraightWhenBodyDetected = JsonTools::ParseBool(config, kShouldDriveStraightIfNotOnCharger,
-                                                                      debugName);
+                                                             debugName);
   drivingForwardDistance = JsonTools::ParseFloat(config, kDrivingForwadDistance,
-                                                          debugName);
+                                                 debugName);
+  upperPortionLookUpPercent = JsonTools::ParseFloat(config, kUpperPortionLookUpPercent,
+                                                    debugName);
+  upperPortionLookUpPercent = Util::Clamp(upperPortionLookUpPercent, 0.0f, 1.0f);
+  trackingTimeout = JsonTools::ParseFloat(config, kTrackingTimeout,
+                                          debugName);
+  const bool parsedOk = FaceSelectionComponent::ParseFaceSelectionFactorMap(config[kFaceSelectionPenaltiesKey],
+                                                                            faceSelectionCriteria);
+  DEV_ASSERT(parsedOk, "BehaviorReactToBody.InstanceConfig.InstanceConfig.MissingFaceSelectionPenalties");
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToBody::DynamicVariables::DynamicVariables()
 {
-  Reset();
+  const bool kKeepPersistent = false;
+  Reset(kKeepPersistent);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToBody::DynamicVariables::Reset()
+void BehaviorReactToBody::DynamicVariables::Reset(bool keepPersistent)
 {
   lastPersonDetected = Vision::SalientPoint();
   searchingForFaces = false;
   imageTimestampWhenActivated = 0;
+  droveOffCharger = false;
+  actingOnFaceFound = false;
+  if (! keepPersistent) {
+    persistent.lastSeenTimeStamp = 0;
+  }
 }
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToBody::BehaviorReactToBody(const Json::Value& config)
@@ -114,6 +136,9 @@ void BehaviorReactToBody::GetBehaviorJsonKeys(std::set<const char*>& expectedKey
       kDriveOffChargerBehaviorKey,
       kShouldDriveStraightIfNotOnCharger,
       kDrivingForwadDistance,
+      kUpperPortionLookUpPercent,
+      kTrackingTimeout,
+      kFaceSelectionPenaltiesKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -121,12 +146,9 @@ void BehaviorReactToBody::GetBehaviorJsonKeys(std::set<const char*>& expectedKey
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToBody::OnBehaviorActivated()
 {
-
-  // save the last salient point
-  Vision::SalientPoint lastPersonDetected(std::move(_dVars.lastPersonDetected));
-
   // reset dynamic variables
-  _dVars = DynamicVariables();
+  const bool kKeepPersistent = true;
+  _dVars.Reset(kKeepPersistent);
 
   LOG_DEBUG( "BehaviorReactToPersonDetected.OnBehaviorActivated", "I am active!");
 
@@ -141,16 +163,16 @@ void BehaviorReactToBody::OnBehaviorActivated()
     return;
   }
 
-  auto& component = GetBEI().GetAIComponent().GetComponent<SalientPointsComponent>();
+  auto& component = GetAIComp<SalientPointsComponent>();
   std::list<Vision::SalientPoint> latestPersons;
 
   //Get all the latest persons
   component.GetSalientPointSinceTime(latestPersons, Vision::SalientPointType::Person,
-                                     lastPersonDetected.timestamp);
+                                     _dVars.persistent.lastSeenTimeStamp);
 
   if (latestPersons.empty()) {
-    LOG_DEBUG( "BehaviorReactToPersonDetected.OnBehaviorActivated.NoPersonDetected", ""
-        "Activated but no person with a timestamp > %u", _dVars.lastPersonDetected.timestamp);
+    LOG_DEBUG( "BehaviorReactToPersonDetected.OnBehaviorActivated.NoPersonDetected",
+        "Activated but no person with a timestamp > %u", _dVars.persistent.lastSeenTimeStamp);
     TransitionToCompleted();
     return;
   }
@@ -168,7 +190,7 @@ void BehaviorReactToBody::OnBehaviorActivated()
                                          }
   );
   _dVars.lastPersonDetected = *maxElementIter;
-
+  _dVars.persistent.lastSeenTimeStamp = _dVars.lastPersonDetected.timestamp;
 
   DEV_ASSERT(_dVars.lastPersonDetected.salientType == Vision::SalientPointType::Person,
              "BehaviorReactToPersonDetected.OnBehaviorActivated.LastSalientPointMustBePerson");
@@ -179,20 +201,50 @@ void BehaviorReactToBody::OnBehaviorActivated()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorReactToBody::CheckIfShouldStop()
+{
+
+  // pickup
+  {
+    const bool pickedUp = GetBEI().GetRobotInfo().IsPickedUp();
+
+    if (pickedUp) {
+      LOG_DEBUG( "BehaviorReactToPersonDetected.BehaviorUpdate.PickedUp",
+                "Robot has been picked up");
+      return true;
+    }
+  }
+
+  // cliff
+  {
+    const CliffSensorComponent& cliff = GetBEI().GetCliffSensorComponent();
+    if (cliff.IsCliffDetected()) {
+      LOG_DEBUG("BehaviorReactToPersonDetected.BehaviorUpdate.CliffSensed",
+               "There's a cliff, not moving");
+      return true;
+    }
+  }
+
+  // note: if an obstacle is in front of the robot, it can still look for a face
+  return false;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToBody::BehaviorUpdate()
 {
 
-  const bool pickedUp = GetBEI().GetRobotInfo().IsPickedUp();
-
-  if (pickedUp) {
-    // definitively stop here
-    LOG_DEBUG( "BehaviorReactToPersonDetected.BehaviorUpdate.PickedUp",
-              "Robot has been picked up");
+  if (CheckIfShouldStop()) {
     TransitionToCompleted();
+  }
+
+
+  if( ! IsActivated() || ! IsControlDelegated()) {
     return;
   }
 
-  if( ! IsActivated() || ! IsControlDelegated()) {
+  if (_dVars.actingOnFaceFound) {
+    // doing something with a found face, nothing to do here
     return;
   }
 
@@ -219,36 +271,70 @@ void BehaviorReactToBody::TransitionToStart()
   // If on charger, then drive off of it
   if (GetBEI().GetRobotInfo().IsOnChargerContacts()) {
     DelegateIfInControl(_iConfig.moveOffChargerBehavior.get(),
-                        &BehaviorReactToBody::TransitionToCheckIfGoStraight);
+                        [this]() {
+                          if (GetBEI().GetRobotInfo().IsOnChargerContacts()) {
+                            LOG_WARNING("BehaviorReactToBody.TransitionToStart.CouldntMoveOffCharger",
+                                        "Driving off the charger failed, stopping this behavior");
+                            _dVars.droveOffCharger = false;
+                            TransitionToCompleted();
+                          }
+                          else {
+                            _dVars.droveOffCharger = true;
+                            TransitionToMaybeGoStraightAndLookUp();
+                          }
+                        }
+    );
   }
   else {
-    TransitionToCheckIfGoStraight();
+    TransitionToMaybeGoStraightAndLookUp();
   }
 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Cozmo::BehaviorReactToBody::TransitionToCheckIfGoStraight()
+void BehaviorReactToBody::TransitionToMaybeGoStraightAndLookUp()
 {
-  DEBUG_SET_STATE(CheckIfFGoStraight);
+  DEBUG_SET_STATE(MaybeGoStraightAndLookUp);
+
+  bool shouldGoStraight = false;
 
   if (_iConfig.shouldDriveStraightWhenBodyDetected) {
-    TransitionToGoStraight();
+    if (! _dVars.droveOffCharger) { // no need to drive straight twice
+
+      const ProxSensorComponent &prox = GetBEI().GetRobotInfo().GetProxSensorComponent();
+      u16 distance_mm = 0;
+      if (prox.GetLatestDistance_mm(distance_mm)) {
+        if (distance_mm < _iConfig.drivingForwardDistance) {
+          LOG_DEBUG("BehaviorReactToBody.TransitionToMaybeGoStraightAndLookUp.ObstacleClose",
+                   "Can't go straight, an obstacle is at %d while the driving distance would be %f",
+                   distance_mm, _iConfig.drivingForwardDistance);
+          shouldGoStraight = false; // redundant, but it makes things clear
+        }
+        else {
+          LOG_DEBUG("BehaviorReactToBody.TransitionToMaybeGoStraightAndLookUp.ProxSensorData", "Distance is %u", distance_mm);
+          shouldGoStraight = true;
+        }
+      }
+      else {
+        LOG_DEBUG("BehaviorReactToBody.TransitionToMaybeGoStraightAndLookUp.NoValidProxSensorData", "");
+        shouldGoStraight = false; // redundant, but it makes things clear
+      }
+    }
+  }
+
+  CompoundActionSequential * action;
+
+  // go straight (maybe) and then look up
+  if (shouldGoStraight) {
+    action = new CompoundActionSequential({new DriveStraightAction(_iConfig.drivingForwardDistance),
+                                           new MoveHeadToAngleAction(Radians(MAX_HEAD_ANGLE))});
   }
   else {
-    TransitionToLookForFace();
+    action = new CompoundActionSequential({new MoveHeadToAngleAction(Radians(MAX_HEAD_ANGLE))});
   }
-
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Cozmo::BehaviorReactToBody::TransitionToGoStraight()
-{
-  DEBUG_SET_STATE(GoStraight);
-
-  auto* action = new DriveStraightAction(_iConfig.drivingForwardDistance);
   CancelDelegates(false);
   DelegateIfInControl(action, &BehaviorReactToBody::TransitionToLookForFace);
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -275,8 +361,15 @@ void BehaviorReactToBody::TransitionToLookForFace()
     }
   }
 
+  if (_iConfig.upperPortionLookUpPercent != 1.0) {
+    const float length = maxY - minY;
+    const float reducedLength = _iConfig.upperPortionLookUpPercent * length;
+    minY = maxY - reducedLength;
+  }
+
+
   LOG_DEBUG("BehaviorReactToBody.TransitionToLookForFace.BoundingBox",
-           "The search bounding box is: min: (%f, %f), max: (%f, %f)", minX, minY, maxX, maxY);
+           "The search bounding box is: x: (%f, %f), y: (%f, %f)", minX, maxX, minY, maxY);
 
   _iConfig.searchBehavior->SetNewBoundingBox(minX, maxX, minY, maxY);
   if (_iConfig.searchBehavior->WantsToBeActivated()) {
@@ -285,19 +378,42 @@ void BehaviorReactToBody::TransitionToLookForFace()
   }
   else {
     PRINT_NAMED_WARNING("BehaviorReactToBody.TransitionToLookForFace.SearchBehaviorNotReady",
-                        "Why doens't the search behavior want to be activated?");
+                        "Why doesn't the search behavior want to be activated?");
+    TransitionToCompleted();
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToBody::TransitionToFaceFound()
 {
-  // TODO Play an animation? Do something?
+  // TODO Tracking a face for the moment, but need to decide what to do next
 
   DEBUG_SET_STATE(FaceFound);
-  LOG_DEBUG("BehaviorReactToPersonDetected.TransitionToFaceFound.WhatNext",
-            "Play an animation?");
-  TransitionToCompleted();
+
+  if (! ANKI_VERIFY(! _dVars.actingOnFaceFound, // using double not for clarity of intention
+                  "BehaviorReactToBody.TransitionToFaceFound.ActingOnFaceFoundShouldBeFalse",
+                  "")) {
+    TransitionToCompleted();
+    return;
+  }
+
+  _dVars.actingOnFaceFound = true;
+
+  // getting the best face
+  const auto& faceSelection = GetAIComp<FaceSelectionComponent>();
+  SmartFaceID bestFace = faceSelection.GetBestFaceToUse(_iConfig.faceSelectionCriteria);
+
+  if (bestFace.IsValid()) {
+    auto *action = new TrackFaceAction(bestFace);
+    action->SetUpdateTimeout(_iConfig.trackingTimeout);
+    CancelDelegates(false);
+    DelegateIfInControl(action, &BehaviorReactToBody::TransitionToCompleted);
+  }
+  else {
+    LOG_WARNING("BehaviorReactToBody.TransitionToFaceFound.NoValidFace", "No valid face found for tracking");
+    TransitionToCompleted();
+  }
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

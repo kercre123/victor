@@ -13,8 +13,9 @@
 #ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorTurnTowardsPerson__
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorTurnTowardsPerson__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "clad/types/salientPointTypes.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/faceSelectionComponent.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -45,11 +46,12 @@ protected:
 private:
 
   void TransitionToStart();
-  void TransitionToCheckIfGoStraight();
-  void TransitionToGoStraight();
+  void TransitionToMaybeGoStraightAndLookUp();
   void TransitionToLookForFace();
   void TransitionToFaceFound();
   void TransitionToCompleted();
+
+  bool CheckIfShouldStop(); // It won't run if e.g. it's picked up, or there's a cliff, or an obstacle..
 
 
   struct InstanceConfig {
@@ -60,17 +62,25 @@ private:
     ICozmoBehaviorPtr moveOffChargerBehavior;
     float drivingForwardDistance;
     std::shared_ptr<BehaviorSearchWithinBoundingBox> searchBehavior;
+    float upperPortionLookUpPercent;
+    float trackingTimeout;
+    FaceSelectionComponent::FaceSelectionFactorMap faceSelectionCriteria;
   };
 
   struct DynamicVariables {
+    struct Persistent {
+      TimeStamp_t lastSeenTimeStamp;
+    } persistent;
+
     DynamicVariables();
-    void Reset();
+    void Reset(bool keepPersistent);
 
     Vision::SalientPoint lastPersonDetected;
     bool searchingForFaces;
+    bool droveOffCharger;
+    bool actingOnFaceFound; // currently tracking, could be something else
     TimeStamp_t imageTimestampWhenActivated;
   };
-
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;

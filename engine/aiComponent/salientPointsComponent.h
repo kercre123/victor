@@ -61,11 +61,7 @@ public:
   // constructor
   SalientPointsComponent();
 
-  ~SalientPointsComponent() override ;
-
-  // IDependencyManagedComponent<AIComponentID> functions
-  void UpdateDependent(const AICompMap& dependentComps) override;
-  // end IDependencyManagedComponent<AIComponentID> functions
+  ~SalientPointsComponent() override = default;
 
   // Get all the SalientPoints of a specific type since a specific timestamp
   void GetSalientPointSinceTime(std::list<Vision::SalientPoint>& salientPoints,

@@ -62,6 +62,11 @@ const CliffSensorComponent& BEIRobotInfo::GetCliffSensorComponent() const
   return _robot.GetCliffSensorComponent();
 }
 
+const ProxSensorComponent& BEIRobotInfo::GetProxSensorComponent() const
+{
+  return _robot.GetProxSensorComponent();
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const CozmoContext* BEIRobotInfo::GetContext() const
 {

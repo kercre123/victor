@@ -1472,7 +1472,9 @@ namespace Cozmo {
       }
       
       // Notify the SalientPointsComponent that we have a bunch of new detections
-      _robot->GetAIComponent().GetComponent<SalientPointsComponent>().AddSalientPoints(procResult.salientPoints);
+      if (procResult.salientPoints.size() > 0) {
+        _robot->GetAIComponent().GetComponent<SalientPointsComponent>().AddSalientPoints(procResult.salientPoints);
+      }
       for(auto const& salientPoint : procResult.salientPoints)
       {
         _salientPointsToDraw.emplace_back(currentTime_ms, salientPoint);

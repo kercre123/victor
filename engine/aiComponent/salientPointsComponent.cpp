@@ -37,25 +37,16 @@ SalientPointsComponent::SalientPointsComponent()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SalientPointsComponent::~SalientPointsComponent()
-{
-
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SalientPointsComponent::InitDependent(Robot* robot, const AICompMap& dependentComps)
 {
   _robot = robot;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SalientPointsComponent::UpdateDependent(const AICompMap& dependentComps)
-{
-  // TODO: what goes here?
-}
-
 void SalientPointsComponent::AddSalientPoints(const std::list<Vision::SalientPoint>& c) {
+
+  PRINT_CH_DEBUG("Behaviors", "SalientPointsComponent.AddSalientPoints.PointsReceived",
+                 "Number of salient point received: %zu, previous size: %zu", c.size(), _salientPoints.size());
 
   std::set<Vision::SalientPointType> erased; // which lists (associated with a type) have been erased already
   for (const auto& salientPoint : c) {
@@ -74,6 +65,18 @@ void SalientPointsComponent::AddSalientPoints(const std::list<Vision::SalientPoi
     }
   }
 
+  PRINT_CH_DEBUG("Behaviors", "SalientPointsComponent.AddSalientPoints.NewPointsSize",
+                 "Number of salient point after adding: %zu", _salientPoints.size());
+
+#if ANKI_DEVELOPER_CODE
+  for (auto &element : _salientPoints) {
+    for (auto &salientPoint : element.second) {
+      PRINT_CH_DEBUG("Behaviors", "SalientPointsComponent.AddSalientPoints.PointInfo",
+                     "Timestamp of SalientPoint: %u", salientPoint.timestamp);
+    }
+  }
+#endif
+
 }
 
 void SalientPointsComponent::GetSalientPointSinceTime(std::list<Vision::SalientPoint>& salientPoints,
@@ -81,9 +84,8 @@ void SalientPointsComponent::GetSalientPointSinceTime(std::list<Vision::SalientP
                                                       const uint32_t timestamp) const
 {
 
-#if ANKI_DEVELOPER_CODE
-  const size_t previousSize = salientPoints.size(); // used for debugging
-#endif
+  ANKI_DEVELOPER_CODE_ONLY(const size_t previousSize = salientPoints.size();) // used for debugging
+
   auto it = _salientPoints.find(type);
   if (it != _salientPoints.end()) {
     const std::list<Vision::SalientPoint>& oldPoints = it->second;
@@ -98,6 +100,7 @@ void SalientPointsComponent::GetSalientPointSinceTime(std::list<Vision::SalientP
                  Vision::SalientPointTypeToString(type), timestamp,
                  salientPoints.size() - previousSize);
 
+
 }
 
 bool SalientPointsComponent::SalientPointDetected(const Vision::SalientPointType& type, const uint32_t timestamp) const
@@ -105,6 +108,7 @@ bool SalientPointsComponent::SalientPointDetected(const Vision::SalientPointType
 
   if (kRandomPersonDetection) {
     // TODO Here I'm cheating: test if x seconds have passed and if so create a few fake salient points
+    PRINT_NAMED_WARNING("SalientPointsComponent.SalientPointDetected.Cheating","");
     DEV_ASSERT(_robot != nullptr, "SalientPointsComponent.PersonDetected.RobotCantBeNull");
     float currentTickCount = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if ((currentTickCount - _timeSinceLastObservation) > 8) { // 8 seconds
@@ -150,10 +154,7 @@ bool SalientPointsComponent::SalientPointDetected(const Vision::SalientPointType
       // TODO DANGER THIS IS ONLY FOR TESTING AND WILL BE REMOVED SOON!
       const_cast<SalientPointsComponent*>(this)->AddSalientPoints(pointsToAdd);
 
-      PRINT_CH_DEBUG("Behaviors", "SalientPointsComponent.SalientPointDetected.ConditionTrue", "");
       _timeSinceLastObservation = currentTickCount;
-    } else {
-      PRINT_CH_DEBUG("Behaviors", "SalientPointsComponent.SalientPointDetected.ConditionFalse", "");
     }
   }
 
