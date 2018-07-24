@@ -14,7 +14,7 @@ def getListOfOnlineNodesForLabel(label) {
 node('victor-slaves') {
     withEnv(['CONFIGURATION=release']) {
         def victorBuildImage = docker.image('victor-build-img:99')
-        victorBuildImage.inside {
+        victorBuildImage.inside("-v /etc/passwd:/etc/passwd -v ${env.HOME}/.ssh:${env.HOME}/.ssh") {
             checkout([
                 $class: 'GitSCM',
                 branches: scm.branches,
@@ -70,6 +70,9 @@ node('victor-slaves') {
         }
         stage('Collecting artifacts') {
             archiveArtifacts artifacts: '_build/**', onlyIfSuccessful: true, caseSensitive: true
+        }
+        stage('Cleaning workspace') {
+            cleanWs()
         }
     }
 }
