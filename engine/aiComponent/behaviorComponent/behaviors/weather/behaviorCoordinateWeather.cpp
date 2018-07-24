@@ -19,7 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
-#include "engine/aiComponent/behaviorComponent/weatherIntentParser.h"
+#include "engine/aiComponent/behaviorComponent/weatherIntents/weatherIntentParser.h"
 #include "engine/components/dataAccessorComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/utils/cozmoFeatureGate.h"
@@ -124,6 +124,11 @@ void BehaviorCoordinateWeather::InitBehavior()
 
   _iConfig.iCantDoThatBehavior = behaviorContainer.FindBehaviorByID(BEHAVIOR_ID(SingletonICantDoThat));
 
+  _iConfig.intentParser = std::make_unique<WeatherIntentParser>(
+    GetBEI().GetDataAccessorComponent().GetWeatherResponseMap(),
+    GetBEI().GetDataAccessorComponent().GetWeatherRemaps()
+  );
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -145,11 +150,9 @@ void BehaviorCoordinateWeather::OnBehaviorActivated()
 
   // Respond with appropriate weather response
   bool cantDoThat = false;
-  if(WeatherIntentParser::IsForecast(weatherResponse)){
+  if(_iConfig.intentParser->IsForecast(weatherResponse)){
     cantDoThat = true;
   }else{
-    auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();
-
     ///////
     /// PR DEMO HACK - want a city where it always rains, so if it's the PRDemo the WeatherIntentParser may lie
     /// about the weather condition based on the location returned by the cloud intent
@@ -159,9 +162,8 @@ void BehaviorCoordinateWeather::OnBehaviorActivated()
                                   featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::PRDemo) :
                                   false;
 
-    const auto condition = WeatherIntentParser::GetCondition(dataAccessorComp.GetWeatherResponseMap(), 
-                                                             weatherResponse,
-                                                             isForPRDemo);
+    const auto condition = _iConfig.intentParser->GetCondition(weatherResponse,
+                                                               isForPRDemo);
     ///////
     /// END PR DEMO HACK
     ///////

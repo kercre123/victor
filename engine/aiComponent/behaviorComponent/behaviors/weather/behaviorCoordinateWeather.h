@@ -22,6 +22,7 @@ namespace Cozmo {
 
 // forward declaration
 enum class BehaviorID : uint16_t;
+class WeatherIntentParser;
 
 class BehaviorCoordinateWeather : public ICozmoBehavior
 {
@@ -53,6 +54,8 @@ private:
     std::vector<WeatherConditionType> conditions;
 
     std::map<WeatherConditionType, ICozmoBehaviorPtr> weatherBehaviorMap;
+    std::unique_ptr<WeatherIntentParser> intentParser;
+
     ICozmoBehaviorPtr              iCantDoThatBehavior;
   };
 

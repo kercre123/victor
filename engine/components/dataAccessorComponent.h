@@ -58,6 +58,7 @@ public:
   const RobotDataLoader::CompLayoutMap* GetCompLayoutMap() const { assert(_compLayoutMap); return _compLayoutMap; }
   const CannedAnimationContainer* GetCannedAnimationContainer() const { assert(_cannedAnimationContainer); return _cannedAnimationContainer; }
   const RobotDataLoader::WeatherResponseMap* GetWeatherResponseMap() const { assert(_weatherResponseMap); return _weatherResponseMap; }
+  const Json::Value& GetWeatherRemaps() const { assert(_weatherRemaps); return *_weatherRemaps;}
   RobotDataLoader::VariableSnapshotJsonMap* GetVariableSnapshotJsonMap() const { assert(nullptr != _variableSnapshotJsonMap); return _variableSnapshotJsonMap; }
 
   const Json::Value& GetCubeSpinnerConfig() const { return _cupeSpinnerConfig; }
@@ -70,6 +71,7 @@ private:
   const RobotDataLoader::CompLayoutMap* _compLayoutMap = nullptr;
   const CannedAnimationContainer* _cannedAnimationContainer = nullptr;
   const RobotDataLoader::WeatherResponseMap* _weatherResponseMap = nullptr;
+  const Json::Value* _weatherRemaps = nullptr;
   RobotDataLoader::VariableSnapshotJsonMap* _variableSnapshotJsonMap = nullptr;
   Json::Value _cupeSpinnerConfig;
 

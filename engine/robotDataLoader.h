@@ -153,6 +153,8 @@ public:
   using VariableSnapshotJsonMap = std::unordered_map<VariableSnapshotId, Json::Value>;
 
   const WeatherResponseMap* GetWeatherResponseMap() const { assert(_weatherResponseMap); return _weatherResponseMap.get();}
+  const Json::Value& GetWeatherRemaps() const { return _weatherRemaps;}
+  const Json::Value* GetWeatherRemapsPtr() const { return &_weatherRemaps;}
   VariableSnapshotJsonMap*  GetVariableSnapshotJsonMap() const { assert(_variableSnapshotJsonMap); return _variableSnapshotJsonMap.get(); }
 
   bool IsCustomAnimLoadEnabled() const;
@@ -193,6 +195,7 @@ private:
   void LoadCompositeImageMaps();
 
   void LoadWeatherResponseMaps();
+  void LoadWeatherRemaps();
 
   void LoadVariableSnapshotJsonMap();
   
@@ -257,7 +260,8 @@ private:
   std::unique_ptr<CompImageMap>  _compImageMap;
   std::unique_ptr<CompLayoutMap> _compLayoutMap;
 
-  std::unique_ptr<WeatherResponseMap> _weatherResponseMap;
+  std::unique_ptr<WeatherResponseMap>      _weatherResponseMap;
+  Json::Value                              _weatherRemaps;
   std::unique_ptr<VariableSnapshotJsonMap> _variableSnapshotJsonMap;
 
 

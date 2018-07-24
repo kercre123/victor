@@ -75,7 +75,8 @@
       "cloud_substitutions": {
         "speakable_location_string": "speakableLocationString",
         "is_forecast": "isForecast",
-        "temperature_unit": "temperatureUnit"
+        "temperature_unit": "temperatureUnit",
+        "local_datetime": "localDateTime"
       }
     },
     {

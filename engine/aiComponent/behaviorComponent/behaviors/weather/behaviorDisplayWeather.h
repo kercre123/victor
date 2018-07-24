@@ -26,6 +26,7 @@ class CompositeImage;
 namespace Cozmo {
 
 class BehaviorTextToSpeechLoop;
+class WeatherIntentParser;
 
 class BehaviorDisplayWeather : public ICozmoBehavior
 {
@@ -66,6 +67,7 @@ private:
     std::vector<Vision::SpriteName> temperatureAssets;
     // layouts stored least -> greatest pos followed by least -> greatest neg
     std::vector<Vision::CompositeImage> temperatureLayouts;
+    std::unique_ptr<WeatherIntentParser> intentParser;
   };
 
   struct DynamicVariables {

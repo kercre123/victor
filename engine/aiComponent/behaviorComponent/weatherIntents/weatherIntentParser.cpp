@@ -10,7 +10,7 @@
 * Copyright: Anki, Inc. 2018
 **/
 
-#include "engine/aiComponent/behaviorComponent/weatherIntentParser.h"
+#include "engine/aiComponent/behaviorComponent/weatherIntents/weatherIntentParser.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
@@ -36,8 +36,19 @@ CONSOLE_FUNC(SetRainyCity, "WeatherHack", const char* rainyCity);
 
 }
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool WeatherIntentParser::IsForecast(const UserIntent_WeatherResponse& weatherIntent)
+WeatherIntentParser::WeatherIntentParser(const RobotDataLoader::WeatherResponseMap* weatherResponseMap,
+                                         const Json::Value& conditionRemaps)
+: _weatherResponseMap(weatherResponseMap)
+, _conditionRemaps(conditionRemaps)
+{
+  
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool WeatherIntentParser::IsForecast(const UserIntent_WeatherResponse& weatherIntent) const
 {
   return (weatherIntent.isForecast == "true") ||
          (weatherIntent.isForecast == "True");
@@ -46,7 +57,7 @@ bool WeatherIntentParser::IsForecast(const UserIntent_WeatherResponse& weatherIn
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool WeatherIntentParser::ShouldSayText(const UserIntent_WeatherResponse& weatherIntent,
-                                        std::string& textToSay)
+                                        std::string& textToSay) const
 {
   textToSay = kWeatherLocationPrepend + weatherIntent.speakableLocationString;
   return !weatherIntent.speakableLocationString.empty();
@@ -54,7 +65,7 @@ bool WeatherIntentParser::ShouldSayText(const UserIntent_WeatherResponse& weathe
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool WeatherIntentParser::IsFahrenheit(const UserIntent_WeatherResponse& weatherIntent)
+bool WeatherIntentParser::IsFahrenheit(const UserIntent_WeatherResponse& weatherIntent) const
 {
   return weatherIntent.temperatureUnit == "F" ||
          weatherIntent.temperatureUnit == "f";
@@ -62,9 +73,8 @@ bool WeatherIntentParser::IsFahrenheit(const UserIntent_WeatherResponse& weather
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-WeatherConditionType WeatherIntentParser::GetCondition(const RobotDataLoader::WeatherResponseMap* weatherResponseMap,
-                                                       const UserIntent_WeatherResponse& weatherIntent,
-                                                       bool isForPRDemo)
+WeatherConditionType WeatherIntentParser::GetCondition(const UserIntent_WeatherResponse& weatherIntent,
+                                                       bool isForPRDemo) const
 {
   if(isForPRDemo && (weatherIntent.speakableLocationString == kCityWhereItAlwaysRainsMutable)){
     return WeatherConditionType::Rain;
@@ -74,9 +84,9 @@ WeatherConditionType WeatherIntentParser::GetCondition(const RobotDataLoader::We
   std::transform(weatherIntent.condition.begin(), weatherIntent.condition.end(),
                  std::back_inserter(str), [](const char c) { return std::tolower(c); });
 
-  auto iter = weatherResponseMap->find(str);
-  if(iter != weatherResponseMap->end()){
-    return iter->second;
+  auto iter = _weatherResponseMap->find(str);
+  if(iter != _weatherResponseMap->end()){
+    return _conditionRemaps.GetRemappedCondition(*this, weatherIntent, iter->second);
   }else{
     PRINT_NAMED_ERROR("WeatherIntentParser.GetCondition.NoConditionMatch",
                       "No weather condition found for %s",
@@ -84,6 +94,16 @@ WeatherConditionType WeatherIntentParser::GetCondition(const RobotDataLoader::We
     return WeatherConditionType::Count;
   }
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+tm WeatherIntentParser::GetLocalDateTime(const UserIntent_WeatherResponse& weatherIntent) const
+{
+  tm localTime;
+  strptime(weatherIntent.localDateTime.c_str(), "%Y-%m-%dT%H:%M%S-", &localTime);
+  return localTime;
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

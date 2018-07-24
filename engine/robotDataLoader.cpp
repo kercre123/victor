@@ -153,6 +153,11 @@ void RobotDataLoader::LoadNonConfigData()
   }
 
   {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadWeatherRemaps");
+    LoadWeatherRemaps();
+  }
+
+  {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadVariableSnapshotJsonMap");
     LoadVariableSnapshotJsonMap();
   }
@@ -709,7 +714,7 @@ void RobotDataLoader::LoadWeatherResponseMaps()
   const bool recurse = true;
 
 
-  const std::string path =  "config/engine/behaviorComponent/weatherResponseMaps/";
+  const std::string path =  "config/engine/behaviorComponent/weather/weatherResponseMaps/";
   const char* kAPIValueKey = "APIValue";
   const char* kCladTypeKey = "CladType";
 
@@ -758,6 +763,15 @@ void RobotDataLoader::LoadWeatherResponseMaps()
 
 }
 
+void RobotDataLoader::LoadWeatherRemaps()
+{
+  static const std::string jsonFilename = "config/engine/behaviorComponent/weather/condition_remaps.json";
+  const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _weatherRemaps);
+  if(!success)
+  {
+    PRINT_NAMED_WARNING("RobotDataLoader.LoadWeatherRemaps.ErrorReadingFile","");
+  }
+}
 
 void RobotDataLoader::LoadVariableSnapshotJsonMap()
 {

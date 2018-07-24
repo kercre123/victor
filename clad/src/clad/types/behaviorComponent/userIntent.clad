@@ -43,7 +43,7 @@ structure UserIntent_WeatherResponse
 
   int_32 temperature,
   string  temperatureUnit,
-
+  string  localDateTime
 }
 
 structure UserIntent_TakeAPhoto

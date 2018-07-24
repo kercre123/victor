@@ -18,7 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
-#include "engine/aiComponent/behaviorComponent/weatherIntentParser.h"
+#include "engine/aiComponent/behaviorComponent/weatherIntents/weatherIntentParser.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/dataAccessorComponent.h"
 #include "engine/components/settingsManager.h"
@@ -228,6 +228,11 @@ void BehaviorDisplayWeather::InitBehavior()
                         "Animations need to be manually loaded on engine side - %s is not", _iConfig->animationName.c_str());
     return;
   }
+  
+  _iConfig->intentParser = std::make_unique<WeatherIntentParser>(
+    GetBEI().GetDataAccessorComponent().GetWeatherResponseMap(),
+    GetBEI().GetDataAccessorComponent().GetWeatherRemaps()
+  );
 
   ParseDisplayTempTimesFromAnim();
 }
@@ -273,7 +278,7 @@ void BehaviorDisplayWeather::DisplayWeatherResponse()
                                                           animationCallback);
   
   const auto temperature = weatherResponse.temperature;
-  const bool isFahrenheit = WeatherIntentParser::IsFahrenheit(weatherResponse);
+  const bool isFahrenheit = _iConfig->intentParser->IsFahrenheit(weatherResponse);
   const auto success = GenerateTemperatureImage(temperature, isFahrenheit, _dVars.temperatureImg);
   if(!success){
     return;
