@@ -33,6 +33,8 @@ namespace {
   // TODO: Move to console vars or Json config
  static constexpr f32 kReadyToTakePhotoTimeout_sec = 3.f;
  static constexpr f32 kTakingPhotoTimeout_sec      = 6.f;
+
+ CONSOLE_VAR(f32, kHeadAngleDeg, "TakeAPhoto", 15.0);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -42,6 +44,7 @@ BehaviorTakeAPhotoCoordinator::InstanceConfig::InstanceConfig()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorTakeAPhotoCoordinator::DynamicVariables::DynamicVariables()
+: isASelfie(false)
 {
 }
 
@@ -104,12 +107,14 @@ void BehaviorTakeAPhotoCoordinator::OnBehaviorActivated()
   if(isStorageFull){
     TransitionToStorageIsFull();
   }else if(intentData != nullptr){
-    const bool isASelfie = !(intentData->intent.Get_take_a_photo().empty_or_selfie.empty());
+    _dVars.isASelfie = !(intentData->intent.Get_take_a_photo().empty_or_selfie.empty());
     // If we're taking a selfie we need to center the faces first - otherwise just take a photo
-    if(isASelfie){
+    if(_dVars.isASelfie){
       TransitionToFrameFaces();
     }else{
-      TransitionToFocusingAnimation();
+      DelegateIfInControl(new MoveHeadToAngleAction(DEG_TO_RAD(kHeadAngleDeg)), [this](){
+        TransitionToFocusingAnimation();
+      });
     }
   }else{
     PRINT_NAMED_ERROR("BehaviorTakeAPhotoCoordinator.OnBehaviorActivated.NullIntentData",

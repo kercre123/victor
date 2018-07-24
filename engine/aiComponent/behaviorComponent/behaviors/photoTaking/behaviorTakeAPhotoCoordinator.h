@@ -50,6 +50,7 @@ private:
 
   struct DynamicVariables {
     DynamicVariables();
+    bool isASelfie;
   };
 
   InstanceConfig _iConfig;
