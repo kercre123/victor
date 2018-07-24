@@ -429,7 +429,7 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechPrep
 
   // Unpack message fields
   const auto ttsID = msg.ttsID;
-  const std::string & text = std::string(msg.text, msg.text_length);
+  const std::string text( reinterpret_cast<const char*>(msg.text) );
   const auto style = msg.style;
   const auto durationScalar = msg.durationScalar;
 

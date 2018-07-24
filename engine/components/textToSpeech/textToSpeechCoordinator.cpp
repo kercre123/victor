@@ -25,6 +25,8 @@
 #include "util/entityComponent/dependencyManagedEntity.h"
 #include "util/math/math.h"
 
+#include <cstring>
+
 // Return a serial number 1-255.
 // 0 is reserved for "invalid".
 static uint8_t GetNextID()
@@ -45,7 +47,7 @@ namespace {
   constexpr float kPlayTimeoutScalar = 2.0f;
 
   // Utterances should not take longer than this to generate
-  constexpr float kGenerationTimeout_s = 10.0f; // making this high until we figure out accurate generation times
+  constexpr float kGenerationTimeout_s = 20.0f; // making this high until we figure out accurate generation times
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -136,21 +138,25 @@ const uint8_t TextToSpeechCoordinator::CreateUtterance(const std::string& uttera
               "TextToSpeechCoordinator.KeyframeDrivenTTS.NotYetSupported",
               "Keyframe driven TTS should not be used with the TTSCoordinator until it is fully supported");
 
-  // TODO: warn here that _robot->SendMessage(...) will fail if the string length is greater than 255
-  //       this is because CLAD stores the string length in an uint8_t
-  //       only a warning since KnowledgeGraph is known to send large strings and can fail gracefully
-  if(utteranceString.length() > 255){
-    PRINT_NAMED_WARNING("TextToSpeechCoordinator.CreateUtterance",
-                        "Utterance string cannot be longer than 255 characters (yours is %d)",
+  RobotInterface::TextToSpeechPrepare msg;
+  const size_t maxTextLength = msg.text.max_size() - 1;
+
+  // we store the string in a 1024 character array, so we need can't have a string greater than this (including the
+  // null terminating character).
+  if(utteranceString.length() > maxTextLength){
+    PRINT_NAMED_ERROR("TextToSpeechCoordinator.CreateUtterance",
+                        "Utterance string cannot be longer than %d characters (yours is %d)",
+                        (int)maxTextLength,
                         (int)utteranceString.length());
+    return kInvalidUtteranceID;
   }
 
   // Compose a request to prepare TTS audio
-  RobotInterface::TextToSpeechPrepare msg;
   msg.ttsID = utteranceID;
-  msg.text = utteranceString;
   msg.style = style;
   msg.durationScalar = durationScalar;
+  // copy our null-terminated string
+  std::memcpy( msg.text.data(), utteranceString.c_str(), utteranceString.size() + 1 );
 
   // Send request to animation process
   const Result result = _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
