@@ -46,13 +46,6 @@ message CalibrateMotors {
 message CliffAlignToWhite {
 }
 
-// DriveOffChargerContacts
-//  Mostly useful for SDK usage where motors are locked while on the charger.
-//  This action drives forward slightly to get off the charger.
-message DriveOffChargerContacts {
-
-}
-
 // DriveStraight
 //  Drives a straight line forward or backward without using the planner.
 message DriveStraight {
@@ -470,7 +463,6 @@ union RobotActionUnion {
   AlignWithObject               alignWithObject,
   CalibrateMotors               calibrateMotors,
   CliffAlignToWhite             cliffAlignToWhite,
-  DriveOffChargerContacts       driveOffChargerContacts,
   DriveStraight                 driveStraight,
   FacePlant                     facePlant,
   FlipBlock                     flipBlock,

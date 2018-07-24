@@ -39,7 +39,6 @@ enum int_32 RobotActionType {
     DEVICE_AUDIO,              // This calls audio from WWise
     DISPLAY_FACE_IMAGE,
     DISPLAY_PROCEDURAL_FACE,
-    DRIVE_OFF_CHARGER_CONTACTS,
     DRIVE_STRAIGHT,
     DRIVE_TO_FLIP_BLOCK_POSE,
     DRIVE_TO_OBJECT,

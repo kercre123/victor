@@ -36,7 +36,6 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/chargerActions.h"
 #include "engine/actions/dockActions.h"
-#include "engine/actions/driveOffChargerContactsAction.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/flipBlockAction.h"
 #include "engine/actions/retryWrapperAction.h"
@@ -386,13 +385,6 @@ template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::DriveStraight& msg)
 {
   return new DriveStraightAction(msg.dist_mm, msg.speed_mmps, msg.shouldPlayAnimation);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::DriveOffChargerContacts& msg)
-{
-  return new DriveOffChargerContactsAction();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -933,7 +925,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(alignWithObject,          AlignWithObject,          0),
       DEFINE_HANDLER(calibrateMotors,          CalibrateMotors,          0),
       DEFINE_HANDLER(cliffAlignToWhite,        CliffAlignToWhite,        0),
-      DEFINE_HANDLER(driveOffChargerContacts,  DriveOffChargerContacts,  1),
       DEFINE_HANDLER(driveStraight,            DriveStraight,            0),
       DEFINE_HANDLER(facePlant,                FacePlant,                0),
       DEFINE_HANDLER(flipBlock,                FlipBlock,                0),
